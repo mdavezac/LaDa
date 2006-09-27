@@ -3,6 +3,10 @@
 
 #include <eo/eoEvalFunc.h>
 #include <exception>
+#include <stdexcept>
+#include <iostream>
+#include <sstream>
+#include <string>
 using namespace eo;
 
 namespace LaDa 
@@ -24,24 +28,25 @@ namespace LaDa
 
       void operator()(Object &_object)
       {
-        if ( not _object.invalid() )
-          return;
-
         if ( not overlord )
           throw std::invalid_argument( "pointer overlord unitialised in void Evaluation(Object &_object)" );
 
-        if ( not _object.is_quantity_valid() )
-          _object.set_quantity( overlord->evaluate( _object ) );
-
-        if ( not _object.is_baseline_valid() )
+        // if quantity does not exist, neither should baseline
+        if ( _object.invalid() )
         {
+          _object.set_quantity( overlord->evaluate( _object ) );
           _object.set_baseline( overlord->evaluate( _object.get_concentration() ) );
           _object.set_fitness();
           return;
         }
 
-        if ( _object.invalid() )
-          _object.set_fitness();
+        // everything OK -- validates
+        if ( _object.is_baseline_valid() )
+          return;
+
+        // baseline should be recomputed
+        _object.set_baseline( overlord->evaluate( _object.get_concentration() ) );
+        _object.set_fitness();
       }
   };
 
@@ -58,13 +63,36 @@ namespace LaDa
     
       void operator()(eoPop<Object> & _parents, eoPop<Object> & _offsprings)
       {
-        apply<Object>(eval, _offsprings);
+        typename std::vector<Object> :: iterator i_pop = _offsprings.begin();
+        typename std::vector<Object> :: iterator i_last = _offsprings.end();
+        for ( ; i_pop != i_last; ++i_pop )
+          eval(*i_pop);
         // convex hull has changed => reevaluate
         if ( not  _offsprings.begin()->is_baseline_valid() )
         {
-          apply<Object>(eval, _offsprings);
-          apply<Object>(eval, _parents);
-        }
+          i_pop = _offsprings.begin();
+          for ( ; i_pop != i_last; ++i_pop )
+            eval(*i_pop);
+          i_pop = _parents.begin();
+          i_last = _parents.end();
+          for ( ; i_pop != i_last; ++i_pop )
+            eval(*i_pop);
+        } 
+       //  int i=0, j=0;
+       //try
+       //{ 
+       //  for(; i < _offsprings.size(); ++i)
+       //    _offsprings[i].fitness();
+       //  for(; j < _parents.size(); ++j)
+       //    _parents[j].fitness();
+       //}
+       //catch (std::exception &e )
+       //{
+       //  std::cerr << "here" << std::endl;
+       //  std::ostringstream s( e.what() );
+       //  s << " at i=" << i << " and j=" << j <<" ";
+       //  throw std::runtime_error(s.str());
+       //}
       }
     
     private:

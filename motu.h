@@ -8,15 +8,8 @@
 
 #include <lamarck/functional_builder.h>
 #include <opt/fitness_function.h>
-#ifdef ONE_POINT
-  #include "one_point_hull.h"
-  #define CONVEX_HULL One_Point_Hull
-#else 
-  #include <lamarck/convex_hull.h>
-  #define CONVEX_HULL VA_CE::Convex_Hull
-#endif
+#include <lamarck/convex_hull.h>
 
-#define LINEAR_SOLVE
 #include <opt/opt_minimize.h>
 
 #include <eo/eo>
@@ -27,17 +20,19 @@ namespace LaDa
   class MotU : public VA_CE :: Functional_Builder
   {
     public:
-      typedef Individual<FUNCTIONAL> t_individual;
+      typedef Individual<> t_individual;
 
     protected:
-      typedef opt::Fitness_Function<FUNCTIONAL, CONVEX_HULL> FITNESS;
-      const static double ZERO_TOLERANCE;
-      const static int LAMARCKIAN_EVOLUTION;
-      const static int LAMARCKIAN;
-      const static int DARWINISTIC;
-      const static int MULTISTART;
+      typedef opt::Fitness_Function<FUNCTIONAL, VA_CE::Convex_Hull> FITNESS;
+      const static unsigned LAMARCK;
+      const static unsigned DARWIN;
+      const static unsigned DEBUG;
+      const static unsigned NO_MINIMIZER;
+      const static unsigned WANG_MINIMIZER;
+      const static unsigned PHYSICAL_MINIMIZER;
+      const static unsigned LINEAR_MINIMIZER;
 
-      struct GA_Params
+      struct GA // stores all GA parameters
       {
         double crossover_vs_mutation,
                crossover_probability, 
@@ -49,32 +44,41 @@ namespace LaDa
         unsigned max_generations;
         unsigned method;
         bool utter_random;
+        bool multistart;
+        bool evolve_from_start;
 
-        GA_Params();
+        // eo stuff
+        eoState eostates;
+        eoIncrementorParam<unsigned> *nb_generations;
+        eoEasyEA<MotU::t_individual> *algorithm;
+
+        GA();
         bool Load( TiXmlElement *element );
       };
+
 
     private:
       Ising_CE::Structure structure;
       FUNCTIONAL functional;
       FITNESS fitness;
-      opt::Minimize<FITNESS> minimizer;
-      CONVEX_HULL convex_hull;
+      VA_CE::Convex_Hull convex_hull;
       std::string filename;
       std::string xml_filename;
       std::string xmgrace_filename;
+      GA ga_params;
       eoPop<t_individual> population;
-      GA_Params ga_params;
-      eoState eostates;
-      eoIncrementorParam<unsigned> *nb_generations;
       unsigned EvalCounter;
-      eoEasyEA<t_individual> *algorithm;
+      int job_type;
+      opt::Minimize_Base<FITNESS> *minimizer;
+      unsigned minimizer_type;
 
 
     public:
-      MotU() { filename="input.xml"; EvalCounter = 0; };
+      MotU() : Functional_Builder(), convex_hull(), filename("input.xml"),
+               ga_params(), population(), EvalCounter(0)
+        { minimizer=NULL; minimizer_type=0; }
       MotU(const std::string &_filename);
-      ~MotU(){};
+      virtual ~MotU(){};
       void run();
       void print_xml();
       void print_xmgrace();
@@ -86,6 +90,7 @@ namespace LaDa
     protected:
       bool Load( TiXmlHandle &handle );
       bool read_CH();
+      void run_debug();
 
 
       void populate();
@@ -94,6 +99,8 @@ namespace LaDa
       eoBreed<t_individual>* make_breeder();
       eoReplacement<t_individual>* make_replacement();
       void make_algo();
+
+      void write_xmgrace_header( std::ofstream &_f);
       
   };
 

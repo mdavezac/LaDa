@@ -38,7 +38,7 @@ namespace LaDa
           if ( rng.uniform() < probability ) 
             *i_object1 = *i_object2;
 
-        object1.invalidate_quantity();
+        object1.invalidate();
         
         return true;
       }
@@ -73,7 +73,7 @@ namespace LaDa
           }
 
         if ( mutated )
-          object.invalidate_quantity();
+          object.invalidate();
         
         return mutated;
       }
@@ -96,6 +96,7 @@ namespace LaDa
         for( ; i_object != i_last; ++i_object )
           *i_object = ( rng.flip() ) ? -1.0 : 1.0;
 
+        object.invalidate();
         
         return true;
       }

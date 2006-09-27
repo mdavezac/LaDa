@@ -6,14 +6,16 @@ my %params;
 
 my $HOME = `cd; pwd`; chomp $HOME;
 
-  @{$params{"defs"}} = ( "HAVE_SSTREAM" ); 
+  @{$params{"defs"}} = ( "_G_HAVE_BOOL", "ANSI_HEADERS", "HAVE_SSTREAM" ); 
 
-@{$params{"Includes"}} = (".");
+@{$params{"Includes"}} = ( "." );
 
 if ( $computer =~ /office/ )
 {
   @{$params{"make include"}} = ( "/usr/local/include", 
                                  "$HOME/usr/include",
+                                 "/usr/local/include/newmat",
+                                 "/usr/local/include/opt++",
                                  "/usr/local/include/eo");
                                  
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
@@ -119,6 +121,7 @@ sub get_dependencies()
                 $dependencies{$new_key}{"header"} = 1;
                 if ( -e "$location/$new_key.cc" )
                   { $dependencies{$new_key}{"source"} = 1; }
+                last;
               }
             }
             if( exists $dependencies{$new_key} ) 
@@ -151,6 +154,7 @@ sub get_dependencies()
                 $dependencies{$new_key}{"header"} = 1;
                 if ( -e "$location/$new_key.cc" )
                   { $dependencies{$new_key}{"source"} = 1; }
+                last;
               }
             }
             if( exists $dependencies{$new_key} ) 
@@ -313,7 +317,7 @@ sub write_dependencies()
   {    
     if ( not exists $dependencies{$key}{"source"} )
       { next; }
-    elsif ( $dependencies{$key}{"location"} ne "." )
+    if ( $dependencies{$key}{"location"} ne "." )
       { print OUT $dependencies{$key}{"location"}, "/", $key, ".o: ",
                   $dependencies{$key}{"location"}, "/", $key, ".cc ";}
     else
@@ -321,27 +325,36 @@ sub write_dependencies()
     my $i = 0;
     foreach $dep ( sort { sort_hash($a,$b) } @{$dependencies{$key}{"depends on"}} )
     {
-      if( $i % 4 == 0 and $i != 0)
+      if ( $dep =~ $key )
+        { next; }
+      if( $i % 1 == 0 and $i != 0)
         { print OUT " \\\n\t"; }
       if ( (exists $dependencies{$dep}{"source"}) and
-           (exists $dependencies{$dep}{"header"}) and
-           ($dep !~ $key) )
+           (exists $dependencies{$dep}{"header"})     )
       {
         if ( $dependencies{$dep}{"location"} ne "." )
           { print OUT $dependencies{$dep}{"location"}, "/"; }
         print OUT $dep, ".o "; $i++;
+        next;
       }
-      elsif ( exists $dependencies{$dep}{"header"} )
+      if ( (exists $dependencies{$dep}{"source"}) )
       {
+        if ( $dependencies{$dep}{"location"} ne "." )
+          { print OUT $dependencies{$dep}{"location"}, "/"; }
+        print OUT $dep, ".cc "; $i++;
+      }
+      if ( exists $dependencies{$dep}{"header"} )
+      {
+        if ( exists $dependencies{$dep}{"source"} )
+          { print OUT " \\\n\t"; }
         if ( $dependencies{$dep}{"location"} ne "." )
           { print OUT $dependencies{$dep}{"location"}, "/"; }
         print OUT $dep, ".h "; $i++;
       }
+      
     }
     print OUT "\n\n";
   }    
-
-  close OUT;
 
 }
 
@@ -363,3 +376,17 @@ sub sort_hash ()
   return 1;
 }
 
+sub is_in_compile_location($)
+{
+  my $location = $_[0];
+  my $result = 0;
+  foreach $cloc ( @{$params{"compile"}} )
+  {
+    if ( $location eq $cloc )
+    {
+      $result = 1 ;
+      last;
+    }
+  }
+  return $result;
+}
