@@ -12,10 +12,10 @@ namespace LaDa
   const unsigned MotU :: DARWIN  = 0;
   const unsigned MotU :: LAMARCK = 1;
   const unsigned MotU :: DEBUG   = 2;
-  const unsigned MotU :: NO_MINIMIZER       = 0;
-  const unsigned MotU :: WANG_MINIMIZER     = 1;
-  const unsigned MotU :: PHYSICAL_MINIMIZER = 2;
-  const unsigned MotU :: LINEAR_MINIMIZER   = 3;
+  const unsigned MotU :: GA :: NO_MINIMIZER       = 0;
+  const unsigned MotU :: GA :: WANG_MINIMIZER     = 1;
+  const unsigned MotU :: GA :: PHYSICAL_MINIMIZER = 2;
+  const unsigned MotU :: GA :: LINEAR_MINIMIZER   = 3;
 
   MotU :: GA :: GA()
   {
@@ -31,13 +31,14 @@ namespace LaDa
     utter_random = false;
     evolve_from_start = false; 
     multistart = false; 
+    minimizer = NO_MINIMIZER;
   }
   
   MotU :: MotU(const std::string &_filename) : Functional_Builder(), convex_hull(),
                                                filename( _filename ), ga_params(),
                                                EvalCounter(0)
   {
-    minimizer = NULL; minimizer_type = 0;
+    minimizer = NULL; 
     TiXmlDocument doc( filename.c_str() );
     
     if  ( !doc.LoadFile() )
@@ -101,20 +102,6 @@ namespace LaDa
     structure.Load(child, *axes);
     ga_params.mutation_probability = 1.0 / ((double) structure.atoms.size());
 
-    // finds minimizer type
-    minimizer_type = NO_MINIMIZER;
-    child = handle.FirstChild( "LaDa" ).FirstChild( "minimizer" ).Element();
-    if ( child )
-    {
-      std::string str =  child->Attribute( "type" );
-      if ( str.compare("wang" ) == 0 ) // Wang
-        minimizer_type = WANG_MINIMIZER;
-      else if ( str.compare("physical" ) == 0 ) // Wang
-        minimizer_type = PHYSICAL_MINIMIZER;
-      else if ( str.compare("linear" ) == 0 ) // Wang
-        minimizer_type = LINEAR_MINIMIZER;
-    }
-      
     // sets hull type: one or many points
     convex_hull.is_flat = false;
     child = handle.FirstChild( "LaDa" ).FirstChild( "OnePointHull" ).Element();
@@ -148,15 +135,15 @@ namespace LaDa
       default:
       case DARWIN: _f << "# job: Darwinistic GA" << std::endl; break;
     }
-    switch( minimizer_type)
+    switch( ga_params.minimizer )
     {
-      case WANG_MINIMIZER: 
+      case GA::WANG_MINIMIZER: 
         _f << "# Wang Constraints " << std::endl; 
         break;
-      case PHYSICAL_MINIMIZER: 
+      case GA::PHYSICAL_MINIMIZER: 
         _f << "# Physical constraints " << std::endl; 
         break;
-      case LINEAR_MINIMIZER: 
+      case GA::LINEAR_MINIMIZER: 
         _f << "# Linear minimizer " << std::endl; 
         break;
       default:
@@ -275,26 +262,42 @@ namespace LaDa
         if ( d > 0 )
           max_generations = d;
 
-      std::string str = parent->Attribute("method");
-      if ( str.find("lamarck") != std::string::npos )
+      if ( parent->Attribute("minimizer") )
       {
-        method = LAMARCK;
-        if ( str.find("from start") != std::string::npos )
+        std::string str = parent->Attribute("minimizer");
+        if ( str.compare("wang" ) == 0 ) // Wang
+          minimizer = WANG_MINIMIZER;
+        else if ( str.compare("physical" ) == 0 ) // Wang
+          minimizer = PHYSICAL_MINIMIZER;
+        else if ( str.compare("linear" ) == 0 ) // Wang
+          minimizer = LINEAR_MINIMIZER;
+      }
+
+      if ( parent->Attribute("method") )
+      {
+        std::string str = parent->Attribute("method");
+        if ( str.find("lamarck") != std::string::npos )
+        {
+          method = LAMARCK;
+          if ( str.find("from start") != std::string::npos )
+            evolve_from_start = true;
+          if ( minimizer == NO_MINIMIZER )
+            minimizer = LINEAR_MINIMIZER;
+        }
+        if ( str.find("debug") != std::string::npos )
+          method = DEBUG;
+        if ( str.find("multistart") != std::string::npos )
+        {
+          multistart = true;
+          eoHowMany nb(replacement_rate);
+          max_generations = pop_size + nb(pop_size) * max_generations;
+          pop_size = 1;
+          utter_random = true;
+          replacement_rate = 1.0;
           evolve_from_start = true;
-      }
-      if ( str.find("debug") != std::string::npos )
-        method = DEBUG;
-      if ( str.find("multistart") != std::string::npos )
-      {
-        multistart = true;
-        eoHowMany nb(replacement_rate);
-        max_generations = pop_size + nb(pop_size) * max_generations;
-        pop_size = 1;
-        utter_random = true;
-        replacement_rate = 1.0;
-        evolve_from_start = true;
-      }
-    }
+        }
+      } // if attribute "mehod" exists
+    }   
 
     return true;
   }
@@ -391,7 +394,7 @@ namespace LaDa
     fitness.set_variables( individual.get_variables() );
  
     if ( ga_params.evolve_from_start
-         and ga_params.nb_generations->value() )
+         or ga_params.nb_generations->value() )
       minimizer->minimize();
  
     result = functional.evaluate();
@@ -501,15 +504,15 @@ namespace LaDa
     functional.destroy_variables(); 
 
     // minimizer
-    switch( minimizer_type)
+    switch( ga_params.minimizer )
     {
-      case WANG_MINIMIZER: 
+      case GA::WANG_MINIMIZER: 
         minimizer = new opt::Minimize_Wang<FITNESS>( &fitness);
         break;
-      case PHYSICAL_MINIMIZER: 
+      case GA::PHYSICAL_MINIMIZER: 
         minimizer = new opt::Minimize_Ssquared<FITNESS>( &fitness );
         break;
-      case LINEAR_MINIMIZER: 
+      case GA::LINEAR_MINIMIZER: 
         minimizer = new opt::Minimize_Linear<FITNESS>( &fitness );
         break;
       default:

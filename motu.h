@@ -27,13 +27,14 @@ namespace LaDa
       const static unsigned LAMARCK;
       const static unsigned DARWIN;
       const static unsigned DEBUG;
-      const static unsigned NO_MINIMIZER;
-      const static unsigned WANG_MINIMIZER;
-      const static unsigned PHYSICAL_MINIMIZER;
-      const static unsigned LINEAR_MINIMIZER;
 
       struct GA // stores all GA parameters
       {
+        const static unsigned NO_MINIMIZER;
+        const static unsigned WANG_MINIMIZER;
+        const static unsigned PHYSICAL_MINIMIZER;
+        const static unsigned LINEAR_MINIMIZER;
+
         double crossover_vs_mutation,
                crossover_probability, 
                mutation_probability;
@@ -46,6 +47,7 @@ namespace LaDa
         bool utter_random;
         bool multistart;
         bool evolve_from_start;
+        unsigned minimizer;
 
         // eo stuff
         eoState eostates;
@@ -68,15 +70,12 @@ namespace LaDa
       GA ga_params;
       eoPop<t_individual> population;
       unsigned EvalCounter;
-      int job_type;
       opt::Minimize_Base<FITNESS> *minimizer;
-      unsigned minimizer_type;
 
 
     public:
       MotU() : Functional_Builder(), convex_hull(), filename("input.xml"),
-               ga_params(), population(), EvalCounter(0)
-        { minimizer=NULL; minimizer_type=0; }
+               ga_params(), population(), EvalCounter(0), minimizer(NULL) {}
       MotU(const std::string &_filename);
       virtual ~MotU(){};
       void run();
