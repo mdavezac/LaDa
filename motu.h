@@ -12,8 +12,17 @@
 
 #include <opt/opt_minimize.h>
 
-#include <eo/eo>
-
+#include <eo/eoBreed.h>
+#include <eo/eoEasyEA.h>
+#include <eo/eoGenOp.h>
+#include <eo/eoGenContinue.h>
+#include <eo/eoOpContainer.h>
+#include <eo/eoReduceMerge.h>
+#include <eo/eoDetTournamentSelect.h>
+#include <eo/eoGeneralBreeder.h>
+#include <eo/utils/eoUpdater.h>
+#include <eo/utils/eoState.h>
+#include <eo/utils/eoCheckPoint.h>
 
 namespace LaDa
 {
@@ -34,6 +43,7 @@ namespace LaDa
         const static unsigned WANG_MINIMIZER;
         const static unsigned PHYSICAL_MINIMIZER;
         const static unsigned LINEAR_MINIMIZER;
+        const static unsigned SA_MINIMIZER; // simulated annealing at zero T
 
         double crossover_vs_mutation,
                crossover_probability, 
@@ -48,6 +58,8 @@ namespace LaDa
         bool multistart;
         bool evolve_from_start;
         unsigned minimizer;
+        unsigned max_eval_calls;
+        unsigned max_grad_calls;
 
         // eo stuff
         eoState eostates;
@@ -100,6 +112,7 @@ namespace LaDa
       void make_algo();
 
       void write_xmgrace_header( std::ofstream &_f);
+      void init_convex_hull();
       
   };
 

@@ -5,6 +5,7 @@
 #include "checkpoint.h"
 
 #include <eo/utils/eoHowMany.h>
+#include <limits.h>
 
 namespace LaDa 
 {
@@ -16,6 +17,7 @@ namespace LaDa
   const unsigned MotU :: GA :: WANG_MINIMIZER     = 1;
   const unsigned MotU :: GA :: PHYSICAL_MINIMIZER = 2;
   const unsigned MotU :: GA :: LINEAR_MINIMIZER   = 3;
+  const unsigned MotU :: GA :: SA_MINIMIZER       = 4;
 
   MotU :: GA :: GA()
   {
@@ -32,6 +34,8 @@ namespace LaDa
     evolve_from_start = false; 
     multistart = false; 
     minimizer = NO_MINIMIZER;
+    max_eval_calls = 0;
+    max_grad_calls = 0;
   }
   
   MotU :: MotU(const std::string &_filename) : Functional_Builder(), convex_hull(),
@@ -44,7 +48,7 @@ namespace LaDa
     if  ( !doc.LoadFile() )
     {
       std::cout << doc.ErrorDesc() << std::endl; 
-      return;
+      exit(0);
     }
 
     TiXmlHandle docHandle( &doc );
@@ -145,6 +149,9 @@ namespace LaDa
         break;
       case GA::LINEAR_MINIMIZER: 
         _f << "# Linear minimizer " << std::endl; 
+        break;
+      case GA::SA_MINIMIZER: 
+        _f << "# T=0 Simulated Annealing " << std::endl; 
         break;
       default:
         _f << "# No minimizer " << std::endl; 
@@ -262,17 +269,6 @@ namespace LaDa
         if ( d > 0 )
           max_generations = d;
 
-      if ( parent->Attribute("minimizer") )
-      {
-        std::string str = parent->Attribute("minimizer");
-        if ( str.compare("wang" ) == 0 ) // Wang
-          minimizer = WANG_MINIMIZER;
-        else if ( str.compare("physical" ) == 0 ) // Wang
-          minimizer = PHYSICAL_MINIMIZER;
-        else if ( str.compare("linear" ) == 0 ) // Wang
-          minimizer = LINEAR_MINIMIZER;
-      }
-
       if ( parent->Attribute("method") )
       {
         std::string str = parent->Attribute("method");
@@ -296,8 +292,35 @@ namespace LaDa
           replacement_rate = 1.0;
           evolve_from_start = true;
         }
-      } // if attribute "mehod" exists
+      } // if attribute "method" exists
     }   
+
+      
+    if ( method == DARWIN )  // no optimizer - keep default
+    {
+      child = parent->FirstChildElement( "Minimizer" );
+      if ( child->Attribute("type") )
+      {
+        std::string str = child->Attribute("type");
+        if ( str.compare("wang" ) == 0 ) // Wang
+          minimizer = WANG_MINIMIZER;
+        else if ( str.compare("physical" ) == 0 ) // Wang
+          minimizer = PHYSICAL_MINIMIZER;
+        else if ( str.compare("linear" ) == 0 ) // Wang
+          minimizer = LINEAR_MINIMIZER;
+        else if ( str.compare("SA" ) == 0 ) // Wang
+          minimizer = SA_MINIMIZER;
+      }
+    }
+    // checks for minimizer setup
+    if (minimizer == LINEAR_MINIMIZER or minimizer == SA_MINIMIZER )
+    {
+      int d=0;
+      if( child->Attribute("maxeval", &d) )
+        max_eval_calls = ( d <= 0 ) ? UINT_MAX : (unsigned) d;
+      if( child->Attribute("maxgrad", &d) )
+        max_grad_calls = ( d <= 0 ) ? max_eval_calls : (unsigned) d;
+    }
 
     return true;
   }
@@ -484,9 +507,12 @@ namespace LaDa
   // then branches off to different jobs
   void MotU :: run()
   {
-    // first things first: make sure we can generate functionals
-    add_equivalent_clusters();
-
+     // completes cluster list with equivalent clusters
+     add_equivalent_clusters();
+    
+     // adds endpoints to convex hull
+     init_convex_hull();
+     
     // debug case: iterates over structures
     if( ga_params.method == DEBUG)
     {
@@ -495,7 +521,7 @@ namespace LaDa
     }
 
     // generate functional
-    generate_functional( structure, functional );
+    generate_functional( structure, &functional );
 
     // fitness pointers  -- note that functiona->variables will be set
     // to Individual::variables at each evaluation
@@ -503,25 +529,34 @@ namespace LaDa
     fitness.set_quantity( &functional ); 
     functional.destroy_variables(); 
 
-    // minimizer
-    switch( ga_params.minimizer )
-    {
-      case GA::WANG_MINIMIZER: 
-        minimizer = new opt::Minimize_Wang<FITNESS>( &fitness);
-        break;
-      case GA::PHYSICAL_MINIMIZER: 
-        minimizer = new opt::Minimize_Ssquared<FITNESS>( &fitness );
-        break;
-      case GA::LINEAR_MINIMIZER: 
-        minimizer = new opt::Minimize_Linear<FITNESS>( &fitness );
-        break;
-      default:
-        minimizer = new opt::Minimize_Base<FITNESS>( &fitness ); // just a dummy, doesn't minimize
-        break;
-    }
-
     try 
     {
+      // minimizer
+      switch( ga_params.minimizer )
+      {
+        case GA::WANG_MINIMIZER: 
+          minimizer = new opt::Minimize_Wang<FITNESS>( &fitness);
+          break;
+        case GA::PHYSICAL_MINIMIZER: 
+          minimizer = new opt::Minimize_Ssquared<FITNESS>( &fitness );
+          break;
+        case GA::SA_MINIMIZER: 
+          minimizer = new opt::Minimize_Linear<FITNESS>( &fitness );
+          static_cast< opt::Minimize_Linear<FITNESS>* >(minimizer)->simulated_annealing = true;
+          static_cast< opt::Minimize_Linear<FITNESS>* >(minimizer)->max_eval_calls = ga_params.max_eval_calls;
+          break;
+        case GA::LINEAR_MINIMIZER: 
+          minimizer = new opt::Minimize_Linear<FITNESS>( &fitness );
+          static_cast< opt::Minimize_Linear<FITNESS>* >(minimizer)->simulated_annealing = false;
+          static_cast< opt::Minimize_Linear<FITNESS>* >(minimizer)->max_eval_calls = ga_params.max_eval_calls;
+          static_cast< opt::Minimize_Linear<FITNESS>* >(minimizer)->max_grad_calls = ga_params.max_grad_calls;
+          break;
+        default:
+          minimizer = new opt::Minimize_Base<FITNESS>( &fitness ); // just a dummy, doesn't minimize
+          break;
+      }
+
+
       // create algorithm
       make_algo();
       
@@ -572,7 +607,7 @@ namespace LaDa
     for(; child; child = child->NextSiblingElement("Structure"))
     {
       structure.Load(child, *axes);
-      generate_functional( structure, functional );
+      generate_functional( structure, &functional );
       {
         std::vector< Ising_CE::Atom > :: iterator i_atom = structure.atoms.begin();
         std::vector< Ising_CE::Atom > :: iterator i_last  = structure.atoms.end();
@@ -594,4 +629,42 @@ namespace LaDa
 
   }
 
+   // adds endpoints to convex hull -- cluster list should be complete
+   // at this point!!
+   // single site CEs only
+   void MotU :: init_convex_hull()
+   {
+     Ising_CE::Structure struc; 
+     FUNCTIONAL func;
+
+     // creates structure...
+     struc.cell = lattice->cell;
+     struc.atoms.push_back( Ising_CE::Atom( lattice->atom_pos(0), -1.0 ) );
+
+     // and functional - note that there is no CS 
+     // (in fact CS may segfault here )
+     generate_functional(struc, &func);
+     
+
+     // adds first endpoint
+     {
+       *(func.begin()) = -1.0;
+       VA_CE::Breaking_Point bp(func.get_Obj1()->evaluate(), struc);
+       convex_hull.force_add( bp );
+     }
+
+     // adds second endpoint
+     {
+       *(func.begin()) = 1.0;
+       struc.atoms.clear();
+       struc.atoms.push_back( Ising_CE::Atom( lattice->atom_pos(0), 1.0 ) );
+       VA_CE::Breaking_Point bp(func.get_Obj1()->evaluate(), struc);
+       convex_hull.force_add( bp );
+     }
+
+     // clean-up
+     func.destroy_variables();
+     delete func.get_Obj1();
+     delete func.get_Obj2();
+   }
 } // namespace LaDa
