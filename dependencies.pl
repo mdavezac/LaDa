@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 #
 
-my $computer = "office";
+my $computer = "super";
 my %params;
 
 my $HOME = `cd; pwd`; chomp $HOME;
@@ -30,21 +30,35 @@ if ( $computer =~ /office/ )
 }
 if ( $computer =~ /lester/ )
 {
-  @{$params{"make include"}} = ( "/usr/local/include", "$HOME/usr/include");
+  @{$params{"make include"}} = ( "$HOME/usr/include",
+                                 "$HOME/usr/include/eo",
+                                 "$HOME/usr/include/newmat",
+                                 "$HOME/usr/include/opt++" );
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
-                             "-llamarck", "-ltinyxml", "-lopt++", "-lnewmat" );
-  $params{"CC"}  = "pgcc";
-  $params{"CXX"} = "pgCC";
-  $params{"LD"}  = "pgCC";
-  $params{"F77"}  = "pgf90";
+                             "-llamarck", "-ltinyxml", "-lopt++", "-lnewmat",
+                             "-lga", "-leoutils", "-leo" );
+  $params{"CC"}  = "gcc";
+  $params{"CXX"} = "g++";
+  $params{"LD"}  = "g++";
+  $params{"F77"}  = "g77";
   $params{"CXXFLAGS"}  = "";
-
-   
-  $params{"cleanall"}[0]  = "- rm -f \$(addsuffix .ii, \$(basename \${OBJS})";
-  $params{"cleanall"}[1]  = "- rm -f \$(addsuffix .ti, \$(basename \${OBJS})";
-
-  push @{$params{"defs"}}, ( "__PORTLAND" ); 
 }
+if ( $computer =~ /super/ )
+{
+  @{$params{"make include"}} = ( "$HOME/usr/include",
+                                 "$HOME/usr/include/eo",
+                                 "$HOME/usr/include/newmat",
+                                 "$HOME/usr/include/opt++" );
+  @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
+                             "-llamarck", "-latat", "-ltinyxml", "-lopt++", "-lnewmat",
+                             "-lga", "-leoutils", "-leo" );
+  $params{"CC"}  = "icc";
+  $params{"CXX"} = "icc";
+  $params{"LD"}  = "icc";
+  $params{"F77"}  = "if90";
+  $params{"CXXFLAGS"}  = "";
+}
+
 
 
 # find source files in present directory

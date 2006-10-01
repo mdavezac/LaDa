@@ -4,8 +4,16 @@
 #include "generator.h"
 #include "checkpoint.h"
 
+#undef min // idiots
+#undef max
 #include <eo/utils/eoHowMany.h>
+#undef min // idiots
+#undef max
 #include <limits.h>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <stdexcept>
 
 namespace LaDa 
 {
@@ -38,26 +46,27 @@ namespace LaDa
     max_grad_calls = 0;
   }
   
-  MotU :: MotU(const std::string &_filename) : Functional_Builder(), convex_hull(),
-                                               filename( _filename ), ga_params(),
-                                               EvalCounter(0)
+  bool MotU :: Load(const std::string &_filename) 
   {
-    minimizer = NULL; 
+    filename = _filename;
     TiXmlDocument doc( filename.c_str() );
     
     if  ( !doc.LoadFile() )
     {
-      std::cout << doc.ErrorDesc() << std::endl; 
-      exit(0);
+      std::cerr << "error while opening input file " << filename << std::endl
+                << doc.ErrorDesc() << std::endl; 
+      return false;
     }
 
     TiXmlHandle docHandle( &doc );
-    if ( Load ( docHandle ) )
-      read_CH();
-    else
-      std::cerr << " Error while loading Lamarck parameters from "
-                << filename
-                << std::endl;
+    if ( not Load ( docHandle ) )
+    {
+      std::cerr << "error while  loading Lamarck parameters from " << filename << std::endl
+                << " tinyxml: " << doc.ErrorDesc() << std::endl;
+      return false;
+    }
+    read_CH();
+    return true;
   }
 
   bool MotU :: read_CH()
@@ -84,8 +93,8 @@ namespace LaDa
 
     // clusters, lattice, harmonics ....
     if ( not Functional_Builder :: Load (handle ) )
-      exit(0);
-
+      return false;
+     
     xml_filename = "convex_hull.xml";
     child = handle.FirstChild( "LaDa" ).FirstChild( "Filename" ).Element();
     if ( child and child->Attribute("xml") )
@@ -116,10 +125,11 @@ namespace LaDa
     child = handle.FirstChild( "LaDa" ).FirstChild( "GA" ).Element();
     if ( not child )
     {
-      std::cerr << "Could not find input file " << filename << std::endl;
+      std::cerr << "Could not find GA in input file " << filename << std::endl;
       return false;
     }
-    ga_params.Load(child);
+    if ( not  ga_params.Load(child) )
+      return false;
 
     // restart content of xmgrace file 
     std::ofstream xmgrace_file( xmgrace_filename.c_str(), std::ios_base::out|std::ios_base::trunc ); 
@@ -296,7 +306,7 @@ namespace LaDa
     }   
 
       
-    if ( method == DARWIN )  // no optimizer - keep default
+    if ( method != DARWIN )  // no optimizer - keep default
     {
       child = parent->FirstChildElement( "Minimizer" );
       if ( child->Attribute("type") )

@@ -12,6 +12,8 @@
 
 #include <opt/opt_minimize.h>
 
+#undef min // idiots
+#undef max
 #include <eo/eoBreed.h>
 #include <eo/eoEasyEA.h>
 #include <eo/eoGenOp.h>
@@ -23,6 +25,8 @@
 #include <eo/utils/eoUpdater.h>
 #include <eo/utils/eoState.h>
 #include <eo/utils/eoCheckPoint.h>
+#undef min // idiots
+#undef max
 
 namespace LaDa
 {
@@ -88,7 +92,7 @@ namespace LaDa
     public:
       MotU() : Functional_Builder(), convex_hull(), filename("input.xml"),
                ga_params(), population(), EvalCounter(0), minimizer(NULL) {}
-      MotU(const std::string &_filename);
+      bool Load(const std::string &_filename);
       virtual ~MotU(){};
       void run();
       void print_xml();
@@ -99,7 +103,7 @@ namespace LaDa
         { return convex_hull.evaluate(_x); }
     
     protected:
-      bool Load( TiXmlHandle &handle );
+      virtual bool Load( TiXmlHandle &handle );
       bool read_CH();
       void run_debug();
 
