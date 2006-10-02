@@ -42,8 +42,8 @@ namespace LaDa
     evolve_from_start = false; 
     multistart = false; 
     minimizer = NO_MINIMIZER;
-    max_eval_calls = 0;
-    max_grad_calls = 0;
+    max_eval_calls = UINT_MAX;
+    max_grad_calls = UINT_MAX;
   }
   
   bool MotU :: Load(const std::string &_filename) 
@@ -327,9 +327,11 @@ namespace LaDa
     {
       int d=0;
       if( child->Attribute("maxeval", &d) )
-        max_eval_calls = ( d <= 0 ) ? UINT_MAX : (unsigned) d;
+        max_eval_calls = ( d <= 0 ) ? UINT_MAX : abs(d);
       if( child->Attribute("maxgrad", &d) )
-        max_grad_calls = ( d <= 0 ) ? max_eval_calls : (unsigned) d;
+        max_grad_calls = ( d <= 0 ) ? UINT_MAX : abs(d);
+      else
+        max_grad_calls = max_eval_calls;
     }
 
     return true;

@@ -35,7 +35,7 @@ if ( $computer =~ /lester/ )
                                  "$HOME/usr/include/newmat",
                                  "$HOME/usr/include/opt++" );
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
-                             "-llamarck", "-ltinyxml", "-lopt++", "-lnewmat",
+                             "-llamarck", "-latat", "-ltinyxml", "-lopt++", "-lnewmat",
                              "-lga", "-leoutils", "-leo" );
   $params{"CC"}  = "gcc";
   $params{"CXX"} = "g++";
