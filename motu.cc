@@ -15,6 +15,7 @@
 #include <string>
 #include <stdexcept>
 
+
 namespace LaDa 
 {
 
@@ -389,6 +390,11 @@ namespace LaDa
                     << VA_CE::Polynome::nb_eval << " "
                     << VA_CE::Polynome::nb_eval_grad << " "
                     << VA_CE::Polynome::nb_eval_with_grad << std::endl;
+       if ( ga_params.minimizer == GA::LINEAR_MINIMIZER )
+         xmgrace_file << " # total guess " << opt::Minimize_Linear<FITNESS> :: nb_guess 
+                      << "   bad guess " << opt::Minimize_Linear<FITNESS> :: good_guess 
+                      << std::endl;
+
        convex_hull.print_out(xmgrace_file, VA_CE::Convex_Hull::PRINT_XMGRACE);
        xmgrace_file.flush();
        xmgrace_file.close();
@@ -628,12 +634,13 @@ namespace LaDa
         for(; i_atom != i_last; ++i_atom, ++i_var )
           *i_var = i_atom->type; 
       }
-      std::cout << functional.get_concentration() << " "
-                << functional.get_Obj1()->evaluate() << "   "
-                << functional.get_Obj2()->evaluate() << "   "
-                << structure.energy << " - "
+      std::cout << " x " << functional.get_concentration() << " "
+                << " Obj1 " << functional.get_Obj1()->evaluate() << "   "
+                << " Obj2 " << functional.get_Obj2()->evaluate() << "   "
+                << " E - eval = " << structure.energy << " - "
                 << functional.evaluate() << " = "
                 << structure.energy - functional.evaluate() << std::endl;
+      
       functional.destroy_variables(); // variables must be destroyed explicitely!!
       delete functional.get_Obj1(); 
       delete functional.get_Obj2(); 
