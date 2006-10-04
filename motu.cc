@@ -76,33 +76,37 @@ namespace LaDa
 
     bool MotU :: read_CH()
     {
-      TiXmlDocument doc( xml_filename.c_str() );
-      
-      if  ( !doc.LoadFile() ) // no convex hull to read...
-        return false;
-    
-      TiXmlHandle handle( &doc );
-      TiXmlElement *child = handle.FirstChild( "LaDa" ).FirstChild( "ConvexHull" ).Element();
-      if ( not child )
-        return false;
-      
-      if ( convex_hull )
-        delete convex_hull;
-      if ( ga_params.is_one_point_hull )
-        convex_hull = new VA_CE :: One_Point_Hull();
-      else
-      {
-        convex_hull = new VA_CE :: Convex_Hull();
-        init_convex_hull();
+      { // first, creates ch
+        if ( convex_hull )
+          delete convex_hull;
+        if ( ga_params.is_one_point_hull )
+          convex_hull = new VA_CE :: One_Point_Hull();
+        else
+        {
+          convex_hull = new VA_CE :: Convex_Hull();
+          init_convex_hull();
+        }
       }
-
-      if ( not convex_hull )
-      {
-        std::cerr << "Error while creating convex hull" << std::endl;
-        return false;
-      }
+      { // then attempts to ch file
+        TiXmlDocument doc( xml_filename.c_str() );
+        
+        if  ( !doc.LoadFile() ) // no convex hull to read...
+          return false;
       
-      return convex_hull->Load(child, *axes);
+        TiXmlHandle handle( &doc );
+        TiXmlElement *child = handle.FirstChild( "LaDa" ).FirstChild( "ConvexHull" ).Element();
+        if ( not child )
+          return false;
+        
+  
+        if ( not convex_hull )
+        {
+          std::cerr << "Error while creating convex hull" << std::endl;
+          return false;
+        }
+        
+        return convex_hull->Load(child, *axes);
+      } // end of attempt to read ch file
     }
 
 
