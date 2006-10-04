@@ -70,6 +70,10 @@ namespace LaDa
                 << " tinyxml: " << doc.ErrorDesc() << std::endl;
       return false;
     }
+
+    // completes cluster list with equivalent clusters
+    add_equivalent_clusters();
+    
     read_CH();
     return true;
   }
@@ -549,9 +553,6 @@ namespace LaDa
     // then branches off to different jobs
     void MotU :: run()
     {
-      // completes cluster list with equivalent clusters
-      add_equivalent_clusters();
-      
       // debug case: iterates over structures
       if( ga_params.method == DEBUG)
       {
