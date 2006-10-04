@@ -8,7 +8,7 @@
 
 #include <lamarck/functional_builder.h>
 #include <opt/fitness_function.h>
-#include <lamarck/convex_hull.h>
+#include <lamarck/ch_template.h>
 
 #include <opt/opt_minimize.h>
 
@@ -36,7 +36,7 @@ namespace LaDa
       typedef Individual<> t_individual;
 
     protected:
-      typedef opt::Fitness_Function<FUNCTIONAL, VA_CE::Convex_Hull> FITNESS;
+      typedef opt::Fitness_Function<FUNCTIONAL, VA_CE::CH_Template> FITNESS;
       const static unsigned LAMARCK;
       const static unsigned DARWIN;
       const static unsigned DEBUG;
@@ -65,6 +65,9 @@ namespace LaDa
         unsigned max_eval_calls;
         unsigned max_grad_calls;
 
+        // CH stuff
+        bool is_one_point_hull;
+
         // eo stuff
         eoState eostates;
         eoIncrementorParam<unsigned> *nb_generations;
@@ -79,7 +82,7 @@ namespace LaDa
       Ising_CE::Structure structure;
       FUNCTIONAL functional;
       FITNESS fitness;
-      VA_CE::Convex_Hull convex_hull;
+      VA_CE::CH_Template *convex_hull;
       std::string filename;
       std::string xml_filename;
       std::string xmgrace_filename;
@@ -90,7 +93,7 @@ namespace LaDa
 
 
     public:
-      MotU() : Functional_Builder(), convex_hull(), filename("input.xml"),
+      MotU() : Functional_Builder(), convex_hull(NULL), filename("input.xml"),
                ga_params(), population(), EvalCounter(0), minimizer(NULL) {}
       bool Load(const std::string &_filename);
       virtual ~MotU(){};
@@ -100,7 +103,7 @@ namespace LaDa
 
       double evaluate( t_individual &individual ); // polynomial only
       double evaluate( const double &_x ) // convex hull only
-        { return convex_hull.evaluate(_x); }
+        { return convex_hull->evaluate(_x); }
     
     protected:
       virtual bool Load( TiXmlHandle &handle );
