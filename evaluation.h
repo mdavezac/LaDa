@@ -70,6 +70,7 @@ namespace LaDa
         // convex hull has changed => reevaluate
         if ( not  _offsprings.begin()->is_baseline_valid() )
         {
+          std::cout << std::endl << "Base line changed" << std::endl; 
           i_pop = _offsprings.begin();
           for ( ; i_pop != i_last; ++i_pop )
             eval(*i_pop);
@@ -78,21 +79,15 @@ namespace LaDa
           for ( ; i_pop != i_last; ++i_pop )
             eval(*i_pop);
         } 
-       //  int i=0, j=0;
-       //try
-       //{ 
-       //  for(; i < _offsprings.size(); ++i)
-       //    _offsprings[i].fitness();
-       //  for(; j < _parents.size(); ++j)
-       //    _parents[j].fitness();
-       //}
-       //catch (std::exception &e )
-       //{
-       //  std::cerr << "here" << std::endl;
-       //  std::ostringstream s( e.what() );
-       //  s << " at i=" << i << " and j=" << j <<" ";
-       //  throw std::runtime_error(s.str());
-       //}
+        i_pop = _offsprings.begin();
+        i_last = _offsprings.end();
+        std::cout << "New Individuals:" << std::endl; 
+        for (int i = 0 ; i_pop != i_last; ++i, ++i_pop )
+          std::cout << " Offspring " << i 
+                    << " Fitness: " << i_pop->fitness() 
+                    << " Quantity: " << i_pop->get_quantity() 
+                    << " Baseline: " << i_pop->get_baseline() << std::endl; 
+        std::cout << std::endl; 
       }
     
     private:

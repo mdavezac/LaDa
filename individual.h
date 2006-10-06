@@ -16,7 +16,7 @@
 
 namespace LaDa 
 {
-  template<class FITNESS = eoMaximizingFitness, class FUNCTIONAL = opt::Function<> >
+  template<class FITNESS = eoMinimizingFitness, class FUNCTIONAL = opt::Function<> >
   class Individual : public FUNCTIONAL, public eoObject, public eoPersistent
   {
 
@@ -78,8 +78,12 @@ namespace LaDa
         quantity = _q;
         quantity_is_valid = true;
       }
+      TYPE get_quantity() const
+        { return quantity; }
       void set_baseline( TYPE _b )
         { baseline = _b; }
+      TYPE get_baseline() const
+        { return baseline; }
 
       void  set_MotU_ref( int _m )
         { MotU_ref = _m; }

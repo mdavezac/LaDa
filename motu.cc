@@ -279,10 +279,6 @@ namespace LaDa
         if ( child->Attribute("rate", &d) )
           if ( d <= 1.0 and d > 0.0 )
             replacement_rate = d;
-        //
-        if ( child->Attribute("rate", &d) )
-          if ( d <= 1.0 and d > 0.0 )
-            replacement_rate = d;
       }
 
       // population size
