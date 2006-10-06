@@ -46,8 +46,7 @@ namespace LaDa
     evolve_from_start = false; 
     multistart = false; 
     minimizer = NO_MINIMIZER;
-    max_eval_calls = UINT_MAX;
-    max_grad_calls = UINT_MAX;
+    max_calls = UINT_MAX;
     is_one_point_hull = false;
   }
   
@@ -345,12 +344,8 @@ namespace LaDa
       if (minimizer == LINEAR_MINIMIZER or minimizer == SA_MINIMIZER )
       {
         int d=0;
-        if( child->Attribute("maxeval", &d) )
-          max_eval_calls = ( d <= 0 ) ? UINT_MAX : abs(d);
-        if( child->Attribute("maxgrad", &d) )
-          max_grad_calls = ( d <= 0 ) ? UINT_MAX : abs(d);
-        else
-          max_grad_calls = max_eval_calls;
+        if( child->Attribute("maxcalls", &d) )
+          max_calls = ( d <= 0 ) ? UINT_MAX : abs(d);
       }
       
       // sets hull type: one or many points
@@ -415,8 +410,15 @@ namespace LaDa
                       << VA_CE::Polynome::nb_eval_grad << " "
                       << VA_CE::Polynome::nb_eval_with_grad << std::endl;
          if ( ga_params.minimizer == GA::LINEAR_MINIMIZER )
-           xmgrace_file << " # total guess " << opt::Minimize_Linear<FITNESS> :: nb_guess 
-                        << "   bad guess " << opt::Minimize_Linear<FITNESS> :: good_guess 
+           xmgrace_file << " # bad guess " << opt::Minimize_Linear<FITNESS> :: bad_guess 
+                        << "   good guess " << opt::Minimize_Linear<FITNESS> :: good_guess 
+                        << std::endl
+                        << " # poleval calls " << opt::Minimize_Linear<FITNESS> :: nb_evals
+                        << "   polgrad calls " << opt::Minimize_Linear<FITNESS> :: nb_grad_evals
+                        << std::endl;
+         if ( ga_params.minimizer == GA::SA_MINIMIZER )
+           xmgrace_file << " # poleval calls " << opt::Minimize_Linear<FITNESS> :: nb_evals
+                        << "   polgrad calls " << opt::Minimize_Linear<FITNESS> :: nb_grad_evals
                         << std::endl;
 
          convex_hull->print_out(xmgrace_file, VA_CE::Convex_Hull::PRINT_XMGRACE);
@@ -579,13 +581,15 @@ namespace LaDa
           case GA::SA_MINIMIZER: 
             minimizer = new opt::Minimize_Linear<FITNESS>( &fitness );
             static_cast< opt::Minimize_Linear<FITNESS>* >(minimizer)->simulated_annealing = true;
-            static_cast< opt::Minimize_Linear<FITNESS>* >(minimizer)->max_eval_calls = ga_params.max_eval_calls;
+            static_cast< opt::Minimize_Linear<FITNESS>* >(minimizer)->max_calls = ga_params.max_calls;
             break;
           case GA::LINEAR_MINIMIZER: 
             minimizer = new opt::Minimize_Linear<FITNESS>( &fitness );
             static_cast< opt::Minimize_Linear<FITNESS>* >(minimizer)->simulated_annealing = false;
-            static_cast< opt::Minimize_Linear<FITNESS>* >(minimizer)->max_eval_calls = ga_params.max_eval_calls;
-            static_cast< opt::Minimize_Linear<FITNESS>* >(minimizer)->max_grad_calls = ga_params.max_grad_calls;
+            static_cast< opt::Minimize_Linear<FITNESS>* >(minimizer)->max_calls = ga_params.max_calls;
+            // Makes sure we count the calls during initialization
+            if ( not ga_params.evolve_from_start )
+              static_cast< opt::Minimize_Linear<FITNESS>* >(minimizer)->nb_evals = ga_params.pop_size;
             break;
           default:
             minimizer = new opt::Minimize_Base<FITNESS>( &fitness ); // just a dummy, doesn't minimize

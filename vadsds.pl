@@ -8,6 +8,7 @@ push @COMMANDS, ( <IN> );
 push @COMMANDS, ( <IN> );
 push @COMMANDS, ( <IN> );
 push @COMMANDS, ( <IN> );
+push @COMMANDS, ( <IN> );
 close IN;
 
 $params{"home"} = `cd; pwd`; chomp $params{"home"};
@@ -20,22 +21,20 @@ $params{'minimizer'}           =  $COMMANDS[3]; chomp $params{'minimizer'};
 $params{'minimizer'}            =~ s/\s+$//;
 $params{'minimizer'}            =~ s/^\s+//;
 $params{'CH'}                  =  $COMMANDS[4]; chomp $params{'CH'};
-$params{'iaga call'}           =  "lada";
+$_ = $COMMANDS[5]; /(\d+)/; $params{'max calls'} = $1;
+$_ = $COMMANDS[6]; /generations:\s+(\d+)\s+replacement:\s+(\S+)/;
+$params{"GA"}{"population"} = $1;
+$params{"GA"}{"replace per generation"} = $2;
+$params{'iaga call'}           =  "lada > out";
 
 $params{'nb atoms'} = 20;
 $params{"file"}{"Pi"} = "$params{'home'}/nanopse/cell_shapes/fcc_7-32";
-$params{"GA"}{"population"} = 100;
-$params{"GA"}{"replace per generation"} = 10;
-$params{"GA"}{"max generations"} = 200;
 $params{'max GA iters'} = 1000;
 
 
 
-if ( $params{'CH'} =~ /one point/ )
+if ( $params{'CH'} =~ /one point/i )
 {
-  $params{'GA style'} =~ s/one point//; 
-  $params{'GA style'}            =~ s/^\s+//;
-  $params{'GA style'}            =~ s/\s+$//;
   $params{'GA style'} = "one_point_$params{'GA style'}";
 }
 if ( $params{'GA style'} =~ /true/ )
@@ -46,8 +45,30 @@ if ( $params{'GA style'} =~ /true/ )
   $params{'GA style'} = "true_$params{'GA style'}"; chomp $params{'GA style'};
 }
 
-$params{'agr'}{"filename"} = "$params{'GA style'}_$params{'minimizer'}.agr";
-$params{'xml'}{"filename"} = "$params{'GA style'}_$params{'minimizer'}.xml";
+
+
+$params{'agr'}{"filename"} = "$params{'GA style'}_$params{'minimizer'}";
+$params{'xml'}{"filename"} = "$params{'GA style'}_$params{'minimizer'}";
+
+if ( $params{'max calls'} != 0 )
+{
+  $params{'agr'}{"filename"} = "$params{'GA style'}_$params{'minimizer'}_n=$params{'max calls'}";
+  $params{'xml'}{"filename"} = "$params{'GA style'}_$params{'minimizer'}_n=$params{'max calls'}";
+}
+
+if ( $params{"GA"}{"population"} != 100 )
+{
+  $params{'agr'}{"filename"} .= "_gen:$params{'GA'}{'population'}";
+  $params{'xml'}{"filename"} .= "_gen:$params{'GA'}{'population'}";
+}
+if ( $params{"GA"}{"replace per generation"} != 0.1 )
+{
+  $params{'agr'}{"filename"} .= "_rep:$params{'GA'}{'replace per generation'}";
+  $params{'xml'}{"filename"} .= "_rep:$params{'GA'}{'replace per generation'}";
+}
+
+$params{'agr'}{"filename"} = "$params{'agr'}{'filename'}.agr";
+$params{'xml'}{"filename"} = "$params{'xml'}{'filename'}.xml";
 
 
 # begin work
@@ -86,9 +107,8 @@ sub launch_iaga()
     if ( $params{'GA style'} !~ /true/ )
       { system "rm -f convex_hull.xml"; }
     system "$params{'iaga call'}";
-    system "echo '# new GA ' >> $params{'agr'}{'filename'}";
-    system "cat convex_hull.agr >> $params{'agr'}{'filename'}";
-    system "cp $params{'agr'}{'filename'} $params{'directory'}{'result'} ";
+    system "echo '# new GA ' >> $params{'directory'}{'result'}/$params{'agr'}{'filename'}";
+    system "cat convex_hull.agr >> $params{'directory'}{'result'}/$params{'agr'}{'filename'}";
     system "cp convex_hull.xml $params{'directory'}{'result'}/$params{'xml'}{'filename'}  ";
   }
 exit;
@@ -164,9 +184,15 @@ sub write_lamarck_input()
                  $params{'GA'}{'max generations'};
 
       if ( $params{'minimizer'} =~ /linear/i )
-        { printf OUT "    <Minimizer type=\"linear\"/>\n"; }
+      {
+        printf OUT "    <Minimizer type=\"linear\" maxeval=\"%i\" />\n",
+                   $params{'max calls'};
+      }
       elsif ( $params{'minimizer'} =~ /sa/i )
-        { printf OUT "    <Minimizer type=\"SA\"/>\n"; }
+      {
+        printf OUT "    <Minimizer type=\"SA\" maxeval=\"%i\" />\n",
+                   $params{'max calls'};
+      }
       elsif ( $params{'minimizer'} =~ /wang/i )
         { printf OUT "    <Minimizer type=\"wang\"/>\n"; }
       elsif ( $params{'minimizer'} =~ /physical/i )
@@ -183,6 +209,8 @@ sub write_lamarck_input()
                  $params{'GA'}{'population'};
       printf OUT "    <Offspings rate=\"%i\"/>\n",
                  $params{'GA'}{'replace per generation'};
+      if( $params{'CH'} =~ /one point/i )
+        { printf OUT "    <OnePointHull/>\n"; }
       printf OUT "  </GA>\n";
     }
     else

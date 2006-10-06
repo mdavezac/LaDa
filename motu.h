@@ -62,8 +62,7 @@ namespace LaDa
         bool multistart;
         bool evolve_from_start;
         unsigned minimizer;
-        unsigned max_eval_calls;
-        unsigned max_grad_calls;
+        unsigned max_calls;
 
         // CH stuff
         bool is_one_point_hull;
