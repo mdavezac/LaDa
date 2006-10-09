@@ -212,6 +212,16 @@ namespace LaDa
         _f << "# crossover prob: " << ga_params.crossover_probability << std::endl;
         _f << "# mutation prob: " << ga_params.mutation_probability << std::endl;
       }
+      if ( ga_params.minimize_best > 0 and ga_params.minimize_best <= 1 )
+      {
+        _f << "# minimize best: rate " << ga_params.minimize_best
+           << " every " << ga_params.minimize_best_every << std::endl;
+        _f << "# minimize offsprings: ";
+       if ( ga_params.minimize_offsprings )
+        _f <<  "true" << std::endl;
+       else
+        _f <<  "false" << std::endl;
+      }
     }
 
 
@@ -364,7 +374,7 @@ namespace LaDa
             minimize_best = d;
         int u = 0;
         if ( child->Attribute( "every", &u ) )
-          minimize_best_every = ( u > 0 and u <= (int) UINT_MAX ) ? unsigned(abs(u)) : 0 ;
+          minimize_best_every = ( u > 0 and abs(u) <= max_generations ) ? (unsigned) u  : 0 ;
         std::string str;
         if ( child->Attribute( "type" ) )
         {
