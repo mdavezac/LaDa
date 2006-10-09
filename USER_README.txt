@@ -53,6 +53,14 @@ LaDa specific input follows, and should be included with liblamarck input
 
     <!-- if OnePointHull is present, finds lowest energy state, rather than a true convex hull -->
     <OnePointHull/>
+
+    <!-- if MinimizeBest is present, algorithm minimizes best individuals at end of each step -->
+    <!-- rate specifies how many individuals to minimize -->
+    <!-- if type="also" is not present, minimization over offsprings are NOT performed -->
+      <!-- that is, ONLY minimization of best individuals are performed -->
+    <!-- if type="also" is present, then ALSO performs minimization over offsprings -->
+    <!-- every means minimization occurs every n generations -->
+    <MinimizeBest rate="0.1" type="also" every="n" />
   </GA>
 
   <!-- you need to specify Lattice, Clusters and CS in this file as well -->

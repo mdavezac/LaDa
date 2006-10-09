@@ -27,7 +27,7 @@ $params{"GA"}{"population"} = $1;
 $params{"GA"}{"replace per generation"} = $2;
 $params{'iaga call'}           =  "lada > out";
 
-$params{'nb atoms'} = 20;
+$params{'nb atoms'} = 32;
 $params{"file"}{"Pi"} = "$params{'home'}/nanopse/cell_shapes/fcc_7-32";
 $params{'max GA iters'} = 1000;
 
@@ -47,8 +47,8 @@ if ( $params{'CH'} =~ /one point/i )
 
 
 
-$params{'agr'}{"filename"} = "$params{'GA style'}_$params{'minimizer'}";
-$params{'xml'}{"filename"} = "$params{'GA style'}_$params{'minimizer'}";
+$params{'agr'}{"filename"} = "32_$params{'GA style'}_$params{'minimizer'}";
+$params{'xml'}{"filename"} = "32_$params{'GA style'}_$params{'minimizer'}";
 
 if ( $params{'max calls'} != 0 )
 {

@@ -48,6 +48,9 @@ namespace LaDa
     minimizer = NO_MINIMIZER;
     max_calls = UINT_MAX;
     is_one_point_hull = false;
+    minimize_best = 0;
+    minimize_offsprings = true;
+    minimize_best_every = 5;
   }
   
   bool MotU :: Load(const std::string &_filename) 
@@ -347,6 +350,30 @@ namespace LaDa
         if( child->Attribute("maxcalls", &d) )
           max_calls = ( d <= 0 ) ? UINT_MAX : abs(d);
       }
+
+
+      // minimizes best at end of each iteration
+      child = parent->FirstChildElement( "MinimizeBest" );
+      if ( child )
+      {
+        minimize_offsprings = false;
+        minimize_best = 0.1;
+        double d=0;
+        if ( child->Attribute( "rate", &d ) )
+          if ( d > 0 and d <= 1 )
+            minimize_best = d;
+        int u = 0;
+        if ( child->Attribute( "every", &u ) )
+          minimize_best_every = ( u > 0 and u <= (int) UINT_MAX ) ? unsigned(abs(u)) : 0 ;
+        std::string str;
+        if ( child->Attribute( "type" ) )
+        {
+          str = child->Attribute( "type" );
+          minimize_offsprings = false;
+          if ( str.compare("also") == 0 )
+            minimize_offsprings = true;
+        }
+      }
       
       // sets hull type: one or many points
       child = parent->FirstChildElement( "OnePointHull" );
@@ -380,17 +407,17 @@ namespace LaDa
       eoGenContinue<t_individual> *gen_continue = new eoGenContinue<t_individual>(ga_params.max_generations);
       ga_params.eostates.storeFunctor( gen_continue );
 
-      // checkpoints
-        // gen_continue
+     
+      // gen_continue
       eoCheckPoint<t_individual> *check_point = new eoCheckPoint<t_individual>(*gen_continue);
       ga_params.eostates.storeFunctor( check_point );
 
-        // our very own updater wrapper to print stuff
+      // our very own updater wrapper to print stuff
       Monitor<MotU> *updater = new Monitor<MotU>(this);
       ga_params.eostates.storeFunctor(updater);
       check_point->add(*updater);
       
-        // gen_continue -- should be last updater to be added
+      // gen_continue -- should be last updater to be added
       ga_params.nb_generations = new eoIncrementorParam<unsigned>("Gen.");
       ga_params.eostates.storeFunctor(ga_params.nb_generations);
       check_point->add(*ga_params.nb_generations);
@@ -401,7 +428,7 @@ namespace LaDa
     void MotU :: print_xmgrace()
     {
       std::string special_char = "";
-      if( not population.begin()->is_baseline_valid() )
+      if( population.begin()->is_baseline_valid() )
         special_char = "?";
       std::ofstream xmgrace_file( xmgrace_filename.c_str(), std::ios_base::out|std::ios_base::app ); 
       xmgrace_file << " # " << special_char << " iteration:" << ga_params.nb_generations->value() 
@@ -448,7 +475,7 @@ namespace LaDa
     }
 
     // returns polynomial value only
-    double MotU :: evaluate( t_individual &individual )
+    double MotU :: minimize( t_individual &individual )
     {
       ++EvalCounter;
 
@@ -458,6 +485,23 @@ namespace LaDa
       if ( ga_params.evolve_from_start
            or ga_params.nb_generations->value() )
         minimizer->minimize();
+   
+      result = functional.evaluate();
+   
+      structure.set_atom_types( *individual.get_variables() );
+      if ( convex_hull->add_structure(result, structure) )
+        population.begin()->invalidate_baseline();
+      
+      return result;
+    }
+
+    // returns polynomial value only
+    double MotU :: evaluate( t_individual &individual )
+    {
+      ++EvalCounter;
+
+      double result;
+      fitness.set_variables( individual.get_variables() );
    
       result = functional.evaluate();
    
@@ -532,14 +576,23 @@ namespace LaDa
     void MotU :: make_algo()
     {
       Evaluation<t_individual, MotU> *evaluation = new Evaluation<t_individual, MotU>(this);
-      EvaluatePop<t_individual> *evalpop = new EvaluatePop<t_individual>(*evaluation);
-      ga_params.algorithm = new eoEasyEA<t_individual>( *make_checkpoint(), 
-                                              *evalpop, 
-                                              *make_breeder(), 
-                                              *make_replacement() );
+      Minimization<t_individual, MotU> *minimization = new Minimization<t_individual, MotU>(this);
+      EvaluatePop<t_individual> *evalpop = new EvaluatePop<t_individual>(evaluation, minimization);
+      evalpop->set_minimize_offsprings( ga_params.minimize_offsprings );
+      MinimizeBest<t_individual> *minimize_best =
+        new MinimizeBest<t_individual>( *minimization, 
+                                        ga_params.minimize_best,
+                                        ga_params.minimize_best_every );
+      ga_params.algorithm = new Darwin<t_individual>( *make_checkpoint(), 
+                                                      *evalpop, 
+                                                      *make_breeder(), 
+                                                      *make_replacement(),
+                                                      *minimize_best );
       ga_params.eostates.storeFunctor(evaluation);
+      ga_params.eostates.storeFunctor(minimization);
       ga_params.eostates.storeFunctor(evalpop);
       ga_params.eostates.storeFunctor(ga_params.algorithm);
+      ga_params.eostates.storeFunctor(minimize_best);
     }
 
     // creates and sets functionals and minimizers,

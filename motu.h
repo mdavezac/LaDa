@@ -15,7 +15,6 @@
 #undef min // idiots
 #undef max
 #include <eo/eoBreed.h>
-#include <eo/eoEasyEA.h>
 #include <eo/eoGenOp.h>
 #include <eo/eoGenContinue.h>
 #include <eo/eoOpContainer.h>
@@ -27,6 +26,8 @@
 #include <eo/utils/eoCheckPoint.h>
 #undef min // idiots
 #undef max
+
+#include "darwin.h"
 
 namespace LaDa
 {
@@ -63,6 +64,9 @@ namespace LaDa
         bool evolve_from_start;
         unsigned minimizer;
         unsigned max_calls;
+        double minimize_best;
+        bool minimize_offsprings;
+        unsigned minimize_best_every;
 
         // CH stuff
         bool is_one_point_hull;
@@ -70,7 +74,7 @@ namespace LaDa
         // eo stuff
         eoState eostates;
         eoIncrementorParam<unsigned> *nb_generations;
-        eoEasyEA<MotU::t_individual> *algorithm;
+        Darwin<MotU::t_individual> *algorithm;
 
         GA();
         bool Load( TiXmlElement *element );
@@ -100,7 +104,8 @@ namespace LaDa
       void print_xml();
       void print_xmgrace();
 
-      double evaluate( t_individual &individual ); // polynomial only
+      double evaluate( t_individual &individual ); // polynomial+CS only
+      double minimize( t_individual &individual ); // polynomial+CS only
       double evaluate( const double &_x ) // convex hull only
         { return convex_hull->evaluate(_x); }
     

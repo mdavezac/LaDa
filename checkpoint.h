@@ -1,6 +1,8 @@
 #ifndef _CHECKPOINT_H_
 #define _CHECKPOINT_H_
 
+#include <eo/utils/eoUpdater.h>
+
 namespace LaDa 
 {
   template<class Object>
