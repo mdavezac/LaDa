@@ -645,9 +645,6 @@ namespace LaDa
             minimizer = new opt::Minimize_Linear<FITNESS>( &fitness );
             static_cast< opt::Minimize_Linear<FITNESS>* >(minimizer)->simulated_annealing = false;
             static_cast< opt::Minimize_Linear<FITNESS>* >(minimizer)->max_calls = ga_params.max_calls;
-            // Makes sure we count the calls during initialization
-            if ( not ga_params.evolve_from_start )
-              static_cast< opt::Minimize_Linear<FITNESS>* >(minimizer)->nb_evals = ga_params.pop_size;
             break;
           default:
             minimizer = new opt::Minimize_Base<FITNESS>( &fitness ); // just a dummy, doesn't minimize
@@ -738,6 +735,7 @@ namespace LaDa
 
       // creates structure...
       struc.cell = lattice->cell;
+      struc.atoms.clear();
       struc.atoms.push_back( Ising_CE::Atom( lattice->atom_pos(0), -1.0 ) );
 
       // and functional - note that there is no CS 
