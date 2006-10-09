@@ -400,40 +400,35 @@ namespace LaDa
     
     void MotU :: print_xmgrace()
     {
+      std::string special_char = "";
+      if( not population.begin()->is_baseline_valid() )
+        special_char = "?";
+      std::ofstream xmgrace_file( xmgrace_filename.c_str(), std::ios_base::out|std::ios_base::app ); 
+      xmgrace_file << " # " << special_char << " iteration:" << ga_params.nb_generations->value() 
+                   << "   evaluation calls: " << EvalCounter << std::endl;
+      xmgrace_file << " # " << special_char << " polynomial calls: " 
+                   << VA_CE::Polynome::nb_eval << " "
+                   << VA_CE::Polynome::nb_eval_grad << " "
+                   << VA_CE::Polynome::nb_eval_with_grad << std::endl;
+      if ( ga_params.minimizer == GA::LINEAR_MINIMIZER )
+        xmgrace_file << " # " << special_char << " bad guess " << opt::Minimize_Linear<FITNESS> :: bad_guess 
+                     << "   good guess " << opt::Minimize_Linear<FITNESS> :: good_guess 
+                     << std::endl
+                     << " # " << special_char << " poleval calls " << opt::Minimize_Linear<FITNESS> :: nb_evals
+                     << "   polgrad calls " << opt::Minimize_Linear<FITNESS> :: nb_grad_evals
+                     << std::endl;
+      if ( ga_params.minimizer == GA::SA_MINIMIZER )
+        xmgrace_file << " # " << special_char << " poleval calls " << opt::Minimize_Linear<FITNESS> :: nb_evals
+                     << "   polgrad calls " << opt::Minimize_Linear<FITNESS> :: nb_grad_evals
+                     << std::endl;
+
       if( not population.begin()->is_baseline_valid() )
       {
-         std::ofstream xmgrace_file( xmgrace_filename.c_str(), std::ios_base::out|std::ios_base::app ); 
-         xmgrace_file << " # iteration:" << ga_params.nb_generations->value() 
-                      << "   evaluation calls: " << EvalCounter << std::endl;
-         xmgrace_file << " # polynomial calls: " 
-                      << VA_CE::Polynome::nb_eval << " "
-                      << VA_CE::Polynome::nb_eval_grad << " "
-                      << VA_CE::Polynome::nb_eval_with_grad << std::endl;
-         if ( ga_params.minimizer == GA::LINEAR_MINIMIZER )
-           xmgrace_file << " # bad guess " << opt::Minimize_Linear<FITNESS> :: bad_guess 
-                        << "   good guess " << opt::Minimize_Linear<FITNESS> :: good_guess 
-                        << std::endl
-                        << " # poleval calls " << opt::Minimize_Linear<FITNESS> :: nb_evals
-                        << "   polgrad calls " << opt::Minimize_Linear<FITNESS> :: nb_grad_evals
-                        << std::endl;
-         if ( ga_params.minimizer == GA::SA_MINIMIZER )
-           xmgrace_file << " # poleval calls " << opt::Minimize_Linear<FITNESS> :: nb_evals
-                        << "   polgrad calls " << opt::Minimize_Linear<FITNESS> :: nb_grad_evals
-                        << std::endl;
-
-         convex_hull->print_out(xmgrace_file, VA_CE::Convex_Hull::PRINT_XMGRACE);
-         xmgrace_file.flush();
-         xmgrace_file.close();
-         population.begin()->validate_baseline();
+        convex_hull->print_out(xmgrace_file, VA_CE::Convex_Hull::PRINT_XMGRACE);
+        population.begin()->validate_baseline();
       }
-  //   else
-  //   {
-  //      std::ofstream xmgrace_file( xmgrace_filename.c_str(), std::ios_base::out|std::ios_base::app ); 
-  //      xmgrace_file << " # iteration:" << ga_params.nb_generations->value() 
-  //                   << " no change " << std::endl;
-  //      xmgrace_file.flush();
-  //      xmgrace_file.close();
-  //   }
+      xmgrace_file.flush();
+      xmgrace_file.close();
     }
 
     void MotU :: print_xml()

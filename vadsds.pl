@@ -33,16 +33,16 @@ $params{'max GA iters'} = 1000;
 
 
 
-if ( $params{'CH'} =~ /one point/i )
-{
-  $params{'GA style'} = "one_point_$params{'GA style'}";
-}
 if ( $params{'GA style'} =~ /true/ )
 { 
   $params{'GA style'} =~ s/true//; 
   $params{'GA style'}            =~ s/^\s+//;
   $params{'GA style'}            =~ s/\s+$//;
   $params{'GA style'} = "true_$params{'GA style'}"; chomp $params{'GA style'};
+}
+if ( $params{'CH'} =~ /one point/i )
+{
+  $params{'GA style'} = "one_point_$params{'GA style'}";
 }
 
 
@@ -207,7 +207,7 @@ sub write_lamarck_input()
 
       printf OUT "    <Population size=\"%i\"/>\n",
                  $params{'GA'}{'population'};
-      printf OUT "    <Offspings rate=\"%i\"/>\n",
+      printf OUT "    <Offsprings rate=\"%.4f\"/>\n",
                  $params{'GA'}{'replace per generation'};
       if( $params{'CH'} =~ /one point/i )
         { printf OUT "    <OnePointHull/>\n"; }
