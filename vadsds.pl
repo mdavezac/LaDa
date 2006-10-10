@@ -9,9 +9,11 @@ push @COMMANDS, ( <IN> );
 push @COMMANDS, ( <IN> );
 push @COMMANDS, ( <IN> );
 push @COMMANDS, ( <IN> );
+push @COMMANDS, ( <IN> );
 close IN;
 
 $params{"home"} = `cd; pwd`; chomp $params{"home"};
+$params{'GA'}{'max generations'} = 100;
 $params{'directory'}{'result'} =  $COMMANDS[0]; chomp $params{'directory'}{'result'};
 $params{'directory'}{'work'}   =  $COMMANDS[1]; chomp $params{'directory'}{'work'};
 $params{'GA style'}            =  $COMMANDS[2]; chomp $params{'GA style'};
@@ -25,11 +27,15 @@ $_ = $COMMANDS[5]; /(\d+)/; $params{'max calls'} = $1;
 $_ = $COMMANDS[6]; /generations:\s+(\d+)\s+replacement:\s+(\S+)/;
 $params{"GA"}{"population"} = $1;
 $params{"GA"}{"replace per generation"} = $2;
+$_ = $COMMANDS[7]; /minimize best:\s+(\S+)\s+ every:\s+(\d+)/;
+$params{"minimize best"}{"rate"} = $1;
+$params{"minimize best"}{"every"} = $2; 
+
 $params{'iaga call'}           =  "lada > out";
 
-$params{'nb atoms'} = 32;
+$params{'nb atoms'} = 20;
 $params{"file"}{"Pi"} = "$params{'home'}/nanopse/cell_shapes/fcc_7-32";
-$params{'max GA iters'} = 1000;
+$params{'max GA iters'} = 20;
 
 
 
@@ -47,28 +53,38 @@ if ( $params{'CH'} =~ /one point/i )
 
 
 
-$params{'agr'}{"filename"} = "32_$params{'GA style'}_$params{'minimizer'}";
-$params{'xml'}{"filename"} = "32_$params{'GA style'}_$params{'minimizer'}";
+$params{'agr'}{"filename"} = sprintf "%s_%s",
+                             $params{'GA style'}, 
+                             $params{'minimizer'};
+if ( $params{'nb atoms'} != 20 )
+{
+  $params{'agr'}{"filename"} = sprintf "%i_%s",
+                               $params{'nb atoms'},
+                               $params{'agr'}{'filename'};
+}
 
 if ( $params{'max calls'} != 0 )
 {
   $params{'agr'}{"filename"} = "$params{'GA style'}_$params{'minimizer'}_n=$params{'max calls'}";
-  $params{'xml'}{"filename"} = "$params{'GA style'}_$params{'minimizer'}_n=$params{'max calls'}";
 }
 
 if ( $params{"GA"}{"population"} != 100 )
 {
   $params{'agr'}{"filename"} .= "_gen:$params{'GA'}{'population'}";
-  $params{'xml'}{"filename"} .= "_gen:$params{'GA'}{'population'}";
 }
 if ( $params{"GA"}{"replace per generation"} != 0.1 )
 {
   $params{'agr'}{"filename"} .= "_rep:$params{'GA'}{'replace per generation'}";
-  $params{'xml'}{"filename"} .= "_rep:$params{'GA'}{'replace per generation'}";
+}
+if ( $params{"minimize best"}{'rate'} > 0 )
+{
+  $params{'agr'}{"filename"} = sprintf "mb:%.3f_$params{'agr'}{'filename'}",
+                                       $params{'minimize best'}{'rate'};
 }
 
-$params{'agr'}{"filename"} = "$params{'agr'}{'filename'}.agr";
-$params{'xml'}{"filename"} = "$params{'xml'}{'filename'}.xml";
+$params{'xml'}{"filename"} = $params{'agr'}{'filename'};
+$params{'agr'}{"filename"} .= ".agr";
+$params{'xml'}{"filename"} .= ".xml";
 
 
 # begin work
@@ -183,25 +199,49 @@ sub write_lamarck_input()
       printf OUT " maxgen=\"%i\">\n",
                  $params{'GA'}{'max generations'};
 
+      my $minizertype;
       if ( $params{'minimizer'} =~ /linear/i )
       {
-        printf OUT "    <Minimizer type=\"linear\" maxeval=\"%i\" />\n",
-                   $params{'max calls'};
+       $minimizertype = sprintf "<Minimizer type=\"linear\" maxeval=\"%i\" ",
+                        $params{'max calls'};
       }
       elsif ( $params{'minimizer'} =~ /sa/i )
       {
-        printf OUT "    <Minimizer type=\"SA\" maxeval=\"%i\" />\n",
-                   $params{'max calls'};
+       $minimizertype = sprintf "<Minimizer type=\"SA\" maxeval=\"%i\" ",
+                                $params{'max calls'};
       }
       elsif ( $params{'minimizer'} =~ /wang/i )
-        { printf OUT "    <Minimizer type=\"wang\"/>\n"; }
+        { $minimizertype = sprintf "<Minimizer type=\"wang\""; }
       elsif ( $params{'minimizer'} =~ /physical/i )
-        { printf OUT "    <Minimizer type=\"physical\"/>\n"; }
+        { $minimizertype = sprintf "<Minimizer type=\"physical\""; }
+      printf OUT "    %s />\n", $minimizertype;
 
-      printf OUT "    <Operators type=\"or\" prob=\"0.75\" >\n";
-      printf OUT "      <Mutation prob=1.0 />\n";
-      printf OUT "      <Crossover prob=0.5 />\n";
-      printf OUT "    </Operators>\n";
+      # creates the operators
+      if ( $params{'GA style'} =~ /multistart/i )
+      {
+        printf OUT "    <Operators type=\"and\" >\n";
+        printf OUT "      <UtterRandom prob=1.0 />\n";
+        printf OUT "      %s prob=1.0 />\n", $minimizertype;
+        printf OUT "    </Operators>\n";
+      }
+      else if($params{'GA style'} =~ /lamarck/i ) 
+      {
+        printf OUT "    <Operators type=\"and\" >\n";
+        printf OUT "      <Operators type=\"or\" prob=\"1.0\"  >\n";
+        printf OUT "        <Crossover value=\"0.5\" prob=\"0.75\" />\n";
+        printf OUT "        <Mutation value=\"0.05\" prob=\"0.25\" />\n";
+        printf OUT "      </Operators>\n";
+        printf OUT "      %s prob=1.0 />\n", $minimizertype;
+        printf OUT "    </Operators>\n";
+      }
+      else if($params{'GA style'} =~ /darwin/i ) 
+      {
+        printf OUT "    <Operators type=\"or\" >\n";
+        printf OUT "      <Crossover value=\"0.5\" prob=\"0.75\" />\n";
+        printf OUT "      <Mutation value=\"0.05\" prob=\"0.25\" />\n";
+        printf OUT "    </Operators>\n";
+      }
+
 
       printf OUT "    <Selection size=2 />\n";
 
@@ -211,6 +251,12 @@ sub write_lamarck_input()
                  $params{'GA'}{'replace per generation'};
       if( $params{'CH'} =~ /one point/i )
         { printf OUT "    <OnePointHull/>\n"; }
+      if( $params{'minimize best'}{'rate'} > 0 )
+      {
+        printf OUT "    <MinimizeBest rate=\"%.4f\" every=\"%i\" />\n", 
+                   $params{"minimize best"}{"rate"}, 
+                   $params{"minimize best"}{"every"};
+      }
       printf OUT "  </GA>\n";
     }
     else
