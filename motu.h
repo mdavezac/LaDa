@@ -31,17 +31,17 @@
 
 namespace LaDa
 {
+  typedef LaDa::Individual<> t_individual ; 
+  typedef opt::Fitness_Function<VA_CE::t_functional, VA_CE::CH_Template> t_fitness;
   class MotU : public VA_CE :: Functional_Builder
   {
-    public:
-      typedef Individual<> t_individual;
-
     protected:
-      typedef opt::Fitness_Function<FUNCTIONAL, VA_CE::CH_Template> FITNESS;
+      typedef t_fitness FITNESS;
       const static unsigned LAMARCK;
       const static unsigned DARWIN;
       const static unsigned DEBUG;
 
+    public:
       struct GA // stores all GA parameters
       {
         const static unsigned NO_MINIMIZER;
@@ -50,9 +50,8 @@ namespace LaDa
         const static unsigned LINEAR_MINIMIZER;
         const static unsigned SA_MINIMIZER; // simulated annealing at zero T
 
-        double crossover_vs_mutation,
-               crossover_probability, 
-               mutation_probability;
+        double crossover_value; 
+        double mutation_value;
         bool sequential_op;
         unsigned tournament_size;
         unsigned pop_size;
@@ -74,7 +73,7 @@ namespace LaDa
         // eo stuff
         eoState eostates;
         eoIncrementorParam<unsigned> *nb_generations;
-        Darwin<MotU::t_individual> *algorithm;
+        Darwin<t_individual> *algorithm;
 
         GA();
         bool Load( TiXmlElement *element );
@@ -118,6 +117,7 @@ namespace LaDa
       void populate();
       eoCheckPoint<t_individual>* make_checkpoint();
       eoGenOp<t_individual>* make_GenOp();
+      eoGenOp<t_individual>* make_recurrent_op(const TiXmlElement * const el);
       eoBreed<t_individual>* make_breeder();
       eoReplacement<t_individual>* make_replacement();
       void make_algo();

@@ -10,6 +10,8 @@
 #include <eo/eoPop.h>
 #include <eo/utils/eoRNG.h>
 
+#include <opt/opt_minimize.h>
+
 namespace LaDa 
 {
   template<class Object> 
@@ -102,6 +104,74 @@ namespace LaDa
       }
   }; // class Mutation<Object> : public eoMonOp<Object> 
   
+  template<class EO_OBJECT, class OPT_OBJECT> 
+  class MinimizationOp : public eoMonOp<EO_OBJECT> 
+  {
+    public:
+      // following should be exactly quivalent to MotU :: GA :: ...
+      const static unsigned WANG_MINIMIZER; 
+      const static unsigned PHYSICAL_MINIMIZER;
+      const static unsigned LINEAR_MINIMIZER;
+      const static unsigned SA_MINIMIZER; 
+
+    private:
+      unsigned n, type;
+      OPT_OBJECT *object;
+      opt::Minimize_Base<OPT_OBJECT> *minimizer;
+
+    public:
+      MinimizationOp   ( const MinimizationOp<EO_OBJECT, OPT_OBJECT> &_minop )
+                     : n(_minop.n), type(_minop.type ), object(_minop.object )
+        { create_minimizer(); }
+      MinimizationOp   ( unsigned _n, unsigned _type, OPT_OBJECT *_fitness )
+                     : n(_n), type(_type), object( _fitness )
+        { create_minimizer(); };
+      virtual ~MinimizationOp()
+      {
+        if ( minimizer )
+          delete minimizer;
+        minimizer = NULL;
+      }
+
+
+    protected:
+      void create_minimizer()
+      {
+        switch( type )
+        {
+          case MinimizationOp<EO_OBJECT, OPT_OBJECT> :: WANG_MINIMIZER: 
+            minimizer = new opt::Minimize_Wang<OPT_OBJECT>(object);
+            break;
+          case MinimizationOp<EO_OBJECT, OPT_OBJECT> :: PHYSICAL_MINIMIZER: 
+            minimizer = new opt::Minimize_Ssquared<OPT_OBJECT>(object);
+            break;
+          case MinimizationOp<EO_OBJECT, OPT_OBJECT> :: SA_MINIMIZER: 
+            minimizer = new opt::Minimize_Linear<OPT_OBJECT>(object);
+            static_cast< opt::Minimize_Linear<OPT_OBJECT>* >(minimizer)->simulated_annealing = true;
+            static_cast< opt::Minimize_Linear<OPT_OBJECT>* >(minimizer)->max_calls = n;
+            break;
+          case MinimizationOp<EO_OBJECT, OPT_OBJECT> :: LINEAR_MINIMIZER: 
+            minimizer = new opt::Minimize_Linear<OPT_OBJECT>(object);
+            static_cast< opt::Minimize_Linear<OPT_OBJECT>* >(minimizer)->simulated_annealing = false;
+            static_cast< opt::Minimize_Linear<OPT_OBJECT>* >(minimizer)->max_calls = n;
+            break;
+          default:
+            std::cerr << "Unknown minimizer type in LaDa :: MinimizerOp" << std::endl;
+            exit(-1);
+            break;
+        }
+      };
+      virtual std::string className() const { return "LaDa::MinimizerOp"; }
+
+      bool operator() (EO_OBJECT &_object) 
+      {
+        object->set_variables( _object.get_variables() );
+        minimizer->minimize();
+       
+        return true;
+      }
+  }; // class MinimizationOp : public eoMonOp<EO_OBJECT> 
+
 } // endif LaDa
 
 #endif

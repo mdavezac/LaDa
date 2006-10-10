@@ -30,26 +30,30 @@ namespace LaDa
   const unsigned MotU :: GA :: PHYSICAL_MINIMIZER = 2;
   const unsigned MotU :: GA :: LINEAR_MINIMIZER   = 3;
   const unsigned MotU :: GA :: SA_MINIMIZER       = 4;
+  template<> 
+    const unsigned MinimizationOp<t_individual,t_fitness>::WANG_MINIMIZER     = MotU::GA::WANG_MINIMIZER;
+  template<> 
+    const unsigned MinimizationOp<t_individual,t_fitness>::PHYSICAL_MINIMIZER = MotU::GA::PHYSICAL_MINIMIZER;
+  template<> 
+    const unsigned MinimizationOp<t_individual,t_fitness>::LINEAR_MINIMIZER   = MotU::GA::LINEAR_MINIMIZER;
+  template<> 
+    const unsigned MinimizationOp<t_individual,t_fitness>::SA_MINIMIZER       = MotU::GA::SA_MINIMIZER;
 
   MotU :: GA :: GA()
   {
-    crossover_vs_mutation = 0.85;
-    crossover_probability = 0.5;
-    mutation_probability = 0.0;
-    sequential_op = false;
+    crossover_value = 0.5;
+    mutation_value = 0.05;
     tournament_size = 2;
     replacement_rate = 0.1;
     max_generations = 200;
     pop_size = 100;
     method = DARWIN;
-    utter_random = false;
     evolve_from_start = false; 
     multistart = false; 
     minimizer = NO_MINIMIZER;
     max_calls = UINT_MAX;
     is_one_point_hull = false;
     minimize_best = 0;
-    minimize_offsprings = true;
     minimize_best_every = 5;
   }
   
@@ -144,7 +148,7 @@ namespace LaDa
         return false;
       }
       structure.Load(child, *axes);
-      ga_params.mutation_probability = 1.0 / ((double) structure.atoms.size());
+      ga_params.mutation_value = 1.0 / ((double) structure.atoms.size());
 
       // finds GA parameters
       child = handle.FirstChild( "LaDa" ).FirstChild( "GA" ).Element();
@@ -203,24 +207,10 @@ namespace LaDa
       _f << "# population size: " << ga_params.pop_size << std::endl;
       _f << "# replacement rate: " << ga_params.replacement_rate << std::endl;
       _f << "# max generations: " << ga_params.max_generations << std::endl;
-      if ( ga_params.utter_random )
-        _f << "# utter random operator: " << std::endl;
-      else
-      {
-        _f << "# sequential operators: " << ga_params.sequential_op << std::endl;
-        _f << "# crossover vs mutation: " << ga_params.crossover_vs_mutation << std::endl;
-        _f << "# crossover prob: " << ga_params.crossover_probability << std::endl;
-        _f << "# mutation prob: " << ga_params.mutation_probability << std::endl;
-      }
       if ( ga_params.minimize_best > 0 and ga_params.minimize_best <= 1 )
       {
         _f << "# minimize best: rate " << ga_params.minimize_best
            << " every " << ga_params.minimize_best_every << std::endl;
-        _f << "# minimize offsprings: ";
-       if ( ga_params.minimize_offsprings )
-        _f <<  "true" << std::endl;
-       else
-        _f <<  "false" << std::endl;
       }
     }
 
@@ -236,40 +226,6 @@ namespace LaDa
         parent = element;
         if ( str.compare("GA" ) != 0 )
           parent = element->FirstChildElement("GA");
-      }
-      
-
-      // Checks Operators
-      child = parent->FirstChildElement( "Operators" );
-      if ( child )
-      {
-        if ( child->Attribute( "type" ) )
-        {
-          std::string str =  child->Attribute( "type" );
-          if ( str.compare("and" ) == 0 ) // operators applied sequentially
-            sequential_op = true;
-        }
-        
-        // Crossover vs Mutation
-        double d = 0;
-        if ( child->Attribute("prob", &d) and d > 0 and d < 1)
-          crossover_vs_mutation = d;
-        
-        // if tag present, then applies utter random
-        if ( child->FirstChildElement( "utter random" ) )
-          utter_random = true;
-
-        // gets Mutation prob
-        TiXmlElement *grandchild = child->FirstChildElement( "Mutation" ); d=0;
-        if (     grandchild 
-             and grandchild->Attribute("prob", &d) and d > 0 and d < 1)
-          mutation_probability = d;
-        
-        // gets Crossover prob
-        grandchild = child->FirstChildElement( "Crossover" ); d=0;
-        if (     grandchild 
-             and grandchild->Attribute("prob", &d) and d > 0 and d < 1)
-          crossover_probability = d;
       }
       
 
@@ -329,7 +285,6 @@ namespace LaDa
             eoHowMany nb(replacement_rate);
             max_generations = pop_size + nb(pop_size) * max_generations;
             pop_size = 1;
-            utter_random = true;
             replacement_rate = 1.0;
             evolve_from_start = true;
           }
@@ -366,7 +321,6 @@ namespace LaDa
       child = parent->FirstChildElement( "MinimizeBest" );
       if ( child )
       {
-        minimize_offsprings = false;
         minimize_best = 0.1;
         double d=0;
         if ( child->Attribute( "rate", &d ) )
@@ -376,13 +330,6 @@ namespace LaDa
         if ( child->Attribute( "every", &u ) )
           minimize_best_every = ( u > 0 and abs(u) <= max_generations ) ? (unsigned) u  : 0 ;
         std::string str;
-        if ( child->Attribute( "type" ) )
-        {
-          str = child->Attribute( "type" );
-          minimize_offsprings = false;
-          if ( str.compare("also") == 0 )
-            minimize_offsprings = true;
-        }
       }
       
       // sets hull type: one or many points
@@ -411,7 +358,7 @@ namespace LaDa
       }
     }
 
-    eoCheckPoint<MotU::t_individual>* MotU :: make_checkpoint()
+    eoCheckPoint<t_individual>* MotU :: make_checkpoint()
     {
       // continuator
       eoGenContinue<t_individual> *gen_continue = new eoGenContinue<t_individual>(ga_params.max_generations);
@@ -522,44 +469,146 @@ namespace LaDa
       return result;
     }
 
-    eoGenOp<MotU::t_individual>* MotU :: make_GenOp()
+    eoGenOp<t_individual>* MotU :: make_GenOp()
     {
-      // completely randomizes offsprings
-      if ( ga_params.utter_random )
-      {
-        UtterRandom<t_individual> *random = new UtterRandom<t_individual>;
-        eoMonGenOp<t_individual> *op = new  eoMonGenOp<t_individual>( *random );
-        ga_params.eostates.storeFunctor( random );
-        ga_params.eostates.storeFunctor( op );
-        return op;
+      // creates operator from recurrent input
+      // first creates doc handle
+      { 
+        TiXmlDocument doc( filename.c_str() );
+        TiXmlHandle docHandle( &doc );
+        
+        if  ( !doc.LoadFile() )
+        {
+          std::cout << doc.ErrorDesc() << std::endl; 
+          throw "Could not load input file in MotU :: make_GenOp";
+        }
+        TiXmlElement *child = docHandle.FirstChild("LaDa")
+                                       .FirstChild("GA")
+                                       .FirstChild("Operators").Element();
+        if ( not child )
+          throw "Could not find Operators in input file ";
+        
+        eoGenOp<t_individual>* this_op = make_recurrent_op(child);
+        if ( not this_op )
+          throw "Error while creating operators in MotU :: make_GenOp ";
+
+        return  this_op;
       }
-
-      // creates crossover and mutation operators
-      Crossover<t_individual> *crossover = new Crossover<t_individual>( ga_params.crossover_probability );
-      Mutation<t_individual> *mutation = new Mutation<t_individual>( ga_params.mutation_probability );
-      ga_params.eostates.storeFunctor(crossover);
-      ga_params.eostates.storeFunctor(mutation);
-
-      // which are applied either sequentially
-      if ( ga_params.sequential_op )
-      {
-        eoSequentialOp<t_individual> *op = new  eoSequentialOp<t_individual>;
-        ga_params.eostates.storeFunctor(op);
-        op->add(*crossover, 1.0);
-        op->add(*mutation, 1.0);
-        return op;
-      }
-
-      // or propotionally
-      eoProportionalOp<t_individual> *op = new  eoProportionalOp<t_individual>;
-      ga_params.eostates.storeFunctor(op);
-      op->add(*crossover, ga_params.crossover_vs_mutation);
-      op->add(*mutation, 1.0 - ga_params.crossover_vs_mutation );
-
-      return op;
     }
 
-    eoBreed<MotU::t_individual>* MotU :: make_breeder()
+    eoGenOp<t_individual>* MotU :: make_recurrent_op(const TiXmlElement * const el)
+    {
+      eoGenOp<t_individual>* this_op;
+      bool is_sequential;
+      if ( el->Attribute( "type" ) )
+      {
+         std::string str =  el->Attribute( "type" );
+         is_sequential = true;
+         if ( str.compare("and" ) == 0 ) // operators applied sequentially
+           this_op = new  eoSequentialOp<t_individual>;
+         else
+         {
+           is_sequential = false;
+           this_op = new  eoProportionalOp<t_individual>;
+         }
+         ga_params.eostates.storeFunctor(this_op);
+      }
+      else
+        throw "Error while creating Operator ";
+
+      const TiXmlElement *child = el->FirstChildElement();
+      if (not child)
+        throw "Error while creating Operator ";
+
+      for ( ; child; child = child->NextSiblingElement() )
+      {
+        std::string str = child->Value();
+        double prob = 0.0;
+        
+        // gets probability for applying child 
+        if ( not child->Attribute("prob", &prob) )
+          prob = 1.0;
+
+        // then creates child
+        if ( str.compare("Crossover" ) == 0 )
+        {
+          double d; 
+          child->Attribute("value", &d);
+          if ( d <= 0 and d > 1 )
+            d = ga_params.crossover_value;
+          Crossover<t_individual>* crossover = new Crossover<t_individual>( d );
+          ga_params.eostates.storeFunctor(crossover);
+          if ( is_sequential )
+            static_cast< eoSequentialOp<t_individual>* >(this_op)->add( *crossover, prob );
+          else
+            static_cast< eoProportionalOp<t_individual>* >(this_op)->add( *crossover, prob );
+        }
+        else if ( str.compare("Mutation" ) == 0 )
+        {
+          double d; 
+          child->Attribute("value", &d);
+          if ( d <= 0 and d > 1 )
+            d = ga_params.mutation_value;
+          Mutation<t_individual> *mutation = new Mutation<t_individual>( d );
+          ga_params.eostates.storeFunctor(mutation);
+          if ( is_sequential )
+            static_cast< eoSequentialOp<t_individual>* >(this_op)->add( *mutation, prob );
+          else
+            static_cast< eoProportionalOp<t_individual>* >(this_op)->add( *mutation, prob );
+        }
+        else if ( str.compare("Minimizer") == 0 )
+        {
+          unsigned type = GA :: LINEAR_MINIMIZER;
+          if ( child->Attribute("type") )
+          {
+            std::string str = child->Attribute("type");
+            if ( str.compare("wang" ) == 0 ) // Wang
+              type = GA :: WANG_MINIMIZER;
+            else if ( str.compare("physical" ) == 0 ) // Wang
+              type = GA :: PHYSICAL_MINIMIZER;
+            else if ( str.compare("linear" ) == 0 ) // Wang
+              type = GA :: LINEAR_MINIMIZER;
+            else if ( str.compare("SA" ) == 0 ) // Wang
+              type = GA :: SA_MINIMIZER;
+          }
+          unsigned n = UINT_MAX;
+          int i = 0;
+          if ( child->Attribute("maxeval", &i) )
+            n = ( i <= 0 ) ? UINT_MAX : abs(i);
+
+          MinimizationOp<t_individual, FITNESS>* minop = 
+              new MinimizationOp<t_individual, FITNESS>( n, type, &fitness);
+          ga_params.eostates.storeFunctor(minop);
+          if ( is_sequential )
+            static_cast< eoSequentialOp<t_individual>* >(this_op)->add( *minop, prob );
+          else
+            static_cast< eoProportionalOp<t_individual>* >(this_op)->add( *minop, prob );
+        }
+        else if ( str.compare("UtterRandom") == 0 )
+        {
+          UtterRandom<t_individual>* utterrandom = new UtterRandom<t_individual>;
+          ga_params.eostates.storeFunctor(utterrandom);
+          if ( is_sequential )
+            static_cast< eoSequentialOp<t_individual>* >(this_op)->add( *utterrandom, prob );
+          else
+            static_cast< eoProportionalOp<t_individual>* >(this_op)->add( *utterrandom, prob );
+        }
+        else if ( str.compare("Operators") == 0 )
+        {
+          eoGenOp<t_individual> *add_genop = make_recurrent_op( child );
+          if ( is_sequential )
+            static_cast< eoSequentialOp<t_individual>* >(this_op)->add( *add_genop, prob );
+          else
+            static_cast< eoProportionalOp<t_individual>* >(this_op)->add( *add_genop, prob );
+        }
+        else
+          throw "Unknown operator in MotU :: make_recurrent_op(...) ";
+      }
+      
+      return this_op;
+    }
+
+    eoBreed<t_individual>* MotU :: make_breeder()
     {
       eoSelectOne<t_individual> *select;
       select = new eoDetTournamentSelect<t_individual>(ga_params.tournament_size);
@@ -571,7 +620,7 @@ namespace LaDa
       return breed;
     }
     
-    eoReplacement<MotU::t_individual>* MotU :: make_replacement()
+    eoReplacement<t_individual>* MotU :: make_replacement()
     {
       eoTruncate<t_individual>* truncate = new  eoTruncate<t_individual>;
       eoMerge<t_individual>* merge = new  eoPlus<t_individual>;
@@ -587,8 +636,7 @@ namespace LaDa
     {
       Evaluation<t_individual, MotU> *evaluation = new Evaluation<t_individual, MotU>(this);
       Minimization<t_individual, MotU> *minimization = new Minimization<t_individual, MotU>(this);
-      EvaluatePop<t_individual> *evalpop = new EvaluatePop<t_individual>(evaluation, minimization);
-      evalpop->set_minimize_offsprings( ga_params.minimize_offsprings );
+      EvaluatePop<t_individual> *evalpop = new EvaluatePop<t_individual>(*evaluation);
       MinimizeBest<t_individual> *minimize_best =
         new MinimizeBest<t_individual>( *minimization, 
                                         ga_params.minimize_best,

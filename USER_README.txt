@@ -35,11 +35,21 @@ LaDa specific input follows, and should be included with liblamarck input
     <Minimizer type="wang|linear|sa" maxeval="?">
 
     <!-- breeding operators --> 
-      <!-- can be either Mutation and/or Crossover --> 
-      <!-- and/or is specified in type -->
-    <Operators type="or" prob="0.75" >
-      <Mutation prob=1.0 />
-      <Crossover prob=0.5 />
+    <!-- can be applied recurrently --> 
+    <!-- four types exists --> 
+      <!-- Operators type="and"  applies all the operators it contains with their probability prob -->
+      <!-- Operators type="or"  applies one of the operators it contains -->
+         <!-- using a roulette based on their probability prob -->
+      <!-- Mutation  applies point mutation with probability value -->
+      <!-- Crossover  applies point crossovers between two parents, depending on probability value -->
+      <!-- UtterRandom utterly randomizes a chromosome -->
+      <!-- Minimizer minimizes the offspring -- see input description above -->
+    <Operators type="and">
+      <Operators type="or" prob="1.0" >
+        <Mutation value=0.05 prob="0.25"/>
+        <Crossover value=0.5 prob="0.75"/>
+      </Operators>
+      <Minimizer type="linear" maxeval=20 prob="1.0" />
     </Operators>
 
     <!-- deterministic tournament size when selecting parents --> 
@@ -56,11 +66,8 @@ LaDa specific input follows, and should be included with liblamarck input
 
     <!-- if MinimizeBest is present, algorithm minimizes best individuals at end of each step -->
     <!-- rate specifies how many individuals to minimize -->
-    <!-- if type="also" is not present, minimization over offsprings are NOT performed -->
-      <!-- that is, ONLY minimization of best individuals are performed -->
-    <!-- if type="also" is present, then ALSO performs minimization over offsprings -->
     <!-- every means minimization occurs every n generations -->
-    <MinimizeBest rate="0.1" type="also" every="n" />
+    <MinimizeBest rate="0.1" every="n" />
   </GA>
 
   <!-- you need to specify Lattice, Clusters and CS in this file as well -->

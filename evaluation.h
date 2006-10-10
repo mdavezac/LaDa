@@ -98,21 +98,15 @@ namespace LaDa
   class EvaluatePop : public eoPopEvalFunc<Object>
   {
     public:
-      EvaluatePop(eoEvalFunc<Object> * _eval,
-                  eoEvalFunc<Object> *_minimize) : eval(_eval), minimize(_minimize),
-                                                   minimize_offsprings(true) {};
+      EvaluatePop(eoEvalFunc<Object> &_eval ) : eval(_eval) {}
     
       void operator()(eoPop<Object> & _parents, eoPop<Object> & _offsprings)
       {
         typename std::vector<Object> :: iterator i_pop = _offsprings.begin();
         typename std::vector<Object> :: iterator i_last = _offsprings.end();
 
-        if ( minimize_offsprings )
-          for ( ; i_pop != i_last; ++i_pop )
-            minimize->operator()(*i_pop);
-        else 
-          for ( ; i_pop != i_last; ++i_pop )
-            eval->operator()(*i_pop);
+        for ( ; i_pop != i_last; ++i_pop )
+          eval(*i_pop);
 
         // convex hull has changed => reevaluate
         if ( not  _offsprings.begin()->is_baseline_valid() )
@@ -120,11 +114,11 @@ namespace LaDa
           std::cout << std::endl << "Base line changed" << std::endl; 
           i_pop = _offsprings.begin();
           for ( ; i_pop != i_last; ++i_pop )
-            eval->operator()(*i_pop);
+            eval(*i_pop);
           i_pop = _parents.begin();
           i_last = _parents.end();
           for ( ; i_pop != i_last; ++i_pop )
-            eval->operator()(*i_pop);
+            eval(*i_pop);
         } 
         i_pop = _offsprings.begin();
         i_last = _offsprings.end();
@@ -137,13 +131,8 @@ namespace LaDa
         std::cout << std::endl; 
       }
 
-      void set_minimize_offsprings( bool _b )
-        { minimize_offsprings = _b; }
-    
     private:
-      eoEvalFunc<Object> * eval;
-      eoEvalFunc<Object> * minimize;
-      bool minimize_offsprings;
+      eoEvalFunc<Object> &eval;
   };
 
   template<class Object>
