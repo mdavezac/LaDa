@@ -9,101 +9,57 @@
 #include <string>
 using namespace eo;
 
+#include "operators.h" 
+#include <algorithm>
+
 namespace LaDa 
 {
-  // Object should be some LaDa::Individual<..,..>
+  // t_Object should be some LaDa::Individual<..,..>
   // Boss should be some LaDa::MotU<..,..>
-  template<class Object, class Boss> 
-  class Evaluation : public eoEvalFunc<Object> 
+  template<class t_Object, class Boss> 
+  class Evaluation : public eoEvalFunc<t_Object> 
   {
     private:
-      static Boss *overlord;
+      Boss &overlord;
       
     public: 
-      Evaluation(Boss *_overlord = NULL)
-        { overlord = _overlord;}
+      Evaluation(Boss &_overlord) : overlord( _overlord ) {}
 
-      void set_overlord( Boss *_overlord )
+      void set_overlord( Boss &_overlord )
         { overlord = _overlord; }
 
-      void operator()(Object &_object)
+      void operator()(t_Object &_object)
       {
-        if ( not overlord )
-          throw std::invalid_argument( "pointer overlord unitialised in void Evaluation(Object &_object)" );
-
         // if quantity does not exist, neither should baseline
         if ( _object.invalid() )
         {
-          _object.set_quantity( overlord->evaluate( _object ) );
-          _object.set_baseline( overlord->evaluate( _object.get_concentration() ) );
+          _object.set_quantity( overlord.evaluate( _object ) );
+          _object.set_baseline( overlord.evaluate( _object.get_concentration() ) );
           _object.set_fitness();
           return;
         }
 
-        // everything OK -- validates
+        // everything t_Object -- validates
         if ( _object.is_baseline_valid() )
           return;
 
         // baseline should be recomputed
-        _object.set_baseline( overlord->evaluate( _object.get_concentration() ) );
+        _object.set_baseline( overlord.evaluate( _object.get_concentration() ) );
         _object.set_fitness();
       }
   };
 
   
-  template<class Object, class Boss> 
-    Boss *Evaluation<Object, Boss> :: overlord = NULL;
-
-  template<class Object, class Boss> 
-  class Minimization : public eoEvalFunc<Object> 
-  {
-    private:
-      static Boss *overlord;
-      
-    public: 
-      Minimization(Boss *_overlord = NULL)
-        { overlord = _overlord;}
-
-      void set_overlord( Boss *_overlord )
-        { overlord = _overlord; }
-
-      void operator()(Object &_object)
-      {
-        if ( not overlord )
-          throw std::invalid_argument( "pointer overlord unitialised in void Evaluation(Object &_object)" );
-
-        // if quantity does not exist, neither should baseline
-        if ( _object.invalid() )
-        {
-          _object.set_quantity( overlord->minimize( _object ) );
-          _object.set_baseline( overlord->evaluate( _object.get_concentration() ) );
-          _object.set_fitness();
-          return;
-        }
-
-        // everything OK -- validates
-        if ( _object.is_baseline_valid() )
-          return;
-
-        // baseline should be recomputed
-        _object.set_baseline( overlord->evaluate( _object.get_concentration() ) );
-        _object.set_fitness();
-      }
-  };
-
-  template<class Object, class Boss> 
-    Boss *Minimization<Object, Boss> :: overlord = NULL;
-
-  template<class Object>
-  class EvaluatePop : public eoPopEvalFunc<Object>
+  template<class t_Object>
+  class EvaluatePop : public eoPopEvalFunc<t_Object>
   {
     public:
-      EvaluatePop(eoEvalFunc<Object> &_eval ) : eval(_eval) {}
+      EvaluatePop(eoEvalFunc<t_Object> &_eval ) : eval(_eval) {}
     
-      void operator()(eoPop<Object> & _parents, eoPop<Object> & _offsprings)
+      void operator()(eoPop<t_Object> & _parents, eoPop<t_Object> & _offsprings)
       {
-        typename std::vector<Object> :: iterator i_pop = _offsprings.begin();
-        typename std::vector<Object> :: iterator i_last = _offsprings.end();
+        typename std::vector<t_Object> :: iterator i_pop = _offsprings.begin();
+        typename std::vector<t_Object> :: iterator i_last = _offsprings.end();
 
         for ( ; i_pop != i_last; ++i_pop )
           eval(*i_pop);
@@ -132,35 +88,50 @@ namespace LaDa
       }
 
     private:
-      eoEvalFunc<Object> &eval;
+      eoEvalFunc<t_Object> &eval;
   };
 
-  template<class Object>
-  class MinimizeBest : public eoPopAlgo<Object>
+  template<class t_Object, class t_Call_Back>
+  class Extra_PopAlgo : public eoPopAlgo<t_Object>
   {
+      bool do_minimize_best;
+      t_Call_Back &call_back;
+      eoHowMany how_many;
+      unsigned every;
+      unsigned nb_calls;
+      Evaluation<t_Object, t_Call_Back> *eval;
+      eoMonOp<t_Object> & op;
+
     public:
-      MinimizeBest   (eoEvalFunc<Object> &_minimizer, double _rate = 0.0, unsigned _every = 5)
+      Extra_PopAlgo  (eoMonOp<t_Object> &_op, t_Call_Back &_call_back,
+                      double _rate = 0.0, unsigned _every = 5)
                    : do_minimize_best(false),
+                     call_back(_call_back), 
                      how_many( _rate ),
-                     minimizer(_minimizer),
-                     every(5),
-                     nb_calls(0)
+                     every(_every),
+                     nb_calls(0),
+                     op(_op)
       {
-       if( _rate > 0 and _rate <= 1 )
-         do_minimize_best = true;
-       if( _every == 0 ) 
-         do_minimize_best = false;
+        eval = new Evaluation<t_Object, t_Call_Back>(call_back);
+        if( _rate > 0 and _rate <= 1 )
+          do_minimize_best = true;
+        if( _every == 0 ) 
+          do_minimize_best = false;
       };
 
-      MinimizeBest   ( const MinimizeBest<Object> &_algo )
+      Extra_PopAlgo  ( const Extra_PopAlgo<t_Object, t_Call_Back> &_algo )
                    : do_minimize_best( _algo.do_minimize_best ),
+                     call_back(_algo.call_back), 
                      how_many( _algo.how_many ),
-                     minimizer( _algo.minimizer ),
+                     op( _algo.op ),
                      every( _algo.every ),
-                     nb_calls( _algo.nb_calls )
+                     nb_calls( _algo.nb_calls ),
+                     eval(_algo.eval),
+                     op(_algo.op)
                    {}
+      ~Extra_PopAlgo () { delete eval; }
     
-      void operator()(eoPop<Object> & _pop)
+      void operator()(eoPop<t_Object> & _pop)
       {
         ++nb_calls;
         if ( not do_minimize_best or nb_calls % every )
@@ -174,29 +145,24 @@ namespace LaDa
         // reorders elements such that the nth best are the nth first
         _pop.nth_element(nb);
         
-        typename std::vector<Object> :: iterator i_pop = _pop.begin();
-        typename std::vector<Object> :: iterator i_last = _pop.end();
+        typename std::vector<t_Object> :: iterator i_pop = _pop.begin();
+        typename std::vector<t_Object> :: iterator i_last = _pop.end();
         for (unsigned i = 0; i < nb and i_pop != i_last; ++i, ++i_pop )
         {
-          i_pop->invalidate(); // unsets fitness so evaluation is performed
-          minimizer( *i_pop );
+          i_pop->invalidate();
+          op( *i_pop );
+          (*eval)(*i_pop);
         }
 
         if ( not _pop.begin()->is_baseline_valid() )
         {
           i_pop = _pop.begin();
-          for ( ; i_pop != i_last; ++i_pop )
-            minimizer(*i_pop); // fitness is set, hence won't minimize
-        } 
+          for (; i_pop != i_last; ++i_pop )
+            (*eval)(*i_pop);
+        }
 
       }
 
-    private:
-      bool do_minimize_best;
-      eoHowMany how_many;
-      eoEvalFunc<Object> & minimizer;
-      unsigned every;
-      unsigned nb_calls;
   };
   
 } // endif LaDa

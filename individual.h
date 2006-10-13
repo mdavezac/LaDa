@@ -24,6 +24,7 @@ namespace LaDa
       typedef typename FUNCTIONAL::TYPE TYPE;
       typedef typename FUNCTIONAL::CONTAINER CONTAINER;
       typedef typename CONTAINER::iterator CONTAINER_ITERATOR;
+      typedef typename CONTAINER::iterator iterator;
       typedef typename CONTAINER::const_iterator CONST_CONTAINER_ITERATOR;
       typedef TYPE AtomType;
       typedef FITNESS Fitness;

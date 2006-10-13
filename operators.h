@@ -104,74 +104,91 @@ namespace LaDa
       }
   }; // class Mutation<Object> : public eoMonOp<Object> 
   
-  template<class EO_OBJECT, class OPT_OBJECT> 
+  template<class EO_OBJECT, class CALL_BACK> 
   class MinimizationOp : public eoMonOp<EO_OBJECT> 
   {
-    public:
-      // following should be exactly quivalent to MotU :: GA :: ...
-      const static unsigned WANG_MINIMIZER; 
-      const static unsigned PHYSICAL_MINIMIZER;
-      const static unsigned LINEAR_MINIMIZER;
-      const static unsigned SA_MINIMIZER; 
-
     private:
-      unsigned n, type;
-      OPT_OBJECT *object;
-      opt::Minimize_Base<OPT_OBJECT> *minimizer;
+      unsigned minimizer_nb;
+      CALL_BACK &call_back;
 
     public:
-      MinimizationOp   ( const MinimizationOp<EO_OBJECT, OPT_OBJECT> &_minop )
-                     : n(_minop.n), type(_minop.type ), object(_minop.object )
-        { create_minimizer(); }
-      MinimizationOp   ( unsigned _n, unsigned _type, OPT_OBJECT *_fitness )
-                     : n(_n), type(_type), object( _fitness )
-        { create_minimizer(); };
-      virtual ~MinimizationOp()
-      {
-        if ( minimizer )
-          delete minimizer;
-        minimizer = NULL;
-      }
+      MinimizationOp   ( const MinimizationOp<EO_OBJECT, CALL_BACK> &_minop )
+                     : minimizer_nb(_minop.minimizer_nb),
+                       call_back( _minop.call_back ) {};
+      MinimizationOp   ( unsigned _nb, CALL_BACK &_call_back )
+                     : minimizer_nb(_nb),
+                       call_back( _call_back ) {};
+      virtual ~MinimizationOp() {}
 
 
     protected:
-      void create_minimizer()
-      {
-        switch( type )
-        {
-          case MinimizationOp<EO_OBJECT, OPT_OBJECT> :: WANG_MINIMIZER: 
-            minimizer = new opt::Minimize_Wang<OPT_OBJECT>(object);
-            break;
-          case MinimizationOp<EO_OBJECT, OPT_OBJECT> :: PHYSICAL_MINIMIZER: 
-            minimizer = new opt::Minimize_Ssquared<OPT_OBJECT>(object);
-            break;
-          case MinimizationOp<EO_OBJECT, OPT_OBJECT> :: SA_MINIMIZER: 
-            minimizer = new opt::Minimize_Linear<OPT_OBJECT>(object);
-            static_cast< opt::Minimize_Linear<OPT_OBJECT>* >(minimizer)->simulated_annealing = true;
-            static_cast< opt::Minimize_Linear<OPT_OBJECT>* >(minimizer)->max_calls = n;
-            break;
-          case MinimizationOp<EO_OBJECT, OPT_OBJECT> :: LINEAR_MINIMIZER: 
-            minimizer = new opt::Minimize_Linear<OPT_OBJECT>(object);
-            static_cast< opt::Minimize_Linear<OPT_OBJECT>* >(minimizer)->simulated_annealing = false;
-            static_cast< opt::Minimize_Linear<OPT_OBJECT>* >(minimizer)->max_calls = n;
-            break;
-          default:
-            std::cerr << "Unknown minimizer type in LaDa :: MinimizerOp" << std::endl;
-            exit(-1);
-            break;
-        }
-      };
       virtual std::string className() const { return "LaDa::MinimizerOp"; }
 
       bool operator() (EO_OBJECT &_object) 
       {
-        object->set_variables( _object.get_variables() );
-        minimizer->minimize();
+        call_back.minimize( _object, minimizer_nb );
        
+        _object.invalidate(); 
+
         return true;
       }
   }; // class MinimizationOp : public eoMonOp<EO_OBJECT> 
 
+  template<class t_Object>
+  class Sequential : public eoMonOp<t_Object>
+  {
+      std::vector< eoMonOp<t_Object>* > operators;
+      std::vector< double > rates;
+
+    public:
+      Sequential() {}
+
+      Sequential ( const Sequential<t_Object> &_algo ) : operators(_algo.operators ) {}
+    
+      virtual bool operator()(t_Object &_pop)
+      {
+        typename std::vector< double > :: iterator i_rate = rates.begin();
+        typename std::vector< eoMonOp<t_Object>* > :: iterator i_op = operators.begin();
+        typename std::vector< eoMonOp<t_Object>* > :: iterator i_end = operators.end();
+        for (; i_op != i_end; ++i_op, ++i_rate )
+        {
+          if ( eo::rng.flip( *i_rate ) )
+            (*i_op)->operator()( _pop );
+        }
+
+        return false;
+      }
+
+      void add( eoMonOp<t_Object> *_op, double &_rate)
+      { 
+        operators.push_back( _op ); 
+        rates.push_back( _rate );
+      }
+  };
+
+  template<class t_Object>
+  class Proportional : public eoMonOp<t_Object>
+  {
+      std::vector< eoMonOp<t_Object>* > operators;
+      std::vector< double > rates;
+
+    public:
+      Proportional() {}
+
+      Proportional ( const Proportional<t_Object> &_algo ) : operators(_algo.operators ) {}
+    
+      virtual bool operator()(t_Object &_pop)
+      {
+        unsigned i = eo::rng.roulette_wheel(rates);
+        return (operators[i])->operator()( _pop );
+      }
+
+      void add( eoMonOp<t_Object> *_op, double &_rate)
+      { 
+        operators.push_back( _op ); 
+        rates.push_back( _rate );
+      }
+  };
 } // endif LaDa
 
 #endif
