@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 #
 
-my $computer = "office";
+my $computer = "home";
 my %params;
 
 my $HOME = `cd; pwd`; chomp $HOME;
@@ -10,6 +10,24 @@ my $HOME = `cd; pwd`; chomp $HOME;
 
 @{$params{"Includes"}} = ( "." );
 
+if ( $computer =~ /home/ )
+{
+  @{$params{"make include"}} = ( "/usr/local/include", 
+                                 "$HOME/usr/include",
+                                 "$HOME/usr/include/newmat",
+                                 "$HOME/usr/include/opt++",
+                                 "$HOME/usr/include/eo");
+                                 
+  @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
+                             "-llamarck", "-latat", "-ltinyxml",
+                             "-lopt++", "-lnewmat",
+                             "-lga", "-leoutils", "-leo" );
+  $params{"CC"}  = "gcc";
+  $params{"CXX"} = "g++";
+  $params{"LD"}  = "g++";
+  $params{"F77"}  = "g77";
+  $params{"CXXFLAGS"}  = "-mtune=athlon64 -ffriend-injection";
+}
 if ( $computer =~ /office/ )
 {
   @{$params{"make include"}} = ( "/usr/local/include", 
@@ -83,20 +101,6 @@ foreach $file ( <*.cc> )
     push @{$dependencies{$key}{"depends on"}}, ( $key );
   }
 }
-# find orphaned header file in present directory
-foreach $file ( <*.h> )
-{
-  if ( $file =~ /lada/ )
-    { next; }
-  if ( $file =~ /fftw_interface/ )
-    { next; }
-  my $key = $file; $key =~ s/\.h//;
-  if ( ! (exists $dependencies{$key}{"header"}) )
-  {
-    $dependencies{$key}{"location"} = ".";
-    $dependencies{$key}{"header"} = 1; 
-  }
-}
 
 while ( get_dependencies() == 0 ) {};
 
@@ -125,7 +129,7 @@ sub get_dependencies()
         if (/\#include(\s+|)(\"|\<)(\S+\/|)(\S+)\.h(\"|\>)/)
         {
           my $new_key = $4;
-          if ( !( exists $dependencies{$new_key} ) )
+          if ( !( exists $dependencies{"$new_key"} ) )
           {
             foreach $location (  @{$params{"Includes"}} ) 
             { 
@@ -336,40 +340,69 @@ sub write_dependencies()
                   $dependencies{$key}{"location"}, "/", $key, ".cc ";}
     else
       { print OUT $key, ".o: ", $key, ".cc ";}
-    my $i = 0;
-    foreach $dep ( sort { sort_hash($a,$b) } @{$dependencies{$key}{"depends on"}} )
+
+    if ( exists $dependencies{$key}{"header"} )
     {
-      if ( $dep =~ $key )
+      if ( not exists $dependencies{$key}{"source"} )
         { next; }
-      if( $i % 1 == 0 and $i != 0)
-        { print OUT " \\\n\t"; }
-      if ( (exists $dependencies{$dep}{"source"}) and
-           (exists $dependencies{$dep}{"header"})     )
-      {
-        if ( $dependencies{$dep}{"location"} ne "." )
-          { print OUT $dependencies{$dep}{"location"}, "/"; }
-        print OUT $dep, ".o "; $i++;
-        next;
-      }
-      if ( (exists $dependencies{$dep}{"source"}) )
-      {
-        if ( $dependencies{$dep}{"location"} ne "." )
-          { print OUT $dependencies{$dep}{"location"}, "/"; }
-        print OUT $dep, ".cc "; $i++;
-      }
-      if ( exists $dependencies{$dep}{"header"} )
-      {
-        if ( exists $dependencies{$dep}{"source"} )
-          { print OUT " \\\n\t"; }
-        if ( $dependencies{$dep}{"location"} ne "." )
-          { print OUT $dependencies{$dep}{"location"}, "/"; }
-        print OUT $dep, ".h "; $i++;
-      }
-      
+      if ( $dependencies{$key}{"location"} ne "." )
+        { print OUT $dependencies{$key}{"location"}, "/", $key, ".h ";}
+      else
+        { print OUT $key, ".h ";}
     }
+    my $i = 0;
+    print_recurrent_deps($key);
     print OUT "\n\n";
   }    
 
+}
+
+sub print_recurrent_deps($)
+{
+  my $key = $_[0];
+  push @{$params{"already"}}, ( $key );
+  foreach $dep ( sort { sort_hash($a,$b) } @{$dependencies{$key}{"depends on"}} )
+  {
+    if ( already_included($dep) )
+      { next; }
+    if ( (exists $dependencies{$dep}{"source"}) and
+         (exists $dependencies{$dep}{"header"})     )
+    {
+      print OUT " \\\n\t";
+      if ( $dependencies{$dep}{"location"} ne "." )
+        { print OUT $dependencies{$dep}{"location"}, "/"; }
+      print OUT $dep, ".o "; $i++;
+    }
+    if ( (exists $dependencies{$dep}{"source"}) )
+    {
+      print OUT " \\\n\t";
+      if ( $dependencies{$dep}{"location"} ne "." )
+        { print OUT $dependencies{$dep}{"location"}, "/"; }
+      print OUT $dep, ".cc "; $i++;
+    }
+    if ( exists $dependencies{$dep}{"header"} )
+    {
+      print OUT " \\\n\t";
+      if ( $dependencies{$dep}{"location"} ne "." )
+        { print OUT $dependencies{$dep}{"location"}, "/"; }
+      print OUT $dep, ".h "; $i++;
+      print_recurrent_deps($dep);
+      next;
+    }
+    push @{$params{"already"}}, ( $dep );
+    
+  }
+}
+
+sub already_included($)
+{
+  my $is_included = $_[0];
+  foreach $dep ( @{$params{"already"}} )
+  {
+    if ( $dep eq $is_included )
+    {  return 1; }
+  }
+  return 0;
 }
 
 sub sort_hash ()
