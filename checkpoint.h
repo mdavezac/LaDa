@@ -75,7 +75,7 @@ namespace LaDa
       // some anoying stuff
       void printOn( std::ostream &__os ) const {};
       void readFrom( std::istream &__os ) const {};
-      void lastCall() {};
+      virtual void lastCall() {};
       virtual std::string className(void) const { return "LaDa::NuclearWinter"; }
 
   };
@@ -110,7 +110,7 @@ namespace LaDa
       // some anoying stuff
       void printOn( std::ostream &__os ) const {};
       void readFrom( std::istream &__os ) const {};
-      void lastCall()
+      virtual void lastCall()
         { taboo.print_out( std::cout ); }
 
       virtual std::string className(void) const { return "LaDa::UpdateTaboo"; }

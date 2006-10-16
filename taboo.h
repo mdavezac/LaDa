@@ -37,7 +37,7 @@ namespace LaDa
       Taboo   ( t_Container *_list )
             : problematic(false), owns_pointer( false ),
               taboo_list(_list) {};
-      Taboo() : owns_pointer(true)
+      Taboo() : problematic(false), owns_pointer(true)
         { taboo_list = new t_Container; }
       Taboo   ( const Taboo<t_Object, t_Container> & _taboo )
             : owns_pointer( false ),
@@ -53,17 +53,7 @@ namespace LaDa
       virtual bool operator()( t_Object& _object ) 
       {
         typename t_Container :: iterator i_end = taboo_list->end();
-        typename t_Container :: iterator i_found = std::find( taboo_list->begin(), i_end, _object ) ;
-        bool result = ( i_end == i_found );
-        if ( not result )
-        {
-          std::cout << "Object ";
-          _object.print_out(std::cout);
-          std::cout << std::endl << "Copy   ";
-          i_found->print_out(std::cout);
-          std::cout << std::endl << std::endl;
-        }
-        return not result;
+        return not ( i_end == std::find( taboo_list->begin(), i_end, _object ) );
       }
       
 

@@ -48,6 +48,9 @@ namespace LaDa
         
         return true;
       }
+
+      void print_out( std::ostream &_str)
+        {  std::cout << "Crossover, v=" << probability << " "; }
   }; // class Crossover : public eoGenOp<Object>
 
   template<class Object> 
@@ -83,6 +86,9 @@ namespace LaDa
         
         return mutated;
       }
+
+    // void print_out( std::ostream &_str)
+    //   {  std::cout << "Mutation, v=" << probability << " "; }
   }; // class Mutation<Object> : public eoMonOp<Object> 
 
   template<class Object> 
@@ -106,6 +112,8 @@ namespace LaDa
         
         return true;
       }
+    // void print_out( std::ostream &_str)
+    //   {  std::cout << "UtterRandom " << probability << " "; }
   }; // class Mutation<Object> : public eoMonOp<Object> 
   
   template<class EO_OBJECT, class CALL_BACK> 
@@ -124,8 +132,10 @@ namespace LaDa
                        call_back( _call_back ) {};
       virtual ~MinimizationOp() {}
 
+  //   void print_out( std::ostream &_str)
+  //     {  std::cout << "Minimization "; call_back->print_out_minimizer(minimzer_nb);  }
 
-    protected:
+
       virtual std::string className() const { return "LaDa::MinimizerOp"; }
 
       bool operator() (EO_OBJECT &_object) 
@@ -179,7 +189,8 @@ namespace LaDa
       ;
     public:
       TriggeredOp  ( eoOp<t_Object> &_op,
-                     bool _t = false, eoFunctorStore &_store )
+                     eoFunctorStore &_store,
+                     bool _t = false  )
                   : is_triggered(_t)
         { op = &wrap_op<t_Object>( _op, _store ); }
       virtual ~TriggeredOp() {};
@@ -198,6 +209,11 @@ namespace LaDa
         if ( is_triggered )
           (*op)(_object);
       }
+
+ //    void print_out( std::ostream &_str)
+ //    { 
+ //      std::cout << "Triggered "; 
+ //    }
   };
 
   template<class t_Object>

@@ -568,6 +568,7 @@ namespace LaDa
         length = ( d >=0 ) ? abs(d) : UINT_MAX;
         UpdateAgeTaboo< t_Object > *updateagetaboo 
             = new UpdateAgeTaboo<t_Object>( *agetaboo, *nb_generations, length);
+        xmgrace_file << "# Age Taboo, lifespan=" << d << std::endl;
         eostates.storeFunctor(updateagetaboo);
         eostates.storeFunctor(breeder_ops);
         check_point->add(*updateagetaboo);
@@ -592,6 +593,7 @@ namespace LaDa
                        .FirstChild("PopTaboo").Element();
       if (child)
       {
+        xmgrace_file << "# Pop Taboo " << std::endl; 
         poptaboo = new Taboo<t_Object>( &population );
         eostates.storeFunctor(poptaboo);
       }
@@ -626,7 +628,7 @@ namespace LaDa
           throw "Error while creating operators in  Darwin<t_Object, t_Lamarck>  :: make_GenOp ";
         
         // then makes it into a TriggeredOp
-        nuclear_op = new TriggeredOp<t_Object>( *nuclear_op, false, eostates ); // unactivated 
+        nuclear_op = new TriggeredOp<t_Object>( *nuclear_op, eostates, false ); // unactivated 
         eostates.storeFunctor( nuclear_op );
 
         // creates the NuclearWinter 
@@ -637,6 +639,7 @@ namespace LaDa
           = new NuclearWinter<t_Object>( *taboos, 
                                          *static_cast< TriggeredOp<t_Object> * >(nuclear_op),
                                          length );
+        xmgrace_file << "# NuclearWinter, length=" << length << std::endl;
         eostates.storeFunctor( nuclearwinter );
 
         // finally, adds nuclear_op to breeder_ops

@@ -27,9 +27,10 @@ $params{'minimizer'}            =~ s/\s+$//;
 $params{'minimizer'}            =~ s/^\s+//;
 $params{'CH'}                  =  $COMMANDS[5]; chomp $params{'CH'};
 $_ = $COMMANDS[6]; /(\d+)/; $params{'max calls'} = $1;
-$_ = $COMMANDS[7]; /generations:\s+(\d+)\s+replacement:\s+(\S+)/;
+$_ = $COMMANDS[7]; /popsize:\s+(\d+)\s+replacement:\s+(\S+) gen:\s+(\d+)/;
 $params{"GA"}{"population"} = $1;
 $params{"GA"}{"replace per generation"} = $2;
+$params{"GA"}{"max generations"} = $3;
 $_ = $COMMANDS[8]; /minimize best:\s+(\S+)\s+ every:\s+(\d+)/;
 $params{"minimize best"}{"rate"} = $1;
 $params{"minimize best"}{"every"} = $2; 
@@ -41,7 +42,7 @@ $params{'iaga call'}           =  "lada > out";
 
 $params{'nb atoms'} = 20;
 $params{"file"}{"Pi"} = "$params{'home'}/nanopse/cell_shapes/fcc_7-32";
-$params{'max GA iters'} = 20;
+$params{'max GA iters'} = 200;
 
 
 
@@ -88,6 +89,20 @@ if ( $params{"minimize best"}{'rate'} > 0 )
                                        $params{'minimize best'}{'rate'};
 }
 
+if ( exists $params{'taboos'} )
+{
+  if( $params{'taboos'} =~ /age/ )
+  {
+    $params{'agr'}{"filename"} = sprintf "%s_%s", "age",
+                                 $params{'agr'}{'filename'};
+  } 
+  if( $params{'taboos'} =~ /pop/ )
+  {
+    $params{'agr'}{"filename"} = sprintf "%s_%s", "pop",
+                                 $params{'agr'}{'filename'};
+  } 
+}
+
 $params{'xml'}{"filename"} = $params{'agr'}{'filename'};
 $params{'agr'}{"filename"} .= ".agr";
 $params{'xml'}{"filename"} .= ".xml";
@@ -105,11 +120,11 @@ while(<PI>)
   {
     read_structure(); # data passes from PIfile to %structure hash
 	
- #  if ( scalar( @{$structure{'atomic positions'}} ) < $params{'nb atoms'}*3 ) 
- #    { next; }
- #  else 
+    if ( scalar( @{$structure{'atomic positions'}} ) < $params{'nb atoms'}*3 ) 
+      { next; }
+    else 
       { launch_iaga(); };
-# exit;
+  exit;
 
   }
 }
@@ -273,13 +288,13 @@ sub write_lamarck_input()
       {
         printf OUT "    <Taboos>\n"; 
         if ( $params{'taboos'} =~ /pop/ )
-          { printf OUT "    <PopTaboo/>\n";  }
+          { printf OUT "      <PopTaboo/>\n";  }
         if ( $params{'taboos'} =~ /age/ )
         {
-          printf OUT "    <AgeTaboo lifespan=100 />\n";  
-          printf OUT "    <NuclearWinter length=15 />\n";  
-            printf OUT "    <Mutation value=\"0.5\" />\n";  
-          printf OUT "    </NuclearWinter/>\n";  
+          printf OUT "      <AgeTaboo lifespan=100 />\n";  
+          printf OUT "      <NuclearWinter length=15 >\n";  
+          printf OUT "        <Mutation value=\"0.5\" />\n";  
+          printf OUT "      </NuclearWinter>\n";  
         }
         printf OUT "    </Taboos>\n"; 
       }
