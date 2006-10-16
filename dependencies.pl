@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 #
 
-my $computer = "home";
+my $computer = "office";
 my %params;
 
 my $HOME = `cd; pwd`; chomp $HOME;
@@ -44,7 +44,7 @@ if ( $computer =~ /office/ )
   $params{"CXX"} = "g++";
   $params{"LD"}  = "g++";
   $params{"F77"}  = "g77";
-  $params{"CXXFLAGS"}  = "-malign-double";
+  $params{"CXXFLAGS"}  = "-malign-double -ftemplate-depth-20";
 }
 if ( $computer =~ /lester/ )
 {
@@ -74,7 +74,7 @@ if ( $computer =~ /super/ )
   $params{"CXX"} = "icc";
   $params{"LD"}  = "icc";
   $params{"F77"}  = "if90";
-  $params{"CXXFLAGS"}  = "";
+  $params{"CXXFLAGS"}  = "-mtune=itanium2";
 }
 
 

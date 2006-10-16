@@ -12,6 +12,10 @@
 
 #include <opt/opt_minimize.h>
 
+#include<vector>
+#include<list>
+#include<utility>
+
 namespace LaDa 
 {
   template<class Object> 
@@ -135,28 +139,113 @@ namespace LaDa
   }; // class MinimizationOp : public eoMonOp<EO_OBJECT> 
 
   template<class t_Object>
-  class Sequential : public eoMonOp<t_Object>
+  class SequentialMonOp : public eoMonOp<t_Object>
+  {
+      typedef std::pair< eoMonOp<t_Object>*, double > t_pair;
+      typedef std::list< t_pair > t_pair_list;
+      t_pair_list operators;
+
+    public:
+      SequentialMonOp() {}
+
+      SequentialMonOp   ( const SequentialMonOp<t_Object> &_algo ) 
+                      : operators(_algo.operators ) {};
+    
+      virtual bool operator()(t_Object &_object)
+      {
+        typename t_pair_list :: iterator i_op = operators.begin();
+        typename t_pair_list :: iterator i_end = operators.end();
+        for (; i_op != i_end; ++i_op )
+        {
+          if ( eo::rng.flip( i_op->second ) )
+            (i_op->first)->operator()( _object );
+        }
+
+        return false;
+      }
+
+      void add( eoMonOp<t_Object> *_op, double &_rate)
+      { 
+        operators.push_back( t_pair(_op, _rate) ); 
+      }
+  };
+
+  template<class t_Object>
+  class TriggeredOp : public eoGenOp<t_Object>
+  {
+    protected:
+      bool is_triggered;
+      eoGenOp<t_Object> *op;
+      ;
+    public:
+      TriggeredOp  ( eoOp<t_Object> &_op,
+                     bool _t = false, eoFunctorStore &_store )
+                  : is_triggered(_t)
+        { op = &wrap_op<t_Object>( _op, _store ); }
+      virtual ~TriggeredOp() {};
+    
+      virtual unsigned max_production()
+        { return op->max_production(); }
+
+      void trigger( bool _trigger = false )
+      {
+        is_triggered = _trigger;
+      }
+      virtual std::string className() const {return "LaDa :: TriggeredOps";}
+
+      virtual void apply( eoPopulator<t_Object> &_object ) 
+      {
+        if ( is_triggered )
+          (*op)(_object);
+      }
+  };
+
+  template<class t_Object>
+  class PeriodicOp : public eoGenOp<t_Object>
+  {
+    protected:
+      unsigned period;
+      eoIncrementorParam<unsigned> &age;
+      eoGenOp<t_Object> *op;
+    public:
+      PeriodicOp   ( eoOp<t_Object> &_op,
+                     unsigned _period, 
+                     eoIncrementorParam<unsigned> &_age,
+                     eoFunctorStore &_store)
+                 : period(_period), age(_age)
+      
+        { op = &wrap_op<t_Object>( _op, _store ); }
+      virtual ~PeriodicOp() {};
+    
+      virtual unsigned max_production()
+        { return op->max_production(); }
+
+      virtual std::string className() const {return "LaDa :: TriggeredOps";}
+
+      virtual void apply( eoPopulator<t_Object> &_object ) 
+      {
+        if ( age.value() % period == 0 )
+          (*op)(_object);
+      }
+  };
+
+  template<class t_Object>
+  class ProportionalMonOp : public eoMonOp<t_Object>
   {
       std::vector< eoMonOp<t_Object>* > operators;
       std::vector< double > rates;
 
     public:
-      Sequential() {}
+      ProportionalMonOp() {}
 
-      Sequential ( const Sequential<t_Object> &_algo ) : operators(_algo.operators ) {}
+      ProportionalMonOp   ( const ProportionalMonOp<t_Object> &_algo )
+                        : operators(_algo.operators ),
+                          rates(_algo.rates) {}
     
-      virtual bool operator()(t_Object &_pop)
+      virtual bool operator()(t_Object &_object)
       {
-        typename std::vector< double > :: iterator i_rate = rates.begin();
-        typename std::vector< eoMonOp<t_Object>* > :: iterator i_op = operators.begin();
-        typename std::vector< eoMonOp<t_Object>* > :: iterator i_end = operators.end();
-        for (; i_op != i_end; ++i_op, ++i_rate )
-        {
-          if ( eo::rng.flip( *i_rate ) )
-            (*i_op)->operator()( _pop );
-        }
-
-        return false;
+        unsigned i = eo::rng.roulette_wheel(rates);
+        return (operators[i])->operator()( _object );
       }
 
       void add( eoMonOp<t_Object> *_op, double &_rate)
@@ -167,26 +256,23 @@ namespace LaDa
   };
 
   template<class t_Object>
-  class Proportional : public eoMonOp<t_Object>
+  class AgeOp : public eoMonOp<t_Object>
   {
-      std::vector< eoMonOp<t_Object>* > operators;
-      std::vector< double > rates;
+    protected:
+      eoIncrementorParam<unsigned> &age;
 
     public:
-      Proportional() {}
+      AgeOp   ( eoIncrementorParam<unsigned> &_age )
+            : age(_age) {}
+      AgeOp   ( const AgeOp<t_Object> &_t )
+            : age(_t.age) {}
 
-      Proportional ( const Proportional<t_Object> &_algo ) : operators(_algo.operators ) {}
-    
-      virtual bool operator()(t_Object &_pop)
+      // tries to create an untaboo object on applying _op
+      // after max tries, creates a random untaboo object
+      virtual bool operator()( t_Object &_object )
       {
-        unsigned i = eo::rng.roulette_wheel(rates);
-        return (operators[i])->operator()( _pop );
-      }
-
-      void add( eoMonOp<t_Object> *_op, double &_rate)
-      { 
-        operators.push_back( _op ); 
-        rates.push_back( _rate );
+        _object.set_age( age.value() );
+        return false;
       }
   };
 } // endif LaDa

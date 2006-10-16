@@ -9,6 +9,9 @@
 #include <eo/eoObject.h>      // eoObject
 #include <eo/eoPersistent.h>  // eoPersistent
 
+#include<algorithm>
+#include<functional>
+
 // functional should be some class derived from 
 // opt::Function<TYPE, CONTAINTER>, where CONTAINER supports random
 // access iterators
@@ -40,18 +43,19 @@ namespace LaDa
       static bool baseline_is_valid;
       bool quantity_is_valid;
       TYPE quantity, baseline;
+      unsigned age;
       
 
     public: 
       Individual() : FUNCTIONAL(), repFitness(Fitness()), 
                      MotU_ref(0), quantity_is_valid (false)
-        { variables = new CONTAINER; };
+        { variables = new CONTAINER; age = 0; };
       
       Individual(const Individual<FITNESS, FUNCTIONAL> &_indiv ) :
               repFitness(_indiv.repFitness),
               MotU_ref(_indiv.MotU_ref), 
               quantity_is_valid (_indiv.quantity_is_valid),
-              quantity(_indiv.quantity), baseline(_indiv.baseline)
+              quantity(_indiv.quantity), baseline(_indiv.baseline), age(0)
       {
         variables = new CONTAINER(_indiv.variables->size()); 
         *variables = *_indiv.variables;
@@ -86,6 +90,10 @@ namespace LaDa
       TYPE get_baseline() const
         { return baseline; }
 
+      void  set_age( unsigned _age )
+        { age = _age; }
+      unsigned  get_age() const
+        { return age; }
       void  set_MotU_ref( int _m )
         { MotU_ref = _m; }
       int get_MotU_ref() const
@@ -103,6 +111,17 @@ namespace LaDa
         quantity = _indiv.quantity;
         baseline = _indiv.baseline;
         *variables = *_indiv.variables;
+        age = _indiv.age;
+      }
+      bool operator==( const Individual<FITNESS, FUNCTIONAL> &_indiv )
+      {
+        unsigned size = variables->size();
+        if ( size != _indiv.variables->size() )
+          return false;
+        if ( size == 0 )
+          return true;
+        return std::equal( variables->begin(), variables->end(),
+                           _indiv.variables->begin() );
       }
         
       Fitness fitness() const
@@ -167,6 +186,13 @@ namespace LaDa
           _is >> *i_var;
       }
 
+      void print_out( std::ostream &_stream ) const
+      {
+        CONTAINER_ITERATOR i_var = variables->begin();
+        CONTAINER_ITERATOR i_last = variables->end();
+        for( ; i_var != i_last; ++i_var )
+          _stream << int(*i_var) << " ";
+      }
 
   };
 

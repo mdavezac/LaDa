@@ -23,6 +23,7 @@
 
 #include "evaluation.h"
 #include "operators.h"
+#include "taboo.h"
 
 namespace LaDa
 {
@@ -63,9 +64,11 @@ namespace LaDa
 
       eoContinue<t_Object>*          continuator;
       eoPopEvalFunc<t_Object>*       popEval;
-      eoBreed<t_Object>*             breed;
+      eoBreed<t_Object>*             breeder;
+      eoGenOp<t_Object>*             breeder_ops;
       eoReplacement<t_Object>*       replace;
       eoPopAlgo<t_Object>*           extra_popalgo;
+      Taboo_Base<t_Object>*          taboos;
 
       t_Lamarck *lamarck;
 
@@ -91,10 +94,11 @@ namespace LaDa
 
     protected:
       eoGenOp<t_Object>* make_GenOp(const TiXmlElement *element, std::ofstream &_f);
-      eoGenOp<t_Object>* make_recurrent_op(const TiXmlElement &el,
-                                           std::ofstream &_f,
-                                           std::string &_special,
-                                           std::string &_base);
+      eoGenOp<t_Object>* make_genetic_op(const TiXmlElement &el,
+                                         std::ofstream &_f,
+                                         std::string &_special,
+                                         std::string &_base,
+                                         eoGenOp<t_Object> *current_op);
       eoBreed<t_Object>* make_breeder();
       eoCheckPoint<t_Object>* make_checkpoint();
       eoReplacement<t_Object>* make_replacement();

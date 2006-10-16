@@ -63,7 +63,7 @@ namespace LaDa
          unsigned pSize = population.size();
          offsprings.clear(); // new offsprings
 
-         breed->operator()(population, offsprings);
+         breeder->operator()(population, offsprings);
 
          popEval->operator()(population, offsprings); // eval of parents + offsprings if necessary
 
@@ -234,133 +234,115 @@ namespace LaDa
 
   // makes genetic operators
   template< class t_Object, class t_Lamarck >
-  eoGenOp<t_Object>* Darwin<t_Object, t_Lamarck> :: make_GenOp( const TiXmlElement *_el,
-                                                                std::ofstream  &_f)
+  eoGenOp<t_Object>* Darwin<t_Object, t_Lamarck>
+      :: make_genetic_op( const TiXmlElement &el, std::ofstream &_f,
+                          std::string &_special, std::string &_base,
+                          eoGenOp<t_Object> *current_op = NULL)
   {
-    // creates operator from recurrent input
-    std::string str = "  ";
-    eoGenOp<t_Object>* this_op = make_recurrent_op(*_el, _f, str, str);
-    if ( not this_op )
-      throw "Error while creating operators in  Darwin<t_Object, t_Lamarck>  :: make_GenOp ";
-
-    return  this_op;
-  }
-
-  template< class t_Object, class t_Lamarck >
-  eoGenOp<t_Object>* Darwin<t_Object, t_Lamarck> :: make_recurrent_op(const TiXmlElement &el,
-                                                                      std::ofstream &_f,
-                                                                      std::string &_special,
-                                                                      std::string &_base)
-  {
-    eoGenOp<t_Object>* this_op;
-    bool is_sequential;
-    if ( el.Attribute( "type" ) )
-    {
-       std::string str =  el.Attribute( "type" );
-       is_sequential = true;
-       if ( str.compare("and" ) == 0 ) // operators applied sequentially
-       {
-         double d;
-         if ( el.Attribute("prob", &d ) )
-           _f << "# " << _special << "Sequential: prob " << d << std::endl;
-         else
-           _f << "# " << _special << "Sequential" << std::endl;
-         this_op = new  eoSequentialOp<t_Object>;
-       }
-       else
-       {
-         is_sequential = false;
-         double d;
-         if ( el.Attribute("prob", &d ) )
-           _f << "# " << _special << "Proportional: prob " << d << std::endl;
-         else
-           _f << "# " << _special << "Proportional" << std::endl;
-         this_op = new  eoProportionalOp<t_Object>;
-       }
-       eostates.storeFunctor(this_op);
-    }
-    else
+    eoOp<t_Object>* this_op;
+    const TiXmlElement *sibling = &el;
+    if (not sibling)
       throw "Error while creating Operator ";
 
-    const TiXmlElement *child = el.FirstChildElement();
-    if (not child)
-      throw "Error while creating Operator ";
-
-    for ( ; child; child = child->NextSiblingElement() )
+    for ( ; sibling; sibling = sibling->NextSiblingElement() )
     {
-      std::string str = child->Value();
+      std::string str = sibling->Value();
       double prob = 0.0;
+      int period = 0;
+      bool is_op = false;
       
-      // gets probability for applying child 
-      if ( not child->Attribute("prob", &prob) )
-        prob = 1.0;
 
-      // then creates child
+      // then creates sibling
       if ( str.compare("Crossover" ) == 0 )
       {
         double d; 
-        child->Attribute("value", &d);
+        sibling->Attribute("value", &d);
         if ( d <= 0 and d > 1 )
           d = crossover_value;
-        Crossover<t_Object>* crossover = new Crossover<t_Object>( d );
-        eostates.storeFunctor(crossover);
-        _f << "# " << _special << _base << "Crossover: value=" << d 
-           << " prob="<< prob << std::endl;
-        if ( is_sequential )
-          static_cast< eoSequentialOp<t_Object>* >(this_op)->add( *crossover, prob );
-        else
-          static_cast< eoProportionalOp<t_Object>* >(this_op)->add( *crossover, prob );
+        this_op = new Crossover<t_Object>( d );
+        eostates.storeFunctor( static_cast< Crossover<t_Object> *>(this_op) );
+        _f << "# " << _special << _base << "Crossover: value=" << d;
+        is_op = true;
       }
       else if ( str.compare("Mutation" ) == 0 )
       {
         double d; 
-        child->Attribute("value", &d);
+        sibling->Attribute("value", &d);
         if ( d <= 0 and d > 1 )
           d = 1.0 / (double) lamarck->get_pb_size();
-        Mutation<t_Object> *mutation = new Mutation<t_Object>( d );
-        eostates.storeFunctor(mutation);
-        _f << "# " << _special << _base << "Mutation: value=" << d 
-           << " prob="<< prob << std::endl;
-        if ( is_sequential )
-          static_cast< eoSequentialOp<t_Object>* >(this_op)->add( *mutation, prob );
-        else
-          static_cast< eoProportionalOp<t_Object>* >(this_op)->add( *mutation, prob );
+        this_op = new Mutation<t_Object>( d );
+        eostates.storeFunctor( static_cast< Mutation<t_Object> *>(this_op) );
+        _f << "# " << _special << _base << "Mutation: value=" << d;
+        is_op = true;
       }
       else if ( str.compare("Minimizer") == 0 )
       {
         _f << "# " << _special << _base << "Minimizer: ";
-        eoMonOp<t_Object>* minop = Load_Minimizer( child, _f );
-        _f << ", prob=" << prob << std::endl;
-        if ( is_sequential )
-          static_cast< eoSequentialOp<t_Object>* >(this_op)->add( *minop, prob );
-        else
-          static_cast< eoProportionalOp<t_Object>* >(this_op)->add( *minop, prob );
+        this_op = Load_Minimizer( sibling, _f );
+        is_op = true;
       }
       else if ( str.compare("UtterRandom") == 0 )
       {
-        UtterRandom<t_Object>* utterrandom = new UtterRandom<t_Object>;
-        eostates.storeFunctor(utterrandom);
-        _f << "# " << _special << _base << "UtterRandom "
-           << " prob "<< prob << std::endl;
-        if ( is_sequential )
-          static_cast< eoSequentialOp<t_Object>* >(this_op)->add( *utterrandom, prob );
-        else
-          static_cast< eoProportionalOp<t_Object>* >(this_op)->add( *utterrandom, prob );
+        this_op = new UtterRandom<t_Object>;
+        eostates.storeFunctor( static_cast< UtterRandom<t_Object> *>(this_op) );
+        _f << "# " << _special << _base << "UtterRandom ";
+        is_op = true;
       }
+
       else if ( str.compare("Operators") == 0 )
       {
-        std :: string special = _special + _base;
-        eoGenOp<t_Object> *add_genop = make_recurrent_op( *child, _f,  special, _base);
-        if ( is_sequential )
-          static_cast< eoSequentialOp<t_Object>* >(this_op)->add( *add_genop, prob );
-        else
-          static_cast< eoProportionalOp<t_Object>* >(this_op)->add( *add_genop, prob );
+        if (     sibling->Attribute("type") )
+        {
+          std::string sstr = sibling->Attribute("type");
+          if ( sstr.compare("and") == 0 ) 
+          {
+            _f << "# " << _special << _base << "And begin " << std::endl;
+            std :: string special = _special + _base;
+            eoSequentialOp<t_Object> *new_branch = new eoSequentialOp<t_Object>;
+            eostates.storeFunctor( new_branch );
+            this_op = make_genetic_op( *sibling->FirstChildElement(), _f,  special, _base, new_branch);
+            _f << "# " << _special << _base << "And end";
+             is_op = true;
+          }
+        }
+        if ( not is_op )
+        {
+          _f << "# " << _special << _base << "Or begin " << std::endl;
+          std :: string special = _special + _base;
+          eoProportionalOp<t_Object> *new_branch = new eoProportionalOp<t_Object>;
+          eostates.storeFunctor( new_branch );
+          this_op = make_genetic_op( *sibling->FirstChildElement(), _f,  special, _base, new_branch);
+          _f << "# " << _special << _base << "Or end";
+        }
+        is_op = true;
       }
-      else
-        throw "Unknown operator in  Darwin<t_Object, t_Lamarck>  :: make_recurrent_op(...) ";
+      if ( is_op and sibling->Attribute("period", &period) )
+      {
+        if (period > 0 and abs(period) < max_generations )
+        {
+          _f << " period= " << prob;
+          this_op = new PeriodicOp<t_Object>( *this_op, abs(period), *nb_generations, eostates );
+          eostates.storeFunctor( static_cast< PeriodicOp<t_Object> *>(this_op) );
+        }
+      }
+      if ( is_op and current_op != NULL )
+      {
+        if (not sibling->Attribute("prob", &prob) )
+          prob = 1.0;
+        _f << " prob= " << prob << std::endl;
+        if ( current_op->className().compare("SequentialOp") == 0 )
+          static_cast< eoSequentialOp<t_Object>* >(current_op)->add( *this_op, prob );
+        else if ( current_op->className().compare("ProportionalOp") == 0 )
+          static_cast< eoProportionalOp<t_Object>* >(current_op)->add( *this_op, prob );
+      }
+      else if ( is_op )
+      {
+        current_op = &wrap_op<t_Object>(*this_op, eostates);
+        _f << std::endl;
+      }
     }
     
-    return this_op;
+    return current_op;
   }
 
   template< class t_Object, class t_Lamarck >
@@ -382,7 +364,7 @@ namespace LaDa
            _f << "# " << _special << "Sequential: prob " << d << std::endl;
          else
            _f << "# " << _special << "Sequential" << std::endl;
-         this_op = new  Sequential<t_Object>;
+         this_op = new  SequentialMonOp<t_Object>;
        }
        else
        {
@@ -392,7 +374,7 @@ namespace LaDa
            _f << "# " << _special << "Proportional: prob " << d << std::endl;
          else
            _f << "# " << _special << "Proportional" << std::endl;
-         this_op = new  Proportional<t_Object>;
+         this_op = new  ProportionalMonOp<t_Object>;
        }
        eostates.storeFunctor(this_op);
     }
@@ -424,9 +406,9 @@ namespace LaDa
         _f << "# " << _special << _base << "Mutation: value=" << d 
            << " prob="<< prob << std::endl;
         if ( is_sequential )
-          static_cast< Sequential<t_Object>* >(this_op)->add( mutation, prob );
+          static_cast< SequentialMonOp<t_Object>* >(this_op)->add( mutation, prob );
         else
-          static_cast< Proportional<t_Object>* >(this_op)->add( mutation, prob );
+          static_cast< ProportionalMonOp<t_Object>* >(this_op)->add( mutation, prob );
       }
       else if ( str.compare("Minimizer") == 0 )
       {
@@ -434,9 +416,9 @@ namespace LaDa
         eoMonOp<t_Object>* minop = Load_Minimizer( child, _f );
         _f << ", prob=" << prob << std::endl;
         if ( is_sequential )
-          static_cast< Sequential<t_Object>* >(this_op)->add( minop, prob );
+          static_cast< SequentialMonOp<t_Object>* >(this_op)->add( minop, prob );
         else
-          static_cast< Proportional<t_Object>* >(this_op)->add( minop, prob );
+          static_cast< ProportionalMonOp<t_Object>* >(this_op)->add( minop, prob );
       }
       else if ( str.compare("UtterRandom") == 0 )
       {
@@ -445,18 +427,18 @@ namespace LaDa
         _f << "# " << _special << _base << "UtterRandom "
            << " prob "<< prob << std::endl;
         if ( is_sequential )
-          static_cast< Sequential<t_Object>* >(this_op)->add( utterrandom, prob );
+          static_cast< SequentialMonOp<t_Object>* >(this_op)->add( utterrandom, prob );
         else
-          static_cast< Proportional<t_Object>* >(this_op)->add( utterrandom, prob );
+          static_cast< ProportionalMonOp<t_Object>* >(this_op)->add( utterrandom, prob );
       }
       else if ( str.compare("Operators") == 0 )
       {
         std :: string special = _special + _base;
         eoMonOp<t_Object> *add_genop = make_MonOp( *child, _f,  special, _base);
         if ( is_sequential )
-          static_cast< Sequential<t_Object>* >(this_op)->add( add_genop, prob );
+          static_cast< SequentialMonOp<t_Object>* >(this_op)->add( add_genop, prob );
         else
-          static_cast< Proportional<t_Object>* >(this_op)->add( add_genop, prob );
+          static_cast< ProportionalMonOp<t_Object>* >(this_op)->add( add_genop, prob );
       }
       else
         throw "Unknown operator in  Darwin<t_Object, t_Lamarck>  :: make_MonOp(...) ";
@@ -468,36 +450,14 @@ namespace LaDa
   template<class t_Object, class t_Lamarck>
   eoBreed<t_Object>* Darwin<t_Object, t_Lamarck> :: make_breeder()
   {
-    eoGeneralBreeder<t_Object> *breed;
-    eoGenOp<t_Object> *op;
+    eoBreed<t_Object> *breed;
     eoSelectOne<t_Object> *select;
 
-    std::ofstream xmgrace_file( xmgrace_filename.c_str(), std::ios_base::out|std::ios_base::app );
-
     select = new eoDetTournamentSelect<t_Object>(tournament_size);
-
-    TiXmlDocument doc( filename.c_str() );
-    TiXmlHandle docHandle( &doc );
-    
-    if  ( !doc.LoadFile() )
-    {
-      std::cout << doc.ErrorDesc() << std::endl; 
-      throw "Could not load input file in  Darwin<t_Object, t_Lamarck>  :: make_GenOp";
-    }
-    TiXmlElement *child = docHandle.FirstChild("LaDa")
-                                   .FirstChild("GA")
-                                   .FirstChild("Operators").Element();
-    if ( not child )
-      throw "Could not find Operators in input file ";
-
-    op = make_GenOp( child, xmgrace_file );
-    xmgrace_file << "# Breeding Operator begin " << std::endl;
-    breed = new eoGeneralBreeder<t_Object>(*select,*op , replacement_rate);
-    xmgrace_file << "# Breeding Operator end " << std::endl;
+    breed = new eoGeneralBreeder<t_Object>(*select, *breeder_ops, replacement_rate);
     eostates.storeFunctor(breed);
+    eostates.storeFunctor(select);
 
-    xmgrace_file.flush();
-    xmgrace_file.close();
     return breed;
   }
   
@@ -521,8 +481,8 @@ namespace LaDa
        = new Evaluation<t_Object, Darwin< t_Object, t_Lamarck> >(*this);
     popEval = new EvaluatePop<t_Object>(*evaluation);
     
-    continuator = make_checkpoint();
-    breed = make_breeder();
+    continuator = make_checkpoint(); // must come before make_breeder
+    breeder = make_breeder();
     replace = make_replacement();
     make_extra_algo();
     eostates.storeFunctor(evaluation);
@@ -535,21 +495,172 @@ namespace LaDa
     // continuator
     eoGenContinue<t_Object> *gen_continue = new eoGenContinue<t_Object>(max_generations);
     eostates.storeFunctor( gen_continue );
-
-   
+ 
     // gen_continue
     eoCheckPoint<t_Object> *check_point = new eoCheckPoint<t_Object>(*gen_continue);
     eostates.storeFunctor( check_point );
-
+ 
     // our very own updater wrapper to print stuff
-    Monitor< Darwin<t_Object, t_Lamarck> > *updater = new Monitor< Darwin<t_Object, t_Lamarck> >(this);
-    eostates.storeFunctor(updater);
-    check_point->add(*updater);
+    PrintXmgrace< Darwin<t_Object, t_Lamarck> > 
+       *printxmgrace = new PrintXmgrace< Darwin<t_Object, t_Lamarck> >(this);
+    eostates.storeFunctor(printxmgrace);
+    check_point->add(*printxmgrace);
     
     // gen_continue -- should be last updater to be added
     nb_generations = new eoIncrementorParam<unsigned>("Gen.");
     eostates.storeFunctor(nb_generations);
     check_point->add(*nb_generations);
+
+    // taboos -- needs to create operators first
+    taboos = NULL;
+    {
+      std::ofstream xmgrace_file( xmgrace_filename.c_str(), std::ios_base::out|std::ios_base::app );
+      Taboo<t_Object, std::list<t_Object> > *agetaboo = NULL;
+      Taboo<t_Object> *poptaboo = NULL;
+      unsigned length;
+      TiXmlDocument doc( filename.c_str() );
+      TiXmlHandle docHandle( &doc );
+      if  ( !doc.LoadFile() )
+      {
+        std::cout << doc.ErrorDesc() << std::endl; 
+        throw "Could not load input file in  Darwin<t_Object, t_Lamarck>  :: make_breeder";
+      }
+
+      // first creates breeder op
+      TiXmlElement *child = docHandle.FirstChild("LaDa")
+                                     .FirstChild("GA")
+                                     .FirstChild("Operators").Element();
+      if (not child )
+        throw "";
+      xmgrace_file << "# Breeding Operator begin " << std::endl;
+      std::string str = "  ";
+      breeder_ops = make_genetic_op(*child, xmgrace_file, str, str);
+      xmgrace_file << "# Breeding Operator end " << std::endl;
+      if ( not breeder_ops )
+        throw "Error while creating operators in  Darwin<t_Object, t_Lamarck>  :: make_GenOp ";
+
+      // then creates nuclear age and nuclear ops
+      child = docHandle.FirstChild("LaDa")
+                       .FirstChild("GA")
+                       .FirstChild("Taboos").Element();
+      if (not child)
+      {
+        xmgrace_file.flush();
+        xmgrace_file.close();
+        return check_point;
+      }
+
+
+      // creates age taboo
+      child = docHandle.FirstChild("LaDa")
+                       .FirstChild("GA")
+                       .FirstChild("Taboos")
+                       .FirstChild("AgeTaboo").Element();
+      if (child)
+      {
+        // creates the taboo list
+        agetaboo = new Taboo< t_Object, std::list<t_Object> >;
+        eostates.storeFunctor(agetaboo);
+
+        // then creates the object to update the taboo list
+        int d = 0;
+        child->Attribute("lifespan", &d );
+        length = ( d >=0 ) ? abs(d) : UINT_MAX;
+        UpdateAgeTaboo< t_Object > *updateagetaboo 
+            = new UpdateAgeTaboo<t_Object>( *agetaboo, *nb_generations, length);
+        eostates.storeFunctor(updateagetaboo);
+        eostates.storeFunctor(breeder_ops);
+        check_point->add(*updateagetaboo);
+
+        // finally adds an operator to set d.o.b. of offsprings
+        AgeOp<t_Object> *ageop = new AgeOp<t_Object> ( *nb_generations );
+        eostates.storeFunctor(ageop);
+        if ( breeder_ops->className().compare("SequentialOp") != 0 )
+        {
+          eoSequentialOp<t_Object> *seq = new eoSequentialOp<t_Object>;
+          seq->add( *breeder_ops, 1.0 );
+          breeder_ops = seq;
+          eostates.storeFunctor( breeder_ops );
+        }
+        static_cast< eoSequentialOp<t_Object> *>(breeder_ops)->add(*ageop, 1.0); 
+      }
+      
+      // creates pop taboo
+      child = docHandle.FirstChild("LaDa")
+                       .FirstChild("GA")
+                       .FirstChild("Taboos")
+                       .FirstChild("PopTaboo").Element();
+      if (child)
+      {
+        poptaboo = new Taboo<t_Object>( &population );
+        eostates.storeFunctor(poptaboo);
+      }
+
+      // creates compound if necessary
+      if ( agetaboo and poptaboo)
+      {
+        taboos = new Taboos<t_Object>;
+        eostates.storeFunctor(taboos);
+        static_cast< Taboos<t_Object>* >(taboos)->add( agetaboo );
+        static_cast< Taboos<t_Object>* >(taboos)->add( poptaboo );
+      }
+      else if (agetaboo) 
+        taboos = agetaboo;
+      else if (poptaboo) 
+        taboos = poptaboo;
+
+
+      child = docHandle.FirstChild("LaDa")
+                       .FirstChild("GA")
+                       .FirstChild("Taboos")
+                       .FirstChild("NuclearWinter").Element();
+      if ( child and agetaboo )
+      {
+        eoGenOp<t_Object> *nuclear_op;
+      
+        // first creates the nuclear op from input
+        xmgrace_file << "# Nuclear Operator begin " << std::endl;
+        nuclear_op = make_genetic_op( *child->FirstChildElement(), xmgrace_file, str,str );
+        xmgrace_file << "# Nuclear Operator end " << std::endl;
+        if ( not nuclear_op )
+          throw "Error while creating operators in  Darwin<t_Object, t_Lamarck>  :: make_GenOp ";
+        
+        // then makes it into a TriggeredOp
+        nuclear_op = new TriggeredOp<t_Object>( *nuclear_op, false, eostates ); // unactivated 
+        eostates.storeFunctor( nuclear_op );
+
+        // creates the NuclearWinter 
+        int d;
+        child->Attribute("length", &d);
+        length = ( d > 0 ) ? abs(d) : UINT_MAX;
+        NuclearWinter<t_Object> *nuclearwinter 
+          = new NuclearWinter<t_Object>( *taboos, 
+                                         *static_cast< TriggeredOp<t_Object> * >(nuclear_op),
+                                         length );
+        eostates.storeFunctor( nuclearwinter );
+
+        // finally, adds nuclear_op to breeder_ops
+        if ( breeder_ops->className().compare("SequentialOp") != 0 )
+        {
+          eoSequentialOp<t_Object> *seq = new eoSequentialOp<t_Object>;
+          seq->add( *breeder_ops, 1.0 );
+          breeder_ops = seq;
+          eostates.storeFunctor( breeder_ops );
+        }
+        static_cast< eoSequentialOp<t_Object> *>(breeder_ops)->add(*nuclear_op, 1.0); 
+        check_point->add(*nuclearwinter);
+      }
+
+      if ( taboos ) // creates a TabooOp around all the above
+      {
+        breeder_ops = new TabooOp<t_Object> ( *breeder_ops, *taboos, pop_size+1, eostates );
+        eostates.storeFunctor(breeder_ops);
+      }
+
+      xmgrace_file.flush();
+      xmgrace_file.close();
+    }
+
     
     return check_point;
   }
@@ -560,6 +671,7 @@ namespace LaDa
     Generator generator;
     t_Object indiv;
     indiv.resize( lamarck->get_pb_size() );
+    indiv.set_age( nb_generations->value() ); 
     population.clear();
     population.reserve(pop_size);
     for( unsigned i = 0; i < pop_size; ++i )
@@ -611,6 +723,7 @@ namespace LaDa
   {
     TiXmlDocument doc( filename.c_str() );
     TiXmlHandle docHandle( &doc );
+    extra_popalgo = NULL;
     
     if  ( !doc.LoadFile() )
     {
@@ -622,16 +735,11 @@ namespace LaDa
                                    .FirstChild("PopAlgo")
                                    .FirstChild("Operators").Element();
     if ( not child )
-      throw "Could not find PopAlgo Operators in input file ";
+      return;
 
     child = docHandle.FirstChild("LaDa")
                      .FirstChild("GA")
                      .FirstChild("PopAlgo").Element();
-    if ( not child )
-      throw "Could not find PopAlgo in input file ";
-    
-    if (  not child )
-      extra_popalgo = NULL;
     
     // get parameters
     {

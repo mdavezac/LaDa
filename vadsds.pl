@@ -10,26 +10,32 @@ push @COMMANDS, ( <IN> );
 push @COMMANDS, ( <IN> );
 push @COMMANDS, ( <IN> );
 push @COMMANDS, ( <IN> );
+push @COMMANDS, ( <IN> );
+push @COMMANDS, ( <IN> );
 close IN;
 
 $params{"home"} = `cd; pwd`; chomp $params{"home"};
-$params{'GA'}{'max generations'} = 100;
-$params{'directory'}{'result'} =  $COMMANDS[0]; chomp $params{'directory'}{'result'};
-$params{'directory'}{'work'}   =  $COMMANDS[1]; chomp $params{'directory'}{'work'};
-$params{'GA style'}            =  $COMMANDS[2]; chomp $params{'GA style'};
+$params{'GA'}{'max generations'} = 200;
+$params{'agr'}{'filename'} =  $COMMANDS[0]; chomp $params{'agr'}{'filename'};
+$params{'directory'}{'result'} =  $COMMANDS[1]; chomp $params{'directory'}{'result'};
+$params{'directory'}{'work'}   =  $COMMANDS[2]; chomp $params{'directory'}{'work'};
+$params{'GA style'}            =  $COMMANDS[3]; chomp $params{'GA style'};
 $params{'GA style'}            =~ s/^\s+//;
 $params{'GA style'}            =~ s/\s+$//;
-$params{'minimizer'}           =  $COMMANDS[3]; chomp $params{'minimizer'};
+$params{'minimizer'}           =  $COMMANDS[4]; chomp $params{'minimizer'};
 $params{'minimizer'}            =~ s/\s+$//;
 $params{'minimizer'}            =~ s/^\s+//;
-$params{'CH'}                  =  $COMMANDS[4]; chomp $params{'CH'};
-$_ = $COMMANDS[5]; /(\d+)/; $params{'max calls'} = $1;
-$_ = $COMMANDS[6]; /generations:\s+(\d+)\s+replacement:\s+(\S+)/;
+$params{'CH'}                  =  $COMMANDS[5]; chomp $params{'CH'};
+$_ = $COMMANDS[6]; /(\d+)/; $params{'max calls'} = $1;
+$_ = $COMMANDS[7]; /generations:\s+(\d+)\s+replacement:\s+(\S+)/;
 $params{"GA"}{"population"} = $1;
 $params{"GA"}{"replace per generation"} = $2;
-$_ = $COMMANDS[7]; /minimize best:\s+(\S+)\s+ every:\s+(\d+)/;
+$_ = $COMMANDS[8]; /minimize best:\s+(\S+)\s+ every:\s+(\d+)/;
 $params{"minimize best"}{"rate"} = $1;
 $params{"minimize best"}{"every"} = $2; 
+$params{'taboos'} = $COMMANDS[9]; 
+if ( $params{'taboos'} !~ /(age|pop)/ )
+  { delete $params{'taboos'}; }
 
 $params{'iaga call'}           =  "lada > out";
 
@@ -53,9 +59,9 @@ if ( $params{'CH'} =~ /one point/i )
 
 
 
-$params{'agr'}{"filename"} = sprintf "%s_%s",
-                             $params{'GA style'}, 
-                             $params{'minimizer'};
+$params{'agr'}{"filename"} .= sprintf "%s_%s",
+                              $params{'GA style'}, 
+                              $params{'minimizer'};
 if ( $params{'nb atoms'} != 20 )
 {
   $params{'agr'}{"filename"} = sprintf "%i_%s",
@@ -99,10 +105,11 @@ while(<PI>)
   {
     read_structure(); # data passes from PIfile to %structure hash
 	
-    if ( scalar( @{$structure{'atomic positions'}} ) < $params{'nb atoms'}*3 ) 
-      { next; }
-    else 
+ #  if ( scalar( @{$structure{'atomic positions'}} ) < $params{'nb atoms'}*3 ) 
+ #    { next; }
+ #  else 
       { launch_iaga(); };
+# exit;
 
   }
 }
@@ -127,7 +134,6 @@ sub launch_iaga()
     system "cat convex_hull.agr >> $params{'directory'}{'result'}/$params{'agr'}{'filename'}";
     system "cp convex_hull.xml $params{'directory'}{'result'}/$params{'xml'}{'filename'}  ";
   }
-exit;
 }
 
 sub read_structure()
@@ -202,8 +208,8 @@ sub write_lamarck_input()
       my $minizertype;
       if ( $params{'minimizer'} =~ /linear/i )
       {
-       $minimizertype = sprintf "<Minimizer type=\"linear\" maxeval=\"%i\" ",
-                        $params{'max calls'};
+       $minimizertype = sprintf "<Minimizer type=\"linear\" "; # maxeval=\"%i\" ",
+#                       $params{'max calls'};
       }
       elsif ( $params{'minimizer'} =~ /sa/i )
       {
@@ -224,17 +230,19 @@ sub write_lamarck_input()
         printf OUT "      %s prob=1.0 />\n", $minimizertype;
         printf OUT "    </Operators>\n";
       }
-      else if($params{'GA style'} =~ /lamarck/i ) 
+      elsif($params{'GA style'} =~ /lamarck/i ) 
       {
-        printf OUT "    <Operators type=\"and\" >\n";
-        printf OUT "      <Operators type=\"or\" prob=\"1.0\"  >\n";
-        printf OUT "        <Crossover value=\"0.5\" prob=\"0.75\" />\n";
-        printf OUT "        <Mutation value=\"0.05\" prob=\"0.25\" />\n";
+        printf OUT "    <Operators type=\"or\" >\n";
+        printf OUT "      <Operators type=\"and\" prob=\"0.95\" >\n";
+        printf OUT "        <Operators type=\"or\" prob=\"1.0\"  >\n";
+        printf OUT "          <Crossover value=\"0.5\" prob=\"0.75\" />\n";
+        printf OUT "          <Mutation value=\"0.05\" prob=\"0.25\" />\n";
+        printf OUT "        </Operators>\n";
+        printf OUT "        %s prob=\"0.25\" />\n", $minimizertype;
         printf OUT "      </Operators>\n";
-        printf OUT "      %s prob=1.0 />\n", $minimizertype;
         printf OUT "    </Operators>\n";
       }
-      else if($params{'GA style'} =~ /darwin/i ) 
+      elsif($params{'GA style'} =~ /darwin/i ) 
       {
         printf OUT "    <Operators type=\"or\" >\n";
         printf OUT "      <Crossover value=\"0.5\" prob=\"0.75\" />\n";
@@ -253,9 +261,27 @@ sub write_lamarck_input()
         { printf OUT "    <OnePointHull/>\n"; }
       if( $params{'minimize best'}{'rate'} > 0 )
       {
-        printf OUT "    <MinimizeBest rate=\"%.4f\" every=\"%i\" />\n", 
+        printf OUT "    <PopAlgo rate=\"%.4f\" every=\"%i\" >\n", 
                    $params{"minimize best"}{"rate"}, 
                    $params{"minimize best"}{"every"};
+          printf OUT "    <Operators type=\"and\">\n";
+        printf OUT "        %s prob=\"0.25\" />\n", $minimizertype;
+          printf OUT "    </Operators>\n";
+        printf OUT "    </PopAlgo>\n";
+      }
+      if( exists $params{'taboos'} )
+      {
+        printf OUT "    <Taboos>\n"; 
+        if ( $params{'taboos'} =~ /pop/ )
+          { printf OUT "    <PopTaboo/>\n";  }
+        if ( $params{'taboos'} =~ /age/ )
+        {
+          printf OUT "    <AgeTaboo lifespan=100 />\n";  
+          printf OUT "    <NuclearWinter length=15 />\n";  
+            printf OUT "    <Mutation value=\"0.5\" />\n";  
+          printf OUT "    </NuclearWinter/>\n";  
+        }
+        printf OUT "    </Taboos>\n"; 
       }
       printf OUT "  </GA>\n";
     }
