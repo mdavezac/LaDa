@@ -11,6 +11,7 @@ using namespace eo;
 
 #include "operators.h" 
 #include <algorithm>
+#include <string>
 
 namespace LaDa 
 {
@@ -141,6 +142,12 @@ namespace LaDa
         unsigned nb = how_many( pSize );
         if (nb > pSize )
           return;
+
+        {
+          std::string str(" ExtraPopAlgo launched ");
+          call_back.print_xmgrace( str );
+        }
+
 
         // reorders elements such that the nth best are the nth first
         _pop.nth_element(nb);

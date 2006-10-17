@@ -44,6 +44,10 @@ namespace LaDa
     minimize_best_every = 5;
 
     extra_popalgo = NULL;
+    taboos = NULL;
+    nuclearwinter = NULL;
+
+    print_strings.reserve(10);
   }
 
   template< class t_Object, class t_Lamarck >
@@ -518,8 +522,6 @@ namespace LaDa
     check_point->add(*nb_generations);
 
     // taboos -- needs to create operators first
-    taboos = NULL;
-    nuclearwinter = NULL;
     {
       std::ofstream xmgrace_file( xmgrace_filename.c_str(), std::ios_base::out|std::ios_base::app );
       Taboo<t_Object, std::list<t_Object> > *agetaboo = NULL;
@@ -573,23 +575,12 @@ namespace LaDa
         int d = 0;
         child->Attribute("lifespan", &d );
         length = ( d >=0 ) ? abs(d) : UINT_MAX;
-        UpdateAgeTaboo< t_Object > *updateagetaboo 
-            = new UpdateAgeTaboo<t_Object>( *agetaboo, *nb_generations, length);
+        UpdateAgeTaboo< t_Object, Darwin<t_Object, t_Lamarck> > *updateagetaboo 
+            = new UpdateAgeTaboo<t_Object, Darwin<t_Object, t_Lamarck> >
+                                ( *agetaboo, *nb_generations, *this, length);
         xmgrace_file << "# Age Taboo, lifespan=" << d << std::endl;
         eostates.storeFunctor(updateagetaboo);
         check_point->add(*updateagetaboo);
-
-        // finally adds an operator to set d.o.b. of offsprings
-//       AgeOp<t_Object> *ageop = new AgeOp<t_Object> ( *nb_generations );
-//       eostates.storeFunctor(ageop);
-//       if ( breeder_ops->className().compare("SequentialOp") != 0 )
-//       {
-//         eoSequentialOp<t_Object> *seq = new eoSequentialOp<t_Object>;
-//         seq->add( *breeder_ops, 1.0 );
-//         breeder_ops = seq;
-//         eostates.storeFunctor( breeder_ops );
-//       }
-//       static_cast< eoSequentialOp<t_Object> *>(breeder_ops)->add(*ageop, 1.0); 
       }
       
       // creates pop taboo
@@ -638,30 +629,14 @@ namespace LaDa
         if ( not nuclear_op )
           throw "Error while creating operators in  Darwin<t_Object, t_Lamarck>  :: make_GenOp ";
         
-        // then makes it into a TriggeredOp
-//       nuclear_op = new TriggeredOp<t_Object>( *nuclear_op, eostates, false ); // unactivated 
-//       eostates.storeFunctor( nuclear_op );
-
         // creates the NuclearWinter 
         int d;
         child->Attribute("length", &d);
         length = ( d > 0 ) ? abs(d) : UINT_MAX;
-        nuclearwinter = new NuclearWinter<t_Object>( *taboos, 
-                                                     *breeder_ops,
-                                                     *nuclear_op,
-                                                     length );
+        nuclearwinter = new NuclearWinter<t_Object, Darwin<t_Object, t_Lamarck> >
+                                         ( *taboos, *breeder_ops, *nuclear_op, *this, length );
         xmgrace_file << "# NuclearWinter, length=" << length << std::endl;
         eostates.storeFunctor( nuclearwinter );
-
-//       // finally, adds nuclear_op to breeder_ops
-//       if ( breeder_ops->className().compare("SequentialOp") != 0 )
-//       {
-//         eoSequentialOp<t_Object> *seq = new eoSequentialOp<t_Object>;
-//         seq->add( *breeder_ops, 1.0 );
-//         breeder_ops = seq;
-//         eostates.storeFunctor( breeder_ops );
-//       }
-//       static_cast< eoSequentialOp<t_Object> *>(breeder_ops)->add(*nuclear_op, 1.0); 
         check_point->add(*nuclearwinter);
       }
 
@@ -715,16 +690,24 @@ namespace LaDa
   {
     std::ofstream xmgrace_file( xmgrace_filename.c_str(), std::ios_base::out|std::ios_base::app ); 
     bool print_ch = not population.begin()->is_baseline_valid();
+    std::string special = " ";
     if ( not print_ch )
-      xmgrace_file<< " # ? iteration:" << nb_generations->value(); 
-    else 
-      xmgrace_file << " # iteration:" << nb_generations->value(); 
+      special = " ? ";
+    xmgrace_file << " #" << special <<  "iteration:" << nb_generations->value(); 
     lamarck->print_xmgrace( xmgrace_file,  print_ch );
     if ( print_ch )
       population.begin()->validate_baseline();
+
+    std::vector< std::string > :: const_iterator i_str = print_strings.begin();
+    std::vector< std::string > :: const_iterator i_end = print_strings.end();
+    for ( ; i_str != i_end; ++i_str )
+      xmgrace_file << " #" << special << (*i_str) << std::endl;
+    print_strings.clear();
+
     xmgrace_file.flush();
     xmgrace_file.close();
   }
+
 
   template< class t_Object, class t_Lamarck >
   void Darwin <t_Object, t_Lamarck> :: make_extra_algo()

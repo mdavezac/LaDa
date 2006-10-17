@@ -56,6 +56,7 @@ namespace LaDa
       bool minimize_offsprings;
       unsigned minimize_best_every;
       bool is_one_point_hull;
+      std::vector< std::string > print_strings;
 
       eoState eostates;
       eoIncrementorParam<unsigned> *nb_generations;
@@ -68,10 +69,10 @@ namespace LaDa
       eoPopEvalFunc<t_Object>*       popEval;
       eoBreed<t_Object>*             breeder;
       eoGenOp<t_Object>*             breeder_ops;
-      NuclearWinter<t_Object>*       nuclearwinter;
       eoReplacement<t_Object>*       replace;
       eoPopAlgo<t_Object>*           extra_popalgo;
       Taboo_Base<t_Object>*          taboos;
+      NuclearWinter<t_Object, Darwin<t_Object, t_Lamarck> >* nuclearwinter;
 
       t_Lamarck *lamarck;
 
@@ -93,6 +94,9 @@ namespace LaDa
       bool minimize( const t_Object &_object, const unsigned &_nb )
         { return lamarck->minimize( _object, _nb);  }
       void print_xmgrace();
+      void print_xmgrace( std::string &_str )
+        { print_strings.push_back(_str); }
+  
       void print_xml()
         { lamarck->print_xml(); };
 
