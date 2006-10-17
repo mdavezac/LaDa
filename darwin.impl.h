@@ -4,7 +4,6 @@
 #include<eo/eoReduceMerge.h>
 
 
-#include "checkpoint.h"
 #include "generator.h"
 #include <lamarck/convex_hull.h>
 #include <opt/opt_minimize.h>
@@ -454,7 +453,14 @@ namespace LaDa
     eoSelectOne<t_Object> *select;
 
     select = new eoDetTournamentSelect<t_Object>(tournament_size);
-    breed = new eoGeneralBreeder<t_Object>(*select, *breeder_ops, replacement_rate);
+    if ( nuclearwinter )
+    {
+      breed = new Breeder<t_Object>(*select, *breeder_ops, *nb_generations, replacement_rate);
+      nuclearwinter->set_op_address( static_cast<Breeder<t_Object>*>(breed)->get_op_address() );
+    }
+    else
+      breed = new eoGeneralBreeder<t_Object>(*select, *breeder_ops, replacement_rate);
+
     eostates.storeFunctor(breed);
     eostates.storeFunctor(select);
 
@@ -513,6 +519,7 @@ namespace LaDa
 
     // taboos -- needs to create operators first
     taboos = NULL;
+    nuclearwinter = NULL;
     {
       std::ofstream xmgrace_file( xmgrace_filename.c_str(), std::ios_base::out|std::ios_base::app );
       Taboo<t_Object, std::list<t_Object> > *agetaboo = NULL;
@@ -570,20 +577,19 @@ namespace LaDa
             = new UpdateAgeTaboo<t_Object>( *agetaboo, *nb_generations, length);
         xmgrace_file << "# Age Taboo, lifespan=" << d << std::endl;
         eostates.storeFunctor(updateagetaboo);
-        eostates.storeFunctor(breeder_ops);
         check_point->add(*updateagetaboo);
 
         // finally adds an operator to set d.o.b. of offsprings
-        AgeOp<t_Object> *ageop = new AgeOp<t_Object> ( *nb_generations );
-        eostates.storeFunctor(ageop);
-        if ( breeder_ops->className().compare("SequentialOp") != 0 )
-        {
-          eoSequentialOp<t_Object> *seq = new eoSequentialOp<t_Object>;
-          seq->add( *breeder_ops, 1.0 );
-          breeder_ops = seq;
-          eostates.storeFunctor( breeder_ops );
-        }
-        static_cast< eoSequentialOp<t_Object> *>(breeder_ops)->add(*ageop, 1.0); 
+//       AgeOp<t_Object> *ageop = new AgeOp<t_Object> ( *nb_generations );
+//       eostates.storeFunctor(ageop);
+//       if ( breeder_ops->className().compare("SequentialOp") != 0 )
+//       {
+//         eoSequentialOp<t_Object> *seq = new eoSequentialOp<t_Object>;
+//         seq->add( *breeder_ops, 1.0 );
+//         breeder_ops = seq;
+//         eostates.storeFunctor( breeder_ops );
+//       }
+//       static_cast< eoSequentialOp<t_Object> *>(breeder_ops)->add(*ageop, 1.0); 
       }
       
       // creates pop taboo
@@ -611,6 +617,11 @@ namespace LaDa
       else if (poptaboo) 
         taboos = poptaboo;
 
+      if ( taboos ) // creates a TabooOp around all the above
+      {
+        breeder_ops = new TabooOp<t_Object> ( *breeder_ops, *taboos, pop_size+1, eostates );
+        eostates.storeFunctor(breeder_ops);
+      }
 
       child = docHandle.FirstChild("LaDa")
                        .FirstChild("GA")
@@ -628,36 +639,30 @@ namespace LaDa
           throw "Error while creating operators in  Darwin<t_Object, t_Lamarck>  :: make_GenOp ";
         
         // then makes it into a TriggeredOp
-        nuclear_op = new TriggeredOp<t_Object>( *nuclear_op, eostates, false ); // unactivated 
-        eostates.storeFunctor( nuclear_op );
+//       nuclear_op = new TriggeredOp<t_Object>( *nuclear_op, eostates, false ); // unactivated 
+//       eostates.storeFunctor( nuclear_op );
 
         // creates the NuclearWinter 
         int d;
         child->Attribute("length", &d);
         length = ( d > 0 ) ? abs(d) : UINT_MAX;
-        NuclearWinter<t_Object> *nuclearwinter 
-          = new NuclearWinter<t_Object>( *taboos, 
-                                         *static_cast< TriggeredOp<t_Object> * >(nuclear_op),
-                                         length );
+        nuclearwinter = new NuclearWinter<t_Object>( *taboos, 
+                                                     *breeder_ops,
+                                                     *nuclear_op,
+                                                     length );
         xmgrace_file << "# NuclearWinter, length=" << length << std::endl;
         eostates.storeFunctor( nuclearwinter );
 
-        // finally, adds nuclear_op to breeder_ops
-        if ( breeder_ops->className().compare("SequentialOp") != 0 )
-        {
-          eoSequentialOp<t_Object> *seq = new eoSequentialOp<t_Object>;
-          seq->add( *breeder_ops, 1.0 );
-          breeder_ops = seq;
-          eostates.storeFunctor( breeder_ops );
-        }
-        static_cast< eoSequentialOp<t_Object> *>(breeder_ops)->add(*nuclear_op, 1.0); 
+//       // finally, adds nuclear_op to breeder_ops
+//       if ( breeder_ops->className().compare("SequentialOp") != 0 )
+//       {
+//         eoSequentialOp<t_Object> *seq = new eoSequentialOp<t_Object>;
+//         seq->add( *breeder_ops, 1.0 );
+//         breeder_ops = seq;
+//         eostates.storeFunctor( breeder_ops );
+//       }
+//       static_cast< eoSequentialOp<t_Object> *>(breeder_ops)->add(*nuclear_op, 1.0); 
         check_point->add(*nuclearwinter);
-      }
-
-      if ( taboos ) // creates a TabooOp around all the above
-      {
-        breeder_ops = new TabooOp<t_Object> ( *breeder_ops, *taboos, pop_size+1, eostates );
-        eostates.storeFunctor(breeder_ops);
       }
 
       xmgrace_file.flush();

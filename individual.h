@@ -8,6 +8,7 @@
 #include <stdexcept>       // std::runtime_error
 #include <eo/eoObject.h>      // eoObject
 #include <eo/eoPersistent.h>  // eoPersistent
+#include <eo/eoOpContainer.h>  
 
 #include<algorithm>
 #include<functional>

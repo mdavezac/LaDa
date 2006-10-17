@@ -24,6 +24,8 @@
 #include "evaluation.h"
 #include "operators.h"
 #include "taboo.h"
+#include "breeder.h"
+#include "checkpoint.h"
 
 namespace LaDa
 {
@@ -66,6 +68,7 @@ namespace LaDa
       eoPopEvalFunc<t_Object>*       popEval;
       eoBreed<t_Object>*             breeder;
       eoGenOp<t_Object>*             breeder_ops;
+      NuclearWinter<t_Object>*       nuclearwinter;
       eoReplacement<t_Object>*       replace;
       eoPopAlgo<t_Object>*           extra_popalgo;
       Taboo_Base<t_Object>*          taboos;
@@ -75,6 +78,7 @@ namespace LaDa
     public:
 
       Darwin (t_Lamarck *_lam); 
+      virtual ~Darwin () {};
 
       bool Load( const std::string &_filename );
 

@@ -23,6 +23,7 @@ namespace LaDa
       virtual bool is_problematic() const = 0;
       virtual void set_problematic(bool _p = false) = 0;
 
+      virtual void print_out( std::ostream &str ) const = 0;
   };
 
   template<class t_Object, class t_Container = eoPop<t_Object> >
@@ -66,7 +67,7 @@ namespace LaDa
         }
       }
 
-      void print_out( std::ostream &str ) const
+      virtual void print_out( std::ostream &str ) const
       {
         typename t_Container :: const_iterator i_pop = taboo_list->begin();
         typename t_Container :: const_iterator i_end = taboo_list->end();
@@ -139,6 +140,13 @@ namespace LaDa
         for ( ; i_taboo != i_end; ++i_taboo )
           (*i_taboo)->set_problematic( _p );
       }
+      virtual void print_out( std::ostream &str ) const
+      {
+        typename std::list< Taboo_Base<t_Object> * > :: const_iterator i_taboo = taboos.begin();
+        typename std::list< Taboo_Base<t_Object> * > :: const_iterator i_end = taboos.end();
+        for ( ; i_taboo != i_end; ++i_taboo )
+          (*i_taboo)->print_out( str );
+      };
   };
 
   template<class t_Object>

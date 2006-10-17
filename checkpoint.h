@@ -30,18 +30,26 @@ namespace LaDa
   {
     protected:
       Taboo_Base<t_Object> &taboo;
-      TriggeredOp<t_Object> &triggered_op;
+      eoGenOp<t_Object> &normal_ops;
+      eoSequentialOp<t_Object> nuclear_ops;
+      eoGenOp<t_Object> **breeding_ops;
       unsigned nuclear_winter_length, nuclear_winter_age;
       bool is_gone_nuclear;
 
     public:
       NuclearWinter   ( Taboo_Base<t_Object> &_taboo, 
-                        TriggeredOp<t_Object> &_triggered_op,
+                        eoGenOp<t_Object> &_nops,
+                        eoGenOp<t_Object> &_nwops,
                         unsigned _nwl )
                     : taboo(_taboo),
-                      triggered_op(_triggered_op),
+                      normal_ops(_nops),
+                      breeding_ops(NULL),
                       nuclear_winter_length(_nwl),
-                      is_gone_nuclear(false) {}
+                      is_gone_nuclear(false)
+      {
+        nuclear_ops.add(_nops, 1.0);
+        nuclear_ops.add(_nwops, 1.0);
+      }
 
       virtual ~NuclearWinter(){};
 
@@ -56,7 +64,7 @@ namespace LaDa
           ++nuclear_winter_age;
           if ( nuclear_winter_age > nuclear_winter_length ) 
           {
-            triggered_op.trigger(false); 
+            *breeding_ops = &normal_ops; 
             is_gone_nuclear = false;
             std::cout << "Nuclear-winter is over" << std::endl;
           }
@@ -65,17 +73,26 @@ namespace LaDa
         { // starts nuclear winter
           nuclear_winter_age = 0;
           is_gone_nuclear = true;
-          triggered_op.trigger(true); 
+          *breeding_ops = &nuclear_ops; 
           taboo.set_problematic(false);
           std::cout << "Going Nuclear" << std::endl;
         }
       }
 
+      void set_op_address( eoGenOp<t_Object> ** _ops )
+        { breeding_ops = _ops; } 
+
+      eoGenOp<t_Object>* get_op_address() const
+      {
+        if (is_gone_nuclear)
+          return &normal_ops;
+        return &nuclear_ops;
+      }
 
       // some anoying stuff
       void printOn( std::ostream &__os ) const {};
       void readFrom( std::istream &__os ) const {};
-      virtual void lastCall() {};
+      virtual void lastCall( const eoPop<t_Object> &_pop) {};
       virtual std::string className(void) const { return "LaDa::NuclearWinter"; }
 
   };
@@ -120,8 +137,8 @@ namespace LaDa
       // some anoying stuff
       void printOn( std::ostream &__os ) const {};
       void readFrom( std::istream &__os ) const {};
-      virtual void lastCall()
-        { taboo.print_out( std::cout ); }
+      virtual void lastCall( const eoPop<t_Object> &_pop)
+        {  } //;taboo.print_out( std::cout ); }
 
       virtual std::string className(void) const { return "LaDa::UpdateTaboo"; }
   };
