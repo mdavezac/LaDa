@@ -575,9 +575,16 @@ namespace LaDa
         int d = 0;
         child->Attribute("lifespan", &d );
         length = ( d >=0 ) ? abs(d) : UINT_MAX;
+        bool print_out = false;
+        if ( child->Attribute("printout") )
+        {
+          std::string str = child->Attribute("printout");
+          if ( str.compare("true") == 0 )
+            print_out = true;
+        }
         UpdateAgeTaboo< t_Object, Darwin<t_Object, t_Lamarck> > *updateagetaboo 
             = new UpdateAgeTaboo<t_Object, Darwin<t_Object, t_Lamarck> >
-                                ( *agetaboo, *nb_generations, *this, length);
+                                ( *agetaboo, *nb_generations, *this, length, print_out);
         xmgrace_file << "# Age Taboo, lifespan=" << d << std::endl;
         eostates.storeFunctor(updateagetaboo);
         check_point->add(*updateagetaboo);
