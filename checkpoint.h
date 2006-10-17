@@ -87,23 +87,33 @@ namespace LaDa
       Taboo< t_Object, std::list<t_Object> > & taboo;
       eoIncrementorParam<unsigned> &age;
       unsigned max_age;
+      unsigned check_every;
 
     public:
       UpdateAgeTaboo  ( Taboo< t_Object, std::list<t_Object> > & _taboo,
                         eoIncrementorParam<unsigned> &_age,
                         unsigned _max_age )
-                     : taboo(_taboo), age(_age), max_age(_max_age) {};
+                     : taboo(_taboo), age(_age), max_age(_max_age) 
+      {
+        check_every = max_age / 10;
+        if ( check_every == 0 )
+          check_every = 1;
+      };
       UpdateAgeTaboo  ( const UpdateAgeTaboo<t_Object> & _update )
                      : taboo(_update.taboo), age(_update.age),
-                       max_age(_update.max_age) {};
+                       max_age(_update.max_age), check_every( _update.check_every ) {};
 
       virtual void operator()( const eoPop<t_Object> &_pop )
       {
+        unsigned ga_age = age.value();
+        if ( ga_age < max_age or ga_age%check_every != 0 )
+          return;
+
         typename eoPop<t_Object> :: const_iterator i_pop = _pop.begin();
         typename eoPop<t_Object> :: const_iterator i_end = _pop.end();
 
         for( ; i_pop != i_end; ++i_pop )
-          if ( age.value() - i_pop->get_age() > max_age )
+          if ( ga_age - i_pop->get_age() > max_age )
             taboo.add( *i_pop );
       }
 
