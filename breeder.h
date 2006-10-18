@@ -29,27 +29,22 @@ namespace LaDa
       eoSelectOne<t_Object>& select;
       eoGenOp<t_Object> *op; 
       eoIncrementorParam<unsigned> &age;
-      eoHowMany howMany;
+      eoHowMany *howMany;
     
     public:
-      Breeder   ( eoSelectOne<t_Object>& _select, eoGenOp<t_Object>& _op, 
-                  eoIncrementorParam<unsigned> &_age,
-                  double  _rate=1.0, bool _interpret_as_rate = true) 
-              : select( _select ), op(&_op), age(_age),
-                howMany(_rate, _interpret_as_rate) {}
       Breeder   ( eoSelectOne<t_Object>& _select, eoGenOp<t_Object>& _op,
-                  eoIncrementorParam<unsigned> &_age, eoHowMany &_howmany )
+                  eoIncrementorParam<unsigned> &_age )
               : select( _select ), op(&_op),
-                age(_age), howMany(_howmany) {}
+                age(_age), howMany(NULL) {}
       Breeder   ( Breeder<t_Object> & _breeder )
               : select( _breeder.select ), op(_breeder.op),
-                age(_breeder.age), howMany(_breeder.howmany) {}
+                age(_breeder.age), howMany(_breeder.howMany) {}
 
       virtual ~Breeder() {};
      
       void operator()(const eoPop<t_Object>& _parents, eoPop<t_Object>& _offspring)
       {
-        unsigned target = howMany(_parents.size());
+        unsigned target = (*howMany)(_parents.size());
      
         _offspring.clear();
         eoSelectivePopulator<t_Object> it(_parents, _offspring, select);
@@ -66,6 +61,8 @@ namespace LaDa
 
       eoGenOp<t_Object>** get_op_address() 
         { return &op; }
+      eoHowMany** get_howmany_address() 
+        { return &howMany; }
      
       /// The class name.
       virtual std::string className() const { return "LaDa::Breeder"; }

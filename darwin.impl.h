@@ -478,8 +478,9 @@ namespace LaDa
     select = new eoDetTournamentSelect<t_Object>(tournament_size);
     if ( nuclearwinter )
     {
-      breed = new Breeder<t_Object>(*select, *breeder_ops, *nb_generations, replacement_rate);
+      breed = new Breeder<t_Object>(*select, *breeder_ops, *nb_generations);
       nuclearwinter->set_op_address( static_cast<Breeder<t_Object>*>(breed)->get_op_address() );
+      nuclearwinter->set_howmany( static_cast<Breeder<t_Object>*>(breed)->get_howmany_address() ) ;
     }
     else
       breed = new eoGeneralBreeder<t_Object>(*select, *breeder_ops, replacement_rate);
@@ -641,7 +642,8 @@ namespace LaDa
         child->Attribute("length", &d);
         length = ( d > 0 ) ? abs(d) : UINT_MAX;
         nuclearwinter = new NuclearWinter<t_Object, Darwin<t_Object, t_Lamarck> >
-                                         ( *taboos, *breeder_ops, *nuclear_op, *this, length );
+                                         ( *taboos, *breeder_ops, *nuclear_op, *this,
+                                           replacement_rate );
         xmgrace_file << "# NuclearWinter, length=" << length << std::endl;
         eostates.storeFunctor( nuclearwinter );
         check_point->add(*nuclearwinter);
@@ -717,7 +719,7 @@ namespace LaDa
       print_strings.clear();
     }
     else if ( print_ch )
-      xmgrace_file << " #" << special <<  "iteration:" << nb_generations->value(); 
+      xmgrace_file << " #" << special <<  "iteration:" << nb_generations->value() << std::endl; 
 
     if ( print_ch )
     {

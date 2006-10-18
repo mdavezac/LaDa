@@ -1,7 +1,11 @@
 #ifndef _CHECKPOINT_H_
 #define _CHECKPOINT_H_
 
+#include <eo/eoOp.h>
+#include <eo/eoGenOp.h>
 #include <eo/utils/eoUpdater.h>
+#include <eo/utils/eoHowMany.h>
+#include <eo/utils/eoStat.h>
 #include <sstream>
 
 #include "taboo.h"
@@ -37,25 +41,37 @@ namespace LaDa
       unsigned nuclear_winter_length, nuclear_winter_age;
       t_Call_Back &call_back;
       bool is_gone_nuclear;
+      eoHowMany nuclear_howmany;
+      eoHowMany normal_howmany;
+      eoHowMany **breeding_howmany;
 
     public:
       NuclearWinter   ( Taboo_Base<t_Object> &_taboo, 
                         eoGenOp<t_Object> &_nops,
                         eoGenOp<t_Object> &_nwops,
                         t_Call_Back &_call_back,
-                        unsigned _nwl )
+                        double &_normal_howmany )
                     : taboo(_taboo),
                       normal_ops(_nops),
                       breeding_ops(NULL),
-                      nuclear_winter_length(_nwl),
+                      nuclear_winter_length(2),
                       call_back( _call_back ),
-                      is_gone_nuclear(false)
+                      is_gone_nuclear(false),
+                      nuclear_howmany(1.0),
+                      normal_howmany(_normal_howmany),
+                      breeding_howmany(NULL)
       {
         nuclear_ops.add(_nops, 1.0);
         nuclear_ops.add(_nwops, 1.0);
       }
 
       virtual ~NuclearWinter(){};
+
+      void set_howmany( eoHowMany **_howmany)
+      {
+        breeding_howmany = _howmany;
+        *breeding_howmany = &normal_howmany;
+      }
 
       // checks for taboo unconvergenced
       // if true, then transforms each individual according to response
@@ -69,6 +85,7 @@ namespace LaDa
           if ( nuclear_winter_age > nuclear_winter_length ) 
           {
             *breeding_ops = &normal_ops; 
+            *breeding_howmany = &normal_howmany;
             is_gone_nuclear = false;
             std::string str("Nuclear-winter is over");
             call_back.print_xmgrace(str);
@@ -79,6 +96,7 @@ namespace LaDa
           nuclear_winter_age = 0;
           is_gone_nuclear = true;
           *breeding_ops = &nuclear_ops; 
+          *breeding_howmany = &nuclear_howmany;
           taboo.set_problematic(false);
           std::string str("Going Nuclear");
           call_back.print_xmgrace(str);
