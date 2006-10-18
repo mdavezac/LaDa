@@ -254,7 +254,7 @@ namespace LaDa
     std::string special_char = ""; 
     if ( not _print_ch ) 
       special_char = "? ";
-    _f << "   evaluation calls: " << EvalCounter << std::endl;
+    _f << " # " << special_char << " evaluation calls: " << EvalCounter << std::endl;
     _f << " # " << special_char << "polynomial calls: " 
        << VA_CE::Polynome::nb_eval << " "
        << VA_CE::Polynome::nb_eval_grad << " "

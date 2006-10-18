@@ -257,7 +257,8 @@ namespace LaDa
       std::string str = sibling->Value();
       double prob = 0.0;
       int period = 0;
-      bool is_op = false;
+      this_op = NULL;
+      bool is_gen_op = false;
       
 
       // then creates sibling
@@ -270,7 +271,6 @@ namespace LaDa
         this_op = new Crossover<t_Object>( d );
         eostates.storeFunctor( static_cast< Crossover<t_Object> *>(this_op) );
         _f << "# " << _special << _base << "Crossover: value=" << d;
-        is_op = true;
       }
       else if ( str.compare("Mutation" ) == 0 )
       {
@@ -281,20 +281,17 @@ namespace LaDa
         this_op = new Mutation<t_Object>( d );
         eostates.storeFunctor( static_cast< Mutation<t_Object> *>(this_op) );
         _f << "# " << _special << _base << "Mutation: value=" << d;
-        is_op = true;
       }
       else if ( str.compare("Minimizer") == 0 )
       {
         _f << "# " << _special << _base << "Minimizer: ";
         this_op = Load_Minimizer( sibling, _f );
-        is_op = true;
       }
       else if ( str.compare("UtterRandom") == 0 )
       {
         this_op = new UtterRandom<t_Object>;
         eostates.storeFunctor( static_cast< UtterRandom<t_Object> *>(this_op) );
         _f << "# " << _special << _base << "UtterRandom ";
-        is_op = true;
       }
       else if ( str.compare("TabooOp") == 0  and taboos )
       {
@@ -302,11 +299,13 @@ namespace LaDa
         std :: string special = _special + _base;
         eoGenOp<t_Object> *taboo_op;
         taboo_op = make_genetic_op( *sibling->FirstChildElement(), _f,  special, _base, NULL);
-        _f << "# " << _special << _base << "And end";
+        _f << "# " << _special << _base << "TabooOp end";
         this_op = new TabooOp<t_Object> ( *taboo_op, *taboos, pop_size+1, eostates );
         eostates.storeFunctor( static_cast< TabooOp<t_Object> *>(this_op) );
-        is_op = true;
+        is_gen_op = true;
       }
+      else if ( str.compare("TabooOp") == 0 )
+        this_op = make_genetic_op( *sibling->FirstChildElement(), _f,  _special, _base, NULL);
       else if ( str.compare("Operators") == 0 )
       {
         if (     sibling->Attribute("type") )
@@ -320,10 +319,9 @@ namespace LaDa
             eostates.storeFunctor( new_branch );
             this_op = make_genetic_op( *sibling->FirstChildElement(), _f,  special, _base, new_branch);
             _f << "# " << _special << _base << "And end";
-             is_op = true;
           }
         }
-        if ( not is_op )
+        if ( not this_op )
         {
           _f << "# " << _special << _base << "Or begin " << std::endl;
           std :: string special = _special + _base;
@@ -332,18 +330,19 @@ namespace LaDa
           this_op = make_genetic_op( *sibling->FirstChildElement(), _f,  special, _base, new_branch);
           _f << "# " << _special << _base << "Or end";
         }
-        is_op = true;
+        is_gen_op = true;
       }
-      if ( is_op and sibling->Attribute("period", &period) )
+      if ( this_op and sibling->Attribute("period", &period) )
       {
         if (period > 0 and abs(period) < max_generations )
         {
           _f << " period= " << prob;
           this_op = new PeriodicOp<t_Object>( *this_op, abs(period), *nb_generations, eostates );
           eostates.storeFunctor( static_cast< PeriodicOp<t_Object> *>(this_op) );
+          is_gen_op = true;
         }
       }
-      if ( is_op and current_op != NULL )
+      if ( this_op and current_op != NULL )
       {
         if (not sibling->Attribute("prob", &prob) )
           prob = 1.0;
@@ -353,10 +352,15 @@ namespace LaDa
         else if ( current_op->className().compare("ProportionalOp") == 0 )
           static_cast< eoProportionalOp<t_Object>* >(current_op)->add( *this_op, prob );
       }
-      else if ( is_op )
+      else if ( this_op )
       {
-        current_op = &wrap_op<t_Object>(*this_op, eostates);
-        _f << std::endl;
+        if ( is_gen_op )
+        {
+          current_op = static_cast<eoGenOp<t_Object>*> (this_op);
+          _f << std::endl;
+        }
+        else 
+          current_op = &wrap_op<t_Object>(*this_op, eostates);
       }
     }
     
@@ -608,13 +612,10 @@ namespace LaDa
 
       // then creates breeder op
       child = docHandle.FirstChild("LaDa")
-                       .FirstChild("GA")
-                       .FirstChild("Operators").Element();
-      if (not child )
-        throw "";
+                       .FirstChild("GA").Element();
       xmgrace_file << "# Breeding Operator begin " << std::endl;
       std::string str = "  ";
-      breeder_ops = make_genetic_op(*child, xmgrace_file, str, str);
+      breeder_ops = make_genetic_op(*child->FirstChildElement(), xmgrace_file, str, str);
       xmgrace_file << "# Breeding Operator end " << std::endl;
       if ( not breeder_ops )
         throw "Error while creating operators in  Darwin<t_Object, t_Lamarck>  :: make_GenOp ";
@@ -706,16 +707,24 @@ namespace LaDa
     std::string special = " ";
     if ( not print_ch )
       special = " ? ";
-    xmgrace_file << " #" << special <<  "iteration:" << nb_generations->value(); 
-    lamarck->print_xmgrace( xmgrace_file,  print_ch );
-    if ( print_ch )
-      population.begin()->validate_baseline();
-
     std::vector< std::string > :: const_iterator i_str = print_strings.begin();
     std::vector< std::string > :: const_iterator i_end = print_strings.end();
-    for ( ; i_str != i_end; ++i_str )
-      xmgrace_file << " #" << special << (*i_str) << std::endl;
-    print_strings.clear();
+    if ( i_str != i_end )
+    {
+      xmgrace_file << " #" << special <<  "iteration:" << nb_generations->value() << std::endl; 
+      for ( ; i_str != i_end; ++i_str )
+        xmgrace_file << " #" << special << (*i_str) << std::endl;
+      print_strings.clear();
+    }
+    else if ( print_ch )
+      xmgrace_file << " #" << special <<  "iteration:" << nb_generations->value(); 
+
+    if ( print_ch )
+    {
+      lamarck->print_xmgrace( xmgrace_file,  print_ch );
+      population.begin()->validate_baseline();
+    }
+
 
     xmgrace_file.flush();
     xmgrace_file.close();

@@ -77,7 +77,7 @@ namespace LaDa
               MotU_ref(_indiv.MotU_ref), 
               quantity_is_valid (_indiv.quantity_is_valid),
               quantity(_indiv.quantity), baseline(_indiv.baseline), 
-              age(0), phenotype(NULL)
+              age(_indiv.age), phenotype(NULL)
       {
         variables = new t_Container;
         *variables = *_indiv.variables;
