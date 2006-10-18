@@ -13,11 +13,9 @@ using opt::PHYSICAL_MINIMIZER;
 using opt::LINEAR_MINIMIZER;
 using opt::SA_MINIMIZER;
 
-#include ".svn_revision.h"
-
-
 namespace LaDa 
 {
+  const unsigned svn_revision = 121;
   template<class t_Object, class t_Lamarck> 
     const unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
