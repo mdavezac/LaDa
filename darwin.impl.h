@@ -296,7 +296,17 @@ namespace LaDa
         _f << "# " << _special << _base << "UtterRandom ";
         is_op = true;
       }
-
+      else if ( str.compare("TabooOp") == 0  and taboos )
+      {
+        _f << "# " << _special << _base << "TabooOp begin " << std::endl;
+        std :: string special = _special + _base;
+        eoGenOp<t_Object> *taboo_op;
+        taboo_op = make_genetic_op( *sibling->FirstChildElement(), _f,  special, _base, NULL);
+        _f << "# " << _special << _base << "And end";
+        this_op = new TabooOp<t_Object> ( *taboo_op, *taboos, pop_size+1, eostates );
+        eostates.storeFunctor( static_cast< TabooOp<t_Object> *>(this_op) );
+        is_op = true;
+      }
       else if ( str.compare("Operators") == 0 )
       {
         if (     sibling->Attribute("type") )
@@ -526,7 +536,7 @@ namespace LaDa
     eostates.storeFunctor(nb_generations);
     check_point->add(*nb_generations);
 
-    // taboos -- needs to create operators first
+    // taboos
     {
       std::ofstream xmgrace_file( xmgrace_filename.c_str(), std::ios_base::out|std::ios_base::app );
       Taboo<t_Object, std::list<t_Object> > *agetaboo = NULL;
@@ -540,36 +550,12 @@ namespace LaDa
         throw "Could not load input file in  Darwin<t_Object, t_Lamarck>  :: make_breeder";
       }
 
-      // first creates breeder op
-      TiXmlElement *child = docHandle.FirstChild("LaDa")
-                                     .FirstChild("GA")
-                                     .FirstChild("Operators").Element();
-      if (not child )
-        throw "";
-      xmgrace_file << "# Breeding Operator begin " << std::endl;
-      std::string str = "  ";
-      breeder_ops = make_genetic_op(*child, xmgrace_file, str, str);
-      xmgrace_file << "# Breeding Operator end " << std::endl;
-      if ( not breeder_ops )
-        throw "Error while creating operators in  Darwin<t_Object, t_Lamarck>  :: make_GenOp ";
-
-      // then creates nuclear age and nuclear ops
-      child = docHandle.FirstChild("LaDa")
-                       .FirstChild("GA")
-                       .FirstChild("Taboos").Element();
-      if (not child)
-      {
-        xmgrace_file.flush();
-        xmgrace_file.close();
-        return check_point;
-      }
-
 
       // creates age taboo
-      child = docHandle.FirstChild("LaDa")
-                       .FirstChild("GA")
-                       .FirstChild("Taboos")
-                       .FirstChild("AgeTaboo").Element();
+      TiXmlElement *child = docHandle.FirstChild("LaDa")
+                                     .FirstChild("GA")
+                                     .FirstChild("Taboos")
+                                     .FirstChild("AgeTaboo").Element();
       if (child)
       {
         // creates the taboo list
@@ -620,12 +606,20 @@ namespace LaDa
       else if (poptaboo) 
         taboos = poptaboo;
 
-      if ( taboos ) // creates a TabooOp around all the above
-      {
-        breeder_ops = new TabooOp<t_Object> ( *breeder_ops, *taboos, pop_size+1, eostates );
-        eostates.storeFunctor(breeder_ops);
-      }
+      // then creates breeder op
+      child = docHandle.FirstChild("LaDa")
+                       .FirstChild("GA")
+                       .FirstChild("Operators").Element();
+      if (not child )
+        throw "";
+      xmgrace_file << "# Breeding Operator begin " << std::endl;
+      std::string str = "  ";
+      breeder_ops = make_genetic_op(*child, xmgrace_file, str, str);
+      xmgrace_file << "# Breeding Operator end " << std::endl;
+      if ( not breeder_ops )
+        throw "Error while creating operators in  Darwin<t_Object, t_Lamarck>  :: make_GenOp ";
 
+      // finally creates nuclear winter
       child = docHandle.FirstChild("LaDa")
                        .FirstChild("GA")
                        .FirstChild("Taboos")
