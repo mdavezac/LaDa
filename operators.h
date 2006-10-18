@@ -1,7 +1,7 @@
 #ifndef _OPERATORS_H_
 #define _OPERATORS_H_
 //   defines a mutation and a crossover operator
-//   Object template should be some LaDa::Individual<..,..>
+//   t_Object template should be some LaDa::Individual<..,..>
 //   also defines a randomization operator
 
 #include <exception>
@@ -18,8 +18,8 @@
 
 namespace LaDa 
 {
-  template<class Object> 
-  class Crossover : public eoBinOp<Object> 
+  template<class t_Object> 
+  class Crossover : public eoBinOp<t_Object> 
   {
     private:
       double probability;
@@ -32,10 +32,10 @@ namespace LaDa
 
       virtual std::string className() const { return "LaDa::Crossover"; }
 
-      bool operator() (Object &object1, const Object &object2) 
+      bool operator() (t_Object &object1, const t_Object &object2) 
       {
-        typename Object::CONTAINER_ITERATOR i_object1, i_last;
-        typename Object::CONST_CONTAINER_ITERATOR i_object2;
+        typename t_Object :: iterator i_object1, i_last;
+        typename t_Object :: const_iterator i_object2;
 
         i_object1 = object1.begin();
         i_object2 = object2.begin();
@@ -51,10 +51,10 @@ namespace LaDa
 
       void print_out( std::ostream &_str)
         {  std::cout << "Crossover, v=" << probability << " "; }
-  }; // class Crossover : public eoGenOp<Object>
+  }; // class Crossover : public eoGenOp<t_Object>
 
-  template<class Object> 
-  class Mutation : public eoMonOp<Object> 
+  template<class t_Object> 
+  class Mutation : public eoMonOp<t_Object> 
   {
     private:
       double probability;
@@ -67,9 +67,9 @@ namespace LaDa
       void set_probability(double &_c)
         { probability = _c; }
 
-      bool operator() (Object &object) 
+      bool operator() (t_Object &object) 
       {
-        typename Object::CONTAINER_ITERATOR i_object, i_last;
+        typename t_Object :: iterator i_object, i_last;
         bool mutated = false;
 
         i_object = object.begin();
@@ -89,19 +89,19 @@ namespace LaDa
 
     // void print_out( std::ostream &_str)
     //   {  std::cout << "Mutation, v=" << probability << " "; }
-  }; // class Mutation<Object> : public eoMonOp<Object> 
+  }; // class Mutation<t_Object> : public eoMonOp<t_Object> 
 
-  template<class Object> 
-  class UtterRandom : public eoMonOp<Object> 
+  template<class t_Object> 
+  class UtterRandom : public eoMonOp<t_Object> 
   {
     public:
       UtterRandom(){};
 
       virtual std::string className() const { return "LaDa::UtterRandom"; }
 
-      bool operator() (Object &object)
+      bool operator() (t_Object &object)
       {
-        typename Object::CONTAINER_ITERATOR i_object, i_last;
+        typename t_Object :: iterator i_object, i_last;
 
         i_object = object.begin();
         i_last = object.end();
@@ -114,7 +114,7 @@ namespace LaDa
       }
     // void print_out( std::ostream &_str)
     //   {  std::cout << "UtterRandom " << probability << " "; }
-  }; // class Mutation<Object> : public eoMonOp<Object> 
+  }; // class Mutation<t_Object> : public eoMonOp<t_Object> 
   
   template<class EO_OBJECT, class CALL_BACK> 
   class MinimizationOp : public eoMonOp<EO_OBJECT> 

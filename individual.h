@@ -14,7 +14,7 @@
 #include<functional>
 
 // functional should be some class derived from 
-// opt::Function<TYPE, CONTAINTER>, where CONTAINER supports random
+// opt::Function<t_Type, t_Container>, where t_Container supports random
 // access iterators
 //
 
@@ -25,45 +25,75 @@ namespace LaDa
   {
 
     public:
-      typedef typename FUNCTIONAL::TYPE TYPE;
-      typedef typename FUNCTIONAL::CONTAINER CONTAINER;
-      typedef typename CONTAINER::iterator CONTAINER_ITERATOR;
-      typedef typename CONTAINER::iterator iterator;
-      typedef typename CONTAINER::const_iterator CONST_CONTAINER_ITERATOR;
-      typedef TYPE AtomType;
-      typedef FITNESS Fitness;
+      typedef FUNCTIONAL t_Functional;
+      typedef typename t_Functional::t_Type t_Type;
+      typedef typename t_Functional::t_Container t_Container;
+      typedef typename t_Functional::iterator iterator;
+      typedef typename t_Functional::const_iterator const_iterator;
+      typedef t_Type AtomType;
+      typedef FITNESS t_Fitness;
+      typedef FITNESS Fitness; // for eo
 
     public:
-      using FUNCTIONAL :: variables;
-      using FUNCTIONAL :: set_variables;
-      using FUNCTIONAL :: get_variables;
+      using t_Functional :: variables;
+      using t_Functional :: set_variables;
 
     private:
-      Fitness repFitness;
+      t_Fitness repFitness;
       int MotU_ref; // ref to master of the universe
       static bool baseline_is_valid;
       bool quantity_is_valid;
-      TYPE quantity, baseline;
+      t_Type quantity, baseline;
       unsigned age;
+      t_Container *phenotype;
+
+    public:
+      static bool is_using_phenotype;
       
 
     public: 
-      Individual() : FUNCTIONAL(), repFitness(Fitness()), 
-                     MotU_ref(0), quantity_is_valid (false)
-        { variables = new CONTAINER; age = 0; };
+      Individual() : MotU_ref(0), quantity_is_valid (false), age(0)
+      {
+        variables = new t_Container;
+        phenotype = NULL;
+        if ( is_using_phenotype )
+          phenotype = new t_Container;
+        else 
+          phenotype = variables;
+      };
       
-      Individual(const Individual<FITNESS, FUNCTIONAL> &_indiv ) :
+      ~Individual()
+      {
+        if (variables)
+          delete variables;  
+        variables = NULL; 
+        if (is_using_phenotype)
+          delete phenotype;  
+        phenotype = NULL;
+      };
+
+      Individual(const Individual<FITNESS, t_Functional> &_indiv ) :
               repFitness(_indiv.repFitness),
               MotU_ref(_indiv.MotU_ref), 
               quantity_is_valid (_indiv.quantity_is_valid),
-              quantity(_indiv.quantity), baseline(_indiv.baseline), age(0)
+              quantity(_indiv.quantity), baseline(_indiv.baseline), 
+              age(0), phenotype(NULL)
       {
-        variables = new CONTAINER(_indiv.variables->size()); 
+        variables = new t_Container;
         *variables = *_indiv.variables;
+        phenotype = variables;
+        if ( is_using_phenotype )
+        {
+          phenotype = new t_Container;
+          *phenotype = *_indiv.phenotype;
+        }
       };
 
-      ~Individual()
-        { if (variables) delete variables;  variables = NULL; };
+      virtual t_Container* get_variables() const
+      { return phenotype; }
+      virtual t_Type get_concentration() const
+      { return ( std::accumulate(phenotype->begin(), phenotype->end(), 0.0) 
+                  / ( (double) phenotype->size() ) ); }
 
       void invalidate() { quantity_is_valid = false; }
       void invalidate_baseline()
@@ -79,16 +109,16 @@ namespace LaDa
         { return not quantity_is_valid; }
 
 
-      void set_quantity( TYPE _q )
+      void set_quantity( t_Type _q )
       {
         quantity = _q;
         quantity_is_valid = true;
       }
-      TYPE get_quantity() const
+      t_Type get_quantity() const
         { return quantity; }
-      void set_baseline( TYPE _b )
+      void set_baseline( t_Type _b )
         { baseline = _b; }
-      TYPE get_baseline() const
+      t_Type get_baseline() const
         { return baseline; }
 
       void  set_age( unsigned _age )
@@ -100,11 +130,11 @@ namespace LaDa
       int get_MotU_ref() const
         { return MotU_ref; }
 
-      bool operator<(const Individual<FITNESS, FUNCTIONAL>& _eo2) const
+      bool operator<(const Individual<FITNESS, t_Functional>& _eo2) const
         { return fitness() < _eo2.fitness(); }
-      bool operator>(const Individual<FITNESS, FUNCTIONAL>& _eo2) const
+      bool operator>(const Individual<FITNESS, t_Functional>& _eo2) const
         { return !(fitness() <= _eo2.fitness()); }
-      void operator=( const Individual<FITNESS, FUNCTIONAL> &_indiv )
+      void operator=( const Individual<FITNESS, t_Functional> &_indiv )
       {
         repFitness = _indiv.repFitness;
         MotU_ref   = _indiv.MotU_ref;
@@ -113,8 +143,12 @@ namespace LaDa
         baseline = _indiv.baseline;
         *variables = *_indiv.variables;
         age = _indiv.age;
+        if ( is_using_phenotype )
+          *phenotype = *_indiv.phenotype;
+        else
+          phenotype = variables;
       }
-      bool operator==( const Individual<FITNESS, FUNCTIONAL> &_indiv )
+      bool operator==( const Individual<FITNESS, t_Functional> &_indiv )
       {
         unsigned size = variables->size();
         if ( size != _indiv.variables->size() )
@@ -125,7 +159,7 @@ namespace LaDa
                            _indiv.variables->begin() );
       }
         
-      Fitness fitness() const
+      t_Fitness fitness() const
       {
          if (not quantity_is_valid)
            throw std::runtime_error("wtf invalid fitness");
@@ -153,8 +187,8 @@ namespace LaDa
         } // EO stuff
         // prints ref
         _os << MotU_ref << " " << variables->size() << " ";
-        CONST_CONTAINER_ITERATOR i_var  = variables->begin();
-        CONST_CONTAINER_ITERATOR i_last = variables->end();
+        const_iterator i_var  = variables->begin();
+        const_iterator i_last = variables->end();
         for( ; i_var != i_last; ++i_var )
           _os << *i_var << " ";
       }
@@ -181,20 +215,31 @@ namespace LaDa
         _is >> var_size;
         variables->resize(var_size);
 
-        CONTAINER_ITERATOR i_var = variables->begin();
-        CONTAINER_ITERATOR i_last = variables->end();
+        iterator i_var = variables->begin();
+        iterator i_last = variables->end();
         for( ; i_var != i_last; ++i_var )
           _is >> *i_var;
       }
 
       void print_out( std::ostream &_stream ) const
       {
-        CONTAINER_ITERATOR i_var = variables->begin();
-        CONTAINER_ITERATOR i_last = variables->end();
+        iterator i_var = variables->begin();
+        iterator i_last = variables->end();
         for( ; i_var != i_last; ++i_var )
           _stream << int(*i_var) << " ";
       }
 
+      void set_genotype_to_phenotype()
+        { std::copy( phenotype->begin(), phenotype->end(), variables->begin() ); }
+      void set_phenotype_to_genotype()
+        { std::copy( variables->begin(), variables->end(), phenotype->begin() ); }
+ 
+      void resize( unsigned n )
+      {
+        t_Functional::resize( n );
+        if ( is_using_phenotype )
+          phenotype->resize( n );
+      }
   };
 
 
@@ -214,6 +259,10 @@ namespace LaDa
 
   template<class FITNESS, class FUNCTIONAL> 
   bool Individual<FITNESS, FUNCTIONAL> :: baseline_is_valid = true; 
+
+  template<class FITNESS, class FUNCTIONAL> 
+  bool Individual<FITNESS, FUNCTIONAL> :: is_using_phenotype = false; 
+
 } // endif LaDa
 
 #endif

@@ -39,7 +39,7 @@ namespace LaDa
 
     public:
       Lamarck() : Functional_Builder(), EvalCounter(0), convex_hull(NULL), filename("input.xml"),
-                  is_one_point_hull(false), minimizers() 
+                  is_one_point_hull(false), minimizers()
       {
         minimizers.reserve(5);
       }

@@ -48,6 +48,7 @@ namespace LaDa
     nuclearwinter = NULL;
 
     print_strings.reserve(10);
+    t_individual :: is_using_phenotype = false;
   }
 
   template< class t_Object, class t_Lamarck >
@@ -180,6 +181,10 @@ namespace LaDa
     }   
 
       
+    // Phenotype vs Genotype
+    child = parent->FirstChildElement( "Phenotype" );
+    if ( child )
+      t_individual :: is_using_phenotype = true;
 
     write_xmgrace_header();
 
@@ -670,6 +675,8 @@ namespace LaDa
       typename t_Object :: iterator i_end = indiv.end();
       for ( ; i_var != i_end; ++i_var)
         *i_var = generator();
+      if ( t_individual :: is_using_phenotype )
+        indiv.set_phenotype_to_genotype();
       population.push_back(indiv);
     }
   }
@@ -681,6 +688,11 @@ namespace LaDa
     xmgrace_file << "# population size: " << pop_size << std::endl;
     xmgrace_file << "# replacement rate: " << replacement_rate << std::endl;
     xmgrace_file << "# max generations: " << max_generations << std::endl;
+    xmgrace_file << "# Using Phenotype: ";
+    if ( t_individual :: is_using_phenotype )
+      xmgrace_file << "true" << std::endl;
+    else
+      xmgrace_file << "false" << std::endl;
     if ( minimize_best > 0 and minimize_best <= 1 )
     {
       xmgrace_file << "# minimize best: rate " << minimize_best

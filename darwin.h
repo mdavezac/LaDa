@@ -87,9 +87,9 @@ namespace LaDa
       virtual void operator()(eoPop<t_Object>& _pop) {}
       void run();
 
-      typename t_Object :: TYPE evaluate( const double &x ) const
+      typename t_Object :: t_Type evaluate( const double &x ) const
         { return lamarck->evaluate( x );  }
-      typename t_Object :: TYPE evaluate( t_Object &_object ) const
+      typename t_Object :: t_Type evaluate( t_Object &_object ) const
         { return lamarck->evaluate( _object );  }
       bool minimize( const t_Object &_object, const unsigned &_nb )
         { return lamarck->minimize( _object, _nb);  }
