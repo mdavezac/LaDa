@@ -638,13 +638,10 @@ namespace LaDa
           throw "Error while creating operators in  Darwin<t_Object, t_Lamarck>  :: make_GenOp ";
         
         // creates the NuclearWinter 
-        int d;
-        child->Attribute("length", &d);
-        length = ( d > 0 ) ? abs(d) : UINT_MAX;
         nuclearwinter = new NuclearWinter<t_Object, Darwin<t_Object, t_Lamarck> >
                                          ( *taboos, *breeder_ops, *nuclear_op, *this,
                                            replacement_rate );
-        xmgrace_file << "# NuclearWinter, length=" << length << std::endl;
+        xmgrace_file << "# NuclearWinter " << std::endl;
         eostates.storeFunctor( nuclearwinter );
         check_point->add(*nuclearwinter);
       }
