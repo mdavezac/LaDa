@@ -253,105 +253,110 @@ sub template()
     }
   }
 
-  printf OUT "\n\ninclude .dependencies\n\n"; 
+    printf OUT "\n\ncommit: \n\t-svn ci\n\t-svn update\n";
+    printf OUT "\t-svn info | grep Revision | ";
+    printf OUT "awk '{printf \"const unsigned svn_revision = \%%i;\\n\", \$\$2 }' ";
+    printf OUT "> .svn_revision.h \n";
 
-  close OUT;
-}
+    printf OUT "\n\ninclude .dependencies\n\n"; 
+
+    close OUT;
+  }
 
 
 
-sub  write_make_file()
-{
-  my @sorted_keys = sort{ sort_hash($a, $b) } keys %dependencies;
-  template();
-
-  open IN, "make_file_template" or die;
-  open OUT, ">makefile" or die;
-  
-  while ( ($_=<IN> ) )
+  sub  write_make_file()
   {
-    if ( /\?SRCS :=\?/ )
+    my @sorted_keys = sort{ sort_hash($a, $b) } keys %dependencies;
+    template();
+
+    open IN, "make_file_template" or die;
+    open OUT, ">makefile" or die;
+    
+    while ( ($_=<IN> ) )
     {
-      print OUT 'SRCS := ';
-      my $i = 0;
-      foreach $key ( @sorted_keys )
+      if ( /\?SRCS :=\?/ )
       {
-        if ( exists $dependencies{$key}{"source"} )
+        print OUT 'SRCS := ';
+        my $i = 0;
+        foreach $key ( @sorted_keys )
         {
-          if ( $i % 5 == 0 and $i != 0 )
-            { print OUT "\\\n\t"; }
+          if ( exists $dependencies{$key}{"source"} )
+          {
+            if ( $i % 5 == 0 and $i != 0 )
+              { print OUT "\\\n\t"; }
 
-          if ( $dependencies{$key}{"location"} eq "." )
-            { print OUT $key, ".cc "; $i++; }
-          else
-            { print OUT $dependencies{$key}{"location"},"/", $key, ".cc "; $i++; }
+            if ( $dependencies{$key}{"location"} eq "." )
+              { print OUT $key, ".cc "; $i++; }
+            else
+              { print OUT $dependencies{$key}{"location"},"/", $key, ".cc "; $i++; }
+          }
         }
+        print OUT "\n";
+        next;
       }
-      print OUT "\n";
-      next;
-    }
-    elsif (/\?dependencies\?/)
-    { next; }
-    print OUT $_;
-  }
-  
-  close IN;
-  close OUT;
-  system "rm make_file_template";
-
-}
-
-sub add_to_dependencies(\$\$)
-{
-  my $key = $_[0];
-  my $new_key = $_[1];
-
-  if ( ! exists $dependencies{$key}{"depends on"} )
-  {
-    push @{$dependencies{$key}{"depends on"}}, ( "$new_key" ); 
-    return;
-  }
-
-  $w = 0;
-  foreach $dep ( @{$dependencies{$key}{"depends on"}} )
-  {
-     if ( $dep eq $new_key )
-       { last; }
-     $w ++ ;
-  }
-  
-  if ( $w == scalar( @{$dependencies{$key}{"depends on"}} ) )
-    { push @{$dependencies{$key}{"depends on"}}, ( "$new_key" ); }
-}
-
-
-sub write_dependencies()
-{
-  open OUT, ">.dependencies"
-    or die " could not open .dependencies for writing \n";
-
-  my @sorted_keys = sort{ sort_hash($a, $b) } keys %dependencies;
-  foreach $key ( @sorted_keys )
-  {    
-    if ( not exists $dependencies{$key}{"source"} )
+      elsif (/\?dependencies\?/)
       { next; }
-    if ( $dependencies{$key}{"location"} ne "." )
-      { print OUT $dependencies{$key}{"location"}, "/", $key, ".o: ",
-                  $dependencies{$key}{"location"}, "/", $key, ".cc ";}
-    else
-      { print OUT $key, ".o: ", $key, ".cc ";}
+      print OUT $_;
+    }
+    
+    close IN;
+    close OUT;
+    system "rm make_file_template";
 
-    if ( exists $dependencies{$key}{"header"} )
+  }
+
+  sub add_to_dependencies(\$\$)
+  {
+    my $key = $_[0];
+    my $new_key = $_[1];
+
+    if ( ! exists $dependencies{$key}{"depends on"} )
     {
+      push @{$dependencies{$key}{"depends on"}}, ( "$new_key" ); 
+      return;
+    }
+
+    $w = 0;
+    foreach $dep ( @{$dependencies{$key}{"depends on"}} )
+    {
+       if ( $dep eq $new_key )
+         { last; }
+       $w ++ ;
+    }
+    
+    if ( $w == scalar( @{$dependencies{$key}{"depends on"}} ) )
+      { push @{$dependencies{$key}{"depends on"}}, ( "$new_key" ); }
+  }
+
+
+  sub write_dependencies()
+  {
+    open OUT, ">.dependencies"
+      or die " could not open .dependencies for writing \n";
+
+    my @sorted_keys = sort{ sort_hash($a, $b) } keys %dependencies;
+    foreach $key ( @sorted_keys )
+    {    
       if ( not exists $dependencies{$key}{"source"} )
         { next; }
       if ( $dependencies{$key}{"location"} ne "." )
-        { print OUT $dependencies{$key}{"location"}, "/", $key, ".h ";}
+        { print OUT $dependencies{$key}{"location"}, "/", $key, ".o: ",
+                    $dependencies{$key}{"location"}, "/", $key, ".cc ";}
       else
-        { print OUT $key, ".h ";}
-    }
-    my $i = 0;
-    print_recurrent_deps($key);
+        { print OUT $key, ".o: ", $key, ".cc ";}
+
+      if ( exists $dependencies{$key}{"header"} )
+      {
+        if ( not exists $dependencies{$key}{"source"} )
+          { next; }
+        if ( $dependencies{$key}{"location"} ne "." )
+          { print OUT $dependencies{$key}{"location"}, "/", $key, ".h ";}
+        else
+          { print OUT $key, ".h ";}
+      }
+      my $i = 0;
+      print_recurrent_deps($key);
     print OUT "\n\n";
   }    
 

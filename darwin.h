@@ -37,6 +37,7 @@ namespace LaDa
       const static unsigned LAMARCK;
       const static unsigned DARWIN;
       const static unsigned DEBUG;
+      const static std::string svn_version;
 
       // parameters
       double crossover_value; 

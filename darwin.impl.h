@@ -13,6 +13,9 @@ using opt::PHYSICAL_MINIMIZER;
 using opt::LINEAR_MINIMIZER;
 using opt::SA_MINIMIZER;
 
+#include ".svn_revision.h"
+
+
 namespace LaDa 
 {
   template<class t_Object, class t_Lamarck> 
@@ -21,6 +24,7 @@ namespace LaDa
     const unsigned Darwin<t_Object, t_Lamarck> :: LAMARCK = 1;
   template<class t_Object, class t_Lamarck> 
     const unsigned Darwin<t_Object, t_Lamarck> :: DEBUG   = 2;
+    
 
   template< class t_Object, class t_Lamarck >
   Darwin<t_Object, t_Lamarck> :: Darwin ( t_Lamarck *_lam )
@@ -679,6 +683,7 @@ namespace LaDa
   void Darwin <t_Object, t_Lamarck> :: write_xmgrace_header()
   {
     std::ofstream xmgrace_file( xmgrace_filename.c_str(), std::ios_base::out|std::ios_base::trunc ); 
+    xmgrace_file << "# LaDa svn revision: " << ::svn_revision << std::endl;
     xmgrace_file << "# population size: " << pop_size << std::endl;
     xmgrace_file << "# replacement rate: " << replacement_rate << std::endl;
     xmgrace_file << "# max generations: " << max_generations << std::endl;
