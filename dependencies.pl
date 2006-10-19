@@ -44,7 +44,7 @@ if ( $computer =~ /office/ )
   $params{"CXX"} = "g++";
   $params{"LD"}  = "g++";
   $params{"F77"}  = "g77";
-  $params{"CXXFLAGS"}  = "-malign-double -ftemplate-depth-20";
+  $params{"CXXFLAGS"}  = "-malign-double ";
 }
 if ( $computer =~ /lester/ )
 {

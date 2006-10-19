@@ -15,7 +15,7 @@ using opt::SA_MINIMIZER;
 
 namespace LaDa 
 {
-  const unsigned svn_revision = 121;
+  const unsigned svn_revision = 122;
   template<class t_Object, class t_Lamarck> 
     const unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -357,12 +357,10 @@ namespace LaDa
       else if ( this_op )
       {
         if ( is_gen_op )
-        {
           current_op = static_cast<eoGenOp<t_Object>*> (this_op);
-          _f << std::endl;
-        }
         else 
           current_op = &wrap_op<t_Object>(*this_op, eostates);
+        _f << std::endl;
       }
     }
     
@@ -454,6 +452,18 @@ namespace LaDa
           static_cast< SequentialMonOp<t_Object>* >(this_op)->add( utterrandom, prob );
         else
           static_cast< ProportionalMonOp<t_Object>* >(this_op)->add( utterrandom, prob );
+      }
+      else if ( str.compare("Evaluate") == 0 )
+      {
+        EvaluateOp<t_Object, Darwin<t_Object, t_Lamarck> >* evaluateop
+           = new EvaluateOp<t_Object, Darwin<t_Object, t_Lamarck> >(*this);
+        eostates.storeFunctor(evaluateop);
+        _f << "# " << _special << _base << "Evaluate "
+           << " prob "<< prob << std::endl;
+        if ( is_sequential )
+          static_cast< SequentialMonOp<t_Object>* >(this_op)->add( evaluateop, prob );
+        else
+          static_cast< ProportionalMonOp<t_Object>* >(this_op)->add( evaluateop, prob );
       }
       else if ( str.compare("Operators") == 0 )
       {
@@ -681,7 +691,7 @@ namespace LaDa
   void Darwin <t_Object, t_Lamarck> :: write_xmgrace_header()
   {
     std::ofstream xmgrace_file( xmgrace_filename.c_str(), std::ios_base::out|std::ios_base::trunc ); 
-    xmgrace_file << "# LaDa svn revision: " << ::svn_revision << std::endl;
+    xmgrace_file << "# LaDa svn revision: " << svn_revision << std::endl;
     xmgrace_file << "# population size: " << pop_size << std::endl;
     xmgrace_file << "# replacement rate: " << replacement_rate << std::endl;
     xmgrace_file << "# max generations: " << max_generations << std::endl;

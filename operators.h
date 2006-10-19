@@ -44,6 +44,8 @@ namespace LaDa
           if ( rng.uniform() < probability ) 
             *i_object1 = *i_object2;
 
+        if ( t_individual :: is_using_phenotype )
+          object1.set_phenotype_to_genotype();
         object1.invalidate();
         
         return true;
@@ -83,6 +85,9 @@ namespace LaDa
 
         if ( mutated )
           object.invalidate();
+
+        if ( t_individual :: is_using_phenotype )
+          object.set_phenotype_to_genotype();
         
         return mutated;
       }
@@ -115,7 +120,28 @@ namespace LaDa
     // void print_out( std::ostream &_str)
     //   {  std::cout << "UtterRandom " << probability << " "; }
   }; // class Mutation<t_Object> : public eoMonOp<t_Object> 
-  
+
+  template<class t_Object, class t_Call_Back> 
+  class EvaluateOp : public eoMonOp<t_Object> 
+  {
+    private:
+      t_Call_Back &call_back;
+
+    public:
+      EvaluateOp ( t_Call_Back &_call_back ) : call_back(_call_back) {};
+
+      virtual std::string className() const { return "LaDa::EvaluateOp"; }
+
+      bool operator() (t_Object &_object) 
+      {  
+        call_back.evaluate( _object ); 
+        return false;
+      }
+
+    // void print_out( std::ostream &_str)
+    //   {  std::cout << "Mutation, v=" << probability << " "; }
+  }; // class EvaluateOp<t_Object, t_Call_Back> : public eoMonOp<t_Object> 
+
   template<class EO_OBJECT, class CALL_BACK> 
   class MinimizationOp : public eoMonOp<EO_OBJECT> 
   {

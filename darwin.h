@@ -3,16 +3,18 @@
 
 //-----------------------------------------------------------------------------
 
-#include <apply.h>
-#include <eoAlgo.h>
-#include <eoPopAlgo.h>
-#include <eoPopEvalFunc.h>
-#include <eoContinue.h>
-#include <eoSelect.h>
-#include <eoTransform.h>
-#include <eoBreed.h>
-#include <eoMergeReduce.h>
-#include <eoReplacement.h>
+#undef min 
+#undef max
+#include <eo/apply.h>
+#include <eo/eoAlgo.h>
+#include <eo/eoPopAlgo.h>
+#include <eo/eoPopEvalFunc.h>
+#include <eo/eoContinue.h>
+#include <eo/eoSelect.h>
+#include <eo/eoTransform.h>
+#include <eo/eoBreed.h>
+#include <eo/eoMergeReduce.h>
+#include <eo/eoReplacement.h>
 #include <eo/eoGenOp.h>
 #include <eo/eoGenContinue.h>
 #include <eo/utils/eoUpdater.h>
