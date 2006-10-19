@@ -35,6 +35,9 @@ namespace LaDa
   template<class t_Object, class t_Lamarck>
   class Darwin: public eoAlgo<t_Object>
   {
+    protected:
+      typedef Darwin<t_Object, t_Lamarck> t_Darwin;
+
     protected: 
       const static unsigned LAMARCK;
       const static unsigned DARWIN;

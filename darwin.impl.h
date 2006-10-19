@@ -15,7 +15,7 @@ using opt::SA_MINIMIZER;
 
 namespace LaDa 
 {
-  const unsigned svn_revision = 122;
+  const unsigned svn_revision = 123;
   template<class t_Object, class t_Lamarck> 
     const unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -534,6 +534,15 @@ namespace LaDa
   template< class t_Object, class t_Lamarck >
   eoCheckPoint<t_Object>* Darwin<t_Object, t_Lamarck> :: make_checkpoint()
   {
+    TiXmlDocument doc( filename.c_str() );
+    TiXmlHandle docHandle( &doc );
+    TiXmlElement *child;
+    if  ( !doc.LoadFile() )
+    {
+      std::cout << doc.ErrorDesc() << std::endl; 
+      throw "Could not load input file in  Darwin<t_Object, t_Lamarck>  :: make_breeder";
+    }
+
     // continuator
     eoGenContinue<t_Object> *gen_continue = new eoGenContinue<t_Object>(max_generations);
     eostates.storeFunctor( gen_continue );
@@ -553,26 +562,32 @@ namespace LaDa
     eostates.storeFunctor(nb_generations);
     check_point->add(*nb_generations);
 
+    // some statistics
+    child = docHandle.FirstChild("LaDa")
+                     .FirstChild("GA")
+                     .FirstChild("Statistics").Element();
+    if ( child )
+    {
+      AverageIndividual< t_Object, t_Darwin > *average
+          = new AverageIndividual< t_Object, t_Darwin >( *this, *nb_generations, 
+                                                         lamarck->get_pb_size() );
+      eostates.storeFunctor( average );
+      check_point->add( *average );
+    }
+
+
     // taboos
     {
       std::ofstream xmgrace_file( xmgrace_filename.c_str(), std::ios_base::out|std::ios_base::app );
       Taboo<t_Object, std::list<t_Object> > *agetaboo = NULL;
       Taboo<t_Object> *poptaboo = NULL;
       unsigned length;
-      TiXmlDocument doc( filename.c_str() );
-      TiXmlHandle docHandle( &doc );
-      if  ( !doc.LoadFile() )
-      {
-        std::cout << doc.ErrorDesc() << std::endl; 
-        throw "Could not load input file in  Darwin<t_Object, t_Lamarck>  :: make_breeder";
-      }
-
 
       // creates age taboo
-      TiXmlElement *child = docHandle.FirstChild("LaDa")
-                                     .FirstChild("GA")
-                                     .FirstChild("Taboos")
-                                     .FirstChild("AgeTaboo").Element();
+      child = docHandle.FirstChild("LaDa")
+                       .FirstChild("GA")
+                       .FirstChild("Taboos")
+                       .FirstChild("AgeTaboo").Element();
       if (child)
       {
         // creates the taboo list
