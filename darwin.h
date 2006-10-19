@@ -66,7 +66,7 @@ namespace LaDa
 
       eoState eostates;
       eoIncrementorParam<unsigned> *nb_generations;
-      eoPop<t_Object> population;
+      eoPop<t_Object> population, offsprings;
 
       std::string filename;
       std::string xmgrace_filename;
@@ -78,7 +78,7 @@ namespace LaDa
       eoReplacement<t_Object>*       replace;
       eoPopAlgo<t_Object>*           extra_popalgo;
       Taboo_Base<t_Object>*          taboos;
-      NuclearWinter<t_Object, Darwin<t_Object, t_Lamarck> >* nuclearwinter;
+      NuclearWinter<t_Object, t_Darwin >* nuclearwinter;
 
       t_Lamarck *lamarck;
 

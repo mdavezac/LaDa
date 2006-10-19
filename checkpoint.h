@@ -185,7 +185,7 @@ namespace LaDa
 
   // Gets an average of individuals accumulated over all generations
   template< class t_Object, class t_Call_Back >
-  class AverageIndividual : public eoStatBase<t_Object>
+  class AccAverage : public eoStatBase<t_Object>
   {
     protected:
       t_Call_Back &call_back;
@@ -194,29 +194,32 @@ namespace LaDa
       t_Object average;
 
     public:
-      AverageIndividual  ( t_Call_Back &_call_back,
-                           eoIncrementorParam<unsigned> &_age,
-                           unsigned _size )
-                       : call_back( _call_back ), age(_age),
-                         total_individuals(0)
-      {
+      AccAverage   ( t_Call_Back &_call_back,
+                     eoIncrementorParam<unsigned> &_age,
+                     unsigned _size )
+                 : call_back( _call_back ), age(_age),
+                   total_individuals(0)
+      {           
         average.resize( _size ); // should initialize to 0 in opt_function_base.h
       }
-      virtual ~AverageIndividual() {}
-      virtual std::string className(void) const { return "LaDa::UpdateTaboo"; }
+      virtual ~AccAverage() {}
+      virtual std::string className(void) const { return "LaDa::AccAverage"; }
       virtual void operator()( const eoPop<t_Object> &_pop )
       {
         unsigned this_age = age.value();
         typename eoPop<t_Object> :: const_iterator i_indiv = _pop.begin();
         typename eoPop<t_Object> :: const_iterator i_end = _pop.end();
+        typename t_Object :: iterator i_av_begin = average.begin();
+        typename t_Object :: iterator i_av_end = average.end();
+        typename t_Object :: iterator i_average;
+        typename t_Object :: const_iterator i_var;
         for( ; i_indiv != i_end; ++i_indiv )
           if ( i_indiv->get_age() == this_age )
           {
             ++total_individuals;
-            typename t_Object :: const_iterator i_var = i_indiv->begin();
-            typename t_Object :: const_iterator i_var_end = i_indiv->end();
-            typename t_Object :: iterator i_average = average.begin();
-            for ( ; i_var != i_var_end; ++i_var, ++i_average )
+            i_var = i_indiv->begin();
+            i_average = i_av_begin ;
+            for ( ; i_average != i_av_end; ++i_var, ++i_average )
                *i_average += *i_var;
           }
 
@@ -225,9 +228,58 @@ namespace LaDa
           std::ostringstream sstr; 
           typename t_Object :: const_iterator i_var = average.begin();
           typename t_Object :: const_iterator i_var_end = average.end();
-          sstr << "Average Individual: " << std::setw(5) << std::setprecision(2);
+          sstr << "AccAverage: " << std::setw(5) << std::setprecision(2);
           for( ; i_var != i_var_end; ++i_var )
-            sstr << (*i_var / total_individuals) << " ";
+            sstr << (*i_var / (double) total_individuals) << " ";
+          std::string str = sstr.str();
+          call_back.print_xmgrace( str );
+        }
+      }
+  };
+
+  // Gets an average of individuals accumulated over this generations
+  template< class t_Object, class t_Call_Back >
+  class PopAverage : public eoStatBase<t_Object>
+  {
+    protected:
+      t_Call_Back &call_back;
+      t_Object average;
+
+    public:
+      PopAverage   ( t_Call_Back &_call_back,
+                     unsigned _size )
+                 : call_back( _call_back )
+      {
+        average.resize( _size ); // should initialize to 0 in opt_function_base.h
+      }
+      virtual ~PopAverage() {}
+      virtual std::string className(void) const { return "LaDa::PopAverage"; }
+      virtual void operator()( const eoPop<t_Object> &_pop )
+      {
+        unsigned pSize = _pop.size();
+        typename t_Object :: iterator i_av_begin = average.begin();
+        typename t_Object :: iterator i_av_end = average.end();
+        typename t_Object :: iterator i_average;
+        typename eoPop<t_Object> :: const_iterator i_indiv = _pop.begin();
+        typename eoPop<t_Object> :: const_iterator i_end = _pop.end();
+        typename t_Object :: const_iterator i_var;
+        average = *i_indiv;
+        for( ++i_indiv; i_indiv != i_end; ++i_indiv )
+        {
+          i_average = i_av_begin;
+          i_var = i_indiv->begin();
+          for ( ; i_average != i_av_end; ++i_var, ++i_average )
+             *i_average += *i_var;
+        }
+
+        // prints stuff out
+        {
+          std::ostringstream sstr; 
+          typename t_Object :: const_iterator i_var = average.begin();
+          typename t_Object :: const_iterator i_var_end = average.end();
+          sstr << "PopAverage: " << std::setw(5) << std::setprecision(2);
+          for( ; i_var != i_var_end; ++i_var )
+            sstr << (*i_var / (double) pSize ) << " ";
           std::string str = sstr.str();
           call_back.print_xmgrace( str );
         }
