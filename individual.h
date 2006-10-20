@@ -96,15 +96,9 @@ namespace LaDa
                   / ( (double) phenotype->size() ) ); }
 
       void invalidate() { quantity_is_valid = false; }
-      void invalidate_baseline()
-      { 
-        baseline_is_valid = false;
-        invalidate();
-      } 
-      void validate_baseline()
-        { baseline_is_valid = true; } 
-      bool is_baseline_valid() const
-        { return baseline_is_valid; }
+      static void invalidate_baseline();
+      static void validate_baseline();
+      static bool is_baseline_valid();
       bool invalid() const
         { return not quantity_is_valid; }
 
@@ -262,6 +256,17 @@ namespace LaDa
 
   template<class FITNESS, class FUNCTIONAL> 
   bool Individual<FITNESS, FUNCTIONAL> :: is_using_phenotype = false; 
+
+  
+  template<class FITNESS, class FUNCTIONAL> 
+  void Individual<FITNESS, FUNCTIONAL> :: invalidate_baseline()
+    { baseline_is_valid = false; }
+  template<class FITNESS, class FUNCTIONAL> 
+  void Individual<FITNESS, FUNCTIONAL> :: validate_baseline()
+    { baseline_is_valid = true; } 
+  template<class FITNESS, class FUNCTIONAL> 
+  bool Individual<FITNESS, FUNCTIONAL> :: is_baseline_valid()
+    { return baseline_is_valid; }
 
 } // endif LaDa
 

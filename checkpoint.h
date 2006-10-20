@@ -286,6 +286,153 @@ namespace LaDa
       }
   };
 
+  // island continuator. Takes two population iterators and goes through them
+  template<class t_Object, class t_Islands = std::list< eoPop<t_Object> > > 
+  class IslandsContinuator : public eoContinue<t_Object>
+  {
+    typedef typename t_Islands :: iterator iterator;
+    typedef typename t_Islands :: const_iterator const_iterator;
+    protected:
+      std::list < eoContinue<t_Object>* >       continuators;
+      std::list < eoSortedStatBase<t_Object>* > sorted;
+      std::list < eoStatBase<t_Object>* >       stats;
+      std::list < eoMonitor* >                  monitors;
+      std::list < eoUpdater* >                  updaters;
+
+    public:
+      IslandsContinuator( eoContinue<t_Object> &_cont ) 
+        { continuators.push_back( &_cont ); }
+
+      void add(eoContinue<t_Object>& _cont)
+        { continuators.push_back(&_cont); }
+      void add(eoSortedStatBase<t_Object>& _stat)
+        { sorted.push_back(&_stat); }
+      void add(eoStatBase<t_Object>& _stat) 
+        { stats.push_back(&_stat); }
+      void add(eoMonitor& _mon)        
+        { monitors.push_back(&_mon); }
+      void add(eoUpdater& _upd)        
+        { updaters.push_back(&_upd); }
+
+      bool operator()(const eoPop<t_Object>& _pop)
+      { return true; }
+
+      // applies population dependant stuff
+      void apply_stats(const eoPop<t_Object>& _pop) const
+      {
+        // first goes through sorted stats
+        if ( not sorted.empty() )
+        { 
+          typename std::list < eoSortedStatBase<t_Object>* > :: const_iterator i_sorted = sorted.begin();
+          typename std::list < eoSortedStatBase<t_Object>* > :: const_iterator i_end = sorted.end();
+          std::vector<const t_Object*> sorted_pop;
+          _pop.sort(sorted_pop);
+          for ( ; i_sorted != i_end; ++i_sorted )
+            (*i_sorted)->operator()(sorted_pop);
+        }
+        // then through unsorted stats
+        if ( not stats.empty() )
+        { 
+          typename std::list < eoStatBase<t_Object>* > :: const_iterator i_stat = stats.begin();
+          typename std::list < eoStatBase<t_Object>* > :: const_iterator i_end = stats.end();
+          for ( ; i_stat != i_end; ++i_stat )
+            (*i_stat)->operator()(_pop);
+        }
+      } // bool apply ( ... )
+
+      void apply_monitors_updaters()
+      {
+        // applies monitors
+        if ( not monitors.empty() )
+        { 
+          typename std::list < eoMonitor* > :: const_iterator i_monitor = monitors.begin();
+          typename std::list < eoMonitor* > :: const_iterator i_end = monitors.end();
+          for ( ; i_monitor != i_end; ++i_monitor )
+            (*i_monitor)->operator()();
+        }
+        // then through updaters
+        if ( not updaters.empty() )
+        { 
+          typename std::list < eoUpdater* > :: const_iterator i_updater = updaters.begin();
+          typename std::list < eoUpdater* > :: const_iterator i_end = updaters.end();
+          for ( ; i_updater != i_end; ++i_updater )
+            (*i_updater)->operator()();
+        }
+      }
+
+      bool apply_continuators( const eoPop<t_Object> & _pop ) const
+      {
+        typename std::list < eoContinue<t_Object>* > :: const_iterator i_continue = continuators.begin();
+        typename std::list < eoContinue<t_Object>* > :: const_iterator i_end = continuators.end();
+        bool result = (*i_continue)->operator()( _pop); // generation counter
+        for ( ++i_continue; i_continue != i_end; ++i_continue )
+          if ( not (*i_continue)->operator()( _pop) )
+            result = false;
+        return result;
+      }
+
+      void lastCall( const eoPop<t_Object>& _pop ) const 
+      {
+        // first goes through sorted stats
+        if ( not sorted.empty() )
+        { 
+          typename std::list < eoSortedStatBase<t_Object>* > :: const_iterator i_sorted = sorted.begin();
+          typename std::list < eoSortedStatBase<t_Object>* > :: const_iterator i_end = sorted.end();
+          std::vector<const t_Object*> sorted_pop;
+          _pop.sort(sorted_pop);
+          for ( ; i_sorted != i_end; ++i_sorted )
+            (*i_sorted)->lastCall(sorted_pop);
+        }
+        // then through unsorted stats
+        if ( not stats.empty() )
+        { 
+          typename std::list < eoStatBase<t_Object>* > :: const_iterator i_stat = stats.begin();
+          typename std::list < eoStatBase<t_Object>* > :: const_iterator i_end = stats.end();
+          for ( ; i_stat != i_end; ++i_stat )
+            (*i_stat)->lastCall(_pop);
+        }
+        // applies monitors
+        if ( not monitors.empty() )
+        { 
+          typename std::list < eoMonitor* > :: const_iterator i_monitor = monitors.begin();
+          typename std::list < eoMonitor* > :: const_iterator i_end = monitors.end();
+          for ( ; i_monitor != i_end; ++i_monitor )
+            (*i_monitor)->lastCall();
+        }
+        // then through updaters
+        if ( not updaters.empty() )
+        { 
+          typename std::list < eoUpdater* > :: const_iterator i_updater = updaters.begin();
+          typename std::list < eoUpdater* > :: const_iterator i_end = updaters.end();
+          for ( ; i_updater != i_end; ++i_updater )
+            (*i_updater)->lastCall();
+        }
+      }
+
+      bool apply ( iterator &_i_begin, iterator &_i_end )
+      {
+        iterator i_pop = _i_begin;
+        bool result = true;
+
+        for( ; i_pop != _i_end; ++i_pop )
+          apply_stats( *i_pop );
+
+        apply_monitors_updaters();
+
+        for( i_pop = _i_begin; i_pop != _i_end; ++i_pop )
+          if ( not apply_continuators( *i_pop ) )
+            result = false;
+ 
+        if ( not result )
+          for( i_pop = _i_begin; i_pop != _i_end; ++i_pop )
+            lastCall( *i_pop );
+
+        return result;
+      }
+
+      virtual std::string className(void) const { return "LaDa::IslandsContinuator"; }
+  };
+
 } // namespace LaDa
 
 

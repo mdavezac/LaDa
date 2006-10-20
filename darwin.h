@@ -23,6 +23,8 @@
 
 #include <tinyxml/tinyxml.h>
 
+#include <list>
+
 #include "evaluation.h"
 #include "operators.h"
 #include "taboo.h"
@@ -37,6 +39,7 @@ namespace LaDa
   {
     protected:
       typedef Darwin<t_Object, t_Lamarck> t_Darwin;
+      typedef typename std::list< eoPop<t_Object> > t_Islands;
 
     protected: 
       const static unsigned LAMARCK;
@@ -66,12 +69,14 @@ namespace LaDa
 
       eoState eostates;
       eoIncrementorParam<unsigned> *nb_generations;
-      eoPop<t_Object> population, offsprings;
+      unsigned nb_islands;
+      t_Islands islands;
+      eoPop<t_Object> offsprings;
 
       std::string filename;
       std::string xmgrace_filename;
 
-      eoContinue<t_Object>*          continuator;
+      IslandsContinuator<t_Object>*          continuator;
       eoPopEvalFunc<t_Object>*       popEval;
       eoBreed<t_Object>*             breeder;
       eoGenOp<t_Object>*             breeder_ops;
@@ -114,7 +119,7 @@ namespace LaDa
                                          std::string &_base,
                                          eoGenOp<t_Object> *current_op);
       eoBreed<t_Object>* make_breeder();
-      eoCheckPoint<t_Object>* make_checkpoint();
+      IslandsContinuator<t_Object>* make_checkpoint();
       eoReplacement<t_Object>* make_replacement();
       void make_extra_algo();
       void make_algo();

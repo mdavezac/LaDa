@@ -15,7 +15,7 @@ using opt::SA_MINIMIZER;
 
 namespace LaDa 
 {
-  const unsigned svn_revision = 124;
+  const unsigned svn_revision = 125;
   template<class t_Object, class t_Lamarck> 
     const unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -50,7 +50,8 @@ namespace LaDa
     nuclearwinter = NULL;
 
     print_strings.reserve(10);
-    t_individual :: is_using_phenotype = false;
+    t_Object :: is_using_phenotype = false;
+    nb_islands = 1;
   }
 
   template< class t_Object, class t_Lamarck >
@@ -59,28 +60,35 @@ namespace LaDa
     make_algo();
     populate();
     offsprings.clear();
-    popEval->operator()(offsprings, population); // A first eval of pop.
+    typename t_Islands :: iterator i_island_begin = islands.begin();
+    typename t_Islands :: iterator i_island_end = islands.end();
+    typename t_Islands :: iterator i_island;
+    for ( i_island = i_island_begin; i_island != i_island_end; ++i_island )
+      (*popEval)(offsprings, *i_island); // A first eval of pop.
 
     do
     {
       try
       {
-         unsigned pSize = population.size();
-         offsprings.clear(); // new offsprings
-
-         breeder->operator()(population, offsprings);
-
-         popEval->operator()(population, offsprings); // eval of parents + offsprings if necessary
-
-         replace->operator()(population, offsprings); // after replace, the new pop. is in population
-
-         if ( extra_popalgo )
-           extra_popalgo->operator()(population); // minimizes best for instance
-
-         if (pSize > population.size())
-             throw std::runtime_error("Population shrinking!");
-         else if (pSize < population.size())
-             throw std::runtime_error("Population growing!");
+         for ( i_island = i_island_begin; i_island != i_island_end; ++i_island )
+         {
+           unsigned pSize = i_island->size();
+           offsprings.clear(); // new offsprings
+           
+           (*breeder)(*i_island, offsprings);
+           
+           (*popEval)(*i_island, offsprings); // eval of parents + offsprings if necessary
+          
+           (*replace)(*i_island, offsprings); // after replace, the new pop. is in population
+           
+           if ( extra_popalgo )
+             (*extra_popalgo)(*i_island); // minimizes best for instance
+           
+           if (pSize > i_island->size())
+               throw std::runtime_error("Population shrinking!");
+           else if (pSize < i_island->size())
+               throw std::runtime_error("Population growing!");
+         }
 
       }
       catch (std::exception& e)
@@ -89,7 +97,7 @@ namespace LaDa
             s.append( " in eoEasyEA");
             throw std::runtime_error( s );
       }
-    } while ( continuator->operator()( population ) );
+    } while ( continuator->apply( i_island_begin, i_island_end ) );
   }
 
   template<class t_Object, class t_Lamarck >
@@ -179,13 +187,16 @@ namespace LaDa
           evolve_from_start = true;
         }
       } // if attribute "method" exists
+      // number of Islands
+      if ( parent->Attribute("islands", &d ) )
+        nb_islands = ( d > 0 ) ? abs(d) : 1;
     }   
 
       
     // Phenotype vs Genotype
     child = parent->FirstChildElement( "Phenotype" );
     if ( child )
-      t_individual :: is_using_phenotype = true;
+      t_Object :: is_using_phenotype = true;
 
     write_xmgrace_header();
 
@@ -531,7 +542,7 @@ namespace LaDa
   }
 
   template< class t_Object, class t_Lamarck >
-  eoCheckPoint<t_Object>* Darwin<t_Object, t_Lamarck> :: make_checkpoint()
+  IslandsContinuator<t_Object>* Darwin<t_Object, t_Lamarck> :: make_checkpoint()
   {
     TiXmlDocument doc( filename.c_str() );
     TiXmlHandle docHandle( &doc );
@@ -547,7 +558,7 @@ namespace LaDa
     eostates.storeFunctor( gen_continue );
  
     // gen_continue
-    eoCheckPoint<t_Object> *check_point = new eoCheckPoint<t_Object>(*gen_continue);
+    IslandsContinuator<t_Object> *check_point = new IslandsContinuator<t_Object>(*gen_continue);
     eostates.storeFunctor( check_point );
  
     // our very own updater wrapper to print stuff
@@ -587,7 +598,7 @@ namespace LaDa
     {
       std::ofstream xmgrace_file( xmgrace_filename.c_str(), std::ios_base::out|std::ios_base::app );
       Taboo<t_Object, std::list<t_Object> > *agetaboo = NULL;
-      Taboo<t_Object> *poptaboo = NULL;
+      IslandsTaboos<t_Object> *poptaboo = NULL;
       Taboo<t_Object> *offspringtaboo = NULL;
       unsigned length;
 
@@ -629,7 +640,7 @@ namespace LaDa
       if (child)
       {
         xmgrace_file << "# Pop Taboo " << std::endl; 
-        poptaboo = new Taboo<t_Object>( &population );
+        poptaboo = new IslandsTaboos<t_Object>( islands );
         eostates.storeFunctor(poptaboo);
         if ( agetaboo ) 
         {
@@ -716,20 +727,28 @@ namespace LaDa
   void Darwin<t_Object, t_Lamarck> :: populate ()
   {
     Generator generator;
+
     t_Object indiv;
     indiv.resize( lamarck->get_pb_size() );
     indiv.set_age( nb_generations->value() ); 
-    population.clear();
+
+    eoPop<t_Object> population;
     population.reserve(pop_size);
-    for( unsigned i = 0; i < pop_size; ++i )
+
+    for( unsigned n = 0; n < nb_islands; ++n )
     {
-      typename t_Object :: iterator i_var = indiv.begin();
-      typename t_Object :: iterator i_end = indiv.end();
-      for ( ; i_var != i_end; ++i_var)
-        *i_var = generator();
-      if ( t_individual :: is_using_phenotype )
-        indiv.set_phenotype_to_genotype();
-      population.push_back(indiv);
+      for( unsigned i = 0; i < pop_size; ++i )
+      {
+        typename t_Object :: iterator i_var = indiv.begin();
+        typename t_Object :: iterator i_end = indiv.end();
+        for ( ; i_var != i_end; ++i_var)
+          *i_var = generator();
+        if ( t_Object :: is_using_phenotype )
+          indiv.set_phenotype_to_genotype();
+        population.push_back(indiv);
+      }
+      islands.push_back( population );
+      population.clear();
     }
   }
 
@@ -738,11 +757,12 @@ namespace LaDa
   {
     std::ofstream xmgrace_file( xmgrace_filename.c_str(), std::ios_base::out|std::ios_base::trunc ); 
     xmgrace_file << "# LaDa svn revision: " << svn_revision << std::endl;
+    xmgrace_file << "# Number of Islands: " << nb_islands << std::endl;
     xmgrace_file << "# population size: " << pop_size << std::endl;
     xmgrace_file << "# replacement rate: " << replacement_rate << std::endl;
     xmgrace_file << "# max generations: " << max_generations << std::endl;
     xmgrace_file << "# Using Phenotype: ";
-    if ( t_individual :: is_using_phenotype )
+    if ( t_Object :: is_using_phenotype )
       xmgrace_file << "true" << std::endl;
     else
       xmgrace_file << "false" << std::endl;
@@ -761,7 +781,7 @@ namespace LaDa
   void Darwin <t_Object, t_Lamarck> :: print_xmgrace()
   {
     std::ofstream xmgrace_file( xmgrace_filename.c_str(), std::ios_base::out|std::ios_base::app ); 
-    bool print_ch = not population.begin()->is_baseline_valid();
+    bool print_ch = not t_Object :: is_baseline_valid();
     std::string special = " ";
     if ( not print_ch )
       special = " ? ";
@@ -780,7 +800,7 @@ namespace LaDa
     if ( print_ch )
     {
       lamarck->print_xmgrace( xmgrace_file,  print_ch );
-      population.begin()->validate_baseline();
+      t_Object :: validate_baseline();
     }
 
 

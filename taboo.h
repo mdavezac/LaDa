@@ -148,6 +148,49 @@ namespace LaDa
           (*i_taboo)->print_out( str );
       };
   };
+  
+  // a class which taboos a whole list of pops
+  template<class t_Object, class t_Container = eoPop<t_Object>, class t_Islands = std::list< t_Container > > 
+  class IslandsTaboos : public Taboo_Base<t_Object>
+  {
+    protected: 
+      bool problematic;
+      t_Islands &populations;
+
+    public:
+      IslandsTaboos   ( t_Islands &_islands )
+                    : problematic(false), 
+                      populations( _islands ) {};
+      IslandsTaboos   ( const IslandsTaboos<t_Object, t_Container, t_Islands> &_taboos )
+                    : problematic(_taboos.is_problematic), 
+                      populations( _taboos.populations ) {};
+      virtual ~IslandsTaboos(){};
+
+      // as soon as one taboo operator returns true,
+      // function exits with true as well
+      virtual bool operator()( t_Object &_object ) 
+      {
+        if ( populations.empty() )
+          return false;
+
+        typename t_Islands :: iterator i_pop = populations.begin();
+        typename t_Islands :: iterator i_pop_end = populations.end();
+        typename t_Container :: iterator i_end;
+        for ( ; i_pop != i_pop_end; ++i_pop )
+        {
+          i_end = i_pop->end();
+          if  ( not ( i_end == std::find( i_pop->begin(), i_end, _object ) ) )
+            return true;
+        }
+
+        return false;
+      } 
+      virtual void print_out( std::ostream &str ) const {}
+      virtual bool is_problematic() const
+        { return problematic; }
+      virtual void set_problematic( bool _p = false ) 
+        { problematic = _p; }
+  };
 
   template<class t_Object>
   class TabooOp : public eoGenOp<t_Object>
@@ -183,6 +226,8 @@ namespace LaDa
           if ( not taboo( *_object ) )
             return;
         } while ( i < max );
+
+        taboo.set_problematic();
 
         do 
         {
