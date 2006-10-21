@@ -5,6 +5,7 @@
 
 
 #include "generator.h"
+#include "taboo_minimizers.h"
 #include <lamarck/convex_hull.h>
 #include <opt/opt_minimize.h>
 using opt::NO_MINIMIZER;
@@ -15,7 +16,7 @@ using opt::SA_MINIMIZER;
 
 namespace LaDa 
 {
-  const unsigned svn_revision = 125;
+  const unsigned svn_revision = 126;
   template<class t_Object, class t_Lamarck> 
     const unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -298,6 +299,25 @@ namespace LaDa
       {
         _f << "# " << _special << _base << "Minimizer: ";
         this_op = Load_Minimizer( sibling, _f );
+      }
+      else if ( str.compare("TabooMinimizer") == 0 and taboos )
+      {
+        std :: string type = "SA";
+        if ( sibling->Attribute("type") )
+          type = sibling->Attribute("type");
+        if ( type.compare("GradientSA") != 0 )
+          type = "SA";
+        int i=0; unsigned maxeval = UINT_MAX;
+        if ( sibling->Attribute("maxeval", &i ) )
+          maxeval = ( i > 0 ) ? abs(i) : UINT_MAX;
+        _f << "# " << _special << _base << "TabooMinimizer: " 
+           << type << " maxeval " << maxeval;
+        if ( type.compare("SA") )
+          this_op = new SA_TabooOp<t_Object, t_Darwin>( *this, *taboos, maxeval );
+        else
+          this_op = new GradientSA_TabooOp<t_Object, t_Darwin>( *this, *taboos, maxeval );
+
+        eostates.storeFunctor( static_cast< eoMonOp<t_Object> *>(this_op) );
       }
       else if ( str.compare("UtterRandom") == 0 )
       {

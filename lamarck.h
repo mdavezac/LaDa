@@ -15,26 +15,26 @@
 
 namespace LaDa
 {
-  typedef LaDa::Individual<> t_individual ; 
-  typedef opt::Fitness_Function<VA_CE::t_functional, VA_CE::CH_Template> t_fitness;
-  typedef VA_CE :: CH_Template t_convex_hull;
   class Lamarck : public VA_CE :: Functional_Builder
   {
+    public:
+      using VA_CE::Functional_Builder::t_VA_Functional;
+      typedef LaDa::Individual<> t_Individual; 
+      typedef VA_CE :: CH_Template t_Convex_Hull;
+      typedef opt::Fitness_Function<t_VA_Functional, t_Convex_Hull> t_GA_Functional;
+
     public: 
       unsigned EvalCounter;
 
-    protected:
-      typedef t_fitness FITNESS;
-
     private:
       Ising_CE::Structure structure;
-      FUNCTIONAL functional;
-      t_fitness fitness;
-      t_convex_hull *convex_hull;
+      t_VA_Functional functional;
+      t_GA_Functional fitness;
+      t_Convex_Hull *convex_hull;
       std::string filename;
       std::string xml_filename;
       bool is_one_point_hull;
-      std::vector< opt::Minimize_Base<t_fitness> *> minimizers;
+      std::vector< opt::Minimize_Base<t_GA_Functional> *> minimizers;
 
 
     public:
@@ -50,13 +50,13 @@ namespace LaDa
 
       double evaluate( const double &_x ) // convex hull only
         { return convex_hull->evaluate(_x); }
-      double evaluate( t_individual & _individual );
-      bool minimize( const t_individual & _individual, const unsigned &_minimizer );
+      double evaluate( t_Individual & _individual );
+      bool minimize( const t_Individual & _individual, const unsigned &_minimizer );
     
-      t_fitness& get_functional (const t_individual &_individual) 
+      t_GA_Functional& get_functional (const t_Individual &_individual) 
         { return fitness; }
       
-      t_convex_hull& get_convex_hull ()
+      t_Convex_Hull& get_convex_hull ()
         { return *convex_hull; }
 
       unsigned add_minimizer( unsigned type, unsigned n);
@@ -72,6 +72,10 @@ namespace LaDa
           _f << "# N-Point Convex Hull " << std::endl;
       }
       void print_xmgrace( std::ofstream &_f, bool _print_ch );
+
+      t_GA_Functional& get_GA_functional( const t_Individual &_object )
+        { return fitness; }
+      void add_to_convex_hull( const t_Individual &_indiv );
 
     protected:
       virtual bool Load( TiXmlHandle &handle );

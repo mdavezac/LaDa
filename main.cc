@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
     LaDa::Lamarck lamarck;
     if ( not  lamarck.Load("input.xml") )
       throw ""; 
-    LaDa::Darwin<LaDa::t_individual, LaDa::Lamarck> darwin(  &lamarck );
+    LaDa::Darwin<LaDa::Lamarck::t_Individual, LaDa::Lamarck> darwin(  &lamarck );
     if ( not  darwin.Load("input.xml") )
       throw ""; 
     darwin.run();

@@ -26,8 +26,8 @@ namespace LaDa
     convex_hull = NULL;
     if ( minimizers.size() )
     {
-      std::vector< opt::Minimize_Base<t_fitness> * > :: iterator i_minimizer = minimizers.begin();
-      std::vector< opt::Minimize_Base<t_fitness> * > :: iterator i_end = minimizers.end();
+      std::vector< opt::Minimize_Base<t_GA_Functional> * > :: iterator i_minimizer = minimizers.begin();
+      std::vector< opt::Minimize_Base<t_GA_Functional> * > :: iterator i_end = minimizers.end();
       for( ; i_minimizer != i_end; ++i_minimizer )
         delete *i_minimizer;
     }
@@ -160,7 +160,7 @@ namespace LaDa
   void Lamarck :: init_convex_hull()
   {
     Ising_CE::Structure struc; 
-    FUNCTIONAL func;
+    t_VA_Functional func;
 
     // creates structure...
     struc.cell = lattice->cell;
@@ -199,28 +199,28 @@ namespace LaDa
   // adds a minimizer in list 
   unsigned Lamarck :: add_minimizer( unsigned _type, unsigned _n)
   {
-    opt::Minimize_Base<t_fitness> *minimizer;
+    opt::Minimize_Base<t_GA_Functional> *minimizer;
 
     switch( _type )
     {
       case NO_MINIMIZER: 
-        minimizer = new opt::Minimize_Base<t_fitness>;
+        minimizer = new opt::Minimize_Base<t_GA_Functional>;
         break;
       case WANG_MINIMIZER: 
-        minimizer = new opt::Minimize_Wang<t_fitness>;
+        minimizer = new opt::Minimize_Wang<t_GA_Functional>;
         break;
       case PHYSICAL_MINIMIZER: 
-        minimizer = new opt::Minimize_Ssquared<t_fitness>;
+        minimizer = new opt::Minimize_Ssquared<t_GA_Functional>;
         break;
       case SA_MINIMIZER: 
-        minimizer = new opt::Minimize_Linear<t_fitness>;
-        static_cast< opt::Minimize_Linear<t_fitness>* >(minimizer)->simulated_annealing = true;
-        static_cast< opt::Minimize_Linear<t_fitness>* >(minimizer)->max_calls = _n;
+        minimizer = new opt::Minimize_Linear<t_GA_Functional>;
+        static_cast< opt::Minimize_Linear<t_GA_Functional>* >(minimizer)->simulated_annealing = true;
+        static_cast< opt::Minimize_Linear<t_GA_Functional>* >(minimizer)->max_calls = _n;
         break;
       case LINEAR_MINIMIZER: 
-        minimizer = new opt::Minimize_Linear<t_fitness>;
-        static_cast< opt::Minimize_Linear<t_fitness>* >(minimizer)->simulated_annealing = false;
-        static_cast< opt::Minimize_Linear<t_fitness>* >(minimizer)->max_calls = _n;
+        minimizer = new opt::Minimize_Linear<t_GA_Functional>;
+        static_cast< opt::Minimize_Linear<t_GA_Functional>* >(minimizer)->simulated_annealing = false;
+        static_cast< opt::Minimize_Linear<t_GA_Functional>* >(minimizer)->max_calls = _n;
         break;
       default:
         std::cerr << "Unknown minimizer type in LaDa :: MinimizerOp" << std::endl;
@@ -232,7 +232,7 @@ namespace LaDa
     return minimizers.size() - 1;
   };
 
-  bool Lamarck :: minimize( const t_individual &_indiv, const unsigned &_minimizer ) 
+  bool Lamarck :: minimize( const t_Individual &_indiv, const unsigned &_minimizer ) 
   {
     if ( _minimizer > minimizers.size() ) 
       return false;
@@ -240,7 +240,7 @@ namespace LaDa
     fitness.set_variables( _indiv.get_variables() );
     return (minimizers[_minimizer])->minimize(fitness);
   }
-  double Lamarck :: evaluate( t_individual &_indiv ) 
+  double Lamarck :: evaluate( t_Individual &_indiv ) 
   {
     ++EvalCounter;
     fitness.set_variables( _indiv.get_variables() );
@@ -249,6 +249,12 @@ namespace LaDa
     if ( convex_hull->add_structure(result, structure) )
       _indiv.invalidate_baseline();
     return result;
+  }
+  void Lamarck :: add_to_convex_hull( const t_Individual &_indiv ) 
+  {
+    structure.set_atom_types( *_indiv.get_variables() );
+    if ( convex_hull->add_structure( _indiv.get_quantity(), structure) )
+      _indiv.invalidate_baseline();
   }
 
   void Lamarck :: print_xmgrace( std::ofstream &_f, bool _print_ch )
@@ -261,11 +267,11 @@ namespace LaDa
        << VA_CE::Polynome::nb_eval << " "
        << VA_CE::Polynome::nb_eval_grad << " "
        << VA_CE::Polynome::nb_eval_with_grad << std::endl;
-    _f << " # " << special_char << "bad guess " << opt::Minimize_Linear<FITNESS> :: bad_guess 
-       << "   good guess " << opt::Minimize_Linear<FITNESS> :: good_guess 
+    _f << " # " << special_char << "bad guess " << opt::Minimize_Linear<t_GA_Functional> :: bad_guess 
+       << "   good guess " << opt::Minimize_Linear<t_GA_Functional> :: good_guess 
        << std::endl
-       << " # " << special_char << "poleval calls " << opt::Minimize_Linear<FITNESS> :: nb_evals
-       << "   polgrad calls " << opt::Minimize_Linear<FITNESS> :: nb_grad_evals
+       << " # " << special_char << "poleval calls " << opt::Minimize_Linear<t_GA_Functional> :: nb_evals
+       << "   polgrad calls " << opt::Minimize_Linear<t_GA_Functional> :: nb_grad_evals
        << std::endl;
  
     if( _print_ch )

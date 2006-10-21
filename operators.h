@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include <eo/eoPop.h>
+#include <eo/eoOp.h>
 #include <eo/utils/eoRNG.h>
 
 #include <opt/opt_minimize.h>
@@ -44,7 +45,7 @@ namespace LaDa
           if ( rng.uniform() < probability ) 
             *i_object1 = *i_object2;
 
-        if ( t_individual :: is_using_phenotype )
+        if ( t_Object :: is_using_phenotype )
           object1.set_phenotype_to_genotype();
         object1.invalidate();
         
@@ -86,7 +87,7 @@ namespace LaDa
         if ( mutated )
           object.invalidate();
 
-        if ( t_individual :: is_using_phenotype )
+        if ( t_Object :: is_using_phenotype )
           object.set_phenotype_to_genotype();
         
         return mutated;

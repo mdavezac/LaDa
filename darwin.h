@@ -37,9 +37,10 @@ namespace LaDa
   template<class t_Object, class t_Lamarck>
   class Darwin: public eoAlgo<t_Object>
   {
-    protected:
+    public:
       typedef Darwin<t_Object, t_Lamarck> t_Darwin;
       typedef typename std::list< eoPop<t_Object> > t_Islands;
+      typedef typename t_Lamarck :: t_GA_Functional t_Functional;
 
     protected: 
       const static unsigned LAMARCK;
@@ -110,6 +111,11 @@ namespace LaDa
   
       void print_xml()
         { lamarck->print_xml(); };
+      
+      t_Functional &get_functional( const t_Object &_object ) 
+        { return lamarck->get_GA_functional( _object ); }
+      void add_to_convex_hull( const t_Object &_object ) const
+        { lamarck->add_to_convex_hull(_object); }
 
     protected:
       eoGenOp<t_Object>* make_GenOp(const TiXmlElement *element, std::ofstream &_f);
@@ -135,6 +141,7 @@ namespace LaDa
       
       bool Load( TiXmlHandle &handle );
       void write_xmgrace_header();
+
   };
 
 } // namespace LaDa
