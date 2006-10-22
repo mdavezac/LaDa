@@ -254,7 +254,7 @@ sub template()
   }
 
     printf OUT "\n\ncommit: \n\t";
-    printf OUT "-sed -i 's/\\(const unsigned svn_revision = \\).*\\;/\\1\$(shell svn info | grep Revision | awk '{print \$\$2}' )\;/' darwin.impl.h \n";
+    printf OUT "-sed -i 's/\\(const unsigned svn_revision = \\).*\\;/\\1\$(shell svn info | grep Revision | awk '{print \$\$2+1}' )\;/' darwin.impl.h \n";
     printf OUT "\t-svn ci\n\t-svn update .\n";
 
     printf OUT "\n\ninclude .dependencies\n\n"; 
