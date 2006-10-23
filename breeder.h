@@ -18,6 +18,7 @@
 
 #include <opt/types.h>
 using namespace types;
+#include "eotypes.h"
 
 /**
   Base class for breeders using generalized operators.
@@ -47,7 +48,7 @@ namespace LaDa
      
       void operator()(const eoPop<t_Object>& _parents, eoPop<t_Object>& _offspring)
       {
-        t_unsigned target = (*howMany)(_parents.size());
+        t_unsigned target = (*howMany)( (eotypes::t_unsigned)_parents.size());
      
         _offspring.clear();
         eoSelectivePopulator<t_Object> it(_parents, _offspring, select);

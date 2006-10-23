@@ -210,12 +210,6 @@ namespace LaDa
       case NO_MINIMIZER: 
         minimizer = new opt::Minimize_Base<t_GA_Functional>;
         break;
-      case WANG_MINIMIZER: 
-        minimizer = new opt::Minimize_Wang<t_GA_Functional>;
-        break;
-      case PHYSICAL_MINIMIZER: 
-        minimizer = new opt::Minimize_Ssquared<t_GA_Functional>;
-        break;
       case SA_MINIMIZER: 
         minimizer = new opt::Minimize_Linear<t_GA_Functional>;
         static_cast< opt::Minimize_Linear<t_GA_Functional>* >(minimizer)->simulated_annealing = true;

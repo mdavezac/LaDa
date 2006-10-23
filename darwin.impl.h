@@ -8,9 +8,10 @@
 #include "taboo_minimizers.h"
 #include <lamarck/convex_hull.h>
 #include <opt/opt_minimize.h>
+
+#include <math.h>
+
 using opt::NO_MINIMIZER;
-using opt::WANG_MINIMIZER;
-using opt::PHYSICAL_MINIMIZER;
 using opt::LINEAR_MINIMIZER;
 using opt::SA_MINIMIZER;
 
@@ -142,9 +143,9 @@ namespace LaDa
     child = parent->FirstChildElement( "Selection" );
     if ( child )
     {
-      t_int d = 0;
+      int d = 0;
       if ( child->Attribute("value", &d) and d > 1 )
-        tournament_size = d;
+        tournament_size = abs(d);
     }
 
     // Offsprings
@@ -152,28 +153,28 @@ namespace LaDa
     if ( child )
     {
       // rate
-      t_real d = 0;
+      double d = 0;
       if ( child->Attribute("rate", &d) )
         if ( d <= 1.0 and d > 0.0 )
-          replacement_rate = d;
+          replacement_rate = types::t_real(d);
     }
 
     // population size
     child = parent->FirstChildElement( "Population" );
     if ( child )
     {
-      t_int d = 0;
+      int d = 0;
       if ( child->Attribute("size", &d) )
         if ( d > 0 )
-          pop_size = d;
+          pop_size = abs(eotypes::t_int(d));
     }
 
     // method and nb steps
     {
-      t_int d = 0;
+      int d = 0;
       if ( parent->Attribute("maxgen", &d) )
         if ( d > 0 )
-          max_generations = d;
+          max_generations = abs(types::t_int(d));
 
       if ( parent->Attribute("method") )
       {
@@ -182,7 +183,8 @@ namespace LaDa
         {
           multistart = true;
           eoHowMany nb(replacement_rate);
-          max_generations = pop_size + nb(pop_size) * max_generations;
+          max_generations = (types::t_int) pop_size
+                            + (types::t_int) nb(pop_size) * max_generations;
           pop_size = 1;
           replacement_rate = 1.0;
           evolve_from_start = true;
@@ -190,7 +192,7 @@ namespace LaDa
       } // if attribute "method" exists
       // number of Islands
       if ( parent->Attribute("islands", &d ) )
-        nb_islands = ( d > 0 ) ? abs(d) : 1;
+        nb_islands = ( d > 0 ) ? abs(types::t_int(d)) : 1;
     }   
 
       
@@ -212,17 +214,7 @@ namespace LaDa
     if ( el->Attribute("type") )
     {
       std::string str = el->Attribute("type");
-      if ( str.compare("wang" ) == 0 ) // Wang
-      {
-        _f << "Wang ";
-        type = WANG_MINIMIZER;
-      }
-      else if ( str.compare("physical" ) == 0 ) // Wang
-      {
-        _f << "Physical ";
-        type = PHYSICAL_MINIMIZER;
-      }
-      else if ( str.compare("linear" ) == 0 ) // Wang
+      if ( str.compare("linear" ) == 0 ) // Wang
       {
         _f << "Linear ";
         type = LINEAR_MINIMIZER;
@@ -234,7 +226,7 @@ namespace LaDa
       }
     }
     t_unsigned n = UINT_MAX;
-    t_int i = 0;
+    int i = 0;
     if ( el->Attribute("maxeval", &i) )
       n = ( i <= 0 ) ? UINT_MAX : abs(i);
     if ( type == SA_MINIMIZER or type == LINEAR_MINIMIZER )
@@ -268,8 +260,8 @@ namespace LaDa
     for ( ; sibling; sibling = sibling->NextSiblingElement() )
     {
       std::string str = sibling->Value();
-      t_real prob = 0.0;
-      t_int period = 0;
+      double prob = 0.0;
+      int period = 0;
       this_op = NULL;
       bool is_gen_op = false;
       
@@ -277,11 +269,11 @@ namespace LaDa
       // then creates sibling
       if ( str.compare("Crossover" ) == 0 )
       {
-        t_real d; 
+        double d; 
         sibling->Attribute("value", &d);
         if ( d <= 0 and d > 1 )
-          d = crossover_value;
-        this_op = new Crossover<t_Object>( d );
+          d = double(crossover_value);
+        this_op = new Crossover<t_Object>( types::t_real(d) );
         eostates.storeFunctor( static_cast< Crossover<t_Object> *>(this_op) );
         _f << "# " << _special << _base << "Crossover: value=" << d;
       }
@@ -293,11 +285,11 @@ namespace LaDa
       }
       else if ( str.compare("Mutation" ) == 0 )
       {
-        t_real d; 
+        double d; 
         sibling->Attribute("value", &d);
         if ( d <= 0 and d > 1 )
-          d = 1.0 / (t_real) lamarck->get_pb_size();
-        this_op = new Mutation<t_Object>( d );
+          d = 1.0 / (double) lamarck->get_pb_size();
+        this_op = new Mutation<t_Object>(  types::t_real(d) );
         eostates.storeFunctor( static_cast< Mutation<t_Object> *>(this_op) );
         _f << "# " << _special << _base << "Mutation: value=" << d;
       }
@@ -313,9 +305,9 @@ namespace LaDa
           type = sibling->Attribute("type");
         if ( type.compare("GradientSA") != 0 )
           type = "SA";
-        t_int i=0; t_unsigned maxeval = UINT_MAX;
+        int i=0; t_unsigned maxeval = UINT_MAX;
         if ( sibling->Attribute("maxeval", &i ) )
-          maxeval = ( i > 0 ) ? abs(i) : UINT_MAX;
+          maxeval = ( i > 0 ) ? abs(t_int(i)) : UINT_MAX;
         _f << "# " << _special << _base << "TabooMinimizer: " 
            << type << " maxeval " << maxeval;
         if ( type.compare("SA") )
@@ -338,7 +330,7 @@ namespace LaDa
         eoGenOp<t_Object> *taboo_op;
         taboo_op = make_genetic_op( *sibling->FirstChildElement(), _f,  special, _base, NULL);
         _f << "# " << _special << _base << "TabooOp end";
-        this_op = new TabooOp<t_Object> ( *taboo_op, *taboos, pop_size+1, eostates );
+        this_op = new TabooOp<t_Object> ( *taboo_op, *taboos, types::t_int(pop_size+1), eostates );
         eostates.storeFunctor( static_cast< TabooOp<t_Object> *>(this_op) );
         is_gen_op = true;
       }
@@ -375,7 +367,7 @@ namespace LaDa
         if (period > 0 and abs(period) < max_generations )
         {
           _f << " period= " << prob;
-          this_op = new PeriodicOp<t_Object>( *this_op, abs(period), *nb_generations, eostates );
+          this_op = new PeriodicOp<t_Object>( *this_op, abs(types::t_int(period)), *nb_generations, eostates );
           eostates.storeFunctor( static_cast< PeriodicOp<t_Object> *>(this_op) );
           is_gen_op = true;
         }
@@ -386,9 +378,9 @@ namespace LaDa
           prob = 1.0;
         _f << " prob= " << prob << std::endl;
         if ( current_op->className().compare("SequentialOp") == 0 )
-          static_cast< eoSequentialOp<t_Object>* >(current_op)->add( *this_op, prob );
+          static_cast< eoSequentialOp<t_Object>* >(current_op)->add( *this_op, types::t_real(prob) );
         else if ( current_op->className().compare("ProportionalOp") == 0 )
-          static_cast< eoProportionalOp<t_Object>* >(current_op)->add( *this_op, prob );
+          static_cast< eoProportionalOp<t_Object>* >(current_op)->add( *this_op, types::t_real(prob) );
       }
       else if ( this_op )
       {
@@ -417,7 +409,7 @@ namespace LaDa
        is_sequential = true;
        if ( str.compare("and" ) == 0 ) // operators applied sequentially
        {
-         t_real d;
+         double d;
          if ( el.Attribute("prob", &d ) )
            _f << "# " << _special << "Sequential: prob " << d << std::endl;
          else
@@ -427,7 +419,7 @@ namespace LaDa
        else
        {
          is_sequential = false;
-         t_real d;
+         double d;
          if ( el.Attribute("prob", &d ) )
            _f << "# " << _special << "Proportional: prob " << d << std::endl;
          else
@@ -446,7 +438,7 @@ namespace LaDa
     for ( ; child; child = child->NextSiblingElement() )
     {
       std::string str = child->Value();
-      t_real prob = 0.0;
+      double prob = 0.0;
       
       // gets probability for applying child 
       if ( not child->Attribute("prob", &prob) )
@@ -455,11 +447,11 @@ namespace LaDa
       // then creates child
       if ( str.compare("Mutation" ) == 0 )
       {
-        t_real d; 
+        double d; 
         child->Attribute("value", &d);
         if ( d <= 0 and d > 1 )
-          d = 1.0 / (t_real) lamarck->get_pb_size();
-        Mutation<t_Object> *mutation = new Mutation<t_Object>( d );
+          d = 1.0 / (double) lamarck->get_pb_size();
+        Mutation<t_Object> *mutation = new Mutation<t_Object>( types::t_real(d) );
         eostates.storeFunctor(mutation);
         _f << "# " << _special << _base << "Mutation: value=" << d 
            << " prob="<< prob << std::endl;
@@ -640,9 +632,9 @@ namespace LaDa
         eostates.storeFunctor(agetaboo);
 
         // then creates the object to update the taboo list
-        t_int d = 0;
+        int d = 0;
         child->Attribute("lifespan", &d );
-        length = ( d >=0 ) ? abs(d) : UINT_MAX;
+        length = ( d >=0 ) ? abs(types::t_int(d)) : UINT_MAX;
         bool print_out = false;
         if ( child->Attribute("printout") )
         {
@@ -861,13 +853,14 @@ namespace LaDa
     // get parameters
     {
       minimize_best = 0.1;
-      t_real d=0;
+      double d=0;
       if ( child->Attribute( "rate", &d ) )
         if ( d > 0 and d <= 1 )
-          minimize_best = d;
-      t_int u = 0;
+          minimize_best = types::t_real(d);
+      int u = 0;
       if ( child->Attribute( "every", &u ) )
-        minimize_best_every = ( u > 0 and abs(u) <= max_generations ) ? (t_unsigned) u  : 0 ;
+        minimize_best_every = ( u > 0 and abs(types::t_int(u)) <= max_generations ) ?
+                              abs(types::t_int(u))  : 0 ;
       std::string str;
     }
 

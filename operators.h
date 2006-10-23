@@ -237,7 +237,7 @@ namespace LaDa
         { op = &wrap_op<t_Object>( _op, _store ); }
       virtual ~TriggeredOp() {};
     
-      virtual t_unsigned max_production()
+      virtual unsigned max_production()
         { return op->max_production(); }
 
       void trigger( bool _trigger = false )
@@ -275,7 +275,7 @@ namespace LaDa
         { op = &wrap_op<t_Object>( _op, _store ); }
       virtual ~PeriodicOp() {};
     
-      virtual t_unsigned max_production()
+      virtual unsigned max_production()
         { return op->max_production(); }
 
       virtual std::string className() const {return "LaDa :: TriggeredOps";}

@@ -15,6 +15,7 @@ using namespace eo;
 
 #include <opt/types.h>
 using namespace types;
+#include "eotypes.h"
 
 namespace LaDa 
 {
@@ -142,7 +143,7 @@ namespace LaDa
           return;
 
         t_unsigned pSize = _pop.size();
-        t_unsigned nb = how_many( pSize );
+        eotypes::t_unsigned nb = how_many( (eotypes::t_unsigned)pSize );
         if (nb > pSize )
           return;
 

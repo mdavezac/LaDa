@@ -31,6 +31,8 @@
 #include "breeder.h"
 #include "checkpoint.h"
 
+#include "eotypes.h"
+
 #include <opt/types.h>
 using namespace types;
 
@@ -55,8 +57,8 @@ namespace LaDa
       t_real crossover_value; 
       t_real mutation_value;
       bool sequential_op;
-      t_unsigned tournament_size;
-      t_unsigned pop_size;
+      eotypes::t_unsigned tournament_size;
+      eotypes::t_unsigned pop_size;
       t_real replacement_rate;
       t_unsigned max_generations;
       t_unsigned method;
