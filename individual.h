@@ -13,6 +13,9 @@
 #include<algorithm>
 #include<functional>
 
+#include <opt/types.h>
+using namespace types;
+
 // functional should be some class derived from 
 // opt::Function<t_Type, t_Container>, where t_Container supports random
 // access iterators
@@ -40,11 +43,11 @@ namespace LaDa
 
     private:
       t_Fitness repFitness;
-      int MotU_ref; // ref to master of the universe
+      t_int MotU_ref; // ref to master of the universe
       static bool baseline_is_valid;
       bool quantity_is_valid;
       t_Type quantity, baseline;
-      unsigned age;
+      t_unsigned age;
       t_Container *phenotype;
 
     public:
@@ -93,7 +96,7 @@ namespace LaDa
       { return phenotype; }
       virtual t_Type get_concentration() const
       { return ( std::accumulate(phenotype->begin(), phenotype->end(), 0.0) 
-                  / ( (double) phenotype->size() ) ); }
+                  / ( (t_real) phenotype->size() ) ); }
 
       void invalidate() { quantity_is_valid = false; }
       static void invalidate_baseline();
@@ -115,13 +118,13 @@ namespace LaDa
       t_Type get_baseline() const
         { return baseline; }
 
-      void  set_age( unsigned _age )
+      void  set_age( t_unsigned _age )
         { age = _age; }
-      unsigned  get_age() const
+      t_unsigned  get_age() const
         { return age; }
-      void  set_MotU_ref( int _m )
+      void  set_MotU_ref( t_int _m )
         { MotU_ref = _m; }
-      int get_MotU_ref() const
+      t_int get_MotU_ref() const
         { return MotU_ref; }
 
       bool operator<(const Individual<FITNESS, t_Functional>& _eo2) const
@@ -144,7 +147,7 @@ namespace LaDa
       }
       bool operator==( const Individual<FITNESS, t_Functional> &_indiv )
       {
-        unsigned size = variables->size();
+        t_unsigned size = variables->size();
         if ( size != _indiv.variables->size() )
           return false;
         if ( size == 0 )
@@ -191,7 +194,7 @@ namespace LaDa
 
         { // EO stuff
           std::string fitness_str;
-          int pos = _is.tellg();
+          t_int pos = _is.tellg();
           _is >> fitness_str;
 
           if (fitness_str == "INVALID")
@@ -205,7 +208,7 @@ namespace LaDa
              _is >> repFitness;
           }
         } // EO stuff
-        unsigned var_size;
+        t_unsigned var_size;
         _is >> var_size;
         variables->resize(var_size);
 
@@ -220,7 +223,7 @@ namespace LaDa
         iterator i_var = variables->begin();
         iterator i_last = variables->end();
         for( ; i_var != i_last; ++i_var )
-          _stream << int(*i_var) << " ";
+          _stream << t_int(*i_var) << " ";
       }
 
       void set_genotype_to_phenotype()
@@ -228,7 +231,7 @@ namespace LaDa
       void set_phenotype_to_genotype()
         { std::copy( variables->begin(), variables->end(), phenotype->begin() ); }
  
-      void resize( unsigned n )
+      void resize( t_unsigned n )
       {
         t_Functional::resize( n );
         if ( is_using_phenotype )

@@ -201,7 +201,7 @@ namespace LaDa
 
 
   // adds a minimizer in list 
-  unsigned Lamarck :: add_minimizer( unsigned _type, unsigned _n)
+  t_unsigned Lamarck :: add_minimizer( t_unsigned _type, t_unsigned _n)
   {
     opt::Minimize_Base<t_GA_Functional> *minimizer;
 
@@ -236,7 +236,7 @@ namespace LaDa
     return minimizers.size() - 1;
   };
 
-  bool Lamarck :: minimize( const t_Individual &_indiv, const unsigned &_minimizer ) 
+  bool Lamarck :: minimize( const t_Individual &_indiv, const t_unsigned &_minimizer ) 
   {
     if ( _minimizer > minimizers.size() ) 
       return false;
@@ -244,11 +244,11 @@ namespace LaDa
     fitness.set_variables( _indiv.get_variables() );
     return (minimizers[_minimizer])->minimize(fitness);
   }
-  double Lamarck :: evaluate( t_Individual &_indiv ) 
+  t_real Lamarck :: evaluate( t_Individual &_indiv ) 
   {
     ++EvalCounter;
     fitness.set_variables( _indiv.get_variables() );
-    double result = ( fitness.get_quantity() )->evaluate();
+    t_real result = ( fitness.get_quantity() )->evaluate();
     structure.set_atom_types( *_indiv.get_variables() );
     if ( convex_hull->add_structure(result, structure) )
       _indiv.invalidate_baseline();
@@ -284,11 +284,11 @@ namespace LaDa
 
   bool Lamarck :: kCrossover( t_Individual  &_offspring, const t_Individual &_parent)
   {
-    const std::complex<double> imath(0, -2*3.1415926535897932384626433832795028841971693993751058208);
+    const std::complex<t_real> imath(0, -2*3.1415926535897932384626433832795028841971693993751058208);
     const std::vector<rVector3d> &k_vecs = functional.get_Obj2()->get_kvectors();
     typedef std::vector< std::complex<t_Individual :: t_Type> > t_k_type;
-    t_k_type k_offspring( k_vecs.size(), std::complex<double>(0) );
-    t_k_type k_parent( k_vecs.size(), std::complex<double>(0) );
+    t_k_type k_offspring( k_vecs.size(), std::complex<t_real>(0) );
+    t_k_type k_parent( k_vecs.size(), std::complex<t_real>(0) );
     
     // first, FTs parent and offspring
     std::vector<rVector3d> :: const_iterator i_kvec = k_vecs.begin();
@@ -298,7 +298,7 @@ namespace LaDa
     std::vector<Ising_CE::Atom> :: const_iterator i_atom_end = structure.atoms.end();
     std::vector<Ising_CE::Atom> :: const_iterator i_atom;
     t_Individual :: const_iterator i_spin = _offspring.begin();
-    for (int i=0; i < 2; ++i)
+    for (t_int i=0; i < 2; ++i)
     {
       for ( ; i_val != i_val_end; ++i_val, ++i_kvec)
       {
@@ -332,7 +332,7 @@ namespace LaDa
     i_atom = i_atom_begin;
     for ( ; i_atom != i_atom_end; ++i_var, ++i_atom)
     {
-      std::complex<double> store(0);
+      std::complex<t_real> store(0);
       i_kvec = i_kvec_begin;
       i_val = i_val_begin;
       for(; i_val != i_val_end; ++i_kvec, ++i_val )

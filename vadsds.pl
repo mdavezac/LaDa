@@ -31,20 +31,23 @@ $_ = $COMMANDS[7]; /popsize:\s+(\d+)\s+replacement:\s+(\S+) gen:\s+(\d+)/;
 $params{"GA"}{"population"} = $1;
 $params{"GA"}{"replace per generation"} = $2;
 $params{"GA"}{"max generations"} = $3;
-$_ = $COMMANDS[8]; /minimize best:\s+(\S+)\s+ every:\s+(\d+)/;
-$params{"minimize best"}{"rate"} = $1;
-$params{"minimize best"}{"every"} = $2; 
+$_ = $COMMANDS[8]; /(\d+)/;
+$params{"every"} = $1;
 $params{'taboos'} = $COMMANDS[9]; 
-if ( $params{'taboos'} !~ /(age|pop)/ )
+if ( $params{'taboos'} !~ /(age|pop|unique)/ )
   { delete $params{'taboos'}; }
 
+if ( $params{'GA style'} =~ /PopAlgo/ )
+{
+  $params{'GA style'} =~ s/PopAlgo//;
+}
+else 
+{ delete $params{'minimize best'}; }
 $params{'iaga call'}           =  "lada > out";
 
 $params{'nb atoms'} = 20;
 $params{"file"}{"Pi"} = "$params{'home'}/nanopse/cell_shapes/fcc_7-32";
 $params{'max GA iters'} = 200;
-
-
 
 if ( $params{'GA style'} =~ /true/ )
 { 
@@ -57,6 +60,37 @@ if ( $params{'CH'} =~ /one point/i )
 {
   $params{'GA style'} = "one_point_$params{'GA style'}";
 }
+if ( $params{'GA style'} =~ /restart/)
+{
+  $params{'GA style'} =~ s/restart//; 
+  $params{'GA style'} =~ s/^\s+//;
+  $params{'GA style'} =~ s/\s+$//;
+  $params{'GA style'} =  sprintf "restart:%i\_%s",
+                         $params{'every'},
+                         $params{'GA style'};
+}
+if ( $params{'GA style'} =~ /best:(\d+\.\d+)/)
+{
+  $params{'rate'} = $1;
+  $params{'GA style'} =~ s/best:(\d+\.\d+)//; 
+  $params{'GA style'} =~ s/^\s+//;
+  $params{'GA style'} =~ s/\s+$//;
+  $params{'GA style'} =  sprintf "best:%.2f\_every:%i_%s",
+                         $params{'rate'},
+                         $params{'every'},
+                         $params{'GA style'};
+}
+if ( $params{'GA style'} =~ /islands:(\d+)/)
+{
+  my $islands = $1;
+  $params{'GA style'} =~ s/islands:(\d+)//; 
+  $params{'GA style'} =~ s/^\s+//;
+  $params{'GA style'} =~ s/\s+$//;
+  $params{'GA style'} =  sprintf "islands:%i_%s",
+                         $islands,
+                         $params{'GA style'};
+}
+
 
 
 
@@ -83,10 +117,10 @@ if ( $params{"GA"}{"replace per generation"} != 0.1 )
 {
   $params{'agr'}{"filename"} .= "_rep:$params{'GA'}{'replace per generation'}";
 }
-if ( $params{"minimize best"}{'rate'} > 0 )
+if ( exists $params{"minimize best"} )
 {
   $params{'agr'}{"filename"} = sprintf "mb:%.3f_$params{'agr'}{'filename'}",
-                                       $params{'minimize best'}{'rate'};
+				       $params{'every'};
 }
 
 if ( exists $params{'taboos'} )
@@ -145,10 +179,11 @@ sub launch_iaga()
     if ( $params{'GA style'} !~ /true/ )
       { system "rm -f convex_hull.xml"; }
     system "$params{'iaga call'}";
-    system "echo '# new GA ' >> $params{'directory'}{'result'}/$params{'agr'}{'filename'}";
-    system "cat convex_hull.agr >> $params{'directory'}{'result'}/$params{'agr'}{'filename'}";
-    system "cp convex_hull.xml $params{'directory'}{'result'}/$params{'xml'}{'filename'}  ";
+    system "echo '# new GA ' >> $params{'agr'}{'filename'}";
+    system "cat convex_hull.agr >> $params{'agr'}{'filename'}";
+    system "cp convex_hull.xml $params{'xml'}{'filename'}  ";
   }
+  system "cp $params{'xml'}{'filename'} $params{'agr'}{'filename'}  $params{'directory'}{'result'} ";
 }
 
 sub read_structure()
@@ -217,14 +252,17 @@ sub write_lamarck_input()
         { printf OUT " method=\"lamarck multistart evolve from start\""; }
       elsif ( $params{'GA style'} =~ /darwin/i )
         { printf OUT " method=\"darwin\""; }
+      if ( $params{'GA style'} =~ /islands:(\d+)_/i )
+        { printf OUT " islands=\"$1\""; }
       printf OUT " maxgen=\"%i\">\n",
                  $params{'GA'}{'max generations'};
+#     printf OUT "  <Phenotype/> \n";
 
       my $minizertype;
       if ( $params{'minimizer'} =~ /linear/i )
       {
-       $minimizertype = sprintf "<Minimizer type=\"linear\" "; # maxeval=\"%i\" ",
-#                       $params{'max calls'};
+       $minimizertype = sprintf "<Minimizer type=\"linear\" maxeval=\"%i\" "; 
+                        $params{'max calls'};
       }
       elsif ( $params{'minimizer'} =~ /sa/i )
       {
@@ -235,7 +273,6 @@ sub write_lamarck_input()
         { $minimizertype = sprintf "<Minimizer type=\"wang\""; }
       elsif ( $params{'minimizer'} =~ /physical/i )
         { $minimizertype = sprintf "<Minimizer type=\"physical\""; }
-      printf OUT "    %s />\n", $minimizertype;
 
       # creates the operators
       if ( $params{'GA style'} =~ /multistart/i )
@@ -247,22 +284,28 @@ sub write_lamarck_input()
       }
       elsif($params{'GA style'} =~ /lamarck/i ) 
       {
-        printf OUT "    <Operators type=\"or\" >\n";
-        printf OUT "      <Operators type=\"and\" prob=\"0.95\" >\n";
-        printf OUT "        <Operators type=\"or\" prob=\"1.0\"  >\n";
-        printf OUT "          <Crossover value=\"0.5\" prob=\"0.75\" />\n";
-        printf OUT "          <Mutation value=\"0.05\" prob=\"0.25\" />\n";
-        printf OUT "        </Operators>\n";
-        printf OUT "        %s prob=\"0.25\" />\n", $minimizertype;
+        $minimizer = "SA";
+        if ( $params{'minimizer'} =~ /GradientSA/i )
+          { $minimizertype = "GradientSA"; }
+        printf OUT "      <Operators type=\"and\" >\n";
+        printf OUT "        <TabooOp> \n";
+        printf OUT "            <Operators type=\"or\">\n";
+        printf OUT "              <Crossover value=\"0.5\" prob=\"0.75\" />\n";
+        printf OUT "              <Mutation value=\"0.05\" prob=\"0.25\" />\n";
+        printf OUT "            </Operators>\n";
+        printf OUT "        </TabooOp> \n";
+        printf OUT "        <TabooMinimizer type=\"%s\" maxeval=%i />\n",
+                   $minimizertype, $params{'max calls'};
         printf OUT "      </Operators>\n";
-        printf OUT "    </Operators>\n";
       }
       elsif($params{'GA style'} =~ /darwin/i ) 
       {
-        printf OUT "    <Operators type=\"or\" >\n";
-        printf OUT "      <Crossover value=\"0.5\" prob=\"0.75\" />\n";
-        printf OUT "      <Mutation value=\"0.05\" prob=\"0.25\" />\n";
-        printf OUT "    </Operators>\n";
+        printf OUT "    <TabooOp> \n";
+        printf OUT "      <Operators type=\"or\">\n";
+        printf OUT "        <kCrossover value=\"0.5\" prob=\"0.75\" />\n";
+        printf OUT "        <Mutation value=\"0.05\" prob=\"0.25\" />\n";
+        printf OUT "      </Operators>\n";
+        printf OUT "    </TabooOp> \n";
       }
 
 
@@ -274,14 +317,23 @@ sub write_lamarck_input()
                  $params{'GA'}{'replace per generation'};
       if( $params{'CH'} =~ /one point/i )
         { printf OUT "    <OnePointHull/>\n"; }
-      if( $params{'minimize best'}{'rate'} > 0 )
+      if( $params{'GA style'} =~ /restart/ )
       {
-        printf OUT "    <PopAlgo rate=\"%.4f\" every=\"%i\" >\n", 
-                   $params{"minimize best"}{"rate"}, 
-                   $params{"minimize best"}{"every"};
-          printf OUT "    <Operators type=\"and\">\n";
-        printf OUT "        %s prob=\"0.25\" />\n", $minimizertype;
-          printf OUT "    </Operators>\n";
+        printf OUT "    <PopAlgo rate=\"1.0\" every=\"%i\" >\n", 
+                   $params{"every"};
+          printf OUT "      <Operators type=\"and\">\n";
+        printf OUT "          <UtterRandom/>\n";
+          printf OUT "      </Operators>\n";
+        printf OUT "    </PopAlgo>\n";
+      }
+      if( $params{'GA style'} =~ /best/ )
+      {
+        printf OUT "    <PopAlgo rate=\"%.2f\" every=\"%i\" >\n", 
+                   $params{'rate'}, $params{"every"};
+        printf OUT "      <Operators type=\"and\">\n";
+        printf OUT "        %s \>\n", $minimizertype;
+        printf OUT "        <UtterRandom/>\n";
+        printf OUT "      </Operators>\n";
         printf OUT "    </PopAlgo>\n";
       }
       if( exists $params{'taboos'} )
@@ -289,15 +341,21 @@ sub write_lamarck_input()
         printf OUT "    <Taboos>\n"; 
         if ( $params{'taboos'} =~ /pop/ )
           { printf OUT "      <PopTaboo/>\n";  }
-        if ( $params{'taboos'} =~ /age/ )
+        if ( $params{'taboos'} =~ /unique/ )
         {
-          printf OUT "      <AgeTaboo lifespan=100 />\n";  
-          printf OUT "      <NuclearWinter length=15 >\n";  
+          printf OUT "      <AgeTaboo lifespan=0 />\n";  
+        }
+        elsif ( $params{'taboos'} =~ /age/ )
+        {
+          printf OUT "      <AgeTaboo lifespan=%i />\n",
+                     $params{'every'};  
+          printf OUT "      <NuclearWinter >\n";  
           printf OUT "        <Mutation value=\"0.5\" />\n";  
           printf OUT "      </NuclearWinter>\n";  
         }
         printf OUT "    </Taboos>\n"; 
       }
+#     printf OUT "    <Statistics type=\"population\"/>\n";
       printf OUT "  </GA>\n";
     }
     else

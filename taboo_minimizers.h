@@ -8,6 +8,9 @@
 
 #include "taboo.h"
 
+#include <opt/types.h>
+using namespace types;
+
 namespace LaDa
 {
   template <class t_Object, class t_Call_Back> 
@@ -16,14 +19,14 @@ namespace LaDa
     protected:
       t_Call_Back &call_back;
       Taboo_Base< t_Object > &taboo;
-      std::vector<unsigned> directions;
-      unsigned max_directions_checked;
-      static unsigned nb_evals;
+      std::vector<t_unsigned> directions;
+      t_unsigned max_directions_checked;
+      static t_unsigned nb_evals;
 
     public:
       SA_TabooOp   ( t_Call_Back &_call_back,
                      Taboo_Base<t_Object> &_taboo,
-                     unsigned &_max )
+                     t_unsigned &_max )
                  : call_back( _call_back ), taboo(_taboo),
                    max_directions_checked(_max) {}
       SA_TabooOp   ( const SA_TabooOp<t_Object, t_Call_Back> &_sa )
@@ -42,25 +45,25 @@ namespace LaDa
         functional.set_variables( _object.get_variables() );
 
         // then gets problem size of object
-        unsigned size = _object.size();
+        t_unsigned size = _object.size();
 
         // creates a vector of ordered directions
         directions.clear();
         { // implements sgl iota
           // -- i.e. fills which_direction with increasing intergers
-          for( unsigned i =0; i < size; ++i)
+          for( t_unsigned i =0; i < size; ++i)
             directions.push_back(i);
         }
 
         // now for the simmulated annealing part
-        unsigned count = 0; // number of calls
-        std::vector<unsigned> :: iterator i_begin = directions.begin();
-        std::vector<unsigned> :: iterator i_last = directions.end();
-        std::vector<unsigned> :: iterator i_dir;
+        t_unsigned count = 0; // number of calls
+        std::vector<t_unsigned> :: iterator i_begin = directions.begin();
+        std::vector<t_unsigned> :: iterator i_last = directions.end();
+        std::vector<t_unsigned> :: iterator i_dir;
         bool is_not_converged;
         typename t_Object::iterator i_var_begin = functional.begin();
         typename t_Object::iterator i_var;
-        double current_e, next_e;
+        t_real current_e, next_e;
 
         do 
         {
@@ -115,7 +118,7 @@ namespace LaDa
   };
   
   template <class t_Object, class t_Call_Back> 
-  unsigned SA_TabooOp<t_Object, t_Call_Back> :: nb_evals = 0;
+  t_unsigned SA_TabooOp<t_Object, t_Call_Back> :: nb_evals = 0;
 
   template <class t_Object, class t_Call_Back> 
   class GradientSA_TabooOp : public eoMonOp<t_Object>
@@ -123,14 +126,14 @@ namespace LaDa
     protected:
       t_Call_Back &call_back;
       Taboo_Base< t_Object > &taboo;
-      std::vector<unsigned> directions;
-      unsigned max_directions_checked;
-      static unsigned nb_evals, nb_grad_evals;
+      std::vector<t_unsigned> directions;
+      t_unsigned max_directions_checked;
+      static t_unsigned nb_evals, nb_grad_evals;
 
     public:
       GradientSA_TabooOp   ( t_Call_Back &_call_back,
                              Taboo_Base<t_Object> &_taboo,
-                             unsigned &_max )
+                             t_unsigned &_max )
                          : call_back( _call_back ), taboo(_taboo),
                            max_directions_checked(_max) {}
       GradientSA_TabooOp   ( const GradientSA_TabooOp<t_Object, t_Call_Back> &_sa )
@@ -150,25 +153,25 @@ namespace LaDa
         functional.set_variables( _object.get_variables() );
 
         // then gets problem size of object
-        unsigned size = _object.size();
+        t_unsigned size = _object.size();
 
         // creates a vector of ordered directions
         directions.clear();
         { // implements sgl iota
           // -- i.e. fills which_direction with increasing intergers
-          for( unsigned i =0; i < size; ++i)
+          for( t_unsigned i =0; i < size; ++i)
             directions.push_back(i);
         }
 
         // now for the simmulated annealing part
-        unsigned count = 0; // number of calls
-        std::vector<unsigned> :: iterator i_begin = directions.begin();
-        std::vector<unsigned> :: iterator i_last = directions.end();
-        std::vector<unsigned> :: iterator i_dir;
+        t_unsigned count = 0; // number of calls
+        std::vector<t_unsigned> :: iterator i_begin = directions.begin();
+        std::vector<t_unsigned> :: iterator i_last = directions.end();
+        std::vector<t_unsigned> :: iterator i_dir;
         bool is_not_converged;
         typename t_Object::iterator i_var_begin = functional.begin();
         typename t_Object::iterator i_var;
-        double current_e, next_e;
+        t_real current_e, next_e;
 
         do 
         {
@@ -230,9 +233,9 @@ namespace LaDa
   };
 
   template <class t_Object, class t_Call_Back> 
-  unsigned GradientSA_TabooOp<t_Object, t_Call_Back> :: nb_evals = 0;
+  t_unsigned GradientSA_TabooOp<t_Object, t_Call_Back> :: nb_evals = 0;
   template <class t_Object, class t_Call_Back> 
-  unsigned GradientSA_TabooOp<t_Object, t_Call_Back> :: nb_grad_evals = 0;
+  t_unsigned GradientSA_TabooOp<t_Object, t_Call_Back> :: nb_grad_evals = 0;
 
 } // namespace LaDa
 #endif

@@ -13,6 +13,9 @@ using namespace eo;
 #include <algorithm>
 #include <string>
 
+#include <opt/types.h>
+using namespace types;
+
 namespace LaDa 
 {
   // t_Object should be some LaDa::Individual<..,..>
@@ -80,7 +83,7 @@ namespace LaDa
         i_pop = _offsprings.begin();
         i_last = _offsprings.end();
         std::cout << "New Individuals:" << std::endl; 
-        for (int i = 0 ; i_pop != i_last; ++i, ++i_pop )
+        for (t_int i = 0 ; i_pop != i_last; ++i, ++i_pop )
           std::cout << " Offspring " << i 
                     << " Fitness: " << i_pop->fitness() 
                     << " Quantity: " << i_pop->get_quantity() 
@@ -98,14 +101,14 @@ namespace LaDa
       bool do_minimize_best;
       t_Call_Back &call_back;
       eoHowMany how_many;
-      unsigned every;
-      unsigned nb_calls;
+      t_unsigned every;
+      t_unsigned nb_calls;
       Evaluation<t_Object, t_Call_Back> *eval;
       eoMonOp<t_Object> & op;
 
     public:
       Extra_PopAlgo  (eoMonOp<t_Object> &_op, t_Call_Back &_call_back,
-                      double _rate = 0.0, unsigned _every = 5)
+                      t_real _rate = 0.0, t_unsigned _every = 5)
                    : do_minimize_best(false),
                      call_back(_call_back), 
                      how_many( _rate ),
@@ -138,8 +141,8 @@ namespace LaDa
         if ( not do_minimize_best or nb_calls % every )
           return;
 
-        unsigned pSize = _pop.size();
-        unsigned nb = how_many( pSize );
+        t_unsigned pSize = _pop.size();
+        t_unsigned nb = how_many( pSize );
         if (nb > pSize )
           return;
 
@@ -154,7 +157,7 @@ namespace LaDa
         
         typename std::vector<t_Object> :: iterator i_pop = _pop.begin();
         typename std::vector<t_Object> :: iterator i_last = _pop.end();
-        for (unsigned i = 0; i < nb and i_pop != i_last; ++i, ++i_pop )
+        for (t_unsigned i = 0; i < nb and i_pop != i_last; ++i, ++i_pop )
         {
           i_pop->invalidate();
           op( *i_pop );

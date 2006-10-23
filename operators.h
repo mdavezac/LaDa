@@ -17,18 +17,21 @@
 #include<list>
 #include<utility>
 
+#include <opt/types.h>
+using namespace types;
+
 namespace LaDa 
 {
   template<class t_Object> 
   class Crossover : public eoBinOp<t_Object> 
   {
     private:
-      double probability;
+      t_real probability;
 
     public:
-      Crossover( double _c = 0.5 ) : probability(_c) {};
+      Crossover( t_real _c = 0.5 ) : probability(_c) {};
 
-      void set_probability(double &_c)
+      void set_probability(t_real &_c)
         { probability = _c; }
 
       virtual std::string className() const { return "LaDa::Crossover"; }
@@ -74,14 +77,14 @@ namespace LaDa
   class Mutation : public eoMonOp<t_Object> 
   {
     private:
-      double probability;
+      t_real probability;
 
     public:
-      Mutation( double _c = 0.0 ) : probability(_c) {};
+      Mutation( t_real _c = 0.0 ) : probability(_c) {};
 
       virtual std::string className() const { return "LaDa::Mutation"; }
 
-      void set_probability(double &_c)
+      void set_probability(t_real &_c)
         { probability = _c; }
 
       bool operator() (t_Object &object) 
@@ -159,14 +162,14 @@ namespace LaDa
   class MinimizationOp : public eoMonOp<EO_OBJECT> 
   {
     private:
-      unsigned minimizer_nb;
+      t_unsigned minimizer_nb;
       CALL_BACK &call_back;
 
     public:
       MinimizationOp   ( const MinimizationOp<EO_OBJECT, CALL_BACK> &_minop )
                      : minimizer_nb(_minop.minimizer_nb),
                        call_back( _minop.call_back ) {};
-      MinimizationOp   ( unsigned _nb, CALL_BACK &_call_back )
+      MinimizationOp   ( t_unsigned _nb, CALL_BACK &_call_back )
                      : minimizer_nb(_nb),
                        call_back( _call_back ) {};
       virtual ~MinimizationOp() {}
@@ -190,7 +193,7 @@ namespace LaDa
   template<class t_Object>
   class SequentialMonOp : public eoMonOp<t_Object>
   {
-      typedef std::pair< eoMonOp<t_Object>*, double > t_pair;
+      typedef std::pair< eoMonOp<t_Object>*, t_real > t_pair;
       typedef std::list< t_pair > t_pair_list;
       t_pair_list operators;
 
@@ -213,7 +216,7 @@ namespace LaDa
         return false;
       }
 
-      void add( eoMonOp<t_Object> *_op, double &_rate)
+      void add( eoMonOp<t_Object> *_op, t_real &_rate)
       { 
         operators.push_back( t_pair(_op, _rate) ); 
       }
@@ -234,7 +237,7 @@ namespace LaDa
         { op = &wrap_op<t_Object>( _op, _store ); }
       virtual ~TriggeredOp() {};
     
-      virtual unsigned max_production()
+      virtual t_unsigned max_production()
         { return op->max_production(); }
 
       void trigger( bool _trigger = false )
@@ -259,20 +262,20 @@ namespace LaDa
   class PeriodicOp : public eoGenOp<t_Object>
   {
     protected:
-      unsigned period;
-      eoIncrementorParam<unsigned> &age;
+      t_unsigned period;
+      eoIncrementorParam<t_unsigned> &age;
       eoGenOp<t_Object> *op;
     public:
       PeriodicOp   ( eoOp<t_Object> &_op,
-                     unsigned _period, 
-                     eoIncrementorParam<unsigned> &_age,
+                     t_unsigned _period, 
+                     eoIncrementorParam<t_unsigned> &_age,
                      eoFunctorStore &_store)
                  : period(_period), age(_age)
       
         { op = &wrap_op<t_Object>( _op, _store ); }
       virtual ~PeriodicOp() {};
     
-      virtual unsigned max_production()
+      virtual t_unsigned max_production()
         { return op->max_production(); }
 
       virtual std::string className() const {return "LaDa :: TriggeredOps";}
@@ -288,7 +291,7 @@ namespace LaDa
   class ProportionalMonOp : public eoMonOp<t_Object>
   {
       std::vector< eoMonOp<t_Object>* > operators;
-      std::vector< double > rates;
+      std::vector< t_real > rates;
 
     public:
       ProportionalMonOp() {}
@@ -299,11 +302,11 @@ namespace LaDa
     
       virtual bool operator()(t_Object &_object)
       {
-        unsigned i = eo::rng.roulette_wheel(rates);
+        t_unsigned i = eo::rng.roulette_wheel(rates);
         return (operators[i])->operator()( _object );
       }
 
-      void add( eoMonOp<t_Object> *_op, double &_rate)
+      void add( eoMonOp<t_Object> *_op, t_real &_rate)
       { 
         operators.push_back( _op ); 
         rates.push_back( _rate );
@@ -314,10 +317,10 @@ namespace LaDa
   class AgeOp : public eoMonOp<t_Object>
   {
     protected:
-      eoIncrementorParam<unsigned> &age;
+      eoIncrementorParam<t_unsigned> &age;
 
     public:
-      AgeOp   ( eoIncrementorParam<unsigned> &_age )
+      AgeOp   ( eoIncrementorParam<t_unsigned> &_age )
             : age(_age) {}
       AgeOp   ( const AgeOp<t_Object> &_t )
             : age(_t.age) {}

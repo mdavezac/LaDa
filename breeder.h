@@ -16,6 +16,9 @@
 #include <eo/eoBreed.h>
 #include <eo/utils/eoHowMany.h>
 
+#include <opt/types.h>
+using namespace types;
+
 /**
   Base class for breeders using generalized operators.
 */
@@ -28,12 +31,12 @@ namespace LaDa
     protected:
       eoSelectOne<t_Object>& select;
       eoGenOp<t_Object> *op; 
-      eoIncrementorParam<unsigned> &age;
+      eoIncrementorParam<t_unsigned> &age;
       eoHowMany *howMany;
     
     public:
       Breeder   ( eoSelectOne<t_Object>& _select, eoGenOp<t_Object>& _op,
-                  eoIncrementorParam<unsigned> &_age )
+                  eoIncrementorParam<t_unsigned> &_age )
               : select( _select ), op(&_op),
                 age(_age), howMany(NULL) {}
       Breeder   ( Breeder<t_Object> & _breeder )
@@ -44,7 +47,7 @@ namespace LaDa
      
       void operator()(const eoPop<t_Object>& _parents, eoPop<t_Object>& _offspring)
       {
-        unsigned target = (*howMany)(_parents.size());
+        t_unsigned target = (*howMany)(_parents.size());
      
         _offspring.clear();
         eoSelectivePopulator<t_Object> it(_parents, _offspring, select);

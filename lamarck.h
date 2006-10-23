@@ -12,6 +12,8 @@
 #include <opt/fitness_function.h>
 #include <opt/opt_minimize.h>
 
+#include <opt/types.h>
+using namespace types;
 
 namespace LaDa
 {
@@ -24,7 +26,7 @@ namespace LaDa
       typedef opt::Fitness_Function<t_VA_Functional, t_Convex_Hull> t_GA_Functional;
 
     public: 
-      unsigned EvalCounter;
+      t_unsigned EvalCounter;
 
     private:
       Ising_CE::Structure structure;
@@ -48,10 +50,10 @@ namespace LaDa
       void print_xml();
       void print_xmgrace();
 
-      double evaluate( const double &_x ) // convex hull only
+      t_real evaluate( const t_real &_x ) // convex hull only
         { return convex_hull->evaluate(_x); }
-      double evaluate( t_Individual & _individual );
-      bool minimize( const t_Individual & _individual, const unsigned &_minimizer );
+      t_real evaluate( t_Individual & _individual );
+      bool minimize( const t_Individual & _individual, const t_unsigned &_minimizer );
     
       t_GA_Functional& get_functional (const t_Individual &_individual) 
         { return fitness; }
@@ -59,9 +61,9 @@ namespace LaDa
       t_Convex_Hull& get_convex_hull ()
         { return *convex_hull; }
 
-      unsigned add_minimizer( unsigned type, unsigned n);
+      t_unsigned add_minimizer( t_unsigned type, t_unsigned n);
 
-      unsigned get_pb_size () const
+      t_unsigned get_pb_size () const
         { return structure.atoms.size(); }
 
       void write_xmgrace_header( std::ofstream &_f )

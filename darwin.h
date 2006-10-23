@@ -31,6 +31,9 @@
 #include "breeder.h"
 #include "checkpoint.h"
 
+#include <opt/types.h>
+using namespace types;
+
 namespace LaDa
 {
 
@@ -43,34 +46,34 @@ namespace LaDa
       typedef typename t_Lamarck :: t_GA_Functional t_Functional;
 
     protected: 
-      const static unsigned LAMARCK;
-      const static unsigned DARWIN;
-      const static unsigned DEBUG;
+      const static t_unsigned LAMARCK;
+      const static t_unsigned DARWIN;
+      const static t_unsigned DEBUG;
       const static std::string svn_version;
 
       // parameters
-      double crossover_value; 
-      double mutation_value;
+      t_real crossover_value; 
+      t_real mutation_value;
       bool sequential_op;
-      unsigned tournament_size;
-      unsigned pop_size;
-      double replacement_rate;
-      unsigned max_generations;
-      unsigned method;
+      t_unsigned tournament_size;
+      t_unsigned pop_size;
+      t_real replacement_rate;
+      t_unsigned max_generations;
+      t_unsigned method;
       bool utter_random;
       bool multistart;
       bool evolve_from_start;
-      unsigned minimizer;
-      unsigned max_calls;
-      double minimize_best;
+      t_unsigned minimizer;
+      t_unsigned max_calls;
+      t_real minimize_best;
       bool minimize_offsprings;
-      unsigned minimize_best_every;
+      t_unsigned minimize_best_every;
       bool is_one_point_hull;
       std::vector< std::string > print_strings;
 
       eoState eostates;
-      eoIncrementorParam<unsigned> *nb_generations;
-      unsigned nb_islands;
+      eoIncrementorParam<t_unsigned> *nb_generations;
+      t_unsigned nb_islands;
       t_Islands islands;
       eoPop<t_Object> offsprings;
 
@@ -99,11 +102,11 @@ namespace LaDa
       virtual void operator()(eoPop<t_Object>& _pop) {}
       void run();
 
-      typename t_Object :: t_Type evaluate( const double &x ) const
+      typename t_Object :: t_Type evaluate( const t_real &x ) const
         { return lamarck->evaluate( x );  }
       typename t_Object :: t_Type evaluate( t_Object &_object ) const
         { return lamarck->evaluate( _object );  }
-      bool minimize( const t_Object &_object, const unsigned &_nb )
+      bool minimize( const t_Object &_object, const t_unsigned &_nb )
         { return lamarck->minimize( _object, _nb);  }
       void print_xmgrace();
       void print_xmgrace( std::string &_str )

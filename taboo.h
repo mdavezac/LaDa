@@ -7,6 +7,9 @@
 #include <list>
 #include <algorithm>
 
+#include <opt/types.h>
+using namespace types;
+
 namespace LaDa
 {
   // taboo base class, declares virtual stuff
@@ -18,7 +21,7 @@ namespace LaDa
       Taboo_Base( const Taboo_Base<t_Object> &_taboo ) {}
       virtual ~Taboo_Base() {};
 
-      unsigned max_production(void) { return 1; }
+      t_unsigned max_production(void) { return 1; }
 
       virtual bool is_problematic() const = 0;
       virtual void set_problematic(bool _p = false) = 0;
@@ -73,7 +76,7 @@ namespace LaDa
         typename t_Container :: const_iterator i_end = taboo_list->end();
 
         str << "Taboo Population" << std::endl;
-        for(unsigned i=0 ; i_pop != i_end; ++i, ++i_pop )
+        for(t_unsigned i=0 ; i_pop != i_end; ++i, ++i_pop )
         {
           str << "  Indiv " << i << " -- ";
           i_pop->print_out(str);
@@ -198,28 +201,28 @@ namespace LaDa
     protected:
       Taboo_Base<t_Object> &taboo;
       UtterRandom<t_Object> utterrandom;
-      unsigned max;
+      t_unsigned max;
       eoGenOp<t_Object> *op;
 
     public:
       TabooOp   ( eoOp<t_Object> &_op, 
                   Taboo_Base<t_Object> &_taboo,
-                  unsigned _max,
+                  t_unsigned _max,
                   eoFunctorStore &_store )
               : taboo(_taboo), utterrandom(), max(_max)
         { op = &wrap_op<t_Object>( _op, _store ); }
 
-      virtual unsigned max_production()
+      virtual t_unsigned max_production()
         { return op->max_production(); }
 
       // tries to create an untaboo object on applying _op
       // after max tries, creates a random untaboo object
       virtual void apply( eoPopulator<t_Object> &_object ) 
       {
-        unsigned  i = 0;
+        t_unsigned  i = 0;
         do
         {
-          unsigned pos = _object.tellp();
+          t_unsigned pos = _object.tellp();
           ++i;
           (*op)( _object );
           _object.seekp(pos);

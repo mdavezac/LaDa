@@ -12,6 +12,9 @@
 
 #include "taboo.h"
 
+#include<opt/types.h>
+using namespace types;
+
 namespace LaDa 
 {
   // implements a call back which simply calls a print_xmgrace and a print_xml
@@ -40,7 +43,7 @@ namespace LaDa
       eoGenOp<t_Object> &normal_ops;
       eoSequentialOp<t_Object> nuclear_ops;
       eoGenOp<t_Object> **breeding_ops;
-      unsigned nuclear_winter_length, nuclear_winter_age;
+      t_unsigned nuclear_winter_length, nuclear_winter_age;
       t_Call_Back &call_back;
       bool is_gone_nuclear;
       eoHowMany nuclear_howmany;
@@ -52,7 +55,7 @@ namespace LaDa
                         eoGenOp<t_Object> &_nops,
                         eoGenOp<t_Object> &_nwops,
                         t_Call_Back &_call_back,
-                        double &_normal_howmany )
+                        t_real &_normal_howmany )
                     : taboo(_taboo),
                       normal_ops(_nops),
                       breeding_ops(NULL),
@@ -128,16 +131,16 @@ namespace LaDa
   {
     protected:
       Taboo< t_Object, std::list<t_Object> > & taboo;
-      eoIncrementorParam<unsigned> &age;
+      eoIncrementorParam<t_unsigned> &age;
       t_Call_Back &call_back;
-      unsigned max_age;
-      unsigned check_every;
+      t_unsigned max_age;
+      t_unsigned check_every;
       bool do_print_out;
 
     public:
       UpdateAgeTaboo  ( Taboo< t_Object, std::list<t_Object> > & _taboo,
-                        eoIncrementorParam<unsigned> &_age, t_Call_Back &_call_back,
-                        unsigned _max_age, bool _do_print_out = false )
+                        eoIncrementorParam<t_unsigned> &_age, t_Call_Back &_call_back,
+                        t_unsigned _max_age, bool _do_print_out = false )
                      : taboo(_taboo), age(_age), call_back(_call_back), max_age(_max_age),
                        do_print_out( _do_print_out )
       {
@@ -152,7 +155,7 @@ namespace LaDa
 
       virtual void operator()( const eoPop<t_Object> &_pop )
       {
-        unsigned ga_age = age.value();
+        t_unsigned ga_age = age.value();
         if ( ga_age < max_age or ga_age%check_every != 0 )
           return;
 
@@ -189,14 +192,14 @@ namespace LaDa
   {
     protected:
       t_Call_Back &call_back;
-      eoIncrementorParam<unsigned> &age;
-      unsigned total_individuals;
+      eoIncrementorParam<t_unsigned> &age;
+      t_unsigned total_individuals;
       t_Object average;
 
     public:
       AccAverage   ( t_Call_Back &_call_back,
-                     eoIncrementorParam<unsigned> &_age,
-                     unsigned _size )
+                     eoIncrementorParam<t_unsigned> &_age,
+                     t_unsigned _size )
                  : call_back( _call_back ), age(_age),
                    total_individuals(0)
       {           
@@ -206,7 +209,7 @@ namespace LaDa
       virtual std::string className(void) const { return "LaDa::AccAverage"; }
       virtual void operator()( const eoPop<t_Object> &_pop )
       {
-        unsigned this_age = age.value();
+        t_unsigned this_age = age.value();
         typename eoPop<t_Object> :: const_iterator i_indiv = _pop.begin();
         typename eoPop<t_Object> :: const_iterator i_end = _pop.end();
         typename t_Object :: iterator i_av_begin = average.begin();
@@ -230,7 +233,7 @@ namespace LaDa
           typename t_Object :: const_iterator i_var_end = average.end();
           sstr << "AccAverage: " << std::setw(5) << std::setprecision(2);
           for( ; i_var != i_var_end; ++i_var )
-            sstr << (*i_var / (double) total_individuals) << " ";
+            sstr << (*i_var / (t_real) total_individuals) << " ";
           std::string str = sstr.str();
           call_back.print_xmgrace( str );
         }
@@ -247,7 +250,7 @@ namespace LaDa
 
     public:
       PopAverage   ( t_Call_Back &_call_back,
-                     unsigned _size )
+                     t_unsigned _size )
                  : call_back( _call_back )
       {
         average.resize( _size ); // should initialize to 0 in opt_function_base.h
@@ -256,7 +259,7 @@ namespace LaDa
       virtual std::string className(void) const { return "LaDa::PopAverage"; }
       virtual void operator()( const eoPop<t_Object> &_pop )
       {
-        unsigned pSize = _pop.size();
+        t_unsigned pSize = _pop.size();
         typename t_Object :: iterator i_av_begin = average.begin();
         typename t_Object :: iterator i_av_end = average.end();
         typename t_Object :: iterator i_average;
@@ -279,7 +282,7 @@ namespace LaDa
           typename t_Object :: const_iterator i_var_end = average.end();
           sstr << "PopAverage: " << std::setw(5) << std::setprecision(2);
           for( ; i_var != i_var_end; ++i_var )
-            sstr << (*i_var / (double) pSize ) << " ";
+            sstr << (*i_var / (t_real) pSize ) << " ";
           std::string str = sstr.str();
           call_back.print_xmgrace( str );
         }
