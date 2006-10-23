@@ -10,6 +10,10 @@
 #include <sstream>
 #include <string>
 #include <stdexcept>
+#include <math.h>
+#include<complex>
+
+#include <eo/utils/eoRNG.h>
 
 using opt::NO_MINIMIZER;
 using opt::WANG_MINIMIZER;
@@ -276,6 +280,72 @@ namespace LaDa
  
     if( _print_ch )
       convex_hull->print_out(_f, VA_CE::Convex_Hull::PRINT_XMGRACE);
+  }
+
+  bool Lamarck :: kCrossover( t_Individual  &_offspring, const t_Individual &_parent)
+  {
+    const std::complex<double> imath(0, -2*3.1415926535897932384626433832795028841971693993751058208);
+    const std::vector<rVector3d> &k_vecs = functional.get_Obj2()->get_kvectors();
+    typedef std::vector< std::complex<t_Individual :: t_Type> > t_k_type;
+    t_k_type k_offspring( k_vecs.size(), std::complex<double>(0) );
+    t_k_type k_parent( k_vecs.size(), std::complex<double>(0) );
+    
+    // first, FTs parent and offspring
+    std::vector<rVector3d> :: const_iterator i_kvec = k_vecs.begin();
+    t_k_type :: iterator i_val = k_offspring.begin();
+    t_k_type :: iterator i_val_end = k_offspring.end();
+    std::vector<Ising_CE::Atom> :: const_iterator i_atom_begin = structure.atoms.begin();
+    std::vector<Ising_CE::Atom> :: const_iterator i_atom_end = structure.atoms.end();
+    std::vector<Ising_CE::Atom> :: const_iterator i_atom;
+    t_Individual :: const_iterator i_spin = _offspring.begin();
+    for (int i=0; i < 2; ++i)
+    {
+      for ( ; i_val != i_val_end; ++i_val, ++i_kvec)
+      {
+        for( i_atom = i_atom_begin; i_atom != i_atom_end; ++i_atom, ++i_spin )
+        {
+          *i_val +=    exp( imath * ( i_atom->pos[0] * (*i_kvec)[0] +
+                                      i_atom->pos[1] * (*i_kvec)[1] +
+                                      i_atom->pos[2] * (*i_kvec)[2] ) )
+                     * (*i_spin);
+        }
+      }
+      i_val = k_parent.begin();    // FT _parent next
+      i_val_end = k_parent.end();
+      i_spin = _parent.begin();
+      i_kvec = k_vecs.begin();
+    }
+
+    // then does crossover
+    t_k_type :: const_iterator i_cnst = k_parent.begin();
+    i_val = k_offspring.begin();
+    i_val_end = k_offspring.end();
+    for ( ; i_val != i_val_end; ++i_val, ++i_cnst)
+      if ( rng.flip() )
+        *i_val = *i_cnst;
+
+    // Then FT back to r space, while making sure values are +/-1
+    std::vector<rVector3d> :: const_iterator i_kvec_begin = k_vecs.begin();
+    t_k_type :: iterator i_val_begin = k_offspring.begin();
+    t_Individual :: iterator i_var = _offspring.begin();
+    i_cnst = k_parent.begin();
+    i_atom = i_atom_begin;
+    for ( ; i_atom != i_atom_end; ++i_var, ++i_atom)
+    {
+      std::complex<double> store(0);
+      i_kvec = i_kvec_begin;
+      i_val = i_val_begin;
+      for(; i_val != i_val_end; ++i_kvec, ++i_val )
+      {
+        store +=    exp( imath * ( i_atom->pos[0] * (*i_kvec)[0] +
+                                   i_atom->pos[1] * (*i_kvec)[1] +
+                                   i_atom->pos[2] * (*i_kvec)[2] ) )
+                  * (*i_val);
+      }
+      *i_var = ( std::real( store ) > 0 ) ? 1.0 : -1.0;
+    }
+
+    return true; // offspring has changed!
   }
   
 } // namespace LaDa

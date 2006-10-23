@@ -234,6 +234,7 @@ namespace LaDa
         if ( is_using_phenotype )
           phenotype->resize( n );
       }
+
   };
 
 

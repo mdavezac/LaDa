@@ -52,9 +52,23 @@ namespace LaDa
         return true;
       }
 
-      void print_out( std::ostream &_str)
-        {  std::cout << "Crossover, v=" << probability << " "; }
   }; // class Crossover : public eoGenOp<t_Object>
+
+  template<class t_Object, class t_Call_Back>  // call back to Lamarck!!
+  class kCrossover : public eoBinOp<t_Object> 
+  {
+    private:
+      t_Call_Back &call_back;
+
+    public:
+      kCrossover( t_Call_Back &_call_back) : call_back(_call_back) {};
+
+      virtual std::string className() const { return "LaDa::kCrossover"; }
+
+      bool operator() (t_Object &_object1, const t_Object &_object2) 
+        {  return call_back.kCrossover( _object1, _object2 ); }
+
+  }; // class kCrossover : public eoGenOp<t_Object>
 
   template<class t_Object> 
   class Mutation : public eoMonOp<t_Object> 
@@ -93,8 +107,6 @@ namespace LaDa
         return mutated;
       }
 
-    // void print_out( std::ostream &_str)
-    //   {  std::cout << "Mutation, v=" << probability << " "; }
   }; // class Mutation<t_Object> : public eoMonOp<t_Object> 
 
   template<class t_Object> 

@@ -16,7 +16,7 @@ using opt::SA_MINIMIZER;
 
 namespace LaDa 
 {
-  const unsigned svn_revision = 130;
+  const unsigned svn_revision = 131;
   template<class t_Object, class t_Lamarck> 
     const unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -284,6 +284,12 @@ namespace LaDa
         this_op = new Crossover<t_Object>( d );
         eostates.storeFunctor( static_cast< Crossover<t_Object> *>(this_op) );
         _f << "# " << _special << _base << "Crossover: value=" << d;
+      }
+      else if ( str.compare("kCrossover" ) == 0 )
+      {
+        this_op = new kCrossover<t_Object, t_Lamarck>( *lamarck );
+        eostates.storeFunctor( static_cast< kCrossover<t_Object, t_Lamarck> *>(this_op) );
+        _f << "# " << _special << _base << "kCrossover ";
       }
       else if ( str.compare("Mutation" ) == 0 )
       {

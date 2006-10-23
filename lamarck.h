@@ -77,6 +77,7 @@ namespace LaDa
         { return fitness; }
       void add_to_convex_hull( const t_Individual &_indiv );
 
+      bool kCrossover( t_Individual  &_offspring, const t_Individual &_parent);
     protected:
       virtual bool Load( TiXmlHandle &handle );
       bool read_CH();
