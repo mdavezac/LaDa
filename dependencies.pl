@@ -57,7 +57,7 @@ if ( $computer =~ /lester/ )
 if ( $computer =~ /super/ )
 {
   @{$params{"make include"}} = ( "$HOME/usr/include",
-                                 "$HOME/usr/include/eo",
+                                 "$HOME/usr/include/eo" );
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
                              "-llamarck", "-latat", "-ltinyxml", 
                              "-lga", "-leoutils", "-leo" );
@@ -245,7 +245,7 @@ sub template()
   }
 
   printf OUT "\n\ncommit: \n\t";
-  printf OUT "-sed -i 's/\\(const unsigned svn_revision = \\).*\\;/\\1\$(shell svn info | grep Revision | awk '{print \$\$2+1}' )\;/' darwin.impl.h \n";
+  printf OUT "-sed -i 's/\\(const t_unsigned svn_revision = \\).*\\;/\\1\$(shell svn info | grep Revision | awk '{print \$\$2+1}' )\;/' darwin.impl.h \n";
   printf OUT "\t-svn ci\n\t-svn update .\n";
 
   printf OUT "\n\ninclude .dependencies\n\n"; 
