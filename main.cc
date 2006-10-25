@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
   catch ( std::exception &e )
   {
     std::cerr << "Caught error while running lada" << std::endl
-              << e.what();
+	      << e.what();
   }
   return 0;
 }

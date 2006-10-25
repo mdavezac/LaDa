@@ -9,9 +9,10 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <iomanip>
 #include <stdexcept>
 #include <math.h>
-#include<complex>
+#include <complex>
 
 #include <eo/utils/eoRNG.h>
 
@@ -291,12 +292,16 @@ namespace LaDa
     std::vector<Ising_CE::Atom> :: const_iterator i_atom_begin = structure.atoms.begin();
     std::vector<Ising_CE::Atom> :: const_iterator i_atom_end = structure.atoms.end();
     std::vector<Ising_CE::Atom> :: const_iterator i_atom;
-    t_Individual :: const_iterator i_spin = _offspring.begin();
+    t_Individual :: const_iterator i_spin_begin = _offspring.begin();
+    t_Individual :: const_iterator i_spin;
+    std::cout << std::setprecision(2);
     for (t_int i=0; i < 2; ++i)
     {
       for ( ; i_val != i_val_end; ++i_val, ++i_kvec)
       {
-        for( i_atom = i_atom_begin; i_atom != i_atom_end; ++i_atom, ++i_spin )
+        i_atom = i_atom_begin;
+        i_spin = i_spin_begin;
+        for(; i_atom != i_atom_end; ++i_atom, ++i_spin )
         {
           *i_val +=    exp( imath * ( i_atom->pos[0] * (*i_kvec)[0] +
                                       i_atom->pos[1] * (*i_kvec)[1] +
@@ -306,7 +311,7 @@ namespace LaDa
       }
       i_val = k_parent.begin();    // FT _parent next
       i_val_end = k_parent.end();
-      i_spin = _parent.begin();
+      i_spin_begin = _parent.begin();
       i_kvec = k_vecs.begin();
     }
 
@@ -322,7 +327,6 @@ namespace LaDa
     std::vector<rVector3d> :: const_iterator i_kvec_begin = k_vecs.begin();
     t_k_type :: iterator i_val_begin = k_offspring.begin();
     t_Individual :: iterator i_var = _offspring.begin();
-    i_cnst = k_parent.begin();
     i_atom = i_atom_begin;
     for ( ; i_atom != i_atom_end; ++i_var, ++i_atom)
     {
@@ -331,9 +335,9 @@ namespace LaDa
       i_val = i_val_begin;
       for(; i_val != i_val_end; ++i_kvec, ++i_val )
       {
-        store +=    exp( imath * ( i_atom->pos[0] * (*i_kvec)[0] +
-                                   i_atom->pos[1] * (*i_kvec)[1] +
-                                   i_atom->pos[2] * (*i_kvec)[2] ) )
+        store +=    exp( -imath * ( i_atom->pos[0] * (*i_kvec)[0] +
+                                    i_atom->pos[1] * (*i_kvec)[1] +
+                                    i_atom->pos[2] * (*i_kvec)[2] ) )
                   * (*i_val);
       }
       *i_var = ( std::real( store ) > 0 ) ? 1.0 : -1.0;

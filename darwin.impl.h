@@ -18,7 +18,7 @@ using opt::SA_MINIMIZER;
 
 namespace LaDa 
 {
-  const t_unsigned svn_revision = 141;
+  const t_unsigned svn_revision = 142;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -73,7 +73,8 @@ namespace LaDa
     {
       try
       {
-         for ( i_island = i_island_begin; i_island != i_island_end; ++i_island )
+         i_island = i_island_begin;
+         for (int i=0; i_island != i_island_end; ++i, ++i_island )
          {
            t_unsigned pSize = i_island->size();
            offsprings.clear(); // new offsprings
