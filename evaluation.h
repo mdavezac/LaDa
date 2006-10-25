@@ -15,7 +15,7 @@ using namespace eo;
 
 #include <opt/types.h>
 using namespace types;
-#include "eotypes.h"
+#include <eo/eotypes.h>
 
 namespace LaDa 
 {
@@ -81,15 +81,15 @@ namespace LaDa
           for ( ; i_pop != i_last; ++i_pop )
             eval(*i_pop);
         } 
-        i_pop = _offsprings.begin();
-        i_last = _offsprings.end();
-        std::cout << "New Individuals:" << std::endl; 
-        for (t_int i = 0 ; i_pop != i_last; ++i, ++i_pop )
-          std::cout << " Offspring " << i 
-                    << " Fitness: " << i_pop->fitness() 
-                    << " Quantity: " << i_pop->get_quantity() 
-                    << " Baseline: " << i_pop->get_baseline() << std::endl; 
-        std::cout << std::endl; 
+       //i_pop = _offsprings.begin();
+       //i_last = _offsprings.end();
+       //std::cout << "New Individuals:" << std::endl; 
+       //for (t_int i = 0 ; i_pop != i_last; ++i, ++i_pop )
+       //  std::cout << " Offspring " << i 
+       //            << " Fitness: " << i_pop->fitness() 
+       //            << " Quantity: " << i_pop->get_quantity() 
+       //            << " Baseline: " << i_pop->get_baseline() << std::endl; 
+       //std::cout << std::endl; 
       }
 
     private:

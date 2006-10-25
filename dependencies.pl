@@ -14,13 +14,10 @@ if ( $computer =~ /home/ )
 {
   @{$params{"make include"}} = ( "/usr/local/include", 
                                  "$HOME/usr/include",
-                                 "$HOME/usr/include/newmat",
-                                 "$HOME/usr/include/opt++",
                                  "$HOME/usr/include/eo");
                                  
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
                              "-llamarck", "-latat", "-ltinyxml",
-                             "-lopt++", "-lnewmat",
                              "-lga", "-leoutils", "-leo" );
   $params{"CC"}  = "gcc";
   $params{"CXX"} = "g++";
@@ -32,13 +29,10 @@ if ( $computer =~ /office/ )
 {
   @{$params{"make include"}} = ( "/usr/local/include", 
                                  "$HOME/usr/include",
-                                 "/usr/local/include/newmat",
-                                 "/usr/local/include/opt++",
-                                 "/usr/local/include/eo");
+                                 "$HOME/usr/include/eo");
                                  
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
                              "-llamarck", "-latat", "-ltinyxml",
-                             "-lopt++", "-lnewmat",
                              "-lga", "-leoutils", "-leo" );
   $params{"CC"}  = "gcc";
   $params{"CXX"} = "g++";
@@ -50,10 +44,9 @@ if ( $computer =~ /lester/ )
 {
   @{$params{"make include"}} = ( "$HOME/usr/include",
                                  "$HOME/usr/include/eo",
-                                 "$HOME/usr/include/newmat",
                                  "$HOME/usr/include/opt++" );
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
-                             "-llamarck", "-latat", "-ltinyxml", "-lopt++", "-lnewmat",
+                             "-llamarck", "-latat", "-ltinyxml", 
                              "-lga", "-leoutils", "-leo" );
   $params{"CC"}  = "gcc";
   $params{"CXX"} = "g++";
@@ -65,10 +58,8 @@ if ( $computer =~ /super/ )
 {
   @{$params{"make include"}} = ( "$HOME/usr/include",
                                  "$HOME/usr/include/eo",
-                                 "$HOME/usr/include/newmat",
-                                 "$HOME/usr/include/opt++" );
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
-                             "-llamarck", "-latat", "-ltinyxml", "-lopt++", "-lnewmat",
+                             "-llamarck", "-latat", "-ltinyxml", 
                              "-lga", "-leoutils", "-leo" );
   $params{"CC"}  = "icc";
   $params{"CXX"} = "icc";
@@ -253,14 +244,14 @@ sub template()
     }
   }
 
-    printf OUT "\n\ncommit: \n\t";
-    printf OUT "-sed -i 's/\\(const unsigned svn_revision = \\).*\\;/\\1\$(shell svn info | grep Revision | awk '{print \$\$2+1}' )\;/' darwin.impl.h \n";
-    printf OUT "\t-svn ci\n\t-svn update .\n";
+  printf OUT "\n\ncommit: \n\t";
+  printf OUT "-sed -i 's/\\(const unsigned svn_revision = \\).*\\;/\\1\$(shell svn info | grep Revision | awk '{print \$\$2+1}' )\;/' darwin.impl.h \n";
+  printf OUT "\t-svn ci\n\t-svn update .\n";
 
-    printf OUT "\n\ninclude .dependencies\n\n"; 
+  printf OUT "\n\ninclude .dependencies\n\n"; 
 
-    close OUT;
-  }
+  close OUT;
+}
 
 
 
@@ -298,7 +289,7 @@ sub template()
       { next; }
       print OUT $_;
     }
-    
+
     close IN;
     close OUT;
     system "rm make_file_template";

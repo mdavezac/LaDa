@@ -9,7 +9,7 @@
 
 #include <opt/types.h>
 using namespace types;
-#include "eotypes.h"
+#include <eo/eotypes.h>
 
 namespace LaDa
 {
@@ -22,7 +22,7 @@ namespace LaDa
       Taboo_Base( const Taboo_Base<t_Object> &_taboo ) {}
       virtual ~Taboo_Base() {};
 
-      unsigned max_production(void) { return 1; }
+      eotypes::t_unsigned max_production(void) { return 1; }
 
       virtual bool is_problematic() const = 0;
       virtual void set_problematic(bool _p = false) = 0;
@@ -213,7 +213,7 @@ namespace LaDa
               : taboo(_taboo), utterrandom(), max(_max)
         { op = &wrap_op<t_Object>( _op, _store ); }
 
-      virtual unsigned max_production()
+      virtual eotypes::t_unsigned max_production()
         { return op->max_production(); }
 
       // tries to create an untaboo object on applying _op

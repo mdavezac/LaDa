@@ -10,6 +10,7 @@
 #include <opt/opt_minimize.h>
 
 #include <math.h>
+#include <cmath>
 
 using opt::NO_MINIMIZER;
 using opt::LINEAR_MINIMIZER;
@@ -17,7 +18,7 @@ using opt::SA_MINIMIZER;
 
 namespace LaDa 
 {
-  const t_unsigned svn_revision = 131;
+  const t_unsigned svn_revision = 137;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -166,7 +167,7 @@ namespace LaDa
       int d = 0;
       if ( child->Attribute("size", &d) )
         if ( d > 0 )
-          pop_size = abs(eotypes::t_int(d));
+          pop_size = (eotypes::t_unsigned) abs(d);
     }
 
     // method and nb steps
@@ -174,7 +175,7 @@ namespace LaDa
       int d = 0;
       if ( parent->Attribute("maxgen", &d) )
         if ( d > 0 )
-          max_generations = abs(types::t_int(d));
+          max_generations = (types::t_unsigned) abs(d);
 
       if ( parent->Attribute("method") )
       {
@@ -183,8 +184,8 @@ namespace LaDa
         {
           multistart = true;
           eoHowMany nb(replacement_rate);
-          max_generations = (types::t_int) pop_size
-                            + (types::t_int) nb(pop_size) * max_generations;
+          max_generations = (types::t_unsigned) pop_size
+                            + (types::t_unsigned) nb(pop_size) * max_generations;
           pop_size = 1;
           replacement_rate = 1.0;
           evolve_from_start = true;
@@ -192,7 +193,7 @@ namespace LaDa
       } // if attribute "method" exists
       // number of Islands
       if ( parent->Attribute("islands", &d ) )
-        nb_islands = ( d > 0 ) ? abs(types::t_int(d)) : 1;
+        nb_islands = ( d > 0 ) ? (types::t_int) abs(d) : 1;
     }   
 
       
@@ -228,7 +229,7 @@ namespace LaDa
     t_unsigned n = UINT_MAX;
     int i = 0;
     if ( el->Attribute("maxeval", &i) )
-      n = ( i <= 0 ) ? UINT_MAX : abs(i);
+      n = ( i <= 0 ) ? UINT_MAX : (types::t_unsigned) abs(i);
     if ( type == SA_MINIMIZER or type == LINEAR_MINIMIZER )
     {
       if ( n == UINT_MAX ) 
@@ -307,7 +308,7 @@ namespace LaDa
           type = "SA";
         int i=0; t_unsigned maxeval = UINT_MAX;
         if ( sibling->Attribute("maxeval", &i ) )
-          maxeval = ( i > 0 ) ? abs(t_int(i)) : UINT_MAX;
+          maxeval = ( i > 0 ) ? (types::t_unsigned) abs(i) : UINT_MAX;
         _f << "# " << _special << _base << "TabooMinimizer: " 
            << type << " maxeval " << maxeval;
         if ( type.compare("SA") )
@@ -330,7 +331,9 @@ namespace LaDa
         eoGenOp<t_Object> *taboo_op;
         taboo_op = make_genetic_op( *sibling->FirstChildElement(), _f,  special, _base, NULL);
         _f << "# " << _special << _base << "TabooOp end";
-        this_op = new TabooOp<t_Object> ( *taboo_op, *taboos, types::t_int(pop_size+1), eostates );
+        this_op = new TabooOp<t_Object> ( *taboo_op, *taboos, 
+                                          (types::t_unsigned)(pop_size+1),
+                                          eostates );
         eostates.storeFunctor( static_cast< TabooOp<t_Object> *>(this_op) );
         is_gen_op = true;
       }
@@ -367,7 +370,8 @@ namespace LaDa
         if (period > 0 and abs(period) < max_generations )
         {
           _f << " period= " << prob;
-          this_op = new PeriodicOp<t_Object>( *this_op, abs(types::t_int(period)), *nb_generations, eostates );
+          this_op = new PeriodicOp<t_Object>( *this_op, (types::t_unsigned) abs(period),
+                                              *nb_generations, eostates );
           eostates.storeFunctor( static_cast< PeriodicOp<t_Object> *>(this_op) );
           is_gen_op = true;
         }
@@ -634,7 +638,7 @@ namespace LaDa
         // then creates the object to update the taboo list
         int d = 0;
         child->Attribute("lifespan", &d );
-        length = ( d >=0 ) ? abs(types::t_int(d)) : UINT_MAX;
+        length = ( d >=0 ) ? (types::t_int) abs(d) : UINT_MAX;
         bool print_out = false;
         if ( child->Attribute("printout") )
         {
@@ -753,9 +757,9 @@ namespace LaDa
     eoPop<t_Object> population;
     population.reserve(pop_size);
 
-    for( t_unsigned n = 0; n < nb_islands; ++n )
+    for( eotypes::t_unsigned n = 0; n < nb_islands; ++n )
     {
-      for( t_unsigned i = 0; i < pop_size; ++i )
+      for( eotypes::t_unsigned i = 0; i < pop_size; ++i )
       {
         typename t_Object :: iterator i_var = indiv.begin();
         typename t_Object :: iterator i_end = indiv.end();
@@ -859,8 +863,8 @@ namespace LaDa
           minimize_best = types::t_real(d);
       int u = 0;
       if ( child->Attribute( "every", &u ) )
-        minimize_best_every = ( u > 0 and abs(types::t_int(u)) <= max_generations ) ?
-                              abs(types::t_int(u))  : 0 ;
+        minimize_best_every = ( u > 0 and (types::t_unsigned) abs(u) <= max_generations ) ?
+                              (types::t_unsigned) abs(u)  : 0 ;
       std::string str;
     }
 

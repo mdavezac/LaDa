@@ -31,7 +31,7 @@
 #include "breeder.h"
 #include "checkpoint.h"
 
-#include "eotypes.h"
+#include <eo/eotypes.h>
 
 #include <opt/types.h>
 using namespace types;

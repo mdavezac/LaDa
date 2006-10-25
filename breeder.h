@@ -18,7 +18,7 @@
 
 #include <opt/types.h>
 using namespace types;
-#include "eotypes.h"
+#include <eo/eotypes.h>
 
 /**
   Base class for breeders using generalized operators.
