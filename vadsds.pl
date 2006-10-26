@@ -69,6 +69,17 @@ if ( $params{'GA style'} =~ /restart/)
                          $params{'every'},
                          $params{'GA style'};
 }
+if ( $params{'GA style'} =~ /krossover/)
+{
+ print $params{'GA style'}, "\n";
+  $params{'GA style'} =~ s/krossover//; 
+ print $params{'GA style'}, "\n";
+  $params{'GA style'} =~ s/^\s+//;
+  $params{'GA style'} =~ s/\s+$//;
+  $params{'GA style'} =  sprintf "krossover_%s",
+                         $params{'GA style'};
+ print $params{'GA style'}, "\n";
+}
 if ( $params{'GA style'} =~ /best:(\d+\.\d+)/)
 {
   $params{'rate'} = $1;
@@ -264,15 +275,21 @@ sub write_lamarck_input()
        $minimizertype = sprintf "<Minimizer type=\"linear\" maxeval=\"%i\" "; 
                         $params{'max calls'};
       }
+      elsif ( $params{'minimizer'} =~ /GradientSA/ ) 
+      {
+        $minimizertype = sprintf "<TabooMinimizer type=\"GradientSA\" maxeval=%i ",
+                                 $params{'max calls'}; 
+      }
+      elsif ( $params{'minimizer'} =~ /TabooSA/ ) 
+      {
+        $minimizertype = sprintf "<TabooMinimizer type=\"SA\" maxeval=%i ",
+                                 $params{'max calls'}; 
+      }
       elsif ( $params{'minimizer'} =~ /sa/i )
       {
        $minimizertype = sprintf "<Minimizer type=\"SA\" maxeval=\"%i\" ",
                                 $params{'max calls'};
       }
-      elsif ( $params{'minimizer'} =~ /wang/i )
-        { $minimizertype = sprintf "<Minimizer type=\"wang\""; }
-      elsif ( $params{'minimizer'} =~ /physical/i )
-        { $minimizertype = sprintf "<Minimizer type=\"physical\""; }
 
       # creates the operators
       if ( $params{'GA style'} =~ /multistart/i )
@@ -284,25 +301,27 @@ sub write_lamarck_input()
       }
       elsif($params{'GA style'} =~ /lamarck/i ) 
       {
-        $minimizer = "SA";
-        if ( $params{'minimizer'} =~ /GradientSA/i )
-          { $minimizertype = "GradientSA"; }
         printf OUT "      <Operators type=\"and\" >\n";
         printf OUT "        <TabooOp> \n";
         printf OUT "            <Operators type=\"or\">\n";
-        printf OUT "              <Crossover value=\"0.5\" prob=\"0.75\" />\n";
+        if ( $params{'GA style'} =~ /krossover/ ) 
+          { printf OUT "              <kCrossover prob=\"0.75\" />\n"; }
+        else
+          { printf OUT "              <Crossover value=\"0.5\" prob=\"0.75\" />\n"; }
         printf OUT "              <Mutation value=\"0.05\" prob=\"0.25\" />\n";
         printf OUT "            </Operators>\n";
         printf OUT "        </TabooOp> \n";
-        printf OUT "        <TabooMinimizer type=\"%s\" maxeval=%i />\n",
-                   $minimizertype, $params{'max calls'};
+        printf OUT "        %s />\n", $minimizertype;
         printf OUT "      </Operators>\n";
       }
       elsif($params{'GA style'} =~ /darwin/i ) 
       {
         printf OUT "    <TabooOp> \n";
         printf OUT "      <Operators type=\"or\">\n";
-        printf OUT "        <kCrossover value=\"0.5\" prob=\"0.75\" />\n";
+        if ( $params{'GA style'} =~ /krossover/ ) 
+          { printf OUT "        <kCrossover prob=\"0.75\" />\n"; }
+        else
+          { printf OUT "        <Crossover value=\"0.5\" prob=\"0.75\" />\n"; }
         printf OUT "        <Mutation value=\"0.05\" prob=\"0.25\" />\n";
         printf OUT "      </Operators>\n";
         printf OUT "    </TabooOp> \n";

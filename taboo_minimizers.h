@@ -21,6 +21,8 @@ namespace LaDa
       Taboo_Base< t_Object > &taboo;
       std::vector<t_unsigned> directions;
       t_unsigned max_directions_checked;
+      
+    public:
       static t_unsigned nb_evals;
 
     public:
@@ -128,6 +130,8 @@ namespace LaDa
       Taboo_Base< t_Object > &taboo;
       std::vector<t_unsigned> directions;
       t_unsigned max_directions_checked;
+
+    public:
       static t_unsigned nb_evals, nb_grad_evals;
 
     public:

@@ -18,7 +18,7 @@ using opt::SA_MINIMIZER;
 
 namespace LaDa 
 {
-  const t_unsigned svn_revision = 142;
+  const t_unsigned svn_revision = 143;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -312,7 +312,7 @@ namespace LaDa
           maxeval = ( i > 0 ) ? (types::t_unsigned) abs(i) : UINT_MAX;
         _f << "# " << _special << _base << "TabooMinimizer: " 
            << type << " maxeval " << maxeval;
-        if ( type.compare("SA") )
+        if ( type.compare("SA") == 0 )
           this_op = new SA_TabooOp<t_Object, t_Darwin>( *this, *taboos, maxeval );
         else
           this_op = new GradientSA_TabooOp<t_Object, t_Darwin>( *this, *taboos, maxeval );
@@ -822,6 +822,11 @@ namespace LaDa
 
     if ( print_ch )
     {
+      xmgrace_file << " # " << special << "TabooGradientSA: " 
+                   << GradientSA_TabooOp<t_Object, t_Darwin>::nb_evals << " "
+                   << GradientSA_TabooOp<t_Object, t_Darwin>::nb_grad_evals << std::endl;
+      xmgrace_file << " # " << special << "TabooSA: " 
+                   << SA_TabooOp<t_Object, t_Darwin>::nb_evals << std::endl;
       lamarck->print_xmgrace( xmgrace_file,  print_ch );
       t_Object :: validate_baseline();
     }
