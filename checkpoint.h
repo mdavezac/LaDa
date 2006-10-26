@@ -28,14 +28,14 @@ namespace LaDa
       virtual void lastCall()
         { call_back->print_xml(); }
       virtual void operator()(void)
-        { call_back->print_xmgrace(); }
+        { t_Call_Back::t_Object::invalidate_baseline(); call_back->print_xmgrace(); }
       
       virtual std::string className(void) const { return "Monitor"; } 
   };
 
   // checks for taboo unconvergence from a breeder, 
   // response. If response does not get through 
-  template< class t_Object, class t_Call_Back >
+  template< class t_Call_Back, class t_Object = typename t_Call_Back :: t_Object >
   class NuclearWinter : public eoStatBase<t_Object>
   {
     protected:
@@ -126,7 +126,7 @@ namespace LaDa
 
   };
 
-  template<class t_Object, class t_Call_Back>
+  template< class t_Call_Back, class t_Object = typename t_Call_Back :: t_Object >
   class UpdateAgeTaboo : public eoStatBase<t_Object> 
   {
     protected:
@@ -187,7 +187,7 @@ namespace LaDa
   };
 
   // Gets an average of individuals accumulated over all generations
-  template< class t_Object, class t_Call_Back >
+  template< class t_Call_Back, class t_Object = typename t_Call_Back :: t_Object >
   class AccAverage : public eoStatBase<t_Object>
   {
     protected:
@@ -241,7 +241,7 @@ namespace LaDa
   };
 
   // Gets an average of individuals accumulated over this generations
-  template< class t_Object, class t_Call_Back >
+  template< class t_Call_Back, class t_Object = typename t_Call_Back :: t_Object >
   class PopAverage : public eoStatBase<t_Object>
   {
     protected:

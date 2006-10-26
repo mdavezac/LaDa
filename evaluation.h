@@ -19,27 +19,22 @@ using namespace types;
 
 namespace LaDa 
 {
-  // t_Object should be some LaDa::Individual<..,..>
-  // Boss should be some LaDa::MotU<..,..>
-  template<class t_Object, class Boss> 
+  template<class t_Call_Back, class t_Object = typename t_Call_Back :: t_Object> 
   class Evaluation : public eoEvalFunc<t_Object> 
   {
     private:
-      Boss &overlord;
+      t_Call_Back &call_back;
       
     public: 
-      Evaluation(Boss &_overlord) : overlord( _overlord ) {}
-
-      void set_overlord( Boss &_overlord )
-        { overlord = _overlord; }
+      Evaluation(t_Call_Back &_call_back) : call_back( _call_back ) {}
 
       void operator()(t_Object &_object)
       {
         // if quantity does not exist, neither should baseline
         if ( _object.invalid() )
         {
-          _object.set_quantity( overlord.evaluate( _object ) );
-          _object.set_baseline( overlord.evaluate( _object.get_concentration() ) );
+          _object.set_quantity( call_back.evaluate( _object ) );
+          _object.set_baseline( call_back.evaluate( _object.get_concentration() ) );
           _object.set_fitness();
           return;
         }
@@ -49,7 +44,7 @@ namespace LaDa
           return;
 
         // baseline should be recomputed
-        _object.set_baseline( overlord.evaluate( _object.get_concentration() ) );
+        _object.set_baseline( call_back.evaluate( _object.get_concentration() ) );
         _object.set_fitness();
       }
   };
@@ -96,7 +91,7 @@ namespace LaDa
       eoEvalFunc<t_Object> &eval;
   };
 
-  template<class t_Object, class t_Call_Back>
+  template<class t_Call_Back, class t_Object = typename t_Call_Back :: t_Object >
   class Extra_PopAlgo : public eoPopAlgo<t_Object>
   {
       bool do_minimize_best;
@@ -104,7 +99,7 @@ namespace LaDa
       eoHowMany how_many;
       t_unsigned every;
       t_unsigned nb_calls;
-      Evaluation<t_Object, t_Call_Back> *eval;
+      Evaluation<t_Call_Back, t_Object> *eval;
       eoMonOp<t_Object> & op;
 
     public:
@@ -117,7 +112,7 @@ namespace LaDa
                      nb_calls(0),
                      op(_op)
       {
-        eval = new Evaluation<t_Object, t_Call_Back>(call_back);
+        eval = new Evaluation<t_Call_Back, t_Object>(call_back);
         if( _rate > 0 and _rate <= 1 )
           do_minimize_best = true;
         if( _every == 0 ) 

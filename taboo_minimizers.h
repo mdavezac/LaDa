@@ -13,7 +13,7 @@ using namespace types;
 
 namespace LaDa
 {
-  template <class t_Object, class t_Call_Back> 
+  template <class t_Call_Back, class t_Object = typename t_Call_Back :: t_Object> 
   class SA_TabooOp : public eoMonOp<t_Object>
   {
     protected:
@@ -119,10 +119,10 @@ namespace LaDa
 
   };
   
-  template <class t_Object, class t_Call_Back> 
-  t_unsigned SA_TabooOp<t_Object, t_Call_Back> :: nb_evals = 0;
+  template <class t_Call_Back, class t_Object> 
+  t_unsigned SA_TabooOp<t_Call_Back, t_Object> :: nb_evals = 0;
 
-  template <class t_Object, class t_Call_Back> 
+  template <class t_Call_Back, class t_Object = typename t_Call_Back::t_Object> 
   class GradientSA_TabooOp : public eoMonOp<t_Object>
   {
     protected:
@@ -236,10 +236,10 @@ namespace LaDa
 
   };
 
-  template <class t_Object, class t_Call_Back> 
-  t_unsigned GradientSA_TabooOp<t_Object, t_Call_Back> :: nb_evals = 0;
-  template <class t_Object, class t_Call_Back> 
-  t_unsigned GradientSA_TabooOp<t_Object, t_Call_Back> :: nb_grad_evals = 0;
+  template <class t_Call_Back, class t_Object> 
+  t_unsigned GradientSA_TabooOp<t_Call_Back, t_Object> :: nb_evals = 0;
+  template <class t_Call_Back, class t_Object> 
+  t_unsigned GradientSA_TabooOp<t_Call_Back, t_Object> :: nb_grad_evals = 0;
 
 } // namespace LaDa
 #endif

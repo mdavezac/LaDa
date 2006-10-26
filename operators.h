@@ -58,7 +58,7 @@ namespace LaDa
 
   }; // class Crossover : public eoGenOp<t_Object>
 
-  template<class t_Object, class t_Call_Back>  // call back to Lamarck!!
+  template<class t_Call_Back, class t_Object = typename t_Call_Back :: t_Object >
   class kCrossover : public eoBinOp<t_Object> 
   {
     private:
@@ -138,7 +138,7 @@ namespace LaDa
     //   {  std::cout << "UtterRandom " << probability << " "; }
   }; // class Mutation<t_Object> : public eoMonOp<t_Object> 
 
-  template<class t_Object, class t_Call_Back> 
+  template<class t_Call_Back, class t_Object = typename t_Call_Back :: t_Object > 
   class EvaluateOp : public eoMonOp<t_Object> 
   {
     private:

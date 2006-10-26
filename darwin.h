@@ -39,10 +39,12 @@ using namespace types;
 namespace LaDa
 {
 
-  template<class t_Object, class t_Lamarck>
-  class Darwin: public eoAlgo<t_Object>
+  template<class T_OBJECT, class T_LAMARCK>
+  class Darwin: public eoAlgo<T_OBJECT>
   {
     public:
+      typedef T_OBJECT t_Object;
+      typedef T_LAMARCK t_Lamarck;
       typedef Darwin<t_Object, t_Lamarck> t_Darwin;
       typedef typename std::list< eoPop<t_Object> > t_Islands;
       typedef typename t_Lamarck :: t_GA_Functional t_Functional;
@@ -89,7 +91,7 @@ namespace LaDa
       eoReplacement<t_Object>*       replace;
       eoPopAlgo<t_Object>*           extra_popalgo;
       Taboo_Base<t_Object>*          taboos;
-      NuclearWinter<t_Object, t_Darwin >* nuclearwinter;
+      NuclearWinter<t_Darwin >* nuclearwinter;
 
       t_Lamarck *lamarck;
 

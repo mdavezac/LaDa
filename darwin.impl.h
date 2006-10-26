@@ -18,7 +18,7 @@ using opt::SA_MINIMIZER;
 
 namespace LaDa 
 {
-  const t_unsigned svn_revision = 143;
+  const t_unsigned svn_revision = 144;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -281,8 +281,8 @@ namespace LaDa
       }
       else if ( str.compare("kCrossover" ) == 0 )
       {
-        this_op = new kCrossover<t_Object, t_Lamarck>( *lamarck );
-        eostates.storeFunctor( static_cast< kCrossover<t_Object, t_Lamarck> *>(this_op) );
+        this_op = new kCrossover<t_Lamarck, t_Object>( *lamarck );
+        eostates.storeFunctor( static_cast< kCrossover<t_Lamarck, t_Object> *>(this_op) );
         _f << "# " << _special << _base << "kCrossover ";
       }
       else if ( str.compare("Mutation" ) == 0 )
@@ -313,9 +313,9 @@ namespace LaDa
         _f << "# " << _special << _base << "TabooMinimizer: " 
            << type << " maxeval " << maxeval;
         if ( type.compare("SA") == 0 )
-          this_op = new SA_TabooOp<t_Object, t_Darwin>( *this, *taboos, maxeval );
+          this_op = new SA_TabooOp<t_Darwin>( *this, *taboos, maxeval );
         else
-          this_op = new GradientSA_TabooOp<t_Object, t_Darwin>( *this, *taboos, maxeval );
+          this_op = new GradientSA_TabooOp<t_Darwin>( *this, *taboos, maxeval );
 
         eostates.storeFunctor( static_cast< eoMonOp<t_Object> *>(this_op) );
       }
@@ -488,8 +488,8 @@ namespace LaDa
       }
       else if ( str.compare("Evaluate") == 0 )
       {
-        EvaluateOp<t_Object, t_Darwin >* evaluateop
-           = new EvaluateOp<t_Object, t_Darwin >(*this);
+        EvaluateOp<t_Darwin >* evaluateop
+           = new EvaluateOp<t_Darwin >(*this);
         eostates.storeFunctor(evaluateop);
         _f << "# " << _special << _base << "Evaluate "
            << " prob "<< prob << std::endl;
@@ -552,8 +552,8 @@ namespace LaDa
   template< class t_Object, class t_Lamarck >
   void Darwin<t_Object, t_Lamarck> :: make_algo()
   {
-    Evaluation<t_Object, t_Darwin > *evaluation
-       = new Evaluation<t_Object, t_Darwin >(*this);
+    Evaluation<t_Darwin> *evaluation
+       = new Evaluation<t_Darwin>(*this);
     popEval = new EvaluatePop<t_Object>(*evaluation);
     
     continuator = make_checkpoint(); // must come before make_breeder
@@ -607,10 +607,10 @@ namespace LaDa
         str = child->Attribute( "type" );
 
       if ( str.compare("accumulated") == 0 )
-        average = new AccAverage< t_Object, t_Darwin >( *this, *nb_generations, 
+        average = new AccAverage< t_Darwin >( *this, *nb_generations, 
                                                         lamarck->get_pb_size() );
       else if ( str.compare("population") == 0 )
-        average = new PopAverage< t_Object, t_Darwin >( *this, lamarck->get_pb_size() );
+        average = new PopAverage< t_Darwin >( *this, lamarck->get_pb_size() );
 
       eostates.storeFunctor( average );
       check_point->add( *average );
@@ -647,8 +647,8 @@ namespace LaDa
           if ( str.compare("true") == 0 )
             print_out = true;
         }
-        UpdateAgeTaboo< t_Object, t_Darwin > *updateagetaboo 
-            = new UpdateAgeTaboo<t_Object, t_Darwin >
+        UpdateAgeTaboo< t_Darwin > *updateagetaboo 
+            = new UpdateAgeTaboo<t_Darwin >
                                 ( *agetaboo, *nb_generations, *this, length, print_out);
         xmgrace_file << "# Age Taboo, lifespan=" << d << std::endl;
         eostates.storeFunctor(updateagetaboo);
@@ -730,7 +730,7 @@ namespace LaDa
           throw "Error while creating operators in  Darwin<t_Object, t_Lamarck>  :: make_GenOp ";
         
         // creates the NuclearWinter 
-        nuclearwinter = new NuclearWinter<t_Object, t_Darwin >
+        nuclearwinter = new NuclearWinter<t_Darwin >
                                          ( *taboos, *breeder_ops, *nuclear_op, *this,
                                            replacement_rate );
         xmgrace_file << "# NuclearWinter " << std::endl;
@@ -823,10 +823,10 @@ namespace LaDa
     if ( print_ch )
     {
       xmgrace_file << " # " << special << "TabooGradientSA: " 
-                   << GradientSA_TabooOp<t_Object, t_Darwin>::nb_evals << " "
-                   << GradientSA_TabooOp<t_Object, t_Darwin>::nb_grad_evals << std::endl;
+                   << GradientSA_TabooOp<t_Darwin>::nb_evals << " "
+                   << GradientSA_TabooOp<t_Darwin>::nb_grad_evals << std::endl;
       xmgrace_file << " # " << special << "TabooSA: " 
-                   << SA_TabooOp<t_Object, t_Darwin>::nb_evals << std::endl;
+                   << SA_TabooOp<t_Darwin>::nb_evals << std::endl;
       lamarck->print_xmgrace( xmgrace_file,  print_ch );
       t_Object :: validate_baseline();
     }
@@ -885,7 +885,7 @@ namespace LaDa
     std::string base = "  ";
     eoMonOp<t_Object> *op = make_MonOp(*child, xmgrace_file, str, base);
 
-    extra_popalgo = new Extra_PopAlgo< t_Object, t_Darwin > 
+    extra_popalgo = new Extra_PopAlgo< t_Darwin > 
                                      ( *op, *this, minimize_best, minimize_best_every );
     eostates.storeFunctor( extra_popalgo );
     xmgrace_file.flush();
