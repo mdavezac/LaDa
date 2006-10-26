@@ -112,7 +112,7 @@ namespace LaDa
         { return lamarck->evaluate( _object );  }
       bool minimize( const t_Object &_object, const t_unsigned &_nb )
         { return lamarck->minimize( _object, _nb);  }
-      void print_xmgrace();
+      void print_xmgrace(bool is_last_call);
       void print_xmgrace( std::string &_str )
         { print_strings.push_back(_str); }
   

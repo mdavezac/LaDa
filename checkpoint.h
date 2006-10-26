@@ -26,9 +26,12 @@ namespace LaDa
     public:
       PrintXmgrace( t_Call_Back* _call_back) { call_back =_call_back; }
       virtual void lastCall()
-        { call_back->print_xml(); }
+      {
+        call_back->print_xmgrace(true); // is_last_call = true
+        call_back->print_xml();
+      }
       virtual void operator()(void)
-        { t_Call_Back::t_Object::invalidate_baseline(); call_back->print_xmgrace(); }
+        { call_back->print_xmgrace(); }
       
       virtual std::string className(void) const { return "Monitor"; } 
   };

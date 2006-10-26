@@ -18,7 +18,7 @@ using opt::SA_MINIMIZER;
 
 namespace LaDa 
 {
-  const t_unsigned svn_revision = 144;
+  const t_unsigned svn_revision = 145;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -801,13 +801,15 @@ namespace LaDa
 
     
   template< class t_Object, class t_Lamarck >
-  void Darwin <t_Object, t_Lamarck> :: print_xmgrace()
+  void Darwin <t_Object, t_Lamarck> :: print_xmgrace( bool is_last_call = false )
   {
     std::ofstream xmgrace_file( xmgrace_filename.c_str(), std::ios_base::out|std::ios_base::app ); 
     bool print_ch = not t_Object :: is_baseline_valid();
     std::string special = " ";
     if ( not print_ch )
       special = " ? ";
+    if ( is_last_call )
+      xmgrace_file << " # last call for alcohol" << std::endl; 
     std::vector< std::string > :: const_iterator i_str = print_strings.begin();
     std::vector< std::string > :: const_iterator i_end = print_strings.end();
     if ( i_str != i_end )
@@ -817,10 +819,10 @@ namespace LaDa
         xmgrace_file << " #" << special << (*i_str) << std::endl;
       print_strings.clear();
     }
-    else if ( print_ch )
+    else if ( print_ch or is_last_call )
       xmgrace_file << " #" << special <<  "iteration:" << nb_generations->value() << std::endl; 
 
-    if ( print_ch )
+    if ( print_ch or is_last_call )
     {
       xmgrace_file << " # " << special << "TabooGradientSA: " 
                    << GradientSA_TabooOp<t_Darwin>::nb_evals << " "
