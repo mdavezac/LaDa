@@ -20,6 +20,7 @@
 using namespace types;
 #include <eo/eotypes.h>
 
+#include "checkpoint.h"
 /**
   Base class for breeders using generalized operators.
 */
@@ -32,12 +33,12 @@ namespace LaDa
     protected:
       eoSelectOne<t_Object>& select;
       eoGenOp<t_Object> *op; 
-      eoIncrementorParam<t_unsigned> &age;
+      GenCount &age;
       eoHowMany *howMany;
     
     public:
       Breeder   ( eoSelectOne<t_Object>& _select, eoGenOp<t_Object>& _op,
-                  eoIncrementorParam<t_unsigned> &_age )
+                  GenCount &_age )
               : select( _select ), op(&_op),
                 age(_age), howMany(NULL) {}
       Breeder   ( Breeder<t_Object> & _breeder )
@@ -56,7 +57,7 @@ namespace LaDa
         while (_offspring.size() < target)
         {
           (*op)(it);
-          (*it).set_age(age.value());
+          (*it).set_age(age());
           ++it;
         }
      

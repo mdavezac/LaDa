@@ -76,7 +76,6 @@ namespace LaDa
       std::vector< std::string > print_strings;
 
       eoState eostates;
-      eoIncrementorParam<t_unsigned> *nb_generations;
       t_unsigned nb_islands;
       t_Islands islands;
       eoPop<t_Object> offsprings;
@@ -84,7 +83,7 @@ namespace LaDa
       std::string filename;
       std::string xmgrace_filename;
 
-      IslandsContinuator<t_Object>*          continuator;
+      IslandsContinuator<t_Object>*  continuator;
       eoPopEvalFunc<t_Object>*       popEval;
       eoBreed<t_Object>*             breeder;
       eoGenOp<t_Object>*             breeder_ops;
@@ -132,7 +131,7 @@ namespace LaDa
                                          std::string &_base,
                                          eoGenOp<t_Object> *current_op);
       eoBreed<t_Object>* make_breeder();
-      IslandsContinuator<t_Object>* make_checkpoint();
+      void make_checkpoint();
       eoReplacement<t_Object>* make_replacement();
       void make_extra_algo();
       void make_algo();

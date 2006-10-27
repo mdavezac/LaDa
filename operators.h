@@ -20,6 +20,7 @@
 #include <opt/types.h>
 using namespace types;
 #include <eo/eotypes.h>
+#include "gencount.h"
 
 namespace LaDa 
 {
@@ -264,15 +265,14 @@ namespace LaDa
   {
     protected:
       t_unsigned period;
-      eoIncrementorParam<t_unsigned> &age;
+      GenCount &age;
       eoGenOp<t_Object> *op;
     public:
       PeriodicOp   ( eoOp<t_Object> &_op,
                      t_unsigned _period, 
-                     eoIncrementorParam<t_unsigned> &_age,
+                     GenCount &_age,
                      eoFunctorStore &_store)
                  : period(_period), age(_age)
-      
         { op = &wrap_op<t_Object>( _op, _store ); }
       virtual ~PeriodicOp() {};
     
@@ -283,7 +283,7 @@ namespace LaDa
 
       virtual void apply( eoPopulator<t_Object> &_object ) 
       {
-        if ( age.value() % period == 0 )
+        if ( age() % period == 0 )
           (*op)(_object);
       }
   };
@@ -318,10 +318,10 @@ namespace LaDa
   class AgeOp : public eoMonOp<t_Object>
   {
     protected:
-      eoIncrementorParam<t_unsigned> &age;
+      GenCount &age;
 
     public:
-      AgeOp   ( eoIncrementorParam<t_unsigned> &_age )
+      AgeOp   ( GenCount &_age )
             : age(_age) {}
       AgeOp   ( const AgeOp<t_Object> &_t )
             : age(_t.age) {}
@@ -330,7 +330,7 @@ namespace LaDa
       // after max tries, creates a random untaboo object
       virtual bool operator()( t_Object &_object )
       {
-        _object.set_age( age.value() );
+        _object.set_age( age() );
         return false;
       }
   };

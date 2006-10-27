@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <eo/eoOp.h>
+#include <eo/utils/eoRNG.h>
 
 #include "taboo.h"
 
@@ -70,7 +71,7 @@ namespace LaDa
         do 
         {
           // shuffle directions
-          std::random_shuffle(i_begin, i_last);
+          std::random_shuffle(i_begin, i_last, eo::random<t_unsigned>);
           is_not_converged = false;
 
           // evaluates first position
@@ -180,7 +181,7 @@ namespace LaDa
         do 
         {
           // shuffle directions
-          std::random_shuffle(i_begin, i_last);
+          std::random_shuffle(i_begin, i_last, eo::random<t_unsigned>);
           is_not_converged = false;
 
           // evaluates first position
@@ -198,7 +199,10 @@ namespace LaDa
               *i_var = ( *i_var > 0 ) ? -1.0 : 1.0; // flips back
             else 
             {
-              *i_var = ( *i_var > 0 ) ? -0.998 : 0.998; // flips to derivative position
+              // flips to derivative position 
+              // ** we've flipped one already for taboo, 
+              // ** hence negative sign
+              *i_var = ( *i_var > 0 ) ? -0.998 : 0.998; 
               next_e = functional.evaluate(); // evaluates
               ++nb_grad_evals;
               if ( current_e > next_e ) // gradient says to flip
@@ -211,9 +215,11 @@ namespace LaDa
                   is_not_converged = true;
                   current_e = next_e;
                 }
-                else // flips back
+                else // flips back -- gradient was wrong
                   *i_var = ( *i_var > 0.0 ) ? -1.0 : 1.0; 
               }
+              else // flips back -- gradient says dont investigate
+                *i_var = ( *i_var > 0.0 ) ? 1.0 : -1.0; 
             } // end of check for taboo
 
             if ( count >= max_directions_checked )  // breaks out after n calls to functional
@@ -231,7 +237,7 @@ namespace LaDa
         // and add to Convex_Hull if necessary
         if ( current_e < 0 )
           call_back.add_to_convex_hull( _object );
-        return false; // fitness is set, returns false
+        return true; // fitness is set, returns false
       } // end of operator()(t_Object &_object)
 
   };

@@ -15,8 +15,11 @@
 #include<opt/types.h>
 using namespace types;
 
+#include "gencount.h"
+
 namespace LaDa 
 {
+
   // implements a call back which simply calls a print_xmgrace and a print_xml
   template<class t_Call_Back>
   class PrintXmgrace : public eoUpdater
@@ -134,7 +137,7 @@ namespace LaDa
   {
     protected:
       Taboo< t_Object, std::list<t_Object> > & taboo;
-      eoIncrementorParam<t_unsigned> &age;
+      GenCount &age;
       t_Call_Back &call_back;
       t_unsigned max_age;
       t_unsigned check_every;
@@ -142,7 +145,7 @@ namespace LaDa
 
     public:
       UpdateAgeTaboo  ( Taboo< t_Object, std::list<t_Object> > & _taboo,
-                        eoIncrementorParam<t_unsigned> &_age, t_Call_Back &_call_back,
+                        GenCount &_age, t_Call_Back &_call_back,
                         t_unsigned _max_age, bool _do_print_out = false )
                      : taboo(_taboo), age(_age), call_back(_call_back), max_age(_max_age),
                        do_print_out( _do_print_out )
@@ -158,7 +161,7 @@ namespace LaDa
 
       virtual void operator()( const eoPop<t_Object> &_pop )
       {
-        t_unsigned ga_age = age.value();
+        t_unsigned ga_age = age();
         if ( ga_age < max_age or ga_age%check_every != 0 )
           return;
 
@@ -195,13 +198,13 @@ namespace LaDa
   {
     protected:
       t_Call_Back &call_back;
-      eoIncrementorParam<t_unsigned> &age;
+      GenCount &age;
       t_unsigned total_individuals;
       t_Object average;
 
     public:
       AccAverage   ( t_Call_Back &_call_back,
-                     eoIncrementorParam<t_unsigned> &_age,
+                     GenCount &_age,
                      t_unsigned _size )
                  : call_back( _call_back ), age(_age),
                    total_individuals(0)
@@ -212,7 +215,7 @@ namespace LaDa
       virtual std::string className(void) const { return "LaDa::AccAverage"; }
       virtual void operator()( const eoPop<t_Object> &_pop )
       {
-        t_unsigned this_age = age.value();
+        t_unsigned this_age = age();
         typename eoPop<t_Object> :: const_iterator i_indiv = _pop.begin();
         typename eoPop<t_Object> :: const_iterator i_end = _pop.end();
         typename t_Object :: iterator i_av_begin = average.begin();
@@ -296,18 +299,20 @@ namespace LaDa
   template<class t_Object, class t_Islands = std::list< eoPop<t_Object> > > 
   class IslandsContinuator : public eoContinue<t_Object>
   {
-    typedef typename t_Islands :: iterator iterator;
-    typedef typename t_Islands :: const_iterator const_iterator;
+    public:
+      typedef typename t_Islands :: iterator iterator;
+      typedef typename t_Islands :: const_iterator const_iterator;
     protected:
       std::list < eoContinue<t_Object>* >       continuators;
       std::list < eoSortedStatBase<t_Object>* > sorted;
       std::list < eoStatBase<t_Object>* >       stats;
       std::list < eoMonitor* >                  monitors;
       std::list < eoUpdater* >                  updaters;
+      GenCount generation_counter;
+      t_unsigned  max_generations;
 
     public:
-      IslandsContinuator( eoContinue<t_Object> &_cont ) 
-        { continuators.push_back( &_cont ); }
+      IslandsContinuator( t_unsigned _max ) : generation_counter(0), max_generations(_max) {}
 
       void add(eoContinue<t_Object>& _cont)
         { continuators.push_back(&_cont); }
@@ -370,8 +375,8 @@ namespace LaDa
       {
         typename std::list < eoContinue<t_Object>* > :: const_iterator i_continue = continuators.begin();
         typename std::list < eoContinue<t_Object>* > :: const_iterator i_end = continuators.end();
-        bool result = (*i_continue)->operator()( _pop); // generation counter
-        for ( ++i_continue; i_continue != i_end; ++i_continue )
+        bool result = true;
+        for (; i_continue != i_end; ++i_continue )
           if ( not (*i_continue)->operator()( _pop) )
             result = false;
         return result;
@@ -418,25 +423,33 @@ namespace LaDa
       bool apply ( iterator &_i_begin, iterator &_i_end )
       {
         iterator i_pop = _i_begin;
-        bool result = true;
 
         for( ; i_pop != _i_end; ++i_pop )
           apply_stats( *i_pop );
 
         apply_monitors_updaters();
 
+        bool result = ( generation_counter() < max_generations );
         for( i_pop = _i_begin; i_pop != _i_end; ++i_pop )
           if ( not apply_continuators( *i_pop ) )
             result = false;
- 
+
+        // last call
         if ( not result )
           for( i_pop = _i_begin; i_pop != _i_end; ++i_pop )
             lastCall( *i_pop );
+
+        // increments generation
+        ++generation_counter;
 
         return result;
       }
 
       virtual std::string className(void) const { return "LaDa::IslandsContinuator"; }
+      GenCount& get_generation_counter() 
+        { return generation_counter; }
+      const t_unsigned age() const
+        { return generation_counter(); }
   };
 
 } // namespace LaDa

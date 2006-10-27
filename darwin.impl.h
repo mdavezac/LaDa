@@ -4,6 +4,7 @@
 #include<eo/eoReduceMerge.h>
 
 
+#include "gencount.h"
 #include "generator.h"
 #include "taboo_minimizers.h"
 #include <lamarck/convex_hull.h>
@@ -18,7 +19,7 @@ using opt::SA_MINIMIZER;
 
 namespace LaDa 
 {
-  const t_unsigned svn_revision = 145;
+  const t_unsigned svn_revision = 146;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -372,7 +373,7 @@ namespace LaDa
         {
           _f << " period= " << prob;
           this_op = new PeriodicOp<t_Object>( *this_op, (types::t_unsigned) abs(period),
-                                              *nb_generations, eostates );
+                                              continuator->get_generation_counter(), eostates );
           eostates.storeFunctor( static_cast< PeriodicOp<t_Object> *>(this_op) );
           is_gen_op = true;
         }
@@ -523,7 +524,7 @@ namespace LaDa
     select = new eoDetTournamentSelect<t_Object>(tournament_size);
     if ( nuclearwinter )
     {
-      breed = new Breeder<t_Object>(*select, *breeder_ops, *nb_generations);
+      breed = new Breeder<t_Object>(*select, *breeder_ops, continuator->get_generation_counter() );
       nuclearwinter->set_op_address( static_cast<Breeder<t_Object>*>(breed)->get_op_address() );
       nuclearwinter->set_howmany( static_cast<Breeder<t_Object>*>(breed)->get_howmany_address() ) ;
     }
@@ -556,7 +557,7 @@ namespace LaDa
        = new Evaluation<t_Darwin>(*this);
     popEval = new EvaluatePop<t_Object>(*evaluation);
     
-    continuator = make_checkpoint(); // must come before make_breeder
+    make_checkpoint(); // must come before make_breeder
     breeder = make_breeder();
     replace = make_replacement();
     make_extra_algo();
@@ -565,7 +566,7 @@ namespace LaDa
   }
 
   template< class t_Object, class t_Lamarck >
-  IslandsContinuator<t_Object>* Darwin<t_Object, t_Lamarck> :: make_checkpoint()
+  void Darwin<t_Object, t_Lamarck> :: make_checkpoint()
   {
     TiXmlDocument doc( filename.c_str() );
     TiXmlHandle docHandle( &doc );
@@ -576,24 +577,16 @@ namespace LaDa
       throw "Could not load input file in  Darwin<t_Object, t_Lamarck>  :: make_breeder";
     }
 
-    // continuator
-    eoGenContinue<t_Object> *gen_continue = new eoGenContinue<t_Object>(max_generations);
-    eostates.storeFunctor( gen_continue );
- 
-    // gen_continue
-    IslandsContinuator<t_Object> *check_point = new IslandsContinuator<t_Object>(*gen_continue);
-    eostates.storeFunctor( check_point );
+    // contains all checkpoints
+    continuator = new IslandsContinuator<t_Object>(max_generations);
+    eostates.storeFunctor( continuator );
+    GenCount &generation_counter = continuator->get_generation_counter();
  
     // our very own updater wrapper to print stuff
     PrintXmgrace< t_Darwin > *printxmgrace = new PrintXmgrace< t_Darwin >(this);
     eostates.storeFunctor(printxmgrace);
-    check_point->add(*printxmgrace);
+    continuator->add(*printxmgrace);
     
-    // gen_continue -- should be last updater to be added
-    nb_generations = new eoIncrementorParam<t_unsigned>("Gen.");
-    eostates.storeFunctor(nb_generations);
-    check_point->add(*nb_generations);
-
     // some statistics
     child = docHandle.FirstChild("LaDa")
                      .FirstChild("GA")
@@ -607,13 +600,13 @@ namespace LaDa
         str = child->Attribute( "type" );
 
       if ( str.compare("accumulated") == 0 )
-        average = new AccAverage< t_Darwin >( *this, *nb_generations, 
-                                                        lamarck->get_pb_size() );
+        average = new AccAverage< t_Darwin >( *this, generation_counter,
+                                              lamarck->get_pb_size() );
       else if ( str.compare("population") == 0 )
         average = new PopAverage< t_Darwin >( *this, lamarck->get_pb_size() );
 
       eostates.storeFunctor( average );
-      check_point->add( *average );
+      continuator->add( *average );
     }
 
 
@@ -647,12 +640,12 @@ namespace LaDa
           if ( str.compare("true") == 0 )
             print_out = true;
         }
-        UpdateAgeTaboo< t_Darwin > *updateagetaboo 
-            = new UpdateAgeTaboo<t_Darwin >
-                                ( *agetaboo, *nb_generations, *this, length, print_out);
+        UpdateAgeTaboo< t_Darwin > *updateagetaboo
+               = new UpdateAgeTaboo<t_Darwin > ( *agetaboo, generation_counter,
+                                                 *this, length, print_out);
         xmgrace_file << "# Age Taboo, lifespan=" << d << std::endl;
         eostates.storeFunctor(updateagetaboo);
-        check_point->add(*updateagetaboo);
+        continuator->add(*updateagetaboo);
       }
       
       // creates pop taboo
@@ -735,16 +728,13 @@ namespace LaDa
                                            replacement_rate );
         xmgrace_file << "# NuclearWinter " << std::endl;
         eostates.storeFunctor( nuclearwinter );
-        check_point->add(*nuclearwinter);
+        continuator->add(*nuclearwinter);
       }
 
       xmgrace_file.flush();
       xmgrace_file.close();
     }
-
-    
-    return check_point;
-  }
+  } // end of make_check_point
 
   template<class t_Object, class t_Lamarck>
   void Darwin<t_Object, t_Lamarck> :: populate ()
@@ -753,7 +743,7 @@ namespace LaDa
 
     t_Object indiv;
     indiv.resize( lamarck->get_pb_size() );
-    indiv.set_age( nb_generations->value() ); 
+    indiv.set_age( continuator->age() ); 
 
     eoPop<t_Object> population;
     population.reserve(pop_size);
@@ -814,13 +804,13 @@ namespace LaDa
     std::vector< std::string > :: const_iterator i_end = print_strings.end();
     if ( i_str != i_end )
     {
-      xmgrace_file << " #" << special <<  "iteration:" << nb_generations->value() << std::endl; 
+      xmgrace_file << " #" << special <<  "iteration:" << continuator->age() << std::endl; 
       for ( ; i_str != i_end; ++i_str )
         xmgrace_file << " #" << special << (*i_str) << std::endl;
       print_strings.clear();
     }
     else if ( print_ch or is_last_call )
-      xmgrace_file << " #" << special <<  "iteration:" << nb_generations->value() << std::endl; 
+      xmgrace_file << " #" << special <<  "iteration:" << continuator->age() << std::endl; 
 
     if ( print_ch or is_last_call )
     {
