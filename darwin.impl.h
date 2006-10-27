@@ -19,7 +19,7 @@ using opt::SA_MINIMIZER;
 
 namespace LaDa 
 {
-  const t_unsigned svn_revision = 146;
+  const t_unsigned svn_revision = 148;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
