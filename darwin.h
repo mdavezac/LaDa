@@ -135,10 +135,10 @@ namespace LaDa
       eoReplacement<t_Object>* make_replacement();
       void make_extra_algo();
       void make_algo();
-      eoMonOp<t_Object>* make_MonOp(const TiXmlElement &el,
-                                    std::ofstream &_f,
-                                    std::string &_special,
-                                    std::string &_base);
+//     eoMonOp<t_Object>* make_MonOp(const TiXmlElement &el,
+//                                   std::ofstream &_f,
+//                                   std::string &_special,
+//                                   std::string &_base);
        
       void populate ();
       MinimizationOp< t_Object, Darwin<t_Object, t_Lamarck> >* Load_Minimizer( const TiXmlElement* el,   

@@ -19,7 +19,7 @@ using opt::SA_MINIMIZER;
 
 namespace LaDa 
 {
-  const t_unsigned svn_revision = 148;
+  const t_unsigned svn_revision = 150;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -401,119 +401,139 @@ namespace LaDa
     return current_op;
   }
 
-  template< class t_Object, class t_Lamarck >
-  eoMonOp<t_Object>* Darwin<t_Object, t_Lamarck> :: make_MonOp(const TiXmlElement &el,
-                                                               std::ofstream &_f,
-                                                               std::string &_special,
-                                                               std::string &_base)
-  {
-    eoMonOp<t_Object>* this_op;
-    bool is_sequential;
-    if ( el.Attribute( "type" ) )
-    {
-       std::string str =  el.Attribute( "type" );
-       is_sequential = true;
-       if ( str.compare("and" ) == 0 ) // operators applied sequentially
-       {
-         double d;
-         if ( el.Attribute("prob", &d ) )
-           _f << "# " << _special << "Sequential: prob " << d << std::endl;
-         else
-           _f << "# " << _special << "Sequential" << std::endl;
-         this_op = new  SequentialMonOp<t_Object>;
-       }
-       else
-       {
-         is_sequential = false;
-         double d;
-         if ( el.Attribute("prob", &d ) )
-           _f << "# " << _special << "Proportional: prob " << d << std::endl;
-         else
-           _f << "# " << _special << "Proportional" << std::endl;
-         this_op = new  ProportionalMonOp<t_Object>;
-       }
-       eostates.storeFunctor(this_op);
-    }
-    else
-      throw "Error while creating Operator ";
-
-    const TiXmlElement *child = el.FirstChildElement();
-    if (not child)
-      throw "Error while creating Operator ";
-
-    for ( ; child; child = child->NextSiblingElement() )
-    {
-      std::string str = child->Value();
-      double prob = 0.0;
-      
-      // gets probability for applying child 
-      if ( not child->Attribute("prob", &prob) )
-        prob = 1.0;
-
-      // then creates child
-      if ( str.compare("Mutation" ) == 0 )
-      {
-        double d; 
-        child->Attribute("value", &d);
-        if ( d <= 0 and d > 1 )
-          d = 1.0 / (double) lamarck->get_pb_size();
-        Mutation<t_Object> *mutation = new Mutation<t_Object>( types::t_real(d) );
-        eostates.storeFunctor(mutation);
-        _f << "# " << _special << _base << "Mutation: value=" << d 
-           << " prob="<< prob << std::endl;
-        if ( is_sequential )
-          static_cast< SequentialMonOp<t_Object>* >(this_op)->add( mutation, prob );
-        else
-          static_cast< ProportionalMonOp<t_Object>* >(this_op)->add( mutation, prob );
-      }
-      else if ( str.compare("Minimizer") == 0 )
-      {
-        _f << "# " << _special << _base << "Minimizer: ";
-        eoMonOp<t_Object>* minop = Load_Minimizer( child, _f );
-        _f << ", prob=" << prob << std::endl;
-        if ( is_sequential )
-          static_cast< SequentialMonOp<t_Object>* >(this_op)->add( minop, prob );
-        else
-          static_cast< ProportionalMonOp<t_Object>* >(this_op)->add( minop, prob );
-      }
-      else if ( str.compare("UtterRandom") == 0 )
-      {
-        UtterRandom<t_Object>* utterrandom = new UtterRandom<t_Object>;
-        eostates.storeFunctor(utterrandom);
-        _f << "# " << _special << _base << "UtterRandom "
-           << " prob "<< prob << std::endl;
-        if ( is_sequential )
-          static_cast< SequentialMonOp<t_Object>* >(this_op)->add( utterrandom, prob );
-        else
-          static_cast< ProportionalMonOp<t_Object>* >(this_op)->add( utterrandom, prob );
-      }
-      else if ( str.compare("Evaluate") == 0 )
-      {
-        EvaluateOp<t_Darwin >* evaluateop
-           = new EvaluateOp<t_Darwin >(*this);
-        eostates.storeFunctor(evaluateop);
-        _f << "# " << _special << _base << "Evaluate "
-           << " prob "<< prob << std::endl;
-        if ( is_sequential )
-          static_cast< SequentialMonOp<t_Object>* >(this_op)->add( evaluateop, prob );
-        else
-          static_cast< ProportionalMonOp<t_Object>* >(this_op)->add( evaluateop, prob );
-      }
-      else if ( str.compare("Operators") == 0 )
-      {
-        std :: string special = _special + _base;
-        eoMonOp<t_Object> *add_genop = make_MonOp( *child, _f,  special, _base);
-        if ( is_sequential )
-          static_cast< SequentialMonOp<t_Object>* >(this_op)->add( add_genop, prob );
-        else
-          static_cast< ProportionalMonOp<t_Object>* >(this_op)->add( add_genop, prob );
-      }
-      else
-        throw "Unknown operator in  Darwin<t_Object, t_Lamarck>  :: make_MonOp(...) ";
-    }
-    
-    return this_op;
-  }
+// template< class t_Object, class t_Lamarck >
+// eoMonOp<t_Object>* Darwin<t_Object, t_Lamarck> :: make_MonOp(const TiXmlElement &el,
+//                                                              std::ofstream &_f,
+//                                                              std::string &_special,
+//                                                              std::string &_base)
+// {
+//   eoMonOp<t_Object>* this_op;
+//   bool is_sequential;
+//   if ( el.Attribute( "type" ) )
+//   {
+//      std::string str =  el.Attribute( "type" );
+//      is_sequential = true;
+//      if ( str.compare("and" ) == 0 ) // operators applied sequentially
+//      {
+//        double d;
+//        if ( el.Attribute("prob", &d ) )
+//          _f << "# " << _special << "Sequential: prob " << d << std::endl;
+//        else
+//          _f << "# " << _special << "Sequential" << std::endl;
+//        this_op = new  SequentialMonOp<t_Object>;
+//      }
+//      else
+//      {
+//        is_sequential = false;
+//        double d;
+//        if ( el.Attribute("prob", &d ) )
+//          _f << "# " << _special << "Proportional: prob " << d << std::endl;
+//        else
+//          _f << "# " << _special << "Proportional" << std::endl;
+//        this_op = new  ProportionalMonOp<t_Object>;
+//      }
+//      eostates.storeFunctor(this_op);
+//   }
+//   else
+//     throw "Error while creating Operator ";
+//
+//   const TiXmlElement *child = el.FirstChildElement();
+//   if (not child)
+//     throw "Error while creating Operator ";
+//
+//   for ( ; child; child = child->NextSiblingElement() )
+//   {
+//     std::string str = child->Value();
+//     double prob = 0.0;
+//     
+//     // gets probability for applying child 
+//     if ( not child->Attribute("prob", &prob) )
+//       prob = 1.0;
+//
+//     // then creates child
+//     if ( str.compare("Mutation" ) == 0 )
+//     {
+//       double d; 
+//       child->Attribute("value", &d);
+//       if ( d <= 0 and d > 1 )
+//         d = 1.0 / (double) lamarck->get_pb_size();
+//       Mutation<t_Object> *mutation = new Mutation<t_Object>( types::t_real(d) );
+//       eostates.storeFunctor(mutation);
+//       _f << "# " << _special << _base << "Mutation: value=" << d 
+//          << " prob="<< prob << std::endl;
+//       if ( is_sequential )
+//         static_cast< SequentialMonOp<t_Object>* >(this_op)->add( mutation, prob );
+//       else
+//         static_cast< ProportionalMonOp<t_Object>* >(this_op)->add( mutation, prob );
+//     }
+//     else if ( str.compare("TabooMinimizer") == 0 and taboos)
+//     {
+//       std :: string type = "SA";
+//       if ( child->Attribute("type") )
+//         type = child->Attribute("type");
+//       if ( type.compare("GradientSA") != 0 )
+//         type = "SA";
+//       _f << "# " << _special << _base << "TabooMinimizer: " << type 
+//          << " prob=" << prob << std::endl;
+//       eoMonOp<t_Object>* minop;
+//       t_unsigned maxeval = UINT_MAX;
+//       if ( type.compare("SA") == 0 )
+//         minop = new SA_TabooOp<t_Darwin>( *this, *taboos, maxeval );
+//       else
+//         minop = new GradientSA_TabooOp<t_Darwin>( *this, *taboos, maxeval );
+//       if ( is_sequential )
+//         static_cast< SequentialMonOp<t_Object>* >(this_op)->add( minop, prob );
+//       else
+//         static_cast< ProportionalMonOp<t_Object>* >(this_op)->add( minop, prob );
+//     }
+//     else if ( str.compare("Minimizer") == 0 )
+//     {
+//       _f << "# " << _special << _base << "Minimizer: ";
+//       eoMonOp<t_Object>* minop = Load_Minimizer( child, _f );
+//       _f << ", prob=" << prob << std::endl;
+//       if ( is_sequential )
+//         static_cast< SequentialMonOp<t_Object>* >(this_op)->add( minop, prob );
+//       else
+//         static_cast< ProportionalMonOp<t_Object>* >(this_op)->add( minop, prob );
+//     }
+//     else if ( str.compare("UtterRandom") == 0 )
+//     {
+//       UtterRandom<t_Object>* utterrandom = new UtterRandom<t_Object>;
+//       eostates.storeFunctor(utterrandom);
+//       _f << "# " << _special << _base << "UtterRandom "
+//          << " prob "<< prob << std::endl;
+//       if ( is_sequential )
+//         static_cast< SequentialMonOp<t_Object>* >(this_op)->add( utterrandom, prob );
+//       else
+//         static_cast< ProportionalMonOp<t_Object>* >(this_op)->add( utterrandom, prob );
+//     }
+//     else if ( str.compare("Evaluate") == 0 )
+//     {
+//       EvaluateOp<t_Darwin >* evaluateop
+//          = new EvaluateOp<t_Darwin >(*this);
+//       eostates.storeFunctor(evaluateop);
+//       _f << "# " << _special << _base << "Evaluate "
+//          << " prob "<< prob << std::endl;
+//       if ( is_sequential )
+//         static_cast< SequentialMonOp<t_Object>* >(this_op)->add( evaluateop, prob );
+//       else
+//         static_cast< ProportionalMonOp<t_Object>* >(this_op)->add( evaluateop, prob );
+//     }
+//     else if ( str.compare("Operators") == 0 )
+//     {
+//       std :: string special = _special + _base;
+//       eoMonOp<t_Object> *add_genop = make_MonOp( *child, _f,  special, _base);
+//       if ( is_sequential )
+//         static_cast< SequentialMonOp<t_Object>* >(this_op)->add( add_genop, prob );
+//       else
+//         static_cast< ProportionalMonOp<t_Object>* >(this_op)->add( add_genop, prob );
+//     }
+//     else
+//       throw "Unknown operator in  Darwin<t_Object, t_Lamarck>  :: make_MonOp(...) ";
+//   }
+//   
+//   return this_op;
+// }
 
   template<class t_Object, class t_Lamarck>
   eoBreed<t_Object>* Darwin<t_Object, t_Lamarck> :: make_breeder()
@@ -839,18 +859,14 @@ namespace LaDa
     if  ( !doc.LoadFile() )
     {
       std::cout << doc.ErrorDesc() << std::endl; 
-      throw "Could not load input file in  Darwin<t_Object, t_Lamarck>  :: make_GenOp";
+      throw "Could not load input file in  Darwin<t_Object, t_Lamarck>  :: make_extra_algo";
     }
+
     TiXmlElement *child = docHandle.FirstChild("LaDa")
                                    .FirstChild("GA")
-                                   .FirstChild("PopAlgo")
-                                   .FirstChild("Operators").Element();
+                                   .FirstChild("PopAlgo").Element();
     if ( not child )
       return;
-
-    child = docHandle.FirstChild("LaDa")
-                     .FirstChild("GA")
-                     .FirstChild("PopAlgo").Element();
     
     // get parameters
     {
@@ -869,14 +885,15 @@ namespace LaDa
     std::ofstream xmgrace_file( xmgrace_filename.c_str(), std::ios_base::out|std::ios_base::app );
     xmgrace_file << "# PopAlgorithm: rate="<< minimize_best 
                  << " every=" << minimize_best_every << std::endl;
-    child = docHandle.FirstChild("LaDa")
-                     .FirstChild("GA")
-                     .FirstChild("PopAlgo")
-                     .FirstChild("Operators").Element();
     std::string str = "    ";
     std::string base = "  ";
-    eoMonOp<t_Object> *op = make_MonOp(*child, xmgrace_file, str, base);
+    eoGenOp<t_Object> *op = make_genetic_op(*child->FirstChildElement(), xmgrace_file, str, base);
 
+    if ( not op )
+    {
+      std::cout << "Error while creating Genetic Operator for ExtraPopAlgo " << std::endl;
+      throw; 
+    }
     extra_popalgo = new Extra_PopAlgo< t_Darwin > 
                                      ( *op, *this, minimize_best, minimize_best_every );
     eostates.storeFunctor( extra_popalgo );

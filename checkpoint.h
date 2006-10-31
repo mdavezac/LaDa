@@ -448,7 +448,7 @@ namespace LaDa
       virtual std::string className(void) const { return "LaDa::IslandsContinuator"; }
       GenCount& get_generation_counter() 
         { return generation_counter; }
-      const t_unsigned age() const
+      t_unsigned age() const
         { return generation_counter(); }
   };
 

@@ -100,10 +100,11 @@ namespace LaDa
       t_unsigned every;
       t_unsigned nb_calls;
       Evaluation<t_Call_Back, t_Object> *eval;
-      eoMonOp<t_Object> & op;
+      eoGenOp<t_Object> & op;
+      eoPop<t_Object> offsprings;
 
     public:
-      Extra_PopAlgo  (eoMonOp<t_Object> &_op, t_Call_Back &_call_back,
+      Extra_PopAlgo  (eoGenOp<t_Object> &_op, t_Call_Back &_call_back,
                       t_real _rate = 0.0, t_unsigned _every = 5)
                    : do_minimize_best(false),
                      call_back(_call_back), 
@@ -151,19 +152,22 @@ namespace LaDa
         // reorders elements such that the nth best are the nth first
         _pop.nth_element(nb);
         
-        typename std::vector<t_Object> :: iterator i_pop = _pop.begin();
-        typename std::vector<t_Object> :: iterator i_last = _pop.end();
-        for (t_unsigned i = 0; i < nb and i_pop != i_last; ++i, ++i_pop )
+        offsprings.clear(); 
+        eoSeqPopulator<t_Object> populator( _pop, offsprings );
+        // applies genetic operation to best candidates
+        for ( t_unsigned i = 0; i < nb; ++i, ++populator )
         {
-          i_pop->invalidate();
-          op( *i_pop );
-          (*eval)(*i_pop);
+           op( populator );
+           (*eval)(*populator);
         }
+        std::copy( offsprings.begin(), offsprings.end(), _pop.begin() );
 
+        // recomputes fitness if baseline is invalid
         if ( not _pop.begin()->is_baseline_valid() )
         {
-          i_pop = _pop.begin();
-          for (; i_pop != i_last; ++i_pop )
+          typename eoPop<t_Object> :: iterator i_pop = _pop.begin();
+          typename eoPop<t_Object> :: iterator i_end = _pop.end();
+          for (; i_pop != i_end; ++i_pop )
             (*eval)(*i_pop);
         }
 

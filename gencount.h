@@ -14,7 +14,7 @@ namespace LaDa
       GenCount() : age(0) {};
       void operator ++() 
         { ++age; }
-      const t_unsigned operator()() const
+      t_unsigned operator()() const
         { return age; }
   };
 } // namespace LaDa
