@@ -14,7 +14,7 @@ using namespace types;
 namespace LaDa 
 {
   template<class t_Object, class t_Islands = std::list< eoPop<t_Object> > > 
-  class Colonize : public eoUF<t_Islands, void >
+  class Colonize : public eoUF<t_Islands&, void >
   {
     protected:
       t_unsigned every; // goes to work every "every" generations

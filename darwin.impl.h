@@ -37,7 +37,7 @@ namespace LaDa
      xmgrace_file.flush(); \
      xmgrace_file.close();
 
-  const t_unsigned svn_revision = 153;
+  const t_unsigned svn_revision = 154;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -225,7 +225,7 @@ namespace LaDa
 
     // reseed
     { 
-      t_int seed;
+      int seed;
       child = parent->FirstChildElement("Seed");
       if (child and child->Attribute("nb", &seed) )
       {
