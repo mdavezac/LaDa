@@ -204,7 +204,10 @@ namespace LaDa
         }
 
         N *= _pop.begin()->size();
-        result /= static_cast<t_real>(N);
+        if ( N ) // pb case for N = 0, ie all individuals are identical
+          result /= static_cast<t_real>(N);
+        else
+          result = 0.0;
 
         // prints stuff out
         std::ostringstream sstr; 
@@ -232,15 +235,15 @@ namespace LaDa
         typename eoPop<t_Object> :: const_iterator i_indiv1 = i_begin;
         typename eoPop<t_Object> :: const_iterator i_end = _pop.end();
         typename eoPop<t_Object> :: const_iterator i_indiv2;
-        t_unsigned N = 0;
+        t_unsigned N = _pop.size();
         
         for( ; i_indiv1 != i_end; ++i_indiv1 )
         {
-          for ( i_indiv2 = i_begin; i_indiv2 != i_end; ++i_indiv2 )
-            if ( i_indiv1 != i_indiv2 and *i_indiv1 == *i_indiv2 )
+          for ( i_indiv2 = i_indiv1 + 1; i_indiv2 != i_end; ++i_indiv2 )
+            if ( *i_indiv1 == *i_indiv2 )
               break;
           if ( i_indiv2 == i_end )
-            ++N;
+            --N;
         }
 
         // prints stuff out
