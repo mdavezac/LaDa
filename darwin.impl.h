@@ -37,7 +37,7 @@ namespace LaDa
      xmgrace_file.flush(); \
      xmgrace_file.close();
 
-  const t_unsigned svn_revision = 151;
+  const t_unsigned svn_revision = 152;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -222,6 +222,19 @@ namespace LaDa
       t_Object :: is_using_phenotype = true;
 
     write_xmgrace_header();
+
+    // reseed
+    { 
+      t_int seed;
+      child = parent->FirstChildElement("Seed");
+      if (child and child->Attribute("nb", &seed) )
+      {
+        OPENXMGRACE
+        xmgrace_file << "# Seed: " << seed << std::endl;
+        rng.reseed( abs(seed) );
+        CLOSEXMGRACE
+      }
+    }
 
     return true;
   }
