@@ -3,6 +3,8 @@
 
 //-----------------------------------------------------------------------------
 
+#include <complex>
+
 #undef min 
 #undef max
 #include <eo/apply.h>
@@ -30,6 +32,7 @@
 #include "taboo.h"
 #include "breeder.h"
 #include "checkpoint.h"
+#include "colonize.h"
 
 #include <eo/eotypes.h>
 
@@ -90,7 +93,10 @@ namespace LaDa
       eoReplacement<t_Object>*       replace;
       eoPopAlgo<t_Object>*           extra_popalgo;
       Taboo_Base<t_Object>*          taboos;
+      Taboo<t_Object, std::list<t_Object> > *agetaboo;
       NuclearWinter<t_Darwin >* nuclearwinter;
+      Colonize<t_Object> *colonize;
+      Evaluation<t_Darwin> *evaluation;
 
       t_Lamarck *lamarck;
 
@@ -118,6 +124,9 @@ namespace LaDa
       void print_xml()
         { lamarck->print_xml(); };
       
+      void fourrier_transform( const t_Object &_object, 
+                               std::vector< std::complex< typename t_Object :: t_Type> > &_fourrier )
+        { return lamarck->fourrier_transform( _object, _fourrier ); }
       t_Functional &get_functional( const t_Object &_object ) 
         { return lamarck->get_GA_functional( _object ); }
       void add_to_convex_hull( const t_Object &_object ) const
@@ -132,17 +141,16 @@ namespace LaDa
                                          eoGenOp<t_Object> *current_op);
       eoBreed<t_Object>* make_breeder();
       void make_checkpoint();
+      void make_taboos();
+      void make_breeder_ops();
       eoReplacement<t_Object>* make_replacement();
       void make_extra_algo();
       void make_algo();
-//     eoMonOp<t_Object>* make_MonOp(const TiXmlElement &el,
-//                                   std::ofstream &_f,
-//                                   std::string &_special,
-//                                   std::string &_base);
+      void make_colonize();
        
       void populate ();
-      MinimizationOp< t_Object, Darwin<t_Object, t_Lamarck> >* Load_Minimizer( const TiXmlElement* el,   
-                                                                               std::ofstream &_f ); 
+      MinimizationOp<t_Object, t_Darwin>* Load_Minimizer( const TiXmlElement* el,   
+                                                          std::ofstream &_f ); 
 
       
       bool Load( TiXmlHandle &handle );

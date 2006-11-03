@@ -1,8 +1,7 @@
 #ifndef _LADA_H_
 #define _LADA_H_
 
-//  MotU: Master of the Universe class
-//  controls everything, does everything, will cook your breakfast
+#include <complex>
 
 #include "individual.h"
 
@@ -77,9 +76,13 @@ namespace LaDa
 
       t_GA_Functional& get_GA_functional( const t_Individual &_object )
         { return fitness; }
+      const std::vector<rVector3d> &get_kvectors( const t_Individual &_object ) const
+        { return functional.get_Obj2()->get_kvectors(); }
       void add_to_convex_hull( const t_Individual &_indiv );
+      void fourrier_transform( const t_Individual &_indiv, 
+                               std::vector< std::complex<t_Individual :: t_Type> > &_fourrier );
 
-      bool kCrossover( t_Individual  &_offspring, const t_Individual &_parent);
+      bool Krossover( t_Individual  &_offspring, const t_Individual &_parent);
     protected:
       virtual bool Load( TiXmlHandle &handle );
       bool read_CH();

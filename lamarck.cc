@@ -12,7 +12,6 @@
 #include <iomanip>
 #include <stdexcept>
 #include <math.h>
-#include <complex>
 
 #include <eo/utils/eoRNG.h>
 
@@ -277,13 +276,15 @@ namespace LaDa
       convex_hull->print_out(_f, VA_CE::Convex_Hull::PRINT_XMGRACE);
   }
 
-  bool Lamarck :: kCrossover( t_Individual  &_offspring, const t_Individual &_parent)
+  bool Lamarck :: Krossover( t_Individual  &_offspring, const t_Individual &_parent)
   {
-    const std::complex<t_real> imath(0, -2*3.1415926535897932384626433832795028841971693993751058208);
-    const std::vector<rVector3d> &k_vecs = functional.get_Obj2()->get_kvectors();
-    typedef std::vector< std::complex<t_Individual :: t_Type> > t_k_type;
-    t_k_type k_offspring( k_vecs.size(), std::complex<t_real>(0) );
-    t_k_type k_parent( k_vecs.size(), std::complex<t_real>(0) );
+    typedef std::complex<t_Individual :: t_Type> t_complex;
+    typedef std::vector< t_complex > t_k_type;
+    const t_complex imath(0, -2*3.1415926535897932384626433832795028841971693993751058208);
+    const std::vector<rVector3d> &k_vecs = get_kvectors(_offspring);
+    typedef std::vector< t_complex > t_k_type;
+    t_k_type k_offspring( k_vecs.size(), t_complex(0) );
+    t_k_type k_parent( k_vecs.size(), t_complex(0) );
     
     // first, FTs parent and offspring
     std::vector<rVector3d> :: const_iterator i_kvec = k_vecs.begin();
@@ -330,7 +331,7 @@ namespace LaDa
     i_atom = i_atom_begin;
     for ( ; i_atom != i_atom_end; ++i_var, ++i_atom)
     {
-      std::complex<t_real> store(0);
+      t_complex store(0);
       i_kvec = i_kvec_begin;
       i_val = i_val_begin;
       for(; i_val != i_val_end; ++i_kvec, ++i_val )
@@ -344,6 +345,39 @@ namespace LaDa
     }
 
     return true; // offspring has changed!
+  }
+
+  void Lamarck :: fourrier_transform( const t_Individual &_indiv, 
+                                      std::vector< std::complex<t_Individual :: t_Type> > &_fourrier )
+  {
+    typedef std::complex<t_Individual :: t_Type> t_complex;
+    typedef std::vector< t_complex > t_k_type;
+    const t_complex imath(0, -2*3.1415926535897932384626433832795028841971693993751058208);
+    const std::vector<rVector3d> &k_vecs = get_kvectors(_indiv);
+    std::vector<rVector3d> :: const_iterator i_kvec = k_vecs.begin();
+    t_k_type :: iterator i_val = _fourrier.begin();
+    t_k_type :: iterator i_val_end = _fourrier.end();
+    std::vector<Ising_CE::Atom> :: const_iterator i_atom_begin = structure.atoms.begin();
+    std::vector<Ising_CE::Atom> :: const_iterator i_atom_end = structure.atoms.end();
+    std::vector<Ising_CE::Atom> :: const_iterator i_atom;
+    t_Individual :: const_iterator i_spin_begin = _indiv.begin();
+    t_Individual :: const_iterator i_spin;
+
+    _fourrier.resize( k_vecs.size() );
+
+    for ( ; i_val != i_val_end; ++i_val, ++i_kvec)
+    {
+      i_atom = i_atom_begin;
+      i_spin = i_spin_begin;
+      *i_val = t_complex(0);
+      for(; i_atom != i_atom_end; ++i_atom, ++i_spin )
+      {
+        *i_val +=    exp( imath * ( i_atom->pos[0] * (*i_kvec)[0] +
+                                    i_atom->pos[1] * (*i_kvec)[1] +
+                                    i_atom->pos[2] * (*i_kvec)[2] ) )
+                   * (*i_spin);
+      }
+    }
   }
   
 } // namespace LaDa

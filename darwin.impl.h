@@ -7,6 +7,7 @@
 #include "gencount.h"
 #include "generator.h"
 #include "taboo_minimizers.h"
+#include "statistics.h"
 #include <lamarck/convex_hull.h>
 #include <opt/opt_minimize.h>
 
@@ -19,7 +20,24 @@ using opt::SA_MINIMIZER;
 
 namespace LaDa 
 {
-  const t_unsigned svn_revision = 150;
+# define OPENXMLINPUT \
+    TiXmlDocument doc( filename.c_str() ); \
+    TiXmlHandle docHandle( &doc ); \
+    TiXmlElement *child; \
+    if  ( !doc.LoadFile() ) \
+    { \
+      std::cout << doc.ErrorDesc() << std::endl; \
+      throw "Could not load input file in  Darwin<t_Object, t_Lamarck> "; \
+    } 
+
+#  define OPENXMGRACE \
+    std::ofstream xmgrace_file( xmgrace_filename.c_str(), std::ios_base::out|std::ios_base::app ); 
+
+#  define CLOSEXMGRACE \
+     xmgrace_file.flush(); \
+     xmgrace_file.close();
+
+  const t_unsigned svn_revision = 151;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -52,6 +70,8 @@ namespace LaDa
     extra_popalgo = NULL;
     taboos = NULL;
     nuclearwinter = NULL;
+    agetaboo = NULL;
+    colonize = NULL;
 
     print_strings.reserve(10);
     t_Object :: is_using_phenotype = false;
@@ -95,6 +115,10 @@ namespace LaDa
                throw std::runtime_error("Population growing!");
          }
 
+         // creates colonies if requested
+         if ( colonize )
+           (*colonize)( islands );
+
       }
       catch (std::exception& e)
       {
@@ -109,19 +133,12 @@ namespace LaDa
   bool Darwin<t_Object, t_Lamarck> :: Load(const std::string &_filename) 
   {
     filename = _filename;
-    TiXmlDocument doc( filename.c_str() );
-    
-    if  ( !doc.LoadFile() )
-    {
-      std::cerr << "error while opening input file " << filename << std::endl
-                << doc.ErrorDesc() << std::endl; 
-      return false;
-    }
 
-    TiXmlHandle docHandle( &doc );
+    OPENXMLINPUT
+
     TiXmlElement *element = docHandle.FirstChild("LaDa")
                                      .FirstChild("GA").Element();
-    TiXmlElement *child, *parent;
+    TiXmlElement *parent;
     if (not element) 
       return false;
 
@@ -280,11 +297,11 @@ namespace LaDa
         eostates.storeFunctor( static_cast< Crossover<t_Object> *>(this_op) );
         _f << "# " << _special << _base << "Crossover: value=" << d;
       }
-      else if ( str.compare("kCrossover" ) == 0 )
+      else if ( str.compare("Krossover" ) == 0 )
       {
-        this_op = new kCrossover<t_Lamarck, t_Object>( *lamarck );
-        eostates.storeFunctor( static_cast< kCrossover<t_Lamarck, t_Object> *>(this_op) );
-        _f << "# " << _special << _base << "kCrossover ";
+        this_op = new Krossover<t_Lamarck, t_Object>( *lamarck );
+        eostates.storeFunctor( static_cast< Krossover<t_Lamarck, t_Object> *>(this_op) );
+        _f << "# " << _special << _base << "Krossover ";
       }
       else if ( str.compare("Mutation" ) == 0 )
       {
@@ -398,142 +415,13 @@ namespace LaDa
       }
     }
     
+    if ( not current_op  )
+    {
+      std::cerr << " Error while creating genetic operators " << std::endl;
+      throw;
+    }
     return current_op;
   }
-
-// template< class t_Object, class t_Lamarck >
-// eoMonOp<t_Object>* Darwin<t_Object, t_Lamarck> :: make_MonOp(const TiXmlElement &el,
-//                                                              std::ofstream &_f,
-//                                                              std::string &_special,
-//                                                              std::string &_base)
-// {
-//   eoMonOp<t_Object>* this_op;
-//   bool is_sequential;
-//   if ( el.Attribute( "type" ) )
-//   {
-//      std::string str =  el.Attribute( "type" );
-//      is_sequential = true;
-//      if ( str.compare("and" ) == 0 ) // operators applied sequentially
-//      {
-//        double d;
-//        if ( el.Attribute("prob", &d ) )
-//          _f << "# " << _special << "Sequential: prob " << d << std::endl;
-//        else
-//          _f << "# " << _special << "Sequential" << std::endl;
-//        this_op = new  SequentialMonOp<t_Object>;
-//      }
-//      else
-//      {
-//        is_sequential = false;
-//        double d;
-//        if ( el.Attribute("prob", &d ) )
-//          _f << "# " << _special << "Proportional: prob " << d << std::endl;
-//        else
-//          _f << "# " << _special << "Proportional" << std::endl;
-//        this_op = new  ProportionalMonOp<t_Object>;
-//      }
-//      eostates.storeFunctor(this_op);
-//   }
-//   else
-//     throw "Error while creating Operator ";
-//
-//   const TiXmlElement *child = el.FirstChildElement();
-//   if (not child)
-//     throw "Error while creating Operator ";
-//
-//   for ( ; child; child = child->NextSiblingElement() )
-//   {
-//     std::string str = child->Value();
-//     double prob = 0.0;
-//     
-//     // gets probability for applying child 
-//     if ( not child->Attribute("prob", &prob) )
-//       prob = 1.0;
-//
-//     // then creates child
-//     if ( str.compare("Mutation" ) == 0 )
-//     {
-//       double d; 
-//       child->Attribute("value", &d);
-//       if ( d <= 0 and d > 1 )
-//         d = 1.0 / (double) lamarck->get_pb_size();
-//       Mutation<t_Object> *mutation = new Mutation<t_Object>( types::t_real(d) );
-//       eostates.storeFunctor(mutation);
-//       _f << "# " << _special << _base << "Mutation: value=" << d 
-//          << " prob="<< prob << std::endl;
-//       if ( is_sequential )
-//         static_cast< SequentialMonOp<t_Object>* >(this_op)->add( mutation, prob );
-//       else
-//         static_cast< ProportionalMonOp<t_Object>* >(this_op)->add( mutation, prob );
-//     }
-//     else if ( str.compare("TabooMinimizer") == 0 and taboos)
-//     {
-//       std :: string type = "SA";
-//       if ( child->Attribute("type") )
-//         type = child->Attribute("type");
-//       if ( type.compare("GradientSA") != 0 )
-//         type = "SA";
-//       _f << "# " << _special << _base << "TabooMinimizer: " << type 
-//          << " prob=" << prob << std::endl;
-//       eoMonOp<t_Object>* minop;
-//       t_unsigned maxeval = UINT_MAX;
-//       if ( type.compare("SA") == 0 )
-//         minop = new SA_TabooOp<t_Darwin>( *this, *taboos, maxeval );
-//       else
-//         minop = new GradientSA_TabooOp<t_Darwin>( *this, *taboos, maxeval );
-//       if ( is_sequential )
-//         static_cast< SequentialMonOp<t_Object>* >(this_op)->add( minop, prob );
-//       else
-//         static_cast< ProportionalMonOp<t_Object>* >(this_op)->add( minop, prob );
-//     }
-//     else if ( str.compare("Minimizer") == 0 )
-//     {
-//       _f << "# " << _special << _base << "Minimizer: ";
-//       eoMonOp<t_Object>* minop = Load_Minimizer( child, _f );
-//       _f << ", prob=" << prob << std::endl;
-//       if ( is_sequential )
-//         static_cast< SequentialMonOp<t_Object>* >(this_op)->add( minop, prob );
-//       else
-//         static_cast< ProportionalMonOp<t_Object>* >(this_op)->add( minop, prob );
-//     }
-//     else if ( str.compare("UtterRandom") == 0 )
-//     {
-//       UtterRandom<t_Object>* utterrandom = new UtterRandom<t_Object>;
-//       eostates.storeFunctor(utterrandom);
-//       _f << "# " << _special << _base << "UtterRandom "
-//          << " prob "<< prob << std::endl;
-//       if ( is_sequential )
-//         static_cast< SequentialMonOp<t_Object>* >(this_op)->add( utterrandom, prob );
-//       else
-//         static_cast< ProportionalMonOp<t_Object>* >(this_op)->add( utterrandom, prob );
-//     }
-//     else if ( str.compare("Evaluate") == 0 )
-//     {
-//       EvaluateOp<t_Darwin >* evaluateop
-//          = new EvaluateOp<t_Darwin >(*this);
-//       eostates.storeFunctor(evaluateop);
-//       _f << "# " << _special << _base << "Evaluate "
-//          << " prob "<< prob << std::endl;
-//       if ( is_sequential )
-//         static_cast< SequentialMonOp<t_Object>* >(this_op)->add( evaluateop, prob );
-//       else
-//         static_cast< ProportionalMonOp<t_Object>* >(this_op)->add( evaluateop, prob );
-//     }
-//     else if ( str.compare("Operators") == 0 )
-//     {
-//       std :: string special = _special + _base;
-//       eoMonOp<t_Object> *add_genop = make_MonOp( *child, _f,  special, _base);
-//       if ( is_sequential )
-//         static_cast< SequentialMonOp<t_Object>* >(this_op)->add( add_genop, prob );
-//       else
-//         static_cast< ProportionalMonOp<t_Object>* >(this_op)->add( add_genop, prob );
-//     }
-//     else
-//       throw "Unknown operator in  Darwin<t_Object, t_Lamarck>  :: make_MonOp(...) ";
-//   }
-//   
-//   return this_op;
-// }
 
   template<class t_Object, class t_Lamarck>
   eoBreed<t_Object>* Darwin<t_Object, t_Lamarck> :: make_breeder()
@@ -573,11 +461,13 @@ namespace LaDa
   template< class t_Object, class t_Lamarck >
   void Darwin<t_Object, t_Lamarck> :: make_algo()
   {
-    Evaluation<t_Darwin> *evaluation
-       = new Evaluation<t_Darwin>(*this);
+    evaluation = new Evaluation<t_Darwin>(*this);
     popEval = new EvaluatePop<t_Object>(*evaluation);
     
-    make_checkpoint(); // must come before make_breeder
+    make_taboos();      // order counts
+    make_breeder_ops(); // order counts
+    make_checkpoint();  // order counts
+
     breeder = make_breeder();
     replace = make_replacement();
     make_extra_algo();
@@ -588,14 +478,8 @@ namespace LaDa
   template< class t_Object, class t_Lamarck >
   void Darwin<t_Object, t_Lamarck> :: make_checkpoint()
   {
-    TiXmlDocument doc( filename.c_str() );
-    TiXmlHandle docHandle( &doc );
-    TiXmlElement *child;
-    if  ( !doc.LoadFile() )
-    {
-      std::cout << doc.ErrorDesc() << std::endl; 
-      throw "Could not load input file in  Darwin<t_Object, t_Lamarck>  :: make_breeder";
-    }
+    OPENXMLINPUT;
+    OPENXMGRACE;
 
     // contains all checkpoints
     continuator = new IslandsContinuator<t_Object>(max_generations);
@@ -614,147 +498,240 @@ namespace LaDa
     for( ; child; child = child->NextSiblingElement("Statistics") )
     {
       std::string str = "accumulated";
-      eoStatBase<t_Object> *average;
+      eoStatBase<t_Object> *average = NULL;
 
       if ( child->Attribute("type" ) )
         str = child->Attribute( "type" );
 
       if ( str.compare("accumulated") == 0 )
+      {
         average = new AccAverage< t_Darwin >( *this, generation_counter,
                                               lamarck->get_pb_size() );
+        xmgrace_file << "# Statistics: accumulated average in real space" << std::endl;
+      }
       else if ( str.compare("population") == 0 )
-        average = new PopAverage< t_Darwin >( *this, lamarck->get_pb_size() );
+      {
+        xmgrace_file << "# Statistics: population average";
+        std::string att = "false";
+        if ( child->Attribute("kspace") )
+          att = child->Attribute("kspace");
+        if ( att.compare("true") == 0 )
+        {
+          average = new kPopAverage< t_Darwin >( *this );
+          xmgrace_file << "in k-space" << std::endl;
+        }
+        else 
+          average = new PopAverage< t_Darwin >( *this, lamarck->get_pb_size() );
+        xmgrace_file << std::endl;
+      }
+      else if ( str.compare("diversity") == 0 )
+      {
+        std::string att = "non-identical";
+        if ( child->Attribute("count") )
+          att = child->Attribute("identical");
+        xmgrace_file << "# Statistics: diversity " << std::endl;
+        if ( att.compare("identical") == 0 )
+        {
+          average = new Diversity< t_Darwin >( *this, false );
+          xmgrace_file << " including count over identical object " << std::endl;
+        }
+        else
+          average = new Diversity< t_Darwin >( *this, true );
+        xmgrace_file << std::endl;
+      }
+      else if ( str.compare("true census") == 0 )
+      {
+        average = new TrueCensus< t_Darwin >( *this );
+        xmgrace_file << "# Statistics: True population size, discounting twins" << std::endl;
+      }
 
+      if ( not average  )
+      {
+        std::cerr << "Error while reading Statistics tags " << std::endl;
+        throw;
+      }
       eostates.storeFunctor( average );
       continuator->add( *average );
     }
 
-
-    // taboos
+    // Creates Age taboo
+    child = docHandle.FirstChild("LaDa")
+                     .FirstChild("GA")
+                     .FirstChild("Taboos")
+                     .FirstChild("AgeTaboo").Element();
+    if ( child and agetaboo )
     {
-      std::ofstream xmgrace_file( xmgrace_filename.c_str(), std::ios_base::out|std::ios_base::app );
-      Taboo<t_Object, std::list<t_Object> > *agetaboo = NULL;
-      IslandsTaboos<t_Object> *poptaboo = NULL;
-      Taboo<t_Object> *offspringtaboo = NULL;
-      t_unsigned length;
-
-      // creates age taboo
-      child = docHandle.FirstChild("LaDa")
-                       .FirstChild("GA")
-                       .FirstChild("Taboos")
-                       .FirstChild("AgeTaboo").Element();
-      if (child)
+      int d = 0;
+      child->Attribute("lifespan", &d );
+      t_unsigned length = ( d >=0 ) ? (types::t_int) abs(d) : UINT_MAX;
+      bool print_out = false;
+      if ( child->Attribute("printout") )
       {
-        // creates the taboo list
-        agetaboo = new Taboo< t_Object, std::list<t_Object> >;
-        eostates.storeFunctor(agetaboo);
-
-        // then creates the object to update the taboo list
-        int d = 0;
-        child->Attribute("lifespan", &d );
-        length = ( d >=0 ) ? (types::t_int) abs(d) : UINT_MAX;
-        bool print_out = false;
-        if ( child->Attribute("printout") )
-        {
-          std::string str = child->Attribute("printout");
-          if ( str.compare("true") == 0 )
-            print_out = true;
-        }
-        UpdateAgeTaboo< t_Darwin > *updateagetaboo
-               = new UpdateAgeTaboo<t_Darwin > ( *agetaboo, generation_counter,
-                                                 *this, length, print_out);
-        xmgrace_file << "# Age Taboo, lifespan=" << d << std::endl;
-        eostates.storeFunctor(updateagetaboo);
-        continuator->add(*updateagetaboo);
+        std::string str = child->Attribute("printout");
+        if ( str.compare("true") == 0 )
+          print_out = true;
       }
-      
-      // creates pop taboo
-      child = docHandle.FirstChild("LaDa")
-                       .FirstChild("GA")
-                       .FirstChild("Taboos")
-                       .FirstChild("PopTaboo").Element();
-      if (child)
-      {
-        xmgrace_file << "# Pop Taboo " << std::endl; 
-        poptaboo = new IslandsTaboos<t_Object>( islands );
-        eostates.storeFunctor(poptaboo);
-        if ( agetaboo ) 
-        {
-          taboos = new Taboos<t_Object>;
-          eostates.storeFunctor(taboos);
-          static_cast< Taboos<t_Object>* >(taboos)->add( agetaboo );
-          static_cast< Taboos<t_Object>* >(taboos)->add( poptaboo );
-        }
-      }
-      
-      // creates offspring taboo
-      child = docHandle.FirstChild("LaDa")
-                       .FirstChild("GA")
-                       .FirstChild("Taboos")
-                       .FirstChild("OffspringTaboo").Element();
-      if (child)
-      {
-        xmgrace_file << "# Offspring Taboo " << std::endl; 
-        offspringtaboo = new Taboo<t_Object>( &offsprings );
-        eostates.storeFunctor(offspringtaboo);
-        if ( (not taboos) and (agetaboo or poptaboo) ) 
-        {
-          taboos = new Taboos<t_Object>;
-          eostates.storeFunctor(taboos);
-          if ( agetaboo )
-            static_cast< Taboos<t_Object>* >(taboos)->add( agetaboo );
-          if ( poptaboo )
-            static_cast< Taboos<t_Object>* >(taboos)->add( poptaboo );
-        }
-      }
-      if ( taboos )
-        static_cast< Taboos<t_Object>* >(taboos)->add( offspringtaboo );
-      else if (agetaboo) 
-        taboos = agetaboo;
-      else if (poptaboo) 
-        taboos = poptaboo;
-      else if (offspringtaboo) 
-        taboos = offspringtaboo;
-
-      // then creates breeder op
-      child = docHandle.FirstChild("LaDa")
-                       .FirstChild("GA").Element();
-      xmgrace_file << "# Breeding Operator begin " << std::endl;
-      std::string str = "  ";
-      breeder_ops = make_genetic_op(*child->FirstChildElement(), xmgrace_file, str, str);
-      xmgrace_file << "# Breeding Operator end " << std::endl;
-      if ( not breeder_ops )
-        throw "Error while creating operators in  Darwin<t_Object, t_Lamarck>  :: make_GenOp ";
-
-      // finally creates nuclear winter
-      child = docHandle.FirstChild("LaDa")
-                       .FirstChild("GA")
-                       .FirstChild("Taboos")
-                       .FirstChild("NuclearWinter").Element();
-      if ( child and agetaboo )
-      {
-        eoGenOp<t_Object> *nuclear_op;
-      
-        // first creates the nuclear op from input
-        xmgrace_file << "# Nuclear Operator begin " << std::endl;
-        nuclear_op = make_genetic_op( *child->FirstChildElement(), xmgrace_file, str,str );
-        xmgrace_file << "# Nuclear Operator end " << std::endl;
-        if ( not nuclear_op )
-          throw "Error while creating operators in  Darwin<t_Object, t_Lamarck>  :: make_GenOp ";
-        
-        // creates the NuclearWinter 
-        nuclearwinter = new NuclearWinter<t_Darwin >
-                                         ( *taboos, *breeder_ops, *nuclear_op, *this,
-                                           replacement_rate );
-        xmgrace_file << "# NuclearWinter " << std::endl;
-        eostates.storeFunctor( nuclearwinter );
-        continuator->add(*nuclearwinter);
-      }
-
-      xmgrace_file.flush();
-      xmgrace_file.close();
+      UpdateAgeTaboo< t_Darwin > *updateagetaboo
+             = new UpdateAgeTaboo<t_Darwin > ( *agetaboo, generation_counter,
+                                               *this, length, print_out);
+      xmgrace_file << "# Age Taboo, lifespan=" << d << std::endl;
+      eostates.storeFunctor(updateagetaboo);
+      continuator->add(*updateagetaboo);
     }
+
+    // Nuclear Winter -- only for agetaboo
+    child = docHandle.FirstChild("LaDa")
+                     .FirstChild("GA")
+                     .FirstChild("Taboos")
+                     .FirstChild("NuclearWinter").Element();
+    if ( child and agetaboo)
+    {
+      eoGenOp<t_Object> *nuclear_op;
+    
+      // first creates the nuclear op from input
+      std::string str = "  ";
+      xmgrace_file << "# Nuclear Operator begin " << std::endl;
+      nuclear_op = make_genetic_op( *child->FirstChildElement(), xmgrace_file, str,str );
+      xmgrace_file << "# Nuclear Operator end " << std::endl;
+      if ( not nuclear_op )
+        throw "Error while creating operators in  Darwin<t_Object, t_Lamarck>  :: make_GenOp ";
+      
+      // creates the NuclearWinter 
+      nuclearwinter = new NuclearWinter<t_Darwin >
+                                       ( *taboos, *breeder_ops, *nuclear_op, *this,
+                                         replacement_rate );
+      xmgrace_file << "# NuclearWinter " << std::endl;
+      eostates.storeFunctor( nuclearwinter );
+      continuator->add(*nuclearwinter);
+    }
+
+    CLOSEXMGRACE
   } // end of make_check_point
+
+    // create Taboos
+
+  template< class t_Object, class t_Lamarck >
+  void Darwin<t_Object, t_Lamarck> :: make_taboos()
+  {
+    OPENXMLINPUT
+    OPENXMGRACE 
+
+    IslandsTaboos<t_Object> *poptaboo = NULL;
+    Taboo<t_Object> *offspringtaboo = NULL;
+    agetaboo = NULL;
+
+    // creates age taboo -- updater is created in make_checkpoint
+    child = docHandle.FirstChild("LaDa")
+                     .FirstChild("GA")
+                     .FirstChild("Taboos")
+                     .FirstChild("AgeTaboo").Element();
+    if (child)
+    {
+      agetaboo = new Taboo< t_Object, std::list<t_Object> >;
+      eostates.storeFunctor(agetaboo);
+    }
+    
+    // creates pop taboo
+    child = docHandle.FirstChild("LaDa")
+                     .FirstChild("GA")
+                     .FirstChild("Taboos")
+                     .FirstChild("PopTaboo").Element();
+    if (child)
+    {
+      xmgrace_file << "# Pop Taboo " << std::endl; 
+      poptaboo = new IslandsTaboos<t_Object>( islands );
+      eostates.storeFunctor(poptaboo);
+      if ( agetaboo ) 
+      {
+        taboos = new Taboos<t_Object>;
+        eostates.storeFunctor(taboos);
+        static_cast< Taboos<t_Object>* >(taboos)->add( agetaboo );
+        static_cast< Taboos<t_Object>* >(taboos)->add( poptaboo );
+      }
+    }
+    
+    // creates offspring taboo
+    child = docHandle.FirstChild("LaDa")
+                     .FirstChild("GA")
+                     .FirstChild("Taboos")
+                     .FirstChild("OffspringTaboo").Element();
+    if (child)
+    {
+      xmgrace_file << "# Offspring Taboo " << std::endl; 
+      offspringtaboo = new Taboo<t_Object>( &offsprings );
+      eostates.storeFunctor(offspringtaboo);
+      if ( (not taboos) and (agetaboo or poptaboo) ) 
+      {
+        taboos = new Taboos<t_Object>;
+        eostates.storeFunctor(taboos);
+        if ( agetaboo )
+          static_cast< Taboos<t_Object>* >(taboos)->add( agetaboo );
+        if ( poptaboo )
+          static_cast< Taboos<t_Object>* >(taboos)->add( poptaboo );
+      }
+    }
+    if ( taboos )
+      static_cast< Taboos<t_Object>* >(taboos)->add( offspringtaboo );
+    else if (agetaboo) 
+      taboos = agetaboo;
+    else if (poptaboo) 
+      taboos = poptaboo;
+    else if (offspringtaboo) 
+      taboos = offspringtaboo;
+
+    CLOSEXMGRACE
+  }
+
+  template< class t_Object, class t_Lamarck >
+  void Darwin<t_Object, t_Lamarck> :: make_colonize()
+  {
+    OPENXMLINPUT
+    OPENXMGRACE 
+
+    // creates age taboo -- updater is created in make_checkpoint
+    child = docHandle.FirstChild("LaDa")
+                     .FirstChild("GA")
+                     .FirstChild("Colonize").Element();
+
+    t_int every = 0;
+    if (not child and not child->Attribute("every", &every) )
+      return;
+    if ( every <= 0 and every >= max_generations )
+      return;
+    xmgrace_file << "# Colonize every " << every;
+
+    bool is_pop_stable = false;
+    if ( child->Attribute("stablepop") )
+    {
+      xmgrace_file << " keeping population size stable ";
+      is_pop_stable = true;
+    }
+    xmgrace_file << std::endl;
+
+    colonize = new Colonize<t_Object>( evaluation, breeder,
+                                       abs(every), is_pop_stable );
+    eostates.storeFunctor(colonize);
+    
+    CLOSEXMGRACE
+  }
+
+  template<class t_Object, class t_Lamarck>
+  void Darwin<t_Object, t_Lamarck> :: make_breeder_ops ()
+  {
+    OPENXMLINPUT
+    OPENXMGRACE
+
+    child = docHandle.FirstChild("LaDa")
+                     .FirstChild("GA").Element();
+    xmgrace_file << "# Breeding Operator begin " << std::endl;
+    std::string str = "  ";
+    breeder_ops = make_genetic_op(*child->FirstChildElement(), xmgrace_file, str, str);
+    xmgrace_file << "# Breeding Operator end " << std::endl;
+    if ( not breeder_ops )
+      throw "Error while creating operators in  Darwin<t_Object, t_Lamarck>  :: make_GenOp ";
+
+    CLOSEXMGRACE
+  }
 
   template<class t_Object, class t_Lamarck>
   void Darwin<t_Object, t_Lamarck> :: populate ()
@@ -813,7 +790,8 @@ namespace LaDa
   template< class t_Object, class t_Lamarck >
   void Darwin <t_Object, t_Lamarck> :: print_xmgrace( bool is_last_call = false )
   {
-    std::ofstream xmgrace_file( xmgrace_filename.c_str(), std::ios_base::out|std::ios_base::app ); 
+    OPENXMGRACE 
+
     bool print_ch = not t_Object :: is_baseline_valid();
     std::string special = " ";
     if ( not print_ch )
@@ -843,28 +821,19 @@ namespace LaDa
       t_Object :: validate_baseline();
     }
 
-
-    xmgrace_file.flush();
-    xmgrace_file.close();
+    CLOSEXMGRACE
   }
 
 
   template< class t_Object, class t_Lamarck >
   void Darwin <t_Object, t_Lamarck> :: make_extra_algo()
   {
-    TiXmlDocument doc( filename.c_str() );
-    TiXmlHandle docHandle( &doc );
-    extra_popalgo = NULL;
-    
-    if  ( !doc.LoadFile() )
-    {
-      std::cout << doc.ErrorDesc() << std::endl; 
-      throw "Could not load input file in  Darwin<t_Object, t_Lamarck>  :: make_extra_algo";
-    }
+    OPENXMLINPUT
+    OPENXMGRACE
 
-    TiXmlElement *child = docHandle.FirstChild("LaDa")
-                                   .FirstChild("GA")
-                                   .FirstChild("PopAlgo").Element();
+    child = docHandle.FirstChild("LaDa")
+                     .FirstChild("GA")
+                     .FirstChild("PopAlgo").Element();
     if ( not child )
       return;
     
@@ -882,7 +851,6 @@ namespace LaDa
       std::string str;
     }
 
-    std::ofstream xmgrace_file( xmgrace_filename.c_str(), std::ios_base::out|std::ios_base::app );
     xmgrace_file << "# PopAlgorithm: rate="<< minimize_best 
                  << " every=" << minimize_best_every << std::endl;
     std::string str = "    ";
@@ -897,8 +865,9 @@ namespace LaDa
     extra_popalgo = new Extra_PopAlgo< t_Darwin > 
                                      ( *op, *this, minimize_best, minimize_best_every );
     eostates.storeFunctor( extra_popalgo );
-    xmgrace_file.flush();
-    xmgrace_file.close();
+
+    CLOSEXMGRACE
   }
+
 } // namespace LaDa
 

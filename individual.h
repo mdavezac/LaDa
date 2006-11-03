@@ -145,7 +145,7 @@ namespace LaDa
         else
           phenotype = variables;
       }
-      bool operator==( const Individual<FITNESS, t_Functional> &_indiv )
+      bool operator==( const Individual<FITNESS, t_Functional> &_indiv ) const
       {
         t_unsigned size = variables->size();
         if ( size != _indiv.variables->size() )
