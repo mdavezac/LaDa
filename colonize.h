@@ -7,6 +7,7 @@
 
 #include <opt/types.h>
 using namespace types;
+#include <eo/eotypes.h>
 
 #include "operators.h"
 #include "breeder.h"
@@ -63,7 +64,7 @@ namespace LaDa
         }
 
         // swtiches eoHowMany object in breeder.
-        eoHowMany howmany(take_from_each);
+        eoHowMany howmany(static_cast<eotypes::t_int>(take_from_each));
         eoHowMany **howmany_address = breeder.get_howmany_address();
         eoHowMany *save_howmany = *howmany_address;
         *howmany_address = &howmany;
