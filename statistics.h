@@ -242,13 +242,13 @@ namespace LaDa
           for ( i_indiv2 = i_indiv1 + 1; i_indiv2 != i_end; ++i_indiv2 )
             if ( *i_indiv1 == *i_indiv2 )
               break;
-          if ( i_indiv2 == i_end )
+          if ( i_indiv2 != i_end )
             --N;
         }
 
         // prints stuff out
         std::ostringstream sstr; 
-        sstr << "TruePopSize: " << std::setw(10) << std::setprecision(3)
+        sstr << "True Census: " << std::setw(10) << std::setprecision(3)
              << N << " / " << _pop.size(); 
         std::string str = sstr.str();
         call_back.print_xmgrace( str );
