@@ -88,7 +88,7 @@ namespace LaDa
 
       IslandsContinuator<t_Object>*  continuator;
       eoPopEvalFunc<t_Object>*       popEval;
-      eoBreed<t_Object>*             breeder;
+      Breeder<t_Object>*             breeder;
       eoGenOp<t_Object>*             breeder_ops;
       eoReplacement<t_Object>*       replace;
       eoPopAlgo<t_Object>*           extra_popalgo;
@@ -139,7 +139,7 @@ namespace LaDa
                                          std::string &_special,
                                          std::string &_base,
                                          eoGenOp<t_Object> *current_op);
-      eoBreed<t_Object>* make_breeder();
+      void make_breeder();
       void make_checkpoint();
       void make_taboos();
       void make_breeder_ops();

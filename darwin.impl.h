@@ -37,7 +37,7 @@ namespace LaDa
      xmgrace_file.flush(); \
      xmgrace_file.close();
 
-  const t_unsigned svn_revision = 157;
+  const t_unsigned svn_revision = 158;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -437,25 +437,22 @@ namespace LaDa
   }
 
   template<class t_Object, class t_Lamarck>
-  eoBreed<t_Object>* Darwin<t_Object, t_Lamarck> :: make_breeder()
+  void Darwin<t_Object, t_Lamarck> :: make_breeder()
   {
-    eoBreed<t_Object> *breed;
     eoSelectOne<t_Object> *select;
 
     select = new eoDetTournamentSelect<t_Object>(tournament_size);
+    breeder = new Breeder<t_Object>(*select, *breeder_ops, continuator->get_generation_counter() );
     if ( nuclearwinter )
     {
-      breed = new Breeder<t_Object>(*select, *breeder_ops, continuator->get_generation_counter() );
-      nuclearwinter->set_op_address( static_cast<Breeder<t_Object>*>(breed)->get_op_address() );
-      nuclearwinter->set_howmany( static_cast<Breeder<t_Object>*>(breed)->get_howmany_address() ) ;
+      nuclearwinter->set_op_address( breeder->get_op_address() );
+      nuclearwinter->set_howmany( breeder->get_howmany_address() ) ;
     }
     else
-      breed = new eoGeneralBreeder<t_Object>(*select, *breeder_ops, replacement_rate);
+      breeder->set_howmany(replacement_rate);
 
-    eostates.storeFunctor(breed);
+    eostates.storeFunctor(breeder);
     eostates.storeFunctor(select);
-
-    return breed;
   }
   
   template<class t_Object, class t_Lamarck>
@@ -481,7 +478,8 @@ namespace LaDa
     make_breeder_ops(); // order counts
     make_checkpoint();  // order counts
 
-    breeder = make_breeder();
+    make_breeder();
+    make_colonize();
     replace = make_replacement();
     make_extra_algo();
     eostates.storeFunctor(evaluation);
@@ -707,9 +705,9 @@ namespace LaDa
                      .FirstChild("Colonize").Element();
 
     t_int every = 0;
-    if (not child and not child->Attribute("every", &every) )
+    if (not child or not child->Attribute("every", &every) )
       return;
-    if ( every <= 0 and every >= max_generations )
+    if ( every <= 0 or abs(every) >= max_generations )
       return;
     xmgrace_file << "# Colonize every " << every;
 
@@ -721,8 +719,14 @@ namespace LaDa
     }
     xmgrace_file << std::endl;
 
-    colonize = new Colonize<t_Object>( evaluation, breeder,
+    colonize = new Colonize<t_Object>( *evaluation, *breeder,
                                        abs(every), is_pop_stable );
+    if ( not colonize )
+    {
+      std::cerr << "Error while creating colonize operator from input"    
+                << std::endl;
+      throw "";
+    }
     eostates.storeFunctor(colonize);
     
     CLOSEXMGRACE

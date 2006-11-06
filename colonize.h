@@ -22,20 +22,26 @@ namespace LaDa
       bool stable_pop;  // stable population vs grow population
       eoEvalFunc<t_Object> &eval;
       Breeder<t_Object> &breeder;
+      t_unsigned nb_count;
       UtterRandom <t_Object> utter_random;
 
     public:
-      Colonize   ( eoEvalFunc<t_Object> &_eval, eoBreed<t_Object> &_breed,
+      Colonize   ( eoEvalFunc<t_Object> &_eval, Breeder<t_Object> &_breed,
                    t_unsigned _every, bool _stable = false ) 
-               : eval(_eval), breeder(_breed), every(_every), stable_pop(_stable) {};
+               :  every(_every), stable_pop(_stable), eval(_eval),
+                  breeder(_breed), nb_count(0) {};
       Colonize   ( const Colonize<t_Object, t_Islands> &_copy )
-               : eval(_copy.eval), breeder(_copy.breeder), 
-                 every(_copy.every), stable_pop(_copy.stable_pop) {};
+               : every(_copy.every), stable_pop(_copy.stable_pop),
+                 eval(_copy.eval), breeder(_copy.breeder), nb_count(_copy.nb_count)  {};
 
-      virtual ~Colonize ();
+      virtual ~Colonize () {};
 
       void operator()( t_Islands &_islands )
       {
+        ++nb_count;
+        if ( nb_count % every )
+          return;
+
         t_unsigned pop_size = _islands.begin()->size();
         t_unsigned new_size = pop_size;
         t_unsigned nb_islands = _islands.size();
@@ -50,7 +56,7 @@ namespace LaDa
           if ( new_size * nb_islands < pop_size * (nb_islands - 1 ) )
             ++new_size; // won't go to zero
         }
-        d = floor( (double) pop_size / (double) ( nb_islands )  ) / 2.0;
+        d = floor( (double) pop_size / (double) ( nb_islands - 1 )  ) / 2.0;
         take_from_each = ( d > 0) ? static_cast<t_unsigned>(d) : 1;
         if ( take_from_each * nb_islands < 1  ) 
           take_from_each = 1;
@@ -76,19 +82,21 @@ namespace LaDa
         typename t_Islands :: iterator i_end = _islands.end();
         new_pop.resize( new_size >> 1 );
         typename eoPop<t_Object> :: iterator i_indiv = new_pop.begin();
-        for( ; i_pop != i_end; ++i_pop, i_indiv += take_from_each )
+        typename eoPop<t_Object> :: iterator i_indiv_end;
+        for( ; i_pop != i_end; ++i_pop)
         {
           breeder(*i_pop, offsprings);
           std::copy( offsprings.begin(), offsprings.end(), i_indiv );
           offsprings.clear();
+
+          // Now evaluates the new island
+          // note that new UtterRandom object are evaluated when created
+          // in the loop below
+          i_indiv_end = i_indiv + take_from_each;
+          for(; i_indiv != i_indiv_end; ++i_indiv)
+            eval(*i_indiv);
         }
 
-        // Now evaluates the new island
-        // note that new UtterRandom object are evaluated when created
-        // in the loop below
-        typename eoPop<t_Object> :: iterator i_indiv_end = new_pop.end();
-        for( ; i_indiv != i_indiv_end; ++i_indiv)
-          eval(*i_indiv);
 
         // Shoves island into island container
         _islands.push_back(new_pop);
@@ -96,6 +104,7 @@ namespace LaDa
         // completes the job by resizing each island to proper value
         i_pop = _islands.begin();
         i_end = _islands.end();
+        t_Object object( *i_pop->begin() );
         for( ; i_pop != i_end; ++i_pop )
         {
           t_unsigned s = i_pop->size();
@@ -106,7 +115,6 @@ namespace LaDa
           }
           else if ( s < new_size )
           {
-            t_Object object;
             for(; s < new_size; ++s )
             {
               utter_random(object);
@@ -122,8 +130,8 @@ namespace LaDa
           i_pop = _islands.begin();
           for( ; i_pop != i_end; ++i_pop )
           {
-            i_indiv = new_pop.begin();
-            i_indiv_end = new_pop.end();
+            i_indiv = i_pop->begin();
+            i_indiv_end = i_pop->end();
             for( ; i_indiv != i_indiv_end; ++i_indiv )
               eval(*i_indiv);
           }

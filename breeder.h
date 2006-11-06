@@ -35,17 +35,18 @@ namespace LaDa
       eoGenOp<t_Object> *op; 
       GenCount &age;
       eoHowMany *howMany;
+      eoHowMany *howMany_save;
     
     public:
       Breeder   ( eoSelectOne<t_Object>& _select, eoGenOp<t_Object>& _op,
                   GenCount &_age )
               : select( _select ), op(&_op),
-                age(_age), howMany(NULL) {}
+                age(_age), howMany(NULL), howMany_save(NULL) {}
       Breeder   ( Breeder<t_Object> & _breeder )
               : select( _breeder.select ), op(_breeder.op),
-                age(_breeder.age), howMany(_breeder.howMany) {}
+                age(_breeder.age), howMany(_breeder.howMany), howMany_save(NULL) {}
 
-      virtual ~Breeder() {};
+      virtual ~Breeder() { if( howMany_save ) delete howMany_save; };
      
       void operator()(const eoPop<t_Object>& _parents, eoPop<t_Object>& _offspring)
       {
@@ -68,6 +69,12 @@ namespace LaDa
         { return &op; }
       eoHowMany** get_howmany_address() 
         { return &howMany; }
+      void set_howmany(t_real _rate)
+      {
+        if ( howMany_save ) delete howMany_save;
+        howMany_save = new eoHowMany(_rate);
+        howMany = howMany_save;
+      }
      
       /// The class name.
       virtual std::string className() const { return "LaDa::Breeder"; }
