@@ -37,7 +37,7 @@ namespace LaDa
      xmgrace_file.flush(); \
      xmgrace_file.close();
 
-  const t_unsigned svn_revision = 158;
+  const t_unsigned svn_revision = 159;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -704,10 +704,10 @@ namespace LaDa
                      .FirstChild("GA")
                      .FirstChild("Colonize").Element();
 
-    t_int every = 0;
+    int every = 0;
     if (not child or not child->Attribute("every", &every) )
       return;
-    if ( every <= 0 or abs(every) >= max_generations )
+    if ( every <= 0 or (t_unsigned) abs(every) >= max_generations )
       return;
     xmgrace_file << "# Colonize every " << every;
 
@@ -720,7 +720,8 @@ namespace LaDa
     xmgrace_file << std::endl;
 
     colonize = new Colonize<t_Object>( *evaluation, *breeder,
-                                       abs(every), is_pop_stable );
+                                       (t_unsigned) abs(every), 
+                                       is_pop_stable );
     if ( not colonize )
     {
       std::cerr << "Error while creating colonize operator from input"    
