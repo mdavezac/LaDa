@@ -37,7 +37,7 @@ namespace LaDa
      xmgrace_file.flush(); \
      xmgrace_file.close();
 
-  const t_unsigned svn_revision = 160;
+  const t_unsigned svn_revision = 161;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -719,6 +719,29 @@ namespace LaDa
     }
     xmgrace_file << std::endl;
 
+    // constructs a new breeder
+    eoGenOp<t_Object>*  breeder_ops_save = breeder_ops;
+    Breeder<t_Object>* breeder_save = breeder;
+    // tournament size when selecting parents
+    t_unsigned tournament_size_save = tournament_size;
+    if ( child->FirstChildElement( "Selection" ) )
+    {
+      int d = 0;
+      if ( child->FirstChildElement( "Selection" )->Attribute("value", &d) and d > 1 )
+        tournament_size = abs(d);
+    }
+    xmgrace_file << "#   Tournament Size: " << tournament_size << std::endl;
+    std::string str = "  ", base = "    ";
+    xmgrace_file << "#   Breeding Operator begin " << std::endl;
+    breeder_ops = make_genetic_op(*child->FirstChildElement(), xmgrace_file, str, base);
+    if ( not breeder_ops )
+    {
+      std::cerr << "Could not create Breeder Operators for Colonize" << std::endl;
+      throw "";
+    }
+
+    xmgrace_file << "#   Breeding Operator end " << std::endl;
+
     colonize = new Colonize<t_Object>( *evaluation, *breeder,
                                        (t_unsigned) abs(every), 
                                        is_pop_stable );
@@ -729,6 +752,10 @@ namespace LaDa
       throw "";
     }
     eostates.storeFunctor(colonize);
+    breeder = breeder_save;
+    tournament_size = tournament_size_save;
+    breeder_ops = breeder_ops_save;
+    xmgrace_file << "# End Colonize " << std::endl;
     
     CLOSEXMGRACE
   }
