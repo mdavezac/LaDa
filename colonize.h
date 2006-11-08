@@ -56,7 +56,7 @@ namespace LaDa
           if ( new_size * nb_islands < pop_size * (nb_islands - 1 ) )
             ++new_size; // won't go to zero
         }
-        d = floor( (double) pop_size / (double) ( nb_islands - 1 )  ) / 2.0;
+        d = floor( (double) pop_size / (double) ( nb_islands - 1 )  );
         take_from_each = ( d > 0) ? static_cast<t_unsigned>(d) : 1;
         if ( take_from_each * nb_islands > new_size  )
         {
