@@ -191,6 +191,49 @@ namespace LaDa
       virtual std::string className(void) const { return "LaDa::UpdateAgeTaboo"; }
   };
 
+  // when binop( ref, term ), terminates GA
+  template< class t_Value, class t_Binop, class t_Call_Back,
+            class t_Object = typename t_Call_Back :: t_Object >
+  class Terminator : public eoContinue<t_Object>
+  {
+    protected:
+      t_Value &ref;
+      t_Value term;
+      t_Binop binop;
+      t_Call_Back &call_back;
+      std::string type;
+
+    public:
+      Terminator   ( t_Value &_ref, t_Value _term, t_Binop _op, 
+                     t_Call_Back &_cb, std::string _type)
+                 : ref(_ref), term(_term), binop(_op),
+                   call_back(_cb), type(_type) {}
+      Terminator   ( const Terminator< t_Value, t_Binop, t_Call_Back, t_Object> & _copy)
+                 : ref(_copy.ref), term(_copy.term), binop(_copy.op), 
+                   call_back(_copy.call_back), type(_copy.type) {}
+      virtual ~Terminator() {}
+
+      virtual bool operator() (const eoPop<t_Object> &_pop )
+      {
+        if ( binop( ref, term ) )
+         return true;
+        lastCall();
+        return false;
+      }
+      virtual std::string className(void) const { return "LaDa::Terminator"; }
+
+      void lastCall() const
+      {
+        std::ostringstream sstr;
+        sstr << " Terminator, type: " << type
+             << ", ref= " << ref 
+             << ", term=" << term;
+ 
+        std::string str = sstr.str();
+        call_back.print_xmgrace( str );
+      }
+  };
+
   // island continuator. Takes two population iterators and goes through them
   template<class t_Object, class t_Islands = std::list< eoPop<t_Object> > > 
   class IslandsContinuator : public eoContinue<t_Object>
@@ -204,11 +247,14 @@ namespace LaDa
       std::list < eoStatBase<t_Object>* >       stats;
       std::list < eoMonitor* >                  monitors;
       std::list < eoUpdater* >                  updaters;
+      eoUpdater &print;
       GenCount generation_counter;
       t_unsigned  max_generations;
 
     public:
-      IslandsContinuator( t_unsigned _max ) : generation_counter(0), max_generations(_max) {}
+      IslandsContinuator   ( t_unsigned _max, eoUpdater &_print ) 
+                         : print(_print), generation_counter(0),
+                           max_generations(_max) {}
 
       void add(eoContinue<t_Object>& _cont)
         { continuators.push_back(&_cont); }
@@ -325,6 +371,8 @@ namespace LaDa
 
         apply_monitors_updaters();
 
+        print(); 
+
         bool result = ( generation_counter() < max_generations );
         for( i_pop = _i_begin; i_pop != _i_end; ++i_pop )
           if ( not apply_continuators( *i_pop ) )
@@ -332,8 +380,11 @@ namespace LaDa
 
         // last call
         if ( not result )
+        {
           for( i_pop = _i_begin; i_pop != _i_end; ++i_pop )
             lastCall( *i_pop );
+          print.lastCall();
+        }
 
         // increments generation
         ++generation_counter;

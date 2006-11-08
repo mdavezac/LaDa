@@ -12,6 +12,7 @@
 #include <opt/opt_minimize.h>
 
 #include <math.h>
+#include <functional>
 #include <cmath>
 
 using opt::NO_MINIMIZER;
@@ -37,7 +38,7 @@ namespace LaDa
      xmgrace_file.flush(); \
      xmgrace_file.close();
 
-  const t_unsigned svn_revision = 163;
+  const t_unsigned svn_revision = 164;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -496,15 +497,15 @@ namespace LaDa
     OPENXMLINPUT;
     OPENXMGRACE;
 
-    // contains all checkpoints
-    continuator = new IslandsContinuator<t_Object>(max_generations);
-    eostates.storeFunctor( continuator );
-    GenCount &generation_counter = continuator->get_generation_counter();
- 
     // our very own updater wrapper to print stuff
     PrintXmgrace< t_Darwin > *printxmgrace = new PrintXmgrace< t_Darwin >(this);
     eostates.storeFunctor(printxmgrace);
-    continuator->add(*printxmgrace);
+    
+    // contains all checkpoints
+    continuator = new IslandsContinuator<t_Object>(max_generations, *printxmgrace);
+    eostates.storeFunctor( continuator );
+    GenCount &generation_counter = continuator->get_generation_counter();
+ 
     
     // some statistics
     child = docHandle.FirstChild("LaDa")
@@ -569,6 +570,62 @@ namespace LaDa
       continuator->add( *average );
     }
 
+    // Creates Terminators
+    child = docHandle.FirstChild("LaDa")
+                     .FirstChild("GA")
+                     .FirstChild("Terminator").Element();
+    for( ; child; child = child->NextSiblingElement("Terminator") )
+    {
+      eoContinue<t_Object> *terminator = NULL;
+      std::string type = "<";
+      std::string ref = "";
+      if ( child->Attribute("ref" ) )
+        ref = child->Attribute( "ref" );
+      int max = 0;
+      child->Attribute("value", &max);
+      if ( max > 0 )
+      {
+        if (     type.compare("<") == 0 
+             and ref.compare("evaluation") == 0 )
+        {
+          terminator = new Terminator< t_unsigned, std::less<t_unsigned>, t_Darwin >
+                                     ( SA_TabooOp<t_Darwin> :: nb_evals, (t_unsigned) abs(max),
+                                       std::less<t_unsigned>(), *this,
+                                       "SA_TabooOp<t_Darwin> :: nb_eval < term" );
+          eostates.storeFunctor( terminator );
+          continuator->add( *terminator );
+          terminator = new Terminator< t_unsigned, std::less<t_unsigned>, t_Darwin >
+                                     ( GradientSA_TabooOp<t_Darwin> :: nb_evals, (t_unsigned) abs(max),
+                                       std::less<t_unsigned>(), *this, 
+                                       "GradientSA_TabooOp<t_Darwin> :: nb_eval < term" );
+          eostates.storeFunctor( terminator );
+          continuator->add( *terminator );
+          terminator = new Terminator< t_unsigned, std::less<t_unsigned>, t_Darwin >
+                                     ( VA_CE :: Polynome :: nb_eval, (t_unsigned) abs(max),
+                                       std::less<t_unsigned>(), *this, 
+                                       "VA_CE :: Polynome :: nb_eval < term" );
+          eostates.storeFunctor( terminator );
+          continuator->add( *terminator );
+        }
+        if (     type.compare("<") == 0 
+             and ref.compare("gradient") == 0 )
+        {
+          terminator = new Terminator< t_unsigned, std::less<t_unsigned>, t_Darwin >
+                                     ( GradientSA_TabooOp<t_Darwin> :: nb_grad_evals, (t_unsigned) abs(max),
+                                       std::less<t_unsigned>(), *this, 
+                                       "GradientSA_TabooOp<t_Darwin> :: nb_grad_evals < term" );
+          eostates.storeFunctor( terminator );
+          continuator->add( *terminator );
+          terminator = new Terminator< t_unsigned, std::less<t_unsigned>, t_Darwin >
+                                     ( VA_CE :: Polynome :: nb_eval_grad, (t_unsigned) abs(max),
+                                       std::less<t_unsigned>(), *this, 
+                                       "VA_CE :: Polynome :: nb_grad_eval < term" );
+          eostates.storeFunctor( terminator );
+          continuator->add( *terminator );
+        }
+      } // end if max
+    }
+    
     // Creates Age taboo
     child = docHandle.FirstChild("LaDa")
                      .FirstChild("GA")
@@ -593,6 +650,7 @@ namespace LaDa
       eostates.storeFunctor(updateagetaboo);
       continuator->add(*updateagetaboo);
     }
+
 
     // Nuclear Winter -- only for agetaboo
     child = docHandle.FirstChild("LaDa")
