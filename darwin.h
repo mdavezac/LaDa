@@ -5,8 +5,6 @@
 
 #include <complex>
 
-#undef min 
-#undef max
 #include <eo/apply.h>
 #include <eo/eoAlgo.h>
 #include <eo/eoPopAlgo.h>

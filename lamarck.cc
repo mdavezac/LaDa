@@ -3,8 +3,6 @@
 #include <lamarck/convex_hull.h>
 #include <lamarck/one_point_hull.h>
 
-#undef min
-#undef max
 #include <limits.h>
 #include <iostream>
 #include <sstream>
