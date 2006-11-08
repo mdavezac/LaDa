@@ -37,7 +37,7 @@ namespace LaDa
      xmgrace_file.flush(); \
      xmgrace_file.close();
 
-  const t_unsigned svn_revision = 162;
+  const t_unsigned svn_revision = 163;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -72,6 +72,7 @@ namespace LaDa
     nuclearwinter = NULL;
     agetaboo = NULL;
     colonize = NULL;
+    popgrowth = NULL;
 
     print_strings.reserve(10);
     t_Object :: is_using_phenotype = false;
@@ -118,6 +119,8 @@ namespace LaDa
          // creates colonies if requested
          if ( colonize )
            (*colonize)( islands );
+         if ( popgrowth )
+           (*popgrowth)( islands );
 
       }
       catch (std::exception& e)
@@ -480,6 +483,7 @@ namespace LaDa
 
     make_breeder();
     make_colonize();
+    make_popgrowth();
     replace = make_replacement();
     make_extra_algo();
     eostates.storeFunctor(evaluation);
@@ -694,6 +698,74 @@ namespace LaDa
   }
 
   template< class t_Object, class t_Lamarck >
+  void Darwin<t_Object, t_Lamarck> :: make_popgrowth()
+  {
+    OPENXMLINPUT
+    OPENXMGRACE 
+
+    // creates age taboo -- updater is created in make_checkpoint
+    child = docHandle.FirstChild("LaDa")
+                     .FirstChild("GA")
+                     .FirstChild("PopGrowth").Element();
+
+    int every = 0, max_pop = 0; double rate;
+    if (not child or not child->Attribute("every", &every) )
+      return;
+    if ( every <= 0 or (t_unsigned) abs(every) >= max_generations )
+      return;
+    if (not child or not child->Attribute("maxpop", &max_pop) )
+      return;
+    if ( max_pop <= 0 or (t_unsigned) abs(max_pop) < pop_size)
+      return;
+    if (not child or not child->Attribute("rate", &rate) )
+      return;
+    if ( rate <= 0 )
+      return;
+    xmgrace_file << "# PopGrowth: rate=" << rate 
+                 << "  every=" << every << " maxpop=" << max_pop << std::endl;
+
+    // constructs a new breeder
+    eoGenOp<t_Object>*  breeder_ops_save = breeder_ops;
+    Breeder<t_Object>* breeder_save = breeder;
+    // tournament size when selecting parents
+    t_unsigned tournament_size_save = tournament_size;
+    if ( child->FirstChildElement( "Selection" ) )
+    {
+      int d = 0;
+      if ( child->FirstChildElement( "Selection" )->Attribute("value", &d) and d > 1 )
+        tournament_size = abs(d);
+    }
+    xmgrace_file << "#   Tournament Size: " << tournament_size << std::endl;
+    std::string str = "  ", base = "    ";
+    xmgrace_file << "#   Breeding Operator begin " << std::endl;
+    breeder_ops = make_genetic_op(*child->FirstChildElement(), xmgrace_file, str, base);
+    if ( not breeder_ops )
+    {
+      std::cerr << "Could not create Breeder Operators for PopGrowth" << std::endl;
+      throw "";
+    }
+
+    xmgrace_file << "#   Breeding Operator end " << std::endl;
+
+    popgrowth = new PopGrowth<t_Object>( *evaluation, *breeder,
+                                         (t_unsigned) abs(every), 
+                                         static_cast<t_real>(rate),
+                                         (t_unsigned) abs(max_pop) );
+    if ( not popgrowth )
+    {
+      std::cerr << "Error while creating PopGrowth operator from input"    
+                << std::endl;
+      throw "";
+    }
+    eostates.storeFunctor(popgrowth);
+    breeder_ops = breeder_ops_save;
+    breeder = breeder_save;
+    tournament_size = tournament_size_save;
+    xmgrace_file << "# End PopGrowth " << std::endl;
+    
+    CLOSEXMGRACE
+  }
+  template< class t_Object, class t_Lamarck >
   void Darwin<t_Object, t_Lamarck> :: make_colonize()
   {
     OPENXMLINPUT
@@ -752,9 +824,9 @@ namespace LaDa
       throw "";
     }
     eostates.storeFunctor(colonize);
+    breeder_ops = breeder_ops_save;
     breeder = breeder_save;
     tournament_size = tournament_size_save;
-    breeder_ops = breeder_ops_save;
     xmgrace_file << "# End Colonize " << std::endl;
     
     CLOSEXMGRACE

@@ -33,6 +33,7 @@
 #include "breeder.h"
 #include "checkpoint.h"
 #include "colonize.h"
+#include "popgrowth.h"
 
 #include <eo/eotypes.h>
 
@@ -96,6 +97,7 @@ namespace LaDa
       Taboo<t_Object, std::list<t_Object> > *agetaboo;
       NuclearWinter<t_Darwin >* nuclearwinter;
       Colonize<t_Object> *colonize;
+      PopGrowth<t_Object> *popgrowth;
       Evaluation<t_Darwin> *evaluation;
 
       t_Lamarck *lamarck;
@@ -147,6 +149,7 @@ namespace LaDa
       void make_extra_algo();
       void make_algo();
       void make_colonize();
+      void make_popgrowth();
        
       void populate ();
       MinimizationOp<t_Object, t_Darwin>* Load_Minimizer( const TiXmlElement* el,   

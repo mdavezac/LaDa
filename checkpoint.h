@@ -188,7 +188,7 @@ namespace LaDa
       virtual void lastCall( const eoPop<t_Object> &_pop)
         {} //;taboo.print_out( std::cout ); }
 
-      virtual std::string className(void) const { return "LaDa::UpdateTaboo"; }
+      virtual std::string className(void) const { return "LaDa::UpdateAgeTaboo"; }
   };
 
   // island continuator. Takes two population iterators and goes through them
