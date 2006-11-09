@@ -23,16 +23,19 @@ namespace LaDa
       eoEvalFunc<t_Object> &eval;
       Breeder<t_Object> &breeder;
       t_unsigned nb_count;
+      eoPop<t_Object> offsprings; 
       UtterRandom <t_Object> utter_random;
 
     public:
       Colonize   ( eoEvalFunc<t_Object> &_eval, Breeder<t_Object> &_breed,
-                   t_unsigned _every, bool _stable = false ) 
+                   t_unsigned _every, eoPop<t_Object> &_offsprings,
+                   bool _stable = false ) 
                :  every(_every), stable_pop(_stable), eval(_eval),
-                  breeder(_breed), nb_count(0) {};
+                  breeder(_breed), nb_count(0), offsprings(_offsprings) {};
       Colonize   ( const Colonize<t_Object, t_Islands> &_copy )
                : every(_copy.every), stable_pop(_copy.stable_pop),
-                 eval(_copy.eval), breeder(_copy.breeder), nb_count(_copy.nb_count)  {};
+                 eval(_copy.eval), breeder(_copy.breeder),
+                 nb_count(_copy.nb_count), offsprings(_copy.offsprings) {};
 
       virtual ~Colonize () {};
 
@@ -75,7 +78,7 @@ namespace LaDa
 
         // breeds new pop from all other islands
         eoPop<t_Object> new_pop; new_pop.reserve( new_size ); 
-        eoPop<t_Object> offsprings; offsprings.reserve( take_from_each );
+        offsprings.clear(); offsprings.reserve( take_from_each );
         new_pop.resize( take_from_each*(nb_islands-1) );
         typename t_Islands :: iterator i_pop = _islands.begin();
         typename t_Islands :: iterator i_end = _islands.end();

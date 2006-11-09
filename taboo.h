@@ -91,6 +91,28 @@ namespace LaDa
         { problematic = _p; }
   };
 
+  template<class t_Object, class t_Container = eoPop<t_Object> >
+  class OffspringTaboo : public Taboo<t_Object, t_Container>
+  {
+    protected:
+      using Taboo<t_Object, t_Container> :: taboo_list;
+
+    public:
+      OffspringTaboo ( t_Container *_list ) : Taboo<t_Object, t_Container>( _list ) {}
+      virtual ~OffspringTaboo() {};
+       
+      // returns true if _object is in taboo_list 
+      virtual bool operator()( t_Object& _object ) 
+      {
+        typename t_Container :: iterator i_end = taboo_list->end();
+        typename t_Container :: iterator i_begin = taboo_list->begin();
+        if ( i_begin == i_end )
+          return false;
+        --i_end; // last is current
+        return not ( i_end == std::find( i_begin, i_end, _object ) );
+      }
+  };
+
   // a class with a number of taboos
   template<class t_Object>
   class Taboos : public Taboo_Base<t_Object>

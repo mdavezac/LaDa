@@ -38,7 +38,7 @@ namespace LaDa
      xmgrace_file.flush(); \
      xmgrace_file.close();
 
-  const t_unsigned svn_revision = 165;
+  const t_unsigned svn_revision = 167;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -731,7 +731,7 @@ namespace LaDa
     if (child)
     {
       xmgrace_file << "# Offspring Taboo " << std::endl; 
-      offspringtaboo = new Taboo<t_Object>( &offsprings );
+      offspringtaboo = new OffspringTaboo<t_Object>( &offsprings );
       eostates.storeFunctor(offspringtaboo);
       if ( (not taboos) and (agetaboo or poptaboo) ) 
       {
@@ -766,7 +766,7 @@ namespace LaDa
                      .FirstChild("GA")
                      .FirstChild("PopGrowth").Element();
 
-    int every = 0, max_pop = 0; double rate;
+    int every = 0, max_pop = 0, rate = 0;
     if (not child or not child->Attribute("every", &every) )
       return;
     if ( every <= 0 or (t_unsigned) abs(every) >= max_generations )
@@ -807,8 +807,9 @@ namespace LaDa
 
     popgrowth = new PopGrowth<t_Object>( *evaluation, *breeder,
                                          (t_unsigned) abs(every), 
-                                         static_cast<t_real>(rate),
-                                         (t_unsigned) abs(max_pop) );
+                                         (t_unsigned) abs(rate), 
+                                         (t_unsigned) abs(max_pop),
+                                         offsprings );
     if ( not popgrowth )
     {
       std::cerr << "Error while creating PopGrowth operator from input"    
@@ -874,7 +875,7 @@ namespace LaDa
 
     colonize = new Colonize<t_Object>( *evaluation, *breeder,
                                        (t_unsigned) abs(every), 
-                                       is_pop_stable );
+                                       offsprings, is_pop_stable );
     if ( not colonize )
     {
       std::cerr << "Error while creating colonize operator from input"    
