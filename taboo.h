@@ -243,6 +243,7 @@ namespace LaDa
       virtual void apply( eoPopulator<t_Object> &_object ) 
       {
         t_unsigned  i = 0;
+        t_Object copy = *_object;
         do
         {
           eotypes::t_unsigned pos = _object.tellp();
@@ -251,6 +252,7 @@ namespace LaDa
           _object.seekp(pos);
           if ( not taboo( *_object ) )
             return;
+          *_object = copy;
         } while ( i < max );
 
         taboo.set_problematic();

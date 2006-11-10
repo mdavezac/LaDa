@@ -93,6 +93,7 @@ namespace LaDa
       eoPopAlgo<t_Object>*           extra_popalgo;
       Taboo_Base<t_Object>*          taboos;
       Taboo<t_Object, std::list<t_Object> > *agetaboo;
+      Taboo<t_Object, std::list<t_Object> > *pathtaboo;
       NuclearWinter<t_Darwin >* nuclearwinter;
       Colonize<t_Object> *colonize;
       PopGrowth<t_Object> *popgrowth;

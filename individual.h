@@ -152,8 +152,20 @@ namespace LaDa
           return false;
         if ( size == 0 )
           return true;
-        return std::equal( variables->begin(), variables->end(),
-                           _indiv.variables->begin() );
+        if ( not std::equal( variables->begin(), variables->end(),
+                             _indiv.variables->begin() ) )
+          return false;
+        if ( not is_using_phenotype )
+          return true;
+
+        if ( not std::equal( variables->begin(), variables->end(),
+                             _indiv.phenotype->begin() ) )
+          return false;
+        if ( not std::equal( phenotype->begin(), phenotype->end(),
+                             _indiv.variables->begin() ) )
+          return false;
+        return std::equal( phenotype->begin(), phenotype->end(),
+                           _indiv.phenotype->begin() );
       }
         
       t_Fitness fitness() const

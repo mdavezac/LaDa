@@ -48,7 +48,7 @@ namespace LaDa
         // swtiches eoHowMany object in breeder.
         eoHowMany **howmany_address = breeder.get_howmany_address();
         eoHowMany *save_howmany = *howmany_address;
-        eoHowMany howmany(growth_rate);
+        eoHowMany howmany(static_cast<eotypes::t_int>(growth_rate));
         *howmany_address = &howmany;
 
         // breeds new pop from all other islands

@@ -22,6 +22,7 @@ namespace LaDa
       Taboo_Base< t_Object > &taboo;
       std::vector<t_unsigned> directions;
       t_unsigned max_directions_checked;
+      Taboo< t_Object, std::list<t_Object> > *path_taboo;
       
     public:
       static t_unsigned nb_evals;
@@ -29,12 +30,14 @@ namespace LaDa
     public:
       SA_TabooOp   ( t_Call_Back &_call_back,
                      Taboo_Base<t_Object> &_taboo,
+                     Taboo<t_Object, std::list<t_Object> > *_pt, 
                      t_unsigned &_max )
                  : call_back( _call_back ), taboo(_taboo),
-                   max_directions_checked(_max) {}
+                   max_directions_checked(_max), path_taboo(_pt) {}
       SA_TabooOp   ( const SA_TabooOp<t_Object, t_Call_Back> &_sa )
                  : call_back( _sa.call_back ), taboo(_sa.taboo),
-                   max_directions_checked(_sa.max_directions_checked) {}
+                   max_directions_checked(_sa.max_directions_checked),
+                   path_taboo(_sa.path_taboo) {}
       virtual ~SA_TabooOp() {}
 
       virtual std::string className() const { return "LaDa::SA_TabooOp"; }
@@ -90,7 +93,14 @@ namespace LaDa
             else
             {
               next_e = functional.evaluate(); // evaluates
-               ++nb_evals;
+              ++nb_evals;
+              if ( path_taboo ) // add to path_taboo
+                path_taboo->add(_object);
+              if ( next_e < 0 ) // add to ch if necessary
+              {
+                set_fitness( next_e, _object );
+                call_back.add_to_convex_hull( _object );
+              }
               if ( current_e > next_e ) // we do wanna flip!
               {
                 is_not_converged = true;
@@ -108,15 +118,20 @@ namespace LaDa
         } while ( is_not_converged );
 
         // we have values, so lets use them
-        next_e = call_back.evaluate( _object.get_concentration() );
-        _object.set_quantity( current_e + next_e );
-        _object.set_baseline( next_e );
-        _object.set_fitness();
+        set_fitness( current_e, _object );
         // and add to Convex_Hull if necessary
         if ( current_e < 0 )
           call_back.add_to_convex_hull( _object );
         return false; // fitness is set, returns false
       } // end of operator()(t_Object &_object)
+
+      void set_fitness( t_real _energy, t_Object &_object )
+      {
+        t_real baseline = call_back.evaluate( _object.get_concentration() );
+        _object.set_quantity( _energy + baseline );
+        _object.set_baseline( baseline );
+        _object.set_fitness();
+      }
 
   };
   
@@ -131,6 +146,7 @@ namespace LaDa
       Taboo_Base< t_Object > &taboo;
       std::vector<t_unsigned> directions;
       t_unsigned max_directions_checked;
+      Taboo<t_Object, std::list<t_Object> > *path_taboo;
 
     public:
       static t_unsigned nb_evals, nb_grad_evals;
@@ -138,12 +154,14 @@ namespace LaDa
     public:
       GradientSA_TabooOp   ( t_Call_Back &_call_back,
                              Taboo_Base<t_Object> &_taboo,
+                             Taboo<t_Object, std::list<t_Object> > *_pt,
                              t_unsigned &_max )
                          : call_back( _call_back ), taboo(_taboo),
-                           max_directions_checked(_max) {}
+                           max_directions_checked(_max), path_taboo(_pt) {}
       GradientSA_TabooOp   ( const GradientSA_TabooOp<t_Object, t_Call_Back> &_sa )
                          : call_back( _sa.call_back ), taboo(_sa.taboo),
-                           max_directions_checked(_sa.max_directions_checked) {}
+                           max_directions_checked(_sa.max_directions_checked),
+                           path_taboo( _sa.path_taboo ) {}
 
       virtual ~GradientSA_TabooOp() {}
 
@@ -210,6 +228,13 @@ namespace LaDa
                 *i_var = ( *i_var > 0.0 ) ? -1.0 : 1.0; // so we flip
                 next_e = functional.evaluate();
                 ++nb_evals;
+                if ( path_taboo ) // add to path_taboo
+                  path_taboo->add(_object);
+                if ( next_e < 0 ) // add to ch if necessary
+                {
+                  set_fitness( next_e, _object );
+                  call_back.add_to_convex_hull( _object );
+                }
                 if ( current_e > next_e )
                 { // yeah! gradient was right
                   is_not_converged = true;
@@ -230,16 +255,20 @@ namespace LaDa
         } while ( is_not_converged );
 
         // we have values, so lets use them
-        next_e = call_back.evaluate( _object.get_concentration() );
-        _object.set_quantity( current_e + next_e );
-        _object.set_baseline( next_e );
-        _object.set_fitness();
+        set_fitness( current_e, _object );
         // and add to Convex_Hull if necessary
         if ( current_e < 0 )
           call_back.add_to_convex_hull( _object );
         return true; // fitness is set, returns false
       } // end of operator()(t_Object &_object)
 
+      void set_fitness( t_real _energy, t_Object &_object )
+      {
+        t_real baseline = call_back.evaluate( _object.get_concentration() );
+        _object.set_quantity( _energy + baseline );
+        _object.set_baseline( baseline );
+        _object.set_fitness();
+      }
   };
 
   template <class t_Call_Back, class t_Object> 

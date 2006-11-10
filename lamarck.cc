@@ -342,6 +342,9 @@ namespace LaDa
       *i_var = ( std::real( store ) > 0 ) ? 1.0 : -1.0;
     }
 
+    if ( t_Individual :: is_using_phenotype )
+      _offspring.set_phenotype_to_genotype();
+
     return true; // offspring has changed!
   }
 

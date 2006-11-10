@@ -38,7 +38,7 @@ namespace LaDa
      xmgrace_file.flush(); \
      xmgrace_file.close();
 
-  const t_unsigned svn_revision = 167;
+  const t_unsigned svn_revision = 168;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -72,6 +72,7 @@ namespace LaDa
     taboos = NULL;
     nuclearwinter = NULL;
     agetaboo = NULL;
+    pathtaboo = NULL;
     colonize = NULL;
     popgrowth = NULL;
 
@@ -348,9 +349,9 @@ namespace LaDa
         _f << "# " << _special << _base << "TabooMinimizer: " 
            << type << " maxeval " << maxeval;
         if ( type.compare("SA") == 0 )
-          this_op = new SA_TabooOp<t_Darwin>( *this, *taboos, maxeval );
+          this_op = new SA_TabooOp<t_Darwin>( *this, *taboos, pathtaboo, maxeval );
         else
-          this_op = new GradientSA_TabooOp<t_Darwin>( *this, *taboos, maxeval );
+          this_op = new GradientSA_TabooOp<t_Darwin>( *this, *taboos, pathtaboo, maxeval );
 
         eostates.storeFunctor( static_cast< eoMonOp<t_Object> *>(this_op) );
       }
@@ -687,11 +688,35 @@ namespace LaDa
   void Darwin<t_Object, t_Lamarck> :: make_taboos()
   {
     OPENXMLINPUT
-    OPENXMGRACE 
+    // checks if there are more than one taboo list
+    child = docHandle.FirstChild("LaDa")
+                     .FirstChild("GA")
+                     .FirstChild("Taboos").Element();
+    if ( not child )
+      return;
+    child = child->FirstChildElement();
+    for( t_unsigned nb_taboos = 0; child and not taboos; child = child->NextSiblingElement() )
+    {
+      std::string name = child->Value();
+      if (    name.compare("PopTaboo") == 0
+           or name.compare("AgeTaboo") == 0
+           or name.compare("OffspringTaboo") == 0 
+           or name.compare("PathTaboo") == 0 )
+        ++nb_taboos;
+      if ( nb_taboos > 1 ) // creates a container
+      {
+        taboos = new Taboos<t_Object>;
+        eostates.storeFunctor(taboos);
+      }
+    }
+    if ( not child )
+      return; // no Taboo tags in Taboos tag
 
+    OPENXMGRACE 
     IslandsTaboos<t_Object> *poptaboo = NULL;
     Taboo<t_Object> *offspringtaboo = NULL;
     agetaboo = NULL;
+    pathtaboo = NULL;
 
     // creates age taboo -- updater is created in make_checkpoint
     child = docHandle.FirstChild("LaDa")
@@ -702,6 +727,12 @@ namespace LaDa
     {
       agetaboo = new Taboo< t_Object, std::list<t_Object> >;
       eostates.storeFunctor(agetaboo);
+      if ( not taboos )
+      {
+        taboos = agetaboo;
+        return;
+      }
+      static_cast< Taboos<t_Object>* >(taboos)->add( agetaboo );
     }
     
     // creates pop taboo
@@ -714,13 +745,12 @@ namespace LaDa
       xmgrace_file << "# Pop Taboo " << std::endl; 
       poptaboo = new IslandsTaboos<t_Object>( islands );
       eostates.storeFunctor(poptaboo);
-      if ( agetaboo ) 
+      if ( not taboos ) 
       {
-        taboos = new Taboos<t_Object>;
-        eostates.storeFunctor(taboos);
-        static_cast< Taboos<t_Object>* >(taboos)->add( agetaboo );
-        static_cast< Taboos<t_Object>* >(taboos)->add( poptaboo );
+        taboos = poptaboo;
+        return;
       }
+      static_cast< Taboos<t_Object>* >(taboos)->add( poptaboo );
     }
     
     // creates offspring taboo
@@ -733,24 +763,31 @@ namespace LaDa
       xmgrace_file << "# Offspring Taboo " << std::endl; 
       offspringtaboo = new OffspringTaboo<t_Object>( &offsprings );
       eostates.storeFunctor(offspringtaboo);
-      if ( (not taboos) and (agetaboo or poptaboo) ) 
+      if ( not taboos )
       {
-        taboos = new Taboos<t_Object>;
-        eostates.storeFunctor(taboos);
-        if ( agetaboo )
-          static_cast< Taboos<t_Object>* >(taboos)->add( agetaboo );
-        if ( poptaboo )
-          static_cast< Taboos<t_Object>* >(taboos)->add( poptaboo );
+        taboos = offspringtaboo;
+        return;
       }
-    }
-    if ( taboos )
       static_cast< Taboos<t_Object>* >(taboos)->add( offspringtaboo );
-    else if (agetaboo) 
-      taboos = agetaboo;
-    else if (poptaboo) 
-      taboos = poptaboo;
-    else if (offspringtaboo) 
-      taboos = offspringtaboo;
+    }
+
+    // creates offspring taboo
+    child = docHandle.FirstChild("LaDa")
+                     .FirstChild("GA")
+                     .FirstChild("Taboos")
+                     .FirstChild("PathTaboo").Element();
+    if (child)
+    {
+      xmgrace_file << "# Path Taboo " << std::endl; 
+      pathtaboo = new Taboo<t_Object, std::list<t_Object> >;
+      eostates.storeFunctor(pathtaboo);
+      if ( not taboos )
+      {
+        taboos = pathtaboo;
+        return;
+      }
+      static_cast< Taboos<t_Object>* >(taboos)->add( pathtaboo );
+    }
 
     CLOSEXMGRACE
   }
