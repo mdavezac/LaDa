@@ -45,12 +45,8 @@ namespace LaDa
         if ( _object.invalid() )
         {
           // returns true if fitness can be set
-          if ( history and history->set_fitness(_object) ) 
-          {
-            _object.set_baseline( call_back.evaluate( _object.get_concentration() ) );
-            _object.set_fitness();
+          if ( is_known(_object) ) 
             return;
-          }
 
           _object.set_quantity( call_back.evaluate( _object ) ); ++nb_evals;
           _object.set_baseline( call_back.evaluate( _object.get_concentration() ) );
@@ -90,10 +86,11 @@ namespace LaDa
       {
         if ( not history ) 
           return false;
-        bool result = history->set_fitness(_object);
+        if ( not history->set_quantity(_object) )
+          return false;
         _object.set_baseline( call_back.evaluate( _object.get_concentration() ) );
         _object.set_fitness();
-        return result;
+        return true;
       }
   };
 
@@ -159,8 +156,8 @@ namespace LaDa
 
     public:
       Extra_PopAlgo  (eoGenOp<t_Object> &_op, t_Call_Back &_call_back,
-                      t_real _rate = 0.0, t_unsigned _every = 5, 
-                      Evaluation<t_Call_Back, t_Object > &_eval)
+                      Evaluation<t_Call_Back, t_Object > &_eval,
+                      t_real _rate = 0.0, t_unsigned _every = 5 ) 
                    : do_minimize_best(false),
                      call_back(_call_back), 
                      how_many( _rate ),

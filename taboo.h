@@ -146,21 +146,8 @@ namespace LaDa
       History() : Taboo<t_Object, t_Container>() {}
       virtual ~History() {};
 
-      // returns true if _object is found and stores quantity in _energy
-      virtual bool operator()(const t_Object &_object, typename t_Object::t_Type &_energy) 
-      {
-        typename t_Container :: iterator i_end = taboo_list->end();
-        typename t_Container :: iterator i_indiv = taboo_list->begin();
-        if ( i_indiv == i_end )
-          return false;
-        i_indiv = std::find( i_indiv, i_end, _object );
-        if ( i_end == i_indiv )
-          return false;
-        _energy = i_indiv->get_quantity();
-        return true;
-      }
-
-      virtual bool set_fitness(t_Object &_object)
+      // sets quantity in object if object is in history list
+      virtual bool set_quantity(t_Object &_object)
       {
         typename t_Container :: iterator i_end = taboo_list->end();
         typename t_Container :: iterator i_indiv = taboo_list->begin();

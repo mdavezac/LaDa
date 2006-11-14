@@ -38,7 +38,7 @@ namespace LaDa
      xmgrace_file.flush(); \
      xmgrace_file.close();
 
-  const t_unsigned svn_revision = 169;
+  const t_unsigned svn_revision = 170;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -1098,7 +1098,7 @@ namespace LaDa
       throw; 
     }
     extra_popalgo = new Extra_PopAlgo< t_Darwin > 
-                                     ( *op, *this, minimize_best, minimize_best_every, *evaluation );
+                                     ( *op, *this, *evaluation, minimize_best, minimize_best_every);
     eostates.storeFunctor( extra_popalgo );
 
     CLOSEXMGRACE
