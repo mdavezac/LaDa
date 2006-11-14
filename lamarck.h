@@ -51,7 +51,7 @@ namespace LaDa
 
       t_real evaluate( const t_real &_x ) // convex hull only
         { return convex_hull->evaluate(_x); }
-      t_real evaluate( t_Individual & _individual );
+      t_real evaluate( const t_Individual & _individual );
       bool minimize( const t_Individual & _individual, const t_unsigned &_minimizer );
     
       t_GA_Functional& get_functional (const t_Individual &_individual) 

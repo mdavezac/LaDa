@@ -93,7 +93,8 @@ namespace LaDa
       eoPopAlgo<t_Object>*           extra_popalgo;
       Taboo_Base<t_Object>*          taboos;
       Taboo<t_Object, std::list<t_Object> > *agetaboo;
-      Taboo<t_Object, std::list<t_Object> > *pathtaboo;
+      OffspringTaboo<t_Object, std::list<t_Object> > *pathtaboo;
+      History<t_Object, std::list<t_Object> > *history;
       NuclearWinter<t_Darwin >* nuclearwinter;
       Colonize<t_Object> *colonize;
       PopGrowth<t_Object> *popgrowth;
@@ -114,7 +115,7 @@ namespace LaDa
 
       typename t_Object :: t_Type evaluate( const t_real &x ) const
         { return lamarck->evaluate( x );  }
-      typename t_Object :: t_Type evaluate( t_Object &_object ) const
+      typename t_Object :: t_Type evaluate( const t_Object &_object ) const
         { return lamarck->evaluate( _object );  }
       bool minimize( const t_Object &_object, const t_unsigned &_nb )
         { return lamarck->minimize( _object, _nb);  }
@@ -149,6 +150,7 @@ namespace LaDa
       void make_algo();
       void make_colonize();
       void make_popgrowth();
+      void make_history();
        
       void populate ();
       MinimizationOp<t_Object, t_Darwin>* Load_Minimizer( const TiXmlElement* el,   

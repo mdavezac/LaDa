@@ -10,6 +10,7 @@
 #include <algorithm>
 
 #include "taboo.h"
+#include "operators.h"
 
 #include<opt/types.h>
 using namespace types;
@@ -46,7 +47,7 @@ namespace LaDa
     protected:
       Taboo_Base<t_Object> &taboo;
       eoGenOp<t_Object> &normal_ops;
-      eoSequentialOp<t_Object> nuclear_ops;
+      SequentialOp<t_Object> nuclear_ops;
       eoGenOp<t_Object> **breeding_ops;
       t_unsigned nuclear_winter_length, nuclear_winter_age;
       t_Call_Back &call_back;
@@ -225,7 +226,7 @@ namespace LaDa
       void lastCall() const
       {
         std::ostringstream sstr;
-        sstr << " Terminator, type: " << type
+        sstr << "Terminator, type: " << type
              << ", ref= " << ref 
              << ", term=" << term;
  

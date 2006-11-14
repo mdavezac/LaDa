@@ -84,6 +84,10 @@ namespace LaDa
       {
         variables = new t_Container;
         *variables = *_indiv.variables;
+        typename t_Container :: iterator i_var = variables->begin();
+        typename t_Container :: iterator i_end = variables->end();
+        for(; i_var != i_end; ++i_var )
+          *i_var = ( *i_var > 0.0 ) ? 1.0 : -1.0;
         phenotype = variables;
         if ( is_using_phenotype )
         {
@@ -139,6 +143,10 @@ namespace LaDa
         quantity = _indiv.quantity;
         baseline = _indiv.baseline;
         *variables = *_indiv.variables;
+        typename t_Container :: iterator i_var = variables->begin();
+        typename t_Container :: iterator i_end = variables->end();
+        for(; i_var != i_end; ++i_var )
+          *i_var = ( *i_var > 0.0 ) ? 1.0 : -1.0;
         age = _indiv.age;
         if ( is_using_phenotype )
           *phenotype = *_indiv.phenotype;
@@ -174,6 +182,8 @@ namespace LaDa
            throw std::runtime_error("wtf invalid fitness");
          return repFitness;
       }
+      t_Type value() const
+        { return quantity-baseline; }
       void set_fitness()
       {
         repFitness = quantity - baseline;

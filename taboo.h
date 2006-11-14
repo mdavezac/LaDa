@@ -15,7 +15,7 @@ namespace LaDa
 {
   // taboo base class, declares virtual stuff
   template<class t_Object>
-  class Taboo_Base : public eoUF<t_Object&, bool>
+  class Taboo_Base : public eoUF<const t_Object&, bool>
   {
     public:
       Taboo_Base() {}
@@ -55,16 +55,23 @@ namespace LaDa
       }
 
       // returns true if _object is in taboo_list
-      virtual bool operator()( t_Object& _object ) 
+      virtual bool operator()( const t_Object& _object ) 
       {
         typename t_Container :: iterator i_end = taboo_list->end();
         return not ( i_end == std::find( taboo_list->begin(), i_end, _object ) );
       }
       
 
-      void add( const t_Object &_object ) 
+      void add( const t_Object &_object, bool add_fast = true ) 
       {
-        if ( owns_pointer )
+        if ( not owns_pointer )
+          return;
+        if ( add_fast )
+        {
+          taboo_list->push_back( _object );
+          return;
+        }
+        if (  not operator()(_object) )
         {
           taboo_list->push_back( _object );
           problematic = true;
@@ -89,6 +96,21 @@ namespace LaDa
         { return problematic; }
       virtual void set_problematic( bool _p = false ) 
         { problematic = _p; }
+
+      template<class tt_Container>
+      void append( const tt_Container &_pop )
+      {
+        if ( not owns_pointer )
+          return;
+        t_unsigned size = _pop.size();
+        if ( size < 1 )  // nothing to append
+          return; 
+        typename tt_Container :: const_iterator i_indiv = _pop.begin();
+        typename tt_Container :: const_iterator i_end = _pop.end();
+        for(; i_indiv != i_end; ++i_indiv)
+          if ( not operator()(*i_indiv) )
+            taboo_list->push_back(*i_indiv);
+      }
   };
 
   template<class t_Object, class t_Container = eoPop<t_Object> >
@@ -99,10 +121,11 @@ namespace LaDa
 
     public:
       OffspringTaboo ( t_Container *_list ) : Taboo<t_Object, t_Container>( _list ) {}
+      OffspringTaboo () : Taboo<t_Object, t_Container>() {}
       virtual ~OffspringTaboo() {};
        
       // returns true if _object is in taboo_list 
-      virtual bool operator()( t_Object& _object ) 
+      virtual bool operator()( const t_Object& _object ) 
       {
         typename t_Container :: iterator i_end = taboo_list->end();
         typename t_Container :: iterator i_begin = taboo_list->begin();
@@ -110,6 +133,45 @@ namespace LaDa
           return false;
         --i_end; // last is current
         return not ( i_end == std::find( i_begin, i_end, _object ) );
+      }
+  };
+
+  template<class t_Object, class t_Container = eoPop<t_Object> >
+  class History : public Taboo<t_Object, t_Container>
+  {
+    protected:
+      using Taboo<t_Object, t_Container> :: taboo_list;
+
+    public:
+      History() : Taboo<t_Object, t_Container>() {}
+      virtual ~History() {};
+
+      // returns true if _object is found and stores quantity in _energy
+      virtual bool operator()(const t_Object &_object, typename t_Object::t_Type &_energy) 
+      {
+        typename t_Container :: iterator i_end = taboo_list->end();
+        typename t_Container :: iterator i_indiv = taboo_list->begin();
+        if ( i_indiv == i_end )
+          return false;
+        i_indiv = std::find( i_indiv, i_end, _object );
+        if ( i_end == i_indiv )
+          return false;
+        _energy = i_indiv->get_quantity();
+        return true;
+      }
+
+      virtual bool set_fitness(t_Object &_object)
+      {
+        typename t_Container :: iterator i_end = taboo_list->end();
+        typename t_Container :: iterator i_indiv = taboo_list->begin();
+        if ( i_indiv == i_end )
+          return false;
+        i_indiv = std::find( i_indiv, i_end, _object );
+        if ( i_end == i_indiv )
+          return false;
+        _object.set_quantity( i_indiv->get_quantity() );
+        _object.set_fitness();
+        return true;
       }
   };
 
@@ -136,7 +198,7 @@ namespace LaDa
 
       // as soon as one taboo operator returns true,
       // function exits with true as well
-      virtual bool operator()( t_Object &_object ) 
+      virtual bool operator()( const t_Object &_object ) 
       {
         if ( not taboos.empty() )
         {
@@ -194,7 +256,7 @@ namespace LaDa
 
       // as soon as one taboo operator returns true,
       // function exits with true as well
-      virtual bool operator()( t_Object &_object ) 
+      virtual bool operator()( const t_Object &_object ) 
       {
         if ( populations.empty() )
           return false;
@@ -243,7 +305,6 @@ namespace LaDa
       virtual void apply( eoPopulator<t_Object> &_object ) 
       {
         t_unsigned  i = 0;
-        t_Object copy = *_object;
         do
         {
           eotypes::t_unsigned pos = _object.tellp();
@@ -252,9 +313,11 @@ namespace LaDa
           _object.seekp(pos);
           if ( not taboo( *_object ) )
             return;
-          *_object = copy;
+          *_object = _object.select();
         } while ( i < max );
 
+        std::cerr << "Could not find original individual in this crowd" << std::endl
+                  << "Going UtterRandom" << std::endl;
         taboo.set_problematic();
 
         do 
@@ -265,7 +328,8 @@ namespace LaDa
             return;
         } while ( i < UINT_MAX );
 
-        std::cerr << "Could not find original individual in this crowd" << std::endl;
+        std::cerr << "Could not find original individual in this crowd" << std::endl
+                  << "Not even from UtterRandom generation" << std::endl;
         throw "";
       }
 

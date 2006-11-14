@@ -10,6 +10,7 @@
 using namespace eo;
 
 #include "operators.h" 
+#include "taboo.h" 
 #include <algorithm>
 #include <string>
 
@@ -24,18 +25,44 @@ namespace LaDa
   {
     private:
       t_Call_Back &call_back;
+      History< t_Object, std::list<t_Object> > *history;
+
+    public:
+      static t_unsigned nb_evals;
+      static t_unsigned nb_fastevals;
+      static t_unsigned nb_dontcount;
       
     public: 
-      Evaluation(t_Call_Back &_call_back) : call_back( _call_back ) {}
+      Evaluation  (t_Call_Back &_call_back, 
+                   History< t_Object, std::list<t_Object> > *_hst)
+                 : call_back( _call_back ), history(_hst) {}
 
+      typename t_Object :: t_Type operator()( typename t_Object :: t_Type x )
+        { return call_back->evaluate(x); }
       void operator()(t_Object &_object)
       {
         // if quantity does not exist, neither should baseline
         if ( _object.invalid() )
         {
-          _object.set_quantity( call_back.evaluate( _object ) );
+          // returns true if fitness can be set
+          if ( history and history->set_fitness(_object) ) 
+          {
+            _object.set_baseline( call_back.evaluate( _object.get_concentration() ) );
+            _object.set_fitness();
+            return;
+          }
+
+          _object.set_quantity( call_back.evaluate( _object ) ); ++nb_evals;
           _object.set_baseline( call_back.evaluate( _object.get_concentration() ) );
           _object.set_fitness();
+          if ( history )
+            history->add(_object);
+          if ( _object.value() < 0 )
+          {
+            call_back.add_to_convex_hull(_object);
+            _object.set_baseline( call_back.evaluate( _object.get_concentration() ) );
+            _object.set_fitness();
+          }
           return;
         }
 
@@ -46,9 +73,36 @@ namespace LaDa
         // baseline should be recomputed
         _object.set_baseline( call_back.evaluate( _object.get_concentration() ) );
         _object.set_fitness();
+        if ( _object.value() < 0 )
+          call_back.add_to_convex_hull(_object);
+      }
+      typename t_Object::t_Type evaluate( t_Object &_object )
+        { operator()(_object); return _object.value(); }
+      typename t_Object::t_Type dontcounteval( t_Object &_object )
+        { ++nb_dontcount; return _object.value(); }
+
+      typename t_Object :: t_Type fast_eval( t_Object &_object )
+      {
+        ++nb_fastevals;
+        return call_back.evaluate( _object ) - call_back.evaluate( _object.get_concentration() );
+      }
+      bool is_known( t_Object &_object )
+      {
+        if ( not history ) 
+          return false;
+        bool result = history->set_fitness(_object);
+        _object.set_baseline( call_back.evaluate( _object.get_concentration() ) );
+        _object.set_fitness();
+        return result;
       }
   };
 
+  template <class t_Call_Back, class t_Object> 
+  t_unsigned Evaluation<t_Call_Back, t_Object> :: nb_evals = 0;
+  template <class t_Call_Back, class t_Object> 
+  t_unsigned Evaluation<t_Call_Back, t_Object> :: nb_fastevals = 0;
+  template <class t_Call_Back, class t_Object> 
+  t_unsigned Evaluation<t_Call_Back, t_Object> :: nb_dontcount = 0;
   
   template<class t_Object>
   class EvaluatePop : public eoPopEvalFunc<t_Object>
@@ -99,21 +153,22 @@ namespace LaDa
       eoHowMany how_many;
       t_unsigned every;
       t_unsigned nb_calls;
-      Evaluation<t_Call_Back, t_Object> *eval;
+      Evaluation<t_Call_Back, t_Object> &eval;
       eoGenOp<t_Object> & op;
       eoPop<t_Object> offsprings;
 
     public:
       Extra_PopAlgo  (eoGenOp<t_Object> &_op, t_Call_Back &_call_back,
-                      t_real _rate = 0.0, t_unsigned _every = 5)
+                      t_real _rate = 0.0, t_unsigned _every = 5, 
+                      Evaluation<t_Call_Back, t_Object > &_eval)
                    : do_minimize_best(false),
                      call_back(_call_back), 
                      how_many( _rate ),
                      every(_every),
                      nb_calls(0),
+                     eval(_eval),
                      op(_op)
       {
-        eval = new Evaluation<t_Call_Back, t_Object>(call_back);
         if( _rate > 0 and _rate <= 1 )
           do_minimize_best = true;
         if( _every == 0 ) 
@@ -130,7 +185,7 @@ namespace LaDa
                      eval(_algo.eval),
                      op(_algo.op)
                    {}
-      ~Extra_PopAlgo () { delete eval; }
+      ~Extra_PopAlgo () {}
     
       void operator()(eoPop<t_Object> & _pop)
       {
@@ -158,7 +213,7 @@ namespace LaDa
         for ( t_unsigned i = 0; i < nb; ++i, ++populator )
         {
            op( populator );
-           (*eval)(*populator);
+           eval(*populator);
         }
         std::copy( offsprings.begin(), offsprings.end(), _pop.begin() );
 
@@ -168,7 +223,7 @@ namespace LaDa
           typename eoPop<t_Object> :: iterator i_pop = _pop.begin();
           typename eoPop<t_Object> :: iterator i_end = _pop.end();
           for (; i_pop != i_end; ++i_pop )
-            (*eval)(*i_pop);
+            eval(*i_pop);
         }
 
       }

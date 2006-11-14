@@ -9,6 +9,7 @@
 
 #include "taboo.h"
 
+#include "evaluation.h"
 #include <opt/types.h>
 using namespace types;
 
@@ -19,25 +20,24 @@ namespace LaDa
   {
     protected:
       t_Call_Back &call_back;
-      Taboo_Base< t_Object > &taboo;
+      Taboo_Base< t_Object > *taboo;
       std::vector<t_unsigned> directions;
       t_unsigned max_directions_checked;
       Taboo< t_Object, std::list<t_Object> > *path_taboo;
+      Evaluation< t_Call_Back, t_Object > &eval;
       
     public:
-      static t_unsigned nb_evals;
-
-    public:
       SA_TabooOp   ( t_Call_Back &_call_back,
-                     Taboo_Base<t_Object> &_taboo,
-                     Taboo<t_Object, std::list<t_Object> > *_pt, 
-                     t_unsigned &_max )
+                     t_unsigned &_max,
+                     Evaluation< t_Call_Back, t_Object > &_eval,
+                     Taboo_Base<t_Object> *_taboo = NULL,
+                     Taboo<t_Object, std::list<t_Object> > *_pt = NULL )
                  : call_back( _call_back ), taboo(_taboo),
-                   max_directions_checked(_max), path_taboo(_pt) {}
+                   max_directions_checked(_max), path_taboo(_pt), eval(_eval) {}
       SA_TabooOp   ( const SA_TabooOp<t_Object, t_Call_Back> &_sa )
                  : call_back( _sa.call_back ), taboo(_sa.taboo),
                    max_directions_checked(_sa.max_directions_checked),
-                   path_taboo(_sa.path_taboo) {}
+                   path_taboo(_sa.path_taboo), eval(_sa.eval) {}
       virtual ~SA_TabooOp() {}
 
       virtual std::string className() const { return "LaDa::SA_TabooOp"; }
@@ -46,10 +46,6 @@ namespace LaDa
       // position _object. The result is stored in _object
       virtual bool operator() ( t_Object &_object )
       {
-        // first gets the function to minimize
-        typename t_Call_Back :: t_Functional &functional = call_back.get_functional( _object );
-        functional.set_variables( _object.get_variables() );
-
         // then gets problem size of object
         t_unsigned size = _object.size();
 
@@ -67,19 +63,18 @@ namespace LaDa
         std::vector<t_unsigned> :: iterator i_last = directions.end();
         std::vector<t_unsigned> :: iterator i_dir;
         bool is_not_converged;
-        typename t_Object::iterator i_var_begin = functional.begin();
+        t_Object next_o(_object);
+        typename t_Object::iterator i_var_begin = next_o.begin();
         typename t_Object::iterator i_var;
         t_real current_e, next_e;
 
+        // evaluates first position
+        current_e = eval.evaluate(_object);
         do 
         {
           // shuffle directions
           std::random_shuffle(i_begin, i_last, eo::random<t_unsigned>);
           is_not_converged = false;
-
-          // evaluates first position
-          current_e = functional.evaluate();
-          ++nb_evals;
 
           for( i_dir = i_begin; i_dir != i_last; ++i_dir )
           {
@@ -88,23 +83,19 @@ namespace LaDa
             *i_var = ( *i_var > 0 ) ? -1.0 : 1.0; // flips spins
 
             // we only want to flip if structure not in taboo lists
-            if ( taboo(_object) )  
+            if ( taboo and (*taboo)(next_o) )  
               *i_var = ( *i_var > 0 ) ? -1.0 : 1.0; // flips spin back
             else
             {
-              next_e = functional.evaluate(); // evaluates
-              ++nb_evals;
+              next_o.invalidate();
+              next_e = eval.evaluate(next_o); // evaluates
               if ( path_taboo ) // add to path_taboo
-                path_taboo->add(_object);
-              if ( next_e < 0 ) // add to ch if necessary
-              {
-                set_fitness( next_e, _object );
-                call_back.add_to_convex_hull( _object );
-              }
+                path_taboo->add(next_o, false);
               if ( current_e > next_e ) // we do wanna flip!
               {
                 is_not_converged = true;
                 current_e = next_e;
+                _object = next_o;
               }
               else
                 *i_var = ( *i_var > 0 ) ? -1.0 : 1.0; // flips spin back
@@ -117,51 +108,34 @@ namespace LaDa
 
         } while ( is_not_converged );
 
-        // we have values, so lets use them
-        set_fitness( current_e, _object );
-        // and add to Convex_Hull if necessary
-        if ( current_e < 0 )
-          call_back.add_to_convex_hull( _object );
         return false; // fitness is set, returns false
       } // end of operator()(t_Object &_object)
 
-      void set_fitness( t_real _energy, t_Object &_object )
-      {
-        t_real baseline = call_back.evaluate( _object.get_concentration() );
-        _object.set_quantity( _energy + baseline );
-        _object.set_baseline( baseline );
-        _object.set_fitness();
-      }
-
   };
   
-  template <class t_Call_Back, class t_Object> 
-  t_unsigned SA_TabooOp<t_Call_Back, t_Object> :: nb_evals = 0;
-
   template <class t_Call_Back, class t_Object = typename t_Call_Back::t_Object> 
   class GradientSA_TabooOp : public eoMonOp<t_Object>
   {
     protected:
       t_Call_Back &call_back;
-      Taboo_Base< t_Object > &taboo;
+      Taboo_Base< t_Object > *taboo;
       std::vector<t_unsigned> directions;
       t_unsigned max_directions_checked;
       Taboo<t_Object, std::list<t_Object> > *path_taboo;
-
-    public:
-      static t_unsigned nb_evals, nb_grad_evals;
+      Evaluation<t_Call_Back, t_Object > &eval;
 
     public:
       GradientSA_TabooOp   ( t_Call_Back &_call_back,
-                             Taboo_Base<t_Object> &_taboo,
-                             Taboo<t_Object, std::list<t_Object> > *_pt,
-                             t_unsigned &_max )
+                             t_unsigned &_max,
+                             Evaluation<t_Call_Back, t_Object > &_eval,
+                             Taboo_Base<t_Object> *_taboo = NULL,
+                             Taboo<t_Object, std::list<t_Object> > *_pt = NULL )
                          : call_back( _call_back ), taboo(_taboo),
-                           max_directions_checked(_max), path_taboo(_pt) {}
+                           max_directions_checked(_max), path_taboo(_pt), eval(_eval) {}
       GradientSA_TabooOp   ( const GradientSA_TabooOp<t_Object, t_Call_Back> &_sa )
                          : call_back( _sa.call_back ), taboo(_sa.taboo),
                            max_directions_checked(_sa.max_directions_checked),
-                           path_taboo( _sa.path_taboo ) {}
+                           path_taboo( _sa.path_taboo ), eval(_sa.eval) {}
 
       virtual ~GradientSA_TabooOp() {}
 
@@ -171,10 +145,6 @@ namespace LaDa
       // position _object. The result is stored in _object
       virtual bool operator() ( t_Object &_object )
       {
-        // first gets the function to minimize
-        typename t_Call_Back :: t_Functional &functional = call_back.get_functional( _object );
-        functional.set_variables( _object.get_variables() );
-
         // then gets problem size of object
         t_unsigned size = _object.size();
 
@@ -192,19 +162,20 @@ namespace LaDa
         std::vector<t_unsigned> :: iterator i_last = directions.end();
         std::vector<t_unsigned> :: iterator i_dir;
         bool is_not_converged;
-        typename t_Object::iterator i_var_begin = functional.begin();
+        t_Object next_o = _object;
+        t_Object copy = _object;
+        typename t_Object::iterator i_var_begin = next_o.begin();
         typename t_Object::iterator i_var;
         t_real current_e, next_e;
+  
+        // evaluates first position
+        current_e = eval.evaluate(_object);
 
         do 
         {
           // shuffle directions
           std::random_shuffle(i_begin, i_last, eo::random<t_unsigned>);
           is_not_converged = false;
-
-          // evaluates first position
-          current_e = functional.evaluate();
-          ++nb_evals;
 
           for( i_dir = i_begin; i_dir != i_last; ++i_dir )
           {
@@ -213,32 +184,40 @@ namespace LaDa
             *i_var = ( *i_var > 0 ) ? -1.0 : 1.0; // flips spins
 
             // we only want to flip if structure not in taboo lists
-            if ( taboo(_object) ) 
+            if ( taboo and (*taboo)(next_o) ) 
               *i_var = ( *i_var > 0 ) ? -1.0 : 1.0; // flips back
-            else 
+            else if ( eval.is_known( next_o ) )
+            {
+              next_e = next_o.value();
+              if ( current_e > next_e )
+              {
+                _object = next_o;
+                current_e = next_e; 
+                is_not_converged = true;
+              }
+              else
+                *i_var = ( *i_var > 0 ) ? -1.0 : 1.0; // flips back
+            }
+            else
             {
               // flips to derivative position 
               // ** we've flipped one already for taboo, 
               // ** hence negative sign
               *i_var = ( *i_var > 0 ) ? -0.998 : 0.998; 
-              next_e = functional.evaluate(); // evaluates
-              ++nb_grad_evals;
+              next_e = eval.fast_eval(next_o); // evaluates fast!! no history, etc..
               if ( current_e > next_e ) // gradient says to flip
               {
                 *i_var = ( *i_var > 0.0 ) ? -1.0 : 1.0; // so we flip
-                next_e = functional.evaluate();
-                ++nb_evals;
+                next_o.invalidate();
+                next_e = eval.evaluate(next_o);
+                current_e = eval.evaluate(_object); // baseline may have changed
                 if ( path_taboo ) // add to path_taboo
-                  path_taboo->add(_object);
-                if ( next_e < 0 ) // add to ch if necessary
-                {
-                  set_fitness( next_e, _object );
-                  call_back.add_to_convex_hull( _object );
-                }
+                  path_taboo->add(next_o, false);
                 if ( current_e > next_e )
                 { // yeah! gradient was right
                   is_not_converged = true;
                   current_e = next_e;
+                  _object = next_o;
                 }
                 else // flips back -- gradient was wrong
                   *i_var = ( *i_var > 0.0 ) ? -1.0 : 1.0; 
@@ -254,27 +233,12 @@ namespace LaDa
 
         } while ( is_not_converged );
 
-        // we have values, so lets use them
-        set_fitness( current_e, _object );
-        // and add to Convex_Hull if necessary
-        if ( current_e < 0 )
-          call_back.add_to_convex_hull( _object );
-        return true; // fitness is set, returns false
+//       _object = copy;
+        eval(_object);
+        return false; // fitness is set, returns false
       } // end of operator()(t_Object &_object)
 
-      void set_fitness( t_real _energy, t_Object &_object )
-      {
-        t_real baseline = call_back.evaluate( _object.get_concentration() );
-        _object.set_quantity( _energy + baseline );
-        _object.set_baseline( baseline );
-        _object.set_fitness();
-      }
   };
-
-  template <class t_Call_Back, class t_Object> 
-  t_unsigned GradientSA_TabooOp<t_Call_Back, t_Object> :: nb_evals = 0;
-  template <class t_Call_Back, class t_Object> 
-  t_unsigned GradientSA_TabooOp<t_Call_Back, t_Object> :: nb_grad_evals = 0;
 
 } // namespace LaDa
 #endif

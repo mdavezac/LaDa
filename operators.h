@@ -9,6 +9,7 @@
 
 #include <eo/eoPop.h>
 #include <eo/eoOp.h>
+#include <eo/eoOpContainer.h>
 #include <eo/utils/eoRNG.h>
 
 #include <opt/opt_minimize.h>
@@ -193,35 +194,46 @@ namespace LaDa
   }; // class MinimizationOp : public eoMonOp<EO_OBJECT> 
 
   template<class t_Object>
-  class SequentialMonOp : public eoMonOp<t_Object>
+  class SequentialOp : public eoOpContainer<t_Object>
   {
-      typedef std::pair< eoMonOp<t_Object>*, t_real > t_pair;
-      typedef std::list< t_pair > t_pair_list;
-      t_pair_list operators;
+    protected:
+      using eoOpContainer< t_Object >::ops;
+      using eoOpContainer< t_Object >::rates;
 
     public:
-      SequentialMonOp() {}
+      SequentialOp() {}
 
-      SequentialMonOp   ( const SequentialMonOp<t_Object> &_algo ) 
-                      : operators(_algo.operators ) {};
-    
-      virtual bool operator()(t_Object &_object)
+      virtual void apply(eoPopulator<t_Object> &_populator)
       {
-        typename t_pair_list :: iterator i_op = operators.begin();
-        typename t_pair_list :: iterator i_end = operators.end();
-        for (; i_op != i_end; ++i_op )
+        typename std::vector< eotypes::t_real > :: const_iterator i_rate = rates.begin();
+        typename std::vector< eoGenOp<t_Object>* > :: iterator i_op = ops.begin();
+        typename std::vector< eoGenOp<t_Object>* > :: iterator i_end = ops.end();
+        for (; i_op != i_end; ++i_op, ++i_rate )
         {
-          if ( eo::rng.flip( i_op->second ) )
-            (i_op->first)->operator()( _object );
+          if ( eo::rng.flip( *i_rate ) )
+            (*i_op)->operator()( _populator );
         }
+      }
+    
+      virtual std::string className() const {return "LaDa::SequentialOp";}
 
-        return false;
+  };
+
+  template<class t_Object>
+  class ProportionalOp : public eoOpContainer<t_Object>
+  {
+    protected:
+      using eoOpContainer< t_Object >::ops;
+      using eoOpContainer< t_Object >::rates;
+
+    public:
+      virtual void apply(eoPopulator<t_Object> &_populator)
+      {
+        t_unsigned i = static_cast<t_unsigned>(eo::rng.roulette_wheel(rates));
+        return (*ops[i])( _populator );
       }
 
-      void add( eoMonOp<t_Object> *_op, t_real &_rate)
-      { 
-        operators.push_back( t_pair(_op, _rate) ); 
-      }
+      virtual std::string className() const {return "LaDa::ProportionalOp";}
   };
 
   template<class t_Object>
@@ -288,31 +300,6 @@ namespace LaDa
       }
   };
 
-  template<class t_Object>
-  class ProportionalMonOp : public eoMonOp<t_Object>
-  {
-      std::vector< eoMonOp<t_Object>* > operators;
-      std::vector< t_real > rates;
-
-    public:
-      ProportionalMonOp() {}
-
-      ProportionalMonOp   ( const ProportionalMonOp<t_Object> &_algo )
-                        : operators(_algo.operators ),
-                          rates(_algo.rates) {}
-    
-      virtual bool operator()(t_Object &_object)
-      {
-        t_unsigned i = eo::rng.roulette_wheel(rates);
-        return (operators[i])->operator()( _object );
-      }
-
-      void add( eoMonOp<t_Object> *_op, t_real &_rate)
-      { 
-        operators.push_back( _op ); 
-        rates.push_back( _rate );
-      }
-  };
 
   template<class t_Object>
   class AgeOp : public eoMonOp<t_Object>

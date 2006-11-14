@@ -38,7 +38,7 @@ namespace LaDa
      xmgrace_file.flush(); \
      xmgrace_file.close();
 
-  const t_unsigned svn_revision = 168;
+  const t_unsigned svn_revision = 169;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -75,6 +75,7 @@ namespace LaDa
     pathtaboo = NULL;
     colonize = NULL;
     popgrowth = NULL;
+    history = NULL;
 
     print_strings.reserve(10);
     t_Object :: is_using_phenotype = false;
@@ -333,25 +334,23 @@ namespace LaDa
       }
       else if ( str.compare("Minimizer") == 0 )
       {
-        _f << "# " << _special << _base << "Minimizer: ";
-        this_op = Load_Minimizer( sibling, _f );
-      }
-      else if ( str.compare("TabooMinimizer") == 0 and taboos )
-      {
         std :: string type = "SA";
         if ( sibling->Attribute("type") )
           type = sibling->Attribute("type");
         if ( type.compare("GradientSA") != 0 )
           type = "SA";
+        Taboo_Base<t_Object> *tbs = taboos;
+        if ( sibling->Attribute("notaboo") )
+          tbs = NULL;
         int i=0; t_unsigned maxeval = UINT_MAX;
         if ( sibling->Attribute("maxeval", &i ) )
           maxeval = ( i > 0 ) ? (types::t_unsigned) abs(i) : UINT_MAX;
         _f << "# " << _special << _base << "TabooMinimizer: " 
            << type << " maxeval " << maxeval;
         if ( type.compare("SA") == 0 )
-          this_op = new SA_TabooOp<t_Darwin>( *this, *taboos, pathtaboo, maxeval );
+          this_op = new SA_TabooOp<t_Darwin>( *this, maxeval, *evaluation, tbs, pathtaboo );
         else
-          this_op = new GradientSA_TabooOp<t_Darwin>( *this, *taboos, pathtaboo, maxeval );
+          this_op = new GradientSA_TabooOp<t_Darwin>( *this, maxeval, *evaluation, tbs, pathtaboo );
 
         eostates.storeFunctor( static_cast< eoMonOp<t_Object> *>(this_op) );
       }
@@ -385,7 +384,7 @@ namespace LaDa
           {
             _f << "# " << _special << _base << "And begin " << std::endl;
             std :: string special = _special + _base;
-            eoSequentialOp<t_Object> *new_branch = new eoSequentialOp<t_Object>;
+            SequentialOp<t_Object> *new_branch = new SequentialOp<t_Object>;
             eostates.storeFunctor( new_branch );
             this_op = make_genetic_op( *sibling->FirstChildElement(), _f,  special, _base, new_branch);
             _f << "# " << _special << _base << "And end";
@@ -395,7 +394,7 @@ namespace LaDa
         {
           _f << "# " << _special << _base << "Or begin " << std::endl;
           std :: string special = _special + _base;
-          eoProportionalOp<t_Object> *new_branch = new eoProportionalOp<t_Object>;
+          ProportionalOp<t_Object> *new_branch = new ProportionalOp<t_Object>;
           eostates.storeFunctor( new_branch );
           this_op = make_genetic_op( *sibling->FirstChildElement(), _f,  special, _base, new_branch);
           _f << "# " << _special << _base << "Or end";
@@ -418,10 +417,12 @@ namespace LaDa
         if (not sibling->Attribute("prob", &prob) )
           prob = 1.0;
         _f << " prob= " << prob << std::endl;
-        if ( current_op->className().compare("SequentialOp") == 0 )
-          static_cast< eoSequentialOp<t_Object>* >(current_op)->add( *this_op, types::t_real(prob) );
-        else if ( current_op->className().compare("ProportionalOp") == 0 )
-          static_cast< eoProportionalOp<t_Object>* >(current_op)->add( *this_op, types::t_real(prob) );
+        if ( current_op->className().compare("LaDa::SequentialOp") == 0 )
+          static_cast< SequentialOp<t_Object>* >(current_op)->add( *this_op,
+                                                                   static_cast<eotypes::t_real>(prob) );
+        else if ( current_op->className().compare("LaDa::ProportionalOp") == 0 )
+          static_cast< ProportionalOp<t_Object>* >(current_op)->add( *this_op, 
+                                                                     static_cast<eotypes::t_real>(prob) );
       }
       else if ( this_op )
       {
@@ -476,7 +477,9 @@ namespace LaDa
   template< class t_Object, class t_Lamarck >
   void Darwin<t_Object, t_Lamarck> :: make_algo()
   {
-    evaluation = new Evaluation<t_Darwin>(*this);
+    make_history();
+
+    evaluation = new Evaluation<t_Darwin>(*this, history);
     popEval = new EvaluatePop<t_Object>(*evaluation);
     
     make_taboos();      // order counts
@@ -590,21 +593,9 @@ namespace LaDa
              and ref.compare("evaluation") == 0 )
         {
           terminator = new Terminator< t_unsigned, std::less<t_unsigned>, t_Darwin >
-                                     ( SA_TabooOp<t_Darwin> :: nb_evals, (t_unsigned) abs(max),
-                                       std::less<t_unsigned>(), *this,
-                                       "SA_TabooOp<t_Darwin> :: nb_eval < term" );
-          eostates.storeFunctor( terminator );
-          continuator->add( *terminator );
-          terminator = new Terminator< t_unsigned, std::less<t_unsigned>, t_Darwin >
-                                     ( GradientSA_TabooOp<t_Darwin> :: nb_evals, (t_unsigned) abs(max),
+                                     ( Evaluation<t_Darwin> :: nb_evals, (t_unsigned) abs(max),
                                        std::less<t_unsigned>(), *this, 
-                                       "GradientSA_TabooOp<t_Darwin> :: nb_eval < term" );
-          eostates.storeFunctor( terminator );
-          continuator->add( *terminator );
-          terminator = new Terminator< t_unsigned, std::less<t_unsigned>, t_Darwin >
-                                     ( VA_CE :: Polynome :: nb_eval, (t_unsigned) abs(max),
-                                       std::less<t_unsigned>(), *this, 
-                                       "VA_CE :: Polynome :: nb_eval < term" );
+                                       "Evaluation<t_Darwin> :: nb_eval < term" );
           eostates.storeFunctor( terminator );
           continuator->add( *terminator );
         }
@@ -612,15 +603,9 @@ namespace LaDa
              and ref.compare("gradient") == 0 )
         {
           terminator = new Terminator< t_unsigned, std::less<t_unsigned>, t_Darwin >
-                                     ( GradientSA_TabooOp<t_Darwin> :: nb_grad_evals, (t_unsigned) abs(max),
+                                     ( Evaluation<t_Darwin> :: nb_fastevals, (t_unsigned) abs(max),
                                        std::less<t_unsigned>(), *this, 
-                                       "GradientSA_TabooOp<t_Darwin> :: nb_grad_evals < term" );
-          eostates.storeFunctor( terminator );
-          continuator->add( *terminator );
-          terminator = new Terminator< t_unsigned, std::less<t_unsigned>, t_Darwin >
-                                     ( VA_CE :: Polynome :: nb_eval_grad, (t_unsigned) abs(max),
-                                       std::less<t_unsigned>(), *this, 
-                                       "VA_CE :: Polynome :: nb_grad_eval < term" );
+                                       "Evaluation<t_Darwin> :: nb_fastevals < term" );
           eostates.storeFunctor( terminator );
           continuator->add( *terminator );
         }
@@ -682,8 +667,27 @@ namespace LaDa
     CLOSEXMGRACE
   } // end of make_check_point
 
-    // create Taboos
+  template< class t_Object, class t_Lamarck >
+  void Darwin<t_Object, t_Lamarck> :: make_history()
+  {
+    OPENXMLINPUT
+    // checks if there are more than one taboo list
+    child = docHandle.FirstChild("LaDa")
+                     .FirstChild("GA")
+                     .FirstChild("History").Element();
+    if ( not child )
+      return;
 
+    // creates history list 
+    OPENXMGRACE 
+    xmgrace_file << "# Track History " << std::endl; 
+    history = new History< t_Object, std::list<t_Object> >;
+    eostates.storeFunctor(history);
+    CLOSEXMGRACE
+  }
+
+
+  // create Taboos
   template< class t_Object, class t_Lamarck >
   void Darwin<t_Object, t_Lamarck> :: make_taboos()
   {
@@ -701,7 +705,8 @@ namespace LaDa
       if (    name.compare("PopTaboo") == 0
            or name.compare("AgeTaboo") == 0
            or name.compare("OffspringTaboo") == 0 
-           or name.compare("PathTaboo") == 0 )
+           or name.compare("PathTaboo") == 0
+           or ( name.compare("HistoryTaboo") == 0 and history) )
         ++nb_taboos;
       if ( nb_taboos > 1 ) // creates a container
       {
@@ -779,7 +784,7 @@ namespace LaDa
     if (child)
     {
       xmgrace_file << "# Path Taboo " << std::endl; 
-      pathtaboo = new Taboo<t_Object, std::list<t_Object> >;
+      pathtaboo = new OffspringTaboo<t_Object, std::list<t_Object> >;
       eostates.storeFunctor(pathtaboo);
       if ( not taboos )
       {
@@ -788,6 +793,25 @@ namespace LaDa
       }
       static_cast< Taboos<t_Object>* >(taboos)->add( pathtaboo );
     }
+
+    // makes history a taboo list if it exists
+    child = docHandle.FirstChild("LaDa")
+                     .FirstChild("GA")
+                     .FirstChild("Taboos")
+                     .FirstChild("HistoryTaboo").Element();
+    if (child and history)
+    {
+      xmgrace_file << "# History Taboo " << std::endl; 
+      if ( not taboos )
+      {
+        taboos = history;
+        return;
+      }
+      static_cast< Taboos<t_Object>* >(taboos)->add( history );
+    }
+    else if (child)
+      std::cerr << "HistoryTaboo found in Taboos tags, but not History tag found!!" << std::endl
+                << "Include History tag if you want HistoryTaboo" << std::endl;
 
     CLOSEXMGRACE
   }
@@ -1025,11 +1049,9 @@ namespace LaDa
 
     if ( print_ch or is_last_call )
     {
-      xmgrace_file << " # " << special << "TabooGradientSA: " 
-                   << GradientSA_TabooOp<t_Darwin>::nb_evals << " "
-                   << GradientSA_TabooOp<t_Darwin>::nb_grad_evals << std::endl;
-      xmgrace_file << " # " << special << "TabooSA: " 
-                   << SA_TabooOp<t_Darwin>::nb_evals << std::endl;
+      xmgrace_file << " #" << special << "Evaluation Calls: " 
+                   << Evaluation<t_Darwin>::nb_evals << " "
+                   << Evaluation<t_Darwin>::nb_fastevals << std::endl;
       lamarck->print_xmgrace( xmgrace_file,  print_ch );
       t_Object :: validate_baseline();
     }
@@ -1076,7 +1098,7 @@ namespace LaDa
       throw; 
     }
     extra_popalgo = new Extra_PopAlgo< t_Darwin > 
-                                     ( *op, *this, minimize_best, minimize_best_every );
+                                     ( *op, *this, minimize_best, minimize_best_every, *evaluation );
     eostates.storeFunctor( extra_popalgo );
 
     CLOSEXMGRACE

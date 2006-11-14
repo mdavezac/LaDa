@@ -236,14 +236,11 @@ namespace LaDa
     fitness.set_variables( _indiv.get_variables() );
     return (minimizers[_minimizer])->minimize(fitness);
   }
-  t_real Lamarck :: evaluate( t_Individual &_indiv ) 
+  t_real Lamarck :: evaluate( const t_Individual &_indiv ) 
   {
     ++EvalCounter;
     fitness.set_variables( _indiv.get_variables() );
     t_real result = ( fitness.get_quantity() )->evaluate();
-    structure.set_atom_types( *_indiv.get_variables() );
-    if ( convex_hull->add_structure(result, structure) )
-      _indiv.invalidate_baseline();
     return result;
   }
   void Lamarck :: add_to_convex_hull( const t_Individual &_indiv ) 
@@ -258,7 +255,6 @@ namespace LaDa
     std::string special_char = ""; 
     if ( not _print_ch ) 
       special_char = "? ";
-    _f << " # " << special_char << " evaluation calls: " << EvalCounter << std::endl;
     _f << " # " << special_char << "polynomial calls: " 
        << VA_CE::Polynome::nb_eval << " "
        << VA_CE::Polynome::nb_eval_grad << " "
