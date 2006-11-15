@@ -146,7 +146,6 @@ namespace LaDa
       History() : Taboo<t_Object, t_Container>() {}
       virtual ~History() {};
 
-      // sets quantity in object if object is in history list
       virtual bool set_quantity(t_Object &_object)
       {
         typename t_Container :: iterator i_end = taboo_list->end();
@@ -294,10 +293,8 @@ namespace LaDa
         t_unsigned  i = 0;
         do
         {
-          eotypes::t_unsigned pos = _object.tellp();
           ++i;
           (*op)( _object );
-          _object.seekp(pos);
           if ( not taboo( *_object ) )
             return;
           *_object = _object.select();

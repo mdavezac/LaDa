@@ -38,7 +38,7 @@ namespace LaDa
      xmgrace_file.flush(); \
      xmgrace_file.close();
 
-  const t_unsigned svn_revision = 170;
+  const t_unsigned svn_revision = 171;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -699,7 +699,8 @@ namespace LaDa
     if ( not child )
       return;
     child = child->FirstChildElement();
-    for( t_unsigned nb_taboos = 0; child and not taboos; child = child->NextSiblingElement() )
+    t_unsigned nb_taboos = 0;
+    for( ; child and not taboos; child = child->NextSiblingElement() )
     {
       std::string name = child->Value();
       if (    name.compare("PopTaboo") == 0
@@ -711,10 +712,15 @@ namespace LaDa
       if ( nb_taboos > 1 ) // creates a container
       {
         taboos = new Taboos<t_Object>;
+        if ( not taboos )
+        {
+          std::cerr << "Could not allocate memory for taboos!!" << std::endl;
+          throw "";
+        }
         eostates.storeFunctor(taboos);
       }
     }
-    if ( not child )
+    if ( nb_taboos < 1 )
       return; // no Taboo tags in Taboos tag
 
     OPENXMGRACE 
