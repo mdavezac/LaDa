@@ -103,7 +103,7 @@ namespace LaDa
         return false;
       }
       
-      return convex_hull->Load(child, *axes);
+      return convex_hull->Load(*child, *axes);
     } // end of attempt to read ch file
   }
 
@@ -112,7 +112,7 @@ namespace LaDa
   bool Lamarck :: Load( TiXmlHandle &handle )
   {
     TiXmlElement *child;
-    rVector3d vec;
+    atat::rVector3d vec;
 
     // clusters, lattice, harmonics ....
     if ( not Functional_Builder :: Load (handle ) )
@@ -130,7 +130,7 @@ namespace LaDa
       std::cerr << "Could not find Structure in " << filename << std::endl;
       return false;
     }
-    structure.Load(child, *axes);
+    structure.Load(*child, *axes);
 
     child = handle.FirstChild( "LaDa" ).FirstChild( "GA" ).FirstChild("OnePointHull").Element();
     if ( child )
@@ -275,13 +275,13 @@ namespace LaDa
     typedef std::complex<t_Individual :: t_Type> t_complex;
     typedef std::vector< t_complex > t_k_type;
     const t_complex imath(0, -2*3.1415926535897932384626433832795028841971693993751058208);
-    const std::vector<rVector3d> &k_vecs = get_kvectors(_offspring);
+    const std::vector<atat::rVector3d> &k_vecs = get_kvectors(_offspring);
     typedef std::vector< t_complex > t_k_type;
     t_k_type k_offspring( k_vecs.size(), t_complex(0) );
     t_k_type k_parent( k_vecs.size(), t_complex(0) );
     
     // first, FTs parent and offspring
-    std::vector<rVector3d> :: const_iterator i_kvec = k_vecs.begin();
+    std::vector<atat::rVector3d> :: const_iterator i_kvec = k_vecs.begin();
     t_k_type :: iterator i_val = k_offspring.begin();
     t_k_type :: iterator i_val_end = k_offspring.end();
     std::vector<Ising_CE::Atom> :: const_iterator i_atom_begin = structure.atoms.begin();
@@ -319,7 +319,7 @@ namespace LaDa
         *i_val = *i_cnst;
 
     // Then FT back to r space, while making sure values are +/-1
-    std::vector<rVector3d> :: const_iterator i_kvec_begin = k_vecs.begin();
+    std::vector<atat::rVector3d> :: const_iterator i_kvec_begin = k_vecs.begin();
     t_k_type :: iterator i_val_begin = k_offspring.begin();
     t_Individual :: iterator i_var = _offspring.begin();
     i_atom = i_atom_begin;
@@ -350,8 +350,8 @@ namespace LaDa
     typedef std::complex<t_Individual :: t_Type> t_complex;
     typedef std::vector< t_complex > t_k_type;
     const t_complex imath(0, -2*3.1415926535897932384626433832795028841971693993751058208);
-    const std::vector<rVector3d> &k_vecs = get_kvectors(_indiv);
-    std::vector<rVector3d> :: const_iterator i_kvec = k_vecs.begin();
+    const std::vector<atat::rVector3d> &k_vecs = get_kvectors(_indiv);
+    std::vector<atat::rVector3d> :: const_iterator i_kvec = k_vecs.begin();
     t_k_type :: iterator i_val = _fourrier.begin();
     t_k_type :: iterator i_val_end = _fourrier.end();
     std::vector<Ising_CE::Atom> :: const_iterator i_atom_begin = structure.atoms.begin();

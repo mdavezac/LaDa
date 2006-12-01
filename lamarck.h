@@ -76,7 +76,7 @@ namespace LaDa
 
       t_GA_Functional& get_GA_functional( const t_Individual &_object )
         { return fitness; }
-      const std::vector<rVector3d> &get_kvectors( const t_Individual &_object ) const
+      const std::vector<atat::rVector3d> &get_kvectors( const t_Individual &_object ) const
         { return functional.get_Obj2()->get_kvectors(); }
       void add_to_convex_hull( const t_Individual &_indiv );
       void fourrier_transform( const t_Individual &_indiv, 
