@@ -39,7 +39,7 @@ namespace LaDa
      xmgrace_file.flush(); \
      xmgrace_file.close();
 
-  const t_unsigned svn_revision = 179;
+  const t_unsigned svn_revision = 181;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -331,9 +331,9 @@ namespace LaDa
         eostates.storeFunctor( static_cast< mem_binop_t<t_Lamarck, t_Object, bool>* >(this_op) );
         _f << "# " << _special << _base << "Krossover ";
         if ( att )
-          _f << " every point ";
-        else
           _f << " range ";
+        else
+          _f << " every point ";
       }
       else if ( str.compare("Mutation" ) == 0 )
       {

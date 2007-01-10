@@ -16,7 +16,6 @@ close IN;
 
 $params{"home"} = `cd; pwd`; chomp $params{"home"};
 $params{'iaga call'}           =  "lada > out";
-$params{"file"}{"Pi"} = "$params{'home'}/nanopse/cell_shapes/fcc_7-32";
 $params{'max GA iters'} = 400;
 
 $params{'GA'}{'max generations'} = 200;
@@ -44,13 +43,19 @@ if ( $params{'taboos'} !~ /(age|pop|path|hst)/ )
 
 $params{'ssc'} = 0;
 $params{'nb atoms'} = 20;
-if ( $params{'agr'}{'filename'} =~ /atoms:(\d+)/ )
+if ( $params{'agr'}{'filename'} =~ /atoms:(\d+)_(\d+)_(\d+)/ )
 {
-  $params{'nb atoms'} = $1;
-  $params{'agr'}{'filename'} =~ s/atoms:(\d+)(\_|)//;
+  $params{'nb atoms'} = $1*$2*$3;
+  $params{'x'} = $1;
+  $params{'y'} = $2;
+  $params{'z'} = $3;
+  $params{'agr'}{'filename'} =~ s/atoms:(\d+)_(\d+)_(\d+)(\_|)//;
   $params{'agr'}{'filename'} =~ s/^\s+//;
   $params{'agr'}{'filename'} =~ s/\s+$//;
-  $params{'agr'}{'filename'} = sprintf "atoms:%i_%s", $params{'nb atoms'},
+  $params{'agr'}{'filename'} = sprintf "atoms:%i_%i_%i_%s",
+                                       $params{'x'}, 
+                                       $params{'y'}, 
+                                       $params{'z'}, 
                                        $params{'agr'}{'filename'};
 }
 if ( $params{'agr'}{'filename'} =~ /cosa:(\d+)/ )
@@ -259,41 +264,10 @@ $params{'xml'}{"filename"} .= ".xml";
 # begin work
 my %structure;
 
-open (PI, "$params{'file'}{'Pi'}") 
-  or die "Did not find PI file $params{'file'}{'Pi'}";
-
 my $cosa = 0;
 system "rm -f $params{'agr'}{'filename'}";
-while(<PI>)
-{
-  if(/NT/ and $params{'agr'}{'filename'} =~ /full/ )
-  {
-    my $Nold = scalar( @{$structure{'atomic positions'} } ) / 3;
-    read_structure();
-    my $N = scalar( @{$structure{'atomic positions'} } ) / 3;
-    $cosa = 0 if ( $N > $Nold );
-    printf "Working on (%i, %i)\n", $N, $cosa;
-    launch_iaga();
-    $cosa++;
-  }
-  elsif(/NT/)
-  {
-    read_structure(); # data passes from PIfile to %structure hash
-	
-    if ( scalar( @{$structure{'atomic positions'}} ) < $params{'nb atoms'}*3 ) 
-      { next; }
-    else 
-    {
-      if ( $cosa == $params{'ssc'} )
-        { launch_iaga(); exit }
-      $cosa++;
-    }
-
-  }
-}
-
-close PI;
-
+read_structure(); # data passes from PIfile to %structure hash
+launch_iaga(); 
 
 
 exit;
@@ -317,24 +291,29 @@ sub launch_iaga()
 
 sub read_structure()
 {
-  my $dummy;
-  ($dummy,$structure{'nb sites'},$structure{'nb triads'},
-   @{$structure{'cell'}[0]}[1..3],@{$structure{'cell'}[1]}[1..3],
-   @{$structure{'cell'}[2]}[1..3]) = (split);
+  my $n = $params{'nb atoms'}; 
+  @{$structure{'cell'}} = ( [ 0.0, 0.5*$params{'x'}, 0.5*$params{'x'} ],
+                            [ 0.5*$params{'y'}, 0.0, 0.5*$params{'y'} ],
+                            [ 0.5*$params{'z'}, 0.5*$params{'z'}, 0.0 ] );
+  @{$structure{'atomic positions'}}  = ();
   
-  for($i=1;$i<=3;$i++)
+  my $index = 0;
+  for($i=0;$i<$params{'x'};$i++)
   { 
-    $structure{'cell'}[0][$i] /= 2;
-    $structure{'cell'}[1][$i] /= 2;
-    $structure{'cell'}[2][$i] /= 2;
+    for($j=0;$j<$params{'y'};$j++)
+    {
+      for($k=0;$k<$params{'z'};$k++)
+      {
+        $structure{'atomic positions'}[$index] = 0.5*($j+$k);
+        $index++;
+        $structure{'atomic positions'}[$index] = 0.5*($i+$k);
+        $index++;
+        $structure{'atomic positions'}[$index] = 0.5*($i+$j);
+        $index++;
+      }
+    }
   }
 
-  # Skip the PIs
-  while( ($_=<PI>) and ($_ !~ /BASIS/) ){}
-
-  # atoms
-  s/BASIS//; # Get the basis atom positions
-  @{$structure{'atomic positions'}} = (split);
 }
 
 
@@ -353,20 +332,20 @@ sub write_lamarck_input()
       printf OUT "  <Structure>\n";
       printf OUT "    <Cell>\n";
       printf OUT "      <column x=\"%.6f\" y=\"%.6f\" z=\"%.6f\" />\n",
-                 @{$structure{'cell'}[0]}[1..3];
+                 @{$structure{'cell'}[0]}[0..2];
       printf OUT "      <column x=\"%.6f\" y=\"%.6f\" z=\"%.6f\" />\n",
-                 @{$structure{'cell'}[1]}[1..3];
+                 @{$structure{'cell'}[1]}[0..2];
       printf OUT "      <column x=\"%.6f\" y=\"%.6f\" z=\"%.6f\" />\n",
-                 @{$structure{'cell'}[2]}[1..3];
+                 @{$structure{'cell'}[2]}[0..2];
       printf OUT "    </Cell>\n";
 
       for( my $i = 0; $i < scalar( @{$structure{'atomic positions'}} ); 
            $i +=3 )
       {
         printf OUT "    <Atom x=\"%.6f\" y=\"%.6f\" z=\"%.6f\" type=\"%.6f\" />\n",
-                 $structure{'atomic positions'}[$i]/2, 
-                 $structure{'atomic positions'}[$i+1]/2, 
-                 $structure{'atomic positions'}[$i+2]/2; 
+                 $structure{'atomic positions'}[$i], 
+                 $structure{'atomic positions'}[$i+1], 
+                 $structure{'atomic positions'}[$i+2]; 
       }
       printf OUT "  </Structure>\n";
     }
@@ -428,7 +407,7 @@ sub write_lamarck_input()
         elsif ( $params{'GA style'} =~ /krossover/ )
           { printf OUT "          <Krossover/>\n"; }
         else
-          { printf OUT "          <Crossover/>\n"; }
+          { printf OUT "          <Crossover />\n"; }
         printf OUT "        </TabooOp> \n";
         printf OUT "        %s />\n", $minimizertype;
         printf OUT "      </Operators>\n";
@@ -441,7 +420,7 @@ sub write_lamarck_input()
         elsif ( $params{'GA style'} =~ /krossover/ )
           { printf OUT "          <Krossover/>\n"; }
         else
-          { printf OUT "      <Crossover value=\"0.5\" prob=\"0.75\" />\n"; }
+          { printf OUT "      <Crossover value=\"0.5\"/>\n"; }
         printf OUT "    </TabooOp> \n";
       }
 
