@@ -39,6 +39,46 @@ namespace LaDa
       virtual std::string className(void) const { return "Monitor"; } 
   };
 
+  template< class t_Call_Back, class t_Object = typename t_Call_Back :: t_Object >
+  class PrintFitness : public eoStatBase<t_Object> 
+  {
+    protected:
+      GenCount &age;
+      t_Call_Back &call_back;
+
+    public:
+      PrintFitness   ( GenCount &_age, t_Call_Back *_call_back )
+                   : age(_age), call_back(*_call_back) {}
+      PrintFitness   ( const PrintFitness<t_Object, t_Call_Back> & _update )
+                   : age(_update.age), call_back( _update.call_back ) {}
+
+      virtual void operator()( const eoPop<t_Object> &_pop )
+      {
+        t_unsigned ga_age = age();
+        typename eoPop<t_Object> :: const_iterator i_pop = _pop.begin();
+        typename eoPop<t_Object> :: const_iterator i_end = _pop.end();
+
+        for( ; i_pop != i_end; ++i_pop )
+          if ( ga_age == i_pop->get_age() )
+          {
+            std::ostringstream sstr; 
+            sstr << "Offspring: " << std::setw(8) << std::setprecision(5)
+                 << i_pop->get_concentration() << " "
+                 << i_pop->get_quantity() << " ";
+            std::string str = sstr.str();
+            call_back.print_xmgrace( str );
+          }
+      }
+
+      // some anoying stuff
+      void printOn( std::ostream &__os ) const {};
+      void readFrom( std::istream &__os ) const {};
+      virtual void lastCall( const eoPop<t_Object> &_pop)
+        {}
+
+      virtual std::string className(void) const { return "LaDa::PrintFitness"; }
+  };
+
   // checks for taboo unconvergence from a breeder, 
   // response. If response does not get through 
   template< class t_Call_Back, class t_Object = typename t_Call_Back :: t_Object >

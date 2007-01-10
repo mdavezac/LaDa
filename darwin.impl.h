@@ -8,6 +8,7 @@
 #include "generator.h"
 #include "taboo_minimizers.h"
 #include "statistics.h"
+#include "generic_ops.h"
 #include <lamarck/convex_hull.h>
 #include <opt/opt_minimize.h>
 
@@ -38,7 +39,7 @@ namespace LaDa
      xmgrace_file.flush(); \
      xmgrace_file.close();
 
-  const t_unsigned svn_revision = 175;
+  const t_unsigned svn_revision = 178;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -318,8 +319,9 @@ namespace LaDa
       }
       else if ( str.compare("Krossover" ) == 0 )
       {
-        this_op = new Krossover<t_Lamarck, t_Object>( *lamarck );
-        eostates.storeFunctor( static_cast< Krossover<t_Lamarck, t_Object> *>(this_op) );
+        this_op = new mem_binop_t<t_Lamarck, t_Object>( *lamarck, &t_Lamarck::Krossover, 
+                                                         std::string( "Krossover" )   );
+        eostates.storeFunctor( static_cast< mem_binop_t<t_Lamarck, t_Object>* >(this_op) );
         _f << "# " << _special << _base << "Krossover ";
       }
       else if ( str.compare("Mutation" ) == 0 )
@@ -510,6 +512,16 @@ namespace LaDa
     eostates.storeFunctor( continuator );
     GenCount &generation_counter = continuator->get_generation_counter();
  
+    // Print Offsprings
+    child = docHandle.FirstChild("LaDa")
+                     .FirstChild("GA")
+                     .FirstChild("PrintOffsprings").Element();
+    if ( child )
+    {
+      PrintFitness<t_Darwin> *printfitness = new PrintFitness<t_Darwin> ( generation_counter, this );
+      continuator->add( *printfitness );
+      eostates.storeFunctor( printfitness );
+    }
     
     // some statistics
     child = docHandle.FirstChild("LaDa")
