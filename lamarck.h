@@ -82,7 +82,7 @@ namespace LaDa
       void fourrier_transform( const t_Individual &_indiv, 
                                std::vector< std::complex<t_Individual :: t_Type> > &_fourrier );
 
-      bool Krossover( t_Individual  &_offspring, const t_Individual &_parent);
+      bool Krossover( t_Individual  &_offspring, const t_Individual &_parent, bool _range);
     protected:
       virtual bool Load( TiXmlHandle &handle );
       bool read_CH();

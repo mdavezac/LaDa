@@ -12,6 +12,7 @@
 #include <math.h>
 
 #include <eo/utils/eoRNG.h>
+#include <ext/algorithm>
 
 using opt::NO_MINIMIZER;
 using opt::WANG_MINIMIZER;
@@ -270,7 +271,8 @@ namespace LaDa
       convex_hull->print_out(_f, VA_CE::Convex_Hull::PRINT_XMGRACE);
   }
 
-  bool Lamarck :: Krossover( t_Individual  &_offspring, const t_Individual &_parent)
+  bool Lamarck :: Krossover( t_Individual  &_offspring, const t_Individual &_parent,
+                             bool _range = false )
   {
     typedef std::complex<t_Individual :: t_Type> t_complex;
     typedef std::vector< t_complex > t_k_type;
@@ -311,12 +313,20 @@ namespace LaDa
     }
 
     // then does crossover
-    t_k_type :: const_iterator i_cnst = k_parent.begin();
-    i_val = k_offspring.begin();
-    i_val_end = k_offspring.end();
-    for ( ; i_val != i_val_end; ++i_val, ++i_cnst)
-      if ( rng.flip() )
-        *i_val = *i_cnst;
+    i_val_end = k_offspring.end(); // necessary later on...
+    if ( _range and k_vecs.size() > 2 ) // every point crossover
+    {  
+      eotypes::t_unsigned n =  rng.random ( k_vecs.size() - 1 );
+      __gnu_cxx::copy_n( k_parent.begin(), n, k_offspring.begin() );
+    }
+    else // range crossover ... kvec should be oredered according to size
+    {
+      t_k_type :: const_iterator i_cnst = k_parent.begin();
+      i_val = k_offspring.begin();
+      for ( ; i_val != i_val_end; ++i_val, ++i_cnst)
+        if ( rng.flip() )
+          *i_val = *i_cnst;
+    }
 
     // Then FT back to r space, while making sure values are +/-1
     std::vector<atat::rVector3d> :: const_iterator i_kvec_begin = k_vecs.begin();

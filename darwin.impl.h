@@ -39,7 +39,7 @@ namespace LaDa
      xmgrace_file.flush(); \
      xmgrace_file.close();
 
-  const t_unsigned svn_revision = 178;
+  const t_unsigned svn_revision = 179;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -319,10 +319,21 @@ namespace LaDa
       }
       else if ( str.compare("Krossover" ) == 0 )
       {
-        this_op = new mem_binop_t<t_Lamarck, t_Object>( *lamarck, &t_Lamarck::Krossover, 
-                                                         std::string( "Krossover" )   );
-        eostates.storeFunctor( static_cast< mem_binop_t<t_Lamarck, t_Object>* >(this_op) );
+        bool att = false;
+        if ( sibling->Attribute("type") )
+        {
+          std::string str =  sibling->Attribute("type");
+          if ( str.compare("range") == 0 ) 
+            att = true;
+        }
+        this_op = new mem_binop_t<t_Lamarck, t_Object, bool>( *lamarck, &t_Lamarck::Krossover, 
+                                                              std::string( "Krossover" ), att  );
+        eostates.storeFunctor( static_cast< mem_binop_t<t_Lamarck, t_Object, bool>* >(this_op) );
         _f << "# " << _special << _base << "Krossover ";
+        if ( att )
+          _f << " every point ";
+        else
+          _f << " range ";
       }
       else if ( str.compare("Mutation" ) == 0 )
       {

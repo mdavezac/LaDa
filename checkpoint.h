@@ -62,7 +62,7 @@ namespace LaDa
           if ( ga_age == i_pop->get_age() )
           {
             std::ostringstream sstr; 
-            sstr << "Offspring: " << std::setw(8) << std::setprecision(5)
+            sstr << "Offspring: " << std::setw(12) << std::setprecision(7)
                  << i_pop->get_concentration() << " "
                  << i_pop->get_quantity() << " ";
             std::string str = sstr.str();
