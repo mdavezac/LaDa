@@ -39,7 +39,7 @@ namespace LaDa
      xmgrace_file.flush(); \
      xmgrace_file.close();
 
-  const t_unsigned svn_revision = 181;
+  const t_unsigned svn_revision = 185;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DARWIN  = 0;
   template<class t_Object, class t_Lamarck> 
@@ -68,6 +68,7 @@ namespace LaDa
     is_one_point_hull = false;
     minimize_best = 0;
     minimize_best_every = 5;
+    do_print_nb_calls = false;
 
     extra_popalgo = NULL;
     taboos = NULL;
@@ -227,6 +228,11 @@ namespace LaDa
     child = parent->FirstChildElement( "Phenotype" );
     if ( child )
       t_Object :: is_using_phenotype = true;
+
+    // Print nb calls at each step
+    child = parent->FirstChildElement( "PrintNbCalls" );
+    if ( child )
+      do_print_nb_calls = true;
 
     write_xmgrace_header();
 
@@ -1076,7 +1082,7 @@ namespace LaDa
     else if ( print_ch or is_last_call )
       xmgrace_file << " #" << special <<  "iteration:" << continuator->age() << std::endl; 
 
-    if ( print_ch or is_last_call )
+    if ( print_ch or is_last_call or do_print_nb_calls )
     {
       xmgrace_file << " #" << special << "Evaluation Calls: " 
                    << Evaluation<t_Darwin>::nb_evals << " "

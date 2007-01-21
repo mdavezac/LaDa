@@ -60,21 +60,22 @@ namespace LaDa
       // parameters
       t_real crossover_value; 
       t_real mutation_value;
-      bool sequential_op;
-      eotypes::t_unsigned tournament_size;
-      eotypes::t_unsigned pop_size;
       t_real replacement_rate;
-      t_unsigned max_generations;
-      t_unsigned method;
+      t_real minimize_best;
+      bool sequential_op;
       bool utter_random;
       bool multistart;
       bool evolve_from_start;
+      bool minimize_offsprings;
+      bool is_one_point_hull;
+      bool do_print_nb_calls;
+      eotypes::t_unsigned tournament_size;
+      eotypes::t_unsigned pop_size;
+      t_unsigned max_generations;
+      t_unsigned method;
       t_unsigned minimizer;
       t_unsigned max_calls;
-      t_real minimize_best;
-      bool minimize_offsprings;
       t_unsigned minimize_best_every;
-      bool is_one_point_hull;
       std::vector< std::string > print_strings;
 
       eoState eostates;
