@@ -7,7 +7,7 @@
 
 #include <opt/types.h>
 using namespace types;
-#include <eo/eotypes.h>
+#include "eotypes.h"
 
 #include "operators.h"
 #include "breeder.h"

@@ -12,8 +12,7 @@ my $HOME = `cd; pwd`; chomp $HOME;
 
 if ( $computer =~ /home/ )
 {
-  @{$params{"make include"}} = ( "/usr/local/include", 
-                                 "$HOME/usr/include",
+  @{$params{"make include"}} = ( "$HOME/usr/include",
                                  "$HOME/usr/include/eo");
                                  
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
@@ -27,8 +26,7 @@ if ( $computer =~ /home/ )
 }
 if ( $computer =~ /office/ )
 {
-  @{$params{"make include"}} = ( "/usr/local/include", 
-                                 "$HOME/usr/include",
+  @{$params{"make include"}} = ( "$HOME/usr/include",
                                  "$HOME/usr/include/eo");
                                  
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
@@ -43,8 +41,7 @@ if ( $computer =~ /office/ )
 if ( $computer =~ /lester/ )
 {
   @{$params{"make include"}} = ( "$HOME/usr/include",
-                                 "$HOME/usr/include/eo",
-                                 "$HOME/usr/include/opt++" );
+                                 "$HOME/usr/include/eo" );
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
                              "-llamarck", "-latat", "-ltinyxml", 
                              "-lga", "-leoutils", "-leo" );

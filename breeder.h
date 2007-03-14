@@ -18,7 +18,7 @@
 
 #include <opt/types.h>
 using namespace types;
-#include <eo/eotypes.h>
+#include "eotypes.h"
 
 #include "checkpoint.h"
 /**

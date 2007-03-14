@@ -14,6 +14,8 @@
 #include <eo/utils/eoRNG.h>
 #include <ext/algorithm>
 
+#include "eotypes.h"
+
 using opt::NO_MINIMIZER;
 using opt::WANG_MINIMIZER;
 using opt::PHYSICAL_MINIMIZER;

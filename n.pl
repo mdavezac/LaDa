@@ -58,6 +58,38 @@ if ( $params{'agr'}{'filename'} =~ /atoms:(\d+)_(\d+)_(\d+)/ )
                                        $params{'z'}, 
                                        $params{'agr'}{'filename'};
 }
+
+if ( $params{'GA style'} =~ /terminator:(\d+)/ )
+{ 
+  $params{'terminator'} = $1; 
+  $params{'GA style'} =~ s/terminator:(\d+)(\_|)//;
+  $params{'GA style'} =~ s/^\s+//;
+  $params{'GA style'} =~ s/\s+$//;
+}
+
+if ( $params{'GA style'} =~ /PrintOffsprings/ )
+{
+  $params{'GA style'} =~ s/PrintOffsprings(\_|)//;
+  $params{'GA style'} =~ s/^\s+//;
+  $params{'GA style'} =~ s/\s+$//;
+  $params{'print offsprings'} = 1;
+}
+if ( $params{'GA style'} =~ /multistart/ and 
+     $params{'GA style'} =~ /local/  )
+{
+  $params{'GA style'} =~ s/local(\_|)//;
+  $params{'GA style'} =~ s/^\s+//;
+  $params{'GA style'} =~ s/\s+$//;
+  $params{'GA style'} = sprintf "local_%s", $params{'GA style'};
+  $params{'max GA iters'} = 1;
+}
+if ( $params{'GA style'} =~ /partition/ )
+{
+  $params{'GA style'} =~ s/partition(\_|)//;
+  $params{'GA style'} =~ s/^\s+//;
+  $params{'GA style'} =~ s/\s+$//;
+  $params{'GA style'} = sprintf "partition_%s", $params{'GA style'};
+}
 if ( $params{'agr'}{'filename'} =~ /cosa:(\d+)/ )
 {
   $params{'ssc'} = $1;
@@ -87,6 +119,14 @@ if ( $params{'GA style'} =~ /phenotype/ )
   $params{'GA style'} =~ s/^\s+//;
   $params{'GA style'} =~ s/\s+$//;
   $params{'GA style'} = sprintf "pheno_%s", $params{'GA style'};
+}
+
+if ( $params{'GA style'} =~ /repeat:(\d+)/ )
+{
+  $params{'max GA iters'} = $1;
+  $params{'GA style'} =~ s/repeat:(\d+)(\_|)//;
+  $params{'GA style'} =~ s/^\s+//;
+  $params{'GA style'} =~ s/\s+$//;
 }
 
 
@@ -209,7 +249,7 @@ $params{'agr'}{"filename"} .= sprintf "%s_%s",
 
 if ( $params{'max calls'} != 0 )
 {
-  $params{'agr'}{"filename"} = "$params{'GA style'}_$params{'minimizer'}_n=$params{'max calls'}";
+  $params{'agr'}{"filename"} .= "_n=$params{'max calls'}";
 }
 
 if ( $params{"GA"}{"population"} != 100 )
@@ -265,7 +305,7 @@ $params{'xml'}{"filename"} .= ".xml";
 my %structure;
 
 my $cosa = 0;
-system "rm -f $params{'agr'}{'filename'}";
+#system "rm -f $params{'agr'}{'filename'}";
 read_structure(); # data passes from PIfile to %structure hash
 launch_iaga(); 
 
@@ -281,6 +321,12 @@ sub launch_iaga()
     if ( $params{'GA style'} !~ /true/ and
          $params{'agr'}{'filename'} !~ /full/ )
       { system "rm -f convex_hull.xml"; }
+    if ( $params{'GA style'} =~ /local/ and $params{'GS style'} !~ /one\_point/ )
+    {
+      my $chname = sprintf "true_ch_%i_%i_%i.xml", 
+                   $params{'x'}, $params{'y'}, $params{'z'};
+      system "cp $chname convex_hull.xml";
+    }
     system "$params{'iaga call'}";
     system "echo '# new GA ' >> $params{'agr'}{'filename'}";
     system "cat convex_hull.agr >> $params{'agr'}{'filename'}";
@@ -389,13 +435,16 @@ sub write_lamarck_input()
        $minimizertype = sprintf "<Minimizer type=\"SA\" maxeval=\"%i\" notaboo=\"true\" ",
                                 $params{'max calls'};
       }
+      elsif ( $params{'minimizer'} =~ /none/i )
+       { $minimizertype = "none"; }
 
       # creates the operators
       if ( $params{'GA style'} =~ /multistart/i )
       {
         printf OUT "    <Operators type=\"and\" >\n";
         printf OUT "      <UtterRandom prob=1.0 />\n";
-        printf OUT "      %s prob=1.0 />\n", $minimizertype;
+        printf OUT "      %s prob=1.0 />\n", $minimizertype
+          if ( $minimizertype !~ /none/ );
         printf OUT "    </Operators>\n";
       }
       elsif($params{'GA style'} =~ /lamarck/i ) 
@@ -409,7 +458,8 @@ sub write_lamarck_input()
         else
           { printf OUT "          <Crossover />\n"; }
         printf OUT "        </TabooOp> \n";
-        printf OUT "        %s />\n", $minimizertype;
+        printf OUT "        %s />\n", $minimizertype
+          if ( $minimizertype !~ /none/ );
         printf OUT "      </Operators>\n";
       }
       elsif($params{'GA style'} =~ /darwin/i ) 
@@ -497,24 +547,29 @@ sub write_lamarck_input()
         { printf OUT "    <History/>\n"; }
 
 
-      if ( $params{"minimizer"} =~ /GradientSA/ )
-      {
-        if ( $params{"nb atoms"} > 20 )
-           { printf OUT "    <Terminator ref=\"gradient\" value=250000/>\n"; }
-        else
-           { printf OUT "    <Terminator ref=\"gradient\" value=50000/>\n"; }
-      }
-      else
-      {
-        if ( $params{"nb atoms"} > 20 )
-           { printf OUT "    <Terminator ref=\"evaluation\" value=25000/>\n"; }
-        else
-           { printf OUT "    <Terminator ref=\"evaluation\" value=5000/>\n"; }
-      }
+      my $terminator = 500;
+      $terminator = 3000    if ( $params{"nb atoms"} >= 15 );
+      $terminator = 6000    if ( $params{"nb atoms"} >= 20 );
+      $terminator = 8000    if ( $params{"nb atoms"} >= 24 );
+      $terminator = 25000   if ( $params{"nb atoms"} >= 30 );
+      $terminator = 40000   if ( $params{"nb atoms"} >= 40 );
+      $terminator = 60000   if ( $params{"nb atoms"} >= 50 );
+      $terminator = 10000000 if ( $params{'GA style'} =~ /local/ );
+      $terminator *= 10  if ( $params{"GA style"} !~ /one\_point/ );
+      if ( exists $params{'terminator'} ) { $terminator = $params{'terminator'}; }
+      printf OUT "    <Terminator ref=\"evaluation\" value=%i/>\n", $terminator; 
 
 #     printf OUT "    <tSeed n=\"5\"/>\n";
-      printf OUT "    <Statistics type=\"diversity\"/>\n";
-      printf OUT "    <Statistics type=\"true census\"/>\n";
+#     printf OUT "    <Statistics type=\"diversity\"/>\n";
+#     printf OUT "    <Statistics type=\"true census\"/>\n";
+      printf OUT "    <Populate type=\"partition\" />\n"
+        if ( $params{'GA style'} =~ /partition/ );
+
+      if ( $params{'GA style'} =~ /local/i or exists $params{'print offsprings'})
+      {
+        printf OUT "    <PrintOffsprings/>\n"; 
+        printf OUT "    <PrintNbCalls/>\n"; 
+      }
       printf OUT "  </GA>\n";
     }
     else

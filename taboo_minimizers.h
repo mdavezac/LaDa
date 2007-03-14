@@ -2,6 +2,7 @@
 #define _TABOO_MINIMIZERS_H_
 
 #include <algorithm>
+#include <functional>
 #include <vector>
 
 #include <eo/eoOp.h>
@@ -73,7 +74,8 @@ namespace LaDa
         do 
         {
           // shuffle directions
-          std::random_shuffle(i_begin, i_last, eo::random<t_unsigned>);
+          types::t_unsigned (*ptr_to_rng)(const types::t_unsigned& ) = &eo::random<types::t_unsigned>;
+          std::random_shuffle(i_begin, i_last, ptr_to_rng );
           is_not_converged = false;
 
           for( i_dir = i_begin; i_dir != i_last; ++i_dir )
@@ -174,7 +176,8 @@ namespace LaDa
         do 
         {
           // shuffle directions
-          std::random_shuffle(i_begin, i_last, eo::random<t_unsigned>);
+          types::t_unsigned (*ptr_to_rng)(const types::t_unsigned& ) = &eo::random<types::t_unsigned>;
+          std::random_shuffle(i_begin, i_last, ptr_to_rng );
           is_not_converged = false;
 
           for( i_dir = i_begin; i_dir != i_last; ++i_dir )

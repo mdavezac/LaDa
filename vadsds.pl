@@ -63,16 +63,41 @@ if ( $params{'agr'}{'filename'} =~ /cosa:(\d+)/ )
                                        $params{'agr'}{'filename'};
 }
 
-if ( $params{'agr'}{'filename'} =~ /full/ )
+if ( $params{'agr'}{'filename'} =~ /full:(\d+)-(\d+)/ )
 {
-  $params{'ssc'} = $1;
-  $params{'agr'}{'filename'} =~ s/full(\_|)//;
+  $params{'agr'}{'filename'} =~ s/full:(\d+)-(\d+)(\_|)//;
   $params{'agr'}{'filename'} =~ s/^\s+//;
   $params{'agr'}{'filename'} =~ s/\s+$//;
-  $params{'agr'}{'filename'} = sprintf "full_%s", $params{'ssc'},
-                                       $params{'agr'}{'filename'};
+}
+elsif ( $params{'agr'}{'filename'} =~ /full/ )
+{
+  $params{'agr'}{'filename'} =~ s/full(\_|)//;
+}
+if ( $params{'GA style'} =~ /full:(\d+)-(\d+)/ )
+{
+  $params{'ssc'} = $1;
+  $params{'nb atoms'} = $2;
+  $params{'GA style'} =~ s/full:(\d+)-(\d+)(\_|)//;
+  $params{'GA style'} =~ s/^\s+//;
+  $params{'GA style'} =~ s/\s+$//;
+  $params{'GA style'} = sprintf "full:%i-%i_%s", 
+                                       $params{'nb atoms'},
+                                       $params{'ssc'},
+                                       $params{'GA style'};
   $params{'max GA iters'} = 20;
   $params{'population'} = 50 if ( $params{'nb atoms'} < 12 );
+}
+elsif ( $params{'GA style'} =~ /full/ )
+{
+  $params{'ssc'} = $1;
+  $params{'GA style'} =~ s/full(\_|)//;
+  $params{'GA style'} =~ s/^\s+//;
+  $params{'GA style'} =~ s/\s+$//;
+  $params{'GA style'} = sprintf "full_%s", $params{'ssc'},
+                                       $params{'GA style'};
+  $params{'max GA iters'} = 40;
+  $params{'population'} = 50 if ( $params{'nb atoms'} < 12 );
+  $params{'population'} = 200 if ( $params{'nb atoms'} > 20 );
 }
 
 if ( $params{'GA style'} =~ /phenotype/ )
@@ -263,7 +288,11 @@ open (PI, "$params{'file'}{'Pi'}")
   or die "Did not find PI file $params{'file'}{'Pi'}";
 
 my $cosa = 0;
-system "rm -f $params{'agr'}{'filename'}";
+
+system "rm -f $params{'agr'}{'filename'}"
+  if ( $params{'agr'}{'filename'} !~ /full/ );
+
+
 while(<PI>)
 {
   if(/NT/ and $params{'agr'}{'filename'} =~ /full/ )
@@ -272,8 +301,14 @@ while(<PI>)
     read_structure();
     my $N = scalar( @{$structure{'atomic positions'} } ) / 3;
     $cosa = 0 if ( $N > $Nold );
-    printf "Working on (%i, %i)\n", $N, $cosa;
-    launch_iaga();
+    if ( $N >= $params{'nb atoms'} and $cosa >= $params{'ssc'} )
+    {
+      printf "Working on (%i, %i)\n", $N, $cosa;
+      launch_iaga();
+    }
+    else
+      { printf "NOT Working on (%i, %i)\n", $N, $cosa; }
+      
     $cosa++;
   }
   elsif(/NT/)
@@ -517,25 +552,21 @@ sub write_lamarck_input()
       if( $params{'GA style'} =~ /hst/ )
         { printf OUT "    <History/>\n"; }
 
-
-      if ( $params{"minimizer"} =~ /GradientSA/ )
-      {
-        if ( $params{"nb atoms"} > 20 )
-           { printf OUT "    <Terminator ref=\"gradient\" value=250000/>\n"; }
-        else
-           { printf OUT "    <Terminator ref=\"gradient\" value=50000/>\n"; }
-      }
-      else
-      {
-        if ( $params{"nb atoms"} > 20 )
-           { printf OUT "    <Terminator ref=\"evaluation\" value=25000/>\n"; }
-        else
-           { printf OUT "    <Terminator ref=\"evaluation\" value=5000/>\n"; }
-      }
+      my $terminator = 500;
+      $terminator = 3000    if ( $params{"nb atoms"} >= 15 );
+      $terminator = 6000    if ( $params{"nb atoms"} >= 20 );
+      $terminator = 8000    if ( $params{"nb atoms"} >= 24 );
+      $terminator = 16000   if ( $params{"nb atoms"} >= 30 );
+      $terminator = 32000   if ( $params{"nb atoms"} >= 40 );
+      $terminator = 60000   if ( $params{"nb atoms"} >= 50 );
+      $terminator *= 5  if ( $params{"GA style"} !~ /one\_point/ );
+      printf OUT "    <Terminator ref=\"evaluation\" value=%i/>\n", $terminator; 
 
 #     printf OUT "    <tSeed n=\"5\"/>\n";
-      printf OUT "    <Statistics type=\"diversity\"/>\n";
-      printf OUT "    <Statistics type=\"true census\"/>\n";
+#     printf OUT "    <Statistics type=\"diversity\"/>\n";
+#     printf OUT "    <Statistics type=\"true census\"/>\n";
+      if ( $params{'GA style'} =~ /multistart/i )
+        { printf OUT "    <PrintOffsprings/>\n"; }
       printf OUT "  </GA>\n";
     }
     else

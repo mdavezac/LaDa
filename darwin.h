@@ -33,7 +33,7 @@
 #include "colonize.h"
 #include "popgrowth.h"
 
-#include <eo/eotypes.h>
+#include "eotypes.h"
 
 #include <opt/types.h>
 using namespace types;
