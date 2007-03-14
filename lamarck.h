@@ -23,6 +23,7 @@ namespace LaDa
       typedef LaDa::Individual<> t_Individual; 
       typedef VA_CE :: CH_Template t_Convex_Hull;
       typedef opt::Fitness_Function<t_VA_Functional, t_Convex_Hull> t_GA_Functional;
+      typedef t_VA_Functional::t_Type t_Type;
 
     public: 
       t_unsigned EvalCounter;

@@ -55,6 +55,8 @@ namespace LaDa
       const static t_unsigned LAMARCK;
       const static t_unsigned DARWIN;
       const static t_unsigned DEBUG;
+      const static t_unsigned RANDOM_POPULATE;
+      const static t_unsigned PARTITION_POPULATE;
       const static std::string svn_version;
 
       // parameters
@@ -76,6 +78,7 @@ namespace LaDa
       t_unsigned minimizer;
       t_unsigned max_calls;
       t_unsigned minimize_best_every;
+      t_unsigned populate_style;
       std::vector< std::string > print_strings;
 
       eoState eostates;
@@ -153,7 +156,8 @@ namespace LaDa
       void make_popgrowth();
       void make_history();
        
-      void populate ();
+      void random_populate ();
+      void partition_populate ();
       MinimizationOp<t_Object, t_Darwin>* Load_Minimizer( const TiXmlElement* el,   
                                                           std::ofstream &_f ); 
 

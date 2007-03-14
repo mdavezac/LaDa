@@ -38,7 +38,7 @@ if ( $computer =~ /office/ )
   $params{"CXX"} = "g++";
   $params{"LD"}  = "g++";
   $params{"F77"}  = "g77";
-  $params{"CXXFLAGS"}  = "-malign-double ";
+  $params{"CXXFLAGS"}  = "-malign-double -ffriend-injection";
 }
 if ( $computer =~ /lester/ )
 {
@@ -368,14 +368,14 @@ sub print_recurrent_deps($)
         { print OUT $dependencies{$dep}{"location"}, "/"; }
       print OUT $dep, ".o "; $i++;
     }
-    if ( (exists $dependencies{$dep}{"source"}) )
+    elsif ( exists $dependencies{$dep}{"source"} )
     {
       print OUT " \\\n\t";
       if ( $dependencies{$dep}{"location"} ne "." )
         { print OUT $dependencies{$dep}{"location"}, "/"; }
       print OUT $dep, ".cc "; $i++;
     }
-    if ( exists $dependencies{$dep}{"header"} )
+    elsif ( exists $dependencies{$dep}{"header"} )
     {
       print OUT " \\\n\t";
       if ( $dependencies{$dep}{"location"} ne "." )

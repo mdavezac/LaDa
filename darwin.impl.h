@@ -14,6 +14,7 @@
 
 #include <math.h>
 #include <functional>
+#include <algorithm>
 #include <cmath>
 
 using opt::NO_MINIMIZER;
@@ -46,6 +47,10 @@ namespace LaDa
     const t_unsigned Darwin<t_Object, t_Lamarck> :: LAMARCK = 1;
   template<class t_Object, class t_Lamarck> 
     const t_unsigned Darwin<t_Object, t_Lamarck> :: DEBUG   = 2;
+  template<class t_Object, class t_Lamarck> 
+    const t_unsigned Darwin<t_Object, t_Lamarck> :: RANDOM_POPULATE   = 0;
+  template<class t_Object, class t_Lamarck> 
+    const t_unsigned Darwin<t_Object, t_Lamarck> :: PARTITION_POPULATE   = 0;
     
 
   template< class t_Object, class t_Lamarck >
@@ -69,6 +74,7 @@ namespace LaDa
     minimize_best = 0;
     minimize_best_every = 5;
     do_print_nb_calls = false;
+    populate_style = RANDOM_POPULATE;
 
     extra_popalgo = NULL;
     taboos = NULL;
@@ -88,7 +94,10 @@ namespace LaDa
   void Darwin<t_Object, t_Lamarck> :: run()
   {
     make_algo();
-    populate();
+    if ( populate_style == PARTITION_POPULATE )
+      partition_populate();
+    else
+      random_populate();
     offsprings.clear();
     typename t_Islands :: iterator i_island_begin = islands.begin();
     typename t_Islands :: iterator i_island_end = islands.end();
@@ -234,6 +243,15 @@ namespace LaDa
     if ( child )
       do_print_nb_calls = true;
 
+    // Populate Style
+    child = parent->FirstChildElement( "Populate" );
+    if ( child and child->Attribute("type") )
+    {
+      std::string type = child->Attribute("type");
+      if ( type.compare("partition") )
+        populate_style = PARTITION_POPULATE;
+    }
+
     write_xmgrace_header();
 
     // reseed
@@ -248,6 +266,7 @@ namespace LaDa
         CLOSEXMGRACE
       }
     }
+
 
     return true;
   }
@@ -1006,7 +1025,7 @@ namespace LaDa
   }
 
   template<class t_Object, class t_Lamarck>
-  void Darwin<t_Object, t_Lamarck> :: populate ()
+  void Darwin<t_Object, t_Lamarck> :: random_populate ()
   {
     Generator generator;
 
@@ -1033,6 +1052,106 @@ namespace LaDa
       population.clear();
     }
   }
+  template<class t_Object, class t_Lamarck>
+  void Darwin<t_Object, t_Lamarck> :: partition_populate ()
+  {
+    Generator generator;
+
+    t_Object random_indiv, indiv;
+    types::t_unsigned pb_size = lamarck->get_pb_size();
+    indiv.resize(pb_size);
+    indiv.set_age( continuator->age() ); 
+    random_indiv.resize(pb_size);
+    random_indiv.set_age( continuator->age() ); 
+
+    typename t_Object :: iterator i_random_var = random_indiv.begin();
+    typename t_Object :: iterator i_random_end = random_indiv.end();
+    typename t_Object :: iterator i_var;
+    typename t_Object :: iterator i_end;
+
+    eoPop<t_Object> population;
+    population.reserve(pop_size);
+    for( eotypes::t_unsigned n = 0; n < nb_islands; ++n )
+    {
+      eotypes::t_unsigned i = 0;
+      while ( i < pop_size )
+      {
+        // first random object
+        for ( ; i_random_var != i_random_end; ++i_random_var)
+          *i_random_var = generator();
+        i_random_var = random_indiv.begin();
+
+        // copy random_indiv whole
+        std::copy( random_indiv.begin(), i_random_end, indiv.begin() );
+        population.push_back(indiv);
+        ++i; if ( i >= pop_size) break;
+
+        std::transform( random_indiv.begin(), i_random_end, 
+                        indiv.begin(), std::negate<typename t_Lamarck::t_Type>() );
+        population.push_back(indiv);
+        ++i; if ( i >= pop_size) break;
+        
+        // then copies per half
+        std::copy( random_indiv.begin(), random_indiv.begin() + (pb_size>>1),
+                   indiv.begin() );
+        std::transform( random_indiv.begin()+(pb_size>>1), random_indiv.end(),
+                        indiv.begin()+(pb_size>>1), std::negate<typename t_Lamarck::t_Type>() );
+        population.push_back(indiv);
+        ++i; if ( i >= pop_size) break;
+
+        std::transform( random_indiv.begin(), random_indiv.begin()+(pb_size>>1),
+                        indiv.begin(), std::negate<typename t_Lamarck::t_Type>() );
+        std::copy( random_indiv.begin()+(pb_size>>1), random_indiv.end(),
+                   indiv.begin()+(pb_size>>1) );
+        population.push_back(indiv);
+        ++i; if ( i >= pop_size) break;
+        
+        // then copies per fourth and half
+        std::copy( random_indiv.begin(), random_indiv.begin() + (pb_size>>2),
+                   indiv.begin() );
+        std::transform( random_indiv.begin()+(pb_size>>2), random_indiv.begin()+(pb_size*3/4),
+                        indiv.begin()+(pb_size>>2), std::negate<typename t_Lamarck::t_Type>() );
+        std::copy( random_indiv.begin()+(pb_size*3/4), random_indiv.end(),
+                        indiv.begin()+(pb_size*3/4) );
+        population.push_back(indiv);
+        ++i; if ( i >= pop_size) break;
+
+        std::transform( random_indiv.begin(), random_indiv.begin() + (pb_size>>2),
+                        indiv.begin(), std::negate<typename t_Lamarck::t_Type>() );
+        std::copy( random_indiv.begin()+(pb_size>>2), random_indiv.begin()+(pb_size*3/4),
+                   indiv.begin()+(pb_size>>2) );
+        std::transform( random_indiv.begin()+(pb_size*3/4), random_indiv.end(),
+                        indiv.begin()+(pb_size*3/4), std::negate<typename t_Lamarck::t_Type>() );
+        population.push_back(indiv);
+        ++i; if ( i >= pop_size) break;
+
+        // then copies per fourth only
+        std::copy( random_indiv.begin(), random_indiv.begin() + (pb_size>>2),
+                   indiv.begin() );
+        std::transform( random_indiv.begin()+(pb_size>>2), random_indiv.begin()+(pb_size>>1),
+                        indiv.begin()+(pb_size>>2), std::negate<typename t_Lamarck::t_Type>() ); 
+        std::copy( random_indiv.begin()+(pb_size>>1), random_indiv.begin()+ (pb_size*3/4),
+                   indiv.begin()+(pb_size>>1) );
+        std::transform( random_indiv.begin()+(pb_size*3/4), random_indiv.end(),
+                        indiv.begin()+(pb_size*3/4), std::negate<typename t_Lamarck::t_Type>() );
+        population.push_back(indiv);
+        ++i; if ( i >= pop_size) break;
+
+        std::transform( random_indiv.begin(), random_indiv.begin() + (pb_size>>2),
+                        indiv.begin(), std::negate<typename t_Lamarck::t_Type>() );
+        std::copy( random_indiv.begin()+(pb_size>>2), random_indiv.begin()+(pb_size>>1),
+                   indiv.begin()+(pb_size>>2) ); 
+        std::transform( random_indiv.begin()+(pb_size>>1), random_indiv.begin()+ (pb_size*3/4),
+                        indiv.begin()+(pb_size>>1), std::negate<typename t_Lamarck::t_Type>() );
+        std::copy( random_indiv.begin()+(pb_size*3/4), random_indiv.end(),
+                   indiv.begin()+(pb_size*3/4) );
+        population.push_back(indiv);
+        ++i; 
+      }
+      islands.push_back( population );
+      population.clear();
+    }
+  }
 
   template< class t_Object, class t_Lamarck >
   void Darwin <t_Object, t_Lamarck> :: write_xmgrace_header()
@@ -1053,6 +1172,10 @@ namespace LaDa
       xmgrace_file << "# minimize best: rate " << minimize_best
                    << " every " << minimize_best_every << std::endl;
     }
+    if ( populate_style == PARTITION_POPULATE )
+      xmgrace_file << "# Initial Population random + partition "  << std::endl;
+    else
+      xmgrace_file << "# Initial Population random "  << std::endl;
     lamarck->write_xmgrace_header( xmgrace_file );
     xmgrace_file.flush();
     xmgrace_file.close();

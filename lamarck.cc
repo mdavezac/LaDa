@@ -168,7 +168,7 @@ namespace LaDa
     // creates structure...
     struc.cell = lattice->cell;
     struc.atoms.clear();
-    struc.atoms.push_back( Ising_CE::Atom( lattice->atom_pos(0), -1.0 ) );
+    struc.atoms.push_back( Ising_CE::Atom( lattice->sites[0].pos, -1.0 ) );
 
     // and functional - note that there is no CS 
     // (in fact CS may segfault here )
@@ -186,7 +186,7 @@ namespace LaDa
     {
       *(func.begin()) = 1.0;
       struc.atoms.clear();
-      struc.atoms.push_back( Ising_CE::Atom( lattice->atom_pos(0), 1.0 ) );
+      struc.atoms.push_back( Ising_CE::Atom( lattice->sites[0].pos, 1.0 ) );
       VA_CE::Breaking_Point bp(func.get_Obj1()->evaluate(), struc);
       static_cast<VA_CE::Convex_Hull*>(convex_hull)->force_add( bp );
     }
