@@ -33,8 +33,8 @@ if ( $computer =~ /office/ )
                              "-llamarck", "-latat", "-ltinyxml",
                              "-lga", "-leoutils", "-leo" );
   $params{"CC"}  = "gcc";
-  $params{"CXX"} = "g++";
-  $params{"LD"}  = "g++";
+  $params{"CXX"} = "gcc";
+  $params{"LD"}  = "gcc";
   $params{"F77"}  = "g77";
   $params{"CXXFLAGS"}  = "-malign-double -ffriend-injection";
 }

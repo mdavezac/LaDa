@@ -19,8 +19,8 @@ if ( $computer =~ /home/ )
                              "-llamarck", "-latat", "-ltinyxml",
                              "-lga", "-leoutils", "-leo" );
   $params{"CC"}  = "gcc";
-  $params{"CXX"} = "gcc";
-  $params{"LD"}  = "gcc";
+  $params{"CXX"} = "g++";
+  $params{"LD"}  = "g++";
   $params{"F77"}  = "g77";
   $params{"CXXFLAGS"}  = "-mtune=athlon64 -ffriend-injection";
 }
@@ -28,14 +28,13 @@ if ( $computer =~ /office/ )
 {
   @{$params{"make include"}} = ( "$HOME/usr/include",
                                  "$HOME/usr/include/eo",
-                                 "/opt/mpich/include");
+                                 "/opt/mpich/include" );
                                  
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
-                             "-L/opt/mpich/ch-p4/lib", 
-                             "-lgslcblas", "-lgsl", 
-                             "-lpmpich++", "-lpmpich",
                              "-llamarck", "-latat", "-ltinyxml",
-                             "-lga", "-leoutils", "-leo", "-lvff" );
+                             "-L/opt/mpich/ch-p4/lib/",
+                             " -lpmpich++", "-lpmpich", "-lmpiobject", 
+                             "-lga", "-leoutils", "-leo" );
   $params{"CC"}  = "gcc";
   $params{"CXX"} = "gcc";
   $params{"LD"}  = "gcc";
@@ -222,28 +221,21 @@ sub template()
   printf OUT "endif\n";
   printf OUT "\nCFLAGS   := \${CFLAGS}   \${DEFS}\n";
   printf OUT "CXXFLAGS := \${CXXFLAGS} \${DEFS}\n";
-  printf OUT "\nOUTPUT := mpiobject\n";
-  printf OUT "\nall: \${OUTPUT}  mpitest \n";
+  printf OUT "\nOUTPUT := lada\n";
+  printf OUT "\nall: \${OUTPUT} \n";
   printf OUT "\n\?SRCS :=\?\n";
-  printf OUT "\n\?TESTSRC :=\?\n";
   printf OUT "\nOBJS := \$(addsuffix .o,\$(basename \${SRCS}))\n";
-  printf OUT "\nOBJTEST := \$(addsuffix .o,\$(basename \${TESTSRC}))\n";
   printf OUT "\n.PHONY: clean cleanall\n";
   printf OUT "\n\${OUTPUT}: \${OBJS} \n";
-  printf OUT "\tar ruv libmpiobject.a \${OBJS} \n";
-  printf OUT "\tranlib libmpiobject.a\n";
-  printf OUT "\n\${OBJS} : \n";
+  printf OUT "\t\${LD} \${LDFLAGS} -o \$@ \${OBJS} \${LIBS} \${EXTRALIBS}\n";
+  printf OUT "\n\${OBJS} : ${OBJSRCS}\n";
   printf OUT "\t\${CXX} -c \${CXXFLAGS} \${INCS} \$< -o \$@\n\n";
-  printf OUT "\n\${OBJTEST} : \n";
-  printf OUT "\t\${CXX} -c \${CXXFLAGS} \${INCS} \$< -o \$@\n\n";
-  printf OUT "\nmpitest : \${OBJTEST}\n";
-  printf OUT "\t\${LD} \${LDFLAGS} -o \$@ \${OBJTEST} \${LIBS} -L.";
-  printf OUT " -lmpiobject \${EXTRALIBS}\n";
   printf OUT "\?dependencies\?";
 
             
 
-  printf OUT "\n\nclean:\n\t- rm -f \${OBJS} \${OBJTEST} libmpiobject.a mpitest \n";
+  printf OUT "\n\nclean:\n\t- rm -f \${OBJS}\n";
+  printf OUT "\t- rm -f \${OUTPUT}\n";
   if (exists $params{'cleanall'} )
   { 
     foreach $clean ( (@{$params{"cleanall"}}) )
@@ -251,6 +243,10 @@ sub template()
       printf OUT "\t%s\n", $clean;
     }
   }
+
+  printf OUT "\n\ncommit: \n\t";
+  printf OUT "-sed -i 's/\\(const t_unsigned svn_revision = \\).*\\;/\\1\$(shell svn info | grep Revision | awk '{print \$\$2+1}' )\;/' darwin.impl.h \n";
+  printf OUT "\t-svn ci\n\t-svn update .\n";
 
   printf OUT "\n\ninclude .dependencies\n\n"; 
 
@@ -275,28 +271,6 @@ sub template()
         my $i = 0;
         foreach $key ( @sorted_keys )
         {
-          next if ( $key =~ /main/ );
-          if ( exists $dependencies{$key}{"source"} )
-          {
-            if ( $i % 5 == 0 and $i != 0 )
-              { print OUT "\\\n\t"; }
-
-            if ( $dependencies{$key}{"location"} eq "." )
-              { print OUT $key, ".cc "; $i++; }
-            else
-              { print OUT $dependencies{$key}{"location"},"/", $key, ".cc "; $i++; }
-          }
-        }
-        print OUT "\n";
-        next;
-      }
-      if ( /\?TESTSRC :=\?/ )
-      {
-        print OUT 'TESTSRC := ';
-        my $i = 0;
-        foreach $key ( @sorted_keys )
-        {
-          next if ( $key !~ /main/ );
           if ( exists $dependencies{$key}{"source"} )
           {
             if ( $i % 5 == 0 and $i != 0 )
