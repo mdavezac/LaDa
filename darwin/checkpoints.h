@@ -513,6 +513,41 @@ namespace darwin
         { return generation_counter(); }
   };
 
+  template < class T_CLASS >
+  class SaveEvery: public eoUpdater
+  {
+    public:
+      typedef T_CLASS t_Class;
+    protected:
+      typedef bool ( t_Class::*t_Function )();
+    protected:
+      t_Class &object;
+      t_Function func;
+      types::t_unsigned every, age;
+
+    public:
+      SaveEvery   ( t_Class &_object, t_Function _func, types::t_unsigned _n ) 
+                : object(_object), func(_func), every( _n ), age(0) 
+      {
+        if ( not every ) every = 1;
+      }
+      SaveEvery   ( const SaveEvery<t_Class> &_copy )
+                : object(_copy.object), func(_copy.func), every( _copy.n ), age(_copy.age) {}
+
+      void operator()()
+      {
+        ++age;
+
+        if ( age % every )
+          return;
+
+        if ( (object.*func)() )
+          return;
+
+        std::cerr << "Could not perform save " << std::endl;
+      }
+  };
+
 } // namespace LaDa
 
 

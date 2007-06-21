@@ -314,6 +314,24 @@ namespace darwin
     continuator = new IslandsContinuator<t_Individual>(max_generations, str );
     eostates.storeFunctor( continuator );
     GenCount &generation_counter = continuator->get_generation_counter();
+
+    // Creates SaveEvery object if necessary
+    if (      _parent.FirstChildElement("Save") 
+         and  _parent.FirstChildElement("Save")->Attribute("every") )
+    {
+      types::t_int n;
+      _parent.FirstChildElement("Save")->Attribute("every", &n);
+      
+      if ( n >= 0 and do_save )
+      {
+        std::ostringstream sstr;
+        sstr << "Will Save Every " << n << " Generations ";
+        printxmg.add_comment( sstr.str() );
+        SaveEvery<t_Darwin> *save = new SaveEvery<t_Darwin>( *this, &Darwin::Save, std::abs(n) );
+        eostates.storeFunctor( save );
+        continuator->add( *save );
+      }
+    }
  
     // Creates Print object
     {
@@ -409,9 +427,6 @@ namespace darwin
 
     // Nuclear Winter -- only for agetaboo
     child = _parent.FirstChildElement("Taboos");
-    if ( not do_save )
-      return;
-
     if ( child ) child = child->FirstChildElement("NuclearWinter");
     if ( child and agetaboo)
     {
@@ -1092,19 +1107,30 @@ namespace darwin
         }
       }
       restart_xml = parent->FirstChildElement("Save");
+      std::ostringstream sstr("Will Save Results");
       if ( restart_xml and restart_xml->Attribute("what") )
       {
         std::string str = restart_xml->Attribute("what");
         if ( str.find("all") != std::string::npos )
-          do_save |= SAVE_POPULATION | SAVE_HISTORY;
-        else
         {
-          if ( str.find("pop") != std::string::npos )
-            do_save |= SAVE_POPULATION;
-          if ( str.find("history") != std::string::npos and history)
-            do_save |= SAVE_HISTORY;
+          do_save |= SAVE_POPULATION | SAVE_HISTORY;
+          sstr << ", Population";
+          if ( history )
+            sstr << ", and History";
+          goto out;
+        }
+        if ( str.find("pop") != std::string::npos )
+        {
+          do_save |= SAVE_POPULATION;
+          sstr << ", Population";
+        }
+        if ( str.find("history") != std::string::npos and history)
+        {
+          do_save |= SAVE_HISTORY;
+          sstr << ", History";
         }
       }
+out:  printxmg.add_comment( sstr.str() );
 #ifdef _MPI
     }
 
@@ -1159,15 +1185,15 @@ namespace darwin
     if( not _bc.serialize( restarts ) ) return false;
     if( not _bc.serialize( replacement_rate ) ) return false;
     if( not _bc.serialize( do_print_each_call ) ) return false;
-    types::t_unsigned n = populate;
-    if ( not serialize( n ) ) return false;
+    types::t_unsigned n = populate_style;
+    if ( not _bc.serialize( n ) ) return false;
     if ( _bc.get_stage() == mpi::BroadCast::COPYING_FROM_HERE )
       switch ( n ) 
       {
         case RANDOM_POPULATE: 
-          populate = RANDOM_POPULATE; break;
+          populate_style = RANDOM_POPULATE; break;
         case PARTITION_POPULATE: 
-          populate = PARTITION_POPULATE; break;
+          populate_style = PARTITION_POPULATE; break;
       }
     return _bc.serialize( evaluator );
 #else

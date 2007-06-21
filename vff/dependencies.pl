@@ -6,8 +6,9 @@ my %params;
 
 my $HOME = `cd; pwd`; chomp $HOME;
 
-  @{$params{"defs"}} = ( "_G_HAVE_BOOL", "ANSI_HEADERS",
-    "HAVE_SSTREAM" ); #, "_MPI" ); 
+@{$params{"defs"}} = ( "_G_HAVE_BOOL", "ANSI_HEADERS", 
+                       "_MPI", 
+                       "HAVE_SSTREAM" );
 
 @{$params{"Includes"}} = ( "." );
 
@@ -26,12 +27,14 @@ if ( $computer =~ /home/ )
 if ( $computer =~ /office/ )
 {
   @{$params{"make include"}} = ( "/usr/local/include", 
-                                 "$HOME/usr/include", "/opt/mpich/include");
+                                 "/opt/mpich/include",
+                                 "$HOME/usr/include");
                                  
-  @{$params{"make lib"}} = (
-                             "-lm", "-lstdc++", "-L $HOME/usr/lib/",
+  @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
                              "-llamarck", "-latat", "-ltinyxml",
+                             "-L /opt/mpich/ch-p4/lib/", "-lpmpich++", "-lpmpich", "-lmpiobject", 
                              "-lgslcblas", "-lgsl", "-lphysics",
+                             "-lmpiobject",
                              "-lrt",  "-lopt"); 
   $params{"CC"}  = "gcc";
   $params{"CXX"} = "g++-4.1";
@@ -217,27 +220,25 @@ sub template()
   printf OUT "\nCFLAGS   := \${CFLAGS}   \${DEFS}\n";
   printf OUT "CXXFLAGS := \${CXXFLAGS} \${DEFS}\n";
   printf OUT "\nOUTPUT := vff\n";
-  printf OUT "\nall: \${OUTPUT} \n";
+  printf OUT "\nall: libvff vff \n";
   printf OUT "\n\?SRCS :=\?\n";
-  printf OUT "\n\?MAINSRC :=\?\n";
   printf OUT "\nOBJS := \$(addsuffix .o,\$(basename \${SRCS}))\n";
-  printf OUT "\nMAINOBJ := \$(addsuffix .o,\$(basename \${MAINSRC}))\n";
   printf OUT "\n.PHONY: clean cleanall\n";
-  printf OUT "\n\${OUTPUT}: lib\${OUTPUT} \${MAINOBJ} \n";
-  printf OUT "\t\${LD} \${LDFLAGS} -o \$@ \${MAINOBJ} \${OBJS}";
+  printf OUT "\n\${OUTPUT}: lib\${OUTPUT} main.o \n";
+  printf OUT "\t\${LD} \${LDFLAGS} -o \$@ main.o \${OBJS}";
   printf OUT " -L. \${LIBS} \${EXTRALIBS} \n";
   printf OUT "\nlib\${OUTPUT}: \${OBJS} \n";
   printf OUT "\tar rvu lib\${OUTPUT}.a \${OBJS} \n";
   printf OUT "\tranlib lib\${OUTPUT}.a \n";
   printf OUT "\n\${OBJS} : \${OBJSRCS}\n";
   printf OUT "\t\${CXX} -c \${CXXFLAGS} \${INCS} \$< -o \$@\n\n";
-  printf OUT "\n\${MAINOBJ} : \${MAINSRC}\n";
-  printf OUT "\t\${CXX} -c \${CXXFLAGS} \${INCS} \$< -o \$@\n\n";
+  printf OUT "\nmain.o : \n";
+  printf OUT "\t\${CXX} -c \${CXXFLAGS} \${INCS} main.cc -o main.o\n\n";
   printf OUT "\?dependencies\?";
 
             
 
-  printf OUT "\n\nclean:\n\t- rm -f \${OBJS} \${MAINOBJ}\n";
+  printf OUT "\n\nclean:\n\t- rm -f \${OBJS} main.o\n";
   printf OUT "\t- rm -f lib\${OUTPUT}.a \${OUTPUT}\n";
   if (exists $params{'cleanall'} )
   { 

@@ -110,7 +110,7 @@ namespace BandGap
     friend void operator<<(std::string &_str, const Object &_o);
     friend void operator<<(Ising_CE::Structure &_str, const Object &_o);
 #ifdef _MPI
-    friend bool mpi::BroadCast::serialize<CE::Object>(CE::Object &);
+    friend bool mpi::BroadCast::serialize<BandGap::Object>(BandGap::Object &);
 #endif
     t_Container bitstring;
     Object() {}

@@ -6,7 +6,7 @@ my %params;
 
 my $HOME = `cd; pwd`; chomp $HOME;
 
-@{$params{"defs"}} = ();
+@{$params{"defs"}} = ( "_MPI" );
 
 @{$params{"Includes"}} = (".", "$HOME/usr/src/atat/src",
                           "$HOME/usr/include/opt", "$HOME/usr/include/analysis");
@@ -23,9 +23,12 @@ if ( $computer =~ /home/ )
 }
 elsif ( $computer =~ /office/ )
 {
-  @{$params{"make include"}} = ( "$HOME/usr/include" );
-  @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
-                             "-llamarck", "-latat", "-ltinyxml" );
+  @{$params{"make include"}} = ( "$HOME/usr/include"
+                                 ,"/opt/mpich/include"
+                               );
+  @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/", "-llamarck", "-latat", 
+                             "-L /opt/mpich/ch-p4/lib/", "-lpmpich++", "-lpmpich", "-lmpiobject", 
+                             "-ltinyxml" );
   $params{"CC"}  = "gcc";
   $params{"CXX"} = "gcc";
   $params{"LD"}  = "gcc";
@@ -261,7 +264,7 @@ sub template()
   }
   else 
   {
-    printf OUT "\t$\{AR} atat/lib\$@.a \${ATATOBJS} \n";
+    printf OUT "\t\$\{AR} atat/lib\$@.a \${ATATOBJS} \n";
   }
   printf OUT "\t\${RANLIB} atat/lib\$@.a\n";
 
@@ -280,6 +283,7 @@ sub template()
   printf OUT "\t- rm -f atat/libatat.a \${OUTPUT} \n\n";
 
   printf OUT "\n\ninclude .dependencies\n\n"; 
+
 
   close OUT;
 }

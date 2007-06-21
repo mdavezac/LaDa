@@ -33,7 +33,10 @@ namespace Pescan
   void Interface :: create_directory()
   {
     std::ostringstream sstr;
-    sstr << "escan." << mpi::main.rank();
+    sstr << "escan.";
+#ifdef _MPI
+    sstr << mpi::main.rank();
+#endif
     dirname = sstr.str();
 
     sstr.str("");

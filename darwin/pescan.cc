@@ -463,7 +463,7 @@ namespace BandGap
       file.close();
 #ifdef _MPI
     }
-    mpi::Broadcast broadcast(mpi::main);
+    mpi::BroadCast broadcast(mpi::main);
     broadcast.serialize(a);
     broadcast.serialize(b);
     broadcast.allocate_buffers();
@@ -633,11 +633,14 @@ types::t_real set_concentration( Ising_CE::Structure &_str,
 namespace mpi
 {
   template<>
-  bool mpi::BroadCast::serialize<BandGap>( BandGap::Functional & _func )
+  bool mpi::BroadCast::serialize<BandGap::Functional>( BandGap::Functional & _func )
   {
-    if( not serialize( _ev.vff ) ) return false;
-    if( not serialize( _ev.vff_minimizer ) ) return false;
-    if( not serialize( _ev.pescan ) ) return false;
+    if( not serialize( _func.vff ) ) return false;
+    if( not _func.vff_minimizer.broadcast( *this ) ) return false;
+    if( not serialize( _func.pescan ) ) return false;
+
+    if ( stage == COPYING_FROM_HERE and rank() != ROOT_NODE )
+      _func.vff.initialize_centers();
 
     return true;
   }
@@ -653,15 +656,11 @@ namespace mpi
     if( not serialize( _ev.lessthen ) ) return false;
     if( not serialize( _ev.morethen ) ) return false;
     if( not serialize( _ev.x_vs_y ) ) return false;
-    if( not serialize( _ev.single_concentration ) ) return false;
 
-    if ( stage == COPYING_FROM_HERE and rank() != ROOT_NODE )
-      _ev.vff.initialize_centers();
-
-    return true;
+    return serialize( _ev.single_concentration );
   }
   template<>
-  bool mpi::BroadCast::serialize<CE::Object>( CE::Object & _object )
+  bool mpi::BroadCast::serialize<BandGap::Object>( BandGap::Object & _object )
   {
     return serialize( _object.bitstring );
   }

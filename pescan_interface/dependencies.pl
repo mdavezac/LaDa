@@ -29,9 +29,8 @@ if ( $computer =~ /office/ )
                                  "/opt/mpich/include");
                                  
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
-                             "-L/opt/mpich/ch-p4/lib", "-lpmpich++",
-                             "-lpmpich",
                              "-llamarck", "-ltinyxml", "-latat","-lmpiobject",
+                             "-L/opt/mpich/ch-p4/lib", "-lpmpich++", "-lpmpich",
                              "-lphysics", "-lgslcblas", "-lgsl", "-lvff" );
   $params{"CC"}  = "gcc";
   $params{"CXX"} = "g++-4.1";
@@ -234,7 +233,7 @@ sub template()
 
             
 
-  printf OUT "\n\nclean:\n\t- rm -f \${OBJS}\n";
+  printf OUT "\n\nclean:\n\t- rm -f \${OBJS} main.o \n";
   printf OUT "\t- rm -f \${OUTPUT} lib\${OUPUT}.a\n";
   if (exists $params{'cleanall'} )
   { 

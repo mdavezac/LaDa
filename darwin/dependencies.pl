@@ -6,7 +6,9 @@ my %params;
 
 my $HOME = `cd; pwd`; chomp $HOME;
 
-@{$params{"defs"}} = ( "_G_HAVE_BOOL", "ANSI_HEADERS", "HAVE_SSTREAM" ); 
+@{$params{"defs"}} = ( "_G_HAVE_BOOL", "ANSI_HEADERS",
+                       "_MPI",
+                       "HAVE_SSTREAM" ); 
 
 @{$params{"Includes"}} = ( "." );
 @{$params{"gsl lib"}} = ( "-lgslcblas", "-lgsl" );
@@ -28,13 +30,12 @@ if ( $computer =~ /home/ )
 if ( $computer =~ /office/ )
 {
   @{$params{"make include"}} = ( "$HOME/usr/include",
-                                 "$HOME/usr/include/eo",
-                                 "/opt/mpich/include" );
+                                 "/opt/mpich/include",
+                                 "$HOME/usr/include/eo" );
                                  
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
                              "-llamarck", "-latat", "-ltinyxml",
-#                            "-L/opt/mpich/ch-p4/lib/",
-#                            " -lpmpich++", "-lpmpich", "-lmpiobject", 
+                             "-L/opt/mpich/ch-p4/lib/", " -lpmpich++", "-lpmpich", "-lmpiobject", 
                              "-lga", "-leoutils", "-leo" );
   $params{"CC"}  = "gcc";
   $params{"CXX"} = "gcc";
@@ -232,7 +233,7 @@ sub template()
   printf OUT "\t\${CXX} -c \${CXXFLAGS} \${INCS} -D _CE main.cc  -o main.o\n\n";
   printf OUT "\t\${LD} \${LDFLAGS} -o \$@ \${OBJS} ce.o main.o \${LIBS} \${EXTRALIBS}\n";
   printf OUT "\npescan: \${OBJS} pescan.o \n";
-  printf OUT "\t\${CXX} -c \${CXXFLAGS} \${INCS} -D _PESCAN main.cc  -o main.o\n\n";
+  printf OUT "\t\${CXX} -c \${CXXFLAGS} \${INCS} -D _PESCAN main.cc  -o main.o\n";
   printf OUT "\t\${LD} \${LDFLAGS} -o \$@ \${OBJS} pescan.o main.o -lpescan -lvff -lphysics ";
   foreach $lib ( @{$params{"gsl lib"}} )
   {
@@ -249,8 +250,8 @@ sub template()
 
             
 
-  printf OUT "\n\nclean:\n\t- rm -f \${OBJS}\n";
-  printf OUT "\t- rm -f \${OUTPUT}\n";
+  printf OUT "\n\nclean:\n\t- rm -f \${OBJS} pescan.o ce.o\n";
+  printf OUT "\t- rm -f pescan ce\n";
   if (exists $params{'cleanall'} )
   { 
     foreach $clean ( (@{$params{"cleanall"}}) )
