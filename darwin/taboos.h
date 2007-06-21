@@ -11,25 +11,11 @@
 #include <opt/types.h>
 
 #include<ext/functional>
-namespace gstd = __gnu_cxx;
+
+#include"functors.h"
 
 namespace darwin
 {
-  template <class A1, class R>
- class const_eoUF : public eoFunctorBase, public std::unary_function<A1, R>
- {
-   public:
-     typedef A1 t_Argument;
-     typedef R  t_Return;
-
-   public:
-     virtual ~const_eoUF() {}
-   
-     virtual t_Return operator()( t_Argument ) const = 0;
-   
-     static eoFunctorBase::unary_function_tag functor_category()
-       { return eoFunctorBase::unary_function_tag(); }
- };
 
   template<class t_Individual> 
     bool equate_objects ( const t_Individual &_i1, const t_Individual &_i2 ) 
@@ -52,10 +38,10 @@ namespace darwin
 
       types::t_unsigned max_production(void) { return 1; }
 
-      virtual bool is_problematic() const = 0;
-      virtual void set_problematic(bool _p = false) = 0;
+      virtual bool is_problematic() {return false;}
+      virtual void set_problematic(bool _p = false) {return; }
 
-      virtual void print_out( std::ostream &str ) const = 0;
+      virtual void print_out( std::ostream &str ) const {return;}
   };
 
   template<class T_INDIVIDUAL, class T_CONTAINER = eoPop<T_INDIVIDUAL> >
@@ -464,6 +450,28 @@ namespace darwin
 
       virtual std::string className () const { return "Darwin :: TabooOp"; }
 
+  };
+
+  template< class T_INDIVIDUAL  >
+  class TabooFunction : public Taboo_Base< T_INDIVIDUAL >
+  {
+    public:
+      typedef T_INDIVIDUAL t_Individual;
+      typedef typename T_INDIVIDUAL::t_Object t_Object;
+
+    protected:
+      eoMonOp<const t_Object> &op;
+
+    public:
+      TabooFunction( eoMonOp<const t_Object> &_op ) : op(_op) {};
+      ~TabooFunction() {}
+
+      std::string className() const { return op.className(); }
+
+      bool operator()( const t_Individual& _indiv ) const
+      {
+        return op(_indiv.Object());
+      }
   };
 
 } // namespace LaDa

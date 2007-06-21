@@ -67,7 +67,6 @@ int main(int argc, char *argv[])
 
     VA_CE::Functional_Builder::t_VA_Functional functional;
     ce.generate_functional(structure, &functional);
-    structure.set_kvectors( functional.get_functional2()->get_kvectors() );
   
     functional.resize( structure.atoms.size() );
     Ising_CE::Structure::t_Atoms::const_iterator i_atom = structure.atoms.begin();

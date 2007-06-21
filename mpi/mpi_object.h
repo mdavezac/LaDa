@@ -51,7 +51,7 @@ namespace mpi
       {
         types::t_int out, in = _bool ? 1 : 0;
         MPI::COMM_WORLD.Allreduce( &in, &out, 1, UNSIGNED, MPI::SUM ); 
-        _bool = ( out == 4 );
+        _bool = ( out == nproc );
         return _bool;
       }
   };

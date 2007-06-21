@@ -1,4 +1,11 @@
-#include "ce.h"
+#ifdef _CE
+  #include "ce.h"
+  namespace Functional = CE;
+#endif
+#ifdef _PESCAN
+  #include "pescan.h"
+  namespace Functional = BandGap;
+#endif
 #include "individual.h"
 #include "darwin.h"
 #include "print_xmgrace.h"
@@ -12,8 +19,8 @@ int main(int argc, char *argv[])
   darwin::printxmg.init("convex_hull.agr");
   try
   {
-    typedef darwin::Individual< CE::Object, eoMinimizingFitness > t_Individual;
-    darwin::Darwin< t_Individual, CE::Evaluator > ga;
+    typedef darwin::Individual< Functional::Object, eoMinimizingFitness > t_Individual;
+    darwin::Darwin< t_Individual, Functional::Evaluator > ga;
     if ( not  ga.Load("input.xml") )
       throw ""; 
     ga.run();

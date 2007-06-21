@@ -11,6 +11,7 @@
 
 namespace darwin
 {
+#ifdef _MPI
 # define OPENXMLINPUT \
     TiXmlDocument doc( filename.c_str() ); \
     TiXmlHandle docHandle( &doc ); \
@@ -20,6 +21,16 @@ namespace darwin
       std::cout << doc.ErrorDesc() << std::endl; \
       throw "Could not load input file in  Darwin<T_INDIVIDUAL,T_EVALUATOR> "; \
     } 
+#else
+# define OPENXMLINPUT \
+    TiXmlDocument doc( filename.c_str() ); \
+    TiXmlHandle docHandle( &doc ); \
+    if  ( !doc.LoadFile() ) \
+    { \
+      std::cout << doc.ErrorDesc() << std::endl; \
+      throw "Could not load input file in  Darwin<T_INDIVIDUAL,T_EVALUATOR> "; \
+    } 
+#endif
 
   template<class T_INDIVIDUAL, class T_EVALUATOR>
   Darwin<T_INDIVIDUAL,T_EVALUATOR> :: ~Darwin()
@@ -150,7 +161,7 @@ namespace darwin
 
     // creates Taboo container if there are more than one taboo list
     types::t_unsigned nb_taboos = 0;
-    for( ; child and not taboos; child = child->NextSiblingElement() )
+    for( ; child and nb_taboos < 2; child = child->NextSiblingElement() )
     {
       std::string name = child->Value();
       if (    name.compare("PopTaboo") == 0
@@ -158,6 +169,14 @@ namespace darwin
            or name.compare("OffspringTaboo") == 0 
            or ( name.compare("HistoryTaboo") == 0 and history) )
         ++nb_taboos;
+      else
+      {
+        eoMonOp<const t_Object> *_op = evaluator.LoadTaboo( *child );
+        if ( not _op )
+          continue;
+        delete _op;
+        ++nb_taboos;
+      }
     }
     if ( nb_taboos < 1 )
       return; // no Taboo tags in Taboos tag
@@ -236,6 +255,26 @@ namespace darwin
     else if (child)
       std::cerr << "HistoryTaboo found in Taboos tags, but not History tag found!!" << std::endl
                 << "Include History tag if you want HistoryTaboo" << std::endl;
+
+
+    child = parent.FirstChildElement();
+    for( ; child ; child = child->NextSiblingElement() )
+    {
+      eoMonOp<const t_Object> *op = evaluator.LoadTaboo( *child );
+      if ( not op )
+        continue;
+      eostates.storeFunctor( op );
+      TabooFunction<t_Individual> *func = new TabooFunction<t_Individual>( *op );
+      eostates.storeFunctor(func);
+      if ( not taboos )
+      {
+        taboos = func;
+        return;
+      }
+      static_cast< Taboos<t_Individual>* >(taboos)->add( func );
+    }
+
+      
   }
 
   // Loads mating operations
@@ -267,7 +306,12 @@ namespace darwin
   void Darwin<T_INDIVIDUAL,T_EVALUATOR> :: Load_CheckPoints (const TiXmlElement &_parent)
   {
     // contains all checkpoints
-    continuator = new IslandsContinuator<t_Individual>(max_generations);
+    std::string str = "stop"; 
+    if (      _parent.FirstChildElement("Filenames") 
+         and  _parent.FirstChildElement("Filenames")->Attribute("stop") )
+      str = _parent.FirstChildElement("Filenames")->Attribute("stop");
+
+    continuator = new IslandsContinuator<t_Individual>(max_generations, str );
     eostates.storeFunctor( continuator );
     GenCount &generation_counter = continuator->get_generation_counter();
  
@@ -388,6 +432,14 @@ namespace darwin
       eostates.storeFunctor( nuclearwinter );
       continuator->add(*nuclearwinter);
     }
+
+
+    // Load object specific continuator
+    eoF<bool> *specific = evaluator.LoadContinue( _parent );
+    if ( not specific )
+      return;
+    eostates.storeFunctor(specific); 
+    continuator->add( eostates.storeFunctor(new Continuator<t_Individual>(*specific)) );
 
   } // end of make_check_point
   
@@ -917,8 +969,10 @@ namespace darwin
 
     // first load filenames
     std::string ga_string;
+#ifdef _MPI
     if ( mpi::main.rank() == mpi::ROOT_NODE )
     {
+#endif
       OPENXMLINPUT
       const TiXmlElement *parent = docHandle.FirstChild("Job")
                                             .FirstChild("GA").Element();
@@ -950,8 +1004,9 @@ namespace darwin
       // finds <GA> ... </GA> block 
       if ( not Load_Parameters( *parent ) )
         return false;
-    }
 
+#ifdef _MPI
+    }
 
     // broadcast what we have up to now
     mpi::BroadCast bc( mpi::main );
@@ -976,6 +1031,7 @@ namespace darwin
         const TiXmlElement *parent = docHandle.FirstChild("GA").Element();
         if ( not parent )
           return false;
+#endif
         Load_History( *parent );
         Load_Taboos( *parent );
         Load_Method( *parent );
@@ -985,12 +1041,15 @@ namespace darwin
         
         make_breeder();
         replacement = make_replacement();
+#ifdef _MPI
       }
       mpi::main.barrier();
     }
+#endif
 
     results->set_history(history);
 
+#ifdef _MPI
     if ( mpi::main.rank() == mpi::ROOT_NODE )
     {
       OPENXMLINPUT
@@ -998,6 +1057,7 @@ namespace darwin
                                             .FirstChild("GA").Element();
       if ( not parent )
         return false;
+#endif
       
       const TiXmlElement *restart_xml = parent->FirstChildElement("Restart");
       if ( restart_xml and restart_xml->Attribute("what") )
@@ -1045,6 +1105,7 @@ namespace darwin
             do_save |= SAVE_HISTORY;
         }
       }
+#ifdef _MPI
     }
 
     if ( mpi::main.rank() != mpi::ROOT_NODE )
@@ -1061,6 +1122,7 @@ namespace darwin
     if( history ) history->broadcast(bc);
     results->broadcast(bc);
     broadcast_islands(bc);
+#endif 
 
     {
       std::ostringstream sstr; 

@@ -180,7 +180,7 @@ sub template()
 {
   open OUT, ">make_file_template" or die;
   printf OUT "CC     := $params{'CC'}\nCXX    := $params{'CXX'}\nF77    := $params{'F77'}\nLD     := $params{'LD'}\n";
-  printf OUT "AR     := ar rc\nRANLIB := ranlib\nDEBUG = NO\n";
+  printf OUT "AR     := ar rvu\nRANLIB := ranlib\nDEBUG = NO\n";
   printf OUT "\nFFLAGS     := \n";
   printf OUT  "CFLAGS     := \n";
   printf OUT  "CXXFLAGS   := $params{'CXXFLAGS'} \n";
@@ -243,27 +243,27 @@ sub template()
   if ( exists $params{'ar'}{'lamarck flags'} ) 
   {
     printf OUT "\t%s \n", $params{'ar'}{'lamarck flags'}[0];
-    printf OUT "\tar rvu \${OUTPUT} \${LIBOBJS} %s/*.o\n",
+    printf OUT "\t\${AR} \${OUTPUT} \${LIBOBJS} %s/*.o\n",
                $params{'ar'}{'lamarck flags'}[1];
   }
   else 
   {
-    printf OUT "\tar rvu \${OUTPUT} \${LIBOBJS} \n";
+    printf OUT "\t\${AR} \${OUTPUT} \${LIBOBJS} \n";
   }
-  printf OUT "\tranlib \${OUTPUT}\n";
+  printf OUT "\t\${RANLIB} \${OUTPUT}\n";
 
   printf OUT "\n\natat: \${ATATOBJS}\n";
   if ( exists $params{'ar'}{'atat flags'} ) 
   {
     printf OUT "\t%s \n", $params{'ar'}{'atat flags'}[0];
-    printf OUT "\tar rvu atat/lib\$@.a \${ATATOBJS} %s/*.o\n",
+    printf OUT "\t\${AR} atat/lib\$@.a \${ATATOBJS} %s/*.o\n",
                $params{'ar'}{'atat flags'}[1];
   }
   else 
   {
-    printf OUT "\tar rvu atat/lib\$@.a \${ATATOBJS} \n";
+    printf OUT "\t$\{AR} atat/lib\$@.a \${ATATOBJS} \n";
   }
-  printf OUT "\tranlib atat/lib\$@.a\n";
+  printf OUT "\t\${RANLIB} atat/lib\$@.a\n";
 
   printf OUT "\n\nclean:\n\t- rm -f \${OBJS} \${LIBOBJS}\n";
   printf OUT "\t- rm -f \${OUTPUT}\n\n";

@@ -249,8 +249,7 @@ namespace VA_CE
      (*polynome) *= 1.0 /( (types::t_real) str.atoms.size() );
  
      // now computes constituent strain 
-     strain = new Constituent_Strain;
-     strain->set_structure( str, lattice->cell );
+     strain = new Constituent_Strain(str);
      
      // finally creates FUNCTION object and adds it to the list
      functional->set_functional2( strain );

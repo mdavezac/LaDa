@@ -36,7 +36,7 @@ namespace CE
     std::vector<types::t_real> bitstring;
     Object() {}
     Object(const Object &_c) : bitstring(_c.bitstring) {};
-    Object(const Ising_CE::Structure &_c)
+    bool operator<< (const Ising_CE::Structure &_c)
     {
       bitstring.resize( _c.atoms.size() );
       Ising_CE::Structure :: t_Atoms :: const_iterator i_atom = _c.atoms.begin();
@@ -44,8 +44,9 @@ namespace CE
       std::vector<types::t_real> :: iterator i_var = bitstring.begin();
       for(; i_atom != i_end; ++i_atom, ++i_var )
         *i_var = ( i_atom->type > 0 ) ? 1.0 : -1.0;
+      return true;
     }
-    Object(const std::string &_c)
+    bool operator<<(const std::string &_c)
     {
       types::t_unsigned size = _c.size();
       bitstring.resize( size );
@@ -53,9 +54,14 @@ namespace CE
       std::vector<types::t_real> :: iterator i_end = bitstring.end();
       for(types::t_unsigned n=0; i_var != i_end; ++i_var, ++n )
         *i_var = ( _c[n] == '1' ) ? 1.0 : -1.0;
+      return true;
     }
     ~Object() {};
     
+    types::t_real& operator[](types::t_unsigned _i) 
+      { return bitstring[_i]; }
+    const types::t_real& operator[](types::t_unsigned _i) const
+      { return bitstring[_i]; }
     bool operator==( const Object &_c ) const
     {
       return std::equal( bitstring.begin(), bitstring.end(), 
@@ -144,11 +150,7 @@ namespace CE
       bool initialize( t_Object &_object );
       void set_object( t_Object &_object, const void * const _f ) {}
       void* const LoadMinimizer(const TiXmlElement &_el );
-
-    protected:
-      bool set_concentration( Ising_CE::Structure &_object );
   };
-
 
 } // namespace CE
 

@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
   structure.energy = vff.energy();
   vff.print_escan_input();
 
-  pescan::Interface interface;
+  Pescan::Interface interface;
   interface.Load(*handle.FirstChild("Job").Element());
   std::cout << "Band Gap: " << interface(structure) << std::endl;
 

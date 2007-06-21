@@ -62,6 +62,14 @@ namespace darwin
       // pointer is owned by darwin::MinmizerGaOp !!
       // don't deallocate yourself
       virtual void* const LoadMinimizer(const TiXmlElement &_el ) = 0;
+      // returns a pointer to a eoF<bool> object
+      // pointer is owned by darwin::Darwin::eostates !!
+      // don't deallocate yourself
+      virtual eoF<bool>* LoadContinue(const TiXmlElement &_el ) { return NULL; }
+      // returns a pointer to a eoMonOp<const t_Object> object
+      // pointer is owned by darwin::Darwin::eostates !!
+      // don't deallocate yourself
+      virtual eoMonOp<const t_Object>* LoadTaboo(const TiXmlElement &_el ) { return NULL; }
       // Initializes object before call to functional 
       // i.e. transforms t_Object format to
       // function::Function<...>::variables format if necessary

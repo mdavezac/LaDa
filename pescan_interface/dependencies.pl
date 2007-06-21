@@ -181,7 +181,7 @@ sub template()
 {
   open OUT, ">make_file_template" or die;
   printf OUT "CC     := $params{'CC'}\nCXX    := $params{'CXX'}\nF77    := $params{'F77'}\nLD     := $params{'LD'}\n";
-  printf OUT "AR     := ar rc\nRANLIB := ranlib\nDEBUG = NO\n";
+  printf OUT "AR     := ar ruv\nRANLIB := ranlib\nDEBUG = NO\n";
   printf OUT "\nFFLAGS     := \n";
   printf OUT  "CFLAGS     := \n";
   printf OUT  "CXXFLAGS   := $params{'CXXFLAGS'} \n";
@@ -217,20 +217,25 @@ sub template()
   printf OUT "\nCFLAGS   := \${CFLAGS}   \${DEFS}\n";
   printf OUT "CXXFLAGS := \${CXXFLAGS} \${DEFS}\n";
   printf OUT "\nOUTPUT := pescan\n";
-  printf OUT "\nall: \${OUTPUT} \n";
+  printf OUT "\nall: lib\${OUTPUT}  \${OUTPUT} \n";
   printf OUT "\n\?SRCS :=\?\n";
   printf OUT "\nOBJS := \$(addsuffix .o,\$(basename \${SRCS}))\n";
   printf OUT "\n.PHONY: clean cleanall\n";
-  printf OUT "\n\${OUTPUT}: \${OBJS} \n";
-  printf OUT "\t\${LD} \${LDFLAGS} -o \$@ \${OBJS} \${LIBS} \${EXTRALIBS}\n";
-  printf OUT "\n\${OBJS} : ${OBJSRCS}\n";
+  printf OUT "\nlib\${OUTPUT}: \${OBJS} \n";
+  printf OUT "\t\${AR} \$@.a \${OBJS} \n";
+  printf OUT "\t\${RANLIB} \$@.a\n";
+  printf OUT "\n\${OUTPUT}: \${OBJS} main.o \n";
+  printf OUT "\t\${LD} \${LDFLAGS} -o \$@ \${OBJS} main.o \${LIBS} \${EXTRALIBS}\n";
+  printf OUT "\n\${OBJS} : \${OBJSRCS}\n";
   printf OUT "\t\${CXX} -c \${CXXFLAGS} \${INCS} \$< -o \$@\n\n";
+  printf OUT "\nmain.o : \n";
+  printf OUT "\t\${CXX} -c \${CXXFLAGS} \${INCS} main.cc -o main.o\n\n";
   printf OUT "\?dependencies\?";
 
             
 
   printf OUT "\n\nclean:\n\t- rm -f \${OBJS}\n";
-  printf OUT "\t- rm -f \${OUTPUT}\n";
+  printf OUT "\t- rm -f \${OUTPUT} lib\${OUPUT}.a\n";
   if (exists $params{'cleanall'} )
   { 
     foreach $clean ( (@{$params{"cleanall"}}) )
@@ -266,6 +271,7 @@ sub template()
         my $i = 0;
         foreach $key ( @sorted_keys )
         {
+          next if ( $key =~ /main/ );
           if ( exists $dependencies{$key}{"source"} )
           {
             if ( $i % 5 == 0 and $i != 0 )

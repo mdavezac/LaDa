@@ -9,6 +9,7 @@ my $HOME = `cd; pwd`; chomp $HOME;
 @{$params{"defs"}} = ( "_G_HAVE_BOOL", "ANSI_HEADERS", "HAVE_SSTREAM" ); 
 
 @{$params{"Includes"}} = ( "." );
+@{$params{"gsl lib"}} = ( "-lgslcblas", "-lgsl" );
 
 if ( $computer =~ /home/ )
 {
@@ -32,8 +33,8 @@ if ( $computer =~ /office/ )
                                  
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
                              "-llamarck", "-latat", "-ltinyxml",
-                             "-L/opt/mpich/ch-p4/lib/",
-                             " -lpmpich++", "-lpmpich", "-lmpiobject", 
+#                            "-L/opt/mpich/ch-p4/lib/",
+#                            " -lpmpich++", "-lpmpich", "-lmpiobject", 
                              "-lga", "-leoutils", "-leo" );
   $params{"CC"}  = "gcc";
   $params{"CXX"} = "gcc";
@@ -120,6 +121,7 @@ sub get_dependencies()
         if (/\#include(\s+|)(\"|\<)(\S+\/|)(\S+)\.h(\"|\>)/)
         {
           my $new_key = $4;
+          next if ( $key =~ /main/ and $new_key =~ /(\bce\b|pescan)/ );
           if ( !( exists $dependencies{"$new_key"} ) )
           {
             foreach $location (  @{$params{"Includes"}} ) 
@@ -153,6 +155,7 @@ sub get_dependencies()
         if (/\#include(\s+|)(\"|\<)(\S+\/|)(\S+)\.h(\"|\>)/)
         {
           my $new_key = $4;
+          next if ( $key =~ /main/ and $new_key =~ /(\bce\b|pescan)/ );
           if ( !( exists $dependencies{$new_key} ) )
           {
             foreach $location (  @{$params{"Includes"}} ) 
@@ -221,13 +224,25 @@ sub template()
   printf OUT "endif\n";
   printf OUT "\nCFLAGS   := \${CFLAGS}   \${DEFS}\n";
   printf OUT "CXXFLAGS := \${CXXFLAGS} \${DEFS}\n";
-  printf OUT "\nOUTPUT := lada\n";
-  printf OUT "\nall: \${OUTPUT} \n";
+  printf OUT "\nall: ce pescan \n";
   printf OUT "\n\?SRCS :=\?\n";
   printf OUT "\nOBJS := \$(addsuffix .o,\$(basename \${SRCS}))\n";
   printf OUT "\n.PHONY: clean cleanall\n";
-  printf OUT "\n\${OUTPUT}: \${OBJS} \n";
-  printf OUT "\t\${LD} \${LDFLAGS} -o \$@ \${OBJS} \${LIBS} \${EXTRALIBS}\n";
+  printf OUT "\nce: \${OBJS} ce.o \n";
+  printf OUT "\t\${CXX} -c \${CXXFLAGS} \${INCS} -D _CE main.cc  -o main.o\n\n";
+  printf OUT "\t\${LD} \${LDFLAGS} -o \$@ \${OBJS} ce.o main.o \${LIBS} \${EXTRALIBS}\n";
+  printf OUT "\npescan: \${OBJS} pescan.o \n";
+  printf OUT "\t\${CXX} -c \${CXXFLAGS} \${INCS} -D _PESCAN main.cc  -o main.o\n\n";
+  printf OUT "\t\${LD} \${LDFLAGS} -o \$@ \${OBJS} pescan.o main.o -lpescan -lvff -lphysics ";
+  foreach $lib ( @{$params{"gsl lib"}} )
+  {
+    printf OUT " $lib ";
+  }
+  printf OUT " \${LIBS} \${EXTRALIBS} \n";
+  printf OUT "\npescan.o : \n";
+  printf OUT "\t\${CXX} -c \${CXXFLAGS} \${INCS} \$< -o \$@\n\n";
+  printf OUT "\nce.o : \n";
+  printf OUT "\t\${CXX} -c \${CXXFLAGS} \${INCS} \$< -o \$@\n\n";
   printf OUT "\n\${OBJS} : ${OBJSRCS}\n";
   printf OUT "\t\${CXX} -c \${CXXFLAGS} \${INCS} \$< -o \$@\n\n";
   printf OUT "\?dependencies\?";
@@ -271,6 +286,7 @@ sub template()
         my $i = 0;
         foreach $key ( @sorted_keys )
         {
+          next if ( $key =~ /(main|\bce\b|pescan)/ );
           if ( exists $dependencies{$key}{"source"} )
           {
             if ( $i % 5 == 0 and $i != 0 )

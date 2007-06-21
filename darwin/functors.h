@@ -2,6 +2,7 @@
 #define _DARWIN_FUNCTORS_H_
 
 #include <eo/eoOp.h>
+#include <eo/eoContinue.h>
 #include <eo/utils/eoRNG.h>
 #include <eo/utils/eoState.h>
 
@@ -10,6 +11,22 @@
 
 namespace darwin 
 {
+  template <class A1, class R>
+ class const_eoUF : public eoFunctorBase, public std::unary_function<A1, R>
+ {
+   public:
+     typedef A1 t_Argument;
+     typedef R  t_Return;
+
+   public:
+     virtual ~const_eoUF() {}
+   
+     virtual t_Return operator()( t_Argument ) const = 0;
+   
+     static eoFunctorBase::unary_function_tag functor_category()
+       { return eoFunctorBase::unary_function_tag(); }
+ };
+
   // generic class for converting member function to binary genetic operators
   template<class T_CLASS, class T_OBJECT, class T_ARG >
   class mem_binop_t : public eoBinOp<T_OBJECT> 
@@ -121,6 +138,31 @@ namespace darwin
         {  return ( (class_obj.*class_func) )( _object); }
 
   }; 
+  template<class T_CLASS, class T_OBJECT>
+  class const_mem_monop_t : public eoMonOp<const T_OBJECT> 
+  {
+    public:
+      typedef T_CLASS t_Class; 
+      typedef T_OBJECT t_Object;
+      typedef bool ( t_Class::*t_Function )(const t_Object &);
+
+    private:
+      t_Class &class_obj;
+      t_Function class_func;
+      std::string class_name;
+
+    public:
+      explicit
+        const_mem_monop_t   ( t_Class &_co, t_Function _func, const std::string &_cn )
+                    : class_obj(_co), class_func(_func), class_name(_cn) {};
+
+      void set_className( std::string &_cn) { class_name = _cn; }
+      virtual std::string className() const { return class_name; }
+
+      bool operator() (const t_Object &_object) 
+        {  return ( (class_obj.*class_func) )( _object); }
+
+  }; 
   // generic class for converting member function to monary operators
   template<class T_CLASS, class T_INDIVIDUAL>
   class mem_monop_indiv_t : public eoMonOp<T_INDIVIDUAL> 
@@ -146,6 +188,31 @@ namespace darwin
 
       bool operator() (t_Individual &_indiv) 
         { return ( (class_obj.*class_func) )( (t_Object &) _indiv ); }
+
+  }; 
+  // generic class for converting member function to zero operators
+  template<class T_CLASS, class T_OBJECT>
+  class mem_zerop_t : public eoF<bool>
+  {
+    public:
+      typedef T_CLASS t_Class; 
+      typedef bool ( t_Class::*t_Function )();
+
+    private:
+      t_Class &class_obj;
+      t_Function class_func;
+      std::string class_name;
+
+    public:
+      explicit
+        mem_zerop_t   ( t_Class &_co, t_Function _func, const std::string &_cn )
+                    : class_obj(_co), class_func(_func), class_name(_cn) {};
+
+      void set_className( std::string &_cn) { class_name = _cn; }
+      virtual std::string className() const { return class_name; }
+
+      bool operator() () 
+        {  return ( (class_obj.*class_func) )(); }
 
   }; 
   template<class T_INDIVIDUAL>
@@ -266,6 +333,25 @@ namespace darwin
 
       bool operator() ( t_Object &_obj1 )
       { return false; } // do nothing!
+  };
+
+  template< class T_INDIVIDUAL  >
+  class Continuator : public eoContinue< T_INDIVIDUAL >
+  {
+    public:
+      typedef T_INDIVIDUAL t_Individual;
+
+    protected:
+      eoF<bool> &op;
+
+    public:
+      Continuator( eoF<bool> &_op ) : op(_op) {};
+      ~Continuator() {}
+
+      bool operator()(const eoPop<t_Individual> &_pop )
+      {
+        return op();
+      }
   };
 
 

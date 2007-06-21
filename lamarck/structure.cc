@@ -10,6 +10,7 @@
 #endif
 
 #include <opt/compose_functors.h>
+#include <opt/ndim_iterator.h>
 
 #include "atat/misc.h"
 #include "structure.h"
@@ -64,7 +65,7 @@ namespace Ising_CE {
     std::vector<CAtom> :: const_iterator i_kvec_end = k_vecs.end();
     for( ; i_kvec != i_kvec_end; ++i_kvec )
     {
-      stream << "  Kvec: ";
+      stream << "  Kvec: " << std::fixed << std::setprecision(8);
       i_kvec->print_out(stream);
     }
   }
@@ -253,14 +254,15 @@ namespace Ising_CE {
       if ( (not lattice) or (not lattice->convert_StrAtom_to_Atom( stratom, atom )) )
         if ( not atom.Load( *child ) )
           return false;
+      if (    ( lattice and atom.site > (types::t_int)lattice->sites.size() )
+           or atom.site < -1 )
+        atom.site = -1;
+      if ( lattice and atom.site != -1 )
+        atom.freeze |= lattice->sites[ atom.site ].freeze;
       atoms.push_back(atom);
     }
-//   if ( atoms.size() )
-//     std::sort( atoms.begin(), atoms.end(), 
-//                opt::ref_compose2( std::less<types::t_real>(), std::ptr_fun( ptr_norm ),
-//                                   std::ptr_fun( ptr_norm ) ) );
 
-    // reads in atoms
+    // reads in kvectors
     child = parent->FirstChildElement( "Kvec" );
     k_vecs.clear();
     for (; child; child=child->NextSiblingElement( "Kvec" ) )
@@ -270,6 +272,8 @@ namespace Ising_CE {
         return false;
       k_vecs.push_back(kvec);
     }
+    if ( lattice and ( not k_vecs.size() ) )
+      find_k_vectors();
 
     if ( k_vecs.size() )
       std::sort( k_vecs.begin(), k_vecs.end(), 
@@ -278,6 +282,23 @@ namespace Ising_CE {
     return true;
   }
 
+  bool Structure :: set_site_indices()
+  {
+    if ( not lattice )
+      return false;
+
+    bool result = true;
+    t_Atoms :: iterator i_atom = atoms.begin();
+    t_Atoms :: iterator i_atom_end = atoms.end();
+    for(; i_atom != i_atom_end; ++i_atom )
+    {
+      i_atom->site = lattice->get_atom_site_index( i_atom->pos );
+      (i_atom->site == -1) ?
+        result = false:
+        i_atom->freeze |= lattice->sites[ i_atom->site ].freeze;
+    }
+    return result;
+  }
 
   // prints an xml Structure tag. 
   // It may or may not have been created by a call
@@ -390,16 +411,167 @@ namespace Ising_CE {
 
   }
 
-// void Structure :: operator=( const Structure &_str )
-// {
-//   cell = _str.cell;
-//   atoms.clear(); atoms.resize( _str.atoms.size() );
-//   std::copy( _str.atoms.begin(), _str.atoms.end(), atoms.begin() );
-//   k_vecs.clear(); k_vecs.resize( _str.k_vecs.size() );
-//   std::copy( _str.k_vecs.begin(), _str.k_vecs.end(), k_vecs.begin() );
-//   Pi_name = _str.Pi_name;
-//   energy = _str.energy;
-// }
+  void Structure :: find_k_vectors()
+  {
+    if ( not lattice ) return;
+  
+    atat::rVector3d kvec;
+    atat::rMatrix3d k_lat = !( ~(lattice->cell) );
+    atat::rMatrix3d k_cell = !( ~(cell) );
+    k_vecs.clear();
+
+
+    // A is the basis used to determine "a" first brillouin zone
+    atat::rMatrix3d A = (!k_lat) * k_cell;
+    atat::iVector3d range, min;
+    
+    // computes range up to first periodic image
+    find_range( A, range );
+    
+    // sets up the n-dimensional iterators
+    opt::Ndim_Iterator< types::t_int, std::less_equal<types::t_int> > global_iterator;
+    global_iterator.add( 0, range[0]);
+    global_iterator.add( 0, range[1]);
+    global_iterator.add( 0, range[2]);
+    
+    // the following loop creates all possible k-vectors,
+    // it then refolds them and adds them to the k vector list
+    // only one copy of each refolded vector is allowed
+    types::t_real (*ptr_norm)(const atat::FixedVector<types::t_real, 3> &) = &atat::norm2;
+    t_kAtoms :: iterator i_begin = k_vecs.begin();
+    t_kAtoms :: iterator i_end = k_vecs.end();
+    t_kAtoms :: iterator i_which;
+    do
+    {
+      // creates vector in A basis
+      kvec[0] =  (types::t_real) global_iterator.access(0);
+      kvec[1] =  (types::t_real) global_iterator.access(1);
+      kvec[2] =  (types::t_real) global_iterator.access(2);
+      kvec = A * kvec;
+    
+      kvec[0] -= rint(kvec[0]); 
+      kvec[1] -= rint(kvec[1]); 
+      kvec[2] -= rint(kvec[2]); 
+      
+      // switches to cartesian coordinates
+      kvec = k_lat * kvec;
+      
+      // find if vector is already in list
+      i_which = std::find_if( i_begin, i_end, 
+                     compose1( std::bind2nd(std::less<types::t_real>(), types::tolerance),
+                     compose1( std::ptr_fun(ptr_norm),
+                               bind2nd(std::minus<atat::rVector3d>(), kvec) ) ) );
+      // if it is in list, don't add it
+      if ( i_which != i_end  ) 
+        continue;
+      
+      k_vecs.push_back( t_kAtom(kvec,0) );
+      i_begin = k_vecs.begin();
+      i_end = k_vecs.end();
+    
+    } while( ++global_iterator );
+
+    // refolds the vectors somewhat better
+    i_begin = k_vecs.begin();
+    i_end = k_vecs.end();
+    for( ; i_begin != i_end; i_begin++ )
+      refold(i_begin->pos, k_lat);
+
+    // finally, puts vector 0,0,0 at front of list
+    i_begin = k_vecs.begin();
+    i_end = k_vecs.end();
+    i_which = std::find_if( i_begin, i_end, 
+                   compose1( std::bind2nd(std::less<types::t_real>(), types::tolerance),
+                   compose1( std::ptr_fun(ptr_norm), std::_Identity<atat::rVector3d>() ) ) );
+ 
+    if ( i_which != i_end  ) 
+      std::iter_swap( i_which, k_vecs.begin() );
+      
+    // the refolding is not perfect, we now remove equivalent
+    // vectors "by hand "
+    remove_equivalents(k_vecs, k_lat);
+  }
+
+  void  find_range( const atat::rMatrix3d &A, atat::iVector3d &kvec )
+  {
+    atat::rVector3d a = A.get_column(0), b;
+    types::t_int n = 1;
+    b = a;
+    while( not is_int(b) )
+      { b += a; n++;  }
+    kvec[0] = n;
+
+    a = A.get_column(1);
+    b = a; n = 1;
+    while( not is_int(b) )
+      { b += a; n++;  }
+    kvec[1] = n;
+    
+    a = A.get_column(2);
+    b = a; n = 1;
+    while( not is_int(b) )
+      { b += a; n++;  }
+    kvec[2] = n;
+  }
+
+  // refold by one vector
+  void refold( atat::rVector3d &vec, const atat::rMatrix3d &lat )
+  {
+    opt::Ndim_Iterator<types::t_int, std::less_equal<types::t_int> > i_cell;
+    atat::rVector3d hold = vec;
+    atat::rVector3d compute;
+    atat::rVector3d current = vec;
+    types::t_real norm_c = norm2(vec);
+
+    i_cell.add(-2,2);
+    i_cell.add(-2,2);
+    i_cell.add(-2,2);
+
+    do
+    {
+      compute(0) = (types::t_real) i_cell.access(0);
+      compute(1) = (types::t_real) i_cell.access(1);
+      compute(2) = (types::t_real) i_cell.access(2);
+
+      vec = hold + lat*compute;
+      if ( norm2( vec ) < norm_c ) 
+      {
+        current = vec;
+        norm_c = norm2(vec);
+      }
+
+    } while ( (++i_cell) );
+
+    vec = current;
+  }
+
+  bool are_equivalent( const atat::rVector3d &_a,
+                       const atat::rVector3d &_b,
+                       const atat::rMatrix3d &_cell) 
+  {
+
+    opt::Ndim_Iterator<types::t_int, std::less_equal<types::t_int> > i_cell;
+    atat::rVector3d compute;
+
+    i_cell.add(-1,1);
+    i_cell.add(-1,1);
+    i_cell.add(-1,1);
+
+    do
+    {
+      compute(0) = (types::t_real) i_cell.access(0);
+      compute(1) = (types::t_real) i_cell.access(1);
+      compute(2) = (types::t_real) i_cell.access(2);
+
+      compute = _a + _cell*compute;
+      if ( norm2( compute - _b ) <  types::tolerance ) 
+        return true;
+
+    } while ( (++i_cell) );
+
+    return false;
+  }
+
 } // namespace Ising_CE
 
 #ifdef _MPI

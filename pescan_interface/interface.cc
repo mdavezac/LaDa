@@ -4,7 +4,7 @@
 
 #include<physics/physics.h>
 
-namespace pescan
+namespace Pescan
 {
   types::t_real Interface :: operator()( Ising_CE::Structure &_str)
   {
@@ -388,7 +388,7 @@ namespace pescan
 namespace mpi
 {
   template<>
-  bool BroadCast :: serialize<pescan::Interface::SpinOrbit>( pescan::Interface::SpinOrbit &_sp )
+  bool BroadCast :: serialize<Pescan::Interface::SpinOrbit>( Pescan::Interface::SpinOrbit &_sp )
   {
     if( not serialize( _sp.filename ) ) return false;
     if( not serialize( _sp.izz ) ) return false;
@@ -399,7 +399,7 @@ namespace mpi
     return serialize( _sp.dnl );
   }
   template<>
-  bool BroadCast :: serialize<pescan::Interface::Escan>( pescan::Interface::Escan &_p )
+  bool BroadCast :: serialize<Pescan::Interface::Escan>( Pescan::Interface::Escan &_p )
   {
     if ( not serialize( _p.filename ) ) return false;
     if ( not serialize( _p.output ) ) return false;
@@ -409,13 +409,13 @@ namespace mpi
     if ( stage == COPYING_FROM_HERE )
       switch ( n ) 
       {
-        case pescan::Interface::Escan::NOMET: 
-          _p.method = pescan::Interface::Escan::NOMET; break;
-        case pescan::Interface::Escan::FOLDED_SPECTRUM: 
-          _p.method = pescan::Interface::Escan::FOLDED_SPECTRUM; break;
+        case Pescan::Interface::Escan::NOMET: 
+          _p.method = Pescan::Interface::Escan::NOMET; break;
+        case Pescan::Interface::Escan::FOLDED_SPECTRUM: 
+          _p.method = Pescan::Interface::Escan::FOLDED_SPECTRUM; break;
         default:
-        case pescan::Interface::Escan::ALL_ELECTRON: 
-          _p.method = pescan::Interface::Escan::ALL_ELECTRON; break;
+        case Pescan::Interface::Escan::ALL_ELECTRON: 
+          _p.method = Pescan::Interface::Escan::ALL_ELECTRON; break;
       }
     if ( not serialize( _p.Eref.first ) ) return false;
     if ( not serialize( _p.Eref.second ) ) return false;
@@ -432,22 +432,22 @@ namespace mpi
     if ( stage == COPYING_FROM_HERE )
       switch ( n ) 
       {
-        case pescan::Interface::Escan::NOPOT: 
-          _p.potential = pescan::Interface::Escan::NOPOT; break;
+        case Pescan::Interface::Escan::NOPOT: 
+          _p.potential = Pescan::Interface::Escan::NOPOT; break;
         default:
-        case pescan::Interface::Escan::LOCAL: 
-          _p.potential = pescan::Interface::Escan::LOCAL; break;
-        case pescan::Interface::Escan::NONLOCAL: 
-          _p.potential = pescan::Interface::Escan::NONLOCAL; break;
-        case pescan::Interface::Escan::SPINORBIT: 
-          _p.potential = pescan::Interface::Escan::SPINORBIT; break;
+        case Pescan::Interface::Escan::LOCAL: 
+          _p.potential = Pescan::Interface::Escan::LOCAL; break;
+        case Pescan::Interface::Escan::NONLOCAL: 
+          _p.potential = Pescan::Interface::Escan::NONLOCAL; break;
+        case Pescan::Interface::Escan::SPINORBIT: 
+          _p.potential = Pescan::Interface::Escan::SPINORBIT; break;
       }
     if ( not serialize( _p.rcut ) ) return false;
     if ( not serialize( _p.launch ) ) return false;
     return serialize_container( _p.spinorbit );
   }
   template<>
-  bool BroadCast :: serialize<pescan::Interface::GenPot>( pescan::Interface::GenPot &_p )
+  bool BroadCast :: serialize<Pescan::Interface::GenPot>( Pescan::Interface::GenPot &_p )
   {
     if( not serialize( _p.filename ) ) return false;
     if( not serialize( _p.x ) ) return false;
@@ -459,7 +459,7 @@ namespace mpi
     return serialize_container( _p.pseudos );
   }
   template<>
-  bool BroadCast :: serialize<pescan::Interface>( pescan::Interface &_p )
+  bool BroadCast :: serialize<Pescan::Interface>( Pescan::Interface &_p )
   {
     if ( not serialize( _p.atom_input ) ) return false;
     if ( not serialize( _p.escan ) ) return false;
@@ -469,11 +469,11 @@ namespace mpi
     if ( stage == COPYING_TO_HERE )
       switch( n )
       {
-        case pescan::Interface::VBM:
-          _p.computation = pescan::Interface::VBM; break;
+        case Pescan::Interface::VBM:
+          _p.computation = Pescan::Interface::VBM; break;
         default:
-        case pescan::Interface::CBM:
-          _p.computation = pescan::Interface::CBM; break;
+        case Pescan::Interface::CBM:
+          _p.computation = Pescan::Interface::CBM; break;
       }
     return serialize( _p.dirname );
   }

@@ -50,7 +50,7 @@ namespace function
       bool does_own_variables;
 
     public:
-      Base() : variables(NULL), does_own_variables(false) {}
+      Base( t_Container *_vars = NULL ) : variables(_vars), does_own_variables(false) {}
       Base( types::t_int nb ) : variables(NULL), does_own_variables(false) 
         { resize(nb); }
       Base   ( const Base<t_Type, t_Container> &_f )

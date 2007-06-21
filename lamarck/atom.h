@@ -32,13 +32,14 @@ namespace Ising_CE {
       atat::rVector3d pos;
       t_Type  type;
       types::t_unsigned freeze;
+      types::t_int site;
       
-      Atom_Type() : pos(atat::rVector3d(0,0,0)), freeze(FREEZE_NONE) {};
+      Atom_Type() : pos(atat::rVector3d(0,0,0)), freeze(FREEZE_NONE), site(0) {};
       explicit 
         Atom_Type   ( const atat::rVector3d &_pos, t_Type _type) 
                   : pos(_pos), type(_type), freeze(FREEZE_NONE) {};
       Atom_Type   ( const Ising_CE::Atom_Type<t_Type> &_atom )
-                : pos(_atom.pos), type(_atom.type), freeze(_atom.freeze) {};
+                : pos(_atom.pos), type(_atom.type), freeze(_atom.freeze), site(_atom.site) {};
       bool operator== (const Atom_Type<t_Type> &_atom) const
        { return ( pos == _atom.pos ) ? true : false; };
       bool equal (const Atom_Type<t_Type> &_atom) const
@@ -61,35 +62,37 @@ namespace Ising_CE {
         types::t_real x, y, z;
         if ( not _element.Attribute("x") )
          return false; 
-        {
-          std::string str( _element.Attribute("x") );
-          std::istringstream ss( str );
-          ss >> x;
-        }
+
+        std::string str( _element.Attribute("x") );
+        std::istringstream ss( str );
+        ss >> x;
+
         if ( not _element.Attribute("y") )
          return false; 
-        {
-          std::string str( _element.Attribute("y") );
-          std::istringstream ss( str );
-          ss >> y;
-        }
+        str = _element.Attribute("y");
+        ss.clear(); ss.str( str );
+        ss >> y;
+
         if ( not _element.Attribute("z") )
          return false; 
-        {
-          std::string str( _element.Attribute("z") );
-          std::istringstream ss( str );
-          ss >> z;
-        }
+        str = _element.Attribute("z");
+        ss.clear(); ss.str( str );
+        ss >> z;
+
         pos = atat::rVector3d(x,y,z);
 
+        ss.clear(); ss.str("");
         if ( _element.Attribute("type") )
         {
-          std::string str( _element.Attribute("type") );
-          std::istringstream ss( str );
-          ss >> type;
+          str = _element.Attribute("type");
+          ss.str( str );
         }
-        else
-          type = t_Type(0);
+        ss >> type;
+        
+
+        site = -1;
+        if ( _element.Attribute("site") )
+          _element.Attribute("site", &site);
 
         freeze = FREEZE_NONE;
         if ( _element.Attribute("freeze") )
@@ -147,6 +150,11 @@ namespace Ising_CE {
               ss << "t";
           }
           node->SetAttribute( "freeze", ss.str().c_str() );
+        }
+        if ( site > -1 )
+        { 
+          std::ostringstream ss; 
+          ss << site;             node->SetAttribute( "type", ss.str().c_str() );
         }
         
       }

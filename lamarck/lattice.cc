@@ -170,8 +170,9 @@ namespace Ising_CE {
     _out.pos = _in.pos; 
     _out.freeze = _in.freeze;
     _out.type = 0;
+    _out.site = _in.site;
 
-    types::t_int site = get_atom_site_index( _in.pos );
+    types::t_int site = (_in.site > -1 ) ? _in.site : get_atom_site_index( _in.pos );
     if ( sites[site].type.size() == 1 )
       { _out.type = convert_type_index_to_real(0); return true; }
     if ( sites[site].type.size() > 2 )

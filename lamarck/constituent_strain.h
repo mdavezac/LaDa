@@ -25,26 +25,22 @@ namespace Ising_CE
 #endif
     public: 
       typedef std::vector<Harmonic> t_Harmonics;
+      typedef types::t_real t_Type;
+      typedef std::vector<types::t_real>  t_Container;
 
     protected:
       static const types::t_real ZERO_TOLERANCE;
 
     protected: 
       std::vector<atat::rVector3d> r_vecs, k_vecs;
-      atat::rMatrix3d r_cell, k_cell;
       static t_Harmonics harmonics;
  
       // constructor, destructor, and helpers
     public:
       Constituent_Strain() : function::Base<types::t_real>() {};
-      Constituent_Strain(const Ising_CE::Structure& str, const atat::rMatrix3d &lattice)
-        : function::Base<types::t_real>()
-          { set_structure( str, lattice ); }
-      Constituent_Strain(const Ising_CE::Structure& str, const atat::rMatrix3d &lattice,
-                         std::vector<types::t_real> *vars)
-        { function::Base<types::t_real>::variables = vars; set_structure( str, lattice ); }
+      Constituent_Strain(const Ising_CE::Structure& str, t_Container *vars=NULL);
       ~Constituent_Strain(){};
-      void set_structure( const Ising_CE::Structure& str, const atat::rMatrix3d &lattice );
+
    
       // required behaviors for interfacing with minimizer
     public: 
@@ -53,18 +49,6 @@ namespace Ising_CE
         { evaluate_with_gradient( gradient ); }
       types::t_real evaluate_with_gradient(types::t_real* const gradient);
       types::t_real evaluate_one_gradient( types::t_unsigned _pos );
-
-      // others
-    protected:
-      void cut_integer_part( atat::rVector3d &kvec);
-      void find_range( const atat::rMatrix3d &A, atat::iVector3d &kvec);
-      void refold( atat::rVector3d &vec, const atat::rMatrix3d &lat );
-      bool are_equivalent( const atat::rVector3d &vec_a,
-                           const atat::rVector3d &vec_b,
-                           const atat::rMatrix3d &lat) const;
-      void remove_equivalents( const atat::rMatrix3d &lat);
-
-
 
     public:
       bool Load_Harmonics( const TiXmlElement &_element);

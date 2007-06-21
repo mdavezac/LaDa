@@ -344,11 +344,12 @@ namespace darwin
       std::list < eoUpdater* >                  updaters;
       GenCount generation_counter;
       types::t_unsigned  max_generations;
+      std::string stop_filename;
 
     public:
-      IslandsContinuator   ( types::t_unsigned _max ) 
+      IslandsContinuator   ( types::t_unsigned _max, std::string _f = "stop" ) 
                          : generation_counter(0),
-                           max_generations(_max) {}
+                           max_generations(_max), stop_filename(_f) {}
 
       void add(eoContinue<t_Individual>& _cont)
         { continuators.push_back(&_cont); }
@@ -472,6 +473,25 @@ namespace darwin
         for( i_pop = _i_begin; i_pop != _i_end; ++i_pop )
           if ( not apply_continuators( *i_pop ) )
             result = false;
+
+        // checks if stop file exists
+#ifdef _MPI
+        if ( mpi::main.rank() == mpi::ROOT_NODE )
+        {
+#endif
+        std::ifstream file( stop_filename.c_str(), std::ios_base::in );
+        if ( file.is_open() )
+        {
+          std::ostringstream sstr;
+          sstr << "Stopping on finding file " << stop_filename;
+          printxmg.add_comment( sstr.str() );
+          result = false; 
+        }
+
+#ifdef _MPI
+        }
+        result = mpi::main.all_sum_all(result);
+#endif 
 
         // last call
         if ( not result )

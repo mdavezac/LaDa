@@ -17,6 +17,8 @@
 
 #include<mpi/mpi_object.h>
 
+#include <tinyxml/tinyxml.h>
+
 namespace darwin
 {
   template<class T_OBJECT, class T_FITNESS = eoMinimizingFitness >

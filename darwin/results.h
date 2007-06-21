@@ -346,7 +346,7 @@ namespace darwin
     public:
       BestOf   (const TiXmlElement &_parent, t_Evaluator &_eval, const t_Taboo * const _t)
              : Results<t_Individual, t_Evaluator, t_Population>( _eval, _t ), 
-               delta(types::tolerance), remove_if(delta, optimum.get_quantity())
+               delta(types::tolerance), remove_if(optimum.get_quantity(), delta)
       {
         if ( _parent.Attribute("delta") )
           _parent.Attribute("delta", &delta);

@@ -7,6 +7,8 @@
 #include "print_xmgrace.h"
 #include <lamarck/atom.h>
 #include <opt/va_minimizer.h>
+#include <opt/bisection.h>
+#include "concentration.h"
 
 namespace CE
 {
@@ -35,14 +37,14 @@ namespace CE
     {
       if( not _node.Attribute("string") )
         return false;
-      _obj = std::string(_node.Attribute("string"));
+      _obj << std::string(_node.Attribute("string"));
       return true;
     }
 
     Ising_CE::Structure s; 
     if ( not s.Load(_node) )
       return false;
-    _obj = s;
+    _obj << s;
     return true;
   }
   bool Evaluator :: Save( const Object &_obj, TiXmlElement &_node, bool _type ) const
@@ -82,7 +84,8 @@ namespace CE
 
     if ( not VA_CE::Functional_Builder::Load(*functional_xml) )
       return false;
-
+    Ising_CE::Structure::lattice = VA_CE::Functional_Builder::lattice;
+       
     // reads structure from input
     const TiXmlElement *structure_xml = _node.FirstChildElement( "Structure" );
     if ( not structure_xml )
@@ -97,7 +100,6 @@ namespace CE
     add_equivalent_clusters();
 
     generate_functional(structure, &functional);
-    structure.set_kvectors( functional.get_functional2()->get_kvectors() );
 
     return true;
   }
@@ -123,102 +125,27 @@ namespace CE
                                   str1.k_vecs.begin(), str1.k_vecs.end() );
     Ising_CE::fourrier_to_kspace( str2.atoms.begin(),  str2.atoms.end(),
                                   str2.k_vecs.begin(), str2.k_vecs.end() );
-    do 
-    {
-      if ( _range and str1.k_vecs.size() > 2 ) // range crossover ... kvec should be oredered according to size
-      {  
-        types::t_unsigned n = (types::t_unsigned)
-           std::floor(   (types::t_real) rng.random ( str1.k_vecs.size() - 1 ) 
-                       * (types::t_real) crossover_probability );
-        __gnu_cxx::copy_n( str2.k_vecs.begin(), n, str1.k_vecs.begin() );
-      }
-      else // every point crossover
-      {
-        Ising_CE::Structure::t_kAtoms :: const_iterator i_p = str2.k_vecs.begin();
-        Ising_CE::Structure::t_kAtoms :: const_iterator i_p_end = str2.k_vecs.end();
-        Ising_CE::Structure::t_kAtoms :: iterator i_o = str1.k_vecs.begin();
-        for ( ; i_p != i_p_end; ++i_p, ++i_o)
-          if ( rng.flip(crossover_probability) ) 
-            i_o->type = i_p->type;
-      }
-  
-      if ( set_concentration( str1 ) )
-        break;
-      str1 << _offspring;
+    if ( _range and str1.k_vecs.size() > 2 ) // range crossover ... kvec should be oredered according to size
+    {  
+      types::t_unsigned n = (types::t_unsigned)
+          std::floor(   (types::t_real) rng.random ( str1.k_vecs.size() - 1 ) 
+                      * (types::t_real) crossover_probability );
+      __gnu_cxx::copy_n( str2.k_vecs.begin(), n, str1.k_vecs.begin() );
     }
-    while (true);
-    _offspring = str1;
+    else // every point crossover
+    {
+      Ising_CE::Structure::t_kAtoms :: const_iterator i_p = str2.k_vecs.begin();
+      Ising_CE::Structure::t_kAtoms :: const_iterator i_p_end = str2.k_vecs.end();
+      Ising_CE::Structure::t_kAtoms :: iterator i_o = str1.k_vecs.begin();
+      for ( ; i_p != i_p_end; ++i_p, ++i_o)
+        if ( rng.flip(crossover_probability) ) 
+          i_o->type = i_p->type;
+    }
+  
+    single_concentration ? set_concentration( str1, x ): set_concentration( str1 );
+    _offspring << str1;
 
     return true; // offspring has changed!
-  }
-
-  bool Evaluator :: set_concentration( Ising_CE::Structure &_object )
-  {
-    typedef std::complex<types::t_real> t_complex;
-    types::t_real N = 1.0 / types::t_real( _object.atoms.size() );
-    types::t_real tolerance = N;
-    types::t_unsigned count = 0;
-
-    // Then FT back to r space
-    t_complex  *Chold = new t_complex[ _object.atoms.size() ];
-    t_complex  *i_chold = Chold;
-    Ising_CE::fourrier_to_rspace( _object.atoms.begin(), _object.atoms.end(),
-                                  _object.k_vecs.begin(), _object.k_vecs.end(),
-                                  i_chold );
-
-    // Finally, normalizes and copies
-    i_chold = Chold;
-    Ising_CE::Structure::t_Atoms::iterator i_atom_end = _object.atoms.end();
-    Ising_CE::Structure::t_Atoms::iterator i_atom_begin = _object.atoms.begin();
-    Ising_CE::Structure::t_Atoms::iterator i_atom = i_atom_begin;
-    types::t_real X = 0;
-    for (; i_atom != i_atom_end; ++i_atom, ++i_chold)
-    {
-      i_atom->type = ( std::real(*i_chold) > 0 ) ? 1.0 : -1.0;
-      X += i_atom->type;
-    }
-    X *= N;
-    if (    ( not single_concentration )
-         or ( std::abs(X - x) < tolerance ) )
-      return true;
-
-    bool sign = (X > x ); 
-    types::t_real step = ( sign ? -1: 1 );
-    while( ( sign and X > x ) or ( (not sign) and X < x ) )
-    {
-      X = 0; i_atom = i_atom_begin;
-      _object.k_vecs.front().type += step;
-      i_chold = Chold; i_atom = i_atom_begin; X = 0.0;
-      Ising_CE::fourrier_to_rspace( _object.atoms.begin(), _object.atoms.end(),
-                                    _object.k_vecs.begin(), _object.k_vecs.end(),
-                                    i_chold );
-      for (; i_atom != i_atom_end; ++i_atom, ++i_chold)
-        X += ( std::real(*i_chold) > 0 ) ? 1.0 : -1.0;
-      X *= N;
-    }
-    while ( std::abs(X - x) > tolerance and count < 64 )
-    {
-      ++ count;
-      step = ( X > x ) ? -0.5 * std::abs(step) : 0.5 * std::abs(step);
-      _object.k_vecs.front().type += step;
-      i_chold = Chold; i_atom = i_atom_begin; X = 0.0;
-      Ising_CE::fourrier_to_rspace( _object.atoms.begin(), _object.atoms.end(),
-                                    _object.k_vecs.begin(), _object.k_vecs.end(),
-                                    i_chold );
-      for (; i_atom != i_atom_end; ++i_atom, ++i_chold)
-        X += ( std::real(*i_chold) > 0 ) ? 1.0 : -1.0;
-      X *= N;
-    }
-
-    i_chold = Chold; i_atom = i_atom_begin; X = 0;
-    for (; i_atom != i_atom_end; ++i_atom, ++i_chold)
-    {
-      i_atom->type = ( std::real(*i_chold) > 0 ) ? 1.0 : -1.0;
-      X += ( std::real(*i_chold) > 0 ) ? 1.0 : -1.0;
-    }
-    X *= N;
-    delete[] Chold;
-    return std::abs(X - x) < tolerance;
   }
 
   eoOp<Object>* Evaluator::LoadGaOp(const TiXmlElement &_el )
@@ -281,18 +208,29 @@ namespace CE
   {
     Ising_CE::Structure str = structure;
     _object.bitstring.resize( structure.atoms.size() );
-    do
+     
+    Object :: iterator i_var_end = _object.end();
+    Object :: iterator i_var = _object.begin();
+    types::t_int result = 0;
+    for(; i_var != i_var_end; ++i_var )
     {
-     Object :: iterator i_var_end = _object.end();
-     Object :: iterator i_var = _object.begin();
-     for(; i_var != i_var_end; ++i_var )
-       *i_var = rng.flip() ? 1.0 : -1.0;
-     if ( not single_concentration )
-       return true;
-     str << _object;
-     Ising_CE::fourrier_to_kspace( str.atoms.begin(),  str.atoms.end(), 
-                                   str.k_vecs.begin(), str.k_vecs.end() );
-    } while(not set_concentration( str ) );
+      *i_var = rng.flip() ? 1.0 : -1.0;
+      ( *i_var == 1.0 ) ? ++result: --result;
+    }
+    if ( single_concentration )
+    {
+      types::t_unsigned N = _object.size();
+      types::t_int to_change = static_cast<types::t_int>( (double) N * x ) - result;
+      if ( not to_change ) return true;
+      do
+      {
+        types::t_unsigned i = rng.random(N-1);
+        if ( to_change > 0 and _object[i] < 0 )
+          { _object[i] = 1; to_change-=2; }
+        else if ( to_change < 0 and _object[i] > 0 )
+          { _object[i] = -1; to_change+=2; }
+      } while ( to_change );
+    }
     return true;
   }
 
@@ -351,14 +289,15 @@ namespace mpi
   {
     if( not serialize( _ev.crossover_probability ) ) return false;
     if( not serialize( _ev.structure ) ) return false;
+    if( not serialize( _ev.lattice ) ) return false;
     if( not serialize( _ev.single_concentration ) ) return false;
     if( not serialize( _ev.x ) ) return false;
     if( not serialize<VA_CE::Functional_Builder>(_ev) ) return false;
 
     if ( stage == COPYING_FROM_HERE and rank() != ROOT_NODE )
     {
+      Ising_CE::Structure::lattice = VA_CE::Functional_Builder::lattice;
       _ev.generate_functional( _ev.structure, &_ev.functional );
-      _ev.structure.set_kvectors( _ev.functional.get_functional2()->get_kvectors() );
     }
 
     return true;

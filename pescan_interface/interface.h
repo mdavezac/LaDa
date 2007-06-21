@@ -13,7 +13,7 @@
 #include <mpi/mpi_object.h>
 #endif
 
-namespace pescan
+namespace Pescan
 {
   class Interface 
   {
@@ -93,6 +93,14 @@ namespace pescan
 
      types::t_real operator()( Ising_CE::Structure &_str ); 
      types::t_real launch_pescan( Ising_CE::Structure &_str ); 
+     void set_band_edges( types::t_real _val, types::t_real _cond )
+       { band_edge.first = _val; band_edge.second = _cond; }
+     void get_band_edges( types::t_real &_val, types::t_real &_cond ) const
+       { _val = band_edge.first; _cond = band_edge.second; }
+     Escan::t_method get_method() const
+       { return escan.method; }
+     void set_method( Escan::t_method _method = Escan::FOLDED_SPECTRUM )
+       { escan.method = _method; }
 
     protected:
      void create_directory();

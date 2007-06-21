@@ -67,7 +67,6 @@ namespace Ising_CE {
     void convert_from_ATAT (const Atat_Structure &atat);
     void operator=( const Atat_Structure &atat )
      { convert_from_ATAT( atat ); };
-//   void operator=( const Structure &_str );
     void print_out( std::ostream &stream ) const;
     void set_atom_types( const std::vector<types::t_real> &types);
     void get_atom_types( std::vector<types::t_real> &types) const;
@@ -96,8 +95,45 @@ namespace Ising_CE {
         k_vecs.push_back( kvec );
       }
     }
+
+    bool set_site_indices();
+
+    void find_k_vectors();
   };
 
+  void  find_range( const atat::rMatrix3d &A, atat::iVector3d &kvec );
+  void refold( atat::rVector3d &vec, const atat::rMatrix3d &lat );
+  bool are_equivalent( const atat::rVector3d &_a,
+                       const atat::rVector3d &_b,
+                       const atat::rMatrix3d &_cell);
+
+  template <class CONTAINER>
+  void remove_equivalents( CONTAINER &_cont, const atat::rMatrix3d &_cell)
+  {
+    typename CONTAINER :: iterator i_vec = _cont.begin();
+    typename CONTAINER :: iterator i_end = _cont.end();
+    typename CONTAINER :: iterator i_which;
+
+    while( i_vec != i_end )
+    {
+      i_which = i_vec+1;
+      for ( ; i_which != i_end; i_which++ )
+        if ( are_equivalent( *i_which, *i_vec, _cell ) )
+          break;
+
+      if ( i_which == i_end )
+      { 
+        ++i_vec;
+        continue;
+      }
+      
+      ( atat::norm2( (atat::rVector3d&) *i_vec ) < atat::norm2( (atat::rVector3d&) *i_which ) ) ? 
+            _cont.erase(i_which): _cont.erase(i_vec);
+      i_vec = _cont.begin();
+      i_end = _cont.end();
+    }
+
+  }
   template<class T_R_IT, class T_K_IT>
   void fourrier_to_kspace( T_R_IT _rfirst, T_R_IT _rend,
                            T_K_IT _kfirst, T_K_IT _kend ) // sets kvector values from rspace values

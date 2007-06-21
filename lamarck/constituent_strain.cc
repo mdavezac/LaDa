@@ -13,8 +13,6 @@
 #endif
 
 
-#include <opt/compose_functors.h>
-#include <opt/ndim_iterator.h>
 #include <analysis/analyze_code.h>
 
 #include "constituent_strain.h"
@@ -24,146 +22,23 @@ namespace Ising_CE
   std::vector<Harmonic> Constituent_Strain :: harmonics;
   const types::t_real Constituent_Strain::ZERO_TOLERANCE = 0.0000000001;
 
-  void Constituent_Strain :: set_structure(const Ising_CE::Structure& str, const atat::rMatrix3d &lattice)
+  Constituent_Strain :: Constituent_Strain   ( const Ising_CE::Structure& _str, t_Container *vars )
+                                           : function::Base<t_Type>(vars)
   {
-     atat::rVector3d kvec;
-     atat::rMatrix3d k_lat = !( ~(lattice) );
-     std::cout << std::fixed << std::right
-               << std::showpos << std::setprecision(6) << std::setw(14);
-
-     r_cell = str.cell;
-     k_cell = !( ~(r_cell) );
-     r_vecs.clear(); k_vecs.clear();
-
-     // gets r_vecs from str
-     {
-       std::vector<Atom> :: const_iterator i_atom = str.atoms.begin();
-       std::vector<Atom> :: const_iterator i_end = str.atoms.end();
-       for ( ; i_atom != i_end; i_atom++ )
-         r_vecs.push_back( i_atom->pos );
-     }
-
-     // creates k vector list
-     {
-       // A is the basis used to determine "a" first brillouin zone
-       atat::rMatrix3d A = (!k_lat) * k_cell;
-       atat::iVector3d range, min;
-       
-       // computes range up to first periodic image
-       find_range( A, range );
-       
-       // sets up the n-dimensional iterators
-       opt::Ndim_Iterator< types::t_int, std::less_equal<types::t_int> > global_iterator;
-       global_iterator.add( 0, range[0]);
-       global_iterator.add( 0, range[1]);
-       global_iterator.add( 0, range[2]);
-       
-       // the following loop creates all possible k-vectors,
-       // it then refolds them and adds them to the k vector list
-       // only one copy of each refolded vector is allowed
-       types::t_real (*ptr_norm)(const atat::FixedVector<types::t_real, 3> &) = &atat::norm2;
-       std::vector<atat::rVector3d> :: iterator i_begin = k_vecs.begin();
-       std::vector<atat::rVector3d> :: iterator i_end = k_vecs.end();
-       std::vector<atat::rVector3d> :: iterator i_which;
-       do
-       {
-         // creates vector in A basis
-         kvec[0] =  (types::t_real) global_iterator.access(0);
-         kvec[1] =  (types::t_real) global_iterator.access(1);
-         kvec[2] =  (types::t_real) global_iterator.access(2);
-         kvec = A * kvec;
-       
-         kvec[0] -= rint(kvec[0]); 
-         kvec[1] -= rint(kvec[1]); 
-         kvec[2] -= rint(kvec[2]); 
-         
-         // switches to cartesian coordinates
-         kvec = k_lat * kvec;
-//        refold( kvec, k_lat);
-         
-         // find if vector is already in list
-         i_which = std::find_if( i_begin, i_end, 
-                        compose1( std::bind2nd(std::less<types::t_real>(), ZERO_TOLERANCE),
-                        compose1( std::ptr_fun(ptr_norm),
-                                  bind2nd(std::minus<atat::rVector3d>(), kvec) ) ) );
-         // if it isn't, adds it
-         if ( i_which == i_end  ) 
-         {
-           k_vecs.push_back( kvec );
-           i_begin = k_vecs.begin();
-           i_end = k_vecs.end();
-         }
-       
-       } while( ++global_iterator );
-
-       // refolds the vectors somewhat better
-       i_begin = k_vecs.begin();
-       i_end = k_vecs.end();
-       for( ; i_begin != i_end; i_begin++ )
-         refold(*i_begin, k_lat);
-
-       // finally, puts vector 0,0,0 at front of list
-       i_begin = k_vecs.begin();
-       i_end = k_vecs.end();
-       i_which = std::find_if( i_begin, i_end, 
-                      compose1( std::bind2nd(std::less<types::t_real>(), ZERO_TOLERANCE),
-                      compose1( std::ptr_fun(ptr_norm), std::_Identity<atat::rVector3d>() ) ) );
- 
-       if ( i_which != i_end  ) 
-         std::iter_swap( i_which, k_vecs.begin() );
-         
-       // the refolding is not perfect, we now remove equivalent
-       // vectors "by hand "
-       remove_equivalents(k_lat);
-
-       std::sort( k_vecs.begin(), k_vecs.end(),
-                  opt::ref_compose2( std::less<types::t_real>(), std::ptr_fun(ptr_norm),
-                                     std::ptr_fun(ptr_norm) ) );
-
-//      std::cout << k_vecs.size() << std::endl;
-//      i_begin = k_vecs.begin();
-//      i_end = k_vecs.end();
-//      for( ; i_begin != i_end; i_begin++ )
-//      {
-//        std::cout << " -> " << ( *i_begin )
-//                  << std::endl;
-//     }
-
-     }
-
+    if (    _str.atoms.size() < 1 
+         or _str.k_vecs.size() < 1 )
+      return;
+    k_vecs.clear(); r_vecs.clear();
+    k_vecs.reserve(_str.k_vecs.size()); r_vecs.reserve(_str.atoms.size());
+    Ising_CE::Structure::t_kAtoms::const_iterator i_kvec = _str.k_vecs.begin();
+    Ising_CE::Structure::t_kAtoms::const_iterator i_kvec_end = _str.k_vecs.end();
+    for(; i_kvec != i_kvec_end; ++i_kvec )
+      k_vecs.push_back( i_kvec->pos );
+    Ising_CE::Structure::t_Atoms::const_iterator i_rvec = _str.atoms.begin();
+    Ising_CE::Structure::t_Atoms::const_iterator i_rvec_end = _str.atoms.end();
+    for(; i_rvec != i_rvec_end; ++i_rvec )
+      r_vecs.push_back( i_rvec->pos );
   }
-
-  void Constituent_Strain :: cut_integer_part (atat::rVector3d &kvec)
-  {
-    kvec[0] -= rint(kvec[0]); 
-    kvec[1] -= rint(kvec[1]); 
-    kvec[2] -= rint(kvec[2]); 
-  }
-
-
-  void  Constituent_Strain :: find_range( const atat::rMatrix3d &A,
-                                          atat::iVector3d &kvec )
-  {
-    atat::rVector3d a = A.get_column(0), b;
-    types::t_int n = 1;
-    b = a;
-    while( not is_int(b) )
-      { b += a; n++;  }
-    kvec[0] = n;
-
-    a = A.get_column(1);
-    b = a; n = 1;
-    while( not is_int(b) )
-      { b += a; n++;  }
-    kvec[1] = n;
-    
-    a = A.get_column(2);
-    b = a; n = 1;
-    while( not is_int(b) )
-      { b += a; n++;  }
-    kvec[2] = n;
-  }
-
 
   // loads coefficients from input into static member variable x_coefs
   bool Constituent_Strain :: Load_Harmonics( const TiXmlElement &_element)
@@ -468,93 +343,6 @@ namespace Ising_CE
     return value;
   }
 
-  void Constituent_Strain :: remove_equivalents( const atat::rMatrix3d &lat)
-  {
-    std::vector<atat::rVector3d> :: iterator i_vec = k_vecs.begin();
-    std::vector<atat::rVector3d> :: iterator i_end = k_vecs.end();
-    std::vector<atat::rVector3d> :: iterator i_which;
-
-    while( i_vec != i_end )
-    {
-      i_which = i_vec+1;
-      for ( ; i_which != i_end; i_which++ )
-        if ( are_equivalent( *i_which, *i_vec, lat ) )
-          break;
-
-      if ( i_which != i_end )
-      {
-        if ( norm2( *i_vec ) < norm2( *i_which ) )
-          k_vecs.erase(i_which);
-        else
-          k_vecs.erase(i_vec);
-        i_vec = k_vecs.begin();
-        i_end = k_vecs.end();
-      }
-      else
-        i_vec++;
-    }
-
-  }
-
-  bool Constituent_Strain :: are_equivalent( const atat::rVector3d &vec_a,
-                                             const atat::rVector3d &vec_b,
-                                             const atat::rMatrix3d &lat) const
-  {
-
-    opt::Ndim_Iterator<types::t_int, std::less_equal<types::t_int> > i_cell;
-    atat::rVector3d compute;
-
-    i_cell.add(-1,1);
-    i_cell.add(-1,1);
-    i_cell.add(-1,1);
-
-    do
-    {
-      compute(0) = (types::t_real) i_cell.access(0);
-      compute(1) = (types::t_real) i_cell.access(1);
-      compute(2) = (types::t_real) i_cell.access(2);
-
-      compute = vec_a + lat*compute;
-      if ( norm2( compute - vec_b ) <  ZERO_TOLERANCE ) 
-        return true;
-
-    } while ( (++i_cell) );
-
-    return false;
-  }
-
-  // refold by one vector
-  void Constituent_Strain :: refold( atat::rVector3d &vec, const atat::rMatrix3d &lat )
-  {
-    opt::Ndim_Iterator<types::t_int, std::less_equal<types::t_int> > i_cell;
-    atat::rVector3d hold = vec;
-    atat::rVector3d compute;
-    atat::rVector3d current = vec;
-    types::t_real norm_c = norm2(vec);
-
-    i_cell.add(-2,2);
-    i_cell.add(-2,2);
-    i_cell.add(-2,2);
-
-    do
-    {
-      compute(0) = (types::t_real) i_cell.access(0);
-      compute(1) = (types::t_real) i_cell.access(1);
-      compute(2) = (types::t_real) i_cell.access(2);
-
-      vec = hold + lat*compute;
-      if ( norm2( vec ) < norm_c ) 
-      {
-        current = vec;
-        norm_c = norm2(vec);
-      }
-
-    } while ( (++i_cell) );
-
-    vec = current;
-  }
-
-
   // writes k_vecs into a Structure tag
   // first checks wether there already exists a Structure tag
   // if not, creates it
@@ -671,14 +459,6 @@ namespace mpi
   template<>
   bool BroadCast :: serialize<Ising_CE::Constituent_Strain>( Ising_CE::Constituent_Strain &_cs )
   {
-    // first serializes cells
-    if ( not serialize( _cs.r_cell.x[0], (_cs.r_cell.x[0]+3) ) ) return false;
-    if ( not serialize( _cs.r_cell.x[1], (_cs.r_cell.x[1]+3) ) ) return false;
-    if ( not serialize( _cs.r_cell.x[2], (_cs.r_cell.x[2]+3) ) ) return false;
-    if ( not serialize( _cs.k_cell.x[0], (_cs.k_cell.x[0]+3) ) ) return false;
-    if ( not serialize( _cs.k_cell.x[1], (_cs.k_cell.x[1]+3) ) ) return false;
-    if ( not serialize( _cs.k_cell.x[2], (_cs.k_cell.x[2]+3) ) ) return false;
-    
     // then serializes rvecs and kvecs
     types::t_int n = _cs.r_vecs.size();
     if( not serialize( n ) ) return false;
