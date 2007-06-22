@@ -1171,10 +1171,10 @@ out:  printxmg.add_comment( sstr.str() );
   }
 
 
+#ifdef _MPI
   template<class T_INDIVIDUAL, class T_EVALUATOR>
   bool Darwin<T_INDIVIDUAL,T_EVALUATOR> :: broadcast( mpi::BroadCast &_bc )
   {
-#ifdef _MPI
     if( not _bc.serialize( filename ) ) return false;
     if( not _bc.serialize( evaluator_filename ) ) return false;
     if( not _bc.serialize( restart_filename ) ) return false;
@@ -1196,14 +1196,10 @@ out:  printxmg.add_comment( sstr.str() );
           populate_style = PARTITION_POPULATE; break;
       }
     return _bc.serialize( evaluator );
-#else
-    return true;
-#endif
   }
   template<class T_INDIVIDUAL, class T_EVALUATOR>
   bool Darwin<T_INDIVIDUAL,T_EVALUATOR> :: broadcast_islands( mpi::BroadCast &_bc )
   {
-#ifdef _MPI
     types::t_int n = islands.size();
     if ( not _bc.serialize( n ) ) return false;
     if ( _bc.get_stage() == mpi::BroadCast::COPYING_FROM_HERE )
@@ -1221,9 +1217,9 @@ out:  printxmg.add_comment( sstr.str() );
       for( ; i_indiv != i_indiv_end; ++i_indiv )
         if( not i_indiv->broadcast( _bc ) ) return false;
     }
-#endif
     return true;
   }
+#endif
 
 } // namespace darwin
 

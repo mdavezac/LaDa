@@ -1,12 +1,12 @@
 #! /usr/bin/perl
 #
 
-my $computer = "office";
+my $computer = "lester";
 my %params;
 
 my $HOME = `cd; pwd`; chomp $HOME;
 
-@{$params{"defs"}} = ( "_G_HAVE_BOOL", "ANSI_HEADERS", "HAVE_SSTREAM" ); 
+@{$params{"defs"}} = ( "_G_HAVE_BOOL", "ANSI_HEADERS", "HAVE_SSTREAM", "_MPI" ); 
 
 @{$params{"Includes"}} = ( "." );
 
@@ -45,9 +45,11 @@ if ( $computer =~ /office/ )
 if ( $computer =~ /lester/ )
 {
   @{$params{"make include"}} = ( "$HOME/usr/include",
+                                 "/opt/mpich.gcc/include",
                                  "$HOME/usr/include/eo" );
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
                              "-llamarck", "-latat", "-ltinyxml", 
+                             "-L /opt/mpich.gcc/lib/", "-lpmpich++", "-lpmpich", "-lmpiobject", 
                              "-lga", "-leoutils", "-leo" );
   $params{"CC"}  = "gcc";
   $params{"CXX"} = "g++";

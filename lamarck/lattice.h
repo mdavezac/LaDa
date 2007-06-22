@@ -31,8 +31,6 @@ namespace Ising_CE {
     types::t_real scale;
 
     Lattice() {};
-    Lattice( const TiXmlElement &_element )
-      { Load( _element ); };
     ~Lattice () {};
     bool Load( const TiXmlElement &_element );
     void find_space_group();

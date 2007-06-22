@@ -15,7 +15,9 @@
 
 #include <opt/types.h>
 
+#ifdef _MPI
 #include<mpi/mpi_object.h>
+#endif 
 
 #include <tinyxml/tinyxml.h>
 
@@ -172,9 +174,9 @@ namespace darwin
       types::t_real get_concentration() const
         { return object.get_concentration(); }
 
+#ifdef _MPI
       bool broadcast( mpi::BroadCast &_bc )
       {
-#ifdef _MPI
         types::t_real fitness = 0;
         if ( _bc.get_stage() == mpi::BroadCast::COPYING_TO_HERE ) fitness = repFitness;
         if (    ( not _bc.serialize( quantity_is_valid ) ) 
@@ -184,9 +186,9 @@ namespace darwin
              or ( not _bc.serialize<t_Object>( object ) )   ) return false;
         if ( _bc.get_stage() == mpi::BroadCast::COPYING_FROM_HERE )
           repFitness = fitness;
-#endif
         return true;
       }
+#endif
   };
 
 

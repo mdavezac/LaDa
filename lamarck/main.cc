@@ -10,6 +10,10 @@ int main(int argc, char *argv[])
   TiXmlElement *child;
   atat::rVector3d vec;
   Ising_CE::Lattice lattice;
+
+#ifdef _MPI
+  mpi::main(argc, argv);
+#endif
   
   
   std::string filename("input.xml");
@@ -80,6 +84,9 @@ int main(int argc, char *argv[])
     Ising_CE::fourrier_to_kspace( structure.atoms.begin(), structure.atoms.end(),
                                   structure.k_vecs.begin(), structure.k_vecs.end() );
     structure.print_out( std::cout );
+
+    delete functional.get_functional1();
+    delete functional.get_functional2();
   }
 
 }

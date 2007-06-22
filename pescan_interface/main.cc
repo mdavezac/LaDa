@@ -32,6 +32,9 @@ extern "C" {
 
 int main(int argc, char *argv[]) 
 {
+#ifdef _MPI
+  mpi::main(argc, argv);
+#endif
   TiXmlElement *child;
   atat::rVector3d vec;
   Ising_CE::Structure structure;

@@ -11,7 +11,9 @@
 
 #include <tinyxml/tinyxml.h>
 
+#ifdef _MPI
 #include<mpi/mpi_object.h>
+#endif
 
 #include "checkpoints.h"
 #include "taboos.h"
@@ -104,8 +106,10 @@ namespace darwin
       eoReplacement<T_INDIVIDUAL>* make_replacement();
 
       void populate ();
+#ifdef _MPI
       bool broadcast( mpi::BroadCast &_bc );
       bool broadcast_islands( mpi::BroadCast &_bc );
+#endif
       void random_populate ( t_Population &_pop, types::t_unsigned _size);
       void partition_populate ( t_Population &_pop, types::t_unsigned _size);
   };

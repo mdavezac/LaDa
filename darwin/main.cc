@@ -11,11 +11,15 @@
 #include "print_xmgrace.h"
 
 #include <eo/eoScalarFitness.h>
-#include <mpi/mpi_object.h>
+#ifdef _MPI
+#  include <mpi/mpi_object.h>
+#endif
 
 int main(int argc, char *argv[]) 
 {
-  mpi::main( argc, argv );
+#ifdef _MPI
+  mpi::main(argc, argv);
+#endif
   darwin::printxmg.init("convex_hull.agr");
   try
   {

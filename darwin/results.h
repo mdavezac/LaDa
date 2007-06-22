@@ -12,7 +12,9 @@
 #include <opt/fitness_function.h>
 #include <opt/convex_hull.h>
 
+#ifdef _MPI
 #include<mpi/mpi_object.h>
+#endif
 
 #include "taboos.h"
 #include "print_xmgrace.h"
@@ -121,7 +123,9 @@ namespace darwin
           evaluate(*i_indiv);
         }
 
+#ifdef _MPI
         synchronize( _offsprings ); // for mpi purposes
+#endif
 
         i_indiv = _offsprings.begin();
         std::cout << "New Individuals:" << std::endl; 
@@ -130,8 +134,10 @@ namespace darwin
                     << " Fitness: " << i_indiv->fitness() << std::endl;
         std::cout << std::endl; 
       }
+#ifdef _MPI
       virtual bool broadcast( mpi::BroadCast &_bc ) = 0;
       virtual void synchronize( t_Population &_pop ) {};
+#endif
 
     protected:
       virtual bool is_known( t_Individual &_indiv )
@@ -270,14 +276,12 @@ namespace darwin
         _node.LinkEndChild(parent);
       }
 
+#ifdef _MPI
       virtual bool broadcast( mpi::BroadCast &_bc )
       {
-#ifdef _MPI
         if ( not optimum.broadcast(_bc) ) return false;
-#endif
         return true;
       }
-#ifdef _MPI
       virtual void synchronize( t_Population &_pop )
       {
         mpi::BroadCast bc( mpi::main );
@@ -505,9 +509,9 @@ namespace darwin
           is_comment ? printxmg.add_comment( sstr.str() ) : printxmg.add_line( sstr.str() );
         }
       }
+#ifdef _MPI
       virtual bool broadcast( mpi::BroadCast &_bc )
       {
-#ifdef _MPI
         if ( not optimum.broadcast(_bc) ) return false;
         types::t_int n = results.size();
         if ( not _bc.serialize(n) ) return false;
@@ -517,10 +521,8 @@ namespace darwin
         typename std::list<t_Individual> :: iterator i_res_end = results.end();
         for(; i_res != i_res_end; ++i_res )
           if( not i_res->broadcast( _bc ) ) return false;
-#endif
         return true;
       }
-#ifdef _MPI
       virtual void synchronize( t_Population &_pop )
       {
         mpi::AllGather allgather( mpi::main );
@@ -762,12 +764,15 @@ namespace darwin
 
 
         // convex hull has changed => reevaluate
+#ifdef _MPI
         if ( not mpi::main.all_sum_all( valid_ch ) )
         {
-#ifdef _MPI
           synchronize( _offsprings );
           i_last = _offsprings.end();
           if( mpi::main.rank() == mpi::ROOT_NODE )
+#else
+        if ( not valid_ch )
+        {
 #endif
           std::cout << std::endl << "Base line changed" << std::endl << std::flush; 
           i_indiv = _offsprings.begin();
@@ -840,16 +845,14 @@ namespace darwin
         convexhull.Save( *parent, saveop );
         _node.LinkEndChild(parent);
       }
+#ifdef _MPI
       virtual bool broadcast( mpi::BroadCast &_bc )
       {
-#ifdef _MPI
         if (    ( not convexhull.broadcast(_bc) ) 
              or ( not _bc.serialize(valid_ch) )    ) return false;
-#endif
         return true;
       }
 
-#ifdef _MPI
       // for each process,
       //  _ broadcasts individuals with fitness = 0
       //  _ add each individual to convex_hull

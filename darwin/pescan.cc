@@ -406,6 +406,7 @@ namespace BandGap
     functional.read_band_edges();
     if ( check_ref_every != -1 and not ( age % check_ref_every ) )
       functional.set_all_electron();
+    return true;
   }
 
   bool Functional::Load( const TiXmlElement &_node )

@@ -58,17 +58,24 @@ namespace mpi
 
   class InitDestroy : public Base
   {
+    protected:
+      bool finalized;
     public:
-      InitDestroy () : Base () {} 
-      void operator()( int _argc, char *_argv[] ) 
+      InitDestroy () : Base (), finalized(false) {} 
+      void operator()( int _argc, char **_argv )
       { 
-        MPI::Init( _argc, _argv);
+        if ( MPI::Is_initialized() or finalized )
+          return;
+        MPI::Init( _argc, _argv );
         this_rank = MPI::COMM_WORLD.Get_rank();
         nproc = MPI::COMM_WORLD.Get_size();
       }
       virtual ~InitDestroy()
       { 
+        if ( ( not MPI::Is_initialized() ) or finalized )
+          return;
         MPI::Finalize();
+        finalized = true;
       }
   };
 
@@ -139,18 +146,6 @@ namespace mpi
       virtual ~BroadCast() { destroy_buffers(); };
 
       bool allocate_buffers( types::t_unsigned _root = ROOT_NODE );
-
-      void go_to_next_stage()
-      {
-        switch ( stage )
-        {
-          case GETTING_SIZE: stage = COPYING_TO_HERE; break;
-          case COPYING_TO_HERE: stage = COPYING_FROM_HERE; break;
-          default:
-          case COPYING_FROM_HERE: std::cerr << "Already been through all mpi stages!!" << std::endl;
-                                  break;
-        }
-      }
 
       template< class T_OBJECT > bool serialize( T_OBJECT& _object );
       template< class T_ITERATOR > bool serialize( T_ITERATOR _first, T_ITERATOR _last );
@@ -266,7 +261,7 @@ namespace mpi
   {
      public:
        InitDestroy () : Base() {};
-       void operator()( int _argc, char *_argv[] ) {};
+       void operator()( int, char ** ) {};
        virtual ~InitDestroy() {};
   }; 
  
@@ -283,8 +278,6 @@ namespace mpi
  
       
       bool allocate_buffers( types::t_unsigned _root = ROOT_NODE) { return true; };
- 
-      void go_to_next_stage() {}
  
       template< class T_OBJECT > bool serialize( T_OBJECT _object )
         { return true; }

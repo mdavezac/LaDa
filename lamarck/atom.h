@@ -34,10 +34,10 @@ namespace Ising_CE {
       types::t_unsigned freeze;
       types::t_int site;
       
-      Atom_Type() : pos(atat::rVector3d(0,0,0)), freeze(FREEZE_NONE), site(0) {};
+      Atom_Type() : pos(atat::rVector3d(0,0,0)), freeze(FREEZE_NONE), site(-1) {};
       explicit 
         Atom_Type   ( const atat::rVector3d &_pos, t_Type _type) 
-                  : pos(_pos), type(_type), freeze(FREEZE_NONE) {};
+                  : pos(_pos), type(_type), freeze(FREEZE_NONE), site(-1) {};
       Atom_Type   ( const Ising_CE::Atom_Type<t_Type> &_atom )
                 : pos(_atom.pos), type(_atom.type), freeze(_atom.freeze), site(_atom.site) {};
       bool operator== (const Atom_Type<t_Type> &_atom) const

@@ -81,13 +81,7 @@ namespace darwin
         typename t_Container :: const_iterator i_end = taboo_list->end();
         typename t_Container :: const_iterator i_begin = taboo_list->begin();
 
-        // t_Object since we do not want to compare fitness,
-        // quantity, validity, etc...
-        // but only wether these are truly different individual 
-        // in terms of t_Object
         return i_end != std::find( i_begin, i_end, _indiv);
-//       return not ( i_end == std::find_if( i_begin, i_end,
-//                                           std::bind1st(std::equal_to<t_Object>(), _indiv) ) );
       }
       
 
@@ -260,11 +254,9 @@ namespace darwin
           { Taboo<t_Individual, t_Container>::add( indiv ); }
         new_taboos.clear();
       }
-#endif
 
       bool broadcast( mpi::BroadCast &_bc )
       {
-#ifdef _MPI
         types::t_int n = taboo_list->size();
         if( not _bc.serialize(n) ) return false;
         if( _bc.get_stage() == mpi::BroadCast::COPYING_FROM_HERE )
@@ -273,9 +265,9 @@ namespace darwin
         typename t_Container :: iterator i_indiv_end = taboo_list->end();
         for(; i_indiv != i_indiv_end; ++i_indiv )
           if ( not i_indiv->broadcast(_bc) ) return false;
-#endif
         return true;
       }
+#endif
   };
 
   // a class with a number of taboos

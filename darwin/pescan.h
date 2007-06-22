@@ -204,9 +204,8 @@ namespace BandGap
 
     public:
       Evaluator() : functional(structure), crossover_probability(0.5),
-                    x(0), y(0),
-                    single_concentration(false), age(0), check_ref_every(-1),
-                    lessthen(1.0), morethen(-1.0) {}; 
+                    x(0), y(0), lessthen(1.0), morethen(-1.0),
+                    single_concentration(false), age(0), check_ref_every(-1) {}; 
       ~Evaluator() {};
 
       void* const init( t_Object &_object );

@@ -3,32 +3,36 @@
 #include<iostream>
 #include <sstream>
 
-#include<mpi/mpi_object.h>
-
 namespace darwin
 {
 
   void PrintXmg :: init (const std::string &_f)
   { 
+#ifdef _MPI
+    if ( mpi::main.rank() != mpi::ROOT_NODE )
+      return;
+#endif 
     filename = _f;
-    if ( mpi::main.size() > 1 )
-    {
-      std::ostringstream sstr;
-      sstr << filename << "." << mpi::main.rank();
-      filename = sstr.str();
-    }
     file.open( filename.c_str(), std::ios_base::out|std::ios_base::trunc ); 
     close();
   }
   bool PrintXmg :: open ()
   {
+#ifdef _MPI
+    if ( mpi::main.rank() != mpi::ROOT_NODE )
+      return false;
+#endif
     if ( file.is_open() )
-      return true;;
+      return true;
     file.open( filename.c_str(), std::ios_base::out|std::ios_base::app ); 
     return file.is_open();
   }    
   void PrintXmg :: close ()
   {
+#ifdef _MPI
+    if ( mpi::main.rank() != mpi::ROOT_NODE )
+      return;
+#endif
     if ( not file.is_open() )
       return;
     flush();
@@ -37,6 +41,10 @@ namespace darwin
   }    
   void PrintXmg :: flush ()
   {
+#ifdef _MPI
+    if ( mpi::main.rank() != mpi::ROOT_NODE )
+      return;
+#endif 
     if ( line_list.empty() )
       return; 
 
@@ -53,6 +61,10 @@ namespace darwin
 
   void PrintXmg :: add_comment( const std::string &_str )
   {
+#ifdef _MPI
+    if ( mpi::main.rank() != mpi::ROOT_NODE )
+      return;
+#endif 
     std::ostringstream sstr;
     sstr << "# ";
     for( types::t_unsigned i = 0; i < indentation; ++i)
@@ -63,6 +75,10 @@ namespace darwin
   }
   void PrintXmg :: add_to_last( const std::string &_str )
   {
+#ifdef _MPI
+    if ( mpi::main.rank() != mpi::ROOT_NODE )
+      return;
+#endif 
     if( line_list.empty() )
       return;
     std::string &str = line_list.back();
