@@ -5,10 +5,7 @@
 #include <limits.h>
 #include <float.h>
 #define MAXINT INT_MAX
-
-#ifndef MAXFLOAT
 #define MAXFLOAT FLT_MAX
-#endif
 
 #include <opt/types.h>
 

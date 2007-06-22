@@ -124,7 +124,6 @@ sub get_dependencies()
         if (/\#include(\s+|)(\"|\<)(\S+\/|)(\S+)\.h(\"|\>)/)
         {
           my $new_key = $4;
-          next if ( $key =~ /main/ and $new_key =~ /(\bce\b|pescan)/ );
           if ( !( exists $dependencies{"$new_key"} ) )
           {
             foreach $location (  @{$params{"Includes"}} ) 
@@ -158,7 +157,6 @@ sub get_dependencies()
         if (/\#include(\s+|)(\"|\<)(\S+\/|)(\S+)\.h(\"|\>)/)
         {
           my $new_key = $4;
-          next if ( $key =~ /main/ and $new_key =~ /(\bce\b|pescan)/ );
           if ( !( exists $dependencies{$new_key} ) )
           {
             foreach $location (  @{$params{"Includes"}} ) 
@@ -232,7 +230,7 @@ sub template()
   printf OUT "\nOBJS := \$(addsuffix .o,\$(basename \${SRCS}))\n";
   printf OUT "\n.PHONY: clean cleanall\n";
   printf OUT "\nce: \${OBJS} ce.o \n";
-  printf OUT "\t\${CXX} -c \${CXXFLAGS} \${INCS} -D _CE main.cc  -o main.o\n\n";
+  printf OUT "\t\${CXX} -c \${CXXFLAGS} \${INCS} -D _CE main.cc  -o main.o\n";
   printf OUT "\t\${LD} \${LDFLAGS} -o \$@ \${OBJS} ce.o main.o \${LIBS} \${EXTRALIBS}\n";
   printf OUT "\npescan: \${OBJS} pescan.o \n";
   printf OUT "\t\${CXX} -c \${CXXFLAGS} \${INCS} -D _PESCAN main.cc  -o main.o\n";
@@ -347,6 +345,7 @@ sub template()
     my @sorted_keys = sort{ sort_hash($a, $b) } keys %dependencies;
     foreach $key ( @sorted_keys )
     {    
+      delete $params{"already"};
       if ( not exists $dependencies{$key}{"source"} )
         { next; }
       if ( $dependencies{$key}{"location"} ne "." )

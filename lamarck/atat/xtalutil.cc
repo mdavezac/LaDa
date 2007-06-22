@@ -21,14 +21,14 @@ types::t_int in01included(rVector3d v) {
   return 1;
 }
 
-types::t_int which_atom(const Array<rVector3d> &atom_pos, const rVector3d &pos, const rMatrix3d &inv_cell) {
+types::t_int which_atom(const Array<rVector3d> &atom_pos, rVector3d pos, const rMatrix3d &inv_cell) {
   for (types::t_int i=0; i<atom_pos.get_size(); i++) {
     if (equivalent_mod_cell(atom_pos(i),pos,inv_cell)) return i;
   }
   return -1;
 }
 
-types::t_int which_atom(const Array<rVector3d> &atom_pos, const rVector3d &pos) {
+types::t_int which_atom(const Array<rVector3d> &atom_pos, rVector3d pos) {
   for (types::t_int i=0; i<atom_pos.get_size(); i++) {
     if (norm(atom_pos(i)-pos)<zero_tolerance) return i;
   }
@@ -36,13 +36,13 @@ types::t_int which_atom(const Array<rVector3d> &atom_pos, const rVector3d &pos) 
 }
 
 rVector3d wrap_inside_cell(const rVector3d &v, const rMatrix3d &cell) {
-  rVector3d shift=rVector3d(1.,1.,1.)*M_PI*zero_tolerance*0.1;
+  rVector3d shift=rVector3d(1.,1.,1.)*M_PI*zero_tolerance*3;
   return (cell*(mod1((!cell)*v-shift)+shift));
 }
 
 void wrap_inside_cell(Array<rVector3d> *dest, const Array<rVector3d> &src, const rMatrix3d &cell) {
   if (dest->get_size()!=src.get_size()) {dest->resize(src.get_size());}
-  rVector3d shift=rVector3d(1,1,1)*M_PI*zero_tolerance*0.1;
+  rVector3d shift=rVector3d(1,1,1)*M_PI*zero_tolerance*3;
   rMatrix3d inv_cell=!cell;
   for (types::t_int i=0; i<src.get_size(); i++) {
     (*dest)(i)=cell*(mod1(inv_cell*src(i)-shift)+shift);
@@ -218,7 +218,7 @@ rVector3d LatticePointIterator::operator++(int) {
 void LatticePointInCellIterator::init(const rMatrix3d &_cell, const rMatrix3d &_supercell) {
   cell=_cell;
   cell_to_super=(!_supercell)*_cell;
-  shift=rVector3d(1.,1.,1.)*zero_tolerance*0.1*M_PI; //some irrational number;
+  shift=rVector3d(1.,1.,1.)*zero_tolerance*3.*M_PI; //some irrational number;
 
   rMatrix3d super_to_cell=!cell_to_super;
   BoundingBox<types::t_real,3> box;

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 #
 
-my $computer = "office";
+my $computer = "lester";
 my %params;
 
 my $HOME = `cd; pwd`; chomp $HOME;

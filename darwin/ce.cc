@@ -289,7 +289,6 @@ namespace mpi
   {
     if( not serialize( _ev.crossover_probability ) ) return false;
     if( not serialize( _ev.structure ) ) return false;
-    if( not serialize( *_ev.lattice ) ) return false;
     if( not serialize( _ev.single_concentration ) ) return false;
     if( not serialize( _ev.x ) ) return false;
     if( not serialize<VA_CE::Functional_Builder>(_ev) ) return false;

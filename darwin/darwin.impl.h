@@ -16,11 +16,11 @@ namespace darwin
     TiXmlDocument doc( filename.c_str() ); \
     TiXmlHandle docHandle( &doc ); \
     if  ( mpi::main.rank() == mpi::ROOT_NODE ) \
-    if  ( !doc.LoadFile() ) \
-    { \
-      std::cout << doc.ErrorDesc() << std::endl; \
-      throw "Could not load input file in  Darwin<T_INDIVIDUAL,T_EVALUATOR> "; \
-    } 
+      if  ( !doc.LoadFile() ) \
+      { \
+        std::cout << doc.ErrorDesc() << std::endl; \
+        throw "Could not load input file in  Darwin<T_INDIVIDUAL,T_EVALUATOR> "; \
+      } 
 #else
 # define OPENXMLINPUT \
     TiXmlDocument doc( filename.c_str() ); \
@@ -315,6 +315,17 @@ namespace darwin
     eostates.storeFunctor( continuator );
     GenCount &generation_counter = continuator->get_generation_counter();
 
+    // The following synchronizes Results::nb_val and Results::nb_grad over 
+    // all procs. Should always be there!!
+#ifdef _MPI
+        Synchronize<types::t_unsigned> *synchro = new Synchronize<types::t_unsigned>( results->nb_eval );
+        eostates.storeFunctor( synchro );
+        continuator->add( *synchro );
+        synchro = new Synchronize<types::t_unsigned>( results->nb_grad );
+        eostates.storeFunctor( synchro );
+        continuator->add( *synchro );
+#endif
+
     // Creates SaveEvery object if necessary
     if (      _parent.FirstChildElement("Save") 
          and  _parent.FirstChildElement("Save")->Attribute("every") )
@@ -333,25 +344,8 @@ namespace darwin
       }
     }
  
-    // Creates Print object
-    {
-      typedef Print< Results<t_Individual, t_Evaluator, t_Population> > t_Print;
-      t_Print* print = new t_Print( *results, generation_counter, do_print_each_call);
-      eostates.storeFunctor(print);
-      continuator->add( *print );
-    }
-    
-    // Print Offsprings
-    const TiXmlElement *child = _parent.FirstChildElement("PrintOffsprings");
-    if ( child )
-    {
-      PrintFitness<t_Individual> *printfitness = new PrintFitness<t_Individual> ( generation_counter );
-      continuator->add( *printfitness );
-      eostates.storeFunctor( printfitness );
-    }
-
     // Creates Statistics -- only one type available...
-    child = _parent.FirstChildElement("Statistics");
+    const TiXmlElement *child = _parent.FirstChildElement("Statistics");
     if( child )
     {
       continuator->add( eostates.storeFunctor( new TrueCensus< t_Individual, t_Population >() ) );
@@ -451,10 +445,28 @@ namespace darwin
 
     // Load object specific continuator
     eoF<bool> *specific = evaluator.LoadContinue( _parent );
-    if ( not specific )
-      return;
-    eostates.storeFunctor(specific); 
-    continuator->add( eostates.storeFunctor(new Continuator<t_Individual>(*specific)) );
+    if ( specific )
+    {
+      eostates.storeFunctor(specific); 
+      continuator->add( eostates.storeFunctor(new Continuator<t_Individual>(*specific)) );
+    }
+
+    // Creates Print object
+    {
+      typedef Print< Results<t_Individual, t_Evaluator, t_Population> > t_Print;
+      t_Print* print = new t_Print( *results, generation_counter, do_print_each_call);
+      eostates.storeFunctor(print);
+      continuator->add( *print );
+    }
+    
+    // Print Offsprings
+    child = _parent.FirstChildElement("PrintOffsprings");
+    if ( child )
+    {
+      PrintFitness<t_Individual> *printfitness = new PrintFitness<t_Individual> ( generation_counter );
+      continuator->add( *printfitness );
+      eostates.storeFunctor( printfitness );
+    }
 
   } // end of make_check_point
   
@@ -1107,7 +1119,7 @@ namespace darwin
         }
       }
       restart_xml = parent->FirstChildElement("Save");
-      std::ostringstream sstr("Will Save Results");
+      std::ostringstream sstr; sstr << "Will Save Results";
       if ( restart_xml and restart_xml->Attribute("what") )
       {
         std::string str = restart_xml->Attribute("what");

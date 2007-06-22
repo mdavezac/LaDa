@@ -209,8 +209,6 @@ namespace BandGap
       ~Evaluator() {};
 
       void* const init( t_Object &_object );
-      types::t_real evaluate( const t_Object &_object )
-        { return functional.evaluate(); }
       bool Load( const TiXmlElement &_node );
       bool Load ( t_Object &_indiv, const TiXmlElement &_node, bool _type );
       bool Save ( const t_Object &_indiv, TiXmlElement &_node, bool _type ) const;

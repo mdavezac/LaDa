@@ -15,7 +15,7 @@
 
 namespace mpi
 {
-#define DOUBLE MPI::DOUBLE
+#define REAL MPI::DOUBLE
 #define INT MPI::INT
 #define CHAR MPI::CHAR
 #define UNSIGNED MPI::UNSIGNED
@@ -44,6 +44,20 @@ namespace mpi
       {
         types::t_unsigned out;
         MPI::COMM_WORLD.Allreduce( &_in, &out, 1, UNSIGNED, MPI::SUM ); 
+        _in = out;
+        return out;
+      }
+      types::t_int all_sum_all( types::t_int &_in) const
+      {
+        types::t_int out;
+        MPI::COMM_WORLD.Allreduce( &_in, &out, 1, INT, MPI::SUM ); 
+        _in = out;
+        return out;
+      }
+      types::t_real all_sum_all( types::t_real &_in) const
+      {
+        types::t_real out;
+        MPI::COMM_WORLD.Allreduce( &_in, &out, 1, REAL, MPI::SUM ); 
         _in = out;
         return out;
       }
@@ -240,7 +254,8 @@ namespace mpi
        types::t_int size() const { return 1; }
        
        void barrier() const {};
-       types::t_unsigned all_sum_all( types::t_unsigned &_un ) const 
+       template< class T_TYPE >
+       T_TYPE all_sum_all( T_TYPE &_un ) const 
          { return _un; };
        bool all_sum_all( bool &_bool ) const 
          { return _bool; };

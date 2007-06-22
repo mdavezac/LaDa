@@ -70,9 +70,9 @@ rMatrix3d find_almost_reduced_cell(const rMatrix3d &cell);
 
 void find_all_equivalent_cell(Array<rMatrix3d> *psupercell, const rMatrix3d &cell, types::t_real radius);
 
-void find_supercells(Array<rMatrix3d> *supercell, types::t_int min_volume, types::t_int max_volume, const rMatrix3d &unitcell, const Array<rMatrix3d> &pointgroup);
+void find_supercells(Array<rMatrix3d> *supercell, types::t_int min_volume, types::t_int max_volume, rMatrix3d unitcell, const Array<rMatrix3d> &pointgroup);
 
-void find_supercells_2D(Array<rMatrix3d> *supercell, types::t_int min_volume, types::t_int max_volume, const rMatrix3d &unitcell, const Array<rMatrix3d> &pointgroup);
+void find_supercells_2D(Array<rMatrix3d> *supercell, types::t_int min_volume, types::t_int max_volume, rMatrix3d unitcell, const Array<rMatrix3d> &pointgroup);
 
 void sort_supercells(Array<rMatrix3d> *p_supercell, const Array<rMatrix3d> &pointgroup);
 

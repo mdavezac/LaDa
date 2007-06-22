@@ -347,7 +347,7 @@ void find_all_equivalent_cell(Array<rMatrix3d> *psupercell, const rMatrix3d &cel
 
 
 
-void find_supercells(Array<rMatrix3d> *supercell, types::t_int min_volume, types::t_int max_volume, const rMatrix3d &unitcell, const Array<rMatrix3d> &pointgroup) {
+void find_supercells(Array<rMatrix3d> *supercell, types::t_int min_volume, types::t_int max_volume, rMatrix3d unitcell, const Array<rMatrix3d> &pointgroup) {
   Array<iMatrix3d> A(pointgroup.get_size());
   for (types::t_int op=0; op<A.get_size(); op++) {
     A(op)=to_int ( (!unitcell)*pointgroup(op)*unitcell );
@@ -436,7 +436,7 @@ void find_supercells(Array<rMatrix3d> *supercell, types::t_int min_volume, types
   }
 }
 
-void find_supercells_2D(Array<rMatrix3d> *supercell, types::t_int min_volume, types::t_int max_volume, const rMatrix3d &unitcell, const Array<rMatrix3d> &pointgroup) {
+void find_supercells_2D(Array<rMatrix3d> *supercell, types::t_int min_volume, types::t_int max_volume, rMatrix3d unitcell, const Array<rMatrix3d> &pointgroup) {
   rVector3d rec=unitcell.get_column(0)^unitcell.get_column(1);
   rVector3d rc=unitcell.get_column(2);
   if (!near_zero(rec*rc-norm(rec)*norm(rc))) {

@@ -548,6 +548,29 @@ namespace darwin
       }
   };
 
+#ifdef _MPI
+  template< class T_TYPE >
+  class Synchronize : public eoUpdater
+  {
+    public:
+      typedef T_TYPE t_Type;
+    protected:
+      t_Type &object;
+      t_Type current_value;
+    public:
+      explicit
+        Synchronize( t_Type &_object ) : object(_object), current_value(_object) {}
+      ~Synchronize(){}
+      void operator()()
+      {
+        t_Type diff = object - current_value;
+        mpi::main.all_sum_all(diff);
+        current_value += diff;
+        object = current_value;
+      }
+  };
+#endif
+
 } // namespace LaDa
 
 

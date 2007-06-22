@@ -24,7 +24,6 @@ namespace darwin
       Evaluator() {};
       virtual ~Evaluator() {}
 
-      virtual types::t_real evaluate( const t_Object &_object ) = 0;
       // Should load t_Object and funtional related stuff
       // except attributes in <GA > tag
       bool Load ( std::string const &_f )
