@@ -111,7 +111,7 @@ namespace Pescan
     const TiXmlElement *child, *parent;
     std::string str;
 
-    // This whole section tries to find a <Functional type="vff"> tag
+    // This whole section tries to find a <Functional type="escan"> tag
     // in _element or its child
     str = _node.Value();
     if ( str.compare("Functional" ) != 0 )
@@ -178,6 +178,7 @@ namespace Pescan
       if( child->Attribute("CBM") )
         child->Attribute("CBM", &escan.Eref.second);
     }
+
     child = parent->FirstChildElement("Hamiltonian");
     if (    ( not child )
          or (not child->Attribute("kinscal"))
@@ -187,6 +188,8 @@ namespace Pescan
       std::cerr << "Please Specify hamiltonian on input" << std::endl;
       exit(0);
     }
+    if ( child->Attribute("launch") )
+      escan.launch = child->Attribute("launch");
     child->Attribute("kinscal", &escan.kinscal);
     if( child->Attribute("smooth") )
       child->Attribute("smooth", &escan.smooth);

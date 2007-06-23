@@ -1012,10 +1012,10 @@ namespace darwin
       for( ; child; child = child->NextSiblingElement("Filenames") )
       {
         if (     child->Attribute("evaluator") 
-             and evaluator_filename != filename )
+             and evaluator_filename == filename )
           evaluator_filename = child->Attribute("evaluator");
         else if (     child->Attribute("restart") 
-                  and restart_filename != filename )
+                  and restart_filename == filename )
           restart_filename = child->Attribute("restart");
       }
       

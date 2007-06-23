@@ -2,6 +2,7 @@
 
 my %params;
 open IN, "COMMANDS";
+$params{'iaga call'}            =  <IN>;
 $params{'agr'}{'filename'}      =  <IN>;
 $params{'directory'}{'result'}  =  <IN>;
 $params{'GA string'}            =  <IN>;
@@ -13,7 +14,6 @@ $params{'other string'}         =  <IN>;
 close IN;
 
 $params{"home"} = `cd; pwd`; chomp $params{"home"};
-$params{'iaga call'}           =  "lada >> out";
 $params{'max GA iters'} = 400;
 
 $params{'GA'}{'maxgen'} = 0;
@@ -254,7 +254,7 @@ sub write_lamarck_input()
       printf OUT "    <Terminator ref=\"evaluation\" value=%i/>\n", $params{'terminator'}; 
       printf OUT "    <Save what=\"all\"/>\n";
       printf OUT "    <Restart what=\"results\"/>\n" if ( $params{'restart'} =~ /results/ );
-      printf OUT "    <Filenames restart=\"restart.xml\" />\n";
+      printf OUT "    <Filenames restart=\"convex_hull.xml\" />\n";
 
       printf OUT "  </GA>\n";
     }

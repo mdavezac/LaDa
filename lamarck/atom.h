@@ -53,6 +53,7 @@ namespace Ising_CE {
 
       void print_out( std::ostream &stream ) const
       {
+        stream << std::fixed << std::setprecision(5);
         stream << pos[0] << " " << pos[1] << " " << pos[2];
         stream << "  type: " << type;
         stream << "  freeze: " << freeze << std::endl;
@@ -117,25 +118,14 @@ namespace Ising_CE {
       }
       void print_xml( TiXmlElement* const node ) const
       {
-        { 
-          std::ostringstream ss(""); ss << std::setprecision(16);
-          ss << pos[0];             node->SetAttribute( "x", ss.str().c_str() );
-        }
-        { 
-          std::ostringstream ss(""); ss << std::setprecision(16);
-          ss << pos[1];             node->SetAttribute( "y", ss.str().c_str() );
-        }
-        { 
-          std::ostringstream ss(""); ss << std::setprecision(16);
-          ss << pos[2];             node->SetAttribute( "z", ss.str().c_str() );
-        }
-        { 
-          std::ostringstream ss(""); ss << std::setprecision(16);
-          ss << type;             node->SetAttribute( "type", ss.str().c_str() );
-        }
+        std::ostringstream ss; ss << std::fixed << std::setprecision(5);
+        ss << pos[0];  node->SetAttribute( "x", ss.str().c_str() );
+        ss.str(""); ss << pos[1];  node->SetAttribute( "y", ss.str().c_str() );
+        ss.str(""); ss << pos[2];  node->SetAttribute( "z", ss.str().c_str() );
+        ss.str(""); ss << type;    node->SetAttribute( "type", ss.str().c_str() );
         if ( freeze != FREEZE_NONE )
         {
-          std::ostringstream ss(""); 
+          ss.str("");
           if ( freeze & (FREEZE_X | FREEZE_Y | FREEZE_Z | FREEZE_T) )
             ss << "all";
           else
@@ -153,8 +143,7 @@ namespace Ising_CE {
         }
         if ( site > -1 )
         { 
-          std::ostringstream ss; 
-          ss << site;             node->SetAttribute( "type", ss.str().c_str() );
+          ss.str(""); ss << site;   node->SetAttribute( "type", ss.str().c_str() );
         }
         
       }

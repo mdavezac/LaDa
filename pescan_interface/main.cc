@@ -105,6 +105,7 @@ int main(int argc, char *argv[])
   Pescan::Interface interface;
   interface.Load(*handle.FirstChild("Job").Element());
   std::cout << "Band Gap: " << interface(structure) << std::endl;
+  lattice.print_out(std::cout);
 
   return 0;
 }
