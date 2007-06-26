@@ -6,6 +6,7 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <ostream>
 
 #include <complex>
 
@@ -51,12 +52,15 @@ namespace Ising_CE {
       void operator=( const t_Type &_type )
         { type = _type; }
 
-      void print_out( std::ostream &stream ) const
+      std::ostream& print_out( std::ostream &stream ) const
       {
         stream << std::fixed << std::setprecision(5);
         stream << pos[0] << " " << pos[1] << " " << pos[2];
         stream << "  type: " << type;
-        stream << "  freeze: " << freeze << std::endl;
+        if ( site != -1 )
+          stream << "  site: " << site;
+        stream << "  freeze: " << freeze;
+        return stream;
       }
       bool Load( const TiXmlElement &_element )
       {
@@ -181,5 +185,9 @@ namespace Ising_CE {
   typedef Atom_Type<std::string> StrAtom;
   typedef Atom_Type<types::t_real> Atom;
 } // namespace Ising_CE
+
+template<class T_TYPE>
+  std::ostream& operator<<(std::ostream& _stream, Ising_CE::Atom_Type<T_TYPE> &_at )
+    { _at.print_out( _stream ); return _stream; }
   
 #endif

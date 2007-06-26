@@ -792,22 +792,19 @@ namespace Vff
 
   void Functional :: print_escan_input( const std::string &_f ) const
   {
-    std::ofstream file;
-    file.open( _f.c_str(), std::ios_base::out|std::ios_base::trunc ); 
-
-    // prints number of atoms
-    file << structure0.atoms.size() << std::endl;
+    std::ostringstream stream;
+    types::t_unsigned nb_pseudos=0;
 
     // prints cell vectors in units of a0 and other
     // whatever nanopes other may be
     for( types::t_unsigned i = 0; i < 3; ++i )
-      file << std::setprecision(7) 
-           << std::setw(12) << structure.cell(0,i) * structure0.scale / physics::a0("A")
-           << std::setw(12) << structure.cell(1,i) * structure0.scale / physics::a0("A")
-           << std::setw(12) << structure.cell(2,i) * structure0.scale / physics::a0("A")
-           << std::setw(18) << structure.cell(0,i) 
-           << std::setw(12) << structure.cell(1,i) 
-           << std::setw(12) << structure.cell(2,i) << std::endl;
+      stream << std::setprecision(7) 
+             << std::setw(12) << structure.cell(0,i) * structure0.scale / physics::a0("A")
+             << std::setw(12) << structure.cell(1,i) * structure0.scale / physics::a0("A")
+             << std::setw(12) << structure.cell(2,i) * structure0.scale / physics::a0("A")
+             << std::setw(18) << structure.cell(0,i) 
+             << std::setw(12) << structure.cell(1,i) 
+             << std::setw(12) << structure.cell(2,i) << std::endl;
 
     // prints atomic position, strain, weight, and atomic position in
     // "other unit"
@@ -847,22 +844,30 @@ namespace Vff
       for( ; i_pseudo != i_pseudo_end; ++i_pseudo )
       {
         atat::rVector3d pos = (!structure.cell) * i_center->get_origin().pos;
-        pos[0] -= rint(pos[0]);
-        pos[1] -= rint(pos[1]);
-        pos[2] -= rint(pos[2]);
-        file << std::fixed    << std::setprecision(7)
-             << std::setw(6)  << index << '0' << i_pseudo->first  // pseudo index
-             << std::setw(12) << pos[0] // pseudo position
-             << std::setw(12) << pos[1] 
-             << std::setw(12) << pos[2] 
-             << std::setw(18) << msstrain << " " // microscopic strain
-             << std::setw(6) << std::setprecision(2) << types::t_real( i_pseudo->second ) * 0.25  // weight
-             << std::setw(18) << std::setprecision(7) << pos[0] // pseudo position
-             << std::setw(12) << pos[1] 
-             << std::setw(12) << pos[2] << std::endl;
+//       pos[0] -= rint(pos[0]);
+//       pos[1] -= rint(pos[1]);
+//       pos[2] -= rint(pos[2]);
+        ++nb_pseudos;
+        stream << std::fixed    << std::setprecision(7)
+               << std::setw(6)  << index << '0' << i_pseudo->first  // pseudo index
+               << std::setw(12) << pos[0] // pseudo position
+               << std::setw(12) << pos[1] 
+               << std::setw(12) << pos[2] 
+               << std::setw(18) << msstrain << " " // microscopic strain
+               << std::setw(6) << std::setprecision(2) << types::t_real( i_pseudo->second ) * 0.25  // weight
+               << std::setw(18) << std::setprecision(7) << pos[0] // pseudo position
+               << std::setw(12) << pos[1] 
+               << std::setw(12) << pos[2] << std::endl;
       }
 
     }
+    std::ofstream file( _f.c_str(), std::ios_base::out|std::ios_base::trunc ); 
+    // prints number of atoms
+    file << nb_pseudos << std::endl;
+    // print rest of file
+    file << stream.str();
+    file.flush();
+    file.close();
   }
 
   types::t_real Atomic_Functional :: MicroStrain( const Atomic_Center &_center, 

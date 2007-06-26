@@ -222,7 +222,7 @@ sub write_lamarck_input()
       {
         printf OUT "      <TabooOp>\n";
         printf OUT "        <UtterRandom/>\n" if ( $params{"breeding"} =~ /UtterRandom/ );
-        printf OUT "        <Krossover type=\"range\" />\n" if ( $params{"breeding"} =~ /Krossover/ );
+        printf OUT "        <Krossover />\n" if ( $params{"breeding"} =~ /Krossover/ );
         printf OUT "        <Crossover/>\n" if ( $params{"breeding"} =~ /Crossover/ );
         printf OUT "      </TabooOp>\n";
       }

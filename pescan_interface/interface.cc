@@ -4,6 +4,15 @@
 
 #include<physics/physics.h>
 
+std::string StripDir( const std::string &_string )
+{
+  types::t_unsigned n = _string.size() - 1;
+  for(; n; --n)
+    if ( _string[n] == '/' and _string[n-1] != '\' )
+      break;
+  return _string.substr(n+1);
+}
+
 namespace Pescan
 {
   types::t_real Interface :: operator()( Ising_CE::Structure &_str)
@@ -45,6 +54,7 @@ namespace Pescan
   }
   void Interface :: destroy_directory()
   {
+    return;
     std::ostringstream sstr;
     sstr << "rm -rf " << dirname;
     system( sstr.str().c_str() );
@@ -71,7 +81,7 @@ namespace Pescan
 
     
     sstr.str("");
-    sstr << "cd " << dirname << ";" << genpot.launch;
+    sstr << "cd " << dirname << ";" << StripDir(genpot.launch);
     system(sstr.str().c_str());
   }
   types::t_real Interface :: launch_pescan( Ising_CE::Structure &_str )
@@ -100,7 +110,7 @@ namespace Pescan
     system( sstr.str().c_str() );
 
     sstr.str("");
-    sstr << "cd " << dirname << ";" << escan.launch << " > " << escan.output;
+    sstr << "cd " << dirname << ";" << StripDir(escan.launch) << " > " << escan.output;
     system(sstr.str().c_str());
     return 0.0;
   }
@@ -257,7 +267,7 @@ namespace Pescan
     std::vector< std::string > :: const_iterator i_str = genpot.pseudos.begin();
     std::vector< std::string > :: const_iterator i_str_end = genpot.pseudos.end();
     for(; i_str != i_str_end; ++i_str )
-     file << *i_str << std::endl;
+     file << StripDir(*i_str) << std::endl;
     file.flush();
     file.close();
   }
@@ -294,7 +304,7 @@ namespace Pescan
       if (    escan.potential != Escan::SPINORBIT
            or atat::norm2(escan.kpoint) < types::tolerance )
         n /= 2;
-      file << "5 " << n + escan.nbstates << std::endl;
+      file << "5 " << n + 3 << std::endl;
     }
     file << "6 " << escan.niter << " " << escan.nlines << " " << escan.tolerance << std::endl
          << "7 0" << std::endl << "8 0" << std::endl << "9 wg.cbm.in" << std::endl

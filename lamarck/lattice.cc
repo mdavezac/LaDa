@@ -199,9 +199,12 @@ namespace Ising_CE {
                                            Ising_CE::StrAtom &_out ) const
   {
     // on exit, _out is initialized, even is site and type not found
-    _out.pos = _in.pos; _out.type = "";
+    _out.pos = _in.pos; 
+    _out.freeze = _in.freeze;
+    _out.type = "";
+    _out.site = _in.site;
 
-    types::t_int site = get_atom_site_index( _in.pos );
+    types::t_int site = (_in.site > -1 ) ? _in.site : get_atom_site_index( _in.pos );
     if ( sites[site].type.size() == 1 )
       { _out.type = sites[site].type[0]; return true; }
     if ( sites[site].type.size() > 2 )

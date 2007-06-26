@@ -79,6 +79,8 @@ int main(int argc, char *argv[])
     std::cerr << "Error while reading Structure from input" << std::endl;
     return false;
   }
+  structure.set_site_indices();
+  lattice.print_out(std::cout); std::cout << std::endl;
 
   // loads vff functional
   child = handle.FirstChild( "Job" ).Element();

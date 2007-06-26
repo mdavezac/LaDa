@@ -68,9 +68,9 @@ namespace darwin
         { return age; }
 
       bool operator<(const Individual<t_Object, t_Fitness>& _eo2) const
-        { return fitness() < fitness(); }
+        { return fitness() < _eo2.fitness(); }
       bool operator>(const Individual<t_Object, t_Fitness>& _eo2) const
-        { return _eo2.fitness() < fitness(); }
+        { return fitness() > _eo2.fitness(); }
       bool operator==( const Individual<t_Object, t_Fitness> &_indiv ) const
       {
         if ( std::abs(get_concentration() - _indiv.get_concentration()) > types::tolerance )

@@ -214,7 +214,7 @@ namespace CE
     types::t_int result = 0;
     for(; i_var != i_var_end; ++i_var )
     {
-      *i_var = rng.flip() ? 1.0 : -1.0;
+      *i_var = rng.flip() ? -1.0 : 1.0;
       ( *i_var == 1.0 ) ? ++result: --result;
     }
     if ( single_concentration )

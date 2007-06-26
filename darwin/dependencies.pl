@@ -56,7 +56,7 @@ if ( $computer =~ /lester/ )
   $params{"CXX"} = "g++";
   $params{"LD"}  = "g++";
   $params{"F77"}  = "g77";
-  $params{"CXXFLAGS"}  = "";
+  $params{"CXXFLAGS"}  = "-mtune=opteron";
 }
 if ( $computer =~ /super/ )
 {
