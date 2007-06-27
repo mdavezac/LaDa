@@ -41,6 +41,8 @@ if ( $params{'GA string'} =~ /popsize:(\d+)/ )
   { $params{'GA'}{'popsize'} = $1; }
 if ( $params{'GA string'} =~ /rate:(\S+)/ )
   { $params{'GA'}{'rate'} = $1; }
+if ( $params{'GA string'} =~ /x=(\S+)/ )
+  { $params{'GA'}{'x'} = $1; }
 
 if ( $params{'method string'} =~ /optimum/ )
   { $params{'method'}{'type'} = "optimum"; }
@@ -72,6 +74,10 @@ $params{'breeding'} .= " Beratan" if ( $params{'breeding string'} =~ /Beratan/ )
   
 $params{'taboos'} .= " pop" if ( $params{'taboos string'} =~ /pop/ );
 $params{'taboos'} .= " history" if ( $params{'taboos string'} =~ /history/ );
+if ( $params{'taboos string'} =~ /c:(\S+)-(\S+)/ )
+{
+  $params{'taboo'} .= " concentration:$1-$2";
+}
 
 if ( $params{'terminator string'} =~ /(\d+)/ )
   { $params{'terminator'} = $1; }
@@ -111,6 +117,13 @@ $params{'agr'}{'filename'} .= sprintf "_rep:%.2f", $params{'GA'}{'rate'}
     if ( $params{'GA'}{'rate'} != 0.1 );
 $params{'agr'}{'filename'} .= "_partition"
     if ( $params{'GA string'} =~ /partition/ );
+
+$params{'agr'}{'filename'} .= sprintf "_x=%.2f", $params{'GA'}{'x'} 
+  if( $params{'GA string'} =~ /x=(\S+)/ );
+if( $params{'taboo'} =~ /concentration:(\S+)-(\S+)/ )
+{
+  $params{'agr'}{'filename'} .= sprintf "_c:%.4f-%.4f", $params{'taboo'}{'c'} 
+}
 
 $params{'xml'}{"filename"} = $params{'agr'}{'filename'};
 $params{'agr'}{"filename"} .= ".agr";
@@ -207,6 +220,7 @@ sub write_lamarck_input()
       printf OUT "  <GA ";
       printf OUT "maxgen=\"%i\" " if( $params{'GA'}{'maxgen'} != 0 );
       printf OUT "populate=\"partition\" " if( $params{'GA string'} =~ /partition/ );
+      printf OUT "x=\"%.2f\" ", $params{"GA"}{"x"} if( $params{'GA string'} =~ /x=(\S+)/ );
       printf OUT "popsize=\"%i\" rate=\"%.2f\">\n",
                  $params{'GA'}{'popsize'}, 
                  $params{'GA'}{'rate'};
@@ -218,7 +232,7 @@ sub write_lamarck_input()
       printf OUT " />\n";
       
       printf OUT "    <Breeding>\n";
-      if ( $params{'taboos'} =~ /(pop|history)/ )
+      if ( $params{'taboos'} =~ /(pop|history|concentration)/ )
       {
         printf OUT "      <TabooOp>\n";
         printf OUT "        <UtterRandom/>\n" if ( $params{"breeding"} =~ /UtterRandom/ );
@@ -238,12 +252,16 @@ sub write_lamarck_input()
       printf OUT "    </Breeding>\n";
 
 
-      if( $params{'taboos'} =~ /(pop|history)/ )
+      if( $params{'taboos'} =~ /(pop|history|concentration)/ )
       {
         printf OUT "    <Taboos>\n"; 
         printf OUT "      <PopTaboo/>\n"  if ( $params{'taboos'} =~ /pop/ );  
         printf OUT "      <OffspringTaboo/>\n" if ( $params{'taboos'} =~ /pop/ );   
         printf OUT "      <HistoryTaboo/>\n" if ( $params{'taboos'} =~ /history/ );   
+        if ( $params{'taboo'} =~ /concentration:(\S+)-(\S+)/ )
+        {
+          printf OUT "      <Concentration morethan=\"%.4f\" lessthan=\"%.4f\" />\n", $1, $2;
+        }
         printf OUT "    </Taboos>\n"; 
       }
 

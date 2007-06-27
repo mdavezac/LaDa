@@ -289,15 +289,18 @@ namespace darwin
         {
           if ( i == mpi::main.rank() and new_results )
             optimum.broadcast(bc);
-          bc.allocate_buffers();
+          if ( not bc.allocate_buffers() ) continue; // nothing to broadcast!!
           if ( i == mpi::main.rank() and new_results )
             optimum.broadcast(bc);
           bc();
           t_Individual indiv;
           indiv.broadcast(bc);
           bc.reset();
-          if ( indiv > optimum )
+          if ( optimum.invalid() or  indiv > optimum )
+          {
+            std::cout << "Synchronize: Optimum Invalid " << std::endl;
             optimum = indiv;
+          }
         }
       }
 #endif
@@ -538,7 +541,7 @@ namespace darwin
         new_optima.clear();
         t_Individual indiv;
         while( indiv.broadcast( allgather ) )
-          if ( indiv > optimum )
+          if ( optimum.invalid() or indiv > optimum )
           {
             optimum = indiv;
             results.remove_if( remove_if );

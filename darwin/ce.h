@@ -122,10 +122,11 @@ namespace CE
       Ising_CE::Structure structure;
       bool single_concentration;
       types::t_real x;
+      types::t_real lessthan, morethan;
 
     public:
       Evaluator() : functional(), crossover_probability(0.5),
-                    single_concentration(false), x(0) {}; 
+                    single_concentration(false), x(0), lessthan(-1.0), morethan(1.0) {}; 
       ~Evaluator() 
       {
         if ( functional.get_functional1() ) 
@@ -140,6 +141,7 @@ namespace CE
       bool Save ( const t_Object &_indiv, TiXmlElement &_node, bool _type ) const;
       void LoadAttribute ( const TiXmlAttribute &_att );
       eoOp<t_Object>* LoadGaOp(const TiXmlElement &_el );
+      eoMonOp<const Object>* LoadTaboo(const TiXmlElement &_el );
 
       bool Krossover( t_Object  &_offspring, const t_Object &_parent,
                       bool _range = false );
@@ -148,6 +150,7 @@ namespace CE
       bool initialize( t_Object &_object );
       void set_object( t_Object &_object, const void * const _f ) {}
       void* const LoadMinimizer(const TiXmlElement &_el );
+      bool Taboo(const t_Object &_object );
   };
 
 } // namespace CE

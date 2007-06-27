@@ -2,6 +2,7 @@
 #include<list>
 #include<string>
 #include<iostream>
+#include <stdexcept>       // std::runtime_error
 
 #include "mpi_object.h"
 #include <lamarck/structure.h>
@@ -34,11 +35,14 @@ namespace mpi
     // now broadcasts sizes
     MPI::COMM_WORLD.Bcast( buffer_size, 3, UNSIGNED, _root );
 
+    if ( not( buffer_size[0] and buffer_size[1] and buffer_size[2] ) )
+      return false;
+
     // and allocates buffers
     if ( buffer_size[0]  )
     {
       int_buff = new types::t_int[ buffer_size[0] ];
-      if ( not int_buff ) return false;
+      if ( not int_buff ) throw std::runtime_error("Could not allocate memory for broadcast\n");
       cur_int_buff = int_buff; end_int_buff = int_buff + buffer_size[0]; 
     }
     if ( buffer_size[1] )
@@ -51,7 +55,7 @@ namespace mpi
           delete[] int_buff;
           int_buff = NULL; cur_int_buff = NULL; end_int_buff = NULL;
         }
-        return false; 
+        throw std::runtime_error("Could not allocate memory for broadcast\n");
       }
       cur_char_buff = char_buff; end_char_buff = char_buff + buffer_size[1]; 
     }
@@ -71,7 +75,7 @@ namespace mpi
         delete[] char_buff;
         char_buff = NULL; cur_char_buff = NULL; end_char_buff = NULL;
       }
-      return false; 
+      throw std::runtime_error("Could not allocate memory for broadcast\n");
     }
     cur_real_buff = real_buff; end_real_buff = real_buff + buffer_size[2]; 
     
@@ -88,7 +92,7 @@ namespace mpi
     {
       std::cerr << "Buffers already allocated in call to mpi::AlltoAll::alllocate_buffers() ??? " 
                 << std::endl << "Quitting program " << std::endl; 
-      exit(0);
+      throw std::runtime_error("Could not allocate memory for broadcast\n");
     }
     stage = COPYING_TO_HERE;
 
@@ -164,7 +168,7 @@ namespace mpi
     if ( char_buff and buffer_size[1] )
       MPI::COMM_WORLD.Bcast( char_buff, buffer_size[1], CHAR, _root );
     if ( real_buff and buffer_size[2] )
-      MPI::COMM_WORLD.Bcast( real_buff, buffer_size[2], DOUBLE, _root );
+      MPI::COMM_WORLD.Bcast( real_buff, buffer_size[2], REAL, _root );
 
     stage = COPYING_FROM_HERE;
     cur_int_buff = int_buff;
@@ -216,8 +220,8 @@ namespace mpi
       *displs=0;
       for( types::t_int i=1; i < Base::nproc; ++i )
         *(displs + i) = *(displs + i - 1) + *(all_sizes + 3*(i-1) + 2);
-      MPI::COMM_WORLD.Allgatherv( real_buff, *(all_sizes+3*Base::this_rank+2), DOUBLE, real_buff,
-                                  recvcounts, displs, DOUBLE );
+      MPI::COMM_WORLD.Allgatherv( real_buff, *(all_sizes+3*Base::this_rank+2), REAL, real_buff,
+                                  recvcounts, displs, REAL );
     }
     
     delete[] recvcounts;

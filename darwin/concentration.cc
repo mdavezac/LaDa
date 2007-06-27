@@ -29,7 +29,6 @@ types::t_real set_concentration( Ising_CE::Structure &_str,
       i_atom->type = ( std::real(*i_hold) > 0 ) ? 1.0: -1.0;
     }
   }
-  std::cout << std::endl;
 
   if ( _target == -2.0 )
   {

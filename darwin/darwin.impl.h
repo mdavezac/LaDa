@@ -833,17 +833,12 @@ namespace darwin
   template<class T_INDIVIDUAL, class T_EVALUATOR >
   void Darwin<T_INDIVIDUAL, T_EVALUATOR> :: random_populate ( t_Population &_pop, types::t_unsigned _size)
   {
-    rng.reseed( 1 );
     while ( _pop.size() < _size )
     {
       t_Individual indiv;
       evaluator.initialize(indiv);
       if ( taboos and ( not (*taboos)(indiv) ) )
-      {
         _pop.push_back(indiv);
-        indiv.print_out(std::cout);
-        std::cout << std::endl;
-      }
     } // while ( i_pop->size() < target )
     _pop.resize( _size );
   }

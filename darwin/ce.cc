@@ -202,7 +202,39 @@ namespace CE
       }
     }
   }
+  eoMonOp<const Object>* Evaluator :: LoadTaboo(const TiXmlElement &_el )
+  {
+    if ( single_concentration )
+      return NULL;
+    const TiXmlElement *child = _el.FirstChildElement( "Concentration" );
+    if ( not child )
+      return NULL;
+    double d;
+    if ( child->Attribute( "lessthan" ) )
+      child->Attribute( "xlessthan", &d );
+    lessthan = ( d > 0 and d < 1 ) ? 2.0*d-1.0: 1.0;
+    if ( child->Attribute( "morethan" ) )
+      child->Attribute( "morethan", &d );
+    morethan = ( d > 0 and d < 1 ) ? 2.0*d-1.0: -1.0;
+    if ( lessthan < morethan )
+      return NULL;
+   
+    std::ostringstream sstr;
+    sstr << std::fixed << std::setprecision(3) << "Taboo x in [ " << 0.5*(morethan+1.0)
+         << ", "  << 0.5*(lessthan+1.0) << "] ";
+    darwin::printxmg.add_comment(sstr.str());
+    // pointer is owned by caller !!
+    return new darwin::const_mem_monop_t<Evaluator, Object>( *this, &Evaluator::Taboo,
+                                                             "Taboo" );
+  }
 
+  bool Evaluator :: Taboo(const t_Object &_object )
+  {
+    if ( single_concentration )
+      return false;
+    types::t_real x = _object.get_concentration();
+    return x > lessthan or x < morethan;
+  }
 
   bool Evaluator::initialize( Object &_object )
   {
@@ -291,6 +323,8 @@ namespace mpi
     if( not serialize( _ev.structure ) ) return false;
     if( not serialize( _ev.single_concentration ) ) return false;
     if( not serialize( _ev.x ) ) return false;
+    if( not serialize( _ev.lessthan ) ) return false;
+    if( not serialize( _ev.morethan ) ) return false;
     if( not serialize<VA_CE::Functional_Builder>(_ev) ) return false;
 
     if ( stage == COPYING_FROM_HERE and rank() != ROOT_NODE )

@@ -197,14 +197,14 @@ namespace BandGap
       Functional functional;
       types::t_real crossover_probability;
       types::t_real x, y;
-      types::t_real lessthen, morethen;
+      types::t_real lessthan, morethan;
       X_vs_y x_vs_y;
       bool single_concentration;
       types::t_int age, check_ref_every;
 
     public:
       Evaluator() : functional(structure), crossover_probability(0.5),
-                    x(0), y(0), lessthen(1.0), morethen(-1.0),
+                    x(0), y(0), lessthan(1.0), morethan(-1.0),
                     single_concentration(false), age(0), check_ref_every(-1) {}; 
       ~Evaluator() {};
 

@@ -85,7 +85,7 @@ namespace darwin
       t_Fitness fitness() const
       {
          if (not quantity_is_valid)
-           throw std::runtime_error("wtf invalid fitness");
+           throw std::runtime_error("invalid fitness\n");
          return repFitness;
       }
       void set_fitness( types::t_real _f)

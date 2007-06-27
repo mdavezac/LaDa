@@ -204,7 +204,7 @@ namespace BandGap
       return false;
     structure << _object;
     get_xy_concentrations( structure );
-    return x > lessthen or x < morethen;
+    return x > lessthan or x < morethan;
   }
   
   eoMonOp<const Object>* Evaluator :: LoadTaboo(const TiXmlElement &_el )
@@ -215,18 +215,18 @@ namespace BandGap
     if ( not child )
       return NULL;
     double d;
-    if ( child->Attribute( "lessthen" ) )
+    if ( child->Attribute( "lessthan" ) )
       child->Attribute( "xlessthan", &d );
-    lessthen = ( d > 0 and d < 1 ) ? 2.0*d-1.0: 1.0;
-    if ( child->Attribute( "morethen" ) )
-      child->Attribute( "morethen", &d );
-    morethen = ( d > 0 and d < 1 ) ? 2.0*d-1.0: -1.0;
-    if ( lessthen < morethen )
+    lessthan = ( d > 0 and d < 1 ) ? 2.0*d-1.0: 1.0;
+    if ( child->Attribute( "morethan" ) )
+      child->Attribute( "morethan", &d );
+    morethan = ( d > 0 and d < 1 ) ? 2.0*d-1.0: -1.0;
+    if ( lessthan < morethan )
       return NULL;
    
     std::ostringstream sstr;
-    sstr << std::fixed << std::setprecision(3) << "Taboo x in [ " << 0.5*(morethen+1.0)
-         << ", "  << 0.5*(lessthen+1.0) << "] ";
+    sstr << std::fixed << std::setprecision(3) << "Taboo x in [ " << 0.5*(morethan+1.0)
+         << ", "  << 0.5*(lessthan+1.0) << "] ";
     darwin::printxmg.add_comment(sstr.str());
     // pointer is owned by caller !!
     return new darwin::const_mem_monop_t<Evaluator, Object>( *this, &Evaluator::Taboo,
@@ -654,8 +654,8 @@ namespace mpi
     if( not serialize( _ev.crossover_probability ) ) return false;
     if( not serialize( _ev.x ) ) return false;
     if( not serialize( _ev.y ) ) return false;
-    if( not serialize( _ev.lessthen ) ) return false;
-    if( not serialize( _ev.morethen ) ) return false;
+    if( not serialize( _ev.lessthan ) ) return false;
+    if( not serialize( _ev.morethan ) ) return false;
     if( not serialize( _ev.x_vs_y ) ) return false;
 
     return serialize( _ev.single_concentration );
