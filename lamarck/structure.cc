@@ -57,7 +57,7 @@ namespace Ising_CE {
     {
       stream << "  Position: ";
       i_atom->print_out(stream); 
-      std::cout << std::endl;
+      stream << std::endl;
     }
     if ( not k_vecs.size() ) 
       return;
@@ -68,7 +68,7 @@ namespace Ising_CE {
     {
       stream << "  Kvec: " << std::fixed << std::setprecision(5);
       i_kvec->print_out(stream);
-      std::cout << std::endl;
+      stream << std::endl;
     }
   }
 
