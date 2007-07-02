@@ -56,7 +56,8 @@ namespace Ising_CE {
     for( ; i_atom != i_end; ++i_atom )
     {
       stream << "  Position: ";
-      i_atom->print_out(stream);
+      i_atom->print_out(stream); 
+      std::cout << std::endl;
     }
     if ( not k_vecs.size() ) 
       return;
@@ -65,8 +66,9 @@ namespace Ising_CE {
     std::vector<CAtom> :: const_iterator i_kvec_end = k_vecs.end();
     for( ; i_kvec != i_kvec_end; ++i_kvec )
     {
-      stream << "  Kvec: " << std::fixed << std::setprecision(8);
+      stream << "  Kvec: " << std::fixed << std::setprecision(5);
       i_kvec->print_out(stream);
+      std::cout << std::endl;
     }
   }
 
@@ -583,9 +585,7 @@ namespace mpi
   bool BroadCast :: serialize<Ising_CE::Structure>( Ising_CE::Structure &_str )
   {
     // first copies cell vectors
-    if ( not serialize( _str.cell.x[0], (_str.cell.x[0]+3) ) ) return false;
-    if ( not serialize( _str.cell.x[1], (_str.cell.x[1]+3) ) ) return false;
-    if ( not serialize( _str.cell.x[2], (_str.cell.x[2]+3) ) ) return false;
+    if ( not serialize( _str.cell ) ) return false;
     
     // copies freeze, Pi_name, energy, and scale
     if ( not serialize( _str.freeze ) ) return false;
@@ -608,7 +608,7 @@ namespace mpi
     Ising_CE::Structure::t_Atoms :: iterator i_atom_end = _str.atoms.end();
     for(; i_atom != i_atom_end; ++i_atom )
     {
-      if ( not serialize( i_atom->pos.x, i_atom->pos.x+3 ) ) return false;
+      if ( not serialize( i_atom->pos ) ) return false;
       if ( not serialize( i_atom->type ) ) return false;
       if ( not serialize( i_atom->freeze ) ) return false;
     }
@@ -618,7 +618,7 @@ namespace mpi
     Ising_CE::Structure::t_kAtoms :: iterator i_kvec_end = _str.k_vecs.end();
     for(; i_kvec != i_kvec_end; ++i_kvec )
     {
-      if ( not serialize( i_kvec->pos.x, i_kvec->pos.x+3 ) ) return false;
+      if ( not serialize( i_kvec->pos ) ) return false;
       if ( not serialize( std::real(i_kvec->type) ) ) return false;
       if ( not serialize( std::imag(i_kvec->type) ) ) return false;
       if ( not serialize( i_kvec->freeze ) ) return false;

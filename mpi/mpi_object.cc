@@ -5,7 +5,7 @@
 #include <stdexcept>       // std::runtime_error
 
 #include "mpi_object.h"
-#include <lamarck/structure.h>
+#include <atat/vectmac.h>
 
 namespace mpi
 {
@@ -572,6 +572,72 @@ namespace mpi
 
     ++buffer_size[0];
     buffer_size[2] += _cont.size();
+    return true;
+  }
+
+  template<>
+  bool BroadCast :: serialize< atat::rVector3d >
+                             ( atat::rVector3d& _vec )
+  {
+    if( stage == COPYING_TO_HERE )
+    {
+      if ( end_real_buff - cur_real_buff < 3 ) return false;
+      *cur_real_buff = _vec[0]; ++cur_real_buff;
+      *cur_real_buff = _vec[1]; ++cur_real_buff;
+      *cur_real_buff = _vec[2]; ++cur_real_buff;
+
+      return true;
+    }
+    else if( stage == COPYING_FROM_HERE )
+    {
+      if ( end_real_buff - cur_real_buff < 3 ) return false;
+      _vec[0] = *cur_real_buff; ++cur_real_buff;
+      _vec[1] = *cur_real_buff; ++cur_real_buff;
+      _vec[2] = *cur_real_buff; ++cur_real_buff;
+
+      return true;
+    }
+
+    buffer_size[2] += 3;
+    return true;
+    
+  }
+
+  template<>
+  bool BroadCast :: serialize< atat::rMatrix3d >
+                             ( atat::rMatrix3d &_mat )
+  {
+    if( stage == COPYING_TO_HERE )
+    {
+      if ( end_real_buff - cur_real_buff < 9 ) return false;
+      *cur_real_buff = _mat(0,0); ++cur_real_buff;
+      *cur_real_buff = _mat(0,1); ++cur_real_buff;
+      *cur_real_buff = _mat(0,2); ++cur_real_buff;
+      *cur_real_buff = _mat(1,0); ++cur_real_buff;
+      *cur_real_buff = _mat(1,1); ++cur_real_buff;
+      *cur_real_buff = _mat(1,2); ++cur_real_buff;
+      *cur_real_buff = _mat(2,0); ++cur_real_buff;
+      *cur_real_buff = _mat(2,1); ++cur_real_buff;
+      *cur_real_buff = _mat(2,2); ++cur_real_buff;
+      return true;
+    }
+    if( stage == COPYING_FROM_HERE )
+    {
+      if ( end_real_buff - cur_real_buff < 9 ) return false;
+      _mat(0,0) = *cur_real_buff; ++cur_real_buff;
+      _mat(0,1) = *cur_real_buff; ++cur_real_buff;
+      _mat(0,2) = *cur_real_buff; ++cur_real_buff;
+      _mat(1,0) = *cur_real_buff; ++cur_real_buff;
+      _mat(1,1) = *cur_real_buff; ++cur_real_buff;
+      _mat(1,2) = *cur_real_buff; ++cur_real_buff;
+      _mat(2,0) = *cur_real_buff; ++cur_real_buff;
+      _mat(2,1) = *cur_real_buff; ++cur_real_buff;
+      _mat(2,2) = *cur_real_buff; ++cur_real_buff;
+
+      return true;
+    }
+
+    buffer_size[2] += 9;
     return true;
   }
 

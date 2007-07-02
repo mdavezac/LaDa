@@ -211,8 +211,6 @@ namespace Vff
       bond_cutoff = 1.25; 
     bond_cutoff *= std::sqrt(3.0) / 4.0; // axes bs same as CE
     bond_cutoff *= bond_cutoff; // squared for simplicity
-    if ( parent->FirstChildElement("FreezeNone") )
-      freeze_none = true;
     
     // creates an unitialized array of atomic functionals
     functionals.clear();
@@ -293,8 +291,7 @@ namespace Vff
     // then reads angle and bond-angle interactions 
     // **************************************************************
     child = parent->FirstChildElement( "Angle" );
-    for( types::t_unsigned i=0; child and i < functionals.size()<<1;
-         child = child->NextSiblingElement( "Angle" ), ++i )
+    for(; child; child = child->NextSiblingElement( "Angle" ) )
     {
       // reads input
       std::string A, B, C;
@@ -387,12 +384,16 @@ namespace Vff
       if ( _center.site_one() ) 
       {
         std::vector<types::t_real>::const_iterator i_alpha = alphas.begin() + 5 * bond_kind;
-        energy +=  e0 * e0 * ( (*i_alpha) 
+        types::t_real result;
+        result  =  e0 * e0 * ( (*i_alpha) 
                    + e0 * ( *(++i_alpha) / twos3
                    + e0 * ( *(++i_alpha) * one16
                    + e0 * ( *(++i_alpha) * s3o160
                    + e0 * ( *(++i_alpha) * one640 )))));
-      }
+        if ( result < 0 ) 
+        { std::cerr << " negative energy!! " << result << std::endl; exit(0); }
+        energy += result;
+      } 
 
       // Three body terms
       Atomic_Center :: const_iterator i_angle ( i_bond_begin );
@@ -411,11 +412,15 @@ namespace Vff
           if ( i_bond - i_angle > 0 )
           {
             std::vector< types::t_real > :: const_iterator i_beta = betas.begin() + 5 * angle_kind;
-            energy +=   e1 * e1 * ( (*i_beta) 
-                      + e1 * ( *(++i_beta) / twos3
-                      + e1 * ( *(++i_beta) * one16
-                      + e1 * ( *(++i_beta) * s3o160
-                      + e1 * ( *(++i_beta) * one640 )))));
+            types::t_real result;
+            result  =   e1 * e1 * ( (*i_beta) 
+                       + e1 * ( *(++i_beta) / twos3 
+                       + e1 * ( *(++i_beta) * one16
+                       + e1 * ( *(++i_beta) * s3o160
+                       + e1 * ( *(++i_beta) * one640 )))));
+            if ( result < 0 ) 
+            { std::cerr << " negative angle energy!! " << result << std::endl; exit(0); }
+            energy += result;
           }
 
           // Bond angle
@@ -666,6 +671,8 @@ namespace Vff
     std::vector<Ising_CE::Atom> :: const_iterator i_atom0 = structure0.atoms.begin();
     std::vector<Ising_CE::Atom> :: iterator i_atom = structure.atoms.begin();
     std::vector<Ising_CE::Atom> :: iterator i_atom_end = structure.atoms.end();
+    atat::rVector3d com(0,0,0);
+    atat::rMatrix3d cell_inv = !structure.cell;
     for(; i_atom != i_atom_end; ++i_atom, ++i_atom0 )
     {
       atat::rVector3d pos;
@@ -676,7 +683,19 @@ namespace Vff
       pos[2] = ( i_atom0->freeze & Ising_CE::Atom::FREEZE_Z ) ?
                i_atom0->pos[2] : 2.0 * (*i_x++);
       i_atom->pos = strain * pos;
+      com -= cell_inv * i_atom->pos;
     }
+
+    com += center_of_mass;
+    com[0] /= (double) structure.atoms.size();
+    com[1] /= (double) structure.atoms.size();
+    com[2] /= (double) structure.atoms.size();
+    if ( atat::norm2( com ) < types::tolerance )
+      return;
+
+
+    for(i_atom = structure.atoms.begin(); i_atom != i_atom_end; ++i_atom )
+      i_atom->pos += com; 
   }
 
 
@@ -691,37 +710,13 @@ namespace Vff
     // sets up structure0, needed for fractional vs cartesian shit
     structure0 = structure;
 
-    // first checks that at least three translational symmetries are
+    // Computes center of Mass
     // frozen (i.e. three components of the atomic positions )
     std::vector< Ising_CE::Atom > :: iterator i_atom =  structure0.atoms.begin();
     std::vector< Ising_CE::Atom > :: iterator i_atom_end =  structure0.atoms.end();
-    types :: t_unsigned is_frozen = Ising_CE::Atom::FREEZE_NONE;
-    if ( not freeze_none )
-    { 
-      for(; i_atom != i_atom_end; ++i_atom )
-        is_frozen |= i_atom->freeze;
-      if( not (is_frozen & Ising_CE::Atom::FREEZE_X) )
-      {
-        for( i_atom = structure0.atoms.begin(); 
-             i_atom != i_atom_end and (i_atom->freeze & Ising_CE::Atom::FREEZE_X);
-             ++i_atom );
-        i_atom->freeze |= Ising_CE::Atom::FREEZE_X;
-      } 
-      if( not (is_frozen & Ising_CE::Atom::FREEZE_Y) )
-      {
-        for( i_atom = structure0.atoms.begin(); 
-             i_atom != i_atom_end and (i_atom->freeze & Ising_CE::Atom::FREEZE_Y);
-             ++i_atom );
-        i_atom->freeze |= Ising_CE::Atom::FREEZE_Y;
-      } 
-      if( not (is_frozen & Ising_CE::Atom::FREEZE_Z) )
-      {
-        for( i_atom = structure0.atoms.begin(); 
-             i_atom != i_atom_end and (i_atom->freeze & Ising_CE::Atom::FREEZE_Z);
-             ++i_atom );
-        i_atom->freeze |= Ising_CE::Atom::FREEZE_Z;
-      } 
-    }
+    center_of_mass = atat::rVector3d(0,0,0);
+    for(; i_atom != i_atom_end; ++i_atom )
+      center_of_mass += (!structure0.cell) * i_atom->pos;
 
     // Now counts the leftover degrees of freedom
     types::t_unsigned dof = 0;
@@ -798,7 +793,7 @@ namespace Vff
     // prints cell vectors in units of a0 and other
     // whatever nanopes other may be
     for( types::t_unsigned i = 0; i < 3; ++i )
-      stream << std::setprecision(7) 
+      stream << std::fixed << std::setprecision(7) 
              << std::setw(12) << structure.cell(0,i) * structure0.scale / physics::a0("A")
              << std::setw(12) << structure.cell(1,i) * structure0.scale / physics::a0("A")
              << std::setw(12) << structure.cell(2,i) * structure0.scale / physics::a0("A")
@@ -945,7 +940,7 @@ namespace Vff
 
   void Functional :: print_out( std::ostream &stream ) const
   {
-    stream << "Vff::Functional " << freeze_none << " " << bond_cutoff << std::endl;
+    stream << "Vff::Functional " << " " << bond_cutoff << std::endl;
     std::vector<Vff::Atomic_Functional> :: const_iterator i_func = functionals.begin();
     std::vector<Vff::Atomic_Functional> :: const_iterator i_func_end = functionals.end();
     for(; i_func != i_func_end; ++i_func )
@@ -975,8 +970,8 @@ namespace mpi
   bool BroadCast :: serialize<Vff::Functional>( Vff::Functional &_vff )
   {
     // first serializes bond_cutoff and freeze_none 
-    if ( not serialize( _vff.freeze_none ) ) return false;
     if ( not serialize( _vff.bond_cutoff ) ) return false;
+    if ( not serialize( _vff.center_of_mass ) ) return false;
 
     // finally, serializes atomic functionals
     types::t_int n = _vff.functionals.size();

@@ -94,7 +94,9 @@ int main(int argc, char *argv[])
       return false;
     }
     vff.initialize_centers();
+    vff.print_out(std::cout );
     
+    structure.print_out(std::cout );
     minimizer::GnuSL<Vff::Functional> minimizer( vff );
     child = handle.FirstChild( "Job" ).Element();
     minimizer.Load(*child);
@@ -107,6 +109,9 @@ int main(int argc, char *argv[])
               << "   " << stress(0,1) << " " << stress(1,1) << " " << stress(2,1) << std::endl
               << "   " << stress(0,2) << " " << stress(1,2) << " " << stress(2,2) 
               << std::endl << std::endl << std::endl;
+    vff.print_escan_input( "atomic.config" );
+
+    structure.print_out(std::cout );
 
   }
 

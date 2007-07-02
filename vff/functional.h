@@ -44,7 +44,7 @@ namespace Vff
                       do_translates(_c.do_translates), structure(_c.structure),
                       is_site_one(_c.is_site_one),
                       is_site_one_two_species( _c.is_site_one_two_species), 
-                      index( _c.index) {} 
+                      gradient(0,0,0), index( _c.index) {} 
 
       types::t_unsigned kind() const;
       types::t_int add_bond( Atomic_Center &_e, const types::t_real _cutoff  );
@@ -270,20 +270,21 @@ namespace Vff
       Ising_CE :: Lattice &lattice;
       Ising_CE :: Structure &structure;
       Ising_CE :: Structure structure0; // needed for gradients
-      bool freeze_none;
       types::t_real bond_cutoff;
       std::vector< Atomic_Center > centers;
       std::vector< Atomic_Functional > functionals;
       atat::rMatrix3d stress, strain;
+      atat::rVector3d center_of_mass;
       
     public:
       Functional   ( Ising_CE :: Structure &_str )
                  : function::Base<>( 7 + _str.atoms.size() ), lattice(*_str.lattice), 
-                   structure(_str), structure0(_str), freeze_none(false) {};
+                   structure(_str), structure0(_str), center_of_mass(0,0,0) {};
       Functional   ( const Vff::Functional &_c )
                  : function::Base<>( _c ), lattice( _c.lattice ), structure( _c.structure ),
-                   structure0( _c.structure0 ), freeze_none( _c.freeze_none ), 
-                   bond_cutoff( _c.bond_cutoff ), centers( _c.centers ), functionals( _c.functionals ) {}
+                   structure0( _c.structure0 ), bond_cutoff( _c.bond_cutoff ),
+                   centers( _c.centers ), functionals( _c.functionals ),
+                   center_of_mass(_c.center_of_mass) {}
       ~Functional() {}
 
       bool Load( const TiXmlElement &_element );

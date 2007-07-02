@@ -8,7 +8,7 @@ std::string StripDir( const std::string &_string )
 {
   types::t_unsigned n = _string.size() - 1;
   for(; n; --n)
-    if ( _string[n] == '/' and _string[n-1] != '\' )
+    if ( _string[n] == '/' )
       break;
   return _string.substr(n+1);
 }
