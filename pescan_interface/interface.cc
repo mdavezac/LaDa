@@ -54,7 +54,6 @@ namespace Pescan
   }
   void Interface :: destroy_directory()
   {
-    return;
     std::ostringstream sstr;
     sstr << "rm -rf " << dirname;
     system( sstr.str().c_str() );
@@ -181,12 +180,10 @@ namespace Pescan
     if( parent->Attribute("method", &j) )
       escan.method = ( j == 1 ) ? Escan::FOLDED_SPECTRUM: Escan::ALL_ELECTRON;
     child = parent->FirstChildElement("References");
-    if( child )
+    if( child and child->Attribute("VBM") and child->Attribute("CBM") )
     {
-      if( child->Attribute("VBM") )
-        child->Attribute("VBM", &escan.Eref.first);
-      if( child->Attribute("CBM") )
-        child->Attribute("CBM", &escan.Eref.second);
+      child->Attribute("VBM", &escan.Eref.first);
+      child->Attribute("CBM", &escan.Eref.second);
     }
 
     child = parent->FirstChildElement("Hamiltonian");
@@ -248,6 +245,7 @@ namespace Pescan
     if( child->Attribute("tolerance") )
       child->Attribute("tolerance", &escan.tolerance);
 
+    return true;
   }
 
   void Interface::write_genpot_input()

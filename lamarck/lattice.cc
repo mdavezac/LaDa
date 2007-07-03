@@ -58,9 +58,6 @@ namespace Ising_CE {
       sites.push_back(site);
     }
 
-    // computes space group
-    find_space_group();
-     
     return true;
   }
 

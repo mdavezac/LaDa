@@ -92,6 +92,7 @@ namespace VA_CE
        std::cerr << "Error while reading Lattice from input" << std::endl;
        return false;
      }
+     lattice->find_space_group();
      Ising_CE :: Structure :: lattice = lattice;
      
      // then load clusters

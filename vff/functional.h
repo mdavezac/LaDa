@@ -267,7 +267,6 @@ namespace Vff
       typedef t_Container :: const_iterator const_iterator;
 
     protected:
-      Ising_CE :: Lattice &lattice;
       Ising_CE :: Structure &structure;
       Ising_CE :: Structure structure0; // needed for gradients
       types::t_real bond_cutoff;
@@ -278,10 +277,10 @@ namespace Vff
       
     public:
       Functional   ( Ising_CE :: Structure &_str )
-                 : function::Base<>( 7 + _str.atoms.size() ), lattice(*_str.lattice), 
+                 : function::Base<>( 7 + _str.atoms.size() ),
                    structure(_str), structure0(_str), center_of_mass(0,0,0) {};
       Functional   ( const Vff::Functional &_c )
-                 : function::Base<>( _c ), lattice( _c.lattice ), structure( _c.structure ),
+                 : function::Base<>( _c ), structure( _c.structure ),
                    structure0( _c.structure0 ), bond_cutoff( _c.bond_cutoff ),
                    centers( _c.centers ), functionals( _c.functionals ),
                    center_of_mass(_c.center_of_mass) {}

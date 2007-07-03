@@ -52,9 +52,9 @@ namespace Vff
 
     // Creates a list of closest neighbors
     std::vector< atat::rVector3d > neighbors;
-    Ising_CE::Lattice::t_Sites :: iterator i_site_begin = lattice.sites.begin();
+    Ising_CE::Lattice::t_Sites :: iterator i_site_begin = structure.lattice->sites.begin();
     Ising_CE::Lattice::t_Sites :: iterator i_site, i_site2;
-    Ising_CE::Lattice::t_Sites :: iterator i_site_end = lattice.sites.end();
+    Ising_CE::Lattice::t_Sites :: iterator i_site_end = structure.lattice->sites.end();
     
     for(i_site = i_site_begin; i_site != i_site_end; ++i_site )
     {
@@ -71,7 +71,7 @@ namespace Vff
           frac_image[0] =  (types::t_real) period.access(0);
           frac_image[1] =  (types::t_real) period.access(1);
           frac_image[2] =  (types::t_real) period.access(2);
-          image = i_site2->pos + lattice.cell * frac_image;
+          image = i_site2->pos + structure.lattice->cell * frac_image;
           if( atat::norm2( image - i_site->pos ) > types::tolerance )
             neighbors.push_back( image - i_site->pos );
         } while ( ++period ); 
@@ -81,7 +81,7 @@ namespace Vff
     std::sort( neighbors.begin(), neighbors.end(), 
                opt::ref_compose2( std::less<types::t_real>(), std::ptr_fun( ptr_norm ),
                                   std::ptr_fun( ptr_norm ) ) );
-    neighbors.resize(4*lattice.sites.size());
+    neighbors.resize(4*structure.lattice->sites.size());
 
     std::vector< Atomic_Center > :: iterator i_begin = centers.begin();
     std::vector< Atomic_Center > :: iterator i_end = centers.end();
@@ -159,7 +159,7 @@ namespace Vff
   bool Functional :: Load ( const TiXmlElement &_element )
   {
     // some consistency checking
-    if ( lattice.get_nb_sites() != 2 )
+    if ( structure.lattice->get_nb_sites() != 2 )
     { 
       std::cerr << "Cannot do vff on this lattice" 
                 << std::endl
@@ -167,8 +167,8 @@ namespace Vff
                 << std::endl;
       return false;
     }
-    if (     lattice.get_nb_types(0) + lattice.get_nb_types(1) < 2
-         and lattice.get_nb_types(0) + lattice.get_nb_types(1) > 4 )
+    if (     structure.lattice->get_nb_types(0) + structure.lattice->get_nb_types(1) < 2
+         and structure.lattice->get_nb_types(0) + structure.lattice->get_nb_types(1) > 4 )
     { 
       std::cerr << "Cannot do vff on this lattice" 
                 << std::endl
@@ -214,15 +214,15 @@ namespace Vff
     
     // creates an unitialized array of atomic functionals
     functionals.clear();
-    functionals.push_back( Atomic_Functional( lattice.get_atom_string(0,0),
+    functionals.push_back( Atomic_Functional( structure.lattice->get_atom_string(0,0),
                            structure, 0, 0) );
-    if ( lattice.get_nb_types(0) == 2 )
-      functionals.push_back( Atomic_Functional( lattice.get_atom_string(0,1),
+    if ( structure.lattice->get_nb_types(0) == 2 )
+      functionals.push_back( Atomic_Functional( structure.lattice->get_atom_string(0,1),
                              structure, 0, 1) );
-    functionals.push_back( Atomic_Functional( lattice.get_atom_string(1,0),
+    functionals.push_back( Atomic_Functional( structure.lattice->get_atom_string(1,0),
                            structure, 1, 0) );
-    if ( lattice.get_nb_types(1) == 2 )
-      functionals.push_back( Atomic_Functional( lattice.get_atom_string(1,1),
+    if ( structure.lattice->get_nb_types(1) == 2 )
+      functionals.push_back( Atomic_Functional( structure.lattice->get_atom_string(1,1),
                              structure, 1, 1) );
 
     // **************************************************************
@@ -255,13 +255,13 @@ namespace Vff
       child->Attribute("alpha6", &(alphas[4]));
 
       // finds out where to put it
-      types::t_int siteA = lattice.get_atom_site_index( A );
+      types::t_int siteA = structure.lattice->get_atom_site_index( A );
       if ( siteA == -1 ) return false;
-      types::t_int typeA = lattice.get_atom_type_index( A );
+      types::t_int typeA = structure.lattice->get_atom_type_index( A );
       if ( typeA == -1 ) return false;
-      types::t_int siteB = lattice.get_atom_site_index( B );
+      types::t_int siteB = structure.lattice->get_atom_site_index( B );
       if ( siteB == -1 ) return false;
-      types::t_int typeB = lattice.get_atom_type_index( B );
+      types::t_int typeB = structure.lattice->get_atom_type_index( B );
       if ( typeB == -1 ) return false;
 
       if ( siteA == siteB )
@@ -284,7 +284,7 @@ namespace Vff
       }
 
       functionals[typeA].add_bond( typeB, d0, alphas );
-      functionals[typeB+lattice.get_nb_types(0)].add_bond( typeA, d0, alphas );
+      functionals[typeB+structure.lattice->get_nb_types(0)].add_bond( typeA, d0, alphas );
     }
 
     // **************************************************************
@@ -330,17 +330,17 @@ namespace Vff
       }
       
       // finds out where to put it
-      types::t_int siteA = lattice.get_atom_site_index( A );
+      types::t_int siteA = structure.lattice->get_atom_site_index( A );
       if ( siteA == -1 ) return false;
-      types::t_int typeA = lattice.get_atom_type_index( A );
+      types::t_int typeA = structure.lattice->get_atom_type_index( A );
       if ( typeA == -1 ) return false;
-      types::t_int siteB = lattice.get_atom_site_index( B );
+      types::t_int siteB = structure.lattice->get_atom_site_index( B );
       if ( siteB == -1 ) return false;
-      types::t_int typeB = lattice.get_atom_type_index( B );
+      types::t_int typeB = structure.lattice->get_atom_type_index( B );
       if ( typeB == -1 ) return false;
-      types::t_int siteC = lattice.get_atom_site_index( C );
+      types::t_int siteC = structure.lattice->get_atom_site_index( C );
       if ( siteB == -1 ) return false;
-      types::t_int typeC = lattice.get_atom_type_index( C);
+      types::t_int typeC = structure.lattice->get_atom_type_index( C);
       if ( typeB == -1 ) return false;
 
       if ( siteA == siteB or siteA != siteC )
@@ -355,8 +355,8 @@ namespace Vff
       if ( siteB == 0 )
         functionals[typeB].add_angle( typeA, typeC, gamma, sigma, betas );
       else
-        functionals[typeB+lattice.get_nb_types(0)].add_angle( typeA, typeC, 
-                                                              gamma, sigma, betas );
+        functionals[typeB+structure.lattice->get_nb_types(0)].add_angle( typeA, typeC, 
+                                                                         gamma, sigma, betas );
 
     }
 
@@ -809,7 +809,7 @@ namespace Vff
     {
       // first gets pseudo index
       Ising_CE::StrAtom stratom;
-      lattice.convert_Atom_to_StrAtom( structure0.atoms[i_center->get_index()], stratom );
+      structure.lattice->convert_Atom_to_StrAtom( structure0.atoms[i_center->get_index()], stratom );
       types::t_unsigned index = physics::atoms::Z( stratom.type );
       types::t_real msstrain = functionals[i_center->kind()].MicroStrain( *i_center, structure0 );
 
@@ -822,7 +822,7 @@ namespace Vff
       t_pseudos pseudos;
       for(; i_bond != i_bond_end; ++i_bond )
       { 
-        lattice.convert_Atom_to_StrAtom( structure0.atoms[i_bond->get_index()], stratom );
+        structure.lattice->convert_Atom_to_StrAtom( structure0.atoms[i_bond->get_index()], stratom );
         types::t_unsigned Z = physics::atoms::Z( stratom.type );
         t_pseudos::iterator i_pseudo = pseudos.begin();
         t_pseudos::iterator i_pseudo_end = pseudos.end();

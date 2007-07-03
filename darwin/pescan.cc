@@ -81,7 +81,7 @@ namespace BandGap
       std::cerr << " Could not load lattice type from input!! " << std::endl; 
       return false;
     }
-    structure.lattice = &lattice;
+    Ising_CE::Structure::lattice = &lattice;
     if ( not structure.Load( _node ) )
     {
       std::cerr << " Could not load input structure!! " << std::endl; 
@@ -204,7 +204,7 @@ namespace BandGap
       return false;
     structure << _object;
     get_xy_concentrations( structure );
-    return x > lessthan or x < morethan;
+    return x > lessthan or x < morethan; // if true, _object is taboo
   }
   
   eoMonOp<const Object>* Evaluator :: LoadTaboo(const TiXmlElement &_el )
@@ -402,10 +402,20 @@ namespace BandGap
 
   bool Evaluator :: Continue()
   {
+    // on first iteration, writes band edges... then read them on following iterations
     ++age;
     functional.read_band_edges();
-    if ( check_ref_every != -1 and not ( age % check_ref_every ) )
-      functional.set_all_electron();
+
+#ifdef _MPI
+    if ( mpi::main.rank() != ROOT_NODE )
+      return true;
+#endif
+
+    if ( check_ref_every != -1 ) // recomputes all electron band_edges every so often, if required
+    {
+      if ( not ( age % check_ref_every ) )
+        functional.set_all_electron();
+    }
     return true;
   }
 
@@ -427,16 +437,27 @@ namespace BandGap
       std::cerr << " Could not load vff minimizer from input!! " << std::endl;
       return false;
     }
+    pescan.set_band_edges( -666.666, 666.666 ); // wrong order! just to check whether Refs are read from input
     if ( not pescan.Load( _node ) )
     {
       std::cerr << " Could not load pescan interface from input!! " << std::endl; 
       return false;
     }
+    types::t_real x, y;
+    pescan.get_band_edges(x,y); // band edges have not been read if below is true
+    if (     std::abs(x + 666.666 ) < types::tolerance 
+         and std::abs(x - 666.666 ) < types::tolerance )
+      set_all_electron();
+
     return true;
   }
 
   void Functional::write_band_edges()
   {
+#ifdef _MPI 
+    if ( mpi::main.rank() != mpi::ROOT_NODE )
+      return;
+#endif
     std::ofstream file( band_edge_filename.c_str(), std::ios_base::out | std::ios_base::trunc ); 
     if ( not file.is_open() )
       return;
@@ -484,8 +505,6 @@ namespace BandGap
     if ( not _str.lattice and _str.lattice->sites.size() != 2)
       return;
 
-    std::cout << "before rearranging" << std::endl;
-    _str.print_out(std::cout); std::cout << std::endl;
     std::list< Ising_CE::Structure::t_Atom > sites0;
     std::list< Ising_CE::Structure::t_Atom > sites1;
     Ising_CE::Structure::t_Atoms :: const_iterator i_atom = _str.atoms.begin();
@@ -513,8 +532,6 @@ namespace BandGap
       _str.atoms.push_back( *i_1 ); 
     }
 
-    std::cout << "after rearranging" << std::endl;
-    _str.print_out(std::cout); std::cout << std::endl;
   }
 
 

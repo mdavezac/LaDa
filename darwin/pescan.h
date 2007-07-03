@@ -41,7 +41,6 @@ namespace BandGap
 
     protected:
       Ising_CE::Structure &structure;
-      Ising_CE::Structure evaluation_structure;
       Vff::Functional vff;
       Pescan::Interface pescan;
       minimizer::GnuSL<Vff::Functional> vff_minimizer;
@@ -49,10 +48,10 @@ namespace BandGap
 
     public:
       Functional   ( Ising_CE::Structure &_str, std::string _f = "BandEdge" ) 
-                 : structure( _str ), vff(evaluation_structure),
+                 : structure( _str ), vff(structure),
                    vff_minimizer(vff), band_edge_filename(_f) {}
       Functional   ( const Functional &_func )
-                 : structure(_func.structure), evaluation_structure(_func.evaluation_structure),
+                 : structure(_func.structure), 
                    vff(_func.vff), pescan(_func.pescan), vff_minimizer(_func.vff_minimizer),
                    band_edge_filename(_func.band_edge_filename) {};
       ~Functional() {};
@@ -75,13 +74,14 @@ namespace BandGap
         if ( pescan.get_method() != Pescan::Interface::Escan::ALL_ELECTRON )
           return result;
         
+        pescan.set_method(); // resets to folded spectrum if necessary
+
 #ifdef _MPI
         if ( mpi::main.rank() != mpi::ROOT_NODE ) // not root no read write
           return result;
 #endif 
 
         write_band_edges();
-        pescan.set_method(); // resets to folded spectrum if necessary
         return result;
       } 
       void evaluate_gradient( t_Type* const _i_grad ) 
@@ -203,9 +203,9 @@ namespace BandGap
       types::t_int age, check_ref_every;
 
     public:
-      Evaluator() : functional(structure), crossover_probability(0.5),
+      Evaluator() : functional(structure), crossover_probability(0.5), 
                     x(0), y(0), lessthan(1.0), morethan(-1.0),
-                    single_concentration(false), age(0), check_ref_every(-1) {}; 
+                    single_concentration(false), age(0), check_ref_every(-1) {}
       ~Evaluator() {};
 
       void* const init( t_Object &_object );
