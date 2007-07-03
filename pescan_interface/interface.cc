@@ -81,7 +81,9 @@ namespace Pescan
     
     sstr.str("");
     sstr << "cd " << dirname << ";" << StripDir(genpot.launch);
+#ifndef _NOLAUNCH
     system(sstr.str().c_str());
+#endif
   }
   types::t_real Interface :: launch_pescan( Ising_CE::Structure &_str )
   {
@@ -110,7 +112,9 @@ namespace Pescan
 
     sstr.str("");
     sstr << "cd " << dirname << ";" << StripDir(escan.launch) << " > " << escan.output;
+#ifndef _NOLAUNCH
     system(sstr.str().c_str());
+#endif
     return 0.0;
   }
 
@@ -331,6 +335,15 @@ namespace Pescan
 
   types::t_real Interface :: read_result( Ising_CE::Structure &_str )
   {
+#ifdef _NOLAUNCH
+    if( escan.method == Escan::ALL_ELECTRON )
+    {
+      band_edge.first = random() * 5;
+      band_edge.second = band_edge.first + random() * 5;
+      return band_edge.second - band_edge.first;
+    }
+    return random() * 5; 
+#else
     std::ifstream file;
     std::ostringstream sstr;
     sstr << dirname << "/" << escan.output;
@@ -393,6 +406,7 @@ namespace Pescan
         i_eig_result = i_eig;
       }
     return *i_eig_result;
+#endif
   }
 
 }
