@@ -10,7 +10,7 @@
 
 
 #include <tinyxml/tinyxml.h>
-#include <opt/types.h>
+#include "opt/types.h"
 
 #include "atat/findsym.h"
 #include "atat/vectmac.h"

@@ -1,14 +1,14 @@
 #ifndef _DARWIN_MINIMIZER_GENOP_H_
 #define _DARWIN_MINIMIZER_GENOP_H_
 
-namespace darwin 
-{
-
 #include <eo/eoGenOp.h>
 
-#include <opt/opt_minimize_base.h>
-#include <opt/opt_function_base.h>
+#include "opt/opt_minimize_base.h"
+#include "opt/opt_function_base.h"
 #include "results.h"
+
+namespace darwin 
+{
 
   template<class T_INDIVIDUAL, class T_EVALUATOR, class T_POPULATION>
   class Minimizer_Functional : public function::Base

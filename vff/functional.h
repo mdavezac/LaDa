@@ -6,14 +6,14 @@
 
 #include <tinyxml/tinyxml.h>
 
-#include <lamarck/atom.h>
-#include <lamarck/structure.h>
-#include <lamarck/lattice.h>
-#include <opt/types.h>
-#include <opt/opt_function_base.h>
+#include "lamarck/atom.h"
+#include "lamarck/structure.h"
+#include "lamarck/lattice.h"
+#include "opt/types.h"
+#include "opt/opt_function_base.h"
 
 #ifdef _MPI 
-  #include<mpi/mpi_object.h>
+  #include "mpi/mpi_object.h"
 #endif
 
 namespace Vff

@@ -4,14 +4,15 @@
 
 #include <vector>
 #include <math.h>
+
 #include <tinyxml/tinyxml.h>
 
-#include <opt/types.h>
 
+#include "opt/types.h"
 #include "atat/vectmac.h"
 
 #ifdef _MPI 
-  #include<mpi/mpi_object.h>
+  #include "mpi/mpi_object.h"
 #endif
 
 namespace Ising_CE 

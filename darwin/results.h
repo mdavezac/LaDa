@@ -6,14 +6,15 @@
 #include <iostream>
 
 #include <eo/eoPop.h>
+
 #include <tinyxml/tinyxml.h>
 
-#include <opt/opt_function_base.h>
-#include <opt/fitness_function.h>
-#include <opt/convex_hull.h>
+#include "opt/opt_function_base.h"
+#include "opt/fitness_function.h"
+#include "opt/convex_hull.h"
 
 #ifdef _MPI
-#include<mpi/mpi_object.h>
+#include "mpi/mpi_object.h"
 #endif
 
 #include "taboos.h"

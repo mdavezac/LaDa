@@ -1,18 +1,17 @@
 #ifndef _ATOM_H_
 #define _ATOM_H_
 
-#include <opt/types.h>
-
 #include <string>
 #include <sstream>
 #include <iomanip>
 #include <ostream>
-
 #include <complex>
 
-#include <atat/vectmac.h>
-#include <atat/xtalutil.h>
-#include <atat/machdep.h>
+#include "opt/types.h"
+
+#include "atat/vectmac.h"
+#include "atat/xtalutil.h"
+#include "atat/machdep.h"
 
 namespace Ising_CE {
 

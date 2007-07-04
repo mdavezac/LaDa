@@ -9,8 +9,8 @@
   using std::compose1;
 #endif
 
-#include <opt/compose_functors.h>
-#include <opt/ndim_iterator.h>
+#include "opt/compose_functors.h"
+#include "opt/ndim_iterator.h"
 
 #include "atat/misc.h"
 #include "structure.h"

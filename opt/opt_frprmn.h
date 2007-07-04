@@ -1,8 +1,9 @@
 #ifndef _OPT_FRPRMN_H_
 #define _OPT_FRPRMN_H_
 
-#include <opt/opt_minimize_base.h>
 #include <functional>
+
+#include "opt/opt_minimize_base.h"
 
 namespace minimizer {
 

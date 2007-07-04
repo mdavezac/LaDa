@@ -3,7 +3,7 @@
 #include <sstream>
 #include <string>
 
-#include <lamarck/functional_builder.h>
+#include "lamarck/functional_builder.h"
 
 int main(int argc, char *argv[]) 
 {

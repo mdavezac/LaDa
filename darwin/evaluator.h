@@ -2,9 +2,11 @@
 #define _DARWIN_EVALUATOR_H_
 
 #include <string>
-#include <opt/types.h>
-#include <opt/opt_function_base.h>
+
 #include <eo/eoGenOp.h>
+
+#include "opt/types.h"
+#include "opt/opt_function_base.h"
 #include "loadsave.h"
 
 namespace darwin 

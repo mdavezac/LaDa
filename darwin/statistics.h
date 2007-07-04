@@ -4,7 +4,7 @@
 #include <eo/eoPop.h>
 #include <eo/eoGenOp.h>
 
-#include <opt/types.h>
+#include "opt/types.h"
 #include "print_xmgrace.h"
 
 namespace darwin

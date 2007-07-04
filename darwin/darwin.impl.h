@@ -945,11 +945,14 @@ namespace darwin
       breeder->synchronize_offsprings( *i_island );
 #endif 
     }
+    types::t_unsigned n = 0;
 
     do
     {
       try
       {
+        std::cout << "Iteration " << n << std::endl;
+        ++n;
          i_island = i_island_begin;
          for (int i=0; i_island != i_island_end; ++i, ++i_island )
          {

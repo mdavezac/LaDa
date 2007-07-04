@@ -6,23 +6,23 @@
 #include <functional>
 #include <string>
 
-#include <vff/functional.h>
-#include <pescan_interface/interface.h>
-#include <lamarck/structure.h>
-#include <opt/opt_function_base.h>
-#include <opt/opt_minimize_gsl.h>
-#include <opt/types.h>
+#include <eo/eoOp.h>
 
 #include <tinyxml/tinyxml.h>
 
-#include <eo/eoOp.h>
+#include "vff/functional.h"
+#include "pescan_interface/interface.h"
+#include "lamarck/structure.h"
+#include "opt/opt_function_base.h"
+#include "opt/opt_minimize_gsl.h"
+#include "opt/types.h"
 
 #include "evaluator.h"
 #include "concentration.h"
 #include "functors.h"
 
 #ifdef _MPI
-#include<mpi/mpi_object.h>
+#include "mpi/mpi_object.h"
 #endif
 
 namespace BandGap
@@ -65,7 +65,9 @@ namespace BandGap
       t_Type evaluate()
       {
         // first minimizes strain
+#ifndef _NOLAUNCH
         vff_minimizer.minimize();
+#endif
         structure.energy = vff.energy();
         vff.print_escan_input();
 

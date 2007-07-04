@@ -3,6 +3,9 @@
 
 #include <exception>
 #include <iostream>
+#include <vector>
+#include <list>
+#include <utility>
 
 #include <eo/eoPop.h>
 #include <eo/eoOp.h>
@@ -10,11 +13,8 @@
 #include <eo/utils/eoRNG.h>
 
 
-#include<vector>
-#include<list>
-#include<utility>
 
-#include <opt/types.h>
+#include "opt/types.h"
 #include "gencount.h"
 
 namespace darwin 

@@ -1,8 +1,8 @@
 #ifndef _FITNESS_H_
 #define _FITNESS_H_
 
-
 #include<iostream>
+
 #include "opt_functors.h"
 
 namespace function {

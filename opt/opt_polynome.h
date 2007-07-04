@@ -20,10 +20,11 @@
 #include <iostream>
 #include <cmath>
 #include <math.h>
-#include <opt/opt_function_base.h>
-#include <opt/opt_monome.h>
 
-#include <mpi/mpi_object.h>
+#include "opt/opt_function_base.h"
+#include "opt/opt_monome.h"
+
+#include "mpi/mpi_object.h"
 
 namespace function {
 

@@ -7,7 +7,9 @@
 #include <algorithm>
 #include <opt/compose_functors.h>
 
-#include<mpi/mpi_object.h>
+#ifdef _MPI
+#  include "mpi/mpi_object.h"
+#endif
 
 namespace minimizer {
 
@@ -281,17 +283,15 @@ namespace minimizer {
         return true;
      }
 
+#ifdef _MPI
      bool broadcast( mpi::BroadCast &_bc )
      {
-#ifdef _MPI
         if ( not _bc.serialize( itermax ) ) return false;
         if ( not _bc.serialize( tolerance ) ) return false;
         if ( not _bc.serialize( linetolerance ) ) return false;
         return _bc.serialize( linestep );
-#else
-        return true;
-#endif 
      }
+#endif 
   };
 
 }

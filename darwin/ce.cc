@@ -5,9 +5,9 @@
 #include "ce.h"
 #include "functors.h"
 #include "print_xmgrace.h"
-#include <lamarck/atom.h>
-#include <opt/va_minimizer.h>
-#include <opt/bisection.h>
+#include "lamarck/atom.h"
+#include "opt/va_minimizer.h"
+#include "opt/bisection.h"
 #include "concentration.h"
 
 namespace CE

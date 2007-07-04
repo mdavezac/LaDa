@@ -16,7 +16,7 @@
 #include "lattice.h"
 
 #ifdef _MPI 
-  #include<mpi/mpi_object.h>
+  #include "mpi/mpi_object.h"
 #endif
 
 namespace VA_CE {

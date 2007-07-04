@@ -1,12 +1,12 @@
-#include "functional.h"
+#include <functional.h>
 #include <cstdlib>
 
 #include <algorithm>
 #include <functional>
 
-#include <physics/physics.h>
-#include <opt/ndim_iterator.h>
-#include <opt/compose_functors.h>
+#include "physics/physics.h"
+#include "opt/ndim_iterator.h"
+#include "opt/compose_functors.h"
 
 namespace Vff
 { 

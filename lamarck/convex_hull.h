@@ -6,8 +6,8 @@
 #include <iostream>
 
 #include <tinyxml/tinyxml.h>
-#include <opt/types.h>
 
+#include "opt/types.h"
 #include "structure.h"
 #include "ch_template.h"
 

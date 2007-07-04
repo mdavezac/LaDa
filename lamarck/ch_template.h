@@ -3,10 +3,10 @@
 
 #include <iostream>
 
-#include <atat/vectmac.h>
-
 #include <tinyxml/tinyxml.h>
-#include <opt/types.h>
+
+#include "opt/types.h"
+#include "atat/vectmac.h"
 
 #include "structure.h"
 

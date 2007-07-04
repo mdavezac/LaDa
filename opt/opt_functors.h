@@ -29,9 +29,10 @@
 #ifndef _OPT_FUNCTORS_H_
 #define _OPT_FUNCTORS_H_
 
-#include "opt_function_base.h"
 #include<iostream>
-#include<opt/types.h>
+
+#include "opt_function_base.h"
+#include "opt/types.h"
 
 namespace function
 {

@@ -1,18 +1,18 @@
-#ifdef _CE
-  #include "ce.h"
-  namespace Functional = CE;
-#endif
+#include <eo/eoScalarFitness.h>
+
 #ifdef _PESCAN
   #include "pescan.h"
   namespace Functional = BandGap;
+#else
+  #include "ce.h"
+  namespace Functional = CE;
 #endif
 #include "individual.h"
 #include "darwin.h"
 #include "print_xmgrace.h"
 
-#include <eo/eoScalarFitness.h>
 #ifdef _MPI
-#  include <mpi/mpi_object.h>
+#  include "mpi/mpi_object.h"
 #endif
 
 int main(int argc, char *argv[]) 

@@ -2,12 +2,6 @@
 #include <algorithm>
 #include <ext/algorithm>
 #include <fstream>
-
-#include "pescan.h"
-#include "print_xmgrace.h"
-#include <lamarck/atom.h>
-#include <opt/va_minimizer.h>
-
 #ifndef __PGI
   #include<ext/functional>
   using __gnu_cxx::compose1;
@@ -15,6 +9,12 @@
   #include<functional>
   using std::compose1;
 #endif
+
+#include "pescan.h"
+#include "print_xmgrace.h"
+#include "lamarck/atom.h"
+#include "opt/va_minimizer.h"
+
 namespace BandGap
 {
   void operator<<(std::string &_str, const Object &_o)

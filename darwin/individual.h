@@ -1,25 +1,27 @@
 #ifndef _DARWIN_INDIVIDUAL_H_
 #define _DARWIN_INDIVIDUAL_H_
 
-#include <eo/eoScalarFitness.h>
-#include <opt/opt_function_base.h>
 #include <exception>
 #include <iostream>
 #include <stdexcept>       // std::runtime_error
+#include <algorithm>
+#include <functional>
+
+#include <tinyxml/tinyxml.h>
+
+#include <eo/eoScalarFitness.h>
 #include <eo/eoObject.h>      // eoObject
 #include <eo/eoPersistent.h>  // eoPersistent
 #include <eo/eoOpContainer.h>  
 
-#include<algorithm>
-#include<functional>
 
-#include <opt/types.h>
+#include "opt/opt_function_base.h"
+#include "opt/types.h"
 
 #ifdef _MPI
-#include<mpi/mpi_object.h>
+#include "mpi/mpi_object.h"
 #endif 
 
-#include <tinyxml/tinyxml.h>
 
 namespace darwin
 {

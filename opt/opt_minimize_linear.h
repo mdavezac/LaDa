@@ -11,9 +11,9 @@
 #include <algorithm> 
 #include <limits.h>
 
-#include <opt/opt_minimize_base.h>
-#include <analysis/analyze_code.h>
-#include <opt/types.h>
+#include "opt/opt_minimize_base.h"
+#include "analysis/analyze_code.h"
+#include "opt/types.h"
 
 namespace opt {
 

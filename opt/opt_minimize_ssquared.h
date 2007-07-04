@@ -1,16 +1,16 @@
 #ifndef _OPT_MINIMIZE_OPT_Ssquared_H_
 #define _OPT_MINIMIZE_OPT_Ssquared_H_
 
+#include "opt/opt_minimize_opt++.h" // always include before other opt++
+
 // implements S^2 - 1 = 0 type constraints 
 // works with package opt++, see include below
-#include <opt/opt_minimize_opt++.h> // always include before other opt++
 #include <NonLinearEquation.h>
 #include <NonLinearConstraint.h>
 #include <CompoundConstraint.h>
 #include <OptQNIPS.h>
 
-
-#include <analysis/analyze_code.h>
+#include "analysis/analyze_code.h"
 
 namespace opt {
 

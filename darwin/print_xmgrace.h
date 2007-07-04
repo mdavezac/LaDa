@@ -1,13 +1,13 @@
 #ifndef _DARWIN_PRINT_XMGRACE_H_
 #define _DARWIN_PRINT_XMGRACE_H_
 
-#include <opt/types.h>
 #include <string>
 #include <fstream>
 #include <list>
 
+#include "opt/types.h"
 #ifdef _MPI
-#include<mpi/mpi_object.h>
+#include "mpi/mpi_object.h"
 #endif
 
 namespace darwin

@@ -1,8 +1,9 @@
-#include <lamarck/functional_builder.h>
-#include <lamarck/structure.h>
 #include <tinyxml/tinyxml.h>
-#include <vff/functional.h>
-#include <opt/opt_minimize_gsl.h>
+
+#include "lamarck/functional_builder.h"
+#include "lamarck/structure.h"
+#include "vff/functional.h"
+#include "opt/opt_minimize_gsl.h"
 #include "mpi_object.h"
 
 

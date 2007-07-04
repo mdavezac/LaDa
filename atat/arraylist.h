@@ -18,13 +18,44 @@ inline LinkedList<T>& operator <<(LinkedList<T>& list, const Array<S> &a) {
 }
 
 template<class T,class S>
-inline void LinkedList_to_Array(Array<T> *a, const LinkedList<S> &l) {
+void LinkedList_to_Array(Array<T> *a, const LinkedList<S> &l) {
   if (a) {
     types::t_int size=l.get_size();
     a->resize(size);
     LinkedListIterator<S> it(l);
     for (types::t_int i=0; i<size; i++) {
       (*a)(i)=(T)(*it);
+      it++;
+    }
+  }
+}
+
+template<class T,class S>
+void ArrayArray_to_Array2d(Array2d<T> *pmat, const Array<Array<S> > &a) {
+  if (a.get_size()==0) {
+    pmat->resize(0,0);
+  }
+  else {
+    types::t_int h=a(0).get_size();
+    pmat->resize(a.get_size(),h);
+    for (types::t_int i=0; i<a.get_size(); i++) {
+      for (types::t_int j=0; j<h; j++) {
+        (*pmat)(i,j)=(T)(a(i)(j));
+      }
+    }
+  }
+}
+
+template<class T,class S>
+void LinkedListArray_to_Array2d(Array2d<T> *a, const LinkedList<Array<S> > &l) {
+  if (a) {
+    LinkedListIterator<S> it(l);
+    iVector2d size(l.get_size(),it->get_size());
+    a->resize(size);
+    for (types::t_int i=0; i<size(0); i++) {
+      for (types::t_int j=0; j<size(1); j++) {
+	(*a)(i,j)=(T)((*it)(j));
+      }
       it++;
     }
   }
@@ -130,7 +161,8 @@ class MultiDimIterator {
     current=min;
   }
   operator const T& (void) {return current;}
-  operator void * () { return valid ? (void*)(1) : (void*)(NULL); }
+  //  operator void * () {return (void *)valid;}
+  operator void * () {return ((types::t_int *)NULL+valid);}
   const T& operator++(int);
   void bump_up(types::t_int level);  
 };

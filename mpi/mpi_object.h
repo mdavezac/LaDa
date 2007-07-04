@@ -2,6 +2,7 @@
 #define _MPI_OBJECT_H_
 
 
+#include <math.h>
 #ifdef _MPI
 // #undef SEEK_SET
 // #undef SEEK_CUR
@@ -10,8 +11,7 @@
 #include <mpi2c++/mpi++.h>
 #endif
 
-#include <opt/types.h>
-#include <math.h>
+#include "opt/types.h"
 
 namespace mpi
 {

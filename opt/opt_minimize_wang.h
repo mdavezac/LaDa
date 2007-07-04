@@ -3,7 +3,8 @@
 
 // implements -1<= S <= 1 type constraints
 // works with package opt++, see include below
-#include <opt/opt_minimize_opt++.h> // always include before other opt++
+#include "opt/opt_minimize_opt++.h" // always include before other opt++
+
 #include <NLP.h>
 #include <Constraint.h>
 #include <BoundConstraint.h>

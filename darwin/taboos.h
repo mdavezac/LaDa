@@ -1,18 +1,17 @@
 #ifndef _DARWIN_TABOO_H_
 #define _DARWIN_TABOO_H_
 
+#include <ext/functional>
+#include <list>
+#include <algorithm>
 
 #include <eo/eoFunctor.h>
 #include <eo/eoOp.h>
 #include <eo/eoGenOp.h>
-#include <list>
-#include <algorithm>
 
-#include <opt/types.h>
+#include "opt/types.h"
 
-#include<ext/functional>
-
-#include"functors.h"
+#include "functors.h"
 
 namespace darwin
 {

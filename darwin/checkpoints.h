@@ -12,7 +12,7 @@
 #include <eo/eoContinue.h>
 #include <eo/utils/eoHowMany.h>
 
-#include<opt/types.h>
+#include "opt/types.h"
 
 #include "taboos.h"
 #include "operators.h"

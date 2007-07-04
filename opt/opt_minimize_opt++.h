@@ -6,8 +6,7 @@
 // functions. see opt::function in opt_functors.h
 
 
-
-#include <opt/opt_minimize_base.h>
+#include "opt/opt_minimize_base.h"
 #ifdef Real // atat vs newmat pb
   #undef Real
 #endif

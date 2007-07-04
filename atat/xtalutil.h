@@ -84,8 +84,8 @@ inline types::t_int is_int(const rMatrix3d &m) {
 
 types::t_int in01(rVector3d v);
 types::t_int in01included(rVector3d v);
-types::t_int which_atom(const Array<rVector3d> &atom_pos, rVector3d pos, const rMatrix3d &inv_cell);
-types::t_int which_atom(const Array<rVector3d> &atom_pos, rVector3d pos);
+types::t_int which_atom(const Array<rVector3d> &atom_pos, const rVector3d &pos, const rMatrix3d &inv_cell);
+types::t_int which_atom(const Array<rVector3d> &atom_pos, const rVector3d &pos);
 rVector3d wrap_inside_cell(const rVector3d &v, const rMatrix3d &cell);
 rVector3d flip_into_brillouin_1(const rVector3d &k, const rMatrix3d &rec_lat);
 rVector3d find_perpendicular(const rVector3d &dir);

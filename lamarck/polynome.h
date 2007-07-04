@@ -18,10 +18,12 @@
 #include <algorithm>
 #include <numeric>
 #include <iostream>
+
 #include <tinyxml/tinyxml.h>
-#include <opt/opt_function_base.h>
-#include <opt/opt_polynome.h>
-#include <opt/types.h>
+
+#include "opt/opt_function_base.h"
+#include "opt/opt_polynome.h"
+#include "opt/types.h"
 
 namespace VA_CE {
 

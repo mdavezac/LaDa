@@ -476,28 +476,28 @@ template<class T, types::t_int D>
     }
   };
 
-inline void BoundingBox<types::t_int,3>::before_update(void) {
+template<> inline void BoundingBox<types::t_int,3>::before_update(void) {
   for (types::t_int i=0; i<3; i++) {
     min.x[i]= MAXINT;
     max.x[i]=-MAXINT;
   }
 }
 
-inline void BoundingBox<types::t_real,3>::before_update(void) {
+template<> inline void BoundingBox<types::t_real,3>::before_update(void) {
   for (types::t_int i=0; i<3; i++) {
     min.x[i]= MAXFLOAT;
     max.x[i]=-MAXFLOAT;
   }
 }
 
-inline void BoundingBox<types::t_int,2>::before_update(void) {
+template<> inline void BoundingBox<types::t_int,2>::before_update(void) {
   for (types::t_int i=0; i<2; i++) {
     min.x[i]= MAXINT;
     max.x[i]=-MAXINT;
   }
 }
 
-inline void BoundingBox<types::t_real,2>::before_update(void) {
+template<> inline void BoundingBox<types::t_real,2>::before_update(void) {
   for (types::t_int i=0; i<2; i++) {
     min.x[i]= MAXFLOAT;
     max.x[i]=-MAXFLOAT;

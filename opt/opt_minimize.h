@@ -2,10 +2,10 @@
 #define _OPT_MINIMIZE_H_
 
 // includes all minimizers
-#include <opt/opt_minimize_linear.h>
+#include "opt/opt_minimize_linear.h"
 // #include <opt/opt_minimize_wang.h>
 // #include <opt/opt_minimize_ssquared.h>
-#include <opt/types.h>
+#include "opt/types.h"
 
 namespace opt
 {

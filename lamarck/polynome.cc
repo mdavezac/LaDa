@@ -8,8 +8,8 @@
 #include <stdio.h>
 
 
-#include <analysis/analyze_code.h>
-#include <analysis/call_log.h>
+#include "analysis/analyze_code.h"
+#include "analysis/call_log.h"
 
 #include "polynome.h"
 

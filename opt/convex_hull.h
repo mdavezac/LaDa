@@ -4,14 +4,15 @@
 #include <list>
 #include <functional>
 #include <iostream>
-#include<iomanip>
+#include <iomanip>
 
 #include <tinyxml/tinyxml.h>
-#include <opt/types.h>
-#include <opt/opt_functors.h>
+
+#include "opt/types.h"
+#include "opt/opt_functors.h"
 
 #ifdef _MPI
-#include <mpi/mpi_object.h>
+#include "mpi/mpi_object.h"
 #endif
 
 namespace ch

@@ -12,7 +12,7 @@
 #include "harmonic.h"
 
 #ifdef _MPI 
-  #include<mpi/mpi_object.h>
+  #include "mpi/mpi_object.h"
 #endif
 
 namespace Ising_CE 

@@ -1,11 +1,11 @@
-#include<vector>
-#include<list>
-#include<string>
-#include<iostream>
+#include <vector>
+#include <list>
+#include <string>
+#include <iostream>
 #include <stdexcept>       // std::runtime_error
 
 #include "mpi_object.h"
-#include <atat/vectmac.h>
+#include "atat/vectmac.h"
 
 namespace mpi
 {

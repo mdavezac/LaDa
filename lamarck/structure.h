@@ -17,8 +17,8 @@
 
 #include <tinyxml/tinyxml.h>
 #include <exception>
-#include <opt/types.h>
 
+#include "opt/types.h"
 #include "atat/vectmac.h"
 #include "atat/xtalutil.h"
 #include "atat/machdep.h"

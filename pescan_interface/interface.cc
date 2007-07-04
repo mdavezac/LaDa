@@ -42,9 +42,9 @@ namespace Pescan
   void Interface :: create_directory()
   {
     std::ostringstream sstr;
-    sstr << "escan.";
+    sstr << "escan";
 #ifdef _MPI
-    sstr << mpi::main.rank();
+    sstr << "." << mpi::main.rank();
 #endif
     dirname = sstr.str();
 
@@ -70,7 +70,10 @@ namespace Pescan
     system( sstr.str().c_str() );
 
     sstr.str("");
-    sstr << "cp " << genpot.launch << " ";
+    sstr << "cp ";
+#ifndef _NOLAUNCH
+    sstr <<  genpot.launch << " ";
+#endif
     std::vector<std::string> :: const_iterator i_str = genpot.pseudos.begin();
     std::vector<std::string> :: const_iterator i_str_end = genpot.pseudos.end();
     for(; i_str != i_str_end; ++i_str)
@@ -93,8 +96,10 @@ namespace Pescan
     system( sstr.str().c_str() );
 
     sstr.str("");
-    sstr << "cp " << escan.launch << " ";
-    sstr << " maskr ";
+    sstr << "cp maskr "; 
+#ifndef _NOLAUNCH
+    sstr << escan.launch;
+#endif
     std::vector<SpinOrbit> :: const_iterator i_so = escan.spinorbit.begin();
     std::vector<SpinOrbit> :: const_iterator i_so_end = escan.spinorbit.end();
     std::vector<std::string> alreadythere;
@@ -184,10 +189,12 @@ namespace Pescan
     if( parent->Attribute("method", &j) )
       escan.method = ( j == 1 ) ? Escan::FOLDED_SPECTRUM: Escan::ALL_ELECTRON;
     child = parent->FirstChildElement("References");
-    if( child and child->Attribute("VBM") and child->Attribute("CBM") )
+    if( child )
     {
-      child->Attribute("VBM", &escan.Eref.first);
-      child->Attribute("CBM", &escan.Eref.second);
+      if( child->Attribute("VBM") )
+        child->Attribute("VBM", &escan.Eref.first);
+      if( child->Attribute("CBM") )
+        child->Attribute("CBM", &escan.Eref.second);
     }
 
     child = parent->FirstChildElement("Hamiltonian");
@@ -249,7 +256,6 @@ namespace Pescan
     if( child->Attribute("tolerance") )
       child->Attribute("tolerance", &escan.tolerance);
 
-    return true;
   }
 
   void Interface::write_genpot_input()

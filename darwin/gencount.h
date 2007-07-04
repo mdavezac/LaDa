@@ -1,7 +1,7 @@
 #ifndef _DARWIN_GENCOUNT_H_
 #define _DARWIN_GENCOUNT_H_
 
-#include <opt/types.h>
+#include "opt/types.h"
 
 namespace darwin
 {

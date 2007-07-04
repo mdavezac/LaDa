@@ -2,7 +2,8 @@
 #define _PHYSICAL_CONSTANTS_
 
 #include <string>
-#include <opt/types.h>
+
+#include "physics.h"
 
 namespace physics 
 {

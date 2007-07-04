@@ -5,21 +5,18 @@
 #include <algorithm>
 #include <functional>
 
-#include <lamarck/structure.h>
-#include <lamarck/functional_builder.h>
-#include <opt/opt_function_base.h>
-#include <opt/types.h>
-
 #include <tinyxml/tinyxml.h>
-
 #include <eo/eoOp.h>
 
-#include <lamarck/structure.h>
+#include "lamarck/structure.h"
+#include "lamarck/functional_builder.h"
+#include "opt/opt_function_base.h"
+#include "opt/types.h"
 
 #include "evaluator.h"
 
 #ifdef _MPI
-#include<mpi/mpi_object.h>
+#include "mpi/mpi_object.h"
 #endif
 
 namespace CE
