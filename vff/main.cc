@@ -1,7 +1,7 @@
-#include <functional.h>
 
 #include <tinyxml/tinyxml.h>
 
+#include "functional.h"
 #include "lamarck/lattice.h"
 #include "lamarck/structure.h"
 #include "opt/opt_frprmn.h"

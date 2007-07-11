@@ -83,7 +83,11 @@ namespace darwin
         sstr << "Seed: " << d;
         std::string str = sstr.str();
         printxmg.add_comment( str );
+#ifdef _MPI
         rng.reseed( std::abs(d) * (mpi::main.rank()+1) );
+#else
+        rng.reseed( std::abs(d) );
+#endif
       }
       else if ( str.compare("populate")==0 ) // seed from given number
       {
@@ -837,7 +841,7 @@ namespace darwin
     {
       t_Individual indiv;
       evaluator.initialize(indiv);
-      if ( taboos and ( not (*taboos)(indiv) ) )
+      if ( not ( taboos and (*taboos)(indiv) ) )
         _pop.push_back(indiv);
     } // while ( i_pop->size() < target )
     _pop.resize( _size );

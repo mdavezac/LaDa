@@ -48,13 +48,13 @@ int main(int argc, char *argv[])
     std::cerr << "Could not find Functional in input" << std::endl;
     return false;
   }
-// VA_CE::Functional_Builder ce;
-// if ( not ce.Load(*child) )
-// {
-//   std::cerr << "Error while reading Functional from input" << std::endl;
-//   return false;
-// }
-// ce.add_equivalent_clusters();
+  VA_CE::Functional_Builder ce;
+  if ( not ce.Load(*child) )
+  {
+    std::cerr << "Error while reading Functional from input" << std::endl;
+    return false;
+  }
+  ce.add_equivalent_clusters();
 
   // do structure
   child = handle.FirstChild( "Job" ).FirstChild( "Structure" ).Element();
@@ -69,21 +69,21 @@ int main(int argc, char *argv[])
       return false;
     }
 
-//   VA_CE::Functional_Builder::t_VA_Functional functional;
-//   ce.generate_functional(structure, &functional);
-// 
-//   functional.resize( structure.atoms.size() );
-//   Ising_CE::Structure::t_Atoms::const_iterator i_atom = structure.atoms.begin();
-//   Ising_CE::Structure::t_Atoms::const_iterator i_atom_end = structure.atoms.end();
-//   VA_CE::Functional_Builder::t_VA_Functional::iterator i_var = functional.begin();
-//   for( ; i_atom != i_atom_end; ++i_atom, ++i_var )
-//     *i_var = i_atom->type;
-// 
-//   std::cout << "Energy: " << functional.evaluate() << std::endl
-//             << "Concentration: " << structure.get_concentration() << std::endl;
-    Ising_CE::fourrier_to_kspace( structure.atoms.begin(), structure.atoms.end(),
-                                  structure.k_vecs.begin(), structure.k_vecs.end() );
-    structure.print_out( std::cout );
+    VA_CE::Functional_Builder::t_VA_Functional functional;
+    ce.generate_functional(structure, &functional);
+  
+    functional.resize( structure.atoms.size() );
+    Ising_CE::Structure::t_Atoms::const_iterator i_atom = structure.atoms.begin();
+    Ising_CE::Structure::t_Atoms::const_iterator i_atom_end = structure.atoms.end();
+    VA_CE::Functional_Builder::t_VA_Functional::iterator i_var = functional.begin();
+    for( ; i_atom != i_atom_end; ++i_atom, ++i_var )
+      *i_var = i_atom->type;
+  
+    std::cout << "Energy: " << functional.evaluate() << std::endl
+              << "Concentration: " << structure.get_concentration() << std::endl;
+//   Ising_CE::fourrier_to_kspace( structure.atoms.begin(), structure.atoms.end(),
+//                                 structure.k_vecs.begin(), structure.k_vecs.end() );
+//   structure.print_out( std::cout );
 
 //   delete functional.get_functional1();
 //   delete functional.get_functional2();

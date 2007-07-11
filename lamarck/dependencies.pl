@@ -8,12 +8,12 @@ my $HOME = `cd; pwd`; chomp $HOME;
 
 @{$params{"defs"}} = ( "_MPI" );
 
-@{$params{"Includes"}} = (".", "$HOME/usr/src/atat/src",
+@{$params{"Includes"}} = (".", "$HOME/usr/src/ATAT/src",
                           "$HOME/usr/include/opt", "$HOME/usr/include/analysis");
 
 if ( $computer =~ /home/ )
 {
-  @{$params{"make include"}} = ( "atat", "$HOME/usr/include");
+  @{$params{"make include"}} = ( "../atat", "$HOME/usr/include");
   @{$params{"make lib"}} = ( ); 
   $params{"CC"}  = "gcc";
   $params{"CXX"} = "g++";
@@ -37,7 +37,7 @@ elsif ( $computer =~ /office/ )
 }
 elsif ( $computer =~ /lester/ )
 {
-  @{$params{"make include"}} = ( "atat", 
+  @{$params{"make include"}} = ( "../atat", 
                                  "/opt/mpich.gcc/include",
                                  "$HOME/usr/include/" );
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/", "-llamarck", "-latat", 
@@ -51,7 +51,7 @@ elsif ( $computer =~ /lester/ )
 }
 elsif ( $computer =~ /super/ )
 {
-  @{$params{"make include"}} = ( "atat", "$HOME/usr/include");
+  @{$params{"make include"}} = ( "../atat", "$HOME/usr/include");
   @{$params{"make lib"}} = ();
   $params{"CC"}  = "icc";
   $params{"CXX"} = "icc";
@@ -263,14 +263,14 @@ sub template()
   if ( exists $params{'ar'}{'atat flags'} ) 
   {
     printf OUT "\t%s \n", $params{'ar'}{'atat flags'}[0];
-    printf OUT "\t\${AR} atat/lib\$@.a \${ATATOBJS} %s/*.o\n",
+    printf OUT "\t\${AR} ../atat/lib\$@.a \${ATATOBJS} %s/*.o\n",
                $params{'ar'}{'atat flags'}[1];
   }
   else 
   {
-    printf OUT "\t\$\{AR} atat/lib\$@.a \${ATATOBJS} \n";
+    printf OUT "\t\$\{AR} ../atat/lib\$@.a \${ATATOBJS} \n";
   }
-  printf OUT "\t\${RANLIB} atat/lib\$@.a\n";
+  printf OUT "\t\${RANLIB} ../atat/lib\$@.a\n";
 
   printf OUT "\n\nclean:\n\t- rm -f \${OBJS} \${LIBOBJS}\n";
   printf OUT "\t- rm -f \${OUTPUT}\n\n";
@@ -284,7 +284,7 @@ sub template()
       printf OUT "\t%s\n", $clean;
     }
   }
-  printf OUT "\t- rm -f atat/libatat.a \${OUTPUT} \n\n";
+  printf OUT "\t- rm -f ../atat/libatat.a \${OUTPUT} \n\n";
 
   printf OUT "\n\ninclude .dependencies\n\n"; 
 
@@ -296,15 +296,14 @@ sub template()
 
 sub copy_dependencies()
 {
-  system "rm -f atat/*";
+  system "rm -f ../atat/*";
   foreach $key ( keys %dependencies )
   {
-    if ( $dependencies{$key}{"location"} =~ /atat/ )
+    if ( $dependencies{$key}{"location"} =~ /ATAT/ )
     {
-      if ( exists $dependencies{$key}{"header"} ) 
-        { copy_atat($key,"header") }
-      if ( exists $dependencies{$key}{"source"} ) 
-        { copy_atat($key,"source") }
+      copy_atat($key,"header") if ( exists $dependencies{$key}{"header"} );
+      copy_atat($key,"source") if ( exists $dependencies{$key}{"source"} );
+      $dependencies{$key}{'location'} = "../atat";
     }
   }
 }
@@ -359,9 +358,8 @@ sub copy_atat($$)
   if ( $first_other < $last_include )
    { $last_include = $first_other; }
 
-  open OUT, ">atat/$key$suffix" 
+  open OUT, ">../atat/$key$suffix" 
     or die "Could not open $dependencies{$key}{'location'}/$key$suffix\n";
-
   seek (IN, 0, 0);
   $counter = 0;
   while( <IN> )
@@ -464,7 +462,7 @@ sub  write_make_file()
             { print OUT "\\\n\t"; }
           if ( $dependencies{$key}{"location"} !~ /atat/ )
             { next; } 
-          print OUT "atat/", $key, ".cc "; $i++;
+          print OUT "../atat/", $key, ".cc "; $i++;
         }
       }
       print OUT "\n";
@@ -516,18 +514,14 @@ sub write_dependencies()
     delete $params{"already"};
     if ( not exists $dependencies{$key}{"source"} )
       { next; }
-    if ( $dependencies{$key}{"location"} =~ /atat/ )
-      { print OUT "atat/", $key, ".o: atat/", $key, ".cc ";}
-    elsif ( $dependencies{$key}{"location"} ne "." )
+    if ( $dependencies{$key}{"location"} ne "." )
       { print OUT $dependencies{$key}{"location"}, "/", $key, ".o: ",
                   $dependencies{$key}{"location"}, "/", $key, ".cc ";}
     else
       { print OUT $key, ".o: ", $key, ".cc ";}
     if ( exists $dependencies{$key}{"header"} )
     {
-      if ( $dependencies{$key}{"location"} =~ /atat/ )
-        { print OUT "atat/", $key, ".h ";}
-      elsif ( $dependencies{$key}{"location"} ne "." )
+      if ( $dependencies{$key}{"location"} ne "." )
         { print OUT $dependencies{$key}{"location"}, "/", $key, ".h ";}
       else
         { print OUT $key, ".h ";}
@@ -555,27 +549,21 @@ sub print_recurrent_deps($)
          (exists $dependencies{$dep}{"header"})     )
     {
       print OUT " \\\n\t";
-      if ( $dependencies{$dep}{"location"} =~ /atat/ )
-        { print OUT "atat/"; }
-      elsif ( $dependencies{$dep}{"location"} ne "." )
+      if ( $dependencies{$dep}{"location"} ne "." )
         { print OUT $dependencies{$dep}{"location"}, "/"; }
       print OUT $dep, ".o";
     }
     elsif ( (exists $dependencies{$dep}{"source"}) )
     {
       print OUT " \\\n\t";
-      if ( $dependencies{$dep}{"location"} =~ /atat/ )
-        { print OUT "atat/"; }
-      elsif ( $dependencies{$dep}{"location"} ne "." )
+      if ( $dependencies{$dep}{"location"} ne "." )
         { print OUT $dependencies{$dep}{"location"}, "/"; }
       print OUT $dep, ".cc";
     }
     elsif ( exists $dependencies{$dep}{"header"} )
     {
       print OUT " \\\n\t";
-      if ( $dependencies{$dep}{"location"} =~ /atat/ )
-        { print OUT "atat/"; }
-      elsif ( $dependencies{$dep}{"location"} ne "." )
+      if ( $dependencies{$dep}{"location"} ne "." )
         { print OUT $dependencies{$dep}{"location"}, "/"; }
       print OUT $dep, ".h";
       print_recurrent_deps($dep);

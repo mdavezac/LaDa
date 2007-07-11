@@ -1,3 +1,4 @@
+#include <stdexcept>       // std::runtime_error
 #include <eo/eoScalarFitness.h>
 
 #ifdef _PESCAN
@@ -26,7 +27,7 @@ int main(int argc, char *argv[])
     typedef darwin::Individual< Functional::Object, eoMinimizingFitness > t_Individual;
     darwin::Darwin< t_Individual, Functional::Evaluator > ga;
     if ( not  ga.Load("input.xml") )
-      throw ""; 
+      throw std::runtime_error( "Could not load input!!\n" ); 
     ga.run();
   }
   catch ( std::exception &e )

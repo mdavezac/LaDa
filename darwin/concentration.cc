@@ -121,6 +121,22 @@ types::t_real set_concentration( Ising_CE::Structure &_str,
       return false;
     } 
 
+    if (     parent->Attribute("x") 
+         and parent->Attribute("y") )
+    {
+      double d;
+      parent->Attribute("x", &d); x0 = (types::t_real) d;
+      parent->Attribute("y", &d); y0 = (types::t_real) d;
+      if ( x0 > 0 and x0 < 1 and y0 > 0 and y0 < 1 )
+      {
+        x0 = 2.0*x0 - 1.0;
+        y0 = 2.0*y0 - 1.0;
+        singlec = true;
+        return true;
+      }
+      std::cerr << "Incorrect values for concentrations " << std::endl
+                << " x = " << x0 << " y = " << y0 << std::endl;
+    }
     if (    ( not parent->Attribute("a") )
          or ( not parent->Attribute("b") )
          or ( not parent->Attribute("c") ) )
@@ -135,16 +151,63 @@ types::t_real set_concentration( Ising_CE::Structure &_str,
     if (    ( b*b - 4*a*c < 0.0 )
          or ( b*b - 4*(a-1.0)*c < 0.0 ) )
     {
-      std::cerr << "Equation incorrect on input... should be y = a +b*x + c*x*x "<<std::cerr;
+      std::cerr << "Equation incorrect on input... should be x = c +b*y + a*y*y "<<std::cerr;
       std::cerr << " with x,y in [0,1] "<<std::cerr;
     }
 
     // changing to x,y in [-1,1]
-    a += b *0.5 + c*0.25 -0.5;
-    b = b *0.5 + c*0.5;
-    c *= 0.25;
+    c = 2.0*c + b + a*0.5 - 1.0;
+    b += a;
+    a *= 0.5;
+
+    if ( parent->Attribute("x") )
+    {
+      parent->Attribute("x", &x0);
+      if ( x0 > 0 and x0 < 1 and can_inverse(x0) ) 
+      {
+        x0 = 2.0*x0 - 1.0;
+        y0 = get_y(x0);
+        singlec = true;
+        return true;
+      }
+      std::cerr << "Incorrect values for concentrations " << std::endl
+                << " x = " << x0 << std::endl;
+    }
+    if ( parent->Attribute("y") )
+    {
+      parent->Attribute("y", &y0);
+      if ( y0 > 0 and y0 < 1 )
+      {
+        y0 = 2.0*y0 - 1.0;
+        x0 = get_x(y0);
+        singlec = true;
+        return true;
+      }
+      std::cerr << "Incorrect values for concentrations " << std::endl
+                << " y = " << y0 << std::endl;
+    }
+
+    if (     std::abs( a ) < types::tolerance 
+         and std::abs( b ) < types::tolerance )
+    {
+      std::cerr << " Equation will run into numerical errors..."
+                << " b and a coefficients too small " << std::endl;
+      return false;
+    }
     return true;
   }
+
+  // verifies that _y leads to x in [-1;1] 
+  // expects polynomial to be monotonous between y(1) and y(-1)
+  bool X_vs_y :: can_inverse( types::t_real _x)
+  {
+    types::t_real c0 = c + b + a; // y = 1
+    types::t_real c1 = c - b + a; // y = -1
+    if ( c0 > c1 )
+      return _x <= c0 and _x >= c1;
+    return _x >= c0 and _x <= c1;
+  }
+
 
 #ifdef _MPI
 namespace mpi

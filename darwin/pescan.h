@@ -67,7 +67,6 @@ namespace BandGap
         // first minimizes strain
 #ifndef _NOLAUNCH
         vff_minimizer.minimize();
-#endif
         structure.energy = vff.energy();
         vff.print_escan_input();
 
@@ -84,6 +83,9 @@ namespace BandGap
 #endif 
 
         write_band_edges();
+#else 
+        types::t_real result = rng.random(1000000);
+#endif
         return result;
       } 
       void evaluate_gradient( t_Type* const _i_grad ) 
@@ -201,13 +203,12 @@ namespace BandGap
       types::t_real x, y;
       types::t_real lessthan, morethan;
       X_vs_y x_vs_y;
-      bool single_concentration;
       types::t_int age, check_ref_every;
 
     public:
       Evaluator() : functional(structure), crossover_probability(0.5), 
                     x(0), y(0), lessthan(1.0), morethan(-1.0),
-                    single_concentration(false), age(0), check_ref_every(-1) {}
+                    age(0), check_ref_every(-1) {}
       ~Evaluator() {};
 
       void* const init( t_Object &_object );
@@ -234,13 +235,12 @@ namespace BandGap
       void get_xy_concentrations( const Ising_CE::Structure &_str );
       bool consistency_check();
       void set_concentration( Ising_CE::Structure &_str );
+      void normalize( Ising_CE::Structure &_str, 
+                      const types::t_int _site, types::t_real _tochange);
       bool Taboo(const t_Object &_object );
   };
 
   void rearrange_structure(Ising_CE::Structure &);
-  types::t_real set_concentration( Ising_CE::Structure &_str,
-                                   types::t_int _site,
-                                   types::t_real _target );
 
 // class SiteIterator
 // {
@@ -319,7 +319,7 @@ namespace BandGap
                            T_O_IT _rout ) // sets rvector values from kspace values
   {
     const std::complex<types::t_real> imath(0, 2*3.1415926535897932384626433832795028841971693993751058208);
-    for (; _rfirst != _rend; ++_rfirst, ++_rout)
+    for (; _rfirst != _rend; _rfirst+=2, ++_rout)
     {
       *_rout = 0.0;
       for(T_K_IT i_k=_kfirst; i_k != _kend; ++i_k)
@@ -330,7 +330,6 @@ namespace BandGap
                   * i_k->type;
       }
     }
-    bool consistency_check();
   }
 
 

@@ -24,7 +24,9 @@
 #include "opt/opt_function_base.h"
 #include "opt/opt_monome.h"
 
+#ifdef _MPI
 #include "mpi/mpi_object.h"
+#endif
 
 namespace function {
 
@@ -346,10 +348,10 @@ namespace function {
         return std::abs(_coef) < 1e-6;
       }
 
+#ifdef _MPI
     public: // MPI stuff
      bool broadcast( mpi::BroadCast &_bc )
      {
-#ifdef _MPI
        types::t_int n = monomes.size();
        if ( not _bc.serialize( n ) ) return false;
        if ( _bc.get_stage() == mpi::BroadCast::COPYING_FROM_HERE )
@@ -359,9 +361,9 @@ namespace function {
        for(; i_monome != i_monome_end; ++i_monome )
          if(    ( not _bc.serialize( i_monome->coefficient ) )
              or ( not _bc.serialize( i_monome->terms ) ) ) return false;
-#endif 
        return true;
      }
+#endif 
   };
  
 } // namespace opt

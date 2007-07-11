@@ -100,6 +100,8 @@ namespace BandGap
       std::cerr << " Could not load Concentration input!! " << std::endl; 
       return false;
     }
+    if ( x_vs_y.is_singlec() )
+      { x = x_vs_y.get_x(); y = x_vs_y.get_y(); }
     if ( not functional.Load( _node ) )
     {
       std::cerr << " Could not load functional input!! " << std::endl; 
@@ -200,7 +202,7 @@ namespace BandGap
 
   bool Evaluator :: Taboo(const t_Object &_object )
   {
-    if ( single_concentration )
+    if ( x_vs_y.is_singlec() )
       return false;
     structure << _object;
     get_xy_concentrations( structure );
@@ -209,7 +211,7 @@ namespace BandGap
   
   eoMonOp<const Object>* Evaluator :: LoadTaboo(const TiXmlElement &_el )
   {
-    if ( single_concentration )
+    if ( x_vs_y.is_singlec() )
       return NULL;
     const TiXmlElement *child = _el.FirstChildElement( "Concentration" );
     if ( not child )
@@ -238,37 +240,47 @@ namespace BandGap
     _object.bitstring.clear(); 
     Ising_CE::Structure::t_Atoms :: const_iterator i_atom = structure.atoms.begin();
     Ising_CE::Structure::t_Atoms :: const_iterator i_atom_end = structure.atoms.end();
-    types::t_int result = 0;
+    types::t_int concx = 0;
+    types::t_int concy = 0;
     for(; i_atom != i_atom_end; ++i_atom )
     {
       bool flip = rng.flip();
+      if ( i_atom->freeze & (i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
+        flip = ( i_atom->type > 0 );
       _object.bitstring.push_back( flip ? 1.0: -1.0 );
-      flip ? ++result: --result;
+      flip ? ++concx: --concx;
+
+      ++i_atom;
+      flip = rng.flip();
+      if ( i_atom->freeze & (i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
+        flip = ( i_atom->type > 0 );
+      _object.bitstring.push_back( flip ? 1.0: -1.0 );
+      flip ? ++concy: --concy;
     }
-    if ( single_concentration )
+    if ( x_vs_y.is_singlec() )
     {
-      types::t_unsigned N = structure.atoms.size();
-      types::t_int xto_change = static_cast<types::t_int>( (double) N * x ) - result;
-      types::t_int yto_change = static_cast<types::t_int>( (double) N * y ) - result;
-      if ( not ( xto_change or yto_change ) ) return true;
+      types::t_unsigned N = structure.atoms.size() >> 1; 
+      types::t_real xto_change = (types::t_real) N * x  - concx;
+      types::t_real yto_change = (types::t_real) N * y  - concy;
+      if (      xto_change > -1.0 and xto_change < 1.0 
+           and  yto_change > -1.0 and xto_change < 1.0 ) return true;
       do
       {
-
-        types::t_unsigned i = rng.random(N-1);
-        if ( i % 2 )
-        {
-          if ( xto_change > 0 and _object.bitstring[i] < 0 )
-            { _object.bitstring[i] = 1; xto_change-=2; }
-          else if ( xto_change < 0 and _object.bitstring[i] > 0 )
-            { _object.bitstring[i] = -1; xto_change+=2; }
-          continue;
-        }
-        if ( yto_change > 0 and _object.bitstring[i] < 0 )
+        types::t_unsigned i = 2 * rng.random(N-1);
+        if ( xto_change > 1.0 and _object.bitstring[i] < 0 )
+          { _object.bitstring[i] = 1; xto_change-=2; }
+        else if ( xto_change < -1.0 and _object.bitstring[i] > 0 )
+          { _object.bitstring[i] = -1; xto_change+=2; }
+        
+        if ( yto_change > -1.0 and yto_change < 1.0 ) continue;
+        i = 2 * rng.random(N-1) + 1;
+        if ( yto_change > 1.0 and _object.bitstring[i] < 0 )
           { _object.bitstring[i] = 1; yto_change-=2; }
-        else if ( yto_change < 0 and _object.bitstring[i] > 0 )
+        else if ( yto_change < -1.0 and _object.bitstring[i] > 0 )
           { _object.bitstring[i] = -1; yto_change+=2; }
 
-      } while ( xto_change or yto_change );
+      } while (    xto_change < -1.0 or xto_change > 1.0
+                or yto_change < -1.0 or yto_change > 1.0 );
     }
     return true;
   }
@@ -334,6 +346,11 @@ namespace BandGap
     Ising_CE::Structure::t_Atoms :: iterator i_atom = structure.atoms.begin();
     Ising_CE::Structure::t_Atoms :: iterator i_atom_end = structure.atoms.end();
     for(; i_atom != i_atom_end; ++i_atom )
+      if ( i_atom->site != 1 and i_atom->site != 0 )
+        return false;
+    i_atom = structure.atoms.begin();
+
+    for(; i_atom != i_atom_end; ++i_atom )
       if ( i_atom->site == 0 and not (i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
         break;
     if (     i_atom == i_atom_end
@@ -364,41 +381,20 @@ namespace BandGap
     if (    ( lattice.sites[0].freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) 
          or ( lattice.sites[1].freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
     {
-      single_concentration = true; 
       get_xy_concentrations( structure );
+      x_vs_y.set_xy( x, y );
       std::ostringstream sstr;
       sstr << " Setting Concentrations to x=" << std::fixed << std::setprecision(3 ) << x 
            << " and y=" << y;
       darwin::printxmg.add_comment( sstr.str() );
-      if (    std::abs(x - x_vs_y.inverse(y)) > types::tolerance 
-           or std::abs(y - x_vs_y.evaluate(x)) > types::tolerance )
+      if (    std::abs(x - x_vs_y.get_x(y)) > types::tolerance 
+           or std::abs(y - x_vs_y.get_y(x)) > types::tolerance )
         darwin::printxmg.add_comment( " WARNING: x and y pair are strain mismatched!! " );
     }
 
     return true;
   }
 
-  void Evaluator :: set_concentration( Ising_CE::Structure &_str )
-  {
-    if ( single_concentration )
-    {
-      ::set_concentration( _str, 0, x );
-      ::set_concentration( _str, 1, y );
-      return;
-    }
-    
-    if ( rng.flip() ) // set y concentration
-    {
-      x = ::set_concentration( _str, 0, -2 );
-      y = x_vs_y.evaluate( x );
-      ::set_concentration( _str, 1, y );
-      return;
-    }
-
-    y = ::set_concentration( _str, 1, -2 );
-    x = x_vs_y.inverse( y );
-    ::set_concentration( _str, 0, x );
-  }
 
   bool Evaluator :: Continue()
   {
@@ -536,115 +532,152 @@ namespace BandGap
 
 
 
-} // namespace CE
-
-types::t_real set_concentration( Ising_CE::Structure &_str,
-                                 types::t_int _site,
-                                 types::t_real _target )
-{
-  types::t_unsigned N = (types::t_int) _str.atoms.size(); N = N>>1;
-  types::t_complex  *hold = new types::t_complex[ N ];
-  if ( not hold )
+  //  sets concentration from k-space values.
+  //  individual need not be physical (ie S_i=+/-1) when fourrier transformed to real-space
+  //  a normalization procedure is applied which takes into account:
+  //  (i) that this ga run is at set concentration (x =x0, y=y0)
+  //  (ii) that x and y are only constrained by load-balancing
+  void Evaluator :: set_concentration( Ising_CE::Structure &_str )
   {
-    std::cerr << " Could not allocate memory in set_concentration!! " << std::endl; 
-    exit(0);
-  }
-  types::t_complex  *i_hold = hold;
-  BandGap::fourrier_to_rspace( _str.atoms.begin(), _str.atoms.end(),
-                               _str.k_vecs.begin(), _str.k_vecs.end(),
-                               i_hold );
-
-  Ising_CE::Structure::t_Atoms::iterator i_atom = _str.atoms.begin();
-  Ising_CE::Structure::t_Atoms::iterator i_atom_end = _str.atoms.end();
-  types :: t_int result = 0; 
-  i_hold = hold;
-  for (; i_atom != i_atom_end; ++i_atom, ++i_hold)
-  {
-    if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T 
-         or ( _site != -1 and _site != i_atom->site ) ) 
-      ( i_atom->type > 0 ) ? ++result : --result;
-    else 
+    types::t_unsigned N = (types::t_int) _str.atoms.size(); N = N>>1;
+    types::t_complex  *hold = new types::t_complex[ N ];
+    if ( not hold )
     {
-      ( std::real(*i_hold) > 0 ) ? ++result : --result;
-      i_atom->type = ( std::real(*i_hold) > 0 ) ? 1.0: -1.0;
+      std::cerr << " Could not allocate memory in set_concentration!! " << std::endl; 
+      exit(0);
     }
-  }
 
-  if ( _target == -2.0 )
-  {
-    delete[] hold;
-    return (double) result  / (double) N;
-  }
+    // creates individual with unnormalized occupation
+    types::t_complex  *i_hold = hold;
+    BandGap::fourrier_to_rspace( _str.atoms.begin(), _str.atoms.end(),
+                                 _str.k_vecs.begin(), _str.k_vecs.end(),
+                                 i_hold );
 
-  types::t_int to_change = static_cast<types::t_int>( (double) N * _target ) - result;
-  if (  not to_change ) 
-  {
-    delete[] hold;
-    return _target;
-  }
-
-  i_atom = _str.atoms.begin();
-  i_hold = hold;
-  for (; i_atom != i_atom_end; ++i_atom, ++i_hold)
-    if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T 
-         or ( _site != -1 and _site != i_atom->site ) ) 
-      *i_hold = to_change;
-    else if ( to_change > 0 and std::real( *i_hold ) > 0 )
-      *i_hold = to_change;
-    else if ( to_change < 0 and std::real( *i_hold ) < 0 )
-      *i_hold = to_change;
-
-  i_atom = _str.atoms.begin();
-  types::t_int which;
-  do
-  {
+    Ising_CE::Structure::t_Atoms::iterator i_atom = _str.atoms.begin();
+    Ising_CE::Structure::t_Atoms::iterator i_atom_end = _str.atoms.end();
+    types :: t_int concx = 0, concy = 0; 
     i_hold = hold;
-    which = -1;
-    types::t_real maxr = 1.0;
-    if ( to_change > 0 )
+    for (; i_atom != i_atom_end; ++i_atom, ++i_hold)
     {
-      for( types::t_unsigned i = 0; i < N; ++i, ++i_hold ) 
-      {
-        if ( _site != -1 and _site != i_atom->site )
-          continue;
-        if (     ( maxr == 1.0 and std::real( *i_hold ) < 0 )
-             or  (  std::real( *i_hold ) < 0 and maxr <  std::real( *i_hold ) ) )
-        {
-          maxr = std::real( *i_hold );
-          which = i;
-        }
-      }
-      if ( which == -1 )
-      {
-        std::cerr << "Couldn't find a site to flip !? " << std::endl;
-        exit(0);
-      }
-      ( i_atom + which )->type = 1.0;
-      *( hold + which ) = to_change;
-      result+=2; to_change-=2;
-      continue;
-    }
-    maxr = -1.0;
-    for( types::t_unsigned i = 0; i < N; ++i, ++i_hold ) 
-    {
-      if ( _site != -1 and _site != i_atom->site )
-        continue;
-      if (     ( maxr == -1.0 and std::real( *i_hold ) > 0 )
-           or  (  std::real( *i_hold ) > 0 and maxr >  std::real( *i_hold ) ) )
-      {
-        maxr = std::real( *i_hold );
-        which = i;
-      }
-    }
-    ( i_atom + which )->type = -1.0;
-    *( hold + which ) = to_change;
-    result-=2; to_change+=2;
+      if ( not i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
+        i_atom->type = std::real(*i_hold);
+      ( i_atom->type > 0 ) ? ++concx : --concx;
 
-  } while (to_change); 
-  
-  delete[] hold;
-  return (double) result  / (double) N;
-}
+      ++i_atom;
+      if ( not i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
+        i_atom->type = std::imag(*i_hold);
+      ( i_atom->type > 0 ) ? ++concy : --concy;
+    }
+
+    // then normalize it while setting correct concentrations
+    if ( x_vs_y.is_singlec() )
+    {
+      normalize( _str, 0, (types::t_real) concx - ( (types::t_real) N ) * x_vs_y.get_x(x) );
+      normalize( _str, 1, (types::t_real) concy - ( (types::t_real) N ) * x_vs_y.get_y(y) );
+      delete[] hold;
+      return;
+    }
+    
+    // Concentration is not set, but still constrained by load balancing
+    // hence will randomly set concentration to ( x and load balanced y )
+    // or ( y and load balanced x). The latter case may not always be possible. 
+    x = (double) concx / (double) N;
+    if ( rng.flip() or not x_vs_y.can_inverse(x) )
+    {  // x and load balanced y
+      y = (double) concy / (double) N;
+      x = x_vs_y.get_x( y );
+      normalize( _str, 1, 0 );
+      normalize( _str, 0, (types::t_real) concx - ( (types::t_real) N ) * x );
+      delete[] hold;
+      return;
+    }
+     
+    // y and load balanced x
+    y = x_vs_y.get_y( x );
+    normalize( _str, 0, 0 );
+    normalize( _str, 1, (types::t_real) concy - ( (types::t_real) N ) * y );
+    delete[] hold;
+  }
+
+
+  // Takes an "unphysical" individual and set normalizes its sites _sites to +/-1,
+  // after flipping the _tochange spins closest to zero.
+  // ie sets the concentration
+  void Evaluator :: normalize( Ising_CE::Structure &_str, 
+                               const types::t_int _site, types::t_real _tochange) 
+  {
+    Ising_CE::Structure::t_Atoms::iterator i_end = _str.atoms.end();
+    Ising_CE::Structure::t_Atoms::iterator i_which;
+    Ising_CE::Structure::t_Atoms::iterator i_atom;
+    while( _tochange < -1.0 or _tochange > 1.0 )
+    {
+      // first finds atom with type closest to zero from +1 or -1 side,
+      // depending on _tochange
+      i_atom = _str.atoms.begin();
+      i_which = i_end;
+      types::t_real minr = 0.0;
+      for(; i_atom != i_end; ++i_atom )
+      {
+        if ( _site ) ++i_atom; 
+        if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
+          goto endofloop;
+        if ( _tochange > 0 )
+        {
+          if ( i_atom->type < 0 )
+            goto endofloop;
+          if ( minr != 0.0 and i_atom->type > minr )
+            goto endofloop;
+        }
+        else // ( _tochange < 0 )
+        {
+          if ( i_atom->type > 0 )
+            goto endofloop;
+          if ( minr != 0.0 and i_atom->type < minr )
+            goto endofloop;
+        }
+
+        i_which = i_atom;
+        minr = i_atom->type;
+
+endofloop: 
+        if ( not _site ) ++i_atom;
+      }
+      if ( i_which == i_end )
+        throw std::runtime_error( "Error while normalizing x constituents\n" );
+
+      i_which->type = ( _tochange > 0 ) ? -1.0: 1.0;
+      _tochange += ( _tochange > 0 ) ? -2: 2;
+    }
+
+    // finally, normalizes _str
+    i_atom = _str.atoms.begin();
+    for(; i_atom != i_end; ++i_atom )
+    {
+      if ( _site ) ++i_atom;
+      i_atom->type = ( i_atom->type > 0 ) ? 1.0: -1.0;
+      if ( not _site ) ++i_atom;
+    }
+#ifdef _DEBUG
+    types::t_real concx = 0;
+    types::t_real concy = 0;
+    types :: t_unsigned N = _str.atoms.size() >> 1;
+    i_atom = _str.atoms.begin();
+    for(; i_atom != i_end; ++i_atom )
+    {
+      i_atom->type > 0 ? ++concx: --concx;
+      ++i_atom;
+      i_atom->type > 0 ? ++concy: --concy;
+    }
+    types::t_real result =  _site ? (types::t_real ) concy / (types::t_real) N:
+                                    (types::t_real ) concx / (types::t_real) N;
+    types::t_real inv = 2.0 / (types::t_real) N;
+    if ( std::abs( result - (_site ? y:x) ) > inv )
+      throw std::runtime_error("Could not normalize site\n" );
+#endif
+  }
+
+} // namespace pescan
+
 
 
 #ifdef _MPI
@@ -674,8 +707,6 @@ namespace mpi
     if( not serialize( _ev.lessthan ) ) return false;
     if( not serialize( _ev.morethan ) ) return false;
     if( not serialize( _ev.x_vs_y ) ) return false;
-
-    return serialize( _ev.single_concentration );
   }
   template<>
   bool mpi::BroadCast::serialize<BandGap::Object>( BandGap::Object & _object )

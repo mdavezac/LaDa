@@ -2,7 +2,6 @@
 #include <sstream>
 
 #include "print_xmgrace.h"
-
 namespace darwin
 {
 
