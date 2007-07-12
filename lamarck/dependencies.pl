@@ -1,15 +1,14 @@
 #! /usr/bin/perl
 #
 
-my $computer = "lester";
+my $computer = "office";
 my %params;
 
 my $HOME = `cd; pwd`; chomp $HOME;
 
 @{$params{"defs"}} = ( "_MPI" );
 
-@{$params{"Includes"}} = (".", "$HOME/usr/src/ATAT/src",
-                          "$HOME/usr/include/opt", "$HOME/usr/include/analysis");
+@{$params{"Includes"}} = (".", "$HOME/usr/src/ATAT/src" );
 
 if ( $computer =~ /home/ )
 {
@@ -25,7 +24,7 @@ elsif ( $computer =~ /office/ )
 {
   @{$params{"make include"}} = ( ".."
                                  ,"/opt/mpich/include"
-                               );
+                                 ,"$HOME/usr/include" );
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/", "-llamarck", "-latat", 
                              "-L /opt/mpich/ch-p4/lib/", "-lpmpich++", "-lpmpich", "-lmpiobject", 
                              "-ltinyxml" );
@@ -317,7 +316,7 @@ sub copy_atat($$)
     { $suffix = ".h"; }
 
 
-  open IN, "<$dependencies{$key}{'location'}/$key$suffix" 
+  open IN, "$dependencies{$key}{'location'}/$key$suffix" 
     or die "Could not open $dependencies{$key}{'location'}/$key$suffix\n";
 
   my $last_include = 0;
