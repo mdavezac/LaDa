@@ -1,0 +1,174 @@
+#include "poly_harmonic.h"
+
+namespace VA_CE
+{
+  double Poly_Harmonic :: attenuation = 1000000.0;
+  const double Poly_Harmonic :: ZERO_TOLERANCE = 0.00000000001;
+  using atat::ipow;
+  // adds point in sorted list
+
+  double Poly_Harmonic :: evaluate_harmonic ( const rVector3d &k ) const
+  {
+    double r2=norm2(k);
+    double A=sqrt(1./(4.*M_PI));
+    if ( fabs(r2) <= ZERO_TOLERANCE )
+    {
+      switch ( rank )
+      {
+        case 0:
+          return(0);
+        case 1:
+          return( -A*sqrt(21./4.)  );
+        case 2:
+          return( A*sqrt(13./2.)*(-5./4.) );
+        case 3:
+          return( 0.0 ); 
+      }
+    }
+    switch (rank)
+    {
+       case 0:
+         return(A);
+       case 1: 
+         return (   A*sqrt(21./4.)*(1.-5.*(ipow(k(0),2)*ipow(k(1),2) 
+                  + ipow(k(0),2)*ipow(k(2),2) 
+                  + ipow(k(1),2)*ipow(k(2),2)) / ipow(r2,2)));
+       case 2: 
+         return (   A*sqrt(13./2.)*(1./4.)*(
+                    7*(ipow(k(0),6)
+                       + ipow(k(1),6)
+                       + ipow(k(2),6)
+                       + 30*ipow(k(0),2)*ipow(k(1),2)*ipow(k(2),2)
+                    )/ipow(r2,3) - 5));
+       case 3: 
+         return (   A*sqrt(561.)*(1./8.)*(
+                    ipow(k(0),8) 
+                  + ipow(k(1),8) 
+                  + ipow(k(2),8) 
+                  - 14.*(  ipow(k(0),6)*ipow(k(1),2) 
+                         + ipow(k(0),6)*ipow(k(2),2) 
+                         + ipow(k(1),6)*ipow(k(2),2) 
+                         + ipow(k(0),2)*ipow(k(1),6) 
+                         + ipow(k(0),2)*ipow(k(2),6) 
+                         + ipow(k(1),2)*ipow(k(2),6)) 
+                  + 35.*(  ipow(k(0),4)*ipow(k(1),4) 
+                         + ipow(k(0),4)*ipow(k(2),4) 
+                         + ipow(k(1),4)*ipow(k(2),4))
+                  ) / ipow(r2,4));
+       default:
+         std::cerr << "Kubic harmonics l > 3 not yet implemented"
+                   << std::endl;
+         exit(0);
+    }
+
+    return 0.;
+  }
+  
+  bool Poly_Harmonic :: Load (TiXmlElement *element) 
+  {
+    TiXmlElement *child;
+    int i=1;
+
+    if ( !element->Attribute("rank", &i) )
+    {
+      std::cerr << "Harmonic has no rank on input"
+                << std::endl;
+      return false;
+    }
+    if ( i < 0 || i > 3)
+    {
+      std::cerr << "rank of harmonic is out of range on input"
+                << std::endl;
+      return false;
+    }
+    rank = abs(i);
+    child = element->FirstChildElement( "Polynomial" );
+    if (not child )
+    {
+      std::cerr << "Could not find Polynomial while laod Poly_CS" << std::endl;
+      return false;
+    }
+    child = child->FirstChildElement( "Monomial" );
+    poly_coefs.clear(); // clear interpolation
+    if ( !child )
+      return false;
+    for ( ; child; child = child->NextSiblingElement( "Monomial" ) )
+    {
+      double d=0; int o=0;
+      if ( not child->Attribute("order", &o) )
+        return false;
+      if ( not child->Attribute("coef", &d) )
+        return false;
+
+      poly_coefs.push_back( std::pair<double, int>( d, o ) );
+    }
+
+    return true;
+  }
+
+  double Poly_Harmonic :: evaluate (const double _x) const
+  {
+    double result = 0;
+    std::vector< std::pair< double, int> > :: const_iterator i_monomial = poly_coefs.begin();
+    std::vector< std::pair< double, int> > :: const_iterator i_end = poly_coefs.end();
+    for ( ; i_monomial != i_end; ++i_monomial )
+      result += i_monomial->first * ipow ( _x, i_monomial->second );
+    
+    return result;
+  }
+  double Poly_Harmonic :: evaluate_gradient (const double _x) const
+  {
+    double result = 0;
+    std::vector< std::pair< double, int> > :: const_iterator i_monomial = poly_coefs.begin();
+    std::vector< std::pair< double, int> > :: const_iterator i_end = poly_coefs.end();
+    for ( ; i_monomial != i_end; ++i_monomial )
+      if ( i_monomial->second > 0 )
+        result += i_monomial->first * i_monomial->second 
+                  * ipow ( _x, i_monomial->second-1 );
+    
+    return result;
+  }
+  double Poly_Harmonic :: evaluate_with_gradient (const double _x, double _grad) const
+  {
+    double result = 0; _grad = 0;
+    std::vector< std::pair< double, int> > :: const_iterator i_monomial = poly_coefs.begin();
+    std::vector< std::pair< double, int> > :: const_iterator i_end = poly_coefs.end();
+    for ( ; i_monomial != i_end; ++i_monomial )
+      if ( i_monomial->second > 0 )
+      {
+        double save =  i_monomial->first * ipow ( _x, i_monomial->second-1 );
+        _grad += save * i_monomial->second;
+        result += save * _x;
+      }
+      else
+        result += i_monomial->first * ipow ( _x, i_monomial->second );
+    
+    return result;
+  }
+
+  // change of variables x= _poly
+  // returns P(_poly) in _poly
+  void Poly_Harmonic :: var_change( opt::Polynome<> &_poly, bool _linearize) const
+  {
+    std::vector< std::pair< double, int> > :: const_iterator i_monomial = poly_coefs.begin();
+    std::vector< std::pair< double, int> > :: const_iterator i_end = poly_coefs.end();
+    opt::Polynome<> copy_terms = _poly;
+    opt::Polynome<> pow_pol;
+    _poly.clear();
+    for ( ; i_monomial != i_end; ++i_monomial)
+      switch ( i_monomial->second )
+      {
+        case 0: _poly.add( opt::Monome<> ( i_monomial->first ) ); break;
+        case 1: _poly += copy_terms; _poly *= i_monomial->first; break;
+        default:
+          pow_pol = copy_terms;
+          for ( int i=1; i < i_monomial->second; ++i )
+            pow_pol.multiply(copy_terms, _linearize);
+          pow_pol *= i_monomial->first;
+          _poly += pow_pol;
+          break;
+      }
+  }
+  
+
+} // namespace Ising_CE

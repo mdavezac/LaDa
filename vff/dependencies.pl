@@ -1,50 +1,54 @@
 #! /usr/bin/perl
 #
 
-my $computer = "office";
+my $computer = "lester";
 my %params;
 
 my $HOME = `cd; pwd`; chomp $HOME;
 
-  @{$params{"defs"}} = ( "_G_HAVE_BOOL", "ANSI_HEADERS", "HAVE_SSTREAM" ); 
+@{$params{"defs"}} = ( "_G_HAVE_BOOL", "ANSI_HEADERS", 
+                       "_MPI", 
+                       "HAVE_SSTREAM" );
 
 @{$params{"Includes"}} = ( "." );
 
 if ( $computer =~ /home/ )
 {
-  @{$params{"make include"}} = ( "$HOME/usr/include",
-                                 "$HOME/usr/include/eo");
+  @{$params{"make include"}} = ( "$HOME/usr/include" );
                                  
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
-                             "-llamarck", "-latat", "-ltinyxml",
-                             "-lga", "-leoutils", "-leo" );
+                             "-llamarck", "-latat", "-ltinyxml" );
   $params{"CC"}  = "gcc";
-  $params{"CXX"} = "g++";
-  $params{"LD"}  = "g++";
+  $params{"CXX"} = "g++-4.1";
+  $params{"LD"}  = "g++-4.1";
   $params{"F77"}  = "g77";
   $params{"CXXFLAGS"}  = "-mtune=athlon64 -ffriend-injection";
 }
 if ( $computer =~ /office/ )
 {
-  @{$params{"make include"}} = ( "$HOME/usr/include",
-                                 "$HOME/usr/include/eo");
+  @{$params{"make include"}} = ( "/usr/local/include", 
+                                 "/opt/mpich/include",
+                                 "$HOME/usr/include");
                                  
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
                              "-llamarck", "-latat", "-ltinyxml",
-                             "-lga", "-leoutils", "-leo" );
+                             "-L /opt/mpich/ch-p4/lib/", "-lpmpich++", "-lpmpich", "-lmpiobject", 
+                             "-lgslcblas", "-lgsl", "-lphysics",
+                             "-lrt",  "-lopt"); 
   $params{"CC"}  = "gcc";
-  $params{"CXX"} = "g++";
-  $params{"LD"}  = "g++";
+  $params{"CXX"} = "g++-4.1";
+  $params{"LD"}  = "g++-4.1";
   $params{"F77"}  = "g77";
   $params{"CXXFLAGS"}  = "-malign-double -ffriend-injection";
 }
 if ( $computer =~ /lester/ )
 {
-  @{$params{"make include"}} = ( "$HOME/usr/include",
-                                 "$HOME/usr/include/eo" );
+  @{$params{"make include"}} = ( "$HOME/usr/include", # );
+                                 "/opt/mpich.gcc/include" );
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
                              "-llamarck", "-latat", "-ltinyxml", 
-                             "-lga", "-leoutils", "-leo" );
+                             "-L /opt/mpich.gcc/lib/", "-lpmpich++", "-lpmpich", "-lmpiobject", 
+                             "-lgslcblas", "-lgsl", "-lphysics" );
   $params{"CC"}  = "gcc";
   $params{"CXX"} = "g++";
   $params{"LD"}  = "g++";
@@ -53,11 +57,9 @@ if ( $computer =~ /lester/ )
 }
 if ( $computer =~ /super/ )
 {
-  @{$params{"make include"}} = ( "$HOME/usr/include",
-                                 "$HOME/usr/include/eo" );
+  @{$params{"make include"}} = ( "$HOME/usr/include" );
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/",
-                             "-llamarck", "-latat", "-ltinyxml", 
-                             "-lga", "-leoutils", "-leo" );
+                             "-llamarck", "-latat", "-ltinyxml" );
   $params{"CC"}  = "icc";
   $params{"CXX"} = "icc";
   $params{"LD"}  = "icc";
@@ -218,21 +220,27 @@ sub template()
   printf OUT "endif\n";
   printf OUT "\nCFLAGS   := \${CFLAGS}   \${DEFS}\n";
   printf OUT "CXXFLAGS := \${CXXFLAGS} \${DEFS}\n";
-  printf OUT "\nOUTPUT := lada\n";
-  printf OUT "\nall: \${OUTPUT} \n";
+  printf OUT "\nOUTPUT := vff\n";
+  printf OUT "\nall: libvff vff \n";
   printf OUT "\n\?SRCS :=\?\n";
   printf OUT "\nOBJS := \$(addsuffix .o,\$(basename \${SRCS}))\n";
   printf OUT "\n.PHONY: clean cleanall\n";
-  printf OUT "\n\${OUTPUT}: \${OBJS} \n";
-  printf OUT "\t\${LD} \${LDFLAGS} -o \$@ \${OBJS} \${LIBS} \${EXTRALIBS}\n";
-  printf OUT "\n\${OBJS} : ${OBJSRCS}\n";
+  printf OUT "\n\${OUTPUT}: lib\${OUTPUT} main.o \n";
+  printf OUT "\t\${LD} \${LDFLAGS} -o \$@ main.o \${OBJS}";
+  printf OUT " -L. \${LIBS} \${EXTRALIBS} \n";
+  printf OUT "\nlib\${OUTPUT}: \${OBJS} \n";
+  printf OUT "\tar rvu lib\${OUTPUT}.a \${OBJS} \n";
+  printf OUT "\tranlib lib\${OUTPUT}.a \n";
+  printf OUT "\n\${OBJS} : \${OBJSRCS}\n";
   printf OUT "\t\${CXX} -c \${CXXFLAGS} \${INCS} \$< -o \$@\n\n";
+  printf OUT "\nmain.o : \n";
+  printf OUT "\t\${CXX} -c \${CXXFLAGS} \${INCS} main.cc -o main.o\n\n";
   printf OUT "\?dependencies\?";
 
             
 
-  printf OUT "\n\nclean:\n\t- rm -f \${OBJS}\n";
-  printf OUT "\t- rm -f \${OUTPUT}\n";
+  printf OUT "\n\nclean:\n\t- rm -f \${OBJS} main.o\n";
+  printf OUT "\t- rm -f lib\${OUTPUT}.a \${OUTPUT}\n";
   if (exists $params{'cleanall'} )
   { 
     foreach $clean ( (@{$params{"cleanall"}}) )
@@ -268,6 +276,28 @@ sub template()
         my $i = 0;
         foreach $key ( @sorted_keys )
         {
+          next if ( $key =~ /main/ );
+          if ( exists $dependencies{$key}{"source"} )
+          {
+            if ( $i % 5 == 0 and $i != 0 )
+              { print OUT "\\\n\t"; }
+
+            if ( $dependencies{$key}{"location"} eq "." )
+              { print OUT $key, ".cc "; $i++; }
+            else
+              { print OUT $dependencies{$key}{"location"},"/", $key, ".cc "; $i++; }
+          }
+        }
+        print OUT "\n";
+        next;
+      }
+      elsif ( /\?MAINSRC :=\?/ )
+      {
+        print OUT 'MAINSRC := ';
+        my $i = 0;
+        foreach $key ( @sorted_keys )
+        {
+          next if ( $key !~ /main/ );
           if ( exists $dependencies{$key}{"source"} )
           {
             if ( $i % 5 == 0 and $i != 0 )
