@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 #
 
-my $computer = "office";
+my $computer = "lester";
 my %params;
 
 my $HOME = `cd; pwd`; chomp $HOME;
@@ -23,7 +23,7 @@ if ( $computer =~ /home/ )
 }
 elsif ( $computer =~ /office/ )
 {
-  @{$params{"make include"}} = ( "$HOME/usr/include"
+  @{$params{"make include"}} = ( ".."
                                  ,"/opt/mpich/include"
                                );
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/", "-llamarck", "-latat", 
@@ -37,7 +37,7 @@ elsif ( $computer =~ /office/ )
 }
 elsif ( $computer =~ /lester/ )
 {
-  @{$params{"make include"}} = ( "../atat", 
+  @{$params{"make include"}} = ( "..", 
                                  "/opt/mpich.gcc/include",
                                  "$HOME/usr/include/" );
   @{$params{"make lib"}} = ( "-lm", "-lstdc++", "-L $HOME/usr/lib/", "-llamarck", "-latat", 

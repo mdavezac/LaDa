@@ -403,7 +403,7 @@ namespace BandGap
     functional.read_band_edges();
 
 #ifdef _MPI
-    if ( mpi::main.rank() != ROOT_NODE )
+    if ( mpi::main.rank() != mpi::ROOT_NODE )
       return true;
 #endif
 
@@ -690,7 +690,7 @@ namespace mpi
     if( not _func.vff_minimizer.broadcast( *this ) ) return false;
     if( not serialize( _func.pescan ) ) return false;
 
-    if ( stage == COPYING_FROM_HERE and rank() != ROOT_NODE )
+    if ( stage == COPYING_FROM_HERE and rank() != mpi::ROOT_NODE )
       _func.vff.initialize_centers();
 
     return true;

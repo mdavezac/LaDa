@@ -6,15 +6,15 @@ RANLIB := ranlib
 DEBUG = YES
 
 CXXFLAGS   := 
-DEFS       := -D _G_HAVE_BOOL -D ANSI_HEADERS -D HAVE_SSTREAM -D _NOLAUNCH
+DEFS       := -D _G_HAVE_BOOL -D ANSI_HEADERS -D HAVE_SSTREAM -D _NOLAUNCH  -D _MPI
 
 
-ifneq ( ,$(findstring gcc, $(CXX)) )
-  CXXFLAGS   += -malign-double -ffriend-injection 
-endif
-ifeq ( $(CXX), g++ )
-  CXXFLAGS   += -malign-double -ffriend-injection 
-endif
+#ifneq ( ,$(findstring gcc, $(CXX)) )
+#  CXXFLAGS   += -malign-double -ffriend-injection 
+#endif
+#ifeq ( $(CXX), g++ )
+#  CXXFLAGS   += -malign-double -ffriend-injection 
+#endif
 
 DEBUG_CFLAGS     := -Wall -Wno-format -g -O0 -Wno-unknown-pragmas -fbounds-check
 DEBUG_CXXFLAGS    := ${DEBUG_CFLAGS} -D_DEBUG_LADA_ 
@@ -24,12 +24,13 @@ RELEASE_CXXFLAGS := ${RELEASE_CFLAGS}
 RELEASE_LDFLAGS   := 
 RELEASE_CFLAGS    := -Wall -Wno-unknown-pragmas -Wno-format 
 
-LIBS:=   -lm  -lstdc++  -L /home/davezac/usr/lib/  -llamarck  -latat  -ltinyxml    -lga  -leoutils  -leo 
-INCLUDES := -I ../
-INCS := -I /opt/mpich/include -I /home/davezac/usr/include -I /home/davezac/usr/include/eo
+LIBS:=   -lm  -lstdc++  -L ~/usr/lib/  -llamarck  -latat  -ltinyxml    -lga  -leoutils  -leo 
+INCLUDES := -I ../ 
+SYSINCS := -isystem ../../include -isystem ../../include/eo
 
-ifeq ( ,$(findstring _MPI, $(CXXFLAGS)) )
-  LIBS   += -L/opt/mpich/ch-p4/lib/   -lpmpich++  -lpmpich  -lmpiobject
+ifneq ( "_MPI",$(findstring "_MPI", $(DEFS)) )
+  LIBS   += -L/opt/mpich.gcc/lib/   -lpmpich++  -lpmpich  -lmpiobject
+  SYSINCS   += -isystem /opt/mpich.gcc/include
 endif
 
 ifeq (YES, ${DEBUG})
@@ -60,8 +61,8 @@ all: ce pescan
 
 ${depends_dir}%.d: CXXFLAGS += -MM
 ${depends_dir}%.d: %.cc
-	@set -e; rm -f $@; \
-	$(CXX) ${CXXFLAGS} ${INCLUDES} $< > $@.$$; \
+	set -e; rm -f $@; \
+	$(CXX) ${CXXFLAGS} ${INCLUDES} ${SYSINCS} $< > $@.$$; \
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$ > $@; \
 	rm -f $@.$$
 
@@ -69,12 +70,12 @@ ce: cemain.o $(filter-out pescan.o, ${objects})
 	${LD} ${LDFLAGS} -o $@ $^ ${LIBS} ${EXTRALIBS}
 cemain.o: CXXFLAGS += -D _CE
 cemain.o: main.cc 
-	${CXX} -c ${CXXFLAGS} ${INCLUDES} ${INCS} $< -o $@
+	${CXX} -c ${CXXFLAGS} ${INCLUDES} ${SYSINCS} $< -o $@
 
 ${depends_dir}cemain.d: CXXFLAGS += -D_CE -MM
 ${depends_dir}cemain.d: main.cc
-	@set -e; rm -f $@; \
-	$(CXX) ${CXXFLAGS} ${INCLUDES} $< > $@.$$; \
+	set -e; rm -f $@; \
+	$(CXX) ${CXXFLAGS} ${INCLUDES} ${SYSINCS}  $< > $@.$$; \
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$ > $@; \
 	sed 's,main.o,cemain.o,g' < $@ > $@.$$; \
 	mv $@.$$ $@
@@ -84,18 +85,18 @@ pescan: main.o $(filter-out ce.o, ${objects})
 	${LD} ${LDFLAGS} -o $@ $^ ${LIBS} ${EXTRALIBS}
 main.o: CXXFLAGS += -D _PESCAN
 main.o: main.cc 
-	${CXX} -c ${CXXFLAGS} ${INCLUDES} ${INCS} $< -o $@
+	${CXX} -c ${CXXFLAGS} ${INCLUDES} ${SYSINCS} $< -o $@
 
 ${depends_dir}pescanmain.d: CXXFLAGS += -D_PESCAN -MM
 ${depends_dir}pescanmain.d: main.cc
-	@set -e; rm -f $@; \
-	$(CXX) ${CXXFLAGS} ${INCLUDES} $< > $@.$$; \
+	set -e; rm -f $@; \
+	$(CXX) ${CXXFLAGS} ${INCLUDES} ${SYSINCS} $< > $@.$$; \
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$ > $@; \
 	sed 's,main.o,pescanmain.o,g' < $@ > $@.$$; \
 	mv $@.$$ $@ 
 
 ${objects} : ${sources}
-	${CXX} -c ${CXXFLAGS} ${INCLUDES} ${INCS} $(basename $@).cc -o $@
+	${CXX} -c ${CXXFLAGS} ${INCLUDES} ${SYSINCS} $(basename $@).cc -o $@
 
 
 .PHONY: clean cleanall 
