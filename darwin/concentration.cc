@@ -218,6 +218,9 @@ namespace mpi
     if( not serialize( _xy.a ) ) return false;
     if( not serialize( _xy.b ) ) return false;
     if( not serialize( _xy.c ) ) return false;
+    if( not serialize( _xy.x0 ) ) return false;
+    if( not serialize( _xy.y0 ) ) return false;
+    if( not serialize( _xy.singlec ) ) return false;
 
     return true;
   }
