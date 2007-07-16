@@ -1,5 +1,9 @@
 #include<iostream>
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <eo/eoDetTournamentSelect.h>
 #include <eo/eoReduceMerge.h>
 #include <tinyxml/tinystr.h>

@@ -1,6 +1,10 @@
 #ifndef _CONSTITTUENT_STRAIN_H_
 #define _CONSTITTUENT_STRAIN_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <vector>
 #include <tinyxml/tinyxml.h>
 #include <opt/opt_function_base.h>

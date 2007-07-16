@@ -1,5 +1,0 @@
-main.o: main.cc  \
-	interface.o 
-
-interface.o: interface.cc interface.h 
-

@@ -7,6 +7,10 @@
 #ifndef _OPT_MONOME_H_
 #define _OPT_MONOME_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <list>
 #include <algorithm>
 #include <numeric>

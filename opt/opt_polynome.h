@@ -13,6 +13,10 @@
 #ifndef _OPT_POLYNOME_H_
 #define _OPT_POLYNOME_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <list>
 #include <vector>
 #include <algorithm>
@@ -279,7 +283,7 @@ namespace function {
       virtual t_Type evaluate_one_gradient( types::t_unsigned _pos)
       {
         // clears gradient
-        t_Type result;
+        t_Type result = t_Type(0);
 
         if ( monomes.empty() or not variables )
           return t_Type(0);
@@ -293,7 +297,7 @@ namespace function {
         {
           typename std::list<t_Term> :: const_iterator i_term = i_monome->terms.begin();
           typename std::list<t_Term> :: const_iterator i_term_last = i_monome->terms.end();
-          t_Type partial_grad;
+          t_Type partial_grad = t_Type(0);
       
           t_Term exponent = std::count( i_term, i_term_last, t_Term(_pos) );
           

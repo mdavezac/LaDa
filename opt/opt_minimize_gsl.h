@@ -1,6 +1,10 @@
 #ifndef _OPT_MINIMIZE_GSL_H_
 #define _OPT_MINIMIZE_GSL_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <opt/opt_minimize_base.h>
 #include <gsl/gsl_multimin.h>
 #include <functional>

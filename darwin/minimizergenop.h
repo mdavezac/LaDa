@@ -1,6 +1,10 @@
 #ifndef _DARWIN_MINIMIZER_GENOP_H_
 #define _DARWIN_MINIMIZER_GENOP_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <eo/eoGenOp.h>
 
 #include "opt/opt_minimize_base.h"

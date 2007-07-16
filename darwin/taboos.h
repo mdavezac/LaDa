@@ -1,6 +1,10 @@
 #ifndef _DARWIN_TABOO_H_
 #define _DARWIN_TABOO_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <ext/functional>
 #include <list>
 #include <algorithm>

@@ -706,7 +706,7 @@ namespace mpi
     if( not serialize( _ev.y ) ) return false;
     if( not serialize( _ev.lessthan ) ) return false;
     if( not serialize( _ev.morethan ) ) return false;
-    if( not serialize( _ev.x_vs_y ) ) return false;
+    return serialize( _ev.x_vs_y );
   }
   template<>
   bool mpi::BroadCast::serialize<BandGap::Object>( BandGap::Object & _object )

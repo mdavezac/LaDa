@@ -1,6 +1,10 @@
 #ifndef _CH_TEMPLATE_H_
 #define _CH_TEMPLATE_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <iostream>
 
 #include <tinyxml/tinyxml.h>

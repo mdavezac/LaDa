@@ -1,6 +1,10 @@
 #ifndef _MPI_OBJECT_H_
 #define _MPI_OBJECT_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 
 #include <math.h>
 #ifdef _MPI

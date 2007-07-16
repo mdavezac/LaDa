@@ -1,6 +1,10 @@
 #ifndef _CONVEX_HULL_BASE_H_
 #define _CONVEX_HULL_BASE_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <list>
 #include <functional>
 #include <iostream>

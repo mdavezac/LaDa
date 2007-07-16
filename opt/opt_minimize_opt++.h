@@ -5,6 +5,10 @@
 // works with any class Object which contains a number of member
 // functions. see opt::function in opt_functors.h
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 
 #include "opt/opt_minimize_base.h"
 #ifdef Real // atat vs newmat pb

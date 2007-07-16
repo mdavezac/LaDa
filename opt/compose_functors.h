@@ -1,5 +1,9 @@
 #ifndef _COMPOSE_FUNCTORS_H
 #define _COMPOSE_FUNCTORS_H
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <functional>
 namespace opt 
 {

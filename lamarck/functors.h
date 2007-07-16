@@ -1,6 +1,10 @@
 #ifndef _FUNCTORS_H_
 #define _FUNCTORS_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include<functional>
 
   template <class _Operation1, class _Operation2, class _Operation3>

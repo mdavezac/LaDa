@@ -1,6 +1,10 @@
 #ifndef _DARWIN_FUNCTORS_H_
 #define _DARWIN_FUNCTORS_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <eo/eoOp.h>
 #include <eo/eoContinue.h>
 #include <eo/utils/eoRNG.h>

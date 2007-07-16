@@ -1,6 +1,10 @@
 #ifndef _BISECTION_H_
 #define _BISECTION_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 namespace method
 {
   template<class OPERATION>

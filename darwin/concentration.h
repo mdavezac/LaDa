@@ -1,6 +1,10 @@
 #ifndef _CONCENETRATION_H_
 #define _CONCENETRATION_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdexcept>       // std::runtime_error
 #include "lamarck/structure.h"
 #include "opt/types.h"

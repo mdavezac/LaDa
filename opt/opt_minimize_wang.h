@@ -1,6 +1,10 @@
 #ifndef _OPT_MINIMIZE_OPT_WANG_H_
 #define _OPT_MINIMIZE_OPT_WANG_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 // implements -1<= S <= 1 type constraints
 // works with package opt++, see include below
 #include "opt/opt_minimize_opt++.h" // always include before other opt++

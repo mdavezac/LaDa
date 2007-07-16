@@ -256,6 +256,7 @@ namespace Pescan
     if( child->Attribute("tolerance") )
       child->Attribute("tolerance", &escan.tolerance);
 
+    return true;
   }
 
   void Interface::write_genpot_input()

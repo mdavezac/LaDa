@@ -1,6 +1,10 @@
 #ifndef _DARWIN_RESULTS_H_
 #define _DARWIN_RESULTS_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <list>
 #include <algorithm>
 #include <iostream>

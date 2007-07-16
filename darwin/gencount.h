@@ -1,6 +1,10 @@
 #ifndef _DARWIN_GENCOUNT_H_
 #define _DARWIN_GENCOUNT_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "opt/types.h"
 
 namespace darwin

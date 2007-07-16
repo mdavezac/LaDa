@@ -7,6 +7,10 @@
 // to each spin, although SA does require less calls.
 // works only for physical points +/- 1 
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <vector> 
 #include <algorithm> 
 #include <limits.h>

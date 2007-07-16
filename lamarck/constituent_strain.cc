@@ -366,9 +366,9 @@ namespace Ising_CE
     {
       child = new TiXmlElement( "kvec" );
       parent->LinkEndChild( child );
-      child->SetDoubleAttribute( "x", vec(0) );
-      child->SetDoubleAttribute( "y", vec(1) );
-      child->SetDoubleAttribute( "z", vec(2) );
+      child->SetDoubleAttribute( "x", (*i_vec)(0) );
+      child->SetDoubleAttribute( "y", (*i_vec)(1) );
+      child->SetDoubleAttribute( "z", (*i_vec)(2) );
     }
   }
 

@@ -1,6 +1,10 @@
 #ifndef _DARWIN_LOADSAVE_H_
 #define _DARWIN_LOADSAVE_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <tinyxml/tinyxml.h>
 
 namespace darwin

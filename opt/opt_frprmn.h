@@ -1,6 +1,10 @@
 #ifndef _OPT_FRPRMN_H_
 #define _OPT_FRPRMN_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <functional>
 
 #include "opt/opt_minimize_base.h"

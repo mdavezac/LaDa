@@ -1,6 +1,10 @@
 #ifndef _CE_H_
 #define _CE_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <string>
 #include <algorithm>
 #include <functional>

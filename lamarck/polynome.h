@@ -13,6 +13,10 @@
 #ifndef _Polynome_H_
 #define _Polynome_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <list>
 #include <vector>
 #include <algorithm>

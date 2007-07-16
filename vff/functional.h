@@ -1,6 +1,10 @@
 #ifndef _VFF_FUNCTIONAL_H_
 #define _VFF_FUNCTIONAL_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <vector>
 #include <algorithm>
 

@@ -25,6 +25,10 @@
 #ifndef _OPT_FUNCTION_BASE_H_
 #define _OPT_FUNCTION_BASE_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <iostream>
 #include <algorithm>
 #include <numeric>

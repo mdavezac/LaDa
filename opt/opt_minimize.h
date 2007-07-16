@@ -1,6 +1,10 @@
 #ifndef _OPT_MINIMIZE_H_
 #define _OPT_MINIMIZE_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 // includes all minimizers
 #include "opt/opt_minimize_linear.h"
 // #include <opt/opt_minimize_wang.h>

@@ -1,0 +1,10 @@
+prefix=/opt/mpich
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: mpich
+Description: mpich
+Version: 1.2.7
+Libs: -L${exec_prefix}/ch-p4/lib -lpmpich++ -lpmpich
+Cflags: -I${prefix}/include

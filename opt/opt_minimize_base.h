@@ -1,6 +1,10 @@
 #ifndef _OPT_MINIMIZE_BASE_H_
 #define _OPT_MINIMIZE_BASE_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <tinyxml/tinyxml.h>
 
 namespace minimizer {

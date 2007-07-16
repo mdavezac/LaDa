@@ -1,6 +1,10 @@
 #ifndef _DARWIN_STATISTICS_H_
 #define _DARWIN_STATISTICS_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <eo/eoPop.h>
 #include <eo/eoGenOp.h>
 

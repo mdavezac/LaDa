@@ -2,11 +2,16 @@
 #include <eo/eoScalarFitness.h>
 
 #ifdef _PESCAN
+#ifdef _CE 
+#undef _CE
+#endif
   #include "pescan.h"
   namespace Functional = BandGap;
-#else
+#elif _CE
   #include "ce.h"
   namespace Functional = CE;
+#else 
+  Need to define _CE or _PESCAN
 #endif
 #include "individual.h"
 #include "darwin.h"

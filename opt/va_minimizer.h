@@ -1,6 +1,10 @@
 #ifndef _MINIMIZER_VA_H_
 #define _MINIMIZER_VA_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <eo/utils/eoRNG.h>
 #include "opt_minimize_base.h"
 

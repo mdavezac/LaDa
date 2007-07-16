@@ -31,6 +31,10 @@
 #ifndef _NDIM_ITERATOR_H_
 #define _NDIM_ITERATOR_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 
 #include <vector>
 #include <algorithm>

@@ -1,6 +1,10 @@
 #ifndef _DARWIN_PRINT_XMGRACE_H_
 #define _DARWIN_PRINT_XMGRACE_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <string>
 #include <fstream>
 #include <list>

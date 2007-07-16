@@ -1,6 +1,10 @@
 #ifndef _LOOP_FUNCTORS_H_
 #define _LOOP_FUNCTORS_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 namespace loop
 {
   template< class T_OBJECT, class T_COMPONENT, class T_FUNCTOR>

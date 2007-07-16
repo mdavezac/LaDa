@@ -1,6 +1,10 @@
 #ifndef _DARWIN_EVALUATOR_H_
 #define _DARWIN_EVALUATOR_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <string>
 
 #include <eo/eoGenOp.h>

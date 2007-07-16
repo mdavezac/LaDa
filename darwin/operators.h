@@ -1,6 +1,10 @@
 #ifndef _DARWIN_OPERATORS_H_
 #define _DARWIN_OPERATORS_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <exception>
 #include <iostream>
 #include <vector>

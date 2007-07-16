@@ -1,6 +1,10 @@
 #ifndef _DARWIN_INDIVIDUAL_H_
 #define _DARWIN_INDIVIDUAL_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <exception>
 #include <iostream>
 #include <stdexcept>       // std::runtime_error
