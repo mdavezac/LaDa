@@ -139,10 +139,10 @@ fi
 COMPILER_CXXFLAGS=
 # first checks if friend injection is needed (for atat) (gcc >= 4.0)
 if test "$ac_compiler_gnu"="yes"; then
-AX_CHECK_COMPILER_FLAGS([--ffriend-injection], 
-                        [COMPILER_CXXFLAGS+=--ffriend-injection],)
-AX_CHECK_COMPILER_FLAGS([--malign-double], 
-                        [COMPILER_CXXFLAGS+=--malign-double],)
+AX_CHECK_COMPILER_FLAGS([-ffriend-injection], 
+                        [COMPILER_CXXFLAGS+=" -ffriend-injection"],)
+AX_CHECK_COMPILER_FLAGS([-malign-double], 
+                        [COMPILER_CXXFLAGS+=" -malign-double"],)
 fi
 AC_SUBST(COMPILER_CXXFLAGS)
 
