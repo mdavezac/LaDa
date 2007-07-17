@@ -59,9 +59,8 @@ fi
 ])dnl AX_CHECK_COMPILER_FLAGS
 
 
-AC_DEFUN(AC_FIND_FILE, 
+AC_DEFUN([AC_FIND_FILE], 
 [
-
 	$3=NO
 	for x in $2
 	do

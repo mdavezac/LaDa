@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -malign-double @ATAT_CXXFLAGS@  @CPP_DEBUG_FLAGS@
+AM_CPPFLAGS = @COMPILER_CXXFLAGS@  @CPP_DEBUG_FLAGS@
 noinst_LTLIBRARIES = libatat.la
 libatat_la_SOURCES = findsym.cc integer.cc xtalutil.cc 
 libatat_ladir = atat

@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -malign-double @CPP_DEBUG_FLAGS@
+AM_CPPFLAGS = @CPP_DEBUG_FLAGS@ @COMPILER_CXXFLAGS@
 AM_LDFLAGS = 
 noinst_LTLIBRARIES = libmpiobject.la
 libmpiobject_la_SOURCES = mpi_object.cc

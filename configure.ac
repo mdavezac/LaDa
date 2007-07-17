@@ -2,8 +2,8 @@ AC_INIT(lamarck/structure.cc)
 AM_INIT_AUTOMAKE(lamarck,0.1)
 AC_PROG_CC
 AC_PROG_CXX
-AC_PROG_F77(g95)
-AC_PROG_FC(g95)
+#AC_PROG_F77(g95)
+#AC_PROG_FC(g95)
 AC_PROG_INSTALL
 
 AM_CONFIG_HEADER(config.h)
@@ -21,17 +21,6 @@ AH_TOP([
 #define HAVE_SSTREAM
 #endif])
 
-ATAT_CXXFLAGS=
-if test "$ac_compiler_gnu"="yes"; then
-AX_CHECK_COMPILER_FLAGS([-ffriend-injection], 
-                        [ATAT_CXXFLAGS=--friend-injection],)
-fi
-AC_SUBST(ATAT_CXXFLAGS)
-
-
-# Ask user for path to tinyxml
-AC_ARG_WITH(tinyxml,
-    [ --with-tinyxml=<path> prefix of tynixml installation. e.g. $HOME/usr/lib (default) or /usr],,)
 
 AC_ARG_ENABLE(vff,
      [  --enable-vff    Turn on vff],
@@ -91,13 +80,7 @@ AC_SUBST(MPICH_LIBS)
 AC_SUBST(MPI_ADDLIB)
 
 #  XML libs
-AC_FIND_FILE([lib/libtinyxml.a],[$with_tinyxml /usr /usr/local $HOME/usr],
-             tinyxmlprefix)
-
-AC_SUBST(TINYXML_PREFIX)
-TINYXML_PREFIX=$tinyxmlprefix
-TINYXML_LIBS="-L${TINYXML_PREFIX}/lib/ -ltinyxml"
-TINYXML_CFLAGS="-I${TINYXML_PREFIX}/include"
+PKG_CHECK_MODULES(TINYXML, tinyxml)
 AC_SUBST(TINYXML_LIBS)
 AC_SUBST(TINYXML_CFLAGS)
 
@@ -143,13 +126,27 @@ fi
 AC_SUBST(GSL_INCLUDE)
 AC_SUBST(GSL_LIB)
 
-
+# checks for STLs
 AC_CXX_HAVE_STL
 if test "$ac_cv_cxx_have_stl" = yes; then
   LIBS="-lstdc++ -lm $LIBS"
  else
    AC_MSG_ERROR("Could not find standard template libraries")
 fi
+
+# checks for compiler specific flags 
+#
+COMPILER_CXXFLAGS=
+# first checks if friend injection is needed (for atat) (gcc >= 4.0)
+if test "$ac_compiler_gnu"="yes"; then
+AX_CHECK_COMPILER_FLAGS([--ffriend-injection], 
+                        [COMPILER_CXXFLAGS+=--ffriend-injection],)
+AX_CHECK_COMPILER_FLAGS([--malign-double], 
+                        [COMPILER_CXXFLAGS+=--malign-double],)
+fi
+AC_SUBST(COMPILER_CXXFLAGS)
+
+#
 AC_PROG_LIBTOOL
 
 

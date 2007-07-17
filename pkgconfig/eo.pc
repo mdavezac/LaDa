@@ -3,8 +3,8 @@ exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include/eo
 
-Name: mpich
-Description: mpich
+Name: eo
+Description: Evolutionary Object
 Version: 1.0.1
 Libs: -L${libdir}/ -lga -leo -leoutils 
 Cflags: -I${includedir}
