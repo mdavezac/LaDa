@@ -29,6 +29,10 @@ namespace Pescan
     if ( escan.method == Escan::ALL_ELECTRON )
     {
       destroy_directory();
+      std::cout << "VBM " << band_edge.first << "  CBM " << band_edge.second 
+                << "   Band Gap " <<  result << std::endl;
+      escan.Eref.first = band_edge.first;
+      escan.Eref.second = band_edge.second;
       return result;
     }
     band_edge.second = result;
@@ -37,23 +41,29 @@ namespace Pescan
     launch_pescan( _str );
     band_edge.first = read_result( _str );
     destroy_directory();
+    std::cout << "  VBM " << band_edge.first << "  CBM " << band_edge.second 
+              << "   Band Gap " <<  result - band_edge.first << std::endl;
     return result - band_edge.first;
   }
   void Interface :: create_directory()
   {
-    std::ostringstream sstr;
-    sstr << "escan";
+    if ( do_destroy_dir ) 
+    {
+      std::ostringstream sstr;
+      sstr << "escan";
 #ifdef _MPI
-    sstr << "." << mpi::main.rank();
+      sstr << "." << mpi::main.rank();
 #endif
-    dirname = sstr.str();
+      dirname = sstr.str();
+    }
 
-    sstr.str("");
+    std::ostringstream sstr;
     sstr << "mkdir " << dirname;
     system( sstr.str().c_str() );
   }
   void Interface :: destroy_directory()
   {
+    if ( not do_destroy_dir ) return;
     std::ostringstream sstr;
     sstr << "rm -rf " << dirname;
     system( sstr.str().c_str() );
@@ -98,7 +108,7 @@ namespace Pescan
     sstr.str("");
     sstr << "cp maskr "; 
 #ifndef _NOLAUNCH
-    sstr << escan.launch;
+    sstr << escan.launch << " ";
 #endif
     std::vector<SpinOrbit> :: const_iterator i_so = escan.spinorbit.begin();
     std::vector<SpinOrbit> :: const_iterator i_so_end = escan.spinorbit.end();

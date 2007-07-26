@@ -84,19 +84,21 @@ namespace Pescan
       t_computation computation;
       std::string dirname;
       std::pair<types::t_real, types::t_real> band_edge;
+      bool do_destroy_dir;
 
     public:
-      Interface () : atom_input("atom.config"), genpot(), escan(), computation(VBM) {}
+      Interface () : atom_input("atom.config"), genpot(), escan(), computation(VBM), do_destroy_dir(true) {}
      ~Interface() {};
 
      bool Load( const TiXmlElement &_node );
 
      types::t_real operator()( Ising_CE::Structure &_str ); 
      types::t_real launch_pescan( Ising_CE::Structure &_str ); 
-     void set_band_edges( types::t_real _val, types::t_real _cond )
-       { band_edge.first = _val; band_edge.second = _cond; }
-     void get_band_edges( types::t_real &_val, types::t_real &_cond ) const
-       { _val = band_edge.first; _cond = band_edge.second; }
+     void set_dirname( const std::string &_dir ) { do_destroy_dir = false; dirname = _dir; }
+     void set_references( types::t_real _val, types::t_real _cond )
+       { escan.Eref.first = _val; escan.Eref.second = _cond; }
+     void get_references( types::t_real &_val, types::t_real &_cond ) const
+       { _val = escan.Eref.first; _cond = escan.Eref.second; }
      Escan::t_method get_method() const
        { return escan.method; }
      void set_method( Escan::t_method _method = Escan::FOLDED_SPECTRUM )

@@ -145,11 +145,18 @@ namespace darwin
     {
       std::string str = child->Attribute("type");
       if (    str.compare("Best Of")==0 
+           or str.compare("BestOf")==0 
+           or str.compare("best of")==0 
+           or str.compare("bestof")==0 
            or str.compare("BO")==0 )
         results = new BestOf<t_Individual, t_Evaluator, t_Population>( *child, evaluator, taboos );
-      if ( str.compare("Target")==0 )
+      if (    str.compare("Target")==0 
+           or str.compare("target")==0 )
         results = new Target<t_Individual, t_Evaluator, t_Population>( *child, evaluator, taboos );
       if (    str.compare("ConvexHull")==0 
+           or str.compare("convex hull")==0 
+           or str.compare("convex-hull")==0 
+           or str.compare("convexhull")==0 
            or str.compare("CH")==0 )
         results = new ConvexHull<t_Individual, t_Evaluator, t_Population>( *child, evaluator, taboos );
     }

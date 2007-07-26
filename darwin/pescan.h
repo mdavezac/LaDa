@@ -48,28 +48,35 @@ namespace BandGap
       Vff::Functional vff;
       Pescan::Interface pescan;
       minimizer::GnuSL<Vff::Functional> vff_minimizer;
-      std::string band_edge_filename;
+      std::string references_filename;
+      types::t_int nbeval;
 
     public:
       Functional   ( Ising_CE::Structure &_str, std::string _f = "BandEdge" ) 
                  : structure( _str ), vff(structure),
-                   vff_minimizer(vff), band_edge_filename(_f) {}
+                   vff_minimizer(vff), references_filename(_f), nbeval(0) {}
       Functional   ( const Functional &_func )
                  : structure(_func.structure), 
                    vff(_func.vff), pescan(_func.pescan), vff_minimizer(_func.vff_minimizer),
-                   band_edge_filename(_func.band_edge_filename) {};
+                   references_filename(_func.references_filename), nbeval() {};
       ~Functional() {};
       bool Load( const TiXmlElement &_node );
       
       void set_filename( const std::string &_f )
-        { band_edge_filename = _f; } 
-      void read_band_edges();
-      void write_band_edges();
+        { references_filename = _f; } 
+      void read_references();
+      void write_references();
       void set_all_electron() { pescan.set_method( Pescan::Interface::Escan::ALL_ELECTRON ); }
       t_Type evaluate()
       {
         // first minimizes strain
+        std::ostringstream sstr; sstr << "escan" << nbeval; 
+        ++nbeval;
+#ifdef _MPI
+        sstr << mpi::main.rank();
+#endif
 #ifndef _NOLAUNCH
+        pescan.set_dirname(sstr.str());
         vff_minimizer.minimize();
         structure.energy = vff.energy();
         vff.print_escan_input();
@@ -80,16 +87,23 @@ namespace BandGap
           return result;
         
         pescan.set_method(); // resets to folded spectrum if necessary
+#endif
 
 #ifdef _MPI
         if ( mpi::main.rank() != mpi::ROOT_NODE ) // not root no read write
           return result;
 #endif 
+        if ( result < types::tolerance ) 
+        {
+          set_all_electron();
+          evaluate();
+        }
+        write_references();
 
-        write_band_edges();
-#else 
+#ifdef _NOLAUNCH
         types::t_real result = rng.random(1000000);
 #endif
+        std::cout << "Result " << result << std::endl;
         return result;
       } 
       void evaluate_gradient( t_Type* const _i_grad ) 

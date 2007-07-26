@@ -398,16 +398,16 @@ namespace BandGap
 
   bool Evaluator :: Continue()
   {
-    // on first iteration, writes band edges... then read them on following iterations
+    // on first iteration, writes references... then read them on following iterations
     ++age;
-    functional.read_band_edges();
+    functional.read_references();
 
 #ifdef _MPI
     if ( mpi::main.rank() != mpi::ROOT_NODE )
       return true;
 #endif
 
-    if ( check_ref_every != -1 ) // recomputes all electron band_edges every so often, if required
+    if ( check_ref_every != -1 ) // recomputes all electron references every so often, if required
     {
       if ( not ( age % check_ref_every ) )
         functional.set_all_electron();
@@ -433,14 +433,14 @@ namespace BandGap
       std::cerr << " Could not load vff minimizer from input!! " << std::endl;
       return false;
     }
-    pescan.set_band_edges( -666.666, 666.666 ); // wrong order! just to check whether Refs are read from input
+    pescan.set_references( -666.666, 666.666 ); // wrong order! just to check whether Refs are read from input
     if ( not pescan.Load( _node ) )
     {
       std::cerr << " Could not load pescan interface from input!! " << std::endl; 
       return false;
     }
     types::t_real x, y;
-    pescan.get_band_edges(x,y); // band edges have not been read if below is true
+    pescan.get_references(x,y); // band edges have not been read if below is true
     if (     std::abs(x + 666.666 ) < types::tolerance 
          and std::abs(x - 666.666 ) < types::tolerance )
       set_all_electron();
@@ -448,30 +448,30 @@ namespace BandGap
     return true;
   }
 
-  void Functional::write_band_edges()
+  void Functional::write_references()
   {
 #ifdef _MPI 
     if ( mpi::main.rank() != mpi::ROOT_NODE )
       return;
 #endif
-    std::ofstream file( band_edge_filename.c_str(), std::ios_base::out | std::ios_base::trunc ); 
+    std::ofstream file( references_filename.c_str(), std::ios_base::out | std::ios_base::trunc ); 
     if ( not file.is_open() )
       return;
     types :: t_real a, b;
-    pescan.get_band_edges( a, b );
-    file << a; if ( file.fail() ) return;
-    file << b; if ( file.fail() ) return;
+    pescan.get_references( a, b );
+    file << a << "   "; if ( file.fail() ) return;
+    file << b << std::endl; if ( file.fail() ) return;
     file.close();
     return;
   }
-  void Functional::read_band_edges()
+  void Functional::read_references()
   {
     types :: t_real a, b;
 #ifdef _MPI 
     if ( mpi::main.rank() == mpi::ROOT_NODE )
     {
 #endif
-      std::ifstream file( band_edge_filename.c_str(), std::ios_base::in ); 
+      std::ifstream file( references_filename.c_str(), std::ios_base::in ); 
       if ( not file.is_open() )
         return;
       file >> a; if ( file.fail() ) return;
@@ -492,7 +492,7 @@ namespace BandGap
     broadcast.serialize(b);
 #endif 
 
-    pescan.set_band_edges( a, b ); 
+    pescan.set_references( a, b ); 
     return;
   }
 
