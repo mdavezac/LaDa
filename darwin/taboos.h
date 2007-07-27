@@ -221,6 +221,22 @@ namespace darwin
         _indiv.set_quantity( i_indiv->get_quantity() );
         return true;
       }
+      virtual bool clone(t_Individual &_indiv)
+      {
+        typename t_Container :: const_iterator i_end = taboo_list->end();
+        typename t_Container :: const_iterator i_indiv = taboo_list->begin();
+        if ( i_indiv == i_end )
+          return false;
+        // t_Object since we do not want to compare fitness,
+        // quantity, validity, etc...
+        // but only wether these are truly different individual 
+        // in terms of t_Object
+        i_indiv = std::find( i_indiv, i_end, _indiv);
+        if ( i_end == i_indiv )
+          return false;
+        _indiv.clone(*i_indiv);
+        return true;
+      }
 #ifdef _MPI
       void add( const t_Individual &_indiv, bool add_fast = true ) 
       {

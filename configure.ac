@@ -38,6 +38,14 @@ AC_ARG_ENABLE(pescan,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-pescan) ;;
      esac],[pescan=true])
 
+AC_ARG_ENABLE(ce,
+     [  --enable-cedarwin    Turn on ce darwin],
+     [case "${enableval}" in
+       yes) ce=true ;;
+       no)  ce=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-ce) ;;
+     esac],[ce=false])
+
 AC_ARG_ENABLE(darwin,
      [  --enable-darwin    Turn on darwin],
      [case "${enableval}" in
@@ -95,6 +103,7 @@ fi
 # conditional
 AM_CONDITIONAL(DOMPI, test x$mpi = xtrue)
 AM_CONDITIONAL(DOPESCAN, test x$pescan = xtrue)
+AM_CONDITIONAL(DOCE, test x$ce = xtrue)
 AM_CONDITIONAL(DOVFF, test x$vff = xtrue)
 AM_CONDITIONAL(DODARWIN, test x$darwin = xtrue)
 

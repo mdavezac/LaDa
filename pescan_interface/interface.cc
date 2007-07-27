@@ -17,6 +17,11 @@ namespace Pescan
 {
   types::t_real Interface :: operator()( Ising_CE::Structure &_str)
   {
+#ifdef _NOLAUNCH
+    bands.vbm = random() * 5;
+    bands.cbm = bands.vbm + random() * 5;
+    return bands.gap();
+#endif
     if ( escan.method == Escan::FOLDED_SPECTRUM )
       computation = CBM;
       
@@ -29,21 +34,16 @@ namespace Pescan
     if ( escan.method == Escan::ALL_ELECTRON )
     {
       destroy_directory();
-      std::cout << "VBM " << band_edge.first << "  CBM " << band_edge.second 
-                << "   Band Gap " <<  result << std::endl;
-      escan.Eref.first = band_edge.first;
-      escan.Eref.second = band_edge.second;
+      escan.Eref = bands;
       return result;
     }
-    band_edge.second = result;
+    bands.cbm = result;
 
     computation = VBM;
     launch_pescan( _str );
-    band_edge.first = read_result( _str );
+    bands.vbm = read_result( _str );
     destroy_directory();
-    std::cout << "  VBM " << band_edge.first << "  CBM " << band_edge.second 
-              << "   Band Gap " <<  result - band_edge.first << std::endl;
-    return result - band_edge.first;
+    return bands.gap();
   }
   void Interface :: create_directory()
   {
@@ -202,9 +202,9 @@ namespace Pescan
     if( child )
     {
       if( child->Attribute("VBM") )
-        child->Attribute("VBM", &escan.Eref.first);
+        child->Attribute("VBM", &escan.Eref.vbm);
       if( child->Attribute("CBM") )
-        child->Attribute("CBM", &escan.Eref.second);
+        child->Attribute("CBM", &escan.Eref.cbm);
     }
 
     child = parent->FirstChildElement("Hamiltonian");
@@ -300,8 +300,8 @@ namespace Pescan
          << "3 " << escan.method << std::endl;
     switch (computation)
     { 
-      case VBM: file << "4 " << escan.Eref.first << " "; break;
-      case CBM: file << "4 " << escan.Eref.second << " "; break;
+      case VBM: file << "4 " << escan.Eref.vbm << " "; break;
+      case CBM: file << "4 " << escan.Eref.cbm << " "; break;
     }
     file << genpot.cutoff << " " 
          << escan.smooth << " "
@@ -352,15 +352,6 @@ namespace Pescan
 
   types::t_real Interface :: read_result( Ising_CE::Structure &_str )
   {
-#ifdef _NOLAUNCH
-    if( escan.method == Escan::ALL_ELECTRON )
-    {
-      band_edge.first = random() * 5;
-      band_edge.second = band_edge.first + random() * 5;
-      return band_edge.second - band_edge.first;
-    }
-    return random() * 5; 
-#else
     std::ifstream file;
     std::ostringstream sstr;
     sstr << dirname << "/" << escan.output;
@@ -400,17 +391,17 @@ namespace Pescan
         std::cerr << "Error, not enough states were computed to determine band gap " << n << std::endl;
         return -1.0;
       }
-      band_edge.first = eigenvalues[n-1];
-      band_edge.second = eigenvalues[n];
-      return eigenvalues[n] - eigenvalues[n-1];
+      bands.vbm = eigenvalues[n-1];
+      bands.cbm = eigenvalues[n];
+      return bands.gap();
     }
 
     types :: t_real reference = 0;
     if ( escan.method == Escan::FOLDED_SPECTRUM )
       switch (computation)
       { 
-        case VBM: reference = escan.Eref.first; break;
-        case CBM: reference = escan.Eref.second; break;
+        case VBM: reference = escan.Eref.vbm; break;
+        case CBM: reference = escan.Eref.cbm; break;
       };
     std::vector<types::t_real> :: const_iterator i_eig = eigenvalues.begin();
     std::vector<types::t_real> :: const_iterator i_eig_end = eigenvalues.end();
@@ -423,7 +414,6 @@ namespace Pescan
         i_eig_result = i_eig;
       }
     return *i_eig_result;
-#endif
   }
 
 }
@@ -462,8 +452,8 @@ namespace mpi
         case Pescan::Interface::Escan::ALL_ELECTRON: 
           _p.method = Pescan::Interface::Escan::ALL_ELECTRON; break;
       }
-    if ( not serialize( _p.Eref.first ) ) return false;
-    if ( not serialize( _p.Eref.second ) ) return false;
+    if ( not serialize( _p.Eref.vbm ) ) return false;
+    if ( not serialize( _p.Eref.cbm ) ) return false;
     if ( not serialize( _p.smooth ) ) return false;
     if ( not serialize( _p.kinscal ) ) return false;
     if ( not serialize( _p.nbstates ) ) return false;

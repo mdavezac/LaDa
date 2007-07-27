@@ -75,7 +75,6 @@ namespace BandGap
 #ifdef _MPI
         sstr << mpi::main.rank();
 #endif
-#ifndef _NOLAUNCH
         pescan.set_dirname(sstr.str());
         vff_minimizer.minimize();
         structure.energy = vff.energy();
@@ -87,7 +86,6 @@ namespace BandGap
           return result;
         
         pescan.set_method(); // resets to folded spectrum if necessary
-#endif
 
 #ifdef _MPI
         if ( mpi::main.rank() != mpi::ROOT_NODE ) // not root no read write
@@ -100,10 +98,6 @@ namespace BandGap
         }
         write_references();
 
-#ifdef _NOLAUNCH
-        types::t_real result = rng.random(1000000);
-#endif
-        std::cout << "Result " << result << std::endl;
         return result;
       } 
       void evaluate_gradient( t_Type* const _i_grad ) 
@@ -121,6 +115,8 @@ namespace BandGap
         std::cerr << "Not implemented !!" << std::endl;
         exit(0);
       }
+      void get_bands( types::t_real &_vbm, types::t_real &_cbm ) 
+        { pescan.get_bands( _vbm, _cbm); }
   };
 
   struct Object 
@@ -134,9 +130,12 @@ namespace BandGap
 #ifdef _MPI
     friend bool mpi::BroadCast::serialize<BandGap::Object>(BandGap::Object &);
 #endif
+
+    types::t_real CBM, VBM;
     t_Container bitstring;
-    Object() {}
-    Object(const Object &_c) : bitstring(_c.bitstring) {};
+
+    Object() : CBM(0), VBM(0) {}
+    Object(const Object &_c) : CBM(_c.CBM), VBM(_c.VBM), bitstring(_c.bitstring) {};
     bool operator<<(const Ising_CE::Structure &_c)
     {
       bitstring.clear(); bitstring.reserve( _c.atoms.size() );
@@ -230,6 +229,7 @@ namespace BandGap
       ~Evaluator() {};
 
       void* const init( t_Object &_object );
+      void finalize( t_Object &_object );
       bool Load( const TiXmlElement &_node );
       bool Load ( t_Object &_indiv, const TiXmlElement &_node, bool _type );
       bool Save ( const t_Object &_indiv, TiXmlElement &_node, bool _type ) const;

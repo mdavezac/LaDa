@@ -55,6 +55,14 @@ namespace darwin
               quantity_is_valid (_indiv.quantity_is_valid),
               quantity(_indiv.quantity), age(_indiv.age) {}
 
+      // doesn't copy age!
+      void clone( const Individual<t_Object, t_Fitness> &_indiv )
+      {
+        object            = _indiv.object;
+        repFitness        = _indiv.repFitness;
+        quantity_is_valid = _indiv.quantity_is_valid;
+        quantity          = _indiv.quantity;
+      }
       void invalidate() { quantity_is_valid = false; }
       bool invalid() const
         { return not quantity_is_valid; }

@@ -149,7 +149,7 @@ namespace darwin
       {
         if ( not history ) 
           return false;
-        return history->set_quantity(_indiv);
+        return history->clone(_indiv);
       }
 
   };
@@ -198,15 +198,11 @@ namespace darwin
           return;
         
         // returns true if fitness can be set
-        if ( is_known(_indiv) ) 
-        {
-          types::t_real quantity = _indiv.get_quantity();
-          _indiv.set_fitness( quantity );
-          return;
-        }
+        if ( is_known(_indiv) )  return;
 
         ++nb_eval;
         types::t_real quantity = objective->evaluate();
+        evaluator.finalize( _indiv );
         _indiv.set_quantity( quantity );
         _indiv.set_fitness( quantity );
         if ( history )
@@ -224,12 +220,7 @@ namespace darwin
           return;
         
         // returns true if fitness can be set
-        if ( is_known(_indiv) ) 
-        {
-          types::t_real quantity = _indiv.get_quantity();
-          _indiv.set_fitness( quantity );
-          return;
-        }
+        if ( is_known(_indiv) )  return;
 
         ++nb_eval;
         nb_grad += objective->size();
@@ -383,15 +374,11 @@ namespace darwin
           return;
         
         // returns true if fitness can be set
-        if ( is_known(_indiv) ) 
-        {
-          types::t_real quantity = _indiv.get_quantity();
-          _indiv.set_fitness( quantity );
-          return;
-        }
+        if ( is_known(_indiv) ) return;
 
         ++nb_eval; 
         types::t_real quantity = objective->evaluate();
+        evaluator.finalize( _indiv );
         _indiv.set_quantity( quantity );
         _indiv.set_fitness( quantity );
         do_store( _indiv );
@@ -403,12 +390,7 @@ namespace darwin
           return;
         
         // returns true if fitness can be set
-        if ( is_known(_indiv) ) 
-        {
-          types::t_real quantity = _indiv.get_quantity();
-          _indiv.set_fitness( quantity );
-          return;
-        }
+        if ( is_known(_indiv) ) return;
 
         ++nb_eval; 
         nb_grad += objective->size(); 
@@ -679,16 +661,11 @@ namespace darwin
         if ( _indiv.invalid() )
         {
           // returns true if fitness can be set
-          if ( is_known(_indiv) ) 
-          {
-            types::t_real quantity = _indiv.get_quantity();
-            types::t_real base = convexhull.evaluate( _indiv.get_concentration() );
-            _indiv.set_fitness( quantity - base );
-            return;
-          }
+          if ( is_known(_indiv) ) return;
 
           ++nb_eval;
           types::t_real quantity = objective->evaluate();
+          evaluator.finalize( _indiv );
           _indiv.set_fitness( quantity );
           types::t_real base = convexhull.evaluate( _indiv.get_concentration() );
           quantity += base;
@@ -722,14 +699,7 @@ namespace darwin
         if ( _indiv.invalid() )
         {
           // returns true if fitness can be set
-          if ( is_known(_indiv) ) 
-          {
-            types::t_real quantity = _indiv.get_quantity();
-            types::t_real base = convexhull.evaluate( _indiv.get_concentration() );
-            _indiv.set_fitness( quantity - base );
-            objective->evaluate_gradient( _i_grad );
-            return;
-          }
+          if ( is_known(_indiv) ) return;
 
           ++nb_eval;
           types::t_real quantity = objective->evaluate_with_gradient( _i_grad );

@@ -43,6 +43,9 @@ namespace BandGap
 
   bool Evaluator :: Load( Object &_obj, const TiXmlElement &_node, bool _type )
   {
+    _node.Attribute("CBM", &_obj.CBM);
+    _node.Attribute("VBM", &_obj.VBM);
+
     if ( _type == darwin::LOADSAVE_SHORT )
     {
       if( not _node.Attribute("string") )
@@ -59,6 +62,9 @@ namespace BandGap
   }
   bool Evaluator :: Save( const Object &_obj, TiXmlElement &_node, bool _type ) const
   {
+    _node.SetDoubleAttribute("CBM", (double) _obj.CBM);
+    _node.SetDoubleAttribute("VBM", (double) _obj.VBM);
+
     if ( _type == darwin::LOADSAVE_SHORT )
     {
       std::string str; str << _obj;
@@ -290,6 +296,13 @@ namespace BandGap
     structure << _object;
     functional.set_variables( &_object.bitstring );
     return &functional;
+  }
+  void Evaluator::finalize( Object &_object )
+  {
+    types::t_real vbm, cbm;
+    functional.get_bands( vbm, cbm );
+    _object.VBM = vbm;
+    _object.CBM = cbm;
   }
 
   void* const Evaluator::LoadMinimizer(const TiXmlElement &_el )
@@ -711,6 +724,8 @@ namespace mpi
   template<>
   bool mpi::BroadCast::serialize<BandGap::Object>( BandGap::Object & _object )
   {
+    if( not serialize( _object.CBM ) ) return false;
+    if( not serialize( _object.VBM ) ) return false;
     return serialize( _object.bitstring );
   }
 }

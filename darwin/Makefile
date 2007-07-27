@@ -40,7 +40,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = x86_64-redhat-linux-gnu
 host_triplet = x86_64-redhat-linux-gnu
-bin_PROGRAMS = cedarwin$(EXEEXT) $(am__EXEEXT_1)
+bin_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2)
 subdir = darwin
 DIST_COMMON = $(nobase_cedarwin_HEADERS) \
 	$(nobase_libdarwin_la_HEADERS) $(nobase_pdarwin_HEADERS) \
@@ -57,7 +57,8 @@ LTLIBRARIES = $(noinst_LTLIBRARIES)
 libdarwin_la_LIBADD =
 am_libdarwin_la_OBJECTS = concentration.lo print_xmgrace.lo
 libdarwin_la_OBJECTS = $(am_libdarwin_la_OBJECTS)
-am__EXEEXT_1 = pdarwin$(EXEEXT)
+#am__EXEEXT_1 = cedarwin$(EXEEXT)
+am__EXEEXT_2 = pdarwin$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(cedarwindir)" \
 	"$(DESTDIR)$(libdarwin_ladir)" "$(DESTDIR)$(pdarwindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
@@ -123,6 +124,8 @@ CXXFLAGS = -g -O2
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
+DOCE_FALSE = 
+DOCE_TRUE = #
 DODARWIN_FALSE = #
 DODARWIN_TRUE = 
 DOMPI_FALSE = #
@@ -210,13 +213,14 @@ localstatedir = ${prefix}/var
 mandir = ${prefix}/man
 mkdir_p = mkdir -p --
 oldincludedir = /usr/include
-prefix = /usr/local
+prefix = /mnt/uhome4/mdavezac/usr
 program_transform_name = s,x,x,
 sbindir = ${exec_prefix}/sbin
 sharedstatedir = ${prefix}/com
 sysconfdir = ${prefix}/etc
 target_alias = 
 PDARWIN = pdarwin
+#CEDARWIN = cedarwin
 AM_CPPFLAGS =  -I/mnt/uhome4/mdavezac/usr/include    -I/opt/mpich.gcc/include   -I/mnt/uhome4/mdavezac/usr/include/eo  
 AM_LDFLAGS = -L/mnt/uhome4/mdavezac/usr/lib/ -ltinyxml   -L/mnt/uhome4/mdavezac/usr/lib/ -lga -leo -leoutils  
 cedarwin_SOURCES = main.cc ce.cc
@@ -254,9 +258,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  darwin/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  darwin/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign  darwin/Makefile
+	  $(AUTOMAKE) --gnu  darwin/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \

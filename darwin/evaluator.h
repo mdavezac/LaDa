@@ -79,8 +79,11 @@ namespace darwin
       // i.e. transforms t_Object format to
       // function::Function<...>::variables format if necessary
       virtual bool initialize( t_Object &_object ) = 0;
+      // Called before objective function is evaluated
       // must return a void pointer to functional
       virtual void* const init( t_Object &_object ) = 0;
+      // Called after objective function is evaluated
+      virtual void finalize( t_Object &_object ) {};
       // _f points to function::Function<?,?> object
       // transforms from function::Function<...>::variables format to
       // t_Object format -- used for Taboos mostly 

@@ -20,6 +20,16 @@ namespace Pescan
 #ifdef _MPI
     friend bool mpi::BroadCast::serialize<Interface> ( Interface& );
 #endif 
+  
+    struct Bands
+    { 
+      types::t_real vbm, cbm; 
+      Bands() : vbm(0), cbm(0) {};
+      Bands( const types :: t_real _cbm, types::t_real _vbm ) : cbm(_cbm), vbm(_vbm) {};
+      Bands( const Bands &_bands ) : cbm(_bands.cbm), vbm(_bands.vbm) {};
+      types::t_real gap() const { return cbm - vbm; }
+    };
+
     public:
     struct GenPot
     {
@@ -58,7 +68,7 @@ namespace Pescan
       std::string output;
       std::string wavefunction;
       t_method method;
-      std::pair<types::t_real, types::t_real> Eref;
+      Bands Eref;
       types::t_real smooth, kinscal;
       types::t_int nbstates;
       types::t_int niter, nlines;
@@ -83,7 +93,7 @@ namespace Pescan
       Escan escan;
       t_computation computation;
       std::string dirname;
-      std::pair<types::t_real, types::t_real> band_edge;
+      Bands bands;
       bool do_destroy_dir;
 
     public:
@@ -96,9 +106,11 @@ namespace Pescan
      types::t_real launch_pescan( Ising_CE::Structure &_str ); 
      void set_dirname( const std::string &_dir ) { do_destroy_dir = false; dirname = _dir; }
      void set_references( types::t_real _val, types::t_real _cond )
-       { escan.Eref.first = _val; escan.Eref.second = _cond; }
+       { escan.Eref.vbm = _val; escan.Eref.cbm = _cond; }
      void get_references( types::t_real &_val, types::t_real &_cond ) const
-       { _val = escan.Eref.first; _cond = escan.Eref.second; }
+       { _val = escan.Eref.vbm; _cond = escan.Eref.cbm; }
+     void get_bands( types::t_real &_VBM, types::t_real &_CBM ) const
+       { _CBM = bands.cbm; _VBM = bands.vbm; }
      Escan::t_method get_method() const
        { return escan.method; }
      void set_method( Escan::t_method _method = Escan::FOLDED_SPECTRUM )
