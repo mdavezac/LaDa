@@ -27,14 +27,14 @@
 
 namespace darwin
 {
-  template<class T_INDIVIDUAL, class T_EVALUATOR >
+  template< class T_EVALUATOR >
   class Darwin
   {    
     public:
-      typedef T_INDIVIDUAL t_Individual;
       typedef T_EVALUATOR t_Evaluator;
     private:
-      typedef Darwin<t_Individual, t_Evaluator> t_Darwin;
+      typedef typename t_Evaluator::t_Individual t_Individual;
+      typedef Darwin<t_Evaluator> t_Darwin;
       typedef eoPop<t_Individual>  t_Population;
       typedef std::list< t_Population > t_Islands;
       typedef typename t_Individual :: t_Object t_Object;
@@ -62,23 +62,17 @@ namespace darwin
       IslandsContinuator<t_Individual>*                continuator;
       History<t_Individual, std::list<t_Individual> >* history;
       Taboo_Base<t_Individual>*                        taboos;
-      Taboo<t_Individual, std::list<t_Individual> >*   agetaboo;
       eoGenOp<t_Individual>*                           breeder_ops;
-      NuclearWinter<t_Individual, t_Population >*      nuclearwinter;
-//     Colonize<t_Individual>*                          colonize;
-//     PopGrowth<t_Individual>*                         popgrowth;
       Breeder<t_Individual>*                           breeder;
-      Results<t_Individual, t_Evaluator>*              results;
       eoReplacement<t_Individual>*                     replacement;
+      objective::Base<t_Evaluator>*                    objective;
+      Store::Base<t_Evaluator>*                        store;
+      Evaluation::WithHistory<t_Individual>*           evaluation;
 
       t_Evaluator                                      evaluator;
       t_Islands                                        islands;
       t_Population                                     offsprings;
       
-      // lists for cleanup purposes
-      typedef std::list< typename minimizer::Base< typename t_Evaluator::t_Functional >* > t_minimizer_list;
-      t_minimizer_list minimizers; 
-
       eoState eostates;
 
     public:
@@ -86,8 +80,8 @@ namespace darwin
                   max_generations(0), nb_islands(1), restarts(0), do_save(SAVE_RESULTS),
                   do_restart(0), replacement_rate(0.1), do_print_each_call(false),
                   populate_style(RANDOM_POPULATE), continuator(NULL), history(NULL),
-                  taboos(NULL), breeder_ops(NULL), nuclearwinter(NULL), breeder(NULL),
-                  results(NULL){};
+                  taboos(NULL), breeder_ops(NULL), breeder(NULL), replacement(NULL),
+                  objective(NULL), store(NULL), evaluation(NULL) {}
       virtual ~Darwin ();
 
       bool Load( const std::string &_filename );
@@ -95,7 +89,7 @@ namespace darwin
 
     protected: 
       bool Load_Parameters( const TiXmlElement &_parent );
-      void Load_History( const TiXmlElement &_parent );
+      void make_History( const TiXmlElement &_parent );
       bool Load_Mating( const TiXmlElement &_parent );
       void Load_Method( const TiXmlElement &_parent );
       void Load_Taboos( const TiXmlElement &_node );
@@ -111,7 +105,6 @@ namespace darwin
 
       void populate ();
 #ifdef _MPI
-      bool broadcast( mpi::BroadCast &_bc );
       bool broadcast_islands( mpi::BroadCast &_bc );
 #endif
       void random_populate ( t_Population &_pop, types::t_unsigned _size);

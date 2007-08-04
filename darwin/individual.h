@@ -1,5 +1,5 @@
-#ifndef _DARWIN_INDIVIDUAL_H_
-#define _DARWIN_INDIVIDUAL_H_
+#ifndef _MULTIOB_INDIVIDUAL_H_
+#define _MULTIOB_INDIVIDUAL_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -13,7 +13,6 @@
 
 #include <tinyxml/tinyxml.h>
 
-#include <eo/eoScalarFitness.h>
 #include <eo/eoObject.h>      // eoObject
 #include <eo/eoPersistent.h>  // eoPersistent
 #include <eo/eoOpContainer.h>  
@@ -27,54 +26,34 @@
 #endif 
 
 
-namespace darwin
+namespace Individual
 {
-  template<class T_OBJECT, class T_FITNESS = eoMinimizingFitness >
-  class Individual : public eoObject, public eoPersistent
+  template<class T_OBJECT>
+  class Base : public eoObject, public eoPersistent
   {
     public:
       typedef T_OBJECT t_Object;
-      typedef T_FITNESS t_Fitness;
-      typedef T_FITNESS Fitness; // for eo
+      typedef darwin::Fitness t_Fitness;
+      typedef darwin::Fitness Fitness; // for eo
 
     protected:
       t_Object object;
       t_Fitness repFitness;
-      bool quantity_is_valid;
-      types::t_real quantity;
       types::t_unsigned age;
 
     public: 
-      Individual() : quantity_is_valid (false), age(0) {}
+      Base() : age(0) {}
       
-      ~Individual() {}
+      ~Base() {}
 
-      Individual(const Individual<t_Object, t_Fitness> &_indiv ) :
-              object( _indiv.object ), 
-              repFitness(_indiv.repFitness),
-              quantity_is_valid (_indiv.quantity_is_valid),
-              quantity(_indiv.quantity), age(_indiv.age) {}
+      Base   (const Base<t_Object, t_Fitness> &_indiv )
+           : object( _indiv.object ), 
+             repFitness(_indiv.repFitness),
+             age(_indiv.age) {}
 
-      // doesn't copy age!
-      void clone( const Individual<t_Object, t_Fitness> &_indiv )
-      {
-        object            = _indiv.object;
-        repFitness        = _indiv.repFitness;
-        quantity_is_valid = _indiv.quantity_is_valid;
-        quantity          = _indiv.quantity;
-      }
-      void invalidate() { quantity_is_valid = false; }
       bool invalid() const
-        { return not quantity_is_valid; }
+        { return repFitness.invalid(); }
 
-
-      void set_quantity( types::t_real _q )
-      {
-        quantity = _q;
-        quantity_is_valid = true;
-      }
-      const types::t_real& get_quantity() const
-        { return quantity; }
 
       void  set_age( types::t_unsigned _age )
         { age = _age; }
@@ -82,28 +61,28 @@ namespace darwin
         { return age; }
 
       bool operator<(const Individual<t_Object, t_Fitness>& _eo2) const
-        { return fitness() < _eo2.fitness(); }
+        { return repFitness < _eo2.repFitness; }
       bool operator>(const Individual<t_Object, t_Fitness>& _eo2) const
-        { return fitness() > _eo2.fitness(); }
+        { return repFitness > _eo2.repFitness; }
       bool operator==( const Individual<t_Object, t_Fitness> &_indiv ) const
       {
         if ( std::abs(get_concentration() - _indiv.get_concentration()) > types::tolerance )
           return false;
         if ( invalid() or _indiv.invalid() )
           return object == _indiv.object; 
-        if ( std::abs( quantity - _indiv.get_quantity() ) > types::tolerance )
-          return false;
         return object == _indiv.object; 
       }
         
-      t_Fitness fitness() const
+      t_Fitness& fitness() 
+        { return repFitness; }
+      const t_Fitness& fitness() const
       {
          if (not quantity_is_valid)
            throw std::runtime_error("invalid fitness\n");
          return repFitness;
       }
-      void set_fitness( types::t_real _f)
-        { repFitness = _f; } 
+      void set_fitness( types::t_real _fit )
+        { repFitness = _fit; }
 
       // eo stuff
       virtual std::string className() const
@@ -120,25 +99,7 @@ namespace darwin
           }
         } // EO stuff
       }
-      void readFrom(std::istream &_is)
-      {
-        { // EO stuff
-          std::string fitness_str;
-          types::t_int pos = _is.tellg();
-          _is >> fitness_str;
-
-          if (fitness_str == "INVALID")
-          {
-             quantity_is_valid = false;
-          }
-          else
-          {
-             quantity_is_valid = true;
-             _is.seekg(pos); // rewind
-             _is >> repFitness;
-          }
-        } // EO stuff
-      }
+      void readFrom(std::istream &_is) {}
 
       void print_out( std::ostream &_stream ) const
         { object.print_out( _stream ); }
@@ -156,8 +117,7 @@ namespace darwin
       void Save( TiXmlElement &_node, SaveOp &_saveop ) const
       {
         TiXmlElement *xmlindiv = new TiXmlElement("Individual");
-        xmlindiv->SetDoubleAttribute( "fitness", fitness() );
-        xmlindiv->SetDoubleAttribute( "quantity", quantity );
+        repFitness->Save(*xmlindiv);
         _saveop(object, *xmlindiv); 
         _node.LinkEndChild( xmlindiv );
       }
@@ -171,16 +131,8 @@ namespace darwin
         if ( not parent )
           return false;
 
-        if ( not parent->Attribute("fitness") )
+        if ( not repFitness->Load(*parent) )
           return false;
-        double d = 0;
-        parent->Attribute("fitness", &d );
-        repFitness = d;
-
-        if ( not parent->Attribute("quantity") )
-          return false;
-        parent->Attribute("quantity", &quantity );
-        quantity_is_valid = true;
 
         return _loadop(object,*parent);
       }
@@ -193,18 +145,97 @@ namespace darwin
       {
         types::t_real fitness = 0;
         if ( _bc.get_stage() == mpi::BroadCast::COPYING_TO_HERE ) fitness = repFitness;
-        if (    ( not _bc.serialize( quantity_is_valid ) ) 
-             or ( not _bc.serialize( quantity ) )
-             or ( not _bc.serialize( age ) )
-             or ( not _bc.serialize( fitness ) )
+        if (    ( not _bc.serialize( age ) )
+             or ( not _bc.serialize( repfitness ) )
              or ( not _bc.serialize<t_Object>( object ) )   ) return false;
-        if ( _bc.get_stage() == mpi::BroadCast::COPYING_FROM_HERE )
-          repFitness = fitness;
         return true;
       }
 #endif
   };
 
+  template<class T_OBJECT>
+  class Single : public Base<T_OBJECT>
+  {
+    protected:
+      typedef typename Base<T_OBJECT> t_Base;
+    public:
+      typedef types::t_real t_Quantity;
+
+    public:
+      using t_Base :: t_Object;
+      using t_Base :: t_Fitness;
+      using t_Base :: Fitness;
+
+    protected:
+      t_Quantity quantity;
+    
+    public:
+      Single () : Base<t_Object>() {}
+      Single   ( const Single<t_Object> &_single )
+             : Base<t_Object>( _single ), quantity( _single.quantity ) {}
+    
+      // doesn't copy age!
+      virtual void clone( const Individual<t_Object, t_Fitness> &_indiv )
+      {
+        quantity   = _indiv.quantity;
+        object     = _indiv.object;
+        repFitness = _indiv.repFitness;
+      }
+
+      t_Quantity& quantities() { return quantities; }
+      const t_Quantity& quantities() const { return quantities; }
+      t_Quantity quantities( types::t_unsigned ) { return quantities; }
+      const t_Quantity quantities( const types::t_unsigned ) const { return quantities; }
+#ifdef _MPI
+      bool broadcast( mpi::BroadCast &_bc )
+      {
+        if ( not _bc.serialize( quantity ) ) return false;
+        return t_Base::broadcast(_bc);
+      }
+#endif
+  };
+
+
+  template<class T_OBJECT>
+  class Multi : public Base<T_OBJECT>
+  {
+    protected:
+      typedef typename Base<T_OBJECT> t_Base;
+      typedef types::t_real t_Type;
+    public:
+      using t_Base :: t_Object;
+      using t_Base :: t_Fitness;
+      using t_Base :: Fitness;
+      typedef std::vector<t_Type> t_Quantity;
+
+    protected:
+      t_Quantity quantity;
+    
+    public:
+      Multi () : Base<t_Object>() {}
+      Multi   ( const Single<t_Object> &_single )
+            : Base<t_Object>( _single ), quantity( _single.quantity ) {}
+    
+      // doesn't copy age!
+      virtual void clone( const Individual<t_Object, t_Fitness> &_indiv )
+      {
+        quantity          = _indiv.quantity;
+        object            = _indiv.object;
+        repFitness        = _indiv.repFitness;
+      }
+
+      t_Quantity& quantities() { return quantities; }
+      const t_Quantity& quantities() const { return quantities; }
+      t_Type quantities( types::t_unsigned _n ) { return quantities[_n]; }
+      const t_Type quantities( const types::t_unsigned _n ) const { return quantities[_n]; }
+#ifdef _MPI
+      bool broadcast( mpi::BroadCast &_bc )
+      {
+        if ( not _bc.serialize_container( quantity ) ) return false;
+        return t_Base::broadcast(_bc);
+      }
+#endif
+  };
 
   // redefines operators < and > with respect to FITNESS
   template <class T_FITNESS, class T_OBJECT>
@@ -216,6 +247,6 @@ namespace darwin
                  const Individual<T_FITNESS, T_OBJECT>& _eo2)
     { return _eo2.operator<(_eo1); }
 
-} // endif LaDa
+} // endif MultiObj
 
 #endif

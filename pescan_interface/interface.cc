@@ -164,6 +164,13 @@ namespace Pescan
       return false;
     } 
 
+    // lester needs to load "module fftw" when in interactive multi-proc mode
+    if ( parent->Attribute("system") )
+    {
+      std::string str = parent->Attribute("system");
+      system( str.c_str() );
+    }
+
     child = parent->FirstChildElement("GenPot");
     if (    (not child)
          or (not child->Attribute("x")) 
@@ -365,8 +372,14 @@ namespace Pescan
       line = cline;
     }
 
-    std::vector<types::t_real> eigenvalues;
     types :: t_real eigenvalue;
+    if (escan.nbstates == 1)
+    {
+      file >> eigenvalue;
+      return eigenvalue;
+    }
+
+    std::vector<types::t_real> eigenvalues;
     while(     ( not file.eof() )
            and (file >> eigenvalue).good() )
       eigenvalues.push_back( eigenvalue );
@@ -397,12 +410,11 @@ namespace Pescan
     }
 
     types :: t_real reference = 0;
-    if ( escan.method == Escan::FOLDED_SPECTRUM )
-      switch (computation)
-      { 
-        case VBM: reference = escan.Eref.vbm; break;
-        case CBM: reference = escan.Eref.cbm; break;
-      };
+    switch (computation)
+    { 
+      case VBM: reference = escan.Eref.vbm; break;
+      case CBM: reference = escan.Eref.cbm; break;
+    };
     std::vector<types::t_real> :: const_iterator i_eig = eigenvalues.begin();
     std::vector<types::t_real> :: const_iterator i_eig_end = eigenvalues.end();
     std::vector<types::t_real> :: const_iterator i_eig_result = i_eig;

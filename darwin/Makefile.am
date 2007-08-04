@@ -2,7 +2,7 @@ if DOPESCAN
   PDARWIN=pdarwin
 endif
 if DOCE
-  CEDARWIN=cedarwin
+  CEDARWIN= #cedarwin
 endif
 bin_PROGRAMS = $(CEDARWIN) $(PDARWIN)
 AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ @MPICH_CFLAGS@ @EO_CFLAGS@
@@ -13,7 +13,7 @@ nobase_cedarwin_HEADERS = ce.h
 cedarwin_CPPFLAGS =  -D _CE $(AM_CPPFLAGS) -I .. @GSL_INCLUDE@ 
 cedarwin_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIB@ @MPICH_LIBS@
 cedarwin_LDADD = libdarwin.la ../lamarck/liblamarck.la ../atat/libatat.la @MPI_ADDLIB@
-pdarwin_SOURCES = main.cc pescan.cc
+pdarwin_SOURCES = main.cc pescan.cc two_sites.cc
 pdarwindir = darwin
 nobase_pdarwin_HEADERS = pescan.h
 pdarwin_CPPFLAGS =  -D _PESCAN $(AM_CPPFLAGS) -I .. @GSL_INCLUDE@ 
@@ -22,7 +22,7 @@ pdarwin_LDADD = libdarwin.la ../lamarck/liblamarck.la ../atat/libatat.la ../vff/
 	       	../pescan_interface/libpescan.la ../physics/libphysics.la @MPI_ADDLIB@
 noinst_LTLIBRARIES = libdarwin.la
 libdarwin_ladir = darwin
-libdarwin_la_SOURCES = concentration.cc print_xmgrace.cc
+libdarwin_la_SOURCES = concentration.cc print_xmgrace.cc 
 nobase_libdarwin_la_HEADERS = breeder.h  checkpoints.h darwin.h evaluator.h gencount.h loadsave.h \
                               operators.h  print_xmgrace.h  statistics.h concentration.h darwin.impl.h \
 			      functors.h individual.h minimizergenop.h results.h taboos.h

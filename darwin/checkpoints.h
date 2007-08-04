@@ -68,67 +68,6 @@ namespace darwin
       virtual std::string className(void) const { return "darwin::PrintFitness"; }
   };
 
-  template< class T_RESULTS >
-  class Print : public eoUpdater
-  {
-    protected:
-      typedef T_RESULTS t_Results; 
-      typedef typename t_Results::t_Individual t_Individual;
-      typedef typename t_Results::t_Population t_Population;
-
-    protected:
-      const t_Results &results;
-      const GenCount &age;
-      bool do_print_each_call;
-
-    public:
-      Print   ( const t_Results &_results, const GenCount &_age,
-                bool _each )
-            : results(_results), age(_age), do_print_each_call(_each) {}
-      Print   ( const Print<t_Results> &_c )
-            : results(_c.results), age(_c.age),
-              do_print_each_call(_c.do_print_each_call)  {}
-
-      virtual void operator()()
-      {
-        if ( not ( do_print_each_call or results.is_new_results() ) )
-        {
-          printxmg.clear();
-          return;
-        }
-
-        std::string special = "";
-        if ( not results.is_new_results() )
-          special = " ? ";
-       
-        std::ostringstream sstr;
-        sstr << special << "Iteration " << age();
-        printxmg.add_comment( sstr.str() );
-        sstr.str(""); 
-        sstr << special << "Evaluation Calls: " 
-             << results.nb_eval << " "
-             << results.nb_grad;
-        printxmg.add_comment( sstr.str() );
-        
-        if( results.is_new_results() )
-          results.print_results( age() );
-        results.set_new_results(false);
-        printxmg.flush();
-      }
-
-      // some anoying stuff
-      void printOn( std::ostream &__os ) const {};
-      void readFrom( std::istream &__os ) const {};
-      void lastCall()
-      {
-        printxmg.add_comment("Last Found Result");
-        results.print_results(age(), true);
-        printxmg.flush();
-      }
-
-      virtual std::string className(void) const { return "darwin::PrintFitness"; }
-  };
-
   // checks for taboo unconvergence from a breeder, 
   // response. If response does not get through 
   template< class T_INDIVIDUAL, class T_POPULATION = eoPop<T_INDIVIDUAL> >

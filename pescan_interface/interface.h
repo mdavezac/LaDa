@@ -23,8 +23,8 @@ namespace Pescan
   
     struct Bands
     { 
-      types::t_real vbm, cbm; 
-      Bands() : vbm(0), cbm(0) {};
+      types::t_real cbm, vbm; 
+      Bands() : cbm(0), vbm(0) {};
       Bands( const types :: t_real _cbm, types::t_real _vbm ) : cbm(_cbm), vbm(_vbm) {};
       Bands( const Bands &_bands ) : cbm(_bands.cbm), vbm(_bands.vbm) {};
       types::t_real gap() const { return cbm - vbm; }

@@ -195,7 +195,7 @@ namespace darwin
 
   }; 
   // generic class for converting member function to zero operators
-  template<class T_CLASS, class T_OBJECT>
+  template<class T_CLASS>
   class mem_zerop_t : public eoF<bool>
   {
     public:

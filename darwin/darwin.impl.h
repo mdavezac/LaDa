@@ -15,17 +15,6 @@
 
 namespace darwin
 {
-#ifdef _MPI
-# define OPENXMLINPUT \
-    TiXmlDocument doc( filename.c_str() ); \
-    TiXmlHandle docHandle( &doc ); \
-    if  ( mpi::main.rank() == mpi::ROOT_NODE ) \
-      if  ( !doc.LoadFile() ) \
-      { \
-        std::cout << doc.ErrorDesc() << std::endl; \
-        throw "Could not load input file in  Darwin<T_INDIVIDUAL,T_EVALUATOR> "; \
-      } 
-#else
 # define OPENXMLINPUT \
     TiXmlDocument doc( filename.c_str() ); \
     TiXmlHandle docHandle( &doc ); \
@@ -34,20 +23,17 @@ namespace darwin
       std::cout << doc.ErrorDesc() << std::endl; \
       throw "Could not load input file in  Darwin<T_INDIVIDUAL,T_EVALUATOR> "; \
     } 
-#endif
 
-  template<class T_INDIVIDUAL, class T_EVALUATOR>
-  Darwin<T_INDIVIDUAL,T_EVALUATOR> :: ~Darwin()
+  template<class T_EVALUATOR>
+  Darwin<T_EVALUATOR> :: ~Darwin()
   {
-    if ( results ) delete results; results = NULL; 
-    typename t_minimizer_list :: iterator i_it = minimizers.begin();
-    typename t_minimizer_list :: iterator i_end = minimizers.end();
-    for( ; i_it != i_end; ++i_it )
-      delete *i_it;
+    if ( store ) delete store;
+    if ( objective ) delete objective;
+    if ( evaluation ) delete evaluation;
   }
   // reads in different parameters
-  template<class T_INDIVIDUAL, class T_EVALUATOR>
-  bool Darwin<T_INDIVIDUAL,T_EVALUATOR> :: Load_Parameters(const TiXmlElement &_parent)
+  template<class T_EVALUATOR>
+  bool Darwin<T_EVALUATOR> :: Load_Parameters(const TiXmlElement &_parent)
   {
     // tournament size when selecting parents
     const TiXmlAttribute *att = _parent.FirstAttribute();
@@ -123,8 +109,8 @@ namespace darwin
   }
 
   // creates history object if required
-  template<class T_INDIVIDUAL, class T_EVALUATOR>
-  void Darwin<T_INDIVIDUAL,T_EVALUATOR> :: Load_History(const TiXmlElement &_parent)
+  template<class T_EVALUATOR>
+  void Darwin<T_EVALUATOR> :: make_History(const TiXmlElement &_parent)
   {
     // checks if there are more than one taboo list
     const TiXmlElement *child = _parent.FirstChildElement("History");
@@ -136,37 +122,46 @@ namespace darwin
   }
   
   // creates history object if required
-  template<class T_INDIVIDUAL, class T_EVALUATOR>
-  void Darwin<T_INDIVIDUAL,T_EVALUATOR> :: Load_Method(const TiXmlElement &_parent)
+  template<class T_EVALUATOR>
+  void Darwin<T_EVALUATOR> :: Load_Method(const TiXmlElement &_parent)
   {
     // checks if there are more than one taboo list
-    const TiXmlElement *child = _parent.FirstChildElement("Method");
+    const TiXmlElement *child = _parent.FirstChildElement("Objective");
     if( child and child->Attribute("type") ) 
     {
       std::string str = child->Attribute("type");
-      if (    str.compare("Best Of")==0 
-           or str.compare("BestOf")==0 
-           or str.compare("best of")==0 
-           or str.compare("bestof")==0 
-           or str.compare("BO")==0 )
-        results = new BestOf<t_Individual, t_Evaluator, t_Population>( *child, evaluator, taboos );
-      if (    str.compare("Target")==0 
-           or str.compare("target")==0 )
-        results = new Target<t_Individual, t_Evaluator, t_Population>( *child, evaluator, taboos );
-      if (    str.compare("ConvexHull")==0 
-           or str.compare("convex hull")==0 
-           or str.compare("convex-hull")==0 
-           or str.compare("convexhull")==0 
-           or str.compare("CH")==0 )
-        results = new ConvexHull<t_Individual, t_Evaluator, t_Population>( *child, evaluator, taboos );
+      if ( str.compare("maximize")==0 )
+        objective = new Objective::Maximize();
+      if ( str.compare("minimize")==0 )
+        objective = new Objective::Minimize();
+      else if ( str.compare("target")==0 )
+      {
+        types::t_real value; child->Attribute( "value", &value );
+        objective = new Target( value );
+      }
     }
-    if( not results )
-      results = new Optimum<t_Individual, t_Evaluator, t_Population>( *child, evaluator, taboos );
+    if( not objective )
+      objective = new Objective::Minimize();
+
+    child = parent.FirstChildElement("Store");
+    if ( child and child->Attribute("delta") )
+    {
+      types::t_real delta; child->Attribute("delta", &delta);
+      store = new Store::FromObjective<t_Evaluator>( *evaluator, objective, 0, delta );
+    }
+    if ( not store )
+      store = new Store::Optima( *evaluator );
+
+    if( history )
+      evaluation = new Evaluation::WithHistory<t_Evaluator, t_Population>
+                                              ( *evaluator, *objective, *store, history );
+    if ( not evaluation )
+      evaluation = new Evaluation::Base<t_Evaluator, t_Population>( *evaluator, *objective, *store );
   }
   
   // create Taboos
-  template<class T_INDIVIDUAL, class T_EVALUATOR >
-  void Darwin<T_INDIVIDUAL,T_EVALUATOR> :: Load_Taboos( const TiXmlElement &_node )
+  template<class T_EVALUATOR >
+  void Darwin<T_EVALUATOR> :: Load_Taboos( const TiXmlElement &_node )
   {
     // checks if there are more than one taboo list
     if ( not _node.FirstChildElement("Taboos") )
@@ -293,8 +288,8 @@ namespace darwin
   }
 
   // Loads mating operations
-  template<class T_INDIVIDUAL, class T_EVALUATOR>
-  bool Darwin<T_INDIVIDUAL,T_EVALUATOR> :: Load_Mating (const TiXmlElement &_parent)
+  template<class T_EVALUATOR>
+  bool Darwin<T_EVALUATOR> :: Load_Mating (const TiXmlElement &_parent)
   {
     const TiXmlElement *child = _parent.FirstChildElement("Breeding");
     if ( not child )
@@ -317,8 +312,8 @@ namespace darwin
   }
   
   // Loads CheckPoints
-  template<class T_INDIVIDUAL, class T_EVALUATOR>
-  void Darwin<T_INDIVIDUAL,T_EVALUATOR> :: Load_CheckPoints (const TiXmlElement &_parent)
+  template<class T_EVALUATOR>
+  void Darwin<T_EVALUATOR> :: Load_CheckPoints (const TiXmlElement &_parent)
   {
     // contains all checkpoints
     std::string str = "stop"; 
@@ -333,10 +328,7 @@ namespace darwin
     // The following synchronizes Results::nb_val and Results::nb_grad over 
     // all procs. Should always be there!!
 #ifdef _MPI
-        Synchronize<types::t_unsigned> *synchro = new Synchronize<types::t_unsigned>( results->nb_eval );
-        eostates.storeFunctor( synchro );
-        continuator->add( *synchro );
-        synchro = new Synchronize<types::t_unsigned>( results->nb_grad );
+        Synchronize<types::t_unsigned> *synchro = new Synchronize<types::t_unsigned>( evaluation->nb_eval );
         eostates.storeFunctor( synchro );
         continuator->add( *synchro );
 #endif
@@ -385,7 +377,7 @@ namespace darwin
       if ( ref.compare("evaluation") == 0 )
       {
         terminator = new Terminator< types::t_unsigned, std::less<types::t_unsigned>, t_Individual >
-                                   ( results->nb_eval, (types::t_unsigned) abs(max),
+                                   ( evaluation->nb_eval, (types::t_unsigned) abs(max),
                                      std::less<types::t_unsigned>(), "nb_eval < term" );
         eostates.storeFunctor( terminator );
         continuator->add( *terminator );
@@ -396,7 +388,7 @@ namespace darwin
       else if ( ref.compare("gradient") == 0 )
       {
         terminator = new Terminator< types::t_unsigned, std::less<types::t_unsigned>, t_Individual >
-                                   ( results->nb_grad, (types::t_unsigned) abs(max),
+                                   ( evaluation->nb_grad, (types::t_unsigned) abs(max),
                                      std::less<types::t_unsigned>(), "nb_grad < term" );
         eostates.storeFunctor( terminator );
         continuator->add( *terminator );
@@ -434,30 +426,6 @@ namespace darwin
     }
 
 
-    // Nuclear Winter -- only for agetaboo
-    child = _parent.FirstChildElement("Taboos");
-    if ( child ) child = child->FirstChildElement("NuclearWinter");
-    if ( child and agetaboo)
-    {
-      eoGenOp<t_Individual> *nuclear_op;
-    
-      // first creates the nuclear op from input
-      printxmg.add_comment("Nuclear Operator Begin");
-      nuclear_op = make_genetic_op( *child->FirstChildElement() );
-      printxmg.add_comment("Nuclear Operator End");
-      if ( not nuclear_op )
-        throw "Error while creating operators in  Darwin<t_Individual>  :: make_GenOp ";
-      
-      // creates the NuclearWinter 
-      nuclearwinter = new NuclearWinter<t_Individual, t_Population >
-                                       ( *taboos, *breeder_ops, *nuclear_op,
-                                         replacement_rate );
-      printxmg.add_comment("NuclearWinter");
-      eostates.storeFunctor( nuclearwinter );
-      continuator->add(*nuclearwinter);
-    }
-
-
     // Load object specific continuator
     eoF<bool> *specific = evaluator.LoadContinue( _parent );
     if ( specific )
@@ -466,14 +434,6 @@ namespace darwin
       continuator->add( eostates.storeFunctor(new Continuator<t_Individual>(*specific)) );
     }
 
-    // Creates Print object
-    {
-      typedef Print< Results<t_Individual, t_Evaluator, t_Population> > t_Print;
-      t_Print* print = new t_Print( *results, generation_counter, do_print_each_call);
-      eostates.storeFunctor(print);
-      continuator->add( *print );
-    }
-    
     // Print Offsprings
     child = _parent.FirstChildElement("PrintOffsprings");
     if ( child )
@@ -485,8 +445,8 @@ namespace darwin
 
   } // end of make_check_point
   
-  template<class T_INDIVIDUAL, class T_EVALUATOR>
-  bool Darwin<T_INDIVIDUAL,T_EVALUATOR> :: Restart()
+  template<class T_EVALUATOR>
+  bool Darwin<T_EVALUATOR> :: Restart()
   {
     TiXmlDocument doc( restart_filename.c_str() );
     TiXmlHandle docHandle( &doc ); 
@@ -503,8 +463,8 @@ namespace darwin
 
   // Loads restarts operations
   // Should be in a Restart XML Section
-  template<class T_INDIVIDUAL, class T_EVALUATOR>
-  bool Darwin<T_INDIVIDUAL,T_EVALUATOR> :: Restart (const TiXmlElement &_node)
+  template<class T_EVALUATOR>
+  bool Darwin<T_EVALUATOR> :: Restart (const TiXmlElement &_node)
   {
     const TiXmlElement *parent = &_node;
     std::string name = _node.Value();
@@ -519,11 +479,11 @@ namespace darwin
       std::string name = child->Value();
       if (     name.compare("Results") == 0
            and ( do_restart & SAVE_RESULTS ) )
-        results->Restart(*child);
+        store->Restart(*child);
       else if (     name.compare("History") == 0
                 and ( do_restart & SAVE_HISTORY ) and history )
       {
-        LoadObject<t_Object, t_Evaluator> loadop( evaluator, &t_Evaluator::Load, LOADSAVE_SHORT);
+        LoadObject<t_Individual, t_Evaluator> loadop( evaluator, &t_Evaluator::Load, LOADSAVE_SHORT);
         history->clear();
         if ( LoadIndividuals( *child, loadop, *history) )
         {
@@ -537,7 +497,7 @@ namespace darwin
       else if (     name.compare("Population") == 0
                 and ( do_restart & SAVE_POPULATION ) )
       {
-        LoadObject<t_Object, t_Evaluator> loadop( evaluator, &t_Evaluator::Load, LOADSAVE_SHORT);
+        LoadObject<t_Individual, t_Evaluator> loadop( evaluator, &t_Evaluator::Load, LOADSAVE_SHORT);
         islands.clear();
         const TiXmlElement *island_xml = child->FirstChildElement("Island");
         for(; island_xml; island_xml = island_xml->NextSiblingElement("Island") )
@@ -557,8 +517,8 @@ namespace darwin
     return true;
   }
 
-  template<class T_INDIVIDUAL, class T_EVALUATOR>
-  bool Darwin<T_INDIVIDUAL,T_EVALUATOR> :: Save()
+  template<class T_EVALUATOR>
+  bool Darwin<T_EVALUATOR> :: Save()
   {
     if ( not do_save )
       return true;
@@ -591,17 +551,17 @@ namespace darwin
     }
 
     if ( do_save & SAVE_RESULTS )
-      results->Save( *node );
+      store->Save( *node );
     if ( do_save & SAVE_HISTORY and history)
     {
       TiXmlElement *xmlhistory = new TiXmlElement("History");
-      SaveObject<t_Object, t_Evaluator> saveop( evaluator, &t_Evaluator::Save, LOADSAVE_SHORT);
+      SaveObject<t_Individual, t_Evaluator> saveop( evaluator, &t_Evaluator::Save, LOADSAVE_SHORT);
       SaveIndividuals( *xmlhistory, saveop, history->begin(), history->end());
       node->LinkEndChild( xmlhistory );
     }
     if ( do_save & SAVE_POPULATION )
     {
-      SaveObject<t_Object, t_Evaluator> saveop( evaluator, &t_Evaluator::Save, LOADSAVE_SHORT);
+      SaveObject<t_Individual, t_Evaluator> saveop( evaluator, &t_Evaluator::Save, LOADSAVE_SHORT);
       typename t_Islands :: const_iterator i_island = islands.begin();
       typename t_Islands :: const_iterator i_island_end = islands.end();
       TiXmlElement *xmlpop = new TiXmlElement("Population");
@@ -618,8 +578,8 @@ namespace darwin
     return true;
   }
   
-  template<class T_INDIVIDUAL, class T_EVALUATOR>
-  eoReplacement<T_INDIVIDUAL>* Darwin<T_INDIVIDUAL,T_EVALUATOR> :: make_replacement()
+  template<class T_EVALUATOR>
+  eoReplacement<T_INDIVIDUAL>* Darwin<T_EVALUATOR> :: make_replacement()
   {
     eoTruncate<t_Individual>* truncate       = new  eoTruncate<t_Individual>;
     eoMerge<t_Individual>* merge             = new  eoPlus<t_Individual>;
@@ -632,9 +592,9 @@ namespace darwin
   }
 
   // makes genetic operators
-  template<class T_INDIVIDUAL, class T_EVALUATOR >
-  eoGenOp<T_INDIVIDUAL>* Darwin<T_INDIVIDUAL,T_EVALUATOR> :: make_genetic_op( const TiXmlElement &el,
-                                                                  eoGenOp<t_Individual> *current_op )
+  template<class T_EVALUATOR >
+  eoGenOp<T_INDIVIDUAL>* Darwin<T_EVALUATOR> :: make_genetic_op( const TiXmlElement &el,
+                                                                 eoGenOp<t_Individual> *current_op )
   {
     eoOp<t_Individual>* this_op;
     const TiXmlElement *sibling = &el;
@@ -734,21 +694,10 @@ namespace darwin
         // eoFunctor_Base inheritance is necessary to store 
         // as in eostates.storeFunctor( functor )
         if ( eoop )
-          this_op = Wrap_ObjectOp_To_GenOp<t_Individual>( eoop, eostates);
-        else
         {
-          minimizer::Base< typename t_Evaluator::t_Functional > 
-            *minimizer = ( minimizer::Base< typename t_Evaluator::t_Functional >* )
-                         evaluator.LoadMinimizer( *sibling );
-          // MinimizerGenOp owns object pointed to by minimizer
-          if ( minimizer )
-          {
-            minimizers.push_back( minimizer );
-            this_op = new MinimizerGenOp<t_Individual, t_Evaluator, t_Population>( *minimizer, *results); 
-            eostates.storeFunctor(static_cast< eoGenOp<t_Individual>* >(this_op) );
-          }
+          this_op = Wrap_ObjectOp_To_GenOp<t_Individual>( eoop, eostates);
+          is_gen_op = true;
         }
-        is_gen_op = true;
       }
       if ( this_op and sibling->Attribute("period", &period) )
       {
@@ -801,8 +750,8 @@ namespace darwin
     return current_op;
   }
 
-  template<class T_INDIVIDUAL, class T_EVALUATOR>
-  void Darwin<T_INDIVIDUAL,T_EVALUATOR> :: make_breeder()
+  template<class T_EVALUATOR>
+  void Darwin<T_EVALUATOR> :: make_breeder()
   {
     eoSelectOne<t_Individual> *select;
 
@@ -820,8 +769,8 @@ namespace darwin
     eostates.storeFunctor(select);
   }
   
-  template<class T_INDIVIDUAL, class T_EVALUATOR >
-  void Darwin<T_INDIVIDUAL, T_EVALUATOR> :: populate ()
+  template<class T_EVALUATOR >
+  void Darwin<T_EVALUATOR> :: populate ()
   {
     islands.resize( nb_islands );
     typename t_Islands :: iterator i_pop = islands.begin();
@@ -845,8 +794,8 @@ namespace darwin
     }
   }
 
-  template<class T_INDIVIDUAL, class T_EVALUATOR >
-  void Darwin<T_INDIVIDUAL, T_EVALUATOR> :: random_populate ( t_Population &_pop, types::t_unsigned _size)
+  template<class T_EVALUATOR >
+  void Darwin<T_EVALUATOR> :: random_populate ( t_Population &_pop, types::t_unsigned _size)
   {
     while ( _pop.size() < _size )
     {
@@ -857,8 +806,8 @@ namespace darwin
     } // while ( i_pop->size() < target )
     _pop.resize( _size );
   }
-  template<class T_INDIVIDUAL, class T_EVALUATOR >
-  void Darwin<T_INDIVIDUAL, T_EVALUATOR> :: partition_populate ( t_Population &_pop, types::t_unsigned _size)
+  template<class T_EVALUATOR >
+  void Darwin<T_EVALUATOR> :: partition_populate ( t_Population &_pop, types::t_unsigned _size)
   {
     while ( _pop.size() < _size )
     {
@@ -931,8 +880,8 @@ namespace darwin
   }
 
 
-  template<class T_INDIVIDUAL, class T_EVALUATOR >
-  void Darwin<T_INDIVIDUAL,T_EVALUATOR> :: run()
+  template<class T_EVALUATOR >
+  void Darwin<T_EVALUATOR> :: run()
   {
 #ifdef _MPI 
     for( types::t_int i = 0; i < mpi::main.size(); ++i )
@@ -955,7 +904,7 @@ namespace darwin
     typename t_Islands :: iterator i_island;
     for ( i_island = i_island_begin; i_island != i_island_end; ++i_island )
     {
-      results->evaluate(offsprings, *i_island); // A first eval of pop.
+      (*evaluation)(offsprings, *i_island); // A first eval of pop.
 #ifdef _MPI // "All Gather" new population
       breeder->synchronize_offsprings( *i_island );
 #endif 
@@ -976,7 +925,7 @@ namespace darwin
            
            (*breeder)(*i_island, offsprings);
            
-           results->evaluate(*i_island, offsprings); // eval of parents + offsprings if necessary
+           (*evaluation)(*i_island, offsprings); // eval of parents + offsprings if necessary
 
 #ifdef _MPI // "All Gather" offsprings -- note that replacement scheme is deterministic!!
            breeder->synchronize_offsprings( offsprings );
@@ -1003,19 +952,83 @@ namespace darwin
     Save();
   }
 
+
+#ifdef _MPI
+  template<class T_INDIVIDUAL, class T_EVALUATOR>
+  void Darwin<T_INDIVIDUAL,T_EVALUATOR> :: LoadAllInputFiles(std::string &_input, 
+                                                             std::string &_restart, 
+                                                             std::string &_evaluator ) 
+  {
+    if ( mpi::main.is_root_node() )
+    { 
+      OPENXMLINPUT
+      TIXML_OSTREAM stream;
+      const TiXmlElement *parent = doc.RootElement();
+      stream << *parent;
+      _input = stream.c_str();
+      _restart = _input; 
+      _evaluator = _input;
+
+      if ( restart_filename != filename )
+      {
+        doc.LoadFile( restart_filename.c_str() );
+        if  ( !doc.LoadFile() ) 
+        { 
+          std::cout << doc.ErrorDesc() << std::endl; 
+          throw std::runtime_error("Could not load restart file"); 
+        } 
+
+        parent = doc.RootElement();
+        TIXML_OSTREAM stream;
+        _restart = stream.c_str();
+      }
+      if ( evaluator_filename != filename )
+      {
+        doc.LoadFile( evaluator_filename.c_str() );
+        if  ( !doc.LoadFile() ) 
+        { 
+          std::cout << doc.ErrorDesc() << std::endl; 
+          throw std::runtime_error("Could not load restart file"); 
+        } 
+
+        parent = doc.RootElement();
+        TIXML_OSTREAM stream;
+        _evaluator = stream.c_str();
+      }
+    }
+
+    mpi::BroadCast bc( mpi::main );
+    bc.serialize(_input);
+    bc.serialize(_restart);
+    bc.serialize(_evaluator);
+    bc.allocate_buffers();
+    bc.serialize(_input);
+    bc.serialize(_restart);
+    bc.serialize(_evaluator);
+    bc();
+    bc.serialize(_input);
+    bc.serialize(_restart);
+    bc.serialize(_evaluator);
+    for( int i=0; i < mpi::main.size(); ++i )
+    {
+      if( i == mpi::main.rank() )
+        std::cout << std::endl << mpi::main.rank() << " / " << mpi::main.size() << std::endl 
+                  <<  _input.substr(0,20) << std::endl << std::flush; 
+      mpi::main.barrier();
+    }
+  }
+#endif
+
   template<class T_INDIVIDUAL, class T_EVALUATOR>
   bool Darwin<T_INDIVIDUAL,T_EVALUATOR> :: Load(const std::string &_filename) 
   {
-    printxmg.add_comment("new GA run");
-
     filename = _filename;
     evaluator_filename = _filename;
     restart_filename = _filename;
 
-    // first load filenames
-    std::string ga_string;
+    // first loads all inputfiles 
 #ifdef _MPI
-    if ( mpi::main.rank() == mpi::ROOT_NODE )
+    if ( mpi::main.is_root_node() )
     {
 #endif
       OPENXMLINPUT
@@ -1023,9 +1036,6 @@ namespace darwin
                                             .FirstChild("GA").Element();
       if ( not parent )
         return false;
-      TIXML_OSTREAM stream;
-      stream << *parent;
-      ga_string = stream.c_str();
       const TiXmlElement *child = parent->FirstChildElement("Filenames");
       for( ; child; child = child->NextSiblingElement("Filenames") )
       {
@@ -1035,150 +1045,137 @@ namespace darwin
         else if (     child->Attribute("restart") 
                   and restart_filename == filename )
           restart_filename = child->Attribute("restart");
-      }
-      
-      // Loads evaluator first 
-      if ( evaluator_filename != filename )
-      { 
-        if ( not evaluator.Load(evaluator_filename) )
-          return false;
-      } // for following, we know docHandle.FirstChild("Job") exists
-      else if ( not evaluator.Load(*docHandle.FirstChild("Job").Element() ) )
-        return false;
-            
-      // finds <GA> ... </GA> block 
-      if ( not Load_Parameters( *parent ) )
-        return false;
-
-#ifdef _MPI
-    }
-
-    // broadcast what we have up to now
-    mpi::BroadCast bc( mpi::main );
-    broadcast(bc);
-    bc.serialize(ga_string);
-    bc.allocate_buffers();
-    broadcast(bc);
-    bc.serialize(ga_string);
-    bc();
-    broadcast(bc);
-    bc.serialize(ga_string);
-    bc.reset();
-
-
-    for( types::t_int i=0; i < mpi::main.size(); ++i )
-    {
-      if ( mpi::main.rank() == i )
-      {
-        TiXmlDocument doc;
-        doc.Parse( ga_string.c_str() );
-        TiXmlHandle docHandle(&doc);
-        const TiXmlElement *parent = docHandle.FirstChild("GA").Element();
-        if ( not parent )
-          return false;
-#endif
-        Load_History( *parent );
-        Load_Taboos( *parent );
-        Load_Method( *parent );
-        if ( not  Load_Mating( *parent ) )
-          return false;
-        Load_CheckPoints( *parent );
-        
-        make_breeder();
-        replacement = make_replacement();
-#ifdef _MPI
-      }
-      mpi::main.barrier();
-    }
-#endif
-
-    results->set_history(history);
-
-#ifdef _MPI
-    if ( mpi::main.rank() == mpi::ROOT_NODE )
-    {
-      OPENXMLINPUT
-      const TiXmlElement *parent = docHandle.FirstChild("Job")
-                                            .FirstChild("GA").Element();
-      if ( not parent )
-        return false;
-#endif
-      
-      const TiXmlElement *restart_xml = parent->FirstChildElement("Restart");
-      if ( restart_xml and restart_xml->Attribute("what") )
-      {
-        std::string str = restart_xml->Attribute("what");
-        if ( str.find("all") != std::string::npos )
-          do_restart |= SAVE_POPULATION | SAVE_HISTORY | SAVE_RESULTS;
-        else
+        else if ( child->Attribute("xmgrace") )
         {
-          if ( str.find("pop") != std::string::npos )
-            do_restart |= SAVE_POPULATION;
-          if ( str.find("history") != std::string::npos and history )
-            do_restart |= SAVE_HISTORY;
-          if ( str.find("results") != std::string::npos )
-            do_restart |= SAVE_RESULTS;
+          std::string f = child->Attribute("xmgrace");
+          printxmg.init( f );
         }
       }
-      if ( do_restart )
+
+      printxmg.add_comment("new GA run");
+#ifdef _MPI
+    }
+
+    // broadcasts all input files and filenames
+    std::string input_str, restart_str, evaluator_str;
+    LoadAllInputFiles(input_str, restart_str, evaluator_str);
+
+    TiXmlDocument doc;
+    if ( evaluator_filename == filename ) // works for all nodes!!
+      doc.Parse( evaluator_str.c_str() );
+    TiXmlHandle docHandle(&doc);
+#endif
+      
+    for( int i=0; i < mpi::main.size(); ++i )
+    {
+      if( i == mpi::main.rank() )
+        std::cout << mpi::main.rank() << " Before Eval" << std::endl << std::flush;
+      mpi::main.barrier();
+    }
+    // Loads evaluator first 
+    if ( evaluator_filename != filename )
+    { 
+      if ( not evaluator.Load(evaluator_filename) )
+        return false;
+    } // for following, we know docHandle.FirstChild("Job") exists
+    else if ( not evaluator.Load(*docHandle.FirstChild("Job").Element() ) )
+      return false;
+          
+    for( int i=0; i < mpi::main.size(); ++i )
+    {
+      if( i == mpi::main.rank() )
+        std::cout << mpi::main.rank() << " After Eval" << std::endl << std::flush;
+      mpi::main.barrier();
+    }
+    // finds <GA> ... </GA> block 
+#ifdef _MPI
+    doc.Parse( input_str.c_str() );
+    const TiXmlElement *parent = docHandle.FirstChild("Job")
+                                          .FirstChild("GA").Element();
+#endif
+    if ( not Load_Parameters( *parent ) )
+      return false;
+
+
+
+    make_History( *parent );
+    Load_Taboos( *parent );
+    Load_Method( *parent );
+    if ( not  Load_Mating( *parent ) )
+      return false;
+    Load_CheckPoints( *parent );
+    
+    make_breeder();
+    replacement = make_replacement();
+
+    const TiXmlElement *restart_xml = parent->FirstChildElement("Restart");
+    if ( restart_xml and restart_xml->Attribute("what") )
+    {
+      std::string str = restart_xml->Attribute("what");
+      if ( str.find("all") != std::string::npos )
+        do_restart |= SAVE_POPULATION | SAVE_HISTORY | SAVE_RESULTS;
+      else
       {
-        if ( restart_filename != filename )
-        { 
-          if ( not Restart() )
-          {
-            std::cerr << "Could not load restart from file" << restart_filename;
-            printxmg.add_comment("Starting from scratch");
-          }
-        } // for following, we know docHandle.FirstChild("Job") exists
-        else if ( not Restart( *docHandle.FirstChild("Job").Element() ) )
+        if ( str.find("pop") != std::string::npos )
+          do_restart |= SAVE_POPULATION;
+        if ( str.find("history") != std::string::npos and history )
+          do_restart |= SAVE_HISTORY;
+        if ( str.find("results") != std::string::npos )
+          do_restart |= SAVE_RESULTS;
+      }
+    }
+    if ( do_restart )
+    {
+#ifdef _MPI
+      if ( not mpi::main.is_root_node() )
+        doc.Parse( restart_str.c_str() );
+#endif
+      if ( restart_filename != filename )
+      { 
+        if ( not Restart() )
         {
           std::cerr << "Could not load restart from file" << restart_filename;
           printxmg.add_comment("Starting from scratch");
         }
-      }
-      restart_xml = parent->FirstChildElement("Save");
-      std::ostringstream sstr; sstr << "Will Save Results";
-      if ( restart_xml and restart_xml->Attribute("what") )
+      } // for following, we know docHandle.FirstChild("Job") exists
+      else if ( not Restart( *docHandle.FirstChild("Job").Element() ) )
       {
-        std::string str = restart_xml->Attribute("what");
-        if ( str.find("all") != std::string::npos )
-        {
-          do_save |= SAVE_POPULATION | SAVE_HISTORY;
-          sstr << ", Population";
-          if ( history )
-            sstr << ", and History";
-          goto out;
-        }
-        if ( str.find("pop") != std::string::npos )
-        {
-          do_save |= SAVE_POPULATION;
-          sstr << ", Population";
-        }
-        if ( str.find("history") != std::string::npos and history)
-        {
-          do_save |= SAVE_HISTORY;
-          sstr << ", History";
-        }
+        std::cerr << "Could not load restart from file" << restart_filename;
+        printxmg.add_comment("Starting from scratch");
       }
-out:  printxmg.add_comment( sstr.str() );
-#ifdef _MPI
     }
-
-    if ( mpi::main.rank() != mpi::ROOT_NODE )
+#ifdef _MPI
+    if ( not mpi::main.is_root_node() )
+    {
       do_save = 0;
-
-    if ( history ) history->broadcast(bc);
-    results->broadcast(bc);
-    broadcast_islands(bc);
-    bc.allocate_buffers();
-    if ( history ) history->broadcast(bc);
-    results->broadcast(bc);
-    broadcast_islands(bc);
-    bc();
-    if( history ) history->broadcast(bc);
-    results->broadcast(bc);
-    broadcast_islands(bc);
+      return true;
+    }
 #endif 
+    restart_xml = parent->FirstChildElement("Save");
+    std::ostringstream sstr; sstr << "Will Save Results";
+    if ( restart_xml and restart_xml->Attribute("what") )
+    {
+      std::string str = restart_xml->Attribute("what");
+      if ( str.find("all") != std::string::npos )
+      {
+        do_save |= SAVE_POPULATION | SAVE_HISTORY;
+        sstr << ", Population";
+        if ( history )
+          sstr << ", and History";
+        goto out;
+      }
+      if ( str.find("pop") != std::string::npos )
+      {
+        do_save |= SAVE_POPULATION;
+        sstr << ", Population";
+      }
+      if ( str.find("history") != std::string::npos and history)
+      {
+        do_save |= SAVE_HISTORY;
+        sstr << ", History";
+      }
+    }
+out:  printxmg.add_comment( sstr.str() );
 
     {
       std::ostringstream sstr; 
@@ -1202,31 +1199,6 @@ out:  printxmg.add_comment( sstr.str() );
 
 
 #ifdef _MPI
-  template<class T_INDIVIDUAL, class T_EVALUATOR>
-  bool Darwin<T_INDIVIDUAL,T_EVALUATOR> :: broadcast( mpi::BroadCast &_bc )
-  {
-    if( not _bc.serialize( filename ) ) return false;
-    if( not _bc.serialize( evaluator_filename ) ) return false;
-    if( not _bc.serialize( restart_filename ) ) return false;
-    if( not _bc.serialize( tournament_size ) ) return false;
-    if( not _bc.serialize( pop_size ) ) return false;
-    if( not _bc.serialize( max_generations ) ) return false;
-    if( not _bc.serialize( nb_islands ) ) return false;
-    if( not _bc.serialize( restarts ) ) return false;
-    if( not _bc.serialize( replacement_rate ) ) return false;
-    if( not _bc.serialize( do_print_each_call ) ) return false;
-    types::t_unsigned n = populate_style;
-    if ( not _bc.serialize( n ) ) return false;
-    if ( _bc.get_stage() == mpi::BroadCast::COPYING_FROM_HERE )
-      switch ( n ) 
-      {
-        case RANDOM_POPULATE: 
-          populate_style = RANDOM_POPULATE; break;
-        case PARTITION_POPULATE: 
-          populate_style = PARTITION_POPULATE; break;
-      }
-    return _bc.serialize( evaluator );
-  }
   template<class T_INDIVIDUAL, class T_EVALUATOR>
   bool Darwin<T_INDIVIDUAL,T_EVALUATOR> :: broadcast_islands( mpi::BroadCast &_bc )
   {

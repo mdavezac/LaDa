@@ -42,6 +42,7 @@ namespace mpi
       types::t_int rank() const { return this_rank; }
       types::t_int size() const { return nproc; }
       
+      bool is_root_node() const { return this_rank == ROOT_NODE; }
       void barrier() const
         { MPI::COMM_WORLD.Barrier(); }
       types::t_unsigned all_sum_all( types::t_unsigned &_in) const

@@ -35,51 +35,43 @@ namespace mpi
     // now broadcasts sizes
     MPI::COMM_WORLD.Bcast( buffer_size, 3, UNSIGNED, _root );
 
-    if ( not( buffer_size[0] and buffer_size[1] and buffer_size[2] ) )
+    if ( not( buffer_size[0] or buffer_size[1] or buffer_size[2] ) )
       return false;
 
     // and allocates buffers
     if ( buffer_size[0]  )
     {
       int_buff = new types::t_int[ buffer_size[0] ];
-      if ( not int_buff ) throw std::runtime_error("Could not allocate memory for broadcast\n");
+      if ( not int_buff ) goto broadcast_erase;
       cur_int_buff = int_buff; end_int_buff = int_buff + buffer_size[0]; 
     }
     if ( buffer_size[1] )
     {
       char_buff = new types::t_char[ buffer_size[1] ];
-      if ( not char_buff )
-      { 
-        if ( buffer_size[0] )
-        {
-          delete[] int_buff;
-          int_buff = NULL; cur_int_buff = NULL; end_int_buff = NULL;
-        }
-        throw std::runtime_error("Could not allocate memory for broadcast\n");
-      }
+      if ( not char_buff ) goto broadcast_erase;
       cur_char_buff = char_buff; end_char_buff = char_buff + buffer_size[1]; 
     }
     if ( not buffer_size[2] )
       return true;
    
     real_buff = new types::t_real[buffer_size[2]];
-    if ( not real_buff )
-    { 
-      if ( buffer_size[0] )
-      {
-        delete[] int_buff;
-        int_buff = NULL; cur_int_buff = NULL; end_int_buff = NULL;
-      }
-      if ( buffer_size[1] )
-      {
-        delete[] char_buff;
-        char_buff = NULL; cur_char_buff = NULL; end_char_buff = NULL;
-      }
-      throw std::runtime_error("Could not allocate memory for broadcast\n");
-    }
+    if ( not real_buff ) goto broadcast_erase;
     cur_real_buff = real_buff; end_real_buff = real_buff + buffer_size[2]; 
     
     return true;
+
+broadcast_erase:
+    if ( int_buff ) 
+      delete[] int_buff;
+    int_buff = cur_int_buff = end_int_buff = NULL;
+    if ( char_buff ) 
+      delete[] char_buff;
+    char_buff = cur_char_buff = end_char_buff = NULL;
+    if ( real_buff ) 
+      delete[] real_buff;
+    real_buff = cur_real_buff = end_real_buff = NULL;
+    std::cerr << "Could not allocate memory for broadcast" << std::endl;
+    return false;
   }
   bool AllGather :: allocate_buffers( types::t_unsigned _root )
   {
@@ -110,44 +102,36 @@ namespace mpi
     if ( buffer_size[0]  )
     {
       int_buff = new types::t_int[ buffer_size[0] ];
-      if ( not int_buff ) return false;
+      if ( not int_buff ) goto gather_erase;
       cur_int_buff = int_buff; end_int_buff = int_buff + buffer_size[0]; 
     }
     if ( buffer_size[1] )
     {
       char_buff = new types::t_char[ buffer_size[1] ];
-      if ( not char_buff )
-      { 
-        if ( buffer_size[0] )
-        {
-          delete[] int_buff;
-          int_buff = NULL; cur_int_buff = NULL; end_int_buff = NULL;
-        }
-        return false; 
-      }
+      if ( not char_buff ) goto gather_erase;
       cur_char_buff = char_buff; end_char_buff = char_buff + buffer_size[1]; 
     }
     if ( not buffer_size[2] )
       return true;
    
     real_buff = new types::t_real[buffer_size[2]];
-    if ( not real_buff )
-    { 
-      if ( buffer_size[0] )
-      {
-        delete[] int_buff;
-        int_buff = NULL; cur_int_buff = NULL; end_int_buff = NULL;
-      }
-      if ( buffer_size[1] )
-      {
-        delete[] char_buff;
-        char_buff = NULL; cur_char_buff = NULL; end_char_buff = NULL;
-      }
-      return false; 
-    }
+    if ( not real_buff ) goto gather_erase;
     cur_real_buff = real_buff; end_real_buff = real_buff + buffer_size[2]; 
     
     return true;
+
+gather_erase:
+    if ( int_buff ) 
+      delete[] int_buff;
+    int_buff = cur_int_buff = end_int_buff = NULL;
+    if ( char_buff ) 
+      delete[] char_buff;
+    char_buff = cur_char_buff = end_char_buff = NULL;
+    if ( real_buff ) 
+      delete[] real_buff;
+    real_buff = cur_real_buff = end_real_buff = NULL;
+    std::cerr << "Could not allocate memory for AllGatherAll" << std::endl;
+    return false;
   }
 
 
@@ -160,7 +144,7 @@ namespace mpi
     cur_int_buff = int_buff;
     cur_char_buff = char_buff;
     cur_real_buff = real_buff;
-    if ( nproc < 2 )
+    if ( nproc == 1 )
       return true;
 
     if ( int_buff and buffer_size[0] )
