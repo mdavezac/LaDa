@@ -13,6 +13,8 @@
 #include "opt/types.h"
 #include "lamarck/structure.h"
 
+#include "gatraits.h"
+
 namespace darwin 
 {
   template <class A1, class R>
@@ -31,167 +33,32 @@ namespace darwin
        { return eoFunctorBase::unary_function_tag(); }
  };
 
-  // generic class for converting member function to binary genetic operators
-  template<class T_CLASS, class T_OBJECT, class T_ARG >
-  class mem_binop_t : public eoBinOp<T_OBJECT> 
-  {
-    public:
-      typedef T_CLASS t_Class;
-      typedef T_OBJECT t_Object;
-      typedef T_ARG t_Arg; 
-      typedef bool ( t_Class::*t_Function )(t_Object &, const t_Object&, t_Arg);
-
-    private:
-      t_Class &class_obj;
-      t_Arg arg;
-      t_Function class_func;
-      std::string class_name;
-
-    public:
-      explicit
-        mem_binop_t   ( t_Class &_co, t_Function _func,
-                        const std::string &_cn, t_Arg _arg )
-                    : class_obj(_co), arg(_arg), class_func(_func), class_name(_cn) {};
-
-      void set_className( std::string &_cn) { class_name = _cn; }
-      virtual std::string className() const { return class_name; }
-
-      bool operator() (t_Object &_object1, const t_Object &_object2) 
-        {  return ( (class_obj.*class_func) )( _object1, _object2, arg ); }
-
-  }; 
-
   // generic class for converting member function to binary operators
-  template<class T_CLASS, class T_OBJECT>
-  class mem_binop_t< T_CLASS, T_OBJECT, void > : public eoBinOp<T_OBJECT> 
+  template<class T_EVALUATOR, class T_GA_TRAITS = Traits::GA<T_EVALUATOR> >
+  class mem_monop_t : public eoMonOp<typename T_GA_TRAITS :: t_Individual > 
   {
     public:
-      typedef T_CLASS t_Class;
-      typedef T_OBJECT t_Object;
-      typedef bool ( t_Class::*t_Function )(t_Object &, const t_Object&);
+      typedef T_EVALUATOR t_Evaluator; 
+      typedef T_GA_TRAITS t_GA_Traits; 
+    protected:
+      typedef typename t_GA_Traits :: t_Individual t_Individual; 
+      typedef bool ( t_Evaluator :: *t_Function )( t_Individual &);
 
     private:
-      t_Class &class_obj;
-      bool ( t_Class::*class_func )(t_Object &, const t_Object&);
-      std::string class_name;
-
-    public:
-      explicit
-        mem_binop_t   ( t_Class &_co, t_Function _func, const std::string &_cn )
-                    : class_obj(_co), class_func(_func), class_name(_cn) {};
-
-      void set_className( std::string &_cn) { class_name = _cn; }
-      virtual std::string className() const { return class_name; }
-
-      bool operator() (t_Object &_object1, const t_Object &_object2) 
-        {  return ( (class_obj.*class_func) )( _object1, _object2 ); }
-
-  }; 
-
-  template<class T_INDIVIDUAL>
-  class ObjectOp_To_BinGenOp : public eoGenOp<T_INDIVIDUAL> 
-  {
-    public:
-      typedef T_INDIVIDUAL t_Individual;
-      typedef typename t_Individual::t_Object t_Object;
-
-    private:
-      eoBinOp<t_Object> &class_object;
-
-    public:
-      explicit
-        ObjectOp_To_BinGenOp ( eoBinOp<t_Object> &_class ) : class_object(_class) {};
-
-      unsigned max_production(void) { return 1; } 
-   
-      void apply(eoPopulator<t_Individual>& _pop)
-      {
-        t_Individual& a = *_pop;
-        const t_Individual& b = _pop.select();
-  
-        if ( class_object( (t_Object&) a, (const t_Object&)b ) )
-          a.invalidate();
-      }
-      virtual std::string className() const {return class_object.className();}
-
-  }; 
-
-  // generic class for converting member function to binary operators
-  template<class T_CLASS, class T_OBJECT>
-  class mem_monop_t : public eoMonOp<T_OBJECT> 
-  {
-    public:
-      typedef T_CLASS t_Class; 
-      typedef T_OBJECT t_Object;
-      typedef bool ( t_Class::*t_Function )(t_Object &);
-
-    private:
-      t_Class &class_obj;
+      t_Evaluator &class_obj;
       t_Function class_func;
       std::string class_name;
 
     public:
       explicit
-        mem_monop_t   ( t_Class &_co, t_Function _func, const std::string &_cn )
+        mem_monop_t   ( t_Evaluator &_co, t_Function _func, const std::string &_cn )
                     : class_obj(_co), class_func(_func), class_name(_cn) {};
 
       void set_className( std::string &_cn) { class_name = _cn; }
       virtual std::string className() const { return class_name; }
 
-      bool operator() (t_Object &_object) 
+      bool operator() (t_Individual &_object) 
         {  return ( (class_obj.*class_func) )( _object); }
-
-  }; 
-  template<class T_CLASS, class T_OBJECT>
-  class const_mem_monop_t : public eoMonOp<const T_OBJECT> 
-  {
-    public:
-      typedef T_CLASS t_Class; 
-      typedef T_OBJECT t_Object;
-      typedef bool ( t_Class::*t_Function )(const t_Object &);
-
-    private:
-      t_Class &class_obj;
-      t_Function class_func;
-      std::string class_name;
-
-    public:
-      explicit
-        const_mem_monop_t   ( t_Class &_co, t_Function _func, const std::string &_cn )
-                    : class_obj(_co), class_func(_func), class_name(_cn) {};
-
-      void set_className( std::string &_cn) { class_name = _cn; }
-      virtual std::string className() const { return class_name; }
-
-      bool operator() (const t_Object &_object) 
-        {  return ( (class_obj.*class_func) )( _object); }
-
-  }; 
-  // generic class for converting member function to monary operators
-  template<class T_CLASS, class T_INDIVIDUAL>
-  class mem_monop_indiv_t : public eoMonOp<T_INDIVIDUAL> 
-  {
-    public:
-      typedef T_CLASS t_Class; 
-      typedef T_INDIVIDUAL t_Individual;
-      typedef typename t_Individual::t_Object t_Object;
-      typedef bool ( t_Class::*t_Function )(t_Object &);
-
-    private:
-      t_Class &class_obj;
-      t_Function class_func;
-      std::string class_name;
-
-    public:
-      explicit
-        mem_monop_indiv_t   ( t_Class &_co, t_Function _func, const std::string &_cn )
-                          : class_obj(_co), class_func(_func), class_name(_cn) {};
-
-      void set_className( std::string &_cn) { class_name = _cn; }
-      virtual std::string className() const { return class_name; }
-
-      bool operator() (t_Individual &_indiv) 
-        { return ( (class_obj.*class_func) )( (t_Object &) _indiv ); }
 
   }; 
   // generic class for converting member function to zero operators
@@ -219,58 +86,100 @@ namespace darwin
         {  return ( (class_obj.*class_func) )(); }
 
   }; 
-  template<class T_INDIVIDUAL>
-  class ObjectOp_To_MonGenOp : public eoGenOp<T_INDIVIDUAL> 
+  
+  // generic class for converting member function to binary genetic operators
+  template<class T_EVALUATOR, class T_ARG, class T_GA_TRAITS = Traits::GA<T_EVALUATOR> >
+  class mem_bingenop_arg_t : public eoGenOp<typename T_GA_TRAITS :: t_Individual> 
   {
     public:
-      typedef T_INDIVIDUAL t_Individual;
-      typedef typename t_Individual::t_Object t_Object;
+      typedef T_EVALUATOR t_Evaluator;
+      typedef T_ARG t_Arg; 
+      typedef T_GA_TRAITS t_GA_Traits; 
+    protected:
+      typedef typename t_GA_Traits :: t_Individual t_Individual;
+    public:
+      typedef bool ( t_Evaluator::*t_Function )(t_Individual &, const t_Individual&, t_Arg);
 
     private:
-      eoMonOp<t_Object> &class_object;
+      t_Evaluator &class_obj;
+      t_Arg arg;
+      t_Function class_func;
+      std::string class_name;
 
     public:
       explicit
-        ObjectOp_To_MonGenOp ( eoMonOp<t_Object> &_class ) : class_object(_class) {};
+        mem_bingenop_arg_t   ( t_Evaluator &_co, t_Function _func,
+                        const std::string &_cn, t_Arg _arg )
+                    : class_obj(_co), arg(_arg), class_func(_func), class_name(_cn) {};
+
+      void set_className( std::string &_cn) { class_name = _cn; }
+      virtual std::string className() const { return class_name; }
 
       unsigned max_production(void) { return 1; } 
-   
+
       void apply(eoPopulator<t_Individual>& _pop)
       {
-        if ( class_object( (t_Object &)(*_pop) ) )
-          (*_pop).invalidate();
+        t_Individual& a = *_pop;
+        const t_Individual& b = _pop.select();
+  
+        if ( (class_obj.*class_func)(a, b, arg) )
+          a.invalidate();
       }
-      virtual std::string className() const {return class_object.className();}
   }; 
 
-  // translates an eoOp<t_Object> into a genetic operator
-  // eoGenOp<t_Individual>, where trait t_Individual::t_Object should
-  // be defined. Note that _class is stored at this point for
-  // convenience (see note in darwin.impl.h to this effect) 
-  template<class T_INDIVIDUAL>
-  eoGenOp<T_INDIVIDUAL>* Wrap_ObjectOp_To_GenOp( eoOp<typename T_INDIVIDUAL::t_Object> *_class, eoState &_state)
+  // generic class for converting member function to binary genetic operators
+  template<class T_EVALUATOR, class T_GA_TRAITS = Traits::GA<T_EVALUATOR> >
+  class mem_bingenop_t : public eoGenOp<typename T_GA_TRAITS :: t_Individual> 
   {
-    typedef T_INDIVIDUAL t_Individual;
-    typedef typename t_Individual::t_Object t_Object;
-    switch(_class->getType())
+    public:
+      typedef T_EVALUATOR t_Evaluator;
+      typedef T_GA_TRAITS t_GA_Traits; 
+    protected:
+      typedef typename t_GA_Traits :: t_Individual t_Individual;
+    public:
+      typedef bool ( t_Evaluator::*t_Function )(t_Individual &, const t_Individual&);
+
+    private:
+      t_Evaluator &class_obj;
+      t_Function class_func;
+      std::string class_name;
+
+    public:
+      explicit
+        mem_bingenop_t   ( t_Evaluator &_co, t_Function _func,
+                           const std::string &_cn )
+                    : class_obj(_co), class_func(_func), class_name(_cn) {};
+
+      void set_className( std::string &_cn) { class_name = _cn; }
+      virtual std::string className() const { return class_name; }
+
+      unsigned max_production(void) { return 1; } 
+
+      void apply(eoPopulator<t_Individual>& _pop)
+      {
+        t_Individual& a = *_pop;
+        const t_Individual& b = _pop.select();
+  
+        if ( (class_obj.*class_func)(a, b) )
+          a.invalidate();
+      }
+  }; 
+
+  template< class T_EVALUATOR, class T_ARGS >
+    mem_bingenop_arg_t<T_EVALUATOR, T_ARGS>*
+        new_genop ( T_EVALUATOR &_eval, 
+                    typename mem_bingenop_arg_t<T_EVALUATOR, T_ARGS> :: t_Function _func,
+                    const std::string  &_str, T_ARGS _arg )
     {
-      case eoOp<t_Object>::unary: 
-        _state.storeFunctor( (eoMonOp<t_Object>*)(_class) );
-        return & _state.storeFunctor(
-            new ObjectOp_To_MonGenOp<t_Individual>( *((eoMonOp<t_Object>*)_class)) );
-      case eoOp<T_INDIVIDUAL>::binary:
-        _state.storeFunctor( (eoBinOp<t_Object>*)(_class) );
-        return & _state.storeFunctor(
-            new ObjectOp_To_BinGenOp<t_Individual>(*( (eoBinOp<t_Object>*)_class) ) );
-      case eoOp<T_INDIVIDUAL>::quadratic:
-      case eoOp<T_INDIVIDUAL>::general:
-        std::cerr << "No Implementation for quadratic and general operators "
-                  << "in Wrap_ObjectOp_To_GenOp yet!"
-                  << std::endl;
-        exit(0);
+      return new mem_bingenop_arg_t<T_EVALUATOR, T_ARGS>( _eval, _func, _str, _arg );
     }
-    return NULL; // just to please gcc
-  }
+  template< class T_EVALUATOR>
+    mem_bingenop_t<T_EVALUATOR>*  new_genop ( T_EVALUATOR &_eval,
+                                              typename mem_bingenop_t<T_EVALUATOR> :: t_Function _func,
+                                              const std::string  &_str )
+    {
+      return new mem_bingenop_t<T_EVALUATOR>( _eval, _func, _str );
+    }
 
   template< class T_OBJECT, class T_CONTAINER = typename T_OBJECT::t_Container >
   class Crossover : public eoBinOp<T_OBJECT>
@@ -339,11 +248,14 @@ namespace darwin
       { return false; } // do nothing!
   };
 
-  template< class T_INDIVIDUAL  >
+  template< class T_INDIVIDUAL, class T_INDIV_TRAITS = Traits::Indiv<T_INDIVIDUAL>  >
   class Continuator : public eoContinue< T_INDIVIDUAL >
   {
     public:
       typedef T_INDIVIDUAL t_Individual;
+      typedef T_INDIV_TRAITS t_IndivTraits;
+    protected:
+      typedef typename t_IndivTraits :: t_Population t_Population;
 
     protected:
       eoF<bool> &op;
@@ -352,7 +264,7 @@ namespace darwin
       Continuator( eoF<bool> &_op ) : op(_op) {};
       ~Continuator() {}
 
-      bool operator()(const eoPop<t_Individual> &_pop )
+      bool operator()(const t_Population &_pop )
       {
         return op();
       }

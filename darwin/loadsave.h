@@ -10,14 +10,14 @@
 namespace darwin
 {
 
-  template<class T_OBJECT, class T_EVALUATOR>
+  template<class T_EVALUATOR>
   class SaveObject
   {
     public:
-      typedef T_OBJECT t_Object;
       typedef T_EVALUATOR t_Evaluator;
+      typedef typename t_Evaluator::t_Individual t_Individual;
     private:
-      typedef bool( t_Evaluator::*t_saveop )( const t_Object &_object, TiXmlElement &_node, bool _type ) const;
+      typedef bool(t_Evaluator::*t_saveop)( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const;
 
     public:
       t_Evaluator &evaluator;      
@@ -26,27 +26,28 @@ namespace darwin
 
       SaveObject   ( t_Evaluator &_e, t_saveop _op, bool _t)
                  : evaluator(_e), op(_op), type(_t) {}
-      bool operator()(const t_Object &_object, TiXmlElement &_node ) const
-        { return (evaluator.*op)(_object, _node, type); }
+      bool operator()(const t_Individual &_indiv, TiXmlElement &_node ) const
+        { return (evaluator.*op)(_indiv, _node, type); }
   };
-  template<class T_OBJECT, class T_EVALUATOR>
+  template<class T_EVALUATOR, class T_INDIVIDUAL = typename T_EVALUATOR :: t_Individual>
   class LoadObject
   {
     public:
-      typedef T_OBJECT t_Object;
       typedef T_EVALUATOR t_Evaluator;
+      typedef T_INDIVIDUAL t_Individual;
     private:
-      typedef bool( t_Evaluator::*t_loadop )( t_Object &_object, const TiXmlElement &_node, bool _type );
+      typedef bool( t_Evaluator::*t_loadop )( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
 
     public:
       t_Evaluator &evaluator;      
       t_loadop op;      
       bool type;
 
-      LoadObject   ( t_Evaluator &_e, t_loadop _op, bool _t)
-                 : evaluator(_e), op(_op), type(_t) {}
-      bool operator()(t_Object &_object, const TiXmlElement &_node )
-        { return (evaluator.*op)(_object, _node, type); }
+      explicit
+        LoadObject   ( t_Evaluator &_e, t_loadop _op, bool _t)
+                   : evaluator(_e), op(_op), type(_t) {}
+      bool operator()(t_Individual &_indiv, const TiXmlElement &_node )
+        { return (evaluator.*op)(_indiv, _node, type); }
   };
 
   const bool LOADSAVE_SHORT = true;

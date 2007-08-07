@@ -23,18 +23,21 @@
 #include "opt/types.h"
 
 #include "checkpoints.h"
+#include "gatraits.h"
 /**
   Base class for breeders using generalized operators.
 */
 
 namespace darwin 
 {
-  template<class T_INDIVIDUAL, class T_POPULATION = eoPop<T_INDIVIDUAL> >
+  template<class T_INDIVIDUAL, class T_INDIVTRAITS = Traits::Indiv<T_INDIVIDUAL> >
   class Breeder: public eoBreed<T_INDIVIDUAL>
   {
-    protected:
+    public:
       typedef T_INDIVIDUAL t_Individual;
-      typedef T_POPULATION t_Population;
+      typedef T_INDIVTRAITS t_IndivTraits;
+    protected:
+      typedef typename t_IndivTraits :: t_Population t_Population;
 
     protected:
       eoSelectOne<t_Individual>& select;

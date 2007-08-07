@@ -21,19 +21,19 @@ namespace darwin
     if  ( !doc.LoadFile() ) \
     { \
       std::cout << doc.ErrorDesc() << std::endl; \
-      throw "Could not load input file in  Darwin<T_INDIVIDUAL,T_EVALUATOR> "; \
+      throw "Could not load input file in  Darwin<T_EVALUATOR> "; \
     } 
 
-  template<class T_EVALUATOR>
-  Darwin<T_EVALUATOR> :: ~Darwin()
+  template<class T_EVALUATOR, class T_GATRAITS>
+  Darwin<T_EVALUATOR,T_GATRAITS> :: ~Darwin()
   {
     if ( store ) delete store;
     if ( objective ) delete objective;
     if ( evaluation ) delete evaluation;
   }
   // reads in different parameters
-  template<class T_EVALUATOR>
-  bool Darwin<T_EVALUATOR> :: Load_Parameters(const TiXmlElement &_parent)
+  template<class T_EVALUATOR, class T_GATRAITS>
+  bool Darwin<T_EVALUATOR,T_GATRAITS> :: Load_Parameters(const TiXmlElement &_parent)
   {
     // tournament size when selecting parents
     const TiXmlAttribute *att = _parent.FirstAttribute();
@@ -109,8 +109,8 @@ namespace darwin
   }
 
   // creates history object if required
-  template<class T_EVALUATOR>
-  void Darwin<T_EVALUATOR> :: make_History(const TiXmlElement &_parent)
+  template<class T_EVALUATOR, class T_GATRAITS>
+  void Darwin<T_EVALUATOR,T_GATRAITS> :: make_History(const TiXmlElement &_parent)
   {
     // checks if there are more than one taboo list
     const TiXmlElement *child = _parent.FirstChildElement("History");
@@ -122,46 +122,30 @@ namespace darwin
   }
   
   // creates history object if required
-  template<class T_EVALUATOR>
-  void Darwin<T_EVALUATOR> :: Load_Method(const TiXmlElement &_parent)
+  template<class T_EVALUATOR, class T_GATRAITS>
+  void Darwin<T_EVALUATOR,T_GATRAITS> :: Load_Method(const TiXmlElement &_parent)
   {
     // checks if there are more than one taboo list
     const TiXmlElement *child = _parent.FirstChildElement("Objective");
-    if( child and child->Attribute("type") ) 
-    {
-      std::string str = child->Attribute("type");
-      if ( str.compare("maximize")==0 )
-        objective = new Objective::Maximize();
-      if ( str.compare("minimize")==0 )
-        objective = new Objective::Minimize();
-      else if ( str.compare("target")==0 )
-      {
-        types::t_real value; child->Attribute( "value", &value );
-        objective = new Target( value );
-      }
-    }
+    objective = Objective :: new_from_xml( *child );
     if( not objective )
-      objective = new Objective::Minimize();
+      throw std::runtime_error( "Could not Create Objective from input!!\n" );
 
-    child = parent.FirstChildElement("Store");
+    child = _parent.FirstChildElement("Store");
     if ( child and child->Attribute("delta") )
-    {
-      types::t_real delta; child->Attribute("delta", &delta);
-      store = new Store::FromObjective<t_Evaluator>( *evaluator, objective, 0, delta );
-    }
+      store = new typename Store::FromObjective<t_Evaluator>::auto_template( evaluator, *child );
     if ( not store )
-      store = new Store::Optima( *evaluator );
+      store = new typename Store::Optima<t_Evaluator>::auto_template( evaluator, *child );
 
     if( history )
-      evaluation = new Evaluation::WithHistory<t_Evaluator, t_Population>
-                                              ( *evaluator, *objective, *store, history );
+      evaluation = new Evaluation::WithHistory<t_Evaluator>( evaluator, *objective, *store, history );
     if ( not evaluation )
-      evaluation = new Evaluation::Base<t_Evaluator, t_Population>( *evaluator, *objective, *store );
+      evaluation = new Evaluation::Base<t_Evaluator>( evaluator, *objective, *store );
   }
   
   // create Taboos
-  template<class T_EVALUATOR >
-  void Darwin<T_EVALUATOR> :: Load_Taboos( const TiXmlElement &_node )
+  template<class T_EVALUATOR, class T_GATRAITS>
+  void Darwin<T_EVALUATOR,T_GATRAITS> :: Load_Taboos( const TiXmlElement &_node )
   {
     // checks if there are more than one taboo list
     if ( not _node.FirstChildElement("Taboos") )
@@ -170,68 +154,16 @@ namespace darwin
     const TiXmlElement *child = parent.FirstChildElement();
 
     // creates Taboo container if there are more than one taboo list
-    types::t_unsigned nb_taboos = 0;
-    for( ; child and nb_taboos < 2; child = child->NextSiblingElement() )
-    {
-      std::string name = child->Value();
-      if (    name.compare("PopTaboo") == 0
-           or name.compare("AgeTaboo") == 0
-           or name.compare("OffspringTaboo") == 0 
-           or ( name.compare("HistoryTaboo") == 0 and history) )
-        ++nb_taboos;
-      else
-      {
-        eoMonOp<const t_Object> *_op = evaluator.LoadTaboo( *child );
-        if ( not _op )
-          continue;
-        delete _op;
-        ++nb_taboos;
-      }
-    }
-    if ( nb_taboos < 1 )
-      return; // no Taboo tags in Taboos tag
-    if ( nb_taboos > 1 ) // creates a container
-    {
-      taboos = new Taboos<t_Individual>;
-      if ( not taboos )
-      {
-        std::cerr << "Could not allocate memory for taboos!!" << std::endl;
-        throw "";
-      }
-      eostates.storeFunctor(taboos);
-    }
+    taboos = new Taboos<t_Individual>;
 
-    IslandsTaboos<t_Individual> *poptaboo = NULL;
-    Taboo<t_Individual> *offspringtaboo = NULL;
-    agetaboo = NULL;
-
-    // creates age taboo -- updater is created in make_checkpoint
-    child = parent.FirstChildElement("AgeTaboo");
-    if (child)
-    {
-      printxmg.add_comment("Age Taboo");
-      agetaboo = new Taboo< t_Individual, std::list<t_Individual> >;
-      eostates.storeFunctor(agetaboo);
-      if ( not taboos )
-      {
-        taboos = agetaboo;
-        return;
-      }
-      static_cast< Taboos<t_Individual>* >(taboos)->add( agetaboo );
-    }
-    
     // creates pop taboo
     child = parent.FirstChildElement("PopTaboo");
     if (child)
     {
       printxmg.add_comment("Population Taboo");
-      poptaboo = new IslandsTaboos<t_Individual>( islands );
+      IslandsTaboos<t_Individual,t_IndivTraits> *poptaboo
+         = new IslandsTaboos<t_Individual, t_IndivTraits>( islands );
       eostates.storeFunctor(poptaboo);
-      if ( not taboos ) 
-      {
-        taboos = poptaboo;
-        return;
-      }
       static_cast< Taboos<t_Individual>* >(taboos)->add( poptaboo );
     }
     
@@ -240,13 +172,9 @@ namespace darwin
     if (child)
     {
       printxmg.add_comment("Offspring Taboo");
-      offspringtaboo = new OffspringTaboo<t_Individual>( &offsprings );
+      OffspringTaboo<t_Individual, t_IndivTraits> *offspringtaboo 
+         = new OffspringTaboo<t_Individual, t_IndivTraits>( &offsprings );
       eostates.storeFunctor(offspringtaboo);
-      if ( not taboos )
-      {
-        taboos = offspringtaboo;
-        return;
-      }
       static_cast< Taboos<t_Individual>* >(taboos)->add( offspringtaboo );
     }
 
@@ -255,11 +183,6 @@ namespace darwin
     if (child and history)
     {
       printxmg.add_comment("History Taboo");
-      if ( not taboos )
-      {
-        taboos = history;
-        return;
-      }
       static_cast< Taboos<t_Individual>* >(taboos)->add( history );
     }
     else if (child)
@@ -270,26 +193,27 @@ namespace darwin
     child = parent.FirstChildElement();
     for( ; child ; child = child->NextSiblingElement() )
     {
-      eoMonOp<const t_Object> *op = evaluator.LoadTaboo( *child );
-      if ( not op )
-        continue;
-      eostates.storeFunctor( op );
-      TabooFunction<t_Individual> *func = new TabooFunction<t_Individual>( *op );
+      Taboo_Base<t_Individual> *func = evaluator.LoadTaboo( *child );
       eostates.storeFunctor(func);
-      if ( not taboos )
-      {
-        taboos = func;
-        return;
-      }
       static_cast< Taboos<t_Individual>* >(taboos)->add( func );
     }
 
+    // now some cleaning up
+    Taboos<t_Individual>* save_taboos = static_cast< Taboos<t_Individual>* >(taboos);
+    types::t_unsigned n = save_taboos->size();
+    switch( n )
+    {
+      case 0: delete taboos; taboos = NULL; break; // no taboos! 
+      case 1: taboos = save_taboos->front(); delete save_taboos; break; // move lone taboo to front
+      default: eostates.storeFunctor( taboos ); break; // multiple taboos, good as is
+    }
       
+    return;
   }
 
   // Loads mating operations
-  template<class T_EVALUATOR>
-  bool Darwin<T_EVALUATOR> :: Load_Mating (const TiXmlElement &_parent)
+  template<class T_EVALUATOR, class T_GATRAITS>
+  bool Darwin<T_EVALUATOR,T_GATRAITS> :: Load_Mating (const TiXmlElement &_parent)
   {
     const TiXmlElement *child = _parent.FirstChildElement("Breeding");
     if ( not child )
@@ -306,14 +230,14 @@ namespace darwin
     if ( not breeder_ops )
     {
       std::cout << "Error while creating breeding operators" << std::endl;
-      throw "Error while creating operators in  Darwin<T_INDIVIDUAL,T_EVALUATOR>  :: make_GenOp ";
+      throw "Error while creating operators in  Darwin<T_EVALUATOR>  :: make_GenOp ";
     }
     return true;
   }
   
   // Loads CheckPoints
-  template<class T_EVALUATOR>
-  void Darwin<T_EVALUATOR> :: Load_CheckPoints (const TiXmlElement &_parent)
+  template<class T_EVALUATOR, class T_GATRAITS>
+  void Darwin<T_EVALUATOR,T_GATRAITS> :: Load_CheckPoints (const TiXmlElement &_parent)
   {
     // contains all checkpoints
     std::string str = "stop"; 
@@ -325,7 +249,7 @@ namespace darwin
     eostates.storeFunctor( continuator );
     GenCount &generation_counter = continuator->get_generation_counter();
 
-    // The following synchronizes Results::nb_val and Results::nb_grad over 
+    // The following synchronizes Results::nb_val 
     // all procs. Should always be there!!
 #ifdef _MPI
         Synchronize<types::t_unsigned> *synchro = new Synchronize<types::t_unsigned>( evaluation->nb_eval );
@@ -355,7 +279,7 @@ namespace darwin
     const TiXmlElement *child = _parent.FirstChildElement("Statistics");
     if( child )
     {
-      continuator->add( eostates.storeFunctor( new TrueCensus< t_Individual, t_Population >() ) );
+      continuator->add( eostates.storeFunctor( new TrueCensus< t_Individual >() ) );
       printxmg.add_comment("Statistics: True population size, discounting twins");
     }
 
@@ -374,58 +298,20 @@ namespace darwin
       if ( max <= 0 ) continue;
       if ( type.compare("<") != 0 ) continue;
 
-      if ( ref.compare("evaluation") == 0 )
-      {
-        terminator = new Terminator< types::t_unsigned, std::less<types::t_unsigned>, t_Individual >
-                                   ( evaluation->nb_eval, (types::t_unsigned) abs(max),
-                                     std::less<types::t_unsigned>(), "nb_eval < term" );
-        eostates.storeFunctor( terminator );
-        continuator->add( *terminator );
-        std::ostringstream sstr;
-        sstr << "Terminating after " << max << " evaluations";
-        printxmg.add_comment(sstr.str());
-      }
-      else if ( ref.compare("gradient") == 0 )
-      {
-        terminator = new Terminator< types::t_unsigned, std::less<types::t_unsigned>, t_Individual >
-                                   ( evaluation->nb_grad, (types::t_unsigned) abs(max),
-                                     std::less<types::t_unsigned>(), "nb_grad < term" );
-        eostates.storeFunctor( terminator );
-        continuator->add( *terminator );
-        std::ostringstream sstr;
-        sstr << "Terminating after " << max << " gradient calls";
-        printxmg.add_comment(sstr.str());
-      }
+      if ( ref.compare("evaluation") != 0 ) continue;
+      
+      terminator = new Terminator< types::t_unsigned, std::less<types::t_unsigned>, t_Individual >
+                                 ( evaluation->nb_eval, (types::t_unsigned) abs(max),
+                                   std::less<types::t_unsigned>(), "nb_eval < term" );
+      eostates.storeFunctor( terminator );
+      continuator->add( *terminator );
+      std::ostringstream sstr;
+      sstr << "Terminating after " << max << " evaluations";
+      printxmg.add_comment(sstr.str());
+      
       // end if max
     }
     
-    // Creates Age taboo Updater
-    child = _parent.FirstChildElement("Taboos");
-    if( child ) child = child->FirstChildElement("AgeTaboo");
-    if ( child and agetaboo )
-    {
-      int d = 0;
-      child->Attribute("lifespan", &d );
-      types::t_unsigned length = ( d >=0 ) ? (types::t_int) abs(d) : UINT_MAX;
-      bool print_out = false;
-      if ( child->Attribute("printout") )
-      {
-        std::string str = child->Attribute("printout");
-        if ( str.compare("true") == 0 )
-          print_out = true;
-      }
-      UpdateAgeTaboo< t_Individual > *updateagetaboo
-             = new UpdateAgeTaboo<t_Individual > ( *agetaboo, generation_counter,
-                                                   length, print_out);
-      std::ostringstream sstr;
-      sstr << "# Age Taboo, lifespan=" << d << std::endl;
-      std::string str = sstr.str();
-      printxmg.add_comment(str);
-      eostates.storeFunctor(updateagetaboo);
-      continuator->add(*updateagetaboo);
-    }
-
-
     // Load object specific continuator
     eoF<bool> *specific = evaluator.LoadContinue( _parent );
     if ( specific )
@@ -445,8 +331,8 @@ namespace darwin
 
   } // end of make_check_point
   
-  template<class T_EVALUATOR>
-  bool Darwin<T_EVALUATOR> :: Restart()
+  template<class T_EVALUATOR, class T_GATRAITS>
+  bool Darwin<T_EVALUATOR,T_GATRAITS> :: Restart()
   {
     TiXmlDocument doc( restart_filename.c_str() );
     TiXmlHandle docHandle( &doc ); 
@@ -463,8 +349,8 @@ namespace darwin
 
   // Loads restarts operations
   // Should be in a Restart XML Section
-  template<class T_EVALUATOR>
-  bool Darwin<T_EVALUATOR> :: Restart (const TiXmlElement &_node)
+  template<class T_EVALUATOR, class T_GATRAITS>
+  bool Darwin<T_EVALUATOR,T_GATRAITS> :: Restart (const TiXmlElement &_node)
   {
     const TiXmlElement *parent = &_node;
     std::string name = _node.Value();
@@ -483,7 +369,7 @@ namespace darwin
       else if (     name.compare("History") == 0
                 and ( do_restart & SAVE_HISTORY ) and history )
       {
-        LoadObject<t_Individual, t_Evaluator> loadop( evaluator, &t_Evaluator::Load, LOADSAVE_SHORT);
+        LoadObject<t_Evaluator> loadop( evaluator, &t_Evaluator::Load, LOADSAVE_SHORT);
         history->clear();
         if ( LoadIndividuals( *child, loadop, *history) )
         {
@@ -497,7 +383,7 @@ namespace darwin
       else if (     name.compare("Population") == 0
                 and ( do_restart & SAVE_POPULATION ) )
       {
-        LoadObject<t_Individual, t_Evaluator> loadop( evaluator, &t_Evaluator::Load, LOADSAVE_SHORT);
+        LoadObject<t_Evaluator> loadop( evaluator, &t_Evaluator::Load, LOADSAVE_SHORT);
         islands.clear();
         const TiXmlElement *island_xml = child->FirstChildElement("Island");
         for(; island_xml; island_xml = island_xml->NextSiblingElement("Island") )
@@ -517,8 +403,8 @@ namespace darwin
     return true;
   }
 
-  template<class T_EVALUATOR>
-  bool Darwin<T_EVALUATOR> :: Save()
+  template<class T_EVALUATOR, class T_GATRAITS>
+  bool Darwin<T_EVALUATOR,T_GATRAITS> :: Save()
   {
     if ( not do_save )
       return true;
@@ -555,13 +441,13 @@ namespace darwin
     if ( do_save & SAVE_HISTORY and history)
     {
       TiXmlElement *xmlhistory = new TiXmlElement("History");
-      SaveObject<t_Individual, t_Evaluator> saveop( evaluator, &t_Evaluator::Save, LOADSAVE_SHORT);
+      SaveObject<t_Evaluator> saveop( evaluator, &t_Evaluator::Save, LOADSAVE_SHORT);
       SaveIndividuals( *xmlhistory, saveop, history->begin(), history->end());
       node->LinkEndChild( xmlhistory );
     }
     if ( do_save & SAVE_POPULATION )
     {
-      SaveObject<t_Individual, t_Evaluator> saveop( evaluator, &t_Evaluator::Save, LOADSAVE_SHORT);
+      SaveObject<t_Evaluator> saveop( evaluator, &t_Evaluator::Save, LOADSAVE_SHORT);
       typename t_Islands :: const_iterator i_island = islands.begin();
       typename t_Islands :: const_iterator i_island_end = islands.end();
       TiXmlElement *xmlpop = new TiXmlElement("Population");
@@ -578,8 +464,8 @@ namespace darwin
     return true;
   }
   
-  template<class T_EVALUATOR>
-  eoReplacement<T_INDIVIDUAL>* Darwin<T_EVALUATOR> :: make_replacement()
+  template<class T_EVALUATOR, class T_GATRAITS>
+  eoReplacement<typename T_GATRAITS::t_Individual>* Darwin<T_EVALUATOR,T_GATRAITS> :: make_replacement()
   {
     eoTruncate<t_Individual>* truncate       = new  eoTruncate<t_Individual>;
     eoMerge<t_Individual>* merge             = new  eoPlus<t_Individual>;
@@ -592,9 +478,10 @@ namespace darwin
   }
 
   // makes genetic operators
-  template<class T_EVALUATOR >
-  eoGenOp<T_INDIVIDUAL>* Darwin<T_EVALUATOR> :: make_genetic_op( const TiXmlElement &el,
-                                                                 eoGenOp<t_Individual> *current_op )
+  template<class T_EVALUATOR, class T_GATRAITS>
+  eoGenOp<typename T_GATRAITS::t_Individual>*
+    Darwin<T_EVALUATOR,T_GATRAITS> :: make_genetic_op( const TiXmlElement &el,
+                                                       eoGenOp<t_Individual> *current_op )
   {
     eoOp<t_Individual>* this_op;
     const TiXmlElement *sibling = &el;
@@ -622,7 +509,7 @@ namespace darwin
         {
           printxmg.add_comment("TabooOp End");
           eoMonOp<t_Individual> *utterrandom;
-          utterrandom = new mem_monop_indiv_t<t_Evaluator, t_Individual>
+          utterrandom = new mem_monop_t<t_Evaluator>
                               ( evaluator, &t_Evaluator::initialize, std::string( "Initialize" ) );
           eostates.storeFunctor(utterrandom);
           this_op = new TabooOp<t_Individual> ( *taboo_op, *taboos, 
@@ -641,7 +528,7 @@ namespace darwin
       else if ( str.compare("UtterRandom") == 0 )
       {
         printxmg.add_comment("UtterRandom");
-        this_op = new mem_monop_indiv_t<t_Evaluator, t_Individual>
+        this_op = new mem_monop_t<t_Evaluator>
                          ( evaluator, &t_Evaluator::initialize, std::string( "UtterRandom" ) );
         eostates.storeFunctor( static_cast< TabooOp<t_Individual> *>(this_op) );
       }
@@ -687,17 +574,10 @@ namespace darwin
       }
       else // operators specific to t_Individual 
       {
-        eoOp<typename t_Individual::t_Object> *eoop = evaluator.LoadGaOp( *sibling );
-        // eoop is stored in Wrap_ObjectOp_To_GenOp
-        // since eoOp does not derive from eoFunctor_Base, 
-        // whereas eoMonOp, eoBinOp, ... do
-        // eoFunctor_Base inheritance is necessary to store 
-        // as in eostates.storeFunctor( functor )
-        if ( eoop )
-        {
-          this_op = Wrap_ObjectOp_To_GenOp<t_Individual>( eoop, eostates);
-          is_gen_op = true;
-        }
+        eoGenOp<t_Individual> *eoop = evaluator.LoadGaOp( *sibling );
+        eostates.storeFunctor( eoop );
+        if ( eoop ) this_op = eoop;
+        is_gen_op = true;
       }
       if ( this_op and sibling->Attribute("period", &period) )
       {
@@ -750,27 +630,21 @@ namespace darwin
     return current_op;
   }
 
-  template<class T_EVALUATOR>
-  void Darwin<T_EVALUATOR> :: make_breeder()
+  template<class T_EVALUATOR, class T_GATRAITS>
+  void Darwin<T_EVALUATOR,T_GATRAITS> :: make_breeder()
   {
     eoSelectOne<t_Individual> *select;
 
     select = new eoDetTournamentSelect<t_Individual>(tournament_size);
     breeder = new Breeder<t_Individual>(*select, *breeder_ops, continuator->get_generation_counter() );
-    if ( nuclearwinter )
-    {
-      nuclearwinter->set_op_address( breeder->get_op_address() );
-      nuclearwinter->set_howmany( breeder->get_howmany_address() ) ;
-    }
-    else
-      breeder->set_howmany(replacement_rate);
+    breeder->set_howmany(replacement_rate);
 
     eostates.storeFunctor(breeder);
     eostates.storeFunctor(select);
   }
   
-  template<class T_EVALUATOR >
-  void Darwin<T_EVALUATOR> :: populate ()
+  template<class T_EVALUATOR, class T_GATRAITS>
+  void Darwin<T_EVALUATOR,T_GATRAITS> :: populate ()
   {
     islands.resize( nb_islands );
     typename t_Islands :: iterator i_pop = islands.begin();
@@ -794,8 +668,8 @@ namespace darwin
     }
   }
 
-  template<class T_EVALUATOR >
-  void Darwin<T_EVALUATOR> :: random_populate ( t_Population &_pop, types::t_unsigned _size)
+  template<class T_EVALUATOR, class T_GATRAITS>
+  void Darwin<T_EVALUATOR,T_GATRAITS> :: random_populate ( t_Population &_pop, types::t_unsigned _size)
   {
     while ( _pop.size() < _size )
     {
@@ -806,8 +680,8 @@ namespace darwin
     } // while ( i_pop->size() < target )
     _pop.resize( _size );
   }
-  template<class T_EVALUATOR >
-  void Darwin<T_EVALUATOR> :: partition_populate ( t_Population &_pop, types::t_unsigned _size)
+  template<class T_EVALUATOR, class T_GATRAITS>
+  void Darwin<T_EVALUATOR,T_GATRAITS> :: partition_populate ( t_Population &_pop, types::t_unsigned _size)
   {
     while ( _pop.size() < _size )
     {
@@ -880,8 +754,8 @@ namespace darwin
   }
 
 
-  template<class T_EVALUATOR >
-  void Darwin<T_EVALUATOR> :: run()
+  template<class T_EVALUATOR, class T_GATRAITS>
+  void Darwin<T_EVALUATOR,T_GATRAITS> :: run()
   {
 #ifdef _MPI 
     for( types::t_int i = 0; i < mpi::main.size(); ++i )
@@ -904,7 +778,7 @@ namespace darwin
     typename t_Islands :: iterator i_island;
     for ( i_island = i_island_begin; i_island != i_island_end; ++i_island )
     {
-      (*evaluation)(offsprings, *i_island); // A first eval of pop.
+      evaluation->evaluate(*i_island); // A first eval of pop.
 #ifdef _MPI // "All Gather" new population
       breeder->synchronize_offsprings( *i_island );
 #endif 
@@ -954,10 +828,10 @@ namespace darwin
 
 
 #ifdef _MPI
-  template<class T_INDIVIDUAL, class T_EVALUATOR>
-  void Darwin<T_INDIVIDUAL,T_EVALUATOR> :: LoadAllInputFiles(std::string &_input, 
-                                                             std::string &_restart, 
-                                                             std::string &_evaluator ) 
+  template<class T_EVALUATOR, class T_GATRAITS>
+  void Darwin<T_EVALUATOR,T_GATRAITS> :: LoadAllInputFiles(std::string &_input, 
+                                                std::string &_restart, 
+                                                std::string &_evaluator ) 
   {
     if ( mpi::main.is_root_node() )
     { 
@@ -1019,8 +893,8 @@ namespace darwin
   }
 #endif
 
-  template<class T_INDIVIDUAL, class T_EVALUATOR>
-  bool Darwin<T_INDIVIDUAL,T_EVALUATOR> :: Load(const std::string &_filename) 
+  template<class T_EVALUATOR, class T_GATRAITS>
+  bool Darwin<T_EVALUATOR,T_GATRAITS> :: Load(const std::string &_filename) 
   {
     filename = _filename;
     evaluator_filename = _filename;
@@ -1199,8 +1073,8 @@ out:  printxmg.add_comment( sstr.str() );
 
 
 #ifdef _MPI
-  template<class T_INDIVIDUAL, class T_EVALUATOR>
-  bool Darwin<T_INDIVIDUAL,T_EVALUATOR> :: broadcast_islands( mpi::BroadCast &_bc )
+  template<class T_EVALUATOR, class T_GATRAITS>
+  bool Darwin<T_EVALUATOR,T_GATRAITS> :: broadcast_islands( mpi::BroadCast &_bc )
   {
     types::t_int n = islands.size();
     if ( not _bc.serialize( n ) ) return false;

@@ -24,6 +24,7 @@
 #include "evaluator.h"
 #include "concentration.h"
 #include "functors.h"
+#include "taboos.h"
 
 #ifdef _MPI
 #include "mpi/mpi_object.h"
@@ -42,7 +43,7 @@ namespace TwoSites
     friend void operator<<(std::string &_str, const Object &_o);
     friend void operator<<(Ising_CE::Structure &_str, const Object &_o);
 #ifdef _MPI
-    friend bool mpi::BroadCast::serialize<BandGap::Object>(BandGap::Object &);
+    friend bool mpi::BroadCast::serialize<TwoSites::Object>(TwoSites::Object &);
 #endif
 
     // Typedefs
@@ -131,8 +132,14 @@ namespace TwoSites
       typedef T_INDIVIDUAL t_Individual;
       typedef typename t_Individual::t_Object t_Object;
 
+    protected:
+      typedef Evaluator<t_Individual> t_This;
+
     public:
       using darwin::Evaluator<t_Individual> :: Load;
+    protected:
+      using darwin::Evaluator<t_Individual> :: current_individual;
+      using darwin::Evaluator<t_Individual> :: current_object;
 
     protected:
       typedef Ising_CE::Structure::t_kAtoms t_kvecs;
@@ -156,15 +163,15 @@ namespace TwoSites
       ~Evaluator() {};
 
 
-      bool Save( const t_Object &_obj, TiXmlElement &_node, bool _type ) const;
-      bool Load( t_Object &_obj, const TiXmlElement &_node, bool _type );
+      bool Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const;
+      bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
       bool Load( const TiXmlElement &_node );
-      eoOp<t_Individual>* LoadGaOp(const TiXmlElement &_el );
-      eoMonOp<const t_Individual>* LoadTaboo(const TiXmlElement &_el );
+      eoGenOp<t_Individual>* LoadGaOp(const TiXmlElement &_el );
+      darwin::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el );
 
-      bool Krossover( t_Object  &_offspring, const t_Object &_parent,
+      bool Krossover( t_Individual  &_offspring, const t_Individual &_parent,
                       bool _range = false );
-      bool Crossover( t_Object &_obj1, const t_Object &_obj2 );
+      bool Crossover( t_Individual &_indiv1, const t_Individual &_indiv2 );
 
       bool initialize( t_Object &_object );
 
@@ -174,7 +181,7 @@ namespace TwoSites
       void set_concentration( Ising_CE::Structure &_str );
       void normalize( Ising_CE::Structure &_str, 
                       const types::t_int _site, types::t_real _tochange);
-      bool Taboo(const t_Object &_object );
+      bool Taboo(const t_Individual &_indiv );
   };
 
 } // namespace TwoSites

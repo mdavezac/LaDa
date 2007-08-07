@@ -13,6 +13,7 @@
 #endif
 
 #include "print_xmgrace.h"
+#include "functors.h"
 
 namespace TwoSites
 {
@@ -54,35 +55,35 @@ namespace TwoSites
   }
 
   template<class T_INDIVIDUAL>
-  bool Evaluator<T_INDIVIDUAL> :: Load( t_Object &_obj, const TiXmlElement &_node, bool _type )
+  bool Evaluator<T_INDIVIDUAL> :: Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type )
   {
     if ( _type == darwin::LOADSAVE_SHORT )
     {
       if( not _node.Attribute("string") )
         return false;
-      _obj << std::string(_node.Attribute("string"));
+      (_indiv.Object()) << std::string(_node.Attribute("string"));
       return true;
     }
 
     Ising_CE::Structure s; 
     if ( not s.Load(_node) )
       return false;
-    _obj << s;
+    (_indiv.Object()) << s;
     return true;
   }
 
   template<class T_INDIVIDUAL>
-  bool Evaluator<T_INDIVIDUAL> :: Save( const t_Object &_obj, TiXmlElement &_node, bool _type ) const
+  bool Evaluator<T_INDIVIDUAL> :: Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const
   {
     if ( _type == darwin::LOADSAVE_SHORT )
     {
-      std::string str; str << _obj;
+      std::string str; str << _indiv.Object();
       _node.SetAttribute("string", str.c_str());
       return true;
     }
 
     Ising_CE::Structure s = structure; 
-    s << _obj;
+    s << _indiv.Object();
     TwoSites::fourrier_to_kspace( s.atoms.begin(),  s.atoms.end(),
                                    s.k_vecs.begin(), s.k_vecs.end() );
     s.print_xml(_node);
@@ -270,27 +271,32 @@ endofloop:
   }
 
   template<class T_INDIVIDUAL>
-  bool Evaluator<T_INDIVIDUAL> :: Crossover ( t_Object &_obj1, const t_Object &_obj2 )
+  bool Evaluator<T_INDIVIDUAL> :: Crossover ( t_Individual &_indiv1, const t_Individual &_indiv2 )
   {
-    Object::t_Container :: iterator i_var1 = _obj1.begin();
-    Object::t_Container :: const_iterator i_var2 = _obj2.begin();
-    Object::t_Container :: const_iterator i_var2_end = _obj2.end();
+    t_Object &obj1 = _indiv1;
+    const t_Object &obj2 = _indiv2;
+    Object::t_Container :: iterator i_var1 = obj1.begin();
+    Object::t_Container :: const_iterator i_var2 = obj2.begin();
+    Object::t_Container :: const_iterator i_var2_end = obj2.end();
     for(; i_var2 != i_var2_end; ++i_var1, ++i_var2)
       if ( rng.flip(crossover_probability) ) 
         *i_var1 = *i_var2;
-    structure << _obj1;
-    Evaluator<t_Object>::set_concentration( structure );
-    _obj1 << structure;
+    structure << obj1;
+    Evaluator<t_Individual>::set_concentration( structure );
+    obj1 << structure;
     return true;
   }
 
   // expects kspace value to exist!!
   template<class T_INDIVIDUAL>
-  bool Evaluator<T_INDIVIDUAL> :: Krossover( t_Object  &_offspring, const t_Object &_parent,
-                                         bool _range )
+  bool Evaluator<T_INDIVIDUAL> :: Krossover( t_Individual  &_offspring,
+                                             const t_Individual &_parent,
+                                             bool _range )
   {
+    t_Object &offspring  = _offspring;
+    const t_Object &parent  = _parent;
     Ising_CE::Structure str1 = structure, str2 = structure;
-    str1 << _offspring; str2 << _parent;
+    str1 << offspring; str2 << parent;
     TwoSites::fourrier_to_kspace( str1.atoms.begin(),  str1.atoms.end(),
                                   str1.k_vecs.begin(), str1.k_vecs.end() );
     TwoSites::fourrier_to_kspace( str2.atoms.begin(),  str2.atoms.end(),
@@ -312,14 +318,14 @@ endofloop:
           i_o->type = i_p->type;
     }
   
-    Evaluator<t_Object>::set_concentration( str1 );
-    _offspring << str1;
+    Evaluator<t_Individual>::set_concentration( str1 );
+    offspring << str1;
 
     return true; // offspring has changed!
   }
 
   template<class T_INDIVIDUAL>
-  eoOp<T_INDIVIDUAL>* Evaluator<T_INDIVIDUAL> :: LoadGaOp(const TiXmlElement &_el )
+  eoGenOp<T_INDIVIDUAL>* Evaluator<T_INDIVIDUAL> :: LoadGaOp(const TiXmlElement &_el )
   {
     std::string value = _el.Value();
 
@@ -332,8 +338,7 @@ endofloop:
       sstr << "Crossover rate = " << crossover_probability;
       darwin::printxmg.add_comment(sstr.str());
       // pointer is owned by caller !!
-      return new darwin::mem_binop_t<Evaluator<t_Individual>, t_Object, void>
-                                    ( *this, &Evaluator<T_INDIVIDUAL>::Crossover, std::string( "Crossover" ) );
+      return darwin::new_genop( *this, &Evaluator<t_Individual>::Crossover, std::string( "Crossover" ) );
     }
     else if ( value.compare( "Krossover" ) == 0 )
     {
@@ -351,26 +356,26 @@ endofloop:
           { att = true; darwin::printxmg.add_to_last( ", Range = true" ); }
       }
       // pointer is owned by caller !!
-      return new darwin::mem_binop_t<Evaluator<t_Indiviudal>, t_Object, bool>
-                                    ( *this, &Evaluator<t_Object>::Krossover, 
-                                      std::string( "Krossover" ), att);
+      return darwin::new_genop( *this, &Evaluator<t_Individual>::Krossover, 
+                                std::string( "Krossover" ), att);
     }
 
     return NULL;
   }
 
   template<class T_INDIVIDUAL>
-  bool Evaluator<T_INDIVIDUAL> :: Taboo(const t_Object &_object )
+  bool Evaluator<T_INDIVIDUAL> :: Taboo(const t_Individual &_indiv )
   {
     if ( x_vs_y.is_singlec() )
       return false;
-    structure << _object;
+    structure << (t_Object&)_indiv;
     get_xy_concentrations( structure );
     return x > lessthan or x < morethan; // if true, _object is taboo
   }
   
   template<class T_INDIVIDUAL>
-  eoMonOp<const T_INDIVIDUAL>* Evaluator<T_INDIVIDUAL> :: LoadTaboo(const TiXmlElement &_el )
+  darwin::Taboo_Base< T_INDIVIDUAL >* 
+       Evaluator<T_INDIVIDUAL> :: LoadTaboo(const TiXmlElement &_el )
   {
     if ( x_vs_y.is_singlec() )
       return NULL;
@@ -392,8 +397,8 @@ endofloop:
          << ", "  << 0.5*(lessthan+1.0) << "] ";
     darwin::printxmg.add_comment(sstr.str());
     // pointer is owned by caller !!
-    return new darwin::const_mem_monop_t<Evaluator<t_Individual>, t_Object>
-                                        ( *this, &Evaluator<T_INDIVIDUAL>::Taboo, "Taboo" );
+    return new darwin::TabooFunction< Evaluator<t_Individual> >
+                                    ( *this, &Evaluator<t_Individual>::Taboo, "Taboo" );
   }
 
   template<class T_INDIVIDUAL>

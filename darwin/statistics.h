@@ -13,12 +13,13 @@
 
 namespace darwin
 {
-  template< class T_INDIVIDUAL, class T_POPULATION = eoPop<T_INDIVIDUAL> >
+  template< class T_INDIVIDUAL>
   class TrueCensus : public eoStatBase< T_INDIVIDUAL >
   {
     public:
       typedef T_INDIVIDUAL t_Individual;
-      typedef T_POPULATION t_Population;
+    protected:
+      typedef eoPop<t_Individual> t_Population;
     private:
       typedef typename t_Individual :: t_Object t_Object;
       

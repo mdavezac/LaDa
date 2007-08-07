@@ -29,8 +29,7 @@ int main(int argc, char *argv[])
   darwin::printxmg.init("convex_hull.agr");
   try
   {
-    typedef darwin::Individual< Functional::Object, eoMinimizingFitness > t_Individual;
-    darwin::Darwin< t_Individual, Functional::Evaluator > ga;
+    darwin::Darwin< Functional::Evaluator > ga;
     if ( not  ga.Load("input.xml") )
       throw std::runtime_error( "Could not load input!!\n" ); 
     ga.run();

@@ -16,16 +16,10 @@
 #include "opt/types.h"
 
 #include "functors.h"
+#include "gatraits.h"
 
 namespace darwin
 {
-
-  template<class t_Individual> 
-    bool equate_objects ( const t_Individual &_i1, const t_Individual &_i2 ) 
-    {
-      typedef typename t_Individual :: t_Object t_Object;
-      return ( (t_Object&)_i1 ) == ( (t_Object&)_i2 );
-    }
 
   // taboo base class, declares virtual stuff
   template<class T_INDIVIDUAL>
@@ -47,15 +41,13 @@ namespace darwin
       virtual void print_out( std::ostream &str ) const {return;}
   };
 
-  template<class T_INDIVIDUAL, class T_CONTAINER = eoPop<T_INDIVIDUAL> >
+  template< class T_INDIVIDUAL, class T_CONTAINER = std::list<T_INDIVIDUAL> >
   class Taboo : public Taboo_Base<T_INDIVIDUAL>
   {
     public:
       typedef T_INDIVIDUAL t_Individual;
       typedef T_CONTAINER t_Container;
       typedef t_Individual value_type;
-    private:
-      typedef typename t_Individual::t_Object t_Object;
 
     protected:
       bool problematic;
@@ -151,40 +143,35 @@ namespace darwin
       void clear() { taboo_list->clear(); }
   };
 
-  template<class T_INDIVIDUAL, class T_CONTAINER = eoPop<T_INDIVIDUAL> >
-  class OffspringTaboo : public Taboo<T_INDIVIDUAL, T_CONTAINER>
+  template<class T_INDIVIDUAL, class T_INDIVTRAITS = Traits::Indiv<T_INDIVIDUAL> >
+  class OffspringTaboo : public Taboo<T_INDIVIDUAL, typename T_INDIVTRAITS :: t_Population >
   {
     public:
       typedef T_INDIVIDUAL t_Individual;
-      typedef T_CONTAINER t_Container;
+      typedef T_INDIVTRAITS t_IndivTraits;
       typedef t_Individual value_type;
-    private:
-      typedef typename t_Individual :: t_Object t_Object ;
     protected:
-      using Taboo<t_Individual, t_Container> :: taboo_list;
+      typedef typename t_IndivTraits :: t_Population t_Population;
+      using Taboo<t_Individual, t_Population> :: taboo_list;
 
     public:
-      OffspringTaboo ( t_Container *_list ) : Taboo<t_Individual, t_Container>( _list ) {}
-      OffspringTaboo () : Taboo<t_Individual, t_Container>() {}
+      OffspringTaboo ( t_Population *_list ) : Taboo<t_Individual, t_Population>( _list ) {}
+      OffspringTaboo () : Taboo<t_Individual, t_Population>() {}
       virtual ~OffspringTaboo() {};
        
       // returns true if _indiv is in taboo_list 
       virtual bool operator()( const t_Individual& _indiv ) const
       {
-        typename t_Container :: const_iterator i_end = taboo_list->end();
-        typename t_Container :: const_iterator i_begin = taboo_list->begin();
+        typename t_Population :: const_iterator i_end = taboo_list->end();
+        typename t_Population :: const_iterator i_begin = taboo_list->begin();
         if ( i_begin == i_end )
           return false;
         --i_end; // last is current
-        // t_Object since we do not want to compare fitness,
-        // quantity, validity, etc...
-        // but only wether these are truly different individual 
-        // in terms of t_Object
         return i_end != std::find( i_begin, i_end, _indiv);
       }
   };
 
-  template<class T_INDIVIDUAL, class T_CONTAINER = eoPop<T_INDIVIDUAL> >
+  template<class T_INDIVIDUAL, class T_CONTAINER = std::list<T_INDIVIDUAL> >
   class History : public Taboo<T_INDIVIDUAL, T_CONTAINER>
   {
     public:
@@ -205,22 +192,6 @@ namespace darwin
       History() : Taboo<t_Individual, t_Container>() {}
       virtual ~History() {};
 
-      virtual bool set_quantity(t_Individual &_indiv)
-      {
-        typename t_Container :: const_iterator i_end = taboo_list->end();
-        typename t_Container :: const_iterator i_indiv = taboo_list->begin();
-        if ( i_indiv == i_end )
-          return false;
-        // t_Object since we do not want to compare fitness,
-        // quantity, validity, etc...
-        // but only wether these are truly different individual 
-        // in terms of t_Object
-        i_indiv = std::find( i_indiv, i_end, _indiv);
-        if ( i_end == i_indiv )
-          return false;
-        _indiv.set_quantity( i_indiv->get_quantity() );
-        return true;
-      }
       virtual bool clone(t_Individual &_indiv)
       {
         typename t_Container :: const_iterator i_end = taboo_list->end();
@@ -234,7 +205,8 @@ namespace darwin
         i_indiv = std::find( i_indiv, i_end, _indiv);
         if ( i_end == i_indiv )
           return false;
-        _indiv.clone(*i_indiv);
+        _indiv.quantities() = i_indiv->quantities();
+        _indiv.fitness() = i_indiv->fitness();
         return true;
       }
 #ifdef _MPI
@@ -293,16 +265,23 @@ namespace darwin
   template<class T_INDIVIDUAL>
   class Taboos : public Taboo_Base<T_INDIVIDUAL>
   {
-    protected:
+    public:
       typedef T_INDIVIDUAL t_Individual;
 
+    protected:
+      typedef Taboo_Base<t_Individual> t_Type;
+      typedef std::list< t_Type* > t_Container;
+
     protected: 
-      std::list< Taboo_Base<t_Individual>* > taboos;
+      t_Container taboos;
 
     public:
       Taboos() {};
       Taboos( const Taboos<t_Individual> &_taboo ) : taboos( _taboo.taboos ) {};
       virtual ~Taboos(){};
+
+      types::t_unsigned size() const { return taboos.size(); }
+      t_Type* front() { return taboos.front(); }
 
       void add( Taboo_Base<t_Individual> * _taboo )
       {
@@ -355,16 +334,17 @@ namespace darwin
   };
   
   // a class which taboos a whole list of pops
-  template<class T_INDIVIDUAL, class T_CONTAINER = eoPop<T_INDIVIDUAL>,
-           class T_ISLANDS = std::list< T_CONTAINER > > 
+  template<class T_INDIVIDUAL, class T_INDIVTRAITS = Traits::Indiv<T_INDIVIDUAL> > 
   class IslandsTaboos : public Taboo_Base<T_INDIVIDUAL>
   {
     public:
       typedef T_INDIVIDUAL t_Individual;
-      typedef T_CONTAINER  t_Container;
-      typedef T_ISLANDS t_Islands;
+      typedef T_INDIVTRAITS t_IndivTraits;
     private:
-      typedef typename t_Individual::t_Object t_Object;
+      typedef IslandsTaboos<t_Individual, t_IndivTraits>  t_Base;
+      typedef typename t_IndivTraits :: t_Population  t_Container;
+      typedef typename t_IndivTraits :: t_Islands     t_Islands;
+      typedef typename t_IndivTraits :: t_Object t_Object;
 
     protected: 
       bool problematic;
@@ -374,7 +354,7 @@ namespace darwin
       IslandsTaboos   ( t_Islands &_islands )
                     : problematic(false), 
                       populations( _islands ) {};
-      IslandsTaboos   ( const IslandsTaboos<t_Individual, t_Container, t_Islands> &_taboos )
+      IslandsTaboos   ( const t_Base &_taboos )
                     : problematic(_taboos.is_problematic), 
                       populations( _taboos.populations ) {};
       virtual ~IslandsTaboos(){};
@@ -463,26 +443,30 @@ namespace darwin
 
   };
 
-  template< class T_INDIVIDUAL  >
-  class TabooFunction : public Taboo_Base< T_INDIVIDUAL >
+  template< class T_EVALUATOR >
+  class TabooFunction : public Taboo_Base< typename T_EVALUATOR::t_Individual >
   {
     public:
-      typedef T_INDIVIDUAL t_Individual;
-      typedef typename T_INDIVIDUAL::t_Object t_Object;
+      typedef T_EVALUATOR t_Evaluator;
+      typedef bool ( t_Evaluator::*t_Function )(const typename t_Evaluator::t_Individual &);
+    protected:
+      typedef typename t_Evaluator::t_Individual t_Individual;
 
     protected:
-      eoMonOp<const t_Object> &op;
+      t_Evaluator &evaluator;
+      t_Function member_func;
+      std::string class_name;
 
     public:
-      TabooFunction( eoMonOp<const t_Object> &_op ) : op(_op) {};
+      explicit
+        TabooFunction   ( t_Evaluator &_eval, t_Function _func, const std::string &_cn )
+                      : evaluator(_eval), member_func(_func), class_name(_cn) {};
       ~TabooFunction() {}
 
-      std::string className() const { return op.className(); }
+      std::string className() const { return class_name; }
 
       bool operator()( const t_Individual& _indiv ) const
-      {
-        return op(_indiv.Object());
-      }
+        { return ( (evaluator.*member_func) )( _indiv); }
   };
 
 } // namespace LaDa

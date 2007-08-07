@@ -9,12 +9,12 @@
 
 #include "opt/opt_minimize_base.h"
 #include "opt/opt_function_base.h"
-#include "results.h"
+#include "evaluation.h"
 
 namespace darwin 
 {
 
-  template<class T_INDIVIDUAL, class T_EVALUATOR, class T_POPULATION>
+  template<class T_INDIVIDUAL, class T_EVALUATOR>
   class Minimizer_Functional : public function::Base
                                < typename T_EVALUATOR :: t_Functional :: t_Type,
                                  typename T_EVALUATOR :: t_Functional :: t_Container >
@@ -22,7 +22,7 @@ namespace darwin
     public:
       typedef T_INDIVIDUAL t_Individual;
       typedef T_EVALUATOR t_Evaluator;
-      typedef T_POPULATION t_Population;
+      typedef eoPop<t_Individual> t_Population;
       typedef typename t_Evaluator :: t_Functional t_Functional;
       typedef typename T_EVALUATOR :: t_Functional :: t_Type t_Type;
       typedef typename T_EVALUATOR :: t_Functional :: t_Container t_Container;

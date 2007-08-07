@@ -12,25 +12,31 @@
 #include "opt/types.h"
 #include "opt/opt_function_base.h"
 #include "loadsave.h"
+#include "taboos.h"
+
+#include "gatraits.h"
 
 namespace darwin 
 {
-  template< class T_INDIVIDUAL >
+  template< class T_INDIVIDUAL, class T_INDIV_TRAITS = Traits :: Indiv<T_INDIVIDUAL> >
   class Evaluator
   {
     public:
-      typedef T_INDIVIDUAL t_Individual;
-      typedef typename t_Individual::t_Object t_Object;
-      // DON'T FORGET THE FOLLOWING
-      // add the following type in your derived class
-      // typedef function::Function<?,?> t_Functional;
-      // where ? is probably types::t_real or std::complex<...>
-      // and ? some container, probably an std::vector
+      typedef T_INDIVIDUAL   t_Individual;
+      typedef T_INDIV_TRAITS t_IndivTraits;
+    protected:
+      typedef typename t_IndivTraits :: t_Object         t_Object;
+      typedef typename t_IndivTraits :: t_Population     t_Population;
+
+    protected:
+      t_Individual current_individual;
+      t_Object current_object;
 
     public:
       Evaluator() {};
       virtual ~Evaluator() {}
 
+    public:
       // Should load t_Individual and funtional related stuff
       // except attributes in <GA > tag
       bool Load ( std::string const &_f )
@@ -63,7 +69,7 @@ namespace darwin
       // returns a pointer to an eoOp object
       // pointer is owned by darwin::Darwin::eostates !!
       // don't deallocate yourself
-      virtual eoOp<t_Individual>* LoadGaOp(const TiXmlElement &_el ) = 0;
+      virtual eoGenOp<t_Individual>* LoadGaOp(const TiXmlElement &_el ) = 0;
       // returns a pointer to a eoF<bool> object
       // pointer is owned by darwin::Darwin::eostates !!
       // don't deallocate yourself
@@ -71,7 +77,7 @@ namespace darwin
       // returns a pointer to a eoMonOp<const t_Individual> object
       // pointer is owned by darwin::Darwin::eostates !!
       // don't deallocate yourself
-      virtual eoMonOp<const t_Individual>* LoadTaboo(const TiXmlElement &_el ) { return NULL; }
+      virtual darwin::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el ) { return NULL; }
       // Initializes object before call to functional 
       // i.e. transforms t_Individual format to
       // function::Function<...>::variables format if necessary
@@ -79,9 +85,8 @@ namespace darwin
       // Called before objective function is evaluated
       // must return a void pointer to functional
       virtual void init( t_Individual &_indiv ) = 0;
-      virtual void evaluate( t_Individual &_indiv );
+      virtual void evaluate() = 0;
   };
-
 
 }
 

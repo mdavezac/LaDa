@@ -18,21 +18,26 @@
 #include "objective.h"
 #include "store.h"
 #include "taboos.h"
+#include "gatraits.h"
 
 namespace Evaluation 
 { 
   // abstract base class for results and storage
-  template<class T_EVALUATOR, class T_POPULATION = eoPop<typename T_EVALUATOR::T_INDIVIDUAL> >
+template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
   class Base
   {
     public:
-      typedef T_POPULATION t_Population;
       typedef T_EVALUATOR  t_Evaluator;
+      typedef T_GATRAITS   t_GA_Traits;
 
     protected:
-      typedef typename t_Evaluator::t_Individual t_Individual;
-      typedef typename Objective :: Base<typename t_Individual::t_Quantity > t_Objective;
-      typedef Store :: Base<t_Evaluator> t_Store;
+      typedef typename t_GA_Traits :: t_Individual       t_Individual;
+      typedef typename t_GA_Traits :: t_IndivTraits      t_IndivTraits;
+      typedef typename t_GA_Traits :: t_QuantityTraits   t_QuantityTraits;
+      typedef typename t_QuantityTraits :: t_Quantity    t_Quantity;
+      typedef typename t_IndivTraits :: t_Population     t_Population;
+      typedef typename Objective :: Base< t_Quantity >   t_Objective;
+      typedef Store :: Base<t_Evaluator, t_GA_Traits>    t_Store;
 
     protected:
       t_Evaluator &evaluator;
@@ -45,38 +50,39 @@ namespace Evaluation
     public:
       Base   ( t_Evaluator &_eval, t_Objective &_obj, t_Store &_store )
            : evaluator(_eval), objective(_obj), store(&_store), nb_eval(0) {};
+      Base   ( const Base<t_Evaluator> &_x )
+           : evaluator(_x.evaluator), objective(_x.objective),
+             store(_x.store), nb_eval(_x.nb_eval) {};
       virtual ~Base() {};
 
-      void set_evaluator ( t_Evaluator *_e ) { evaluator = _e; }
-      
+    protected:
       virtual void evaluate( t_Individual &_indiv );
+    public:
       virtual void evaluate( t_Population &_pop );
-      virtual bool Save( TiXmlElement &_node ) {};
-      virtual bool Load( const TiXmlElement &_node ) {};
+      virtual void operator()( t_Population &_pop, t_Population & ) { evaluate(_pop); }
   };
 
 
-template<class T_EVALUATOR, class T_POPULATION = eoPop<typename T_EVALUATOR::T_INDIVIDUAL> >
-  virtual void Base<T_EVALUATOR, T_POPULATION> :: evaluate( t_Individual &_indiv )
+template<class T_EVALUATOR, class T_GATRAITS>
+  void Base<T_EVALUATOR,T_GATRAITS> :: evaluate( t_Individual &_indiv )
   {
-    if ( not _indiv.invalid() )
-      return;
-    
     ++nb_eval;
-    evaluator->evaluate( _indiv );
-    types::t_real quantity = objective( _indiv.object.quantities() );
+    evaluator.evaluate();
+    types::t_real quantity = objective( _indiv.quantities() );
     _indiv.set_fitness( quantity );
     (*store)( _indiv );
   }
 
-template<class T_EVALUATOR, class T_POPULATION = eoPop<typename T_EVALUATOR::T_INDIVIDUAL> >
-  virtual void Base<T_EVALUATOR, T_POPULATION> :: evaluate( t_Population &_pop )
+template<class T_EVALUATOR, class T_GATRAITS>
+  void Base<T_EVALUATOR,T_GATRAITS> :: evaluate( t_Population &_pop )
   {
     typename t_Population :: iterator i_indiv = _pop.begin();
     typename t_Population :: iterator i_end = _pop.end();
     for(; i_indiv != i_end; ++i_indiv )
     {
-      evaluator->init( _indiv );
+      if ( not i_indiv->invalid() ) continue;
+    
+      evaluator.init( *i_indiv );
       evaluate( *i_indiv );
     }
 
@@ -86,55 +92,50 @@ template<class T_EVALUATOR, class T_POPULATION = eoPop<typename T_EVALUATOR::T_I
   }
 
   // abstract base class for results and storage
-template<class T_EVALUATOR, class T_POPULATION = eoPop<typename T_EVALUATOR::T_INDIVIDUAL> >
-  class WithHistory : public Base<T_EVALUATOR, T_POPULATION>
+template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
+  class WithHistory : public Base<T_EVALUATOR,T_GATRAITS>
   {
     public:
       typedef T_EVALUATOR  t_Evaluator;
-      typedef T_POPULATION t_Population;
+      typedef T_GATRAITS   t_GA_Traits;
 
     private:
-      typedef typename Base<t_Evaluator, t_Population> t_Base;
-      typedef typename t_Evaluator :: t_Individual;
-      using t_Base :: t_Objective;
-      typedef History<t_Individual, std::list<t_Individual> > t_History;
-      typedef store :: Base t_Store;
+      typedef Base<t_Evaluator, t_GA_Traits> t_Base;
+      typedef typename t_GA_Traits :: t_Individual       t_Individual;
+      typedef typename t_GA_Traits :: t_IndivTraits      t_IndivTraits;
+      typedef typename t_GA_Traits :: t_QuantityTraits   t_QuantityTraits;
+      typedef typename t_QuantityTraits :: t_Quantity    t_Quantity;
+      typedef typename t_IndivTraits :: t_Population     t_Population;
+      typedef typename Objective :: Base< t_Quantity >   t_Objective;
+      typedef Store :: Base<t_Evaluator, t_GA_Traits>    t_Store;
+      typedef darwin::History<t_Individual> t_History;
 
     protected:
-      using Base<t_Evaluator, t_Population> :: evaluator;
-      using Base<t_Evaluator, t_Population> :: objective;
-      using Base<t_Evaluator, t_Population> :: store;
-      using Base<t_Evaluator, t_Population> :: nb_eval;
+      using t_Base :: evaluator;
+      using t_Base :: objective;
+      using t_Base :: store;
+      using t_Base :: nb_eval;
       t_History *history;
 
     public:
-      types::t_unsigned nb_eval;
-
-    public:
       WithHistory   ( t_Evaluator &_eval, t_Objective &_obj, t_Store &_store, t_History *_hist )
-           : Base(_eval, _obj, _store), history(_hist) {};
-      virtual ~Base() {};
+           : Base<t_Evaluator>(_eval, _obj, _store), history(_hist) {};
+      WithHistory   ( const WithHistory<t_Evaluator> &_c )
+                  : Base<t_Evaluator>( _c ), history(_c.history ) {}
+      virtual ~WithHistory() {};
 
-      void set_evaluator ( t_Evaluator *_e ) { evaluator = _e; }
-      
+    protected:
       virtual void evaluate( t_Individual &_indiv );
-#ifdef _MPI
+    public:
       virtual void evaluate( t_Population &_pop );
-#endif
   };
 
-template<class T_EVALUATOR, class T_POPULATION = eoPop<typename T_EVALUATOR::T_INDIVIDUAL> >
-  virtual void WithHistory<T_EVALUATOR, T_POPULATION> :: evaluate( t_Individual &_indiv )
+template<class T_EVALUATOR, class T_GATRAITS>
+  void WithHistory<T_EVALUATOR,T_GATRAITS> :: evaluate( t_Individual &_indiv )
   {
-    if ( not _indiv.invalid() )
-      return;
-    if ( history and history->clone( _indiv ) )
-      return;
-    
     ++nb_eval;
-    evaluator->init( _indiv );
-    evaluator->evaluate( _indiv );
-    types::t_real quantity = objective( _indiv.object.quantities() );
+    evaluator.evaluate();
+    types::t_real quantity = objective( _indiv.quantities() );
     _indiv.set_fitness( quantity );
 
     if( history ) 
@@ -142,15 +143,29 @@ template<class T_EVALUATOR, class T_POPULATION = eoPop<typename T_EVALUATOR::T_I
     (*store)( _indiv );
   }
 
-#ifdef _MPI
-template<class T_EVALUATOR, class T_POPULATION = eoPop<typename T_EVALUATOR::T_INDIVIDUAL> >
-  virtual void WithHistory<T_EVALUATOR, T_POPULATION> :: evaluate( t_Population &_pop )
+template<class T_EVALUATOR, class T_GATRAITS>
+  void WithHistory<T_EVALUATOR,T_GATRAITS> :: evaluate( t_Population &_pop )
   {
-    Base<t_Evaluator, t_Population> :: evaluate( _pop );
-    if ( history )
-      history->synchronize();
-  }
+    if ( not history )
+    {
+      Base<t_Evaluator>::evaluate( _pop );
+      return;
+    }
+
+    typename t_Population :: iterator i_indiv = _pop.begin();
+    typename t_Population :: iterator i_end = _pop.end();
+    for(; i_indiv != i_end; ++i_indiv )
+    {
+      if (    ( not i_indiv->invalid() ) 
+           or history->clone( *i_indiv ) ) continue;
+    
+      evaluator.init( *i_indiv );
+      evaluate( *i_indiv );
+    }
+#ifdef _MPI
+    history->synchronize();
 #endif
+  }
 
 } // namespace Evaluation
 

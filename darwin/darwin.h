@@ -21,23 +21,30 @@
 
 #include "checkpoints.h"
 #include "taboos.h"
-#include "results.h"
+#include "objective.h"
+#include "store.h"
+#include "evaluation.h"
 #include "breeder.h"
-#include "minimizergenop.h"
+#include "gatraits.h"
 
 namespace darwin
 {
-  template< class T_EVALUATOR >
+  template< class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
   class Darwin
   {    
     public:
       typedef T_EVALUATOR t_Evaluator;
+      typedef T_GATRAITS t_GA_Traits;
     private:
-      typedef typename t_Evaluator::t_Individual t_Individual;
-      typedef Darwin<t_Evaluator> t_Darwin;
-      typedef eoPop<t_Individual>  t_Population;
-      typedef std::list< t_Population > t_Islands;
-      typedef typename t_Individual :: t_Object t_Object;
+      typedef Darwin<t_Evaluator, t_GA_Traits> t_Darwin;
+      typedef typename t_GA_Traits :: t_Individual       t_Individual;
+      typedef typename t_GA_Traits :: t_QuantityTraits   t_QuantityTraits;
+      typedef typename t_GA_Traits :: t_IndivTraits      t_IndivTraits;
+      typedef typename t_IndivTraits :: t_Object         t_Object;
+      typedef typename t_IndivTraits :: t_Population     t_Population;
+      typedef typename t_IndivTraits :: t_Islands        t_Islands;
+      typedef typename t_QuantityTraits :: t_ScalarQuantity   t_ScalarQuantity;
+      typedef typename t_QuantityTraits :: t_Container        t_ObjectiveContainer;
 
     protected:
       const static types::t_unsigned SAVE_RESULTS;
@@ -59,19 +66,19 @@ namespace darwin
       bool do_print_each_call;
       enum { RANDOM_POPULATE, PARTITION_POPULATE } populate_style;
 
-      IslandsContinuator<t_Individual>*                continuator;
-      History<t_Individual, std::list<t_Individual> >* history;
-      Taboo_Base<t_Individual>*                        taboos;
-      eoGenOp<t_Individual>*                           breeder_ops;
-      Breeder<t_Individual>*                           breeder;
-      eoReplacement<t_Individual>*                     replacement;
-      objective::Base<t_Evaluator>*                    objective;
-      Store::Base<t_Evaluator>*                        store;
-      Evaluation::WithHistory<t_Individual>*           evaluation;
+      IslandsContinuator<t_Individual,t_IndivTraits>*          continuator;
+      History<t_Individual>*                                   history;
+      Taboo_Base<t_Individual>*                                taboos;
+      eoGenOp<t_Individual>*                                   breeder_ops;
+      Breeder<t_Individual, t_IndivTraits>*                    breeder;
+      eoReplacement<t_Individual>*                             replacement;
+      Objective::Base<t_ScalarQuantity, t_ObjectiveContainer>* objective;
+      Store::Base<t_Evaluator, t_GA_Traits>*                   store;
+      Evaluation::Base<t_Evaluator, t_GA_Traits>*              evaluation;
 
-      t_Evaluator                                      evaluator;
-      t_Islands                                        islands;
-      t_Population                                     offsprings;
+      t_Evaluator   evaluator;
+      t_Islands     islands;
+      t_Population  offsprings;
       
       eoState eostates;
 
@@ -101,22 +108,25 @@ namespace darwin
       eoGenOp<t_Individual>* make_genetic_op( const TiXmlElement &el,
                                               eoGenOp<t_Individual> *current_op = NULL);
       void make_breeder();
-      eoReplacement<T_INDIVIDUAL>* make_replacement();
+      eoReplacement<t_Individual>* make_replacement();
 
       void populate ();
 #ifdef _MPI
       bool broadcast_islands( mpi::BroadCast &_bc );
+      void LoadAllInputFiles(std::string &_input, 
+                             std::string &_restart, 
+                             std::string &_evaluator );
 #endif
       void random_populate ( t_Population &_pop, types::t_unsigned _size);
       void partition_populate ( t_Population &_pop, types::t_unsigned _size);
   };
 
-  template< class T_INDIVIDUAL, class T_EVALUATOR >
-    const types::t_unsigned Darwin<T_INDIVIDUAL, T_EVALUATOR> :: SAVE_RESULTS    = 1;
-  template< class T_INDIVIDUAL, class T_EVALUATOR >
-    const types::t_unsigned Darwin<T_INDIVIDUAL, T_EVALUATOR> :: SAVE_POPULATION = 2;
-  template< class T_INDIVIDUAL, class T_EVALUATOR >
-    const types::t_unsigned Darwin<T_INDIVIDUAL, T_EVALUATOR> :: SAVE_HISTORY     = 4;
+  template< class T_EVALUATOR, class T_GATRAITS >
+    const types::t_unsigned Darwin<T_EVALUATOR,T_GATRAITS> :: SAVE_RESULTS    = 1;
+  template< class T_EVALUATOR, class T_GATRAITS >
+    const types::t_unsigned Darwin<T_EVALUATOR, T_GATRAITS> :: SAVE_POPULATION = 2;
+  template< class T_EVALUATOR, class T_GATRAITS >
+    const types::t_unsigned Darwin<T_EVALUATOR, T_GATRAITS> :: SAVE_HISTORY     = 4;
 
 } // namespace darwin
 

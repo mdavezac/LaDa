@@ -19,16 +19,18 @@ namespace BandGap
 {
   bool Evaluator :: Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type )
   {
-    _node.Attribute("CBM", &_indiv.CBM);
-    _node.Attribute("VBM", &_indiv.VBM);
-    _indiv.quantity = _indiv.VBM - _indiv.CBM; 
+    t_Object &object = _indiv.Object();
+    _node.Attribute("CBM", &object.CBM);
+    _node.Attribute("VBM", &object.VBM);
+    _indiv.quantities() = object.VBM - object.CBM; 
 
     return t_Base::Load( _indiv, _node, _type );
   }
-  bool Evaluator :: Save( const Object &_obj, TiXmlElement &_node, bool _type ) const
+  bool Evaluator :: Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const
   {
-    _node.SetDoubleAttribute("CBM", (double) _indiv.CBM);
-    _node.SetDoubleAttribute("VBM", (double) _indiv.VBM);
+    const t_Object &object = _indiv.Object();
+    _node.SetDoubleAttribute("CBM", (double) object.CBM);
+    _node.SetDoubleAttribute("VBM", (double) object.VBM);
 
     return t_Base::Save( _indiv, _node, _type );
   }
@@ -69,7 +71,7 @@ namespace BandGap
 
     if (     _node.FirstChildElement("Filenames") 
          and _node.FirstChildElement("Filenames")->Attribute("BandEdge") )
-      functional.set_filename( _node.FirstChildElement("Filenames")->Attribute("BandEdge") );
+      references_filename = _node.FirstChildElement("Filenames")->Attribute("BandEdge");
 
     return true;
   }
@@ -77,12 +79,14 @@ namespace BandGap
   void Evaluator::init( t_Individual &_indiv )
   {
     current_individual = _indiv;
-    current_object = (Object&) _indiv;
-    structure << current_object
-    functional.set_variables( &current_object.bitstring );
+    current_object = _indiv.Object();
+    vff.set_variables( &current_object.bitstring );
   }
   void Evaluator::evaluate()
   {
+    // sets structure to this object 
+    structure << current_object;
+
     // first minimizes strain
     std::ostringstream sstr; sstr << "escan" << nbeval; 
     ++nbeval;
@@ -99,7 +103,7 @@ namespace BandGap
 
     // copies band edges into object
     types::t_real vbm, cbm;
-    functional.get_bands( vbm, cbm );
+    get_bands( vbm, cbm );
     current_object.VBM = vbm;
     current_object.CBM = cbm;
 

@@ -83,7 +83,7 @@ namespace TwoSites
 namespace mpi
 {
   template<>
-  bool mpi::BroadCast::serialize<BandGap::Object>( BandGap::Object & _object )
+  bool mpi::BroadCast::serialize<TwoSites::Object>( TwoSites::Object & _object )
   {
     return serialize( _object.bitstring );
   }

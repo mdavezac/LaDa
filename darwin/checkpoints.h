@@ -22,16 +22,16 @@
 #include "operators.h"
 #include "gencount.h"
 #include "print_xmgrace.h"
-#include "results.h"
 
 namespace darwin
 {
-  template< class T_INDIVIDUAL, class T_POPULATION = eoPop<T_INDIVIDUAL> >
+  template< class T_INDIVIDUAL>
   class PrintFitness : public eoStatBase<T_INDIVIDUAL> 
   {
-    protected:
+    public:
       typedef T_INDIVIDUAL t_Individual;
-      typedef T_POPULATION t_Population;
+    protected:
+      typedef eoPop<t_Individual> t_Population;
 
     protected:
       GenCount &age;
@@ -54,7 +54,7 @@ namespace darwin
             std::ostringstream sstr; 
             sstr << "Offspring: " << std::setw(12) << std::setprecision(7)
                  << i_pop->get_concentration() << " "
-                 << i_pop->get_quantity();
+                 << i_pop->fitness();
             std::string str = sstr.str();
             printxmg.add_comment( str );
           }
@@ -70,12 +70,13 @@ namespace darwin
 
   // checks for taboo unconvergence from a breeder, 
   // response. If response does not get through 
-  template< class T_INDIVIDUAL, class T_POPULATION = eoPop<T_INDIVIDUAL> >
+  template< class T_INDIVIDUAL>
   class NuclearWinter : public eoStatBase<T_INDIVIDUAL>
   {
-    protected:
+    public:
       typedef T_INDIVIDUAL t_Individual;
-      typedef T_POPULATION t_Population;
+    protected:
+      typedef eoPop<t_Individual> t_Population;
 
     protected:
       Taboo_Base<t_Individual> &taboo;
@@ -160,12 +161,13 @@ namespace darwin
 
   };
 
-  template< class T_INDIVIDUAL, class T_POPULATION = eoPop<T_INDIVIDUAL> >
+  template< class T_INDIVIDUAL>
   class UpdateAgeTaboo : public eoStatBase<T_INDIVIDUAL> 
   {
-    protected:
+    public:
       typedef T_INDIVIDUAL t_Individual;
-      typedef T_POPULATION t_Population;
+    protected:
+      typedef eoPop<t_Individual> t_Population;
 
     protected:
       Taboo< t_Individual, std::list<t_Individual> > & taboo;
@@ -184,7 +186,7 @@ namespace darwin
         if ( check_every == 0 )
           check_every = 1;
       };
-      UpdateAgeTaboo  ( const UpdateAgeTaboo<t_Individual, t_Population> & _update )
+      UpdateAgeTaboo  ( const UpdateAgeTaboo<t_Individual> & _update )
                      : taboo(_update.taboo), age(_update.age), 
                        max_age(_update.max_age), check_every( _update.check_every ),
                        do_print_out(_update.do_print_out) {};
@@ -223,26 +225,28 @@ namespace darwin
   };
 
   // when binop( ref, term ), terminates GA
-  template< class t_Value, class t_Binop, class T_INDIVIDUAL,
-            class T_POPULATION = eoPop<T_INDIVIDUAL> >
+  template< class T_VALUE, class T_BINOP, class T_INDIVIDUAL>
   class Terminator : public eoContinue<T_INDIVIDUAL>
   {
-    protected:
+    public:
+      typedef T_VALUE t_Value;
+      typedef T_BINOP t_BinOp;
       typedef T_INDIVIDUAL t_Individual;
-      typedef T_POPULATION t_Population;
+    protected:
+      typedef eoPop<t_Individual> t_Population;
 
     protected:
       t_Value &ref;
       t_Value term;
-      t_Binop binop;
+      t_BinOp binop;
       std::string type;
 
     public:
-      Terminator   ( t_Value &_ref, t_Value _term, t_Binop _op, 
+      Terminator   ( t_Value &_ref, t_Value _term, t_BinOp _op, 
                      std::string _type)
                  : ref(_ref), term(_term), binop(_op),
                    type(_type) {}
-      Terminator   ( const Terminator< t_Value, t_Binop, t_Individual, t_Population> & _copy)
+      Terminator   ( const Terminator< t_Value, t_BinOp, t_Individual> & _copy)
                  : ref(_copy.ref), term(_copy.term), binop(_copy.op), 
                    type(_copy.type) {}
       virtual ~Terminator() {}
@@ -269,22 +273,23 @@ namespace darwin
   };
 
   // island continuator. Takes two population iterators and goes through them
-  template<class T_INDIVIDUAL, class T_POPULATION = eoPop<T_INDIVIDUAL>,
-           class T_ISLANDS = std::list< T_POPULATION > > 
+  template<class T_INDIVIDUAL, class T_INDIVTRAITS = Traits::Indiv<T_INDIVIDUAL> > 
   class IslandsContinuator : public eoContinue<T_INDIVIDUAL>
   {
     public:
       typedef T_INDIVIDUAL t_Individual;
-      typedef T_POPULATION t_Population;
-      typedef T_ISLANDS t_Islands;
+      typedef T_INDIVTRAITS t_IndivTraits;
+    protected:
+      typedef typename t_IndivTraits :: t_Population t_Population;
+      typedef typename t_IndivTraits :: t_Islands t_Islands;
       typedef typename t_Islands :: iterator iterator;
       typedef typename t_Islands :: const_iterator const_iterator;
     protected:
       std::list < eoContinue<t_Individual>* >       continuators;
       std::list < eoSortedStatBase<t_Individual>* > sorted;
       std::list < eoStatBase<t_Individual>* >       stats;
-      std::list < eoMonitor* >                  monitors;
-      std::list < eoUpdater* >                  updaters;
+      std::list < eoMonitor* >                      monitors;
+      std::list < eoUpdater* >                      updaters;
       GenCount generation_counter;
       types::t_unsigned  max_generations;
       std::string stop_filename;
