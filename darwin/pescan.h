@@ -34,6 +34,8 @@ namespace BandGap
 
   struct Object : public TwoSites::Object
   {
+    typedef TwoSites::Object :: t_Container t_Container;
+    typedef types::t_real t_Quantity;
 #ifdef _MPI
     friend bool mpi::BroadCast::serialize<BandGap::Object>(BandGap::Object &);
 #endif
@@ -43,17 +45,15 @@ namespace BandGap
     Object(const Object &_c) : TwoSites::Object(_c), CBM(_c.CBM), VBM(_c.VBM) {};
     ~Object() {};
     
+    t_Container& Container() { return bitstring; }
+    const t_Container& Container() const { return bitstring; }
   };
 
 
-  class Evaluator : public TwoSites::Evaluator< Individual::Types<Object>::Single >
+  class Evaluator : public TwoSites::Evaluator< Individual::Types<Object>::Scalar >
   {
-#ifdef _MPI
-    friend bool mpi::BroadCast::serialize<BandGap::Evaluator>( BandGap::Evaluator & );
-#endif
     public:
-      typedef types::t_real t_Quantity;
-      typedef Individual::Types<Object>::Single t_Individual;
+      typedef Individual::Types<Object>::Scalar t_Individual;
     protected:
       typedef TwoSites::Evaluator< t_Individual > t_Base;
       typedef Ising_CE::Structure::t_kAtoms t_kvecs;
@@ -105,5 +105,18 @@ namespace BandGap
 
 
 } // namespace BandGap
+
+#ifdef _MPI
+namespace mpi
+{
+  template<>
+  inline bool mpi::BroadCast::serialize<BandGap::Object>( BandGap::Object & _object )
+  {
+    if( not serialize( _object.CBM ) ) return false;
+    if( not serialize( _object.VBM ) ) return false;
+    return serialize< TwoSites::Object >( _object );
+  }
+}
+#endif
 
 #endif // _PESCAN_H_

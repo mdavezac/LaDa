@@ -54,8 +54,10 @@ namespace TwoSites
     }
   }
 
-  template<class T_INDIVIDUAL>
-  bool Evaluator<T_INDIVIDUAL> :: Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type )
+  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
+  bool Evaluator<T_INDIVIDUAL, T_INDIV_TRAITS> :: Load( t_Individual &_indiv,
+                                                        const TiXmlElement &_node,
+                                                        bool _type )
   {
     if ( _type == darwin::LOADSAVE_SHORT )
     {
@@ -72,8 +74,10 @@ namespace TwoSites
     return true;
   }
 
-  template<class T_INDIVIDUAL>
-  bool Evaluator<T_INDIVIDUAL> :: Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const
+  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
+  bool Evaluator<T_INDIVIDUAL, T_INDIV_TRAITS> :: Save( const t_Individual &_indiv, 
+                                                        TiXmlElement &_node, 
+                                                        bool _type ) const
   {
     if ( _type == darwin::LOADSAVE_SHORT )
     {
@@ -96,8 +100,8 @@ namespace TwoSites
   //  a normalization procedure is applied which takes into account:
   //  (i) that this ga run is at set concentration (x =x0, y=y0)
   //  (ii) that x and y are only constrained by load-balancing
-  template<class T_INDIVIDUAL>
-  void Evaluator<T_INDIVIDUAL> :: set_concentration( Ising_CE::Structure &_str )
+  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
+  void Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: set_concentration( Ising_CE::Structure &_str )
   {
     types::t_unsigned N = (types::t_int) _str.atoms.size(); N = N>>1;
     types::t_complex  *hold = new types::t_complex[ N ];
@@ -163,9 +167,10 @@ namespace TwoSites
   // Takes an "unphysical" individual and set normalizes its sites _sites to +/-1,
   // after flipping the _tochange spins closest to zero.
   // ie sets the concentration
-  template<class T_INDIVIDUAL>
-  void Evaluator<T_INDIVIDUAL> :: normalize( Ising_CE::Structure &_str, 
-                                             const types::t_int _site, types::t_real _tochange) 
+  template<class T_INDIVIDUAL,class T_INDIV_TRAITS>
+  void Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: normalize( Ising_CE::Structure &_str, 
+                                                            const types::t_int _site, 
+                                                            types::t_real _tochange) 
   {
     Ising_CE::Structure::t_Atoms::iterator i_end = _str.atoms.end();
     Ising_CE::Structure::t_Atoms::iterator i_which;
@@ -237,8 +242,8 @@ endofloop:
 #endif
   }
 
-  template<class T_INDIVIDUAL>
-  bool Evaluator<T_INDIVIDUAL> :: Load( const TiXmlElement &_node )
+  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
+  bool Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: Load( const TiXmlElement &_node )
   {
     if ( not lattice.Load( _node ) )
     {
@@ -270,8 +275,9 @@ endofloop:
     return true;
   }
 
-  template<class T_INDIVIDUAL>
-  bool Evaluator<T_INDIVIDUAL> :: Crossover ( t_Individual &_indiv1, const t_Individual &_indiv2 )
+  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
+  bool Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: Crossover ( t_Individual &_indiv1,
+                                                             const t_Individual &_indiv2 )
   {
     t_Object &obj1 = _indiv1;
     const t_Object &obj2 = _indiv2;
@@ -282,16 +288,16 @@ endofloop:
       if ( rng.flip(crossover_probability) ) 
         *i_var1 = *i_var2;
     structure << obj1;
-    Evaluator<t_Individual>::set_concentration( structure );
+    t_This::set_concentration( structure );
     obj1 << structure;
     return true;
   }
 
   // expects kspace value to exist!!
-  template<class T_INDIVIDUAL>
-  bool Evaluator<T_INDIVIDUAL> :: Krossover( t_Individual  &_offspring,
-                                             const t_Individual &_parent,
-                                             bool _range )
+  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
+  bool Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: Krossover( t_Individual  &_offspring,
+                                                            const t_Individual &_parent,
+                                                            bool _range )
   {
     t_Object &offspring  = _offspring;
     const t_Object &parent  = _parent;
@@ -318,14 +324,14 @@ endofloop:
           i_o->type = i_p->type;
     }
   
-    Evaluator<t_Individual>::set_concentration( str1 );
+    t_This::set_concentration( str1 );
     offspring << str1;
 
     return true; // offspring has changed!
   }
 
-  template<class T_INDIVIDUAL>
-  eoGenOp<T_INDIVIDUAL>* Evaluator<T_INDIVIDUAL> :: LoadGaOp(const TiXmlElement &_el )
+  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
+  eoGenOp<T_INDIVIDUAL>* Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: LoadGaOp(const TiXmlElement &_el )
   {
     std::string value = _el.Value();
 
@@ -338,7 +344,7 @@ endofloop:
       sstr << "Crossover rate = " << crossover_probability;
       darwin::printxmg.add_comment(sstr.str());
       // pointer is owned by caller !!
-      return darwin::new_genop( *this, &Evaluator<t_Individual>::Crossover, std::string( "Crossover" ) );
+      return darwin::new_genop( *this, &t_This::Crossover, std::string( "Crossover" ) );
     }
     else if ( value.compare( "Krossover" ) == 0 )
     {
@@ -356,15 +362,15 @@ endofloop:
           { att = true; darwin::printxmg.add_to_last( ", Range = true" ); }
       }
       // pointer is owned by caller !!
-      return darwin::new_genop( *this, &Evaluator<t_Individual>::Krossover, 
+      return darwin::new_genop( *this, &t_This::Krossover, 
                                 std::string( "Krossover" ), att);
     }
 
     return NULL;
   }
 
-  template<class T_INDIVIDUAL>
-  bool Evaluator<T_INDIVIDUAL> :: Taboo(const t_Individual &_indiv )
+  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
+  bool Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: Taboo(const t_Individual &_indiv )
   {
     if ( x_vs_y.is_singlec() )
       return false;
@@ -373,9 +379,9 @@ endofloop:
     return x > lessthan or x < morethan; // if true, _object is taboo
   }
   
-  template<class T_INDIVIDUAL>
+  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
   darwin::Taboo_Base< T_INDIVIDUAL >* 
-       Evaluator<T_INDIVIDUAL> :: LoadTaboo(const TiXmlElement &_el )
+       Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: LoadTaboo(const TiXmlElement &_el )
   {
     if ( x_vs_y.is_singlec() )
       return NULL;
@@ -397,12 +403,12 @@ endofloop:
          << ", "  << 0.5*(lessthan+1.0) << "] ";
     darwin::printxmg.add_comment(sstr.str());
     // pointer is owned by caller !!
-    return new darwin::TabooFunction< Evaluator<t_Individual> >
-                                    ( *this, &Evaluator<t_Individual>::Taboo, "Taboo" );
+    return new darwin::TabooFunction< t_This >
+                                    ( *this, &t_This::Taboo, "Taboo" );
   }
 
-  template<class T_INDIVIDUAL>
-  bool Evaluator<T_INDIVIDUAL>::initialize( t_Object &_object )
+  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
+  bool Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS>::initialize( t_Object &_object )
   {
     _object.bitstring.clear(); 
     Ising_CE::Structure::t_Atoms :: const_iterator i_atom = structure.atoms.begin();
@@ -452,8 +458,8 @@ endofloop:
     return true;
   }
 
-  template<class T_INDIVIDUAL>
-  void Evaluator<T_INDIVIDUAL> :: get_xy_concentrations( const Ising_CE::Structure &_str)
+  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
+  void Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: get_xy_concentrations( const Ising_CE::Structure &_str)
   {
     Ising_CE::Structure::t_Atoms :: const_iterator i_atom = structure.atoms.begin();
     Ising_CE::Structure::t_Atoms :: const_iterator i_atom_end = structure.atoms.end();
@@ -465,8 +471,8 @@ endofloop:
     y /= (types::t_real) Ny;
   }
 
-  template<class T_INDIVIDUAL>
-  bool Evaluator<T_INDIVIDUAL> :: consistency_check()
+  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
+  bool Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: consistency_check()
   {
     Ising_CE::Structure::t_Atoms :: iterator i_atom = structure.atoms.begin();
     Ising_CE::Structure::t_Atoms :: iterator i_atom_end = structure.atoms.end();

@@ -19,7 +19,9 @@
 #include "mpi/mpi_object.h"
 #endif
 
-namespace ch
+namespace opt
+{
+namespace ConvexHull
 {
   template <class T_OBJECT>
   struct Vertex  // breaking point
@@ -373,6 +375,7 @@ namespace ch
     return i_which->a;
   }
 
-} // namespace ch
+} // namespace ConvexHull
+}
 
 #endif //  _CONVEX_HULL_BASE_H_

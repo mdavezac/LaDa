@@ -193,8 +193,8 @@ namespace Individual
   template<class T_OBJECT>
     struct Types
     {
-      typedef Base<T_OBJECT, types::t_real> Single; 
-      typedef Base<T_OBJECT, std::vector<types::t_real> > Multi; 
+      typedef Base<T_OBJECT, types::t_real> Scalar; 
+      typedef Base<T_OBJECT, std::vector<types::t_real> > Vector; 
     };
 
 } // endif MultiObj

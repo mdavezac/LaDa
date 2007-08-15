@@ -12,6 +12,7 @@
 #include "print_xmgrace.h"
 #include "functors.h"
 #include "statistics.h"
+#include "minimizergenop.h"
 
 namespace darwin
 {
@@ -127,15 +128,15 @@ namespace darwin
   {
     // checks if there are more than one taboo list
     const TiXmlElement *child = _parent.FirstChildElement("Objective");
-    objective = Objective :: new_from_xml( *child );
+    objective = Objective :: Types<t_Individual, t_IndivTraits> :: new_from_xml( *child );
     if( not objective )
       throw std::runtime_error( "Could not Create Objective from input!!\n" );
 
     child = _parent.FirstChildElement("Store");
     if ( child and child->Attribute("delta") )
-      store = new typename Store::FromObjective<t_Evaluator>::auto_template( evaluator, *child );
+      store = new typename Store::Type<t_Evaluator>::FromObjective( evaluator, *child );
     if ( not store )
-      store = new typename Store::Optima<t_Evaluator>::auto_template( evaluator, *child );
+      store = new typename Store::Type<t_Evaluator>::Optima( evaluator, *child );
 
     if( history )
       evaluation = new Evaluation::WithHistory<t_Evaluator>( evaluator, *objective, *store, history );
@@ -531,6 +532,24 @@ namespace darwin
         this_op = new mem_monop_t<t_Evaluator>
                          ( evaluator, &t_Evaluator::initialize, std::string( "UtterRandom" ) );
         eostates.storeFunctor( static_cast< TabooOp<t_Individual> *>(this_op) );
+      }
+      else if ( str.compare("Minimizer") == 0 )
+      {
+        Minimizer_Functional<t_Evaluator, t_GA_Traits> *func = 
+          new Minimizer_Functional<t_Evaluator, t_GA_Traits>( *evaluation, *taboos ); 
+        if ( not func )
+          throw std::runtime_error( "Memory Allocation Error");
+        MinimizerGenOp<t_Evaluator, t_GA_Traits> *mingenop
+            = new MinimizerGenOp<t_Evaluator, t_GA_Traits>( *func );
+        if ( not mingenop )
+          { delete func; this_op = NULL; }
+        else if ( not mingenop->Load( *sibling ) )
+          { delete mingenop; delete func; this_op = NULL; }
+        else
+        {
+          eostates.storeFunctor( mingenop );
+          this_op = mingenop;
+        }
       }
       else if ( str.compare("Operators") == 0 )
       {

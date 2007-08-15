@@ -6,6 +6,7 @@
 #endif
 
 #include <string>
+#include <algorithm>
 
 #include <eo/eoGenOp.h>
 
@@ -25,12 +26,18 @@ namespace darwin
       typedef T_INDIVIDUAL   t_Individual;
       typedef T_INDIV_TRAITS t_IndivTraits;
     protected:
-      typedef typename t_IndivTraits :: t_Object         t_Object;
-      typedef typename t_IndivTraits :: t_Population     t_Population;
+      typedef typename t_IndivTraits :: t_Object            t_Object;
+      typedef typename t_IndivTraits :: t_Population        t_Population;
+      typedef typename t_IndivTraits :: t_QuantityTraits    t_QuantityTraits;
+      typedef typename t_QuantityTraits :: t_Quantity       t_Quantity;
+      typedef typename t_QuantityTraits :: t_ScalarQuantity t_ScalarQuantity;
+      typedef typename t_IndivTraits :: t_VA_Traits         t_VATraits;
+      typedef typename t_VATraits :: t_QuantityGradients    t_QuantityGradients;
+      typedef typename t_VATraits :: t_Type                 t_VA_Type;
 
     protected:
-      t_Individual current_individual;
-      t_Object current_object;
+      t_Individual *current_individual;
+      t_Object *current_object;
 
     public:
       Evaluator() {};
@@ -61,31 +68,45 @@ namespace darwin
       // internal stuff as the former. You need both only if the
       // ga object and the user-expected result object are different (say
       // bitstring versus a decorated lattice structure )
-      virtual bool Load ( t_Individual &_indiv, const TiXmlElement &_node, bool _type ) = 0;
-      virtual bool Save ( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const = 0;
+      bool Load ( t_Individual &_indiv, const TiXmlElement &_node, bool _type ) {return true;};
+      bool Save ( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const {return true;};
       // attributes from <GA > tag in input.xml are passed to this
       // function from Darwin::Load(...)
-      virtual void LoadAttribute ( const TiXmlAttribute &_att ) = 0;
+      void LoadAttribute ( const TiXmlAttribute &_att ) {};
       // returns a pointer to an eoOp object
       // pointer is owned by darwin::Darwin::eostates !!
       // don't deallocate yourself
-      virtual eoGenOp<t_Individual>* LoadGaOp(const TiXmlElement &_el ) = 0;
+      eoGenOp<t_Individual>* LoadGaOp(const TiXmlElement &_el ) { return NULL; };
       // returns a pointer to a eoF<bool> object
       // pointer is owned by darwin::Darwin::eostates !!
       // don't deallocate yourself
-      virtual eoF<bool>* LoadContinue(const TiXmlElement &_el ) { return NULL; }
+      eoF<bool>* LoadContinue(const TiXmlElement &_el ) { return NULL; }
       // returns a pointer to a eoMonOp<const t_Individual> object
       // pointer is owned by darwin::Darwin::eostates !!
       // don't deallocate yourself
-      virtual darwin::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el ) { return NULL; }
+      darwin::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el ) { return NULL; }
       // Initializes object before call to functional 
       // i.e. transforms t_Individual format to
       // function::Function<...>::variables format if necessary
-      virtual bool initialize( t_Individual &_indiv ) = 0;
+      bool initialize( t_Individual &_indiv ) {return false; };
       // Called before objective function is evaluated
       // must return a void pointer to functional
-      virtual void init( t_Individual &_indiv ) = 0;
-      virtual void evaluate() = 0;
+      void init( t_Individual &_indiv )
+      {
+        current_individual = &_indiv;
+        current_object     = &_indiv.Object();
+      };
+      void evaluate() {};
+      // Override the next three functions only if VA Minimization is implemented
+      void evaluate_gradient( t_QuantityGradients& _grad )
+        { Traits::zero_out( _grad ); }
+      void evaluate_with_gradient( t_QuantityGradients& _grad )
+      {
+        evaluate_gradient( _grad );
+        evaluate();
+      }
+      void evaluate_one_gradient( t_QuantityGradients& _grad, types::t_unsigned _pos) 
+        { Traits :: zero_out( _grad[_pos] ); }
   };
 
 }

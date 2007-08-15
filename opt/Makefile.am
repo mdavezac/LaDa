@@ -10,3 +10,4 @@ nobase_libopt_la_HEADERS = bisection.h ndim_iterator.h opt_minimize_base.h opt_m
 			   opt_minimize.h opt_minimize_wang.h va_minimizer.h fitness_function.h \
 			   opt_functors.h opt_minimize_linear.h opt_monome.h
 libopt_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
+

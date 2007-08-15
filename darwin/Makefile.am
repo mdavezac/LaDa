@@ -2,14 +2,14 @@ if DOPESCAN
   PDARWIN=pdarwin
 endif
 if DOCE
-  CEDARWIN= #cedarwin
+  CEDARWIN= cedarwin
 endif
 bin_PROGRAMS = $(CEDARWIN) $(PDARWIN)
 AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ @MPICH_CFLAGS@ @EO_CFLAGS@
 AM_LDFLAGS = @TINYXML_LIBS@ @EO_LIBS@
-cedarwin_SOURCES = main.cc ce.cc
+cedarwin_SOURCES = main.cc ce.cc single_site.cc
 cedarwindir = darwin
-nobase_cedarwin_HEADERS = ce.h
+nobase_cedarwin_HEADERS = ce.h single_site.impl.h single_site.h
 cedarwin_CPPFLAGS =  -D _CE $(AM_CPPFLAGS) -I .. @GSL_INCLUDE@ 
 cedarwin_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIB@ @MPICH_LIBS@
 cedarwin_LDADD = libdarwin.la ../lamarck/liblamarck.la ../atat/libatat.la @MPI_ADDLIB@
@@ -23,11 +23,11 @@ pdarwin_LDADD = libdarwin.la ../lamarck/liblamarck.la ../atat/libatat.la ../vff/
 	       	../pescan_interface/libpescan.la ../physics/libphysics.la @MPI_ADDLIB@
 noinst_LTLIBRARIES = libdarwin.la
 libdarwin_ladir = darwin
-libdarwin_la_SOURCES = concentration.cc print_xmgrace.cc objective.cc
+libdarwin_la_SOURCES = concentration.cc print_xmgrace.cc objective.cc 
 nobase_libdarwin_la_HEADERS = breeder.h concentration.h evaluation.h functors.h loadsave.h operators.h \
 	                      statistics.h darwin.h gencount.h store.h \
 			      checkpoints.h darwin.impl.h evaluator.h individual.h objective.h \
-			      print_xmgrace.h taboos.h
+			      print_xmgrace.h taboos.h gatraits.h 
 libopt_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 

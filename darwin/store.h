@@ -136,6 +136,8 @@ namespace Store
         darwin::LoadObject<t_Evaluator> loadop( evaluator, &t_Evaluator::Load,
                                                 darwin::LOADSAVE_LONG);
         darwin::LoadIndividuals( *xmlresults, loadop, results );
+        // This particular line acts as Restart for condition if necessary
+        std::remove_if(results.begin(), results.end(), condition); 
         std::ostringstream sstr;
         sstr << "Reloaded Optimum ";
         sstr << " and " << results.size() << " target results";
@@ -218,7 +220,7 @@ namespace Store
 
   namespace Condition
   {
-    // Condition checks objective 
+    // Condition checks fitness only
     template< class T_INDIVIDUAL, class T_INDIV_TRAITS = Traits::Indiv<T_INDIVIDUAL> >
     class BaseOptima 
     {
@@ -231,6 +233,7 @@ namespace Store
 
       public:
         BaseOptima   ( const TiXmlElement &_node ) {};
+        BaseOptima   ( const BaseOptima &_c ) : optimum(_c.optimum) {};
         ~BaseOptima() {};
 
         template< class T_OP > bool Restart( const TiXmlElement &_node, T_OP & _op)
@@ -270,30 +273,26 @@ namespace Store
 
       protected:
         using t_Base :: optimum;
-        ::Objective::Base<t_ScalarQuantity> *objective;
-        types::t_unsigned n;
+        typename Objective::Types<t_Individual, t_IndivTraits> :: Vector *objective;
         types::t_real val;
         types::t_real end_val;
         types::t_real delta;
 
       public:
+        FromObjective   () : objective(NULL) {}
         FromObjective   ( const TiXmlElement &_node ) 
-                      : t_Base(_node), objective(NULL), n(0), 
+                      : t_Base(_node), objective(NULL),
                         val(0), end_val(0), delta(0)
         {
           std::string obj_type;
-          int i = 0; double d=0;
-          if ( _node.Attribute("n") )
-            _node.Attribute("n", &i);
-          n = (types::t_unsigned ) std::abs(i);
+          double d=0;
           if ( _node.Attribute("delta") )
             _node.Attribute("delta", &d);
           delta = (types::t_real) std::abs(d);
 
-          objective = Objective::new_from_xml( _node );
+          objective = Objective::Types<t_Individual, t_IndivTraits> :: new_from_xml( _node );
           if ( not objective )
             throw std::runtime_error("Could not Load objective from input in conditional store\n"); 
-
         }
         ~FromObjective()  { if ( objective ) delete objective; }
 
@@ -302,11 +301,11 @@ namespace Store
           if ( optimum.invalid() )
           {
             optimum = _indiv;
-            val = (*objective)( optimum.quantities(n) );
+            val = (*objective)( optimum.quantities() );
             end_val = val + delta;
             return false;
           }
-          types::t_real indiv_val = (*objective)(_indiv.quantities(n));
+          types::t_real indiv_val = (*objective)(_indiv.quantities());
           if ( indiv_val < val )
           {
             optimum = _indiv;
@@ -315,7 +314,7 @@ namespace Store
             return false;
           }
 
-          return indiv_val >= end_val; 
+          return indiv_val > end_val; 
         }
     };
 
@@ -350,20 +349,16 @@ namespace Store
   } // namespace Condition
 
   template<class T_EVALUATOR, class T_GA_TRAITS = Traits::GA<T_EVALUATOR> >
-    struct Optima
+    struct Type
     {
       typedef Store::Conditional< T_EVALUATOR,
                                   Store::Condition::Optima< typename T_GA_TRAITS :: t_Individual,
                                                             typename T_GA_TRAITS :: t_IndivTraits>,
-                                  T_GA_TRAITS > auto_template;
-    };
-  template<class T_EVALUATOR, class T_GA_TRAITS = Traits::GA<T_EVALUATOR> >
-    struct FromObjective
-    {
+                                  T_GA_TRAITS > Optima;
       typedef Store::Conditional< T_EVALUATOR,
                                   Store::Condition::FromObjective< typename T_GA_TRAITS :: t_Individual,
                                                                    typename T_GA_TRAITS :: t_IndivTraits>,
-                                  T_GA_TRAITS >  auto_template;
+                                  T_GA_TRAITS >  FromObjective;
     };
 } // namespace Store
 

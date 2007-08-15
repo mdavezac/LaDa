@@ -3,28 +3,6 @@
 std::ostream & operator<<( std::ostream &_os, darwin::Fitness &_fit )
   {  return _os << (types::t_real ) _fit; }
 
-namespace Objective
-{
-  Single *new_from_xml( const TiXmlElement &_node )
-  {
-    std::string str = "minimize"; 
-    if ( _node.Attribute( "objective" ) )
-      str = _node.Attribute( "objective" );
-    else if ( _node.Attribute( "type" ) )
-      str = _node.Attribute( "type" );
-    if ( str.compare("minimize") == 0 )
-      return new Minimize;
-    else if ( str.compare("maximize") == 0 )
-      return new Maximize;
-    else if ( not str.compare("target") == 0 )
-      return false;
-    if( not _node.Attribute("target") )
-      return false;
-    
-    double d; _node.Attribute("target", &d );
-    return new Target( (types::t_real) d );
-  }
-}
 
 namespace darwin
 {

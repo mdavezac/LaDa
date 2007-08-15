@@ -14,17 +14,14 @@
 
 #include <tinyxml/tinyxml.h>
 
-#include "vff/functional.h"
-#include "pescan_interface/interface.h"
 #include "lamarck/structure.h"
-#include "opt/opt_function_base.h"
-#include "opt/opt_minimize_gsl.h"
 #include "opt/types.h"
 
 #include "evaluator.h"
 #include "concentration.h"
 #include "functors.h"
 #include "taboos.h"
+#include "gatraits.h"
 
 #ifdef _MPI
 #include "mpi/mpi_object.h"
@@ -125,21 +122,22 @@ namespace TwoSites
   };
 
 
-  template<class T_INDIVIDUAL>
-  class Evaluator : public darwin::Evaluator< T_INDIVIDUAL >
+  template<class T_INDIVIDUAL, class T_INDIV_TRAITS = Traits::Indiv<T_INDIVIDUAL> >
+  class Evaluator : public darwin::Evaluator< T_INDIVIDUAL, T_INDIV_TRAITS >
   {
     public:
       typedef T_INDIVIDUAL t_Individual;
-      typedef typename t_Individual::t_Object t_Object;
-
+      typedef T_INDIV_TRAITS t_IndivTraits;
     protected:
-      typedef Evaluator<t_Individual> t_This;
+      typedef typename t_IndivTraits::t_Object t_Object;
+      typedef darwin::Evaluator<t_Individual, t_IndivTraits> t_Base;
+      typedef Evaluator<t_Individual, t_IndivTraits> t_This;
 
     public:
-      using darwin::Evaluator<t_Individual> :: Load;
+      using t_Base :: Load;
     protected:
-      using darwin::Evaluator<t_Individual> :: current_individual;
-      using darwin::Evaluator<t_Individual> :: current_object;
+      using t_Base :: current_individual;
+      using t_Base :: current_object;
 
     protected:
       typedef Ising_CE::Structure::t_kAtoms t_kvecs;
@@ -157,7 +155,7 @@ namespace TwoSites
       Evaluator   ()
                 : crossover_probability(0.5), 
                   x(0), y(0), lessthan(1.0), morethan(-1.0) {}
-      Evaluator   ( const Evaluator<t_Individual> &_c )
+      Evaluator   ( const t_Base &_c )
                 : crossover_probability( &_c.crossover_probability ), 
                   x(_c.x), y(_c.y), lessthan(_c.lessthan), morethan(_c.moerethan) {}
       ~Evaluator() {};
@@ -187,5 +185,15 @@ namespace TwoSites
 } // namespace TwoSites
 
 #include "two_sites.impl.h"
+#ifdef _MPI
+namespace mpi
+{
+  template<>
+  inline bool mpi::BroadCast::serialize<TwoSites::Object>( TwoSites::Object & _object )
+  {
+    return serialize( _object.bitstring );
+  }
+}
+#endif
 
 #endif // _TWOSITES_OBJECT_H_

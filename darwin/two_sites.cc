@@ -13,7 +13,7 @@
 #include "two_sites.h"
 #include "print_xmgrace.h"
 #include "lamarck/atom.h"
-#include "opt/va_minimizer.h"
+#include "opt/compose_functors.h"
 
 namespace TwoSites
 {
@@ -79,13 +79,3 @@ namespace TwoSites
 
 
 
-#ifdef _MPI
-namespace mpi
-{
-  template<>
-  bool mpi::BroadCast::serialize<TwoSites::Object>( TwoSites::Object & _object )
-  {
-    return serialize( _object.bitstring );
-  }
-}
-#endif

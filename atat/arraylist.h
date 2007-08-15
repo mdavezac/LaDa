@@ -132,8 +132,8 @@ inline void sort_array(Array<T> *a, const C &comparator) {
 template<class T>
 class MultiDimIterator {
   T current;
-  T max;
   T min;
+  T max;
   types::t_int valid;
  public:
   MultiDimIterator(): current(), min(), max() {}

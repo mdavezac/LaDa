@@ -99,10 +99,10 @@ types::t_int equivalent_mod_cell(const Array<rVector3d> &a, const Array<rVector3
 types::t_int equivalent_mod_cell(const MultiCluster &a, const MultiCluster &b, const rMatrix3d &inv_cell);
 
 class LatticePointIterator {
+  LinkedList<rVector3d> list;
   rMatrix3d cell;
   types::t_real max_radius;
   types::t_real inc_radius;
-  LinkedList<rVector3d> list;
   void find_new_neighbors(types::t_real new_max_radius);
  public:
   LatticePointIterator(void): list(), cell() {}
@@ -196,8 +196,8 @@ class AtomMultipletIterator {
   rMatrix3d cell;
   const Array<rVector3d> *atom_pos;
   types::t_int ntuple;
-  Array<rVector3d> multiplet;
   Array<AtomPairIterator> pairs;
+  Array<rVector3d> multiplet;
  public:
   AtomMultipletIterator(const rMatrix3d &_cell, const Array<rVector3d> &_atom_pos, types::t_int _ntuple):
                        pairs(), multiplet() {

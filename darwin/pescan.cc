@@ -78,14 +78,13 @@ namespace BandGap
 
   void Evaluator::init( t_Individual &_indiv )
   {
-    current_individual = _indiv;
-    current_object = _indiv.Object();
-    vff.set_variables( &current_object.bitstring );
+    t_Base :: init( _indiv );
+    vff.set_variables( &current_object->bitstring );
   }
   void Evaluator::evaluate()
   {
     // sets structure to this object 
-    structure << current_object;
+    structure << *current_object;
 
     // first minimizes strain
     std::ostringstream sstr; sstr << "escan" << nbeval; 
@@ -104,8 +103,9 @@ namespace BandGap
     // copies band edges into object
     types::t_real vbm, cbm;
     get_bands( vbm, cbm );
-    current_object.VBM = vbm;
-    current_object.CBM = cbm;
+    current_object->VBM = vbm;
+    current_object->CBM = cbm;
+    current_individual->quantities() = cbm - vbm;
 
     // if all-electron, no need to write references
     if ( pescan.get_method() != Pescan::Interface::Escan::ALL_ELECTRON )
@@ -199,15 +199,3 @@ namespace BandGap
 
 
 
-#ifdef _MPI
-namespace mpi
-{
-  template<>
-  bool mpi::BroadCast::serialize<BandGap::Object>( BandGap::Object & _object )
-  {
-    if( not serialize( _object.CBM ) ) return false;
-    if( not serialize( _object.VBM ) ) return false;
-    return serialize< TwoSites::Object >( _object );
-  }
-}
-#endif
