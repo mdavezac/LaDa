@@ -297,7 +297,14 @@ namespace darwin
     public:
       IslandsContinuator   ( types::t_unsigned _max, std::string _f = "stop" ) 
                          : generation_counter(0),
-                           max_generations(_max), stop_filename(_f) {}
+                           max_generations(_max), stop_filename(_f)
+      {
+        if ( stop_filename.empty() ) stop_filename = "stop";
+        std::ostringstream sstr;
+        sstr << "Will stop on finding file " << stop_filename;
+        darwin::printxmg.add_comment( sstr.str() );
+      }
+
 
       void add(eoContinue<t_Individual>& _cont)
         { continuators.push_back(&_cont); }
@@ -424,7 +431,7 @@ namespace darwin
 
         // checks if stop file exists
 #ifdef _MPI
-        if ( mpi::main.rank() == mpi::ROOT_NODE )
+        if ( mpi::main.is_root_node() )
         {
 #endif
         std::ifstream file( stop_filename.c_str(), std::ios_base::in );
@@ -438,7 +445,7 @@ namespace darwin
 
 #ifdef _MPI
         }
-        result = mpi::main.all_sum_all(result);
+        result = mpi::main.all_or_all(result);
 #endif 
 
         // last call

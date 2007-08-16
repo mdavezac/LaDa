@@ -13,6 +13,11 @@
 #include <mpi/mpi_object.h>
 #endif
 
+std::string StripDir( std::string _string );
+std::string StripDir( const std::string &_dir, const std::string &_str );
+std::string StripEdges( std::string _string );
+std::string reformat_home( std::string _str );
+
 namespace Pescan
 {
   class Interface 
@@ -115,6 +120,7 @@ namespace Pescan
        { return escan.method; }
      void set_method( Escan::t_method _method = Escan::FOLDED_SPECTRUM )
        { escan.method = _method; }
+     void set_atom_input( const std::string &_str ) { atom_input = _str; }
 
     protected:
      void create_directory();

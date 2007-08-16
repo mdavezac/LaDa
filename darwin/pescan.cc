@@ -66,12 +66,12 @@ namespace BandGap
     types::t_real x, y;
     pescan.get_references(x,y); // band edges have not been read if below is true
     if (     std::abs(x + 666.666 ) < types::tolerance 
-         and std::abs(x - 666.666 ) < types::tolerance )
+         and std::abs(y - 666.666 ) < types::tolerance )
       set_all_electron();
 
     if (     _node.FirstChildElement("Filenames") 
          and _node.FirstChildElement("Filenames")->Attribute("BandEdge") )
-      references_filename = _node.FirstChildElement("Filenames")->Attribute("BandEdge");
+      references_filename = reformat_home(_node.FirstChildElement("Filenames")->Attribute("BandEdge"));
 
     return true;
   }
@@ -86,16 +86,28 @@ namespace BandGap
     // sets structure to this object 
     structure << *current_object;
 
-    // first minimizes strain
+    // Creates an mpi aware directory: one per proc
     std::ostringstream sstr; sstr << "escan" << nbeval; 
     ++nbeval;
 #ifdef _MPI
     sstr << mpi::main.rank();
 #endif
     pescan.set_dirname(sstr.str());
+
+    // minimizes vff energy
     vff_minimizer.minimize();
     structure.energy = vff.energy();
-    vff.print_escan_input();
+
+    // creates an mpi aware file name for atomic configurations
+    sstr.str("");
+    sstr << "atom_config";
+#ifdef _MPI
+    sstr << "." << mpi::main.rank();
+#endif
+    // prints atomic configurations
+    vff.print_escan_input(sstr.str());
+    // tells pescan where to find atomic configurations
+    pescan.set_atom_input( sstr.str() );
 
     // then evaluates band gap
     types::t_real result = pescan(structure);

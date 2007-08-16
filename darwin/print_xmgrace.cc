@@ -2,23 +2,26 @@
 #include <sstream>
 
 #include "print_xmgrace.h"
+#include "pescan_interface/interface.h"
 namespace darwin
 {
 
   void PrintXmg :: init (const std::string &_f)
   { 
 #ifdef _MPI
-    if ( mpi::main.rank() != mpi::ROOT_NODE )
+    if ( not mpi::main.is_root_node() )
       return;
 #endif 
-    filename = _f;
+    filename = reformat_home( _f );
     file.open( filename.c_str(), std::ios_base::out|std::ios_base::trunc ); 
+    if (file.fail() )
+      std::cerr << "Could not open " << filename << std::endl;
     close();
   }
   bool PrintXmg :: open ()
   {
 #ifdef _MPI
-    if ( mpi::main.rank() != mpi::ROOT_NODE )
+    if ( not mpi::main.is_root_node() )
       return false;
 #endif
     if ( file.is_open() )
@@ -29,7 +32,7 @@ namespace darwin
   void PrintXmg :: close ()
   {
 #ifdef _MPI
-    if ( mpi::main.rank() != mpi::ROOT_NODE )
+    if ( not mpi::main.is_root_node() )
       return;
 #endif
     if ( not file.is_open() )
@@ -41,7 +44,7 @@ namespace darwin
   void PrintXmg :: flush ()
   {
 #ifdef _MPI
-    if ( mpi::main.rank() != mpi::ROOT_NODE )
+    if ( not mpi::main.is_root_node() )
       return;
 #endif 
     if ( line_list.empty() )
@@ -61,7 +64,7 @@ namespace darwin
   void PrintXmg :: add_comment( const std::string &_str )
   {
 #ifdef _MPI
-    if ( mpi::main.rank() != mpi::ROOT_NODE )
+    if ( not mpi::main.is_root_node() )
       return;
 #endif 
     std::ostringstream sstr;
@@ -75,7 +78,7 @@ namespace darwin
   void PrintXmg :: add_to_last( const std::string &_str )
   {
 #ifdef _MPI
-    if ( mpi::main.rank() != mpi::ROOT_NODE )
+    if ( not mpi::main.is_root_node() )
       return;
 #endif 
     if( line_list.empty() )

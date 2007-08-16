@@ -1,16 +1,55 @@
 #include "interface.h"
 #include<mpi/mpi_object.h>
 #include <sstream>
+#include <stdlib.h>
 
 #include<physics/physics.h>
 
-std::string StripDir( const std::string &_string )
+std::string StripDir( std::string _string )
 {
-  types::t_unsigned n = _string.size() - 1;
-  for(; n; --n)
-    if ( _string[n] == '/' )
-      break;
-  return _string.substr(n+1);
+  _string = StripEdges( _string );
+  size_t t = _string.find_last_of("/");
+  if ( t == std::string::npos )
+    return _string;
+  
+  return _string.erase( 0, t + 1 );
+}
+std::string StripDir( const std::string &_dir, const std::string &_str )
+{
+  std::string dir = reformat_home(_dir);
+  std::string str = reformat_home(_str);
+  if( str.find( dir ) == std::string::npos )
+    return str;
+  
+  str.erase(0, dir.length() );
+  if ( _str.find_first_of(" /\t\n") )
+    str.erase(0, str.find_first_not_of(" /\t\n"));
+  return str; 
+}
+std::string StripEdges( std::string _string )
+{
+  if ( _string.find_first_of(" \t\n") )
+    _string.erase(0, _string.find_first_not_of(" \t\n") );
+  size_t l = _string.length();
+  size_t t = _string.find_last_not_of(" \t\n") + 1;
+  if ( t > l ) return _string;
+  _string.erase(t, l );
+  return _string;
+}
+
+std::string reformat_home ( std::string _str )
+{
+  // Trim leading and tailing spaces
+  _str = StripEdges(_str);
+  if ( _str[0] != '~' ) return _str;
+  std::string home="";
+  if ( getenv("HOME") ) home = getenv("HOME");
+  else if ( getenv("home") ) home = getenv("home");
+  else return _str;
+  if ( _str.find_first_of("/") )
+    _str.erase(0, _str.find_first_of("/") );
+  _str.insert(0, home );
+  return _str;
 }
 
 namespace Pescan
@@ -70,17 +109,10 @@ namespace Pescan
   }
   void Interface :: create_potential()
   {
-    std::ostringstream sstr;
-    sstr << "cp " << atom_input << " " << dirname;
-    system( sstr.str().c_str() );
-
     write_genpot_input();
-    sstr.str(""); 
-    sstr << "mv " << genpot.filename << " " << dirname;
-    system( sstr.str().c_str() );
 
-    sstr.str("");
-    sstr << "cp ";
+    std::ostringstream sstr;
+    sstr << "cp " << atom_input << " ";
 #ifndef _NOLAUNCH
     sstr <<  genpot.launch << " ";
 #endif
@@ -93,7 +125,7 @@ namespace Pescan
 
     
     sstr.str("");
-    sstr << "cd " << dirname << ";" << StripDir(genpot.launch);
+    sstr << "cd " << dirname << "; ./" << StripDir(genpot.launch);
 #ifndef _NOLAUNCH
     system(sstr.str().c_str());
 #endif
@@ -102,10 +134,7 @@ namespace Pescan
   {
     std::ostringstream sstr;
     write_escan_input( _str );
-    sstr << "mv " << escan.filename << " " << dirname;
-    system( sstr.str().c_str() );
 
-    sstr.str("");
     sstr << "cp maskr "; 
 #ifndef _NOLAUNCH
     sstr << escan.launch << " ";
@@ -125,8 +154,12 @@ namespace Pescan
     sstr << dirname;
     system( sstr.str().c_str() );
 
+    std::string output = StripEdges(escan.output);
+    std::cout << "Method " << (escan.method == Escan::FOLDED_SPECTRUM ? "Folded": "All Electron") << std::endl;
+    if ( escan.method == Escan::FOLDED_SPECTRUM )
+      output += ( computation == VBM ) ? ".vbm": ".cbm";
     sstr.str("");
-    sstr << "cd " << dirname << ";" << StripDir(escan.launch) << " > " << escan.output;
+    sstr << "cd " << dirname << "; ./" << StripDir(escan.launch) << " > " << output;
 #ifndef _NOLAUNCH
     system(sstr.str().c_str());
 #endif
@@ -279,9 +312,10 @@ namespace Pescan
   void Interface::write_genpot_input()
   {
     std::ofstream file;
-    file.open( genpot.filename.c_str(), std::ios_base::out|std::ios_base::trunc ); 
+    std::string name = StripEdges(dirname) + "/" + StripEdges(genpot.filename);
+    file.open( name.c_str(), std::ios_base::out|std::ios_base::trunc ); 
 
-    file << atom_input << std::endl 
+    file << StripDir(atom_input) << std::endl 
          << genpot.x << " " 
          << genpot.y << " " 
          << genpot.z << std::endl 
@@ -301,8 +335,9 @@ namespace Pescan
   void Interface::write_escan_input( Ising_CE::Structure &_str ) 
   {
     std::ofstream file;
-    file.open( escan.filename.c_str(), std::ios_base::out|std::ios_base::trunc ); 
-    file << "1 " << genpot.output << std::endl
+    std::string name = StripEdges(dirname) + "/" + StripEdges(escan.filename);
+    file.open( name.c_str(), std::ios_base::out|std::ios_base::trunc ); 
+    file << "1 " << StripDir(dirname, genpot.output) << std::endl
          << "2 " << escan.wavefunction << std::endl
          << "3 " << escan.method << std::endl;
     switch (computation)
@@ -361,7 +396,9 @@ namespace Pescan
   {
     std::ifstream file;
     std::ostringstream sstr;
-    sstr << dirname << "/" << escan.output;
+    sstr << dirname << "/" << StripEdges(escan.output);
+    if ( escan.method == Escan::FOLDED_SPECTRUM )
+      sstr << ( ( computation == VBM ) ? ".vbm": ".cbm" );
     file.open( sstr.str().c_str(), std::ios_base::in ); 
     char cline[256];
     std::string line("");

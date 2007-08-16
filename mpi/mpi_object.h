@@ -73,6 +73,20 @@ namespace mpi
         _bool = ( out == nproc );
         return _bool;
       }
+      bool all_or_all( bool &_bool) const
+      {
+        types::t_int out, in = _bool ? 1 : 0;
+        MPI::COMM_WORLD.Allreduce( &in, &out, 1, UNSIGNED, MPI::SUM ); 
+        _bool = ( out != 0 );
+        return _bool;
+      }
+      bool all_xor_all( bool &_bool) const
+      {
+        types::t_int out, in = _bool ? 1 : 0;
+        MPI::COMM_WORLD.Allreduce( &in, &out, 1, UNSIGNED, MPI::SUM ); 
+        _bool = ( out == 0 or out == nproc );
+        return _bool;
+      }
   };
 
   class InitDestroy : public Base
@@ -263,6 +277,10 @@ namespace mpi
        T_TYPE all_sum_all( T_TYPE &_un ) const 
          { return _un; };
        bool all_sum_all( bool &_bool ) const 
+         { return _bool; };
+       bool all_or_all( bool &_bool ) const 
+         { return _bool; };
+       bool all_xor_all( bool &_bool ) const 
          { return _bool; };
   };
 

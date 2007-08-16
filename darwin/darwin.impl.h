@@ -8,6 +8,7 @@
 #include <eo/eoReduceMerge.h>
 #include <tinyxml/tinystr.h>
 
+#include "pescan_interface/interface.h"
 
 #include "print_xmgrace.h"
 #include "functors.h"
@@ -246,6 +247,7 @@ namespace darwin
          and  _parent.FirstChildElement("Filenames")->Attribute("stop") )
       str = _parent.FirstChildElement("Filenames")->Attribute("stop");
 
+    str = reformat_home(str);
     continuator = new IslandsContinuator<t_Individual>(max_generations, str );
     eostates.storeFunctor( continuator );
     GenCount &generation_counter = continuator->get_generation_counter();
@@ -437,10 +439,23 @@ namespace darwin
       doc.LinkEndChild( node );
     }
 
+    std::ostringstream sstr;
+    sstr << "Saving ";
+    int is_saving = 0;
     if ( do_save & SAVE_RESULTS )
+    {
+      ++is_saving;
+      sstr << "Results";
       store->Save( *node );
+    }
     if ( do_save & SAVE_HISTORY and history)
     {
+      // Printout stuff
+      ++is_saving;
+      if ( is_saving > 1 )
+        sstr << ", ";
+      sstr << " History";
+
       TiXmlElement *xmlhistory = new TiXmlElement("History");
       SaveObject<t_Evaluator> saveop( evaluator, &t_Evaluator::Save, LOADSAVE_SHORT);
       SaveIndividuals( *xmlhistory, saveop, history->begin(), history->end());
@@ -448,6 +463,14 @@ namespace darwin
     }
     if ( do_save & SAVE_POPULATION )
     {
+      // Printout stuff
+      ++is_saving;
+      if ( is_saving == 2 )
+        sstr << " and";
+      if ( is_saving > 2 )
+        sstr << ", and ";
+      sstr << " Population";
+
       SaveObject<t_Evaluator> saveop( evaluator, &t_Evaluator::Save, LOADSAVE_SHORT);
       typename t_Islands :: const_iterator i_island = islands.begin();
       typename t_Islands :: const_iterator i_island_end = islands.end();
@@ -461,7 +484,14 @@ namespace darwin
       node->LinkEndChild( xmlpop );
     }
 
-    doc.SaveFile(restart_filename.c_str());
+    if ( not doc.SaveFile(restart_filename.c_str() ) )
+    {
+      std::cerr << "Could not save results in " << restart_filename << std::endl;
+      return false;
+    }
+
+    sstr << " in " << restart_filename;
+    darwin::printxmg.add_comment(sstr.str());
     return true;
   }
   
@@ -862,19 +892,22 @@ namespace darwin
       _restart = _input; 
       _evaluator = _input;
 
-      if ( restart_filename != filename )
+      if ( restart_filename == filename )
       {
         doc.LoadFile( restart_filename.c_str() );
         if  ( !doc.LoadFile() ) 
         { 
           std::cout << doc.ErrorDesc() << std::endl; 
-          throw std::runtime_error("Could not load restart file"); 
+          std::cerr << "Could not load restart file " << std::endl;
+          _restart = "";
+          goto nextfilename;
         } 
 
         parent = doc.RootElement();
         TIXML_OSTREAM stream;
         _restart = stream.c_str();
       }
+nextfilename:
       if ( evaluator_filename != filename )
       {
         doc.LoadFile( evaluator_filename.c_str() );
@@ -902,13 +935,6 @@ namespace darwin
     bc.serialize(_input);
     bc.serialize(_restart);
     bc.serialize(_evaluator);
-    for( int i=0; i < mpi::main.size(); ++i )
-    {
-      if( i == mpi::main.rank() )
-        std::cout << std::endl << mpi::main.rank() << " / " << mpi::main.size() << std::endl 
-                  <<  _input.substr(0,20) << std::endl << std::flush; 
-      mpi::main.barrier();
-    }
   }
 #endif
 
@@ -934,13 +960,13 @@ namespace darwin
       {
         if (     child->Attribute("evaluator") 
              and evaluator_filename == filename )
-          evaluator_filename = child->Attribute("evaluator");
+          evaluator_filename = reformat_home(child->Attribute("evaluator"));
         else if (     child->Attribute("restart") 
                   and restart_filename == filename )
-          restart_filename = child->Attribute("restart");
+          restart_filename = reformat_home(child->Attribute("restart"));
         else if ( child->Attribute("xmgrace") )
         {
-          std::string f = child->Attribute("xmgrace");
+          std::string f = reformat_home(child->Attribute("xmgrace"));
           printxmg.init( f );
         }
       }
@@ -959,12 +985,6 @@ namespace darwin
     TiXmlHandle docHandle(&doc);
 #endif
       
-    for( int i=0; i < mpi::main.size(); ++i )
-    {
-      if( i == mpi::main.rank() )
-        std::cout << mpi::main.rank() << " Before Eval" << std::endl << std::flush;
-      mpi::main.barrier();
-    }
     // Loads evaluator first 
     if ( evaluator_filename != filename )
     { 
@@ -974,12 +994,6 @@ namespace darwin
     else if ( not evaluator.Load(*docHandle.FirstChild("Job").Element() ) )
       return false;
           
-    for( int i=0; i < mpi::main.size(); ++i )
-    {
-      if( i == mpi::main.rank() )
-        std::cout << mpi::main.rank() << " After Eval" << std::endl << std::flush;
-      mpi::main.barrier();
-    }
     // finds <GA> ... </GA> block 
 #ifdef _MPI
     doc.Parse( input_str.c_str() );
