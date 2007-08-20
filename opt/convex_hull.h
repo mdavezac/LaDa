@@ -67,7 +67,7 @@ namespace ConvexHull
     template< class T_LOADOP >
     bool Load( const TiXmlElement &_node, T_LOADOP &_op );
     template< class T_SAVEOP >
-    void Save( TiXmlElement &_node, T_SAVEOP &_op ) const;
+    bool Save( TiXmlElement &_node, T_SAVEOP &_op ) const;
 
     types::t_real get_concentration() const
       { return x; }
@@ -125,7 +125,7 @@ namespace ConvexHull
       template< class T_LOADOP >
       bool Load(const TiXmlElement &_node, T_LOADOP &_op);
       template< class T_SAVEOP >
-      void Save( TiXmlElement &_node, T_SAVEOP &_op ) const;
+      bool Save( TiXmlElement &_node, T_SAVEOP &_op ) const;
 
 #ifdef _MPI
       bool broadcast( mpi::BroadCast &_bc )
@@ -150,6 +150,15 @@ namespace ConvexHull
         return true;
       }
 #endif
+      std::string print() const
+      { 
+        std::ostringstream sstr;
+        typename t_Vertices :: const_iterator i_vert = vertices.begin();
+        typename t_Vertices :: const_iterator i_end = vertices.end();
+        for(; i_vert != i_end; ++i_vert )
+          i_vert->print_out(sstr);
+        return sstr.str();
+      }
 
     protected:
       void build_function();
@@ -315,26 +324,31 @@ namespace ConvexHull
   }
 
   template<class T_OBJECT> template<class T_SAVEOP>
-  void Base<T_OBJECT> :: Save( TiXmlElement &_node, T_SAVEOP &_op ) const
+  bool Base<T_OBJECT> :: Save( TiXmlElement &_node, T_SAVEOP &_op ) const
   {
     TiXmlElement *parent;
     
     parent = new TiXmlElement("ConvexHull");
+    if( not parent  ) return false;
     _node.LinkEndChild(parent);
 
     typename t_Vertices :: const_iterator i_v = vertices.begin();
     typename t_Vertices :: const_iterator i_end = vertices.end();
     for( ; i_v != i_end; ++i_v )
-      i_v->Save(*parent, _op);
+      if ( not i_v->Save(*parent, _op) ) break;
+
+    return i_v == i_end;
   }
   template<class T_OBJECT> template<class T_SAVEOP>
-  void Vertex<T_OBJECT> :: Save( TiXmlElement &_node, T_SAVEOP &_op ) const
+  bool Vertex<T_OBJECT> :: Save( TiXmlElement &_node, T_SAVEOP &_op ) const
   {
     TiXmlElement *child = new TiXmlElement("Vertex");
+    if ( not child ) return false;
     child->SetDoubleAttribute( "y", y );
     child->SetDoubleAttribute( "x", x );
     _op( object, *child );
     _node.LinkEndChild(child);
+    return true;
   }
 
   template<class T_OBJECT>

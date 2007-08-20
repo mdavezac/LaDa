@@ -37,5 +37,5 @@ libopt_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS)
 	cd ../physics; $(MAKE)
 ../mpi/libmpiobject.la:
 	cd ../mpi; $(MAKE)
-../mpi/libpescan.la:
+../pescan_interface/libpescan.la:
 	cd ../pescan; $(MAKE)

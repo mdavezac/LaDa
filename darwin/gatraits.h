@@ -24,24 +24,24 @@ namespace Traits
     struct Quantity
     {
       typedef T_QUANTITY  t_Quantity;  
-      typedef T_QUANTITY& t_Quantity_ref;  
       typedef typename t_Quantity :: value_type   t_ScalarQuantity;
-      typedef typename t_Quantity :: value_type&  t_ScalarQuantity_ref;
-      typedef const t_Quantity  const_t_Quantity;  
-      typedef const t_Quantity& const_t_Quantity_ref;  
-      typedef const T_QUANTITY   const_t_ScalarQuantity;
-      typedef const T_QUANTITY&  const_t_ScalarQuantity_ref;
+      typedef std::vector< t_Quantity > t_QuantityGradients;
       bool const static is_vectorial = true;
       bool const static is_scalar = false;
-      Quantity() {};
-      t_ScalarQuantity_ref scalar( t_Quantity_ref _q, types::t_unsigned n )
+      static t_ScalarQuantity& scalar( t_Quantity& _q, types::t_unsigned n )
         { return _q[n]; }
-      const_t_ScalarQuantity_ref scalar( const_t_Quantity_ref _q, types::t_unsigned n ) const 
+      static const t_ScalarQuantity& scalar( const t_Quantity& _q, types::t_unsigned n )
         { return _q[n]; }
-      types::t_unsigned size( const_t_Quantity_ref _q ) const
+      static types::t_unsigned size( const t_Quantity& _q ) 
         { return _q.size(); }
+      static bool less( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
+        { return Quantity<t_ScalarQuantity>::less(_a,_b); }
+      static bool greater( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
+        { return Quantity<t_ScalarQuantity>::greater(_a,_b); }
+      static bool equal( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
+        { return Quantity<t_ScalarQuantity>::equal(_a,_b); }
 #ifdef _MPI
-      bool broadcast( t_Quantity_ref _q, mpi::BroadCast &_bc )
+      static bool broadcast( t_Quantity& _q, mpi::BroadCast &_bc )
         { return _bc.serialize_container( _q ); }
 #endif
     };
@@ -49,51 +49,50 @@ namespace Traits
     struct Quantity<types::t_real> 
     {
       typedef types::t_real  t_ScalarQuantity;
-      typedef types::t_real& t_ScalarQuantity_ref;
       typedef types::t_real  t_Quantity;  
-      typedef types::t_real& t_Quantity_ref;  
-      typedef const types::t_real  const_t_Quantity;  
-      typedef const types::t_real& const_t_Quantity_ref;  
-      typedef const types::t_real  const_t_ScalarQuantity;
-      typedef const types::t_real& const_t_ScalarQuantity_ref;
       typedef std::vector< t_Quantity > t_QuantityGradients;
       bool const static is_vectorial = false;
       bool const static is_scalar = true;
       Quantity() {};
-      t_ScalarQuantity_ref scalar( t_Quantity_ref _q, types::t_unsigned n )
+      static t_ScalarQuantity& scalar( t_Quantity& _q, types::t_unsigned n )
         { return _q; }
-      const_t_ScalarQuantity_ref scalar( const_t_Quantity_ref _q, types::t_unsigned n ) const 
+      static const t_ScalarQuantity& scalar( const t_Quantity& _q, types::t_unsigned n )
         { return _q; }
-      types::t_unsigned size( const_t_Quantity_ref _q ) const
+      static types::t_unsigned size( const t_Quantity& _q ) 
         { return 1; }
+      static bool less( const t_ScalarQuantity _a, const t_ScalarQuantity _b )
+        { return _a + types::tolerance < _b; }
+      static bool greater( const t_ScalarQuantity _a, const t_ScalarQuantity _b )
+        { return _b + types::tolerance < _a; }
+      static bool equal( const t_ScalarQuantity _a, const t_ScalarQuantity _b )
+        { return std::abs(_b - _a) < types::tolerance; }
 #ifdef _MPI
-      bool broadcast( t_Quantity_ref _q, mpi::BroadCast &_bc )
-        { return _bc.serialize( _q ); }
+      static bool broadcast( t_Quantity& _q, mpi::BroadCast &_bc )
+        { return _bc.serialize_container( _q ); }
 #endif
     };
   template<>
     struct Quantity<types::t_int> 
     {
       typedef types::t_int   t_ScalarQuantity;
-      typedef types::t_int&  t_ScalarQuantity_ref;
       typedef types::t_int   t_Quantity;  
-      typedef types::t_int&  t_Quantity_ref;  
-      typedef const types::t_int  const_t_Quantity;  
-      typedef const types::t_int& const_t_Quantity_ref;  
-      typedef const types::t_int  const_t_ScalarQuantity;
-      typedef const types::t_int& const_t_ScalarQuantity_ref;
       typedef std::vector< t_Quantity > t_QuantityGradients;
       bool const static is_vectorial = false;
       bool const static is_scalar = true;
-      Quantity() {};
-      t_ScalarQuantity_ref scalar( t_Quantity_ref _q, types::t_unsigned n )
+      static t_ScalarQuantity& scalar( t_Quantity& _q, types::t_unsigned n )
         { return _q; }
-      const_t_ScalarQuantity_ref scalar( const_t_Quantity_ref _q, types::t_unsigned n ) const 
+      static const t_ScalarQuantity& scalar( const t_Quantity& _q, types::t_unsigned n ) 
         { return _q; }
-      types::t_unsigned size( const_t_Quantity_ref _q ) const
+      static types::t_unsigned size( const t_Quantity& _q ) 
         { return 1; }
+      static bool less( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
+        { return _a < _b; }
+      static bool greater( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
+        { return _b < _a; }
+      static bool equal( const t_ScalarQuantity _a, const t_ScalarQuantity _b )
+        { return _b == _a; }
 #ifdef _MPI
-      bool broadcast( t_Quantity_ref _q, mpi::BroadCast &_bc )
+      static bool broadcast( t_Quantity& _q, mpi::BroadCast &_bc )
         { return _bc.serialize( _q ); }
 #endif
     };
@@ -101,23 +100,22 @@ namespace Traits
     struct Quantity<types::t_unsigned> 
     {
       typedef types::t_unsigned   t_ScalarQuantity;
-      typedef types::t_unsigned&  t_ScalarQuantity_ref;
       typedef types::t_unsigned t_Quantity;  
-      typedef types::t_unsigned& t_Quantity_ref;  
-      typedef const types::t_unsigned  const_t_Quantity;  
-      typedef const types::t_unsigned& const_t_Quantity_ref;  
-      typedef const types::t_unsigned  const_t_ScalarQuantity;
-      typedef const types::t_unsigned& const_t_ScalarQuantity_ref;
       typedef std::vector< t_Quantity > t_QuantityGradients;
       bool const static is_vectorial = false;
       bool const static is_scalar = true;
-      Quantity() {};
-      t_ScalarQuantity_ref scalar( t_Quantity_ref _q, types::t_unsigned n )
+      static t_ScalarQuantity& scalar( t_Quantity& _q, types::t_unsigned n )
         { return _q; }
-      const_t_ScalarQuantity_ref scalar( const_t_Quantity_ref _q, types::t_unsigned n ) const 
+      static const t_ScalarQuantity& scalar( const t_Quantity& _q, types::t_unsigned n ) 
         { return _q; }
+      static bool less( const t_ScalarQuantity _a, const t_ScalarQuantity _b )
+        { return _a < _b; }
+      static bool greater( const t_ScalarQuantity _a, const t_ScalarQuantity _b )
+        { return _b < _a; }
+      static bool equal( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
+        { return _b == _a; }
 #ifdef _MPI
-      bool broadcast( t_Quantity_ref _q, mpi::BroadCast &_bc )
+      static bool broadcast( t_Quantity& _q, mpi::BroadCast &_bc )
         { return _bc.serialize( _q ); }
 #endif
     };

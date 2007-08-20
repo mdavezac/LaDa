@@ -6,6 +6,7 @@
 #endif
 
 
+#include <stdexcept>       // std::runtime_error
 #include <math.h>
 #ifdef _MPI
 // #undef SEEK_SET
@@ -166,14 +167,24 @@ namespace mpi
 
   class BroadCast : public CommBase 
   {
+    template< class T_TYPE > friend BroadCast& operator<< ( BroadCast& _this, T_TYPE &_type );
     public:
       enum t_stages { GETTING_SIZE, COPYING_TO_HERE, COPYING_FROM_HERE };
+    private:
+      enum t_operation { SIZEUP, ALLOCATE, TOHERE, BROADCAST, FROMHERE };
+    public:
+      const static t_operation sizeup;
+      const static t_operation allocate;
+      const static t_operation tohere;
+      const static t_operation broadcast;
+      const static t_operation fromhere;
 
     protected:
       t_stages stage;
+      bool keep_going;
 
     public:
-      BroadCast() : CommBase(), stage(GETTING_SIZE) {}
+      BroadCast() : CommBase(), stage(GETTING_SIZE), keep_going(true) {}
       BroadCast( const BroadCast &_b ) : CommBase(_b), stage(_b.stage) {}
       BroadCast( const Base &_b ) : CommBase(_b), stage(GETTING_SIZE) {}
       virtual ~BroadCast() { destroy_buffers(); };
@@ -184,7 +195,7 @@ namespace mpi
       template< class T_ITERATOR > bool serialize( T_ITERATOR _first, T_ITERATOR _last );
       bool operator()( types::t_unsigned _root = ROOT_NODE );
       void reset()
-        { destroy_buffers(); stage = GETTING_SIZE; }
+        { destroy_buffers(); stage = GETTING_SIZE; keep_going = true; }
 
       t_stages get_stage() const { return stage; } 
 
@@ -202,7 +213,34 @@ namespace mpi
       
         return true;
       }
+    protected:
+      bool special_op( t_operation _op );
+      template<class T_TYPE> bool operator_( T_TYPE &_type );
   };
+
+  template<class T_TYPE> bool BroadCast :: operator_( T_TYPE &_type )
+  {
+    if ( not keep_going ) return true;
+    try
+    {
+      if (not serialize( _type ) )
+        throw std::runtime_error( "Error while BroadCasting \n" );
+    }
+    catch( std::exception &e )
+    {
+      std::cerr << "Caught error while running lada" << std::endl
+                << e.what();
+      keep_going = false;
+    }
+  }
+  template<> inline bool BroadCast::operator_<BroadCast::t_operation>( t_operation &_op )
+  {
+    if ( not keep_going ) return true;
+    return  special_op( _op );
+  }
+
+  template< class T_TYPE > inline BroadCast& operator<< ( BroadCast& _this, T_TYPE &_type )
+    { _this.operator_( _type ); return _this; }
 
   class AllGather : public BroadCast
   {

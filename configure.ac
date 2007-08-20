@@ -62,6 +62,8 @@ AC_ARG_ENABLE(debug,
   *) AC_MSG_ERROR(bad value ${enableval} for --enable-debug) ;;
 esac],[debug=true])
 if test x$debug = xtrue; then
+       CXXFLAGS=`echo $CXXFLAGS | sed "s/-O2//"`
+       CFLAGS=`echo $CFLAGS | sed "s/-O2//"`
        CPP_DEBUG_FLAGS="-Wall -O0  -fbounds-check"
      else
        CPP_DEBUG_FLAGS=

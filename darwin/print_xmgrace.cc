@@ -5,6 +5,15 @@
 #include "pescan_interface/interface.h"
 namespace darwin
 {
+  const PrintXmg :: t_operation PrintXmg :: endl       = PrintXmg :: ENDL;
+  const PrintXmg :: t_operation PrintXmg :: comment    = PrintXmg :: COMMENT;
+  const PrintXmg :: t_operation PrintXmg :: clear      = PrintXmg :: CLEAR;
+  const PrintXmg :: t_operation PrintXmg :: flush      = PrintXmg :: FLUSH;
+  const PrintXmg :: t_operation PrintXmg :: indent     = PrintXmg :: INDENT;
+  const PrintXmg :: t_operation PrintXmg :: unindent   = PrintXmg :: UNINDENT;
+  const PrintXmg :: t_operation PrintXmg :: addtolast  = PrintXmg :: ADDTOLAST;
+  const PrintXmg :: t_operation PrintXmg :: removelast = PrintXmg :: REMOVELAST;
+  const PrintXmg :: t_operation PrintXmg :: clearall   = PrintXmg :: CLEARALL;
 
   void PrintXmg :: init (const std::string &_f)
   { 
@@ -37,11 +46,11 @@ namespace darwin
 #endif
     if ( not file.is_open() )
       return;
-    flush();
+    flushall();
     file.flush();
     file.close();
   }    
-  void PrintXmg :: flush ()
+  void PrintXmg :: flushall ()
   {
 #ifdef _MPI
     if ( not mpi::main.is_root_node() )
@@ -85,6 +94,29 @@ namespace darwin
       return;
     std::string &str = line_list.back();
     str += _str;
+  }
+  void PrintXmg :: add_to_last()
+  {
+    if( line_list.empty() ) return;
+
+    stream.str(""); stream << line_list.back();
+    line_list.pop_back();
+  }
+
+  void PrintXmg :: special_op( t_operation _op )
+  {
+    switch ( _op )
+    {
+      case ENDL: line_list.push_back( stream.str() ); stream.str(""); break;
+      case CLEAR: stream.str(""); break;
+      case COMMENT: stream.str(""); stream << "# "; do_indent(); break;
+      case FLUSH: flushall(); break;
+      case INDENT: ++indentation; break;
+      case UNINDENT: --indentation; break;
+      case ADDTOLAST: add_to_last(); break;
+      case REMOVELAST: line_list.pop_back(); break;
+      case CLEARALL: stream.str(""); clear_all(); break;
+    }
   }
 
 

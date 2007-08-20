@@ -25,6 +25,61 @@
 
 namespace darwin
 {
+  template< class T_STORE, class T_EVALUATION >
+  class Print : public eoUpdater
+  {
+    public:
+      typedef T_STORE t_Store; 
+      typedef T_EVALUATION t_Evaluation; 
+
+    protected:
+      const t_Store &store;
+      const t_Evaluation &evaluation;
+      const GenCount &age;
+      bool do_print_each_call;
+
+    public:
+      Print   ( const t_Store &_store, const t_Evaluation &_eval, 
+                const GenCount &_age, bool _each )
+            : store(_store), evaluation(_eval), age(_age), do_print_each_call(_each) {}
+      Print   ( const Print &_c )
+            : store(_c.results), evaluation(_c.evaluation), age(_c.age),
+              do_print_each_call(_c.do_print_each_call)  {}
+
+      virtual void operator()()
+      {
+        if ( not ( do_print_each_call or store.newresults() ) )
+        {
+          printxmg << darwin :: PrintXmg:: clearall;
+          return;
+        }
+
+        std::string special = "";
+        if ( not store.newresults() ) special = " ? ";
+       
+        darwin::printxmg << darwin::PrintXmg::comment << special << "Iteration " << age() 
+                         << darwin::PrintXmg::endl 
+                         << darwin::PrintXmg::comment << special << "Evaluation Calls: " 
+                         << evaluation.nb_eval << " " << evaluation.nb_grad 
+                         << darwin::PrintXmg::endl;
+        
+        if( store.newresults() )
+          store.print_results( age() );
+        printxmg << darwin::PrintXmg::flush;
+      }
+
+      // some anoying stuff
+      void printOn( std::ostream &__os ) const {};
+      void readFrom( std::istream &__os ) const {};
+      void lastCall()
+      {
+        darwin::printxmg << darwin::PrintXmg::comment << "Last Found Result" << PrintXmg::endl;
+        store.print_results(age(), true);
+        darwin::printxmg << darwin::PrintXmg::flush;
+      }
+
+      virtual std::string className(void) const { return "darwin::PrintFitness"; }
+  };
   template< class T_INDIVIDUAL>
   class PrintFitness : public eoStatBase<T_INDIVIDUAL> 
   {
@@ -421,7 +476,7 @@ namespace darwin
 
         apply_monitors_updaters();
 
-        printxmg.flush(); 
+        printxmg << PrintXmg::flush; 
 
         bool result =    ( max_generations and generation_counter() < max_generations ) 
                       or ( not max_generations );

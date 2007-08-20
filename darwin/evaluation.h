@@ -31,17 +31,17 @@ template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
       typedef T_GATRAITS   t_GA_Traits;
 
     protected:
-      typedef typename t_GA_Traits :: t_Individual              t_Individual;
-      typedef typename t_GA_Traits :: t_IndivTraits             t_IndivTraits;
-      typedef typename t_GA_Traits :: t_QuantityTraits          t_QuantityTraits;
-      typedef typename t_QuantityTraits :: t_Quantity           t_Quantity;
-      typedef typename t_QuantityTraits :: t_ScalarQuantity     t_ScalarQuantity;
-      typedef typename t_IndivTraits :: t_Population            t_Population;
-      typedef typename Objective :: Types < t_Individual, t_IndivTraits > :: Vector  t_Objective;
-      typedef Store :: Base<t_Evaluator, t_GA_Traits>           t_Store;
-      typedef typename t_IndivTraits :: t_VA_Traits             t_VATraits;
-      typedef typename t_VATraits :: t_QuantityGradients        t_QuantityGradients;
-      typedef typename t_VATraits :: t_Type                     t_VA_Type;
+      typedef typename t_GA_Traits :: t_Individual                               t_Individual;
+      typedef typename t_GA_Traits :: t_IndivTraits                              t_IndivTraits;
+      typedef typename t_GA_Traits :: t_QuantityTraits                           t_QuantityTraits;
+      typedef typename t_QuantityTraits :: t_Quantity                            t_Quantity;
+      typedef typename t_QuantityTraits :: t_ScalarQuantity                      t_ScalarQuantity;
+      typedef typename t_IndivTraits :: t_Population                             t_Population;
+      typedef typename Objective :: Types < t_Evaluator, t_GA_Traits > :: Vector t_Objective;
+      typedef Store :: Base<t_Evaluator, t_GA_Traits>                            t_Store;
+      typedef typename t_IndivTraits :: t_VA_Traits                              t_VATraits;
+      typedef typename t_VATraits :: t_QuantityGradients                         t_QuantityGradients;
+      typedef typename t_VATraits :: t_Type                                      t_VA_Type;
 
     protected:
       t_Evaluator &evaluator;
@@ -50,13 +50,14 @@ template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
 
     public:
       types::t_unsigned nb_eval;
+      types::t_unsigned nb_grad;
 
     public:
       Base   ( t_Evaluator &_eval, t_Objective &_obj, t_Store &_store )
-           : evaluator(_eval), objective(_obj), store(&_store), nb_eval(0) {};
+           : evaluator(_eval), objective(_obj), store(&_store), nb_eval(0), nb_grad(0) {};
       Base   ( const Base<t_Evaluator> &_x )
            : evaluator(_x.evaluator), objective(_x.objective),
-             store(_x.store), nb_eval(_x.nb_eval) {};
+             store(_x.store), nb_eval(_x.nb_eval), nb_grad(_x.nb_grad) {};
       virtual ~Base() {};
 
     public:
@@ -72,12 +73,14 @@ template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
         // size and value of _grad should be set by evaluator
         evaluator.evaluate_gradient( _grad );
         objective.evaluate_gradient( _indiv.quantities(), _grad, _i_grad );
+        nb_grad += _grad.size(); ++nb_eval;
       }
       virtual t_ScalarQuantity evaluate_with_gradient( t_Individual &_indiv,
                                                        t_QuantityGradients& _grad,
                                                        t_VA_Type *_i_grad )
       {
         evaluator.evaluate_with_gradient( _grad );
+        nb_grad += _grad.size(); ++nb_eval;
         return objective.evaluate_with_gradient( _indiv.quantities(), _grad, _i_grad );
       }
       virtual t_VA_Type evaluate_one_gradient( t_Individual &_indiv,
@@ -86,10 +89,13 @@ template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
       {
         evaluate(_indiv);
         evaluator.evaluate_one_gradient( _grad, _pos );
+        ++nb_grad;
         return objective.evaluate_one_gradient( _indiv.quantities(), _grad, _pos );
       }
 
+    protected:
       virtual void evaluate( t_Population &_pop );
+    public:
       // this next function makes sure that 
       //   population-dependent fitnesses ( e.g. hamming distance )
       //   moving-traget fitnesses ( e.g. convex hull )
@@ -97,10 +103,25 @@ template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
       virtual void operator()( t_Population &_pop, t_Population &_offspring ) 
       { 
         evaluate(_offspring); 
-        if ( objective.is_valid() ) return; 
-        // if invalid, recomputes whole population
-        evaluate( _pop );
-        evaluate( _offspring );
+        if ( not objective.is_valid() )
+        {
+          // if invalid, recomputes whole population
+          evaluate( _pop );
+          evaluate( _offspring );
+        }
+        return;
+
+        typename t_Population :: const_iterator i_indiv = _offspring.begin();
+        typename t_Population :: const_iterator i_end   = _offspring.end();
+        std::cout << "New Individual " << std::endl;
+        for(; i_indiv != i_end; ++i_indiv )
+        {
+          std::string str; str << (const typename t_IndivTraits::t_Object& ) *i_indiv;
+          std::cout  << std::setw(12) << std::setprecision(7) << "  "
+                     << str << " "
+                     << i_indiv->fitness() << std::endl;
+        }
+        
       }
 
 
@@ -156,15 +177,15 @@ template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
 
     private:
       typedef Base<t_Evaluator, t_GA_Traits> t_Base;
-      typedef typename t_GA_Traits :: t_Individual                                  t_Individual;
-      typedef typename t_GA_Traits :: t_IndivTraits                                 t_IndivTraits;
-      typedef typename t_GA_Traits :: t_QuantityTraits                              t_QuantityTraits;
-      typedef typename t_QuantityTraits :: t_Quantity                               t_Quantity;
-      typedef typename t_QuantityTraits :: t_ScalarQuantity                         t_ScalarQuantity;
-      typedef typename t_IndivTraits :: t_Population                                t_Population;
-      typedef typename Objective :: Types < t_Individual, t_IndivTraits > :: Vector t_Objective;
-      typedef Store :: Base<t_Evaluator, t_GA_Traits>                               t_Store;
-      typedef darwin::History<t_Individual>                                         t_History;
+      typedef typename t_GA_Traits :: t_Individual                               t_Individual;
+      typedef typename t_GA_Traits :: t_IndivTraits                              t_IndivTraits;
+      typedef typename t_GA_Traits :: t_QuantityTraits                           t_QuantityTraits;
+      typedef typename t_QuantityTraits :: t_Quantity                            t_Quantity;
+      typedef typename t_QuantityTraits :: t_ScalarQuantity                      t_ScalarQuantity;
+      typedef typename t_IndivTraits :: t_Population                             t_Population;
+      typedef typename Objective :: Types < t_Evaluator, t_GA_Traits > :: Vector t_Objective;
+      typedef Store :: Base<t_Evaluator, t_GA_Traits>                            t_Store;
+      typedef darwin::History<t_Individual>                                      t_History;
 
     protected:
       using t_Base :: evaluator;
@@ -182,7 +203,7 @@ template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
 
     protected:
       virtual t_ScalarQuantity evaluate( t_Individual &_indiv );
-    public:
+    protected:
       // we need redefine this only for mpi sync'ing
 #ifdef _MPI
       virtual void evaluate( t_Population &_pop )

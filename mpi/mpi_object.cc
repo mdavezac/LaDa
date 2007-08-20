@@ -16,6 +16,11 @@ namespace mpi
 #ifdef _MPI
 namespace mpi
 {
+  const BroadCast::t_operation sizeup    = BroadCast::RESET;
+  const BroadCast::t_operation allocate = BroadCast::ALLOCATE;
+  const BroadCast::t_operation tohere   = BroadCast::TOHERE;
+  const BroadCast::t_operation fromhere = BroadCast::FROMHERE;
+
   
   bool BroadCast :: allocate_buffers( types::t_unsigned _root )
   {
@@ -623,6 +628,14 @@ gather_erase:
 
     buffer_size[2] += 9;
     return true;
+  }
+
+  bool BroadCast :: special_op( t_operation _op )
+  {
+    if      ( _op == SIZEUP )   reset();
+    else if ( _op == ALLOCATE ) allocate_buffers(); 
+    else if ( _op == BROADCAST ) operator()(); 
+    return true; 
   }
 
 }

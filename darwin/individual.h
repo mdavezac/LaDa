@@ -39,13 +39,7 @@ namespace Individual
       typedef T_OBJECT t_Object;
       typedef T_QUANTITYTRAITS t_QuantityTraits;
       typedef typename t_QuantityTraits :: t_ScalarQuantity     t_ScalarQuantity;
-      typedef typename t_QuantityTraits :: t_ScalarQuantity_ref t_ScalarQuantity_ref;
       typedef typename t_QuantityTraits :: t_Quantity           t_Quantity;  
-      typedef typename t_QuantityTraits :: t_Quantity_ref       t_Quantity_ref;  
-      typedef typename t_QuantityTraits :: const_t_ScalarQuantity     const_t_ScalarQuantity;
-      typedef typename t_QuantityTraits :: const_t_ScalarQuantity_ref const_t_ScalarQuantity_ref;
-      typedef typename t_QuantityTraits :: const_t_Quantity           const_t_Quantity;  
-      typedef typename t_QuantityTraits :: const_t_Quantity_ref       const_t_Quantity_ref;  
 
       typedef darwin::Fitness t_Fitness;
       typedef darwin::Fitness Fitness; // for eo
@@ -59,7 +53,6 @@ namespace Individual
       t_Fitness repFitness;
       types::t_unsigned age;
       t_Quantity quantity;
-      t_QuantityTraits quantity_traits;
 
     public: 
       Base() : age(0) {}
@@ -145,13 +138,13 @@ namespace Individual
       types::t_real get_concentration() const
         { return object.get_concentration(); }
 
-      t_Quantity_ref quantities() { return quantity; }
-      const_t_Quantity_ref quantities() const { return quantity; }
+      t_Quantity& quantities() { return quantity; }
+      const t_Quantity& quantities() const { return quantity; }
 
-      t_ScalarQuantity_ref quantities( types::t_unsigned _n )
-        { return quantity_traits.scalar(quantity,_n); }
-      const_t_ScalarQuantity_ref quantities( types::t_unsigned _n ) const
-        { return quantity_traits.scalar(quantity,_n); }
+      t_ScalarQuantity& quantities( types::t_unsigned _n )
+        { return t_QuantityTraits::scalar(quantity,_n); }
+      const t_ScalarQuantity& quantities( types::t_unsigned _n ) const
+        { return t_QuantityTraits::scalar(quantity,_n); }
 
       template<class SaveOp>
       bool Save( TiXmlElement &_node, SaveOp &_saveop ) const
@@ -185,7 +178,7 @@ namespace Individual
         return      _bc.serialize( age ) 
                 and _bc.serialize( repFitness )
                 and _bc.serialize<t_Object>( object )
-                and quantity_traits.broadcast( quantity, _bc );
+                and t_QuantityTraits::broadcast( quantity, _bc );
       }
 #endif
   };

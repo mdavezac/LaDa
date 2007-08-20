@@ -123,12 +123,12 @@ namespace TwoSites
     i_hold = hold;
     for (; i_atom != i_atom_end; ++i_atom, ++i_hold)
     {
-      if ( not i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
+      if ( not ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
         i_atom->type = std::real(*i_hold);
       ( i_atom->type > 0 ) ? ++concx : --concx;
 
       ++i_atom;
-      if ( not i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
+      if ( not ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
         i_atom->type = std::imag(*i_hold);
       ( i_atom->type > 0 ) ? ++concy : --concy;
     }
@@ -418,14 +418,14 @@ endofloop:
     for(; i_atom != i_atom_end; ++i_atom )
     {
       bool flip = rng.flip();
-      if ( i_atom->freeze & (i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
+      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) 
         flip = ( i_atom->type > 0 );
       _object.bitstring.push_back( flip ? 1.0: -1.0 );
       flip ? ++concx: --concx;
 
       ++i_atom;
       flip = rng.flip();
-      if ( i_atom->freeze & (i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
+      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) 
         flip = ( i_atom->type > 0 );
       _object.bitstring.push_back( flip ? 1.0: -1.0 );
       flip ? ++concy: --concy;

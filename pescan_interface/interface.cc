@@ -64,7 +64,10 @@ namespace Pescan
     if ( escan.method == Escan::FOLDED_SPECTRUM )
       computation = CBM;
       
+    std::string olddirname = dirname;
     escan.scale = _str.scale;
+    if ( escan.method == Escan::FOLDED_SPECTRUM )
+      dirname = olddirname + ( computation == CBM ?  ".cbm": ".vbm" );
     create_directory();
     create_potential();
     launch_pescan( _str );
@@ -79,6 +82,11 @@ namespace Pescan
     bands.cbm = result;
 
     computation = VBM;
+    destroy_directory();
+    if ( escan.method == Escan::FOLDED_SPECTRUM )
+      dirname = olddirname + ( computation == CBM ?  ".cbm": ".vbm" );
+    create_directory();
+    create_potential();
     launch_pescan( _str );
     bands.vbm = read_result( _str );
     destroy_directory();
@@ -410,7 +418,8 @@ namespace Pescan
     }
 
     types :: t_real eigenvalue;
-    if (escan.nbstates == 1)
+    if (     escan.nbstates == 1
+         and escan.method == Escan::FOLDED_SPECTRUM )
     {
       file >> eigenvalue;
       return eigenvalue;

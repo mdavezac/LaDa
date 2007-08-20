@@ -26,6 +26,7 @@
 #include "print_xmgrace.h"
 #include "loadsave.h"
 #include "gatraits.h"
+#include "loadsave.h"
 
 namespace Store
 { 
@@ -42,7 +43,7 @@ namespace Store
 
     protected:
       t_Evaluator &evaluator;
-      bool new_results;
+      mutable bool new_results;
 
     public:
       Base (t_Evaluator &_eval) : evaluator(_eval), new_results(false) {};
@@ -52,7 +53,12 @@ namespace Store
       virtual bool Restart( const TiXmlElement &_node ) = 0;
       virtual void Save( TiXmlElement &_node ) const = 0;
 
-      virtual void operator()( t_Individual &_indiv ) = 0;
+      virtual void operator()( const t_Individual &_indiv ) = 0;
+      bool newresults() const { return new_results; }
+      virtual void print_results(types::t_unsigned _age, bool is_comment = false) const = 0;
+      virtual std::string what_is() const = 0;
+      virtual std::string print() const = 0;
+
 #ifdef _MPI
       virtual void synchronize() = 0;
 #endif
@@ -87,33 +93,41 @@ namespace Store
     public:
       Conditional   (t_Evaluator &_eval, const TiXmlElement &_node)
                   : t_Base( _eval), condition( _node ) {}
+      template< class T_TYPE >
+      Conditional   (t_Evaluator &_eval, T_TYPE _type, const TiXmlElement &_node)
+                  : t_Base( _eval), condition( _type, _node ) {}
       virtual ~Conditional() {}
 
       // non-mpi version simply stores best N results 
       // MPI version is a bit of a hack
       // the object is for MPI version to be able to store in "unsynchronized" new_optima by default
       // and then into "synchronized" result upon call to synchronize
-      virtual void operator()( t_Individual &_indiv )
+      virtual void operator()( const t_Individual &_indiv )
       {
         // if first evaluation, adds it directly
-        if( condition( _indiv ) )
-          return;
+        if( condition( _indiv ) ) return;
 
         // checks wether result should be stored
         typename t_Container :: iterator i_found;
 #ifdef _MPI
-        i_found = std::find( new_optima.begin(), new_optima.end(), _indiv );
-        if ( i_found != new_optima.end() )
-          return;
+        if ( not new_optima.empty() )
+        {
+          i_found = std::find( new_optima.begin(), new_optima.end(), _indiv );
+          if ( i_found != new_optima.end() ) return;
+        }
 #endif
-        i_found = std::find( results.begin(), results.end(), _indiv );
-        if ( i_found != results.end() )
-          return;
+        if ( not results.empty() )
+        {
+          i_found = std::find( results.begin(), results.end(), _indiv );
+          if ( i_found != results.end() ) return;
+        }
         new_results = true;
 #ifdef _MPI
-        new_optima.push_front( _indiv );
+        if ( not new_optima.empty() ) new_optima.remove_if( condition );
+        new_optima.push_back( _indiv );
 #else
-        results.push_front( _indiv );
+        if ( not results.empty() ) results.remove_if( condition );
+        results.push_back( _indiv );
 #endif
       }
 
@@ -123,37 +137,31 @@ namespace Store
         std::string name = _node.Value();
         if ( name.compare("Results") ) xmlresults = _node.FirstChildElement("Results");
         if ( not xmlresults ) return false;
-        darwin::LoadObject<t_Evaluator> loadworst( evaluator, &t_Evaluator::Load,
-                                                   darwin::LOADSAVE_SHORT);
-        if ( not condition.Restart( *xmlresults, loadworst ) )
+        darwin::LoadObject<t_Evaluator> loadop( evaluator, &t_Evaluator::Load,
+                                                darwin::LOADSAVE_LONG);
+        if ( not condition.Restart( *xmlresults, loadop ) )
         {
-          darwin::printxmg.add_comment("Could not load condition");
-          darwin::printxmg.add_comment("Aborting load of results");
+          darwin::printxmg << darwin::PrintXmg::comment << "Could not load condition" << darwin::PrintXmg::endl
+                           << darwin::PrintXmg::comment << "Aborting Load of Result" << darwin::PrintXmg::endl;
           return false;
         }
 
         results.clear();
-        darwin::LoadObject<t_Evaluator> loadop( evaluator, &t_Evaluator::Load,
-                                                darwin::LOADSAVE_LONG);
         darwin::LoadIndividuals( *xmlresults, loadop, results );
         // This particular line acts as Restart for condition if necessary
         std::remove_if(results.begin(), results.end(), condition); 
-        std::ostringstream sstr;
-        sstr << "Reloaded Optimum ";
-        sstr << " and " << results.size() << " target results";
-        darwin::printxmg.add_comment( sstr.str() );
+        darwin::printxmg << darwin::PrintXmg::comment << "Reloaded Optimum and "
+                         << results.size() << " target results" << darwin::PrintXmg::endl;
         print_results(0, true);
         return true;
       }
       void Save( TiXmlElement &_node ) const
       {
-        darwin::SaveObject<t_Evaluator> saveworst( evaluator, &t_Evaluator::Save,
-                                                   darwin::LOADSAVE_SHORT);
         darwin::SaveObject<t_Evaluator> saveop( evaluator, &t_Evaluator::Save,
                                                 darwin::LOADSAVE_LONG);
         TiXmlElement *parent = new TiXmlElement("Results");
         if ( not parent ) return;
-        condition.Save(*parent, saveworst);
+        condition.Save(*parent, saveop);
         SaveIndividuals( *parent, saveop, results.begin(), results.end() );
         _node.LinkEndChild(parent);
       }
@@ -163,15 +171,18 @@ namespace Store
         typename t_Container :: const_iterator i_indiv = results.begin();
         typename t_Container :: const_iterator i_end = results.end();
         for (; i_indiv != i_end; ++i_indiv )
-        {
-          std::ostringstream sstr; 
-          sstr << std::setw(12) << std::setprecision(7)
-               << _age << " "
-               << i_indiv->get_concentration() << " "
-               << i_indiv->fitness();
-          is_comment ?   darwin::printxmg.add_comment( sstr.str() )
-                       : darwin::printxmg.add_line( sstr.str() );
-        }
+          darwin::printxmg << ( is_comment ? darwin::PrintXmg::comment: darwin::PrintXmg::clear )
+                           << std::setw(12) << std::setprecision(7)
+                           << _age << " "
+                           << i_indiv->get_concentration() << " "
+                           << i_indiv->fitness() << darwin::PrintXmg::endl;
+        new_results = false;
+      }
+      virtual std::string print() const { return condition.print(); }
+      virtual std::string what_is() const
+      { 
+        std::ostringstream sstr; sstr << " Conditional on"  << condition.what_is(); 
+        return sstr.str();
       }
 #ifdef _MPI
       virtual bool broadcast( mpi::BroadCast &_bc )
@@ -203,8 +214,7 @@ namespace Store
         t_Individual indiv;
         while( indiv.broadcast( allgather ) )
         {
-          if( condition( indiv ) )
-            continue;
+          if( condition( indiv ) ) continue;
           
           // checks wether result should be stored
           typename t_Container :: iterator i_found;
@@ -212,8 +222,9 @@ namespace Store
           if ( i_found != results.end() )
             return;
           new_results = true;
-          results.push_front( indiv );
+          results.push_back( indiv );
         }
+        results.remove_if( condition );
       }
 #endif
   };
@@ -221,12 +232,18 @@ namespace Store
   namespace Condition
   {
     // Condition checks fitness only
-    template< class T_INDIVIDUAL, class T_INDIV_TRAITS = Traits::Indiv<T_INDIVIDUAL> >
+    template< class T_EVALUATOR, class T_GA_TRAITS = Traits::GA<T_EVALUATOR> >
     class BaseOptima 
     {
       public:
-        typedef T_INDIVIDUAL t_Individual;
-        typedef T_INDIV_TRAITS t_IndivTraits;
+        typedef T_EVALUATOR t_Evaluator;
+        typedef T_GA_TRAITS t_GA_Traits;
+
+      protected:
+        typedef typename t_GA_Traits :: t_Individual t_Individual;
+        typedef typename t_GA_Traits :: t_IndivTraits t_IndivTraits;
+        typedef darwin::SaveObject<t_Evaluator> t_SaveOp;
+        typedef darwin::LoadObject<t_Evaluator> t_LoadOp;
 
       protected:
         t_Individual optimum;
@@ -236,13 +253,13 @@ namespace Store
         BaseOptima   ( const BaseOptima &_c ) : optimum(_c.optimum) {};
         ~BaseOptima() {};
 
-        template< class T_OP > bool Restart( const TiXmlElement &_node, T_OP & _op)
+        bool Restart( const TiXmlElement &_node, t_LoadOp & _op)
         {
           const TiXmlElement *child = _node.FirstChildElement("optimum");
           if( not child ) return false;
           return optimum.Load( *child, _op );
         }
-        template< class T_OP > bool Save( TiXmlElement &_node, T_OP & _op) const
+        bool Save( TiXmlElement &_node, t_SaveOp & _op) const
         {
           TiXmlElement *child = new TiXmlElement("optimum");
           if( not child ) return false;
@@ -256,48 +273,84 @@ namespace Store
           return optimum.broadcast(_bc);
         }
 #endif
+        std::string what_is() const { return " BaseOptima "; } 
+        std::string print() const
+        {
+          std::ostringstream sstr;
+          std::string bitstring; bitstring <<  (typename t_IndivTraits :: t_Object&) optimum;
+          sstr << std::setw(12) << std::setprecision(7) 
+               << bitstring << " "
+               << optimum.get_concentration() << " "
+               << optimum.fitness() << std::endl;
+          return sstr.str(); 
+        }
     };
     // Condition checks objective 
-    template< class T_INDIVIDUAL, class T_INDIV_TRAITS = Traits :: Indiv<T_INDIVIDUAL> >
-    class FromObjective : public BaseOptima<T_INDIVIDUAL>
+    template< class T_EVALUATOR, class T_GA_TRAITS = Traits :: GA<T_EVALUATOR> >
+    class FromObjective : public BaseOptima<T_EVALUATOR>
     {
       public:
-        typedef T_INDIVIDUAL t_Individual;
-        typedef T_INDIV_TRAITS t_IndivTraits;
+        typedef T_EVALUATOR t_Evaluator;
+        typedef T_GA_TRAITS t_GA_Traits;
 
       protected:
-        typedef BaseOptima<t_Individual, t_IndivTraits> t_Base;
+        typedef BaseOptima<t_Evaluator, t_GA_Traits> t_Base;
+        typedef typename t_GA_Traits :: t_Individual t_Individual;
+        typedef typename t_GA_Traits :: t_IndivTraits t_IndivTraits;
         typedef typename t_IndivTraits :: t_QuantityTraits t_QuantityTraits;
         typedef typename t_QuantityTraits :: t_Quantity t_Quantity;
         typedef typename t_QuantityTraits :: t_ScalarQuantity t_ScalarQuantity;
+        typedef typename Objective::Types<t_Evaluator, t_GA_Traits> t_Objective;
+        typedef darwin::SaveObject<t_Evaluator> t_SaveOp;
+        typedef darwin::LoadObject<t_Evaluator> t_LoadOp;
 
       protected:
         using t_Base :: optimum;
-        typename Objective::Types<t_Individual, t_IndivTraits> :: Vector *objective;
-        types::t_real val;
-        types::t_real end_val;
-        types::t_real delta;
+        typename t_Objective :: Vector *objective;
+        t_ScalarQuantity val;
+        t_ScalarQuantity end_val;
+        t_ScalarQuantity delta;
+        bool owns_objective;
 
       public:
-        FromObjective   () : objective(NULL) {}
+        FromObjective   () : objective(NULL), owns_objective(false) {}
         FromObjective   ( const TiXmlElement &_node ) 
                       : t_Base(_node), objective(NULL),
-                        val(0), end_val(0), delta(0)
+                        val(0), end_val(0), delta(0), owns_objective(false)
         {
           std::string obj_type;
           double d=0;
           if ( _node.Attribute("delta") )
             _node.Attribute("delta", &d);
-          delta = (types::t_real) std::abs(d);
+          delta = (t_ScalarQuantity) std::abs(d);
 
-          objective = Objective::Types<t_Individual, t_IndivTraits> :: new_from_xml( _node );
+          objective = t_Objective :: new_from_xml( _node );
+          if ( not objective )
+            throw std::runtime_error("Could not Load objective from input in conditional store\n"); 
+          owns_objective = true;
+        }
+        FromObjective   ( typename t_Objective::Vector* _type, const TiXmlElement &_node )
+                      : t_Base(_node), objective(_type),
+                        val(0), end_val(0), delta(0), owns_objective(false)
+        {
+          std::string obj_type;
+          double d=0;
+          if ( _node.Attribute("delta") )
+            _node.Attribute("delta", &d);
+          delta = (t_ScalarQuantity) std::abs(d);
+ 
           if ( not objective )
             throw std::runtime_error("Could not Load objective from input in conditional store\n"); 
         }
-        ~FromObjective()  { if ( objective ) delete objective; }
+        FromObjective   ( const FromObjective &_c )
+                      : t_Base(_c), objective(_c.objective),
+                        val(_c.val), end_val(_c.end_val), delta(_c.delta),
+                        owns_objective(false) {}
+        ~FromObjective()  { if ( objective and owns_objective ) delete objective; }
 
         bool operator()( const t_Individual &_indiv )
         {
+          objective->init( _indiv );
           if ( optimum.invalid() )
           {
             optimum = _indiv;
@@ -305,8 +358,8 @@ namespace Store
             end_val = val + delta;
             return false;
           }
-          types::t_real indiv_val = (*objective)(_indiv.quantities());
-          if ( indiv_val < val )
+          t_ScalarQuantity indiv_val = (*objective)(_indiv.quantities());
+          if ( t_QuantityTraits::less(indiv_val, val) )
           {
             optimum = _indiv;
             val = indiv_val;
@@ -314,20 +367,34 @@ namespace Store
             return false;
           }
 
-          return indiv_val > end_val; 
+          return t_QuantityTraits::greater(indiv_val, end_val); 
         }
+        std::string print() const
+          { return objective->print();  }
+        std::string what_is() const
+        { 
+          std::ostringstream sstr;
+          sstr << objective->what_is() << " Objective, with delta = " << delta;
+          return sstr.str();
+        } 
+        bool Restart( const TiXmlElement &_node, t_LoadOp & _op)
+          { return t_Base::Restart( _node, _op) and objective->Restart( _node, _op); }
+        bool Save( TiXmlElement &_node, t_SaveOp & _op) const
+          { return t_Base::Save( _node, _op) and objective->Save( _node, _op); }
     };
 
     // returns true if should remove
     // ie false if shouldn't store;
-    template< class T_INDIVIDUAL, class T_INDIV_TRAITS = Traits::Indiv<T_INDIVIDUAL> >
-    class Optima : public BaseOptima<T_INDIVIDUAL, T_INDIV_TRAITS>
+    template< class T_EVALUATOR, class T_GA_TRAITS = Traits::GA<T_EVALUATOR> >
+    class Optima : public BaseOptima<T_EVALUATOR, T_GA_TRAITS>
     {
       public:
-        typedef T_INDIVIDUAL t_Individual;
-        typedef T_INDIV_TRAITS t_IndivTraits;
+        typedef T_EVALUATOR t_Evaluator;
+        typedef T_GA_TRAITS t_GA_Traits;
       protected:
-        typedef BaseOptima<t_Individual, t_IndivTraits> t_Base;
+        typedef BaseOptima<t_Evaluator, t_GA_Traits> t_Base;
+        typedef typename t_GA_Traits :: t_Individual t_Individual;
+        typedef typename t_GA_Traits :: t_IndivTraits t_IndivTraits;
         typedef typename t_IndivTraits :: t_QuantityTraits t_QuantityTraits;
         typedef typename t_QuantityTraits :: t_Quantity t_Quantity;
         typedef typename t_QuantityTraits :: t_ScalarQuantity t_ScalarQuantity;
@@ -345,20 +412,20 @@ namespace Store
           optimum = _indiv;
           return false; 
         }
+        std::string what_is() const { return " optimum "; }
     };
   } // namespace Condition
 
   template<class T_EVALUATOR, class T_GA_TRAITS = Traits::GA<T_EVALUATOR> >
-    struct Type
+    struct Types
     {
       typedef Store::Conditional< T_EVALUATOR,
-                                  Store::Condition::Optima< typename T_GA_TRAITS :: t_Individual,
-                                                            typename T_GA_TRAITS :: t_IndivTraits>,
+                                  Store::Condition::Optima< T_EVALUATOR, T_GA_TRAITS >,
                                   T_GA_TRAITS > Optima;
       typedef Store::Conditional< T_EVALUATOR,
-                                  Store::Condition::FromObjective< typename T_GA_TRAITS :: t_Individual,
-                                                                   typename T_GA_TRAITS :: t_IndivTraits>,
+                                  Store::Condition::FromObjective< T_EVALUATOR, T_GA_TRAITS >,
                                   T_GA_TRAITS >  FromObjective;
+      typedef Store::Base< T_EVALUATOR, T_GA_TRAITS > Base;
     };
 } // namespace Store
 

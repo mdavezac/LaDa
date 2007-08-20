@@ -44,7 +44,8 @@ namespace darwin
       typedef typename t_IndivTraits :: t_Population     t_Population;
       typedef typename t_IndivTraits :: t_Islands        t_Islands;
       typedef typename t_QuantityTraits :: t_ScalarQuantity   t_ScalarQuantity;
-      typedef typename Objective :: Types < t_Individual, t_IndivTraits > :: Vector  t_Objective;
+      typedef typename Objective :: Types < t_Evaluator, t_GA_Traits >  t_Objective;
+      typedef typename Store :: Types< t_Evaluator, t_GA_Traits >  t_Store;
 
     protected:
       const static types::t_unsigned SAVE_RESULTS;
@@ -72,8 +73,8 @@ namespace darwin
       eoGenOp<t_Individual>*                                   breeder_ops;
       Breeder<t_Individual, t_IndivTraits>*                    breeder;
       eoReplacement<t_Individual>*                             replacement;
-      t_Objective*                                             objective;
-      Store::Base<t_Evaluator, t_GA_Traits>*                   store;
+      typename t_Objective::Vector*                            objective;
+      typename t_Store :: Base*                                store;
       Evaluation::Base<t_Evaluator, t_GA_Traits>*              evaluation;
 
       t_Evaluator   evaluator;

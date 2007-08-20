@@ -1,6 +1,7 @@
 AUTOMAKE_OPTIONS = foreign
 if DODARWIN 
   DARWINSUBDIR = darwin
+  PESCANSUBDIR = pescan_interface
 endif 
 if DOMPI 
   MPISUBDIR = mpi
