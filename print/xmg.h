@@ -42,9 +42,10 @@ namespace Print
       std::ofstream file;
       std::list< std::string > line_list;
       std::ostringstream stream;
+      bool is_empty;
 
     public:
-      Xmg(const std::string &_f) : indentation(0), filename(_f) {};
+      Xmg(const std::string &_f) : indentation(0), filename(_f), is_empty(true) {};
       ~Xmg() { close(); }
       
       bool open();

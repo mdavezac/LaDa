@@ -29,6 +29,7 @@ namespace Print
 #endif 
     filename = reformat_home( _f );
     file.open( filename.c_str(), std::ios_base::out|std::ios_base::trunc ); 
+    is_empty = true;
     if (file.fail() )
       std::cerr << "Could not open " << filename << std::endl;
     close();
@@ -42,7 +43,6 @@ namespace Print
     if ( file.is_open() )
       return true;
     file.open( filename.c_str(), std::ios_base::out|std::ios_base::app ); 
-    file << "# Subversion Revision " << SVN::Revision << std::endl;
     return file.is_open();
   }    
   void Xmg :: close ()
@@ -67,6 +67,11 @@ namespace Print
       return; 
 
     open();
+
+    if ( is_empty )  // print revision
+      file << "# Subversion Revision " << SVN::Revision << std::endl;
+
+    is_empty = false;
 
     std::list< std::string > :: const_iterator i_str = line_list.begin();
     std::list< std::string > :: const_iterator i_str_end = line_list.end();
