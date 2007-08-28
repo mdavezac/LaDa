@@ -20,16 +20,16 @@
 #include <eo/utils/eoHowMany.h>
 
 #include "opt/types.h"
+#include "print/xmg.h"
 
 #include "taboos.h"
 #include "operators.h"
 #include "gencount.h"
-#include "print_xmgrace.h"
 
 namespace darwin
 {
   template< class T_STORE, class T_EVALUATION >
-  class Print : public eoUpdater
+  class PrintGA : public eoUpdater
   {
     public:
       typedef T_STORE t_Store; 
@@ -42,33 +42,33 @@ namespace darwin
       bool do_print_each_call;
 
     public:
-      Print   ( const t_Store &_store, const t_Evaluation &_eval, 
-                const GenCount &_age, bool _each )
-            : store(_store), evaluation(_eval), age(_age), do_print_each_call(_each) {}
-      Print   ( const Print &_c )
-            : store(_c.results), evaluation(_c.evaluation), age(_c.age),
-              do_print_each_call(_c.do_print_each_call)  {}
+      PrintGA   ( const t_Store &_store, const t_Evaluation &_eval, 
+                  const GenCount &_age, bool _each )
+              : store(_store), evaluation(_eval), age(_age), do_print_each_call(_each) {}
+      PrintGA   ( const PrintGA &_c )
+              : store(_c.results), evaluation(_c.evaluation), age(_c.age),
+                do_print_each_call(_c.do_print_each_call)  {}
 
       virtual void operator()()
       {
         if ( not ( do_print_each_call or store.newresults() ) )
         {
-          printxmg << darwin :: PrintXmg:: clearall;
+          Print::xmg << Print::Xmg:: clearall;
           return;
         }
 
         std::string special = "";
         if ( not store.newresults() ) special = " ? ";
        
-        darwin::printxmg << darwin::PrintXmg::comment << special << "Iteration " << age() 
-                         << darwin::PrintXmg::endl 
-                         << darwin::PrintXmg::comment << special << "Evaluation Calls: " 
+        Print::xmg << Print::Xmg::comment << special << "Iteration " << age() 
+                         << Print::Xmg::endl 
+                         << Print::Xmg::comment << special << "Evaluation Calls: " 
                          << evaluation.nb_eval << " " << evaluation.nb_grad 
-                         << darwin::PrintXmg::endl;
+                         << Print::Xmg::endl;
         
         if( store.newresults() )
           store.print_results( age() );
-        printxmg << darwin::PrintXmg::flush;
+        Print::xmg << Print::Xmg::flush;
       }
 
       // some anoying stuff
@@ -76,9 +76,9 @@ namespace darwin
       void readFrom( std::istream &__os ) const {};
       void lastCall()
       {
-        darwin::printxmg << darwin::PrintXmg::comment << "Last Found Result" << PrintXmg::endl;
+        Print::xmg << Print::Xmg::comment << "Last Found Result" << Print::Xmg::endl;
         store.print_results(age(), true);
-        darwin::printxmg << darwin::PrintXmg::flush;
+        Print::xmg << Print::Xmg::flush;
       }
 
       virtual std::string className(void) const { return "darwin::PrintFitness"; }
@@ -114,7 +114,7 @@ namespace darwin
                  << i_pop->get_concentration() << " "
                  << i_pop->fitness();
             std::string str = sstr.str();
-            printxmg.add_comment( str );
+            Print::xmg.add_comment( str );
           }
       }
 
@@ -187,7 +187,7 @@ namespace darwin
             *breeding_ops = &normal_ops; 
             *breeding_howmany = &normal_howmany;
             is_gone_nuclear = false;
-            printxmg.add_comment("Nuclear-winter is over");
+            Print::xmg.add_comment("Nuclear-winter is over");
           }
         }
         else if ( taboo.is_problematic() )
@@ -197,7 +197,7 @@ namespace darwin
           *breeding_ops = &nuclear_ops; 
           *breeding_howmany = &nuclear_howmany;
           taboo.set_problematic(false);
-          printxmg.add_comment("Going Nuclear");
+          Print::xmg.add_comment("Going Nuclear");
         }
       }
 
@@ -268,7 +268,7 @@ namespace darwin
               sstr << " AgeTaboo: new individual ";
               i_pop->print_out( sstr );
               std::string str = sstr.str();
-              printxmg.add_comment( str );
+              Print::xmg.add_comment( str );
             }
           }
       }
@@ -326,7 +326,7 @@ namespace darwin
              << ", term=" << term;
  
         std::string str = sstr.str();
-        printxmg.add_comment( str );
+        Print::xmg.add_comment( str );
       }
   };
 
@@ -360,7 +360,7 @@ namespace darwin
         if ( stop_filename.empty() ) stop_filename = "stop";
         std::ostringstream sstr;
         sstr << "Will stop on finding file " << stop_filename;
-        darwin::printxmg.add_comment( sstr.str() );
+        Print::xmg.add_comment( sstr.str() );
       }
 
 
@@ -479,7 +479,7 @@ namespace darwin
 
         apply_monitors_updaters();
 
-        printxmg << PrintXmg::flush; 
+        Print::xmg << Print::Xmg::flush; 
 
         bool result =    ( max_generations and generation_counter() < max_generations ) 
                       or ( not max_generations );
@@ -497,7 +497,7 @@ namespace darwin
         {
           std::ostringstream sstr;
           sstr << "Stopping on finding file " << stop_filename;
-          printxmg.add_comment( sstr.str() );
+          Print::xmg.add_comment( sstr.str() );
           result = false; 
         }
 

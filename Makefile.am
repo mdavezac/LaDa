@@ -12,4 +12,8 @@ endif
 if DOPESCAN
   PESCANSUBDIR = pescan_interface
 endif 
-SUBDIRS = $(MPISUBDIR) atat physics opt lamarck  $(VFFSUBDIR) $(PESCANSUBDIR) $(DARWINSUBDIR)
+SUBDIRS = $(MPISUBDIR) atat physics opt lamarck print $(VFFSUBDIR) $(PESCANSUBDIR) $(DARWINSUBDIR)
+revision.h: force
+	./max_revision.pl
+force: 
+all: revision.h

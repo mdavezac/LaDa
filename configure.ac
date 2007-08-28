@@ -162,6 +162,6 @@ AC_PROG_LIBTOOL
 
 
 AC_OUTPUT(Makefile atat/Makefile physics/Makefile opt/Makefile lamarck/Makefile
-          vff/Makefile mpi/Makefile pescan_interface/Makefile darwin/Makefile )
+          vff/Makefile mpi/Makefile pescan_interface/Makefile darwin/Makefile print/Makefile )
 
 

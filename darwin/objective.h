@@ -15,10 +15,10 @@
 #ifdef _MPI
 #include "mpi/mpi_object.h"
 #endif
+#include "print/xmg.h"
 
 #include "gatraits.h"
 #include "loadsave.h"
-#include "print_xmgrace.h"
 
 namespace Objective
 {
@@ -468,17 +468,17 @@ namespace Objective
           str = _node.Attribute( "objective" );
         if ( str.compare("convexhull") == 0 )
         {
-          darwin::printxmg << darwin::PrintXmg::comment << "Objective: ConvexHull" << darwin::PrintXmg::endl;
+          Print::xmg << Print::Xmg::comment << "Objective: ConvexHull" << Print::Xmg::endl;
           return new ConvexHull<t_Evaluator, t_GA_Traits>;
         }
         else if ( str.compare("minimize") == 0 )
         {
-          darwin::printxmg << darwin::PrintXmg::comment << "Objective: Minimize" << darwin::PrintXmg::endl;
+          Print::xmg << Print::Xmg::comment << "Objective: Minimize" << Print::Xmg::endl;
           return new Minimize<t_Evaluator, t_GA_Traits>;
         }
         else if ( str.compare("maximize") == 0 )
         {
-          darwin::printxmg << darwin::PrintXmg::comment << "Objective: Maximize" << darwin::PrintXmg::endl;
+          Print::xmg << Print::Xmg::comment << "Objective: Maximize" << Print::Xmg::endl;
           return new Maximize<t_Evaluator, t_GA_Traits>;
         }
         else if (str.compare("target") == 0 )
@@ -486,8 +486,8 @@ namespace Objective
           if( _node.Attribute("target") )
           {
             double d; _node.Attribute("target", &d );
-            darwin::printxmg << darwin::PrintXmg::comment
-                             << "Objective: Target (" << d << ")" << darwin::PrintXmg::endl;
+            Print::xmg << Print::Xmg::comment
+                       << "Objective: Target (" << d << ")" << Print::Xmg::endl;
             return new Target<t_Evaluator, t_GA_Traits>( (types::t_real) d );
           }
         }

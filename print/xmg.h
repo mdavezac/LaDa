@@ -1,8 +1,8 @@
 //
 //  Version: $Id$
 //
-#ifndef _DARWIN_PRINT_XMGRACE_H_
-#define _DARWIN_PRINT_XMGRACE_H_
+#ifndef __PRINT_XMG_H_
+#define __PRINT_XMG_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -18,11 +18,11 @@
 #endif
 
 
-namespace darwin
+namespace Print
 {
-  class PrintXmg
+  class Xmg
   {
-    template< class T_TYPE > friend darwin::PrintXmg& operator<< ( darwin::PrintXmg &, const T_TYPE & );
+    template< class T_TYPE > friend Xmg& operator<< ( Xmg &, const T_TYPE & );
     protected:
       enum t_operation { ENDL, COMMENT, CLEAR, FLUSH, INDENT, UNINDENT, ADDTOLAST, REMOVELAST,
                          CLEARALL };
@@ -44,8 +44,8 @@ namespace darwin
       std::ostringstream stream;
 
     public:
-      PrintXmg(const std::string &_f) : indentation(0), filename(_f) {};
-      ~PrintXmg() { close(); }
+      Xmg(const std::string &_f) : indentation(0), filename(_f) {};
+      ~Xmg() { close(); }
       
       bool open();
       void close();
@@ -96,9 +96,9 @@ namespace darwin
       void special_op( t_operation _op);
   };
 
-  extern PrintXmg printxmg;
+  extern Xmg xmg;
 
-  template<class T_TYPE> inline void PrintXmg :: to_current_stream ( const T_TYPE &_type)
+  template<class T_TYPE> inline void Xmg :: to_current_stream ( const T_TYPE &_type)
   {
 #ifdef _MPI
     if ( not mpi::main.is_root_node() ) return;
@@ -106,14 +106,14 @@ namespace darwin
       stream << _type;
   }
 
-  template<> inline void PrintXmg :: to_current_stream<PrintXmg::t_operation>(const PrintXmg::t_operation &_op)
+  template<> inline void Xmg :: to_current_stream<Xmg::t_operation>(const Xmg::t_operation &_op)
   {
     if ( _op == ENDL  and stream.str().empty() ) return;
     special_op( _op );
   }
 
 
-  template<class T_TYPE> darwin::PrintXmg& operator<< ( darwin::PrintXmg& _this, const T_TYPE &_whatever)
+  template<class T_TYPE> Xmg& operator<< ( Xmg& _this, const T_TYPE &_whatever)
   {
 #ifdef _MPI
     if ( not mpi::main.is_root_node() ) return _this;
@@ -121,7 +121,7 @@ namespace darwin
       _this.to_current_stream( _whatever );
     return _this;
   }
-}
 
+}
 
 #endif // _PRINT_XMGRACE_H_

@@ -12,7 +12,7 @@
 #include <eo/eoGenOp.h>
 
 #include "opt/types.h"
-#include "print_xmgrace.h"
+#include "print/xmg.h"
 
 namespace darwin
 {
@@ -47,10 +47,8 @@ namespace darwin
         }
 
         // prints stuff out
-        std::ostringstream sstr; 
-        sstr << "True Census: " << std::setw(10) << std::setprecision(3)
-             << N << " / " << _pop.size(); 
-        printxmg.add_comment( sstr.str() );
+        Print::xmg << Print::Xmg::comment <<  "True Census: "
+                   << N << " / " << _pop.size() << Print::Xmg::endl; 
       }
   };
   

@@ -15,7 +15,7 @@
   using std::compose1;
 #endif
 
-#include "print_xmgrace.h"
+#include "print/xmg.h"
 #include "functors.h"
 #include "concentration.h"
 
@@ -187,7 +187,7 @@ namespace SingleSite
     singlec = true;
     std::ostringstream sstr; 
     sstr << "Concentration is fixed to " << x;
-    darwin::printxmg.add_comment( sstr.str() );
+    Print::xmg.add_comment( sstr.str() );
 
     return true;
   }
@@ -263,7 +263,7 @@ namespace SingleSite
       if ( crossover_probability > 1 ) crossover_probability = 0.5;
       std::ostringstream sstr;
       sstr << "Crossover rate = " << crossover_probability;
-      darwin::printxmg.add_comment(sstr.str());
+      Print::xmg.add_comment(sstr.str());
       // pointer is owned by caller !!
       return darwin::new_genop( *this, &t_This::Crossover, std::string( "Crossover" ) );
     }
@@ -275,12 +275,12 @@ namespace SingleSite
       if ( crossover_probability > 1 ) crossover_probability = 0.5;
       std::ostringstream sstr;
       sstr << "Krossover, rate = " << crossover_probability;
-      darwin::printxmg.add_comment(sstr.str());
+      Print::xmg.add_comment(sstr.str());
       if ( _el.Attribute("type") )
       {
         std::string str =  _el.Attribute("type");
         if ( str.compare("range") == 0 ) 
-          { att = true; darwin::printxmg.add_to_last( ", Range = true" ); }
+          { att = true; Print::xmg.add_to_last( ", Range = true" ); }
       }
       // pointer is owned by caller !!
       return darwin::new_genop( *this, &t_This::Krossover, 
@@ -316,10 +316,8 @@ namespace SingleSite
     if ( lessthan < morethan )
       return NULL;
    
-    std::ostringstream sstr;
-    sstr << std::fixed << std::setprecision(3) << "Taboo x in [ " << 0.5*(morethan+1.0)
-         << ", "  << 0.5*(lessthan+1.0) << "] ";
-    darwin::printxmg.add_comment(sstr.str());
+    Print::xmg << Print::Xmg::comment << "Taboo x in [ " << 0.5*(morethan+1.0)
+               << ", "  << 0.5*(lessthan+1.0) << "] " << Print::Xmg::endl;
     // pointer is owned by caller !!
     return new darwin::TabooFunction< t_This >
                                     ( *this, &t_This::Taboo, "Taboo" );

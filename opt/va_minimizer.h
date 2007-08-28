@@ -9,6 +9,9 @@
 #endif
 
 #include <eo/utils/eoRNG.h>
+
+#include <opt/types.h>
+
 #include "opt_minimize_base.h"
 
 namespace minimizer

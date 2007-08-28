@@ -7,7 +7,6 @@
 #include <fstream>
 
 #include "single_site.h"
-#include "print_xmgrace.h"
 #include "lamarck/atom.h"
 #include "opt/va_minimizer.h"
 

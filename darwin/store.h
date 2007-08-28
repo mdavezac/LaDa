@@ -19,6 +19,7 @@
 #include "opt/opt_function_base.h"
 #include "opt/fitness_function.h"
 #include "opt/convex_hull.h"
+#include "print/xmg.h"
 
 #ifdef _MPI
 #include "mpi/mpi_object.h"
@@ -26,7 +27,6 @@
 
 #include "objective.h"
 #include "taboos.h"
-#include "print_xmgrace.h"
 #include "loadsave.h"
 #include "gatraits.h"
 #include "loadsave.h"
@@ -144,8 +144,8 @@ namespace Store
                                                 darwin::LOADSAVE_LONG);
         if ( not condition.Restart( *xmlresults, loadop ) )
         {
-          darwin::printxmg << darwin::PrintXmg::comment << "Could not load condition" << darwin::PrintXmg::endl
-                           << darwin::PrintXmg::comment << "Aborting Load of Result" << darwin::PrintXmg::endl;
+          Print::xmg << Print::Xmg::comment << "Could not load condition" << Print::Xmg::endl
+                     << Print::Xmg::comment << "Aborting Load of Result"  << Print::Xmg::endl;
           return false;
         }
 
@@ -153,8 +153,8 @@ namespace Store
         darwin::LoadIndividuals( *xmlresults, loadop, results );
         // This particular line acts as Restart for condition if necessary
         std::remove_if(results.begin(), results.end(), condition); 
-        darwin::printxmg << darwin::PrintXmg::comment << "Reloaded Optimum and "
-                         << results.size() << " target results" << darwin::PrintXmg::endl;
+        Print::xmg << Print::Xmg::comment << "Reloaded Optimum and "
+                   << results.size() << " target results" << Print::Xmg::endl;
         print_results(0, true);
         return true;
       }
@@ -174,11 +174,11 @@ namespace Store
         typename t_Container :: const_iterator i_indiv = results.begin();
         typename t_Container :: const_iterator i_end = results.end();
         for (; i_indiv != i_end; ++i_indiv )
-          darwin::printxmg << ( is_comment ? darwin::PrintXmg::comment: darwin::PrintXmg::clear )
-                           << std::setw(12) << std::setprecision(7)
-                           << _age << " "
-                           << i_indiv->get_concentration() << " "
-                           << i_indiv->fitness() << darwin::PrintXmg::endl;
+          Print::xmg << ( is_comment ? Print::Xmg::comment: Print::Xmg::clear )
+                     << std::setw(12) << std::setprecision(7)
+                     << _age << " "
+                     << i_indiv->get_concentration() << " "
+                     << i_indiv->fitness() << Print::Xmg::endl;
         new_results = false;
       }
       virtual std::string print() const { return condition.print(); }

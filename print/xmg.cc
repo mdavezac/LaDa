@@ -4,21 +4,24 @@
 #include<iostream>
 #include <sstream>
 
-#include "print_xmgrace.h"
-#include "pescan_interface/interface.h"
-namespace darwin
-{
-  const PrintXmg :: t_operation PrintXmg :: endl       = PrintXmg :: ENDL;
-  const PrintXmg :: t_operation PrintXmg :: comment    = PrintXmg :: COMMENT;
-  const PrintXmg :: t_operation PrintXmg :: clear      = PrintXmg :: CLEAR;
-  const PrintXmg :: t_operation PrintXmg :: flush      = PrintXmg :: FLUSH;
-  const PrintXmg :: t_operation PrintXmg :: indent     = PrintXmg :: INDENT;
-  const PrintXmg :: t_operation PrintXmg :: unindent   = PrintXmg :: UNINDENT;
-  const PrintXmg :: t_operation PrintXmg :: addtolast  = PrintXmg :: ADDTOLAST;
-  const PrintXmg :: t_operation PrintXmg :: removelast = PrintXmg :: REMOVELAST;
-  const PrintXmg :: t_operation PrintXmg :: clearall   = PrintXmg :: CLEARALL;
+#include <revision.h>
 
-  void PrintXmg :: init (const std::string &_f)
+#include "xmg.h"
+#include "manip.h"
+
+namespace Print
+{
+  const Xmg :: t_operation Xmg :: endl       = Xmg :: ENDL;
+  const Xmg :: t_operation Xmg :: comment    = Xmg :: COMMENT;
+  const Xmg :: t_operation Xmg :: clear      = Xmg :: CLEAR;
+  const Xmg :: t_operation Xmg :: flush      = Xmg :: FLUSH;
+  const Xmg :: t_operation Xmg :: indent     = Xmg :: INDENT;
+  const Xmg :: t_operation Xmg :: unindent   = Xmg :: UNINDENT;
+  const Xmg :: t_operation Xmg :: addtolast  = Xmg :: ADDTOLAST;
+  const Xmg :: t_operation Xmg :: removelast = Xmg :: REMOVELAST;
+  const Xmg :: t_operation Xmg :: clearall   = Xmg :: CLEARALL;
+
+  void Xmg :: init (const std::string &_f)
   { 
 #ifdef _MPI
     if ( not mpi::main.is_root_node() )
@@ -30,7 +33,7 @@ namespace darwin
       std::cerr << "Could not open " << filename << std::endl;
     close();
   }
-  bool PrintXmg :: open ()
+  bool Xmg :: open ()
   {
 #ifdef _MPI
     if ( not mpi::main.is_root_node() )
@@ -39,9 +42,10 @@ namespace darwin
     if ( file.is_open() )
       return true;
     file.open( filename.c_str(), std::ios_base::out|std::ios_base::app ); 
+    file << "# Subversion Revision " << SVN::Revision << std::endl;
     return file.is_open();
   }    
-  void PrintXmg :: close ()
+  void Xmg :: close ()
   {
 #ifdef _MPI
     if ( not mpi::main.is_root_node() )
@@ -53,7 +57,7 @@ namespace darwin
     file.flush();
     file.close();
   }    
-  void PrintXmg :: flushall ()
+  void Xmg :: flushall ()
   {
 #ifdef _MPI
     if ( not mpi::main.is_root_node() )
@@ -73,7 +77,7 @@ namespace darwin
     file.flush();
   }    
 
-  void PrintXmg :: add_comment( const std::string &_str )
+  void Xmg :: add_comment( const std::string &_str )
   {
 #ifdef _MPI
     if ( not mpi::main.is_root_node() )
@@ -87,7 +91,7 @@ namespace darwin
     std::string str = sstr.str();
     line_list.push_back( str );
   }
-  void PrintXmg :: add_to_last( const std::string &_str )
+  void Xmg :: add_to_last( const std::string &_str )
   {
 #ifdef _MPI
     if ( not mpi::main.is_root_node() )
@@ -98,7 +102,7 @@ namespace darwin
     std::string &str = line_list.back();
     str += _str;
   }
-  void PrintXmg :: add_to_last()
+  void Xmg :: add_to_last()
   {
     if( line_list.empty() ) return;
 
@@ -106,7 +110,7 @@ namespace darwin
     line_list.pop_back();
   }
 
-  void PrintXmg :: special_op( t_operation _op )
+  void Xmg :: special_op( t_operation _op )
   {
     switch ( _op )
     {
@@ -123,5 +127,5 @@ namespace darwin
   }
 
 
-  PrintXmg printxmg("convex_hull.agr");
+  Xmg xmg("convex_hull.agr");
 }

@@ -18,7 +18,7 @@
 #endif
 #include "individual.h"
 #include "darwin.h"
-#include "print_xmgrace.h"
+#include "print/xmg.h"
 
 #ifdef _MPI
 #  include "mpi/mpi_object.h"
@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
 #ifdef _MPI
   mpi::main(argc, argv);
 #endif
-  darwin::printxmg.init("convex_hull.agr");
+  Print::xmg.init("convex_hull.agr");
   try
   {
     darwin::Darwin< Functional::Evaluator > ga;

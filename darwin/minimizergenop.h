@@ -11,11 +11,13 @@
 #include <eo/eoGenOp.h>
 
 #include "opt/opt_function_base.h"
+#include "opt/va_minimizer.h"
+#include "print/xmg.h"
+
 #include "evaluation.h"
 #include "objective.h"
 #include "gatraits.h"
 #include "minimizergenop.h"
-#include "opt/va_minimizer.h"
 
 namespace darwin 
 {
@@ -185,21 +187,21 @@ namespace darwin
    
     if ( name.compare("VA") == 0 )
     {
-      darwin::printxmg << darwin::PrintXmg::comment << "VA optimizer" << darwin::PrintXmg::endl;
+      Print::xmg << Print::Xmg::comment << "VA optimizer" << Print::Xmg::endl;
       // pointer is owned by caller !!
       // don't deallocate
       minimizer =  new ::minimizer::VA<t_Functional, t_SaveState>( _node, functional.savestate );
     }
     else if ( name.compare("SA") == 0 )
     {
-      darwin::printxmg << darwin::PrintXmg::comment << "SA optimizer" << darwin::PrintXmg::endl;
+      Print::xmg << Print::Xmg::comment << "SA optimizer" << Print::Xmg::endl;
       // pointer is owned by caller !!
       // don't deallocate
       minimizer = new ::minimizer::VA<t_Functional, t_SaveState>( _node, functional.savestate );
     }
     else if ( name.compare("Beratan") == 0 )
     {
-      darwin::printxmg << darwin::PrintXmg::comment << "Beratan optimizer" << darwin::PrintXmg::endl;
+      Print::xmg << Print::Xmg::comment << "Beratan optimizer" << Print::Xmg::endl;
       // pointer is owned by caller !!
       // don't deallocate
       minimizer = new ::minimizer::Beratan<t_Functional>( _node );
