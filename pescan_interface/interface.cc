@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #include "interface.h"
 #include<mpi/mpi_object.h>
 #include <sstream>

@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #include "harmonic.h"
 
 namespace Ising_CE

@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _DARWIN_PRINT_XMGRACE_H_
 #define _DARWIN_PRINT_XMGRACE_H_
 

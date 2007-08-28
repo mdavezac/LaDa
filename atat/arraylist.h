@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _ARRAYLIST_H_
 #define _ARRAYLIST_H_
 

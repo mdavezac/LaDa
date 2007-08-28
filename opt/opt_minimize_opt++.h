@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _OPT_MINIMIZE_OPTpp_H_
 #define _OPT_MINIMIZE_OPTpp_H_
 

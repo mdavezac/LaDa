@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 // Defines two new classes, 
 //   Atom: object containing a position (as atat::rVector3d)
 //            and a type (types::t_real)

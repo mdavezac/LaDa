@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _PHYSICAL_CONSTANTS_
 #define _PHYSICAL_CONSTANTS_
 

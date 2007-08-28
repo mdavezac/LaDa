@@ -1,4 +1,7 @@
 //
+//  Version: $Id$
+//
+//
 // Monome class: a single term made up of a coefficient and an array
 // of variables. The latters are usually integers which are meant to refer to
 // the variable array of a Polynome object

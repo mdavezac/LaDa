@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 
 #include <fstream>
 #include <sstream>

@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _LOOP_FUNCTORS_H_
 #define _LOOP_FUNCTORS_H_
 

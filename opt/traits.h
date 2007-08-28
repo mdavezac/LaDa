@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _TRAITS_H_
 #define _TRAITS_H_
 

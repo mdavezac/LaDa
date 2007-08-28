@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _ATOM_H_
 #define _ATOM_H_
 

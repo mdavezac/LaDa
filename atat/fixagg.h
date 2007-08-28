@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef __FIXAGG_H__
 #define __FIXAGG_H__
 

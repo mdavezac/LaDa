@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _CH_TEMPLATE_H_
 #define _CH_TEMPLATE_H_
 

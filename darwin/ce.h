@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _CE_H_
 #define _CE_H_
 

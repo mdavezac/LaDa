@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _XTALUTIL_H_
 #define _XTALUTIL_H_
 

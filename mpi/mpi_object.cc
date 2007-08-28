@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #include <vector>
 #include <list>
 #include <string>

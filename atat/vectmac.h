@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef __VECTMAC_H__
 #define __VECTMAC_H__
 

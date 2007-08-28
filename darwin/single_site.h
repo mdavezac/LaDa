@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _SINGLE_SITE_H_
 #define _SINGLE_SITE_H_
 

@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #include "atat/array.h"
 #include "atat/misc.h"
 #include "lattice.h"

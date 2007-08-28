@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _DARWIN_FUNCTORS_H_
 #define _DARWIN_FUNCTORS_H_
 

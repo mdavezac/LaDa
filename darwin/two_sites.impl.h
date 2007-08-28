@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _TWOSITES_IMPL_H_
 #define _TWOSITES_IMPL_H_
 

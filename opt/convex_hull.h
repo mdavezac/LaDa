@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _CONVEX_HULL_BASE_H_
 #define _CONVEX_HULL_BASE_H_
 

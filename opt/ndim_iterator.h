@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 // Provides a multidimensional iterator for dynamic loops
 // _Tp, the building block iterator, requires the incrementation ++
 // _Predicate is a binary predicate taking _Tp on input 

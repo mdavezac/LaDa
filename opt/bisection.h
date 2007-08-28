@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _BISECTION_H_
 #define _BISECTION_H_
 

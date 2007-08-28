@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _VFF_FUNCTIONAL_H_
 #define _VFF_FUNCTIONAL_H_
 

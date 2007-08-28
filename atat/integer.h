@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _INTEGER__H_
 #define _INTEGER__H_
  

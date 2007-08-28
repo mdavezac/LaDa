@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _COMPOSE_FUNCTORS_H
 #define _COMPOSE_FUNCTORS_H
 #ifdef HAVE_CONFIG_H

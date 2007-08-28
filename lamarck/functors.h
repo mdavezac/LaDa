@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _FUNCTORS_H_
 #define _FUNCTORS_H_
 

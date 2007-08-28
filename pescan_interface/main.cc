@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #include <vff/functional.h>
 #include <lamarck/lattice.h>
 #include <lamarck/structure.h>

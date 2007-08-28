@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #include <tinyxml/tinyxml.h>
 
 #include "lamarck/functional_builder.h"

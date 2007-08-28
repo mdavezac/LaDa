@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _MULTIOB_INDIVIDUAL_H_
 #define _MULTIOB_INDIVIDUAL_H_
 

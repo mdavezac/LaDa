@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef __MACHDEP_H__
 #define __MACHDEP_H__
 

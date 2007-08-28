@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #include<iostream>
 
 #ifdef HAVE_CONFIG_H

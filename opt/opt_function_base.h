@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 // Implements a base template class for functions minimizable by
 // opt_minimize. It contains the following members
 //

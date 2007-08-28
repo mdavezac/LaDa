@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _CONSTITTUENT_STRAIN_H_
 #define _CONSTITTUENT_STRAIN_H_
 

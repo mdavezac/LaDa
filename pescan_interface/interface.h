@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _PESCAN_INTERFACE_H_
 #define _PESCAN_INTERFACE_H_
 

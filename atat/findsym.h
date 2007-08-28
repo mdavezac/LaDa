@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _FINDSYM_H_
 #define _FINDSYM_H_
 

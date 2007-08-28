@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 // Implements binary functors for operations OP="-" and OP="+"
 // for use with minimizer::?? interface
 // both classes should have the same variable arrays (ie in mem)

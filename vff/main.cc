@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 
 #include <tinyxml/tinyxml.h>
 

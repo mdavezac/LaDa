@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _FUNCTIONAL_BUILDER_H_
 #define _FUNCTIONAL_BUILDER_H_
 

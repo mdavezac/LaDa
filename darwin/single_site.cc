@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #include <functional>
 #include <algorithm>
 #include <ext/algorithm>

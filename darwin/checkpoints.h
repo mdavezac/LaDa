@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _DARWIN_CHECKPOINT_H_
 #define _DARWIN_CHECKPOINT_H_
 

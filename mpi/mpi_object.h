@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _MPI_OBJECT_H_
 #define _MPI_OBJECT_H_
 

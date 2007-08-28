@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _OPT_FRPRMN_H_
 #define _OPT_FRPRMN_H_
 

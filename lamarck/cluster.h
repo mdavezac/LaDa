@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _CLUSTER_H_
 #define _CLUSTER_H_
 

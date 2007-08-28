@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #include <stdexcept>       // std::runtime_error
 #include <eo/eoScalarFitness.h>
 

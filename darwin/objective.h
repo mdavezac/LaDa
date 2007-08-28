@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _MULTIOB_OBJECTIVE_H_
 #define _MULTIOB_OBJECTIVE_H_
 

@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #include "concentration.h"
 
 types::t_real set_concentration( Ising_CE::Structure &_str,

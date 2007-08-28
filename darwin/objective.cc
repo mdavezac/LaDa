@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #include  "objective.h"
 
 std::ostream & operator<<( std::ostream &_os, darwin::Fitness &_fit )

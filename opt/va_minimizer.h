@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _MINIMIZER_VA_H_
 #define _MINIMIZER_VA_H_
 

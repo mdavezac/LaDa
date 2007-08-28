@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _HARMONICS_H_
 #define _HARMONICS_H_
 

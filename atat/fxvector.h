@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef __FXVECTOR_H__
 #define __FXVECTOR_H__
 

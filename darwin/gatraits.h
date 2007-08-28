@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifndef _GATRAITS_H_
 #define _GATRAITS_H_
 

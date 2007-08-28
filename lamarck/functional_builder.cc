@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #include <iostream>
 #include <sstream>
 #include <string>
