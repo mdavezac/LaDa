@@ -20,7 +20,7 @@ $params{'GA'}{'maxgen'} = 0;
 $params{'GA'}{'popsize'} = 100;
 $params{'GA'}{'rate'} = 0.1;
 
-$params{'method'}{'type'} = "optimum";
+$params{'method'}{'type'} = "convexhull";
 $params{'method'}{'target'} = "0";
 $params{'method'}{'delta'} = "0";
 

@@ -96,23 +96,28 @@ int main(int argc, char *argv[])
       return false;
     }
     vff.initialize_centers();
-    vff.print_out(std::cout );
     
-    structure.print_out(std::cout );
     minimizer::GnuSL<Vff::Functional> minimizer( vff );
     child = handle.FirstChild( "Job" ).Element();
     minimizer.Load(*child);
     minimizer.minimize();
-    structure.energy = vff.energy();
-    std::cout << "Energy: " << structure.energy << std::endl;
-    std::cout << "Stress Tensor: " << std::endl;
+    structure.energy = vff.energy() / 16.0217733;
     const atat::rMatrix3d stress = vff.get_stress();
-    std::cout << "   " << stress(0,0) << " " << stress(1,0) << " " << stress(2,0) << std::endl
-              << "   " << stress(0,1) << " " << stress(1,1) << " " << stress(2,1) << std::endl
-              << "   " << stress(0,2) << " " << stress(1,2) << " " << stress(2,2) 
+    std::cout << std::fixed << std::setprecision(5) 
+              << "Energy [meV/atom]: " << std::setw(12) << structure.energy << std::endl
+              << "Stress Tensor: " << std::endl 
+              << std::setw(12) << stress(0,0) << " " << std::setw(12)
+                               << stress(1,0) << " " << std::setw(12) << stress(2,0) << std::endl
+              << std::setw(12) << stress(0,1) << " " << std::setw(12)
+                               << stress(1,1) << " " << std::setw(12) << stress(2,1) << std::endl
+              << std::setw(12) << stress(0,2) << " " << std::setw(12)
+                               << stress(1,2) << " " << std::setw(12) << stress(2,2) 
               << std::endl << std::endl << std::endl;
     vff.print_escan_input( "atomic.config" );
 
+
+    Ising_CE::fourrier_to_kspace( structure.atoms.begin(),  structure.atoms.end(),
+                                  structure.k_vecs.begin(), structure.k_vecs.end() );
     structure.print_out(std::cout );
 
   }

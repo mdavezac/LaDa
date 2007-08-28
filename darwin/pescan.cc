@@ -119,25 +119,22 @@ namespace BandGap
     current_object->CBM = cbm;
     current_individual->quantities() = cbm - vbm;
 
-    // if all-electron, no need to write references
-    if ( pescan.get_method() != Pescan::Interface::Escan::ALL_ELECTRON )
+    // checks that non-zero band gap has been found
+    if ( result < types::tolerance )
     {
-      if ( result < types::tolerance ) // makes sure result makes sense
-      {
-        set_all_electron();
-        evaluate();
-      }
-      return;  // then returns
+      set_all_electron();
+      evaluate();
+      return;
     }
-    
+    if ( pescan.get_method() == Pescan::Interface::Escan::FOLDED_SPECTRUM ) return;
     pescan.set_method(); // resets to folded spectrum if necessary
 
 
     // writes referecnce
 #ifdef _MPI
-    if ( mpi::main.is_root_node() ) // not root no read write
+    if ( not mpi::main.is_root_node() ) return // not root no read write
 #endif 
-      write_references();
+    write_references();
   }
 
   bool Evaluator :: Continue()

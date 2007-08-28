@@ -59,8 +59,8 @@ namespace Ising_CE {
       std::ostream& print_out( std::ostream &stream ) const
       {
         stream << std::fixed << std::setprecision(5);
-        stream << pos[0] << " " << pos[1] << " " << pos[2];
-        stream << "  type: " << type;
+        stream << std::setw(8) << pos[0] << std::setw(8) << pos[1] << std::setw(8) << pos[2];
+        stream << "  type: " << std::setw(16) << type;
         if ( site != -1 )
           stream << "  site: " << site;
         stream << "  freeze: " << freeze;

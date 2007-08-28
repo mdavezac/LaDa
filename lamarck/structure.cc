@@ -40,8 +40,16 @@ namespace Ising_CE {
                                                                  
   void Structure :: print_out (std::ostream &stream) const
   {
-    stream << std::endl << " Structure Cell " << std::endl;
-    stream << cell;
+    stream << std::endl << " Structure Cell " << std::endl << std::fixed << std::setprecision(5)
+           << " " << std::setw(9) << cell(0,0)
+           << " " << std::setw(9) << cell(0,1)
+           << " " << std::setw(9) << cell(0,2) << std::endl
+           << " " << std::setw(9) << cell(1,0)
+           << " " << std::setw(9) << cell(1,1)
+           << " " << std::setw(9) << cell(1,2) << std::endl
+           << " " << std::setw(9) << cell(2,0)
+           << " " << std::setw(9) << cell(2,1)
+           << " " << std::setw(9) << cell(2,2) << std::endl;
     
     #ifdef _DEBUG_LADA_
       if (atoms.size() == 0 )
