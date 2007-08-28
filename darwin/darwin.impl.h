@@ -17,7 +17,6 @@
 
 void keycheck( types::t_int _s=20 )
 {
-  return;
   std::string result; result.resize(_s);
   for (types::t_int i=0 ; i < _s; ++i)
     result[i] = rng.flip() ? '1' : '0';
@@ -137,6 +136,7 @@ namespace darwin
     // checks if there are more than one taboo list
     const TiXmlElement *child = _parent.FirstChildElement("Objective");
     if ( not child ) child = _parent.FirstChildElement("Method");
+    bool do_store = true;
     objective = t_Objective :: new_from_xml( *child );
     if( not objective )
     {
@@ -148,16 +148,20 @@ namespace darwin
     if ( store_xml )
         store = new typename t_Store::FromObjective( evaluator, *store_xml );
     else
+    {
+      do_store = false;
       store = new typename t_Store::FromObjective( evaluator, objective, *child );
+    }
     if ( not store )
       store = new typename t_Store::Optima( evaluator, *child );
     printxmg << PrintXmg::comment << "Store: " << store->what_is() << PrintXmg::endl;
 
     if( history )
       evaluation = new Evaluation::WithHistory<t_Evaluator,t_GA_Traits>
-                                              ( evaluator, *objective, *store, history );
+                                              ( evaluator, *objective, (do_store ? store: NULL), history );
     if ( not evaluation )
-      evaluation = new Evaluation::Base<t_Evaluator,t_GA_Traits>( evaluator, *objective, *store );
+      evaluation = new Evaluation::Base<t_Evaluator,t_GA_Traits>( evaluator, *objective,
+                                                                  (do_store ? store: NULL) );
   }
   
   // create Taboos
@@ -851,28 +855,28 @@ namespace darwin
       {
         std::cout << "Iteration " << n << std::endl;
         ++n;
-         i_island = i_island_begin;
-         for (int i=0; i_island != i_island_end; ++i, ++i_island )
-         {
-           types::t_unsigned pSize = i_island->size();
-           offsprings.clear(); // new offsprings
-           
-           (*breeder)(*i_island, offsprings);
-           
-           (*evaluation)(*i_island, offsprings); // eval of parents + offsprings if necessary
+        i_island = i_island_begin;
+        for (int i=0; i_island != i_island_end; ++i, ++i_island )
+        {
+          types::t_unsigned pSize = i_island->size();
+          offsprings.clear(); // new offsprings
+          
+          (*breeder)(*i_island, offsprings);
+          
+          (*evaluation)(*i_island, offsprings); // eval of parents + offsprings if necessary
 
 #ifdef _MPI // "All Gather" offsprings -- note that replacement scheme is deterministic!!
-           breeder->synchronize_offsprings( offsprings );
-           if(history) history->synchronize();
+          breeder->synchronize_offsprings( offsprings );
+          if(history) history->synchronize();
 #endif 
+         
+          (*replacement)(*i_island, offsprings); // after replace, the new pop. is in population
           
-           (*replacement)(*i_island, offsprings); // after replace, the new pop. is in population
-           
-           if (pSize > i_island->size())
-               throw std::runtime_error("Population shrinking!");
-           else if (pSize < i_island->size())
-               throw std::runtime_error("Population growing!");
-         }
+          if (pSize > i_island->size())
+              throw std::runtime_error("Population shrinking!");
+          else if (pSize < i_island->size())
+              throw std::runtime_error("Population growing!");
+        }
       }
       catch (std::exception& e)
       {
@@ -972,10 +976,10 @@ nextfilename:
         if (     child->Attribute("evaluator") 
              and evaluator_filename == filename )
           evaluator_filename = reformat_home(child->Attribute("evaluator"));
-        else if (     child->Attribute("restart") 
+        if (     child->Attribute("restart") 
                   and restart_filename == filename )
           restart_filename = reformat_home(child->Attribute("restart"));
-        else if ( child->Attribute("xmgrace") )
+        if ( child->Attribute("xmgrace") )
         {
           std::string f = reformat_home(child->Attribute("xmgrace"));
           printxmg.init( f );

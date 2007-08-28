@@ -57,7 +57,7 @@ namespace Objective
       virtual t_VA_Type evaluate_one_gradient( const t_Quantity &,
                                                t_QuantityGradients&,
                                                types::t_unsigned) = 0;
-      virtual bool is_valid() = 0;
+      virtual bool is_valid() const = 0;
       virtual std::string what_is() const = 0;
       virtual std::string print() const = 0;
       virtual bool Save( TiXmlElement &_node, t_SaveOp& _op) { return true; };
@@ -134,7 +134,7 @@ namespace Objective
       virtual t_VA_Type evaluate_one_gradient( const t_Quantity &,
                                                t_QuantityGradients& _grad,
                                                types::t_unsigned _n) { return -_grad[_n]; }
-      bool is_valid() { return true; }
+      bool is_valid() const { return true; }
       virtual std::string what_is() const { return " Maximize"; }
       virtual std::string print() const { return ""; }
   };
@@ -184,7 +184,7 @@ namespace Objective
       virtual t_VA_Type evaluate_one_gradient( const t_Quantity &,
                                                t_QuantityGradients& _grad,
                                                types::t_unsigned _n) { return _grad[_n]; }
-      bool is_valid() { return true; }
+      bool is_valid() const { return true; }
       virtual std::string what_is() const { return " Minimize"; }
       virtual std::string print() const { return ""; }
   };
@@ -248,7 +248,7 @@ namespace Objective
       {
         return ( _val > target ) ? _grad[_n]: -_grad[_n];
       }
-      bool is_valid() { return true; }
+      bool is_valid() const { return true; }
       virtual std::string print() const { return ""; }
       virtual std::string what_is() const
       { 
@@ -278,7 +278,7 @@ namespace Objective
 
     protected:
       t_ConvexHull convexhull; 
-      bool valid;
+      mutable bool valid;
       using t_Base :: current_indiv;
 
     public:
@@ -298,7 +298,7 @@ namespace Objective
       virtual t_VA_Type evaluate_one_gradient( const t_Quantity & _val,
                                                t_QuantityGradients& _grad,
                                                types::t_unsigned _n);
-      bool is_valid() 
+      bool is_valid() const
       {
         if ( valid ) return true;
         valid = true;
@@ -340,7 +340,13 @@ namespace Objective
       t_VA_Type *i_grad_result = _i_grad;
       for(; i_grad != i_grad_end; ++i_grad, ++i_grad_result )
         *i_grad_result += *i_grad - gradient;
-      return _val - base;
+      
+      if ( _val >= base ) return _val - base;
+
+      if ( convexhull.add( _val, *current_indiv ) )
+        valid = false;
+
+      return 0.0;
     }
   template< class T_EVALUATOR, class T_GA_TRAITS >
   typename ConvexHull<T_EVALUATOR, T_GA_TRAITS> :: t_VA_Type
@@ -388,7 +394,7 @@ namespace Objective
         objectives.clear();
       }
 
-      bool is_valid() 
+      bool is_valid() const
       {
         typename t_Objectives::const_iterator i_objective = objectives.begin();
         typename t_Objectives::const_iterator i_end = objectives.begin();

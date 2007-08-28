@@ -183,6 +183,15 @@ namespace Individual
 #endif
   };
 
+  template<class T_OBJECT, class T_QUANTITY, class T_QUANTITYTRAITS>
+  std::ostream& operator<< ( std::ostream &_str, const Base<T_OBJECT, T_QUANTITY, T_QUANTITYTRAITS> &_indiv )
+  {
+    typedef typename Base<T_OBJECT, T_QUANTITY, T_QUANTITYTRAITS> :: t_Object t_Object;
+    std::string str; str << (const t_Object&) _indiv;
+    _str << str;
+    return _str;
+  }
+
   template<class T_OBJECT>
     struct Types
     {

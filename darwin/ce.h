@@ -71,7 +71,11 @@ namespace CE
         { t_Base :: init( _indiv ); functional.set_variables( &_indiv.Object().bitstring ); }
       bool Load( const TiXmlElement &_node );
 
-      void evaluate() { current_individual->quantities() = functional.evaluate(); }
+      void evaluate()
+      { 
+//       std::cout << "Evaluate " << *current_individual << std::endl;
+        current_individual->quantities() = functional.evaluate(); 
+      }
       void evaluate_gradient( t_QuantityGradients& _grad )
       {
         // note that t_Function sets gradient to 0

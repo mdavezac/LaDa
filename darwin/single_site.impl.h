@@ -216,9 +216,9 @@ namespace SingleSite
     t_Object &offspring  = _offspring;
     const t_Object &parent  = _parent;
     Ising_CE::Structure str1 = structure, str2 = structure;
-    std::string str_; str_ << offspring;
-    std::string str_2; str_2 << parent;
-    std::cout << "P1 " << str_ << "    P2 " << str_2 << std::endl;
+//   std::string str_; str_ << offspring;
+//   std::string str_2; str_2 << parent;
+//   std::cout << "P1 " << str_ << "    P2 " << str_2 << std::endl;
     str1 << offspring; str2 << parent;
     fourrier_to_kspace( str1.atoms.begin(),  str1.atoms.end(),
                         str1.k_vecs.begin(), str1.k_vecs.end() );

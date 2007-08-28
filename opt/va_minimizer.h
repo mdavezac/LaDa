@@ -10,11 +10,33 @@
 
 namespace minimizer
 {
-  template< class T_FUNCTIONAL > 
+  template< class T_FUNCTIONAL > std::string print( const T_FUNCTIONAL &_func )
+  {
+    typename T_FUNCTIONAL :: const_iterator  i_var = _func.begin();
+    typename T_FUNCTIONAL :: const_iterator  i_var_end = _func.end();
+    std::string str = " Vars: ";
+    for(; i_var != i_var_end; ++i_var )
+      str.push_back( ( *i_var > 0 ? '1': '0' ) ); 
+    return str;
+  }
+
+  template< class T_FUNCTIONAL >
+  class SaveNoState
+  { 
+    public:
+      SaveNoState() {}
+      SaveNoState( const SaveNoState<T_FUNCTIONAL> &) {}
+    public:
+      void save() {};
+      void reset() {};
+  };
+
+  template< class T_FUNCTIONAL, class T_SAVESTATE = SaveNoState<T_FUNCTIONAL> > 
   class VA : public Base<T_FUNCTIONAL>
   {
     public:
       typedef T_FUNCTIONAL t_Functional;
+      typedef T_SAVESTATE  t_SaveState;
       typedef typename t_Functional :: t_Type t_Type;
       typedef typename t_Functional :: t_Container :: iterator iterator;
       typedef typename t_Functional :: t_Container :: const_iterator const_iterator;
@@ -26,15 +48,20 @@ namespace minimizer
       std::vector<types::t_unsigned> directions;
       types::t_unsigned itermax;
       bool do_check_gradient;
+      t_SaveState *save_state;
 
     public:
       VA   ( const TiXmlElement &_node )
-         : itermax(0), do_check_gradient(true) { Load(_node); }
-      VA   ( const VA<t_Functional> &_c ) 
+         : itermax(0), do_check_gradient(true),save_state(NULL) { Load(_node); }
+      VA   ( const TiXmlElement &_node, t_SaveState &_s )
+         : itermax(0), do_check_gradient(true), save_state(&_s) { Load(_node); }
+      VA   ( const VA<t_Functional, t_SaveState> &_c ) 
          : itermax(_c.itermax),
-           do_check_gradient( _c.do_check_gradient) {}
+           do_check_gradient( _c.do_check_gradient),
+           save_state(_c.s) {}
 
       virtual ~VA() {}
+
 
       virtual bool operator()()
       {
@@ -61,6 +88,11 @@ namespace minimizer
   
         // evaluates first position
         current_e = current_func->evaluate();
+        if( save_state ) save_state->save();
+
+        i_var = current_func->end();
+        i_var_begin = current_func->begin();
+
 
         do 
         {
@@ -79,13 +111,15 @@ namespace minimizer
             *i_var = ( *i_var > t_Type(0) ) ? t_Type(-1) : t_Type(1); // flips spins
             bool do_investigate = not current_func->is_taboo();
             *i_var = ( *i_var > t_Type(0) ) ? t_Type(-1) : t_Type(1); // flips spins
-
+              
             if ( do_investigate  ) 
             {
+              types::t_real grad = current_func->evaluate_one_gradient( *i_dir );
               if (     do_check_gradient 
-                   and current_func->evaluate_one_gradient( *i_dir ) < 0 )
+                   and  grad < 0 )
               {
                 *i_var = ( *i_var > t_Type(0) ) ? t_Type(-1) : t_Type(1); // flips spins
+                if( save_state ) save_state->save();
                 next_e = current_func->evaluate();
                 if ( current_e > next_e )
                 { // yeah! gradient was right
@@ -93,7 +127,10 @@ namespace minimizer
                   current_e = next_e;
                 }
                 else // flips back -- gradient was wrong
+                {
                   *i_var = ( *i_var > t_Type(0) ) ? t_Type(-1) : t_Type(1); // flips spins
+                  if( save_state ) save_state->reset();
+                }
               } // end of gradient sign check
             } // end of check for taboo
             

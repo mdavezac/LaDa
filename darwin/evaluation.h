@@ -53,8 +53,8 @@ template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
       types::t_unsigned nb_grad;
 
     public:
-      Base   ( t_Evaluator &_eval, t_Objective &_obj, t_Store &_store )
-           : evaluator(_eval), objective(_obj), store(&_store), nb_eval(0), nb_grad(0) {};
+      Base   ( t_Evaluator &_eval, t_Objective &_obj, t_Store *_store )
+           : evaluator(_eval), objective(_obj), store(_store), nb_eval(0), nb_grad(0) {};
       Base   ( const Base<t_Evaluator> &_x )
            : evaluator(_x.evaluator), objective(_x.objective),
              store(_x.store), nb_eval(_x.nb_eval), nb_grad(_x.nb_grad) {};
@@ -73,23 +73,17 @@ template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
         // size and value of _grad should be set by evaluator
         evaluator.evaluate_gradient( _grad );
         objective.evaluate_gradient( _indiv.quantities(), _grad, _i_grad );
-        nb_grad += _grad.size(); ++nb_eval;
+        nb_grad += _grad.size(); 
       }
       virtual t_ScalarQuantity evaluate_with_gradient( t_Individual &_indiv,
                                                        t_QuantityGradients& _grad,
-                                                       t_VA_Type *_i_grad )
-      {
-        evaluator.evaluate_with_gradient( _grad );
-        nb_grad += _grad.size(); ++nb_eval;
-        return objective.evaluate_with_gradient( _indiv.quantities(), _grad, _i_grad );
-      }
+                                                       t_VA_Type *_i_grad );
       virtual t_VA_Type evaluate_one_gradient( t_Individual &_indiv,
                                                t_QuantityGradients& _grad,
                                                types::t_unsigned _pos )
       {
-        evaluate(_indiv);
+        evaluate( _indiv );
         evaluator.evaluate_one_gradient( _grad, _pos );
-        ++nb_grad;
         return objective.evaluate_one_gradient( _indiv.quantities(), _grad, _pos );
       }
 
@@ -109,7 +103,6 @@ template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
           evaluate( _pop );
           evaluate( _offspring );
         }
-        return;
 
         typename t_Population :: const_iterator i_indiv = _offspring.begin();
         typename t_Population :: const_iterator i_end   = _offspring.end();
@@ -147,7 +140,29 @@ template<class T_EVALUATOR, class T_GATRAITS>
 
     types::t_real quantity = objective( _indiv.quantities() );
     _indiv.set_fitness( quantity );
-    (*store)( _indiv );
+    if( store ) (*store)( _indiv );
+    return quantity;
+  }
+
+template<class T_EVALUATOR, class T_GATRAITS>
+  typename Base<T_EVALUATOR, T_GATRAITS> :: t_ScalarQuantity
+  Base<T_EVALUATOR,T_GATRAITS> :: evaluate_with_gradient( t_Individual &_indiv,
+                                                          t_QuantityGradients& _grad,
+                                                          t_VA_Type *_i_grad )
+  {
+    // only computes "expensive" evaluator functionals once!
+    nb_grad += _grad.size(); 
+    if ( _indiv.invalid() ) 
+    {
+      // fitness AND quantities of _indiv must be valid from here-on
+      ++nb_eval; 
+      evaluator.evaluate_with_gradient( _grad );
+    }
+    else evaluator.evaluate_gradient( _grad );
+
+    types::t_real quantity = objective.evaluate_with_gradient( _indiv.quantities(), _grad, _i_grad );
+    _indiv.set_fitness( quantity );
+    if( store ) (*store)( _indiv );
     return quantity;
   }
 
@@ -163,7 +178,7 @@ template<class T_EVALUATOR, class T_GATRAITS>
     }
 
 #ifdef _MPI
-    store->synchronize();
+    if( store ) store->synchronize();
 #endif
   }
 
@@ -184,6 +199,9 @@ template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
       typedef typename t_QuantityTraits :: t_ScalarQuantity                      t_ScalarQuantity;
       typedef typename t_IndivTraits :: t_Population                             t_Population;
       typedef typename Objective :: Types < t_Evaluator, t_GA_Traits > :: Vector t_Objective;
+      typedef typename t_IndivTraits :: t_VA_Traits                              t_VATraits;
+      typedef typename t_VATraits :: t_QuantityGradients                         t_QuantityGradients;
+      typedef typename t_VATraits :: t_Type                                      t_VA_Type;
       typedef Store :: Base<t_Evaluator, t_GA_Traits>                            t_Store;
       typedef darwin::History<t_Individual>                                      t_History;
 
@@ -192,10 +210,11 @@ template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
       using t_Base :: objective;
       using t_Base :: store;
       using t_Base :: nb_eval;
+      using t_Base :: nb_grad;
       t_History *history;
 
     public:
-      WithHistory   ( t_Evaluator &_eval, t_Objective &_obj, t_Store &_store, t_History *_hist )
+      WithHistory   ( t_Evaluator &_eval, t_Objective &_obj, t_Store *_store, t_History *_hist )
            : Base<t_Evaluator>(_eval, _obj, _store), history(_hist) {};
       WithHistory   ( const WithHistory<t_Evaluator> &_c )
                   : Base<t_Evaluator>( _c ), history(_c.history ) {}
@@ -203,6 +222,9 @@ template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
 
     protected:
       virtual t_ScalarQuantity evaluate( t_Individual &_indiv );
+      virtual t_ScalarQuantity evaluate_with_gradient( t_Individual &_indiv,
+                                                       t_QuantityGradients& _grad,
+                                                       t_VA_Type *_i_grad );
     protected:
       // we need redefine this only for mpi sync'ing
 #ifdef _MPI
@@ -239,8 +261,39 @@ template<class T_EVALUATOR, class T_GATRAITS>
 
     // isnot_clone is true only if history exists and prior call to history->clone( _indiv ) returned false
     if( isnot_clone ) history->add( _indiv );
-    (*store)( _indiv );
+    if ( store ) (*store)( _indiv );
 
+    return quantity;
+  }
+
+template<class T_EVALUATOR, class T_GATRAITS>
+  typename WithHistory<T_EVALUATOR, T_GATRAITS> :: t_ScalarQuantity
+  WithHistory<T_EVALUATOR,T_GATRAITS> :: evaluate_with_gradient( t_Individual &_indiv,
+                                                                 t_QuantityGradients& _grad,
+                                                                 t_VA_Type *_i_grad )
+  {
+    bool isnot_clone = (history != NULL); // isnot_clone is false if history does not exist
+    bool do_evaluate = _indiv.invalid();
+
+    if ( history and  history->clone( _indiv ) )
+    {
+      isnot_clone = false;
+      do_evaluate = false;
+    }
+
+    // only computes "expensive" evaluator functionals once!
+    nb_grad += _grad.size(); 
+    if ( do_evaluate )
+    {
+      // fitness AND quantities of _indiv must be valid from here-on
+      ++nb_eval; 
+      evaluator.evaluate_with_gradient( _grad );
+    }
+    else evaluator.evaluate_gradient( _grad );
+
+    types::t_real quantity = objective.evaluate_with_gradient( _indiv.quantities(), _grad, _i_grad );
+    _indiv.set_fitness( quantity );
+    if ( store ) (*store)( _indiv );
     return quantity;
   }
 
