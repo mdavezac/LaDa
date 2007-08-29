@@ -59,6 +59,7 @@ namespace darwin
       std::string filename;
       std::string evaluator_filename;
       std::string restart_filename;
+      std::string save_filename;
       types::t_unsigned tournament_size;
       types::t_unsigned pop_size;
       types::t_unsigned max_generations;

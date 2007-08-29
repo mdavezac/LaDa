@@ -17,7 +17,7 @@ if ( $cur_revision < $max_revision )
 
   printf OUT "#ifndef _REVISION_H_\n#define _REVISION_H_\n\n";
   printf OUT "#include <opt/types.h> \n\n";
-  printf OUT "namespace SVN \n{\n  types::t_unsigned Revision = %i; \n}\n\n", $max_revision;
+  printf OUT "namespace SVN \n{\n  const types::t_unsigned Revision = %i; \n}\n\n", $max_revision;
   printf OUT "#endif\n";
 
   close OUT;

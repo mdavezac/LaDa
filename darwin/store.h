@@ -144,8 +144,8 @@ namespace Store
                                                 darwin::LOADSAVE_LONG);
         if ( not condition.Restart( *xmlresults, loadop ) )
         {
-          Print::xmg << Print::Xmg::comment << "Could not load condition" << Print::Xmg::endl
-                     << Print::Xmg::comment << "Aborting Load of Result"  << Print::Xmg::endl;
+          Print::xmg << Print::Xmg::comment << "Could not load condition" << Print::endl
+                     << Print::Xmg::comment << "Aborting Load of Result"  << Print::endl;
           return false;
         }
 
@@ -154,7 +154,7 @@ namespace Store
         // This particular line acts as Restart for condition if necessary
         std::remove_if(results.begin(), results.end(), condition); 
         Print::xmg << Print::Xmg::comment << "Reloaded Optimum and "
-                   << results.size() << " target results" << Print::Xmg::endl;
+                   << results.size() << " target results" << Print::endl;
         print_results(0, true);
         return true;
       }
@@ -178,7 +178,7 @@ namespace Store
                      << std::setw(12) << std::setprecision(7)
                      << _age << " "
                      << i_indiv->get_concentration() << " "
-                     << i_indiv->fitness() << Print::Xmg::endl;
+                     << i_indiv->fitness() << Print::endl;
         new_results = false;
       }
       virtual std::string print() const { return condition.print(); }

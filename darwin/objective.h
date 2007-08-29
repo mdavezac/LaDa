@@ -468,17 +468,17 @@ namespace Objective
           str = _node.Attribute( "objective" );
         if ( str.compare("convexhull") == 0 )
         {
-          Print::xmg << Print::Xmg::comment << "Objective: ConvexHull" << Print::Xmg::endl;
+          Print::xmg << Print::Xmg::comment << "Objective: ConvexHull" << Print::endl;
           return new ConvexHull<t_Evaluator, t_GA_Traits>;
         }
         else if ( str.compare("minimize") == 0 )
         {
-          Print::xmg << Print::Xmg::comment << "Objective: Minimize" << Print::Xmg::endl;
+          Print::xmg << Print::Xmg::comment << "Objective: Minimize" << Print::endl;
           return new Minimize<t_Evaluator, t_GA_Traits>;
         }
         else if ( str.compare("maximize") == 0 )
         {
-          Print::xmg << Print::Xmg::comment << "Objective: Maximize" << Print::Xmg::endl;
+          Print::xmg << Print::Xmg::comment << "Objective: Maximize" << Print::endl;
           return new Maximize<t_Evaluator, t_GA_Traits>;
         }
         else if (str.compare("target") == 0 )
@@ -487,7 +487,7 @@ namespace Objective
           {
             double d; _node.Attribute("target", &d );
             Print::xmg << Print::Xmg::comment
-                       << "Objective: Target (" << d << ")" << Print::Xmg::endl;
+                       << "Objective: Target (" << d << ")" << Print::endl;
             return new Target<t_Evaluator, t_GA_Traits>( (types::t_real) d );
           }
         }

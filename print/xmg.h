@@ -17,6 +17,7 @@
 #include "mpi/mpi_object.h"
 #endif
 
+#include "operations.h"
 
 namespace Print
 {
@@ -24,13 +25,11 @@ namespace Print
   {
     template< class T_TYPE > friend Xmg& operator<< ( Xmg &, const T_TYPE & );
     protected:
-      enum t_operation { ENDL, COMMENT, CLEAR, FLUSH, INDENT, UNINDENT, ADDTOLAST, REMOVELAST,
+      enum t_operation { COMMENT, CLEAR, INDENT, UNINDENT, ADDTOLAST, REMOVELAST,
                          CLEARALL };
     public:
-      const static t_operation endl;
       const static t_operation comment;
       const static t_operation clear; 
-      const static t_operation flush; 
       const static t_operation indent;
       const static t_operation unindent; 
       const static t_operation addtolast;
@@ -86,6 +85,7 @@ namespace Print
         line_list.pop_back(); 
       }
       void init(const std::string &_f);
+      std::string get_filename() const { return filename; }
 
     protected:
       void flushall();
@@ -109,10 +109,23 @@ namespace Print
 
   template<> inline void Xmg :: to_current_stream<Xmg::t_operation>(const Xmg::t_operation &_op)
   {
-    if ( _op == ENDL  and stream.str().empty() ) return;
     special_op( _op );
   }
-
+  template<> inline void Xmg :: to_current_stream<Print::t_Operation>(const Print::t_Operation &_op)
+  {
+    if ( _op == Print::ENDL  and stream.str().empty() ) return;
+    switch ( _op )
+    {
+      case ENDL: line_list.push_back( stream.str() ); stream.str(""); break;
+      case FLUSH: flushall(); break;
+      default: Print::apply_ops( stream, _op ); break;
+    }
+  }
+  template<> inline void Xmg::to_current_stream<Print::setw>(const Print::setw &_op) { _op(stream); }
+  template<> inline void Xmg::to_current_stream<Print::setfill>(const Print::setfill &_op) { _op(stream); }
+  template<> inline void Xmg::to_current_stream<Print::setprecision>(const Print::setprecision &_op)
+    { _op(stream); }
+   
 
   template<class T_TYPE> Xmg& operator<< ( Xmg& _this, const T_TYPE &_whatever)
   {

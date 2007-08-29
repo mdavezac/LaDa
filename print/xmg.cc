@@ -11,10 +11,8 @@
 
 namespace Print
 {
-  const Xmg :: t_operation Xmg :: endl       = Xmg :: ENDL;
   const Xmg :: t_operation Xmg :: comment    = Xmg :: COMMENT;
   const Xmg :: t_operation Xmg :: clear      = Xmg :: CLEAR;
-  const Xmg :: t_operation Xmg :: flush      = Xmg :: FLUSH;
   const Xmg :: t_operation Xmg :: indent     = Xmg :: INDENT;
   const Xmg :: t_operation Xmg :: unindent   = Xmg :: UNINDENT;
   const Xmg :: t_operation Xmg :: addtolast  = Xmg :: ADDTOLAST;
@@ -76,7 +74,7 @@ namespace Print
     std::list< std::string > :: const_iterator i_str = line_list.begin();
     std::list< std::string > :: const_iterator i_str_end = line_list.end();
     for(; i_str != i_str_end; ++i_str) 
-      file << *i_str << std::endl; 
+      file << *i_str << "\n";
 
     line_list.clear();
     file.flush();
@@ -119,10 +117,8 @@ namespace Print
   {
     switch ( _op )
     {
-      case ENDL: line_list.push_back( stream.str() ); stream.str(""); break;
       case CLEAR: stream.str(""); break;
       case COMMENT: stream.str(""); stream << "# "; do_indent(); break;
-      case FLUSH: flushall(); break;
       case INDENT: ++indentation; break;
       case UNINDENT: --indentation; break;
       case ADDTOLAST: add_to_last(); break;

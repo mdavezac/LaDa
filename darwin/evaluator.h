@@ -55,7 +55,7 @@ namespace darwin
         TiXmlHandle docHandle( &doc ); 
         if  ( !doc.LoadFile() )
         { 
-          std::cout << doc.ErrorDesc() << std::endl; 
+          std::cerr << doc.ErrorDesc() << std::endl; 
           throw "Could not load input file in CE::Evaluator ";
         } 
 

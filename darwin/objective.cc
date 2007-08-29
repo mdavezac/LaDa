@@ -37,10 +37,6 @@ namespace mpi
   {
      bool result = serialize( _fit.is_valid )
             and serialize( _fit.quantity );
-     if ( stage == COPYING_TO_HERE )
-       std::cout <<  "Copying to here " << _fit.is_valid << " " << _fit.quantity << std::endl;
-     else if ( stage == COPYING_FROM_HERE )
-       std::cout <<  "Copying from here " << _fit.is_valid << " " << _fit.quantity << std::endl;
      return result;
   }
 //   if ( stage == GETTING_SIZE )

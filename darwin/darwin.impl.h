@@ -12,6 +12,7 @@
 #include <tinyxml/tinystr.h>
 
 #include "pescan_interface/interface.h"
+#include "print/stdout.h"
 #include "print/xmg.h"
 #include "print/manip.h"
 
@@ -24,7 +25,7 @@ void keycheck( types::t_int _s=20 )
   std::string result; result.resize(_s);
   for (types::t_int i=0 ; i < _s; ++i)
     result[i] = rng.flip() ? '1' : '0';
-  std::cout << "KeyCheck: " << result << std::endl;
+  Print::out << "KeyCheck: " << result << Print::endl;
 }
 
 
@@ -35,7 +36,7 @@ namespace darwin
     TiXmlHandle docHandle( &doc ); \
     if  ( !doc.LoadFile() ) \
     { \
-      std::cout << doc.ErrorDesc() << std::endl; \
+      std::cerr << doc.ErrorDesc() << std::endl; \
       throw "Could not load input file in  Darwin<T_EVALUATOR> "; \
     } 
 
@@ -84,7 +85,8 @@ namespace darwin
       else if ( str.compare("seed")==0 ) // seed from given number
       { 
         types::t_int d = att->IntValue();
-        Print::xmg << Print::Xmg::comment <<  "Seed: " << d << Print::Xmg::endl;
+        Print::xmg << Print::Xmg::comment <<  "Seed: " 
+                   << Print::fixed << Print::setw(8) << d << Print::endl;
 #ifdef _MPI
         rng.reseed( std::abs(d) * (mpi::main.rank()+1) );
 #else
@@ -102,7 +104,7 @@ namespace darwin
         }
         else
           Print::xmg << "Random Populate";
-        Print::xmg << Print::Xmg::endl;
+        Print::xmg << Print::endl;
       }
       else
         evaluator.LoadAttribute( *att );
@@ -111,9 +113,10 @@ namespace darwin
     // some checking
     if ( std::floor( pop_size * replacement_rate ) == 0 )
     {
-      Print::xmg << Print::Xmg::comment << "Error: replacement_rate is too small." << Print::Xmg::endl
-               << Print::Xmg::comment << "Error: setting replacement_rate too 1.0 / pop_size ."
-               << Print::Xmg::endl;
+      Print::xmg << Print::Xmg::comment << "Error: replacement_rate is too small." << Print::endl 
+                 << Print::Xmg::comment << "Error: setting replacement_rate too 1.0 / pop_size ." << Print::endl;
+      Print::out << "Error: replacement_rate is too small.\n"
+                 << "Error: setting replacement_rate too 1.0 / pop_size .\n";
       replacement_rate = 1.00 / pop_size + 10*types::tolerance;
     }
 
@@ -128,7 +131,7 @@ namespace darwin
     const TiXmlElement *child = _parent.FirstChildElement("History");
     if ( not child )
       return;
-    Print::xmg << Print::Xmg::comment << "Track History" << Print::Xmg::endl;
+    Print::xmg << Print::Xmg::comment << "Track History" << Print::endl;
     history = new History< t_Individual, std::list<t_Individual> >;
     eostates.storeFunctor(history);
   }
@@ -158,7 +161,7 @@ namespace darwin
     }
     if ( not store )
       store = new typename t_Store::Optima( evaluator, *child );
-    Print::xmg << Print::Xmg::comment << "Store: " << store->what_is() << Print::Xmg::endl;
+    Print::xmg << Print::Xmg::comment << "Store: " << store->what_is() << Print::endl;
 
     if( history )
       evaluation = new Evaluation::WithHistory<t_Evaluator,t_GA_Traits>
@@ -185,7 +188,7 @@ namespace darwin
     child = parent.FirstChildElement("PopTaboo");
     if (child)
     {
-      Print::xmg << Print::Xmg::comment << "Population Taboo" << Print::Xmg::endl;
+      Print::xmg << Print::Xmg::comment << "Population Taboo" << Print::endl;
       IslandsTaboos<t_Individual,t_IndivTraits> *poptaboo
          = new IslandsTaboos<t_Individual, t_IndivTraits>( islands );
       eostates.storeFunctor(poptaboo);
@@ -196,7 +199,7 @@ namespace darwin
     child = parent.FirstChildElement("OffspringTaboo");
     if (child)
     {
-      Print::xmg << Print::Xmg::comment << "Offspring Taboo" << Print::Xmg::endl;
+      Print::xmg << Print::Xmg::comment << "Offspring Taboo" << Print::endl;
       OffspringTaboo<t_Individual, t_IndivTraits> *offspringtaboo 
          = new OffspringTaboo<t_Individual, t_IndivTraits>( &offsprings );
       eostates.storeFunctor(offspringtaboo);
@@ -207,7 +210,7 @@ namespace darwin
     child = parent.FirstChildElement("History Taboo");
     if (child and history)
     {
-      Print::xmg << Print::Xmg::comment << "History Taboo" << Print::Xmg::endl;
+      Print::xmg << Print::Xmg::comment << "History Taboo" << Print::endl;
       static_cast< Taboos<t_Individual>* >(taboos)->add( history );
     }
     else if (child)
@@ -247,14 +250,14 @@ namespace darwin
       std::cerr << "Giving Up" << std::endl;
       return false;
     }
-    Print::xmg << Print::Xmg::comment << "Breeding Operator Begin" << Print::Xmg::endl;
+    Print::xmg << Print::Xmg::comment << "Breeding Operator Begin" << Print::endl;
     breeder_ops = new SequentialOp<t_Individual>;
     eostates.storeFunctor( breeder_ops );
     breeder_ops = make_genetic_op(*child->FirstChildElement(), breeder_ops);
-    Print::xmg << Print::Xmg::comment << "Breeding Operator End" << Print::Xmg::endl;
+    Print::xmg << Print::Xmg::comment << "Breeding Operator End" << Print::endl;
     if ( not breeder_ops )
     {
-      std::cout << "Error while creating breeding operators" << std::endl;
+      std::cerr << "Error while creating breeding operators" << std::endl;
       throw "Error while creating operators in  Darwin<T_EVALUATOR>  :: make_GenOp ";
     }
     return true;
@@ -296,7 +299,7 @@ namespace darwin
       
       if ( n >= 0 and do_save )
       {
-        Print::xmg << Print::Xmg::comment << "Will Save Every " << n << " Generations " << Print::Xmg::endl;
+        Print::xmg << Print::Xmg::comment << "Will Save Every " << n << " Generations " << Print::endl;
         SaveEvery<t_Darwin> *save = new SaveEvery<t_Darwin>( *this, &Darwin::Save, std::abs(n) );
         eostates.storeFunctor( save );
         continuator->add( *save );
@@ -308,7 +311,7 @@ namespace darwin
     if( child )
     {
       continuator->add( eostates.storeFunctor( new TrueCensus< t_Individual >() ) );
-      Print::xmg << Print::Xmg::comment << "Statistics: True population size, discounting twins" << Print::Xmg::endl;
+      Print::xmg << Print::Xmg::comment << "Statistics: True population size, discounting twins" << Print::endl;
     }
 
     // Creates Terminators
@@ -333,7 +336,7 @@ namespace darwin
                                    std::less<types::t_unsigned>(), "nb_eval < term" );
       eostates.storeFunctor( terminator );
       continuator->add( *terminator );
-      Print::xmg << Print::Xmg::comment << "Terminating after " << max << " evaluations" << Print::Xmg::endl;
+      Print::xmg << Print::Xmg::comment << "Terminating after " << max << " evaluations" << Print::endl;
       
       // end if max
     }
@@ -373,7 +376,7 @@ namespace darwin
     TiXmlHandle docHandle( &doc ); 
     if  ( !doc.LoadFile() ) 
     { 
-      std::cout << doc.ErrorDesc() << std::endl; 
+      std::cerr << doc.ErrorDesc() << std::endl; 
       return false;
     } 
     TiXmlElement *parent = docHandle.FirstChild("Restart").Element();
@@ -408,7 +411,7 @@ namespace darwin
         history->clear();
         if ( LoadIndividuals( *child, loadop, *history) )
           Print::xmg << Print::Xmg::comment << "Reloaded " << history->size() 
-                   << " individuals into history " << Print::Xmg::endl;
+                     << " individuals into history" << Print::endl;
         
       } // end of "Population" Restart
       else if (     name.compare("Population") == 0
@@ -424,8 +427,8 @@ namespace darwin
           t_Population pop;
           LoadIndividuals( *island_xml, loadop, pop, pop_size);
           islands.push_back( pop );
-          Print::xmg << Print::Xmg :: comment << "Loaded " << pop.size() 
-                   << " individuals into island " << islands.size() << Print::Xmg :: endl;
+          Print::xmg << Print::Xmg::comment << "Loaded " << pop.size() 
+                     << " individuals into island " << islands.size() << "" << Print::endl;
         }
       } // end of "Population" Restart
     }
@@ -440,9 +443,9 @@ namespace darwin
 
     TiXmlDocument doc;
     TiXmlElement *node;
-    if ( restart_filename == filename )
+    if ( save_filename == filename )
     {
-      doc.LoadFile(restart_filename.c_str());
+      doc.LoadFile(save_filename.c_str());
       TiXmlHandle docHandle( &doc );
       node = docHandle.FirstChild("Job").Element();
       TiXmlNode* child = docHandle.FirstChild("Job")
@@ -465,7 +468,7 @@ namespace darwin
       doc.LinkEndChild( node );
     }
 
-    Print::xmg << Print::Xmg :: comment <<  "Saving ";
+    Print::xmg << Print::Xmg::comment <<  "Saving ";
     int is_saving = 0;
     if ( do_save & SAVE_RESULTS )
     {
@@ -509,14 +512,15 @@ namespace darwin
       node->LinkEndChild( xmlpop );
     }
 
-    if ( not doc.SaveFile(restart_filename.c_str() ) )
+    if ( not doc.SaveFile(save_filename.c_str() ) )
     {
-      std::cerr << "Could not save results in " << restart_filename << std::endl;
-      Print::xmg << Print::Xmg :: clear;
+      std::cerr << "Could not save results in " << save_filename << std::endl;
+      Print::xmg << Print::Xmg::clear;
+      Print::out << "********** Save failed!! \n" << Print::endl;
       return false;
     }
 
-    Print::xmg << " in " << restart_filename << Print::Xmg :: endl;
+    Print::xmg << " in " << save_filename << Print::endl;
     return true;
   }
   
@@ -544,7 +548,7 @@ namespace darwin
     if (not sibling)
       return NULL;
  
-    Print::xmg << Print::Xmg :: indent;
+    Print::xmg << Print::Xmg::indent;
 
     for ( ; sibling; sibling = sibling->NextSiblingElement() )
     {
@@ -557,13 +561,13 @@ namespace darwin
       // then creates sibling
       if ( str.compare("TabooOp") == 0  and taboos )
       {
-        Print::xmg << Print::Xmg::comment << "TabooOp Begin" << Print::Xmg::endl;
+        Print::xmg << Print::Xmg::comment << "TabooOp Begin" << Print::endl;
         eoGenOp<t_Individual> *taboo_op = make_genetic_op( *sibling->FirstChildElement(), NULL);
         if ( not taboo_op )
           Print::xmg << Print::Xmg::removelast;
         else
         {
-          Print::xmg << Print::Xmg::comment << "TabooOp End" << Print::Xmg::endl;
+          Print::xmg << Print::Xmg::comment << "TabooOp End" << Print::endl;
           eoMonOp<t_Individual> *utterrandom;
           utterrandom = new mem_monop_t<t_Evaluator>
                               ( evaluator, &t_Evaluator::initialize, std::string( "Initialize" ) );
@@ -583,7 +587,7 @@ namespace darwin
       }
       else if ( str.compare("UtterRandom") == 0 )
       {
-        Print::xmg << Print::Xmg :: comment << "UtterRandom" << Print::Xmg::endl;
+        Print::xmg << Print::Xmg::comment << "UtterRandom" << Print::endl;
         this_op = new mem_monop_t<t_Evaluator>
                          ( evaluator, &t_Evaluator::initialize, std::string( "UtterRandom" ) );
         eostates.storeFunctor( static_cast< TabooOp<t_Individual> *>(this_op) );
@@ -613,24 +617,25 @@ namespace darwin
           std::string sstr = sibling->Attribute("type");
           if ( sstr.compare("and") == 0 ) 
           {
-            Print::xmg << Print::Xmg::comment << "And Begin" << Print::Xmg :: endl;
+            Print::xmg << Print::Xmg::comment << "And Begin" << Print::endl;
             SequentialOp<t_Individual> *new_branch = new SequentialOp<t_Individual>;
             this_op = make_genetic_op( *sibling->FirstChildElement(), new_branch);
             if ( not this_op )
             {
               Print::xmg << Print::Xmg::removelast;
+              Print::out << " Failure, or No Operators Found in \"And\" operator \n";
               delete new_branch;
             }
             else
             {
-              Print::xmg << Print::Xmg::comment << "And End" << Print::Xmg :: endl;
+              Print::xmg << Print::Xmg::comment << "And End" << Print::endl;
               eostates.storeFunctor( new_branch );
             }
           }
         }
         if ( not this_op )
         {
-          Print::xmg << Print::Xmg::comment << "Or Begin" << Print::Xmg :: endl;
+          Print::xmg << Print::Xmg::comment << "Or Begin" << Print::endl;
           ProportionalOp<t_Individual> *new_branch = new ProportionalOp<t_Individual>;
           this_op = make_genetic_op( *sibling->FirstChildElement(), new_branch);
           if ( not this_op )
@@ -640,7 +645,7 @@ namespace darwin
           }
           else
           {
-            Print::xmg << Print::Xmg::comment << "Or End" << Print::Xmg :: endl;
+            Print::xmg << Print::Xmg::comment << "Or End" << Print::endl;
             eostates.storeFunctor( new_branch );
           }
         }
@@ -659,7 +664,7 @@ namespace darwin
                    or (types::t_unsigned)std::abs(period) < max_generations ) 
              and period > 0 )
         {
-          Print::xmg << Print::Xmg::addtolast << " period = " << period << Print::Xmg :: endl;
+          Print::xmg << Print::Xmg::addtolast << " period = " << period << Print::endl;
           this_op = new PeriodicOp<t_Individual>( *this_op, (types::t_unsigned) abs(period),
                                               continuator->get_generation_counter(), eostates );
           eostates.storeFunctor( static_cast< PeriodicOp<t_Individual> *>(this_op) );
@@ -670,7 +675,7 @@ namespace darwin
       {
         if (not sibling->Attribute("prob", &prob) )
           prob = 1.0;
-        Print::xmg << Print::Xmg::addtolast << " prob = " << prob << Print::Xmg :: endl;
+        Print::xmg << Print::Xmg::addtolast << " prob = " << prob << Print::endl;
         if ( current_op->className().compare("darwin::SequentialOp") == 0 )
           static_cast< SequentialOp<t_Individual>* >(current_op)->add( *this_op,
                                                                    static_cast<double>(prob) );
@@ -838,7 +843,7 @@ namespace darwin
       mpi::main.barrier();
     }
 #endif
-    Print::xmg << Print::Xmg::flush;
+    Print::xmg << Print::flush;
     populate();
     offsprings.clear();
     typename t_Islands :: iterator i_island_begin = islands.begin();
@@ -857,7 +862,8 @@ namespace darwin
     {
       try
       {
-        std::cout << "Iteration " << n << std::endl;
+        Print::out << "Iteration " << n << Print::endl;
+        Print::xmg << Print::flush;
         ++n;
         i_island = i_island_begin;
         for (int i=0; i_island != i_island_end; ++i, ++i_island )
@@ -890,7 +896,7 @@ namespace darwin
       }
     } while ( continuator->apply( i_island_begin, i_island_end ) );
 
-    Print::xmg << Print::Xmg::flush;
+    Print::xmg << Print::flush;
     Save();
   }
 
@@ -916,7 +922,7 @@ namespace darwin
         doc.LoadFile( restart_filename.c_str() );
         if  ( !doc.LoadFile() ) 
         { 
-          std::cout << doc.ErrorDesc() << std::endl; 
+          std::cerr << doc.ErrorDesc() << std::endl; 
           std::cerr << "Could not load restart file " << std::endl;
           _restart = "";
           goto nextfilename;
@@ -932,7 +938,7 @@ nextfilename:
         doc.LoadFile( evaluator_filename.c_str() );
         if  ( !doc.LoadFile() ) 
         { 
-          std::cout << doc.ErrorDesc() << std::endl; 
+          std::cerr << doc.ErrorDesc() << std::endl; 
           throw std::runtime_error("Could not load restart file"); 
         } 
 
@@ -963,6 +969,7 @@ nextfilename:
     filename = _filename;
     evaluator_filename = _filename;
     restart_filename = _filename;
+    save_filename = _filename;
 
     // first loads all inputfiles 
 #ifdef _MPI
@@ -983,6 +990,11 @@ nextfilename:
         if (     child->Attribute("restart") 
                   and restart_filename == filename )
           restart_filename = Print::reformat_home(child->Attribute("restart"));
+        if (     child->Attribute("save") 
+                  and save_filename == filename )
+          save_filename = Print::reformat_home(child->Attribute("save"));
+        if ( child->Attribute("out")  )
+          Print::out.init( child->Attribute("save") );
         if ( child->Attribute("xmgrace") )
         {
           std::string f = Print::reformat_home(child->Attribute("xmgrace"));
@@ -990,7 +1002,13 @@ nextfilename:
         }
       }
 
-      Print::xmg << Print::Xmg :: comment << "new GA run" << Print::Xmg :: endl;
+      Print::xmg << Print::Xmg :: comment << "new GA run" << Print::endl;
+      Print::out << "Starting new genetic algorithm runs\n\n"
+                 << "GA Input file is located at " << evaluator_filename << "\n"
+                 << "Functional Input file is located at " << evaluator_filename << "\n"
+                 << "Restart Input file is located at " << restart_filename << "\n"
+                 << "Xmgrace output file is located at " << Print::xmg.get_filename() << "\n"
+                 << "Will Save to file located at " << save_filename << "\n\n";
 #ifdef _MPI
     }
 
@@ -1061,13 +1079,17 @@ nextfilename:
         if ( not Restart() )
         {
           std::cerr << "Could not load restart from file" << restart_filename;
-          Print::xmg << Print::Xmg :: comment << "Starting from scratch" << Print::Xmg::endl;
+          Print::xmg << Print::Xmg :: comment << "Starting from scratch" << Print::endl;
+          Print::out << "Could not load restart from file" << restart_filename << "\n"
+                     << "Starting from scratch\n";
         }
       } // for following, we know docHandle.FirstChild("Job") exists
       else if ( not Restart( *docHandle.FirstChild("Job").Element() ) )
       {
         std::cerr << "Could not load restart from file" << restart_filename;
-        Print::xmg << Print::Xmg :: comment << "Starting from scratch" << Print::Xmg::endl;
+        Print::xmg << Print::Xmg :: comment << "Starting from scratch" << Print::endl;
+        Print::out << "Could not load restart from file" << restart_filename << "\n"
+                   << "Starting from scratch\n";
       }
     }
 #ifdef _MPI
@@ -1101,18 +1123,19 @@ nextfilename:
         Print::xmg << ", History";
       }
     }
-out:  Print::xmg << Print::Xmg :: endl;
+out:  Print::xmg << Print::endl;
 
     {
-      Print::xmg << Print::Xmg::comment << "Mating Tournament Size: " << tournament_size << Print::Xmg::endl;
-      Print::xmg << Print::Xmg::comment << "Offspring Replacement Rate: " << replacement_rate << Print::Xmg::endl;
-      Print::xmg << Print::Xmg::comment << "Population Size: " << pop_size << Print::Xmg::endl;
+      Print::xmg << Print::Xmg::comment << "Mating Tournament Size: " << tournament_size << Print::endl
+                 << Print::Xmg::comment << "Offspring Replacement Rate: " << replacement_rate << Print::endl
+                 << Print::Xmg::comment << "Population Size: " << pop_size << Print::endl;
       if ( max_generations )
         Print::xmg << Print::Xmg::comment << "Maximum Number of Generations: " << max_generations
-                 << Print::Xmg::endl;
+                   << Print::endl;
       else
-        Print::xmg << Print::Xmg::comment << "Unlimited Number of Generations" << Print::Xmg::endl;
-      Print::xmg << Print::Xmg::comment << "Number of Islands: " << nb_islands << Print::Xmg::endl;
+        Print::xmg << Print::Xmg::comment << "Unlimited Number of Generations" << Print::endl;
+      Print::xmg << Print::Xmg::comment << "Number of Islands: " << nb_islands << Print::endl 
+                 << Print::Xmg::comment << "Will save to " << save_filename << Print::endl;
     }
     return true;
   }

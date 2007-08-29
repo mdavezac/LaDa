@@ -61,14 +61,14 @@ namespace darwin
         if ( not store.newresults() ) special = " ? ";
        
         Print::xmg << Print::Xmg::comment << special << "Iteration " << age() 
-                         << Print::Xmg::endl 
+                         << Print::endl 
                          << Print::Xmg::comment << special << "Evaluation Calls: " 
                          << evaluation.nb_eval << " " << evaluation.nb_grad 
-                         << Print::Xmg::endl;
+                         << Print::endl;
         
         if( store.newresults() )
           store.print_results( age() );
-        Print::xmg << Print::Xmg::flush;
+        Print::xmg << Print::flush;
       }
 
       // some anoying stuff
@@ -76,9 +76,9 @@ namespace darwin
       void readFrom( std::istream &__os ) const {};
       void lastCall()
       {
-        Print::xmg << Print::Xmg::comment << "Last Found Result" << Print::Xmg::endl;
+        Print::xmg << Print::Xmg::comment << "Last Found Result" << Print::endl;
         store.print_results(age(), true);
-        Print::xmg << Print::Xmg::flush;
+        Print::xmg << Print::flush;
       }
 
       virtual std::string className(void) const { return "darwin::PrintFitness"; }
@@ -276,8 +276,7 @@ namespace darwin
       // some anoying stuff
       void printOn( std::ostream &__os ) const {};
       void readFrom( std::istream &__os ) const {};
-      virtual void lastCall( const eoPop<t_Individual> &_pop)
-        {} //;taboo.print_out( std::cout ); }
+      virtual void lastCall( const eoPop<t_Individual> &_pop) {}
 
       virtual std::string className(void) const { return "Darwin::UpdateAgeTaboo"; }
   };
@@ -479,7 +478,7 @@ namespace darwin
 
         apply_monitors_updaters();
 
-        Print::xmg << Print::Xmg::flush; 
+        Print::xmg << Print::flush; 
 
         bool result =    ( max_generations and generation_counter() < max_generations ) 
                       or ( not max_generations );

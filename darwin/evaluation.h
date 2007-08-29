@@ -17,6 +17,7 @@
 #ifdef _MPI
 #include "mpi/mpi_object.h"
 #endif
+#include "print/stdout.h"
 
 #include "objective.h"
 #include "store.h"
@@ -109,13 +110,14 @@ template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
 
         typename t_Population :: const_iterator i_indiv = _offspring.begin();
         typename t_Population :: const_iterator i_end   = _offspring.end();
-        std::cout << "New Individual " << std::endl;
+        Print::out << "New Individual"
+                   << ( _offspring.size() > 1 ? "s\n": "   ");
         for(; i_indiv != i_end; ++i_indiv )
         {
           std::string str; str << (const typename t_IndivTraits::t_Object& ) *i_indiv;
-          std::cout  << std::setw(12) << std::setprecision(7) << "  "
-                     << str << " "
-                     << i_indiv->fitness() << std::endl;
+          Print::out << str << "    Fitness: "
+                     << Print::fixed << Print::setw(12) << Print::setprecision(5) << "  "
+                     << i_indiv->fitness() << "\n";
         }
         
       }

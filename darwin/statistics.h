@@ -48,7 +48,7 @@ namespace darwin
 
         // prints stuff out
         Print::xmg << Print::Xmg::comment <<  "True Census: "
-                   << N << " / " << _pop.size() << Print::Xmg::endl; 
+                   << N << " / " << _pop.size() << Print::endl; 
       }
   };
   

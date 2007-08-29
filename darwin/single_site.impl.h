@@ -93,7 +93,6 @@ namespace SingleSite
     {
       if ( not ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
         i_atom->type = std::real(*i_hold);
-      else std::cout << "Atom is Frozen " << std::endl;
       ( i_atom->type > 0 ) ? ++concx : --concx;
     }
 
@@ -219,9 +218,6 @@ namespace SingleSite
     t_Object &offspring  = _offspring;
     const t_Object &parent  = _parent;
     Ising_CE::Structure str1 = structure, str2 = structure;
-//   std::string str_; str_ << offspring;
-//   std::string str_2; str_2 << parent;
-//   std::cout << "P1 " << str_ << "    P2 " << str_2 << std::endl;
     str1 << offspring; str2 << parent;
     fourrier_to_kspace( str1.atoms.begin(),  str1.atoms.end(),
                         str1.k_vecs.begin(), str1.k_vecs.end() );
@@ -317,7 +313,7 @@ namespace SingleSite
       return NULL;
    
     Print::xmg << Print::Xmg::comment << "Taboo x in [ " << 0.5*(morethan+1.0)
-               << ", "  << 0.5*(lessthan+1.0) << "] " << Print::Xmg::endl;
+               << ", "  << 0.5*(lessthan+1.0) << "] " << Print::endl;
     // pointer is owned by caller !!
     return new darwin::TabooFunction< t_This >
                                     ( *this, &t_This::Taboo, "Taboo" );
