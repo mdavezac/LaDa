@@ -44,7 +44,7 @@ AC_ARG_ENABLE(ce,
        yes) ce=true ;;
        no)  ce=false ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-ce) ;;
-     esac],[ce=false])
+     esac],[ce=true])
 
 AC_ARG_ENABLE(darwin,
      [  --enable-darwin    Turn on darwin],
@@ -62,21 +62,30 @@ AC_ARG_ENABLE(debug,
   *) AC_MSG_ERROR(bad value ${enableval} for --enable-debug) ;;
 esac],[debug=true])
 if test x$debug = xtrue; then
-       CXXFLAGS=`echo $CXXFLAGS | sed "s/-O2//"`
-       CFLAGS=`echo $CFLAGS | sed "s/-O2//"`
-       CPP_DEBUG_FLAGS="-Wall -O0  -fbounds-check"
-     else
-       CPP_DEBUG_FLAGS=
+  CXXFLAGS=`echo $CXXFLAGS | sed "s/-O2//"`
+  CFLAGS=`echo $CFLAGS | sed "s/-O2//"`
+  CPP_DEBUG_FLAGS="-Wall -O0  -fbounds-check"
+  AH_TOP([
+  #ifndef _PRINT_ALL_PROCS_
+  #define _PRINT_ALL_PROCS_
+  #endif])
+else
+  CPP_DEBUG_FLAGS=
 fi
 AC_SUBST(CPP_DEBUG_FLAGS)
-
+ismultiproc=`grep processor /proc/cpuinfo | wc -l`
+if test $ismultiproc > 1; then
+  ismultiproc="true"
+else
+  ismultiproc="false"
+fi
 AC_ARG_ENABLE(mpi,
 [  --enable-mpi    Turn on mpi],
 [case "${enableval}" in
   yes) mpi=true ;;
   no)  mpi=false ;;
   *) AC_MSG_ERROR(bad value ${enableval} for --enable-mpi) ;;
-esac],[mpi=false])
+esac],[mpi=$ismultiproc])
 AH_TEMPLATE([_MPI])
 
 #  MPI libs
@@ -164,4 +173,28 @@ AC_PROG_LIBTOOL
 AC_OUTPUT(Makefile atat/Makefile physics/Makefile opt/Makefile lamarck/Makefile
           vff/Makefile mpi/Makefile pescan_interface/Makefile darwin/Makefile print/Makefile )
 
-
+echo ""; echo ""
+echo "Will Compile following modules: "
+echo " _ CE related stuff in lamarck directory"
+if test $vff = true; then
+  echo " _ vff functional ";
+fi
+if test $pescan = true; then
+  echo " _ interface to nanopse/pescan functional ";
+fi
+if test $darwin = true; then
+  if test $ce = true; then
+    echo " _ Genetic Algorithm for Cluster Expansion"
+  fi
+  if test $pescan = true; then
+    echo " _ Genetic Algorithm for Band Gap"
+  fi
+fi
+echo ""
+if test $mpi = true; then
+  echo "Will Include MPI where available"
+fi
+if test $debug = true; then
+  echo "Compiling with debug options"
+fi
+echo ""; echo ""

@@ -173,9 +173,11 @@ namespace mpi
     template< class T_TYPE > friend BroadCast& operator<< ( BroadCast& _this, T_TYPE &_type );
     public:
       enum t_stages { GETTING_SIZE, COPYING_TO_HERE, COPYING_FROM_HERE };
-    private:
-      enum t_operation { SIZEUP, ALLOCATE, TOHERE, BROADCAST, FROMHERE };
+    protected:
+      enum t_operation { SIZEUP, ALLOCATE, TOHERE, BROADCAST, FROMHERE, CLEAR, NEXTSTAGE };
     public:
+      const static t_operation clear;
+      const static t_operation nextstage;
       const static t_operation sizeup;
       const static t_operation allocate;
       const static t_operation tohere;
@@ -234,9 +236,11 @@ namespace mpi
       std::cerr << "Caught error while running lada" << std::endl
                 << e.what();
       keep_going = false;
+      return false;
     }
+    return true;
   }
-  template<> inline bool BroadCast::operator_<BroadCast::t_operation>( t_operation &_op )
+  template<> inline bool BroadCast::operator_<const BroadCast::t_operation>( const t_operation &_op )
   {
     if ( not keep_going ) return true;
     return  special_op( _op );

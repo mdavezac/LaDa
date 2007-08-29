@@ -285,7 +285,7 @@ namespace darwin
         eostates.storeFunctor( synchro );
         continuator->add( *synchro );
 
-        Synchronize<types::t_unsigned> *synchro = new Synchronize<types::t_unsigned>( evaluation->nb_grad );
+        synchro = new Synchronize<types::t_unsigned>( evaluation->nb_grad );
         eostates.storeFunctor( synchro );
         continuator->add( *synchro );
 #endif
@@ -949,17 +949,12 @@ nextfilename:
     }
 
     mpi::BroadCast bc( mpi::main );
-    bc.serialize(_input);
-    bc.serialize(_restart);
-    bc.serialize(_evaluator);
-    bc.allocate_buffers();
-    bc.serialize(_input);
-    bc.serialize(_restart);
-    bc.serialize(_evaluator);
-    bc();
-    bc.serialize(_input);
-    bc.serialize(_restart);
-    bc.serialize(_evaluator);
+    bc << _input << _restart << _evaluator 
+       << mpi::BroadCast::allocate 
+       << _input << _restart << _evaluator 
+       << mpi::BroadCast::broadcast 
+       << _input << _restart << _evaluator 
+       << mpi::BroadCast::clear; 
   }
 #endif
 

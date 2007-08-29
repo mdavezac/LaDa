@@ -16,6 +16,7 @@
 #endif
 
 #include "print/xmg.h"
+#include "print/stdout.h"
 #include "functors.h"
 
 namespace TwoSites
@@ -343,9 +344,7 @@ endofloop:
       _el.Attribute( "prob", &crossover_probability );
       crossover_probability = crossover_probability > 0 ? std::abs(crossover_probability) : 0.5;
       if ( crossover_probability > 1 ) crossover_probability = 0.5;
-      std::ostringstream sstr;
-      sstr << "Crossover rate = " << crossover_probability;
-      Print::xmg.add_comment(sstr.str());
+      Print::xmg << Print::Xmg::comment << "Crossover rate = " << crossover_probability << Print::endl;
       // pointer is owned by caller !!
       return darwin::new_genop( *this, &t_This::Crossover, std::string( "Crossover" ) );
     }
@@ -355,9 +354,7 @@ endofloop:
       _el.Attribute( "prob", &crossover_probability );
       crossover_probability = crossover_probability > 0 ? std::abs(crossover_probability) : 0.5;
       if ( crossover_probability > 1 ) crossover_probability = 0.5;
-      std::ostringstream sstr;
-      sstr << "Krossover, rate = " << crossover_probability;
-      Print::xmg.add_comment(sstr.str());
+      Print::xmg << Print::Xmg::comment << "Krossover rate = " << crossover_probability << Print::endl;
       if ( _el.Attribute("type") )
       {
         std::string str =  _el.Attribute("type");
@@ -377,7 +374,7 @@ endofloop:
   {
     if ( x_vs_y.is_singlec() )
       return false;
-    structure << (t_Object&)_indiv;
+    structure << (const t_Object&)_indiv;
     get_xy_concentrations( structure );
     return x > lessthan or x < morethan; // if true, _object is taboo
   }
@@ -401,10 +398,9 @@ endofloop:
     if ( lessthan < morethan )
       return NULL;
    
-    std::ostringstream sstr;
-    sstr << std::fixed << std::setprecision(3) << "Taboo x in [ " << 0.5*(morethan+1.0)
-         << ", "  << 0.5*(lessthan+1.0) << "] ";
-    Print::xmg.add_comment(sstr.str());
+    Print::xmg << Print::Xmg::comment << Print::fixed << Print::setprecision(3) 
+               << "Taboo x in [ " << 0.5*(morethan+1.0)
+               << ", "  << 0.5*(lessthan+1.0) << "] " << Print::endl;
     // pointer is owned by caller !!
     return new darwin::TabooFunction< t_This >
                                     ( *this, &t_This::Taboo, "Taboo" );
@@ -517,13 +513,12 @@ endofloop:
     {
       get_xy_concentrations( structure );
       x_vs_y.set_xy( x, y );
-      std::ostringstream sstr;
-      sstr << " Setting Concentrations to x=" << std::fixed << std::setprecision(3 ) << x 
-           << " and y=" << y;
-      Print::xmg.add_comment( sstr.str() );
+      Print::xmg << Print::Xmg::comment << " Setting Concentrations to x="
+                 << Print::fixed << Print::setprecision(3 ) << x 
+                 << " and y=" << y << Print::endl;
       if (    std::abs(x - x_vs_y.get_x(y)) > types::tolerance 
            or std::abs(y - x_vs_y.get_y(x)) > types::tolerance )
-        Print::xmg.add_comment( " WARNING: x and y pair are strain mismatched!! " );
+        Print::out << " WARNING: x and y pair are strain mismatched!! \n";
     }
 
     return true;

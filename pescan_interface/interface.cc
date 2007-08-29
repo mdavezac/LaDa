@@ -125,7 +125,7 @@ namespace Pescan
     std::string output = Print::StripEdges(escan.output);
     std::cout << "Method " << (escan.method == Escan::FOLDED_SPECTRUM ? "Folded": "All Electron") << std::endl;
     if ( escan.method == Escan::FOLDED_SPECTRUM )
-      output += ( computation == VBM ) ? ".vbm": ".cbm";
+      output += ( computation == VBM ) ? "/vbm": "/cbm";
     sstr.str("");
     sstr << "cd " << dirname << "; ./" << Print::StripDir(escan.launch) << " > " << output;
 #ifndef _NOLAUNCH
@@ -280,7 +280,7 @@ namespace Pescan
   void Interface::write_genpot_input()
   {
     std::ofstream file;
-    std::string name = StripEdges(dirname) + "/" + StripEdges(genpot.filename);
+    std::string name = Print::StripEdges(dirname) + "/" + Print::StripEdges(genpot.filename);
     file.open( name.c_str(), std::ios_base::out|std::ios_base::trunc ); 
 
     file << Print::StripDir(atom_input) << std::endl 
@@ -303,7 +303,7 @@ namespace Pescan
   void Interface::write_escan_input( Ising_CE::Structure &_str ) 
   {
     std::ofstream file;
-    std::string name = StripEdges(dirname) + "/" + StripEdges(escan.filename);
+    std::string name = Print::StripEdges(dirname) + "/" + Print::StripEdges(escan.filename);
     file.open( name.c_str(), std::ios_base::out|std::ios_base::trunc ); 
     file << "1 " << Print::StripDir(dirname, genpot.output) << std::endl
          << "2 " << escan.wavefunction << std::endl
@@ -364,9 +364,9 @@ namespace Pescan
   {
     std::ifstream file;
     std::ostringstream sstr;
-    sstr << dirname << "/" << StripEdges(escan.output);
+    sstr << dirname << "/" << Print::StripEdges(escan.output);
     if ( escan.method == Escan::FOLDED_SPECTRUM )
-      sstr << ( ( computation == VBM ) ? ".vbm": ".cbm" );
+      sstr << ( ( computation == VBM ) ? "/vbm": "/cbm" );
     file.open( sstr.str().c_str(), std::ios_base::in ); 
     char cline[256];
     std::string line("");

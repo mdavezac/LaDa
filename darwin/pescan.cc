@@ -13,10 +13,11 @@
   using std::compose1;
 #endif
 
+#include <print/manip.h>
+#include <lamarck/atom.h>
+#include <opt/va_minimizer.h>
+
 #include "pescan.h"
-#include "print_xmgrace.h"
-#include "lamarck/atom.h"
-#include "opt/va_minimizer.h"
 
 namespace BandGap
 {
@@ -74,7 +75,7 @@ namespace BandGap
 
     if (     _node.FirstChildElement("Filenames") 
          and _node.FirstChildElement("Filenames")->Attribute("BandEdge") )
-      references_filename = reformat_home(_node.FirstChildElement("Filenames")->Attribute("BandEdge"));
+      references_filename = Print::reformat_home(_node.FirstChildElement("Filenames")->Attribute("BandEdge"));
 
     return true;
   }

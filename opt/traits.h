@@ -71,7 +71,7 @@ namespace Traits
         { return std::abs(_b - _a) < types::tolerance; }
 #ifdef _MPI
       static bool broadcast( t_Quantity& _q, mpi::BroadCast &_bc )
-        { return _bc.serialize_container( _q ); }
+        { return _bc.serialize( _q ); }
 #endif
     };
   template<>

@@ -14,12 +14,13 @@
 #include <ostream>
 #include <complex>
 
-#include "opt/types.h"
+#include <tinyxml/tinyxml.h>
 
-#include "atat/vectmac.h"
-#include "atat/xtalutil.h"
-#include "atat/machdep.h"
-#include "atat/fxvector.h"
+#include <opt/types.h>
+#include <atat/vectmac.h>
+#include <atat/xtalutil.h>
+#include <atat/machdep.h>
+#include <atat/fxvector.h>
 
 namespace Ising_CE {
 

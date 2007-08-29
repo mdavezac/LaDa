@@ -280,7 +280,7 @@ namespace Store
         std::string print() const
         {
           std::ostringstream sstr;
-          std::string bitstring; bitstring <<  (typename t_IndivTraits :: t_Object&) optimum;
+          std::string bitstring; bitstring <<  (const typename t_IndivTraits :: t_Object&) optimum;
           sstr << std::setw(12) << std::setprecision(7) 
                << bitstring << " "
                << optimum.get_concentration() << " "

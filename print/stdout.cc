@@ -22,7 +22,7 @@ namespace Print
     {
       std::ostringstream sstr; 
       sstr << filename << ".mpi:" <<  mpi::main.rank();
-      filename = sstr.filename.str();
+      filename = sstr.str();
     }
 #endif 
     is_empty = true;

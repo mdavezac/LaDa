@@ -14,7 +14,6 @@
 #endif
 
 #include "two_sites.h"
-#include "print_xmgrace.h"
 #include "lamarck/atom.h"
 #include "opt/compose_functors.h"
 

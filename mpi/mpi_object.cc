@@ -19,10 +19,13 @@ namespace mpi
 #ifdef _MPI
 namespace mpi
 {
-  const BroadCast::t_operation sizeup    = BroadCast::RESET;
-  const BroadCast::t_operation allocate = BroadCast::ALLOCATE;
-  const BroadCast::t_operation tohere   = BroadCast::TOHERE;
-  const BroadCast::t_operation fromhere = BroadCast::FROMHERE;
+  const BroadCast::t_operation BroadCast::nextstage = BroadCast::NEXTSTAGE;
+  const BroadCast::t_operation BroadCast::clear     = BroadCast::CLEAR;
+  const BroadCast::t_operation BroadCast::sizeup    = BroadCast::SIZEUP;
+  const BroadCast::t_operation BroadCast::allocate  = BroadCast::ALLOCATE;
+  const BroadCast::t_operation BroadCast::tohere    = BroadCast::TOHERE;
+  const BroadCast::t_operation BroadCast::broadcast = BroadCast::BROADCAST;
+  const BroadCast::t_operation BroadCast::fromhere  = BroadCast::FROMHERE;
 
   
   bool BroadCast :: allocate_buffers( types::t_unsigned _root )
@@ -635,9 +638,19 @@ gather_erase:
 
   bool BroadCast :: special_op( t_operation _op )
   {
-    if      ( _op == SIZEUP )   reset();
+    if      ( _op == SIZEUP or _op == CLEAR )   reset();
     else if ( _op == ALLOCATE ) allocate_buffers(); 
     else if ( _op == BROADCAST ) operator()(); 
+    else if ( _op == NEXTSTAGE )
+    {
+      switch( stage )
+      {
+        case GETTING_SIZE: allocate_buffers(); break;
+        case COPYING_TO_HERE: operator()(); break;
+        case COPYING_FROM_HERE: reset(); break;
+        default: break;
+      }
+    }
     return true; 
   }
 
