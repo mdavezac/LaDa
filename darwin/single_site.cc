@@ -12,14 +12,19 @@
 
 namespace SingleSite
 {
-  void operator<<(std::string &_str, const Object &_o)
+  std::ostream& operator<<(std::ostream &_stream, const Object &_o)
   {
+    std::cout << "size " << _o.bitstring.size() << std::endl;
     Object::t_Container :: const_iterator i_var = _o.bitstring.begin();
     Object::t_Container :: const_iterator i_end = _o.bitstring.end();
-    std::ostringstream sstr;
     for(; i_var != i_end; ++i_var )
-      sstr << ( *i_var > 0 ? '1' : '0' );
-    _str = sstr.str();
+      _stream << ( *i_var > 0 ? '1' : '0' );
+    return _stream;
+  }
+  void operator<<(std::string &_str, const Object &_o)
+  {
+    std::ostringstream sstr;
+    sstr << _o; _str = sstr.str();
   }
   void operator<<(Ising_CE::Structure &_str, const Object &_o)
   {

@@ -37,23 +37,21 @@ namespace BandGap
 
   struct Object : public TwoSites::Object
   {
+    friend std::ostream& operator<<(std::ostream &_stream, const Object &_o);
     typedef TwoSites::Object :: t_Container t_Container;
     typedef types::t_real t_Quantity;
 #ifdef _MPI
     friend bool mpi::BroadCast::serialize<BandGap::Object>(BandGap::Object &);
 #endif
-    types::t_real CBM, VBM;
+    types::t_real cbm, vbm;
 
-    Object() : TwoSites::Object(), CBM(0), VBM(0) {}
-    Object(const Object &_c) : TwoSites::Object(_c), CBM(_c.CBM), VBM(_c.VBM) {};
+    Object() : TwoSites::Object(), cbm(0), vbm(0) {}
+    Object(const Object &_c) : TwoSites::Object(_c), cbm(_c.cbm), vbm(_c.vbm) {};
     ~Object() {};
-    
-    t_Container& Container() { return bitstring; }
-    const t_Container& Container() const { return bitstring; }
   };
 
 
-  class Evaluator : public TwoSites::Evaluator< Individual::Types<Object>::Scalar >
+  class Evaluator : public TwoSites::Evaluator< Individual::Types<BandGap::Object>::Scalar >
   {
     public:
       typedef Individual::Types<Object>::Scalar t_Individual;
@@ -106,6 +104,13 @@ namespace BandGap
 
   void rearrange_structure(Ising_CE::Structure &);
 
+  inline std::ostream& operator<<(std::ostream &_stream, const Object &_o)
+  { 
+    _stream << (SingleSite::Object& ) _o 
+            << " CBM " << std::fixed << std::setw(12) << std::setprecision(6) << _o.cbm 
+            << "  --  VBM " << std::fixed << std::setw(12) << std::setprecision(6) << _o.vbm; 
+    return _stream; 
+  } 
 
 } // namespace BandGap
 
@@ -115,8 +120,8 @@ namespace mpi
   template<>
   inline bool mpi::BroadCast::serialize<BandGap::Object>( BandGap::Object & _object )
   {
-    if( not serialize( _object.CBM ) ) return false;
-    if( not serialize( _object.VBM ) ) return false;
+    if( not serialize( _object.cbm ) ) return false;
+    if( not serialize( _object.vbm ) ) return false;
     return serialize< TwoSites::Object >( _object );
   }
 }

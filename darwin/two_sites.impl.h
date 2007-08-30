@@ -25,7 +25,8 @@ namespace TwoSites
   void fourrier_to_kspace( T_R_IT _rfirst, T_R_IT _rend,
                            T_K_IT _kfirst, T_K_IT _kend ) // sets kvector values from rspace values
   {
-    const std::complex<types::t_real> imath(0, -2*3.1415926535897932384626433832795028841971693993751058208);
+    const std::complex<types::t_real>
+       imath(0, -2*3.1415926535897932384626433832795028841971693993751058208);
     
     for (; _kfirst != _kend; ++_kfirst)
     {
@@ -44,7 +45,8 @@ namespace TwoSites
                            T_K_IT _kfirst, T_K_IT _kend,
                            T_O_IT _rout ) // sets rvector values from kspace values
   {
-    const std::complex<types::t_real> imath(0, 2*3.1415926535897932384626433832795028841971693993751058208);
+    const std::complex<types::t_real>
+       imath(0, 2*3.1415926535897932384626433832795028841971693993751058208);
     for (; _rfirst != _rend; _rfirst+=2, ++_rout)
     {
       *_rout = 0.0;
@@ -260,12 +262,15 @@ endofloop:
       std::cerr << " Could not load input structure!! " << std::endl; 
       return false;
     }
+    std::cout << " nb atoms " << structure.atoms.size() << std::endl;
     if ( not structure.set_site_indices() )
     {
       std::cerr << " Could not set atomic indices! " << std::endl; 
       return false;
     }
+    std::cout << " nb atoms " << structure.atoms.size() << std::endl;
     rearrange_structure(structure);
+    std::cout << " nb atoms " << structure.atoms.size() << std::endl;
     if ( not consistency_check() )
       return false;
     if ( not x_vs_y.Load( _node ) )
@@ -303,6 +308,8 @@ endofloop:
                                                             const t_Individual &_parent,
                                                             bool _range )
   {
+      std::cout << "Final Bitstring size " << _offspring.Object().bitstring.size() <<  "   "
+                << _offspring.Object() << std::endl;
     t_Object &offspring  = _offspring;
     const t_Object &parent  = _parent;
     Ising_CE::Structure str1 = structure, str2 = structure;
@@ -311,7 +318,9 @@ endofloop:
                                   str1.k_vecs.begin(), str1.k_vecs.end() );
     TwoSites::fourrier_to_kspace( str2.atoms.begin(),  str2.atoms.end(),
                                   str2.k_vecs.begin(), str2.k_vecs.end() );
-    if ( _range and str1.k_vecs.size() > 2 ) // range crossover ... kvec should be oredered according to size
+
+    // range crossover ... kvec should be oredered according to size
+    if ( _range and str1.k_vecs.size() > 2 ) 
     {  
       types::t_unsigned n = (types::t_unsigned)
          std::floor(   (types::t_real) rng.random ( str1.k_vecs.size() - 1 ) 
@@ -344,7 +353,8 @@ endofloop:
       _el.Attribute( "prob", &crossover_probability );
       crossover_probability = crossover_probability > 0 ? std::abs(crossover_probability) : 0.5;
       if ( crossover_probability > 1 ) crossover_probability = 0.5;
-      Print::xmg << Print::Xmg::comment << "Crossover rate = " << crossover_probability << Print::endl;
+      Print::xmg << Print::Xmg::comment << "Crossover rate = "
+                 << crossover_probability << Print::endl;
       // pointer is owned by caller !!
       return darwin::new_genop( *this, &t_This::Crossover, std::string( "Crossover" ) );
     }
@@ -354,7 +364,8 @@ endofloop:
       _el.Attribute( "prob", &crossover_probability );
       crossover_probability = crossover_probability > 0 ? std::abs(crossover_probability) : 0.5;
       if ( crossover_probability > 1 ) crossover_probability = 0.5;
-      Print::xmg << Print::Xmg::comment << "Krossover rate = " << crossover_probability << Print::endl;
+      Print::xmg << Print::Xmg::comment << "Krossover rate = " 
+                 << crossover_probability << Print::endl;
       if ( _el.Attribute("type") )
       {
         std::string str =  _el.Attribute("type");

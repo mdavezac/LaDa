@@ -12,11 +12,6 @@ namespace Pescan
 {
   types::t_real Interface :: operator()( Ising_CE::Structure &_str)
   {
-#ifdef _NOLAUNCH
-    bands.vbm = random() * 5;
-    bands.cbm = bands.vbm + random() * 5;
-    return bands.gap();
-#endif
     if ( escan.method == Escan::FOLDED_SPECTRUM )
       computation = CBM;
       
@@ -123,7 +118,6 @@ namespace Pescan
     system( sstr.str().c_str() );
 
     std::string output = Print::StripEdges(escan.output);
-    std::cout << "Method " << (escan.method == Escan::FOLDED_SPECTRUM ? "Folded": "All Electron") << std::endl;
     if ( escan.method == Escan::FOLDED_SPECTRUM )
       output += ( computation == VBM ) ? "/vbm": "/cbm";
     sstr.str("");
@@ -362,6 +356,21 @@ namespace Pescan
 
   types::t_real Interface :: read_result( Ising_CE::Structure &_str )
   {
+#ifdef _NOLAUNCH
+    if ( escan.method == Escan :: ALL_ELECTRON ) 
+    { 
+      bands.cbm = random() * 5;
+      bands.vbm = bands.cbm - random() * 5;
+      return bands.gap();
+    }
+    if ( computation == CBM )
+    {
+      bands.cbm = random() * 5;
+      return bands.cbm;
+    }
+    bands.vbm = bands.cbm - random() * 5;
+    return bands.vbm;
+#endif
     std::ifstream file;
     std::ostringstream sstr;
     sstr << dirname << "/" << Print::StripEdges(escan.output);

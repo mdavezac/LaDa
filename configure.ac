@@ -64,11 +64,7 @@ esac],[debug=true])
 if test x$debug = xtrue; then
   CXXFLAGS=`echo $CXXFLAGS | sed "s/-O2//"`
   CFLAGS=`echo $CFLAGS | sed "s/-O2//"`
-  CPP_DEBUG_FLAGS="-Wall -O0  -fbounds-check"
-  AH_TOP([
-  #ifndef _PRINT_ALL_PROCS_
-  #define _PRINT_ALL_PROCS_
-  #endif])
+  CPP_DEBUG_FLAGS="-Wall -O0  -fbounds-check -D _PRINT_ALL_PROCS" 
 else
   CPP_DEBUG_FLAGS=
 fi
@@ -87,6 +83,17 @@ AC_ARG_ENABLE(mpi,
   *) AC_MSG_ERROR(bad value ${enableval} for --enable-mpi) ;;
 esac],[mpi=$ismultiproc])
 AH_TEMPLATE([_MPI])
+
+AC_ARG_ENABLE(nolaunch,
+[  --enable-nolaunch    Runs fake pescan/darwin],
+[case "${enableval}" in
+  yes) nolaunch=true ;;
+  no)  nolaunch=false ;;
+  *) AC_MSG_ERROR(bad value ${enableval} for --enable-nolaunch) ;;
+esac],[nolaunch=false])
+if test x$nolaunch = xtrue; then
+  CXXFLAGS="$CXXFLAGS -D_NOLAUNCH";
+fi
 
 #  MPI libs
 if test x$mpi = xtrue; then
@@ -196,5 +203,8 @@ if test $mpi = true; then
 fi
 if test $debug = true; then
   echo "Compiling with debug options"
+fi
+if test $nolaunch = true; then
+  echo "Compiling with _NOLAUNCH.... Are you sure you know what you're doing? "
 fi
 echo ""; echo ""

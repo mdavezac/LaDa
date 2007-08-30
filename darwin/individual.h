@@ -126,7 +126,7 @@ namespace Individual
       void readFrom(std::istream &_is) {}
 
       void print_out( std::ostream &_stream ) const
-        { object.print_out( _stream ); }
+        { _stream << (const t_Object&) object << "  "; }
 
       operator t_Object& ()
         { return object; }
@@ -187,13 +187,9 @@ namespace Individual
   };
 
   template<class T_OBJECT, class T_QUANTITY, class T_QUANTITYTRAITS>
-  std::ostream& operator<< ( std::ostream &_str, const Base<T_OBJECT, T_QUANTITY, T_QUANTITYTRAITS> &_indiv )
-  {
-    typedef typename Base<T_OBJECT, T_QUANTITY, T_QUANTITYTRAITS> :: t_Object t_Object;
-    std::string str; str << (const t_Object&) _indiv;
-    _str << str;
-    return _str;
-  }
+  inline std::ostream& operator<< ( std::ostream &_str,
+                                    const Base<T_OBJECT, T_QUANTITY, T_QUANTITYTRAITS> &_indiv )
+    { _indiv.print_out(_str); return _str; }
 
   template<class T_OBJECT>
     struct Types

@@ -13,6 +13,7 @@
   using std::compose1;
 #endif
 
+#include <print/stdout.h>
 #include <print/manip.h>
 #include <lamarck/atom.h>
 #include <opt/va_minimizer.h>
@@ -24,17 +25,17 @@ namespace BandGap
   bool Evaluator :: Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type )
   {
     t_Object &object = _indiv.Object();
-    _node.Attribute("CBM", &object.CBM);
-    _node.Attribute("VBM", &object.VBM);
-    _indiv.quantities() = object.VBM - object.CBM; 
+    _node.Attribute("CBM", &object.cbm);
+    _node.Attribute("VBM", &object.vbm);
+    _indiv.quantities() = object.cbm - object.vbm; 
 
     return t_Base::Load( _indiv, _node, _type );
   }
   bool Evaluator :: Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const
   {
     const t_Object &object = _indiv.Object();
-    _node.SetDoubleAttribute("CBM", (double) object.CBM);
-    _node.SetDoubleAttribute("VBM", (double) object.VBM);
+    _node.SetDoubleAttribute("CBM", (double) object.cbm);
+    _node.SetDoubleAttribute("VBM", (double) object.vbm);
 
     return t_Base::Save( _indiv, _node, _type );
   }
@@ -61,7 +62,8 @@ namespace BandGap
       std::cerr << " Could not load vff minimizer from input!! " << std::endl;
       return false;
     }
-    pescan.set_references( -666.666, 666.666 ); // wrong order! just to check whether Refs are read from input
+    // wrong order! just to check whether Refs are read from input
+    pescan.set_references( -666.666, 666.666 );
     if ( not pescan.Load( _node ) )
     {
       std::cerr << " Could not load pescan interface from input!! " << std::endl; 
@@ -75,7 +77,10 @@ namespace BandGap
 
     if (     _node.FirstChildElement("Filenames") 
          and _node.FirstChildElement("Filenames")->Attribute("BandEdge") )
-      references_filename = Print::reformat_home(_node.FirstChildElement("Filenames")->Attribute("BandEdge"));
+    {
+      references_filename = _node.FirstChildElement("Filenames")->Attribute("BandEdge");
+      references_filename = Print::reformat_home( references_filename );
+    }
 
     return true;
   }
@@ -90,6 +95,7 @@ namespace BandGap
     // sets structure to this object 
     structure << *current_object;
 
+
     // Creates an mpi aware directory: one per proc
     std::ostringstream sstr; sstr << "escan" << nbeval; 
     ++nbeval;
@@ -99,8 +105,11 @@ namespace BandGap
     pescan.set_dirname(sstr.str());
 
     // minimizes vff energy
+    std::cout << "Evaluatioon 1. " << current_object->bitstring.size();
     vff_minimizer.minimize();
+    std::cout << "  2. " << current_object->bitstring.size();
     structure.energy = vff.energy();
+    std::cout << "  3. " << current_object->bitstring.size();
 
     // creates an mpi aware file name for atomic configurations
     sstr.str("");
@@ -109,23 +118,28 @@ namespace BandGap
     sstr << "." << mpi::main.rank();
 #endif
     // prints atomic configurations
+    std::cout << "  4. " << current_object->bitstring.size();
     vff.print_escan_input(sstr.str());
     // tells pescan where to find atomic configurations
+    std::cout << "  5. " << current_object->bitstring.size();
     pescan.set_atom_input( sstr.str() );
 
     // then evaluates band gap
+    std::cout << "  6. " << current_object->bitstring.size();
     types::t_real result = pescan(structure);
 
     // copies band edges into object
-    types::t_real vbm, cbm;
-    get_bands( vbm, cbm );
-    current_object->VBM = vbm;
-    current_object->CBM = cbm;
-    current_individual->quantities() = cbm - vbm;
+    std::cout << "  7. " << current_object->bitstring.size();
+    get_bands( current_object->vbm, current_object->cbm );
+    current_individual->quantities() = current_object->cbm - current_object->vbm;
 
+    std::cout << "  8. " << current_object->bitstring.size();
     // checks that non-zero band gap has been found
     if ( result < types::tolerance )
     {
+      Print::out << " Found metallic or negative band gap!! " << result << "\n" 
+                 << current_object << "\n"
+                 << " Will Try and Recompute Band Gap \n";
       set_all_electron();
       evaluate();
       return;
@@ -136,8 +150,10 @@ namespace BandGap
 
     // writes referecnce
 #ifdef _MPI
-    if ( not mpi::main.is_root_node() ) return // not root no read write
+    if ( not mpi::main.is_root_node() ) return; // not root no read write
 #endif 
+    Print::out << " Writing band edges to file " << references_filename << "\n" 
+               << " using band gap of object " <<  current_object << "\n";
     write_references();
   }
 

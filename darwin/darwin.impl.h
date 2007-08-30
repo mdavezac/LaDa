@@ -147,7 +147,7 @@ namespace darwin
     objective = t_Objective :: new_from_xml( *child );
     if( not objective )
     {
-      std::cerr << " Could not find Objective tag... Will simply minimize " << std::endl;
+      Print::out << " Could not find Objective tag... Will simply minimize " << Print::endl;
       objective = new Objective::Minimize<t_Evaluator, t_GA_Traits>;
     }
 
@@ -748,8 +748,13 @@ namespace darwin
     {
       t_Individual indiv;
       evaluator.initialize(indiv);
+      std::cout << "indiv size "<< indiv.Object().bitstring.size();
       if ( not ( taboos and (*taboos)(indiv) ) )
+      {
+        std::cout << " pop_back size " << _pop.back().Object().bitstring.size();
         _pop.push_back(indiv);
+      }
+      std::cout << std::endl;
     } // while ( i_pop->size() < target )
     _pop.resize( _size );
   }

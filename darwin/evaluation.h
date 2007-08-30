@@ -114,8 +114,7 @@ template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
                    << ( _offspring.size() > 1 ? "s\n": "   ");
         for(; i_indiv != i_end; ++i_indiv )
         {
-          std::string str; str << (const typename t_IndivTraits::t_Object& ) *i_indiv;
-          Print::out << str << "    Fitness: "
+          Print::out << *i_indiv << "    Fitness: "
                      << Print::fixed << Print::setw(12) << Print::setprecision(5) << "  "
                      << i_indiv->fitness() << "\n";
         }
@@ -264,7 +263,8 @@ template<class T_EVALUATOR, class T_GATRAITS>
     types::t_real quantity = objective( _indiv.quantities() );
     _indiv.set_fitness( quantity );
 
-    // isnot_clone is true only if history exists and prior call to history->clone( _indiv ) returned false
+    // isnot_clone is true only if history exists
+    // and prior call to history->clone( _indiv ) returned false
     if( isnot_clone ) history->add( _indiv );
     if ( store ) (*store)( _indiv );
 

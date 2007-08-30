@@ -43,6 +43,13 @@ namespace Traits
         { return Quantity<t_ScalarQuantity>::greater(_a,_b); }
       static bool equal( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
         { return Quantity<t_ScalarQuantity>::equal(_a,_b); }
+      static void print_out( std::ostream& _stream, const t_Quantity &_quantity )
+      {
+        typename t_Quantity :: const_iterator i_scal = _quantity.begin();
+        typename t_Quantity :: const_iterator i_end = _quantity.end();
+        for(; i_scal != i_end; ++i_scal )
+          _stream << *i_scal << " ";
+      }
 #ifdef _MPI
       static bool broadcast( t_Quantity& _q, mpi::BroadCast &_bc )
         { return _bc.serialize_container( _q ); }
@@ -69,6 +76,8 @@ namespace Traits
         { return _b + types::tolerance < _a; }
       static bool equal( const t_ScalarQuantity _a, const t_ScalarQuantity _b )
         { return std::abs(_b - _a) < types::tolerance; }
+      static void print_out( std::ostream& _stream, const t_Quantity &_quantity )
+        { _stream << _quantity << " "; }
 #ifdef _MPI
       static bool broadcast( t_Quantity& _q, mpi::BroadCast &_bc )
         { return _bc.serialize( _q ); }
@@ -94,6 +103,8 @@ namespace Traits
         { return _b < _a; }
       static bool equal( const t_ScalarQuantity _a, const t_ScalarQuantity _b )
         { return _b == _a; }
+      static void print_out( std::ostream& _stream, const t_Quantity &_quantity )
+        { _stream << _quantity << " "; }
 #ifdef _MPI
       static bool broadcast( t_Quantity& _q, mpi::BroadCast &_bc )
         { return _bc.serialize( _q ); }
@@ -117,6 +128,8 @@ namespace Traits
         { return _b < _a; }
       static bool equal( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
         { return _b == _a; }
+      static void print_out( std::ostream& _stream, const t_Quantity &_quantity )
+        { _stream << _quantity << " "; }
 #ifdef _MPI
       static bool broadcast( t_Quantity& _q, mpi::BroadCast &_bc )
         { return _bc.serialize( _q ); }

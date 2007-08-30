@@ -10,6 +10,7 @@
 
 
 #include <stdexcept>       // std::runtime_error
+#include <iostream>
 #include <math.h>
 #ifdef _MPI
 // #undef SEEK_SET

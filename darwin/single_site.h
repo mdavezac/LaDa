@@ -38,6 +38,7 @@ namespace SingleSite
   struct Object 
   {
     // Friend Functions
+    friend std::ostream& operator<<(std::ostream &_stream, const Object &_o);
     friend void operator<<(std::string &_str, const Object &_o);
     friend void operator<<(Ising_CE::Structure &_str, const Object &_o);
 #ifdef _MPI
