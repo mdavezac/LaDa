@@ -4,6 +4,10 @@
 #ifndef _CALL_LOG_H_
 #define _CALL_LOG_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
   #ifdef CALL_LOG
     #include <string>
     #include <ext/hash_map>

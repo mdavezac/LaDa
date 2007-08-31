@@ -4,6 +4,11 @@
 #ifndef _GATRAITS_H_
 #define _GATRAITS_H_
 
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <list>
 #include <vector>
 

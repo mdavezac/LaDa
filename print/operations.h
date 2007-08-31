@@ -4,6 +4,10 @@
 #ifndef __PRINT_OPERATIONS_H_
 #define __PRINT_OPERATIONS_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <iomanip> 
 
 namespace Print

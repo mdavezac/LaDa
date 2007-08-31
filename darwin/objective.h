@@ -4,6 +4,10 @@
 #ifndef _MULTIOB_OBJECTIVE_H_
 #define _MULTIOB_OBJECTIVE_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include<vector>
 #include<math.h>
 #include<stdexcept>
@@ -543,8 +547,21 @@ namespace darwin
       bool Save( TiXmlElement & _node ) const;
   };
 
+  inline std::ostream & operator<<( std::ostream &_os, Fitness &_fit ) 
+    {  return _os << (types::t_real ) _fit; }
 }
 
-std::ostream & operator<<( std::ostream &_os, darwin::Fitness &_fit );
+
+#ifdef _MPI
+namespace mpi
+{
+  template<>
+  inline bool BroadCast::serialize<darwin::Fitness>( darwin::Fitness &_fit )
+  {
+     return     serialize( _fit.is_valid )
+            and serialize( _fit.quantity );
+  }
+} // namespace mpi
+#endif 
 
 #endif //  _MULTIOB_OBJECTIVE_H_

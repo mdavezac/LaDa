@@ -4,6 +4,10 @@
 #ifndef _ANALYZE_CODE_H_
 #define _ANALYZE_CODE_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
   #ifdef _ANALYZE
     #include <time.h>
     #include <string>

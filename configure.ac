@@ -61,10 +61,12 @@ AC_ARG_ENABLE(debug,
   no)  debug=false ;;
   *) AC_MSG_ERROR(bad value ${enableval} for --enable-debug) ;;
 esac],[debug=true])
+AH_TEMPLATE([_PRINT_ALL_PROCS])
 if test x$debug = xtrue; then
   CXXFLAGS=`echo $CXXFLAGS | sed "s/-O2//"`
   CFLAGS=`echo $CFLAGS | sed "s/-O2//"`
-  CPP_DEBUG_FLAGS="-Wall -O0  -fbounds-check -D _PRINT_ALL_PROCS" 
+  AC_DEFINE([_PRINT_ALL_PROCS],[],[])
+  CPP_DEBUG_FLAGS="-Wall -O0  -fbounds-check" 
 else
   CPP_DEBUG_FLAGS=
 fi
@@ -91,8 +93,9 @@ AC_ARG_ENABLE(nolaunch,
   no)  nolaunch=false ;;
   *) AC_MSG_ERROR(bad value ${enableval} for --enable-nolaunch) ;;
 esac],[nolaunch=false])
+AH_TEMPLATE([_NOLAUNCH])
 if test x$nolaunch = xtrue; then
-  CXXFLAGS="$CXXFLAGS -D_NOLAUNCH";
+  AC_DEFINE([_NOLAUNCH],[],[])
 fi
 
 #  MPI libs

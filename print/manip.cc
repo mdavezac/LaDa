@@ -2,6 +2,7 @@
 //  Version: $Id$
 //
 #include <stdlib.h>
+#include <cctype>
 
 #include "manip.h"
 
@@ -54,7 +55,18 @@ namespace Print
     return _str;
   }
 
-
+  std::string lowercase(std::string _string)
+  {//change each element of the string to upper case
+     for(unsigned int i=0;i<_string.length();i++)
+        _string[i] = std::tolower(_string[i]);
+     return _string;//return the converted string
+  }
+  std::string uppercase(std::string _string)
+  {//change each element of the string to upper case
+     for(unsigned int i=0;i<_string.length();i++)
+        _string[i] = std::toupper(_string[i]);
+     return _string;//return the converted string
+  }
+   
 
 }
-

@@ -13,14 +13,14 @@ nobase_cedarwin_HEADERS = ce.h single_site.impl.h single_site.h
 cedarwin_CPPFLAGS =  -D _CE $(AM_CPPFLAGS) -I .. @GSL_INCLUDE@ 
 cedarwin_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIB@ @MPICH_LIBS@
 cedarwin_LDADD = libdarwin.la ../lamarck/liblamarck.la ../atat/libatat.la\
-		 ../print/libprint.la @MPI_ADDLIB@
+		 ../print/libprint.la @MPI_ADDLIB@ libdarwin.la 
 pdarwin_SOURCES = main.cc pescan.cc two_sites.cc single_site.cc
 pdarwin_HEADERS = pescan.h two_sites.h two_sites.impl.h single_site.h
 pdarwindir = darwin
 nobase_pdarwin_HEADERS = pescan.h
 pdarwin_CPPFLAGS =  -D _PESCAN $(AM_CPPFLAGS) -I .. @GSL_INCLUDE@ 
 pdarwin_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIB@ @MPICH_LIBS@
-pdarwin_LDADD = ../lamarck/liblamarck.la libdarwin.la ../lamarck/liblamarck.la ../atat/libatat.la ../vff/libvff.la \
+pdarwin_LDADD = libdarwin.la ../lamarck/liblamarck.la ../atat/libatat.la ../vff/libvff.la \
 	       	../pescan_interface/libpescan.la ../physics/libphysics.la ../print/libprint.la @MPI_ADDLIB@
 noinst_LTLIBRARIES = libdarwin.la
 libdarwin_ladir = darwin
