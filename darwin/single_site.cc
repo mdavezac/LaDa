@@ -1,20 +1,17 @@
 //
 //  Version: $Id$
 //
-#include <functional>
-#include <algorithm>
-#include <ext/algorithm>
 #include <fstream>
 
+#include <lamarck/atom.h>
+#include <opt/va_minimizer.h>
+
 #include "single_site.h"
-#include "lamarck/atom.h"
-#include "opt/va_minimizer.h"
 
 namespace SingleSite
 {
   std::ostream& operator<<(std::ostream &_stream, const Object &_o)
   {
-    std::cout << "size " << _o.bitstring.size() << std::endl;
     Object::t_Container :: const_iterator i_var = _o.bitstring.begin();
     Object::t_Container :: const_iterator i_end = _o.bitstring.end();
     for(; i_var != i_end; ++i_var )

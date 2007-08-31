@@ -744,8 +744,7 @@ namespace Vff
     }
 
     function::Base<> :: resize( dof );
-    if ( not variables )
-      return false;
+    if ( not variables ) return false;
 
     strain.zero(); 
     strain(0,0) = 1.0;

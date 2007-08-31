@@ -15,6 +15,7 @@
 
 #include <print/stdout.h>
 #include <print/manip.h>
+#include <lamarck/structure.h>
 #include <lamarck/atom.h>
 #include <opt/va_minimizer.h>
 
@@ -88,12 +89,11 @@ namespace BandGap
   void Evaluator::init( t_Individual &_indiv )
   {
     t_Base :: init( _indiv );
-    vff.set_variables( &current_object->bitstring );
+    // sets structure to this object 
+    structure << *current_object;
   }
   void Evaluator::evaluate()
   {
-    // sets structure to this object 
-    structure << *current_object;
 
 
     // Creates an mpi aware directory: one per proc
@@ -105,11 +105,9 @@ namespace BandGap
     pescan.set_dirname(sstr.str());
 
     // minimizes vff energy
-    std::cout << "Evaluatioon 1. " << current_object->bitstring.size();
     vff_minimizer.minimize();
-    std::cout << "  2. " << current_object->bitstring.size();
     structure.energy = vff.energy();
-    std::cout << "  3. " << current_object->bitstring.size();
+
 
     // creates an mpi aware file name for atomic configurations
     sstr.str("");
@@ -118,22 +116,17 @@ namespace BandGap
     sstr << "." << mpi::main.rank();
 #endif
     // prints atomic configurations
-    std::cout << "  4. " << current_object->bitstring.size();
     vff.print_escan_input(sstr.str());
     // tells pescan where to find atomic configurations
-    std::cout << "  5. " << current_object->bitstring.size();
     pescan.set_atom_input( sstr.str() );
 
     // then evaluates band gap
-    std::cout << "  6. " << current_object->bitstring.size();
     types::t_real result = pescan(structure);
 
     // copies band edges into object
-    std::cout << "  7. " << current_object->bitstring.size();
     get_bands( current_object->vbm, current_object->cbm );
     current_individual->quantities() = current_object->cbm - current_object->vbm;
 
-    std::cout << "  8. " << current_object->bitstring.size();
     // checks that non-zero band gap has been found
     if ( result < types::tolerance )
     {

@@ -16,6 +16,7 @@
 #endif
 
 #include <vector>
+#include <ostream>
 #include <fstream>
 #include <string>
 #include <complex>
@@ -178,6 +179,10 @@ namespace Ising_CE {
     }
   }
 
+  inline std::ostream& operator<<( std::ostream& _stream, const Ising_CE::Structure& _struc )
+    { _struc.print_out(_stream); return _stream; }
 
 } // namespace Ising_CE
+
+
 #endif

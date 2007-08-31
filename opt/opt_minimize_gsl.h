@@ -163,8 +163,7 @@ namespace minimizer {
       virtual bool minimize()
       {
         // initializes object related stuff
-        if( not current_func->init() )
-          return false;
+        if( current_func and current_func->init() )  return false;
         int status;
         
         const gsl_multimin_fdfminimizer_type *T;

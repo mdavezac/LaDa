@@ -262,15 +262,12 @@ endofloop:
       std::cerr << " Could not load input structure!! " << std::endl; 
       return false;
     }
-    std::cout << " nb atoms " << structure.atoms.size() << std::endl;
     if ( not structure.set_site_indices() )
     {
       std::cerr << " Could not set atomic indices! " << std::endl; 
       return false;
     }
-    std::cout << " nb atoms " << structure.atoms.size() << std::endl;
     rearrange_structure(structure);
-    std::cout << " nb atoms " << structure.atoms.size() << std::endl;
     if ( not consistency_check() )
       return false;
     if ( not x_vs_y.Load( _node ) )
@@ -308,8 +305,6 @@ endofloop:
                                                             const t_Individual &_parent,
                                                             bool _range )
   {
-      std::cout << "Final Bitstring size " << _offspring.Object().bitstring.size() <<  "   "
-                << _offspring.Object() << std::endl;
     t_Object &offspring  = _offspring;
     const t_Object &parent  = _parent;
     Ising_CE::Structure str1 = structure, str2 = structure;

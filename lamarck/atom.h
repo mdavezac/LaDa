@@ -155,7 +155,7 @@ namespace Ising_CE {
         }
         if ( site > -1 )
         { 
-          ss.str(""); ss << site;   node->SetAttribute( "type", ss.str().c_str() );
+          ss.str(""); ss << site;   node->SetAttribute( "site", ss.str().c_str() );
         }
         
       }

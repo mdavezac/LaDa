@@ -33,11 +33,10 @@ namespace darwin
 namespace mpi
 {
   template<>
-  bool BroadCast::serialize<darwin::Fitness>( darwin::Fitness &_fit )
+  inline bool BroadCast::serialize<darwin::Fitness>( darwin::Fitness &_fit )
   {
-     bool result = serialize( _fit.is_valid )
+     return     serialize( _fit.is_valid )
             and serialize( _fit.quantity );
-     return result;
   }
 //   if ( stage == GETTING_SIZE )
 //   {

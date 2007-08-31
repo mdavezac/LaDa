@@ -748,13 +748,8 @@ namespace darwin
     {
       t_Individual indiv;
       evaluator.initialize(indiv);
-      std::cout << "indiv size "<< indiv.Object().bitstring.size();
       if ( not ( taboos and (*taboos)(indiv) ) )
-      {
-        std::cout << " pop_back size " << _pop.back().Object().bitstring.size();
         _pop.push_back(indiv);
-      }
-      std::cout << std::endl;
     } // while ( i_pop->size() < target )
     _pop.resize( _size );
   }

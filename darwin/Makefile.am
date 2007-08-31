@@ -20,7 +20,7 @@ pdarwindir = darwin
 nobase_pdarwin_HEADERS = pescan.h
 pdarwin_CPPFLAGS =  -D _PESCAN $(AM_CPPFLAGS) -I .. @GSL_INCLUDE@ 
 pdarwin_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIB@ @MPICH_LIBS@
-pdarwin_LDADD = libdarwin.la ../lamarck/liblamarck.la ../atat/libatat.la ../vff/libvff.la \
+pdarwin_LDADD = ../lamarck/liblamarck.la libdarwin.la ../lamarck/liblamarck.la ../atat/libatat.la ../vff/libvff.la \
 	       	../pescan_interface/libpescan.la ../physics/libphysics.la ../print/libprint.la @MPI_ADDLIB@
 noinst_LTLIBRARIES = libdarwin.la
 libdarwin_ladir = darwin

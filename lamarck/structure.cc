@@ -19,6 +19,7 @@
 #include "structure.h"
 
 
+
 namespace Ising_CE {
 
   using atat::rndseed;
