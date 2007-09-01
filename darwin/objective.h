@@ -14,12 +14,13 @@
 
 #include <tinyxml/tinyxml.h>
 
-#include "opt/types.h"
-#include "opt/convex_hull.h"
+#include <opt/types.h>
+#include <opt/convex_hull.h>
 #ifdef _MPI
-#include "mpi/mpi_object.h"
+#include <mpi/mpi_object.h>
 #endif
-#include "print/xmg.h"
+#include <print/xmg.h>
+#include <print/manip.h>
 
 #include "gatraits.h"
 #include "loadsave.h"
@@ -461,12 +462,12 @@ namespace Objective
       {
         if ( not &_node ) return NULL;
         std::string str = "minimize"; 
-        std::string name = _node.Value();
+        std::string name = Print::lowercase(_node.Value());
         if (    name.compare("Objective") == 0 
              or name.compare("Method") == 0 )
         {
           if ( _node.Attribute( "type" ) )
-            str = _node.Attribute( "type" );
+            str = Print::lowercase(_node.Attribute( "type" ));
         }
         else if ( _node.Attribute("objective") )
           str = _node.Attribute( "objective" );
