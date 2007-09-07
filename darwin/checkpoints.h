@@ -21,6 +21,7 @@
 
 #include "opt/types.h"
 #include "print/xmg.h"
+#include "print/stdout.h"
 
 #include "taboos.h"
 #include "operators.h"
