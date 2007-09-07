@@ -191,8 +191,8 @@ namespace mpi
 
     public:
       BroadCast() : CommBase(), stage(GETTING_SIZE), keep_going(true) {}
-      BroadCast( const BroadCast &_b ) : CommBase(_b), stage(_b.stage) {}
-      BroadCast( const Base &_b ) : CommBase(_b), stage(GETTING_SIZE) {}
+      BroadCast( const BroadCast &_b ) : CommBase(_b), stage(_b.stage), keep_going(true) {}
+      BroadCast( const Base &_b ) : CommBase(_b), stage(GETTING_SIZE), keep_going(true) {}
       virtual ~BroadCast() { destroy_buffers(); };
 
       bool allocate_buffers( types::t_unsigned _root = ROOT_NODE );
@@ -220,11 +220,10 @@ namespace mpi
         return true;
       }
     protected:
-      bool special_op( t_operation _op );
       template<class T_TYPE> bool operator_( T_TYPE &_type );
   };
 
-  template<class T_TYPE> bool BroadCast :: operator_( T_TYPE &_type )
+  template<class T_TYPE> inline bool BroadCast :: operator_( T_TYPE &_type )
   {
     if ( not keep_going ) return true;
     try
@@ -244,7 +243,20 @@ namespace mpi
   template<> inline bool BroadCast::operator_<const BroadCast::t_operation>( const t_operation &_op )
   {
     if ( not keep_going ) return true;
-    return  special_op( _op );
+    if      ( _op == SIZEUP or _op == CLEAR )   reset();
+    else if ( _op == ALLOCATE ) allocate_buffers(); 
+    else if ( _op == BROADCAST ) operator()(); 
+    else if ( _op == NEXTSTAGE )
+    {
+      switch( stage )
+      {
+        case GETTING_SIZE: allocate_buffers(); break;
+        case COPYING_TO_HERE: operator()(); break;
+        case COPYING_FROM_HERE: reset(); break;
+        default: break;
+      }
+    }
+    return true; 
   }
 
   template< class T_TYPE > inline BroadCast& operator<< ( BroadCast& _this, T_TYPE &_type )

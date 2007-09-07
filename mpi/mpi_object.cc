@@ -636,23 +636,6 @@ gather_erase:
     return true;
   }
 
-  bool BroadCast :: special_op( t_operation _op )
-  {
-    if      ( _op == SIZEUP or _op == CLEAR )   reset();
-    else if ( _op == ALLOCATE ) allocate_buffers(); 
-    else if ( _op == BROADCAST ) operator()(); 
-    else if ( _op == NEXTSTAGE )
-    {
-      switch( stage )
-      {
-        case GETTING_SIZE: allocate_buffers(); break;
-        case COPYING_TO_HERE: operator()(); break;
-        case COPYING_FROM_HERE: reset(); break;
-        default: break;
-      }
-    }
-    return true; 
-  }
 
 }
 

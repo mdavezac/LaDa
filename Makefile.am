@@ -1,4 +1,5 @@
 AUTOMAKE_OPTIONS = foreign
+EXTRA_DIST = max_revision.pl
 if DODARWIN 
   DARWINSUBDIR = darwin
   PESCANSUBDIR = pescan_interface
@@ -17,3 +18,4 @@ revision.h: force
 	./max_revision.pl
 force: 
 all: revision.h
+

@@ -53,7 +53,7 @@ namespace darwin
       {
         if ( not ( do_print_each_call or store.newresults() ) )
         {
-          Print::xmg << Print::Xmg:: clearall;
+          Print::xmg << Print::Xmg::clearall;
           return;
         }
 
@@ -61,10 +61,10 @@ namespace darwin
         if ( not store.newresults() ) special = " ? ";
        
         Print::xmg << Print::Xmg::comment << special << "Iteration " << age() 
-                         << Print::endl 
-                         << Print::Xmg::comment << special << "Evaluation Calls: " 
-                         << evaluation.nb_eval << " " << evaluation.nb_grad 
-                         << Print::endl;
+                   << Print::endl 
+                   << Print::Xmg::comment << special << "Evaluation Calls: " 
+                   << evaluation.nb_eval << " " << evaluation.nb_grad 
+                   << Print::endl;
         
         if( store.newresults() )
           store.print_results( age() );
@@ -319,13 +319,12 @@ namespace darwin
 
       void lastCall() const
       {
-        std::ostringstream sstr;
-        sstr << "Terminator, type: " << type
-             << ", ref= " << ref 
-             << ", term=" << term;
- 
-        std::string str = sstr.str();
-        Print::xmg.add_comment( str );
+        Print::xmg << Print::Xmg::comment << "Terminator, type: " << type
+                   << ", ref= " << ref 
+                   << ", term=" << term << Print::endl;
+        Print::out << "\n Stopping run on:\n    Terminator, type: " << type
+                   << ", ref= " << ref 
+                   << ", term=" << term << Print::endl;
       }
   };
 
@@ -357,9 +356,7 @@ namespace darwin
                            max_generations(_max), stop_filename(_f)
       {
         if ( stop_filename.empty() ) stop_filename = "stop";
-        std::ostringstream sstr;
-        sstr << "Will stop on finding file " << stop_filename;
-        Print::xmg.add_comment( sstr.str() );
+        Print::xmg << Print::Xmg::comment << "Will stop on finding file " << stop_filename << Print::endl;
       }
 
 
@@ -491,18 +488,18 @@ namespace darwin
         if ( mpi::main.is_root_node() )
         {
 #endif
-        std::ifstream file( stop_filename.c_str(), std::ios_base::in );
-        if ( file.is_open() )
-        {
-          std::ostringstream sstr;
-          sstr << "Stopping on finding file " << stop_filename;
-          Print::xmg.add_comment( sstr.str() );
-          result = false; 
-        }
-
+          std::ifstream file( stop_filename.c_str(), std::ios_base::in );
+          if ( file.is_open() )
+          {
+            Print::xmg << Print::Xmg::comment << "Stopping on finding file "
+                       << stop_filename << Print::endl;
+            Print::out << "\n\nStopping on finding file "
+                       << stop_filename << Print::endl;
+            result = false; 
+          }
 #ifdef _MPI
         }
-        result = mpi::main.all_or_all(result);
+        result = mpi::main.all_sum_all(result);
 #endif 
 
         // last call

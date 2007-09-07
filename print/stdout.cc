@@ -12,9 +12,8 @@
 namespace Print
 {
 
-  void StdOut :: init (const std::string &_f)
+  void StdOut :: init_ (const std::string &_f)
   { 
-    if( filename == _f ) return; 
     if ( is_open() ) close();
     filename = reformat_home( _f );
 #ifdef _MPI
@@ -45,5 +44,22 @@ namespace Print
     file.flush();
     file.close();
   }    
+
+#if defined(_MPI) and defined(_PRINT_ALL_PROCS)
+  void StdOut::sync_filename()
+  {
+    mpi::BroadCast bc( mpi::main );
+    bc << filename
+       << mpi::BroadCast::allocate
+       << filename
+       << mpi::BroadCast::broadcast
+       << filename;
+
+    if ( mpi::main.is_root_node() ) return;
+
+    init_(filename);
+  }
+#endif
+
   StdOut out("out");
 }

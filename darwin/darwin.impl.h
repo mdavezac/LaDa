@@ -868,6 +868,7 @@ namespace darwin
         i_island = i_island_begin;
         for (int i=0; i_island != i_island_end; ++i, ++i_island )
         {
+
           types::t_unsigned pSize = i_island->size();
           offsprings.clear(); // new offsprings
           
@@ -949,12 +950,11 @@ nextfilename:
     }
 
     mpi::BroadCast bc( mpi::main );
-    bc << _input << _restart << _evaluator 
-       << mpi::BroadCast::allocate 
-       << _input << _restart << _evaluator 
-       << mpi::BroadCast::broadcast 
-       << _input << _restart << _evaluator 
-       << mpi::BroadCast::clear; 
+    bc << _input << _restart << _evaluator
+       << mpi::BroadCast::allocate
+       << _input << _restart << _evaluator
+       << mpi::BroadCast::broadcast
+       << _input << _restart << _evaluator;
   }
 #endif
 
@@ -998,15 +998,19 @@ nextfilename:
       }
 
       Print::xmg << Print::Xmg :: comment << "new GA run" << Print::endl;
-      Print::out << "Starting new genetic algorithm runs\n\n"
-                 << "GA Input file is located at " << evaluator_filename << "\n"
-                 << "Functional Input file is located at " << evaluator_filename << "\n"
-                 << "Restart Input file is located at " << restart_filename << "\n"
-                 << "Xmgrace output file is located at " << Print::xmg.get_filename() << "\n"
-                 << "Will Save to file located at " << save_filename << "\n\n";
 #ifdef _MPI
     }
+    Print::out.sync_filename();
+#endif
 
+    Print::out << "Starting new genetic algorithm runs\n\n"
+               << "GA Input file is located at " << evaluator_filename << "\n"
+               << "Functional Input file is located at " << evaluator_filename << "\n"
+               << "Restart Input file is located at " << restart_filename << "\n"
+               << "Xmgrace output file is located at " << Print::xmg.get_filename() << "\n"
+               << "Will Save to file located at " << save_filename << "\n\n";
+
+#ifdef _MPI
     // broadcasts all input files and filenames
     std::string input_str, restart_str, evaluator_str;
     LoadAllInputFiles(input_str, restart_str, evaluator_str);

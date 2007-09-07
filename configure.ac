@@ -1,5 +1,5 @@
 AC_INIT(lamarck/structure.cc)
-AM_INIT_AUTOMAKE(lamarck,0.1)
+AM_INIT_AUTOMAKE(LaDa,2.0)
 AC_PROG_CC
 AC_PROG_CXX
 #AC_PROG_F77(g95)
@@ -11,12 +11,10 @@ AM_CONFIG_HEADER(config.h)
 AH_TOP([
 #ifndef _G_HAVE_BOOL
 #define _G_HAVE_BOOL
-#endif])
-AH_TOP([
+#endif
 #ifndef ANSI_HEADERS
 #define ANSI_HEADERS
-#endif])
-AH_TOP([
+#endif
 #ifndef HAVE_SSTREAM
 #define HAVE_SSTREAM
 #endif])

@@ -189,32 +189,31 @@ namespace BandGap
   {
     types :: t_real a, b;
 #ifdef _MPI 
+    mpi::BroadCast bc(mpi::main);
     if ( mpi::main.is_root_node() )
     {
 #endif
       std::ifstream file( references_filename.c_str(), std::ios_base::in ); 
-      if ( not file.is_open() )
-        return;
-      file >> a; if ( file.fail() ) return;
-      file >> b; if ( file.fail() ) return;
-      if ( a >= b )
-       return;
+      if ( not file.is_open() ) goto failure;
+      file >> a; if ( file.fail() ) goto failure;
+      file >> b; if ( file.fail() ) goto failure;
       file.close();
 #ifdef _MPI
     }
-    mpi::BroadCast broadcast(mpi::main);
-    broadcast.serialize(a);
-    broadcast.serialize(b);
-    broadcast.allocate_buffers();
-    broadcast.serialize(a);
-    broadcast.serialize(b);
-    broadcast();
-    broadcast.serialize(a);
-    broadcast.serialize(b);
+    bc << a << b << mpi::BroadCast::allocate 
+       << a << b << mpi::BroadCast::broadcast
+       << a << b;
 #endif 
 
+    if ( a >= b )  return;
     pescan.set_references( a, b ); 
     return;
+
+failure:
+#ifdef _MPI
+    bc << a << a << mpi::BroadCast::allocate 
+       << a << a << mpi::BroadCast::broadcast;
+#endif
   }
 
 } // namespace pescan

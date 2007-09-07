@@ -29,7 +29,7 @@ nobase_libdarwin_la_HEADERS = breeder.h concentration.h evaluation.h functors.h 
 	                      statistics.h darwin.h gencount.h store.h \
 			      checkpoints.h darwin.impl.h evaluator.h individual.h objective.h \
 			      taboos.h gatraits.h 
-libopt_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
+libdarwin_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 
 ../lamarck/liblamarck.la: 

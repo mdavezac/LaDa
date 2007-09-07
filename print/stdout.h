@@ -32,22 +32,21 @@ namespace Print
 
     public:
       StdOut   (const std::string &_f)
-             : is_empty(true), do_print(true)
+             : is_empty(true), do_print(true), filename("")
       { 
-#ifdef _MPI 
-#ifndef _PRINT_ALL_PROCS_
+#if defined(_MPI) and not defined(_PRINT_ALL_PROCS)
         if ( not mpi::main.is_root_node() ) do_print = false;
 #endif
-#endif
-        init(_f); 
+        init_(_f); 
       }
       ~StdOut() { close(); }
       
       bool open();
       void close();
 
+      bool is_set() const { return not filename.empty(); }
       bool is_open() { return do_print and file.is_open(); }
-      void init(const std::string &_f);
+      void init(const std::string &_f) { if ( filename == _f ) return; init_(_f); }
       void set_do_print(bool _print = true) { do_print = _print; }
       template<class T_TYPE> inline StdOut& operator<< ( const T_TYPE &_whatever )
         { operator_( _whatever ); return *this; }
@@ -57,7 +56,14 @@ namespace Print
         do_checks();
         file << _whatever;
       }
+#if defined(_MPI) and not defined(_PRINT_ALL_PROCS)
+      void sync_filename() {}
+#elif defined(_MPI)
+      void sync_filename();
+#endif
+
     private:
+      void init_(const std::string &_f);
       void do_checks()
       {
         if ( not is_open() ) open();
