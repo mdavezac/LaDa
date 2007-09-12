@@ -54,7 +54,7 @@ namespace Store
       virtual ~Base() {};
 
       virtual bool Restart( const TiXmlElement &_node ) = 0;
-      virtual void Save( TiXmlElement &_node ) const = 0;
+      virtual bool Save( TiXmlElement &_node ) const = 0;
 
       virtual void operator()( const t_Individual &_indiv ) = 0;
       bool newresults() const { return new_results; }
@@ -158,15 +158,27 @@ namespace Store
         print_results(0, true);
         return true;
       }
-      void Save( TiXmlElement &_node ) const
+      bool Save( TiXmlElement &_node ) const
       {
         darwin::SaveObject<t_Evaluator> saveop( evaluator, &t_Evaluator::Save,
                                                 darwin::LOADSAVE_LONG);
         TiXmlElement *parent = new TiXmlElement("Results");
-        if ( not parent ) return;
-        condition.Save(*parent, saveop);
-        SaveIndividuals( *parent, saveop, results.begin(), results.end() );
-        _node.LinkEndChild(parent);
+        if ( not parent ) 
+        {
+          std::cerr << "Memory error while saving results" << std::endl;
+          return false;
+        }
+
+        if (      condition.Save(*parent, saveop) 
+             and  SaveIndividuals( *parent, saveop, results.begin(), results.end() ) ) 
+        {
+          _node.LinkEndChild(parent);
+          return true;
+        }
+
+        std::cerr << "Could not save resuls as requested" << std::endl;
+        delete parent;
+        return false;
       }
 
       virtual void print_results(types::t_unsigned _age, bool is_comment = false) const
@@ -264,9 +276,25 @@ namespace Store
         }
         bool Save( TiXmlElement &_node, t_SaveOp & _op) const
         {
+          if ( optimum.invalid() )
+          {
+            std::cerr << "Optimum is invalid!! when trying to save" << std::endl;
+            Print::out << "Optimum is invalid!! when trying to save\n";
+            return false;
+          }
+
           TiXmlElement *child = new TiXmlElement("optimum");
-          if( not child ) return false;
-          if ( not optimum.Save( *child, _op ) ) return false;
+          if( not child )
+          { 
+            std::cerr << "Memory allocation error while save results" << std::endl;
+            return false;
+          }
+          if ( not optimum.Save( *child, _op ) )
+          {
+            std::cerr << "Could not save optimum" << std::endl;
+            return false;
+          }
+
           _node.LinkEndChild(child);
           return true;
         }
@@ -383,7 +411,13 @@ namespace Store
         bool Restart( const TiXmlElement &_node, t_LoadOp & _op)
           { return t_Base::Restart( _node, _op) and objective->Restart( _node, _op); }
         bool Save( TiXmlElement &_node, t_SaveOp & _op) const
-          { return t_Base::Save( _node, _op) and objective->Save( _node, _op); }
+        {
+          if (     t_Base::Save( _node, _op)  
+               and objective->Save( _node, _op) )  return true;
+          
+          std::cerr << "Could not save objective" << std::endl;
+          return false;
+        }
     };
 
     // returns true if should remove

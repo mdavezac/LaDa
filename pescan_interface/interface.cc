@@ -8,6 +8,10 @@
 #include <physics/physics.h>
 #include <print/manip.h>
 
+#ifdef _NOLAUNCH
+#include<eo/utils/eoRNG.h>
+#endif
+
 namespace Pescan
 {
   types::t_real Interface :: operator()( Ising_CE::Structure &_str)
@@ -359,16 +363,16 @@ namespace Pescan
 #ifdef _NOLAUNCH
     if ( escan.method == Escan :: ALL_ELECTRON ) 
     { 
-      bands.cbm = random() * 5;
-      bands.vbm = bands.cbm - random() * 5;
+      bands.cbm = rng.uniform() * 5;
+      bands.vbm = bands.cbm - rng.uniform() * 5;
       return bands.gap();
     }
     if ( computation == CBM )
     {
-      bands.cbm = random() * 5;
+      bands.cbm = rng.uniform() * 5;
       return bands.cbm;
     }
-    bands.vbm = bands.cbm - random() * 5;
+    bands.vbm = bands.cbm - rng.uniform() * 5;
     return bands.vbm;
 #endif
     std::ifstream file;

@@ -143,7 +143,6 @@ namespace darwin
     // checks if there are more than one taboo list
     const TiXmlElement *child = _parent.FirstChildElement("Objective");
     if ( not child ) child = _parent.FirstChildElement("Method");
-    bool do_store = true;
     objective = t_Objective :: new_from_xml( *child );
     if( not objective )
     {
@@ -155,20 +154,18 @@ namespace darwin
     if ( store_xml )
         store = new typename t_Store::FromObjective( evaluator, *store_xml );
     else
-    {
-      do_store = false;
       store = new typename t_Store::FromObjective( evaluator, objective, *child );
-    }
     if ( not store )
       store = new typename t_Store::Optima( evaluator, *child );
+    if ( not store )
+      throw std::runtime_error( "Memory Error: could not create Store object \n");
     Print::xmg << Print::Xmg::comment << "Store: " << store->what_is() << Print::endl;
 
     if( history )
       evaluation = new Evaluation::WithHistory<t_Evaluator,t_GA_Traits>
-                                              ( evaluator, *objective, (do_store ? store: NULL), history );
+                                              ( evaluator, *objective, *store, history );
     if ( not evaluation )
-      evaluation = new Evaluation::Base<t_Evaluator,t_GA_Traits>( evaluator, *objective,
-                                                                  (do_store ? store: NULL) );
+      evaluation = new Evaluation::Base<t_Evaluator,t_GA_Traits>( evaluator, *objective, *store );
   }
   
   // create Taboos

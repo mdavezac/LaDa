@@ -19,6 +19,11 @@ namespace darwin
   }
   bool Fitness :: Save( TiXmlElement & _node ) const
   {
+    if ( not is_valid )
+    {
+      std::cerr << "Trying to Save invalid fitness" << std::endl;
+      return false;
+    }
     double d = (double) quantity;
     _node.SetDoubleAttribute("fitness", d);
     return true;

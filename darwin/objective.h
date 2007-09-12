@@ -70,6 +70,7 @@ namespace Objective
       virtual std::string print() const = 0;
       virtual bool Save( TiXmlElement &_node, t_SaveOp& _op) { return true; };
       virtual bool Restart( const  TiXmlElement &_node, t_LoadOp &_op) { return true; };
+      virtual bool does_store() const { return false; }
   };
   template< class T_EVALUATOR, class T_GA_TRAITS, class T_QUANTITY_TRAITS, class T_VA_TRAITS >
   void Base<T_EVALUATOR, T_GA_TRAITS, T_QUANTITY_TRAITS, T_VA_TRAITS> :: init( const t_Individual & _indiv)
@@ -318,6 +319,7 @@ namespace Objective
         { return convexhull.Save( _node, _op ); };
       virtual bool Restart( const  TiXmlElement &_node, t_LoadOp &_op)
         { return convexhull.Load( _node, _op ); };
+      virtual bool does_store() const { return true; }
   };
   template< class T_EVALUATOR, class T_GA_TRAITS >
   typename ConvexHull<T_EVALUATOR, T_GA_TRAITS> :: t_ScalarQuantity
@@ -521,6 +523,7 @@ namespace darwin
     public:
       Fitness() : is_valid( false )  {}
       Fitness( const Fitness & _c ) : quantity( _c.quantity ), is_valid( _c.is_valid ) {}
+      Fitness( const types::t_real _fit ) : quantity( _fit ), is_valid( true ) {}
       ~Fitness() {}
 
 
@@ -533,11 +536,6 @@ namespace darwin
 
       bool invalid() const { return not is_valid; }
       void invalidate() { is_valid = false; }
-      void operator=( types::t_real _fit ) 
-      {
-        is_valid = true;
-        quantity = _fit;
-      }
       operator t_Quantity() const
       { 
         if ( not is_valid )

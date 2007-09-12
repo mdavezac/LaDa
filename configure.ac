@@ -125,6 +125,7 @@ AM_CONDITIONAL(DOPESCAN, test x$pescan = xtrue)
 AM_CONDITIONAL(DOCE, test x$ce = xtrue)
 AM_CONDITIONAL(DOVFF, test x$vff = xtrue)
 AM_CONDITIONAL(DODARWIN, test x$darwin = xtrue)
+AM_CONDITIONAL(NOLAUNCH, test x$nolaunch = xtrue)
 
 #  gsl libs iff vff is enabled 
 if test x$vff = xtrue; then

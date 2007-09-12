@@ -50,14 +50,14 @@ template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
     protected:
       t_Evaluator &evaluator;
       t_Objective &objective;
-      t_Store *store;
+      t_Store &store;
 
     public:
       types::t_unsigned nb_eval;
       types::t_unsigned nb_grad;
 
     public:
-      Base   ( t_Evaluator &_eval, t_Objective &_obj, t_Store *_store )
+      Base   ( t_Evaluator &_eval, t_Objective &_obj, t_Store &_store )
            : evaluator(_eval), objective(_obj), store(_store), nb_eval(0), nb_grad(0) {};
       Base   ( const Base<t_Evaluator> &_x )
            : evaluator(_x.evaluator), objective(_x.objective),
@@ -144,7 +144,7 @@ template<class T_EVALUATOR, class T_GATRAITS>
 
     types::t_real quantity = objective( _indiv.quantities() );
     _indiv.set_fitness( quantity );
-    if( store ) (*store)( _indiv );
+    store( _indiv );
     return quantity;
   }
 
@@ -166,7 +166,7 @@ template<class T_EVALUATOR, class T_GATRAITS>
 
     types::t_real quantity = objective.evaluate_with_gradient( _indiv.quantities(), _grad, _i_grad );
     _indiv.set_fitness( quantity );
-    if( store ) (*store)( _indiv );
+    store( _indiv );
     return quantity;
   }
 
@@ -182,7 +182,7 @@ template<class T_EVALUATOR, class T_GATRAITS>
     }
 
 #ifdef _MPI
-    if( store ) store->synchronize();
+    store.synchronize();
 #endif
   }
 
@@ -218,7 +218,7 @@ template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
       t_History *history;
 
     public:
-      WithHistory   ( t_Evaluator &_eval, t_Objective &_obj, t_Store *_store, t_History *_hist )
+      WithHistory   ( t_Evaluator &_eval, t_Objective &_obj, t_Store &_store, t_History *_hist )
            : Base<t_Evaluator>(_eval, _obj, _store), history(_hist) {};
       WithHistory   ( const WithHistory<t_Evaluator> &_c )
                   : Base<t_Evaluator>( _c ), history(_c.history ) {}
@@ -266,7 +266,7 @@ template<class T_EVALUATOR, class T_GATRAITS>
     // isnot_clone is true only if history exists
     // and prior call to history->clone( _indiv ) returned false
     if( isnot_clone ) history->add( _indiv );
-    if ( store ) (*store)( _indiv );
+    store( _indiv );
 
     return quantity;
   }
@@ -298,7 +298,7 @@ template<class T_EVALUATOR, class T_GATRAITS>
 
     types::t_real quantity = objective.evaluate_with_gradient( _indiv.quantities(), _grad, _i_grad );
     _indiv.set_fitness( quantity );
-    if ( store ) (*store)( _indiv );
+    store( _indiv );
     return quantity;
   }
 

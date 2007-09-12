@@ -153,11 +153,22 @@ namespace Individual
       bool Save( TiXmlElement &_node, SaveOp &_saveop ) const
       {
         TiXmlElement *xmlindiv = new TiXmlElement("Individual");
-        if ( not xmlindiv ) return false;
-        repFitness.Save(*xmlindiv);
-        if( not _saveop(*this, *xmlindiv) ) return false;
-        _node.LinkEndChild( xmlindiv );
-        return true;
+        if ( not xmlindiv )
+        {
+          std::cerr << "Memory Allocation Error while saving individual" << std::endl;
+          return false;
+        }
+
+        if (     repFitness.Save(*xmlindiv)
+             and _saveop(*this, *xmlindiv)  )
+        {
+          _node.LinkEndChild( xmlindiv );
+          return true;
+        }
+
+        delete xmlindiv;
+        std::cerr << "Errow while save individual" << std::endl <<  *this << std::endl;
+        return false;
       }
       template<class LoadOp>
       bool Load( const TiXmlElement &_node, LoadOp &_loadop ) 

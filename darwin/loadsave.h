@@ -57,10 +57,12 @@ namespace darwin
   const bool LOADSAVE_LONG = false;
 
   template<class T_IT, class SaveOp>
-  void SaveIndividuals( TiXmlElement &_node, SaveOp &_saveop, T_IT _first, T_IT _end) 
+  bool SaveIndividuals( TiXmlElement &_node, SaveOp &_saveop, T_IT _first, T_IT _end) 
   {
+    bool result = true;
     for(; _first != _end; ++_first )
-      _first->Save( _node, _saveop );
+      if( not _first->Save( _node, _saveop ) ) result = false;
+    return result;
   }
   template<class T_CONTAINER, class LoadOp>
   bool LoadIndividuals( const TiXmlElement &_node, LoadOp &_loadop, 
