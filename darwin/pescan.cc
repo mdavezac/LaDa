@@ -1,68 +1,46 @@
 //
-//  Version: $Id: pescan.cc 275 2007-09-07 17:42:43Z davezac $
+//  Version: $Id$
 //
-#include <functional>
-#include <algorithm>
-#include <ext/algorithm>
-#include <fstream>
-#ifndef __PGI
-  #include<ext/functional>
-  using __gnu_cxx::compose1;
-#else
-  #include<functional>
-  using std::compose1;
-#endif
-
 #include <print/stdout.h>
 #include <print/manip.h>
-#include <lamarck/structure.h>
-#include <lamarck/atom.h>
-#include <opt/va_minimizer.h>
+#include "pescan.h"
 
-#include "bandgap.h"
-
-namespace BandGap
+namespace Pescan
 {
-  bool Evaluator :: Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type )
+  bool Keeper :: Save( const TiXmlElement &_node )
   {
-    t_Object &object = _indiv.Object();
-    _node.Attribute("CBM", &object.cbm);
-    _node.Attribute("VBM", &object.vbm);
-    _indiv.quantities() = object.cbm - object.vbm; 
+    const TiXmlElement *xml = _node.FistChildElement( "PescanResult" );
+    double d;
 
-    return t_Base::Load( _indiv, _node, _type );
-  }
-  bool Evaluator :: Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const
-  {
-    const t_Object &object = _indiv.Object();
-    _node.SetDoubleAttribute("CBM", (double) object.cbm);
-    _node.SetDoubleAttribute("VBM", (double) object.vbm);
+    if ( not xml ) goto errorout;
+    
+    if ( not xml->Attribute("cbm", &d ) ) goto errorout;
+    cbm = types::t_real(d);
+    if ( not xml->Attribute("vbm", &d ) ) goto errorout;
+    vbm = types::t_real(d);
 
-    return t_Base::Save( _indiv, _node, _type );
+    return true;
+errorout:
+    std::cerr << "Could not Load Pescan::Keeper" << std::endl;
+    return false;
   }
-  bool Evaluator :: Load( const TiXmlElement &_node )
+  bool Keeper :: Save( TiXmlElement &_node ) const
   {
-    if ( not t_Base::Load( _node ) )
+    TiXmlElement *xml = new TiXmlElement( "PescanResult" );
+    if ( not vffxml )
     {
-      std::cerr << " Could not load TwoSites::Evaluator<Object> input!! " << std::endl; 
+      std::cerr << "Could not Save Pescan::Keeper";
       return false;
     }
-    if ( not vff.Load( _node ) )
-    {
-      std::cerr << " Could not load vff input!! " << std::endl; 
-      return false;
-    }
-    if ( not vff.initialize_centers() )
-    {
-      std::cerr << " Could not initialize Atomic_Center list in vff!! " << std::endl
-                << " Are you sure the lattice and the structure correspond? " << std::endl; 
-      return false;
-    }
-    if ( not vff_minimizer.Load( _node ) )
-    {
-      std::cerr << " Could not load vff minimizer from input!! " << std::endl;
-      return false;
-    }
+    xml->SetDoubleAttribute("vbm", vbm );
+    xml->SetDoubleAttribute("cvm", cbm );
+
+    _node.LinkEndChild( xml );
+
+    return true;
+  }
+  bool Base :: Load( const TiXmlElement &_node )
+  {
     // wrong order! just to check whether Refs are read from input
     pescan.set_references( -666.666, 666.666 );
     if ( not pescan.Load( _node ) )
@@ -86,46 +64,23 @@ namespace BandGap
     return true;
   }
 
-  void Evaluator::init( t_Individual &_indiv )
+  void Base::evaluate( Keeper &_keeper )
   {
-    t_Base :: init( _indiv );
-    // sets structure to this object 
-    structure << *current_object;
-  }
-  void Evaluator::evaluate()
-  {
-
-
     // Creates an mpi aware directory: one per proc
     std::ostringstream sstr; sstr << "escan" << nbeval; 
     ++nbeval;
 #ifdef _MPI
     sstr << mpi::main.rank();
 #endif
-    pescan.set_dirname(sstr.str());
-
-    // minimizes vff energy
-    vff_minimizer.minimize();
-    structure.energy = vff.energy();
-
-
-    // creates an mpi aware file name for atomic configurations
-    sstr.str("");
-    sstr << "atom_config";
-#ifdef _MPI
-    sstr << "." << mpi::main.rank();
-#endif
-    // prints atomic configurations
-    vff.print_escan_input(sstr.str());
-    // tells pescan where to find atomic configurations
-    pescan.set_atom_input( sstr.str() );
+    dirname =  sstr.str();
+    pescan.set_dirname( dirname );
+    pescan.set_atom_input( atomicconfig );
 
     // then evaluates band gap
     types::t_real result = pescan(structure);
 
     // copies band edges into object
-    get_bands( current_object->vbm, current_object->cbm );
-    current_individual->quantities() = current_object->cbm - current_object->vbm;
+    get_bands( _keeper.vbm, _keeper.cbm );
 
     // checks that non-zero band gap has been found
     if ( result < types::tolerance )
@@ -150,7 +105,7 @@ namespace BandGap
     write_references();
   }
 
-  bool Evaluator :: Continue()
+  bool Base :: Continue()
   {
     // on first iteration, writes references... then read them on following iterations
     ++age;

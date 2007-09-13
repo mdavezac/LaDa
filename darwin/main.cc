@@ -8,7 +8,7 @@
 #ifdef _CE 
 #undef _CE
 #endif
-  #include "pescan.h"
+  #include "bandgap.h"
   typedef BandGap :: Evaluator t_Evaluator;
 #elif _CE
   #include "ce.h"

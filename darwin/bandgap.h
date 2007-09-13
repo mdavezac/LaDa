@@ -1,8 +1,8 @@
 //
 //  Version: $Id$
 //
-#ifndef _PESCAN_H_
-#define _PESCAN_H_
+#ifndef _BANDGAP_H_
+#define _BANDGAP_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -26,6 +26,9 @@
 #include "concentration.h"
 #include "functors.h"
 #include "individual.h"
+#include "vff.h"
+#include "pescan.h"
+
 
 #ifdef _MPI
 #include "mpi/mpi_object.h"
@@ -34,7 +37,7 @@
 namespace BandGap
 {
 
-  struct Object : public TwoSites::Object
+  struct Object : public Vff::Keeper, public Pescan::Keeper
   {
     friend std::ostream& operator<<(std::ostream &_stream, const Object &_o);
     typedef TwoSites::Object :: t_Container t_Container;
@@ -42,10 +45,9 @@ namespace BandGap
 #ifdef _MPI
     friend bool mpi::BroadCast::serialize<BandGap::Object>(BandGap::Object &);
 #endif
-    types::t_real cbm, vbm;
 
-    Object() : TwoSites::Object(), cbm(0), vbm(0) {}
-    Object(const Object &_c) : TwoSites::Object(_c), cbm(_c.cbm), vbm(_c.vbm) {};
+    Object() : TwoSites::Object(), Vff::Keeper(), Pescan::Keeper {}
+    Object(const Object &_c) : TwoSites::Object(_c), Vff::Keeper(_c), Pescan::Keeper(_c) {};
     ~Object() {};
   };
 
@@ -126,4 +128,4 @@ namespace mpi
 }
 #endif
 
-#endif // _PESCAN_H_
+#endif // _BANDGAP_H_
