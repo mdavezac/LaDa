@@ -1,5 +1,5 @@
 //
-//  Version: $Id: pescan.cc 278 2007-09-12 23:04:56Z davezac $
+//  Version: $Id: pescan.cc 275 2007-09-07 17:42:43Z davezac $
 //
 #include <functional>
 #include <algorithm>
@@ -15,14 +15,15 @@
 
 #include <print/stdout.h>
 #include <print/manip.h>
+#include <lamarck/structure.h>
 #include <lamarck/atom.h>
 #include <opt/va_minimizer.h>
 
+#include "pescan.h"
+
 namespace BandGap
 {
-  template< class T_INDIVIDUAL, class T_INDIVTRAITS >
-  bool Evaluator<T_INDIVIDUAL, T_INDIVTRAITS> :: 
-           Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type )
+  bool Evaluator :: Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type )
   {
     t_Object &object = _indiv.Object();
     _node.Attribute("CBM", &object.cbm);
@@ -31,9 +32,7 @@ namespace BandGap
 
     return t_Base::Load( _indiv, _node, _type );
   }
-  template< class T_INDIVIDUAL, class T_INDIVTRAITS >
-  bool Evaluator<T_INDIVIDUAL, T_INDIVTRAITS > ::
-    Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const
+  bool Evaluator :: Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const
   {
     const t_Object &object = _indiv.Object();
     _node.SetDoubleAttribute("CBM", (double) object.cbm);
@@ -41,8 +40,7 @@ namespace BandGap
 
     return t_Base::Save( _indiv, _node, _type );
   }
-  template< class T_INDIVIDUAL, class T_INDIVTRAITS >
-  bool Evaluator<T_INDIVIDUAL, T_INDIVTRAITS> :: Load( const TiXmlElement &_node )
+  bool Evaluator :: Load( const TiXmlElement &_node )
   {
     if ( not t_Base::Load( _node ) )
     {
@@ -88,17 +86,16 @@ namespace BandGap
     return true;
   }
 
-  template< class T_INDIVIDUAL, class T_INDIVTRAITS >
-  void Evaluator<T_INDIVIDUAL, T_INDIVTRAITS> :: init( t_Individual &_indiv )
+  void Evaluator::init( t_Individual &_indiv )
   {
     t_Base :: init( _indiv );
     // sets structure to this object 
     structure << *current_object;
   }
-
-  template< class T_INDIVIDUAL, class T_INDIVTRAITS >
-  void Evaluator<T_INDIVIDUAL, T_INDIVTRAITS> :: evaluate()
+  void Evaluator::evaluate()
   {
+
+
     // Creates an mpi aware directory: one per proc
     std::ostringstream sstr; sstr << "escan" << nbeval; 
     ++nbeval;
@@ -153,8 +150,7 @@ namespace BandGap
     write_references();
   }
 
-  template <class T_INDIVIDUAL, class T_INDIVTRAITS> 
-  bool Evaluator<T_INDIVIDUAL,T_INDIVTRAITS> :: Continue()
+  bool Evaluator :: Continue()
   {
     // on first iteration, writes references... then read them on following iterations
     ++age;
@@ -173,8 +169,7 @@ namespace BandGap
     return true;
   }
 
-  template <class T_INDIVIDUAL, class T_INDIVTRAITS> 
-  void Evaluator<T_INDIVIDUAL,T_INDIVTRAITS> :: write_references()
+  void Evaluator::write_references()
   {
 #ifdef _MPI 
     if ( not mpi::main.is_root_node() )
@@ -190,8 +185,7 @@ namespace BandGap
     file.close();
     return;
   }
-  template <class T_INDIVIDUAL, class T_INDIVTRAITS> 
-  void Evaluator<T_INDIVIDUAL, T_INDIVTRAITS> :: read_references()
+  void Evaluator::read_references()
   {
     types :: t_real a, b;
 #ifdef _MPI 
