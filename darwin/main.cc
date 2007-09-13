@@ -9,7 +9,7 @@
 #undef _CE
 #endif
   #include "pescan.h"
-  typedef BandGap :: Evaluator<> t_Evaluator;
+  typedef BandGap :: Evaluator t_Evaluator;
 #elif _CE
   #include "ce.h"
   typedef CE :: Evaluator t_Evaluator;

@@ -50,11 +50,10 @@ namespace BandGap
   };
 
 
-  template<class T_INDIVIDUAL = Individual::Types<BandGap::Object>::Scalar >
-  class Evaluator : public TwoSites::Evaluator< T_INDIVIDUAL >
+  class Evaluator : public TwoSites::Evaluator< Individual::Types<BandGap::Object>::Scalar >
   {
     public:
-      typedef T_INDIVIDUAL t_Individual;
+      typedef  Individual::Types<BandGap::Object>::Scalar t_Individual;
     protected:
       typedef TwoSites::Evaluator< t_Individual > t_Base;
       typedef Ising_CE::Structure::t_kAtoms t_kvecs;
@@ -80,6 +79,8 @@ namespace BandGap
                     nbeval(0), age(0), check_ref_every(-1) {}
       ~Evaluator() {};
 
+      bool initialize( t_Individual &_indiv )
+        { return t_Base::initialize( _indiv ); }
       void init( t_Individual &_indiv );
       bool Load( const TiXmlElement &_node );
       bool Load ( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
@@ -118,14 +119,11 @@ namespace mpi
   template<>
   inline bool mpi::BroadCast::serialize<BandGap::Object>( BandGap::Object & _object )
   {
-    return     serialize( _object.cbm ) 
-           and serialize( _object.vbm ) 
-           and serialize< TwoSites::Object >( _object );
+    if( not serialize( _object.cbm ) ) return false;
+    if( not serialize( _object.vbm ) ) return false;
+    return serialize< TwoSites::Object >( _object );
   }
 }
 #endif
 
-#include "pescan.impl.h"
-
 #endif // _PESCAN_H_
-

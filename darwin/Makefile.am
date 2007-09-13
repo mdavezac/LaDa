@@ -24,11 +24,11 @@ pdarwin_LDADD = libdarwin.la ../lamarck/liblamarck.la ../atat/libatat.la ../vff/
 	       	../pescan_interface/libpescan.la ../physics/libphysics.la ../print/libprint.la @MPI_ADDLIB@
 noinst_LTLIBRARIES = libdarwin.la
 libdarwin_ladir = darwin
-libdarwin_la_SOURCES = concentration.cc objective.cc 
+libdarwin_la_SOURCES = concentration.cc objective.cc
 nobase_libdarwin_la_HEADERS = breeder.h concentration.h evaluation.h functors.h loadsave.h operators.h \
 	                      statistics.h darwin.h gencount.h store.h \
 			      checkpoints.h darwin.impl.h evaluator.h individual.h objective.h \
-			      taboos.h gatraits.h 
+			      taboos.h gatraits.h  bitstring.h
 libdarwin_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 

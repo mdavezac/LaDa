@@ -1001,7 +1001,7 @@ nextfilename:
 #endif
 
     Print::out << "Starting new genetic algorithm runs\n\n"
-               << "GA Input file is located at " << evaluator_filename << "\n"
+               << "GA Input file is located at " << filename << "\n"
                << "Functional Input file is located at " << evaluator_filename << "\n"
                << "Restart Input file is located at " << restart_filename << "\n"
                << "Xmgrace output file is located at " << Print::xmg.get_filename() << "\n"

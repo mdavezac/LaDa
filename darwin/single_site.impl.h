@@ -197,12 +197,8 @@ namespace SingleSite
   {
     t_Object &obj1 = _indiv1;
     const t_Object &obj2 = _indiv2;
-    Object::t_Container :: iterator i_var1 = obj1.begin();
-    Object::t_Container :: const_iterator i_var2 = obj2.begin();
-    Object::t_Container :: const_iterator i_var2_end = obj2.end();
-    for(; i_var2 != i_var2_end; ++i_var1, ++i_var2)
-      if ( rng.flip(crossover_probability) ) 
-        *i_var1 = *i_var2;
+    BitString::Crossover<t_Object> crossover( crossover_probability );
+    if ( not crossover( obj1, obj2 ) ) return false;
     structure << obj1;
     t_This::set_concentration( structure );
     obj1 << structure;

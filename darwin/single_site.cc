@@ -26,12 +26,11 @@ namespace SingleSite
   void operator<<(Object &_o, const std::string &_c)
   {
     types::t_unsigned size = _c.size();
-    bitstring.resize( size );
-    std::vector<types::t_real> :: iterator i_var = bitstring.begin();
-    std::vector<types::t_real> :: iterator i_end = bitstring.end();
+    _o.bitstring.resize( size );
+    std::vector<types::t_real> :: iterator i_var = _o.bitstring.begin();
+    std::vector<types::t_real> :: iterator i_end = _o.bitstring.end();
     for(types::t_unsigned n=0; i_var != i_end; ++i_var, ++n )
       *i_var = ( _c[n] == '1' ) ? 1.0: -1.0;
-    return true;
   }
   void operator<<(Ising_CE::Structure &_str, const Object &_o)
   {
@@ -49,13 +48,12 @@ namespace SingleSite
   }
   void operator<<(Object &_o, const Ising_CE::Structure &_c)
   {
-    bitstring.clear(); bitstring.reserve( _c.atoms.size() );
+    _o.bitstring.clear(); _o.bitstring.reserve( _c.atoms.size() );
     Ising_CE::Structure :: t_Atoms :: const_iterator i_atom = _c.atoms.begin();
     Ising_CE::Structure :: t_Atoms :: const_iterator i_end = _c.atoms.end();
     for(; i_atom != i_end; ++i_atom )
       if ( not (i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T) )
-        bitstring.push_back( i_atom->type > 0 ? 1.0: -1.0 );
-    return true;
+        _o.bitstring.push_back( i_atom->type > 0 ? 1.0: -1.0 );
   }
 
 } // SingleSite

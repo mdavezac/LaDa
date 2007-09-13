@@ -44,7 +44,7 @@ namespace darwin
 
     public:
       Evaluator() {};
-      virtual ~Evaluator() {}
+      ~Evaluator() {}
 
     public:
       // Should load t_Individual and funtional related stuff
@@ -64,7 +64,7 @@ namespace darwin
           return false;
         return Load(*child);
       }
-      virtual bool Load ( const TiXmlElement &_node ) = 0;
+      bool Load ( const TiXmlElement &_node ) { return true; }
       // Load and Save individuals
       // _type can be either darwin::LOADSAVE_SHORT or
       // darwin::LOADSAVE_LONG. Results are save as latter, and darwin

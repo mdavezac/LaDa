@@ -8,10 +8,7 @@
 #include <config.h>
 #endif
 
-#include <string>
 #include <algorithm>
-#include <functional>
-#include <string>
 
 #include <eo/eoOp.h>
 
@@ -24,6 +21,7 @@
 #include "concentration.h"
 #include "functors.h"
 #include "taboos.h"
+#include "bitstring.h"
 
 #ifdef _MPI
 #include "mpi/mpi_object.h"
@@ -35,50 +33,22 @@
 namespace SingleSite
 {
 
-  struct Object 
+  struct Object : public BitString::Object<> 
   {
-    // Friend Functions
-    friend std::ostream& operator<<(std::ostream &_stream, const Object &_o);
-    friend void operator<<(std::string &_str, const Object &_o);
-    friend void operator<<(Ising_CE::Structure &_str, const Object &_o);
-    friend void operator<<(Object &_o, const Ising_CE::Structure &_c)
-    friend void operator<<(Object &_o, Ising_CE::Structure &_str);
-#ifdef _MPI
-    friend bool mpi::BroadCast::serialize<SingleSite::Object>(SingleSite::Object &);
-#endif
-
     // Typedefs
+    protected:
+      typedef BitString :: Object<> t_Base;
     public:
-      typedef types::t_real t_Type;
-      typedef std::vector<t_Type>  t_Container;
-      typedef t_Container :: iterator iterator;
-      typedef t_Container :: const_iterator const_iterator;
-
-
-    // variables
-    public:
-      t_Container bitstring;
+      typedef t_Base :: t_Type t_Type;
+      typedef t_Base :: t_Container t_Container;
 
 
     // Member Functions
     public:
       Object() {}
-      Object(const Object &_c) : bitstring(_c.bitstring) {};
+      Object(const Object &_c) : t_Base(_c) {};
       ~Object() {};
     
-      bool operator==( const Object &_c ) const
-      {
-        return std::equal( bitstring.begin(), bitstring.end(), 
-                            _c.bitstring.begin() ); 
-      }
-      t_Container :: const_iterator begin() const
-        { return bitstring.begin();  }
-      t_Container:: const_iterator end() const
-        { return bitstring.end();  }
-      t_Container:: iterator begin() 
-        { return bitstring.begin();  }
-      t_Container:: iterator end()
-        { return bitstring.end();  }
       
       types::t_real get_concentration() const
       {
@@ -90,24 +60,14 @@ namespace SingleSite
         result /= static_cast<types::t_real>(bitstring.size());
         return result;
       }
-      
-      void print_out( std::ostream &_stream ) const
-        { std::string str; str << *this; _stream << str; }
-      
-      void mask( types::t_unsigned _start, types::t_unsigned _end)
-      {
-        if ( _end > bitstring.size() )
-          _end = bitstring.size();
-        std::transform( bitstring.begin()+_start, bitstring.begin()+_end,
-                        bitstring.begin()+_start, std::logical_not<t_Type>() );  
-      }
-      types::t_unsigned size()
-        { return bitstring.size(); }
-
-      t_Container& Container() { return bitstring; }
-      const t_Container& Container() const { return bitstring; }
   };
 
+  std::ostream& operator<<(std::ostream &_stream, const Object &_o);
+  void operator<<(std::string &_str, const Object &_o);
+  void operator<<(Object &_o, const std::string &_str );
+  void operator<<(Ising_CE::Structure &_str, const Object &_o);
+  void operator<<(Object &_o, const Ising_CE::Structure &_c);
+  void operator<<(Object &_o, const Ising_CE::Structure &_str);
 
   template<class T_INDIVIDUAL, class T_INDIV_TRAITS = Traits :: Indiv<T_INDIVIDUAL> >
   class Evaluator : public darwin::Evaluator< T_INDIVIDUAL, T_INDIV_TRAITS >
@@ -176,7 +136,8 @@ namespace SingleSite
 namespace mpi
 {
   template<>
-  inline bool mpi::BroadCast::serialize<SingleSite::Object>( SingleSite::Object & _object )
+  inline bool mpi::BroadCast::serialize< SingleSite::Object >
+                                       ( SingleSite::Object & _object )
   {
     return serialize( _object.bitstring );
   }
