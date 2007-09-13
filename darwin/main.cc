@@ -9,10 +9,10 @@
 #undef _CE
 #endif
   #include "pescan.h"
-  namespace Functional = BandGap;
+  typedef BandGap :: Evaluator<> t_Evaluator;
 #elif _CE
   #include "ce.h"
-  namespace Functional = CE;
+  typedef CE :: Evaluator t_Evaluator;
 #else 
   Need to define _CE or _PESCAN
 #endif
@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
   Print::xmg.init("convex_hull.agr");
   try
   {
-    darwin::Darwin< Functional::Evaluator > ga;
+    darwin::Darwin< t_Evaluator > ga;
     if ( not  ga.Load("input.xml") )
       throw std::runtime_error( "Could not load input!!\n" ); 
     ga.run();

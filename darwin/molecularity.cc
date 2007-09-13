@@ -1,38 +1,34 @@
 //
 //  Version: $Id$
 //
+#include <functional>
+#include <algorithm>
+#include <ext/algorithm>
 #include <fstream>
+#ifndef __PGI
+  #include<ext/functional>
+  using __gnu_cxx::compose1;
+#else
+  #include<functional>
+  using std::compose1;
+#endif
 
+#include <print/stdout.h>
+#include <print/manip.h>
+#include <lamarck/structure.h>
 #include <lamarck/atom.h>
 #include <opt/va_minimizer.h>
 
-#include "single_site.h"
+#include "molecularity.h"
 
-namespace SingleSite
+  // "Molecularity" means that we try and simulate growth conditions...
+  // The input should be a 1x1xn supercell, with n either 100, 110 or 111 
+  // each unit-cell is a "molecule", say InAs or GaSb, but not a mix of the two.
+
+
+namespace Molecularity
 {
-  std::ostream& operator<<(std::ostream &_stream, const Object &_o)
-  {
-    Object::t_Container :: const_iterator i_var = _o.bitstring.begin();
-    Object::t_Container :: const_iterator i_end = _o.bitstring.end();
-    for(; i_var != i_end; ++i_var )
-      _stream << ( *i_var > 0 ? '1' : '0' );
-    return _stream;
-  }
-  void operator<<(std::string &_str, const Object &_o)
-  {
-    std::ostringstream sstr;
-    sstr << _o; _str = sstr.str();
-  }
-  void operator<<(Object &_o, const std::string &_c)
-  {
-    types::t_unsigned size = _c.size();
-    bitstring.resize( size );
-    std::vector<types::t_real> :: iterator i_var = bitstring.begin();
-    std::vector<types::t_real> :: iterator i_end = bitstring.end();
-    for(types::t_unsigned n=0; i_var != i_end; ++i_var, ++n )
-      *i_var = ( _c[n] == '1' ) ? 1.0: -1.0;
-    return true;
-  }
+  // Only need encode one atom per unit-cell
   void operator<<(Ising_CE::Structure &_str, const Object &_o)
   {
     Object::t_Container :: const_iterator i_var = _o.bitstring.begin();
@@ -42,8 +38,9 @@ namespace SingleSite
     for(; i_var != i_end and i_atom != i_atom_end; ++i_atom )
     {
       if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) 
-        continue;
+        { ++i_atom;  continue; }
       i_atom->type = *i_var > 0 ? 1.0 : -1.0;
+      (++i_atom)->type = *i_var > 0 ? 1.0 : -1.0;
       ++i_var;
     }
   }
@@ -52,13 +49,12 @@ namespace SingleSite
     bitstring.clear(); bitstring.reserve( _c.atoms.size() );
     Ising_CE::Structure :: t_Atoms :: const_iterator i_atom = _c.atoms.begin();
     Ising_CE::Structure :: t_Atoms :: const_iterator i_end = _c.atoms.end();
-    for(; i_atom != i_end; ++i_atom )
+    for(; i_atom != i_end; i_atom += 2 )
       if ( not (i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T) )
         bitstring.push_back( i_atom->type > 0 ? 1.0: -1.0 );
     return true;
   }
-
-} // SingleSite
+} // namespace pescan
 
 
 

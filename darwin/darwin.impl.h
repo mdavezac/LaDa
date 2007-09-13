@@ -986,7 +986,7 @@ nextfilename:
                   and save_filename == filename )
           save_filename = Print::reformat_home(child->Attribute("save"));
         if ( child->Attribute("out")  )
-          Print::out.init( child->Attribute("save") );
+          Print::out.init( child->Attribute("out") );
         if ( child->Attribute("xmgrace") )
         {
           std::string f = Print::reformat_home(child->Attribute("xmgrace"));
