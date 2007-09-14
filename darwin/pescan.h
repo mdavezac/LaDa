@@ -14,6 +14,7 @@
 #include <lamarck/structure.h>
 #include <opt/types.h>
 
+#include "vff.h"
 
 #ifdef _MPI
 #include "mpi/mpi_object.h"
@@ -38,7 +39,7 @@ namespace Pescan
   };
 
 
-  class Base 
+  class Darwin 
   {
     public:
       std::string atomicconfig;
@@ -52,17 +53,24 @@ namespace Pescan
       types::t_int age, check_ref_every;
 
     public:
-      Base   ( Ising_CE::Structure &_s )
-           : structure(_s), references_filename("BandEdge"), 
-             nbeval(0), age(0), check_ref_every(-1) {}
-      Base   ( const Base &_b ) 
-           : structure(_b.structure), references_filename(_b.references_filename)
-             nbeval(_b.nbeval), age(_b.age), check_ref_every(_b.check_ref_every) {}
-      ~Base() {};
+      Darwin   ( Ising_CE::Structure &_s )
+             : structure(_s), references_filename("BandEdge"), 
+               nbeval(0), age(0), check_ref_every(-1) {}
+      Darwin   ( const Darwin &_b ) 
+             : structure(_b.structure), references_filename(_b.references_filename),
+               nbeval(_b.nbeval), age(_b.age), check_ref_every(_b.check_ref_every) {}
+      ~Darwin() {};
 
       bool Load( const TiXmlElement &_node );
       bool Continue();
-      void evaluate( Keeper &_k );
+      void operator()();
+      void operator()( Keeper &_keeper )
+      {
+        Darwin::operator()();
+        // copies band edges into object
+        get_bands( _keeper.vbm, _keeper.cbm );
+      }
+    void operator<<( const Vff::Darwin &_vff );
 
     protected:
       void set_all_electron() { pescan.set_method( Pescan::Interface::Escan::ALL_ELECTRON ); }
@@ -79,17 +87,16 @@ namespace Pescan
     return _stream; 
   } 
 
-} // namespace BandGap
+} // namespace Pescan
 
 #ifdef _MPI
 namespace mpi
 {
   template<>
-  inline bool mpi::BroadCast::serialize<BandGap::Object>( BandGap::Object & _object )
+  inline bool mpi::BroadCast::serialize<Pescan::Keeper>( Pescan::Keeper & _keeper )
   {
-    if( not serialize( _object.cbm ) ) return false;
-    if( not serialize( _object.vbm ) ) return false;
-    return serialize< TwoSites::Object >( _object );
+    return     serialize( _keeper.cbm ) 
+           and serialize( _keeper.vbm );
   }
 }
 #endif

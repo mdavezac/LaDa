@@ -16,6 +16,10 @@
 
 #include<opt/types.h>
 
+#ifdef _MPI
+#include "mpi/mpi_object.h"
+#endif
+
 namespace BitString
 {
 
@@ -43,8 +47,6 @@ namespace BitString
                             _c.bitstring.begin() ); 
       }
 
-      void print_out( std::ostream &_stream ) const
-        { std::string str; str << *this; _stream << str; }
       void mask( types::t_unsigned _start, types::t_unsigned _end);
       types::t_unsigned size() { return bitstring.size(); }
       t_Container& Container() { return bitstring; }
@@ -58,21 +60,18 @@ namespace BitString
         { return bitstring.begin();  }
       iterator end()
         { return bitstring.end();  }
+
+#ifdef _MPI
+       bool broadcast ( mpi::BroadCast &_bc )
+       {
+         return _bc.serialize_container( bitstring );
+       }
+#endif
   };
 
   template< class T_OBJECT > void inline flip( typename T_OBJECT :: t_Type &_t ) { _t = -_t; }
   template<> void inline flip< Object< std::vector<bool> > >( bool &_t ) { _t = not _t; }
 
-// template< class T_CONTAINER >
-//   typename Object<T_CONTAINER> :: t_Type Object<T_CONTAINER> :: get_concentration() const
-//   {
-//     t_Container :: const_iterator i_var = bitstring.begin();
-//     t_Container :: const_iterator i_var_end = bitstring.end();
-//     t_Type result = t_Type(0);
-//     for(; i_var != i_var_end; ++i_var )
-//       result += *i_var > 0 ? t_Type(1): t_Type(-1);
-//     return result / (t_Type) bitstring.size();
-//   }
   template< class T_CONTAINER >
     inline void Object<T_CONTAINER> :: mask( types::t_unsigned _start, types::t_unsigned _end)
     {

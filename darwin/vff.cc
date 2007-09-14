@@ -5,9 +5,9 @@
 
 namespace Vff
 {
-  bool Keeper :: Save( const TiXmlElement &_node )
+  bool Keeper :: Load( const TiXmlElement &_node )
   {
-    const TiXmlElement *vffxml = _node.FistChildElement( "VffResult" );
+    const TiXmlElement *vffxml = _node.FirstChildElement( "VffResult" );
     atat::rVector3d vec;
     double d;
 
@@ -21,21 +21,21 @@ namespace Vff
     vec(1) = types::t_real(d);
     if ( not vffxml->Attribute("xz",     &d ) ) goto errorout;
     vec(2) = types::t_real(d);
-    strss.set_column(0,vec);
+    stress.set_column(0,vec);
     if ( not vffxml->Attribute("yx",     &d ) ) goto errorout;
     vec(0) = types::t_real(d);
     if ( not vffxml->Attribute("yy",     &d ) ) goto errorout;
     vec(1) = types::t_real(d);
     if ( not vffxml->Attribute("yz",     &d ) ) goto errorout;
     vec(2) = types::t_real(d);
-    strss.set_column(1,vec);
+    stress.set_column(1,vec);
     if ( not vffxml->Attribute("zx",     &d ) ) goto errorout;
     vec(0) = types::t_real(d);
     if ( not vffxml->Attribute("zy",     &d ) ) goto errorout;
     vec(1) = types::t_real(d);
     if ( not vffxml->Attribute("zz",     &d ) ) goto errorout;
     vec(2) = types::t_real(d);
-    strss.set_column(2,vec);
+    stress.set_column(2,vec);
 
     return true;
 errorout:
@@ -65,7 +65,7 @@ errorout:
 
     return true;
   }
-  bool Evaluator :: Load( const TiXmlElement &_node )
+  bool Darwin :: Load( const TiXmlElement &_node )
   {
     if ( not Functional::Load( _node ) )
     {

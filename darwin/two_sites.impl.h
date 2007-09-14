@@ -287,7 +287,7 @@ endofloop:
   {
     t_Object &obj1 = _indiv1;
     const t_Object &obj2 = _indiv2;
-    Crossover<t_Object> :: crossover( crossover_rate );
+    BitString::Crossover<t_Object> crossover( crossover_probability );
     crossover( obj1, obj2 );
     structure << obj1;
     t_This::set_concentration( structure );
@@ -409,9 +409,9 @@ endofloop:
   }
 
   template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
-  bool Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS>::initialize( t_Object &_object )
+  bool Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS>::initialize( t_Individual &_indiv )
   {
-    _object.bitstring.clear(); 
+    _indiv.Object().bitstring.clear(); 
     Ising_CE::Structure::t_Atoms :: const_iterator i_atom = structure.atoms.begin();
     Ising_CE::Structure::t_Atoms :: const_iterator i_atom_end = structure.atoms.end();
     types::t_int concx = 0;
@@ -421,14 +421,14 @@ endofloop:
       bool flip = rng.flip();
       if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) 
         flip = ( i_atom->type > 0 );
-      _object.bitstring.push_back( flip ? 1.0: -1.0 );
+      _indiv.Object().bitstring.push_back( flip ? 1.0: -1.0 );
       flip ? ++concx: --concx;
 
       ++i_atom;
       flip = rng.flip();
       if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) 
         flip = ( i_atom->type > 0 );
-      _object.bitstring.push_back( flip ? 1.0: -1.0 );
+      _indiv.Object().bitstring.push_back( flip ? 1.0: -1.0 );
       flip ? ++concy: --concy;
     }
     if ( x_vs_y.is_singlec() )
@@ -441,17 +441,17 @@ endofloop:
       do
       {
         types::t_unsigned i = 2 * rng.random(N-1);
-        if ( xto_change > 1.0 and _object.bitstring[i] < 0 )
-          { _object.bitstring[i] = 1; xto_change-=2; }
-        else if ( xto_change < -1.0 and _object.bitstring[i] > 0 )
-          { _object.bitstring[i] = -1; xto_change+=2; }
+        if ( xto_change > 1.0 and _indiv.Object().bitstring[i] < 0 )
+          { _indiv.Object().bitstring[i] = 1; xto_change-=2; }
+        else if ( xto_change < -1.0 and _indiv.Object().bitstring[i] > 0 )
+          { _indiv.Object().bitstring[i] = -1; xto_change+=2; }
         
         if ( yto_change > -1.0 and yto_change < 1.0 ) continue;
         i = 2 * rng.random(N-1) + 1;
-        if ( yto_change > 1.0 and _object.bitstring[i] < 0 )
-          { _object.bitstring[i] = 1; yto_change-=2; }
-        else if ( yto_change < -1.0 and _object.bitstring[i] > 0 )
-          { _object.bitstring[i] = -1; yto_change+=2; }
+        if ( yto_change > 1.0 and _indiv.Object().bitstring[i] < 0 )
+          { _indiv.Object().bitstring[i] = 1; yto_change-=2; }
+        else if ( yto_change < -1.0 and _indiv.Object().bitstring[i] > 0 )
+          { _indiv.Object().bitstring[i] = -1; yto_change+=2; }
 
       } while (    xto_change < -1.0 or xto_change > 1.0
                 or yto_change < -1.0 or yto_change > 1.0 );

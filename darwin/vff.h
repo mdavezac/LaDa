@@ -39,18 +39,28 @@ namespace Vff
     bool Save( TiXmlElement &_node ) const;
   };
 
-
-  class Base : public Functional
+  class Darwin : public Functional
   {
-    public:
-      Base( Ising_CE::Structure &_str ) : Functional( _str ) {} 
-      ~Base() {};
+    protected:
+      minimizer::GnuSL<Vff::Functional> minimizer;
 
-      Load( const TiXmlElement &_node );
-      bool evaluate( Keeper &_keeper )
+
+    public:
+      Darwin   ( Ising_CE::Structure &_str ) 
+             : Functional( _str ), minimizer( *this )  {} 
+      Darwin   ( const Darwin &_d ) 
+             : Functional(_d), minimizer ( *this ) {}
+      ~Darwin() {};
+
+      bool Load( const TiXmlElement &_node );
+      void operator()()
       {
         minimizer.minimize();
-        structure.energy = vff.energy();
+        structure.energy = Functional::energy();
+      }
+      void operator()( Keeper &_keeper )
+      {
+        Darwin::evaluate();
         _keeper.energy = structure.energy;
         _keeper.stress = stress;
       }

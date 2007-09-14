@@ -14,8 +14,8 @@ cedarwin_CPPFLAGS =  -D _CE $(AM_CPPFLAGS) -I .. @GSL_INCLUDE@
 cedarwin_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIB@ @MPICH_LIBS@
 cedarwin_LDADD = libdarwin.la ../lamarck/liblamarck.la ../atat/libatat.la\
 		 ../print/libprint.la @MPI_ADDLIB@ libdarwin.la 
-pdarwin_SOURCES = main.cc pescan.cc two_sites.cc single_site.cc
-pdarwin_HEADERS = pescan.h two_sites.h two_sites.impl.h single_site.h
+pdarwin_SOURCES = main.cc pescan.cc two_sites.cc single_site.cc vff.cc bandgap.cc 
+pdarwin_HEADERS = pescan.h two_sites.h two_sites.impl.h single_site.h vff.h bandgap.h
 pdarwindir = darwin
 nobase_pdarwin_HEADERS = pescan.h
 pdarwin_CPPFLAGS =  -D _PESCAN $(AM_CPPFLAGS) -I .. @GSL_INCLUDE@ 

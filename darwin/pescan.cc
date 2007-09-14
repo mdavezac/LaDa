@@ -7,9 +7,9 @@
 
 namespace Pescan
 {
-  bool Keeper :: Save( const TiXmlElement &_node )
+  bool Keeper :: Load ( const TiXmlElement &_node )
   {
-    const TiXmlElement *xml = _node.FistChildElement( "PescanResult" );
+    const TiXmlElement *xml = _node.FirstChildElement( "PescanResult" );
     double d;
 
     if ( not xml ) goto errorout;
@@ -27,7 +27,7 @@ errorout:
   bool Keeper :: Save( TiXmlElement &_node ) const
   {
     TiXmlElement *xml = new TiXmlElement( "PescanResult" );
-    if ( not vffxml )
+    if ( not xml )
     {
       std::cerr << "Could not Save Pescan::Keeper";
       return false;
@@ -39,7 +39,7 @@ errorout:
 
     return true;
   }
-  bool Base :: Load( const TiXmlElement &_node )
+  bool Darwin :: Load( const TiXmlElement &_node )
   {
     // wrong order! just to check whether Refs are read from input
     pescan.set_references( -666.666, 666.666 );
@@ -64,7 +64,7 @@ errorout:
     return true;
   }
 
-  void Base::evaluate( Keeper &_keeper )
+  void Darwin::operator()()
   {
     // Creates an mpi aware directory: one per proc
     std::ostringstream sstr; sstr << "escan" << nbeval; 
@@ -79,17 +79,13 @@ errorout:
     // then evaluates band gap
     types::t_real result = pescan(structure);
 
-    // copies band edges into object
-    get_bands( _keeper.vbm, _keeper.cbm );
-
     // checks that non-zero band gap has been found
     if ( result < types::tolerance )
     {
       Print::out << " Found metallic or negative band gap!! " << result << "\n" 
-                 << current_object << "\n"
                  << " Will Try and Recompute Band Gap \n";
       set_all_electron();
-      evaluate();
+      Darwin::operator()();
       return;
     }
     if ( pescan.get_method() == Pescan::Interface::Escan::FOLDED_SPECTRUM ) return;
@@ -100,12 +96,11 @@ errorout:
 #ifdef _MPI
     if ( not mpi::main.is_root_node() ) return; // not root no read write
 #endif 
-    Print::out << " Writing band edges to file " << references_filename << "\n" 
-               << " using band gap of object " <<  current_object << "\n";
+    Print::out << " Writing band edges to file " << references_filename << "\n";
     write_references();
   }
 
-  bool Base :: Continue()
+  bool Darwin :: Continue()
   {
     // on first iteration, writes references... then read them on following iterations
     ++age;
@@ -124,7 +119,7 @@ errorout:
     return true;
   }
 
-  void Evaluator::write_references()
+  void Darwin::write_references()
   {
 #ifdef _MPI 
     if ( not mpi::main.is_root_node() )
@@ -140,7 +135,7 @@ errorout:
     file.close();
     return;
   }
-  void Evaluator::read_references()
+  void Darwin::read_references()
   {
     types :: t_real a, b;
 #ifdef _MPI 
@@ -170,6 +165,21 @@ failure:
        << a << a << mpi::BroadCast::broadcast;
 #endif
   }
+
+  void Darwin::operator<<( const Vff::Darwin &_vff )
+  {
+    // creates an mpi aware file name for atomic configurations
+    std::ostringstream  sstr;
+    sstr << "atom_config";
+#ifdef _MPI
+    sstr << "." << mpi::main.rank();
+#endif
+    // prints atomic configurations
+    _vff.print_escan_input(sstr.str());
+    // tells pescan where to find atomic configurations
+    atomicconfig = sstr.str();
+  }
+
 
 } // namespace pescan
 

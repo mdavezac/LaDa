@@ -54,6 +54,7 @@ namespace TwoSites
 
     public:
       using t_Base :: Load;
+      using t_Base :: Save;
     protected:
       using t_Base :: current_individual;
       using t_Base :: current_object;
@@ -90,7 +91,7 @@ namespace TwoSites
                       bool _range = false );
       bool Crossover( t_Individual &_indiv1, const t_Individual &_indiv2 );
 
-      bool initialize( t_Object &_object );
+      bool initialize( t_Individual &_indiv );
 
     protected:
       void get_xy_concentrations( const Ising_CE::Structure &_str );
