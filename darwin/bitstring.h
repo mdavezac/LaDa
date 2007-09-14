@@ -9,7 +9,7 @@
 #endif
 
 #include<string>
-#include<iostream>
+#include<sstream>
 #include <functional>
 
 #include<tinyxml/tinyxml.h>
@@ -91,16 +91,27 @@ namespace BitString
       public:
         Crossover() : rate (0.5) {}
         Crossover( types::t_real &_rate ) : rate ( _rate ) {}
-        Crossover( const TiXmlElement &_node ) : rate ( 0.5 )
+        Crossover( const TiXmlElement &_node ) : rate ( 0.5 ) { Load( _node ); }
+
+        bool Load( const TiXmlElement &_node )
         {
           _node.Attribute("rate", &rate);
           if ( rate <= types::tolerance ) rate = 0.5;
+          if ( 1.0 - rate <= types::tolerance ) rate = 1.0;
+          return true;
         }
         Crossover( const Crossover<t_Object> &_k ) : rate (_k.rate) {}
         ~Crossover() {}
 
         bool operator()( t_Object &_off, const t_Object &_parent );
         bool operator()( t_Object &_off1, t_Object &_off2 );
+        std::string print_out() const
+        {
+          std::ostringstream sstr;
+          sstr << "Crossover rate = " << rate;
+          return sstr.str();
+        }
+        std::string className() const { return "BitString::Crossover"; }
     };
 
   template< class T_OBJECT >
@@ -161,15 +172,26 @@ namespace BitString
       public:
         Mutation() : rate (0.1) {}
         Mutation( types::t_real &_rate ) : rate ( _rate ) {}
-        Mutation( const TiXmlElement &_node ) : rate ( 0.5 )
+        Mutation( const TiXmlElement &_node ) : rate ( 0.5 ) { Load(_node); }
+          
+        bool Load(const TiXmlElement &_node )
         {
           _node.Attribute("rate", &rate);
           if ( rate <= types::tolerance ) rate = 0.5;
+          if ( 1.0 - rate <= types::tolerance ) rate = 1.0;
+          return true;
         }
         Mutation( const Mutation<t_Object> &_k ) : rate (_k.rate) {}
         ~Mutation() {}
 
         bool operator()( t_Object &_o);
+        std::string print_out() const
+        {
+          std::ostringstream sstr;
+          sstr << "Mutation rate = " << rate;
+          return sstr.str();
+        }
+        std::string className() const { return "BitString::Mutation"; }
     };
 
 
