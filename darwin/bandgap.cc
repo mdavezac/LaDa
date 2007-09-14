@@ -1,5 +1,5 @@
 //
-//  Version: $Id: pescan.cc 275 2007-09-07 17:42:43Z davezac $
+//  Version: $Id$
 //
 #include <functional>
 #include <algorithm>
