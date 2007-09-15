@@ -51,6 +51,12 @@ namespace BandGap
     ~Object() {};
   };
 
+  inline std::ostream& operator<<(std::ostream &_stream, const Object &_o)
+  { 
+    _stream << (SingleSite::Object& ) _o   << " "
+            << (Pescan::Keeper&) _o;
+    return _stream; 
+  } 
 
   class Evaluator : public TwoSites::Evaluator< Individual::Types<BandGap::Object>::Scalar >
   {
@@ -88,12 +94,6 @@ namespace BandGap
       void evaluate();
   };
 
-  inline std::ostream& operator<<(std::ostream &_stream, const Object &_o)
-  { 
-    _stream << (SingleSite::Object& ) _o   << " "
-            << (Pescan::Keeper&) _o;
-    return _stream; 
-  } 
 
 } // namespace BandGap
 

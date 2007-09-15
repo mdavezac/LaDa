@@ -103,7 +103,8 @@ namespace TwoSites
       Evaluator   ()
                 : lessthan(1.0), morethan(-1.0) {}
       Evaluator   ( const t_Base &_c )
-                : lessthan(_c.lessthan), morethan(_c.moerethan) {}
+                : lattice( _c.lattice ), structure( _c.structure ),
+                  lessthan(_c.lessthan), morethan(_c.moerethan), concentration( _c.concentration ){}
       ~Evaluator() {};
 
 
@@ -116,11 +117,7 @@ namespace TwoSites
       bool initialize( t_Individual &_indiv );
 
     protected:
-      void get_xy_concentrations( const Ising_CE::Structure &_str );
       bool consistency_check();
-      void set_concentration( Ising_CE::Structure &_str );
-      void normalize( Ising_CE::Structure &_str, 
-                      const types::t_int _site, types::t_real _tochange);
       bool Taboo(const t_Individual &_indiv );
   };
 
