@@ -56,7 +56,7 @@ namespace TwoSites
 
 
   //  sets concentration from k-space values.
-  //  individual need not be physical (ie S_i=+/-1) when fourrier transformed to real-space
+  //  individual need not be physical (ie S_i=+/-1) when fourier transformed to real-space
   //  a normalization procedure is applied which takes into account:
   //  (i) that this ga run is at set concentration (x =x0, y=y0)
   //  (ii) that x and y are only constrained by load-balancing
@@ -72,9 +72,9 @@ namespace TwoSites
 
     // creates individual with unnormalized occupation
     types::t_complex  *i_hold = hold;
-    TwoSites::fourrier_to_rspace( _str.atoms.begin(), _str.atoms.end(),
-                                  _str.k_vecs.begin(), _str.k_vecs.end(),
-                                 i_hold );
+    TwoSites::Fourier( _str.atoms.begin(), _str.atoms.end(),
+                       _str.k_vecs.begin(), _str.k_vecs.end(),
+                       i_hold );
 
     Ising_CE::Structure::t_Atoms::iterator i_atom = _str.atoms.begin();
     Ising_CE::Structure::t_Atoms::iterator i_atom_end = _str.atoms.end();

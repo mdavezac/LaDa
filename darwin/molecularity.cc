@@ -119,8 +119,8 @@ namespace Molecularity
 
     Ising_CE::Structure s = structure; 
     s << _indiv.Object();
-    TwoSites::fourrier_to_kspace( s.atoms.begin(),  s.atoms.end(),
-                                   s.k_vecs.begin(), s.k_vecs.end() );
+    fourrier_to_kspace( s.atoms.begin(),  s.atoms.end(),
+                        s.k_vecs.begin(), s.k_vecs.end() );
     s.print_xml(_node);
 
     return true;
@@ -167,7 +167,64 @@ namespace Molecularity
     return true;
   }
 
+  bool Concentration::Taboo(const Ising_CE &_structure, const Object& _object )
+  {
+    if ( singlec ) return false;
+    _structure << _object;
+    operator()( _structure );
+    return x > lessthan or x < morethan; // if true, _object is taboo
+  }
 
+  bool Concentration :: LoadTaboo(const TiXmlElement &_el )
+  {
+    if ( singlec ) return false;
+    const TiXmlElement *child = _el.FirstChildElement( "Concentration" );
+    if ( not child ) return false;
+
+    double d; 
+    if ( child->Attribute( "lessthan" ) )
+      child->Attribute( "xlessthan", &d );
+    lessthan = ( d > 0 and d < 1 ) ? 2.0*d-1.0: 1.0;
+    if ( child->Attribute( "morethan" ) )
+      child->Attribute( "morethan", &d );
+    morethan = ( d > 0 and d < 1 ) ? 2.0*d-1.0: -1.0;
+    if ( lessthan < morethan ) return false;
+   
+    Print::xmg << Print::Xmg::comment << Print::fixed << Print::setprecision(3) 
+               << "Taboo x in [ " << 0.5*(morethan+1.0)
+               << ", "  << 0.5*(lessthan+1.0) << "] " << Print::endl;
+    // pointer is owned by caller !!
+    return true;
+  }
+
+  bool Concentration :: Load ( const TiXmlElement &_node )
+  {
+    if ( not ( _node.Attribute("x") or _node.Attribute("y") ) )
+    {
+      singlec = false;
+      return true;
+    }
+    if ( _node.Attribute("x") )
+    {
+      double d;
+      _node.Attribute("x", &d);
+      if( d < 0 and d > 1 ) goto errout;
+      singlec = true;
+      x0 = 2.0 * (types::t_real) d - 1.0;
+      y0 = 2.0 * (1.0 - (types::t_real) d ) - 1.0;
+      return true;
+    }
+    double d;
+    _node.Attribute("y", &d);
+    if( d < 0 and d > 1 ) goto errorout;
+    singlec = true;
+    y0 = 2.0 * (types::t_real) d - 1.0;
+    x0 = 2.0 * (1.0 - (types::t_real) d ) - 1.0;
+
+nexty0:
+    std::cerr << "Error while reading concentration input\n";
+    return false;
+  }
 
   void Concentration :: operator()( Ising_CE::Structure &_str )
   {

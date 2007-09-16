@@ -33,6 +33,7 @@
 
 #include "single_site.h"
 
+#include "gaoperators.h"
 
 // Defines base classes for two site structures
 
@@ -41,6 +42,17 @@ namespace TwoSites
   void rearrange_structure(Ising_CE::Structure &);
 
   typedef SingleSite :: Object Object;
+
+  struct Fourier
+  {
+    template<class T_R_IT, class T_K_IT>
+    Fourier( T_R_IT _rfirst, T_R_IT _rend,
+             T_K_IT _kfirst, T_K_IT _kend );
+    template<class T_R_IT, class T_K_IT, class T_O_IT >
+    Fourier( T_R_IT _rfirst, T_R_IT _rend,
+             T_K_IT _kfirst, T_K_IT _kend,
+             T_O_IT _rout ); // sets rvector values from kspace values
+  };
 
   class Concentration : public X_vs_y
   {
@@ -111,7 +123,11 @@ namespace TwoSites
       bool Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const;
       bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
       bool Load( const TiXmlElement &_node );
-      eoGenOp<t_Individual>* LoadGaOp(const TiXmlElement &_el );
+      eoGenOp<t_Individual>* LoadGaOp(const TiXmlElement &_el )
+      {
+        typedef Traits::GAOp<t_Individual, Concentration, Fourier> t_GAOpTraits;
+        return Darwin::LoadGaOp<t_GAOpTraits>( _el, structure, concentration );
+      }
       darwin::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el );
 
       bool initialize( t_Individual &_indiv );
@@ -121,153 +137,7 @@ namespace TwoSites
       bool Taboo(const t_Individual &_indiv );
   };
 
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS = Traits::Indiv<T_INDIVIDUAL> >
-  class Krossover : public eoGenOp<T_INDIVIDUAL> 
-  {
-    public:
-      typedef T_INDIVIDUAL t_Individual;
-      typedef T_INDIV_TRAITS t_IndivTraits;
-    protected:
-      typedef typename t_IndivTraits::t_Object t_Object;
 
-    protected:
-      Concentration &concentration;
-      Ising_CE::Structure &structure;
-      types::t_real rate;
-      bool do_range;
-
-    public:
-      Krossover   ( Concentration &_c, Ising_CE::Structure &_str )
-                : concentration(_c), structure(_str), rate(0.5), do_range(false) {}
-      Krossover   ( const Krossover &_k )
-                : concentration(_k.concentration), structure(_k.structure),
-                  rate(_k.rate), do_range(_k.do_range) {}
-      ~Krossover() {}
-
-      bool Load( const TiXmlElement &_node );
-
-      virtual std::string className() const { return "TwoSites::Krossover"; }
-      unsigned max_production(void) { return 1; } 
-
-      void apply(eoPopulator<t_Individual>& _pop);
-      std::string print_out() const
-      {
-        std::ostringstream sstr;
-        sstr << "Krossover rate = " << rate;
-        if (do_range) sstr << ", Range = true ";
-        return sstr.str();
-      }
-  };
-
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS = Traits::Indiv<T_INDIVIDUAL> >
-  class KMutation : public eoGenOp<T_INDIVIDUAL> 
-  {
-    public:
-      typedef T_INDIVIDUAL t_Individual;
-      typedef T_INDIV_TRAITS t_IndivTraits;
-    protected:
-      typedef typename t_IndivTraits::t_Object t_Object;
-
-    protected:
-      Concentration &concentration;
-      Ising_CE::Structure &structure;
-      types::t_real rate;
-
-    public:
-      KMutation   ( Concentration &_c, Ising_CE::Structure &_str )
-                : concentration(_c), structure(_str), rate(0.5) {}
-      KMutation   ( const KMutation &_k )
-                : concentration(_k.concentration), structure(_k.structure),
-                  rate(_k.rate) {}
-      ~KMutation() {}
-
-      bool Load( const TiXmlElement &_node );
-
-      virtual std::string className() const { return "TwoSites::Krossover"; }
-      unsigned max_production(void) { return 1; } 
-
-      void apply(eoPopulator<t_Individual>& _pop);
-      std::string print_out() const
-      {
-        std::ostringstream sstr;
-        sstr << "KMutation rate = " << rate;
-        return sstr.str();
-      }
-  };
-
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS = Traits::Indiv<T_INDIVIDUAL> >
-  class Crossover : public eoGenOp<T_INDIVIDUAL> 
-  {
-    public:
-      typedef T_INDIVIDUAL t_Individual;
-      typedef T_INDIV_TRAITS t_IndivTraits;
-    protected:
-      typedef typename t_IndivTraits::t_Object t_Object;
-
-    protected:
-      Concentration &concentration;
-      Ising_CE::Structure structure;
-      BitString::Crossover<t_Object> op;
-
-    public:
-      Crossover   ( Ising_CE::Structure &_str, Concentration &_c )
-             : concentration(_c), structure(_str), op() {}
-      Crossover   ( const Crossover &_k )
-             : concentration(_k.crossover), structure(_k.structure), op(_k.op) {}
-      ~Crossover() {}
-
-      bool Load( const TiXmlElement &_node ) { return op.Load( _node ); }
-
-      virtual std::string className() const { return op.className(); }
-      unsigned max_production(void) { return 1; } 
-
-      void apply(eoPopulator<t_Individual>& _pop)
-      {
-        t_Object &obj1 = (*_pop).Object();
-        const t_Object &obj2 = _pop.select().Object();
-        op( obj1, obj2 );
-        structure << obj1;
-        concentration( structure );
-        obj1 << structure;
-      }
-      std::string print_out() const { return "TwoSites::Crossover"; }
-  };
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS = Traits::Indiv<T_INDIVIDUAL> >
-  class Mutation : public eoGenOp<T_INDIVIDUAL> 
-  {
-    public:
-      typedef T_INDIVIDUAL t_Individual;
-      typedef T_INDIV_TRAITS t_IndivTraits;
-    protected:
-      typedef typename t_IndivTraits::t_Object t_Object;
-
-    protected:
-      Concentration &concentration;
-      Ising_CE::Structure structure;
-      BitString::Mutation<t_Object> op;
-
-    public:
-      Mutation   ( Ising_CE::Structure &_str, Concentration &_c )
-             : concentration(_c), structure(_str), op() {}
-      Mutation   ( const Mutation &_k )
-             : concentration(_k.crossover), structure(_k.structure), op(_k.op) {}
-      ~Mutation() {}
-
-      bool Load( const TiXmlElement &_node ) { return op.Load( _node ); }
-
-      virtual std::string className() const { return op.className(); }
-      unsigned max_production(void) { return 1; } 
-
-      void apply(eoPopulator<t_Individual>& _pop)
-      {
-        t_Object &obj = (*_pop).Object();
-        op( obj );
-        structure << obj;
-        concentration( structure );
-        obj << structure;
-      }
-      std::string print_out() const { return "TwoSites::Mutation"; }
-  };
 
 } // namespace TwoSites
 
