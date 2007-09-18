@@ -18,7 +18,7 @@
 
 #include "gatraits.h"
 
-namespace darwin 
+namespace GA 
 {
   template <class A1, class R>
  class const_eoUF : public eoFunctorBase, public std::unary_function<A1, R>
@@ -183,57 +183,6 @@ namespace darwin
     {
       return new mem_bingenop_t<T_EVALUATOR>( _eval, _func, _str );
     }
-
-  template< class T_OBJECT, class T_CONTAINER = typename T_OBJECT::t_Container >
-  class Crossover : public eoBinOp<T_OBJECT>
-  {
-    protected:
-      typedef T_OBJECT t_Object;
-      typedef T_CONTAINER t_Container;
-
-    public:
-      types::t_real probability;
-
-    public:
-      Crossover(types::t_real _prob=0.0) : probability(_prob) {}
-      ~Crossover() {}
-
-      bool operator() ( t_Object &_obj1, const t_Object &_obj2 )
-      {
-        typename t_Container :: iterator i_var1 = _obj1.begin();
-        typename t_Container :: const_iterator i_var2 = _obj2.begin();
-        typename t_Container :: const_iterator i_var2_end = _obj2.end();
-        for(; i_var2 != i_var2_end; ++i_var1, ++i_var2)
-          if ( rng.uniform() < probability ) 
-            *i_var1 = *i_var2;
-        return true;
-      }
-  };
-  template<> 
-  class Crossover<Ising_CE::Structure, Ising_CE::Structure::t_Atoms> : public eoBinOp<Ising_CE::Structure>
-  {
-    protected:
-      typedef Ising_CE::Structure t_Object;
-      typedef Ising_CE::Structure::t_Atoms t_Container;
-
-    public:
-      types::t_real probability;
-
-    public:
-      Crossover(types::t_real _prob=0.0) : probability(_prob) {}
-      ~Crossover() {}
-
-      bool operator() ( t_Object &_obj1, const t_Object &_obj2 )
-      {
-        t_Container :: iterator i_var1 = _obj1.atoms.begin();
-        t_Container :: const_iterator i_var2 = _obj2.atoms.begin();
-        t_Container :: const_iterator i_var2_end = _obj2.atoms.end();
-        for(; i_var2 != i_var2_end; ++i_var1, ++i_var2)
-          if ( rng.uniform() < probability ) 
-            i_var1->type = i_var2->type;
-        return true;
-      }
-  };
 
 
   // a dummy operator which does nothing 

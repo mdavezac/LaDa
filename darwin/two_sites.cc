@@ -43,11 +43,11 @@ namespace TwoSites
     {
       atat::rVector3d atom = i_0->pos + translation;
       i_1 = std::min_element ( sites1.begin(), sites1.end(), 
-                      opt::ref_compose2( std::less<types::t_real>(),
-                                         compose1( std::ptr_fun(ptr_norm),
-                                                   bind2nd(std::minus<atat::rVector3d>(), atom) ),
-                                         compose1( std::ptr_fun(ptr_norm),
-                                                      bind2nd(std::minus<atat::rVector3d>(), atom) ) ) );
+                opt::ref_compose2( std::less<types::t_real>(),
+                                   compose1( std::ptr_fun(ptr_norm),
+                                             bind2nd(std::minus<atat::rVector3d>(), atom) ),
+                                     compose1( std::ptr_fun(ptr_norm),
+                                               bind2nd(std::minus<atat::rVector3d>(), atom) ) ) );
       _str.atoms.push_back( *i_0 ); 
       _str.atoms.push_back( *i_1 ); 
     }
@@ -62,7 +62,6 @@ namespace TwoSites
   //  (ii) that x and y are only constrained by load-balancing
   void Concentration :: operator()( Ising_CE::Structure &_str )
   {
-    types::t_unsigned N = (types::t_int) _str.atoms.size(); N = N>>1;
     types::t_complex  *hold = new types::t_complex[ N ];
     if ( not hold )
     {
@@ -122,26 +121,44 @@ namespace TwoSites
     delete[] hold;
   }
 
-  void Concentration :: operator()( const Ising_CE::Structure &_str, Object &_obj,
-                                    types::t_int _concx, types::t_int _concy )
+  void Concentration :: operator()( Object &_obj )
   {
-    if ( not is_singlec() ) return;
-    
-    types::t_unsigned N = _str.atoms.size() >> 1; 
-    types::t_real xto_change = (types::t_real) N * x  - _concx;
-    types::t_real yto_change = (types::t_real) N * y  - _concy;
+    // computes concentrations first
+    Object::t_Container::const_iterator i_bit = _obj.bitstring.begin();
+    Object::t_Container::const_iterator i_bit_end = _obj.bitstring.end();
+    std::vector<bool> :: const_iterator i_site = sites.begin();
+    types::t_int concx = 0, concy = 0;
+    for(; i_bit != i_bit_end; ++i_bit, ++i_site )
+      if ( *i_site ) concx += *i_bit > 0 ? 1: -1;
+      else           concy += *i_bit > 0 ? 1: -1;
+
+    // then chose to normalize w.r.t. x or y (or both if singlec)
+    concx += Nfreeze_x; concy += Nfreeze_y;
+    x = (types::t_real) concx / (types::t_real) N;
+    y = (types::t_real) concy / (types::t_real) N;
+    if( not singlec )
+    {
+      if ( rng.flip() or not can_inverse(x) ) x = get_x(y);
+      else                                    y = get_y(x);
+    }
+
+    // finally normalizes
+    types::t_real xto_change = (types::t_real) N * x  - concx;
+    types::t_real yto_change = (types::t_real) N * y  - concy;
     if (      xto_change > -1.0 and xto_change < 1.0 
          and  yto_change > -1.0 and xto_change < 1.0 ) return;
     do
     {
-      types::t_unsigned i = 2 * rng.random(N-1);
-      if ( xto_change > 1.0 and _obj.bitstring[i] < 0 )
-        { _obj.bitstring[i] = 1; xto_change-=2; }
-      else if ( xto_change < -1.0 and _obj.bitstring[i] > 0 )
-        { _obj.bitstring[i] = -1; xto_change+=2; }
+      types::t_unsigned i = rng.random(2*N-1);
+      if ( sites[i] )
+      {
+        if ( xto_change > 1.0 and _obj.bitstring[i] < 0 )
+          { _obj.bitstring[i] = 1; xto_change-=2; }
+        else if ( xto_change < -1.0 and _obj.bitstring[i] > 0 )
+          { _obj.bitstring[i] = -1; xto_change+=2; }
+        continue;
+      }
       
-      if ( yto_change > -1.0 and yto_change < 1.0 ) continue;
-      i = 2 * rng.random(N-1) + 1;
       if ( yto_change > 1.0 and _obj.bitstring[i] < 0 )
         { _obj.bitstring[i] = 1; yto_change-=2; }
       else if ( yto_change < -1.0 and _obj.bitstring[i] > 0 )
@@ -151,9 +168,6 @@ namespace TwoSites
               or yto_change < -1.0 or yto_change > 1.0 );
   }
 
-  // Takes an "unphysical" individual and set normalizes its sites _sites to +/-1,
-  // after flipping the _tochange spins closest to zero.
-  // ie sets the concentration
   void Concentration :: normalize( Ising_CE::Structure &_str, const types::t_int _site, 
                                    types::t_real _tochange ) 
   {

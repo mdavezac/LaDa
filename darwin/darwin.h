@@ -30,7 +30,7 @@
 #include "breeder.h"
 #include "gatraits.h"
 
-namespace darwin
+namespace GA
 {
   template< class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
   class Darwin
@@ -47,7 +47,7 @@ namespace darwin
       typedef typename t_IndivTraits :: t_Population     t_Population;
       typedef typename t_IndivTraits :: t_Islands        t_Islands;
       typedef typename t_QuantityTraits :: t_ScalarQuantity   t_ScalarQuantity;
-      typedef typename Objective :: Types < t_Evaluator, t_GA_Traits >  t_Objective;
+      typedef typename Objective :: Types < t_Evaluator, t_GA_Traits >  t_ObjectiveType;
       typedef typename Store :: Types< t_Evaluator, t_GA_Traits >  t_Store;
 
     protected:
@@ -77,7 +77,7 @@ namespace darwin
       eoGenOp<t_Individual>*                                   breeder_ops;
       Breeder<t_Individual, t_IndivTraits>*                    breeder;
       eoReplacement<t_Individual>*                             replacement;
-      typename t_Objective::Vector*                            objective;
+      typename t_ObjectiveType::Vector*                        objective;
       typename t_Store :: Base*                                store;
       Evaluation::Base<t_Evaluator, t_GA_Traits>*              evaluation;
 
@@ -133,7 +133,7 @@ namespace darwin
   template< class T_EVALUATOR, class T_GATRAITS >
     const types::t_unsigned Darwin<T_EVALUATOR, T_GATRAITS> :: SAVE_HISTORY     = 4;
 
-} // namespace darwin
+} // namespace GA
 
 #include "darwin.impl.h"
 

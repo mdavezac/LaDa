@@ -88,8 +88,8 @@ namespace BandGap
       bool Save ( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const;
       void LoadAttribute ( const TiXmlAttribute &_att ) {};
       eoF<bool>* LoadContinue(const TiXmlElement &_el )
-        { return new darwin::mem_zerop_t<Pescan::Darwin>( pescan, &Pescan::Darwin::Continue,
-                                                          "Pescan::Continue" );     }
+        { return new GA::mem_zerop_t<Pescan::Darwin>( pescan, &Pescan::Darwin::Continue,
+                                                      "Pescan::Continue" );     }
 
       void evaluate();
   };

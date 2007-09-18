@@ -14,7 +14,7 @@
 #include "opt/types.h"
 #include "print/xmg.h"
 
-namespace darwin
+namespace GA
 {
   template< class T_INDIVIDUAL>
   class TrueCensus : public eoStatBase< T_INDIVIDUAL >
@@ -29,7 +29,7 @@ namespace darwin
     public:
       TrueCensus () {}
       virtual ~TrueCensus() {}
-      virtual std::string className(void) const { return "darwin::TrueCensus"; }
+      virtual std::string className(void) const { return "GA::TrueCensus"; }
       virtual void operator()( const t_Population &_pop )
       {
         typename t_Population :: const_iterator i_begin = _pop.begin();

@@ -27,7 +27,7 @@
 #include "operators.h"
 #include "gencount.h"
 
-namespace darwin
+namespace GA
 {
   template< class T_STORE, class T_EVALUATION >
   class PrintGA : public eoUpdater
@@ -82,7 +82,7 @@ namespace darwin
         Print::xmg << Print::flush;
       }
 
-      virtual std::string className(void) const { return "darwin::PrintFitness"; }
+      virtual std::string className(void) const { return "GA::PrintFitness"; }
   };
   template< class T_INDIVIDUAL>
   class PrintFitness : public eoStatBase<T_INDIVIDUAL> 
@@ -124,7 +124,7 @@ namespace darwin
       void readFrom( std::istream &__os ) const {};
       void lastCall( const eoPop<t_Individual> &_pop) {}
 
-      virtual std::string className(void) const { return "darwin::PrintFitness"; }
+      virtual std::string className(void) const { return "GA::PrintFitness"; }
   };
 
   // checks for taboo unconvergence from a breeder, 
@@ -581,7 +581,7 @@ namespace darwin
   };
 #endif
 
-} // namespace LaDa
+} // namespace GA
 
 
 #endif //  _CHECKPOINT_H_

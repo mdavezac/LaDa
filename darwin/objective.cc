@@ -3,7 +3,7 @@
 //
 #include  "objective.h"
 
-namespace darwin
+namespace GA
 {
   bool Fitness :: Load( const TiXmlElement & _node )
   {

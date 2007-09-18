@@ -36,6 +36,7 @@ namespace Traits
       typedef typename t_Container :: value_type      t_Type;
       typedef function :: Base < t_Type, t_Container > t_Functional;
       typedef std::vector< std::vector< t_Type > > t_QuantityGradients;
+      typedef VA<T_CONTAINER, true> t_Scalar;
   };
   template< class T_CONTAINER >
   struct VA<T_CONTAINER, true>
@@ -60,6 +61,7 @@ namespace Traits
       typedef T_VA_TRAITS       t_VA_Traits;
       typedef T_POPULATION      t_Population;
       typedef T_ISLANDS         t_Islands;
+      typedef typename t_Individual :: t_Fitness t_Fitness;
       const static bool is_scalar = t_QuantityTraits :: is_scalar;
       const static bool is_vectorial = t_QuantityTraits :: is_vectorial;
   };

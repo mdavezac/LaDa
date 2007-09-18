@@ -65,7 +65,7 @@ namespace TwoSites
                                                         const TiXmlElement &_node,
                                                         bool _type )
   {
-    if ( _type == darwin::LOADSAVE_SHORT )
+    if ( _type == GA::LOADSAVE_SHORT )
     {
       if( not _node.Attribute("string") )
         return false;
@@ -85,7 +85,7 @@ namespace TwoSites
                                                         TiXmlElement &_node, 
                                                         bool _type ) const
   {
-    if ( _type == darwin::LOADSAVE_SHORT )
+    if ( _type == GA::LOADSAVE_SHORT )
     {
       std::string str; str << _indiv.Object();
       _node.SetAttribute("string", str.c_str());
@@ -124,6 +124,21 @@ namespace TwoSites
     if ( not consistency_check() )  return false;
 
     if ( concentration.Load( _node ) ) return true;
+    concentration.N = structure.atoms.size() >> 1;
+
+    Ising_CE::Structure::t_Atoms::const_iterator i_atom = structure.atoms.begin();
+    Ising_CE::Structure::t_Atoms::const_iterator i_atom_end = structure.atoms.end();
+    concentration.Nfreeze_x = 0; concentration.Nfreeze_y = 0;
+    for(; i_atom != i_atom_end; ++i_atom )
+    {
+      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
+        concentration.Nfreeze_x += i_atom->type > 0 ? 1 : -1; 
+      else concentration.sites.push_back( true );
+      ++i_atom;
+      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
+        concentration.Nfreeze_y += i_atom->type > 0 ? 1 : -1; 
+      else concentration.sites.push_back( false );
+    }
     
     std::cerr << " Could not load Concentration input!! " << std::endl; 
     return false;
@@ -134,19 +149,17 @@ namespace TwoSites
   template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
   bool Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: Taboo(const t_Individual &_indiv )
   {
-    if ( concentration.is_singlec() )
-      return false;
+    if ( concentration.is_singlec() ) return false;
     structure << (const t_Object&)_indiv;
     concentration.set( structure );
     return concentration.x > lessthan or concentration.x < morethan; // if true, _object is taboo
   }
   
   template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
-  darwin::Taboo_Base< T_INDIVIDUAL >* 
+  GA::Taboo_Base< T_INDIVIDUAL >* 
        Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: LoadTaboo(const TiXmlElement &_el )
   {
-    if ( concentration.is_singlec() )
-      return NULL;
+    if ( concentration.is_singlec() ) return NULL;
     const TiXmlElement *child = _el.FirstChildElement( "Concentration" );
     if ( not child )
       return NULL;
@@ -164,38 +177,9 @@ namespace TwoSites
                << "Taboo x in [ " << 0.5*(morethan+1.0)
                << ", "  << 0.5*(lessthan+1.0) << "] " << Print::endl;
     // pointer is owned by caller !!
-    return new darwin::TabooFunction< t_This >
+    return new GA::TabooFunction< t_This >
                                     ( *this, &t_This::Taboo, "Taboo" );
   }
-
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
-  bool Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS>::initialize( t_Individual &_indiv )
-  {
-    _indiv.Object().bitstring.clear(); 
-    Ising_CE::Structure::t_Atoms :: const_iterator i_atom = structure.atoms.begin();
-    Ising_CE::Structure::t_Atoms :: const_iterator i_atom_end = structure.atoms.end();
-    types::t_int concx = 0;
-    types::t_int concy = 0;
-    for(; i_atom != i_atom_end; ++i_atom )
-    {
-      bool flip = rng.flip();
-      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) 
-        flip = ( i_atom->type > 0 );
-      _indiv.Object().bitstring.push_back( flip ? 1.0: -1.0 );
-      flip ? ++concx: --concx;
-
-      ++i_atom;
-      flip = rng.flip();
-      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) 
-        flip = ( i_atom->type > 0 );
-      _indiv.Object().bitstring.push_back( flip ? 1.0: -1.0 );
-      flip ? ++concy: --concy;
-    }
-    // sets bitstring to correct concentration if necessary
-    concentration( structure, _indiv.Object(), concx, concy );
-    return true;
-  }
-
 
   template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
   bool Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: consistency_check()

@@ -29,7 +29,7 @@ void keycheck( types::t_int _s=20 )
 }
 
 
-namespace darwin
+namespace GA
 {
 # define OPENXMLINPUT \
     TiXmlDocument doc( filename.c_str() ); \
@@ -143,12 +143,9 @@ namespace darwin
     // checks if there are more than one taboo list
     const TiXmlElement *child = _parent.FirstChildElement("Objective");
     if ( not child ) child = _parent.FirstChildElement("Method");
-    objective = t_Objective :: new_from_xml( *child );
+    objective = t_ObjectiveType :: new_from_xml( *child );
     if( not objective )
-    {
-      Print::out << " Could not find Objective tag... Will simply minimize " << Print::endl;
-      objective = new Objective::Minimize<t_Evaluator, t_GA_Traits>;
-    }
+      throw std::runtime_error(" Could not find Objective tag... ");
 
     const TiXmlElement *store_xml = _parent.FirstChildElement("Store");
     if ( store_xml )
@@ -173,8 +170,7 @@ namespace darwin
   void Darwin<T_EVALUATOR,T_GATRAITS> :: Load_Taboos( const TiXmlElement &_node )
   {
     // checks if there are more than one taboo list
-    if ( not _node.FirstChildElement("Taboos") )
-      return;
+    if ( not _node.FirstChildElement("Taboos") ) return;
     const TiXmlElement &parent = *_node.FirstChildElement("Taboos");
     const TiXmlElement *child = parent.FirstChildElement();
 
@@ -182,7 +178,7 @@ namespace darwin
     taboos = new Taboos<t_Individual>;
 
     // creates pop taboo
-    child = parent.FirstChildElement("PopTaboo");
+    child = parent.FirstChildElement("Population");
     if (child)
     {
       Print::xmg << Print::Xmg::comment << "Population Taboo" << Print::endl;
@@ -193,7 +189,7 @@ namespace darwin
     }
     
     // creates offspring taboo
-    child = parent.FirstChildElement("OffspringTaboo");
+    child = parent.FirstChildElement("Offspring");
     if (child)
     {
       Print::xmg << Print::Xmg::comment << "Offspring Taboo" << Print::endl;
@@ -204,7 +200,7 @@ namespace darwin
     }
 
     // makes history a taboo list if it exists
-    child = parent.FirstChildElement("History Taboo");
+    child = parent.FirstChildElement("History");
     if (child and history)
     {
       Print::xmg << Print::Xmg::comment << "History Taboo" << Print::endl;
@@ -215,6 +211,7 @@ namespace darwin
                 << "Include History tag if you want HistoryTaboo" << std::endl;
 
 
+    // then evaluator specific taboos
     child = parent.FirstChildElement();
     for( ; child ; child = child->NextSiblingElement() )
     {
@@ -673,10 +670,10 @@ namespace darwin
         if (not sibling->Attribute("prob", &prob) )
           prob = 1.0;
         Print::xmg << Print::Xmg::addtolast << " prob = " << prob << Print::endl;
-        if ( current_op->className().compare("darwin::SequentialOp") == 0 )
+        if ( current_op->className().compare("GA::SequentialOp") == 0 )
           static_cast< SequentialOp<t_Individual>* >(current_op)->add( *this_op,
                                                                    static_cast<double>(prob) );
-        else if ( current_op->className().compare("darwin::ProportionalOp") == 0 )
+        else if ( current_op->className().compare("GA::ProportionalOp") == 0 )
           static_cast< ProportionalOp<t_Individual>* >(current_op)->add( *this_op, 
                                                                      static_cast<double>(prob) );
       }
@@ -1162,5 +1159,5 @@ out:  Print::xmg << Print::endl;
   }
 #endif
 
-} // namespace darwin
+} // namespace GA
 

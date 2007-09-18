@@ -4,7 +4,10 @@ endif
 if DOCE
   CEDARWIN= cedarwin
 endif
-bin_PROGRAMS = $(CEDARWIN) $(PDARWIN)
+if DOMOLECULARITY
+  MOLECULARITY = molecularity
+endif
+bin_PROGRAMS = $(CEDARWIN) $(PDARWIN) $(MOLECULARITY)
 AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ @MPICH_CFLAGS@ @EO_CFLAGS@
 AM_LDFLAGS = @TINYXML_LIBS@ @EO_LIBS@
 cedarwin_SOURCES = main.cc ce.cc single_site.cc
@@ -17,11 +20,18 @@ cedarwin_LDADD = libdarwin.la ../lamarck/liblamarck.la ../atat/libatat.la\
 pdarwin_SOURCES = main.cc pescan.cc two_sites.cc single_site.cc vff.cc bandgap.cc 
 pdarwin_HEADERS = pescan.h two_sites.h two_sites.impl.h single_site.h vff.h bandgap.h
 pdarwindir = darwin
-nobase_pdarwin_HEADERS = pescan.h
 pdarwin_CPPFLAGS =  -D _PESCAN $(AM_CPPFLAGS) -I .. @GSL_INCLUDE@ 
 pdarwin_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIB@ @MPICH_LIBS@
 pdarwin_LDADD = libdarwin.la ../lamarck/liblamarck.la ../atat/libatat.la ../vff/libvff.la \
 	       	../pescan_interface/libpescan.la ../physics/libphysics.la ../print/libprint.la @MPI_ADDLIB@
+molecularity_SOURCES = main.cc pescan.cc two_sites.cc single_site.cc vff.cc molecularity.cc
+molecularity_HEADERS = pescan.h two_sites.h two_sites.impl.h single_site.h vff.h molecularity.h
+molecularitydir = darwin
+molecularity_CPPFLAGS =  -D _MOLECULARITY $(AM_CPPFLAGS) -I .. @GSL_INCLUDE@ 
+molecularity_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIB@ @MPICH_LIBS@
+molecularity_LDADD = libdarwin.la ../lamarck/liblamarck.la ../atat/libatat.la ../vff/libvff.la \
+	       	../pescan_interface/libpescan.la ../physics/libphysics.la\
+	       	../print/libprint.la @MPI_ADDLIB@
 noinst_LTLIBRARIES = libdarwin.la
 libdarwin_ladir = darwin
 libdarwin_la_SOURCES = concentration.cc objective.cc

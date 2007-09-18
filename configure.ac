@@ -36,6 +36,14 @@ AC_ARG_ENABLE(pescan,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-pescan) ;;
      esac],[pescan=true])
 
+AC_ARG_ENABLE(molecularity,
+     [  --enable-molecularity    Turn on molecularity],
+     [case "${enableval}" in
+       yes) pescan=true ;;
+       no)  pescan=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-molecularity) ;;
+     esac],[molecularity=true])
+
 AC_ARG_ENABLE(ce,
      [  --enable-cedarwin    Turn on ce darwin],
      [case "${enableval}" in
@@ -122,6 +130,7 @@ fi
 # conditional
 AM_CONDITIONAL(DOMPI, test x$mpi = xtrue)
 AM_CONDITIONAL(DOPESCAN, test x$pescan = xtrue)
+AM_CONDITIONAL(DOMOLECULARITY, test x$molecularity = xtrue)
 AM_CONDITIONAL(DOCE, test x$ce = xtrue)
 AM_CONDITIONAL(DOVFF, test x$vff = xtrue)
 AM_CONDITIONAL(DODARWIN, test x$darwin = xtrue)

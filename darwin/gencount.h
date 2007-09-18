@@ -10,7 +10,7 @@
 
 #include "opt/types.h"
 
-namespace darwin
+namespace GA
 {
   // generation counter
   class GenCount
@@ -26,6 +26,6 @@ namespace darwin
       types::t_unsigned operator()() const
         { return age; }
   };
-} // namespace LaDa
+} // namespace GA
 
 #endif

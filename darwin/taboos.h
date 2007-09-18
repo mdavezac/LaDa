@@ -21,7 +21,7 @@
 #include "functors.h"
 #include "gatraits.h"
 
-namespace darwin
+namespace GA
 {
 
   // taboo base class, declares virtual stuff

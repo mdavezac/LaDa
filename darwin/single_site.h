@@ -70,14 +70,14 @@ namespace SingleSite
   void operator<<(Object &_o, const Ising_CE::Structure &_str);
 
   template<class T_INDIVIDUAL, class T_INDIV_TRAITS = Traits :: Indiv<T_INDIVIDUAL> >
-  class Evaluator : public darwin::Evaluator< T_INDIVIDUAL, T_INDIV_TRAITS >
+  class Evaluator : public GA::Evaluator< T_INDIVIDUAL, T_INDIV_TRAITS >
   {
     public:
       typedef T_INDIVIDUAL t_Individual;
       typedef T_INDIV_TRAITS t_IndivTraits;
     protected:
       typedef typename t_IndivTraits::t_Object t_Object;
-      typedef darwin::Evaluator<t_Individual, t_IndivTraits> t_Base;
+      typedef GA::Evaluator<t_Individual, t_IndivTraits> t_Base;
       typedef Evaluator<t_Individual, t_IndivTraits> t_This;
 
     public:
@@ -112,7 +112,7 @@ namespace SingleSite
       bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
       bool Load( const TiXmlElement &_node );
       eoGenOp<t_Individual>* LoadGaOp(const TiXmlElement &_el );
-      darwin::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el );
+      GA::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el );
 
       bool Krossover( t_Individual  &_offspring, const t_Individual &_parent,
                       bool _range = false );

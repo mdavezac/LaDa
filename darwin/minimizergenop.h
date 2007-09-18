@@ -19,7 +19,7 @@
 #include "gatraits.h"
 #include "minimizergenop.h"
 
-namespace darwin 
+namespace GA 
 {
 
   template< class T_EVALUATOR, class T_GA_TRAITS > class SaveStateIndividual;
@@ -41,7 +41,7 @@ namespace darwin
       typedef typename t_VA_Traits :: t_Container t_VA_Container;
       typedef typename function::Base< t_VA_Type, t_VA_Container > t_Base;
       typedef Evaluation::Base<t_Evaluator, t_GA_Traits> t_Evaluation;
-      typedef darwin::Taboo_Base<t_Individual> t_Taboo;
+      typedef GA::Taboo_Base<t_Individual> t_Taboo;
       typedef typename t_VA_Traits :: t_QuantityGradients t_QuantityGradients;
       typedef typename t_GA_Traits :: t_QuantityTraits t_QuantityTraits;
       typedef typename t_QuantityTraits :: t_Quantity t_Quantity;
@@ -106,11 +106,12 @@ namespace darwin
       typedef typename t_QuantityTraits :: t_Quantity t_Quantity;
       typedef typename t_QuantityTraits :: t_ScalarQuantity t_ScalarQuantity;
       typedef Minimizer_Functional<t_Evaluator, t_GA_Traits> t_MFunctional;
+      typedef typename t_IndivTraits :: t_Fitness t_Fitness;
 
     protected:
       t_Individual *current_indiv;
       t_Quantity quantity;
-      darwin::Fitness fitness;
+      GA::Fitness fitness;
 
     public:
       SaveStateIndividual() : current_indiv(NULL) {};
@@ -212,6 +213,6 @@ namespace darwin
   }
 
 
-} // namespace darwin
+} // namespace GA
 
 #endif // _DARWIN_MINMIZER_GENOP_H_

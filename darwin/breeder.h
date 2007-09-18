@@ -31,7 +31,7 @@
   Base class for breeders using generalized operators.
 */
 
-namespace darwin 
+namespace GA 
 {
   template<class T_INDIVIDUAL, class T_INDIVTRAITS = Traits::Indiv<T_INDIVIDUAL> >
   class Breeder: public eoBreed<T_INDIVIDUAL>

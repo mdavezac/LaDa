@@ -35,6 +35,7 @@
 namespace Individual
 {
   template<class T_OBJECT, class T_QUANTITY = typename T_OBJECT :: t_Quantity,
+           class T_FITNESS = GA::Fitness, 
            class T_QUANTITYTRAITS = Traits::Quantity<T_QUANTITY> >
   class Base : public eoObject, public eoPersistent
   {
@@ -44,12 +45,12 @@ namespace Individual
       typedef typename t_QuantityTraits :: t_ScalarQuantity     t_ScalarQuantity;
       typedef typename t_QuantityTraits :: t_Quantity           t_Quantity;  
 
-      typedef darwin::Fitness t_Fitness;
-      typedef darwin::Fitness Fitness; // for eo
+      typedef T_FITNESS t_Fitness;
+      typedef T_FITNESS Fitness; // for eo
 
 
     private:
-      typedef Base<t_Object, t_Quantity, t_QuantityTraits> t_Base;
+      typedef Base<t_Object, t_Quantity, t_Fitness, t_QuantityTraits> t_Base;
 
     protected:
       t_Object object;

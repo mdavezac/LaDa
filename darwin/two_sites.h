@@ -58,10 +58,17 @@ namespace TwoSites
   {
     public:
       types::t_real x, y;
+      types::t_unsigned N;
+      types::t_int Nfreeze_x, Nfreeze_y;
+      std::vector<bool> sites;
 
     public:
-      Concentration() : X_vs_y(), x(0), y(0) {}
-      Concentration( const Concentration &_conc) : X_vs_y(_conc), x(_conc.x), y(_conc.y) {}
+      Concentration  () 
+                    : X_vs_y(), x(0), y(0), N(0), Nfreeze_x(0), Nfreeze_y(0) {}
+      Concentration   ( const Concentration &_conc)
+                    : X_vs_y(_conc), x(_conc.x), y(_conc.y), N(_conc.N),
+                      Nfreeze_x(_conc.Nfreeze_x), Nfreeze_y(_conc.Nfreeze_y),
+                      sites(_conc.sites) {}
       ~Concentration() {}
 
       bool Load( const TiXmlElement &_node )
@@ -73,6 +80,7 @@ namespace TwoSites
       }
 
       void operator()( Ising_CE::Structure &_str );
+      void operator()( Object &_obj );
       void operator()( const Ising_CE::Structure &_str, Object &_object,
                        types::t_int _concx, types::t_int _concy );
       void set( const Ising_CE::Structure &_str);
@@ -84,15 +92,16 @@ namespace TwoSites
   };
 
   template<class T_INDIVIDUAL, class T_INDIV_TRAITS = Traits::Indiv<T_INDIVIDUAL> >
-  class Evaluator : public darwin::Evaluator< T_INDIVIDUAL, T_INDIV_TRAITS >
+  class Evaluator : public GA::Evaluator< T_INDIVIDUAL, T_INDIV_TRAITS >
   {
     public:
       typedef T_INDIVIDUAL t_Individual;
       typedef T_INDIV_TRAITS t_IndivTraits;
     protected:
       typedef typename t_IndivTraits::t_Object t_Object;
-      typedef darwin::Evaluator<t_Individual, t_IndivTraits> t_Base;
+      typedef GA::Evaluator<t_Individual, t_IndivTraits> t_Base;
       typedef Evaluator<t_Individual, t_IndivTraits> t_This;
+      typedef Traits::GAOp<t_Individual, Concentration, Fourier> t_GAOpTraits;
 
     public:
       using t_Base :: Load;
@@ -116,7 +125,8 @@ namespace TwoSites
                 : lessthan(1.0), morethan(-1.0) {}
       Evaluator   ( const t_Base &_c )
                 : lattice( _c.lattice ), structure( _c.structure ),
-                  lessthan(_c.lessthan), morethan(_c.moerethan), concentration( _c.concentration ){}
+                  lessthan(_c.lessthan), morethan(_c.moerethan),
+                  concentration( _c.concentration ){}
       ~Evaluator() {};
 
 
@@ -124,13 +134,14 @@ namespace TwoSites
       bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
       bool Load( const TiXmlElement &_node );
       eoGenOp<t_Individual>* LoadGaOp(const TiXmlElement &_el )
-      {
-        typedef Traits::GAOp<t_Individual, Concentration, Fourier> t_GAOpTraits;
-        return Darwin::LoadGaOp<t_GAOpTraits>( _el, structure, concentration );
-      }
-      darwin::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el );
+       { return GA::LoadGaOp<t_GAOpTraits>( _el, structure, concentration ); }
+      GA::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el );
 
-      bool initialize( t_Individual &_indiv );
+      bool initialize( t_Individual &_indiv )
+      {
+        GA::Random< t_GAOpTraits > random( concentration, structure, _indiv );
+        _indiv.invalidate(); return true;
+      }
 
     protected:
       bool consistency_check();

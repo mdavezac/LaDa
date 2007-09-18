@@ -44,6 +44,7 @@ namespace Print
       bool is_empty;
 
     public:
+      Xmg() : indentation(0), filename(""), is_empty(false) {};
       Xmg(const std::string &_f) : indentation(0), filename(_f), is_empty(true) {};
       ~Xmg() { close(); }
       

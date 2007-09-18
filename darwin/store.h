@@ -140,8 +140,7 @@ namespace Store
         std::string name = _node.Value();
         if ( name.compare("Results") ) xmlresults = _node.FirstChildElement("Results");
         if ( not xmlresults ) return false;
-        darwin::LoadObject<t_Evaluator> loadop( evaluator, &t_Evaluator::Load,
-                                                darwin::LOADSAVE_LONG);
+        GA::LoadObject<t_Evaluator> loadop( evaluator, &t_Evaluator::Load, GA::LOADSAVE_LONG);
         if ( not condition.Restart( *xmlresults, loadop ) )
         {
           Print::xmg << Print::Xmg::comment << "Could not load condition" << Print::endl
@@ -150,7 +149,7 @@ namespace Store
         }
 
         results.clear();
-        darwin::LoadIndividuals( *xmlresults, loadop, results );
+        GA::LoadIndividuals( *xmlresults, loadop, results );
         // This particular line acts as Restart for condition if necessary
         std::remove_if(results.begin(), results.end(), condition); 
         Print::xmg << Print::Xmg::comment << "Reloaded Optimum and "
@@ -160,8 +159,7 @@ namespace Store
       }
       bool Save( TiXmlElement &_node ) const
       {
-        darwin::SaveObject<t_Evaluator> saveop( evaluator, &t_Evaluator::Save,
-                                                darwin::LOADSAVE_LONG);
+        GA::SaveObject<t_Evaluator> saveop( evaluator, &t_Evaluator::Save, GA::LOADSAVE_LONG);
         TiXmlElement *parent = new TiXmlElement("Results");
         if ( not parent ) 
         {
@@ -257,8 +255,8 @@ namespace Store
       protected:
         typedef typename t_GA_Traits :: t_Individual t_Individual;
         typedef typename t_GA_Traits :: t_IndivTraits t_IndivTraits;
-        typedef darwin::SaveObject<t_Evaluator> t_SaveOp;
-        typedef darwin::LoadObject<t_Evaluator> t_LoadOp;
+        typedef GA::SaveObject<t_Evaluator> t_SaveOp;
+        typedef GA::LoadObject<t_Evaluator> t_LoadOp;
 
       protected:
         t_Individual optimum;
@@ -332,8 +330,8 @@ namespace Store
         typedef typename t_QuantityTraits :: t_Quantity t_Quantity;
         typedef typename t_QuantityTraits :: t_ScalarQuantity t_ScalarQuantity;
         typedef typename Objective::Types<t_Evaluator, t_GA_Traits> t_Objective;
-        typedef darwin::SaveObject<t_Evaluator> t_SaveOp;
-        typedef darwin::LoadObject<t_Evaluator> t_LoadOp;
+        typedef GA::SaveObject<t_Evaluator> t_SaveOp;
+        typedef GA::LoadObject<t_Evaluator> t_LoadOp;
 
       protected:
         using t_Base :: optimum;

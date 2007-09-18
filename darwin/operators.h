@@ -24,7 +24,7 @@
 #include "opt/types.h"
 #include "gencount.h"
 
-namespace darwin 
+namespace GA 
 {
   template<class T_INDIVIDUAL>
   class SequentialOp : public eoOpContainer<T_INDIVIDUAL>
@@ -50,7 +50,7 @@ namespace darwin
         }
       }
     
-      virtual std::string className() const {return "darwin::SequentialOp";}
+      virtual std::string className() const {return "GA::SequentialOp";}
 
   };
 
@@ -71,7 +71,7 @@ namespace darwin
         return (*ops[i])( _populator );
       }
 
-      virtual std::string className() const {return "darwin::ProportionalOp";}
+      virtual std::string className() const {return "GA::ProportionalOp";}
   };
 
   template<class T_INDIVIDUAL>
@@ -99,7 +99,7 @@ namespace darwin
       {
         is_triggered = _trigger;
       }
-      virtual std::string className() const {return "darwin :: TriggeredOps";}
+      virtual std::string className() const {return "GA :: TriggeredOps";}
 
       virtual void apply( eoPopulator<t_Individual> &_indiv ) 
       {
@@ -131,7 +131,7 @@ namespace darwin
       virtual types::t_unsigned max_production()
         { return op->max_production(); }
 
-      virtual std::string className() const {return "darwin :: PeriodicOp";}
+      virtual std::string className() const {return "GA :: PeriodicOp";}
 
       virtual void apply( eoPopulator<t_Individual> &_indiv ) 
       {
@@ -164,6 +164,6 @@ namespace darwin
         return false;
       }
   };
-} // endif darwin
+} // endif GA
 
 #endif

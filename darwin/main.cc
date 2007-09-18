@@ -13,6 +13,9 @@
 #elif _CE
   #include "ce.h"
   typedef CE :: Evaluator t_Evaluator;
+#elif _MOLECULARITY
+  #include "molecularity.h"
+  typedef Molecularity :: Evaluator t_Evaluator;
 #else 
   Need to define _CE or _PESCAN
 #endif
@@ -32,7 +35,7 @@ int main(int argc, char *argv[])
   Print::xmg.init("convex_hull.agr");
   try
   {
-    darwin::Darwin< t_Evaluator > ga;
+    GA::Darwin< t_Evaluator > ga;
     if ( not  ga.Load("input.xml") )
       throw std::runtime_error( "Could not load input!!\n" ); 
     ga.run();

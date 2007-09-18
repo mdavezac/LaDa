@@ -9,6 +9,7 @@
 #endif
 
 #include <string>
+#include <ostream>
 
 #include <eo/eoOp.h>
 
@@ -21,11 +22,13 @@
 #include <opt/opt_minimize_gsl.h>
 #include <opt/types.h>
 
+#include "bitstring.h"
 #include "pescan.h"
+#include "vff.h"
 #include "evaluator.h"
-#include "concentration.h"
 #include "functors.h"
 #include "individual.h"
+#include "gaoperators.h"
 
 #ifdef _MPI
 #include "mpi/mpi_object.h"
@@ -33,17 +36,19 @@
 
 namespace Molecularity
 {
-  template<class T_R_IT, class T_K_IT>
-  void fourrier_to_kspace( T_R_IT _rfirst, T_R_IT _rend,
-                           T_K_IT _kfirst, T_K_IT _kend ); // sets kvector values from rspace values
-
-  template<class T_R_IT, class T_K_IT, class T_O_IT >
-  void fourrier_to_rspace( T_R_IT _rfirst, T_R_IT _rend,
-                           T_K_IT _kfirst, T_K_IT _kend,
-                           T_O_IT _rout ); // sets rvector values from kspace values
+  struct Fourier
+  {
+    template<class T_R_IT, class T_K_IT>
+    Fourier( T_R_IT _rfirst, T_R_IT _rend,
+             T_K_IT _kfirst, T_K_IT _kend );
+    template<class T_R_IT, class T_K_IT, class T_O_IT >
+    Fourier( T_R_IT _rfirst, T_R_IT _rend,
+             T_K_IT _kfirst, T_K_IT _kend,
+             T_O_IT _rout ); // sets rvector values from kspace values
+  };
 
   // Exact same object as BandGap, except for the two friends
-  class Object : public BitString::Object<>, Vff::Keeper, Pescan::Keeper
+  class Object : public BitString::Object<>, public Vff::Keeper, public Pescan::Keeper
   {
     protected:
       typedef BitString :: Object<> t_Base;
@@ -51,6 +56,7 @@ namespace Molecularity
     public:
       typedef t_Base :: t_Type t_Type;
       typedef t_Base :: t_Container t_Container;
+      typedef std::vector<types::t_real> t_Quantity;
 
     public:
       Object() {}
@@ -79,19 +85,28 @@ namespace Molecularity
       types::t_real x0;
       bool single_c;
       types::t_real x;
+      types::t_real N;
+      types::t_real Nfreeze;
+    protected:
+      types::t_real lessthan;
+      types::t_real morethan;
 
     public:
-      Concentration () : x0(-1), single_c(false) {}
+      Concentration () : x0(-1), single_c(false), N(0), 
+                         Nfreeze(0), lessthan(1.0), morethan(1.0) {}
+      Concentration   ( const Concentration &_c) 
+                    : x0(_c.x0), single_c(_c.single_c), N(_c.N), Nfreeze(_c.Nfreeze),
+                      lessthan(_c.lessthan), morethan(_c.morethan) {}
 
-      types::t_real operator()( Ising_CE::Structure );
-      void set( Ising_CE::Structure );
+      void operator()( Ising_CE::Structure &_str);
+      void operator()( Object &_obj );
+      void set( const Ising_CE::Structure &_structure);
+      void set( const Object &_obj );
       bool Load ( const TiXmlElement &_node );
-      bool LoadTaboo(const TiXmlElement &_el );
-      bool Taboo(const Ising_CE &_structure, const Object& _object );
 
     protected:
       void normalize( Ising_CE::Structure &_str, types::t_real _tochange );
-  }
+  };
 
   std::ostream& operator<<(std::ostream &_stream, const Object &_o);
   void operator<<(std::string &_str, const Object &_o);
@@ -101,12 +116,14 @@ namespace Molecularity
   void operator<<(Object &_o, const Ising_CE::Structure &_str);
 
 
-  class Evaluator : public Darwin::Evaluator< Individual::Types<Object>::Vector >
+  class Evaluator : public GA::Evaluator< Individual::Types<Object>::Vector >
   {
     protected:
-      typedef Darwin::Evaluator< Individual::Types<Object>::Vector > t_Base;
+      typedef Evaluator t_This;
+      typedef GA::Evaluator< Individual::Types<Object>::Vector > t_Base;
       typedef Ising_CE::Structure::t_kAtoms t_kvecs;
       typedef Ising_CE::Structure::t_Atoms t_rvecs;
+      typedef Traits::GAOp<t_Individual, Concentration, Fourier> t_GAOpTraits;
     public:
       typedef  t_Base :: t_Individual t_Individual;
 
@@ -122,194 +139,107 @@ namespace Molecularity
       Ising_CE::Structure structure;
       Concentration concentration;
       Pescan::Darwin pescan;
-      Pescan::Vff vff;
+      Vff::Darwin vff;
 
     public:
-      Evaluator() : t_Base(), pescan(_structure), vff(_structure) {}
-      Evaluator   ( const t_Base &_c )
+      Evaluator() : t_Base(), pescan(structure), vff(structure) {}
+      Evaluator   ( const Evaluator &_c )
                 : lattice( _c.lattice ), structure( _c.structure ),
-                  lessthan(_c.lessthan), morethan(_c.moerethan), 
-                  concentration( _c.concentration ), vff(_c.vff), pescan(_c.pescan) {}
+                  concentration( _c.concentration ), pescan(_c.pescan), vff(_c.vff) {}
       ~Evaluator() {}
 
       bool Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const;
       bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
       bool Load( const TiXmlElement &_node );
-      eoGenOp<t_Individual>* LoadGaOp(const TiXmlElement &_el );
-      darwin::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el );
+      eoGenOp<t_Individual>* LoadGaOp(const TiXmlElement &_el )
+       { return GA::LoadGaOp<t_GAOpTraits>( _el, structure, concentration ); }
+      GA::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el )
       {
-        if ( not concentration.LoadTaboo(_el) ) return NULL;
-        return new darwin::TabooFunction< t_This >( *this, &t_This::Taboo, "Taboo" );
+        if ( concentration.single_c ) return NULL;
+        GA::xTaboo<t_GAOpTraits> *xtaboo = new GA::xTaboo< t_GAOpTraits >( concentration );
+        if ( xtaboo and xtaboo->Load( _el ) )  return xtaboo;
+        if ( xtaboo ) delete xtaboo;
+        return NULL;
       }
-      bool Taboo(const Ising_CE &_structure, const t_Individual& _indiv )
-        { return concentration( structure, _indiv.Object() ); }
+      bool initialize( t_Individual &_indiv )
+      {
+        GA::Random< t_GAOpTraits > random( concentration, structure, _indiv );
+        _indiv.invalidate(); return true;
+      }
 
-      bool initialize( t_Individual &_indiv );
-
+      void init( t_Individual &_indiv )
+      {
+        t_Base :: init( _indiv );
+        // sets structure to this object 
+        structure << *current_object;
+      }
+      void evaluate()
+      {
+        // relax structure
+        vff();
+        // Load relaxed structure into pescan
+        pescan << vff; 
+        // get band gap
+        pescan( *current_object );
+      
+        // set quantity
+        current_individual->quantities().front() =
+           ( current_object->stress(0,0) + current_object->stress(1,1) ) * 0.5;
+        current_individual->quantities().back() = current_object->cbm - current_object->vbm;
+      }
     protected:
       bool consistency_check();
+  };
+
+  template<class T_R_IT, class T_K_IT>
+  Fourier :: Fourier( T_R_IT _rfirst, T_R_IT _rend,
+                      T_K_IT _kfirst, T_K_IT _kend )
+  {
+    const std::complex<types::t_real>
+       imath(0, -2*3.1415926535897932384626433832795028841971693993751058208);
+    
+    for (; _kfirst != _kend; ++_kfirst)
+    {
+      _kfirst->type = std::complex<types::t_real>(0);
+      for(T_R_IT i_r( _rfirst ); i_r != _rend; i_r += 2 )
+      {
+        _kfirst->type +=   exp( imath * ( i_r->pos[0] * _kfirst->pos[0] +
+                                          i_r->pos[1] * _kfirst->pos[1] +
+                                          i_r->pos[2] * _kfirst->pos[2] ) )
+                         * i_r->type;
+      }
+    }
   }
-
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS = Traits::Indiv<T_INDIVIDUAL> >
-  class Krossover : public eoGenOp<T_INDIVIDUAL> 
+  template<class T_R_IT, class T_K_IT, class T_O_IT >
+  Fourier :: Fourier( T_R_IT _rfirst, T_R_IT _rend,
+                      T_K_IT _kfirst, T_K_IT _kend,
+                      T_O_IT _rout ) // sets rvector values from kspace values
   {
-    public:
-      typedef T_INDIVIDUAL t_Individual;
-      typedef T_INDIV_TRAITS t_IndivTraits;
-    protected:
-      typedef typename t_IndivTraits::t_Object t_Object;
-
-    protected:
-      Concentration &concentration;
-      Ising_CE::Structure &structure;
-      types::t_real rate;
-      bool do_range;
-
-    public:
-      Krossover   ( Concentration &_c, Ising_CE::Structure &_str )
-                : concentration(_c), structure(_str), rate(0.5), do_range(false) {}
-      Krossover   ( const Krossover &_k )
-                : concentration(_k.concentration), structure(_k.structure),
-                  rate(_k.rate), do_range(_k.do_range) {}
-      ~Krossover() {}
-
-      bool Load( const TiXmlElement &_node );
-
-      virtual std::string className() const { return "TwoSites::Krossover"; }
-      unsigned max_production(void) { return 1; } 
-
-      void apply(eoPopulator<t_Individual>& _pop);
-      std::string print_out() const
+    const std::complex<types::t_real>
+       imath(0, 2*3.1415926535897932384626433832795028841971693993751058208);
+    for (; _rfirst != _rend; _rfirst+=2, ++_rout)
+    {
+      *_rout = 0.0;
+      for(T_K_IT i_k=_kfirst; i_k != _kend; ++i_k)
       {
-        std::ostringstream sstr;
-        sstr << "Krossover rate = " << rate;
-        if (do_range) sstr << ", Range = true ";
-        return sstr.str();
+        *_rout +=   exp( imath * ( _rfirst->pos[0] * i_k->pos[0] +
+                                   _rfirst->pos[1] * i_k->pos[1] +
+                                   _rfirst->pos[2] * i_k->pos[2] ) )
+                  * i_k->type;
       }
-  };
-
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS = Traits::Indiv<T_INDIVIDUAL> >
-  class KMutation : public eoGenOp<T_INDIVIDUAL> 
-  {
-    public:
-      typedef T_INDIVIDUAL t_Individual;
-      typedef T_INDIV_TRAITS t_IndivTraits;
-    protected:
-      typedef typename t_IndivTraits::t_Object t_Object;
-
-    protected:
-      Concentration &concentration;
-      Ising_CE::Structure &structure;
-      types::t_real rate;
-
-    public:
-      KMutation   ( Concentration &_c, Ising_CE::Structure &_str )
-                : concentration(_c), structure(_str), rate(0.5) {}
-      KMutation   ( const KMutation &_k )
-                : concentration(_k.concentration), structure(_k.structure),
-                  rate(_k.rate) {}
-      ~KMutation() {}
-
-      bool Load( const TiXmlElement &_node );
-
-      virtual std::string className() const { return "TwoSites::Krossover"; }
-      unsigned max_production(void) { return 1; } 
-
-      void apply(eoPopulator<t_Individual>& _pop);
-      std::string print_out() const
-      {
-        std::ostringstream sstr;
-        sstr << "KMutation rate = " << rate;
-        return sstr.str();
-      }
-  };
-
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS = Traits::Indiv<T_INDIVIDUAL> >
-  class Crossover : public eoGenOp<T_INDIVIDUAL> 
-  {
-    public:
-      typedef T_INDIVIDUAL t_Individual;
-      typedef T_INDIV_TRAITS t_IndivTraits;
-    protected:
-      typedef typename t_IndivTraits::t_Object t_Object;
-
-    protected:
-      Concentration &concentration;
-      Ising_CE::Structure structure;
-      BitString::Crossover<t_Object> op;
-
-    public:
-      Crossover   ( Ising_CE::Structure &_str, Concentration &_c )
-             : concentration(_c), structure(_str), op() {}
-      Crossover   ( const Crossover &_k )
-             : concentration(_k.crossover), structure(_k.structure), op(_k.op) {}
-      ~Crossover() {}
-
-      bool Load( const TiXmlElement &_node ) { return op.Load( _node ); }
-
-      virtual std::string className() const { return op.className(); }
-      unsigned max_production(void) { return 1; } 
-
-      void apply(eoPopulator<t_Individual>& _pop)
-      {
-        t_Object &obj1 = (*_pop).Object();
-        const t_Object &obj2 = _pop.select().Object();
-        op( obj1, obj2 );
-        structure << obj1;
-        concentration( structure );
-        obj1 << structure;
-      }
-      std::string print_out() const { return "TwoSites::Crossover"; }
-  };
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS = Traits::Indiv<T_INDIVIDUAL> >
-  class Mutation : public eoGenOp<T_INDIVIDUAL> 
-  {
-    public:
-      typedef T_INDIVIDUAL t_Individual;
-      typedef T_INDIV_TRAITS t_IndivTraits;
-    protected:
-      typedef typename t_IndivTraits::t_Object t_Object;
-
-    protected:
-      Concentration &concentration;
-      Ising_CE::Structure structure;
-      BitString::Mutation<t_Object> op;
-
-    public:
-      Mutation   ( Ising_CE::Structure &_str, Concentration &_c )
-             : concentration(_c), structure(_str), op() {}
-      Mutation   ( const Mutation &_k )
-             : concentration(_k.crossover), structure(_k.structure), op(_k.op) {}
-      ~Mutation() {}
-
-      bool Load( const TiXmlElement &_node ) { return op.Load( _node ); }
-
-      virtual std::string className() const { return op.className(); }
-      unsigned max_production(void) { return 1; } 
-
-      void apply(eoPopulator<t_Individual>& _pop)
-      {
-        t_Object &obj = (*_pop).Object();
-        op( obj );
-        structure << obj;
-        concentration( structure );
-        obj << structure;
-      }
-      std::string print_out() const { return "TwoSites::Mutation"; }
-  };
+    }
+  }
 } // namespace BandGap
 
-
-#include "molecularity.impl.h"
 
 #ifdef _MPI
 namespace mpi
 {
   template<>
-  inline bool mpi::BroadCast::serialize<BandGap::Object>( BandGap::Object & _object )
+  inline bool mpi::BroadCast::serialize<Molecularity::Object>( Molecularity::Object & _object )
   {
     return     serialize<Pescan::Keeper>( _object )
-           and serialize<Pescan::Vff>( _object )
+           and serialize<Vff::Keeper>( _object )
            and _object.broadcast( *this );
   }
 }

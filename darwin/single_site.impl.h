@@ -27,7 +27,7 @@ namespace SingleSite
                                                        const TiXmlElement &_node,
                                                        bool _type )
   {
-    if ( _type == darwin::LOADSAVE_SHORT )
+    if ( _type == GA::LOADSAVE_SHORT )
     {
       if( not _node.Attribute("string") )
         return false;
@@ -47,7 +47,7 @@ namespace SingleSite
                                                        TiXmlElement &_node,
                                                        bool _type ) const
   {
-    if ( _type == darwin::LOADSAVE_SHORT )
+    if ( _type == GA::LOADSAVE_SHORT )
     {
       std::string str; str << _indiv.Object();
       _node.SetAttribute("string", str.c_str());
@@ -257,7 +257,7 @@ namespace SingleSite
       sstr << "Crossover rate = " << crossover_probability;
       Print::xmg.add_comment(sstr.str());
       // pointer is owned by caller !!
-      return darwin::new_genop( *this, &t_This::Crossover, std::string( "Crossover" ) );
+      return GA::new_genop( *this, &t_This::Crossover, std::string( "Crossover" ) );
     }
     else if ( value.compare( "Krossover" ) == 0 )
     {
@@ -275,7 +275,7 @@ namespace SingleSite
           { att = true; Print::xmg.add_to_last( ", Range = true" ); }
       }
       // pointer is owned by caller !!
-      return darwin::new_genop( *this, &t_This::Krossover, 
+      return GA::new_genop( *this, &t_This::Krossover, 
                                 std::string( "Krossover" ), att);
     }
 
@@ -291,7 +291,7 @@ namespace SingleSite
   }
   
   template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
-  darwin::Taboo_Base< T_INDIVIDUAL >* 
+  GA::Taboo_Base< T_INDIVIDUAL >* 
        Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: LoadTaboo(const TiXmlElement &_el )
   {
     if ( singlec ) return NULL;
@@ -311,7 +311,7 @@ namespace SingleSite
     Print::xmg << Print::Xmg::comment << "Taboo x in [ " << 0.5*(morethan+1.0)
                << ", "  << 0.5*(lessthan+1.0) << "] " << Print::endl;
     // pointer is owned by caller !!
-    return new darwin::TabooFunction< t_This >
+    return new GA::TabooFunction< t_This >
                                     ( *this, &t_This::Taboo, "Taboo" );
   }
 

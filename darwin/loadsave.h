@@ -10,7 +10,7 @@
 
 #include <tinyxml/tinyxml.h>
 
-namespace darwin
+namespace GA
 {
 
   template<class T_EVALUATOR>
@@ -90,5 +90,5 @@ namespace darwin
     return did_load;
   }
 
-} // namespace darwin
+} // namespace GA
 #endif // _DARWIN_LOADSAVE_H_

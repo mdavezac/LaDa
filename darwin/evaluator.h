@@ -20,7 +20,7 @@
 
 #include "gatraits.h"
 
-namespace darwin 
+namespace GA 
 {
   template< class T_INDIVIDUAL, class T_INDIV_TRAITS = Traits :: Indiv<T_INDIVIDUAL> >
   class Evaluator
@@ -66,8 +66,8 @@ namespace darwin
       }
       bool Load ( const TiXmlElement &_node ) { return true; }
       // Load and Save individuals
-      // _type can be either darwin::LOADSAVE_SHORT or
-      // darwin::LOADSAVE_LONG. Results are save as latter, and darwin
+      // _type can be either GA::LOADSAVE_SHORT or
+      // GA::LOADSAVE_LONG. Results are save as latter, and GA
       // internal stuff as the former. You need both only if the
       // ga object and the user-expected result object are different (say
       // bitstring versus a decorated lattice structure )
@@ -77,17 +77,17 @@ namespace darwin
       // function from Darwin::Load(...)
       void LoadAttribute ( const TiXmlAttribute &_att ) {};
       // returns a pointer to an eoOp object
-      // pointer is owned by darwin::Darwin::eostates !!
+      // pointer is owned by GA::Darwin::eostates !!
       // don't deallocate yourself
       eoGenOp<t_Individual>* LoadGaOp(const TiXmlElement &_el ) { return NULL; };
       // returns a pointer to a eoF<bool> object
-      // pointer is owned by darwin::Darwin::eostates !!
+      // pointer is owned by GA::Darwin::eostates !!
       // don't deallocate yourself
       eoF<bool>* LoadContinue(const TiXmlElement &_el ) { return NULL; }
       // returns a pointer to a eoMonOp<const t_Individual> object
-      // pointer is owned by darwin::Darwin::eostates !!
+      // pointer is owned by GA::Darwin::eostates !!
       // don't deallocate yourself
-      darwin::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el ) { return NULL; }
+      Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el ) { return NULL; }
       // Initializes object before call to functional 
       // i.e. transforms t_Individual format to
       // function::Function<...>::variables format if necessary
