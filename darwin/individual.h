@@ -25,7 +25,9 @@
 #include "opt/types.h"
 
 #include "objective.h"
+#include "fitness.h"
 #include "gatraits.h"
+
 
 #ifdef _MPI
 #include "mpi/mpi_object.h"
@@ -35,7 +37,7 @@
 namespace Individual
 {
   template<class T_OBJECT, class T_QUANTITY = typename T_OBJECT :: t_Quantity,
-           class T_FITNESS = GA::Fitness, 
+           class T_FITNESS = Fitness::Base<>, 
            class T_QUANTITYTRAITS = Traits::Quantity<T_QUANTITY> >
   class Base : public eoObject, public eoPersistent
   {
@@ -191,7 +193,7 @@ namespace Individual
       bool broadcast( mpi::BroadCast &_bc )
       {
         return      _bc.serialize( age ) 
-                and _bc.serialize( repFitness )
+                and repFitness.broadcast(_bc)
                 and _bc.serialize<t_Object>( object )
                 and t_QuantityTraits::broadcast( quantity, _bc );
       }

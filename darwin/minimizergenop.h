@@ -16,6 +16,7 @@
 
 #include "evaluation.h"
 #include "objective.h"
+#include "fitness.h"
 #include "gatraits.h"
 #include "minimizergenop.h"
 
@@ -111,7 +112,7 @@ namespace GA
     protected:
       t_Individual *current_indiv;
       t_Quantity quantity;
-      GA::Fitness fitness;
+      t_Fitness fitness;
 
     public:
       SaveStateIndividual() : current_indiv(NULL) {};
