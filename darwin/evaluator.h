@@ -15,22 +15,21 @@
 
 #include "opt/types.h"
 #include "opt/opt_function_base.h"
-#include "loadsave.h"
 #include "taboos.h"
+#include "loadsave.h"
 
 #include "gatraits.h"
 
 namespace GA 
 {
-  template< class T_INDIVIDUAL, class T_INDIV_TRAITS = Traits :: Indiv<T_INDIVIDUAL> >
+  template< class T_INDIVIDUAL>
   class Evaluator
   {
     public:
       typedef T_INDIVIDUAL   t_Individual;
-      typedef T_INDIV_TRAITS t_IndivTraits;
     protected:
+      typedef typename t_Individual :: t_IndivTraits        t_IndivTraits;
       typedef typename t_IndivTraits :: t_Object            t_Object;
-      typedef typename t_IndivTraits :: t_Population        t_Population;
       typedef typename t_IndivTraits :: t_QuantityTraits    t_QuantityTraits;
       typedef typename t_QuantityTraits :: t_Quantity       t_Quantity;
       typedef typename t_QuantityTraits :: t_ScalarQuantity t_ScalarQuantity;

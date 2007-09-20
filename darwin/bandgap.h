@@ -41,7 +41,6 @@ namespace BandGap
   {
     friend std::ostream& operator<<(std::ostream &_stream, const Object &_o);
     typedef TwoSites::Object :: t_Container t_Container;
-    typedef types::t_real t_Quantity;
 #ifdef _MPI
     friend bool mpi::BroadCast::serialize<BandGap::Object>(BandGap::Object &);
 #endif

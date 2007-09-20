@@ -36,23 +36,21 @@
 
 namespace Individual
 {
-  template<class T_OBJECT, class T_QUANTITY = typename T_OBJECT :: t_Quantity,
-           class T_FITNESS = Fitness::Base<>, 
-           class T_QUANTITYTRAITS = Traits::Quantity<T_QUANTITY> >
+  template<class T_INDIVTRAITS>
   class Base : public eoObject, public eoPersistent
   {
     public:
-      typedef T_OBJECT t_Object;
-      typedef T_QUANTITYTRAITS t_QuantityTraits;
+      typedef T_INDIVTRAITS t_IndivTraits;
+      typedef typename t_IndivTraits::t_Fitness t_Fitness;
+      typedef typename t_IndivTraits::t_ScalarFitness Fitness;
+    protected:
+      typedef typename t_IndivTraits :: t_Object t_Object;
+      typedef typename t_IndivTraits :: t_QuantityTraits t_QuantityTraits;
       typedef typename t_QuantityTraits :: t_ScalarQuantity     t_ScalarQuantity;
       typedef typename t_QuantityTraits :: t_Quantity           t_Quantity;  
 
-      typedef T_FITNESS t_Fitness;
-      typedef T_FITNESS Fitness; // for eo
-
-
     private:
-      typedef Base<t_Object, t_Quantity, t_Fitness, t_QuantityTraits> t_Base;
+      typedef Base<t_IndivTraits> t_Base;
 
     protected:
       t_Object object;
@@ -108,8 +106,8 @@ namespace Individual
            throw std::runtime_error("invalid fitness\n");
          return repFitness;
       }
-      void set_fitness( types::t_real _fit )
-        { repFitness = _fit; }
+      void set_fitness( const t_Quantity _q )
+        { repFitness = _q; }
 
       // eo stuff
       virtual std::string className() const
@@ -200,16 +198,76 @@ namespace Individual
 #endif
   };
 
-  template<class T_OBJECT, class T_QUANTITY, class T_QUANTITYTRAITS>
+  template< class T_BASE >
+  class Multi : public T_BASE
+  {
+      typedef T_BASE t_Base;
+    public: 
+      typedef typename t_Base::t_IndivTraits t_IndivTraits; 
+
+    protected:
+      typedef typename t_Base::t_Fitness::t_ScalarFitness t_ScalarFitness;
+      typedef typename t_ScalarFitness :: t_Quantity t_ScalarFitnessQuantity;
+
+    protected:
+      using t_Base :: repFitness;
+
+    public:
+      void set_fitness( const t_ScalarFitnessQuantity _q )
+        { (t_ScalarFitness&) repFitness = _q; }
+      template<class SaveOp>
+      bool Save( TiXmlElement &_node, SaveOp &_saveop ) const
+      {
+        TiXmlElement *xmlindiv = new TiXmlElement("Individual");
+        if ( not xmlindiv )
+        {
+          std::cerr << "Memory Allocation Error while saving individual" << std::endl;
+          return false;
+        }
+
+        if (     repFitness.Save(*xmlindiv)
+             and _saveop(*this, *xmlindiv)  )
+        {
+          _node.LinkEndChild( xmlindiv );
+          return true;
+        }
+
+        delete xmlindiv;
+        std::cerr << "Errow while save individual" << std::endl <<  *this << std::endl;
+        return false;
+      }
+      template<class LoadOp>
+      bool Load( const TiXmlElement &_node, LoadOp &_loadop ) 
+      {
+        const TiXmlElement *parent = &_node;
+        std::string name = parent->Value();
+        if ( name.compare("Individual") )
+          parent = _node.FirstChildElement("Individual");
+        if ( not parent )
+          return false;
+
+        if ( not repFitness.Load(*parent) )
+          return false;
+
+        return _loadop(*this,*parent);
+      }
+  };
+
+  template<class T_INDIVTRAITS>
   inline std::ostream& operator<< ( std::ostream &_str,
-                                    const Base<T_OBJECT, T_QUANTITY, T_QUANTITYTRAITS> &_indiv )
+                                    const Base<T_INDIVTRAITS> &_indiv )
     { _indiv.print_out(_str); return _str; }
 
   template<class T_OBJECT>
     struct Types
     {
-      typedef Base<T_OBJECT, types::t_real> Scalar; 
-      typedef Base<T_OBJECT, std::vector<types::t_real> > Vector; 
+        typedef T_OBJECT t_Object;
+        typedef Base< Traits :: Indiv< t_Object, Traits::Quantity<types::t_real> > > Scalar;
+      protected:
+        typedef Base< Traits :: Indiv< t_Object,
+                                       Traits::Quantity< std::vector<types::t_real> > > > VectorBase;
+      public:
+        typedef Multi< VectorBase > Vector;
     };
 
 } // endif MultiObj

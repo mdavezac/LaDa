@@ -60,8 +60,8 @@ namespace TwoSites
     }
   }
 
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
-  bool Evaluator<T_INDIVIDUAL, T_INDIV_TRAITS> :: Load( t_Individual &_indiv,
+  template<class T_INDIVIDUAL>
+  bool Evaluator<T_INDIVIDUAL> :: Load( t_Individual &_indiv,
                                                         const TiXmlElement &_node,
                                                         bool _type )
   {
@@ -80,8 +80,8 @@ namespace TwoSites
     return true;
   }
 
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
-  bool Evaluator<T_INDIVIDUAL, T_INDIV_TRAITS> :: Save( const t_Individual &_indiv, 
+  template<class T_INDIVIDUAL>
+  bool Evaluator<T_INDIVIDUAL> :: Save( const t_Individual &_indiv, 
                                                         TiXmlElement &_node, 
                                                         bool _type ) const
   {
@@ -101,8 +101,8 @@ namespace TwoSites
     return true;
   }
 
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
-  bool Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: Load( const TiXmlElement &_node )
+  template<class T_INDIVIDUAL>
+  bool Evaluator<T_INDIVIDUAL> :: Load( const TiXmlElement &_node )
   {
     if ( not lattice.Load( _node ) )
     {
@@ -146,8 +146,8 @@ namespace TwoSites
 
 
 
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
-  bool Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: Taboo(const t_Individual &_indiv )
+  template<class T_INDIVIDUAL>
+  bool Evaluator<T_INDIVIDUAL> :: Taboo(const t_Individual &_indiv )
   {
     if ( concentration.is_singlec() ) return false;
     structure << (const t_Object&)_indiv;
@@ -155,9 +155,9 @@ namespace TwoSites
     return concentration.x > lessthan or concentration.x < morethan; // if true, _object is taboo
   }
   
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
+  template<class T_INDIVIDUAL>
   GA::Taboo_Base< T_INDIVIDUAL >* 
-       Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: LoadTaboo(const TiXmlElement &_el )
+       Evaluator<T_INDIVIDUAL> :: LoadTaboo(const TiXmlElement &_el )
   {
     if ( concentration.is_singlec() ) return NULL;
     const TiXmlElement *child = _el.FirstChildElement( "Concentration" );
@@ -181,8 +181,8 @@ namespace TwoSites
                                     ( *this, &t_This::Taboo, "Taboo" );
   }
 
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
-  bool Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: consistency_check()
+  template<class T_INDIVIDUAL>
+  bool Evaluator<T_INDIVIDUAL> :: consistency_check()
   {
     Ising_CE::Structure::t_Atoms :: iterator i_atom = structure.atoms.begin();
     Ising_CE::Structure::t_Atoms :: iterator i_atom_end = structure.atoms.end();

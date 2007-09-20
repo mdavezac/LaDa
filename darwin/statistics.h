@@ -16,15 +16,15 @@
 
 namespace GA
 {
-  template< class T_INDIVIDUAL>
-  class TrueCensus : public eoStatBase< T_INDIVIDUAL >
+  template< class T_GATRAITS>
+  class TrueCensus : public eoStatBase< typename T_GATRAITS :: t_Individual >
   {
     public:
-      typedef T_INDIVIDUAL t_Individual;
+      typedef T_GATRAITS t_GATraits;
     protected:
-      typedef eoPop<t_Individual> t_Population;
-    private:
-      typedef typename t_Individual :: t_Object t_Object;
+      typedef typename t_GATraits::t_Population t_Population;
+      typedef typename t_GATraits::t_Individual t_Individual;
+      typedef typename t_GATraits::t_Object t_Object;
       
     public:
       TrueCensus () {}

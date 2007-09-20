@@ -37,19 +37,19 @@ namespace GA
     if  ( !doc.LoadFile() ) \
     { \
       std::cerr << doc.ErrorDesc() << std::endl; \
-      throw "Could not load input file in  Darwin<T_EVALUATOR> "; \
+      throw "Could not load input file in  Darwin<T_GATRAITS> "; \
     } 
 
-  template<class T_EVALUATOR, class T_GATRAITS>
-  Darwin<T_EVALUATOR,T_GATRAITS> :: ~Darwin()
+  template<class T_GATRAITS>
+  Darwin<T_GATRAITS> :: ~Darwin()
   {
     if ( store ) delete store;
     if ( objective ) delete objective;
     if ( evaluation ) delete evaluation;
   }
   // reads in different parameters
-  template<class T_EVALUATOR, class T_GATRAITS>
-  bool Darwin<T_EVALUATOR,T_GATRAITS> :: Load_Parameters(const TiXmlElement &_parent)
+  template<class T_GATRAITS>
+  bool Darwin<T_GATRAITS> :: Load_Parameters(const TiXmlElement &_parent)
   {
     // tournament size when selecting parents
     const TiXmlAttribute *att = _parent.FirstAttribute();
@@ -124,21 +124,21 @@ namespace GA
   }
 
   // creates history object if required
-  template<class T_EVALUATOR, class T_GATRAITS>
-  void Darwin<T_EVALUATOR,T_GATRAITS> :: make_History(const TiXmlElement &_parent)
+  template<class T_GATRAITS>
+  void Darwin<T_GATRAITS> :: make_History(const TiXmlElement &_parent)
   {
     // checks if there are more than one taboo list
     const TiXmlElement *child = _parent.FirstChildElement("History");
     if ( not child )
       return;
     Print::xmg << Print::Xmg::comment << "Track History" << Print::endl;
-    history = new History< t_Individual, std::list<t_Individual> >;
+    history = new History< t_Individual>;
     eostates.storeFunctor(history);
   }
   
   // creates history object if required
-  template<class T_EVALUATOR, class T_GATRAITS>
-  void Darwin<T_EVALUATOR,T_GATRAITS> :: Load_Method(const TiXmlElement &_parent)
+  template<class T_GATRAITS>
+  void Darwin<T_GATRAITS> :: Load_Method(const TiXmlElement &_parent)
   {
     // checks if there are more than one taboo list
     const TiXmlElement *child = _parent.FirstChildElement("Objective");
@@ -159,15 +159,15 @@ namespace GA
     Print::xmg << Print::Xmg::comment << "Store: " << store->what_is() << Print::endl;
 
     if( history )
-      evaluation = new Evaluation::WithHistory<t_Evaluator,t_GA_Traits>
+      evaluation = new Evaluation::WithHistory<t_GATraits>
                                               ( evaluator, *objective, *store, history );
     if ( not evaluation )
-      evaluation = new Evaluation::Base<t_Evaluator,t_GA_Traits>( evaluator, *objective, *store );
+      evaluation = new Evaluation::Base<t_GATraits>( evaluator, *objective, *store );
   }
   
   // create Taboos
-  template<class T_EVALUATOR, class T_GATRAITS>
-  void Darwin<T_EVALUATOR,T_GATRAITS> :: Load_Taboos( const TiXmlElement &_node )
+  template<class T_GATRAITS>
+  void Darwin<T_GATRAITS> :: Load_Taboos( const TiXmlElement &_node )
   {
     // checks if there are more than one taboo list
     if ( not _node.FirstChildElement("Taboos") ) return;
@@ -182,8 +182,8 @@ namespace GA
     if (child)
     {
       Print::xmg << Print::Xmg::comment << "Population Taboo" << Print::endl;
-      IslandsTaboos<t_Individual,t_IndivTraits> *poptaboo
-         = new IslandsTaboos<t_Individual, t_IndivTraits>( islands );
+      IslandsTaboos<t_GATraits> *poptaboo
+         = new IslandsTaboos<t_GATraits>( islands );
       eostates.storeFunctor(poptaboo);
       static_cast< Taboos<t_Individual>* >(taboos)->add( poptaboo );
     }
@@ -193,8 +193,8 @@ namespace GA
     if (child)
     {
       Print::xmg << Print::Xmg::comment << "Offspring Taboo" << Print::endl;
-      OffspringTaboo<t_Individual, t_IndivTraits> *offspringtaboo 
-         = new OffspringTaboo<t_Individual, t_IndivTraits>( &offsprings );
+      OffspringTaboo<t_GATraits> *offspringtaboo 
+         = new OffspringTaboo<t_GATraits>( &offsprings );
       eostates.storeFunctor(offspringtaboo);
       static_cast< Taboos<t_Individual>* >(taboos)->add( offspringtaboo );
     }
@@ -234,8 +234,8 @@ namespace GA
   }
 
   // Loads mating operations
-  template<class T_EVALUATOR, class T_GATRAITS>
-  bool Darwin<T_EVALUATOR,T_GATRAITS> :: Load_Mating (const TiXmlElement &_parent)
+  template<class T_GATRAITS>
+  bool Darwin<T_GATRAITS> :: Load_Mating (const TiXmlElement &_parent)
   {
     const TiXmlElement *child = _parent.FirstChildElement("Breeding");
     if ( not child )
@@ -245,21 +245,21 @@ namespace GA
       return false;
     }
     Print::xmg << Print::Xmg::comment << "Breeding Operator Begin" << Print::endl;
-    breeder_ops = new SequentialOp<t_Individual>;
+    breeder_ops = new SequentialOp<t_GATraits>;
     eostates.storeFunctor( breeder_ops );
     breeder_ops = make_genetic_op(*child->FirstChildElement(), breeder_ops);
     Print::xmg << Print::Xmg::comment << "Breeding Operator End" << Print::endl;
     if ( not breeder_ops )
     {
       std::cerr << "Error while creating breeding operators" << std::endl;
-      throw "Error while creating operators in  Darwin<T_EVALUATOR>  :: make_GenOp ";
+      throw "Error while creating operators in  Darwin<T_GATRAITS>  :: make_GenOp ";
     }
     return true;
   }
   
   // Loads CheckPoints
-  template<class T_EVALUATOR, class T_GATRAITS>
-  void Darwin<T_EVALUATOR,T_GATRAITS> :: Load_CheckPoints (const TiXmlElement &_parent)
+  template<class T_GATRAITS>
+  void Darwin<T_GATRAITS> :: Load_CheckPoints (const TiXmlElement &_parent)
   {
     // contains all checkpoints
     std::string str = "stop"; 
@@ -268,7 +268,7 @@ namespace GA
       str = _parent.FirstChildElement("Filenames")->Attribute("stop");
 
     str = Print::reformat_home(str);
-    continuator = new IslandsContinuator<t_Individual>(max_generations, str );
+    continuator = new IslandsContinuator<t_GATraits>(max_generations, str );
     eostates.storeFunctor( continuator );
     GenCount &generation_counter = continuator->get_generation_counter();
 
@@ -304,7 +304,7 @@ namespace GA
     const TiXmlElement *child = _parent.FirstChildElement("Statistics");
     if( child )
     {
-      continuator->add( eostates.storeFunctor( new TrueCensus< t_Individual >() ) );
+      continuator->add( eostates.storeFunctor( new TrueCensus< t_GATraits >() ) );
       Print::xmg << Print::Xmg::comment << "Statistics: True population size, discounting twins" << Print::endl;
     }
 
@@ -325,7 +325,7 @@ namespace GA
 
       if ( ref.compare("evaluation") != 0 ) continue;
       
-      terminator = new Terminator< types::t_unsigned, std::less<types::t_unsigned>, t_Individual >
+      terminator = new Terminator< types::t_unsigned, std::less<types::t_unsigned>, t_GATraits >
                                  ( evaluation->nb_eval, (types::t_unsigned) abs(max),
                                    std::less<types::t_unsigned>(), "nb_eval < term" );
       eostates.storeFunctor( terminator );
@@ -340,13 +340,12 @@ namespace GA
     if ( specific )
     {
       eostates.storeFunctor(specific); 
-      continuator->add( eostates.storeFunctor(new Continuator<t_Individual>(*specific)) );
+      continuator->add( eostates.storeFunctor(new Continuator<t_GATraits>(*specific)) );
     }
 
     // Creates Print object
     {
-      typedef PrintGA< Store::Base<t_Evaluator, t_GA_Traits>,
-                       Evaluation::Base<t_Evaluator, t_GA_Traits> > t_PrintGA;
+      typedef PrintGA< Store::Base<t_GATraits>, Evaluation::Base<t_GATraits> > t_PrintGA;
       t_PrintGA* printga = new t_PrintGA( *store, *evaluation, generation_counter, do_print_each_call);
       eostates.storeFunctor(printga);
       continuator->add( *printga );
@@ -356,15 +355,15 @@ namespace GA
     child = _parent.FirstChildElement("PrintOffsprings");
     if ( child )
     {
-      PrintFitness<t_Individual> *printfitness = new PrintFitness<t_Individual> ( generation_counter );
+      PrintFitness<t_GATraits> *printfitness = new PrintFitness<t_GATraits> ( generation_counter );
       continuator->add( *printfitness );
       eostates.storeFunctor( printfitness );
     }
 
   } // end of make_check_point
   
-  template<class T_EVALUATOR, class T_GATRAITS>
-  bool Darwin<T_EVALUATOR,T_GATRAITS> :: Restart()
+  template<class T_GATRAITS>
+  bool Darwin<T_GATRAITS> :: Restart()
   {
     TiXmlDocument doc( restart_filename.c_str() );
     TiXmlHandle docHandle( &doc ); 
@@ -381,8 +380,8 @@ namespace GA
 
   // Loads restarts operations
   // Should be in a Restart XML Section
-  template<class T_EVALUATOR, class T_GATRAITS>
-  bool Darwin<T_EVALUATOR,T_GATRAITS> :: Restart (const TiXmlElement &_node)
+  template<class T_GATRAITS>
+  bool Darwin<T_GATRAITS> :: Restart (const TiXmlElement &_node)
   {
     const TiXmlElement *parent = &_node;
     std::string name = _node.Value();
@@ -401,7 +400,7 @@ namespace GA
       else if (     name.compare("History") == 0
                 and ( do_restart & SAVE_HISTORY ) and history )
       {
-        LoadObject<t_Evaluator> loadop( evaluator, &t_Evaluator::Load, LOADSAVE_SHORT);
+        LoadObject<t_GATraits> loadop( evaluator, &t_Evaluator::Load, LOADSAVE_SHORT);
         history->clear();
         if ( LoadIndividuals( *child, loadop, *history) )
           Print::xmg << Print::Xmg::comment << "Reloaded " << history->size() 
@@ -411,7 +410,7 @@ namespace GA
       else if (     name.compare("Population") == 0
                 and ( do_restart & SAVE_POPULATION ) )
       {
-        LoadObject<t_Evaluator> loadop( evaluator, &t_Evaluator::Load, LOADSAVE_SHORT);
+        LoadObject<t_GATraits> loadop( evaluator, &t_Evaluator::Load, LOADSAVE_SHORT);
         islands.clear();
         const TiXmlElement *island_xml = child->FirstChildElement("Island");
         for(; island_xml; island_xml = island_xml->NextSiblingElement("Island") )
@@ -429,8 +428,8 @@ namespace GA
     return true;
   }
 
-  template<class T_EVALUATOR, class T_GATRAITS>
-  bool Darwin<T_EVALUATOR,T_GATRAITS> :: Save()
+  template<class T_GATRAITS>
+  bool Darwin<T_GATRAITS> :: Save()
   {
     if ( not do_save )
       return true;
@@ -479,7 +478,7 @@ namespace GA
       Print::xmg << " History";
 
       TiXmlElement *xmlhistory = new TiXmlElement("History");
-      SaveObject<t_Evaluator> saveop( evaluator, &t_Evaluator::Save, LOADSAVE_SHORT);
+      SaveObject<t_GATraits> saveop( evaluator, &t_Evaluator::Save, LOADSAVE_SHORT);
       SaveIndividuals( *xmlhistory, saveop, history->begin(), history->end());
       node->LinkEndChild( xmlhistory );
     }
@@ -493,7 +492,7 @@ namespace GA
         Print::xmg << ", and ";
       Print::xmg << " Population";
 
-      SaveObject<t_Evaluator> saveop( evaluator, &t_Evaluator::Save, LOADSAVE_SHORT);
+      SaveObject<t_GATraits> saveop( evaluator, &t_Evaluator::Save, LOADSAVE_SHORT);
       typename t_Islands :: const_iterator i_island = islands.begin();
       typename t_Islands :: const_iterator i_island_end = islands.end();
       TiXmlElement *xmlpop = new TiXmlElement("Population");
@@ -518,8 +517,8 @@ namespace GA
     return true;
   }
   
-  template<class T_EVALUATOR, class T_GATRAITS>
-  eoReplacement<typename T_GATRAITS::t_Individual>* Darwin<T_EVALUATOR,T_GATRAITS> :: make_replacement()
+  template<class T_GATRAITS>
+  eoReplacement<typename T_GATRAITS::t_Individual>* Darwin<T_GATRAITS> :: make_replacement()
   {
     eoTruncate<t_Individual>* truncate       = new  eoTruncate<t_Individual>;
     eoMerge<t_Individual>* merge             = new  eoPlus<t_Individual>;
@@ -532,9 +531,9 @@ namespace GA
   }
 
   // makes genetic operators
-  template<class T_EVALUATOR, class T_GATRAITS>
+  template<class T_GATRAITS>
   eoGenOp<typename T_GATRAITS::t_Individual>*
-    Darwin<T_EVALUATOR,T_GATRAITS> :: make_genetic_op( const TiXmlElement &el,
+    Darwin<T_GATRAITS> :: make_genetic_op( const TiXmlElement &el,
                                                        eoGenOp<t_Individual> *current_op )
   {
     eoOp<t_Individual>* this_op;
@@ -563,7 +562,7 @@ namespace GA
         {
           Print::xmg << Print::Xmg::comment << "TabooOp End" << Print::endl;
           eoMonOp<t_Individual> *utterrandom;
-          utterrandom = new mem_monop_t<t_Evaluator>
+          utterrandom = new mem_monop_t<t_GATraits>
                               ( evaluator, &t_Evaluator::initialize, std::string( "Initialize" ) );
           eostates.storeFunctor(utterrandom);
           this_op = new TabooOp<t_Individual> ( *taboo_op, *taboos, 
@@ -582,18 +581,18 @@ namespace GA
       else if ( str.compare("UtterRandom") == 0 )
       {
         Print::xmg << Print::Xmg::comment << "UtterRandom" << Print::endl;
-        this_op = new mem_monop_t<t_Evaluator>
+        this_op = new mem_monop_t<t_GATraits>
                          ( evaluator, &t_Evaluator::initialize, std::string( "UtterRandom" ) );
         eostates.storeFunctor( static_cast< TabooOp<t_Individual> *>(this_op) );
       }
       else if ( str.compare("Minimizer") == 0 )
       {
-        Minimizer_Functional<t_Evaluator, t_GA_Traits> *func = 
-          new Minimizer_Functional<t_Evaluator, t_GA_Traits>( *evaluation, *taboos ); 
+        Minimizer_Functional<t_GATraits> *func = 
+          new Minimizer_Functional<t_GATraits>( *evaluation, *taboos ); 
         if ( not func )
           throw std::runtime_error( "Memory Allocation Error");
-        MinimizerGenOp<t_Evaluator, t_GA_Traits> *mingenop
-            = new MinimizerGenOp<t_Evaluator, t_GA_Traits>( *func );
+        MinimizerGenOp<t_GATraits> *mingenop
+            = new MinimizerGenOp<t_GATraits>( *func );
         if ( not mingenop )
           { delete func; this_op = NULL; }
         else if ( not mingenop->Load( *sibling ) )
@@ -612,7 +611,7 @@ namespace GA
           if ( sstr.compare("and") == 0 ) 
           {
             Print::xmg << Print::Xmg::comment << "And Begin" << Print::endl;
-            SequentialOp<t_Individual> *new_branch = new SequentialOp<t_Individual>;
+            SequentialOp<t_GATraits> *new_branch = new SequentialOp<t_GATraits>;
             this_op = make_genetic_op( *sibling->FirstChildElement(), new_branch);
             if ( not this_op )
             {
@@ -630,7 +629,7 @@ namespace GA
         if ( not this_op )
         {
           Print::xmg << Print::Xmg::comment << "Or Begin" << Print::endl;
-          ProportionalOp<t_Individual> *new_branch = new ProportionalOp<t_Individual>;
+          ProportionalOp<t_GATraits> *new_branch = new ProportionalOp<t_GATraits>;
           this_op = make_genetic_op( *sibling->FirstChildElement(), new_branch);
           if ( not this_op )
           {
@@ -645,7 +644,7 @@ namespace GA
         }
         is_gen_op = true;
       }
-      else // operators specific to t_Individual 
+      else // operators specific to t_Evaluator 
       {
         eoGenOp<t_Individual> *eoop = evaluator.LoadGaOp( *sibling );
         eostates.storeFunctor( eoop );
@@ -659,9 +658,9 @@ namespace GA
              and period > 0 )
         {
           Print::xmg << Print::Xmg::addtolast << " period = " << period << Print::endl;
-          this_op = new PeriodicOp<t_Individual>( *this_op, (types::t_unsigned) abs(period),
+          this_op = new PeriodicOp<t_GATraits>( *this_op, (types::t_unsigned) abs(period),
                                               continuator->get_generation_counter(), eostates );
-          eostates.storeFunctor( static_cast< PeriodicOp<t_Individual> *>(this_op) );
+          eostates.storeFunctor( static_cast< PeriodicOp<t_GATraits> *>(this_op) );
           is_gen_op = true;
         }
       }
@@ -671,10 +670,10 @@ namespace GA
           prob = 1.0;
         Print::xmg << Print::Xmg::addtolast << " prob = " << prob << Print::endl;
         if ( current_op->className().compare("GA::SequentialOp") == 0 )
-          static_cast< SequentialOp<t_Individual>* >(current_op)->add( *this_op,
+          static_cast< SequentialOp<t_GATraits>* >(current_op)->add( *this_op,
                                                                    static_cast<double>(prob) );
         else if ( current_op->className().compare("GA::ProportionalOp") == 0 )
-          static_cast< ProportionalOp<t_Individual>* >(current_op)->add( *this_op, 
+          static_cast< ProportionalOp<t_GATraits>* >(current_op)->add( *this_op, 
                                                                      static_cast<double>(prob) );
       }
       else if ( this_op )
@@ -697,21 +696,21 @@ namespace GA
     return current_op;
   }
 
-  template<class T_EVALUATOR, class T_GATRAITS>
-  void Darwin<T_EVALUATOR,T_GATRAITS> :: make_breeder()
+  template<class T_GATRAITS>
+  void Darwin<T_GATRAITS> :: make_breeder()
   {
     eoSelectOne<t_Individual> *select;
 
     select = new eoDetTournamentSelect<t_Individual>(tournament_size);
-    breeder = new Breeder<t_Individual>(*select, *breeder_ops, continuator->get_generation_counter() );
+    breeder = new Breeder<t_GATraits>(*select, *breeder_ops, continuator->get_generation_counter() );
     breeder->set_howmany(replacement_rate);
 
     eostates.storeFunctor(breeder);
     eostates.storeFunctor(select);
   }
   
-  template<class T_EVALUATOR, class T_GATRAITS>
-  void Darwin<T_EVALUATOR,T_GATRAITS> :: populate ()
+  template<class T_GATRAITS>
+  void Darwin<T_GATRAITS> :: populate ()
   {
     islands.resize( nb_islands );
     typename t_Islands :: iterator i_pop = islands.begin();
@@ -735,8 +734,8 @@ namespace GA
     }
   }
 
-  template<class T_EVALUATOR, class T_GATRAITS>
-  void Darwin<T_EVALUATOR,T_GATRAITS> :: random_populate ( t_Population &_pop, types::t_unsigned _size)
+  template<class T_GATRAITS>
+  void Darwin<T_GATRAITS> :: random_populate ( t_Population &_pop, types::t_unsigned _size)
   {
     while ( _pop.size() < _size )
     {
@@ -747,8 +746,8 @@ namespace GA
     } // while ( i_pop->size() < target )
     _pop.resize( _size );
   }
-  template<class T_EVALUATOR, class T_GATRAITS>
-  void Darwin<T_EVALUATOR,T_GATRAITS> :: partition_populate ( t_Population &_pop, types::t_unsigned _size)
+  template<class T_GATRAITS>
+  void Darwin<T_GATRAITS> :: partition_populate ( t_Population &_pop, types::t_unsigned _size)
   {
     while ( _pop.size() < _size )
     {
@@ -821,8 +820,8 @@ namespace GA
   }
 
 
-  template<class T_EVALUATOR, class T_GATRAITS>
-  void Darwin<T_EVALUATOR,T_GATRAITS> :: run()
+  template<class T_GATRAITS>
+  void Darwin<T_GATRAITS> :: run()
   {
 #ifdef _MPI 
     for( types::t_int i = 0; i < mpi::main.size(); ++i )
@@ -897,8 +896,8 @@ namespace GA
 
 
 #ifdef _MPI
-  template<class T_EVALUATOR, class T_GATRAITS>
-  void Darwin<T_EVALUATOR,T_GATRAITS> :: LoadAllInputFiles(std::string &_input, 
+  template<class T_GATRAITS>
+  void Darwin<T_GATRAITS> :: LoadAllInputFiles(std::string &_input, 
                                                 std::string &_restart, 
                                                 std::string &_evaluator ) 
   {
@@ -952,8 +951,8 @@ nextfilename:
   }
 #endif
 
-  template<class T_EVALUATOR, class T_GATRAITS>
-  bool Darwin<T_EVALUATOR,T_GATRAITS> :: Load(const std::string &_filename) 
+  template<class T_GATRAITS>
+  bool Darwin<T_GATRAITS> :: Load(const std::string &_filename) 
   {
     filename = _filename;
     evaluator_filename = _filename;
@@ -1135,8 +1134,8 @@ out:  Print::xmg << Print::endl;
 
 
 #ifdef _MPI
-  template<class T_EVALUATOR, class T_GATRAITS>
-  bool Darwin<T_EVALUATOR,T_GATRAITS> :: broadcast_islands( mpi::BroadCast &_bc )
+  template<class T_GATRAITS>
+  bool Darwin<T_GATRAITS> :: broadcast_islands( mpi::BroadCast &_bc )
   {
     types::t_int n = islands.size();
     if ( not _bc.serialize( n ) ) return false;

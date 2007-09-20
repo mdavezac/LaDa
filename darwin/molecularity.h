@@ -116,16 +116,18 @@ namespace Molecularity
   void operator<<(Object &_o, const Ising_CE::Structure &_str);
 
 
-  class Evaluator : public GA::Evaluator< Individual::Types<Object>::Vector >
+  typedef Individual::Types<Object>::Vector t_Individual;
+
+  class Evaluator : public GA::Evaluator< Molecularity::t_Individual >
   {
+    public:
+      typedef Molecularity::t_Individual t_Individual;
     protected:
       typedef Evaluator t_This;
-      typedef GA::Evaluator< Individual::Types<Object>::Vector > t_Base;
+      typedef GA::Evaluator< t_Individual > t_Base;
       typedef Ising_CE::Structure::t_kAtoms t_kvecs;
       typedef Ising_CE::Structure::t_Atoms t_rvecs;
       typedef Traits::GAOp<t_Individual, Concentration, Fourier> t_GAOpTraits;
-    public:
-      typedef  t_Base :: t_Individual t_Individual;
 
     public:
       using t_Base :: Load;

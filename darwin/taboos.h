@@ -146,15 +146,16 @@ namespace GA
       void clear() { taboo_list->clear(); }
   };
 
-  template<class T_INDIVIDUAL, class T_INDIVTRAITS = Traits::Indiv<T_INDIVIDUAL> >
-  class OffspringTaboo : public Taboo<T_INDIVIDUAL, typename T_INDIVTRAITS :: t_Population >
+  template<class T_GATRAITS>
+  class OffspringTaboo : public Taboo<typename T_GATRAITS::t_Individual,
+                                      typename T_GATRAITS :: t_Population >
   {
     public:
-      typedef T_INDIVIDUAL t_Individual;
-      typedef T_INDIVTRAITS t_IndivTraits;
-      typedef t_Individual value_type;
+      typedef T_GATRAITS t_GATraits;
+      typedef typename t_GATraits::t_Individual value_type;
     protected:
-      typedef typename t_IndivTraits :: t_Population t_Population;
+      typedef typename t_GATraits::t_Individual t_Individual;
+      typedef typename t_GATraits::t_Population t_Population;
       using Taboo<t_Individual, t_Population> :: taboo_list;
 
     public:
@@ -182,7 +183,8 @@ namespace GA
       typedef T_CONTAINER t_Container;
       typedef t_Individual value_type;
     private:
-      typedef typename t_Individual::t_Object t_Object;
+      typedef typename t_Individual::t_IndivTraits t_IndivTraits;
+      typedef typename t_IndivTraits::t_Object t_Object;
     protected:
       using Taboo<t_Individual, t_Container> :: taboo_list;
       using Taboo<t_Individual, t_Container> :: owns_pointer;
@@ -337,17 +339,17 @@ namespace GA
   };
   
   // a class which taboos a whole list of pops
-  template<class T_INDIVIDUAL, class T_INDIVTRAITS = Traits::Indiv<T_INDIVIDUAL> > 
-  class IslandsTaboos : public Taboo_Base<T_INDIVIDUAL>
+  template<class T_GATRAITS>
+  class IslandsTaboos : public Taboo_Base<typename T_GATRAITS::t_Individual>
   {
     public:
-      typedef T_INDIVIDUAL t_Individual;
-      typedef T_INDIVTRAITS t_IndivTraits;
+      typedef T_GATRAITS t_GATraits;
     private:
-      typedef IslandsTaboos<t_Individual, t_IndivTraits>  t_Base;
-      typedef typename t_IndivTraits :: t_Population  t_Container;
-      typedef typename t_IndivTraits :: t_Islands     t_Islands;
-      typedef typename t_IndivTraits :: t_Object t_Object;
+      typedef IslandsTaboos<t_GATraits>  t_Base;
+      typedef typename t_GATraits::t_Individual t_Individual;
+      typedef typename t_GATraits :: t_Population  t_Container;
+      typedef typename t_GATraits :: t_Islands     t_Islands;
+      typedef typename t_GATraits :: t_Object t_Object;
 
     protected: 
       bool problematic;

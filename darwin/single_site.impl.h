@@ -22,10 +22,10 @@
 namespace SingleSite
 {
 
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
-  bool Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: Load( t_Individual &_indiv,
-                                                       const TiXmlElement &_node,
-                                                       bool _type )
+  template<class T_INDIVIDUAL>
+  bool Evaluator<T_INDIVIDUAL> :: Load( t_Individual &_indiv,
+                                        const TiXmlElement &_node,
+                                        bool _type )
   {
     if ( _type == GA::LOADSAVE_SHORT )
     {
@@ -42,10 +42,10 @@ namespace SingleSite
     return true;
   }
 
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
-  bool Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: Save( const t_Individual &_indiv,
-                                                       TiXmlElement &_node,
-                                                       bool _type ) const
+  template<class T_INDIVIDUAL>
+  bool Evaluator<T_INDIVIDUAL> :: Save( const t_Individual &_indiv,
+                                        TiXmlElement &_node,
+                                        bool _type ) const
   {
     if ( _type == GA::LOADSAVE_SHORT )
     {
@@ -68,8 +68,8 @@ namespace SingleSite
   //  a normalization procedure is applied which takes into account:
   //  (i) that this ga run is at set concentration (x =x0, y=y0)
   //  (ii) that x and y are only constrained by load-balancing
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
-  void Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: set_concentration( Ising_CE::Structure &_str )
+  template<class T_INDIVIDUAL>
+  void Evaluator<T_INDIVIDUAL> :: set_concentration( Ising_CE::Structure &_str )
   {
     types::t_unsigned N = (types::t_int) _str.atoms.size();
     types::t_complex  *hold = new types::t_complex[ N ];
@@ -107,9 +107,9 @@ namespace SingleSite
   // Takes an "unphysical" individual and set normalizes its sites _sites to +/-1,
   // after flipping the _tochange spins closest to zero.
   // ie sets the concentration
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
-  void Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: normalize( Ising_CE::Structure &_str, 
-                                                            types::t_real _tochange) 
+  template<class T_INDIVIDUAL>
+  void Evaluator<T_INDIVIDUAL> :: normalize( Ising_CE::Structure &_str, 
+                                             types::t_real _tochange) 
   {
     Ising_CE::Structure::t_Atoms::iterator i_end = _str.atoms.end();
     Ising_CE::Structure::t_Atoms::iterator i_which;
@@ -163,8 +163,8 @@ namespace SingleSite
 #endif
   }
 
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
-  bool Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: Load( const TiXmlElement &_node )
+  template<class T_INDIVIDUAL>
+  bool Evaluator<T_INDIVIDUAL> :: Load( const TiXmlElement &_node )
   {
     if ( not lattice.Load( _node ) )
     {
@@ -191,9 +191,9 @@ namespace SingleSite
     return true;
   }
 
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
-  bool Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: Crossover ( t_Individual &_indiv1,
-                                                             const t_Individual &_indiv2 )
+  template<class T_INDIVIDUAL>
+  bool Evaluator<T_INDIVIDUAL> :: Crossover ( t_Individual &_indiv1,
+                                              const t_Individual &_indiv2 )
   {
     t_Object &obj1 = _indiv1;
     const t_Object &obj2 = _indiv2;
@@ -206,10 +206,10 @@ namespace SingleSite
   }
 
   // expects kspace value to exist!!
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
-  bool Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: Krossover( t_Individual  &_offspring,
-                                                            const t_Individual &_parent,
-                                                            bool _range )
+  template<class T_INDIVIDUAL>
+  bool Evaluator<T_INDIVIDUAL> :: Krossover( t_Individual  &_offspring,
+                                             const t_Individual &_parent,
+                                             bool _range )
   {
     t_Object &offspring  = _offspring;
     const t_Object &parent  = _parent;
@@ -243,8 +243,8 @@ namespace SingleSite
     return true; // offspring has changed!
   }
 
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
-  eoGenOp<T_INDIVIDUAL>* Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: LoadGaOp(const TiXmlElement &_el )
+  template<class T_INDIVIDUAL>
+  eoGenOp<T_INDIVIDUAL>* Evaluator<T_INDIVIDUAL> :: LoadGaOp(const TiXmlElement &_el )
   {
     std::string value = _el.Value();
 
@@ -282,17 +282,17 @@ namespace SingleSite
     return NULL;
   }
 
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
-  bool Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: Taboo(const t_Individual &_indiv )
+  template<class T_INDIVIDUAL>
+  bool Evaluator<T_INDIVIDUAL> :: Taboo(const t_Individual &_indiv )
   {
     if ( singlec ) return false;
     x = _indiv.get_concentration();
     return x > lessthan or x < morethan; // if true, _object is taboo
   }
   
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
+  template<class T_INDIVIDUAL>
   GA::Taboo_Base< T_INDIVIDUAL >* 
-       Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS> :: LoadTaboo(const TiXmlElement &_el )
+       Evaluator<T_INDIVIDUAL> :: LoadTaboo(const TiXmlElement &_el )
   {
     if ( singlec ) return NULL;
     const TiXmlElement *child = _el.FirstChildElement( "Concentration" );
@@ -315,8 +315,8 @@ namespace SingleSite
                                     ( *this, &t_This::Taboo, "Taboo" );
   }
 
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS>
-  bool Evaluator<T_INDIVIDUAL,T_INDIV_TRAITS>::initialize( t_Individual &_indiv )
+  template<class T_INDIVIDUAL>
+  bool Evaluator<T_INDIVIDUAL>::initialize( t_Individual &_indiv )
   {
     t_Object &object = _indiv.Object();
     object.bitstring.clear(); 

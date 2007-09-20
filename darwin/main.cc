@@ -10,12 +10,15 @@
 #endif
   #include "bandgap.h"
   typedef BandGap :: Evaluator t_Evaluator;
+  typedef BandGap :: Object t_Object;
 #elif _CE
   #include "ce.h"
   typedef CE :: Evaluator t_Evaluator;
+  typedef CE :: Object t_Object;
 #elif _MOLECULARITY
   #include "molecularity.h"
   typedef Molecularity :: Evaluator t_Evaluator;
+  typedef Molecularity :: Object t_Object;
 #else 
   Need to define _CE or _PESCAN
 #endif
@@ -35,7 +38,8 @@ int main(int argc, char *argv[])
   Print::xmg.init("convex_hull.agr");
   try
   {
-    GA::Darwin< t_Evaluator > ga;
+    typedef Traits::GA< t_Evaluator > t_GATraits;
+    GA::Darwin< t_GATraits > ga;
     if ( not  ga.Load("input.xml") )
       throw std::runtime_error( "Could not load input!!\n" ); 
     ga.run();

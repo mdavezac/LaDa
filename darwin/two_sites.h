@@ -91,16 +91,16 @@ namespace TwoSites
 
   };
 
-  template<class T_INDIVIDUAL, class T_INDIV_TRAITS = Traits::Indiv<T_INDIVIDUAL> >
-  class Evaluator : public GA::Evaluator< T_INDIVIDUAL, T_INDIV_TRAITS >
+  template<class T_INDIVIDUAL >
+  class Evaluator : public GA::Evaluator< T_INDIVIDUAL >
   {
     public:
       typedef T_INDIVIDUAL t_Individual;
-      typedef T_INDIV_TRAITS t_IndivTraits;
     protected:
+      typedef typename t_Individual::t_IndivTraits t_IndivTraits;
       typedef typename t_IndivTraits::t_Object t_Object;
-      typedef GA::Evaluator<t_Individual, t_IndivTraits> t_Base;
-      typedef Evaluator<t_Individual, t_IndivTraits> t_This;
+      typedef GA::Evaluator<t_Individual> t_Base;
+      typedef Evaluator<t_Individual> t_This;
       typedef Traits::GAOp<t_Individual, Concentration, Fourier> t_GAOpTraits;
 
     public:

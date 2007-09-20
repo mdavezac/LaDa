@@ -52,13 +52,13 @@ AC_ARG_ENABLE(ce,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-ce) ;;
      esac],[ce=true])
 
-AC_ARG_ENABLE(darwin,
-     [  --enable-darwin    Turn on darwin],
+AC_ARG_ENABLE(pdarwin,
+     [  --enable-pdarwin    Turn on pescan-darwin],
      [case "${enableval}" in
-       yes) darwin=true ;;
-       no)  darwin=false ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-darwin) ;;
-     esac],[darwin=true])
+       yes) pdarwin=true ;;
+       no)  pdarwin=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-pdarwin) ;;
+     esac],[pdarwin=true])
 
 AC_ARG_ENABLE(debug,
 [  --enable-debug    Turn on debugging],
@@ -122,8 +122,9 @@ AC_SUBST(TINYXML_CFLAGS)
 #  libm 
 AC_CHECK_LIB(m,main)
 
-# enables vff if pescan and darwin are enabled is true
-if test x$pescan = xtrue && test x$darwin = xtrue; then
+# enables vff and pescan for GA
+if test x$pdarwin = xtrue || test x$molecularity = xtrue; then
+  $pescan = true
   $vff = true
 fi
 
@@ -133,7 +134,7 @@ AM_CONDITIONAL(DOPESCAN, test x$pescan = xtrue)
 AM_CONDITIONAL(DOMOLECULARITY, test x$molecularity = xtrue)
 AM_CONDITIONAL(DOCE, test x$ce = xtrue)
 AM_CONDITIONAL(DOVFF, test x$vff = xtrue)
-AM_CONDITIONAL(DODARWIN, test x$darwin = xtrue)
+AM_CONDITIONAL(DOPDARWIN, test x$pdarwin = xtrue)
 AM_CONDITIONAL(NOLAUNCH, test x$nolaunch = xtrue)
 
 #  gsl libs iff vff is enabled 
@@ -158,7 +159,7 @@ AC_SUBST(GSL_INCLUDE)
 AC_SUBST(GSL_LIB)
 
 #  eo libs iff darwin is enabled 
-if test x$darwin = xtrue; then
+if test x$pdarwin = xtrue || test x$molecularity = xtrue; then
   PKG_CHECK_MODULES(EO, eo >= 1.0.1 )
 fi 
 AC_SUBST(GSL_INCLUDE)
@@ -200,13 +201,14 @@ fi
 if test $pescan = true; then
   echo " _ interface to nanopse/pescan functional ";
 fi
-if test $darwin = true; then
-  if test $ce = true; then
-    echo " _ Genetic Algorithm for Cluster Expansion"
-  fi
-  if test $pescan = true; then
-    echo " _ Genetic Algorithm for Band Gap"
-  fi
+if test $pdarwin = true; then
+  echo " _ Genetic Algorithm for Band Gap"
+fi
+if test $ce = true; then
+  echo " _ Genetic Algorithm for Cluster Expansion"
+fi
+if test $molecularity = true; then
+  echo " _ Genetic Algorithm for Molecularity"
 fi
 echo ""
 if test $mpi = true; then

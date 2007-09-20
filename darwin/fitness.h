@@ -25,24 +25,24 @@
 
 namespace Fitness
 {
-  template<class T_QUANTITY = types::t_real, 
-           class T_QUANTITYTRAITS = Traits::Quantity< T_QUANTITY >,
+  template<class T_QUANTITYTRAITS,
            bool IS_SCALAR = T_QUANTITYTRAITS::is_scalar >
   class Base {};
 
-  template<class T_QUANTITY, class T_QUANTITYTRAITS >
-  class Base<T_QUANTITY,T_QUANTITYTRAITS, true>
+  template<class T_QUANTITYTRAITS >
+  class Base<T_QUANTITYTRAITS, true>
   {
-    typedef Base<T_QUANTITY,T_QUANTITYTRAITS, true> t_This;
-    template<class TQUANTITY, class TQUANTITYTRAITS>
+    typedef Base<T_QUANTITYTRAITS, true> t_This;
+    template<class TQUANTITYTRAITS>
       friend inline std::istream & operator>>( std::ostream &_is,
-                                               Base<TQUANTITY,TQUANTITY, true> &_fit );
-    template<class TQUANTITY, class TQUANTITYTRAITS>
-      friend inline std::ostream & operator<<( std::ostream &_is,
-                                               Base<TQUANTITY,TQUANTITY, true> &_fit );
+                                               const Base<TQUANTITYTRAITS, true> &_fit );
+    template<class TQUANTITYTRAITS>
+      friend inline std::ostream & operator<<( std::istream &_is,
+                                               Base<TQUANTITYTRAITS, true> &_fit );
     public:
-      typedef T_QUANTITY t_Quantity;
       typedef T_QUANTITYTRAITS t_QuantityTraits;
+      typedef typename t_QuantityTraits :: t_Quantity t_Quantity;
+      typedef t_This t_ScalarFitness;
 
     protected:
       t_Quantity quantity;
@@ -82,8 +82,8 @@ namespace Fitness
 #endif 
   };
 
-  template<class T_QUANTITY, class T_QUANTITYTRAITS>
-  bool Base<T_QUANTITY,T_QUANTITYTRAITS, true> :: Load( const TiXmlElement & _node )
+  template<class T_QUANTITYTRAITS>
+  bool Base<T_QUANTITYTRAITS, true> :: Load( const TiXmlElement & _node ) 
   {
     if ( not _node.Attribute( "fitness" ) )
     {
@@ -95,8 +95,8 @@ namespace Fitness
     is_valid = true;
     return true;
   }
-  template<class T_QUANTITY, class T_QUANTITYTRAITS>
-  bool Base<T_QUANTITY,T_QUANTITYTRAITS, true> :: Save( TiXmlElement & _node ) const
+  template<class T_QUANTITYTRAITS>
+  bool Base<T_QUANTITYTRAITS, true> :: Save( TiXmlElement & _node ) const
   {
     if ( not is_valid )
     {
@@ -108,28 +108,35 @@ namespace Fitness
     return true;
   }
 
-  template<class T_QUANTITY, class T_QUANTITYTRAITS>
-  inline std::ostream & operator<<( std::ostream &_os, Base<T_QUANTITY,T_QUANTITY, true> &_fit ) 
-    {  return _os << (T_QUANTITY) _fit; }
-  template<class T_QUANTITY, class T_QUANTITYTRAITS>
-  inline std::istream & operator>>( std::istream &_is, Base<T_QUANTITY,T_QUANTITY, true> &_fit ) 
-    {  T_QUANTITY d; _is >> d; _fit = d; return _is; } 
+  template<class T_QUANTITYTRAITS>
+  inline std::ostream & operator<<( std::ostream &_os, const Base<T_QUANTITYTRAITS, true> &_fit ) 
+    {  return _os << (typename T_QUANTITYTRAITS::t_Quantity) _fit; }
+  template<class T_QUANTITYTRAITS>
+  inline std::istream & operator>>( std::istream &_is, Base<T_QUANTITYTRAITS, true> &_fit ) 
+    { typename T_QUANTITYTRAITS::t_Quantity d; _is >> d; _fit = d; return _is; } 
 
 
 
-  template<class T_QUANTITY, class T_QUANTITYTRAITS >
-  class Base<T_QUANTITY,T_QUANTITYTRAITS, false>
+  template<class T_QUANTITYTRAITS >
+  class Base<T_QUANTITYTRAITS, false> :
+        public Base< typename T_QUANTITYTRAITS::t_ScalarQuantityTraits, true >
   {
-    typedef Base<T_QUANTITY,T_QUANTITYTRAITS, false> t_This;
-    template<class TQUANTITY, class TQUANTITYTRAITS>
-      friend inline std::istream & operator>>( std::ostream &_is,
-                                               Base<TQUANTITY,TQUANTITY, true> &_fit );
-    template<class TQUANTITY, class TQUANTITYTRAITS>
-      friend inline std::ostream & operator<<( std::ostream &_is,
-                                               Base<TQUANTITY,TQUANTITY, true> &_fit );
+    typedef Base<T_QUANTITYTRAITS, false> t_This;
+    template<class TQUANTITYTRAITS>
+      friend std::istream & operator>>( std::istream &_is,
+                                        Base<TQUANTITYTRAITS, false> &_fit );
+    template<class TQUANTITYTRAITS>
+      friend std::ostream & operator<<( std::ostream &_os,
+                                        const Base<TQUANTITYTRAITS, false> &_fit );
     public:
-      typedef T_QUANTITY t_Quantity;
       typedef T_QUANTITYTRAITS t_QuantityTraits;
+      typedef typename t_QuantityTraits :: t_Quantity t_Quantity;
+      typedef typename t_QuantityTraits :: t_ScalarQuantityTraits t_ScalarQuantityTraits;
+      typedef Base<t_ScalarQuantityTraits, true> t_ScalarFitness;
+
+    protected:
+      typedef Base<t_ScalarQuantityTraits, true> t_Base;
+
 
     protected:
       t_Quantity quantity;
@@ -137,8 +144,9 @@ namespace Fitness
 
     public:
       Base() : is_valid( false )  {}
-      Base( const Base & _c ) : quantity( _c.quantity ), is_valid( _c.is_valid ) {}
-      Base( const types::t_real _fit ) : quantity( _fit ), is_valid( true ) {}
+      Base( const Base & _c ) : t_Base(_c), quantity( _c.quantity ), is_valid( _c.is_valid ) {}
+      Base( const t_Quantity &_fit ) : t_Base(), quantity( _fit ), is_valid( true ) {}
+      Base( const t_ScalarFitness _fit ) : t_Base( _fit ), is_valid( false ) {}
       ~Base() {}
 
 
@@ -166,59 +174,59 @@ namespace Fitness
 #endif 
   };
 
-  template<class T_QUANTITY, class T_QUANTITYTRAITS>
-  bool Base<T_QUANTITY, T_QUANTITYTRAITS, false> :: operator<( const Base & _f)
+  template<class T_QUANTITYTRAITS>
+  bool Base<T_QUANTITYTRAITS, false> :: operator<( const Base & _f) const
   {
     if( quantity.size() != _f.quantity.size () )
       throw std::runtime_error("quantities of different size in Multi-Objective Fitness!?\n");
-    typename t_Quantity :: iterator i_scalar1 = quantity.begin();
-    typename t_Quantity :: iterator i_scalar1_end = quantity.end();
-    typename t_Quantity :: iterator i_scalar2 = _fit.quantity.begin();
+    typename t_Quantity :: const_iterator i_scalar1 = quantity.begin();
+    typename t_Quantity :: const_iterator i_scalar1_end = quantity.end();
+    typename t_Quantity :: const_iterator i_scalar2 = _f.quantity.begin();
     for(; i_scalar1 != i_scalar1_end; ++i_scalar1, ++i_scalar2 )
       if (     *i_scalar2 > *i_scalar1  
            or std::abs( *i_scalar1 - *i_scalar2 ) < types::tolerance ) return false;
     return true;
   }
-  template<class T_QUANTITY, class T_QUANTITYTRAITS>
-  bool Base<T_QUANTITY, T_QUANTITYTRAITS, false> :: operator<( const Base & _f)
+  template<class T_QUANTITYTRAITS>
+  bool Base<T_QUANTITYTRAITS, false> :: operator>( const Base & _f) const
   {
     if( quantity.size() != _f.quantity.size () )
       throw std::runtime_error("quantities of different size in Multi-Objective Fitness!?\n");
-    typename t_Quantity :: iterator i_scalar1 = quantity.begin();
-    typename t_Quantity :: iterator i_scalar1_end = quantity.end();
-    typename t_Quantity :: iterator i_scalar2 = _fit.quantity.begin();
+    typename t_Quantity :: const_iterator i_scalar1 = quantity.begin();
+    typename t_Quantity :: const_iterator i_scalar1_end = quantity.end();
+    typename t_Quantity :: const_iterator i_scalar2 = _f.quantity.begin();
     for(; i_scalar1 != i_scalar1_end; ++i_scalar1, ++i_scalar2 )
       if (     *i_scalar2 < *i_scalar1  
            or std::abs( *i_scalar1 - *i_scalar2 ) < types::tolerance ) return false;
     return true;
   }
-  template<class T_QUANTITY, class T_QUANTITYTRAITS>
-  bool Base<T_QUANTITY, T_QUANTITYTRAITS, false> :: operator<( const Base & _f)
+  template<class T_QUANTITYTRAITS>
+  bool Base<T_QUANTITYTRAITS, false> :: operator==( const Base & _f) const
   {
     if( quantity.size() != _f.quantity.size () )
       throw std::runtime_error("quantities of different size in Multi-Objective Fitness!?\n");
-    typename t_Quantity :: iterator i_scalar1 = quantity.begin();
-    typename t_Quantity :: iterator i_scalar1_end = quantity.end();
-    typename t_Quantity :: iterator i_scalar2 = _fit.quantity.begin();
+    typename t_Quantity :: const_iterator i_scalar1 = quantity.begin();
+    typename t_Quantity :: const_iterator i_scalar1_end = quantity.end();
+    typename t_Quantity :: const_iterator i_scalar2 = _f.quantity.begin();
     for(; i_scalar1 != i_scalar1_end; ++i_scalar1, ++i_scalar2 )
       if ( std::abs( *i_scalar1 - *i_scalar2 ) > types::tolerance ) return false;
     return true;
   }
-  template<class T_QUANTITY, class T_QUANTITYTRAITS>
-  bool Base<T_QUANTITY,T_QUANTITYTRAITS, false> :: Load( const TiXmlElement & _node )
+  template<class T_QUANTITYTRAITS>
+  bool Base<T_QUANTITYTRAITS, false> :: Load( const TiXmlElement & _node )
   {
     if ( not _node.Attribute( "fitness" ) )
     {
       is_valid = false;
       return false; 
     }
-    std::istringstream istr = _node.Attribute( "fitness" );
+    std::istringstream istr; istr.str( _node.Attribute( "fitness" ) );
     istr >> *this;
     is_valid = true;
     return true;
   }
-  template<class T_QUANTITY, class T_QUANTITYTRAITS>
-  bool Base<T_QUANTITY,T_QUANTITYTRAITS, false> :: Save( TiXmlElement & _node ) const
+  template<class T_QUANTITYTRAITS>
+  bool Base<T_QUANTITYTRAITS, false> :: Save( TiXmlElement & _node ) const
   {
     if ( not is_valid )
     {
@@ -230,18 +238,18 @@ namespace Fitness
     return true;
   }
 
-  template<class T_QUANTITY, class T_QUANTITYTRAITS>
-  inline std::ostream & operator<<( std::ostream &_os, Base<T_QUANTITY,T_QUANTITY, false> &_fit ) 
+  template<class T_QUANTITYTRAITS>
+  inline std::ostream & operator<<( std::ostream &_os, const Base<T_QUANTITYTRAITS, false> &_fit ) 
   {
-    typename T_QUANTITY :: iterator i_q = _fit.quantity.begin();
-    typename T_QUANTITY :: iterator i_q_end = _fit.quantity.end();
+    typename T_QUANTITYTRAITS::t_Quantity :: const_iterator i_q = _fit.quantity.begin();
+    typename T_QUANTITYTRAITS::t_Quantity :: const_iterator i_q_end = _fit.quantity.end();
     _os << _fit.quantity.size() << " ";
     for(; i_q != i_q_end; ++i_q )
       _os << *i_q << " ";
     return _os;
   }
-  template<class T_QUANTITY, class T_QUANTITYTRAITS>
-  inline std::istream & operator>>( std::istream &_is, Base<T_QUANTITY,T_QUANTITY, false> &_fit ) 
+  template<class T_QUANTITYTRAITS>
+  inline std::istream & operator>>( std::istream &_is, Base<T_QUANTITYTRAITS, false> &_fit ) 
   {
     types::t_unsigned n; _is >> n;
     _fit.quantity.clear();

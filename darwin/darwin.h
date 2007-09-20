@@ -32,23 +32,23 @@
 
 namespace GA
 {
-  template< class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
+  template< class T_GATRAITS >
   class Darwin
   {    
     public:
-      typedef T_EVALUATOR t_Evaluator;
-      typedef T_GATRAITS t_GA_Traits;
+      typedef T_GATRAITS t_GATraits;
     private:
-      typedef Darwin<t_Evaluator, t_GA_Traits> t_Darwin;
-      typedef typename t_GA_Traits :: t_Individual       t_Individual;
-      typedef typename t_GA_Traits :: t_QuantityTraits   t_QuantityTraits;
-      typedef typename t_GA_Traits :: t_IndivTraits      t_IndivTraits;
-      typedef typename t_IndivTraits :: t_Object         t_Object;
-      typedef typename t_IndivTraits :: t_Population     t_Population;
-      typedef typename t_IndivTraits :: t_Islands        t_Islands;
-      typedef typename t_QuantityTraits :: t_ScalarQuantity   t_ScalarQuantity;
-      typedef typename Objective :: Types < t_Evaluator, t_GA_Traits >  t_ObjectiveType;
-      typedef typename Store :: Types< t_Evaluator, t_GA_Traits >  t_Store;
+      typedef Darwin<t_GATraits>                            t_Darwin;
+      typedef typename t_GATraits :: t_Individual           t_Individual;
+      typedef typename t_GATraits :: t_Evaluator            t_Evaluator;
+      typedef typename t_GATraits :: t_QuantityTraits       t_QuantityTraits;
+      typedef typename t_GATraits :: t_Object               t_Object;
+      typedef typename t_GATraits :: t_Population           t_Population;
+      typedef typename t_GATraits :: t_Islands              t_Islands;
+      typedef typename t_QuantityTraits :: t_ScalarQuantity t_ScalarQuantity;
+      typedef typename Objective :: Types < t_GATraits >    t_ObjectiveType;
+      typedef typename Store :: Types< t_GATraits >         t_Store;
+//     typedef Ranking :: Base<T_GATRAITS>                   t_Ranking;
 
     protected:
       const static types::t_unsigned SAVE_RESULTS;
@@ -71,15 +71,16 @@ namespace GA
       bool do_print_each_call;
       enum { RANDOM_POPULATE, PARTITION_POPULATE } populate_style;
 
-      IslandsContinuator<t_Individual,t_IndivTraits>*          continuator;
-      History<t_Individual>*                                   history;
-      Taboo_Base<t_Individual>*                                taboos;
-      eoGenOp<t_Individual>*                                   breeder_ops;
-      Breeder<t_Individual, t_IndivTraits>*                    breeder;
-      eoReplacement<t_Individual>*                             replacement;
-      typename t_ObjectiveType::Vector*                        objective;
-      typename t_Store :: Base*                                store;
-      Evaluation::Base<t_Evaluator, t_GA_Traits>*              evaluation;
+      IslandsContinuator<t_GATraits>*    continuator;
+      History<t_Individual>*             history;
+      Taboo_Base<t_Individual>*          taboos;
+      eoGenOp<t_Individual>*             breeder_ops;
+      Breeder<t_GATraits>*               breeder;
+      eoReplacement<t_Individual>*       replacement;
+      typename t_ObjectiveType::Vector*  objective;
+      typename t_Store :: Base*          store;
+      Evaluation::Base<t_GATraits>*      evaluation;
+      //_Ranking*                         ranking;
 
       t_Evaluator   evaluator;
       t_Islands     islands;
@@ -126,12 +127,12 @@ namespace GA
       void partition_populate ( t_Population &_pop, types::t_unsigned _size);
   };
 
-  template< class T_EVALUATOR, class T_GATRAITS >
-    const types::t_unsigned Darwin<T_EVALUATOR,T_GATRAITS> :: SAVE_RESULTS    = 1;
-  template< class T_EVALUATOR, class T_GATRAITS >
-    const types::t_unsigned Darwin<T_EVALUATOR, T_GATRAITS> :: SAVE_POPULATION = 2;
-  template< class T_EVALUATOR, class T_GATRAITS >
-    const types::t_unsigned Darwin<T_EVALUATOR, T_GATRAITS> :: SAVE_HISTORY     = 4;
+  template< class T_GATRAITS >
+    const types::t_unsigned Darwin<T_GATRAITS> :: SAVE_RESULTS    = 1;
+  template< class T_GATRAITS >
+    const types::t_unsigned Darwin<T_GATRAITS> :: SAVE_POPULATION = 2;
+  template< class T_GATRAITS >
+    const types::t_unsigned Darwin<T_GATRAITS> :: SAVE_HISTORY     = 4;
 
 } // namespace GA
 

@@ -26,12 +26,13 @@
 
 namespace GA 
 {
-  template<class T_INDIVIDUAL>
-  class SequentialOp : public eoOpContainer<T_INDIVIDUAL>
+  template<class T_GATRAITS>
+  class SequentialOp : public eoOpContainer<typename T_GATRAITS :: t_Individual >
   {
     protected:
-      typedef T_INDIVIDUAL t_Individual;
+      typedef T_GATRAITS t_GATraits;
     protected:
+      typedef typename t_GATraits :: t_Individual t_Individual;
       using eoOpContainer< t_Individual >::ops;
       using eoOpContainer< t_Individual >::rates;
 
@@ -54,13 +55,13 @@ namespace GA
 
   };
 
-  template<class T_INDIVIDUAL>
-  class ProportionalOp : public eoOpContainer<T_INDIVIDUAL>
+  template<class T_GATRAITS>
+  class ProportionalOp : public eoOpContainer<typename T_GATRAITS :: t_Individual >
   {
     protected:
-      typedef T_INDIVIDUAL t_Individual;
-
+      typedef T_GATRAITS t_GATraits;
     protected:
+      typedef typename t_GATraits :: t_Individual t_Individual;
       using eoOpContainer< t_Individual >::ops;
       using eoOpContainer< t_Individual >::rates;
 
@@ -74,11 +75,13 @@ namespace GA
       virtual std::string className() const {return "GA::ProportionalOp";}
   };
 
-  template<class T_INDIVIDUAL>
-  class TriggeredOp : public eoGenOp<T_INDIVIDUAL>
+  template<class T_GATRAITS>
+  class TriggeredOp : public eoGenOp<typename T_GATRAITS :: t_Individual >
   {
+    public:
+      typedef T_GATRAITS t_GATraits;
     protected:
-      typedef T_INDIVIDUAL t_Individual;
+      typedef typename t_GATraits :: t_Individual t_Individual;
 
     protected:
       bool is_triggered;
@@ -109,11 +112,13 @@ namespace GA
 
   };
 
-  template<class T_INDIVIDUAL>
-  class PeriodicOp : public eoGenOp<T_INDIVIDUAL>
+  template<class T_GATRAITS>
+  class PeriodicOp : public eoGenOp<typename T_GATRAITS :: t_Individual >
   {
+    public:
+      typedef T_GATRAITS t_GATraits;
     protected:
-      typedef T_INDIVIDUAL t_Individual;
+      typedef typename t_GATraits :: t_Individual t_Individual;
       
     protected:
       types::t_unsigned period;
@@ -141,11 +146,13 @@ namespace GA
   };
 
 
-  template<class T_INDIVIDUAL>
-  class AgeOp : public eoMonOp<T_INDIVIDUAL>
+  template<class T_GATRAITS>
+  class AgeOp : public eoMonOp<typename T_GATRAITS :: t_Individual >
   {
+    public:
+      typedef T_GATRAITS t_GATraits;
     protected:
-      typedef T_INDIVIDUAL t_Individual;
+      typedef typename t_GATraits :: t_Individual t_Individual;
       
     protected:
       GenCount &age;

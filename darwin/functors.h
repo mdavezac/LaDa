@@ -37,14 +37,15 @@ namespace GA
  };
 
   // generic class for converting member function to binary operators
-  template<class T_EVALUATOR, class T_GA_TRAITS = Traits::GA<T_EVALUATOR> >
-  class mem_monop_t : public eoMonOp<typename T_GA_TRAITS :: t_Individual > 
+  template<class T_GATRAITS >
+  class mem_monop_t : public eoMonOp<typename T_GATRAITS::t_Individual > 
   {
     public:
-      typedef T_EVALUATOR t_Evaluator; 
-      typedef T_GA_TRAITS t_GA_Traits; 
+      typedef T_GATRAITS t_GATraits;
     protected:
-      typedef typename t_GA_Traits :: t_Individual t_Individual; 
+      typedef typename t_GATraits :: t_Evaluator t_Evaluator; 
+      typedef typename t_GATraits :: t_Individual t_Individual; 
+    public:
       typedef bool ( t_Evaluator :: *t_Function )( t_Individual &);
 
     private:
@@ -91,15 +92,14 @@ namespace GA
   }; 
   
   // generic class for converting member function to binary genetic operators
-  template<class T_EVALUATOR, class T_ARG, class T_GA_TRAITS = Traits::GA<T_EVALUATOR> >
-  class mem_bingenop_arg_t : public eoGenOp<typename T_GA_TRAITS :: t_Individual> 
+  template<class T_EVALUATOR, class T_ARG>
+  class mem_bingenop_arg_t : public eoGenOp<typename T_EVALUATOR :: t_Individual >
   {
     public:
       typedef T_EVALUATOR t_Evaluator;
       typedef T_ARG t_Arg; 
-      typedef T_GA_TRAITS t_GA_Traits; 
     protected:
-      typedef typename t_GA_Traits :: t_Individual t_Individual;
+      typedef typename t_Evaluator :: t_Individual t_Individual; 
     public:
       typedef bool ( t_Evaluator::*t_Function )(t_Individual &, const t_Individual&, t_Arg);
 
@@ -131,14 +131,13 @@ namespace GA
   }; 
 
   // generic class for converting member function to binary genetic operators
-  template<class T_EVALUATOR, class T_GA_TRAITS = Traits::GA<T_EVALUATOR> >
-  class mem_bingenop_t : public eoGenOp<typename T_GA_TRAITS :: t_Individual> 
+  template<class T_EVALUATOR>
+  class mem_bingenop_t : public eoGenOp<typename T_EVALUATOR :: t_Individual> 
   {
     public:
       typedef T_EVALUATOR t_Evaluator;
-      typedef T_GA_TRAITS t_GA_Traits; 
     protected:
-      typedef typename t_GA_Traits :: t_Individual t_Individual;
+      typedef typename t_Evaluator::t_Individual t_Individual; 
     public:
       typedef bool ( t_Evaluator::*t_Function )(t_Individual &, const t_Individual&);
 
@@ -170,16 +169,17 @@ namespace GA
 
   template< class T_EVALUATOR, class T_ARGS >
     mem_bingenop_arg_t<T_EVALUATOR, T_ARGS>*
-        new_genop ( T_EVALUATOR &_eval, 
-                    typename mem_bingenop_arg_t<T_EVALUATOR, T_ARGS> :: t_Function _func,
-                    const std::string  &_str, T_ARGS _arg )
+        new_genop( T_EVALUATOR &_eval, 
+                   typename mem_bingenop_arg_t<T_EVALUATOR, T_ARGS> :: t_Function _func,
+                   const std::string  &_str, T_ARGS _arg )
     {
       return new mem_bingenop_arg_t<T_EVALUATOR, T_ARGS>( _eval, _func, _str, _arg );
     }
-  template< class T_EVALUATOR>
-    mem_bingenop_t<T_EVALUATOR>*  new_genop ( T_EVALUATOR &_eval,
-                                              typename mem_bingenop_t<T_EVALUATOR> :: t_Function _func,
-                                              const std::string  &_str )
+  template< class T_EVALUATOR >
+    mem_bingenop_t<T_EVALUATOR>* 
+      new_genop ( T_EVALUATOR &_eval,
+                  typename mem_bingenop_t<T_EVALUATOR> :: t_Function _func,
+                  const std::string  &_str )
     {
       return new mem_bingenop_t<T_EVALUATOR>( _eval, _func, _str );
     }
@@ -200,14 +200,14 @@ namespace GA
       { return false; } // do nothing!
   };
 
-  template< class T_INDIVIDUAL, class T_INDIV_TRAITS = Traits::Indiv<T_INDIVIDUAL>  >
-  class Continuator : public eoContinue< T_INDIVIDUAL >
+  template< class T_GATRAITS >
+  class Continuator : public eoContinue< typename T_GATRAITS::t_Individual >
   {
     public:
-      typedef T_INDIVIDUAL t_Individual;
-      typedef T_INDIV_TRAITS t_IndivTraits;
+      typedef T_GATRAITS t_GATraits;
     protected:
-      typedef typename t_IndivTraits :: t_Population t_Population;
+      typedef typename t_GATraits::t_Individual t_Individual;
+      typedef typename t_GATraits::t_Population t_Population;
 
     protected:
       eoF<bool> &op;

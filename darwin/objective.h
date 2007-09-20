@@ -27,24 +27,24 @@
 
 namespace Objective
 {
-  template< class T_EVALUATOR, class T_GA_TRAITS = Traits::GA<T_EVALUATOR>, 
+  template< class T_GA_TRAITS,
             class T_QUANTITY_TRAITS = typename T_GA_TRAITS :: t_QuantityTraits,
             class T_VA_TRAITS = typename T_GA_TRAITS :: t_VA_Traits >
   class Base
   {
     public: 
-      typedef T_EVALUATOR t_Evaluator;
-      typedef T_GA_TRAITS t_GA_Traits;
+      typedef T_GA_TRAITS t_GATraits;
       typedef T_QUANTITY_TRAITS t_QuantityTraits;
       typedef T_VA_TRAITS t_VA_Traits;
     protected:
-      typedef typename t_GA_Traits :: t_Individual t_Individual;
-      typedef typename t_QuantityTraits :: t_Quantity t_Quantity;
+      typedef typename t_GATraits :: t_Evaluator           t_Evaluator;
+      typedef typename t_GATraits :: t_Individual          t_Individual;
+      typedef typename t_QuantityTraits :: t_Quantity       t_Quantity;
       typedef typename t_QuantityTraits :: t_ScalarQuantity t_ScalarQuantity;
-      typedef typename t_VA_Traits :: t_QuantityGradients t_QuantityGradients;
-      typedef typename t_VA_Traits :: t_Type t_VA_Type;
-      typedef GA::SaveObject<t_Evaluator> t_SaveOp;
-      typedef GA::LoadObject<t_Evaluator> t_LoadOp;
+      typedef typename t_VA_Traits :: t_QuantityGradients   t_QuantityGradients;
+      typedef typename t_VA_Traits :: t_Type                t_VA_Type;
+      typedef GA::SaveObject<t_GATraits>                    t_SaveOp;
+      typedef GA::LoadObject<t_GATraits>                    t_LoadOp;
     protected:
       static const t_Individual *current_indiv;
     public:
@@ -72,33 +72,32 @@ namespace Objective
       virtual bool Restart( const  TiXmlElement &_node, t_LoadOp &_op) { return true; };
       virtual bool does_store() const { return false; }
   };
-  template< class T_EVALUATOR, class T_GA_TRAITS, class T_QUANTITY_TRAITS, class T_VA_TRAITS >
-  void Base<T_EVALUATOR, T_GA_TRAITS, T_QUANTITY_TRAITS, T_VA_TRAITS> :: init( const t_Individual & _indiv)
-    { Base<T_EVALUATOR, T_GA_TRAITS, T_QUANTITY_TRAITS, T_VA_TRAITS> :: current_indiv = &_indiv; }
-  template< class T_EVALUATOR, class T_GA_TRAITS, class T_QUANTITY_TRAITS, class T_VA_TRAITS >
-    const typename Base<T_EVALUATOR, T_GA_TRAITS, T_QUANTITY_TRAITS, T_VA_TRAITS> :: t_Individual* 
-      Base<T_EVALUATOR, T_GA_TRAITS, T_QUANTITY_TRAITS, T_VA_TRAITS> :: current_indiv = NULL;
+  template< class T_GA_TRAITS, class T_QUANTITY_TRAITS, class T_VA_TRAITS >
+  void Base<T_GA_TRAITS, T_QUANTITY_TRAITS, T_VA_TRAITS> :: init( const t_Individual & _indiv)
+    { Base<T_GA_TRAITS, T_QUANTITY_TRAITS, T_VA_TRAITS> :: current_indiv = &_indiv; }
+  template<class T_GA_TRAITS, class T_QUANTITY_TRAITS, class T_VA_TRAITS >
+    const typename Base<T_GA_TRAITS, T_QUANTITY_TRAITS, T_VA_TRAITS> :: t_Individual* 
+      Base<T_GA_TRAITS, T_QUANTITY_TRAITS, T_VA_TRAITS> :: current_indiv = NULL;
  
   template< class T_TYPE, bool is_vectorial > struct fork;
 
-  template < class T_EVALUATOR, class T_GA_TRAITS = Traits::GA<T_EVALUATOR> >
+  template <class T_GA_TRAITS >
     struct Types
     {
       template< class T_TYPE, bool is_vectorial > friend struct fork;
       public:
-        typedef T_EVALUATOR t_Evaluator;
-        typedef T_GA_TRAITS t_GA_Traits;
+        typedef T_GA_TRAITS t_GATraits;
       protected:
-        typedef typename t_Evaluator :: t_Individual t_Individual;
-        typedef typename t_Evaluator :: t_IndivTraits t_IndivTraits;
-        typedef typename t_IndivTraits :: t_QuantityTraits t_QuantityTraits;
-        typedef typename t_QuantityTraits :: t_ScalarQuantity t_ScalarQuantity;
+        typedef typename t_GATraits::t_Evaluator            t_Evaluator;
+        typedef typename t_GATraits::t_Individual           t_Individual;
+        typedef typename t_GATraits::t_QuantityTraits       t_QuantityTraits;
+        typedef typename t_QuantityTraits::t_ScalarQuantity t_ScalarQuantity;
 
       public:
-        typedef Base< t_Evaluator, t_GA_Traits, 
+        typedef Base< t_GATraits, 
                       typename Traits::Quantity< t_ScalarQuantity >,
                       typename Traits::VA< std::vector<t_ScalarQuantity> > > Scalar;
-        typedef Base<t_Evaluator, t_GA_Traits >  Vector;
+        typedef Base< t_GATraits >  Vector;
 
 
 
@@ -109,21 +108,20 @@ namespace Objective
         static Vector* vector_from_xml( const TiXmlElement &_node );
     };
 
-  template< class T_EVALUATOR, class T_GA_TRAITS >
-  class Maximize : public Types< T_EVALUATOR, T_GA_TRAITS > :: Scalar
+  template< class T_GA_TRAITS >
+  class Maximize : public Types< T_GA_TRAITS > :: Scalar
   {
     public:
-      typedef T_EVALUATOR t_Evaluator;
-      typedef T_GA_TRAITS t_GA_Traits;
+      typedef T_GA_TRAITS t_GATraits;
     protected:
-      typedef typename Types<t_Evaluator, t_GA_Traits> :: Scalar t_Base;
-      typedef typename t_GA_Traits :: t_Individual t_Individual;
-      typedef typename t_GA_Traits :: t_IndivTraits t_IndivTraits;
-      typedef typename t_Base :: t_Quantity t_Quantity;
-      typedef typename t_Base :: t_ScalarQuantity t_ScalarQuantity;
-      typedef typename t_Base :: t_VA_Traits t_VA_Traits;
+      typedef typename t_GATraits :: t_Evaluator         t_Evaluator;
+      typedef typename Types<t_GATraits> :: Scalar       t_Base;
+      typedef typename t_GATraits :: t_Individual        t_Individual;
+      typedef typename t_Base :: t_Quantity               t_Quantity;
+      typedef typename t_Base :: t_ScalarQuantity         t_ScalarQuantity;
+      typedef typename t_Base :: t_VA_Traits              t_VA_Traits;
       typedef typename t_VA_Traits :: t_QuantityGradients t_QuantityGradients;
-      typedef typename t_VA_Traits :: t_Type t_VA_Type;
+      typedef typename t_VA_Traits :: t_Type              t_VA_Type;
 
     public:
       Maximize() {}
@@ -159,21 +157,20 @@ namespace Objective
       virtual std::string what_is() const { return " Maximize"; }
       virtual std::string print() const { return ""; }
   };
-  template< class T_EVALUATOR, class T_GA_TRAITS >
-  class Minimize : public Types< T_EVALUATOR, T_GA_TRAITS > :: Scalar
+  template< class T_GA_TRAITS >
+  class Minimize : public Types< T_GA_TRAITS > :: Scalar
   {
     public:
-      typedef T_EVALUATOR t_Evaluator;
-      typedef T_GA_TRAITS t_GA_Traits;
+      typedef T_GA_TRAITS t_GATraits;
     protected:
-      typedef typename Types<t_Evaluator, t_GA_Traits> :: Scalar t_Base;
-      typedef typename t_GA_Traits :: t_Individual t_Individual;
-      typedef typename t_GA_Traits :: t_IndivTraits t_IndivTraits;
-      typedef typename t_Base :: t_Quantity t_Quantity;
-      typedef typename t_Base :: t_ScalarQuantity t_ScalarQuantity;
-      typedef typename t_Base :: t_VA_Traits t_VA_Traits;
+      typedef typename Types<t_GATraits> :: Scalar       t_Base;
+      typedef typename t_GATraits :: t_Individual        t_Individual;
+      typedef typename t_GATraits :: t_IndivTraits       t_IndivTraits;
+      typedef typename t_Base :: t_Quantity               t_Quantity;
+      typedef typename t_Base :: t_ScalarQuantity         t_ScalarQuantity;
+      typedef typename t_Base :: t_VA_Traits              t_VA_Traits;
       typedef typename t_VA_Traits :: t_QuantityGradients t_QuantityGradients;
-      typedef typename t_VA_Traits :: t_Type t_VA_Type;
+      typedef typename t_VA_Traits :: t_Type              t_VA_Type;
 
     public:
       Minimize() {}
@@ -209,21 +206,20 @@ namespace Objective
       virtual std::string what_is() const { return " Minimize"; }
       virtual std::string print() const { return ""; }
   };
-  template< class T_EVALUATOR, class T_GA_TRAITS >
-  class Target : public Types< T_EVALUATOR, T_GA_TRAITS > :: Scalar
+  template< class T_GA_TRAITS >
+  class Target : public Types< T_GA_TRAITS > :: Scalar
   {
     public:
-      typedef T_EVALUATOR t_Evaluator;
-      typedef T_GA_TRAITS t_GA_Traits;
+      typedef T_GA_TRAITS t_GATraits;
     protected:
-      typedef typename Types<t_Evaluator, t_GA_Traits> :: Scalar t_Base;
-      typedef typename t_GA_Traits :: t_Individual t_Individual;
-      typedef typename t_GA_Traits :: t_IndivTraits t_IndivTraits;
-      typedef typename t_Base :: t_Quantity t_Quantity;
-      typedef typename t_Base :: t_ScalarQuantity t_ScalarQuantity;
-      typedef typename t_Base :: t_VA_Traits t_VA_Traits;
+      typedef typename Types<t_GATraits> :: Scalar       t_Base;
+      typedef typename t_GATraits :: t_Individual        t_Individual;
+      typedef typename t_GATraits :: t_IndivTraits       t_IndivTraits;
+      typedef typename t_Base :: t_Quantity               t_Quantity;
+      typedef typename t_Base :: t_ScalarQuantity         t_ScalarQuantity;
+      typedef typename t_Base :: t_VA_Traits              t_VA_Traits;
       typedef typename t_VA_Traits :: t_QuantityGradients t_QuantityGradients;
-      typedef typename t_VA_Traits :: t_Type t_VA_Type;
+      typedef typename t_VA_Traits :: t_Type              t_VA_Type;
 
     protected:
       t_ScalarQuantity target; 
@@ -278,24 +274,23 @@ namespace Objective
         return sstr.str();
       }
   };
-  template< class T_EVALUATOR, class T_GA_TRAITS >
-  class ConvexHull : public Types< T_EVALUATOR, T_GA_TRAITS > :: Scalar
+  template< class T_GA_TRAITS >
+  class ConvexHull : public Types< T_GA_TRAITS > :: Scalar
   {
     public:
-      typedef T_EVALUATOR t_Evaluator;
-      typedef T_GA_TRAITS t_GA_Traits;
+      typedef T_GA_TRAITS t_GATraits;
     protected:
-      typedef typename Types<t_Evaluator, t_GA_Traits> :: Scalar t_Base;
-      typedef typename t_GA_Traits :: t_Individual t_Individual;
-      typedef typename t_GA_Traits :: t_IndivTraits t_IndivTraits;
-      typedef typename t_Base :: t_Quantity t_Quantity;
-      typedef typename t_Base :: t_ScalarQuantity t_ScalarQuantity;
-      typedef opt::ConvexHull::Base<t_Individual> t_ConvexHull;
-      typedef typename t_Base :: t_VA_Traits t_VA_Traits;
+      typedef typename Types<t_GATraits> :: Scalar       t_Base;
+      typedef typename t_GATraits :: t_Individual        t_Individual;
+      typedef typename t_GATraits :: t_IndivTraits       t_IndivTraits;
+      typedef typename t_Base :: t_Quantity               t_Quantity;
+      typedef typename t_Base :: t_ScalarQuantity         t_ScalarQuantity;
+      typedef opt::ConvexHull::Base<t_Individual>         t_ConvexHull;
+      typedef typename t_Base :: t_VA_Traits              t_VA_Traits;
       typedef typename t_VA_Traits :: t_QuantityGradients t_QuantityGradients;
-      typedef typename t_VA_Traits :: t_Type t_VA_Type;
-      typedef GA::SaveObject<t_Evaluator> t_SaveOp;
-      typedef GA::LoadObject<t_Evaluator> t_LoadOp;
+      typedef typename t_VA_Traits :: t_Type              t_VA_Type;
+      typedef GA::SaveObject<t_GATraits>                 t_SaveOp;
+      typedef GA::LoadObject<t_GATraits>                 t_LoadOp;
 
     protected:
       t_ConvexHull convexhull; 
@@ -333,9 +328,9 @@ namespace Objective
         { return convexhull.Load( _node, _op ); };
       virtual bool does_store() const { return true; }
   };
-  template< class T_EVALUATOR, class T_GA_TRAITS >
-  typename ConvexHull<T_EVALUATOR, T_GA_TRAITS> :: t_ScalarQuantity
-    ConvexHull<T_EVALUATOR, T_GA_TRAITS> :: operator()(const t_Quantity& _val)
+  template< class T_GA_TRAITS >
+  typename ConvexHull<T_GA_TRAITS> :: t_ScalarQuantity
+    ConvexHull<T_GA_TRAITS> :: operator()(const t_Quantity& _val)
     {
       t_Quantity x = current_indiv->get_concentration();
       t_Quantity base = (t_Quantity) convexhull.evaluate( x );
@@ -347,9 +342,9 @@ namespace Objective
 
       return 0.0;
     }
-  template< class T_EVALUATOR, class T_GA_TRAITS >
-  typename ConvexHull<T_EVALUATOR, T_GA_TRAITS> :: t_ScalarQuantity
-    ConvexHull<T_EVALUATOR, T_GA_TRAITS> :: evaluate_with_gradient( const t_Quantity &_val,
+  template< class T_GA_TRAITS >
+  typename ConvexHull<T_GA_TRAITS> :: t_ScalarQuantity
+    ConvexHull<T_GA_TRAITS> :: evaluate_with_gradient( const t_Quantity &_val,
                                                                         t_QuantityGradients &_grad,
                                                                         t_VA_Type *_i_grad)
     {
@@ -370,9 +365,9 @@ namespace Objective
 
       return 0.0;
     }
-  template< class T_EVALUATOR, class T_GA_TRAITS >
-  typename ConvexHull<T_EVALUATOR, T_GA_TRAITS> :: t_VA_Type
-    ConvexHull<T_EVALUATOR, T_GA_TRAITS> :: evaluate_one_gradient( const t_Quantity &_val,
+  template< class T_GA_TRAITS >
+  typename ConvexHull<T_GA_TRAITS> :: t_VA_Type
+    ConvexHull<T_GA_TRAITS> :: evaluate_one_gradient( const t_Quantity &_val,
                                                                    t_QuantityGradients &_grad,
                                                                    types::t_unsigned _n) 
     {
@@ -383,26 +378,25 @@ namespace Objective
     }
 
 
-  template< class T_EVALUATOR, class T_GA_TRAITS >
-  class Container : public Types<T_EVALUATOR, T_GA_TRAITS> :: Vector
+  template<class T_GA_TRAITS >
+  class Container : public Types<T_GA_TRAITS> :: Vector
   {
     public:
-      typedef T_EVALUATOR t_Evaluator;
-      typedef T_GA_TRAITS t_GA_Traits;
+      typedef T_GA_TRAITS t_GATraits;
     protected:
-      typedef Types<t_Evaluator, t_GA_Traits> t_ObjectiveType;
-      typedef typename t_ObjectiveType :: Vector t_Base;
-      typedef typename t_GA_Traits :: t_Individual t_Individual;
-      typedef typename t_GA_Traits :: t_IndivTraits t_IndivTraits;
-      typedef typename t_Base :: t_Quantity t_Quantity;
-      typedef typename t_Base :: t_ScalarQuantity t_ScalarQuantity;
-      typedef typename t_ObjectiveType :: Scalar t_Objective;
-      typedef std::vector< t_Objective* > t_Objectives;
-      typedef typename t_Base :: t_VA_Traits t_VA_Traits;
+      typedef Types<t_GATraits>                          t_ObjectiveType;
+      typedef typename t_ObjectiveType :: Vector          t_Base;
+      typedef typename t_GATraits :: t_Individual        t_Individual;
+      typedef typename t_GATraits :: t_IndivTraits       t_IndivTraits;
+      typedef typename t_Base :: t_Quantity               t_Quantity;
+      typedef typename t_Base :: t_ScalarQuantity         t_ScalarQuantity;
+      typedef typename t_ObjectiveType :: Scalar          t_Objective;
+      typedef std::vector< t_Objective* >                 t_Objectives;
+      typedef typename t_Base :: t_VA_Traits              t_VA_Traits;
       typedef typename t_VA_Traits :: t_QuantityGradients t_QuantityGradients;
-      typedef typename t_VA_Traits :: t_Type t_VA_Type;
-      typedef GA::SaveObject<t_Evaluator> t_SaveOp;
-      typedef GA::LoadObject<t_Evaluator> t_LoadOp;
+      typedef typename t_VA_Traits :: t_Type              t_VA_Type;
+      typedef GA::SaveObject<t_GATraits>                 t_SaveOp;
+      typedef GA::LoadObject<t_GATraits>                 t_LoadOp;
 
     protected:
       t_Objectives objectives;
@@ -461,25 +455,25 @@ namespace Objective
       }
   };
 
-  template< class T_EVALUATOR, class T_GA_TRAITS >
-  class LinearSum : public Container<T_EVALUATOR, T_GA_TRAITS>
+  template<class T_GA_TRAITS >
+  class LinearSum : public Container<T_GA_TRAITS>
   {
     public:
-      typedef T_EVALUATOR t_Evaluator;
-      typedef T_GA_TRAITS t_GA_Traits;
+      typedef T_GA_TRAITS t_GATraits;
     protected:
-      typedef Types<t_Evaluator, t_GA_Traits> t_ObjectiveType;
-      typedef Container<t_Evaluator, t_GA_Traits> t_Base;
-      typedef typename t_GA_Traits :: t_Individual t_Individual;
-      typedef typename t_GA_Traits :: t_IndivTraits t_IndivTraits;
-      typedef typename t_IndivTraits :: t_QuantityTraits t_QuantityTraits;
-      typedef typename t_QuantityTraits :: t_Quantity t_Quantity;
-      typedef typename t_QuantityTraits :: t_ScalarQuantity t_ScalarQuantity;
-      typedef typename t_ObjectiveType :: Scalar t_Objective;
-      typedef typename t_Base :: t_VA_Traits t_VA_Traits;
-      typedef typename t_VA_Traits :: t_Type t_VA_Type;
+      typedef Types<t_GATraits>                      t_ObjectiveType;
+      typedef Container<t_GATraits>                  t_Base;
+      typedef typename t_Base :: t_Individual        t_Individual;
+      typedef typename t_Base :: t_QuantityTraits    t_QuantityTraits;
+      typedef typename t_Base :: t_Quantity          t_Quantity;
+      typedef typename t_Base :: t_ScalarQuantity    t_ScalarQuantity;
+      typedef typename t_Base :: t_Objective         t_Objective;
+      typedef std::vector< t_Objective* >            t_Objectives;
+      typedef typename t_Base :: t_VA_Traits         t_VA_Traits;
       typedef typename t_VA_Traits :: t_QuantityGradients t_QuantityGradients;
-      typedef typename t_Base::t_Objectives t_Objectives;
+      typedef typename t_VA_Traits :: t_Type              t_VA_Type;
+      typedef GA::SaveObject<t_GATraits>             t_SaveOp;
+      typedef GA::LoadObject<t_GATraits>             t_LoadOp;
 
     protected:
       using t_Base :: objectives;
@@ -521,9 +515,9 @@ namespace Objective
      
   };
   
-  template< class T_EVALUATOR, class T_GA_TRAITS >
-    typename LinearSum<T_EVALUATOR,T_GA_TRAITS>::t_ScalarQuantity
-      LinearSum<T_EVALUATOR,T_GA_TRAITS> :: operator()( const t_Quantity& _val ) 
+  template< class T_GA_TRAITS >
+    typename LinearSum<T_GA_TRAITS>::t_ScalarQuantity
+      LinearSum<T_GA_TRAITS> :: operator()( const t_Quantity& _val ) 
       {
         if ( t_QuantityTraits::size(_val) != coefs.size() )
           throw std::runtime_error( "Wrong number of objective functions\n" );
@@ -539,9 +533,9 @@ namespace Objective
           
         return inter;
       };
-  template< class T_EVALUATOR, class T_GA_TRAITS >
-    typename LinearSum<T_EVALUATOR,T_GA_TRAITS>::t_ScalarQuantity
-      LinearSum<T_EVALUATOR,T_GA_TRAITS> :: evaluate_with_gradient( const t_Quantity &_val,
+  template< class T_GA_TRAITS >
+    typename LinearSum<T_GA_TRAITS>::t_ScalarQuantity
+      LinearSum<T_GA_TRAITS> :: evaluate_with_gradient( const t_Quantity &_val,
                                                                     t_QuantityGradients &_grad,
                                                                     t_VA_Type *_i_grad)
       {
@@ -581,9 +575,9 @@ namespace Objective
           
         return results;
       };
-  template< class T_EVALUATOR, class T_GA_TRAITS >
+  template< class T_GA_TRAITS >
     void
-      LinearSum<T_EVALUATOR,T_GA_TRAITS> ::  evaluate_gradient( const t_Quantity &_val,
+      LinearSum<T_GA_TRAITS> ::  evaluate_gradient( const t_Quantity &_val,
                                                                 t_QuantityGradients &_grad,
                                                                 t_VA_Type *_i_grad)
       {
@@ -619,9 +613,9 @@ namespace Objective
 
         delete[] const_grad_result;
       };
-  template< class T_EVALUATOR, class T_GA_TRAITS >
-    typename LinearSum<T_EVALUATOR,T_GA_TRAITS>::t_VA_Type
-      LinearSum<T_EVALUATOR,T_GA_TRAITS> :: evaluate_one_gradient( const t_Quantity & _val,
+  template< class T_GA_TRAITS >
+    typename LinearSum<T_GA_TRAITS>::t_VA_Type
+      LinearSum<T_GA_TRAITS> :: evaluate_one_gradient( const t_Quantity & _val,
                                                                    t_QuantityGradients& _grad,
                                                                    types::t_unsigned _n)
       {
@@ -644,9 +638,9 @@ namespace Objective
         return result;
       };
 
-  template< class T_EVALUATOR, class T_GA_TRAITS >
-     typename Types<T_EVALUATOR, T_GA_TRAITS> :: Scalar*
-      Types<T_EVALUATOR, T_GA_TRAITS> :: scalar_from_xml( const TiXmlElement &_node )
+  template< class T_GA_TRAITS >
+     typename Types<T_GA_TRAITS> :: Scalar*
+      Types<T_GA_TRAITS> :: scalar_from_xml( const TiXmlElement &_node )
       {
         if ( not &_node ) return NULL;
         std::string str = "minimize"; 
@@ -662,92 +656,93 @@ namespace Objective
         if ( str.compare("convexhull") == 0 )
         {
           Print::xmg << Print::Xmg::comment << "Objective: ConvexHull" << Print::endl;
-          return new ConvexHull<t_Evaluator, t_GA_Traits>;
-        }
-        else if ( str.compare("minimize") == 0 )
-        {
-          Print::xmg << Print::Xmg::comment << "Objective: Minimize" << Print::endl;
-          return new Minimize<t_Evaluator, t_GA_Traits>;
-        }
-        else if ( str.compare("maximize") == 0 )
-        {
-          Print::xmg << Print::Xmg::comment << "Objective: Maximize" << Print::endl;
-          return new Maximize<t_Evaluator, t_GA_Traits>;
-        }
-        else if (str.compare("target") == 0 )
-        {
-          if( _node.Attribute("target") )
-          {
-            double d; _node.Attribute("target", &d );
-            Print::xmg << Print::Xmg::comment
-                       << "Objective: Target (" << d << ")" << Print::endl;
-            return new Target<t_Evaluator, t_GA_Traits>( (types::t_real) d );
+            return new ConvexHull<t_GATraits>;
           }
-        }
-        if ( _node.FirstChildElement( "Objective" ) )
-         return scalar_from_xml( *_node.FirstChildElement( "Objective" ) ); 
-
-        return NULL;
-      }
-  template< class T_EVALUATOR, class T_GA_TRAITS >
-     typename Types<T_EVALUATOR, T_GA_TRAITS> :: Vector*
-      Types<T_EVALUATOR, T_GA_TRAITS> :: vector_from_xml( const TiXmlElement &_node )
-      {
-        if ( not &_node ) return NULL;
-        std::string str = "minimize"; 
-        std::string name = Print::lowercase(_node.Value());
-        if (    name.compare("Objective") == 0 
-             or name.compare("Method") == 0 )
-        {
-          if ( _node.Attribute( "type" ) )
-            str = Print::lowercase(_node.Attribute( "type" ));
-        }
-        if ( Vector::t_QuantityTraits::is_vectorial and str.compare("LinearSum") == 0 )
-        {
-          LinearSum<T_EVALUATOR, T_GA_TRAITS> *linear = new LinearSum<T_EVALUATOR, T_GA_TRAITS>;
-          if ( not linear ) 
+          else if ( str.compare("minimize") == 0 )
           {
-            std::cerr << "Mememory Pb when creating LinearSum multi-objective" << std::endl;
-            return NULL;
+            Print::xmg << Print::Xmg::comment << "Objective: Minimize" << Print::endl;
+            return new Minimize<t_GATraits>;
           }
-          const TiXmlElement *child = child->FirstChildElement("Objective");
-          for(; child; child = child->NextSiblingElement("Objective") )
+          else if ( str.compare("maximize") == 0 )
           {
-            Scalar* scalar = scalar_from_xml( *child );
-            if ( not scalar ) continue;
-            double d = 0.0;
-            if ( not child->Attribute("coef", &d) ) d = 1.0;
-            linear->add( scalar, t_ScalarQuantity(d) );
+            Print::xmg << Print::Xmg::comment << "Objective: Maximize" << Print::endl;
+            return new Maximize<t_GATraits>;
           }
+          else if (str.compare("target") == 0 )
+          {
+            if( _node.Attribute("target") )
+            {
+              double d; _node.Attribute("target", &d );
+              Print::xmg << Print::Xmg::comment
+                         << "Objective: Target (" << d << ")" << Print::endl;
+              return new Target<t_GATraits>( (types::t_real) d );
+            }
+          }
+          if ( _node.FirstChildElement( "Objective" ) )
+           return scalar_from_xml( *_node.FirstChildElement( "Objective" ) ); 
+
+          return NULL;
+        }
+    template< class T_GA_TRAITS >
+       typename Types<T_GA_TRAITS> :: Vector*
+        Types<T_GA_TRAITS> :: vector_from_xml( const TiXmlElement &_node )
+        {
+          if ( not &_node ) return NULL;
+          std::string str = "minimize"; 
+          std::string name = Print::lowercase(_node.Value());
+          if (    name.compare("Objective") == 0 
+               or name.compare("Method") == 0 )
+          {
+            if ( _node.Attribute( "type" ) )
+              str = Print::lowercase(_node.Attribute( "type" ));
+          }
+          if ( Vector::t_QuantityTraits::is_vectorial and str.compare("LinearSum") == 0 )
+          {
+            LinearSum<T_GA_TRAITS> *linear = new LinearSum<T_GA_TRAITS>;
+            if ( not linear ) 
+            {
+              std::cerr << "Mememory Pb when creating LinearSum multi-objective" << std::endl;
+              return NULL;
+            }
+            const TiXmlElement *child = child->FirstChildElement("Objective");
+            for(; child; child = child->NextSiblingElement("Objective") )
+            {
+              Scalar* scalar = scalar_from_xml( *child );
+              if ( not scalar ) continue;
+              double d = 0.0;
+              if ( not child->Attribute("coef", &d) ) d = 1.0;
+              linear->add( scalar, t_ScalarQuantity(d) );
+            }
+            return linear;
+          }
+
+          if ( _node.FirstChildElement( "Objective" ) )
+           return new_from_xml( *_node.FirstChildElement( "Objective" ) ); 
+
+          return NULL;
         }
 
-        if ( _node.FirstChildElement( "Objective" ) )
-         return new_from_xml( *_node.FirstChildElement( "Objective" ) ); 
-
-        return NULL;
-      }
-
- 
-  // bullshit class since there is no such thing as partial specialization of functions!!
-  template< class T_TYPE, bool IS_VECTORIAL > 
-    struct fork
-    {
-      typename T_TYPE :: Vector* operator()( const TiXmlElement &_node )
+   
+    // bullshit class since there is no such thing as partial specialization of functions!!
+    template< class T_TYPE, bool IS_VECTORIAL > 
+      struct fork
       {
-        typename T_TYPE :: Vector* result;
-        result = T_TYPE::vector_from_xml( _node );
-        if( not result ) std::cerr << "Could not create multi-objective..." << std::endl;
-        return result;
-      }
-    };
-  template< class T_TYPE > 
-    struct fork<T_TYPE, false>
-    {
-      typename T_TYPE :: Vector* operator()( const TiXmlElement &_node )
+        typename T_TYPE :: Vector* operator()( const TiXmlElement &_node )
+        {
+          typename T_TYPE :: Vector* result;
+          result = T_TYPE::vector_from_xml( _node );
+          if( not result ) std::cerr << "Could not create multi-objective..." << std::endl;
+          return result;
+        }
+      };
+    template< class T_TYPE > 
+      struct fork<T_TYPE, false>
       {
-        return T_TYPE::scalar_from_xml( _node );
-      }
-    };
+        typename T_TYPE :: Vector* operator()( const TiXmlElement &_node )
+        {
+          return T_TYPE::scalar_from_xml( _node );
+        }
+      };
 
-}  // namespace Objective
+  }  // namespace Objective
 #endif //  _MULTIOB_OBJECTIVE_H_

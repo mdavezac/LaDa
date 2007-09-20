@@ -33,6 +33,7 @@ namespace Traits
     {
       typedef T_QUANTITY  t_Quantity;  
       typedef typename t_Quantity :: value_type   t_ScalarQuantity;
+      typedef Quantity<t_ScalarQuantity>  t_ScalarQuantityTraits;  
       typedef std::vector< t_Quantity > t_QuantityGradients;
       bool const static is_vectorial = true;
       bool const static is_scalar = false;
@@ -65,6 +66,7 @@ namespace Traits
     {
       typedef types::t_real  t_ScalarQuantity;
       typedef types::t_real  t_Quantity;  
+      typedef Quantity<t_ScalarQuantity>  t_ScalarQuantityTraits;  
       typedef std::vector< t_Quantity > t_QuantityGradients;
       bool const static is_vectorial = false;
       bool const static is_scalar = true;
@@ -93,6 +95,7 @@ namespace Traits
     {
       typedef types::t_int   t_ScalarQuantity;
       typedef types::t_int   t_Quantity;  
+      typedef Quantity<t_ScalarQuantity>  t_ScalarQuantityTraits;  
       typedef std::vector< t_Quantity > t_QuantityGradients;
       bool const static is_vectorial = false;
       bool const static is_scalar = true;
@@ -120,6 +123,7 @@ namespace Traits
     {
       typedef types::t_unsigned   t_ScalarQuantity;
       typedef types::t_unsigned t_Quantity;  
+      typedef Quantity<t_ScalarQuantity>  t_ScalarQuantityTraits;  
       typedef std::vector< t_Quantity > t_QuantityGradients;
       bool const static is_vectorial = false;
       bool const static is_scalar = true;

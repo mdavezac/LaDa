@@ -26,7 +26,6 @@
 #endif
 
 #include "objective.h"
-#include "taboos.h"
 #include "loadsave.h"
 #include "gatraits.h"
 #include "loadsave.h"
@@ -34,15 +33,15 @@
 namespace Store
 { 
   // abstract base class for results and storage
-  template<class T_EVALUATOR, class T_GA_TRAITS = Traits::GA<T_EVALUATOR> >
+  template<class T_GA_TRAITS>
   class Base
   {
     public:
-      typedef T_EVALUATOR t_Evaluator;
-      typedef T_GA_TRAITS t_GA_Traits;
+      typedef T_GA_TRAITS t_GATraits;
 
     private:
-      typedef typename t_GA_Traits :: t_Individual t_Individual;
+      typedef typename t_GATraits :: t_Evaluator  t_Evaluator;
+      typedef typename t_GATraits :: t_Individual t_Individual;
 
     protected:
       t_Evaluator &evaluator;
@@ -50,7 +49,7 @@ namespace Store
 
     public:
       Base (t_Evaluator &_eval) : evaluator(_eval), new_results(false) {};
-      Base (const Base<t_Evaluator> &_c) : evaluator(_c.eval), new_results(_c.new_results) {};
+      Base (const Base<t_GATraits> &_c) : evaluator(_c.eval), new_results(_c.new_results) {};
       virtual ~Base() {};
 
       virtual bool Restart( const TiXmlElement &_node ) = 0;
@@ -71,18 +70,18 @@ namespace Store
   // T_CONDITION must return true when Conditional should NOT store
   // For examples of T_CONDITION, see namespace Condition below
   // easier to use are "templated typedef" in struct Condition below
-  template<class T_EVALUATOR, class T_CONDITION, class T_GA_TRAITS = Traits::GA<T_EVALUATOR> >
-  class Conditional : public Base<T_EVALUATOR, T_GA_TRAITS>
+  template<class T_CONDITION, class T_GA_TRAITS>
+  class Conditional : public Base<T_GA_TRAITS>
   {
     public:
-      typedef T_EVALUATOR t_Evaluator;
       typedef T_CONDITION t_Condition;
-      typedef T_GA_TRAITS t_GA_Traits;
+      typedef T_GA_TRAITS t_GATraits;
 
     private:
-      typedef Base<t_Evaluator, t_GA_Traits> t_Base;
-      typedef typename t_GA_Traits :: t_Individual t_Individual;
-      typedef std::list<t_Individual> t_Container;
+      typedef typename t_GATraits :: t_Evaluator  t_Evaluator;
+      typedef Base<t_GATraits>                    t_Base;
+      typedef typename t_GATraits :: t_Individual t_Individual;
+      typedef std::list<t_Individual>              t_Container;
 
     protected:
       using t_Base :: new_results;
@@ -140,7 +139,7 @@ namespace Store
         std::string name = _node.Value();
         if ( name.compare("Results") ) xmlresults = _node.FirstChildElement("Results");
         if ( not xmlresults ) return false;
-        GA::LoadObject<t_Evaluator> loadop( evaluator, &t_Evaluator::Load, GA::LOADSAVE_LONG);
+        GA::LoadObject<t_GATraits> loadop( evaluator, &t_Evaluator::Load, GA::LOADSAVE_LONG);
         if ( not condition.Restart( *xmlresults, loadop ) )
         {
           Print::xmg << Print::Xmg::comment << "Could not load condition" << Print::endl
@@ -159,7 +158,7 @@ namespace Store
       }
       bool Save( TiXmlElement &_node ) const
       {
-        GA::SaveObject<t_Evaluator> saveop( evaluator, &t_Evaluator::Save, GA::LOADSAVE_LONG);
+        GA::SaveObject<t_GATraits> saveop( evaluator, &t_Evaluator::Save, GA::LOADSAVE_LONG);
         TiXmlElement *parent = new TiXmlElement("Results");
         if ( not parent ) 
         {
@@ -245,18 +244,17 @@ namespace Store
   namespace Condition
   {
     // Condition checks fitness only
-    template< class T_EVALUATOR, class T_GA_TRAITS = Traits::GA<T_EVALUATOR> >
+    template< class T_GA_TRAITS >
     class BaseOptima 
     {
       public:
-        typedef T_EVALUATOR t_Evaluator;
-        typedef T_GA_TRAITS t_GA_Traits;
+        typedef T_GA_TRAITS t_GATraits;
 
       protected:
-        typedef typename t_GA_Traits :: t_Individual t_Individual;
-        typedef typename t_GA_Traits :: t_IndivTraits t_IndivTraits;
-        typedef GA::SaveObject<t_Evaluator> t_SaveOp;
-        typedef GA::LoadObject<t_Evaluator> t_LoadOp;
+        typedef typename t_GATraits :: t_Evaluator  t_Evaluator;
+        typedef typename t_GATraits :: t_Individual t_Individual;
+        typedef GA::SaveObject<t_GATraits>           t_SaveOp;
+        typedef GA::LoadObject<t_GATraits>           t_LoadOp;
 
       protected:
         t_Individual optimum;
@@ -306,7 +304,7 @@ namespace Store
         std::string print() const
         {
           std::ostringstream sstr;
-          std::string bitstring; bitstring <<  (const typename t_IndivTraits :: t_Object&) optimum;
+          std::string bitstring; bitstring <<  (const typename t_GATraits :: t_Object&) optimum;
           sstr << std::setw(12) << std::setprecision(7) 
                << bitstring << " "
                << optimum.get_concentration() << " "
@@ -315,23 +313,22 @@ namespace Store
         }
     };
     // Condition checks objective 
-    template< class T_EVALUATOR, class T_GA_TRAITS = Traits :: GA<T_EVALUATOR> >
-    class FromObjective : public BaseOptima<T_EVALUATOR>
+    template< class T_GATRAITS >
+    class FromObjective : public BaseOptima<T_GATRAITS>
     {
       public:
-        typedef T_EVALUATOR t_Evaluator;
-        typedef T_GA_TRAITS t_GA_Traits;
+        typedef T_GATRAITS t_GATraits;
 
       protected:
-        typedef BaseOptima<t_Evaluator, t_GA_Traits> t_Base;
-        typedef typename t_GA_Traits :: t_Individual t_Individual;
-        typedef typename t_GA_Traits :: t_IndivTraits t_IndivTraits;
-        typedef typename t_IndivTraits :: t_QuantityTraits t_QuantityTraits;
-        typedef typename t_QuantityTraits :: t_Quantity t_Quantity;
+        typedef typename t_GATraits :: t_Evaluator           t_Evaluator;
+        typedef BaseOptima<t_GATraits>                       t_Base;
+        typedef typename t_GATraits :: t_Individual          t_Individual;
+        typedef typename t_GATraits :: t_QuantityTraits      t_QuantityTraits;
+        typedef typename t_QuantityTraits :: t_Quantity       t_Quantity;
         typedef typename t_QuantityTraits :: t_ScalarQuantity t_ScalarQuantity;
-        typedef typename Objective::Types<t_Evaluator, t_GA_Traits> t_Objective;
-        typedef GA::SaveObject<t_Evaluator> t_SaveOp;
-        typedef GA::LoadObject<t_Evaluator> t_LoadOp;
+        typedef typename Objective::Types< t_GATraits>       t_Objective;
+        typedef GA::SaveObject<t_GATraits> t_SaveOp;
+        typedef GA::LoadObject<t_GATraits> t_LoadOp;
 
       protected:
         using t_Base :: optimum;
@@ -420,18 +417,17 @@ namespace Store
 
     // returns true if should remove
     // ie false if shouldn't store;
-    template< class T_EVALUATOR, class T_GA_TRAITS = Traits::GA<T_EVALUATOR> >
-    class Optima : public BaseOptima<T_EVALUATOR, T_GA_TRAITS>
+    template< class T_GA_TRAITS >
+    class Optima : public BaseOptima<T_GA_TRAITS>
     {
       public:
-        typedef T_EVALUATOR t_Evaluator;
-        typedef T_GA_TRAITS t_GA_Traits;
+        typedef T_GA_TRAITS t_GATraits;
       protected:
-        typedef BaseOptima<t_Evaluator, t_GA_Traits> t_Base;
-        typedef typename t_GA_Traits :: t_Individual t_Individual;
-        typedef typename t_GA_Traits :: t_IndivTraits t_IndivTraits;
-        typedef typename t_IndivTraits :: t_QuantityTraits t_QuantityTraits;
-        typedef typename t_QuantityTraits :: t_Quantity t_Quantity;
+        typedef BaseOptima<t_GATraits>                       t_Base;
+        typedef typename t_GATraits :: t_Evaluator           t_Evaluator;
+        typedef typename t_GATraits :: t_Individual          t_Individual;
+        typedef typename t_GATraits :: t_QuantityTraits      t_QuantityTraits;
+        typedef typename t_QuantityTraits :: t_Quantity       t_Quantity;
         typedef typename t_QuantityTraits :: t_ScalarQuantity t_ScalarQuantity;
 
       protected:
@@ -451,16 +447,14 @@ namespace Store
     };
   } // namespace Condition
 
-  template<class T_EVALUATOR, class T_GA_TRAITS = Traits::GA<T_EVALUATOR> >
+  template<class T_GATRAITS>
     struct Types
     {
-      typedef Store::Conditional< T_EVALUATOR,
-                                  Store::Condition::Optima< T_EVALUATOR, T_GA_TRAITS >,
-                                  T_GA_TRAITS > Optima;
-      typedef Store::Conditional< T_EVALUATOR,
-                                  Store::Condition::FromObjective< T_EVALUATOR, T_GA_TRAITS >,
-                                  T_GA_TRAITS >  FromObjective;
-      typedef Store::Base< T_EVALUATOR, T_GA_TRAITS > Base;
+      typedef Store::Conditional< Store::Condition::Optima< T_GATRAITS >,
+                                  T_GATRAITS > Optima;
+      typedef Store::Conditional< Store::Condition::FromObjective< T_GATRAITS >,
+                                  T_GATRAITS >  FromObjective;
+      typedef Store::Base< T_GATRAITS > Base;
     };
 } // namespace Store
 

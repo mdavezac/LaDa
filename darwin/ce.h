@@ -36,7 +36,6 @@ namespace CE
 {
   struct Object: public SingleSite::Object
   {
-    typedef types::t_real t_Quantity; 
 #ifdef _MPI
     friend bool mpi::BroadCast::serialize<CE::Object>( CE::Object & );
 #endif
@@ -48,6 +47,7 @@ namespace CE
     public:
       typedef Individual::Types<Object>::Scalar t_Individual;
     protected:
+      typedef t_Individual::t_IndivTraits t_IndivTraits;
       typedef SingleSite::Evaluator< t_Individual > t_Base;
       typedef VA_CE::Functional_Builder::t_VA_Functional t_Functional;
       

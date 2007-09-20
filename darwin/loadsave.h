@@ -13,14 +13,16 @@
 namespace GA
 {
 
-  template<class T_EVALUATOR>
+  template<class T_GATRAITS>
   class SaveObject
   {
     public:
-      typedef T_EVALUATOR t_Evaluator;
-      typedef typename t_Evaluator::t_Individual t_Individual;
-    private:
-      typedef bool(t_Evaluator::*t_saveop)( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const;
+      typedef T_GATRAITS t_GATraits;
+    protected:
+      typedef typename t_GATraits :: t_Individual t_Individual;
+      typedef typename t_GATraits :: t_Evaluator  t_Evaluator;
+      typedef bool(t_Evaluator::*t_saveop)( const t_Individual &_indiv,
+                                            TiXmlElement &_node, bool _type ) const;
 
     public:
       t_Evaluator &evaluator;      
@@ -32,14 +34,16 @@ namespace GA
       bool operator()(const t_Individual &_indiv, TiXmlElement &_node ) const
         { return (evaluator.*op)(_indiv, _node, type); }
   };
-  template<class T_EVALUATOR, class T_INDIVIDUAL = typename T_EVALUATOR :: t_Individual>
+  template<class T_GATRAITS>
   class LoadObject
   {
     public:
-      typedef T_EVALUATOR t_Evaluator;
-      typedef T_INDIVIDUAL t_Individual;
-    private:
-      typedef bool( t_Evaluator::*t_loadop )( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
+      typedef T_GATRAITS t_GATraits;
+    protected:
+      typedef typename t_GATraits :: t_Individual t_Individual;
+      typedef typename t_GATraits :: t_Evaluator  t_Evaluator;
+      typedef bool( t_Evaluator::*t_loadop )( t_Individual &_indiv,
+                                              const TiXmlElement &_node, bool _type );
 
     public:
       t_Evaluator &evaluator;      

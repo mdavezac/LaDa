@@ -27,27 +27,26 @@
 namespace Evaluation 
 { 
   // abstract base class for results and storage
-template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
+template< class T_GATRAITS >
   class Base
   {
     public:
-      typedef T_EVALUATOR  t_Evaluator;
-      typedef T_GATRAITS   t_GA_Traits;
+      typedef T_GATRAITS  t_GATraits;
 
     protected:
-      typedef typename t_GA_Traits :: t_Individual                               t_Individual;
-      typedef typename t_GA_Traits :: t_IndivTraits                              t_IndivTraits;
-      typedef typename t_GA_Traits :: t_QuantityTraits                           t_QuantityTraits;
-      typedef typename t_QuantityTraits :: t_Quantity                            t_Quantity;
-      typedef typename t_QuantityTraits :: t_ScalarQuantity                      t_ScalarQuantity;
-      typedef typename t_IndivTraits :: t_Population                             t_Population;
-      typedef typename Objective :: Types < t_Evaluator, t_GA_Traits > :: Vector t_Objective;
-      typedef Store :: Base<t_Evaluator, t_GA_Traits>                            t_Store;
-      typedef typename t_IndivTraits :: t_VA_Traits                              t_VATraits;
-      typedef typename t_VATraits :: t_QuantityGradients                         t_QuantityGradients;
-      typedef typename t_VATraits :: t_Type                                      t_VA_Type;
-      typedef typename t_IndivTraits :: t_Fitness                                t_Fitness;
-      typedef typename t_IndivTraits :: t_Fitness :: t_Quantity                  t_FitnessQuantity;
+      typedef typename t_GATraits :: t_Individual                  t_Individual;
+      typedef typename t_GATraits :: t_Evaluator                   t_Evaluator;
+      typedef typename t_GATraits :: t_QuantityTraits              t_QuantityTraits;
+      typedef typename t_QuantityTraits :: t_Quantity              t_Quantity;
+      typedef typename t_QuantityTraits :: t_ScalarQuantity        t_ScalarQuantity;
+      typedef typename t_GATraits :: t_Population                  t_Population;
+      typedef typename Objective :: Types < t_GATraits > :: Vector t_Objective;
+      typedef Store :: Base<t_GATraits>                            t_Store;
+      typedef typename t_GATraits :: t_VA_Traits                   t_VATraits;
+      typedef typename t_VATraits :: t_QuantityGradients           t_QuantityGradients;
+      typedef typename t_VATraits :: t_Type                        t_VA_Type;
+      typedef typename t_GATraits :: t_Fitness :: t_ScalarFitness  t_Fitness;
+      typedef typename t_Fitness :: t_Quantity                     t_FitnessQuantity;
 
     protected:
       t_Evaluator &evaluator;
@@ -132,9 +131,9 @@ template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
       }
   };
 
-template<class T_EVALUATOR, class T_GATRAITS>
-  typename Base<T_EVALUATOR, T_GATRAITS> :: t_FitnessQuantity
-  Base<T_EVALUATOR,T_GATRAITS> :: evaluate( t_Individual &_indiv )
+template< class T_GATRAITS >
+  typename Base<T_GATRAITS> :: t_FitnessQuantity
+  Base<T_GATRAITS> :: evaluate( t_Individual &_indiv )
   {
     // only computes "expensive" evaluator functionals once!
     if ( _indiv.invalid() ) 
@@ -149,9 +148,9 @@ template<class T_EVALUATOR, class T_GATRAITS>
     return _indiv.fitness();
   }
 
-template<class T_EVALUATOR, class T_GATRAITS>
-  typename Base<T_EVALUATOR, T_GATRAITS> :: t_FitnessQuantity
-  Base<T_EVALUATOR,T_GATRAITS> :: evaluate_with_gradient( t_Individual &_indiv,
+template< class T_GATRAITS >
+  typename Base<T_GATRAITS> :: t_FitnessQuantity
+  Base<T_GATRAITS> :: evaluate_with_gradient( t_Individual &_indiv,
                                                           t_QuantityGradients& _grad,
                                                           t_VA_Type *_i_grad )
   {
@@ -170,8 +169,8 @@ template<class T_EVALUATOR, class T_GATRAITS>
     return _indiv.fitness();
   }
 
-template<class T_EVALUATOR, class T_GATRAITS>
-  void Base<T_EVALUATOR,T_GATRAITS> :: evaluate( t_Population &_pop )
+template< class T_GATRAITS >
+  void Base<T_GATRAITS> :: evaluate( t_Population &_pop )
   {
     typename t_Population :: iterator i_indiv = _pop.begin();
     typename t_Population :: iterator i_end = _pop.end();
@@ -187,29 +186,28 @@ template<class T_EVALUATOR, class T_GATRAITS>
   }
 
   // abstract base class for results and storage
-template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
-  class WithHistory : public Base<T_EVALUATOR,T_GATRAITS>
+template< class T_GATRAITS >
+  class WithHistory : public Base<T_GATRAITS>
   {
     public:
-      typedef T_EVALUATOR  t_Evaluator;
-      typedef T_GATRAITS   t_GA_Traits;
+      typedef T_GATRAITS t_GATraits;
 
     private:
-      typedef Base<t_Evaluator, t_GA_Traits> t_Base;
-      typedef typename t_GA_Traits :: t_Individual                               t_Individual;
-      typedef typename t_GA_Traits :: t_IndivTraits                              t_IndivTraits;
-      typedef typename t_GA_Traits :: t_QuantityTraits                           t_QuantityTraits;
-      typedef typename t_QuantityTraits :: t_Quantity                            t_Quantity;
-      typedef typename t_QuantityTraits :: t_ScalarQuantity                      t_ScalarQuantity;
-      typedef typename t_IndivTraits :: t_Population                             t_Population;
-      typedef typename Objective :: Types < t_Evaluator, t_GA_Traits > :: Vector t_Objective;
-      typedef typename t_IndivTraits :: t_VA_Traits                              t_VATraits;
-      typedef typename t_VATraits :: t_QuantityGradients                         t_QuantityGradients;
-      typedef typename t_VATraits :: t_Type                                      t_VA_Type;
-      typedef Store :: Base<t_Evaluator, t_GA_Traits>                            t_Store;
-      typedef GA::History<t_Individual>                                          t_History;
-      typedef typename t_IndivTraits :: t_Fitness                                t_Fitness;
-      typedef typename t_IndivTraits :: t_Fitness :: t_Quantity                  t_FitnessQuantity;
+      typedef Base<t_GATraits>                                     t_Base;
+      typedef typename t_GATraits::t_Individual                    t_Individual;
+      typedef typename t_GATraits :: t_Evaluator                   t_Evaluator;
+      typedef typename t_GATraits :: t_QuantityTraits              t_QuantityTraits;
+      typedef typename t_QuantityTraits :: t_Quantity              t_Quantity;
+      typedef typename t_QuantityTraits :: t_ScalarQuantity        t_ScalarQuantity;
+      typedef typename t_GATraits :: t_Population                  t_Population;
+      typedef typename Objective :: Types < t_GATraits > :: Vector t_Objective;
+      typedef typename t_GATraits :: t_VA_Traits                   t_VATraits;
+      typedef typename t_VATraits :: t_QuantityGradients           t_QuantityGradients;
+      typedef typename t_VATraits :: t_Type                        t_VA_Type;
+      typedef Store :: Base<t_GATraits>                            t_Store;
+      typedef GA::History<t_Individual>                            t_History;
+      typedef typename t_GATraits :: t_Fitness :: t_ScalarFitness  t_Fitness;
+      typedef typename t_Fitness :: t_Quantity                     t_FitnessQuantity;
 
     protected:
       using t_Base :: evaluator;
@@ -221,9 +219,9 @@ template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
 
     public:
       WithHistory   ( t_Evaluator &_eval, t_Objective &_obj, t_Store &_store, t_History *_hist )
-           : Base<t_Evaluator>(_eval, _obj, _store), history(_hist) {};
-      WithHistory   ( const WithHistory<t_Evaluator> &_c )
-                  : Base<t_Evaluator>( _c ), history(_c.history ) {}
+           : Base<T_GATRAITS>(_eval, _obj, _store), history(_hist) {};
+      WithHistory   ( const WithHistory<t_Individual> &_c )
+                  : Base<T_GATRAITS>( _c ), history(_c.history ) {}
       virtual ~WithHistory() {};
 
     protected:
@@ -242,9 +240,9 @@ template<class T_EVALUATOR, class T_GATRAITS = Traits::GA<T_EVALUATOR> >
 #endif
   };
 
-template<class T_EVALUATOR, class T_GATRAITS>
-  typename WithHistory<T_EVALUATOR, T_GATRAITS> :: t_FitnessQuantity
-  WithHistory<T_EVALUATOR,T_GATRAITS> :: evaluate( t_Individual &_indiv )
+template< class T_GATRAITS >
+  typename WithHistory<T_GATRAITS> :: t_FitnessQuantity
+  WithHistory<T_GATRAITS> :: evaluate( t_Individual &_indiv )
   {
     bool isnot_clone = (history != NULL); // isnot_clone is false if history does not exist
     bool do_evaluate = _indiv.invalid();
@@ -272,9 +270,9 @@ template<class T_EVALUATOR, class T_GATRAITS>
     return _indiv.fitness();
   }
 
-template<class T_EVALUATOR, class T_GATRAITS>
-  typename WithHistory<T_EVALUATOR, T_GATRAITS> :: t_FitnessQuantity
-  WithHistory<T_EVALUATOR,T_GATRAITS> :: evaluate_with_gradient( t_Individual &_indiv,
+template< class T_GATRAITS >
+  typename WithHistory<T_GATRAITS> :: t_FitnessQuantity
+  WithHistory<T_GATRAITS> :: evaluate_with_gradient( t_Individual &_indiv,
                                                                  t_QuantityGradients& _grad,
                                                                  t_VA_Type *_i_grad )
   {

@@ -33,14 +33,15 @@
 
 namespace GA 
 {
-  template<class T_INDIVIDUAL, class T_INDIVTRAITS = Traits::Indiv<T_INDIVIDUAL> >
-  class Breeder: public eoBreed<T_INDIVIDUAL>
+  template<class T_GATRAITS>
+  class Breeder: public eoBreed<typename T_GATRAITS::t_Individual>
   {
     public:
-      typedef T_INDIVIDUAL t_Individual;
-      typedef T_INDIVTRAITS t_IndivTraits;
+      typedef T_GATRAITS t_GATraits;
     protected:
-      typedef typename t_IndivTraits :: t_Population t_Population;
+      typedef typename t_GATraits::t_IndivTraits t_IndivTraits;
+      typedef typename t_GATraits::t_Individual  t_Individual;
+      typedef typename t_GATraits::t_Population  t_Population;
 
     protected:
       eoSelectOne<t_Individual>& select;

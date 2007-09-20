@@ -23,31 +23,31 @@
 namespace GA 
 {
 
-  template< class T_EVALUATOR, class T_GA_TRAITS > class SaveStateIndividual;
-  template< class T_EVALUATOR, class T_GA_TRAITS > class MinimizerGenOp;
+  template< class T_GATRAITS > class SaveStateIndividual;
+  template< class T_GATRAITS > class MinimizerGenOp;
 
-  template<class T_EVALUATOR, class T_GA_TRAITS = Traits::GA<T_EVALUATOR> >
+  template<class T_GATRAITS>
   class Minimizer_Functional : public eoFunctorBase, 
-                               public function::Base < typename T_GA_TRAITS :: t_VA_Traits :: t_Type,
-                                                       typename T_GA_TRAITS :: t_VA_Traits :: t_Container >
+                               public function::Base < typename T_GATRAITS :: t_VA_Traits :: t_Type,
+                                                       typename T_GATRAITS :: t_VA_Traits :: t_Container >
   {
     public:
-      typedef T_EVALUATOR t_Evaluator;
-      typedef T_GA_TRAITS t_GA_Traits;
+      typedef T_GATRAITS t_GATraits;
     protected:
-      typedef typename t_GA_Traits :: t_Individual t_Individual;
-      typedef eoPop<t_Individual> t_Population;
-      typedef typename t_GA_Traits :: t_VA_Traits t_VA_Traits;
-      typedef typename t_VA_Traits :: t_Type t_VA_Type;
-      typedef typename t_VA_Traits :: t_Container t_VA_Container;
+      typedef typename t_GATraits :: t_Individual                  t_Individual;
+      typedef typename t_GATraits :: t_Evaluator                   t_Evaluator;
+      typedef typename t_GATraits :: t_Population                  t_Population;
+      typedef typename t_GATraits :: t_VA_Traits                   t_VA_Traits;
+      typedef typename t_VA_Traits :: t_Type                       t_VA_Type;
+      typedef typename t_VA_Traits :: t_Container                  t_VA_Container;
       typedef typename function::Base< t_VA_Type, t_VA_Container > t_Base;
-      typedef Evaluation::Base<t_Evaluator, t_GA_Traits> t_Evaluation;
-      typedef GA::Taboo_Base<t_Individual> t_Taboo;
-      typedef typename t_VA_Traits :: t_QuantityGradients t_QuantityGradients;
-      typedef typename t_GA_Traits :: t_QuantityTraits t_QuantityTraits;
-      typedef typename t_QuantityTraits :: t_Quantity t_Quantity;
-      typedef typename t_QuantityTraits :: t_ScalarQuantity t_ScalarQuantity;
-      typedef SaveStateIndividual<t_Evaluator, t_GA_Traits > t_SaveState;
+      typedef Evaluation::Base<t_GATraits>                         t_Evaluation;
+      typedef GA::Taboo_Base<t_Individual>                         t_Taboo;
+      typedef typename t_VA_Traits :: t_QuantityGradients          t_QuantityGradients;
+      typedef typename t_GATraits :: t_QuantityTraits              t_QuantityTraits;
+      typedef typename t_QuantityTraits :: t_Quantity              t_Quantity;
+      typedef typename t_QuantityTraits :: t_ScalarQuantity        t_ScalarQuantity;
+      typedef SaveStateIndividual<t_GATraits >                     t_SaveState;
 
 
     protected:
@@ -94,20 +94,27 @@ namespace GA
         
   };
 
-  template< class T_EVALUATOR, class T_GA_TRAITS = Traits::GA<T_EVALUATOR > >
+  template< class T_GATRAITS >
   class SaveStateIndividual
   {
     public:
-      typedef T_EVALUATOR t_Evaluator;
-      typedef T_GA_TRAITS t_GA_Traits;
+      typedef T_GATRAITS t_GATraits;
     protected:
-      typedef typename t_GA_Traits :: t_Individual t_Individual;
-      typedef typename t_GA_Traits :: t_IndivTraits t_IndivTraits;
-      typedef typename t_GA_Traits :: t_QuantityTraits t_QuantityTraits;
-      typedef typename t_QuantityTraits :: t_Quantity t_Quantity;
-      typedef typename t_QuantityTraits :: t_ScalarQuantity t_ScalarQuantity;
-      typedef Minimizer_Functional<t_Evaluator, t_GA_Traits> t_MFunctional;
-      typedef typename t_IndivTraits :: t_Fitness t_Fitness;
+      typedef typename t_GATraits :: t_Individual                  t_Individual;
+      typedef typename t_GATraits :: t_Evaluator                   t_Evaluator;
+      typedef typename t_GATraits :: t_Population                  t_Population;
+      typedef typename t_GATraits :: t_VA_Traits                   t_VA_Traits;
+      typedef typename t_VA_Traits :: t_Type                       t_VA_Type;
+      typedef typename t_VA_Traits :: t_Container                  t_VA_Container;
+      typedef typename function::Base< t_VA_Type, t_VA_Container > t_Base;
+      typedef Evaluation::Base<t_GATraits>                         t_Evaluation;
+      typedef GA::Taboo_Base<t_Individual>                         t_Taboo;
+      typedef typename t_VA_Traits :: t_QuantityGradients          t_QuantityGradients;
+      typedef typename t_GATraits :: t_QuantityTraits              t_QuantityTraits;
+      typedef typename t_QuantityTraits :: t_Quantity              t_Quantity;
+      typedef typename t_QuantityTraits :: t_ScalarQuantity        t_ScalarQuantity;
+      typedef SaveStateIndividual<t_GATraits >                     t_SaveState;
+      typedef typename t_GATraits :: t_Fitness :: t_ScalarFitness  t_Fitness;
 
     protected:
       t_Individual *current_indiv;
@@ -137,20 +144,29 @@ namespace GA
       void init( t_Individual &_indiv ) { current_indiv = &_indiv; }
   };
 
-  template< class T_EVALUATOR, class T_GA_TRAITS = Traits::GA<T_EVALUATOR> >
-  class MinimizerGenOp : public eoGenOp<typename T_GA_TRAITS :: t_Individual>
+  template< class T_GATRAITS >
+  class MinimizerGenOp : public eoGenOp<typename T_GATRAITS :: t_Individual>
   {
     public:
-      typedef T_EVALUATOR t_Evaluator;
-      typedef T_GA_TRAITS t_GA_Traits;
+      typedef T_GATRAITS t_GATraits;
     protected:
-      typedef typename t_GA_Traits :: t_Individual t_Individual;
-      typedef typename t_GA_Traits :: t_IndivTraits t_IndivTraits;
-      typedef typename t_IndivTraits :: t_VA_Traits t_VA_Traits;
+      typedef typename t_GATraits :: t_Individual                  t_Individual;
+      typedef typename t_GATraits :: t_Evaluator                   t_Evaluator;
+      typedef typename t_GATraits :: t_Population                  t_Population;
+      typedef typename t_GATraits :: t_VA_Traits                   t_VA_Traits;
+      typedef typename t_VA_Traits :: t_Type                       t_VA_Type;
+      typedef typename t_VA_Traits :: t_Container                  t_VA_Container;
+      typedef typename function::Base< t_VA_Type, t_VA_Container > t_Base;
+      typedef Evaluation::Base<t_GATraits>                         t_Evaluation;
+      typedef GA::Taboo_Base<t_Individual>                         t_Taboo;
+      typedef typename t_VA_Traits :: t_QuantityGradients          t_QuantityGradients;
+      typedef typename t_GATraits :: t_QuantityTraits              t_QuantityTraits;
+      typedef typename t_QuantityTraits :: t_Quantity              t_Quantity;
+      typedef typename t_QuantityTraits :: t_ScalarQuantity        t_ScalarQuantity;
+      typedef SaveStateIndividual<t_GATraits >                     t_SaveState;
+      typedef Minimizer_Functional<t_GATraits>                     t_MFunctional;
       typedef typename t_VA_Traits :: t_Functional t_Functional;
       typedef typename ::minimizer::Base< t_Functional > t_Minimizer;
-      typedef Minimizer_Functional<t_Evaluator, t_GA_Traits> t_MFunctional;
-      typedef  SaveStateIndividual<t_Evaluator, t_GA_Traits>  t_SaveState;
 
     protected:
       t_Minimizer *minimizer;
@@ -175,8 +191,8 @@ namespace GA
 
       bool Load( const TiXmlElement &_node );
   };
-  template< class T_EVALUATOR, class T_GA_TRAITS >
-  bool MinimizerGenOp<T_EVALUATOR, T_GA_TRAITS> :: Load( const TiXmlElement &_node )
+  template< class T_GATRAITS>
+  bool MinimizerGenOp<T_GATRAITS> :: Load( const TiXmlElement &_node )
   {
     std::string name = _node.Value();
     if ( name.compare("Minimizer") != 0 )

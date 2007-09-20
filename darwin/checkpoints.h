@@ -84,13 +84,14 @@ namespace GA
 
       virtual std::string className(void) const { return "GA::PrintFitness"; }
   };
-  template< class T_INDIVIDUAL>
-  class PrintFitness : public eoStatBase<T_INDIVIDUAL> 
+  template< class T_GATRAITS>
+  class PrintFitness : public eoStatBase<typename T_GATRAITS::t_Individual> 
   {
     public:
-      typedef T_INDIVIDUAL t_Individual;
+      typedef T_GATRAITS t_GATraits;
     protected:
-      typedef eoPop<t_Individual> t_Population;
+      typedef typename t_GATraits::t_Individual t_Individual;
+      typedef typename t_GATraits::t_Population t_Population;
 
     protected:
       GenCount &age;
@@ -98,7 +99,7 @@ namespace GA
     public:
       PrintFitness   ( GenCount &_age )
                    : age(_age) {}
-      PrintFitness   ( const PrintFitness<t_Individual> &_update )
+      PrintFitness   ( const PrintFitness &_update )
                    : age(_update.age) {}
 
       virtual void operator()( const t_Population &_pop )
@@ -129,13 +130,14 @@ namespace GA
 
   // checks for taboo unconvergence from a breeder, 
   // response. If response does not get through 
-  template< class T_INDIVIDUAL>
-  class NuclearWinter : public eoStatBase<T_INDIVIDUAL>
+  template< class T_GATRAITS>
+  class NuclearWinter : public eoStatBase<typename T_GATRAITS::t_Individual>
   {
     public:
-      typedef T_INDIVIDUAL t_Individual;
+      typedef T_GATRAITS t_GATraits;
     protected:
-      typedef eoPop<t_Individual> t_Population;
+      typedef typename t_GATraits::t_Individual t_Individual;
+      typedef typename t_GATraits::t_Population t_Population;
 
     protected:
       Taboo_Base<t_Individual> &taboo;
@@ -220,13 +222,14 @@ namespace GA
 
   };
 
-  template< class T_INDIVIDUAL>
-  class UpdateAgeTaboo : public eoStatBase<T_INDIVIDUAL> 
+  template< class T_GATRAITS>
+  class UpdateAgeTaboo : public eoStatBase<typename T_GATRAITS::t_Individual>
   {
     public:
-      typedef T_INDIVIDUAL t_Individual;
+      typedef T_GATRAITS t_GATraits;
     protected:
-      typedef eoPop<t_Individual> t_Population;
+      typedef typename t_GATraits::t_Individual t_Individual;
+      typedef typename t_GATraits::t_Population t_Population;
 
     protected:
       Taboo< t_Individual, std::list<t_Individual> > & taboo;
@@ -283,15 +286,16 @@ namespace GA
   };
 
   // when binop( ref, term ), terminates GA
-  template< class T_VALUE, class T_BINOP, class T_INDIVIDUAL>
-  class Terminator : public eoContinue<T_INDIVIDUAL>
+  template< class T_VALUE, class T_BINOP, class T_GATRAITS>
+  class Terminator : public eoContinue<typename T_GATRAITS::t_Individual>
   {
     public:
       typedef T_VALUE t_Value;
       typedef T_BINOP t_BinOp;
-      typedef T_INDIVIDUAL t_Individual;
+      typedef T_GATRAITS t_GATraits;
     protected:
-      typedef eoPop<t_Individual> t_Population;
+      typedef typename t_GATraits::t_Individual t_Individual;
+      typedef typename t_GATraits::t_Population t_Population;
 
     protected:
       t_Value &ref;
@@ -304,7 +308,7 @@ namespace GA
                      std::string _type)
                  : ref(_ref), term(_term), binop(_op),
                    type(_type) {}
-      Terminator   ( const Terminator< t_Value, t_BinOp, t_Individual> & _copy)
+      Terminator   ( const Terminator & _copy)
                  : ref(_copy.ref), term(_copy.term), binop(_copy.op), 
                    type(_copy.type) {}
       virtual ~Terminator() {}
@@ -330,15 +334,15 @@ namespace GA
   };
 
   // island continuator. Takes two population iterators and goes through them
-  template<class T_INDIVIDUAL, class T_INDIVTRAITS = Traits::Indiv<T_INDIVIDUAL> > 
-  class IslandsContinuator : public eoContinue<T_INDIVIDUAL>
+  template< class T_GATRAITS>
+  class IslandsContinuator : public eoContinue<typename T_GATRAITS::t_Individual> 
   {
     public:
-      typedef T_INDIVIDUAL t_Individual;
-      typedef T_INDIVTRAITS t_IndivTraits;
+      typedef T_GATRAITS t_GATraits;
     protected:
-      typedef typename t_IndivTraits :: t_Population t_Population;
-      typedef typename t_IndivTraits :: t_Islands t_Islands;
+      typedef typename t_GATraits::t_Individual t_Individual;
+      typedef typename t_GATraits::t_Population t_Population;
+      typedef typename t_GATraits :: t_Islands t_Islands;
       typedef typename t_Islands :: iterator iterator;
       typedef typename t_Islands :: const_iterator const_iterator;
     protected:

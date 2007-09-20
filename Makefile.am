@@ -6,9 +6,10 @@ endif
 if DOPESCAN
   PESCANSUBDIR = pescan_interface
 endif 
-if DODARWIN 
+if DOPDARWIN 
   DARWINSUBDIR = darwin
   PESCANSUBDIR = pescan_interface
+  VFFSUBDIR = vff
 endif 
 if DOMOLECULARITY
   DARWINSUBDIR = darwin

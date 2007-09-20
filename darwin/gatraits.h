@@ -22,6 +22,8 @@
 #include "opt/opt_function_base.h"
 #include "opt/traits.h"
 
+#include "fitness.h"
+
 #ifdef _MPI
 #include "mpi/mpi_object.h"
 #endif
@@ -47,36 +49,53 @@ namespace Traits
       typedef std::vector< t_Type > t_QuantityGradients;
   };
 
-  template< class T_INDIVIDUAL,
-            class T_OBJECT = typename T_INDIVIDUAL :: t_Object,
+  template< class T_OBJECT,
             class T_QUANTITY_TRAITS = Traits :: Quantity< typename T_OBJECT :: t_Quantity >,
             class T_VA_TRAITS = Traits::VA<typename T_OBJECT :: t_Container, T_QUANTITY_TRAITS :: is_scalar >,
-            class T_POPULATION = eoPop< T_INDIVIDUAL >,
-            class T_ISLANDS = typename std::list< T_POPULATION > >
+            class T_FITNESS = Fitness::Base< T_QUANTITY_TRAITS > >
   struct Indiv
   {
-      typedef T_INDIVIDUAL      t_Individual;
       typedef T_OBJECT          t_Object;
       typedef T_QUANTITY_TRAITS t_QuantityTraits;
       typedef T_VA_TRAITS       t_VA_Traits;
-      typedef T_POPULATION      t_Population;
-      typedef T_ISLANDS         t_Islands;
-      typedef typename t_Individual :: t_Fitness t_Fitness;
+      typedef T_FITNESS t_Fitness;
+      typedef typename t_Fitness :: t_ScalarFitness t_ScalarFitness;
       const static bool is_scalar = t_QuantityTraits :: is_scalar;
       const static bool is_vectorial = t_QuantityTraits :: is_vectorial;
   };
 
   template< class T_EVALUATOR,
-            class T_INDIVIDUAL = typename T_EVALUATOR :: t_Individual,
-            class T_INDIV_TRAITS = typename Traits::Indiv<T_INDIVIDUAL> >
-    struct GA
-    {
-      typedef T_EVALUATOR t_Evaluator;
+            class T_POPULATION = eoPop< typename T_EVALUATOR::t_Individual >,
+            class T_ISLANDS = typename std::list< T_POPULATION > >
+  struct GA
+  {
+     typedef T_EVALUATOR   t_Evaluator;
+     typedef typename t_Evaluator :: t_Individual   t_Individual;
+     typedef T_POPULATION      t_Population;
+     typedef T_ISLANDS         t_Islands;
+     typedef typename t_Individual :: t_IndivTraits t_IndivTraits;
+     typedef typename t_IndivTraits :: t_Object          t_Object;               
+     typedef typename t_IndivTraits :: t_QuantityTraits  t_QuantityTraits;
+     typedef typename t_IndivTraits :: t_VA_Traits       t_VA_Traits;
+     typedef typename t_IndivTraits :: t_Fitness         t_Fitness;
+     typedef typename t_Fitness :: t_ScalarFitness       t_ScalarFitness;
+     const static bool is_scalar = t_QuantityTraits :: is_scalar;
+     const static bool is_vectorial = t_QuantityTraits :: is_vectorial;
+  };
+  
+
+  template< class T_INDIVIDUAL, class T_CONCENTRATION, class T_FOURIER_RTOK, 
+            class T_FOURIER_KTOR = T_FOURIER_RTOK,
+            class T_INDIVTRAITS = typename T_INDIVIDUAL::t_IndivTraits >
+  class GAOp
+  {
+    public: 
       typedef T_INDIVIDUAL t_Individual;
-      typedef T_INDIV_TRAITS t_IndivTraits;
-      typedef typename t_IndivTraits :: t_QuantityTraits t_QuantityTraits;
-      typedef typename t_IndivTraits :: t_VA_Traits t_VA_Traits;
-    };
+      typedef T_INDIVTRAITS t_IndivTraits;
+      typedef T_CONCENTRATION t_Concentration;
+      typedef T_FOURIER_RTOK t_FourierRtoK;
+      typedef T_FOURIER_KTOR t_FourierKtoR;
+  };
 //     typedef T_GATRAITS        t_GA_Traits;
 //     typedef typename t_GA_Traits :: t_Evaluator        t_Evaluator;
 //     typedef typename t_GA_Traits :: t_Individual       t_Individual;
