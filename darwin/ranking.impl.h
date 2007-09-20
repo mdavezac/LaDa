@@ -4,41 +4,37 @@
 #ifndef _RANKING_IMPL_H_
 #define _RANKING_IMPL_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
-#include <tinyxml/tinyxml.h>
-
-#include <opt/types.h>
-#ifdef _MPI
-#include <mpi/mpi_object.h>
-#endif
-
 namespace Ranking
 {
   template<class T_GATRAITS>
   Container<T_GATRAITS> :: ~Container()
   {
-    typename t_Container :: iterator i_ranking = container.begin();
-    typename t_Container :: iterator i_end = container.end();
+    typename t_Container :: iterator i_ranking = rankers.begin();
+    typename t_Container :: iterator i_end = rankers.end();
     for(; i_ranking != i_end; ++i_ranking )
     {
       delete (*i_ranking);
       *i_ranking = NULL;
     }
-    container.clear();
+    rankers.clear();
   }
 
   template<class T_GATRAITS>
   void Container<T_GATRAITS> :: operator()(t_Population &_pop)
   {
-    typename t_Container :: iterator i_ranking = container.begin();
-    typename t_Container :: iterator i_end = container.end();
+    typename t_Container :: iterator i_ranking = rankers.begin();
+    typename t_Container :: iterator i_end = rankers.end();
     for(; i_ranking != i_end; ++i_ranking )
       (*i_ranking)->operator()(_pop);
   }
 
+  template<class T_GATRAITS>
+   Base<T_GATRAITS>* Container<T_GATRAITS> :: pop_front()
+   { 
+     Base<T_GATRAITS> *copy = rankers.front();
+     rankers.pop_front();
+     return copy;
+   }
 
 
   template<class T_SHARING>
@@ -50,7 +46,10 @@ namespace Ranking
     typename t_Population :: iterator i_end = _pop.end();
     typename t_Column :: const_iterator i_sum = sums.begin();
     for(; i_indiv != i_end; ++i_indiv );
-      i_indiv->set_fitness( (t_ScalarFitnessQuantity&) i_indiv.fitness() / *i_sum );
+    {
+      t_ScalarFitness& fitness = i_indiv->fitness();
+      fitness = ( (t_ScalarFitnessQuantity&) fitness ) / *i_sum;
+    }
   }
 
   template<class T_SHARING>
@@ -69,7 +68,7 @@ namespace Ranking
       *i_sum += t_ScalarFitnessQuantity(1);
       for(; i_2indiv != i_end; ++i_2indiv, ++i_2sum );
       {
-        t_ScalarFitnessQuantity d = share(*i_indiv, *i_2indiv);
+        t_ScalarFitnessQuantity d = sharing(*i_indiv, *i_2indiv);
         (*i_sum)  += d; (*i_2sum) += d;
       }
     }
@@ -180,14 +179,15 @@ namespace Sharing
         
       sigma = t_ScalarFitnessQuantity( d );
     }
+    return true;
   }
   
   template<class T_DISTANCE>
-  std::string Triangular<T_DISTANCE> :: print_out() const
+  std::string Triangular<T_DISTANCE> :: what_is() const
   { 
     std::ostringstream sstr; 
-    sstr << "Triangular Sharing, alpha=" << alpha << ", sigma=" << sigma
-         << ", distance: " << distance.print_out();
+    sstr << "Sharing::Triangular( alpha=" << alpha << ", sigma=" << sigma
+         << ", distance: " << distance.what_is() << " )";
     return sstr.str();
   }
 
@@ -198,9 +198,8 @@ namespace Sharing
     {
       t_ScalarFitnessQuantity d = distance( _i1, _i2 );
       if ( d > sigma ) return t_ScalarFitnessQuantity(0);
-      if( alpha == -1 )
-        return t_ScalarFitnessQuantity(1) - d / sigma;
-      return std::pow( t_ScalarFitnessQuantity(1) - d / sigma, alpha );
+      if( alpha == 1 ) return t_ScalarFitnessQuantity(1) - d / sigma;
+      return std::pow( t_ScalarFitnessQuantity(1) - d / sigma, (double) alpha );
     }
                             
 } // namespace Sharing
@@ -225,13 +224,13 @@ namespace Ranking
       name = parent->Attribute("type");
 
       if( name == "Niching" or name == "niching" )
-        { container.push_back( new_Niche_from_xml<T_GATRAITS>( *parent ) ); }
+        { container->push_back( new_Niche_from_xml<T_GATRAITS>( *parent ) ); }
     }
 
     Base<T_GATRAITS>* result = NULL;
     switch( container->size() )
     {
-      case 1: result = container->front(); 
+      case 1: result = container->pop_front(); 
       case 0: delete container; break;
       default: result = dynamic_cast< Base<T_GATRAITS>* >( container ); break;
     }
@@ -243,7 +242,7 @@ namespace Ranking
   Base<T_GATRAITS>* new_Niche_from_xml( const TiXmlElement &_node )
   {
     typedef Niching< Sharing::Triangular< Distance::Hamming<T_GATRAITS> > > t_Niche;
-    t_Niche result =  new t_Niche;
+    t_Niche *result =  new t_Niche;
     if ( result and result->Load(_node ) ) return result;
     if ( result ) delete result;
     return NULL;
@@ -258,4 +257,4 @@ namespace Ranking
   }
 }
 
-#endif // _RANKING_H_
+#endif // _RANKING_IMPL_H_

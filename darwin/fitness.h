@@ -146,9 +146,12 @@ namespace Fitness
       Base() : is_valid( false )  {}
       Base( const Base & _c ) : t_Base(_c), quantity( _c.quantity ), is_valid( _c.is_valid ) {}
       Base( const t_Quantity &_fit ) : t_Base(), quantity( _fit ), is_valid( true ) {}
-      Base( const t_ScalarFitness _fit ) : t_Base( _fit ), is_valid( false ) {}
       ~Base() {}
 
+
+      void operator=( const t_ScalarFitness &_fit ) { (t_Base&) *this = _fit; }
+      void operator=( const typename t_ScalarFitness::t_Quantity &_fit )
+        { (t_Base&) *this = _fit; }
 
       bool operator<(const Base & _f) const;
       bool operator>(const Base & _f) const;
@@ -165,6 +168,9 @@ namespace Fitness
       bool Load( const TiXmlElement & _node );
       bool Save( TiXmlElement & _node ) const;
 
+      void clear() { quantity.clear(); }
+      void push_back( typename t_Quantity :: value_type  _var )
+        { quantity.push_back( _var ); }
 #ifdef _MPI
       bool broadcast( mpi::BroadCast &_bc )
       {
@@ -262,6 +268,12 @@ namespace Fitness
     }
     return _is;
   }
+
+  template< class T_FITNESS, bool indeed = false >
+  struct GetScalar  { typedef T_FITNESS t_result; };
+  template< class T_FITNESS >
+  struct GetScalar<T_FITNESS, true>
+    { typedef typename T_FITNESS :: t_ScalarFitness t_result; };
 }
 
 

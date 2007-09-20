@@ -31,28 +31,28 @@
 namespace Traits 
 {
 
-  template< class T_CONTAINER, bool SCALAR = true >
-  struct VA
+  template< class T_ARG, class T_RET >
+  class VA
   {
-      typedef T_CONTAINER       t_Container;
-      typedef typename t_Container :: value_type      t_Type;
-      typedef function :: Base < t_Type, t_Container > t_Functional;
-      typedef std::vector< std::vector< t_Type > > t_QuantityGradients;
-      typedef VA<T_CONTAINER, true> t_Scalar;
-  };
-  template< class T_CONTAINER >
-  struct VA<T_CONTAINER, true>
-  {
-      typedef T_CONTAINER       t_Container;
-      typedef typename t_Container :: value_type      t_Type;
-      typedef function :: Base < t_Type, t_Container > t_Functional;
-      typedef std::vector< t_Type > t_QuantityGradients;
+      const static bool argvec = Dim<T_ARG> :: is_vector;
+      const static bool retvec = Dim<T_RET> :: is_vector;
+    public:
+      typedef T_ARG                                          t_Container;
+      typedef typename GetScalar<t_Container> :: t_Scalar    t_Type;
+      typedef function :: Base < t_Type, t_Container >       t_Functional;
+                                                                 
+    private:                                                     
+      typedef typename MakeVector<t_Type, argvec> :: t_Vector  t_A1;
+
+    public:
+      typedef typename MakeVector<t_A1, retvec> :: t_Vector  t_QuantityGradients;
   };
 
   template< class T_OBJECT, class T_CONCENTRATION, class T_FOURIER_RTOK, 
             class T_FOURIER_KTOR = T_FOURIER_RTOK,
             class T_QUANTITY_TRAITS = Traits :: Quantity< typename T_OBJECT :: t_Quantity >,
-            class T_VA_TRAITS = Traits::VA<typename T_OBJECT :: t_Container, T_QUANTITY_TRAITS :: is_scalar >,
+            class T_VA_TRAITS = Traits::VA<typename T_OBJECT :: t_Container, 
+                                           typename T_QUANTITY_TRAITS::t_Quantity >,
             class T_FITNESS = Fitness::Base< T_QUANTITY_TRAITS > >
   struct Indiv
   {

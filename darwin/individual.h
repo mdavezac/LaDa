@@ -106,6 +106,8 @@ namespace Individual
            throw std::runtime_error("invalid fitness\n");
          return repFitness;
       }
+      void set_fitness( const t_Fitness &_q )
+        { repFitness = _q; }
       void set_fitness( const t_Quantity _q )
         { repFitness = _q; }
 

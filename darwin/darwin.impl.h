@@ -163,6 +163,10 @@ namespace GA
                                               ( evaluator, *objective, *store, history );
     if ( not evaluation )
       evaluation = new Evaluation::Base<t_GATraits>( evaluator, *objective, *store );
+
+    ranking = Ranking::new_from_xml<t_GATraits>( _parent );
+    if( ranking ) Print::xmg << Print::Xmg::comment << ranking->what_is() << Print::endl;
+      
   }
   
   // create Taboos

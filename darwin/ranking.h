@@ -18,7 +18,11 @@
 namespace Ranking
 {
   template<class T_GATRAITS> 
-    class Base : public eoUF< typename T_GATRAITS::t_Population&, void> {};
+    class Base : public eoUF< typename T_GATRAITS::t_Population&, void> 
+  {
+    public:
+    virtual std::string what_is() const = 0;
+  };
 
   template<class T_GATRAITS> 
   Base<T_GATRAITS>* new_from_xml( const TiXmlElement &_node );
@@ -37,24 +41,36 @@ namespace Ranking
       typedef std::list<t_Base*> t_Container;
 
     protected:
-      t_Container container;
+      t_Container rankers;
 
     public:
       Container() {}
-      Container( const Container &_c ) : container(_c.container) {}
+      Container( const Container &_c ) : rankers(_c.rankers) {}
       ~Container();
 
-      void push_back( t_Base* _ptr) { if( _ptr ) container.push_back( _ptr ); }
-      void push_front( t_Base* _ptr) { if( _ptr ) container.push_front( _ptr ); }
+      void push_back( t_Base* _ptr) { if( _ptr ) rankers.push_back( _ptr ); }
+      void push_front( t_Base* _ptr) { if( _ptr ) rankers.push_front( _ptr ); }
 
+      Base<t_GATraits>* pop_front(); 
       void operator()( t_Population & _pop );
 
-      types::t_unsigned size() const { return container.size(); }
+      types::t_unsigned size() const { return rankers.size(); }
+
+      virtual std::string what_is() const
+      {
+        std::ostringstream sstr;
+        sstr << "Ranking begin{ ";
+        typename t_Container::const_iterator i_rankers = rankers.begin();
+        typename t_Container::const_iterator i_end = rankers.begin();
+        for(; i_rankers != i_end; ++i_rankers)
+          sstr << (*i_rankers)->what_is() << " "; 
+        sstr << "} end"; 
+        return  sstr.str();
+      }
   };
 
-
   template<class T_SHARING>
-  class Niching : Base<typename T_SHARING::t_GATraits >
+  class Niching : public Base<typename T_SHARING::t_GATraits >
   {
     public:
       typedef T_SHARING t_Sharing;
@@ -83,13 +99,16 @@ namespace Ranking
       void operator()(t_Population& _pop);
       bool Load( const TiXmlElement &_node )
         { return sharing.Load(_node); }
+      virtual std::string what_is() const 
+        { return "Ranking::Niching[ " + sharing.what_is() + " ]"; }
+
 
     protected:
       void map(const t_Population &_pop);
   };
 
   template<class T_GATRAITS>
-  class ParetoRanking : Base< T_GATRAITS >
+  class ParetoRanking : public Base< T_GATRAITS >
   {
     public:
       typedef T_GATRAITS t_GATraits;
@@ -116,6 +135,8 @@ namespace Ranking
       void operator()(t_Population& _pop);
 
       bool Load( const TiXmlElement &_node )  { return true; }
+      virtual std::string what_is() const 
+        { return "Ranking::Pareto"; }
      
     protected:
       void map(const t_Population &_pop);
@@ -135,8 +156,10 @@ namespace Distance
       typedef typename t_GATraits :: t_ScalarFitness t_ScalarFitness;
       typedef typename t_ScalarFitness :: t_Quantity t_ScalarFitnessQuantity;
 
+    public:
       t_ScalarFitnessQuantity operator()( const t_Individual &_i1, const t_Individual &_i2) const;
-  };
+      std::string what_is() const { return "Distance::Hamming"; }
+  }; 
 } // namespace Distance
 
 namespace Sharing
@@ -170,7 +193,7 @@ namespace Sharing
       bool Load( const TiXmlElement &_node );
       t_ScalarFitnessQuantity operator()(const t_Individual& _i1, const t_Individual& _i2 ) const;
 
-      std::string print_out() const;
+      std::string what_is() const;
       bool is_valid() const { return distance != NULL; }
   };  
 }
