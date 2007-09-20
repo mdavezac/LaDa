@@ -49,16 +49,20 @@ namespace Traits
       typedef std::vector< t_Type > t_QuantityGradients;
   };
 
-  template< class T_OBJECT,
+  template< class T_OBJECT, class T_CONCENTRATION, class T_FOURIER_RTOK, 
+            class T_FOURIER_KTOR = T_FOURIER_RTOK,
             class T_QUANTITY_TRAITS = Traits :: Quantity< typename T_OBJECT :: t_Quantity >,
             class T_VA_TRAITS = Traits::VA<typename T_OBJECT :: t_Container, T_QUANTITY_TRAITS :: is_scalar >,
             class T_FITNESS = Fitness::Base< T_QUANTITY_TRAITS > >
   struct Indiv
   {
-      typedef T_OBJECT          t_Object;
-      typedef T_QUANTITY_TRAITS t_QuantityTraits;
-      typedef T_VA_TRAITS       t_VA_Traits;
-      typedef T_FITNESS t_Fitness;
+      typedef T_OBJECT                              t_Object;
+      typedef T_CONCENTRATION                       t_Concentration;
+      typedef T_FOURIER_RTOK                        t_FourierRtoK;
+      typedef T_FOURIER_KTOR                        t_FourierKtoR;
+      typedef T_QUANTITY_TRAITS                     t_QuantityTraits;
+      typedef T_VA_TRAITS                           t_VA_Traits;
+      typedef T_FITNESS                             t_Fitness;
       typedef typename t_Fitness :: t_ScalarFitness t_ScalarFitness;
       const static bool is_scalar = t_QuantityTraits :: is_scalar;
       const static bool is_vectorial = t_QuantityTraits :: is_vectorial;
@@ -75,6 +79,9 @@ namespace Traits
      typedef T_ISLANDS         t_Islands;
      typedef typename t_Individual :: t_IndivTraits t_IndivTraits;
      typedef typename t_IndivTraits :: t_Object          t_Object;               
+     typedef typename t_IndivTraits :: t_Concentration   t_Concentration;
+     typedef typename t_IndivTraits :: t_FourierRtoK     t_FourierRtoK;
+     typedef typename t_IndivTraits :: t_FourierKtoR     t_FourierKtoR;
      typedef typename t_IndivTraits :: t_QuantityTraits  t_QuantityTraits;
      typedef typename t_IndivTraits :: t_VA_Traits       t_VA_Traits;
      typedef typename t_IndivTraits :: t_Fitness         t_Fitness;
@@ -84,28 +91,6 @@ namespace Traits
   };
   
 
-  template< class T_INDIVIDUAL, class T_CONCENTRATION, class T_FOURIER_RTOK, 
-            class T_FOURIER_KTOR = T_FOURIER_RTOK,
-            class T_INDIVTRAITS = typename T_INDIVIDUAL::t_IndivTraits >
-  class GAOp
-  {
-    public: 
-      typedef T_INDIVIDUAL t_Individual;
-      typedef T_INDIVTRAITS t_IndivTraits;
-      typedef T_CONCENTRATION t_Concentration;
-      typedef T_FOURIER_RTOK t_FourierRtoK;
-      typedef T_FOURIER_KTOR t_FourierKtoR;
-  };
-//     typedef T_GATRAITS        t_GA_Traits;
-//     typedef typename t_GA_Traits :: t_Evaluator        t_Evaluator;
-//     typedef typename t_GA_Traits :: t_Individual       t_Individual;
-//     typedef typename t_GA_Traits :: t_IndivTraits      t_IndivTraits;
-//     typedef typename t_GA_Traits :: t_QuantityTraits   t_QuantityTraits;
-//     typedef typename t_GA_Traits :: t_VAFunctional     t_VAFunctional;
-//     typedef typename t_GA_Traits :: t_VAContainer      t_VAContainer;
-//     typedef typename t_GA_Traits :: t_VAType           t_VAType;
-//     typedef typename t_IndivTraits :: t_Population     t_Population;
-//  
     template< class T_CONTAINER >
       void zero_out( T_CONTAINER &_cont )
       {

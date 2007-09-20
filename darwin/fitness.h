@@ -183,7 +183,7 @@ namespace Fitness
     typename t_Quantity :: const_iterator i_scalar1_end = quantity.end();
     typename t_Quantity :: const_iterator i_scalar2 = _f.quantity.begin();
     for(; i_scalar1 != i_scalar1_end; ++i_scalar1, ++i_scalar2 )
-      if (     *i_scalar2 > *i_scalar1  
+      if (    *i_scalar2 > *i_scalar1  
            or std::abs( *i_scalar1 - *i_scalar2 ) < types::tolerance ) return false;
     return true;
   }

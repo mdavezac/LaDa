@@ -38,8 +38,7 @@ int main(int argc, char *argv[])
   Print::xmg.init("convex_hull.agr");
   try
   {
-    typedef Traits::GA< t_Evaluator > t_GATraits;
-    GA::Darwin< t_GATraits > ga;
+    GA::Darwin< t_Evaluator > ga;
     if ( not  ga.Load("input.xml") )
       throw std::runtime_error( "Could not load input!!\n" ); 
     ga.run();

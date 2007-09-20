@@ -96,12 +96,12 @@ namespace TwoSites
   {
     public:
       typedef T_INDIVIDUAL t_Individual;
+      typedef Traits::GA< Evaluator<t_Individual> > t_GATraits;
     protected:
       typedef typename t_Individual::t_IndivTraits t_IndivTraits;
       typedef typename t_IndivTraits::t_Object t_Object;
       typedef GA::Evaluator<t_Individual> t_Base;
       typedef Evaluator<t_Individual> t_This;
-      typedef Traits::GAOp<t_Individual, Concentration, Fourier> t_GAOpTraits;
 
     public:
       using t_Base :: Load;
@@ -134,12 +134,12 @@ namespace TwoSites
       bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
       bool Load( const TiXmlElement &_node );
       eoGenOp<t_Individual>* LoadGaOp(const TiXmlElement &_el )
-       { return GA::LoadGaOp<t_GAOpTraits>( _el, structure, concentration ); }
+       { return GA::LoadGaOp<t_GATraits>( _el, structure, concentration ); }
       GA::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el );
 
       bool initialize( t_Individual &_indiv )
       {
-        GA::Random< t_GAOpTraits > random( concentration, structure, _indiv );
+        GA::Random< t_GATraits > random( concentration, structure, _indiv );
         _indiv.invalidate(); return true;
       }
 

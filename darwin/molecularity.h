@@ -116,18 +116,20 @@ namespace Molecularity
   void operator<<(Object &_o, const Ising_CE::Structure &_str);
 
 
-  typedef Individual::Types<Object>::Vector t_Individual;
+  typedef Individual::Types< Object, 
+                             Concentration, 
+                             Fourier        > :: Vector t_Individual;
 
   class Evaluator : public GA::Evaluator< Molecularity::t_Individual >
   {
     public:
       typedef Molecularity::t_Individual t_Individual;
+      typedef Traits::GA< Evaluator > t_GATraits;
     protected:
       typedef Evaluator t_This;
       typedef GA::Evaluator< t_Individual > t_Base;
       typedef Ising_CE::Structure::t_kAtoms t_kvecs;
       typedef Ising_CE::Structure::t_Atoms t_rvecs;
-      typedef Traits::GAOp<t_Individual, Concentration, Fourier> t_GAOpTraits;
 
     public:
       using t_Base :: Load;
@@ -154,18 +156,18 @@ namespace Molecularity
       bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
       bool Load( const TiXmlElement &_node );
       eoGenOp<t_Individual>* LoadGaOp(const TiXmlElement &_el )
-       { return GA::LoadGaOp<t_GAOpTraits>( _el, structure, concentration ); }
+       { return GA::LoadGaOp<t_GATraits>( _el, structure, concentration ); }
       GA::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el )
       {
         if ( concentration.single_c ) return NULL;
-        GA::xTaboo<t_GAOpTraits> *xtaboo = new GA::xTaboo< t_GAOpTraits >( concentration );
+        GA::xTaboo<t_GATraits> *xtaboo = new GA::xTaboo< t_GATraits >( concentration );
         if ( xtaboo and xtaboo->Load( _el ) )  return xtaboo;
         if ( xtaboo ) delete xtaboo;
         return NULL;
       }
       bool initialize( t_Individual &_indiv )
       {
-        GA::Random< t_GAOpTraits > random( concentration, structure, _indiv );
+        GA::Random< t_GATraits > random( concentration, structure, _indiv );
         _indiv.invalidate(); return true;
       }
 

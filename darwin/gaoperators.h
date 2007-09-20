@@ -495,7 +495,7 @@ errorout:
       typedef typename t_GAOpTraits :: t_Individual t_Individual;
       typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits;
       typedef typename t_GAOpTraits :: t_Concentration t_Concentration;
-      typedef typename t_IndivTraits::t_Object t_Object;
+      typedef typename t_GAOpTraits :: t_Object t_Object;
 
     protected:
       t_Concentration &concentration;

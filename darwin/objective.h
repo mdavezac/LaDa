@@ -696,7 +696,7 @@ namespace Objective
             if ( _node.Attribute( "type" ) )
               str = Print::lowercase(_node.Attribute( "type" ));
           }
-          if ( Vector::t_QuantityTraits::is_vectorial and str.compare("LinearSum") == 0 )
+          if ( Vector::t_QuantityTraits::is_vectorial ) // and str.compare("LinearSum") == 0 )
           {
             LinearSum<T_GA_TRAITS> *linear = new LinearSum<T_GA_TRAITS>;
             if ( not linear ) 

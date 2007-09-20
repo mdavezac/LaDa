@@ -57,10 +57,15 @@ namespace BandGap
     return _stream; 
   } 
 
-  class Evaluator : public TwoSites::Evaluator< Individual::Types<BandGap::Object>::Scalar >
+  typedef Individual::Types< BandGap::Object, 
+                             TwoSites::Concentration, 
+                             TwoSites::Fourier        > :: Scalar t_Individual;
+
+  class Evaluator : public TwoSites::Evaluator< t_Individual >
   {
     public:
-      typedef  Individual::Types<BandGap::Object>::Scalar t_Individual;
+      typedef BandGap::t_Individual t_Individual;
+      typedef Traits::GA< Evaluator > t_GATraits;
     protected:
       typedef TwoSites::Evaluator< t_Individual > t_Base;
       typedef Ising_CE::Structure::t_kAtoms t_kvecs;

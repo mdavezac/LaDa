@@ -258,15 +258,24 @@ namespace Individual
                                     const Base<T_INDIVTRAITS> &_indiv )
     { _indiv.print_out(_str); return _str; }
 
-  template<class T_OBJECT>
-    struct Types
+  template<class T_OBJECT, class T_CONCENTRATION, class T_FOURIER_RTOK>
+    class Types
     {
-        typedef T_OBJECT t_Object;
-        typedef Base< Traits :: Indiv< t_Object, Traits::Quantity<types::t_real> > > Scalar;
-      protected:
-        typedef Base< Traits :: Indiv< t_Object,
-                                       Traits::Quantity< std::vector<types::t_real> > > > VectorBase;
       public:
+        typedef T_OBJECT        t_Object;
+        typedef T_CONCENTRATION t_Concentration;
+        typedef T_FOURIER_RTOK  t_FourierRtoK;
+
+      protected:
+        typedef t_FourierRtoK t_FourierKtoR;
+        typedef Traits::Indiv< t_Object, t_Concentration, t_FourierRtoK, t_FourierKtoR,
+                               Traits::Quantity< types::t_real > > t_realtraits;
+        typedef Traits::Indiv< t_Object, t_Concentration, t_FourierRtoK, t_FourierKtoR,
+                               Traits::Quantity< std::vector<types::t_real> > > t_vectortraits;
+        typedef Base< t_vectortraits > VectorBase;
+
+      public:
+        typedef Base< t_realtraits > Scalar;
         typedef Multi< VectorBase > Vector;
     };
 
