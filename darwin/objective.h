@@ -679,8 +679,8 @@ namespace Objective
         if ( not &_node ) return NULL;
         std::string str = "minimize"; 
         std::string name = Print::lowercase(_node.Value());
-        if (    name.compare("Objective") == 0 
-             or name.compare("Method") == 0 )
+        if (    name.compare("objective") == 0 
+             or name.compare("method") == 0 )
         {
           if ( _node.Attribute( "type" ) )
             str = Print::lowercase(_node.Attribute( "type" ));
@@ -690,33 +690,33 @@ namespace Objective
         if ( str.compare("convexhull") == 0 )
         {
           Print::xmg << Print::Xmg::comment << "Objective: ConvexHull" << Print::endl;
-            return new ConvexHull<t_GATraits>;
-          }
-          else if ( str.compare("minimize") == 0 )
-          {
-            Print::xmg << Print::Xmg::comment << "Objective: Minimize" << Print::endl;
-            return new Minimize<t_GATraits>;
-          }
-          else if ( str.compare("maximize") == 0 )
-          {
-            Print::xmg << Print::Xmg::comment << "Objective: Maximize" << Print::endl;
-            return new Maximize<t_GATraits>;
-          }
-          else if (str.compare("target") == 0 )
-          {
-            if( _node.Attribute("target") )
-            {
-              double d; _node.Attribute("target", &d );
-              Print::xmg << Print::Xmg::comment
-                         << "Objective: Target (" << d << ")" << Print::endl;
-              return new Target<t_GATraits>( (types::t_real) d );
-            }
-          }
-          if ( _node.FirstChildElement( "Objective" ) )
-           return scalar_from_xml( *_node.FirstChildElement( "Objective" ) ); 
-
-          return NULL;
+          return new ConvexHull<t_GATraits>;
         }
+        else if ( str.compare("minimize") == 0 )
+        {
+          Print::xmg << Print::Xmg::comment << "Objective: Minimize" << Print::endl;
+          return new Minimize<t_GATraits>;
+        }
+        else if ( str.compare("maximize") == 0 )
+        {
+          Print::xmg << Print::Xmg::comment << "Objective: Maximize" << Print::endl;
+          return new Maximize<t_GATraits>;
+        }
+        else if (str.compare("target") == 0 )
+        {
+          if( _node.Attribute("target") )
+          {
+            double d; _node.Attribute("target", &d );
+            Print::xmg << Print::Xmg::comment
+                       << "Objective: Target (" << d << ")" << Print::endl;
+            return new Target<t_GATraits>( (types::t_real) d );
+          }
+        }
+        if ( _node.FirstChildElement( "Objective" ) )
+         return scalar_from_xml( *_node.FirstChildElement( "Objective" ) ); 
+
+        return NULL;
+      }
     template< class T_GA_TRAITS >
        typename Types<T_GA_TRAITS> :: Vector*
         Types<T_GA_TRAITS> :: vector_from_xml( const TiXmlElement &_node )
@@ -724,8 +724,8 @@ namespace Objective
           if ( not &_node ) return NULL;
           std::string str = "minimize"; 
           std::string name = Print::lowercase(_node.Value());
-          if (    name.compare("Objective") == 0 
-               or name.compare("Method") == 0 )
+          if (    name.compare("objective") == 0 
+               or name.compare("method") == 0 )
           {
             if ( _node.Attribute( "type" ) )
               str = Print::lowercase(_node.Attribute( "type" ));

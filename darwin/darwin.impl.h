@@ -853,7 +853,7 @@ namespace GA
 #ifdef _MPI // "All Gather" new population
       breeder->synchronize_offsprings( *i_island );
 #endif 
-      (*ranking)( *i_island );
+      if( ranking )(*ranking)( *i_island );
     }
     types::t_unsigned n = 0;
 
@@ -880,7 +880,7 @@ namespace GA
           if(history) history->synchronize();
 #endif 
 
-          (*ranking)( *i_island );
+          if( ranking )(*ranking)( *i_island );
          
           (*replacement)(*i_island, offsprings); // after replace, the new pop. is in population
           

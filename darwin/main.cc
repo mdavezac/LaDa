@@ -35,7 +35,6 @@ int main(int argc, char *argv[])
 #ifdef _MPI
   mpi::main(argc, argv);
 #endif
-  Print::xmg.init("convex_hull.agr");
   try
   {
     GA::Darwin< t_Evaluator > ga;
