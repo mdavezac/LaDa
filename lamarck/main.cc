@@ -84,8 +84,8 @@ int main(int argc, char *argv[])
   
     std::cout << "Energy: " << functional.evaluate() << std::endl
               << "Concentration: " << structure.get_concentration() << std::endl;
-//   Ising_CE::fourrier_to_kspace( structure.atoms.begin(), structure.atoms.end(),
-//                                 structure.k_vecs.begin(), structure.k_vecs.end() );
+//   Ising_CE::Fourier( structure.atoms.begin(), structure.atoms.end(),
+//                      structure.k_vecs.begin(), structure.k_vecs.end() );
 //   structure.print_out( std::cout );
 
 //   delete functional.get_functional1();

@@ -29,103 +29,19 @@
 
 namespace Molecularity
 {
-  // Only need encode one atom per unit-cell
-  void operator<<(Ising_CE::Structure &_str, const Object &_o)
-  {
-    Object::t_Container :: const_iterator i_var = _o.bitstring.begin();
-    Object::t_Container :: const_iterator i_end = _o.bitstring.end();
-    Ising_CE::Structure :: t_Atoms :: iterator i_atom = _str.atoms.begin();
-    Ising_CE::Structure :: t_Atoms :: iterator i_atom_end = _str.atoms.end();
-    for(; i_var != i_end and i_atom != i_atom_end; ++i_atom )
-    {
-      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) 
-        { ++i_atom;  continue; }
-      i_atom->type = *i_var > 0 ? 1.0 : -1.0;
-      (++i_atom)->type = *i_var > 0 ? 1.0 : -1.0;
-      ++i_var;
-    }
-  }
-  void operator<<(Object &_o, const Ising_CE::Structure &_c)
-  {
-    _o.bitstring.clear(); _o.bitstring.reserve( _c.atoms.size() );
-    Ising_CE::Structure :: t_Atoms :: const_iterator i_atom = _c.atoms.begin();
-    Ising_CE::Structure :: t_Atoms :: const_iterator i_end = _c.atoms.end();
-    for(; i_atom != i_end; i_atom += 2 )
-      if ( not (i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T) )
-        _o.bitstring.push_back( i_atom->type > 0 ? 1.0: -1.0 );
-  }
-
-
-
-  std::ostream& operator<<(std::ostream &_stream, const Object &_o)
-  {
-    Object::t_Container :: const_iterator i_var = _o.bitstring.begin();
-    Object::t_Container :: const_iterator i_end = _o.bitstring.end();
-    for(; i_var != i_end; ++i_var )
-      _stream << ( *i_var > 0 ? '1' : '0' );
-    _stream << " " << (Pescan::Keeper&) _o << " " 
-            << ( _o.stress(0,0) + _o.stress(1,1) ) * 0.5  << " ";
-    return _stream;
-  }
-  void operator<<(std::string &_str, const Object &_o)
-  {
-    std::ostringstream sstr;
-    sstr << _o; _str = sstr.str();
-  }
-  void operator<<(Object &_o, const std::string &_c)
-  {
-    types::t_unsigned size = _c.size();
-    _o.bitstring.resize( size );
-    std::vector<types::t_real> :: iterator i_var = _o.bitstring.begin();
-    std::vector<types::t_real> :: iterator i_end = _o.bitstring.end();
-    for(types::t_unsigned n=0; i_var != i_end; ++i_var, ++n )
-      *i_var = ( _c[n] == '1' ) ? 1.0: -1.0;
-  }
-
-
-
-
-
-
   bool Evaluator :: Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type )
   {
     t_Object &object = _indiv.Object();
     if ( not object.Load( _node ) ) return false;
-    _indiv.quantities().back() = object.cbm - object.vbm; 
-    _indiv.quantities().front() = ( object.stress(0,0) + object.stress(1,1) ) * 0.5;
+    current_individual->quantities().front() =
+       ( current_object->stress(0,0) + current_object->stress(1,1) ) * 0.5;
+    current_individual->quantities().back() = current_object->cbm - current_object->vbm;
 
-    if ( _type == GA::LOADSAVE_SHORT )
-    {
-      if( not _node.Attribute("string") )
-        return false;
-      (_indiv.Object()) << std::string(_node.Attribute("string"));
-      return true;
-    }
-
-    Ising_CE::Structure s; 
-    if ( not s.Load(_node) )
-      return false;
-    (_indiv.Object()) << s;
-    return true;
+    return t_Base::Load( _indiv, _node, _type );
   }
-
   bool Evaluator :: Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const
-  {
-    if ( not _indiv.Object().Save( _node ) ) return false;
-    if ( _type == GA::LOADSAVE_SHORT )
-    {
-      std::string str; str << _indiv.Object();
-      _node.SetAttribute("string", str.c_str());
-      return true;
-    }
-
-    Ising_CE::Structure s = structure; 
-    s << _indiv.Object();
-    Fourier( s.atoms.begin(),  s.atoms.end(),
-             s.k_vecs.begin(), s.k_vecs.end() );
-    s.print_xml(_node);
-
-    return true;
+  { 
+    return _indiv.Object().Save(_node) and t_Base::Save( _indiv, _node, _type );
   }
 
   bool Evaluator :: Load( const TiXmlElement &_node )
@@ -149,11 +65,6 @@ namespace Molecularity
     TwoSites::rearrange_structure(structure);
     if ( not consistency_check() )  return false;
 
-    if ( not concentration.Load( _node ) ) 
-    {
-      std::cerr << " Could not load Concentration input!! " << std::endl; 
-      return false;
-    }
     concentration.N = structure.atoms.size() >> 1;
     Ising_CE::Structure::t_Atoms::const_iterator i_atom = structure.atoms.begin();
     Ising_CE::Structure::t_Atoms::const_iterator i_atom_end = structure.atoms.end();
@@ -176,13 +87,13 @@ namespace Molecularity
     return true;
   }
 
+
   bool Evaluator :: consistency_check()
   {
     Ising_CE::Structure::t_Atoms :: iterator i_atom = structure.atoms.begin();
     Ising_CE::Structure::t_Atoms :: iterator i_atom_end = structure.atoms.end();
     for(; i_atom != i_atom_end; ++i_atom )
-      if ( i_atom->site != 1 and i_atom->site != 0 )
-        return false;
+      if ( i_atom->site != 1 and i_atom->site != 0 ) return false;
     i_atom = structure.atoms.begin();
 
     for(; i_atom != i_atom_end; ++i_atom )
@@ -212,25 +123,30 @@ namespace Molecularity
   }
 
 
-  bool Concentration :: Load ( const TiXmlElement &_node )
+  // Only need encode one atom per unit-cell
+  void operator<<(Ising_CE::Structure &_str, const Object &_o)
   {
-    if ( not ( _node.Attribute("x") or _node.Attribute("y") ) )
+    Object::t_Container :: const_iterator i_var = _o.bitstring.begin();
+    Object::t_Container :: const_iterator i_end = _o.bitstring.end();
+    Ising_CE::Structure :: t_Atoms :: iterator i_atom = _str.atoms.begin();
+    Ising_CE::Structure :: t_Atoms :: iterator i_atom_end = _str.atoms.end();
+    for(; i_var != i_end and i_atom != i_atom_end; ++i_atom )
     {
-      single_c = false;
-      return true;
+      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) 
+        { ++i_atom;  continue; }
+      i_atom->type = *i_var > 0 ? 1.0 : -1.0;
+      (++i_atom)->type = *i_var > 0 ? 1.0 : -1.0;
+      ++i_var;
     }
-    if ( not _node.Attribute("x") ) return true;
-    
-    double d;
-    _node.Attribute("x", &d);
-    if( d < 0 or d > 1 ) goto errorout;
-    single_c = true;
-    x0 = 2.0 * (types::t_real) d - 1.0;
-    return true;
-
-errorout:
-    std::cerr << "Error while reading concentration input\n";
-    return false;
+  }
+  void operator<<(Object &_o, const Ising_CE::Structure &_c)
+  {
+    _o.bitstring.clear(); _o.bitstring.reserve( _c.atoms.size() );
+    Ising_CE::Structure :: t_Atoms :: const_iterator i_atom = _c.atoms.begin();
+    Ising_CE::Structure :: t_Atoms :: const_iterator i_end = _c.atoms.end();
+    for(; i_atom != i_end; i_atom += 2 )
+      if ( not (i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T) )
+        _o.bitstring.push_back( i_atom->type > 0 ? 1.0: -1.0 );
   }
 
   void Concentration :: operator()( Ising_CE::Structure &_str )
@@ -266,35 +182,6 @@ errorout:
     normalize( _str, (types::t_real) concx - ( (types::t_real) N ) * x0 );
     delete[] hold;
     return;
-  }
-
-  void Concentration :: operator()( Object &_obj )
-  {
-    if ( not single_c ) return;
-
-    // computes concentrations first
-    Object::t_Container::const_iterator i_bit = _obj.bitstring.begin();
-    Object::t_Container::const_iterator i_bit_end = _obj.bitstring.end();
-    types::t_real conc = 0;
-    for(; i_bit != i_bit_end; ++i_bit )
-      conc += *i_bit > 0 ? 1: -1;
-
-    // add frozen bits
-    conc += Nfreeze;
-
-    // finally normalizes
-    x = conc / (types::t_real) N;
-    types::t_real to_change = (types::t_real) N * x  - conc;
-    if ( to_change > -1.0 and to_change < 1.0 ) return;
-    do
-    {
-      types::t_unsigned i = rng.random( types::t_int(N-1) );
-      if ( to_change > 1.0 and _obj.bitstring[i] < 0 )
-        { _obj.bitstring[i] = 1; to_change-=2; }
-      else if ( to_change < -1.0 and _obj.bitstring[i] > 0 )
-        { _obj.bitstring[i] = -1; to_change+=2; }
-
-    } while ( to_change < -1.0 or to_change > 1.0 );
   }
 
   // Takes an "unphysical" individual and set normalizes its sites _sites to +/-1,
@@ -338,10 +225,10 @@ errorout:
 
     // finally, normalizes _str
     i_atom = _str.atoms.begin();
-    for(; i_atom != i_end; ++i_atom )
+    for(; i_atom != i_end; i_atom+=2 )
     {
       i_atom->type = ( i_atom->type > 0 ) ? 1.0: -1.0;
-      (++i_atom)->type = ( i_atom->type > 0 ) ? 1.0: -1.0;
+      (i_atom+1)->type = ( i_atom->type > 0 ) ? 1.0: -1.0;
     }
   }
 
@@ -352,23 +239,6 @@ errorout:
     for(; i_atom != i_atom_end; i_atom +=2 )
       x += i_atom->type;
     x /= (types::t_real) N;
-  }
-  void Concentration :: set( const Object &_obj )
-  {
-    if ( not single_c ) return;
-
-    // computes concentrations first
-    Object::t_Container::const_iterator i_bit = _obj.bitstring.begin();
-    Object::t_Container::const_iterator i_bit_end = _obj.bitstring.end();
-    types::t_real conc = 0;
-    for(; i_bit != i_bit_end; ++i_bit )
-      conc += *i_bit > 0 ? 1: -1;
-
-    // add frozen bits
-    conc += Nfreeze;
-
-    // finally normalizes
-    x = (types::t_real) conc / (types::t_real) N;
   }
 } // namespace Molecularity
 

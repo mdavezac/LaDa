@@ -57,6 +57,7 @@ namespace TwoSites
   class Concentration : public X_vs_y
   {
     public:
+      types::t_real x0, y0;
       types::t_real x, y;
       types::t_unsigned N;
       types::t_int Nfreeze_x, Nfreeze_y;
@@ -64,17 +65,18 @@ namespace TwoSites
 
     public:
       Concentration  () 
-                    : X_vs_y(), x(0), y(0), N(0), Nfreeze_x(0), Nfreeze_y(0) {}
+                    : X_vs_y(), x0(0), y0(0), x(0), y(0), N(0),
+                      Nfreeze_x(0), Nfreeze_y(0) {}
       Concentration   ( const Concentration &_conc)
-                    : X_vs_y(_conc), x(_conc.x), y(_conc.y), N(_conc.N),
-                      Nfreeze_x(_conc.Nfreeze_x), Nfreeze_y(_conc.Nfreeze_y),
+                    : X_vs_y(_conc), x0(_conc.x0), y0(_conc.y0), x(_conc.x), y(_conc.y),
+                      N(_conc.N), Nfreeze_x(_conc.Nfreeze_x), Nfreeze_y(_conc.Nfreeze_y),
                       sites(_conc.sites) {}
       ~Concentration() {}
 
       bool Load( const TiXmlElement &_node )
       {
         if( not X_vs_y::Load( _node ) ) return false;
-        if( not is_singlec() )  return true;
+        if( not single_c )  return true;
         x = get_x();  y = get_y();
         return true;
       }
@@ -84,6 +86,7 @@ namespace TwoSites
       void operator()( const Ising_CE::Structure &_str, Object &_object,
                        types::t_int _concx, types::t_int _concy );
       void set( const Ising_CE::Structure &_str);
+      void set( const Object &_obj );
 
     protected:
       void normalize( Ising_CE::Structure &_str, const types::t_int _site, 
@@ -100,6 +103,7 @@ namespace TwoSites
     protected:
       typedef typename t_Individual::t_IndivTraits t_IndivTraits;
       typedef typename t_IndivTraits::t_Object t_Object;
+      typedef typename t_IndivTraits::t_Concentration t_Concentration;
       typedef GA::Evaluator<t_Individual> t_Base;
       typedef Evaluator<t_Individual> t_This;
 
@@ -118,15 +122,12 @@ namespace TwoSites
       Ising_CE::Lattice lattice;
       Ising_CE::Structure structure;
       types::t_real lessthan, morethan;
-      Concentration concentration;
+      t_Concentration concentration;
 
     public:
-      Evaluator   ()
-                : lessthan(1.0), morethan(-1.0) {}
-      Evaluator   ( const t_Base &_c )
-                : lattice( _c.lattice ), structure( _c.structure ),
-                  lessthan(_c.lessthan), morethan(_c.moerethan),
-                  concentration( _c.concentration ){}
+      Evaluator   () {}
+      Evaluator   ( const t_This &_c )
+                : lattice( _c.lattice ), structure( _c.structure ) {}
       ~Evaluator() {};
 
 
@@ -135,17 +136,29 @@ namespace TwoSites
       bool Load( const TiXmlElement &_node );
       eoGenOp<t_Individual>* LoadGaOp(const TiXmlElement &_el )
        { return GA::LoadGaOp<t_GATraits>( _el, structure, concentration ); }
-      GA::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el );
+      GA::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el )
+      {
+        if ( concentration.single_c ) return NULL;
+        GA::xTaboo<t_GATraits> *xtaboo = new GA::xTaboo< t_GATraits >( concentration );
+        if ( xtaboo and xtaboo->Load( _el ) )  return xtaboo;
+        if ( xtaboo ) delete xtaboo;
+        return NULL;
+      }
 
       bool initialize( t_Individual &_indiv )
       {
         GA::Random< t_GATraits > random( concentration, structure, _indiv );
         _indiv.invalidate(); return true;
       }
+      void init( t_Individual &_indiv )
+      {
+        t_Base :: init( _indiv );
+        // sets structure to this object 
+        structure << *current_object;
+      }
 
     protected:
       bool consistency_check();
-      bool Taboo(const t_Individual &_indiv );
   };
 
 

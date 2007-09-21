@@ -119,8 +119,8 @@ int main(int argc, char *argv[])
     vff.print_escan_input( "atomic.config" );
 
 
-    Ising_CE::fourrier_to_kspace( structure.atoms.begin(),  structure.atoms.end(),
-                                  structure.k_vecs.begin(), structure.k_vecs.end() );
+    Ising_CE::Fourier( structure.atoms.begin(),  structure.atoms.end(),
+                       structure.k_vecs.begin(), structure.k_vecs.end() );
     structure.print_out(std::cout );
 
   }

@@ -26,27 +26,28 @@
       types::t_real a, b, c;
       types::t_real x0;
       types::t_real y0;
-      bool singlec;
+    public:
+      bool single_c;
 
     public:
-      X_vs_y() : a(0), b(0), c(0), x0(0), y0(0), singlec(false) {}
+      X_vs_y() : a(0), b(0), c(0), x0(0), y0(0), single_c(false) {}
       X_vs_y( const X_vs_y &_c) : a(_c.a), b(_c.b), c(_c.c), 
-                                  x0(_c.x0), y0(_c.y0), singlec(_c.singlec) {}
+                                  x0(_c.x0), y0(_c.y0), single_c(_c.single_c) {}
       bool Load( const TiXmlElement &_node );
       types::t_real get_x( types::t_real _y ) 
       {
-        if ( singlec ) return x0;
+        if ( single_c ) return x0;
         return c + b * _y + a * _y * _y; 
       }
       void set_xy( types::t_real _x, types::t_real _y )
       {
-        x0 = _x; y0 = _y; singlec = true;
+        x0 = _x; y0 = _y; single_c = true;
       } 
       types::t_real get_y() { return y0; }
       types::t_real get_x() { return x0; }
       types::t_real get_y( types::t_real _x )
       {
-        if ( singlec ) return y0;
+        if ( single_c ) return y0;
         if ( std::abs ( a ) < types::tolerance )
           return ( _x - c ) / b;
        
@@ -78,7 +79,7 @@
         return r0;
       }
       bool can_inverse( types::t_real _x );
-      bool is_singlec () const { return singlec; }
+      bool is_single_c () const { return single_c; }
 
   };
 

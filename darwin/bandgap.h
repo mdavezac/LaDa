@@ -86,7 +86,6 @@ namespace BandGap
       Evaluator() : t_Base(), vff(structure), pescan(structure)  {}
       ~Evaluator() {};
 
-      void init( t_Individual &_indiv );
       bool Load( const TiXmlElement &_node );
       bool Load ( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
       bool Save ( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const;

@@ -142,11 +142,26 @@ namespace Ising_CE {
     }
 
   }
-  template<class T_R_IT, class T_K_IT>
-  void fourrier_to_kspace( T_R_IT _rfirst, T_R_IT _rend,
-                           T_K_IT _kfirst, T_K_IT _kend ) // sets kvector values from rspace values
+
+
+  struct Fourier
   {
-    const std::complex<types::t_real> imath(0, -2*3.1415926535897932384626433832795028841971693993751058208);
+    template<class T_R_IT, class T_K_IT>
+    Fourier( T_R_IT _rfirst, T_R_IT _rend,
+             T_K_IT _kfirst, T_K_IT _kend );
+    template<class T_R_IT, class T_K_IT, class T_O_IT >
+    Fourier( T_R_IT _rfirst, T_R_IT _rend,
+             T_K_IT _kfirst, T_K_IT _kend,
+             T_O_IT _rout ); // sets rvector values from kspace values
+  };
+
+
+  template<class T_R_IT, class T_K_IT>
+  Fourier :: Fourier( T_R_IT _rfirst, T_R_IT _rend,
+                      T_K_IT _kfirst, T_K_IT _kend )
+  {
+    const std::complex<types::t_real>
+       imath(0, -2*3.1415926535897932384626433832795028841971693993751058208);
     
     for (; _kfirst != _kend; ++_kfirst)
     {
@@ -161,12 +176,13 @@ namespace Ising_CE {
     }
   }
   template<class T_R_IT, class T_K_IT, class T_O_IT >
-  void fourrier_to_rspace( T_R_IT _rfirst, T_R_IT _rend,
-                           T_K_IT _kfirst, T_K_IT _kend,
-                           T_O_IT _rout ) // sets rvector values from kspace values
+  Fourier :: Fourier( T_R_IT _rfirst, T_R_IT _rend,
+                      T_K_IT _kfirst, T_K_IT _kend,
+                      T_O_IT _rout ) // sets rvector values from kspace values
   {
-    const std::complex<types::t_real> imath(0, 2*3.1415926535897932384626433832795028841971693993751058208);
-    for (; _rfirst != _rend; ++_rfirst, ++_rout)
+    const std::complex<types::t_real>
+       imath(0, 2*3.1415926535897932384626433832795028841971693993751058208);
+    for (; _rfirst != _rend; _rfirst+=2, ++_rout)
     {
       *_rout = 0.0;
       for(T_K_IT i_k=_kfirst; i_k != _kend; ++i_k)
@@ -178,6 +194,9 @@ namespace Ising_CE {
       }
     }
   }
+
+
+
 
   inline std::ostream& operator<<( std::ostream& _stream, const Ising_CE::Structure& _struc )
     { _struc.print_out(_stream); return _stream; }

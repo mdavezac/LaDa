@@ -22,11 +22,10 @@
 #include <opt/opt_minimize_gsl.h>
 #include <opt/types.h>
 
-#include "bitstring.h"
+#include "two_sites.h"
 #include "pescan.h"
 #include "vff.h"
 #include "evaluator.h"
-#include "functors.h"
 #include "individual.h"
 #include "gaoperators.h"
 
@@ -48,10 +47,10 @@ namespace Molecularity
   };
 
   // Exact same object as BandGap, except for the two friends
-  class Object : public BitString::Object<>, public Vff::Keeper, public Pescan::Keeper
+  class Object : public SingleSite::Object, public Vff::Keeper, public Pescan::Keeper
   {
     protected:
-      typedef BitString :: Object<> t_Base;
+      typedef SingleSite :: Object t_Base;
 
     public:
       typedef t_Base :: t_Type t_Type;
@@ -79,40 +78,31 @@ namespace Molecularity
         { return Vff::Keeper::Save(_node) and Pescan::Keeper::Save(_node); }
   };
 
-  class Concentration
+  class Concentration : public SingleSite::Concentration
   {
+    typedef SingleSite::Concentration t_Base;
     public:
-      types::t_real x0;
-      bool single_c;
-      types::t_real x;
-      types::t_real N;
-      types::t_real Nfreeze;
-    protected:
-      types::t_real lessthan;
-      types::t_real morethan;
-
-    public:
-      Concentration () : x0(-1), single_c(false), N(0), 
-                         Nfreeze(0), lessthan(1.0), morethan(1.0) {}
+      Concentration () : t_Base() {}
       Concentration   ( const Concentration &_c) 
-                    : x0(_c.x0), single_c(_c.single_c), N(_c.N), Nfreeze(_c.Nfreeze),
-                      lessthan(_c.lessthan), morethan(_c.morethan) {}
+                    : t_Base(_c) {}
 
       void operator()( Ising_CE::Structure &_str);
-      void operator()( Object &_obj );
+      void operator()( Object &_obj) { t_Base::operator()( _obj ); }
       void set( const Ising_CE::Structure &_structure);
-      void set( const Object &_obj );
-      bool Load ( const TiXmlElement &_node );
+      void set( const Object &_obj) { t_Base::set( _obj ); }
 
     protected:
       void normalize( Ising_CE::Structure &_str, types::t_real _tochange );
   };
 
-  std::ostream& operator<<(std::ostream &_stream, const Object &_o);
-  void operator<<(std::string &_str, const Object &_o);
-  void operator<<(Object &_o, const std::string &_str );
+  inline std::ostream& operator<<(std::ostream &_stream, const Object &_o)
+    { return _stream << (const SingleSite::Object&) _o; }
+  inline void operator<<(Object &_o, const std::string &_str )
+    { (SingleSite::Object&) _o << _str; }
+  inline void operator<<(std::string &_str, const Object &_o)
+    { _str << (const SingleSite::Object&) _o; }
+
   void operator<<(Ising_CE::Structure &_str, const Object &_o);
-  void operator<<(Object &_o, const Ising_CE::Structure &_c);
   void operator<<(Object &_o, const Ising_CE::Structure &_str);
 
 
@@ -120,14 +110,14 @@ namespace Molecularity
                              Concentration, 
                              Fourier        > :: Vector t_Individual;
 
-  class Evaluator : public GA::Evaluator< Molecularity::t_Individual >
+  class Evaluator : public TwoSites::Evaluator< Molecularity::t_Individual >
   {
     public:
       typedef Molecularity::t_Individual t_Individual;
       typedef Traits::GA< Evaluator > t_GATraits;
     protected:
       typedef Evaluator t_This;
-      typedef GA::Evaluator< t_Individual > t_Base;
+      typedef TwoSites::Evaluator< t_Individual > t_Base;
       typedef Ising_CE::Structure::t_kAtoms t_kvecs;
       typedef Ising_CE::Structure::t_Atoms t_rvecs;
 
@@ -155,28 +145,9 @@ namespace Molecularity
       bool Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const;
       bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
       bool Load( const TiXmlElement &_node );
-      eoGenOp<t_Individual>* LoadGaOp(const TiXmlElement &_el )
-       { return GA::LoadGaOp<t_GATraits>( _el, structure, concentration ); }
-      GA::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el )
-      {
-        if ( concentration.single_c ) return NULL;
-        GA::xTaboo<t_GATraits> *xtaboo = new GA::xTaboo< t_GATraits >( concentration );
-        if ( xtaboo and xtaboo->Load( _el ) )  return xtaboo;
-        if ( xtaboo ) delete xtaboo;
-        return NULL;
-      }
-      bool initialize( t_Individual &_indiv )
-      {
-        GA::Random< t_GATraits > random( concentration, structure, _indiv );
-        _indiv.invalidate(); return true;
-      }
+      void LoadAttribute ( const TiXmlAttribute &_att )
+        { concentration.LoadAttribute( _att ); };
 
-      void init( t_Individual &_indiv )
-      {
-        t_Base :: init( _indiv );
-        // sets structure to this object 
-        structure << *current_object;
-      }
       void evaluate()
       {
         // relax structure

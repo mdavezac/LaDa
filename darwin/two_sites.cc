@@ -92,7 +92,7 @@ namespace TwoSites
     }
 
     // then normalize it while setting correct concentrations
-    if ( is_singlec() )
+    if ( single_c )
     {
       normalize( _str, 0, (types::t_real) concx - ( (types::t_real) N ) * get_x(x) );
       normalize( _str, 1, (types::t_real) concy - ( (types::t_real) N ) * get_y(y) );
@@ -124,27 +124,17 @@ namespace TwoSites
   void Concentration :: operator()( Object &_obj )
   {
     // computes concentrations first
-    Object::t_Container::const_iterator i_bit = _obj.bitstring.begin();
-    Object::t_Container::const_iterator i_bit_end = _obj.bitstring.end();
-    std::vector<bool> :: const_iterator i_site = sites.begin();
-    types::t_int concx = 0, concy = 0;
-    for(; i_bit != i_bit_end; ++i_bit, ++i_site )
-      if ( *i_site ) concx += *i_bit > 0 ? 1: -1;
-      else           concy += *i_bit > 0 ? 1: -1;
-
-    // then chose to normalize w.r.t. x or y (or both if singlec)
-    concx += Nfreeze_x; concy += Nfreeze_y;
-    x = (types::t_real) concx / (types::t_real) N;
-    y = (types::t_real) concy / (types::t_real) N;
-    if( not singlec )
+    set( _obj );
+    if( not single_c )
     {
-      if ( rng.flip() or not can_inverse(x) ) x = get_x(y);
-      else                                    y = get_y(x);
+      x0 = x; y0 = y;
+      if ( rng.flip() or not can_inverse(x) ) x0 = get_x(y0);
+      else                                    y0 = get_y(x0);
     }
 
     // finally normalizes
-    types::t_real xto_change = (types::t_real) N * x  - concx;
-    types::t_real yto_change = (types::t_real) N * y  - concy;
+    types::t_real xto_change = (types::t_real) N * ( x0 - x );
+    types::t_real yto_change = (types::t_real) N * ( y0 - y );
     if (      xto_change > -1.0 and xto_change < 1.0 
          and  yto_change > -1.0 and xto_change < 1.0 ) return;
     do
@@ -252,6 +242,31 @@ endofloop:
     x /= (types::t_real) Nx;
     y /= (types::t_real) Ny;
   }
+
+  void Concentration :: set( const Object &_obj )
+  {
+    if ( not single_c ) return;
+    if ( sites.size() != _obj.bitstring.size() ) return;
+
+    // computes concentrations first
+    Object::t_Container::const_iterator i_bit = _obj.bitstring.begin();
+    Object::t_Container::const_iterator i_bit_end = _obj.bitstring.end();
+    std::vector<bool>::const_iterator i_site = sites.begin();
+    types::t_real concx = 0, concy = 0;
+    for(; i_bit != i_bit_end; ++i_bit, ++i_site )
+      if( *i_site ) concx += *i_bit > 0 ? 1: -1;
+      else          concy += *i_bit > 0 ? 1: -1;
+
+    // add frozen bits
+    concx += Nfreeze_x;
+    concy += Nfreeze_y;
+
+    // finally normalizes
+    x = (types::t_real) concx / (types::t_real) N;
+    y = (types::t_real) concy / (types::t_real) N;
+  }
+
+
 
 } // namespace pescan
 

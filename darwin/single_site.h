@@ -18,10 +18,10 @@
 #include "opt/types.h"
 
 #include "evaluator.h"
-#include "concentration.h"
 #include "functors.h"
 #include "taboos.h"
 #include "bitstring.h"
+#include "gaoperators.h"
 
 #ifdef _MPI
 #include "mpi/mpi_object.h"
@@ -32,6 +32,7 @@
 
 namespace SingleSite
 {
+  using Ising_CE::Fourier;
 
   struct Object : public BitString::Object<> 
   {
@@ -69,14 +70,49 @@ namespace SingleSite
   void operator<<(Object &_o, const Ising_CE::Structure &_c);
   void operator<<(Object &_o, const Ising_CE::Structure &_str);
 
+  class Concentration 
+  {
+    protected:
+      types::t_real x0;
+    public:
+      types::t_real x;
+      types::t_unsigned N;
+      types::t_int Nfreeze;
+      bool single_c;
+
+    public:
+      Concentration () : x0(0), x(0), N(0), Nfreeze(0), single_c(false) {}
+      Concentration   ( const Concentration &_conc)
+                    : x0(_conc.x0), x(_conc.x), N(_conc.N), Nfreeze(_conc.Nfreeze) {}
+      ~Concentration() {}
+
+      bool Load( const TiXmlElement &_node );
+      void LoadAttribute ( const TiXmlAttribute &_att );
+
+      void operator()( Ising_CE::Structure &_str );
+      void operator()( Object &_obj );
+      void operator()( const Ising_CE::Structure &_str, Object &_object,
+                       types::t_int _concx, types::t_int _concy );
+      void set( const Ising_CE::Structure &_str);
+      void set( const Object &_obj );
+
+    protected:
+      void normalize( Ising_CE::Structure &_str, 
+                      types::t_real _tochange);
+
+  };
+
   template<class T_INDIVIDUAL>
   class Evaluator : public GA::Evaluator< T_INDIVIDUAL >
   {
     public:
       typedef T_INDIVIDUAL t_Individual;
+      typedef Traits::GA< Evaluator<t_Individual> > t_GATraits;
     protected:
       typedef typename t_Individual::t_IndivTraits t_IndivTraits;
       typedef typename t_IndivTraits::t_Object t_Object;
+      typedef typename t_IndivTraits::t_Concentration t_Concentration;
+      typedef typename t_IndivTraits::t_FourierRtoK t_FourierRtoK;
       typedef GA::Evaluator<t_Individual> t_Base;
       typedef Evaluator<t_Individual> t_This;
 
@@ -93,39 +129,41 @@ namespace SingleSite
     protected:
       Ising_CE::Lattice lattice;
       Ising_CE::Structure structure;
-      types::t_real crossover_probability;
-      types::t_real x;
-      types::t_real lessthan, morethan;
-      bool singlec;
+      t_Concentration concentration;
 
     public:
       Evaluator   ()
-                : crossover_probability(0.5), 
-                  x(0), lessthan(1.0), morethan(-1.0), singlec(false) {}
-      Evaluator   ( const t_Base &_c )
-                : crossover_probability( &_c.crossover_probability ), 
-                  x(_c.x), lessthan(_c.lessthan), morethan(_c.moerethan), singlec(_c.singlec) {}
+                : lattice(), structure(), concentration() {}
+      Evaluator   ( const t_This &_c ) 
+                : lattice( _c.lattice), structure(_c.structure),
+                  concentration(_c.concentration) {}
       ~Evaluator() {};
 
 
       bool Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const;
       bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
       bool Load( const TiXmlElement &_node );
-      eoGenOp<t_Individual>* LoadGaOp(const TiXmlElement &_el );
-      GA::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el );
+      eoGenOp<t_Individual>* LoadGaOp(const TiXmlElement &_el )
+       { return GA::LoadGaOp<t_GATraits>( _el, structure, concentration ); }
+      GA::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el )
+      {
+        if ( concentration.single_c ) return NULL;
+        GA::xTaboo<t_GATraits> *xtaboo = new GA::xTaboo< t_GATraits >( concentration );
+        if ( xtaboo and xtaboo->Load( _el ) )  return xtaboo;
+        if ( xtaboo ) delete xtaboo;
+        return NULL;
+      }
 
-      bool Krossover( t_Individual  &_offspring, const t_Individual &_parent,
-                      bool _range = false );
-      bool Crossover( t_Individual &_indiv1, const t_Individual &_indiv2 );
-
-      bool initialize( t_Individual &_indiv );
+      bool initialize( t_Individual &_indiv )
+      {
+        GA::Random< t_GATraits > random( concentration, structure, _indiv );
+        _indiv.invalidate(); return true;
+      }
+      void LoadAttribute ( const TiXmlAttribute &_att )
+        { concentration.LoadAttribute( _att ); };
 
     protected:
       bool consistency_check();
-      void set_concentration( Ising_CE::Structure &_str );
-      void normalize( Ising_CE::Structure &_str, 
-                      types::t_real _tochange);
-      bool Taboo(const t_Individual &_indiv );
   };
 
 } // namespace TwoSites

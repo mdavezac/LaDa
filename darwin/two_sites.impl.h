@@ -123,7 +123,11 @@ namespace TwoSites
     rearrange_structure(structure);
     if ( not consistency_check() )  return false;
 
-    if ( concentration.Load( _node ) ) return true;
+    if ( concentration.Load( _node ) ) 
+    {
+      std::cerr << " Could not load Concentration input!! " << std::endl; 
+      return false;
+    }
     concentration.N = structure.atoms.size() >> 1;
 
     Ising_CE::Structure::t_Atoms::const_iterator i_atom = structure.atoms.begin();
@@ -140,45 +144,7 @@ namespace TwoSites
       else concentration.sites.push_back( false );
     }
     
-    std::cerr << " Could not load Concentration input!! " << std::endl; 
-    return false;
-  }
-
-
-
-  template<class T_INDIVIDUAL>
-  bool Evaluator<T_INDIVIDUAL> :: Taboo(const t_Individual &_indiv )
-  {
-    if ( concentration.is_singlec() ) return false;
-    structure << (const t_Object&)_indiv;
-    concentration.set( structure );
-    return concentration.x > lessthan or concentration.x < morethan; // if true, _object is taboo
-  }
-  
-  template<class T_INDIVIDUAL>
-  GA::Taboo_Base< T_INDIVIDUAL >* 
-       Evaluator<T_INDIVIDUAL> :: LoadTaboo(const TiXmlElement &_el )
-  {
-    if ( concentration.is_singlec() ) return NULL;
-    const TiXmlElement *child = _el.FirstChildElement( "Concentration" );
-    if ( not child )
-      return NULL;
-    double d;
-    if ( child->Attribute( "lessthan" ) )
-      child->Attribute( "xlessthan", &d );
-    lessthan = ( d > 0 and d < 1 ) ? 2.0*d-1.0: 1.0;
-    if ( child->Attribute( "morethan" ) )
-      child->Attribute( "morethan", &d );
-    morethan = ( d > 0 and d < 1 ) ? 2.0*d-1.0: -1.0;
-    if ( lessthan < morethan )
-      return NULL;
-   
-    Print::xmg << Print::Xmg::comment << Print::fixed << Print::setprecision(3) 
-               << "Taboo x in [ " << 0.5*(morethan+1.0)
-               << ", "  << 0.5*(lessthan+1.0) << "] " << Print::endl;
-    // pointer is owned by caller !!
-    return new GA::TabooFunction< t_This >
-                                    ( *this, &t_This::Taboo, "Taboo" );
+    return true;
   }
 
   template<class T_INDIVIDUAL>

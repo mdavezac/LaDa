@@ -14,9 +14,9 @@ types::t_real set_concentration( Ising_CE::Structure &_str,
     exit(0);
   }
   types::t_complex  *i_hold = hold;
-  Ising_CE::fourrier_to_rspace( _str.atoms.begin(), _str.atoms.end(),
-                                _str.k_vecs.begin(), _str.k_vecs.end(),
-                                i_hold );
+  Ising_CE::Fourier( _str.atoms.begin(), _str.atoms.end(),
+                     _str.k_vecs.begin(), _str.k_vecs.end(),
+                     i_hold );
 
   Ising_CE::Structure::t_Atoms::iterator i_atom = _str.atoms.begin();
   Ising_CE::Structure::t_Atoms::iterator i_atom_end = _str.atoms.end();
@@ -134,7 +134,7 @@ types::t_real set_concentration( Ising_CE::Structure &_str,
       {
         x0 = 2.0*x0 - 1.0;
         y0 = 2.0*y0 - 1.0;
-        singlec = true;
+        single_c = true;
         return true;
       }
       std::cerr << "Incorrect values for concentrations " << std::endl
@@ -170,7 +170,7 @@ types::t_real set_concentration( Ising_CE::Structure &_str,
       {
         x0 = 2.0*x0 - 1.0;
         y0 = get_y(x0);
-        singlec = true;
+        single_c = true;
         return true;
       }
       std::cerr << "Incorrect values for concentrations " << std::endl
@@ -183,7 +183,7 @@ types::t_real set_concentration( Ising_CE::Structure &_str,
       {
         y0 = 2.0*y0 - 1.0;
         x0 = get_x(y0);
-        singlec = true;
+        single_c = true;
         return true;
       }
       std::cerr << "Incorrect values for concentrations " << std::endl
@@ -223,7 +223,7 @@ namespace mpi
     if( not serialize( _xy.c ) ) return false;
     if( not serialize( _xy.x0 ) ) return false;
     if( not serialize( _xy.y0 ) ) return false;
-    if( not serialize( _xy.singlec ) ) return false;
+    if( not serialize( _xy.single_c ) ) return false;
 
     return true;
   }

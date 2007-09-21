@@ -56,12 +56,6 @@ namespace BandGap
     return true;
   }
 
-  void Evaluator::init( t_Individual &_indiv )
-  {
-    t_Base :: init( _indiv );
-    // sets structure to this object 
-    structure << *current_object;
-  }
   void Evaluator::evaluate()
   {
     // relax structure

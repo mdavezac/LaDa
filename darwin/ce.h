@@ -41,11 +41,15 @@ namespace CE
 #endif
   };
 
-  class Evaluator : public SingleSite::Evaluator< Individual::Types<Object>::Scalar >,
+  typedef Individual::Types< SingleSite::Object, 
+                             SingleSite::Concentration, 
+                             SingleSite::Fourier        > :: Scalar t_Individual;
+  class Evaluator : public SingleSite::Evaluator< t_Individual >,
                     public VA_CE :: Functional_Builder
   {
     public:
-      typedef Individual::Types<Object>::Scalar t_Individual;
+      typedef CE::t_Individual t_Individual;
+      typedef Traits::GA< Evaluator > t_GATraits;
     protected:
       typedef t_Individual::t_IndivTraits t_IndivTraits;
       typedef SingleSite::Evaluator< t_Individual > t_Base;
