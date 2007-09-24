@@ -77,7 +77,10 @@ namespace GA
       void evaluate_gradient( t_VA_Type *_i_grad )
         { evaluation->evaluate_gradient( *current_indiv, gradients, _i_grad ); }
       t_VA_Type evaluate_one_gradient( types::t_unsigned _pos )
-        { return evaluation->evaluate_one_gradient( *current_indiv, gradients, _pos ); }
+      {
+        current_indiv->invalidate();
+        return evaluation->evaluate_one_gradient( *current_indiv, gradients, _pos ); 
+      }
       bool is_taboo() const
         { return taboo ? (*taboo)( *current_indiv ): false; }
       bool init( t_Individual & _indiv)
@@ -85,7 +88,7 @@ namespace GA
         savestate.init(_indiv);
         evaluation->init(_indiv); 
         variables = &_indiv.Object().Container();
-        gradients.resize( variables->size(), _indiv.quantities() );
+        gradients.resize( variables->size(), _indiv.const_quantities() );
         Traits::zero_out( gradients );
         current_indiv = &_indiv;
         return true;
@@ -132,7 +135,7 @@ namespace GA
       void save()
       {
         if ( not current_indiv ) return;
-        quantity = current_indiv->quantities();
+        quantity = current_indiv->const_quantities();
         fitness =  current_indiv->fitness();
       }
       void reset() const 
@@ -185,7 +188,6 @@ namespace GA
         functional.init( *_pop );
         (*minimizer)( functional );
         functional.evaluate();
-        (*_pop).invalidate();
       }
       virtual std::string className() const {return "Darwin::MinimizerGenOp";}
 

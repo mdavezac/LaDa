@@ -77,7 +77,7 @@ template< class T_GATRAITS >
         std::fill_n( first, N, t_VA_Type(0) );
         // size and value of _grad should be set by evaluator
         evaluator.evaluate_gradient( _grad );
-        objective.evaluate_gradient( _indiv.quantities(), _grad, _i_grad );
+        objective.evaluate_gradient( _indiv.const_quantities(), _grad, _i_grad );
         nb_grad += _grad.size(); 
       }
       virtual t_FitnessQuantity evaluate_with_gradient( t_Individual &_indiv,
@@ -89,7 +89,7 @@ template< class T_GATRAITS >
       {
         evaluate( _indiv );
         evaluator.evaluate_one_gradient( _grad, _pos );
-        return objective.evaluate_one_gradient( _indiv.quantities(), _grad, _pos );
+        return objective.evaluate_one_gradient( _indiv.const_quantities(), _grad, _pos );
       }
 
     protected:
@@ -143,7 +143,7 @@ template< class T_GATRAITS >
       evaluator.evaluate();
     }
 
-    _indiv.set_fitness( objective( _indiv.quantities() ) );
+    _indiv.set_fitness( objective( _indiv.const_quantities() ) );
     store( _indiv );
     return _indiv.fitness();
   }
@@ -151,8 +151,8 @@ template< class T_GATRAITS >
 template< class T_GATRAITS >
   typename Base<T_GATRAITS> :: t_FitnessQuantity
   Base<T_GATRAITS> :: evaluate_with_gradient( t_Individual &_indiv,
-                                                          t_QuantityGradients& _grad,
-                                                          t_VA_Type *_i_grad )
+                                              t_QuantityGradients& _grad,
+                                              t_VA_Type *_i_grad )
   {
     // only computes "expensive" evaluator functionals once!
     nb_grad += _grad.size(); 
@@ -164,7 +164,8 @@ template< class T_GATRAITS >
     }
     else evaluator.evaluate_gradient( _grad );
 
-    _indiv.set_fitness( objective.evaluate_with_gradient( _indiv.quantities(), _grad, _i_grad ) );
+    _indiv.set_fitness( objective.evaluate_with_gradient( _indiv.const_quantities(),
+                                                          _grad, _i_grad ) );
     store( _indiv );
     return _indiv.fitness();
   }
@@ -260,7 +261,7 @@ template< class T_GATRAITS >
       evaluator.evaluate();
       ++nb_eval;
     }
-    _indiv.set_fitness( objective( _indiv.quantities() ) ); 
+    _indiv.set_fitness( objective( _indiv.const_quantities() ) ); 
 
     // isnot_clone is true only if history exists
     // and prior call to history->clone( _indiv ) returned false
@@ -295,7 +296,7 @@ template< class T_GATRAITS >
     }
     else evaluator.evaluate_gradient( _grad );
 
-    _indiv.set_fitness( objective.evaluate_with_gradient( _indiv.quantities(), _grad, _i_grad ) );
+    _indiv.set_fitness( objective.evaluate_with_gradient( _indiv.const_quantities(), _grad, _i_grad ) );
     store( _indiv );
     return _indiv.fitness();
   }

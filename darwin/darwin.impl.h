@@ -183,6 +183,7 @@ namespace GA
 
     // creates pop taboo
     child = parent.FirstChildElement("Population");
+    if ( not child ) child = parent.FirstChildElement("PopTaboo");
     if (child)
     {
       Print::xmg << Print::Xmg::comment << "Population Taboo" << Print::endl;
@@ -194,6 +195,7 @@ namespace GA
     
     // creates offspring taboo
     child = parent.FirstChildElement("Offspring");
+    if ( not child ) child = parent.FirstChildElement("OffspringTaboo");
     if (child)
     {
       Print::xmg << Print::Xmg::comment << "Offspring Taboo" << Print::endl;

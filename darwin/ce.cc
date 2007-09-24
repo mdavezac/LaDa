@@ -14,6 +14,23 @@
 
 namespace CE
 {
+  bool Evaluator :: Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type )
+  {
+    double d;
+    if ( not _node.Attribute("enthalpy", &d ) ) goto errorout;
+    _indiv.quantities() = (types::t_real) d;
+
+    return t_Base::Load( _indiv, _node, _type );
+errorout:
+    std::cerr << "Could not Load CE::Object" << std::endl;
+    return false;
+  }
+  bool Evaluator :: Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const
+  { 
+    double d = (double) _indiv.const_quantities();
+    _node.SetDoubleAttribute("enthalpy", d );
+    return t_Base::Save( _indiv, _node, GA::LOADSAVE_SHORT );
+  }
 
   bool Evaluator :: Load( const TiXmlElement &_node )
   {

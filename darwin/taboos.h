@@ -210,7 +210,7 @@ namespace GA
         i_indiv = std::find( i_indiv, i_end, _indiv);
         if ( i_end == i_indiv )
           return false;
-        _indiv.quantities() = i_indiv->quantities();
+        _indiv.quantities() = i_indiv->const_quantities();
         _indiv.fitness() = i_indiv->fitness();
         return true;
       }

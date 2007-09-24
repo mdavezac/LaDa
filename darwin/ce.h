@@ -105,6 +105,8 @@ namespace CE
       {
         _grad[_pos] = functional.evaluate_one_gradient( _pos );
       }
+      bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
+      bool Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const;
   };
 
 } // namespace CE

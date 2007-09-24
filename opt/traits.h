@@ -56,6 +56,35 @@ namespace Traits
   template< class T_ARG >
    struct GetScalar<T_ARG, false> { typedef T_ARG t_Scalar; };
 
+  template< class T_ARG>
+    struct Fuzzy {
+      static bool less( const T_ARG &_a, const T_ARG &_b ) 
+        { return _a + types::tolerance < _b; }
+      static bool greater( const T_ARG &_a, const T_ARG &_b ) 
+        { return _b + types::tolerance < _a; }
+      static bool equal( const T_ARG &_a, const T_ARG &_b ) 
+        { return std::abs( _a - _b ) <  types::tolerance; }
+    };
+  template<>
+    struct Fuzzy<types::t_int> {
+      static bool less( const types::t_int &_a, const types::t_int &_b ) 
+        { return _a < _b; }
+      static bool greater( const types::t_int &_a, const types::t_int &_b ) 
+        { return _b< _a; }
+      static bool equal( const types::t_int &_a, const types::t_int &_b ) 
+        { return _a == _b; }
+    };
+  template<>
+    struct Fuzzy<types::t_unsigned> {
+      static bool less( const types::t_unsigned &_a, const types::t_unsigned &_b ) 
+        { return _a < _b; }
+      static bool greater( const types::t_unsigned &_a, const types::t_unsigned &_b ) 
+        { return _b< _a; }
+      static bool equal( const types::t_unsigned &_a, const types::t_unsigned &_b ) 
+        { return _a == _b; }
+    };
+
+
   template<class T_QUANTITY, bool ISVECTOR = Dim<T_QUANTITY> :: is_vector >
     struct Quantity 
     {
@@ -72,11 +101,11 @@ namespace Traits
       static types::t_unsigned size( const t_Quantity& _q ) 
         { return _q.size(); }
       static bool less( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
-        { return Quantity<t_ScalarQuantity>::less(_a,_b); }
+        { return Fuzzy<t_ScalarQuantity>::less(_a,_b); }
       static bool greater( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
-        { return Quantity<t_ScalarQuantity>::greater(_a,_b); }
+        { return Fuzzy<t_ScalarQuantity>::greater(_a,_b); }
       static bool equal( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
-        { return Quantity<t_ScalarQuantity>::equal(_a,_b); }
+        { return Fuzzy<t_ScalarQuantity>::equal(_a,_b); }
       static void print_out( std::ostream& _stream, const t_Quantity &_quantity )
       {
         typename t_Quantity :: const_iterator i_scal = _quantity.begin();
@@ -105,11 +134,11 @@ namespace Traits
       static types::t_unsigned size( const t_Quantity& _q ) 
         { return _q.size(); }
       static bool less( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
-        { return Quantity<t_ScalarQuantity>::less(_a,_b); }
+        { return Fuzzy<t_ScalarQuantity>::less(_a,_b); }
       static bool greater( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
-        { return Quantity<t_ScalarQuantity>::greater(_a,_b); }
+        { return Fuzzy<t_ScalarQuantity>::greater(_a,_b); }
       static bool equal( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
-        { return Quantity<t_ScalarQuantity>::equal(_a,_b); }
+        { return Fuzzy<t_ScalarQuantity>::equal(_a,_b); }
       static void print_out( std::ostream& _stream, const t_Quantity &_quantity )
         { _stream << _quantity; }
 #ifdef _MPI

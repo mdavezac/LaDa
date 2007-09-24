@@ -86,7 +86,8 @@ namespace SingleSite
     for(; i_atom != i_atom_end; ++i_atom )
       if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
         concentration.Nfreeze += i_atom->type > 0 ? 1 : -1; 
-    
+    Print::xmg << Print::Xmg::comment << concentration.print_out() << Print::endl;
+
     return true;
   }
 

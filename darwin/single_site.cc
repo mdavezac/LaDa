@@ -80,14 +80,13 @@ namespace SingleSite
   {
     single_c = false;
     std::string name = _att.Name();
-    if ( name.compare("x") and name.compare("x0") )
-      return;
     
     double d;
     d = _att.DoubleValue();
     if( d < 0 or d > 1 ) goto errorout;
     single_c = true;
     x0 = 2.0 * (types::t_real) d - 1.0;
+
 
 errorout:
     std::cerr << "Error while reading concentration input\n";
@@ -219,6 +218,16 @@ errorout:
     // finally normalizes
     x = (types::t_real) conc / (types::t_real) N;
   }
+
+  std::string Concentration :: print_out () const 
+  {
+    if ( not single_c ) return "Concentration Range";
+    std::ostringstream sstr;
+    sstr << "Single Concentration, x0 = " << x0;
+    return sstr.str();
+  }
+
+
 
 
 } // SingleSite

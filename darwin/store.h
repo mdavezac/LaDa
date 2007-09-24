@@ -123,14 +123,18 @@ namespace Store
           i_found = std::find( results.begin(), results.end(), _indiv );
           if ( i_found != results.end() ) return;
         }
-        new_results = true;
+        new_results = true; 
+        std::cout << "Removing..." << new_optima.size() << " -> ";
 #ifdef _MPI
         if ( not new_optima.empty() ) new_optima.remove_if( condition );
+        std::cout << new_optima.size() << std::endl;
         new_optima.push_back( _indiv );
 #else
         if ( not results.empty() ) results.remove_if( condition );
         results.push_back( _indiv );
 #endif
+        // remove_if should have changed Objective::current_indiv 
+        condition( _indiv );
       }
 
       bool Restart( const TiXmlElement &_node )
@@ -231,8 +235,7 @@ namespace Store
           // checks wether result should be stored
           typename t_Container :: iterator i_found;
           i_found = std::find( results.begin(), results.end(), indiv );
-          if ( i_found != results.end() )
-            return;
+          if ( i_found != results.end() ) continue;
           new_results = true;
           results.push_back( indiv );
         }
@@ -380,11 +383,11 @@ namespace Store
           if ( optimum.invalid() )
           {
             optimum = _indiv;
-            val = (*objective)( optimum.quantities() );
+            val = (*objective)( optimum.const_quantities() );
             end_val = val + delta;
             return false;
           }
-          t_ScalarQuantity indiv_val = (*objective)(_indiv.quantities());
+          t_ScalarQuantity indiv_val = (*objective)(_indiv.const_quantities());
           if ( t_QuantityTraits::less(indiv_val, val) )
           {
             optimum = _indiv;
@@ -392,6 +395,8 @@ namespace Store
             end_val = val + delta;
             return false;
           }
+          std::cout << indiv_val << " > " << end_val << " ? " 
+                    << t_QuantityTraits::greater(indiv_val, end_val) <<  std::endl;
 
           return t_QuantityTraits::greater(indiv_val, end_val); 
         }

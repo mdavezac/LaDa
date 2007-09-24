@@ -96,6 +96,8 @@ namespace SingleSite
       void set( const Ising_CE::Structure &_str);
       void set( const Object &_obj );
 
+      std::string print_out() const;
+
     protected:
       void normalize( Ising_CE::Structure &_str, 
                       types::t_real _tochange);
@@ -161,6 +163,7 @@ namespace SingleSite
       }
       void LoadAttribute ( const TiXmlAttribute &_att )
         { concentration.LoadAttribute( _att ); };
+
 
     protected:
       bool consistency_check();

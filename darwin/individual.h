@@ -145,11 +145,11 @@ namespace Individual
         { return object.get_concentration(); }
 
       t_Quantity& quantities() { return quantity; }
-      const t_Quantity& quantities() const { return quantity; }
+      const t_Quantity& const_quantities() const { return quantity; }
 
       t_ScalarQuantity& quantities( types::t_unsigned _n )
         { return t_QuantityTraits::scalar(quantity,_n); }
-      const t_ScalarQuantity& quantities( types::t_unsigned _n ) const
+      const t_ScalarQuantity& const_quantities( types::t_unsigned _n ) const
         { return t_QuantityTraits::scalar(quantity,_n); }
 
       template<class SaveOp>
