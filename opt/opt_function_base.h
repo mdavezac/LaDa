@@ -143,6 +143,9 @@ namespace function
       virtual t_Type evaluate_with_gradient( t_Type* const _i_grad ) = 0;
 
       virtual bool is_taboo() const { return false; } // for minimizers with taboos
+
+      virtual void invalidate() {}
+      virtual bool is_valid() { return true; }
   };
 
 }

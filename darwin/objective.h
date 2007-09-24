@@ -355,10 +355,6 @@ namespace Objective
   const typename ConvexHull<T_GA_TRAITS> :: t_Fitness&
     ConvexHull<T_GA_TRAITS> :: operator()(const t_Quantity& _val)
     {
-      if ( std::abs( _val - (const t_Quantity&) current_indiv->const_quantities() ) > types::tolerance )
-        std::cerr << " _val and current_indiv do not match " 
-                  << _val << " and " << (const t_Quantity&) current_indiv->const_quantities()
-                  <<  std::endl;
       t_Quantity x = current_indiv->get_concentration();
       t_Quantity base = (t_Quantity) convexhull.evaluate( x );
     
@@ -377,10 +373,6 @@ namespace Objective
                                                        t_QuantityGradients &_grad,
                                                        t_VA_Type *_i_grad)
     {
-      if ( std::abs( _val - (const t_Quantity&) current_indiv->const_quantities() ) > types::tolerance )
-        std::cerr << " _val and current_indiv do not match " 
-                  << _val << " and " << (const t_Quantity&) current_indiv->const_quantities()
-                  <<  std::endl;
       t_Quantity x = current_indiv->get_concentration();
       t_Quantity base = (t_Quantity) convexhull.evaluate( x );
       types::t_real Ninv = 1.0 / ( (types::t_real ) current_indiv->Object().Container().size() );

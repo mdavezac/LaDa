@@ -64,23 +64,19 @@ namespace GA
     public:
       Minimizer_Functional( t_Evaluation &_r, t_Taboo &_t ) : evaluation(&_r), taboo(&_t) {};
       t_VA_Type evaluate()
-      {
-        current_indiv->invalidate();
+      { 
         t_VA_Type result = evaluation->evaluate( *current_indiv ); 
         return result;
       }
       t_VA_Type evaluate_with_gradient( t_VA_Type *_i_grad )
       {
-        current_indiv->invalidate();
-        return (t_VA_Type) evaluation->evaluate_with_gradient( *current_indiv, gradients, _i_grad ); 
+        return (t_VA_Type) evaluation->evaluate_with_gradient( *current_indiv,
+                                                               gradients, _i_grad ); 
       }
       void evaluate_gradient( t_VA_Type *_i_grad )
         { evaluation->evaluate_gradient( *current_indiv, gradients, _i_grad ); }
       t_VA_Type evaluate_one_gradient( types::t_unsigned _pos )
-      {
-        current_indiv->invalidate();
-        return evaluation->evaluate_one_gradient( *current_indiv, gradients, _pos ); 
-      }
+        { return evaluation->evaluate_one_gradient( *current_indiv, gradients, _pos ); }
       bool is_taboo() const
         { return taboo ? (*taboo)( *current_indiv ): false; }
       bool init( t_Individual & _indiv)
@@ -93,6 +89,7 @@ namespace GA
         current_indiv = &_indiv;
         return true;
       }
+      void invalidate() { current_indiv->invalidate(); }
       bool init() { return true; }
         
   };

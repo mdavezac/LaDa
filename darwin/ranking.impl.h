@@ -225,6 +225,8 @@ namespace Ranking
 
       if( name == "Niching" or name == "niching" )
         { container->push_back( new_Niche_from_xml<T_GATRAITS>( *parent ) ); }
+      if( T_GATRAITS::t_QuantityTraits::is_vector and ( name == "Pareto" or name == "pareto" ) )
+        { container->push_back( new ParetoRanking<T_GATRAITS>() ); }
     }
 
     Base<T_GATRAITS>* result = NULL;

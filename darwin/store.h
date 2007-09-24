@@ -124,7 +124,6 @@ namespace Store
           if ( i_found != results.end() ) return;
         }
         new_results = true; 
-        std::cout << "Removing..." << new_optima.size() << " -> ";
 #ifdef _MPI
         if ( not new_optima.empty() ) new_optima.remove_if( condition );
         std::cout << new_optima.size() << std::endl;
@@ -395,8 +394,6 @@ namespace Store
             end_val = val + delta;
             return false;
           }
-          std::cout << indiv_val << " > " << end_val << " ? " 
-                    << t_QuantityTraits::greater(indiv_val, end_val) <<  std::endl;
 
           return t_QuantityTraits::greater(indiv_val, end_val); 
         }
