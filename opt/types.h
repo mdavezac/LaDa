@@ -10,13 +10,14 @@
 
 #include<complex>
 
+//! Names a few simple variable types and globals for portability purposes
 namespace types 
 {
-  typedef unsigned t_unsigned;
-  typedef int t_int;
-  typedef double t_real;
-  typedef char t_char;
-  const t_real tolerance = 0.000001;
-  typedef std::complex<types::t_real> t_complex;
+  typedef unsigned t_unsigned; //!< the unsigned integer type
+  typedef int t_int;           //!< the signed integer type
+  typedef double t_real;       //!< the real value type
+  typedef char t_char;         //!< the character type, unused
+  typedef std::complex<types::t_real> t_complex; //!< a complex real type
+  const t_real tolerance = 0.000001; //!< all purpose tolerance global
 }
 #endif

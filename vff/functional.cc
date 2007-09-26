@@ -954,6 +954,7 @@ namespace Vff
 
 namespace mpi
 {
+  //! Allows mpi::BroadCast "-ing" and mpi::AllGather "-ing" of  Vff::Atomic_Functional
   template<>
   bool BroadCast :: serialize<Vff::Atomic_Functional>( Vff::Atomic_Functional &_func )
   {
@@ -968,6 +969,7 @@ namespace mpi
     return serialize( _func.sigmas );
   }
 
+  //! Allows mpi::BroadCast "-ing" and mpi::AllGather "-ing" of  Vff::Functional
   template<>
   bool BroadCast :: serialize<Vff::Functional>( Vff::Functional &_vff )
   {
