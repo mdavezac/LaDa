@@ -88,12 +88,12 @@ namespace Vff
 
     public:
       //! Default Constructor. 
-      //! \param _str structure in which _e can be found
+      //! \param _str structure in which \a _e can be found
       //! \param _e atom to which this Atomic_Center relates
       //! \param _i index of _i in _str.atoms collection. Usefull for mpi processing
       Atomic_Center ( Ising_CE::Structure &_str, Ising_CE::Atom &_e, types::t_unsigned _i);
       //! Copy Constructor
-      //! \param _c Atomic_Center object to copy
+      //! \param[in] _c Atomic_Center object to copy
       Atomic_Center   ( const Atomic_Center &_c )
                     : origin(_c.origin), bonds(_c.bonds), translations(_c.translations), 
                       do_translates(_c.do_translates), structure(_c.structure),
@@ -112,7 +112,7 @@ namespace Vff
 
       //! Adds _bond to  Atomic_Center::bonds if it is in first neighbor relationship
       //
-      //! This function returns -1 if _e is not a bond, and returns the
+      //! This function returns -1 if \a _e is not a bond, and returns the
       //! number of bounds if it is. Note that poeriodic images of _bond are checked and 
       //! Atomic_Center::translations and Atomic_Center::do_translate are set accordingly.
       //! \param _e Atomic_Center object for which first neighbor relationship is checked
