@@ -44,12 +44,16 @@ namespace GA
       typedef typename t_GAOpTraits :: t_FourierRtoK t_FourierRtoK;
       typedef typename t_GAOpTraits :: t_FourierKtoR t_FourierKtoR;
       typedef typename t_IndivTraits::t_Object t_Object;
+      typedef eoGenOp<t_Individual> t_Base;
 
     protected:
       t_Concentration &concentration;
       Ising_CE::Structure &structure;
       types::t_real rate;
       bool do_range;
+
+    public:
+      using t_Base::operator();
 
     public:
       Krossover   ( t_Concentration &_c, Ising_CE::Structure &_str )
@@ -65,6 +69,7 @@ namespace GA
       unsigned max_production(void) { return 1; } 
 
       bool operator()( t_Individual &_indiv, const t_Individual &_parent );
+
       void apply(eoPopulator<t_Individual>& _pop)
         { if ( operator()( *_pop, _pop.select() ) ) (*_pop).invalidate(); }
       std::string print_out() const
@@ -140,11 +145,15 @@ namespace GA
       typedef typename t_GAOpTraits :: t_FourierRtoK t_FourierRtoK;
       typedef typename t_GAOpTraits :: t_FourierKtoR t_FourierKtoR;
       typedef typename t_IndivTraits::t_Object t_Object;
+      typedef eoGenOp<t_Individual> t_Base;
 
     protected:
       t_Concentration &concentration;
       Ising_CE::Structure &structure;
       types::t_real rate;
+
+    public:
+      using t_Base::operator();
 
     public:
       KMutation   ( t_Concentration &_c, Ising_CE::Structure &_str )
@@ -222,10 +231,14 @@ namespace GA
       typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits;
       typedef typename t_GAOpTraits :: t_Concentration t_Concentration;
       typedef typename t_IndivTraits::t_Object t_Object;
+      typedef eoGenOp<t_Individual> t_Base;
 
     protected:
       t_Concentration &concentration;
       Ising_CE::Structure structure;
+
+    public:
+      using t_Base::operator();
 
     public:
       KRandom   ( t_Concentration &_c, Ising_CE::Structure &_str )
@@ -277,10 +290,14 @@ namespace GA
       typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits;
       typedef typename t_GAOpTraits :: t_Concentration t_Concentration;
       typedef typename t_IndivTraits::t_Object t_Object;
+      typedef eoGenOp<t_Individual> t_Base;
     protected:
       t_Concentration &concentration;
       Ising_CE::Structure structure;
       BitString::Crossover<t_Object> op;
+
+    public:
+      using t_Base::operator();
 
     public:
       Crossover   ( t_Concentration &_c, Ising_CE::Structure &_str )
@@ -321,11 +338,16 @@ namespace GA
       typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits;
       typedef typename t_GAOpTraits :: t_Concentration t_Concentration;
       typedef typename t_IndivTraits::t_Object t_Object;
+      typedef eoGenOp<t_Individual> t_Base;
+
 
     protected:
       t_Concentration &concentration;
       Ising_CE::Structure structure;
       BitString::Mutation<t_Object> op;
+
+    public:
+      using t_Base::operator();
 
     public:
       Mutation   ( t_Concentration &_c, Ising_CE::Structure &_str )
@@ -365,10 +387,14 @@ namespace GA
       typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits;
       typedef typename t_GAOpTraits :: t_Concentration t_Concentration;
       typedef typename t_IndivTraits::t_Object t_Object;
+      typedef eoGenOp<t_Individual> t_Base;
 
     protected:
       t_Concentration &concentration;
       Ising_CE::Structure structure;
+
+    public:
+      using t_Base::operator();
 
     public:
       Random   ( t_Concentration &_c, Ising_CE::Structure &_str )

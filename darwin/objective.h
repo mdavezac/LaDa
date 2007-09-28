@@ -738,7 +738,7 @@ namespace Objective
               std::cerr << "Mememory Pb when creating LinearSum multi-objective" << std::endl;
               return NULL;
             }
-            const TiXmlElement *child = child->FirstChildElement("Objective");
+            const TiXmlElement *child = _node.FirstChildElement("Objective");
             for(; child; child = child->NextSiblingElement("Objective") )
             {
               Scalar* scalar = scalar_from_xml( *child );

@@ -281,7 +281,8 @@ namespace GA
     // The following synchronizes Results::nb_val 
     // all procs. Should always be there!!
 #ifdef _MPI
-        Synchronize<types::t_unsigned> *synchro = new Synchronize<types::t_unsigned>( evaluation->nb_eval );
+        Synchronize<types::t_unsigned> *synchro = 
+                 new Synchronize<types::t_unsigned>( evaluation->nb_eval );
         eostates.storeFunctor( synchro );
         continuator->add( *synchro );
 
@@ -299,7 +300,8 @@ namespace GA
       
       if ( n >= 0 and do_save )
       {
-        Print::xmg << Print::Xmg::comment << "Will Save Every " << n << " Generations " << Print::endl;
+        Print::xmg << Print::Xmg::comment << "Will Save Every " << n
+                   << " Generations " << Print::endl;
         SaveEvery<t_Darwin> *save = new SaveEvery<t_Darwin>( *this, &Darwin::Save, std::abs(n) );
         eostates.storeFunctor( save );
         continuator->add( *save );
@@ -311,7 +313,8 @@ namespace GA
     if( child )
     {
       continuator->add( eostates.storeFunctor( new TrueCensus< t_GATraits >() ) );
-      Print::xmg << Print::Xmg::comment << "Statistics: True population size, discounting twins" << Print::endl;
+      Print::xmg << Print::Xmg::comment
+                 << "Statistics: True population size, discounting twins" << Print::endl;
     }
 
     // Creates Terminators
@@ -336,7 +339,8 @@ namespace GA
                                    std::less<types::t_unsigned>(), "nb_eval < term" );
       eostates.storeFunctor( terminator );
       continuator->add( *terminator );
-      Print::xmg << Print::Xmg::comment << "Terminating after " << max << " evaluations" << Print::endl;
+      Print::xmg << Print::Xmg::comment << "Terminating after " << max
+                 << " evaluations" << Print::endl;
       
       // end if max
     }
@@ -352,7 +356,8 @@ namespace GA
     // Creates Print object
     {
       typedef PrintGA< Store::Base<t_GATraits>, Evaluation::Base<t_GATraits> > t_PrintGA;
-      t_PrintGA* printga = new t_PrintGA( *store, *evaluation, generation_counter, do_print_each_call);
+      t_PrintGA* printga = 
+          new t_PrintGA( *store, *evaluation, generation_counter, do_print_each_call);
       eostates.storeFunctor(printga);
       continuator->add( *printga );
     }

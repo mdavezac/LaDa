@@ -65,7 +65,7 @@ namespace Traits
       typedef T_FITNESS                             t_Fitness;
       typedef typename t_Fitness :: t_ScalarFitness t_ScalarFitness;
       const static bool is_scalar = t_QuantityTraits :: is_scalar;
-      const static bool is_vectorial = t_QuantityTraits :: is_vectorial;
+      const static bool is_vector = t_QuantityTraits :: is_vector;
   };
 
   template< class T_EVALUATOR,
@@ -87,7 +87,7 @@ namespace Traits
      typedef typename t_IndivTraits :: t_Fitness         t_Fitness;
      typedef typename t_Fitness :: t_ScalarFitness       t_ScalarFitness;
      const static bool is_scalar = t_QuantityTraits :: is_scalar;
-     const static bool is_vectorial = t_QuantityTraits :: is_vectorial;
+     const static bool is_vector = t_QuantityTraits :: is_vector;
   };
   
 

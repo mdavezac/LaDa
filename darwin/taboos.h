@@ -38,7 +38,7 @@ namespace GA
 
       types::t_unsigned max_production(void) { return 1; }
 
-      virtual bool is_problematic() {return false;}
+      virtual bool is_problematic() const {return false;}
       virtual void set_problematic(bool _p = false) {return; }
 
       virtual void print_out( std::ostream &str ) const {return;}

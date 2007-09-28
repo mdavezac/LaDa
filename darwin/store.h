@@ -183,6 +183,11 @@ namespace Store
 
       virtual void print_results(types::t_unsigned _age, bool is_comment = false) const
       {
+        if (print_objective)
+        {
+          objective->print();
+          return;
+        }
         typename t_Container :: const_iterator i_indiv = results.begin();
         typename t_Container :: const_iterator i_end = results.end();
         for (; i_indiv != i_end; ++i_indiv )
@@ -339,6 +344,7 @@ namespace Store
         t_ScalarQuantity end_val;
         t_ScalarQuantity delta;
         bool owns_objective;
+        bool print_objective;
 
       public:
         FromObjective   () : objective(NULL), owns_objective(false) {}
@@ -346,7 +352,6 @@ namespace Store
                       : t_Base(_node), objective(NULL),
                         val(0), end_val(0), delta(0), owns_objective(false)
         {
-          std::string obj_type;
           double d=0;
           if ( _node.Attribute("delta") )
             _node.Attribute("delta", &d);
@@ -356,12 +361,17 @@ namespace Store
           if ( not objective )
             throw std::runtime_error("Could not Load objective from input in conditional store\n"); 
           owns_objective = true;
+
+          if ( _node.Attribute("print") )
+          {
+            std::string str = _node.Attribute("print");
+            if( str.compare("all") == 0 ) print_objective = false;
+          }
         }
         FromObjective   ( typename t_Objective::Vector* _type, const TiXmlElement &_node )
                       : t_Base(_node), objective(_type),
                         val(0), end_val(0), delta(0), owns_objective(false)
         {
-          std::string obj_type;
           double d=0;
           if ( _node.Attribute("delta") )
             _node.Attribute("delta", &d);

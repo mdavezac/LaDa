@@ -72,7 +72,8 @@ if test x$debug = xtrue; then
   CXXFLAGS=`echo $CXXFLAGS | sed "s/-O2//"`
   CFLAGS=`echo $CFLAGS | sed "s/-O2//"`
   AC_DEFINE([_PRINT_ALL_PROCS],[],[])
-  CPP_DEBUG_FLAGS="-Wall -O0  -fbounds-check" 
+  AX_CHECK_COMPILER_FLAGS([-fbounds-check], 
+                          [CPP_DEBUG_FLAS+=" -fbounds-check"],)
 else
   CPP_DEBUG_FLAGS=
 fi
@@ -171,6 +172,9 @@ if test "$ac_cv_cxx_have_stl" = yes; then
   LIBS="-lstdc++ -lm $LIBS"
  else
    AC_MSG_ERROR("Could not find standard template libraries")
+fi
+if test hostname="super01" && test "$CXX" = "icc"; then
+  LIBS="${LIBS} -L/copt/intel/9.0/lib -lcxa -lcxaguard"
 fi
 
 # checks for compiler specific flags 
