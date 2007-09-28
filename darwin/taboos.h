@@ -313,7 +313,7 @@ namespace GA
         return false;
       } 
 
-      bool is_problematic() const
+      virtual bool is_problematic() const
       {
         typename std::list< Taboo_Base<t_Individual> * > :: const_iterator i_taboo = taboos.begin();
         typename std::list< Taboo_Base<t_Individual> * > :: const_iterator i_end = taboos.end();
