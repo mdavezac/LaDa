@@ -1,0 +1,23 @@
+/** \page xIndex Index of all XML Tags
+
+  <UL>
+     <LI> \ref TagAngle
+     <LI> \ref Tagatom
+     <LI> \ref TagAtom
+     <LI> \ref TagBond
+     <LI> \ref Tagcell
+     <LI> \ref Tagcolumn
+     <LI> \xe<Functional>\ex, \ref xFunctionals
+     <LI> Tagescanfunc
+     <LI> Tagvfffunc
+     <LI> \ref TagGenPot
+     <LI> \ref TagHamiltonian
+     <LI> \ref Taglattice
+     <LI> \ref TagPseudo
+     <LI> \ref TagReference
+     <LI> \ref Tagsite
+     <LI> \ref TagSpinOrbit
+     <LI> \ref Tagstructure
+  </UL>
+
+*/

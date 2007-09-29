@@ -1,0 +1,205 @@
+/** \page xFunctionals  Functional input
+    In LaDa the input to all functionals is to be found between \xe
+    <Functional\ex \xa type\ax="??"\xe >\ex ... \xe</Functional>\ex tags, where
+    the attribute \xa type \ax defines which functional this tag will deal
+    with. Further \xe<Functional>\ex attributes, as well as tags contained within
+    \xe<Functional>\ex will depend on \xa type\ax. 
+    \param type can be one of the following:
+           <ul> 
+             <li> vff \ref  secvff 
+             <li> escan \ref  secescan 
+             <li> CE \ref  secce 
+           </ul>
+
+    <h1> Vff Input </h1> \anchor secvff
+    This Vff input follows closely the input of nanopse Vff. The units and
+    quantities are the same, whatever those may be.  If by chance, you were not
+    what those are, don't hesitate to let me know. Anyways, a good guess is to
+    use the units of <A HREF="http://dx.doi.org/10.1103/PhysRevB.66.045208">
+    PRB <STRONG>66</STRONG>, 045208 (2002). </A> 
+    Here is an example of what a  Vff input should look like
+    \code
+    <Functional type="vff">
+        <Bond A="In" B="As" d0="2.622" alpha="35.180" />
+        <Bond A="Ga" B="As" d0="2.448" alpha="41.190" />
+        <Bond A="Ga" B="Sb" d0="2.640" alpha="33.160" />
+        <Bond A="In" B="Sb" d0="2.805" alpha="26.610" />
+        <Angle A="As" B="Ga" C="As" gamma="tet" sigma="0" beta="8.93823" />
+        <Angle A="As" B="Ga" C="Sb" gamma="tet" sigma="0" beta="8.08355" />
+        <Angle A="Sb" B="Ga" C="Sb" gamma="tet" sigma="0" beta="7.2289" />
+        <Angle A="In" B="As" C="In" gamma="tet" sigma="0" beta="5.48808" />
+        <Angle A="Ga" B="As" C="In" gamma="tet" sigma="0" beta="7.213155" />
+        <Angle A="Ga" B="As" C="Ga" gamma="tet" sigma="0" beta="8.93823" />
+        <Angle A="As" B="In" C="As" gamma="tet" sigma="0" beta="5.48808" />
+        <Angle A="Sb" B="In" C="As" gamma="tet" sigma="0" beta="4.88615" />
+        <Angle A="Sb" B="In" C="Sb" gamma="tet" sigma="0" beta="4.2842" />
+        <Angle A="Ga" B="Sb" C="Ga" gamma="tet" sigma="0" beta="7.2289" />
+        <Angle A="In" B="Sb" C="In" gamma="tet" sigma="0" beta="4.2842" />
+        <Angle A="Ga" B="Sb" C="In" gamma="tet" sigma="0" beta="5.75655" />
+    </Functional>
+    \endcode
+    \warning All codes which use vff also require coherent \ref Taglattice and
+             \ref Tagstructure tags. 
+
+     There are a grand total of three tags
+     \secreflist
+       \refitem Tagvfffunc Functional, type="vff"
+       \refitem TagBond Bond
+       \refitem TagAngle Angle
+     \endsecreflist
+
+     \section Tagvfffunc <Functional type="vff">
+     Including the specified type, this tag is where all Vff data should be
+     found. It can contain two attributes,
+     \param type type must be equal to \a "vff" here
+     \param cutoff real space radius below which first neighbor relationships
+      are assumed, eg if two atoms are closer than \a cutoff, then it is assumed that
+      they are first neighbors. It must be given in the same units as positions in
+      \ref Tagstructure and \ref Taglattice (eg versus their scale attribute). Mind,
+      the default value seems to work. 
+
+     \section TagBond <Bond/>
+     Defines Vff bond-stretching values within its attributes.
+     \warning There is little or no checking done in the code at this point.
+              Too many \ref TagBond tags or too few, and it is likely vff will
+              reformat your hard-drive.
+      The attributes \a A, \a B, \a d0, and \a alpha are mandatory.
+      \param A symbol of one of the bond-endpoint, must be one of the species listed
+               in \ref \taglattice
+      \param B symbol of the other bond-endpoint, must be one of the species listed
+               in \ref \taglattice
+      \param d0 equilibrium bond-length in &Aring;
+      \param alpha  harmonic bond-stretching parameter \f$(N\cdot m^{-1})\f$
+      \param alpha3 cubic    bond-stretching parameter \f$(N\cdot m^{-1})\f$
+      \param alpha4 quartic  bond-stretching parameter \f$(N\cdot m^{-1})\f$
+      \param alpha5 order-5  bond-stretching parameter \f$(N\cdot m^{-1})\f$
+      \param alpha6 order-6  bond-stretching parameter \f$(N\cdot m^{-1})\f$
+
+     \section TagAngle <Angle/>
+     Defines Vff bond-bending and bond-angle values within its attributes.
+     \warning There is little or no checking done in the code at this point.
+              Too many \ref TagAngle tags or too few, and it is likely vff will
+              reformat your hard-drive.
+      The attributes \a A, \a B, \a C, \a gamma, \a sigma, and \a beta are mandatory.
+      \param A symbol of one of the angle-endpoint, must be one of the species listed
+               in \ref \taglattice
+      \param B symbol of the central atom in the angle, must be one of the species listed
+               in \ref \taglattice
+      \param C symbol of the other angle-endpoint, must be one of the species listed
+               in \ref \taglattice
+      \param gamma equilibrium angle. Can be "tet", or "tetrahedral" for some
+                   kind of symmetrie. Can be a number with a meaning which can
+                   probably be found in nanopse.
+      \param beta harmonic bond-bending parameter \f$(N\cdot m^{-1})\f$
+      \param beta3 cubic bond-bending parameter   \f$(N\cdot m^{-1})\f$
+      \param beta4 quartic bond-bending parameter \f$(N\cdot m^{-1})\f$
+      \param beta5 order-5 bond-bending parameter \f$(N\cdot m^{-1})\f$
+      \param beta6 order-6 bond-bending parameter \f$(N\cdot m^{-1})\f$
+      \param sigma bond-angle parameter \f$(N\cdot m^{-1})\f$
+
+    <h1> Escan Interface Input </h1> \anchor secescan
+       Interface in the title means that this is not a reimplementation of
+       pescan. In fact it is just what it claims to be, a wrapper around pescan
+       that GA can use to obtain the band gap of any structure, and which
+       eventually call upon pescan itself to do the real job. As such <em>all the
+       input is a mere repetition of pescan input</em>.
+       It looks something like this:
+       \code
+     <Functional type="escan" method="1">
+        <GenPot x="48" y="48" z="96" cutoff="5.0" launch="~/usr/bin/getVLarg">
+            <Pseudo filename="~/GAkspace/pseudos/vq.atom1" />
+            <Pseudo filename="~/GAkspace/pseudos/vq.atom2" />
+            <Pseudo filename="~/GAkspace/pseudos/vq.atom3" />
+            <Pseudo filename="~/GAkspace/pseudos/vq.atom4" />
+            <Pseudo filename="~/GAkspace/pseudos/vq.atom5" />
+            <Pseudo filename="~/GAkspace/pseudos/vq.atom6" />
+            <Pseudo filename="~/GAkspace/pseudos/vq.atom7" />
+            <Pseudo filename="~/GAkspace/pseudos/vq.atom8" />
+        </GenPot>
+        <References VBM="-4.8" CBM="-4.5" />
+        <Hamiltonian kinscal="1.23" smooth="0.8" potential="3" realcutoff="4.5" nbstates="1" launch="~/usr/bin/escanCNL">
+            <SpinOrbit filename="~/GAkspace/vwr.pso" izz="49051" pnl="1.271254 " />
+            <SpinOrbit filename="~/GAkspace/vwr.pso" izz="51049" pnl="0.946102 " />
+            <SpinOrbit filename="~/GAkspace/vwr.pso" izz="49033" pnl="1.0747401" />
+            <SpinOrbit filename="~/GAkspace/vwr.pso" izz="33049" pnl="0.2779539" />
+            <SpinOrbit filename="~/GAkspace/vwr.pso" izz="31051" pnl="0.2979240" />
+            <SpinOrbit filename="~/GAkspace/vwr.pso" izz="51031" pnl="0.8113915" />
+            <SpinOrbit filename="~/GAkspace/vwr.pso" izz="31033" pnl="0.2347250" />
+            <SpinOrbit filename="~/GAkspace/vwr.pso" izz="33031" pnl="0.2338090" />
+        </Hamiltonian>
+    </Functional>
+      \endcode
+      \note to operate correctly, this interface requires for all the files
+        named in the input to exist, and for some file called maskr to be copied
+        manually to the same directory as the GA executable.
+     The following tags have been introduced:
+     \secreflist
+       \refitem Tagescanfunc Functional, type="escan"
+       \refitem TagGenPot GenPot
+       \refitem TagPseudo Pseudo
+       \refitem TagPseudo Reference
+       \refitem TagPseudo Hamiltonian
+       \refitem TagPseudo SpinOrbit
+     \endsecreflist
+
+     \section Tagescanfunc <Functional type="escan">
+     Including the specified type, this tag is where all the escan interface data should be
+     found. It can contain two attributes,
+     \param type type must be equal to \a "escan" here
+     \param method  which can take the values
+          - 0 for an all electron computation
+          - 1 for an a folded spectrum computation
+          .
+
+      
+     \section TagGenPot <GenPot>
+     Commands so called <TT> getVlarg </TT> nanopse program which generates the
+     potential for escan. As such it requires a large number of attributes
+     (controlling over all aspects of the potential) as well as some internal \ref TagPseudo
+     tags ( one for each type of pseudopotential ).
+     More specifically, its attributes are those of getVlarg input
+     \param launch  full path to <TT>getVlarg</TT> program. On unix, "~" will
+                    be replaced with the path to your home
+     \param x grid coordinate
+     \param y grid coordinate
+     \param z grid coordinate
+     \param cutoff plane-wave cutoff
+
+     \section TagPseudo <Pseudo/>
+     Provides a link to a file containing the definition of a pseudo-potential.
+     \param filename to the pseudo-potential. don't be cheap. include full path.
+           on unices "~", will substitute to your home directory.
+
+     \section TagReference <Reference/>
+     Defines the valence band maximum and the conduction band minimum reference
+     energies for folded spectrum calculations (see \ref Tagescanfunc, attribute \a
+     method). This is only needed for folded spectrum calculations.
+     \param VBM valence band maximum in eV
+     \param CBM conduction band minimum in eV
+
+     \section TagHamiltonian <Hamiltonian> 
+     The meat of escan interface. The attributes of \ref <Hamiltonian> define
+     general properties, whereas specie dependent stuff go within, in the \ref
+     TagSpinOrbit tags.
+     \param launch  full path to <TT>escanCNL</TT> program. On unices, "~" will
+                    be replaced with the path to your home
+     \param kinscal ?? see nanopse input
+     \param smooth ?? see nanopse input
+     \param potential ?? see nanopse input
+     \param realcutoff ?? see nanopse input
+     \param nbstates  
+                      - for folded spectrum method, the number of states to compute. for
+                      - for all-electron method, the number of states to
+                        compute on top of the valence states.
+                      .
+
+    \section TagSpinOrbit <SpinOrbit/>
+    Yet again, see nanopse input for details... The file named here must exist!
+    \param filename full path to whatever. On unices, "~" will
+                   be replaced with the path to your home
+    \param izz ?? see nanopse input
+    \param pnl ?? see nanopse input
+
+    <h1> Cluster Expansion Input </h1> \anchor secce
+*/
+

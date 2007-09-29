@@ -49,7 +49,7 @@ namespace mpi
 extern const types::t_int ROOT_NODE;
 
 #ifdef _MPI
-  //! \brief Simple Base class to all other helper classes.
+  //! Simple Base class to all other helper classes.
   class Base
   {
     protected:
@@ -154,9 +154,8 @@ extern const types::t_int ROOT_NODE;
   };
 
   //! \brief Handles creation and destruction of mpi aspect
-  //
-  //! A global mpi::InitDestroy object is created, mpi::main, which should be
-  //!    called once, preferably at the start of the main() function. Simply
+  //! \details A global mpi::InitDestroy object is created, mpi::main, which should be
+  //! called once, preferably at the start of the main() function. Simply
   //! place call mpi::InitDestroy::operator()(int, char **) at the start of any
   //! main(int, char**) with the corresponding arguments and mpi will be
   //! initialized. mpi are finalized upon the destruction of mpi::main
@@ -167,12 +166,10 @@ extern const types::t_int ROOT_NODE;
     public:
       //! constructor, initailizes mpi::InitDestroy::finalized to false
       InitDestroy () : Base (), finalized(false) {} 
-      //! should be called once to enable mpi 
-      //
-      //  Enables mpi and initializes Base::this_rank and
-      //                  Base::nproc
-      //     \params _argc see main(int, char**)
-      //     \params _argv see main(int, char**)
+      //! \brief should be called once to enable mpi 
+      //! \details Enables mpi and initializes Base::this_rank and Base::nproc
+      //!    \params _argc see main(int, char**)
+      //!    \params _argv see main(int, char**)
       void operator()( int _argc, char **_argv )
       { 
         if ( MPI::Is_initialized() or finalized )
@@ -181,10 +178,9 @@ extern const types::t_int ROOT_NODE;
         this_rank = MPI::COMM_WORLD.Get_rank();
         nproc = MPI::COMM_WORLD.Get_size();
       }
-      //! Destructor, disables mpi calls
-      //
-      // Disables mpi calls. After this function is called, no other mpi calls
-      // should be made.
+      //! \brief Destructor, disables mpi calls
+      //! \details Disables mpi calls. After this function is called, no other mpi calls
+      //! should be made.
       virtual ~InitDestroy()
       { 
         if ( ( not MPI::Is_initialized() ) or finalized )
@@ -195,8 +191,7 @@ extern const types::t_int ROOT_NODE;
   };
 
   //! \brief Base class for all data communication classes
-  //
-  //! Defines integer, real, and char buffers to be used for data transactions.
+  //! \details Defines integer, real, and char buffers to be used for data transactions.
   //! It cannot be used as is, but should be derived from.
   class CommBase : public Base
   {
@@ -210,8 +205,8 @@ extern const types::t_int ROOT_NODE;
       types::t_real *real_buff,     //!< beginning of real buffer
                     *end_real_buff, //!< end of real buffer                  
                     *cur_real_buff; //!< current position in the real buffer
-      types::t_unsigned buffer_size[3]; //!< \brief array to communicate size of all
-                                        //!  three buffers
+      //! \brief array to communicate size of all three buffers
+      types::t_unsigned buffer_size[3]; 
 
 
     public:
@@ -225,8 +220,7 @@ extern const types::t_int ROOT_NODE;
         buffer_size[2] = 0;
       }
       //! \brief initialization Constructor, copies only mpi::Base members.
-      //
-      //! Should be used in conjunction with mpi::main to initialize any data
+      //! \details Should be used in conjunction with mpi::main to initialize any data
       //! communication helper class. Only mpi::Base members are copied,
       //! Members from CommBase are set to 0 or NULL. 
       CommBase   ( const Base &_c ) 
@@ -249,9 +243,8 @@ extern const types::t_int ROOT_NODE;
         buffer_size[1] = _c.buffer_size[1];
         buffer_size[2] = _c.buffer_size[2];
       }
-      //! Destructor. Does nothing ;)
-      //
-      //! Destructor leave it to derived classes to destroy buffers!!
+      //! \brief Destructor. Does nothing ;)
+      //! \details Destructor leaves it to derived classes to destroy buffers!!
       virtual ~CommBase() {}
 
       //! Destroys all buffers if they exist, then assigns all members to 0 or NULL;
@@ -265,8 +258,8 @@ extern const types::t_int ROOT_NODE;
         char_buff = NULL; end_char_buff = NULL; cur_char_buff = NULL; buffer_size[2] = 0; 
       }
      
-      //! Allocate buffers
-      //! should be overidden in
+      //! \brief Allocates buffers
+      //! \details should be overidden in
       //! derived classes in order to create buffers according to data
       //! transaction scheme and CommBase::buffer_size. May become non-virtual
       //! in the future.
@@ -274,8 +267,7 @@ extern const types::t_int ROOT_NODE;
       virtual bool allocate_buffers( types::t_unsigned _root = ROOT_NODE ) = 0;
       //!\brief  Historycally, was meant to be the main function of all data
       //! transaction helper classes. 
-      //
-      //! Historycally, was meant to be the main interface function of all
+      //! \details Historycally, was meant to be the main interface function of all
       //! data transaction helper classes. It is insufficient in itself (see
       //! BroadCast::serialize() below), and should be overidden with
       //! mpi::operator<<() when possible
@@ -283,10 +275,8 @@ extern const types::t_int ROOT_NODE;
       virtual bool operator()( types::t_unsigned _root = ROOT_NODE ) = 0;
   };
 
-  //! Can be used to send data from one root process to all processes.
-  //
-  //! Can be used to send data from one root process to all processes. It
-  //! adopts a six fold scheme:
+  //! \brief Can be used to send data from one root process to all processes.
+  //! \details It adopts a six fold scheme:
   //!  - all variables should be sized up using BroadCast::serialize(), in
   //!      order to determine the size of the buffers. Any number of calls to 
   //!      BroadCast::serialize() can be made, with any type of argument for
@@ -335,9 +325,8 @@ extern const types::t_int ROOT_NODE;
   //! and classes.
   class BroadCast : public CommBase 
   {
-    //! interface to this class! see class description for use
-    //
-    //! handles both object serialization and broadcasting
+    //! \brief interface to this class! see class description for use
+    //! \details handles both object serialization and broadcasting
     //! operation in one clear call.
     //! \param _this a BroadCast Object
     //! \param _type Make sure BroadCast::serialize() has been declared for your T_TYPE.
@@ -388,22 +377,20 @@ extern const types::t_int ROOT_NODE;
       //! Destructor, destroy CommBase ineherited buffers
       virtual ~BroadCast() { destroy_buffers(); };
 
-      //! Allocate buffers
-      //! allocate_buffers(types::t_unsigned _root) does just that. May
+      //! \brief Allocate buffers
+      //! \details allocate_buffers(types::t_unsigned _root) does just that. May
       //! become non-virtual in the future.
       //! \param _root optionally, specifies root process of data transaction
       bool allocate_buffers( types::t_unsigned _root = ROOT_NODE );
 
-      //! Allows to pass data to this class
-      //
-      //! serialize() is used for sizing-up data, loading-up data, and then forwarding data
+      //! \brief Allows to pass data to this class
+      //! \details serialize() is used for sizing-up data, loading-up data, and then forwarding data
       //! It is defined only for a few basic types: you need to "overload" it for your own use
       //! \param _object object to be passed, make sure template function has been explicitely 
       //!        defined for T_OBJET!! Otherwise, you'll get a linkage error ;)
       template< class T_OBJECT > bool serialize( T_OBJECT& _object );
       //! \brief Serialize function for iterator ranges.
-      //
-      //! Range must be valid from _first to _last, excluding _last.
+      //! \details Range must be valid from _first to _last, excluding _last.
       //! Furthermore a BroadCast::serialize() must be explicitely declared which
       //! takes T_ITERATOR::value_type as an argument.
       //! \param _first object to be serialized
@@ -418,9 +405,8 @@ extern const types::t_int ROOT_NODE;
       //! returns which stage we are at, can be usefull in definition of serialize functions
       t_stages get_stage() const { return stage; } 
 
-      //! Serialize function for containers
-      //
-      //! serialize_container() does just that. Keeps track of size of
+      //! \brief Serialize function for containers
+      //! \details serialize_container() does just that. Keeps track of size of
       //! container. Upon loading, container will be  resized
       //! \param _cont to be serialized. Input and Output
       template< class T_CONTAINER >
@@ -438,9 +424,8 @@ extern const types::t_int ROOT_NODE;
         return true;
       }
     protected:
-      //! Don't touch unless you know what you are doing
-      //
-      //! allows operator<<(BroadCast &, T_TYPE&) to call both operations and to
+      //! \brief Don't touch unless you know what you are doing
+      //! \details allows operator<<(BroadCast &, T_TYPE&) to call both operations and to
       //! serialize objects
       template<class T_TYPE> bool operator_( T_TYPE &_type );
   };
@@ -487,8 +472,7 @@ extern const types::t_int ROOT_NODE;
 
   //! \brief Can be used to send gather data from all processes and then 
   //! distribute it to all processes.
-  //
-  //! Can be used to send compound data from all processes in root
+  //! \details Can be used to send compound data from all processes in root
   //! process, and then send complete data back to all processes. It
   //! adopts the same six fold scheme as mpi::BroadCast :
   //!  - all variables should be sized up using BroadCast::serialize(), in
@@ -547,8 +531,8 @@ extern const types::t_int ROOT_NODE;
         destroy_buffers();
       };
 
-      //! Allocate buffers
-      //! allocate_buffers(types::t_unsigned _root) does just that. May
+      //! \brief Allocate buffers
+      //! \details allocate_buffers(types::t_unsigned _root) does just that. May
       //! become non-virtual in the future.
       //! \param _root optionally, specifies root process of data transaction
       bool allocate_buffers( types::t_unsigned _root = ROOT_NODE );
@@ -558,10 +542,8 @@ extern const types::t_int ROOT_NODE;
   };
 
 
-  //! Return an iterator so each processor gets to screen different bits of a container
-  //
-  //! returns an iterator to the beginning of the range assigned to
-  //!     this processor
+  //! \brief Return an iterator so each processor gets to screen different bits of a container
+  //! \details Each proc starts at a different point in the array, and ends right were the next begins
   //! \sa end(T_CONTAINER&), begin(T_CONTAINER&), begin(const T_CONTAINER&), end( const T_CONTAINER&)
   //! \param _cont a container which should be the same across all processors
   template<class T_CONTAINER>
@@ -573,10 +555,8 @@ extern const types::t_int ROOT_NODE;
                       / (types::t_real) main.size();
     return _cont.begin() + ( types::t_unsigned ) floor(n);
   }
-  //! Returns an iterator so each processor gets to screen different bits of a container
-  //
-  //! Returns an iterator to the end of the range assigned to
-  //!     this processor
+  //! \details Returns an iterator so each processor gets to screen different bits of a container
+  //! \details Each proc starts at a different point in the array, and ends right were the next begins
   //! \sa end(T_CONTAINER&), begin(T_CONTAINER&), begin(const T_CONTAINER&), end( const T_CONTAINER&)
   //! \param _cont a container which should be the same across all processors
   template<class T_CONTAINER>
@@ -590,9 +570,7 @@ extern const types::t_int ROOT_NODE;
   }
   //! \brief Returns an constant iterator so each processor gets to screen different
   //! bits of a container
-  //
-  //! Returns an iterator to the beginning of the range assigned to
-  //!     this processor
+  //! \details Each proc starts at a different point in the array, and ends right were the next begins
   //! \sa end(T_CONTAINER&), begin(T_CONTAINER&), begin(const T_CONTAINER&), end( const T_CONTAINER&)
   //! \param _cont a container which should be the same across all processors
   template<class T_CONTAINER>
@@ -606,9 +584,7 @@ extern const types::t_int ROOT_NODE;
   }
   //! \brief Returns an constant iterator so each processor gets to screen different
   //! bits of a container
-  //
-  //! Returns a constant iterator to the end of the range assigned to
-  //!     this processor
+  //! \details Each proc starts at a different point in the array, and ends right were the next begins
   //! \sa end(T_CONTAINER&), begin(T_CONTAINER&), begin(const T_CONTAINER&), end( const T_CONTAINER&)
   //! \param _cont a container which should be the same across all processors
   template<class T_CONTAINER>

@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
     structure.energy = vff.energy() / 16.0217733;
     const atat::rMatrix3d stress = vff.get_stress();
     std::cout << std::fixed << std::setprecision(5) 
-              << "Energy [meV/atom]: " << std::setw(12) << structure.energy << std::endl
+              << "Energy [eV]: " << std::setw(12) << structure.energy << std::endl
               << "Stress Tensor: " << std::endl 
               << std::setw(12) << stress(0,0) << " " << std::setw(12)
                                << stress(1,0) << " " << std::setw(12) << stress(2,0) << std::endl
