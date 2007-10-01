@@ -8,8 +8,8 @@
      <LI> \ref Tagcell
      <LI> \ref Tagcolumn
      <LI> \xe<Functional>\ex, \ref xFunctionals
-     <LI> Tagescanfunc
-     <LI> Tagvfffunc
+     <LI> \ref Tagescanfunc
+     <LI> \ref Tagvfffunc
      <LI> \ref TagGenPot
      <LI> \ref TagHamiltonian
      <LI> \ref Taglattice
