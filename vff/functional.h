@@ -23,7 +23,7 @@
   #include "mpi/mpi_object.h"
 #endif
 
-//! \brief Reimplements the Valence Force Field Functional in c++
+//! \brief Reimplements the Valence Force Field %Functional in c++
 //! \details Vff, or Valence Force Field functional, is an empirical functional which
 //! attempts to model the strain energy of a material from at most three-body
 //! interactions. The there body interactions which are considered are

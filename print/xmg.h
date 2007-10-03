@@ -47,10 +47,10 @@ namespace Print
       std::list< std::string > line_list;
       std::ostringstream stream;
       bool is_empty;
+      bool do_print;
 
     public:
-      Xmg() : indentation(0), filename(""), is_empty(false) {};
-      Xmg(const std::string &_f) : indentation(0), filename(_f), is_empty(true) {};
+      Xmg() : indentation(0), filename(""), is_empty(true), do_print(false) {};
       ~Xmg() { close(); }
       
       bool open();
@@ -58,36 +58,23 @@ namespace Print
 
       void clear_all()
       {
-#ifdef _MPI
-        if ( mpi::main.rank() != mpi::ROOT_NODE )
-          return;
-#endif 
+        if ( not do_print )  return;
         line_list.clear(); 
       }
       bool is_open() 
       {
-#ifdef _MPI
-        if ( mpi::main.rank() != mpi::ROOT_NODE )
-          return false;
-#endif 
-        return file.is_open(); 
+        return do_print and file.is_open(); 
       }
       void add_line( const std::string &_str )
       {
-#ifdef _MPI
-        if ( mpi::main.rank() != mpi::ROOT_NODE )
-          return;
-#endif 
+        if ( not do_print )  return;
         line_list.push_back(_str); 
       }
       void add_comment( const std::string &_str);
       void add_to_last( const std::string &_str);
       void remove_last()
       {
-#ifdef _MPI
-        if ( mpi::main.rank() != mpi::ROOT_NODE )
-          return;
-#endif 
+        if ( not do_print )  return;
         line_list.pop_back(); 
       }
       void init(const std::string &_f);
@@ -101,15 +88,25 @@ namespace Print
         { for( types::t_unsigned i = 0; i < indentation; ++i) stream << "  "; }
       void add_to_last();
       void special_op( t_operation _op);
+
+
+#ifdef _MPI
+    public:
+#ifndef _PRINT_ALL_PROCS
+      void sync_filename() {}
+      void sync_filename( std::string & ) {}
+#else
+      void sync_filename();
+      void sync_filename( std::string &_filename );
+#endif
+#endif
   };
 
   extern Xmg xmg;
 
   template<class T_TYPE> inline void Xmg :: to_current_stream ( const T_TYPE &_type)
   {
-#ifdef _MPI
-    if ( not mpi::main.is_root_node() ) return;
-#endif
+      if ( not do_print )  return;
       stream << _type;
   }
 
@@ -135,10 +132,8 @@ namespace Print
 
   template<class T_TYPE> Xmg& operator<< ( Xmg& _this, const T_TYPE &_whatever)
   {
-#ifdef _MPI
-    if ( not mpi::main.is_root_node() ) return _this;
-#endif
-      _this.to_current_stream( _whatever );
+    if ( not _this.do_print )  return _this;
+    _this.to_current_stream( _whatever );
     return _this;
   }
 

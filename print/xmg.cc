@@ -23,47 +23,38 @@ namespace Print
   void Xmg :: init (const std::string &_f)
   { 
 #ifdef _MPI
-    if ( not mpi::main.is_root_node() )
-      return;
+    if ( not mpi::main.is_root_node() ) return;
 #endif 
     filename = reformat_home( _f );
     file.open( filename.c_str(), std::ios_base::out|std::ios_base::trunc ); 
     is_empty = true;
     if (file.fail() )
+    {
       std::cerr << "Could not open " << filename << std::endl;
+      return;
+    }
+    do_print = true;
     close();
   }
   bool Xmg :: open ()
   {
-#ifdef _MPI
-    if ( not mpi::main.is_root_node() )
-      return false;
-#endif
-    if ( file.is_open() )
-      return true;
+    if ( not do_print ) return true;
+    if ( file.is_open() ) return true;
     file.open( filename.c_str(), std::ios_base::out|std::ios_base::app ); 
     return file.is_open();
   }    
   void Xmg :: close ()
   {
-#ifdef _MPI
-    if ( not mpi::main.is_root_node() )
-      return;
-#endif
-    if ( not file.is_open() )
-      return;
+    if ( not do_print ) return;
+    if ( not file.is_open() ) return;
     flushall();
     file.flush();
     file.close();
   }    
   void Xmg :: flushall ()
   {
-#ifdef _MPI
-    if ( not mpi::main.is_root_node() )
-      return;
-#endif 
-    if ( line_list.empty() )
-      return; 
+    if ( not do_print ) return;
+    if ( line_list.empty() ) return; 
 
     open();
 
@@ -83,10 +74,7 @@ namespace Print
 
   void Xmg :: add_comment( const std::string &_str )
   {
-#ifdef _MPI
-    if ( not mpi::main.is_root_node() )
-      return;
-#endif 
+    if ( not do_print ) return;
     std::ostringstream sstr;
     sstr << comment_string;
     for( types::t_unsigned i = 0; i < indentation; ++i)
@@ -97,17 +85,14 @@ namespace Print
   }
   void Xmg :: add_to_last( const std::string &_str )
   {
-#ifdef _MPI
-    if ( not mpi::main.is_root_node() )
-      return;
-#endif 
-    if( line_list.empty() )
-      return;
+    if ( not do_print ) return;
+    if( line_list.empty() ) return;
     std::string &str = line_list.back();
     str += _str;
   }
   void Xmg :: add_to_last()
   {
+    if ( not do_print ) return;
     if( line_list.empty() ) return;
 
     stream.str(""); stream << line_list.back();
@@ -129,7 +114,30 @@ namespace Print
   }
 
 
-  Xmg xmg("convex_hull.agr");
+#ifdef _MPI
+#ifdef _PRINT_ALL_PROCS
+  void Xmg::sync_filename( std::string &_filename )
+  {
+    filename = _filename;
+    sync_filename();
+  }
+  void Xmg::sync_filename()
+  {
+    mpi::BroadCast bc( mpi::main );
+    bc << filename
+       << mpi::BroadCast::allocate
+       << filename
+       << mpi::BroadCast::broadcast
+       << filename;
+
+    if ( mpi::main.is_root_node() ) return;
+
+    init(filename);
+  }
+#endif
+#endif
+
+
 
   std::string make_commented_string( const std::string &_str )
   {
@@ -149,4 +157,6 @@ namespace Print
     result << copy.substr(old);
     return result.str();
   }
+
+  Xmg xmg;
 }

@@ -16,20 +16,29 @@
 
 namespace GA
 {
+  /** \ingroup Genetic
+   * @{
+  * \brief Counts the number of non-identical individuals in the population
+  * \details Non-identical will depend on the implementation of
+  *          t_Individual::operator==()
+  */
   template< class T_GATRAITS>
   class TrueCensus : public eoStatBase< typename T_GATRAITS :: t_Individual >
   {
     public:
-      typedef T_GATRAITS t_GATraits;
+      typedef T_GATRAITS t_GATraits; //!< Contains all %GA types
     protected:
-      typedef typename t_GATraits::t_Population t_Population;
-      typedef typename t_GATraits::t_Individual t_Individual;
-      typedef typename t_GATraits::t_Object t_Object;
+      typedef typename t_GATraits::t_Population t_Population; //!< Population type
+      typedef typename t_GATraits::t_Individual t_Individual; //!< Individual type
+      typedef typename t_GATraits::t_Object t_Object; //!< Object type
       
     public:
-      TrueCensus () {}
-      virtual ~TrueCensus() {}
+      TrueCensus () {} //!< Constructor
+      virtual ~TrueCensus() {} //!< Destructor
+      //! Name of the class, EO requirement
       virtual std::string className(void) const { return "GA::TrueCensus"; }
+      //! \brief Functor which counts the number of unique individuals in a population \a _pop
+      //! \details Results are printed out on Print::xmg as a comment
       virtual void operator()( const t_Population &_pop )
       {
         typename t_Population :: const_iterator i_begin = _pop.begin();

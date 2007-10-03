@@ -111,11 +111,12 @@ namespace Store
   // or only whatever objective itself does print
   template<class T_CONDITION, class T_GATRAITS>
   void Conditional<T_CONDITION, T_GATRAITS> :: print_results(types::t_unsigned _age,
-                                                              bool is_comment ) const
+                                                              bool _is_comment ) const
   {
+    t_Base :: print_results( _age, _is_comment );
     if (print_what & PRINT_CONDITION)  
-      Print::xmg << ( is_comment ? Print::make_commented_string( condition.print() ) :
-                                   condition.print() )
+      Print::xmg << ( _is_comment ? Print::make_commented_string( condition.print() ) :
+                                    condition.print() )
                  << Print::endl;
 
     if( not ( print_what & PRINT_RESULTS ) )return;
@@ -123,12 +124,11 @@ namespace Store
     typename t_Container :: const_iterator i_indiv = results.begin();
     typename t_Container :: const_iterator i_end = results.end();
     for (; i_indiv != i_end; ++i_indiv )
-      Print::xmg << ( is_comment ? Print::Xmg::comment: Print::Xmg::clear )
+      Print::xmg << ( _is_comment ? Print::Xmg::comment: Print::Xmg::clear )
                  << std::setw(12) << std::setprecision(7)
                  << _age << " "
                  << i_indiv->get_concentration() << " "
                  << i_indiv->fitness() << Print::endl;
-    new_results = false;
   }
   template<class T_CONDITION, class T_GATRAITS>
   inline std::string Conditional<T_CONDITION, T_GATRAITS> ::  what_is() const
@@ -154,6 +154,7 @@ namespace Store
   template<class T_CONDITION, class T_GATRAITS>
   void Conditional<T_CONDITION, T_GATRAITS> :: synchronize()
   {
+    t_Base::synchronize();
     mpi::AllGather allgather( mpi::main );
     typename t_Container :: iterator i_res = new_optima.begin();
     typename t_Container :: iterator i_res_end = new_optima.end();
@@ -174,7 +175,6 @@ namespace Store
       typename t_Container :: iterator i_found;
       i_found = std::find( results.begin(), results.end(), indiv );
       if ( i_found != results.end() ) continue;
-      new_results = true;
       results.push_back( indiv );
     }
     results.remove_if( condition );

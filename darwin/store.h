@@ -93,7 +93,8 @@ namespace Store
       //! \param _age curreng GA iteration
       //! \param is_comment Whether print_out should be in Print::Xmg::comment format
       //! \sa Print::Xmg
-      virtual void print_results(types::t_unsigned _age, bool is_comment = false) const = 0;
+      virtual void print_results(types::t_unsigned _age, bool is_comment = false) const
+        { new_results = false; }
       //! \brief Returns a string defining this derived class
       virtual std::string what_is() const = 0;
       //! \brief Other print method
@@ -101,11 +102,14 @@ namespace Store
 
 #ifdef _MPI
       /** \ingroup MPI
-      * \brief Should synchronize storage container of Store::Base derived
-      *        classes across all procs
+      * \brief Syncrhonizes Base::new_results across all processors.
+      * \details If Base::new_results is true on one proc, then it is set to
+      *          true on all procs (see mpi::Base::all_or_all() ). Derived
+      *          classes should also synchronize storage containers across all procs. 
       * \sa mpi
       */
-      virtual void synchronize() = 0;
+      virtual void synchronize() 
+        { mpi::main.all_or_all( new_results ); }
 #endif
   };
 

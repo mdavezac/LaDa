@@ -82,7 +82,9 @@ if ( $params{'taboos string'} =~ /c:(\S+)-(\S+)/ )
 if ( $params{'terminator string'} =~ /(\d+)/ )
   { $params{'terminator'} = $1; }
 
+$params{'other'} = "";
 $params{'other'} = " history " if ( $params{'other string'} =~ /history/ );
+$params{'other'} = " stats " if ( $params{'other string'} =~ /stats/ );
 $params{'restart'} = " results " if ( $params{'other string'} =~ /true/ );
 
 $params{'ssc'} = 0;
@@ -271,11 +273,12 @@ sub write_lamarck_input()
       printf OUT "    <History/>\n" if(    $params{'other'} =~ /history/ 
                                         or $params{'taboos'} =~ /history/ );
 
+      printf OUT "    <Statistics/>\n" if(    $params{'other'} =~ /stats/ );
 
       printf OUT "    <Terminator ref=\"evaluation\" value=%i/>\n", $params{'terminator'}; 
       printf OUT "    <Save what=\"all\"/>\n";
       printf OUT "    <Restart what=\"results\"/>\n" if ( $params{'restart'} =~ /results/ );
-      printf OUT "    <Filenames save=\"convex_hull.xml\" />\n";
+      printf OUT "    <Filenames save=\"convex_hull.xml\" xmgrace=\"convex_hull.agr\" />\n";
 
       printf OUT "  </GA>\n";
     }

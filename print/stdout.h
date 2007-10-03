@@ -31,14 +31,7 @@ namespace Print
       std::ofstream file;
 
     public:
-      StdOut   (const std::string &_f)
-             : is_empty(true), do_print(true), filename("")
-      { 
-#if defined(_MPI) and not defined(_PRINT_ALL_PROCS)
-        if ( not mpi::main.is_root_node() ) do_print = false;
-#endif
-        init_(_f); 
-      }
+      StdOut () : is_empty(true), do_print(false), filename("") {}
       ~StdOut() { close(); }
       
       bool open();
@@ -47,19 +40,17 @@ namespace Print
       bool is_set() const { return not filename.empty(); }
       bool is_open() { return do_print and file.is_open(); }
       void init(const std::string &_f) { if ( filename == _f ) return; init_(_f); }
-      void set_do_print(bool _print = true) { do_print = _print; }
-      template<class T_TYPE> inline StdOut& operator<< ( const T_TYPE &_whatever )
+      template<class T_TYPE> StdOut& operator<< ( const T_TYPE &_whatever )
         { operator_( _whatever ); return *this; }
-      template<class T_TYPE> inline void operator_ ( const T_TYPE &_whatever )
-      {
-        if ( not do_print ) return;
-        do_checks();
-        file << _whatever;
-      }
-#if defined(_MPI) and not defined(_PRINT_ALL_PROCS)
+      template<class T_TYPE> inline void operator_ ( const T_TYPE &_whatever );
+#ifdef _MPI
+#ifndef _PRINT_ALL_PROCS
       void sync_filename() {}
-#elif defined(_MPI)
+      void sync_filename( std::string & ) {}
+#else
       void sync_filename();
+      void sync_filename( std::string &_filename );
+#endif
 #endif
 
     private:
@@ -77,6 +68,12 @@ namespace Print
         
   };
 
+  template<class T_TYPE> inline void StdOut::operator_ ( const T_TYPE &_whatever )
+  {
+    if ( not do_print ) return;
+    do_checks();
+    file << _whatever;
+  }
   template<> inline void StdOut::operator_<Print::t_Operation> ( const Print::t_Operation &_op )
   {
     if ( not do_print ) return;

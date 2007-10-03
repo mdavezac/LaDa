@@ -850,11 +850,13 @@ namespace GA
     }
 #endif
     Print::xmg << Print::flush;
+    Print::out << "\nCreating population" << Print::endl;
     populate();
     offsprings.clear();
     typename t_Islands :: iterator i_island_begin = islands.begin();
     typename t_Islands :: iterator i_island_end = islands.end();
     typename t_Islands :: iterator i_island;
+    Print::out << "\nEvaluating starting population" << Print::endl;
     for ( i_island = i_island_begin; i_island != i_island_end; ++i_island )
     {
       (*evaluation)(offsprings, *i_island); // A first eval of pop.
@@ -865,6 +867,7 @@ namespace GA
     }
     types::t_unsigned n = 0;
 
+    Print::out << "\nEntering Generational Loop" << Print::endl;
     do
     {
       try
@@ -975,6 +978,8 @@ nextfilename:
     restart_filename = _filename;
     save_filename = _filename;
 
+    std::string xmg_filename = "out.xmg";
+    std::string out_filename = "out";
     // first loads all inputfiles 
 #ifdef _MPI
     if ( mpi::main.is_root_node() )
@@ -998,26 +1003,27 @@ nextfilename:
                   and save_filename == filename )
           save_filename = Print::reformat_home(child->Attribute("save"));
         if ( child->Attribute("out")  )
-          Print::out.init( child->Attribute("out") );
+          out_filename = child->Attribute("out");
         if ( child->Attribute("xmgrace") )
-        {
-          std::string f = Print::reformat_home(child->Attribute("xmgrace"));
-          Print::xmg.init( f );
-        }
+          xmg_filename = Print::reformat_home(child->Attribute("xmgrace"));
       }
 
-      Print::xmg << Print::Xmg :: comment << "new GA run" << Print::endl;
 #ifdef _MPI
     }
-    Print::out.sync_filename();
+    Print::xmg.sync_filename( out_filename );
+    Print::out.sync_filename( out_filename );
 #endif
 
-    Print::out << "Starting new genetic algorithm runs\n\n"
-               << "GA Input file is located at " << filename << "\n"
+    Print::xmg.init( xmg_filename );
+    Print::xmg << Print::Xmg :: comment << "new GA run" << Print::endl;
+
+    Print::out.init( out_filename );
+    Print::out << "Starting genetic algorithm run\n\n"
+               << "GA Input file is located at " << evaluator_filename << "\n"
                << "Functional Input file is located at " << evaluator_filename << "\n"
                << "Restart Input file is located at " << restart_filename << "\n"
                << "Xmgrace output file is located at " << Print::xmg.get_filename() << "\n"
-               << "Will Save to file located at " << save_filename << "\n\n";
+               << "Will Save to file located at " << save_filename << "\n" << Print::endl;
 
 #ifdef _MPI
     // broadcasts all input files and filenames
@@ -1045,16 +1051,14 @@ nextfilename:
     const TiXmlElement *parent = docHandle.FirstChild("Job")
                                           .FirstChild("GA").Element();
 #endif
-    if ( not Load_Parameters( *parent ) )
-      return false;
+    if ( not Load_Parameters( *parent ) )  return false;
 
 
 
     make_History( *parent );
     Load_Taboos( *parent );
     Load_Method( *parent );
-    if ( not  Load_Mating( *parent ) )
-      return false;
+    if ( not  Load_Mating( *parent ) ) return false; 
     Load_CheckPoints( *parent );
     
     make_breeder();
@@ -1100,13 +1104,11 @@ nextfilename:
                    << "Starting from scratch\n";
       }
     }
+    do_save = 0;
 #ifdef _MPI
-    if ( not mpi::main.is_root_node() )
-    {
-      do_save = 0;
-      return true;
-    }
+    if ( not mpi::main.is_root_node() ) goto out;
 #endif 
+    do_save = SAVE_RESULTS;
     restart_xml = parent->FirstChildElement("Save");
     Print::xmg << Print::Xmg::comment << "Will Save Results";
     if ( restart_xml and restart_xml->Attribute("what") )
