@@ -18,6 +18,8 @@
 
 #include "opt/types.h"
 
+/** \ingroup MPI
+ * @{*/
 //!\brief mpi namespace should contain all mpi related helper classes. 
 /*!       Currently works with openmpi implementation only. 
   
@@ -168,8 +170,8 @@ extern const types::t_int ROOT_NODE;
       InitDestroy () : Base (), finalized(false) {} 
       //! \brief should be called once to enable mpi 
       //! \details Enables mpi and initializes Base::this_rank and Base::nproc
-      //!    \params _argc see main(int, char**)
-      //!    \params _argv see main(int, char**)
+      //!    \param _argc see main(int, char**)
+      //!    \param _argv see main(int, char**)
       void operator()( int _argc, char **_argv )
       { 
         if ( MPI::Is_initialized() or finalized )
@@ -305,7 +307,7 @@ extern const types::t_int ROOT_NODE;
   //!  bc.serialize(A);  // forwards buffer into object A
   //!  bc.serialize(B);  // forwards buffer into object B
   //!  bc.serialize(C);  // forwards buffer into object C
-  //!  bc.resrt();       // Destroy buffers, bc ready for new transaction
+  //!  bc.reset();       // Destroy buffers, bc ready for new transaction
   //! \endcode
   //! It is essential to load and forward data in the same order!! 
   //! A second interface uses the mpi::operator<<( BroadCast &, some type) to
@@ -689,4 +691,6 @@ extern const types::t_int ROOT_NODE;
     
 
 }
+/*@}*/
+
 #endif

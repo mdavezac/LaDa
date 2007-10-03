@@ -6,12 +6,12 @@
     \xe<Functional>\ex will depend on \xa type\ax. 
     \param type can be one of the following:
            <ul> 
-             <li> vff \ref  secvff 
-             <li> escan \ref  secescan 
-             <li> CE \ref  secce 
+             <li> \ref secvff  "Valence Force Field Functional" 
+             <li> \ref secescan "Empirical Pseudopotential Functional"
+             <li> \ref secce "Cluster Expansion Functional"
            </ul>
 
-    <h1> Vff Input </h1> \anchor secvff
+    <h1> Valence Force Field Input </h1> \anchor secvff
     This Vff input follows closely the input of nanopse Vff. The units and
     quantities are the same, whatever those may be.  If by chance, you were not
     what those are, don't hesitate to let me know. Anyways, a good guess is to
@@ -88,8 +88,8 @@
       \param C symbol of the other angle-endpoint, must be one of the species listed
                in \ref \taglattice
       \param gamma equilibrium angle. Can be "tet", or "tetrahedral" for some
-                   kind of symmetrie. Can be a number with a meaning which can
-                   probably be found in nanopse.
+                   kind of symmetrie. Otherwise, it should be
+                   \f$\cos(\alpha)\f$, where \f$\alpha\f$ is the equilibrium angle of the bond.
       \param beta harmonic bond-bending parameter \f$(N\cdot m^{-1})\f$
       \param beta3 cubic bond-bending parameter   \f$(N\cdot m^{-1})\f$
       \param beta4 quartic bond-bending parameter \f$(N\cdot m^{-1})\f$

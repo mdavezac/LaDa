@@ -9,6 +9,7 @@
 
 #include <eo/eoDetTournamentSelect.h>
 #include <eo/eoReduceMerge.h>
+#include <eo/utils/eoRNG.h>
 #include <tinyxml/tinystr.h>
 
 #include "pescan_interface/interface.h"

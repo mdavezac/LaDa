@@ -44,6 +44,7 @@ namespace CE
   typedef Individual::Types< SingleSite::Object, 
                              SingleSite::Concentration, 
                              SingleSite::Fourier        > :: Scalar t_Individual;
+
   class Evaluator : public SingleSite::Evaluator< t_Individual >,
                     public VA_CE :: Functional_Builder
   {

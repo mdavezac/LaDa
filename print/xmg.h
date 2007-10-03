@@ -21,9 +21,11 @@
 
 namespace Print
 {
+  std::string make_commented_string( const std::string& );
   class Xmg
   {
     template< class T_TYPE > friend Xmg& operator<< ( Xmg &, const T_TYPE & );
+    friend std::string make_commented_string( const std::string &_str );
     protected:
       enum t_operation { COMMENT, CLEAR, INDENT, UNINDENT, ADDTOLAST, REMOVELAST,
                          CLEARALL };
@@ -35,6 +37,9 @@ namespace Print
       const static t_operation addtolast;
       const static t_operation removelast;
       const static t_operation clearall;
+    protected:
+      const static std::string comment_string;
+
     protected:
       types::t_unsigned indentation;
       std::string filename;

@@ -30,444 +30,382 @@
 #include "gatraits.h"
 #include "loadsave.h"
 
+/** \ingroup Genetic 
+ * @{*/
+//! \brief Implements storage capacity for use with Evaluation classes
+//! \details Storage is performed <em>via</em> a simple call to
+//! Store::Base::operator(const t_Indiviudal& _indiv). Whether \a _indiv is
+//! stored will depend upon the particular class  used.
+//! Two storage classes have defined at this point:
+//! - Store::Base, an abstract base class
+//! - Store::Conditional, stores an individual depending a template T_CONDITION functor.
+//! A number of T_CONDITION have defined in namespace Store::Condition
+//! \sa Evaluation
 namespace Store
 { 
-  // abstract base class for results and storage
-  template<class T_GA_TRAITS>
+  //!  Abstract base class for results and storage
+  template<class T_GATRAITS>
   class Base
   {
     public:
-      typedef T_GA_TRAITS t_GATraits;
+      typedef T_GATRAITS t_GATraits; //!< defines all GA classes \sa Traits::GA
 
     private:
-      typedef typename t_GATraits :: t_Evaluator  t_Evaluator;
-      typedef typename t_GATraits :: t_Individual t_Individual;
+      typedef typename t_GATraits :: t_Evaluator  t_Evaluator; //!< Evaluator type
+      typedef typename t_GATraits :: t_Individual t_Individual;//!< Individual type
 
     protected:
+      //! \brief reference to functional evaluator \sa GA::Darwin::evaluator
+      //! \details used only for load and save stuff. Such functions should probably become
+      //! functors to be set in Traits::GA in the future.
       t_Evaluator &evaluator;
+      //! \brief for print_out purposes
+      //! \details Set to true each time a new individual is stores. Should be
+      //! set to false upon call to print(). It is mutable so that it can be
+      //! changed upon a call to a Base::print_out(), even though print_out
+      //! functions are generally decalred const.
       mutable bool new_results;
 
     public:
+      //! Constructor and basic Initializer
       Base (t_Evaluator &_eval) : evaluator(_eval), new_results(false) {};
+      //! Copy Constructor
       Base (const Base<t_GATraits> &_c) : evaluator(_c.eval), new_results(_c.new_results) {};
+      //! Destructor
       virtual ~Base() {};
 
+      //! \brief Should reload stored individuals from XML input
+      //! \details Can use Base::evaluator reference for this purpose
       virtual bool Restart( const TiXmlElement &_node ) = 0;
+      //! \brief Should save stored individuals to XML ouput
+      //! \details Can use Base::evaluator reference for this purpose
       virtual bool Save( TiXmlElement &_node ) const = 0;
 
+      //! \brief Stores \a _indiv 
+      //! \details Can potentially store \a _indiv if \a _indiv statisfies
+      //! whatever condition the base class cares about. This operator will be
+      //! called by Evaluation classes.
+      //! \sa Evaluation::Base::evaluate, Evaluation::WithHistory::Evaluate
       virtual void operator()( const t_Individual &_indiv ) = 0;
+      //! \brief returns true if new results have been found
       bool newresults() const { return new_results; }
+      //! \brief prints new results
+      //! \param _age curreng GA iteration
+      //! \param is_comment Whether print_out should be in Print::Xmg::comment format
+      //! \sa Print::Xmg
       virtual void print_results(types::t_unsigned _age, bool is_comment = false) const = 0;
+      //! \brief Returns a string defining this derived class
       virtual std::string what_is() const = 0;
-      virtual std::string print() const = 0;
+      //! \brief Other print method
+      virtual std::string print() const = 0; 
 
 #ifdef _MPI
+      /** \ingroup MPI
+      * \brief Should synchronize storage container of Store::Base derived
+      *        classes across all procs
+      * \sa mpi
+      */
       virtual void synchronize() = 0;
 #endif
   };
 
-  // Store depends on T_CONDTION object
-  // T_CONDITION must return true when Conditional should NOT store
-  // For examples of T_CONDITION, see namespace Condition below
-  // easier to use are "templated typedef" in struct Condition below
-  template<class T_CONDITION, class T_GA_TRAITS>
-  class Conditional : public Base<T_GA_TRAITS>
+  //! \brief stores individuals depending upon the return value of a
+  //! conditional functor of template T_CONDITON
+  //! \details T_CONDITION must return true when Conditional should
+  //! <em>not</em> store the individual under consideration. This choice may
+  //! seem odd, but it works better when using std::remove_if to remove
+  //! individuals which once fulfilled the condition, but for whatever reason, do
+  //! not anymore.
+  //! For examples of T_CONDITION, see namespace Store::Condition below.
+  template<class T_CONDITION, class T_GATRAITS>
+  class Conditional : public Base<T_GATRAITS>
   {
     public:
-      typedef T_CONDITION t_Condition;
-      typedef T_GA_TRAITS t_GATraits;
+      typedef T_CONDITION t_Condition; //!< type of functor usd to determine storage
+      typedef T_GATRAITS t_GATraits; //!< all GA classes \sa Traits::GA
 
     private:
-      typedef typename t_GATraits :: t_Evaluator  t_Evaluator;
-      typedef Base<t_GATraits>                    t_Base;
-      typedef typename t_GATraits :: t_Individual t_Individual;
-      typedef std::list<t_Individual>              t_Container;
+      typedef typename t_GATraits :: t_Evaluator  t_Evaluator; //!< Evaluator type
+      typedef Base<t_GATraits>                    t_Base;      //!< Base class type
+      typedef typename t_GATraits :: t_Individual t_Individual; //!< Individual type
+      typedef std::list<t_Individual>              t_Container; //!< Type of storage container
 
     protected:
-      using t_Base :: new_results;
+      using t_Base :: new_results; 
       using t_Base :: evaluator;
-      t_Condition condition;
-      t_Container results;
+      t_Condition condition; //!< Condition which determines storage \sa Store::Condition
+      //! \brief whether to print condition, results, or all in Conditional::print_results() const
+      types::t_unsigned print_what; 
+      const static types::t_unsigned PRINT_RESULTS = 1; //!< print_what says print results 
+      const static types::t_unsigned PRINT_CONDITION = 2;  //!< print_what says print condition 
+      t_Container results; //!< Container where to store "good" individuals
 #ifdef _MPI
+      /** \ingroup MPI
+      * \brief processor dependant temporary container 
+      * \details results in new_optima should passed on to Conditional::results in
+      * Conditional::synchronize, and then flushed. 
+      */
       t_Container new_optima;
 #endif 
 
     public:
-      Conditional   (t_Evaluator &_eval, const TiXmlElement &_node)
-                  : t_Base( _eval), condition( _node ) {}
+      //! \brief Constructor and Initializor
+      //! \details Conditional::condition is initialized entirely from XML input
+      //! Conditional itself only reads wether there exists a print attribute, and sets 
+      //! Conditional::print_what accordingly
+      Conditional   (t_Evaluator &_eval, const TiXmlElement &_node);
+      //! \brief Constructor and Initializor
+      //! \details Conditional::condition is initialized both from XML input and \a _type
       template< class T_TYPE >
       Conditional   (t_Evaluator &_eval, T_TYPE _type, const TiXmlElement &_node)
-                  : t_Base( _eval), condition( _type, _node ) {}
+                  : t_Base( _eval), condition( _type, _node ), print_what( PRINT_CONDITION )
+        { Conditional::Conditional( _eval,_node); }
+      //! Deconstructor
       virtual ~Conditional() {}
 
-      // non-mpi version simply stores best N results 
-      // MPI version is a bit of a hack
-      // the object is for MPI version to be able to store in "unsynchronized" new_optima by default
-      // and then into "synchronized" result upon call to synchronize
-      virtual void operator()( const t_Individual &_indiv )
-      {
-        // if first evaluation, adds it directly
-        if( condition( _indiv ) ) return;
+      //! \brief simply stores results for which T_CONDTION::operator()( const t_Individual& )
+      //!    returns false
+      //! \details MPI version is a bit of a hack
+      //! the object is for MPI version to be able to store in "unsynchronized"
+      //! new_optima by default and then into "synchronized" result upon call
+      //! to synchronize. \sa Evaluation::Base::Evaluate, Evaluation::WithHistory::Evaluate
+      virtual void operator()( const t_Individual &_indiv );
 
-        // checks wether result should be stored
-        typename t_Container :: iterator i_found;
-#ifdef _MPI
-        if ( not new_optima.empty() )
-        {
-          i_found = std::find( new_optima.begin(), new_optima.end(), _indiv );
-          if ( i_found != new_optima.end() ) return;
-        }
-#endif
-        if ( not results.empty() )
-        {
-          i_found = std::find( results.begin(), results.end(), _indiv );
-          if ( i_found != results.end() ) return;
-        }
-        new_results = true; 
-#ifdef _MPI
-        if ( not new_optima.empty() ) new_optima.remove_if( condition );
-        std::cout << new_optima.size() << std::endl;
-        new_optima.push_back( _indiv );
-#else
-        if ( not results.empty() ) results.remove_if( condition );
-        results.push_back( _indiv );
-#endif
-        // remove_if should have changed Objective::current_indiv 
-        condition( _indiv );
-      }
+      //! \brief Reloads stored individuals from XML input
+      //! \details Uses Base::evaluator reference for this purpose.
+      //! \sa darwin::LoadObject
+      bool Restart( const TiXmlElement &_node );
+      //! \brief Saves stored individuals into XML input
+      //! \details Uses Base::evaluator reference for this purpose.
+      //! \sa darwin::SaveObject
+      bool Save( TiXmlElement &_node ) const;
 
-      bool Restart( const TiXmlElement &_node )
-      {
-        const TiXmlElement *xmlresults = &_node;
-        std::string name = _node.Value();
-        if ( name.compare("Results") ) xmlresults = _node.FirstChildElement("Results");
-        if ( not xmlresults ) return false;
-        GA::LoadObject<t_GATraits> loadop( evaluator, &t_Evaluator::Load, GA::LOADSAVE_LONG);
-        if ( not condition.Restart( *xmlresults, loadop ) )
-        {
-          Print::xmg << Print::Xmg::comment << "Could not load condition" << Print::endl
-                     << Print::Xmg::comment << "Aborting Load of Result"  << Print::endl;
-          return false;
-        }
-
-        results.clear();
-        GA::LoadIndividuals( *xmlresults, loadop, results );
-        // This particular line acts as Restart for condition if necessary
-        std::remove_if(results.begin(), results.end(), condition); 
-        Print::xmg << Print::Xmg::comment << "Reloaded Optimum and "
-                   << results.size() << " target results" << Print::endl;
-        print_results(0, true);
-        return true;
-      }
-      bool Save( TiXmlElement &_node ) const
-      {
-        GA::SaveObject<t_GATraits> saveop( evaluator, &t_Evaluator::Save, GA::LOADSAVE_LONG);
-        TiXmlElement *parent = new TiXmlElement("Results");
-        if ( not parent ) 
-        {
-          std::cerr << "Memory error while saving results" << std::endl;
-          return false;
-        }
-
-        if (      condition.Save(*parent, saveop) 
-             and  SaveIndividuals( *parent, saveop, results.begin(), results.end() ) ) 
-        {
-          _node.LinkEndChild(parent);
-          return true;
-        }
-
-        std::cerr << "Could not save resuls as requested" << std::endl;
-        delete parent;
-        return false;
-      }
-
-      virtual void print_results(types::t_unsigned _age, bool is_comment = false) const
-      {
-        if (print_objective)
-        {
-          objective->print();
-          return;
-        }
-        typename t_Container :: const_iterator i_indiv = results.begin();
-        typename t_Container :: const_iterator i_end = results.end();
-        for (; i_indiv != i_end; ++i_indiv )
-          Print::xmg << ( is_comment ? Print::Xmg::comment: Print::Xmg::clear )
-                     << std::setw(12) << std::setprecision(7)
-                     << _age << " "
-                     << i_indiv->get_concentration() << " "
-                     << i_indiv->fitness() << Print::endl;
-        new_results = false;
-      }
+      //! \brief Prints results to Print::Xmg
+      //! \sa Base::print_results, Base::new_results, GA::IslandsContinuator
+      virtual void print_results(types::t_unsigned _age, bool is_comment = false) const;
+      //! \brief Prints condition only
       virtual std::string print() const { return condition.print(); }
-      virtual std::string what_is() const
-      { 
-        std::ostringstream sstr; sstr << " Conditional on"  << condition.what_is(); 
-        return sstr.str();
-      }
+      //! \brief Returns a string characterizing Conditional (and its Conditional::condition)
+      virtual std::string what_is() const;
+
 #ifdef _MPI
-      virtual bool broadcast( mpi::BroadCast &_bc )
-      {
-        if ( not condition.broadcast(_bc) ) return false;
-        types::t_int n = results.size();
-        if ( not _bc.serialize(n) ) return false;
-        if ( _bc.get_stage() == mpi::BroadCast::COPYING_FROM_HERE )
-          results.resize(n);
-        typename t_Container :: iterator i_res = results.begin();
-        typename t_Container :: iterator i_res_end = results.end();
-        for(; i_res != i_res_end; ++i_res )
-          if( not i_res->broadcast( _bc ) ) return false;
-        return true;
-      }
+      /** \ingroup MPI
+      * \brief Serializes Store::Conditional class
+      * \details The container Conditional::results is serialized here.
+      * Since t_Individual is a template class, it does not itsef declare a
+      * BroadCast::serialize() function, and we cannot use
+      * BroadCast::serialize_container. Instead, each individual is broadcast,
+      * one at a time, throught its broadcast member function.
+      * \sa mpi::BroadCast::serialize
+      */
+      virtual bool broadcast( mpi::BroadCast &_bc );
+      /* \ingroup MPI
+      * \brief synchronizes stored results across all processors
+      * \details this function is called directly by Evaluation classes
+      * \sa Evaluation::Base::evaluate, Evaluation::WithHistory::evaluate
+      *     Conditional::new_optima
+      */
       virtual void synchronize()
-      {
-        mpi::AllGather allgather( mpi::main );
-        typename t_Container :: iterator i_res = new_optima.begin();
-        typename t_Container :: iterator i_res_end = new_optima.end();
-        for(; i_res != i_res_end; ++i_res )
-          i_res->broadcast( allgather );
-        allgather.allocate_buffers();
-        i_res = new_optima.begin();
-        for(; i_res != i_res_end; ++i_res )
-          i_res->broadcast( allgather );
-        allgather();
-        new_optima.clear();
-        t_Individual indiv;
-        while( indiv.broadcast( allgather ) )
-        {
-          if( condition( indiv ) ) continue;
-          
-          // checks wether result should be stored
-          typename t_Container :: iterator i_found;
-          i_found = std::find( results.begin(), results.end(), indiv );
-          if ( i_found != results.end() ) continue;
-          new_results = true;
-          results.push_back( indiv );
-        }
-        results.remove_if( condition );
-      }
 #endif
   };
 
+  //! \brief Defines some functors for conditional storage
+  //! \details Implements the functors used in storage class Store::Conditional. Only
+  //! a few behaviors are require:
+  //! - a constructor which takes an xml element only
+  //! - a constructor which takes an xml element only and some other type
+  //! - the functor member, operator()(const t_Individual&) which return false
+  //! - Restart for reloading previous state in XML format
+  //! - Save for saving current state in XML format
+  //! - print for printing current state to a string
+  //! - what_is returns a string defining this condition
+  //! when an individual should <em> not </em> be stored.
+  //! At this point, Three classes are defined
+  //! - Condition :: BaseOptima a base class which basic implements for "best-of" behaviors
+  //! - Condition :: FromObjective implements "Best-of" behavior using Objective classes
+  //! - Condition :: Optima implements "Best-of" behavior using ordering
+  //! operators acting upon indiividuals
+  //! \sa Store::Conditional 
   namespace Condition
   {
-    // Condition checks fitness only
-    template< class T_GA_TRAITS >
+    //! \brief Base class for "Best-Of" Behavior
+    //! \details Only implements BaseOptima::Restart, BaseOptima::Save,
+    //! BaseOptima::print_results for the one "best" individual stored as
+    //! BaseOptima::optimum. BaseOptima::optimum will be used in derived classes
+    //! for comparison
+    template< class T_GATRAITS >
     class BaseOptima 
     {
       public:
-        typedef T_GA_TRAITS t_GATraits;
+        typedef T_GATRAITS t_GATraits; //!< All GA classes \sa Traits::GA
 
       protected:
-        typedef typename t_GATraits :: t_Evaluator  t_Evaluator;
-        typedef typename t_GATraits :: t_Individual t_Individual;
-        typedef GA::SaveObject<t_GATraits>           t_SaveOp;
-        typedef GA::LoadObject<t_GATraits>           t_LoadOp;
+        typedef typename t_GATraits :: t_Evaluator  t_Evaluator; //!< Evaluator type
+        typedef typename t_GATraits :: t_Individual t_Individual;//!< Individual type
+        typedef GA::SaveObject<t_GATraits>           t_SaveOp; //!< Functor for saving individuals
+        typedef GA::LoadObject<t_GATraits>           t_LoadOp; //!< Functor for loading individuals
 
       protected:
-        t_Individual optimum;
+        t_Individual optimum; //!< "best" individual
 
       public:
+        //! Constructor
         BaseOptima   ( const TiXmlElement &_node ) {};
+        //! Copy Constructor
         BaseOptima   ( const BaseOptima &_c ) : optimum(_c.optimum) {};
+        //! Destructor
         ~BaseOptima() {};
 
-        bool Restart( const TiXmlElement &_node, t_LoadOp & _op)
-        {
-          const TiXmlElement *child = _node.FirstChildElement("optimum");
-          if( not child ) return false;
-          return optimum.Load( *child, _op );
-        }
-        bool Save( TiXmlElement &_node, t_SaveOp & _op) const
-        {
-          if ( optimum.invalid() )
-          {
-            std::cerr << "Optimum is invalid!! when trying to save" << std::endl;
-            Print::out << "Optimum is invalid!! when trying to save\n";
-            return false;
-          }
+        //! \brief Reloads stored BaseOptima::optimum from XML input
+        bool Restart( const TiXmlElement &_node, t_LoadOp & _op);
+        //! \brief Saves stored BaseOptima::optimum from XML input
+        bool Save( TiXmlElement &_node, t_SaveOp & _op) const;
 
-          TiXmlElement *child = new TiXmlElement("optimum");
-          if( not child )
-          { 
-            std::cerr << "Memory allocation error while save results" << std::endl;
-            return false;
-          }
-          if ( not optimum.Save( *child, _op ) )
-          {
-            std::cerr << "Could not save optimum" << std::endl;
-            return false;
-          }
-
-          _node.LinkEndChild(child);
-          return true;
-        }
 #ifdef _MPI
+        /** \ingroup MPI
+        * \brief Serializes Store::BaseOptima class
+        * \details Only BaseOptima::optimum is serialized here
+        * \sa mpi::BroadCast::serialize
+        */
         bool broadcast( mpi::BroadCast &_bc )
-        {
-          return optimum.broadcast(_bc);
-        }
+          { return optimum.broadcast(_bc); }
 #endif
+        //! \brief Returns a string characterizing BaseOptima
         std::string what_is() const { return " BaseOptima "; } 
-        std::string print() const
-        {
-          std::ostringstream sstr;
-          std::string bitstring; bitstring <<  (const typename t_GATraits :: t_Object&) optimum;
-          sstr << std::setw(12) << std::setprecision(7) 
-               << bitstring << " "
-               << optimum.get_concentration() << " "
-               << optimum.fitness() << std::endl;
-          return sstr.str(); 
-        }
+        //! \brief prints out BaseOptima::optimum characteristics
+        std::string print() const;
     };
-    // Condition checks objective 
+
+    //! \brief Implements "Best-of" behavior using an individual's fitness and an Objective
+    //! \details An individual is deemed good for storage depending on the FromObjective::objective,
+    //! FromObjective::objective can be the provided as a pointer upon
+    //! constructing this object, or it can be created from an XML input. From
+    //! there on, and individual is stored if is better than the inherited member
+    //! BaseOptima::optimum, or when it is within FromObjective::delta of
+    //! BaseOptima::optimum. If is is better that BaseOptima::optimum, it
+    //! replaces BaseOptima::optimum.
     template< class T_GATRAITS >
     class FromObjective : public BaseOptima<T_GATRAITS>
     {
       public:
-        typedef T_GATRAITS t_GATraits;
+        typedef T_GATRAITS t_GATraits; //!< All GA types \sa Traits::GA
 
       protected:
-        typedef typename t_GATraits :: t_Evaluator           t_Evaluator;
-        typedef BaseOptima<t_GATraits>                       t_Base;
-        typedef typename t_GATraits :: t_Individual          t_Individual;
-        typedef typename t_GATraits :: t_QuantityTraits      t_QuantityTraits;
-        typedef typename t_QuantityTraits :: t_Quantity       t_Quantity;
-        typedef typename t_QuantityTraits :: t_ScalarQuantity t_ScalarQuantity;
-        typedef typename Objective::Types< t_GATraits>       t_Objective;
-        typedef GA::SaveObject<t_GATraits> t_SaveOp;
-        typedef GA::LoadObject<t_GATraits> t_LoadOp;
+        typedef typename t_GATraits :: t_Evaluator           t_Evaluator; //!< Evaluator type
+        typedef BaseOptima<t_GATraits>                       t_Base;     //!< base class type
+        typedef typename t_GATraits :: t_Individual          t_Individual; //!< individual type
+        typedef typename t_GATraits :: t_QuantityTraits      t_QuantityTraits;//!< quantity traits
+        typedef typename t_QuantityTraits :: t_Quantity       t_Quantity; //!< quantity type
+         //! scalar quantity type
+        typedef typename t_QuantityTraits :: t_ScalarQuantity t_ScalarQuantity; 
+        typedef typename Objective::Types< t_GATraits>       t_Objective; //!< objective typedef
+        typedef GA::SaveObject<t_GATraits> t_SaveOp; //!< Save functor
+        typedef GA::LoadObject<t_GATraits> t_LoadOp; //!< load functor
 
       protected:
         using t_Base :: optimum;
-        typename t_Objective :: Vector *objective;
-        t_ScalarQuantity val;
-        t_ScalarQuantity end_val;
-        t_ScalarQuantity delta;
-        bool owns_objective;
-        bool print_objective;
+        typename t_Objective :: Vector *objective;  //!< objective type
+        t_ScalarQuantity val; //!< optimal value
+        t_ScalarQuantity end_val; //!< end of storage interval
+        t_ScalarQuantity delta; //!< length of storage interval
+        bool owns_objective; //!< wether FomOjbective::objective pointer is owned by this object
 
       public:
-        FromObjective   () : objective(NULL), owns_objective(false) {}
-        FromObjective   ( const TiXmlElement &_node ) 
-                      : t_Base(_node), objective(NULL),
-                        val(0), end_val(0), delta(0), owns_objective(false)
-        {
-          double d=0;
-          if ( _node.Attribute("delta") )
-            _node.Attribute("delta", &d);
-          delta = (t_ScalarQuantity) std::abs(d);
-
-          objective = t_Objective :: new_from_xml( _node );
-          if ( not objective )
-            throw std::runtime_error("Could not Load objective from input in conditional store\n"); 
-          owns_objective = true;
-
-          if ( _node.Attribute("print") )
-          {
-            std::string str = _node.Attribute("print");
-            if( str.compare("all") == 0 ) print_objective = false;
-          }
-        }
-        FromObjective   ( typename t_Objective::Vector* _type, const TiXmlElement &_node )
-                      : t_Base(_node), objective(_type),
-                        val(0), end_val(0), delta(0), owns_objective(false)
-        {
-          double d=0;
-          if ( _node.Attribute("delta") )
-            _node.Attribute("delta", &d);
-          delta = (t_ScalarQuantity) std::abs(d);
- 
-          if ( not objective )
-            throw std::runtime_error("Could not Load objective from input in conditional store\n"); 
-        }
-        FromObjective   ( const FromObjective &_c )
-                      : t_Base(_c), objective(_c.objective),
-                        val(_c.val), end_val(_c.end_val), delta(_c.delta),
-                        owns_objective(false) {}
+        //! \brief XML constructor 
+        //! \sa BaseOptima::BaseOptima(const TiXmlElement&), 
+        //! Store and Store::Conditional overview
+        FromObjective   ( const TiXmlElement &_node );
+        //! \brief XML and objective constructor 
+        //! \sa BaseOptima::BaseOptima(const TiXmlElement&), 
+        //! Store and Store::Conditional overview
+        FromObjective   ( typename t_Objective::Vector* _type, const TiXmlElement &_node );
+        //! \brief Destructor
+        //! \details deleletes FromObjective::objective only if objective is
+        //! non-null and if FromObjective::objective is owned according to
+        //! FromObjective::owns_objective.
         ~FromObjective()  { if ( objective and owns_objective ) delete objective; }
 
-        bool operator()( const t_Individual &_indiv )
-        {
-          objective->init( _indiv );
-          if ( optimum.invalid() )
-          {
-            optimum = _indiv;
-            val = (*objective)( optimum.const_quantities() );
-            end_val = val + delta;
-            return false;
-          }
-          t_ScalarQuantity indiv_val = (*objective)(_indiv.const_quantities());
-          if ( t_QuantityTraits::less(indiv_val, val) )
-          {
-            optimum = _indiv;
-            val = indiv_val;
-            end_val = val + delta;
-            return false;
-          }
+        //! \brief returns false if \a _indiv should <em>not</em> be stored
+        bool operator()( const t_Individual &_indiv );
 
-          return t_QuantityTraits::greater(indiv_val, end_val); 
-        }
-        std::string print() const
-          { return objective->print();  }
-        std::string what_is() const
-        { 
-          std::ostringstream sstr;
-          sstr << objective->what_is() << " Objective, with delta = " << delta;
-          return sstr.str();
-        } 
+        //! returns a string with stuff that FomObjective::objective store, eg convexhull
+        std::string print() const { return objective->print();  }
+        //! Return a string characterizing FromOjbective
+        std::string what_is() const;
+        //! \brief Reloads previously saved state from XML input
+        //! \param _node XML node from which to reload
+        //! \param _op Darwin::LoadObject with which to reload t_Individuals
         bool Restart( const TiXmlElement &_node, t_LoadOp & _op)
           { return t_Base::Restart( _node, _op) and objective->Restart( _node, _op); }
-        bool Save( TiXmlElement &_node, t_SaveOp & _op) const
-        {
-          if (     t_Base::Save( _node, _op)  
-               and objective->Save( _node, _op) )  return true;
-          
-          std::cerr << "Could not save objective" << std::endl;
-          return false;
-        }
+        //! Save current state to XML output
+        //! \param _node XML node to which current state should be saved
+        //! \param _op Darwin::SaveObject with which to save t_Individuals
+        bool Save( TiXmlElement &_node, t_SaveOp & _op) const;
     };
 
-    // returns true if should remove
-    // ie false if shouldn't store;
-    template< class T_GA_TRAITS >
-    class Optima : public BaseOptima<T_GA_TRAITS>
+    //! \brief Functor which returns true if an individual is not as good as
+    //!        the current optimum
+    //! \details Comparisons are done using the ordering operators defined in Individual
+    //! (eg depending on individuals fitness)
+    template< class T_GATRAITS >
+    class Optima : public BaseOptima<T_GATRAITS>
     {
       public:
-        typedef T_GA_TRAITS t_GATraits;
+        typedef T_GATRAITS t_GATraits; //!< All GA objects \sa Traits::GA
       protected:
-        typedef BaseOptima<t_GATraits>                       t_Base;
-        typedef typename t_GATraits :: t_Evaluator           t_Evaluator;
-        typedef typename t_GATraits :: t_Individual          t_Individual;
-        typedef typename t_GATraits :: t_QuantityTraits      t_QuantityTraits;
-        typedef typename t_QuantityTraits :: t_Quantity       t_Quantity;
-        typedef typename t_QuantityTraits :: t_ScalarQuantity t_ScalarQuantity;
+        typedef BaseOptima<t_GATraits>                       t_Base; //!< Base class type
+        typedef typename t_GATraits :: t_Evaluator           t_Evaluator; //!< Evaluator type
+        typedef typename t_GATraits :: t_Individual          t_Individual; //!< Individual type
 
       protected:
         using t_Base :: optimum;
 
       public:
+        //! \brief XML Constuctor 
+        //! \sa BaseOptima::BaseOptima(const TiXmlElement), 
+        //! Store and Store::Condition overviews.
         Optima ( const TiXmlElement &_node ) : t_Base(_node) {}
+        //! Destructor
         ~Optima () {}
 
+        //! \brief Returns true if _indiv is <em>not</em> better than
+        //!        inherited member BaseOptima::optimum
+        //! \details Set to work with std::remove_if. BaseOptima::optimum is
+        //! set to _indiv if _indiv is better than BaseOptimat::optimum. By
+        //! better, we mean the ordering
+        //! operator(const t_Individual&, const t_Individual) 
+        //! which should be defined.
         bool operator()( const t_Individual &_indiv )
         {
           if (  (not optimum.invalid()) and _indiv > optimum ) return true; 
           optimum = _indiv;
           return false; 
         }
+        //! Returns a string characteristic of Optima.
         std::string what_is() const { return " optimum "; }
     };
   } // namespace Condition
 
+  //! Typedef collection of a few standard Objective %types 
   template<class T_GATRAITS>
     struct Types
     {
+      //! \brief A conditional storage type which stores only best individuals
+      //! \details Best is defined by  bool operator(const t_Individual&, const t_Individual) 
       typedef Store::Conditional< Store::Condition::Optima< T_GATRAITS >,
                                   T_GATRAITS > Optima;
+      //! \brief A conditional storage type which stores only best individuals
+      //!  according to objective
       typedef Store::Conditional< Store::Condition::FromObjective< T_GATRAITS >,
                                   T_GATRAITS >  FromObjective;
+
+      //! \brief The type of the abstract base class. 
       typedef Store::Base< T_GATRAITS > Base;
     };
 } // namespace Store
+
+#include "store.impl.h"
+/*@}*/
+
 
 #endif // _RESULTS_H_

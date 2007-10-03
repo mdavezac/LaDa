@@ -1,4 +1,5 @@
 //! \defgroup Genetic Genetic Algorithm
-//! \mainpage La(marck)Darwin) User Guide
+//! \defgroup MPI Message Passing Interface in LaDa
+//! \mainpage La(marck)Da(rwin) User Guide
 //! 
 //! \subpage input : "LaDa input description"

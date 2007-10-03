@@ -23,9 +23,8 @@
   #include "mpi/mpi_object.h"
 #endif
 
-//! Reimplements the Valence Force Field Functional in c++
-//
-//! Vff, or Valence Force Field functional, is an empirical functional which
+//! \brief Reimplements the Valence Force Field Functional in c++
+//! \details Vff, or Valence Force Field functional, is an empirical functional which
 //! attempts to model the strain energy of a material from at most three-body
 //! interactions. The there body interactions which are considered are
 //! bond-stretching, change in bond-angles, and a combination of these two.
@@ -46,9 +45,8 @@ namespace Vff
 
   class Functional;
 
-  //! Represents a single Atom and its first neighbor relationships
-  //
-  //! This class is meant to be used in conjunction with a list of
+  //! \brief Represents a single Atom and its first neighbor relationships
+  //! \details This class is meant to be used in conjunction with a list of
   //! Ising_CE::Atom, most likely in a Ising_CE::Structure. It contains a
   //! pointer, Atomic_Center::origin, which points a single Ising_CE::Atom. The
   //! first neighbor bonds of this atom are collected as vector of pointers to
@@ -64,9 +62,8 @@ namespace Vff
 
     protected:
       Ising_CE::Atom *origin; //!< The atom this object is addressing
-      //! Other Vff::Atomic_Center objects with which this one is in a bond-relationship
-      //
-      //! Via bonds, a collection of Atomic_Center can be made into a tree,
+      //! \brief Other Vff::Atomic_Center objects with which this one is in a bond-relationship
+      //! \details Via bonds, a collection of Atomic_Center can be made into a tree,
       //! which can be travelled linearly, or through the first neighbor bonds,
       //! using Atomic_Center::const_iterator.
       //! \sa Atomic_Center::const_iterator, Vff::Functional::construct_centers, 
@@ -87,12 +84,12 @@ namespace Vff
       types::t_unsigned index;
 
     public:
-      //! Default Constructor. 
+      //! \brief Default Constructor. 
       //! \param _str structure in which \a _e can be found
       //! \param _e atom to which this Atomic_Center relates
       //! \param _i index of _i in _str.atoms collection. Usefull for mpi processing
       Atomic_Center ( Ising_CE::Structure &_str, Ising_CE::Atom &_e, types::t_unsigned _i);
-      //! Copy Constructor
+      //! \brief Copy Constructor
       //! \param[in] _c Atomic_Center object to copy
       Atomic_Center   ( const Atomic_Center &_c )
                     : origin(_c.origin), bonds(_c.bonds), translations(_c.translations), 
@@ -101,18 +98,16 @@ namespace Vff
                       is_site_one_two_species( _c.is_site_one_two_species), 
                       gradient(0,0,0), index( _c.index) {} 
 
-      //! Returns the kind of atomic center this is
-      //
-      //! In order to use the right coefficients in bond stretching and other
+      //! \brief Returns the kind of atomic center this is
+      //! \details In order to use the right coefficients in bond stretching and other
       //! interactions, we have to know the "kind"
       //! functional this is. This will depend on the atomic specie of this
       //! atom and the encoding of Vff::Atomic_Functional array in
       //! Vff::Functional
       types::t_unsigned kind() const;
 
-      //! Adds _bond to  Atomic_Center::bonds if it is in first neighbor relationship
-      //
-      //! This function returns -1 if \a _e is not a bond, and returns the
+      //! \brief Adds _bond to  Atomic_Center::bonds if it is in first neighbor relationship
+      //! \details This function returns -1 if \a _e is not a bond, and returns the
       //! number of bounds if it is. Note that poeriodic images of _bond are checked and 
       //! Atomic_Center::translations and Atomic_Center::do_translate are set accordingly.
       //! \param _e Atomic_Center object for which first neighbor relationship is checked
@@ -167,16 +162,14 @@ namespace Vff
         { return index; }
 
     protected:
-      //! Returns the type of bond between this Atomic_Center and _bond
-      // 
+      //! \brief Returns the type of bond between this Atomic_Center and _bond
       //! \param _bond If this is not a bond, function will return result, not error!!
       //! \sa Atomic_Center::add_bond(), Atomic_Functional::add_bond(), Functional::Load()
       types::t_unsigned bond_kind( const Atomic_Center &_bond ) const;
   };
 
-  //! Iterator to travel along the bonds of an Atomic_Center
-  //
-  //! Once a mesh of Atomic_Center objects is constructed, with the bonds
+  //! \brief Iterator to travel along the bonds of an Atomic_Center
+  //! \details Once a mesh of Atomic_Center objects is constructed, with the bonds
   //! forming the links in the mesh, an iterator is needed which will allow us to
   //! travel the mesh in any direction. Atomic_Center::const_iterator is built
   //! to iterates through the bonds of an Atomic_Center object. From there, one
@@ -196,13 +189,12 @@ namespace Vff
     public:
       //! Constructor.
       const_iterator() {};
-      //! Constrcutor and Initialized
+      //! \brief Constrcutor and Initialized
       //! \param _parent origin of the bond
       //! \param _is_begin
       //!                   - on true, initializes to first bond
       //!                   - on false, initializes to last bond
       //!                   .
-      //
       const_iterator   ( const Atomic_Center *_parent, bool _is_begin=true) 
                      : parent(_parent)
       {
@@ -232,15 +224,15 @@ namespace Vff
       //! Iterates through bonds
       void operator +=( types::t_int  n)
         { i_bond += n; i_translation += n; i_do_translate += n; }
-      //! Returns true if iterators are at same bond
+      //! \brief Returns true if iterators are at same bond
       //! \param _i iterator agains which to check
       bool operator ==( const const_iterator &_i ) const
         { return _i.i_bond == i_bond; }
-      //! Returns true if iterators are \em not at same bond
+      //! \brief Returns true if iterators are \em not at same bond
       //! \param _i iterator agains which to check
       bool operator !=( const const_iterator &_i ) const
         { return _i.i_bond != i_bond; }
-      //! Returns the number of bonds separating \code this \endcode  and _i in
+      //! \brief Returns the number of bonds separating this object  and _i in
       //!  bond array 
       //! \param _i iterator agains which to check
       types::t_int operator -( const const_iterator &_i )
@@ -265,7 +257,7 @@ namespace Vff
         return atat::norm2( parent->origin->pos - (*i_bond)->origin->pos -
                             parent->structure->cell * (*i_translation) );
       }
-      //! Returns bond vector
+      //! \brief Returns bond vector
       atat::rVector3d& vector( atat::rVector3d &_hold )
       {
         _hold = (*i_bond)->origin->pos - parent->origin->pos ;
@@ -273,7 +265,7 @@ namespace Vff
           _hold += parent->structure->cell * (*i_translation);
         return _hold;
       }
-      //! Returns scalar product between bond vector and _b
+      //! \brief Returns scalar product between bond vector and _b
       types::t_real scalar_product( const const_iterator &_b ) const
       {
         atat::rVector3d a, b;
@@ -289,38 +281,37 @@ namespace Vff
           b = (*_b.i_bond)->origin->pos - _b.parent->origin->pos;
         return a * b;
       }
-      //! Returns the kind of bond this is
+      //! \brief Returns the kind of bond this is
       //! \see  Atomic_Center::bond_kind(), Atomic_Center::add_bond(),
       //!       Atomic_Functional::add_bond(), Functional::Load() 
       types::t_unsigned kind() const
         { return parent->bond_kind( *(*i_bond) ); }
-      //! Returns the atom at the origin of range of bonds this iterator travels
+      //! \brief Returns the atom at the origin of range of bonds this iterator travels
       //! \see Atomic_Center::const_iterator::parent 
       Ising_CE::Atom& get_origin()
         { return ((*i_bond)->get_origin()); }
-      //! Translates a vector _v by periodic image of enpoint of bond
-      //
+      //! \brief Translates a vector _v by periodic image of enpoint of bond
       //! \param _v vector to translate
       //! \param _cell unit-cell defining periodic image (can be different from
       //! Atomic_Center::structure by amount of minimized strain)
       void translate( atat::rVector3d &_v, const atat::rMatrix3d &_cell )
         { if( *i_do_translate ) _v += _cell * ( *i_translation ); }
-      //! Translates a vector _v by periodic image of enpoint of bond
-      //!
+      //! \brief Translates a vector _v by periodic image of enpoint of bond
       //! \param _v vector to translate
       void translate( atat::rVector3d &_v )
         { if( *i_do_translate ) _v += parent->structure->cell * ( *i_translation ); }
   }; // end of const_iterator definition
 
-  //! An atom centered functional
-  //
-  //! Atomic_Functional will compute the energy and strain resulting from
+  //! \brief An atom centered functional
+  //! \details Atomic_Functional will compute the energy and strain resulting from
   //! bond-stretching, angle warping, and bond-angle-warping, eg from all
   //! first-neighbor two and three body interactions, on an Vff:;Atomic_Center atom.
   class Atomic_Functional 
   {
 #ifdef _MPI
-    //! Allows mpi::BroadCast "-ing" and mpi::AllGather "-ing" of  Vff::Atomic_Functional
+    /** \ingroup MPI
+    * \brief Serializes Vff::Atom_Functional. 
+    */
     friend bool mpi::BroadCast::serialize<Vff::Atomic_Functional> ( Vff::Atomic_Functional& );
 #endif
      const static types::t_real twos3;  //!<\f$2*\sqrt(3)\f$
@@ -350,12 +341,14 @@ namespace Vff
       
     public:
 #ifdef _MPI
-      //! Constructor,  should only be used by serialize
+      /** \ingroup MPI
+      *   \brief Constructor,  should only be used by serialize
+      *   \details Can't remember why anymore...
+      */ 
       Atomic_Functional   ( Ising_CE::Structure &_struct ) 
                         : structure(&_struct) {}  
 #endif
-      //! Constructor and Initializer
-      //
+      //! \brief Constructor and Initializer
       //! \param _str atomic type as a string
       //! \param _struct structure to which Atomic_Center belongs
       //! \param _site site number of Atomic_Center
@@ -370,8 +363,7 @@ namespace Vff
                           lengths(_a.lengths), alphas(_a.alphas),
                           betas(_a.betas), gammas(_a.gammas), sigmas(_a.sigmas) {}
       
-      //! Adds a bond type to bond list
-      //
+      //! \brief Adds a bond type to bond list
       //! \param _typeB type of atom at end-point of bond
       //! \param _l equilibrium length
       //! \param _i bond stretching parameters
@@ -385,8 +377,7 @@ namespace Vff
         lengths[_typeB] = _l;
         std::copy( _i.begin(), _i.end(), alphas.begin() + _typeB * 5 );
       }
-      //! Adds angle deformation and bond-angle parameters
-      //
+      //! \brief Adds angle deformation and bond-angle parameters
       //! \param _typeA type of atom at end-point of one bond
       //! \param _typeC type of atom at end-point of other bond
       //! \param _gamma bond-angle deformation parameter
@@ -409,15 +400,13 @@ namespace Vff
         std::copy( _i.begin(), _i.end(), betas.begin() + offset * 5 );
       }
       
-      //! Evaluate strain energy for Atomic_Center _center
-      //
-      //! returns strain energy 
+      //! \brief Evaluate strain energy for Atomic_Center _center
+      //! \details returns strain energy 
       //! \param _center center for which to evaluate energy
       //! \sa function::Base, function::Base::evaluate()
       types::t_real evaluate( const Atomic_Center &_center ) const;
-      //! Evaluate strain energy and gradients for Atomic_Center _center
-      //
-      //! returns strain energy, and computes stress
+      //! \brief Evaluate strain energy and gradients for Atomic_Center _center
+      //! \details returns strain energy, and computes stress
       //! \param _center center for which to evaluate energy
       //! \param _strain to which Atomic_Functional::structure is submitted
       //! \param _stress on _center resulting from _strain
@@ -429,8 +418,7 @@ namespace Vff
                                             const atat::rMatrix3d &_K0 ) const;
       //! \brief computes the trace of the microscopic strain on an atomic center
       //!  structure0 and the atomic centers are expected to be related 
-      //
-      //! To be used for pescan
+      //! \details To be used for pescan
       types::t_real MicroStrain( const Atomic_Center &_center, 
                                  const Ising_CE::Structure &_str0 ) const;
 
@@ -475,10 +463,12 @@ namespace Vff
   //! vff.print_escan_input( "atomic.config" ); // print pescan input
   //! 
   //! \endcode
-  class Functional : public function :: Base<>
+  class Functional : public function :: Base<types::t_real, std::vector<types::t_real> >
   {
 #ifdef _MPI
-    //! Allows mpi::BroadCast "-ing" and mpi::AllGather "-ing" of  Vff::Functional
+    /** \ingroup MPI
+     * \brief Serializes Vff::Functional
+     */
     friend bool mpi::BroadCast::serialize<Vff::Functional> ( Vff::Functional& );
 #endif
     public:
@@ -501,99 +491,85 @@ namespace Vff
       atat::rVector3d center_of_mass; //!< center of mass of atoms in Functional::structure
       
     public:
-      //! Constructor and Initializer
-      //
+      //! \brief Constructor and Initializer
       //! \param _str structure for which to compute energy and stress
       Functional   ( Ising_CE :: Structure &_str )
                  : function::Base<>( 7 + _str.atoms.size() ),
                    structure(_str), structure0(_str), center_of_mass(0,0,0) {};
-      //! Copy Constructor
+      //! \brief Copy Constructor
       Functional   ( const Vff::Functional &_c )
                  : function::Base<>( _c ), structure( _c.structure ),
                    structure0( _c.structure0 ), bond_cutoff( _c.bond_cutoff ),
                    centers( _c.centers ), functionals( _c.functionals ),
                    center_of_mass(_c.center_of_mass) {}
-      //! Destructor
+      //! \brief Destructor
       ~Functional() {}
 
-      //! Loads input to functional from  xml 
-      //
+      //! \brief Loads input to functional from  xml 
       //! \param _element should point to an xml node which is the functional data
       //! or contains a node to the funtional data as a direct child
       bool Load( const TiXmlElement &_element );
       
-      //! unpacks function::Base::variables, then calls energy
-      //
+      //! \brief unpacks function::Base::variables, then calls energy
       //! \sa function::Base, function::Base::evaluate
       types::t_real evaluate(); 
-      //! computes energy and stress, expects everything to be set
+      //! \brief computes energy and stress, expects everything to be set
       types::t_real energy() const;
-      //! Evaluates gradients only
-      //
+      //! \brief Evaluates gradients only
       //! \sa function::Base, function::Base::evaluate_gradient
       template< typename t_grad_iterator>
         void evaluate_gradient( t_grad_iterator const &_i_grad )
           { evaluate_with_gradient( _i_grad ); }
-      //! Evaluates gradients only
-      //
+      //! \brief Evaluates gradients only
       //! \sa function::Base, function::Base::evaluate_gradient
       void evaluate_gradient( t_Type * const _i_grad )
         { evaluate_with_gradient<t_Type*>( _i_grad ); }  
-      //! Evaluates gradients and energy
-      //
+      //! \brief Evaluates gradients and energy
       //! \sa function::Base, function::Base::evaluate_with_gradient
       template< typename t_grad_iterator>
         t_Type evaluate_with_gradient( t_grad_iterator const &_i_grad );
-      //! Evaluates gradients and energy
-      //
+      //! \brief Evaluates gradients and energy
       //! \sa function::Base, function::Base::evaluate_with_gradient
       t_Type evaluate_with_gradient( t_Type * const _i_grad )
         { return evaluate_with_gradient<t_Type*>( _i_grad ); }  
-      //! Evaluates gradient in one direction only
-      //
+      //! \brief Evaluates gradient in one direction only
       //! \todo Vff::Functional::implement evaluate_one_gradient
       //! \sa function::Base, function::Base::evaluate_one_gradient, minimizer::VA
       t_Type evaluate_one_gradient( types::t_unsigned _pos) {return 0;}; 
-      //!  initializes stuff before minimization
-      //
-      //! Defines the packing and unpacking process, such that only unfrozen
+      //! \brief initializes stuff before minimization
+      //! \details Defines the packing and unpacking process, such that only unfrozen
       //! degrees of liberty are known to the minimizer
       //! \sa function::Base, minimizer::Base
       bool init();
-      //! Prints atom.config type input to escan
-      //
+      //! \brief Prints atom.config type input to escan
       //! \param _f optional filename to which to direct the output
       void print_escan_input( const std::string &_f = "atom.config") const;
-      //! Constructs the mesh of Atomic_Center
-      //
-      //! Newer version than Functional::initialize_centers, it works even if
+      //! \brief Constructs the mesh of Atomic_Center
+      //! \details Newer version than Functional::initialize_centers, it works even if
       //! structure is slightly distorted.
       bool construct_centers();
       //! \deprecated Constructs the mesh of Atomic_Center
       bool initialize_centers();
       //! Prints out all parameters
       void print_out( std::ostream &stream ) const;
-      //! Returns a reference to the computed stress
-      //
+      //! \brief Returns a reference to the computed stress
       //! \sa Functional::stress
       const atat::rMatrix3d& get_stress() const
         { return stress; }
 
     protected:
-      //! unpacks variables from minimizer
-      //
-      //! Functional knows about Functional::Structure, whereas minizers now about function::Base,
-      //! this function does the interface between the two
+      //! \brief unpacks variables from minimizer
+      //! \details Functional knows about Functional::Structure, whereas minizers now
+      //! about function::Base, this function does the interface between the two
       void unpack_variables(atat::rMatrix3d& strain);
-      //! packs variables from minimizer
-      //
-      //! Functional knows about Functional::Structure, whereas minizers now about function::Base,
-      //! this function does the interface between the two
+      //! \brief packs variables from minimizer
+      //! \details Functional knows about Functional::Structure, whereas minizers now
+      //! about function::Base, this function does the interface between the two
       void pack_variables(const atat::rMatrix3d& _strain);
-      //! packs variables from minimizer
-      //
-      //! Functional knows about Functional::Structure, whereas minizers now about function::Base,
-      //! this function does the interface between the two
+      //! \brief packs variables from minimizer
+      //! \details Functional knows about Functional::Structure, whereas
+      //! minizers now about function::Base, this function does the interface
+      //! between the two
       template< typename t_grad_iterator>
       void pack_gradients(const atat::rMatrix3d& _stress, t_grad_iterator const &_grad) const;
   };

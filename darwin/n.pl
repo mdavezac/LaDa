@@ -224,7 +224,10 @@ sub write_lamarck_input()
       printf OUT "popsize=\"%i\" rate=\"%.2f\">\n",
                  $params{'GA'}{'popsize'}, 
                  $params{'GA'}{'rate'};
-      printf OUT "    <Method type=\"%s\" ", $params{'method'}{'type'};
+      printf OUT "    <Method type=\"convexhull\" "
+        if ( $params{'method'}{"type"} =~ /CH/ );
+      printf OUT "    <Method type=\"%s\" ", $params{'method'}{'type'}
+        if ( $params{'method'}{"type"} !~ /CH/ );
       printf OUT "target=\"%.2f\" ", $params{'method'}{'target'}
         if( $params{'method'}{'type'} =~ /target/ );
       printf OUT "delta=\"%.2f\" ", $params{'method'}{'delta'}
@@ -272,7 +275,7 @@ sub write_lamarck_input()
       printf OUT "    <Terminator ref=\"evaluation\" value=%i/>\n", $params{'terminator'}; 
       printf OUT "    <Save what=\"all\"/>\n";
       printf OUT "    <Restart what=\"results\"/>\n" if ( $params{'restart'} =~ /results/ );
-      printf OUT "    <Filenames restart=\"convex_hull.xml\" />\n";
+      printf OUT "    <Filenames save=\"convex_hull.xml\" />\n";
 
       printf OUT "  </GA>\n";
     }

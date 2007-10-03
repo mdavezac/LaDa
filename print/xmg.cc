@@ -18,6 +18,7 @@ namespace Print
   const Xmg :: t_operation Xmg :: addtolast  = Xmg :: ADDTOLAST;
   const Xmg :: t_operation Xmg :: removelast = Xmg :: REMOVELAST;
   const Xmg :: t_operation Xmg :: clearall   = Xmg :: CLEARALL;
+  const std::string Xmg :: comment_string = "# ";
 
   void Xmg :: init (const std::string &_f)
   { 
@@ -67,7 +68,7 @@ namespace Print
     open();
 
     if ( is_empty )  // print revision
-      file << "# Subversion Revision " << SVN::Revision << std::endl;
+      file << comment_string << "Subversion Revision " << SVN::Revision << std::endl;
 
     is_empty = false;
 
@@ -87,7 +88,7 @@ namespace Print
       return;
 #endif 
     std::ostringstream sstr;
-    sstr << "# ";
+    sstr << comment_string;
     for( types::t_unsigned i = 0; i < indentation; ++i)
       sstr << "  ";
     sstr << _str;
@@ -118,7 +119,7 @@ namespace Print
     switch ( _op )
     {
       case CLEAR: stream.str(""); break;
-      case COMMENT: stream.str(""); stream << "# "; do_indent(); break;
+      case COMMENT: stream.str(""); stream << comment_string; do_indent(); break;
       case INDENT: ++indentation; break;
       case UNINDENT: --indentation; break;
       case ADDTOLAST: add_to_last(); break;
@@ -129,4 +130,23 @@ namespace Print
 
 
   Xmg xmg("convex_hull.agr");
+
+  std::string make_commented_string( const std::string &_str )
+  {
+    std::string copy(_str);
+    std::ostringstream result;
+    if ( copy.empty() ) return "";
+    result << Xmg::comment_string;
+
+    types::t_int old = 0;
+    types::t_int i = copy.find('\n', 0);
+    while ( i != std::string::npos  )
+    {
+      result << copy.substr(old, i - old +1 ) << Xmg::comment_string;
+      ++i; old = i;
+      i = copy.find('\n', old);
+    }
+    result << copy.substr(old);
+    return result.str();
+  }
 }

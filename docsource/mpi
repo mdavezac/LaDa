@@ -1,0 +1,8 @@
+/** \ingroup MPI
+  \page MPI Message Passing Interface
+  This  page aims to regroup all MPI specific stuff. This includes anything in
+the mpi namespace of course. But also all the mpi::serialze() and
+t_Something::broadcast() functions declared all over the place. Finally, it
+includes an hack which is specific to MPI, eg t_Something synchronize.
+*/
+  

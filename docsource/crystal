@@ -63,7 +63,8 @@
 
    \section TagAtom <Atom/> 
    Defines an atomic site and its occupation of the \ref Tagstructure within
-   which it is found. It contains the following attributes
+   which it is found. Only attribute \a x, \a y, \z are mandatory for all
+   applications. Attribute \a type is required for anything not GA. 
     
    \param x first cartesian coordinate scaled by ref Tagstructure's \a scale attribute
    \param y second cartesian coordinate scaled by ref Tagstructure's \a scale attribute
@@ -72,7 +73,10 @@
           or an atomic symbol
    \param freeze Allows to "freeze" \a x, \a y, \a z, or \a t coordinates, or a
              combination thereof, such that the frozen coordinates are
-             untouched during minimization. \a t stands for type. \a freeze is optional.
+             untouched during minimization. \a t stands for type. \a freeze is optional. 
+   \param site Should be an integer \f$i\in[0, N]\f$ where \f$N\f$ is the
+          number of sites declared in \ref Taglattice. The index \f$i\f$
+          corresponds to the ordering of \ref Tagsite tags in the XML input. 
    
    <h1> Inputing a lattice </h1>
     \anchor xxlattice
@@ -121,6 +125,9 @@
      \param freeze Allows to "freeze" \a x, \a y, \a z, or \a t coordinates, or a
                combination thereof, such that the frozen coordinates are
                untouched during minimization. \a t stands for type. \a freeze is optional.
+   \warning \a freeze in a \ref Taglattice can only be used to freeze all atoms
+            of a particular site in a structure if attribute \a site of the relevant \ref
+            TagAtom tags have been set in the corresponding \ref Tagstructure.
 
    \section Tagatom <atom/>
      \addindex \<atom/>

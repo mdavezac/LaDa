@@ -122,8 +122,7 @@ errorout:
   void Darwin::write_references()
   {
 #ifdef _MPI 
-    if ( not mpi::main.is_root_node() )
-      return;
+    if ( not mpi::main.is_root_node() ) return;
 #endif
     std::ofstream file( references_filename.c_str(), std::ios_base::out | std::ios_base::trunc ); 
     if ( not file.is_open() )
