@@ -79,6 +79,7 @@ namespace SingleSite
       return false;
     }
 
+
     concentration.N = structure.atoms.size();
     Ising_CE::Structure::t_Atoms::const_iterator i_atom = structure.atoms.begin();
     Ising_CE::Structure::t_Atoms::const_iterator i_atom_end = structure.atoms.end();
@@ -91,5 +92,17 @@ namespace SingleSite
     return true;
   }
 
+  template<class T_INDIVIDUAL>
+  void Evaluator<T_INDIVIDUAL> :: presubmit( std::list<t_Individual> &_pop)
+  {
+    t_Individual pure;
+    initialize( pure );
+    // Pure A
+    std::fill( pure.Object().Container().begin(), pure.Object().Container().end(), 1.0 );
+    _pop.push_back(pure);
+    // Pure B
+    std::fill( pure.Object().Container().begin(), pure.Object().Container().end(), -1.0 );
+    _pop.push_back(pure);
+  } 
 } // namespace SingleSite
 #endif // _TWOSITES_IMPL_H_

@@ -157,13 +157,15 @@ namespace Store
       //! \details Conditional::condition is initialized entirely from XML input
       //! Conditional itself only reads wether there exists a print attribute, and sets 
       //! Conditional::print_what accordingly
-      Conditional   (t_Evaluator &_eval, const TiXmlElement &_node);
+      Conditional   (t_Evaluator &_eval, const TiXmlElement &_node)
+                  : t_Base( _eval), condition( _node ),
+                    print_what(PRINT_CONDITION)  { Load( _node ); }
       //! \brief Constructor and Initializor
       //! \details Conditional::condition is initialized both from XML input and \a _type
       template< class T_TYPE >
       Conditional   (t_Evaluator &_eval, T_TYPE _type, const TiXmlElement &_node)
-                  : t_Base( _eval), condition( _type, _node ), print_what( PRINT_CONDITION )
-        { Conditional::Conditional( _eval,_node); }
+                  : t_Base( _eval), condition( _type, _node ), 
+                    print_what( PRINT_CONDITION ) { Load( _node ); }
       //! Deconstructor
       virtual ~Conditional() {}
 
@@ -209,8 +211,12 @@ namespace Store
       * \sa Evaluation::Base::evaluate, Evaluation::WithHistory::evaluate
       *     Conditional::new_optima
       */
-      virtual void synchronize()
+      virtual void synchronize();
 #endif
+
+    private:
+      //! Checks from XML input what to print out in print_results 
+      bool Load( const TiXmlElement &_node );
   };
 
   //! \brief Defines some functors for conditional storage

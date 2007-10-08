@@ -157,6 +157,12 @@ namespace TwoSites
         structure << *current_object;
       }
 
+      //! \brief Used to submits individuals to history, etc, prior to starting %GA
+      //! \details initializes the endopoints of a convex-hull, for instance.
+      //! Presubmitted individuals are not put into the population.
+      //! \see GA::Evaluator::presubmit()
+      void presubmit( std::list<t_Individual> &_pop );
+
     protected:
       bool consistency_check();
   };

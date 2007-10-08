@@ -21,13 +21,7 @@
 #include "statistics.h"
 #include "minimizergenop.h"
 
-void keycheck( types::t_int _s=20 )
-{
-  std::string result; result.resize(_s);
-  for (types::t_int i=0 ; i < _s; ++i)
-    result[i] = rng.flip() ? '1' : '0';
-  Print::out << "KeyCheck: " << result << Print::endl;
-}
+#include "debug.h"
 
 
 namespace GA
@@ -98,6 +92,7 @@ namespace GA
       {
         std::string string = att->Value();
         Print::xmg << Print::Xmg::comment << "Populate Style: ";
+        populate_style = RANDOM_POPULATE;
         if ( string.compare("partition") == 0 )
         {
           populate_style = PARTITION_POPULATE;
@@ -737,13 +732,14 @@ namespace GA
 #endif
     for(; i_pop != i_end; ++i_pop)
     {
-      switch ( populate_style )
-      {
-        case RANDOM_POPULATE:
-          random_populate(*i_pop, target); break;
-        case PARTITION_POPULATE:
-          partition_populate(*i_pop, target); break;
-      }
+          random_populate(*i_pop, target); //break;
+//     switch ( populate_style )
+//     {
+//       case RANDOM_POPULATE:
+//         random_populate(*i_pop, target); break;
+//       case PARTITION_POPULATE:
+//         partition_populate(*i_pop, target); break;
+//     }
     }
   }
 
@@ -752,10 +748,14 @@ namespace GA
   {
     while ( _pop.size() < _size )
     {
+      std::cout << "KeyCheck: " << keycheck() << std::endl;
       t_Individual indiv;
       evaluator.initialize(indiv);
       if ( not ( taboos and (*taboos)(indiv) ) )
+      {
         _pop.push_back(indiv);
+        std::cout << _pop.back().Object() << std::endl;
+      }
     } // while ( i_pop->size() < target )
     _pop.resize( _size );
   }
@@ -832,10 +832,26 @@ namespace GA
     _pop.resize( _size );
   }
 
+  template<class T_EVALUATOR>
+  void Darwin<T_EVALUATOR> :: presubmit()
+  {
+    // GA::Evaluator does not know about Traits::GA, and even less about
+    // Traits::GA::t_Population, hence this bit of hackery.
+    std::list< t_Individual > dummy;
+    eoPop<t_Individual> dummy2;
+    evaluator.presubmit(dummy);
+    if ( dummy.empty() ) return;
+    offsprings.resize( dummy.size() );
+    std::copy( dummy.begin(), dummy.end(), offsprings.begin() );
+    (*evaluation)(dummy2, offsprings);
+    offsprings.clear();
+  }
 
   template<class T_EVALUATOR>
   void Darwin<T_EVALUATOR> :: run()
   {
+    presubmit();
+
 #ifdef _MPI 
     for( types::t_int i = 0; i < mpi::main.size(); ++i )
     {
@@ -848,10 +864,14 @@ namespace GA
       }
       mpi::main.barrier();
     }
+    rng.reseed(1562);
 #endif
     Print::xmg << Print::flush;
     Print::out << "\nCreating population" << Print::endl;
+
+    std::cout << "Pop " << keycheck() << std::endl;
     populate();
+    std::cout << "After Pop " << keycheck() << std::endl;
     offsprings.clear();
     typename t_Islands :: iterator i_island_begin = islands.begin();
     typename t_Islands :: iterator i_island_end = islands.end();
@@ -862,6 +882,7 @@ namespace GA
       (*evaluation)(offsprings, *i_island); // A first eval of pop.
 #ifdef _MPI // "All Gather" new population
       breeder->synchronize_offsprings( *i_island );
+      if(history) history->synchronize();
 #endif 
       if( ranking )(*ranking)( *i_island );
     }

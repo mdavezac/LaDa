@@ -32,535 +32,450 @@
 
 namespace GA
 {
+  /** \ingroup Genetic
+   * @{
+   */
+  //! \brief Applies Krossover between two parents and retrieves a child
+  //! \details Krossover refers to a crossover operation in reciprocal-space
+  //! where the values of the structure factors of two parents of identical shape
+  //! are interchanged to create a new individual. This process should be more
+  //! seamless than the real-space crossover practiced in GA::Crossover.
+  //! Krossover can be done over all <STRONG>k</STRONG>-vectors indifferently,
+  //! or the parents can exchange a contiguous range of vectors with increasing
+  //! wavelengths. Whether range or not does not seem to affect the results.
+  //! The concentration after krossover is set (or not) using a
+  //! \a T_GAOPTRAITS::t_Concentration functor.
+  //! \param T_GAOPTRAITS contains all %types pertaining to %GA 
+  //! \todo The back Fourier transform is done in (!) the t_Concentration
+  //! object. Which means both this functor and the (at present) non-template
+  //! t_Concentration classes need to know independantly about going real space
+  //! to reciprocal space and back. Not quite logical. Probably only the
+  //! template functor should have to know about this type of operation.
   template<class T_GAOPTRAITS> 
   class Krossover : public eoGenOp<typename T_GAOPTRAITS :: t_Individual> 
   {
     public:
-      typedef T_GAOPTRAITS t_GAOpTraits;
+      typedef T_GAOPTRAITS t_GAOpTraits; //!< all %GA types
     protected:
-      typedef typename t_GAOpTraits :: t_Individual t_Individual;
-      typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits;
-      typedef typename t_GAOpTraits :: t_Concentration t_Concentration;
-      typedef typename t_GAOpTraits :: t_FourierRtoK t_FourierRtoK;
-      typedef typename t_GAOpTraits :: t_FourierKtoR t_FourierKtoR;
-      typedef typename t_IndivTraits::t_Object t_Object;
-      typedef eoGenOp<t_Individual> t_Base;
+      typedef typename t_GAOpTraits :: t_Individual t_Individual; //!< Individual type
+      typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits; //!< Individual traits
+      typedef typename t_GAOpTraits :: t_Concentration t_Concentration; //!< Concentration type
+      typedef typename t_GAOpTraits :: t_FourierRtoK t_FourierRtoK; //!< Direct Fourier Functor
+      typedef typename t_GAOpTraits :: t_FourierKtoR t_FourierKtoR; //!< Back Fourier Functor
+      typedef typename t_IndivTraits::t_Object t_Object; //!< Object type
+      typedef eoGenOp<t_Individual> t_Base; //!< Base class
 
     protected:
-      t_Concentration &concentration;
-      Ising_CE::Structure &structure;
-      types::t_real rate;
-      bool do_range;
+      t_Concentration &concentration; //!< reference to a t_Concentration object
+      Ising_CE::Structure &structure; //!< reference to a structure
+      types::t_real rate; //!< crossover rate (0.5 by default)
+      bool do_range; //!< Whether to a range or indifferent krossover
 
     public:
       using t_Base::operator();
 
     public:
+      //! Constructor and Initializer
       Krossover   ( t_Concentration &_c, Ising_CE::Structure &_str )
                 : concentration(_c), structure(_str), rate(0.5), do_range(false) {}
+      //! Copy Constructor
       Krossover   ( const Krossover &_k )
                 : concentration(_k.concentration), structure(_k.structure),
                   rate(_k.rate), do_range(_k.do_range) {}
+      //! Deconstructor
       ~Krossover() {}
 
+      //! Loads Krossover::rate and Krossover::do_range parameters from XML input
       bool Load( const TiXmlElement &_node );
 
+      //! Eo required bullshit
       virtual std::string className() const { return "TwoSites::Krossover"; }
+      //! Eo required bullshit
       unsigned max_production(void) { return 1; } 
 
+      //! \brief Does the actual krossover
+      //! \param  _indiv first parent on input, offspring on output
+      //! \param _parent second parent
       bool operator()( t_Individual &_indiv, const t_Individual &_parent );
 
+      //! \brief wrapper aroung Krossover::operator()() which uses eoPopulator
+      //! to obtain two parents
       void apply(eoPopulator<t_Individual>& _pop)
         { if ( operator()( *_pop, _pop.select() ) ) (*_pop).invalidate(); }
-      std::string print_out() const
-      {
-        std::ostringstream sstr;
-        sstr << "Krossover, rate = " << rate;
-        if (do_range) sstr << ", Range = true ";
-        return sstr.str();
-      }
+
+      //! \brief prints out parameters
+      std::string print_out() const;
   };
-  template<class T_GAOPTRAITS>
-  bool Krossover<T_GAOPTRAITS> :: Load( const TiXmlElement &_node )
-  {
-    std::string name = _node.Value();
-    if ( name.compare("Krossover") ) return false;
 
-    _node.Attribute( "prob", &rate );
-    rate = rate > 0 ? std::abs(rate) : 0.5;
-    if ( rate > 1 ) rate = 0.5;
-    if ( _node.Attribute("type") )
-    {
-      std::string str =  _node.Attribute("type");
-      if ( str.compare("range") == 0 )  do_range = true;
-    }
-    return true;
-  }
-  // expects kspace value to exist!!
-  template<class T_GAOPTRAITS>
-  bool Krossover<T_GAOPTRAITS> :: operator()( t_Individual &_indiv, const t_Individual &_parent )
-  {
-    t_Object &offspring  = _indiv.Object();
-    const t_Object &parent  = _parent.Object();
-    Ising_CE::Structure str1 = structure, str2 = structure;
-    str1 << offspring; str2 << parent;
-    t_FourierRtoK( str1.atoms.begin(),  str1.atoms.end(),
-                   str1.k_vecs.begin(), str1.k_vecs.end() );
-    t_FourierKtoR( str2.atoms.begin(),  str2.atoms.end(),
-                   str2.k_vecs.begin(), str2.k_vecs.end() );
-
-    // range crossover ... kvec should be oredered according to size
-    if ( do_range and str1.k_vecs.size() > 2 ) 
-    {  
-      types::t_unsigned n = (types::t_unsigned)
-         std::floor(   (types::t_real) rng.random ( str1.k_vecs.size() - 1 ) 
-                     * (types::t_real) rate );
-      __gnu_cxx::copy_n( str2.k_vecs.begin(), n, str1.k_vecs.begin() );
-    }
-    else // every point crossover
-    {
-      Ising_CE::Structure::t_kAtoms :: const_iterator i_p = str2.k_vecs.begin();
-      Ising_CE::Structure::t_kAtoms :: const_iterator i_p_end = str2.k_vecs.end();
-      Ising_CE::Structure::t_kAtoms :: iterator i_o = str1.k_vecs.begin();
-      for ( ; i_p != i_p_end; ++i_p, ++i_o)
-        if ( rng.flip(rate) ) 
-          i_o->type = i_p->type;
-    }
-  
-    concentration( str1 );
-    offspring << str1;
-
-    return true;
-  }
-
+  //! \brief Mutation in reciprocal space
+  //! \details Changes the intensity a random number of
+  //! <STRONG>k</STRONG>-vectors to random values. More specifically, each
+  //! <STRONG>k</STRONG>-vectors is susceptible to be mutated with a
+  //! mutation_rate of KMutation::rate. If a <STRONG>k</STRONG>-vectors is
+  //! mutated, then its intensity is changed to a random complex number in ([-M,M],[-M,M]) where
+  //! M is the square root of the maximum absolute intensity in reciprocal-space
+  //! before any mutation. 
+  //! The concentration after mutation is set (or not) using a
+  //! \a T_GAOPTRAITS::t_Concentration functor.
+  //! \param T_GAOPTRAITS contains all %types pertaining to %GA 
+  //! \todo The back Fourier transform is done in (!) the t_Concentration
+  //! object. Which means both this functor and the (at present) non-template
+  //! t_Concentration classes need to know independantly about going real space
+  //! to reciprocal space and back. Not quite logical. Probably only the
+  //! template functor should have to know about this type of operation.
   template<class T_GAOPTRAITS>
   class KMutation : public eoGenOp<typename T_GAOPTRAITS::t_Individual> 
   {
     public:
-      typedef T_GAOPTRAITS t_GAOpTraits;
+      typedef T_GAOPTRAITS t_GAOpTraits; //!< all %GA types
     protected:
-      typedef typename t_GAOpTraits :: t_Individual t_Individual;
-      typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits;
-      typedef typename t_GAOpTraits :: t_Concentration t_Concentration;
-      typedef typename t_GAOpTraits :: t_FourierRtoK t_FourierRtoK;
-      typedef typename t_GAOpTraits :: t_FourierKtoR t_FourierKtoR;
-      typedef typename t_IndivTraits::t_Object t_Object;
-      typedef eoGenOp<t_Individual> t_Base;
+      typedef typename t_GAOpTraits :: t_Individual t_Individual; //!< Individual type
+      typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits; //!< Individual traits
+      typedef typename t_GAOpTraits :: t_Concentration t_Concentration; //!< Concentration type
+      typedef typename t_GAOpTraits :: t_FourierRtoK t_FourierRtoK; //!< Direct Fourier Functor
+      typedef typename t_GAOpTraits :: t_FourierKtoR t_FourierKtoR; //!< Back Fourier Functor
+      typedef typename t_IndivTraits::t_Object t_Object; //!< Object type
+      typedef eoGenOp<t_Individual> t_Base; //!< Base class
 
     protected:
-      t_Concentration &concentration;
-      Ising_CE::Structure &structure;
-      types::t_real rate;
+      t_Concentration &concentration; //!< reference to a t_Concentration object
+      Ising_CE::Structure &structure; //!< reference to a structure
+      types::t_real rate; //!< crossover rate (0.5 by default)
 
     public:
       using t_Base::operator();
 
     public:
+      //! Constructor and Initializer
       KMutation   ( t_Concentration &_c, Ising_CE::Structure &_str )
                 : concentration(_c), structure(_str), rate(0.5) {}
+      //! Copy Constructor
       KMutation   ( const KMutation &_k )
                 : concentration(_k.concentration), structure(_k.structure),
                   rate(_k.rate) {}
+      //! Deconstructor
       ~KMutation() {}
 
+      //! Loads KMutation::rate parameter from XML input
       bool Load( const TiXmlElement &_node );
 
+      //! Eo required bullshit
       virtual std::string className() const { return "TwoSites::KMutation"; }
+      //! Eo required bullshit
       unsigned max_production(void) { return 1; } 
 
+      //! \brief Does the actual KMutation
+      //! \param _indiv individual to be mutated
       bool operator()( t_Individual &_indiv );
+      //! \brief wrapper aroung KMutation::operator()() which uses eoPopulator
+      //! to obtain an individual
       void apply(eoPopulator<t_Individual>& _pop)
         { if ( operator()( *_pop ) ) (*_pop).invalidate(); }
-      std::string print_out() const
-      {
-        std::ostringstream sstr;
-        sstr << "KMutation, rate = " << rate;
-        return sstr.str();
-      }
+      //! \brief prints out parameters
+      std::string print_out() const;
   };
-  template<class T_GAOPTRAITS> 
-  bool KMutation<T_GAOPTRAITS> :: Load( const TiXmlElement &_node )
-  {
-    std::string name = _node.Value();
-    if ( name.compare("KMutation") ) return false;
 
-    _node.Attribute( "prob", &rate );
-    rate = rate > 0 ? std::abs(rate) : 0.5;
-    if ( rate > 1 ) rate = 0.5;
-    return true;
-  }
-  // expects kspace value to exist!!
-  template<class T_GAOPTRAITS>
-  bool KMutation<T_GAOPTRAITS> :: operator()(t_Individual &_indiv )
-  {
-    t_Object &object  = _indiv.Object();
-    Ising_CE::Structure str = structure;
-    str << object;
-    t_FourierRtoK( str.atoms.begin(),  str.atoms.end(),
-                   str.k_vecs.begin(), str.k_vecs.end() );
-
-    
-    Ising_CE::Structure::t_kAtoms :: iterator i_k = str.k_vecs.begin();
-    Ising_CE::Structure::t_kAtoms :: iterator i_k_end = str.k_vecs.end();
-    types::t_real max = std::norm( i_k->type );
-    for(; i_k != i_k_end; ++i_k)
-      if ( max < std::norm( i_k->type ) ) max = std::norm( i_k->type );
-
-    i_k = str.k_vecs.begin();
-    max = std::sqrt( max );
-    bool result = false;
-    for(; i_k != i_k_end; ++i_k)
-      if ( rng.flip(rate) )
-      {
-        i_k->type = std::complex<types::t_real>( rng.uniform( 2.0 * max ) - max, 
-                                                 rng.uniform( 2.0 * max ) - max );
-        result = true;
-      }
-  
-    concentration( str );
-    object << str;
-    return true;
-  }
+  //! \brief creates a random individidual from random values in reciprocal-space
+  //! \details The concentration is set (or not) using a
+  //! \a T_GAOPTRAITS::t_Concentration functor.
+  //! \param T_GAOPTRAITS contains all %types pertaining to %GA 
+  //! \todo The back Fourier transform is done in (!) the t_Concentration
+  //! object. Which means both this functor and the (at present) non-template
+  //! t_Concentration classes need to know independantly about going real space
+  //! to reciprocal space and back. Not quite logical. Probably only the
+  //! template functor should have to know about this type of operation.
   template<class T_GAOPTRAITS> 
   class KRandom : public eoGenOp<typename T_GAOPTRAITS :: t_Individual> 
   {
     public:
-      typedef T_GAOPTRAITS t_GAOpTraits;
+      typedef T_GAOPTRAITS t_GAOpTraits; //!< all %GA types
     protected:
-      typedef typename t_GAOpTraits :: t_Individual t_Individual;
-      typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits;
-      typedef typename t_GAOpTraits :: t_Concentration t_Concentration;
-      typedef typename t_IndivTraits::t_Object t_Object;
-      typedef eoGenOp<t_Individual> t_Base;
+      typedef typename t_GAOpTraits :: t_Individual t_Individual; //!< Individual type
+      typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits; //!< Individual traits
+      typedef typename t_GAOpTraits :: t_Concentration t_Concentration; //!< Concentration type
+      typedef typename t_IndivTraits::t_Object t_Object; //!< Object type
+      typedef eoGenOp<t_Individual> t_Base; //!< Base class
 
     protected:
-      t_Concentration &concentration;
-      Ising_CE::Structure structure;
+      t_Concentration &concentration; //!< reference to a t_Concentration object
+      Ising_CE::Structure &structure; //!< reference to a structure
 
     public:
       using t_Base::operator();
 
     public:
+      //! Constructor and Initializer
       KRandom   ( t_Concentration &_c, Ising_CE::Structure &_str )
               : concentration(_c), structure(_str) {}
+      //! Acts a functor. For convenience
       KRandom   ( t_Concentration &_c, Ising_CE::Structure &_str, t_Individual &_indiv )
               : concentration(_c), structure(_str) { operator()(_indiv); }
+      //! Copy Constructor
       KRandom   ( const KRandom &_k )
               : concentration(_k.crossover), structure(_k.structure) {}
+      //! Deconstructor
       ~KRandom() {}
 
+      //! Doesn't load anything from anywhere and returns true
       bool Load( const TiXmlElement &_node ) { return true; }
 
+      //! Eo required bullshit
       virtual std::string className() const { return "Darwin::Random"; }
+      //! Eo required bullshit
       unsigned max_production(void) { return 1; } 
 
-      bool operator()( t_Individual &_indiv )
-      {
-        t_Object &obj = _indiv.Object();
+      //! \brief Creates a random bitstring individual
+      //! \param _indiv individual to be initialized
+      bool operator()( t_Individual &_indiv );
 
-        Ising_CE::Structure::t_Atoms :: const_iterator i_kvec = structure.k_vecs.begin();
-        Ising_CE::Structure::t_Atoms :: const_iterator i_kvec_end = structure.k_vecs.end();
-        types::t_real n = 3.0 / (types::t_real) structure.k_vecs.size(); 
-        for(; i_kvec != i_kvec_end; ++i_kvec )
-          if( rng.flip(n) )
-            i_kvec->type = std::complex<types::t_real>( rng.uniform( 5.0 ) - 2.5,
-                                                        rng.uniform( 5.0 ) - 2.5  );
-
-        concentration( structure );
-        obj << structure;
-
-        return true;
-      }
-
+      //! \brief wrapper aroung KRandom::operator()() which uses eoPopulator
+      //! to obtain two parents
       void apply(eoPopulator<t_Individual>& _pop)
         { if ( operator()( *_pop ) ) (*_pop).invalidate(); }
+
+      //! \brief prints out parameters
       std::string print_out() const { return "Darwin::KRandom"; }
   };
 
 
 
+  //! \brief Applies a standard bitstring crossover to a bitstring (of form \f$b_i=\pm1\f$)
+  //! \details The concentration after krossover is set (or not) using a
+  //! \a T_GAOPTRAITS::t_Concentration functor.
+  //! \param T_GAOPTRAITS contains all %types pertaining to %GA 
+  //! \related BitString::Krossover
   template<class T_GAOPTRAITS> 
   class Crossover : public eoGenOp<typename T_GAOPTRAITS :: t_Individual > 
   {
-
     public:
-      typedef T_GAOPTRAITS t_GAOpTraits;
+      typedef T_GAOPTRAITS t_GAOpTraits; //!< all %GA types
     protected:
-      typedef typename t_GAOpTraits :: t_Individual t_Individual;
-      typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits;
-      typedef typename t_GAOpTraits :: t_Concentration t_Concentration;
-      typedef typename t_IndivTraits::t_Object t_Object;
-      typedef eoGenOp<t_Individual> t_Base;
+      typedef typename t_GAOpTraits :: t_Individual t_Individual; //!< Individual type
+      typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits; //!< Individual traits
+      typedef typename t_GAOpTraits :: t_Concentration t_Concentration; //!< Concentration type
+      typedef typename t_IndivTraits::t_Object t_Object; //!< Object type
+      typedef eoGenOp<t_Individual> t_Base; //!< Base class
+
     protected:
-      t_Concentration &concentration;
-      Ising_CE::Structure structure;
-      BitString::Crossover<t_Object> op;
+      t_Concentration &concentration; //!< reference to a t_Concentration object
+      BitString::Crossover<t_Object> op; //!< the bitstring crossover functor
 
     public:
       using t_Base::operator();
 
     public:
-      Crossover   ( t_Concentration &_c, Ising_CE::Structure &_str )
-             : concentration(_c), structure(_str), op() {}
+      //! Constructor and Initializer
+      Crossover   ( t_Concentration &_c )
+             : concentration(_c), op() {}
+      //! Copy Constructor
       Crossover   ( const Crossover &_k )
-             : concentration(_k.crossover), structure(_k.structure), op(_k.op) {}
+             : concentration(_k.crossover), op(_k.op) {}
+      //! Deconstructor
       ~Crossover() {}
 
+      //! Loads parameters from XML input
       bool Load( const TiXmlElement &_node ) { return op.Load( _node ); }
 
+      //! Eo required bullshit
       virtual std::string className() const { return op.className(); }
+      //! Eo required bullshit
       unsigned max_production(void) { return 1; } 
 
-      bool operator()(t_Individual& _indiv, const t_Individual _parent )
-      {
-        t_Object &obj1 = _indiv.Object();
-        const t_Object &obj2 = _parent.Object();
-        op( obj1, obj2 );
-        concentration( obj1 );
-        return true;
-      }
+      //! \brief Does the actual crossover
+      //! \param _indiv first parent on input, offspring on output
+      //! \param _parent second parent
+      bool operator()(t_Individual& _indiv, const t_Individual _parent );
+
+      //! \brief wrapper aroung Crossover::operator()() which uses eoPopulator
+      //! to obtain two parents
       void apply(eoPopulator<t_Individual>& _pop)
         { if ( operator()( *_pop, _pop.select() ) ) (*_pop).invalidate(); }
-      std::string print_out() const
-      {
-        std::ostringstream sstr;
-        sstr << "Crossover, rate = " << op.rate;
-        return sstr.str();
-      }
+
+      //! \brief prints out parameters
+      std::string print_out() const;
   };
+
+
+  //! \brief Applies a standard bitstring mutation to a bitstring (of form \f$b_i=\pm1\f$)
+  //! \details The concentration after mutation is set (or not) using a
+  //! \a T_GAOPTRAITS::t_Concentration functor.
+  //! \param T_GAOPTRAITS contains all %types pertaining to %GA 
+  //! \related BitString::Mutation
   template<class T_GAOPTRAITS> 
   class Mutation : public eoGenOp<typename T_GAOPTRAITS :: t_Individual> 
   {
     public:
-      typedef T_GAOPTRAITS t_GAOpTraits;
+      typedef T_GAOPTRAITS t_GAOpTraits; //!< all %GA types
     protected:
-      typedef typename t_GAOpTraits :: t_Individual t_Individual;
-      typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits;
-      typedef typename t_GAOpTraits :: t_Concentration t_Concentration;
-      typedef typename t_IndivTraits::t_Object t_Object;
-      typedef eoGenOp<t_Individual> t_Base;
-
+      typedef typename t_GAOpTraits :: t_Individual t_Individual; //!< Individual type
+      typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits; //!< Individual traits
+      typedef typename t_GAOpTraits :: t_Concentration t_Concentration; //!< Concentration type
+      typedef typename t_IndivTraits::t_Object t_Object; //!< Object type
+      typedef eoGenOp<t_Individual> t_Base; //!< Base class
 
     protected:
-      t_Concentration &concentration;
-      Ising_CE::Structure structure;
-      BitString::Mutation<t_Object> op;
+      t_Concentration &concentration; //!< reference to a t_Concentration object
+      BitString::Mutation<t_Object> op; //!< the bitstring crossover functor
 
     public:
       using t_Base::operator();
 
     public:
-      Mutation   ( t_Concentration &_c, Ising_CE::Structure &_str )
-             : concentration(_c), structure(_str), op() {}
+      //! Constructor and Initializer
+      Mutation   ( t_Concentration &_c )
+             : concentration(_c), op() {}
+      //! Copy Constructor
       Mutation   ( const Mutation &_k )
-             : concentration(_k.crossover), structure(_k.structure), op(_k.op) {}
+             : concentration(_k.crossover), op(_k.op) {}
+      //! Deconstructor
       ~Mutation() {}
 
+      //! Loads parameters from XML input
       bool Load( const TiXmlElement &_node ) { return op.Load( _node ); }
 
+      //! Eo required bullshit
       virtual std::string className() const { return op.className(); }
+      //! Eo required bullshit
       unsigned max_production(void) { return 1; } 
 
-      bool operator()( t_Individual &_indiv )
-      {
-        t_Object &obj = _indiv.Object();
-        op( obj );
-        concentration( obj );
-        return true;
-      }
+      //! \brief Does the actual crossover
+      //! \param _indiv individual on which the mutation is performed
+      bool operator()( t_Individual &_indiv );
+
+      //! \brief wrapper aroung Mutation::operator()() which uses eoPopulator
+      //! to obtain an individual
       void apply(eoPopulator<t_Individual>& _pop)
         { if ( operator()( *_pop ) ) (*_pop).invalidate(); }
-      std::string print_out() const 
-      {
-        std::ostringstream sstr;
-        sstr << "Mutation, rate = " << op.rate;
-        return sstr.str();
-      }
+
+      //! \brief prints out parameters
+      std::string print_out() const;
   };
+
+  //! \brief Creates a random bitstring of \f$b_i=\pm1\f$ 
+  //! \details The concentration after random generation is set (or not) using a
+  //! \a T_GAOPTRAITS::t_Concentration functor. This functor needs to know
+  //! about the structure in order to create a bitstring of correct length.
+  //! \param T_GAOPTRAITS contains all %types pertaining to %GA 
+  //! \todo Remove Random::structure? should bitstring lenght become an
+  //! adjustable parameter?
   template<class T_GAOPTRAITS> 
   class Random : public eoGenOp<typename T_GAOPTRAITS :: t_Individual> 
   {
     public:
-      typedef T_GAOPTRAITS t_GAOpTraits;
+      typedef T_GAOPTRAITS t_GAOpTraits; //!< all %GA types
     protected:
-      typedef typename t_GAOpTraits :: t_Individual t_Individual;
-      typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits;
-      typedef typename t_GAOpTraits :: t_Concentration t_Concentration;
-      typedef typename t_IndivTraits::t_Object t_Object;
-      typedef eoGenOp<t_Individual> t_Base;
+      typedef typename t_GAOpTraits :: t_Individual t_Individual; //!< Individual type
+      typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits; //!< Individual traits
+      typedef typename t_GAOpTraits :: t_Concentration t_Concentration; //!< Concentration type
+      typedef typename t_IndivTraits::t_Object t_Object; //!< Object type
+      typedef eoGenOp<t_Individual> t_Base; //!< Base class
 
     protected:
-      t_Concentration &concentration;
-      Ising_CE::Structure structure;
+      t_Concentration &concentration; //!< reference to a t_Concentration object
+      Ising_CE::Structure &structure; //!< reference to a structure
 
     public:
       using t_Base::operator();
 
     public:
+      //! Constructor and Initializer
       Random   ( t_Concentration &_c, Ising_CE::Structure &_str )
              : concentration(_c), structure(_str) {}
+      //! Acts a functor. For convenience
       Random   ( t_Concentration &_c, Ising_CE::Structure &_str, t_Individual &_indiv )
              : concentration(_c), structure(_str) { operator()(_indiv); }
+      //! Copy Constructor
       Random   ( const Random &_k )
              : concentration(_k.crossover), structure(_k.structure) {}
+      //! Deconstructor
       ~Random() {}
 
+      //! Doesn't load anything from anywhere and returns true
       bool Load( const TiXmlElement &_node ) { return true; }
 
+      //! Eo required bullshit
       virtual std::string className() const { return "Darwin::Random"; }
+      //! Eo required bullshit
       unsigned max_production(void) { return 1; } 
 
-      bool operator()( t_Individual &_indiv )
-      {
-        t_Object &obj = _indiv.Object();
-        obj.bitstring.clear();
+      //! \brief Creates a random bitstring individual
+      //! \param _indiv individual to be initialized
+      bool operator()( t_Individual &_indiv );
 
-        Ising_CE::Structure::t_Atoms :: const_iterator i_atom = structure.atoms.begin();
-        Ising_CE::Structure::t_Atoms :: const_iterator i_atom_end = structure.atoms.end();
-        for(; i_atom != i_atom_end; ++i_atom )
-          if ( not (i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T) )
-            obj.bitstring.push_back( rng.flip() ? 1.0: -1.0 );
-
-        concentration( obj );
-
-        return true;
-      }
-
+      //! \brief wrapper aroung KRandom::operator()() which uses eoPopulator
+      //! to obtain two parents
       void apply(eoPopulator<t_Individual>& _pop)
         { if ( operator()( *_pop ) ) (*_pop).invalidate(); }
+
+      //! \brief prints out parameters
       std::string print_out() const { return "Darwin::Random"; }
   };
 
+  //! \brief Creates a %GA operator from XML input
+  //! \details Can create at present anyone of the following operators:
+  //! - Krossover
+  //! - KMutation
+  //! - KRandom
+  //! - rossover
+  //! - Mutation
+  //! - Random
+  //! . 
+  //! \param _el XML node from which to load
+  //! \param _structure needed by some functors 
+  //! \param _concentration needed by some functors 
+  //! \return a pointer to a eoGenOp object, or NULL if could not load from input
+  //! \warning Checking the returned pointer, as well as storing and destroying it, is
+  //! the responsability of the caller, not the callee.
   template<class T_GAOPTRAITS>
     eoGenOp<typename T_GAOPTRAITS::t_Individual >*
       LoadGaOp(const TiXmlElement &_el, Ising_CE::Structure &_structure, 
-               typename T_GAOPTRAITS :: t_Concentration &_concentration )
-  {
-    std::string value = _el.Value();
-
-    if ( value.compare("Crossover") == 0 )
-    {
-      Crossover<T_GAOPTRAITS> *crossover
-         = new Crossover<T_GAOPTRAITS>(_concentration, _structure);
-      if ( not crossover ) goto errorout;
-      if ( not crossover->Load( _el ) ) 
-      {
-        delete crossover;
-        return NULL;
-      }
-      Print::xmg << Print::Xmg::comment << crossover->print_out() << Print::endl;
-      // pointer is owned by caller !!
-      return crossover;
-    }
-    else if ( value.compare("Mutation") == 0 )
-    {
-      Mutation<T_GAOPTRAITS> *mutation
-         = new Mutation<T_GAOPTRAITS>(_concentration, _structure);
-      if ( not mutation ) goto errorout;
-      if ( not mutation->Load( _el ) ) 
-      {
-        delete mutation;
-        return NULL;
-      }
-      Print::xmg << Print::Xmg::comment << mutation->print_out() << Print::endl;
-      // pointer is owned by caller !!
-      return mutation;
-    }
-    else if ( value.compare( "Random" ) == 0 )
-    {
-      Random<T_GAOPTRAITS> *random
-         = new Random<T_GAOPTRAITS>(_concentration, _structure);
-      Print::xmg << Print::Xmg::comment << random->print_out() << Print::endl;
-      // pointer is owned by caller !!
-      return random;
-    }
-    else if ( value.compare( "Krossover" ) == 0 )
-    {
-      Krossover<T_GAOPTRAITS> *krossover
-         = new Krossover<T_GAOPTRAITS>( _concentration, _structure );
-      if ( not krossover ) goto errorout;
-      if ( not krossover->Load( _el ) ) 
-      {
-        delete krossover;
-        return NULL;
-      }
-      Print::xmg << Print::Xmg::comment << krossover->print_out() << Print::endl;
-      // pointer is owned by caller !!
-      return krossover;
-    }
-    else if ( value.compare( "KMutation" ) == 0 )
-    {
-      KMutation<T_GAOPTRAITS> *kmutation
-         = new KMutation<T_GAOPTRAITS>( _concentration, _structure );
-      if ( not kmutation ) goto errorout;
-      if ( not kmutation->Load( _el ) ) 
-      {
-        delete kmutation;
-        return NULL;
-      }
-      Print::xmg << Print::Xmg::comment << kmutation->print_out() << Print::endl;
-      // pointer is owned by caller !!
-      return kmutation;
-    }
-
-    return NULL;
-
-errorout:
-    std::cerr << " Memory Allocation error while creating GA Operators " << std::endl;
-    return NULL;
-  }
+               typename T_GAOPTRAITS :: t_Concentration &_concentration );
 
 
-
+  //! \brief Create a functor which returns false if the individual is outside
+  //! a given concentration range
+  //! \details This functor can be added to a GA::Taboos object. It can be used
+  //! as any other taboo.
+  //! \param T_GAOPTRAITS contains all %types pertaining to %GA 
   template< class T_GAOPTRAITS >
   class xTaboo : public Taboo_Base< typename T_GAOPTRAITS::t_Individual >
   {
     public:
-      typedef T_GAOPTRAITS t_GAOpTraits;
+      typedef T_GAOPTRAITS t_GAOpTraits; //!< all %GA types
     protected:
-      typedef typename t_GAOpTraits :: t_Individual t_Individual;
-      typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits;
-      typedef typename t_GAOpTraits :: t_Concentration t_Concentration;
-      typedef typename t_GAOpTraits :: t_Object t_Object;
+      typedef typename t_GAOpTraits :: t_Individual t_Individual; //!< Individual type
+      typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits; //!< Individual traits
+      typedef typename t_GAOpTraits :: t_Concentration t_Concentration; //!< Concentration type
+      typedef typename t_IndivTraits::t_Object t_Object; //!< Object type
 
     protected:
-      t_Concentration &concentration;
-      types::t_real morethan, lessthan;
+      t_Concentration &concentration; //!< reference to a t_Concentration object
+      types::t_real morethan; //!< lower limit of allowed range
+      types::t_real lessthan; //!< upper limit of allowed range
 
     public:
+      //! Constructor and Initializer 
        xTaboo   ( t_Concentration &_c) 
-              : concentration(_c) {}
+              : concentration(_c), morethan(-1.0), lessthan(-1.0) {}
+      //! Copy Constructor
+       xTaboo   ( const xTaboo &_c)
+              : concentration(_c.concentration), morethan(_c.morethan),
+                lessthan(_c.lessthan) {}
+      //! Deconstructor
       ~xTaboo() {}
 
+      //! Loads parameters from XML input
+      bool Load( const TiXmlElement &_el );
+
+      //! Eo required bullshit
       std::string className() const { return "Darwin::xTaboo"; }
 
-      bool operator()( const t_Individual& _indiv ) const
-      {
-        concentration.set( _indiv.Object() );
-        return concentration.x < lessthan and concentration.x > morethan;
-      }
-      bool Load( const TiXmlElement &_el ) 
-      {
-        const TiXmlElement *child = &_el;
-        std::string name = _el.Value();
-        if ( name.compare("Concentration") )
-          child = _el.FirstChildElement( "Concentration" );
-        if ( not child ) return false;
-        
-        double d; 
-        if ( child->Attribute( "lessthan" ) )
-          child->Attribute( "xlessthan", &d );
-        lessthan = ( d > 0 and d < 1 ) ? 2.0*d-1.0: 1.0;
-        if ( child->Attribute( "morethan" ) )
-          child->Attribute( "morethan", &d );
-        morethan = ( d > 0 and d < 1 ) ? 2.0*d-1.0: -1.0;
-        if ( lessthan < morethan ) return false;
-       
-        Print::xmg << Print::Xmg::comment << Print::fixed << Print::setprecision(3) 
-                   << "Taboo x in [ " << 0.5*(morethan+1.0)
-                   << ", "  << 0.5*(lessthan+1.0) << "] " << Print::endl;
-        return true;
-      }
+      //! \brief returns true if \a _indiv is within allowed concentration range
+      bool operator()( const t_Individual& _indiv ) const;
   };
+/** @} 
+ */
 }
+
+#include "gaoperators.impl.h"
 #endif

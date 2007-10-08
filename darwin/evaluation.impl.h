@@ -93,13 +93,16 @@ namespace Evaluation
       evaluate(_offspring); 
       if ( not objective.is_valid() )
       {
+        std::cout << std::endl << "Base line changed" << std::endl; 
         // if invalid, recomputes whole population
         evaluate( _pop );
         evaluate( _offspring );
       }
 
+      typedef typename t_GATraits :: t_QuantityTraits t_qt;
       typename t_Population :: const_iterator i_indiv = _offspring.begin();
       typename t_Population :: const_iterator i_end   = _offspring.end();
+      std::cout << "New Individuals:" << std::endl; 
       Print::out << "New Individual"
                  << ( _offspring.size() > 1 ? "s\n": "   ");
       for(; i_indiv != i_end; ++i_indiv )
@@ -107,7 +110,14 @@ namespace Evaluation
         Print::out << *i_indiv << "    Fitness: "
                    << Print::fixed << Print::setw(12) << Print::setprecision(5) << "  "
                    << i_indiv->fitness() << "\n";
+        std::cout  << *i_indiv << "    Fitness: "
+                   << std::fixed << std::setw(12) << std::setprecision(5) << "  "
+                   << i_indiv->fitness() << "  Quantity: "
+                   << std::fixed << std::setw(12) << std::setprecision(5) << "  ";
+        t_qt::print_out(std::cout, i_indiv->const_quantities());
+        std::cout  <<  "\n";
       }
+      std::cout << std::endl;
       
     }
 

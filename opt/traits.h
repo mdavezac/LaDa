@@ -11,6 +11,8 @@
 
 #include <list>
 #include <vector>
+#include <string>
+#include <sstream>
 
 #include <eo/eoPop.h>
 
@@ -146,6 +148,17 @@ namespace Traits
       for(; i_scal != i_end; ++i_scal )
         _stream << *i_scal << " ";
     }
+    //! Returns a string in which is printed \a _quantity 
+    template< class t_Quantity >
+    static std::string print( const t_Quantity &_quantity )
+    {
+      std::ostringstream sstr;
+      typename t_Quantity :: const_iterator i_scal = _quantity.begin();
+      typename t_Quantity :: const_iterator i_end = _quantity.end();
+      for(; i_scal != i_end; ++i_scal )
+        sstr << *i_scal << " ";
+      return sstr.str();
+    }
 #ifdef _MPI
     //! Broadcasts  a t_Quantity type \a _q
     template< class t_Quantity >
@@ -157,10 +170,14 @@ namespace Traits
   template<>
   struct IsAScalar<true>
   {
-    //! Prints out the scalar r into the stream
+    //! Prints out the scalar into the stream
     template< class t_Quantity >
     static void print_out( std::ostream& _stream, const t_Quantity &_quantity )
       { _stream << _quantity; }
+    //! Returns a string in which is printed \a _quantity 
+    template< class t_Quantity >
+    static std::string print( const t_Quantity &_quantity )
+      { std::ostringstream sstr; sstr << _quantity; return sstr.str(); }
 #ifdef _MPI
     //! Broadcasts  the scalar type \a _q
     template< class t_Quantity >
@@ -215,6 +232,9 @@ namespace Traits
       //! Prints out the full vector into the stream
       static void print_out( std::ostream& _stream, const t_Quantity &_quantity )
         { IsAScalar<is_scalar>::print_out(_stream, _quantity); }
+      //! Prints out the full vector into a string
+      static std::string print( const t_Quantity &_quantity )
+        { return IsAScalar<is_scalar>::print(_quantity); }
 #ifdef _MPI
       //! Serializes quantity \sa mpi::BroadCast::serialize
       static bool broadcast( t_Quantity& _q, mpi::BroadCast &_bc )

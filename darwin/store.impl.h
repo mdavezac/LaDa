@@ -10,12 +10,9 @@ namespace Store
 {
 
   template<class T_CONDITION, class T_GATRAITS>
-  Conditional<T_CONDITION, T_GATRAITS> ::  Conditional   ( t_Evaluator &_eval,
-                                                           const TiXmlElement &_node)
-                                                       : t_Base( _eval), condition( _node ), 
-                                                         print_what(PRINT_CONDITION) 
+  bool Conditional<T_CONDITION, T_GATRAITS> :: Load (const TiXmlElement &_node)
   {
-    if ( not _node.Attribute("print") ) return;
+    if ( not _node.Attribute("print") ) return true;
 
     std::string str = _node.Attribute("print");
     if( str.find("all") != std::string::npos)
@@ -25,6 +22,8 @@ namespace Store
 
     if( str.find("condition") != std::string::npos ) 
        print_what |= PRINT_CONDITION;
+
+    return true;
   }
 
   template<class T_CONDITION, class T_GATRAITS>
@@ -50,7 +49,6 @@ namespace Store
     new_results = true; 
 #ifdef _MPI
     if ( not new_optima.empty() ) new_optima.remove_if( condition );
-    std::cout << new_optima.size() << std::endl;
     new_optima.push_back( _indiv );
 #else
     if ( not results.empty() ) results.remove_if( condition );

@@ -95,9 +95,7 @@ errorout:
 
   void Concentration :: operator()( Ising_CE::Structure &_str )
   {
-    if ( not single_c ) return;
-
-    types::t_unsigned N = (types::t_int) _str.atoms.size(); N = N>>1;
+    types::t_unsigned N = (types::t_int) _str.atoms.size();
     types::t_complex  *hold = new types::t_complex[ N ];
     if ( not hold )
     {
@@ -115,6 +113,20 @@ errorout:
     Ising_CE::Structure::t_Atoms::iterator i_atom_end = _str.atoms.end();
     types :: t_int concx = 0;
     i_hold = hold;
+    if( not single_c )
+    {
+      for (; i_atom != i_atom_end; ++i_atom, ++i_hold)
+        if ( not ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
+        {
+          if ( std::real( *i_hold ) < types::tolerance )
+             i_atom->type = rng.flip() ? 1.0: -1.0;
+          else 
+           i_atom->type = std::real(*i_hold) > 0.0 ? 1.0: -1.0;
+          std::cout << i_atom->type << " " << std::real( *i_hold ) << std::endl;
+        }
+      return;
+    }
+
     for (; i_atom != i_atom_end; ++i_atom, ++i_hold)
     {
       if ( not ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
@@ -156,7 +168,7 @@ errorout:
     Ising_CE::Structure::t_Atoms::iterator i_end = _str.atoms.end();
     Ising_CE::Structure::t_Atoms::iterator i_which;
     Ising_CE::Structure::t_Atoms::iterator i_atom;
-    while( _tochange < -1.0 or _tochange > 1.0 )
+    while( _tochange < -1.0 or _tochange > 1.0 ) 
     {
       // first finds atom with type closest to zero from +1 or -1 side,
       // depending on _tochange

@@ -10,6 +10,7 @@
 #include "ce.h"
 #include "functors.h"
 #include "lamarck/atom.h"
+#include "lamarck/structure.h"
 #include "concentration.h"
 
 namespace CE
@@ -40,6 +41,10 @@ errorout:
                 << std::endl << "Giving up" << std::endl;
       return false;
     }
+
+    std::sort( structure.k_vecs.begin(), structure.k_vecs.end(),  Ising_CE::sort_kvec );
+//   std::sort( structure.atoms.begin(),  structure.atoms.end(), Ising_CE::sort_kvec );
+    
     const TiXmlElement *functional_xml = _node.FirstChildElement("Functional");
     for(; functional_xml; functional_xml = functional_xml->NextSiblingElement("Functional") )
     {
@@ -63,7 +68,7 @@ errorout:
     add_equivalent_clusters();
 
     generate_functional(structure, &functional);
-
+    
     return true;
   }
 

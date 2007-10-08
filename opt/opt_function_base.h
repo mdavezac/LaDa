@@ -180,7 +180,8 @@ namespace function
       variables->resize(_nb, t_Type(0) ); 
     }
   template<class _TYPE, class _CONTAINER >
-    inline Base<_TYPE,_CONTAINER> :: t_Type Base<_TYPE,_CONTAINER> :: get_concentration() const
+    inline typename Base<_TYPE,_CONTAINER> :: t_Type
+        Base<_TYPE,_CONTAINER> :: get_concentration() const
     {
        return ( std::accumulate(variables->begin(), variables->end(), 0.0) 
                 / ( (t_Type) variables->size() ) );
@@ -193,7 +194,7 @@ namespace function
        std::copy( variables->begin(), variables->end(), _var->begin() );
     }
   template<class _TYPE, class _CONTAINER >
-    inline void Base<_TYPE,_CONTAINER> :: copy_variables( t_Container *var ) const
+    inline void Base<_TYPE,_CONTAINER> :: copy_variables( t_Container *_var ) const
     {
        if ( variables->size() < _var->size() )
        { 
@@ -214,7 +215,8 @@ namespace function
     }
 
   template<class _TYPE, class _CONTAINER >
-    inline Base<_TYPE,_CONTAINER>::t_Type& Base<_TYPE,_CONTAINER> :: operator[](size_t n)
+    inline typename Base<_TYPE,_CONTAINER>::t_Type&
+       Base<_TYPE,_CONTAINER> :: operator[](size_t n)
     {
       if ( n > variables->size() )
         throw std::out_of_range("out of range in function::Base<...> :: t_Type& operator[](size_t n) ");

@@ -8,6 +8,7 @@
 #include <config.h>
 #endif
 
+#include <list>
 #include <string>
 #include <algorithm>
 
@@ -109,6 +110,13 @@ namespace GA
       }
       void evaluate_one_gradient( t_QuantityGradients& _grad, types::t_unsigned _pos) 
         { Traits :: zero_out( _grad[_pos] ); }
+      //! \brief Submits individuals to history, etc, prior to starting %GA
+      //! \details initializes the endopoints of a convex-hull, for instance.
+      //! Presubmitted individuals are not put into the population.
+      //! \note GA::Evaluator does not know about Traits::GA (or affiliated).
+      //! Hence it does not know about Traits::GA::t_Population. So we input this
+      //! population an eoPop<t_Individual> directly.
+      void presubmit( std::list<t_Individual>& ) { return; }
   };
 
 }

@@ -7,7 +7,6 @@ AC_PROG_CXX
 AC_PROG_INSTALL
 
 AM_CONFIG_HEADER(config.h)
-# TinyXml shit
 AH_TOP([
 #ifndef _G_HAVE_BOOL
 #define _G_HAVE_BOOL

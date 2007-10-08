@@ -126,6 +126,11 @@ namespace GA
 #endif
       void random_populate ( t_Population &_pop, types::t_unsigned _size);
       void partition_populate ( t_Population &_pop, types::t_unsigned _size);
+
+      //! \brief Submits individuals to history, taboo, etc, prior to starting %GA
+      //! \details initializes the endopoints of a convex-hull, for instance.
+      //! Presubmitted individuals are not put inot the population.
+      void presubmit();
   };
 
   template< class T_EVALUATOR >

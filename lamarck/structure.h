@@ -1,12 +1,6 @@
 //
 //  Version: $Id$
 //
-// Defines two new classes, 
-//   Atom: object containing a position (as atat::rVector3d)
-//            and a type (types::t_real)
-//   Structure: object containing a cell (as atat::rMatrix3d) 
-//                 and an array of Atom (in std::vector container)
-
 
 #ifndef _ISING_CE_STRUCTURE_H_
 #define _ISING_CE_STRUCTURE_H_
@@ -26,13 +20,18 @@
 #include <tinyxml/tinyxml.h>
 #include <exception>
 
-#include "opt/types.h"
-#include "atat/vectmac.h"
-#include "atat/xtalutil.h"
-#include "atat/machdep.h"
+#include <opt/types.h>
+#include <atat/vectmac.h>
+#include <atat/xtalutil.h>
+#include <atat/machdep.h>
 #include "atom.h"
 #include "lattice.h"
+#include "lattice.h"
+#include "lattice.h"
 
+//! \brief Everything CE which does not encompass VA.
+//! \details  Old nomenclature.
+//! \todo Rename Ising_CE with something more meaningfull, such as CE, or Crystal
 namespace Ising_CE {
 
   typedef atat::Structure Atat_Structure;
@@ -70,7 +69,8 @@ namespace Ising_CE {
       { Load( _element ); };
     Structure   ( const Structure &_str )
               : cell(_str.cell), atoms(_str.atoms), k_vecs(_str.k_vecs),
-                Pi_name(_str.Pi_name), energy(_str.energy), freeze(_str.freeze) {}
+                Pi_name(_str.Pi_name), energy(_str.energy), freeze(_str.freeze),
+                scale( _str.scale ) {}
     ~Structure () {};
     void convert_from_ATAT (const Atat_Structure &atat);
     void operator=( const Atat_Structure &atat )
@@ -182,7 +182,7 @@ namespace Ising_CE {
   {
     const std::complex<types::t_real>
        imath(0, 2*3.1415926535897932384626433832795028841971693993751058208);
-    for (; _rfirst != _rend; _rfirst+=2, ++_rout)
+    for (; _rfirst != _rend; ++_rfirst, ++_rout)
     {
       *_rout = 0.0;
       for(T_K_IT i_k=_kfirst; i_k != _kend; ++i_k)
@@ -201,6 +201,7 @@ namespace Ising_CE {
   inline std::ostream& operator<<( std::ostream& _stream, const Ising_CE::Structure& _struc )
     { _struc.print_out(_stream); return _stream; }
 
+  bool sort_kvec( const atat::rVector3d &_vec1, const atat::rVector3d &_vec2 );
 } // namespace Ising_CE
 
 

@@ -22,6 +22,20 @@
 
 namespace Ising_CE {
 
+  bool sort_kvec( const atat::rVector3d &_vec1, const atat::rVector3d &_vec2 )
+  {
+    types::t_real a = atat::norm2( _vec1 );
+    types::t_real b = atat::norm2( _vec2 );
+    if ( std::abs( a - b ) > types::tolerance ) return a < b;
+    a = _vec1[0]; b = _vec2[0];
+    if ( std::abs( a - b ) > types::tolerance ) return a < b;
+    a = _vec1[1]; b = _vec2[1];
+    if ( std::abs( a - b ) > types::tolerance ) return a < b;
+    a = _vec1[2]; b = _vec2[2];
+    if ( std::abs( a - b ) > types::tolerance ) return a < b;
+    return false;
+  }
+
   using atat::rndseed;
   Lattice* Structure :: lattice = NULL;
 
@@ -243,8 +257,8 @@ namespace Ising_CE {
         }  
       }
     }
-    if (i != 3)
-      return false;
+    if (i != 3)  return false; 
+    std::cout << "cell: " << std::endl << cell << std::endl;
 
     scale = 0;
     parent->Attribute("scale", &scale);
@@ -276,6 +290,7 @@ namespace Ising_CE {
       atoms.push_back(atom);
     }
 
+
     // reads in kvectors
     child = parent->FirstChildElement( "Kvec" );
     k_vecs.clear();
@@ -289,10 +304,6 @@ namespace Ising_CE {
     if ( lattice and ( not k_vecs.size() ) )
       find_k_vectors();
 
-    if ( k_vecs.size() )
-      std::sort( k_vecs.begin(), k_vecs.end(), 
-                 opt::ref_compose2( std::less<types::t_real>(), std::ptr_fun( ptr_norm ),
-                                    std::ptr_fun( ptr_norm ) ) );
     return true;
   }
 
@@ -451,6 +462,7 @@ namespace Ising_CE {
     // the following loop creates all possible k-vectors,
     // it then refolds them and adds them to the k vector list
     // only one copy of each refolded vector is allowed
+       k_vecs.clear();
     types::t_real (*ptr_norm)(const atat::FixedVector<types::t_real, 3> &) = &atat::norm2;
     t_kAtoms :: iterator i_begin = k_vecs.begin();
     t_kAtoms :: iterator i_end = k_vecs.end();
@@ -476,8 +488,7 @@ namespace Ising_CE {
                      compose1( std::ptr_fun(ptr_norm),
                                bind2nd(std::minus<atat::rVector3d>(), kvec) ) ) );
       // if it is in list, don't add it
-      if ( i_which != i_end  ) 
-        continue;
+      if ( i_which != i_end  )  continue;
       
       k_vecs.push_back( t_kAtom(kvec,0) );
       i_begin = k_vecs.begin();
@@ -504,6 +515,9 @@ namespace Ising_CE {
     // the refolding is not perfect, we now remove equivalent
     // vectors "by hand "
     remove_equivalents(k_vecs, k_lat);
+
+    std::sort( k_vecs.begin(), k_vecs.end(), sort_kvec );
+
   }
 
   void  find_range( const atat::rMatrix3d &A, atat::iVector3d &kvec )

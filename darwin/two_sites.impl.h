@@ -201,5 +201,18 @@ namespace TwoSites
   }
 
 
+  template<class T_INDIVIDUAL>
+  void Evaluator<T_INDIVIDUAL> :: presubmit( std::list<t_Individual> &_pop )
+  {
+    t_Individual pure;
+    initialize( pure );
+    // Pure A
+    std::fill( pure.Object().Container().begin(), pure.Object().Container().end(), 1.0 );
+    _pop.push_back(pure);
+    // Pure B
+    std::fill( pure.Object().Container().begin(), pure.Object().Container().end(), -1.0 );
+    _pop.push_back(pure);
+  } 
+
 } // namespace TwoSites
 #endif // _TWOSITES_IMPL_H_
