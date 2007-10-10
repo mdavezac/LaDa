@@ -37,8 +37,8 @@ namespace GA
   template<class T_GAOPTRAITS>
   bool Krossover<T_GAOPTRAITS> :: operator()( t_Individual &_indiv, const t_Individual &_parent )
   {
-    std::cout << keycheck() << " P1: " << _parent
-              << "P2: " << _indiv << std::endl;
+//   std::cout << keycheck() << " P1: " << _indiv
+//             << "P2: " << _parent << std::endl;
     t_Object &offspring  = _indiv.Object();
     const t_Object &parent  = _parent.Object();
     Ising_CE::Structure str1 = structure, str2 = structure;
@@ -62,14 +62,21 @@ namespace GA
       Ising_CE::Structure::t_kAtoms :: const_iterator i_p_end = str2.k_vecs.end();
       Ising_CE::Structure::t_kAtoms :: iterator i_o = str1.k_vecs.begin();
       for ( ; i_p != i_p_end; ++i_p, ++i_o)
-        if ( not rng.flip(rate) )  i_o->type = i_p->type;
+        if ( rng.flip(rate) )  i_o->type = i_p->type;
     }
   
     concentration( str1 );
     offspring << str1;
 
-    std::cout << "  Offspring " << offspring << std::endl;
+//   std::cout << "  Offspring " << offspring << std::endl;
     return true;
+  }
+  template<class T_GAOPTRAITS>
+  void Krossover<T_GAOPTRAITS> :: apply(eoPopulator<t_Individual>& _pop)
+  {
+    t_Individual &offspring = *_pop;
+    const t_Individual &parent = _pop.select();
+    if ( operator()( offspring, parent ) ) (*_pop).invalidate(); 
   }
 
   template<class T_GAOPTRAITS>
@@ -157,6 +164,13 @@ namespace GA
     std::ostringstream sstr;
     sstr << "Crossover, rate = " << op.rate;
     return sstr.str();
+  }
+  template<class T_GAOPTRAITS>
+  void Crossover<T_GAOPTRAITS> :: apply(eoPopulator<t_Individual>& _pop)
+  {
+    t_Individual &offspring = *_pop;
+    const t_Individual &parent = _pop.select();
+    if ( operator()( offspring, parent ) ) (*_pop).invalidate(); 
   }
   
 

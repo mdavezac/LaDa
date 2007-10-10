@@ -25,6 +25,14 @@
 #include "gatraits.h"
 #include "loadsave.h"
 
+//! \brief Functors implementing optimization goals
+//! \details  
+//!
+//! \par Design Philosophy
+//! Again, we are faced with the problem of implementing objects capable of
+//! dealing as easily with vecctorial quantities (multi-objective %GA) and scalar
+//! quantities (single-objective %GA). We have chosen to implement
+//! multiobjectives as a vectors of scalar objectives. This does not necessarily mean that 
 namespace Objective
 {
 
@@ -358,7 +366,7 @@ namespace Objective
       t_Quantity x = current_indiv->get_concentration();
       t_Quantity base = (t_Quantity) convexhull.evaluate( x );
     
-      if ( _val >= base )
+      if ( _val >= base and convexhull.size() >= 2 )
        { fitness = _val - base;  return fitness; }
     
       if ( convexhull.add( _val, *current_indiv ) )

@@ -56,11 +56,11 @@ namespace Fitness
 
 
       bool operator<(const Base & _f) const
-        { return std::abs(quantity - _f.quantity) > types::tolerance and quantity > _f.quantity; }
+        { return t_QuantityTraits::less(quantity, _f.quantity); }
       bool operator>(const Base & _f) const
-        { return std::abs(quantity - _f.quantity) > types::tolerance and quantity < _f.quantity; }
+        { return t_QuantityTraits::greater(quantity, _f.quantity); }
       bool operator==(const Base & _f) const
-        { return std::abs(quantity - _f.quantity) < types::tolerance; }
+        { return t_QuantityTraits::equal(quantity, _f.quantity); }
 
       bool invalid() const { return not is_valid; }
       void invalidate() { is_valid = false; }

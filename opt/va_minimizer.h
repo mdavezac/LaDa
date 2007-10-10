@@ -121,8 +121,7 @@ namespace minimizer
             if ( do_investigate  ) 
             {
               types::t_real grad = current_func->evaluate_one_gradient( *i_dir );
-              if (     do_check_gradient 
-                   and  grad < 0 )
+              if ( do_check_gradient and  grad < 0 )
               {
                 *i_var = ( *i_var > t_Type(0) ) ? t_Type(-1) : t_Type(1); // flips spins
                 if( save_state ) save_state->save();

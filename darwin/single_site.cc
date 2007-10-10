@@ -122,7 +122,6 @@ errorout:
              i_atom->type = rng.flip() ? 1.0: -1.0;
           else 
            i_atom->type = std::real(*i_hold) > 0.0 ? 1.0: -1.0;
-          std::cout << i_atom->type << " " << std::real( *i_hold ) << std::endl;
         }
       return;
     }

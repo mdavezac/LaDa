@@ -100,13 +100,29 @@ namespace GA
 
       //! \brief wrapper aroung Krossover::operator()() which uses eoPopulator
       //! to obtain two parents
-      void apply(eoPopulator<t_Individual>& _pop)
-        { if ( operator()( *_pop, _pop.select() ) ) (*_pop).invalidate(); }
+      //! \note It seems that using a single line, as in 
+      //! \code 
+      // if ( operator()( *_pop, _pop.select() ) ) (*_pop).invalidate(); 
+      //! \endcode  
+      //! leads to a bug where the wrong individual is copied from the selector.
+      //! See Revision 313 and earlier. 
+      //! Hence, the current implementation uses a more explicit approach:
+      //! \code
+      //  t_Individual &offspring = *_pop;
+      //  const t_Individual &parent = _pop.select();
+      //  if ( operator()( offspring, parent ) ) (*_pop).invalidate(); 
+      //!\endcode 
+      void apply(eoPopulator<t_Individual>& _pop);
 
       //! \brief prints out parameters
       std::string print_out() const;
   };
+  //! @}
 
+
+  /** \ingroup Genetic
+   * @{
+   */
   //! \brief Mutation in reciprocal space
   //! \details Changes the intensity a random number of
   //! <STRONG>k</STRONG>-vectors to random values. More specifically, each
@@ -174,7 +190,12 @@ namespace GA
       //! \brief prints out parameters
       std::string print_out() const;
   };
+  //! @}
 
+
+  /** \ingroup Genetic
+   * @{
+   */
   //! \brief creates a random individidual from random values in reciprocal-space
   //! \details The concentration is set (or not) using a
   //! \a T_GAOPTRAITS::t_Concentration functor.
@@ -236,9 +257,12 @@ namespace GA
       //! \brief prints out parameters
       std::string print_out() const { return "Darwin::KRandom"; }
   };
+  //! @}
 
 
-
+  /** \ingroup Genetic
+   * @{
+   */
   //! \brief Applies a standard bitstring crossover to a bitstring (of form \f$b_i=\pm1\f$)
   //! \details The concentration after krossover is set (or not) using a
   //! \a T_GAOPTRAITS::t_Concentration functor.
@@ -288,14 +312,29 @@ namespace GA
 
       //! \brief wrapper aroung Crossover::operator()() which uses eoPopulator
       //! to obtain two parents
-      void apply(eoPopulator<t_Individual>& _pop)
-        { if ( operator()( *_pop, _pop.select() ) ) (*_pop).invalidate(); }
+      //! \note It seems that using a single line, as in 
+      //! \code 
+      // if ( operator()( *_pop, _pop.select() ) ) (*_pop).invalidate(); 
+      //! \endcode  
+      //! leads to a bug where the wrong individual is copied from the selector.
+      //! See Revision 313 and earlier. 
+      //! Hence, the current implementation uses a more explicit approach:
+      //! \code
+      //  t_Individual &offspring = *_pop;
+      //  const t_Individual &parent = _pop.select();
+      //  if ( operator()( offspring, parent ) ) (*_pop).invalidate(); 
+      //!\endcode 
+      void apply(eoPopulator<t_Individual>& _pop);
 
       //! \brief prints out parameters
       std::string print_out() const;
   };
+  //! @}
 
 
+  /** \ingroup Genetic
+   * @{
+   */
   //! \brief Applies a standard bitstring mutation to a bitstring (of form \f$b_i=\pm1\f$)
   //! \details The concentration after mutation is set (or not) using a
   //! \a T_GAOPTRAITS::t_Concentration functor.
@@ -350,7 +389,12 @@ namespace GA
       //! \brief prints out parameters
       std::string print_out() const;
   };
+  //! @}
+  
 
+  /** \ingroup Genetic
+   * @{
+   */
   //! \brief Creates a random bitstring of \f$b_i=\pm1\f$ 
   //! \details The concentration after random generation is set (or not) using a
   //! \a T_GAOPTRAITS::t_Concentration functor. This functor needs to know
@@ -410,13 +454,18 @@ namespace GA
       //! \brief prints out parameters
       std::string print_out() const { return "Darwin::Random"; }
   };
+  //! @}
+  
 
+  /** \ingroup Genetic
+   * @{
+   */
   //! \brief Creates a %GA operator from XML input
   //! \details Can create at present anyone of the following operators:
   //! - Krossover
   //! - KMutation
   //! - KRandom
-  //! - rossover
+  //! - Crossover
   //! - Mutation
   //! - Random
   //! . 
@@ -473,8 +522,7 @@ namespace GA
       //! \brief returns true if \a _indiv is within allowed concentration range
       bool operator()( const t_Individual& _indiv ) const;
   };
-/** @} 
- */
+  //! @}
 }
 
 #include "gaoperators.impl.h"

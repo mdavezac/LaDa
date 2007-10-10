@@ -258,7 +258,6 @@ namespace Ising_CE {
       }
     }
     if (i != 3)  return false; 
-    std::cout << "cell: " << std::endl << cell << std::endl;
 
     scale = 0;
     parent->Attribute("scale", &scale);

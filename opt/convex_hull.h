@@ -213,8 +213,15 @@ namespace ConvexHull
     public:
       typedef T_OBJECT t_Object; //!< Object type
       typedef Vertex<t_Object> t_Vertex;//!< Vertex type
-      typedef std::list< Vertex<t_Object> > t_Vertices; //!< Vertex collection type
-      typedef std::list< HalfLine > t_HalfLines; //!< HalfLine collection type
+      //! \brief Vertex collection type
+      //! \details t_Vertices is an std::list since adding and removing
+      //! vertices should happen relatively often as the convex-hull is refined.
+      typedef std::list< Vertex<t_Object> > t_Vertices; 
+      //! \brief HalfLine collection type
+      //! \details Just as t_Vertices, this is a list since half-lines are
+      //! expected to be added and removed relatively often as the convex-hull is
+      //! refined.
+      typedef std::list< HalfLine > t_HalfLines;
 
     protected:
       t_Vertices vertices; //!< Vertex collection
@@ -259,6 +266,9 @@ namespace ConvexHull
       //! \param _op a functor capable of saving a t_Object to XML
       template< class T_SAVEOP >
       bool Save( TiXmlElement &_node, T_SAVEOP &_op ) const;
+
+      //! Returns number of breakpoints in convex-hull
+      types::t_unsigned size() const { return vertices.size(); }
 
 #ifdef _MPI
       /** \ingroup MPI
