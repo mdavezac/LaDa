@@ -12,10 +12,6 @@
 
 //-----------------------------------------------------------------------------
 
-/*****************************************************************************
- * eoGeneralBreeder: transforms a population using the generalOp construct.
- *****************************************************************************/
-
 #include <eo/eoOp.h>
 #include <eo/eoGenOp.h>
 #include <eo/eoPopulator.h>
@@ -27,95 +23,130 @@
 
 #include "checkpoints.h"
 #include "gatraits.h"
-/**
-  Base class for breeders using generalized operators.
-*/
-
 namespace GA 
 {
+  //! \brief Creates an offpsring population from a current population
+  //! \details Breeder simply accretes all data necessary to the creation of
+  //! offspring via mating. It expects to be given a mating operator on input,
+  //! which it will then call until the requested number of offspring is
+  //! created. It also expects an eoSelectOne object on input for selecting
+  //! parents.
   template<class T_GATRAITS>
   class Breeder: public eoBreed<typename T_GATRAITS::t_Individual>
   {
     public:
-      typedef T_GATRAITS t_GATraits;
+      typedef T_GATRAITS t_GATraits; //!< all %GA traits
     protected:
-      typedef typename t_GATraits::t_IndivTraits t_IndivTraits;
-      typedef typename t_GATraits::t_Individual  t_Individual;
-      typedef typename t_GATraits::t_Population  t_Population;
+      typedef typename t_GATraits::t_IndivTraits t_IndivTraits; //!< all individual traits
+      typedef typename t_GATraits::t_Individual  t_Individual;  //!< type of an individual
+      typedef typename t_GATraits::t_Population  t_Population;  //!< type of the population
 
     protected:
-      eoSelectOne<t_Individual>& select;
-      eoGenOp<t_Individual> *op; 
-      GenCount &age;
-      eoHowMany *howMany;
+      eoSelectOne<t_Individual>& select; //!< A selection operator for the obtention of parents
+      eoGenOp<t_Individual> *op;  //!< Mating operator
+      GenCount &age;              //!< Generation counter
+      //! \brief Number of offspring to create
+      //! \details It is declared a pointer so that it can be changed
+      //! dynamically during the run. This is useful mostly for
+      //! GA::NuclearWinter.
+      eoHowMany *howMany;     
+      //! \brief place holder 
       eoHowMany *howMany_save;
     
     public:
+      //! Constructor and Initializer
       Breeder   ( eoSelectOne<t_Individual>& _select, eoGenOp<t_Individual>& _op,
                   GenCount &_age )
               : select( _select ), op(&_op),
                 age(_age), howMany(NULL), howMany_save(NULL) {}
+      //! Copy Constructor
       Breeder   ( Breeder<t_Individual> & _breeder )
               : select( _breeder.select ), op(_breeder.op),
                 age(_breeder.age), howMany(_breeder.howMany), howMany_save(NULL) {}
-
+      //! Destructor
       virtual ~Breeder() { if( howMany_save ) delete howMany_save; };
      
-      void operator()(const t_Population& _parents, t_Population& _offspring)
-      {
-        types::t_unsigned target = (*howMany)( (types::t_unsigned)_parents.size());
-#ifdef _MPI
-        types::t_int residual = target % (mpi::main.size());
-        target = target / mpi::main.size();
-        if ( mpi::main.rank() < residual )
-          ++target;
-#endif
-     
-        _offspring.clear();
-        eoSelectivePopulator<t_Individual> it(_parents, _offspring, select);
-     
-        while (_offspring.size() < target)
-        {
-          (*op)(it);
-          (*it).set_age(age());
-          ++it;
-        }
-     
-        _offspring.resize(target);   // you might have generated a few more
-      }
-#ifdef _MPI // "All Gather" offsprings -- note that replacement schema is deterministic!!
-      void synchronize_offsprings( t_Population &_pop )
-      {
-        mpi::AllGather allgather( mpi::main );
-        typename t_Population::iterator i_indiv = _pop.begin();
-        typename t_Population::iterator i_indiv_end = _pop.end();
-        for (; i_indiv != i_indiv_end; ++i_indiv )
-          i_indiv->broadcast(allgather);
-        allgather.allocate_buffers();
-        for (i_indiv = _pop.begin(); i_indiv != i_indiv_end; ++i_indiv )
-          i_indiv->broadcast(allgather);
-        allgather();
-        _pop.clear();
-        t_Individual indiv;
-        while( indiv.broadcast( allgather ) )
-          { _pop.push_back(indiv); }
-      }
-#endif 
+      //! Creates \a _offspring population from \a _parent
+      void operator()(const t_Population& _parents, t_Population& _offspring);
 
-      eoGenOp<t_Individual>** get_op_address() 
-        { return &op; }
-      eoHowMany** get_howmany_address() 
-        { return &howMany; }
-      void set_howmany(types::t_real _rate)
-      {
-        if ( howMany_save ) delete howMany_save;
-        howMany_save = new eoHowMany(_rate);
-        howMany = howMany_save;
-      }
+
+      //! \brief Hack, don't use
+      //! \details Used to change the mating operators from right under the nose of
+      //! a Breeeder instance. Used by GA::NuclearWinter.
+      //! \todo remove this dirty hack
+      eoGenOp<t_Individual>** get_op_address()  { return &op; }
+      //! \brief Hack, don't use
+      //! \details Used to change the number of offspring to create from right
+      //! under the nose of  a Breeeder instance. Used by GA::NuclearWinter.
+      //! \todo remove this dirty hack
+      eoHowMany** get_howmany_address()  { return &howMany; }
+      //! \brief sets the ratio of offsprings to create (w.r.t. main population)
+      void set_howmany(types::t_real _rate);
      
-      /// The class name.
+      ///! The class name. EO required
       virtual std::string className() const { return "Darwin::Breeder"; }
+      
+#ifdef _MPI
+      /** \ingroup MPI
+       *  \brief synchronizes offspring population across all processors.
+       *  \details Symply does an mpi::AllGather on the individuals of \a _pop
+       *  \see used in GA::Darwin::run
+       */
+      void synchronize_offsprings( t_Population &_pop );
+#endif 
   };
+
+  template<class T_GATRAITS>
+  inline void Breeder<T_GATRAITS> :: operator()(const t_Population& _parents,
+                                                t_Population& _offspring)
+  {
+    types::t_unsigned target = (*howMany)( (types::t_unsigned)_parents.size());
+#ifdef _MPI
+    types::t_int residual = target % (mpi::main.size());
+    target = target / mpi::main.size();
+    if ( mpi::main.rank() < residual )
+      ++target;
+#endif
+  
+    _offspring.clear();
+    eoSelectivePopulator<t_Individual> it(_parents, _offspring, select);
+  
+    while (_offspring.size() < target)
+    {
+      (*op)(it);
+      (*it).set_age(age());
+      ++it;
+    }
+  
+    _offspring.resize(target);   // you might have generated a few more
+  }
+  template<class T_GATRAITS>
+  inline void Breeder<T_GATRAITS> :: set_howmany(types::t_real _rate)
+  {
+    if ( howMany_save ) delete howMany_save;
+    howMany_save = new eoHowMany(_rate);
+    howMany = howMany_save;
+  }
+
+#ifdef _MPI 
+  template<class T_GATRAITS>
+  inline void Breeder<T_GATRAITS> :: synchronize_offsprings( t_Population &_pop )
+  {
+    mpi::AllGather allgather( mpi::main );
+    typename t_Population::iterator i_indiv = _pop.begin();
+    typename t_Population::iterator i_indiv_end = _pop.end();
+    for (; i_indiv != i_indiv_end; ++i_indiv )
+      i_indiv->broadcast(allgather);
+    allgather.allocate_buffers();
+    for (i_indiv = _pop.begin(); i_indiv != i_indiv_end; ++i_indiv )
+      i_indiv->broadcast(allgather);
+    allgather();
+    _pop.clear();
+    t_Individual indiv;
+    while( indiv.broadcast( allgather ) )
+      { _pop.push_back(indiv); }
+  }
+#endif 
 
 } // namespace Breeder
 

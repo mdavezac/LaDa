@@ -23,91 +23,153 @@
 
 namespace GA 
 {
+  //! \brief base class for future functionals. See \ref secnew. 
+  //! \details Implements the expected behavior of an evaluator class, eg an
+  //! application-specific class capable of returning application-specific mating
+  //! operators, application-specific evaluations... Note that only one of the
+  //! behaviors implemented below is virtual. Indeed, it is expected that they
+  //! will be overridden explicitely.
+  //!
+  //! Evaluator contains all behaviors required by %GA for an evaluator class,
+  //! except for one, a traits class describing all %GA %types.
+  //! The implementation of an actual could start with defining an individual.
+  //! One easy way is to use the convenience %types afforded by Individual::Types,
+  //! \code
+  // typedef Individual::Types< SingleSite::Object, 
+  //                            SingleSite::Concentration, 
+  //                            SingleSite::Fourier        > :: Scalar t_Individual;
+  //!  \endcode 
+  //! You can use whatever else you want, as long as the required behaviors are there.
+  //! The next step is to derive a class from GA::Evaluator as follows,
+  //! \code
+  // class Evaluator : public GA::Evaluator< t_Individual >
+  // {
+  //   public:
+  //     typedef t_Individual t_Individual;
+  //! \endcode
+  //! where the instanciation of GA::Evaluator is  explicitely given in the derived class. 
+  //! Just as important, the full traits of %GA must be defined, say  using Traits::GA,
+  //! \code
+  //     typedef Traits::GA< Evaluator > t_GATraits;
+  //  \endcode 
+  //! Then, override all the member %functions of GA::Evaluator that you want
+  //! overridden. Finally,
+  //! \code
+  //  };
+  //! \endcode 
+  //! close your class. A job well done!
+  //! For an example, see CE::Evaluator::t_GATraits and Traits::GA
+  //! \param T_INDIVIDUAL is the type of individual to be used in this GA. This
+  //! type will be passed on to rest of the %GA through Evaluator :: t_Individual
+  //! and the derived class' t_GATraits :: t_Individual.
   template< class T_INDIVIDUAL>
   class Evaluator
   {
     public:
-      typedef T_INDIVIDUAL   t_Individual;
+      typedef T_INDIVIDUAL   t_Individual; //!< The type of individual
     protected:
+      //! %Traits of the individual
       typedef typename t_Individual :: t_IndivTraits        t_IndivTraits;
+      //! Genetic Object type
       typedef typename t_IndivTraits :: t_Object            t_Object;
+      //! %Traits of the quantity
       typedef typename t_IndivTraits :: t_QuantityTraits    t_QuantityTraits;
+      //! Type of the quantity
       typedef typename t_QuantityTraits :: t_Quantity       t_Quantity;
+      //! Type of the scalar quantity derived from t_Quantity
       typedef typename t_QuantityTraits :: t_ScalarQuantity t_ScalarQuantity;
+      //! %Traits for Lamarckian behaviors
       typedef typename t_IndivTraits :: t_VA_Traits         t_VATraits;
+      //! Type of the Larmarckian gradients
       typedef typename t_VATraits :: t_QuantityGradients    t_QuantityGradients;
+      //! Type of the Larmarckian variables
       typedef typename t_VATraits :: t_Type                 t_VA_Type;
 
     protected:
-      t_Individual *current_individual;
+      //! \brief Individual currently being assessed. 
+      //! \details Evaluator::current_individual is set in Evaluator::init (and
+      //! nowhere else, please!). It is usefull to keep track of the individual
+      //! when doing Lamarckian stuff (and hence mutliple calls by, say,
+      //! MinimizerGenOp to evaluation members of your derived class),  so that
+      //! initialization is done once only, at the beginning of the local search.
+      t_Individual *current_individual; 
+      //! \brief see Evaluator::current_individual
+      //! \details Provided for convenience.
       t_Object *current_object;
 
     public:
+      //! Constructor
       Evaluator() {};
+      //! Destructor
       ~Evaluator() {}
 
     public:
-      // Should load t_Individual and funtional related stuff
-      // except attributes in <GA > tag
-      bool Load ( std::string const &_f )
-      {
-        TiXmlDocument doc( _f.c_str() ); 
-        TiXmlHandle docHandle( &doc ); 
-        if  ( !doc.LoadFile() )
-        { 
-          std::cerr << doc.ErrorDesc() << std::endl; 
-          throw "Could not load input file in CE::Evaluator ";
-        } 
-
-        TiXmlElement *child = docHandle.FirstChild("Job").Element();
-        if (not child)
-          return false;
-        return Load(*child);
-      }
-      bool Load ( const TiXmlElement &_node ) { return true; }
-      // Load and Save individuals
-      // _type can be either GA::LOADSAVE_SHORT or
-      // GA::LOADSAVE_LONG. Results are save as latter, and GA
-      // internal stuff as the former. You need both only if the
-      // ga object and the user-expected result object are different (say
-      // bitstring versus a decorated lattice structure )
+      //! \brief opens XML file \a _f and calls Evaluator::Load(const TiXmlElement &_node )
+      //! \details Should load t_Individual and funtional related stuff, except
+      //! for the attributes of the <GA> tag.
+      bool Load ( std::string const &_f );
+      //! \brief Loads from XML input
+      //! \details Is made virtual so that the correct member %function is
+      //! called in Evaluator::Load( std::string const &)
+      virtual bool Load ( const TiXmlElement &_node ) { return true; }
+      //! \brief  Loads an  individual
+      //! \details Results are expected in GA::LOADSAVE_LONG format, and GA
+      //! internal stuff in GA::LOADSAVE_SHORT. You need both only if the
+      //! ga object and the user-expected result object are different (say
+      //! bitstring versus a decorated lattice structure )
+      //! \param _indiv is the individual to load. More explicitely, load the
+      //! indiviudal's t_Object instance!
+      //! \param _node The XML node to load from. Should be an <Individual> Tag...
+      //! \param _type can be either GA::LOADSAVE_SHORT or
+      //!              GA::LOADSAVE_LONG.
       bool Load ( t_Individual &_indiv, const TiXmlElement &_node, bool _type ) {return true;};
+      //! \brief  Saves an individual
+      //! \details Results are expected in GA::LOADSAVE_LONG format, and GA
+      //! internal stuff in GA::LOADSAVE_SHORT. You need both only if the
+      //! ga object and the user-expected result object are different (say
+      //! bitstring versus a decorated lattice structure )
+      //! \param _indiv is the individual to save. More explicitely, save the
+      //! indiviudal's t_Object instance!
+      //! \param _node The XML node to save to. Should be an <Individual> Tag...
+      //! \param _type can be either GA::LOADSAVE_SHORT or
+      //!              GA::LOADSAVE_LONG.
       bool Save ( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const {return true;};
-      // attributes from <GA > tag in input.xml are passed to this
-      // function from Darwin::Load(...)
+      //! \brief attributes from <GA > tag in input.xml are passed to this
+      //! %function from Darwin::Load(...)
       void LoadAttribute ( const TiXmlAttribute &_att ) {};
-      // returns a pointer to an eoOp object
-      // pointer is owned by GA::Darwin::eostates !!
-      // don't deallocate yourself
+      //! \brief Loads application-specific Mating operators
+      //! \return  a pointer to an eoOp object. This pointer is owned by
+      //! GA::Darwin::eostates, so don't deallocate yourself.
       eoGenOp<t_Individual>* LoadGaOp(const TiXmlElement &_el ) { return NULL; };
-      // returns a pointer to a eoF<bool> object
-      // pointer is owned by GA::Darwin::eostates !!
-      // don't deallocate yourself
+      //! \brief Loads application-specific continuators
+      //! \details For a description  of continuators, see the EO library.
+      //! \return  a pointer to an eoF<bool> object. This pointer is owned by
+      //! GA::Darwin::eostates, so don't deallocate yourself.
       eoF<bool>* LoadContinue(const TiXmlElement &_el ) { return NULL; }
-      // returns a pointer to a eoMonOp<const t_Individual> object
-      // pointer is owned by GA::Darwin::eostates !!
-      // don't deallocate yourself
+      //! \brief Loads application-specific taboos
+      //! \details should return a functor which returns true if an individual is forbidden
+      //! \see TabooFunction
+      //! \related Taboo, Taboos, ... 
+      //! \return a pointer to an eoMonOp<const t_Individual> object owned by
+      //! GA::Darwin::eostates, so don't deallocate yourself.
       Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el ) { return NULL; }
-      // Initializes object before call to functional 
-      // i.e. transforms t_Individual format to
-      // function::Function<...>::variables format if necessary
-      bool initialize( t_Individual &_indiv ) {return false; };
-      // Called before objective function is evaluated
-      // must return a void pointer to functional
-      void init( t_Individual &_indiv )
-      {
-        current_individual = &_indiv;
-        current_object     = &_indiv.Object();
-      };
+      //! \brief Random initialization of the t_object instance of \a _indiv
+      //! \return true if \a _indiv should be invalidated (eg, \a _indiv has changed)
+      bool initialize( t_Individual &_indiv ) {return false; }; 
+      //! \brief Called before objective %function is evaluated. 
+      //! \details See implementation below.
+      void init( t_Individual &_indiv );
+      //! \brief Evaluate Evaluator::current_indiv and stores the results in
+      //! its quantities.
       void evaluate() {};
-      // Override the next three functions only if VA Minimization is implemented
-      void evaluate_gradient( t_QuantityGradients& _grad )
-        { Traits::zero_out( _grad ); }
-      void evaluate_with_gradient( t_QuantityGradients& _grad )
-      {
-        evaluate_gradient( _grad );
-        evaluate();
-      }
+      //! \brief Evaluates the gradient of Evaluator::current_individual
+      //! \details Only needed for Lamarckian %GA
+      void evaluate_gradient( t_QuantityGradients& _grad ) { Traits::zero_out( _grad ); }
+      //! \brief Evaluates Evaluator::current_individual and its gradients
+      //! \details Only needed for Lamarckian %GA
+      void evaluate_with_gradient( t_QuantityGradients& _grad );
+      //! \brief Evaluates the gradient of Evaluator::current_individual in direction \a _pos
+      //! \details Only needed for Lamarckian %GA
       void evaluate_one_gradient( t_QuantityGradients& _grad, types::t_unsigned _pos) 
         { Traits :: zero_out( _grad[_pos] ); }
       //! \brief Submits individuals to history, etc, prior to starting %GA
@@ -118,6 +180,37 @@ namespace GA
       //! population an eoPop<t_Individual> directly.
       void presubmit( std::list<t_Individual>& ) { return; }
   };
+
+  template< class T_INDIVIDUAL>
+  inline bool Evaluator<T_INDIVIDUAL> :: Load ( std::string const &_f )
+  {
+    TiXmlDocument doc( _f.c_str() ); 
+    TiXmlHandle docHandle( &doc ); 
+    if  ( !doc.LoadFile() )
+    { 
+      std::cerr << doc.ErrorDesc() << std::endl; 
+      throw "Could not load input file in CE::Evaluator ";
+    } 
+
+    TiXmlElement *child = docHandle.FirstChild("Job").Element();
+    if (not child)
+      return false;
+    return Load(*child);
+  }
+
+  template< class T_INDIVIDUAL>
+  inline void Evaluator<T_INDIVIDUAL> :: init( t_Individual &_indiv )
+  {
+    current_individual = &_indiv;
+    current_object     = &_indiv.Object();
+  };
+
+  template< class T_INDIVIDUAL>
+  inline void Evaluator<T_INDIVIDUAL> :: evaluate_with_gradient( t_QuantityGradients& _grad )
+  {
+    evaluate_gradient( _grad );
+    evaluate();
+  }
 
 }
 

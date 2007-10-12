@@ -748,14 +748,10 @@ namespace GA
   {
     while ( _pop.size() < _size )
     {
-      std::cout << "KeyCheck: " << keycheck() << std::endl;
       t_Individual indiv;
       evaluator.initialize(indiv);
       if ( not ( taboos and (*taboos)(indiv) ) )
-      {
         _pop.push_back(indiv);
-        std::cout << _pop.back().Object() << std::endl;
-      }
     } // while ( i_pop->size() < target )
     _pop.resize( _size );
   }
@@ -868,9 +864,7 @@ namespace GA
     Print::xmg << Print::flush;
     Print::out << "\nCreating population" << Print::endl;
 
-    std::cout << "Pop " << keycheck() << std::endl;
     populate();
-    std::cout << "After Pop " << keycheck() << std::endl;
     offsprings.clear();
     typename t_Islands :: iterator i_island_begin = islands.begin();
     typename t_Islands :: iterator i_island_end = islands.end();
@@ -914,18 +908,6 @@ namespace GA
           if( ranking )(*ranking)( *i_island );
          
           (*replacement)(*i_island, offsprings); // after replace, the new pop. is in population
-
-//         std::sort( i_island->begin(), i_island->end(), std::less<t_Individual>() );
-//         typename t_Population::const_iterator i_indiv = i_island->begin();
-//         typename t_Population::const_iterator i_indiv_end = i_island->end();
-//         for(; i_indiv != i_indiv_end; ++i_indiv)
-//         {
-//           std::cout << (*i_indiv) << " F: " << i_indiv->fitness() << " Q: ";
-//           typedef typename t_GATraits :: t_QuantityTraits t_qt;
-//           t_qt::print_out(std::cout, i_indiv->const_quantities());
-//           std::cout << "\n";
-//         }
-//         std::cout << std::endl;
 
           
           if (pSize > i_island->size())

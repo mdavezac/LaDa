@@ -110,7 +110,7 @@ namespace Individual
     public: 
        //! Constructor, Base::age is set to 0
       Base() : age(0) {}
-      //! Deconstructor
+      //! Destructor
       ~Base() {} 
       //! Copy Constructor
       Base   (const t_This &_indiv ) 

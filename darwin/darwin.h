@@ -33,6 +33,11 @@
 
 namespace GA
 {
+  //! \brief Also does your laundry
+  //! \detail This class is god. It controls the input from XML. It runs the
+  //! GA. It ouptuts the results. It calls all the shots. And yet its generic.
+  //! There is no space in this class for anything application-specific. Just put
+  //! it in \a T_EVALUATOR.
   template< class T_EVALUATOR >
   class Darwin
   {    

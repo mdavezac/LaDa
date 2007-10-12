@@ -37,8 +37,6 @@ namespace GA
   template<class T_GAOPTRAITS>
   bool Krossover<T_GAOPTRAITS> :: operator()( t_Individual &_indiv, const t_Individual &_parent )
   {
-//   std::cout << keycheck() << " P1: " << _indiv
-//             << "P2: " << _parent << std::endl;
     t_Object &offspring  = _indiv.Object();
     const t_Object &parent  = _parent.Object();
     Ising_CE::Structure str1 = structure, str2 = structure;
@@ -68,7 +66,6 @@ namespace GA
     concentration( str1 );
     offspring << str1;
 
-//   std::cout << "  Offspring " << offspring << std::endl;
     return true;
   }
   template<class T_GAOPTRAITS>

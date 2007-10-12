@@ -72,14 +72,14 @@ namespace Traits
                       const static bool is_vector = false;  //!< \a IS_SCALAR is not a vector
    };
 
-  //! \brief Make a vector form \a T_ARG if \a MAKEVECTOR is true                    
+  //! \brief Make a vector form \a T_ARG if \a MAKEVECTOR is true.
   //! \details When setting \a MAKEVECTOR to Dim<T_ARG> :: is_vector, this
   //! function allows us to create or not a vector of T_ARG, or simply redeclare
   //! T_ARG. \relates Function::t_GradientTraits
   template< class T_ARG, bool MAKEVECTOR = true >
    struct MakeVector { typedef std::vector<T_ARG> t_Vector; //!< The the resulting type
   };
-  //! Specialized version og MakeVector when \a MAKEVECTOR is set to false
+  //! Specialized version of MakeVector when \a MAKEVECTOR is set to false
   template< class T_ARG >
    struct MakeVector<T_ARG,false> { typedef T_ARG t_Vector; //!< The the resulting type
    };
@@ -89,7 +89,7 @@ namespace Traits
   template< class T_ARG, bool ISVECTOR = Dim<T_ARG>::is_vector >
    struct GetScalar { typedef typename T_ARG::value_type t_Scalar; //!< the resulting type
   };
-  //! Specialized version og GetScalar when ISVECTOR is set to false
+  //! Specialized version of GetScalar when ISVECTOR is set to false
   template< class T_ARG >
    struct GetScalar<T_ARG, false> { typedef T_ARG t_Scalar;  //!< The the resulting type
    };
@@ -166,7 +166,7 @@ namespace Traits
       { return _bc.serialize_container( _q ); }
 #endif
   };
-  //! \brief Specialization of IsAScalar of \a IS_SCALAR = true
+  //! Specialization of IsAScalar of \a IS_SCALAR = true
   template<>
   struct IsAScalar<true>
   {

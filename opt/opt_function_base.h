@@ -74,7 +74,7 @@ namespace function
       //! Copy Constructor
       Base   ( const Base<t_Type, t_Container> &_f )
            : variables( _f.variables ), does_own_variables( false ) {}
-      //! \brief Deconstructor
+      //! \brief Destructor
       //! \details destroys Base::variables if an only if Base::variables is
       //! non-NULL and owned by this particular instance of Base, according to
       //! Base::does_own_variables.

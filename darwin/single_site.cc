@@ -118,10 +118,9 @@ errorout:
       for (; i_atom != i_atom_end; ++i_atom, ++i_hold)
         if ( not ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
         {
-          if ( std::real( *i_hold ) < types::tolerance )
-             i_atom->type = rng.flip() ? 1.0: -1.0;
-          else 
-           i_atom->type = std::real(*i_hold) > 0.0 ? 1.0: -1.0;
+          if ( std::abs( std::real(*i_hold) ) < types::tolerance )
+                i_atom->type = rng.flip() ? 1.0: -1.0;
+          else  i_atom->type = std::real(*i_hold) > 0.0 ? 1.0: -1.0;
         }
       return;
     }
@@ -129,7 +128,11 @@ errorout:
     for (; i_atom != i_atom_end; ++i_atom, ++i_hold)
     {
       if ( not ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
-        i_atom->type = std::real(*i_hold);
+      {
+        if ( std::abs( std::real(*i_hold) ) < types::tolerance )
+          i_atom->type = rng.flip() ? 10.0*types::tolerance: -10.0*types::tolerance;
+        else i_atom->type = std::real( *i_hold );
+      }
       ( i_atom->type > 0 ) ? ++concx : --concx;
     }
 

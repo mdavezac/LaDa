@@ -82,12 +82,20 @@ namespace TwoSites
     for (; i_atom != i_atom_end; ++i_atom, ++i_hold)
     {
       if ( not ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
+      {
         i_atom->type = std::real(*i_hold);
+        if ( std::abs(i_atom->type) < types::tolerance )
+          i_atom->type = rng.flip() ? 10.0*types::tolerance: -10.0*types::tolerance;
+      }
       ( i_atom->type > 0 ) ? ++concx : --concx;
 
       ++i_atom;
       if ( not ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
+      {
         i_atom->type = std::imag(*i_hold);
+        if ( std::abs(i_atom->type) < types::tolerance )
+          i_atom->type = rng.flip() ? 10.0*types::tolerance: -10.0*types::tolerance;
+      }
       ( i_atom->type > 0 ) ? ++concy : --concy;
     }
 

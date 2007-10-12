@@ -210,7 +210,7 @@ fi
 if test $ce = true; then
   echo " _ Genetic Algorithm for Cluster Expansion"
 fi
-if test $molecularity = true; then
+if test x$molecularity = xtrue; then
   echo " _ Genetic Algorithm for Molecularity"
 fi
 echo ""

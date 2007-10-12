@@ -190,6 +190,5 @@ namespace Evaluation
       store( _indiv );
       return _indiv.fitness();
     }
-  }
-
+}
 #endif

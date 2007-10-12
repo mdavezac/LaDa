@@ -29,128 +29,112 @@
 
 namespace GA
 {
+  //! \brief Prints data to Print::xmg. 
+  //! \details This functor is called at the end of each generation. It prints
+  //! out new results to Pring::xmg if there are any, as well as the generation
+  //! number and the number of calls to the functional (using
+  //! T_EVALUATION::nb_eval, see Evaluation::Base::nb_eval). 
   template< class T_STORE, class T_EVALUATION >
   class PrintGA : public eoUpdater
   {
     public:
-      typedef T_STORE t_Store; 
-      typedef T_EVALUATION t_Evaluation; 
+      typedef T_STORE t_Store; //!< Type of storage class
+      typedef T_EVALUATION t_Evaluation;  //!< Type of evaluation class
 
     protected:
-      const t_Store &store;
-      const t_Evaluation &evaluation;
-      const GenCount &age;
-      bool do_print_each_call;
+      const t_Store &store; //!< Reference to a storage class
+      const t_Evaluation &evaluation; //!< Reference to an evalution class 
+      const GenCount &age; //!< Reference to a generational counter
+      //! \brief true if should print at each call. 
+      //! \details You may not want to print if there are no new results.
+      bool do_print_each_call; 
 
     public:
+      //! Constructor and Initializor
       PrintGA   ( const t_Store &_store, const t_Evaluation &_eval, 
                   const GenCount &_age, bool _each )
               : store(_store), evaluation(_eval), age(_age), do_print_each_call(_each) {}
+      //! Copy Constructor
       PrintGA   ( const PrintGA &_c )
               : store(_c.results), evaluation(_c.evaluation), age(_c.age),
                 do_print_each_call(_c.do_print_each_call)  {}
 
-      virtual void operator()()
-      {
-        if ( not ( do_print_each_call or store.newresults() ) )
-        {
-          Print::xmg << Print::Xmg::clearall;
-          return;
-        }
+      //! \brief This class is a functor
+      virtual void operator()();
 
-        std::string special = "";
-        if ( not store.newresults() ) special = " ? ";
-       
-        Print::xmg << Print::Xmg::comment << special << "Iteration " << age() 
-                   << Print::endl 
-                   << Print::Xmg::comment << special << "Evaluation Calls: " 
-                   << evaluation.nb_eval << " " << evaluation.nb_grad 
-                   << Print::endl;
-        
-        if( store.newresults() )
-          store.print_results( age() );
-        Print::xmg << Print::flush;
-      }
-
-      // some anoying stuff
+      //! Eo required 
       void printOn( std::ostream &__os ) const {};
+      //! Eo required 
       void readFrom( std::istream &__os ) const {};
-      void lastCall()
-      {
-        Print::xmg << Print::Xmg::comment << "Last Found Result" << Print::endl;
-        store.print_results(age(), true);
-        Print::xmg << Print::flush;
-      }
+      //! Prints results to Print::xmg prior to termination
+      void lastCall();
 
+      //! EO required 
       virtual std::string className(void) const { return "GA::PrintFitness"; }
   };
+
+  //! Prints out the fitness of new individuals to Print::xmg.
   template< class T_GATRAITS>
   class PrintFitness : public eoStatBase<typename T_GATRAITS::t_Individual> 
   {
     public:
-      typedef T_GATRAITS t_GATraits;
+      typedef T_GATRAITS t_GATraits; //!< All %GA %types
     protected:
-      typedef typename t_GATraits::t_Individual t_Individual;
-      typedef typename t_GATraits::t_Population t_Population;
+      typedef typename t_GATraits::t_Individual t_Individual; //!< Type of the indiviudals
+      typedef typename t_GATraits::t_Population t_Population; //!< Type of the population
 
     protected:
-      GenCount &age;
+      GenCount &age; //!<  Reference to a generational counter
 
     public:
+      //! Constructor and Initializor
       PrintFitness   ( GenCount &_age )
                    : age(_age) {}
+      //! Copy Constructor
       PrintFitness   ( const PrintFitness &_update )
                    : age(_update.age) {}
 
-      virtual void operator()( const t_Population &_pop )
-      {
-        types::t_unsigned ga_age = age();
-        typename t_Population :: const_iterator i_pop = _pop.begin();
-        typename t_Population :: const_iterator i_end = _pop.end();
+      //! \brief This class is a functor
+      virtual void operator()( const t_Population &_pop );
 
-        for( ; i_pop != i_end; ++i_pop )
-          if ( ga_age == i_pop->get_age() )
-          {
-            std::ostringstream sstr; 
-            sstr << "Offspring: " << std::setw(12) << std::setprecision(7)
-                 << i_pop->get_concentration() << " "
-                 << i_pop->fitness();
-            std::string str = sstr.str();
-            Print::xmg.add_comment( str );
-          }
-      }
-
-      // some anoying stuff
+      //! Eo required 
       void printOn( std::ostream &__os ) const {};
+      //! Eo required 
       void readFrom( std::istream &__os ) const {};
+      //! Eo required 
       void lastCall( const eoPop<t_Individual> &_pop) {}
 
+      //! Eo required 
       virtual std::string className(void) const { return "GA::PrintFitness"; }
   };
 
-  // checks for taboo unconvergence from a breeder, 
-  // response. If response does not get through 
+  //! \brief In case of taboo diverges, starts a period of high mutations.
+  //! \details The idea is that if no new individual can be found, than the %GA
+  //! is stuck in a niche. A periode of high mutation could possibly dislodge it.
+  //! \warning Everything in this class is a dirty hack. Its best simply not to use it.
   template< class T_GATRAITS>
   class NuclearWinter : public eoStatBase<typename T_GATRAITS::t_Individual>
   {
     public:
-      typedef T_GATRAITS t_GATraits;
+      typedef T_GATRAITS t_GATraits; //!< All %GA triats
     protected:
-      typedef typename t_GATraits::t_Individual t_Individual;
-      typedef typename t_GATraits::t_Population t_Population;
+      typedef typename t_GATraits::t_Individual t_Individual; //!< Type of an individual
+      typedef typename t_GATraits::t_Population t_Population; //!< Type of the population
 
     protected:
-      Taboo_Base<t_Individual> &taboo;
-      eoGenOp<t_Individual> &normal_ops;
-      SequentialOp<t_Individual> nuclear_ops;
-      eoGenOp<t_Individual> **breeding_ops;
-      types::t_unsigned nuclear_winter_length, nuclear_winter_age;
-      bool is_gone_nuclear;
-      eoHowMany nuclear_howmany;
-      eoHowMany normal_howmany;
-      eoHowMany **breeding_howmany;
+      Taboo_Base<t_Individual> &taboo; //!< Reference to the taboos to check
+      eoGenOp<t_Individual> &normal_ops; //!< Reference to the "normal" operators
+      SequentialOp<t_Individual> nuclear_ops; //!< The high-mutation operators
+      eoGenOp<t_Individual> **breeding_ops; //!< The breeding operators. Watch out! Hack!
+      types::t_unsigned nuclear_winter_length; //!< Number of generations of high mutation period
+      types::t_unsigned nuclear_winter_age;//!< Starting date of the high mutation period
+      bool is_gone_nuclear; //!< True if within a high mutation period
+      eoHowMany nuclear_howmany; //!< Number of offsprings to create during high mutation period
+      eoHowMany normal_howmany; //!< Number of offsprings to create during normal period
+      eoHowMany **breeding_howmany; //!< Dirty Hack!
 
     public:
+      //! Constructor and Initialisor
       NuclearWinter   ( Taboo_Base<t_Individual> &_taboo, 
                         eoGenOp<t_Individual> &_nops,
                         eoGenOp<t_Individual> &_nwops,
@@ -168,77 +152,54 @@ namespace GA
         nuclear_ops.add(_nwops, 1.0);
       }
 
+      //! Destructor
       virtual ~NuclearWinter(){};
 
-      void set_howmany( eoHowMany **_howmany)
-      {
-        breeding_howmany = _howmany;
-        *breeding_howmany = &normal_howmany;
-      }
+      
+      //! Dirty Hack!
+      void set_howmany( eoHowMany **_howmany);
 
-      // checks for taboo unconvergenced
-      // if true, then transforms each individual according to response
-      // if still cannot create new individuals, then returns false
-      // and GA exits
-      virtual void operator()( const t_Population &_pop )
-      {
-        if ( is_gone_nuclear )
-        { // ends nuclear winter
-          ++nuclear_winter_age;
-          if ( nuclear_winter_age > nuclear_winter_length ) 
-          {
-            *breeding_ops = &normal_ops; 
-            *breeding_howmany = &normal_howmany;
-            is_gone_nuclear = false;
-            Print::xmg.add_comment("Nuclear-winter is over");
-          }
-        }
-        else if ( taboo.is_problematic() )
-        { // starts nuclear winter
-          nuclear_winter_age = 0;
-          is_gone_nuclear = true;
-          *breeding_ops = &nuclear_ops; 
-          *breeding_howmany = &nuclear_howmany;
-          taboo.set_problematic(false);
-          Print::xmg.add_comment("Going Nuclear");
-        }
-      }
+      //! \brief This class is a dirty hack of a functor
+      virtual void operator()( const t_Population &_pop );
 
-      void set_op_address( eoGenOp<t_Individual> ** _ops )
-        { breeding_ops = _ops; } 
+      //! Dirty Hack!
+      void set_op_address( eoGenOp<t_Individual> ** _ops ) { breeding_ops = _ops; } 
 
-      eoGenOp<t_Individual>* get_op_address() const
-      {
-        if (is_gone_nuclear)
-          return &normal_ops;
-        return &nuclear_ops;
-      }
+      //! Dirty Hack!
+      eoGenOp<t_Individual>* get_op_address() const;
 
-      // some anoying stuff
+      //! EO required 
       void printOn( std::ostream &__os ) const {};
+      //! EO required 
       void readFrom( std::istream &__os ) const {};
+      //! EO required 
       virtual void lastCall( const t_Population &_pop) {};
+      //! EO required 
       virtual std::string className(void) const { return "LaDa::NuclearWinter"; }
 
   };
 
+  //! \brief adds "old" individuals to a taboo list
+  //! \details Individuals are added to a taboo list here, but certainly not removed
+  //!          from the population.
   template< class T_GATRAITS>
   class UpdateAgeTaboo : public eoStatBase<typename T_GATRAITS::t_Individual>
   {
     public:
-      typedef T_GATRAITS t_GATraits;
+      typedef T_GATRAITS t_GATraits; //!< All %GA traits.
     protected:
-      typedef typename t_GATraits::t_Individual t_Individual;
-      typedef typename t_GATraits::t_Population t_Population;
+      typedef typename t_GATraits::t_Individual t_Individual; //!< Type of the indiviudals
+      typedef typename t_GATraits::t_Population t_Population; //!< Type of the population
 
     protected:
-      Taboo< t_Individual, std::list<t_Individual> > & taboo;
-      GenCount &age;
-      types::t_unsigned max_age;
-      types::t_unsigned check_every;
-      bool do_print_out;
+      Taboo< t_Individual, std::list<t_Individual> > & taboo; //!< Reference to a Taboo list
+      GenCount &age; //!< Generational counter
+      types::t_unsigned max_age; //!< Maximum allowed age
+      types::t_unsigned check_every; //!< Checks for the old every n generations
+      bool do_print_out; //!< Prints out newly tabooed individual
 
     public:
+      //! Constructor and Initialisor
       UpdateAgeTaboo  ( Taboo< t_Individual, std::list<t_Individual> > & _taboo,
                         GenCount &_age, types::t_unsigned _max_age, bool _do_print_out = false )
                      : taboo(_taboo), age(_age), max_age(_max_age),
@@ -248,344 +209,249 @@ namespace GA
         if ( check_every == 0 )
           check_every = 1;
       };
+      //! Copy Constructor
       UpdateAgeTaboo  ( const UpdateAgeTaboo<t_Individual> & _update )
                      : taboo(_update.taboo), age(_update.age), 
                        max_age(_update.max_age), check_every( _update.check_every ),
                        do_print_out(_update.do_print_out) {};
 
-      virtual void operator()( const t_Population &_pop )
-      {
-        types::t_unsigned ga_age = age();
-        if ( ga_age < max_age or ga_age%check_every != 0 )
-          return;
+      //! \brief This class is a functor
+      //! \details Check for old individuals in \a _pop and adds them to the
+      //! taboo list. If required, prints out the tabooed individual to
+      //! Print::xmg as a comment.
+      virtual void operator()( const t_Population &_pop );
 
-        typename t_Population :: const_iterator i_pop = _pop.begin();
-        typename t_Population :: const_iterator i_end = _pop.end();
-
-        for( ; i_pop != i_end; ++i_pop )
-          if ( ga_age - i_pop->get_age() > max_age )
-          {
-            taboo.add( *i_pop );
-            if ( do_print_out )
-            { 
-              std::ostringstream sstr;
-              sstr << " AgeTaboo: new individual ";
-              i_pop->print_out( sstr );
-              std::string str = sstr.str();
-              Print::xmg.add_comment( str );
-            }
-          }
-      }
-
-      // some anoying stuff
+      //! EO required
       void printOn( std::ostream &__os ) const {};
+      //! EO required
       void readFrom( std::istream &__os ) const {};
+      //! EO required
       virtual void lastCall( const eoPop<t_Individual> &_pop) {}
 
+      //! EO required
       virtual std::string className(void) const { return "Darwin::UpdateAgeTaboo"; }
   };
 
-  // when binop( ref, term ), terminates GA
+  //! \brief Terminates %GA when condition is found to be true
+  //! \details The condition should be a functor of type T_BINOP which takes
+  //! two parameters of type T_VALUE, and returns true if the condition is
+  //! fulfilled. Upon true, the %GA terminates. Here is an example taken from
+  //! darwin.impl.h (at revision 313)
+  //! \code
+  //  eoContinue<t_Individual> *terminator = NULL;
+  //  terminator = new Terminator< types::t_unsigned, std::less<types::t_unsigned>, t_GATraits >
+  //                             ( evaluation->nb_eval, (types::t_unsigned) abs(max),
+  //                               std::less<types::t_unsigned>(), "nb_eval < term" );
+  //! \endcode
+  //! \param T_VALUE type of the binary functor parameters
+  //! \param T_BINOP type of the binary functor with which Terminator::ref and
+  //!                Terminator::term are compared 
+  //! \param T_GATRAITS All %GA traits
   template< class T_VALUE, class T_BINOP, class T_GATRAITS>
   class Terminator : public eoContinue<typename T_GATRAITS::t_Individual>
   {
     public:
-      typedef T_VALUE t_Value;
-      typedef T_BINOP t_BinOp;
-      typedef T_GATRAITS t_GATraits;
+      //! type of the binary functor parameters.
+      typedef T_VALUE t_Value; 
+      //! \brief type of the binary functor with which Terminator::ref and
+      //!  Terminator::term are compared.
+      typedef T_BINOP t_BinOp;         
+      typedef T_GATRAITS t_GATraits; //!< All %GA traits.
     protected:
-      typedef typename t_GATraits::t_Individual t_Individual;
-      typedef typename t_GATraits::t_Population t_Population;
+      typedef typename t_GATraits::t_Individual t_Individual; //!< Type of the indiviudals
+      typedef typename t_GATraits::t_Population t_Population; //!< Type of the population
 
     protected:
-      t_Value &ref;
-      t_Value term;
-      t_BinOp binop;
-      std::string type;
+      t_Value &ref;  //!< \brief Reference to the variable to be watched
+      t_Value term;  //!< \brief Comparison parameter
+      t_BinOp binop; //!< \brief Comparison binary functor 
+      std::string type; //!< Terminator type
 
     public:
+      //! Constructor and Initialisor
+      //! \param _ref is the variable to watch
+      //! \param _term a parameter to fulfilling the condition
+      //! \param _op an instance of the condition functor
+      //! \param _type a string describing the condition, for output purposes
       Terminator   ( t_Value &_ref, t_Value _term, t_BinOp _op, 
                      std::string _type)
                  : ref(_ref), term(_term), binop(_op),
                    type(_type) {}
+      //! Copy Constructor
       Terminator   ( const Terminator & _copy)
                  : ref(_copy.ref), term(_copy.term), binop(_copy.op), 
                    type(_copy.type) {}
+      //! Destructor
       virtual ~Terminator() {}
 
-      virtual bool operator() (const t_Population &_pop )
-      {
-        if ( (not term ) or ( term and binop( ref, term ) ) )
-         return true;
-        lastCall();
-        return false;
-      }
+      //! \brief This class is a functor
+      //! \details returns true if either:
+      //!     - Terminator::term is false
+      //!     - Terminator::term is true <STRONG >and</STRONG> Condition
+      //!       Terminator::binop return true
+      //!     .
+      virtual bool operator() (const t_Population &_pop );
+     
+      //! EO required
       virtual std::string className(void) const { return "Darwin::Terminator"; }
 
-      void lastCall() const
-      {
-        Print::xmg << Print::Xmg::comment << "Terminator, type: " << type
-                   << ", ref= " << ref 
-                   << ", term=" << term << Print::endl;
-        Print::out << "\n Stopping run on:\n    Terminator, type: " << type
-                   << ", ref= " << ref 
-                   << ", term=" << term << Print::endl;
-      }
+      //! Prints out current status of the condition
+      void lastCall() const;
   };
 
-  // island continuator. Takes two population iterators and goes through them
+  //! \brief Collects all continuators and such, and works for range of population.
+  //! \details This continuator expects on input an iterator range of whole
+  //! populations, eg islands. It then applies the collected continuators,
+  //! stats, updaters to each population. 
   template< class T_GATRAITS>
   class IslandsContinuator : public eoContinue<typename T_GATRAITS::t_Individual> 
   {
     public:
-      typedef T_GATRAITS t_GATraits;
+      typedef T_GATRAITS t_GATraits; //!< All %GA traits
     protected:
-      typedef typename t_GATraits::t_Individual t_Individual;
-      typedef typename t_GATraits::t_Population t_Population;
-      typedef typename t_GATraits :: t_Islands t_Islands;
-      typedef typename t_Islands :: iterator iterator;
+      typedef typename t_GATraits::t_Individual t_Individual; //!< Type of the indiviudals
+      typedef typename t_GATraits::t_Population t_Population; //!< Type of the population
+      typedef typename t_GATraits :: t_Islands t_Islands; //!< Type of island collection
+      //! Type to an iterator to an island collection
+      typedef typename t_Islands :: iterator iterator; 
+      //! Constant type to an iterator to an island collection
       typedef typename t_Islands :: const_iterator const_iterator;
     protected:
+      //! list of continuators. see EO library
       std::list < eoContinue<t_Individual>* >       continuators;
+      //! list of sorted statistics. see EO library
       std::list < eoSortedStatBase<t_Individual>* > sorted;
+      //! list of statistics. see EO library
       std::list < eoStatBase<t_Individual>* >       stats;
+      //! list of monitors. see EO library
       std::list < eoMonitor* >                      monitors;
+      //! list of updaters. see EO library
       std::list < eoUpdater* >                      updaters;
+      //! A generational counter
       GenCount generation_counter;
+      //! \brief Maximum number of generations before quitting
+      //! \details May quit before if a something in IslandsContinuator ::
+      //! continuators says quit. Actually, its generally more usefull to use a
+      //! Terminator acting upon the number of evaluations than this variable. 
       types::t_unsigned  max_generations;
+      //! %GA stops on finding this file
       std::string stop_filename;
 
     public:
+      //! Constructor and Initialisor
       IslandsContinuator   ( types::t_unsigned _max, std::string _f = "stop" ) 
                          : generation_counter(0),
                            max_generations(_max), stop_filename(_f)
       {
         if ( stop_filename.empty() ) stop_filename = "stop";
-        Print::xmg << Print::Xmg::comment << "Will stop on finding file " << stop_filename << Print::endl;
+        Print::xmg << Print::Xmg::comment << "Will stop on finding file "
+                   << stop_filename << Print::endl;
       }
 
 
-      void add(eoContinue<t_Individual>& _cont)
-        { continuators.push_back(&_cont); }
-      void add(eoSortedStatBase<t_Individual>& _stat)
-        { sorted.push_back(&_stat); }
-      void add(eoStatBase<t_Individual>& _stat) 
-        { stats.push_back(&_stat); }
-      void add(eoMonitor& _mon)        
-        { monitors.push_back(&_mon); }
-      void add(eoUpdater& _upd)        
-        { updaters.push_back(&_upd); }
+      //! adds a continuator
+      void add(eoContinue<t_Individual>& _cont)       { continuators.push_back(&_cont); }
+      //! adds a sorted statistic
+      void add(eoSortedStatBase<t_Individual>& _stat) { sorted.push_back(&_stat); }
+      //! adds an unsorted statistic
+      void add(eoStatBase<t_Individual>& _stat)       { stats.push_back(&_stat); }
+      //! adds a monitor
+      void add(eoMonitor& _mon)                       { monitors.push_back(&_mon); }
+      //! adds an updater
+      void add(eoUpdater& _upd)                       { updaters.push_back(&_upd); }
 
-      bool operator()(const t_Population& _pop)
-      { return true; }
+      //! \brief Don't use
+      //! \details EO declares this function virtual, but we don't need it.
+      //!          use IslandsContinuator::apply() instead
+      bool operator()(const t_Population& _pop) { return true; }
 
-      // applies population dependant stuff
-      void apply_stats(const t_Population& _pop) const
-      {
-        // first goes through sorted stats
-        if ( not sorted.empty() )
-        { 
-          typename std::list < eoSortedStatBase<t_Individual>* > :: const_iterator i_sorted = sorted.begin();
-          typename std::list < eoSortedStatBase<t_Individual>* > :: const_iterator i_end = sorted.end();
-          std::vector<const t_Individual*> sorted_pop;
-          _pop.sort(sorted_pop);
-          for ( ; i_sorted != i_end; ++i_sorted )
-            (*i_sorted)->operator()(sorted_pop);
-        }
-        // then through unsorted stats
-        if ( not stats.empty() )
-        { 
-          typename std::list < eoStatBase<t_Individual>* > :: const_iterator i_stat = stats.begin();
-          typename std::list < eoStatBase<t_Individual>* > :: const_iterator i_end = stats.end();
-          for ( ; i_stat != i_end; ++i_stat )
-            (*i_stat)->operator()(_pop);
-        }
-      } // bool apply ( ... )
+      //! \brief Applies sorted and unsorted statistics.
+      void apply_stats(const t_Population& _pop) const;
 
-      void apply_monitors_updaters()
-      {
-        // applies monitors
-        if ( not monitors.empty() )
-        { 
-          typename std::list < eoMonitor* > :: const_iterator i_monitor = monitors.begin();
-          typename std::list < eoMonitor* > :: const_iterator i_end = monitors.end();
-          for ( ; i_monitor != i_end; ++i_monitor )
-            (*i_monitor)->operator()();
-        }
-        // then through updaters
-        if ( not updaters.empty() )
-        { 
-          typename std::list < eoUpdater* > :: const_iterator i_updater = updaters.begin();
-          typename std::list < eoUpdater* > :: const_iterator i_end = updaters.end();
-          for ( ; i_updater != i_end; ++i_updater )
-            (*i_updater)->operator()();
-        }
-      }
+      //! \brief Applies monitors and updaters
+      void apply_monitors_updaters();
 
-      bool apply_continuators( const t_Population & _pop ) const
-      {
-        typename std::list < eoContinue<t_Individual>* > :: const_iterator i_continue = continuators.begin();
-        typename std::list < eoContinue<t_Individual>* > :: const_iterator i_end = continuators.end();
-        bool result = true;
-        for (; i_continue != i_end; ++i_continue )
-          if ( not (*i_continue)->operator()( _pop) )
-            result = false;
-        return result;
-      }
+      //! \brief Applies continuators
+      bool apply_continuators( const t_Population & _pop ) const;
 
-      void lastCall( const t_Population& _pop ) 
-      {
-        // first goes through sorted stats
-        if ( not sorted.empty() )
-        { 
-          typename std::list < eoSortedStatBase<t_Individual>* > :: const_iterator i_sorted = sorted.begin();
-          typename std::list < eoSortedStatBase<t_Individual>* > :: const_iterator i_end = sorted.end();
-          std::vector<const t_Individual*> sorted_pop;
-          _pop.sort(sorted_pop);
-          for ( ; i_sorted != i_end; ++i_sorted )
-            (*i_sorted)->lastCall(sorted_pop);
-        }
-        // then through unsorted stats
-        if ( not stats.empty() )
-        { 
-          typename std::list < eoStatBase<t_Individual>* > :: const_iterator i_stat = stats.begin();
-          typename std::list < eoStatBase<t_Individual>* > :: const_iterator i_end = stats.end();
-          for ( ; i_stat != i_end; ++i_stat )
-            (*i_stat)->lastCall(_pop);
-        }
-        // applies monitors
-        if ( not monitors.empty() )
-        { 
-          typename std::list < eoMonitor* > :: const_iterator i_monitor = monitors.begin();
-          typename std::list < eoMonitor* > :: const_iterator i_end = monitors.end();
-          for ( ; i_monitor != i_end; ++i_monitor )
-            (*i_monitor)->lastCall();
-        }
-        // then through updaters
-        if ( not updaters.empty() )
-        { 
-          typename std::list < eoUpdater* > :: const_iterator i_updater = updaters.begin();
-          typename std::list < eoUpdater* > :: const_iterator i_end = updaters.end();
-          for ( ; i_updater != i_end; ++i_updater )
-            (*i_updater)->lastCall();
-        }
-      }
+      //! \brief When terminating, calls lastCall member function of statistics,
+      //! monitors and updaters.
+      void lastCall( const t_Population& _pop );
 
-      bool apply ( iterator &_i_begin, iterator &_i_end )
-      {
-        iterator i_pop = _i_begin;
+      //! \brief Applies all the apply_something member functions  to the iterator range.
+      //! \details The populations in [\a _i_begin, \a _i_end) should all be valid.
+      bool apply ( iterator &_i_begin, iterator &_i_end );
 
-        for( ; i_pop != _i_end; ++i_pop )
-          apply_stats( *i_pop );
-
-        apply_monitors_updaters();
-
-        Print::xmg << Print::flush; 
-
-        bool result =    ( max_generations and generation_counter() < max_generations ) 
-                      or ( not max_generations );
-        for( i_pop = _i_begin; i_pop != _i_end; ++i_pop )
-          if ( not apply_continuators( *i_pop ) )
-            result = false;
-
-        // checks if stop file exists
-#ifdef _MPI
-        if ( mpi::main.is_root_node() )
-        {
-#endif
-          std::ifstream file( stop_filename.c_str(), std::ios_base::in );
-          if ( file.is_open() )
-          {
-            Print::xmg << Print::Xmg::comment << "Stopping on finding file "
-                       << stop_filename << Print::endl;
-            Print::out << "\n\nStopping on finding file "
-                       << stop_filename << Print::endl;
-            result = false; 
-          }
-#ifdef _MPI
-        }
-        result = mpi::main.all_sum_all(result);
-#endif 
-
-        // last call
-        if ( not result )
-        {
-          for( i_pop = _i_begin; i_pop != _i_end; ++i_pop )
-            lastCall( *i_pop );
-        }
-
-        // increments generation
-        ++generation_counter;
-
-        return result;
-      }
-
+      //! EO required
       virtual std::string className(void) const { return "LaDa::IslandsContinuator"; }
-      GenCount& get_generation_counter() 
-        { return generation_counter; }
-      types::t_unsigned age() const
-        { return generation_counter(); }
+      //! Returns a referenec to the generation counter
+      GenCount& get_generation_counter()  { return generation_counter; }
+      //! Returns the current number of GA generations
+      types::t_unsigned age() const { return generation_counter(); }
   };
 
+  //! \brief Calls SaveEvery::func every SaveEvery::every generations
+  //! \details Used to save results every so many generations. 
+  //! You can use this functor as follows (from darwin.iml.h at revision 313)
+  //! \code
+  //    SaveEvery<t_Darwin> *save = new SaveEvery<t_Darwin>( *this, &Darwin::Save, std::abs(n) );
+  //! \endcode
   template < class T_CLASS >
   class SaveEvery: public eoUpdater
   {
     public:
-      typedef T_CLASS t_Class;
+      typedef T_CLASS t_Class; //!< Class of member function to call
     protected:
-      typedef bool ( t_Class::*t_Function )();
+      typedef bool ( t_Class::*t_Function )(); //!< Member function type
     protected:
-      t_Class &object;
-      t_Function func;
-      types::t_unsigned every, age;
+      t_Class &object; //!< Object of which to call member function
+      t_Function func; //!< Address of member function to call
+      types::t_unsigned every; //!< Perfom function every "n" calls
+      types::t_unsigned age; //!< Call counter
 
     public:
+      //! \brief Constructor and Initializer
+      //! \param _object for which member function is called
+      //! \param _func pointer to the member function to call 
+      //! \param _n Initializes SaveEvery::every
       SaveEvery   ( t_Class &_object, t_Function _func, types::t_unsigned _n ) 
                 : object(_object), func(_func), every( _n ), age(0) 
       {
         if ( not every ) every = 1;
       }
+      //! Copy Constructor
       SaveEvery   ( const SaveEvery<t_Class> &_copy )
                 : object(_copy.object), func(_copy.func), every( _copy.n ), age(_copy.age) {}
 
-      void operator()()
-      {
-        ++age;
-
-        if ( age % every )
-          return;
-
-        if ( (object.*func)() )
-          return;
-
-        std::cerr << "Could not perform save " << std::endl;
-      }
+      //! \brief This class is a functor
+      void operator()();
   };
 
 #ifdef _MPI
+  //! \brief Synchronizes scalars across processor at the end of each generation
+  //! \details Basically does an mpi::Base::all_sum_all on Synchronize::object.
+  //! No, nothing gets counted twice, so don't worry.
   template< class T_TYPE >
   class Synchronize : public eoUpdater
   {
     public:
-      typedef T_TYPE t_Type;
+      typedef T_TYPE t_Type; //!< The type of scalar to sync
     protected:
-      t_Type &object;
-      t_Type current_value;
+      t_Type &object; //!< A reference to the scalar to sync
+      t_Type current_value; //!< A place holder
     public:
+      //! Constructor and Initializer
       explicit
         Synchronize( t_Type &_object ) : object(_object), current_value(_object) {}
+      //! Destructor
       ~Synchronize(){}
-      void operator()()
-      {
-        t_Type diff = object - current_value;
-        mpi::main.all_sum_all(diff);
-        current_value += diff;
-        object = current_value;
-      }
+      //! This is a functor
+      void operator()();
   };
 #endif
 
 } // namespace GA
 
+#include "checkpoints.impl.h"
 
 #endif //  _CHECKPOINT_H_

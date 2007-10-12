@@ -41,7 +41,7 @@ nobase_libdarwin_la_HEADERS = breeder.h concentration.h evaluation.h functors.h 
 			      taboos.h gatraits.h  bitstring.h fitness.h gaoperators.h \
 			      ranking.h darwin.impl.h  evaluation.impl.h individual.impl.h \
 			      molecularity.impl.h  ranking.impl.h  single_site.impl.h \
-			      store.impl.h  two_sites.impl.h debug.h
+			      store.impl.h  two_sites.impl.h debug.h fitness.impl.h
 libdarwin_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 

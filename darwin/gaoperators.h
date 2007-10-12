@@ -30,12 +30,17 @@
 #include "mpi/mpi_object.h"
 #endif
 
+/** \ingroup Genetic 
+ * @{*/
+
+//! \brief Contains all Genetic Algorithm that is not in another namespace ;)
+//! \todo make GA a more homogeneous namespace. Possibly move all %GA related
+//! namespaces inside GA
 namespace GA
 {
-  /** \ingroup Genetic
-   * @{
-   */
-  //! \brief Applies Krossover between two parents and retrieves a child
+  //! \brief Applies reciprocal-space %crossover. See <A
+  //! HREF="http://dx.doi.org/10.1088/0953-8984/19/40/402201"> J. Phys.: Cond.
+  //! Matt. <STRONG>19</STRONG>, 402201 (2007) </A>.
   //! \details Krossover refers to a crossover operation in reciprocal-space
   //! where the values of the structure factors of two parents of identical shape
   //! are interchanged to create a new individual. This process should be more
@@ -82,7 +87,7 @@ namespace GA
       Krossover   ( const Krossover &_k )
                 : concentration(_k.concentration), structure(_k.structure),
                   rate(_k.rate), do_range(_k.do_range) {}
-      //! Deconstructor
+      //! Destructor
       ~Krossover() {}
 
       //! Loads Krossover::rate and Krossover::do_range parameters from XML input
@@ -117,13 +122,9 @@ namespace GA
       //! \brief prints out parameters
       std::string print_out() const;
   };
-  //! @}
 
 
-  /** \ingroup Genetic
-   * @{
-   */
-  //! \brief Mutation in reciprocal space
+  //! \brief %Mutation in reciprocal space
   //! \details Changes the intensity a random number of
   //! <STRONG>k</STRONG>-vectors to random values. More specifically, each
   //! <STRONG>k</STRONG>-vectors is susceptible to be mutated with a
@@ -169,7 +170,7 @@ namespace GA
       KMutation   ( const KMutation &_k )
                 : concentration(_k.concentration), structure(_k.structure),
                   rate(_k.rate) {}
-      //! Deconstructor
+      //! Destructor
       ~KMutation() {}
 
       //! Loads KMutation::rate parameter from XML input
@@ -190,12 +191,8 @@ namespace GA
       //! \brief prints out parameters
       std::string print_out() const;
   };
-  //! @}
 
 
-  /** \ingroup Genetic
-   * @{
-   */
   //! \brief creates a random individidual from random values in reciprocal-space
   //! \details The concentration is set (or not) using a
   //! \a T_GAOPTRAITS::t_Concentration functor.
@@ -234,7 +231,7 @@ namespace GA
       //! Copy Constructor
       KRandom   ( const KRandom &_k )
               : concentration(_k.crossover), structure(_k.structure) {}
-      //! Deconstructor
+      //! Destructor
       ~KRandom() {}
 
       //! Doesn't load anything from anywhere and returns true
@@ -257,12 +254,8 @@ namespace GA
       //! \brief prints out parameters
       std::string print_out() const { return "Darwin::KRandom"; }
   };
-  //! @}
 
 
-  /** \ingroup Genetic
-   * @{
-   */
   //! \brief Applies a standard bitstring crossover to a bitstring (of form \f$b_i=\pm1\f$)
   //! \details The concentration after krossover is set (or not) using a
   //! \a T_GAOPTRAITS::t_Concentration functor.
@@ -294,7 +287,7 @@ namespace GA
       //! Copy Constructor
       Crossover   ( const Crossover &_k )
              : concentration(_k.crossover), op(_k.op) {}
-      //! Deconstructor
+      //! Destructor
       ~Crossover() {}
 
       //! Loads parameters from XML input
@@ -329,12 +322,8 @@ namespace GA
       //! \brief prints out parameters
       std::string print_out() const;
   };
-  //! @}
 
 
-  /** \ingroup Genetic
-   * @{
-   */
   //! \brief Applies a standard bitstring mutation to a bitstring (of form \f$b_i=\pm1\f$)
   //! \details The concentration after mutation is set (or not) using a
   //! \a T_GAOPTRAITS::t_Concentration functor.
@@ -366,7 +355,7 @@ namespace GA
       //! Copy Constructor
       Mutation   ( const Mutation &_k )
              : concentration(_k.crossover), op(_k.op) {}
-      //! Deconstructor
+      //! Destructor
       ~Mutation() {}
 
       //! Loads parameters from XML input
@@ -389,12 +378,8 @@ namespace GA
       //! \brief prints out parameters
       std::string print_out() const;
   };
-  //! @}
   
 
-  /** \ingroup Genetic
-   * @{
-   */
   //! \brief Creates a random bitstring of \f$b_i=\pm1\f$ 
   //! \details The concentration after random generation is set (or not) using a
   //! \a T_GAOPTRAITS::t_Concentration functor. This functor needs to know
@@ -431,7 +416,7 @@ namespace GA
       //! Copy Constructor
       Random   ( const Random &_k )
              : concentration(_k.crossover), structure(_k.structure) {}
-      //! Deconstructor
+      //! Destructor
       ~Random() {}
 
       //! Doesn't load anything from anywhere and returns true
@@ -454,12 +439,8 @@ namespace GA
       //! \brief prints out parameters
       std::string print_out() const { return "Darwin::Random"; }
   };
-  //! @}
   
 
-  /** \ingroup Genetic
-   * @{
-   */
   //! \brief Creates a %GA operator from XML input
   //! \details Can create at present anyone of the following operators:
   //! - Krossover
@@ -510,7 +491,7 @@ namespace GA
        xTaboo   ( const xTaboo &_c)
               : concentration(_c.concentration), morethan(_c.morethan),
                 lessthan(_c.lessthan) {}
-      //! Deconstructor
+      //! Destructor
       ~xTaboo() {}
 
       //! Loads parameters from XML input
@@ -522,8 +503,8 @@ namespace GA
       //! \brief returns true if \a _indiv is within allowed concentration range
       bool operator()( const t_Individual& _indiv ) const;
   };
-  //! @}
 }
 
 #include "gaoperators.impl.h"
+/*@}*/
 #endif

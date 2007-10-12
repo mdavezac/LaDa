@@ -6,8 +6,21 @@ even when starting from something as elaborate as EO, quite some coding is
 required to obtain a %GA library capable of handling diverse physical problems. 
 The following has been separated into two poetically named sections
   - \ref secbas
+     - \ref secpop
+     - \ref seceval
+     - \ref secbreed
+     - \ref seccull
+     .
   - \ref seccomp
-
+     - \ref sectraits
+     - \ref secci
+     - \ref rawf
+     .
+  - \ref secnew
+     - \ref secobject
+     - \ref secvaluator
+     .
+  .
   \section secbas Basic Components
   Genetic Algorithms mimic biological evolution (in the case of Darwinian %GA)
 and not quite so natural evolution (in the case of Lamarckian %GA) by favoring
@@ -100,7 +113,7 @@ operation only needs to rank individuals and act upon collection of
 individuals. As such it can be made highly generic. It is recommened to look to
 EO for behaviors beyond the steady-state implemented here.
 
-\section More complicated concepts
+\section seccomp More complicated concepts
  In the previous section, we have looked at rather basic concepts of Genetic
 Algorithms. Here we introduce other programming concepts which allow for
 greater abstraction between the %GA itself and the object (and functional) to
@@ -120,7 +133,7 @@ implementation by simply using different %Traits. This, of course, may have
 unwanted consequences.
 
 
- \subsection ci Creating Generic Individuals 
+ \subsection secci Creating Generic Individuals 
  Before any type of %GA can be done, one needs to define the individuals on
 which the algorithm is applied. Quite obviously, these individuals contain
 application specific information, as well as generic %GA content. To this end,
@@ -326,7 +339,7 @@ The first class should contain the minimum information necessary for coding the
 characteristics of an individual. Say, for an fcc, single-cell-shape,
 combinatorial search, this would be simply the bitstring coding for the
 occupation of each lattice-site. Each individual will contain an instance of
-this class. So small footprints is best. For more details see \ref secobj 
+this class. So small footprints is best. For more details see \ref secobject
 
 The second object is used mainly by GA::Darwin. It should contain all
 functional related evaluation subroutines, as well as the ability to mate
@@ -385,7 +398,7 @@ necessary members (see darwin/bitstring.h).
 iterator and const_iterator are also redefined, such that the full content of
 Object can be accessed through begin() and end() member functions. Objects
 should copiable through a copy constructor, and comparable through the explicit
-declaration of operator==(). The member function broadcast should allow
+declaration of operator==(). The member %function broadcast should allow
 serialization of object. See \ref MPI. 
 
 An external operator<< should allow for the object to be dumped to a stream.
@@ -394,7 +407,7 @@ from an std::string via overloaded operator<<.
 
 
 The following are very bitstring related and may become deprecated at some
-point.  A member function Container() should allow direct access to the
+point.  A member %function Container() should allow direct access to the
 container.  mask() should allow the logical negation of part of the encoding.
 get_concentration() should return the concentration of the object.
 
@@ -416,7 +429,7 @@ Indeed, GA::Darwin and related will call upon it to,
   - ...
   .
 All these and more are described in GA::Evaluator. The simplest way to create a
-new evaluator is to derive it from GA::Evaluator. Note that no virtual function
+new evaluator is to derive it from GA::Evaluator. Note that no virtual %function
 is declared. Indeed, it is expected the %GA run itself will be created using a
 GA::Darwin object specifically instanciated with your evaluator.
 \see BitString::Evaluator, SingleSite::Evaluator, TwoSites::Evaluator, CE::Evaluator,

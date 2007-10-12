@@ -166,7 +166,7 @@ namespace Store
       Conditional   (t_Evaluator &_eval, T_TYPE _type, const TiXmlElement &_node)
                   : t_Base( _eval), condition( _type, _node ), 
                     print_what( PRINT_CONDITION ) { Load( _node ); }
-      //! Deconstructor
+      //! Destructor
       virtual ~Conditional() {}
 
       //! \brief simply stores results for which T_CONDTION::operator()( const t_Individual& )

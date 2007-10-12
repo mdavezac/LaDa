@@ -16,9 +16,7 @@
 
 namespace GA
 {
-  /** \ingroup Genetic
-   * @{
-  * \brief Counts the number of non-identical individuals in the population
+  /** \brief Counts the number of non-identical individuals in the population
   * \details Non-identical will depend on the implementation of
   *          t_Individual::operator==()
   */
@@ -62,5 +60,5 @@ namespace GA
   };
   
 }
-
+  
 #endif
