@@ -110,14 +110,15 @@ namespace Pescan
       bool do_destroy_dir;
 
     public:
-      Interface () : atom_input("atom.config"), genpot(), escan(), computation(VBM), do_destroy_dir(true) {}
+      Interface () : atom_input("atom.config"), genpot(), escan(),
+                     computation(VBM), do_destroy_dir(true) {}
      ~Interface() {};
 
      bool Load( const TiXmlElement &_node );
 
      types::t_real operator()( Ising_CE::Structure &_str ); 
      types::t_real launch_pescan( Ising_CE::Structure &_str ); 
-     void set_dirname( const std::string &_dir ) { do_destroy_dir = false; dirname = _dir; }
+     void set_dirname( const std::string &_dir ) { dirname = _dir; }
      void set_references( types::t_real _val, types::t_real _cond )
        { escan.Eref.vbm = _val; escan.Eref.cbm = _cond; }
      void get_references( types::t_real &_val, types::t_real &_cond ) const

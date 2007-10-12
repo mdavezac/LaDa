@@ -3,6 +3,8 @@
 //
 #include <print/stdout.h>
 #include <print/manip.h>
+#include <print/xmg.h>
+
 #include "pescan.h"
 
 namespace Pescan
@@ -52,13 +54,29 @@ errorout:
     pescan.get_references(x,y); // band edges have not been read if below is true
     if (     std::abs(x + 666.666 ) < types::tolerance 
          and std::abs(y - 666.666 ) < types::tolerance )
+    {
       set_all_electron();
+      Print::out << "No reference energy on input, "
+                 << "will first perform all electron calculation\n"; 
+      Print::xmg << Print::Xmg::comment << "No reference energy on input, "
+                 << "will first perform all electron calculation" << Print::endl; 
+    }
+    else
+    {
+      Print::out << "Reference Energies are: CBM=" << y
+                 << ", VBM=" << x << "\n";
+      Print::xmg << Print::Xmg::comment << "Reference Energies are: CBM=" << y
+                 << ", VBM=" << x << Print::endl;
+    }
 
     if (     _node.FirstChildElement("Filenames") 
          and _node.FirstChildElement("Filenames")->Attribute("BandEdge") )
     {
       references_filename = _node.FirstChildElement("Filenames")->Attribute("BandEdge");
       references_filename = Print::reformat_home( references_filename );
+      Print::out << "Will store Reference energies at: " << references_filename << "\n";
+      Print::xmg << Print::Xmg::comment 
+                 << "Will store Reference energies at: " << references_filename << Print::endl;
     }
 
     return true;
@@ -79,7 +97,7 @@ errorout:
     // then evaluates band gap
     types::t_real result = pescan(structure);
 
-    // checks that non-zero band gap has been found
+    // checks that non-zero band gap has been found (and non-negative!)
     if ( result < types::tolerance )
     {
       Print::out << " Found metallic or negative band gap!! " << result << "\n" 
@@ -107,27 +125,29 @@ errorout:
     read_references();
 
 #ifdef _MPI
-    if ( not mpi::main.is_root_node() )
-      return true;
+    if ( not mpi::main.is_root_node() ) return true;
 #endif
+    // recomputes all electron references every so often, if required
+    if (     check_ref_every != -1 
+         and age % check_ref_every == 0 )  set_all_electron();
 
-    if ( check_ref_every != -1 ) // recomputes all electron references every so often, if required
-    {
-      if ( not ( age % check_ref_every ) )
-        set_all_electron();
-    }
     return true;
   }
 
   void Darwin::write_references()
   {
+    types :: t_real a, b;
+    pescan.get_references( a, b );
+
+    Print::out << "Reference Energies are: CBM=" << b
+               << ", VBM=" << a << "\n";
+    Print::xmg << Print::Xmg::comment << "Reference Energies are: CBM=" << b
+               << ", VBM=" << a << Print::endl;
 #ifdef _MPI 
     if ( not mpi::main.is_root_node() ) return;
 #endif
     std::ofstream file( references_filename.c_str(), std::ios_base::out | std::ios_base::trunc ); 
-    if ( not file.is_open() )
-      return;
-    types :: t_real a, b;
+    if ( not file.is_open() ) return;
     pescan.get_references( a, b );
     file << a << "   "; if ( file.fail() ) return;
     file << b << std::endl; if ( file.fail() ) return;
@@ -151,7 +171,7 @@ errorout:
     }
     bc << a << b << mpi::BroadCast::allocate 
        << a << b << mpi::BroadCast::broadcast
-       << a << b;
+       << a << b << mpi::BroadCast::clear;
 #endif 
 
     if ( a >= b )  return;
@@ -161,7 +181,8 @@ errorout:
 failure:
 #ifdef _MPI
     bc << a << a << mpi::BroadCast::allocate 
-       << a << a << mpi::BroadCast::broadcast;
+       << a << a << mpi::BroadCast::broadcast
+       << a << a << mpi::BroadCast::clear;
 #endif
   }
 

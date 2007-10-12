@@ -40,7 +40,7 @@ namespace Print
       bool is_set() const { return not filename.empty(); }
       bool is_open() { return do_print and file.is_open(); }
       void init(const std::string &_f) { if ( filename == _f ) return; init_(_f); }
-      template<class T_TYPE> StdOut& operator<< ( const T_TYPE &_whatever )
+      template<class T_TYPE> inline StdOut& operator<< ( const T_TYPE &_whatever )
         { operator_( _whatever ); return *this; }
       template<class T_TYPE> inline void operator_ ( const T_TYPE &_whatever );
 #ifdef _MPI

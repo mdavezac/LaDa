@@ -64,20 +64,14 @@ namespace Pescan
       bool Load( const TiXmlElement &_node );
       bool Continue();
       void operator()();
-      void operator()( Keeper &_keeper )
-      {
-        Darwin::operator()();
-        // copies band edges into object
-        get_bands( _keeper.vbm, _keeper.cbm );
-      }
-    void operator<<( const Vff::Darwin &_vff );
+      void operator()( Keeper &_keeper );
+      void operator<<( const Vff::Darwin &_vff );
 
     protected:
       void set_all_electron() { pescan.set_method( Pescan::Interface::Escan::ALL_ELECTRON ); }
       void read_references();
       void write_references();
-      void get_bands( types::t_real &_vbm, types::t_real &_cbm ) 
-        { pescan.get_bands( _vbm, _cbm); }
+      void get_bands( types::t_real &_vbm, types::t_real &_cbm ) { pescan.get_bands( _vbm, _cbm); }
   };
 
   inline std::ostream& operator<<(std::ostream &_stream, const Keeper &_o)
@@ -86,6 +80,13 @@ namespace Pescan
             << "  --  VBM " << std::fixed << std::setw(12) << std::setprecision(6) << _o.vbm; 
     return _stream; 
   } 
+
+  inline void Darwin :: operator()( Keeper &_keeper )
+  {
+    Darwin::operator()();
+    // copies band edges into object
+    get_bands( _keeper.vbm, _keeper.cbm );
+  }
 
 } // namespace Pescan
 

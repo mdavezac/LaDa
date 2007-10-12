@@ -7,6 +7,7 @@
 
 #include <physics/physics.h>
 #include <print/manip.h>
+#include <print/stdout.h>
 
 #ifdef _NOLAUNCH
 #include<eo/utils/eoRNG.h>
@@ -21,7 +22,7 @@ namespace Pescan
       
     std::string olddirname = dirname;
     escan.scale = _str.scale;
-    if ( escan.method == Escan::FOLDED_SPECTRUM and not do_destroy_dir )
+    if ( escan.method == Escan::FOLDED_SPECTRUM and (not do_destroy_dir) )
     {
       dirname = olddirname;
       create_directory();
@@ -42,7 +43,7 @@ namespace Pescan
 
     computation = VBM;
     destroy_directory();
-    if ( escan.method == Escan::FOLDED_SPECTRUM and not do_destroy_dir )
+    if ( escan.method == Escan::FOLDED_SPECTRUM and (not do_destroy_dir) )
       dirname = olddirname + ( computation == CBM ?  "/cbm": "/vbm" );
     create_directory();
     create_potential();
@@ -53,16 +54,6 @@ namespace Pescan
   }
   void Interface :: create_directory()
   {
-    if ( do_destroy_dir ) 
-    {
-      std::ostringstream sstr;
-      sstr << "escan";
-#ifdef _MPI
-      sstr << "." << mpi::main.rank();
-#endif
-      dirname = sstr.str();
-    }
-
     std::ostringstream sstr;
     sstr << "mkdir " << dirname;
     system( sstr.str().c_str() );
@@ -122,8 +113,6 @@ namespace Pescan
     system( sstr.str().c_str() );
 
     std::string output = Print::StripEdges(escan.output);
-    if ( escan.method == Escan::FOLDED_SPECTRUM )
-      output += ( computation == VBM ) ? "/vbm": "/cbm";
     sstr.str("");
     sstr << "cd " << dirname << "; ./" << Print::StripDir(escan.launch) << " > " << output;
 #ifndef _NOLAUNCH
@@ -169,6 +158,9 @@ namespace Pescan
       std::string str = parent->Attribute("system");
       system( str.c_str() );
     }
+
+    do_destroy_dir = true;
+    if( parent->Attribute("keepdirs") ) do_destroy_dir = false;
 
     child = parent->FirstChildElement("GenPot");
     if (    (not child)
@@ -377,10 +369,19 @@ namespace Pescan
 #endif
     std::ifstream file;
     std::ostringstream sstr;
-    sstr << dirname << "/" << Print::StripEdges(escan.output);
-    if ( escan.method == Escan::FOLDED_SPECTRUM )
-      sstr << ( ( computation == VBM ) ? "/vbm": "/cbm" );
+    sstr << dirname; 
+    sstr << "/" << Print::StripEdges(escan.output);
     file.open( sstr.str().c_str(), std::ios_base::in ); 
+    if( file.fail() )
+    {
+      std::string filename = sstr.str();
+      sstr.str("");
+      sstr << "Could not open file "
+           << filename
+           << " in Pescan::Interface::read_result " << std::endl;
+      throw std::runtime_error( sstr.str() );
+    }
+
     char cline[256];
     std::string line("");
     while (     ( not file.eof() )
@@ -420,7 +421,8 @@ namespace Pescan
       // watch out! C arrays start at index = 0
       if ( eigenvalues.size() < n )
       {
-        std::cerr << "Error, not enough states were computed to determine band gap " << n << std::endl;
+        std::cerr << "Error, not enough states were computed to determine band gap "
+                  << n << std::endl;
         return -1.0;
       }
       bands.vbm = eigenvalues[n-1];

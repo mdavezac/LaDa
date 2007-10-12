@@ -298,7 +298,7 @@ namespace GA
       {
         Print::xmg << Print::Xmg::comment << "Will Save Every " << n
                    << " Generations " << Print::endl;
-        SaveEvery<t_Darwin> *save = new SaveEvery<t_Darwin>( *this, &Darwin::Save, std::abs(n) );
+        SaveEvery<t_This> *save = new SaveEvery<t_This>( *this, &Darwin::Save, std::abs(n) );
         eostates.storeFunctor( save );
         continuator->add( *save );
       }
@@ -732,14 +732,13 @@ namespace GA
 #endif
     for(; i_pop != i_end; ++i_pop)
     {
-          random_populate(*i_pop, target); //break;
-//     switch ( populate_style )
-//     {
-//       case RANDOM_POPULATE:
-//         random_populate(*i_pop, target); break;
-//       case PARTITION_POPULATE:
-//         partition_populate(*i_pop, target); break;
-//     }
+      switch ( populate_style )
+      {
+        case RANDOM_POPULATE:
+          random_populate(*i_pop, target); break;
+        case PARTITION_POPULATE:
+          partition_populate(*i_pop, target); break;
+      }
     }
   }
 

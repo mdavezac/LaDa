@@ -33,10 +33,15 @@ namespace TwoSites
       _kfirst->type = std::complex<types::t_real>(0);
       for(T_R_IT i_r( _rfirst ); i_r != _rend; ++i_r )
       {
+        // used to be directly in std::complex constructor below...
+        // but then it hit me: which constructor argument does c++ look at first?
+        // this is safe now.
+        types::t_real a = i_r->type;
+        types::t_real b = (++i_r)->type;
         _kfirst->type +=   exp( imath * ( i_r->pos[0] * _kfirst->pos[0] +
                                           i_r->pos[1] * _kfirst->pos[1] +
                                           i_r->pos[2] * _kfirst->pos[2] ) )
-                         * std::complex<types::t_real>(i_r->type, (++i_r)->type);
+                         * std::complex<types::t_real>(a, b);
       }
     }
   }

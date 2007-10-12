@@ -319,7 +319,7 @@ extern const types::t_int ROOT_NODE;
   //!     << A << B << C  // loads buffers
   //!     << mpi::BroadCast::broadcast // broadcasts buffers
   //!     << A << B << C  // forwards buffers to A, B, C
-  //!     << mpi::BroadCast::reset; // clears all and resets bc
+  //!     << mpi::BroadCast::clear; // clears all and resets bc
   //! \endcode
   //! Whithin this code, only a few types can serialized, types::int,
   //! types::real, bool, and std::string. You can (and should) "overload" the

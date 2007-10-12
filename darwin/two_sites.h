@@ -35,8 +35,12 @@
 
 #include "gaoperators.h"
 
-// Defines base classes for two site structures
-
+/** \ingroop Genetic
+ * @{ */
+//! \brief Defines base classes for ternary and quaternary semi-conductors
+//! \details It is expected the lattice will contain two different sites, one
+//for cations, another for anions.  The atoms in the structure are rearranged
+//(see TwoSites::rearrange_structure) such that
 namespace TwoSites
 {
   void rearrange_structure(Ising_CE::Structure &);
@@ -172,5 +176,7 @@ namespace TwoSites
 } // namespace TwoSites
 
 #include "two_sites.impl.h"
+
+/* @} */
 
 #endif // _TWOSITES_OBJECT_H_

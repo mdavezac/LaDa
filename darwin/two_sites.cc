@@ -83,20 +83,20 @@ namespace TwoSites
     {
       if ( not ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
       {
-        i_atom->type = std::real(*i_hold);
-        if ( std::abs(i_atom->type) < types::tolerance )
+        if ( std::abs( std::real(*i_hold) ) < types::tolerance )
           i_atom->type = rng.flip() ? 10.0*types::tolerance: -10.0*types::tolerance;
+        else i_atom->type = std::real( *i_hold );
       }
-      ( i_atom->type > 0 ) ? ++concx : --concx;
+      ( i_atom->type > 0.0 ) ? ++concx : --concx;
 
       ++i_atom;
       if ( not ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
       {
-        i_atom->type = std::imag(*i_hold);
-        if ( std::abs(i_atom->type) < types::tolerance )
+        if ( std::abs( std::imag(*i_hold) ) < types::tolerance )
           i_atom->type = rng.flip() ? 10.0*types::tolerance: -10.0*types::tolerance;
+        else i_atom->type = std::imag( *i_hold );
       }
-      ( i_atom->type > 0 ) ? ++concy : --concy;
+      ( i_atom->type > 0.0 ) ? ++concy : --concy;
     }
 
     // then normalize it while setting correct concentrations

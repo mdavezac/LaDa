@@ -68,5 +68,18 @@ namespace Print
      return _string;//return the converted string
   }
    
+// void BackwardFind( ifstream &_file, const std::string _comp )
+// {
+//   types::t_unsigned size = 10*_comp.size() * sizeof( char );
+//   if( size < 100 ) size = 100;
+//   types::t_int i;
+//
+//   // go to end of file (less eof char)
+//   _file.seekg(0, ios::end);
+//   i = (types::t_int) in.tellg(); // see how many bytes in file
+//   i -= size;                // backup before eof
+//   if ( i < 0 ) i = 0;
+//   while(
+// }
 
 }
