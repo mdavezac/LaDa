@@ -25,14 +25,28 @@
 #include "gatraits.h"
 #include "loadsave.h"
 
-//! \brief Functors implementing optimization goals
-//! \details  
-//!
-//! \par Design Philosophy
-//! Again, we are faced with the problem of implementing objects capable of
-//! dealing as easily with vecctorial quantities (multi-objective %GA) and scalar
-//! quantities (single-objective %GA). We have chosen to implement
-//! multiobjectives as a vectors of scalar objectives. This does not necessarily mean that 
+//! \brief Implements optimization goals by linking "raw fitness" to "polished" fitness
+//! \details The raw fitness is simply whatever comes out of the functional (e.g. some
+//! class derived from GA::Evaluator). The fitness is whatever quantity is used
+//! to appreciate one individual over the other. The link between the two is the
+//! objective. This could mean in the case of minimization a simple identity, in
+//! the case of maximization a negation, or in the case of a convex-hull,
+//!  the depth to that convex-hull. 
+//! 
+//! All objectives are derived from a single template class, Objective::Base,
+//! built to support through templatization both scalar and vectorial
+//! fitnesses. In any case, are defined the member functions allowing straight up
+//! evaluation, taking in a t_Quantity and returning a t_Fitness, gradient
+//! evaluations, as well as standard XML read and write.
+//! 
+//! For ease of use a class Objective::Types is declared which contains
+//! typedefs to scalar and vectorial objectives, Objective::Types::Scalar and
+//! Objective::Types::Vector. It also contains a static function  capable of
+//! reading XML input and returning a pointer to one of the objectives defined below. 
+//! \note Fitnesses can be made to depend upon the whole population, say for
+//! niching, via objects from the Ranking namespace. Rankings are applied after
+//! objectives.
+//! \see Fitnesss, Ranking
 namespace Objective
 {
 
