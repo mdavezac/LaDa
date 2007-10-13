@@ -39,6 +39,7 @@ sub dodir()
 {
   foreach $dir ( <*/> )
   {
+    next if ($dir =~ /LaDa/);
     chdir $dir;
     get_max_revision();
     chdir "..";
@@ -52,19 +53,22 @@ sub get_max_revision()
     next if ( $file =~ /config\.h/ );
 
     open IN, "$file";
-    $n = 0;
-    while ( $_=<IN> and $n < 5)
+    my $n = 0;
+    my $found = 0;
+    while ( ($_=<IN>) and ($n < 5) )
     {
-      if( /Version: \$Id:\s+(\S+)\s+(\d+)/ )
+      if( /Version:+(\s+|)\$Id:\s+(\S+)\s+(\d+)/ )
       {
-        $max_revision = $2 if ( $2 > $max_revision );
-        $min_revision = $2 if ( $min_revision == -1 );
-        $min_revision = $2 if ( $2 < $min_revision and $2 != -1);
+        $max_revision = $3 if ( $3 > $max_revision );
+        $min_revision = $3 if ( $min_revision == -1 );
+        $min_revision = $3 if ( $3 < $min_revision and $3 != -1);
+        $found = 1;
         last;
       }
       $n ++;
     }
     close IN; 
+    print "Revision String not found in $file\n" if ($found != 1 and $file !~ /revision.h/ );
   }
 }
 

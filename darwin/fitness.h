@@ -74,13 +74,13 @@ namespace Fitness
 
     //! \brief Dumps fitness to a stream
     template<class TQUANTITYTRAITS>
-      friend inline std::istream & operator>>( std::istream &_is,
-                                               const Base<TQUANTITYTRAITS, true> &_fit );
+      friend std::istream & operator>>( std::istream &_is,
+                                        const Base<TQUANTITYTRAITS, true> &_fit );
     
     //! \brief Retrieves fitness from a stream
     template<class TQUANTITYTRAITS>
-      friend inline std::ostream & operator<<( std::ostream &_is,
-                                               Base<TQUANTITYTRAITS, true> &_fit );
+      friend std::ostream & operator<<( std::ostream &_os,
+                                        Base<TQUANTITYTRAITS, true> &_fit );
     public:
       //! \brief The traits of the fitness quantity \see Traits::Quantity
       typedef T_QUANTITYTRAITS t_QuantityTraits;
