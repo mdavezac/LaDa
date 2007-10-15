@@ -54,7 +54,6 @@ namespace TwoSites
 
   }
 
-
   //  sets concentration from k-space values.
   //  individual need not be physical (ie S_i=+/-1) when fourier transformed to real-space
   //  a normalization procedure is applied which takes into account:

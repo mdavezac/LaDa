@@ -29,7 +29,7 @@ namespace Objective
       *i_grad_result -= *i_grad;
   }
   template< class T_GA_TRAITS >
-  inline typename Maximize<T_GA_TRAITS>>::t_ScalarQuantity
+  inline typename Maximize<T_GA_TRAITS>::t_ScalarQuantity
     Maximize<T_GA_TRAITS> :: evaluate_with_gradient( const t_Quantity &_val,
                                                      t_QuantityGradients& _grad,
                                                      t_VA_Type *_i_grad)  
@@ -55,7 +55,7 @@ namespace Objective
   }
 
   template< class T_GA_TRAITS >
-  inline typename Minimize<T_GA_TRAITS>>::t_ScalarQuantity
+  inline typename Minimize<T_GA_TRAITS>::t_ScalarQuantity
     Minimize<T_GA_TRAITS> :: evaluate_with_gradient( const t_Quantity &_val,
                                                      t_QuantityGradients& _grad,
                                                      t_VA_Type *_i_grad)  

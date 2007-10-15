@@ -128,7 +128,7 @@ namespace TwoSites
     rearrange_structure(structure);
     if ( not consistency_check() )  return false;
 
-    if ( concentration.Load( _node ) ) 
+    if ( not concentration.Load( _node ) ) 
     {
       std::cerr << " Could not load Concentration input!! " << std::endl; 
       return false;

@@ -37,6 +37,7 @@ namespace Print
       bool open();
       void close();
 
+      std::string get_filename() const { return filename; }
       bool is_set() const { return not filename.empty(); }
       bool is_open() { return do_print and file.is_open(); }
       void init(const std::string &_f) { if ( filename == _f ) return; init_(_f); }

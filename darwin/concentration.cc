@@ -105,9 +105,9 @@ types::t_real set_concentration( Ising_CE::Structure &_str,
     // in _node or its child
     str = _node.Value();
     if ( str.compare("Functional" ) != 0 )
-      parent = _node.FirstChildElement("Functional");
-    else
-      parent = &_node;
+         parent = _node.FirstChildElement("Functional");
+    else parent = &_node;
+
     while (parent)
     {
       str = "";
@@ -210,6 +210,7 @@ types::t_real set_concentration( Ising_CE::Structure &_str,
       return _x <= c0 and _x >= c1;
     return _x >= c0 and _x <= c1;
   }
+
 
 
 #ifdef _MPI

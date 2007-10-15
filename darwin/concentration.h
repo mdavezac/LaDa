@@ -83,55 +83,17 @@
       bool Load( const TiXmlElement &_node );
       //! \brief Returns x with respect to input _y
       //! \details returns X_vs_y::x0 if the concentration is fixed.
-      types::t_real get_x( types::t_real _y ) 
-      {
-        if ( single_c ) return x0;
-        return c + b * _y + a * _y * _y; 
-      }
+      types::t_real get_x( types::t_real _y );
       //! \brief sets a fixed concentration
       void set_xy( types::t_real _x, types::t_real _y )
-      {
-        x0 = _x; y0 = _y; single_c = true;
-      } 
+        { x0 = _x; y0 = _y; single_c = true; }
       //! returns X_vs_y::y0
       types::t_real get_y() { return y0; }
       //! returns X_vs_y::x0
       types::t_real get_x() { return x0; }
       //! \brief Returns y with respect to input _x
       //! \details returns X_vs_y::y0 if the concentration is fixed.
-      types::t_real get_y( types::t_real _x )
-      {
-        if ( single_c ) return y0;
-        if ( std::abs ( a ) < types::tolerance )
-          return ( _x - c ) / b;
-       
-        types::t_real det = b*b - 4.0 * (c-_x) * a; 
-        if ( det < 0 )
-        {
-          std::cerr << "Error when using Concentration::get_y(" << _x<<")" << std::endl
-                    << "determinent is negative, " << det << std::endl;
-          throw std::runtime_error("");
-        }
-        det = std::sqrt(det);
-        types::t_real u = 1.0 / ( 2.0 * a );  
-        types::t_real r0 =  (-b + det ) * u;
-        types::t_real r1 =  (-b - det ) * u;
-        if ( std::abs(r0 - 1.0 ) < types::tolerance ) r0 = 1.0;
-        if ( std::abs(r0 + 1.0 ) < types::tolerance ) r0 = -1.0;
-        if ( std::abs(r1 - 1.0 ) < types::tolerance ) r1 = 1.0;
-        if ( std::abs(r1 + 1.0 ) < types::tolerance ) r1 = -1.0;
-        if (     ( r0 < -1.0 or r0 > 1.0 )
-             and ( r1 < -1.0 or r1 > 1.0 ) )
-        {
-          std::cerr << a + b +c << " " << a - b + c << std::endl;
-          std::cerr << "Error when using Concentration::get_y(" << _x<< ")" << std::endl;
-          std::cerr << " r0= " << r0  << " and r1= " << r1 << std::endl;
-          throw std::runtime_error("");
-        }
-        if ( r0 < -1.0 or r0 > 1.0 ) 
-          return r1; 
-        return r0;
-      }
+      types::t_real get_y( types::t_real _x );
       //! \brief Returns true if some y can be computed with respect to input _x
       bool can_inverse( types::t_real _x );
       //! \brief Returns true if the concentration is fixed
@@ -139,6 +101,45 @@
 
   };
 
+  inline types::t_real X_vs_y :: get_x( types::t_real _y ) 
+  {
+    if ( single_c ) return x0;
+    return c + b * _y + a * _y * _y; 
+  }
+  
+  inline types::t_real X_vs_y :: get_y( types::t_real _x )
+  {
+    if ( single_c ) return y0;
+    if ( std::abs ( a ) < types::tolerance )
+      return ( _x - c ) / b;
+   
+    types::t_real det = b*b - 4.0 * (c-_x) * a; 
+    if ( det < 0 )
+    {
+      std::cerr << "Error when using Concentration::get_y(" << _x<<")" << std::endl
+                << "determinent is negative, " << det << std::endl;
+      throw std::runtime_error("");
+    }
+    det = std::sqrt(det);
+    types::t_real u = 1.0 / ( 2.0 * a );  
+    types::t_real r0 =  (-b + det ) * u;
+    types::t_real r1 =  (-b - det ) * u;
+    if ( std::abs(r0 - 1.0 ) < types::tolerance ) r0 = 1.0;
+    if ( std::abs(r0 + 1.0 ) < types::tolerance ) r0 = -1.0;
+    if ( std::abs(r1 - 1.0 ) < types::tolerance ) r1 = 1.0;
+    if ( std::abs(r1 + 1.0 ) < types::tolerance ) r1 = -1.0;
+    if (     ( r0 < -1.0 or r0 > 1.0 )
+         and ( r1 < -1.0 or r1 > 1.0 ) )
+    {
+      std::cerr << a + b +c << " " << a - b + c << std::endl;
+      std::cerr << "Error when using Concentration::get_y(" << _x<< ")" << std::endl;
+      std::cerr << " r0= " << r0  << " and r1= " << r1 << std::endl;
+      throw std::runtime_error("");
+    }
+    if ( r0 < -1.0 or r0 > 1.0 ) 
+      return r1; 
+    return r0;
+  }
 //! \deprecated normalizes the concentration of  a structure.
 //! Replaced by SingleSite::Concentration and affiliated
 types::t_real set_concentration( Ising_CE::Structure &_str,

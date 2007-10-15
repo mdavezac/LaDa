@@ -1037,7 +1037,18 @@ nextfilename:
                << "Functional Input file is located at " << evaluator_filename << "\n"
                << "Restart Input file is located at " << restart_filename << "\n"
                << "Xmgrace output file is located at " << Print::xmg.get_filename() << "\n"
-               << "Will Save to file located at " << save_filename << "\n" << Print::endl;
+               << "Will Save to file located at " << save_filename << "\n" << Print::endl
+               << Print::flush;
+    Print::xmg << Print::Xmg::comment << "GA Input file is located at "
+                                      << evaluator_filename << Print::endl
+               << Print::Xmg::comment << "Functional Input file is located at "
+                                      << evaluator_filename << Print::endl
+               << Print::Xmg::comment << "Restart Input file is located at "
+                                      << restart_filename << Print::endl
+               << Print::Xmg::comment << "Standard output file is located at "
+                                      << Print::out.get_filename() << Print::endl
+               << Print::Xmg::comment << "Will Save to file located at "
+                                      << save_filename << Print::endl;
 
 #ifdef _MPI
     // broadcasts all input files and filenames

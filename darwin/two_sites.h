@@ -77,13 +77,7 @@ namespace TwoSites
                       sites(_conc.sites) {}
       ~Concentration() {}
 
-      bool Load( const TiXmlElement &_node )
-      {
-        if( not X_vs_y::Load( _node ) ) return false;
-        if( not single_c )  return true;
-        x = get_x();  y = get_y();
-        return true;
-      }
+      bool Load( const TiXmlElement &_node );
 
       void operator()( Ising_CE::Structure &_str );
       void operator()( Object &_obj );
@@ -171,6 +165,14 @@ namespace TwoSites
       bool consistency_check();
   };
 
+
+  inline bool Concentration :: Load( const TiXmlElement &_node )
+  {
+    if( not X_vs_y::Load( _node ) ) return false;
+    if( not single_c )  return true;
+    x = get_x();  y = get_y();
+    return true;
+  }
 
 
 } // namespace TwoSites

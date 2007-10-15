@@ -70,8 +70,6 @@ namespace Print
        << mpi::BroadCast::broadcast
        << filename;
 
-    if ( mpi::main.is_root_node() ) return;
-
     init_(filename);
   }
 #endif
