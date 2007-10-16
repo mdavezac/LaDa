@@ -916,30 +916,30 @@ namespace Objective
   
 
    
-    //! (Vectorial) Hack, don't touch
-    template< class T_TYPE >
-      struct fork<T_TYPE, true>
+  //! (Vectorial) Hack, don't touch
+  template< class T_TYPE >
+    struct fork<T_TYPE, true>
+    {
+      //! (Vectorial) Hack, don't touch
+      typename T_TYPE :: Vector* operator()( const TiXmlElement &_node )
       {
-        //! (Vectorial) Hack, don't touch
-        typename T_TYPE :: Vector* operator()( const TiXmlElement &_node )
-        {
-          typename T_TYPE :: Vector* result;
-          result = T_TYPE::vector_from_xml( _node );
-          if( not result ) std::cerr << "Could not create multi-objective..." << std::endl;
-          return result;
-        }
-      };
-    //! (Scalar) Hack, don't touch
-    template< class T_TYPE > 
-      struct fork<T_TYPE, false>
+        typename T_TYPE :: Vector* result;
+        result = T_TYPE::vector_from_xml( _node );
+        if( not result ) std::cerr << "Could not create multi-objective..." << std::endl;
+        return result;
+      }
+    };
+  //! (Scalar) Hack, don't touch
+  template< class T_TYPE > 
+    struct fork<T_TYPE, false>
+    {
+      //! (Scalar) Hack, don't touch
+      typename T_TYPE :: Vector* operator()( const TiXmlElement &_node )
       {
-        //! (Scalar) Hack, don't touch
-        typename T_TYPE :: Vector* operator()( const TiXmlElement &_node )
-        {
-          return T_TYPE::scalar_from_xml( _node );
-        }
-      };
+        return T_TYPE::scalar_from_xml( _node );
+      }
+    };
 
-  }  // namespace Objective
+}  // namespace Objective
  /* @} */
 #endif //  _MULTIOB_OBJECTIVE_H_

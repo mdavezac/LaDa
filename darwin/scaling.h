@@ -334,12 +334,12 @@ namespace Scaling
   //! \details A distance is any binary functor of two individuals which returns
   //!          a \b scalar quantity. That said, it should somehow relate to
   //!          distances... In other words it should be larger for two
-  //!          individuals which share a large part of their genotype, or of
+  //!          individuals which share a large part of their genotype or of
   //!          their phenotype (whenever the two are distincts). 
   namespace Distance
   {
     /** \brief Defines a generalized Hamming distance \f$|\sigma_i-\sigma_j|=\sum_t
-       q_{t,\sigma_i} - q_{t,\sigma_j}|\f$ */
+       |q_{t,\sigma_i} - q_{t,\sigma_j}|\f$ */
     template<class T_GATRAITS>
     class GeneralHamming
     {
@@ -361,8 +361,8 @@ namespace Scaling
         //! Returns "Distance::GeneralHamming"
         std::string what_is() const { return "Distance::GeneralHamming"; }
     }; 
-    /** \brief Defines the Hamming distance \f$|sigma_i-\sigma_j|=\sum_t
-     *  q_{t,\sigma_i} = q_{t,\sigma_j}\ ?\ 1:\ 0\f$ */
+    /** \brief Defines the Hamming distance \f$|\sigma_i-\sigma_j|=\sum_t
+     *  (q_{t,\sigma_i} = q_{t,\sigma_j})\ ?\ 1:\ 0\f$ */
     template<class T_GATRAITS>
     class Hamming
     {
@@ -379,7 +379,7 @@ namespace Scaling
         typedef typename t_ScalarFitness :: t_Quantity t_ScalarFitnessQuantity;
 
       public:
-        //! Returns \f$\sum_t q_{t,\sigma_i} = q_{t,\sigma_j}\ ?\ 1:\ 0 \f$
+        //! Returns \f$\sum_t (q_{t,\sigma_i} = q_{t,\sigma_j})\ ?\ 1:\ 0 \f$
         t_ScalarFitnessQuantity operator()( const t_Individual &_i1, const t_Individual &_i2) const;
         //! Returns "Distance::Hamming"
         std::string what_is() const { return "Distance::Hamming"; }
