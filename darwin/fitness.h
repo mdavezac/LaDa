@@ -39,7 +39,7 @@
 //! that it is defined as a derived class of the scalar fitness. As such, it is
 //! possible (and sometimes interesting) to define a scalar fitness from the
 //! vectorial fitnesses. For an example, see Pareto ranking with niching in
-//! namespace Ranking.
+//! namespace Scaling.
 namespace Fitness
 {
   //! \brief %Base class for fitnesses

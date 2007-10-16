@@ -1,8 +1,8 @@
 /** \page xFunctionals  Functional input
-    In LaDa the input to all functionals is to be found between \xe
-    <Functional\ex \xa type\ax="??"\xe >\ex ... \xe</Functional>\ex tags, where
+    In LaDa the input to all functionals is to be found between 
+    \xe<Functional\ex \xa type\ax="whatever" \xe\>\ex ... \xe\</Functional\>\ex tags, where
     the attribute \xa type \ax defines which functional this tag will deal
-    with. Further \xe<Functional>\ex attributes, as well as tags contained within
+    with. Further \xe\<Functional\>\ex attributes, as well as tags contained within
     \xe<Functional>\ex will depend on \xa type\ax. 
     \param type can be one of the following:
            <ul> 
@@ -38,8 +38,8 @@
         <Angle A="Ga" B="Sb" C="In" gamma="tet" sigma="0" beta="5.75655" />
     </Functional>
     \endcode
-    \warning All codes which use vff also require coherent \ref Taglattice and
-             \ref Tagstructure tags. 
+    \warning All codes which use vff also require coherent \ref TagLattice and
+             \ref TagStructure tags. 
 
      There are a grand total of three tags
      \secreflist
@@ -55,7 +55,7 @@
      \param cutoff real space radius below which first neighbor relationships
       are assumed, eg if two atoms are closer than \a cutoff, then it is assumed that
       they are first neighbors. It must be given in the same units as positions in
-      \ref Tagstructure and \ref Taglattice (eg versus their scale attribute). Mind,
+      \ref TagStructure and \ref TagLattice (eg versus their scale attribute). Mind,
       the default value seems to work. 
 
      \section TagBond \<Bond/\>
@@ -65,9 +65,9 @@
               reformat your hard-drive.
       The attributes \a A, \a B, \a d0, and \a alpha are mandatory.
       \param A symbol of one of the bond-endpoint, must be one of the species listed
-               in \ref \taglattice
+               in \ref  TagLattice
       \param B symbol of the other bond-endpoint, must be one of the species listed
-               in \ref \taglattice
+               in \ref  TagLattice
       \param d0 equilibrium bond-length in &Aring;
       \param alpha  harmonic bond-stretching parameter \f$(N\cdot m^{-1})\f$
       \param alpha3 cubic    bond-stretching parameter \f$(N\cdot m^{-1})\f$
@@ -82,11 +82,11 @@
               reformat your hard-drive.
       The attributes \a A, \a B, \a C, \a gamma, \a sigma, and \a beta are mandatory.
       \param A symbol of one of the angle-endpoint, must be one of the species listed
-               in \ref \taglattice
+               in \ref TagLattice
       \param B symbol of the central atom in the angle, must be one of the species listed
-               in \ref \taglattice
+               in \ref TagLattice
       \param C symbol of the other angle-endpoint, must be one of the species listed
-               in \ref \taglattice
+               in \ref TagLattice
       \param gamma equilibrium angle. Can be "tet", or "tetrahedral" for some
                    kind of symmetrie. Otherwise, it should be
                    \f$\cos(\alpha)\f$, where \f$\alpha\f$ is the equilibrium angle of the bond.
@@ -178,10 +178,10 @@
      \param CBM conduction band minimum in eV
 
      \section TagHamiltonian \<Hamiltonian\> 
-     The meat of escan interface. The attributes of \ref <Hamiltonian> define
-     general properties, whereas specie dependent stuff go within, in the \ref
-     TagSpinOrbit tags.
-     \param launch  full path to <TT>escanCNL</TT> program. On unices, "~" will
+     The meat of escan interface. The attributes of \ref TagHamiltonian define
+     general properties, whereas specie dependent stuff go within, in the
+     \ref TagSpinOrbit tags.
+     \param launch  full path to \e escanCNL program. On unices, "~" will
                     be replaced with the path to your home
      \param kinscal ?? see nanopse input
      \param smooth ?? see nanopse input
@@ -193,7 +193,7 @@
                         compute on top of the valence states.
                       .
 
-    \section TagSpinOrbit <\SpinOrbit/\>
+    \section TagSpinOrbit \<SpinOrbit/\>
     Yet again, see nanopse input for details... The file named here must exist!
     \param filename full path to whatever. On unices, "~" will
                    be replaced with the path to your home

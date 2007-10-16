@@ -12,12 +12,12 @@
      <LI> \ref Tagvfffunc
      <LI> \ref TagGenPot
      <LI> \ref TagHamiltonian
-     <LI> \ref Taglattice
+     <LI> \ref TagLattice
      <LI> \ref TagPseudo
      <LI> \ref TagReference
      <LI> \ref Tagsite
      <LI> \ref TagSpinOrbit
-     <LI> \ref Tagstructure
+     <LI> \ref TagStructure
   </UL>
 
 */

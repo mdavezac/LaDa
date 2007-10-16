@@ -28,7 +28,7 @@
 #include "store.h"
 #include "evaluation.h"
 #include "breeder.h"
-#include "ranking.h"
+#include "scaling.h"
 #include "gatraits.h"
 
 namespace GA
@@ -64,8 +64,8 @@ namespace GA
       typedef typename Objective :: Types < t_GATraits >    t_ObjectiveType;
       //! Type of the storage type holder
       typedef typename Store :: Types< t_GATraits >         t_Store;
-      //! Type of the ranking virtual base class
-      typedef Ranking :: Base<t_GATraits>                   t_Ranking;
+      //! Type of the scaling virtual base class
+      typedef Scaling :: Base<t_GATraits>                   t_Scaling;
 
     protected:
       //! \brief Input/Output Flag. \see Darwin::do_save, Darwin::do_restart
@@ -184,7 +184,7 @@ namespace GA
       //! Using a virtual base class allows the instance to be pretty much
       //! anything we want. 
       //! \see Darwin::Load_Method()
-      t_Ranking*                         ranking;
+      t_Scaling*                         scaling;
 
       //! \brief The evaluator instance itself
       //! \see Darwin::Load(const TiXmlElement& )

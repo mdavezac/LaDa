@@ -467,7 +467,7 @@ namespace Vff
   {
 #ifdef _MPI
     /** \ingroup MPI
-     * \brief Serializes Vff::Functional
+     *  Serializes Vff::Functional
      */
     friend bool mpi::BroadCast::serialize<Vff::Functional> ( Vff::Functional& );
 #endif

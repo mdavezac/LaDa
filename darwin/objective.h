@@ -51,9 +51,9 @@
 //! Objective::Types::Vector. It also contains a static %function  capable of
 //! reading XML input and returning a pointer to one of the objectives defined below. 
 //! \note Fitnesses can be made to depend upon the whole population, say for
-//! niching, via objects from the Ranking namespace. Rankings are applied after
+//! niching, via objects from the Scaling namespace. Scaling are applied after
 //! objectives.
-//! \see Fitness, Ranking
+//! \see Fitness, Scaling
 //! \xmlinput should be all done by Objective::Types::new_from_xml()
 //! At present, the allowed \b scalar objectives are the following
 //! \code
@@ -90,8 +90,8 @@
 //! with the weight assigned by each \a coef attribute. The (possible) scalar
 //! objectives are those listed above.
 //! \note It turns out that Pareto ranking is not an Objective... Its a
-//! Ranking. Don't get it? doesn't matter. Just input it as given in
-//! Ranking::new_from_xml();
+//! Scaling. Don't get it? doesn't matter. Just input it as given in
+//! Scaling::new_from_xml();
 namespace Objective
 {
 

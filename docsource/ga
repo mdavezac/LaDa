@@ -36,7 +36,7 @@ Generally, a genetic algorithm follows the following simple flowchart
   digraph example {
         node [shape=record, fontname=Helvetica, fontsize=10];
         b [ label="Population" URL="\ref B"];
-        c [ label="Evaluation/Fitness/Ranking" URL="\ref C"];
+        c [ label="Evaluation/Fitness/Scaling" URL="\ref C"];
         d [ label="Offspring Generation" URL="\ref D"];
         e [ label="Replacement/Culling" URL="\ref E"];
         b -> c [ arrowhead="open" ];
@@ -46,7 +46,7 @@ Generally, a genetic algorithm follows the following simple flowchart
     }
 \enddot
   - <span style="color: blue"> \anchor B Population</span>: A collection of individuals
-  - <span style="color: blue"> \anchor C Evaluation/Fitness/Ranking</span>: All and any operation which
+  - <span style="color: blue"> \anchor C Evaluation/Fitness/Scaling</span>: All and any operation which
            which gives the algorithms the ability to discriminate between
            individuals, e. g. <STRONG>A</STRONG> is better than <STRONG>B</STRONG>, not as
            good as <STRONG>C</STRONG>. It is expected that an weak ordering

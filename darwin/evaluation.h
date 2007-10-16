@@ -155,7 +155,7 @@ template< class T_GATRAITS >
       //! Evaluation::Base::evaluate(t_Population&), conditional evaluation of
       //! \a _pop. 
       //! \details \a _pop is assessed only if the objectives are invalid for
-      //! some reason. Probably useless since the introduction of Ranking.
+      //! some reason. Probably useless since the introduction of Scaling.
       virtual void operator()( t_Population &_pop, t_Population &_offspring );
 
       //! \brief Correlates Evaluation::Base::objective and

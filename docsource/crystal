@@ -27,13 +27,13 @@
     \endcode
     The following XML tags have been introduced:
    \secreflist
-     \refitem Tagstructure \<Structure\>
+     \refitem TagStructure \<Structure\>
      \refitem Tagcell \<Cell\>
      \refitem Tagcolumn \<column/\>
      \refitem TagAtom \<Atom/\>
    \endsecreflist
 
-   \section Tagstructure \<Structure\>
+   \section TagStructure \<Structure\>
    \addindex \<Structure\>
    Contains information pertaining to a single structure. It expects a complete
    \ref Tagcell as well as at least one \ref TagAtom.
@@ -47,35 +47,35 @@
 
    \section Tagcell \<Cell\>
    \addindex \<Cell\>
-   Defines the unit-cell vectors of the \ref Tagstructure 
+   Defines the unit-cell vectors of the \ref TagStructure 
    tag whithin which it is found.  It does not expect any attributes.  The
    cell-vectors are defined using three \ref Tagcolumn tags.
 
    \section Tagcolumn \<column/\>
    \addindex \<column/\>
    Defines a column within a 3x3 matrix. It contains the following attributes
-   \param x first coordinate scaled by ref Tagstructure's \a scale attribute
-   \param y second coordinate scaled by ref Tagstructure's \a scale attribute
-   \param z third coordinate scaled by ref Tagstructure's \a scale attribute
+   \param x first coordinate scaled by ref TagStructure's \a scale attribute
+   \param y second coordinate scaled by ref TagStructure's \a scale attribute
+   \param z third coordinate scaled by ref TagStructure's \a scale attribute
    \param freeze Allows to "freeze" \a x, \a y, \a z, coordinates, or a
              combination thereof, such that the frozen coordinates are
              untouched during minimization. \a freeze is optional.
 
    \section TagAtom \<Atom/\> 
-   Defines an atomic site and its occupation of the \ref Tagstructure within
-   which it is found. Only attribute \a x, \a y, \z are mandatory for all
+   Defines an atomic site and its occupation of the \ref TagStructure within
+   which it is found. Only attribute \a x, \a y, \a z are mandatory for all
    applications. Attribute \a type is required for anything not GA. 
     
-   \param x first cartesian coordinate scaled by ref Tagstructure's \a scale attribute
-   \param y second cartesian coordinate scaled by ref Tagstructure's \a scale attribute
-   \param z third cartesian coordinate scaled by ref Tagstructure's \a scale attribute
+   \param x first cartesian coordinate scaled by ref TagStructure's \a scale attribute
+   \param y second cartesian coordinate scaled by ref TagStructure's \a scale attribute
+   \param z third cartesian coordinate scaled by ref TagStructure's \a scale attribute
    \param type Atomic type. It can be a numerical value (generally \f$\pm1\f$)
           or an atomic symbol
    \param freeze Allows to "freeze" \a x, \a y, \a z, or \a t coordinates, or a
              combination thereof, such that the frozen coordinates are
              untouched during minimization. \a t stands for type. \a freeze is optional. 
    \param site Should be an integer \f$i\in[0, N]\f$ where \f$N\f$ is the
-          number of sites declared in \ref Taglattice. The index \f$i\f$
+          number of sites declared in \ref TagLattice. The index \f$i\f$
           corresponds to the ordering of \ref Tagsite tags in the XML input. 
    
    <h1> Inputing a lattice </h1>
@@ -94,20 +94,20 @@
     \endcode
     \note Including a lattice  in your input is generally <em>not</em> an
        option. Furthermore, the lattice input must be coherent with whatever \ref
-       Tagstructure which may be required.
+       TagStructure which may be required.
 
     \ref Tagcolumn has already been introduced previously. This variation
       accepts the exact same attributes. Note that for some unknowable reason, \ref
-      Tagcolumn tags are not enclosed in a \ref Tagcell tag when defining a \ref  Taglattice tag...
+      Tagcolumn tags are not enclosed in a \ref Tagcell tag when defining a \ref  TagLattice tag...
 
     The following new XML tags have been introduced:
    \secreflist
-     \refitem Taglattice \<Lattice\>
+     \refitem TagLattice \<Lattice\>
      \refitem Tagsite \<site\>
      \refitem Tagatom \<atom/\>
    \endsecreflist
     
-   \section Taglattice \<Lattice\>
+   \section TagLattice \<Lattice\>
    \addindex \<Lattice\>
    Contains information pertaining to a lattice type.  In addition to three
    \ref Tagcolumn tag's, at least one \ref Tagsite is expected.
@@ -119,15 +119,15 @@
    \addindex \<site\>
       Defines a lattice site, which may contain one or more \ref Tagatom tags. 
       It accepts the following attributes.
-     \param x first cartesian coordinate scaled by ref Taglattice's \a scale attribute
-     \param y second cartesian coordinate scaled by ref Taglattice's \a scale attribute
-     \param z third cartesian coordinate scaled by ref Taglattice's \a scale attribute
+     \param x first cartesian coordinate scaled by ref TagLattice's \a scale attribute
+     \param y second cartesian coordinate scaled by ref TagLattice's \a scale attribute
+     \param z third cartesian coordinate scaled by ref TagLattice's \a scale attribute
      \param freeze Allows to "freeze" \a x, \a y, \a z, or \a t coordinates, or a
                combination thereof, such that the frozen coordinates are
                untouched during minimization. \a t stands for type. \a freeze is optional.
-   \warning \a freeze in a \ref Taglattice can only be used to freeze all atoms
+   \warning \a freeze in a \ref TagLattice can only be used to freeze all atoms
             of a particular site in a structure if attribute \a site of the relevant \ref
-            TagAtom tags have been set in the corresponding \ref Tagstructure.
+            TagAtom tags have been set in the corresponding \ref TagStructure.
 
    \section Tagatom \<atom/\>
      \addindex \<atom/\>

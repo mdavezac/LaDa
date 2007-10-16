@@ -160,8 +160,8 @@ namespace GA
     if ( not evaluation )
       evaluation = new Evaluation::Base<t_GATraits>( evaluator, *objective, *store );
 
-    ranking = Ranking::new_from_xml<t_GATraits>( _parent );
-    if( ranking ) Print::xmg << Print::Xmg::comment << ranking->what_is() << Print::endl;
+    scaling = Scaling::new_from_xml<t_GATraits>( _parent );
+    if( scaling ) Print::xmg << Print::Xmg::comment << scaling->what_is() << Print::endl;
       
   }
   
@@ -876,7 +876,7 @@ namespace GA
       breeder->synchronize_offsprings( *i_island );
       if(history) history->synchronize();
 #endif 
-      if( ranking )(*ranking)( *i_island );
+      if( scaling )(*scaling)( *i_island );
     }
     types::t_unsigned n = 0;
 
@@ -904,7 +904,7 @@ namespace GA
           if(history) history->synchronize();
 #endif 
 
-          if( ranking )(*ranking)( *i_island );
+          if( scaling )(*scaling)( *i_island );
          
           (*replacement)(*i_island, offsprings); // after replace, the new pop. is in population
 

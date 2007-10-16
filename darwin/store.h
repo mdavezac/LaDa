@@ -232,13 +232,13 @@ namespace Store
   //! when an individual should <em> not </em> be stored.
   //! At this point, Three classes are defined
   //! - Condition :: BaseOptima a base class which basic implements for "best-of" behaviors
-  //! - Condition :: FromObjective implements "Best-of" behavior using Objective classes
-  //! - Condition :: Optima implements "Best-of" behavior using ordering
+  //! - Condition :: FromObjective implements "%Best-of" behavior using Objective classes
+  //! - Condition :: Optima implements "%Best-of" behavior using ordering
   //! operators acting upon indiividuals
   //! \sa Store::Conditional 
   namespace Condition
   {
-    //! \brief Base class for "Best-Of" Behavior
+    //! \brief Base class for \"Best-Of\" Behavior
     //! \details Only implements BaseOptima::Restart, BaseOptima::Save,
     //! BaseOptima::print_results for the one "best" individual stored as
     //! BaseOptima::optimum. BaseOptima::optimum will be used in derived classes
@@ -286,7 +286,7 @@ namespace Store
         std::string print() const;
     };
 
-    //! \brief Implements "Best-of" behavior using an individual's fitness and an Objective
+    //! \brief Implements Best-of behavior using an individual's fitness and an Objective
     //! \details An individual is deemed good for storage depending on the FromObjective::objective,
     //! FromObjective::objective can be the provided as a pointer upon
     //! constructing this object, or it can be created from an XML input. From
