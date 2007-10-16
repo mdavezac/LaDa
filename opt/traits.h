@@ -111,7 +111,7 @@ namespace Traits
       //! \details if \a T_ARG is a types::real, return true if 
       //! \f$|\_a - \_b| > \f$ types::tolerance, and \f$ \_a  > \_b \f$
       static bool greater( const T_ARG &_a, const T_ARG &_b ) 
-        { return _b< _a; }
+        { return _a > _b; }
       //! \brief returns true if \f$ \_a  == \_b \f$
       //! \details if \a T_ARG is a types::real, return true if 
       //! \f$|\_a - \_b| > \f$ types::tolerance, and \f$ \_a  > \_b \f$

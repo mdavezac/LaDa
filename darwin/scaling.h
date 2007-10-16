@@ -193,8 +193,8 @@ namespace Scaling
                and only if 
                \f[
                    \mathcal{F}^v(\sigma_i) \succeq \mathcal{F}^v(\sigma_j)\quad
-                   \Leftrightarrow\quad \forall t\in[0,N[,\ \mathcal{F}_t(\sigma_i)
-                   \geq \mathcal{F}_t(\sigma_j).
+                   \Leftrightarrow\quad \forall t\in[0,N[,\ \mathcal{F}^v_t(\sigma_i)
+                   \geq \mathcal{F}^v_t(\sigma_j).
                \f]
                This definition of Pareto ordering is defined by Fitness::Base
                (both for vectorial and scalar flavors). ParetoRanking sets the
@@ -204,7 +204,9 @@ namespace Scaling
                                              \mathcal{F}^v(\sigma_j)\ ?\ -1 :\ 0 
                \f]
                The negation is there because the default is to minimize. Also,
-               according to the definition, individuals dominate themselves.
+               according to the definition, individuals dominate themselves. As
+               a final remark, note that (a \> b) and (a \< b) does not imply
+               (a==b). 
       \note For a multi-objective %GA, ParetoRanking acts upon the \b vectorial
             fitness and sets the \b scalar fitness. For single-objective its
             acts, by default, upon the \b scalar fitness.
@@ -251,7 +253,7 @@ namespace Scaling
   
       /** Sets the scalar fitnes to the number of dominated individual,
           \f$ \mathcal{F}(\sigma) = \sum_j\mathcal{F}^v(\sigma) \succeq
-              \mathcal{F}^v(\sigma_j)\ ?\ -1 :\ 0 \f] */
+              \mathcal{F}^v(\sigma_j)\ ?\ -1 :\ 0 \f$ */
       void operator()(t_Population& _pop);
 
       //! Does nothing

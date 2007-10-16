@@ -245,12 +245,19 @@ namespace Store
                                                    const TiXmlElement &_node )
                                                : t_Base(_node), objective(_type),
                                                  val(0), end_val(0), delta(0),
-                                                 owns_objective(false)
+                                                 owns_objective(false), print_condition(false)
     {
       double d=0;
       if ( _node.Attribute("delta") )
         _node.Attribute("delta", &d);
       delta = (t_ScalarQuantity) std::abs(d);
+
+      if( _node.Attribute("print") )
+      {
+        std::string name = _node.Attribute("print");
+        if (    name.compare("all") == 0
+             or name.compare("condition") == 0 ) print_condition=true;
+      }
  
       if ( not objective )
         throw std::runtime_error("Could not Load objective from input in conditional store\n"); 

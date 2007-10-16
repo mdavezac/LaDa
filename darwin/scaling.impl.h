@@ -116,8 +116,9 @@ namespace Scaling
       for(; i_2indiv != i_end; ++i_2indiv, ++i_2sum );
       {
         // minimizes by default -- see objectives.h
-        if( i_indiv->fitness()  > i_2indiv->fitness() ) --(*i_sum);
-        if( i_2indiv->fitness() > i_indiv->fitness()  ) --(*i_2sum);
+        if     ( i_indiv->fitness()   >  i_2indiv->fitness() )   --(*i_sum);
+        else if( i_2indiv->fitness()  > i_indiv->fitness()   )               --(*i_2sum);
+        else if( i_indiv->fitness()  == i_2indiv->fitness()  ) { --(*i_sum); --(*i_2sum); }
       }
     }
   }

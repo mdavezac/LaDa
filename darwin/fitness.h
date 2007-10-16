@@ -110,17 +110,19 @@ namespace Fitness
       //! \brief strict ordering operator 
       //! \details Calls a static function of Fitness::Base::t_QuantityTraits.
       //! This allows type specific implementation, such as fuzzy math for
-      //! reals (to avoid numerical noise).
+      //! reals (to avoid numerical noise). Note that since minimization is the
+      //! default, the implementation calls t_QuantityTraits::greater().
       //! \see Traits::Quantity, Traits::Fuzzy
       bool operator<(const Base & _f) const
-        { return t_QuantityTraits::less(quantity, _f.quantity); }
+        { return t_QuantityTraits::greater(quantity, _f.quantity); }
       //! \brief strict ordering operator 
       //! \details Calls a static function of Fitness::Base::t_QuantityTraits.
       //! This allows type specific implementation, such as fuzzy math for
-      //! reals (to avoid numerical noise).
+      //! reals (to avoid numerical noise). Note that since minimization is the
+      //! default, the implementation calls t_QuantityTraits::less().
       //! \see Traits::Quantity, Traits::Fuzzy
       bool operator>(const Base & _f) const
-        { return t_QuantityTraits::greater(quantity, _f.quantity); }
+        { return t_QuantityTraits::less(quantity, _f.quantity); }
       //! \brief equality operator 
       //! \details Calls a static function of Fitness::Base::t_QuantityTraits.
       //! This allows type specific implementation, such as fuzzy math for
@@ -153,14 +155,30 @@ namespace Fitness
 
 
 
-  //! \brief %Base class for <em>vectorial</em> fitnesses
-  //! \details This is the multi-objective implementation of fitness. Note that
-  //! it is derived from a scalar fitness. Indeed, a multi-objective
-  //! approach may at some point appreciate one individual against another using,
-  //! say, Pareto Ranking, and hence a vectorial quantity, or through a single
-  //! scalar number, say when using a linear sum of objectives. By deriving the
-  //! multi-objective fitness from the single-objective fitness, we allow both
-  //! approach with the same object.
+  /** \brief %Base class for <em>vectorial</em> fitnesses
+      \details This is the multi-objective implementation of fitness. Note that
+             it is derived from a scalar fitness. Indeed, a multi-objective
+             approach may at some point appreciate one individual against
+             another using, say, Pareto Ranking, and hence a vectorial
+             quantity, or through a single scalar number, say when using a
+             linear sum of objectives. By deriving the multi-objective
+             fitness from the single-objective fitness, we allow both
+             approach with the same object.  Individuals can be orderer
+             according to the Pareto ordering operators.
+
+             Let \f$\mathcal{F}^{v}_t(\sigma)\f$ denote the component
+             \f$t\in[0,N[\f$ of <I>N</I>-dimensional fitness 
+             \f$\mathcal{F}^{v}(\sigma)\f$ of an individual \f$\sigma\f$.
+             Also, let \f$\mathcal{F}(\sigma)\f$ be the \b scalar end-product
+             fitness of an individual \f$\sigma\f$.  An individual
+             \f$\sigma_i\f$ dominates another individual \f$\sigma\f$ if
+             and only if 
+             \f[
+                 \mathcal{F}^v(\sigma_i) \succeq \mathcal{F}^v(\sigma_j)\quad
+                 \Leftrightarrow\quad \forall t\in[0,N[,\ \mathcal{F}^v_t(\sigma_i)
+                 \geq \mathcal{F}^v_t(\sigma_j).
+             \f]
+  */
   template<class T_QUANTITYTRAITS >
   class Base<T_QUANTITYTRAITS, false> :
         public Base< typename T_QUANTITYTRAITS::t_ScalarQuantityTraits, true >
@@ -221,9 +239,31 @@ namespace Fitness
       void operator=( const typename t_ScalarFitness::t_Quantity &_fit )
         { (t_Base&) *this = _fit; }
 
-      //! \brief Pareto ordering 
+      /** \brief Pareto ordering, \f$\mathcal{F}^v(\sigma_i) \preceq \mathcal{F}^v(\sigma_j)\f$
+          \details Implements the relationship
+             \f[
+                 \mathcal{F}^v(\sigma_i) \preceq \mathcal{F}^v(\sigma_j)\quad
+                 \Leftrightarrow\quad \forall t\in[0,N[,\ \mathcal{F}^v_t(\sigma_i)
+                 \geq \mathcal{F}^v_t(\sigma_j).
+             \f]
+                  For generality, the static ordering operators of
+                  t_ScalarQuantityTraits are use in the implementation (eg
+                  fuzzy math for reals). Note however that it is Fuzzy ::
+                  greater which is called, since minimization is the default.
+      */
       bool operator<(const Base & _f) const;
-      //! \brief Pareto ordering 
+      /** \brief Pareto ordering, \f$\mathcal{F}^v(\sigma_i) \succeq \mathcal{F}^v(\sigma_j)\f$
+          \details Implements the relationship
+             \f[
+                 \mathcal{F}^v(\sigma_i) \succeq \mathcal{F}^v(\sigma_j)\quad
+                 \Leftrightarrow\quad \forall t\in[0,N[,\ \mathcal{F}^v_t(\sigma_i)
+                 \geq \mathcal{F}^v_t(\sigma_j).
+             \f]
+                  For generality, the static ordering operators of
+                  t_ScalarQuantityTraits are use in the implementation (eg
+                  fuzzy math for reals). Note however that it is Fuzzy ::
+                  greater which is called, since minimization is the default.
+      */
       bool operator>(const Base & _f) const;
       //! \brief Pareto ordering, eg true if both fitnesses are equally
       //! dominant and dominated

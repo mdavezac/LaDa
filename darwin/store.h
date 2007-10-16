@@ -319,6 +319,11 @@ namespace Store
         t_ScalarQuantity end_val; //!< end of storage interval
         t_ScalarQuantity delta; //!< length of storage interval
         bool owns_objective; //!< wether FomOjbective::objective pointer is owned by this object
+        //! \brief True if condition should be printed, as well as objective
+        //! \details. More specifically, this variable modulates the behavior
+        //! of FromObjective::print so that when it is true, BaseOptima::print() is
+        //! called in addition to Objective::Base::print()
+        bool print_condition;
 
       public:
         using t_Base :: print; 
@@ -344,7 +349,8 @@ namespace Store
         bool operator()( const t_Individual &_indiv );
 
         //! returns a string with stuff that FomObjective::objective store, eg convexhull
-        std::string print() const { return t_Base::print() + objective->print();  }
+        std::string print() const 
+          { return  print_condition ? t_Base::print() + objective->print(): objective->print(); }
         //! Return a string characterizing FromOjbective
         std::string what_is() const;
         //! \brief Reloads previously saved state from XML input
