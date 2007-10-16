@@ -338,7 +338,7 @@ namespace Scaling
   //!          their phenotype (whenever the two are distincts). 
   namespace Distance
   {
-    /** Defines a generalized Hamming distance \f$|\sigma_i-\sigma_j|=\sum_t
+    /** \brief Defines a generalized Hamming distance \f$|\sigma_i-\sigma_j|=\sum_t
        q_{t,\sigma_i} - q_{t,\sigma_j}|\f$ */
     template<class T_GATRAITS>
     class GeneralHamming
@@ -361,7 +361,7 @@ namespace Scaling
         //! Returns "Distance::GeneralHamming"
         std::string what_is() const { return "Distance::GeneralHamming"; }
     }; 
-    /** Defines the Hamming distance \f$|sigma_i-\sigma_j|=\sum_t
+    /** \brief Defines the Hamming distance \f$|sigma_i-\sigma_j|=\sum_t
      *  q_{t,\sigma_i} = q_{t,\sigma_j}\ ?\ 1:\ 0\f$ */
     template<class T_GATRAITS>
     class Hamming
