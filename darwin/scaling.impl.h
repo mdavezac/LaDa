@@ -4,7 +4,7 @@
 #ifndef _RANKING_IMPL_H_
 #define _RANKING_IMPL_H_
 
-namespace Ranking
+namespace Scaling
 {
   template<class T_GATRAITS>
   Container<T_GATRAITS> :: ~Container()
@@ -23,7 +23,7 @@ namespace Ranking
   inline std::string Container<T_GATRAITS> :: what_is() const
   {
     std::ostringstream sstr;
-    sstr << "Ranking begin{ ";
+    sstr << "Scaling begin{ ";
     typename t_Container::const_iterator i_rankers = rankers.begin();
     typename t_Container::const_iterator i_end = rankers.begin();
     for(; i_rankers != i_end; ++i_rankers)
@@ -158,18 +158,18 @@ namespace Ranking
           
         alpha = types::t_unsigned( std::abs(d) );
       }
-      if ( parent->Attribute("sigma") )
+      if ( parent->Attribute("d0") )
       {
         double d = 0;
-        parent->Attribute("sigma", &d );
+        parent->Attribute("d0", &d );
         if ( d < 0 ) 
         {
-          std::cerr << "Invalid sigma = " << d 
+          std::cerr << "Invalid d0 = " << d 
                     << " in Sharing::Triangular " << std::endl;
           return false;
         } 
           
-        sigma = t_ScalarFitnessQuantity( d );
+        d_0 = t_ScalarFitnessQuantity( d );
       }
       return true;
     }
@@ -178,7 +178,7 @@ namespace Ranking
     std::string Triangular<T_DISTANCE> :: what_is() const
     { 
       std::ostringstream sstr; 
-      sstr << "Sharing::Triangular( alpha=" << alpha << ", sigma=" << sigma
+      sstr << "Sharing::Triangular( alpha=" << alpha << ", d0=" << d_0
            << ", distance: " << distance.what_is() << " )";
       return sstr.str();
     }
@@ -189,9 +189,9 @@ namespace Ranking
                                               const t_Individual& _i2 ) const
       {
         t_ScalarFitnessQuantity d = distance( _i1, _i2 );
-        if ( d > sigma ) return t_ScalarFitnessQuantity(0);
-        if( alpha == 1 ) return t_ScalarFitnessQuantity(1) - d / sigma;
-        return std::pow( t_ScalarFitnessQuantity(1) - d / sigma, (double) alpha );
+        if ( d > d_0 ) return t_ScalarFitnessQuantity(0);
+        if( alpha == 1 ) return t_ScalarFitnessQuantity(1) - d / d_0;
+        return std::pow( t_ScalarFitnessQuantity(1) - d / d_0, (double) alpha );
       }
                               
   } // namespace Sharing
@@ -220,7 +220,7 @@ namespace Ranking
     typename Hamming<T_GAOPTRAITS>::t_ScalarFitnessQuantity 
        Hamming<T_GAOPTRAITS>::operator()( const t_Individual &_i1, const t_Individual &_i2) const
        {
-         typedef typename t_GATraits :: t_ScalarQuantity t_ScalarQuantity;
+         typedef typename t_GATraits::t_QuantityTraits::t_ScalarQuantityTraits t_SQTraits;
          if ( _i1.Object().Container().size() != _i1.Object().Container().size() )
            throw std::runtime_error("individuals of different size in Distance::Hamming!\n");
          typename t_Object::const_iterator i_bit2 = _i2.Object().begin();
@@ -228,7 +228,7 @@ namespace Ranking
          typename t_Object::const_iterator i_bit1_end = _i1.Object().end();
          t_ScalarFitnessQuantity result;
          for(; i_bit1 != i_bit1_end; ++i_bit1, ++i_bit2 )
-           result +=  t_ScalarFitnessQuantity(t_ScalarQuantity::equal( *i_bit1, *i_bit2) ? 1: 0);
+           result +=  t_ScalarFitnessQuantity(t_SQTraits::equal( *i_bit1, *i_bit2) ? 1: 0);
          return result;
        }
   } // namespace Distance
@@ -239,13 +239,13 @@ namespace Ranking
   {
     const TiXmlElement *parent = &_node;
     std::string name = parent->Value();
-    if( name != "Ranking" )
-      parent = _node.FirstChildElement("Ranking");
+    if( name != "Scaling" )
+      parent = _node.FirstChildElement("Scaling");
     if( not parent ) return NULL;
 
     Container<T_GATRAITS> *container = new Container<T_GATRAITS>;
 
-    for(; parent; parent = parent->NextSiblingElement("Ranking") )
+    for(; parent; parent = parent->NextSiblingElement("Scaling") )
     {
       if( not parent->Attribute("type") ) return false;
       name = parent->Attribute("type");
@@ -271,7 +271,7 @@ namespace Ranking
   Base<T_GATRAITS>* new_Niche_from_xml( const TiXmlElement &_node )
   {
     if( not _node.Attribute("distance") ) return NULL;
-    name = _node.Attribute("distance");
+    std::string name = _node.Attribute("distance");
     if( name != "GeneralHamming" and name != "generalhamming" ) 
     {
       typedef Niching< Sharing::Triangular< Distance::GeneralHamming<T_GATRAITS> > > t_Niche;
@@ -288,7 +288,6 @@ namespace Ranking
     if ( result ) delete result;
     return NULL;
   }
-}
 
-} // namespace Ranking
+} // namespace Scaling
 #endif // _RANKING_IMPL_H_

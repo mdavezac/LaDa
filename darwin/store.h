@@ -321,6 +321,11 @@ namespace Store
         bool owns_objective; //!< wether FomOjbective::objective pointer is owned by this object
 
       public:
+        using t_Base :: print; 
+        using t_Base :: Restart; 
+        using t_Base :: Save; 
+
+      public:
         //! \brief XML constructor 
         //! \sa BaseOptima::BaseOptima(const TiXmlElement&), 
         //! Store and Store::Conditional overview
@@ -339,7 +344,7 @@ namespace Store
         bool operator()( const t_Individual &_indiv );
 
         //! returns a string with stuff that FomObjective::objective store, eg convexhull
-        std::string print() const { return objective->print();  }
+        std::string print() const { return t_Base::print() + objective->print();  }
         //! Return a string characterizing FromOjbective
         std::string what_is() const;
         //! \brief Reloads previously saved state from XML input

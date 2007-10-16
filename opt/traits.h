@@ -124,11 +124,11 @@ namespace Traits
       //! \brief returns return true if 
       //! \f$|\_a - \_b| > \f$ types::tolerance, and \f$ \_a  < \_b \f$
       static bool less( const types::t_real &_a, const types::t_real &_b ) 
-        { return std::abs(_a - _b) > types::tolerance and _a > _b; }
+        { return std::abs(_a - _b) > types::tolerance and _a < _b; }
       //! \brief  return true if 
       //! \f$|\_a - \_b| > \f$ types::tolerance, and \f$ \_a  > \_b \f$
       static bool greater( const types::t_real &_a, const types::t_real &_b ) 
-        { return std::abs(_a - _b) > types::tolerance and _a < _b; }
+        { return std::abs(_a - _b) > types::tolerance and _a > _b; }
       //! \brief return true if \f$|\_a - \_b| > \f$ types::tolerance
       static bool equal( const types::t_real &_a, const types::t_real &_b ) 
         { return std::abs( _a - _b ) <  types::tolerance; }

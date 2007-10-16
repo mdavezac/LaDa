@@ -107,15 +107,7 @@ namespace Evaluation
         Print::out << *i_indiv << "    Fitness: "
                    << Print::fixed << Print::setw(12) << Print::setprecision(5) << "  "
                    << i_indiv->fitness() << "\n";
-//       std::cout  << *i_indiv << "    Fitness: "
-//                  << std::fixed << std::setw(12) << std::setprecision(5) << "  "
-//                  << i_indiv->fitness() << "  Quantity: "
-//                  << std::fixed << std::setw(12) << std::setprecision(5) << "  ";
-//       t_qt::print_out(std::cout, i_indiv->const_quantities());
-//       std::cout  <<  "\n";
-//     }
-//     std::cout << std::endl;
-      
+      Print::out << Print::endl;
     }
 
 

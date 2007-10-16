@@ -323,6 +323,8 @@ namespace Objective
         //! Types::t_QuantityTraits and Types::t_ScalarQauntityTraits are
         //! equivalent
         typedef typename t_QuantityTraits::t_ScalarQuantityTraits t_ScalarQuantityTraits;
+        //! Type of the scalar quantity
+        typedef typename t_QuantityTraits::t_ScalarQuantity t_ScalarQuantity;
 
       public:
         //! Scalar objective type
@@ -544,6 +546,8 @@ namespace Objective
       typedef typename t_VA_Traits :: t_QuantityGradients t_QuantityGradients;
       //! Type of the lamarckian variables, as declared in the base class
       typedef typename t_VA_Traits :: t_Type              t_VA_Type;
+      //! %Traits of the quantity
+      typedef typename t_GATraits :: t_QuantityTraits     t_QuantityTraits;
     protected:
       using t_Base :: fitness;
 
@@ -791,11 +795,13 @@ namespace Objective
       //! Type of the lamarckian variables, as declared in the base class
       typedef typename t_VA_Traits :: t_Type              t_VA_Type;
       //! A functor to for saving individuals
-      typedef GA::SaveObject<t_GATraits>                 t_SaveOp;
+      typedef GA::SaveObject<t_GATraits>                  t_SaveOp;
       //! A functor to for loading individuals
-      typedef GA::LoadObject<t_GATraits>                 t_LoadOp;
+      typedef GA::LoadObject<t_GATraits>                  t_LoadOp;
       //! Scalar objective type
       typedef typename t_ObjectiveType :: Scalar          t_Objective;
+      //! Type of container for objectives
+      typedef typename std::vector<t_Objective>           t_Objectives;
       
     protected:
       using t_Base :: fitness;
@@ -847,8 +853,6 @@ namespace Objective
     public:
       typedef T_GA_TRAITS t_GATraits; //!< All %GA traits
     protected:
-      //! Class holding all possible objective %types
-      typedef Types<t_GATraits>                          t_ObjectiveType;
       //! Type of individual in this %GA
       typedef typename t_GATraits :: t_Individual         t_Individual;
       //! Base of this class
@@ -866,9 +870,15 @@ namespace Objective
       //! Type of the lamarckian variables, as declared in the base class
       typedef typename t_VA_Traits :: t_Type              t_VA_Type;
       //! A functor to for saving individuals
-      typedef GA::SaveObject<t_GATraits>                 t_SaveOp;
-      //! A functor to for loading individuals
-      typedef GA::LoadObject<t_GATraits>                 t_LoadOp;
+      typedef GA::SaveObject<t_GATraits>                  t_SaveOp;
+      //! A functor to for loading individuals       
+      typedef GA::LoadObject<t_GATraits>                  t_LoadOp;
+      //! Scalar objective type
+      typedef typename t_Base :: t_Objective              t_Objective;
+      //! Type of the container of objectives
+      typedef typename t_Base :: t_Objectives             t_Objectives;
+      //! %Traits of the quantity
+      typedef typename t_GATraits :: t_QuantityTraits     t_QuantityTraits;
 
     protected:
       using t_Base :: fitness;
@@ -941,5 +951,8 @@ namespace Objective
     };
 
 }  // namespace Objective
+
+#include "objective.impl.h"
+
  /* @} */
 #endif //  _MULTIOB_OBJECTIVE_H_

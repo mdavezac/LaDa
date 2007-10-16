@@ -356,7 +356,7 @@ namespace Pescan
     if ( escan.method == Escan :: ALL_ELECTRON ) 
     { 
       bands.cbm = rng.uniform() * 5;
-      bands.vbm = bands.cbm - rng.uniform() * 5;
+      bands.vbm = bands.cbm - rng.uniform();
       return bands.gap();
     }
     if ( computation == CBM )
@@ -364,7 +364,7 @@ namespace Pescan
       bands.cbm = rng.uniform() * 5;
       return bands.cbm;
     }
-    bands.vbm = bands.cbm - rng.uniform() * 5;
+    bands.vbm = bands.cbm - rng.uniform();
     return bands.vbm;
 #endif
     std::ifstream file;

@@ -35,7 +35,7 @@ errorout:
       return false;
     }
     xml->SetDoubleAttribute("vbm", vbm );
-    xml->SetDoubleAttribute("cvm", cbm );
+    xml->SetDoubleAttribute("cbm", cbm );
 
     _node.LinkEndChild( xml );
 

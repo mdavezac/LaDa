@@ -94,10 +94,10 @@ namespace Objective
     typename t_QuantityGradients :: iterator i_grad_end = _grad.end(); 
     t_VA_Type *i_grad_result = _i_grad;
 
-    if ( t_Quantity::greater(_q, q_0 ) )
+    if ( t_QuantityTraits::greater(_q, q_0 ) )
       for(; i_grad != i_grad_end; ++i_grad, ++i_grad_result )
         *i_grad_result += *i_grad;
-    else if ( t_Quantity::less(_q, q_0 ) )
+    else if ( t_QuantityTraits::less(_q, q_0 ) )
       for(; i_grad != i_grad_end; ++i_grad, ++i_grad_result )
         *i_grad_result -= *i_grad;
     return std::abs(q_0 - _q);
@@ -108,8 +108,8 @@ namespace Objective
                                                       t_QuantityGradients& _grad,
                                                       types::t_unsigned _n) 
   {
-    if ( t_Quantity::greater(_q, q_0 ) ) return _grad[_n];
-    else if ( t_Quantity::less(_q, q_0 ) ) return -_grad[_n];
+    if ( t_QuantityTraits::greater(_q, q_0 ) ) return _grad[_n];
+    else if ( t_QuantityTraits::less(_q, q_0 ) ) return -_grad[_n];
     return t_VA_Type(0);
   }
   template< class T_GA_TRAITS >

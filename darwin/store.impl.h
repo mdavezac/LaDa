@@ -117,7 +117,7 @@ namespace Store
                                     condition.print() )
                  << Print::endl;
 
-    if( not ( print_what & PRINT_RESULTS ) )return;
+    if( not ( print_what & PRINT_RESULTS ) ) return;
 
     typename t_Container :: const_iterator i_indiv = results.begin();
     typename t_Container :: const_iterator i_end = results.end();
@@ -220,11 +220,8 @@ namespace Store
     std::string BaseOptima<T_GATRAITS> :: print() const
     {
       std::ostringstream sstr;
-      std::string bitstring; bitstring <<  (const typename t_GATraits :: t_Object&) optimum;
-      sstr << std::setw(12) << std::setprecision(7) 
-           << bitstring << " "
-           << optimum.get_concentration() << " "
-           << optimum.fitness() << std::endl;
+      sstr << optimum << std::setw(12) << std::setprecision(7) 
+           << optimum.fitness();
       return sstr.str(); 
     }
 
