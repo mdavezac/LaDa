@@ -2,7 +2,7 @@
 
     <h1> Inputing a Structure </h1>
     \anchor xstructure
-   Structures should be enclosed in a \xe<Structure>\ex ... \xe</Structure>\ex
+   Structures should be enclosed in a \xe\<Structure\>\ex ... \xe\</Structure\>\ex
  * tags as follows  inputed in the following way:
     \code
     <Structure scale=6.2>
@@ -27,14 +27,14 @@
     \endcode
     The following XML tags have been introduced:
    \secreflist
-     \refitem Tagstructure Structure
-     \refitem Tagcell Cell
-     \refitem Tagcolumn column
-     \refitem TagAtom Atom
+     \refitem Tagstructure \<Structure\>
+     \refitem Tagcell \<Cell\>
+     \refitem Tagcolumn \<column/\>
+     \refitem TagAtom \<Atom/\>
    \endsecreflist
 
-   \section Tagstructure <Structure>
-   \addindex \<Structure>
+   \section Tagstructure \<Structure\>
+   \addindex \<Structure\>
    Contains information pertaining to a single structure. It expects a complete
    \ref Tagcell as well as at least one \ref TagAtom.
    It can contain the following attributes
@@ -45,14 +45,14 @@
      \param Pi Pi-file name of the stucture, or any other
          name you want. Not really of any use.
 
-   \section Tagcell <Cell>
-   \addindex \<Cell>
+   \section Tagcell \<Cell\>
+   \addindex \<Cell\>
    Defines the unit-cell vectors of the \ref Tagstructure 
    tag whithin which it is found.  It does not expect any attributes.  The
    cell-vectors are defined using three \ref Tagcolumn tags.
 
-   \section Tagcolumn <column/>
-   \addindex \<column\/>
+   \section Tagcolumn \<column/\>
+   \addindex \<column/\>
    Defines a column within a 3x3 matrix. It contains the following attributes
    \param x first coordinate scaled by ref Tagstructure's \a scale attribute
    \param y second coordinate scaled by ref Tagstructure's \a scale attribute
@@ -61,7 +61,7 @@
              combination thereof, such that the frozen coordinates are
              untouched during minimization. \a freeze is optional.
 
-   \section TagAtom <Atom/> 
+   \section TagAtom \<Atom/\> 
    Defines an atomic site and its occupation of the \ref Tagstructure within
    which it is found. Only attribute \a x, \a y, \z are mandatory for all
    applications. Attribute \a type is required for anything not GA. 
@@ -102,21 +102,21 @@
 
     The following new XML tags have been introduced:
    \secreflist
-     \refitem Taglattice Lattice
-     \refitem Tagsite site
-     \refitem Tagatom atom
+     \refitem Taglattice \<Lattice\>
+     \refitem Tagsite \<site\>
+     \refitem Tagatom \<atom/\>
    \endsecreflist
     
-   \section Taglattice <Lattice>
-   \addindex \<Lattice>
+   \section Taglattice \<Lattice\>
+   \addindex \<Lattice\>
    Contains information pertaining to a lattice type.  In addition to three
    \ref Tagcolumn tag's, at least one \ref Tagsite is expected.
    It can include the following attributes
      \param scale scaling factor (&Aring;) with
          respect to which positions and unit-cell vectors are given. Defaults to 1.
    
-   \section Tagsite <site>
-   \addindex \<site>
+   \section Tagsite \<site\>
+   \addindex \<site\>
       Defines a lattice site, which may contain one or more \ref Tagatom tags. 
       It accepts the following attributes.
      \param x first cartesian coordinate scaled by ref Taglattice's \a scale attribute
@@ -129,8 +129,8 @@
             of a particular site in a structure if attribute \a site of the relevant \ref
             TagAtom tags have been set in the corresponding \ref Tagstructure.
 
-   \section Tagatom <atom/>
-     \addindex \<atom/>
+   \section Tagatom \<atom/\>
+     \addindex \<atom/\>
       Adds a possible atomic-type to the lattice \ref Tagsite within which it is found.
       Its attributes are:
      \param type Atomic type which should be inputed as an atomic symbol.

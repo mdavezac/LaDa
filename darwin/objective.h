@@ -37,7 +37,7 @@
 //! Note \f$\mathcal{P}(\sigma)\f$ the polished fitness (Fitness) of an
 //! individual \f$\sigma\f$, and \f$q(\sigma)\f$ the raw fitness
 //! (Individual::Base::quantity) of the same individual, then the objective
-//! \f$\mathcal{O}\f$ is simply the function such that 
+//! \f$\mathcal{O}\f$ is simply the %function such that 
 //! \f$\mathcal{P}(\sigma) =\mathcal{Q}\left[ q(\sigma) \right]\f$.
 //! 
 //! All objectives are derived from a single template class, Objective::Base,
@@ -48,12 +48,50 @@
 //! 
 //! For ease of use a class Objective::Types is declared which contains
 //! typedefs to scalar and vectorial objectives, Objective::Types::Scalar and
-//! Objective::Types::Vector. It also contains a static function  capable of
+//! Objective::Types::Vector. It also contains a static %function  capable of
 //! reading XML input and returning a pointer to one of the objectives defined below. 
 //! \note Fitnesses can be made to depend upon the whole population, say for
 //! niching, via objects from the Ranking namespace. Rankings are applied after
 //! objectives.
-//! \see Fitnesss, Ranking
+//! \see Fitness, Ranking
+//! \xmlinput should be all done by Objective::Types::new_from_xml()
+//! At present, the allowed \b scalar objectives are the following
+//! \code
+//     <Objective type = "Maximize"/>
+//! \endcode or, \code
+//     <Objective type = "Minimize"/>
+//! \endcode or, \code
+//     <Objective type = "Target" target=?? />
+//! \endcode where \a target expects a "target" number,  or, \code
+//     <Objective type = "convexhull" />
+//! \endcode
+//! For scalar objectives, you can input any one of those directly whithin \<GA\> tags,
+//! \code
+//    <GA>
+//      ... other tags
+//      <Objective type="??"/>
+//      ... other tags
+//    </GA>
+//! \endcode
+//! \n\n For \a Vectorial objectives, there is at present only one option,
+//! which should be inputed as follows
+//! \code
+//    <GA>
+//      ... other tags
+//        <Objective type="LinearSum" />
+//           <Objective type=?? coef="14" />
+//           <Objective type=?? coef="2" />
+//           ... other scalar objectives
+//        </Objective>
+//      ... other tags
+//    </GA>
+//! \endcode
+//! It returns the weighted linear average of scalar objectives,
+//! with the weight assigned by each \a coef attribute. The (possible) scalar
+//! objectives are those listed above.
+//! \note It turns out that Pareto ranking is not an Objective... Its a
+//! Ranking. Don't get it? doesn't matter. Just input it as given in
+//! Ranking::new_from_xml();
 namespace Objective
 {
 
@@ -74,7 +112,7 @@ namespace Objective
   //! t_Quantity&) returns a reference to a fitness. The reason for this lies
   //! in the possibility of a vectorial objective and shall be described in
   //! more details below.
-  //! To these member functions  are added XML input/output behaviors, validity
+  //! To these member %functions  are added XML input/output behaviors, validity
   //! checks, and initialization routine.
   //! 
   //! As usual, the implementation is made more complex by the possiblity of a
@@ -126,6 +164,9 @@ namespace Objective
   //! and Objective::Types::Vector which define a scalar and a vectorial
   //! objective. In the case of a single-objective %GA, there is no difference
   //! between Objective::Types::Scalar and Objective::Types::Vector.
+  //! \xmlinput Generally, objective tags should have the following syntax
+  //! \code  <Objective type="??" attribute="??" /> \endcode
+  //! See each implementation for details
   template< class T_GA_TRAITS,
             class T_QUANTITY_TRAITS = typename T_GA_TRAITS :: t_QuantityTraits,
             class T_VA_TRAITS = typename T_GA_TRAITS :: t_VA_Traits >
@@ -197,24 +238,42 @@ namespace Objective
 
       //! \brief initializes Base::current_indiv
       void static init(const t_Individual& _indiv);
-      //! \brief returns a polished fitness from a raw fitness
+      //! returns a polished fitness \f$\mathcal{O}(q)\f$ from a raw fitness \f$q\f$
       virtual const t_Fitness& operator()( const t_Quantity& ) = 0;
-      //! \brief evaluates the gradient of a polished fitness
-      virtual void evaluate_gradient( const t_Quantity &,
-                                      t_QuantityGradients &,
-                                      t_ScalarQuantity *) = 0;
-      //! \brief evaluates a polished fitness and its gradient
-      virtual t_ScalarQuantity evaluate_with_gradient( const t_Quantity &,
-                                                       t_QuantityGradients&,
-                                                       t_VA_Type *) = 0;
+      //! \brief evaluates the gradient \f$\partial\mathcal{O}(q)\f$ from
+      //! \f$q\f$ and \f$\partial q\f$
+      //! \param _q the quantity \f$q\f$
+      //! \param _grad the gradient \f$\partial q\f$ as computed by some
+      //!              derived class of GA::Evaluator
+      //! \param _i_grad the resulting gradient from this objective. Note that
+      //! it is not necessarily zero, say in the case of objectives within
+      //! objectives  \f$\mathcal{O}_1 \circ \mathcal{O}_2(q)\f$.
+      virtual void evaluate_gradient( const t_Quantity & _q,
+                                      t_QuantityGradients & _grad,
+                                      t_ScalarQuantity *_i_grad) = 0;
+      //! \brief evaluates a polished fitness and its gradient \f$\partial \mathcal{O}(q)\f$
+      //! \param _q the quantity \f$q\f$
+      //! \param _grad the gradient \f$\partial q\f$ as computed by some
+      //!              derived class of GA::Evaluator
+      //! \param _i_grad the resulting gradient from this objective. Note that
+      //! it is not necessarily zero, say in the case of objectives within
+      //! objectives  \f$\mathcal{O}_1 \circ \mathcal{O}_2(q)\f$.
+      virtual t_ScalarQuantity evaluate_with_gradient( const t_Quantity &_q,
+                                                       t_QuantityGradients &_grad,
+                                                       t_VA_Type *_i_grad) = 0;
       //! \brief returns the gradient in specified direction 
-      virtual t_VA_Type evaluate_one_gradient( const t_Quantity &,
-                                               t_QuantityGradients&,
-                                               types::t_unsigned) = 0;
+      //! \param _q the quantity \f$q\f$
+      //! \param _grad the gradient \f$\partial q\f$ as computed by some
+      //!              derived class of GA::Evaluator
+      //! \param _n direction of the requested gradient. This "direction" is
+      //!           merely the index of the array t_QuantityGradients. 
+      virtual t_VA_Type evaluate_one_gradient( const t_Quantity &_q,
+                                               t_QuantityGradients &_grad,
+                                               types::t_unsigned _n) = 0;
       //! \brief returns true if the objective is valid
       //! \details Moving target objectives such as Objective::ConvexHull may
       //! change during the evaluation of a population. As such, whenever the
-      //! objective changes, it is marked invalid until this function is called.
+      //! objective changes, it is marked invalid until this %function is called.
       //! See implementation of Evaluation::operator( t_Population&,
       //! t_Population& )
       virtual bool is_valid() const = 0;
@@ -234,7 +293,7 @@ namespace Objective
       virtual bool does_store() const { return false; }
   };
  
-  //! helper class to have one single function from which to create
+  //! helper class to have one single %function from which to create
   //! objectives from XML
   template< class T_TYPE, bool IS_VECTORIAL > struct fork;
 
@@ -246,7 +305,7 @@ namespace Objective
   //! a scalar quantity, than Objective::Types::Scalar and
   //! Objective::Types::Vector are equivalent.
   //
-  //! Finally, this class also contains a function capable of creating
+  //! Finally, this class also contains a %function capable of creating
   //! objectives from XML input.
   template <class T_GA_TRAITS >
     struct Types
@@ -299,6 +358,8 @@ namespace Objective
   //! \brief Implements maximization of a scalar quantity with \f$\mathcal{O}(q) = -q \f$
   //! \details In practice, this mean transforming any quantity \a q into \a -q.
   //! \note This is a <STRONG>scalar</STRONG> objective
+  //! \xmlinput No attributes
+  //! \code  <Objective type="maximize"/> \endcode
   template< class T_GA_TRAITS >
   class Maximize : public Types< T_GA_TRAITS > :: Scalar
   {
@@ -330,26 +391,46 @@ namespace Objective
       Maximize( const Maximize &) {} //!< Copy Constructor
       virtual ~Maximize() {} //!< Virtual destructor
       
-      //! retuns a "maximization" fitness, eg -\a _val
-      virtual const t_Fitness& operator()(const t_Quantity& _val)
-       { fitness = -_val; return fitness; }
-      //! evaluates a "maximization" gradient, eg negates original gradient
-      virtual void evaluate_gradient( const t_Quantity &_val,
+      //! \brief retuns a "maximization" fitness, eg \f$-q\f$
+      virtual const t_Fitness& operator()(const t_Quantity& _q)
+       { fitness = -_q; return fitness; }
+      //! \brief evaluates a "maximization" gradient, eg \f$-\partial q\f$
+      //! \param _q the quantity \f$q\f$
+      //! \param _grad the gradient \f$\partial q\f$ as computed by some
+      //!              derived class of GA::Evaluator
+      //! \param _i_grad the resulting gradient from this objective. Note that
+      //! it is not necessarily zero, say in the case of objectives within
+      //! objectives  \f$\mathcal{O}_1 \circ \mathcal{O}_2(q)\f$.
+      virtual void evaluate_gradient( const t_Quantity &_q,
                                       t_QuantityGradients &_grad,
                                       t_VA_Type *_i_grad);
-      //! evaluates a "maximization" fitness and gradient
-      virtual t_ScalarQuantity evaluate_with_gradient( const t_Quantity &_val,
+      //! \brief evaluates both \f$\mathcal{O}(q) = -q\f$ and 
+      //!        \f$\partial\mathcal{O}(q) = -\partial q\f$
+      //! \param _q the quantity \f$q\f$
+      //! \param _grad the gradient \f$\partial q\f$ as computed by some
+      //!              derived class of GA::Evaluator
+      //! \param _i_grad the resulting gradient from this objective. Note that
+      //!                it is not necessarily zero, say in the case of
+      //!                objectives within objectives 
+      //!                \f$\mathcal{O}_1 \circ \mathcal{O}_2(q)\f$.
+      virtual t_ScalarQuantity evaluate_with_gradient( const t_Quantity &_q,
                                                        t_QuantityGradients& _grad,
                                                        t_VA_Type *_i_grad);
-      //! evaluates gradient in one direction only
-      virtual t_VA_Type evaluate_one_gradient( const t_Quantity &,
+      //! \brief evaluates gradient in one direction only,
+      //! \f$\partial_n\mathcal{O}(q) = -\partial_n q\f$
+      //! \param _q the quantity \f$q\f$
+      //! \param _grad the gradient \f$\partial q\f$ as computed by some
+      //!              derived class of GA::Evaluator
+      //! \param _n direction of the requested gradient. This "direction" is
+      //!           merely the index of the array t_QuantityGradients. 
+      virtual t_VA_Type evaluate_one_gradient( const t_Quantity &_q,
                                                t_QuantityGradients& _grad,
                                                types::t_unsigned _n) { return -_grad[_n]; }
-      //! The status is permanent, and this function always returns true
+      //! The status is permanent, and this %function always returns true
       bool is_valid() const { return true; }
       //! Returns "Maximize"
       virtual std::string what_is() const { return " Maximize"; }
-      //! The status is permanent, and this function always returns an empty string
+      //! The status is permanent, and this %function always returns an empty string
       virtual std::string print() const { return ""; }
   };
  
@@ -357,6 +438,8 @@ namespace Objective
   //! \details In practice, this mean doing nothing (or simple identity) since
   //!          minimization is the default behavior of Fitness.
   //! \note This is a <STRONG>scalar</STRONG> objective
+  //! \xmlinput There are no attributes
+  //! \code <Objective type="minimize"/> \endcode
   template< class T_GA_TRAITS >
   class Minimize : public Types< T_GA_TRAITS > :: Scalar
   {
@@ -388,569 +471,456 @@ namespace Objective
       Minimize( const Minimize &) {} //!< Copy Constructor
       virtual ~Minimize() {} //!< Virtual Destructor
       
-      //! retuns a "minimization" fitness, eg identity
-      virtual const t_Fitness& operator()(const t_Quantity& _val)
-         { fitness = _val; return fitness; }
-      //! evaluates a "minimization" gradient, eg original gradient
-      virtual void evaluate_gradient( const t_Quantity &_val,
+      //! retuns a "minimization" fitness, eg identity \f$q\f$
+      virtual const t_Fitness& operator()(const t_Quantity& _q)
+         { fitness = _q; return fitness; }
+      //! \brief evaluates a "minimization" gradient, eg original gradient
+      //!        \f$\partial q\f$
+      //! \param _q the quantity \f$q\f$
+      //! \param _grad the gradient \f$\partial q\f$ as computed by some
+      //!              derived class of GA::Evaluator
+      //! \param _i_grad the resulting gradient from this objective. Note that
+      //!                it is not necessarily zero, say in the case of
+      //!                objectives within objectives 
+      //!                \f$\mathcal{O}_1 \circ \mathcal{O}_2(q)\f$.
+      virtual void evaluate_gradient( const t_Quantity &_q,
                                       t_QuantityGradients &_grad,
                                       t_VA_Type *_i_grad);
-      //! evaluates a "minimization" fitness and gradient
-      virtual t_ScalarQuantity evaluate_with_gradient( const t_Quantity &_val,
+      //! \brief evaluates both \f$\mathcal{O}(q) = q\f$ and 
+      //! \f$\partial\mathcal{O}(q) = \partial q\f$
+      //! \param _q the quantity \f$q\f$
+      //! \param _grad the gradient \f$\partial q\f$ as computed by some
+      //!              derived class of GA::Evaluator
+      //! \param _i_grad the resulting gradient from this objective. Note that
+      //!                it is not necessarily zero, say in the case of
+      //!                objectives within objectives 
+      //!                \f$\mathcal{O}_1 \circ \mathcal{O}_2(q)\f$.
+      virtual t_ScalarQuantity evaluate_with_gradient( const t_Quantity &_q,
                                                        t_QuantityGradients& _grad,
                                                        t_VA_Type *_i_grad);
-      //! evaluates gradient in one direction only
-      virtual t_VA_Type evaluate_one_gradient( const t_Quantity &,
+      //! \brief evaluates gradient in one direction only,
+      //! \f$\partial_n\mathcal{O}(q) = \partial_n q\f$
+      //! \param _q the quantity \f$q\f$
+      //! \param _grad the gradient \f$\partial q\f$ as computed by some
+      //!              derived class of GA::Evaluator
+      //! \param _n direction of the requested gradient. This "direction" is
+      //!           merely the index of the array t_QuantityGradients. 
+      virtual t_VA_Type evaluate_one_gradient( const t_Quantity &_q,
                                                t_QuantityGradients& _grad,
                                                types::t_unsigned _n) { return _grad[_n]; }
-      //! The status is permanent, and this function always returns true
+      //! The status is permanent, and this %function always returns true
       bool is_valid() const { return true; }
       //! Returns "Minimize"
       virtual std::string what_is() const { return " Minimize"; }
-      //! The status is permanent, and this function always returns an empty string
+      //! The status is permanent, and this %function always returns an empty string
       virtual std::string print() const { return ""; }
   };
   
   //! \brief Implements optimization towards a (scalar) target
   //! \f$q_0\f$ with \f$\mathcal{O}(q)= |q -q_0|\f$
   //! \note This is a <STRONG>scalar</STRONG> objective
+  //! \xmlinput There is one \b required attribute \a target, which should be
+  //!           an integer or a real, depending on the type of Target::t_ScalarQuantity
+  //!           \code <Objective type="target" target="??" /> \endcode
   template< class T_GA_TRAITS >
   class Target : public Types< T_GA_TRAITS > :: Scalar
   {
     public:
-      typedef T_GA_TRAITS t_GATraits;
+      typedef T_GA_TRAITS t_GATraits; //!< All %GA traits
     protected:
-      typedef typename Types<t_GATraits> :: Scalar       t_Base;
-      typedef typename t_GATraits :: t_Individual        t_Individual;
-      typedef typename t_GATraits :: t_IndivTraits       t_IndivTraits;
+      //! Type of individual in this %GA
+      typedef typename t_GATraits :: t_Individual         t_Individual;
+      //! Base of this class
+      typedef typename Types<t_GATraits> :: Scalar        t_Base; 
+      //! Type of the fitness, as declared in the base class
       typedef typename t_Base :: t_Fitness                t_Fitness;
+      //! Type of the quantity, as declared in the base class
       typedef typename t_Base :: t_Quantity               t_Quantity;
+      //! Type of the scalar quantity, as declared in the base class
       typedef typename t_Base :: t_ScalarQuantity         t_ScalarQuantity;
+      //! Type of the lamarckian traits, as declared in the base class
       typedef typename t_Base :: t_VA_Traits              t_VA_Traits;
+      //! Type of the lamarckian gradients, as declared in the base class
       typedef typename t_VA_Traits :: t_QuantityGradients t_QuantityGradients;
+      //! Type of the lamarckian variables, as declared in the base class
       typedef typename t_VA_Traits :: t_Type              t_VA_Type;
-
     protected:
       using t_Base :: fitness;
 
     protected:
-      t_ScalarQuantity target; 
+      t_ScalarQuantity q_0; //!< Target value of \f$\mathcal{O}(q) = |q - q_0|\f$
     public:
-      Target( t_ScalarQuantity _target ) : target( _target ) {}
-      Target( const Target &_c ) : target( _c.target ) {}
+      //! Constructor and Initializer
+      Target( t_ScalarQuantity _q_0 ) : q_0( _q_0 ) {}
+      //! Copy Constructor
+      Target( const Target &_c ) : q_0( _c.q_0 ) {}
+      //! Destructor
       virtual ~Target() {}
       
-      virtual const t_Fitness& operator()(const t_Quantity& _val)
-        { fitness = std::abs( _val - target ); return fitness; }
-      virtual void evaluate_gradient( const t_Quantity &_val,
+      //! returns distance from target, eg \f$|q-q_0|\f$
+      virtual const t_Fitness& operator()(const t_Quantity& _q)
+        { fitness = std::abs( _q - q_0 ); return fitness; }
+      //! \brief computes the gradient \f$\mathrm{sgn}(q - q_0) \partial q \f$
+      //! \details It was chosen to set the gradient to zero for 
+      //!          \f$q \approx q_0\f$, where \f$\approx\f$ is exact in the
+      //!          case of integer quantities, and "fuzzy" in the case of
+      //!          reals.
+      //! \param _q the quantity \f$q\f$
+      //! \param _grad the gradient \f$\partial q\f$ as computed by some
+      //!              derived class of GA::Evaluator
+      //! \param _i_grad the resulting gradient from this objective. Note that
+      //!                it is not necessarily zero, say in the case of
+      //!                objectives within objectives 
+      //!                \f$\mathcal{O}_1 \circ \mathcal{O}_2(q)\f$.
+      virtual void evaluate_gradient( const t_Quantity &_q,
                                       t_QuantityGradients &_grad,
-                                      t_VA_Type *_i_grad)
-      {
-        typename t_QuantityGradients :: iterator i_grad = _grad.begin(); 
-        typename t_QuantityGradients :: iterator i_grad_end = _grad.end(); 
-        t_VA_Type *i_grad_result = _i_grad;
-        if ( _val > target ) 
-          for(; i_grad != i_grad_end; ++i_grad, ++i_grad_result )
-            *i_grad_result += *i_grad;
-        else 
-          for(; i_grad != i_grad_end; ++i_grad, ++i_grad_result )
-            *i_grad_result -= *i_grad;
-      }
-      virtual t_ScalarQuantity evaluate_with_gradient( const t_Quantity &_val,
+                                      t_VA_Type *_i_grad);
+      //! \brief computes both \f$\mathcal{O}(q)=|q-q_0|\f$ and
+      //!        \f$\partial\mathcal{O}(q)=\mathrm{sgn}(q - q_0) \partial q \f$
+      //! \details It was chosen to set the gradient to zero for 
+      //!          \f$q \approx q_0\f$, where \f$\approx\f$ is exact in the
+      //!          case of integer quantities, and "fuzzy" in the case of reals.
+      //! \param _q the quantity \f$q\f$
+      //! \param _grad the gradient \f$\partial q\f$ as computed by some
+      //!              derived class of GA::Evaluator
+      //! \param _i_grad the resulting gradient from this objective. Note that
+      //!                it is not necessarily zero, say in the case of
+      //!                objectives within objectives 
+      //!                \f$\mathcal{O}_1 \circ \mathcal{O}_2(q)\f$.
+      virtual t_ScalarQuantity evaluate_with_gradient( const t_Quantity &_q,
                                                        t_QuantityGradients& _grad,
-                                                       t_VA_Type *_i_grad)  
-      {
-        typename t_QuantityGradients :: iterator i_grad = _grad.begin(); 
-        typename t_QuantityGradients :: iterator i_grad_end = _grad.end(); 
-        t_VA_Type *i_grad_result = _i_grad;
-        if ( _val > target ) 
-          for(; i_grad != i_grad_end; ++i_grad, ++i_grad_result )
-            *i_grad_result += *i_grad;
-        else 
-          for(; i_grad != i_grad_end; ++i_grad, ++i_grad_result )
-            *i_grad_result -= *i_grad;
-        return std::abs(target - _val);
-      }
-      virtual t_VA_Type evaluate_one_gradient( const t_Quantity & _val,
+                                                       t_VA_Type *_i_grad);
+      //! \brief returns the gradient
+      //!        \f$\partial_n\mathcal{O}(q)=\mathrm{sgn}(q - q_0) \partial_n q \f$
+      //!        in specified direction \a _n
+      //! \details It was chosen to set the gradient to zero for 
+      //!          \f$q \approx q_0\f$, where \f$\approx\f$ is exact in the
+      //!          case of integer quantities, and "fuzzy" in the case of reals.
+      //! \param _q the quantity \f$q\f$
+      //! \param _grad the gradient \f$\partial q\f$ as computed by some
+      //!              derived class of GA::Evaluator
+      //! \param _n direction of the requested gradient. This "direction" is
+      //!           merely the index of the array t_QuantityGradients. 
+      virtual t_VA_Type evaluate_one_gradient( const t_Quantity & _q,
                                                t_QuantityGradients& _grad,
-                                               types::t_unsigned _n) 
-      {
-        return ( _val > target ) ? _grad[_n]: -_grad[_n];
-      }
+                                               types::t_unsigned _n);
+      //! The status is permanent, and this %function always returns true
       bool is_valid() const { return true; }
+      //! The status is permanent, and this %function always returns an empty string
       virtual std::string print() const { return ""; }
-      virtual std::string what_is() const
-      { 
-        std::ostringstream sstr;
-        sstr << " Target (" << target << ")";
-        return sstr.str();
-      }
+      //! Returns "Target (\f$q_0\f$)"
+      virtual std::string what_is() const;
   };
+
+
+  /** \brief Implements the refinement of a (scalar) convex-hull, 
+        \f$ \mathcal{O}(q_\sigma) = q_\sigma - C^{(n)}(x_\sigma), \f$
+      \details The convex-hull is defined in opt::ConvexHull::Base. Indeed,
+        that is the implementation we shall use below.\n The goal of this
+        objective is to construct and refine a convex-hull. As such, the
+        objective is defined as \f[ \mathcal{O}(q_\sigma) = q_\sigma -
+        C^{(n)}(x_\sigma), \f] with \f$\sigma\f$ an individual, \f$q_\sigma\f$ its
+        raw fitness, \f$x_\sigma\f$ its concentration, and \f$C^{(n)}(x)\f$ the
+        known convex-hull at iteration (generation) \f$n\f$ of the genetic
+        algorithm. This definition of the objective as the distance to the
+        known convex-hull allows us to refine the convex-hull simultaneously
+        throughout the concentration range.
+      \note This is a <STRONG>scalar</STRONG> objective
+      \xmlinput There are no special attributes
+        \code <Objective type="convexhull"/> \endcode
+      \xmlrestart This objective can be saved and restarted directly as a
+      convex-hull. See opt::ConvexHull
+  */
   template< class T_GA_TRAITS >
   class ConvexHull : public Types< T_GA_TRAITS > :: Scalar
   {
     public:
-      typedef T_GA_TRAITS t_GATraits;
+      typedef T_GA_TRAITS t_GATraits; //!< All %GA traits
     protected:
-      typedef typename Types<t_GATraits> :: Scalar       t_Base;
-      typedef typename t_GATraits :: t_Individual        t_Individual;
+      //! Type of individual in this %GA
+      typedef typename t_GATraits :: t_Individual         t_Individual;
+      //! Base of this class
+      typedef typename Types<t_GATraits> :: Scalar        t_Base; 
+      //! Type of the fitness, as declared in the base class
       typedef typename t_Base :: t_Fitness                t_Fitness;
+      //! Type of the quantity, as declared in the base class
       typedef typename t_Base :: t_Quantity               t_Quantity;
+      //! Type of the scalar quantity, as declared in the base class
       typedef typename t_Base :: t_ScalarQuantity         t_ScalarQuantity;
-      typedef opt::ConvexHull::Base<t_Individual>         t_ConvexHull;
+      //! Type of the lamarckian traits, as declared in the base class
       typedef typename t_Base :: t_VA_Traits              t_VA_Traits;
+      //! Type of the lamarckian gradients, as declared in the base class
       typedef typename t_VA_Traits :: t_QuantityGradients t_QuantityGradients;
+      //! Type of the lamarckian variables, as declared in the base class
       typedef typename t_VA_Traits :: t_Type              t_VA_Type;
+      //! A functor to for saving individuals
       typedef GA::SaveObject<t_GATraits>                 t_SaveOp;
+      //! A functor to for loading individuals
       typedef GA::LoadObject<t_GATraits>                 t_LoadOp;
+      //! The convex-hull object instanciated for a %GA individual
+      typedef opt::ConvexHull::Base<t_Individual>         t_ConvexHull;
 
     protected:
-      t_ConvexHull convexhull; 
-      mutable bool valid;
+      t_ConvexHull convexhull;  //!<  The convex-hull instanciation
+      //! \brief is true when convex-hull.
+      //! \details The convex-hull becomes invalid whenever a new break-point is found.
+      //!          It is set to true again whenever ConvexHull::is_valid()
+      //!          const is called. Since the latter is a constant %function,
+      //!          ConvexHull::valid is mutable.
+      mutable bool valid;       
       using t_Base :: fitness;
       using t_Base :: current_indiv;
 
     public:
+      //! Constructor
       ConvexHull() : valid(true) {}
+      //! Copy Constructor
       ConvexHull( const ConvexHull &_c ) : convexhull( _c.convexhull ), valid(true) {}
+      //! Destructor
       virtual ~ConvexHull() {}
       
-      virtual const t_Fitness& operator()(const t_Quantity& _val);
-      virtual void evaluate_gradient( const t_Quantity &_val,
+      //! \brief Returns the distance of Base::current_indiv to the
+      //!     convex-hull, \f$ \mathcal{O}(q_\sigma) = q_\sigma - C^{(n)}(x_\sigma), \f$
+      //! \details First, we check whether Base::current_indiv is a (new)
+      //!     breaking-point. Then the subroutines returns the distance to the
+      //!     (possibly) updated convex-hull.
+      virtual const t_Fitness& operator()(const t_Quantity& _q);
+      /** \brief Returns the gradient
+              \f$ \partial\mathcal{O}(q_\sigma) = \partial q_\sigma - \partial
+              C^{(n)}(x_\sigma), \f$
+          \details First, we check whether Base::current_indiv is a (new)
+              breaking-point. Then the subroutines returns the gradient of the
+              distance to the (possibly) updated convex-hull.
+          \param _q the quantity \f$q\f$
+          \param _grad the gradient \f$\partial q\f$ as computed by some
+                       derived class of GA::Evaluator
+          \param _i_grad the resulting gradient from this objective. Note that
+                         it is not necessarily zero, say in the case of
+                         objectives within objectives 
+                         \f$\mathcal{O}_1 \circ \mathcal{O}_2(q)\f$.
+      */
+      virtual void evaluate_gradient( const t_Quantity &_q,
                                       t_QuantityGradients &_grad,
                                       t_VA_Type *_i_grad)
-        { evaluate_with_gradient( _val, _grad, _i_grad ); }
-
-      virtual t_ScalarQuantity evaluate_with_gradient( const t_Quantity &_val,
+        { evaluate_with_gradient( _q, _grad, _i_grad ); }
+      /** \brief Returns both \f$ \mathcal{O}(q_\sigma) = q_\sigma -
+              C^{(n)}(x_\sigma), \f$ \f$ \partial\mathcal{O}(q_\sigma) =
+              \partial q_\sigma - \partial C^{(n)}(x_\sigma), \f$
+          \details First, we check whether Base::current_indiv is a (new)
+              breaking-point. Then the subroutines computes what it should.
+          \param _q the quantity \f$q\f$
+          \param _grad the gradient \f$\partial q\f$ as computed by some
+                       derived class of GA::Evaluator
+          \param _i_grad the resulting gradient from this objective. Note that
+                         it is not necessarily zero, say in the case of
+                         objectives within objectives 
+                         \f$\mathcal{O}_1 \circ \mathcal{O}_2(q)\f$.
+      */
+      virtual t_ScalarQuantity evaluate_with_gradient( const t_Quantity &_q,
                                                        t_QuantityGradients& _grad,
-                                                       t_VA_Type *);
-      virtual t_VA_Type evaluate_one_gradient( const t_Quantity & _val,
+                                                       t_VA_Type *_i_grad);
+      /** \brief Returns \f$ \partial_n\mathcal{O}(q_\sigma) =
+              \partial_n q_\sigma - \partial_n C^{(n)}(x_\sigma), \f$
+          \details First, we check whether Base::current_indiv is a (new)
+              breaking-point. Then the subroutines computes what it should.
+          \param _q the quantity \f$q\f$
+          \param _grad the gradient \f$\partial q\f$ as computed by some
+                       derived class of GA::Evaluator
+          \param _n direction of the requested gradient. This "direction" is
+                    merely the index of the array t_QuantityGradients. 
+      */
+      virtual t_VA_Type evaluate_one_gradient( const t_Quantity & _q,
                                                t_QuantityGradients& _grad,
                                                types::t_unsigned _n);
-      bool is_valid() const
-      {
-        if ( valid ) return true;
-        valid = true;
-        return false;
-      }
+      //! \brief returns true if no new breaking-point has been found since the
+      //! last call to this routine
+      //! \sa ConvexHull::valid, Evaluate::Base::operator(t_Population&, t_Population&)
+      bool is_valid() const;
+      //! Returns " Convex-Hull"
       virtual std::string what_is() const { return " Convex-Hull"; }
+      //! Returns a string defining the current status of the convex-hull, as
+      //! given by opt::ConvexHull::Base::print().
       virtual std::string print() const { return convexhull.print(); }
+      //! \brief Saves the current status of the convex-hull
+      //! \sa opt::ConvexHull::Base::Save
+      //! \note This %function will generally make an indirect call to
+      //!       GA::Evaluator::Save(const t_Individual&, TiXmlElement &, bool) const
       virtual bool Save( TiXmlElement &_node, t_SaveOp& _op)
         { return convexhull.Save( _node, _op ); };
+      //! \brief Restarts using a previouly saved status of the convex-hull
+      //! \sa opt::ConvexHull::Base::Load
+      //! \note This %function will generally make an indirect call to
+      //!       GA::Evaluator::Load(t_Individual&, const TiXmlElement &, bool)
       virtual bool Restart( const  TiXmlElement &_node, t_LoadOp &_op)
         { return convexhull.Load( _node, _op ); };
+      //! Always returns true since this is an impermanent objective
       virtual bool does_store() const { return true; }
   };
-  template< class T_GA_TRAITS >
-  const typename ConvexHull<T_GA_TRAITS> :: t_Fitness&
-    ConvexHull<T_GA_TRAITS> :: operator()(const t_Quantity& _val)
-    {
-      t_Quantity x = current_indiv->get_concentration();
-      t_Quantity base = (t_Quantity) convexhull.evaluate( x );
-    
-      if ( _val >= base and convexhull.size() >= 2 )
-       { fitness = _val - base;  return fitness; }
-    
-      if ( convexhull.add( _val, *current_indiv ) )
-        valid = false;
-
-      fitness = 0.0;
-      return fitness;
-    }
-  template< class T_GA_TRAITS >
-  typename ConvexHull<T_GA_TRAITS> :: t_ScalarQuantity
-    ConvexHull<T_GA_TRAITS> :: evaluate_with_gradient( const t_Quantity &_val,
-                                                       t_QuantityGradients &_grad,
-                                                       t_VA_Type *_i_grad)
-    {
-      t_Quantity x = current_indiv->get_concentration();
-      t_Quantity base = (t_Quantity) convexhull.evaluate( x );
-      types::t_real Ninv = 1.0 / ( (types::t_real ) current_indiv->Object().Container().size() );
-      types::t_real gradient = convexhull.evaluate_gradient( x ) * Ninv;
-      typename t_QuantityGradients :: iterator i_grad = _grad.begin(); 
-      typename t_QuantityGradients :: iterator i_grad_end = _grad.end(); 
-      t_VA_Type *i_grad_result = _i_grad;
-      for(; i_grad != i_grad_end; ++i_grad, ++i_grad_result )
-        *i_grad_result += *i_grad - gradient;
-      
-      if ( _val >= base ) return _val - base;
-
-      if ( convexhull.add( _val, *current_indiv ) )
-        valid = false;
-
-      return 0.0;
-    }
-  template< class T_GA_TRAITS >
-  typename ConvexHull<T_GA_TRAITS> :: t_VA_Type
-    ConvexHull<T_GA_TRAITS> :: evaluate_one_gradient( const t_Quantity &_val,
-                                                      t_QuantityGradients &_grad,
-                                                      types::t_unsigned _n) 
-    {
-      t_Quantity x = current_indiv->get_concentration();
-      types::t_real Ninv = 1.0 / ( (types::t_real ) current_indiv->Object().Container().size() );
-      types::t_real gradient = convexhull.evaluate_gradient( x ) * Ninv;
-      return _grad[_n] - gradient;
-    }
 
 
+  //! \brief Base class to implement optimization towards a vector of scalar
+  //!        objectives
+  //! \details This class is still pure virtual and cannot be used as such. It
+  //!          merely implements some general routines over a container of scalar
+  //!          objectives. As suchm there is not XML input to create this class.
+  //! \note This is a <STRONG>vectorial</STRONG> objective
+  //! \xmlrestart This objectives saves and restart the scalar objectives in
+  //!             the order given Container::objectives.
   template<class T_GA_TRAITS >
   class Container : public Types<T_GA_TRAITS> :: Vector
   {
     public:
-      typedef T_GA_TRAITS t_GATraits;
+      typedef T_GA_TRAITS t_GATraits; //!< All %GA traits
     protected:
+      //! Class holding all possible objective %types
       typedef Types<t_GATraits>                          t_ObjectiveType;
-      typedef typename t_ObjectiveType :: Vector          t_Base;
-      typedef typename t_GATraits :: t_Individual        t_Individual;
-      typedef typename t_GATraits :: t_IndivTraits       t_IndivTraits;
+      //! Type of individual in this %GA
+      typedef typename t_GATraits :: t_Individual         t_Individual;
+      //! Base of this class
+      typedef typename Types<t_GATraits> :: Scalar        t_Base; 
+      //! Type of the fitness, as declared in the base class
+      typedef typename t_Base :: t_Fitness                t_Fitness;
+      //! Type of the quantity, as declared in the base class
       typedef typename t_Base :: t_Quantity               t_Quantity;
+      //! Type of the scalar quantity, as declared in the base class
       typedef typename t_Base :: t_ScalarQuantity         t_ScalarQuantity;
-      typedef typename t_ObjectiveType :: Scalar          t_Objective;
-      typedef std::vector< t_Objective* >                 t_Objectives;
+      //! Type of the lamarckian traits, as declared in the base class
       typedef typename t_Base :: t_VA_Traits              t_VA_Traits;
+      //! Type of the lamarckian gradients, as declared in the base class
       typedef typename t_VA_Traits :: t_QuantityGradients t_QuantityGradients;
+      //! Type of the lamarckian variables, as declared in the base class
       typedef typename t_VA_Traits :: t_Type              t_VA_Type;
+      //! A functor to for saving individuals
       typedef GA::SaveObject<t_GATraits>                 t_SaveOp;
+      //! A functor to for loading individuals
       typedef GA::LoadObject<t_GATraits>                 t_LoadOp;
-
+      //! Scalar objective type
+      typedef typename t_ObjectiveType :: Scalar          t_Objective;
+      
     protected:
       using t_Base :: fitness;
-      t_Objectives objectives;
+      //! \brief Container of scalar objectives
+      //! \details The objectives are owned by this class
+      t_Objectives objectives; 
 
     public:
+      //! Constructor
       Container() {}
+      //! Copy Constructor
       Container( const Container &_c ) : objectives(_c.objectives) {}
-      virtual ~Container () 
-      {
-        typename t_Objectives :: iterator i_objective = objectives.begin();
-        typename t_Objectives :: iterator i_end = objectives.end();
-        for(; i_objective != i_end; ++i_objective ) delete *i_objective;
-        objectives.clear();
-      }
+      //! \brief Destructor
+      //! \details Deletes the pointers held within Container::objectives
+      virtual ~Container ();
 
-      bool is_valid() const
-      {
-        typename t_Objectives::const_iterator i_objective = objectives.begin();
-        typename t_Objectives::const_iterator i_end = objectives.begin();
-        for(; i_objective != i_end; ++i_objective )
-          if ( not (*i_objective)->is_valid() ) return false;
-        return true;
-      }
-      virtual bool Save( TiXmlElement &_node, t_SaveOp& _op)
-      {
-        typename t_Objectives::const_iterator i_objective = objectives.begin();
-        typename t_Objectives::const_iterator i_end = objectives.begin();
-        for(; i_objective != i_end; ++i_objective )
-          if ( not (*i_objective)->Save( _node, _op ) ) return false;
-        return true;
-      }
-      virtual bool Restart( const  TiXmlElement &_node, t_LoadOp &_op) 
-      {
-        typename t_Objectives::iterator i_objective = objectives.begin();
-        typename t_Objectives::iterator i_end = objectives.begin();
-        for(; i_objective != i_end; ++i_objective )
-          if ( not (*i_objective)->Restart( _node, _op ) ) return false;
-        return true;
-      }
-      virtual bool does_store() const
-      {
-        typename t_Objectives::const_iterator i_objective = objectives.begin();
-        typename t_Objectives::const_iterator i_end = objectives.begin();
-        for(; i_objective != i_end; ++i_objective )
-          if ( (*i_objective)->does_store() ) return true;
-        return false;
-      }
-      virtual std::string print() const
-      {
-        typename t_Objectives::const_iterator i_objective = objectives.begin();
-        typename t_Objectives::const_iterator i_end = objectives.begin();
-        std::ostringstream sstr;
-        for(; i_objective != i_end; ++i_objective )
-          sstr << (*i_objective)->print();
-        return sstr.str();
-      }
+      //! Returns false if one of the scalar objectives is invalid
+      bool is_valid() const;
+      //! Calls upon each objective to save current status
+      virtual bool Save( TiXmlElement &_node, t_SaveOp& _op);
+      //! Calls upon each objective to restart from a previously saved status
+      virtual bool Restart( const  TiXmlElement &_node, t_LoadOp &_op);
+      //! Returns true if at least one objective is impermanent
+      virtual bool does_store() const;
+      //! Concatenates into a string the call to each scalar objective 
+      virtual std::string print() const;
   };
 
+  /** \brief Implements a weighted linear average of scalar objectives,
+         \f$ \mathcal{O}(q) = \sum_i\omega_i\mathcal{O}_i(q)\f$.
+      \note This is a \b vectorial objective
+      \xmlinput A list of scalar  %Objective tags are expected.
+      \code
+        <Objective type="LinearSum" >
+          <Objective type="minimize" coef="1"/>
+          <Objective type="target"  target=0.3 coef="10"/>
+        </Objective>
+      \endcode
+      The order of the scalar objectives should correspond to the order of the
+      scalar quantities, as defined  within your class derived from
+      GA::Evaluator. Refer to an actual implementation for details. 
+      The \a coef  attribute is the weight of that objective in the linear sum.
+      \xmlrestart This objectives saves and restart the scalar objectives in
+                  the order given by Container::objectives.
+  */
   template<class T_GA_TRAITS >
   class LinearSum : public Container<T_GA_TRAITS>
   {
     public:
-      typedef T_GA_TRAITS t_GATraits;
+      typedef T_GA_TRAITS t_GATraits; //!< All %GA traits
     protected:
-      typedef Types<t_GATraits>                      t_ObjectiveType;
-      typedef Container<t_GATraits>                  t_Base;
-      typedef typename t_Base :: t_Fitness           t_Fitness;
-      typedef typename t_Base :: t_Individual        t_Individual;
-      typedef typename t_Base :: t_QuantityTraits    t_QuantityTraits;
-      typedef typename t_Base :: t_Quantity          t_Quantity;
-      typedef typename t_Base :: t_ScalarQuantity    t_ScalarQuantity;
-      typedef typename t_Base :: t_Objective         t_Objective;
-      typedef std::vector< t_Objective* >            t_Objectives;
-      typedef typename t_Base :: t_VA_Traits         t_VA_Traits;
+      //! Class holding all possible objective %types
+      typedef Types<t_GATraits>                          t_ObjectiveType;
+      //! Type of individual in this %GA
+      typedef typename t_GATraits :: t_Individual         t_Individual;
+      //! Base of this class
+      typedef typename Types<t_GATraits> :: Scalar        t_Base; 
+      //! Type of the fitness, as declared in the base class
+      typedef typename t_Base :: t_Fitness                t_Fitness;
+      //! Type of the quantity, as declared in the base class
+      typedef typename t_Base :: t_Quantity               t_Quantity;
+      //! Type of the scalar quantity, as declared in the base class
+      typedef typename t_Base :: t_ScalarQuantity         t_ScalarQuantity;
+      //! Type of the lamarckian traits, as declared in the base class
+      typedef typename t_Base :: t_VA_Traits              t_VA_Traits;
+      //! Type of the lamarckian gradients, as declared in the base class
       typedef typename t_VA_Traits :: t_QuantityGradients t_QuantityGradients;
+      //! Type of the lamarckian variables, as declared in the base class
       typedef typename t_VA_Traits :: t_Type              t_VA_Type;
-      typedef GA::SaveObject<t_GATraits>             t_SaveOp;
-      typedef GA::LoadObject<t_GATraits>             t_LoadOp;
+      //! A functor to for saving individuals
+      typedef GA::SaveObject<t_GATraits>                 t_SaveOp;
+      //! A functor to for loading individuals
+      typedef GA::LoadObject<t_GATraits>                 t_LoadOp;
 
     protected:
       using t_Base :: fitness;
       using t_Base :: objectives;
-      std::vector< t_ScalarQuantity > coefs;
+      //!  Vector containing the weights of each scalar objective
+      std::vector< t_ScalarQuantity > coefs; 
 
     public:
+      //! Constructor
       LinearSum() {}
+      //! Copy Constructor
       LinearSum ( const LinearSum &_c ) : t_Base(_c), coefs(_c.coefs) {}
+      //! Destructor
       virtual ~LinearSum() {}
 
-      void add( t_Objective *_objective, t_ScalarQuantity _coef )
-      {
-        if ( not _objective ) return;
-        coefs.push_back( _coef );
-        objectives.push_back( _objective );
-      }
-      virtual const t_Fitness& operator()(const t_Quantity& _val);
+      //! \brief Adds a scalar objective to the linear sum
+      //! \details The pointer to the scalar objective is owned by this
+      //!    instance of LinearSum and will be destroyed by this instance of
+      //!    LinearSum.
+      //! \param _objective pointer to a scalar objective
+      //! \param _coef coefficient in the linear sum
+      void add( t_Objective *_objective, t_ScalarQuantity _coef );
+      //! Returns a weighted linear average of scalar objectives,
+      //! \f$ \mathcal{O}(q) = \sum_i\omega_i\mathcal{O}_i(q)\f$.
+      virtual const t_Fitness& operator()(const t_Quantity& _q);
+      //! Computes both  \f$ \mathcal{O}(q) = \sum_i\omega_i\mathcal{O}_i(q)\f$ and
+      //! \f$ \partial\mathcal{O}(q) = \partial \sum_i\omega_i\partial\mathcal{O}_i(q)\f$.
       virtual t_ScalarQuantity evaluate_with_gradient( const t_Quantity &,
                                                        t_QuantityGradients&,
                                                        t_VA_Type *);
-      virtual void evaluate_gradient( const t_Quantity &_val,
+      //! Computes the weighted linear average of the gradients 
+      //! \f$ \partial\mathcal{O}(q) = \partial \sum_i\omega_i\partial\mathcal{O}_i(q)\f$.
+      virtual void evaluate_gradient( const t_Quantity &_q,
                                       t_QuantityGradients &_grad,
                                       t_VA_Type *_i_grad);
+      //! Computes the weighted linear average of the gradients in direction \a _n,
+      //! \f$ \partial_n\mathcal{O}(q) = \partial \sum_i\omega_i\partial_n\mathcal{O}_i(q)\f$.
       virtual t_VA_Type evaluate_one_gradient( const t_Quantity &,
                                                t_QuantityGradients& _grad,
                                                types::t_unsigned _n);
-      virtual std::string what_is() const
-      {
-        std::ostringstream sstr;
-        sstr << "LinearSum begin{ ";
-        typename t_Objectives::const_iterator i_objective = objectives.begin();
-        typename t_Objectives::const_iterator i_end = objectives.begin();
-        typename std::vector< t_ScalarQuantity > :: const_iterator i_coef = coefs.begin();
-        for(; i_objective != i_end; ++i_objective, ++i_coef )
-          sstr << (*i_objective)->what_is() << "[" << *i_coef << "] ";
-        sstr << "} end"; 
-        return  sstr.str();
-      }
+      //! Returns a string describing each scalar objective and its assigned weight
+      virtual std::string what_is() const;
      
   };
   
-  template< class T_GA_TRAITS >
-    const typename LinearSum<T_GA_TRAITS>::t_Fitness&
-      LinearSum<T_GA_TRAITS> :: operator()( const t_Quantity& _val ) 
-      {
-        if ( t_QuantityTraits::size(_val) != coefs.size() )
-          throw std::runtime_error( "Wrong number of objective functions\n" );
-
-        t_ScalarQuantity inter = 0;
-        typename t_Quantity :: const_iterator i_val = _val.begin();
-        typename t_Quantity :: const_iterator i_val_end = _val.end();
-        typename std::vector< t_ScalarQuantity > :: const_iterator i_coef = coefs.begin();
-        typename t_Objectives :: iterator i_objective = objectives.begin();
-        typename t_Objectives :: iterator i_end = objectives.begin();
-        fitness.clear();
-        for(; i_objective != i_end and i_val != i_val_end; ++i_objective, ++i_coef, ++i_val )
-        {
-          double r = (*i_objective)->operator()( *i_val );
-          fitness.push_back( r );
-          inter += ( *i_coef ) * r;
-        }
-          
-        fitness = inter;
-        return fitness;
-      };
-  template< class T_GA_TRAITS >
-    typename LinearSum<T_GA_TRAITS>::t_ScalarQuantity
-      LinearSum<T_GA_TRAITS> :: evaluate_with_gradient( const t_Quantity &_val,
-                                                                    t_QuantityGradients &_grad,
-                                                                    t_VA_Type *_i_grad)
-      {
-        if ( t_QuantityTraits::size(_val) != coefs.size() )
-          throw std::runtime_error( "Wrong number of objective functions\n" );
-        t_ScalarQuantity results = 0.0;
-        typename t_Quantity :: const_iterator i_val = _val.begin();
-        typename t_Quantity :: const_iterator i_val_end = _val.end();
-        typename t_QuantityGradients :: iterator i_grad = _grad.begin();
-        typename t_QuantityGradients :: iterator i_grad_end = _grad.end();
-        typename std::vector< t_ScalarQuantity > :: const_iterator i_coef = coefs.begin();
-        typename t_Objectives :: iterator i_objective = objectives.begin();
-        typename t_Objectives :: iterator i_end = objectives.begin();
-
-        t_VA_Type *i2 = _i_grad + _val.size();
-        t_VA_Type *i1 = _i_grad;
-        for( ; i1 != i2; ++i1 ) *i1 = t_VA_Type(0);
-
-        t_VA_Type *const_grad_result = new t_VA_Type[ _val.size() ];
-        t_VA_Type *const_grad_result_end = const_grad_result + _val.size(); 
-
-        for(; i_objective != i_end and i_val != i_val_end;
-              ++i_objective, ++i_coef, ++i_val, ++i_grad )
-        {
-          i1 = const_grad_result;
-
-          for( ; i1 != const_grad_result_end; ++i1 ) *i1 = t_VA_Type(0);
-
-          results +=   (*i_objective)->evaluate_with_gradient( *i_val, *i_grad, const_grad_result )
-                     * (*i_coef);
-          i1 = const_grad_result;
-
-          for(; i1 != const_grad_result_end; ++i1, ++i2, ++i_coef ) *i2 +=  (*i_coef) * (*i1);
-        }
-
-        delete[] const_grad_result;
-          
-        return results;
-      };
-  template< class T_GA_TRAITS >
-    void
-      LinearSum<T_GA_TRAITS> ::  evaluate_gradient( const t_Quantity &_val,
-                                                                t_QuantityGradients &_grad,
-                                                                t_VA_Type *_i_grad)
-      {
-        if ( t_QuantityTraits::size(_val) != coefs.size() )
-          throw std::runtime_error( "Wrong number of objective functions\n" );
-        typename t_Quantity :: const_iterator i_val = _val.begin();
-        typename t_Quantity :: const_iterator i_val_end = _val.end();
-        typename t_QuantityGradients :: iterator i_grad = _grad.begin();
-        typename t_QuantityGradients :: iterator i_grad_end = _grad.end();
-        typename std::vector< t_ScalarQuantity > :: const_iterator i_coef = coefs.begin();
-        typename t_Objectives :: iterator i_objective = objectives.begin();
-        typename t_Objectives :: iterator i_end = objectives.begin();
-
-        t_VA_Type *i2 = _i_grad + _val.size();
-        t_VA_Type *i1 = _i_grad;
-        for( ; i1 != i2; ++i1 ) *i1 = t_VA_Type(0);
-
-        t_VA_Type *const_grad_result = new t_VA_Type[ _val.size() ];
-        t_VA_Type *const_grad_result_end = const_grad_result + _val.size(); 
-
-        for(; i_objective != i_end and i_val != i_val_end;
-              ++i_objective, ++i_coef, ++i_val, ++i_grad )
-        {
-          i1 = const_grad_result;
-
-          for( ; i1 != const_grad_result_end; ++i1 ) *i1 = t_VA_Type(0);
-
-          (*i_objective)->evaluate_gradient( *i_val, *i_grad, const_grad_result );
-          i1 = const_grad_result;
-
-          for(; i1 != const_grad_result_end; ++i1, ++i2, ++i_coef ) *i2 +=  (*i_coef) * (*i1);
-        }
-
-        delete[] const_grad_result;
-      };
-  template< class T_GA_TRAITS >
-    typename LinearSum<T_GA_TRAITS>::t_VA_Type
-      LinearSum<T_GA_TRAITS> :: evaluate_one_gradient( const t_Quantity & _val,
-                                                                   t_QuantityGradients& _grad,
-                                                                   types::t_unsigned _n)
-      {
-        if ( t_QuantityTraits::size(_val) != coefs.size() )
-          throw std::runtime_error( "Wrong number of objective functions\n" );
-        typename t_Quantity :: const_iterator i_val = _val.begin();
-        typename t_Quantity :: const_iterator i_val_end = _val.end();
-        typename t_QuantityGradients :: iterator i_grad = _grad.begin();
-        typename t_QuantityGradients :: iterator i_grad_end = _grad.end();
-        typename std::vector< t_ScalarQuantity > :: const_iterator i_coef = coefs.begin();
-        typename t_Objectives :: iterator i_objective = objectives.begin();
-        typename t_Objectives :: iterator i_end = objectives.begin();
-
-        t_VA_Type result = t_VA_Type(0);
-        for(; i_objective != i_end and i_val != i_val_end;
-              ++i_objective, ++i_coef, ++i_val, ++i_grad )
-          result +=   ( *i_coef ) 
-                    * (*i_objective)->evaluate_one_gradient( *i_val, *i_grad, _n );
-
-        return result;
-      };
-
-  template< class T_GA_TRAITS >
-     typename Types<T_GA_TRAITS> :: Scalar*
-      Types<T_GA_TRAITS> :: scalar_from_xml( const TiXmlElement &_node )
-      {
-        if ( not &_node ) return NULL;
-        std::string str = "minimize"; 
-        std::string name = Print::lowercase(_node.Value());
-        if (    name.compare("objective") == 0 
-             or name.compare("method") == 0 )
-        {
-          if ( _node.Attribute( "type" ) )
-            str = Print::lowercase(_node.Attribute( "type" ));
-        }
-        else if ( _node.Attribute("objective") )
-          str = _node.Attribute( "objective" );
-        if ( str.compare("convexhull") == 0 )
-        {
-          Print::xmg << Print::Xmg::comment << "Objective: ConvexHull" << Print::endl;
-          return new ConvexHull<t_GATraits>;
-        }
-        else if ( str.compare("minimize") == 0 )
-        {
-          Print::xmg << Print::Xmg::comment << "Objective: Minimize" << Print::endl;
-          return new Minimize<t_GATraits>;
-        }
-        else if ( str.compare("maximize") == 0 )
-        {
-          Print::xmg << Print::Xmg::comment << "Objective: Maximize" << Print::endl;
-          return new Maximize<t_GATraits>;
-        }
-        else if (str.compare("target") == 0 )
-        {
-          if( _node.Attribute("target") )
-          {
-            double d; _node.Attribute("target", &d );
-            Print::xmg << Print::Xmg::comment
-                       << "Objective: Target (" << d << ")" << Print::endl;
-            return new Target<t_GATraits>( (types::t_real) d );
-          }
-        }
-        if ( _node.FirstChildElement( "Objective" ) )
-         return scalar_from_xml( *_node.FirstChildElement( "Objective" ) ); 
-
-        return NULL;
-      }
-    template< class T_GA_TRAITS >
-       typename Types<T_GA_TRAITS> :: Vector*
-        Types<T_GA_TRAITS> :: vector_from_xml( const TiXmlElement &_node )
-        {
-          if ( not &_node ) return NULL;
-          std::string str = "minimize"; 
-          std::string name = Print::lowercase(_node.Value());
-          if (    name.compare("objective") == 0 
-               or name.compare("method") == 0 )
-          {
-            if ( _node.Attribute( "type" ) )
-              str = Print::lowercase(_node.Attribute( "type" ));
-          }
-          if ( Vector::t_QuantityTraits::is_vector ) // and str.compare("LinearSum") == 0 )
-          {
-            LinearSum<T_GA_TRAITS> *linear = new LinearSum<T_GA_TRAITS>;
-            if ( not linear ) 
-            {
-              std::cerr << "Mememory Pb when creating LinearSum multi-objective" << std::endl;
-              return NULL;
-            }
-            const TiXmlElement *child = _node.FirstChildElement("Objective");
-            for(; child; child = child->NextSiblingElement("Objective") )
-            {
-              Scalar* scalar = scalar_from_xml( *child );
-              if ( not scalar ) continue;
-              double d = 0.0;
-              if ( not child->Attribute("coef", &d) ) d = 1.0;
-              linear->add( scalar, t_ScalarQuantity(d) );
-            }
-            return linear;
-          }
-
-          if ( _node.FirstChildElement( "Objective" ) )
-           return new_from_xml( *_node.FirstChildElement( "Objective" ) ); 
-
-          return NULL;
-        }
 
    
-    // bullshit class since there is no such thing as partial specialization of functions!!
+    //! (Vectorial) Hack, don't touch
     template< class T_TYPE >
       struct fork<T_TYPE, true>
       {
+        //! (Vectorial) Hack, don't touch
         typename T_TYPE :: Vector* operator()( const TiXmlElement &_node )
         {
           typename T_TYPE :: Vector* result;
@@ -959,9 +929,11 @@ namespace Objective
           return result;
         }
       };
+    //! (Scalar) Hack, don't touch
     template< class T_TYPE > 
       struct fork<T_TYPE, false>
       {
+        //! (Scalar) Hack, don't touch
         typename T_TYPE :: Vector* operator()( const TiXmlElement &_node )
         {
           return T_TYPE::scalar_from_xml( _node );

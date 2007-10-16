@@ -106,7 +106,7 @@ namespace GA
     public:
       //! \brief opens XML file \a _f and calls Evaluator::Load(const TiXmlElement &_node )
       //! \details Should load t_Individual and funtional related stuff, except
-      //! for the attributes of the <GA> tag.
+      //! for the attributes of the \<GA\> tag.
       bool Load ( std::string const &_f );
       //! \brief Loads from XML input
       //! \details Is made virtual so that the correct member %function is
@@ -119,7 +119,7 @@ namespace GA
       //! bitstring versus a decorated lattice structure )
       //! \param _indiv is the individual to load. More explicitely, load the
       //! indiviudal's t_Object instance!
-      //! \param _node The XML node to load from. Should be an <Individual> Tag...
+      //! \param _node The XML node to load from. Should be an \<Individual\> Tag...
       //! \param _type can be either GA::LOADSAVE_SHORT or
       //!              GA::LOADSAVE_LONG.
       bool Load ( t_Individual &_indiv, const TiXmlElement &_node, bool _type ) {return true;};
@@ -130,11 +130,11 @@ namespace GA
       //! bitstring versus a decorated lattice structure )
       //! \param _indiv is the individual to save. More explicitely, save the
       //! indiviudal's t_Object instance!
-      //! \param _node The XML node to save to. Should be an <Individual> Tag...
+      //! \param _node The XML node to save to. Should be an \<Individual\> Tag...
       //! \param _type can be either GA::LOADSAVE_SHORT or
       //!              GA::LOADSAVE_LONG.
       bool Save ( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const {return true;};
-      //! \brief attributes from <GA > tag in input.xml are passed to this
+      //! \brief attributes from \<GA\> tag in input.xml are passed to this
       //! %function from Darwin::Load(...)
       void LoadAttribute ( const TiXmlAttribute &_att ) {};
       //! \brief Loads application-specific Mating operators

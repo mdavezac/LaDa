@@ -26,83 +26,130 @@
 namespace opt
 {
 
-//!  \brief Contains template class which can will make a convex-hull out of
-//! any object of type \a T_OBJECT.
-//! \details A convex hull of \a T_OBJECT is constructed from some \a x and \a
-//! y coordinates specific to each instance of \a T_OBJECT. The <em>x</em>-axis
-//! is determined by \a T_OBJECT::get_concentration(), The <em>y</em>-axis should be
-//! given on input when submitting an instance of \a T_OBJECT to a
-//! ConvexHull::Base object, <em> via</em>  ConvexHull::Base::add(). Once
-//! constructed a convex-hull is nothing more than a single variable function. 
-//!
-//!  \par Required behaviors for \a T_OBJECT
-//!  The following behaviors are required from \a T_OBJECT and should be
-//! implemented to use it in ConvexHull,
-//!  - get_concentration() returns a types::real which should represent the concentration
-//!  - copy constructor or operator=(T_OBJECT&, const TOBJECT&) 
-//!  - a functor capable of saving a \a T_OBJECT  to an XML node, eg GA::SaveObject 
-//!  - a functor capable of loading a \a T_OBJECT  from an XML node, eg GA::LoadObject
-//!  . 
-//! 
-//!  \par Design Philosophy
-//!  Convexhulls are defined using two template classes and a single non-template class:
-//!    - Vertex defines  a breakpoint in the convex hull through an copied
-//!      instance of T_OBJECT, ConvexHull::Vertex::object, and two stored variables,
-//!      ConvexHull::Vertex::x and ! ConvexHull::Vertex::y 
-//!    - HalfLine defines a half-line in the \f$(x,y)\f$ plane. 
-//!    - Base handles a collection of vertices. It checks whether the instances
-//!      of \a T_OBJECT are breaking points and should be added to the ConvexHull::Vertex
-//!      collection. The vertices are used to create a collection of
-//!      ConvexHull::HalfLine objects which define the convex-hull in the \f$(x,y)\f$
-//!      plane.
-//!    . 
-//!    Once created, a convex hull can be evaluated <em>via</em>
-//!    ConvexHull::Base::evaluate(). It can be loaded and saved to XML
-//!    <em>via</em> ConvexHull::Base::Load() and ConvexHull::Base::Save().
-//!
-//! Here is a sample code. The full implementation is not given.
-//! The header file of the T_OBJECT could go as follows,
-//! \code
-//!   // The T_OBJECT type that will be stored as a convex-hull
-//!   class Object
-//!   {
-//!       types::t_real some_member;
-//!       std::vector<types::t_real> X;
-//!     public: 
-//!       //! Copy constructor
-//!       Object(const Object& _c ) : some_member(_c.some_member), X(_c.X) {}
-//!       //! returns object concentration  
-//!       types::t_real get_concentration() const
-//!       {
-//!        return std::accumulate( X.begin(), X.end(), 0.0 ) / (types::t_real) X.size();
-//!       }
-//!   };
-//
-//!   //! Loads an Object from XML
-//!   class LoadFunctor
-//!   {
-//!     public:
-//!     bool operator()(Object&, const TiXmlElement &_node); 
-//!   };
-//!   //! Saves an Object to XML
-//!   class SaveFunctor
-//!   {
-//!     public:
-//!     bool operator()(const Object&, const TiXmlElement &_node); 
-//!   };
-//! \endcode
-//! The convex hull itself, some object, and this object's y coordinate are declared
-//! \code
-//!    ConvexHull::Base<Object> convexhull;
-//!    Object object;
-//!    types::t_real y;
-//! \endcode
-//! Something is done with \a object and with \a y, and then \a object can be
-//! added to the convex-hull,
-//! \code
-//!    convexhull.add( y, object); // submits object to convexhull
-//!    convexhull.evaluate(0.5);  // evaluates convexhull 
-//! \endcode
+/**  \brief Contains template class which can will make a convex-hull out of
+            any object of type \a T_OBJECT.
+     \details First, let us define  what is a convex-hull.
+      Imagine a space comprised of \a T_OBJECTs \f$\sigma\f$ to each of which
+      can be attached an "energy" \f$q_\sigma\f$ and a
+      concentration \f$x_\sigma\f$ in the range \f$x_\sigma \in [0,1]\f$. A
+      convex-hull can be constructed in two steps.  First, one selects at each
+      concentration \f$x_i\f$ the \a T_OBJECT \f$\sigma_i\f$ with lowest
+      energy \f$q_\sigma\f$. Then, one deletes any \a T_OBJECT
+      \f$\sigma_i\f$ that can disproportionate into a sum of two
+      neighboring \a T_OBJECT \f$\sigma_{i-1}\f$ and
+      \f$\sigma_{i+1}\f$, with
+      \f[x_{\sigma_{i-1}} < x_{\sigma_i} < x_{\sigma_{i+1}}\f], 
+      and 
+      \f[
+          q_{\sigma_i} > \frac{x_{\sigma_{i+1}} -
+          x_{\sigma_i}}{x_{\sigma_{i+1}}-x_{\sigma_{i-x}}}
+          q_{\sigma_{i-1}}\\+ \frac{x_\sigma -
+          x_{\sigma_{i-1}}}{x_{\sigma_{i+1}}-x_{\sigma_{i-1}}} q_{\sigma_{i+1}} 
+      \f].
+      The \a T_OBJECT which satisfy the above conditions are known as
+      the breaking-points of the convex-hull. Using these breaking-points, we
+      can construct a piece-wise linear function \f$C(\sigma)\f$ connecting the
+      breaking points in the \f$(q,x)\f$ plane. \f$C(\sigma)\f$ is the convex-hull.
+
+      The class opt::ConvexHull::Base is an implementation of the convex-hull
+      algorithm described above. More specifically, when fed an \a T_OBJECT A,
+      it checks it is a breaking-point with respect to previously fed \a
+      T_OBJECTS. If A is indeed a breaking-point, opt::ConvexHull::Base
+      stores it for future reference. As can be seen, obaining the true
+      convex-hull of a space requires, in theory, that you feed each every
+      object in the space to opt::ConvexHull::Base. In practice, one could use
+      some sampling method...
+
+      The <em>x</em>-axis is determined by \a T_OBJECT::get_concentration(),
+      The <em>y</em>-axis should be given on input when submitting an instance
+      of \a T_OBJECT to a ConvexHull::Base object, <em> via</em>
+      ConvexHull::Base::add(). Once constructed a convex-hull is nothing more
+      than a single variable function. 
+     
+       \par Required behaviors for \a T_OBJECT
+       The following behaviors are required from \a T_OBJECT and should be
+      implemented to use it in ConvexHull,
+       - get_concentration() returns a types::real which should represent the concentration
+       - copy constructor or operator=(T_OBJECT&, const TOBJECT&) 
+       - a functor capable of saving a \a T_OBJECT  to an XML node, eg GA::SaveObject 
+       - a functor capable of loading a \a T_OBJECT  from an XML node, eg GA::LoadObject
+       . 
+      
+       \par Design Philosophy
+       Convexhulls are defined using two template classes and a single non-template class:
+         - Vertex defines  a breakpoint in the convex hull through an copied
+           instance of T_OBJECT, ConvexHull::Vertex::object, and two stored variables,
+           ConvexHull::Vertex::x and ! ConvexHull::Vertex::y 
+         - HalfLine defines a half-line in the \f$(x,y)\f$ plane. 
+         - Base handles a collection of vertices. It checks whether the instances
+           of \a T_OBJECT are breaking points and should be added to the ConvexHull::Vertex
+           collection. The vertices are used to create a collection of
+           ConvexHull::HalfLine objects which define the convex-hull in the \f$(x,y)\f$
+           plane.
+         . 
+         Once created, a convex hull can be evaluated <em>via</em>
+         ConvexHull::Base::evaluate(). It can be loaded and saved to XML
+         <em>via</em> ConvexHull::Base::Load() and ConvexHull::Base::Save().
+     
+      Here is a sample code. The full implementation is not given.
+      The header file of the T_OBJECT could go as follows,
+      \code
+        // The T_OBJECT type that will be stored as a convex-hull
+        class Object
+        {
+            types::t_real some_member;
+            std::vector<types::t_real> X;
+          public: 
+            //! Copy constructor
+            Object(const Object& _c ) : some_member(_c.some_member), X(_c.X) {}
+            //! returns object concentration  
+            types::t_real get_concentration() const
+            {
+             return std::accumulate( X.begin(), X.end(), 0.0 ) / (types::t_real) X.size();
+            }
+        };
+     
+        //! Loads an Object from XML
+        class LoadFunctor
+        {
+          public:
+          bool operator()(Object&, const TiXmlElement &_node); 
+        };
+        //! Saves an Object to XML
+        class SaveFunctor
+        {
+          public:
+          bool operator()(const Object&, const TiXmlElement &_node); 
+        };
+      \endcode
+      The convex hull itself, some object, and this object's y coordinate are declared
+      \code
+         ConvexHull::Base<Object> convexhull;
+         Object object;
+         types::t_real y;
+      \endcode
+      Something is done with \a object and with \a y, and then \a object can be
+      added to the convex-hull,
+      \code
+         convexhull.add( y, object); // submits object to convexhull
+         convexhull.evaluate(0.5);  // evaluates convexhull 
+      \endcode
+
+      \xmlrestart The convex-hull saves and reloads itself to and from XML in
+      the following format:
+      \code
+         <ConvexHull>
+            <Vertex x="?" y="?"/>
+              ... T_OBJECT as saved by template parameter T_SAVEOP &_op of ConvexHull::Base::Save
+            </Vertex
+            <Vertex x="?" y="?"/>
+              ... T_OBJECT as saved by template parameter T_SAVEOP &_op of ConvexHull::Base::Save
+            </Vertex
+            ... other vertices
+         </ConvexHull>
+      \endcode The attributes \a x and \a y of the \<%Vertex\> store the
+      concentration (\a x) and the "energy" (\a y) of that Vertex. 
+ */
 namespace ConvexHull
 {
   //! \brief Represents a Breaking-Point in the convex-hull

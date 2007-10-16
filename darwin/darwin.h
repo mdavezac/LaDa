@@ -83,18 +83,18 @@ namespace GA
       std::string filename; 
       //! \brief Input file of the evaluator
       //! \details If it is different from Darwin::filename, it should be
-      //! indicated in a <Filename evaluator="?"/> tag in Darwin::filename. Otherwise,
+      //! indicated in a \<Filename evaluator="?"/\> tag in Darwin::filename. Otherwise,
       //! evaluator input is read from Darwin::filename.
       std::string evaluator_filename;
       //! \brief Input filename where restart data (in XML) can be found
       //! \details It can be different from Darwin::filename. It is set by a
-      //! <Filename restart="?" /> within the <GA> .. </GA> tags of
+      //! \<Filename restart="?" /\> within the \<GA\> .. \</GA\> tags of
       //! Darwin::filename. Only those components specified by
       //! Darwin::do_restart are read from input.
       std::string restart_filename;
       //! \brief Input filename where restart data (in XML) is saved to
       //! \details It can be different from Darwin::filename. It is set by a
-      //! <Filename restart="?" /> within the <GA> .. </GA> tags of
+      //! \<Filename restart="?" /\> within the \<GA\> .. \</GA\> tags of
       //! Darwin::filename. Only those components specified by
       //! Darwin::do_save are actually saved to input. 
       //! The following code 

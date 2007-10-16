@@ -43,12 +43,12 @@
 
      There are a grand total of three tags
      \secreflist
-       \refitem Tagvfffunc Functional, type="vff"
-       \refitem TagBond Bond
-       \refitem TagAngle Angle
+       \refitem Tagvfffunc \<Functional, type="vff"\>
+       \refitem TagBond \<Bond/\>
+       \refitem TagAngle \<Angle/\>
      \endsecreflist
 
-     \section Tagvfffunc <Functional type="vff">
+     \section Tagvfffunc \<Functional type="vff"\>
      Including the specified type, this tag is where all Vff data should be
      found. It can contain two attributes,
      \param type type must be equal to \a "vff" here
@@ -58,7 +58,7 @@
       \ref Tagstructure and \ref Taglattice (eg versus their scale attribute). Mind,
       the default value seems to work. 
 
-     \section TagBond <Bond/>
+     \section TagBond \<Bond/\>
      Defines Vff bond-stretching values within its attributes.
      \warning There is little or no checking done in the code at this point.
               Too many \ref TagBond tags or too few, and it is likely vff will
@@ -75,7 +75,7 @@
       \param alpha5 order-5  bond-stretching parameter \f$(N\cdot m^{-1})\f$
       \param alpha6 order-6  bond-stretching parameter \f$(N\cdot m^{-1})\f$
 
-     \section TagAngle <Angle/>
+     \section TagAngle \<Angle/\>
      Defines Vff bond-bending and bond-angle values within its attributes.
      \warning There is little or no checking done in the code at this point.
               Too many \ref TagAngle tags or too few, and it is likely vff will
@@ -134,15 +134,15 @@
         manually to the same directory as the GA executable.
      The following tags have been introduced:
      \secreflist
-       \refitem Tagescanfunc Functional, type="escan"
-       \refitem TagGenPot GenPot
-       \refitem TagPseudo Pseudo
-       \refitem TagPseudo Reference
-       \refitem TagPseudo Hamiltonian
-       \refitem TagPseudo SpinOrbit
+       \refitem Tagescanfunc \<Functional, type="escan"\>
+       \refitem TagGenPot \<GenPot\>
+       \refitem TagPseudo \<Pseudo/\>
+       \refitem TagPseudo \<Reference/\>
+       \refitem TagPseudo \<Hamiltonian\>
+       \refitem TagPseudo \<SpinOrbit/\>
      \endsecreflist
 
-     \section Tagescanfunc <Functional type="escan">
+     \section Tagescanfunc \<Functional type="escan"\>
      Including the specified type, this tag is where all the escan interface data should be
      found. It can contain two attributes,
      \param type type must be equal to \a "escan" here
@@ -152,7 +152,7 @@
           .
 
       
-     \section TagGenPot <GenPot>
+     \section TagGenPot \<GenPot\>
      Commands so called <TT> getVlarg </TT> nanopse program which generates the
      potential for escan. As such it requires a large number of attributes
      (controlling over all aspects of the potential) as well as some internal \ref TagPseudo
@@ -165,19 +165,19 @@
      \param z grid coordinate
      \param cutoff plane-wave cutoff
 
-     \section TagPseudo <Pseudo/>
+     \section TagPseudo \<Pseudo/\>
      Provides a link to a file containing the definition of a pseudo-potential.
      \param filename to the pseudo-potential. don't be cheap. include full path.
            on unices "~", will substitute to your home directory.
 
-     \section TagReference <Reference/>
+     \section TagReference \<Reference/\>
      Defines the valence band maximum and the conduction band minimum reference
      energies for folded spectrum calculations (see \ref Tagescanfunc, attribute \a
      method). This is only needed for folded spectrum calculations.
      \param VBM valence band maximum in eV
      \param CBM conduction band minimum in eV
 
-     \section TagHamiltonian <Hamiltonian> 
+     \section TagHamiltonian \<Hamiltonian\> 
      The meat of escan interface. The attributes of \ref <Hamiltonian> define
      general properties, whereas specie dependent stuff go within, in the \ref
      TagSpinOrbit tags.
@@ -193,7 +193,7 @@
                         compute on top of the valence states.
                       .
 
-    \section TagSpinOrbit <SpinOrbit/>
+    \section TagSpinOrbit <\SpinOrbit/\>
     Yet again, see nanopse input for details... The file named here must exist!
     \param filename full path to whatever. On unices, "~" will
                    be replaced with the path to your home
