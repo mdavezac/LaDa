@@ -182,7 +182,7 @@ namespace Traits
     //! Broadcasts  the scalar type \a _q
     template< class t_Quantity >
     static bool broadcast( t_Quantity& _q, mpi::BroadCast &_bc )
-      { return _bc.serialize( _q ); }
+      { return _bc.serialize(_q); }
 #endif
   };
 
@@ -238,7 +238,7 @@ namespace Traits
 #ifdef _MPI
       //! Serializes quantity \sa mpi::BroadCast::serialize
       static bool broadcast( t_Quantity& _q, mpi::BroadCast &_bc )
-        { IsAScalar<is_scalar>::broadcast(_q, _bc); }
+        { return IsAScalar<is_scalar>::broadcast(_q, _bc); }
 #endif
     };
 

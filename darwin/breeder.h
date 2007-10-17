@@ -100,12 +100,11 @@ namespace GA
   inline void Breeder<T_GATRAITS> :: operator()(const t_Population& _parents,
                                                 t_Population& _offspring)
   {
-    types::t_unsigned target = (*howMany)( (types::t_unsigned)_parents.size());
+    types::t_unsigned target = (*howMany)( (types::t_unsigned) _parents.size());
 #ifdef _MPI
     types::t_int residual = target % (mpi::main.size());
     target = target / mpi::main.size();
-    if ( mpi::main.rank() < residual )
-      ++target;
+    if ( mpi::main.rank() < residual ) ++target;
 #endif
   
     _offspring.clear();
@@ -144,7 +143,7 @@ namespace GA
     _pop.clear();
     t_Individual indiv;
     while( indiv.broadcast( allgather ) )
-      { _pop.push_back(indiv); }
+      _pop.push_back(indiv);
   }
 #endif 
 
