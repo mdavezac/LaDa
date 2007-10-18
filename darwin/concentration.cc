@@ -212,6 +212,20 @@ types::t_real set_concentration( Ising_CE::Structure &_str,
   }
 
 
+  std::string X_vs_y :: print () const 
+  {
+    std::ostringstream sstr;
+    if ( single_c )
+      sstr << "Single Concentration, x0 = " << x0
+           << ", y0 = " << y0;
+    else
+      sstr << "Concentration function x = " 
+           << a << " * y^2 + "  << b << " * y + "  << c;
+    return sstr.str();
+  }
+
+
+
 
 #ifdef _MPI
 namespace mpi

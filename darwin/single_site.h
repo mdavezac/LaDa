@@ -95,8 +95,9 @@ namespace SingleSite
                        types::t_int _concx, types::t_int _concy );
       void set( const Ising_CE::Structure &_str);
       void set( const Object &_obj );
+      void setfrozen ( const Ising_CE::Structure &_str );
 
-      std::string print_out() const;
+      std::string print() const;
 
     protected:
       void normalize( Ising_CE::Structure &_str, 

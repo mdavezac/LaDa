@@ -353,18 +353,11 @@ namespace Pescan
   types::t_real Interface :: read_result( Ising_CE::Structure &_str )
   {
 #ifdef _NOLAUNCH
+    nolaunch_functional( _str, bands );
     if ( escan.method == Escan :: ALL_ELECTRON ) 
-    { 
-      bands.cbm = rng.uniform() * 5;
-      bands.vbm = bands.cbm - rng.uniform();
       return bands.gap();
-    }
     if ( computation == CBM )
-    {
-      bands.cbm = rng.uniform() * 5;
       return bands.cbm;
-    }
-    bands.vbm = bands.cbm - rng.uniform();
     return bands.vbm;
 #endif
     std::ifstream file;
@@ -449,6 +442,32 @@ namespace Pescan
     return *i_eig_result;
   }
 
+#ifdef _NOLAUNCH
+  void nolaunch_functional( const Ising_CE::Structure &_str, Interface::Bands &bands )
+  {
+    Ising_CE::Structure::t_kAtoms::const_iterator i_k = _str.k_vecs.begin();
+    Ising_CE::Structure::t_kAtoms::const_iterator i_k_end = _str.k_vecs.end();
+    bands.vbm = 0.0; bands.cbm = 0.0;
+    bool which = true, sign = true;
+    for(; i_k != i_k_end; ++i_k, which = not which )
+    {
+      types::t_real a0 = std::abs( i_k->type ) * i_k->pos(0);
+      types::t_real a1 = std::abs( i_k->type ) * i_k->pos(1);
+      types::t_real a2 = std::abs( i_k->type ) * i_k->pos(2);
+
+      bands.vbm +=  a0 * a0 / 5.0 - a1 / 15.0 - a2 * a1;
+      bands.cbm += 7.0 * cos( a0 * a1 / 7.0 + a2  ); 
+    }
+
+    bands.cbm += bands.vbm;
+
+    if ( bands.vbm > bands.cbm ) bands.swap();
+    if ( std::abs( bands.vbm - bands.cbm ) < types::tolerance )
+      bands.cbm += 0.1;
+
+  }
+#endif
+ 
 }
 
 #ifdef _MPI
@@ -545,6 +564,6 @@ namespace mpi
       }
     return serialize( _p.dirname );
   }
-}
 
+}
 #endif

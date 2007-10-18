@@ -47,7 +47,7 @@ namespace Fitness
 
   template<class T_QUANTITYTRAITS>
   inline std::ostream & operator<<( std::ostream &_os, const Base<T_QUANTITYTRAITS, true> &_fit ) 
-    {  return _os << (typename T_QUANTITYTRAITS::t_Quantity) _fit; }
+    {  return _os << (const typename T_QUANTITYTRAITS::t_Quantity&) _fit; }
   template<class T_QUANTITYTRAITS>
   inline std::istream & operator>>( std::istream &_is, Base<T_QUANTITYTRAITS, true> &_fit ) 
     { typename T_QUANTITYTRAITS::t_Quantity d; _is >> d; _fit = d; return _is; } 
@@ -141,7 +141,7 @@ namespace Fitness
     _os << _fit.quantity.size() << " ";
     for(; i_q != i_q_end; ++i_q )
       _os << *i_q << " ";
-    return _os << ( typename Base<T_QUANTITYTRAITS,false>::t_ScalarFitness& ) _fit;
+    return _os << ( const typename Base<T_QUANTITYTRAITS,false>::t_ScalarFitness& ) _fit;
   }
   template<class T_QUANTITYTRAITS>
   inline std::istream & operator>>( std::istream &_is, Base<T_QUANTITYTRAITS, false> &_fit ) 

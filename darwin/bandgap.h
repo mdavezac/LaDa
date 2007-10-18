@@ -52,8 +52,8 @@ namespace BandGap
 
   inline std::ostream& operator<<(std::ostream &_stream, const Object &_o)
   { 
-    _stream << (SingleSite::Object& ) _o   << " "
-            << (Pescan::Keeper&) _o;
+    _stream << (const SingleSite::Object& ) _o   << " "
+            << (const Pescan::Keeper&) _o;
     return _stream; 
   } 
 

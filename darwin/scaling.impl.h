@@ -74,12 +74,12 @@ namespace Scaling
     typename t_Population :: const_iterator i_end = _pop.end();
     typename t_Column :: iterator i_sum = sums.begin();
     typename t_Column :: iterator i_2sum;
-    for(; i_indiv != i_end; ++i_indiv, ++i_sum );
+    for(; i_indiv != i_end; ++i_indiv, ++i_sum )
     {
       i_2indiv = i_indiv + 1;
       i_2sum = i_sum + 1;
       *i_sum += t_ScalarFitnessQuantity(1);
-      for(; i_2indiv != i_end; ++i_2indiv, ++i_2sum );
+      for(; i_2indiv != i_end; ++i_2indiv, ++i_2sum )
       {
         t_ScalarFitnessQuantity d = sharing(*i_indiv, *i_2indiv);
         (*i_sum)  += d; (*i_2sum) += d;
@@ -108,12 +108,12 @@ namespace Scaling
     typename t_Population :: const_iterator i_end = _pop.end();
     t_Column :: iterator i_sum = sums.begin();
     t_Column :: iterator i_2sum;
-    for(; i_indiv != i_end; ++i_indiv, ++i_sum );
+    for(; i_indiv != i_end; ++i_indiv, ++i_sum )
     {
       i_2indiv = i_indiv + 1;  
       i_2sum = i_sum + 1;
       --(*i_sum);
-      for(; i_2indiv != i_end; ++i_2indiv, ++i_2sum );
+      for(; i_2indiv != i_end; ++i_2indiv, ++i_2sum )
       {
         // minimizes by default -- see objectives.h
         if     ( i_indiv->fitness()   >  i_2indiv->fitness() )   --(*i_sum);
@@ -131,19 +131,22 @@ namespace Scaling
     {
       // First finds correct node
       std::string name = _node.Value();
-      const TiXmlElement *parent;
-      if( name == "Sharing" )
-        parent = &_node;
-      else
-        parent = _node.FirstChildElement("Sharing");
-      
-      for(; parent; parent = parent->NextSiblingElement("Sharing") )
-      {
-        if ( not parent->Attribute("type") ) continue;
-        name = parent->Attribute("type");
-        if(    name == "Triangular"
-            or name == "triangular" ) break;
-      }
+      const TiXmlElement *parent = &_node;
+
+// Don't need this if there is only one sharing function...
+// Also, it may be better to do everything as attributes directly
+//     if( name == "Sharing" )
+//       parent = &_node;
+//     else
+//       parent = _node.FirstChildElement("Sharing");
+//     
+//     for(; parent; parent = parent->NextSiblingElement("Sharing") )
+//     {
+//       if ( not parent->Attribute("type") ) continue;
+//       name = parent->Attribute("type");
+//       if(    name == "Triangular"
+//           or name == "triangular" ) break;
+//     }
 
       if ( not parent ) return false;
       if ( parent->Attribute("alpha") )
@@ -203,7 +206,8 @@ namespace Scaling
   {
     template<class T_GAOPTRAITS>
     typename GeneralHamming<T_GAOPTRAITS>::t_ScalarFitnessQuantity 
-       GeneralHamming<T_GAOPTRAITS>::operator()( const t_Individual &_i1, const t_Individual &_i2) const
+       GeneralHamming<T_GAOPTRAITS>::operator()( const t_Individual &_i1, 
+                                                 const t_Individual &_i2) const
        {
          if ( _i1.Object().Container().size() != _i1.Object().Container().size() )
            throw std::runtime_error("individuals of different size in Distance::GeneralHamming!\n");

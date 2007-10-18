@@ -46,17 +46,38 @@ namespace GA
   inline void PrintFitness<T_GATRAITS> :: operator()( const t_Population &_pop )
   {
     types::t_unsigned ga_age = age();
+    if ( ga_age == 0 ) return;
     typename t_Population :: const_iterator i_pop = _pop.begin();
     typename t_Population :: const_iterator i_end = _pop.end();
 
+    // The population  of a sorted stat is not an eoPop, but rather a vector of
+    // pointers to individuals in an eoPop. Hence the double deferencing
+    Print::out << "New Individuals: \n";
     for( ; i_pop != i_end; ++i_pop )
-      if ( ga_age == i_pop->get_age() )
-        Print::xmg << Print::Xmg::comment << "Offspring: "
-                   << std::setw(12) << std::setprecision(7)
-                   << i_pop->get_concentration() << " "
-                   << i_pop->fitness() << Print::endl;
+      if ( ga_age == (*i_pop)->get_age() )
+        Print::out << *(*i_pop)  << "  Fitness: " 
+                   << Print::fixed << Print::setw(12) << Print::setprecision(5) << "  "
+                   <<  (*i_pop)->fitness() << "\n";
+    Print::out << "\n";
   }
 
+
+
+  template< class T_GATRAITS>
+  inline void PrintPop<T_GATRAITS> :: operator()( const t_Population &_pop )
+  {
+    typename t_Population :: const_iterator i_pop = _pop.begin();
+    typename t_Population :: const_iterator i_end = _pop.end();
+
+    // The population  of a sorted stat is not an eoPop, but rather a vector of
+    // pointers to individuals in an eoPop. Hence the double deferencing
+    Print::out << "Current Population: \n";
+    for( ; i_pop != i_end; ++i_pop )
+      Print::out << *(*i_pop)  << "  Fitness: " 
+                 << Print::fixed << Print::setw(12) << Print::setprecision(5) << "  "
+                 <<  (*i_pop)->fitness() << "\n";
+    Print::out << "\n";
+  }
 
 
 

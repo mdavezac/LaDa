@@ -365,13 +365,13 @@ namespace Objective
   template< class T_GA_TRAITS >
   class Maximize : public Types< T_GA_TRAITS > :: Scalar
   {
+      //! Base of this class
+      typedef typename Types<T_GA_TRAITS> :: Scalar        t_Base; 
     public:
       typedef T_GA_TRAITS t_GATraits; //!< All %GA traits
     protected:
       //! Type of individual in this %GA
       typedef typename t_GATraits :: t_Individual         t_Individual;
-      //! Base of this class
-      typedef typename Types<t_GATraits> :: Scalar        t_Base; 
       //! Type of the fitness, as declared in the base class
       typedef typename t_Base :: t_Fitness                t_Fitness;
       //! Type of the quantity, as declared in the base class
@@ -445,13 +445,13 @@ namespace Objective
   template< class T_GA_TRAITS >
   class Minimize : public Types< T_GA_TRAITS > :: Scalar
   {
+      //! Base of this class
+      typedef typename Types<T_GA_TRAITS> :: Scalar        t_Base; 
     public:
       typedef T_GA_TRAITS t_GATraits; //!< All %GA traits
     protected:
       //! Type of individual in this %GA
       typedef typename t_GATraits :: t_Individual         t_Individual;
-      //! Base of this class
-      typedef typename Types<t_GATraits> :: Scalar        t_Base; 
       //! Type of the fitness, as declared in the base class
       typedef typename t_Base :: t_Fitness                t_Fitness;
       //! Type of the quantity, as declared in the base class
@@ -527,13 +527,13 @@ namespace Objective
   template< class T_GA_TRAITS >
   class Target : public Types< T_GA_TRAITS > :: Scalar
   {
+      //! Base of this class
+      typedef typename Types<T_GA_TRAITS> :: Scalar        t_Base; 
     public:
       typedef T_GA_TRAITS t_GATraits; //!< All %GA traits
     protected:
       //! Type of individual in this %GA
       typedef typename t_GATraits :: t_Individual         t_Individual;
-      //! Base of this class
-      typedef typename Types<t_GATraits> :: Scalar        t_Base; 
       //! Type of the fitness, as declared in the base class
       typedef typename t_Base :: t_Fitness                t_Fitness;
       //! Type of the quantity, as declared in the base class
@@ -638,13 +638,13 @@ namespace Objective
   template< class T_GA_TRAITS >
   class ConvexHull : public Types< T_GA_TRAITS > :: Scalar
   {
+      //! Base of this class
+      typedef typename Types<T_GA_TRAITS> :: Scalar        t_Base; 
     public:
       typedef T_GA_TRAITS t_GATraits; //!< All %GA traits
     protected:
       //! Type of individual in this %GA
       typedef typename t_GATraits :: t_Individual         t_Individual;
-      //! Base of this class
-      typedef typename Types<t_GATraits> :: Scalar        t_Base; 
       //! Type of the fitness, as declared in the base class
       typedef typename t_Base :: t_Fitness                t_Fitness;
       //! Type of the quantity, as declared in the base class
@@ -773,15 +773,13 @@ namespace Objective
   template<class T_GA_TRAITS >
   class Container : public Types<T_GA_TRAITS> :: Vector
   {
+      //! Base of this class
+      typedef typename Types<T_GA_TRAITS> :: Vector        t_Base; 
     public:
       typedef T_GA_TRAITS t_GATraits; //!< All %GA traits
     protected:
-      //! Class holding all possible objective %types
-      typedef Types<t_GATraits>                          t_ObjectiveType;
       //! Type of individual in this %GA
       typedef typename t_GATraits :: t_Individual         t_Individual;
-      //! Base of this class
-      typedef typename Types<t_GATraits> :: Scalar        t_Base; 
       //! Type of the fitness, as declared in the base class
       typedef typename t_Base :: t_Fitness                t_Fitness;
       //! Type of the quantity, as declared in the base class
@@ -799,9 +797,9 @@ namespace Objective
       //! A functor to for loading individuals
       typedef GA::LoadObject<t_GATraits>                  t_LoadOp;
       //! Scalar objective type
-      typedef typename t_ObjectiveType :: Scalar          t_Objective;
+      typedef typename Types<t_GATraits>::Scalar          t_Objective;
       //! Type of container for objectives
-      typedef typename std::vector<t_Objective>           t_Objectives;
+      typedef typename std::vector<t_Objective*>          t_Objectives;
       
     protected:
       using t_Base :: fitness;
@@ -850,13 +848,13 @@ namespace Objective
   template<class T_GA_TRAITS >
   class LinearSum : public Container<T_GA_TRAITS>
   {
+      //! Base of this class
+      typedef Container<T_GA_TRAITS>                      t_Base; 
     public:
       typedef T_GA_TRAITS t_GATraits; //!< All %GA traits
     protected:
       //! Type of individual in this %GA
       typedef typename t_GATraits :: t_Individual         t_Individual;
-      //! Base of this class
-      typedef typename Types<t_GATraits> :: Scalar        t_Base; 
       //! Type of the fitness, as declared in the base class
       typedef typename t_Base :: t_Fitness                t_Fitness;
       //! Type of the quantity, as declared in the base class

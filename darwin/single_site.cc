@@ -70,32 +70,39 @@ namespace SingleSite
       return false;
     }
     const TiXmlAttribute *att = parent->FirstAttribute();
-    for(; att ; att->Next() )
-      LoadAttribute( *att );
+    for(; att ; att->Next() )  LoadAttribute( *att );
 
     return true;
   }
 
   void Concentration :: LoadAttribute ( const TiXmlAttribute &_att )
   {
-    single_c = false;
     std::string name = _att.Name();
+    if ( name.compare("x0") ) return;
     
     double d;
     d = _att.DoubleValue();
     if( d < 0 or d > 1 ) goto errorout;
     single_c = true;
     x0 = 2.0 * (types::t_real) d - 1.0;
-
-
 errorout:
     std::cerr << "Error while reading concentration input\n";
   }
 
 
+  void Concentration :: setfrozen ( const Ising_CE::Structure &_str )
+  {
+    N = _str.atoms.size();
+    Ising_CE::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
+    Ising_CE::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
+    Nfreeze = 0;
+    for(; i_atom != i_atom_end; ++i_atom )
+      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
+        Nfreeze += i_atom->type > 0 ? 1 : -1; 
+  }
+
   void Concentration :: operator()( Ising_CE::Structure &_str )
   {
-    types::t_unsigned N = (types::t_int) _str.atoms.size();
     types::t_complex  *hold = new types::t_complex[ N ];
     if ( not hold )
     {
@@ -177,7 +184,7 @@ errorout:
       i_atom = _str.atoms.begin();
       i_which = i_end;
       types::t_real minr = 0.0;
-      for(; i_atom != i_end; i_atom +=2 )
+      for(; i_atom != i_end; ++i_atom )
       {
         if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) continue;
         if ( _tochange > 0 )
@@ -233,7 +240,7 @@ errorout:
     x = (types::t_real) conc / (types::t_real) N;
   }
 
-  std::string Concentration :: print_out () const 
+  std::string Concentration :: print() const 
   {
     if ( not single_c ) return "Concentration Range";
     std::ostringstream sstr;

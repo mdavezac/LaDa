@@ -207,7 +207,7 @@ namespace GA
                   do_restart(0), replacement_rate(0.1), do_print_each_call(false),
                   populate_style(RANDOM_POPULATE), continuator(NULL), history(NULL),
                   taboos(NULL), breeder_ops(NULL), breeder(NULL), replacement(NULL),
-                  objective(NULL), store(NULL), evaluation(NULL) {}
+                  objective(NULL), store(NULL), evaluation(NULL), scaling(NULL) {}
       //! Destructor
       virtual ~Darwin ();
 

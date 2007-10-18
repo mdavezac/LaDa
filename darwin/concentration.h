@@ -50,7 +50,7 @@
   class X_vs_y
   {
 #ifdef _MPI
-    //! \brief allows the serialization of an X_vs_y object
+    //! allows the serialization of an X_vs_y object
     friend bool mpi::BroadCast::serialize<X_vs_y>( X_vs_y & );
 #endif
     protected:
@@ -94,11 +94,13 @@
       //! \brief Returns y with respect to input _x
       //! \details returns X_vs_y::y0 if the concentration is fixed.
       types::t_real get_y( types::t_real _x );
-      //! \brief Returns true if some y can be computed with respect to input _x
+      //! Returns true if some y can be computed with respect to input _x
       bool can_inverse( types::t_real _x );
-      //! \brief Returns true if the concentration is fixed
+      //! Returns true if the concentration is fixed
       bool is_single_c () const { return single_c; }
 
+      //! Returns a string describing this class
+      std::string print() const;
   };
 
   inline types::t_real X_vs_y :: get_x( types::t_real _y ) 

@@ -13,6 +13,7 @@
 #include <algorithm>
 
 #include <eo/eoPop.h>
+#include <eo/utils/eoPopStat.h>
 #include <eo/utils/eoStat.h>
 #include <eo/utils/eoMonitor.h>
 #include <eo/utils/eoUpdater.h>
@@ -73,15 +74,20 @@ namespace GA
       virtual std::string className(void) const { return "GA::PrintFitness"; }
   };
 
-  //! Prints out the fitness of new individuals to Print::xmg.
+  //! \brief Prints out the fitness of new individuals to Print::out.
+  //! \details The printout is sorted according to the \b scalar fitness
   template< class T_GATRAITS>
-  class PrintFitness : public eoStatBase<typename T_GATRAITS::t_Individual> 
+  class PrintFitness : public eoSortedStatBase<typename T_GATRAITS::t_Individual> 
   {
     public:
       typedef T_GATRAITS t_GATraits; //!< All %GA %types
     protected:
       typedef typename t_GATraits::t_Individual t_Individual; //!< Type of the indiviudals
-      typedef typename t_GATraits::t_Population t_Population; //!< Type of the population
+      //! \brief Type of the \e sorted population. 
+      //! \details The population is sorted using the mechanism offered by EO.
+      //!          As a result, the \e sorted population is actually a vector
+      //!          of pointers to individuals, not the usual eoPop.
+      typedef typename std::vector<const t_Individual*> t_Population;
 
     protected:
       GenCount &age; //!<  Reference to a generational counter
@@ -106,6 +112,44 @@ namespace GA
 
       //! Eo required 
       virtual std::string className(void) const { return "GA::PrintFitness"; }
+  };
+  
+  //! \brief Prints out current population to Print::out
+  //! \details The printout is sorted according to the \b scalar fitness
+  template< class T_GATRAITS>
+  class PrintPop : public eoSortedStatBase<typename T_GATRAITS::t_Individual> 
+  {
+    public:
+      typedef T_GATRAITS t_GATraits; //!< All %GA %types
+    protected:
+      typedef typename t_GATraits::t_Individual t_Individual; //!< Type of the indiviudals
+      //! \brief Type of the \e sorted population. 
+      //! \details The population is sorted using the mechanism offered by EO.
+      //!          As a result, the \e sorted population is actually a vector
+      //!          of pointers to individuals, not the usual eoPop.
+      typedef typename std::vector<const t_Individual*> t_Population;
+
+
+    public:
+      //! Constructor 
+      PrintPop() {};
+      //! Destructor 
+      ~PrintPop() {}
+
+      //! \brief This class is a functor
+      //! \details Watch it! in \e sorted statistics t_Population is not quite
+      //!          the container we are used to...
+      virtual void operator()( const t_Population &_pop );
+
+      //! Eo required 
+      void printOn( std::ostream &__os ) const {};
+      //! Eo required 
+      void readFrom( std::istream &__os ) const {};
+      //! Eo required 
+      void lastCall( const eoPop<t_Individual> &_pop) {}
+
+      //! Eo required 
+      virtual std::string className(void) const { return "GA::PrintPop"; }
   };
 
   //! \brief In case of taboo diverges, starts a period of high mutations.

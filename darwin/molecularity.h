@@ -90,6 +90,7 @@ namespace Molecularity
       void operator()( Object &_obj) { t_Base::operator()( _obj ); }
       void set( const Ising_CE::Structure &_structure);
       void set( const Object &_obj) { t_Base::set( _obj ); }
+      void setfrozen( const Ising_CE::Structure &_structure);
 
     protected:
       void normalize( Ising_CE::Structure &_str, types::t_real _tochange );

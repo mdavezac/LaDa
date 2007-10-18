@@ -63,6 +63,12 @@ namespace BandGap
     // Load relaxed structure into pescan
     pescan << vff; 
     // get band gap
+#ifdef _NOLAUNCH
+    structure << *current_object;
+    typedef t_Individual :: t_IndivTraits :: t_FourierRtoK t_Fourier;
+    t_Fourier( structure.atoms.begin(), structure.atoms.end(),
+               structure.k_vecs.begin(), structure.k_vecs.end() );
+#endif
     pescan( *current_object );
 
     // set quantity

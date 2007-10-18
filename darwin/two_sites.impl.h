@@ -65,6 +65,17 @@ namespace TwoSites
     }
   }
 
+
+  inline bool Concentration :: Load( const TiXmlElement &_node )
+  {
+    if( not X_vs_y::Load( _node ) ) return false;
+    if( not single_c )  return true;
+    x = get_x();  y = get_y();
+
+    return true;
+  }
+
+
   template<class T_INDIVIDUAL>
   bool Evaluator<T_INDIVIDUAL> :: Load( t_Individual &_indiv,
                                                         const TiXmlElement &_node,
@@ -133,21 +144,9 @@ namespace TwoSites
       std::cerr << " Could not load Concentration input!! " << std::endl; 
       return false;
     }
-    concentration.N = structure.atoms.size() >> 1;
 
-    Ising_CE::Structure::t_Atoms::const_iterator i_atom = structure.atoms.begin();
-    Ising_CE::Structure::t_Atoms::const_iterator i_atom_end = structure.atoms.end();
-    concentration.Nfreeze_x = 0; concentration.Nfreeze_y = 0;
-    for(; i_atom != i_atom_end; ++i_atom )
-    {
-      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
-        concentration.Nfreeze_x += i_atom->type > 0 ? 1 : -1; 
-      else concentration.sites.push_back( true );
-      ++i_atom;
-      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
-        concentration.Nfreeze_y += i_atom->type > 0 ? 1 : -1; 
-      else concentration.sites.push_back( false );
-    }
+    concentration.setfrozen( structure );
+    Print::xmg << Print::Xmg::comment << concentration.print() << Print::endl;
     
     return true;
   }
@@ -190,18 +189,6 @@ namespace TwoSites
       std::cerr << "No atoms to optimize !? " << std::endl;
       return false;
     }
-    if (    ( lattice.sites[0].freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) 
-         or ( lattice.sites[1].freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
-    {
-      concentration.set_xy( concentration.x, concentration.y );
-      Print::xmg << Print::Xmg::comment << " Setting Concentrations to x="
-                 << Print::fixed << Print::setprecision(3 ) << concentration.x 
-                 << " and y=" << concentration.y << Print::endl;
-      if (    std::abs( concentration.x - concentration.get_x( concentration.y)) > types::tolerance 
-           or std::abs( concentration.y - concentration.get_y( concentration.x)) > types::tolerance )
-        Print::out << " WARNING: x and y pair are strain mismatched!! \n";
-    }
-
     return true;
   }
 

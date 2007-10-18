@@ -85,6 +85,7 @@ namespace TwoSites
                        types::t_int _concx, types::t_int _concy );
       void set( const Ising_CE::Structure &_str);
       void set( const Object &_obj );
+      void setfrozen ( const Ising_CE::Structure &_str );
 
     protected:
       void normalize( Ising_CE::Structure &_str, const types::t_int _site, 
@@ -164,15 +165,6 @@ namespace TwoSites
     protected:
       bool consistency_check();
   };
-
-
-  inline bool Concentration :: Load( const TiXmlElement &_node )
-  {
-    if( not X_vs_y::Load( _node ) ) return false;
-    if( not single_c )  return true;
-    x = get_x();  y = get_y();
-    return true;
-  }
 
 
 } // namespace TwoSites

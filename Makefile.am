@@ -19,6 +19,9 @@ endif
 if DOMPI 
   MPISUBDIR = mpi
 endif 
+if DODARWIN
+  DARWINSUBDIR = darwin
+endif 
 SUBDIRS = $(MPISUBDIR) atat physics opt lamarck print $(VFFSUBDIR) $(PESCANSUBDIR) $(DARWINSUBDIR)
 revision.h: force
 	./max_revision.pl

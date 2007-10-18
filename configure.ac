@@ -38,10 +38,18 @@ AC_ARG_ENABLE(pescan,
 AC_ARG_ENABLE(molecularity,
      [  --enable-molecularity    Turn on molecularity],
      [case "${enableval}" in
-       yes) pescan=true ;;
-       no)  pescan=false ;;
+       yes) molecularity=true ;;
+       no)  molecularity=false ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-molecularity) ;;
      esac],[molecularity=true])
+
+AC_ARG_ENABLE(galib,
+     [  --enable-galib    Turn on galib],
+     [case "${enableval}" in
+       yes) galib=true ;;
+       no)  galib=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-galib) ;;
+     esac],[galib=false])
 
 AC_ARG_ENABLE(ce,
      [  --enable-cedarwin    Turn on ce darwin],
@@ -67,6 +75,16 @@ AC_ARG_ENABLE(debug,
   *) AC_MSG_ERROR(bad value ${enableval} for --enable-debug) ;;
 esac],[debug=true])
 AH_TEMPLATE([_PRINT_ALL_PROCS])
+
+# enables vff and pescan for GA
+if test x$pdarwin = xtrue || test x$molecularity = xtrue; then
+  pescan=true
+  vff=true
+fi
+if test x$pdarwin = xtrue || test x$molecularity = xtrue || test x$ce = xtrue; then
+  galib=true
+fi
+
 if test x$debug = xtrue; then
   CXXFLAGS=`echo $CXXFLAGS | sed "s/-O2//"`
   CFLAGS=`echo $CFLAGS | sed "s/-O2//"`
@@ -122,12 +140,6 @@ AC_SUBST(TINYXML_CFLAGS)
 #  libm 
 AC_CHECK_LIB(m,main)
 
-# enables vff and pescan for GA
-if test x$pdarwin = xtrue || test x$molecularity = xtrue; then
-  $pescan = true
-  $vff = true
-fi
-
 # conditional
 AM_CONDITIONAL(DOMPI, test x$mpi = xtrue)
 AM_CONDITIONAL(DOPESCAN, test x$pescan = xtrue)
@@ -136,6 +148,7 @@ AM_CONDITIONAL(DOCE, test x$ce = xtrue)
 AM_CONDITIONAL(DOVFF, test x$vff = xtrue)
 AM_CONDITIONAL(DOPDARWIN, test x$pdarwin = xtrue)
 AM_CONDITIONAL(NOLAUNCH, test x$nolaunch = xtrue)
+AM_CONDITIONAL(DODARWIN, test x$galib = xtrue)
 
 #  gsl libs iff vff is enabled 
 if test x$vff = xtrue; then
@@ -158,8 +171,8 @@ fi
 AC_SUBST(GSL_INCLUDE)
 AC_SUBST(GSL_LIB)
 
-#  eo libs iff darwin is enabled 
-if test x$pdarwin = xtrue || test x$molecularity = xtrue; then
+#  eo libs iff galib is enabled 
+if test x$galib = xtrue; then
   PKG_CHECK_MODULES(EO, eo >= 1.0.1 )
 fi 
 AC_SUBST(GSL_INCLUDE)
@@ -198,6 +211,10 @@ AC_OUTPUT(Makefile atat/Makefile physics/Makefile opt/Makefile lamarck/Makefile
 echo ""; echo ""
 echo "Will Compile following modules: "
 echo " _ CE related stuff in lamarck directory"
+
+if test $galib = true; then
+  echo " _ GA libraries"
+fi
 if test $vff = true; then
   echo " _ vff functional ";
 fi

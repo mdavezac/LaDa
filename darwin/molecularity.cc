@@ -65,14 +65,9 @@ namespace Molecularity
     TwoSites::rearrange_structure(structure);
     if ( not consistency_check() )  return false;
 
-    concentration.N = structure.atoms.size() >> 1;
-    Ising_CE::Structure::t_Atoms::const_iterator i_atom = structure.atoms.begin();
-    Ising_CE::Structure::t_Atoms::const_iterator i_atom_end = structure.atoms.end();
-    concentration.Nfreeze = 0; 
-    for(; i_atom != i_atom_end; ++i_atom )
-      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
-        concentration.Nfreeze += i_atom->type > 0 ? 1 : -1; 
-    
+    concentration.setfrozen( structure );
+
+
     if ( not vff.Load( _node ) )
     {
       std::cerr << " Could not load vff input!! " << std::endl; 
@@ -153,7 +148,6 @@ namespace Molecularity
   {
     if ( not single_c ) return;
 
-    types::t_unsigned N = (types::t_int) _str.atoms.size(); N = N>>1;
     types::t_complex  *hold = new types::t_complex[ N ];
     if ( not hold )
     {
@@ -171,6 +165,19 @@ namespace Molecularity
     Ising_CE::Structure::t_Atoms::iterator i_atom_end = _str.atoms.end();
     types :: t_int concx = 0;
     i_hold = hold;
+    if( not single_c )
+    {
+      for (; i_atom != i_atom_end; i_atom += 2, ++i_hold)
+        if ( not ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
+        {
+          if ( std::abs( std::real(*i_hold) ) < types::tolerance )
+                i_atom->type = rng.flip() ? 1.0: -1.0;
+          else  i_atom->type = std::real(*i_hold) > 0.0 ? 1.0: -1.0;
+          (i_atom+1)->type = i_atom->type > 0.0 ? 1.0: -1.0;
+        }
+      return;
+    }
+
     for (; i_atom != i_atom_end; i_atom+=2, ++i_hold)
     {
       if ( not ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
@@ -239,6 +246,19 @@ namespace Molecularity
     for(; i_atom != i_atom_end; i_atom +=2 )
       x += i_atom->type;
     x /= (types::t_real) N;
+  }
+
+  void Concentration :: setfrozen( const Ising_CE::Structure &_str )
+  {
+    // We need to redo this, since the number of "effective" atoms is haflf of what
+    // SingleSite::Concentration expects.
+    N = _str.atoms.size() >> 1;
+    Ising_CE::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
+    Ising_CE::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
+    Nfreeze = 0; 
+    for(; i_atom != i_atom_end; i_atom+=2 )
+      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
+        Nfreeze += i_atom->type > 0 ? 1 : -1; 
   }
 } // namespace Molecularity
 

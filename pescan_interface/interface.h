@@ -28,6 +28,7 @@ std::string reformat_home( std::string _str );
 
 namespace Pescan
 {
+
   class Interface 
   {
 #ifdef _MPI
@@ -41,7 +42,15 @@ namespace Pescan
       Bands( const types :: t_real _cbm, types::t_real _vbm ) : cbm(_cbm), vbm(_vbm) {};
       Bands( const Bands &_bands ) : cbm(_bands.cbm), vbm(_bands.vbm) {};
       types::t_real gap() const { return cbm - vbm; }
+#ifdef _NOLAUNCH
+      void swap() { types::t_real a = cbm; cbm = vbm; vbm = a; }
+#endif
     };
+
+#ifdef _NOLAUNCH
+    friend void nolaunch_functional( const Ising_CE::Structure &_str,
+                                     Interface::Bands &bands );
+#endif
 
     public:
     struct GenPot

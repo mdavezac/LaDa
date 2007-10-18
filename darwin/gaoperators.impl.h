@@ -23,7 +23,7 @@ namespace GA
     std::string name = _node.Value();
     if ( name.compare("Krossover") ) return false;
 
-    _node.Attribute( "prob", &rate );
+    _node.Attribute( "rate", &rate );
     rate = rate > 0 ? std::abs(rate) : 0.5;
     if ( rate > 1 ) rate = 0.5;
     if ( _node.Attribute("type") )
@@ -89,7 +89,7 @@ namespace GA
     std::string name = _node.Value();
     if ( name.compare("KMutation") ) return false;
 
-    _node.Attribute( "prob", &rate );
+    _node.Attribute( "rate", &rate );
     rate = rate > 0 ? std::abs(rate) : 0.5;
     if ( rate > 1 ) rate = 0.5;
     return true;

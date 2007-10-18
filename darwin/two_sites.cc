@@ -274,6 +274,39 @@ endofloop:
   }
 
 
+  void Concentration :: setfrozen( const Ising_CE::Structure &_str )
+  {
+    N = _str.atoms.size() >> 1;
+
+    Ising_CE::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
+    Ising_CE::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
+    Nfreeze_x = 0; Nfreeze_y = 0;
+    for(; i_atom != i_atom_end; ++i_atom )
+    {
+      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
+        Nfreeze_x += i_atom->type > 0 ? 1 : -1; 
+      else sites.push_back( true );
+      ++i_atom;
+      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
+        Nfreeze_y += i_atom->type > 0 ? 1 : -1; 
+      else sites.push_back( false );
+    }
+
+    if ( not _str.lattice ) return;
+    if (    ( _str.lattice->sites[0].freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) 
+         or ( _str.lattice->sites[1].freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
+    {
+      set_xy( x, y );
+      Print::xmg << Print::Xmg::comment << " Setting Concentrations to x="
+                 << Print::fixed << Print::setprecision(3 ) << x 
+                 << " and y=" << y << Print::endl;
+      if (    std::abs( x - get_x( y)) > types::tolerance 
+           or std::abs( y - get_y( x)) > types::tolerance )
+        Print::out << " WARNING: x and y pair are strain mismatched!! \n";
+    }
+
+  }
+
 
 } // namespace pescan
 

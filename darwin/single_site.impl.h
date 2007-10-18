@@ -78,16 +78,9 @@ namespace SingleSite
       std::cerr << " Could not load input structure!! " << std::endl; 
       return false;
     }
-
-
-    concentration.N = structure.atoms.size();
-    Ising_CE::Structure::t_Atoms::const_iterator i_atom = structure.atoms.begin();
-    Ising_CE::Structure::t_Atoms::const_iterator i_atom_end = structure.atoms.end();
-    concentration.Nfreeze = 0;
-    for(; i_atom != i_atom_end; ++i_atom )
-      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
-        concentration.Nfreeze += i_atom->type > 0 ? 1 : -1; 
-    Print::xmg << Print::Xmg::comment << concentration.print_out() << Print::endl;
+    
+    concentration.setfrozen( structure );
+    Print::xmg << Print::Xmg::comment << concentration.print() << Print::endl;
 
     return true;
   }

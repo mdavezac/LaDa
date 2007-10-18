@@ -41,6 +41,7 @@ namespace GA
     if ( store ) delete store;
     if ( objective ) delete objective;
     if ( evaluation ) delete evaluation;
+    if ( scaling ) delete scaling;
   }
   // reads in different parameters
   template<class T_EVALUATOR>
@@ -306,11 +307,22 @@ namespace GA
  
     // Creates Statistics -- only one type available...
     const TiXmlElement *child = _parent.FirstChildElement("Statistics");
-    if( child )
+    for(; child; child = child->NextSiblingElement("Statistics") )
     {
-      continuator->add( eostates.storeFunctor( new TrueCensus< t_GATraits >() ) );
-      Print::xmg << Print::Xmg::comment
-                 << "Statistics: True population size, discounting twins" << Print::endl;
+      if( not child->Attribute("type") ) continue;
+      std::string name = child->Attribute("type");
+      if( name.compare("census") == 0 )
+      {
+        continuator->add( eostates.storeFunctor( new TrueCensus< t_GATraits >() ) );
+        Print::xmg << Print::Xmg::comment
+                   << "Statistics: True population size, discounting twins" << Print::endl;
+      }
+      else if( name.compare("AverageFitness") == 0 )
+      {
+        continuator->add( eostates.storeFunctor( new AverageFitness< t_GATraits >() ) );
+        Print::xmg << Print::Xmg::comment
+                   << "Statistics: Average Fitness" << Print::endl;
+      }
     }
 
     // Creates Terminators
@@ -359,12 +371,24 @@ namespace GA
     }
 
     // Print Offsprings
-    child = _parent.FirstChildElement("PrintOffsprings");
-    if ( child )
+    child = _parent.FirstChildElement("Print"); 
+    for(; child; child = child->NextSiblingElement("Print") )
     {
-      PrintFitness<t_GATraits> *printfitness = new PrintFitness<t_GATraits> ( generation_counter );
-      continuator->add( *printfitness );
-      eostates.storeFunctor( printfitness );
+      if( not child->Attribute("type") ) continue;
+      std::string name = child->Attribute("type");
+      if( name.compare("offspring") == 0 )
+      {
+        continuator->add( eostates.storeFunctor( new PrintFitness< t_GATraits >
+                                                                 ( generation_counter ) ) );
+        Print::xmg << Print::Xmg::comment
+                   << "Print: offsprings" << Print::endl;
+      }
+      else if( name.compare("pop") == 0 )
+      {
+        continuator->add( eostates.storeFunctor( new PrintPop< t_GATraits >() ) );
+        Print::xmg << Print::Xmg::comment
+                   << "Print: current population" << Print::endl;
+      }
     }
 
   } // end of make_check_point
@@ -903,10 +927,18 @@ namespace GA
           breeder->synchronize_offsprings( offsprings );
           if(history) history->synchronize();
 #endif 
-
           if( scaling )(*scaling)( *i_island );
          
           (*replacement)(*i_island, offsprings); // after replace, the new pop. is in population
+
+//#ifdef _DEBUG
+//        std::sort( i_island->begin(), i_island->end() );
+//        typename t_Population :: const_iterator i_indiv = i_island->begin();
+//        typename t_Population :: const_iterator i_indiv_end = i_island->end();
+//        Print::out << "Current Population\n";
+//        for(; i_indiv != i_indiv_end; ++i_indiv)
+//          Print::out << *i_indiv << " " << i_indiv->fitness() << "\n";
+//#endif
 
           
           if (pSize > i_island->size())

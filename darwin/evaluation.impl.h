@@ -91,23 +91,12 @@ namespace Evaluation
     void Base<T_GATRAITS> :: operator()( t_Population &_pop, t_Population &_offspring ) 
     { 
       evaluate(_offspring); 
-      if ( not objective.is_valid() )
-      {
-        // if invalid, recomputes whole population
-        evaluate( _pop );
-        evaluate( _offspring );
-      }
 
-      typedef typename t_GATraits :: t_QuantityTraits t_qt;
-      typename t_Population :: const_iterator i_indiv = _offspring.begin();
-      typename t_Population :: const_iterator i_end   = _offspring.end();
-      Print::out << "New Individual"
-                 << ( _offspring.size() > 1 ? "s\n": "   ");
-      for(; i_indiv != i_end; ++i_indiv )
-        Print::out << *i_indiv << "    Fitness: "
-                   << Print::fixed << Print::setw(12) << Print::setprecision(5) << "  "
-                   << i_indiv->fitness() << "\n";
-      Print::out << Print::endl;
+      if ( objective.is_valid() ) return;
+      
+      // if invalid, recomputes whole population
+      evaluate( _pop );
+      evaluate( _offspring );
     }
 
 
