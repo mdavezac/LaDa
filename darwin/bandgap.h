@@ -44,15 +44,21 @@ namespace BandGap
 #ifdef _MPI
     friend bool mpi::BroadCast::serialize<BandGap::Object>(BandGap::Object &);
 #endif
+    types::t_real x, y;
+
 
     Object() : TwoSites::Object(), Pescan::Keeper() {}
-    Object(const Object &_c) : TwoSites::Object(_c), Pescan::Keeper(_c) {};
+    Object   (const Object &_c)
+           : TwoSites::Object(_c), Pescan::Keeper(_c),
+             x(_c.x), y(_c.y) {};
     ~Object() {};
   };
 
   inline std::ostream& operator<<(std::ostream &_stream, const Object &_o)
   { 
-    _stream << (const SingleSite::Object& ) _o   << " "
+    if( _o.Container().size() <= 30 )
+      _stream << (const SingleSite::Object& ) _o << " ";
+    _stream << "x=" << _o.x << " y="  << _o.y 
             << (const Pescan::Keeper&) _o;
     return _stream; 
   } 
@@ -107,6 +113,8 @@ namespace mpi
   inline bool mpi::BroadCast::serialize<BandGap::Object>( BandGap::Object & _object )
   {
     return     serialize<Pescan::Keeper>( _object )
+           and serialize( _object.x )
+           and serialize( _object.y )
            and _object.broadcast( *this );
   }
 }

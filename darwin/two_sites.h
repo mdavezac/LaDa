@@ -61,7 +61,6 @@ namespace TwoSites
   class Concentration : public X_vs_y
   {
     public:
-      types::t_real x0, y0;
       types::t_real x, y;
       types::t_unsigned N;
       types::t_int Nfreeze_x, Nfreeze_y;
@@ -69,10 +68,10 @@ namespace TwoSites
 
     public:
       Concentration  () 
-                    : X_vs_y(), x0(0), y0(0), x(0), y(0), N(0),
+                    : X_vs_y(), x(0), y(0), N(0),
                       Nfreeze_x(0), Nfreeze_y(0) {}
       Concentration   ( const Concentration &_conc)
-                    : X_vs_y(_conc), x0(_conc.x0), y0(_conc.y0), x(_conc.x), y(_conc.y),
+                    : X_vs_y(_conc), x(_conc.x), y(_conc.y),
                       N(_conc.N), Nfreeze_x(_conc.Nfreeze_x), Nfreeze_y(_conc.Nfreeze_y),
                       sites(_conc.sites) {}
       ~Concentration() {}

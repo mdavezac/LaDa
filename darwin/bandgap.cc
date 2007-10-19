@@ -58,13 +58,15 @@ namespace BandGap
 
   void Evaluator::evaluate()
   {
+    concentration.set( *current_object );
+    current_object->x = concentration.x;
+    current_object->y = concentration.y;
     // relax structure
     vff();
     // Load relaxed structure into pescan
     pescan << vff; 
     // get band gap
 #ifdef _NOLAUNCH
-    structure << *current_object;
     typedef t_Individual :: t_IndivTraits :: t_FourierRtoK t_Fourier;
     t_Fourier( structure.atoms.begin(), structure.atoms.end(),
                structure.k_vecs.begin(), structure.k_vecs.end() );

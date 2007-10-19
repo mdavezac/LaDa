@@ -124,12 +124,12 @@ types::t_real set_concentration( Ising_CE::Structure &_str,
       return false;
     } 
 
-    if (     parent->Attribute("x") 
-         and parent->Attribute("y") )
+    if (     parent->Attribute("x0") 
+         and parent->Attribute("y0") )
     {
       double d;
-      parent->Attribute("x", &d); x0 = (types::t_real) d;
-      parent->Attribute("y", &d); y0 = (types::t_real) d;
+      parent->Attribute("x0", &d); x0 = (types::t_real) d;
+      parent->Attribute("y0", &d); y0 = (types::t_real) d;
       if ( x0 > 0 and x0 < 1 and y0 > 0 and y0 < 1 )
       {
         x0 = 2.0*x0 - 1.0;
@@ -138,7 +138,7 @@ types::t_real set_concentration( Ising_CE::Structure &_str,
         return true;
       }
       std::cerr << "Incorrect values for concentrations " << std::endl
-                << " x = " << x0 << " y = " << y0 << std::endl;
+                << " x0 = " << x0 << " y0 = " << y0 << std::endl;
     }
     if (    ( not parent->Attribute("a") )
          or ( not parent->Attribute("b") )
@@ -163,9 +163,9 @@ types::t_real set_concentration( Ising_CE::Structure &_str,
     b += a;
     a *= 0.5;
 
-    if ( parent->Attribute("x") )
+    if ( parent->Attribute("x0") )
     {
-      parent->Attribute("x", &x0);
+      parent->Attribute("x0", &x0);
       if ( x0 > 0 and x0 < 1 and can_inverse(x0) ) 
       {
         x0 = 2.0*x0 - 1.0;
@@ -176,9 +176,9 @@ types::t_real set_concentration( Ising_CE::Structure &_str,
       std::cerr << "Incorrect values for concentrations " << std::endl
                 << " x = " << x0 << std::endl;
     }
-    if ( parent->Attribute("y") )
+    if ( parent->Attribute("y0") )
     {
-      parent->Attribute("y", &y0);
+      parent->Attribute("y0", &y0);
       if ( y0 > 0 and y0 < 1 )
       {
         y0 = 2.0*y0 - 1.0;

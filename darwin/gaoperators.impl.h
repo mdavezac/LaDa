@@ -131,8 +131,8 @@ namespace GA
   {
     t_Object &obj = _indiv.Object();
 
-    Ising_CE::Structure::t_Atoms :: const_iterator i_kvec = structure.k_vecs.begin();
-    Ising_CE::Structure::t_Atoms :: const_iterator i_kvec_end = structure.k_vecs.end();
+    Ising_CE::Structure::t_kAtoms :: const_iterator i_kvec = structure.k_vecs.begin();
+    Ising_CE::Structure::t_kAtoms :: const_iterator i_kvec_end = structure.k_vecs.end();
     types::t_real n = 3.0 / (types::t_real) structure.k_vecs.size(); 
     for(; i_kvec != i_kvec_end; ++i_kvec )
       if( rng.flip(n) )

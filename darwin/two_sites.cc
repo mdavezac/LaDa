@@ -101,8 +101,8 @@ namespace TwoSites
     // then normalize it while setting correct concentrations
     if ( single_c )
     {
-      normalize( _str, 0, (types::t_real) concx - ( (types::t_real) N ) * get_x(x) );
-      normalize( _str, 1, (types::t_real) concy - ( (types::t_real) N ) * get_y(y) );
+      normalize( _str, 0, (types::t_real) concx - ( (types::t_real) N ) * x0 );
+      normalize( _str, 1, (types::t_real) concy - ( (types::t_real) N ) * y0 );
       delete[] hold;
       return;
     }
@@ -110,21 +110,21 @@ namespace TwoSites
     // Concentration is not set, but still constrained by load balancing
     // hence will randomly set concentration to ( x and load balanced y )
     // or ( y and load balanced x). The latter case may not always be possible. 
-    x = (double) concx / (double) N;
+    x0 = (double) concx / (double) N;
     if ( rng.flip() or not can_inverse(x) )
     {  // x and load balanced y
-      y = (double) concy / (double) N;
-      x = get_x( y );
+      y0 = (double) concy / (double) N;
+      x0 = get_x( y0 );
       normalize( _str, 1, 0 );
-      normalize( _str, 0, (types::t_real) concx - ( (types::t_real) N ) * x );
+      normalize( _str, 0, (types::t_real) concx - ( (types::t_real) N ) * x0 );
       delete[] hold;
       return;
     }
      
     // y and load balanced x
-    y = get_y( x );
+    y0 = get_y( x0 );
     normalize( _str, 0, 0 );
-    normalize( _str, 1, (types::t_real) concy - ( (types::t_real) N ) * y );
+    normalize( _str, 1, (types::t_real) concy - ( (types::t_real) N ) * y0 );
     delete[] hold;
   }
 
@@ -207,6 +207,7 @@ endofloop:
       if ( i_which == i_end )
         throw std::runtime_error( "Error while normalizing x constituents\n" );
 
+
       i_which->type = ( _tochange > 0 ) ? -1.0: 1.0;
       _tochange += ( _tochange > 0 ) ? -2: 2;
     }
@@ -219,7 +220,7 @@ endofloop:
       i_atom->type = ( i_atom->type > 0 ) ? 1.0: -1.0;
       if ( not _site ) ++i_atom;
     }
-#ifdef _DEBUG
+// #ifdef _DEBUG
     types::t_real concx = 0;
     types::t_real concy = 0;
     types :: t_unsigned N = _str.atoms.size() >> 1;
@@ -233,9 +234,16 @@ endofloop:
     types::t_real result =  _site ? (types::t_real ) concy / (types::t_real) N:
                                     (types::t_real ) concx / (types::t_real) N;
     types::t_real inv = 2.0 / (types::t_real) N;
-    if ( std::abs( result - (_site ? y:x) ) > inv )
-      throw std::runtime_error("Could not normalize site\n" );
-#endif
+    if ( std::abs( result - (_site ? y0:x0) ) > inv )
+    {
+      std::ostringstream sstr;
+      sstr << "Could not normalize site\n" << ( _site ? " x= ": " y= " )
+           << result <<  ( _site ? " x0= ": " y0= " ) <<  ( _site ? x0: y0 )
+           << "\n"; 
+
+      throw std::runtime_error( sstr.str() );
+    }
+// #endif
   }
 
   void Concentration :: set( const Ising_CE::Structure &_str)
@@ -252,7 +260,6 @@ endofloop:
 
   void Concentration :: set( const Object &_obj )
   {
-    if ( not single_c ) return;
     if ( sites.size() != _obj.bitstring.size() ) return;
 
     // computes concentrations first
@@ -292,18 +299,18 @@ endofloop:
       else sites.push_back( false );
     }
 
-    if ( not _str.lattice ) return;
-    if (    ( _str.lattice->sites[0].freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) 
-         or ( _str.lattice->sites[1].freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
-    {
-      set_xy( x, y );
-      Print::xmg << Print::Xmg::comment << " Setting Concentrations to x="
-                 << Print::fixed << Print::setprecision(3 ) << x 
-                 << " and y=" << y << Print::endl;
-      if (    std::abs( x - get_x( y)) > types::tolerance 
-           or std::abs( y - get_y( x)) > types::tolerance )
-        Print::out << " WARNING: x and y pair are strain mismatched!! \n";
-    }
+ //  if ( not _str.lattice ) return;
+ //  if (    ( _str.lattice->sites[0].freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) 
+ //       or ( _str.lattice->sites[1].freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
+ //  {
+ //    set_xy( x, y );
+ //    Print::xmg << Print::Xmg::comment << " Setting Concentrations to x="
+ //               << Print::fixed << Print::setprecision(3 ) << x 
+ //               << " and y=" << y << Print::endl;
+ //    if (    std::abs( x - get_x( y)) > types::tolerance 
+ //         or std::abs( y - get_y( x)) > types::tolerance )
+ //      Print::out << " WARNING: x and y pair are strain mismatched!! \n";
+ //  }
 
   }
 

@@ -255,7 +255,7 @@ namespace GA
     if ( not breeder_ops )
     {
       std::cerr << "Error while creating breeding operators" << std::endl;
-      throw "Error while creating operators in  Darwin<T_EVALUATOR>  :: make_GenOp ";
+      throw "Error while creating operators in  Darwin<T_EVALUATOR>  :: make_genetic_op() ";
     }
     return true;
   }

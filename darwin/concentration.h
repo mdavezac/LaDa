@@ -85,8 +85,8 @@
       //! \details returns X_vs_y::x0 if the concentration is fixed.
       types::t_real get_x( types::t_real _y );
       //! \brief sets a fixed concentration
-      void set_xy( types::t_real _x, types::t_real _y )
-        { x0 = _x; y0 = _y; single_c = true; }
+//     void set_xy( types::t_real _x, types::t_real _y )
+//       { x0 = _x; y0 = _y; single_c = true; }
       //! returns X_vs_y::y0
       types::t_real get_y() { return y0; }
       //! returns X_vs_y::x0
