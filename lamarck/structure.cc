@@ -188,6 +188,7 @@ namespace Ising_CE {
     double d; atat::rVector3d vec;
     int i;
 
+    // Find first XML "Structure" node (may be _element from start, or a child of _element)
     std::string str = _element.Value();
     if ( str.compare("Structure" ) != 0 )
       parent = _element.FirstChildElement("Structure");
@@ -461,7 +462,7 @@ namespace Ising_CE {
     // the following loop creates all possible k-vectors,
     // it then refolds them and adds them to the k vector list
     // only one copy of each refolded vector is allowed
-       k_vecs.clear();
+    k_vecs.clear();
     types::t_real (*ptr_norm)(const atat::FixedVector<types::t_real, 3> &) = &atat::norm2;
     t_kAtoms :: iterator i_begin = k_vecs.begin();
     t_kAtoms :: iterator i_end = k_vecs.end();
@@ -598,6 +599,8 @@ namespace Ising_CE {
 
     return false;
   }
+
+
 
 } // namespace Ising_CE
 

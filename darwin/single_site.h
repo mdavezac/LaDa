@@ -50,17 +50,6 @@ namespace SingleSite
       Object(const Object &_c) : t_Base(_c) {};
       ~Object() {};
     
-      
-      types::t_real get_concentration() const
-      {
-        t_Container :: const_iterator i_var = bitstring.begin();
-        t_Container :: const_iterator i_var_end = bitstring.end();
-        types::t_real result = 0.0;
-        for(; i_var != i_var_end; ++i_var )
-          result += *i_var > 0 ? 1.0: -1.0;
-        result /= static_cast<types::t_real>(bitstring.size());
-        return result;
-      }
   };
 
   std::ostream& operator<<(std::ostream &_stream, const Object &_o);

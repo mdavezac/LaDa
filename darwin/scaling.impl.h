@@ -61,7 +61,7 @@ namespace Scaling
     for(; i_indiv != i_end; ++i_indiv );
     {
       t_ScalarFitness& fitness = i_indiv->fitness();
-      fitness = ( (t_ScalarFitnessQuantity&) fitness ) / *i_sum;
+      fitness = ( ( (t_ScalarFitnessQuantity&) fitness ) - offset ) / *i_sum;
     }
   }
 
@@ -74,8 +74,14 @@ namespace Scaling
     typename t_Population :: const_iterator i_end = _pop.end();
     typename t_Column :: iterator i_sum = sums.begin();
     typename t_Column :: iterator i_2sum;
+    offset = t_ScalarFitnessQuantity(0);
     for(; i_indiv != i_end; ++i_indiv, ++i_sum )
     {
+      // Finds the offset by which all fitnesses should be shifted
+      // to make them negative
+      if ( (const t_ScalarFitnessQuantity& ) i_indiv->fitness() > offset) 
+        offset = (const t_ScalarFitnessQuantity& ) i_indiv->fitness();
+
       i_2indiv = i_indiv + 1;
       i_2sum = i_sum + 1;
       *i_sum += t_ScalarFitnessQuantity(1);
@@ -85,6 +91,10 @@ namespace Scaling
         (*i_sum)  += d; (*i_2sum) += d;
       }
     }
+
+    // if offset is negative, then no offset is needed.
+    if ( offset < t_ScalarFitnessQuantity(0) ) 
+      offset = t_ScalarFitnessQuantity(0);
   }
 
   template<class T_SHARING>

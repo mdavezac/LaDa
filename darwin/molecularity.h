@@ -46,7 +46,7 @@ namespace Molecularity
              T_O_IT _rout ); // sets rvector values from kspace values
   };
 
-  // Exact same object as BandGap, except for the two friends
+  // Exact same object as SingleSite::Object, except for the two friends
   class Object : public SingleSite::Object, public Vff::Keeper, public Pescan::Keeper
   {
     protected:
@@ -55,7 +55,6 @@ namespace Molecularity
     public:
       typedef t_Base :: t_Type t_Type;
       typedef t_Base :: t_Container t_Container;
-      typedef std::vector<types::t_real> t_Quantity;
 
     public:
       Object() {}
@@ -130,9 +129,6 @@ namespace Molecularity
       using t_Base :: current_object;
 
     protected:
-      Ising_CE::Lattice lattice;
-      Ising_CE::Structure structure;
-      Concentration concentration;
       Pescan::Darwin pescan;
       Vff::Darwin vff;
 
