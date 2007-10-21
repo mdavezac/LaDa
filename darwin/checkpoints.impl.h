@@ -370,6 +370,7 @@ namespace GA
 
 
 
+#ifdef _MPI
   template< class T_TYPE >
   inline void Synchronize<T_TYPE> :: operator()()
   {
@@ -378,6 +379,7 @@ namespace GA
     current_value += diff;
     object = current_value;
   }
+#endif
 
 
 }

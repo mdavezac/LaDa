@@ -133,11 +133,11 @@ namespace TwoSites
       bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
       bool Load( const TiXmlElement &_node );
       eoGenOp<t_Individual>* LoadGaOp(const TiXmlElement &_el )
-       { return GA::LoadGaOp<t_GATraits>( _el, structure, concentration ); }
+       { return GA::LoadGaOp<t_Individual>( _el, structure, concentration ); }
       GA::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el )
       {
         if ( concentration.single_c ) return NULL;
-        GA::xTaboo<t_GATraits> *xtaboo = new GA::xTaboo< t_GATraits >( concentration );
+        GA::xTaboo<t_Individual> *xtaboo = new GA::xTaboo< t_Individual >( concentration );
         if ( xtaboo and xtaboo->Load( _el ) )  return xtaboo;
         if ( xtaboo ) delete xtaboo;
         return NULL;
@@ -145,7 +145,7 @@ namespace TwoSites
 
       bool initialize( t_Individual &_indiv )
       {
-        GA::Random< t_GATraits > random( concentration, structure, _indiv );
+        GA::Random< t_Individual > random( concentration, structure, _indiv );
         _indiv.invalidate(); return true;
       }
       void init( t_Individual &_indiv )

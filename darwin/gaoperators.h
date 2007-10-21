@@ -49,24 +49,25 @@ namespace GA
   //! or the parents can exchange a contiguous range of vectors with increasing
   //! wavelengths. Whether range or not does not seem to affect the results.
   //! The concentration after krossover is set (or not) using a
-  //! \a T_GAOPTRAITS::t_Concentration functor.
-  //! \param T_GAOPTRAITS contains all %types pertaining to %GA 
+  //! \a T_INDIVIDUAL::t_Concentration functor.
+  //! \param T_INDIVIDUAL is a \e physical individual
   //! \todo The back Fourier transform is done in (!) the t_Concentration
   //! object. Which means both this functor and the (at present) non-template
   //! t_Concentration classes need to know independantly about going real space
   //! to reciprocal space and back. Not quite logical. Probably only the
   //! template functor should have to know about this type of operation.
-  template<class T_GAOPTRAITS> 
-  class Krossover : public eoGenOp<typename T_GAOPTRAITS :: t_Individual> 
+  template<class T_INDIVIDUAL> 
+  class Krossover : public eoGenOp<T_INDIVIDUAL>
   {
     public:
-      typedef T_GAOPTRAITS t_GAOpTraits; //!< all %GA types
+      //! Type of a \e physical individual
+      typedef T_INDIVIDUAL t_Individual; 
     protected:
-      typedef typename t_GAOpTraits :: t_Individual t_Individual; //!< Individual type
-      typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits; //!< Individual traits
-      typedef typename t_GAOpTraits :: t_Concentration t_Concentration; //!< Concentration type
-      typedef typename t_GAOpTraits :: t_FourierRtoK t_FourierRtoK; //!< Direct Fourier Functor
-      typedef typename t_GAOpTraits :: t_FourierKtoR t_FourierKtoR; //!< Back Fourier Functor
+      //! Contains all types pertaining to a \e physicla individual
+      typedef typename t_Individual :: t_IndivTraits t_IndivTraits; 
+      typedef typename t_IndivTraits :: t_Concentration t_Concentration; //!< Concentration type
+      typedef typename t_IndivTraits :: t_FourierRtoK t_FourierRtoK; //!< Direct Fourier Functor
+      typedef typename t_IndivTraits :: t_FourierKtoR t_FourierKtoR; //!< Back Fourier Functor
       typedef typename t_IndivTraits::t_Object t_Object; //!< Object type
       typedef eoGenOp<t_Individual> t_Base; //!< Base class
 
@@ -133,24 +134,25 @@ namespace GA
   //! M is the square root of the maximum absolute intensity in reciprocal-space
   //! before any mutation. 
   //! The concentration after mutation is set (or not) using a
-  //! \a T_GAOPTRAITS::t_Concentration functor.
-  //! \param T_GAOPTRAITS contains all %types pertaining to %GA 
+  //! \a T_INDIVIDUAL::t_Concentration functor.
+  //! \param T_INDIVIDUAL is a \e physical individual.
   //! \todo The back Fourier transform is done in (!) the t_Concentration
   //! object. Which means both this functor and the (at present) non-template
   //! t_Concentration classes need to know independantly about going real space
   //! to reciprocal space and back. Not quite logical. Probably only the
   //! template functor should have to know about this type of operation.
-  template<class T_GAOPTRAITS>
-  class KMutation : public eoGenOp<typename T_GAOPTRAITS::t_Individual> 
+  template<class T_INDIVIDUAL>
+  class KMutation : public eoGenOp<T_INDIVIDUAL>
   {
     public:
-      typedef T_GAOPTRAITS t_GAOpTraits; //!< all %GA types
+      //! Type of a \e physical individual
+      typedef T_INDIVIDUAL t_Individual; 
     protected:
-      typedef typename t_GAOpTraits :: t_Individual t_Individual; //!< Individual type
-      typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits; //!< Individual traits
-      typedef typename t_GAOpTraits :: t_Concentration t_Concentration; //!< Concentration type
-      typedef typename t_GAOpTraits :: t_FourierRtoK t_FourierRtoK; //!< Direct Fourier Functor
-      typedef typename t_GAOpTraits :: t_FourierKtoR t_FourierKtoR; //!< Back Fourier Functor
+      //! Contains all types pertaining to a \e physicla individual
+      typedef typename t_Individual :: t_IndivTraits t_IndivTraits; 
+      typedef typename t_IndivTraits :: t_Concentration t_Concentration; //!< Concentration type
+      typedef typename t_IndivTraits :: t_FourierRtoK t_FourierRtoK; //!< Direct Fourier Functor
+      typedef typename t_IndivTraits :: t_FourierKtoR t_FourierKtoR; //!< Back Fourier Functor
       typedef typename t_IndivTraits::t_Object t_Object; //!< Object type
       typedef eoGenOp<t_Individual> t_Base; //!< Base class
 
@@ -195,22 +197,23 @@ namespace GA
 
   //! \brief creates a random individidual from random values in reciprocal-space
   //! \details The concentration is set (or not) using a
-  //! \a T_GAOPTRAITS::t_Concentration functor.
-  //! \param T_GAOPTRAITS contains all %types pertaining to %GA 
+  //! \a T_INDIVIDUAL::t_Concentration functor.
+  //! \param T_INDIVIDUAL is a \e physical individual.
   //! \todo The back Fourier transform is done in (!) the t_Concentration
   //! object. Which means both this functor and the (at present) non-template
   //! t_Concentration classes need to know independantly about going real space
   //! to reciprocal space and back. Not quite logical. Probably only the
   //! template functor should have to know about this type of operation.
-  template<class T_GAOPTRAITS> 
-  class KRandom : public eoGenOp<typename T_GAOPTRAITS :: t_Individual> 
+  template<class T_INDIVIDUAL> 
+  class KRandom : public eoGenOp<T_INDIVIDUAL>
   {
     public:
-      typedef T_GAOPTRAITS t_GAOpTraits; //!< all %GA types
+      //! Type of a \e physical individual
+      typedef T_INDIVIDUAL t_Individual; 
     protected:
-      typedef typename t_GAOpTraits :: t_Individual t_Individual; //!< Individual type
-      typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits; //!< Individual traits
-      typedef typename t_GAOpTraits :: t_Concentration t_Concentration; //!< Concentration type
+      //! Contains all types pertaining to a \e physicla individual
+      typedef typename t_Individual :: t_IndivTraits t_IndivTraits; 
+      typedef typename t_IndivTraits :: t_Concentration t_Concentration; //!< Concentration type
       typedef typename t_IndivTraits::t_Object t_Object; //!< Object type
       typedef eoGenOp<t_Individual> t_Base; //!< Base class
 
@@ -258,18 +261,19 @@ namespace GA
 
   //! \brief Applies a standard bitstring crossover to a bitstring (of form \f$b_i=\pm1\f$)
   //! \details The concentration after krossover is set (or not) using a
-  //! \a T_GAOPTRAITS::t_Concentration functor.
-  //! \param T_GAOPTRAITS contains all %types pertaining to %GA 
+  //! \a T_INDIVIDUAL::t_Concentration functor.
+  //! \param T_INDIVIDUAL is a \e physical individual.
   //! \related BitString::Krossover
-  template<class T_GAOPTRAITS> 
-  class Crossover : public eoGenOp<typename T_GAOPTRAITS :: t_Individual > 
+  template<class T_INDIVIDUAL> 
+  class Crossover : public eoGenOp<T_INDIVIDUAL>
   {
     public:
-      typedef T_GAOPTRAITS t_GAOpTraits; //!< all %GA types
+      //! Type of a \e physical individual
+      typedef T_INDIVIDUAL t_Individual; 
     protected:
-      typedef typename t_GAOpTraits :: t_Individual t_Individual; //!< Individual type
-      typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits; //!< Individual traits
-      typedef typename t_GAOpTraits :: t_Concentration t_Concentration; //!< Concentration type
+      //! Contains all types pertaining to a \e physicla individual
+      typedef typename t_Individual :: t_IndivTraits t_IndivTraits; 
+      typedef typename t_IndivTraits :: t_Concentration t_Concentration; //!< Concentration type
       typedef typename t_IndivTraits::t_Object t_Object; //!< Object type
       typedef eoGenOp<t_Individual> t_Base; //!< Base class
 
@@ -326,18 +330,19 @@ namespace GA
 
   //! \brief Applies a standard bitstring mutation to a bitstring (of form \f$b_i=\pm1\f$)
   //! \details The concentration after mutation is set (or not) using a
-  //! \a T_GAOPTRAITS::t_Concentration functor.
-  //! \param T_GAOPTRAITS contains all %types pertaining to %GA 
+  //! \a T_INDIVIDUAL::t_Concentration functor.
+  //! \param T_INDIVIDUAL is a \e physical individual.
   //! \related BitString::Mutation
-  template<class T_GAOPTRAITS> 
-  class Mutation : public eoGenOp<typename T_GAOPTRAITS :: t_Individual> 
+  template<class T_INDIVIDUAL> 
+  class Mutation : public eoGenOp<T_INDIVIDUAL>
   {
     public:
-      typedef T_GAOPTRAITS t_GAOpTraits; //!< all %GA types
+      //! Type of a \e physical individual
+      typedef T_INDIVIDUAL t_Individual; 
     protected:
-      typedef typename t_GAOpTraits :: t_Individual t_Individual; //!< Individual type
-      typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits; //!< Individual traits
-      typedef typename t_GAOpTraits :: t_Concentration t_Concentration; //!< Concentration type
+      //! Contains all types pertaining to a \e physicla individual
+      typedef typename t_Individual :: t_IndivTraits t_IndivTraits; 
+      typedef typename t_IndivTraits :: t_Concentration t_Concentration; //!< Concentration type
       typedef typename t_IndivTraits::t_Object t_Object; //!< Object type
       typedef eoGenOp<t_Individual> t_Base; //!< Base class
 
@@ -382,20 +387,21 @@ namespace GA
 
   //! \brief Creates a random bitstring of \f$b_i=\pm1\f$ 
   //! \details The concentration after random generation is set (or not) using a
-  //! \a T_GAOPTRAITS::t_Concentration functor. This functor needs to know
+  //! \a T_INDIVIDUAL::t_Concentration functor. This functor needs to know
   //! about the structure in order to create a bitstring of correct length.
-  //! \param T_GAOPTRAITS contains all %types pertaining to %GA 
+  //! \param T_INDIVIDUAL is a \e physical individual.
   //! \todo Remove Random::structure? should bitstring lenght become an
   //! adjustable parameter?
-  template<class T_GAOPTRAITS> 
-  class Random : public eoGenOp<typename T_GAOPTRAITS :: t_Individual> 
+  template<class T_INDIVIDUAL> 
+  class Random : public eoGenOp<T_INDIVIDUAL>
   {
     public:
-      typedef T_GAOPTRAITS t_GAOpTraits; //!< all %GA types
+      //! Type of a \e physical individual
+      typedef T_INDIVIDUAL t_Individual; 
     protected:
-      typedef typename t_GAOpTraits :: t_Individual t_Individual; //!< Individual type
-      typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits; //!< Individual traits
-      typedef typename t_GAOpTraits :: t_Concentration t_Concentration; //!< Concentration type
+      //! Contains all types pertaining to a \e physicla individual
+      typedef typename t_Individual :: t_IndivTraits t_IndivTraits; 
+      typedef typename t_IndivTraits :: t_Concentration t_Concentration; //!< Concentration type
       typedef typename t_IndivTraits::t_Object t_Object; //!< Object type
       typedef eoGenOp<t_Individual> t_Base; //!< Base class
 
@@ -441,7 +447,7 @@ namespace GA
   };
   
 
-  //! \brief Creates a %GA operator from XML input
+  //! \brief Creates GA operators for \e physical individuals from XML input
   //! \details Can create at present anyone of the following operators:
   //! - Krossover
   //! - KMutation
@@ -456,26 +462,27 @@ namespace GA
   //! \return a pointer to a eoGenOp object, or NULL if could not load from input
   //! \warning Checking the returned pointer, as well as storing and destroying it, is
   //! the responsability of the caller, not the callee.
-  template<class T_GAOPTRAITS>
-    eoGenOp<typename T_GAOPTRAITS::t_Individual >*
+  template<class T_INDIVIDUAL>
+    eoGenOp<T_INDIVIDUAL>*
       LoadGaOp(const TiXmlElement &_el, Ising_CE::Structure &_structure, 
-               typename T_GAOPTRAITS :: t_Concentration &_concentration );
+               typename T_INDIVIDUAL :: t_IndivTraits :: t_Concentration &_concentration );
 
 
   //! \brief Create a functor which returns false if the individual is outside
   //! a given concentration range
   //! \details This functor can be added to a GA::Taboos object. It can be used
   //! as any other taboo.
-  //! \param T_GAOPTRAITS contains all %types pertaining to %GA 
-  template< class T_GAOPTRAITS >
-  class xTaboo : public Taboo_Base< typename T_GAOPTRAITS::t_Individual >
+  //! \param T_INDIVIDUAL is a physical individual
+  template< class T_INDIVIDUAL >
+  class xTaboo : public Taboo_Base<T_INDIVIDUAL>
   {
     public:
-      typedef T_GAOPTRAITS t_GAOpTraits; //!< all %GA types
+      //! Type of a \e physical individual
+      typedef T_INDIVIDUAL t_Individual; 
     protected:
-      typedef typename t_GAOpTraits :: t_Individual t_Individual; //!< Individual type
-      typedef typename t_GAOpTraits :: t_IndivTraits t_IndivTraits; //!< Individual traits
-      typedef typename t_GAOpTraits :: t_Concentration t_Concentration; //!< Concentration type
+      //! Contains all types pertaining to a \e physicla individual
+      typedef typename t_Individual :: t_IndivTraits t_IndivTraits; 
+      typedef typename t_IndivTraits :: t_Concentration t_Concentration; //!< Concentration type
       typedef typename t_IndivTraits::t_Object t_Object; //!< Object type
 
     protected:

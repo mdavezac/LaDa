@@ -63,8 +63,8 @@ namespace BitString
       
       types::t_real get_concentration() const
       {
-        t_Container :: const_iterator i_var = bitstring.begin();
-        t_Container :: const_iterator i_var_end = bitstring.end();
+        typename t_Container :: const_iterator i_var = bitstring.begin();
+        typename t_Container :: const_iterator i_var_end = bitstring.end();
         types::t_real result = 0.0;
         for(; i_var != i_var_end; ++i_var )
           result += *i_var > 0 ? 1.0: -1.0;
@@ -80,15 +80,31 @@ namespace BitString
 #endif
   };
 
-  template< class T_OBJECT > void inline flip( typename T_OBJECT :: t_Type &_t ) { _t = -_t; }
-  template<> void inline flip< Object< std::vector<bool> > >( bool &_t ) { _t = not _t; }
+  template<class T_CONT>
+    std::ostream& operator<<(std::ostream &_stream, const Object<T_CONT> &_o);
+  template<class T_CONT>
+    void operator<<(std::string &_str, const Object<T_CONT> &_o);
+  template<class T_CONT>
+    void operator<<(Object<T_CONT> &_o, const std::string &_str );
+
+  template< class T_TYPE > inline bool spin_up( T_TYPE _t ) { return _t > T_TYPE(0); }
+  template<> inline bool spin_up<bool>(bool _t ) { return _t; }
+  template< class T_TYPE > inline bool spin_down( T_TYPE _t ) 
+    { return  not spin_up<T_TYPE>(_t); }
+  template<> inline bool spin_down<bool>( bool _t ) { return not _t; }
+
+  template< class T_TYPE >
+    void inline flip( T_TYPE &_t ) { _t = -_t; }
+  template<>
+    void inline flip< bool >( bool &_t ) { _t = not _t; }
 
   template< class T_CONTAINER >
-    inline void Object<T_CONTAINER> :: mask( types::t_unsigned _start, types::t_unsigned _end)
+    inline void Object<T_CONTAINER> :: mask( types::t_unsigned _start,
+                                             types::t_unsigned _end)
     {
       if ( _end > bitstring.size() ) _end = bitstring.size();
       std::for_each( bitstring.begin() + _start, bitstring.begin() + _end,
-                     std::ptr_fun( &flip< Object<t_Container> > ) );  
+                     std::ptr_fun( &flip< typename T_CONTAINER::value_type > ) );  
     }
     
   template< class T_OBJECT >
@@ -218,7 +234,7 @@ namespace BitString
       for(; i_var != i_var_end; ++i_var )
       {
         if( not rng.flip( rate ) ) continue;
-        flip< t_Object >( *i_var );
+        flip< typename t_Object :: t_Container :: value_type >( *i_var );
         has_changed = true;
       }
       return has_changed;
@@ -226,5 +242,6 @@ namespace BitString
 
 }
 
+#include "bitstring.impl.h"
 
 #endif

@@ -9,16 +9,16 @@
 
 namespace GA
 {
-  template<class T_GAOPTRAITS> 
-  std::string Krossover<T_GAOPTRAITS> :: print_out() const
+  template<class T_INDIVIDUAL> 
+  std::string Krossover<T_INDIVIDUAL> :: print_out() const
   {
     std::ostringstream sstr;
     sstr << "Krossover, rate = " << rate;
     if (do_range) sstr << ", Range = true ";
     return sstr.str();
   }
-  template<class T_GAOPTRAITS>
-  bool Krossover<T_GAOPTRAITS> :: Load( const TiXmlElement &_node )
+  template<class T_INDIVIDUAL>
+  bool Krossover<T_INDIVIDUAL> :: Load( const TiXmlElement &_node )
   {
     std::string name = _node.Value();
     if ( name.compare("Krossover") ) return false;
@@ -34,8 +34,8 @@ namespace GA
     return true;
   }
   // expects kspace value to exist!!
-  template<class T_GAOPTRAITS>
-  bool Krossover<T_GAOPTRAITS> :: operator()( t_Individual &_indiv, const t_Individual &_parent )
+  template<class T_INDIVIDUAL>
+  bool Krossover<T_INDIVIDUAL> :: operator()( t_Individual &_indiv, const t_Individual &_parent )
   {
     t_Object &offspring  = _indiv.Object();
     const t_Object &parent  = _parent.Object();
@@ -68,23 +68,23 @@ namespace GA
 
     return true;
   }
-  template<class T_GAOPTRAITS>
-  void Krossover<T_GAOPTRAITS> :: apply(eoPopulator<t_Individual>& _pop)
+  template<class T_INDIVIDUAL>
+  void Krossover<T_INDIVIDUAL> :: apply(eoPopulator<t_Individual>& _pop)
   {
     t_Individual &offspring = *_pop;
     const t_Individual &parent = _pop.select();
     if ( operator()( offspring, parent ) ) (*_pop).invalidate(); 
   }
 
-  template<class T_GAOPTRAITS>
-  std::string KMutation<T_GAOPTRAITS> :: print_out() const
+  template<class T_INDIVIDUAL>
+  std::string KMutation<T_INDIVIDUAL> :: print_out() const
   {
     std::ostringstream sstr;
     sstr << "KMutation, rate = " << rate;
     return sstr.str();
   }
-  template<class T_GAOPTRAITS> 
-  bool KMutation<T_GAOPTRAITS> :: Load( const TiXmlElement &_node )
+  template<class T_INDIVIDUAL> 
+  bool KMutation<T_INDIVIDUAL> :: Load( const TiXmlElement &_node )
   {
     std::string name = _node.Value();
     if ( name.compare("KMutation") ) return false;
@@ -94,8 +94,8 @@ namespace GA
     if ( rate > 1 ) rate = 0.5;
     return true;
   }
-  template<class T_GAOPTRAITS>
-  bool KMutation<T_GAOPTRAITS> :: operator()(t_Individual &_indiv )
+  template<class T_INDIVIDUAL>
+  bool KMutation<T_INDIVIDUAL> :: operator()(t_Individual &_indiv )
   {
     t_Object &object  = _indiv.Object();
     Ising_CE::Structure str = structure;
@@ -126,8 +126,8 @@ namespace GA
     return true;
   }
 
-  template<class T_GAOPTRAITS> 
-  bool KRandom<T_GAOPTRAITS> :: operator()( t_Individual &_indiv )
+  template<class T_INDIVIDUAL> 
+  bool KRandom<T_INDIVIDUAL> :: operator()( t_Individual &_indiv )
   {
     t_Object &obj = _indiv.Object();
 
@@ -146,8 +146,8 @@ namespace GA
   }
 
 
-  template<class T_GAOPTRAITS> 
-  bool Crossover<T_GAOPTRAITS> :: operator()(t_Individual& _indiv, const t_Individual _parent )
+  template<class T_INDIVIDUAL> 
+  bool Crossover<T_INDIVIDUAL> :: operator()(t_Individual& _indiv, const t_Individual _parent )
   {
     t_Object &obj1 = _indiv.Object();
     const t_Object &obj2 = _parent.Object();
@@ -155,15 +155,15 @@ namespace GA
     concentration( obj1 );
     return true;
   }
-  template<class T_GAOPTRAITS> 
-  std::string Crossover<T_GAOPTRAITS> :: print_out() const
+  template<class T_INDIVIDUAL> 
+  std::string Crossover<T_INDIVIDUAL> :: print_out() const
   {
     std::ostringstream sstr;
     sstr << "Crossover, rate = " << op.rate;
     return sstr.str();
   }
-  template<class T_GAOPTRAITS>
-  void Crossover<T_GAOPTRAITS> :: apply(eoPopulator<t_Individual>& _pop)
+  template<class T_INDIVIDUAL>
+  void Crossover<T_INDIVIDUAL> :: apply(eoPopulator<t_Individual>& _pop)
   {
     t_Individual &offspring = *_pop;
     const t_Individual &parent = _pop.select();
@@ -172,24 +172,24 @@ namespace GA
   
 
 
-  template<class T_GAOPTRAITS> 
-  bool Mutation<T_GAOPTRAITS> :: operator()( t_Individual &_indiv )
+  template<class T_INDIVIDUAL> 
+  bool Mutation<T_INDIVIDUAL> :: operator()( t_Individual &_indiv )
   {
     t_Object &obj = _indiv.Object();
     op( obj );
     concentration( obj );
     return true;
   }
-  template<class T_GAOPTRAITS> 
-  std::string Mutation<T_GAOPTRAITS> :: print_out() const 
+  template<class T_INDIVIDUAL> 
+  std::string Mutation<T_INDIVIDUAL> :: print_out() const 
   {
     std::ostringstream sstr;
     sstr << "Mutation, rate = " << op.rate;
     return sstr.str();
   }
 
-  template<class T_GAOPTRAITS> 
-  bool Random<T_GAOPTRAITS> :: operator()( t_Individual &_indiv )
+  template<class T_INDIVIDUAL> 
+  bool Random<T_INDIVIDUAL> :: operator()( t_Individual &_indiv )
   {
     t_Object &obj = _indiv.Object();
     obj.bitstring.clear();
@@ -206,17 +206,17 @@ namespace GA
   }
 
 
-  template<class T_GAOPTRAITS>
-    eoGenOp<typename T_GAOPTRAITS::t_Individual >*
+  template<class T_INDIVIDUAL>
+    eoGenOp<T_INDIVIDUAL>*
       LoadGaOp(const TiXmlElement &_el, Ising_CE::Structure &_structure, 
-               typename T_GAOPTRAITS :: t_Concentration &_concentration )
+               typename T_INDIVIDUAL :: t_IndivTraits :: t_Concentration &_concentration )
   {
     std::string value = _el.Value();
 
     if ( value.compare("Crossover") == 0 )
     {
-      Crossover<T_GAOPTRAITS> *crossover
-         = new Crossover<T_GAOPTRAITS>(_concentration);
+      Crossover<T_INDIVIDUAL> *crossover
+         = new Crossover<T_INDIVIDUAL>(_concentration);
       if ( not crossover ) goto errorout;
       if ( not crossover->Load( _el ) ) 
       {
@@ -229,8 +229,8 @@ namespace GA
     }
     else if ( value.compare("Mutation") == 0 )
     {
-      Mutation<T_GAOPTRAITS> *mutation
-         = new Mutation<T_GAOPTRAITS>(_concentration);
+      Mutation<T_INDIVIDUAL> *mutation
+         = new Mutation<T_INDIVIDUAL>(_concentration);
       if ( not mutation ) goto errorout;
       if ( not mutation->Load( _el ) ) 
       {
@@ -243,16 +243,16 @@ namespace GA
     }
     else if ( value.compare( "Random" ) == 0 )
     {
-      Random<T_GAOPTRAITS> *random
-         = new Random<T_GAOPTRAITS>(_concentration, _structure);
+      Random<T_INDIVIDUAL> *random
+         = new Random<T_INDIVIDUAL>(_concentration, _structure);
       Print::xmg << Print::Xmg::comment << random->print_out() << Print::endl;
       // pointer is owned by caller !!
       return random;
     }
     else if ( value.compare( "Krossover" ) == 0 )
     {
-      Krossover<T_GAOPTRAITS> *krossover
-         = new Krossover<T_GAOPTRAITS>( _concentration, _structure );
+      Krossover<T_INDIVIDUAL> *krossover
+         = new Krossover<T_INDIVIDUAL>( _concentration, _structure );
       if ( not krossover ) goto errorout;
       if ( not krossover->Load( _el ) ) 
       {
@@ -265,8 +265,8 @@ namespace GA
     }
     else if ( value.compare( "KMutation" ) == 0 )
     {
-      KMutation<T_GAOPTRAITS> *kmutation
-         = new KMutation<T_GAOPTRAITS>( _concentration, _structure );
+      KMutation<T_INDIVIDUAL> *kmutation
+         = new KMutation<T_INDIVIDUAL>( _concentration, _structure );
       if ( not kmutation ) goto errorout;
       if ( not kmutation->Load( _el ) ) 
       {
@@ -287,14 +287,14 @@ errorout:
 
 
 
-  template< class T_GAOPTRAITS >
-  bool xTaboo<T_GAOPTRAITS> :: operator()( const t_Individual& _indiv ) const
+  template< class T_INDIVIDUAL >
+  bool xTaboo<T_INDIVIDUAL> :: operator()( const t_Individual& _indiv ) const
   {
     concentration.set( _indiv.Object() );
     return concentration.x < lessthan and concentration.x > morethan;
   }
-  template< class T_GAOPTRAITS >
-  bool xTaboo<T_GAOPTRAITS> :: Load( const TiXmlElement &_el ) 
+  template< class T_INDIVIDUAL >
+  bool xTaboo<T_INDIVIDUAL> :: Load( const TiXmlElement &_el ) 
   {
     const TiXmlElement *child = &_el;
     std::string name = _el.Value();

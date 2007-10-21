@@ -21,44 +21,55 @@
 
 namespace Molecularity
 {
-  template<class T_R_IT, class T_K_IT>
-  void fourrier_to_kspace( T_R_IT _rfirst, T_R_IT _rend,
-                           T_K_IT _kfirst, T_K_IT _kend ) // sets kvector values from rspace values
+  
+  inline void Evaluator :: evaluate()
   {
-    const std::complex<types::t_real>
-       imath(0, -2*3.1415926535897932384626433832795028841971693993751058208);
-    
-    for (; _kfirst != _kend; ++_kfirst)
-    {
-      _kfirst->type = std::complex<types::t_real>(0);
-      for(T_R_IT i_r( _rfirst ); i_r != _rend; i_r += 2 )
-      {
-        _kfirst->type +=   exp( imath * ( i_r->pos[0] * _kfirst->pos[0] +
-                                          i_r->pos[1] * _kfirst->pos[1] +
-                                          i_r->pos[2] * _kfirst->pos[2] ) )
-                         * i_r->type;
-      }
-    }
-  }
-  template<class T_R_IT, class T_K_IT, class T_O_IT >
-  void fourrier_to_rspace( T_R_IT _rfirst, T_R_IT _rend,
-                           T_K_IT _kfirst, T_K_IT _kend,
-                           T_O_IT _rout ) // sets rvector values from kspace values
-  {
-    const std::complex<types::t_real>
-       imath(0, 2*3.1415926535897932384626433832795028841971693993751058208);
-    for (; _rfirst != _rend; _rfirst+=2, ++_rout)
-    {
-      *_rout = 0.0;
-      for(T_K_IT i_k=_kfirst; i_k != _kend; ++i_k)
-      {
-        *_rout +=   exp( imath * ( _rfirst->pos[0] * i_k->pos[0] +
-                                   _rfirst->pos[1] * i_k->pos[1] +
-                                   _rfirst->pos[2] * i_k->pos[2] ) )
-                  * i_k->type;
-      }
-    }
+    // relax structure
+    vff();
+    // Load relaxed structure into pescan
+    pescan << vff; 
+    // get band gap
+    pescan( *current_object );
+  
+    // set quantity
+    current_individual->quantities().front()
+       = inplane_stress( current_object->stress, direction );
+    current_individual->quantities().back() =   current_object->cbm
+                                              - current_object->vbm;
   }
 
-} // namespace TwoSites
+  inline eoF<bool>* Evaluator :: LoadContinue(const TiXmlElement &_el )
+  {
+    return new GA::mem_zerop_t<Pescan::Darwin>( pescan,
+                                                &Pescan::Darwin::Continue,
+                                                "Pescan::Continue"         );     
+  }
+
+  inline types::t_real inplane_stress( atat::rMatrix3d &_stress,
+                                       atat::rVector3d &_dir     )
+  {
+    types::t_real norm = atat::norm2(_dir);
+    types::t_real trace = _stress(0,0) + _stress(1,1) + _stress(2,2);
+    atat::rVector3d axial = _stress * _dir;
+    return ( trace - (   axial(0) * _dir(0)
+                       + axial(1) * _dir(1)
+                       + axial(2) * _dir(2) ) / norm ) * 0.5;
+  }
+} // namespace Molecularity
+
+
+#ifdef _MPI
+namespace mpi
+{
+  template<>
+  inline bool mpi::BroadCast::serialize<Molecularity::Object>
+                                       ( Molecularity::Object & _object )
+  {
+    return     serialize<Pescan::Keeper>( _object )
+           and serialize<Vff::Keeper>( _object )
+           and _object.broadcast( *this );
+  }
+}
+#endif
+
 #endif // _TWOSITES_IMPL_H_

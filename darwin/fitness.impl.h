@@ -38,12 +38,14 @@ namespace Fitness
       throw std::runtime_error( " Invalid Fitness !!\n" );
     return quantity;
   }
+#ifdef _MPI
   template<class T_QUANTITYTRAITS>
   inline bool Base<T_QUANTITYTRAITS, true> :: broadcast( mpi::BroadCast &_bc )
   {
     return     _bc.serialize( is_valid )
            and t_QuantityTraits::broadcast( quantity, _bc );
   }
+#endif
 
   template<class T_QUANTITYTRAITS>
   inline std::ostream & operator<<( std::ostream &_os, const Base<T_QUANTITYTRAITS, true> &_fit ) 
@@ -125,6 +127,7 @@ namespace Fitness
       throw std::runtime_error( " Invalid Fitness !!\n" );
     return quantity;
   }
+#ifdef _MPI
   template<class T_QUANTITYTRAITS>
   inline bool Base<T_QUANTITYTRAITS, false> :: broadcast( mpi::BroadCast &_bc )
   {
@@ -132,6 +135,7 @@ namespace Fitness
            and t_QuantityTraits::broadcast( quantity, _bc )
            and Base<T_QUANTITYTRAITS, false>::t_ScalarFitness::broadcast( _bc );
   }
+#endif
 
   template<class T_QUANTITYTRAITS>
   inline std::ostream & operator<<( std::ostream &_os, const Base<T_QUANTITYTRAITS, false> &_fit ) 

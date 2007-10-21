@@ -184,6 +184,7 @@ failure:
        << a << a << mpi::BroadCast::broadcast
        << a << a << mpi::BroadCast::clear;
 #endif
+    return;
   }
 
   void Darwin::operator<<( const Vff::Darwin &_vff )

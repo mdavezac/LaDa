@@ -52,11 +52,7 @@ namespace SingleSite
     
   };
 
-  std::ostream& operator<<(std::ostream &_stream, const Object &_o);
-  void operator<<(std::string &_str, const Object &_o);
-  void operator<<(Object &_o, const std::string &_str );
   void operator<<(Ising_CE::Structure &_str, const Object &_o);
-  void operator<<(Object &_o, const Ising_CE::Structure &_c);
   void operator<<(Object &_o, const Ising_CE::Structure &_str);
 
   class Concentration 
@@ -99,7 +95,6 @@ namespace SingleSite
   {
     public:
       typedef T_INDIVIDUAL t_Individual;
-      typedef Traits::GA< Evaluator<t_Individual> > t_GATraits;
     protected:
       typedef typename t_Individual::t_IndivTraits t_IndivTraits;
       typedef typename t_IndivTraits::t_Object t_Object;
@@ -136,11 +131,11 @@ namespace SingleSite
       bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
       bool Load( const TiXmlElement &_node );
       eoGenOp<t_Individual>* LoadGaOp(const TiXmlElement &_el )
-       { return GA::LoadGaOp<t_GATraits>( _el, structure, concentration ); }
+       { return GA::LoadGaOp<t_Individual>( _el, structure, concentration ); }
       GA::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el )
       {
         if ( concentration.single_c ) return NULL;
-        GA::xTaboo<t_GATraits> *xtaboo = new GA::xTaboo< t_GATraits >( concentration );
+        GA::xTaboo<t_Individual> *xtaboo = new GA::xTaboo< t_Individual >( concentration );
         if ( xtaboo and xtaboo->Load( _el ) )  return xtaboo;
         if ( xtaboo ) delete xtaboo;
         return NULL;
@@ -148,7 +143,7 @@ namespace SingleSite
 
       bool initialize( t_Individual &_indiv )
       {
-        GA::Random< t_GATraits > random( concentration, structure, _indiv );
+        GA::Random< t_Individual > random( concentration, structure, _indiv );
         _indiv.invalidate(); return true;
       }
       void LoadAttribute ( const TiXmlAttribute &_att )

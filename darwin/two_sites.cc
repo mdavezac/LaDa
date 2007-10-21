@@ -36,8 +36,10 @@ namespace TwoSites
     std::list< Ising_CE::Structure::t_Atom > :: iterator i_0 = sites0.begin();
     std::list< Ising_CE::Structure::t_Atom > :: iterator i_end = sites0.end();
     std::list< Ising_CE::Structure::t_Atom > :: iterator i_1;
-    atat::rVector3d translation = _str.lattice->sites[1].pos - _str.lattice->sites[0].pos; 
-    types::t_real (*ptr_norm)(const atat::FixedVector<types::t_real, 3> &) = &atat::norm2;
+    atat::rVector3d translation =   _str.lattice->sites[1].pos
+                                  - _str.lattice->sites[0].pos; 
+    types::t_real (*ptr_norm)(const atat::FixedVector<types::t_real, 3> &)
+          = &atat::norm2;
     _str.atoms.clear();
     for(; i_0 != i_end; ++i_0 )
     {
