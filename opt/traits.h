@@ -14,14 +14,7 @@
 #include <string>
 #include <sstream>
 
-#include <eo/eoPop.h>
-
-#ifdef _MPI
-#include "mpi/mpi_object.h"
-#endif
-
 #include "opt/types.h"
-#include "opt/opt_function_base.h"
 
 #ifdef _MPI
 #include "mpi/mpi_object.h"
@@ -104,6 +97,16 @@ namespace Traits
     struct Fuzzy {
       //! \brief returns true if \f$ \_a  < \_b \f$
       //! \details if \a T_ARG is a types::real, return true if 
+      //! \f$|\_a - \_b| < \f$ types::tolerance or\f$ \_a  < \_b \f$
+      static bool leq( const T_ARG &_a, const T_ARG &_b ) 
+        { return _a <= _b; }
+      //! \brief returns true if \f$ \_a  > \_b \f$
+      //! \details if \a T_ARG is a types::real, return true if 
+      //! \f$|\_a - \_b| < \f$ types::tolerance or \f$ \_a  > \_b \f$
+      static bool geq( const T_ARG &_a, const T_ARG &_b ) 
+        { return _a >= _b; }
+      //! \brief returns true if \f$ \_a  < \_b \f$
+      //! \details if \a T_ARG is a types::real, return true if 
       //! \f$|\_a - \_b| > \f$ types::tolerance, and \f$ \_a  < \_b \f$
       static bool less( const T_ARG &_a, const T_ARG &_b ) 
         { return _a < _b; }
@@ -121,6 +124,16 @@ namespace Traits
   //! Specialize version for \a T_ARG a types::real, eg when fuzzyness is indeed needed 
   template<>
     struct Fuzzy<types::t_real> {
+      //! \brief returns true if \f$ \_a  < \_b \f$
+      //! \details if \a T_ARG is a types::real, return true if 
+      //! \f$|\_a - \_b| < \f$ types::tolerance or\f$ \_a  < \_b \f$
+      static bool leq( const types::t_real &_a, const types::t_real &_b ) 
+        { return std::abs(_a - _b) < types::tolerance or _a < _b; }
+      //! \brief returns true if \f$ \_a  > \_b \f$
+      //! \details if \a T_ARG is a types::real, return true if 
+      //! \f$|\_a - \_b| < \f$ types::tolerance or \f$ \_a  > \_b \f$
+      static bool geq( const types::t_real &_a, const types::t_real &_b ) 
+        { return std::abs(_a - _b) < types::tolerance or _a > _b; }
       //! \brief returns return true if 
       //! \f$|\_a - \_b| > \f$ types::tolerance, and \f$ \_a  < \_b \f$
       static bool less( const types::t_real &_a, const types::t_real &_b ) 

@@ -24,7 +24,7 @@ pdarwin_CPPFLAGS =  -D _PESCAN $(AM_CPPFLAGS) -I .. @GSL_INCLUDE@
 pdarwin_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIB@ @MPICH_LIBS@
 pdarwin_LDADD = libdarwin.la ../lamarck/liblamarck.la ../atat/libatat.la ../vff/libvff.la \
 	       	../pescan_interface/libpescan.la ../physics/libphysics.la ../print/libprint.la @MPI_ADDLIB@
-molecularity_SOURCES = main.cc pescan.cc two_sites.cc single_site.cc vff.cc molecularity.cc
+molecularity_SOURCES = main.cc pescan.cc two_sites.cc single_site.cc vff.cc molecularity.cc layered.cc
 molecularity_HEADERS = pescan.h two_sites.h two_sites.impl.h single_site.h vff.h molecularity.h
 molecularitydir = darwin
 molecularity_CPPFLAGS =  -D _MOLECULARITY $(AM_CPPFLAGS) -I .. @GSL_INCLUDE@ 

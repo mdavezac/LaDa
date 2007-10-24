@@ -87,8 +87,7 @@ namespace Layered
   void Concentration<_D> :: operator()( Ising_CE::Structure &_str )
   {
     if ( _str.atoms.size() % _D != 0 )
-      throw std::runtime_error( "Number of atoms is not a multiple of _D in \
-                                 Layered::Concentration\n");
+      throw std::runtime_error( "Number of atoms is not a multiple of _D\n");
 
     if ( not single_c ) return;
 
@@ -269,8 +268,7 @@ namespace Layered
   {
     N = _str.atoms.size();
     if( N % _D )
-      throw std::runtime_error("Number of atoms in structure \
-                                is not a multiple of _D\n");
+      throw std::runtime_error("Number of atoms in structure is not a multiple of _D\n");
 
     Ising_CE::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
     Ising_CE::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
@@ -332,9 +330,9 @@ errorout:
   bool Evaluator<T_INDIVIDUAL> :: Load_Structure( const TiXmlElement &_node )
   {
     if(     ( not _node.Attribute("direction") )
-        and ( not _node.Attribute("u") ) ) return false;
+        and ( not _node.Attribute("multiplicity") ) ) return false;
     if(     ( not _node.Attribute("direction") )
-        or  ( not _node.Attribute("u") ) )
+        or  ( not _node.Attribute("multiplicity") ) )
     {
       std::cerr << "Either cell direction or multiplicity is missing on input\n";
       return false;
@@ -368,22 +366,40 @@ errorout:
     }
     multiplicity = (types::t_unsigned) std::abs( u );
 
+    // Load in scale
+    if( _node.Attribute("scale") )
+      _node.Attribute("scale", &structure.scale);
+    else if ( structure.lattice ) 
+      structure.scale = structure.lattice->scale;
+    else
+      structure.scale = 2;
+
+    // Load in PI and Energy
+    structure.Pi_name = 0;
+    if( _node.Attribute("PI") )
+    {
+      _node.Attribute("PI", &u);
+      structure.Pi_name = (types::t_int) u;
+    }
+    double d;
+    structure.energy = 666.666;
+    if( _node.Attribute("energy") )
+    {
+      _node.Attribute("energy", &d);
+      structure.energy = (types::t_real) d;
+    }
+
 
     // Then constructs unit cell
+    types::t_real a = (types::t_real) multiplicity;
     cell = lattice.cell;
-    cell(0,0) =   direction(0) * (types::t_real) multiplicity * lattice.cell(0,0)
-                + direction(1) * (types::t_real) multiplicity * lattice.cell(0,1)
-                + direction(2) * (types::t_real) multiplicity * lattice.cell(0,2);
-    cell(1,0) =   direction(0) * (types::t_real) multiplicity * lattice.cell(1,0)
-                + direction(1) * (types::t_real) multiplicity * lattice.cell(1,1)
-                + direction(2) * (types::t_real) multiplicity * lattice.cell(1,2);
-    cell(2,0) =   direction(0) * (types::t_real) multiplicity * lattice.cell(2,0)
-                + direction(1) * (types::t_real) multiplicity * lattice.cell(2,1)
-                + direction(2) * (types::t_real) multiplicity * lattice.cell(2,2);
+    cell.set_column(0, lattice.cell * direction * a ); 
 
     // Checks that cell is not singular
     if ( std::abs( det(cell) ) < types::tolerance )
       cell.set_column(1, lattice.cell.get_column( 0 ) );
+    if ( std::abs( det(cell) ) < types::tolerance )
+      cell.set_column(2, lattice.cell.get_column( 1 ) );
     if ( std::abs( det(cell) ) < types::tolerance )
     {
       std::cerr << "Could not construct unit-cell\n" << cell << std::endl;
@@ -391,39 +407,36 @@ errorout:
     }
 
     // Makes sure the triad is direct
-    if ( std::abs( det(cell) ) < types::tolerance )
+    if ( det(cell) < 0 )
     {
       atat::rVector3d d = cell.get_column(2);
       cell.set_column(2, cell.get_column(1) );
       cell.set_column(1, d);
     }
 
-    // Now adds atoms to structure.
-    structure.atoms.clear();
-
-    // Atoms of site 0 can be added in the exact same way that kvectors are
-    // found.  Indeed, lets fool that particular routine
-    atat::rMatrix3d holdcell = cell;
-    cell =  !( ~(cell) );
-    structure.find_k_vectors();
-    // And undo the cell 
-    cell = holdcell;
+    // Fills in a structure lattice points.
+    Ising_CE::Structure copy_structure = structure;
+    FillStructure( copy_structure );
     
     // We now sort the real space atoms according to layer
-    std::sort( structure.k_vecs.begin(), structure.k_vecs.end(),
-               Depth( cell.get_column(0) ) );
+    std::sort( copy_structure.atoms.begin(), copy_structure.atoms.end(),
+               Depth( cell ) );
+    // The lattice sites are also sorted the same way
+    std::sort( lattice.sites.begin(), lattice.sites.end(),
+               Depth( cell ) );
 
 
     // Finally, we copy the kvector positions as atoms, and the related sites
-    Ising_CE::Structure::t_kAtoms::const_iterator i_kvec = structure.k_vecs.begin();
-    Ising_CE::Structure::t_kAtoms::const_iterator i_kvec_end = structure.k_vecs.end();
-    structure.atoms.clear(); structure.atoms.reserve( structure.k_vecs.size() );
+    Ising_CE::Structure::t_Atoms::const_iterator i_vec = copy_structure.atoms.begin();
+    Ising_CE::Structure::t_Atoms::const_iterator i_vec_end = copy_structure.atoms.end();
+    structure.atoms.clear();
+    structure.atoms.reserve( lattice.sites.size() * copy_structure.atoms.size() );
     bool only_one_site = lattice.sites.size() == 1;
     atat::rVector3d origin = lattice.sites.front().pos;
-    for(; i_kvec != i_kvec_end; ++i_kvec )
+    for(; i_vec != i_vec_end; ++i_vec )
     {
       Ising_CE::Structure::t_Atom atom;
-      atom.site = 0; atom.pos = i_kvec->pos;
+      atom.site = 0; atom.pos = i_vec->pos;
       atom.type = Ising_CE::Structure::t_Atom::t_Type(0);
       atom.freeze = lattice.sites.front().freeze;
       structure.atoms.push_back(atom);
@@ -437,14 +450,23 @@ errorout:
         Ising_CE::Structure::t_Atom atom2(atom);
         atom2.pos += ( i_site->pos - origin );
         atom2.freeze = i_site->freeze;
+        structure.atoms.push_back(atom2);
       }
     }
    
-    structure.k_vecs.clear();
     // More of the same... but for kvecs
     structure.find_k_vectors();
 
     concentration.setfrozen( structure );
+    std::cout << "CRYSTAL\nPRIMVEC\n" << (~structure.cell) * structure.scale << "PRIMCOORD\n" 
+              << structure.atoms.size() << " 1 \n";  
+    Ising_CE::Structure::t_Atoms::const_iterator i_atom = structure.atoms.begin();
+    Ising_CE::Structure::t_Atoms::const_iterator i_atom_end = structure.atoms.end();
+    bool which = true;
+    for(; i_atom != i_atom_end; ++i_atom, which = not which )
+      std::cout << " " << (which ? "16": "32") << " " << i_atom->pos * structure.scale << "\n";
+
+    throw std::runtime_error("");
 
     return true;
 
@@ -516,8 +538,18 @@ errorout:
   inline bool Depth::operator()( const atat::rVector3d &_1,
                                  const atat::rVector3d &_2 )
   {
-    types::t_real a =   _1(0) * depth(0) + _1(1) * depth(1) + _1(2) * depth(2);
-    types::t_real b =   _2(0) * depth(0) + _2(1) * depth(1) + _2(2) * depth(2);
+    types::t_real a =   _1(0) * a0(0) + _1(1) * a0(1) + _1(2) * a0(2);
+    types::t_real b =   _2(0) * a0(0) + _2(1) * a0(1) + _2(2) * a0(2);
+    if ( not Traits::Quantity< types::t_real > :: equal( a, b ) )
+      return Traits::Quantity<types::t_real> :: less( a, b );
+
+    a =   _1(0) * a1(0) + _1(1) * a1(1) + _1(2) * a1(2);
+    b =   _2(0) * a1(0) + _2(1) * a1(1) + _2(2) * a1(2);
+    if ( not Traits::Quantity< types::t_real > :: equal( a, b ) )
+      return Traits::Quantity<types::t_real> :: less( a, b );
+    
+    a =   _1(0) * a2(0) + _1(1) * a2(1) + _1(2) * a2(2);
+    b =   _2(0) * a2(0) + _2(1) * a2(1) + _2(2) * a2(2);
     return Traits::Quantity<types::t_real> :: less( a, b );
   }
 

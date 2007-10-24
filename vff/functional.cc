@@ -80,10 +80,13 @@ namespace Vff
         } while ( ++period ); 
       }
     }
+
+    // Sorts the neighbors according to distance from origin
     types::t_real (*ptr_norm)(const atat::FixedVector<types::t_real, 3> &) = &atat::norm2;
     std::sort( neighbors.begin(), neighbors.end(), 
                opt::ref_compose2( std::less<types::t_real>(), std::ptr_fun( ptr_norm ),
                                   std::ptr_fun( ptr_norm ) ) );
+    // And reduces to first neighbors only
     neighbors.resize(4*structure.lattice->sites.size());
 
     std::vector< Atomic_Center > :: iterator i_begin = centers.begin();

@@ -27,6 +27,8 @@
 #include "mpi/mpi_object.h"
 #endif
 
+void FillStructure( Ising_CE::Structure &_str );
+
 //! \brief allows the creation
 namespace Layered
 {
@@ -163,11 +165,15 @@ namespace Layered
   class Depth
   {
     protected:
-      atat::rVector3d depth;
+      atat::rVector3d a0;
+      atat::rVector3d a1;
+      atat::rVector3d a2;
 
     public:
-      Depth( const atat::rVector3d &_vec ) : depth(_vec) {}
-      Depth( const Depth &_c) : depth(_c.depth) {}
+      Depth   ( const atat::rMatrix3d &_mat )
+            : a0(_mat.get_column(0)), a1(_mat.get_column(1)),
+              a2(_mat.get_column(2)) {}
+      Depth( const Depth &_c) : a0(_c.a1), a1(_c.a1), a2(_c.a2) {}
 
       bool operator()(const atat::rVector3d& _1, const atat::rVector3d& _2 );
   };

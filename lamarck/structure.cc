@@ -12,10 +12,11 @@
   using std::compose1;
 #endif
 
-#include "opt/compose_functors.h"
-#include "opt/ndim_iterator.h"
+#include <opt/compose_functors.h>
+#include <opt/ndim_iterator.h>
+#include <opt/traits.h>
 
-#include "atat/misc.h"
+#include <atat/misc.h>
 #include "structure.h"
 
 
@@ -463,10 +464,6 @@ namespace Ising_CE {
     // it then refolds them and adds them to the k vector list
     // only one copy of each refolded vector is allowed
     k_vecs.clear();
-    types::t_real (*ptr_norm)(const atat::FixedVector<types::t_real, 3> &) = &atat::norm2;
-    t_kAtoms :: iterator i_begin = k_vecs.begin();
-    t_kAtoms :: iterator i_end = k_vecs.end();
-    t_kAtoms :: iterator i_which;
     do
     {
       // creates vector in A basis
@@ -475,47 +472,27 @@ namespace Ising_CE {
       kvec[2] =  (types::t_real) global_iterator.access(2);
       kvec = A * kvec;
     
-      kvec[0] -= rint(kvec[0]); 
-      kvec[1] -= rint(kvec[1]); 
-      kvec[2] -= rint(kvec[2]); 
-      
-      // switches to cartesian coordinates
-      kvec = k_lat * kvec;
-      
-      // find if vector is already in list
-      i_which = std::find_if( i_begin, i_end, 
-                     compose1( std::bind2nd(std::less<types::t_real>(), types::tolerance),
-                     compose1( std::ptr_fun(ptr_norm),
-                               bind2nd(std::minus<atat::rVector3d>(), kvec) ) ) );
-      // if it is in list, don't add it
-      if ( i_which != i_end  )  continue;
-      
+    // if any of the coordinates is >= 1, then this is a periodic image
+    if (    Traits::Fuzzy<types::t_real>::geq( kvec(0), 1.0 ) 
+         or Traits::Fuzzy<types::t_real>::geq( kvec(1), 1.0 ) 
+         or Traits::Fuzzy<types::t_real>::geq( kvec(2), 1.0 ) ) continue;
+    // if any of the coordinates is < 0, then this is a periodic image
+    if (    Traits::Fuzzy<types::t_real>::less( kvec(0), 0.0 ) 
+         or Traits::Fuzzy<types::t_real>::less( kvec(1), 0.0 ) 
+         or Traits::Fuzzy<types::t_real>::less( kvec(2), 0.0 ) ) continue;
+     
+      // Goes back to lattice basis
+      kvec[0] =  (types::t_real) global_iterator.access(0);
+      kvec[1] =  (types::t_real) global_iterator.access(1);
+      kvec[2] =  (types::t_real) global_iterator.access(2);
+      // And then to cartesian
+      kvec = k_cell * kvec;
       k_vecs.push_back( t_kAtom(kvec,0) );
-      i_begin = k_vecs.begin();
-      i_end = k_vecs.end();
     
     } while( ++global_iterator );
 
-    // refolds the vectors somewhat better
-    i_begin = k_vecs.begin();
-    i_end = k_vecs.end();
-    for( ; i_begin != i_end; i_begin++ )
-      refold(i_begin->pos, k_lat);
 
-    // finally, puts vector 0,0,0 at front of list
-    i_begin = k_vecs.begin();
-    i_end = k_vecs.end();
-    i_which = std::find_if( i_begin, i_end, 
-                   compose1( std::bind2nd(std::less<types::t_real>(), types::tolerance),
-                   compose1( std::ptr_fun(ptr_norm), std::_Identity<atat::rVector3d>() ) ) );
- 
-    if ( i_which != i_end  ) 
-      std::iter_swap( i_which, k_vecs.begin() );
-      
-    // the refolding is not perfect, we now remove equivalent
-    // vectors "by hand "
-    remove_equivalents(k_vecs, k_lat);
-
+    // finally, sorts  k_vec according to size
     std::sort( k_vecs.begin(), k_vecs.end(), sort_kvec );
 
   }
