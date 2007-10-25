@@ -40,23 +40,32 @@ namespace Molecularity
   class Object : public Layered::Object<>, public Vff::Keeper, public Pescan::Keeper
   {
     protected:
-      typedef Layered :: Object<> t_Base;
+      typedef Layered :: Object<> t_LayeredBase;
+      typedef Vff::Keeper         t_VffBase;
+      typedef Pescan::Keeper      t_PescanBase;
 
     public:
-      typedef t_Base :: t_Type t_Type;
-      typedef t_Base :: t_Container t_Container;
+      typedef t_LayeredBase :: t_Type t_Type;
+      typedef t_LayeredBase :: t_Container t_Container;
 
     public:
       Object() {}
-      Object(const Object &_c) : t_Base(_c), Vff::Keeper(_c), Pescan::Keeper(_c) {};
+      Object(const Object &_c) : t_LayeredBase(_c), t_VffBase(_c), t_PescanBase(_c) {};
       ~Object() {};
       
       bool Load( const TiXmlElement &_node )
-        { return Vff::Keeper::Load(_node) and Pescan::Keeper::Load(_node); }
+        { return t_VffBase::Load(_node) and t_PescanBase::Load(_node); }
       bool Save( TiXmlElement &_node ) const
-        { return Vff::Keeper::Save(_node) and Pescan::Keeper::Save(_node); }
+        { return t_VffBase::Save(_node) and t_PescanBase::Save(_node); }
   };
 
+  //! \brief Explicitely defines stream dumping of Molecularity::Object 
+  //! \details Modulates the print out for all formats but XML. 
+  //! \warning don't touch the dumping to a string, unless you want to change
+  //!          read/write to XML. It's got nothing to do with anything here...
+  //!          Just repeating myself.
+  std::ostream& operator<<(std::ostream &_stream, const Object &_o);
+  
 
   typedef Individual::Types< Object, 
                              Layered::Concentration<2>, 
@@ -90,7 +99,8 @@ namespace Molecularity
                 : t_Base(_c), pescan(_c.pescan), vff(_c.vff) {}
       ~Evaluator() {}
 
-      bool Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const;
+      bool Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const
+       { return _indiv.Object().Save(_node) and t_Base::Save( _indiv, _node, _type ); }
       bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
       bool Load( const TiXmlElement &_node );
 

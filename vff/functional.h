@@ -309,10 +309,9 @@ namespace Vff
   class Atomic_Functional 
   {
 #ifdef _MPI
-    /** \ingroup MPI
-    * \brief Serializes Vff::Atom_Functional. 
-    */
+    /// \cond
     friend bool mpi::BroadCast::serialize<Vff::Atomic_Functional> ( Vff::Atomic_Functional& );
+    /// \endcond
 #endif
      const static types::t_real twos3;  //!<\f$2*\sqrt(3)\f$
      const static types::t_real one16;  //!<\f$\frac{1}{16}\f$
@@ -466,10 +465,9 @@ namespace Vff
   class Functional : public function :: Base<types::t_real, std::vector<types::t_real> >
   {
 #ifdef _MPI
-    /** \ingroup MPI
-     *  Serializes Vff::Functional
-     */
+    /// \cond
     friend bool mpi::BroadCast::serialize<Vff::Functional> ( Vff::Functional& );
+    /// \endcond
 #endif
     public:
       typedef types::t_real t_Type;            //!< see Functional::Base
@@ -638,4 +636,18 @@ namespace Vff
 
 } // namespace vff 
 
+namespace mpi {
+  /** \ingroup MPI
+  * \brief Serializes Vff::Atom_Functional. Not sure this works anymore.
+  */
+  template<>
+  bool BroadCast::serialize<Vff::Atomic_Functional> ( Vff::Atomic_Functional& );
+  
+  /** \ingroup MPI
+  * \brief Serializes Vff::Atom_Functional, meaning all member variables
+  * without exception.
+  */
+  template<>
+  bool BroadCast::serialize<Vff::Atomic_Functional> ( Vff::Atomic_Functional& );
+}
 #endif // _VFF_FUNCTIONAL_H_

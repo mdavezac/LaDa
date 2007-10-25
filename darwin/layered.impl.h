@@ -61,12 +61,14 @@ namespace Layered
     Ising_CE::Structure :: t_Atoms :: iterator i_atom = _str.atoms.begin();
     Ising_CE::Structure :: t_Atoms :: iterator i_atom_end = _str.atoms.end();
     types :: t_unsigned _D = _str.lattice->sites.size();
-    for(; i_var != i_end and i_atom != i_atom_end; i_atom += _D )
+    for(; i_var != i_end and i_atom != i_atom_end; )
     {
       if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) 
-        continue;
-      i_atom->type = BitString::spin_up(*i_var) ? 1.0 : -1.0;
-      ++i_var;
+        { i_atom += _D; continue; }
+      
+      for(types::t_unsigned i=0; i < _D; ++i, ++i_atom )
+        i_atom->type = BitString::spin_up(*i_var) ? 1.0 : -1.0;
+      ++i_var; 
     }
   }
   template<class T_CONTAINER>
@@ -110,14 +112,17 @@ namespace Layered
     i_hold = hold;
     if( not single_c )
     {
-      for (; i_atom != i_atom_end; i_atom += _D, ++i_hold)
-        if ( not ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
-        {
-          if ( std::abs( std::real(*i_hold) ) < types::tolerance )
-                i_atom->type = rng.flip() ? 1.0: -1.0;
-          else  i_atom->type = std::real(*i_hold) > 0.0 ? 1.0: -1.0;
-          (i_atom+1)->type = i_atom->type > 0.0 ? 1.0: -1.0;
-        }
+      for (; i_atom != i_atom_end; ++i_atom, ++i_hold)
+      {
+        if (i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )  continue;
+      
+        if ( std::abs( std::real(*i_hold) ) < types::tolerance )
+              i_atom->type = rng.flip() ? 1.0: -1.0;
+        else  i_atom->type = BitString::spin_up( std::real(*i_hold) ) ? 1.0: -1.0;
+
+        for(types::t_unsigned i = 1; i < _D; ++i, ++i_atom )
+          (i_atom + 1)->type = BitString::spin_up(i_atom->type) ? 1.0: -1.0;
+      }
       return;
     }
 
@@ -125,7 +130,7 @@ namespace Layered
     {
       if ( not ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
         i_atom->type = std::real(*i_hold);
-      ( i_atom->type > 0 ) ? ++concx : --concx;
+      BitString::spin_up(i_atom->type) ? ++concx : --concx;
     }
 
     // then normalize it while setting correct concentrations
@@ -182,9 +187,8 @@ namespace Layered
     for(unsigned i=0; i_atom != i_end; ++i_atom, ++i )
     {
       i_atom->type = ( i_atom->type > 0 ) ? 1.0: -1.0;
-      i_which = i_atom + 1;
-      for(types::t_unsigned i = 0; i < _D; ++i )
-        i_which->type = i_atom->type;
+      for(types::t_unsigned i = 1; i < _D; ++i, ++i_atom )
+        (i_atom+1)->type = BitString::spin_up(i_atom->type) ? 1.0: -1.0;
     }
   }
 
@@ -240,7 +244,7 @@ namespace Layered
     Ising_CE::Structure::t_Atoms :: const_iterator i_atom = _str.atoms.begin();
     Ising_CE::Structure::t_Atoms :: const_iterator i_atom_end = _str.atoms.end();
     for(; i_atom != i_atom_end; i_atom += _D )
-      x += i_atom->type;
+      x += BitString::spin_up(i_atom->type) ?  1.0: -1.0;
     x /= (types::t_real) N; 
   }
   template <types::t_unsigned _D> template<class T_CONT>
@@ -270,12 +274,14 @@ namespace Layered
     if( N % _D )
       throw std::runtime_error("Number of atoms in structure is not a multiple of _D\n");
 
+    N /= _D;
+
     Ising_CE::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
     Ising_CE::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
     Nfreeze = 0;
     for(; i_atom != i_atom_end; i_atom += _D )
       if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
-        Nfreeze += i_atom->type > 0 ? 1 : -1; 
+        Nfreeze += BitString::spin_up(i_atom->type) ? 1 : -1; 
   }
 
   template <types::t_unsigned _D>
@@ -300,6 +306,14 @@ namespace Layered
     x0 = 2.0 * (types::t_real) d - 1.0;
 errorout:
     std::cerr << "Error while reading concentration input\n";
+  }
+
+  template<class T_INDIVIDUAL>
+  inline void Evaluator<T_INDIVIDUAL> :: init( t_Individual &_indiv )
+  {
+    t_Base :: init( _indiv );
+    // sets structure to this object 
+    structure << *current_object;
   }
 
 
@@ -449,7 +463,9 @@ errorout:
       {
         Ising_CE::Structure::t_Atom atom2(atom);
         atom2.pos += ( i_site->pos - origin );
-        atom2.freeze = i_site->freeze;
+        // vewy impowtant. Otherwise GA::KRandom and GA::Random produce
+        // individuals which are to big.
+        atom2.freeze = i_site->freeze | Ising_CE::Structure::t_Atom::FREEZE_T;
         structure.atoms.push_back(atom2);
       }
     }

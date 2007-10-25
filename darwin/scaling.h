@@ -106,7 +106,7 @@ namespace Scaling
     };
 
     /** \brief Defines a Niching operation \f$\mathcal{F}(\sigma)
-               =   \left[\mathcal{F}(\sigma)-O]
+               =   \left[\mathcal{F}(\sigma)-O\right]
                  / \sum_{\{\sigma_j\}_{(n)}} \mathcal{D}(\sigma,
                                                          \sigma_j)\f$.
         \details Niching is an operation which attempts to reduce the fitness of

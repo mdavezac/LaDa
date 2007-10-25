@@ -109,6 +109,7 @@ namespace Layered
 
       bool is_single_c() const { return single_c; }
 
+
     protected:
       void normalize( Ising_CE::Structure &_str, 
                       types::t_real _tochange);
@@ -128,6 +129,9 @@ namespace Layered
       typedef typename t_IndivTraits::t_FourierKtoR t_FourierKtoR;
       typedef GA::Evaluator<t_Individual> t_Base;
       typedef Evaluator<t_Individual>     t_This;
+
+    protected:
+      using t_Base :: current_object;
 
     protected:
       Ising_CE :: Lattice lattice;
@@ -157,6 +161,8 @@ namespace Layered
       bool initialize( t_Individual &_indiv );
       void LoadAttribute ( const TiXmlAttribute &_att )
         { concentration.LoadAttribute( _att ); };
+
+      void init( t_Individual &_indiv );
 
     protected:
       bool Load_Structure( const TiXmlElement &_node );

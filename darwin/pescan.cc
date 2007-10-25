@@ -11,14 +11,11 @@ namespace Pescan
 {
   bool Keeper :: Load ( const TiXmlElement &_node )
   {
-    const TiXmlElement *xml = _node.FirstChildElement( "PescanResult" );
     double d;
 
-    if ( not xml ) goto errorout;
-    
-    if ( not xml->Attribute("cbm", &d ) ) goto errorout;
+    if ( not _node.Attribute("cbm", &d ) ) goto errorout;
     cbm = types::t_real(d);
-    if ( not xml->Attribute("vbm", &d ) ) goto errorout;
+    if ( not _node.Attribute("vbm", &d ) ) goto errorout;
     vbm = types::t_real(d);
 
     return true;
@@ -28,16 +25,8 @@ errorout:
   }
   bool Keeper :: Save( TiXmlElement &_node ) const
   {
-    TiXmlElement *xml = new TiXmlElement( "PescanResult" );
-    if ( not xml )
-    {
-      std::cerr << "Could not Save Pescan::Keeper";
-      return false;
-    }
-    xml->SetDoubleAttribute("vbm", vbm );
-    xml->SetDoubleAttribute("cbm", cbm );
-
-    _node.LinkEndChild( xml );
+    _node.SetDoubleAttribute("vbm", vbm );
+    _node.SetDoubleAttribute("cbm", cbm );
 
     return true;
   }

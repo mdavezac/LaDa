@@ -62,6 +62,14 @@ namespace Molecularity
                        + axial(1) * _dir(1)
                        + axial(2) * _dir(2) ) / norm ) * 0.5;
   }
+
+
+
+  inline std::ostream& operator<<(std::ostream &_stream, const Object &_o)
+  {
+    return _stream << (const Layered::Object<>&) _o << " " 
+                   << (const Pescan::Keeper&)  _o << " ";
+  }
 } // namespace Molecularity
 
 

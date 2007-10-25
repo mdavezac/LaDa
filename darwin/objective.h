@@ -279,7 +279,7 @@ namespace Objective
       virtual bool is_valid() const = 0;
       //! Returns a string describing the objective
       virtual std::string what_is() const = 0;
-      //! \brief Returns a string describing the imparmanent status of a
+      //! \brief Returns a string describing the impermanent status of a
       //! "Moving %Target" objective
       //! \details Simple objectives such as Minimization should return an 
       //! empty string. ConvexHull, which is bit more complex, returns
@@ -289,7 +289,7 @@ namespace Objective
       virtual bool Save( TiXmlElement &_node, t_SaveOp& _op) { return true; };
       //! Load imparmentant status from XML
       virtual bool Restart( const  TiXmlElement &_node, t_LoadOp &_op) { return true; };
-      //! Whether status is imparmanent
+      //! Whether status is impermanent
       virtual bool does_store() const { return false; }
   };
  

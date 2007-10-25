@@ -41,11 +41,6 @@ namespace Molecularity
 
     return t_Base::Load( _indiv, _node, _type );
   }
-  bool Evaluator :: Save( const t_Individual &_indiv, 
-                          TiXmlElement &_node, bool _type ) const
-  { 
-    return _indiv.Object().Save(_node) and t_Base::Save( _indiv, _node, _type );
-  }
   
   bool Evaluator :: Load( const TiXmlElement &_node )
   {

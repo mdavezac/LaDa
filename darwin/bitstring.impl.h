@@ -21,7 +21,13 @@ namespace BitString
   void operator<<(std::string &_str, const Object<T_CONT> &_o)
   {
     std::ostringstream sstr;
-    sstr << _o; _str = sstr.str();
+    typedef typename Object<T_CONT> ::t_Type t_Type;
+    typedef typename Object<T_CONT> ::t_Container :: const_iterator const_iterator;
+    const_iterator i_var = _o.bitstring.begin();
+    const_iterator i_end = _o.bitstring.end();
+    for(; i_var != i_end; ++i_var )
+      sstr << ( spin_up<t_Type>(*i_var) ? '1' : '0' );
+    _str = sstr.str();
   }
   template<class T_CONT>
   void operator<<(Object<T_CONT> &_o, const std::string &_c)
