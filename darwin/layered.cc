@@ -1,5 +1,5 @@
 //
-//  Version: $Id: layered.impl.h 333 2007-10-21 19:12:32Z davezac $
+//  Version: $Id$
 //
 
 #ifdef HAVE_CONFIG_H
