@@ -4,7 +4,7 @@ AM_LDFLAGS = @TINYXML_LIBS@
 lamarck_SOURCES = main.cc 
 lamarck_CPPFLAGS =  $(AM_CPPFLAGS) -I .. 
 lamarck_LDFLAGS =  $(AM_LDFLAGS)  -lstdc++ @MPICH_LIBS@
-lamarck_LDADD = liblamarck.la ../atat/libatat.la @MPI_ADDLIB@
+lamarck_LDADD = liblamarck.la ../atat/libatat.la ../physics/libphysics.la @MPI_ADDLIB@
 noinst_LTLIBRARIES = liblamarck.la
 liblamarck_la_SOURCES = cluster.cc  constituent_strain.cc  convex_hull.cc \
            functional_builder.cc  harmonic.cc  lattice.cc   polynome.cc \
@@ -16,6 +16,9 @@ nobase_liblamarck_la_HEADERS = atom.h cluster.h convex_hull.h functors.h  lattic
 liblamarck_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 
+
+../atat/libphysic.la: 
+	cd ../physics; $(MAKE) 
 
 ../mpi/libmpiobject.la:
 	cd ../mpi; $(MAKE)

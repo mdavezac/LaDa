@@ -37,10 +37,7 @@ namespace Molecularity
     if ( not object.Load( _node ) ) return false;
 
     // set quantity
-    current_individual->quantities().front()
-       = inplane_stress( current_object->stress, direction );
-    current_individual->quantities().back() =   current_object->cbm
-                                              - current_object->vbm;
+    object_to_quantities( _indiv );
 
     return t_Base::Load( _indiv, _node, _type );
   }

@@ -12,11 +12,11 @@
 
 #include "opt/types.h"
 
-namespace physics 
+namespace Physics 
 {
   types::t_real a0( const std::string &_str );
-
-  namespace atoms
+  
+  namespace Atomic
   {
     types::t_unsigned Z(const std::string &_str);
     std::string Symbol(types::t_unsigned _n );

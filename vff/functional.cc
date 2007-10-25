@@ -799,9 +799,9 @@ namespace Vff
     // whatever nanopes other may be
     for( types::t_unsigned i = 0; i < 3; ++i )
       stream << std::fixed << std::setprecision(7) 
-             << std::setw(12) << structure.cell(0,i) * structure0.scale / physics::a0("A")
-             << std::setw(12) << structure.cell(1,i) * structure0.scale / physics::a0("A")
-             << std::setw(12) << structure.cell(2,i) * structure0.scale / physics::a0("A")
+             << std::setw(12) << structure.cell(0,i) * structure0.scale / Physics::a0("A")
+             << std::setw(12) << structure.cell(1,i) * structure0.scale / Physics::a0("A")
+             << std::setw(12) << structure.cell(2,i) * structure0.scale / Physics::a0("A")
              << std::setw(18) << structure.cell(0,i) 
              << std::setw(12) << structure.cell(1,i) 
              << std::setw(12) << structure.cell(2,i) << std::endl;
@@ -815,7 +815,7 @@ namespace Vff
       // first gets pseudo index
       Ising_CE::StrAtom stratom;
       structure.lattice->convert_Atom_to_StrAtom( structure0.atoms[i_center->get_index()], stratom );
-      types::t_unsigned index = physics::atoms::Z( stratom.type );
+      types::t_unsigned index = Physics::Atomic::Z( stratom.type );
       types::t_real msstrain = functionals[i_center->kind()].MicroStrain( *i_center, structure0 );
 
       // finally goes over bonds and finds number of pseudos and their
@@ -828,7 +828,7 @@ namespace Vff
       for(; i_bond != i_bond_end; ++i_bond )
       { 
         structure.lattice->convert_Atom_to_StrAtom( structure0.atoms[i_bond->get_index()], stratom );
-        types::t_unsigned Z = physics::atoms::Z( stratom.type );
+        types::t_unsigned Z = Physics::Atomic::Z( stratom.type );
         t_pseudos::iterator i_pseudo = pseudos.begin();
         t_pseudos::iterator i_pseudo_end = pseudos.end();
         for(; i_pseudo != i_pseudo_end; ++i_pseudo )

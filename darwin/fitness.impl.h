@@ -60,7 +60,7 @@ namespace Fitness
 
 
   template<class T_QUANTITYTRAITS>
-  bool Base<T_QUANTITYTRAITS, false> :: operator<( const Base & _f) const
+  bool Base<T_QUANTITYTRAITS, false> :: operator<( const t_This & _f) const
   {
     if( quantity.size() != _f.quantity.size () )
       throw std::runtime_error("quantities of different size in Multi-Objective Fitness!?\n");
@@ -72,7 +72,7 @@ namespace Fitness
     return true;
   }
   template<class T_QUANTITYTRAITS>
-  bool Base<T_QUANTITYTRAITS, false> :: operator>( const Base & _f) const
+  bool Base<T_QUANTITYTRAITS, false> :: operator>( const t_This & _f) const
   {
     if( quantity.size() != _f.quantity.size () )
       throw std::runtime_error("quantities of different size in Multi-Objective Fitness!?\n");
@@ -84,7 +84,7 @@ namespace Fitness
     return true;
   }
   template<class T_QUANTITYTRAITS>
-  bool Base<T_QUANTITYTRAITS, false> :: operator==( const Base & _f) const
+  bool Base<T_QUANTITYTRAITS, false> :: operator==( const t_This & _f) const
   {
     if( quantity.size() != _f.quantity.size () )
       throw std::runtime_error("quantities of different size in Multi-Objective Fitness!?\n");

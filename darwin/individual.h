@@ -145,12 +145,22 @@ namespace Individual
       //! Returns the the age of the indiviudal
       types::t_unsigned  get_age() const { return age; }
 
-      //! Ordering operator, done according to t_Fitness::operator<( const t_Fitness& )
+      //! \brief Ordering operator, done according to Fitness::operator<( const Fitness& )
+      //! \details Watch that t_Fitness and Fitness may be different types.
+      //!          Indeed, as of revision 336, and in the case of
+      //!          multi-objective fitnesses, t_Fitness is a \e vectorial fitness,
+      //!          whereas Fitness is a \e scalar fitness. This means that as far
+      //!          as EO is concerned  only \e scalar fitnesses are compared.
       bool operator<(const t_This& _eo2) const
-        { return repFitness < _eo2.repFitness; }
-      //! Ordering operator, done according to t_Fitness::operator>( const t_Fitness& )
+        { return repFitness.Fitness::operator<( _eo2.repFitness); }
+      //! \brief. Ordering operator, done according to Fitness::operator>( const Fitness& )
+      //! \details Watch that t_Fitness and Fitness may be different types.
+      //!          Indeed, as of revision 336, and in the case of
+      //!          multi-objective fitnesses, t_Fitness is a \e vectorial fitness,
+      //!          whereas Fitness is a \e scalar fitness. This means that as far
+      //!          as EO is concerned  only \e scalar fitnesses are compared.
       bool operator>(const t_This& _eo2) const
-        { return repFitness > _eo2.repFitness; }
+        { return repFitness.Fitness::operator>( _eo2.repFitness); }
       //! \brief Equalitey operator
       //! \details
       //! - If Base::invalid is false, two individuals are equal if 
@@ -264,6 +274,8 @@ namespace Individual
       using t_Base :: repFitness; 
 
     public:
+      using t_Base :: set_fitness;
+
       //! \brief Sets the scalar fitness of Multi::repFitness
       //! \details For a scalar fitness, this function is exactly equivalent to
       //! Base::set_fitness( const t_Quantiy ) and hence cannot even be declared.

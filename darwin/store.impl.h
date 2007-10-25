@@ -131,7 +131,7 @@ namespace Store
   template<class T_CONDITION, class T_GATRAITS>
   inline std::string Conditional<T_CONDITION, T_GATRAITS> ::  what_is() const
   { 
-    std::ostringstream sstr; sstr << " Conditional on"  << condition.what_is(); 
+    std::ostringstream sstr; sstr << " Conditional on "  << condition.what_is(); 
     return sstr.str();
   }
 #ifdef _MPI

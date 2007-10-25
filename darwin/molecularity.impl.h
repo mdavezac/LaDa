@@ -21,6 +21,16 @@
 
 namespace Molecularity
 {
+  inline void Evaluator::object_to_quantities( t_Individual & _indiv )
+  {
+    typedef t_Individual::t_IndivTraits::t_Object t_Object;
+    const t_Object &object = (const t_Object&) _indiv;
+
+    _indiv.quantities().clear();
+
+    _indiv.quantities().push_back( inplane_stress( object.stress, direction ) );
+    _indiv.quantities().push_back( object.cbm - object.vbm );
+  }
   
   inline void Evaluator :: evaluate()
   {
@@ -32,10 +42,7 @@ namespace Molecularity
     pescan( *current_object );
   
     // set quantity
-    current_individual->quantities().front()
-       = inplane_stress( current_object->stress, direction );
-    current_individual->quantities().back() =   current_object->cbm
-                                              - current_object->vbm;
+    object_to_quantities( *current_individual );
   }
 
   inline eoF<bool>* Evaluator :: LoadContinue(const TiXmlElement &_el )
@@ -45,8 +52,8 @@ namespace Molecularity
                                                 "Pescan::Continue"         );     
   }
 
-  inline types::t_real inplane_stress( atat::rMatrix3d &_stress,
-                                       atat::rVector3d &_dir     )
+  inline types::t_real inplane_stress( const atat::rMatrix3d &_stress,
+                                       const atat::rVector3d &_dir     )
   {
     types::t_real norm = atat::norm2(_dir);
     types::t_real trace = _stress(0,0) + _stress(1,1) + _stress(2,2);

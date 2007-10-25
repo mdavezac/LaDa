@@ -229,15 +229,17 @@ namespace Fitness
       Base( const Base & _c ) : t_Base(_c), quantity( _c.quantity ), is_valid( _c.is_valid ) {}
       //! Constructor and Initializer
       Base( const t_Quantity &_fit ) : t_Base(), quantity( _fit ), is_valid( true ) {}
+      //! \brief Copy constructor which only sets the scalar fitness.
+      //! \details Nothing is done about member variables of this class. This
+      //!          is meant to be a copy operator for the scalar fitness only.
+      Base( const t_ScalarFitness &_fit ) : t_Base(_fit) {}
+      //! \brief Copy constructor which only sets the scalar fitness.
+      //! \details Nothing is done about member variables of this class. This
+      //!          is meant to be a copy operator for the scalar fitness only.
+      Base( const typename t_ScalarFitness :: t_Quantity &_fit ) : t_Base(_fit) {}
       //! Destructor
       ~Base() {}
 
-
-      //! \brief initializes t_Base with a scalar fitness.
-      void operator=( const t_ScalarFitness &_fit ) { (t_Base&) *this = _fit; }
-      //! \brief initializes t_Base with a scalar quantity
-      void operator=( const typename t_ScalarFitness::t_Quantity &_fit )
-        { (t_Base&) *this = _fit; }
 
       /** \brief Pareto ordering, \f$\mathcal{F}^v(\sigma_i) \preceq \mathcal{F}^v(\sigma_j)\f$
           \details Implements the relationship
@@ -251,7 +253,7 @@ namespace Fitness
                   fuzzy math for reals). Note however that it is Fuzzy ::
                   greater which is called, since minimization is the default.
       */
-      bool operator<(const Base & _f) const;
+      bool operator<(const t_This & _f) const;
       /** \brief Pareto ordering, \f$\mathcal{F}^v(\sigma_i) \succeq \mathcal{F}^v(\sigma_j)\f$
           \details Implements the relationship
              \f[
@@ -264,10 +266,10 @@ namespace Fitness
                   fuzzy math for reals). Note however that it is Fuzzy ::
                   greater which is called, since minimization is the default.
       */
-      bool operator>(const Base & _f) const;
+      bool operator>(const t_This & _f) const;
       //! \brief Pareto ordering, eg true if both fitnesses are equally
       //! dominant and dominated
-      bool operator==(const Base & _f) const;
+      bool operator==(const t_This & _f) const;
 
       //! \brief returns true if the (vectorial) fitness is not valid
       bool invalid() const { return not is_valid; }
@@ -284,7 +286,7 @@ namespace Fitness
       void clear() { quantity.clear(); }
       //! \brief adds a component to the vectorial quantity
       void push_back( typename t_Quantity :: value_type  _var )
-        { quantity.push_back( _var ); }
+        { quantity.push_back( _var ); is_valid = true; }
 #ifdef _MPI
       /** \ingroup MPI
        * \brief allows the serialization of a Fitness::Base object.

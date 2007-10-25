@@ -15,7 +15,7 @@ cedarwindir = darwin
 nobase_cedarwin_HEADERS = ce.h single_site.impl.h single_site.h
 cedarwin_CPPFLAGS =  -D _CE $(AM_CPPFLAGS) -I .. @GSL_INCLUDE@ 
 cedarwin_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIB@ @MPICH_LIBS@
-cedarwin_LDADD = libdarwin.la ../lamarck/liblamarck.la ../atat/libatat.la\
+cedarwin_LDADD = libdarwin.la ../lamarck/liblamarck.la ../physics/libphysics.la ../atat/libatat.la\
 		 ../print/libprint.la @MPI_ADDLIB@ libdarwin.la 
 pdarwin_SOURCES = main.cc pescan.cc two_sites.cc single_site.cc vff.cc bandgap.cc 
 pdarwin_HEADERS = pescan.h two_sites.h two_sites.impl.h single_site.h vff.h bandgap.h
@@ -47,6 +47,7 @@ libdarwin_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS)
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 
 ../lamarck/liblamarck.la: 
+	cd ../lamarck; $(MAKE)
 ../physics/libphysics.la:
 	cd ../physics; $(MAKE)
 ../mpi/libmpiobject.la:

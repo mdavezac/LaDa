@@ -25,10 +25,10 @@ namespace Scaling
     std::ostringstream sstr;
     sstr << "Scaling begin{ ";
     typename t_Container::const_iterator i_rankers = rankers.begin();
-    typename t_Container::const_iterator i_end = rankers.begin();
+    typename t_Container::const_iterator i_end = rankers.end();
     for(; i_rankers != i_end; ++i_rankers)
       sstr << (*i_rankers)->what_is() << " "; 
-    sstr << "} end"; 
+    sstr << " }end"; 
     return  sstr.str();
   }
 

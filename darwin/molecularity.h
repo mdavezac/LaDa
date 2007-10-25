@@ -35,7 +35,7 @@
 
 namespace Molecularity
 {
-  types::t_real inplane_stress( atat::rMatrix3d &_stress, atat::rVector3d &_dir );
+  types::t_real inplane_stress( const atat::rMatrix3d &_stress, const atat::rVector3d &_dir );
 
   class Object : public Layered::Object<>, public Vff::Keeper, public Pescan::Keeper
   {
@@ -96,6 +96,9 @@ namespace Molecularity
 
       void evaluate();
       eoF<bool>* LoadContinue(const TiXmlElement &_el );
+
+    protected:
+      void object_to_quantities( t_Individual & _indiv );
   };
 
 }

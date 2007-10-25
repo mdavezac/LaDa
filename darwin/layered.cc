@@ -39,18 +39,13 @@ void FillStructure( Ising_CE::Structure &_str )
   atat::rMatrix3d M = (!cell) * lattice.cell;
   // The next few operations should tell us the maximum range of the structure
   // cell int terms of the lattice cell.
-  types::t_real bull=0.0;
-  for( types::t_unsigned i = 0; i < 3; ++i )
-    for( types::t_unsigned j = 0; j < 3; ++j )
-      if( Traits::Fuzzy<types::t_real>::equal( M(i,j), 0 ) ) continue;
-      else if ( Traits::Fuzzy<types::t_real>::less( bull, 1.0 / std::abs(M(i,j)) ) )
-        bull = 1.0 / std::abs(M(i,j));
-  types::t_int amax = (types::t_int) std::ceil( bull );
-
+  atat::rVector3d r = (!lattice.cell) * ( cell * atat::rVector3d(1,1,1) );
+  atat::iVector3d range( (types::t_int) std::ceil( std::abs(r(0) ) ), 
+                         (types::t_int) std::ceil( std::abs(r(1) ) ), 
+                         (types::t_int) std::ceil( std::abs(r(2) ) ) );
+  
   // now that we have the range, we can fully explore the region
   // sets up the n-dimensional iterators
-  atat::iVector3d range;
-  Ising_CE::find_range( M, range );
   opt::Ndim_Iterator< types::t_int, std::less_equal<types::t_int> > global_iterator;
   global_iterator.add( -range[0], range[0]);
   global_iterator.add( -range[1], range[1]);

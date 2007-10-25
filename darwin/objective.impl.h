@@ -199,8 +199,8 @@ namespace Objective
   template<class T_GA_TRAITS >
   inline bool Container<T_GA_TRAITS> :: is_valid() const
   {
-    typename t_Objectives::const_iterator i_objective = objectives.begin();
-    typename t_Objectives::const_iterator i_end = objectives.begin();
+    typename t_Objectives :: const_iterator i_objective = objectives.begin();
+    typename t_Objectives :: const_iterator i_end = objectives.end();
     for(; i_objective != i_end; ++i_objective )
       if ( not (*i_objective)->is_valid() ) return false;
     return true;
@@ -208,8 +208,8 @@ namespace Objective
   template<class T_GA_TRAITS >
   inline bool Container<T_GA_TRAITS> :: Save( TiXmlElement &_node, t_SaveOp& _op)
   {
-    typename t_Objectives::const_iterator i_objective = objectives.begin();
-    typename t_Objectives::const_iterator i_end = objectives.begin();
+    typename t_Objectives :: const_iterator i_objective = objectives.begin();
+    typename t_Objectives :: const_iterator i_end = objectives.end();
     for(; i_objective != i_end; ++i_objective )
       if ( not (*i_objective)->Save( _node, _op ) ) return false;
     return true;
@@ -217,8 +217,8 @@ namespace Objective
   template<class T_GA_TRAITS >
   inline bool Container<T_GA_TRAITS> :: Restart( const  TiXmlElement &_node, t_LoadOp &_op) 
   {
-    typename t_Objectives::iterator i_objective = objectives.begin();
-    typename t_Objectives::iterator i_end = objectives.begin();
+    typename t_Objectives :: iterator i_objective = objectives.begin();
+    typename t_Objectives :: iterator i_end = objectives.end();
     for(; i_objective != i_end; ++i_objective )
       if ( not (*i_objective)->Restart( _node, _op ) ) return false;
     return true;
@@ -226,8 +226,8 @@ namespace Objective
   template<class T_GA_TRAITS >
   inline bool Container<T_GA_TRAITS> :: does_store() const
   {
-    typename t_Objectives::const_iterator i_objective = objectives.begin();
-    typename t_Objectives::const_iterator i_end = objectives.begin();
+    typename t_Objectives :: const_iterator i_objective = objectives.begin();
+    typename t_Objectives :: const_iterator i_end = objectives.end();
     for(; i_objective != i_end; ++i_objective )
       if ( (*i_objective)->does_store() ) return true;
     return false;
@@ -235,8 +235,8 @@ namespace Objective
   template<class T_GA_TRAITS >
   inline std::string Container<T_GA_TRAITS> :: print() const
   {
-    typename t_Objectives::const_iterator i_objective = objectives.begin();
-    typename t_Objectives::const_iterator i_end = objectives.begin();
+    typename t_Objectives :: const_iterator i_objective = objectives.begin();
+    typename t_Objectives :: const_iterator i_end = objectives.end();
     std::ostringstream sstr;
     for(; i_objective != i_end; ++i_objective )
       sstr << (*i_objective)->print();
@@ -271,11 +271,11 @@ namespace Objective
     std::ostringstream sstr;
     sstr << "LinearSum begin{ ";
     typename t_Objectives::const_iterator i_objective = objectives.begin();
-    typename t_Objectives::const_iterator i_end = objectives.begin();
+    typename t_Objectives::const_iterator i_end = objectives.end();
     typename std::vector< t_ScalarQuantity > :: const_iterator i_coef = coefs.begin();
     for(; i_objective != i_end; ++i_objective, ++i_coef )
       sstr << (*i_objective)->what_is() << "[" << *i_coef << "] ";
-    sstr << "} end"; 
+    sstr << " }end"; 
     return  sstr.str();
   }
   template< class T_GA_TRAITS >
@@ -290,7 +290,7 @@ namespace Objective
         typename t_Quantity :: const_iterator i_val_end = _q.end();
         typename std::vector< t_ScalarQuantity > :: const_iterator i_coef = coefs.begin();
         typename t_Objectives :: iterator i_objective = objectives.begin();
-        typename t_Objectives :: iterator i_end = objectives.begin();
+        typename t_Objectives :: iterator i_end = objectives.end();
         fitness.clear();
         for(; i_objective != i_end and i_val != i_val_end; ++i_objective, ++i_coef, ++i_val )
         {
@@ -317,7 +317,7 @@ namespace Objective
         typename t_QuantityGradients :: iterator i_grad_end = _grad.end();
         typename std::vector< t_ScalarQuantity > :: const_iterator i_coef = coefs.begin();
         typename t_Objectives :: iterator i_objective = objectives.begin();
-        typename t_Objectives :: iterator i_end = objectives.begin();
+        typename t_Objectives :: iterator i_end = objectives.end();
 
         t_VA_Type *i2 = _i_grad + _q.size();
         t_VA_Type *i1 = _i_grad;
@@ -480,6 +480,8 @@ namespace Objective
               std::cerr << "Mememory Pb when creating LinearSum multi-objective" << std::endl;
               return NULL;
             }
+            Print::xmg << Print::Xmg::comment << "Objective: begin LinearSum" << Print::endl;
+            Print::xmg << Print::Xmg::indent;
             const TiXmlElement *child = _node.FirstChildElement("Objective");
             for(; child; child = child->NextSiblingElement("Objective") )
             {
@@ -488,7 +490,11 @@ namespace Objective
               double d = 0.0;
               if ( not child->Attribute("coef", &d) ) d = 1.0;
               linear->add( scalar, t_ScalarQuantity(d) );
+              std::ostringstream sstr; sstr << ", coef=" << d;
+              Print::xmg.add_to_last(sstr.str());
             }
+            Print::xmg << Print::Xmg::unindent;
+            Print::xmg << Print::Xmg::comment << "Objective: end LinearSum" << Print::endl;
             return linear;
           }
 

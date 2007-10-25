@@ -9,7 +9,7 @@
 #include "opt/types.h"
 #include "physics.h"
 
-namespace physics 
+namespace Physics 
 {
   types::t_real a0( const std::string &_str )
   {
@@ -23,8 +23,8 @@ namespace physics
       return 0.529177249e-6;
     return 1.0;
   }
-
-  namespace atoms
+  
+  namespace Atomic
   {
     types::t_unsigned Z(const std::string &_str)
     {
@@ -117,7 +117,7 @@ namespace physics
     {
       return Charge( Z( _str ) );
     }
-  } // namespace atoms
+  } // namespace Atomic
 }
 
 

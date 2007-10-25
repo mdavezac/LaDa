@@ -17,7 +17,10 @@
 #include <opt/traits.h>
 
 #include <atat/misc.h>
+#include <physics/physics.h>
+
 #include "structure.h"
+
 
 
 
@@ -449,10 +452,12 @@ namespace Ising_CE {
 
     // A is the basis used to determine "a" first brillouin zone
     atat::rMatrix3d A = (!k_lat) * k_cell;
-    atat::iVector3d range, min;
     
     // computes range up to first periodic image
-    find_range( A, range );
+    atat::rVector3d r = (!k_cell) * ( k_lat * atat::rVector3d(1,1,1) );
+    atat::iVector3d range( (types::t_int) std::ceil( std::abs(r(0) ) ), 
+                           (types::t_int) std::ceil( std::abs(r(1) ) ), 
+                           (types::t_int) std::ceil( std::abs(r(2) ) ) );
     
     // sets up the n-dimensional iterators
     opt::Ndim_Iterator< types::t_int, std::less_equal<types::t_int> > global_iterator;
@@ -577,6 +582,22 @@ namespace Ising_CE {
     return false;
   }
 
+  std::ostream& Structure :: print_xcrysden( std::ostream &_stream ) const
+  {
+    if( not lattice ) return _stream;
+    _stream << "CRYSTAL\nPRIMVEC\n" << ( (~cell) * scale ) << "PRIMCOORD\n" 
+              << atoms.size() << " 1 \n";  
+    t_Atoms :: const_iterator i_atom = atoms.begin();
+    t_Atoms :: const_iterator i_atom_end = atoms.end();
+    bool which = true;
+    for(; i_atom != i_atom_end; ++i_atom, which = not which )
+    {
+      StrAtom stratom; lattice->convert_Atom_to_StrAtom( *i_atom, stratom );
+      _stream << " " << Physics::Atomic::Z(stratom.type) 
+              << " " << ( stratom.pos * scale ) << "\n";
+    }
+    return _stream;
+  } 
 
 
 } // namespace Ising_CE

@@ -24,7 +24,6 @@ namespace Print
   std::string make_commented_string( const std::string& );
   class Xmg
   {
-    template< class T_TYPE > friend Xmg& operator<< ( Xmg &, const T_TYPE & );
     friend std::string make_commented_string( const std::string &_str );
     protected:
       enum t_operation { COMMENT, CLEAR, INDENT, UNINDENT, ADDTOLAST, REMOVELAST,
@@ -79,6 +78,7 @@ namespace Print
       }
       void init(const std::string &_f);
       std::string get_filename() const { return filename; }
+      template<class T_TYPE> Xmg& Xmg::operator<< (const T_TYPE &_whatever);
 
     protected:
       void flushall();
@@ -130,11 +130,10 @@ namespace Print
     { _op(stream); }
    
 
-  template<class T_TYPE> Xmg& operator<< ( Xmg& _this, const T_TYPE &_whatever)
+  template<class T_TYPE> inline Xmg& Xmg::operator<< (const T_TYPE &_whatever)
   {
-    if ( not _this.do_print )  return _this;
-    _this.to_current_stream( _whatever );
-    return _this;
+    if ( do_print ) to_current_stream( _whatever );
+    return *this;
   }
 
 }

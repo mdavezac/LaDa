@@ -436,7 +436,7 @@ errorout:
     for(; i_vec != i_vec_end; ++i_vec )
     {
       Ising_CE::Structure::t_Atom atom;
-      atom.site = 0; atom.pos = i_vec->pos;
+      atom.site = -1; atom.pos = i_vec->pos;
       atom.type = Ising_CE::Structure::t_Atom::t_Type(0);
       atom.freeze = lattice.sites.front().freeze;
       structure.atoms.push_back(atom);
@@ -458,15 +458,6 @@ errorout:
     structure.find_k_vectors();
 
     concentration.setfrozen( structure );
-    std::cout << "CRYSTAL\nPRIMVEC\n" << (~structure.cell) * structure.scale << "PRIMCOORD\n" 
-              << structure.atoms.size() << " 1 \n";  
-    Ising_CE::Structure::t_Atoms::const_iterator i_atom = structure.atoms.begin();
-    Ising_CE::Structure::t_Atoms::const_iterator i_atom_end = structure.atoms.end();
-    bool which = true;
-    for(; i_atom != i_atom_end; ++i_atom, which = not which )
-      std::cout << " " << (which ? "16": "32") << " " << i_atom->pos * structure.scale << "\n";
-
-    throw std::runtime_error("");
 
     return true;
 

@@ -26,8 +26,6 @@
 #include <atat/machdep.h>
 #include "atom.h"
 #include "lattice.h"
-#include "lattice.h"
-#include "lattice.h"
 
 //! \brief Everything CE which does not encompass VA.
 //! \details  Old nomenclature.
@@ -107,6 +105,7 @@ namespace Ising_CE {
     bool set_site_indices();
 
     void find_k_vectors();
+    std::ostream& print_xcrysden( std::ostream &_stream ) const;
   };
 
   void  find_range( const atat::rMatrix3d &A, atat::iVector3d &kvec );

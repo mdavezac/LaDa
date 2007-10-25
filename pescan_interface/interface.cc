@@ -318,7 +318,7 @@ namespace Pescan
       {
         Ising_CE::StrAtom atom; 
         _str.lattice->convert_Atom_to_StrAtom( *i_atom, atom );
-        n += physics::atoms::Charge( atom.type );
+        n += Physics::Atomic::Charge( atom.type );
       }
       if (    escan.potential != Escan::SPINORBIT
            or atat::norm2(escan.kpoint) < types::tolerance )
@@ -406,7 +406,7 @@ namespace Pescan
       {
         Ising_CE::StrAtom atom; 
         _str.lattice->convert_Atom_to_StrAtom( *i_atom, atom );
-        n += physics::atoms::Charge( atom.type );
+        n += Physics::Atomic::Charge( atom.type );
       }
       if (    escan.potential != Escan::SPINORBIT
            or atat::norm2(escan.kpoint) < types::tolerance )
