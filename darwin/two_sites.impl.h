@@ -78,8 +78,8 @@ namespace TwoSites
 
   template<class T_INDIVIDUAL>
   bool Evaluator<T_INDIVIDUAL> :: Load( t_Individual &_indiv,
-                                                        const TiXmlElement &_node,
-                                                        bool _type )
+                                        const TiXmlElement &_node,
+                                        bool _type )
   {
     if ( _type == GA::LOADSAVE_SHORT )
     {
@@ -98,8 +98,8 @@ namespace TwoSites
 
   template<class T_INDIVIDUAL>
   bool Evaluator<T_INDIVIDUAL> :: Save( const t_Individual &_indiv, 
-                                                        TiXmlElement &_node, 
-                                                        bool _type ) const
+                                        TiXmlElement &_node, 
+                                        bool _type ) const
   {
     if ( _type == GA::LOADSAVE_SHORT )
     {
@@ -118,7 +118,7 @@ namespace TwoSites
   }
 
   template<class T_INDIVIDUAL>
-  bool Evaluator<T_INDIVIDUAL> :: Load( const TiXmlElement &_node )
+  inline bool Evaluator<T_INDIVIDUAL> :: Load( const TiXmlElement &_node )
   {
     if ( not lattice.Load( _node ) )
     {

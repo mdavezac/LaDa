@@ -67,40 +67,49 @@ namespace BandGap
                              TwoSites::Concentration, 
                              TwoSites::Fourier        > :: Scalar t_Individual;
 
-  class Evaluator : public TwoSites::Evaluator< t_Individual >
+  class Evaluator : public TwoSites::Evaluator< BandGap::t_Individual >
   {
     public:
       typedef BandGap::t_Individual t_Individual;
       typedef Traits::GA< Evaluator > t_GATraits;
     protected:
+      typedef Evaluator t_This;
       typedef TwoSites::Evaluator< t_Individual > t_Base;
       typedef Ising_CE::Structure::t_kAtoms t_kvecs;
       typedef Ising_CE::Structure::t_Atoms t_rvecs;
 
     public:
       using t_Base :: Load;
+      using t_Base :: Save;
     protected:
       using t_Base :: current_individual;
       using t_Base :: current_object;
 
-      
     protected:
-      Vff::Darwin vff;
       Pescan::Darwin pescan;
+      Vff::Darwin vff;
 
     public:
-      Evaluator() : t_Base(), vff(structure), pescan(structure)  {}
+      Evaluator() : t_Base(), pescan(structure), vff(structure) {}
+      Evaluator   ( const Evaluator &_c )
+                : t_Base(_c), pescan(_c.pescan), vff(_c.vff) {}
       ~Evaluator() {};
 
-      bool Load( const TiXmlElement &_node );
-      bool Load ( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
       bool Save ( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const;
+      bool Load ( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
+      bool Load( const TiXmlElement &_node );
       void LoadAttribute ( const TiXmlAttribute &_att ) {};
       eoF<bool>* LoadContinue(const TiXmlElement &_el )
         { return new GA::mem_zerop_t<Pescan::Darwin>( pescan, &Pescan::Darwin::Continue,
                                                       "Pescan::Continue" );     }
 
       void evaluate();
+
+      //! \brief Pescan is costly and I'm not sure why we would want to do a
+      //!        convex-hull, so presubmit does nothing in this implementation.
+      //! Presubmitted individuals are not put into the population.
+      //! \see GA::Evaluator::presubmit(), TwoSites::Evaluator::presubmit()
+      void presubmit( std::list<t_Individual> &_pop ) { _pop.clear(); }
   };
 
 

@@ -107,7 +107,7 @@ namespace TwoSites
 
     public:
       using t_Base :: Load;
-      using t_Base :: Save;
+
     protected:
       using t_Base :: current_individual;
       using t_Base :: current_object;
@@ -119,7 +119,6 @@ namespace TwoSites
     protected:
       Ising_CE::Lattice lattice;
       Ising_CE::Structure structure;
-      types::t_real lessthan, morethan;
       t_Concentration concentration;
 
     public:

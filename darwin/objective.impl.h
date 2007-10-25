@@ -144,7 +144,7 @@ namespace Objective
       if ( convexhull.add( _q, *current_indiv ) )
         valid = false;
 
-      fitness = 0.0;
+      fitness = t_ScalarQuantity(0);
       return fitness;
     }
   template< class T_GA_TRAITS >
@@ -168,7 +168,7 @@ namespace Objective
       if ( convexhull.add( _q, *current_indiv ) )
         valid = false;
 
-      return 0.0;
+      return t_ScalarQuantity(0);
     }
   template< class T_GA_TRAITS >
   typename ConvexHull<T_GA_TRAITS> :: t_VA_Type

@@ -65,7 +65,7 @@ namespace SingleSite
   }
 
   template<class T_INDIVIDUAL>
-  bool Evaluator<T_INDIVIDUAL> :: Load( const TiXmlElement &_node )
+  inline bool Evaluator<T_INDIVIDUAL> :: Load( const TiXmlElement &_node )
   {
     if ( not lattice.Load( _node ) )
     {

@@ -105,6 +105,7 @@ namespace SingleSite
 
     public:
       using t_Base :: Load;
+
     protected:
       using t_Base :: current_individual;
       using t_Base :: current_object;

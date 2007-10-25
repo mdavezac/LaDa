@@ -102,7 +102,7 @@ namespace Fitness
       //! Copy Constructor
       Base( const Base & _c ) : quantity( _c.quantity ), is_valid( _c.is_valid ) {}
       //! Constructor and Initializer
-      Base( const types::t_real _fit ) : quantity( _fit ), is_valid( true ) {}
+      Base( const t_Quantity _fit ) : quantity( _fit ), is_valid( true ) {}
       //! Destructor
       ~Base() {}
 

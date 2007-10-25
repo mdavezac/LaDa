@@ -78,7 +78,7 @@ namespace Print
       }
       void init(const std::string &_f);
       std::string get_filename() const { return filename; }
-      template<class T_TYPE> Xmg& Xmg::operator<< (const T_TYPE &_whatever);
+      template<class T_TYPE> Xmg& operator<< (const T_TYPE &_whatever);
 
     protected:
       void flushall();

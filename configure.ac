@@ -92,6 +92,8 @@ if test x$debug = xtrue; then
   AX_CHECK_COMPILER_FLAGS([-fbounds-check], 
                           [CPP_DEBUG_FLAS+=" -fbounds-check"],)
 else
+  CXXFLAGS=`echo $CXXFLAGS | sed "s/-g//"`
+  CFLAGS=`echo $CFLAGS | sed "s/-g//"`
   CPP_DEBUG_FLAGS=
 fi
 AC_SUBST(CPP_DEBUG_FLAGS)

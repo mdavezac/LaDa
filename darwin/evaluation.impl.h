@@ -110,7 +110,14 @@ namespace Evaluation
 
 
 
-
+#ifdef _MPI
+  template< class T_GATRAITS >
+    inline void WithHistory<T_GATRAITS> :: evaluate( t_Population &_pop )
+    {
+      t_Base::evaluate( _pop );
+      if ( history ) history->synchronize();
+    }
+#endif
   template< class T_GATRAITS >
     typename WithHistory<T_GATRAITS> :: t_FitnessQuantity
     WithHistory<T_GATRAITS> :: evaluate( t_Individual &_indiv )

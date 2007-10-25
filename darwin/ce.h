@@ -52,12 +52,14 @@ namespace CE
       typedef CE::t_Individual t_Individual;
       typedef Traits::GA< Evaluator > t_GATraits;
     protected:
-      typedef t_Individual::t_IndivTraits t_IndivTraits;
+      typedef Evaluator t_This;
       typedef SingleSite::Evaluator< t_Individual > t_Base;
       typedef VA_CE::Functional_Builder::t_VA_Functional t_Functional;
       
     public:
-      using t_Base :: Load;
+      using t_Base::Load;
+      using t_Base::Save;
+
     protected:
       using t_Base :: current_individual;
       using t_Base :: current_object;
@@ -75,9 +77,12 @@ namespace CE
           delete functional.get_functional2();
       };
 
+      bool Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const;
+      bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
+      bool Load( const TiXmlElement &_node );
+
       void init( t_Individual &_indiv )
         { t_Base :: init( _indiv ); functional.set_variables( &_indiv.Object().bitstring ); }
-      bool Load( const TiXmlElement &_node );
 
       void evaluate()
         { current_individual->quantities() = functional.evaluate(); }
@@ -106,8 +111,6 @@ namespace CE
       {
         _grad[_pos] = functional.evaluate_one_gradient( _pos );
       }
-      bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
-      bool Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const;
   };
 
 } // namespace CE

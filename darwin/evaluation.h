@@ -250,11 +250,7 @@ template< class T_GATRAITS >
       //! \brief adds history synchronization over all processors to
       //! Base::evaluation(t_Population&)
       //! \details Only defined with _MPI.
-      virtual void evaluate( t_Population &_pop )
-      {
-        t_Base::evaluate( _pop );
-        if ( history ) history->synchronize();
-      }
+      virtual void evaluate( t_Population &_pop );
 #endif
   };
 
