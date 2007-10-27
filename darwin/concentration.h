@@ -19,7 +19,7 @@
 
 /** \ingroup Genetic
  * @{ */
-//! \brief  Creates a function \f$x(y)\f$ for load matching in ternaries and !
+//! \brief  Creates a function \f$x(y)\f$ for load matching in ternaries and
 //! quaternaries (see <A HREF="http://dx.doi.org/10.1063/1.2010621"> Rita
 //! Magri, Alex Zunger, H Kroemer, J. App. Phys. <STRONG>98</STRONG>, 43701 (2005)</A>)
 //! \details For a quaternary

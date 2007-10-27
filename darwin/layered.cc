@@ -50,6 +50,8 @@ void FillStructure( Ising_CE::Structure &_str )
   global_iterator.add( -range[0], range[0]);
   global_iterator.add( -range[1], range[1]);
   global_iterator.add( -range[2], range[2]);
+//   std::cout << (!lattice.cell) * cell << std::endl
+//             << "range: " << r << "  " << range << std::endl;
 
   
   _str.atoms.clear();

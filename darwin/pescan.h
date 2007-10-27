@@ -135,8 +135,12 @@ namespace Pescan
       void operator()( Keeper &_keeper );
       //! \brief Correlates pescan to  %Vff results.
       //! \details More accurately, \a _vff is asked to print atomic
-      //! configurations to Darwin::atomicconfig. That's all folks.
-      void operator<<( const Vff::Darwin &_vff );
+      //!          configurations to Darwin::atomicconfig. That's all folks.
+      //!          The templating makes this routine functional for both
+      //!          Vff::Functional and its derived class Vff::Layered. In
+      //!          practice, the compiler should find the type out for itself.
+      template<class T_BASE>
+      void operator<<( const Vff::Darwin<T_BASE> &_vff );
 
     protected:
       //! \brief Sets the next computation to be all-electron
@@ -164,6 +168,21 @@ namespace Pescan
     // copies band edges into object
     get_bands( _keeper.vbm, _keeper.cbm );
   }
+  template <class T_BASE> 
+  inline void Darwin::operator<<( const Vff::Darwin<T_BASE> &_vff )
+  {
+    // creates an mpi aware file name for atomic configurations
+    std::ostringstream  sstr;
+    sstr << "atom_config";
+#ifdef _MPI
+    sstr << "." << mpi::main.rank();
+#endif
+    // prints atomic configurations
+    _vff.print_escan_input(sstr.str());
+    // tells pescan where to find atomic configurations
+    atomicconfig = sstr.str();
+  }
+
 
 } // namespace Pescan
 

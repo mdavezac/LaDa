@@ -22,6 +22,7 @@
 #include "individual.h"
 #include "bitstring.h"
 #include "gaoperators.h"
+#include "vff.h"
 
 #ifdef _MPI
 #include "mpi/mpi_object.h"

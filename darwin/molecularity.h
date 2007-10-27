@@ -15,7 +15,7 @@
 
 #include <tinyxml/tinyxml.h>
 
-#include <vff/functional.h>
+#include <vff/layered.h>
 #include <pescan_interface/interface.h>
 #include <lamarck/structure.h>
 #include <opt/opt_function_base.h>
@@ -91,7 +91,7 @@ namespace Molecularity
 
     protected:
       Pescan::Darwin pescan;
-      Vff::Darwin vff;
+      Vff::Darwin<Vff::Layered> vff;
 
     public:
       Evaluator() : t_Base(), pescan(structure), vff(structure) {}

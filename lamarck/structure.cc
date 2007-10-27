@@ -440,67 +440,72 @@ namespace Ising_CE {
 
   }
 
-  void Structure :: find_k_vectors()
-  {
-    if ( not lattice ) return;
+   void Structure :: find_k_vectors()
+   {
+     if ( not lattice ) return;
+   
+     atat::rVector3d kvec;
+     atat::rMatrix3d k_lat = !( ~(lattice->cell) );
+     atat::rMatrix3d k_cell = !( ~(cell) );
+     k_vecs.clear();
   
-    atat::rVector3d kvec;
-    atat::rMatrix3d k_lat = !( ~(lattice->cell) );
-    atat::rMatrix3d k_cell = !( ~(cell) );
-    k_vecs.clear();
-
-
-    // A is the basis used to determine "a" first brillouin zone
-    atat::rMatrix3d A = (!k_lat) * k_cell;
-    
-    // computes range up to first periodic image
-    atat::rVector3d r = (!k_cell) * ( k_lat * atat::rVector3d(1,1,1) );
-    atat::iVector3d range( (types::t_int) std::ceil( std::abs(r(0) ) ), 
-                           (types::t_int) std::ceil( std::abs(r(1) ) ), 
-                           (types::t_int) std::ceil( std::abs(r(2) ) ) );
-    
-    // sets up the n-dimensional iterators
-    opt::Ndim_Iterator< types::t_int, std::less_equal<types::t_int> > global_iterator;
-    global_iterator.add( 0, range[0]);
-    global_iterator.add( 0, range[1]);
-    global_iterator.add( 0, range[2]);
-    
-    // the following loop creates all possible k-vectors,
-    // it then refolds them and adds them to the k vector list
-    // only one copy of each refolded vector is allowed
-    k_vecs.clear();
-    do
-    {
-      // creates vector in A basis
-      kvec[0] =  (types::t_real) global_iterator.access(0);
-      kvec[1] =  (types::t_real) global_iterator.access(1);
-      kvec[2] =  (types::t_real) global_iterator.access(2);
-      kvec = A * kvec;
-    
-    // if any of the coordinates is >= 1, then this is a periodic image
-    if (    Traits::Fuzzy<types::t_real>::geq( kvec(0), 1.0 ) 
-         or Traits::Fuzzy<types::t_real>::geq( kvec(1), 1.0 ) 
-         or Traits::Fuzzy<types::t_real>::geq( kvec(2), 1.0 ) ) continue;
-    // if any of the coordinates is < 0, then this is a periodic image
-    if (    Traits::Fuzzy<types::t_real>::less( kvec(0), 0.0 ) 
-         or Traits::Fuzzy<types::t_real>::less( kvec(1), 0.0 ) 
-         or Traits::Fuzzy<types::t_real>::less( kvec(2), 0.0 ) ) continue;
+  
+     // A is the basis used to determine "a" first brillouin zone
+     atat::rMatrix3d A = (!k_lat) * k_cell;
      
-      // Goes back to lattice basis
-      kvec[0] =  (types::t_real) global_iterator.access(0);
-      kvec[1] =  (types::t_real) global_iterator.access(1);
-      kvec[2] =  (types::t_real) global_iterator.access(2);
-      // And then to cartesian
-      kvec = k_cell * kvec;
-      k_vecs.push_back( t_kAtom(kvec,0) );
-    
-    } while( ++global_iterator );
+     // computes range up to first periodic image
+     atat::rVector3d r = ~( (!k_cell) * ( k_lat ) ) * atat::rVector3d(1,1,1);
+     atat::iVector3d range( (types::t_int) std::ceil( std::abs(r(0) ) ), 
+                            (types::t_int) std::ceil( std::abs(r(1) ) ), 
+                            (types::t_int) std::ceil( std::abs(r(2) ) ) );
+     
+     // sets up the n-dimensional iterators
+     opt::Ndim_Iterator< types::t_int, std::less_equal<types::t_int> > global_iterator;
+     global_iterator.add( -range[0], range[0]);
+     global_iterator.add( -range[1], range[1]);
+     global_iterator.add( -range[2], range[2]);
+     
+     // the following loop creates all possible k-vectors,
+     // it then refolds them and adds them to the k vector list
+     // only one copy of each refolded vector is allowed
+     k_vecs.clear();
+     do
+     {
+       // creates vector in A basis
+       kvec[0] =  (types::t_real) global_iterator.access(0);
+       kvec[1] =  (types::t_real) global_iterator.access(1);
+       kvec[2] =  (types::t_real) global_iterator.access(2);
+       kvec = A * kvec;
+     
+       // if any of the coordinates is >= 1, then this is a periodic image
+       if (    Traits::Fuzzy<types::t_real>::geq( kvec(0), 1.0 ) 
+            or Traits::Fuzzy<types::t_real>::geq( kvec(1), 1.0 ) 
+            or Traits::Fuzzy<types::t_real>::geq( kvec(2), 1.0 ) ) continue;
+       // if any of the coordinates is < 0, then this is a periodic image
+       if (    Traits::Fuzzy<types::t_real>::less( kvec(0), 0.0 ) 
+            or Traits::Fuzzy<types::t_real>::less( kvec(1), 0.0 ) 
+            or Traits::Fuzzy<types::t_real>::less( kvec(2), 0.0 ) ) continue;
+      
+       // Goes back to lattice basis
+       kvec[0] =  (types::t_real) global_iterator.access(0);
+       kvec[1] =  (types::t_real) global_iterator.access(1);
+       kvec[2] =  (types::t_real) global_iterator.access(2);
+       // And then to cartesian
+       kvec = k_cell * kvec;
 
+       // Refold centers all vectors around origin, eg vector within fist
+       // brillouin zone
+       refold(kvec, k_lat);
 
-    // finally, sorts  k_vec according to size
-    std::sort( k_vecs.begin(), k_vecs.end(), sort_kvec );
+       k_vecs.push_back( t_kAtom(kvec,0) );
+     
+     } while( ++global_iterator );
+  
+  
+     // finally, sorts  k_vec according to size
+     std::sort( k_vecs.begin(), k_vecs.end(), sort_kvec );
+   }
 
-  }
 
   void  find_range( const atat::rMatrix3d &A, atat::iVector3d &kvec )
   {

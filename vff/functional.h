@@ -626,7 +626,8 @@ namespace Vff
     std::vector<Atomic_Center> :: iterator i_end = centers.end();
     stress.zero();
     for (; i_center != i_end; ++i_center)
-      energy += functionals[i_center->kind()].evaluate_with_gradient( *i_center, strain, stress, K0 );
+      energy += functionals[i_center->kind()].
+                     evaluate_with_gradient( *i_center, strain, stress, K0 );
 
     // now repacks into function::Base format
     pack_gradients(stress, _i_grad);
@@ -634,6 +635,10 @@ namespace Vff
     return energy;
   }
 
+  inline Atomic_Center::const_iterator Atomic_Center :: begin() const
+    { return const_iterator( this ); }
+  inline Atomic_Center::const_iterator Atomic_Center :: end() const
+    { return const_iterator( this, false ); }
 } // namespace vff 
 
 namespace mpi {

@@ -4,11 +4,12 @@ AM_LDFLAGS = @TINYXML_LIBS@
 vff_SOURCES = main.cc 
 vff_CPPFLAGS =  $(AM_CPPFLAGS) -I .. @GSL_INCLUDE@ 
 vff_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIB@ @MPICH_LIBS@
-vff_LDADD = ../lamarck/liblamarck.la ../atat/libatat.la libvff.la ../physics/libphysics.la @MPI_ADDLIB@
+vff_LDADD = ../lamarck/liblamarck.la ../atat/libatat.la libvff.la\
+	    ../physics/libphysics.la @MPI_ADDLIB@
 noinst_LTLIBRARIES = libvff.la
-libvff_la_SOURCES = functional.cc
+libvff_la_SOURCES = functional.cc layered.cc
 libvff_ladir = vff
-nobase_libvff_la_HEADERS = functional.h
+nobase_libvff_la_HEADERS = functional.h layered.h
 libvff_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 

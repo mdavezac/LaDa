@@ -176,20 +176,6 @@ failure:
     return;
   }
 
-  void Darwin::operator<<( const Vff::Darwin &_vff )
-  {
-    // creates an mpi aware file name for atomic configurations
-    std::ostringstream  sstr;
-    sstr << "atom_config";
-#ifdef _MPI
-    sstr << "." << mpi::main.rank();
-#endif
-    // prints atomic configurations
-    _vff.print_escan_input(sstr.str());
-    // tells pescan where to find atomic configurations
-    atomicconfig = sstr.str();
-  }
-
 
 } // namespace pescan
 

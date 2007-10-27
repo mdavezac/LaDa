@@ -38,6 +38,13 @@ namespace Molecularity
     vff();
     // Load relaxed structure into pescan
     pescan << vff; 
+
+#ifdef _NOLAUNCH
+    typedef t_Individual :: t_IndivTraits :: t_FourierRtoK t_Fourier;
+    Layered::Fourier<2>( structure.atoms.begin(), structure.atoms.end(),
+                         structure.k_vecs.begin(), structure.k_vecs.end() );
+#endif
+
     // get band gap
     pescan( *current_object );
   

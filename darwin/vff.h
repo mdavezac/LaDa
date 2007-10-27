@@ -25,52 +25,130 @@
 
 namespace Vff
 {
-
+  /** \ingroup Genetic 
+   * @{ */
+  //! \brief Stub class for a %GA "Object" working with Vff.
+  //! \details You can derive your object from this stub. It will then inherit
+  //!          usefull Keeper::Load() and Keeper::Save() member routines for
+  //!          reading from/writing to XML, and work well with the evaluator
+  //!          stub Vff::Darwin.
+  //! \xmlrestart This stub save its info, Keeper::energy and Keeper::stress, in
+  //! the following format:
+  //! \code
+  // <VffResult energy="0.0" xx="-0.1" xy="0.0" xz="-0.1" yx="0.0" yy="-0.1" yz="0.0" zx="-0.1" zy="0.0" zz="0.0" />
+  //! \endcode
+  //! Yes, its ugly... but all the info is there, so stop complaining. 
   struct Keeper 
   {
-    types::t_real energy;
-    atat::rMatrix3d stress;
+    types::t_real energy; //!< The strain energy computed by %Vff.
+    atat::rMatrix3d stress; //!< The stress computed by %Vff.
 
+    //! Constructor
     Keeper() : energy(0), stress() {}
+    //! Copy Constructor
     Keeper(const Keeper &_c) : energy(_c.energy), stress(_c.stress) {};
+    //! Destructor
     ~Keeper() {};
 
+    //! Loads Keeper::energy and Keeper::stress from XML.
     bool Load( const TiXmlElement &_node );
+    //! Saves Keeper::energy and Keeper::stress to XML.
     bool Save( TiXmlElement &_node ) const;
   };
+  /* @} */
 
-  class Darwin : public Functional
+  /** \ingroup Genetic 
+   * @{ */
+  //! \brief Evaluator stub class for Valence Force Field (Vff)
+  //! \details This class simply defines the necessary members to minimize a
+  //!          structure using Vff. It is templated so that any Vff derivative
+  //!          can be used. Whatever the flavor of Vff, the structure is
+  //!          minimized using a GSL minimizer.
+  //!          Communication between an Evaluator class and this class are done
+  //!          \e via the reference to the Ising_CE::Structure
+  //!          Vff::Functional::structure which is (should) fed to the
+  //!          constructor. This is not quite obvious until you see the
+  //!          constructor code of BandGap::Evaluator and
+  //!          Molecularity::Evaluator, so go and check it out.
+  //! \param T_BASE Vff::Functional (default) or derived class
+  template< class T_BASE = Vff::Functional >
+  class Darwin : public T_BASE
   {
+    public:
+      typedef T_BASE t_Base; //!< The base class
     protected:
+      //! The GSL minimizer used to minimize t_Base::structure
       minimizer::GnuSL<Vff::Functional> minimizer;
 
 
     public:
-      Darwin   ( Ising_CE::Structure &_str ) 
-             : Functional( _str ), minimizer( *this )  {} 
+      //! \brief Constructor.
+      //! \details  Should be used referencing a temporary instance of the
+      //!           base class.
+      Darwin   ( const t_Base &_func )
+             : t_Base( _func ), minimizer( *this )  {} 
+      //! Copy Constructor
       Darwin   ( const Darwin &_d ) 
-             : Functional(_d), minimizer ( *this ) {}
+             : t_Base(_d), minimizer ( *this ) {}
+      //! Destructor
       ~Darwin() {};
 
+      //! Load t_Base and the minimizer from XML
       bool Load( const TiXmlElement &_node );
-      void operator()()
-      {
-        minimizer.minimize();
-        structure.energy = Functional::energy();
-      }
-      void operator()( Keeper &_keeper )
-      {
-        Darwin::evaluate();
-        _keeper.energy = structure.energy;
-        _keeper.stress = stress;
-      }
+      //! Minimizes the structure
+      void operator()();
+      //! Minimizes the structure and stores the results in \a _keeper
+      void operator()( Keeper &_keeper );
   };
+  /* @} */
+
+
+
+  template< class T_BASE>
+  bool Darwin<T_BASE> :: Load( const TiXmlElement &_node )
+  {
+    if ( not t_Base::Load( _node ) )
+    {
+      std::cerr << " Could not load vff input!! " << std::endl; 
+      return false;
+    }
+    if ( not t_Base::initialize_centers() )
+    {
+      std::cerr << " Could not initialize Atomic_Center list in vff!! " << std::endl
+                << " Are you sure the lattice and the structure correspond? " << std::endl; 
+      return false;
+    }
+    if ( not minimizer.Load( _node ) )
+    {
+      std::cerr << " Could not load vff minimizer from input!! " << std::endl;
+      return false;
+    }
+
+    return true;
+  }
+  template< class T_BASE>
+  inline void Darwin<T_BASE> :: operator()()
+  {
+    minimizer.minimize();
+    t_Base::structure.energy = t_Base::energy();
+  }
+  template< class T_BASE>
+  inline void Darwin<T_BASE> :: operator()( Keeper &_keeper )
+  {
+    Darwin::evaluate();
+    _keeper.energy = t_Base::structure.energy;
+    _keeper.stress = t_Base::stress;
+  }
 
 } // namespace BandGap
 
 #ifdef _MPI
 namespace mpi
 {
+  /** \ingroup MPI
+  * \brief Serializes Vff::Keeper. 
+  * \details It serializes Vff::Keeper::energy and Vff::Keeper::stress. 
+  */
   template<>
   inline bool mpi::BroadCast::serialize< Vff::Keeper >( Vff::Keeper & _k )
   {

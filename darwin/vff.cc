@@ -65,27 +65,6 @@ errorout:
 
     return true;
   }
-  bool Darwin :: Load( const TiXmlElement &_node )
-  {
-    if ( not Functional::Load( _node ) )
-    {
-      std::cerr << " Could not load vff input!! " << std::endl; 
-      return false;
-    }
-    if ( not initialize_centers() )
-    {
-      std::cerr << " Could not initialize Atomic_Center list in vff!! " << std::endl
-                << " Are you sure the lattice and the structure correspond? " << std::endl; 
-      return false;
-    }
-    if ( not minimizer.Load( _node ) )
-    {
-      std::cerr << " Could not load vff minimizer from input!! " << std::endl;
-      return false;
-    }
-
-    return true;
-  }
 
 } // namespace pescan
 

@@ -705,11 +705,6 @@ namespace Vff
   }
 
 
-  inline Atomic_Center::const_iterator Atomic_Center :: begin() const
-    { return const_iterator( this ); }
-  inline Atomic_Center::const_iterator Atomic_Center :: end() const
-    { return const_iterator( this, false ); }
-
   // initializes stuff before minimization
   bool Functional :: init()
   {
