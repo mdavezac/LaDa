@@ -40,9 +40,15 @@
 //! possible (and sometimes interesting) to define a scalar fitness from the
 //! vectorial fitnesses. For an example, see Pareto ranking with niching in
 //! namespace Scaling.
+//! 
+//! A third class, Fitness::Types defines two typedefs, Fitness::Types::Scalar
+//! and Fitness::Types::Vector. Much like Objective::Types, these two types are
+//! equivalent in the case of single-objective %GA. You should use
+//! Fitness::Types to obtain a fitness, rather than Fitness::Scalar or
+//! Fitness::Vectorial directly.
 namespace Fitness
 {
-  //! \brief %Base class for fitnesses
+  //! \brief %Fitness base class for <em>scalar</em> fitnesses
   //! \details Defines a fitness as a variable Fitness::Base::quantity around
   //! which are implemented weak ordering operators. This class also adds
   //! loading and saving capabilities and such niceties. We first declare the
@@ -58,13 +64,8 @@ namespace Fitness
   //! 
   //! \param T_QUANTITYTRAITS traits of the quantity. Generally  a
   //!        Traits::Quantity of some kind
-  //! \param IS_SCALAR should be set to true for scalar fitnesses. Mainly, this
-  //! allows us to define a multi-objective fitness as a derived type, capable of
-  //! being both a  vectorial quantity (say for Pareto ranking) and a scalar
-  //! quantity (say for a linear sum of objectives).
-// class Base {};
-
-  //! %Fitness %base class for <em>scalar</em> fitnesses
+  //! \warning using this class with a vectorial quantity is not recommended.
+  //!          Use Fitness::Vectorial instead.
   template<class T_QUANTITYTRAITS >
   class Scalar
   {
@@ -141,12 +142,12 @@ namespace Fitness
 #endif 
   };
 
-  //! \brief Dumps fitness to a stream
+  //! Dumps fitness to a stream
   template<class T_QUANTITYTRAITS>
   std::istream & operator>>( std::istream &_is,
                              const Scalar<T_QUANTITYTRAITS> &_fit );
   
-  //! \brief Retrieves fitness from a stream
+  //! Retrieves fitness from a stream
   template<class T_QUANTITYTRAITS>
   std::ostream & operator<<( std::ostream &_os,
                              Scalar<T_QUANTITYTRAITS> &_fit );
@@ -176,6 +177,10 @@ namespace Fitness
                  \Leftrightarrow\quad \forall t\in[0,N[,\ \mathcal{F}^v_t(\sigma_i)
                  \geq \mathcal{F}^v_t(\sigma_j).
              \f]
+      
+             Since the base class of Vectorial is Scalar, this class also
+             implements a \e scalar fitness, which should be used as the
+             end-product fintess for %GA.
   */
   template<class T_QUANTITYTRAITS >
   class Vectorial :
@@ -204,22 +209,22 @@ namespace Fitness
       //! \details Only applies to the vectorial Fitness::Scalar::quantity, and
       //! not to the scalar t_Base::quantity. One may be set when the other is
       //! not. Indeed, in some schemes, the scalar quantity may  never be set.
-      bool vec_is_valid;
+      bool is_valid;
       //! \brief Quantities against which all may be judged
       //! \details This is a <strong>vectorial</strong> quantity.
       //! t_Base::quantity is a <strong>scalar</strong> quantity.
-      t_Quantity vec_quantity;
+      t_Quantity quantity;
 
     public:
       //! Constructor
-      Vectorial() : vec_is_valid( false )  {}
+      Vectorial() : is_valid( false )  {}
       //! Copy Constructor
       Vectorial   ( const t_This & _c )
-           : t_Base(_c), vec_is_valid( _c.vec_is_valid ),
-             vec_quantity( _c.vec_quantity ) {}
+           : t_Base(_c), is_valid( _c.is_valid ),
+             quantity( _c.quantity ) {}
       //! Constructor and Initializer
       Vectorial   ( const t_Quantity &_fit )
-           : t_Base(), vec_is_valid( true ), vec_quantity( _fit ) {}
+           : t_Base(), is_valid( true ), quantity( _fit ) {}
       //! \brief Copy constructor which only sets the scalar fitness.
       //! \details Nothing is done about member variables of this class. This
       //!          is meant to be a copy operator for the scalar fitness only.
@@ -265,9 +270,9 @@ namespace Fitness
       bool operator==(const t_This & _f) const;
 
       //! \brief returns true if the (vectorial) fitness is not valid
-      bool invalid() const { return not vec_is_valid; }
+      bool invalid() const { return not is_valid; }
       //! \brief invalidates the (vectorial) fitness
-      void invalidate() { vec_is_valid = false; }
+      void invalidate() { is_valid = false; }
       //! \brief returns a constant reference of the vectorial quantity
       operator const t_Quantity& () const;
       //! \brief Loads the fitenss from XML
@@ -276,10 +281,10 @@ namespace Fitness
       bool Save( TiXmlElement & _node ) const;
 
       //! \brief clears the quantity
-      void clear() { vec_quantity.clear(); vec_is_valid = false; }
+      void clear() { quantity.clear(); is_valid = false; }
       //! \brief adds a component to the vectorial quantity
       void push_back( typename t_Quantity :: value_type  _var )
-        { vec_quantity.push_back( _var ); vec_is_valid = true; }
+        { quantity.push_back( _var ); is_valid = true; }
 #ifdef _MPI
       /** \ingroup MPI
        * \brief allows the serialization of a Fitness::Vectorial object.
@@ -305,26 +310,35 @@ namespace Fitness
 
 
 
+  //! \brief Helper class for defining fitnesses.
+  //! \details Two fitness types are defined automatically: Types::Scalar and Types::Vector.
+  //!          In the case of a multi-objective %GA (vector quantity), each is
+  //!          what you would expect. In the case of single-objective %GA
+  //!          (scalar quantity), both Types::Vector and Types::Scalar are
+  //!          equivalent and simply typedef a Fitness::Scalar. Generally, you
+  //!          will only want to use Types::Vector.
   template<class T_QUANTITYTRAITS,
            bool IS_SCALAR = T_QUANTITYTRAITS::is_scalar >
   struct Types 
   {
-    typedef Vectorial<T_QUANTITYTRAITS> Vector;
+    typedef Vectorial<T_QUANTITYTRAITS> Vector; //!< A \e truly vectorial fitness
+    //! A scalar fitness
     typedef typename Vectorial<T_QUANTITYTRAITS> :: t_ScalarFitness Scalar;
   };
+  //! Scalar flavor 
   template<class T_QUANTITYTRAITS >
   struct Types <T_QUANTITYTRAITS, true >
   {
-    typedef Scalar<T_QUANTITYTRAITS> Vector;
-    typedef Scalar<T_QUANTITYTRAITS> Scalar;
+    typedef Scalar<T_QUANTITYTRAITS> Vector; //!< A scalar fitness (sic)
+    typedef Scalar<T_QUANTITYTRAITS> Scalar; //!< A scalar fitness
   };
 
-  //! \brief Dumps fitness to a stream
+  //! Dumps \e vectorial fitness to a stream
   template<class T_QUANTITYTRAITS>
     std::istream & operator>>( std::istream &_is,
                                Vectorial<T_QUANTITYTRAITS> &_fit );
 
-  //! \brief Retrieves fitness from a stream
+  //! Retrieves \e vectorial fitness from a stream
   template<class T_QUANTITYTRAITS>
     std::ostream & operator<<( std::ostream &_os,
                                const Vectorial<T_QUANTITYTRAITS> &_fit );

@@ -62,11 +62,11 @@ namespace Fitness
   template<class T_QUANTITYTRAITS>
   bool Vectorial<T_QUANTITYTRAITS> :: operator<( const t_This & _f) const
   {
-    if( vec_quantity.size() != _f.vec_quantity.size () )
+    if( quantity.size() != _f.quantity.size () )
       throw std::runtime_error("quantities of different size in Multi-Objective Fitness!?\n");
-    typename t_Quantity :: const_iterator i_scalar1 = vec_quantity.begin();
-    typename t_Quantity :: const_iterator i_scalar1_end = vec_quantity.end();
-    typename t_Quantity :: const_iterator i_scalar2 = _f.vec_quantity.begin();
+    typename t_Quantity :: const_iterator i_scalar1 = quantity.begin();
+    typename t_Quantity :: const_iterator i_scalar1_end = quantity.end();
+    typename t_Quantity :: const_iterator i_scalar2 = _f.quantity.begin();
     for(; i_scalar1 != i_scalar1_end; ++i_scalar1, ++i_scalar2 )
       if (  t_ScalarQuantityTraits :: less( *i_scalar2, *i_scalar1 ) ) return false;
     return true;
@@ -74,11 +74,11 @@ namespace Fitness
   template<class T_QUANTITYTRAITS>
   bool Vectorial<T_QUANTITYTRAITS> :: operator>( const t_This & _f) const
   {
-    if( vec_quantity.size() != _f.vec_quantity.size () )
+    if( quantity.size() != _f.quantity.size () )
       throw std::runtime_error("quantities of different size in Multi-Objective Fitness!?\n");
-    typename t_Quantity :: const_iterator i_scalar1 = vec_quantity.begin();
-    typename t_Quantity :: const_iterator i_scalar1_end = vec_quantity.end();
-    typename t_Quantity :: const_iterator i_scalar2 = _f.vec_quantity.begin();
+    typename t_Quantity :: const_iterator i_scalar1 = quantity.begin();
+    typename t_Quantity :: const_iterator i_scalar1_end = quantity.end();
+    typename t_Quantity :: const_iterator i_scalar2 = _f.quantity.begin();
     for(; i_scalar1 != i_scalar1_end; ++i_scalar1, ++i_scalar2 )
       if (  t_ScalarQuantityTraits :: greater( *i_scalar2, *i_scalar1 ) ) return false;
     return true;
@@ -86,11 +86,11 @@ namespace Fitness
   template<class T_QUANTITYTRAITS>
   bool Vectorial<T_QUANTITYTRAITS> :: operator==( const t_This & _f) const
   {
-    if( vec_quantity.size() != _f.vec_quantity.size () )
+    if( quantity.size() != _f.quantity.size () )
       throw std::runtime_error("quantities of different size in Multi-Objective Fitness!?\n");
-    typename t_Quantity :: const_iterator i_scalar1 = vec_quantity.begin();
-    typename t_Quantity :: const_iterator i_scalar1_end = vec_quantity.end();
-    typename t_Quantity :: const_iterator i_scalar2 = _f.vec_quantity.begin();
+    typename t_Quantity :: const_iterator i_scalar1 = quantity.begin();
+    typename t_Quantity :: const_iterator i_scalar1_end = quantity.end();
+    typename t_Quantity :: const_iterator i_scalar2 = _f.quantity.begin();
     for(; i_scalar1 != i_scalar1_end; ++i_scalar1, ++i_scalar2 )
       if (  t_ScalarQuantityTraits :: equal( *i_scalar2, *i_scalar1 ) ) return false;
     return true;
@@ -100,18 +100,18 @@ namespace Fitness
   {
     if ( not _node.Attribute( "fitness" ) )
     {
-      vec_is_valid = false;
+      is_valid = false;
       return false; 
     }
     std::istringstream istr; istr.str( _node.Attribute( "fitness" ) );
     istr >> *this;
-    vec_is_valid = true;
+    is_valid = true;
     return true;
   }
   template<class T_QUANTITYTRAITS>
   bool Vectorial<T_QUANTITYTRAITS> :: Save( TiXmlElement & _node ) const
   {
-    if ( not vec_is_valid )
+    if ( not is_valid )
     {
       std::cerr << "Trying to Save invalid fitness" << std::endl;
       return false;
@@ -123,16 +123,16 @@ namespace Fitness
   template<class T_QUANTITYTRAITS>
   inline Vectorial<T_QUANTITYTRAITS> :: operator const t_Quantity& () const
   { 
-    if ( not vec_is_valid )
+    if ( not is_valid )
       throw std::runtime_error( " Invalid Fitness !!\n" );
-    return vec_quantity;
+    return quantity;
   }
 #ifdef _MPI
   template<class T_QUANTITYTRAITS>
   inline bool Vectorial<T_QUANTITYTRAITS> :: broadcast( mpi::BroadCast &_bc )
   {
-    return     _bc.serialize( vec_is_valid )
-           and t_QuantityTraits::broadcast( vec_quantity, _bc )
+    return     _bc.serialize( is_valid )
+           and t_QuantityTraits::broadcast( quantity, _bc )
            and Vectorial<T_QUANTITYTRAITS>::t_ScalarFitness::broadcast( _bc );
   }
 #endif
