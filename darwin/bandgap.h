@@ -87,7 +87,7 @@ namespace BandGap
 
     protected:
       Pescan::Darwin pescan;
-      Vff::Darwin<Vff::Functiona> vff;
+      Vff::Darwin<Vff::Functional> vff;
 
     public:
       Evaluator() : t_Base(), pescan(structure), vff(structure) {}

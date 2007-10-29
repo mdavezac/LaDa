@@ -50,11 +50,9 @@ namespace Vff
     public:
       //! \brief Constructor and Initializer
       //! \param _str structure for which to compute energy and stress
-      Layered ( Ising_CE :: Structure &_str ) : t_Base( _str )
-        { create_template_strain(); }
+      Layered ( Ising_CE :: Structure &_str ) : t_Base( _str ) {}
       //! \brief Copy Constructor
-      Layered   ( const Vff::Functional &_c ) : t_Base( _c )
-        { create_template_strain(); }
+      Layered   ( const Vff::Functional &_c ) : t_Base( _c ) {}
       //! \brief Destructor
       ~Layered() {}
 
@@ -169,6 +167,7 @@ namespace Vff
 
 } // namespace vff 
 
+#ifdef _MPI
 namespace mpi {
   /** \ingroup MPI
   * \brief Serializes Vff::Layered. 
@@ -187,4 +186,5 @@ namespace mpi {
     return result;
   }
 }
+#endif
 #endif // _VFF_FUNCTIONAL_H_

@@ -438,6 +438,10 @@ errorout:
     // The lattice sites are also sorted the same way
     std::sort( lattice.sites.begin(), lattice.sites.end(),
                Depth( cell ) );
+    Ising_CE::Lattice::t_Sites::iterator i_site = lattice.sites.begin(); 
+    Ising_CE::Lattice::t_Sites::iterator i_site_end = lattice.sites.end();
+    for( types::t_unsigned n=0; i_site != i_site_end; ++i_site, ++n )
+      i_site->site = n;
 
 
     // Finally, we copy the kvector positions as atoms, and the related sites
@@ -457,12 +461,13 @@ errorout:
 
       if( only_one_site ) continue;
 
-      Ising_CE::Lattice::t_Sites::const_iterator i_site = lattice.sites.begin();
-      Ising_CE::Lattice::t_Sites::const_iterator i_site_end = lattice.sites.end();
+      i_site = lattice.sites.begin(); 
+      i_site_end = lattice.sites.end();
       for(++i_site; i_site != i_site_end; ++i_site )
       {
         Ising_CE::Structure::t_Atom atom2(atom);
         atom2.pos += ( i_site->pos - origin );
+        atom2.site = i_site->site;
         // vewy impowtant. Otherwise GA::KRandom and GA::Random produce
         // individuals which are to big.
         atom2.freeze = i_site->freeze | Ising_CE::Structure::t_Atom::FREEZE_T;

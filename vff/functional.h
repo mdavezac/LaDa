@@ -492,8 +492,7 @@ namespace Vff
       //! \brief Constructor and Initializer
       //! \param _str structure for which to compute energy and stress
       Functional   ( Ising_CE :: Structure &_str )
-                 : function::Base<>( 7 + _str.atoms.size() ),
-                   structure(_str), structure0(_str), center_of_mass(0,0,0) {};
+                 : structure(_str), structure0(_str), center_of_mass(0,0,0) {};
       //! \brief Copy Constructor
       Functional   ( const Vff::Functional &_c )
                  : function::Base<>( _c ), structure( _c.structure ),
@@ -641,6 +640,7 @@ namespace Vff
     { return const_iterator( this, false ); }
 } // namespace vff 
 
+#ifdef _MPI
 namespace mpi {
   /** \ingroup MPI
   * \brief Serializes Vff::Atom_Functional. Not sure this works anymore.
@@ -655,4 +655,5 @@ namespace mpi {
   template<>
   bool BroadCast::serialize<Vff::Atomic_Functional> ( Vff::Atomic_Functional& );
 }
+#endif
 #endif // _VFF_FUNCTIONAL_H_

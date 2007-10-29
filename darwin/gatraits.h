@@ -53,7 +53,7 @@ namespace Traits
             class T_QUANTITY_TRAITS = Traits :: Quantity< typename T_OBJECT :: t_Quantity >,
             class T_VA_TRAITS = Traits::VA<typename T_OBJECT :: t_Container, 
                                            typename T_QUANTITY_TRAITS::t_Quantity >,
-            class T_FITNESS = Fitness::Base< T_QUANTITY_TRAITS > >
+            class T_FITNESS = typename Fitness::Types< T_QUANTITY_TRAITS > :: Vector >
   struct Indiv
   {
       typedef T_OBJECT                              t_Object;

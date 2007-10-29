@@ -53,11 +53,12 @@ namespace Ising_CE {
       child->Attribute("z", &d); site.pos(2) = d;
       const TiXmlElement *atom_xml = child->FirstChildElement("atom");
       site.type.clear();
-      for ( ; atom_xml; i++, atom_xml = atom_xml->NextSiblingElement("atom") )
+      for ( ; atom_xml; atom_xml = atom_xml->NextSiblingElement("atom") )
       {
         std::string str = atom_xml->Attribute("type");
         site.type.push_back(str);
       }
+      site.site = i;
       sites.push_back(site);
     }
 

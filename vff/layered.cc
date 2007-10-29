@@ -14,14 +14,18 @@ namespace Vff
     // The first vector of the cell should indicate the direction of the
     // layering.
     u = structure.cell.get_column(0);
-    u = ( 1.0 / std::sqrt( atat::norm2(u) ) ) * u;
+    types::t_real a = 1.0 / std::sqrt( atat::norm2(u) );
+    u = a * u;
     template_strain.zero(); 
 
     // First, lets create an orthonormal vector to u
-    atat::rVector3d a1 = Traits::Fuzzy<types::t_real>::equal( u[0], 0.0 ) ? 
-                            atat::rVector3d(0, u(2), -u(3) ):
-                            atat::rVector3d( -u(2) -u(1), u(0), u(0) );
-    a1 = ( 1.0 / std::sqrt( atat::norm2(a1) ) ) * a1;
+    atat::rVector3d a1 = Traits::Fuzzy<types::t_real>::equal( u(0), 0.0 ) ? 
+                           ( Traits::Fuzzy<types::t_real>::equal( u(1), 0.0 ) ? 
+                              atat::rVector3d(1, 0, 0):
+                              atat::rVector3d(0, u(2), -u(3) )  ): 
+                           atat::rVector3d( -u(2) -u(1), u(0), u(0) );
+    a = ( 1.0 / std::sqrt( atat::norm2(a1) ) );
+    a1 =  a * a1;
 
     // Then, lets create another... 
     atat::rVector3d a2;
@@ -45,6 +49,7 @@ namespace Vff
   // initializes stuff before minimization
   bool Layered :: init()
   {
+    create_template_strain();
     // sets up structure0, needed for fractional vs cartesian shit
     structure0 = structure;
 
@@ -90,7 +95,7 @@ namespace Vff
   {
     // finally, packs vff format into function::Base format
     iterator i_var = begin();
-    *i_var = u * (_strain * u);
+    *i_var = u * (_strain * u) - 1.0;
     ++i_var;
 
     std::vector< Ising_CE::Atom > :: const_iterator i_atom =  structure0.atoms.begin();
@@ -120,6 +125,10 @@ namespace Vff
 
     // compute resulting cell vectors
     structure.cell = strain * structure0.cell;
+//   std::cout << " epsilon: " << *i_x << std::endl
+//             << " template: " << std::endl << template_strain
+//             << " strain: " << std::endl << strain
+//             << " cell: " << std::endl << structure.cell << std::endl;
 
     // then computes positions
     std::vector<Ising_CE::Atom> :: const_iterator i_atom0 = structure0.atoms.begin();
@@ -127,7 +136,7 @@ namespace Vff
     std::vector<Ising_CE::Atom> :: iterator i_atom_end = structure.atoms.end();
     atat::rVector3d com(0,0,0);
     atat::rMatrix3d cell_inv = !structure.cell;
-    for(; i_atom != i_atom_end; ++i_atom, ++i_atom0 )
+    for(++i_x; i_atom != i_atom_end; ++i_atom, ++i_atom0 )
     {
       atat::rVector3d pos;
       pos[0] = ( i_atom0->freeze & Ising_CE::Atom::FREEZE_X ) ?

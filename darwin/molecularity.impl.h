@@ -34,10 +34,12 @@ namespace Molecularity
   
   inline void Evaluator :: evaluate()
   {
+    Ising_CE :: Structure structure0 = structure;
     // relax structure
-    vff();
+    vff( *current_object );
     // Load relaxed structure into pescan
     pescan << vff; 
+    structure = structure0;
 
 #ifdef _NOLAUNCH
     typedef t_Individual :: t_IndivTraits :: t_FourierRtoK t_Fourier;
@@ -64,10 +66,9 @@ namespace Molecularity
   {
     types::t_real norm = atat::norm2(_dir);
     types::t_real trace = _stress(0,0) + _stress(1,1) + _stress(2,2);
-    atat::rVector3d axial = _stress * _dir;
-    return ( trace - (   axial(0) * _dir(0)
-                       + axial(1) * _dir(1)
-                       + axial(2) * _dir(2) ) / norm ) * 0.5;
+    types::t_real axial = (_dir * (_stress * _dir) ) / norm;
+    std::cout << "trace " << trace << "  axial " << axial << std::endl;
+    return ( trace - axial ) * 0.5;
   }
 
 

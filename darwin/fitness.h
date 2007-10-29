@@ -62,25 +62,14 @@ namespace Fitness
   //! allows us to define a multi-objective fitness as a derived type, capable of
   //! being both a  vectorial quantity (say for Pareto ranking) and a scalar
   //! quantity (say for a linear sum of objectives).
-  template<class T_QUANTITYTRAITS,
-           bool IS_SCALAR = T_QUANTITYTRAITS::is_scalar >
-  class Base {};
+// class Base {};
 
-  //! %Ftiness %base class for <em>scalar</em> fitnesses
+  //! %Fitness %base class for <em>scalar</em> fitnesses
   template<class T_QUANTITYTRAITS >
-  class Base<T_QUANTITYTRAITS, true>
+  class Scalar
   {
-    typedef Base<T_QUANTITYTRAITS, true> t_This; //!< Type of this class
+    typedef Scalar<T_QUANTITYTRAITS> t_This; //!< Type of this class
 
-    //! \brief Dumps fitness to a stream
-    template<class TQUANTITYTRAITS>
-      friend std::istream & operator>>( std::istream &_is,
-                                        const Base<TQUANTITYTRAITS, true> &_fit );
-    
-    //! \brief Retrieves fitness from a stream
-    template<class TQUANTITYTRAITS>
-      friend std::ostream & operator<<( std::ostream &_os,
-                                        Base<TQUANTITYTRAITS, true> &_fit );
     public:
       //! \brief The traits of the fitness quantity \see Traits::Quantity
       typedef T_QUANTITYTRAITS t_QuantityTraits;
@@ -94,41 +83,41 @@ namespace Fitness
 
     protected:
       t_Quantity quantity; //!< quantity against which will be judged
-      bool is_valid; //!< True if Fitness::Base::quantity has been set
+      bool is_valid; //!< True if Fitness::Scalar::quantity has been set
 
     public:
       //! Constructor
-      Base() : is_valid( false )  {}
+      Scalar() : is_valid( false )  {}
       //! Copy Constructor
-      Base( const Base & _c ) : quantity( _c.quantity ), is_valid( _c.is_valid ) {}
+      Scalar( const t_This & _c ) : quantity( _c.quantity ), is_valid( _c.is_valid ) {}
       //! Constructor and Initializer
-      Base( const t_Quantity _fit ) : quantity( _fit ), is_valid( true ) {}
+      Scalar( const t_Quantity _fit ) : quantity( _fit ), is_valid( true ) {}
       //! Destructor
-      ~Base() {}
+      ~Scalar() {}
 
 
       //! \brief strict ordering operator 
-      //! \details Calls a static function of Fitness::Base::t_QuantityTraits.
+      //! \details Calls a static function of Fitness::Scalar::t_QuantityTraits.
       //! This allows type specific implementation, such as fuzzy math for
       //! reals (to avoid numerical noise). Note that since minimization is the
       //! default, the implementation calls t_QuantityTraits::greater().
       //! \see Traits::Quantity, Traits::Fuzzy
-      bool operator<(const Base & _f) const
+      bool operator<(const t_This & _f) const
         { return t_QuantityTraits::greater(quantity, _f.quantity); }
       //! \brief strict ordering operator 
-      //! \details Calls a static function of Fitness::Base::t_QuantityTraits.
+      //! \details Calls a static function of Fitness::Scalar::t_QuantityTraits.
       //! This allows type specific implementation, such as fuzzy math for
       //! reals (to avoid numerical noise). Note that since minimization is the
       //! default, the implementation calls t_QuantityTraits::less().
       //! \see Traits::Quantity, Traits::Fuzzy
-      bool operator>(const Base & _f) const
+      bool operator>(const t_This & _f) const
         { return t_QuantityTraits::less(quantity, _f.quantity); }
       //! \brief equality operator 
-      //! \details Calls a static function of Fitness::Base::t_QuantityTraits.
+      //! \details Calls a static function of Fitness::Scalar::t_QuantityTraits.
       //! This allows type specific implementation, such as fuzzy math for
       //! reals (to avoid numerical noise).
       //! \see Traits::Quantity, Traits::Fuzzy
-      bool operator==(const Base & _f) const
+      bool operator==(const t_This & _f) const
         { return t_QuantityTraits::equal(quantity, _f.quantity); }
 
       //! \brief returns true if the fitness is not valid
@@ -144,7 +133,7 @@ namespace Fitness
 
 #ifdef _MPI
       /** \ingroup MPI
-       * \brief allows the serialization of a Fitness::Base object.
+       * \brief allows the serialization of a Fitness::Scalar object.
        * \details serializes the object completely, eg both quantity and
        * validity are set.
        */
@@ -152,6 +141,15 @@ namespace Fitness
 #endif 
   };
 
+  //! \brief Dumps fitness to a stream
+  template<class T_QUANTITYTRAITS>
+  std::istream & operator>>( std::istream &_is,
+                             const Scalar<T_QUANTITYTRAITS> &_fit );
+  
+  //! \brief Retrieves fitness from a stream
+  template<class T_QUANTITYTRAITS>
+  std::ostream & operator<<( std::ostream &_os,
+                             Scalar<T_QUANTITYTRAITS> &_fit );
 
 
 
@@ -180,22 +178,12 @@ namespace Fitness
              \f]
   */
   template<class T_QUANTITYTRAITS >
-  class Base<T_QUANTITYTRAITS, false> :
-        public Base< typename T_QUANTITYTRAITS::t_ScalarQuantityTraits, true >
+  class Vectorial :
+        public Scalar< typename T_QUANTITYTRAITS::t_ScalarQuantityTraits >
   {
-    typedef Base<T_QUANTITYTRAITS, false> t_This;      //!< Type of this class
+    typedef Vectorial<T_QUANTITYTRAITS> t_This;      //!< Type of this class
     //! Type of the base class
-    typedef Base<typename T_QUANTITYTRAITS::t_ScalarQuantityTraits, true> t_Base; 
-
-    //! \brief Dumps fitness to a stream
-    template<class TQUANTITYTRAITS>
-      friend std::istream & operator>>( std::istream &_is,
-                                        Base<TQUANTITYTRAITS, false> &_fit );
-
-    //! \brief Retrieves fitness from a stream
-    template<class TQUANTITYTRAITS>
-      friend std::ostream & operator<<( std::ostream &_os,
-                                        const Base<TQUANTITYTRAITS, false> &_fit );
+    typedef Scalar<typename T_QUANTITYTRAITS::t_ScalarQuantityTraits> t_Base; 
 
     public:
       //! \brief The traits of the fitness quantity \see Traits::Quantity
@@ -212,33 +200,38 @@ namespace Fitness
 
 
     protected:
+      //! \brief True if vectorial quantity above is set
+      //! \details Only applies to the vectorial Fitness::Scalar::quantity, and
+      //! not to the scalar t_Base::quantity. One may be set when the other is
+      //! not. Indeed, in some schemes, the scalar quantity may  never be set.
+      bool vec_is_valid;
       //! \brief Quantities against which all may be judged
       //! \details This is a <strong>vectorial</strong> quantity.
       //! t_Base::quantity is a <strong>scalar</strong> quantity.
-      t_Quantity quantity;
-      //! \brief True if vectorial quantity above is set
-      //! \details Only applies to the vectorial Fitness::Base::quantity, and
-      //! not to the scalar t_Base::quantity. One may be set when the other is
-      //! not. Indeed, in some schemes, the scalar quantity may  never be set.
-      bool is_valid;
+      t_Quantity vec_quantity;
 
     public:
       //! Constructor
-      Base() : is_valid( false )  {}
+      Vectorial() : vec_is_valid( false )  {}
       //! Copy Constructor
-      Base( const Base & _c ) : t_Base(_c), quantity( _c.quantity ), is_valid( _c.is_valid ) {}
+      Vectorial   ( const t_This & _c )
+           : t_Base(_c), vec_is_valid( _c.vec_is_valid ),
+             vec_quantity( _c.vec_quantity ) {}
       //! Constructor and Initializer
-      Base( const t_Quantity &_fit ) : t_Base(), quantity( _fit ), is_valid( true ) {}
+      Vectorial   ( const t_Quantity &_fit )
+           : t_Base(), vec_is_valid( true ), vec_quantity( _fit ) {}
       //! \brief Copy constructor which only sets the scalar fitness.
       //! \details Nothing is done about member variables of this class. This
       //!          is meant to be a copy operator for the scalar fitness only.
-      Base( const t_ScalarFitness &_fit ) : t_Base(_fit) {}
+      void operator=( const t_ScalarFitness &_fit ) 
+        { t_Base::operator=(_fit); }
       //! \brief Copy constructor which only sets the scalar fitness.
       //! \details Nothing is done about member variables of this class. This
       //!          is meant to be a copy operator for the scalar fitness only.
-      Base( const typename t_ScalarFitness :: t_Quantity &_fit ) : t_Base(_fit) {}
+      void operator=( const typename t_ScalarFitness :: t_Quantity &_fit )
+        { t_Base::operator=(_fit); }
       //! Destructor
-      ~Base() {}
+      ~Vectorial() {}
 
 
       /** \brief Pareto ordering, \f$\mathcal{F}^v(\sigma_i) \preceq \mathcal{F}^v(\sigma_j)\f$
@@ -272,9 +265,9 @@ namespace Fitness
       bool operator==(const t_This & _f) const;
 
       //! \brief returns true if the (vectorial) fitness is not valid
-      bool invalid() const { return not is_valid; }
+      bool invalid() const { return not vec_is_valid; }
       //! \brief invalidates the (vectorial) fitness
-      void invalidate() { is_valid = false; }
+      void invalidate() { vec_is_valid = false; }
       //! \brief returns a constant reference of the vectorial quantity
       operator const t_Quantity& () const;
       //! \brief Loads the fitenss from XML
@@ -283,13 +276,13 @@ namespace Fitness
       bool Save( TiXmlElement & _node ) const;
 
       //! \brief clears the quantity
-      void clear() { quantity.clear(); }
+      void clear() { vec_quantity.clear(); vec_is_valid = false; }
       //! \brief adds a component to the vectorial quantity
       void push_back( typename t_Quantity :: value_type  _var )
-        { quantity.push_back( _var ); is_valid = true; }
+        { vec_quantity.push_back( _var ); vec_is_valid = true; }
 #ifdef _MPI
       /** \ingroup MPI
-       * \brief allows the serialization of a Fitness::Base object.
+       * \brief allows the serialization of a Fitness::Vectorial object.
        * \details serializes the object completely, eg both quantity and
        * validity are set for both t_This and t_Base.
        */
@@ -309,8 +302,34 @@ namespace Fitness
   {
     typedef typename T_FITNESS :: t_ScalarFitness t_result; //!< resulting type
   };
-}
 
+
+
+  template<class T_QUANTITYTRAITS,
+           bool IS_SCALAR = T_QUANTITYTRAITS::is_scalar >
+  struct Types 
+  {
+    typedef Vectorial<T_QUANTITYTRAITS> Vector;
+    typedef typename Vectorial<T_QUANTITYTRAITS> :: t_ScalarFitness Scalar;
+  };
+  template<class T_QUANTITYTRAITS >
+  struct Types <T_QUANTITYTRAITS, true >
+  {
+    typedef Scalar<T_QUANTITYTRAITS> Vector;
+    typedef Scalar<T_QUANTITYTRAITS> Scalar;
+  };
+
+  //! \brief Dumps fitness to a stream
+  template<class T_QUANTITYTRAITS>
+    std::istream & operator>>( std::istream &_is,
+                               Vectorial<T_QUANTITYTRAITS> &_fit );
+
+  //! \brief Retrieves fitness from a stream
+  template<class T_QUANTITYTRAITS>
+    std::ostream & operator<<( std::ostream &_os,
+                               const Vectorial<T_QUANTITYTRAITS> &_fit );
+
+}
 
 #include "fitness.impl.h"
 

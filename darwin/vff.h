@@ -135,7 +135,7 @@ namespace Vff
   template< class T_BASE>
   inline void Darwin<T_BASE> :: operator()( Keeper &_keeper )
   {
-    Darwin::evaluate();
+    operator()();
     _keeper.energy = t_Base::structure.energy;
     _keeper.stress = t_Base::stress;
   }
