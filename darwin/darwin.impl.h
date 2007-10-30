@@ -935,8 +935,8 @@ namespace GA
           breeder->synchronize_offspring( offspring );
           if(history) history->synchronize();
 #endif 
-//         // Does scaling simultaneously over both populations
-//         if( scaling ) (*scaling)( *i_island, offspring )
+          // Does scaling simultaneously over both populations
+          if( scaling ) (*scaling)( *i_island, offspring );
 
           (*replacement)(*i_island, offspring); // after replace, the new pop. is in population
           

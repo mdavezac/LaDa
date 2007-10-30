@@ -42,13 +42,15 @@ namespace Scaling
     //! Should return a string defining the scaling operation
     virtual std::string what_is() const = 0;
 
+    //! Scaling functor
+    virtual void operator()( typename T_GATRAITS::t_Population& ) = 0;
     //! \brief Same scaling but for a "refed" pop
     //! \details Allows the simultaneous scaling off any number of aggregated
     //!          populations. 
-    virtual void operator()( typename T_GATRAITS::t_RefdPop& ) = 0;
-//   //! Aggregates two populations and scales them.
-//   void operator()( typename T_GATRAITS::t_Population& _1,
-//                    typename T_GATRAITS::t_Population&  _2 );
+    virtual void operator()( typename T_GATRAITS::t_PointerPop& ) = 0;
+    //! Aggregates two populations and scales them.
+    void operator()( typename T_GATRAITS::t_Population& _1,
+                     typename T_GATRAITS::t_Population& _2 );
   };
 
   //! Returns a scaling from an XML input
@@ -108,7 +110,7 @@ namespace Scaling
         void operator()( t_Population & _pop )
           { _operator_(_pop); }
         //! Applies each Scaling object in turn
-        void operator()( typename T_GATRAITS::t_RefdPop& _pop )
+        void operator()( typename T_GATRAITS::t_PointerPop& _pop )
           { _operator_(_pop); }
 
         //! Returns the number of stored Scaling pointers
@@ -210,7 +212,7 @@ namespace Scaling
         { _operator_(_pop); }
       //! Scales down the fitness of each individuals in \a _pop according to
       //! its closeness to other individuals
-      void operator()( typename t_GATraits::t_RefdPop& _pop)
+      void operator()( typename t_GATraits::t_PointerPop& _pop)
         { _operator_(_pop); }
       //! Loads the sharing operator from XML
       bool Load( const TiXmlElement &_node )
@@ -310,7 +312,7 @@ namespace Scaling
       /** Sets the scalar fitnes to the number of dominated individual,
           \f$ \mathcal{F}(\sigma) = \sum_j\mathcal{F}^v(\sigma) \succeq
               \mathcal{F}^v(\sigma_j)\ ?\ -1 :\ 0 \f$ */
-      void operator()( typename t_GATraits::t_RefdPop& _pop)
+      void operator()( typename t_GATraits::t_PointerPop& _pop)
         { _operator_(_pop); }
 
       //! Does nothing
@@ -449,6 +451,30 @@ namespace Scaling
         t_ScalarFitnessQuantity operator()( const t_Individual &_i1, const t_Individual &_i2) const;
         //! Returns "Distance::Hamming"
         std::string what_is() const { return "Distance::Hamming"; }
+    }; 
+
+    /** \brief Defines a phenotypic functor distance */
+    template<class T_GATRAITS>
+    class Phenotypic
+    {
+      public:
+        typedef T_GATRAITS t_GATraits; //!< All %GA %types
+      protected:
+        //! Type of the individuals
+        typedef typename t_GATraits :: t_Individual t_Individual;
+        //! Type of the object characterising the individuals
+        typedef typename t_GATraits :: t_Object t_Object;
+        //! Type of the \b scalar fitness
+        typedef typename t_GATraits :: t_ScalarFitness t_ScalarFitness;
+        //! Type of the  quantity of the \b scalar fitness
+        typedef typename t_ScalarFitness :: t_Quantity t_ScalarFitnessQuantity;
+
+      public:
+        //! Returns the phenotypic distance defined by and object class
+        t_ScalarFitnessQuantity operator()( const t_Individual &_i1, const t_Individual &_i2) const
+          { return _i1.Object().distance( _i2.Object() );  }
+        //! Returns "Distance::Hamming"
+        std::string what_is() const { return "Distance::Phenotypic"; }
     }; 
 
   } // namespace Scaling

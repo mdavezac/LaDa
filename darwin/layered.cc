@@ -64,13 +64,13 @@ void FillStructure( Ising_CE::Structure &_str )
     // Transforms vec to fractional coordinates in current cell-shape
     vec = M * vec;
     // if any of the coordinates is >= 1, then this is a periodic image
-    if (    Traits::Fuzzy<types::t_real>::geq( vec(0), 1.0 ) 
-         or Traits::Fuzzy<types::t_real>::geq( vec(1), 1.0 ) 
-         or Traits::Fuzzy<types::t_real>::geq( vec(2), 1.0 ) ) continue;
+    if (    opt::Fuzzy<types::t_real>::geq( vec(0), 1.0 ) 
+         or opt::Fuzzy<types::t_real>::geq( vec(1), 1.0 ) 
+         or opt::Fuzzy<types::t_real>::geq( vec(2), 1.0 ) ) continue;
     // if any of the coordinates is < 0, then this is a periodic image
-    if (    Traits::Fuzzy<types::t_real>::less( vec(0), 0.0 ) 
-         or Traits::Fuzzy<types::t_real>::less( vec(1), 0.0 ) 
-         or Traits::Fuzzy<types::t_real>::less( vec(2), 0.0 ) ) continue;
+    if (    opt::Fuzzy<types::t_real>::less( vec(0), 0.0 ) 
+         or opt::Fuzzy<types::t_real>::less( vec(1), 0.0 ) 
+         or opt::Fuzzy<types::t_real>::less( vec(2), 0.0 ) ) continue;
 
 
     // Goes back to lattice basis

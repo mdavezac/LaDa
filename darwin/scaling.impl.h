@@ -7,13 +7,13 @@
 namespace Scaling
 {
 
-// template<class T_GATRAITS> 
-// void Base<T_GATRAITS> :: operator()( typename T_GATRAITS::t_Population& _1,
-//                                      typename T_GATRAITS::t_Population&  _2 )
-// {
-//   typename T_GATRAITS::t_RefdPop refed;
-//   operator()( Traits::aggregate_populations( refed, _1, _2 )); 
-// }
+  template<class T_GATRAITS> 
+  inline void Base<T_GATRAITS> :: operator()( typename T_GATRAITS::t_Population& _1,
+                                              typename T_GATRAITS::t_Population& _2 )
+  {
+    GA::Aggregate< typename T_GATRAITS::t_Population > aggregate( _1, _2); 
+    operator()( aggregate ); 
+  }
 
 
   template<class T_GATRAITS>
@@ -65,13 +65,14 @@ namespace Scaling
   {
     map( _pop );
 
-    typename t_Population :: iterator i_indiv = _pop.begin();
-    typename t_Population :: iterator i_end = _pop.end();
+    typename TPOPULATION :: iterator i_indiv = _pop.begin();
+    typename TPOPULATION :: iterator i_end = _pop.end();
     typename t_Column :: const_iterator i_sum = sums.begin();
     for(; i_indiv != i_end; ++i_indiv )
     {
-      t_ScalarFitness& fitness = i_indiv->fitness();
-      fitness = ( ( (t_ScalarFitnessQuantity&) fitness ) - offset ) / *i_sum;
+      t_Individual& indiv  = Modifier::innermost( *i_indiv );
+      t_ScalarFitnessQuantity fitness = indiv.fitness();
+      indiv.set_fitness( ( fitness - offset ) / *i_sum );
     }
   }
 
@@ -87,17 +88,19 @@ namespace Scaling
     offset = t_ScalarFitnessQuantity(0);
     for(; i_indiv != i_end; ++i_indiv, ++i_sum )
     {
+      const t_Individual& indiv  = Modifier::const_innermost( *i_indiv );
       // Finds the offset by which all fitnesses should be shifted
       // to make them negative
-      if ( (const t_ScalarFitnessQuantity& ) i_indiv->fitness() > offset) 
-        offset = (const t_ScalarFitnessQuantity& ) i_indiv->fitness();
+      if ( (const t_ScalarFitnessQuantity& ) indiv.fitness() > offset) 
+        offset = (const t_ScalarFitnessQuantity& ) indiv.fitness();
 
       i_2indiv = i_indiv + 1;
       i_2sum = i_sum + 1;
       *i_sum += t_ScalarFitnessQuantity(1);
       for(; i_2indiv != i_end; ++i_2indiv, ++i_2sum )
       {
-        t_ScalarFitnessQuantity d = sharing(*i_indiv, *i_2indiv);
+        t_ScalarFitnessQuantity d;
+        d = sharing( indiv, Modifier::const_innermost(*i_2indiv)) ;
         (*i_sum)  += d; (*i_2sum) += d;
       }
     }
@@ -116,7 +119,7 @@ namespace Scaling
     typename TPOPULATION :: iterator i_end = _pop.end();
     t_Column :: const_iterator i_sum = sums.begin();
     for(; i_indiv != i_end; ++i_indiv, ++i_sum )
-      i_indiv->set_fitness(*i_sum);
+      Modifier::innermost(*i_indiv).set_fitness(*i_sum);
   }
 
   template<class T_SHARING> template< class TPOPULATION >
@@ -130,15 +133,17 @@ namespace Scaling
     t_Column :: iterator i_2sum;
     for(; i_indiv != i_end; ++i_indiv, ++i_sum )
     {
+      const t_Individual& indiv  = Modifier::const_innermost( *i_indiv );
       i_2indiv = i_indiv + 1;  
       i_2sum = i_sum + 1;
       --(*i_sum);
       for(; i_2indiv != i_end; ++i_2indiv, ++i_2sum )
       {
+        const t_Individual& indiv2  = Modifier::const_innermost( *i_2indiv );
         // minimizes by default -- see objectives.h
-        if     ( i_indiv->fitness()   <  i_2indiv->fitness() )   --(*i_sum);
-        else if( i_2indiv->fitness()  < i_indiv->fitness()   )               --(*i_2sum);
-        else if( i_indiv->fitness()  == i_2indiv->fitness()  ) { --(*i_sum); --(*i_2sum); }
+        if     ( indiv.fitness()   <  indiv2.fitness() )   --(*i_sum);
+        else if( indiv2.fitness()  <  indiv.fitness()  )               --(*i_2sum);
+        else if( indiv.fitness()  ==  indiv2.fitness() ) { --(*i_sum); --(*i_2sum); }
       }
     }
   }
@@ -234,7 +239,7 @@ namespace Scaling
          typename t_Object::const_iterator i_bit2 = _i2.Object().begin();
          typename t_Object::const_iterator i_bit1 = _i1.Object().begin();
          typename t_Object::const_iterator i_bit1_end = _i1.Object().end();
-         t_ScalarFitnessQuantity result;
+         t_ScalarFitnessQuantity result(0);
          for(; i_bit1 != i_bit1_end; ++i_bit1, ++i_bit2 )
            result += std::abs(   t_ScalarFitnessQuantity(*i_bit1) 
                                - t_ScalarFitnessQuantity(*i_bit2) );
@@ -251,11 +256,12 @@ namespace Scaling
          typename t_Object::const_iterator i_bit2 = _i2.Object().begin();
          typename t_Object::const_iterator i_bit1 = _i1.Object().begin();
          typename t_Object::const_iterator i_bit1_end = _i1.Object().end();
-         t_ScalarFitnessQuantity result;
+         t_ScalarFitnessQuantity result(0);
          for(; i_bit1 != i_bit1_end; ++i_bit1, ++i_bit2 )
            result +=  t_ScalarFitnessQuantity(t_SQTraits::equal( *i_bit1, *i_bit2) ? 1: 0);
          return result;
        }
+
   } // namespace Distance
 
 
@@ -297,7 +303,7 @@ namespace Scaling
   {
     if( not _node.Attribute("distance") ) return NULL;
     std::string name = _node.Attribute("distance");
-    if( name != "GeneralHamming" and name != "generalhamming" ) 
+    if( name != "GeneralHamming" or name != "generalhamming" ) 
     {
       typedef Niching< Sharing::Triangular< Distance::GeneralHamming<T_GATRAITS> > > t_Niche;
       t_Niche *result =  new t_Niche;
@@ -306,7 +312,7 @@ namespace Scaling
       return NULL;
     }
 
-    if( name != "Hamming" and name != "hamming" ) return NULL;
+    if( name != "Hamming" or name != "hamming" ) return NULL;
     typedef Niching< Sharing::Triangular< Distance::Hamming<T_GATRAITS> > > t_Niche;
     t_Niche *result =  new t_Niche;
     if ( result and result->Load(_node ) ) return result;

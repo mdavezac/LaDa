@@ -37,15 +37,15 @@ namespace Traits
       const static bool argvec = Dim<T_ARG> :: is_vector;
       const static bool retvec = Dim<T_RET> :: is_vector;
     public:
-      typedef T_ARG                                          t_Container;
-      typedef typename GetScalar<t_Container> :: t_Scalar    t_Type;
-      typedef function :: Base < t_Type, t_Container >       t_Functional;
+      typedef T_ARG                                            t_Container;
+      typedef typename opt::GetScalar<t_Container> :: t_Scalar t_Type;
+      typedef function :: Base < t_Type, t_Container >         t_Functional;
                                                                  
     private:                                                     
-      typedef typename MakeVector<t_Type, argvec> :: t_Vector  t_A1;
+      typedef typename opt::MakeVector<t_Type, argvec> :: t_Vector  t_A1;
 
     public:
-      typedef typename MakeVector<t_A1, retvec> :: t_Vector  t_QuantityGradients;
+      typedef typename opt::MakeVector<t_A1, retvec> :: t_Vector  t_QuantityGradients;
   };
 
   template< class T_OBJECT, class T_CONCENTRATION, class T_FOURIER_RTOK, 
@@ -78,7 +78,7 @@ namespace Traits
      typedef T_POPULATION      t_Population;
      //! \brief Population of Ref'd individuals
      //! \details Allows to aggregate several populations into one. 
-     typedef std::vector< t_Individual* > t_RefdPop; 
+     typedef std::vector< t_Individual* > t_PointerPop; 
      typedef T_ISLANDS         t_Islands;
      typedef typename t_Individual :: t_IndivTraits t_IndivTraits;
      typedef typename t_IndivTraits :: t_Object          t_Object;               
@@ -162,24 +162,44 @@ namespace Traits
     void zero_out ( T_QUANTITY &_q )
       { ZeroOut<T_QUANTITY> dummy( _q ); }
 
+} // namspace Traits
 
-  template< class T_POPULATION > 
-    typename T_POPULATION :: value_type :: t_IndivTraits :: t_RefdPop&
-      aggregate_populations( typename T_POPULATION::value_type::t_IndivTraits::t_RefdPop& _refd,
-                             T_POPULATION& _pop )
-      {
-        if( _pop.size() < 1 ) return _refd;
-        typedef typename T_POPULATION::value_type::t_IndivTraits::t_RefdPop& t_Refd;
-        _refd.insert( _refd.end(), _pop.begin(), _pop.end() );
-        return _refd;
-      }
+namespace GA 
+{
 
-  template< class T_POPULATION > 
-    typename T_POPULATION :: value_type :: t_IndivTraits :: t_RefdPop&
-      aggregate_populations( typename T_POPULATION::value_type::t_IndivTraits::t_RefdPop& _refd,
-                             T_POPULATION& _1, T_POPULATION& _2 )
+    template< class T_POPULATION >
+      class Aggregate
       {
-        return aggregate_populations( aggregate_populations( _refd, _1 ), _2 );
-      }
+        public:
+          typedef T_POPULATION t_Population; //!< Original population type
+        protected:
+          //! \cond
+          typedef typename t_Population :: value_type t_Individual; 
+          typedef typename t_Individual :: t_IndivTraits t_IndivTraits; 
+          //! \endcond
+          //! Aggregate population type
+          typedef typename std::vector< t_Individual* > t_Aggregate;
+
+        protected:
+          t_Aggregate aggregate;
+
+        public:
+          Aggregate() {}; 
+          explicit Aggregate( t_Population &_1, t_Population &_2 )
+            { ( operator<<( _1 ) ) << _2;  }
+
+          Aggregate& operator<<( t_Population &_pop )
+          {
+            if( _pop.size() < 1 ) return *this;
+            typename t_Population :: iterator i_indiv = _pop.begin();
+            typename t_Population :: iterator i_indiv_end = _pop.end();
+            for(; i_indiv != i_indiv_end; ++i_indiv )
+              aggregate.push_back( &(*i_indiv) );
+            return *this;
+          }
+
+          operator t_Aggregate& () { return aggregate; }
+          operator const t_Aggregate& () const { return aggregate; }
+      };
 }
 #endif
