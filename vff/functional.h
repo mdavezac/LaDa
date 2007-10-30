@@ -492,7 +492,13 @@ namespace Vff
       //! \brief Constructor and Initializer
       //! \param _str structure for which to compute energy and stress
       Functional   ( Ising_CE :: Structure &_str )
-                 : structure(_str), structure0(_str), center_of_mass(0,0,0) {};
+                 : structure(_str), structure0(_str),
+                   bond_cutoff(0), center_of_mass(0,0,0) 
+      {
+        centers.reserve(_str.atoms.size());
+        functionals.reserve( _str.atoms.size()); 
+        stress.zero(); strain.zero();
+      };
       //! \brief Copy Constructor
       Functional   ( const Vff::Functional &_c )
                  : function::Base<>( _c ), structure( _c.structure ),

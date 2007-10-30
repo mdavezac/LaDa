@@ -6,6 +6,16 @@
 
 namespace Scaling
 {
+
+// template<class T_GATRAITS> 
+// void Base<T_GATRAITS> :: operator()( typename T_GATRAITS::t_Population& _1,
+//                                      typename T_GATRAITS::t_Population&  _2 )
+// {
+//   typename T_GATRAITS::t_RefdPop refed;
+//   operator()( Traits::aggregate_populations( refed, _1, _2 )); 
+// }
+
+
   template<class T_GATRAITS>
   Container<T_GATRAITS> :: ~Container()
   {
@@ -32,8 +42,8 @@ namespace Scaling
     return  sstr.str();
   }
 
-  template<class T_GATRAITS>
-  inline void Container<T_GATRAITS> :: operator()(t_Population &_pop)
+  template<class T_GATRAITS> template<class TPOPULATION >
+  inline void Container<T_GATRAITS> :: _operator_( TPOPULATION &_pop)
   {
     typename t_Container :: iterator i_ranking = rankers.begin();
     typename t_Container :: iterator i_end = rankers.end();
@@ -50,28 +60,28 @@ namespace Scaling
    }
 
 
-  template<class T_SHARING>
-  void Niching<T_SHARING> :: operator()(t_Population& _pop)
+  template<class T_SHARING> template<class TPOPULATION >
+  inline void Niching<T_SHARING> :: _operator_( TPOPULATION &_pop)
   {
     map( _pop );
 
     typename t_Population :: iterator i_indiv = _pop.begin();
     typename t_Population :: iterator i_end = _pop.end();
     typename t_Column :: const_iterator i_sum = sums.begin();
-    for(; i_indiv != i_end; ++i_indiv );
+    for(; i_indiv != i_end; ++i_indiv )
     {
       t_ScalarFitness& fitness = i_indiv->fitness();
       fitness = ( ( (t_ScalarFitnessQuantity&) fitness ) - offset ) / *i_sum;
     }
   }
 
-  template<class T_SHARING>
-  void Niching<T_SHARING> :: map(const t_Population &_pop)
+  template<class T_SHARING> template< class TPOPULATION >
+  void Niching<T_SHARING> :: map(const TPOPULATION &_pop)
   {
     sums.clear(); sums.resize( _pop.size(), t_ScalarFitnessQuantity(0) );
-    typename t_Population :: const_iterator i_2indiv;
-    typename t_Population :: const_iterator i_indiv = _pop.begin();
-    typename t_Population :: const_iterator i_end = _pop.end();
+    typename TPOPULATION :: const_iterator i_2indiv;
+    typename TPOPULATION :: const_iterator i_indiv = _pop.begin();
+    typename TPOPULATION :: const_iterator i_end = _pop.end();
     typename t_Column :: iterator i_sum = sums.begin();
     typename t_Column :: iterator i_2sum;
     offset = t_ScalarFitnessQuantity(0);
@@ -97,25 +107,25 @@ namespace Scaling
       offset = t_ScalarFitnessQuantity(0);
   }
 
-  template<class T_SHARING>
-  void ParetoRanking<T_SHARING> :: operator()(t_Population& _pop)
+  template<class T_SHARING> template< class TPOPULATION >
+  inline void ParetoRanking<T_SHARING> :: _operator_( TPOPULATION & _pop)
   {
     map( _pop );
 
-    typename t_Population :: iterator i_indiv = _pop.begin();
-    typename t_Population :: iterator i_end = _pop.end();
-    typename t_Column :: const_iterator i_sum = sums.begin();
-    for(; i_indiv != i_end; ++i_indiv );
-      i_indiv->set_fitness( (t_ScalarFitnessQuantity)*i_sum );
+    typename TPOPULATION :: iterator i_indiv = _pop.begin();
+    typename TPOPULATION :: iterator i_end = _pop.end();
+    t_Column :: const_iterator i_sum = sums.begin();
+    for(; i_indiv != i_end; ++i_indiv, ++i_sum )
+      i_indiv->set_fitness(*i_sum);
   }
 
-  template<class T_SHARING>
-  void ParetoRanking<T_SHARING> :: map(const t_Population &_pop)
+  template<class T_SHARING> template< class TPOPULATION >
+  void ParetoRanking<T_SHARING> :: map(const TPOPULATION &_pop)
   {
     sums.clear(); sums.resize( _pop.size(), 0 );
-    typename t_Population :: const_iterator i_2indiv;
-    typename t_Population :: const_iterator i_indiv = _pop.begin();
-    typename t_Population :: const_iterator i_end = _pop.end();
+    typename TPOPULATION :: const_iterator i_2indiv;
+    typename TPOPULATION :: const_iterator i_indiv = _pop.begin();
+    typename TPOPULATION :: const_iterator i_end = _pop.end();
     t_Column :: iterator i_sum = sums.begin();
     t_Column :: iterator i_2sum;
     for(; i_indiv != i_end; ++i_indiv, ++i_sum )
@@ -126,8 +136,8 @@ namespace Scaling
       for(; i_2indiv != i_end; ++i_2indiv, ++i_2sum )
       {
         // minimizes by default -- see objectives.h
-        if     ( i_indiv->fitness()   >  i_2indiv->fitness() )   --(*i_sum);
-        else if( i_2indiv->fitness()  > i_indiv->fitness()   )               --(*i_2sum);
+        if     ( i_indiv->fitness()   <  i_2indiv->fitness() )   --(*i_sum);
+        else if( i_2indiv->fitness()  < i_indiv->fitness()   )               --(*i_2sum);
         else if( i_indiv->fitness()  == i_2indiv->fitness()  ) { --(*i_sum); --(*i_2sum); }
       }
     }

@@ -90,9 +90,12 @@ namespace Fitness
       //! Constructor
       Scalar() : is_valid( false )  {}
       //! Copy Constructor
-      Scalar( const t_This & _c ) : quantity( _c.quantity ), is_valid( _c.is_valid ) {}
+      explicit Scalar   ( const t_This & _c )
+                      : quantity( _c.quantity ), 
+                        is_valid( _c.is_valid ) {}
       //! Constructor and Initializer
-      Scalar( const t_Quantity _fit ) : quantity( _fit ), is_valid( true ) {}
+      void operator=( const t_Quantity _fit ) 
+        { quantity = _fit; is_valid = true; }
       //! Destructor
       ~Scalar() {}
 
@@ -122,7 +125,7 @@ namespace Fitness
         { return t_QuantityTraits::equal(quantity, _f.quantity); }
 
       //! \brief returns true if the fitness is not valid
-      bool invalid() const { return not is_valid; }
+      bool invalid() const { return not ( (bool) is_valid ); }
       //! \brief invalidates the fitness
       void invalidate() { is_valid = false; }
       //! \brief returns a constant copy of the quantity
@@ -141,17 +144,6 @@ namespace Fitness
       bool broadcast( mpi::BroadCast &_bc );
 #endif 
   };
-
-  //! Dumps fitness to a stream
-  template<class T_QUANTITYTRAITS>
-  std::istream & operator>>( std::istream &_is,
-                             const Scalar<T_QUANTITYTRAITS> &_fit );
-  
-  //! Retrieves fitness from a stream
-  template<class T_QUANTITYTRAITS>
-  std::ostream & operator<<( std::ostream &_os,
-                             Scalar<T_QUANTITYTRAITS> &_fit );
-
 
 
   /** \brief %Base class for <em>vectorial</em> fitnesses
@@ -209,22 +201,22 @@ namespace Fitness
       //! \details Only applies to the vectorial Fitness::Scalar::quantity, and
       //! not to the scalar t_Base::quantity. One may be set when the other is
       //! not. Indeed, in some schemes, the scalar quantity may  never be set.
-      bool is_valid;
+      bool vec_is_valid;
       //! \brief Quantities against which all may be judged
       //! \details This is a <strong>vectorial</strong> quantity.
       //! t_Base::quantity is a <strong>scalar</strong> quantity.
-      t_Quantity quantity;
+      t_Quantity vec_quantity;
 
     public:
       //! Constructor
-      Vectorial() : is_valid( false )  {}
+      Vectorial() : vec_is_valid( false )  {}
       //! Copy Constructor
-      Vectorial   ( const t_This & _c )
-           : t_Base(_c), is_valid( _c.is_valid ),
-             quantity( _c.quantity ) {}
+      explicit Vectorial   ( const t_This & _c )
+                         : t_Base(_c), vec_is_valid( _c.vec_is_valid ),
+                           vec_quantity( _c.vec_quantity ) {}
       //! Constructor and Initializer
-      Vectorial   ( const t_Quantity &_fit )
-           : t_Base(), is_valid( true ), quantity( _fit ) {}
+      void operator=( const t_Quantity &_fit )
+        { vec_is_valid = true; vec_quantity = _fit; }
       //! \brief Copy constructor which only sets the scalar fitness.
       //! \details Nothing is done about member variables of this class. This
       //!          is meant to be a copy operator for the scalar fitness only.
@@ -270,9 +262,9 @@ namespace Fitness
       bool operator==(const t_This & _f) const;
 
       //! \brief returns true if the (vectorial) fitness is not valid
-      bool invalid() const { return not is_valid; }
+      bool invalid() const { return not ( (bool) vec_is_valid ); }
       //! \brief invalidates the (vectorial) fitness
-      void invalidate() { is_valid = false; }
+      void invalidate() { vec_is_valid = false; }
       //! \brief returns a constant reference of the vectorial quantity
       operator const t_Quantity& () const;
       //! \brief Loads the fitenss from XML
@@ -281,10 +273,10 @@ namespace Fitness
       bool Save( TiXmlElement & _node ) const;
 
       //! \brief clears the quantity
-      void clear() { quantity.clear(); is_valid = false; }
+      void clear() { vec_quantity.clear(); vec_is_valid = false; }
       //! \brief adds a component to the vectorial quantity
       void push_back( typename t_Quantity :: value_type  _var )
-        { quantity.push_back( _var ); is_valid = true; }
+        { vec_quantity.push_back( _var ); vec_is_valid = true; }
 #ifdef _MPI
       /** \ingroup MPI
        * \brief allows the serialization of a Fitness::Vectorial object.
@@ -333,6 +325,18 @@ namespace Fitness
     typedef Scalar<T_QUANTITYTRAITS> Scalar; //!< A scalar fitness
   };
 
+
+  //! Dumps fitness to a stream
+  template<class T_QUANTITYTRAITS>
+  std::istream & operator>>( std::istream &_is,
+                             Scalar<T_QUANTITYTRAITS> &_fit );
+  
+  //! Retrieves fitness from a stream
+  template<class T_QUANTITYTRAITS>
+  std::ostream & operator<<( std::ostream &_os,
+                             Scalar<T_QUANTITYTRAITS> &_fit );
+
+
   //! Dumps \e vectorial fitness to a stream
   template<class T_QUANTITYTRAITS>
     std::istream & operator>>( std::istream &_is,
@@ -342,7 +346,6 @@ namespace Fitness
   template<class T_QUANTITYTRAITS>
     std::ostream & operator<<( std::ostream &_os,
                                const Vectorial<T_QUANTITYTRAITS> &_fit );
-
 }
 
 #include "fitness.impl.h"

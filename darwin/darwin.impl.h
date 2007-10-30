@@ -197,7 +197,7 @@ namespace GA
     {
       Print::xmg << Print::Xmg::comment << "Offspring Taboo" << Print::endl;
       OffspringTaboo<t_GATraits> *offspringtaboo 
-         = new OffspringTaboo<t_GATraits>( &offsprings );
+         = new OffspringTaboo<t_GATraits>( &offspring );
       eostates.storeFunctor(offspringtaboo);
       static_cast< Taboos<t_Individual>* >(taboos)->add( offspringtaboo );
     }
@@ -323,6 +323,12 @@ namespace GA
         Print::xmg << Print::Xmg::comment
                    << "Statistics: Average Fitness" << Print::endl;
       }
+      else if( name.compare("AverageQuantity") == 0 )
+      {
+        continuator->add( eostates.storeFunctor( new AverageQuantities< t_GATraits >() ) );
+        Print::xmg << Print::Xmg::comment
+                   << "Statistics: Average Quantity " << Print::endl;
+      }
     }
 
     // Creates Terminators
@@ -381,7 +387,7 @@ namespace GA
         continuator->add( eostates.storeFunctor( new PrintFitness< t_GATraits >
                                                                  ( generation_counter ) ) );
         Print::xmg << Print::Xmg::comment
-                   << "Print: offsprings" << Print::endl;
+                   << "Print: offspring" << Print::endl;
       }
       else if( name.compare("pop") == 0 )
       {
@@ -860,10 +866,10 @@ namespace GA
     eoPop<t_Individual> dummy2;
     evaluator.presubmit(dummy);
     if ( dummy.empty() ) return;
-    offsprings.resize( dummy.size() );
-    std::copy( dummy.begin(), dummy.end(), offsprings.begin() );
-    (*evaluation)(dummy2, offsprings);
-    offsprings.clear();
+    offspring.resize( dummy.size() );
+    std::copy( dummy.begin(), dummy.end(), offspring.begin() );
+    (*evaluation)(dummy2, offspring);
+    offspring.clear();
   }
 
   template<class T_EVALUATOR>
@@ -888,19 +894,18 @@ namespace GA
     Print::out << "\nCreating population" << Print::endl;
 
     populate();
-    offsprings.clear();
+    offspring.clear();
     typename t_Islands :: iterator i_island_begin = islands.begin();
     typename t_Islands :: iterator i_island_end = islands.end();
     typename t_Islands :: iterator i_island;
     Print::out << "\nEvaluating starting population" << Print::endl;
     for ( i_island = i_island_begin; i_island != i_island_end; ++i_island )
     {
-      (*evaluation)(offsprings, *i_island); // A first eval of pop.
+      (*evaluation)(offspring, *i_island); // A first eval of pop.
 #ifdef _MPI // "All Gather" new population
-      breeder->synchronize_offsprings( *i_island );
+      breeder->synchronize_offspring( *i_island );
       if(history) history->synchronize();
 #endif 
-      if( scaling )(*scaling)( *i_island );
     }
     types::t_unsigned n = 0;
 
@@ -917,29 +922,23 @@ namespace GA
         {
 
           types::t_unsigned pSize = i_island->size();
-          offsprings.clear(); // new offsprings
+          offspring.clear(); // new offspring
           
-          (*breeder)(*i_island, offsprings);
+          if( scaling ) (*scaling)( *i_island );
           
-          (*evaluation)(*i_island, offsprings); // eval of parents + offsprings if necessary
+          (*breeder)(*i_island, offspring);
+          
+          (*evaluation)(*i_island, offspring); // eval of parents + offspring if necessary
 
-#ifdef _MPI // "All Gather" offsprings -- note that replacement scheme is deterministic!!
-          breeder->synchronize_offsprings( offsprings );
+
+#ifdef _MPI // "All Gather" offspring -- note that replacement scheme is deterministic!!
+          breeder->synchronize_offspring( offspring );
           if(history) history->synchronize();
 #endif 
-          if( scaling )(*scaling)( *i_island );
-         
-          (*replacement)(*i_island, offsprings); // after replace, the new pop. is in population
+//         // Does scaling simultaneously over both populations
+//         if( scaling ) (*scaling)( *i_island, offspring )
 
-//#ifdef _DEBUG
-//        std::sort( i_island->begin(), i_island->end() );
-//        typename t_Population :: const_iterator i_indiv = i_island->begin();
-//        typename t_Population :: const_iterator i_indiv_end = i_island->end();
-//        Print::out << "Current Population\n";
-//        for(; i_indiv != i_indiv_end; ++i_indiv)
-//          Print::out << *i_indiv << " " << i_indiv->fitness() << "\n";
-//#endif
-
+          (*replacement)(*i_island, offspring); // after replace, the new pop. is in population
           
           if (pSize > i_island->size())
               throw std::runtime_error("Population shrinking!");

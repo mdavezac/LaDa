@@ -67,7 +67,6 @@ namespace Molecularity
     types::t_real norm = atat::norm2(_dir);
     types::t_real trace = _stress(0,0) + _stress(1,1) + _stress(2,2);
     types::t_real axial = (_dir * (_stress * _dir) ) / norm;
-    std::cout << "trace " << trace << "  axial " << axial << std::endl;
     return ( trace - axial ) * 0.5;
   }
 
@@ -75,7 +74,7 @@ namespace Molecularity
 
   inline std::ostream& operator<<(std::ostream &_stream, const Object &_o)
   {
-    return _stream << (const Layered::Object<>&) _o << " " 
+    return _stream << (const Layered::Object<>&) _o << " "
                    << (const Pescan::Keeper&)  _o << " ";
   }
 } // namespace Molecularity

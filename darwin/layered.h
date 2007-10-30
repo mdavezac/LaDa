@@ -63,7 +63,7 @@ namespace Layered
       typedef BitString :: Object<T_CONTAINER> t_Base;
 
     public:
-      Object() {}
+      Object() : t_Base() {}
       Object(const Object &_c) : t_Base(_c) {};
       Object(const t_Container &_c) : t_Base(_c) {};
       ~Object() {};

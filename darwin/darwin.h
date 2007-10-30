@@ -192,7 +192,7 @@ namespace GA
       //! holds a collection of independent populations
       t_Islands     islands;
       //! Offspring population
-      t_Population  offsprings;
+      t_Population  offspring;
       
       //! \brief Contains most, if not all, pointers allocated in Darwin. 
       //! \details Is an EO benefit. Basically takes care of deallocating all

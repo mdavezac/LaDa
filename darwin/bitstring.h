@@ -36,7 +36,7 @@ namespace BitString
       t_Container bitstring;
 
     public:
-      Object() {}
+      Object()  { bitstring.reserve(0); }
       Object(const Object &_c) : bitstring(_c.bitstring) {};
       Object(const t_Container &_c) : bitstring(_c) {};
       ~Object() {};

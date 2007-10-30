@@ -57,12 +57,34 @@ namespace GA
       virtual ~AverageFitness() {} //!< Destructor
       //! Name of the class, EO requirement
       virtual std::string className(void) const { return "GA::TrueCensus"; }
-      //! \brief Functor which counts the number of unique individuals in a population \a _pop
-      //! \details Results are printed out on Print::xmg as a comment
+      //! Computes the average \e scalar fitness over the currrent population.
       virtual void operator()( const t_Population &_pop );
   };
   
 
+  //! \brief Prints average quantity over the current population 
+  //! \details Repeat. This is the average of the \e scalar quantities in the
+  //!          case of single-objective %GA, and of vectorial quantities in the
+  //!          case of multi-objective %GA.
+  template< class T_GATRAITS>
+  class AverageQuantities : public eoStatBase< typename T_GATRAITS :: t_Individual >
+  {
+    public:
+      typedef T_GATRAITS t_GATraits; //!< Contains all %GA types
+    protected:
+      typedef typename t_GATraits::t_Population t_Population; //!< Population type
+      typedef typename t_GATraits::t_Individual t_Individual; //!< Individual type
+      typedef typename t_GATraits::t_Object t_Object; //!< Object type
+      
+    public:
+      AverageQuantities () {} //!< Constructor
+      virtual ~AverageQuantities() {} //!< Destructor
+      //! Name of the class, EO requirement
+      virtual std::string className(void) const { return "GA::TrueCensus"; }
+      //! Computes the average quantity (-ies) over the currrent population.
+      virtual void operator()( const t_Population &_pop );
+  };
+  
 
 
   template< class T_GATRAITS>
@@ -103,6 +125,29 @@ namespace GA
     
     average /= (t_S) _pop.size();
     Print::out << "Average Fitness: " << average << "\n\n";
+  }
+
+
+  template< class T_GATRAITS>
+  inline void AverageQuantities<T_GATRAITS> :: operator()( const t_Population &_pop )
+  {
+    typename t_Population :: const_iterator i_indiv = _pop.begin();
+    typename t_Population :: const_iterator i_indiv_end = _pop.end();
+    types::t_unsigned N = _pop.size();
+    
+    typedef typename t_GATraits :: t_QuantityTraits :: t_Quantity t_V;
+    typedef typename t_GATraits :: t_QuantityTraits :: t_ScalarQuantity t_S;
+    t_V average;
+    average.resize( i_indiv->const_quantities().size() );
+    Traits::zero_out( average );
+    for( ; i_indiv != i_indiv_end; ++i_indiv )
+      Traits::sum( average,  i_indiv->const_quantities() );
+    
+    std::transform( average.begin(), average.end(), average.begin(),
+                    std::bind2nd( std::divides<t_S>(), (t_S) _pop.size() ) );
+    Print::out << "Average Quantity: "
+               <<  Traits::Quantity<t_V>::print( average )
+               << "\n\n";
   }
 }
   

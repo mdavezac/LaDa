@@ -8,6 +8,7 @@
 #include <config.h>
 #endif
 
+#include "gatraits.h"
 #include <tinyxml/tinyxml.h>
 
 #include <opt/types.h>
@@ -40,6 +41,14 @@ namespace Scaling
     public:
     //! Should return a string defining the scaling operation
     virtual std::string what_is() const = 0;
+
+    //! \brief Same scaling but for a "refed" pop
+    //! \details Allows the simultaneous scaling off any number of aggregated
+    //!          populations. 
+    virtual void operator()( typename T_GATRAITS::t_RefdPop& ) = 0;
+//   //! Aggregates two populations and scales them.
+//   void operator()( typename T_GATRAITS::t_Population& _1,
+//                    typename T_GATRAITS::t_Population&  _2 );
   };
 
   //! Returns a scaling from an XML input
@@ -96,13 +105,25 @@ namespace Scaling
         //! \details It is now your job to delete the returned pointer
         Base<t_GATraits>* pop_front(); 
         //! Applies each Scaling object in turn
-        void operator()( t_Population & _pop );
+        void operator()( t_Population & _pop )
+          { _operator_(_pop); }
+        //! Applies each Scaling object in turn
+        void operator()( typename T_GATRAITS::t_RefdPop& _pop )
+          { _operator_(_pop); }
 
         //! Returns the number of stored Scaling pointers
         types::t_unsigned size() const { return rankers.size(); }
 
         //! Returns a string defining each stored Scaling object
         virtual std::string what_is() const;
+
+      protected:
+        //! \brief Actually applies the scaling...
+        //! \details The templated version allows us to write only
+        //!          implementation  for both a \e real, \e single population,
+        //!          and a \e ref'd, agreggated population.
+        template< class TPOPULATION >
+        void _operator_( TPOPULATION &_pop );
     };
 
     /** \brief Defines a Niching operation \f$\mathcal{F}(\sigma)
@@ -185,7 +206,12 @@ namespace Scaling
   
       //! Scales down the fitness of each individuals in \a _pop according to
       //! its closeness to other individuals
-      void operator()(t_Population& _pop);
+      void operator()(t_Population& _pop)
+        { _operator_(_pop); }
+      //! Scales down the fitness of each individuals in \a _pop according to
+      //! its closeness to other individuals
+      void operator()( typename t_GATraits::t_RefdPop& _pop)
+        { _operator_(_pop); }
       //! Loads the sharing operator from XML
       bool Load( const TiXmlElement &_node )
         { return sharing.Load(_node); }
@@ -195,10 +221,17 @@ namespace Scaling
 
 
     protected:
+      //! \brief Actually applies the scaling...
+      //! \details The templated version allows us to write only
+      //!          implementation  for both a \e real, \e single population,
+      //!          and a \e ref'd, agreggated population.
+      template< class TPOPULATION >
+      void _operator_( TPOPULATION &_pop );
       //! \brief Computes the vector \f$\sum_j\mathcal{S}(\sigma_i, \sigma_j)\f$
       //! \details \f$\mathcal{S}(\sigma_i, \sigma_i)\f$ automatically defaults
       //!         to 1.
-      void map(const t_Population &_pop);
+      template< class TPOPULATION >
+      void map(const TPOPULATION &_pop);
   };
 
   /** \brief Ranks individuals according to how dominating they are
@@ -251,7 +284,7 @@ namespace Scaling
       typedef typename t_ScalarFitness :: t_Quantity t_ScalarFitnessQuantity;
       //! An internal type which holds the number of individuals each
       //! individual dominates
-      typedef std::vector< types::t_unsigned >       t_Column;
+      typedef std::vector< types::t_int >       t_Column;
 
     protected:
       /** The vector \f$\sum_j\mathcal{F}^v(\sigma) \succeq
@@ -272,7 +305,13 @@ namespace Scaling
       /** Sets the scalar fitnes to the number of dominated individual,
           \f$ \mathcal{F}(\sigma) = \sum_j\mathcal{F}^v(\sigma) \succeq
               \mathcal{F}^v(\sigma_j)\ ?\ -1 :\ 0 \f$ */
-      void operator()(t_Population& _pop);
+      void operator()(t_Population& _pop)
+        { _operator_(_pop); }
+      /** Sets the scalar fitnes to the number of dominated individual,
+          \f$ \mathcal{F}(\sigma) = \sum_j\mathcal{F}^v(\sigma) \succeq
+              \mathcal{F}^v(\sigma_j)\ ?\ -1 :\ 0 \f$ */
+      void operator()( typename t_GATraits::t_RefdPop& _pop)
+        { _operator_(_pop); }
 
       //! Does nothing
       bool Load( const TiXmlElement &_node )  { return true; }
@@ -281,9 +320,16 @@ namespace Scaling
         { return "Ranking::Pareto"; }
      
     protected:
+      //! \brief Actually applies the scaling...
+      //! \details The templated version allows us to write only
+      //!          implementation  for both a \e real, \e single population,
+      //!          and a \e ref'd, agreggated population.
+      template< class TPOPULATION >
+      void _operator_( TPOPULATION &_pop );
       /** \brief Computes the vector \f$\sum_j\mathcal{F}^v(\sigma) \succeq
           \mathcal{F}^v(\sigma_j)\ ?\ -1 :\ 0  \f$ */
-      void map(const t_Population &_pop);
+      template< class TPOPULATION >
+      void map(const TPOPULATION &_pop);
   };
 
 

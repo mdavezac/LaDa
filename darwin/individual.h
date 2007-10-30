@@ -124,7 +124,7 @@ namespace Individual
       //! individuals do not go through the cracks to become part of the
       //! population with unitialized fitness.
       //! \sa Fitness::Base::invalid, Evaluation
-      bool invalid() const { return repFitness.invalid(); }
+      bool invalid() const { return (bool) repFitness.invalid(); }
       //! \brief Invalidates current fitness
       //! \details Helps to keep track of which individuals have been evaluated
       //! already, so that evaluation is not done twice, and that unevaluated
@@ -182,6 +182,7 @@ namespace Individual
       t_Fitness& fitness()  { return repFitness; }
       //! Returns a constant reference to Base::repFitness
       const t_Fitness& fitness() const;
+      const t_Fitness& const_fitness() const { return fitness(); }
       //! Sets the fitness using a t_Fitness
       void set_fitness( const t_Fitness &_q ) { repFitness = _q; }
       //! Sets the fitness using a t_Quantity

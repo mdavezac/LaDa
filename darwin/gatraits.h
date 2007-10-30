@@ -76,6 +76,9 @@ namespace Traits
      typedef T_EVALUATOR   t_Evaluator;
      typedef typename t_Evaluator :: t_Individual   t_Individual;
      typedef T_POPULATION      t_Population;
+     //! \brief Population of Ref'd individuals
+     //! \details Allows to aggregate several populations into one. 
+     typedef std::vector< t_Individual* > t_RefdPop; 
      typedef T_ISLANDS         t_Islands;
      typedef typename t_Individual :: t_IndivTraits t_IndivTraits;
      typedef typename t_IndivTraits :: t_Object          t_Object;               
@@ -90,27 +93,93 @@ namespace Traits
      const static bool is_vector = t_QuantityTraits :: is_vector;
   };
   
-
-    template< class T_CONTAINER >
-      void zero_out( T_CONTAINER &_cont )
+    template< class T_QUANTITY,
+              bool is_scalar = Dim< T_QUANTITY > :: is_vector >
+      struct SumThem
       {
-        size_t size = _cont.size();
-        if ( not size ) return;
-        typename T_CONTAINER :: iterator i_first = _cont.begin();
-        typename T_CONTAINER :: iterator i_end = _cont.end();
-        for(; i_first != i_end; ++i_first)
-          zero_out( *i_first );
-      }
-    template<> inline void zero_out<types::t_real>( types::t_real &_cont )
-      { _cont = types::t_real(0);  }
-    template<> inline void zero_out<types::t_int>( types::t_int &_cont )
-      { _cont = types::t_int(0);  }
-    template<> inline void zero_out<types::t_unsigned>( types::t_unsigned &_cont )
-      { _cont = types::t_unsigned(0);  }
-    template<> inline void zero_out<bool>( bool &_cont )
-      { _cont = false;  }
-    template<> inline void zero_out<std::string>( std::string &_cont )
-      { _cont = "";  }
+        explicit
+        SumThem( T_QUANTITY &_1, const T_QUANTITY &_2 )
+        {
+          size_t size1 = _1.size();
+          size_t size2 = _2.size();
+          if ( size1 == 0 or size2 == 0 ) return;
+          if ( size1 != size2 ) return;
+        
+          typename T_QUANTITY :: iterator i_first = _1.begin();
+          typename T_QUANTITY :: const_iterator i_second = _2.begin();
+          typename T_QUANTITY :: iterator i_end = _1.end();
+          for(; i_first != i_end; ++i_first, ++i_second)
+            sum( *i_first, *i_second );
+        }
+      };
+    template< class T_QUANTITY >
+      struct SumThem<T_QUANTITY, false>
+      {
+        explicit
+        SumThem( T_QUANTITY &_1, const T_QUANTITY &_2 )
+        { _1 = _1 + _2; }
+      };
+    template<> struct SumThem< std::string >
+    {
+      explicit
+      SumThem( std::string &_1, const std::string &_2 )
+        { _1 = _1 + _2; }
+    };
+    template< class T_QUANTITY >
+    void sum( T_QUANTITY& _1, const T_QUANTITY &_2 )
+      { SumThem<T_QUANTITY> dummy( _1, _2 ); }
 
+    template< class T_QUANTITY,
+              bool is_scalar = Dim< T_QUANTITY > :: is_vector >
+      struct ZeroOut
+      {
+        explicit
+        ZeroOut( T_QUANTITY &_cont )
+        {
+          size_t size = _cont.size();
+          if ( not size ) return;
+          typename T_QUANTITY :: iterator i_first = _cont.begin();
+          typename T_QUANTITY :: iterator i_end = _cont.end();
+          for(; i_first != i_end; ++i_first)
+            zero_out( *i_first );
+        }
+      };
+    template< class T_QUANTITY >
+      struct ZeroOut<T_QUANTITY, false>
+      {
+        explicit
+        ZeroOut( T_QUANTITY &_cont )
+          { _cont = T_QUANTITY(0);  }
+      };
+    template<> struct ZeroOut<std::string>
+      {
+        explicit
+        ZeroOut( std::string &_cont )
+          { _cont = "";  }
+      };
+
+    template< class T_QUANTITY >
+    void zero_out ( T_QUANTITY &_q )
+      { ZeroOut<T_QUANTITY> dummy( _q ); }
+
+
+  template< class T_POPULATION > 
+    typename T_POPULATION :: value_type :: t_IndivTraits :: t_RefdPop&
+      aggregate_populations( typename T_POPULATION::value_type::t_IndivTraits::t_RefdPop& _refd,
+                             T_POPULATION& _pop )
+      {
+        if( _pop.size() < 1 ) return _refd;
+        typedef typename T_POPULATION::value_type::t_IndivTraits::t_RefdPop& t_Refd;
+        _refd.insert( _refd.end(), _pop.begin(), _pop.end() );
+        return _refd;
+      }
+
+  template< class T_POPULATION > 
+    typename T_POPULATION :: value_type :: t_IndivTraits :: t_RefdPop&
+      aggregate_populations( typename T_POPULATION::value_type::t_IndivTraits::t_RefdPop& _refd,
+                             T_POPULATION& _1, T_POPULATION& _2 )
+      {
+        return aggregate_populations( aggregate_populations( _refd, _1 ), _2 );
+      }
 }
 #endif

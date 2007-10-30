@@ -80,7 +80,7 @@ namespace GA
       //! under the nose of  a Breeeder instance. Used by GA::NuclearWinter.
       //! \todo remove this dirty hack
       eoHowMany** get_howmany_address()  { return &howMany; }
-      //! \brief sets the ratio of offsprings to create (w.r.t. main population)
+      //! \brief sets the ratio of offspring to create (w.r.t. main population)
       void set_howmany(types::t_real _rate);
      
       ///! The class name. EO required
@@ -92,7 +92,7 @@ namespace GA
        *  \details Symply does an mpi::AllGather on the individuals of \a _pop
        *  \see used in GA::Darwin::run
        */
-      void synchronize_offsprings( t_Population &_pop );
+      void synchronize_offspring( t_Population &_pop );
 #endif 
   };
 
@@ -129,7 +129,7 @@ namespace GA
 
 #ifdef _MPI 
   template<class T_GATRAITS>
-  inline void Breeder<T_GATRAITS> :: synchronize_offsprings( t_Population &_pop )
+  inline void Breeder<T_GATRAITS> :: synchronize_offspring( t_Population &_pop )
   {
     mpi::AllGather allgather( mpi::main );
     typename t_Population::iterator i_indiv = _pop.begin();

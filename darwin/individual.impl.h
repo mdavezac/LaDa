@@ -28,7 +28,7 @@ namespace Individual
   template<class T_INDIVTRAITS>
   const typename Base<T_INDIVTRAITS> :: t_Fitness& Base<T_INDIVTRAITS> :: fitness() const
   {
-     if ( invalid() )
+     if ( (bool) invalid() )
        throw std::runtime_error("invalid fitness\n");
      return repFitness;
   }

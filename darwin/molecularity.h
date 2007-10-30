@@ -49,7 +49,7 @@ namespace Molecularity
       typedef t_LayeredBase :: t_Container t_Container;
 
     public:
-      Object() {}
+      Object() : t_LayeredBase(), t_VffBase(), t_PescanBase() {}
       Object(const Object &_c) : t_LayeredBase(_c), t_VffBase(_c), t_PescanBase(_c) {};
       ~Object() {};
       

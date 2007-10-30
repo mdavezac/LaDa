@@ -44,7 +44,7 @@ namespace Vff
     atat::rMatrix3d stress; //!< The stress computed by %Vff.
 
     //! Constructor
-    Keeper() : energy(0), stress() {}
+    Keeper() : energy(0) { stress.zero(); }
     //! Copy Constructor
     Keeper(const Keeper &_c) : energy(_c.energy), stress(_c.stress) {};
     //! Destructor
