@@ -58,7 +58,7 @@ namespace BandGap
 
   void Evaluator::evaluate()
   {
-    concentration.set( *current_object );
+    concentration.get( *current_object );
     current_object->x = concentration.x;
     current_object->y = concentration.y;
     // relax structure

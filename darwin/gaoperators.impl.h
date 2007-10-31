@@ -290,7 +290,7 @@ errorout:
   template< class T_INDIVIDUAL >
   bool xTaboo<T_INDIVIDUAL> :: operator()( const t_Individual& _indiv ) const
   {
-    concentration.set( _indiv.Object() );
+    concentration.get( _indiv.Object() );
     return concentration.x < lessthan and concentration.x > morethan;
   }
   template< class T_INDIVIDUAL >

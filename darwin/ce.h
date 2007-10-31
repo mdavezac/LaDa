@@ -81,7 +81,7 @@ namespace CE
       bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
       bool Load( const TiXmlElement &_node );
       void* Load_Niche( const TiXmlElement &_node )
-        { return (void *) SingleSite::new_Niche_from_xml<t_GATraits, 1>( _node ); }
+        { return (void *) SingleSite::new_Niche_from_xml<t_GATraits, 1>( _node, concentration ); }
 
       void init( t_Individual &_indiv )
         { t_Base :: init( _indiv ); functional.set_variables( &_indiv.Object().bitstring ); }

@@ -100,8 +100,8 @@ namespace Layered
 
       void operator()( Ising_CE::Structure &_str );
       template<class T_CONT> void operator()( BitString::Object<T_CONT> &_obj );
-      void set( const Ising_CE::Structure &_str);
-      template<class T_CONT> void set( const BitString::Object<T_CONT> &_obj );
+      void get( const Ising_CE::Structure &_str);
+      template<class T_CONT> void get( const BitString::Object<T_CONT> &_obj );
       void setfrozen ( const Ising_CE::Structure &_str );
 
       std::string print() const;

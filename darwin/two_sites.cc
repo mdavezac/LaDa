@@ -133,7 +133,7 @@ namespace TwoSites
   void Concentration :: operator()( Object &_obj )
   {
     // computes concentrations first
-    set( _obj );
+    get( _obj );
     if( not single_c )
     {
       x0 = x; y0 = y;
@@ -248,7 +248,7 @@ endofloop:
 // #endif
   }
 
-  void Concentration :: set( const Ising_CE::Structure &_str)
+  void Concentration :: get( const Ising_CE::Structure &_str)
   {
     Ising_CE::Structure::t_Atoms :: const_iterator i_atom = _str.atoms.begin();
     Ising_CE::Structure::t_Atoms :: const_iterator i_atom_end = _str.atoms.end();
@@ -260,7 +260,7 @@ endofloop:
     y /= (types::t_real) Ny;
   }
 
-  void Concentration :: set( const Object &_obj )
+  void Concentration :: get( const Object &_obj )
   {
     if ( sites.size() != _obj.bitstring.size() ) return;
 

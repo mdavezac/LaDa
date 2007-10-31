@@ -64,6 +64,13 @@ namespace Traits
    struct Dim<bool> { const static bool is_scalar = true;   //!< \a IS_SCALAR is a scalar
                       const static bool is_vector = false;  //!< \a IS_SCALAR is not a vector
    };
+  //! Specialize version of Dim for constant types
+  template<class T_QUANTITY>
+   struct Dim<const T_QUANTITY>
+   {
+     const static bool is_scalar = Dim<T_QUANTITY>::is_scalar;  //!< \a IS_SCALAR is a scalar
+     const static bool is_vector = Dim<T_QUANTITY>::is_vector; //!< \a IS_SCALAR is not a vector
+   };
 
 } // namespace Traits
 
@@ -235,8 +242,8 @@ namespace Traits
           { return Pointer<T_QUANTITY> :: _innermost(_ptr); }
     
     template< class T_QUANTITY > 
-      typename Reference<typename Pointer<T_QUANTITY> :: t_innermost> :: t_refd
-        inline const_innermost( T_QUANTITY &_ptr )
+      typename Reference<const typename Pointer<T_QUANTITY> :: t_innermost> :: t_refd
+        inline const_innermost(const T_QUANTITY &_ptr )
           { return Pointer<const T_QUANTITY> :: _innermost(_ptr); }
     
   }
@@ -431,11 +438,15 @@ namespace Traits
     struct Quantity  
     {
       typedef T_QUANTITY  t_Quantity;   //!< type on which to act
+      //! constant quantity type
+      typedef typename Modifier::Const<t_Quantity> :: t_constant t_const_Quantity;
       //! \brief Scalar of this type
       //! \details Same as Quantity::t_Quantity if Quantity::t_Quantity is already a scalar.
       typedef typename opt::GetScalar<t_Quantity> :: t_Scalar t_ScalarQuantity; 
       //! Traits of Quantity::t_Quantity's scalar
       typedef Quantity<t_ScalarQuantity>  t_ScalarQuantityTraits;  
+      //! Traits of constant Quantity::t_Quantity
+      typedef Quantity< t_const_Quantity >  t_const_QuantityTraits;  
       //! true is Quantity::t_Quantity is a scalar 
       const static bool is_scalar = Dim<t_Quantity> :: is_scalar;
       //! true is Quantity::t_Quantity is a vector 
@@ -456,12 +467,10 @@ namespace Traits
       //! Prints out the full vector into a string
       static std::string print( const t_Quantity &_quantity )
         { return opt::IsAScalar<is_scalar>::print(_quantity); }
-      static t_ScalarQuantity& scalar( t_Quantity& _q, types::t_unsigned _n )
-        { return opt::IsAScalar<is_scalar>::scalar(_q); }
       //! \brief Gets \a _n(th) component of _q 
       //! \details returns \a _q if _q is a scalar
       static const t_ScalarQuantity& scalar( const t_Quantity& _q, types::t_unsigned _n )
-        { return opt::IsAScalar<is_scalar>::scalar(_q); }
+        { return opt::IsAScalar<is_scalar>::scalar(_q, _n); }
       //! \brief returns the size of \a _q
       //! \details returns 0 if \a _q is a scalar
       static types::t_unsigned size( const t_Quantity& _q ) 

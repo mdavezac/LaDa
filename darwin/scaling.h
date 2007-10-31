@@ -202,10 +202,19 @@ namespace Scaling
     public:
       //! Constructor
       Niching() : t_Base(), sharing() {}
+      //! \brief Constructor with templated argument
+      //! \details The argument and its type are passed on to the sharing. What
+      //!          they are will depend on sharing (or farther down the line,
+      //!          on the distance).
+      //! \see SingleSite::Distance and SingleSite::new_Niche_from_XML()
+      template <class T_WHATEVER>
+        Niching( T_WHATEVER &_what ) : t_Base(), sharing( _what ) {} 
       //! Constructor and Initialiser 
       Niching( const TiXmlElement &_node ) : t_Base(), sharing( _node ) {}
       //! Copy Constructor
-      Niching( const Niching &_n) : t_Base(_n), sharing(_n.sharing), sums(_n.sums) {}
+      Niching   ( const Niching &_n)
+              : t_Base(_n), sharing(_n.sharing),
+                sums(_n.sums), offset( _n.offset ) {}
       //! Destructor
       virtual ~Niching() {}
   
@@ -380,6 +389,14 @@ namespace Scaling
       public:
         //! Constructor
         Triangular() : distance(), alpha(1), d_0(1)  {}
+        //! \brief Constructor with templated argument
+        //! \details The argument and its type are passed on to
+        //!          Triangular::distance. What they are will depend on
+        //!          Triangular::distance.
+        //! \see SingleSite::Distance and SingleSite::new_Niche_from_XML()
+        template <class T_WHATEVER>
+          Triangular   ( T_WHATEVER &_what )
+                     : distance( _what ), alpha( 1 ), d_0(1) {} 
         //! Constructor and initialiser
         Triangular  ( const TiXmlElement &_node ) 
                    : distance(), alpha(1), d_0(1) { Load(_node); }

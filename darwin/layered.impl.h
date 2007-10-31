@@ -141,7 +141,7 @@ namespace Layered
 
 
 
-  // Takes an "unphysical" individual and set normalizes its sites _sites to +/-1,
+  // Takes an "unphysical" individual and normalizes its sites _sites to +/-1,
   // after flipping the _tochange spins closest to zero.
   // ie sets the concentration
   template <types::t_unsigned _D>
@@ -199,7 +199,7 @@ namespace Layered
     if ( not single_c ) return;
 
     // computes concentrations first
-    set( _obj );
+    get( _obj );
 
     types::t_real to_change = (types::t_real) N * ( x0  - x );
     // inline with non-use of fzzy math below...
@@ -239,7 +239,7 @@ namespace Layered
 
 
   template <types::t_unsigned _D>
-  void Concentration<_D> :: set( const Ising_CE::Structure &_str)
+  void Concentration<_D> :: get( const Ising_CE::Structure &_str)
   {
     Ising_CE::Structure::t_Atoms :: const_iterator i_atom = _str.atoms.begin();
     Ising_CE::Structure::t_Atoms :: const_iterator i_atom_end = _str.atoms.end();
@@ -248,7 +248,7 @@ namespace Layered
     x /= (types::t_real) N; 
   }
   template <types::t_unsigned _D> template<class T_CONT>
-  void Concentration<_D> :: set( const BitString::Object<T_CONT> &_obj )
+  void Concentration<_D> :: get( const BitString::Object<T_CONT> &_obj )
   {
     if ( not single_c ) return;
 

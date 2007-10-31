@@ -283,10 +283,11 @@ namespace Scaling
       name = parent->Attribute("type");
 
       if( name == "Niching" or name == "niching" )
-        { container->push_back( new_Niche_from_xml<T_GATRAITS>( *parent, _eval ) ); }
+        container->push_back( new_Niche_from_xml<T_GATRAITS>( *parent, _eval ) );
       if( T_GATRAITS::t_QuantityTraits::is_vector and ( name == "Pareto" or name == "pareto" ) )
-        { container->push_back( new ParetoRanking<T_GATRAITS>() ); }
-      else if ( _eval ) container->push_back( (Base<T_GATRAITS>*) _eval->Load_Scaling() );
+        container->push_back( new ParetoRanking<T_GATRAITS>() );
+      else if ( _eval )
+        container->push_back( (Base<T_GATRAITS>*) _eval->Load_Scaling( _node ) );
     }
 
     Base<T_GATRAITS>* result = NULL;
@@ -310,14 +311,14 @@ namespace Scaling
     if( name != "GeneralHamming" or name != "generalhamming" ) 
     {
       typedef Niching< Sharing::Triangular< Distance::GeneralHamming<T_GATRAITS> > > t_Niche;
-      *result =  new t_Niche;
+      result = new t_Niche;
     }
     else if( name == "Hamming" or name == "hamming" )
     {
       typedef Niching< Sharing::Triangular< Distance::Hamming<T_GATRAITS> > > t_Niche;
-      *result =  new t_Niche;
+      result = new t_Niche;
     }
-    else if ( _eval ) result = ( Base<T_GATRAITS>* ) _eval.Load_Niche( _node );
+    else if ( _eval ) result = ( Base<T_GATRAITS>* ) _eval->Load_Niche( _node );
      
     if ( result and result->Load(_node ) ) return result;
     if ( result ) delete result;

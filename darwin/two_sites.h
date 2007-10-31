@@ -82,8 +82,8 @@ namespace TwoSites
       void operator()( Object &_obj );
       void operator()( const Ising_CE::Structure &_str, Object &_object,
                        types::t_int _concx, types::t_int _concy );
-      void set( const Ising_CE::Structure &_str);
-      void set( const Object &_obj );
+      void get( const Ising_CE::Structure &_str);
+      void get( const Object &_obj );
       void setfrozen ( const Ising_CE::Structure &_str );
 
     protected:

@@ -79,8 +79,8 @@ namespace SingleSite
       void operator()( Object &_obj );
       void operator()( const Ising_CE::Structure &_str, Object &_object,
                        types::t_int _concx, types::t_int _concy );
-      void set( const Ising_CE::Structure &_str);
-      void set( const Object &_obj );
+      void get( const Ising_CE::Structure &_str);
+      void get( const Object &_obj );
       void setfrozen ( const Ising_CE::Structure &_str );
 
       std::string print() const;
@@ -205,8 +205,9 @@ namespace SingleSite
   }; 
 
   //! Loads a Niche< Triangular::Sharing< Distance > > from XML
-  template<class T_GATRAITS, types::t_int _D >
-    Scaling::Base<T_GATRAITS>* new_Niche_from_xml( const TiXmlElement &_node );
+  template<class T_GATRAITS, types::t_int _D> Scaling::Base<T_GATRAITS>*
+    new_Niche_from_xml( const TiXmlElement &_node,
+                        typename T_GATRAITS :: t_Concentration &_conce );
 
 } // namespace TwoSites
 

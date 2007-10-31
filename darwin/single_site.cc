@@ -132,7 +132,7 @@ errorout:
     if ( not single_c ) return;
 
     // computes concentrations first
-    set( _obj );
+    get( _obj );
 
     types::t_real to_change = (types::t_real) N * ( x0  - x );
     if ( to_change > -1.0 and to_change < 1.0 ) return;
@@ -147,7 +147,7 @@ errorout:
     } while ( to_change < -1.0 or to_change > 1.0 );
   }
 
-  // Takes an "unphysical" individual and set normalizes its sites _sites to +/-1,
+  // Takes an "unphysical" individual and normalizes its sites \a _sites to +/-1,
   // after flipping the _tochange spins closest to zero.
   // ie sets the concentration
   void Concentration :: normalize( Ising_CE::Structure &_str, types::t_real _tochange ) 
@@ -192,7 +192,7 @@ errorout:
       i_atom->type = ( i_atom->type > 0 ) ? 1.0: -1.0;
   }
 
-  void Concentration :: set( const Ising_CE::Structure &_str)
+  void Concentration :: get( const Ising_CE::Structure &_str)
   {
     Ising_CE::Structure::t_Atoms :: const_iterator i_atom = _str.atoms.begin();
     Ising_CE::Structure::t_Atoms :: const_iterator i_atom_end = _str.atoms.end();
@@ -200,7 +200,7 @@ errorout:
       x += i_atom->type;
     x /= (types::t_real) N;
   }
-  void Concentration :: set( const Object &_obj )
+  void Concentration :: get( const Object &_obj )
   {
     if ( not single_c ) return;
 

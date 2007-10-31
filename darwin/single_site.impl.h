@@ -104,21 +104,21 @@ namespace SingleSite
       Distance<T_GAOPTRAITS, _D>::operator()( const t_Individual &_i1, 
                                               const t_Individual &_i2) const
       {
-        typedef typename t_GATraits :: t_Quantity t_Quantity;
         typedef typename t_GATraits :: t_QuantityTraits t_QuantityTraits;
+        typedef typename t_QuantityTraits :: t_Quantity t_Quantity;
         if ( t_QuantityTraits::size( _i1.const_quantities() ) != 
              t_QuantityTraits::size( _i2.const_quantities() )     )
           throw std::runtime_error( "Individuals with differing number of quantities !?" );
         if ( t_QuantityTraits::size( _i1.const_quantities() ) < _D )
           throw std::runtime_error( "Inconsistent number of quantities !?" );
     
-        concentration( _i1 ); 
+        concentration.get( _i1.Object() ); 
         // Modifier::const_innermost() is a dirty hack which allows us to use
         // this same distance functor for all concentrations for which only x[0]
         // matters. 
         t_ScalarFitnessQuantity result = (t_ScalarFitnessQuantity)
           Modifier::const_innermost(concentration.x);
-        concentration( _i2 ); 
+        concentration.get( _i2.Object() ); 
         result -= (t_ScalarFitnessQuantity) Modifier::const_innermost(concentration.x);
         result = std::abs( result ) * xcoef;
     
@@ -150,8 +150,9 @@ namespace SingleSite
       return result;
     }
 
-  template<class T_GATRAITS, types::t_int _D>
-    Scaling::Base<T_GATRAITS>* new_Niche_from_xml( const TiXmlElement &_node )
+  template<class T_GATRAITS, types::t_int _D> Scaling::Base<T_GATRAITS>*
+    new_Niche_from_xml( const TiXmlElement &_node,
+                        typename T_GATRAITS :: t_Concentration &_conce )
     {
       if( not _node.Attribute("distance") ) return NULL;
       std::string name = _node.Attribute("distance");
@@ -160,7 +161,7 @@ namespace SingleSite
       {
         typedef Scaling::Niching<
             Scaling::Sharing::Triangular< Distance<T_GATRAITS, _D> > > t_Niche;
-        t_Niche *result =  new t_Niche;
+        t_Niche *result =  new t_Niche( _conce );
       }
       // Loading should be done by callee
       return result;
