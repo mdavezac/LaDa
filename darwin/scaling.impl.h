@@ -100,7 +100,7 @@ namespace Scaling
       for(; i_2indiv != i_end; ++i_2indiv, ++i_2sum )
       {
         t_ScalarFitnessQuantity d;
-        d = sharing( indiv, Modifier::const_innermost(*i_2indiv)) ;
+        d = sharing( indiv, Modifier::const_innermost(*i_2indiv) );
         (*i_sum)  += d; (*i_2sum) += d;
       }
     }
@@ -200,7 +200,7 @@ namespace Scaling
           
         d_0 = t_ScalarFitnessQuantity( d );
       }
-      return true;
+      return distance.Load( _node );
     }
     
     template<class T_DISTANCE>
@@ -266,7 +266,8 @@ namespace Scaling
 
 
   template<class T_GATRAITS> 
-  Base<T_GATRAITS>* new_from_xml( const TiXmlElement &_node )
+  Base<T_GATRAITS>* new_from_xml( const TiXmlElement &_node, 
+                                  typename T_GATRAITS :: t_Evaluator *_eval )
   {
     const TiXmlElement *parent = &_node;
     std::string name = parent->Value();
@@ -282,9 +283,10 @@ namespace Scaling
       name = parent->Attribute("type");
 
       if( name == "Niching" or name == "niching" )
-        { container->push_back( new_Niche_from_xml<T_GATRAITS>( *parent ) ); }
+        { container->push_back( new_Niche_from_xml<T_GATRAITS>( *parent, _eval ) ); }
       if( T_GATRAITS::t_QuantityTraits::is_vector and ( name == "Pareto" or name == "pareto" ) )
         { container->push_back( new ParetoRanking<T_GATRAITS>() ); }
+      else if ( _eval ) container->push_back( (Base<T_GATRAITS>*) _eval->Load_Scaling() );
     }
 
     Base<T_GATRAITS>* result = NULL;
@@ -299,22 +301,24 @@ namespace Scaling
   }
 
   template<class T_GATRAITS> 
-  Base<T_GATRAITS>* new_Niche_from_xml( const TiXmlElement &_node )
+  Base<T_GATRAITS>* new_Niche_from_xml( const TiXmlElement &_node,
+                                        typename T_GATRAITS :: t_Evaluator *_eval )
   {
     if( not _node.Attribute("distance") ) return NULL;
     std::string name = _node.Attribute("distance");
+    Base<T_GATRAITS> *result;
     if( name != "GeneralHamming" or name != "generalhamming" ) 
     {
       typedef Niching< Sharing::Triangular< Distance::GeneralHamming<T_GATRAITS> > > t_Niche;
-      t_Niche *result =  new t_Niche;
-      if ( result and result->Load(_node ) ) return result;
-      if ( result ) delete result;
-      return NULL;
+      *result =  new t_Niche;
     }
-
-    if( name != "Hamming" or name != "hamming" ) return NULL;
-    typedef Niching< Sharing::Triangular< Distance::Hamming<T_GATRAITS> > > t_Niche;
-    t_Niche *result =  new t_Niche;
+    else if( name == "Hamming" or name == "hamming" )
+    {
+      typedef Niching< Sharing::Triangular< Distance::Hamming<T_GATRAITS> > > t_Niche;
+      *result =  new t_Niche;
+    }
+    else if ( _eval ) result = ( Base<T_GATRAITS>* ) _eval.Load_Niche( _node );
+     
     if ( result and result->Load(_node ) ) return result;
     if ( result ) delete result;
     return NULL;

@@ -97,5 +97,74 @@ namespace SingleSite
     std::fill( pure.Object().Container().begin(), pure.Object().Container().end(), -1.0 );
     _pop.push_back(pure);
   } 
+
+
+  template<class T_GAOPTRAITS, types::t_unsigned _D>
+    typename Distance<T_GAOPTRAITS, _D>::t_ScalarFitnessQuantity 
+      Distance<T_GAOPTRAITS, _D>::operator()( const t_Individual &_i1, 
+                                              const t_Individual &_i2) const
+      {
+        typedef typename t_GATraits :: t_Quantity t_Quantity;
+        typedef typename t_GATraits :: t_QuantityTraits t_QuantityTraits;
+        if ( t_QuantityTraits::size( _i1.const_quantities() ) != 
+             t_QuantityTraits::size( _i2.const_quantities() )     )
+          throw std::runtime_error( "Individuals with differing number of quantities !?" );
+        if ( t_QuantityTraits::size( _i1.const_quantities() ) < _D )
+          throw std::runtime_error( "Inconsistent number of quantities !?" );
+    
+        concentration( _i1 ); 
+        // Modifier::const_innermost() is a dirty hack which allows us to use
+        // this same distance functor for all concentrations for which only x[0]
+        // matters. 
+        t_ScalarFitnessQuantity result = (t_ScalarFitnessQuantity)
+          Modifier::const_innermost(concentration.x);
+        concentration( _i2 ); 
+        result -= (t_ScalarFitnessQuantity) Modifier::const_innermost(concentration.x);
+        result = std::abs( result ) * xcoef;
+    
+        t_ScalarFitnessQuantity q(0);
+        for( types::t_unsigned i = 0; i < _D; ++i )
+          result +=   std::abs(  t_QuantityTraits::scalar( _i1.const_quantities(), i )
+                               - t_QuantityTraits::scalar( _i1.const_quantities(), i ) )
+                    * qcoefs[i];
+        return result;
+      }
+  template<class T_GAOPTRAITS, types::t_unsigned _D>
+    bool Distance<T_GAOPTRAITS, _D> :: Load( const TiXmlElement &_node )
+    {
+      bool result = false;
+      double d = 0.0;
+      if( _node.Attribute( "xcoef" ) ) _node.Attribute( "xcoef", &d );
+      xcoef = (t_ScalarFitnessQuantity) d;
+      if ( d ) result = true;
+      for( types::t_unsigned i = 0; i < _D; ++i )
+      {
+        std::ostringstream sstr; 
+        sstr << "qcoef" << i; 
+        d = 0.0;
+        if( _node.Attribute( sstr.str().c_str() ) )
+          _node.Attribute( sstr.str().c_str(), &d );
+        qcoefs[i] = d;
+        if ( d ) result = true;
+      } 
+      return result;
+    }
+
+  template<class T_GATRAITS, types::t_int _D>
+    Scaling::Base<T_GATRAITS>* new_Niche_from_xml( const TiXmlElement &_node )
+    {
+      if( not _node.Attribute("distance") ) return NULL;
+      std::string name = _node.Attribute("distance");
+      Scaling::Base<T_GATRAITS> *result;
+      if( name != "Phenotypic" or name != "phenotypic" ) 
+      {
+        typedef Scaling::Niching<
+            Scaling::Sharing::Triangular< Distance<T_GATRAITS, _D> > > t_Niche;
+        t_Niche *result =  new t_Niche;
+      }
+      // Loading should be done by callee
+      return result;
+    }
+
 } // namespace SingleSite
 #endif // _TWOSITES_IMPL_H_

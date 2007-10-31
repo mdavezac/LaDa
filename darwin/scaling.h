@@ -51,15 +51,18 @@ namespace Scaling
     //! Aggregates two populations and scales them.
     void operator()( typename T_GATRAITS::t_Population& _1,
                      typename T_GATRAITS::t_Population& _2 );
+    virtual bool Load( const TiXmlElement &_node ) { return true; }
   };
 
   //! Returns a scaling from an XML input
-  template<class T_GATRAITS> 
-  Base<T_GATRAITS>* new_from_xml( const TiXmlElement &_node );
+  template<class T_GATRAITS>  Base<T_GATRAITS>*
+    new_from_xml( const TiXmlElement &_node,
+                  typename T_GATRAITS :: t_Evaluator *_eval = NULL );
 
   //! Returns a niching from an XML input
-  template<class T_GATRAITS> 
-  Base<T_GATRAITS>* new_Niche_from_xml( const TiXmlElement &_node );
+  template<class T_GATRAITS> Base<T_GATRAITS>*
+    new_Niche_from_xml( const TiXmlElement &_node,
+                        typename T_GATRAITS :: t_Evaluator *_eval = NULL );
 
   //! \brief A scaling which calls upon other to do the job
   //! \details Merely implements general subroutines around a container of
@@ -204,7 +207,7 @@ namespace Scaling
       //! Copy Constructor
       Niching( const Niching &_n) : t_Base(_n), sharing(_n.sharing), sums(_n.sums) {}
       //! Destructor
-      ~Niching() {}
+      virtual ~Niching() {}
   
       //! Scales down the fitness of each individuals in \a _pop according to
       //! its closeness to other individuals
@@ -302,7 +305,7 @@ namespace Scaling
       //! Copy Constructor
       ParetoRanking( const ParetoRanking &_n) : t_Base(_n), sums(_n.sums) {}
       //! Destructor
-      ~ParetoRanking() {}
+      virtual ~ParetoRanking() {}
   
       /** Sets the scalar fitnes to the number of dominated individual,
           \f$ \mathcal{F}(\sigma) = \sum_j\mathcal{F}^v(\sigma) \succeq
@@ -385,7 +388,7 @@ namespace Scaling
                    : distance(_t.distance), alpha(_t.alpha), 
                      d_0(_t.d_0)  {}
         //! Destructor
-        ~Triangular() {}
+        virtual ~Triangular() {}
 
         //! Loads the sharing %function from XML
         bool Load( const TiXmlElement &_node );
@@ -428,6 +431,8 @@ namespace Scaling
         t_ScalarFitnessQuantity operator()( const t_Individual &_i1, const t_Individual &_i2) const;
         //! Returns "Distance::GeneralHamming"
         std::string what_is() const { return "Distance::GeneralHamming"; }
+        //! Returns true
+        bool Load( const TiXmlElement &_node ) { return true; }
     }; 
     /** \brief Defines the Hamming distance \f$|\sigma_i-\sigma_j|=\sum_t
      *  (q_{t,\sigma_i} = q_{t,\sigma_j})\ ?\ 1:\ 0\f$ */
@@ -451,33 +456,11 @@ namespace Scaling
         t_ScalarFitnessQuantity operator()( const t_Individual &_i1, const t_Individual &_i2) const;
         //! Returns "Distance::Hamming"
         std::string what_is() const { return "Distance::Hamming"; }
+        //! Returns true
+        bool Load( const TiXmlElement &_node ) { return true; }
     }; 
 
-    /** \brief Defines a phenotypic functor distance */
-    template<class T_GATRAITS>
-    class Phenotypic
-    {
-      public:
-        typedef T_GATRAITS t_GATraits; //!< All %GA %types
-      protected:
-        //! Type of the individuals
-        typedef typename t_GATraits :: t_Individual t_Individual;
-        //! Type of the object characterising the individuals
-        typedef typename t_GATraits :: t_Object t_Object;
-        //! Type of the \b scalar fitness
-        typedef typename t_GATraits :: t_ScalarFitness t_ScalarFitness;
-        //! Type of the  quantity of the \b scalar fitness
-        typedef typename t_ScalarFitness :: t_Quantity t_ScalarFitnessQuantity;
-
-      public:
-        //! Returns the phenotypic distance defined by and object class
-        t_ScalarFitnessQuantity operator()( const t_Individual &_i1, const t_Individual &_i2) const
-          { return _i1.Object().distance( _i2.Object() );  }
-        //! Returns "Distance::Hamming"
-        std::string what_is() const { return "Distance::Phenotypic"; }
-    }; 
-
-  } // namespace Scaling
+  } // namespace Distance
 
 } // namespace Distance
 #include "scaling.impl.h"

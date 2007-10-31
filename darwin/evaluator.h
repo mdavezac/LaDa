@@ -146,6 +146,17 @@ namespace GA
       //! \return  a pointer to an eoF<bool> object. This pointer is owned by
       //! GA::Darwin::eostates, so don't deallocate yourself.
       eoF<bool>* LoadContinue(const TiXmlElement &_el ) { return NULL; }
+      //! \brief Loads an application-specific Scaling
+      //! \details Scalings depend on t_GATraits which is undefined at this
+      //!          level. Hence this function returns a void pointer.
+      //! \returns a Scaling object which will be owned by the callee.
+      void* Load_Scaling( const TiXmlElement &_node ) { return NULL; }
+      //! \brief Loads a niche with an application-specific Distance
+      //! \details Niches depend on the type of Distance which is undefined at this
+      //!          level. Hence this function returns a void pointer.
+      //! \return a pointer to a niche object, eg Sharing::Triangular< T_DISTANCE >. 
+      //!         This pointer is owned by the callee.
+      void* Load_Niche( const TiXmlElement &_node ) { return NULL; }
       //! \brief Loads application-specific taboos
       //! \details should return a functor which returns true if an individual is forbidden
       //! \see TabooFunction

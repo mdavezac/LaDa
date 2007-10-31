@@ -350,6 +350,25 @@ namespace opt
         sstr << *i_scal << " ";
       return sstr.str();
     }
+    //! \brief Gets \a _n(th) component of _q 
+    //! \details returns \a _q if _q is a scalar
+    template< class t_Quantity >
+    static t_Quantity& scalar( t_Quantity& _q, types::t_unsigned _n )
+      { return _q[_n]; }
+    //! \brief Gets \a _n(th) component of _q 
+    //! \details returns \a _q if _q is a scalar
+    template< class t_Quantity >
+    static const t_Quantity& scalar( const t_Quantity& _q, types::t_unsigned _n )
+      { return _q[_n]; }
+    //! \brief returns the size of \a _q
+    //! \details returns 0 if \a _q is a scalar
+    template< class t_Quantity >
+    static types::t_unsigned size( const t_Quantity& _q ) 
+      { return _q.size(); }
+    //! resizes \a _q, if \a is a vector
+    template< class t_Quantity >
+    static bool resize( const t_Quantity& _q, types::t_unsigned n ) 
+      { return _q.resize(n); }
 #ifdef _MPI
     //! Broadcasts  a t_Quantity type \a _q
     template< class t_Quantity >
@@ -369,6 +388,25 @@ namespace opt
     template< class t_Quantity >
     static std::string print( const t_Quantity &_quantity )
       { std::ostringstream sstr; sstr << _quantity; return sstr.str(); }
+    //! \brief Gets \a _n(th) component of _q 
+    //! \details returns \a _q if _q is a scalar
+    template< class t_Quantity >
+    static t_Quantity& scalar( t_Quantity& _q, types::t_unsigned _n )
+      { return _q; }
+    //! \brief Gets \a _n(th) component of _q 
+    //! \details returns \a _q if _q is a scalar
+    template< class t_Quantity >
+    static const t_Quantity& scalar( const t_Quantity& _q, types::t_unsigned _n )
+      { return _q; }
+    //! \brief returns the size of \a _q
+    //! \details returns 1 if \a _q is a scalar
+    template< class t_Quantity >
+    static types::t_unsigned size( const t_Quantity& _q ) 
+      { return 1; }
+    //! resizes \a _q, if \a is a vector
+    template< class t_Quantity >
+    static bool resize( const t_Quantity& _q, types::t_unsigned n ) 
+      { return true; }
 #ifdef _MPI
     //! Broadcasts  the scalar type \a _q
     template< class t_Quantity >
@@ -403,21 +441,6 @@ namespace Traits
       //! true is Quantity::t_Quantity is a vector 
       const static bool is_vector = Dim<t_Quantity> :: is_vector;
 
-      //! \brief Gets \a _n(th) component of _q 
-      //! \details returns \a _q if _q is a scalar
-      static t_ScalarQuantity& scalar( t_Quantity& _q, types::t_unsigned _n )
-        { return _q[_n]; }
-      //! \brief Gets \a _n(th) component of _q 
-      //! \details returns \a _q if _q is a scalar
-      static const t_ScalarQuantity& scalar( const t_Quantity& _q, types::t_unsigned _n )
-        { return _q[_n]; }
-      //! \brief returns the size of \a _q
-      //! \details returns 0 if \a _q is a scalar
-      static types::t_unsigned size( const t_Quantity& _q ) 
-        { return _q.size(); }
-      //! resizes \a _q, if \a is a vector
-      static bool resize( const t_Quantity& _q, types::t_unsigned n ) 
-        { return _q.resize(n); }
       //! Incorporates Fuzzy::less
       static bool less( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
         { return opt::Fuzzy<t_ScalarQuantity>::less(_a,_b); }
@@ -433,6 +456,19 @@ namespace Traits
       //! Prints out the full vector into a string
       static std::string print( const t_Quantity &_quantity )
         { return opt::IsAScalar<is_scalar>::print(_quantity); }
+      static t_ScalarQuantity& scalar( t_Quantity& _q, types::t_unsigned _n )
+        { return opt::IsAScalar<is_scalar>::scalar(_q); }
+      //! \brief Gets \a _n(th) component of _q 
+      //! \details returns \a _q if _q is a scalar
+      static const t_ScalarQuantity& scalar( const t_Quantity& _q, types::t_unsigned _n )
+        { return opt::IsAScalar<is_scalar>::scalar(_q); }
+      //! \brief returns the size of \a _q
+      //! \details returns 0 if \a _q is a scalar
+      static types::t_unsigned size( const t_Quantity& _q ) 
+        { return opt::IsAScalar<is_scalar>::size(_q); }
+      //! resizes \a _q, if \a is a vector
+      static bool resize( const t_Quantity& _q, types::t_unsigned n ) 
+        { return opt::IsAScalar<is_scalar>::resize(_q); }
 #ifdef _MPI
       //! Serializes quantity \sa mpi::BroadCast::serialize
       static bool broadcast( t_Quantity& _q, mpi::BroadCast &_bc )

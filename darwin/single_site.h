@@ -22,6 +22,7 @@
 #include "taboos.h"
 #include "bitstring.h"
 #include "gaoperators.h"
+#include "scaling.h"
 
 #ifdef _MPI
 #include "mpi/mpi_object.h"
@@ -160,6 +161,52 @@ namespace SingleSite
     protected:
       bool consistency_check();
   };
+
+  /** \brief Defines a phenotypic distance which takes into account the quantities
+   *   and the concentration of an individuals
+       \f$ \alpha_x | x_{\sigma_i} - x_{\sigma_j} | 
+           + \alpha_e |q_{\sigma_i} - q_{\sigma_j} |  \f$ */
+  template<class T_GATRAITS, types::t_unsigned _D = 1>
+  class Distance
+  {
+    public:
+      typedef T_GATRAITS t_GATraits; //!< All %GA %types
+      const static types::t_int d = _D; 
+
+    protected:
+      //! Type of the individuals
+      typedef typename t_GATraits :: t_Individual t_Individual;
+      //! Type of the object characterising the individuals
+      typedef typename t_GATraits :: t_Object t_Object;
+      //! Type of the \b scalar fitness
+      typedef typename t_GATraits :: t_ScalarFitness t_ScalarFitness;
+      //! Type of the  quantity of the \b scalar fitness
+      typedef typename t_ScalarFitness :: t_Quantity t_ScalarFitnessQuantity;
+      //! All types of the \e physical individual
+      typedef typename t_GATraits :: t_IndivTraits  t_IndivTraits;
+      //! Type of the concentration functor
+      typedef typename t_IndivTraits :: t_Concentration t_Concentration;
+
+    protected:
+      t_Concentration &concentration;
+      t_ScalarFitnessQuantity xcoef;
+      t_ScalarFitnessQuantity qcoefs[_D];
+  
+    public:
+      Distance( t_Concentration &_conce ) : concentration( _conce ) {}
+      /** Returns \f$ \alpha_x | x_{\sigma_i} - x_{\sigma_j} | 
+                      + \alpha_e |q_{\sigma_i} - q_{\sigma_j} |  \f$ */
+      t_ScalarFitnessQuantity operator()( const t_Individual &_i1, const t_Individual &_i2) const;
+      //! Returns "SingleSite::Distance"
+      std::string what_is() const { return "SingleSite::Distance"; }
+
+      //! Loads the phenotypic distance
+      bool Load( const TiXmlElement &_node );
+  }; 
+
+  //! Loads a Niche< Triangular::Sharing< Distance > > from XML
+  template<class T_GATRAITS, types::t_int _D >
+    Scaling::Base<T_GATRAITS>* new_Niche_from_xml( const TiXmlElement &_node );
 
 } // namespace TwoSites
 

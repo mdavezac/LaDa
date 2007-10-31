@@ -80,6 +80,8 @@ namespace CE
       bool Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const;
       bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
       bool Load( const TiXmlElement &_node );
+      void* Load_Niche( const TiXmlElement &_node )
+        { return (void *) SingleSite::new_Niche_from_xml<t_GATraits, 1>( _node ); }
 
       void init( t_Individual &_indiv )
         { t_Base :: init( _indiv ); functional.set_variables( &_indiv.Object().bitstring ); }
@@ -112,7 +114,6 @@ namespace CE
         _grad[_pos] = functional.evaluate_one_gradient( _pos );
       }
   };
-
 } // namespace CE
 
 #ifdef _MPI
