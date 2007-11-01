@@ -75,7 +75,7 @@ namespace Traits
 } // namespace Traits
 
 
-//! \brief Templates for handling modifiers (&, *, const)
+//! Templates for handling modifiers (&, *, const)
   namespace Modifier
   {
     //! Construct for detecting (absence of) const modifier
@@ -236,11 +236,20 @@ namespace Traits
 //   };
 
 
+    //! \brief Helper function returning the value to which a pointer points.
+    //! \details Say you call this function with an object in argument, you get
+    //!          a reference to this object in return. Say you call it with a
+    //!          pointer to the same object. You still get the same reference in
+    //!          return. Now if you call it with a pointer to this pointer to
+    //!          the same object, then  in that case, you still get the same
+    //!          reference. In other words. whatever you put in you get the most
+    //!          dereferenced value. Doesn't dereference iterators though...
     template< class T_QUANTITY > 
       typename Reference<typename Pointer<T_QUANTITY> :: t_innermost> :: t_refd
         inline innermost( T_QUANTITY &_ptr )
           { return Pointer<T_QUANTITY> :: _innermost(_ptr); }
     
+    //! \brief const version of Modifier::innnermost()
     template< class T_QUANTITY > 
       typename Reference<const typename Pointer<T_QUANTITY> :: t_innermost> :: t_refd
         inline const_innermost(const T_QUANTITY &_ptr )

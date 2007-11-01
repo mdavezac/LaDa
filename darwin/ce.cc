@@ -15,35 +15,18 @@
 
 namespace CE
 {
-  bool Evaluator :: Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type )
+  Darwin::~Darwin() 
   {
-    double d;
-    if ( not _node.Attribute("enthalpy", &d ) ) goto errorout;
-    _indiv.quantities() = (types::t_real) d;
-
-    return t_Base::Load( _indiv, _node, _type );
-errorout:
-    std::cerr << "Could not Load CE::Object" << std::endl;
-    return false;
-  }
-  bool Evaluator :: Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const
-  { 
-    double d = (double) _indiv.const_quantities();
-    _node.SetDoubleAttribute("enthalpy", d );
-    return t_Base::Save( _indiv, _node, GA::LOADSAVE_SHORT );
+    if ( functional.get_functional1() ) 
+      delete functional.get_functional1();
+    if ( functional.get_functional2() ) 
+      delete functional.get_functional2();
   }
 
-  bool Evaluator :: Load( const TiXmlElement &_node )
-  {
-    if ( not t_Base :: Load ( _node ) )
-    {
-      std::cerr << " Could  not Load SingleSite stuff "
-                << std::endl << "Giving up" << std::endl;
-      return false;
-    }
 
+  bool Darwin :: Load( const TiXmlElement &_node )
+  {
     std::sort( structure.k_vecs.begin(), structure.k_vecs.end(),  Ising_CE::sort_kvec );
-//   std::sort( structure.atoms.begin(),  structure.atoms.end(), Ising_CE::sort_kvec );
     
     const TiXmlElement *functional_xml = _node.FirstChildElement("Functional");
     for(; functional_xml; functional_xml = functional_xml->NextSiblingElement("Functional") )
@@ -62,7 +45,10 @@ errorout:
     }
 
     if ( not VA_CE::Functional_Builder::Load(*functional_xml) )
+    {
+      std::cerr << "Could not load CE functional from XML\n";
       return false;
+    }
     Ising_CE::Structure::lattice = VA_CE::Functional_Builder::lattice;
        
     add_equivalent_clusters();
@@ -71,7 +57,6 @@ errorout:
     
     return true;
   }
-
 
 } // namespace CE
 

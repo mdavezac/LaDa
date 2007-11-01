@@ -32,100 +32,102 @@
 #include "mpi/mpi_object.h"
 #endif
 
+//! all things Cluster Expansion (should be...)
 namespace CE
 {
-  struct Object: public SingleSite::Object
-  {
-#ifdef _MPI
-    friend bool mpi::BroadCast::serialize<CE::Object>( CE::Object & );
-#endif
-  };
 
-  typedef Individual::Types< SingleSite::Object, 
-                             SingleSite::Concentration, 
-                             SingleSite::Fourier        > :: Scalar t_Individual;
-
-  class Evaluator : public SingleSite::Evaluator< t_Individual >,
-                    public VA_CE :: Functional_Builder
+  //! \ingroup Genetic
+  //! \brief Interface between the genetic algorithm and the cluster expansion
+  //!        functional
+  //! \xmlinput The functional is expected to be found directly under the
+  //!           overall \<Job\/> tag. The exact format should be described
+  //!           elsewhere.
+  class Darwin : public VA_CE :: Functional_Builder
   {
-    public:
-      typedef CE::t_Individual t_Individual;
-      typedef Traits::GA< Evaluator > t_GATraits;
     protected:
-      typedef Evaluator t_This;
-      typedef SingleSite::Evaluator< t_Individual > t_Base;
-      typedef VA_CE::Functional_Builder::t_VA_Functional t_Functional;
+      //! Type of the base class
+      typedef VA_CE::Functional_Builder t_Base;
+      //! single-cell-shape specialized cluster expansion functional type
+      typedef t_Base::t_VA_Functional t_Functional;
       
-    public:
-      using t_Base::Load;
-      using t_Base::Save;
-
     protected:
-      using t_Base :: current_individual;
-      using t_Base :: current_object;
-
-    protected:
-      t_Functional functional;
+      //! Single-cell-shape cluster expansion functional instance
+      t_Functional functional; 
+      //! Structure (cell-shape) for which the CE functional is specialized
+      Ising_CE::Structure &structure; 
 
     public:
-      Evaluator() : functional() {}; 
-      ~Evaluator() 
-      {
-        if ( functional.get_functional1() ) 
-          delete functional.get_functional1();
-        if ( functional.get_functional2() ) 
-          delete functional.get_functional2();
-      };
+      //! Constructor
+      Darwin( Ising_CE::Structure& _str ) : functional(), structure(_str) {}; 
+      //! Copy Constructor
+      Darwin   ( const Darwin &_c )
+             : t_Base(_c), functional(_c.functional),
+               structure( _c.structure )  {}
+      //! Destructor
+      ~Darwin();
 
-      bool Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const;
-      bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
+      //! Load the CE functional from input and creates cell-shape
+      //! specialization
       bool Load( const TiXmlElement &_node );
-      void* Load_Niche( const TiXmlElement &_node )
-        { return (void *) SingleSite::new_Niche_from_xml<t_GATraits, 1>( _node, concentration ); }
 
-      void init( t_Individual &_indiv )
-        { t_Base :: init( _indiv ); functional.set_variables( &_indiv.Object().bitstring ); }
+      //! \brief Initializes the functional prior to evaluations.
+      //! \details Before calling \e any evaluation function, this member must
+      //!          be called. It makes sure that the functional acts upon the
+      //!          correct set of variables.
+      //! \param T_INDIVIDUAL the type of the %GA individual. It is expected
+      //!                     that this instance of this type can return an
+      //!                     "Object" which itself can
+      //!                     return the container of variables.
+      //! \param _indiv Individual to be evaluated in the near futur.
+      template< class T_INDIVIDUAL >
+      void init( T_INDIVIDUAL &_indiv )
+        { functional.set_variables( &_indiv.Object().Container() ); }
 
-      void evaluate()
-        { current_individual->quantities() = functional.evaluate(); }
-      void evaluate_gradient( t_QuantityGradients& _grad )
-      {
-        // note that t_Function sets gradient to 0
-        types::t_unsigned N = current_object->Container().size();
-        types::t_real *gradient = new types::t_real[N];
-        types::t_real *keep = gradient;
-        if ( not gradient ) throw std::runtime_error( "Could not allocate memory" );
-        functional.evaluate_gradient( gradient );
-        copy_n( gradient, N, _grad.begin() );
-        delete[] keep;
-      }
-      void evaluate_with_gradient( t_QuantityGradients& _grad )
-      {
-        types::t_unsigned N = current_object->Container().size();
-        types::t_real *gradient = new types::t_real[N];
-        types::t_real *keep = gradient;
-        if ( not gradient ) throw std::runtime_error( "Could not allocate memory" );
-        current_individual->quantities() = functional.evaluate_with_gradient( gradient );
-        copy_n( gradient, N, _grad.begin() );
-        delete[] keep;
-      }
-      void evaluate_one_gradient( t_QuantityGradients& _grad, types::t_unsigned _pos ) 
-      {
-        _grad[_pos] = functional.evaluate_one_gradient( _pos );
-      }
+      //! Returns the evaluation of the CE functional
+      types::t_real evaluate() { return functional.evaluate(); }
+      template< class T_QUANTITYGRADIENTS >
+      //! \brief Computes the gradient of the CE functional
+      //! \param _grad is a container holding the gradient. It should accept a
+      //!              begin() member routine for which std::copy() can be called.
+      void evaluate_gradient( T_QUANTITYGRADIENTS& _grad );
+      //! \brief Computes the gradient and returns the evaluation of the CE functional
+      //! \param _grad is a container holding the gradient. It should accept a
+      //!              begin() member routine for which std::copy() can be called.
+      template< class T_QUANTITYGRADIENTS >
+      types::t_real evaluate_with_gradient( T_QUANTITYGRADIENTS& _grad );
+      //! Returns the gradient of the CE functional in direction \a _pos
+      types::t_real evaluate_one_gradient( types::t_unsigned _pos ) 
+        {  return functional.evaluate_one_gradient( _pos ); }
   };
-} // namespace CE
 
-#ifdef _MPI
-namespace mpi
-{
-  template<>
-  inline bool mpi::BroadCast::serialize<CE::Object>( CE::Object & _object )
+
+
+  template< class T_QUANTITYGRADIENTS >
+  inline void Darwin::Darwin::evaluate_gradient( T_QUANTITYGRADIENTS& _grad )
   {
-    return serialize<SingleSite::Object>( _object );
+    // note that t_Function sets gradient to 0
+    types::t_unsigned N = functional.size();
+    types::t_real *gradient = new types::t_real[N];
+    types::t_real *keep = gradient;
+    if ( not gradient ) throw std::runtime_error( "Could not allocate memory" );
+    functional.evaluate_gradient( gradient );
+    copy_n( gradient, N, _grad.begin() );
+    delete[] keep;
   }
-}
-#endif
+  template< class T_QUANTITYGRADIENTS >
+  inline types::t_real Darwin::evaluate_with_gradient( T_QUANTITYGRADIENTS& _grad )
+  {
+    types::t_unsigned N = functional.size();
+    types::t_real *gradient = new types::t_real[N];
+    types::t_real *keep = gradient;
+    if ( not gradient ) throw std::runtime_error( "Could not allocate memory" );
+    types::t_real result = functional.evaluate_with_gradient( gradient );
+    copy_n( gradient, N, _grad.begin() );
+    delete[] keep;
+    return result;
+  }
+
+} // namespace CE
 
 
 #endif // _CE_OBJECT_H_

@@ -51,6 +51,7 @@ namespace Scaling
     //! Aggregates two populations and scales them.
     void operator()( typename T_GATRAITS::t_Population& _1,
                      typename T_GATRAITS::t_Population& _2 );
+    //! Loads itself from XML.  defaults to simply returning true.
     virtual bool Load( const TiXmlElement &_node ) { return true; }
   };
 

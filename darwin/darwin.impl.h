@@ -161,7 +161,7 @@ namespace GA
     if ( not evaluation )
       evaluation = new Evaluation::Base<t_GATraits>( evaluator, *objective, *store );
 
-    scaling = Scaling::new_from_xml<t_GATraits>( _parent );
+    scaling = Scaling::new_from_xml<t_GATraits>( _parent, &evaluator );
     if( scaling ) Print::xmg << Print::Xmg::comment << scaling->what_is() << Print::endl;
       
   }

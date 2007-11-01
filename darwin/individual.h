@@ -182,6 +182,7 @@ namespace Individual
       t_Fitness& fitness()  { return repFitness; }
       //! Returns a constant reference to Base::repFitness
       const t_Fitness& fitness() const;
+      //! Returns a constant reference to Base::repFitness
       const t_Fitness& const_fitness() const { return fitness(); }
       //! Sets the fitness using a t_Fitness
       void set_fitness( const t_Fitness &_q ) { repFitness = _q; }

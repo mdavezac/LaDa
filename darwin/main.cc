@@ -10,17 +10,14 @@
 #endif
   #include "bandgap.h"
   typedef BandGap :: Evaluator t_Evaluator;
-  typedef BandGap :: Object t_Object;
 #elif _CE
-  #include "ce.h"
-  typedef CE :: Evaluator t_Evaluator;
-  typedef CE :: Object t_Object;
+  #include "groundstate.h"
+  typedef GroundState :: Evaluator t_Evaluator;
 #elif _MOLECULARITY
   #include "molecularity.h"
   typedef Molecularity :: Evaluator t_Evaluator;
-  typedef Molecularity :: Object t_Object;
 #else 
-  Need to define _CE or _PESCAN
+#error Need to define _CE or _PESCAN or _MOLECULARITY
 #endif
 #include "individual.h"
 #include "darwin.h"

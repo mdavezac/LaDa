@@ -167,5 +167,20 @@ namespace SingleSite
       return result;
     }
 
+  template<class T_GAOPTRAITS, types::t_unsigned _D>
+    std::string Distance<T_GAOPTRAITS, _D> :: what_is() const
+    {
+      std::ostringstream sstr;
+      sstr << "SingleSites::Distance(" << xcoef; 
+      for( types::t_int i=0; i < _D; ++i )
+      {
+        sstr << " " << qcoefs[i];
+      }
+      sstr << ")"; 
+      return sstr.str();
+    }
+
+    
+
 } // namespace SingleSite
 #endif // _TWOSITES_IMPL_H_

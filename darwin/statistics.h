@@ -85,6 +85,8 @@ namespace GA
       //! Computes the average quantity (-ies) over the currrent population.
       virtual void operator()( const t_Population &_pop );
   };
+  //! \brief Prints average quantity over the current population. Scalar
+  //!        quantities flavor.
   template< class T_GATRAITS >
   class AverageQuantities<T_GATRAITS, true> :
     public eoStatBase< typename T_GATRAITS :: t_Individual >
