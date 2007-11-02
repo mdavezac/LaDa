@@ -28,7 +28,8 @@
 #include "mpi/mpi_object.h"
 #endif
 
-//! \brief fills in \a _str.atoms from the cell-shape and the lattice
+//! \brief fills in \a atoms member of an Ising_CE::Structure instance from the
+//!        cell-shape and the lattice.
 //! \todo make sure that the guessed range is large enough, so that any
 //!       structure is completely filled with atoms.
 void FillStructure( Ising_CE::Structure &_str );
@@ -71,14 +72,14 @@ namespace Layered
   struct Fourier
   {
     //! \brief From real to k space
-    //! \param _rfirst iterator to the first real space atom (of a type
-    //!                simmilar to Ising_CE::Atom_Type)
-    //! \param _rend iterator to the last real space atom (of a type
-    //!              simmilar to Ising_CE::Atom_Type)
-    //! \param _kfirst iterator to the first real space atom (of a type
-    //!                simmilar to Ising_CE::Atom_Type< std::complex >)
-    //! \param _kend iterator to the last real space atom (of a type
-    //!              simmilar to Ising_CE::Atom_Type< std::complex >)
+    //! \param[in, out] _rfirst iterator to the first real space atom (of a type
+    //!                similar to Ising_CE::Atom_Type)
+    //! \param[in, out] _rend iterator to the last real space atom (of a type
+    //!              similar to Ising_CE::Atom_Type)
+    //! \param[in] _kfirst iterator to the first real space atom (of a type
+    //!                similar to Ising_CE::Atom_Type< std::complex >)
+    //! \param[in] _kend iterator to the last real space atom (of a type
+    //!              similar to Ising_CE::Atom_Type< std::complex >)
     template<class T_R_IT, class T_K_IT>
     Fourier( T_R_IT _rfirst, T_R_IT _rend,
              T_K_IT _kfirst, T_K_IT _kend );
@@ -88,15 +89,15 @@ namespace Layered
     //!          instance of Ising_CE::Structure::t_kAtoms. The third range
     //!          should be iterators to std::complex.
     //! \pre The range [ \a _rout, \a _rout += \a _rfirst - \a _rend  ) should be valid.
-    //! \param _rfirst iterator to the first real space atom (of a type
-    //!                simmilar to Ising_CE::Atom_Type)
-    //! \param _rend iterator to the last real space atom (of a type
-    //!              simmilar to Ising_CE::Atom_Type)
-    //! \param _kfirst iterator to the first real space atom (of a type
-    //!                simmilar to Ising_CE::Atom_Type< std::complex >)
-    //! \param _kend iterator to the last real space atom (of a type
-    //!              simmilar to Ising_CE::Atom_Type< std::complex >)
-    //! \param _rout iterator to the first complex real-space
+    //! \param[in] _rfirst iterator to the first real space atom (of a type
+    //!                similar to Ising_CE::Atom_Type)
+    //! \param[in] _rend iterator to the last real space atom (of a type
+    //!              similar to Ising_CE::Atom_Type)
+    //! \param[in] _kfirst iterator to the first real space atom (of a type
+    //!                similar to Ising_CE::Atom_Type< std::complex >)
+    //! \param[in] _kend iterator to the last real space atom (of a type
+    //!              similar to Ising_CE::Atom_Type< std::complex >)
+    //! \param[out] _rout iterator to the first complex real-space
     //!              occupation ( of std::complex type )
     template<class T_R_IT, class T_K_IT, class T_O_IT >
     Fourier( T_R_IT _rfirst, T_R_IT _rend,

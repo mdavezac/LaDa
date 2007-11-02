@@ -58,12 +58,13 @@ namespace SingleSite
 
   //! \brief Object describing the decoration of a structure.
   //! \details Mostly, this is a redefinition of a BitString::Object<>. The
-  //!          point is to be able to define  operator<<( Ising_CE::Structure&,
-  //!          const Object&) and operator<<( Object&, const
-  //!          Ising_CE::Structure&) whitout interfering with possible previous
+  //!          point is to be able to define 
+  //!          SingleSite::operator<<( Ising_CE::Structure&, const Object&) and 
+  //!          SingleSite::operator<<( Object&, const Ising_CE::Structure&) without
+  //!          interfering with possible previous
   //!          decalarations.
-  //! \see SingleSite::operator<<( Ising_CE::Structure&, const Layered::Object& ), 
-  //!      SingleSite::operator<<( Layered::Object&, const Ising_CE::Structure& ). 
+  //! \see SingleSite::operator<<( Ising_CE::Structure&, const Object& ), 
+  //!      SingleSite::operator<<( Object&, const Ising_CE::Structure& ). 
   struct Object : public BitString::Object<> 
   {
     protected:

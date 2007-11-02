@@ -34,9 +34,33 @@
 #include "mpi/mpi_object.h"
 #endif
 
+/** \ingroup Genetic
+ * @{ */
+//! \brief Implements single-cell-shape decoration search for band gaps.
+//! \details The strain is relaxed using the Valence Force Field developped in
+//!          namespace Vff. The band-gap is obtained from pescan \e via the
+//!          Pescan::Interface class. 
+//! 
+//!          The band gap can be obtained from a complete all-electron
+//!          diagonalization or, more efficiently, through a partial
+//!          diagonalization using the folded spectrum method (see <A
+//!          HREF="http://dx.doi.or/10.1103/PhysRevB.51.17398"> L-W Wang and A.
+//!          Zunger PRB \b 51, 17398 (1995) </A>). The latter needs two
+//!          reference energies to do find the band-gap. If these are \b not
+//!          given on input, Pescan::Darwin will first perform a full
+//!          diagonalization and peg the reference energies to the HOMO and the
+//!          LUMO. From there, only Folded-Spectrum methods are performed
+//!          unless one of two situations arise: 
+//!            - A metallic "band gap" is found 
+//!            - The user has requested all-electron calculations every \a N
+//!              generations
+//!            .
+//! \see For more details on the functionals, see Pescan::Interface and
+//!      Vff::Functional
 namespace BandGap
 {
 
+  //! Object
   struct Object : public TwoSites::Object, public Pescan::Keeper
   {
     friend std::ostream& operator<<(std::ostream &_stream, const Object &_o);
@@ -114,6 +138,8 @@ namespace BandGap
 
 
 } // namespace BandGap
+
+/** @} */
 
 #ifdef _MPI
 namespace mpi
