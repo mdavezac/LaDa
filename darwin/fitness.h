@@ -26,9 +26,9 @@
 /** \ingroup Genetic 
  * @{*/
 //! \brief Defines ordering of individuals
-//! \details This class stores the so-called "polished" fitness with which
-//! individuals are rated. Indee, each individual will contain an instance of a
-//! fitness. A fitness class will necessarily define weak ordering
+//! \details These class stores the so-called "polished" fitness with which
+//! individuals are rated. Indeed, each individual will contain an instance of a
+//! fitness (see Traits::Indiv). A fitness class will necessarily define weak ordering
 //! operators, Below, two kinds of fitnesses are implemented. A scalar fitness is
 //! defined which simply holds a scalar value such as a double or an
 //! integer. Around this value are accreted Load and Save to XML members, an mpi
@@ -59,7 +59,7 @@ namespace Fitness
   //! specifically, Fitness::Base contains a logical member,
   //! Fitness::Base::is_valid which is set to true when the quantity is set. The
   //! point is to make sure that the fitness is valid prior to using it. For this
-  //! purpose, Fitness::Base::invalidate should be called whenever the fintess
+  //! purpose, Fitness::Base::invalidate should be called whenever the fitness
   //! becomes invalid, for instance after a GA::Krossover operator is applied.
   //! 
   //! \param T_QUANTITYTRAITS traits of the quantity. Generally  a
@@ -156,6 +156,16 @@ namespace Fitness
              fitness from the single-objective fitness, we allow both
              approach with the same object.  Individuals can be orderer
              according to the Pareto ordering operators.
+             
+             As defined by the Individual::Base::Fitness type, EO only knows
+             about scalar fitnesses. In other words, when EO compares two
+             individuals, it will compare the \e scalar fitnesses. These have
+             better be set to some logical value prior to, say, parent
+             selection, or replacement. Basically, all things \e vectorial are
+             used and known only by LaDa. The end-product fitness is and should
+             be the \e scalar fitness.  Note however that it should not be very
+             difficult to change this behavior (say add a t_EO_Fitness in
+             Traits::Indiv, and set Individual::Base::Fitness to t_EO_Fitness ).
 
              Let \f$\mathcal{F}^{v}_t(\sigma)\f$ denote the component
              \f$t\in[0,N[\f$ of <I>N</I>-dimensional fitness 
@@ -170,9 +180,6 @@ namespace Fitness
                  \geq \mathcal{F}^v_t(\sigma_j).
              \f]
       
-             Since the base class of Vectorial is Scalar, this class also
-             implements a \e scalar fitness, which should be used as the
-             end-product fintess for %GA.
   */
   template<class T_QUANTITYTRAITS >
   class Vectorial :
@@ -313,16 +320,16 @@ namespace Fitness
            bool IS_SCALAR = T_QUANTITYTRAITS::is_scalar >
   struct Types 
   {
-    typedef Vectorial<T_QUANTITYTRAITS> Vector; //!< A \e truly vectorial fitness
-    //! A scalar fitness
+    typedef Vectorial<T_QUANTITYTRAITS> Vector; //!< A \e truly vectorial fitness type
+    //! A scalar fitness type
     typedef typename Vectorial<T_QUANTITYTRAITS> :: t_ScalarFitness Scalar;
   };
-  //! Scalar flavor 
+  //! %Scalar flavor 
   template<class T_QUANTITYTRAITS >
   struct Types <T_QUANTITYTRAITS, true >
   {
-    typedef Scalar<T_QUANTITYTRAITS> Vector; //!< A scalar fitness (sic)
-    typedef Scalar<T_QUANTITYTRAITS> Scalar; //!< A scalar fitness
+    typedef Scalar<T_QUANTITYTRAITS> Vector; //!< A scalar fitness type (sic)
+    typedef Scalar<T_QUANTITYTRAITS> Scalar; //!< A scalar fitness type
   };
 
 

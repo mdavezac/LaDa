@@ -74,11 +74,11 @@ namespace CE
       //! \details Before calling \e any evaluation function, this member must
       //!          be called. It makes sure that the functional acts upon the
       //!          correct set of variables.
-      //! \param T_INDIVIDUAL the type of the %GA individual. It is expected
+      //! \param _indiv Individual to be evaluated in the near futur.
+      //! \note T_INDIVIDUAL the type of the %GA individual. It is expected
       //!                     that this instance of this type can return an
       //!                     "Object" which itself can
       //!                     return the container of variables.
-      //! \param _indiv Individual to be evaluated in the near futur.
       template< class T_INDIVIDUAL >
       void init( T_INDIVIDUAL &_indiv )
         { functional.set_variables( &_indiv.Object().Container() ); }
@@ -103,7 +103,7 @@ namespace CE
 
 
   template< class T_QUANTITYGRADIENTS >
-  inline void Darwin::Darwin::evaluate_gradient( T_QUANTITYGRADIENTS& _grad )
+  inline void Darwin::evaluate_gradient( T_QUANTITYGRADIENTS& _grad )
   {
     // note that t_Function sets gradient to 0
     types::t_unsigned N = functional.size();

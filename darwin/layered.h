@@ -33,6 +33,8 @@
 //!       structure is completely filled with atoms.
 void FillStructure( Ising_CE::Structure &_str );
 
+/** \ingroup Genetic
+ * @{ */
 //! \brief allows the optimization of a (specified) structure's decoration,
 //!        where the structure \e layered.
 //! \details The point is to optimize for epitaxially grown structures. As such
@@ -71,24 +73,29 @@ namespace Layered
     //! \brief From real to k space
     //! \param _rfirst iterator to the first real space atom (of a type
     //!                simmilar to Ising_CE::Atom_Type)
-    //! \param _rfirst iterator to the last real space atom (of a type
-    //!                simmilar to Ising_CE::Atom_Type)
+    //! \param _rend iterator to the last real space atom (of a type
+    //!              simmilar to Ising_CE::Atom_Type)
     //! \param _kfirst iterator to the first real space atom (of a type
-    //!                simmilar to Ising_CE::Atom_Type< std::complex<?> >)
-    //! \param _klast iterator to the last real space atom (of a type
-    //!                simmilar to Ising_CE::Atom_Type< std::complex<?> >)
+    //!                simmilar to Ising_CE::Atom_Type< std::complex >)
+    //! \param _kend iterator to the last real space atom (of a type
+    //!              simmilar to Ising_CE::Atom_Type< std::complex >)
     template<class T_R_IT, class T_K_IT>
     Fourier( T_R_IT _rfirst, T_R_IT _rend,
              T_K_IT _kfirst, T_K_IT _kend );
     //! \brief From k space to real space. 
+    //! \details The first range is most likely some instance of
+    //!          Ising_CE::Structure::t_Atoms. The second range is similarly an
+    //!          instance of Ising_CE::Structure::t_kAtoms. The third range
+    //!          should be iterators to std::complex.
+    //! \pre The range [ \a _rout, \a _rout += \a _rfirst - \a _rend  ) should be valid.
     //! \param _rfirst iterator to the first real space atom (of a type
     //!                simmilar to Ising_CE::Atom_Type)
-    //! \param _rfirst iterator to the last real space atom (of a type
-    //!                simmilar to Ising_CE::Atom_Type)
+    //! \param _rend iterator to the last real space atom (of a type
+    //!              simmilar to Ising_CE::Atom_Type)
     //! \param _kfirst iterator to the first real space atom (of a type
-    //!                simmilar to Ising_CE::Atom_Type< std::complex<?> >)
-    //! \param _klast iterator to the last real space atom (of a type
-    //!                simmilar to Ising_CE::Atom_Type< std::complex<?> >)
+    //!                simmilar to Ising_CE::Atom_Type< std::complex >)
+    //! \param _kend iterator to the last real space atom (of a type
+    //!              simmilar to Ising_CE::Atom_Type< std::complex >)
     //! \param _rout iterator to the first complex real-space
     //!              occupation ( of std::complex type )
     template<class T_R_IT, class T_K_IT, class T_O_IT >
@@ -98,11 +105,11 @@ namespace Layered
   };
 
 
-  //! \brief Layered Object Type
-  //! \detail Redefines BitString::Object with the sole purpose of implementing
-  //!         overloaded operator<<() on and from Ising_CE::Structures.
-  //!         Note that we could run into awkward redefinitions by using typedefs
-  //!         rather than a complete redeclaration.
+  //! \brief %Layered %Object Type
+  //! \details Redefines BitString::Object with the sole purpose of implementing
+  //!          overloaded operator<<() on and from Ising_CE::Structures.
+  //!          Note that we could run into awkward redefinitions by using typedefs
+  //!          rather than a complete redeclaration.
   //! \see Layered::operator<<( Ising_CE::Structure&, const Layered::Object& ), 
   //!      Layered::operator<<( Layered::Object&, const Ising_CE::Structure& ). 
   template<class T_CONTAINER = std::vector<types::t_real> >
@@ -327,24 +334,39 @@ namespace Layered
       bool Load_Structure( const TiXmlElement &_node );
   };
 
+  //! \brief Strict Weak Ordering functor according to depth along eptiaxial
+  //!        direction
+  //! \details Two vectors are compared by using the value of their scalar
+  //           product with Depth::a0. If these scalar product are equal (as
+  //           defined by opt::Fuzzy<types::t_real>::equal()), then their
+  //           scalar product with Depth::a1 are compared. If again these are
+  //           equal, then the scalar porducts with Depth::a2 are compared and
+  //           the result return. Depth::a0 is the first column of the matrix
+  //           given in the constructor argument. Depth::a2 is the second
+  //           column, and Depth::a3 the third.
   class Depth
   {
     protected:
-      atat::rVector3d a0;
-      atat::rVector3d a1;
-      atat::rVector3d a2;
+      atat::rVector3d a0; //!< First ordering direction
+      atat::rVector3d a1; //!< Second ordering direction
+      atat::rVector3d a2; //!< Third ordering direction
 
     public:
+      //! \brief Constructor and Initializer
+      //! \param _mat Depth::a0 is set to the first column of this matrix,
+      //!             Depth::a1 to the second, and Depth::a2 to the third.
       Depth   ( const atat::rMatrix3d &_mat )
             : a0(_mat.get_column(0)), a1(_mat.get_column(1)),
               a2(_mat.get_column(2)) {}
+      //! Copy Constructor.
       Depth( const Depth &_c) : a0(_c.a1), a1(_c.a1), a2(_c.a2) {}
 
+      //! Strict weak ordering operator.
       bool operator()(const atat::rVector3d& _1, const atat::rVector3d& _2 );
   };
 
 } // namespace Layered
-
+/** @} */
 
 #include "layered.impl.h"
 

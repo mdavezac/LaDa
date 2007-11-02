@@ -550,19 +550,19 @@ errorout:
   inline bool Depth::operator()( const atat::rVector3d &_1,
                                  const atat::rVector3d &_2 )
   {
-    types::t_real a =   _1(0) * a0(0) + _1(1) * a0(1) + _1(2) * a0(2);
-    types::t_real b =   _2(0) * a0(0) + _2(1) * a0(1) + _2(2) * a0(2);
-    if ( not Traits::Quantity< types::t_real > :: equal( a, b ) )
-      return Traits::Quantity<types::t_real> :: less( a, b );
+    types::t_real a =   _1 * a0;
+    types::t_real b =   _2 * a0;
+    if ( not opt::Fuzzy<types::t_real> :: equal( a, b ) )
+      return opt::Fuzzy<types::t_real> :: less( a, b );
 
-    a =   _1(0) * a1(0) + _1(1) * a1(1) + _1(2) * a1(2);
-    b =   _2(0) * a1(0) + _2(1) * a1(1) + _2(2) * a1(2);
-    if ( not Traits::Quantity< types::t_real > :: equal( a, b ) )
-      return Traits::Quantity<types::t_real> :: less( a, b );
+    a =   _1 * a1;
+    b =   _2 * a1;
+    if ( not opt::Fuzzy<types::t_real> :: equal( a, b ) )
+      return opt::Fuzzy<types::t_real> :: less( a, b );
     
-    a =   _1(0) * a2(0) + _1(1) * a2(1) + _1(2) * a2(2);
-    b =   _2(0) * a2(0) + _2(1) * a2(1) + _2(2) * a2(2);
-    return Traits::Quantity<types::t_real> :: less( a, b );
+    a =   _1 * a2;
+    b =   _2 * a2;
+    return opt::Fuzzy<types::t_real> :: less( a, b );
   }
 
 } // namespace Layered

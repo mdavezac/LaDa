@@ -16,13 +16,15 @@ namespace Vff
 
   //! \brief Valence Force Field for "layered" structures
   //! \details In this Vff implementation, strain is only allowed in one
-  //!          Layered::direction. In practice, this means a few changes to
-  //!          variable packing and unpacking (at least were the strain/stress
-  //!          is concerned), as well as redefining member functions which make
-  //!          use of packing and unpacking.  It is expected that the first
-  //!          unit-cell vector of structure (from input) is the direction in
-  //!          which relaxation is allowed. In other words, this class is only
-  //!          supposed to work for Darwin::Molecularity. Cheers.
+  //!          epitaxial growth direction, Layered::direction. In practice,
+  //!          this means a few changes to variable packing and unpacking (at
+  //!          least were the strain/stress is concerned), as well as
+  //!          redefining member functions which make use of packing and
+  //!          unpacking.  It is expected that the first unit-cell vector of
+  //!          structure (from input) is the direction in which relaxation is
+  //!          allowed.
+  //! \see Mostly, this class is meant to work with epitaxial structure
+  //!      optimization as implemented in Darwin::Molecularity. 
   class Layered : public Vff::Functional
   {
 #ifdef _MPI
@@ -44,7 +46,7 @@ namespace Vff
       atat::rVector3d u; 
       /** \brief The Strain \f$\hat{S}\f$, as defined in Vff::Functional is
        * \f$\hat{S} = \hat{1}+\epsilon \hat{S}'\f$, with
-       * \f$\hat{S}'\f$ the template_strain. */
+       * \f$\hat{S}'\f$ the template strain. */
       atat::rMatrix3d  template_strain; 
       
     public:
@@ -116,8 +118,8 @@ namespace Vff
   };
 
   template< typename t_grad_iterator>
-  void Layered :: pack_gradients(const atat::rMatrix3d& _stress, 
-                                 t_grad_iterator const &_grad) const
+  void Vff::Layered :: pack_gradients(const atat::rMatrix3d& _stress, 
+                                      t_grad_iterator const &_grad) const
   {
     t_grad_iterator i_grad(_grad);
 
@@ -143,7 +145,7 @@ namespace Vff
   }
 
   template< typename t_grad_iterator>
-  types::t_real Layered :: evaluate_with_gradient( t_grad_iterator const &_i_grad )
+  types::t_real Vff::Layered :: evaluate_with_gradient( t_grad_iterator const &_i_grad )
   {
     t_Type energy = 0;
     std::for_each( centers.begin(), centers.end(),

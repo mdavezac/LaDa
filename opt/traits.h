@@ -78,7 +78,7 @@ namespace Traits
 //! Templates for handling modifiers (&, *, const)
   namespace Modifier
   {
-    //! Construct for detecting (absence of) const modifier
+    //! Construct for detecting (absence/presence of) const modifier
     template<class T_QUANTITY> struct Const
     { 
       const static bool is_const = false;  //!< True ie T_QUANTITY is const
@@ -92,7 +92,7 @@ namespace Traits
       typedef T_QUANTITY t_nonconstant;    //!< Non Constant type
       typedef const T_QUANTITY t_constant; //!< Constant type
     };
-    //! Construct for detecting (absence of) & modifier
+    //! Construct for detecting (absence/presence of) & modifier
     template<class T_QUANTITY> struct Reference
     { 
       const static bool is_refd = false;  //!< True ie T_QUANTITY is a reference
@@ -106,7 +106,7 @@ namespace Traits
       typedef T_QUANTITY t_nonrefd;      //!< Non ref'd type
       typedef T_QUANTITY& t_refd;        //!< Ref'd type
     };
-    //! Construct for detecting (absence of) * modifier
+    //! Construct for detecting (absence/presence of) * modifier
     template<class T_QUANTITY> class Pointer
     { 
       //! \cond
