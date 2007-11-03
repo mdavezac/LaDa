@@ -88,7 +88,8 @@ namespace Layered
     //!          Ising_CE::Structure::t_Atoms. The second range is similarly an
     //!          instance of Ising_CE::Structure::t_kAtoms. The third range
     //!          should be iterators to std::complex.
-    //! \pre The range [ \a _rout, \a _rout += \a _rfirst - \a _rend  ) should be valid.
+    //! \pre The range [ \a _rout, \a _rout += \a _rfirst - \a _rend  ) should
+    //!      be valid.
     //! \param[in] _rfirst iterator to the first real space atom (of a type
     //!                similar to Ising_CE::Atom_Type)
     //! \param[in] _rend iterator to the last real space atom (of a type
@@ -194,7 +195,7 @@ namespace Layered
       //! \brief Normalizes the site occupations as given by the \b k-vectors. 
       //! \details A "complex" real-space occupation is computed from the
       //!          k-space intensities. Normalized site-occupations are set to
-      //!          +/- 1 depending on which half=plane the complex value are.
+      //!          +/- 1 depending on which half-plane the complex value are.
       //!          If the concentration is fixed, those sites for which the
       //!          real value of the complex occupation  are closest to zero
       //!          are flipped first.
@@ -241,7 +242,7 @@ namespace Layered
   //!        relevant to layered, epitaxial structure decoration search. 
   //! \details Mostly allows for physical %GA operators (GA::Krossover,
   //!          GA::xTaboo, GA::Crossover, etc...) and links them with the
-  //!          bitstring objects defined above, as well as the concetration
+  //!          bitstring objects defined above, as well as the concentration
   //!          functor SingleSite::Concentration. Saving and Restarting of
   //!          individuals is partially implementated as relates to
   //!          BitString::Object and Ising_CE::Structure.
@@ -319,7 +320,8 @@ namespace Layered
       eoGenOp<t_Individual>* LoadGaOp(const TiXmlElement &_el )
        { return GA::LoadGaOp<t_Individual>( _el, structure, concentration ); }
       //! Creates a GA::xTaboo instance if requested.
-      //! \return a pointer to a Taboo_Base functor. This pointer is owned by the callee.
+      //! \return a pointer to a Taboo_Base functor. This pointer is owned by
+      //!         the callee.
       GA::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el );
       //! Creates random individuals using GA::Random.
       bool initialize( t_Individual &_indiv );

@@ -12,17 +12,23 @@
 
 namespace GA
 {
-  // generation counter
+  //! \brief generation counter
   class GenCount
   {
     protected:
+      //! the number of generation since start of %GA run
       types::t_unsigned age;
     public:
+      //! Copy Constructor
       GenCount( const GenCount &_gc) : age(_gc.age) {};
+      //! Constructor and initializer
       GenCount( types::t_unsigned _age) : age(_age) {};
+      //! Constructor
       GenCount() : age(0) {};
+      //! increments the number of generations by one
       void operator ++() 
         { ++age; }
+      //! Returns the number of generations
       types::t_unsigned operator()() const
         { return age; }
   };

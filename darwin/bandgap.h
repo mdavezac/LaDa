@@ -60,24 +60,33 @@
 namespace BandGap
 {
 
-  //! Object
+  //! \brief BitString Object with Pescan capacity
+  //! \details Other than the bitstring itself and the Pescan::Keeper
+  //           variables, this object also stores the x and y concentrations of
+  //           a quaternary. It overloads dumping an object to a stream.
+  //! \see BandGap::operator<<( std::ostream &, const Object& )
   struct Object : public TwoSites::Object, public Pescan::Keeper
   {
-    friend std::ostream& operator<<(std::ostream &_stream, const Object &_o);
+    //! The type of the BitString container
     typedef TwoSites::Object :: t_Container t_Container;
-#ifdef _MPI
-    friend bool mpi::BroadCast::serialize<BandGap::Object>(BandGap::Object &);
-#endif
-    types::t_real x, y;
+    //! The concentration of the first site.
+    types::t_real x;
+    //! The concentration of the second site.
+    types::t_real y;
 
-
+    //! Constructor
     Object() : TwoSites::Object(), Pescan::Keeper() {}
+    //! Copy Constructor
     Object   (const Object &_c)
            : TwoSites::Object(_c), Pescan::Keeper(_c),
              x(_c.x), y(_c.y) {};
+    //! Destructor
     ~Object() {};
   };
 
+  //! \brief Dumps a BandGap::Object to a stream.
+  //! \details  This routine is used for printing results only, and never to
+  //!           serialize in XML format.
   inline std::ostream& operator<<(std::ostream &_stream, const Object &_o)
   { 
     if( _o.Container().size() <= 30 )
@@ -87,20 +96,36 @@ namespace BandGap
     return _stream; 
   } 
 
+  //! \brief Type of the \e physical BandGap individual
+  //! \details In addition to BandGap object, the individual uses
+  //!          TwoSites::Concentration and TwoSites Fourier. By default, it
+  //!          declares a \e scalar fitness.
   typedef Individual::Types< BandGap::Object, 
                              TwoSites::Concentration, 
-                             TwoSites::Fourier        > :: Scalar t_Individual;
+                             TwoSites::Fourier > :: Scalar t_Individual;
 
+  //! \brief %Evaluator class for band-gap decoration search
+  //! \details A Pescan::Darwin and a Vff::Darwin<Vff::Functional> objects are
+  //!          declared which allow for strain and bandgap computation.
+  //!          The \e physical ga operators of gaoperators.h are used to mate
+  //!          individuals. \e A \e priori, I can't see what we would need to
+  //!          compute a convex-hull for, so GA::Evaluator::presubmit() is
+  //!          overriden to simply clear the population in its argument.
   class Evaluator : public TwoSites::Evaluator< BandGap::t_Individual >
   {
     public:
+      //! \brief The type of the \e physical individual used in this decoration
+      //! search.
       typedef BandGap::t_Individual t_Individual;
+      //! All pertinent %GA traits
       typedef Traits::GA< Evaluator > t_GATraits;
     protected:
+      //! \cond
       typedef Evaluator t_This;
       typedef TwoSites::Evaluator< t_Individual > t_Base;
       typedef Ising_CE::Structure::t_kAtoms t_kvecs;
       typedef Ising_CE::Structure::t_Atoms t_rvecs;
+      //! \endcond
 
     public:
       using t_Base :: Load;
@@ -110,23 +135,32 @@ namespace BandGap
       using t_Base :: current_object;
 
     protected:
-      Pescan::Darwin pescan;
-      Vff::Darwin<Vff::Functional> vff;
+      //! interface to... uh ... the pescan interface.
+      Pescan::Darwin pescan; 
+      //! Interface to Vff::Functional.
+      Vff::Darwin<Vff::Functional> vff; 
 
     public:
+      //! Constructor
       Evaluator() : t_Base(), pescan(structure), vff(structure) {}
+      //! Copy Constructor
       Evaluator   ( const Evaluator &_c )
                 : t_Base(_c), pescan(_c.pescan), vff(_c.vff) {}
+      //! Destructor
       ~Evaluator() {};
 
+      //! Saves an individual to XML
       bool Save ( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const;
+      //! Loads an individual from XML
       bool Load ( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
+      //! Loads structure, lattice, pescan, vff from XML
       bool Load( const TiXmlElement &_node );
-      void LoadAttribute ( const TiXmlAttribute &_att ) {};
+      //! Allows pescan all-electron recomputation.
       eoF<bool>* LoadContinue(const TiXmlElement &_el )
         { return new GA::mem_zerop_t<Pescan::Darwin>( pescan, &Pescan::Darwin::Continue,
                                                       "Pescan::Continue" );     }
 
+      //! Evaluates the band gap after strain minimization
       void evaluate();
 
       //! \brief Pescan is costly and I'm not sure why we would want to do a
@@ -144,6 +178,10 @@ namespace BandGap
 #ifdef _MPI
 namespace mpi
 {
+  /** \ingroup Genetic
+   *  \brief Serializes a BandGap::Object.
+   *  \details Includes the serialization of the BitString::container, the
+   *  concentrations x and y, and the Pescan::Keeper member variables. */
   template<>
   inline bool mpi::BroadCast::serialize<BandGap::Object>( BandGap::Object & _object )
   {

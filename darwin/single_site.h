@@ -54,7 +54,13 @@
 //!           \<Job\> tag.  Its exact format is described in \ref TagStructure.
 namespace SingleSite
 {
-  using Ising_CE::Fourier;
+  //! \brief Type of the Fourier functor.
+  //! \details Once doxygen is smart enough, should become
+  //! \code
+  //  using Ising_CE::Fourier;
+  //! \endcode
+  //!      
+  typedef Ising_CE::Fourier Fourier;
 
   //! \brief Object describing the decoration of a structure.
   //! \details Mostly, this is a redefinition of a BitString::Object<>. The

@@ -649,10 +649,10 @@ namespace Vff
 #ifdef _MPI
 namespace mpi {
   /** \ingroup MPI
-  * \brief Serializes Vff::Atom_Functional. Not sure this works anymore.
+  * \brief Serializes Vff::Functional. Not sure this works anymore.
   */
   template<>
-  bool BroadCast::serialize<Vff::Atomic_Functional> ( Vff::Atomic_Functional& );
+  bool BroadCast::serialize<Vff::Functional> ( Vff::Functional& );
   
   /** \ingroup MPI
   * \brief Serializes Vff::Atom_Functional, meaning all member variables
