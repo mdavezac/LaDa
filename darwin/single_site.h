@@ -345,7 +345,7 @@ namespace SingleSite
   //! Loads a Niche< Triangular::Sharing< Distance > > from XML
   template<class T_GATRAITS, types::t_int _D> Scaling::Base<T_GATRAITS>*
     new_Niche_from_xml( const TiXmlElement &_node,
-                        typename T_GATRAITS :: t_Concentration &_conce );
+                        typename T_GATRAITS :: t_IndivTraits :: t_Concentration &_conce );
 
 } // namespace TwoSites
 /* @} */

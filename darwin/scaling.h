@@ -32,7 +32,7 @@
 namespace Scaling
 {
 
-  //! \brief Base class for population dependent fitness operations
+  //! \brief %Base class for population dependent fitness operations
   //! \details A pure virtual operator(t_Population&) is defined by the base
   //!   class. 
   template<class T_GATRAITS> 
@@ -82,7 +82,7 @@ namespace Scaling
   class Container : public Base<T_GATRAITS>
   {
     public:
-        typedef T_GATRAITS t_GATraits; //!< Contain all %GA types
+        typedef T_GATRAITS t_GATraits; //!< Contain all %GA %types
       protected:
         //! Type of the population
         typedef typename t_GATraits :: t_Population t_Population;

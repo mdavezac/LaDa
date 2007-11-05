@@ -316,7 +316,7 @@ namespace GA
 
   //! \brief Genetic operator which chechs wether a new offspring is tabooed
   //! \details When a newly generated offspring is found to be taboo, the
-  //!          function loops to generating a new one. This goes on for a
+  //!          %function loops to generating a new one. This goes on for a
   //!          while. If no new individual can be found, a warning is issued and
   //!          the fucntor tries to create a non-taboo individual with
   //!          TabooOp::utterrandom. This also goes for while. After which, the
@@ -359,7 +359,7 @@ namespace GA
 
   };
 
-  //! \brief Wraps a taboo over a %GA::Evaluator member function.
+  //! \brief Wraps a taboo over a %GA::Evaluator member %function.
   //! \details This is useful for implementing application specific taboos, say
   //!          based on phenotype.
   template< class T_EVALUATOR >
@@ -368,7 +368,7 @@ namespace GA
     public:
       //! Type of the evaluator
       typedef T_EVALUATOR t_Evaluator;
-      //! Pointer to the member function
+      //! Pointer to the member %function
       typedef bool ( t_Evaluator::*t_Function )(const typename t_Evaluator::t_Individual &);
     protected:
       //! Type of the individual

@@ -46,8 +46,8 @@
  * the templated type \a Base::t_IndivTraits::t_Object. Furthermore, Individual
  * allows saving and loading to and from XML input, using templatized save and
  * load functors. 
- * \param T_INDIVTRAITS declares all the types relevant to an Individual, and then some.
- *        The two truly relevant types are 
+ * \param T_INDIVTRAITS declares all %types relevant to an Individual, and then some.
+ *        The two truly relevant %types are 
  *        - Base::t_IndivTraits::t_Object declares the type of object the individual represents
  *        - Base::t_IndivTraits::t_Fitness declares the type of fitness to use, eg a
  *        scalar Fitness::Base, or a vectorial Fitness::Base type.
@@ -135,7 +135,7 @@ namespace Individual
 
       //! \brief Copies everythin but Base::age
       //! \details Base::age is set to zero.
-      //!          This function is useful if you want a new individual (age=0)
+      //!          This %function is useful if you want a new individual (age=0)
       //!          in the population, but which happens to be a clone. \sa
       //!          Taboo::History
       void clone( const t_This &_indiv );
@@ -146,7 +146,7 @@ namespace Individual
       types::t_unsigned  get_age() const { return age; }
 
       //! \brief Ordering operator, done according to Fitness::operator<( const Fitness& )
-      //! \details Watch that t_Fitness and Fitness may be different types.
+      //! \details Watch that t_Fitness and Fitness may be different %types.
       //!          Indeed, as of revision 336, and in the case of
       //!          multi-objective fitnesses, t_Fitness is a \e vectorial fitness,
       //!          whereas Fitness is a \e scalar fitness. This means that as far
@@ -154,7 +154,7 @@ namespace Individual
       bool operator<(const t_This& _eo2) const
         { return repFitness.Fitness::operator<( _eo2.repFitness); }
       //! \brief. Ordering operator, done according to Fitness::operator>( const Fitness& )
-      //! \details Watch that t_Fitness and Fitness may be different types.
+      //! \details Watch that t_Fitness and Fitness may be different %types.
       //!          Indeed, as of revision 336, and in the case of
       //!          multi-objective fitnesses, t_Fitness is a \e vectorial fitness,
       //!          whereas Fitness is a \e scalar fitness. This means that as far
@@ -260,7 +260,7 @@ namespace Individual
   template< class T_BASE >
   class Multi : public T_BASE
   {
-      typedef T_BASE t_Base; //!< Base class type
+      typedef T_BASE t_Base; //!< %Base class type
     public: 
       //! \brief Contains all traits pertaining to an individual, and then some
       //! \sa Traits::Indiv
@@ -279,14 +279,14 @@ namespace Individual
       using t_Base :: set_fitness;
 
       //! \brief Sets the scalar fitness of Multi::repFitness
-      //! \details For a scalar fitness, this function is exactly equivalent to
+      //! \details For a scalar fitness, this %function is exactly equivalent to
       //! Base::set_fitness( const t_Quantiy ) and hence cannot even be declared.
       //! Actually, this fact explains why Multi exists in the first place.
       void set_fitness( const t_ScalarFitnessQuantity _q )
         { (t_ScalarFitness&) repFitness = _q; }
 
       //! \brief Save to XML
-      //! \details, we need to redeclare this function since \a _saveop cannot take
+      //! \details, we need to redeclare this %function since \a _saveop cannot take
       //! an Individual::Base instance as an argument, which it would if we were
       //! to use Base::Save() directly. 
       //! \param _node  XML node to which to save this instance
@@ -294,7 +294,7 @@ namespace Individual
       //! \todo Find a better way to do this, such that we can use Base::Save directly
       template<class SaveOp> bool Save( TiXmlElement &_node, SaveOp &_saveop ) const;
       //! \brief Load from XML
-      //! \details, we need to redeclare this function since \a _loadop cannot take
+      //! \details, we need to redeclare this %function since \a _loadop cannot take
       //! a Individual::Base instance as an argument, which it would if we were
       //! to use Base::Load() directly.
       //! \param _node  XML node to which to save this instance
@@ -309,11 +309,11 @@ namespace Individual
                                     const Base<T_INDIVTRAITS> &_indiv )
     { _indiv.print_out(_str); return _str; }
 
-  //! \brief Makes it simpler to declare a scalar and vectorial individual for
-  //! crystal objects 
-  //! \details A crystal object is simply any physical structure. This class is
-  //! meant to be used in conjunction with all the operators declared in
-  //! gaoperators.h
+  //! \brief Makes it simpler to declare physical individuals of scalar and
+  //!        vectorial %types.
+  //! \details An individual is \e physical when it declares all %types in
+  //!          Traits::PhysicsIndiv. Most notably, these include type for a
+  //!          concentration functor and fourier functors.
   //! To declare a Scalar individual use as in ce.h,
   //! \code
   //!   typedef Individual::Types< SingleSite::Object, 
@@ -343,14 +343,19 @@ namespace Individual
         typedef T_FOURIER_RTOK  t_FourierRtoK; //!< Fourier functor type
 
       protected:
+        //! Traits of %types::t_real
+        typedef Traits::Quantity< types::t_real > t_ScalarQuantityTraits;
+        //! Traits of std::vector<types::t_real>
+        typedef Traits::Quantity< std::vector<types::t_real> > t_VectorQuantityTraits;
+
         typedef t_FourierRtoK t_FourierKtoR; //!< Back Fourier transform functor
         //! Traits of scalar individual whose quantities are real
-        typedef Traits::Indiv< t_Object, t_Concentration, t_FourierRtoK, t_FourierKtoR,
-                               Traits::Quantity< types::t_real > > t_realtraits;
+        typedef Traits::PhysicsIndiv< t_Object, t_Concentration, t_FourierRtoK, t_FourierKtoR,
+                                      t_ScalarQuantityTraits > t_realtraits;
         //! Traits of vectorial individual whose quantities are real
-        typedef Traits::Indiv< t_Object, t_Concentration, t_FourierRtoK, t_FourierKtoR,
-                               Traits::Quantity< std::vector<types::t_real> > > t_vectortraits;
-        //! Base class for templatized Multi 
+        typedef Traits::PhysicsIndiv< t_Object, t_Concentration, t_FourierRtoK, t_FourierKtoR,
+                                      t_VectorQuantityTraits > t_vectortraits;
+        //! %Base class for templatized Multi 
         typedef Base< t_vectortraits > VectorBase;
 
       public:

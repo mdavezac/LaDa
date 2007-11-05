@@ -95,7 +95,7 @@
 namespace Objective
 {
 
-  //! \brief Base class for objectives.
+  //! \brief %Base class for objectives.
   //! \details The goal is to define the necessary behavior for linking the
   //! "raw fitness" of Individual::Base::quantity and the "polished" fitness of
   //! Individual::Base::repFitness. As sich the following member %funtions are
@@ -365,7 +365,7 @@ namespace Objective
   template< class T_GA_TRAITS >
   class Maximize : public Types< T_GA_TRAITS > :: Scalar
   {
-      //! Base of this class
+      //! %Base of this class
       typedef typename Types<T_GA_TRAITS> :: Scalar        t_Base; 
     public:
       typedef T_GA_TRAITS t_GATraits; //!< All %GA traits
@@ -445,7 +445,7 @@ namespace Objective
   template< class T_GA_TRAITS >
   class Minimize : public Types< T_GA_TRAITS > :: Scalar
   {
-      //! Base of this class
+      //! %Base of this class
       typedef typename Types<T_GA_TRAITS> :: Scalar        t_Base; 
     public:
       typedef T_GA_TRAITS t_GATraits; //!< All %GA traits
@@ -527,7 +527,7 @@ namespace Objective
   template< class T_GA_TRAITS >
   class Target : public Types< T_GA_TRAITS > :: Scalar
   {
-      //! Base of this class
+      //! %Base of this class
       typedef typename Types<T_GA_TRAITS> :: Scalar        t_Base; 
     public:
       typedef T_GA_TRAITS t_GATraits; //!< All %GA traits
@@ -638,7 +638,7 @@ namespace Objective
   template< class T_GA_TRAITS >
   class ConvexHull : public Types< T_GA_TRAITS > :: Scalar
   {
-      //! Base of this class
+      //! %Base of this class
       typedef typename Types<T_GA_TRAITS> :: Scalar        t_Base; 
     public:
       typedef T_GA_TRAITS t_GATraits; //!< All %GA traits
@@ -762,7 +762,7 @@ namespace Objective
   };
 
 
-  //! \brief Base class to implement optimization towards a vector of scalar
+  //! \brief %Base class to implement optimization towards a vector of scalar
   //!        objectives
   //! \details This class is still pure virtual and cannot be used as such. It
   //!          merely implements some general routines over a container of scalar
@@ -773,7 +773,7 @@ namespace Objective
   template<class T_GA_TRAITS >
   class Container : public Types<T_GA_TRAITS> :: Vector
   {
-      //! Base of this class
+      //! %Base of this class
       typedef typename Types<T_GA_TRAITS> :: Vector        t_Base; 
     public:
       typedef T_GA_TRAITS t_GATraits; //!< All %GA traits
@@ -848,7 +848,7 @@ namespace Objective
   template<class T_GA_TRAITS >
   class LinearSum : public Container<T_GA_TRAITS>
   {
-      //! Base of this class
+      //! %Base of this class
       typedef Container<T_GA_TRAITS>                      t_Base; 
     public:
       typedef T_GA_TRAITS t_GATraits; //!< All %GA traits

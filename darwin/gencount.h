@@ -12,7 +12,10 @@
 
 namespace GA
 {
-  //! \brief generation counter
+  //! \brief generation counter.
+  //! \details This is simply something which can be incremented and only
+  //!          incremented by one. It should be so once every generation. It
+  //!          can also return its current value.
   class GenCount
   {
     protected:

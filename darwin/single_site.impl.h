@@ -152,7 +152,7 @@ namespace SingleSite
 
   template<class T_GATRAITS, types::t_int _D> Scaling::Base<T_GATRAITS>*
     new_Niche_from_xml( const TiXmlElement &_node,
-                        typename T_GATRAITS :: t_Concentration &_conce )
+                        typename T_GATRAITS :: t_IndivTraits :: t_Concentration &_conce )
     {
       if( not _node.Attribute("distance") ) return NULL;
       std::string name = _node.Attribute("distance");

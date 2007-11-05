@@ -20,10 +20,10 @@
 #include "mpi/mpi_object.h"
 #endif
 
-//! \brief Traits and functions capable of discerning between a few standard
+//! \brief %Traits and functions capable of discerning between a few standard
 //! %types and containers
 //! \details The object of the Traits namespace is to offfer the ability to
-//! distinguish different types when using templates. This is mostly used in
+//! distinguish different %types when using templates. This is mostly used in
 //! module \ref Genetic, where we want to write templated classes capable of
 //! dealing with scalar and vectorial quantities.
 namespace Traits 
@@ -64,7 +64,7 @@ namespace Traits
    struct Dim<bool> { const static bool is_scalar = true;   //!< \a IS_SCALAR is a scalar
                       const static bool is_vector = false;  //!< \a IS_SCALAR is not a vector
    };
-  //! Specialize version of Dim for constant types
+  //! Specialize version of Dim for constant %types
   template<class T_QUANTITY>
    struct Dim<const T_QUANTITY>
    {
@@ -236,8 +236,8 @@ namespace Traits
 //   };
 
 
-    //! \brief Helper function returning the value to which a pointer points.
-    //! \details Say you call this function with an object in argument, you get
+    //! \brief Helper %function returning the value to which a pointer points.
+    //! \details Say you call this %function with an object in argument, you get
     //!          a reference to this object in return. Say you call it with a
     //!          pointer to the same object. You still get the same reference in
     //!          return. Now if you call it with a pointer to this pointer to
@@ -262,7 +262,7 @@ namespace opt
 {
   //! \brief Make a vector form \a T_ARG if \a MAKEVECTOR is true.
   //! \details When setting \a MAKEVECTOR to Dim<T_ARG> :: is_vector, this
-  //! function allows us to create or not a vector of T_ARG, or simply redeclare
+  //! %function allows us to create or not a vector of T_ARG, or simply redeclare
   //! T_ARG. \relates Function::t_GradientTraits
   template< class T_ARG, bool MAKEVECTOR = true >
    struct MakeVector { typedef std::vector<T_ARG> t_Vector; //!< The the resulting type
@@ -341,7 +341,7 @@ namespace opt
         { return std::abs( _a - _b ) <  types::tolerance; }
     };
 
-  //! \brief Defines a print_out and a broadcast function depending on 
+  //! \brief Defines a print_out and a broadcast %function depending on 
   //! whether \a IS_SCALAR is true or false
   template<bool IS_SCALAR>
   struct IsAScalar
@@ -436,8 +436,8 @@ namespace opt
 
 namespace Traits
 {
-  //! \brief Defines a Quantity from \a T_QUANTITY, 
-  //! as well as the closes scalar quantity to Quantity
+  //! \brief Defines %types pertaining to \a T_QUANTITY, 
+  //! eg itself, its components, ...
   //! \details The object of the traits class is to hold for \a T_QUANTITY
   //! type, its related scalar uantity, whether it is vectorial
   //! (Quantity::is_vector) or scalar (Quantity::is_vector), as well as a number
@@ -494,7 +494,7 @@ namespace Traits
 #endif
     };
 
-  //! \brief General traits for any function
+  //! \brief General traits for any %function
   //! \details Defines the type of arguments and the type of the return
   template< class T_ARG, class T_RET = T_ARG >
   struct Function
@@ -503,7 +503,7 @@ namespace Traits
     typedef typename Modifier::Reference<T_ARG> :: t_nonrefd  t_Return; //!< The Return type
     typedef Quantity<T_ARG> t_ArgTraits; //!< The Argument traits
     typedef Quantity<T_RET> t_RetTraits; //!< The return traits
-    //! Defines a complete type for the gradient of this function
+    //! Defines a complete type for the gradient of this %function
     typedef Quantity< typename opt::MakeVector< t_Return,
                           Dim<T_ARG>::is_vector > :: t_Vector > t_GradientTraits;
   };

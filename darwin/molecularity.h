@@ -33,28 +33,49 @@
 #include "mpi/mpi_object.h"
 #endif
 
+//! \ingroup Genetic
+//! \brief Decoration search for band-gaps and in-plane-stress of layered structures.
+//! \details This is mostly an application of Layered to band-gap optimization.
+//!          The in-plane-stress ia added as a second objective, so that the
+//!          structure can be grown. 
+//! \warning It is assumed that the lattice contains two sites.
 namespace Molecularity
 {
+  //! Computes in-plane stress from stress matrix \a _stress and plane \a _dir.
   types::t_real inplane_stress( const atat::rMatrix3d &_stress, const atat::rVector3d &_dir );
 
-  class Object : public Layered::Object<>, public Vff::Keeper, public Pescan::Keeper
+  //! \brief bitstring object for layered structures, including variables for stress
+  //! and band-edges.
+  class Object : public Layered::Object<>,
+                 public Vff::Keeper, 
+                 public Pescan::Keeper
   {
     protected:
-      typedef Layered :: Object<> t_LayeredBase;
-      typedef Vff::Keeper         t_VffBase;
-      typedef Pescan::Keeper      t_PescanBase;
+      //! Layered bitstring base
+      typedef Layered :: Object<> t_LayeredBase;  
+      //! Strain info base 
+      typedef Vff::Keeper         t_VffBase;      
+      //! Band gap info base
+      typedef Pescan::Keeper      t_PescanBase;   
 
     public:
-      typedef t_LayeredBase :: t_Type t_Type;
+      //! see function::Base::t_Type
+      typedef t_LayeredBase :: t_Type t_Type; 
+      //! see function::Base::t_Container
       typedef t_LayeredBase :: t_Container t_Container;
 
     public:
+      //! Constructor
       Object() : t_LayeredBase(), t_VffBase(), t_PescanBase() {}
+      //! Copy Constructor
       Object(const Object &_c) : t_LayeredBase(_c), t_VffBase(_c), t_PescanBase(_c) {};
+      //! Destructor
       ~Object() {};
       
+      //! Loads strain and band-gap info from XML
       bool Load( const TiXmlElement &_node )
         { return t_VffBase::Load(_node) and t_PescanBase::Load(_node); }
+      //! Saves strain and band-gap info to XML
       bool Save( TiXmlElement &_node ) const
         { return t_VffBase::Save(_node) and t_PescanBase::Save(_node); }
   };
@@ -66,21 +87,31 @@ namespace Molecularity
   //!          Just repeating myself.
   std::ostream& operator<<(std::ostream &_stream, const Object &_o);
   
-
+  //! \brief %Individual type for Molecularity.
+  //! \details The object type is the one above, eg a BitString::Object adapted
+  //!          for Layered structures and containing info for stress and
+  //!          band-gap. The concentration functor, as well as the Fourier
+  //!          transform functors are also specialized for layered objects.
   typedef Individual::Types< Object, 
                              Layered::Concentration<2>, 
                              Layered::Fourier<2>    > :: Vector t_Individual;
 
+  //! \brief Evaluator class for band-gap search of a layered structure.
+  //! \details Mostly, this class defines  a Pescan::Darwin instance, and a
+  //!          Vff::Darwin<Vff::Layered> instance for evaluating (and
+  //!          minimizing) in-plane-stress and for evaluating band-gaps.
   class Evaluator : public Layered::Evaluator< t_Individual >
   {
     public:
+      //! Type of the individual
       typedef Molecularity::t_Individual     t_Individual;
+      //! All %types relevant to %GA
       typedef Traits::GA< Evaluator >        t_GATraits;
     protected:
+      //! Type of this class
       typedef Evaluator                      t_This;
+      //! Type of the base class
       typedef Layered::Evaluator<t_Individual> t_Base;
-      typedef Ising_CE::Structure::t_kAtoms  t_kvecs;
-      typedef Ising_CE::Structure::t_Atoms   t_rvecs;
 
     public:
       using t_Base :: Load; 
@@ -90,24 +121,35 @@ namespace Molecularity
       using t_Base :: current_object;
 
     protected:
+      //! The pescan interface object for obtaining band-gaps
       Pescan::Darwin pescan;
+      //! The vff object for minimizing and computing strain/stress.
       Vff::Darwin<Vff::Layered> vff;
 
     public:
+      //! Constructor
       Evaluator() : t_Base(), pescan(structure), vff(structure) {}
+      //! Copy Constructor
       Evaluator   ( const Evaluator &_c )
                 : t_Base(_c), pescan(_c.pescan), vff(_c.vff) {}
+      //! Destructor
       ~Evaluator() {}
 
+      //! Saves an individual to XML
       bool Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const
        { return _indiv.Object().Save(_node) and t_Base::Save( _indiv, _node, _type ); }
+      //! Load an individual from XML
       bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
+      //! Loads the lattice, layered structure, pescan, and vff from XML.
       bool Load( const TiXmlElement &_node );
 
+      //! Computes the band-gap and in-plane-stress of the current_individual.
       void evaluate();
+      //! Allows for periodic all-electron computations
       eoF<bool>* LoadContinue(const TiXmlElement &_el );
 
     protected:
+      //! Transforms stress and band-edges to quantities in \a _indiv.
       void object_to_quantities( t_Individual & _indiv );
   };
 

@@ -51,7 +51,7 @@ namespace mpi
 extern const types::t_int ROOT_NODE;
 
 #ifdef _MPI
-  //! Simple Base class to all other helper classes.
+  //! Simple %Base class to all other helper classes.
   class Base
   {
     protected:
@@ -192,7 +192,7 @@ extern const types::t_int ROOT_NODE;
       }
   };
 
-  //! \brief Base class for all data communication classes
+  //! \brief %Base class for all data communication classes
   //! \details Defines integer, real, and char buffers to be used for data transactions.
   //! It cannot be used as is, but should be derived from.
   class CommBase : public Base

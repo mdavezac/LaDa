@@ -19,7 +19,7 @@
 
 /** \ingroup Genetic
  * @{ */
-//! \brief  Creates a function \f$x(y)\f$ for load matching in ternaries and
+//! \brief  Creates a %function \f$x(y)\f$ for load matching in ternaries and
 //! quaternaries (see <A HREF="http://dx.doi.org/10.1063/1.2010621"> Rita
 //! Magri, Alex Zunger, H Kroemer, J. App. Phys. <STRONG>98</STRONG>, 43701 (2005)</A>)
 //! \details For a quaternary
@@ -44,9 +44,9 @@
 // </Lattice>
 // <Functional type="Concentration" a="0.001" b="0.648" c="0.239" />
 //!   \endcode
-//! The function is a second order polynomial given  by \f$x(y) = a\cdot y^2 +
-//! b\cdot y + c\f$, where the parmaters are given on input as in the XML example
-//! above.
+//! The %function is a second order polynomial given  by
+//! \f$x(y) = a\cdot y^2 + b\cdot y + c\f$, where the parmaters are given on
+//! input as in the XML example above.
   class X_vs_y
   {
 #ifdef _MPI

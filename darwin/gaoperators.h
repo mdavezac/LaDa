@@ -49,7 +49,7 @@ namespace GA
   //! or the parents can exchange a contiguous range of vectors with increasing
   //! wavelengths. Whether range or not does not seem to affect the results.
   //! The concentration after krossover is set (or not) using a
-  //! \a T_INDIVIDUAL::t_Concentration functor.
+  //! \a T_INDIVIDUAL::t_IndivTraits::t_Concentration functor.
   //! \param T_INDIVIDUAL is a \e physical individual
   //! \todo The back Fourier transform is done in (!) the t_Concentration
   //! object. Which means both this functor and the (at present) non-template
@@ -68,7 +68,7 @@ namespace GA
       typedef typename t_IndivTraits :: t_Concentration t_Concentration; //!< Concentration type
       typedef typename t_IndivTraits :: t_FourierRtoK t_FourierRtoK; //!< Direct Fourier Functor
       typedef typename t_IndivTraits :: t_FourierKtoR t_FourierKtoR; //!< Back Fourier Functor
-      typedef typename t_IndivTraits::t_Object t_Object; //!< Object type
+      typedef typename t_IndivTraits :: t_Object t_Object; //!< Object type
       typedef eoGenOp<t_Individual> t_Base; //!< Base class
 
     protected:
@@ -134,7 +134,7 @@ namespace GA
   //! M is the square root of the maximum absolute intensity in reciprocal-space
   //! before any mutation. 
   //! The concentration after mutation is set (or not) using a
-  //! \a T_INDIVIDUAL::t_Concentration functor.
+  //! \a T_INDIVIDUAL::t_IndivTraits::t_Concentration functor.
   //! \param T_INDIVIDUAL is a \e physical individual.
   //! \todo The back Fourier transform is done in (!) the t_Concentration
   //! object. Which means both this functor and the (at present) non-template
@@ -153,7 +153,7 @@ namespace GA
       typedef typename t_IndivTraits :: t_Concentration t_Concentration; //!< Concentration type
       typedef typename t_IndivTraits :: t_FourierRtoK t_FourierRtoK; //!< Direct Fourier Functor
       typedef typename t_IndivTraits :: t_FourierKtoR t_FourierKtoR; //!< Back Fourier Functor
-      typedef typename t_IndivTraits::t_Object t_Object; //!< Object type
+      typedef typename t_IndivTraits :: t_Object t_Object; //!< Object type
       typedef eoGenOp<t_Individual> t_Base; //!< Base class
 
     protected:
@@ -197,7 +197,7 @@ namespace GA
 
   //! \brief creates a random individidual from random values in reciprocal-space
   //! \details The concentration is set (or not) using a
-  //! \a T_INDIVIDUAL::t_Concentration functor.
+  //! \a T_INDIVIDUAL::t_IndivTraits::t_Concentration functor.
   //! \param T_INDIVIDUAL is a \e physical individual.
   //! \todo The back Fourier transform is done in (!) the t_Concentration
   //! object. Which means both this functor and the (at present) non-template
@@ -214,7 +214,7 @@ namespace GA
       //! Contains all types pertaining to a \e physicla individual
       typedef typename t_Individual :: t_IndivTraits t_IndivTraits; 
       typedef typename t_IndivTraits :: t_Concentration t_Concentration; //!< Concentration type
-      typedef typename t_IndivTraits::t_Object t_Object; //!< Object type
+      typedef typename t_IndivTraits :: t_Object t_Object; //!< Object type
       typedef eoGenOp<t_Individual> t_Base; //!< Base class
 
     protected:
@@ -261,7 +261,7 @@ namespace GA
 
   //! \brief Applies a standard bitstring crossover to a bitstring (of form \f$b_i=\pm1\f$)
   //! \details The concentration after krossover is set (or not) using a
-  //! \a T_INDIVIDUAL::t_Concentration functor.
+  //! \a T_INDIVIDUAL::t_IndivTraits::t_Concentration functor.
   //! \param T_INDIVIDUAL is a \e physical individual.
   //! \related BitString::Krossover
   template<class T_INDIVIDUAL> 
@@ -274,7 +274,7 @@ namespace GA
       //! Contains all types pertaining to a \e physicla individual
       typedef typename t_Individual :: t_IndivTraits t_IndivTraits; 
       typedef typename t_IndivTraits :: t_Concentration t_Concentration; //!< Concentration type
-      typedef typename t_IndivTraits::t_Object t_Object; //!< Object type
+      typedef typename t_IndivTraits :: t_Object t_Object; //!< Object type
       typedef eoGenOp<t_Individual> t_Base; //!< Base class
 
     protected:
@@ -330,7 +330,7 @@ namespace GA
 
   //! \brief Applies a standard bitstring mutation to a bitstring (of form \f$b_i=\pm1\f$)
   //! \details The concentration after mutation is set (or not) using a
-  //! \a T_INDIVIDUAL::t_Concentration functor.
+  //! \a T_INDIVIDUAL::t_IndivTraits::t_Concentration functor.
   //! \param T_INDIVIDUAL is a \e physical individual.
   //! \related BitString::Mutation
   template<class T_INDIVIDUAL> 
@@ -343,7 +343,7 @@ namespace GA
       //! Contains all types pertaining to a \e physicla individual
       typedef typename t_Individual :: t_IndivTraits t_IndivTraits; 
       typedef typename t_IndivTraits :: t_Concentration t_Concentration; //!< Concentration type
-      typedef typename t_IndivTraits::t_Object t_Object; //!< Object type
+      typedef typename t_IndivTraits :: t_Object t_Object; //!< Object type
       typedef eoGenOp<t_Individual> t_Base; //!< Base class
 
     protected:
@@ -387,10 +387,10 @@ namespace GA
 
   //! \brief Creates a random bitstring of \f$b_i=\pm1\f$ 
   //! \details The concentration after random generation is set (or not) using a
-  //! \a T_INDIVIDUAL::t_Concentration functor. This functor needs to know
+  //! \a T_INDIVIDUAL::t_IndivTraits::t_Concentration functor. This functor needs to know
   //! about the structure in order to create a bitstring of correct length.
   //! \param T_INDIVIDUAL is a \e physical individual.
-  //! \todo Remove Random::structure? should bitstring lenght become an
+  //! \todo Remove Random::structure? should bitstring length become an
   //! adjustable parameter?
   template<class T_INDIVIDUAL> 
   class Random : public eoGenOp<T_INDIVIDUAL>
@@ -402,7 +402,7 @@ namespace GA
       //! Contains all types pertaining to a \e physicla individual
       typedef typename t_Individual :: t_IndivTraits t_IndivTraits; 
       typedef typename t_IndivTraits :: t_Concentration t_Concentration; //!< Concentration type
-      typedef typename t_IndivTraits::t_Object t_Object; //!< Object type
+      typedef typename t_IndivTraits :: t_Object t_Object; //!< Object type
       typedef eoGenOp<t_Individual> t_Base; //!< Base class
 
     protected:
@@ -483,7 +483,7 @@ namespace GA
       //! Contains all types pertaining to a \e physicla individual
       typedef typename t_Individual :: t_IndivTraits t_IndivTraits; 
       typedef typename t_IndivTraits :: t_Concentration t_Concentration; //!< Concentration type
-      typedef typename t_IndivTraits::t_Object t_Object; //!< Object type
+      typedef typename t_IndivTraits :: t_Object t_Object; //!< Object type
 
     protected:
       t_Concentration &concentration; //!< reference to a t_Concentration object

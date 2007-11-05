@@ -130,7 +130,7 @@ namespace Store
 
     private:
       typedef typename t_GATraits :: t_Evaluator  t_Evaluator; //!< Evaluator type
-      typedef Base<t_GATraits>                    t_Base;      //!< Base class type
+      typedef Base<t_GATraits>                    t_Base;      //!< %Base class type
       typedef typename t_GATraits :: t_Individual t_Individual; //!< Individual type
       typedef std::list<t_Individual>              t_Container; //!< Type of storage container
 
@@ -199,15 +199,15 @@ namespace Store
       * \brief Serializes Store::Conditional class
       * \details The container Conditional::results is serialized here.
       * Since t_Individual is a template class, it does not itsef declare a
-      * BroadCast::serialize() function, and we cannot use
+      * BroadCast::serialize() %function, and we cannot use
       * BroadCast::serialize_container. Instead, each individual is broadcast,
-      * one at a time, throught its broadcast member function.
+      * one at a time, throught its broadcast member %function.
       * \sa mpi::BroadCast::serialize
       */
       virtual bool broadcast( mpi::BroadCast &_bc );
       /* \ingroup MPI
       * \brief synchronizes stored results across all processors
-      * \details this function is called directly by Evaluation classes
+      * \details this %function is called directly by Evaluation classes
       * \sa Evaluation::Base::evaluate, Evaluation::WithHistory::evaluate
       *     Conditional::new_optima
       */
@@ -232,13 +232,13 @@ namespace Store
   //! when an individual should <em> not </em> be stored.
   //! At this point, Three classes are defined
   //! - Condition :: BaseOptima a base class which basic implements for "best-of" behaviors
-  //! - Condition :: FromObjective implements "%Best-of" behavior using Objective classes
-  //! - Condition :: Optima implements "%Best-of" behavior using ordering
+  //! - Condition :: FromObjective implements \e Best-Of behavior using Objective classes
+  //! - Condition :: Optima implements \e Best-Of behavior using ordering
   //! operators acting upon indiividuals
   //! \sa Store::Conditional 
   namespace Condition
   {
-    //! \brief Base class for \"Best-Of\" Behavior
+    //! \brief %Base class for \e Best-Of Behavior
     //! \details Only implements BaseOptima::Restart, BaseOptima::Save,
     //! BaseOptima::print_results for the one "best" individual stored as
     //! BaseOptima::optimum. BaseOptima::optimum will be used in derived classes
@@ -286,7 +286,7 @@ namespace Store
         std::string print() const;
     };
 
-    //! \brief Implements Best-of behavior using an individual's fitness and an Objective
+    //! \brief Implements \e Best-Of behavior using an individual's fitness and an Objective
     //! \details An individual is deemed good for storage depending on the FromObjective::objective,
     //! FromObjective::objective can be the provided as a pointer upon
     //! constructing this object, or it can be created from an XML input. From
@@ -298,7 +298,7 @@ namespace Store
     class FromObjective : public BaseOptima<T_GATRAITS>
     {
       public:
-        typedef T_GATRAITS t_GATraits; //!< All GA types \sa Traits::GA
+        typedef T_GATRAITS t_GATraits; //!< All GA %types \sa Traits::GA
 
       protected:
         typedef typename t_GATraits :: t_Evaluator           t_Evaluator; //!< Evaluator type
@@ -374,7 +374,7 @@ namespace Store
       public:
         typedef T_GATRAITS t_GATraits; //!< All GA objects \sa Traits::GA
       protected:
-        typedef BaseOptima<t_GATraits>                       t_Base; //!< Base class type
+        typedef BaseOptima<t_GATraits>                       t_Base; //!< %Base class type
         typedef typename t_GATraits :: t_Evaluator           t_Evaluator; //!< Evaluator type
         typedef typename t_GATraits :: t_Individual          t_Individual; //!< Individual type
 
