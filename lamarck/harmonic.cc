@@ -6,8 +6,6 @@
 namespace Ising_CE
 {
   types::t_real Harmonic :: attenuation = 1000000.0;
-  const types::t_real Harmonic :: tolerance = 0.00000000001;
-  const types::t_real Linear_Interpolator :: tolerance = 0.000001;
   using atat::ipow;
   // adds point in sorted list
   void Linear_Interpolator :: add_point (const types::t_real _x, const types::t_real _y )
@@ -121,11 +119,11 @@ namespace Ising_CE
   }
 
 
-  types::t_real Harmonic :: evaluate_harmonic ( const atat::rVector3d &k ) const
+  types::t_real Harmonic :: evaluate_harmonic ( const atat::rVector3d &_k ) const
   {
-    types::t_real r2=norm2(k);
+    types::t_real r2=norm2(_k);
     types::t_real A=sqrt(1./(4.*M_PI));
-    if ( fabs(r2) <= tolerance )
+    if ( fabs(r2) <= types::tolerance )
     {
       switch ( rank )
       {
@@ -144,31 +142,31 @@ namespace Ising_CE
        case 0:
          return(A);
        case 1: 
-         return (   A*sqrt(21./4.)*(1.-5.*(ipow(k(0),2)*ipow(k(1),2) 
-                  + ipow(k(0),2)*ipow(k(2),2) 
-                  + ipow(k(1),2)*ipow(k(2),2)) / ipow(r2,2)));
+         return (   A*sqrt(21./4.)*(1.-5.*(ipow(_k(0),2)*ipow(_k(1),2) 
+                  + ipow(_k(0),2)*ipow(_k(2),2) 
+                  + ipow(_k(1),2)*ipow(_k(2),2)) / ipow(r2,2)));
        case 2: 
-         return (   A*sqrt(13./2.)*(1./4.)*(
-                    7*(ipow(k(0),6)
-                       + ipow(k(1),6)
-                       + ipow(k(2),6)
-                       + 30*ipow(k(0),2)*ipow(k(1),2)*ipow(k(2),2)
-                    )/ipow(r2,3) - 5));
+         return A * sqrt(13./2.) * (1./4.) * 
+                (   7 * (   ipow(_k(0),6) + ipow(_k(1),6) + ipow(_k(2),6)
+                          + 30 * ipow(_k(0),2) * ipow(_k(1),2) * ipow(_k(2),2) 
+                        ) / ipow(r2,3)
+                  - 5
+                );
        case 3: 
-         return (   A*sqrt(561.)*(1./8.)*(
-                    ipow(k(0),8) 
-                  + ipow(k(1),8) 
-                  + ipow(k(2),8) 
-                  - 14.*(  ipow(k(0),6)*ipow(k(1),2) 
-                         + ipow(k(0),6)*ipow(k(2),2) 
-                         + ipow(k(1),6)*ipow(k(2),2) 
-                         + ipow(k(0),2)*ipow(k(1),6) 
-                         + ipow(k(0),2)*ipow(k(2),6) 
-                         + ipow(k(1),2)*ipow(k(2),6)) 
-                  + 35.*(  ipow(k(0),4)*ipow(k(1),4) 
-                         + ipow(k(0),4)*ipow(k(2),4) 
-                         + ipow(k(1),4)*ipow(k(2),4))
-                  ) / ipow(r2,4));
+         return A * sqrt(561.) * (1./8.) * 
+                (    ipow(_k(0),8) + ipow(_k(1),8) + ipow(_k(2),8) 
+                   - 14. * (   ipow(_k(0),6)*ipow(_k(1),2)  
+                             + ipow(_k(0),6)*ipow(_k(2),2) 
+                             + ipow(_k(1),6)*ipow(_k(2),2) 
+                             + ipow(_k(0),2)*ipow(_k(1),6) 
+                             + ipow(_k(0),2)*ipow(_k(2),6) 
+                             + ipow(_k(1),2)*ipow(_k(2),6)
+                           ) 
+                   + 35. * (   ipow(_k(0),4)*ipow(_k(1),4) 
+                             + ipow(_k(0),4)*ipow(_k(2),4) 
+                             + ipow(_k(1),4)*ipow(_k(2),4)
+                           )
+                ) / ipow(r2,4);
        default:
          std::cerr << "Kubic harmonics l > 3 not yet implemented"
                    << std::endl;

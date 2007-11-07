@@ -25,14 +25,14 @@ using  std::bind2nd;
 
 namespace Ising_CE {
 
-  void Cluster :: apply_symmetry(const atat::rMatrix3d &point_op, const atat::rVector3d &trans) 
+  void Cluster :: apply_symmetry( const atat::rMatrix3d &_op,
+                                  const atat::rVector3d &_trans    ) 
   {
-    if ( vectors.size() < 1 ) 
-      return;
+    if ( vectors.size() < 1 ) return;
     std::vector<atat::rVector3d> :: iterator i_vec = vectors.begin();
     std::vector<atat::rVector3d> :: iterator i_last = vectors.end();
     for(; i_vec != i_last; ++i_vec)
-      *i_vec = point_op * (*i_vec) + trans;
+      *i_vec = _op * (*i_vec) + _trans;
 
     i_vec = vectors.begin();
     atat::rVector3d translate = *i_vec;
@@ -40,40 +40,39 @@ namespace Ising_CE {
       *i_vec -= translate;
   }
 
-  bool Cluster :: equivalent_mod_cell( Cluster &equiv, const atat::rMatrix3d &inv_cell) 
+  bool Cluster :: equivalent_mod_cell( Cluster &_cluster, const atat::rMatrix3d &_icell) 
   {
-    if ( vectors.size() != equiv.vectors.size() )
-      return false;
-    if ( vectors.size() == 0 )
-      return true;
+    if ( vectors.size() != _cluster.vectors.size() ) return false;
+    if ( vectors.size() == 0 ) return true;
 
     std::vector<atat::rVector3d> :: iterator i_vec = vectors.begin();
     std::vector<atat::rVector3d> :: iterator i_vec_last = vectors.end();
     for (; i_vec != i_vec_last; ++i_vec)
     {
-      if ( atat::equivalent_mod_cell( *equiv.vectors.begin(), *i_vec, inv_cell) )
+      if ( not atat::equivalent_mod_cell( *_cluster.vectors.begin(), *i_vec, _icell) ) continue;
+
+      atat::rVector3d shift = (*i_vec) - *(_cluster.vectors.begin());
+      std::vector<atat::rVector3d> :: iterator is_found;
+      
+      // search for _cluster  vector such that|| (*i_vec-shift) - *i_equiv ||  > zero_tolerance
+      Real (*ptr_func)(const atat::FixedVector<Real, 3>&) = atat::norm;
+      std::vector<atat::rVector3d> :: iterator i2_vec = vectors.begin();
+      for(; i2_vec != i_vec_last; ++i2_vec)
       {
-        atat::rVector3d shift = (*i_vec) - *(equiv.vectors.begin());
-        
-        std::vector<atat::rVector3d> :: iterator is_found;
-        
-        // search for equiv  vector such that|| (*i_vec-shift) - *i_equiv ||  > zero_tolerance
-        Real (*ptr_func)(const atat::FixedVector<Real, 3>&) = atat::norm;
-        std::vector<atat::rVector3d> :: iterator i2_vec = vectors.begin();
-        for(; i2_vec != i_vec_last; ++i2_vec)
-        {
-          is_found  = std::find_if( equiv.vectors.begin(), equiv.vectors.end(),
-                                    compose1( bind2nd( std::less_equal<Real>(), atat::zero_tolerance ), 
-                                              compose1( std::ptr_fun(ptr_func),
-                                                        bind2nd( std::minus<atat::rVector3d>(),  (*i2_vec-shift)) )
-                                            ) ); 
-          if ( is_found == equiv.vectors.end() )
-            break;
-        }
-                                      
-        if ( i2_vec == i_vec_last ) // if all match
-          return true; 
+        is_found  = std::find_if( _cluster.vectors.begin(), _cluster.vectors.end(),
+                                  compose1( bind2nd( std::less_equal<Real>(),
+                                            atat::zero_tolerance ), 
+                                            compose1( std::ptr_fun(ptr_func),
+                                                      bind2nd( std::minus<atat::rVector3d>(), 
+                                                               (*i2_vec-shift)) )
+                                          ) ); 
+
+        if ( is_found == _cluster.vectors.end() ) break;
       }
+                                    
+      // if all match, return true
+      if ( i2_vec == i_vec_last ) return true; 
+      
     }
     return false;
   }

@@ -152,7 +152,7 @@ namespace VA_CE
        for (types::t_int op=0; op<point_op.get_size(); op++)
        {
          // initialize a new cluster to object pointed by i_old_list
-         transfo_cluster->copy( *i_old_list );
+         *transfo_cluster = *i_old_list;
          
          // transforms cluster according to symmetry group
          transfo_cluster->apply_symmetry(point_op(op),trans(op));

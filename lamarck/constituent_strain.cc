@@ -23,7 +23,6 @@
 namespace Ising_CE 
 {
   std::vector<Harmonic> Constituent_Strain :: harmonics;
-  const types::t_real Constituent_Strain::ZERO_TOLERANCE = 0.0000000001;
 
   Constituent_Strain :: Constituent_Strain   ( const Ising_CE::Structure& _str, t_Container *vars )
                                            : function::Base<t_Type>(vars)
@@ -113,7 +112,7 @@ namespace Ising_CE
     types::t_real value = 0.0;
     for ( ; i_k_vec != i_k_vec_end; ++i_k_vec )
     {
-      if ( norm2( *i_k_vec ) < ZERO_TOLERANCE ) // don't need to compute Gamma
+      if ( norm2( *i_k_vec ) < types::tolerance ) // don't need to compute Gamma
         ++i_k_vec;
 
       i_harmonic = i_harmonic_begin;
@@ -196,7 +195,7 @@ namespace Ising_CE
 
     for ( ; i_k_vec != i_k_vec_end; ++i_k_vec )
     {
-      if ( norm2( *i_k_vec ) < ZERO_TOLERANCE ) // don't need to compute Gamma
+      if ( norm2( *i_k_vec ) < types::tolerance ) // don't need to compute Gamma
         ++i_k_vec; 
 
       i_harmonic = i_harmonic_begin;
@@ -300,7 +299,7 @@ namespace Ising_CE
     types::t_real value = 0.0;
     for ( ; i_k_vec != i_k_vec_end; ++i_k_vec )
     {
-      if ( norm2( *i_k_vec ) < ZERO_TOLERANCE ) // don't need to compute Gamma
+      if ( norm2( *i_k_vec ) < types::tolerance ) // don't need to compute Gamma
         ++i_k_vec; 
 
       i_harmonic = i_harmonic_begin;

@@ -24,9 +24,6 @@
 #include <atat/machdep.h>
 #include <atat/fxvector.h>
 
-//! \brief Contains most everything CE and structure related
-//! \todo move structure related stuff to Physics
-//! \todo Rename Ising_CE to CE
 namespace Ising_CE {
 
   //! \brief Describes an atom.

@@ -1,18 +1,6 @@
 //
 //  Version: $Id$
 //
-//
-// Monome class: a single term made up of a coefficient and an array
-// of variables. The latters are integers which are meant to refer to
-// the variable array of a Polynome object
-//
-// Polynome class: contains an array of Monome objects, as well as an
-// array of variables which make up the monomes 
-//
-// Constrained minimization can be achieved via the OPT++ package
-// and the opt_minimize.h template class
-// see lamarck.cc and functional_builder.cc for an example
-//                 
 #ifndef _Polynome_H_
 #define _Polynome_H_
 
@@ -34,32 +22,61 @@
 
 namespace VA_CE {
 
+  //! \brief Adds a bit of XML and accounting to function::Polynome.
+  //! \details The accounting comes from threre new static member variables,
+  //!          Polynome::nb_eval, Polynome::nb_eval_grad, and Polynome::nb_eval_with_grad,
+  //!          which are incremented by any instance of Polynome which makes a
+  //!          call to Polynome::evaluate(), Polynome::evaluate_gradient(), and
+  //!          Polynome::evaluate_with_gradient(), respectively.
+  //!          Furthermore, this instance some XML saving/loading capability
+  //!          for polynomials and monomials. 
   class Polynome : public function::Polynome<types::t_real>
   {
+      //! Type of the base class
+      typedef function::Polynome<types::t_real> t_Base;
+      //! Type of the monomial components
+      typedef function::Monome<types::t_real> t_Monome;
     public:
-      static types::t_unsigned nb_eval, nb_eval_grad, nb_eval_with_grad;
+      //! Counts the calls to Polynome::evaluate().
+      static types::t_unsigned nb_eval;
+      //! Counts the calls to Polynome::evaluate_gradient().
+      static types::t_unsigned nb_eval_grad;
+      //! Counts the calls to Polynome::evaluate_with_gradient().
+      static types::t_unsigned nb_eval_with_grad;
 
     public: 
-      Polynome() : function::Polynome<types::t_real>() {};
-      Polynome( types::t_int _nb ) : function::Polynome<types::t_real>(_nb) {};
+      //! Constructor
+      Polynome() : t_Base() {};
+      //! Constructor and Initializer
+      Polynome( types::t_int _nb ) : t_Base(_nb) {};
+      //! Destructor
       virtual ~Polynome() {};
       
 
-      // evaluations
+      //! Evaluates the polynome and increments Polynome::nb_eval.
       virtual types::t_real evaluate() 
-        { ++nb_eval; return function::Polynome<types::t_real>::evaluate();}
+        { ++nb_eval; return t_Base::evaluate();}
+      //! Evaluates the gradient of the polynome and increments Polynome::nb_eval_grad.
       virtual void evaluate_gradient(types::t_real* const _grad) 
-        { ++nb_eval_grad; return function::Polynome<types::t_real>::evaluate_gradient( _grad ); }
+        { ++nb_eval_grad; return t_Base::evaluate_gradient( _grad ); }
+      //! Evaluates the polynome and its gradient and increments Polynome::nb_eval_with_grad.
       virtual types::t_real evaluate_with_gradient(types::t_real* const _grad) 
-        { ++nb_eval_with_grad; return function::Polynome<types::t_real>::evaluate_with_gradient( _grad ); }
+        { ++nb_eval_with_grad; return t_Base::evaluate_with_gradient( _grad ); }
 
+      //! \brief Resizes the number of variables according to the largest
+      //!        monomial variable index.
       void resize_variables();
+      //! Dumps a polynomial to an XML node.
       void print_xml( TiXmlElement* const node ) const;
-      void print_xml( const function::Monome<> &_m, TiXmlElement* const node ) const;
-      bool Load( function::Monome<> &_m, TiXmlElement* const node );
+      //! Dumps a monomial to an XML node.
+      void print_xml( const t_Monome &_m, TiXmlElement* const node ) const;
+      //! Load a monomials from an XML node.
+      bool Load( t_Monome &_m, TiXmlElement* const node );
+      //! Load a polynomial from an XML node.
       bool Load( TiXmlElement* const node );
 
       #ifdef _DEBUG_LADA_ 
+        //! Doesn't do anything...
         bool is_consistent() const;
       #endif // _DEBUG_LADA_ 
   };
