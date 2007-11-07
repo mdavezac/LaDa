@@ -27,93 +27,215 @@
 #include "atom.h"
 #include "lattice.h"
 
-//! \brief Everything CE which does not encompass VA.
-//! \details  Old nomenclature.
-//! \todo Rename Ising_CE with something more meaningfull, such as CE, or Crystal
 namespace Ising_CE {
 
+  //! The atat structure type.
   typedef atat::Structure Atat_Structure;
   
+  //! \brief Defines a periodic structure for a specific lattice.
+  //! \details The definition is mostly sufficient and self contain. It include:
+  //!          - Structure::cell the lattice cell
+  //!          - Structure::atoms all atomic positions and occupations
+  //!          - Structure::k_vecs all reciprocal-space vectors within the
+  //!                                  first brillouin zone of the lattice
+  //!                                  unit-cell.
+  //!          - Structure::lattice a \a static pointer to the lattice. Static,
+  //!                               because \e a \e priori we will work within
+  //!                               a fixed lattice. Of course, this could
+  //!                               change at some pointe, so it is well
+  //!                               advised to use an instance to access the
+  //!                               lattice.
+  //!          - Structure::scale The scale in which the atomic positions and
+  //!                             unit-cell are given. This should generally be
+  //!                             the same as the scalar of the lattice.
+  //!          - Structure::freeze which indicates which cartesian unit of the
+  //!                              unit-cell should be frozen during
+  //!                              optimization (say throug Vff).
+  //!          .
+  //! \xmlinput A structure can load and save itself to and from XML. See \ref
+  //!           TagStructure. It is better to load the lattice first and the
+  //!           structure(s) second.
   struct Structure
   {
+    //! The atomic type
     typedef Atom_Type<types::t_real>  t_Atom;
+    //! The type of the collection of atoms. 
     typedef std::vector< t_Atom >     t_Atoms;
+    //! The reciprocal-space vector type
     typedef CAtom                     t_kAtom;
+    //! The type of the collection of reciprocal-space vector.
     typedef std::vector< t_kAtom >    t_kAtoms;
 
-    const static types::t_unsigned FREEZE_NONE;
-    const static types::t_unsigned FREEZE_XX;
-    const static types::t_unsigned FREEZE_XY;
-    const static types::t_unsigned FREEZE_XZ;
-    const static types::t_unsigned FREEZE_YY;
-    const static types::t_unsigned FREEZE_YZ;
-    const static types::t_unsigned FREEZE_ZZ;
+    //! Freeze no coordinate of the unit-cell
+    const static types::t_unsigned FREEZE_NONE =  0;
+    //! Freeze the XX coordinate of the unit-cell ( Structure::cell(0,0) )
+    const static types::t_unsigned FREEZE_XX   =  1;
+    //! \brief Freeze the XY coordinate of the unit-cell ( Structure::cell(0,1) and
+    //!        Structure::cell(1,0) )
+    const static types::t_unsigned FREEZE_XY   =  2;
+    //! \brief Freeze the XZ coordinate of the unit-cell ( Structure::cell(0,2) and
+    //!        Structure::cell(2,0) )
+    const static types::t_unsigned FREEZE_XZ   =  4;
+    //! Freeze the YY coordinate of the unit-cell ( Structure::cell(2,2) )
+    const static types::t_unsigned FREEZE_YY   =  8;
+    //! \brief Freeze the YZ coordinate of the unit-cell ( Structure::cell(1,2) and
+    //!        Structure::cell(2,1) )
+    const static types::t_unsigned FREEZE_YZ   = 16;
+    //! Freeze the ZZ coordinate of the unit-cell ( Structure::cell(2,2) )
+    const static types::t_unsigned FREEZE_ZZ   = 32;
 
+    //! The unit-cell of the structure in cartesian coordinate.
     atat::rMatrix3d cell;
+    //! The atomic position in cartesian unit and their occupation.
     std::vector< Atom_Type<types::t_real> > atoms;
+    //! The reciprocal-space vector position in cartesian unit and their intensity.
     std::vector< CAtom > k_vecs;
+    //! Just an old variable with the number of the structure in those NREL PI files.
     types::t_int Pi_name;
+    //! The energy of the structure, whatever (and if) it is computed with.
     types::t_real energy;
+    //! The frozen coordinates of the unit-cell.
     types::t_unsigned freeze;
+    //! The scale in which cartesian units are given.
     types::t_real scale;
+    //! A pointer to the lattice,
     static Lattice *lattice;
 
+    public: 
+
+    //! Constructor
     Structure() : Pi_name(0), energy(0), freeze(FREEZE_NONE) {};
+    //! Constructor and Initializer
     Structure   ( const Atat_Structure &atat ) 
               : Pi_name(0), energy(0), freeze(FREEZE_NONE)
         { convert_from_ATAT( atat ); };
+    //! Constructor. Loads itself from XML node \a _element.
     Structure   ( const TiXmlElement &_element )
               : Pi_name(0), energy(0), freeze(FREEZE_NONE)
       { Load( _element ); };
+    //! Copy Constructor
     Structure   ( const Structure &_str )
               : cell(_str.cell), atoms(_str.atoms), k_vecs(_str.k_vecs),
                 Pi_name(_str.Pi_name), energy(_str.energy), freeze(_str.freeze),
                 scale( _str.scale ) {}
+    //! Destructor.
     ~Structure () {};
+
+    //! Converts an ATAT structure to an this class.
     void convert_from_ATAT (const Atat_Structure &atat);
+
+    //! Converts an ATAT structure to an this class.
     void operator=( const Atat_Structure &atat )
      { convert_from_ATAT( atat ); };
-    void print_out( std::ostream &stream ) const;
-    void set_atom_types( const std::vector<types::t_real> &types);
-    void get_atom_types( std::vector<types::t_real> &types) const;
-    types::t_real get_concentration() const;
-    void randomize(types::t_real range, bool centered);
-    bool Load( const TiXmlElement &_element );
-    void print_xml( TiXmlElement &_node ) const;
-    bool operator== (const Structure &_str ) const
-    {
-      if ( not (cell == _str.cell) )
-        return false;
-      return atoms == _str.atoms;
-    }
     
-    template<class t_container >
-    void set_kvectors( const t_container &_container )
-    {
-      typename t_container :: const_iterator i_kvec =  _container.begin();
-      typename t_container :: const_iterator i_end =  _container.end();
-      CAtom kvec;
-      k_vecs.clear();
-      k_vecs.reserve( _container.size() );
-      for( ; i_kvec != i_end; ++i_kvec ) 
-      {
-        kvec = (*i_kvec);
-        k_vecs.push_back( kvec );
-      }
-    }
+    //! Prints a structure to a stream.
+    void print_out( std::ostream &stream ) const;
 
+    //! \brief Sets the occupations from the vector \a %types.
+    //! \details If \a %types is smaller than Structure::atoms than only the
+    //!          first occupations are set. If is is larger, than only the
+    //!          first components of \a %types are used.
+    //! \pre The atoms in this structure and the occupations of \a %types should
+    //!      be listed in the same order.
+    void set_atom_types( const std::vector<types::t_real> &types);
+    //! \brief Copies the atomic occupations ton \a %types.
+    //! \details If \a %types is smaller than Structure::atoms, then only the
+    //!          first atoms appearing in Structure::atoms are copied. If \a
+    //!          %types is larger than  Structure::atoms, then only the first
+    //!          components of \a %types are set.
+    void get_atom_types( std::vector<types::t_real> &types) const;
+    //! Returns the average occupation.
+    types::t_real get_concentration() const;
+    //! Loads a structure from XML.
+    bool Load( const TiXmlElement &_element );
+    //! Saves a structure to XML.
+    void print_xml( TiXmlElement &_node ) const;
+
+    //! \brief Equates to \e geometic structure.
+    //! \details The unit-cell and the atomic positions are compared, but not
+    //!           the occupations.
+    bool operator== (const Structure &_str ) const;
+    
+    //! \brief Copies the reciprocal-space vectors to a container.
+    //! \details Since Atom_Type automatically returns reference to a
+    //!          atat::rVector3d and its type, this routien can copy the full
+    //!          reciprocal space vector, the positions only, or the
+    //!          intensities only, depending on the type of
+    //!          t_container::value_type.
+    template<class t_container > void set_kvectors( const t_container &_container );
+
+    //! Sets the site index of each atom according to Structure::lattice.
     bool set_site_indices();
 
+    //! \brief Computes the position of the reciprocal-space vectors in the first
+    //!        Brillouin zone of the lattice unit-cell.
     void find_k_vectors();
+    //! \brief Prints in XCrysDen format 
+    //! \see <A HREF="http://www.xcrysden.org">www.xcrysden.org</A>.
     std::ostream& print_xcrysden( std::ostream &_stream ) const;
   };
 
+  //! \cond
   void  find_range( const atat::rMatrix3d &A, atat::iVector3d &kvec );
+  //! \endcond
+ 
+  //! Refolds a periodic vector into the unit-cell, as defined by \a lat.
   void refold( atat::rVector3d &vec, const atat::rMatrix3d &lat );
+  //! Returns true if \a _a and \a _b are periodic equivalents of the unit-cell \a _cell.
   bool are_equivalent( const atat::rVector3d &_a,
                        const atat::rVector3d &_b,
                        const atat::rMatrix3d &_cell);
+  //! Dumps a structure to a stream.
+  inline std::ostream& operator<<( std::ostream& _stream, const Ising_CE::Structure& _struc )
+    { _struc.print_out(_stream); return _stream; }
 
+  //! compares two kvectors according to length and position.
+  bool sort_kvec( const atat::rVector3d &_vec1, const atat::rVector3d &_vec2 );
+
+  //! \brief Defines a %Fourier transform for a structure within a single-site lattice.
+  //! \warning There is no reason this should work well in multiple-site lattices....
+  struct Fourier
+  {
+    //! \brief From real to k space
+    //! \details The first range is most likely some instance of
+    //!          Ising_CE::Structure::t_Atoms. The second range is similarly an
+    //!          instance of Ising_CE::Structure::t_kAtoms. The third range
+    //! \param[in, out] _rfirst iterator to the first real space atom (of a type
+    //!                similar to Ising_CE::Atom_Type)
+    //! \param[in, out] _rend iterator to the last real space atom (of a type
+    //!              similar to Ising_CE::Atom_Type)
+    //! \param[in] _kfirst iterator to the first real space atom (of a type
+    //!                similar to Ising_CE::Atom_Type< std::complex >)
+    //! \param[in] _kend iterator to the last real space atom (of a type
+    //!              similar to Ising_CE::Atom_Type< std::complex >)
+    template<class T_R_IT, class T_K_IT>
+    Fourier( T_R_IT _rfirst, T_R_IT _rend,
+             T_K_IT _kfirst, T_K_IT _kend );
+    //! \brief From k space to real space. 
+    //! \details The first range is most likely some instance of
+    //!          Ising_CE::Structure::t_Atoms. The second range is similarly an
+    //!          instance of Ising_CE::Structure::t_kAtoms. The third range
+    //!          should be iterators to std::complex.
+    //! \pre The range [ \a _rout, \a _rout += \a _rfirst - \a _rend  ) should
+    //!      be valid.
+    //! \param[in] _rfirst iterator to the first real space atom (of a type
+    //!                similar to Ising_CE::Atom_Type)
+    //! \param[in] _rend iterator to the last real space atom (of a type
+    //!              similar to Ising_CE::Atom_Type)
+    //! \param[in] _kfirst iterator to the first real space atom (of a type
+    //!                similar to Ising_CE::Atom_Type< std::complex >)
+    //! \param[in] _kend iterator to the last real space atom (of a type
+    //!              similar to Ising_CE::Atom_Type< std::complex >)
+    //! \param[out] _rout iterator to the first complex real-space
+    //!              occupation ( of std::complex type )
+    template<class T_R_IT, class T_K_IT, class T_O_IT >
+    Fourier( T_R_IT _rfirst, T_R_IT _rend,
+             T_K_IT _kfirst, T_K_IT _kend,
+             T_O_IT _rout ); // sets rvector values from kspace values
+  };
+
+
+  //! \cond
   template <class CONTAINER>
   void remove_equivalents( CONTAINER &_cont, const atat::rMatrix3d &_cell)
   {
@@ -141,18 +263,37 @@ namespace Ising_CE {
     }
 
   }
+  //! \endcond
 
 
-  struct Fourier
+  inline bool Structure :: operator== (const Structure &_str ) const
   {
-    template<class T_R_IT, class T_K_IT>
-    Fourier( T_R_IT _rfirst, T_R_IT _rend,
-             T_K_IT _kfirst, T_K_IT _kend );
-    template<class T_R_IT, class T_K_IT, class T_O_IT >
-    Fourier( T_R_IT _rfirst, T_R_IT _rend,
-             T_K_IT _kfirst, T_K_IT _kend,
-             T_O_IT _rout ); // sets rvector values from kspace values
-  };
+    return     opt::Fuzzy<types::t_real> :: equal( cell(0,0), _str.cell(0,0) )
+           and opt::Fuzzy<types::t_real> :: equal( cell(1,0), _str.cell(1,0) )
+           and opt::Fuzzy<types::t_real> :: equal( cell(2,0), _str.cell(2,0) )
+           and opt::Fuzzy<types::t_real> :: equal( cell(0,1), _str.cell(0,1) )
+           and opt::Fuzzy<types::t_real> :: equal( cell(1,1), _str.cell(1,1) )
+           and opt::Fuzzy<types::t_real> :: equal( cell(2,1), _str.cell(2,1) )
+           and opt::Fuzzy<types::t_real> :: equal( cell(0,2), _str.cell(0,2) )
+           and opt::Fuzzy<types::t_real> :: equal( cell(1,2), _str.cell(1,2) )
+           and opt::Fuzzy<types::t_real> :: equal( cell(2,2), _str.cell(2,2) )
+           and atoms == _str.atoms;
+  }
+    
+  template<class t_container >
+    void Structure :: set_kvectors( const t_container &_container )
+    {
+      typename t_container :: const_iterator i_kvec =  _container.begin();
+      typename t_container :: const_iterator i_end =  _container.end();
+      CAtom kvec;
+      k_vecs.clear();
+      k_vecs.reserve( _container.size() );
+      for( ; i_kvec != i_end; ++i_kvec ) 
+      {
+        kvec = (*i_kvec);
+        k_vecs.push_back( kvec );
+      }
+    }
 
 
   template<class T_R_IT, class T_K_IT>
@@ -197,10 +338,6 @@ namespace Ising_CE {
 
 
 
-  inline std::ostream& operator<<( std::ostream& _stream, const Ising_CE::Structure& _struc )
-    { _struc.print_out(_stream); return _stream; }
-
-  bool sort_kvec( const atat::rVector3d &_vec1, const atat::rVector3d &_vec2 );
 } // namespace Ising_CE
 
 

@@ -67,11 +67,14 @@ void FillStructure( Ising_CE::Structure &_str );
 //!          complete complement of lattice-sites.) 
 namespace Layered
 {
-  //! Defines fourier transforms for a layered structure of a lattice with \a _D sites
+  //! Defines %Fourier transforms for a layered structure of a lattice with \a _D sites
   template<types::t_unsigned _D>
   struct Fourier
   {
     //! \brief From real to k space
+    //! \details The first range is most likely some instance of
+    //!          Ising_CE::Structure::t_Atoms. The second range is similarly an
+    //!          instance of Ising_CE::Structure::t_kAtoms. The third range
     //! \param[in, out] _rfirst iterator to the first real space atom (of a type
     //!                similar to Ising_CE::Atom_Type)
     //! \param[in, out] _rend iterator to the last real space atom (of a type
@@ -367,6 +370,53 @@ namespace Layered
       //! Strict weak ordering operator.
       bool operator()(const atat::rVector3d& _1, const atat::rVector3d& _2 );
   };
+
+
+  //! \brief Taboo functor which forbids large layers. 
+  //! \details This is meant for epitaxial growth. Large layers will generally
+  //!          accumulate strain unti at some point the surface explodes. The
+  //!          point of this taboo is to fordid the appearance of layered
+  //!          structure with large homogeneous layers.
+  template< class T_INDIVIDUAL >
+  class Taboo : public GA::Taboo_Base< T_INDIVIDUAL >
+  {
+    public:
+      //! All relevant %GA %types.
+      typedef T_INDIVIDUAL t_Individual;
+
+    protected:
+      //! Type of the base class
+      typedef GA::Taboo_Base< t_Individual > t_Base;
+
+    protected:
+      //! \brief Each component correspond to an atom and is true if the atom
+      //!        type is not frozen.
+      std::vector<types::t_int> sites;
+      //! The maximum number of layers for type "-1" atoms.
+      types::t_unsigned d0;
+      //! The maximum number of layers for type "1" atoms.
+      types::t_unsigned d1;
+      //! \brief The largest layer that the current cell-shape can accomodate.
+      //! \details This is a geometrical constraint, not a physical constraint.
+      types::t_unsigned Nmax;
+
+    public: 
+      //! Constructor and Initializer
+      Taboo ( const Ising_CE::Structure &_str );
+
+      //! Copy Constructor
+      Taboo   ( const Taboo &_c )
+            : t_Base( _c ), sites( _c.sites ), d0( _c.d0 ), d1 ( _c.d1 ) {}
+      //! Destructor
+      ~Taboo() {}
+
+      //! Loads the maximum number of layers from XML.
+      bool Load( const TiXmlElement &_node );
+
+      //! Returns true of the individual \a _indiv is taboo. Eg finds a heavy layer.
+      bool operator()( const t_Individual &_indiv ) const;
+  };
+
 
 } // namespace Layered
 /** @} */

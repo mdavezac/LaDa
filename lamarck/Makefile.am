@@ -6,13 +6,12 @@ lamarck_CPPFLAGS =  $(AM_CPPFLAGS) -I ..
 lamarck_LDFLAGS =  $(AM_LDFLAGS)  -lstdc++ @MPICH_LIBS@
 lamarck_LDADD = liblamarck.la ../atat/libatat.la ../physics/libphysics.la @MPI_ADDLIB@
 noinst_LTLIBRARIES = liblamarck.la
-liblamarck_la_SOURCES = cluster.cc  constituent_strain.cc  convex_hull.cc \
-           functional_builder.cc  harmonic.cc  lattice.cc   polynome.cc \
-           structure.cc 
+liblamarck_la_SOURCES = cluster.cc  constituent_strain.cc functional_builder.cc \
+			harmonic.cc  lattice.cc polynome.cc structure.cc 
 liblamarck_ladir = lamarck
-nobase_liblamarck_la_HEADERS = atom.h cluster.h convex_hull.h functors.h  lattice.h polynome.h \
-                               ch_template.h  constituent_strain.h  functional_builder.h  harmonic.h \
-			       one_point_hull.h  structure.h
+nobase_liblamarck_la_HEADERS = atom.h cluster.h functors.h  lattice.h polynome.h \
+                               constituent_strain.h  functional_builder.h  harmonic.h \
+			       structure.h
 liblamarck_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 

@@ -488,11 +488,18 @@ errorout:
   GA::Taboo_Base<T_INDIVIDUAL>*
      Evaluator<T_INDIVIDUAL> :: LoadTaboo(const TiXmlElement &_el )
   {
-    if ( concentration.is_single_c() ) return NULL;
-    GA::xTaboo<t_Individual> *xtaboo
-       = new GA::xTaboo< t_Individual >( concentration );
-    if ( xtaboo and xtaboo->Load( _el ) )  return xtaboo;
-    if ( xtaboo ) delete xtaboo;
+    std::string name = _el.Value();
+    GA::Taboo_Base<t_Individual> *taboo = NULL;
+
+    if( name == "Layer" ) 
+      taboo = new Taboo< t_Individual >( structure );
+    else if (     name == "Concentration" 
+              and ( not concentration.is_single_c() ) )
+      taboo = new GA::xTaboo< t_Individual >( concentration );
+
+
+    if ( taboo and taboo->Load( _el ) )  return taboo;
+    if ( taboo ) delete taboo;
     return NULL;
   }
 
@@ -563,6 +570,103 @@ errorout:
     a =   _1 * a2;
     b =   _2 * a2;
     return opt::Fuzzy<types::t_real> :: less( a, b );
+  }
+
+
+
+
+
+  template< class T_INDIVIDUAL > 
+  Taboo<T_INDIVIDUAL> :: Taboo   ( const Ising_CE::Structure &_str )
+                                         : t_Base(), d0(0), d1(0)
+  {
+    Ising_CE::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
+    Ising_CE::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
+    const types::t_unsigned is_frozen = Ising_CE::Structure::t_Atom::FREEZE_T;
+    const types::t_unsigned _d = _str.lattice->sites.size();
+    for(; i_atom != i_atom_end; i_atom += _d )
+      if ( i_atom->freeze & is_frozen ) 
+        sites.push_back( BitString::spin_up( i_atom->type ) ? 1: -1 );
+      else sites.push_back(0); 
+    Nmax = _str.atoms.size() * 2;
+  }
+
+
+  template< class T_INDIVIDUAL >
+  bool Taboo<T_INDIVIDUAL> :: Load ( const TiXmlElement &_node )
+  {
+    if( not Ising_CE::Structure::lattice ) return false;
+    std::string name = _node.Value();
+    if( name.compare("Layer") != 0 ) return false;
+
+    const Ising_CE::Lattice& lattice  = *Ising_CE::Structure::lattice;
+    const std::vector< std::string > &strings = lattice.sites.front().type;
+    std::vector< std::string > :: const_iterator i_string = strings.begin();
+
+    if( _node.Attribute( i_string->c_str() ) )
+    {
+       types::t_int d = 0;
+       _node.Attribute( i_string->c_str(), &d );
+       if ( d > 0 and d < Nmax ) d0 = std::abs( d ); 
+    }
+
+    ++i_string;
+    //! Only one type...
+    if ( i_string == strings.end() ) return false;
+
+      
+    if( _node.Attribute( i_string->c_str() ) )
+    {
+       types::t_int d = 0;
+       _node.Attribute( i_string->c_str(), &d );
+       if ( d > 0 and d < Nmax ) d1 = std::abs( d ); 
+    }
+
+    // Returns false if neither d0 nor d1 impose a constraint
+    if( d0 == 0 ) d0 = Nmax;
+    if( d1 == 0 ) d1 = Nmax;
+    return not ( d0 == Nmax and d1 == Nmax ); 
+  }
+
+
+  template< class T_INDIVIDUAL >
+  bool Taboo<T_INDIVIDUAL> :: operator() ( const t_Individual &_indiv ) const
+  {
+    std::vector<types::t_int> :: const_iterator i_site = sites.begin();
+    std::vector<types::t_int> :: const_iterator i_site_end = sites.end();
+    typedef typename t_Individual :: t_IndivTraits :: t_Object t_Object;
+    typedef typename t_Object :: t_Container :: const_iterator const_iterator;
+    const_iterator i_var = _indiv.Object().Container().begin();
+    const_iterator i_var_end = _indiv.Object().Container().end();
+
+    typedef std::pair<bool, types::t_unsigned> t_layerpair;
+    //! Keeps track of the width and type of the current layer
+    t_layerpair  current( BitString::spin_up( *i_site == 0 ? *i_var: *i_site ), 0 );
+    //! Keeps a record of the first layer in order to do periodicity check
+    t_layerpair  first(0,0);
+    for(; i_site != i_site_end and i_var != i_var_end;  ++i_site )
+    {
+      bool type;
+      type = BitString::spin_up( *i_site == 0 ? *i_var: *i_site );
+
+      if ( current.first != type )
+      {
+        if ( first.first == 0 ) first = current;
+        current.first = type;
+        current.second = 0;
+      }
+      ++current.second;
+      
+      if ( current.second > ( current.first ? d0: d1 ) ) return true;
+      if ( *i_site == 0 )  ++i_var;
+    }
+
+    if ( i_site != i_site_end or i_var != i_var_end )
+      throw std::runtime_error( "Layered::Taboo and individivual's container do not match !?\n" );
+
+    //! periodicicity: adds first to current (eg last) layer if are the same type 
+    if( current.first == first.first ) current.second += first.second;
+    return current.second > ( current.first ? d0: d1 );
   }
 
 } // namespace Layered

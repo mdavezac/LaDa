@@ -44,8 +44,6 @@ namespace GA
     protected:
       //! Type of the individual
       typedef typename t_GATraits :: t_Individual                  t_Individual;
-      //! Type of the evaluator
-      typedef typename t_GATraits :: t_Evaluator                   t_Evaluator;
       //! %Types pertinent to minimizations.
       typedef typename t_GATraits :: t_VA_Traits                   t_VA_Traits;
       //! The type of scalar component of the minimization argument
@@ -90,7 +88,7 @@ namespace GA
       //! Constructor and initializer
       Minimizer_Functional( t_Evaluation &_r, t_Taboo &_t ) : evaluation(&_r), taboo(&_t) {};
       //! Evaluates and returns the evaluation
-      t_VA_Type evaluate(); { return (t_VA_Type) evaluation->evaluate( *current_indiv ); }
+      t_VA_Type evaluate() { return (t_VA_Type) evaluation->evaluate( *current_indiv ); }
       //! \brief Evaluates and returns the evaluation. Also computes the gradient and
       //!        stores in in \a _i_grad.
       //! \pre \a _i_grad should point to a valid and sufficiently large memory block.
@@ -188,6 +186,8 @@ namespace GA
       typedef typename t_VA_Traits :: t_Functional                 t_Functional;
       //! The base minimizer type
       typedef typename ::minimizer::Base< t_Functional >           t_Minimizer;
+      //! A functor capable of saving a current state in a minimization functor.
+      typedef SaveStateIndividual<t_GATraits >                     t_SaveState;
 
     protected:
       //! A pointer to a minizer
@@ -207,12 +207,8 @@ namespace GA
       unsigned max_production(void) { return 1; } 
    
       //! This is a genetic functor
-      void apply(eoPopulator<t_Individual>& _pop)
-      {
-        functional.init( *_pop );
-        (*minimizer)( functional );
-        functional.evaluate();
-      }
+      void apply(eoPopulator<t_Individual>& _pop);
+
       //! Returns "GA::MinimizerGenOp"
       virtual std::string className() const {return "GA::MinimizerGenOp";}
 

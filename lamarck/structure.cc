@@ -43,15 +43,6 @@ namespace Ising_CE {
   using atat::rndseed;
   Lattice* Structure :: lattice = NULL;
 
-  const types::t_unsigned Structure::FREEZE_NONE = 0;
-  const types::t_unsigned Structure::FREEZE_XX = 1;
-  const types::t_unsigned Structure::FREEZE_XY = 2;
-  const types::t_unsigned Structure::FREEZE_XZ = 4;
-  const types::t_unsigned Structure::FREEZE_YY = 8;
-  const types::t_unsigned Structure::FREEZE_YZ = 16;
-  const types::t_unsigned Structure::FREEZE_ZZ = 32;
-
-
   void Structure :: convert_from_ATAT ( const Atat_Structure &atat  )
   {
     cell = atat.cell;
@@ -157,34 +148,6 @@ namespace Ising_CE {
     return ( result / ( (types::t_real) atoms.size() ) );
   }
 
-  void Structure :: randomize (types::t_real range, bool centered = false)
-  {
-    std::vector<Atom> :: iterator i_atom = atoms.begin();
-    std::vector<Atom> :: iterator i_last = atoms.end();
-    rndseed();
-    if (  centered )
-    {
-      for(; i_atom != i_last; i_atom++ )
-      #ifdef WANG_CONSTRAINTS 
-        {
-           i_atom->type = 1.0 - (types::t_real) ( rand()/( (types::t_real)RAND_MAX ) ) * range * 0.5;
-           if ( rand() / ( (types::t_real)RAND_MAX ) < 0.5 ) 
-             i_atom->type *= -1.0;
-        }
-      #else
-        {
-           i_atom->type = ( rand() / ( (types::t_real)RAND_MAX ) < 0.5 ) ? -1.0 : 1.0;
-           i_atom->type += (types::t_real) ( rand()/( (types::t_real)RAND_MAX ) - 0.5 ) * range;
-        }
-      #endif // WANG_CONSTRAINTS
-    }
-    else 
-    {
-      for(; i_atom != i_last; i_atom++ )
-        i_atom->type = (types::t_real) ( rand()/( (types::t_real)RAND_MAX ) -0.5 )
-                       * range;
-    }
-  }
        
   bool Structure :: Load( const TiXmlElement &_element )
   {

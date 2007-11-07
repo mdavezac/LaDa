@@ -53,6 +53,8 @@ namespace GA
 
       //! prints out all tabooed individuals or whatever
       virtual void print_out( std::ostream &str ) const {return;}
+      //! Loads a taboo from XML
+      virtual bool Load( const TiXmlElement &_node ) { return true; }
   };
 
   //! A taboo class defined around a list of tabooed individuals
