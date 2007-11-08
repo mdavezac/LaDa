@@ -8,8 +8,6 @@
 #include <stdexcept>
 
 #include "opt/types.h"
-#include "analysis/analyze_code.h"
-#include "analysis/call_log.h"
 
 #include "functional_builder.h"
 
@@ -135,7 +133,6 @@ namespace VA_CE
    // results are stored in a new Lamarck::clusters
    void  Functional_Builder :: add_equivalent_clusters() 
    {
-     START_ANALYSIS("Lamarck :: add_equivalent_clusters");
      const atat::rMatrix3d &cell            = lattice->cell;
      const atat::rMatrix3d inv_cell         = !cell;
      const atat::Array<atat::rMatrix3d> &point_op = lattice->space_group.point_op;
@@ -170,7 +167,6 @@ namespace VA_CE
        }
      }
      delete transfo_cluster;
-     END_ANALYSIS;
    }
 
    // converts the clusters into a polynomial forme
@@ -185,7 +181,6 @@ namespace VA_CE
      Polynome *polynome;
  
      // finally, creates polynomials
-     START_ANALYSIS( "Functional_Builder :: generate_functionals" )
  
      atat::rMatrix3d inv_cell = !str.cell;
      polynome = new Polynome();
@@ -259,7 +254,6 @@ namespace VA_CE
      functional->set_functional2( strain );
      functional->set_functional1( polynome );
  
-     END_ANALYSIS;
  
      return true;
    }

@@ -9,7 +9,7 @@ noinst_LTLIBRARIES = liblamarck.la
 liblamarck_la_SOURCES = cluster.cc  constituent_strain.cc functional_builder.cc \
 			harmonic.cc  lattice.cc polynome.cc structure.cc 
 liblamarck_ladir = lamarck
-nobase_liblamarck_la_HEADERS = atom.h cluster.h functors.h  lattice.h polynome.h \
+nobase_liblamarck_la_HEADERS = atom.h cluster.h  lattice.h polynome.h \
                                constituent_strain.h  functional_builder.h  harmonic.h \
 			       structure.h
 liblamarck_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 

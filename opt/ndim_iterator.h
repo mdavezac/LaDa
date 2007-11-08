@@ -1,36 +1,6 @@
 //
 //  Version: $Id$
 //
-// Provides a multidimensional iterator for dynamic loops
-// _Tp, the building block iterator, requires the incrementation ++
-// _Predicate is a binary predicate taking _Tp on input 
-//  and returning a bool
-//
-//  The last iterator on the stack is the fastest rolling iterator
-//  in the loop
-//
-//  Usage:
-//    Ndim_Iterator<t_Object, t_pred> iterator;
-//    iterator.add(start, end)
-//      where start(end) is the value of the iterator at start (end)
-//    do {  } while( ++iterator )
-//      this loop will break when the value of the first added
-//      iterator is such that Predicate( first, values of first at
-//      end) is false
-//
-//   iterators are pre-incremented with ++
-//   each time an iterator and its end value returns false when
-//   applied to _Predicate, it is reseted to its value at start,
-//   and the previous iterator on the stack is incremented
-//
-// Functions for looping over the iterators are provided
-// with init_loop, next_iterator, loop_is_valid, get_current_iterator
-// Usage: for( iterator.init_loop(); iterator.loop_is_valid();
-//             iterator.next_iterator() )
-//          do something with iterator.get_currrent_iterator(); 
-//
-//
-//
 #ifndef _NDIM_ITERATOR_H_
 #define _NDIM_ITERATOR_H_
 
@@ -57,129 +27,246 @@
 namespace opt
 {
 
-  template<class _Tp, class _Op>
+  /** \brief Iterator of dynamic dimensionality for loop of dynamic nestedness.
+   * \details Creates an iterator which allows for a dinamic number of loops whithin loops. 
+   *          Imagine for instance that we thant a three-times nested loop
+   *          where each loops iterates 4 times, then we could Ndim_Iterator in
+   *          the following code.
+     \code 
+       // Creates a dimensional iterator of integers with operator <= to check
+       // for the conditional end of a loop.
+       opt::Ndim_Iterator< types::t_int, std::less_equal<types::t_int> > iterator;
+       // adds outermost loop
+       iterator.add( 0, 3);
+       // adds intermediate loop
+       iterator.add( 0, 3);
+       // adds innermost loop
+       iterator.add( 0, 3);
+
+       do
+       {
+         // value of the outer loop
+         types::t_int outer        =  iterator.access(0);
+         // value of the intermediate loop
+         types::t_int intermediate =  iterator.access(1);
+         // value of the innner loop
+         types::t_int inner        =  iterator.access(2);
+
+         ...
+
+
+       } while( ++iterator );
+      \endcode
+              This code is equivalent to the following
+      \code
+        for( types::t_int outer = 0; outer <= 3; ++outer )
+          for( types::t_int intermediate = 0; intermediate <= 3; ++intermediate )
+            for( types::t_int inner = 0; inner <= 3; ++innner )
+            {
+               ...
+            }
+      \endcode
+              The advantage of the second code is that it is more compact ;).
+              The advantage of the first code is that we do not need to know in
+              advance how nested the loop will be. Indeed, rather than
+              explicitely adding three dimensions to the N-dimensional
+              iterators, we could add as... whatever crops up. 
+
+              In any case, the N-dimensional iterators needs all the following
+              to construct a loop 
+      \code 
+         for( T_OBJECT object(_start); _condition( object, _end ); ++object )
+      \endcode
+              It may not be obvious, but here is the input to the loop:
+                - T_OBJECT: is a type defining a quantity
+                - _condition: is a binary functor which returns true as long as
+                              the loop should continue.
+                _ operator++(): T_OBJECT understands the incrementation operator.
+                _ operator=( ? ): T_OBJECT must have a constructor whcih can
+                                  take _start as an argument.
+                - _start: an initial value for the object
+                - _end: an end value for the object
+                .
+              The first two items are the template arguments to Ndim_Iterator.
+              The second two are behaviors required by Ndim_Iterator for
+              T_OBJECT. Note that _condition may itself require some behaviors
+              of T_OBJECT. The last two items are simply meant to initialize
+              and end the loop.
+
+              Finally, other than the member function Ndim_Iterator::access()
+              displayed above, one can also a dynamic loop over inner
+              iterators, where
+       \code
+         // value of the outer loop
+         types::t_int outer        =  iterator.access(0);
+         // value of the intermediate loop
+         types::t_int intermediate =  iterator.access(1);
+         // value of the innner loop
+         types::t_int inner        =  iterator.access(2);
+       \endcode
+              can become,
+       \code
+         std::vector< T_OBJECT > inners;
+         for( iterator.init_loop(); iterator.loop_is_valid(); iterator.next_iterator() );
+           inners.push_back( iterator.get_current_iterator() );
+       \endcode
+              where at the end, \a inners contain the current state of the
+              N-dimensional loop.
+   */          
+  template<class T_OBJECT, class T_PREDICATE>
     class Ndim_Iterator
     {
-      std::vector<_Tp> iterators;
-      std::vector<_Tp> start;
-      std::vector<_Tp> end;
-      typename std::vector<_Tp> :: iterator current_iterator;
-      typename std::vector<_Tp> :: iterator last_iterator;
-      _Op _predicate;
+      public:
+        //! Type of inner iterators
+        typedef T_OBJECT t_Object;
+        //! Type of the predicates.
+        typedef T_PREDICATE t_Predicate;
+
+      protected:
+        //! current value within each nested loop
+        std::vector<t_Object> iterators;
+        //! Start value of each nested loop
+        std::vector<t_Object> start;
+        //! End value of each nested loop
+        std::vector<t_Object> end;
+        //! Current iterator within the container of iterators (eg current loop)
+        typename std::vector<t_Object> :: iterator current_iterator;
+        //! Last iterator within the container of iterators
+        typename std::vector<t_Object> :: iterator last_iterator;
+        //! Predicate which ends the loop.
+        t_Predicate predicate;
 
 
       public:
+        //! Constructor
         Ndim_Iterator(){};
+        //! Destructor
         ~Ndim_Iterator(){};
 
-//       Ndim_Iterator( const _Op _pred ) : _predicate(_pred) {};
-
-        void add( _Tp _begin, _Tp _end )
-        { 
-          start.push_back( _begin );
-          end.push_back( _end );
-          iterators.push_back( _begin );
-        }
-        void reset()
-        { 
-          _DEBUG_ITERATOR_CHECK_;
-          std::copy( start.begin(), start.end(),
-                     iterators.begin() );
-        }
-        void clear()
-        {   
-          start.clear(); end.clear(); iterators.clear();
-        }
-        void erase( types::t_unsigned i);
-        const _Tp& access( types::t_unsigned i) const;
-        _Tp& access( types::t_unsigned i);
+        //! Adds an inner loop to existing loops.
+        void add( t_Object _begin, t_Object _end );
+        //! Resets the iterator to start
+        void reset();
+        //! Clears. No loops. No nothing.
+        void clear(){ start.clear(); end.clear(); iterators.clear(); }
+        //! Erases loop number \a _i
+        void erase( types::t_unsigned _i);
+        //! Returns a constant reference to the component \a _i of the iterator.
+        const t_Object& access( types::t_unsigned _i) const;
+        //! Returns a reference to the component \a _i of the iterator.
+        t_Object& access( types::t_unsigned _i);
+        //! Increments the N-dimensional iterator.
         bool operator++() { return increment(); };
+        //! Increments the N-dimensional iterator.
         bool increment();
-        bool is_valid()
-        {
-          _DEBUG_ITERATOR_CHECK_;
-          return _predicate( *iterators.begin(), *end.begin() ); 
-        }
-        void init_loop()
-        {
-          _DEBUG_ITERATOR_CHECK_;
-          current_iterator = iterators.begin();
-          last_iterator = iterators.end();
-        }
-        _Tp& get_current_iterator()
-          { return *current_iterator; }
-        bool next_iterator()
-          { return ( (++current_iterator) != last_iterator ); }
-        bool loop_is_valid()
-          { return ( current_iterator != last_iterator ); }
+        //! Returns true if the iterator is still valid.
+        bool is_valid();
+        //! Initializes the loop.
+        void init_loop();
+        //! Returns the current iterator for loop accessing internal iterators.
+        t_Object& get_current_iterator() { return *current_iterator; }
+        //! Increments the loop accessing internal iterators.
+        bool next_iterator()  { return ( (++current_iterator) != last_iterator ); }
+        //! Returns true if there are still internal iterators to access.
+        bool loop_is_valid() { return ( current_iterator != last_iterator ); }
 
      protected:
        #ifdef _DEBUG_ITERATORS_
+         //! Debug.
          bool check_valid() const;
        #endif // _DEBUG_ITERATORS_
 
     };
 
 
-    template<typename _Tp, typename _Op>
-    const _Tp& Ndim_Iterator<_Tp, _Op> :: access( types::t_unsigned i ) const
+    template<typename T_OBJECT, typename T_PREDICATE>
+      inline void Ndim_Iterator<T_OBJECT, T_PREDICATE> :: add( t_Object _begin, t_Object _end )
+      { 
+        start.push_back( _begin );
+        end.push_back( _end );
+        iterators.push_back( _begin );
+      }
+    template<typename T_OBJECT, typename T_PREDICATE>
+      inline void Ndim_Iterator<T_OBJECT, T_PREDICATE> :: reset()
+      { 
+        _DEBUG_ITERATOR_CHECK_;
+        std::copy( start.begin(), start.end(),
+                   iterators.begin() );
+      }
+    template<typename T_OBJECT, typename T_PREDICATE>
+      inline bool Ndim_Iterator<T_OBJECT, T_PREDICATE> :: is_valid()
+      {
+        _DEBUG_ITERATOR_CHECK_;
+        return predicate( *iterators.begin(), *end.begin() ); 
+      }
+    template<typename T_OBJECT, typename T_PREDICATE>
+      inline void Ndim_Iterator<T_OBJECT, T_PREDICATE> :: init_loop()
+      {
+        _DEBUG_ITERATOR_CHECK_;
+        current_iterator = iterators.begin();
+        last_iterator = iterators.end();
+      }
+    template<typename T_OBJECT, typename T_PREDICATE>
+      const typename Ndim_Iterator<T_OBJECT, T_PREDICATE> :: t_Object&
+      Ndim_Iterator<T_OBJECT, T_PREDICATE> :: access( types::t_unsigned _i ) const
+      { 
+        #ifdef _DEBUG_ITERATOR_
+          _DEBUG_ITERATOR_CHECK_;
+          if (_i >= iterators.size() ) 
+          {
+            std::cerr << "Cannot access iterator: value beyond range "
+                      << " t_Object& Ndim_Iterator :: access( types::t_unsigned _i ) const"
+                      << std::endl;
+            exit(0);
+          }
+        #endif // _DEBUG_ITERATOR_
+      
+        return ( iterators[_i] );
+      }
+    template<typename T_OBJECT, typename T_PREDICATE>
+      typename Ndim_Iterator<T_OBJECT, T_PREDICATE> :: t_Object&
+        Ndim_Iterator<T_OBJECT, T_PREDICATE> :: access( types::t_unsigned _i )
+        { 
+          #ifdef _DEBUG_ITERATOR_
+            _DEBUG_ITERATOR_CHECK_;
+            if (_i >= iterators.size() ) 
+            {
+              std::cerr << "Cannot access iterator: value beyond range "
+                        << " t_Object& Ndim_Iterator :: access( types::t_unsigned _i ) const"
+                        << std::endl;
+              exit(0);
+            }
+          #endif // _DEBUG_ITERATOR_
+       
+          return ( iterators[_i] );
+        }
+    template<typename T_OBJECT, typename T_PREDICATE>
+    void Ndim_Iterator<T_OBJECT, T_PREDICATE> :: erase( types::t_unsigned _i )
     { 
       #ifdef _DEBUG_ITERATOR_
         _DEBUG_ITERATOR_CHECK_;
-        if (i >= iterators.size() ) 
+        if (_i >= iterators.size() ) 
         {
           std::cerr << "Cannot access iterator: value beyond range "
-                    << " _Tp& Ndim_Iterator :: access( types::t_unsigned i ) const"
+                    << " void Ndim_Iterator :: erase( types::t_unsigned _i )"
                     << std::endl;
           exit(0);
         }
       #endif // _DEBUG_ITERATOR_
 
-      return ( iterators[i] );
-    }
-    template<typename _Tp, typename _Op>
-    _Tp& Ndim_Iterator<_Tp, _Op> :: access( types::t_unsigned i )
-    { 
-      #ifdef _DEBUG_ITERATOR_
-        _DEBUG_ITERATOR_CHECK_;
-        if (i >= iterators.size() ) 
-        {
-          std::cerr << "Cannot access iterator: value beyond range "
-                    << " _Tp& Ndim_Iterator :: access( types::t_unsigned i ) const"
-                    << std::endl;
-          exit(0);
-        }
-      #endif // _DEBUG_ITERATOR_
-
-      return ( iterators[i] );
-    }
-    template<typename _Tp, typename _Op>
-    void Ndim_Iterator<_Tp, _Op> :: erase( types::t_unsigned i )
-    { 
-      #ifdef _DEBUG_ITERATOR_
-        _DEBUG_ITERATOR_CHECK_;
-        if (i >= iterators.size() ) 
-        {
-          std::cerr << "Cannot access iterator: value beyond range "
-                    << " void Ndim_Iterator :: erase( types::t_unsigned i )"
-                    << std::endl;
-          exit(0);
-        }
-      #endif // _DEBUG_ITERATOR_
-
-      start.erase( start.begin() + i );
-      end.erase( end.begin() + i );
-      iterators.erase( iterators.begin() + i );
+      start.erase( start.begin() + _i );
+      end.erase( end.begin() + _i );
+      iterators.erase( iterators.begin() + _i );
     }
 
-    template<typename _Tp, typename _Op>
-    bool Ndim_Iterator<_Tp, _Op> :: increment()
+    template<typename T_OBJECT, typename T_PREDICATE>
+    bool Ndim_Iterator<T_OBJECT, T_PREDICATE> :: increment()
     {
       _DEBUG_ITERATOR_CHECK_;
-      typename std::vector<_Tp> :: iterator ri_it;
-      typename std::vector<_Tp> :: iterator ri_end;
-      typename std::vector<_Tp> :: iterator ri_itstart;
-      typename std::vector<_Tp> :: iterator ri_itend;
+      typename std::vector<t_Object> :: iterator ri_it;
+      typename std::vector<t_Object> :: iterator ri_end;
+      typename std::vector<t_Object> :: iterator ri_itstart;
+      typename std::vector<t_Object> :: iterator ri_itend;
 
       ri_it = iterators.end() - 1;
       ri_end = iterators.begin();
@@ -189,7 +276,7 @@ namespace opt
       while ( (ri_it - ri_end) >= 0 )
       {
         ++(*ri_it);
-        if ( not _predicate( *ri_it, *ri_itend ) )
+        if ( not predicate( *ri_it, *ri_itend ) )
         {
           if ( ri_it == ri_end )
             return false;
@@ -206,8 +293,8 @@ namespace opt
 
 
     #ifdef _DEBUG_ITERATORS_
-      template<typename _Tp, typename _Op>
-      bool Ndim_Iterator<_Tp, _Op> :: check_valid() const
+      template<typename T_OBJECT, typename T_PREDICATE>
+      bool Ndim_Iterator<T_OBJECT, T_PREDICATE> :: check_valid() const
       {
         types::t_unsigned a = start.size();
         types::t_unsigned b = end.size();
