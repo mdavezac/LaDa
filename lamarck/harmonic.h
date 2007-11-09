@@ -33,12 +33,6 @@ namespace Ising_CE
   //!          the gradient in a similar way.
   class Linear_Interpolator 
   {
-#ifdef _MPI
-    //! \cond
-    friend bool mpi::BroadCast::serialize<Linear_Interpolator> ( Linear_Interpolator& );
-    //! \endcond
-#endif
-    
     //! \brief Defines a 2-dimensional point.
     //! \details Defines an x and y member, as well as comparison functions for
     //!          easily retriving the closes instances to a point.
@@ -62,6 +56,13 @@ namespace Ising_CE
       bool x_lesser( const types::t_real _x ) const 
         { return opt::Fuzzy<types::t_real>::less(x, _x); }
     };
+
+#ifdef _MPI
+    //! \cond
+    friend bool mpi::BroadCast::serialize<Linear_Interpolator> ( Linear_Interpolator& );
+    //! \endcond
+#endif
+    
 
     protected:
       //! A collection of Points between which to interpolate.

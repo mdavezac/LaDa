@@ -158,6 +158,17 @@ namespace function
       virtual bool is_valid() { return true; }
   };
 
+  //! Debug: Prints the variables of the functional to string.
+  template< class T_FUNCTIONAL > std::string print( const T_FUNCTIONAL &_func )
+  {
+    typename T_FUNCTIONAL :: const_iterator  i_var = _func.begin();
+    typename T_FUNCTIONAL :: const_iterator  i_var_end = _func.end();
+    std::string str = " Vars: ";
+    for(; i_var != i_var_end; ++i_var )
+      str.push_back( ( *i_var > 0 ? '1': '0' ) ); 
+    return str;
+  }
+
 
   template<class _TYPE, class _CONTAINER >
     inline void Base<_TYPE,_CONTAINER> :: reserve(const types::t_unsigned _nb) 

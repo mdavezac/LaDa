@@ -43,7 +43,7 @@ namespace minimizer {
       //! Destructor
       virtual ~Base(){}
 
-      // Should assign Base::current_func and perform a minimization.
+      //! Should assign Base::current_func and perform a minimization.
       inline bool operator()( t_Functional &_func )
       { 
         current_func = &_func;
