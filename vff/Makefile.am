@@ -6,6 +6,10 @@ vff_CPPFLAGS =  $(AM_CPPFLAGS) -I .. @GSL_INCLUDE@
 vff_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIB@ @MPICH_LIBS@
 vff_LDADD = ../lamarck/liblamarck.la ../atat/libatat.la libvff.la\
 	    ../physics/libphysics.la @MPI_ADDLIB@
+lib_LIBRARIES = libvff.a
+libvff_a_SOURCES = functional.cc fortran.cc
+libvff_a_LIBADD = ../lamarck/liblamarck.la ../atat/libatat.la \
+	          ../physics/libphysics.la ../print/libprint.la @MPI_ADDLIB@
 noinst_LTLIBRARIES = libvff.la
 libvff_la_SOURCES = functional.cc layered.cc
 libvff_ladir = vff
@@ -19,3 +23,5 @@ libvff_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS)
 	cd ../physics; $(MAKE)
 ../mpi/libmpiobject.la:
 	cd ../mpi; $(MAKE)
+../mpi/libprint.la:
+	cd ../print; $(MAKE)

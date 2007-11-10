@@ -5,10 +5,10 @@
 #include <tinyxml/tinyxml.h>
 
 #include "functional.h"
-#include "lamarck/lattice.h"
-#include "lamarck/structure.h"
-#include "opt/opt_frprmn.h"
-#include "opt/opt_minimize_gsl.h"
+#include <lamarck/lattice.h>
+#include <lamarck/structure.h>
+#include <opt/opt_frprmn.h>
+#include <opt/opt_minimize_gsl.h>
 
 
 extern "C" {

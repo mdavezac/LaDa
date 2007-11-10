@@ -9,6 +9,7 @@
 #endif
 
 #include <string>
+#include <cctype>
 
 //! Contains print out related stuff.
 namespace Print
@@ -33,5 +34,10 @@ namespace Print
   //! Transforms all characters to uppercase.
   std::string uppercase(std::string _string);
 
+
+  //! Returns true if c is uppercase
+  inline bool is_uppercase( char c ) { return c == std::toupper( c ); }
+  //! Returns true if c is lowercase
+  inline bool is_lowercase( char c ) { return c != std::toupper( c ); }
 }
 #endif 

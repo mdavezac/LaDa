@@ -132,6 +132,32 @@ namespace minimizer {
   {
     public:
       typedef T_FUNCTIONAL t_Functional;
+
+
+    protected:
+      //!< Lists all known gsl multidimensional minimizers.
+      enum t_gsl_minimizer_type
+      { 
+        GSL_NONE,   //!< No minizer... 
+        GSL_FR,     //!< Fletcher-Reeves conjugate gradient algorithm.
+        GSL_PR,     //!< Polak-Ribiere conjugate gradient algorithm.                  
+        GSL_BFGS2,  //!< More efficient Broyden-Fletcher-Goldfarb-Shanno algorithm.
+        GSL_BFGS,   //!< Broyden-Fletcher-Goldfarb-Shanno algorithm.
+        GSL_SD      //!< Steepest Descent algorithm.
+      };
+
+    public:
+      //! Fletcher-Reeves conjugate gradient algorithm.
+      const static t_gsl_minimizer_type FletcherReeves = GSL_FR;
+      //! Polak-Ribiere conjugate gradient algorithm.                  
+      const static t_gsl_minimizer_type PolakRibiere = GSL_PR;
+      //!  More efficient Broyden-Fletcher-Goldfarb-Shanno algorithm.
+      const static t_gsl_minimizer_type BFGS2 = GSL_BFGS2;
+      //!  Broyden-Fletcher-Goldfarb-Shanno algorithm.
+      const static t_gsl_minimizer_type BFGS = GSL_BFGS;
+      //!  Steepest Descent algorithm.
+      const static t_gsl_minimizer_type SteepestDescent = GSL_SD;
+
     protected:
       using Base<t_Functional>::current_func;
       types::t_real tolerance;
@@ -139,14 +165,21 @@ namespace minimizer {
       types::t_real linestep;
       types::t_unsigned iter; // number of performed iterations
       types::t_unsigned itermax; // maximum number of iterations
-      enum t_gsl_minimizer_type { GSL_NONE, GSL_FR, GSL_PR,                       
-                                  GSL_BFGS2, GSL_BFGS, GSL_SD };
       t_gsl_minimizer_type type; // maximum number of iterations
     public:
       bool do_print;
                                   
       
     public:
+      GnuSL   ( t_gsl_minimizer_type _type, 
+                types::t_unsigned _itermax,
+                types::t_real _tol, 
+                types::t_real _linetol, 
+                types::t_real _linestep ) 
+            : tolerance(_tol), linetolerance(_linetol),
+              linestep(_linestep), iter(0), itermax(_itermax),
+              type( _type ), do_print(false) {}
+            
       GnuSL () : tolerance(types::tolerance),
                  linetolerance(0.01),
                  linestep(0.1), iter(0),
@@ -159,6 +192,23 @@ namespace minimizer {
                        linestep(0.1), iter(0),
                        itermax(500), do_print(false) {}
       virtual ~GnuSL(){};
+
+      //! Non-XML way to set-up the minimizers.
+      void set_parameters( t_gsl_minimizer_type _type, 
+                           types::t_unsigned _itermax,
+                           types::t_real _tol, 
+                           types::t_real _linetol, 
+                           types::t_real _linestep ) 
+      {
+        tolerance     = _tol;
+        linetolerance = _linetol;
+        linestep      = _linestep;
+        iter          = 0;
+        itermax       = _itermax;
+        type          = _type;
+      }
+            
+
 
       virtual bool minimize()
       {

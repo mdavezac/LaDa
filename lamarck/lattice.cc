@@ -137,8 +137,7 @@ namespace Ising_CE {
     for (; i_site != i_end; ++i_site )
       if ( atat::equivalent_mod_cell(_at.pos, i_site->pos,inv_cell) ) 
       {
-        if ( i_site->type.size() == 1 )
-          return 0;
+        if ( i_site->type.size() == 1 ) return 0;
         return convert_real_to_type_index( _at.type );
       }
 
@@ -186,8 +185,7 @@ namespace Ising_CE {
     i_type = sites[site].type.begin();
     i_type_end = sites[site].type.end();
     for (type = 0; i_type != i_type_end; ++i_type, ++type )
-      if ( i_type->compare(_in.type) == 0 )
-        break;
+      if ( i_type->compare(_in.type) == 0 ) break;
     if ( i_type == i_type_end ) // silent error, type not found
       return false;
 
@@ -255,8 +253,7 @@ namespace mpi
     // then serializes point operations
     types::t_int n = _sg.point_op.get_size();
     if( not serialize( n ) ) return false;
-    if ( stage == COPYING_FROM_HERE )
-      _sg.point_op.resize(n);
+    if ( stage == COPYING_FROM_HERE )  _sg.point_op.resize(n);
     for( types::t_int i = 0; i < n ; ++i )
     {
       if ( not serialize( _sg.point_op[i].x[0], (_sg.point_op[i].x[0]+3) ) ) return false;
@@ -267,8 +264,7 @@ namespace mpi
     // finally serializes translations operations
     n = _sg.trans.get_size();
     if( not serialize( n ) ) return false;
-    if ( stage == COPYING_FROM_HERE )
-      _sg.trans.resize(n);
+    if ( stage == COPYING_FROM_HERE ) _sg.trans.resize(n);
     for( types::t_int i = 0; i < n ; ++i )
       if ( not serialize( _sg.trans[i].x, (_sg.trans[i].x+3) ) ) return false;
 
@@ -289,8 +285,7 @@ namespace mpi
     // copies site size
     types::t_int n = _latt.sites.size();
     if( not serialize( n ) ) return false;
-    if ( stage == COPYING_FROM_HERE )
-      _latt.sites.resize(n);
+    if ( stage == COPYING_FROM_HERE )  _latt.sites.resize(n);
 
     // copies sites
     Ising_CE::Lattice::t_Sites :: iterator i_site = _latt.sites.begin();
@@ -301,8 +296,7 @@ namespace mpi
       if ( not serialize( i_site->freeze ) ) return false;
       n = i_site->type.size();
       if( not serialize( n ) ) return false;
-      if ( stage == COPYING_FROM_HERE )
-        i_site->type.resize(n);
+      if ( stage == COPYING_FROM_HERE ) i_site->type.resize(n);
       std::vector<std::string> :: iterator i_str = i_site->type.begin();
       std::vector<std::string> :: iterator i_str_end = i_site->type.end();
       for(; i_str != i_str_end; ++i_str )

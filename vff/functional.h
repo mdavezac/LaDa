@@ -100,7 +100,7 @@ namespace Vff
 
       //! \brief Returns the kind of atomic center this is
       //! \details In order to use the right coefficients in bond stretching and other
-      //! interactions, we have to know the "kind"
+      //! interactions, we have to know the "kind" of
       //! functional this is. This will depend on the atomic specie of this
       //! atom and the encoding of Vff::Atomic_Functional array in
       //! Vff::Functional
@@ -376,6 +376,21 @@ namespace Vff
         lengths[_typeB] = _l;
         std::copy( _i.begin(), _i.end(), alphas.begin() + _typeB * 5 );
       }
+      //! \brief Adds a bond type to bond list
+      //! \param _typeB type of atom at end-point of bond
+      //! \param _l equilibrium length
+      //! \param _i bond stretching parameters
+      void add_bond( const types::t_unsigned _typeB, const types::t_real _l,
+                     const types::t_real _i[5] )
+      {
+        if ( lengths.size() < _typeB + 1)
+          lengths.resize( _typeB+1, types::t_real(0) );
+        if ( alphas.size() < (_typeB+1) * 5  )
+          alphas.resize( (_typeB+1)*5, types::t_real(0) );
+        lengths[_typeB] = _l;
+        const types::t_real *i_alpha = _i;
+        std::copy( i_alpha, i_alpha+5, alphas.begin() + _typeB * 5 );
+      }
       //! \brief Adds angle deformation and bond-angle parameters
       //! \param _typeA type of atom at end-point of one bond
       //! \param _typeC type of atom at end-point of other bond
@@ -397,6 +412,29 @@ namespace Vff
         gammas[offset] = _gamma;
         sigmas[offset] = _sigma;
         std::copy( _i.begin(), _i.end(), betas.begin() + offset * 5 );
+      }
+      //! \brief Adds angle deformation and bond-angle parameters
+      //! \param _typeA type of atom at end-point of one bond
+      //! \param _typeC type of atom at end-point of other bond
+      //! \param _gamma bond-angle deformation parameter
+      //! \param _sigma equilibrium angle
+      //! \param _i angle deformation parameters
+      void add_angle( const types::t_unsigned _typeA,
+                      const types::t_unsigned _typeC,
+                      const types::t_real _gamma, const types::t_real _sigma, 
+                      const types::t_real _i[5] )
+      {
+        types::t_unsigned offset = _typeA+_typeC;
+        if ( gammas.size() < offset + 1  )
+          gammas.resize( offset + 1, types::t_real(0) );
+        if ( sigmas.size() < offset + 1  )
+          sigmas.resize( offset + 1, types::t_real(0) );
+        if ( betas.size() < (offset + 1) * 5 )
+          betas.resize( (offset+1)*5, types::t_real(0) );
+        gammas[offset] = _gamma;
+        sigmas[offset] = _sigma;
+        const types::t_real *i_beta = _i;
+        std::copy( i_beta, i_beta+5, betas.begin() + offset * 5 );
       }
       
       //! \brief Evaluate strain energy for Atomic_Center _center
@@ -559,6 +597,43 @@ namespace Vff
       //! \sa Functional::stress
       const atat::rMatrix3d& get_stress() const
         { return stress; }
+
+      //! \brief Returns the index in the atomic functional array for the bond
+      //!        \a _A - \a _B.
+      //! \details For instance, we can modify the parameters for that bond in
+      //!          the following way:
+      //!          \code
+      //  types::t_int where[2];
+      //  bond_indices( A, B, where )
+
+      //  functionals[ where[0] ].add_bond( where[0], d0, alphas );
+      //  functionals[ where[1]+structure.lattice->get_nb_types(0)]
+      //                         .add_bond( where[0], d0, alphas );
+      //!          \endcode
+      //!          Bond-only parameters should be symmetric. so we have to call
+      //!          Functionall::add_bond() twice in the code above, but you get
+      //!          the picture.
+      //! \param _A First atom. 
+      //! \param _B Second atom. 
+      //! \param _indices The resulting indices.
+      void bond_indices( const std::string &_A, const std::string &_B,
+                         types::t_int _indices[2] ) const;
+
+      //! \brief Returns the indices in the atomic functional array for the angle
+      //!        \a _A - \a _B - \a _C.
+      //! \details For instance, we can modify the parameters for that angle in
+      //!          the following way:
+      //!          \code
+      //  types::t_int where[3];
+      //  angle_indices( A, B, C, where );
+      //  functionals[ where[1] ].add_angle( where[0], where[2], gamma, sigma, betas );
+      //!          \endcode
+      //! \param _A External atom. 
+      //! \param _B Middle atom. 
+      //! \param _C External atom. 
+      //! \param _indices The resulting indices.
+      void angle_indices( const std::string &_A, const std::string &_B,
+                          const std::string &_C, types::t_int _indices[2] ) const;
 
     protected:
       //! \brief unpacks variables from minimizer

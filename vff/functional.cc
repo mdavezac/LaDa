@@ -261,36 +261,11 @@ namespace Vff
       child->Attribute("alpha6", &(alphas[4]));
 
       // finds out where to put it
-      types::t_int siteA = structure.lattice->get_atom_site_index( A );
-      if ( siteA == -1 ) return false;
-      types::t_int typeA = structure.lattice->get_atom_type_index( A );
-      if ( typeA == -1 ) return false;
-      types::t_int siteB = structure.lattice->get_atom_site_index( B );
-      if ( siteB == -1 ) return false;
-      types::t_int typeB = structure.lattice->get_atom_type_index( B );
-      if ( typeB == -1 ) return false;
+      types::t_int where[2];
+      bond_indices( A, B, where );
 
-      if ( siteA == siteB )
-      {
-        std::cerr << "Something wrong with your input" 
-                  << std::endl 
-                  << "Did not expect bond type " << A << "-" << B
-                  << std::endl;
-        return false;
-      }
-
-      // reorders things around
-      if( siteA == 1 ) 
-      {
-        types::t_int swap = typeB;
-        str = A; A = B ; B = str;
-        typeB = typeA;
-        typeA = swap;
-        siteA = 0; siteB = 1;
-      }
-
-      functionals[typeA].add_bond( typeB, d0, alphas );
-      functionals[typeB+structure.lattice->get_nb_types(0)].add_bond( typeA, d0, alphas );
+      functionals[ where[0] ].add_bond( where[0], d0, alphas );
+      functionals[ where[1]+structure.lattice->get_nb_types(0)].add_bond( where[0], d0, alphas );
     }
 
     // **************************************************************
@@ -336,34 +311,9 @@ namespace Vff
       }
       
       // finds out where to put it
-      types::t_int siteA = structure.lattice->get_atom_site_index( A );
-      if ( siteA == -1 ) return false;
-      types::t_int typeA = structure.lattice->get_atom_type_index( A );
-      if ( typeA == -1 ) return false;
-      types::t_int siteB = structure.lattice->get_atom_site_index( B );
-      if ( siteB == -1 ) return false;
-      types::t_int typeB = structure.lattice->get_atom_type_index( B );
-      if ( typeB == -1 ) return false;
-      types::t_int siteC = structure.lattice->get_atom_site_index( C );
-      if ( siteB == -1 ) return false;
-      types::t_int typeC = structure.lattice->get_atom_type_index( C);
-      if ( typeB == -1 ) return false;
-
-      if ( siteA == siteB or siteA != siteC )
-      {
-        std::cerr << "Something wrong with your input" 
-                  << std::endl 
-                  << "Did not expect angle type " << A << "-" << B << "-" << C
-                  << std::endl;
-        return false;
-      }
-
-      if ( siteB == 0 )
-        functionals[typeB].add_angle( typeA, typeC, gamma, sigma, betas );
-      else
-        functionals[typeB+structure.lattice->get_nb_types(0)].add_angle( typeA, typeC, 
-                                                                         gamma, sigma, betas );
-
+      types::t_int where[3];
+      angle_indices( A, B, C, where );
+      functionals[ where[1] ].add_angle( where[0], where[2], gamma, sigma, betas );
     }
 
     return true;
@@ -587,6 +537,73 @@ namespace Vff
       return  1 + structure->lattice->convert_real_to_type_index( 1, origin->type );
     }
   }
+
+  void Functional :: angle_indices( const std::string &_A, const std::string &_B, 
+                                    const std::string &_C, types::t_int _indices[3] ) const
+  {
+    types::t_int siteA, siteB, siteC;
+    siteA = structure.lattice->get_atom_site_index( _A );
+    if ( siteA == -1 ) goto failure;
+    _indices[0] = structure.lattice->get_atom_type_index( _A );
+    if ( _indices[0] == -1 ) goto failure;
+    siteB = structure.lattice->get_atom_site_index( _B );
+    if ( siteB == -1 ) goto failure;
+    _indices[1] = structure.lattice->get_atom_type_index( _B );
+    if ( _indices[1] == -1 ) goto failure;
+    siteC = structure.lattice->get_atom_site_index( _C );
+    if ( siteC == -1 ) goto failure;
+    _indices[2] = structure.lattice->get_atom_type_index( _C);
+    if ( _indices[2] == -1 ) goto failure;
+
+    if ( siteA == siteB or siteA != siteC ) goto failure;
+    if ( siteB == 0 ) return;
+    
+    _indices[1] += structure.lattice->get_nb_types(0);
+
+    return;
+
+failure:
+    std::ostringstream sstr;
+    sstr << "Something wrong with your input" 
+         << std::endl 
+         << "Did not expect angle type " << _A << "-" << _B << "-" << _C
+         << std::endl;
+    throw std::runtime_error( sstr.str() );
+  }
+
+  void Functional :: bond_indices( const std::string &_A, const std::string &_B,
+                                   types::t_int _indices[2] ) const
+  {
+    types::t_int siteA, siteB, swap;
+    // finds out where to put it
+    siteA = structure.lattice->get_atom_site_index( _A );
+    if ( siteA == -1 ) goto failure;
+    _indices[0] = structure.lattice->get_atom_type_index( _A );
+    if ( _indices[0] == -1 ) goto failure;
+    siteB = structure.lattice->get_atom_site_index( _B );
+    if ( siteB == -1 ) goto failure;
+    _indices[1] = structure.lattice->get_atom_type_index( _B );
+    if ( _indices[1] == -1 ) goto failure;
+
+    if ( siteA == siteB ) goto failure;
+
+    // reorders things around
+    if( siteA != 1 )  return;
+    
+    swap = _indices[1];
+    _indices[1] = _indices[0];
+    _indices[0] = swap;
+
+    return;
+failure:
+    std::ostringstream sstr;
+    sstr << "Something wrong with your input" 
+         << std::endl 
+         << "Could not find bond type " << _A << "-" << _B
+         << std::endl;
+    throw std::runtime_error( sstr.str() );
+  }
+
   types::t_unsigned  Atomic_Center :: bond_kind( const Atomic_Center &_bond ) const
   {
     if ( is_site_one_two_species )

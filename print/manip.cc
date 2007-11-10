@@ -2,7 +2,6 @@
 //  Version: $Id$
 //
 #include <stdlib.h>
-#include <cctype>
 
 #include "manip.h"
 
@@ -67,6 +66,7 @@ namespace Print
         _string[i] = std::toupper(_string[i]);
      return _string;//return the converted string
   }
+
    
 // void BackwardFind( ifstream &_file, const std::string _comp )
 // {
