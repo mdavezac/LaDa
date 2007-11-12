@@ -35,7 +35,7 @@ namespace Vff
     // Watch it row vs column major. 
     types::t_real *i_var = _array;
     for(types::t_int i = 0; i < 3; ++i )
-      for(types::t_int j = 0; i < 3; ++j, ++i_var )
+      for(types::t_int j = 0; j < 3; ++j, ++i_var )
         structure.cell( j, i ) = *i_var;
   }
 
@@ -126,7 +126,7 @@ namespace Vff
     types::t_int where[2];
     bond_indices( A, B, where );
 
-    functionals[ where[0] ].add_bond( where[0], _d0, _alphas );
+    functionals[ where[0] ].add_bond( where[1], _d0, _alphas );
     functionals[ where[1]+structure.lattice->get_nb_types(0)].add_bond( where[0], 
                                                                         _d0, _alphas );
   }
@@ -152,56 +152,71 @@ namespace Vff
   }
 }
 
-extern "C" void vff_create() 
+extern "C" void vff_create_() 
 {
-  if( Vff :: fortran ) 
-    delete Vff :: fortran;
+  if( Vff :: fortran ) delete Vff :: fortran;
   Vff :: fortran = new Vff::Fortran;
   if( not Vff :: fortran )
     throw std::runtime_error("Could not create Vff object\n");
 }
-extern "C" void vff_destroy()
+extern "C" void vff_destroy_()
 {
-  if( Vff :: fortran ) 
-    delete Vff :: fortran;
+  if( Vff :: fortran ) delete Vff :: fortran;
   Vff :: fortran = NULL;
 }
-
-extern "C" void vff_cell( types::t_real* _mat )
+extern "C" void vff_print_structure_()
+{
+  if( not Vff :: fortran )
+    throw std::runtime_error( "Fortran object not initialized on call to vff_cell)\n" );
+  Vff :: fortran->print_structure();
+}
+extern "C" void vff_print_lattice_()
+{
+  if( not Vff :: fortran )
+    throw std::runtime_error( "Fortran object not initialized on call to vff_cell)\n" );
+  Vff :: fortran->print_lattice();
+}
+extern "C" void vff_scale_( types::t_real* _scale )
+{
+  if( not Vff :: fortran )
+    throw std::runtime_error( "Fortran object not initialized on call to vff_cell)\n" );
+  Vff :: fortran->set_scale( *_scale );
+}
+extern "C" void vff_cell_( types::t_real* _mat )
 {
   if( not Vff :: fortran )
     throw std::runtime_error( "Fortran object not initialized on call to vff_cell)\n" );
   Vff :: fortran->set_cell( _mat );
 }
-extern "C" void vff_atoms( types::t_int *_n,  types::t_real* _pos, char *_type )
+extern "C" void vff_atoms_( types::t_int *_n,  types::t_real* _pos, char *_type )
 {
   if( not Vff :: fortran )
     throw std::runtime_error( "Fortran object not initialized on call to vff_atoms\n" );
   Vff :: fortran->set_atoms( *_n, _pos, _type );
 }
-extern "C" void vff_bonds( char *_bond, types::t_real *_d0,
+extern "C" void vff_bond_( char *_bond, types::t_real *_d0,
                            types::t_real *_alphas )
 {
   if( not Vff :: fortran )
     throw std::runtime_error( "Fortran object not initialized on call to vff_bonds\n" );
   Vff :: fortran->set_bond_parameters( _bond, *_d0, _alphas );
 }
-extern "C" void vff_angles( char *_angle, types::t_real *_gamma, 
+extern "C" void vff_angle_( char *_angle, types::t_real *_gamma, 
                             types::t_real *_sigma, types::t_real *_betas )
 {
   if( not Vff :: fortran )
     throw std::runtime_error( "Fortran object not initialized on call to vff_angles\n" );
   Vff :: fortran->set_angle_parameters( _angle, *_gamma, *_sigma, _betas );
 }
-extern "C" void vff_minize( types::t_real *_energy )
+extern "C" void vff_minimize_( types::t_real *_energy )
 {
   if( not Vff :: fortran )
     throw std::runtime_error( "Fortran object not initialized on call to vff_minimize\n" );
 
-  minimizer::GnuSL<Vff::Functional> minimize;
+  minimizer::GnuSL<Vff::Functional> minimize( *Vff :: fortran );
   minimize.set_parameters( minimizer::GnuSL<Vff::Functional>::BFGS2,
                            4000, types::tolerance, 0.1, 0.01 );
-  minimize( *Vff :: fortran );
+  minimize.minimize();
 
   *_energy = Vff::fortran->energy() / 16.0217733;
 }

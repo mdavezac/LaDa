@@ -379,7 +379,7 @@ namespace Vff
       //! \brief Adds a bond type to bond list
       //! \param _typeB type of atom at end-point of bond
       //! \param _l equilibrium length
-      //! \param _i bond stretching parameters
+      //! \param _i bond array of stretching parameters (5 types::t_real long)
       void add_bond( const types::t_unsigned _typeB, const types::t_real _l,
                      const types::t_real _i[5] )
       {
@@ -418,7 +418,7 @@ namespace Vff
       //! \param _typeC type of atom at end-point of other bond
       //! \param _gamma bond-angle deformation parameter
       //! \param _sigma equilibrium angle
-      //! \param _i angle deformation parameters
+      //! \param _i angle array of deformation parameters (5 types::t_real long)
       void add_angle( const types::t_unsigned _typeA,
                       const types::t_unsigned _typeC,
                       const types::t_real _gamma, const types::t_real _sigma, 

@@ -122,7 +122,7 @@ namespace Physics
     types::t_int ExtractSymbol( char *_char, std::string &_s )
     { 
       types::t_int n = 0;
-      while( *_char == ' ' or *_char == '-' ) { ++_char; ++n; }
+      while( *_char == ' ' or *_char == '-' )  { ++_char; ++n;  }
       if ( *_char == '\n'  )
       {
         std::cerr << "Encountered end of line prior to Atomic Symbol\n";
@@ -131,13 +131,12 @@ namespace Physics
       if( Print::is_lowercase( *_char ) ) return -n;
       _s.clear();
       _s.push_back( *_char );
-      ++n;
+      ++n; 
       if(     Print::is_lowercase( *(++_char) )
-          and (*_char != ' ' or *_char != '-' or *_char  != '\n' )  )
+          and (*_char != ' ' and *_char != '-' and *_char  != '\n' )  )
       {
         _s.push_back( *_char );
-        ++n;
-        ++_char;  
+        ++n; ++_char;  
       }
       if ( Z( _s ) ) return n;
 

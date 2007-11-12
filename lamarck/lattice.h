@@ -157,5 +157,9 @@ namespace Ising_CE {
     return ( std::abs( _at.type - 1.0 ) < atat::zero_tolerance ) ? 
         sites[i].type[0] : sites[i].type[1];  
   }
+
+  //! Dumps a lattice to a stream.
+  inline std::ostream& operator<<( std::ostream& _stream, const Ising_CE::Lattice& _lat )
+    { _lat.print_out(_stream); return _stream; }
 } // namespace Ising_CE
 #endif

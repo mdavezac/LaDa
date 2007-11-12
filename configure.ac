@@ -1,7 +1,13 @@
 AC_INIT(lamarck/structure.cc)
 AM_INIT_AUTOMAKE(LaDa,2.0)
+# if test $F77 == ""; then
+#   echo "HERE\n\n";
+# fi
+
 AC_PROG_CC
 AC_PROG_CXX
+
+AC_PROG_FC(gfortran)
 #AC_PROG_F77(g95)
 #AC_PROG_FC(g95)
 AC_PROG_INSTALL

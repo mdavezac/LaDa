@@ -1,4 +1,5 @@
 //! \defgroup Genetic Genetic Algorithm
+//! \defgroup Fortran Fortran Interface
 //! \defgroup MPI Message Passing Interface in LaDa
 //! \mainpage La(marck)Da(rwin) User Guide
 //! 

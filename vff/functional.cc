@@ -264,7 +264,7 @@ namespace Vff
       types::t_int where[2];
       bond_indices( A, B, where );
 
-      functionals[ where[0] ].add_bond( where[0], d0, alphas );
+      functionals[ where[0] ].add_bond( where[1], d0, alphas );
       functionals[ where[1]+structure.lattice->get_nb_types(0)].add_bond( where[0], d0, alphas );
     }
 

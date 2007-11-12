@@ -52,7 +52,8 @@ namespace Ising_CE {
                                                                  
   void Structure :: print_out (std::ostream &stream) const
   {
-    stream << std::endl << " Structure Cell " << std::endl << std::fixed << std::setprecision(5)
+    stream << std::endl << " Structure, scale " << scale << ", Cell "
+           << std::endl << std::fixed << std::setprecision(5)
            << " " << std::setw(9) << cell(0,0)
            << " " << std::setw(9) << cell(0,1)
            << " " << std::setw(9) << cell(0,2) << std::endl

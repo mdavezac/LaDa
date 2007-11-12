@@ -36,7 +36,7 @@ namespace Print
 
 
   //! Returns true if c is uppercase
-  inline bool is_uppercase( char c ) { return c == std::toupper( c ); }
+  inline bool is_uppercase( char c ) { return c != std::tolower( c ); }
   //! Returns true if c is lowercase
   inline bool is_lowercase( char c ) { return c != std::toupper( c ); }
 }
