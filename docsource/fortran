@@ -1,0 +1,218 @@
+/** \ingroup Fortran
+    \page Fortran Fortran Interface for Vff
+
+    The fortran interface for vff is specialized for face-centered-cubic
+    lattices with two sites per unit-cell, with the following \e cartesian
+    coordinates:
+  \code
+  <Lattice>
+    <column x="0.0" y="0.5" z="0.5"/>
+    <column x="0.5" y="0.0" z="0.5"/>
+    <column x="0.5" y="0.5" z="0.0"/>
+    <site x="0.0" y="0.0" z="0.0">
+      ?
+    </site>
+    <site x="0.25" y="0.25" z="0.25">
+      ?
+    </site>
+  </Lattice>
+  \endcode
+  The only unknown are the possible occupations of each site. At this point,
+  modifying the lattice is \e not an option. Begging can help.
+
+  Note that the "C" name of all the functions below contains an "_" which does
+not appear in the fortran calls.
+
+  \section First First step, initializing the vff interface
+  Before anything else, the vff interface must be iniatialized. The following
+code can be put anywhere in the program, but it must appear prior to any other
+%vff call.
+  \code 
+     call vff_create()
+  \endcode
+  In practice, this creates a global Vff::Fortran object pointed to
+Vff::fortran. This object is not directly accessible in fortran.
+
+  \section Second Second step, Setting the structure.
+  The structure must be set using three %function calls
+    - vff_scale_()
+    - vff_cell_()
+    - vff_atoms_()
+    .
+  \warning vff_atoms_() must be called after the other two.
+
+  vff__scale_() simply sets the unit the cartesian units used when giving the
+atomic-positions and the unit-cell of the structure. It must be coherent with
+the lattice as given above.
+  \code
+    call vff_scale( 5.36d0 ) ! Note the double notation
+  \endcode
+  The argument can be either a hard-coded double as above (don't forget the
+  "d0" at the end) or a variable.
+  \code
+    real*8 scale ! must be a double
+    read *, scale
+    call vff_scale( scale )
+  \endcode
+
+   The cell should be entered a 3-by-3 array of doubles, as follows
+  \code
+   real*8 :: cell( 3,3 )
+  !  initialize cell
+   call vff_cell( cell )
+  \endcode
+   The matrix is column-major, fortran style ( eg, transpose of a  row-major
+   "C" matrix ).
+
+  Finally, the atomic-positions and occupations should be set using two arrays as follows:
+  \code 
+    real*8 :: pos(3,8)
+    character (len=2) :: At(8) ! use this format, eg don't forget (len=2)
+       
+    ! Initialize pos and At
+    pos(1,1) = 0.00; pos(2,1) = 0.00; pos(3,1) = 0.00; At(1) =  "Ga"
+    pos(1,2) = 0.25; pos(2,2) = 0.25; pos(3,2) = 0.25; At(2) =  "As"
+    pos(1,3) = 0.50; pos(2,3) = 0.50; pos(3,3) = 0.00; At(3) =  "In"
+    pos(1,4) = 0.75; pos(2,4) = 0.75; pos(3,4) = 0.25; At(4) =  "As"
+    pos(1,5) = 0.50; pos(2,5) = 0.00; pos(3,5) = 0.50; At(5) =  "In"
+    pos(1,6) = 0.75; pos(2,6) = 0.25; pos(3,6) = 0.75; At(6) =  "Sb"
+    pos(1,7) = 0.00; pos(2,7) = 0.50; pos(3,7) = 0.50; At(7) =  "Ga"
+    pos(1,8) = 0.25; pos(2,8) = 0.75; pos(3,8) = 0.75; At(8) =  "Sb"
+
+    ! Call these two first
+    call vff_scale( scale) 
+    call vff_cell (cell) 
+
+    ! now call this
+    call vff_atoms( 8, pos, At)
+  \endcode
+  The first argument of  vff_atoms() should give the number of atoms in the structure.
+  The second argument is an array of doubles, 3-\e by-\e n in size (fortran
+column-major), with \e nh the number of atoms in the structure.
+  The occupation is entered a a string of atomic symbols. You can either create
+a single string containing the atomic symbols in the same order as the position
+arrays and separated by nothing, blanks, or '-' characters. Or you can use an
+array of strings as in the code above.
+
+  All the atoms of the structure must be given at the same time. 
+
+  Each time vff_atoms_() is called, vff is reinitialized to work with that
+structure (both atomic positions and occupations). It can be called as many
+times as necessary.
+   
+
+  \section Third Third step, Setting the Vff parameters
+  The valence force-field functional contains two and three body terms. These
+are set independently by vff_bond_() and vff_angle_() respectively. 
+Each two and three body interaction must be set independently. Eg, vff_bond
+must be called for each possible type of bond. More explicitely, in an InGaAsSb
+quaternary, the bond parameters would be set in the following way,
+  \code
+  real*8 :: alphas(5) ! Array of double (64bits) values
+  real*8 :: bondlength; 
+
+  alphas(:) = 0.d0;
+  alphas(1) = 35.180; call vff_bond( "In-As", 2.622d0, alphas )
+  alphas(1) = 41.190; call vff_bond( "Ga-As", bondlength, alphas )
+  alphas(1) = 33.160; call vff_bond( "Ga-Sb", 2.640d0, alphas )
+  \endcode
+  The first parameter of vff_bond_() describes the bond for which to set the
+parameters. It is a string of two atomic symbols which can be separated by
+nothing, or any number of blank and '-' characters. The order of the symbols
+does not matter (eg "In-As" == " As In" ). 
+  The second argument should contain the equilibrium bond-length. Again, it is
+a types::t_real, so don't forget "d0" for hard-coded value (and if
+types::t_real is a double).
+  The last argument is an array of 5 (no more, no less) types::t_real
+containing the bond-strectching parameters, starting the quadratic term.
+
+  The three body interactions are set much the same way, 
+  \code
+  real*8 :: sigma
+  real*8 :: gamma
+  real*8 :: betas(5)
+  betas(:) = 0.d0;
+  betas(1) = 8.93823;  call vff_angle( "As-Ga-As", gamma, sigma, betas )
+  betas(1) = 8.08355;  call vff_angle( "As-Ga-Sb", -0.3333333d0, 0.d0, betas )
+  betas(1) = 7.2289;   call vff_angle( "Sb-Ga-Sb", -0.3333333d0, 0.d0, betas )
+  betas(1) = 5.48808;  call vff_angle( "In-As-In", -0.3333333d0, 0.d0, betas )
+  betas(1) = 7.213155; call vff_angle( "Ga-As-In", -0.3333333d0, 0.d0, betas )
+  betas(1) = 8.93823;  call vff_angle( "Ga-As-Ga", -0.3333333d0, 0.d0, betas )
+  betas(1) = 5.48808;  call vff_angle( "As-In-As", -0.3333333d0, 0.d0, betas )
+  betas(1) = 4.88615;  call vff_angle( "Sb-In-As", -0.3333333d0, 0.d0, betas )
+  betas(1) = 4.2842;   call vff_angle( "Sb-In-Sb", -0.3333333d0, 0.d0, betas )
+  betas(1) = 7.2289;   call vff_angle( "Ga-Sb-Ga", -0.3333333d0, 0.d0, betas )
+  betas(1) = 4.2842;   call vff_angle( "In-Sb-In", -0.3333333d0, 0.d0, betas )
+  betas(1) = 5.75655;  call vff_angle( "Ga-Sb-In", -0.3333333d0, 0.d0, betas )
+  \endcode
+  The  first argument describes the angle for which to set the interaction. It
+should contain three atomic symbols separated by nothing, or any number of
+blanks and  '-'. The second symbol will represent of the angle interations. As
+such, "As - Ga - Sb" is the same as "Sb - Ga - As". On the other hand, "As Ga
+As" is \e not the same as "Ga-As Ga". Mind the central atom.
+  The second and third arguments a real valued representing gamma and sigma
+respectively.
+  The fourth argument is an array of 5 (no more, no less) real values
+containing the angle deformation parameters, starting with the quadratic term.
+
+  Both vff_angle_() and vff_bond_() can be called any number of times. All
+possible bond types and angle types should be set prior to minimization.
+Changing any bond or angle will not upset the parameters of any other bond or
+angle.
+
+
+  \section Fourth Fourth step, Minimizing the structure
+  Once all parameters are set, the structure can finally be minimized
+  \code
+    ! Step 1 above
+    ! Followed by  step two
+    ! And step three
+    
+    ! finally
+    real*8 energy
+    call vff_minimize( energy )
+   
+    call vff_print_structure()
+    call vff_print_lattice()
+    print *, "Energy in eV ", energy
+
+  \endcode
+  vff_minimize_() will minimize the strain energy structure and return the
+ it (in eV) through the first argument.
+  vff_print_structure_() and vff_print_lattice_() will dump the structure and
+lattice to the standard output.
+
+   vff_minimizer_() can be called any number of times. Eg the following should work:
+  \code
+    ! Step 1 above
+    ! Followed by  step two
+    ! And step three
+    
+    ! finally
+    real*8 energy
+    call vff_minimize( energy )
+   
+    call vff_print_structure()
+    call vff_print_lattice()
+    print *, "Energy in eV ", energy
+
+    betas(1) = 10.93823;  call vff_angle( "As-Ga-As", -0.3333333d0, 0.d0, betas )
+    call vff_minimize( energy )
+    print *, "Energy in eV ", energy
+  \endcode
+
+  \section Fith Fith and final step
+   Don't forget to destroy the  vff object after your done and avoid memory leaks. 
+   \code
+       ! First step
+       call vff_create()
+
+       ! Do your stuff
+       ! ******
+       ! Do more stuff ?
+
+
+       ! Don't need vff anymore => destroy it
+       call vff_destroy()
+   \endcode
+*/
