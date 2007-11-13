@@ -1,5 +1,6 @@
 AUTOMAKE_OPTIONS = foreign
-EXTRA_DIST = max_revision.pl
+EXTRA_DIST = max_revision.pl bootstrap.sh \
+	     doxy.conf docsource/*
 if DOVFF
   VFFSUBDIR = vff
 endif 

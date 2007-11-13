@@ -1,4 +1,5 @@
-bin_PROGRAMS = vff fortran_test
+bin_PROGRAMS = vff
+noinst_PROGRAMS = fortran_test
 AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ @MPICH_CFLAGS@
 AM_LDFLAGS = @TINYXML_LIBS@
 vff_SOURCES = main.cc 
@@ -14,9 +15,11 @@ lib_LTLIBRARIES = lib_vff.la
 lib_vff_la_SOURCES = fortran.cc functional.cc 
 lib_vff_la_LIBADD = ../physics/libphysics.la ../lamarck/liblamarck.la ../atat/libatat.la \
 	            ../print/libprint.la @MPI_ADDLIB@ 
+lib_vff_ladir = $(includedir)/vff
+nobase_lib_vff_la_HEADERS = fortran.h
 noinst_LTLIBRARIES = libvff.la
 libvff_la_SOURCES = functional.cc layered.cc
-libvff_ladir = vff
+libvff_ladir = $(includedir)/vff
 nobase_libvff_la_HEADERS = functional.h layered.h
 libvff_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
 ../atat/libatat.la: 

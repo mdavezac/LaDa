@@ -8,7 +8,7 @@ lamarck_LDADD = liblamarck.la ../atat/libatat.la ../physics/libphysics.la @MPI_A
 noinst_LTLIBRARIES = liblamarck.la
 liblamarck_la_SOURCES = cluster.cc  constituent_strain.cc functional_builder.cc \
 			harmonic.cc  lattice.cc polynome.cc structure.cc 
-liblamarck_ladir = lamarck
+liblamarck_ladir = $(includedir)/lamarck
 nobase_liblamarck_la_HEADERS = atom.h cluster.h  lattice.h polynome.h \
                                constituent_strain.h  functional_builder.h  harmonic.h \
 			       structure.h

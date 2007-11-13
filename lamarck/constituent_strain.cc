@@ -16,8 +16,6 @@
 #endif
 
 
-#include "analysis/analyze_code.h"
-
 #include "constituent_strain.h"
 
 namespace Ising_CE 
@@ -69,7 +67,6 @@ namespace Ising_CE
 
   types::t_real Constituent_Strain :: evaluate()
   {
-    START_ANALYSIS("Constituent_Strain :: evaluate")
     #ifdef _DEBUG_LADA_
       if( variables->size() == 0 ) 
       {
@@ -136,13 +133,11 @@ namespace Ising_CE
     value /= ( (types::t_real)  k_vecs.size() ) * (types::t_real) r_vecs.size();
 
     delete[] interpolation;
-    END_ANALYSIS;
     return value;
   }
 
   types::t_real Constituent_Strain :: evaluate_one_gradient( types::t_unsigned _pos ) 
   {
-    START_ANALYSIS("Constituent_Strain :: evaluate_gradient")
     #ifdef _DEBUG_LADA_
       if( variables->size() == 0 ) 
       {
@@ -229,12 +224,10 @@ namespace Ising_CE
     }
 
     delete[] interpolation;
-    END_ANALYSIS;
     return result * inv_N;
   }
   types::t_real Constituent_Strain :: evaluate_with_gradient( types::t_real* const gradient ) 
   {
-    START_ANALYSIS("Constituent_Strain :: evaluate_with_gradient")
     #ifdef _DEBUG_LADA_
       if( variables->size() == 0 ) 
       {
@@ -341,7 +334,6 @@ namespace Ising_CE
     delete[] exp_begin;
     delete[] interpolation;
 
-    END_ANALYSIS;
     return value;
   }
 

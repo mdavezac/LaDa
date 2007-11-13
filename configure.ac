@@ -1,5 +1,5 @@
 AC_INIT(lamarck/structure.cc)
-AM_INIT_AUTOMAKE(LaDa,2.0)
+AM_INIT_AUTOMAKE(LaDa,3.0)
 # if test $F77 == ""; then
 #   echo "HERE\n\n";
 # fi

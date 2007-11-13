@@ -6,7 +6,7 @@ if NOLAUNCH
 endif
 noinst_LTLIBRARIES = libpescan.la
 libpescan_la_SOURCES = interface.cc
-libpescan_ladir = pescan_interface
+libpescan_ladir = $(includedir)/pescan_interface
 nobase_libpescan_la_HEADERS = interface.h
 libpescan_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
 ../atat/libatat.la: 
