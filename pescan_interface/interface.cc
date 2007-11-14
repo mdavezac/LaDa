@@ -50,6 +50,36 @@ namespace Pescan
     launch_pescan( _str );
     bands.vbm = read_result( _str );
     destroy_directory();
+
+
+    if ( bands.gap() > 0.001 )  return bands.gap();
+
+    Bands keeprefs = escan.Eref;
+    do
+    {
+      Print::out << " Found metallic band gap!! " << result << "\n" 
+                 << " Will Try and modify references. \n";
+
+      if( std::abs( bands.vbm - escan.Eref.vbm ) > std::abs( bands.cbm - escan.Eref.cbm ) )
+      {
+        escan.Eref.vbm -= 0.05;
+        computation = VBM;
+      }
+      else
+      {
+        escan.Eref.cbm += 0.05;
+        computation = CBM;
+      }
+      if ( escan.method == Escan::FOLDED_SPECTRUM and (not do_destroy_dir) )
+        dirname = olddirname + ( computation == CBM ?  "/cbm": "/vbm" );
+      create_directory();
+      create_potential();
+      launch_pescan( _str );
+      computation == VBM ?  bands.vbm = read_result( _str ):
+                            bands.cbm = read_result( _str );
+    }
+    while ( bands.gap() < 0.001 );
+
     return bands.gap();
   }
   void Interface :: create_directory()
@@ -323,7 +353,7 @@ namespace Pescan
       if (    escan.potential != Escan::SPINORBIT
            or atat::norm2(escan.kpoint) < types::tolerance )
         n /= 2;
-      file << "5 " << n + 3 << std::endl;
+      file << "5 " << n + 1 << std::endl;
     }
     file << "6 " << escan.niter << " " << escan.nlines << " " << escan.tolerance << std::endl
          << "7 0" << std::endl << "8 0" << std::endl << "9 wg.cbm.in" << std::endl
@@ -412,14 +442,14 @@ namespace Pescan
            or atat::norm2(escan.kpoint) < types::tolerance )
         n /= 2;
       // watch out! C arrays start at index = 0
-      if ( eigenvalues.size() < n )
+      if ( eigenvalues.size() < n or n < 2 )
       {
         std::cerr << "Error, not enough states were computed to determine band gap "
-                  << n << std::endl;
+                  << eigenvalues.size() << " vs " << n << " required " << std::endl;
         return -1.0;
       }
-      bands.vbm = eigenvalues[n-1];
-      bands.cbm = eigenvalues[n];
+      bands.vbm = eigenvalues[n-2];
+      bands.cbm = eigenvalues[n-1];
       return bands.gap();
     }
 

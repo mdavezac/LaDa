@@ -1057,12 +1057,12 @@ nextfilename:
     }
     Print::xmg.sync_filename( out_filename );
     Print::out.sync_filename( out_filename );
+#else
+    Print::xmg.init( xmg_filename );
+    Print::out.init( out_filename );
 #endif
 
-    Print::xmg.init( xmg_filename );
     Print::xmg << Print::Xmg :: comment << "new GA run" << Print::endl;
-
-    Print::out.init( out_filename );
     Print::out << "Starting genetic algorithm run\n\n"
                << "GA Input file is located at " << evaluator_filename << "\n"
                << "Functional Input file is located at " << evaluator_filename << "\n"
