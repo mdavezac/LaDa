@@ -19,7 +19,7 @@
 #endif
 
 #include "opt/types.h"
-#include "opt/opt_function_base.h"
+#include "opt/function_base.h"
 #include "opt/traits.h"
 
 #include "fitness.h"

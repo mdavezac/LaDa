@@ -10,7 +10,7 @@
 
 #include <vector>
 #include <tinyxml/tinyxml.h>
-#include <opt/opt_function_base.h>
+#include <opt/function_base.h>
 #include <opt/types.h>
 
 #include "atat/vectmac.h"

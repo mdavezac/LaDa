@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <ext/algorithm>
 
-#include "opt/va_minimizer.h"
 
 #include "ce.h"
 #include "functors.h"

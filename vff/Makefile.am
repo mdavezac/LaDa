@@ -18,9 +18,9 @@ lib_vff_la_LIBADD = ../physics/libphysics.la ../lamarck/liblamarck.la ../atat/li
 lib_vff_ladir = $(includedir)/vff
 nobase_lib_vff_la_HEADERS = fortran.h
 noinst_LTLIBRARIES = libvff.la
-libvff_la_SOURCES = functional.cc layered.cc
+libvff_la_SOURCES = functional.cc layered.cc va.cc
 libvff_ladir = $(includedir)/vff
-nobase_libvff_la_HEADERS = functional.h layered.h
+nobase_libvff_la_HEADERS = functional.h layered.h va.h
 libvff_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 

@@ -17,7 +17,6 @@
 #include <print/manip.h>
 #include <lamarck/structure.h>
 #include <lamarck/atom.h>
-#include <opt/va_minimizer.h>
 
 #include "molecularity.h"
 #include "two_sites.h"

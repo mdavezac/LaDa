@@ -4,7 +4,6 @@
 #include <fstream>
 
 #include <lamarck/atom.h>
-#include <opt/va_minimizer.h>
 
 #include "single_site.h"
 

@@ -213,8 +213,8 @@ extern "C" void vff_minimize_( types::t_real *_energy )
   if( not Vff :: fortran )
     throw std::runtime_error( "Fortran object not initialized on call to vff_minimize\n" );
 
-  minimizer::GnuSL<Vff::Functional> minimize( *Vff :: fortran );
-  minimize.set_parameters( minimizer::GnuSL<Vff::Functional>::BFGS2,
+  Minimizer::GnuSL<Vff::Functional> minimize( *Vff :: fortran );
+  minimize.set_parameters( Minimizer::GnuSL<Vff::Functional>::BFGS2,
                            4000, types::tolerance, 0.1, 0.01 );
   minimize.minimize();
 

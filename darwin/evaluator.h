@@ -15,7 +15,7 @@
 #include <eo/eoGenOp.h>
 
 #include "opt/types.h"
-#include "opt/opt_function_base.h"
+#include "opt/function_base.h"
 #include "taboos.h"
 #include "loadsave.h"
 

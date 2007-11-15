@@ -21,7 +21,7 @@
 
 #include "lamarck/structure.h"
 #include "lamarck/functional_builder.h"
-#include "opt/opt_function_base.h"
+#include "opt/function_base.h"
 #include "opt/types.h"
 
 #include "evaluator.h"

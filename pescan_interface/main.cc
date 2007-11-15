@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
   }
 
   vff.initialize_centers();
-  minimizer::GnuSL<Vff::Functional> minimizer( vff );
+  Minimizer::GnuSL<Vff::Functional> minimizer( vff );
   child = handle.FirstChild( "Job" ).Element();
   minimizer.Load(*child);
   minimizer.minimize();

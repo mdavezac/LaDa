@@ -14,7 +14,7 @@
 
 #include <vff/functional.h>
 #include <lamarck/structure.h>
-#include <opt/opt_function_base.h>
+#include <opt/function_base.h>
 #include <opt/opt_minimize_gsl.h>
 #include <opt/types.h>
 #include <atat/vectmac.h>
@@ -78,7 +78,7 @@ namespace Vff
       typedef T_BASE t_Base; //!< The base class
     protected:
       //! The GSL minimizer used to minimize t_Base::structure
-      minimizer::GnuSL<Vff::Functional> minimizer;
+      Minimizer::GnuSL<Vff::Functional> minimizer;
 
 
     public:

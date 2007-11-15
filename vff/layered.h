@@ -88,12 +88,12 @@ namespace Vff
         { return evaluate_with_gradient<t_Type*>( _i_grad ); }  
       //! \brief Evaluates gradient in one direction only
       //! \todo Vff::Functional::implement evaluate_one_gradient
-      //! \sa function::Base, function::Base::evaluate_one_gradient, minimizer::VA
+      //! \sa function::Base, function::Base::evaluate_one_gradient, Minimizer::VA
       t_Type evaluate_one_gradient( types::t_unsigned _pos) {return 0;}; 
       //! \brief initializes stuff before minimization
       //! \details Defines the packing and unpacking process, such that only unfrozen
       //! degrees of liberty are known to the minimizer
-      //! \sa function::Base, minimizer::Base
+      //! \sa function::Base, Minimizer::Base
       bool init();
       
     protected:

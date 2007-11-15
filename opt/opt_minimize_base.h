@@ -18,7 +18,7 @@
 //!          the type of functional to minimize as a template. They should not
 //!          expect any behavior from a functional which is not explicitely
 //!          defined by funtion::Base. 
-namespace minimizer {
+namespace Minimizer {
 
   //! Declares the required behaviors for a minimizer.
   template<class T_FUNCTIONAL> 

@@ -12,7 +12,7 @@
 
 #include "opt/opt_minimize_base.h"
 
-namespace minimizer {
+namespace Minimizer {
 
   extern "C" { double frprmn_( double *, int *, double *,
                                double *, double *, int *,

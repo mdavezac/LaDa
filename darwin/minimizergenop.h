@@ -10,7 +10,7 @@
 
 #include <eo/eoGenOp.h>
 
-#include "opt/opt_function_base.h"
+#include "opt/function_base.h"
 #include "opt/va_minimizer.h"
 #include "print/xmg.h"
 
@@ -185,7 +185,7 @@ namespace GA
       //! All %types relevant to the minimization
       typedef typename t_VA_Traits :: t_Functional                 t_Functional;
       //! The base minimizer type
-      typedef typename ::minimizer::Base< t_Functional >           t_Minimizer;
+      typedef typename Minimizer::Base< t_Functional >             t_Minimizer;
       //! A functor capable of saving a current state in a minimization functor.
       typedef SaveStateIndividual<t_GATraits >                     t_SaveState;
 

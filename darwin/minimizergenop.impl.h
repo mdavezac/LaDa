@@ -68,21 +68,21 @@ namespace GA
       Print::xmg << Print::Xmg::comment << "VA optimizer" << Print::endl;
       // pointer is owned by caller !!
       // don't deallocate
-      minimizer =  new ::minimizer::VA<t_Functional, t_SaveState>( _node, functional.savestate );
+      minimizer =  new Minimizer::VA<t_Functional, t_SaveState>( _node, functional.savestate );
     }
     else if ( name.compare("SA") == 0 )
     {
       Print::xmg << Print::Xmg::comment << "SA optimizer" << Print::endl;
       // pointer is owned by caller !!
       // don't deallocate
-      minimizer = new ::minimizer::VA<t_Functional, t_SaveState>( _node, functional.savestate );
+      minimizer = new Minimizer::VA<t_Functional, t_SaveState>( _node, functional.savestate );
     }
     else if ( name.compare("Beratan") == 0 )
     {
       Print::xmg << Print::Xmg::comment << "Beratan optimizer" << Print::endl;
       // pointer is owned by caller !!
       // don't deallocate
-      minimizer = new ::minimizer::Beratan<t_Functional>( _node );
+      minimizer = new Minimizer::Beratan<t_Functional>( _node );
     }
    
     return minimizer != NULL;

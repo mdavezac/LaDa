@@ -21,7 +21,7 @@
 #include <eo/eoOpContainer.h>  
 
 
-#include "opt/opt_function_base.h"
+#include "opt/function_base.h"
 #include "opt/types.h"
 
 #include "objective.h"

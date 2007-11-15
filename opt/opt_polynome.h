@@ -16,7 +16,7 @@
 #include <cmath>
 #include <math.h>
 
-#include "opt_function_base.h"
+#include "function_base.h"
 #include "opt_monome.h"
 #include "traits.h"
 

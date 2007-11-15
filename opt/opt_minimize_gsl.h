@@ -18,7 +18,7 @@
 #  include "mpi/mpi_object.h"
 #endif
 
-namespace minimizer {
+namespace Minimizer {
 
   class gsl_iterator
   {

@@ -18,7 +18,7 @@
 #include <vff/layered.h>
 #include <pescan_interface/interface.h>
 #include <lamarck/structure.h>
-#include <opt/opt_function_base.h>
+#include <opt/function_base.h>
 #include <opt/opt_minimize_gsl.h>
 #include <opt/types.h>
 

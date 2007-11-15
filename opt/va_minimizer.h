@@ -14,7 +14,7 @@
 
 #include "opt_minimize_base.h"
 
-namespace minimizer
+namespace Minimizer
 {
   //! \brief Dummy save-state Functor. 
   //! \details Save-state functors should be capable of, well, saving the
@@ -197,6 +197,10 @@ namespace minimizer
   template< class T_FUNCTIONAL, class T_SAVESTATE>
     bool VA<T_FUNCTIONAL, T_SAVESTATE> :: operator()()
     {
+      // initializes object related stuff
+      if( not current_func )  return false;
+      if( not current_func->init() )  return false;
+
       // then gets problem size of object
       types::t_unsigned size = current_func->size();
 
@@ -337,6 +341,10 @@ namespace minimizer
   template <class T_FUNCTIONAL>
    bool Beratan<T_FUNCTIONAL> :: operator() ()
     {
+      // initializes object related stuff
+      if( not current_func )  return false;
+      if( not current_func->init() )  return false;
+
       typename t_Functional :: t_Container :: iterator i_var_begin = current_func->begin();
       types::t_unsigned N = current_func->size(); // number of calls
       types::t_unsigned count = 0; // number of calls

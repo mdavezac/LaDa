@@ -24,8 +24,11 @@
 namespace function
 {
 
-  //! \brief Abstract base class for all functionals
-  //! \details The object of this class is to declare an interface with which
+  //! \brief Conceptual base class for all functionals
+  //! \details "Conceptual" base class means a class which defines all required
+  //! behaviors for a \e template type. As such it does not contain virtual
+  //! members.
+  //! The object of this class is to declare an interface with which
   //! objects in namespace minimizer can work.
   //! Base is templated as follows
   //! \param _TYPE is the type of the variable. If Base is \f$f(x)\f$, then  \a
@@ -78,7 +81,7 @@ namespace function
       //! \details destroys Base::variables if an only if Base::variables is
       //! non-NULL and owned by this particular instance of Base, according to
       //! Base::does_own_variables.
-      virtual ~Base() { if ( variables and does_own_variables ) delete variables; }
+      ~Base() { if ( variables and does_own_variables ) delete variables; }
       
       //! \brief Returns an iterator to the start of variables. 
       //! \details Does not check if variables is non-zero
@@ -103,7 +106,7 @@ namespace function
       //! \brief applies resize to Base::variables
       //! \details If Base::variables is NULL, then it is first created. If it
       //! is created, then it is owned by this particular instance of Base.
-      virtual void resize(const types::t_unsigned _nb);
+      void resize(const types::t_unsigned _nb);
       //! \brief returns the size of Base::variables
       //! \details Does not check if variables is non-zero
       types::t_unsigned size() const
@@ -115,10 +118,10 @@ namespace function
       //! \details Does not destory variables if it is non-NULL before
       //! assignement. Does not check tha \a _var is valid. After this call,
       //! Base::variables is not owned by this particular instance of Base.
-      virtual void set_variables( t_Container* const _var ) 
+      void set_variables( t_Container* const _var ) 
        { variables = _var; does_own_variables = false; }
       //! \brief Returns the value of Base::variables
-      virtual t_Container* get_variables() const
+      t_Container* get_variables() const
        { return variables; }
       //! \brief Copies Base::variables into \a _var
       void get_variables( t_Container *_var ) const;
@@ -133,29 +136,29 @@ namespace function
       t_Type& operator[](size_t n);
 
       //! \brief Should container whatever initialization may be necessary before minimization
-      virtual bool init() {return true;}; 
+      bool init() {return true;}; 
         
       //! \brief should return the value of the functional for the current Base::variables
-      virtual t_Type evaluate() = 0; 
+      t_Type evaluate() { return t_Type(0); }; 
       //! \brief should return the gradient of the functional for the current Base::variables
-      virtual void evaluate_gradient( t_Type* const _i_grad ) = 0;
+      void evaluate_gradient( t_Type* const _i_grad ) {}
       //! \brief should return the gradient of the functional in direction \a _pos 
       //! for the current Base::variables
-      virtual t_Type evaluate_one_gradient( types::t_unsigned _pos) = 0;
+      t_Type evaluate_one_gradient( types::t_unsigned _pos) { return t_Type(0); }
       //! \brief should return the value and the gradient of the functional
       //! for the current Base::variables
-      virtual t_Type evaluate_with_gradient( t_Type* const _i_grad ) = 0;
+      t_Type evaluate_with_gradient( t_Type* const _i_grad ) { return t_Type(0); }
 
       //! \brief Should return true if the current state of Base::variables is Taboo
       //! \sa minimizers::VA
-      virtual bool is_taboo() const { return false; } // for minimizers with taboos
+      bool is_taboo() const { return false; } // for minimizers with taboos
 
       //! \brief For expensive functionals, this member function helps to make sure the
       //! functional is computed only once
-      virtual void invalidate() {}
+      void invalidate() {}
       //! \brief For expensive functionals, this member function helps to make sure the
       //! functional is computed only once
-      virtual bool is_valid() { return true; }
+      bool is_valid() { return true; }
   };
 
   //! Debug: Prints the variables of the functional to string.
