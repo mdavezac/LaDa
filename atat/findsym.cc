@@ -560,7 +560,6 @@ types::t_int find_point_op_type(rVector3d *pspecial_dir, const rMatrix3d &point_
   case 0:
     if (det==1) {sym_type=3;} else {sym_type=-3;}
     break;
-  default:
   case 1:
     if (trace==1) {
       if (det==1) {sym_type=4;} else {sym_type=-2;}

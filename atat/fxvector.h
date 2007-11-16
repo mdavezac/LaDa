@@ -22,7 +22,48 @@ namespace atat
 #define FORALLi for(types::t_int i=0; i<D; i++)
 
 template<class T, types::t_int D>
+  class FixedVector; 
+
+template<class T, types::t_int D>
+     types::t_int operator==(const FixedVector<T,D>& a, const FixedVector<T,D>& b);
+template<class T, types::t_int D>
+     types::t_int operator!=(const FixedVector<T,D>& a, const FixedVector<T,D>& b);
+template<class T, types::t_int D>
+     FixedVector<T,D> operator-(const FixedVector<T,D>& a,const FixedVector<T,D>& b);
+template<class T, types::t_int D>
+     FixedVector<T,D> operator+(const FixedVector<T,D>& a,const FixedVector<T,D>& b);
+template<class T, types::t_int D>
+     FixedVector<T,D> operator*(T a,const FixedVector<T,D>& b);
+template<class T, types::t_int D>
+     FixedVector<T,D> operator*(const FixedVector<T,D>& b,T a);
+template<class T, types::t_int D>
+     FixedVector<T,D> operator/(const FixedVector<T,D>& b,T a);
+template<class T, types::t_int D>
+     T operator*(const FixedVector<T,D>& a,const FixedVector<T,D>& b);
+template<class T, types::t_int D>
+     T norm2(const FixedVector<T,D>& a);
+template<class T, types::t_int D>
+     types::t_real norm(const FixedVector<T,D>& a);
+template<class T, types::t_int D>
+     T max_norm(const FixedVector<T,D>& a);
+template<class T, types::t_int D>
+     T l1_norm(const FixedVector<T,D>& a);
+
+
+template<class T, types::t_int D>
   class FixedVector {
+    friend types::t_int operator== <> (const FixedVector<T,D>& a, const FixedVector<T,D>& b);
+    friend types::t_int operator!= <> (const FixedVector<T,D>& a, const FixedVector<T,D>& b);
+    friend FixedVector<T,D> operator- <> (const FixedVector<T,D>& a,const FixedVector<T,D>& b);
+    friend FixedVector<T,D> operator+ <> (const FixedVector<T,D>& a,const FixedVector<T,D>& b);
+    friend FixedVector<T,D> operator* <> (T a,const FixedVector<T,D>& b);
+    friend FixedVector<T,D> operator* <> (const FixedVector<T,D>& b,T a);
+    friend FixedVector<T,D> operator/ <> (const FixedVector<T,D>& b,T a);
+    friend T operator* <> (const FixedVector<T,D>& a,const FixedVector<T,D>& b);
+    friend T norm2 <> (const FixedVector<T,D>& a);
+    friend types::t_real norm <> (const FixedVector<T,D>& a);
+    friend T max_norm <> (const FixedVector<T,D>& a);
+    friend T l1_norm <> (const FixedVector<T,D>& a);
   public:
     T x[D];
   public:
@@ -50,46 +91,8 @@ template<class T, types::t_int D>
     const T& operator[](types::t_int i) const {return x[i];}
     T& operator[](types::t_int i) {return x[i];}
     types::t_int get_size(void) {return D;}
-    friend types::t_int operator==(const FixedVector<T,D>& a, const FixedVector<T,D>& b) {
-      FORALLi {if (a.x[i]!=b.x[i]) return 0;}
-      return 1;
-    }
-    friend types::t_int operator!=(const FixedVector<T,D>& a, const FixedVector<T,D>& b) {
-      FORALLi {if (a.x[i]!=b.x[i]) return 1;}
-      return 0;
-    }
     FixedVector<T,D> operator-(void) const {
       RESULT_FORALLi( result.x[i]=-x[i] );
-    }
-    friend FixedVector<T,D> operator-(const FixedVector<T,D>& a,const FixedVector<T,D>& b) {
-      RESULT_FORALLi( result.x[i]=a.x[i]-b.x[i] );
-    }
-    friend FixedVector<T,D> operator+(const FixedVector<T,D>& a,const FixedVector<T,D>& b) {
-      RESULT_FORALLi( result.x[i]=a.x[i]+b.x[i] );
-    }
-    friend FixedVector<T,D> operator*(T a,const FixedVector<T,D>& b) {
-      RESULT_FORALLi( result.x[i]=a*b.x[i] );
-    }
-    friend FixedVector<T,D> operator*(const FixedVector<T,D>& b,T a) {
-      RESULT_FORALLi( result.x[i]=b.x[i]*a );
-    }
-    friend FixedVector<T,D> operator/(const FixedVector<T,D>& b,T a) {
-      RESULT_FORALLi( result.x[i]=b.x[i]/a );
-    }
-    friend T operator*(const FixedVector<T,D>& a,const FixedVector<T,D>& b) {
-      T result=(T)0;
-      FORALLi { result+=a.x[i]*b.x[i]; }
-      return result;
-    }
-    friend T norm2(const FixedVector<T,D>& a) {
-      T result=(T)0;
-      FORALLi { result+=a.x[i]*a.x[i]; }
-      return result;
-    }
-    friend types::t_real norm(const FixedVector<T,D>& a) {
-      types::t_real result=0.;
-      FORALLi { result+=(types::t_real)(a.x[i]*a.x[i]); }
-      return sqrt(result);
     }
     types::t_real normalize(void) {
       types::t_real norm=0.;
@@ -97,16 +100,6 @@ template<class T, types::t_int D>
       norm=sqrt(norm);
       { FORALLi {x[i]=(T)((types::t_real)x[i]/norm);} }
       return norm;
-    }
-    friend T max_norm(const FixedVector<T,D>& a) {
-      T result=0;
-      FORALLi { if (ABS(a.x[i])>result) result=ABS(a.x[i]); }
-      return result;
-    }
-    friend T l1_norm(const FixedVector<T,D>& a) {
-      T result=0;
-      FORALLi { result+=ABS(a.x[i]); }
-      return result;
     }
     void operator+=(const FixedVector<T,D>& a) {
       FORALLi { x[i]+=a.x[i]; }
@@ -116,8 +109,90 @@ template<class T, types::t_int D>
     }
   };
 
+
+ template<class T, types::t_int D>
+     types::t_int operator==(const FixedVector<T,D>& a, const FixedVector<T,D>& b) {
+      FORALLi {if (a.x[i]!=b.x[i]) return 0;}
+      return 1;
+    }
+
+ template<class T, types::t_int D>
+     types::t_int operator!=(const FixedVector<T,D>& a, const FixedVector<T,D>& b) {
+      FORALLi {if (a.x[i]!=b.x[i]) return 1;}
+      return 0;
+    }
+
+ template<class T, types::t_int D>
+     FixedVector<T,D> operator-(const FixedVector<T,D>& a,const FixedVector<T,D>& b) {
+      RESULT_FORALLi( result.x[i]=a.x[i]-b.x[i] );
+    }
+
+ template<class T, types::t_int D>
+     FixedVector<T,D> operator+(const FixedVector<T,D>& a,const FixedVector<T,D>& b) {
+      RESULT_FORALLi( result.x[i]=a.x[i]+b.x[i] );
+    }
+
+ template<class T, types::t_int D>
+     FixedVector<T,D> operator*(T a,const FixedVector<T,D>& b) {
+      RESULT_FORALLi( result.x[i]=a*b.x[i] );
+    }
+
+ template<class T, types::t_int D>
+     FixedVector<T,D> operator*(const FixedVector<T,D>& b,T a) {
+      RESULT_FORALLi( result.x[i]=b.x[i]*a );
+    }
+
+ template<class T, types::t_int D>
+     FixedVector<T,D> operator/(const FixedVector<T,D>& b,T a) {
+      RESULT_FORALLi( result.x[i]=b.x[i]/a );
+    }
+
+ template<class T, types::t_int D>
+     T operator*(const FixedVector<T,D>& a,const FixedVector<T,D>& b) {
+      T result=(T)0;
+      FORALLi { result+=a.x[i]*b.x[i]; }
+      return result;
+    }
+
+ template<class T, types::t_int D>
+     T norm2(const FixedVector<T,D>& a) {
+      T result=(T)0;
+      FORALLi { result+=a.x[i]*a.x[i]; }
+      return result;
+    }
+
+ template<class T, types::t_int D>
+     types::t_real norm(const FixedVector<T,D>& a) {
+      types::t_real result=0.;
+      FORALLi { result+=(types::t_real)(a.x[i]*a.x[i]); }
+      return sqrt(result);
+    }
+
+ template<class T, types::t_int D>
+     T max_norm(const FixedVector<T,D>& a) {
+      T result=0;
+      FORALLi { if (ABS(a.x[i])>result) result=ABS(a.x[i]); }
+      return result;
+    }
+
+ template<class T, types::t_int D>
+     T l1_norm(const FixedVector<T,D>& a) {
+      T result=0;
+      FORALLi { result+=ABS(a.x[i]); }
+      return result;
+    }
+
+
+template<class T>
+  class Vector2d; 
+
+template<class T>
+     T operator^(const FixedVector<T,2>& a,const FixedVector<T,2>& b);
+
+
 template<class T>
   class Vector2d: public FixedVector<T,2> {
+    friend T operator^ <> (const FixedVector<T,2>& a,const FixedVector<T,2>& b);
   public:
     using FixedVector<T,2>::x;
     Vector2d(void) {}
@@ -131,13 +206,25 @@ template<class T>
       x[1]=a.x[1];
     }
     //cross product;
-    friend T operator^(const FixedVector<T,2>& a,const FixedVector<T,2>& b) {
+  };
+
+
+ template<class T>
+     T operator^(const FixedVector<T,2>& a,const FixedVector<T,2>& b) {
       return a.x[0]*b.x[1]-a.x[1]*b.x[0];
     }
-  };
+
+
+template<class T>
+  class Vector3d; 
+
+template<class T>
+     Vector3d<T> operator^(const FixedVector<T,3>& a,const FixedVector<T,3>& b);
+
 
 template<class T>
   class Vector3d: public FixedVector<T,3> {
+    friend Vector3d<T> operator^ <> (const FixedVector<T,3>& a,const FixedVector<T,3>& b);
   public:
     using FixedVector<T,3>::x;
     Vector3d(void) {}
@@ -153,14 +240,18 @@ template<class T>
       x[2]=a.x[2];
     }
     //cross product;
-    friend Vector3d<T> operator^(const FixedVector<T,3>& a,const FixedVector<T,3>& b) {
+  };
+
+
+ template<class T>
+     Vector3d<T> operator^(const FixedVector<T,3>& a,const FixedVector<T,3>& b) {
       return Vector3d<T>(
 		      a.x[1]*b.x[2]-a.x[2]*b.x[1],
 		      a.x[2]*b.x[0]-a.x[0]*b.x[2],
 		      a.x[0]*b.x[1]-a.x[1]*b.x[0]
 		      );
     }
-  };
+
 
 #ifdef STREAM_VECTOR
 
@@ -206,7 +297,48 @@ ostream& operator<<(ostream& s, const FixedVector<T,3> &v) {
     for(types::t_int j=0; j<D; j++)
 
 template<class T, types::t_int D>
+  class FixedMatrix; 
+
+template<class T, types::t_int D>
+     T max_norm(const FixedMatrix<T,D>& a);
+template<class T, types::t_int D>
+     types::t_real norm(const FixedMatrix<T,D>& a);
+template<class T, types::t_int D>
+     FixedMatrix<T,D> operator-(const FixedMatrix<T,D>& a,const FixedMatrix<T,D>& b);
+template<class T, types::t_int D>
+     FixedMatrix<T,D> operator+(const FixedMatrix<T,D>& a,const FixedMatrix<T,D>& b);
+template<class T, types::t_int D>
+     FixedMatrix<T,D> operator*(T k,const FixedMatrix<T,D>& b);
+template<class T, types::t_int D>
+     FixedMatrix<T,D> operator*(const FixedMatrix<T,D>& b,T k);
+template<class T, types::t_int D>
+     FixedMatrix<T,D> operator/(const FixedMatrix<T,D>& b,T k);
+template<class T, types::t_int D>
+     FixedMatrix<T,D> operator*(const FixedMatrix<T,D>& a,const FixedMatrix<T,D>& b);
+template<class T, types::t_int D>
+     FixedVector<T,D> operator*(const FixedMatrix<T,D>& m, const FixedVector<T,D>& v);
+template<class T, types::t_int D>
+     FixedMatrix<T,D> operator~(const FixedMatrix<T,D>& a);
+template<class T, types::t_int D>
+     T trace(const FixedMatrix<T,D>& a);
+template<class T, types::t_int D>
+     types::t_int operator==(const FixedMatrix<T,D>& a, const FixedMatrix<T,D>& b);
+
+
+template<class T, types::t_int D>
   class FixedMatrix {
+    friend T max_norm <> (const FixedMatrix<T,D>& a);
+    friend types::t_real norm <> (const FixedMatrix<T,D>& a);
+    friend FixedMatrix<T,D> operator- <> (const FixedMatrix<T,D>& a,const FixedMatrix<T,D>& b);
+    friend FixedMatrix<T,D> operator+ <> (const FixedMatrix<T,D>& a,const FixedMatrix<T,D>& b);
+    friend FixedMatrix<T,D> operator* <> (T k,const FixedMatrix<T,D>& b);
+    friend FixedMatrix<T,D> operator* <> (const FixedMatrix<T,D>& b,T k);
+    friend FixedMatrix<T,D> operator/ <> (const FixedMatrix<T,D>& b,T k);
+    friend FixedMatrix<T,D> operator* <> (const FixedMatrix<T,D>& a,const FixedMatrix<T,D>& b);
+    friend FixedVector<T,D> operator* <> (const FixedMatrix<T,D>& m, const FixedVector<T,D>& v);
+    friend FixedMatrix<T,D> operator~ <> (const FixedMatrix<T,D>& a);
+    friend T trace <> (const FixedMatrix<T,D>& a);
+    friend types::t_int operator== <> (const FixedMatrix<T,D>& a, const FixedMatrix<T,D>& b);
   public:
     T x[D][D];
   public:
@@ -253,32 +385,57 @@ template<class T, types::t_int D>
       zero();
       FORALLi {(*this)(i,i)=v(i);}
     }
-    friend T max_norm(const FixedMatrix<T,D>& a) {
+    //transpose;
+    void identity(void) {
+      FORALLij {x[i][j]=(i==j ? 1 : 0);}
+    }
+    void zero(void) {
+      FORALLij {x[i][j]=(T)0.;}
+    }
+  };
+
+
+ template<class T, types::t_int D>
+     T max_norm(const FixedMatrix<T,D>& a) {
       T result=0;
       FORALLij { if (ABS(a.x[i][j])>result) result=ABS(a.x[i][j]); }
       return result;
     }
-    friend types::t_real norm(const FixedMatrix<T,D>& a) {
+
+ template<class T, types::t_int D>
+     types::t_real norm(const FixedMatrix<T,D>& a) {
       types::t_real result=0;
       FORALLij { result+=(types::t_real)(a.x[i][j]*a.x[i][j]); }
       return sqrt(result);
     }
-    friend FixedMatrix<T,D> operator-(const FixedMatrix<T,D>& a,const FixedMatrix<T,D>& b) {
+
+ template<class T, types::t_int D>
+     FixedMatrix<T,D> operator-(const FixedMatrix<T,D>& a,const FixedMatrix<T,D>& b) {
       RESULT_FORALLij( result.x[i][j]=a.x[i][j]-b.x[i][j] );
     }
-    friend FixedMatrix<T,D> operator+(const FixedMatrix<T,D>& a,const FixedMatrix<T,D>& b) {
+
+ template<class T, types::t_int D>
+     FixedMatrix<T,D> operator+(const FixedMatrix<T,D>& a,const FixedMatrix<T,D>& b) {
       RESULT_FORALLij( result.x[i][j]=a.x[i][j]+b.x[i][j] );
     }
-    friend FixedMatrix<T,D> operator*(T k,const FixedMatrix<T,D>& b) {
+
+ template<class T, types::t_int D>
+     FixedMatrix<T,D> operator*(T k,const FixedMatrix<T,D>& b) {
       RESULT_FORALLij( result.x[i][j]=k*b.x[i][j] );
     }
-    friend FixedMatrix<T,D> operator*(const FixedMatrix<T,D>& b,T k) {
+
+ template<class T, types::t_int D>
+     FixedMatrix<T,D> operator*(const FixedMatrix<T,D>& b,T k) {
       RESULT_FORALLij( result.x[i][j]=b.x[i][j]*k );
     }
-    friend FixedMatrix<T,D> operator/(const FixedMatrix<T,D>& b,T k) {
+
+ template<class T, types::t_int D>
+     FixedMatrix<T,D> operator/(const FixedMatrix<T,D>& b,T k) {
       RESULT_FORALLij( result.x[i][j]=b.x[i][j]/k );
     }
-    friend FixedMatrix<T,D> operator*(const FixedMatrix<T,D>& a,const FixedMatrix<T,D>& b) {
+
+ template<class T, types::t_int D>
+     FixedMatrix<T,D> operator*(const FixedMatrix<T,D>& a,const FixedMatrix<T,D>& b) {
       RESULT_FORALLij(
 		      result.x[i][j]=(T)0;
 		      for (types::t_int k=0; k<D; k++) {
@@ -286,7 +443,9 @@ template<class T, types::t_int D>
 		      }
 		      );
     }
-    friend FixedVector<T,D> operator*(const FixedMatrix<T,D>& m, const FixedVector<T,D>& v) {
+
+ template<class T, types::t_int D>
+     FixedVector<T,D> operator*(const FixedMatrix<T,D>& m, const FixedVector<T,D>& v) {
       FixedVector<T,D> result;
       for (types::t_int i=0; i<D; i++) {
 	result.x[i]=(T)0;
@@ -296,31 +455,41 @@ template<class T, types::t_int D>
       }
       return result;
     }
-    //transpose;
-    friend FixedMatrix<T,D> operator~(const FixedMatrix<T,D>& a) {
+
+ template<class T, types::t_int D>
+     FixedMatrix<T,D> operator~(const FixedMatrix<T,D>& a) {
       RESULT_FORALLij( result.x[i][j]=a.x[j][i] );
     }
-    void identity(void) {
-      FORALLij {x[i][j]=(i==j ? 1 : 0);}
-    }
-    void zero(void) {
-      FORALLij {x[i][j]=(T)0.;}
-    }
-    friend T trace(const FixedMatrix<T,D>& a) {
+
+ template<class T, types::t_int D>
+     T trace(const FixedMatrix<T,D>& a) {
       T sum=(T)0;
       for (types::t_int i=0; i<D; i++) {
 	sum+=a.x[i][i];
       }
       return sum;
     }
-    friend types::t_int operator==(const FixedMatrix<T,D>& a, const FixedMatrix<T,D>& b) {
+
+ template<class T, types::t_int D>
+     types::t_int operator==(const FixedMatrix<T,D>& a, const FixedMatrix<T,D>& b) {
       FORALLij {if (a.x[i][j]!=b.x[i][j]) return 0;}
       return 1;
     }
-  };
+
+
+template<class T>
+  class Matrix2d; 
+
+template<class T>
+     T det(const FixedMatrix<T,2>& a);
+template<class T>
+     Matrix2d<T> operator!(const FixedMatrix<T,2>& a);
+
 
 template<class T>
   class Matrix2d: public FixedMatrix<T,2> {
+    friend T det <> (const FixedMatrix<T,2>& a);
+    friend Matrix2d<T> operator! <> (const FixedMatrix<T,2>& a);
   public:
     using FixedMatrix<T,2>::x;
     Matrix2d(void) {}
@@ -347,23 +516,40 @@ template<class T>
       x[1][0]=a.x[1][0];
       x[1][1]=a.x[1][1];
     }
-    friend T det(const FixedMatrix<T,2>& a) {
+    //inverse;
+  };
+
+
+ template<class T>
+     T det(const FixedMatrix<T,2>& a) {
       return a.x[0][0]*a.x[1][1]-a.x[1][0]*a.x[0][1];
     }
-    //inverse;
-    friend Matrix2d operator!(const FixedMatrix<T,2>& a) {
+
+ template<class T>
+     Matrix2d<T> operator!(const FixedMatrix<T,2>& a) {
       T d=det(a);
-      Matrix2d result;
+      Matrix2d<T> result;
       result.x[0][0]= a.x[1][1]/d;
       result.x[0][1]=-a.x[0][1]/d;
       result.x[1][0]=-a.x[1][0]/d;
       result.x[1][1]= a.x[0][0]/d;
       return result;
     }
-  };
+
+
+template<class T>
+  class Matrix3d; 
+
+template<class T>
+     T det(const FixedMatrix<T,3>& a);
+template<class T>
+     FixedMatrix<T,3> operator!(const FixedMatrix<T,3>& a);
+
 
 template<class T>
   class Matrix3d: public FixedMatrix<T,3> {
+    friend T det <> (const FixedMatrix<T,3>& a);
+    friend FixedMatrix<T,3> operator! <> (const FixedMatrix<T,3>& a);
   public:
     using FixedMatrix<T,3>::x;
     Matrix3d(void) {}
@@ -387,14 +573,20 @@ template<class T>
 	}
       }
     }
-    friend T det(const FixedMatrix<T,3>& a) {
+    //inverse;
+  };
+
+
+ template<class T>
+     T det(const FixedMatrix<T,3>& a) {
       return
 	a.x[0][0] * (a.x[1][1]*a.x[2][2] -a.x[1][2]*a.x[2][1])+
 	a.x[0][1] * (a.x[1][2]*a.x[2][0] -a.x[1][0]*a.x[2][2])+
 	a.x[0][2] * (a.x[1][0]*a.x[2][1] -a.x[1][1]*a.x[2][0]);
     }
-    //inverse;
-    friend FixedMatrix<T,3> operator!(const FixedMatrix<T,3>& a) {
+
+ template<class T>
+     FixedMatrix<T,3> operator!(const FixedMatrix<T,3>& a) {
       T d=det(a);
       Matrix3d<T> result;
       result.x[0][0]=(+a.x[1][1]*a.x[2][2]-a.x[1][2]*a.x[2][1])/d;
@@ -408,7 +600,7 @@ template<class T>
       result.x[2][2]=(+a.x[0][0]*a.x[1][1]-a.x[0][1]*a.x[1][0])/d;
       return result;
     }
-  };
+
 
 #ifdef STREAM_VECTOR
 

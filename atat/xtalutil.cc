@@ -253,7 +253,7 @@ void find_all_atom_in_supercell(Array<rVector3d> *psuper_atom_pos,
   types::t_int index=0;
   for ( ; l; l++) {
     for (types::t_int s=0; s<atom_pos.get_size(); s++) {
-      (*psuper_atom_pos)(index)=l+atom_pos(s);
+      (*psuper_atom_pos)(index)=(FixedVector<types::t_real,3>)l+atom_pos(s);
       (*psuper_atom_type)(index)=atom_type(s);
       index++;
     }
@@ -372,11 +372,11 @@ types::t_real find_1nn_radius(const Structure &str) {
 
 void AtomPairIterator::find_new_neighbors(types::t_real new_max_radius) {
   LatticePointIterator lat_vect(cell,0);
-  for (; norm(lat_vect) < (new_max_radius+max_dist_in_cell+zero_tolerance); lat_vect++) {
+  for (; norm((FixedVector<types::t_real,3>)lat_vect) < (new_max_radius+max_dist_in_cell+zero_tolerance); lat_vect++) {
     for (types::t_int i=0; i<atom_pos1->get_size(); i++) {
-      for (types::t_int j=(same_pos && norm(lat_vect)<zero_tolerance ? i : 0); j<atom_pos2->get_size(); j++) {
+      for (types::t_int j=(same_pos && norm((FixedVector<types::t_real,3>)lat_vect)<zero_tolerance ? i : 0); j<atom_pos2->get_size(); j++) {
         rVector3d atom_a=(*atom_pos1)(i);
-        rVector3d atom_b=(*atom_pos2)(j)+lat_vect;
+        rVector3d atom_b=(*atom_pos2)(j)+(FixedVector<types::t_real,3>)lat_vect;
         types::t_real r=norm(atom_b-atom_a);
         if (max_radius<r && r<=new_max_radius && r>zero_tolerance) {
           LinkedListIterator<ArrayrVector3d> i(list);
@@ -518,11 +518,11 @@ void find_common_supercell(rMatrix3d *psupercell, const rMatrix3d &a, const rMat
   rMatrix3d ig=!g;
   rVector3d v1,v2,v3;
   LatticePointIterator p(s);
-  while (!is_int(ig*p)) p++;
+  while (!is_int(ig*(FixedVector<types::t_real,3>)p)) p++;
   v1=p;
-  while (!is_int(ig*p) || fabs(sqr(v1*p)-norm2(v1)*norm2(p))<zero_tolerance) p++;
+  while (!is_int(ig*(FixedVector<types::t_real,3>)p) || fabs(sqr(v1*(FixedVector<types::t_real,3>)p)-norm2(v1)*norm2((FixedVector<types::t_real,3>)p))<zero_tolerance) p++;
   v2=p;
-  while (!is_int(ig*p) || fabs((v1^v2)*p)<zero_tolerance) p++;
+  while (!is_int(ig*(FixedVector<types::t_real,3>)p) || fabs((v1^v2)*(FixedVector<types::t_real,3>)p)<zero_tolerance) p++;
   v3=p;
   psupercell->set_column(0,v1);
   psupercell->set_column(1,v2);
@@ -536,6 +536,19 @@ void find_common_simple_supercell(iVector3d *psimple_supercell, const rMatrix3d 
     while (!is_int(isupercell*((types::t_real)m*unitcell.get_column(i)))) m++;
     (*psimple_supercell)(i)=m;
   }
+}
+
+void strain_str(Structure *pstr, const Structure &str, const rMatrix3d &strain) {
+  rMatrix3d id;
+  id.identity();
+  rMatrix3d s=strain+id;
+  pstr->cell=s*(str.cell);
+  pstr->atom_pos.resize(str.atom_pos.get_size());
+  pstr->atom_type.resize(str.atom_pos.get_size());
+  for (types::t_int at=0; at<str.atom_pos.get_size(); at++) {
+    pstr->atom_pos(at)=s*str.atom_pos(at);
+  }
+  pstr->atom_type=str.atom_type;
 }
 
 

@@ -135,8 +135,8 @@ inline void sort_array(Array<T> *a, const C &comparator) {
 template<class T>
 class MultiDimIterator {
   T current;
-  T min;
   T max;
+  T min;
   types::t_int valid;
  public:
   MultiDimIterator(): current(), min(), max() {}
@@ -270,6 +270,13 @@ inline const Array<types::t_int>&  MultipletIterator::operator++(int) {
       break;
   }
   return current;
+}
+
+template<class T>
+void extract_columns(Array2d<T> *pa, const Array2d<T> &b, const LinkedList<types::t_int> &cols_list, types::t_int nb_cols) {
+  Array<types::t_int> cols;
+  LinkedList_to_Array(&cols,cols_list);
+  extract_columns(pa,b,cols,nb_cols);
 }
 
 

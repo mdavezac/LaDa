@@ -117,6 +117,13 @@ void one_array(Array<T> *a) {
 }
 
 template<class T>
+void fill_array(Array<T> *a, const T &val) {
+  for (types::t_int i=0; i<a->getSize(); i++) {
+    (*a)(i)=val;
+  }
+}
+
+template<class T>
 types::t_int operator==(const Array<T> &a, const Array<T> &b) {
   if (a.get_size()!=b.get_size()) return 0;
   for (types::t_int i=0; i<a.get_size(); i++) {
@@ -132,6 +139,21 @@ types::t_int operator!=(const Array<T> &a, const Array<T> &b) {
     if (a(i)!=b(i)) return 1;
   }
   return 0;
+}
+
+template<class T>
+T& robust_access(Array<T> *pa, types::t_int i) {
+  if (i>=pa->get_size()) {
+    Array<T> tmp(*pa);
+    types::t_int s=pa->get_size();
+    while (s<=i) {s*=2;}
+    pa->resize(s);
+    zero_array(pa);
+    for (types::t_int j=0; j<tmp.get_size(); j++) {
+      (*pa)(j)=tmp(j);
+    }
+  }
+  return (*pa)(i);
 }
 
 class Array2dIterator;
@@ -454,6 +476,84 @@ class ArrayFunctionArray {
   virtual void eval(Array<T> *py, const Array<T> &x) {}
   virtual types::t_int read(istream &file) {return 0;}
 };
+
+template<class T, types::t_int D>
+void convert_matrix(FixedMatrix<T,D> *pf, const Array2d<T> &a) {
+  for (types::t_int i=0; i<D; i++) {
+    for (types::t_int j=0; j<D; j++) {
+      (*pf)(i,j)=a(i,j);
+    }
+  }
+}
+
+template<class T, types::t_int D>
+void convert_matrix(Array2d<T> *pa, const FixedMatrix<T,D> &m) {
+  pa->resize(D,D);
+  for (types::t_int i=0; i<D; i++) {
+    for (types::t_int j=0; j<D; j++) {
+      (*pa)(i,j)=m(i,j);
+    }
+  }
+}
+
+template<class T>
+void extract_columns(Array2d<T> *pa, const Array2d<T> &b, const Array<types::t_int> &cols, types::t_int nb_cols=-1) {
+  if (nb_cols==-1) {nb_cols=cols.get_size();}
+  pa->resize(iVector2d(b.get_size()(0),nb_cols));
+  for (types::t_int i=0; i<nb_cols; i++) {
+    if (cols(i)>=0) {
+      for (types::t_int j=0; j<b.get_size()(0); j++) {
+        (*pa)(j,i)=b(j,cols(i));
+      }
+    }
+  }
+}
+
+template<class T>
+void extract_column(Array<T> *pa, const Array2d<T> &b, types::t_int col) {
+  pa->resize(b.get_size()(0));
+  for (types::t_int i=0; i<b.get_size()(0); i++) {
+    (*pa)(i)=b(i,col);
+  }
+}
+
+template<class T>
+void extract_row(Array<T> *pa, const Array2d<T> &b, types::t_int row) {
+  pa->resize(b.get_size()(1));
+  for (types::t_int i=0; i<b.get_size()(1); i++) {
+    (*pa)(i)=b(row,i);
+  }
+}
+
+template<class T>
+void extract_elements(Array<T> *pa, const Array<T> &b, const Array<types::t_int> &cols, types::t_int nb_cols=-1) {
+  if (nb_cols==-1) {nb_cols=cols.get_size();}
+  pa->resize(nb_cols);
+  for (types::t_int i=0; i<nb_cols; i++) {
+    if (cols(i)>=0) {
+      (*pa)(i)=b(cols(i));
+    }
+  }
+}
+
+template<class T>
+void extract_elements(Array<T> *pa,  const Array<T> &b, types::t_int first, types::t_int lastp1) {
+  pa->resize(lastp1-first);
+  types::t_int i=0;
+  for (types::t_int j=first; j<lastp1; j++) {
+    (*pa)(i)=b(j);
+    i++;
+  }
+}
+
+template<class T>
+void extract_elements(Array<T> *pa, types::t_int first_dest, const Array<T> &b, types::t_int first, types::t_int lastp1) {
+  types::t_int i=first_dest;
+  for (types::t_int j=first; j<lastp1; j++) {
+    (*pa)(i)=b(j);
+    i++;
+  }
+}
 
 
 } // namespace atat

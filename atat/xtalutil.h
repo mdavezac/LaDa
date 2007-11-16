@@ -102,10 +102,22 @@ types::t_int equivalent_mod_cell(const Array<rVector3d> &a, const Array<rVector3
 types::t_int equivalent_mod_cell(const MultiCluster &a, const MultiCluster &b, const rMatrix3d &inv_cell);
 
 class LatticePointIterator {
-  LinkedList<rVector3d> list;
+  friend types::t_real norm( LatticePointIterator& );
+  friend types::t_real norm2( LatticePointIterator& );
+  friend types::t_real operator*( const FixedVector<types::t_real, 3> &_a,
+                         LatticePointIterator& _p);
+  friend types::t_real operator*( LatticePointIterator& _p,
+                         const FixedVector<types::t_real, 3> &_a);
+  friend types::t_real operator*( LatticePointIterator& _a,
+                         LatticePointIterator& _p);
+  friend FixedVector<types::t_real,3> operator^( const FixedVector<types::t_real,3>& _a,
+                                        LatticePointIterator& _p);
+  friend FixedVector<types::t_real,3> operator^( LatticePointIterator& _p,
+                                        const FixedVector<types::t_real,3>& _a);
   rMatrix3d cell;
   types::t_real max_radius;
   types::t_real inc_radius;
+  LinkedList<rVector3d> list;
   void find_new_neighbors(types::t_real new_max_radius);
  public:
   LatticePointIterator(void): list(), cell() {}
@@ -117,8 +129,24 @@ class LatticePointIterator {
     return *i;
   }
 };
+inline types::t_real norm( LatticePointIterator& _p)
+{ return norm(_p.operator FixedVector<types::t_real,3>()); }
+inline types::t_real norm2( LatticePointIterator& _p)
+{ return norm2(_p.operator FixedVector<types::t_real,3>()); }
+inline types::t_real operator*(LatticePointIterator& _p,  const FixedVector<types::t_real,3>& _a)
+  { return _a * _p.operator FixedVector<types::t_real,3>(); }
+inline types::t_real operator*( const FixedVector<types::t_real,3>& _a, LatticePointIterator& _p)
+  { return _p.operator FixedVector<types::t_real,3>() * _a; }
+inline FixedVector<types::t_real,3> operator^( const FixedVector<types::t_real,3>& _a, LatticePointIterator& _p)
+  { return _a ^ _p.operator FixedVector<types::t_real,3>(); }
+inline FixedVector<types::t_real,3> operator^( LatticePointIterator& _p, const FixedVector<types::t_real,3>& _a)
+  { return _p.operator FixedVector<types::t_real,3>() ^ _a; }
+inline types::t_real operator*( LatticePointIterator& _a, LatticePointIterator& _p)
+  { return _a.operator FixedVector<types::t_real,3>() * _p.operator FixedVector<types::t_real,3>(); }
 
 class LatticePointInCellIterator {
+  friend FixedVector<types::t_real,3> operator+( const FixedVector<types::t_real,3>&, LatticePointInCellIterator&);
+  friend FixedVector<types::t_real,3> operator+(LatticePointInCellIterator&,  const FixedVector<types::t_real,3>&);
   rMatrix3d cell;
   rMatrix3d cell_to_super;
   rVector3d shift;
@@ -141,6 +169,10 @@ public:
     advance_to_valid();
   }
 };
+inline FixedVector<types::t_real,3> operator+( const FixedVector<types::t_real,3>& _a, LatticePointInCellIterator& _p)
+  { return _a + _p.operator FixedVector<types::t_real,3>(); }
+inline FixedVector<types::t_real,3> operator+(LatticePointInCellIterator& _p,  const FixedVector<types::t_real,3>& _a)
+  { return _a + _p.operator FixedVector<types::t_real,3>(); }
 
 void find_all_atom_in_supercell(Array<rVector3d> *psuper_atom_pos,
 				Array<types::t_int> *psuper_atom_type,
@@ -199,8 +231,8 @@ class AtomMultipletIterator {
   rMatrix3d cell;
   const Array<rVector3d> *atom_pos;
   types::t_int ntuple;
-  Array<AtomPairIterator> pairs;
   Array<rVector3d> multiplet;
+  Array<AtomPairIterator> pairs;
  public:
   AtomMultipletIterator(const rMatrix3d &_cell, const Array<rVector3d> &_atom_pos, types::t_int _ntuple):
                        pairs(), multiplet() {
@@ -227,6 +259,8 @@ types::t_real get_cluster_length(const Array<rVector3d> &c);
 
 void find_common_supercell(rMatrix3d *psupercell, const rMatrix3d &a, const rMatrix3d &b);
 void find_common_simple_supercell(iVector3d *psimple_supercell, const rMatrix3d &unitcell, const rMatrix3d &supercell);
+
+void strain_str(Structure *pstr, const Structure &str, const rMatrix3d &strain);
 
 
 } // namespace atat
