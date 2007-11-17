@@ -140,10 +140,10 @@ namespace Vff
       operator const atat::rVector3d& () const
         { return origin->pos; }
       //! Returns the atom at the origin
-      Ising_CE::Atom& get_origin()
+      Ising_CE::Atom& Origin()
         { return *origin; }
       //! Returns the atom at the origin, constant format
-      const Ising_CE::Atom& get_origin() const
+      const Ising_CE::Atom& Origin() const
         { return *origin; }
       //! Returns the gradient place holder
       atat::rVector3d& get_gradient()
@@ -288,8 +288,8 @@ namespace Vff
         { return parent->bond_kind( *(*i_bond) ); }
       //! \brief Returns the atom at the origin of range of bonds this iterator travels
       //! \see Atomic_Center::const_iterator::parent 
-      Ising_CE::Atom& get_origin()
-        { return ((*i_bond)->get_origin()); }
+      Ising_CE::Atom& Origin()
+        { return ((*i_bond)->Origin()); }
       //! \brief Translates a vector _v by periodic image of enpoint of bond
       //! \param _v vector to translate
       //! \param _cell unit-cell defining periodic image (can be different from

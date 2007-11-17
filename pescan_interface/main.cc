@@ -6,7 +6,7 @@
 #include <lamarck/structure.h>
 #include <tinyxml/tinyxml.h>
 #include <opt/opt_frprmn.h>
-#include <opt/opt_minimize_gsl.h>
+#include <opt/gsl_minimizers.h>
 
 #include "interface.h"
 

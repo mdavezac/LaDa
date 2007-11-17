@@ -1,8 +1,8 @@
 //
 //  Version: $Id$
 //
-#ifndef _OPT_MINIMIZE_GSL_H_
-#define _OPT_MINIMIZE_GSL_H_
+#ifndef _GSL_MINIMIZERS_H_
+#define _GSL_MINIMIZERS_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>

@@ -10,7 +10,7 @@
 
 #include "functional.h"
 
-#include <opt/va_minimizer.h>
+#include <opt/gsl_minimizers.h>
 
 #ifdef _MPI 
   #include "mpi/mpi_object.h"
@@ -32,18 +32,19 @@ namespace Vff
 
      public:
        typedef types::t_real t_Type;
-       typedef Minimizer::GnuSL<t_Base> minimizer;
+       typedef Minimizer::GnuSL<t_Base> t_Minimizer;
        typedef std::vector< t_Type >  t_Container;
 
      protected:
        t_Container va_vars;
+       t_Minimizer minimizer;
 
      public:
-       Functional   ( const Ising_CE::Structure &_str )
-                  : t_Base( _str ), minimizer( *this )
+       VirtualAtom   ( Ising_CE::Structure &_str )
+                   : t_Base( _str ), minimizer( *this )
         { va_vars.reserve( _str.atoms.size() ); }
-       Functional   ( const VirtualAtom &_c )
-                  : t_Base( _c ), minimizer( *this ), va_vars( _c.va_vars ) {}
+       VirtualAtom   ( const VirtualAtom &_c )
+                   : t_Base( _c ), minimizer( *this ), va_vars( _c.va_vars ) {}
         
 
        // Simple constainer behaviors required by Minimizer::VA and

@@ -19,7 +19,7 @@
 #include <pescan_interface/interface.h>
 #include <lamarck/structure.h>
 #include <opt/function_base.h>
-#include <opt/opt_minimize_gsl.h>
+#include <opt/gsl_minimizers.h>
 #include <opt/types.h>
 
 #include "layered.h"

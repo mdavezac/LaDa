@@ -153,7 +153,7 @@ namespace Vff
     for( i_center = i_begin; i_center != i_end; ++i_center )
       if ( i_center->size() != 4 )
       {
-        std::cerr << " Atomic center at " << (atat::rVector3d) i_center->get_origin()
+        std::cerr << " Atomic center at " << (atat::rVector3d) i_center->Origin()
                   << " has " << i_center->size() 
                   << " bonds!!" << std::endl;
         return false;
@@ -855,7 +855,7 @@ failure:
       t_pseudos::const_iterator i_pseudo_end = pseudos.end();
       for( ; i_pseudo != i_pseudo_end; ++i_pseudo )
       {
-        atat::rVector3d pos = (!structure.cell) * i_center->get_origin().pos;
+        atat::rVector3d pos = (!structure.cell) * i_center->Origin().pos;
 //       pos[0] -= rint(pos[0]);
 //       pos[1] -= rint(pos[1]);
 //       pos[2] -= rint(pos[2]);

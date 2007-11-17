@@ -6,7 +6,7 @@
 
 #include "fortran.h"
 #include <physics/physics.h>
-#include <opt/opt_minimize_gsl.h>
+#include <opt/gsl_minimizers.h>
 
 namespace Vff
 { 
