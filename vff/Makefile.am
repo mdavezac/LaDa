@@ -8,7 +8,6 @@ vff_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIB@ @MPICH_LIBS@
 vff_LDADD = ../lamarck/liblamarck.la ../atat/libatat.la libvff.la\
 	             ../physics/libphysics.la @MPI_ADDLIB@
 fortran_test_SOURCES = fortran_test.f90 
-fortran_test_CPPFLAGS =  $(AM_CPPFLAGS) -I .. @GSL_INCLUDE@ 
 fortran_test_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIB@ @MPICH_LIBS@
 fortran_test_LDADD = lib_vff.la @MPI_ADDLIB@
 lib_LTLIBRARIES = lib_vff.la

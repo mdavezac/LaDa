@@ -8,7 +8,7 @@ my $HOME = `cd; pwd`; chomp $HOME;
 
 @{$params{"defs"}} = ( "_MPI" );
 
-@{$params{"Includes"}} = (".", "$HOME/usr/src/ATAT/src" );
+@{$params{"Includes"}} = (".", "$HOME/bull/shit/ATAT/src" );
 
 if ( $computer =~ /home/ )
 {

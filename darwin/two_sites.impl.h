@@ -5,19 +5,9 @@
 #define _TWOSITES_IMPL_H_
 
 #include <algorithm>
-#include <functional>
-#include <ext/algorithm>
-#ifndef __PGI
-  #include<ext/functional>
-  using __gnu_cxx::compose1;
-#else
-  #include<functional>
-  using std::compose1;
-#endif
 
 #include "print/xmg.h"
 #include "print/stdout.h"
-#include "functors.h"
 
 namespace TwoSites
 {

@@ -5,6 +5,7 @@ AM_INIT_AUTOMAKE(LaDa,3.0)
 # fi
 
 AC_PROG_CC
+AX_COMPILER_VENDOR
 AC_PROG_CXX
 
 AC_PROG_FC(gfortran)
@@ -96,7 +97,7 @@ if test x$debug = xtrue; then
   CFLAGS=`echo $CFLAGS | sed "s/-O2//"`
   AC_DEFINE([_PRINT_ALL_PROCS],[],[])
   AX_CHECK_COMPILER_FLAGS([-fbounds-check], 
-                          [CPP_DEBUG_FLAS+=" -fbounds-check"],)
+                          [CPP_DEBUG_FLAGS+=" -fbounds-check"],)
 else
   CXXFLAGS=`echo $CXXFLAGS | sed "s/-g//"`
   CFLAGS=`echo $CFLAGS | sed "s/-g//"`
@@ -186,17 +187,6 @@ fi
 AC_SUBST(GSL_INCLUDE)
 AC_SUBST(GSL_LIB)
 
-# checks for STLs
-AC_CXX_HAVE_STL
-if test "$ac_cv_cxx_have_stl" = yes; then
-  LIBS="-lstdc++ -lm $LIBS"
- else
-   AC_MSG_ERROR("Could not find standard template libraries")
-fi
-if test hostname="super01" && test "$CXX" = "icc"; then
-  LIBS="${LIBS} -L/copt/intel/9.0/lib -lcxa -lcxaguard"
-fi
-
 # checks for compiler specific flags 
 #
 COMPILER_CXXFLAGS=
@@ -211,6 +201,20 @@ AC_SUBST(COMPILER_CXXFLAGS)
 
 #
 AC_PROG_LIBTOOL
+
+# checks for STLs
+AC_CXX_HAVE_STL
+if test "$ac_cv_cxx_have_stl" = yes; then
+  LIBS=`echo ${LIBS} | sed "s/-lstdc++//" `
+  LIBS="${LIBS} -lm "
+  case "$ax_cv_c_compiler_vendor" in 
+    gnu) LIBS=" ${LIBS} -lstdc++";;
+    intel) LIBS=" ${LIBS} -lstdc++ -lcxa -lcxaguard";;
+    ibm) FFLAGS="-qsuffix=f=f90";;
+  esac
+ else
+   AC_MSG_ERROR("Could not find standard template libraries")
+fi
 
 
 AC_OUTPUT(Makefile atat/Makefile physics/Makefile opt/Makefile lamarck/Makefile

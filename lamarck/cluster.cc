@@ -5,18 +5,8 @@
 #include <iomanip>
 #include <algorithm>
 
-#ifndef __PGI
-  #include<ext/functional>
-  using __gnu_cxx::compose1;
-  using __gnu_cxx::compose2;
-#else
-  #include<functional>
-  using std::compose2;
-  using std::compose1;
-#endif
-using  std::bind2nd;
-
 #include "opt/types.h"
+#include "opt/traits.h"
 
 #include "atat/findsym.h" 
 #include "atat/xtalutil.h" 
@@ -24,6 +14,20 @@ using  std::bind2nd;
 
 
 namespace Ising_CE {
+
+  class norm_compare
+  {
+    const atat::rVector3d &vec;
+    public:
+      norm_compare( const atat::rVector3d &_vec ) : vec(_vec) {};
+      norm_compare( const norm_compare &_c ) : vec(_c.vec) {};
+     bool operator()( const atat::rVector3d &_a, const atat::rVector3d &_b ) const
+       { return opt::Fuzzy<types::t_real>::less( 
+                   atat::norm2( _a - vec ), atat::norm2( _b - vec ) ); }
+     bool operator()( const atat::rVector3d &_a ) const
+       { return opt::Fuzzy<types::t_real>::equal( atat::norm2( _a - vec ), 0.0 ); } 
+  };
+
 
   void Cluster :: apply_symmetry( const atat::rMatrix3d &_op,
                                   const atat::rVector3d &_trans    ) 
@@ -59,13 +63,9 @@ namespace Ising_CE {
       std::vector<atat::rVector3d> :: iterator i2_vec = vectors.begin();
       for(; i2_vec != i_vec_last; ++i2_vec)
       {
-        is_found  = std::find_if( _cluster.vectors.begin(), _cluster.vectors.end(),
-                                  compose1( bind2nd( std::less_equal<Real>(),
-                                            atat::zero_tolerance ), 
-                                            compose1( std::ptr_fun(ptr_func),
-                                                      bind2nd( std::minus<atat::rVector3d>(), 
-                                                               (*i2_vec-shift)) )
-                                          ) ); 
+        is_found  = std::find_if( _cluster.vectors.begin(),
+                                  _cluster.vectors.end(),
+                                  norm_compare( shift ) );
 
         if ( is_found == _cluster.vectors.end() ) break;
       }

@@ -1,23 +1,6 @@
 //
 //  Version: $Id$
 //
-#include <functional>
-#include <algorithm>
-#include <ext/algorithm>
-#include <fstream>
-#ifndef __PGI
-  #include<ext/functional>
-  using __gnu_cxx::compose1;
-#else
-  #include<functional>
-  using std::compose1;
-#endif
-
-#include <print/stdout.h>
-#include <print/manip.h>
-#include <lamarck/structure.h>
-#include <lamarck/atom.h>
-
 #include "bandgap.h"
 
 namespace BandGap

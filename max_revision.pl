@@ -63,6 +63,7 @@ sub dodir()
 {
   foreach $dir ( <*/> )
   {
+    next if (not -d $dir );
     next if ($dir =~ /LaDa/);
     chdir $dir;
     get_max_revision();

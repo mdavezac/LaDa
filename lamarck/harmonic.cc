@@ -1,6 +1,8 @@
 //
 //  Version: $Id$
 //
+#include <algorithm>
+
 #include "harmonic.h"
 
 namespace Ising_CE

@@ -2,15 +2,6 @@
 //  Version: $Id$
 //
 #include <algorithm>
-#include <functional>
-
-#ifndef __PGI
-  #include<ext/functional>
-  using __gnu_cxx::compose1;
-#else
-  #include<functional>
-  using std::compose1;
-#endif
 
 #include <opt/ndim_iterator.h>
 #include <opt/traits.h>

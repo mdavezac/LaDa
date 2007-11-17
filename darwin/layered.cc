@@ -8,24 +8,10 @@
 
 #include <stdexcept>       // std::runtime_error
 
-#include <functional>
-#ifndef __PGI
-  #include<ext/functional>
-  using __gnu_cxx::compose1;
-#else
-  #include<functional>
-  using std::compose1;
-#endif
-
-
-#include <lamarck/structure.h>
-#include <lamarck/atom.h>
-
 #include <opt/types.h>
-#include <atat/vectmac.h>
 #include <opt/ndim_iterator.h>
-#include <opt/traits.h>
 
+#include "layered.h"
 
 void FillStructure( Ising_CE::Structure &_str )
 {

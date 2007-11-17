@@ -4,19 +4,9 @@
 #ifndef _SINGLE_SITE_IMPL_H_
 #define _SINGLE_SITE_IMPL_H_
 
-#include <algorithm>
-#include <functional>
 #include <ext/algorithm>
-#ifndef __PGI
-  #include<ext/functional>
-  using __gnu_cxx::compose1;
-#else
-  #include<functional>
-  using std::compose1;
-#endif
 
 #include "print/xmg.h"
-#include "functors.h"
 #include "concentration.h"
 
 namespace SingleSite

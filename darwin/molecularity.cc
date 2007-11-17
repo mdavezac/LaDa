@@ -1,25 +1,7 @@
 //
 //  Version: $Id$
 //
-#include <functional>
-#include <algorithm>
-#include <ext/algorithm>
-#include <fstream>
-#ifndef __PGI
-  #include<ext/functional>
-  using __gnu_cxx::compose1;
-#else
-  #include<functional>
-  using std::compose1;
-#endif
-
-#include <print/stdout.h>
-#include <print/manip.h>
-#include <lamarck/structure.h>
-#include <lamarck/atom.h>
-
 #include "molecularity.h"
-#include "two_sites.h"
 
   // "Molecularity" means that we try and simulate growth conditions...
   // The input should be a 1x1xn supercell, with n either 100, 110 or 111 

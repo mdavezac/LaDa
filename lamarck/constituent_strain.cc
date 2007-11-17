@@ -7,14 +7,6 @@
 #include<math.h>
 #include<limits.h>
 
-#ifndef __PGI
-  #include<ext/functional>
-  using __gnu_cxx::compose1;
-#else
-  #include<functional>
-  using std::compose1;
-#endif
-
 
 #include "constituent_strain.h"
 

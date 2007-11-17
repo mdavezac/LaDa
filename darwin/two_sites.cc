@@ -1,24 +1,24 @@
 //
 //  Version: $Id$
 //
-#include <functional>
 #include <algorithm>
-#include <ext/algorithm>
-#include <fstream>
-#ifndef __PGI
-  #include<ext/functional>
-  using __gnu_cxx::compose1;
-#else
-  #include<functional>
-  using std::compose1;
-#endif
+#include <bits/stl_algo.h>
 
 #include "two_sites.h"
 #include "lamarck/atom.h"
-#include "opt/compose_functors.h"
 
 namespace TwoSites
 {
+  class norm_compare
+  {
+    const atat::rVector3d &vec;
+    public:
+      norm_compare( const atat::rVector3d &_vec ) : vec(_vec) {};
+      norm_compare( const norm_compare &_c ) : vec(_c.vec) {};
+     bool operator()( const atat::rVector3d &_a, const atat::rVector3d &_b ) const
+       { return opt::Fuzzy<types::t_real>::less( 
+                   atat::norm2( _a - vec ), atat::norm2( _b - vec ) ); }
+  };
 
   void rearrange_structure( Ising_CE::Structure &_str)
   {
@@ -38,18 +38,11 @@ namespace TwoSites
     std::list< Ising_CE::Structure::t_Atom > :: iterator i_1;
     atat::rVector3d translation =   _str.lattice->sites[1].pos
                                   - _str.lattice->sites[0].pos; 
-    types::t_real (*ptr_norm)(const atat::FixedVector<types::t_real, 3> &)
-          = &atat::norm2;
     _str.atoms.clear();
     for(; i_0 != i_end; ++i_0 )
     {
       atat::rVector3d atom = i_0->pos + translation;
-      i_1 = std::min_element ( sites1.begin(), sites1.end(), 
-                opt::ref_compose2( std::less<types::t_real>(),
-                                   compose1( std::ptr_fun(ptr_norm),
-                                             bind2nd(std::minus<atat::rVector3d>(), atom) ),
-                                     compose1( std::ptr_fun(ptr_norm),
-                                               bind2nd(std::minus<atat::rVector3d>(), atom) ) ) );
+      i_1 = std::min_element( sites1.begin(), sites1.end(), norm_compare( atom ) );
       _str.atoms.push_back( *i_0 ); 
       _str.atoms.push_back( *i_1 ); 
     }
