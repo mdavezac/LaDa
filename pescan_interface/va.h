@@ -1,58 +1,55 @@
 //
 //  Version: $Id$
 //
-#ifndef _VFF_VA_H_
-#define _VFF_VA_H_
+#ifndef _PESCAN_VA_H_
+#define _PESCAN_VA_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
-#include "functional.h"
+#include "interface.h"
+#include <vff/functional.h>
 
-#include <opt/gsl_minimizers.h>
+#include <opt/types.h>
+#include <opt/function_base.h>
 
-#ifdef _MPI 
-  #include "mpi/mpi_object.h"
+#ifdef _MPI
+#include <mpi/mpi_object.h>
 #endif
 
-namespace Vff
+namespace Pescan
 {
-
-  //! \brief Implements a Virtual Atom functional around Vff::Functional.
-  //! \details In other words, this functional is capable of returning the
-  //!          gradient with respect to a change in the atomic occupation
-  //!          within the structure. It should interact quite well with
-  //!          Minimizer::VA and Minimizer::Beratan,
-  class VirtualAtom : public Functional
+  class VirtualAtom : public functional::Base<>
   {
      protected:
        //! Type from which the VA functional is derived
        typedef Functional t_Base;
-
-     public:
-       //! see functional::Base::t_Type
-       typedef types::t_real t_Type;
-       //! see functional::Base::t_Container
-       typedef std::vector< t_Type >  t_Container;
-       //! Type of the minimizer for minimizing strain
-       typedef Minimizer::GnuSL<t_Base> t_Minimizer;
+       //! Type of the pescan interface class
+       typedef Functional t_Pescan;
+       //! Type of the Valence Force Field Functional class
+       typedef Functional t_Vff;
 
      protected:
-       t_Container va_vars;
-       t_Minimizer minimizer;
+       Ising_CE::Structure &structure;
+       t_Vff vff;
+       t_Pescan pescan;
+       Bands result;
+       types::t_real deriv_amplitude;
+
 
      public:
        //! Constructor and Initializer
        VirtualAtom   ( Ising_CE::Structure &_str )
-                   : t_Base( _str ), minimizer( *this )
-        { va_vars.reserve( _str.atoms.size() ); }
+                   : t_Base(), structure(_str),
+                     vff( structure ), pescan(),
+                     result(), deriv_amplitude(0.01) {}
        //! Copy Constructor
        VirtualAtom   ( const VirtualAtom &_c )
-                   : t_Base( _c ), minimizer( *this ), va_vars( _c.va_vars ) {}
+                   : t_Base( _c ), structure( _c.structure ),
+                     vff(_c.structure), pescan( _c.pescan ),
+                     result( _c.result), deriv_amplitude( _c.deriv_amplitude ) {}
         
-       //! Loads the vff's and the minimizer's parameters from XML
-       bool Load( const TiXmlElement &_node );
 
        // Simple constainer behaviors required by Minimizer::VA and
        // Minimizer::Beratan
@@ -85,11 +82,21 @@ namespace Vff
        //! Computes the \e virtual gradients
        void evaluate_gradient( t_Type* _grad );
 
+       //! Loads pescan and vff minimizers from XML
+       bool Load( const TiXmlElement &_node );
+         {  return pescan.Load( _node )  and vff.Load( _node ); }
+
      protected:
        //! Transfers occupations from VirtualAtom::va_vars to Functional::structure.
        void unpack_variables();
-  };
 
-} // namespace vff 
+       t_Type position_grad( types :: t_int _pos );
+       t_Type potential_grad( types :: t_int _pos );
 
-#endif // _VFF_FUNCTIONAL_H_
+  }
+
+
+} // namespace Pescan
+
+#endif
+

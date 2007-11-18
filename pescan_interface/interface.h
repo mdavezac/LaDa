@@ -24,29 +24,29 @@
 namespace Pescan
 {
 
+  //! Keeps track of the HOMO and LUMO
+  struct Bands
+  { 
+    types::t_real cbm;  //!< Conduction Band Minimum
+    types::t_real vbm;  //!< Valence Band minimum
+    Bands() : cbm(0), vbm(0) {}; //!< Constructor
+    //! Constructor and Initializer
+    Bands( const types :: t_real _cbm, types::t_real _vbm ) : cbm(_cbm), vbm(_vbm) {};
+    //! Copy Constructor.
+    Bands( const Bands &_bands ) : cbm(_bands.cbm), vbm(_bands.vbm) {};
+    //! Returns the gap.
+    types::t_real gap() const { return cbm - vbm; }
+#ifdef _NOLAUNCH
+    //! Debug: for _NOLAUNCH fake functional only
+    void swap() { types::t_real a = cbm; cbm = vbm; vbm = a; }
+#endif
+  };
+
   //! \brief Defines an interface for the nanopse pescan program.
   //! \details Mostly, this class writes the input and recovers the output.
   //! \todo Isolate the pescan launcher itself from the band-gap computation?
   class Interface 
   {
-    //! Keeps track of the HOMO and LUMO
-    struct Bands
-    { 
-      types::t_real cbm;  //!< Conduction Band Minimum
-      types::t_real vbm;  //!< Valence Band minimum
-      Bands() : cbm(0), vbm(0) {}; //!< Constructor
-      //! Constructor and Initializer
-      Bands( const types :: t_real _cbm, types::t_real _vbm ) : cbm(_cbm), vbm(_vbm) {};
-      //! Copy Constructor.
-      Bands( const Bands &_bands ) : cbm(_bands.cbm), vbm(_bands.vbm) {};
-      //! Returns the gap.
-      types::t_real gap() const { return cbm - vbm; }
-#ifdef _NOLAUNCH
-      //! Debug: for _NOLAUNCH fake functional only
-      void swap() { types::t_real a = cbm; cbm = vbm; vbm = a; }
-#endif
-    };
-
     public:
 
     //! Contains parameters necessary for generating the potential.
