@@ -8,16 +8,15 @@
 #include <config.h>
 #endif
 
-#include <string>
-#include <fstream>
 #include <list>
 
-#include "opt/types.h"
+#include <opt/types.h>
 #ifdef _MPI
-#include "mpi/mpi_object.h"
+#include <mpi/mpi_object.h>
 #endif
 
 #include "operations.h"
+#include "base.h"
 
 namespace Print
 {
@@ -29,12 +28,6 @@ namespace Print
   //! \brief Line based ouputing.
   //! \details This class makes it easy to write one line, go back and modify
   //!          it, delete it... The writing unit is the line.
-  //!          In mpi codes and production compilation, only the root processor
-  //!          can write. In mpi codes with debug enables and the
-  //!          _PRINT_ALL_PROCS macro defined, each processor to its own file.
-  //!          The first line of the file is always the highest revision number
-  //!          found in LaDa. See max_revision.pl in the root directory of
-  //!          LaDa. 
   //!          Xmg accepts the standard interface of a stream.
   //!  \code
   //     Print::xmg << Print::Xmg::comment << "whatever" 
@@ -59,7 +52,7 @@ namespace Print
   //!                                     Print::endl call).
   //!            - Print::Xmg::clear clears current line.
   //!            .
-  class Xmg
+  class Xmg : public Base
   {
     friend std::string make_commented_string( const std::string &_str );
 
@@ -79,11 +72,11 @@ namespace Print
       //! Stands for a Print::Xmg standard formatting operation.
       const static t_operation comment;
       //! Stands for a Print::Xmg standard formatting operation.
-      const static t_operation clear; 
+      const static t_operation clear;
       //! Stands for a Print::Xmg standard formatting operation.
       const static t_operation indent;
       //! Stands for a Print::Xmg standard formatting operation.
-      const static t_operation unindent; 
+      const static t_operation unindent;
       //! Stands for a Print::Xmg standard formatting operation.
       const static t_operation addtolast;
       //! Stands for a Print::Xmg standard formatting operation.
@@ -97,41 +90,23 @@ namespace Print
     protected:
       //! The number of current indentation
       types::t_unsigned indentation;
-      //! The name of the file to which to write
-      std::string filename;
-      //! A stream for the file to which to write
-      std::ofstream file;
       //! \brief The lines which have been written (Print::endl) but no flushed
       //!        to file.
       std::list< std::string > line_list;
       //! A stream for writting the current line
       std::ostringstream stream;
-      //! True if nothing has yet been written to file.
-      bool is_empty;
-      //! Wether this processor should write to file.
-      bool do_print;
 
     public:
       //! Constructor
-      Xmg() : indentation(0), filename(""), is_empty(true), do_print(false) {};
+      Xmg() : Base(), indentation(0) {};
       //! Destructor
-      ~Xmg() { close(); }
+      ~Xmg() { }
       
-      //! Opens the file and stream.
-      bool open();
-      //! Closes the file and stream.
-      void close();
-
       //! Clears all non-flushed lines.
       void clear_all()
       {
         if ( not do_print )  return;
         line_list.clear(); 
-      }
-      //! Opens the file stream.
-      bool is_open() 
-      {
-        return do_print and file.is_open(); 
       }
       //! Adds a line to the list of lines. Does not flush to file.
       void add_line( const std::string &_str )
@@ -149,10 +124,6 @@ namespace Print
         if ( not do_print )  return;
         line_list.pop_back(); 
       }
-      //! Initializes the file.
-      void init(const std::string &_f);
-      //! Returns the filename
-      std::string get_filename() const { return filename; }
       //! Easy printing in standard fashion.
       template<class T_TYPE> Xmg& operator<< (const T_TYPE &_whatever);
 
@@ -169,26 +140,6 @@ namespace Print
       void add_to_last();
       //! Specializable printing operation.
       void special_op( t_operation _op);
-
-
-#ifdef _MPI
-    public:
-#ifndef _PRINT_ALL_PROCS
-      //! \ingroup MPI
-      //! Syncs filname across all procs.
-      void sync_filename() {}
-      //! \ingroup MPI
-      //! Syncs filname across all procs.
-      void sync_filename( std::string & ) {}
-#else
-      //! \ingroup MPI
-      //! Syncs filname across all procs.
-      void sync_filename();
-      //! \ingroup MPI
-      //! Syncs filname across all procs.
-      void sync_filename( std::string &_filename );
-#endif
-#endif
   };
 
   //! \brief Print::Xmg object for easy access everywhere.

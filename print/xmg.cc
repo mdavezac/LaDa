@@ -11,46 +11,15 @@
 
 namespace Print
 {
-  const Xmg :: t_operation Xmg :: comment    = Xmg :: COMMENT;
-  const Xmg :: t_operation Xmg :: clear      = Xmg :: CLEAR;
-  const Xmg :: t_operation Xmg :: indent     = Xmg :: INDENT;
-  const Xmg :: t_operation Xmg :: unindent   = Xmg :: UNINDENT;
-  const Xmg :: t_operation Xmg :: addtolast  = Xmg :: ADDTOLAST;
-  const Xmg :: t_operation Xmg :: removelast = Xmg :: REMOVELAST;
-  const Xmg :: t_operation Xmg :: clearall   = Xmg :: CLEARALL;
+  const Xmg::t_operation Xmg :: comment    = Xmg :: COMMENT;
+  const Xmg::t_operation Xmg :: clear      = Xmg :: CLEAR;
+  const Xmg::t_operation Xmg :: indent     = Xmg :: INDENT;
+  const Xmg::t_operation Xmg :: unindent   = Xmg :: UNINDENT; 
+  const Xmg::t_operation Xmg :: addtolast  = Xmg :: ADDTOLAST;
+  const Xmg::t_operation Xmg :: removelast = Xmg :: REMOVELAST;
+  const Xmg::t_operation Xmg :: clearall   = Xmg :: CLEARALL;
   const std::string Xmg :: comment_string = "# ";
 
-  void Xmg :: init (const std::string &_f)
-  { 
-#ifdef _MPI
-    if ( not mpi::main.is_root_node() ) return;
-#endif 
-    filename = reformat_home( _f );
-    file.open( filename.c_str(), std::ios_base::out|std::ios_base::trunc ); 
-    is_empty = true;
-    if (file.fail() )
-    {
-      std::cerr << "Could not open " << filename << std::endl;
-      return;
-    }
-    do_print = true;
-    close();
-  }
-  bool Xmg :: open ()
-  {
-    if ( not do_print ) return true;
-    if ( file.is_open() ) return true;
-    file.open( filename.c_str(), std::ios_base::out|std::ios_base::app ); 
-    return file.is_open();
-  }    
-  void Xmg :: close ()
-  {
-    if ( not do_print ) return;
-    if ( not file.is_open() ) return;
-    flushall();
-    file.flush();
-    file.close();
-  }    
   void Xmg :: flushall ()
   {
     if ( not do_print ) return;
@@ -112,32 +81,6 @@ namespace Print
       case CLEARALL: stream.str(""); clear_all(); break;
     }
   }
-
-
-#ifdef _MPI
-#ifdef _PRINT_ALL_PROCS
-  void Xmg::sync_filename( std::string &_filename )
-  {
-    filename = _filename;
-    sync_filename();
-  }
-  void Xmg::sync_filename()
-  {
-    mpi::BroadCast bc( mpi::main );
-    bc << filename
-       << mpi::BroadCast::allocate
-       << filename
-       << mpi::BroadCast::broadcast
-       << filename;
-
-    if ( mpi::main.is_root_node() ) return;
-
-    init(filename);
-  }
-#endif
-#endif
-
-
 
   std::string make_commented_string( const std::string &_str )
   {

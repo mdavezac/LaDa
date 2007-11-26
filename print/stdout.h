@@ -8,87 +8,41 @@
 #include <config.h>
 #endif
 
-#include <string>
-#include <fstream>
 #include <list>
 
-#include "opt/types.h"
+#include <opt/types.h>
 #include <revision.h>
+
 #ifdef _MPI
-#include "mpi/mpi_object.h"
+#include <mpi/mpi_object.h>
 #endif
 
+#include "base.h"
 #include "operations.h"
 
 namespace Print
 {
   //! \brief Simply writes to file. 
-  //! \details In mpi codes and production compilation, only the root processor
-  //!          can write. In mpi codes with debug enables and the
-  //!          _PRINT_ALL_PROCS macro defined, each processor to its own file.
-  //!          The first line of the file is always the highest revision number
-  //!          found in LaDa. See max_revision.pl in the root directory of
-  //!          LaDa.
-  //!          StdOut accepts the standard interface of a stream.
+  //! \details StdOut accepts the standard interface of a stream.
   //!  \code
   //     Print::out << "whatever" << some_int << " and " << some_real << Print::endl;
   //!  \endcode
   //!          Note however that the standard formating operations have been
   //!          replaced with Print's very own. See Print::t_Operation for more
   //!          details.
-  class StdOut
+  class StdOut : public Base
   {
-    protected:
-      //! True if nothing has yet been written to file.
-      bool is_empty;
-      //! True if this processor should write.
-      bool do_print;
-      //! The name of the file to which to print.
-      std::string filename;
-      //! The file stream
-      std::ofstream file;
-
     public:
       //! Constructor
-      StdOut () : is_empty(true), do_print(false), filename("") {}
+      StdOut () : Base() {}
       //! Destructor
-      ~StdOut() { close(); }
+      ~StdOut() {}
       
-      //! Opens the file stream.
-      bool open();
-      //! Closes the file stream.
-      void close();
-
-      //! Returns the filename.
-      std::string get_filename() const { return filename; }
-      //! Returns true if the filename is not empty.
-      bool is_set() const { return not filename.empty(); }
-      //! Returns true if the file stream is opened.
-      bool is_open() { return do_print and file.is_open(); }
-      //! Sets the filename, checks that the file can be opened, and truncates the file.
-      void init(const std::string &_f) { if ( filename == _f ) return; init_(_f); }
       //! Handy printing operator in the fashion of standard library streams.
       template<class T_TYPE> inline StdOut& operator<< ( const T_TYPE &_whatever )
         { operator_( _whatever ); return *this; }
       //! A specializable operator<<(). Bit of a hack.
       template<class T_TYPE> inline void operator_ ( const T_TYPE &_whatever );
-#ifdef _MPI
-#ifndef _PRINT_ALL_PROCS
-      //! \ingroup MPI
-      //! Syncs filname across all procs.
-      void sync_filename() {}
-      //! \ingroup MPI
-      //! Syncs filname across all procs.
-      void sync_filename( std::string & ) {}
-#else
-      //! \ingroup MPI
-      //! Syncs filname across all procs.
-      void sync_filename();
-      //! \ingroup MPI
-      //! Syncs filname across all procs.
-      void sync_filename( std::string &_filename );
-#endif
-#endif
 
     private:
       //! Initializes new file.
