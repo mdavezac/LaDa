@@ -18,17 +18,18 @@
 
 #include "functional.h"
 
+#ifdef _DOXY_HOODWINKER_
 //! \ingroup Fortran
 //! \brief Prints out vff structure
-extern "C" void vff_print_structure_();
+  extern "C" void vff_print_structure();
 //! \ingroup Fortran
 //! \brief Prints out vff lattice
-extern "C" void vff_print_lattice_();
+  extern "C" void vff_print_lattice();
 //! \ingroup Fortran
 //! \brief Sets unit-cell of the vff structure.
-//! \details Since fortran is the point, the array is a column-major 3x3
-//!          matrix.
-extern "C" void vff_cell_( types::t_real* );
+//! \param  _cell Since fortran is the point, the array is a column-major 3x3
+//!               matrix.
+  extern "C" void vff_cell( types::t_real* _cell);
 //! \ingroup Fortran
 //! \brief Sets the atomic position and the type of the vff structure.
 //! \details This %function guesses the possible occupation of the lattice
@@ -39,20 +40,20 @@ extern "C" void vff_cell_( types::t_real* );
 //! \param _pos Array of types::t_real containing the cartesian coordinates of
 //!             the atoms. In fortran, \a _pos is something like the following,
 //!        \code
-//  real*8 :: _pos( 3, _n )
+//! real*8 :: _pos( 3, _n )
 //!        \endcode
 //!             Whereas in C, the indices are reversed
 //!        \code
-//  types::t_real _pos[_n][3];
+//! types::t_real _pos[_n][3];
 //!        \endcode
 //!  \param _type Contains the types of each atom. The order should be the same
 //!               as for pos. The string is expected to contain atomic symbols,
 //!               separatated by blanks or '-' characters. In fortran, one can
 //!               use an array of array of two characters.
 //!         \code
-//            character (len=2) :: At(_n)
+//!           character (len=2) :: At(_n)
 //!         \endcode
-extern "C" void vff_atoms_( types::t_int *_n,  types::t_real* _pos, char *_type );
+  extern "C" void vff_atoms( types::t_int *_n,  types::t_real* _pos, char *_type );
 //! \ingroup Fortran
 //! \brief Sets the two-body interaction parameters of the bond described by \a _bond.
 //! \param _bond chould an array characters with two atomic symbols separated
@@ -63,8 +64,7 @@ extern "C" void vff_atoms_( types::t_int *_n,  types::t_real* _pos, char *_type 
 //!                array should contain the quadratic bond-stretching
 //!                parameter, the second real-value of the array should contain
 //!                the cubic bond-stretching parameter, and so on.
-extern "C" void vff_bond_( char *_bond, types::t_real *_d0,
-                           types::t_real *_alphas ); 
+  extern "C" void vff_bond( char *_bond, types::t_real *_d0, types::t_real *_alphas ); 
 //! \ingroup Fortran
 //! \brief Sets the three body interactions of the three atoms described by \a _angle
 //! \param _angle chould an array characters with three atomic symbols separated
@@ -78,23 +78,40 @@ extern "C" void vff_bond_( char *_bond, types::t_real *_d0,
 //!                array should contain the quadratic bond-bending
 //!                parameter, the second real-value of the array should contain
 //!                the cubic bond-bending parameter, and so on.
-extern "C" void vff_angle_( char *_angle, types::t_real *_gamma, 
-                            types::t_real *_sigma, types::t_real *_betas );
+  extern "C" void vff_angle( char *_angle, types::t_real *_gamma, 
+                             types::t_real *_sigma, types::t_real *_betas );
 //! \ingroup Fortran
 //! \brief Creates the vff object.
 //! \details It is imperative to call this %function before all others.
-extern "C" void vff_create_();
+  extern "C" void vff_create();
 //! \ingroup Fortran
 //! \brief Destroys the vff object.
 //! \details This must be the last %function called.
-extern "C" void vff_destroy_();
+  extern "C" void vff_destroy();
 //! \ingroup Fortran
 //! \brief Minimizes the structure and stores the \a _energy [eV].
-extern "C" void vff_minimize_( types::t_real *_energy );
+  extern "C" void vff_minimize( types::t_real *_energy );
 //! \ingroup Fortran
 //! \brief Sets the scale of the cartesian units used in the structure and
 //!        lattice.
-extern "C" void vff_scale_( types::t_real* _scale );
+  extern "C" void vff_scale( types::t_real* _scale );
+#endif // _DOXY_HOODWINKER_
+
+//! \cond 
+extern "C" void FC_FUNC_(vff_print_structure, VFF_PRINT_STRUCTURE)();
+extern "C" void FC_FUNC_(vff_print_lattice, VFF_PRINT_LATTICE)();
+extern "C" void FC_FUNC_(vff_cell, VFF_CELL)( types::t_real* );
+extern "C" void FC_FUNC_(vff_atoms, VFF_ATOMS)( types::t_int *_n, 
+                                                types::t_real* _pos, char *_type );
+extern "C" void FC_FUNC_(vff_bond, VFF_BOND)( char *_bond, types::t_real *_d0,
+                                              types::t_real *_alphas ); 
+extern "C" void FC_FUNC_(vff_angle, VFF_ANGLE)( char *_angle, types::t_real *_gamma, 
+                                                types::t_real *_sigma, types::t_real *_betas );
+extern "C" void FC_FUNC_(vff_create, VFF_CREATE)();
+extern "C" void FC_FUNC_(vff_destroy, VFF_DESTROY)();
+extern "C" void FC_FUNC_(vff_minimize, VFF_MINIMIZE)( types::t_real *_energy );
+extern "C" void FC_FUNC_(vff_scale, VFF_SCALE)( types::t_real* _scale );
+//! \endcond
 
 namespace Vff
 {
@@ -102,7 +119,7 @@ namespace Vff
   //! \brief Interface object for fortran.
   //! \details This object is specialized for fcc lattices with two
   //!          atomic-sites (see Fortran::Fortran() ). An instance of this
-  //!          object, pointed to by Vff::fortran, is created by vff_create_().
+  //!          object, pointed to by Vff::fortran, is created by vff_create().
   //!          It is upon this instance that all the "C" functions of the
   //!          fortran interface will act.
   class Fortran : public Functional
@@ -129,7 +146,7 @@ namespace Vff
       //!          matrix.
       void set_cell( types::t_real *_array );
       //! \brief Sets the atomic positions.
-      //! \see vff_atom_()
+      //! \see vff_atom()
       void set_atoms( types::t_int n, types::t_real *_positions, char *_type );
 
       //! \brief sets the parameters of bond interactions.

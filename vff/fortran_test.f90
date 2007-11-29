@@ -53,7 +53,7 @@ program main
 
   print *, "result= ", energy
   call vff_print_structure()
-! call vff_print_lattice()
+! call vff_print_lattice_()
 
 
   call vff_destroy()

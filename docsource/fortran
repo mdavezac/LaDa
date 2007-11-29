@@ -20,8 +20,8 @@
   The only unknown are the possible occupations of each site. At this point,
   modifying the lattice is \e not an option. Begging can help.
 
-  Note that the "C" name of all the functions below contains an "_" which does
-not appear in the fortran calls.
+  \note The functions appear below with their "Fortran" name. Their "C" names are
+        automatically mangled by autotool defined macros.
 
   \section First First step, initializing the vff interface
   Before anything else, the vff interface must be iniatialized. The following
@@ -35,13 +35,13 @@ Vff::fortran. This object is not directly accessible in fortran.
 
   \section Second Second step, Setting the structure.
   The structure must be set using three %function calls
-    - vff_scale_()
-    - vff_cell_()
-    - vff_atoms_()
+    - vff_scale()
+    - vff_cell()
+    - vff_atoms()
     .
   \warning vff_atoms_() must be called after the other two.
 
-  vff__scale_() simply sets the unit the cartesian units used when giving the
+  vff__scale() simply sets the unit the cartesian units used when giving the
 atomic-positions and the unit-cell of the structure. It must be coherent with
 the lattice as given above.
   \code
@@ -96,14 +96,14 @@ array of strings as in the code above.
 
   All the atoms of the structure must be given at the same time. 
 
-  Each time vff_atoms_() is called, vff is reinitialized to work with that
+  Each time vff_atoms() is called, vff is reinitialized to work with that
 structure (both atomic positions and occupations). It can be called as many
 times as necessary.
    
 
   \section Third Third step, Setting the Vff parameters
   The valence force-field functional contains two and three body terms. These
-are set independently by vff_bond_() and vff_angle_() respectively. 
+are set independently by vff_bond() and vff_angle() respectively. 
 Each two and three body interaction must be set independently. Eg, vff_bond
 must be called for each possible type of bond. More explicitely, in an InGaAsSb
 quaternary, the bond parameters would be set in the following way,
@@ -116,7 +116,7 @@ quaternary, the bond parameters would be set in the following way,
   alphas(1) = 41.190; call vff_bond( "Ga-As", bondlength, alphas )
   alphas(1) = 33.160; call vff_bond( "Ga-Sb", 2.640d0, alphas )
   \endcode
-  The first parameter of vff_bond_() describes the bond for which to set the
+  The first parameter of vff_bond() describes the bond for which to set the
 parameters. It is a string of two atomic symbols which can be separated by
 nothing, or any number of blank and '-' characters. The order of the symbols
 does not matter (eg "In-As" == " As In" ). 
@@ -155,7 +155,7 @@ respectively.
   The fourth argument is an array of 5 (no more, no less) real values
 containing the angle deformation parameters, starting with the quadratic term.
 
-  Both vff_angle_() and vff_bond_() can be called any number of times. All
+  Both vff_angle() and vff_bond() can be called any number of times. All
 possible bond types and angle types should be set prior to minimization.
 Changing any bond or angle will not upset the parameters of any other bond or
 angle.
@@ -177,12 +177,12 @@ angle.
     print *, "Energy in eV ", energy
 
   \endcode
-  vff_minimize_() will minimize the strain energy structure and return the
+  vff_minimize() will minimize the strain energy structure and return the
  it (in eV) through the first argument.
-  vff_print_structure_() and vff_print_lattice_() will dump the structure and
+  vff_print_structure() and vff_print_lattice() will dump the structure and
 lattice to the standard output.
 
-   vff_minimizer_() can be called any number of times. Eg the following should work:
+   vff_minimizer() can be called any number of times. Eg the following should work:
   \code
     ! Step 1 above
     ! Followed by  step two

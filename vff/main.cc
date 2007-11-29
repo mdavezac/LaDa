@@ -7,10 +7,14 @@
 #include "functional.h"
 #include <lamarck/lattice.h>
 #include <lamarck/structure.h>
+#ifdef _DOFORTRAN_
 #include <opt/opt_frprmn.h>
-#include <opt/gsl_minimizers.h>
+#else
+#include <opt/opt_minimize_gsl.h>
+#endif
 
 
+#ifdef _DOFORTRAN_
 extern "C" {
   double call_it( const double* const _x,
                   double* const _y)
@@ -22,8 +26,7 @@ extern "C" {
       return 0;
     }
 
-    if ( not this_func )
-      return 0;
+    if ( not this_func )  return 0;
 
     const double *i_x_copy = _x;
     const double *i_x_end = _x + this_func->size();
@@ -32,6 +35,7 @@ extern "C" {
     return result;
   }
 }
+#endif
 
 int main(int argc, char *argv[]) 
 {
@@ -100,10 +104,15 @@ int main(int argc, char *argv[])
     }
     vff.initialize_centers();
     
-    Minimizer::GnuSL<Vff::Functional> minimizer( vff );
+#ifdef _DOFORTRAN_
+    minimizer::Frpr<Vff::Functional> minimizer( vff, call_it );
+    call_it( (const double*) &vff, 0 );
+#else
+    minimizer::GnuSL<Vff::Functional> minimizer( vff );
+#endif
     child = handle.FirstChild( "Job" ).Element();
     minimizer.Load(*child);
-    minimizer.minimize();
+    minimizer();
     structure.energy = vff.energy() / 16.0217733;
     const atat::rMatrix3d stress = vff.get_stress();
     std::cout << std::fixed << std::setprecision(5) 

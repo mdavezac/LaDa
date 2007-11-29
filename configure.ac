@@ -5,12 +5,8 @@ AM_INIT_AUTOMAKE(LaDa,3.0)
 # fi
 
 AC_PROG_CC
-AX_COMPILER_VENDOR
 AC_PROG_CXX
 
-AC_PROG_FC(gfortran)
-#AC_PROG_F77(g95)
-#AC_PROG_FC(g95)
 AC_PROG_INSTALL
 
 AM_CONFIG_HEADER(config.h)
@@ -25,6 +21,13 @@ AH_TOP([
 #define HAVE_SSTREAM
 #endif])
 
+AC_ARG_ENABLE(fortran,
+     [  --enable-fortran    Turn on fortran code snipets],
+     [case "${enableval}" in
+       yes) fortran=true ;;
+       no)  fortran=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-fortran) ;;
+     esac],[fortran=true])
 
 AC_ARG_ENABLE(vff,
      [  --enable-vff    Turn on vff],
@@ -82,6 +85,18 @@ AC_ARG_ENABLE(debug,
   *) AC_MSG_ERROR(bad value ${enableval} for --enable-debug) ;;
 esac],[debug=true])
 AH_TEMPLATE([_PRINT_ALL_PROCS])
+
+if test $fortran=true; then
+  AC_PROG_FC
+  NREL_AC_PROG_FCPP
+  AC_FC_LIBRARY_LDFLAGS
+  AH_TEMPLATE([_DOFORTRAN_])
+  AC_DEFINE([_DOFORTRAN_],[],[])
+  # turn on automatic name mangling
+  AC_FC_WRAPPERS
+fi
+
+AX_COMPILER_VENDOR
 
 # enables vff and pescan for GA
 if test x$pdarwin = xtrue || test x$molecularity = xtrue; then
@@ -158,6 +173,7 @@ AM_CONDITIONAL(DOVFF, test x$vff = xtrue)
 AM_CONDITIONAL(DOPDARWIN, test x$pdarwin = xtrue)
 AM_CONDITIONAL(NOLAUNCH, test x$nolaunch = xtrue)
 AM_CONDITIONAL(DODARWIN, test x$galib = xtrue)
+AM_CONDITIONAL(DOFORTRAN, test x$fortran = xtrue)
 
 #  gsl libs iff vff is enabled 
 if test x$vff = xtrue; then
@@ -210,7 +226,8 @@ if test "$ac_cv_cxx_have_stl" = yes; then
   case "$ax_cv_c_compiler_vendor" in 
     gnu) LIBS=" ${LIBS} -lstdc++";;
     intel) LIBS=" ${LIBS} -lstdc++ -lcxa -lcxaguard";;
-    ibm) FFLAGS="-qsuffix=f=f90";;
+    ibm) FFLAGS="-qsuffix=f=f90 -lC";;
+    portland) LIBS=" ${LIBS} -L/usr/lib -lstdc++ ";;
   esac
  else
    AC_MSG_ERROR("Could not find standard template libraries")
