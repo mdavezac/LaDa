@@ -55,8 +55,8 @@ namespace Vff
 
     // Computes center of Mass
     // frozen (i.e. three components of the atomic positions )
-    std::vector< Ising_CE::Atom > :: iterator i_atom =  structure0.atoms.begin();
-    std::vector< Ising_CE::Atom > :: iterator i_atom_end =  structure0.atoms.end();
+    t_Atoms :: iterator i_atom =  structure0.atoms.begin();
+    t_Atoms :: iterator i_atom_end =  structure0.atoms.end();
     center_of_mass = atat::rVector3d(0,0,0);
     for(; i_atom != i_atom_end; ++i_atom )
       center_of_mass += (!structure0.cell) * i_atom->pos;
@@ -67,9 +67,9 @@ namespace Vff
     for( i_atom = structure0.atoms.begin(); 
          i_atom != i_atom_end; ++i_atom ) 
     {
-      if ( not (i_atom->freeze & Ising_CE::Atom::FREEZE_X ) ) ++dof;
-      if ( not (i_atom->freeze & Ising_CE::Atom::FREEZE_Y ) ) ++dof;
-      if ( not (i_atom->freeze & Ising_CE::Atom::FREEZE_Z ) ) ++dof;
+      if ( not (i_atom->freeze & t_Atom::FREEZE_X ) ) ++dof;
+      if ( not (i_atom->freeze & t_Atom::FREEZE_Y ) ) ++dof;
+      if ( not (i_atom->freeze & t_Atom::FREEZE_Z ) ) ++dof;
     }
     if ( not dof )
     {
@@ -98,15 +98,15 @@ namespace Vff
     *i_var = u * (_strain * u) - 1.0;
     ++i_var;
 
-    std::vector< Ising_CE::Atom > :: const_iterator i_atom =  structure0.atoms.begin();
-    std::vector< Ising_CE::Atom > :: const_iterator i_atom_end =  structure0.atoms.end();
+    t_Atoms :: const_iterator i_atom =  structure0.atoms.begin();
+    t_Atoms :: const_iterator i_atom_end =  structure0.atoms.end();
     for(; i_atom != i_atom_end; ++i_atom )
     {
-      if ( not (i_atom->freeze & Ising_CE::Atom::FREEZE_X ) )
+      if ( not (i_atom->freeze & t_Atom::FREEZE_X ) )
         *i_var = i_atom->pos[0] * 0.5, ++i_var;
-      if ( not (i_atom->freeze & Ising_CE::Atom::FREEZE_Y ) )
+      if ( not (i_atom->freeze & t_Atom::FREEZE_Y ) )
         *i_var = i_atom->pos[1] * 0.5, ++i_var;
-      if ( not (i_atom->freeze & Ising_CE::Atom::FREEZE_Z ) )
+      if ( not (i_atom->freeze & t_Atom::FREEZE_Z ) )
         *i_var = i_atom->pos[2] * 0.5, ++i_var;
     }
   }
@@ -131,19 +131,19 @@ namespace Vff
 //             << " cell: " << std::endl << structure.cell << std::endl;
 
     // then computes positions
-    std::vector<Ising_CE::Atom> :: const_iterator i_atom0 = structure0.atoms.begin();
-    std::vector<Ising_CE::Atom> :: iterator i_atom = structure.atoms.begin();
-    std::vector<Ising_CE::Atom> :: iterator i_atom_end = structure.atoms.end();
+    t_Atoms :: const_iterator i_atom0 = structure0.atoms.begin();
+    t_Atoms :: iterator i_atom = structure.atoms.begin();
+    t_Atoms :: iterator i_atom_end = structure.atoms.end();
     atat::rVector3d com(0,0,0);
     atat::rMatrix3d cell_inv = !structure.cell;
     for(++i_x; i_atom != i_atom_end; ++i_atom, ++i_atom0 )
     {
       atat::rVector3d pos;
-      pos[0] = ( i_atom0->freeze & Ising_CE::Atom::FREEZE_X ) ?
+      pos[0] = ( i_atom0->freeze & t_Atom::FREEZE_X ) ?
                i_atom0->pos[0] : 2.0 * (*i_x++);
-      pos[1] = ( i_atom0->freeze & Ising_CE::Atom::FREEZE_Y ) ?
+      pos[1] = ( i_atom0->freeze & t_Atom::FREEZE_Y ) ?
                i_atom0->pos[1] : 2.0 * (*i_x++);
-      pos[2] = ( i_atom0->freeze & Ising_CE::Atom::FREEZE_Z ) ?
+      pos[2] = ( i_atom0->freeze & t_Atom::FREEZE_Z ) ?
                i_atom0->pos[2] : 2.0 * (*i_x++);
       i_atom->pos = strain * pos;
       com -= cell_inv * i_atom->pos;

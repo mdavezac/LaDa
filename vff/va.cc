@@ -47,33 +47,6 @@ namespace Vff
     return minimizer.Load( *parent->Parent()->ToElement() );
   }
 
-  bool VirtualAtom :: init()
-  {
-    va_vars.clear();
-    va_vars.reserve( structure.atoms.size() );
-    typedef Ising_CE :: Structure :: t_Atoms :: const_iterator t_ci;
-    t_ci i_atom = structure.atoms.begin();
-    t_ci i_atom_end = structure.atoms.end();
-    for(; i_atom != i_atom_end; ++i_atom )
-      if( not ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) ) 
-        va_vars.push_back( i_atom->type );
-
-    return not va_vars.empty();
-  }
-
-  void VirtualAtom :: unpack_variables()
-  {
-    Ising_CE :: Structure :: t_Atoms :: iterator i_atom = structure.atoms.begin();
-    Ising_CE :: Structure :: t_Atoms :: iterator i_atom_end = structure.atoms.end();
-    t_Container :: const_iterator i_var = va_vars.begin();
-    for(; i_atom != i_atom_end; ++i_atom )
-    {
-      if( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) continue;
-
-      i_atom->type = *i_var > t_Type(0) ? 1.0: -1.0;
-      ++i_var;
-    }
-  }
 
   VirtualAtom :: t_Type VirtualAtom :: evaluate()
   {
@@ -94,7 +67,7 @@ namespace Vff
     std::vector< Atomic_Center > :: iterator i_center = centers.begin();
     std::vector< Atomic_Center > :: iterator i_center_end = centers.end();
     for(; _pos and i_center != i_center_end; ++i_center )
-      if( not (i_center->Origin().freeze & Ising_CE::Structure::t_Atom::FREEZE_NONE) )
+      if( not (i_center->Origin().freeze & t_Atom::FREEZE_NONE) )
         --_pos;
 
     t_Type result = functionals[i_center->kind()].evaluate( *i_center );
@@ -113,7 +86,7 @@ namespace Vff
     std::vector< Atomic_Center > :: iterator i_center_end = centers.end();
     for(; i_center != i_center_end; ++i_center )
     {
-      if( i_center->Origin().freeze & Ising_CE::Structure::t_Atom::FREEZE_NONE )
+      if( i_center->Origin().freeze & t_Atom::FREEZE_NONE )
         continue;
 
       *i_grad = functionals[i_center->kind()].evaluate( *i_center );
@@ -135,7 +108,7 @@ namespace Vff
     std::vector< Atomic_Center > :: iterator i_center_end = centers.end();
     for(; i_center != i_center_end; ++i_center )
     {
-      if( i_center->Origin().freeze & Ising_CE::Structure::t_Atom::FREEZE_NONE ) 
+      if( i_center->Origin().freeze & t_Atom::FREEZE_NONE ) 
       {
         result += functionals[i_center->kind()].evaluate( *i_center );
         continue;

@@ -27,6 +27,10 @@ namespace Vff
   //!      optimization as implemented in Darwin::Molecularity. 
   class Layered : public Vff::Functional
   {
+    //! The type of the atom  
+    typedef Ising_CE::Structure::t_Atom  t_Atom;
+    //! The type of the atom container
+    typedef Ising_CE::Structure::t_Atoms t_Atoms;
 #ifdef _MPI
     /// \cond
     friend bool mpi::BroadCast::serialize<Vff::Layered> ( Vff::Layered& );
@@ -38,6 +42,16 @@ namespace Vff
       typedef t_Base::t_Container t_Container;  //!< see Functional::Base
       typedef t_Container :: iterator iterator; //!< see Functional::Base
       typedef t_Container :: const_iterator const_iterator; //!< see Functional::Base
+
+    protected:
+      //! Type of the container holding the atomic centers
+      typedef typename t_Base::t_Centers t_Centers;  
+      //! Type of the atomic centers
+      typedef typename t_Centers::value_type t_Center;  
+      //! Type of the container holding the atomic functionals
+      typedef typename t_Base::t_AtomicFunctionals t_AtomicFunctionals;  
+      //! Type of the atomic functionals
+      typedef typename t_AtomicFunctionals::value_type t_AtomicFunctional;  
 
     protected:
       //! Direction in which to allow lattice-cell relaxation
@@ -128,18 +142,18 @@ namespace Vff
     ++i_grad;
 
     // then atomic position stuff
-    std::vector<Atomic_Center> :: const_iterator i_center = centers.begin();
-    std::vector<Atomic_Center> :: const_iterator i_end = centers.end();
-    std::vector<Ising_CE::Atom> :: const_iterator i_atom0 = structure0.atoms.begin();
+    t_Centers :: const_iterator i_center = centers.begin();
+    t_Centers :: const_iterator i_end = centers.end();
+    t_Atoms :: const_iterator i_atom0 = structure0.atoms.begin();
     i_center = centers.begin();
     for (; i_center != i_end; ++i_center, ++i_atom0)
     {
       const atat::rVector3d& gradient = i_center->get_gradient();
-      if ( not (i_atom0->freeze & Ising_CE::Atom::FREEZE_X) ) 
+      if ( not (i_atom0->freeze & t_Atom::FREEZE_X) ) 
         *i_grad = gradient[0], ++i_grad;
-      if ( not (i_atom0->freeze & Ising_CE::Atom::FREEZE_Y) ) 
+      if ( not (i_atom0->freeze & t_Atom::FREEZE_Y) ) 
         *i_grad = gradient[1], ++i_grad;
-      if ( not (i_atom0->freeze & Ising_CE::Atom::FREEZE_Z) ) 
+      if ( not (i_atom0->freeze & t_Atom::FREEZE_Z) ) 
         *i_grad = gradient[2], ++i_grad;
     }
   }
@@ -149,7 +163,7 @@ namespace Vff
   {
     t_Type energy = 0;
     std::for_each( centers.begin(), centers.end(),
-                   std::mem_fun_ref(&Atomic_Center::reset_gradient) );
+                   std::mem_fun_ref(&t_Center::reset_gradient) );
 
     // unpacks variables into vff atomic_center and strain format
     unpack_variables(strain);
@@ -158,8 +172,8 @@ namespace Vff
     atat::rMatrix3d K0 = (!(~strain));
 
     // computes energy and gradient
-    std::vector<Atomic_Center> :: iterator i_center = centers.begin();
-    std::vector<Atomic_Center> :: iterator i_end = centers.end();
+    t_Centers :: iterator i_center = centers.begin();
+    t_Centers :: iterator i_end = centers.end();
     stress.zero();
     for (; i_center != i_end; ++i_center)
       energy += functionals[i_center->kind()].

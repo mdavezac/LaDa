@@ -44,7 +44,7 @@
 //!          The band gap can be obtained from a complete all-electron
 //!          diagonalization or, more efficiently, through a partial
 //!          diagonalization using the folded spectrum method (see <A
-//!          HREF="http://dx.doi.or/10.1103/PhysRevB.51.17398"> L-W Wang and A.
+//!          HREF="http://dx.doi.org/10.1103/PhysRevB.51.17398"> L-W Wang and A.
 //!          Zunger PRB \b 51, 17398 (1995) </A>). The latter needs two
 //!          reference energies to do find the band-gap. If these are \b not
 //!          given on input, Pescan::Darwin will first perform a full

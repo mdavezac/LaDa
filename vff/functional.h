@@ -45,10 +45,10 @@ namespace Vff
 
   class Functional;
 
-  //! \brief Represents a single Atom and its first neighbor relationships
+  //! \brief Represents a single Structure::t_Atom and its first neighbor relationships
   //! \details This class is meant to be used in conjunction with a list of
-  //! Ising_CE::Atom, most likely in a Ising_CE::Structure. It contains a
-  //! pointer, Atomic_Center::origin, which points a single Ising_CE::Atom. The
+  //! Ising_CE::Structure::t_Atom, most likely in a Ising_CE::Structure. It contains a
+  //! pointer, Atomic_Center::origin, which points a single Ising_CE::Structure::t_Atom. The
   //! first neighbor bonds of this atom are collected as vector of pointers to
   //! Vff::Atomic_Center objects in Atomic_Center::bonds. Since we are concerned
   //! with periodic structures, Atomic_Center::translations and
@@ -57,11 +57,14 @@ namespace Vff
   class Atomic_Center
   {
     friend class Functional;
+    //! The type of the atom  
+    typedef Ising_CE::Structure::t_Atom  t_Atom;
+
     public:
       class const_iterator;
-
+      
     protected:
-      Ising_CE::Atom *origin; //!< The atom this object is addressing
+      t_Atom *origin; //!< The atom this object is addressing
       //! \brief Other Vff::Atomic_Center objects with which this one is in a bond-relationship
       //! \details Via bonds, a collection of Atomic_Center can be made into a tree,
       //! which can be travelled linearly, or through the first neighbor bonds,
@@ -88,7 +91,7 @@ namespace Vff
       //! \param _str structure in which \a _e can be found
       //! \param _e atom to which this Atomic_Center relates
       //! \param _i index of _i in _str.atoms collection. Usefull for mpi processing
-      Atomic_Center ( Ising_CE::Structure &_str, Ising_CE::Atom &_e, types::t_unsigned _i);
+      Atomic_Center ( Ising_CE::Structure &_str, t_Atom &_e, types::t_unsigned _i);
       //! \brief Copy Constructor
       //! \param[in] _c Atomic_Center object to copy
       Atomic_Center   ( const Atomic_Center &_c )
@@ -140,10 +143,10 @@ namespace Vff
       operator const atat::rVector3d& () const
         { return origin->pos; }
       //! Returns the atom at the origin
-      Ising_CE::Atom& Origin()
+      t_Atom& Origin()
         { return *origin; }
       //! Returns the atom at the origin, constant format
-      const Ising_CE::Atom& Origin() const
+      const t_Atom& Origin() const
         { return *origin; }
       //! Returns the gradient place holder
       atat::rVector3d& get_gradient()
@@ -176,6 +179,9 @@ namespace Vff
   //! can easily travel throughout the mesh via first neighbor relationships.
   class Atomic_Center :: const_iterator
   {
+    //! The type of the atom  
+    typedef Ising_CE::Structure::t_Atom  t_Atom;
+
     protected:
       //! current origin of the bonds
       const Atomic_Center *parent;
@@ -288,7 +294,7 @@ namespace Vff
         { return parent->bond_kind( *(*i_bond) ); }
       //! \brief Returns the atom at the origin of range of bonds this iterator travels
       //! \see Atomic_Center::const_iterator::parent 
-      Ising_CE::Atom& Origin()
+      t_Atom& Origin()
         { return ((*i_bond)->Origin()); }
       //! \brief Translates a vector _v by periodic image of enpoint of bond
       //! \param _v vector to translate
@@ -308,6 +314,8 @@ namespace Vff
   //! first-neighbor two and three body interactions, on an Vff:;Atomic_Center atom.
   class Atomic_Functional 
   {
+    //! The type of the atom  
+    typedef Ising_CE::Structure::t_Atom  t_Atom;
 #ifdef _MPI
     /// \cond
     friend bool mpi::BroadCast::serialize<Vff::Atomic_Functional> ( Vff::Atomic_Functional& );
@@ -502,6 +510,10 @@ namespace Vff
   //! \endcode
   class Functional : public function :: Base<types::t_real, std::vector<types::t_real> >
   {
+    //! The type of the atom  
+    typedef Ising_CE::Structure::t_Atom  t_Atom;
+    //! The type of the atom container
+    typedef Ising_CE::Structure::t_Atoms t_Atoms;
 #ifdef _MPI
     /// \cond
     friend bool mpi::BroadCast::serialize<Vff::Functional> ( Vff::Functional& );
@@ -514,14 +526,21 @@ namespace Vff
       typedef t_Container :: const_iterator const_iterator; //!< see Functional::Base
 
     protected:
+      //! Type of the container holding the atomic centers
+      typedef std::vector< Atomic_Center > t_Centers;  
+      //! Type of the container holding the atomic functionals
+      typedef std::vector< Atomic_Functional > t_AtomicFunctionals;  
+
+
+    protected:
       //! Ising_CE::Structure for which to compute energy and stress
       Ising_CE :: Structure &structure;
       Ising_CE :: Structure structure0; //!< original structure,  needed for gradients
       types::t_real bond_cutoff; //!< length below which first-neighbor relationship is defined
       //! list of all Atomic_Center created from Functional::structure
-      std::vector< Atomic_Center > centers;  
+      t_Centers centers;  
       //! list of all possbile Atomic_Functionals for Functional::structure.lattice
-      std::vector< Atomic_Functional > functionals;
+      t_AtomicFunctionals functionals;
       atat::rMatrix3d stress; //!< stores stress in Functional::structure after computation
       atat::rMatrix3d strain; //!< stores stress in Functional::structure after computation
       atat::rVector3d center_of_mass; //!< center of mass of atoms in Functional::structure
@@ -673,18 +692,18 @@ namespace Vff
       *i_grad = 0.5 * (_stress(1,2) + _stress(2,1)), ++i_grad;
 
     // then atomic position stuff
-    std::vector<Atomic_Center> :: const_iterator i_center = centers.begin();
-    std::vector<Atomic_Center> :: const_iterator i_end = centers.end();
-    std::vector<Ising_CE::Atom> :: const_iterator i_atom0 = structure0.atoms.begin();
+    t_Centers :: const_iterator i_center = centers.begin();
+    t_Centers :: const_iterator i_end = centers.end();
+    t_Atoms :: const_iterator i_atom0 = structure0.atoms.begin();
     i_center = centers.begin();
     for (; i_center != i_end; ++i_center, ++i_atom0)
     {
       const atat::rVector3d& gradient = i_center->get_gradient();
-      if ( not (i_atom0->freeze & Ising_CE::Atom::FREEZE_X) ) 
+      if ( not (i_atom0->freeze & t_Atom::FREEZE_X) ) 
         *i_grad = gradient[0], ++i_grad;
-      if ( not (i_atom0->freeze & Ising_CE::Atom::FREEZE_Y) ) 
+      if ( not (i_atom0->freeze & t_Atom::FREEZE_Y) ) 
         *i_grad = gradient[1], ++i_grad;
-      if ( not (i_atom0->freeze & Ising_CE::Atom::FREEZE_Z) ) 
+      if ( not (i_atom0->freeze & t_Atom::FREEZE_Z) ) 
         *i_grad = gradient[2], ++i_grad;
     }
   }

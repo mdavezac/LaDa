@@ -45,8 +45,6 @@ namespace Print
       template<class T_TYPE> inline void operator_ ( const T_TYPE &_whatever );
 
     private:
-      //! Initializes new file.
-      void init_(const std::string &_f);
       //! \brief Checks that the stream is open.
       //! \details If the file is empty, prints the revision number.
       void do_checks()

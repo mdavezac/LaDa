@@ -21,6 +21,19 @@
 #include <mpi/mpi_object.h>
 #endif
 
+//! \brief Holds everything pescan
+//! \details Escan is a semi-empirical potential code capable of computing
+//!          eigenvalues and related quantities for structure containing
+//!          thousands of atoms. The Hamiltonian is constructed from
+//!          pseudo-potentials which are fitted to LDA values and corrected for
+//!          the infamous LDA errors. It reproduces total energies to a feww
+//!          meVs and wavefunction with mean overlap with LDA wavefunctions of
+//!          99%. For more information, see <A
+//!          HREF="http://dx.doi.org/10.1103/PhysRevB.51.17398"> L-W Wang and
+//!          A.  Zunger PRB \b 51, 17398 (1995) </A>, and <A
+//!          HREF="http://dx.doi.org/10.1103/PhysRevB.66.045208"> K. Kim. P. R.
+//!          C. Kent, Alex Zunger and C. B. Geller, PRB \b 66, 045208 (2002)
+//!          </A>. 
 namespace Pescan
 {
 
@@ -110,12 +123,16 @@ namespace Pescan
       std::string filename;
       //! Name of the pescan output
       std::string output;
-      //! Stub name for wavefunction files
-      std::string wavefunction;
+      //! Stub name for output wavefunction files
+      std::string wavefunction_out;
+      //! Stub name for input wavefunction files
+      std::string wavefunction_in;
       //! Eigenvalue solution method.
       t_method method;
       //! Reference energy for folded spectrum method
       Bands Eref;
+      //! \brief Index of VBM and CBM wavefunctions
+      std::pair<types::t_unsigned> wfn_index;
       //! Kinetic scaling factor for plane-wave cutoff
       types::t_real kinscal;
       //! Smoothness fcator plane-wave cutoff
@@ -142,7 +159,8 @@ namespace Pescan
       std::vector<SpinOrbit> spinorbit;
 
       //! Constructor.
-      Escan () : filename("escan.input"), output("escan.out"), wavefunction("wg.cbm"), 
+      Escan () : filename("escan.input"), output("escan.out"),
+                 wavefunction_out("wavefunction"), wavefunction_in("wavefunction"),
                  method(FOLDED_SPECTRUM), Eref(0,0), smooth(0.5), kinscal(0.0), nbstates(3),
                  niter(10), nlines(50), tolerance(types::tolerance),
                  kpoint(0,0,0), scale(0), potential(LOCAL), rcut(0), 
@@ -183,11 +201,14 @@ namespace Pescan
       Bands bands;
       //! Whether to delete directory where computations are being performed.
       bool do_destroy_dir;
+      //! Whether to input wavefunctions
+      bool do_input_wavefunctions;
 
     public:
       //! Constructor
       Interface () : atom_input("atom.config"), genpot(), escan(),
-                     computation(VBM), do_destroy_dir(true) {}
+                     computation(VBM), do_destroy_dir(true),
+                     do_input_wavefunctions(false) {}
       //! Destructor
      ~Interface() {};
 
@@ -217,12 +238,19 @@ namespace Pescan
        { escan.method = _method; }
      //! Sets the name of the atomic configuration input file from Vff.
      void set_atom_input( const std::string &_str ) { atom_input = _str; }
+     //! \brief sets and codes name of output wavefunctions according to calculation
+     //! \details If \a _name is not empty, Escan::wavefunction_out is set to \a _name.
+     //!          The function returns a name which codes for the kind of
+     //!          computation done
+     const std::string &wfn_name(const std::string _name);
+     //! Destroys directory for computations.
+     void destroy_directory();
 
     protected:
      //! Creates directory for computations.
      void create_directory();
-     //! Destroys directory for computations.
-     void destroy_directory();
+     //! Destroys directory for computations, depending on Interface::do_destroy_dir
+     void destroy_directory_() { if (do_destroy_dir) destroy_diretory(); }
      //! Interfaces to potential creation
      void create_potential();
      //! Writes escan parameter input.
@@ -232,6 +260,16 @@ namespace Pescan
      //! Reads results from escan output.
      types::t_real read_result( Ising_CE::Structure &_str );
   };
+
+
+  inline const std::string Interface :: wfn_name(std::string _name)
+  {
+    if( escan.method == FOLDED_SPECTRUM )
+      _name +=  "." + (computation == VBM ? "vbm": "cbm" )
+    else
+      _name +=  ".ae";
+    return _name;
+  }
 
 } // namespace pescan_interface
 

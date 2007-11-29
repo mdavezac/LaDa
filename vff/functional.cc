@@ -47,8 +47,8 @@ namespace Vff
     centers.clear();
     
     // Creates a list of centers
-    std::vector< Ising_CE::Atom > :: iterator i_atom = structure.atoms.begin();
-    std::vector< Ising_CE::Atom > :: iterator i_atom_end = structure.atoms.end();
+    t_Atoms :: iterator i_atom = structure.atoms.begin();
+    t_Atoms :: iterator i_atom_end = structure.atoms.end();
 
     for(types::t_unsigned index=0; i_atom != i_atom_end; ++i_atom, ++index )
       centers.push_back( Atomic_Center( structure, *i_atom, index ) );
@@ -89,12 +89,12 @@ namespace Vff
     // And reduces to first neighbors only
     neighbors.resize(4*structure.lattice->sites.size());
 
-    std::vector< Atomic_Center > :: iterator i_begin = centers.begin();
-    std::vector< Atomic_Center > :: iterator i_end = centers.end();
-    std::vector< Atomic_Center > :: iterator i_center, i_bond;
-            atat::rVector3d image;
-            atat::rVector3d frac_image;
-            atat::rVector3d cut;
+    t_Centers :: iterator i_begin = centers.begin();
+    t_Centers :: iterator i_end = centers.end();
+    t_Centers :: iterator i_center, i_bond;
+    atat::rVector3d image;
+    atat::rVector3d frac_image;
+    atat::rVector3d cut;
     cut = neighbors.front();
     types::t_real cutoff = 0.25 * atat::norm2( neighbors.front() );
     for( i_center = i_begin; i_center != i_end; ++i_center )
@@ -129,15 +129,15 @@ namespace Vff
   {
     centers.clear();
     
-    std::vector< Ising_CE::Atom > :: iterator i_atom = structure.atoms.begin();
-    std::vector< Ising_CE::Atom > :: iterator i_atom_end = structure.atoms.end();
+    t_Atoms :: iterator i_atom = structure.atoms.begin();
+    t_Atoms :: iterator i_atom_end = structure.atoms.end();
 
     for(types::t_unsigned index=0; i_atom != i_atom_end; ++i_atom, ++index )
       centers.push_back( Atomic_Center( structure, *i_atom, index ) );
 
-    std::vector< Atomic_Center > :: iterator i_begin = centers.begin();
-    std::vector< Atomic_Center > :: iterator i_end = centers.end();
-    std::vector< Atomic_Center > :: iterator i_center, i_bond;
+    t_Center :: iterator i_begin = centers.begin();
+    t_Center :: iterator i_end = centers.end();
+    t_Center :: iterator i_center, i_bond;
 
     for( i_center = i_begin; i_center != i_end; ++i_center )
     {
@@ -517,8 +517,8 @@ namespace Vff
   }
 
 
-  Atomic_Center :: Atomic_Center  ( Ising_CE::Structure &_str, Ising_CE::Atom &_e,
-                                    types::t_unsigned _i)
+  Atomic_Center :: Atomic_Center  ( Ising_CE::Structure &_str, t_Atom &_e,
+                                    types::t_unsigned _i )
                                  : origin(&_e), structure(&_str)
   {
      is_site_one = ( structure->lattice->get_atom_site_index( _e.pos ) == 0 );
@@ -652,8 +652,8 @@ failure:
   {
     types::t_real energy = 0;
     
-    std::vector<Atomic_Center> :: const_iterator i_center = centers.begin();
-    std::vector<Atomic_Center> :: const_iterator i_end = centers.end();
+    t_Centers :: const_iterator i_center = centers.begin();
+    t_Centers :: const_iterator i_end = centers.end();
     for (; i_center != i_end; ++i_center)
       energy += functionals[i_center->kind()].evaluate( *i_center );
 
@@ -691,19 +691,19 @@ failure:
     structure.cell = strain * structure0.cell;
 
     // then computes positions
-    std::vector<Ising_CE::Atom> :: const_iterator i_atom0 = structure0.atoms.begin();
-    std::vector<Ising_CE::Atom> :: iterator i_atom = structure.atoms.begin();
-    std::vector<Ising_CE::Atom> :: iterator i_atom_end = structure.atoms.end();
+    t_Atoms :: const_iterator i_atom0 = structure0.atoms.begin();
+    t_Atoms :: iterator i_atom = structure.atoms.begin();
+    t_Atoms :: iterator i_atom_end = structure.atoms.end();
     atat::rVector3d com(0,0,0);
     atat::rMatrix3d cell_inv = !structure.cell;
     for(; i_atom != i_atom_end; ++i_atom, ++i_atom0 )
     {
       atat::rVector3d pos;
-      pos[0] = ( i_atom0->freeze & Ising_CE::Atom::FREEZE_X ) ?
+      pos[0] = ( i_atom0->freeze & t_Atom::FREEZE_X ) ?
                i_atom0->pos[0] : 2.0 * (*i_x++);
-      pos[1] = ( i_atom0->freeze & Ising_CE::Atom::FREEZE_Y ) ?
+      pos[1] = ( i_atom0->freeze & t_Atom::FREEZE_Y ) ?
                i_atom0->pos[1] : 2.0 * (*i_x++);
-      pos[2] = ( i_atom0->freeze & Ising_CE::Atom::FREEZE_Z ) ?
+      pos[2] = ( i_atom0->freeze & t_Atom::FREEZE_Z ) ?
                i_atom0->pos[2] : 2.0 * (*i_x++);
       i_atom->pos = strain * pos;
       com -= cell_inv * i_atom->pos;
@@ -730,8 +730,8 @@ failure:
 
     // Computes center of Mass
     // frozen (i.e. three components of the atomic positions )
-    std::vector< Ising_CE::Atom > :: iterator i_atom =  structure0.atoms.begin();
-    std::vector< Ising_CE::Atom > :: iterator i_atom_end =  structure0.atoms.end();
+    t_Atoms :: iterator i_atom =  structure0.atoms.begin();
+    t_Atoms :: iterator i_atom_end =  structure0.atoms.end();
     center_of_mass = atat::rVector3d(0,0,0);
     for(; i_atom != i_atom_end; ++i_atom )
       center_of_mass += (!structure0.cell) * i_atom->pos;
@@ -747,9 +747,9 @@ failure:
     for( i_atom = structure0.atoms.begin(); 
          i_atom != i_atom_end; ++i_atom ) 
     {
-      if ( not (i_atom->freeze & Ising_CE::Atom::FREEZE_X ) ) ++dof;
-      if ( not (i_atom->freeze & Ising_CE::Atom::FREEZE_Y ) ) ++dof;
-      if ( not (i_atom->freeze & Ising_CE::Atom::FREEZE_Z ) ) ++dof;
+      if ( not (i_atom->freeze & t_Atom::FREEZE_X ) ) ++dof;
+      if ( not (i_atom->freeze & t_Atom::FREEZE_Y ) ) ++dof;
+      if ( not (i_atom->freeze & t_Atom::FREEZE_Z ) ) ++dof;
     }
     if ( not dof )
     {
@@ -789,15 +789,15 @@ failure:
     if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_YZ ) )
       *i_var = 0.5*(_strain(2,1) + _strain(1,2)), ++i_var;
 
-    std::vector< Ising_CE::Atom > :: const_iterator i_atom =  structure0.atoms.begin();
-    std::vector< Ising_CE::Atom > :: const_iterator i_atom_end =  structure0.atoms.end();
+    t_Atoms :: const_iterator i_atom =  structure0.atoms.begin();
+    t_Atoms :: const_iterator i_atom_end =  structure0.atoms.end();
     for(; i_atom != i_atom_end; ++i_atom )
     {
-      if ( not (i_atom->freeze & Ising_CE::Atom::FREEZE_X ) )
+      if ( not (i_atom->freeze & t_Atom::FREEZE_X ) )
         *i_var = i_atom->pos[0] * 0.5, ++i_var;
-      if ( not (i_atom->freeze & Ising_CE::Atom::FREEZE_Y ) )
+      if ( not (i_atom->freeze & t_Atom::FREEZE_Y ) )
         *i_var = i_atom->pos[1] * 0.5, ++i_var;
-      if ( not (i_atom->freeze & Ising_CE::Atom::FREEZE_Z ) )
+      if ( not (i_atom->freeze & t_Atom::FREEZE_Z ) )
         *i_var = i_atom->pos[2] * 0.5, ++i_var;
     }
   }
@@ -816,12 +816,12 @@ failure:
              << std::setw(12) << structure.cell(2,i) * structure0.scale / Physics::a0("A")
              << std::setw(18) << structure.cell(0,i) 
              << std::setw(12) << structure.cell(1,i) 
-             << std::setw(12) << structure.cell(2,i) << std::endl;
+             << std::setw(12) << structure.cell(2,i) << "\n";
 
     // prints atomic position, strain, weight, and atomic position in
     // "other unit"
-    std::vector<Atomic_Center> :: const_iterator i_center = centers.begin();
-    std::vector<Atomic_Center> :: const_iterator i_end = centers.end();
+    t_Centers :: const_iterator i_center = centers.begin();
+    t_Centers :: const_iterator i_end = centers.end();
     for(; i_center != i_end; ++i_center )
     {
       // first gets pseudo index
@@ -869,13 +869,13 @@ failure:
                << std::setw(6) << std::setprecision(2) << types::t_real( i_pseudo->second ) * 0.25  // weight
                << std::setw(18) << std::setprecision(7) << pos[0] // pseudo position
                << std::setw(12) << pos[1] 
-               << std::setw(12) << pos[2] << std::endl;
+               << std::setw(12) << pos[2] << "\n";
       }
 
     }
     std::ofstream file( _f.c_str(), std::ios_base::out|std::ios_base::trunc ); 
     // prints number of atoms
-    file << nb_pseudos << std::endl;
+    file << nb_pseudos << "\n";
     // print rest of file
     file << stream.str();
     file.flush();
@@ -958,8 +958,8 @@ failure:
   void Functional :: print_out( std::ostream &stream ) const
   {
     stream << "Vff::Functional " << " " << bond_cutoff << std::endl;
-    std::vector<Vff::Atomic_Functional> :: const_iterator i_func = functionals.begin();
-    std::vector<Vff::Atomic_Functional> :: const_iterator i_func_end = functionals.end();
+    t_AtomicFunctionals :: const_iterator i_func = functionals.begin();
+    t_AtomicFunctionals :: const_iterator i_func_end = functionals.end();
     for(; i_func != i_func_end; ++i_func )
       i_func->print_out(stream);
   }
@@ -998,8 +998,8 @@ namespace mpi
     if ( stage == COPYING_FROM_HERE )
       _vff.functionals.resize(n, Vff::Atomic_Functional(_vff.structure));
 
-    std::vector<Vff::Atomic_Functional> :: iterator i_func = _vff.functionals.begin();
-    std::vector<Vff::Atomic_Functional> :: iterator i_func_end = _vff.functionals.end();
+    t_AtomicFunctionals :: iterator i_func = _vff.functionals.begin();
+    t_AtomicFunctionals :: iterator i_func_end = _vff.functionals.end();
     for(; i_func != i_func_end; ++i_func )
       if ( not serialize( *i_func ) ) return false;
 

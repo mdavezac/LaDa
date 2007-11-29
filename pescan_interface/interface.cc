@@ -35,21 +35,21 @@ namespace Pescan
 
     if ( escan.method == Escan::ALL_ELECTRON )
     {
-      destroy_directory();
+      destroy_directory_();
       escan.Eref = bands;
       return result;
     }
     bands.cbm = result;
 
     computation = VBM;
-    destroy_directory();
+    destroy_directory_();
     if ( escan.method == Escan::FOLDED_SPECTRUM and (not do_destroy_dir) )
       dirname = olddirname + ( computation == CBM ?  "/cbm": "/vbm" );
     create_directory();
     create_potential();
     launch_pescan( _str );
     bands.vbm = read_result( _str );
-    destroy_directory();
+    destroy_directory_();
 
 
     if ( bands.gap() > 0.001 )  return bands.gap();
@@ -88,9 +88,8 @@ namespace Pescan
     sstr << "mkdir " << dirname;
     system( sstr.str().c_str() );
   }
-  void Interface :: destroy_directory()
+  void Interface :: destroy_directory_()
   {
-    if ( not do_destroy_dir ) return;
     std::ostringstream sstr;
     sstr << "rm -rf " << dirname;
     system( sstr.str().c_str() );
@@ -220,9 +219,11 @@ namespace Pescan
     }
 
 
-    child = parent->FirstChildElement("wavefunction");
-    if( child and child->Attribute("name") )
-      escan.wavefunction = child->Attribute("name");
+    child = parent->FirstChildElement("Wavefunctions");
+    if( child and child->Attribute("in") )
+      escan.wavefunction_in = child->Attribute("in");
+    if( child and child->Attribute("out") )
+      escan.wavefunction_out = child->Attribute("out");
     types::t_int j;
     if( parent->Attribute("method", &j) )
       escan.method = ( j == 1 ) ? Escan::FOLDED_SPECTRUM: Escan::ALL_ELECTRON;
@@ -322,12 +323,13 @@ namespace Pescan
 
   void Interface::write_escan_input( Ising_CE::Structure &_str ) 
   {
+    types::t_unsigned nbwfn = escan.nbstates; 
     std::ofstream file;
     std::string name = Print::StripEdges(dirname) + "/" + Print::StripEdges(escan.filename);
     file.open( name.c_str(), std::ios_base::out|std::ios_base::trunc ); 
-    file << "1 " << Print::StripDir(dirname, genpot.output) << std::endl
-         << "2 " << escan.wavefunction << std::endl
-         << "3 " << escan.method << std::endl;
+    file << "1 " << Print::StripDir(dirname, genpot.output) << "\n"
+         << "2 " << wfn_name( escan.wavefunction_out ) << "\n"
+         << "3 " << escan.method << "\n";
     switch (computation)
     { 
       case VBM: file << "4 " << escan.Eref.vbm << " "; break;
@@ -335,38 +337,49 @@ namespace Pescan
     }
     file << genpot.cutoff << " " 
          << escan.smooth << " "
-         << escan.kinscal << std::endl;
+         << escan.kinscal << "\n";
 
-    if( escan.method == Escan::FOLDED_SPECTRUM )
-      file << "5 " << escan.nbstates << std::endl;
-    else
+    if( escan.method == Escan::ALL_ELECTRON )
     {
       Ising_CE::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
       Ising_CE::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
-      types::t_unsigned n = 0; 
-      for(; i_atom != i_atom_end; ++i_atom)
+      for(nbwfn=0; i_atom != i_atom_end; ++i_atom)
       {
         Ising_CE::StrAtom atom; 
         _str.lattice->convert_Atom_to_StrAtom( *i_atom, atom );
-        n += Physics::Atomic::Charge( atom.type );
+        nbwfn += Physics::Atomic::Charge( atom.type );
       }
       if (    escan.potential != Escan::SPINORBIT
-           or atat::norm2(escan.kpoint) < types::tolerance )
-        n /= 2;
-      file << "5 " << n + 1 << std::endl;
+           or atat::norm2(escan.kpoint) < types::tolerance ) nbwfn /= 2;
+      ++nbwfn; // Adds 1 wavefunction to include CBM
     }
-    file << "6 " << escan.niter << " " << escan.nlines << " " << escan.tolerance << std::endl
-         << "7 0" << std::endl << "8 0" << std::endl << "9 wg.cbm.in" << std::endl
-         << "10 0 4 4 4 graph.R" << std::endl;
+    file << "5 " << nbwfn << "\n"
+         << "6 " << escan.niter << " " << escan.nlines << " " << escan.tolerance << "\n";
+    
+    // Input wavefunctions
+    if( do_input_wavefunctions )
+    {
+      if( escan.method == FOLDED_SPECTRUM )
+      {
+        file << "7 " << nbwfn << "\n8 ";
+        for( types::t_unsigned u=1; u < nbwfn; ++u )
+          file << u << ", ";
+        file << nbwfn << "\n9 " << wfn_name( escan.wavefunction_in ) << "\n";
+      }
+      else file << "7 2\n8 " << nbwfn-1 << ", "<< nbwfn
+                << "\n9 " << wfn_name( escan.wavefunction_in ) << "\n";
+    }
+    else  file << "7 0\n8 0\n9 dummy\n10 0 4 4 4 graph.R\n";
+
     if ( atat::norm2( escan.kpoint ) < types::tolerance )
      file << "11 0 0 0 0 ";
     else 
      file << "11 1 " << escan.kpoint[0] << " " << escan.kpoint[1] << " " << escan.kpoint[2] << " ";
-    file << escan.scale << std::endl
-         << "12 " << escan.potential << std::endl
-         << "13 " << atom_input << std::endl
-         << "14 " << escan.rcut << std::endl
-         << "15 " << escan.spinorbit.size() << std::endl;
+    file << escan.scale << "\n"
+         << "12 " << escan.potential << "\n"
+         << "13 " << atom_input << "\n"
+         << "14 " << escan.rcut << "\n"
+         << "15 " << escan.spinorbit.size() << "\n";
     std::vector<SpinOrbit> :: const_iterator i_so = escan.spinorbit.begin();
     std::vector<SpinOrbit> :: const_iterator i_so_end = escan.spinorbit.end();
     for(types::t_unsigned i=16; i_so != i_so_end; ++i_so, ++i )
@@ -374,7 +387,7 @@ namespace Pescan
       file << i << " " << i_so->filename << " " 
            << i_so->izz << " " 
            << i_so->s << " " << i_so->p << " " << i_so->d << " " 
-           << i_so->pnl << " " << i_so->dnl << std::endl;
+           << i_so->pnl << " " << i_so->dnl << "\n";
     }
     file.flush();
     file.close();
@@ -520,7 +533,8 @@ namespace mpi
   {
     if ( not serialize( _p.filename ) ) return false;
     if ( not serialize( _p.output ) ) return false;
-    if ( not serialize( _p.wavefunction ) ) return false;
+    if ( not serialize( _p.wavefunction_out ) ) return false;
+    if ( not serialize( _p.wavefunction_in ) ) return false;
     types::t_unsigned n = _p.method;
     if ( not serialize( n ) ) return false;
     if ( stage == COPYING_FROM_HERE )

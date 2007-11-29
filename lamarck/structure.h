@@ -83,6 +83,8 @@ namespace Ising_CE {
     const static types::t_unsigned FREEZE_YZ   = 16;
     //! Freeze the ZZ coordinate of the unit-cell ( Structure::cell(2,2) )
     const static types::t_unsigned FREEZE_ZZ   = 32;
+    //! Freeze all coordinates of the unit cell
+    const static types::t_unsigned FREEZE_ALL  = 63;
 
     //! The unit-cell of the structure in cartesian coordinate.
     atat::rMatrix3d cell;

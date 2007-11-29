@@ -20,7 +20,6 @@
 #include "mpi/mpi_object.h"
 #endif
 
-//! Holds everything pescan
 namespace Pescan
 {
 
