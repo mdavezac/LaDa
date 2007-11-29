@@ -55,11 +55,11 @@ namespace Print
   }    
 
 #ifdef _MPI
-#ifdef _PRINT_ALL_PROCS
   void Base::sync_filename( std::string &_filename )
   {
     filename = _filename;
     sync_filename();
+    _filename = filename;
   }
   void Base::sync_filename()
   {
@@ -72,7 +72,6 @@ namespace Print
 
     init_(filename);
   }
-#endif
 #endif
 
 }

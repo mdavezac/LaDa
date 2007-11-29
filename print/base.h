@@ -60,21 +60,12 @@ namespace Print
       //! Sets the filename, checks that the file can be opened, and truncates the file.
       void init(const std::string &_f) { if ( filename == _f ) return; init_(_f); }
 #ifdef _MPI
-#ifndef _PRINT_ALL_PROCS
-      //! \ingroup MPI
-      //! Syncs filname across all procs.
-      void sync_filename() {}
-      //! \ingroup MPI
-      //! Syncs filname across all procs.
-      void sync_filename( std::string & ) {}
-#else
       //! \ingroup MPI
       //! Syncs filname across all procs.
       void sync_filename();
       //! \ingroup MPI
       //! Syncs filname across all procs.
       void sync_filename( std::string &_filename );
-#endif
 #endif
 
     private:
