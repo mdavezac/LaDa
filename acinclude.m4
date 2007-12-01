@@ -165,3 +165,62 @@ AC_DEFUN([PKG_CHECK_MODULES], [
 
 
 
+# NREL_AC_ARG_VAR_FCPPFLAGS
+# -------------------------
+# Document and register FCPPFLAGS, which is used by
+# NREL_AC_PROG_FCPP.
+AC_DEFUN([NREL_AC_ARG_VAR_FCPPFLAGS],
+[AC_ARG_VAR([FCPPFLAGS],
+            [Fortran preprocessor flags, default "-C -P" ])])
+
+# NREL_AC_PROG_FCPP
+# -----------------
+# .f90pp, .F90, and .fpp, .F files are files that are to be preprocessed
+# into .f90 and .f (free and fixed form fortran respectively) using the
+# cpp preprocessor (e.g. cpp -P -C test.f90pp > test.f90).  
+
+AC_DEFUN([NREL_AC_PROG_FCPP],
+
+[AC_REQUIRE([AC_PROG_CC])dnl
+AC_ARG_VAR([FCPP],      [Fortran preprocessor])dnl
+NREL_AC_ARG_VAR_FCPPFLAGS()dnl
+
+if test -z "$FCPPFLAGS"; then
+  FCPPFLAGS="-C -P"
+fi
+
+AC_LANG_PUSH(Fortran)dnl
+AC_MSG_CHECKING([how to run the FCPP preprocessor])
+#     ac_ext_save="$ac_ext"
+#     ac_ext=fpp
+if test -z "$FCPP"; then
+  AC_CACHE_VAL([ac_cv_prog_FCPP],
+  [dnl
+    # Double quotes because FCPP needs to be expanded
+    for FCPP in "gcc -E -x f77-cpp-input" "gcc -E -x assembler-with-cpp -traditional-cpp" "cpp -E -x f77-cpp-input" "cpp" "/lib/cpp" "/usr/lib/cpp"
+    do
+     ac_cpp="$FCPP"
+     AC_MSG_CHECKING([FCPP preprocessor FCPP=$FCPP])
+      _AC_PROG_PREPROC_WORKS_IFELSE([break])
+    done
+    ac_cv_prog_FCPP=$FCPP
+  ])dnl
+  FCPP=$ac_cv_prog_FCPP
+else
+  ac_cv_prog_FCPP=$FCPP
+  ac_cpp="$FCPP"
+fi
+if test -z "$FCPP_OVERRIDE"; then
+AC_MSG_RESULT([$FCPP])
+_AC_PROG_PREPROC_WORKS_IFELSE([],
+                [AC_MSG_FAILURE([FCPP preprocessor "$FCPP" fails sanity check])])
+fi
+AC_SUBST(FCPP)dnl
+#    ac_ext="$ac_ext_save"
+AC_LANG_POP(Fortran)dnl
+])# AC_PROG_FCPP
+
+#test for cpp, /usr/lib/cpp etc.
+)
+
+

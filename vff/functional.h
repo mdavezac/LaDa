@@ -23,6 +23,11 @@
   #include "mpi/mpi_object.h"
 #endif
 
+
+#ifdef _DOFORTRAN
+ extern "C" double vff_for_frprmn( const double* const _x, double* const _y);
+#endif
+
 //! \brief Reimplements the Valence Force Field %Functional in c++
 //! \details Vff, or Valence Force Field functional, is an empirical functional which
 //! attempts to model the strain energy of a material from at most three-body
@@ -528,6 +533,8 @@ namespace Vff
     protected:
       //! Type of the container holding the atomic centers
       typedef std::vector< Atomic_Center > t_Centers;  
+      //! Type of the atomic centers
+      typedef Atomic_Center t_Center;  
       //! Type of the container holding the atomic functionals
       typedef std::vector< Atomic_Functional > t_AtomicFunctionals;  
 

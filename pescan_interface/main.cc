@@ -1,14 +1,11 @@
 //
 //  Version: $Id$
 //
-#include <vff/functional.h>
 #include <lamarck/lattice.h>
 #include <lamarck/structure.h>
 #include <tinyxml/tinyxml.h>
-#include <opt/opt_frprmn.h>
-#include <opt/gsl_minimizers.h>
 
-#include "interface.h"
+#include "va.h"
 
 extern "C" {
   double call_it( const double* const _x,
@@ -85,32 +82,11 @@ int main(int argc, char *argv[])
   structure.set_site_indices();
   lattice.print_out(std::cout); std::cout << std::endl;
 
-  // loads vff functional
-  child = handle.FirstChild( "Job" ).Element();
-  if ( not child )
-  {
-    std::cerr << "Could not find Vff in input" << std::endl;
-    return false;
-  }
-  Vff::Functional vff(structure);
-  if ( not vff.Load(*child) )
-  {
-    std::cerr << "Error while reading Lattice from input" << std::endl;
-    return false;
-  }
-
-  vff.initialize_centers();
-  Minimizer::GnuSL<Vff::Functional> minimizer( vff );
-  child = handle.FirstChild( "Job" ).Element();
-  minimizer.Load(*child);
-  minimizer.minimize();
-  structure.energy = vff.energy();
-  vff.print_escan_input();
-
-  Pescan::Interface interface;
-  interface.Load(*handle.FirstChild("Job").Element());
-  std::cout << "Band Gap: " << interface(structure) << std::endl;
-  lattice.print_out(std::cout);
+  Pescan::VirtualAtom pescan( structure );
+  pescan.Load(*handle.FirstChild("Job").Element());
+  std::cout << "Band Gap [meV]: " << pescan.evaluate() << std::endl
+            << pescan << std::endl;
+ 
 
   return 0;
 }

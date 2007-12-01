@@ -45,13 +45,13 @@ namespace Vff
 
     protected:
       //! Type of the container holding the atomic centers
-      typedef typename t_Base::t_Centers t_Centers;  
+      typedef t_Base::t_Centers t_Centers;  
       //! Type of the atomic centers
-      typedef typename t_Centers::value_type t_Center;  
+      typedef t_Centers::value_type t_Center;  
       //! Type of the container holding the atomic functionals
-      typedef typename t_Base::t_AtomicFunctionals t_AtomicFunctionals;  
+      typedef t_Base::t_AtomicFunctionals t_AtomicFunctionals;  
       //! Type of the atomic functionals
-      typedef typename t_AtomicFunctionals::value_type t_AtomicFunctional;  
+      typedef t_AtomicFunctionals::value_type t_AtomicFunctional;  
 
     protected:
       //! Direction in which to allow lattice-cell relaxation

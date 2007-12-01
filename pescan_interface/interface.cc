@@ -88,7 +88,7 @@ namespace Pescan
     sstr << "mkdir " << dirname;
     system( sstr.str().c_str() );
   }
-  void Interface :: destroy_directory_()
+  void Interface :: destroy_directory()
   {
     std::ostringstream sstr;
     sstr << "rm -rf " << dirname;
@@ -359,7 +359,7 @@ namespace Pescan
     // Input wavefunctions
     if( do_input_wavefunctions )
     {
-      if( escan.method == FOLDED_SPECTRUM )
+      if( escan.method == Escan::FOLDED_SPECTRUM )
       {
         file << "7 " << nbwfn << "\n8 ";
         for( types::t_unsigned u=1; u < nbwfn; ++u )

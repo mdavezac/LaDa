@@ -10,7 +10,7 @@
 
 #include "interface.h"
 
-#include <vff/functional.h>
+#include <vff/va.h>
 #include <opt/va_function.h>
 
 #include <opt/types.h>
@@ -84,14 +84,12 @@ namespace Pescan
    *               \underbrace{
    *                 \sum_{\mathbf{R}}\nabla_{\mathbf{R}}\mathcal{H}\cdot
    *                   \frac{\partial\mathcal{R}}{\partial S}
-   *               }_{\Delta \mathcal{H}_{\mathrm{stress}}}
    *               +
-   *               \underbrace{
    *                 \sum_{\mathbf{R}}\frac{\partial \mathcal{H} }
    *                                       {\partial\epsilon_\mathcal{R}}
    *                                  \frac{\partial\epsilon_\mathcal{R}}
    *                                       {\partial S}
-   *               }_{\Delta \mathcal{H}_{\mathrm{strain}}}
+   *               }_{\Delta \mathcal{H}_{\mathrm{stress}}}
    *               +
    *               \underbrace{
    *                 \frac{\partial \mathcal{H}}{\partial\Omega}
@@ -139,31 +137,19 @@ namespace Pescan
    *                   - \b Apply the wave-functions \e as are onto the
    *                   perturbed potential and obtain new band-gap.  Eg escan
    *                   with 0 iterations.
+   *                   - See Vff::PescanPertubation::chemical()
    *                   .
    *             </DD>
    *             <DT> \f$\Delta \mathcal{H}_{\mathrm{stress}}\f$
    *             <DD> 
-   *                   - \b Keep the wavefunctions, unit-cell, and microscopic
-   *                     strain from \f$sigma\f$
+   *                   - \b Keep the wavefunctions, and unit-cell from \f$sigma\f$
    *                   - \b Compute the strain relaxed Vff positions for
-   *                     \f$\sigma'\f$ with constant unit-cell.
+   *                     \f$\sigma'\f$ with constant unit-cell and the new microstrain.
    *                   - \b Construct a perturbed potential consisting of the
-   *                   displaced atoms. 
+   *                   old positions/old microstrain - displaced atoms/new microstrain.
    *                   - \b Apply the wave-functions \e as are onto the
    *                   perturbed potential.  Eg escan with 0 iterations.
-   *                   .
-   *             </DD>
-   *             <DT> \f$\Delta \mathcal{H}_{\mathrm{strain}}\f$
-   *             <DD> 
-   *                   - \b Keep the wavefunctions, fractional coordinates, and
-   *                   unit-cell from \f$\sigma\f$
-   *                   - \b Compute the strain relaxed Vff positions for
-   *                     \f$\sigma'\f$ with constant unit-cell.
-   *                   - \b Construct a perturbed potential consisting of the
-   *                   difference between the original \f$\sigma\f$ potential
-   *                   and a potential with the new microscopic strains.
-   *                   - \b Apply the wave-functions \e as are onto the
-   *                   perturbed potential.  Eg escan with 0 iterations.
+   *                   - See Vff::PescanPertubation::stress()
    *                   .
    *             </DD>
    *             <DT> \f$\Delta \mathcal{H}_{\mathrm{cell}}\f$
@@ -180,38 +166,57 @@ namespace Pescan
    */
   class VirtualAtom : protected Interface, public function::VirtualAtom
   {
+     friend std::ostream& operator<<( std::ostream& _stream, const VirtualAtom& _va );
      protected:
        //! Type from which the VA functional is derived
-       typedef VirtualAtom t_VABase;
+       typedef function::VirtualAtom t_VABase;
        //! Type of the pescan interface class
        typedef Interface t_PescanBase;
        //! \brief Type of the Valence Force Field Functional class
        //! \details It is fitted into a class which adds positional pertubation
        //!          stuff
-       typedef Vff::PescanPosGrad t_Vff;
+       typedef Vff::PescanPerturbations t_Vff;
 
        //! Amplitude of the numerical derivative
        const static types::t_real deriv_amplitude = 0.01;
 
        //! The type of atom container
-       typedef t_VABase :: t_Atoms t_Atoms;
+       typedef Ising_CE::Structure :: t_Atoms t_Atoms;
        //! The type of atoms 
-       typedef t_VABase :: t_Atom  t_Atom;
+       typedef t_Atoms :: value_type  t_Atom;
+       
+     public:
+       //! For doing chemical gradients
+       const static types::t_unsigned CHEMICAL_GRADIENT          = 1;
+       //! For doing stress gradients                     
+       const static types::t_unsigned STRESS_GRADIENT            = 2;
+       //! For doing both chemical and stress gradients
+       const static types::t_unsigned CHEMICAL_STRESS_GRADIENTS  = 3;
 
      protected:
        //! the vff object to get the variation of the positions
        t_Vff vff;
+       //! Tracks which gradients to do
+       types::t_unsigned do_gradients;
+       
 
 
      public:
        //! Constructor and Initializer
        VirtualAtom   ( Ising_CE::Structure &_str )
-                   : t_PescanBase(), t_VABase( _str ), 
-                     vff( structure ) {}
+                   : t_PescanBase(), t_VABase( _str ),
+                     vff( structure ), do_gradients(CHEMICAL_STRESS_GRADIENTS) 
+       {
+#ifdef _MPI
+         std::ostringstream sstr;
+         sstr << vff.atomic_config << "." << mpi::main.rank();
+         vff.atomic_config = sstr.str();
+#endif
+       }
        //! Copy Constructor
        VirtualAtom   ( const VirtualAtom &_c )
-                   : t_PescanBase( _c ), t_VABase( _str ), 
-                     vff(_c.structure) {}
+                   : t_PescanBase( _c ), t_VABase( _c ),
+                     vff(_c.vff), do_gradients(_c.do_gradients) {}
         
 
        //! \brief Evaluated the strain after copying the occupations from
@@ -225,15 +230,69 @@ namespace Pescan
        void evaluate_gradient( t_Type* _grad );
 
        //! Loads pescan and vff minimizers from XML
-       bool Load( const TiXmlElement &_node );
-         {  return pescan.Load( _node )  and vff.Load( _node ); }
+       bool Load( const TiXmlElement &_node )
+         {  return t_PescanBase::Load( _node )  and vff.Load( _node ); }
 
      protected:
-       //! \brief partial derivative of the band gap with repect to occupation,
-       //!        with constant positions.
-       t_Type potential_grad( types :: t_int _pos );
+         types::t_real apply_wfns();
+  };
+
+  inline VirtualAtom::t_Type VirtualAtom::evaluate()
+  { 
+    vff.evaluate();
+    vff.zero_order();
+    t_PescanBase::do_input_wavefunctions = false;
+    t_PescanBase::escan.wavefunction_out = "zero_order";
+    
+    return t_PescanBase::operator()( structure ); 
   }
 
+  inline VirtualAtom::t_Type VirtualAtom::evaluate_with_gradient( t_Type* _grad )
+  { 
+    types :: t_real result = t_PescanBase::operator()( structure ); 
+    evaluate_gradient( _grad );
+    return result;
+  }
+
+  inline void VirtualAtom::evaluate_gradient( t_Type* _grad )
+  {
+    t_Container :: iterator i_var = t_VABase::va_vars.begin();
+    t_Container :: iterator i_var_end = t_VABase::va_vars.end();
+    t_Type* i_grad = _grad;
+    for(types::t_unsigned n=0; i_var != i_var_end; ++i_var, ++i_grad, ++n )
+      *i_grad += evaluate_one_gradient( n );
+  }
+
+  inline VirtualAtom::t_Type VirtualAtom::apply_wfns()
+  { 
+    vff.evaluate();
+    t_PescanBase::do_input_wavefunctions = true;
+    t_PescanBase::escan.wavefunction_in = "zero_order";
+    t_PescanBase::escan.wavefunction_out = "first_order";
+
+    types::t_int niter      = t_PescanBase::escan.niter;
+    types::t_int nlines     = t_PescanBase::escan.nlines;
+    types::t_real tolerance = t_PescanBase::escan.tolerance;
+
+    t_PescanBase::escan.niter     = 0;
+    t_PescanBase::escan.nlines    = 0;        
+    t_PescanBase::escan.tolerance = 10000;    
+    
+    types::t_real result = t_PescanBase::operator()( structure ); 
+
+    t_PescanBase::escan.niter     = niter;
+    t_PescanBase::escan.nlines    = nlines;
+    t_PescanBase::escan.tolerance = tolerance;
+
+    return result;
+  }
+
+  inline std::ostream& operator<<( std::ostream& _stream, const VirtualAtom& _va )
+  {
+    Ising_CE::Fourier( _va.structure.atoms.begin(),  _va.structure.atoms.end(),
+                       _va.structure.k_vecs.begin(), _va.structure.k_vecs.end() );
+    return _stream << _va.structure;
+  }
 
 } // namespace Pescan
 

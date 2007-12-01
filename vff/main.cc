@@ -7,35 +7,12 @@
 #include "functional.h"
 #include <lamarck/lattice.h>
 #include <lamarck/structure.h>
-#ifdef _DOFORTRAN_
+#ifdef _DOFORTRAN
 #include <opt/opt_frprmn.h>
 #else
-#include <opt/opt_minimize_gsl.h>
+#include <opt/gsl_minimizers.h>
 #endif
 
-
-#ifdef _DOFORTRAN_
-extern "C" {
-  double call_it( const double* const _x,
-                  double* const _y)
-  {
-    static Vff::Functional* this_func;
-    if ( not _y  )
-    {
-      this_func = (Vff::Functional*) _x;
-      return 0;
-    }
-
-    if ( not this_func )  return 0;
-
-    const double *i_x_copy = _x;
-    const double *i_x_end = _x + this_func->size();
-    std::copy(i_x_copy, i_x_end, this_func->begin());
-    types::t_real result = this_func->evaluate_with_gradient(_y);
-    return result;
-  }
-}
-#endif
 
 int main(int argc, char *argv[]) 
 {
@@ -104,11 +81,11 @@ int main(int argc, char *argv[])
     }
     vff.initialize_centers();
     
-#ifdef _DOFORTRAN_
-    minimizer::Frpr<Vff::Functional> minimizer( vff, call_it );
-    call_it( (const double*) &vff, 0 );
+#ifdef _DOFORTRAN
+    Minimizer::Frpr<Vff::Functional> minimizer( vff, vff_for_frprmn );
+    vff_for_frprmn( (double*) &vff, NULL );
 #else
-    minimizer::GnuSL<Vff::Functional> minimizer( vff );
+    Minimizer::GnuSL<Vff::Functional> minimizer( vff );
 #endif
     child = handle.FirstChild( "Job" ).Element();
     minimizer.Load(*child);

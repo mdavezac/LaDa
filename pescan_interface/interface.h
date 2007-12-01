@@ -131,8 +131,6 @@ namespace Pescan
       t_method method;
       //! Reference energy for folded spectrum method
       Bands Eref;
-      //! \brief Index of VBM and CBM wavefunctions
-      std::pair<types::t_unsigned> wfn_index;
       //! Kinetic scaling factor for plane-wave cutoff
       types::t_real kinscal;
       //! Smoothness fcator plane-wave cutoff
@@ -242,7 +240,7 @@ namespace Pescan
      //! \details If \a _name is not empty, Escan::wavefunction_out is set to \a _name.
      //!          The function returns a name which codes for the kind of
      //!          computation done
-     const std::string &wfn_name(const std::string _name);
+     const std::string wfn_name(const std::string _name);
      //! Destroys directory for computations.
      void destroy_directory();
 
@@ -250,7 +248,7 @@ namespace Pescan
      //! Creates directory for computations.
      void create_directory();
      //! Destroys directory for computations, depending on Interface::do_destroy_dir
-     void destroy_directory_() { if (do_destroy_dir) destroy_diretory(); }
+     void destroy_directory_() { if (do_destroy_dir) destroy_directory(); }
      //! Interfaces to potential creation
      void create_potential();
      //! Writes escan parameter input.
@@ -264,10 +262,10 @@ namespace Pescan
 
   inline const std::string Interface :: wfn_name(std::string _name)
   {
-    if( escan.method == FOLDED_SPECTRUM )
-      _name +=  "." + (computation == VBM ? "vbm": "cbm" )
+    if( escan.method == Escan::FOLDED_SPECTRUM )
+      _name = _name + "." + (computation == VBM ? "vbm": "cbm" );
     else
-      _name +=  ".ae";
+      _name = _name + ".ae";
     return _name;
   }
 

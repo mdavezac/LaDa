@@ -11,9 +11,28 @@
 #include "opt/ndim_iterator.h"
 #include "opt/compose_functors.h"
 
+#ifdef _DOFORTRAN_
+  extern "C" double vff_for_frprmn( const double* const _x, double* const _y)
+  {
+    static Vff::Functional* this_func;
+    if ( not _y  )
+    {
+      this_func = (Vff::Functional*) _x;
+      return 0;
+    }
+
+    if ( not this_func )  return 0;
+
+    const double *i_x_copy = _x;
+    const double *i_x_end = _x + this_func->size();
+    std::copy(i_x_copy, i_x_end, this_func->begin());
+    types::t_real result = this_func->evaluate_with_gradient(_y);
+    return result;
+  }
+#endif
+  
 namespace Vff
 { 
-  
   // constants obtained from bc -l with scale = 64
   const types::t_real // 2*sqrt(3)
     Atomic_Functional :: twos3 = 3.4641016151377545870548926830117447338856105076207612561116139588;
@@ -135,9 +154,9 @@ namespace Vff
     for(types::t_unsigned index=0; i_atom != i_atom_end; ++i_atom, ++index )
       centers.push_back( Atomic_Center( structure, *i_atom, index ) );
 
-    t_Center :: iterator i_begin = centers.begin();
-    t_Center :: iterator i_end = centers.end();
-    t_Center :: iterator i_center, i_bond;
+    t_Centers :: iterator i_begin = centers.begin();
+    t_Centers :: iterator i_end = centers.end();
+    t_Centers :: iterator i_center, i_bond;
 
     for( i_center = i_begin; i_center != i_end; ++i_center )
     {

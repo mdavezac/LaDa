@@ -3,11 +3,15 @@ AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ @MPICH_CFLA
 AM_LDFLAGS = @TINYXML_LIBS@
 vff_SOURCES = main.cc 
 vff_CPPFLAGS =  $(AM_CPPFLAGS) -I .. @GSL_INCLUDE@ 
-vff_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIB@ @MPICH_LIBS@ @FCLIBS@
+vff_LDFLAGS =  $(AM_LDFLAGS) @MPICH_LIBS@
 vff_LDADD = ../lamarck/liblamarck.la ../atat/libatat.la libvff.la\
             ../physics/libphysics.la @MPI_ADDLIB@ 
 if DOFORTRAN 
 vff_LDADD += ../opt/libopt.la 
+vff_LDFLAGS  += @FCLIBS@
+else 
+vff_CPPFLAGS +=  @GSL_INCLUDE@ 
+vff_LDFLAGS  += @GSL_LIB@
 endif
 if DOFORTRAN
   noinst_PROGRAMS = fortran_test
