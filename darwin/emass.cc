@@ -32,13 +32,11 @@ namespace eMassSL
       std::cerr << " Could not load vff input!! " << std::endl; 
       return false;
     }
-    if ( not emass.Load( _node ) )
-    {
-      std::cerr << " Could not load emass interface from input!! " << std::endl; 
-      return false;
-    }
-
-    return true;
+    if ( emass.Load( _node ) ) return true;
+    
+    std::cerr << " Could not load emass interface from input!! " << std::endl; 
+    return false;
+    
   }
 
 } // namespace Molecularity

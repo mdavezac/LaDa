@@ -15,6 +15,9 @@
 #elif _MOLECULARITY
   #include "molecularity.h"
   typedef Molecularity :: Evaluator t_Evaluator;
+#elif _EMASS
+  #include "emass.h"
+  typedef eMassSL :: Evaluator t_Evaluator;
 #else 
 #error Need to define _CE or _PESCAN or _MOLECULARITY
 #endif

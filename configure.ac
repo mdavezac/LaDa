@@ -69,21 +69,29 @@ AC_ARG_ENABLE(galib,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-galib) ;;
      esac],[galib=false])
 
-AC_ARG_ENABLE(ce,
-     [  --enable-cedarwin    Turn on ce darwin],
+AC_ARG_ENABLE(ceopt,
+     [  --enable-ceopt    Turn on cluster-expansion optimization],
      [case "${enableval}" in
-       yes) ce=true ;;
-       no)  ce=false ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-ce) ;;
-     esac],[ce=true])
+       yes) ceopt=true ;;
+       no)  ceopt=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-ceopt) ;;
+     esac],[ceopt=true])
 
-AC_ARG_ENABLE(pdarwin,
-     [  --enable-pdarwin    Turn on pescan-darwin],
+AC_ARG_ENABLE(bandgapopt,
+     [  --enable-bandgap    Turn on bandgap optimization],
      [case "${enableval}" in
-       yes) pdarwin=true ;;
-       no)  pdarwin=false ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-pdarwin) ;;
-     esac],[pdarwin=true])
+       yes) bandgapopt=true ;;
+       no)  bandgapopt=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-bandgap) ;;
+     esac],[bandgapopt=true])
+
+AC_ARG_ENABLE(emassopt,
+     [  --enable-emassopt    Turn on electronic effective mass optimization],
+     [case "${enableval}" in
+       yes) emassopt=true ;;
+       no)  emassopt=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-emassopt) ;;
+     esac],[emassopt=true])
 
 AC_ARG_ENABLE(debug,
 [  --enable-debug    Turn on debugging],
@@ -94,8 +102,27 @@ AC_ARG_ENABLE(debug,
 esac],[debug=true])
 AH_TEMPLATE([_PRINT_ALL_PROCS])
 
+# enables vff and pescan for GA
+if test x$bandgapopt = xtrue || test x$molecularity = xtrue; then
+  galib=true
+fi
+if test x$ceopt = xtrue || test x$emass = true; then
+  galib=true
+fi
+if test x$emassopt = xtrue; then
+  galib=true
+  emass=true
+fi
+if test x$bandgapopt = xtrue || test x$molecularity = xtrue || test $emass = true; then
+  pescan=true
+  vff=true
+fi
+if test x$emass = xtrue; then
+  lapack=true
+fi
+
 AH_TEMPLATE([_DOFORTRAN_])
-if test x$fortran = xtrue || test x$emass = xtrue; then
+if test x$fortran = xtrue || test x$lapack = xtrue; then
   AC_PROG_FC
   NREL_AC_PROG_FCPP
   AC_FC_LIBRARY_LDFLAGS
@@ -107,19 +134,6 @@ if test x$fortran = xtrue; then
 fi
 
 AX_COMPILER_VENDOR
-
-# enables vff and pescan for GA
-if test x$pdarwin = xtrue || test x$molecularity = xtrue || test $emass = true; then
-  pescan=true
-  vff=true
-fi
-if test x$pdarwin = xtrue || test x$molecularity = xtrue|| test x$ce = xtrue || test x$emass = true;
-then
-  galib=true
-fi
-if test x$emass = xtrue; then
-  lapack=true
-fi
 
 if test x$debug = xtrue; then
   CXXFLAGS=`echo $CXXFLAGS | sed "s/-O2//"`
@@ -181,14 +195,15 @@ AC_CHECK_LIB(m,main)
 # conditional
 AM_CONDITIONAL(DOMPI, test x$mpi = xtrue)
 AM_CONDITIONAL(DOPESCAN, test x$pescan = xtrue)
-AM_CONDITIONAL(DOMOLECULARITY, test x$molecularity = xtrue)
-AM_CONDITIONAL(DOCE, test x$ce = xtrue)
+AM_CONDITIONAL(DOLAYEREDOPT, test x$molecularity = xtrue)
+AM_CONDITIONAL(DOCEOPT, test x$ceopt = xtrue)
 AM_CONDITIONAL(DOVFF, test x$vff = xtrue)
-AM_CONDITIONAL(DOPDARWIN, test x$pdarwin = xtrue)
+AM_CONDITIONAL(DOBANDGAPOPT, test x$bandgapopt = xtrue)
 AM_CONDITIONAL(NOLAUNCH, test x$nolaunch = xtrue)
 AM_CONDITIONAL(DODARWIN, test x$galib = xtrue)
 AM_CONDITIONAL(DOLAPACK, test x$lapack = xtrue)
 AM_CONDITIONAL(DOEMASS, test x$emass = xtrue)
+AM_CONDITIONAL(DOEMASSOPT, test x$emassopt = xtrue)
 AM_CONDITIONAL(DOFORTRAN, test x$fortran = xtrue)
 
 #  gsl libs iff vff is enabled 
@@ -267,21 +282,27 @@ fi
 if test $pescan = true; then
   echo " _ interface to nanopse/pescan functional ";
 fi
-if test $pdarwin = true; then
+if test x$emass = xtrue; then
+  echo " _ Effective Electronic Mass calculations for ternary (100) uperlattices" 
+fi
+if test $bandgapopt = true; then
   echo " _ Genetic Algorithm for Band Gap"
 fi
-if test $ce = true; then
+if test $ceopt = true; then
   echo " _ Genetic Algorithm for Cluster Expansion"
 fi
 if test x$molecularity = xtrue; then
   echo " _ Genetic Algorithm for Molecularity"
 fi
-if test x$emass = xtrue; then
+if test x$emassopt = xtrue; then
   echo " _ Genetic Algorithm for Electronic Mass Optimization"
 fi
 echo ""
 if test $mpi = true; then
   echo "Will Include MPI where available"
+fi
+if test $lapack = true; then
+  echo "Will Include some lapack/blas routines for Matrix diagonalization"
 fi
 if test $debug = true; then
   echo "Compiling with debug options"

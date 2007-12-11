@@ -26,7 +26,7 @@
 #include "functors.h"
 #include "individual.h"
 #include "vff.h"
-#include "pescan.h"
+#include "bandgap_stubs.h"
 
 
 #ifdef _MPI

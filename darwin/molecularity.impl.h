@@ -13,7 +13,7 @@ namespace Molecularity
 
     _indiv.quantities().clear();
 
-    _indiv.quantities().push_back( inplane_stress( object.stress, direction ) );
+    _indiv.quantities().push_back( Vff::inplane_stress( object.stress, direction ) );
     _indiv.quantities().push_back( object.cbm - object.vbm );
   }
   
@@ -39,16 +39,6 @@ namespace Molecularity
                                                 &BandGap::Darwin::Continue,
                                                 "BandGap::Continue"         );     
   }
-
-  inline types::t_real inplane_stress( const atat::rMatrix3d &_stress,
-                                       const atat::rVector3d &_dir     )
-  {
-    types::t_real norm = atat::norm2(_dir);
-    types::t_real trace = _stress(0,0) + _stress(1,1) + _stress(2,2);
-    types::t_real axial = (_dir * (_stress * _dir) ) / norm;
-    return ( trace - axial ) * 0.5;
-  }
-
 
 
   inline std::ostream& operator<<(std::ostream &_stream, const Object &_o)

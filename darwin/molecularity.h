@@ -16,14 +16,13 @@
 #include <tinyxml/tinyxml.h>
 
 #include <vff/layered.h>
-#include <pescan_interface/interface.h>
 #include <lamarck/structure.h>
 #include <opt/function_base.h>
 #include <opt/gsl_minimizers.h>
 #include <opt/types.h>
 
 #include "layered.h"
-#include "pescan.h"
+#include "bandgap_stubs.h"
 #include "vff.h"
 #include "evaluator.h"
 #include "individual.h"
@@ -41,9 +40,6 @@
 //! \warning It is assumed that the lattice contains two sites.
 namespace Molecularity
 {
-  //! Computes in-plane stress from stress matrix \a _stress and plane \a _dir.
-  types::t_real inplane_stress( const atat::rMatrix3d &_stress, const atat::rVector3d &_dir );
-
   //! \brief bitstring object for layered structures, including variables for stress
   //! and band-edges.
   class Object : public Layered::Object<>,

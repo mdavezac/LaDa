@@ -6,5 +6,5 @@ liblapack_la_SOURCES = dlae2.f   dlanst.f  dlapy2.f  dlarf.f   dlarft.f  dlascl.
 		       dsyev.f   dsytrd.f  lsame.f   xerbla.f  dgemm.f   ilaenv.f \
 		       dscal.f   dlamch.f  dsyr2k.f  ieeeck.f  iparmq.f  dsymv.f  \
 		       ddot.f    daxpy.f   dsyr2.f   dnrm2.f   dswap.f   dcopy.f  \
-		       dgemv.f   dtrmv.f   dtrmm.f   dger.f 
+		       dgemv.f   dtrmv.f   dtrmm.f   dger.f    lapack.cc lapack.h
 

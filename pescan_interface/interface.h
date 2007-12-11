@@ -217,6 +217,10 @@ namespace Pescan
      void set_atom_input( const std::string &_str ) { atom_input = _str; }
      //! Destroys directory for computations.
      void destroy_directory();
+     //! \brief Tries to find a <Functional type="escan"> tag in \a _node.
+     //! \details Checks wether \a _node or its immediate offpsrings are the
+     //!          right functional node.
+     const TiXmlElement* find_node (const TiXmlElement &_node );
 
     protected:
      //! Launches a calculation 
@@ -235,10 +239,6 @@ namespace Pescan
      void write_genpot_input();
      //! Reads results from escan output.
      bool read_result();
-     //! \brief Tries to find a <Functional type="escan"> tag in \a _node.
-     //! \details Checks wether \a _node or its immediate offpsrings are the
-     //!          right functional node.
-     const TiXmlElement* find_node (const TiXmlElement &_node );
      //! Loads functional directly from \a _node
      bool Load_( const TiXmlElement &_node );
   };

@@ -122,7 +122,7 @@ namespace Vff
   inline void Darwin<T_FUNCTIONAL> :: operator()( Keeper &_keeper )
   {
     operator()();
-    _keeper.energy = t_Base::structure.energy;
+    _keeper.energy = t_Functional::structure.energy;
     _keeper.stress = t_Base::stress;
   }
 

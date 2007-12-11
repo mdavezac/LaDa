@@ -1,15 +1,22 @@
 //
 //  Version: $Id$
 //
-#ifndef _DARWIN_BANDGAP_STUBS_IMPL_H_
-#define _DARWIN_BANDGAP_STUBS_IMPL_H_
+#ifndef _DARWIN_EMASS_STUBS_IMPL_H_
+#define _DARWIN_EMASS_STUBS_IMPL_H_
 
-namespace BandGap
+namespace eMassSL
 {
   inline std::ostream& operator<<(std::ostream &_stream, const Keeper &_o)
   { 
     _stream << " CBM " << std::fixed << std::setw(12) << std::setprecision(6) << _o.cbm 
-            << "  --  VBM " << std::fixed << std::setw(12) << std::setprecision(6) << _o.vbm; 
+            << "  --  eMass " 
+            << std::fixed << std::setw(8) << std::setprecision(4) << _o.emass(0,0) << " " 
+            << std::fixed << std::setw(8) << std::setprecision(4) << _o.emass(0,1) << " " 
+            << std::fixed << std::setw(8) << std::setprecision(4) << _o.emass(0,2) << " "
+            << std::fixed << std::setw(8) << std::setprecision(4) << _o.emass(1,1) << " " 
+            << std::fixed << std::setw(8) << std::setprecision(4) << _o.emass(1,2) << " "
+            << std::fixed << std::setw(8) << std::setprecision(4) << _o.emass(2,2);
+
     return _stream; 
   } 
 
@@ -17,8 +24,8 @@ namespace BandGap
   {
     Darwin::operator()();
     // copies band edges into object
-    _keeper.vbm = bandgap.bands.vbm; 
-    _keeper.cbm = bandgap.bands.cbm;
+    _keeper.cbm = emass.eigenvalues.back();
+    _keeper.emass = emass.tensor;
   }
   template <class T_BASE> 
   inline void Darwin::operator<<( const Vff::Darwin<T_BASE> &_vff )
@@ -34,6 +41,6 @@ namespace BandGap
     // tells bandgap where to find atomic configurations
     atomicconfig = sstr.str();
   }
-} // namespace bandgap
+}
 
 #endif

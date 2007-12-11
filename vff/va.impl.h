@@ -4,6 +4,8 @@
 #ifndef _VFF_VA_IMPL_H_
 #define _VFF_VA_IMPL_H_
 
+#include <stdexcept>
+
 namespace Vff
 {
 

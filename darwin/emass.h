@@ -14,17 +14,18 @@
 
 #include <tinyxml/tinyxml.h>
 
+#include <vff/layered.h>
 #include <vff/va.h>
 #include <lamarck/structure.h>
 #include <opt/types.h>
 
-#include "two_sites.h"
+#include "layered.h"
 #include "evaluator.h"
 #include "concentration.h"
 #include "functors.h"
 #include "individual.h"
 #include "vff.h"
-#include "pescan.h"
+#include "emass_stubs.h"
 
 
 #ifdef _MPI
@@ -56,21 +57,30 @@ namespace eMassSL
       typedef t_LayeredBase :: t_Type t_Type; 
       //! see function::Base::t_Container
       typedef t_LayeredBase :: t_Container t_Container;
+      //! \brief Direction of maximum \f$Q = \frac{m_0 m_1}{m_2}\f$.
+      //! \details number of the eigenvector for to which a parallel current
+      //!          yields the highest \e Q, as obtained from Lapack::eigen().
+      //!          A value of 3 means unitialized.
+      types::t_int n;
+      //! \brief Maximum \f$Q = \frac{m_0 m_1}{m_2}\f$.
+      //! \details \f$m_0\f$, \f$m_1\f$, and \f$m_2\f$ are the eigenvalues of the
+      //!          effective mass.
+      types::t_real Q;
 
     public:
       //! Constructor
-      Object() : t_LayeredBase(), t_VffBase(), t_eMassSLBase() {}
+      Object() : t_LayeredBase(), t_VffBase(), t_eMassSLBase(), n(3), Q(0) {}
       //! Copy Constructor
-      Object(const Object &_c) : t_LayeredBase(_c), t_VffBase(_c), t_eMassSLBase(_c) {};
+      Object   (const Object &_c)
+             : t_LayeredBase(_c), t_VffBase(_c), t_eMassSLBase(_c),
+               n(_c.n), Q(_c.Q) {};
       //! Destructor
       ~Object() {};
       
       //! Loads strain and band-gap info from XML
-      bool Load( const TiXmlElement &_node )
-        { return t_VffBase::Load(_node) and t_eMassSLBase::Load(_node); }
+      bool Load( const TiXmlElement &_node );
       //! Saves strain and band-gap info to XML
-      bool Save( TiXmlElement &_node ) const
-        { return t_VffBase::Save(_node) and t_eMassSLBase::Save(_node); }
+      bool Save( TiXmlElement &_node ) const;
   };
 
   //! \brief Explicitely defines stream dumping of eMassSL::Object 
@@ -98,12 +108,12 @@ namespace eMassSL
   {
     public:
       //! Type of the individual
-      typedef Molecularity::t_Individual     t_Individual;
+      typedef eMassSL::t_Individual            t_Individual;
       //! All %types relevant to %GA
-      typedef Traits::GA< Evaluator >        t_GATraits;
-    protected:
+      typedef Traits::GA< Evaluator >          t_GATraits;
+    protected:                               
       //! Type of this class
-      typedef Evaluator                      t_This;
+      typedef Evaluator                        t_This;
       //! Type of the base class
       typedef Layered::Evaluator<t_Individual> t_Base;
 
@@ -119,6 +129,8 @@ namespace eMassSL
       eMassSL::Darwin emass;
       //! The vff object for minimizing and computing strain/stress.
       Vff::Darwin<Vff::Layered> vff;
+      //! Directions for which to optimize electronic effective mass
+      std::vector< atat::rVector3d > directions;
 
     public:
       //! Constructor
@@ -150,6 +162,6 @@ namespace eMassSL
 
 } // namespace BandGap
 
-#include "molecularity.impl.h"
+#include "emass.impl.h"
 /** @} */
 #endif // _BANDGAP_H_

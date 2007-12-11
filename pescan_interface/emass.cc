@@ -6,9 +6,8 @@
 
 #include "emass.h"
 
-extern "C" void FC_FUNC(dsyev, DSYEV)( char*, char*, int*, types::t_real*, 
-                                       int*, types::t_real*, types::t_real*, 
-                                       int*, int* );
+#include <lapack/lapack.h>
+
                                                     
 namespace Pescan
 {
@@ -41,32 +40,16 @@ namespace Pescan
     inverse(1,2) = inverse(2,1) = (   eig_Hxz[0] - eig_Hmxz[0]
                                     + eig_Hxz[1] - eig_Hmxz[1] ) * amp2;
 
-    types::t_real work[9];
+    atat::rMatrix3d m, vecs; m.zero();
     types::t_real eigs[3];
-    types::t_real inv[9];
-    for( types::t_unsigned i=0; i<3; ++i )
-      for( types::t_unsigned j=0; j<3; ++j )
-      {
-        if( opt::Fuzzy<types::t_real>::equal( inverse(i,j), 0.0 ) ) 
-          inverse(i,j) = 0.0;
-        inv[3*i+j] = inverse(i,j);
-      }
+
+    Lapack::eigen( inverse, vecs, eigs );
     
 
-    int info;
-    char job('V'), mattype('U');
-    int three(3), nine(9);
-    FC_FUNC(dsyev, DSYEV)( &job, &mattype, &three, inv, &three, eigs, work, &nine, &info);
-    if( info != 0 ) return false;
-
-    atat::rMatrix3d m, vecs; m.zero();
     m(0,0) = eigs[0];
     m(1,1) = eigs[1];
     m(2,2) = eigs[2];
 
-    for( types::t_unsigned i=0; i<3; ++i )
-      for( types::t_unsigned j=0; j<3; ++j )
-        vecs(i,j) = inv[3*i+j];
 
     tensor = vecs * m * (~vecs);
     std::cout << " Inverse mass: \n " << inverse
