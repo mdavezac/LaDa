@@ -40,6 +40,7 @@ namespace BandGap
 
   void Evaluator::evaluate()
   {
+    Ising_CE::Structure copy_structure = structure;
     concentration.get( *current_object );
     current_object->x = concentration.x;
     current_object->y = concentration.y;
@@ -57,6 +58,7 @@ namespace BandGap
 
     // set quantity
     current_individual->quantities() = current_object->cbm - current_object->vbm;
+    structure = copy_structure;
   }
 
 } // namespace BandGap
