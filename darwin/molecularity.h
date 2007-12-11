@@ -56,7 +56,7 @@ namespace Molecularity
       //! Strain info base 
       typedef Vff::Keeper         t_VffBase;      
       //! Band gap info base
-      typedef Pescan::Keeper      t_PescanBase;   
+      typedef BandGap::Keeper     t_BandGapBase;   
 
     public:
       //! see function::Base::t_Type
@@ -66,18 +66,18 @@ namespace Molecularity
 
     public:
       //! Constructor
-      Object() : t_LayeredBase(), t_VffBase(), t_PescanBase() {}
+      Object() : t_LayeredBase(), t_VffBase(), t_BandGapBase() {}
       //! Copy Constructor
-      Object(const Object &_c) : t_LayeredBase(_c), t_VffBase(_c), t_PescanBase(_c) {};
+      Object(const Object &_c) : t_LayeredBase(_c), t_VffBase(_c), t_BandGapBase(_c) {};
       //! Destructor
       ~Object() {};
       
       //! Loads strain and band-gap info from XML
       bool Load( const TiXmlElement &_node )
-        { return t_VffBase::Load(_node) and t_PescanBase::Load(_node); }
+        { return t_VffBase::Load(_node) and t_BandGapBase::Load(_node); }
       //! Saves strain and band-gap info to XML
       bool Save( TiXmlElement &_node ) const
-        { return t_VffBase::Save(_node) and t_PescanBase::Save(_node); }
+        { return t_VffBase::Save(_node) and t_BandGapBase::Save(_node); }
   };
 
   //! \brief Explicitely defines stream dumping of Molecularity::Object 
@@ -122,16 +122,16 @@ namespace Molecularity
 
     protected:
       //! The pescan interface object for obtaining band-gaps
-      BandGap::Darwin pescan;
+      BandGap::Darwin bandgap;
       //! The vff object for minimizing and computing strain/stress.
       Vff::Darwin<Vff::Layered> vff;
 
     public:
       //! Constructor
-      Evaluator() : t_Base(), pescan(structure), vff(structure) {}
+      Evaluator() : t_Base(), bandgap(structure), vff(structure) {}
       //! Copy Constructor
       Evaluator   ( const Evaluator &_c )
-                : t_Base(_c), pescan(_c.pescan), vff(_c.vff) {}
+                : t_Base(_c), bandgap(_c.bandgap), vff(_c.vff) {}
       //! Destructor
       ~Evaluator() {}
 
@@ -140,7 +140,7 @@ namespace Molecularity
        { return _indiv.Object().Save(_node) and t_Base::Save( _indiv, _node, _type ); }
       //! Load an individual from XML
       bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
-      //! Loads the lattice, layered structure, pescan, and vff from XML.
+      //! Loads the lattice, layered structure, bandgap, and vff from XML.
       bool Load( const TiXmlElement &_node );
 
       //! Computes the band-gap and in-plane-stress of the current_individual.

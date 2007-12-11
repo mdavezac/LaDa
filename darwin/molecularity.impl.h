@@ -22,12 +22,12 @@ namespace Molecularity
     Ising_CE :: Structure structure0 = structure;
     // relax structure
     vff( *current_object );
-    // Load relaxed structure into pescan
-    pescan << vff; 
+    // Load relaxed structure into bandgap
+    bandgap << vff; 
     structure = structure0;
 
     // get band gap
-    pescan( *current_object );
+    bandgap( *current_object );
   
     // set quantity
     object_to_quantities( *current_individual );
@@ -35,7 +35,7 @@ namespace Molecularity
 
   inline eoF<bool>* Evaluator :: LoadContinue(const TiXmlElement &_el )
   {
-    return new GA::mem_zerop_t<BandGap::Darwin>( pescan,
+    return new GA::mem_zerop_t<BandGap::Darwin>( bandgap,
                                                 &BandGap::Darwin::Continue,
                                                 "BandGap::Continue"         );     
   }

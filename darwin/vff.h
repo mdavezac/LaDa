@@ -12,6 +12,7 @@
 
 #include <tinyxml/tinyxml.h>
 
+#include <vff/functional.h>
 #include <vff/va.h>
 #include <lamarck/structure.h>
 #include <opt/function_base.h>
@@ -70,12 +71,13 @@ namespace Vff
   //!          constructor. This is not quite obvious until you see the
   //!          constructor code of BandGap::Evaluator and
   //!          Molecularity::Evaluator, so go and check it out.
-  //! \param T_BASE Vff::Functional (default) or derived class
-  template< class T_BASE = Vff::Functional >
-  class Darwin : public Vff::VABase< T_BASE >
+  //! \param T_FUNCTIONAL Vff::Functional (default) or derived class
+  template< class T_FUNCTIONAL = Vff::Functional >
+  class Darwin : public Vff::VABase< T_FUNCTIONAL >
   {
     public:
-      typedef Vff::VABase<T_BASE> t_Base; //!< The base class
+      typedef T_FUNCTIONAL t_Functional; //!< The base class
+      typedef Vff::VABase<T_FUNCTIONAL> t_Base; //!< The base class
 
     public:
       //! \brief Constructor.
@@ -91,7 +93,7 @@ namespace Vff
       bool Load( const TiXmlElement &_node );
       //! Minimizes the structure
       void operator()()
-        { t_Base :: structure.energy = t_Base::evaluate(); }
+        { t_Functional :: structure.energy = t_Base::evaluate(); }
       //! Minimizes the structure and stores the results in \a _keeper
       void operator()( Keeper &_keeper );
   };
@@ -99,8 +101,8 @@ namespace Vff
 
 
 
-  template< class T_BASE>
-  bool Darwin<T_BASE> :: Load( const TiXmlElement &_node )
+  template< class T_FUNCTIONAL>
+  bool Darwin<T_FUNCTIONAL> :: Load( const TiXmlElement &_node )
   {
     if ( not t_Base::Load( _node ) )
     {
@@ -116,8 +118,8 @@ namespace Vff
 
     return true;
   }
-  template< class T_BASE>
-  inline void Darwin<T_BASE> :: operator()( Keeper &_keeper )
+  template< class T_FUNCTIONAL>
+  inline void Darwin<T_FUNCTIONAL> :: operator()( Keeper &_keeper )
   {
     operator()();
     _keeper.energy = t_Base::structure.energy;

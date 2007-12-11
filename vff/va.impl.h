@@ -68,8 +68,8 @@ namespace Vff
       if( _pos > va_vars.size() )
         throw std::runtime_error( "Requesting out-of-range gradient.\n");
     
-      std::vector< Atomic_Center > :: iterator i_center = centers.begin();
-      std::vector< Atomic_Center > :: iterator i_center_end = centers.end();
+      typename t_Centers :: iterator i_center = centers.begin();
+      typename t_Centers :: iterator i_center_end = centers.end();
       for(++_pos; _pos and i_center != i_center_end; ++i_center )
         if( not (i_center->Origin().freeze & t_Atom::FREEZE_T) ) --_pos;
     
@@ -86,8 +86,8 @@ namespace Vff
   void VABase<T_VFFBASE> :: evaluate_gradient( t_Type * _grad )
   {
     t_Type* i_grad = _grad;
-    std::vector< Atomic_Center > :: iterator i_center = centers.begin();
-    std::vector< Atomic_Center > :: iterator i_center_end = centers.end();
+    typename t_Centers :: iterator i_center = centers.begin();
+    typename t_Centers :: iterator i_center_end = centers.end();
     for(; i_center != i_center_end; ++i_center )
     {
       if( i_center->Origin().freeze & t_Atom::FREEZE_T ) continue;
@@ -108,8 +108,8 @@ namespace Vff
     {
       t_Type result(0);
       t_Type* i_grad = _grad;
-      std::vector< Atomic_Center > :: iterator i_center = centers.begin();
-      std::vector< Atomic_Center > :: iterator i_center_end = centers.end();
+      typename t_Centers :: iterator i_center = centers.begin();
+      typename t_Centers :: iterator i_center_end = centers.end();
       for(; i_center != i_center_end; ++i_center )
       {
         if( i_center->Origin().freeze & t_Atom::FREEZE_T ) 

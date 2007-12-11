@@ -32,9 +32,9 @@ namespace eMassSL
       std::cerr << " Could not load vff input!! " << std::endl; 
       return false;
     }
-    if ( not pescan.Load( _node ) )
+    if ( not emass.Load( _node ) )
     {
-      std::cerr << " Could not load pescan interface from input!! " << std::endl; 
+      std::cerr << " Could not load emass interface from input!! " << std::endl; 
       return false;
     }
 

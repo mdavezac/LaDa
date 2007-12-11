@@ -9,19 +9,20 @@
 
 
 
-namespace BandGap
+namespace eMassSL
 {
   bool Keeper :: Load ( const TiXmlElement &_node )
   {
+    std::istringstream tensor_txt;
+    const TiXmlElement *child;
     double d;
 
     if ( not _node.Attribute("cbm", &d ) ) goto errorout;
     cbm = types::t_real(d);
-    const TiXmlElement *child =  _node.FirstChildElement( "emass" );
+    child = _node.FirstChildElement( "emass" );
     if ( not child  ) goto errorout;
     if ( not child->GetText() ) goto errorout;
-    std::istringstream tensor_txt = child->GetText();
-    types::t_unsigned i = 0, j = 0;
+    tensor_txt.str(child->GetText());
 
     if( not tensor_txt.good() ) goto errorout;
     tensor_txt >> emass(0,0); 
@@ -43,7 +44,7 @@ errorout:
   }
   bool Keeper :: Save( TiXmlElement &_node ) const
   {
-    _node.SetDoubleAttribute("vbm", vbm );
+    _node.SetDoubleAttribute("cbm", cbm );
     TiXmlElement *tensor_xml = new TiXmlElement("emass");
     if( not tensor_xml ) return false;
     std::ostringstream sstr;
@@ -99,9 +100,10 @@ errorout:
     // then evaluates band gap
     if ( not emass(structure) ) 
     {
-      if( emass.escan.method == Pescan::Interface::ALL_ELECTRON )  return;
-      Print::out << " Found metallic or negative band gap!! " << result << "\n" 
-                 << " Will Try and Recompute Band Gap \n";
+      if( emass.get_method() == Pescan::Interface::ALL_ELECTRON )  return;
+      Print::out << " Error while computing effective mass\n"
+                 << " Will try all electron computation before giving up " 
+                 << Print::endl;
       set_all_electron();
       Darwin::operator()();
     }
@@ -137,16 +139,16 @@ errorout:
   {
     types :: t_real a;
 
-    emass.escan.Eref = emass.egeinvalues.back();
-    Print::out << "Reference Energies are: CBM=" << emass.escan.Eref() << "\n";
+    emass.set_reference( emass.eigenvalues.back() );
+    Print::out << "Reference Energies are: CBM=" << emass.get_reference() << "\n";
     Print::xmg << Print::Xmg::comment << "Reference Energies are: CBM=" 
-               << emass.escan.Eref() << Print::endl;
+               << emass.get_reference() << Print::endl;
 #ifdef _MPI 
     if ( not mpi::main.is_root_node() ) return;
 #endif
     std::ofstream file( references_filename.c_str(), std::ios_base::out | std::ios_base::trunc ); 
     if ( not file.is_open() ) return;
-    file << emass.escan.Eref() << "   "; if ( file.fail() ) return;
+    file << emass.get_reference() << "   "; if ( file.fail() ) return;
     file.close();
     return;
   }
@@ -169,7 +171,7 @@ errorout:
        << a << mpi::BroadCast::clear;
 #endif 
 
-    bandgap.Eref = a; 
+    emass.set_reference(a); 
     return;
 
 failure:

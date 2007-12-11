@@ -95,6 +95,7 @@ namespace Pescan
       //! Loads Functional from XML
       bool Load( const TiXmlElement &_node );
 
+
     protected:
       //! Folded Spectrum gamma computation
       types::t_real gamma_folded_spectrum();

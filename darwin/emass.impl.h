@@ -4,7 +4,7 @@
 #ifndef _DARWIN_EMASS_IMPL_H_
 #define _DARWIN_EMASS_IMPL_H_
 
-namespace Molecularity
+namespace eMassSL
 {
   inline void Evaluator::object_to_quantities( t_Individual & _indiv )
   {
@@ -22,7 +22,7 @@ namespace Molecularity
     Ising_CE :: Structure structure0 = structure;
     // relax structure
     vff( *current_object );
-    // Load relaxed structure into pescan
+    // Load relaxed structure into emass
     emass << vff; 
     structure = structure0;
 

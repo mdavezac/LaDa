@@ -34,7 +34,7 @@ namespace Molecularity
     }
     if ( not bandgap.Load( _node ) )
     {
-      std::cerr << " Could not load pescan interface from input!! " << std::endl; 
+      std::cerr << " Could not load bandgap interface from input!! " << std::endl; 
       return false;
     }
 
