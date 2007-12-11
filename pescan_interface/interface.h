@@ -13,9 +13,10 @@
 #include <vector>
 #include <utility>
 
-#include<lamarck/structure.h>
-
 #include <opt/types.h>
+#include <atat/vectmac.h>
+
+#include <tinyxml/tinyxml.h>
 
 #ifdef _MPI
 #include <mpi/mpi_object.h>
@@ -37,30 +38,20 @@
 namespace Pescan
 {
 
-  //! Keeps track of the HOMO and LUMO
-  struct Bands
-  { 
-    types::t_real cbm;  //!< Conduction Band Minimum
-    types::t_real vbm;  //!< Valence Band minimum
-    Bands() : cbm(0), vbm(0) {}; //!< Constructor
-    //! Constructor and Initializer
-    Bands( const types :: t_real _cbm, types::t_real _vbm ) : cbm(_cbm), vbm(_vbm) {};
-    //! Copy Constructor.
-    Bands( const Bands &_bands ) : cbm(_bands.cbm), vbm(_bands.vbm) {};
-    //! Returns the gap.
-    types::t_real gap() const { return cbm - vbm; }
-#ifdef _NOLAUNCH
-    //! Debug: for _NOLAUNCH fake functional only
-    void swap() { types::t_real a = cbm; cbm = vbm; vbm = a; }
-#endif
-  };
-
   //! \brief Defines an interface for the nanopse pescan program.
-  //! \details Mostly, this class writes the input and recovers the output.
-  //! \todo Isolate the pescan launcher itself from the band-gap computation?
+  //! \details Mostly, this class writes the input and recovers the output eigenvalues.
   class Interface 
   {
     public:
+      //! Method for solving the eigenvalue problem
+      enum t_method
+      { 
+        NOMET, //!< No method, placeholder.
+        FOLDED_SPECTRUM, //!< Folded spectrum method.
+        ALL_ELECTRON  //!< Full diagonalization method.
+      };
+
+    protected:
 
     //! Contains parameters necessary for generating the potential.
     struct GenPot
@@ -79,6 +70,11 @@ namespace Pescan
       GenPot   () 
              : filename("pot.input"), x(0), y(0), z(0), 
                cutoff(0), output("pot.output"), launch("getVLarg") {}
+      //! Copy Constructor
+      GenPot   ( const GenPot & _c )
+             : filename( _c.filename ), x( _c.x ), y( _c.y ), z( _c.z ),
+               cutoff( _c.cutoff ), output( _c.output ), launch( _c.launch ),
+               pseudos( _c.pseudos ) {}
       //! Some coherency checks.
       bool check() { return x && y && z && cutoff && ( pseudos.size() >= 2 ); }
     };
@@ -102,14 +98,6 @@ namespace Pescan
     //! Parameters for nanopse's escan program.
     struct Escan
     {
-      public:
-        //! Method for solving the eigenvalue problem
-        enum t_method
-        { 
-          NOMET, //!< No method, placeholder.
-          FOLDED_SPECTRUM, //!< Folded spectrum method.
-          ALL_ELECTRON  //!< Full diagonalization method.
-        };
         //! Type of the potential
         enum t_potential
         { 
@@ -130,7 +118,7 @@ namespace Pescan
       //! Eigenvalue solution method.
       t_method method;
       //! Reference energy for folded spectrum method
-      Bands Eref;
+      types::t_real Eref;
       //! Kinetic scaling factor for plane-wave cutoff
       types::t_real kinscal;
       //! Smoothness fcator plane-wave cutoff
@@ -159,30 +147,24 @@ namespace Pescan
       //! Constructor.
       Escan () : filename("escan.input"), output("escan.out"),
                  wavefunction_out("wavefunction"), wavefunction_in("wavefunction"),
-                 method(FOLDED_SPECTRUM), Eref(0,0), smooth(0.5), kinscal(0.0), nbstates(3),
+                 method(FOLDED_SPECTRUM), Eref(0), smooth(0.5), kinscal(0.0), nbstates(3),
                  niter(10), nlines(50), tolerance(types::tolerance),
                  kpoint(0,0,0), scale(0), potential(LOCAL), rcut(0), 
                  launch("escanCNL") {}
+      //! Copy Constructor
+      Escan   ( const Escan &_c)
+            : filename(_c.filename), output(_c.output),
+              wavefunction_out( _c.wavefunction_out), wavefunction_in( _c.wavefunction_in ),
+              method(_c.method), Eref(_c.Eref), smooth( _c.smooth ), kinscal( _c.kinscal), 
+              nbstates(_c.nbstates), niter(_c.niter), nlines(_c.nlines), tolerance(_c.tolerance),
+              kpoint(_c.kpoint), scale(_c.scale), potential(_c.potential), rcut(_c.rcut), 
+              launch(_c.launch) {}
     };
-    //! For folded spectrum, whcih band is being computed.
-    enum t_computation
-    { 
-      VBM,  //!< Valence Band Maximum is being computed.
-      CBM   //!< Conduction Band Minimum is being computed.
-    };
-
 #ifdef _MPI
     //! \cond
     friend bool mpi::BroadCast::serialize<Interface> ( Interface& );
     //! \endcond
 #endif 
-#ifdef _NOLAUNCH
-    //! \cond
-    friend void nolaunch_functional( const Ising_CE::Structure &_str,
-                                     Interface::Bands &bands );
-    //! \endcond
-#endif
-
   
     protected:
       //! Filename of the atomic configuation input
@@ -191,60 +173,56 @@ namespace Pescan
       GenPot genpot;
       //! All escan-specific parameters
       Escan escan;
-      //! For folded spectrum, which computation is being performed.
-      t_computation computation;
       //! Directory where to perform computations.
       std::string dirname;
-      //! Stores results
-      Bands bands;
       //! Whether to delete directory where computations are being performed.
       bool do_destroy_dir;
       //! Whether to input wavefunctions
       bool do_input_wavefunctions;
+     
+    public:
+      //! Stores results
+      std::vector<types::t_real> eigenvalues;
 
     public:
       //! Constructor
       Interface () : atom_input("atom.config"), genpot(), escan(),
-                     computation(VBM), do_destroy_dir(true),
+                     do_destroy_dir(true),
                      do_input_wavefunctions(false) {}
+      //! Copy Constructor
+      Interface   ( const Interface &_c )
+                : atom_input( _c.atom_input ), genpot( _c.genpot ),
+                  escan( _c.escan ), 
+                  dirname( _c.dirname ), do_destroy_dir( _c.do_destroy_dir ),
+                  do_input_wavefunctions( _c.do_input_wavefunctions ),
+                  eigenvalues( _c.eigenvalues ) {}
       //! Destructor
      ~Interface() {};
 
      //! Loads all parameters from XML.
      bool Load( const TiXmlElement &_node );
 
-     //! Launches a band-gap calculation for structure \a _str
-     types::t_real operator()( Ising_CE::Structure &_str ); 
-     
-     //! launches pescan once potential has been created.
-     types::t_real launch_pescan( Ising_CE::Structure &_str ); 
      //! Sets the name of the directory where to perform calculations.
      void set_dirname( const std::string &_dir ) { dirname = _dir; }
      //! Sets the reference energies for folded spectrum calculations.
-     void set_references( types::t_real _val, types::t_real _cond )
-       { escan.Eref.vbm = _val; escan.Eref.cbm = _cond; }
+     void set_reference( types::t_real _val )  { escan.Eref = _val; }
      //! Stores the reference energies for folded spectrum calculations.
-     void get_references( types::t_real &_val, types::t_real &_cond ) const
-       { _val = escan.Eref.vbm; _cond = escan.Eref.cbm; }
-     //! returns the band edges.
-     void get_bands( types::t_real &_VBM, types::t_real &_CBM ) const
-       { _CBM = bands.cbm; _VBM = bands.vbm; }
-     //! Returns the current eigenvalue method being used.
-     Escan::t_method get_method() const { return escan.method; }
+     types::t_real get_reference() const { return escan.Eref; }
+     //! return eigenvalue method to used.
+     t_method get_method() const { return escan.method; }
      //! Set eigenvalue method to used.
-     void set_method( Escan::t_method _method = Escan::FOLDED_SPECTRUM )
+     void set_method( t_method _method = FOLDED_SPECTRUM )
        { escan.method = _method; }
      //! Sets the name of the atomic configuration input file from Vff.
      void set_atom_input( const std::string &_str ) { atom_input = _str; }
-     //! \brief sets and codes name of output wavefunctions according to calculation
-     //! \details If \a _name is not empty, Escan::wavefunction_out is set to \a _name.
-     //!          The function returns a name which codes for the kind of
-     //!          computation done
-     const std::string wfn_name(const std::string _name);
      //! Destroys directory for computations.
      void destroy_directory();
 
     protected:
+     //! Launches a calculation 
+     bool operator()(); 
+     //! launches pescan once potential has been created.
+     types::t_real launch_pescan(); 
      //! Creates directory for computations.
      void create_directory();
      //! Destroys directory for computations, depending on Interface::do_destroy_dir
@@ -252,22 +230,30 @@ namespace Pescan
      //! Interfaces to potential creation
      void create_potential();
      //! Writes escan parameter input.
-     void write_escan_input( Ising_CE::Structure &_str );
+     void write_escan_input();
      //! Writes potential generation parameter input.
      void write_genpot_input();
      //! Reads results from escan output.
-     types::t_real read_result( Ising_CE::Structure &_str );
+     bool read_result();
+     //! \brief Tries to find a <Functional type="escan"> tag in \a _node.
+     //! \details Checks wether \a _node or its immediate offpsrings are the
+     //!          right functional node.
+     const TiXmlElement* find_node (const TiXmlElement &_node );
+     //! Loads functional directly from \a _node
+     bool Load_( const TiXmlElement &_node );
   };
 
 
-  inline const std::string Interface :: wfn_name(std::string _name)
+  inline bool Interface::Load( const TiXmlElement &_node )
   {
-    if( escan.method == Escan::FOLDED_SPECTRUM )
-      _name = _name + "." + (computation == VBM ? "vbm": "cbm" );
-    else
-      _name = _name + ".ae";
-    return _name;
+    const TiXmlElement *parent = find_node( _node );
+    if ( parent ) return Load( *parent );
+    
+    std::cerr << "Could not find an <Functional type=\"escan\"> tag in input file" 
+              << std::endl;
+    return false;
   }
+    
 
 } // namespace pescan_interface
 

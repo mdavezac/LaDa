@@ -4,7 +4,6 @@
 
 #include <tinyxml/tinyxml.h>
 
-#include "functional.h"
 #include <lamarck/lattice.h>
 #include <lamarck/structure.h>
 #ifdef _DOFORTRAN
@@ -13,6 +12,7 @@
 #include <opt/gsl_minimizers.h>
 #endif
 
+#include "functional.h"
 
 int main(int argc, char *argv[]) 
 {

@@ -1,27 +1,65 @@
-bin_PROGRAMS = escan
 AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ @MPICH_CFLAGS@
 AM_LDFLAGS = @TINYXML_LIBS@ 
 if NOLAUNCH
   AM_CPPFLAGS += @EO_CFLAGS@
   AM_LDFLAGS  += @EO_LIBS@
 endif    
-escan_SOURCES = main.cc
-escan_CPPFLAGS = $(AM_CPPFLAGS)  -I ..
-escan_LDFLAGS =  $(AM_LDFLAGS) @MPICH_LIBS@
-escan_LDADD = libpescan.la ../lamarck/liblamarck.la ../atat/libatat.la ../vff/libvff.la\
-              ../physics/libphysics.la ../print/libprint.la @MPI_ADDLIB@ 
+
 if DOFORTRAN
-  escan_LDFLAGS +=  @FCLIBS@
-  escan_LDADD += ../opt/libopt.la 
+  fortranLDFLAGS =  @FCLIBS@
+  fortranLDADD = ../opt/libopt.la 
+  gslCPPFLAGS = 
+  gslLDFLAGS = 
 else
-  escan_CPPFLAGS += @GSL_INCLUDE@
-  escan_LDFLAGS += @GSL_LIB@
+if DOEMASS
+ fortranLDFLAGS =  @FCLIBS@
+else
+  fortranLDFLAGS = 
 endif
+  fortranLDADD = 
+  gslCPPFLAGS = @GSL_INCLUDE@
+  gslLDFLAGS = @GSL_LIB@
+endif
+
+if DOEMASS
+ emassSOURCE = emass.cc
+ emassHEADER = emass.h
+ emassLDADD = ../lapack/liblapack.la
+ binEMASS = emass
+else 
+ emassSOURCE = 
+ emassHEADER = 
+ emassLDADD = 
+ bin_EMASS = 
+endif
+
+bin_PROGRAMS = escan checkresults $(binEMASS)
+
 noinst_LTLIBRARIES = libpescan.la
-libpescan_la_SOURCES = interface.cc va.cc
 libpescan_ladir = $(includedir)/pescan_interface 
-nobase_libpescan_la_HEADERS = interface.h va.h
+libpescan_la_SOURCES = interface.cc bandgap.cc va.cc $(emassSOURCE)
+nobase_libpescan_la_HEADERS = interface.h bandgap.h va.h $(emassHEADER)
 libpescan_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
+
+escan_SOURCES = main.cc
+escan_CPPFLAGS = $(AM_CPPFLAGS)  -I .. $(gsl_CPPFLAGS)
+escan_LDFLAGS =  $(AM_LDFLAGS) @MPICH_LIBS@ $(gslLDFLAGS) $(fortranLDFLAGS)
+escan_LDADD = libpescan.la ../lamarck/liblamarck.la ../atat/libatat.la ../vff/libvff.la\
+              ../physics/libphysics.la ../print/libprint.la @MPI_ADDLIB@ \
+	      $(fortranLDADD)
+
+checkresults_SOURCES = $(escan_SOURCES)
+checkresults_CPPFLAGS = $(escan_CPPFLAGS) -D _CHECK_RESULTS
+checkresults_LDFLAGS = $(escan_LDFLAGS)
+checkresults_LDADD = $(escan_LDADD)
+
+if DOEMASS
+emass_SOURCES = $(escan_SOURCES)
+emass_CPPFLAGS = $(escan_CPPFLAGS) -D_EMASS
+emass_LDFLAGS = $(escan_LDFLAGS)
+emass_LDADD = $(escan_LDADD) $(emassLDADD)
+endif
+
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 
 ../lamarck/liblamarck.la: 
@@ -38,3 +76,7 @@ if DOFORTRAN
 ../mpi/libopt.la:
 	cd ../opt; $(MAKE)
 endif
+if DOEMASS
+../lapack/liblapack.la:
+	cd ../lapack; $(MAKE)
+endif 

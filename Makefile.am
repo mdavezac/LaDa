@@ -23,7 +23,12 @@ endif
 if DODARWIN
   DARWINSUBDIR = darwin
 endif 
-SUBDIRS = $(MPISUBDIR) atat physics opt lamarck print $(VFFSUBDIR) $(PESCANSUBDIR) $(DARWINSUBDIR)
+if DOLAPACK
+  DARWINSUBDIR = darwin
+  LAPACKDIR = lapack
+endif
+SUBDIRS = $(MPISUBDIR) atat physics opt lamarck print $(VFFSUBDIR) \
+	  $(PESCANSUBDIR) $(LAPACKDIR) $(DARWINSUBDIR) 
 revision.h: force
 	./max_revision.pl
 force: 

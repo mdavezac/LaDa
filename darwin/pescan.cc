@@ -7,7 +7,9 @@
 
 #include "pescan.h"
 
-namespace Pescan
+
+
+namespace BandGap
 {
   bool Keeper :: Load ( const TiXmlElement &_node )
   {
@@ -15,49 +17,60 @@ namespace Pescan
 
     if ( not _node.Attribute("cbm", &d ) ) goto errorout;
     cbm = types::t_real(d);
-    if ( not _node.Attribute("vbm", &d ) ) goto errorout;
-    vbm = types::t_real(d);
+    const TiXmlElement *child =  _node.FirstChildElement( "emass" );
+    if ( not child  ) goto errorout;
+    if ( not child->GetText() ) goto errorout;
+    std::istringstream tensor_txt = child->GetText();
+    types::t_unsigned i = 0, j = 0;
+
+    if( not tensor_txt.good() ) goto errorout;
+    tensor_txt >> emass(0,0); 
+    if( not tensor_txt.good() ) goto errorout;
+    tensor_txt >> emass(0,1); emass(1,0) = emass(0,1);
+    if( not tensor_txt.good() ) goto errorout;
+    tensor_txt >> emass(0,2); emass(2,0) = emass(0,2);
+    if( not tensor_txt.good() ) goto errorout;
+    tensor_txt >> emass(1,1); 
+    if( not tensor_txt.good() ) goto errorout;
+    tensor_txt >> emass(1,2); emass(2,1) = emass(1,2);
+    if( not tensor_txt.good() ) goto errorout;
+    tensor_txt >> emass(1,2); 
 
     return true;
 errorout:
-    std::cerr << "Could not Load Pescan::Keeper" << std::endl;
+    std::cerr << "Could not Load eMassSL::Keeper" << std::endl;
     return false;
   }
   bool Keeper :: Save( TiXmlElement &_node ) const
   {
     _node.SetDoubleAttribute("vbm", vbm );
-    _node.SetDoubleAttribute("cbm", cbm );
+    TiXmlElement *tensor_xml = new TiXmlElement("emass");
+    if( not tensor_xml ) return false;
+    std::ostringstream sstr;
+    sstr << std::fixed << std::setw(8) << std::setprecision(4) << emass(0,0) << " " 
+         << std::fixed << std::setw(8) << std::setprecision(4) << emass(0,1) << " " 
+         << std::fixed << std::setw(8) << std::setprecision(4) << emass(0,2) << " "
+         << std::fixed << std::setw(8) << std::setprecision(4) << emass(1,1) << " " 
+         << std::fixed << std::setw(8) << std::setprecision(4) << emass(1,2) << " "
+         << std::fixed << std::setw(8) << std::setprecision(4) << emass(2,2);
+    TiXmlText *tensor_txt = new TiXmlText( sstr.str().c_str() );
+    if( not tensor_txt )
+    {
+      delete tensor_xml;
+      return false;
+    }
+    tensor_xml->LinkEndChild( tensor_txt );
+    _node.LinkEndChild( tensor_xml );
 
     return true;
   }
+
+
+
   bool Darwin :: Load( const TiXmlElement &_node )
   {
-    // wrong order! just to check whether Refs are read from input
-    pescan.set_references( -666.666, 666.666 );
-    if ( not pescan.Load( _node ) )
-    {
-      std::cerr << " Could not load pescan interface from input!! " << std::endl; 
-      return false;
-    }
-    types::t_real x, y;
-    pescan.get_references(x,y); // band edges have not been read if below is true
-    if (     std::abs(x + 666.666 ) < types::tolerance 
-         and std::abs(y - 666.666 ) < types::tolerance )
-    {
-      set_all_electron();
-      Print::out << "No reference energy on input, "
-                 << "will first perform all electron calculation\n"; 
-      Print::xmg << Print::Xmg::comment << "No reference energy on input, "
-                 << "will first perform all electron calculation" << Print::endl; 
-    }
-    else
-    {
-      Print::out << "Reference Energies are: CBM=" << y
-                 << ", VBM=" << x << "\n";
-      Print::xmg << Print::Xmg::comment << "Reference Energies are: CBM=" << y
-                 << ", VBM=" << x << Print::endl;
-    }
-
+    if ( not emass.Load( _node ) ) return false;
+    
     if (     _node.FirstChildElement("Filenames") 
          and _node.FirstChildElement("Filenames")->Attribute("BandEdge") )
     {
@@ -80,11 +93,152 @@ errorout:
     sstr << mpi::main.rank();
 #endif
     dirname =  sstr.str();
-    pescan.set_dirname( dirname );
-    pescan.set_atom_input( atomicconfig );
+    emass.set_dirname( dirname );
+    emass.set_atom_input( atomicconfig );
 
     // then evaluates band gap
-    types::t_real result = pescan(structure);
+    if ( not emass(structure) ) 
+    {
+      if( emass.escan.method == Pescan::Interface::ALL_ELECTRON )  return;
+      Print::out << " Found metallic or negative band gap!! " << result << "\n" 
+                 << " Will Try and Recompute Band Gap \n";
+      set_all_electron();
+      Darwin::operator()();
+    }
+    if ( emass.get_method() == Pescan::Interface::FOLDED_SPECTRUM ) return;
+    emass.set_method(); // resets to folded spectrum if necessary
+
+
+    // writes referecnce
+#ifdef _MPI
+    if ( not mpi::main.is_root_node() ) return; // not root no read write
+#endif 
+    Print::out << " Writing band edges to file " << references_filename << "\n";
+    write_references();
+  }
+
+  bool Darwin :: Continue()
+  {
+    // on first iteration, writes references... then read them on following iterations
+    ++age;
+    read_references();
+
+#ifdef _MPI
+    if ( not mpi::main.is_root_node() ) return true;
+#endif
+    // recomputes all electron references every so often, if required
+    if (     check_ref_every != -1 
+         and age % check_ref_every == 0 )  set_all_electron();
+
+    return true;
+  }
+
+  void Darwin::write_references()
+  {
+    types :: t_real a;
+
+    emass.escan.Eref = emass.egeinvalues.back();
+    Print::out << "Reference Energies are: CBM=" << emass.escan.Eref() << "\n";
+    Print::xmg << Print::Xmg::comment << "Reference Energies are: CBM=" 
+               << emass.escan.Eref() << Print::endl;
+#ifdef _MPI 
+    if ( not mpi::main.is_root_node() ) return;
+#endif
+    std::ofstream file( references_filename.c_str(), std::ios_base::out | std::ios_base::trunc ); 
+    if ( not file.is_open() ) return;
+    file << emass.escan.Eref() << "   "; if ( file.fail() ) return;
+    file.close();
+    return;
+  }
+  void Darwin::read_references()
+  {
+    types :: t_real a;
+#ifdef _MPI 
+    mpi::BroadCast bc(mpi::main);
+    if ( mpi::main.is_root_node() )
+    {
+#endif
+      std::ifstream file( references_filename.c_str(), std::ios_base::in ); 
+      if ( not file.is_open() ) goto failure;
+      file >> a; if ( file.fail() ) goto failure;
+      file.close();
+#ifdef _MPI
+    }
+    bc << a << mpi::BroadCast::allocate 
+       << a << mpi::BroadCast::broadcast
+       << a << mpi::BroadCast::clear;
+#endif 
+
+    bandgap.Eref = a; 
+    return;
+
+failure:
+#ifdef _MPI
+    bc << a << mpi::BroadCast::allocate 
+       << a << mpi::BroadCast::broadcast
+       << a << mpi::BroadCast::clear;
+#endif
+    return;
+  }
+
+
+
+}
+
+namespace BandGap
+{
+  bool Keeper :: Load ( const TiXmlElement &_node )
+  {
+    double d;
+
+    if ( not _node.Attribute("cbm", &d ) ) goto errorout;
+    cbm = types::t_real(d);
+    if ( not _node.Attribute("vbm", &d ) ) goto errorout;
+    vbm = types::t_real(d);
+
+    return true;
+errorout:
+    std::cerr << "Could not Load BandGap::Keeper" << std::endl;
+    return false;
+  }
+  bool Keeper :: Save( TiXmlElement &_node ) const
+  {
+    _node.SetDoubleAttribute("vbm", vbm );
+    _node.SetDoubleAttribute("cbm", cbm );
+
+    return true;
+  }
+  bool Darwin :: Load( const TiXmlElement &_node )
+  {
+    if ( not bandgap.Load( _node ) ) return false;
+    
+    if (     _node.FirstChildElement("Filenames") 
+         and _node.FirstChildElement("Filenames")->Attribute("BandEdge") )
+    {
+      references_filename = _node.FirstChildElement("Filenames")->Attribute("BandEdge");
+      references_filename = Print::reformat_home( references_filename );
+      Print::out << "Will store Reference energies at: " << references_filename << "\n";
+      Print::xmg << Print::Xmg::comment 
+                 << "Will store Reference energies at: " << references_filename << Print::endl;
+    }
+
+    return true;
+  }
+
+  void Darwin::operator()()
+  {
+    // Creates an mpi aware directory: one per proc
+    std::ostringstream sstr; sstr << "escan" << nbeval; 
+    ++nbeval;
+#ifdef _MPI
+    sstr << mpi::main.rank();
+#endif
+    dirname =  sstr.str();
+    bandgap.set_dirname( dirname );
+    bandgap.set_atom_input( atomicconfig );
+
+    // then evaluates band gap
+    types::t_real result = bandgap(structure);
 
     // checks that non-zero band gap has been found (and non-negative!)
     if ( result < types::tolerance )
@@ -95,8 +249,8 @@ errorout:
       Darwin::operator()();
       return;
     }
-    if ( pescan.get_method() == Pescan::Interface::Escan::FOLDED_SPECTRUM ) return;
-    pescan.set_method(); // resets to folded spectrum if necessary
+    if ( bandgap.get_method() == Pescan::Interface::FOLDED_SPECTRUM ) return;
+    bandgap.set_method(); // resets to folded spectrum if necessary
 
 
     // writes referecnce
@@ -126,20 +280,19 @@ errorout:
   void Darwin::write_references()
   {
     types :: t_real a, b;
-    pescan.get_references( a, b );
 
-    Print::out << "Reference Energies are: CBM=" << b
-               << ", VBM=" << a << "\n";
-    Print::xmg << Print::Xmg::comment << "Reference Energies are: CBM=" << b
-               << ", VBM=" << a << Print::endl;
+    bandgap.Eref = bandgap.bands;
+    Print::out << "Reference Energies are: CBM=" << bandgap.Eref.cbm
+               << ", VBM=" << bandgap.Eref.vbm << "\n";
+    Print::xmg << Print::Xmg::comment << "Reference Energies are: CBM=" << bandgap.Eref.cbm
+               << ", VBM=" << bandgap.Eref.vbm << Print::endl;
 #ifdef _MPI 
     if ( not mpi::main.is_root_node() ) return;
 #endif
     std::ofstream file( references_filename.c_str(), std::ios_base::out | std::ios_base::trunc ); 
     if ( not file.is_open() ) return;
-    pescan.get_references( a, b );
-    file << a << "   "; if ( file.fail() ) return;
-    file << b << std::endl; if ( file.fail() ) return;
+    file << bandgap.Eref.cbm << "   "; if ( file.fail() ) return;
+    file << bandgap.Eref.vbm << std::endl; if ( file.fail() ) return;
     file.close();
     return;
   }
@@ -164,7 +317,8 @@ errorout:
 #endif 
 
     if ( a >= b )  return;
-    pescan.set_references( a, b ); 
+    bandgap.Eref.vbm = a; 
+    bandgap.Eref.cbm = b; 
     return;
 
 failure:
@@ -177,7 +331,7 @@ failure:
   }
 
 
-} // namespace pescan
+} // namespace Pescan
 
 
 

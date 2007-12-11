@@ -26,12 +26,6 @@ namespace Molecularity
     pescan << vff; 
     structure = structure0;
 
-#ifdef _NOLAUNCH
-    typedef t_Individual :: t_IndivTraits :: t_FourierRtoK t_Fourier;
-    Layered::Fourier<2>( structure.atoms.begin(), structure.atoms.end(),
-                         structure.k_vecs.begin(), structure.k_vecs.end() );
-#endif
-
     // get band gap
     pescan( *current_object );
   
@@ -41,9 +35,9 @@ namespace Molecularity
 
   inline eoF<bool>* Evaluator :: LoadContinue(const TiXmlElement &_el )
   {
-    return new GA::mem_zerop_t<Pescan::Darwin>( pescan,
-                                                &Pescan::Darwin::Continue,
-                                                "Pescan::Continue"         );     
+    return new GA::mem_zerop_t<BandGap::Darwin>( pescan,
+                                                &BandGap::Darwin::Continue,
+                                                "BandGap::Continue"         );     
   }
 
   inline types::t_real inplane_stress( const atat::rMatrix3d &_stress,
@@ -60,7 +54,7 @@ namespace Molecularity
   inline std::ostream& operator<<(std::ostream &_stream, const Object &_o)
   {
     return _stream << (const Layered::Object<>&) _o << " "
-                   << (const Pescan::Keeper&)  _o << " ";
+                   << (const BandGap::Keeper&)  _o << " ";
   }
 } // namespace Molecularity
 
@@ -72,7 +66,7 @@ namespace mpi
   inline bool mpi::BroadCast::serialize<Molecularity::Object>
                                        ( Molecularity::Object & _object )
   {
-    return     serialize<Pescan::Keeper>( _object )
+    return     serialize<BandGap::Keeper>( _object )
            and serialize<Vff::Keeper>( _object )
            and _object.broadcast( *this );
   }

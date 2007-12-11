@@ -29,9 +29,9 @@ namespace BandGap
       std::cerr << " Could not load vff input!! " << std::endl; 
       return false;
     }
-    if ( not pescan.Load( _node ) )
+    if ( not bandgap.Load( _node ) )
     {
-      std::cerr << " Could not load pescan interface from input!! " << std::endl; 
+      std::cerr << " Could not load bandgap interface from input!! " << std::endl; 
       return false;
     }
 
@@ -45,21 +45,21 @@ namespace BandGap
     current_object->y = concentration.y;
     // relax structure
     vff();
-    // Load relaxed structure into pescan
-    pescan << vff; 
+    // Load relaxed structure into bandgap
+    bandgap << vff; 
     // get band gap
 #ifdef _NOLAUNCH
     typedef t_Individual :: t_IndivTraits :: t_FourierRtoK t_Fourier;
     t_Fourier( structure.atoms.begin(), structure.atoms.end(),
                structure.k_vecs.begin(), structure.k_vecs.end() );
 #endif
-    pescan( *current_object );
+    bandgap( *current_object );
 
     // set quantity
     current_individual->quantities() = current_object->cbm - current_object->vbm;
   }
 
-} // namespace pescan
+} // namespace BandGap
 
 
 

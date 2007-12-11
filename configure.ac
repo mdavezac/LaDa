@@ -27,7 +27,15 @@ AC_ARG_ENABLE(fortran,
        yes) fortran=true ;;
        no)  fortran=false ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-fortran) ;;
-     esac],[fortran=true])
+     esac],[fortran=false])
+
+AC_ARG_ENABLE(emass,
+     [  --enable-emass    Turn on electronic mass optimization],
+     [case "${enableval}" in
+       yes) emass=true ;;
+       no)  emass=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-emass) ;;
+     esac],[emass=false])
 
 AC_ARG_ENABLE(vff,
      [  --enable-vff    Turn on vff],
@@ -86,25 +94,31 @@ AC_ARG_ENABLE(debug,
 esac],[debug=true])
 AH_TEMPLATE([_PRINT_ALL_PROCS])
 
-if test $fortran=true; then
+AH_TEMPLATE([_DOFORTRAN_])
+if test x$fortran = xtrue || test x$emass = xtrue; then
   AC_PROG_FC
   NREL_AC_PROG_FCPP
   AC_FC_LIBRARY_LDFLAGS
-  AH_TEMPLATE([_DOFORTRAN_])
-  AC_DEFINE([_DOFORTRAN_],[],[])
   # turn on automatic name mangling
   AC_FC_WRAPPERS
+fi
+if test x$fortran = xtrue; then
+  AC_DEFINE([_DOFORTRAN_],[],[])
 fi
 
 AX_COMPILER_VENDOR
 
 # enables vff and pescan for GA
-if test x$pdarwin = xtrue || test x$molecularity = xtrue; then
+if test x$pdarwin = xtrue || test x$molecularity = xtrue || test $emass = true; then
   pescan=true
   vff=true
 fi
-if test x$pdarwin = xtrue || test x$molecularity = xtrue || test x$ce = xtrue; then
+if test x$pdarwin = xtrue || test x$molecularity = xtrue|| test x$ce = xtrue || test x$emass = true;
+then
   galib=true
+fi
+if test x$emass = xtrue; then
+  lapack=true
 fi
 
 if test x$debug = xtrue; then
@@ -173,6 +187,8 @@ AM_CONDITIONAL(DOVFF, test x$vff = xtrue)
 AM_CONDITIONAL(DOPDARWIN, test x$pdarwin = xtrue)
 AM_CONDITIONAL(NOLAUNCH, test x$nolaunch = xtrue)
 AM_CONDITIONAL(DODARWIN, test x$galib = xtrue)
+AM_CONDITIONAL(DOLAPACK, test x$lapack = xtrue)
+AM_CONDITIONAL(DOEMASS, test x$emass = xtrue)
 AM_CONDITIONAL(DOFORTRAN, test x$fortran = xtrue)
 
 #  gsl libs iff vff is enabled 
@@ -235,7 +251,8 @@ fi
 
 
 AC_OUTPUT(Makefile atat/Makefile physics/Makefile opt/Makefile lamarck/Makefile
-          vff/Makefile mpi/Makefile pescan_interface/Makefile darwin/Makefile print/Makefile )
+          vff/Makefile mpi/Makefile pescan_interface/Makefile darwin/Makefile 
+          print/Makefile lapack/Makefile )
 
 echo ""; echo ""
 echo "Will Compile following modules: "
@@ -258,6 +275,9 @@ if test $ce = true; then
 fi
 if test x$molecularity = xtrue; then
   echo " _ Genetic Algorithm for Molecularity"
+fi
+if test x$emass = xtrue; then
+  echo " _ Genetic Algorithm for Electronic Mass Optimization"
 fi
 echo ""
 if test $mpi = true; then

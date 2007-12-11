@@ -48,7 +48,7 @@ namespace Molecularity
   //! and band-edges.
   class Object : public Layered::Object<>,
                  public Vff::Keeper, 
-                 public Pescan::Keeper
+                 public BandGap::Keeper
   {
     protected:
       //! Layered bitstring base
@@ -97,7 +97,7 @@ namespace Molecularity
                              Layered::Fourier<2>    > :: Vector t_Individual;
 
   //! \brief Evaluator class for band-gap search of a layered structure.
-  //! \details Mostly, this class defines  a Pescan::Darwin instance, and a
+  //! \details Mostly, this class defines  a BandGap::Darwin instance, and a
   //!          Vff::Darwin<Vff::Layered> instance for evaluating (and
   //!          minimizing) in-plane-stress and for evaluating band-gaps.
   class Evaluator : public Layered::Evaluator< t_Individual >
@@ -122,7 +122,7 @@ namespace Molecularity
 
     protected:
       //! The pescan interface object for obtaining band-gaps
-      Pescan::Darwin pescan;
+      BandGap::Darwin pescan;
       //! The vff object for minimizing and computing strain/stress.
       Vff::Darwin<Vff::Layered> vff;
 

@@ -12,7 +12,7 @@
 
 #include <tinyxml/tinyxml.h>
 
-#include <vff/functional.h>
+#include <vff/va.h>
 #include <lamarck/structure.h>
 #include <opt/function_base.h>
 #include <opt/gsl_minimizers.h>
@@ -72,31 +72,26 @@ namespace Vff
   //!          Molecularity::Evaluator, so go and check it out.
   //! \param T_BASE Vff::Functional (default) or derived class
   template< class T_BASE = Vff::Functional >
-  class Darwin : public T_BASE
+  class Darwin : public Vff::VABase< T_BASE >
   {
     public:
-      typedef T_BASE t_Base; //!< The base class
-    protected:
-      //! The GSL minimizer used to minimize t_Base::structure
-      Minimizer::GnuSL<Vff::Functional> minimizer;
-
+      typedef Vff::VABase<T_BASE> t_Base; //!< The base class
 
     public:
       //! \brief Constructor.
       //! \details  Should be used referencing a temporary instance of the
       //!           base class.
-      Darwin   ( const t_Base &_func )
-             : t_Base( _func ), minimizer( *this )  {} 
+      Darwin ( const t_Base &_func ) : t_Base( _func ) {} 
       //! Copy Constructor
-      Darwin   ( const Darwin &_d ) 
-             : t_Base(_d), minimizer ( *this ) {}
+      Darwin ( const Darwin &_d ) : t_Base(_d) {}
       //! Destructor
       ~Darwin() {};
 
       //! Load t_Base and the minimizer from XML
       bool Load( const TiXmlElement &_node );
       //! Minimizes the structure
-      void operator()();
+      void operator()()
+        { t_Base :: structure.energy = t_Base::evaluate(); }
       //! Minimizes the structure and stores the results in \a _keeper
       void operator()( Keeper &_keeper );
   };
@@ -118,19 +113,8 @@ namespace Vff
                 << " Are you sure the lattice and the structure correspond? " << std::endl; 
       return false;
     }
-    if ( not minimizer.Load( _node ) )
-    {
-      std::cerr << " Could not load vff minimizer from input!! " << std::endl;
-      return false;
-    }
 
     return true;
-  }
-  template< class T_BASE>
-  inline void Darwin<T_BASE> :: operator()()
-  {
-    minimizer.minimize();
-    t_Base::structure.energy = t_Base::energy();
   }
   template< class T_BASE>
   inline void Darwin<T_BASE> :: operator()( Keeper &_keeper )

@@ -15,7 +15,6 @@
 #include <tinyxml/tinyxml.h>
 
 #include <vff/functional.h>
-#include <pescan_interface/interface.h>
 #include <lamarck/structure.h>
 #include <opt/function_base.h>
 #include <opt/gsl_minimizers.h>
@@ -47,7 +46,7 @@
 //!          HREF="http://dx.doi.org/10.1103/PhysRevB.51.17398"> L-W Wang and A.
 //!          Zunger PRB \b 51, 17398 (1995) </A>). The latter needs two
 //!          reference energies to do find the band-gap. If these are \b not
-//!          given on input, Pescan::Darwin will first perform a full
+//!          given on input, BandGap::Darwin will first perform a full
 //!          diagonalization and peg the reference energies to the HOMO and the
 //!          LUMO. From there, only Folded-Spectrum methods are performed
 //!          unless one of two situations arise: 
@@ -55,17 +54,17 @@
 //!            - The user has requested all-electron calculations every \a N
 //!              generations
 //!            .
-//! \see For more details on the functionals, see Pescan::Interface and
-//!      Vff::Functional
+//! \see For more details on the functionals, see Pescan::Interface, 
+//                Vff::Functional and Pescan::BandGap.
 namespace BandGap
 {
 
-  //! \brief BitString Object with Pescan capacity
-  //! \details Other than the bitstring itself and the Pescan::Keeper
+  //! \brief BitString Object with BandGap capacity
+  //! \details Other than the bitstring itself and the BandGap::Keeper
   //           variables, this object also stores the x and y concentrations of
   //           a quaternary. It overloads dumping an object to a stream.
   //! \see BandGap::operator<<( std::ostream &, const Object& )
-  struct Object : public TwoSites::Object, public Pescan::Keeper
+  struct Object : public TwoSites::Object, public BandGap::Keeper
   {
     //! The type of the BitString container
     typedef TwoSites::Object :: t_Container t_Container;
@@ -75,10 +74,10 @@ namespace BandGap
     types::t_real y;
 
     //! Constructor
-    Object() : TwoSites::Object(), Pescan::Keeper() {}
+    Object() : TwoSites::Object(), BandGap::Keeper() {}
     //! Copy Constructor
     Object   (const Object &_c)
-           : TwoSites::Object(_c), Pescan::Keeper(_c),
+           : TwoSites::Object(_c), BandGap::Keeper(_c),
              x(_c.x), y(_c.y) {};
     //! Destructor
     ~Object() {};
@@ -92,7 +91,7 @@ namespace BandGap
     if( _o.Container().size() <= 30 )
       _stream << (const SingleSite::Object& ) _o << " ";
     _stream << "x=" << _o.x << " y="  << _o.y 
-            << (const Pescan::Keeper&) _o;
+            << (const BandGap::Keeper&) _o;
     return _stream; 
   } 
 
@@ -105,7 +104,7 @@ namespace BandGap
                              TwoSites::Fourier > :: Scalar t_Individual;
 
   //! \brief %Evaluator class for band-gap decoration search
-  //! \details A Pescan::Darwin and a Vff::Darwin<Vff::Functional> objects are
+  //! \details A BandGap::Darwin and a Vff::Darwin<Vff::Functional> objects are
   //!          declared which allow for strain and bandgap computation.
   //!          The \e physical ga operators of gaoperators.h are used to mate
   //!          individuals. \e A \e priori, I can't see what we would need to
@@ -135,17 +134,17 @@ namespace BandGap
       using t_Base :: current_object;
 
     protected:
-      //! interface to... uh ... the pescan interface.
-      Pescan::Darwin pescan; 
+      //! BandGap functional
+      BandGap::Darwin bandgap; 
       //! Interface to Vff::Functional.
       Vff::Darwin<Vff::Functional> vff; 
 
     public:
       //! Constructor
-      Evaluator() : t_Base(), pescan(structure), vff(structure) {}
+      Evaluator() : t_Base(), bandgap(structure), vff(structure) {}
       //! Copy Constructor
       Evaluator   ( const Evaluator &_c )
-                : t_Base(_c), pescan(_c.pescan), vff(_c.vff) {}
+                : t_Base(_c), bandgap(_c.bandgap), vff(_c.vff) {}
       //! Destructor
       ~Evaluator() {};
 
@@ -153,12 +152,12 @@ namespace BandGap
       bool Save ( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const;
       //! Loads an individual from XML
       bool Load ( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
-      //! Loads structure, lattice, pescan, vff from XML
+      //! Loads structure, lattice, bandgap, vff from XML
       bool Load( const TiXmlElement &_node );
-      //! Allows pescan all-electron recomputation.
+      //! Allows bandgap all-electron recomputation.
       eoF<bool>* LoadContinue(const TiXmlElement &_el )
-        { return new GA::mem_zerop_t<Pescan::Darwin>( pescan, &Pescan::Darwin::Continue,
-                                                      "Pescan::Continue" );     }
+        { return new GA::mem_zerop_t<BandGap::Darwin>( bandgap, &BandGap::Darwin::Continue,
+                                                      "BandGap::Continue" );     }
 
       //! Evaluates the band gap after strain minimization
       void evaluate();
@@ -181,11 +180,11 @@ namespace mpi
   /** \ingroup Genetic
    *  \brief Serializes a BandGap::Object.
    *  \details Includes the serialization of the BitString::container, the
-   *  concentrations x and y, and the Pescan::Keeper member variables. */
+   *  concentrations x and y, and the BandGap::Keeper member variables. */
   template<>
   inline bool mpi::BroadCast::serialize<BandGap::Object>( BandGap::Object & _object )
   {
-    return     serialize<Pescan::Keeper>( _object )
+    return     serialize<BandGap::Keeper>( _object )
            and serialize( _object.x )
            and serialize( _object.y )
            and _object.broadcast( *this );

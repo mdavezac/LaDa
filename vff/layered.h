@@ -67,7 +67,7 @@ namespace Vff
       //! \brief Constructor and Initializer
       //! \param _str structure for which to compute energy and stress
       Layered   ( Ising_CE :: Structure &_str )
-              : t_Base( _str ), direction(0,0,0), u(0,0,0) 
+              : Vff::Functional( _str ), direction(0,0,0), u(0,0,0) 
         { template_strain.zero(); }
       //! \brief Copy Constructor
       Layered   ( const Vff::Layered &_c )

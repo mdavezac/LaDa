@@ -8,9 +8,9 @@
 #include <config.h>
 #endif
 
-#include "interface.h"
+#include "bandgap.h"
 
-#include <vff/va.h>
+#include <vff/pescan_perturbation.h>
 #include <opt/va_function.h>
 
 #include <opt/types.h>
@@ -164,14 +164,14 @@ namespace Pescan
    *
    *
    */
-  class VirtualAtom : protected Interface, public function::VirtualAtom
+  class VirtualAtom : protected BandGap, public function::VirtualAtom
   {
      friend std::ostream& operator<<( std::ostream& _stream, const VirtualAtom& _va );
      protected:
        //! Type from which the VA functional is derived
        typedef function::VirtualAtom t_VABase;
        //! Type of the pescan interface class
-       typedef Interface t_PescanBase;
+       typedef BandGap t_PescanBase;
        //! \brief Type of the Valence Force Field Functional class
        //! \details It is fitted into a class which adds positional pertubation
        //!          stuff
@@ -232,6 +232,15 @@ namespace Pescan
        //! Loads pescan and vff minimizers from XML
        bool Load( const TiXmlElement &_node )
          {  return t_PescanBase::Load( _node )  and vff.Load( _node ); }
+
+       //! Returns a reference to the virtual atom vff minimizer
+       t_Vff& Vff() { return vff; }
+       //! Returns a constant reference to the virtual atom vff minimizer
+       const t_Vff& Vff() const { return vff; }
+       //! Returns a reference to the BandGap base
+       operator BandGap&() { return *( (BandGap*) this ); }
+       //! Returns a constant reference to the BandGap base
+       operator const BandGap&() const { return *( (const BandGap*) this ); }
 
      protected:
          types::t_real apply_wfns();
