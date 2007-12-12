@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 
-# MBCE v0.94
-# Mayeul d'Avezac, NREL, 2005
+# Version: $Id$
 # 
 ###############################################################3
 # Transforms NREL-style CE (fort.11, comp-coef, etc...)  to  input files for

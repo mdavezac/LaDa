@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = foreign
 EXTRA_DIST = max_revision.pl bootstrap.sh \
-	     doxy.conf docsource/*
+	     scripts/* doxy.conf docsource/*
 if DOBANDGAPOPT 
   DARWINSUBDIR = darwin
   PESCANSUBDIR = pescan_interface
@@ -38,7 +38,7 @@ endif
 SUBDIRS = $(MPISUBDIR) atat physics opt lamarck print $(VFFSUBDIR) \
 	  $(PESCANSUBDIR) $(LAPACKDIR) $(DARWINSUBDIR) 
 revision.h: force
-	./max_revision.pl
+	@scripts/max_revision.pl
 force: 
 all: revision.h
 

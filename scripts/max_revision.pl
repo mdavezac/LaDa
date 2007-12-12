@@ -1,4 +1,7 @@
 #! /usr/bin/perl
+#
+#  Version: $Id$
+#
 
 my $max_revision = -1;
 my $min_revision = -1;

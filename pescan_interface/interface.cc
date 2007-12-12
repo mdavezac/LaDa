@@ -211,7 +211,7 @@ namespace Pescan
         if( child->Attribute("pnl") )
           child->Attribute("pnl", &so.pnl);
         if( child->Attribute("dnl") )
-          child->Attribute("pnl", &so.dnl);
+          child->Attribute("dnl", &so.dnl);
         escan.spinorbit.push_back(so);
       }
     child = _node.FirstChildElement("Minimizer");
@@ -253,7 +253,6 @@ namespace Pescan
 
   void Interface::write_escan_input() 
   {
-    types::t_unsigned nbwfn = escan.nbstates; 
     std::ofstream file;
     std::string name = Print::StripEdges(dirname) + "/" + Print::StripEdges(escan.filename);
     file.open( name.c_str(), std::ios_base::out|std::ios_base::trunc ); 
@@ -262,7 +261,7 @@ namespace Pescan
          << "3 " << escan.method << "\n"
          << "4 " << escan.Eref << " " << genpot.cutoff << " "
                  << escan.smooth << " " << escan.kinscal << "\n"
-         << "5 " << nbwfn << "\n"
+         << "5 " << escan.nbstates << "\n"
          << "6 " << escan.niter << " " << escan.nlines << " " << escan.tolerance << "\n";
     if( do_input_wavefunctions )
     {
@@ -287,12 +286,10 @@ namespace Pescan
     std::vector<SpinOrbit> :: const_iterator i_so = escan.spinorbit.begin();
     std::vector<SpinOrbit> :: const_iterator i_so_end = escan.spinorbit.end();
     for(types::t_unsigned i=16; i_so != i_so_end; ++i_so, ++i )
-    {
       file << i << " " << i_so->filename << " " 
            << i_so->izz << " " 
            << i_so->s << " " << i_so->p << " " << i_so->d << " " 
            << i_so->pnl << " " << i_so->dnl << "\n";
-    }
     file.flush();
     file.close();
   }

@@ -21,6 +21,15 @@ AH_TOP([
 #define HAVE_SSTREAM
 #endif])
 
+AC_ARG_ENABLE(all,
+     [  --enable-all    Turn off/on all (most) modules],
+     [case "${enableval}" in
+       yes) enall=true ;;
+       no)  enall=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-all) ;;
+     esac],[enall=true])
+
+
 AC_ARG_ENABLE(fortran,
      [  --enable-fortran    Turn on fortran code snipets],
      [case "${enableval}" in
@@ -35,7 +44,7 @@ AC_ARG_ENABLE(emass,
        yes) emass=true ;;
        no)  emass=false ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-emass) ;;
-     esac],[emass=false])
+     esac],[emass=$enall])
 
 AC_ARG_ENABLE(vff,
      [  --enable-vff    Turn on vff],
@@ -43,7 +52,7 @@ AC_ARG_ENABLE(vff,
        yes) vff=true ;;
        no)  vff=false ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-vff) ;;
-     esac],[vff=true])
+     esac],[vff=$enall])
 
 AC_ARG_ENABLE(pescan,
      [  --enable-pescan    Turn on pescan],
@@ -51,7 +60,7 @@ AC_ARG_ENABLE(pescan,
        yes) pescan=true ;;
        no)  pescan=false ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-pescan) ;;
-     esac],[pescan=true])
+     esac],[pescan=$enall])
 
 AC_ARG_ENABLE(molecularity,
      [  --enable-molecularity    Turn on molecularity],
@@ -59,7 +68,7 @@ AC_ARG_ENABLE(molecularity,
        yes) molecularity=true ;;
        no)  molecularity=false ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-molecularity) ;;
-     esac],[molecularity=true])
+     esac],[molecularity=$enall])
 
 AC_ARG_ENABLE(galib,
      [  --enable-galib    Turn on galib],
@@ -67,7 +76,7 @@ AC_ARG_ENABLE(galib,
        yes) galib=true ;;
        no)  galib=false ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-galib) ;;
-     esac],[galib=false])
+     esac],[galib=$enall])
 
 AC_ARG_ENABLE(ceopt,
      [  --enable-ceopt    Turn on cluster-expansion optimization],
@@ -75,7 +84,7 @@ AC_ARG_ENABLE(ceopt,
        yes) ceopt=true ;;
        no)  ceopt=false ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-ceopt) ;;
-     esac],[ceopt=true])
+     esac],[ceopt=$enall])
 
 AC_ARG_ENABLE(bandgapopt,
      [  --enable-bandgap    Turn on bandgap optimization],
@@ -83,7 +92,7 @@ AC_ARG_ENABLE(bandgapopt,
        yes) bandgapopt=true ;;
        no)  bandgapopt=false ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-bandgap) ;;
-     esac],[bandgapopt=true])
+     esac],[bandgapopt=$enall])
 
 AC_ARG_ENABLE(emassopt,
      [  --enable-emassopt    Turn on electronic effective mass optimization],
@@ -91,7 +100,7 @@ AC_ARG_ENABLE(emassopt,
        yes) emassopt=true ;;
        no)  emassopt=false ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-emassopt) ;;
-     esac],[emassopt=true])
+     esac],[emassopt=$enall])
 
 AC_ARG_ENABLE(debug,
 [  --enable-debug    Turn on debugging],
