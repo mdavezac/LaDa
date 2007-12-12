@@ -1017,8 +1017,8 @@ namespace mpi
     if ( stage == COPYING_FROM_HERE )
       _vff.functionals.resize(n, Vff::Atomic_Functional(_vff.structure));
 
-    t_AtomicFunctionals :: iterator i_func = _vff.functionals.begin();
-    t_AtomicFunctionals :: iterator i_func_end = _vff.functionals.end();
+    Vff::Functional::t_AtomicFunctionals :: iterator i_func = _vff.functionals.begin();
+    Vff::Functional::t_AtomicFunctionals :: iterator i_func_end = _vff.functionals.end();
     for(; i_func != i_func_end; ++i_func )
       if ( not serialize( *i_func ) ) return false;
 

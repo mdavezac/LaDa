@@ -60,6 +60,8 @@ namespace Vff
    */
   class PescanPerturbations : public VABase<Vff::Functional>
   {
+      //! Grandparent class...
+      typedef Vff::Functional t_Functional;
     public:
       //! Base class for this class. 
       typedef VABase<Vff::Functional> t_Base;

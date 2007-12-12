@@ -339,6 +339,83 @@ namespace Pescan
     return false;
   }
                
+  bool Interface::SpinOrbit::broadcast( mpi::BroadCast &_bc )
+  {
+    return     _bc.serialize( filename ) 
+           and _bc.serialize( izz )
+           and _bc.serialize( s ) 
+           and _bc.serialize( p ) 
+           and _bc.serialize( d ) 
+           and _bc.serialize( pnl ) 
+           and _bc.serialize( dnl );
+  }
+  bool Interface::Escan::broadcast( mpi::BroadCast &_bc )
+  {
+    if ( not _bc.serialize( filename ) ) return false;
+    if ( not _bc.serialize( output ) ) return false;
+    if ( not _bc.serialize( wavefunction_out ) ) return false;
+    if ( not _bc.serialize( wavefunction_in ) ) return false;
+    types::t_unsigned n = method;
+    if ( not _bc.serialize( n ) ) return false;
+    if ( _bc.get_stage() == mpi::BroadCast::COPYING_FROM_HERE )
+      switch ( n ) 
+      {
+        case Interface::NOMET: 
+          method = Interface::NOMET; break;
+        case Interface::FOLDED_SPECTRUM: 
+          method = Interface::FOLDED_SPECTRUM; break;
+        default:
+        case Interface::ALL_ELECTRON: 
+          method = Interface::ALL_ELECTRON; break;
+      }
+    if ( not _bc.serialize( Eref ) ) return false;
+    if ( not _bc.serialize( smooth ) ) return false;
+    if ( not _bc.serialize( kinscal ) ) return false;
+    if ( not _bc.serialize( nbstates ) ) return false;
+    if ( not _bc.serialize( niter ) ) return false;
+    if ( not _bc.serialize( nlines ) ) return false;
+    if ( not _bc.serialize( tolerance ) ) return false;
+    if ( not _bc.serialize( &kpoint[0], &kpoint[0]+3 ) ) return false;
+    if ( not _bc.serialize( scale ) ) return false;
+    n = potential;
+    if ( not _bc.serialize( n ) ) return false;
+    if ( _bc.get_stage() == mpi::BroadCast::COPYING_FROM_HERE )
+      switch ( n ) 
+      {
+        case Interface::Escan::NOPOT: 
+          potential = Interface::Escan::NOPOT; break;
+        default:
+        case Interface::Escan::LOCAL: 
+          potential = Interface::Escan::LOCAL; break;
+        case Interface::Escan::NONLOCAL: 
+          potential = Interface::Escan::NONLOCAL; break;
+        case Interface::Escan::SPINORBIT: 
+          potential = Interface::Escan::SPINORBIT; break;
+      }
+    if ( not _bc.serialize( rcut ) ) return false;
+    if ( not _bc.serialize( launch ) ) return false;
+    n = spinorbit.size();
+    if ( not _bc.serialize(n) ) return false;
+    if ( _bc.get_stage() == mpi::BroadCast::COPYING_FROM_HERE )
+      spinorbit.resize(n);
+    std::vector< SpinOrbit > :: iterator i_so = spinorbit.begin();
+    std::vector< SpinOrbit > :: iterator i_so_end = spinorbit.end();
+    for(; i_so != i_so_end; ++i_so )
+      if( not i_so->broadcast( _bc ) ) return false;
+
+    return true;
+  }
+  bool Interface::GenPot::broadcast( mpi::BroadCast& _bc )
+  {
+    return     _bc.serialize( filename ) 
+           and _bc.serialize( x ) 
+           and _bc.serialize( y ) 
+           and _bc.serialize( z ) 
+           and _bc.serialize( cutoff ) 
+           and _bc.serialize( output ) 
+           and _bc.serialize( launch ) 
+           and _bc.serialize_container( pseudos );
+  }
 
 }
 
@@ -347,83 +424,11 @@ namespace Pescan
 namespace mpi
 {
   template<>
-  bool BroadCast :: serialize<Pescan::Interface::SpinOrbit>( Pescan::Interface::SpinOrbit &_sp )
-  {
-    return     serialize( _sp.filename ) 
-           and serialize( _sp.izz )
-           and serialize( _sp.s ) 
-           and serialize( _sp.p ) 
-           and serialize( _sp.d ) 
-           and serialize( _sp.pnl ) 
-           and serialize( _sp.dnl );
-  }
-  template<>
-  bool BroadCast :: serialize<Pescan::Interface::Escan>( Pescan::Interface::Escan &_p )
-  {
-    if ( not serialize( _p.filename ) ) return false;
-    if ( not serialize( _p.output ) ) return false;
-    if ( not serialize( _p.wavefunction_out ) ) return false;
-    if ( not serialize( _p.wavefunction_in ) ) return false;
-    types::t_unsigned n = _p.method;
-    if ( not serialize( n ) ) return false;
-    if ( stage == COPYING_FROM_HERE )
-      switch ( n ) 
-      {
-        case Pescan::Interface::NOMET: 
-          _p.method = Pescan::Interface::NOMET; break;
-        case Pescan::Interface::FOLDED_SPECTRUM: 
-          _p.method = Pescan::Interface::FOLDED_SPECTRUM; break;
-        default:
-        case Pescan::Interface::ALL_ELECTRON: 
-          _p.method = Pescan::Interface::ALL_ELECTRON; break;
-      }
-    if ( not serialize( _p.Eref.vbm ) ) return false;
-    if ( not serialize( _p.Eref.cbm ) ) return false;
-    if ( not serialize( _p.smooth ) ) return false;
-    if ( not serialize( _p.kinscal ) ) return false;
-    if ( not serialize( _p.escan.nbstates ) ) return false;
-    if ( not serialize( _p.niter ) ) return false;
-    if ( not serialize( _p.nlines ) ) return false;
-    if ( not serialize( _p.tolerance ) ) return false;
-    if ( not serialize( &_p.kpoint[0], &_p.kpoint[0]+3 ) ) return false;
-    if ( not serialize( _p.scale ) ) return false;
-    n = _p.potential;
-    if ( not serialize( n ) ) return false;
-    if ( stage == COPYING_FROM_HERE )
-      switch ( n ) 
-      {
-        case Pescan::Interface::Escan::NOPOT: 
-          _p.potential = Pescan::Interface::Escan::NOPOT; break;
-        default:
-        case Pescan::Interface::Escan::LOCAL: 
-          _p.potential = Pescan::Interface::Escan::LOCAL; break;
-        case Pescan::Interface::Escan::NONLOCAL: 
-          _p.potential = Pescan::Interface::Escan::NONLOCAL; break;
-        case Pescan::Interface::Escan::SPINORBIT: 
-          _p.potential = Pescan::Interface::Escan::SPINORBIT; break;
-      }
-    if ( not serialize( _p.rcut ) ) return false;
-    if ( not serialize( _p.launch ) ) return false;
-    return serialize_container( _p.spinorbit );
-  }
-  template<>
-  bool BroadCast :: serialize<Pescan::Interface::GenPot>( Pescan::Interface::GenPot &_p )
-  {
-    return     serialize( _p.filename ) 
-           and serialize( _p.x ) 
-           and serialize( _p.y ) 
-           and serialize( _p.z ) 
-           and serialize( _p.cutoff ) 
-           and serialize( _p.output ) 
-           and serialize( _p.launch ) 
-           and serialize_container( _p.pseudos );
-  }
-  template<>
   bool BroadCast :: serialize<Pescan::Interface>( Pescan::Interface &_p )
   {
     return     serialize( _p.atom_input )
-           and serialize( _p.escan )       
-           and serialize( _p.genpot )    
+           and _p.escan.broadcast( *this )       
+           and _p.genpot.broadcast( *this )    
            and serialize( _p.dirname )
            and serialize_container(_p.eigenvalues );
   }

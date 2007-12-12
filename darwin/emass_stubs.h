@@ -40,7 +40,7 @@ namespace eMassSL
   {
 #ifdef _MPI
     //! \cond
-    friend bool mpi::BroadCast::serialize<eMassSL::Keeper>(eMassSL:escan::Keeper &);
+    friend bool mpi::BroadCast::serialize<Keeper>(Keeper &);
     //! \endcond
 #endif
     types::t_real cbm; //!< Conduction Band Minimum

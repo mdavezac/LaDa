@@ -209,8 +209,8 @@ namespace Pescan
        {
 #ifdef _MPI
          std::ostringstream sstr;
-         sstr << vff.atomic_config << "." << mpi::main.rank();
-         vff.atomic_config = sstr.str();
+         sstr << vff.filename << "." << mpi::main.rank();
+         vff.filename = sstr.str();
 #endif
        }
        //! Copy Constructor

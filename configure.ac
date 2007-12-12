@@ -22,7 +22,7 @@ AH_TOP([
 #endif])
 
 AC_ARG_ENABLE(all,
-     [  --enable-all    Turn off/on all (most) modules],
+     [  --enable-all                  Turn off/on all (most) modules],
      [case "${enableval}" in
        yes) enall=true ;;
        no)  enall=false ;;
@@ -31,7 +31,7 @@ AC_ARG_ENABLE(all,
 
 
 AC_ARG_ENABLE(fortran,
-     [  --enable-fortran    Turn on fortran code snipets],
+     [  --enable-fortran              Turn on fortran code snipets],
      [case "${enableval}" in
        yes) fortran=true ;;
        no)  fortran=false ;;
@@ -39,7 +39,7 @@ AC_ARG_ENABLE(fortran,
      esac],[fortran=false])
 
 AC_ARG_ENABLE(emass,
-     [  --enable-emass    Turn on electronic mass optimization],
+     [  --enable-emass                Turn on electronic mass optimization],
      [case "${enableval}" in
        yes) emass=true ;;
        no)  emass=false ;;
@@ -47,7 +47,7 @@ AC_ARG_ENABLE(emass,
      esac],[emass=$enall])
 
 AC_ARG_ENABLE(vff,
-     [  --enable-vff    Turn on vff],
+     [  --enable-vff                  Turn on vff],
      [case "${enableval}" in
        yes) vff=true ;;
        no)  vff=false ;;
@@ -55,7 +55,7 @@ AC_ARG_ENABLE(vff,
      esac],[vff=$enall])
 
 AC_ARG_ENABLE(pescan,
-     [  --enable-pescan    Turn on pescan],
+     [  --enable-pescan               Turn on pescan],
      [case "${enableval}" in
        yes) pescan=true ;;
        no)  pescan=false ;;
@@ -63,7 +63,7 @@ AC_ARG_ENABLE(pescan,
      esac],[pescan=$enall])
 
 AC_ARG_ENABLE(molecularity,
-     [  --enable-molecularity    Turn on molecularity],
+     [  --enable-molecularity         Turn on molecularity],
      [case "${enableval}" in
        yes) molecularity=true ;;
        no)  molecularity=false ;;
@@ -71,7 +71,7 @@ AC_ARG_ENABLE(molecularity,
      esac],[molecularity=$enall])
 
 AC_ARG_ENABLE(galib,
-     [  --enable-galib    Turn on galib],
+     [  --enable-galib                Turn on galib],
      [case "${enableval}" in
        yes) galib=true ;;
        no)  galib=false ;;
@@ -79,7 +79,7 @@ AC_ARG_ENABLE(galib,
      esac],[galib=$enall])
 
 AC_ARG_ENABLE(ceopt,
-     [  --enable-ceopt    Turn on cluster-expansion optimization],
+     [  --enable-ceopt                Turn on cluster-expansion optimization],
      [case "${enableval}" in
        yes) ceopt=true ;;
        no)  ceopt=false ;;
@@ -87,7 +87,7 @@ AC_ARG_ENABLE(ceopt,
      esac],[ceopt=$enall])
 
 AC_ARG_ENABLE(bandgapopt,
-     [  --enable-bandgap    Turn on bandgap optimization],
+     [  --enable-bandgap              Turn on bandgap optimization],
      [case "${enableval}" in
        yes) bandgapopt=true ;;
        no)  bandgapopt=false ;;
@@ -95,7 +95,7 @@ AC_ARG_ENABLE(bandgapopt,
      esac],[bandgapopt=$enall])
 
 AC_ARG_ENABLE(emassopt,
-     [  --enable-emassopt    Turn on electronic effective mass optimization],
+     [  --enable-emassopt             Turn on electronic effective mass optimization],
      [case "${enableval}" in
        yes) emassopt=true ;;
        no)  emassopt=false ;;
@@ -103,13 +103,40 @@ AC_ARG_ENABLE(emassopt,
      esac],[emassopt=$enall])
 
 AC_ARG_ENABLE(debug,
-[  --enable-debug    Turn on debugging],
-[case "${enableval}" in
-  yes) debug=true ;;
-  no)  debug=false ;;
-  *) AC_MSG_ERROR(bad value ${enableval} for --enable-debug) ;;
-esac],[debug=true])
+     [  --enable-debug                Turn on debugging],
+     [case "${enableval}" in
+       yes) debug=true ;;
+       no)  debug=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-debug) ;;
+     esac],[debug=true])
 AH_TEMPLATE([_PRINT_ALL_PROCS])
+
+ismultiproc=`grep processor /proc/cpuinfo | wc -l`
+if test $ismultiproc > 1; then
+  ismultiproc="true"
+else
+  ismultiproc="false"
+fi
+AC_ARG_ENABLE(mpi,
+     [  --enable-mpi                  Turn on mpi],
+     [case "${enableval}" in
+       yes) mpi=true ;;
+       no)  mpi=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-mpi) ;;
+     esac],[mpi=$ismultiproc])
+AH_TEMPLATE([_MPI])
+
+AC_ARG_ENABLE(nolaunch,
+     [  --enable-nolaunch             Runs fake pescan/darwin],
+     [case "${enableval}" in
+       yes) nolaunch=true ;;
+       no)  nolaunch=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-nolaunch) ;;
+     esac],[nolaunch=false])
+AH_TEMPLATE([_NOLAUNCH])
+if test x$nolaunch = xtrue; then
+  AC_DEFINE([_NOLAUNCH],[],[])
+fi
 
 # enables vff and pescan for GA
 if test x$bandgapopt = xtrue || test x$molecularity = xtrue; then
@@ -126,6 +153,7 @@ if test x$bandgapopt = xtrue || test x$molecularity = xtrue || test $emass = tru
   pescan=true
   vff=true
 fi
+lapack=false
 if test x$emass = xtrue; then
   lapack=true
 fi
@@ -156,32 +184,6 @@ else
   CPP_DEBUG_FLAGS=
 fi
 AC_SUBST(CPP_DEBUG_FLAGS)
-ismultiproc=`grep processor /proc/cpuinfo | wc -l`
-if test $ismultiproc > 1; then
-  ismultiproc="true"
-else
-  ismultiproc="false"
-fi
-AC_ARG_ENABLE(mpi,
-[  --enable-mpi    Turn on mpi],
-[case "${enableval}" in
-  yes) mpi=true ;;
-  no)  mpi=false ;;
-  *) AC_MSG_ERROR(bad value ${enableval} for --enable-mpi) ;;
-esac],[mpi=$ismultiproc])
-AH_TEMPLATE([_MPI])
-
-AC_ARG_ENABLE(nolaunch,
-[  --enable-nolaunch    Runs fake pescan/darwin],
-[case "${enableval}" in
-  yes) nolaunch=true ;;
-  no)  nolaunch=false ;;
-  *) AC_MSG_ERROR(bad value ${enableval} for --enable-nolaunch) ;;
-esac],[nolaunch=false])
-AH_TEMPLATE([_NOLAUNCH])
-if test x$nolaunch = xtrue; then
-  AC_DEFINE([_NOLAUNCH],[],[])
-fi
 
 #  MPI libs
 if test x$mpi = xtrue; then

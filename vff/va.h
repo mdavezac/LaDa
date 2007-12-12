@@ -65,7 +65,7 @@ namespace Vff
      using t_VffBase::energy;
 
      // Those protected members of t_VffBase which are expected in this class
-    private:
+    protected:
      using t_VffBase::centers;
      using t_VffBase::functionals;
 

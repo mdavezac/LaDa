@@ -77,6 +77,13 @@ namespace Pescan
                pseudos( _c.pseudos ) {}
       //! Some coherency checks.
       bool check() { return x && y && z && cutoff && ( pseudos.size() >= 2 ); }
+#ifdef _MPI
+      //! \ingroup MPI
+      //! \brief mpi broadcasting for this object
+      //! \details There seems to be pbs with gcc 3.4 
+      //!          when using friend template mpi::BroadCast::Serialize().
+      bool broadcast( mpi::BroadCast& );
+#endif 
     };
     //! Parameters for spin-orbit hamiltonian
     struct SpinOrbit
@@ -94,6 +101,13 @@ namespace Pescan
       //! Copy Constructor.
       SpinOrbit ( const SpinOrbit &_c) : filename(_c.filename), izz(_c.izz),
                                          s(_c.s), p(_c.p), d(_c.d), pnl(_c.pnl), dnl(_c.dnl) {};
+#ifdef _MPI
+      //! \ingroup MPI
+      //! \brief mpi broadcasting for this object
+      //! \details There seems to be pbs with gcc 3.4 
+      //!          when using friend template mpi::BroadCast::Serialize().
+      bool broadcast( mpi::BroadCast& _bc );
+#endif 
     };
     //! Parameters for nanopse's escan program.
     struct Escan
@@ -159,6 +173,13 @@ namespace Pescan
               nbstates(_c.nbstates), niter(_c.niter), nlines(_c.nlines), tolerance(_c.tolerance),
               kpoint(_c.kpoint), scale(_c.scale), potential(_c.potential), rcut(_c.rcut), 
               launch(_c.launch) {}
+#ifdef _MPI
+      //! \ingroup MPI
+      //! \brief mpi broadcasting for this object
+      //! \details There seems to be pbs with gcc 3.4 
+      //!          when using friend template mpi::BroadCast::Serialize().
+      bool broadcast( mpi::BroadCast& _bc );
+#endif 
     };
 #ifdef _MPI
     //! \cond
