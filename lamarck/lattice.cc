@@ -106,7 +106,7 @@ namespace Ising_CE {
         return i_site - sites.begin();
 
     std::cerr << __FILE__ << ", line:" << __LINE__
-              << " Could not find equivalent site!! " << std::endl;
+              << " Could not find atomic site index!! " << _at << std::endl;
     return -1;
   }
 
