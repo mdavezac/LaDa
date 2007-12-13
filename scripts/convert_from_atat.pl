@@ -1,4 +1,7 @@
 #! /usr/bin/perl
+#
+#  Version: $Id$
+#
 
 my %data;
 

@@ -1,5 +1,8 @@
 #! /usr/bin/perl
 #
+#  Version: $Id$
+#
+#
 
 my $computer = "office";
 my %params;

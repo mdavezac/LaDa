@@ -1,4 +1,7 @@
 #!/usr/bin/perl
+#
+#  Version: $Id$
+#
 
 # 1.  run type (multistart|lamarck + true )
 # 2.  miniizer type (none|sa|linear|wang|ssquare)

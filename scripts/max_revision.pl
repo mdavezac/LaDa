@@ -76,7 +76,7 @@ sub dodir()
 
 sub get_max_revision()
 {
-  foreach $file ( <*.h>, <*.cc> ) 
+  foreach $file ( <*.h>, <*.cc>, <*.pl> ) 
   {
     next if ( $file =~ /config\.h/ );
 
