@@ -120,7 +120,7 @@ namespace Vff
        //! Computes the \e virtual gradients
        void evaluate_gradient( t_Type* _grad );
        //! Forwards Vff::Functional::print_escan_input()
-       void print_escan_input( const std::string &_f = "atom.config") const
+       void print_escan_input( const std::string _f = "atom.config") const
          { t_VffBase::print_escan_input( _f ); }
        //! \brief Initializes the va variables, and optionnally the centers
        //! \details This routine compounds the function::Base::init()

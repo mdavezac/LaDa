@@ -907,8 +907,8 @@ failure:
     if ( _center.size() != 4 )
     { 
       std::cerr << "Microscopic strain cannot be computed "
-                << "Because atom " << _center.get_index() 
-                << " does not have four bonds " << std::endl;
+                << "Because atom " << _center.get_index() << " " << _center.Origin().pos
+                << " has only " << _center.size() << " bonds " << std::endl;
       return 0;
     }
     // constructs the two matrices

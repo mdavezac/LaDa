@@ -3,7 +3,7 @@ AM_LDFLAGS =
 noinst_LTLIBRARIES = libmpiobject.la
 libmpiobject_la_SOURCES = mpi_object.cc
 libmpiobject_la_HEADERS = mpi_object.h
-libmpiobject_ladir = mpi
+libmpiobject_ladir = $(includedir)/mpi
 libmpiobject_la_LDFLAGS = $(AM_LDFLAGS) @MPICH_LIBS@
 libmpiobject_la_CPPFLAGS = $(AM_CPPFLAGS) $(MPICH_CFLAGS)
 

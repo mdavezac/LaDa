@@ -21,9 +21,16 @@ bool evaluate( const TiXmlElement &_node,
                t_Pescan &_pescan, t_Vff &_vff )
 {
   if( not _structure.Load(_node) ) return false;
+  std::cout << "Successfuly read structure input from file " << std::endl;
   _structure.set_site_indices();
 
-  _vff.init(true);
+  if( not _vff.init(true) )
+  {
+    std::cerr << "Error while initializing vff\n" 
+              << "Will skip current structure" << std::endl;
+    return false;
+  }
+  std::cout << _structure << std::endl;
 
 #ifndef _EMASS
    Pescan::BandGap& bandgap = (Pescan::BandGap&) _pescan;
@@ -114,6 +121,7 @@ int main(int argc, char *argv[])
     std::cerr << "Error while reading Lattice from input" << std::endl;
     return false;
   }
+  std::cout << "Successfuly read Lattice input from file " << filename << std::endl;
 
 #ifdef _EMASS
   t_Pescan pescan;
@@ -124,6 +132,7 @@ int main(int argc, char *argv[])
     std::cerr << "Error while reading vff from input" << std::endl;
     return false;
   }
+  std::cout << "Successfuly read vff input from file " << filename << std::endl;
 
 #else
   t_Pescan pescan( structure );
@@ -135,6 +144,7 @@ int main(int argc, char *argv[])
     std::cerr << "Error while reading pescan from input" << std::endl;
     return false;
   }
+  std::cout << "Successfuly read pescan input from file " << filename << std::endl;
 
 #ifdef _CHECK_RESULTS
   if ( checkfilename == "" )
@@ -190,22 +200,20 @@ int main(int argc, char *argv[])
   for(; child; child = child->NextSiblingElement("Structure" ) )
   {
 #endif
-    if( evaluate( *child, structure, pescan, vff ) )
-    {
-      std::cout << "\n\n\nNew Structure\n";
-      structure.print_out( std::cout ); 
-      std::cout << "\n\n";
-      structure.print_xcrysden( std::cout );
+    if( not evaluate( *child, structure, pescan, vff ) ) continue;
+    
+    std::cout << "\n\n\nNew Structure\n";
+    structure.print_out( std::cout ); 
+    std::cout << "\n\n";
+    structure.print_xcrysden( std::cout );
 #ifndef _EMASS
-      const Pescan::BandGap& bandgap = (const Pescan::BandGap&) pescan;
-      std::cout << "\nVBM: " << bandgap.bands.vbm
-                << " -- CBM:" << bandgap.bands.cbm
-                << "    ---    Band Gap: " << bandgap.bands.gap() << std::endl;
+    const Pescan::BandGap& bandgap = (const Pescan::BandGap&) pescan;
+    std::cout << "\nVBM: " << bandgap.bands.vbm
+              << " -- CBM:" << bandgap.bands.cbm
+              << "    ---    Band Gap: " << bandgap.bands.gap() << std::endl;
 #else
-      std::cout << "Emass tensor:\n" << pescan.tensor;
+    std::cout << "Emass tensor:\n" << pescan.tensor;
 #endif
-    }
-    else  std::cout << "\n\n\nNew Structure: error ... \n";
   }
 
   return 0;

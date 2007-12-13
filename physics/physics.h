@@ -77,33 +77,27 @@ namespace Physics
 {
   inline types::t_real a0( const std::string &_str )
   {
-    if ( _str == "A" )
-      return 0.529177249;
-    if ( _str == "nm" )
-      return 5.29177249;
-    else if ( _str == "m" )
-      return 0.529177249e-8;
-    else if ( _str == "cm" )
-      return 0.529177249e-6;
-    return 1.0;
+    if ( _str == "A" )       return 0.529177249;
+    else if ( _str == "nm" ) return 5.29177249;
+    else if ( _str == "m" )  return 0.529177249e-8;
+    else if ( _str == "cm" ) return 0.529177249e-6;
+    else throw std::runtime_error( "Unknown Unit for Bhor radius" );
   }
 
   inline types::t_real Hartree( const std::string &_str )
   {
-    if ( _str == "eV" )
-      return 27.211396;
-    if ( _str == "Ry" )
-      return 2.0;
-    return 1.0;
+    if ( _str == "eV" )      return 27.211396;
+    else if ( _str == "Ry" ) return  2.0;
+    else if ( _str == "H" )  return  1.0;
+    else throw std::runtime_error( "Unknown Unit for Hartree constant" );
   }
   
   inline types::t_real Rydberg( const std::string &_str )
   {
-    if ( _str == "eV" )
-      return 27.211396;
-    if ( _str == "Ry" )
-      return 2.0;
-    return 1.0;
+    if ( _str == "eV" ) return 13.6056980;
+    if ( _str == "Ry" ) return  1.0;
+    if ( _str == "H" )  return  0.5;
+    else throw std::runtime_error( "Unknown Unit for Rydberg constant" );
   }
 
   inline types::t_real planck( const std::string &_str )

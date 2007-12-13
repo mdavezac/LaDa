@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
       std::cerr << "Error while reading Lattice from input" << std::endl;
       return false;
     }
-    vff.initialize_centers();
+    vff.construct_centers();
     
 #ifdef _DOFORTRAN
     Minimizer::Frpr<Vff::Functional> minimizer( vff, vff_for_frprmn );
@@ -89,6 +89,8 @@ int main(int argc, char *argv[])
 #endif
     child = handle.FirstChild( "Job" ).Element();
     minimizer.Load(*child);
+    structure.energy = vff.energy() / 16.0217733;
+    std::cout << "Before minimization: E=" << structure.energy << std::endl;
     minimizer();
     structure.energy = vff.energy() / 16.0217733;
     const atat::rMatrix3d stress = vff.get_stress();

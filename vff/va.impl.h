@@ -44,7 +44,8 @@ namespace Vff
     } 
 
     // Now checks for minimizer right in parent node
-    if( minimizer.Load( *parent ) ) return true;
+    const TiXmlElement *mxml = minimizer.find_node( *parent );
+    if( mxml ) return minimizer.Load_( *mxml );
 
     // If it is not found within the functional, check for a minimizer node as
     // a sibling to parent;

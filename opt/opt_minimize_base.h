@@ -50,7 +50,7 @@ namespace Minimizer {
         return operator()();
       }
       //! Should perform the minimization
-      bool operator()() { return true; }  
+      virtual bool operator()() { return true; }  
       //! Should load parameters from XML.
       virtual bool Load( const TiXmlElement &_node) { return true; }
       

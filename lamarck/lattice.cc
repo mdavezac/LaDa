@@ -105,7 +105,8 @@ namespace Ising_CE {
       if ( atat::equivalent_mod_cell(_at, i_site->pos,inv_cell) ) 
         return i_site - sites.begin();
 
-    std::cerr << "Could not find equivalent site!! " << std::endl;
+    std::cerr << __FILE__ << ", line:" << __LINE__
+              << " Could not find equivalent site!! " << std::endl;
     return -1;
   }
 
@@ -124,7 +125,8 @@ namespace Ising_CE {
           return i_site - sites.begin();
     }
 
-    std::cerr << "Could not find atom site " << _at << "!!" << std::endl;
+    std::cerr << __FILE__ << ", line:" << __LINE__
+              << "Could not find atom site " << _at << "!!" << std::endl;
     return -1;
   }
 
@@ -159,7 +161,8 @@ namespace Ising_CE {
         if ( i_type->compare(_at) == 0 )
           return i_type - i_site->type.begin();
     }
-    std::cerr << "Could not find atom site " << _at << "!!" << std::endl;
+    std::cerr << __FILE__ << ", line:" << __LINE__
+              << "Could not find atom site " << _at << "!!" << std::endl;
     return -1;
   }
   

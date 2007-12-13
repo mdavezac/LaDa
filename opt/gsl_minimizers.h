@@ -210,7 +210,7 @@ namespace Minimizer {
             
 
 
-      virtual bool minimize()
+      virtual bool operator()()
       {
         // initializes object related stuff
         if( not current_func )  return false;
@@ -286,7 +286,7 @@ namespace Minimizer {
       }  // dummy minimizer
 
 
-      bool Load( const TiXmlElement &_node )
+      const TiXmlElement* find_node( const TiXmlElement &_node )
       {
         const TiXmlElement *parent;
         std::string str;
@@ -296,8 +296,7 @@ namespace Minimizer {
         str = _node.Value();
         if ( str.compare("Minimizer" ) != 0 )
           parent = _node.FirstChildElement("Minimizer");
-        else
-          parent = &_node;
+        else parent = &_node;
       
         
         while (parent)
@@ -320,24 +319,31 @@ namespace Minimizer {
             break;
           parent = parent->NextSiblingElement("Minimizer");
         }
-        if ( not parent )
-        {
-          std::cerr << "Could not find an <Minimizer type=\"some gsl\"> tag in input file" 
-                    << std::endl;
-          return false;
-        } 
-      
+        if ( parent ) return parent;
+        
+        return NULL;
+      }
+      bool Load_( const TiXmlElement &_node )
+      {
         double d; int n;
-        parent->Attribute( "itermax", &n );
+        _node.Attribute( "itermax", &n );
         itermax = (n > 0) ? abs(n) : 10000;
-        parent->Attribute( "tolerance", &d );
+        _node.Attribute( "tolerance", &d );
         tolerance = d ? types::t_real(d) : types::tolerance;
-        parent->Attribute( "linetolerance", &d );
+        _node.Attribute( "linetolerance", &d );
         linetolerance = d ? types::t_real(d) : 0.01;
-        parent->Attribute( "linestep", &d );
+        _node.Attribute( "linestep", &d );
         linestep = d ? types::t_real(d) : 0.1;
       
         return true;
+     }
+     bool Load( const TiXmlElement &_node )
+     {
+       const TiXmlElement* parent = find_node( _node );
+       if( parent ) return Load_(*parent);
+       std::cerr << "Could not find an <Minimizer type=\"some gsl\"> tag in input file" 
+                 << std::endl;
+       return false;
      }
 
 #ifdef _MPI
