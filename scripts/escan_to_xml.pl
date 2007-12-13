@@ -127,16 +127,16 @@ sub write_escan ()
 {
   printf "  <Functional type=\"escan\" method=\"%i\" >\n",
          $escan{"Solvation Method"};
-  printf "    <Reference value=\"%8.4f\" >\n",
+  printf "    <Reference value=\"%8.4f\" />\n",
          $escan{"Reference Energy"};
+  printf "    <Minimizer niter=\"%i\" nlines=\"%i\" tolerance=\"%2.1e\" />\n",
+         $escan{"niter"}, $escan{"nline"}, $escan{"tolerance"};
+  printf "    <Wavefunctions in=\"%s\" out=\"%s\" />\n",
+         $escan{"wavefunction input file"}, $escan{"wavefunction output file"};
   printf "    <Hamiltonian nbstates=\"%i\" smooth=\"%8.4f\" kinscal=\"%6.3f\" ",
          $escan{"nbstates"}, $escan{"Smooth"}, $escan{"Kinetic scaling"};
   printf " potential=\"%i\" realcutoff=\"%8.4f\" launch=\"~/usr/bin/escanCNL\" >\n",
          $escan{"Hamiltonian"}, $escan{"real space cutoff"}, $escan{"launch"};
-  printf "    <Minimizer niter=\"%i\" nlines=\"%i\" tolerance=\"%2.1e\" >\n",
-         $escan{"niter"}, $escan{"nline"}, $escan{"tolerance"};
-  printf "    <Wavefunctions in=\"%s\" out=\"%s\" >\n",
-         $escan{"wavefunction input file"}, $escan{"wavefunction output file"};
   foreach $name ( keys %{$escan{"potentials"}} )
   {
     for( my $i = 0; $i < scalar( @{$escan{"potentials"}{$name}} ); $i++ )
@@ -306,11 +306,11 @@ sub write_structure()
   print "  </Lattice>\n";
   print "  <Structure>\n";
   print "    <Cell>\n";
-  printf "      <column x=\"%6.4f\" y=\"%6.4f\" x=\"%6.4f\" />\n",
+  printf "      <column x=\"%6.4f\" y=\"%6.4f\" z=\"%6.4f\" />\n",
          $structure{"cell"}[0][0], $structure{"cell"}[1][0], $structure{"cell"}[2][0];
-  printf "      <column x=\"%6.4f\" y=\"%6.4f\" x=\"%6.4f\" />\n",
+  printf "      <column x=\"%6.4f\" y=\"%6.4f\" z=\"%6.4f\" />\n",
          $structure{"cell"}[0][1], $structure{"cell"}[1][1], $structure{"cell"}[2][1];
-  printf "      <column x=\"%6.4f\" y=\"%6.4f\" x=\"%6.4f\" />\n",
+  printf "      <column x=\"%6.4f\" y=\"%6.4f\" z=\"%6.4f\" />\n",
          $structure{"cell"}[0][2], $structure{"cell"}[1][2], $structure{"cell"}[2][2];
   print "    </Cell>\n";
   for( my $i = 0; $i < scalar( @{$structure{"positions"}} ); $i++ )
