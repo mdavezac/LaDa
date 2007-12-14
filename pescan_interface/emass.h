@@ -32,7 +32,7 @@ namespace Pescan
 
     protected:
       //! Amplitude of the numerical derivative
-      static const types::t_real amplitude = 0.01;
+      static const types::t_real amplitude = 0.002;
       //! \f$\sqrt(2)\f$
       static const types::t_real sqrt2 = 1.4142135623730950488016887242096980785696;
       //! \f$-\sqrt(2)\f$
@@ -60,7 +60,7 @@ namespace Pescan
 
     protected:
       //! Eigenvalues at gamma (degenerate)
-      types::t_real eig_gamma;
+      types::t_real eig_Gamma;
       //! Eigenvalues at \f$\Gamma + \epsilon(100)\f$
       types::t_real eig_Lx[2];
       //! Eigenvalues at \f$\Gamma + \epsilon(010)\f$
@@ -113,8 +113,8 @@ namespace Pescan
     escan.kpoint = _v;
     launch_pescan();
     read_result();
-    *_eig     = Physics::Hartree("eV") * eigenvalues.front();
-    *(_eig+1) = Physics::Hartree("eV") * eigenvalues.back();
+    *_eig     = eigenvalues.front();
+    *(_eig+1) = eigenvalues.back();
   }
 
   inline types::t_real eMassSL::gamma_folded_spectrum()

@@ -15,7 +15,7 @@
 namespace Print
 {
 
-  //! Removes the everything from the last "/" character in the string.
+  //! Removes everything from the beginning to the last "/" character in the string.
   std::string StripDir( std::string _string );
   //! \brief Removes everything in \a _dir found after the first occurence of
   //!        pattern \a _str..

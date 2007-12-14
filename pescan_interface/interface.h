@@ -13,8 +13,10 @@
 #include <vector>
 #include <utility>
 
+#include <physics/physics.h>
 #include <opt/types.h>
 #include <atat/vectmac.h>
+#include <lamarck/structure.h>
 
 #include <tinyxml/tinyxml.h>
 
@@ -129,6 +131,8 @@ namespace Pescan
       std::string wavefunction_out;
       //! Stub name for input wavefunction files
       std::string wavefunction_in;
+      //! Wavefunctions to read in
+      std::vector<types::t_unsigned> read_in;
       //! Eigenvalue solution method.
       t_method method;
       //! Reference energy for folded spectrum method
@@ -147,7 +151,8 @@ namespace Pescan
       types::t_real tolerance;
       //! Reciprocal-space vector for which to compute eigenvalue.
       atat::rVector3d kpoint;
-      //! Real-space scale 
+      //! \brief Reciprocal-Space scale \f$\frac{2\pi}{a}\f$, with \e a the lattice
+      //! constant Ising_CE::Structure::scale
       types::t_real scale;
       //! Type of Hamiltonian to solve.
       t_potential potential;
@@ -160,19 +165,18 @@ namespace Pescan
 
       //! Constructor.
       Escan () : filename("escan.input"), output("escan.out"),
-                 wavefunction_out("wavefunction"), wavefunction_in("wavefunction"),
+                 wavefunction_out("wavefunction"), wavefunction_in("wavefunction"), 
                  method(FOLDED_SPECTRUM), Eref(0), smooth(0.5), kinscal(0.0), nbstates(3),
                  niter(10), nlines(50), tolerance(types::tolerance),
                  kpoint(0,0,0), scale(0), potential(LOCAL), rcut(0), 
-                 launch("escanCNL") {}
+                 launch("escanCNL") { read_in.clear(); read_in.reserve(nbstates); }
       //! Copy Constructor
       Escan   ( const Escan &_c)
-            : filename(_c.filename), output(_c.output),
-              wavefunction_out( _c.wavefunction_out), wavefunction_in( _c.wavefunction_in ),
-              method(_c.method), Eref(_c.Eref), smooth( _c.smooth ), kinscal( _c.kinscal), 
-              nbstates(_c.nbstates), niter(_c.niter), nlines(_c.nlines), tolerance(_c.tolerance),
-              kpoint(_c.kpoint), scale(_c.scale), potential(_c.potential), rcut(_c.rcut), 
-              launch(_c.launch) {}
+            : filename(_c.filename), output(_c.output), wavefunction_out( _c.wavefunction_out), 
+              wavefunction_in( _c.wavefunction_in ), read_in( _c.read_in ), method(_c.method), 
+              Eref(_c.Eref), smooth( _c.smooth ), kinscal( _c.kinscal), nbstates(_c.nbstates), 
+              niter(_c.niter), nlines(_c.nlines), tolerance(_c.tolerance), kpoint(_c.kpoint), 
+              scale(_c.scale), potential(_c.potential), rcut(_c.rcut), launch(_c.launch) {}
 #ifdef _MPI
       //! \ingroup MPI
       //! \brief mpi broadcasting for this object
@@ -198,8 +202,6 @@ namespace Pescan
       std::string dirname;
       //! Whether to delete directory where computations are being performed.
       bool do_destroy_dir;
-      //! Whether to input wavefunctions
-      bool do_input_wavefunctions;
      
     public:
       //! Stores results
@@ -208,14 +210,12 @@ namespace Pescan
     public:
       //! Constructor
       Interface () : atom_input("atom.config"), genpot(), escan(),
-                     dirname("escan"), do_destroy_dir(true),
-                     do_input_wavefunctions(false) {}
+                     dirname("escan"), do_destroy_dir(true) {}
       //! Copy Constructor
       Interface   ( const Interface &_c )
                 : atom_input( _c.atom_input ), genpot( _c.genpot ),
                   escan( _c.escan ), 
                   dirname( _c.dirname ), do_destroy_dir( _c.do_destroy_dir ),
-                  do_input_wavefunctions( _c.do_input_wavefunctions ),
                   eigenvalues( _c.eigenvalues ) {}
       //! Destructor
      ~Interface() {};
@@ -262,6 +262,10 @@ namespace Pescan
      bool read_result();
      //! Loads functional directly from \a _node
      bool Load_( const TiXmlElement &_node );
+     //! \brief Sets scale of reciprocal in mesh as \f$\frac{2\pi/a}\f$, with \e a the
+     //! lattice in constant in atomic units.
+     void set_scale( const Ising_CE::Structure &_str )
+       { escan.scale = _str.scale; }
   };
 
 

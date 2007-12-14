@@ -250,10 +250,17 @@ namespace Pescan
   { 
     vff.evaluate();
     vff.zero_order();
-    t_PescanBase::do_input_wavefunctions = false;
+    t_PescanBase::escan.read_in.clear();
     t_PescanBase::escan.wavefunction_out = "zero_order";
     
-    return t_PescanBase::operator()( structure ); 
+    if( not t_PescanBase::operator()( structure ) ) return false; 
+
+    t_PescanBase::escan.read_in.reserve( t_PescanBase::escan.nbstates );
+    std::vector<types::t_unsigned> :: iterator i_r = t_PescanBase::escan.read_in.begin();
+    std::vector<types::t_unsigned> :: iterator i_r_end = t_PescanBase::escan.read_in.end();
+    for( types::t_unsigned u=1; i_r != i_r_end; ++i_r, ++u ) *i_r = u;
+
+    return true;
   }
 
   inline VirtualAtom::t_Type VirtualAtom::evaluate_with_gradient( t_Type* _grad )
@@ -275,7 +282,6 @@ namespace Pescan
   inline VirtualAtom::t_Type VirtualAtom::apply_wfns()
   { 
     vff.evaluate();
-    t_PescanBase::do_input_wavefunctions = true;
     t_PescanBase::escan.wavefunction_in = "zero_order";
     t_PescanBase::escan.wavefunction_out = "first_order";
 

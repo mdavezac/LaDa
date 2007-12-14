@@ -24,15 +24,20 @@ namespace Pescan
 
   bool eMassSL::operator()( const Ising_CE::Structure &_str )
   {
+    set_scale( _str );
     escan_calls( _str );
 
-    const types::t_real amp2 =   _str.scale * _str.scale 
-                               * Physics::emass("kg") / Physics::hbar("eV*s") 
-                               / Physics::hbar("J*s") / 4.0 
-                               / Math::pi / Math::pi / amplitude / amplitude;
-    inverse(0,0) = ( eig_Lx[0] + eig_Lx[1] - 2.0 * eig_gamma ) * amp2;
-    inverse(1,1) = ( eig_Ly[0] + eig_Ly[1] - 2.0 * eig_gamma ) * amp2;
-    inverse(2,2) = ( eig_Lz[0] + eig_Lz[1] - 2.0 * eig_gamma ) * amp2;
+    types::t_real amp2 =   _str.scale / Physics::a0("A") 
+                         / amplitude / 2.0 / Math::pi;
+    amp2 *= amp2; 
+
+    // _str.scale * _str.scale * Physics::Hartree("eV")
+//                              * Physics::emass("kg") / Physics::hbar("eV*s") 
+//                              / Physics::hbar("J*s") / 4.0 
+//                              / Math::pi / Math::pi / amplitude / amplitude;
+    inverse(0,0) = ( eig_Lx[0] + eig_Lx[1] - 2.0 * eig_Gamma ) * amp2;
+    inverse(1,1) = ( eig_Ly[0] + eig_Ly[1] - 2.0 * eig_Gamma ) * amp2;
+    inverse(2,2) = ( eig_Lz[0] + eig_Lz[1] - 2.0 * eig_Gamma ) * amp2;
     inverse(0,1) = inverse(1,0) = (   eig_Hxy[0] - eig_Hxmy[0]
                                     + eig_Hxy[1] - eig_Hxmy[1] ) * amp2;
     inverse(0,2) = inverse(2,0) = (   eig_Hyz[0] - eig_Hymz[0]
@@ -68,43 +73,55 @@ namespace Pescan
   void eMassSL :: escan_calls( const Ising_CE::Structure &_str )
   {
     // Stuff to save
-    atat::rVector3d vec = escan.kpoint;
-    types::t_unsigned nb = escan.nbstates;
-    std::string in = escan.wavefunction_in;
-    std::string out = escan.wavefunction_out;
+    Escan saved_escan = escan;
 
     // Needed only once
     create_directory();
     create_potential();
 
     // Compute Gamma. This is the one computation which can be all electron
-    eig_gamma =   Physics::Hartree("eV")
-                * ( escan.method == Interface::FOLDED_SPECTRUM ) ?
-                   gamma_folded_spectrum():
-                   gamma_all_electron( _str );
+    eig_Gamma =   ( escan.method == Interface::FOLDED_SPECTRUM ) ?
+                  gamma_folded_spectrum():
+                  gamma_all_electron( _str );
 
     // Then compute other points
-    bool m = do_input_wavefunctions;
-    do_input_wavefunctions = true;
-    escan.nbstates = 2;
+    escan.read_in.clear();
+    escan.nbstates = 3;
     escan.wavefunction_in = escan.wavefunction_out;
     escan.wavefunction_out = "dummy";
    
+    std::cout << " ****** Gamma " << eig_Gamma << std::endl;
     other_kpoints( amplitude * Lx, eig_Lx);
-    other_kpoints( amplitude * Ly, eig_Ly);
-    other_kpoints( amplitude * Lz, eig_Lz);
-    other_kpoints( amplitude * Hxy, eig_Hxy);
-    other_kpoints( amplitude * Hxmy, eig_Hxmy);
-    other_kpoints( amplitude * Hyz, eig_Hyz);
-    other_kpoints( amplitude * Hymz, eig_Hymz);
-    other_kpoints( amplitude * Hxz, eig_Hxz);
-    other_kpoints( amplitude * Hmxz, eig_Hmxz);
+    std::cout << " ****** Lx " << eig_Lx[0] << " " << eig_Lx[1] << std::endl;
 
-    do_input_wavefunctions = m;
-    escan.kpoint = vec;
-    escan.nbstates = nb;
-    escan.wavefunction_in = in;
-    escan.wavefunction_out = out;
+    types::t_real amp2 =   _str.scale / Physics::a0("A") 
+                         / amplitude / 2.0 / Math::pi;
+    amp2 *= amp2;
+    std::cout << "1.0/dk^2 = " << amp2 << std::endl;
+    std::cout << " deriv = "
+              << eig_Lx[0] + eig_Lx[1] - 2.0 * eig_Gamma << std::endl
+              << "m^{-1}_{0,0} = " 
+              << ( eig_Lx[0] + eig_Lx[1] - 2.0 * eig_Gamma ) * amp2 << std::endl;
+
+
+    other_kpoints( amplitude * Ly, eig_Ly);
+    std::cout << " ****** Ly " << eig_Ly[0] << " " << eig_Ly[1] << std::endl;
+    other_kpoints( amplitude * Lz, eig_Lz);
+    std::cout << " ****** Lz " << eig_Lz[0] << " " << eig_Lz[1] << std::endl;
+    other_kpoints( amplitude * Hxy, eig_Hxy);
+    std::cout << " ****** Hxy " << eig_Hxy[0] << " " << eig_Hxy[1] << std::endl;
+    other_kpoints( amplitude * Hxmy, eig_Hxmy);
+    std::cout << " ****** Hxmy " << eig_Hxmy[0] << " " << eig_Hxmy[1] << std::endl;
+    other_kpoints( amplitude * Hyz, eig_Hyz);
+    std::cout << " ****** Hyz " << eig_Hyz[0] << " " << eig_Hyz[1] << std::endl;
+    other_kpoints( amplitude * Hymz, eig_Hymz);
+    std::cout << " ****** Hymz " << eig_Hymz[0] << " " << eig_Hymz[1] << std::endl;
+    other_kpoints( amplitude * Hxz, eig_Hxz);
+    std::cout << " ****** Hxz " << eig_Hxz[0] << " " << eig_Hxz[1] << std::endl;
+    other_kpoints( amplitude * Hmxz, eig_Hmxz);
+    std::cout << " ****** Hmxz " << eig_Hmxz[0] << " " << eig_Hmxz[1] << std::endl;
+
+    escan = saved_escan;
     destroy_directory_();
   }
 

@@ -82,7 +82,7 @@ namespace Pescan
 
   inline types::t_real BandGap :: operator()( const Ising_CE::Structure &_str )
   {
-    escan.scale = _str.scale;
+    set_scale( _str );
 
     return escan.method == ALL_ELECTRON ? all_electron( _str ): folded_spectrum();
   }

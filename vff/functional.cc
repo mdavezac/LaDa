@@ -830,12 +830,12 @@ failure:
     // whatever nanopes other may be
     for( types::t_unsigned i = 0; i < 3; ++i )
       stream << std::fixed << std::setprecision(7) 
-             << std::setw(12) << structure.cell(0,i) * structure0.scale / Physics::a0("A")
-             << std::setw(12) << structure.cell(1,i) * structure0.scale / Physics::a0("A")
-             << std::setw(12) << structure.cell(2,i) * structure0.scale / Physics::a0("A")
-             << std::setw(18) << structure.cell(0,i) 
-             << std::setw(12) << structure.cell(1,i) 
-             << std::setw(12) << structure.cell(2,i) << "\n";
+             << std::setw(12) << std::setprecision(8) << structure.cell(0,i) * structure0.scale / Physics::a0("A")
+             << std::setw(12) << std::setprecision(8) << structure.cell(1,i) * structure0.scale / Physics::a0("A")
+             << std::setw(12) << std::setprecision(8) << structure.cell(2,i) * structure0.scale / Physics::a0("A")
+             << std::setw(18) << std::setprecision(8) << structure.cell(0,i) 
+             << std::setw(12) << std::setprecision(8) << structure.cell(1,i) 
+             << std::setw(12) << std::setprecision(8) << structure.cell(2,i) << "\n";
 
     // prints atomic position, strain, weight, and atomic position in
     // "other unit"

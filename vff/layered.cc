@@ -36,7 +36,7 @@ namespace Vff
     // Finally, we a transition matrix from a "u" basis to a cartesian basis.
     atat::rMatrix3d T; T.set_column(0, u); T.set_column(1, a1); T.set_column(2,a2);
     atat::rMatrix3d S; S.zero(); S(0,0) = 1;
-    template_strain = T * S * (!T);
+    template_strain = T * S * (~T);
   }
 
   types::t_real Layered :: evaluate()

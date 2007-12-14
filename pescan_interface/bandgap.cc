@@ -48,11 +48,15 @@ namespace Pescan
 
   void BandGap :: correct(const std::string & _dir) 
   {
+    Escan saved_state = escan;
     Bands keeprefs = Eref;
-    bool old_input = do_input_wavefunctions;
-    do_input_wavefunctions = true;
     std::string wfn = escan.wavefunction_in;
     escan.wavefunction_in = escan.wavefunction_out;
+    escan.read_in.resize( escan.nbstates );
+    std::vector<types::t_unsigned> :: iterator i_r = escan.read_in.begin();
+    std::vector<types::t_unsigned> :: iterator i_r_end = escan.read_in.end();
+    for(types::t_unsigned u=0; i_r != i_r_end; ++i_r, ++u ) *i_r = u;
+
     do 
     {
       Print::out << " Found metallic band gap!! " << bands.gap() << "\n" 
@@ -78,9 +82,8 @@ namespace Pescan
                             bands.cbm = find_closest_eig( Eref.cbm );
     } while ( bands.gap() < 0.001 );
 
-    do_input_wavefunctions = old_input;
-    escan.wavefunction_in = wfn;
-    Eref = keeprefs;
+    escan = saved_state;
+    Eref  = keeprefs;
   }
   
   types::t_real BandGap::all_electron( const Ising_CE::Structure &_str ) 

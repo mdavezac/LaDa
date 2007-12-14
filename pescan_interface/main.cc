@@ -6,7 +6,7 @@
   #include <vff/va.h>
   #include "emass.h"
   typedef Pescan::eMassSL t_Pescan;
-  typedef Vff::VABase<Vff::Layered> t_Vff;
+  typedef Vff::VABase<Vff::Functional> t_Vff;
 #else
   #include "va.h"
   typedef Pescan::VirtualAtom t_Pescan;
@@ -30,7 +30,6 @@ bool evaluate( const TiXmlElement &_node,
               << "Will skip current structure" << std::endl;
     return false;
   }
-  std::cout << _structure << std::endl;
 
 #ifndef _EMASS
    Pescan::BandGap& bandgap = (Pescan::BandGap&) _pescan;
@@ -39,7 +38,6 @@ bool evaluate( const TiXmlElement &_node,
 #else
   _vff.evaluate();
   _vff.print_escan_input();
-  _pescan.set_method( Pescan::Interface::ALL_ELECTRON );
   _pescan( _structure );
 #endif
 

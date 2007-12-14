@@ -251,11 +251,19 @@ namespace Pescan
     file.close();
   }
 
-  void Interface::write_escan_input() 
+  void Interface::write_escan_input()
   {
     std::ofstream file;
     std::string name = Print::StripEdges(dirname) + "/" + Print::StripEdges(escan.filename);
     file.open( name.c_str(), std::ios_base::out|std::ios_base::trunc ); 
+    if( file.bad() or ( not file.is_open() ) )
+    {
+      std::ostringstream error;
+      error << __FILE__ << " - line: " << __LINE__ << ":\n"
+            <<  " Could not open file " << name << "for writing.\n"
+            <<  " Aborting." << std::endl;
+      throw std::runtime_error( error.str() );
+    }
     file << "1 " << Print::StripDir(dirname, genpot.output) << "\n"
          << "2 " << escan.wavefunction_out << "\n"
          << "3 " << escan.method << "\n"
@@ -263,30 +271,36 @@ namespace Pescan
                  << escan.smooth << " " << escan.kinscal << "\n"
          << "5 " << escan.nbstates << "\n"
          << "6 " << escan.niter << " " << escan.nlines << " " << escan.tolerance << "\n";
-    if( do_input_wavefunctions )
+    if( escan.read_in.size() )
     {
-      file << "7 " << escan.nbstates
-           << "\n8 ";
-      for( types::t_unsigned u=1; u < escan.nbstates; ++u )
-        file << u << ", ";
-      file << escan.nbstates 
-           << "\n9 " << escan.wavefunction_in << "\n";
+      file << "7 " << escan.read_in.size() << "\n"
+           << "8 ";
+      std::vector<types::t_unsigned> :: const_iterator i_r = escan.read_in.begin();
+      std::vector<types::t_unsigned> :: const_iterator i_r_end = escan.read_in.end();
+      file << *i_r;
+      for(--i_r_end; i_r != i_r_end; ++i_r)
+        file << ", " << *i_r;
+      file << "\n" << "9 " << escan.wavefunction_in << "\n"
+           << "10 0 4 4 4 graph.R\n";
     }
     else  file << "7 0\n8 0\n9 dummy\n10 0 4 4 4 graph.R\n";
 
-    if ( atat::norm2( escan.kpoint ) < types::tolerance )
-     file << "11 0 0 0 0 ";
-    else 
-     file << "11 1 " << escan.kpoint[0] << " " << escan.kpoint[1] << " " << escan.kpoint[2] << " ";
-    file << escan.scale << "\n"
-         << "12 " << escan.potential << "\n"
+    if ( atat::norm2( escan.kpoint ) < types::tolerance ) file << "11 0 0 0 0 0\n";
+    else
+    {
+      atat::rVector3d k = escan.kpoint * 2.0 * Math::pi * Physics::a0("A") / escan.scale;
+      file << "11 1 " << k << " " 
+                      << std::setw(12) << std::setprecision(8) 
+                      << escan.scale / Physics::a0("A") <<  "\n";
+    }
+    file << "12 " << escan.potential << "\n"
          << "13 " << atom_input << "\n"
          << "14 " << escan.rcut << "\n"
          << "15 " << escan.spinorbit.size() << "\n";
     std::vector<SpinOrbit> :: const_iterator i_so = escan.spinorbit.begin();
     std::vector<SpinOrbit> :: const_iterator i_so_end = escan.spinorbit.end();
     for(types::t_unsigned i=16; i_so != i_so_end; ++i_so, ++i )
-      file << i << " " << i_so->filename << " " 
+      file << i << " " << Print::StripDir(i_so->filename) << " " 
            << i_so->izz << " " 
            << i_so->s << " " << i_so->p << " " << i_so->d << " " 
            << i_so->pnl << " " << i_so->dnl << "\n";
@@ -308,7 +322,8 @@ namespace Pescan
     {
       std::string filename = sstr.str();
       sstr.str("");
-      sstr << "Could not open file "
+      sstr << __FILE__ << " - line " << __LINE__ << ":\n"
+           << "Could not open file "
            << filename
            << " in Pescan::Interface::read_result " << std::endl;
       throw std::runtime_error( sstr.str() );
@@ -325,11 +340,11 @@ namespace Pescan
 
     eigenvalues.clear(); eigenvalues.reserve(escan.nbstates);
     types::t_unsigned u(0);
+    types::t_real eig;
     for(; u < escan.nbstates; ++u )
     {
-      types::t_real eig;
-      if( not file.eof() ) break;
-      if( (file >> eig).good() ) break;
+      if(  file.bad() ) break;
+      file >> eig;
       eigenvalues.push_back( eig );
     }
     if( u == escan.nbstates ) return true;
@@ -355,6 +370,7 @@ namespace Pescan
     if ( not _bc.serialize( output ) ) return false;
     if ( not _bc.serialize( wavefunction_out ) ) return false;
     if ( not _bc.serialize( wavefunction_in ) ) return false;
+    if ( not _bc.serialize_container( read_in ) ) return false;
     types::t_unsigned n = method;
     if ( not _bc.serialize( n ) ) return false;
     if ( _bc.get_stage() == mpi::BroadCast::COPYING_FROM_HERE )
