@@ -32,6 +32,21 @@
 #ifdef _MPI
 #include "mpi/mpi_object.h"
 #endif 
+#ifdef _MPI
+//! \cond
+// namespace Individual
+// {
+//   template<class T_INDIVTRAITS>
+//   class Base;
+// }
+// namespace mpi
+// {
+//    template<>
+//      bool BroadCast::Serialize< template<class T_INDIVTRAITS> Individual::Base< T_INDIVTRAITS > >
+//                               (  Individual::Base< T_INDIVTRAITS > &_indiv)
+// }
+//! \endcond
+#endif
 
 /** \ingroup Genetic
  * @{
@@ -84,6 +99,7 @@ namespace Individual
   template<class T_INDIVTRAITS>
   class Base : public eoObject, public eoPersistent
   {
+      friend class mpi::BroadCast;
     public:
       //! Individual Traits type \sa Traits::Indiv, Individual::Types::Scalar
       typedef T_INDIVTRAITS t_IndivTraits; 
@@ -367,6 +383,18 @@ namespace Individual
 } // namespace Individual
 /**
  * @} */
+
+#ifdef _MPI
+//! \cond
+namespace mpi
+{
+  template< class T_INDIVTRAITS, template Individual::Base >
+     bool BroadCast::Serialize< T_INDIVTRAITS, Individual::Base >
+                                       (  Individual::Base< T_INDIVTRAITS > &_indiv)
+       { return _indiv->broadcast( *this ); }
+}
+//! \endcond
+#endif
 
 #include "individual.impl.h"
 

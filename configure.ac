@@ -187,9 +187,21 @@ AC_SUBST(CPP_DEBUG_FLAGS)
 
 #  MPI libs
 if test x$mpi = xtrue; then
-  PKG_CHECK_MODULES(MPICH, mpich >= 1.2.7 )
-  AC_DEFINE([_MPI],[1],[])
-  MPI_ADDLIB="../mpi/libmpiobject.la"
+  PKG_CHECK_EXISTS(mpich >= 1.2.7, [mpichisthere=yes], [mpichisthere=no] )
+  PKG_CHECK_EXISTS(openmpi >= 1.2, [openmpiisther=yes], [openmpiisther=no] )
+  if test $mpichisthere = yes; then
+    PKG_CHECK_MODULES(MPICH, mpich >= 1.2.7 )
+    AC_DEFINE([_MPI],[1],[])
+    MPI_ADDLIB="../mpi/libmpiobject.la"
+  elif test $openmpiisther = yes; then
+    PKG_CHECK_MODULES(OPENMPI, openmpi >= 1.2.7 )
+    AC_DEFINE([_MPI],[1],[])
+    MPI_ADDLIB="../mpi/libmpiobject.la"
+    MPICH_CFLAGS="$OPENMPI_CFLAGS"
+    MPICH_LIBS="$OPENMPI_LIBS"
+  else
+    $mpi=false;
+  fi
 fi
 AC_SUBST(MPICH_CFLAGS)
 AC_SUBST(MPICH_LIBS)
@@ -309,8 +321,10 @@ if test x$emassopt = xtrue; then
   echo " _ Genetic Algorithm for Electronic Mass Optimization"
 fi
 echo ""
-if test $mpi = true; then
-  echo "Will Include MPI where available"
+if test $mpi$mpichiisthere = trueyes; then
+  echo "Will Include MPI where available, using mpich"
+elif test $mpi$openmpiisther = trueyes; then
+  echo "Will Include MPI where available, using openmpi"
 fi
 if test $lapack = true; then
   echo "Will Include some lapack/blas routines for Matrix diagonalization"

@@ -134,6 +134,13 @@ namespace Vff
       return result;
     }
 
+  template< class T_VFFBASE > 
+    inline bool VABase<T_VFFBASE> :: init( bool _redocenters )
+    {
+      return     t_VABase::init()
+             and ( _redocenters ? t_VffBase::construct_centers(): true ); 
+    }
+
 } // namespace VFF
 
 #endif // _VFF_VA_IMPL_H_

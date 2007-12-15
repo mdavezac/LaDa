@@ -6,13 +6,15 @@
 
 #include <lamarck/lattice.h>
 #include <lamarck/structure.h>
-#ifdef _DOFORTRAN
-#include <opt/opt_frprmn.h>
-#else
-#include <opt/gsl_minimizers.h>
-#endif
 
-#include "functional.h"
+#include <vff/va.h>
+#ifdef _LAYERED
+#include <vff/layered.h>
+typedef Vff::VABase<Vff::Layered> t_Vff;
+#else
+#include <vff/functional.h>
+typedef Vff::VABase<Vff::Functional> t_Vff;
+#endif
 
 int main(int argc, char *argv[]) 
 {
@@ -73,26 +75,17 @@ int main(int argc, char *argv[])
       std::cerr << "Could not find Lattice in input" << std::endl;
       return false;
     }
-    Vff::Functional vff(structure);
+    t_Vff vff(structure);
     if ( not vff.Load(*vff_xml) )
     {
       std::cerr << "Error while reading Lattice from input" << std::endl;
       return false;
     }
-    vff.construct_centers();
-    vff.print_out(std::cout);
+    if( not vff.init(true) ) continue;
+    vff.Vff().print_out(std::cout);
     
-#ifdef _DOFORTRAN
-    Minimizer::Frpr<Vff::Functional> minimizer( vff, vff_for_frprmn );
-    vff_for_frprmn( (double*) &vff, NULL );
-#else
-    Minimizer::GnuSL<Vff::Functional> minimizer( vff );
-#endif
-    child = handle.FirstChild( "Job" ).Element();
-    minimizer.Load(*child);
-    minimizer();
-    structure.energy = vff.energy() / 16.0217733;
-    const atat::rMatrix3d stress = vff.get_stress();
+    structure.energy = vff.evaluate() / 16.0217733;
+    const atat::rMatrix3d stress = vff.Vff().get_stress();
     std::cout << std::fixed << std::setprecision(5) 
               << "Energy [eV]: " << std::setw(12) << structure.energy << std::endl
               << "Stress Tensor: " << std::endl 

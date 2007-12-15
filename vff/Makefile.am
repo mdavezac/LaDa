@@ -18,7 +18,7 @@ else
   gslLDFLAGS  = @GSL_LIB@
 endif
 
-bin_PROGRAMS = vff
+bin_PROGRAMS = vff layered_vff
 noinst_PROGRAMS = $(fortranBIN)
 
 noinst_LTLIBRARIES = libvff.la
@@ -32,6 +32,10 @@ vff_CPPFLAGS =  $(AM_CPPFLAGS) -I .. $(gslCPPFLAGS)
 vff_LDFLAGS =  $(AM_LDFLAGS) @MPICH_LIBS@ $(gslLDFLAGS) $(fortranLDFLAGS)
 vff_LDADD = ../lamarck/liblamarck.la ../atat/libatat.la libvff.la \
             ../physics/libphysics.la $(fortran_LDADD) @MPI_ADDLIB@ 
+layered_vff_SOURCES = $(vff_SOURCES)
+layered_vff_CPPFLAGS =  $(vff_CPPFLAGS) -D _LAYERED
+layered_vff_LDFLAGS =  $(vff_LDFLAGS)
+layered_vff_LDADD = $(vff_LDADD)
 
 fortran_test_LD = $(FC) 
 fortran_test_SOURCES = fortran_test.f90 

@@ -127,8 +127,9 @@ namespace Vff
        //!          capabilities expected by Minimizer objects, while adding
        //!          the capacity for recomputing the first-neighbor tree of
        //!          vff.
-       bool init( bool _redocenters = false )
-        { return  t_VABase::init() and ( _redocenters ? t_VffBase::construct_centers(): true ); }
+       bool init( bool _redocenters = false );
+       //! Returns reference to the Vff base class
+       t_VffBase& Vff() { return *static_cast<t_VffBase*>(this); }
 
      protected:
 
