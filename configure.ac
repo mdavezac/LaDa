@@ -30,6 +30,14 @@ AC_ARG_ENABLE(all,
      esac],[enall=true])
 
 
+AC_ARG_ENABLE(doc,
+     [  --enable-doc              Turn on fortran code snipets],
+     [case "${enableval}" in
+      yes) doc=true ;;
+       no)  oc=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-doc) ;;
+     esac],[doc=false])
+
 AC_ARG_ENABLE(fortran,
      [  --enable-fortran              Turn on fortran code snipets],
      [case "${enableval}" in
@@ -187,8 +195,8 @@ AC_SUBST(CPP_DEBUG_FLAGS)
 
 #  MPI libs
 if test x$mpi = xtrue; then
-  PKG_CHECK_EXISTS(mpich >= 1.2.7, [mpichisthere=yes], [mpichisthere=no] )
-  PKG_CHECK_EXISTS(openmpi >= 1.2, [openmpiisther=yes], [openmpiisther=no] )
+  PKG_CHECK_MODULES(WHATEVER, mpich >= 1.2.7, [mpichisthere=yes], [mpichisthere=no] )
+  PKG_CHECK_MODULES(WHATEVER, openmpi >= 1.2, [openmpiisther=yes], [openmpiisther=no] )
   if test $mpichisthere = yes; then
     PKG_CHECK_MODULES(MPICH, mpich >= 1.2.7 )
     AC_DEFINE([_MPI],[1],[])
@@ -286,6 +294,17 @@ if test "$ac_cv_cxx_have_stl" = yes; then
  else
    AC_MSG_ERROR("Could not find standard template libraries")
 fi
+
+# autoscan suggestions
+AC_CHECK_FUNCS([floor],[],[{(exit 1); exit 1; }] )
+AC_CHECK_FUNCS([gettimeofday],[],[{(exit 1); exit 1; }] )
+AC_CHECK_FUNCS([pow],[],[{(exit 1); exit 1; }] )
+AC_CHECK_FUNCS([rint],[],[{(exit 1); exit 1; }] )
+AC_CHECK_HEADERS([float.h],[],[{(exit 1); exit 1; }] )
+AC_CHECK_HEADERS([limits.h],[],[{(exit 1); exit 1; }] )
+AC_CHECK_HEADERS([sys/time.h],[],[{(exit 1); exit 1; }] )
+AC_HEADER_STDBOOL
+AC_HEADER_TIME
 
 
 AC_OUTPUT(Makefile atat/Makefile physics/Makefile opt/Makefile lamarck/Makefile
