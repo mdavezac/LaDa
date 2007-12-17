@@ -1,17 +1,18 @@
+include ../Files
 bin_PROGRAMS = lamarck
 AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ @MPICH_CFLAGS@
 AM_LDFLAGS = @TINYXML_LIBS@
 lamarck_SOURCES = main.cc 
 lamarck_CPPFLAGS =  $(AM_CPPFLAGS) -I .. 
 lamarck_LDFLAGS =  $(AM_LDFLAGS)  @MPICH_LIBS@
-lamarck_LDADD = liblamarck.la ../atat/libatat.la ../physics/libphysics.la @MPI_ADDLIB@
+lamarck_LDADD = liblamarck.la \
+		../atat/libatat.la \
+		../physics/libphysics.la \
+		@MPI_ADDLIB@
 noinst_LTLIBRARIES = liblamarck.la
-liblamarck_la_SOURCES = cluster.cc  constituent_strain.cc functional_builder.cc \
-			harmonic.cc  lattice.cc polynome.cc structure.cc 
+liblamarck_la_SOURCES = $(CRYSTAL_CC) $(CE_CC)
 liblamarck_ladir = $(includedir)/lamarck
-nobase_liblamarck_la_HEADERS = atom.h cluster.h  lattice.h polynome.h \
-                               constituent_strain.h  functional_builder.h  harmonic.h \
-			       structure.h
+nobase_liblamarck_la_HEADERS = $(CRYSTAL_H) $(CE_H)
 liblamarck_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 

@@ -243,7 +243,10 @@ namespace Pescan
        operator const BandGap&() const { return *( (const BandGap*) this ); }
 
      protected:
-         types::t_real apply_wfns();
+       //! \details Applies wavefunctions to current potential
+       //! \brief The wavefunctions are applied as read from input. They are
+       //!        not optimized for the current potential
+       types::t_real apply_wfns();
   };
 
   inline VirtualAtom::t_Type VirtualAtom::evaluate()
@@ -302,6 +305,7 @@ namespace Pescan
     return result;
   }
 
+  //! Dumps structure to \a _stream
   inline std::ostream& operator<<( std::ostream& _stream, const VirtualAtom& _va )
   {
     Ising_CE::Fourier( _va.structure.atoms.begin(),  _va.structure.atoms.end(),

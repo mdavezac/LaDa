@@ -30,14 +30,6 @@ AC_ARG_ENABLE(all,
      esac],[enall=true])
 
 
-AC_ARG_ENABLE(doc,
-     [  --enable-doc              Turn on fortran code snipets],
-     [case "${enableval}" in
-      yes) doc=true ;;
-       no)  oc=false ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-doc) ;;
-     esac],[doc=false])
-
 AC_ARG_ENABLE(fortran,
      [  --enable-fortran              Turn on fortran code snipets],
      [case "${enableval}" in
@@ -166,6 +158,10 @@ if test x$emass = xtrue; then
   lapack=true
 fi
 
+# ************************************
+# ****** Checks compiler compliances
+# ************************************
+
 AH_TEMPLATE([_DOFORTRAN_])
 if test x$fortran = xtrue || test x$lapack = xtrue; then
   AC_PROG_FC
@@ -180,6 +176,23 @@ fi
 
 AX_COMPILER_VENDOR
 
+# C++ compiler compliance
+AC_CXX_FULL_SPECIALIZATION_SYNTAX
+AC_CXX_PARTIAL_SPECIALIZATION
+AC_CXX_DEFAULT_TEMPLATE_PARAMETERS
+AC_CXX_FULL_DEFAULT_TEMPLATE_PARAMETERS
+
+# autoscan suggestions
+AC_CXX_HAVE_IEEE_MATH
+AC_CXX_COMPLEX_MATH_IN_NAMESPACE_STD
+AC_CXX_HAVE_COMPLEX_MATH1
+AC_CHECK_FUNCS([gettimeofday],[],[{(exit 1); exit 1; }] )
+AC_CHECK_HEADERS([float.h],[],[{(exit 1); exit 1; }] )
+AC_CHECK_HEADERS([limits.h],[],[{(exit 1); exit 1; }] )
+AC_CHECK_HEADERS([sys/time.h],[],[{(exit 1); exit 1; }] )
+AC_HEADER_STDBOOL
+AC_HEADER_TIME
+
 if test x$debug = xtrue; then
   CXXFLAGS=`echo $CXXFLAGS | sed "s/-O2//"`
   CFLAGS=`echo $CFLAGS | sed "s/-O2//"`
@@ -192,6 +205,11 @@ else
   CPP_DEBUG_FLAGS=
 fi
 AC_SUBST(CPP_DEBUG_FLAGS)
+
+# ************************************
+# ****** End of Checks compiler compliances
+# ************************************
+
 
 #  MPI libs
 if test x$mpi = xtrue; then
@@ -295,16 +313,9 @@ if test "$ac_cv_cxx_have_stl" = yes; then
    AC_MSG_ERROR("Could not find standard template libraries")
 fi
 
-# autoscan suggestions
-AC_CHECK_FUNCS([floor],[],[{(exit 1); exit 1; }] )
-AC_CHECK_FUNCS([gettimeofday],[],[{(exit 1); exit 1; }] )
-AC_CHECK_FUNCS([pow],[],[{(exit 1); exit 1; }] )
-AC_CHECK_FUNCS([rint],[],[{(exit 1); exit 1; }] )
-AC_CHECK_HEADERS([float.h],[],[{(exit 1); exit 1; }] )
-AC_CHECK_HEADERS([limits.h],[],[{(exit 1); exit 1; }] )
-AC_CHECK_HEADERS([sys/time.h],[],[{(exit 1); exit 1; }] )
-AC_HEADER_STDBOOL
-AC_HEADER_TIME
+AC_CHECK_PROG(founddox, doxygen, true, false)
+AM_CONDITIONAL(DODOC, test x$founddox = xtrue)
+AC_CHECK_PROG(FOUNDDOT, dot, "YES", "NO")
 
 
 AC_OUTPUT(Makefile atat/Makefile physics/Makefile opt/Makefile lamarck/Makefile
@@ -353,5 +364,15 @@ if test $debug = true; then
 fi
 if test $nolaunch = true; then
   echo "Compiling with _NOLAUNCH.... Are you sure you know what you're doing? "
+fi
+echo ""
+if test $founddox = true; then
+  echo "Type \"make doc\" for doxygen documentation"
+  echo "The check out doc/html/index.html"
+else
+  echo "You will need to install doxygen to generate the documentation"
+fi
+if test $FOUNDDOT = NO; then
+  echo "Install dot for Documentation pretty graph with GraphView"
 fi
 echo ""; echo ""

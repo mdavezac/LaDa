@@ -262,7 +262,7 @@ namespace Pescan
      bool read_result();
      //! Loads functional directly from \a _node
      bool Load_( const TiXmlElement &_node );
-     //! \brief Sets scale of reciprocal in mesh as \f$\frac{2\pi/a}\f$, with \e a the
+     //! \brief Sets scale of reciprocal in mesh as \f$\frac{2\pi}{a}\f$, with \e a the
      //! lattice in constant in atomic units.
      void set_scale( const Ising_CE::Structure &_str )
        { escan.scale = _str.scale; }

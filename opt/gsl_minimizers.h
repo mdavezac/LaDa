@@ -20,80 +20,125 @@
 
 namespace Minimizer {
 
+  //! Creates an iterator which covers the gsl variables
   class gsl_iterator
   {
     public:
+      //! type of the iterator
       typedef double* iterator_category;
+      //! type of the value which the iterator references
       typedef double value_type;
+      //! type of the difference of two iterators
       typedef int difference_type;
+      //! type of the iterator
       typedef double* pointer;
+      //! type of the value which the iterator references
       typedef double reference;
 
     private:
+      //! The vector over which to iterate
       gsl_vector *x;
+      //! Position in the vector
       double* iterator;
 
     public:
+      //! Constructor and Initializer
       gsl_iterator( gsl_vector *_x ) : x(_x), iterator(x->data) {};
+      //! Constructor and Initializer
       gsl_iterator( const gsl_iterator &_x ) : x(_x.x), iterator(_x.iterator) {};
+      //! Moves iterator position forward by 1. (pre-incrementation)
       gsl_iterator& operator++()
        { iterator += x->stride; return *this; }
+      //! Moves iterator position forward by 1. (post-incrementation)
       gsl_iterator& operator++(int)
        { iterator += x->stride; return *this; }
-      gsl_iterator& operator+=(types::t_unsigned n)
-       { iterator += n*x->stride; return *this; }
+      //! Returns an iterator moved \a n positions forward.
       gsl_iterator operator+(types::t_unsigned n)
        { gsl_iterator it(x); it += n; return it;}
+      //! Moves iterator position backward by \a n. 
+      gsl_iterator& operator+=(types::t_unsigned n)
+       { iterator += n*x->stride; return *this; }
+      //! Returns an iterator moved \a n positions backward.
       gsl_iterator operator-(types::t_unsigned n)
        { gsl_iterator it(x); it -= n; return it;}
+      //! Moves iterator position backward by 1. (pre-decrementation)
       gsl_iterator& operator--()
        { iterator -= x->stride; return *this; }
+      //! Moves iterator position backward by \a n.
       gsl_iterator& operator-=(types::t_unsigned n)
        { iterator -= n*x->stride; return *this; }
+      //! Returns a reference to the value at the current position
       double& operator*() const
        { return *iterator; }
+      //! Returns true \a _x is at the same position
       bool operator==(const gsl_iterator &_x) const
        { return iterator == _x.iterator; }
+      //! Returns true \a _x is not at the same position
       bool operator!=(const gsl_iterator &_x) const
        { return iterator != _x.iterator; }
   };
+  //! Creates a constant iterator which covers the gsl variables
   class gsl_const_iterator
   {
     public:
+      //! type of the constant iterator
       typedef const double* iterator_category;
+      //! type of the constant value which the iterator references
       typedef const double value_type;
+      //! type of the difference of two iterators
       typedef int difference_type;
+      //! type of the constant iterator
       typedef const double* pointer;
+      //! type of the value which the iterator references
       typedef const double reference;
 
     private:
+      //! The constant vector over which to iterate
       const gsl_vector *x;
+      //! Position in the constant vector
       pointer iterator;
     public:
+      //! Constructor and Initializer
       gsl_const_iterator( const gsl_vector *_x ) : x(_x), iterator(x->data) {};
-      gsl_const_iterator( const gsl_const_iterator &_x ) : x(_x.x), iterator(_x.iterator) {};
+      //! Constructor and Initializer
+      gsl_const_iterator   ( const gsl_const_iterator &_x ) 
+                         : x(_x.x), iterator(_x.iterator) {};
+      //! Moves constant iterator position forward by 1. (pre-incrementation)
       gsl_const_iterator& operator++()
        { iterator += x->stride; return *this; }
+      //! Moves iterator position forward by 1. (post-incrementation)
       gsl_const_iterator& operator++(int)
        { iterator += x->stride; return *this; }
+      //! Moves constant iterator position forward by \a n.
       gsl_const_iterator& operator+=(types::t_unsigned n)
        { iterator += n*x->stride; return *this; }
+      //! Returns a constant iterator moved \a n positions forward.
       gsl_const_iterator operator+(types::t_unsigned n)
        { gsl_const_iterator it(x); it += n; return it;}
+      //! Returns a constant iterator moved \a n positions backward.
       gsl_const_iterator operator-(types::t_unsigned n)
        { gsl_const_iterator it(x); it -= n; return it;}
+      //! Moves constant iterator position backward by 1. (pre-decrementation)
       gsl_const_iterator& operator--()
        { iterator -= x->stride; return *this; }
+      //! Moves constant iterator position backward by 1. (post-decrementation)
+      gsl_const_iterator& operator--(int)
+       { iterator -= x->stride; return *this; }
+      //! Moves constant iterator position backward by \a n.
       gsl_const_iterator& operator-=(types::t_unsigned n)
        { iterator -= n*x->stride; return *this; }
+      //! Returns a reference to the constant value at the current position
       reference& operator*() const
        { return *iterator; }
+      //! Returns true \a _x is at the same position
       bool operator==(const gsl_const_iterator &_x)
        { return iterator == _x.iterator; }
+      //! Returns true \a _x is not at the same position
       bool operator!=(const gsl_const_iterator &_x)
        { return iterator != _x.iterator; }
   };
 
+  //! Interface for evaluating the functioanl
   template<typename T_FUNTIONAL>
   double gsl_func_f( const gsl_vector *_x, void *_params)
   {
@@ -105,6 +150,7 @@ namespace Minimizer {
 
     return ((T_FUNTIONAL*) _params)->evaluate();
   }
+  //! Interface for evaluating the derivatives of functional
   template<typename T_FUNTIONAL>
   void gsl_func_df( const gsl_vector *_x, void *_params, gsl_vector *_grad)
   {
@@ -115,6 +161,7 @@ namespace Minimizer {
       *i_var = *i_x;
     ((T_FUNTIONAL*) _params)->evaluate_gradient(_grad->data);
   }
+  //! Interface for evaluating the functional and its derivatives.
   template<typename T_FUNTIONAL>
   void gsl_func_fdf( const gsl_vector *_x, void *_params, double *_r, gsl_vector *_grad)
   {
@@ -127,6 +174,7 @@ namespace Minimizer {
     *_r = ((T_FUNTIONAL*) _params)->evaluate_with_gradient(_grad->data);
   }
     
+  //! \brief Minimizer interfaces for the Gnu Scientific Library
   template<typename T_FUNCTIONAL> 
   class GnuSL : public Base< T_FUNCTIONAL >
   {
@@ -160,17 +208,18 @@ namespace Minimizer {
 
     protected:
       using Base<t_Functional>::current_func;
-      types::t_real tolerance;
-      types::t_real linetolerance;
-      types::t_real linestep;
-      types::t_unsigned iter; // number of performed iterations
-      types::t_unsigned itermax; // maximum number of iterations
-      t_gsl_minimizer_type type; // maximum number of iterations
+      types::t_real tolerance; //!< Complete convergence
+      types::t_real linetolerance; //!< Line convergences
+      types::t_real linestep; //!< line step
+      types::t_unsigned iter; //!< number of performed iterations
+      types::t_unsigned itermax; //!< maximum number of iterations
+      t_gsl_minimizer_type type; //!< maximum number of iterations
     public:
-      bool do_print;
+      bool do_print; //!< Wether to print out during minimization
                                   
       
     public:
+      //! Constructor and Initializer
       GnuSL   ( t_gsl_minimizer_type _type, 
                 types::t_unsigned _itermax,
                 types::t_real _tol, 
@@ -180,10 +229,12 @@ namespace Minimizer {
               linestep(_linestep), iter(0), itermax(_itermax),
               type( _type ), do_print(false) {}
             
+      //! Constructor
       GnuSL () : tolerance(types::tolerance),
                  linetolerance(0.01),
                  linestep(0.1), iter(0),
                  itermax(500), do_print(false) {}
+      //! Constructor and Initializer
       explicit
         inline GnuSL   (t_Functional& _func)
                      : Base<t_Functional>( _func ),
@@ -191,6 +242,7 @@ namespace Minimizer {
                        linetolerance(0.01),
                        linestep(0.1), iter(0),
                        itermax(500), do_print(false) {}
+      //! Destructor
       virtual ~GnuSL(){};
 
       //! Non-XML way to set-up the minimizers.
@@ -209,7 +261,7 @@ namespace Minimizer {
       }
             
 
-
+      //! Minimization functor
       virtual bool operator()()
       {
         // initializes object related stuff
@@ -286,6 +338,9 @@ namespace Minimizer {
       }  // dummy minimizer
 
 
+      //! \brief Finds the node - if it is there - which describes this minimizer
+      //! \details Looks for a <Functional type="vff"> tag first as, then as a child,
+      //!          then as a sibling of \a _node
       const TiXmlElement* find_node( const TiXmlElement &_node )
       {
         const TiXmlElement *parent;
@@ -323,6 +378,8 @@ namespace Minimizer {
         
         return NULL;
       }
+      //! \brief Loads Minimizer directly from \a _node.
+      //! \details If \a _node is not the correct node, the results are undefined.
       bool Load_( const TiXmlElement &_node )
       {
         double d; int n;
@@ -337,6 +394,7 @@ namespace Minimizer {
       
         return true;
      }
+     //! Loads the minimizer from XML
      bool Load( const TiXmlElement &_node )
      {
        const TiXmlElement* parent = find_node( _node );
@@ -347,6 +405,10 @@ namespace Minimizer {
      }
 
 #ifdef _MPI
+     /** \ingroop MPI
+      *  \brief Serializes for MPI purposes.
+      *  \details Serializes GnuSL::itermax, GnuSL::tolerance,
+      *           GnuSL::linetolerance, and GnuSL::linestep */
      bool broadcast( mpi::BroadCast &_bc )
      {
         if ( not _bc.serialize( itermax ) ) return false;

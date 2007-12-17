@@ -33,6 +33,7 @@ namespace Pescan
     types::t_real gap() const { return cbm - vbm; }
   };
 
+  //! Computes the band-gap using the pescan interface
   class BandGap : public Interface
   {
     protected:
@@ -54,14 +55,21 @@ namespace Pescan
       t_computation computation;
       //! Wether to apply correction scheme when metallic band-gap is found
       bool do_correct;
+      //! Below this, a band-gap is assumed "metallic"
+      const types::t_real metallicity;
+      //! Amounts by which to increase/decrease references.
+      const types::t_real inc_dec;
 
     public:
       //! Constructor
-      BandGap() : bands(0,0), Eref(0,0), computation( CBM ), do_correct(true) {}
+      BandGap  () 
+             : bands(0,0), Eref(0,0), computation( CBM ), do_correct(true),
+               metallicity(0.001), inc_dec(0.05) {}
       //! Copy Constructor
       BandGap   ( const BandGap & _c ) 
               : Interface( _c ), bands( _c.bands ), Eref( _c.Eref ),
-                computation( CBM ), do_correct( _c.do_correct ) {} 
+                computation( CBM ), do_correct( _c.do_correct ),
+                metallicity(0.001), inc_dec(0.05) {} 
       //! Destructor
       ~BandGap() {};
 
@@ -74,12 +82,24 @@ namespace Pescan
       types::t_real operator()( const Ising_CE::Structure &_str ); 
 
     protected:
+      //! Folded spectrum computation
       types::t_real folded_spectrum();
+      //! All-electron spectrum computation
       types::t_real all_electron( const Ising_CE::Structure &_str );
+      //! Returns the closest eigenvalue to \a _ref
       types::t_real find_closest_eig( types::t_real _ref );
+      //! \brief Makes sure that a non-metallic bandgap has been obtained.
+      //! \details If a metallic band-gap is found, then the eigenvalue
+      //!          farthest from the fermi energy is moved away from it (its
+      //!          value is decreased or increased depending on which side of
+      //!          the fermi energy it is ) by BandGap::move_gap. After this, a
+      //!          folded_spectrum is launched again, which itself will call
+      //!          BandGap::correct. Once a true band-gap has been found, all
+      //!          escan parameters are reset (including references).
       void correct( const std::string &_dir );
   };
 
+  //! \cond
   inline types::t_real BandGap :: operator()( const Ising_CE::Structure &_str )
   {
     set_scale( _str );
@@ -101,6 +121,7 @@ namespace Pescan
       }
     return *i_eig_result;
   }
+  //! \endcond
 
 } // namespace Pescan
 

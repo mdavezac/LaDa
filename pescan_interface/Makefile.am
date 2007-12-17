@@ -1,3 +1,4 @@
+include ../Files
 AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ @MPICH_CFLAGS@
 AM_LDFLAGS = @TINYXML_LIBS@ 
 if NOLAUNCH
@@ -22,8 +23,8 @@ endif
 endif
 
 if DOEMASS
- emassSOURCE = emass.cc
- emassHEADER = emass.h
+ emassSOURCE = $(EMASS_CC)
+ emassHEADER = $(EMASS_H)
  emassLDADD = ../lapack/liblapack.la
  binEMASS = emass
 else 
@@ -37,15 +38,20 @@ bin_PROGRAMS = escan checkresults $(binEMASS)
 
 noinst_LTLIBRARIES = libpescan.la
 libpescan_ladir = $(includedir)/pescan_interface 
-libpescan_la_SOURCES = interface.cc bandgap.cc va.cc $(emassSOURCE)
-nobase_libpescan_la_HEADERS = interface.h bandgap.h va.h $(emassHEADER)
+libpescan_la_SOURCES = $(PESCAN_CC) $(emassSOURCE)
+nobase_libpescan_la_HEADERS = $(PESCAN_H) $(emassHEADER)
 libpescan_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
 
 escan_SOURCES = main.cc
 escan_CPPFLAGS = $(AM_CPPFLAGS)  -I .. $(gsl_CPPFLAGS)
 escan_LDFLAGS =  $(AM_LDFLAGS) @MPICH_LIBS@ $(gslLDFLAGS) $(fortranLDFLAGS)
-escan_LDADD = libpescan.la ../lamarck/liblamarck.la ../atat/libatat.la ../vff/libvff.la\
-              ../physics/libphysics.la ../print/libprint.la @MPI_ADDLIB@ \
+escan_LDADD = libpescan.la \
+	      ../lamarck/liblamarck.la \
+	      ../atat/libatat.la \
+	      ../vff/libvff.la \
+              ../physics/libphysics.la \
+	      ../print/libprint.la \
+	      @MPI_ADDLIB@ \
 	      $(fortranLDADD)
 
 checkresults_SOURCES = $(escan_SOURCES)

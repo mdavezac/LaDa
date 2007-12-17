@@ -16,7 +16,7 @@ namespace Lapack
 {
   //! \brief Eigenvalues and Eigenvectors of symmetric 3d matrices
   //! \param[in] _mat matrix for which to find eigenvalues
-  //! \param[out] _vects Eigenvectors
+  //! \param[out] _vecs Eigenvectors
   //! \param[out] _vals Eigenvalues
   bool eigen( const atat::rMatrix3d &_mat, atat::rMatrix3d &_vecs, types::t_real _vals[3] );
 

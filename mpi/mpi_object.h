@@ -601,6 +601,7 @@ extern const types::t_int ROOT_NODE;
   }
 #else
 
+  //! \cond
   class Base
   {
      public:
@@ -681,6 +682,7 @@ extern const types::t_int ROOT_NODE;
   inline typename T_CONTAINER::iterator end( T_CONTAINER &_cont )
     { return _cont.end(); }
 
+  //! \endcond
 #endif
 
 

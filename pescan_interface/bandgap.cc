@@ -38,7 +38,7 @@ namespace Pescan
     bands.vbm = find_closest_eig( Eref.cbm );
     destroy_directory_();
 
-    if( do_correct and bands.gap() < 0.001 ) correct( olddirname );
+    if( do_correct and bands.gap() < metallicity ) correct( olddirname );
 
     destroy_directory_();
     dirname = olddirname;
@@ -64,13 +64,13 @@ namespace Pescan
 
       if( std::abs( bands.vbm - Eref.vbm ) > std::abs( bands.cbm - Eref.cbm ) )
       {
-        Eref.vbm -= 0.05;
+        Eref.vbm -= inc_dec;
         computation = VBM;
         escan.Eref = Eref.vbm;
       }
       else
       {
-        Eref.cbm += 0.05;
+        Eref.cbm += inc_dec;
         computation = CBM;
         escan.Eref = Eref.cbm;
       }
@@ -80,7 +80,7 @@ namespace Pescan
       read_result();
       computation == VBM ?  bands.vbm = find_closest_eig( Eref.vbm ):
                             bands.cbm = find_closest_eig( Eref.cbm );
-    } while ( bands.gap() < 0.001 );
+    } while ( bands.gap() < metallicity );
 
     escan = saved_state;
     Eref  = keeprefs;

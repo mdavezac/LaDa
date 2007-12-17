@@ -4,4 +4,4 @@ aclocal
 libtoolize --force
 autoconf
 autoheader
-automake -a
+automake-1.7 -a

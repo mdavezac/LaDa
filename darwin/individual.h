@@ -384,18 +384,6 @@ namespace Individual
 /**
  * @} */
 
-#ifdef _MPI
-//! \cond
-namespace mpi
-{
-  template< class T_INDIVTRAITS, template Individual::Base >
-     bool BroadCast::Serialize< T_INDIVTRAITS, Individual::Base >
-                                       (  Individual::Base< T_INDIVTRAITS > &_indiv)
-       { return _indiv->broadcast( *this ); }
-}
-//! \endcond
-#endif
-
 #include "individual.impl.h"
 
 #endif // _INDIVIDUAL_H_

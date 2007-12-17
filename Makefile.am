@@ -1,6 +1,8 @@
 AUTOMAKE_OPTIONS = foreign
 EXTRA_DIST = max_revision.pl bootstrap.sh \
-	     scripts/* doxy.conf docsource/*
+	     scripts/* doxy.conf docsource/* \
+	     Files
+include Files
 if DOBANDGAPOPT 
   DARWINSUBDIR = darwin
   PESCANSUBDIR = pescan_interface
@@ -41,4 +43,13 @@ revision.h: force
 	@scripts/max_revision.pl
 force: 
 all: revision.h
-
+if DODOC
+doc: $(ALL_DOCS)
+	@cat doxy.conf | \
+	 echo "HAVE_DOT = @FOUNDDOT@/" | \
+     	 echo "INPUT = $(ALL_DOCS)" | doxygen -
+clean-local:
+	-rm -rf doc
+install-data-local: doc
+	$(INSTALL_DATA) -d $(srcdir)/doc $(docdir)
+endif

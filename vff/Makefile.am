@@ -1,11 +1,12 @@
+include ../Files
 AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ @MPICH_CFLAGS@
 AM_LDFLAGS = @TINYXML_LIBS@
 if DOFORTRAN 
   fortranLDADD   = ../opt/libopt.la 
   fortranLDFLAGS = @FCLIBS@
   fortranBIN     = fortran_test
-  fortranSOURCE = fortran.cc
-  fortranHEADER = fortran.h
+  fortranSOURCE = $(VFF_FORTRAN_CC)
+  fortranHEADER = $(VFF_FORTRAN_H)
   gslCPPFLAGS =
   gslLDFLAGS  =
 else 
@@ -22,16 +23,20 @@ bin_PROGRAMS = vff layered_vff
 noinst_PROGRAMS = $(fortranBIN)
 
 noinst_LTLIBRARIES = libvff.la
-libvff_la_SOURCES = functional.cc layered.cc pescan_perturbation.cc $(fortranSOURCE)
+libvff_la_SOURCES = $(VFF_CC) $(fortranSOURCE)
 libvff_ladir = $(includedir)/vff
-nobase_libvff_la_HEADERS = functional.h layered.h pescan_perturbation.h $(fortranHEADER)
+nobase_libvff_la_HEADERS = $(VFF_H) $(fortranHEADER)
 libvff_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
 
 vff_SOURCES = main.cc 
 vff_CPPFLAGS =  $(AM_CPPFLAGS) -I .. $(gslCPPFLAGS)
 vff_LDFLAGS =  $(AM_LDFLAGS) @MPICH_LIBS@ $(gslLDFLAGS) $(fortranLDFLAGS)
-vff_LDADD = ../lamarck/liblamarck.la ../atat/libatat.la libvff.la \
-            ../physics/libphysics.la $(fortran_LDADD) @MPI_ADDLIB@ 
+vff_LDADD = ../lamarck/liblamarck.la \
+	    ../atat/libatat.la \
+	    libvff.la \
+            ../physics/libphysics.la \
+	    $(fortran_LDADD) \
+	    @MPI_ADDLIB@ 
 layered_vff_SOURCES = $(vff_SOURCES)
 layered_vff_CPPFLAGS =  $(vff_CPPFLAGS) -D _LAYERED
 layered_vff_LDFLAGS =  $(vff_LDFLAGS)

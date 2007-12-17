@@ -195,11 +195,13 @@
 
     \section TagSpinOrbit \<SpinOrbit/\>
     Yet again, see nanopse input for details... The file named here must exist!
-    \param filename full path to whatever. On unices, "~" will
+    \param filename full path to whatever. On unices, "~/" will
                    be replaced with the path to your home
     \param izz ?? see nanopse input
     \param pnl ?? see nanopse input
 
     <h1> Cluster Expansion Input </h1> \anchor secce
+  
+     
 */
 
