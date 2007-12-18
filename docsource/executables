@@ -108,6 +108,7 @@
           <Functional type="Concentration" a="??" b="??" c="??" />
         </Job>
      \endcode
+     \see test/bandgap_opt/input.xml
    
     \section layeredoptexe layered_opt
      Optimizes in-plane stress as computed from vff and band-gaps as computed
@@ -138,6 +139,7 @@
          </Functional>
        </Job>
     \endcode
+     \see test/layered_opt/input.xml
     The direction is a string of three numbers (mind the spaces. They are
     necessary) defining the epitaxial direction. The multiplicity defines the
     number of (epitaxial) unit-cells to use in the epitaxial direction, eg the number of layers. 

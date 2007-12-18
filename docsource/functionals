@@ -110,6 +110,7 @@
        It looks something like this:
        \code
      <Functional type="escan" method="1">
+        <Maskr filename = "maskr" />
         <GenPot x="48" y="48" z="96" cutoff="5.0" launch="~/usr/bin/getVLarg">
             <Pseudo filename="~/GAkspace/pseudos/vq.atom1" />
             <Pseudo filename="~/GAkspace/pseudos/vq.atom2" />
@@ -139,6 +140,7 @@
      The following tags have been introduced:
      \secreflist
        \refitem Tagescanfunc \<Functional, type="escan"\>
+       \refitem TagMaskr \<Maskr/\>
        \refitem TagGenPot \<GenPot\>
        \refitem TagPseudo \<Pseudo/\>
        \refitem TagPseudo \<Reference/\>
@@ -147,6 +149,7 @@
      \endsecreflist
 
      \section Tagescanfunc \<Functional type="escan"\>
+     \addindex  \<Functional type="escan"\>
      Including the specified type, this tag is where all the escan interface data should be
      found. It can contain two attributes,
      \param type type must be equal to \a "escan" here
@@ -156,7 +159,15 @@
           .
 
       
+     \section TagMaskr \<Maskr\>
+     \addindex  \<Maskr\>
+        \param filename Filename of the maskr file pescan requires, whatever
+                        that file may be.
+
+
+
      \section TagGenPot \<GenPot\>
+     \addindex  \<Genpot\>
      Commands so called <TT> getVlarg </TT> nanopse program which generates the
      potential for escan. As such it requires a large number of attributes
      (controlling over all aspects of the potential) as well as some internal \ref TagPseudo

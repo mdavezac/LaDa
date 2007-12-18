@@ -27,6 +27,7 @@
      <LI> \ref TagKrossover
      <LI> \ref TagLattice
      <LI> \ref TagLayer
+     <LI> \ref TagMaskr
      <LI> \ref TagMinimizer
      <LI> \ref TagMinimizerVA
      <LI> \ref TagMutation

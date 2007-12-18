@@ -200,6 +200,8 @@ namespace Pescan
       Escan escan;
       //! Directory where to perform computations.
       std::string dirname;
+      //! Name of the maskr file
+      std::string maskr;
       //! Whether to delete directory where computations are being performed.
       bool do_destroy_dir;
      
@@ -210,11 +212,11 @@ namespace Pescan
     public:
       //! Constructor
       Interface () : atom_input("atom.config"), genpot(), escan(),
-                     dirname("escan"), do_destroy_dir(true) {}
+                     maskr("maskr"), dirname("escan"), do_destroy_dir(true) {}
       //! Copy Constructor
       Interface   ( const Interface &_c )
                 : atom_input( _c.atom_input ), genpot( _c.genpot ),
-                  escan( _c.escan ), 
+                  escan( _c.escan ), maskr( _c.maskr ),
                   dirname( _c.dirname ), do_destroy_dir( _c.do_destroy_dir ),
                   eigenvalues( _c.eigenvalues ) {}
       //! Destructor

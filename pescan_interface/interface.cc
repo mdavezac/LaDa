@@ -59,7 +59,7 @@ namespace Pescan
     std::ostringstream sstr;
     write_escan_input();
 
-    sstr << "cp maskr "; 
+    sstr << "cp " << maskr << " "; 
 #ifndef _NOLAUNCH
     sstr << escan.launch << " ";
 #endif
@@ -126,6 +126,10 @@ namespace Pescan
     do_destroy_dir = true;
     if( _node.Attribute("keepdirs") ) do_destroy_dir = false;
 
+    child = _node.FirstChildElement("Maskr");
+    if( child and child->Attribute("filename") )
+      maskr = Print::reformat_home(child->Attribute("filename"));
+
     child = _node.FirstChildElement("GenPot");
     if (    (not child)
          or (not child->Attribute("x")) 
@@ -146,7 +150,7 @@ namespace Pescan
     child = child->FirstChildElement("Pseudo");
     for(; child; child = child->NextSiblingElement() )
       if ( child->Attribute("filename") )
-        genpot.pseudos.push_back( child->Attribute("filename") );
+        genpot.pseudos.push_back( Print::reformat_home(child->Attribute("filename")) );
     if( not genpot.check() )
     {
       std::cerr << "Insufficient or Incorrect Genpot input!! " << std::endl;
@@ -200,7 +204,7 @@ namespace Pescan
       if ( child->Attribute("filename") and child->Attribute("izz") )
       {
         SpinOrbit so;
-        so.filename = child->Attribute("filename");
+        so.filename = Print::reformat_home(child->Attribute("filename"));
         so.izz = child->Attribute("izz");
         if( child->Attribute("s") )
           child->Attribute("s", &so.s);

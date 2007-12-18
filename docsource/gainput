@@ -631,6 +631,7 @@
          \section TagFilenames \<Filenames/\> (within \<GA\> ... \</GA\>)
            Defines different files from which to read input, and to which to
            save output. You can have as many tags as you want. All will be read.
+              \param stop      (Optional) GA stops if this file exists
               \param evaluator (Optional) Place to read functional info from.
                                default = same as GA input.
               \param restart   (Optional) Place to restart info from
