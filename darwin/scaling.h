@@ -29,7 +29,7 @@
 //!       know where the results of a scaling operation is stored (in the
 //!       vectorial or scalar fitness?) and which it uses to do the scaling.
 //!       These technicalities are duly noted for each scaling functor.
-//! \xmlinput See description of \ref TagScalign for scaling specifics and \ref
+//! \xmlinput See description of \ref TagScaling for scaling specifics and \ref
 //!           secstrategy for more on objectives and strategies.
 namespace Scaling
 {

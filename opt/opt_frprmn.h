@@ -62,7 +62,8 @@ namespace Minimizer {
       minimizer.minimize() 
    *  \endcode
    *  remember to repeat FROM step 2 when changing from one vff_object to
-   *  another  */
+   *  another  
+   * \xmlinput see TagMinimizer */
   template<typename T_FUNCTIONAL>
   class Frpr : public Base< T_FUNCTIONAL >
   {

@@ -52,6 +52,6 @@ doc: $(ALL_DOCS)
 	@rm doxy.tmp
 clean-local:
 	-rm -rf doc
-install-data-local: doc
-	$(INSTALL_DATA) -d $(srcdir)/doc $(docdir)
+########install-data-local: doc
+########	$(INSTALL_DATA) -d $(srcdir)/doc $(docdir)
 endif

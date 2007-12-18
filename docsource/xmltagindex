@@ -28,6 +28,7 @@
      <LI> \ref TagLattice
      <LI> \ref TagLayer
      <LI> \ref TagMinimizer
+     <LI> \ref TagMinimizerVA
      <LI> \ref TagMutation
      <LI> \ref TagObjective
      <LI> \ref TagOffspring

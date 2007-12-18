@@ -15,7 +15,7 @@
      <LI> \ref TagKrossover
      <LI> \ref TagLattice
      <LI> \ref TagLayer
-     <LI> \ref TagMinimizer
+     <LI> \ref TagMinimizerVA
      <LI> \ref TagMutation
      <LI> \ref TagObjective
      <LI> \ref TagOffspring
@@ -144,7 +144,7 @@
     In \b single-objective GA, let \f$S^(0), \ldots, S^{(i)}\f$ are the
        \e i scalings read from input (and in the order of the input), and \f$O\f$
         is the objective function, \f$x\f$ is the value of the functional (band-gap,
-        formation enthalpy,\dots). Then the GA fitness \f$\mathcal{F}\f$ will be 
+        formation enthalpy,...). Then the GA fitness \f$\mathcal{F}\f$ will be 
        \f[ 
           \mathcal{F} = S^{(i)}\circ S^{(i-1)}\circ\ldots\circ S^{(0)}\circ O(x)
        \f]
@@ -426,7 +426,7 @@
          \param prob (For the \ref TagOperators within which this tag is found)
                       weight with respect to other breeding operators in \ref TagOperators.
 
-    \subsection TagMinimizer \<Minimizer/\> 
+    \subsection TagMinimizerVA \<Minimizer/\> (for Virtual Atom)
     \addindex \<Minimizer/\>
       \code
          <Minimizer type="VA"/>
@@ -451,6 +451,9 @@
       \note Virtual Atom minimizers act in conjunction with the \ref
       TagTaboos tags. In other words, the VA minimizers will not consider exploring
       taboo individuals. 
+      \note Other more standard minimizers (for functionals) are described in
+            \ref secminimizer. These minimizers are not interchangeable.
+
           
     Finally, we move on to the operators wich combine other operators together.
     \subsection TagOperators \<Operators\> ... \</Operators\>
@@ -493,7 +496,7 @@
          \param prob (For the \ref TagOperators within which this tag is found)
                       weight with respect to other breeding operators in \ref
                       TagOperators. 
-         \note It is best to put \ref TagMinimizer \e outside the \ref
+         \note It is best to put \ref TagMinimizerVA \e outside the \ref
                TagTabooOp tags since the latter already work in conjunction
                with the \ref TagTaboos tags.
 
@@ -577,7 +580,7 @@
              </Taboos>
            \endcode
            Contains all tags defining the individuals which \e \b cannot be
-           created when applying \ref TagTabooOp and \ref TagMinimizer. 
+           created when applying \ref TagTabooOp and \ref TagMinimizerVA. 
            There are three "general" tags which work for all executables, and
            some tags which only work in some implementations.
            

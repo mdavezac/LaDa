@@ -225,6 +225,37 @@
 
     <h1> Cluster Expansion Input </h1> \anchor secce
   
-     
+
+    <h1> Minimizers </h1> \anchor secminimizers
+    A number of minimizers are available, depending upon how the code is
+    compiled. Generally, the Gnu Scientific Library minimizers should be
+    available. Furthemore, if the code is compiled with the option
+    "--enable-fortran", then the minimizer "from nanopse" is also available,
+    whatever it may be.
+
+    \section TagMinimizer \<Minimizer/\>
+    \addindex \<Minimizer/\>
+     Which minimizer to use is defined by the \a type attribute. Most all other
+     parameters have default values.  For details on the algorithms, see the
+     Gnu Scientific Library (GSL), or nanopse. In the following (GSL) indicates
+     that this is a GSL only option, (nanopse) that it is a nanopse (eg with
+     --enable-fortran) option only, and (all) that this option exists for all
+     minimizers.
+         \param type Can be one of the following
+              - gsl_fr (GSL) Fletcher-Reeves conjugate gradient 
+              - gsl_pr (GSL) Polak-Ribiere conjugate gradient 
+              - gsl_bfgs (GSL) vector Broyden-Fletcher-Goldfarb-Shanno algorithm
+              - gsl_bfgs2 (GSL) vector Broyden-Fletcher-Goldfarb-Shanno algorithm.
+                Second implementation, recommended by GSL manual...
+              - gsl_sd (GSL) Steepest descent
+              - frprmn (nanopse) God only knows... 
+              .
+          \param itermax  (all) Maximum number of iterations before bailing out
+          \param tolerance (all) Tolerance below wich convergence is achieved.
+          \param linetolerance (all) I don't exactly know, though one can
+                               puzzle out the sense of it, at least for
+                               conjugate gradients...
+          \param linestep (GSL) same as above.
+          \param zeps (nanopse) no clue.
 */
 

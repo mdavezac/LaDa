@@ -175,6 +175,16 @@ namespace Minimizer {
   }
     
   //! \brief Minimizer interfaces for the Gnu Scientific Library
+  //! \details Interface to the following algorithms:
+  //!         - Fletcher-Reeves conjugate gradient
+  //!         - Polak-Ribiere conjugate gradient 
+  //!         - vector Broyden-Fletcher-Goldfarb-Shanno algorithm
+  //!         - vector Broyden-Fletcher-Goldfarb-Shanno algorithm.
+  //!           Second implementation, recommended by GSL manual...
+  //!         - Steepest descent
+  //!         .
+  //! \todo What about the simplex method...
+  //! \xmlinput see TagMinimizer
   template<typename T_FUNCTIONAL> 
   class GnuSL : public Base< T_FUNCTIONAL >
   {
@@ -339,8 +349,9 @@ namespace Minimizer {
 
 
       //! \brief Finds the node - if it is there - which describes this minimizer
-      //! \details Looks for a <Functional type="vff"> tag first as, then as a child,
-      //!          then as a sibling of \a _node
+      //! \details Looks for a \<Minimizer\> tag first as \a _node, then as a
+      //!          child of \a _node. Different minimizer, defined by the
+      //!          attribute types are allowed:
       const TiXmlElement* find_node( const TiXmlElement &_node )
       {
         const TiXmlElement *parent;
@@ -405,7 +416,7 @@ namespace Minimizer {
      }
 
 #ifdef _MPI
-     /** \ingroop MPI
+     /** \ingroup MPI
       *  \brief Serializes for MPI purposes.
       *  \details Serializes GnuSL::itermax, GnuSL::tolerance,
       *           GnuSL::linetolerance, and GnuSL::linestep */

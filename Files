@@ -15,34 +15,40 @@ DARWIN_LIB_H = $(addsuffix .h, $(basename $(DARWIN_LIB_CC))) \
 	       checkpoints.h evaluator.h individual.h objective.h \
 	       taboos.h gatraits.h  bitstring.h fitness.h gaoperators.h \
 	       scaling.h minimizergenop.h 
-
 DARWIN_LIB_IMPLS = darwin.impl.h  evaluation.impl.h individual.impl.h \
 	           scaling.impl.h store.impl.h  fitness.impl.h taboos.impl.h \
                    objective.impl.h bitstring.impl.h gaoperators.impl.h \
                    checkpoints.impl.h minimizergenop.impl.h
+DARWIN_LIB_DOC = $(DARWIN_LIB_H) $(DARWIN_LIB_IMPLS) $(DARWIN_LIB_CC) 
 
 DARWIN_CE_CC = ce.cc single_site.cc groundstate.cc
 DARWIN_CE_H  = ce.h  single_site.h  groundstate.h
 DARWIN_CE_IMPLS = single_site.impl.h 
+DARWIN_CE_DOC = $(DARWIN_CE_H) $(DARWIN_CE_IMPLS) $(DARWIN_CE_CC) 
 
 DARWIN_BG_CC = bandgap_stubs.cc two_sites.cc single_site.cc vff.cc bandgap.cc 
 DARWIN_BG_H  = bandgap_stubs.h  two_sites.h  single_site.h  vff.h  bandgap.h 
 DARWIN_BG_IMPLS = bandgap_stubs.impl.h  two_sites.impl.h  single_site.impl.h  
+DARWIN_BG_DOC = $(DARWIN_BG_H) $(DARWIN_BG_IMPLS) $(DARWIN_BG_CC) 
 
 DARWIN_L_CC = bandgap_stubs.cc two_sites.cc single_site.cc vff.cc molecularity.cc layered.cc
 DARWIN_L_H  = bandgap_stubs.h   two_sites.h single_site.h  vff.h  molecularity.h  layered.h 
 DARWIN_L_IMPLS = bandgap_stubs.impl.h two_sites.impl.h single_site.impl.h molecularity.impl.h \
                  layered.impl.h 
+DARWIN_L_DOC = $(DARWIN_L_H) $(DARWIN_L_IMPLS) $(DARWIN_L_CC) 
 
 DARWIN_E_CC = emass_stubs.cc two_sites.cc single_site.cc vff.cc emass.cc layered.cc
 DARWIN_E_H  = emass_stubs.h  two_sites.h  single_site.h  vff.h  emass.h  layered.h 
 DARWIN_E_IMPLS = emass_stubs.impl.h  two_sites.impl.h  single_site.impl.h \
                  emass.impl.h  layered.impl.h 
+DARWIN_E_DOC = $(DARWIN_E_H) $(DARWIN_E_IMPLS) $(DARWIN_E_CC) 
 
 CRYSTAL_CC = lattice.cc structure.cc 
 CRYSTAL_H  = lattice.h  structure.h  atom.h 
+CRYSTAL_DOC = $(CRYSTAL_H) $(CRYSTAL_CC) 
 CE_CC = cluster.cc constituent_strain.cc functional_builder.cc harmonic.cc  polynome.cc 
 CE_H  = cluster.h  constituent_strain.h  functional_builder.h  harmonic.h   polynome.h  
+CE_DOC = $(CE_H) $(CE_CC) 
 
 LAPACK_F90 = dlae2.f   dlanst.f  dlapy2.f  dlarf.f   dlarft.f  dlascl.f \
 	     dlasr.f   dlassq.f  dorg2l.f  dorgql.f  dorgtr.f  dsterf.f \
@@ -54,51 +60,60 @@ LAPACK_F90 = dlae2.f   dlanst.f  dlapy2.f  dlarf.f   dlarft.f  dlascl.f \
 	     dgemv.f   dtrmv.f   dtrmm.f   dger.f   
 LAPACK_CC = lapack.cc 
 LAPACK_H  = lapack.h
+LAPACK_DOC = $(LAPACK_H) $(LAPACK_CC) 
 
 MPI_CC = mpi_object.cc
 MPI_H  = mpi_object.h
+MPI_DOC = $(MPI_H) $(MPI_CC) 
 
 OPT_H = ndim_iterator.h opt_minimize_base.h opt_polynome.h compose_functors.h \
         opt_frprmn.h  gsl_minimizers.h types.h convex_hull.h function_base.h \
 	va_minimizer.h fitness_function.h  opt_functors.h opt_monome.h traits.h
 OPT_F90 = dbrent.F90  df1dim.F90  frprmn.F90  linmin.F90
+OPT_DOC = $(OPT_H) $(OPT_CC) 
 
 EMASS_CC = emass.cc
 EMASS_H  = emass.h
+EMASS_DOC = $(EMASS_H) $(EMASS_CC) 
 PESCAN_CC = interface.cc bandgap.cc va.cc 
 PESCAN_H  = interface.h  bandgap.h  va.h 
+PESCAN_DOC = $(PESCAN_H) $(PESCAN_CC) 
 
 PHYSICS_CC = physics.cc
 PHYSICS_H  = physics.h
+PHYSICS_DOC = $(PHYSICS_H) $(PHYSICS_CC) 
 
 PRINT_CC = manip.cc xmg.cc stdout.cc base.cc 
 PRINT_H  = manip.h  xmg.h  stdout.h  base.h  operations.h 
+PRINT_DOC = $(PRINT_H) $(PRINT_CC) 
 
 VFF_FORTRAN_CC = fortran.cc
 VFF_FORTRAN_H  = fortran.h
+VFF_FORTRAN_DOC = $(VFF_FORTRAN_H) $(VFF_FORTRAN_CC) 
 VFF_CC = functional.cc layered.cc pescan_perturbation.cc 
 VFF_H  = functional.h  layered.h  pescan_perturbation.h  va.h
 VFF_IMPLS = va.impl.h
+VFF_DOC = $(VFF_H) $(VFF_IMPLS) $(VFF_CC) 
 
 DOCS_H = revision.h
 DOCS =  beginners  crystal  fortran  functionals  ga  \
-        input  mainpage  mpi  xmltagindex gainput
-ALL_DOCS = $(DOCS_H) \
+        input  mainpage  mpi  xmltagindex gainput executables
+ALL_DOCS = doxy.conf $(DOCS_H) \
            $(addprefix docsource/, $(DOCS)) \
-           $(addprefix darwin/, $(DARWIN_LIB_H)) \
-           $(addprefix darwin/, $(DARWIN_CE_H)) \
-           $(addprefix darwin/, $(DARWIN_BG_H)) \
-           $(addprefix darwin/, $(DARWIN_L_H)) \
-           $(addprefix darwin/, $(DARWIN_E_H)) \
-           $(addprefix lamarck/,$(CRYSTAL_H)) \
-           $(addprefix lamarck/,$(CE_H)) \
-           $(addprefix lapack/,$(LAPACK_H)) \
-           $(addprefix mpi/,$(MPI_H)) \
-           $(addprefix opt/,$(OPT_H)) \
-           $(addprefix pescan_interface/,$(EMASS_H)) \
-           $(addprefix pescan_interface/,$(PESCAN_H)) \
-           $(addprefix physics/,$(PHYSICS_H)) \
-           $(addprefix print/,$(PRINT_H)) \
-           $(addprefix vff/,$(VFF_FORTRAN_H)) \
-           $(addprefix vff/,$(VFF_H))
+           $(addprefix darwin/, $(DARWIN_LIB_DOC)) \
+           $(addprefix darwin/, $(DARWIN_CE_DOC)) \
+           $(addprefix darwin/, $(DARWIN_BG_DOC)) \
+           $(addprefix darwin/, $(DARWIN_L_DOC)) \
+           $(addprefix darwin/, $(DARWIN_E_DOC)) \
+           $(addprefix lamarck/,$(CRYSTAL_DOC)) \
+           $(addprefix lamarck/,$(CE_DOC)) \
+           $(addprefix lapack/,$(LAPACK_DOC)) \
+           $(addprefix mpi/,$(MPI_DOC)) \
+           $(addprefix opt/,$(OPT_DOC)) \
+           $(addprefix pescan_interface/,$(EMASS_DOC)) \
+           $(addprefix pescan_interface/,$(PESCAN_DOC)) \
+           $(addprefix physics/,$(PHYSICS_DOC)) \
+           $(addprefix print/,$(PRINT_DOC)) \
+           $(addprefix vff/,$(VFF_FORTRAN_DOC)) \
+           $(addprefix vff/,$(VFF_DOC))
 
