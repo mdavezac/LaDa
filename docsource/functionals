@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 /** \page xFunctionals  Functional input
     In LaDa the input to all functionals is to be found between 
     \xe<Functional\ex \xa type\ax="whatever" \xe\>\ex ... \xe\</Functional\>\ex tags, where
@@ -8,6 +11,7 @@
            <ul> 
              <li> \ref secvff  "Valence Force Field Functional" 
              <li> \ref secescan "Empirical Pseudopotential Functional"
+             <li> \ref secconc "Quaternary concentration functionals"
              <li> \ref secce "Cluster Expansion Functional"
            </ul>
 
@@ -199,6 +203,25 @@
                    be replaced with the path to your home
     \param izz ?? see nanopse input
     \param pnl ?? see nanopse input
+
+    <h1> Quaternary concentration functional </h1> \anchor secconc
+     In some \f$A_xB_{1-x}C_yD_{1-y}\f$ quaternary strained to fit a lattice
+     constant, there is a parabolic equation \f$x(y) = a y^2 + b  y +c\f$ and
+     minimizes the load. For details, see <A HREF="http://dx.doi.org/10.1063/1.2010621"> Rita
+     Magri, Alex Zunger, H Kroemer, J. App. Phys. <STRONG>98</STRONG>, 43701 (2005)</A> and X_vs_y.
+     In any case, we have the tag \ref TagConcentration.
+     \e x is the concentration of first lattice site listed in \ref TagLattice.
+     \e y is the concentration of second lattice site listed in \ref TagLattice.
+     \section TagConcentration \<Functional type="Concentration" /\>
+         \param a (Optional if both \a x0 and \a y0 are given) Specifies the
+                quadratice term in the functional.
+         \param b (Optional if both \a x0 and \a y0 are given) Specifies the
+                first order term in the functional.
+         \param c (Optional if both \a x0 and \a y0 are given) Specifies the
+                constant term in the functional.
+         \param x0 (Optional) specifies a fixed \e x concentration for optimizations.
+         \param y0 (Optional) specifies a fixed \e y concentration for optimizations.
+
 
     <h1> Cluster Expansion Input </h1> \anchor secce
   

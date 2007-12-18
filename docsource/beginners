@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 /** \page beginners XML input for beginners
     XML consists of a set of single line tags of the form \xe \<TAG \ex \xa attribute\ax="something" \xe/\>\ex,
     where \xe TAG \ex is a name such as Atom which will define the full XML

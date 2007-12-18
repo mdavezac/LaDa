@@ -18,7 +18,8 @@
 
 bool evaluate( const TiXmlElement &_node,
                Ising_CE::Structure &_structure,
-               t_Pescan &_pescan, t_Vff &_vff )
+               t_Pescan &_pescan, t_Vff &_vff,
+               bool _doeval )
 {
   if( not _structure.Load(_node) ) return false;
   std::cout << "Successfuly read structure input from file " << std::endl;
@@ -34,11 +35,11 @@ bool evaluate( const TiXmlElement &_node,
 #ifndef _EMASS
    Pescan::BandGap& bandgap = (Pescan::BandGap&) _pescan;
    bandgap.set_method( Pescan::Interface::ALL_ELECTRON );
-  _structure.energy = _pescan.evaluate();
+   if( _doeval ) _structure.energy = _pescan.evaluate();
 #else
   _vff.evaluate();
   _vff.print_escan_input();
-  _pescan( _structure );
+   if( _doeval ) _structure.energy = _pescan( _structure );
 #endif
 
   Ising_CE::Fourier( _structure.atoms.begin(), _structure.atoms.end(),
@@ -51,9 +52,9 @@ bool evaluate( const TiXmlElement &_node,
 int main(int argc, char *argv[]) 
 {
   std::string filename("input.xml");
-#ifdef _CHECK_RESULTS
   std::string checkfilename("");
-#endif
+  bool do_check_results = false;
+  bool do_evaluate = true;
   if( argc > 1 )
   {
     std::ostringstream sstr;
@@ -67,30 +68,26 @@ int main(int argc, char *argv[])
       if( is_op.empty() ) continue;
       else if(     istr.good()
                and (is_op == "-i" or is_op == "--input") ) istr >> filename;
-#ifndef _CHECK_RESULTS
-      else if( is_op == "-h" or is_op == "--help" )
-        std::cout << "Command-line options:\n\t -h, --help this message"
-                  << "\n\t -i, --input XML input file (default: input.xml)\n\n";
-#else
       else if (     istr.good()
-                and (is_op == "-s" or is_op == "--save") ) istr >> checkfilename;
+                and (is_op == "-s" or is_op == "--save") ) 
+        { do_check_results = true; istr >> checkfilename; }
+      else if (is_op == "-d" or is_op == "--donteval") do_evaluate = false;
       else if( is_op == "-h" or is_op == "--help" )
         std::cout << "Command-line options:\n\t -h, --help this message"
                   << "\n\t -i, --input XML input file\n\n"
                   << "\n\t -s, --save XML file where GA results where saved"
-                  << " (default: read from GA output tags )\n\n";
-#endif
-
-      else std::cerr << "I don't understand command-line option " << is_op << std::endl;
+                  << " (default: read from GA output tags or structures from input)\n\n"
+                  << "\n\t -d, --donteval Won't run evaluations, just printouts structures\n\n";
     }
     filename = Print::reformat_home( filename );
     if( filename != "input.xml" )
       std::cout << "Reading from input file " << filename << std::endl;
-#ifdef _CHECK_RESULTS
-    checkfilename = Print::reformat_home( checkfilename );
-    if( checkfilename != filename )
-      std::cout << "Reading from GA output file " << checkfilename << std::endl;
-#endif
+    if( do_check_results )
+    { 
+      checkfilename = Print::reformat_home( checkfilename );
+      if( checkfilename != filename )
+        std::cout << "Reading from GA output file " << checkfilename << std::endl;
+    }
   }
   TiXmlDocument doc( filename.c_str() );
   
@@ -144,7 +141,6 @@ int main(int argc, char *argv[])
   }
   std::cout << "Successfuly read pescan input from file " << filename << std::endl;
 
-#ifdef _CHECK_RESULTS
   if ( checkfilename == "" )
   { 
     child = handle.FirstChild( "Job" ).FirstChild( "GA" ).FirstChild( "Filenames" ).Element();
@@ -160,18 +156,17 @@ int main(int argc, char *argv[])
       std::cerr << "Could not loadfile " << checkfilename << std::endl;
       return false;
     }
-#endif
 
 
-#ifdef _CHECK_RESULTS
   TiXmlHandle docHandle( &doc ); 
   child = docHandle.FirstChild( "Restart" ).
                     FirstChild( "Results" ).
                     FirstChild( "optimum" ).
                     FirstChild( "Indivividual" ).
                     FirstChild( "Structure" ).Element();
-  if( evaluate( *child, structure, pescan, vff ) )
+  if( evaluate( *child, structure, pescan, vff, do_evaluate ) )
   {
+    do_check_results = true;
     std::cout << "\n\n\nChecking Optimum\n";
     structure.print_out( std::cout ); 
     std::cout << "\n\n";
@@ -182,7 +177,7 @@ int main(int argc, char *argv[])
               << " -- CBM:" << bandgap.bands.cbm
               << "    ---    Band Gap: " << bandgap.bands.gap() << std::endl;
 #else
-    std::cout << "Emass tensor:\n" << pescan.bands();
+    std::cout << "Emass tensor:\n" << pescan.tensor;
 #endif
   }
   else  std::cout << "\n\n\nChecking Optimum: error ... \n";
@@ -193,17 +188,35 @@ int main(int argc, char *argv[])
   for(; child; child = child->NextSiblingElement("Individual" ) )
   {
     if ( not child->FirstChildElement("Structure") ) continue;
-#else
-  child = handle.FirstChild( "Job" ).FirstChild( "Structure" ).Element();
-  for(; child; child = child->NextSiblingElement("Structure" ) )
-  {
-#endif
-    if( not evaluate( *child, structure, pescan, vff ) ) continue;
+    if( not evaluate( *child, structure, pescan, vff, do_evaluate ) ) continue;
+    do_check_results = true;
     
     std::cout << "\n\n\nNew Structure\n";
     structure.print_out( std::cout ); 
     std::cout << "\n\n";
     structure.print_xcrysden( std::cout );
+    if ( not do_evaluate ) continue;
+#ifndef _EMASS
+    const Pescan::BandGap& bandgap = (const Pescan::BandGap&) pescan;
+    std::cout << "\nVBM: " << bandgap.bands.vbm
+              << " -- CBM:" << bandgap.bands.cbm
+              << "    ---    Band Gap: " << bandgap.bands.gap() << std::endl;
+#else
+    std::cout << "Emass tensor:\n" << pescan.tensor;
+#endif
+  }
+  if ( do_check_results ) return 0;
+  child = handle.FirstChild( "Job" ).FirstChild( "Structure" ).Element();
+  for(; child; child = child->NextSiblingElement("Structure" ) )
+  {
+    if ( not child->FirstChildElement("Structure") ) continue;
+    if( not evaluate( *child, structure, pescan, vff, do_evaluate ) ) continue;
+    
+    std::cout << "\n\n\nNew Structure\n";
+    structure.print_out( std::cout ); 
+    std::cout << "\n\n";
+    structure.print_xcrysden( std::cout );
+    if ( not do_evaluate ) continue;
 #ifndef _EMASS
     const Pescan::BandGap& bandgap = (const Pescan::BandGap&) pescan;
     std::cout << "\nVBM: " << bandgap.bands.vbm

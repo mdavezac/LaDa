@@ -354,6 +354,7 @@ namespace Pescan
     return false;
   }
                
+#ifdef _MPI 
   bool Interface::SpinOrbit::broadcast( mpi::BroadCast &_bc )
   {
     return     _bc.serialize( filename ) 
@@ -432,6 +433,7 @@ namespace Pescan
            and _bc.serialize( launch ) 
            and _bc.serialize_container( pseudos );
   }
+#endif // _MPI 
 
 }
 

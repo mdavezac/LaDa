@@ -35,6 +35,7 @@ vff_LDADD = ../lamarck/liblamarck.la \
 	    ../atat/libatat.la \
 	    libvff.la \
             ../physics/libphysics.la \
+            ../print/libprint.la \
 	    $(fortran_LDADD) \
 	    @MPI_ADDLIB@ 
 layered_vff_SOURCES = $(vff_SOURCES)

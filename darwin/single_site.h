@@ -331,7 +331,13 @@ namespace SingleSite
   
     public:
       //! Constructor
-      Distance( t_Concentration &_conce ) : concentration( _conce ) {}
+      Distance  ( t_Concentration &_conce ) 
+               : concentration( _conce ), xcoef(0)
+        { for( unsigned u=0; u < _D; ++u ) qcoefs[u] = 0; }
+      //! Copy Constructor
+      Distance  ( const Distance &_c ) 
+               : concentration( _c.concentration ), xcoef(_c.xcoef)
+        { for( unsigned u=0; u < _D; ++u ) qcoefs[u] = _c.qcoefs[u]; }
       /** Returns \f$ \alpha_x | x_{\sigma_i} - x_{\sigma_j} | 
                       + \sum_{e=0}^{D}\alpha_e |q_{\sigma_i} - q_{\sigma_j} |  \f$ */
       t_ScalarFitnessQuantity operator()( const t_Individual &_i1, const t_Individual &_i2) const;

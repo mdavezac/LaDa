@@ -291,7 +291,8 @@ errorout:
   bool xTaboo<T_INDIVIDUAL> :: operator()( const t_Individual& _indiv ) const
   {
     concentration.get( _indiv.Object() );
-    return concentration.x < lessthan and concentration.x > morethan;
+    return    opt::Fuzzy<types::t_real>::less(concentration.x, lessthan)
+           or opt::Fuzzy<types::t_real>::greater(concentration.x, morethan);
   }
   template< class T_INDIVIDUAL >
   bool xTaboo<T_INDIVIDUAL> :: Load( const TiXmlElement &_el ) 
@@ -304,7 +305,7 @@ errorout:
     
     double d; 
     if ( child->Attribute( "lessthan" ) )
-      child->Attribute( "xlessthan", &d );
+      child->Attribute( "lessthan", &d );
     lessthan = ( d > 0 and d < 1 ) ? 2.0*d-1.0: 1.0;
     if ( child->Attribute( "morethan" ) )
       child->Attribute( "morethan", &d );

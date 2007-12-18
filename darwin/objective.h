@@ -55,6 +55,7 @@
 //! objectives.
 //! \see Fitness, Scaling
 //! \xmlinput should be all done by Objective::Types::new_from_xml()
+//! Also see \ref TagObjective.
 //! At present, the allowed \b scalar objectives are the following
 //! \code
 //     <Objective type = "Maximize"/>

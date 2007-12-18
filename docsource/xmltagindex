@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 /** \page xIndex Index of all XML Tags
 
   <UL>
@@ -5,19 +8,42 @@
      <LI> \ref Tagatom
      <LI> \ref TagAtom
      <LI> \ref TagBond
+     <LI> \ref TagBreeding
      <LI> \ref Tagcell
      <LI> \ref Tagcolumn
+     <LI> \ref TagConcentration
+     <LI> \ref TagxTaboo
+     <LI> \ref TagCrossover
+     <LI> \ref TagFilenames 
      <LI> \xe<Functional>\ex, \ref xFunctionals
      <LI> \ref Tagescanfunc
      <LI> \ref Tagvfffunc
+     <LI> \ref TagGA
      <LI> \ref TagGenPot
      <LI> \ref TagHamiltonian
+     <LI> \ref TagHistoryTaboo 
+     <LI> \ref TagHistory 
+     <LI> \ref TagKMutation
+     <LI> \ref TagKrossover
      <LI> \ref TagLattice
+     <LI> \ref TagLayer
+     <LI> \ref TagMinimizer
+     <LI> \ref TagMutation
+     <LI> \ref TagObjective
+     <LI> \ref TagOffspring
+     <LI> \ref TagOperators
      <LI> \ref TagPseudo
+     <LI> \ref TagRandom
      <LI> \ref TagReference
      <LI> \ref Tagsite
+     <LI> \ref TagSave
+     <LI> \ref TagScaling
      <LI> \ref TagSpinOrbit
+     <LI> \ref TagStatistics
+     <LI> \ref TagStore
      <LI> \ref TagStructure
+     <LI> \ref TagTabooOp
+     <LI> \ref TagTaboos
   </UL>
 
 */

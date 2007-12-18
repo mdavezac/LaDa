@@ -8,6 +8,7 @@ lamarck_LDFLAGS =  $(AM_LDFLAGS)  @MPICH_LIBS@
 lamarck_LDADD = liblamarck.la \
 		../atat/libatat.la \
 		../physics/libphysics.la \
+		../print/libprint.la \
 		@MPI_ADDLIB@
 noinst_LTLIBRARIES = liblamarck.la
 liblamarck_la_SOURCES = $(CRYSTAL_CC) $(CE_CC)
@@ -22,3 +23,6 @@ liblamarck_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS)
 
 ../mpi/libmpiobject.la:
 	cd ../mpi; $(MAKE)
+
+../print/libprint.la:
+	cd ../print; $(MAKE)

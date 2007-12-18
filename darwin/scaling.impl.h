@@ -178,9 +178,10 @@ namespace Scaling
       {
         int d = 0;
         parent->Attribute("alpha", &d );
-        if ( d < 0 ) 
+        if ( d < 1 ) 
         {
-          std::cerr << "Invalid alpha = " << d 
+          std::cerr << __FILE__ << ", line:" << __LINE__ << "\n"
+                    << "Invalid alpha = " << d 
                     << " in Sharing::Triangular " << std::endl;
           return false;
         } 
@@ -191,9 +192,10 @@ namespace Scaling
       {
         double d = 0;
         parent->Attribute("d0", &d );
-        if ( d < 0 ) 
+        if ( opt::Fuzzy<types::t_real>::less(d, 0) ) 
         {
-          std::cerr << "Invalid d0 = " << d 
+          std::cerr << __FILE__ << ", line:" << __LINE__ << "\n"
+                    << "Invalid d0 = " << d 
                     << " in Sharing::Triangular " << std::endl;
           return false;
         } 

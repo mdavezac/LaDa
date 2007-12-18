@@ -23,13 +23,6 @@ namespace Minimizer {
                              double *, double *, int *,
                              double * );
 #endif
-  //! \cond
-  extern "C" double FC_FUNC(frprmn, FRPRMN)
-                           ( double *, int *, double *,
-                             double *, double *, int *,
-                             double *, double *, int *,
-                             double * );
-  //! \endcond
 
   /** \brief Interface to the fortran minimizer 
    *  \details Not easy to call generic c++ from fortran.
@@ -121,6 +114,14 @@ namespace Minimizer {
       //! Load minimizer parameters from XML
       bool Load( const TiXmlElement &_element );
   };
+
+  //! \cond
+  extern "C" double FC_FUNC(frprmn, FRPRMN)
+                           ( double *, int *, double *,
+                             double *, double *, int *,
+                             double *, double *, int *,
+                             double * );
+  //! \endcond
 
   template<typename T_FUNCTIONAL> 
   inline bool Frpr<T_FUNCTIONAL> :: operator()()

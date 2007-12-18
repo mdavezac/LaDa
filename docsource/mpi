@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 /** \ingroup MPI
   \page MPI Message Passing Interface
   This  page aims to regroup all MPI specific stuff. This includes anything in

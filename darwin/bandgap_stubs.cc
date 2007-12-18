@@ -34,10 +34,14 @@ errorout:
   {
     if ( not bandgap.Load( _node ) ) return false;
     
-    if (     _node.FirstChildElement("Filenames") 
-         and _node.FirstChildElement("Filenames")->Attribute("BandEdge") )
+    if ( not _node.FirstChildElement("GA") ) return true;
+    const TiXmlElement *child = _node.FirstChildElement("GA");
+    if ( not _node.FirstChildElement("GA") ) return true;
+    child = child->FirstChildElement("Filenames");
+    for(; child; child = child->NextSiblingElement("Filenames") )
     {
-      references_filename = _node.FirstChildElement("Filenames")->Attribute("BandEdge");
+      if( not child->Attribute("BandEdge") ) continue;
+      references_filename = child->Attribute("BandEdge");
       references_filename = Print::reformat_home( references_filename );
       Print::out << "Will store Reference energies at: " << references_filename << "\n";
       Print::xmg << Print::Xmg::comment 

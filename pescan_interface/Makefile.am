@@ -34,7 +34,7 @@ else
  bin_EMASS = 
 endif
 
-bin_PROGRAMS = escan checkresults $(binEMASS)
+bin_PROGRAMS = escan $(binEMASS)
 
 noinst_LTLIBRARIES = libpescan.la
 libpescan_ladir = $(includedir)/pescan_interface 
@@ -54,10 +54,6 @@ escan_LDADD = libpescan.la \
 	      @MPI_ADDLIB@ \
 	      $(fortranLDADD)
 
-checkresults_SOURCES = $(escan_SOURCES)
-checkresults_CPPFLAGS = $(escan_CPPFLAGS) -D _CHECK_RESULTS
-checkresults_LDFLAGS = $(escan_LDFLAGS)
-checkresults_LDADD = $(escan_LDADD)
 
 if DOEMASS
 emass_SOURCES = $(escan_SOURCES)

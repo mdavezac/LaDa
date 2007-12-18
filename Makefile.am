@@ -45,9 +45,11 @@ force:
 all: revision.h
 if DODOC
 doc: $(ALL_DOCS)
-	@cat doxy.conf | \
-	 echo "HAVE_DOT = @FOUNDDOT@/" | \
-     	 echo "INPUT = $(ALL_DOCS)" | doxygen -
+	@cp doxy.conf doxy.tmp
+	@echo "HAVE_DOT = @FOUNDDOT@" >> doxy.tmp
+	@echo "INPUT = $(ALL_DOCS)" >> doxy.tmp
+	@cat doxy.tmp | doxygen -
+	@rm doxy.tmp
 clean-local:
 	-rm -rf doc
 install-data-local: doc
