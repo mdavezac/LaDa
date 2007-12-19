@@ -75,6 +75,9 @@ namespace Pescan
     // Stuff to save
     Escan saved_escan = escan;
 
+    types::t_real amp2 =   _str.scale / Physics::a0("A") 
+                         / amplitude / 2.0 / Math::pi;
+    std::cout << "dk " << amp2;
     // Needed only once
     create_directory();
     create_potential();
@@ -94,8 +97,6 @@ namespace Pescan
     other_kpoints( amplitude * Lx, eig_Lx);
     std::cout << " ****** Lx " << eig_Lx[0] << " " << eig_Lx[1] << std::endl;
 
-    types::t_real amp2 =   _str.scale / Physics::a0("A") 
-                         / amplitude / 2.0 / Math::pi;
     amp2 *= amp2;
     std::cout << "1.0/dk^2 = " << amp2 << std::endl;
     std::cout << " deriv = "
@@ -103,6 +104,7 @@ namespace Pescan
               << "m^{-1}_{0,0} = " 
               << ( eig_Lx[0] + eig_Lx[1] - 2.0 * eig_Gamma ) * amp2 << std::endl;
 
+    throw std::runtime_error( "Stopping here\n\n" );
 
     other_kpoints( amplitude * Ly, eig_Ly);
     std::cout << " ****** Ly " << eig_Ly[0] << " " << eig_Ly[1] << std::endl;

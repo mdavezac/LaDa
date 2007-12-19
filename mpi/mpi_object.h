@@ -13,8 +13,8 @@
 #include <iostream>
 #include <math.h>
 #ifdef _MPI
-#include <openmpi/mpi.h>
-//<mpi2c++/mpi++.h>
+// #include <openmpi/mpi.h>
+#include <mpi2c++/mpi++.h>
 #endif
 
 #include "opt/types.h"
