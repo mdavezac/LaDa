@@ -1013,7 +1013,7 @@ nextfilename:
         { 
           std::ostringstream sstr;
           sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-               << " Could not load restart file\n"
+               << " Could not load restart file\n";
           throw std::runtime_error("Could not load restart file"); 
         } 
 
