@@ -8,14 +8,14 @@
 #include <config.h>
 #endif
 
-#include <opt/opt_minimize_base.h>
 #include <gsl/gsl_multimin.h>
 #include <functional>
 #include <algorithm>
-#include <opt/compose_functors.h>
+
+#include "minimize_base.h"
 
 #ifdef _MPI
-#  include "mpi/mpi_object.h"
+#  include <mpi/mpi_object.h>
 #endif
 
 namespace Minimizer {

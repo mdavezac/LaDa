@@ -10,7 +10,7 @@
 
 #include <functional>
 
-#include "opt/opt_minimize_base.h"
+#include "minimize_base.h"
 
 namespace Minimizer {
 

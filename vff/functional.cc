@@ -7,9 +7,9 @@
 #include <functional>
 
 #include "functional.h"
-#include "physics/physics.h"
-#include "opt/ndim_iterator.h"
-#include "opt/compose_functors.h"
+#include <physics/physics.h>
+#include <opt/ndim_iterator.h>
+#include <opt/compose_functors.h>
 
 #ifdef _DOFORTRAN_
   extern "C" double vff_for_frprmn( const double* const _x, double* const _y)

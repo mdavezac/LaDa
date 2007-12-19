@@ -15,11 +15,11 @@
 
 #include <tinyxml/tinyxml.h>
 
-#include "opt/types.h"
-#include "opt/opt_functors.h"
+#include "types.h"
+#include "opt_functors.h"
 
 #ifdef _MPI
-#include "mpi/mpi_object.h"
+#include <mpi/mpi_object.h>
 #endif
 
 //! trash-can namespace for anything that doesn't quite go anywhere
