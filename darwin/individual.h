@@ -10,7 +10,6 @@
 
 #include <exception>
 #include <iostream>
-#include <stdexcept>       // std::runtime_error
 #include <algorithm>
 #include <functional>
 
@@ -181,7 +180,7 @@ namespace Individual
       //! Returns a reference to Base::repFitness
       t_Fitness& fitness()  { return repFitness; }
       //! Returns a constant reference to Base::repFitness
-      const t_Fitness& fitness() const;
+      const t_Fitness& fitness() const { return repFitness; }
       //! Returns a constant reference to Base::repFitness
       const t_Fitness& const_fitness() const { return fitness(); }
       //! Sets the fitness using a t_Fitness

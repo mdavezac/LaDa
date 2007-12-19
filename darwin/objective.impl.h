@@ -283,7 +283,14 @@ namespace Objective
       LinearSum<T_GA_TRAITS> :: operator()( const t_Quantity& _q ) 
       {
         if ( t_QuantityTraits::size(_q) != coefs.size() )
-          throw std::runtime_error( "Wrong number of objective functions\n" );
+        {
+           std::ostringstream sstr;
+           sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+                << "Wrong number of objective functions during evaluation \n"
+                << "Expected " << t_QuantityTraits::size(_q) << "\n"
+                << "Found " << coefs.size() << "\n";
+           throw std::runtime_error( sstr.str() );
+        }
 
         t_ScalarQuantity inter = 0;
         typename t_Quantity :: const_iterator i_val = _q.begin();
@@ -309,7 +316,14 @@ namespace Objective
                                                                     t_VA_Type *_i_grad)
       {
         if ( t_QuantityTraits::size(_q) != coefs.size() )
-          throw std::runtime_error( "Wrong number of objective functions\n" );
+        {
+           std::ostringstream sstr;
+           sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+                << "Wrong number of objective functions during evaluation \n"
+                << "Expected " << t_QuantityTraits::size(_q) << "\n"
+                << "Found " << coefs.size() << "\n";
+           throw std::runtime_error( sstr.str() );
+        }
         t_ScalarQuantity results = 0.0;
         typename t_Quantity :: const_iterator i_val = _q.begin();
         typename t_Quantity :: const_iterator i_val_end = _q.end();
@@ -351,7 +365,14 @@ namespace Objective
                                                                 t_VA_Type *_i_grad)
       {
         if ( t_QuantityTraits::size(_q) != coefs.size() )
-          throw std::runtime_error( "Wrong number of objective functions\n" );
+        {
+           std::ostringstream sstr;
+           sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+                << "Wrong number of objective functions during evaluation \n"
+                << "Expected " << t_QuantityTraits::size(_q) << "\n"
+                << "Found " << coefs.size() << "\n";
+           throw std::runtime_error( sstr.str() );
+        }
         typename t_Quantity :: const_iterator i_val = _q.begin();
         typename t_Quantity :: const_iterator i_val_end = _q.end();
         typename t_QuantityGradients :: iterator i_grad = _grad.begin();
@@ -389,7 +410,14 @@ namespace Objective
                                                                    types::t_unsigned _n)
       {
         if ( t_QuantityTraits::size(_q) != coefs.size() )
-          throw std::runtime_error( "Wrong number of objective functions\n" );
+        {
+           std::ostringstream sstr;
+           sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+                << "Wrong number of objective functions during evaluation \n"
+                << "Expected " << t_QuantityTraits::size(_q) << "\n"
+                << "Found " << coefs.size() << "\n";
+           throw std::runtime_error( sstr.str() );
+        }
         typename t_Quantity :: const_iterator i_val = _q.begin();
         typename t_Quantity :: const_iterator i_val_end = _q.end();
         typename t_QuantityGradients :: iterator i_grad = _grad.begin();

@@ -69,6 +69,9 @@ errorout:
     // checks that non-zero band gap has been found (and non-negative!)
     if ( result < types::tolerance )
     {
+#ifdef _DEBUG
+      Print::out << __FILE__ << ", line: " << __LINE__ << "\n";
+#endif
       Print::out << " Found metallic or negative band gap!! " << result << "\n" 
                  << " Will Try and Recompute Band Gap \n";
       set_all_electron();

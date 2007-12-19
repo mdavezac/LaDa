@@ -304,17 +304,25 @@ errorout:
     if ( not child ) return false;
     
     double d; 
+    lessthan = -1.0; morethan = 1.0;
     if ( child->Attribute( "lessthan" ) )
+    {
       child->Attribute( "lessthan", &d );
-    lessthan = ( d > 0 and d < 1 ) ? 2.0*d-1.0: 1.0;
+      lessthan = (     opt::Fuzzy<types::t_real>::greater( d, 0)
+                   and opt::Fuzzy<types::t_real>::less( d, 1 )   ) ? 2.0*d-1.0: 1.0;
+    }
     if ( child->Attribute( "morethan" ) )
+    {
       child->Attribute( "morethan", &d );
-    morethan = ( d > 0 and d < 1 ) ? 2.0*d-1.0: -1.0;
-    if ( lessthan < morethan ) return false;
+      morethan = (     opt::Fuzzy<types::t_real>::greater( d, 0)
+                   and opt::Fuzzy<types::t_real>::less( d, 1 )   )? 2.0*d-1.0: 1.0;
+    }
+    if (    opt::Fuzzy<types::t_real>::equal( lessthan, morethan )
+         or opt::Fuzzy<types::t_real>::greater( lessthan, morethan ) ) return false;
    
     Print::xmg << Print::Xmg::comment << Print::fixed << Print::setprecision(3) 
-               << "Taboo x in [ " << 0.5*(morethan+1.0)
-               << ", "  << 0.5*(lessthan+1.0) << "] " << Print::endl;
+               << "Allowed individuals: x in [ " << 0.5*(lessthan+1.0)
+               << ", "  << 0.5*(morethan+1.0) << "] " << Print::endl;
     return true;
   }
 }

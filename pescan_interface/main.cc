@@ -16,6 +16,22 @@
 #include <print/manip.h>
 
 
+#ifdef _EMASS
+inline void operator<<( t_Pescan &_pescan, const t_Vff &_vff )
+{
+  // creates an mpi aware file name for atomic configurations
+  std::ostringstream  sstr;
+  sstr << "atom_config";
+#ifdef _MPI
+    sstr << "." << mpi::main.rank();
+#endif
+  // prints atomic configurations
+  _vff.print_escan_input(sstr.str());
+  // tells bandgap where to find atomic configurations
+  _pescan.set_atom_input(sstr.str());
+}
+#endif
+
 bool evaluate( const TiXmlElement &_node,
                Ising_CE::Structure &_structure,
                t_Pescan &_pescan, t_Vff &_vff,
@@ -37,8 +53,8 @@ bool evaluate( const TiXmlElement &_node,
    bandgap.set_method( Pescan::Interface::ALL_ELECTRON );
    if( _doeval ) _structure.energy = _pescan.evaluate();
 #else
-  _vff.evaluate();
-  _vff.print_escan_input();
+   _vff.evaluate();
+   _pescan << _vff;
    if( _doeval ) _structure.energy = _pescan( _structure );
 #endif
 
@@ -76,7 +92,7 @@ int main(int argc, char *argv[])
         std::cout << "Command-line options:\n\t -h, --help this message"
                   << "\n\t -i, --input XML input file\n\n"
                   << "\n\t -s, --save XML file where GA results where saved"
-                  << " (default: read from GA output tags or structures from input)\n\n"
+                  << " (default: read from GA output tags or structures from input)"
                   << "\n\t -d, --donteval Won't run evaluations, just printouts structures\n\n";
     }
     filename = Print::reformat_home( filename );
@@ -164,7 +180,7 @@ int main(int argc, char *argv[])
                     FirstChild( "optimum" ).
                     FirstChild( "Indivividual" ).
                     FirstChild( "Structure" ).Element();
-  if( evaluate( *child, structure, pescan, vff, do_evaluate ) )
+  if( child and evaluate( *child, structure, pescan, vff, do_evaluate ) )
   {
     do_check_results = true;
     std::cout << "\n\n\nChecking Optimum\n";
@@ -180,7 +196,6 @@ int main(int argc, char *argv[])
     std::cout << "Emass tensor:\n" << pescan.tensor;
 #endif
   }
-  else  std::cout << "\n\n\nChecking Optimum: error ... \n";
 
   child = docHandle.FirstChild( "Restart" ).
                     FirstChild( "Results" ).
@@ -209,7 +224,6 @@ int main(int argc, char *argv[])
   child = handle.FirstChild( "Job" ).FirstChild( "Structure" ).Element();
   for(; child; child = child->NextSiblingElement("Structure" ) )
   {
-    if ( not child->FirstChildElement("Structure") ) continue;
     if( not evaluate( *child, structure, pescan, vff, do_evaluate ) ) continue;
     
     std::cout << "\n\n\nNew Structure\n";

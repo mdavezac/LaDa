@@ -92,8 +92,9 @@ namespace Vff
       //! Load t_Base and the minimizer from XML
       bool Load( const TiXmlElement &_node );
       //! Minimizes the structure
-      void operator()()
-        { t_Functional :: structure.energy = t_Base::evaluate(); }
+      void operator()() { t_Functional :: structure.energy = t_Base::evaluate(); }
+      //! Initializes the base functional
+      void init() { t_Base::init(); } 
       //! Minimizes the structure and stores the results in \a _keeper
       void operator()( Keeper &_keeper );
   };

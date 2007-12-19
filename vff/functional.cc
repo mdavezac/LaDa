@@ -583,7 +583,8 @@ namespace Vff
 
 failure:
     std::ostringstream sstr;
-    sstr << "Something wrong with your input" 
+    sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+         << "Something wrong with your input" 
          << std::endl 
          << "Did not expect angle type " << _A << "-" << _B << "-" << _C
          << std::endl;
@@ -616,7 +617,8 @@ failure:
     return;
 failure:
     std::ostringstream sstr;
-    sstr << "Something wrong with your input" 
+    sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+         << "Something wrong with your input" 
          << std::endl 
          << "Could not find bond type " << _A << "-" << _B
          << std::endl;

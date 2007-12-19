@@ -109,7 +109,13 @@ namespace CE
     types::t_unsigned N = functional.size();
     types::t_real *gradient = new types::t_real[N];
     types::t_real *keep = gradient;
-    if ( not gradient ) throw std::runtime_error( "Could not allocate memory" );
+    if ( not gradient ) 
+    {
+       std::ostringstream sstr;
+       sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+            << "Could not allocate memory";
+       throw std::runtime_error( sstr.str() );
+    }
     functional.evaluate_gradient( gradient );
     copy_n( gradient, N, _grad.begin() );
     delete[] keep;
@@ -120,7 +126,13 @@ namespace CE
     types::t_unsigned N = functional.size();
     types::t_real *gradient = new types::t_real[N];
     types::t_real *keep = gradient;
-    if ( not gradient ) throw std::runtime_error( "Could not allocate memory" );
+    if ( not gradient ) 
+    {
+       std::ostringstream sstr;
+       sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+            << "Could not allocate memory";
+       throw std::runtime_error( sstr.str() );
+    }
     types::t_real result = functional.evaluate_with_gradient( gradient );
     copy_n( gradient, N, _grad.begin() );
     delete[] keep;

@@ -266,8 +266,6 @@ namespace GA
         *_indiv = _indiv.select();
       } while ( i < max );
 
-//     std::cerr << "Could not find original individual in this crowd" << std::endl
-//               << "Trying random initialization" << std::endl;
       taboo.set_problematic();
 
       (*_indiv).invalidate(); // utterrandom is NOT a GenOp, does not invalidate!!
@@ -279,9 +277,10 @@ namespace GA
           return;
       } while ( i < UINT_MAX );
 
- //    std::cerr << "Could not find original individual in this crowd" << std::endl
- //              << "Not even from re-initialization generation" << std::endl;
-      throw std::runtime_error( "Could not create a non-taboo individual" );
+      std::ostringstream sstr;
+      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+           << "Could not create a non-taboo individual\n";
+      throw std::runtime_error( sstr.str() );
     }
 
 

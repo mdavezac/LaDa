@@ -179,7 +179,12 @@ errorout:
         minr = i_atom->type;
       }
       if ( i_which == i_end )
-        throw std::runtime_error( "Error while normalizing x constituents\n" );
+      {
+        std::ostringstream sstr;
+        sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+             << "Error while normalizing x constituents\n";
+        throw std::runtime_error( sstr.str() );
+      }
 
       i_which->type = ( _tochange > 0 ) ? -1.0: 1.0;
       _tochange += ( _tochange > 0 ) ? -2: 2;

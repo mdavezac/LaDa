@@ -199,6 +199,11 @@ if test x$debug = xtrue; then
   AC_DEFINE([_PRINT_ALL_PROCS],[],[])
   AX_CHECK_COMPILER_FLAGS([-fbounds-check], 
                           [CPP_DEBUG_FLAGS+=" -fbounds-check"],)
+  AH_TOP([
+#ifndef _DEBUG
+#define _DEBUG
+#endif
+  ])
 else
   CXXFLAGS=`echo $CXXFLAGS | sed "s/-g//"`
   CFLAGS=`echo $CFLAGS | sed "s/-g//"`

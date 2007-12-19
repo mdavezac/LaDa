@@ -58,15 +58,21 @@ namespace Vff
       if( i_atom->site == -1 )
       {
         std::ostringstream sstr;
-        sstr << "Could not determine lattice-site of  " << i_atom->pos << std::endl;
-        throw std::runtime_error ( sstr.str() );
+        sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+             << "Could not determine lattice-site of  " << i_atom->pos << std::endl;
       }
        
 
       //! Then extracts next symbol.
       std::string symbol;
       types::t_int n = Physics::Atomic::ExtractSymbol( i_char, symbol );
-      if( n <= 0  ) throw std::runtime_error("Error while extracting atomic symbol\n");
+      if( n <= 0  ) 
+      {
+        std::ostringstream sstr;
+        sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+             << "Error while extracting atomic symbol\n";
+        throw std::runtime_error ( sstr.str() );
+      }
       i_char += n;
 
       //! Then determines if it is a known type
@@ -116,10 +122,22 @@ namespace Vff
     std::string A, B; 
     char *i_char = _bond;
     types::t_int n = Physics::Atomic::ExtractSymbol( i_char, A );
-    if( n <= 0 ) throw std::runtime_error("Error while extracting atomic symbol\n");
+    if( n <= 0 ) 
+    {
+      std::ostringstream sstr;
+      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+           << "Error while extracting atomic symbol\n";
+      throw std::runtime_error ( sstr.str() );
+    }
     i_char += n;
     n = Physics::Atomic::ExtractSymbol( i_char, B );
-    if( n <= 0 ) throw std::runtime_error("Error while extracting atomic symbol\n");
+    if( n <= 0 ) 
+    {
+      std::ostringstream sstr;
+      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+           << "Error while extracting atomic symbol\n";
+      throw std::runtime_error ( sstr.str() );
+    }
     i_char += n;
 
     
@@ -137,13 +155,31 @@ namespace Vff
     std::string A, B, C; 
     char *i_char = _angle;
     types::t_int n = Physics::Atomic::ExtractSymbol( i_char, A );
-    if( n <= 0 ) throw std::runtime_error("Error while extracting atomic symbol\n");
+    if( n <= 0  ) 
+    {
+      std::ostringstream sstr;
+      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+           << "Error while extracting atomic symbol\n";
+      throw std::runtime_error ( sstr.str() );
+    }
     i_char += n;
     n = Physics::Atomic::ExtractSymbol( i_char, B );
-    if( n <= 0 ) throw std::runtime_error("Error while extracting atomic symbol\n");
+    if( n <= 0  ) 
+    {
+      std::ostringstream sstr;
+      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+           << "Error while extracting atomic symbol\n";
+      throw std::runtime_error ( sstr.str() );
+    }
     i_char += n;
     n = Physics::Atomic::ExtractSymbol( i_char, C );
-    if( n <= 0 ) throw std::runtime_error("Error while extracting atomic symbol\n");
+    if( n <= 0  ) 
+    {
+      std::ostringstream sstr;
+      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+           << "Error while extracting atomic symbol\n";
+      throw std::runtime_error ( sstr.str() );
+    }
     i_char += n;
 
     types::t_int where[3];
@@ -156,8 +192,13 @@ extern "C" void FC_FUNC_(vff_create, VFF_CREATE)()
 {
   if( Vff :: fortran ) delete Vff :: fortran;
   Vff :: fortran = new Vff::Fortran;
-  if( not Vff :: fortran )
-    throw std::runtime_error("Could not create Vff object\n");
+  if( Vff :: fortran ) return;
+ 
+  std::ostringstream sstr;
+  sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+       << "Could not create Vff object\n";
+  throw std::runtime_error ( sstr.str() );
+  
 }
 extern "C" void FC_FUNC_(vff_destroy, VFF_DESTROY)()
 {
@@ -167,52 +208,92 @@ extern "C" void FC_FUNC_(vff_destroy, VFF_DESTROY)()
 extern "C" void FC_FUNC_(vff_print_structure, VFF_PRINT_STRUCTURE)()
 {
   if( not Vff :: fortran )
-    throw std::runtime_error( "Fortran object not initialized on call to vff_cell)\n" );
+  {
+    std::ostringstream sstr;
+    sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+         << "Fortran object not initialized\n";
+    throw std::runtime_error( sstr.str() );
+  }
   Vff :: fortran->print_structure();
 }
 extern "C" void FC_FUNC_(vff_print_lattice, VFF_PRINT_LATTICE)()
 {
   if( not Vff :: fortran )
-    throw std::runtime_error( "Fortran object not initialized on call to vff_cell)\n" );
+  {
+    std::ostringstream sstr;
+    sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+         << "Fortran object not initialized\n";
+    throw std::runtime_error( sstr.str() );
+  }
   Vff :: fortran->print_lattice();
 }
 extern "C" void FC_FUNC_(vff_scale, VFF_SCALE)( types::t_real* _scale )
 {
   if( not Vff :: fortran )
-    throw std::runtime_error( "Fortran object not initialized on call to vff_cell)\n" );
+  {
+    std::ostringstream sstr;
+    sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+         << "Fortran object not initialized\n";
+    throw std::runtime_error( sstr.str() );
+  }
   Vff :: fortran->set_scale( *_scale );
 }
 extern "C" void FC_FUNC_(vff_cell, VFF_CELL)( types::t_real* _mat)
 {
   if( not Vff :: fortran )
-    throw std::runtime_error( "Fortran object not initialized on call to vff_cell)\n" );
+  {
+    std::ostringstream sstr;
+    sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+         << "Fortran object not initialized\n";
+    throw std::runtime_error( sstr.str() );
+  }
   Vff :: fortran->set_cell( _mat );
 }
 extern "C" void FC_FUNC_(vff_atoms, VFF_ATOMS)( types::t_int *_n, 
                                                 types::t_real* _pos, char *_type )
 {
   if( not Vff :: fortran )
-    throw std::runtime_error( "Fortran object not initialized on call to vff_atoms\n" );
+  {
+    std::ostringstream sstr;
+    sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+         << "Fortran object not initialized\n";
+    throw std::runtime_error( sstr.str() );
+  }
   Vff :: fortran->set_atoms( *_n, _pos, _type );
 }
 extern "C" void FC_FUNC_(vff_bond, VFF_BOND)( char *_bond, types::t_real *_d0,
                                               types::t_real *_alphas )
 {
   if( not Vff :: fortran )
-    throw std::runtime_error( "Fortran object not initialized on call to vff_bonds\n" );
+  {
+    std::ostringstream sstr;
+    sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+         << "Fortran object not initialized\n";
+    throw std::runtime_error( sstr.str() );
+  }
   Vff :: fortran->set_bond_parameters( _bond, *_d0, _alphas );
 }
 extern "C" void FC_FUNC_(vff_angle, VFF_ANGLE)( char *_angle, types::t_real *_gamma, 
                                                 types::t_real *_sigma, types::t_real *_betas )
 {
   if( not Vff :: fortran )
-    throw std::runtime_error( "Fortran object not initialized on call to vff_angles\n" );
+  {
+    std::ostringstream sstr;
+    sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+         << "Fortran object not initialized\n";
+    throw std::runtime_error( sstr.str() );
+  }
   Vff :: fortran->set_angle_parameters( _angle, *_gamma, *_sigma, _betas );
 }
 extern "C" void FC_FUNC_(vff_minimize, VFF_MINIMIZE)( types::t_real *_energy )
 {
   if( not Vff :: fortran )
-    throw std::runtime_error( "Fortran object not initialized on call to vff_minimize\n" );
+  {
+    std::ostringstream sstr;
+    sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+         << "Fortran object not initialized\n";
+    throw std::runtime_error( sstr.str() );
+  }
 
   minimizer::GnuSL<Vff::Functional> minimize( *Vff :: fortran );
   minimize.set_parameters( minimizer::GnuSL<Vff::Functional>::BFGS2,

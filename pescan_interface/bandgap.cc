@@ -1,14 +1,26 @@
 //
 //  Version: $Id$
 //
+#include <algorithm>
+
 #include <physics/physics.h>
 #include <print/stdout.h>
+#include <opt/traits.h>
 
 #include "bandgap.h"
 
 namespace Pescan
 {
+#ifdef _NOLAUNCH
+  //! Fake and fast functional, when compiled with --enable-nolaunch
+  void nolaunch_functional( const Ising_CE::Structure &_str, Bands &bands );
+#endif
+
+#ifdef _NOLAUNCH
+  types::t_real BandGap::folded_spectrum(const Ising_CE::Structure &_str)
+#else
   types::t_real BandGap::folded_spectrum()
+#endif
   {
     std::string olddirname = dirname;
     create_directory();
@@ -38,7 +50,11 @@ namespace Pescan
     bands.vbm = find_closest_eig( Eref.cbm );
     destroy_directory_();
 
+#ifndef _NOLAUNCH
     if( do_correct and bands.gap() < metallicity ) correct( olddirname );
+#else
+    nolaunch_functional( _str, bands );
+#endif // _NOLAUNCH
 
     destroy_directory_();
     dirname = olddirname;
@@ -59,6 +75,9 @@ namespace Pescan
 
     do 
     {
+#ifdef _DEBUG
+      Print::out << __FILE__ << ", line: " << __LINE__ << "\n";
+#endif
       Print::out << " Found metallic band gap!! " << bands.gap() << "\n" 
                  << " Will Try and modify references. \n";
 
@@ -104,8 +123,12 @@ namespace Pescan
 
     if ( not Interface::operator()() ) return -1;
 
+#ifndef _NOLAUNCH
     bands.cbm = eigenvalues[ escan.nbstates - 1 ];
     bands.vbm = eigenvalues[ escan.nbstates - 2 ];
+#else
+    nolaunch_functional( _str, bands );
+#endif // _NOLAUNCH
 
     destroy_directory_();
 
@@ -158,5 +181,31 @@ namespace Pescan
     escan.method = m;
     return true;
   }
+
+
+#ifdef _NOLAUNCH
+  void nolaunch_functional( const Ising_CE::Structure &_str, Bands &bands )
+  {
+    Ising_CE::Structure::t_kAtoms::const_iterator i_k = _str.k_vecs.begin();
+    Ising_CE::Structure::t_kAtoms::const_iterator i_k_end = _str.k_vecs.end();
+    bands.vbm = 0.0; bands.cbm = 0.0;
+    bool which = true, sign = true;
+    for(; i_k != i_k_end; ++i_k, which = not which )
+    {
+      types::t_real a0 = std::abs( i_k->type ) * i_k->pos(0);
+      types::t_real a1 = std::abs( i_k->type ) * i_k->pos(1);
+      types::t_real a2 = std::abs( i_k->type ) * i_k->pos(2);
+
+      bands.vbm +=  a0 * a0 / 5.0 - a1 / 15.0 - a2 * a1;
+      bands.cbm += 7.0 * cos( a0 * a1 / 7.0 + a2  ); 
+    }
+
+    bands.cbm += bands.vbm;
+
+    if( opt::Fuzzy<types::t_real> :: greater( bands.cbm, bands.vbm ) ) return;
+    std::swap( bands.cbm, bands.vbm );
+    if ( opt::Fuzzy<types::t_real>::equal(bands.vbm, bands.cbm ) ) bands.cbm += 0.1;
+  }
+#endif
 
 }

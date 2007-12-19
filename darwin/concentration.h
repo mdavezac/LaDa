@@ -118,9 +118,11 @@
     types::t_real det = b*b - 4.0 * (c-_x) * a; 
     if ( det < 0 )
     {
-      std::cerr << "Error when using Concentration::get_y(" << _x<<")" << std::endl
-                << "determinent is negative, " << det << std::endl;
-      throw std::runtime_error("");
+      std::ostringstream sstr;
+      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+           << "Error when using Concentration::get_y(" << _x <<")\n"
+           << "determinent is negative, " << det << "\n";
+      throw std::runtime_error( sstr.str() );
     }
     det = std::sqrt(det);
     types::t_real u = 1.0 / ( 2.0 * a );  
@@ -133,10 +135,12 @@
     if (     ( r0 < -1.0 or r0 > 1.0 )
          and ( r1 < -1.0 or r1 > 1.0 ) )
     {
-      std::cerr << a + b +c << " " << a - b + c << std::endl;
-      std::cerr << "Error when using Concentration::get_y(" << _x<< ")" << std::endl;
-      std::cerr << " r0= " << r0  << " and r1= " << r1 << std::endl;
-      throw std::runtime_error("");
+      std::ostringstream sstr;
+      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+           << a + b +c << " " << a - b + c << std::endl 
+           << "Error when using Concentration::get_y(" << _x << ")\n" 
+           << " r0= " << r0  << " and r1= " << r1 << "\n";
+      throw std::runtime_error( sstr.str() );
     }
     if ( r0 < -1.0 or r0 > 1.0 ) 
       return r1; 

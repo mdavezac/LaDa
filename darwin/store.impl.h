@@ -237,7 +237,12 @@ namespace Store
 
       objective = t_Objective :: new_from_xml( _node );
       if ( not objective )
-        throw std::runtime_error("Could not Load objective from input in conditional store\n"); 
+      {
+         std::ostringstream sstr;
+         sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+              << "Could not Load objective from input in conditional store\n";
+         throw std::runtime_error( sstr.str() );
+      }
       owns_objective = true;
     }
     template< class T_GATRAITS >
@@ -260,7 +265,12 @@ namespace Store
       }
  
       if ( not objective )
-        throw std::runtime_error("Could not Load objective from input in conditional store\n"); 
+      {
+         std::ostringstream sstr;
+         sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+              << "Could not Load objective from input in conditional store\n";
+         throw std::runtime_error( sstr.str() );
+      }
     }
 
     template< class T_GATRAITS >

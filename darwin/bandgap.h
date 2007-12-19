@@ -158,6 +158,14 @@ namespace BandGap
       eoF<bool>* LoadContinue(const TiXmlElement &_el )
         { return new GA::mem_zerop_t<BandGap::Darwin>( bandgap, &BandGap::Darwin::Continue,
                                                       "BandGap::Continue" );     }
+     
+      //! \brief Intializes before calls to evaluation member routines
+      //! \details The bandgap does not need explicit initialization, since it
+      //!          will act upon the structure as minimized by vff. More
+      //!          explicitely, its "initialization" is carried out in the body
+      //!          of Darwin::evaluate().
+      void init( t_Individual &_indiv )
+        { t_Base :: init( _indiv ); vff.init(); }
 
       //! Evaluates the band gap after strain minimization
       void evaluate();

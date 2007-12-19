@@ -93,9 +93,11 @@ broadcast_erase:
          or char_buff or cur_char_buff or end_char_buff 
          or real_buff or cur_real_buff or end_real_buff )
     {
-      std::cerr << "Buffers already allocated in call to mpi::AlltoAll::alllocate_buffers() ??? " 
-                << std::endl << "Quitting program " << std::endl; 
-      throw std::runtime_error("Could not allocate memory for broadcast\n");
+      std::ostringstream sstr;
+      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+           << "Buffers already allocated in call to mpi::AlltoAll::alllocate_buffers() ???\n" 
+           << "Could not allocate memory for broadcast\n";
+      throw std::runtime_error(sstr.str());
     }
     stage = COPYING_TO_HERE;
 

@@ -61,7 +61,12 @@ int main(int argc, char *argv[])
   {
     GA::Darwin< t_Evaluator > ga;
     if ( not  ga.Load(filename) )
-      throw std::runtime_error( "Could not load input!!\n" ); 
+    {
+      std::ostringstream sstr;
+      sstr << __FILE__ << ", line: " << __LINE__ << "\n"
+           << "Could not load input from file " << filename << "\n";
+      throw std::runtime_error( sstr.str() ); 
+    }
     ga.run();
   }
   catch ( std::exception &e )

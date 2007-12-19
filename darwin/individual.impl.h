@@ -4,6 +4,7 @@
 #ifndef _INDIVIDUAL_IMPL_H_
 #define _INDIVIDUAL_IMPL_H_
 
+
 namespace Individual
 {
   template<class T_INDIVTRAITS>
@@ -25,14 +26,6 @@ namespace Individual
     return object == _indiv.object; 
   }
         
-  template<class T_INDIVTRAITS>
-  const typename Base<T_INDIVTRAITS> :: t_Fitness& Base<T_INDIVTRAITS> :: fitness() const
-  {
-     if ( (bool) invalid() )
-       throw std::runtime_error("invalid fitness\n");
-     return repFitness;
-  }
-
   template<class T_INDIVTRAITS>
   void Base<T_INDIVTRAITS> :: printOn(std::ostream &_os) const
   {

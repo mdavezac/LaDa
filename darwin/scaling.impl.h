@@ -237,7 +237,14 @@ namespace Scaling
                                                  const t_Individual &_i2) const
        {
          if ( _i1.Object().Container().size() != _i1.Object().Container().size() )
-           throw std::runtime_error("individuals of different size in Distance::GeneralHamming!\n");
+         {
+            std::ostringstream sstr;
+            sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+                 << "Cannot compute distance between individuals of different sizes\n"
+                 << "Size of individual A: " << _i1.Object().Container().size() << "\n"
+                 << "Size of individual B: " << _i2.Object().Container().size() << "\n";
+            throw std::runtime_error( sstr.str() );
+         }
          typename t_Object::const_iterator i_bit2 = _i2.Object().begin();
          typename t_Object::const_iterator i_bit1 = _i1.Object().begin();
          typename t_Object::const_iterator i_bit1_end = _i1.Object().end();
@@ -254,7 +261,14 @@ namespace Scaling
        {
          typedef typename t_GATraits::t_QuantityTraits::t_ScalarQuantityTraits t_SQTraits;
          if ( _i1.Object().Container().size() != _i1.Object().Container().size() )
-           throw std::runtime_error("individuals of different size in Distance::Hamming!\n");
+         {
+            std::ostringstream sstr;
+            sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+                 << "Cannot compute distance between individuals of different sizes\n"
+                 << "Size of individual A: " << _i1.Object().Container().size() << "\n"
+                 << "Size of individual B: " << _i2.Object().Container().size() << "\n";
+            throw std::runtime_error( sstr.str() );
+         }
          typename t_Object::const_iterator i_bit2 = _i2.Object().begin();
          typename t_Object::const_iterator i_bit1 = _i1.Object().begin();
          typename t_Object::const_iterator i_bit1_end = _i1.Object().end();

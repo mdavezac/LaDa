@@ -212,7 +212,7 @@ namespace Pescan
     public:
       //! Constructor
       Interface () : atom_input("atom.config"), genpot(), escan(),
-                     maskr("maskr"), dirname("escan"), do_destroy_dir(true) {}
+                     maskr("maskr"), dirname("ESCAN"), do_destroy_dir(true) {}
       //! Copy Constructor
       Interface   ( const Interface &_c )
                 : atom_input( _c.atom_input ), genpot( _c.genpot ),

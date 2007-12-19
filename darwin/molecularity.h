@@ -144,6 +144,14 @@ namespace Molecularity
       //! Allows for periodic all-electron computations
       eoF<bool>* LoadContinue(const TiXmlElement &_el );
 
+      //! \brief Intializes before calls to evaluation member routines
+      //! \details The bandgap does not need explicit initialization, since it
+      //!          will act upon the structure as minimized by vff. More
+      //!          explicitely, its "initialization" is carried out in the body
+      //!          of Darwin::evaluate().
+      void init( t_Individual &_indiv )
+        { t_Base :: init( _indiv ); vff.init(); }
+
     protected:
       //! Transforms stress and band-edges to quantities in \a _indiv.
       void object_to_quantities( t_Individual & _indiv );

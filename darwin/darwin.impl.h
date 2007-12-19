@@ -142,7 +142,13 @@ namespace GA
     if ( not child ) child = _parent.FirstChildElement("Method");
     objective = t_ObjectiveType :: new_from_xml( *child );
     if( not objective )
-      throw std::runtime_error(" Could not find Objective tag... ");
+    {
+       std::ostringstream sstr;
+       sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+            << " Could not find Objective tag in input file "
+            << filename << "\n";
+       throw std::runtime_error( sstr.str() );
+    }
 
     const TiXmlElement *store_xml = _parent.FirstChildElement("Store");
     if ( store_xml )
@@ -152,7 +158,12 @@ namespace GA
     if ( not store )
       store = new typename t_Store::Optima( evaluator, *child );
     if ( not store )
-      throw std::runtime_error( "Memory Error: could not create Store object \n");
+    {
+       std::ostringstream sstr;
+       sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+            << "Memory Error: could not create Store object \n";
+       throw std::runtime_error( sstr.str() );
+    }
     Print::xmg << Print::Xmg::comment << "Store: " << store->what_is() << Print::endl;
 
     if( history )
@@ -161,6 +172,13 @@ namespace GA
     if ( not evaluation )
       evaluation = new Evaluation::Base<t_GATraits>( evaluator, *objective, *store );
 
+    if ( not evaluation )
+    {
+       std::ostringstream sstr;
+       sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+            << "Memory Error? could not create evaluation object \n";
+       throw std::runtime_error( sstr.str() );
+    }
     scaling = Scaling::new_from_xml<t_GATraits>( _parent, &evaluator );
     if( scaling ) Print::xmg << Print::Xmg::comment << scaling->what_is() << Print::endl;
       
@@ -628,12 +646,16 @@ namespace GA
         Minimizer_Functional<t_GATraits> *func = 
           new Minimizer_Functional<t_GATraits>( *evaluation, *taboos ); 
         if ( not func )
-          throw std::runtime_error( "Memory Allocation Error");
+        {
+           std::ostringstream sstr;
+           sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+                << "Memory Allocation Error when allocating " << str << "\n"; 
+           throw std::runtime_error( sstr.str() );
+        }
         MinimizerGenOp<t_GATraits> *mingenop
             = new MinimizerGenOp<t_GATraits>( *func );
-        if ( not mingenop )
-          { delete func; this_op = NULL; }
-        else if ( not mingenop->Load( *sibling ) )
+        if ( not mingenop ) { delete func; this_op = NULL; }
+        else if ( not mingenop->Load( *sibling ) ) 
           { delete mingenop; delete func; this_op = NULL; }
         else
         {
@@ -796,63 +818,51 @@ namespace GA
       types::t_unsigned end = indiv.Object().size();  
     
       // indiv: ----
-      if ( taboos and (*taboos)(indiv) ) continue;
-      _pop.push_back(indiv);
+      if ( not ( taboos and (*taboos)(indiv) ) ) _pop.push_back(indiv);
       if ( _pop.size() >= _size ) break;
       
       indiv.Object().mask( start, end );         // indiv: ****
-      if ( taboos and (*taboos)(indiv) ) continue;
-      _pop.push_back(indiv);
+      if ( not ( taboos and (*taboos)(indiv) ) ) _pop.push_back(indiv);
       if ( _pop.size() >= _size ) break;
       
       indiv.Object().mask( start, end/2 );       // indiv: --**
-      if ( taboos and (*taboos)(indiv) ) continue;
-      _pop.push_back(indiv);
+      if ( not ( taboos and (*taboos)(indiv) ) ) _pop.push_back(indiv);
       if ( _pop.size() >= _size ) break;
 
       indiv.Object().mask( start, end );         // indiv: **--
-      if ( taboos and (*taboos)(indiv) ) continue;
-      _pop.push_back(indiv);
+      if ( not ( taboos and (*taboos)(indiv) ) ) _pop.push_back(indiv);
       if ( _pop.size() >= _size ) break;
 
       indiv.Object().mask( start, end/4 );       // indiv: -*--
-      if ( taboos and (*taboos)(indiv) ) continue;
-      _pop.push_back(indiv);
+      if ( not ( taboos and (*taboos)(indiv) ) ) _pop.push_back(indiv);
       if ( _pop.size() >= _size ) break;
 
       indiv.Object().mask( start, end );         // indiv: *-**
-      if ( taboos and (*taboos)(indiv) ) continue;
-      _pop.push_back(indiv);
+      if ( not ( taboos and (*taboos)(indiv) ) ) _pop.push_back(indiv);
       if ( _pop.size() >= _size ) break;
 
       indiv.Object().mask( end/2, end*3/4 );     // indiv: *--*
-      if ( taboos and (*taboos)(indiv) ) continue;
-      _pop.push_back(indiv);
+      if ( not ( taboos and (*taboos)(indiv) ) ) _pop.push_back(indiv);
       if ( _pop.size() >= _size ) break;
 
       indiv.Object().mask( start, end );         // indiv: -**-
-      if ( taboos and (*taboos)(indiv) ) continue;
-      _pop.push_back(indiv);
+      if ( not ( taboos and (*taboos)(indiv) ) ) _pop.push_back(indiv);
       if ( _pop.size() >= _size ) break;
 
       indiv.Object().mask( end/4, end/2 );       // indiv: --*-
-      if ( taboos and (*taboos)(indiv) ) continue;
-      _pop.push_back(indiv);
+      if ( not ( taboos and (*taboos)(indiv) ) ) _pop.push_back(indiv);
       if ( _pop.size() >= _size ) break;
 
       indiv.Object().mask( start, end );         // indiv: **-*
-      if ( taboos and (*taboos)(indiv) ) continue;
-      _pop.push_back(indiv);
+      if ( not ( taboos and (*taboos)(indiv) ) ) _pop.push_back(indiv);
       if ( _pop.size() >= _size ) break;
 
       indiv.Object().mask( start, end/2 );       // indiv: ---*
-      if ( taboos and (*taboos)(indiv) ) continue;
-      _pop.push_back(indiv);
+      if ( not ( taboos and (*taboos)(indiv) ) ) _pop.push_back(indiv);
       if ( _pop.size() >= _size ) break;
 
       indiv.Object().mask( start, end );         // indiv: *---
-      if ( taboos and (*taboos)(indiv) ) continue;
-      _pop.push_back(indiv);
+      if ( not ( taboos and (*taboos)(indiv) ) ) _pop.push_back(indiv);
     }
     _pop.resize( _size );
   }
@@ -940,10 +950,15 @@ namespace GA
 
           (*replacement)(*i_island, offspring); // after replace, the new pop. is in population
           
-          if (pSize > i_island->size())
-              throw std::runtime_error("Population shrinking!");
-          else if (pSize < i_island->size())
-              throw std::runtime_error("Population growing!");
+          if (pSize != i_island->size())
+          {
+             std::ostringstream sstr;
+             sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+                  << "Population "
+                  << ( pSize > i_island->size() ? "shrinking": "growing" )
+                  << " from " << pSize << " to " << i_island->size() << "\n";
+             throw std::runtime_error( sstr.str() );
+          }
         }
       }
       catch (std::exception& e)
@@ -996,7 +1011,9 @@ nextfilename:
         doc.LoadFile( evaluator_filename.c_str() );
         if  ( !doc.LoadFile() ) 
         { 
-          std::cerr << doc.ErrorDesc() << std::endl; 
+          std::ostringstream sstr;
+          sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+               << " Could not load restart file\n"
           throw std::runtime_error("Could not load restart file"); 
         } 
 

@@ -35,7 +35,12 @@ namespace Fitness
   inline Scalar<T_QUANTITYTRAITS> :: operator t_Quantity() const
   { 
     if ( not is_valid )
-      throw std::runtime_error( " Invalid Fitness !!\n" );
+    {
+      std::ostringstream sstr;
+      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+           << "Tried to access invalid fitness\n";
+      throw std::runtime_error( sstr.str() );
+    }
     return quantity;
   }
 #ifdef _MPI
@@ -55,8 +60,14 @@ namespace Fitness
   template<class T_QUANTITYTRAITS>
   bool Vectorial<T_QUANTITYTRAITS> :: operator<( const t_This & _f) const
   {
-    if( vec_quantity.size() != _f.vec_quantity.size () )
-      throw std::runtime_error("quantities of different size in Multi-Objective Fitness!?\n");
+    if( vec_quantity.size() != _f.vec_quantity.size() )
+    {
+      std::ostringstream sstr;
+      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+           << "Comparing quantities of different sizes\n"
+           << vec_quantity.size() << " " << _f.vec_quantity.size() << "\n";
+      throw std::runtime_error( sstr.str() );
+    }
     typename t_Quantity :: const_iterator i_scalar1 = vec_quantity.begin();
     typename t_Quantity :: const_iterator i_scalar1_end = vec_quantity.end();
     typename t_Quantity :: const_iterator i_scalar2 = _f.vec_quantity.begin();
@@ -68,7 +79,13 @@ namespace Fitness
   bool Vectorial<T_QUANTITYTRAITS> :: operator>( const t_This & _f) const
   {
     if( vec_quantity.size() != _f.vec_quantity.size () )
-      throw std::runtime_error("quantities of different size in Multi-Objective Fitness!?\n");
+    {
+      std::ostringstream sstr;
+      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+           << "Comparing quantities of different sizes\n"
+           << vec_quantity.size() << " " << _f.vec_quantity.size() << "\n";
+      throw std::runtime_error( sstr.str() );
+    }
     typename t_Quantity :: const_iterator i_scalar1 = vec_quantity.begin();
     typename t_Quantity :: const_iterator i_scalar1_end = vec_quantity.end();
     typename t_Quantity :: const_iterator i_scalar2 = _f.vec_quantity.begin();
@@ -80,7 +97,13 @@ namespace Fitness
   bool Vectorial<T_QUANTITYTRAITS> :: operator==( const t_This & _f) const
   {
     if( vec_quantity.size() != _f.vec_quantity.size () )
-      throw std::runtime_error("quantities of different size in Multi-Objective Fitness!?\n");
+    {
+      std::ostringstream sstr;
+      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+           << "Comparing quantities of different sizes\n"
+           << vec_quantity.size() << " " << _f.vec_quantity.size() << "\n";
+      throw std::runtime_error( sstr.str() );
+    }
     typename t_Quantity :: const_iterator i_scalar1 = vec_quantity.begin();
     typename t_Quantity :: const_iterator i_scalar1_end = vec_quantity.end();
     typename t_Quantity :: const_iterator i_scalar2 = _f.vec_quantity.begin();
@@ -117,7 +140,12 @@ namespace Fitness
   inline Vectorial<T_QUANTITYTRAITS> :: operator const t_Quantity& () const
   { 
     if ( not vec_is_valid )
-      throw std::runtime_error( " Invalid Fitness !!\n" );
+    {
+      std::ostringstream sstr;
+      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+           << "Tried to access invalid fitness\n";
+      throw std::runtime_error( sstr.str() );
+    }
     return vec_quantity;
   }
 #ifdef _MPI

@@ -98,9 +98,25 @@ namespace SingleSite
         typedef typename t_QuantityTraits :: t_Quantity t_Quantity;
         if ( t_QuantityTraits::size( _i1.const_quantities() ) != 
              t_QuantityTraits::size( _i2.const_quantities() )     )
-          throw std::runtime_error( "Individuals with differing number of quantities !?" );
+        {
+           std::ostringstream sstr;
+           sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+                << "Inconsistent number of quantities between individuals"
+                << "when computing phenotypic distances \n"
+                << "For individual A: " << _i1.Object().Container().size() << "\n"
+                << "For individual B: " << _i2.Object().Container().size() << "\n";
+           throw std::runtime_error( sstr.str() );
+        }
         if ( t_QuantityTraits::size( _i1.const_quantities() ) < _D )
-          throw std::runtime_error( "Inconsistent number of quantities !?" );
+        {
+           std::ostringstream sstr;
+           sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+                << "Inconsistent number of quantities "
+                << "when computing phenotypic distances \n"
+                << "Found " << _i1.Object().Container().size() << "\n"
+                << "Expected at most " << _D << "\n";
+           throw std::runtime_error( sstr.str() );
+        }
     
         concentration.get( _i1.Object() ); 
         // Modifier::const_innermost() is a dirty hack which allows us to use

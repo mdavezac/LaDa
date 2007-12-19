@@ -82,8 +82,13 @@ namespace Pescan
       types::t_real operator()( const Ising_CE::Structure &_str ); 
 
     protected:
-      //! Folded spectrum computation
-      types::t_real folded_spectrum();
+#ifdef _NOLAUNCH
+        //! Folded spectrum computation (with --enable-nolaunch)
+        types::t_real folded_spectrum(const Ising_CE::Structure& );
+#else
+        //! Folded spectrum computation
+        types::t_real folded_spectrum();
+#endif
       //! All-electron spectrum computation
       types::t_real all_electron( const Ising_CE::Structure &_str );
       //! Returns the closest eigenvalue to \a _ref
@@ -104,11 +109,16 @@ namespace Pescan
   {
     set_scale( _str );
 
+#ifdef _NOLAUNCH
+    return escan.method == ALL_ELECTRON ? all_electron( _str ): folded_spectrum( _str );
+#else
     return escan.method == ALL_ELECTRON ? all_electron( _str ): folded_spectrum();
+#endif
   }
 
   inline types::t_real BandGap :: find_closest_eig( types::t_real _ref )
   {
+    if( eigenvalues.empty() ) return 0;
     std::vector<types::t_real> :: const_iterator i_eig = eigenvalues.begin();
     std::vector<types::t_real> :: const_iterator i_eig_end = eigenvalues.end();
     std::vector<types::t_real> :: const_iterator i_eig_result = i_eig;

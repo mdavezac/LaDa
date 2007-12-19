@@ -89,7 +89,13 @@ namespace Layered
   void Concentration<_D> :: operator()( Ising_CE::Structure &_str )
   {
     if ( _str.atoms.size() % _D != 0 )
-      throw std::runtime_error( "Number of atoms is not a multiple of _D\n");
+    {
+      std::ostringstream sstr;
+      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+           << "Number of atoms in structure is not a multiple of _D\n"
+           << _str.atoms.size() << " % " << _D << " != 0\n";
+      throw std::runtime_error( sstr.str() );
+    }
 
     if ( not single_c ) return;
 
@@ -176,7 +182,13 @@ namespace Layered
         minr = i_atom->type;
       }
       if ( i_which == i_end )
-        throw std::runtime_error( "Error while normalizing x constituents\n" );
+      {
+        std::ostringstream sstr;
+        sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+             << "Error while normalizing x constituents\n";
+        throw std::runtime_error( sstr.str() );
+      }
+
 
       i_which->type = ( _tochange > 0 ) ? -1.0: 1.0;
       _tochange += ( _tochange > 0 ) ? -2: 2;
@@ -233,7 +245,12 @@ namespace Layered
       if ( to_change < -1.0 or to_change > 1.0 ) break;
     }
     if ( not (to_change < -1.0 or to_change > 1.0) )
-      throw std::runtime_error("Could not set the concentration of an object!!\n");
+    {
+      std::ostringstream sstr;
+      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+           << "Could not set the concentration of an object\n";
+      throw std::runtime_error( sstr.str() );
+    }
   }
 
 
@@ -272,7 +289,13 @@ namespace Layered
   {
     N = _str.atoms.size();
     if( N % _D )
-      throw std::runtime_error("Number of atoms in structure is not a multiple of _D\n");
+    {
+      std::ostringstream sstr;
+      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+           << "Number of atoms in structure is not a multiple of _D\n"
+           << N << " % " << _D << " != 0\n";
+      throw std::runtime_error( sstr.str() );
+    }
 
     N /= _D;
 
@@ -327,7 +350,12 @@ errorout:
     }
     const TiXmlElement *parent = _node.FirstChildElement("Structure");
     if ( not parent )
-      throw std::runtime_error("No Structure tag on input ?!\n");
+    {
+      std::ostringstream sstr;
+      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+           << "No Structure tag on input ?!\n";
+      throw std::runtime_error(sstr.str());
+    }
 
     bool loadedstructure = false;
     Ising_CE::Structure::lattice = &lattice;
@@ -662,7 +690,13 @@ errorout:
     }
 
     if ( i_site != i_site_end or i_var != i_var_end )
-      throw std::runtime_error( "Layered::Taboo and individivual's container do not match !?\n" );
+    {
+      std::ostringstream sstr;
+      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+           << "Size of Layered::Taboo and individivual's container do not match\n";
+      throw std::runtime_error(sstr.str());
+    }
+
 
     //! periodicicity: adds first to current (eg last) layer if are the same type 
     if( current.first == first.first ) current.second += first.second;

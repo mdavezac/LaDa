@@ -104,11 +104,11 @@ namespace Vff
       //! Destructor
       ~PescanPerturbations() {}
     
-      //! Printes \f$\Delta \mathcal{H}_{\mathrm{chem}}\f$ input for Pescan::VirtualAtom
+      //! Prints \f$\Delta \mathcal{H}_{\mathrm{chem}}\f$ input for Pescan::VirtualAtom
       void chemical( types::t_unsigned _pos );
-      //! Printes \f$\Delta \mathcal{H}_{\mathrm{stress}}\f$ input for Pescan::VirtualAtom
+      //! Prints \f$\Delta \mathcal{H}_{\mathrm{stress}}\f$ input for Pescan::VirtualAtom
       types::t_real stress( types::t_unsigned _pos );
-      //! Printes \f$\mathcal{H}\f$ input to file for PescanVirtualAtom
+      //! Prints \f$\mathcal{H}\f$ input to file for PescanVirtualAtom
       void zero_order() { t_Base :: print_escan_input( filename ); }
 
     protected:

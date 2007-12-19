@@ -70,9 +70,11 @@ namespace VA_CE
      }
      catch( std::exception &e )
      {
-       std::ostringstream s(" Memory allocation failure in Functional_Builder :: Load (...) ");
-       s << std::endl << e.what() << std::endl;
-       throw std::runtime_error(s.str());
+       std::ostringstream sstr;
+       sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+            << " Memory allocation failure in Functional_Builder :: Load (...) \n"
+            << e.what() << "\n";
+       throw std::runtime_error(sstr.str());
      }
      
      // then loads lattice

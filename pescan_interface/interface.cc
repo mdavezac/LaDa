@@ -263,8 +263,8 @@ namespace Pescan
     if( file.bad() or ( not file.is_open() ) )
     {
       std::ostringstream error;
-      error << __FILE__ << " - line: " << __LINE__ << ":\n"
-            <<  " Could not open file " << name << "for writing.\n"
+      error << __FILE__ << ", line: " << __LINE__ << ":\n"
+            <<  " Could not open file " << name << " for writing.\n"
             <<  " Aborting." << std::endl;
       throw std::runtime_error( error.str() );
     }
@@ -326,7 +326,7 @@ namespace Pescan
     {
       std::string filename = sstr.str();
       sstr.str("");
-      sstr << __FILE__ << " - line " << __LINE__ << ":\n"
+      sstr << __FILE__ << ", line " << __LINE__ << ":\n"
            << "Could not open file "
            << filename
            << " in Pescan::Interface::read_result " << std::endl;
@@ -353,7 +353,8 @@ namespace Pescan
     }
     if( u == escan.nbstates ) return true;
     
-    std::cerr << "Found " << u << " eigenvalues when " 
+    std::cerr << __FILE__ << ", line: " << __LINE__ << "\n"
+              << "Found " << u << " eigenvalues when " 
               << escan.nbstates << " expected " << std::endl;
     return false;
   }

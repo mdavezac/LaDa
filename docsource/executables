@@ -114,7 +114,8 @@
      Optimizes in-plane stress as computed from vff and band-gaps as computed
      from escan. This is a two-objective GA (first stress, second band-gap).
      It is intended for quaternaries (should work for ternaries as well) where
-     structures form the minimal epitaxial unit-cell.
+     optimized structures span the minimal epitaxial unit-cell. As such
+     structures are inputed in a special way (see below).
       \param -h, --help prints out options
       \param -i, --input file to read input from. Defaults to "input.xml" in current directory.
 
@@ -129,6 +130,10 @@
          </Lattice>
          <Structure direction="1 0 0" multplicity="5"/>
          <GA>
+           <Objective>
+             <Objective type="minimize"/> <!-- In-plane stress/>
+             <Objective type="target" target=0.3/> <!-- bandgap/>
+           </Objective>
            ...
          </GA>
          <Functional type="escan">
@@ -145,6 +150,10 @@
     number of (epitaxial) unit-cells to use in the epitaxial direction, eg the number of layers. 
     \warning There is not \ref TagConcentration tag here. Concentrations are
     set by specifying a x0 attribute in the \<GA\> tag. 
+    The \<Structure\> tag also accepts the following attributes \a PI, \a
+    energy, \a scale. 
+    \warning Do not forget to set the scale attribute of either in the lattice
+    or the structure tag. Otherwise, results may be undetermined.
     
 
 **/

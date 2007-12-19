@@ -6,8 +6,6 @@
 #include <config.h>
 #endif
 
-#include <stdexcept>       // std::runtime_error
-
 #include <opt/types.h>
 #include <opt/ndim_iterator.h>
 

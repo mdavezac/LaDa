@@ -212,6 +212,7 @@ namespace Pescan
          sstr << vff.filename << "." << mpi::main.rank();
          vff.filename = sstr.str();
 #endif
+         atom_input = vff.filename;
        }
        //! Copy Constructor
        VirtualAtom   ( const VirtualAtom &_c )
