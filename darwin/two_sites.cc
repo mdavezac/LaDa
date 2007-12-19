@@ -4,8 +4,10 @@
 #include <algorithm>
 #include <bits/stl_algo.h>
 
+#include <lamarck/atom.h>
+#include <opt/fuzzy.h>
+
 #include "two_sites.h"
-#include "lamarck/atom.h"
 
 namespace TwoSites
 {

@@ -17,7 +17,7 @@
 #include <tinyxml/tinyxml.h>
 
 #include <opt/types.h>
-#include <opt/traits.h>
+#include <opt/fuzzy.h>
 
 #include <atat/vectmac.h>
 #include <atat/xtalutil.h>

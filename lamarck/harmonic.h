@@ -16,11 +16,11 @@
 
 
 #include <opt/types.h>
-#include <opt/traits.h>
+#include <opt/fuzzy.h>
 #include <atat/vectmac.h>
 
 #ifdef _MPI 
-  #include "mpi/mpi_object.h"
+  #include <mpi/mpi_object.h>
 #endif
 
 namespace Ising_CE 

@@ -3,8 +3,9 @@
 //
 #include <cstdlib>
 
+#include <opt/fuzzy.h>
+
 #include "layered.h"
-#include <opt/traits.h>
 
 namespace Vff
 { 

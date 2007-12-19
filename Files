@@ -66,9 +66,10 @@ MPI_CC = mpi_object.cc
 MPI_H  = mpi_object.h
 MPI_DOC = $(MPI_H) $(MPI_CC) 
 
-OPT_H = ndim_iterator.h minimize_base.h opt_polynome.h \
-        opt_frprmn.h  gsl_minimizers.h types.h convex_hull.h function_base.h \
-	va_minimizer.h fitness_function.h  opt_functors.h opt_monome.h traits.h
+OPT_H = ndim_iterator.h minimize_base.h polynome.h frprmn_minimizer.h \
+        gsl_minimizers.h types.h convex_hull.h function_base.h \
+	va_minimizer.h fitness_function.h  function_functors.h monome.h traits.h \
+        fuzzy.h 
 OPT_F90 = dbrent.F90  df1dim.F90  frprmn.F90  linmin.F90
 OPT_DOC = $(OPT_H) $(OPT_CC) 
 

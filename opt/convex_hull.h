@@ -16,7 +16,7 @@
 #include <tinyxml/tinyxml.h>
 
 #include "types.h"
-#include "opt_functors.h"
+#include "function_functors.h"
 
 #ifdef _MPI
 #include <mpi/mpi_object.h>

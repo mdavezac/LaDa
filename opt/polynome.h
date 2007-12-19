@@ -17,11 +17,11 @@
 #include <math.h>
 
 #include "function_base.h"
-#include "opt_monome.h"
-#include "traits.h"
+#include "monome.h"
+#include "fuzzy.h"
 
 #ifdef _MPI
-#include "mpi/mpi_object.h"
+#include <mpi/mpi_object.h>
 #endif
 
 namespace function {

@@ -16,9 +16,9 @@
 
 #include <tinyxml/tinyxml.h>
 
-#include "opt/function_base.h"
-#include "opt/opt_polynome.h"
-#include "opt/types.h"
+#include <opt/function_base.h>
+#include <opt/polynome.h>
+#include <opt/types.h>
 
 namespace VA_CE {
 

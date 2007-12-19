@@ -6,6 +6,7 @@
 #include <physics/physics.h>
 #include <print/stdout.h>
 #include <opt/traits.h>
+#include <opt/fuzzy.h>
 
 #include "bandgap.h"
 

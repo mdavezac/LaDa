@@ -5,11 +5,11 @@
 #include <iomanip>
 #include <algorithm>
 
-#include "opt/types.h"
-#include "opt/traits.h"
+#include <opt/types.h>
+#include <opt/fuzzy.h>
+#include <atat/findsym.h>
+#include <atat/xtalutil.h>
 
-#include "atat/findsym.h" 
-#include "atat/xtalutil.h" 
 #include "cluster.h"
 
 

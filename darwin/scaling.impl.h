@@ -4,6 +4,8 @@
 #ifndef _RANKING_IMPL_H_
 #define _RANKING_IMPL_H_
 
+#include <opt/fuzzy.h>
+
 namespace Scaling
 {
 

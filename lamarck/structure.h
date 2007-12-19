@@ -24,6 +24,7 @@
 #include <atat/vectmac.h>
 #include <atat/xtalutil.h>
 #include <atat/machdep.h>
+
 #include "atom.h"
 #include "lattice.h"
 

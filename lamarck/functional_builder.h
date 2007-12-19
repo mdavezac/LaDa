@@ -11,10 +11,10 @@
 #include <string>
 #include <stdio.h>
 
-#include <opt/opt_functors.h>
+#include <opt/function_functors.h>
 #include <tinyxml/tinyxml.h>
 
-#include "atat/vectmac.h"
+#include <atat/vectmac.h>
 
 #include "polynome.h"
 #include "cluster.h"
@@ -23,7 +23,7 @@
 #include "lattice.h"
 
 #ifdef _MPI 
-  #include "mpi/mpi_object.h"
+  #include <mpi/mpi_object.h>
 #endif
 
 //! \brief Nonsense namespace which should become %CE (probably)

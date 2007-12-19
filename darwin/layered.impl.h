@@ -9,6 +9,7 @@
 #include <print/manip.h>
 #include <lamarck/structure.h>
 #include <lamarck/atom.h>
+#include <opt/fuzzy.h>
 
 namespace Layered
 {

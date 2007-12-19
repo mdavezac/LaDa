@@ -14,14 +14,8 @@
 #include "functional.h"
 #include "va.h"
 
-#ifdef _DOFORTRAN
-#include <opt/opt_frprmn.h>
-#else
-#include <opt/gsl_minimizers.h>
-#endif
-
 #ifdef _MPI 
-  #include "mpi/mpi_object.h"
+  #include <mpi/mpi_object.h>
 #endif
 
 namespace Vff

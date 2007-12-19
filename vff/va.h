@@ -13,7 +13,7 @@
 #include <lamarck/structure.h>
 
 #ifdef _DOFORTRAN
-#include <opt/opt_frprmn.h>
+#include <opt/frprmn_minimizer.h>
 #else
 #include <opt/gsl_minimizers.h>
 #endif
