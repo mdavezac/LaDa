@@ -33,10 +33,10 @@ namespace Pescan
     protected:
       //! Amplitude of the numerical derivative
       static const types::t_real amplitude = 0.002;
-      //! \f$\sqrt(2)\f$
-      static const types::t_real sqrt2 = 1.4142135623730950488016887242096980785696;
-      //! \f$-\sqrt(2)\f$
-      static const types::t_real msqrt2 = -1.4142135623730950488016887242096980785696;
+      //! \f$\frac{\sqrt(2)}{2}\f$
+      static const types::t_real sqrt2_over2 = 0.707106781186547524400844362104849039284835937;
+      //! \f$-\frac{\sqrt(2)}{2}\f$
+      static const types::t_real msqrt2_over2 = -0.707106781186547524400844362104849039284835937;
       //! Kpoint Gamma
       static const atat::rVector3d Gamma;
       //! Kpoint \f$(100)\f$

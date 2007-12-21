@@ -292,7 +292,7 @@ namespace Pescan
     if ( atat::norm2( escan.kpoint ) < types::tolerance ) file << "11 0 0 0 0 0\n";
     else
     {
-      atat::rVector3d k = escan.kpoint * 2.0 * Math::pi * Physics::a0("A") / escan.scale;
+      atat::rVector3d k = escan.kpoint;
       file << "11 1 " << k << " " 
                       << std::setw(12) << std::setprecision(8) 
                       << escan.scale / Physics::a0("A") <<  "\n";

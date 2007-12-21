@@ -104,7 +104,7 @@ namespace Physics
   {
     if( _str == "erg*s" ) return 6.626075510e-27;
     else if( _str == "J*s" ) return 6.626075510e-34;
-    else if( _str == "eV*s" ) return 4.1356692-15;
+    else if( _str == "eV*s" ) return 4.1356692e-15;
     else if( _str == "Ry" ) return 2.0 * Math::pi;
     else if( _str == "H" ) return 2.0 * Math::pi;
     else throw std::runtime_error( "Unknown Unit for Planck constant" );
@@ -112,11 +112,11 @@ namespace Physics
 
   inline types::t_real hbar( const std::string &_str )
   {
-    if( _str == "erg*s" ) return 1.05457266-27;
-    else if( _str == "J*s" ) return 1.05457266-34;
-    else if( _str == "eV*s" ) return 6.5821220-16;
-    else if( _str == "Ry" ) return 1.0;
-    else if( _str == "H" ) return 1.0;
+    if( _str == "erg*s" ) return 1.05457266e-27;
+    else if( _str == "J*s" ) return 1.05457266e-34;
+    else if( _str == "eV*s" ) return 6.5821220e-16;
+    else if( _str == "Ry*s" ) return 1.0;
+    else if( _str == "H*s" ) return 1.0;
     else throw std::runtime_error( "Unknown Unit for hbar constant" );
   }
 

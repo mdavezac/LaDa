@@ -153,6 +153,13 @@ namespace eMassSL
       void evaluate();
       //! Allows for periodic all-electron computations
       eoF<bool>* LoadContinue(const TiXmlElement &_el );
+      //! \brief Intializes before calls to evaluation member routines
+      //! \details escan stuff do not need explicit initialization, since they
+      //!          take their input directly from vff. More
+      //!          explicitely, its "initialization" is carried out in the body
+      //!          of Darwin::evaluate().
+      void init( t_Individual &_indiv )
+        { t_Base :: init( _indiv ); vff.init(); }
 
     protected:
       //! Transforms stress and band-edges to quantities in \a _indiv.
