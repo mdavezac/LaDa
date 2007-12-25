@@ -17,7 +17,7 @@ namespace Ising_CE {
 
   class norm_compare
   {
-    const atat::rVector3d &vec;
+    const atat::rVector3d vec;
     public:
       norm_compare( const atat::rVector3d &_vec ) : vec(_vec) {};
       norm_compare( const norm_compare &_c ) : vec(_c.vec) {};
@@ -59,13 +59,12 @@ namespace Ising_CE {
       std::vector<atat::rVector3d> :: iterator is_found;
       
       // search for _cluster  vector such that|| (*i_vec-shift) - *i_equiv ||  > zero_tolerance
-      Real (*ptr_func)(const atat::FixedVector<Real, 3>&) = atat::norm;
       std::vector<atat::rVector3d> :: iterator i2_vec = vectors.begin();
       for(; i2_vec != i_vec_last; ++i2_vec)
       {
         is_found  = std::find_if( _cluster.vectors.begin(),
                                   _cluster.vectors.end(),
-                                  norm_compare( shift ) );
+                                  norm_compare( *i2_vec - shift ) );
 
         if ( is_found == _cluster.vectors.end() ) break;
       }
