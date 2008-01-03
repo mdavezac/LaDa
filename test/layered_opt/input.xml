@@ -1,6 +1,6 @@
 <?xml version="1.0" standalone="no" ?>
 <Job>
-    <Structure direction=" 3 1 1 "  multiplicity="10" />
+    <Structure direction=" 1 0 0 "  multiplicity="30" />
     <GA popsize="50" rate="0.4">
         <Objective>
           <Objective type="minimize" />

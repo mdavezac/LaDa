@@ -509,6 +509,8 @@ errorout:
 
     concentration.setfrozen( structure );
 
+    structure.print_xcrysden( std::cout );
+
     return true;
 
   }
