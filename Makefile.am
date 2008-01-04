@@ -48,6 +48,7 @@ doc: $(ALL_DOCS)
 	@cp doxy.conf doxy.tmp
 	@echo "HAVE_DOT = @FOUNDDOT@" >> doxy.tmp
 	@echo "INPUT = $(ALL_DOCS)" >> doxy.tmp
+	@echo "OUTPUT_DIRECTORY = @DOCDIR@ " >> doxy.tmp
 	@cat doxy.tmp | doxygen -
 	@rm doxy.tmp
 clean-local:

@@ -322,6 +322,13 @@ AC_CHECK_PROG(founddox, doxygen, true, false)
 AM_CONDITIONAL(DODOC, test x$founddox = xtrue)
 AC_CHECK_PROG(FOUNDDOT, dot, "YES", "NO")
 
+DOCDIR="doc"
+if test $datadir = "\${prefix}/share"; then
+  DOCDIR="doc"
+else
+  DOCDIR="$datadir"
+fi
+AC_SUBST(DOCDIR)
 
 AC_OUTPUT(Makefile atat/Makefile physics/Makefile opt/Makefile lamarck/Makefile
           vff/Makefile mpi/Makefile pescan_interface/Makefile darwin/Makefile 
@@ -373,7 +380,7 @@ fi
 echo ""
 if test $founddox = true; then
   echo "Type \"make doc\" for doxygen documentation"
-  echo "The check out doc/html/index.html"
+  echo "Then check out $DOCDIR/html/index.html"
 else
   echo "You will need to install doxygen to generate the documentation"
 fi
