@@ -83,8 +83,10 @@ errorout:
     types::t_complex  *hold = new types::t_complex[ N ];
     if ( not hold )
     {
-      std::cerr << " Could not allocate memory in set_concentration!! " << std::endl; 
-      exit(0);
+      std::ostringstream sstr;
+      sstr << __FILE__ << ", line: " << __LINE__ << "\n"
+           << " Could not allocate memory while setting concentration.\n" << std::endl; 
+      throw std::runtime_error( sstr.str() );
     }
 
     // creates individual with unnormalized occupation
@@ -102,7 +104,7 @@ errorout:
       for (; i_atom != i_atom_end; ++i_atom, ++i_hold)
         if ( not ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
         {
-          if ( std::abs( std::real(*i_hold) ) < types::tolerance )
+          if ( Fuzzy::eq( std::real(*i_hold), 0.0 ) )
                 i_atom->type = rng.flip() ? 1.0: -1.0;
           else  i_atom->type = std::real(*i_hold) > 0.0 ? 1.0: -1.0;
         }
@@ -113,7 +115,7 @@ errorout:
     {
       if ( not ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
       {
-        if ( std::abs( std::real(*i_hold) ) < types::tolerance )
+        if ( Fuzzy::eq( std::real(*i_hold), 0.0 ) )
           i_atom->type = rng.flip() ? 10.0*types::tolerance: -10.0*types::tolerance;
         else i_atom->type = std::real( *i_hold );
       }

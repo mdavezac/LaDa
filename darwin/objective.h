@@ -629,7 +629,13 @@ namespace Objective
         known convex-hull at iteration (generation) \f$n\f$ of the genetic
         algorithm. This definition of the objective as the distance to the
         known convex-hull allows us to refine the convex-hull simultaneously
-        throughout the concentration range.
+        throughout the concentration range. At a breakpoint, the left and right
+        derivatives are invoked for each spin direction, depending upon the
+        value of the spin. Eg, we expect a \e binary spin: (i) if the spin is
+        up, flipping it down will mean lowering the concentration, and hence
+        one should examine the left derivative, (ii) if the spin is down, then
+        flipping it up will increase the concentration, and one should look at
+        the right derivative. 
       \note This is a <STRONG>scalar</STRONG> objective
       \xmlinput There are no special attributes
         \code <Objective type="convexhull"/> \endcode
@@ -706,8 +712,7 @@ namespace Objective
       */
       virtual void evaluate_gradient( const t_Quantity &_q,
                                       t_QuantityGradients &_grad,
-                                      t_VA_Type *_i_grad)
-        { evaluate_with_gradient( _q, _grad, _i_grad ); }
+                                      t_VA_Type *_i_grad);
       /** \brief Returns both \f$ \mathcal{O}(q_\sigma) = q_\sigma -
               C^{(n)}(x_\sigma), \f$ \f$ \partial\mathcal{O}(q_\sigma) =
               \partial q_\sigma - \partial C^{(n)}(x_\sigma), \f$

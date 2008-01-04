@@ -18,7 +18,7 @@
 #include "fuzzy.h"
 
 #ifdef _MPI
-#include "mpi/mpi_object.h"
+#include <mpi/mpi_object.h>
 #endif
 
 //! \brief %Traits and functions capable of discerning between a few standard
@@ -77,187 +77,158 @@ namespace Traits
 
 
 //! Templates for handling modifiers (&, *, const)
-  namespace Modifier
-  {
-    //! Construct for detecting (absence/presence of) const modifier
-    template<class T_QUANTITY> struct Const
-    { 
-      const static bool is_const = false;  //!< True ie T_QUANTITY is const
-      typedef T_QUANTITY t_nonconstant;    //!< Non Constant type
-      typedef const T_QUANTITY t_constant; //!< Constant type
-    };
-    //! Construct for detecting (presence of) const modifier
-    template<class T_QUANTITY> struct Const<const T_QUANTITY>
-    { 
-      const static bool is_const = true;  //!< True ie T_QUANTITY is const
-      typedef T_QUANTITY t_nonconstant;    //!< Non Constant type
-      typedef const T_QUANTITY t_constant; //!< Constant type
-    };
-    //! Construct for detecting (absence/presence of) & modifier
-    template<class T_QUANTITY> struct Reference
-    { 
-      const static bool is_refd = false;  //!< True ie T_QUANTITY is a reference
-      typedef T_QUANTITY t_nonrefd;    //!< Non Ref'd type
-      typedef T_QUANTITY& t_refd;      //!< Ref'd type
-    };
-    //! Construct for detecting (presence of) & modifier
-    template<class T_QUANTITY> struct Reference<T_QUANTITY&>
-    { 
-      const static bool is_refd = true;  //!< True ie T_QUANTITY is const
-      typedef T_QUANTITY t_nonrefd;      //!< Non ref'd type
-      typedef T_QUANTITY& t_refd;        //!< Ref'd type
-    };
-    //! Construct for detecting (absence/presence of) * modifier
-    template<class T_QUANTITY> class Pointer
-    { 
-      //! \cond
-      typedef typename Reference<T_QUANTITY> :: t_refd t_by_address;
-      template< class TQUANTITY > 
-        typename Reference<typename Pointer<TQUANTITY> :: t_innermost> :: t_refd
-          inline innermost( TQUANTITY &_ptr );
-      //! \endcond
+namespace Modifier
+{
+  //! Construct for detecting (absence/presence of) const modifier
+  template<class T_QUANTITY> struct Const
+  { 
+    const static bool is_const = false;  //!< True ie T_QUANTITY is const
+    typedef T_QUANTITY t_nonconstant;    //!< Non Constant type
+    typedef const T_QUANTITY t_constant; //!< Constant type
+  };
+  //! Construct for detecting (presence of) const modifier
+  template<class T_QUANTITY> struct Const<const T_QUANTITY>
+  { 
+    const static bool is_const = true;  //!< True ie T_QUANTITY is const
+    typedef T_QUANTITY t_nonconstant;    //!< Non Constant type
+    typedef const T_QUANTITY t_constant; //!< Constant type
+  };
+  //! Construct for detecting (absence/presence of) & modifier
+  template<class T_QUANTITY> struct Reference
+  { 
+    const static bool is_refd = false;  //!< True ie T_QUANTITY is a reference
+    typedef T_QUANTITY t_nonrefd;    //!< Non Ref'd type
+    typedef T_QUANTITY& t_refd;      //!< Ref'd type
+  };
+  //! Construct for detecting (presence of) & modifier
+  template<class T_QUANTITY> struct Reference<T_QUANTITY&>
+  { 
+    const static bool is_refd = true;  //!< True ie T_QUANTITY is const
+    typedef T_QUANTITY t_nonrefd;      //!< Non ref'd type
+    typedef T_QUANTITY& t_refd;        //!< Ref'd type
+  };
+  //! Construct for detecting (absence/presence of) * modifier
+  template<class T_QUANTITY> class Pointer
+  { 
+    //! \cond
+    typedef typename Reference<T_QUANTITY> :: t_refd t_by_address;
+    template< class TQUANTITY > 
+      typename Reference<typename Pointer<TQUANTITY> :: t_innermost> :: t_refd
+        inline innermost( TQUANTITY &_ptr );
+    //! \endcond
 
-      public:
-        typedef T_QUANTITY t_Quantity; //!< Original type
+    public:
+      typedef T_QUANTITY t_Quantity; //!< Original type
 
-      public:
-        const static bool is_pointer = false;  //!< True ie T_QUANTITY is a reference
-        typedef T_QUANTITY t_nonpointer;       //!< Non-pointer type
-        typedef T_QUANTITY* t_pointer;         //!< Pointer type
-        typedef T_QUANTITY t_innermost;  //!< Innermost pointerd type
+    public:
+      const static bool is_pointer = false;  //!< True ie T_QUANTITY is a reference
+      typedef T_QUANTITY t_nonpointer;       //!< Non-pointer type
+      typedef T_QUANTITY* t_pointer;         //!< Pointer type
+      typedef T_QUANTITY t_innermost;  //!< Innermost pointerd type
 
-      public:
-        //! Returns reference to innermost value of pointer
-        static typename Reference<t_nonpointer>::t_refd 
-          _innermost( t_by_address _ptr ) { return _ptr; }
-    };
-    //! Construct for detecting (presence of) * modifier
-    template<class T_QUANTITY> class Pointer<T_QUANTITY*>
-    { 
-      //! \cond
-      typedef T_QUANTITY* const t_by_address;
-      template< class TQUANTITY > 
-        typename Reference<typename Pointer<TQUANTITY> :: t_innermost> :: t_refd
-          inline innermost( TQUANTITY &_ptr );
-      //! \endcond
+    public:
+      //! Returns reference to innermost value of pointer
+      static typename Reference<t_nonpointer>::t_refd 
+        _innermost( t_by_address _ptr ) { return _ptr; }
+  };
+  //! Construct for detecting (presence of) * modifier
+  template<class T_QUANTITY> class Pointer<T_QUANTITY*>
+  { 
+    //! \cond
+    typedef T_QUANTITY* const t_by_address;
+    template< class TQUANTITY > 
+      typename Reference<typename Pointer<TQUANTITY> :: t_innermost> :: t_refd
+        inline innermost( TQUANTITY &_ptr );
+    //! \endcond
 
-      public:
-        typedef T_QUANTITY t_Quantity; //!< Original type
+    public:
+      typedef T_QUANTITY t_Quantity; //!< Original type
 
-      public:
-        const static bool is_pointer = true;  //!< True ie T_QUANTITY is a reference
-        typedef T_QUANTITY t_nonpointer;       //!< Non-pointer type
-        typedef T_QUANTITY* t_pointer;         //!< Pointer type
-         //!  Innermost pointed type
-        typedef typename Pointer<t_nonpointer>::t_innermost t_innermost; 
+    public:
+      const static bool is_pointer = true;  //!< True ie T_QUANTITY is a reference
+      typedef T_QUANTITY t_nonpointer;       //!< Non-pointer type
+      typedef T_QUANTITY* t_pointer;         //!< Pointer type
+       //!  Innermost pointed type
+      typedef typename Pointer<t_nonpointer>::t_innermost t_innermost; 
 
-      public:
-        //! Returns reference to innermost value of pointer
-        static typename Reference< t_innermost >::t_refd 
-          _innermost( t_by_address _ptr )
-          { return Pointer<t_nonpointer>::_innermost(*_ptr); }
-    };
-    //! Construct for detecting (presence of) * const modifier
-    template<class T_QUANTITY> class Pointer<const T_QUANTITY>
-    { 
-      //! \cond
-      typedef const T_QUANTITY& t_by_address;
-      template< class TQUANTITY > 
-        typename Reference<typename Pointer<TQUANTITY> :: t_innermost> :: t_refd
-          inline innermost( TQUANTITY &_ptr );
-      //! \endcond
+    public:
+      //! Returns reference to innermost value of pointer
+      static typename Reference< t_innermost >::t_refd 
+        _innermost( t_by_address _ptr )
+        { return Pointer<t_nonpointer>::_innermost(*_ptr); }
+  };
+  //! Construct for detecting (presence of) * const modifier
+  template<class T_QUANTITY> class Pointer<const T_QUANTITY>
+  { 
+    //! \cond
+    typedef const T_QUANTITY& t_by_address;
+    template< class TQUANTITY > 
+      typename Reference<typename Pointer<TQUANTITY> :: t_innermost> :: t_refd
+        inline innermost( TQUANTITY &_ptr );
+    //! \endcond
 
-      public:
-        typedef T_QUANTITY t_Quantity; //!< Original type
+    public:
+      typedef T_QUANTITY t_Quantity; //!< Original type
 
-      public:
-        const static bool is_pointer = true;  //!< True ie T_QUANTITY is a reference
-        typedef T_QUANTITY const t_nonpointer;       //!< Non-pointer type
-        typedef T_QUANTITY* const t_pointer;         //!< Pointer type
-         //!  Innermost pointed type
-        typedef T_QUANTITY const t_innermost; 
+    public:
+      const static bool is_pointer = true;  //!< True ie T_QUANTITY is a reference
+      typedef T_QUANTITY const t_nonpointer;       //!< Non-pointer type
+      typedef T_QUANTITY* const t_pointer;         //!< Pointer type
+       //!  Innermost pointed type
+      typedef T_QUANTITY const t_innermost; 
 
-      public:
-        //! Returns reference to innermost value of pointer
-        static typename Reference< t_nonpointer >::t_refd 
-          _innermost( t_by_address _ptr ) { return _ptr; }
-    };
-    //! Construct for detecting (presence of) * const modifier
-    template<class T_QUANTITY> class Pointer<T_QUANTITY* const>
-    { 
-      //! \cond
-      typedef T_QUANTITY* t_by_address;
-      template< class TQUANTITY > 
-        typename Reference<typename Pointer<TQUANTITY> :: t_innermost> :: t_refd
-          inline innermost( TQUANTITY &_ptr );
-      //! \endcond
+    public:
+      //! Returns reference to innermost value of pointer
+      static typename Reference< t_nonpointer >::t_refd 
+        _innermost( t_by_address _ptr ) { return _ptr; }
+  };
+  //! Construct for detecting (presence of) * const modifier
+  template<class T_QUANTITY> class Pointer<T_QUANTITY* const>
+  { 
+    //! \cond
+    typedef T_QUANTITY* t_by_address;
+    template< class TQUANTITY > 
+      typename Reference<typename Pointer<TQUANTITY> :: t_innermost> :: t_refd
+        inline innermost( TQUANTITY &_ptr );
+    //! \endcond
 
-      public:
-        typedef T_QUANTITY t_Quantity; //!< Original type
+    public:
+      typedef T_QUANTITY t_Quantity; //!< Original type
 
-      public:
-        const static bool is_pointer = true;  //!< True ie T_QUANTITY is a reference
-        typedef T_QUANTITY const t_nonpointer;       //!< Non-pointer type
-        typedef T_QUANTITY* const t_pointer;         //!< Pointer type
-         //!  Innermost pointed type
-        typedef typename Pointer<t_nonpointer>::t_innermost t_innermost; 
+    public:
+      const static bool is_pointer = true;  //!< True ie T_QUANTITY is a reference
+      typedef T_QUANTITY const t_nonpointer;       //!< Non-pointer type
+      typedef T_QUANTITY* const t_pointer;         //!< Pointer type
+       //!  Innermost pointed type
+      typedef typename Pointer<t_nonpointer>::t_innermost t_innermost; 
 
-      public:
-        //! Returns reference to innermost value of pointer
-        static typename Reference< t_innermost >::t_refd 
-          _innermost( t_by_address _ptr )
-          { return Pointer<t_nonpointer>::_innermost(*_ptr); }
-    };
-//
-//   //! \brief Reference wrapper which forces a template algorithm to take a
-//   //!        reference rather than a  value.
-//   //! \details Same as reference_wrapper from boost, more or less
-//   template< class T_QUANTITY >
-//   class Ref
-//   {
-//     public:
-//       typedef T_QUANTITY t_Quantity; //!< The type to reference
-//
-//     protected:
-//       //! \cond
-//       typedef typename Reference<t_Quantity> :: t_refd t_refd;
-//       typedef typename Reference<t_Quantity> :: t_refd t_nonrefd;
-//       //! \endcond
-//
-//     protected:
-//       t_refd refd; //!< Reference to pass
-//
-//
-//     public:
-//       //! Constructor
-//       explicit Ref( t_refd _refd ) :  refd( _refd ) {}
-//
-//       //! Operator returning the reference
-//       t_refd operator()() { return refd; } 
-//   };
+    public:
+      //! Returns reference to innermost value of pointer
+      static typename Reference< t_innermost >::t_refd 
+        _innermost( t_by_address _ptr )
+        { return Pointer<t_nonpointer>::_innermost(*_ptr); }
+  };
 
-
-    //! \brief Helper %function returning the value to which a pointer points.
-    //! \details Say you call this %function with an object in argument, you get
-    //!          a reference to this object in return. Say you call it with a
-    //!          pointer to the same object. You still get the same reference in
-    //!          return. Now if you call it with a pointer to this pointer to
-    //!          the same object, then  in that case, you still get the same
-    //!          reference. In other words. whatever you put in you get the most
-    //!          dereferenced value. Doesn't dereference iterators though...
-    template< class T_QUANTITY > 
-      typename Reference<typename Pointer<T_QUANTITY> :: t_innermost> :: t_refd
-        inline innermost( T_QUANTITY &_ptr )
-          { return Pointer<T_QUANTITY> :: _innermost(_ptr); }
-    
-    //! \brief const version of Modifier::innnermost()
-    template< class T_QUANTITY > 
-      typename Reference<const typename Pointer<T_QUANTITY> :: t_innermost> :: t_refd
-        inline const_innermost(const T_QUANTITY &_ptr )
-          { return Pointer<const T_QUANTITY> :: _innermost(_ptr); }
-    
-  }
-
+  //! \brief Helper %function returning the value to which a pointer points.
+  //! \details Say you call this %function with an object in argument, you get
+  //!          a reference to this object in return. Say you call it with a
+  //!          pointer to the same object. You still get the same reference in
+  //!          return. Now if you call it with a pointer to this pointer to
+  //!          the same object, then  in that case, you still get the same
+  //!          reference. In other words. whatever you put in you get the most
+  //!          dereferenced value. Doesn't dereference iterators though...
+  template< class T_QUANTITY > 
+    typename Reference<typename Pointer<T_QUANTITY> :: t_innermost> :: t_refd
+      inline innermost( T_QUANTITY &_ptr )
+        { return Pointer<T_QUANTITY> :: _innermost(_ptr); }
+  
+  //! \brief const version of Modifier::innnermost()
+  template< class T_QUANTITY > 
+    typename Reference<const typename Pointer<T_QUANTITY> :: t_innermost> :: t_refd
+      inline const_innermost(const T_QUANTITY &_ptr )
+        { return Pointer<const T_QUANTITY> :: _innermost(_ptr); }
+  
+}
 
 namespace opt 
 {
@@ -282,6 +253,7 @@ namespace opt
   template< class T_ARG >
    struct GetScalar<T_ARG, false> { typedef T_ARG t_Scalar;  //!< The the resulting type
    };
+
 
   //! \brief Defines a print_out and a broadcast %function depending on 
   //! whether \a IS_SCALAR is true or false
@@ -403,15 +375,21 @@ namespace Traits
       //! true is Quantity::t_Quantity is a vector 
       const static bool is_vector = Dim<t_Quantity> :: is_vector;
 
-      //! Incorporates Fuzzy::less
-      static bool less( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
-        { return opt::Fuzzy<t_ScalarQuantity>::less(_a,_b); }
-      //! Incorporates Fuzzy::greater
-      static bool greater( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
-        { return opt::Fuzzy<t_ScalarQuantity>::greater(_a,_b); }
-      //! Incorporates Fuzzy::equal
-      static bool equal( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
-        { return opt::Fuzzy<t_ScalarQuantity>::equal(_a,_b); }
+      //! Incorporates Fuzzy::le
+      static bool le( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
+        { return Fuzzy::le(_a,_b); }
+      //! Incorporates Fuzzy::leq
+      static bool leq( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
+        { return Fuzzy::leq(_a,_b); }
+      //! Incorporates Fuzzy::ge
+      static bool ge( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
+        { return Fuzzy::ge(_a,_b); }
+      //! Incorporates Fuzzy::geq
+      static bool geq( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
+        { return Fuzzy::geq(_a,_b); }
+      //! Incorporates Fuzzy::eq
+      static bool eq( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
+        { return Fuzzy::eq(_a,_b); }
       //! Prints out the full vector into the stream
       static void print_out( std::ostream& _stream, const t_Quantity &_quantity )
         { opt::IsAScalar<is_scalar>::print_out(_stream, _quantity); }
@@ -451,4 +429,5 @@ namespace Traits
   };
 
 }
+
 #endif

@@ -326,6 +326,13 @@ extern const types::t_int ROOT_NODE;
   //! types::real, bool, and std::string. You can (and should) "overload" the
   //! template member function BroadCast::serialize() to include your own types
   //! and classes.
+  //! \warning It is important that, when using BroadCast, containers on the
+  //!          receiving-end processors should be empty (eg the container
+  //!          should be empty on all nodes but the node which is
+  //!          broadcasting). Otherwise, a buffer overflow error may occur when
+  //!          copying a container to the buffer.
+  //! \todo Make the problem of emptying containers on non-broadcasting node
+  //!       transparent to the user somehow.
   class BroadCast : public CommBase 
   {
     //! \brief interface to this class! see class description for use
@@ -417,8 +424,8 @@ extern const types::t_int ROOT_NODE;
       {
         types::t_int n = _cont.size();
         if ( not serialize( n ) ) return false;
-        if( stage == COPYING_FROM_HERE )
-          _cont.resize(n);
+        if ( n == 0 ) return true;
+        if( stage == COPYING_FROM_HERE ) _cont.resize(n);
         typename T_CONTAINER :: iterator i_ob = _cont.begin();
         typename T_CONTAINER :: iterator i_ob_end = _cont.end();
         for(; i_ob != i_ob_end; ++i_ob )
@@ -436,20 +443,16 @@ extern const types::t_int ROOT_NODE;
   template<class T_TYPE> inline bool BroadCast :: operator_( T_TYPE &_type )
   {
     if ( not keep_going ) return true;
-    try
+    if (not serialize( _type ) )
     {
-      if (not serialize( _type ) )
-        throw std::runtime_error( "Error while BroadCasting \n" );
-    }
-    catch( std::exception &e )
-    {
-      std::cerr << "Caught error while running lada" << std::endl
-                << e.what();
-      keep_going = false;
-      return false;
+      std::ostringstream sstr;
+      sstr << __FILE__ << ", line: " << __LINE__ << "\n"
+           << "Error while BroadCasting " << _type << "\n";
+      throw std::runtime_error( sstr.str() );
     }
     return true;
   }
+
   //! Takes care of operation calls for operator<<( BroadCast&, T_TYPE&)
   template<> inline bool BroadCast::operator_<const BroadCast::t_operation>( const t_operation &_op )
   {
@@ -517,6 +520,12 @@ extern const types::t_int ROOT_NODE;
   //! and classes.
   class AllGather : public BroadCast
   {
+    //! \brief interface to this class! see class description for use
+    //! \details handles both object serialization and broadcasting
+    //! operation in one clear call.
+    //! \param _this a BroadCast Object
+    //! \param _type Make sure BroadCast::serialize() has been declared for your T_TYPE.
+    template< class T_TYPE > friend AllGather& operator<< ( AllGather& _this, T_TYPE &_type );
     protected: 
       types::t_int *all_sizes; //!< receives gathered buffer sizes
     public:
@@ -542,7 +551,50 @@ extern const types::t_int ROOT_NODE;
       //! Use this to go to next stage
       //! \param _root optionally, specifies root process of data transaction
       bool operator()( types::t_unsigned _root = ROOT_NODE );
+
+    protected:
+      //! \brief Don't touch unless you know what you are doing
+      //! \details allows operator<<(BroadCast &, T_TYPE&) to call both operations and to
+      //! serialize objects
+      template<class T_TYPE> bool operator_( T_TYPE &_type );
   };
+
+  template< class T_TYPE > inline AllGather& operator<< ( AllGather& _this, T_TYPE &_type )
+    { _this.operator_( _type ); return _this; }
+
+  template<class T_TYPE> inline bool AllGather :: operator_( T_TYPE &_type )
+  {
+    if ( not keep_going ) return true;
+    if (not serialize( _type ) )
+    {
+      std::ostringstream sstr;
+      sstr << __FILE__ << ", line: " << __LINE__ << "\n"
+           << "Error while AllGathering " << _type << "\n";
+      throw std::runtime_error( sstr.str() );
+    }
+    return true;
+  }
+
+  //! Takes care of operation calls for operator<<( AllGather&, T_TYPE&)
+  template<> inline bool AllGather::operator_<const BroadCast::t_operation>
+                                             ( const BroadCast::t_operation &_op )
+  {
+    if ( not keep_going ) return true;
+    if      ( _op == SIZEUP or _op == CLEAR )   reset();
+    else if ( _op == ALLOCATE ) allocate_buffers(); 
+    else if ( _op == BROADCAST ) operator()(); 
+    else if ( _op == NEXTSTAGE )
+    {
+      switch( stage )
+      {
+        case GETTING_SIZE: allocate_buffers(); break;
+        case COPYING_TO_HERE: operator()(); break;
+        case COPYING_FROM_HERE: reset(); break;
+        default: break;
+      }
+    }
+    return true; 
+  }
 
 
   //! \brief Return an iterator so each processor gets to screen different bits of a container

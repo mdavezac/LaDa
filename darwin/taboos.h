@@ -16,7 +16,7 @@
 #include <eo/eoOp.h>
 #include <eo/eoGenOp.h>
 
-#include "opt/types.h"
+#include <opt/types.h>
 
 #include "functors.h"
 #include "gatraits.h"

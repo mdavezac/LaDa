@@ -244,8 +244,7 @@ namespace function
       // required minimizer:: behavior
     public:
       //! Returns the sum of the two functionals
-      virtual t_Type evaluate() 
-        { return (functional1->evaluate() + functional2->evaluate()); }
+      virtual t_Type evaluate() { return (functional1->evaluate() + functional2->evaluate()); }
       //! Computes the gradient of the sum of the two functionals
       virtual void evaluate_gradient( t_Type* const _i_grad);
       virtual t_Type evaluate_one_gradient( types::t_unsigned _pos);

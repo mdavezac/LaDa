@@ -85,10 +85,10 @@ namespace CE
 
       //! Returns the evaluation of the CE functional
       types::t_real evaluate() { return functional.evaluate(); }
-      template< class T_QUANTITYGRADIENTS >
       //! \brief Computes the gradient of the CE functional
       //! \param _grad is a container holding the gradient. It should accept a
       //!              begin() member routine for which std::copy() can be called.
+      template< class T_QUANTITYGRADIENTS >
       void evaluate_gradient( T_QUANTITYGRADIENTS& _grad );
       //! \brief Computes the gradient and returns the evaluation of the CE functional
       //! \param _grad is a container holding the gradient. It should accept a

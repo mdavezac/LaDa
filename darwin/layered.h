@@ -344,7 +344,7 @@ namespace Layered
   //!        direction
   //! \details Two vectors are compared by using the value of their scalar
   //           product with Depth::a0. If these scalar product are equal (as
-  //           defined by opt::Fuzzy<types::t_real>::equal()), then their
+  //           defined by Fuzzy::eq()), then their
   //           scalar product with Depth::a1 are compared. If again these are
   //           equal, then the scalar porducts with Depth::a2 are compared and
   //           the result return. Depth::a0 is the first column of the matrix

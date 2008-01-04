@@ -61,9 +61,9 @@ namespace Vff
       if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_X ) vec[0] = 0.0;
       if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_Y ) vec[1] = 0.0;
       if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_Z ) vec[2] = 0.0;
-      if(     ( not opt::Fuzzy<types::t_real> :: equal( vec[0], 0 ) )  
-          and ( not opt::Fuzzy<types::t_real> :: equal( vec[1], 0 ) )  
-          and ( not opt::Fuzzy<types::t_real> :: equal( vec[2], 0 ) )  ) continue;
+      if(     ( not Fuzzy::eq( vec[0], 0e0 ) )  
+          and ( not Fuzzy::eq( vec[1], 0e0 ) )  
+          and ( not Fuzzy::eq( vec[2], 0e0 ) )  ) continue;
 
       // It has, hence it is printed out to the pseudo list.
       // First, we must find the type of empirical pseudo 

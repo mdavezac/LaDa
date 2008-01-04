@@ -72,7 +72,7 @@ namespace Fitness
     typename t_Quantity :: const_iterator i_scalar1_end = vec_quantity.end();
     typename t_Quantity :: const_iterator i_scalar2 = _f.vec_quantity.begin();
     for(; i_scalar1 != i_scalar1_end; ++i_scalar1, ++i_scalar2 )
-      if ( not t_ScalarQuantityTraits :: greater( *i_scalar2, *i_scalar1 ) ) return false;
+      if ( not t_ScalarQuantityTraits :: ge( *i_scalar2, *i_scalar1 ) ) return false;
     return true;
   }
   template<class T_QUANTITYTRAITS>
@@ -90,7 +90,7 @@ namespace Fitness
     typename t_Quantity :: const_iterator i_scalar1_end = vec_quantity.end();
     typename t_Quantity :: const_iterator i_scalar2 = _f.vec_quantity.begin();
     for(; i_scalar1 != i_scalar1_end; ++i_scalar1, ++i_scalar2 )
-      if ( not t_ScalarQuantityTraits :: less( *i_scalar2, *i_scalar1 ) ) return false;
+      if ( not t_ScalarQuantityTraits :: le( *i_scalar2, *i_scalar1 ) ) return false;
     return true;
   }
   template<class T_QUANTITYTRAITS>
@@ -108,7 +108,7 @@ namespace Fitness
     typename t_Quantity :: const_iterator i_scalar1_end = vec_quantity.end();
     typename t_Quantity :: const_iterator i_scalar2 = _f.vec_quantity.begin();
     for(; i_scalar1 != i_scalar1_end; ++i_scalar1, ++i_scalar2 )
-      if ( not t_ScalarQuantityTraits :: equal( *i_scalar2, *i_scalar1 ) ) return false;
+      if ( not t_ScalarQuantityTraits :: eq( *i_scalar2, *i_scalar1 ) ) return false;
     return true;
   }
   template<class T_QUANTITYTRAITS>

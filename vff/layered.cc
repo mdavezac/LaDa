@@ -20,8 +20,8 @@ namespace Vff
     template_strain.zero(); 
 
     // First, lets create an orthonormal vector to u
-    atat::rVector3d a1 = opt::Fuzzy<types::t_real>::equal( u(0), 0.0 ) ? 
-                           ( opt::Fuzzy<types::t_real>::equal( u(1), 0.0 ) ? 
+    atat::rVector3d a1 = Fuzzy::eq( u(0), 0e0 ) ? 
+                           ( Fuzzy::eq( u(1), 0e0 ) ? 
                               atat::rVector3d(1, 0, 0):
                               atat::rVector3d(0, u(2), -u(3) )  ): 
                            atat::rVector3d( -u(2) -u(1), u(0), u(0) );
@@ -154,7 +154,7 @@ namespace Vff
     com[0] /= (types::t_real) structure.atoms.size();
     com[1] /= (types::t_real) structure.atoms.size();
     com[2] /= (types::t_real) structure.atoms.size();
-    if ( opt::Fuzzy<types::t_real>::equal( atat::norm2( com ), 0 ) ) return;
+    if ( Fuzzy::eq( atat::norm2( com ), 0e0 ) ) return;
 
 
     for(i_atom = structure.atoms.begin(); i_atom != i_atom_end; ++i_atom )

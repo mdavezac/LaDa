@@ -23,21 +23,18 @@
         <Atom x="1.500000" y="1.500000" z="1.000000" type="Au" />
         <Atom x="2.000000" y="2.000000" z="1.000000" type="Au" />
     </Structure>
-    <GA method="darwin">
+    <GA method="darwin" popsize=10 rate=0.1 >
         <Objective type="convexhull" />
         <Breeding>
-            <TabooOp>
-                <Krossover />
-            </TabooOp>
+            <UtterRandom />
+            <Minimizer type="VA" />
         </Breeding>
-        <Population size="20" />
-        <Offsprings rate="0.1000" />
         <Taboos>
             <Population />
             <Offspring />
         </Taboos>
         <Filenames save="save.xml" />
-        <Terminator ref="evaluation" value="2000" />
+        <Terminator ref="evaluation" value="1000" />
     </GA>
     <Lattice>
         <column x="0.00000000" y="0.50000000" z="0.50000000" />

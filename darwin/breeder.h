@@ -19,10 +19,12 @@
 #include <eo/eoBreed.h>
 #include <eo/utils/eoHowMany.h>
 
-#include "opt/types.h"
+#include <opt/types.h>
 
 #include "checkpoints.h"
 #include "gatraits.h"
+#include "debug.h"
+
 namespace GA 
 {
   //! \brief Creates an offpsring population from a current population
@@ -103,7 +105,7 @@ namespace GA
     types::t_unsigned target = (*howMany)( (types::t_unsigned) _parents.size());
 #ifdef _MPI
     types::t_int residual = target % (mpi::main.size());
-    target = target / mpi::main.size();
+    target /= mpi::main.size();
     if ( mpi::main.rank() < residual ) ++target;
 #endif
   

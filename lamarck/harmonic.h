@@ -51,10 +51,10 @@ namespace Ising_CE
       Point(const types::t_real _x, const types::t_real _y) : x(_x), y(_y)  {}
       //! Compares (Fuzzy math) the \e x axis coordinate with \a _x
       bool x_greater( const types::t_real _x ) const
-        { return opt::Fuzzy<types::t_real>::greater(x, _x); }
+        { return Fuzzy::ge(x, _x); }
       //! Compares (Fuzzy math) the \e x axis coordinate with \a _x
       bool x_lesser( const types::t_real _x ) const 
-        { return opt::Fuzzy<types::t_real>::less(x, _x); }
+        { return Fuzzy::le(x, _x); }
     };
 
 #ifdef _MPI

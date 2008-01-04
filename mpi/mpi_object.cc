@@ -417,14 +417,22 @@ gather_erase:
     if( stage != GETTING_SIZE )
     {
       if ( end_int_buff - cur_int_buff < 1) 
-        return false;
+      {
+        std::ostringstream sstr;
+        sstr << __FILE__ << ", line: " << __LINE__ << "\n"
+             << "Unexpected end of integer buffer\nCannot serialize string\n";
+        throw std::runtime_error( sstr.str() );
+      }
 
       std::string::iterator i_str;
       std::string::iterator i_str_end;
       if ( stage == COPYING_TO_HERE )
       {
+        *cur_int_buff = _str.size();
+        ++cur_int_buff; 
+        if( _str.size() == 0 ) return true;
+        
         i_str = _str.begin(); i_str_end = _str.end();
-        *cur_int_buff = _str.size(); ++cur_int_buff; 
         for (; i_str != i_str_end and cur_char_buff != end_char_buff; 
               ++i_str, ++cur_char_buff )
           *cur_char_buff = *i_str;

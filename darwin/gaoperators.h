@@ -20,8 +20,8 @@
 
 #include <tinyxml/tinyxml.h>
 
-#include "lamarck/structure.h"
-#include "opt/types.h"
+#include <lamarck/structure.h>
+#include <opt/types.h>
 
 #include "functors.h"
 #include "gatraits.h"

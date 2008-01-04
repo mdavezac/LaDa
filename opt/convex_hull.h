@@ -17,6 +17,7 @@
 
 #include "types.h"
 #include "function_functors.h"
+#include "fuzzy.h"
 
 #ifdef _MPI
 #include <mpi/mpi_object.h>
@@ -59,6 +60,11 @@ namespace opt
       convex-hull of a space requires, in theory, that you feed each every
       object in the space to opt::ConvexHull::Base. In practice, one could use
       some sampling method...
+
+      ConvexHull::Base defines a function which takes a scalar on input. It is
+      piecewise continuous. As a result its left and right derivatives exist
+      for all points. For convenience a \e derivative is also defined which
+      returns zero at the positions of breakpoints.
 
       The <em>x</em>-axis is determined by \a T_OBJECT::get_concentration(),
       The <em>y</em>-axis should be given on input when submitting an instance
@@ -246,7 +252,10 @@ namespace ConvexHull
       }
     //! returns \a _x < Vertex::x_end 
     bool x_greater(const types::t_real _x) const
-      { return (_x < x_end); }
+      { return _x < x_end; }
+    //! returns \a _x <= Vertex::x_end 
+    bool x_greatereq(const types::t_real _x) const
+      { return _x < x_end or Fuzzy::eq( _x, x_end); }
   };
 
   //! \brief Handles a collection of Vertex objects defining the convex-hull
@@ -263,11 +272,17 @@ namespace ConvexHull
       //! \brief Vertex collection type
       //! \details t_Vertices is an std::list since adding and removing
       //! vertices should happen relatively often as the convex-hull is refined.
+      //! \warning Technically, one should not expect orderto preserved in
+      //! lists. Nonetheless, this implementation does... The advantage of
+      //! using a list is that we can insert objects in amortized time.
       typedef std::list< Vertex<t_Object> > t_Vertices; 
       //! \brief HalfLine collection type
       //! \details Just as t_Vertices, this is a list since half-lines are
       //! expected to be added and removed relatively often as the convex-hull is
-      //! refined.
+      //! refined. 
+      //! \warning Technically, one should not expect orderto preserved in
+      //! lists. Nonetheless, this implementation does... The advantage of
+      //! using a list is that we can insert objects in amortized time.
       typedef std::list< HalfLine > t_HalfLines;
 
     protected:
@@ -293,8 +308,14 @@ namespace ConvexHull
       //! return the value of the convex-hull at \a _x
       types::t_real evaluate(const types::t_real _x) const;
       //! \brief return the gradient of the convex-hull at \a _x
-      //! \details No exceptions are made at the exact site of a breaking point.
+      //! \details Returns 0 if \e _x is at a breaking point
       types::t_real evaluate_gradient( const types::t_real _x ) const;
+      //! \brief return the gradient of the convex-hull at \a _x
+      //! \details At a breaking point, returns the left derivative.
+      types::t_real evaluate_left_gradient( const types::t_real _x ) const;
+      //! \brief return the gradient of the convex-hull at \a _x
+      //! \details At a breaking point, returns the left derivative.
+      types::t_real evaluate_right_gradient( const types::t_real _x ) const;
       //! removes all vertices
       void clear() { vertices.clear(); }
       //! returns an iterator to the beginning of the Vertex collection
@@ -379,37 +400,38 @@ namespace ConvexHull
 
      typename t_Vertices :: iterator i_begin = vertices.begin();
      typename t_Vertices :: iterator i_end = vertices.end();
-     typename t_Vertices :: iterator i_insert = i_begin; ++i_insert;
+     typename t_Vertices :: iterator i_insert;
 
      // exception case where there is only one point on 
      // the convex hull yet
-     if ( i_insert == i_end )
+     if ( vertices.size() == 1 )
      {
-       if ( std::abs(i_begin->x - vertex.x) < types::tolerance )
+       if ( Fuzzy::eq(i_begin->x, vertex.x) )
        { 
-         if ( i_begin->y > vertex.y )
+         if ( Fuzzy::ge(i_begin->x, vertex.x) )
            *i_begin = vertex;
          return false; // only one point, no convexhull yet!
        }
-       else 
-         i_begin->x > vertex.x ? vertices.push_front( vertex ) : vertices.push_back( vertex );
+       else if ( i_begin->x > vertex.x ) vertices.push_front( vertex );
+       else vertices.push_back( vertex );
        build_function();
        return true;
      }
 
-     std::const_mem_fun1_ref_t<bool, t_Vertex, const types::t_real> func(&t_Vertex::x_geq );
+     std::const_mem_fun1_ref_t<bool, t_Vertex,
+                               const types::t_real> func(&t_Vertex::x_geq );
      
      // does not change convex hull if this is true
-     if ( vertex.y - evaluate(vertex.x) > 0.0 )
+     if ( Fuzzy::ge(vertex.y, evaluate(vertex.x) ) )
        return false; 
      
      // first finds where to insert new vertex
      i_insert = std::find_if( i_begin, i_end, std::bind2nd(func, vertex.x) );
      if ( i_insert == i_end ) // outside of range
        vertices.push_back(vertex);
-     else if( std::abs(i_insert->x - vertex.x) < types::tolerance ) 
+     else if( Fuzzy::eq(i_insert->x, vertex.x ) )
      {  // point already exists at same concentration
-       if ( std::abs( i_insert->y - vertex.y ) < types::tolerance ) return false;
+       if (  Fuzzy::eq(i_insert->y, vertex.y ) ) return false;
        *i_insert = vertex;
      }
      else // otherwise, inserts new vertex
@@ -554,8 +576,7 @@ namespace ConvexHull
   template<class T_OBJECT>
   types::t_real Base<T_OBJECT> :: evaluate( const types::t_real _x) const
   {
-    if ( segments.size() == 0 )
-      return 0.0;
+    if ( segments.size() == 0 ) return 0.0;
 
     t_HalfLines :: const_iterator i_begin = segments.begin();
     t_HalfLines :: const_iterator i_end = segments.end();
@@ -573,22 +594,60 @@ namespace ConvexHull
   template<class T_OBJECT>
   types::t_real Base<T_OBJECT> :: evaluate_gradient( const types::t_real _x) const
   {
-    if ( segments.empty() )
-      return 0.0;
+    if ( segments.empty() ) return 0.0;
 
-    typename t_HalfLines :: const_iterator i_begin = segments.begin();
     typename t_HalfLines :: const_iterator i_end = segments.end();
     typename t_HalfLines :: const_iterator i_which;
     std::const_mem_fun1_ref_t<bool, HalfLine, const types::t_real> 
-                             func( &HalfLine :: x_greater );
-    i_which = std::find_if( i_begin, i_end, std::bind2nd( func, _x ) );
+                             func( &HalfLine :: x_greatereq );
+    i_which = std::find_if( segments.begin(), i_end, std::bind2nd( func, _x ) );
 
-    if ( i_which == i_end ) // exception case ...
-      --i_which; 
+    // exception case ...
+    if ( i_which == i_end ) --i_which; 
+    else if ( Fuzzy::eq( i_which->x_end, _x ) )
+      return 0e0;
 
     return i_which->a;
   }
 
+  template<class T_OBJECT>
+  types::t_real Base<T_OBJECT> :: evaluate_left_gradient( const types::t_real _x) const
+  {
+    if ( segments.empty() ) return 0.0;
+
+    typename t_HalfLines :: const_iterator i_end = segments.end();
+    typename t_HalfLines :: const_iterator i_which;
+    std::const_mem_fun1_ref_t<bool, HalfLine, const types::t_real> 
+                             func( &HalfLine :: x_greatereq );
+    i_which = std::find_if( segments.begin(), i_end, std::bind2nd( func, _x ) );
+
+    // exception case ...
+    if ( i_which == i_end ) --i_which;
+
+    return i_which->a;
+  }
+
+  template<class T_OBJECT>
+  types::t_real Base<T_OBJECT> :: evaluate_right_gradient( const types::t_real _x) const
+  {
+    if ( segments.empty() ) return 0.0;
+
+    typename t_HalfLines :: const_iterator i_end = segments.end();
+    typename t_HalfLines :: const_iterator i_which;
+    std::const_mem_fun1_ref_t<bool, HalfLine, const types::t_real> 
+                             func( &HalfLine :: x_greatereq );
+    i_which = std::find_if( segments.begin(), i_end, std::bind2nd( func, _x ) );
+
+    // exception case ...
+    if ( i_which == i_end ) --i_which;
+    else
+    {
+      if ( Fuzzy::eq( i_which->x_end, _x ) ) ++i_which;
+      if ( i_which == i_end ) --i_which;
+    }
+
+    return i_which->a;
+  }
 } // namespace ConvexHull
 }
 

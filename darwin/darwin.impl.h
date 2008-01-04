@@ -913,8 +913,19 @@ namespace GA
     {
       (*evaluation)(offspring, *i_island); // A first eval of pop.
 #ifdef _MPI // "All Gather" new population
-      breeder->synchronize_offspring( *i_island );
-      if(history) history->synchronize();
+      try 
+      {
+        breeder->synchronize_offspring( *i_island );
+        if(history) history->synchronize();
+      }
+      catch ( std::exception &e )
+      {
+        std::ostringstream sstr;
+        sstr << __FILE__ << ", line: " << __LINE__ << "\n"
+             << "Caught error while synchronizing starting population.\n" 
+             << e.what();
+        throw std::runtime_error( sstr.str() );
+      }
 #endif 
     }
     types::t_unsigned n = 0;
@@ -922,50 +933,51 @@ namespace GA
     Print::out << "\nEntering Generational Loop" << Print::endl;
     do
     {
-      try
+      Print::out << "Iteration " << n << Print::endl;
+      Print::xmg << Print::flush;
+      ++n;
+      i_island = i_island_begin;
+      for (int i=0; i_island != i_island_end; ++i, ++i_island )
       {
-        Print::out << "Iteration " << n << Print::endl;
-        Print::xmg << Print::flush;
-        ++n;
-        i_island = i_island_begin;
-        for (int i=0; i_island != i_island_end; ++i, ++i_island )
-        {
-
-          types::t_unsigned pSize = i_island->size();
-          offspring.clear(); // new offspring
-          
-          if( scaling ) (*scaling)( *i_island );
-          
-          (*breeder)(*i_island, offspring);
-          
-          (*evaluation)(*i_island, offspring); // eval of parents + offspring if necessary
+        types::t_unsigned pSize = i_island->size();
+        offspring.clear(); // new offspring
+        
+        if( scaling ) (*scaling)( *i_island );
+        
+        (*breeder)(*i_island, offspring);
+        
+        (*evaluation)(*i_island, offspring); // eval of parents + offspring if necessary
 
 
 #ifdef _MPI // "All Gather" offspring -- note that replacement scheme is deterministic!!
+        try
+        {
           breeder->synchronize_offspring( offspring );
           if(history) history->synchronize();
-#endif 
-          // Does scaling simultaneously over both populations
-          if( scaling ) (*scaling)( *i_island, offspring );
-
-          (*replacement)(*i_island, offspring); // after replace, the new pop. is in population
-          
-          if (pSize != i_island->size())
-          {
-             std::ostringstream sstr;
-             sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-                  << "Population "
-                  << ( pSize > i_island->size() ? "shrinking": "growing" )
-                  << " from " << pSize << " to " << i_island->size() << "\n";
-             throw std::runtime_error( sstr.str() );
-          }
         }
-      }
-      catch (std::exception& e)
-      {
-            std::string s = e.what();
-            s.append( " in eoEasyEA");
-            throw std::runtime_error( s );
+        catch ( std::exception &e )
+        {
+          std::ostringstream sstr;
+          sstr << __FILE__ << ", line: " << __LINE__ << "\n"
+               << "Caught error while synchronizing offsprings and history.\n" 
+               << e.what();
+          throw std::runtime_error( sstr.str() );
+        }
+#endif 
+        // Does scaling simultaneously over both populations
+        if( scaling ) (*scaling)( *i_island, offspring );
+
+        (*replacement)(*i_island, offspring); // after replace, the new pop. is in population
+        
+        if (pSize != i_island->size())
+        {
+           std::ostringstream sstr;
+           sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+                << "Population "
+                << ( pSize > i_island->size() ? "shrinking": "growing" )
+                << " from " << pSize << " to " << i_island->size() << "\n";
+           throw std::runtime_error( sstr.str() );
+        }
       }
     } while ( continuator->apply( i_island_begin, i_island_end ) );
 
@@ -1023,12 +1035,30 @@ nextfilename:
       }
     }
 
-    mpi::BroadCast bc( mpi::main );
-    bc << _input << _restart << _evaluator
-       << mpi::BroadCast::allocate
-       << _input << _restart << _evaluator
-       << mpi::BroadCast::broadcast
-       << _input << _restart << _evaluator;
+    try
+    {
+      // Empty strings before allocating size.
+      if( not mpi::main.is_root_node() )
+      {
+        _input == "";
+        _restart = "";
+        _evaluator = "";
+      }
+      mpi::BroadCast bc( mpi::main );
+      bc << _input << _restart << _evaluator
+         << mpi::BroadCast::allocate
+         << _input << _restart << _evaluator
+         << mpi::BroadCast::broadcast
+         << _input << _restart << _evaluator;
+    }
+    catch ( std::exception &e )
+    {
+      std::ostringstream sstr;
+      sstr << __FILE__ << ", line: " << __LINE__ << "\n"
+           << "Caught error while synchronizing input files.\n" 
+           << e.what();
+      throw std::runtime_error( sstr.str() );
+    }
   }
 #endif
 
@@ -1048,10 +1078,23 @@ nextfilename:
     {
 #endif
       OPENXMLINPUT
-      const TiXmlElement *parent = docHandle.FirstChild("Job")
-                                            .FirstChild("GA").Element();
+      const TiXmlElement *parent = docHandle.FirstChild("Job").Element();
       if ( not parent )
-        return false;
+      {
+        std::ostringstream sstr;
+        sstr << __FILE__ << ", line: " << __LINE__ << "\n"
+             << "Could not find Job tag in  " << filename << "\n";
+        throw std::runtime_error( sstr.str() );
+      }
+      parent = docHandle.FirstChild("Job")
+                        .FirstChild("GA").Element();
+      if ( not parent )
+      {
+        std::ostringstream sstr;
+        sstr << __FILE__ << ", line: " << __LINE__ << "\n"
+             << "Could not find GA tag in  " << filename << "\n";
+        throw std::runtime_error( sstr.str() );
+      }
       const TiXmlElement *child = parent->FirstChildElement("Filenames");
       for( ; child; child = child->NextSiblingElement("Filenames") )
       {
@@ -1069,19 +1112,36 @@ nextfilename:
         if ( child->Attribute("xmgrace") )
           xmg_filename = Print::reformat_home(child->Attribute("xmgrace"));
       }
-
 #ifdef _MPI
     }
-    Print::xmg.sync_filename( out_filename );
-    Print::out.sync_filename( out_filename );
+    try
+    {
+      Print::out.sync_filename( out_filename );
+      Print::xmg.sync_filename( xmg_filename );
+    }
+    catch ( std::exception &e )
+    {
+      std::ostringstream sstr;
+      sstr << __FILE__ << ", line: " << __LINE__ << "\n"
+           << "Caught error while synchronizing output filenames\n" 
+           << e.what();
+      throw std::runtime_error( sstr.str() );
+    }
 #else
     Print::xmg.init( xmg_filename );
     Print::out.init( out_filename );
 #endif
 
     Print::xmg << Print::Xmg :: comment << "new GA run" << Print::endl;
-    Print::out << "Starting genetic algorithm run\n\n"
-               << "GA Input file is located at " << evaluator_filename << "\n"
+#ifdef _MPI
+    if( mpi::main.size() > 1 ) 
+      Print::out << "Starting genetic algorithm run on processor "
+                 << ( 1 + mpi::main.rank() ) << " of " 
+                 << mpi::main.size() << ".\n\n";
+    else
+#endif
+    Print::out << "Starting (serial) genetic algorithm run\n\n";
+    Print::out << "GA Input file is located at " << evaluator_filename << "\n"
                << "Functional Input file is located at " << evaluator_filename << "\n"
                << "Restart Input file is located at " << restart_filename << "\n"
                << "Xmgrace output file is located at " << Print::xmg.get_filename() << "\n"
@@ -1108,12 +1168,10 @@ nextfilename:
       doc.Parse( evaluator_str.c_str() );
     TiXmlHandle docHandle(&doc);
 #endif
-      
     // Loads evaluator first 
     if ( evaluator_filename != filename )
     { 
-      if ( not evaluator.Load(evaluator_filename) )
-        return false;
+      if ( not evaluator.Load(evaluator_filename) ) return false;
     } // for following, we know docHandle.FirstChild("Job") exists
     else if ( not evaluator.Load(*docHandle.FirstChild("Job").Element() ) )
       return false;
@@ -1222,32 +1280,6 @@ out:  Print::xmg << Print::endl;
     }
     return true;
   }
-
-
-#ifdef _MPI
-  template<class T_EVALUATOR>
-  bool Darwin<T_EVALUATOR> :: broadcast_islands( mpi::BroadCast &_bc )
-  {
-    types::t_int n = islands.size();
-    if ( not _bc.serialize( n ) ) return false;
-    if ( _bc.get_stage() == mpi::BroadCast::COPYING_FROM_HERE )
-      islands.resize(n);
-    typename t_Islands :: iterator i_pop = islands.begin();
-    typename t_Islands :: iterator i_pop_end = islands.end();
-    for( ; i_pop != i_pop_end; ++i_pop )
-    {
-      n = i_pop->size();
-      if ( not _bc.serialize( n ) ) return false;
-      if ( _bc.get_stage() == mpi::BroadCast::COPYING_FROM_HERE )
-        i_pop->resize(n);
-      typename t_Population :: iterator i_indiv = i_pop->begin();
-      typename t_Population :: iterator i_indiv_end = i_pop->end();
-      for( ; i_indiv != i_indiv_end; ++i_indiv )
-        if( not i_indiv->broadcast( _bc ) ) return false;
-    }
-    return true;
-  }
-#endif
 
 } // namespace GA
 

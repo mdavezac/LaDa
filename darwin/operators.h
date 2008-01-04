@@ -23,6 +23,7 @@
 
 #include "opt/types.h"
 #include "gencount.h"
+#include "debug.h"
 
 namespace GA 
 {

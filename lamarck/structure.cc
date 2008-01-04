@@ -432,13 +432,13 @@ namespace Ising_CE {
        kvec = A * kvec;
      
        // if any of the coordinates is >= 1, then this is a periodic image
-       if (    opt::Fuzzy<types::t_real>::geq( kvec(0), 1.0 ) 
-            or opt::Fuzzy<types::t_real>::geq( kvec(1), 1.0 ) 
-            or opt::Fuzzy<types::t_real>::geq( kvec(2), 1.0 ) ) continue;
+       if (    Fuzzy::geq( kvec(0), 1.0 ) 
+            or Fuzzy::geq( kvec(1), 1.0 ) 
+            or Fuzzy::geq( kvec(2), 1.0 ) ) continue;
        // if any of the coordinates is < 0, then this is a periodic image
-       if (    opt::Fuzzy<types::t_real>::less( kvec(0), 0.0 ) 
-            or opt::Fuzzy<types::t_real>::less( kvec(1), 0.0 ) 
-            or opt::Fuzzy<types::t_real>::less( kvec(2), 0.0 ) ) continue;
+       if (    Fuzzy::le( kvec(0), 0.0 ) 
+            or Fuzzy::le( kvec(1), 0.0 ) 
+            or Fuzzy::le( kvec(2), 0.0 ) ) continue;
       
        // Goes back to lattice basis
        kvec[0] =  (types::t_real) global_iterator.access(0);

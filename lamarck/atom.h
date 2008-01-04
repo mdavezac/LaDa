@@ -126,9 +126,9 @@ namespace Ising_CE {
   template<class T_TYPE> template< class TTYPE >
     inline bool Atom_Type<T_TYPE> :: operator== (const Atom_Type<TTYPE> &_atom) const
     {
-      return     opt::Fuzzy<types::t_real>::equal( pos[0], _atom.pos[0] ) 
-             and opt::Fuzzy<types::t_real>::equal( pos[1], _atom.pos[1] ) 
-             and opt::Fuzzy<types::t_real>::equal( pos[2], _atom.pos[2] ); 
+      return     Fuzzy::eq( pos[0], _atom.pos[0] ) 
+             and Fuzzy::eq( pos[1], _atom.pos[1] ) 
+             and Fuzzy::eq( pos[2], _atom.pos[2] ); 
     }
 
   template<class T_TYPE>
@@ -247,15 +247,15 @@ namespace Ising_CE {
         return false;
        
       types::t_real a = pos[0] / norma, b = _atom.pos[0] / normb;
-      if ( opt::Fuzzy<types::t_real>::equal(a, b) )
+      if ( Fuzzy::eq(a, b) )
         return a < b;
 
       a = pos[1] / norma; b = _atom.pos[1] / normb;
-      if ( opt::Fuzzy<types::t_real>::equal(a, b) )
+      if ( Fuzzy::eq(a, b) )
         return a < b;
 
       a = pos[2] / norma; b = _atom.pos[2] / normb;
-      if ( opt::Fuzzy<types::t_real>::equal(a, b) )
+      if ( Fuzzy::eq(a, b) )
         return false;
 
       return a < b;

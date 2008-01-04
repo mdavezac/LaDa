@@ -18,8 +18,8 @@
 
 #include <tinyxml/tinyxml.h>
 
-#include "lamarck/structure.h"
-#include "opt/types.h"
+#include <lamarck/structure.h>
+#include <opt/types.h>
 
 #include "evaluator.h"
 #include "concentration.h"
@@ -28,7 +28,7 @@
 #include "gatraits.h"
 
 #ifdef _MPI
-#include "mpi/mpi_object.h"
+#include <mpi/mpi_object.h>
 #endif
 
 #include "single_site.h"

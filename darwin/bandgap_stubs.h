@@ -92,8 +92,9 @@ namespace BandGap
       Ising_CE::Structure &structure;
       //! The pescan interface
       Pescan::BandGap bandgap;
-      //! The filename to/from are written/read the energy references for the
-      //! CBM and VBM
+      //! \brief File in which energy references for the VBM/CBM are written and read.
+      //! \details This file should contain only one line with two number: the
+      //!          first number is the VBM and the second number is the CBM.
       std::string references_filename;
       //! \brief The directory name where to perform bandgap calculations.
       //! \details Should be processor specific in the case of MPI execution.
@@ -123,10 +124,24 @@ namespace BandGap
 
       //! Load Pescan::BandGap from XML
       bool Load( const TiXmlElement &_node );
-      //! \brief Checks whether to perform all-electron calculations.
-      //! \details if Darwin::age \% Darwin::check_ref_every is false, then the
-      //! first calculations of the root node will be an all-electron on the next
-      //! turrn. Darwin::check_ref_every == -1 turns this behavior off.
+      //! \brief Reads energy references and checks whether to perform
+      //!        all-electron calculations.
+      //! \details The file Darwin::references_filename is read at the end of
+      //!          each generation, whatever else happens. As such, any change
+      //!          in the reference energies will only affect children in the
+      //!          next generation. If the file exists from the outset \ref
+      //!          TagReference will take precedence for computing the starting
+      //!          population and the children of the first generation. 
+      //!          Generally, this file exists only if it has been specifically
+      //!          created by the user, or an all-electron calculation has been
+      //!          performed. If the file exists from the outset and there are
+      //!          no \ref TagReference in th input, then an all-electron
+      //!          calculation is performed and the the file \e overwritten.
+      //!
+      //!          If Darwin::age \% Darwin::check_ref_every is false, then the
+      //!          first calculations of the root node will be an all-electron
+      //!          on the next turrn. Darwin::check_ref_every == -1 turns this
+      //!          behavior off.
       bool Continue();
       //! Computed the band-gap of Darwin::structure.
       void operator()();

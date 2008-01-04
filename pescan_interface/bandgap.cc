@@ -5,7 +5,6 @@
 
 #include <physics/physics.h>
 #include <print/stdout.h>
-#include <opt/traits.h>
 #include <opt/fuzzy.h>
 
 #include "bandgap.h"
@@ -203,9 +202,9 @@ namespace Pescan
 
     bands.cbm += bands.vbm;
 
-    if( opt::Fuzzy<types::t_real> :: greater( bands.cbm, bands.vbm ) ) return;
+    if ( Fuzzy::ge( bands.cbm, bands.vbm ) ) return;
     std::swap( bands.cbm, bands.vbm );
-    if ( opt::Fuzzy<types::t_real>::equal(bands.vbm, bands.cbm ) ) bands.cbm += 0.1;
+    if ( Fuzzy::eq(bands.vbm, bands.cbm ) ) bands.cbm += 0.1;
   }
 #endif
 

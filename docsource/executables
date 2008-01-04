@@ -88,6 +88,7 @@
       \param -i, --input file to read input from. Defaults to "input.xml" in current directory.
 
      The input should look something like the following.
+     See test/bandgap_opt/input.xml for an actual example.
      \code 
         <Job>
           <Lattice>
@@ -108,7 +109,6 @@
           <Functional type="Concentration" a="??" b="??" c="??" />
         </Job>
      \endcode
-     \see test/bandgap_opt/input.xml
    
     \section layeredoptexe layered_opt
      Optimizes in-plane stress as computed from vff and band-gaps as computed
@@ -123,6 +123,7 @@
     constructured. In the former case, the structure must be a minimal
     epitaxial structure, or results are not guaranteed (not that they are in
     any case). In the latter case the \ref TagStructure takes two attributes.
+    See test/layered_opt/input.xml for an actual example.
     \code 
        <Job>
          <Lattice>
@@ -144,7 +145,6 @@
          </Functional>
        </Job>
     \endcode
-     \see test/layered_opt/input.xml
     The direction is a string of three numbers (mind the spaces. They are
     necessary) defining the epitaxial direction. The multiplicity defines the
     number of (epitaxial) unit-cells to use in the epitaxial direction, eg the number of layers. 

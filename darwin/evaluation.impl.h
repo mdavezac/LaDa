@@ -17,7 +17,6 @@ namespace Evaluation
         ++nb_eval;
         evaluator.evaluate();
       }
-
       _indiv.set_fitness( objective( _indiv.const_quantities() ) );
       store( _indiv );
       return _indiv.fitness();
@@ -82,6 +81,8 @@ namespace Evaluation
                                                  t_QuantityGradients& _grad,
                                                  types::t_unsigned _pos )
       {
+        ++nb_grad;
+//       if( _indiv.invalid() or (not objective.is_valid()) ) evaluate( _indiv );
         evaluate( _indiv );
         evaluator.evaluate_one_gradient( _grad, _pos );
         return objective.evaluate_one_gradient( _indiv.const_quantities(), _grad, _pos );

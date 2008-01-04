@@ -285,7 +285,7 @@ namespace Store
         return false;
       }
       t_ScalarQuantity indiv_val = (*objective)(_indiv.const_quantities());
-      if ( t_QuantityTraits::less(indiv_val, val) )
+      if ( t_QuantityTraits::le(indiv_val, val) )
       {
         optimum = _indiv;
         val = indiv_val;
@@ -293,7 +293,7 @@ namespace Store
         return false;
       }
 
-      return t_QuantityTraits::greater(indiv_val, end_val); 
+      return t_QuantityTraits::ge(indiv_val, end_val); 
     }
     
     template< class T_GATRAITS >

@@ -1,7 +1,7 @@
 <?xml version="1.0" standalone="no" ?>
 <Job>
     <Structure direction=" 1 0 0 "  multiplicity="30" />
-    <GA popsize="50" rate="0.4">
+    <GA popsize="40" rate="0.4">
         <Objective>
           <Objective type="minimize" />
           <Objective type="target" target="0.31" delta="0.05" print="all" />

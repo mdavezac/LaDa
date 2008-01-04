@@ -298,7 +298,7 @@ extern "C" void FC_FUNC_(vff_minimize, VFF_MINIMIZE)( types::t_real *_energy )
   minimizer::GnuSL<Vff::Functional> minimize( *Vff :: fortran );
   minimize.set_parameters( minimizer::GnuSL<Vff::Functional>::BFGS2,
                            4000, types::tolerance, 0.1, 0.01 );
-  minimize.minimize();
+  minimize();
 
   *_energy = Vff::fortran->energy() / 16.0217733;
 }

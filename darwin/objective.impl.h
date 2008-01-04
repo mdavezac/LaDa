@@ -94,10 +94,10 @@ namespace Objective
     typename t_QuantityGradients :: iterator i_grad_end = _grad.end(); 
     t_VA_Type *i_grad_result = _i_grad;
 
-    if ( t_QuantityTraits::greater(_q, q_0 ) )
+    if ( t_QuantityTraits::ge(_q, q_0 ) )
       for(; i_grad != i_grad_end; ++i_grad, ++i_grad_result )
         *i_grad_result += *i_grad;
-    else if ( t_QuantityTraits::less(_q, q_0 ) )
+    else if ( t_QuantityTraits::le(_q, q_0 ) )
       for(; i_grad != i_grad_end; ++i_grad, ++i_grad_result )
         *i_grad_result -= *i_grad;
     return std::abs(q_0 - _q);
@@ -108,8 +108,8 @@ namespace Objective
                                                       t_QuantityGradients& _grad,
                                                       types::t_unsigned _n) 
   {
-    if ( t_QuantityTraits::greater(_q, q_0 ) ) return _grad[_n];
-    else if ( t_QuantityTraits::less(_q, q_0 ) ) return -_grad[_n];
+    if ( t_QuantityTraits::ge(_q, q_0 ) ) return _grad[_n];
+    else if ( t_QuantityTraits::le(_q, q_0 ) ) return -_grad[_n];
     return t_VA_Type(0);
   }
   template< class T_GA_TRAITS >
@@ -148,6 +148,25 @@ namespace Objective
       return fitness;
     }
   template< class T_GA_TRAITS >
+  void ConvexHull<T_GA_TRAITS> :: evaluate_gradient( const t_Quantity &_q,
+                                                     t_QuantityGradients &_grad,
+                                                     t_VA_Type *_i_grad)
+  {
+    t_Quantity x = current_indiv->get_concentration();
+
+    typedef typename t_GATraits :: t_Object :: t_Container t_Container;
+    const t_Container &container = current_indiv->Object().Container(); 
+    types::t_real Ninv = 1.0 / ( (types::t_real ) container.size() );
+    types::t_real left = convexhull.evaluate_left_gradient( x ) * Ninv;
+    types::t_real right = convexhull.evaluate_right_gradient( x ) * Ninv;
+    typename t_QuantityGradients :: iterator i_grad = _grad.begin(); 
+    typename t_QuantityGradients :: iterator i_grad_end = _grad.end(); 
+    typename t_Container :: const_iterator i_var = container.begin(); 
+    t_VA_Type *i_grad_result = _i_grad;
+    for(; i_grad != i_grad_end; ++i_grad, ++i_grad_result, ++i_var )
+      *i_grad_result += *i_grad - (*i_var > 0e0 ? left: right);
+  }
+  template< class T_GA_TRAITS >
   typename ConvexHull<T_GA_TRAITS> :: t_ScalarQuantity
     ConvexHull<T_GA_TRAITS> :: evaluate_with_gradient( const t_Quantity &_q,
                                                        t_QuantityGradients &_grad,
@@ -155,13 +174,18 @@ namespace Objective
     {
       t_Quantity x = current_indiv->get_concentration();
       t_Quantity base = (t_Quantity) convexhull.evaluate( x );
-      types::t_real Ninv = 1.0 / ( (types::t_real ) current_indiv->Object().Container().size() );
-      types::t_real gradient = convexhull.evaluate_gradient( x ) * Ninv;
+
+      typedef typename t_GATraits :: t_Object :: t_Container t_Container;
+      const t_Container &container = current_indiv->Object().Container(); 
+      types::t_real Ninv = 1.0 / ( (types::t_real ) container.size() );
+      types::t_real left = convexhull.evaluate_left_gradient( x ) * Ninv;
+      types::t_real right = convexhull.evaluate_right_gradient( x ) * Ninv;
       typename t_QuantityGradients :: iterator i_grad = _grad.begin(); 
       typename t_QuantityGradients :: iterator i_grad_end = _grad.end(); 
+      typename t_Container :: const_iterator i_var = container.begin(); 
       t_VA_Type *i_grad_result = _i_grad;
-      for(; i_grad != i_grad_end; ++i_grad, ++i_grad_result )
-        *i_grad_result += *i_grad - gradient;
+      for(; i_grad != i_grad_end; ++i_grad, ++i_grad_result, ++i_var )
+        *i_grad_result += *i_grad - (*i_var > 0e0 ? left: right);
       
       if ( _q >= base ) return _q - base;
 
@@ -178,7 +202,10 @@ namespace Objective
     {
       t_Quantity x = current_indiv->get_concentration();
       types::t_real Ninv = 1.0 / ( (types::t_real ) current_indiv->Object().Container().size() );
-      types::t_real gradient = convexhull.evaluate_gradient( x ) * Ninv;
+      types::t_real gradient 
+         = Ninv * ( ( current_indiv->Object().Container()[_n] > 0e0 ) ? 
+                       convexhull.evaluate_left_gradient( x ):
+                       convexhull.evaluate_right_gradient( x ) );
       return _grad[_n] - gradient;
     }
 

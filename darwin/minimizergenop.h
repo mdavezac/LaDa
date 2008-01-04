@@ -10,9 +10,9 @@
 
 #include <eo/eoGenOp.h>
 
-#include "opt/function_base.h"
-#include "opt/va_minimizer.h"
-#include "print/xmg.h"
+#include <opt/function_base.h>
+#include <opt/va_minimizer.h>
+#include <print/xmg.h>
 
 #include "evaluation.h"
 #include "objective.h"
@@ -177,14 +177,14 @@ namespace GA
       typedef T_GATRAITS                                           t_GATraits;
     protected:
       //! The wrapper functional to minimize
-      typedef Minimizer_Functional<t_GATraits>                     t_MFunctional;
+      typedef Minimizer_Functional<t_GATraits>                     t_Functional;
       //! Type of the individual
       typedef typename t_GATraits :: t_Individual                  t_Individual;
       //! All %types relevant to the individual
       typedef typename t_GATraits :: t_IndivTraits :: t_VA_Traits  t_VA_Traits;
       //! All %types relevant to the minimization
-      typedef typename t_VA_Traits :: t_Functional                 t_Functional;
-      //! The base minimizer type
+//     typedef typename t_VA_Traits :: t_Functional                 t_Functional;
+//     //! The base minimizer type
       typedef typename Minimizer::Base< t_Functional >             t_Minimizer;
       //! A functor capable of saving a current state in a minimization functor.
       typedef SaveStateIndividual<t_GATraits >                     t_SaveState;
@@ -192,13 +192,13 @@ namespace GA
     protected:
       //! A pointer to a minizer
       t_Minimizer *minimizer;
-      //! A pointer to a wrapper functional
-      t_MFunctional functional;
+      //! The wrapper functional
+      t_Functional functional;
 
     public:
       //! Constructor and Initializer
       explicit
-        MinimizerGenOp   ( t_MFunctional &_r )
+        MinimizerGenOp   ( t_Functional &_r )
                        : minimizer(NULL), functional( _r ) {};
       //! Destructor
       ~MinimizerGenOp () { if ( minimizer ) delete minimizer; }

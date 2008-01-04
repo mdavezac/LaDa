@@ -22,10 +22,9 @@ namespace Ising_CE {
       norm_compare( const atat::rVector3d &_vec ) : vec(_vec) {};
       norm_compare( const norm_compare &_c ) : vec(_c.vec) {};
      bool operator()( const atat::rVector3d &_a, const atat::rVector3d &_b ) const
-       { return opt::Fuzzy<types::t_real>::less( 
-                   atat::norm2( _a - vec ), atat::norm2( _b - vec ) ); }
+       { return Fuzzy::le( atat::norm2( _a - vec ), atat::norm2( _b - vec ) ); }
      bool operator()( const atat::rVector3d &_a ) const
-       { return opt::Fuzzy<types::t_real>::equal( atat::norm2( _a - vec ), 0.0 ); } 
+       { return Fuzzy::eq( atat::norm2( _a - vec ), 0.0 ); } 
   };
 
 

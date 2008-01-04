@@ -643,7 +643,10 @@
               \param xmgrace   (Optional) Place to save xmgrace output
                                default = "xmg" in working directory
               \param BandEdge  (Optional, pescan only) Place to save and read band-edges
-                               default = "BandEdges" in working directory
+                               default = "BandEdges" in working directory. 
+                               For file format, see \link BandGap::Darwin::references_filename, 
+                               here \endlink. For (quirky) behavior, see
+                               \link BandGap::Darwin::Continue() here \endlink.
              
           
          \section TagHistory \<History/\>

@@ -18,8 +18,7 @@ namespace TwoSites
       norm_compare( const atat::rVector3d &_vec ) : vec(_vec) {};
       norm_compare( const norm_compare &_c ) : vec(_c.vec) {};
      bool operator()( const atat::rVector3d &_a, const atat::rVector3d &_b ) const
-       { return opt::Fuzzy<types::t_real>::less( 
-                   atat::norm2( _a - vec ), atat::norm2( _b - vec ) ); }
+       { return Fuzzy::le( atat::norm2( _a - vec ), atat::norm2( _b - vec ) ); }
   };
 
   void rearrange_structure( Ising_CE::Structure &_str)
@@ -61,8 +60,10 @@ namespace TwoSites
     types::t_complex  *hold = new types::t_complex[ N ];
     if ( not hold )
     {
-      std::cerr << " Could not allocate memory in set_concentration!! " << std::endl; 
-      exit(0);
+      std::ostringstream sstr;
+      sstr << __FILE__ << ", line: " << __LINE__ << "\n"
+           << " Could not allocate memory while setting concentration.\n" << std::endl; 
+      throw std::runtime_error( sstr.str() );
     }
 
     // creates individual with unnormalized occupation

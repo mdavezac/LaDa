@@ -359,15 +359,11 @@ namespace Vff
       if ( _center.site_one() ) 
       {
         std::vector<types::t_real>::const_iterator i_alpha = alphas.begin() + 5 * bond_kind;
-        types::t_real result;
-        result  =  e0 * e0 * ( (*i_alpha) 
-                   + e0 * ( *(++i_alpha) / twos3
-                   + e0 * ( *(++i_alpha) * one16
-                   + e0 * ( *(++i_alpha) * s3o160
-                   + e0 * ( *(++i_alpha) * one640 )))));
-        if ( result < 0 ) 
-        { std::cerr << " negative energy!! " << result << std::endl; exit(0); }
-        energy += result;
+        energy +=   e0 * e0 * ( (*i_alpha) 
+                  + e0 * ( *(++i_alpha) / twos3
+                  + e0 * ( *(++i_alpha) * one16
+                  + e0 * ( *(++i_alpha) * s3o160
+                  + e0 * ( *(++i_alpha) * one640 )))));
       } 
 
       // Three body terms
@@ -387,15 +383,11 @@ namespace Vff
           if ( i_bond - i_angle > 0 )
           {
             std::vector< types::t_real > :: const_iterator i_beta = betas.begin() + 5 * angle_kind;
-            types::t_real result;
-            result  =   e1 * e1 * ( (*i_beta) 
-                       + e1 * ( *(++i_beta) / twos3 
-                       + e1 * ( *(++i_beta) * one16
-                       + e1 * ( *(++i_beta) * s3o160
-                       + e1 * ( *(++i_beta) * one640 )))));
-            if ( result < 0 ) 
-            { std::cerr << " negative angle energy!! " << result << std::endl; exit(0); }
-            energy += result;
+            energy +=   e1 * e1 * ( (*i_beta) 
+                      + e1 * ( *(++i_beta) / twos3 
+                      + e1 * ( *(++i_beta) * one16
+                      + e1 * ( *(++i_beta) * s3o160
+                      + e1 * ( *(++i_beta) * one640 )))));
           }
 
           // Bond angle

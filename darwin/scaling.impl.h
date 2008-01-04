@@ -194,7 +194,7 @@ namespace Scaling
       {
         double d = 0;
         parent->Attribute("d0", &d );
-        if ( opt::Fuzzy<types::t_real>::less(d, 0) ) 
+        if ( Fuzzy::le(d, 0e0) ) 
         {
           std::cerr << __FILE__ << ", line:" << __LINE__ << "\n"
                     << "Invalid d0 = " << d 
@@ -276,7 +276,7 @@ namespace Scaling
          typename t_Object::const_iterator i_bit1_end = _i1.Object().end();
          t_ScalarFitnessQuantity result(0);
          for(; i_bit1 != i_bit1_end; ++i_bit1, ++i_bit2 )
-           result +=  t_ScalarFitnessQuantity(t_SQTraits::equal( *i_bit1, *i_bit2) ? 1: 0);
+           result +=  t_ScalarFitnessQuantity(t_SQTraits::eq( *i_bit1, *i_bit2) ? 1: 0);
          return result;
        }
 

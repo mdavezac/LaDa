@@ -146,28 +146,30 @@ namespace Print
   extern Xmg xmg;
 
   //! Specialized Print::Xmg formatting operations for current line.
-  template<> inline void Xmg :: to_current_stream<Xmg::t_operation>(const Xmg::t_operation &_op)
-  {
-    special_op( _op );
-  }
+  template<> inline void
+    Xmg :: to_current_stream<Xmg::t_operation>(const Xmg::t_operation &_op)
+      { special_op( _op ); }
   //!  Specialized standard formatting operations for current line.
-  template<> inline void Xmg :: to_current_stream<Print::t_Operation>(const Print::t_Operation &_op)
-  {
-    if ( _op == Print::ENDL  and stream.str().empty() ) return;
-    switch ( _op )
+  template<> inline void
+    Xmg :: to_current_stream<Print::t_Operation>(const Print::t_Operation &_op)
     {
-      case ENDL: line_list.push_back( stream.str() ); stream.str(""); break;
-      case FLUSH: flushall(); break;
-      default: Print::apply_ops( stream, _op ); break;
+      if ( _op == Print::ENDL  and stream.str().empty() ) return;
+      switch ( _op )
+      {
+        case ENDL: line_list.push_back( stream.str() ); stream.str(""); break;
+        case FLUSH: flushall(); break;
+        default: Print::apply_ops( stream, _op ); break;
+      }
     }
-  }
   //!  Specialized standard formatting operations for current line.
-  template<> inline void Xmg::to_current_stream<Print::setw>(const Print::setw &_op) { _op(stream); }
+  template<> inline void
+    Xmg::to_current_stream<Print::setw>(const Print::setw &_op) { _op(stream); }
   //!  Specialized standard formatting operations for current line.
-  template<> inline void Xmg::to_current_stream<Print::setfill>(const Print::setfill &_op) { _op(stream); }
+  template<> inline void
+    Xmg::to_current_stream<Print::setfill>(const Print::setfill &_op) { _op(stream); }
   //!  Specialized standard formatting operations for current line.
-  template<> inline void Xmg::to_current_stream<Print::setprecision>(const Print::setprecision &_op)
-    { _op(stream); }
+  template<> inline void
+    Xmg::to_current_stream<Print::setprecision>(const Print::setprecision &_op) { _op(stream); }
    
 
   template<class T_TYPE> inline Xmg& Xmg::operator<< (const T_TYPE &_whatever)

@@ -271,15 +271,15 @@ namespace Ising_CE {
 
   inline bool Structure :: operator== (const Structure &_str ) const
   {
-    return     opt::Fuzzy<types::t_real> :: equal( cell(0,0), _str.cell(0,0) )
-           and opt::Fuzzy<types::t_real> :: equal( cell(1,0), _str.cell(1,0) )
-           and opt::Fuzzy<types::t_real> :: equal( cell(2,0), _str.cell(2,0) )
-           and opt::Fuzzy<types::t_real> :: equal( cell(0,1), _str.cell(0,1) )
-           and opt::Fuzzy<types::t_real> :: equal( cell(1,1), _str.cell(1,1) )
-           and opt::Fuzzy<types::t_real> :: equal( cell(2,1), _str.cell(2,1) )
-           and opt::Fuzzy<types::t_real> :: equal( cell(0,2), _str.cell(0,2) )
-           and opt::Fuzzy<types::t_real> :: equal( cell(1,2), _str.cell(1,2) )
-           and opt::Fuzzy<types::t_real> :: equal( cell(2,2), _str.cell(2,2) )
+    return     Fuzzy :: eq( cell(0,0), _str.cell(0,0) )
+           and Fuzzy :: eq( cell(1,0), _str.cell(1,0) )
+           and Fuzzy :: eq( cell(2,0), _str.cell(2,0) )
+           and Fuzzy :: eq( cell(0,1), _str.cell(0,1) )
+           and Fuzzy :: eq( cell(1,1), _str.cell(1,1) )
+           and Fuzzy :: eq( cell(2,1), _str.cell(2,1) )
+           and Fuzzy :: eq( cell(0,2), _str.cell(0,2) )
+           and Fuzzy :: eq( cell(1,2), _str.cell(1,2) )
+           and Fuzzy :: eq( cell(2,2), _str.cell(2,2) )
            and atoms == _str.atoms;
   }
     

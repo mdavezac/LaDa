@@ -19,6 +19,7 @@
 #include "function_base.h"
 #include "monome.h"
 #include "fuzzy.h"
+#include <iomanip>
 
 #ifdef _MPI
 #include <mpi/mpi_object.h>
@@ -161,7 +162,7 @@ namespace function {
       else if ( *i_monome == _monome )    // equivalent monome already exists
       {
         *i_monome += _monome;
-        if ( opt::Fuzzy<typename t_Monome::t_Coef>::equal(i_monome->coefficient, 0) )
+        if ( Fuzzy::eq(i_monome->coefficient, 0e0) )
           monomes.erase(i_monome);
       }
       else       // places _monome in the sorted list, before i_monome
@@ -241,7 +242,7 @@ namespace function {
         typename t_Monomes :: const_iterator i_monome = monomes.begin();
         typename t_Monomes :: const_iterator i_monome_last = monomes.end();
         typename t_Container :: const_iterator i_real = variables->begin();
-        for ( ; i_monome != i_monome_last; i_monome++ )
+        for ( ; i_monome != i_monome_last; ++i_monome )
         {
           typename t_Monome :: t_Terms :: const_iterator i_term = i_monome->terms.begin();
           typename t_Monome :: t_Terms :: const_iterator i_term_last = i_monome->terms.end();

@@ -3,6 +3,8 @@
 //
 #include "concentration.h"
 
+#include <stdexcept>       // std::runtime_error
+
 types::t_real set_concentration( Ising_CE::Structure &_str,
                                  types::t_real _target )
 {
@@ -10,8 +12,10 @@ types::t_real set_concentration( Ising_CE::Structure &_str,
   types::t_complex  *hold = new types::t_complex[ N ];
   if ( not hold )
   {
-    std::cerr << " Could not allocate memory in set_concentration!! " << std::endl; 
-    exit(0);
+    std::ostringstream sstr;
+    sstr << __FILE__ << ", line: " << __LINE__ << "\n"
+         << " Could not allocate memory in set_concentration.\n" << std::endl; 
+    throw std::runtime_error( sstr.str() );
   }
   types::t_complex  *i_hold = hold;
   Ising_CE::Fourier( _str.atoms.begin(), _str.atoms.end(),

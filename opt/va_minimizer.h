@@ -11,6 +11,7 @@
 #include <eo/utils/eoRNG.h>
 
 #include "types.h"
+#include "fuzzy.h"
 
 #include "minimize_base.h"
 
@@ -18,10 +19,10 @@ namespace Minimizer
 {
   //! \brief Dummy save-state Functor. 
   //! \details Save-state functors should be capable of, well, saving the
-  //!          current state within the minimization process, so that the
+  //!          current state within the minimization process so that the
   //!          minimizer can go back to it later on. This implements a dummy
-  //!          minimizer for when no save-state functor  is provided. It can be
-  //!          used by minimizers for which saving a state is optional.
+  //!          stack for when no save-state functor  is provided. It can be
+  //!          used by minimizers for which saving a state is optional. 
   //! \note This functor provides all necessary behaviors for a save-state
   //!       functor. Copy it!
   template< class T_FUNCTIONAL >
@@ -96,18 +97,22 @@ namespace Minimizer
       bool do_check_gradient;
       //! A pointer to the save-state functor.
       t_SaveState *save_state;
+      //! A pointer to another save-state functor.
+      t_SaveState *save_new_state;
 
     public:
       //! Constructor and Initializer
       VA   ( const TiXmlElement &_node )
         //! \cond
-         : itermax(0), do_check_gradient(true), save_state(NULL) { Load(_node); }
+         : itermax(0), do_check_gradient(true), 
+           save_state(NULL), save_new_state(NULL) { Load(_node); }
         //! \endcond
         
       //! Constructor and Initializer
       VA   ( const TiXmlElement &_node, t_SaveState &_s )
         //! \cond
-         : itermax(0), do_check_gradient(true), save_state( &_s ) { Load(_node); }
+         : itermax(0), do_check_gradient(true),
+           save_state( &_s ), save_new_state(NULL) { Load(_node); }
         //! \endcond
 
       //! Copy Constructor.
@@ -115,7 +120,7 @@ namespace Minimizer
         //! \cond
          : itermax(_c.itermax),
            do_check_gradient( _c.do_check_gradient),
-           save_state(_c.s) {}
+           save_state(_c.save_state), save_new_state( _c.save_new_state) {}
         //! \endcond
 
       //! Destructor
@@ -221,12 +226,16 @@ namespace Minimizer
       typename t_Functional :: t_Container :: iterator i_var_begin = current_func->begin();
       typename t_Functional :: t_Container :: iterator i_var;
       t_Type current_e, next_e;
+      types::t_unsigned (*ptr_to_rng)(const types::t_unsigned& );
+      ptr_to_rng = &eo::random<types::t_unsigned>;
   
       // evaluates first position
       current_e = current_func->evaluate();
-      if( save_state ) save_state->save();
-
-      i_var = current_func->end();
+      if( save_state ) 
+      {
+        save_new_state = new T_SAVESTATE( *save_state );
+        save_state->save();
+      }
       i_var_begin = current_func->begin();
 
 
@@ -235,7 +244,6 @@ namespace Minimizer
         ++count;
 
         // shuffle directions
-        types::t_unsigned (*ptr_to_rng)(const types::t_unsigned& ) = &eo::random<types::t_unsigned>;
         std::random_shuffle(i_begin, i_last, ptr_to_rng );
         is_not_converged = false;
 
@@ -248,36 +256,59 @@ namespace Minimizer
           bool do_investigate = not current_func->is_taboo();
           *i_var = ( *i_var > t_Type(0) ) ? t_Type(-1) : t_Type(1); // flips spins
             
-          if ( do_investigate  ) 
-          {
-            types::t_real grad = current_func->evaluate_one_gradient( *i_dir );
-            if ( do_check_gradient and  grad < 0 )
-            {
-              *i_var = ( *i_var > t_Type(0) ) ? t_Type(-1) : t_Type(1); // flips spins
-              if( save_state ) save_state->save();
-              current_func->invalidate();
-              next_e = current_func->evaluate();
-              if ( current_e > next_e )
-              { // yeah! gradient was right
-                is_not_converged = true;
-                current_e = next_e;
-              }
-              else // flips back -- gradient was wrong
-              {
-                *i_var = ( *i_var > t_Type(0) ) ? t_Type(-1) : t_Type(1); // flips spins
-                if( save_state ) save_state->reset();
-              }
-            } // end of gradient sign check
-          } // end of check for taboo
+          if ( not do_investigate  ) continue;
           
-          // breaks out after itermax calls to functional
-          // unless itermax is null
-          if ( itermax and count >= itermax )  
-            { is_not_converged = false; break; }
+          if ( do_check_gradient )
+          { 
+            types::t_real grad =   current_func->evaluate_one_gradient( *i_dir ) 
+                                 * ( *i_var > t_Type(0) ? -1e0: 1e0 );
+            
+            if ( Fuzzy::geq<t_Type>(grad, 0) ) continue;
+          }
+
+          if( save_state ) save_state->save();
+          *i_var = ( *i_var > t_Type(0) ) ? t_Type(-1) : t_Type(1); // flips spins
+          current_func->invalidate();
+          next_e = current_func->evaluate();
+          // Saves the state and recomputes current_e (eg for moving target
+          // optimizations, such as convex hulls. Indeed in the case of a
+          // convex hull, evaluating next_e may have added a breakpoint to the
+          // convex hull and changed the target function.
+          if( save_state )
+          {
+            save_new_state->save();
+            *i_var = ( *i_var > t_Type(0) ) ? t_Type(-1) : t_Type(1); // flips spins
+            save_state->reset();
+            current_e = current_func->evaluate();
+            save_state->save();
+            *i_var = ( *i_var > t_Type(0) ) ? t_Type(-1) : t_Type(1); // flips spins
+            save_new_state->reset();
+          }
+
+          if ( Fuzzy::geq(current_e, next_e) )
+          {
+            is_not_converged = true;
+            current_e = next_e;
+            if( save_state ) save_state->save();
+            continue;
+          }
+
+          // flips back -- gradient was wrong
+          *i_var = ( *i_var > t_Type(0) ) ? t_Type(-1) : t_Type(1); // flips spins
+          if( save_state ) save_state->reset();
 
         } // loop over shuffled directions
 
+        // breaks out after itermax loops over directions
+        if ( itermax and count >= itermax )  is_not_converged = false;
+
       } while ( is_not_converged );
+
+      if( save_new_state )
+      {
+        delete save_new_state; 
+        save_new_state = NULL;
+      }
 
       return true;
     } // end of minimize()

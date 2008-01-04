@@ -64,11 +64,14 @@ namespace Print
   void Base::sync_filename()
   {
     mpi::BroadCast bc( mpi::main );
+
+    if( not mpi::main.is_root_node() ) filename.clear();
     bc << filename
        << mpi::BroadCast::allocate
        << filename
        << mpi::BroadCast::broadcast
-       << filename;
+       << filename
+       << mpi::BroadCast::clear;
 
     init_(filename);
   }

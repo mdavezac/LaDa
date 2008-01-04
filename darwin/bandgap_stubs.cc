@@ -120,8 +120,8 @@ errorout:
 #endif
     std::ofstream file( references_filename.c_str(), std::ios_base::out | std::ios_base::trunc ); 
     if ( not file.is_open() ) return;
-    file << bandgap.Eref.cbm << "   "; if ( file.fail() ) return;
-    file << bandgap.Eref.vbm << std::endl; if ( file.fail() ) return;
+    file << bandgap.Eref.vbm << "   "; if ( file.fail() ) return;
+    file << bandgap.Eref.cbm << std::endl; if ( file.fail() ) return;
     file.close();
     return;
   }

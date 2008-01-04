@@ -294,8 +294,8 @@ errorout:
   bool xTaboo<T_INDIVIDUAL> :: operator()( const t_Individual& _indiv ) const
   {
     concentration.get( _indiv.Object() );
-    return    opt::Fuzzy<types::t_real>::less(concentration.x, lessthan)
-           or opt::Fuzzy<types::t_real>::greater(concentration.x, morethan);
+    return    Fuzzy::le(concentration.x, lessthan)
+           or Fuzzy::ge(concentration.x, morethan);
   }
   template< class T_INDIVIDUAL >
   bool xTaboo<T_INDIVIDUAL> :: Load( const TiXmlElement &_el ) 
@@ -311,17 +311,14 @@ errorout:
     if ( child->Attribute( "lessthan" ) )
     {
       child->Attribute( "lessthan", &d );
-      lessthan = (     opt::Fuzzy<types::t_real>::greater( d, 0)
-                   and opt::Fuzzy<types::t_real>::less( d, 1 )   ) ? 2.0*d-1.0: 1.0;
+      lessthan = ( Fuzzy::ge( d, 0e0) and Fuzzy::le( d, 1e0 ) ) ? 2.0*d-1.0: 1.0;
     }
     if ( child->Attribute( "morethan" ) )
     {
       child->Attribute( "morethan", &d );
-      morethan = (     opt::Fuzzy<types::t_real>::greater( d, 0)
-                   and opt::Fuzzy<types::t_real>::less( d, 1 )   )? 2.0*d-1.0: 1.0;
+      morethan = ( Fuzzy::ge( d, 0e0 ) and Fuzzy::le( d, 1e0 ) )? 2.0*d-1.0: 1.0;
     }
-    if (    opt::Fuzzy<types::t_real>::equal( lessthan, morethan )
-         or opt::Fuzzy<types::t_real>::greater( lessthan, morethan ) ) return false;
+    if ( Fuzzy::geq( lessthan, morethan ) ) return false;
    
     Print::xmg << Print::Xmg::comment << Print::fixed << Print::setprecision(3) 
                << "Allowed individuals: x in [ " << 0.5*(lessthan+1.0)

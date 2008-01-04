@@ -19,7 +19,7 @@
 #include <tinyxml/tinyxml.h>
 
 #ifdef _MPI
-#include "mpi/mpi_object.h"
+#include <mpi/mpi_object.h>
 #endif
 
 #include "checkpoints.h"
@@ -289,11 +289,6 @@ namespace GA
       //! \note This %function makes a call to Evaluator::presubmit()
       void presubmit();
 #ifdef _MPI
-      /** \ingroup MPI
-       * \brief Serializes a collection of populations.
-       * \todo Reimplement this with BroadCast::serialize_container?
-       */
-      bool broadcast_islands( mpi::BroadCast &_bc );
       /** \ingroup MPI
        * \brief Loads the input filenames and input files, and broadcasts them
        * to all processors.

@@ -21,7 +21,7 @@
 #include <print/xmg.h>
 #include <print/manip.h>
 
-#include<opt/traits.h>
+#include <opt/traits.h>
 
 /** \ingroup Genetic 
  * @{*/
@@ -105,24 +105,24 @@ namespace Fitness
       //! This allows type specific implementation, such as fuzzy math for
       //! reals (to avoid numerical noise). Note that since minimization is the
       //! default, the implementation calls t_QuantityTraits::greater().
-      //! \see Traits::Quantity, Traits::Fuzzy
+      //! \see Traits::Quantity, Fuzzy
       bool operator<(const t_This & _f) const
-        { return t_QuantityTraits::greater(quantity, _f.quantity); }
+        { return t_QuantityTraits::ge(quantity, _f.quantity); }
       //! \brief strict ordering operator 
       //! \details Calls a static function of Fitness::Scalar::t_QuantityTraits.
       //! This allows type specific implementation, such as fuzzy math for
       //! reals (to avoid numerical noise). Note that since minimization is the
-      //! default, the implementation calls t_QuantityTraits::less().
-      //! \see Traits::Quantity, Traits::Fuzzy
+      //! default, the implementation calls t_QuantityTraits::le().
+      //! \see Traits::Quantity, Fuzzy
       bool operator>(const t_This & _f) const
-        { return t_QuantityTraits::less(quantity, _f.quantity); }
+        { return t_QuantityTraits::le(quantity, _f.quantity); }
       //! \brief equality operator 
       //! \details Calls a static function of Fitness::Scalar::t_QuantityTraits.
       //! This allows type specific implementation, such as fuzzy math for
       //! reals (to avoid numerical noise).
-      //! \see Traits::Quantity, Traits::Fuzzy
+      //! \see Traits::Quantity, Fuzzy
       bool operator==(const t_This & _f) const
-        { return t_QuantityTraits::equal(quantity, _f.quantity); }
+        { return t_QuantityTraits::eq(quantity, _f.quantity); }
 
       //! \brief returns true if the fitness is not valid
       bool invalid() const { return not ( (bool) is_valid ); }
@@ -247,8 +247,8 @@ namespace Fitness
              \f]
                   For generality, the static ordering operators of
                   t_ScalarQuantityTraits are use in the implementation (eg
-                  fuzzy math for reals). Note however that it is Fuzzy ::
-                  greater which is called, since minimization is the default.
+                  fuzzy math for reals). Note however that it is Fuzzy::ge
+                  which is called, since minimization is the default.
       */
       bool operator<(const t_This & _f) const;
       /** \brief Pareto ordering, \f$\mathcal{F}^v(\sigma_i) \succeq \mathcal{F}^v(\sigma_j)\f$
@@ -260,8 +260,8 @@ namespace Fitness
              \f]
                   For generality, the static ordering operators of
                   t_ScalarQuantityTraits are use in the implementation (eg
-                  fuzzy math for reals). Note however that it is Fuzzy ::
-                  greater which is called, since minimization is the default.
+                  fuzzy math for reals). Note however that it is Fuzzy::ge
+                  which is called, since minimization is the default.
       */
       bool operator>(const t_This & _f) const;
       //! \brief Pareto ordering, eg true if both fitnesses are equally

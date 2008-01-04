@@ -13,8 +13,8 @@
 #include <eo/utils/eoRNG.h>
 #include <eo/utils/eoState.h>
 
-#include "opt/types.h"
-#include "lamarck/structure.h"
+#include <opt/types.h>
+#include <lamarck/structure.h>
 
 #include "gatraits.h"
 

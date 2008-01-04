@@ -5,6 +5,8 @@
 #ifndef _LAYERED_IMPL_H_
 #define _LAYERED_IMPL_H_
 
+#include <stdexcept>       // std::runtime_error
+
 #include <print/stdout.h>
 #include <print/manip.h>
 #include <lamarck/structure.h>
@@ -103,8 +105,10 @@ namespace Layered
     types::t_complex  *hold = new types::t_complex[ N ];
     if ( not hold )
     {
-      std::cerr << " Could not allocate memory in set_concentration!! " << std::endl; 
-      exit(0);
+      std::ostringstream sstr;
+      sstr << __FILE__ << ", line: " << __LINE__ << "\n"
+           << " Could not allocate memory in set_concentration!! " << std::endl; 
+      throw std::runtime_error( sstr.str() );
     }
 
     // creates individual with unnormalized occupation
@@ -509,7 +513,15 @@ errorout:
 
     concentration.setfrozen( structure );
 
+#ifdef _MPI
+    if( mpi::main.is_root_node() )
+    {
+#endif
     structure.print_xcrysden( std::cout );
+    std::cout << std::endl;
+#ifdef _MPI
+    }
+#endif
 
     return true;
 
@@ -590,17 +602,17 @@ errorout:
   {
     types::t_real a =   _1 * a0;
     types::t_real b =   _2 * a0;
-    if ( not opt::Fuzzy<types::t_real> :: equal( a, b ) )
-      return opt::Fuzzy<types::t_real> :: less( a, b );
+    if ( not Fuzzy::eq( a, b ) )
+      return Fuzzy::le( a, b );
 
     a =   _1 * a1;
     b =   _2 * a1;
-    if ( not opt::Fuzzy<types::t_real> :: equal( a, b ) )
-      return opt::Fuzzy<types::t_real> :: less( a, b );
+    if ( not Fuzzy::eq( a, b ) )
+      return Fuzzy::le( a, b );
     
     a =   _1 * a2;
     b =   _2 * a2;
-    return opt::Fuzzy<types::t_real> :: less( a, b );
+    return Fuzzy::le( a, b );
   }
 
 
