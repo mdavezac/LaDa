@@ -634,19 +634,20 @@
               \param stop      (Optional) GA stops if this file exists
               \param evaluator (Optional) Place to read functional info from.
                                default = same as GA input.
-              \param restart   (Optional) Place to restart info from
+              \param restart   (Optional) Place to restart info from.
                                default = same as GA input.
-              \param save      (Optional) Place to save restart/result info to
+              \param save      (Optional) Place to save restart/result info to.
                                default = same as GA input.
-              \param out       (Optional) Place to save standard output
+              \param out       (Optional) Place to save standard output.
                                default = "out" in working directory
-              \param xmgrace   (Optional) Place to save xmgrace output
+              \param xmgrace   (Optional) Place to save xmgrace output.
                                default = "xmg" in working directory
-              \param BandEdge  (Optional, pescan only) Place to save and read band-edges
-                               default = "BandEdges" in working directory. 
-                               For file format, see \link BandGap::Darwin::references_filename, 
-                               here \endlink. For (quirky) behavior, see
-                               \link BandGap::Darwin::Continue() here \endlink.
+              \param BandEdge  (Optional, pescan only) Place to save and read band-edges.
+                               default = "BandEdges" in working directory
+                               For file format, see
+                               \link BandGap::Darwin::references_filename here\endlink.
+                               For (quirky) behavior, see
+                               \link BandGap::Darwin::Continue() here\endlink.
              
           
          \section TagHistory \<History/\>
