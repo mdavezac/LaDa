@@ -152,7 +152,7 @@ namespace Store
       * \details results in new_optima should passed on to Conditional::results in
       * Conditional::synchronize, and then flushed. 
       */
-      _Container new_optima;
+      t_Container new_optima;
 #endif 
 
     public:

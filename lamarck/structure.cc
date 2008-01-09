@@ -46,13 +46,13 @@ namespace Ising_CE {
     stream << std::endl << " Structure, scale " << scale << ", Cell "
            << std::endl << std::fixed << std::setprecision(5)
            << " " << std::setw(9) << cell(0,0)
-           << " " << std::setw(9) << cell(0,1)
-           << " " << std::setw(9) << cell(0,2) << std::endl
            << " " << std::setw(9) << cell(1,0)
+           << " " << std::setw(9) << cell(2,0) << std::endl
+           << " " << std::setw(9) << cell(0,1)
            << " " << std::setw(9) << cell(1,1)
-           << " " << std::setw(9) << cell(1,2) << std::endl
-           << " " << std::setw(9) << cell(2,0)
-           << " " << std::setw(9) << cell(2,1)
+           << " " << std::setw(9) << cell(2,1) << std::endl
+           << " " << std::setw(9) << cell(0,2)
+           << " " << std::setw(9) << cell(1,2)
            << " " << std::setw(9) << cell(2,2) << std::endl;
     
     #ifdef _DEBUG_LADA_

@@ -1,7 +1,5 @@
-AC_INIT(lamarck/structure.cc)
-AM_INIT_AUTOMAKE(LaDa,3.0)
-# if test $F77 == ""; then
-#   echo "HERE\n\n";
+AC_INIT([LaDa],[3.1])
+AM_INIT_AUTOMAKE()
 # fi
 
 AC_PROG_CC
@@ -363,7 +361,7 @@ if test x$emassopt = xtrue; then
   echo " _ Genetic Algorithm for Electronic Mass Optimization"
 fi
 echo ""
-if test $mpi$mpichiisthere = trueyes; then
+if test $mpi$mpichisthere = trueyes; then
   echo "Will Include MPI where available, using mpich"
 elif test $mpi$openmpiisther = trueyes; then
   echo "Will Include MPI where available, using openmpi"
