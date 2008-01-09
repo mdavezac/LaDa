@@ -8,6 +8,7 @@
 
 #include "print/xmg.h"
 #include "concentration.h"
+#include "gaoperators.h"
 
 namespace SingleSite
 {
@@ -87,7 +88,15 @@ namespace SingleSite
     std::fill( pure.Object().Container().begin(), pure.Object().Container().end(), -1.0 );
     _pop.push_back(pure);
   } 
-
+  template<class T_INDIVIDUAL> 
+  eoMonOp<const T_INDIVIDUAL>* Evaluator<T_INDIVIDUAL> :: LoadPrintBest( const TiXmlElement &_node )
+  {  
+    GA::XYZAnim<t_Individual> *anim = new GA::XYZAnim<t_Individual>( structure );
+    if( anim->Load( _node ) ) return anim;
+    delete anim;
+    return NULL;
+  }  
+     
 
   template<class T_GAOPTRAITS, types::t_unsigned _D>
     typename Distance<T_GAOPTRAITS, _D>::t_ScalarFitnessQuantity 

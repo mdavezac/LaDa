@@ -21,13 +21,14 @@
 #include <tinyxml/tinyxml.h>
 
 #include <lamarck/structure.h>
+#include <print/stdout.h>
 #include <opt/types.h>
 
 #include "functors.h"
 #include "gatraits.h"
 
 #ifdef _MPI
-#include "mpi/mpi_object.h"
+#include <mpi/mpi_object.h>
 #endif
 
 /** \ingroup Genetic 
@@ -480,7 +481,7 @@ namespace GA
       //! Type of a \e physical individual
       typedef T_INDIVIDUAL t_Individual; 
     protected:
-      //! Contains all types pertaining to a \e physicla individual
+      //! Contains all types pertaining to a \e physical individual
       typedef typename t_Individual :: t_IndivTraits t_IndivTraits; 
       typedef typename t_IndivTraits :: t_Concentration t_Concentration; //!< Concentration type
       typedef typename t_IndivTraits :: t_Object t_Object; //!< Object type
@@ -510,6 +511,70 @@ namespace GA
       //! \brief returns true if \a _indiv is within allowed concentration range
       bool operator()( const t_Individual& _indiv ) const;
   };
+
+
+  //! \brief Creates a functor which writes to file an individual as an
+  //!        xyz animation.
+  //! \details It is expected that
+  //!          operator<<( Ising_CE::Structure&, const t_Object )
+  //!          is appropriately overloaded.
+  template< class T_INDIVIDUAL >
+  class XYZAnim : public eoMonOp<const T_INDIVIDUAL>
+  {
+    public:
+      //! Type of a \e physical individual
+      typedef T_INDIVIDUAL t_Individual; 
+    protected:
+      //! Contains all types pertaining to a \e physical individual
+      typedef typename t_Individual :: t_IndivTraits t_IndivTraits; 
+       //! Object type.
+      typedef typename t_IndivTraits :: t_Object t_Object;
+      //! The type of the eoMonOp base
+      typedef eoMonOp<const t_Individual> t_OpBase;
+
+    protected:
+      //! \brief Pointer to a file for printing.
+      //! \details Is a pointer for easy copy of the functor.
+      Print::StdOut *file;
+      //! Whether XYZAnim::file should be deleted by destructor.
+      bool owns_pointer;
+      //! Reference to a structure. 
+      Ising_CE::Structure &structure;
+      //! The number of calls made to XYZAnim::operator()().
+      types::t_unsigned n;
+
+    public:
+      //! Constructor.
+      XYZAnim   (Ising_CE::Structure &_str)
+              : t_OpBase(), file(NULL), owns_pointer(false),
+                structure(_str), n(0) {}
+      //! Copy Constructor.
+      XYZAnim   ( const XYZAnim &_c )
+              : t_OpBase(_c), file( _c.file ), owns_pointer( false),
+                structure(_c.structure), n(_c.n) {}
+      //! This class contains a virtual function from its eoMonOp base.
+      virtual ~XYZAnim() { if( owns_pointer and file ) delete file; }
+
+      //! Prints \e _indiv to the file
+      bool operator()( const t_Individual & _indiv);
+
+      //! Loads this object from XML.
+      bool Load( const TiXmlElement &_node );
+
+    protected:
+      //! \brief Opens the file for printing.
+      //! \details Checks if XYZAnim::file is assigned and creates it if not.
+      //!          Then relays to Print::StdOut::is_open(). 
+      bool open();
+
+      //! \brief Sets the filename and begins the file
+      //! \details Print::StdOut::init(const std::string& ) is hidden from the
+      //!          outside, so this function is necessary.
+      void init( const std::string &_f );
+
+  };
+
+
 }
 
 #include "gaoperators.impl.h"

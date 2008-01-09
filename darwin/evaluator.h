@@ -157,6 +157,13 @@ namespace GA
       //! \return a pointer to a niche object, eg Sharing::Triangular< T_DISTANCE >. 
       //!         This pointer is owned by the callee.
       void* Load_Niche( const TiXmlElement &_node ) { return NULL; }
+      //! \brief Returns a functor specifying the type of printout todo for
+      //!        best individual.
+      //! \details This functor will be called at the end of each generation
+      //!          and applied to the best stored individual.
+      //! \return a pointer to an eoOp<const t_Individual>.
+      //!         This pointer is owned by the callee.
+      eoMonOp<const t_Individual>* LoadPrintBest( const TiXmlElement &_node ) { return NULL; }
       //! \brief Loads application-specific taboos
       //! \details should return a functor which returns true if an individual is forbidden
       //! \see TabooFunction

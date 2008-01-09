@@ -43,7 +43,7 @@ namespace GA
 
 
   template< class T_GATRAITS>
-  inline void PrintFitness<T_GATRAITS> :: operator()( const t_Population &_pop )
+  inline void PrintOffspring<T_GATRAITS> :: operator()( const t_Population &_pop )
   {
     types::t_unsigned ga_age = age();
     if ( ga_age == 0 ) return;

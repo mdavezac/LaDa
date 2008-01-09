@@ -95,11 +95,14 @@ namespace Store
       //! \sa Print::Xmg
       virtual void print_results(types::t_unsigned _age, bool is_comment = false) const
         { new_results = false; }
-      //! \brief Returns a string defining this derived class
+      //! Returns a string defining this derived class
       virtual std::string what_is() const = 0;
-      //! \brief Other print method
+      //! Other print method
       virtual std::string print() const = 0; 
-
+      //! Applies \a _op to all stored individuals.
+      virtual void apply_all( eoMonOp<const t_Individual> *_op ) const = 0; 
+      //! Applies \a _op to best stored individuals.
+      virtual void apply_best( eoMonOp<const t_Individual> *_op ) const = 0; 
 #ifdef _MPI
       /** \ingroup MPI
       * \brief Syncrhonizes Base::new_results across all processors.
@@ -132,7 +135,7 @@ namespace Store
       typedef typename t_GATraits :: t_Evaluator  t_Evaluator; //!< Evaluator type
       typedef Base<t_GATraits>                    t_Base;      //!< %Base class type
       typedef typename t_GATraits :: t_Individual t_Individual; //!< Individual type
-      typedef std::list<t_Individual>              t_Container; //!< Type of storage container
+      typedef std::list<t_Individual>             t_Container; //!< Type of storage container
 
     protected:
       using t_Base :: new_results; 
@@ -149,7 +152,7 @@ namespace Store
       * \details results in new_optima should passed on to Conditional::results in
       * Conditional::synchronize, and then flushed. 
       */
-      t_Container new_optima;
+      _Container new_optima;
 #endif 
 
     public:
@@ -193,6 +196,12 @@ namespace Store
       virtual std::string print() const { return condition.print(); }
       //! \brief Returns a string characterizing Conditional (and its Conditional::condition)
       virtual std::string what_is() const;
+     
+      //! Applies \a _op to all stored individuals.
+      virtual void apply_all( eoMonOp<const t_Individual> *_op ) const;
+      //! Applies \a _op to best stored individuals.
+      virtual void apply_best( eoMonOp<const t_Individual> *_op ) const
+        { condition.apply2optimum(_op); }
 
 #ifdef _MPI
       /** \ingroup MPI
@@ -284,6 +293,8 @@ namespace Store
         std::string what_is() const { return " BaseOptima "; } 
         //! \brief prints out BaseOptima::optimum characteristics
         std::string print() const;
+        //! Applies \a _op to best stored individuals.
+        void apply2optimum( eoMonOp<const t_Individual> *_op ) const { (*_op)( optimum ); }
     };
 
     //! \brief Implements \e Best-Of behavior using an individual's fitness and an Objective
@@ -348,9 +359,19 @@ namespace Store
         //! \brief returns false if \a _indiv should <em>not</em> be stored
         bool operator()( const t_Individual &_indiv );
 
-        //! returns a string with stuff that FomObjective::objective store, eg convexhull
-        std::string print() const 
-          { return  print_condition ? t_Base::print() + objective->print(): objective->print(); }
+        //! \brief returns a string with stuff that FomObjective::objective
+        //!        store, eg convexhull
+        //! \details A bit complicated... If the objective does \e not store
+        //!          anything itself (eg as returned by
+        //!          Objective::Base::does_store() const), then this function returns
+        //!          with a call to BaseOptima::print() const. If on the other
+        //!          hand Objective::Base::does_store() const returns true,
+        //!          then two further cases appear. If
+        //!          FromObjective::print_condition is set, both the print
+        //!          routines of the condition and objective are called.
+        //!          Otherwise, only the print routine of the objective
+        //!          function is called.
+        std::string print() const;
         //! Return a string characterizing FromOjbective
         std::string what_is() const;
         //! \brief Reloads previously saved state from XML input

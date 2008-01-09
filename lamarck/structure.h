@@ -176,6 +176,24 @@ namespace Ising_CE {
     //! \brief Prints in XCrysDen format 
     //! \see <A HREF="http://www.xcrysden.org">www.xcrysden.org</A>.
     std::ostream& print_xcrysden( std::ostream &_stream ) const;
+    //! \brief Prints in xyz format 
+    //! \details XYZ format is as follows
+    //! \code
+    //     2
+    //     Diamond unit-cell
+    //     C  0 0 0
+    //     C  0.25 0.25 0.25
+    //! \endcode
+    //! The first line contains the number of atoms.
+    //! The second line contains a comment or name.
+    //! The following lines define each atom throught its symbol and three
+    //! coordinates. There should be as many lines as specified above.
+    //! \param[in] _stream where to output the structure in xyz
+    //! \param[in] _name second line of xyz format is a name or comment. Fill
+    //!                  in here. This string should not include any endline
+    //!                  character.
+    std::ostream& print_xyz( std::ostream &_stream,
+                             const std::string &_name = "" ) const;
   };
 
   //! \cond

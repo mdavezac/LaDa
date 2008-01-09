@@ -20,13 +20,14 @@
 #include <eo/eoContinue.h>
 #include <eo/utils/eoHowMany.h>
 
-#include "opt/types.h"
-#include "print/xmg.h"
-#include "print/stdout.h"
+#include <opt/types.h>
+#include <print/xmg.h>
+#include <print/stdout.h>
 
 #include "taboos.h"
 #include "operators.h"
 #include "gencount.h"
+#include "store.h"
 
 namespace GA
 {
@@ -71,13 +72,13 @@ namespace GA
       void lastCall();
 
       //! EO required 
-      virtual std::string className(void) const { return "GA::PrintFitness"; }
+      virtual std::string className(void) const { return "GA::PrintGA"; }
   };
 
-  //! \brief Prints out the fitness of new individuals to Print::out.
+  //! \brief Prints out the offsprings to Print::out.
   //! \details The printout is sorted according to the \b scalar fitness
   template< class T_GATRAITS>
-  class PrintFitness : public eoSortedStatBase<typename T_GATRAITS::t_Individual> 
+  class PrintOffspring : public eoSortedStatBase<typename T_GATRAITS::t_Individual> 
   {
     public:
       typedef T_GATRAITS t_GATraits; //!< All %GA %types
@@ -94,10 +95,10 @@ namespace GA
 
     public:
       //! Constructor and Initializor
-      PrintFitness   ( GenCount &_age )
+      PrintOffspring   ( GenCount &_age )
                    : age(_age) {}
       //! Copy Constructor
-      PrintFitness   ( const PrintFitness &_update )
+      PrintOffspring   ( const PrintOffspring &_update )
                    : age(_update.age) {}
 
       //! \brief This class is a functor
@@ -111,7 +112,7 @@ namespace GA
       void lastCall( const eoPop<t_Individual> &_pop) {}
 
       //! Eo required 
-      virtual std::string className(void) const { return "GA::PrintFitness"; }
+      virtual std::string className(void) const { return "GA::PrintOffspring"; }
   };
   
   //! \brief Prints out current population to Print::out
@@ -494,6 +495,79 @@ namespace GA
   };
 #endif
 
+
+  //! \brief Applies a functor to all stored individuals.
+  //! \details Generally (depending on the overloading of
+  //!          Store::Manip::apply_all), this should mean applying to whatever
+  //!          container exists in Apply2Stored::store. This functor is not
+  //!          permitted to change anything in the stored invididuals.
+  template< class T_GATRAITS >
+  class Apply2Stored: public eoUpdater
+  {
+    public:
+      //! All relevant GA traits
+      typedef T_GATRAITS t_GATraits;
+
+    protected:
+      //! Type of the individual
+      typedef typename t_GATraits :: t_Individual t_Individual;
+      //! Type of the abstract base storage class
+      typedef Store::Base<t_GATraits> t_Store;
+      //! Type of the functor.
+      typedef eoMonOp<const t_Individual> t_Functor;
+ 
+    protected:
+      const t_Store &store; //!< Reference to the storage class
+      t_Functor *functor; //!< Pointer to the functor
+ 
+    public:
+      //! \brief Constructor and (partial) Initializer.
+      //! \details Apply2Stored::set_functor() still needs to be called prior
+      //!          to use.
+      Apply2Stored ( const t_Store &_store ) : store(_store ) {}
+      //! Sets the functor to call for each stored individual.
+      void set_functor( t_Functor *_functor ) { functor = _functor; }
+ 
+      //! Functor. Reroutes calls to Store::Manip::apply_all().
+      void operator()() { store.apply_all( *functor ); }
+  };
+ 
+  //! \brief Applies a functor to best stored individual.
+  //! \details Generally (depending on the overloading of
+  //!          Store::Manip::apply_best), this should mean applying to whatever
+  //!          optimum exists in Apply2Best::store. This functor is not
+  //!          permitted to change anything in the stored invididuals.
+  template< class T_GATRAITS >
+  class Apply2Best: public eoUpdater
+  {
+    public:
+      //! All relevant GA traits
+      typedef T_GATRAITS t_GATraits;
+
+    protected:
+      //! Type of the individual
+      typedef typename t_GATraits :: t_Individual t_Individual;
+      //! Type of the abstract base storage class
+      typedef Store::Base<t_GATraits> t_Store;
+      //! Type of the functor.
+      typedef eoMonOp<const t_Individual> t_Functor;
+ 
+    protected:
+      const t_Store &store;
+      t_Functor *functor; //!< Pointer to the functor
+ 
+    public:
+      //! \brief Constructor and (partial) Initializer.
+      //! \details Apply2Best::set_functor() still needs to be called prior 
+      //!          to use.
+      Apply2Best   ( const t_Store &_store )
+                 : store(_store ) {}
+      //! Sets the functor to call for best stored individual.
+      void set_functor( t_Functor *_functor ) { functor = _functor; }
+ 
+      //! Functor. Reroutes calls to Store::Manip::apply_best().
+      void operator()() { store.apply_best( functor ); }
+  };
 } // namespace GA
 
 #include "checkpoints.impl.h"

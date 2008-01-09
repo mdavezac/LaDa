@@ -16,12 +16,13 @@ namespace Store
 
     std::string str = _node.Attribute("print");
     if( str.find("all") != std::string::npos)
-       print_what |= PRINT_RESULTS;
+       print_what = PRINT_CONDITION | PRINT_RESULTS;
     else if( str.find("results") != std::string::npos ) 
-       print_what = PRINT_RESULTS;
-
-    if( str.find("condition") != std::string::npos ) 
-       print_what |= PRINT_CONDITION;
+    {
+      print_what = PRINT_RESULTS;
+      if( str.find("condition") != std::string::npos ) 
+        print_what |= PRINT_CONDITION;
+    }
 
     return true;
   }
@@ -134,6 +135,15 @@ namespace Store
     std::ostringstream sstr; sstr << " Conditional on "  << condition.what_is(); 
     return sstr.str();
   }
+  template<class T_CONDITION, class T_GATRAITS>
+  inline void Conditional<T_CONDITION, T_GATRAITS>
+    :: apply_all( eoMonOp<const t_Individual> *_op ) const
+    {
+      typename t_Container :: const_iterator i_indiv = results.begin();
+      typename t_Container :: const_iterator i_indiv_end = results.end();
+      for(; i_indiv != i_indiv_end; ++i_indiv ) (*_op)( *i_indiv );
+    }
+ 
 #ifdef _MPI
   template<class T_CONDITION, class T_GATRAITS>
   bool Conditional<T_CONDITION, T_GATRAITS> :: broadcast( mpi::BroadCast &_bc )
@@ -225,6 +235,7 @@ namespace Store
       return sstr.str(); 
     }
 
+
     template< class T_GATRAITS >
     FromObjective<T_GATRAITS> :: FromObjective   ( const TiXmlElement &_node ) 
                                                : t_Base(_node), objective(NULL),
@@ -294,6 +305,12 @@ namespace Store
       }
 
       return t_QuantityTraits::ge(indiv_val, end_val); 
+    }
+    template< class T_GATRAITS >
+    inline std::string FromObjective<T_GATRAITS> :: print() const
+    {
+      if( not objective->does_store() ) return t_Base::print(); 
+      return  print_condition ? t_Base::print() + objective->print(): objective->print(); 
     }
     
     template< class T_GATRAITS >

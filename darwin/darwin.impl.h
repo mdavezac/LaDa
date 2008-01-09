@@ -402,16 +402,33 @@ namespace GA
       std::string name = child->Attribute("type");
       if( name.compare("offspring") == 0 )
       {
-        continuator->add( eostates.storeFunctor( new PrintFitness< t_GATraits >
-                                                                 ( generation_counter ) ) );
+        continuator->add( eostates.storeFunctor( new PrintOffspring< t_GATraits >
+                                                                   ( generation_counter ) ) );
         Print::xmg << Print::Xmg::comment
                    << "Print: offspring" << Print::endl;
       }
-      else if( name.compare("pop") == 0 )
+      else if(    name.compare("pop") == 0 
+               or name.compare("population") == 0 )
       {
         continuator->add( eostates.storeFunctor( new PrintPop< t_GATraits >() ) );
         Print::xmg << Print::Xmg::comment
                    << "Print: current population" << Print::endl;
+      }
+      else
+      {
+        eoMonOp<const t_Individual> *op =  evaluator.LoadPrintBest( *child );
+        if ( not op ) continue;
+        eostates.storeFunctor( op );
+        Apply2Best<t_GATraits> *printbest = new Apply2Best<t_GATraits>( *store );
+        if( not printbest )
+        {
+          std::ostringstream sstr;
+          sstr << __FILE__ << ", line: " << __LINE__ << "\n"
+               << "Memory allocation error\n"; 
+          throw std::runtime_error( sstr.str() );
+        }
+        printbest->set_functor( op );
+        continuator->add(*printbest);
       }
     }
 

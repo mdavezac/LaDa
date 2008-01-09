@@ -20,6 +20,7 @@
      <LI> \ref TagObjective
      <LI> \ref TagOffspring
      <LI> \ref TagOperators
+     <LI> \ref TagPrint
      <LI> \ref TagRandom
      <LI> \ref TagSave
      <LI> \ref TagScaling
@@ -81,6 +82,7 @@
      \refitem secstore How to save and output?
      \refitem TagTaboos \<Taboos> ... \</Taboos\>
      \refitem TagStatistics \<Statistics/\>
+     \refitem TagPrint \<Print/\>
      \refitem TagFilenames \<Filenames/\>
      \refitem TagHistory \<History/\>
    \endsecreflist
@@ -611,10 +613,12 @@
            \subsection TagLayer \<Layer\>
              \addindex \<Layer/\>
              For "layered" optimization (eg molecularity) only. Makes taboo
-             individuals which have a thickness of site 1 (site 2 ) larger than d0 (d1).
-               \param d0 (Required)  Maximum number of layers of site 1 before
+             individuals which have a thickness of atom 1/site 1 (atom 2/site 1)
+             larger than d0 (d1). The atom and site index depends on the way
+             you have inputed things in \ref TagLattice.
+               \param d0 (Required)  Maximum number of layers of atom 1 before
                          the structure blows up.
-               \param d1 (Required)  Maximum number of layers of site 2 before
+               \param d1 (Required)  Maximum number of layers of atom 2 before
                          the structure blows up.
           
          \section TagStatistics \<Statistics/\>
@@ -628,6 +632,21 @@
                      - "AverageQuantity" over the population. Fitness is the
                        \f$\mathbf{O}\f$ in \ref secstrategy.
                      .
+
+         \section TagPrint \<Print/\>
+           \addindex \<Print/\>
+           Prints out individuals at the end of each generations to the output
+           file (not xmgrace file). Which individuals is defined by the
+           following attributes
+               \param type Defines which individuals to print
+                     - "pop" print out the full population.
+                     - "offspring" print out the offspring only.
+                       \f$\mathcal{F}\f$ in \ref secstrategy.
+                     - "animation" prints out an animation of the best
+                       individual at each generation in an xyz format.
+                       The filename can be set using the correct \ref TagFilenames.
+                     .
+          
          \section TagFilenames \<Filenames/\> (within \<GA\> ... \</GA\>)
            Defines different files from which to read input, and to which to
            save output. You can have as many tags as you want. All will be read.
@@ -648,8 +667,10 @@
                                \link BandGap::Darwin::references_filename here\endlink.
                                For (quirky) behavior, see
                                \link BandGap::Darwin::Continue() here\endlink.
-             
-          
+              \param animation (Optional) PLace to save an xyz animation of the
+                               best result. This tag has no effect unless the
+                               correct \ref TagPrint is present.
+
          \section TagHistory \<History/\>
              Whether to keep track of all evaluated individuals. Generally,
              this is only usefull in conjunction with \ref TagTaboos and \ref

@@ -558,6 +558,23 @@ namespace Ising_CE {
     return _stream;
   } 
 
+  std::ostream& Structure :: print_xyz( std::ostream &_stream,
+                                        const std::string &_name ) const
+  {
+    if( not lattice ) return _stream;
+    _stream << atoms.size() << "\n"
+            << _name << "\n";
+    t_Atoms :: const_iterator i_atom = atoms.begin();
+    t_Atoms :: const_iterator i_atom_end = atoms.end();
+    bool which = true;
+    for(; i_atom != i_atom_end; ++i_atom, which = not which )
+    {
+      StrAtom stratom; lattice->convert_Atom_to_StrAtom( *i_atom, stratom );
+      _stream << "   " << std::setw(2) << stratom.type
+              << "   " << ( stratom.pos * scale ) << "\n";
+    }
+    return _stream;
+  } 
 
 } // namespace Ising_CE
 

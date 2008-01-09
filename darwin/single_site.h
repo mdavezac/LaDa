@@ -284,6 +284,9 @@ namespace SingleSite
       //! \see GA::Evaluator::presubmit()
       void presubmit( std::list<t_Individual> &_pop );
 
+      //! \brief Returns a functor for printing xyz format
+      //! \see Evaluator::LoadPrintBest()
+      eoMonOp<const t_Individual>* LoadPrintBest( const TiXmlElement &_node );
 
     protected:
       //! \brief Does simple consistency checks between the structure as loaded from

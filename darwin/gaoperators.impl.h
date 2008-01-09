@@ -325,5 +325,75 @@ errorout:
                << ", "  << 0.5*(morethan+1.0) << "] " << Print::endl;
     return true;
   }
+
+
+  template< class T_INDIVIDUAL >
+  bool XYZAnim<T_INDIVIDUAL> :: operator()( const t_Individual& _indiv )
+  {
+    ++n;
+    if( not open() ) return false;
+    std::ostringstream sstr;
+    sstr << "Iteration: " << n << "  --  " << _indiv.fitness();
+    structure << _indiv.Object();
+    std::ostringstream sstr2;
+    structure.print_xyz( sstr2, sstr.str() );
+    (*file) << sstr2.str();
+    file->close();
+    return true;
+  }
+
+  template< class T_INDIVIDUAL >
+  bool XYZAnim<T_INDIVIDUAL> :: open()
+  {
+    if( not file ) return false;
+    if( file->is_open() ) return true;
+    return file->open();
+  }
+  template< class T_INDIVIDUAL >
+  void XYZAnim<T_INDIVIDUAL> :: init( const std::string &_name )
+  {
+    if( not file )
+    {
+      file = new Print::StdOut;
+      owns_pointer = true;
+    }
+    file->init( _name );
+  }
+
+  template< class T_INDIVIDUAL >
+  bool XYZAnim<T_INDIVIDUAL> :: Load( const TiXmlElement &_node )
+  {  
+    std::string name = _node.Value();
+    if( name.compare( "Print" ) ) return false;
+    if( not _node.Attribute( "type" ) ) return false;
+    name = _node.Attribute("type");
+    if( name.compare( "animation" ) != 0 ) return false;
+
+    std::string filename = "out.xyz";
+    const TiXmlNode *parent = _node.Parent();
+    if( parent ) 
+    {
+      const TiXmlElement *child = parent->FirstChildElement( "Filenames" );
+      for(; child; child = child->NextSiblingElement( "Filenames" ) )
+      {
+        if( not child->Attribute( "animation" ) ) continue;
+        name = child->Attribute( "animation" );
+        if( name.size() > 0 ) { filename = name; break; }
+      }
+    }
+
+    init( filename );
+
+    Print::xmg << Print::Xmg::comment
+               << "Will print animation (xyz format) of best individual to " 
+               << filename << Print::endl;
+    Print::out << "Will print animation (xyz format) of best individual to " 
+               << filename << "\n";
+
+    return true;
+  }  
+
+  
+
 }
 #endif

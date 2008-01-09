@@ -683,10 +683,11 @@ errorout:
     const_iterator i_var_end = _indiv.Object().Container().end();
 
     typedef std::pair<bool, types::t_unsigned> t_layerpair;
-    //! Keeps track of the width and type of the current layer
+    // Keeps track of the width and type of the current layer
     t_layerpair  current( BitString::spin_up( *i_site == 0 ? *i_var: *i_site ), 0 );
-    //! Keeps a record of the first layer in order to do periodicity check
+    // Keeps a record of the first layer in order to do periodicity check
     t_layerpair  first(0,0);
+    bool is_first = true;
     for(; i_site != i_site_end and i_var != i_var_end;  ++i_site )
     {
       bool type;
@@ -694,7 +695,7 @@ errorout:
 
       if ( current.first != type )
       {
-        if ( first.first == 0 ) first = current;
+        if ( is_first ) { first = current; is_first = false; }
         current.first = type;
         current.second = 0;
       }
