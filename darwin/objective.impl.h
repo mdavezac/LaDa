@@ -4,6 +4,8 @@
 #ifndef _OBJECTIVE_IMPL_H_
 #define _OBJECTIVE_IMPL_H_
 
+#include <opt/debug.h>
+
 namespace Objective
 {
   template< class T_GA_TRAITS, class T_QUANTITY_TRAITS, class T_VA_TRAITS >
@@ -94,7 +96,7 @@ namespace Objective
     typename t_QuantityGradients :: iterator i_grad_end = _grad.end(); 
     t_VA_Type *i_grad_result = _i_grad;
 
-    if ( t_QuantityTraits::ge(_q, q_0 ) )
+    if ( t_QuantityTraits::gt(_q, q_0 ) )
       for(; i_grad != i_grad_end; ++i_grad, ++i_grad_result )
         *i_grad_result += *i_grad;
     else if ( t_QuantityTraits::le(_q, q_0 ) )
@@ -108,7 +110,7 @@ namespace Objective
                                                       t_QuantityGradients& _grad,
                                                       types::t_unsigned _n) 
   {
-    if ( t_QuantityTraits::ge(_q, q_0 ) ) return _grad[_n];
+    if ( t_QuantityTraits::gt(_q, q_0 ) ) return _grad[_n];
     else if ( t_QuantityTraits::le(_q, q_0 ) ) return -_grad[_n];
     return t_VA_Type(0);
   }
@@ -309,15 +311,10 @@ namespace Objective
     const typename LinearSum<T_GA_TRAITS>::t_Fitness&
       LinearSum<T_GA_TRAITS> :: operator()( const t_Quantity& _q ) 
       {
-        if ( t_QuantityTraits::size(_q) != coefs.size() )
-        {
-           std::ostringstream sstr;
-           sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-                << "Wrong number of objective functions during evaluation \n"
-                << "Expected " << t_QuantityTraits::size(_q) << "\n"
-                << "Found " << coefs.size() << "\n";
-           throw std::runtime_error( sstr.str() );
-        }
+        __DOASSERT( t_QuantityTraits::size(_q) != coefs.size(),
+                       "Wrong number of objective functions during evaluation \n"
+                    << "Expected " << t_QuantityTraits::size(_q) << "\n"
+                    << "Found " << coefs.size() << "\n" )
 
         t_ScalarQuantity inter = 0;
         typename t_Quantity :: const_iterator i_val = _q.begin();
@@ -339,18 +336,14 @@ namespace Objective
   template< class T_GA_TRAITS >
     typename LinearSum<T_GA_TRAITS>::t_ScalarQuantity
       LinearSum<T_GA_TRAITS> :: evaluate_with_gradient( const t_Quantity &_q,
-                                                                    t_QuantityGradients &_grad,
-                                                                    t_VA_Type *_i_grad)
+                                                        t_QuantityGradients &_grad,
+                                                        t_VA_Type *_i_grad)
       {
-        if ( t_QuantityTraits::size(_q) != coefs.size() )
-        {
-           std::ostringstream sstr;
-           sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-                << "Wrong number of objective functions during evaluation \n"
-                << "Expected " << t_QuantityTraits::size(_q) << "\n"
-                << "Found " << coefs.size() << "\n";
-           throw std::runtime_error( sstr.str() );
-        }
+        __DOASSERT( t_QuantityTraits::size(_q) != coefs.size(),
+                       "Wrong number of objective functions during evaluation \n"
+                    << "Expected " << t_QuantityTraits::size(_q) << "\n"
+                    << "Found " << coefs.size() << "\n" )
+        
         t_ScalarQuantity results = 0.0;
         typename t_Quantity :: const_iterator i_val = _q.begin();
         typename t_Quantity :: const_iterator i_val_end = _q.end();
@@ -391,15 +384,11 @@ namespace Objective
                                                                 t_QuantityGradients &_grad,
                                                                 t_VA_Type *_i_grad)
       {
-        if ( t_QuantityTraits::size(_q) != coefs.size() )
-        {
-           std::ostringstream sstr;
-           sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-                << "Wrong number of objective functions during evaluation \n"
-                << "Expected " << t_QuantityTraits::size(_q) << "\n"
-                << "Found " << coefs.size() << "\n";
-           throw std::runtime_error( sstr.str() );
-        }
+        __DOASSERT( t_QuantityTraits::size(_q) != coefs.size(),
+                       "Wrong number of objective functions during evaluation \n"
+                    << "Expected " << t_QuantityTraits::size(_q) << "\n"
+                    << "Found " << coefs.size() << "\n" )
+        
         typename t_Quantity :: const_iterator i_val = _q.begin();
         typename t_Quantity :: const_iterator i_val_end = _q.end();
         typename t_QuantityGradients :: iterator i_grad = _grad.begin();
@@ -436,15 +425,11 @@ namespace Objective
                                                                    t_QuantityGradients& _grad,
                                                                    types::t_unsigned _n)
       {
-        if ( t_QuantityTraits::size(_q) != coefs.size() )
-        {
-           std::ostringstream sstr;
-           sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-                << "Wrong number of objective functions during evaluation \n"
-                << "Expected " << t_QuantityTraits::size(_q) << "\n"
-                << "Found " << coefs.size() << "\n";
-           throw std::runtime_error( sstr.str() );
-        }
+        __DOASSERT( t_QuantityTraits::size(_q) != coefs.size(),
+                       "Wrong number of objective functions during evaluation \n"
+                    << "Expected " << t_QuantityTraits::size(_q) << "\n"
+                    << "Found " << coefs.size() << "\n" )
+
         typename t_Quantity :: const_iterator i_val = _q.begin();
         typename t_Quantity :: const_iterator i_val_end = _q.end();
         typename t_QuantityGradients :: iterator i_grad = _grad.begin();
@@ -519,22 +504,19 @@ namespace Objective
         Types<T_GA_TRAITS> :: vector_from_xml( const TiXmlElement &_node )
         {
           if ( not &_node ) return NULL;
-          std::string str = "minimize"; 
-          std::string name = Print::lowercase(_node.Value());
-          if (    name.compare("objective") == 0 
-               or name.compare("method") == 0 )
-          {
-            if ( _node.Attribute( "type" ) )
-              str = Print::lowercase(_node.Attribute( "type" ));
-          }
+//         std::string str = "minimize"; 
+//         std::string name = Print::lowercase(_node.Value());
+//         if (    name.compare("objective") == 0 
+//              or name.compare("method") == 0 )
+//         {
+//           if ( _node.Attribute( "type" ) )
+//             str = Print::lowercase(_node.Attribute( "type" ));
+//         }
           if ( Vector::t_QuantityTraits::is_vector ) // and str.compare("LinearSum") == 0 )
           {
             LinearSum<T_GA_TRAITS> *linear = new LinearSum<T_GA_TRAITS>;
-            if ( not linear ) 
-            {
-              std::cerr << "Mememory Pb when creating LinearSum multi-objective" << std::endl;
-              return NULL;
-            }
+            __DOASSERT( not linear, "Mememory allocation error\n" )
+            
             Print::xmg << Print::Xmg::comment << "Objective: begin LinearSum" << Print::endl;
             Print::xmg << Print::Xmg::indent;
             const TiXmlElement *child = _node.FirstChildElement("Objective");

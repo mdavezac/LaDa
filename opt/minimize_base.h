@@ -39,7 +39,7 @@ namespace Minimizer {
       //! Constructor and Initializer
       Base(t_Functional &_func) : current_func(&_func) {}
       //! Copy Constructor
-      Base( Base<t_Functional> &_func) : current_func(&_func) {}
+      Base( const Base<t_Functional> &_c) : current_func(_c.current_func) {}
       //! Destructor
       virtual ~Base(){}
 

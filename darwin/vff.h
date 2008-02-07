@@ -20,9 +20,6 @@
 #include <opt/types.h>
 #include <atat/vectmac.h>
 
-#ifdef _MPI
-#include "mpi/mpi_object.h"
-#endif
 
 namespace Vff
 {
@@ -130,6 +127,7 @@ namespace Vff
 } // namespace BandGap
 
 #ifdef _MPI
+#include <mpi/mpi_object.h>
 namespace mpi
 {
   /** \ingroup MPI

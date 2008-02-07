@@ -2,6 +2,13 @@
 //  Version: $Id$
 //
 #include <algorithm>
+#include <functional>
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include <opt/debug.h>
 
 #include "harmonic.h"
 
@@ -43,15 +50,8 @@ namespace Ising_CE
 
   types::t_real Linear_Interpolator :: evaluate( const types::t_real _x ) const
   {
-    #ifdef _DEBUG_LADA_ 
-      if ( points.size() == 0 )
-      {
-        std::cerr << "Nothing to interpolate in "
-                  << "Linear_Interpolator :: operator[]( const types::t_real _x )"
-                  << std::endl;
-        exit(0);
-      }
-    #endif // _DEBUG_LADA_ 
+    __ASSERT( points.size() == 0, "Nothing to interpolate\n" )
+
     std::vector<Point> :: const_iterator i_point;
     std::vector<Point> :: const_iterator i_begin = points.begin();
     std::vector<Point> :: const_iterator i_end = points.end();
@@ -70,15 +70,8 @@ namespace Ising_CE
   }
   types::t_real Linear_Interpolator :: evaluate_gradient( const types::t_real _x ) const
   {
-    #ifdef _DEBUG_LADA_ 
-      if ( points.size() == 0 )
-      {
-        std::cerr << "Nothing to interpolate in "
-                  << "Linear_Interpolator :: operator[]( const types::t_real _x )"
-                  << std::endl;
-        exit(0);
-      }
-    #endif // _DEBUG_LADA_ 
+    __ASSERT( points.size() == 0, "Nothing to interpolate\n" )
+
     std::vector<Point> :: const_iterator i_point;
     std::vector<Point> :: const_iterator i_begin = points.begin();
     std::vector<Point> :: const_iterator i_end = points.end();
@@ -95,15 +88,8 @@ namespace Ising_CE
   }
   types::t_real Linear_Interpolator :: evaluate_with_gradient( const types::t_real _x, types::t_real &gradient ) const
   {
-    #ifdef _DEBUG_LADA_ 
-      if ( points.size() == 0 )
-      {
-        std::cerr << "Nothing to interpolate in "
-                  << "Linear_Interpolator :: operator[]( const types::t_real _x )"
-                  << std::endl;
-        exit(0);
-      }
-    #endif // _DEBUG_LADA_ 
+    __ASSERT( points.size() == 0, "Nothing to interpolate\n" )
+    
     std::vector<Point> :: const_iterator i_point;
     std::vector<Point> :: const_iterator i_begin = points.begin();
     std::vector<Point> :: const_iterator i_end = points.end();

@@ -13,7 +13,8 @@ namespace Molecularity
 
     _indiv.quantities().clear();
 
-    _indiv.quantities().push_back( Vff::inplane_stress( object.stress, direction ) );
+    _indiv.quantities().push_back(
+        std::abs(Vff::inplane_stress( object.stress, direction )) );
     _indiv.quantities().push_back( object.cbm - object.vbm );
   }
   
@@ -44,12 +45,14 @@ namespace Molecularity
   inline std::ostream& operator<<(std::ostream &_stream, const Object &_o)
   {
     return _stream << (const Layered::Object<>&) _o << " "
+                   << "x=" << _o.get_concentration() << " "
                    << (const BandGap::Keeper&)  _o << " ";
   }
 } // namespace Molecularity
 
 
 #ifdef _MPI
+#include <mpi/mpi_object.h>
 namespace mpi
 {
   template<>

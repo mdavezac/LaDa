@@ -22,15 +22,13 @@
 
 #include <opt/function_base.h>
 #include <opt/types.h>
+#include <mpi/mpi_object.h>
 
 #include "objective.h"
 #include "fitness.h"
 #include "gatraits.h"
 
 
-#ifdef _MPI
-#include "mpi/mpi_object.h"
-#endif 
 
 /** \ingroup Genetic
  * @{
@@ -107,7 +105,7 @@ namespace Individual
       t_Quantity quantity;  //!< t_Quantity instance, eg raw fitness
 
     public: 
-       //! Constructor, Base::age is set to 0
+      //! Constructor, Base::age is set to 0
       Base() : age(0) {}
       //! Destructor
       ~Base() {} 
@@ -259,8 +257,9 @@ namespace Individual
   template< class T_BASE >
   class Multi : public T_BASE
   {
-      typedef T_BASE t_Base; //!< %Base class type
+      typedef Multi<T_BASE> t_This; //!< Type of this class.
     public: 
+      typedef T_BASE t_Base; //!< %Base class type
       //! \brief Contains all traits pertaining to an individual, and then some
       //! \sa Traits::Indiv
       typedef typename t_Base::t_IndivTraits t_IndivTraits; 
@@ -277,6 +276,13 @@ namespace Individual
     public:
       using t_Base :: set_fitness;
 
+       //! Constructor, Base::age is set to 0
+      Multi() : t_Base() {}
+      //! Destructor
+      ~Multi() {} 
+      //! Copy Constructor
+      Multi   (const t_This &_indiv ) 
+            : t_Base( _indiv ) {}
       //! \brief Sets the scalar fitness of Multi::repFitness
       //! \details For a scalar fitness, this %function is exactly equivalent to
       //! Base::set_fitness( const t_Quantiy ) and hence cannot even be declared.

@@ -3,7 +3,6 @@
 //
 #include <functional>
 #include <algorithm>
-#include <ext/algorithm>
 
 #include <lamarck/atom.h>
 #include <lamarck/structure.h>

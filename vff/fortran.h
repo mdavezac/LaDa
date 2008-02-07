@@ -9,9 +9,7 @@
 #endif
 
 #include <opt/types.h>
-#ifdef _MPI 
-  #include <mpi/mpi_object.h>
-#endif
+#include <mpi/mpi_object.h>
 
 #include <lamarck/structure.h>
 #include <lamarck/lattice.h>

@@ -13,12 +13,10 @@
 #include <pescan_interface/emass.h>
 #include <lamarck/structure.h>
 #include <opt/types.h>
+#include <mpi/mpi_object.h>
 
 #include "vff.h"
 
-#ifdef _MPI
-#include "mpi/mpi_object.h"
-#endif
 
 //! Optimizes effective elecronic mass for SL
 namespace eMassSL

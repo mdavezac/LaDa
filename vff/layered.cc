@@ -4,6 +4,7 @@
 #include <cstdlib>
 
 #include <opt/fuzzy.h>
+#include <opt/debug.h>
 
 #include "layered.h"
 
@@ -14,7 +15,7 @@ namespace Vff
   {
     // The first vector of the cell should indicate the direction of the
     // layering.
-    u = structure.cell.get_column(0);
+    u = is_fixed_by_input ? direction: structure.cell.get_column(0);
     types::t_real a = 1.0 / std::sqrt( atat::norm2(u) );
     u = a * u;
     template_strain.zero(); 
@@ -23,7 +24,7 @@ namespace Vff
     atat::rVector3d a1 = Fuzzy::eq( u(0), 0e0 ) ? 
                            ( Fuzzy::eq( u(1), 0e0 ) ? 
                               atat::rVector3d(1, 0, 0):
-                              atat::rVector3d(0, u(2), -u(3) )  ): 
+                              atat::rVector3d(0, u(2), -u(1) )  ): 
                            atat::rVector3d( -u(2) -u(1), u(0), u(0) );
     a = ( 1.0 / std::sqrt( atat::norm2(a1) ) );
     a1 =  a * a1;
@@ -50,34 +51,12 @@ namespace Vff
   // initializes stuff before minimization
   bool Layered :: init()
   {
-    create_template_strain();
+    if( not is_fixed_by_input ) create_template_strain();
     // sets up structure0, needed for fractional vs cartesian shit
     structure0 = structure;
 
-    // Computes center of Mass
-    // frozen (i.e. three components of the atomic positions )
-    t_Atoms :: iterator i_atom =  structure0.atoms.begin();
-    t_Atoms :: iterator i_atom_end =  structure0.atoms.end();
-    center_of_mass = atat::rVector3d(0,0,0);
-    for(; i_atom != i_atom_end; ++i_atom )
-      center_of_mass += (!structure0.cell) * i_atom->pos;
-
-    // Now counts the leftover degrees of freedom
-    // There is already one assumed dof: relaxation of cell along the direction
-    types::t_unsigned dof = 1;
-    for( i_atom = structure0.atoms.begin(); 
-         i_atom != i_atom_end; ++i_atom ) 
-    {
-      if ( not (i_atom->freeze & t_Atom::FREEZE_X ) ) ++dof;
-      if ( not (i_atom->freeze & t_Atom::FREEZE_Y ) ) ++dof;
-      if ( not (i_atom->freeze & t_Atom::FREEZE_Z ) ) ++dof;
-    }
-    if ( not dof )
-    {
-      std::cerr << " Structure is frozen!! " << std::endl;
-      std::cerr << " give me something to work with... " << std::endl;
-      return false;
-    }
+    // Now counts the degrees of freedom
+    types::t_unsigned dof = 1 + posdofs();
 
     function::Base<> :: resize( dof );
     if ( not variables ) return false;
@@ -94,71 +73,72 @@ namespace Vff
   // variables is expected to be of sufficient size!!
   void Layered :: pack_variables( const atat::rMatrix3d& _strain)
   {
+    __ASSERT( variables->size() == 0, "Too few variables\n" )
     // finally, packs vff format into function::Base format
-    iterator i_var = begin();
+    iterator i_var = variables->begin();
     *i_var = u * (_strain * u) - 1.0;
     ++i_var;
-
-    t_Atoms :: const_iterator i_atom =  structure0.atoms.begin();
-    t_Atoms :: const_iterator i_atom_end =  structure0.atoms.end();
-    for(; i_atom != i_atom_end; ++i_atom )
-    {
-      if ( not (i_atom->freeze & t_Atom::FREEZE_X ) )
-        *i_var = i_atom->pos[0] * 0.5, ++i_var;
-      if ( not (i_atom->freeze & t_Atom::FREEZE_Y ) )
-        *i_var = i_atom->pos[1] * 0.5, ++i_var;
-      if ( not (i_atom->freeze & t_Atom::FREEZE_Z ) )
-        *i_var = i_atom->pos[2] * 0.5, ++i_var;
-    }
+    pack_positions( i_var );
   }
-
 
   // Unpacks opt::Function_Base::variables into Vff::Layered format
   void Layered :: unpack_variables(atat::rMatrix3d& strain)
   {
+    __ASSERT( variables->size() < 3, "Too few variables.\n" )
     std::vector<types::t_real> :: const_iterator i_x = variables->begin();
-    std::vector<types::t_real> :: const_iterator i_x_end = variables->end();
 
-    strain = (*i_x) * template_strain;
+    strain = (*i_x++) * template_strain;
     strain(0,0) += 1.0;
     strain(1,1) += 1.0;
     strain(2,2) += 1.0;
 
     // compute resulting cell vectors
     structure.cell = strain * structure0.cell;
-//   std::cout << " epsilon: " << *i_x << std::endl
-//             << " template: " << std::endl << template_strain
-//             << " strain: " << std::endl << strain
-//             << " cell: " << std::endl << structure.cell << std::endl;
-
-    // then computes positions
-    t_Atoms :: const_iterator i_atom0 = structure0.atoms.begin();
-    t_Atoms :: iterator i_atom = structure.atoms.begin();
-    t_Atoms :: iterator i_atom_end = structure.atoms.end();
-    atat::rVector3d com(0,0,0);
-    atat::rMatrix3d cell_inv = !structure.cell;
-    for(++i_x; i_atom != i_atom_end; ++i_atom, ++i_atom0 )
-    {
-      atat::rVector3d pos;
-      pos[0] = ( i_atom0->freeze & t_Atom::FREEZE_X ) ?
-               i_atom0->pos[0] : 2.0 * (*i_x++);
-      pos[1] = ( i_atom0->freeze & t_Atom::FREEZE_Y ) ?
-               i_atom0->pos[1] : 2.0 * (*i_x++);
-      pos[2] = ( i_atom0->freeze & t_Atom::FREEZE_Z ) ?
-               i_atom0->pos[2] : 2.0 * (*i_x++);
-      i_atom->pos = strain * pos;
-      com -= cell_inv * i_atom->pos;
-    }
-
-    com += center_of_mass;
-    com[0] /= (types::t_real) structure.atoms.size();
-    com[1] /= (types::t_real) structure.atoms.size();
-    com[2] /= (types::t_real) structure.atoms.size();
-    if ( Fuzzy::eq( atat::norm2( com ), 0e0 ) ) return;
-
-
-    for(i_atom = structure.atoms.begin(); i_atom != i_atom_end; ++i_atom )
-      i_atom->pos += com; 
+    unpack_positions( strain, i_x );
   }
+
+  bool Layered :: Load_( const TiXmlElement &_node )
+  {
+    if( not t_Base :: Load( _node ) ) return false;
+    if( not _node.Attribute("direction") )
+    {
+      is_fixed_by_input = false;
+      return true;
+    }
+    bool couldload = true;
+    std::istringstream sstr; sstr.str( _node.Attribute("direction") );
+    sstr >> direction[0]; if ( sstr.fail() ) couldload = false;
+    sstr >> direction[1]; if ( sstr.fail() ) couldload = false;
+    sstr >> direction[2]; if ( sstr.fail() ) couldload = false;
+
+    if ( atat::norm2( direction ) < types::tolerance ) couldload = false;
+
+    if ( not couldload )
+    {
+      is_fixed_by_input = false;
+      std::cerr << "Found direction tag, but could not read it correctly.\n";
+      return false; 
+    }
+     
+    is_fixed_by_input = true;
+    create_template_strain();
+    return true;
+  }
+
+  bool Layered :: Load( const TiXmlElement &_node )
+  {
+    const TiXmlElement* parent = find_node( _node );
+    if( not t_Base :: Load( *parent ) ) return false;
+    return Load_( *parent );
+  }
+
+
+   void Layered :: print_out( std::ostream &stream ) const
+   {
+     t_Base :: print_out( stream );
+     if( is_fixed_by_input )
+       stream << "Epitaxial Direction fixed on input: " << direction << "\n";
+     else stream << "Epitaxial Direction fixed by unit cell\n";
+   }
 } // namespace vff
 

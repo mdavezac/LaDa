@@ -7,14 +7,65 @@
   #include "emass.h"
   typedef Pescan::eMassSL t_Pescan;
   typedef Vff::VABase<Vff::Functional> t_Vff;
+#define __PROGNAME__ "Empirical Pseudo-Potential Functional for 100 Effective Masses in GaInSb"
 #else
   #include "va.h"
   typedef Pescan::VirtualAtom t_Pescan;
   typedef Vff::VABase<Vff::Functional> t_Vff;
+#define __PROGNAME__ "Empirical Pseudo-Potential Functional"
 #endif
 #include <tinyxml/tinyxml.h>
 #include <print/manip.h>
+#include <revision.h>
 
+
+void parse_cli( int argc, char *argv[],
+                std::string &_filename, std::string &_checkfilename,
+                bool &_docheckresult, bool &_doevaluate )
+{
+  std::ostringstream sstr;
+  for( types::t_int i = 1; i < argc; ++i )
+    sstr << argv[i] << " "; 
+  std::istringstream istr( sstr.str() );
+  while ( istr.good() )
+  {
+    std::string is_op;
+    istr >> is_op; is_op = Print::StripEdges( is_op );
+    if( is_op.empty() ) continue;
+    else if(     istr.good()
+             and (is_op == "-i" or is_op == "--input") ) istr >> _filename;
+    else if (     istr.good()
+              and (is_op == "-s" or is_op == "--save") ) 
+      { _docheckresult = true; istr >> _checkfilename; }
+    else if (is_op == "-d" or is_op == "--donteval") _doevaluate = false;
+    else if( is_op == "-h" or is_op == "--help" )
+    {
+      std::cout << "\n" << __PROGNAME__ << " from the " << PACKAGE_STRING << " package.\n"
+                << "Command-line options:\n\t -h, --help this message"
+                << "\n\t -v, --version Subversion Revision and Package version"
+                << "\n\t -i, --input XML input file"
+                << "\n\t -s, --save XML file where GA results where saved"
+                << " (default: read from GA output tags or structures from input)"
+                << "\n\t -d, --donteval Won't run evaluations, just printouts structures\n\n";
+      exit(1);
+    }
+    else if( is_op == "-v" or is_op == "--version" )
+    {
+      std::cout << "\n" << __PROGNAME__ << " from the " << PACKAGE_STRING << " package\n"
+                << "Subversion Revision: " << SVN::Revision << "\n\n"; 
+      exit(1);
+    }
+  }
+  _filename = Print::reformat_home( _filename );
+  if( _filename != "input.xml" )
+    std::cout << "Reading from input file " << _filename << std::endl;
+  if( _docheckresult )
+  { 
+    _checkfilename = Print::reformat_home( _checkfilename );
+    if( _checkfilename != _filename )
+      std::cout << "Reading from GA output file " << _checkfilename << std::endl;
+  }
+}
 
 #ifdef _EMASS
 inline void operator<<( t_Pescan &_pescan, const t_Vff &_vff )
@@ -71,40 +122,9 @@ int main(int argc, char *argv[])
   std::string checkfilename("");
   bool do_check_results = false;
   bool do_evaluate = true;
-  if( argc > 1 )
-  {
-    std::ostringstream sstr;
-    for( types::t_int i = 1; i < argc; ++i )
-      sstr << argv[i] << " "; 
-    std::istringstream istr( sstr.str() );
-    while ( istr.good() )
-    {
-      std::string is_op;
-      istr >> is_op; is_op = Print::StripEdges( is_op );
-      if( is_op.empty() ) continue;
-      else if(     istr.good()
-               and (is_op == "-i" or is_op == "--input") ) istr >> filename;
-      else if (     istr.good()
-                and (is_op == "-s" or is_op == "--save") ) 
-        { do_check_results = true; istr >> checkfilename; }
-      else if (is_op == "-d" or is_op == "--donteval") do_evaluate = false;
-      else if( is_op == "-h" or is_op == "--help" )
-        std::cout << "Command-line options:\n\t -h, --help this message"
-                  << "\n\t -i, --input XML input file\n\n"
-                  << "\n\t -s, --save XML file where GA results where saved"
-                  << " (default: read from GA output tags or structures from input)"
-                  << "\n\t -d, --donteval Won't run evaluations, just printouts structures\n\n";
-    }
-    filename = Print::reformat_home( filename );
-    if( filename != "input.xml" )
-      std::cout << "Reading from input file " << filename << std::endl;
-    if( do_check_results )
-    { 
-      checkfilename = Print::reformat_home( checkfilename );
-      if( checkfilename != filename )
-        std::cout << "Reading from GA output file " << checkfilename << std::endl;
-    }
-  }
+
+  parse_cli( argc, argv, filename, checkfilename, do_check_results, do_evaluate );
+
   TiXmlDocument doc( filename.c_str() );
   
   if  ( !doc.LoadFile() )

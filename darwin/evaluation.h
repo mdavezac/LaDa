@@ -14,9 +14,7 @@
 
 #include <tinyxml/tinyxml.h>
 
-#ifdef _MPI
 #include <mpi/mpi_object.h>
-#endif
 #include <print/stdout.h>
 
 #include "objective.h"

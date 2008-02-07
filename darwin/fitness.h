@@ -15,9 +15,7 @@
 #include <tinyxml/tinyxml.h>
 
 #include <opt/types.h>
-#ifdef _MPI
 #include <mpi/mpi_object.h>
-#endif
 #include <print/xmg.h>
 #include <print/manip.h>
 
@@ -48,6 +46,27 @@
 //! Fitness::Vectorial directly.
 namespace Fitness
 {
+  //! \brief The return value of Fitness::Scalar::compare() and derived
+  //! \details Comparison depends on Fuzzy operators.
+  //!          In the case of <strong> vectorial /<strong> fitnesses,
+  //!          \e a fitness a is \< than a fitness \e b, if and only if all
+  //!          its components but one are at least \<=  than the components
+  //!          of \e b, and if at least one component is stryctly \<.
+  //!          Two </strong> vectorial /<strong> fitnesses are INDIFFERENT
+  //!          if they neither equal, nor stronger, nor weaker than one another.
+  //! \sa Ranking::Pareto
+  enum t_Comparison 
+  {
+    //! Fitnesses are equal
+    EQUAL, 
+    //! Fitnesses is weaker (see t_Comparison description )
+    WEAKER, 
+    //! Fitnesses is stronger (see t_Comparison description )
+    STRONGER, 
+    //! Fitnesses are not comparable (see t_Comparison description )
+    INDIFFERENT
+  };
+
   //! \brief %Fitness base class for <em>scalar</em> fitnesses
   //! \details Defines a fitness as a variable Fitness::Base::quantity around
   //! which are implemented weak ordering operators. This class also adds
@@ -107,7 +126,7 @@ namespace Fitness
       //! default, the implementation calls t_QuantityTraits::greater().
       //! \see Traits::Quantity, Fuzzy
       bool operator<(const t_This & _f) const
-        { return t_QuantityTraits::ge(quantity, _f.quantity); }
+        { return t_QuantityTraits::gt(quantity, _f.quantity); }
       //! \brief strict ordering operator 
       //! \details Calls a static function of Fitness::Scalar::t_QuantityTraits.
       //! This allows type specific implementation, such as fuzzy math for
@@ -129,11 +148,18 @@ namespace Fitness
       //! \brief invalidates the fitness
       void invalidate() { is_valid = false; }
       //! \brief returns a constant copy of the quantity
-      operator t_Quantity() const;
+      operator t_Quantity() const
+      { 
+        __ASSERT( not is_valid, "Trying to access invalid fitness\n" )
+        return quantity;
+      }
       //! \brief Loads the fitenss from XML
       bool Load( const TiXmlElement & _node );
       //! \brief Saves the fitenss to XML
       bool Save( TiXmlElement & _node ) const;
+      //! \brief Returns a t_Comparison giving the relationship between this
+      //!        object and \a _f.
+      t_Comparison compare( const t_This &_f ) const;
 
 #ifdef _MPI
       /** \ingroup MPI
@@ -247,7 +273,7 @@ namespace Fitness
              \f]
                   For generality, the static ordering operators of
                   t_ScalarQuantityTraits are use in the implementation (eg
-                  fuzzy math for reals). Note however that it is Fuzzy::ge
+                  fuzzy math for reals). Note however that it is Fuzzy::gt
                   which is called, since minimization is the default.
       */
       bool operator<(const t_This & _f) const;
@@ -260,7 +286,7 @@ namespace Fitness
              \f]
                   For generality, the static ordering operators of
                   t_ScalarQuantityTraits are use in the implementation (eg
-                  fuzzy math for reals). Note however that it is Fuzzy::ge
+                  fuzzy math for reals). Note however that it is Fuzzy::gt
                   which is called, since minimization is the default.
       */
       bool operator>(const t_This & _f) const;
@@ -273,7 +299,11 @@ namespace Fitness
       //! \brief invalidates the (vectorial) fitness
       void invalidate() { vec_is_valid = false; }
       //! \brief returns a constant reference of the vectorial quantity
-      operator const t_Quantity& () const;
+      operator const t_Quantity& () const
+      { 
+        __ASSERT( not vec_is_valid, "Trying to access invalid fitness\n" )
+        return vec_quantity;
+      }
       //! \brief Loads the fitenss from XML
       bool Load( const TiXmlElement & _node );
       //! \brief Saves the fitenss to XML
@@ -284,6 +314,9 @@ namespace Fitness
       //! \brief adds a component to the vectorial quantity
       void push_back( typename t_Quantity :: value_type  _var )
         { vec_quantity.push_back( _var ); vec_is_valid = true; }
+      //! \brief Returns a t_Comparison giving the relationship between this
+      //!        object and \a _f.
+      t_Comparison compare( const t_This &_f ) const;
 #ifdef _MPI
       /** \ingroup MPI
        * \brief allows the serialization of a Fitness::Vectorial object.
@@ -341,7 +374,7 @@ namespace Fitness
   //! Retrieves fitness from a stream
   template<class T_QUANTITYTRAITS>
   std::ostream & operator<<( std::ostream &_os,
-                             Scalar<T_QUANTITYTRAITS> &_fit );
+                             const Scalar<T_QUANTITYTRAITS> &_fit );
 
 
   //! Dumps \e vectorial fitness to a stream

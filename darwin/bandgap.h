@@ -19,6 +19,7 @@
 #include <opt/function_base.h>
 #include <opt/gsl_minimizers.h>
 #include <opt/types.h>
+#include <mpi/mpi_object.h>
 
 #include "two_sites.h"
 #include "evaluator.h"
@@ -29,9 +30,6 @@
 #include "bandgap_stubs.h"
 
 
-#ifdef _MPI
-#include "mpi/mpi_object.h"
-#endif
 
 /** \ingroup Genetic
  * @{ */
@@ -74,7 +72,7 @@ namespace BandGap
     types::t_real y;
 
     //! Constructor
-    Object() : TwoSites::Object(), BandGap::Keeper() {}
+    Object() : TwoSites::Object(), BandGap::Keeper(), x(-2), y(-2) {}
     //! Copy Constructor
     Object   (const Object &_c)
            : TwoSites::Object(_c), BandGap::Keeper(_c),

@@ -8,7 +8,7 @@
 #include <config.h>
 #endif
 
-#include "opt/types.h"
+#include <opt/types.h>
 
 namespace GA
 {

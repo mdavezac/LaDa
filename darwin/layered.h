@@ -17,6 +17,7 @@
 
 #include <lamarck/structure.h>
 #include <opt/types.h>
+#include <mpi/mpi_object.h>
 
 #include "evaluator.h"
 #include "individual.h"
@@ -24,9 +25,6 @@
 #include "gaoperators.h"
 #include "vff.h"
 
-#ifdef _MPI
-#include "mpi/mpi_object.h"
-#endif
 
 //! \brief fills in \a atoms member of an Ising_CE::Structure instance from the
 //!        cell-shape and the lattice.
@@ -334,6 +332,9 @@ namespace Layered
 
       //! Sets Layered::Evaluator::Structure to \a _indiv
       void init( t_Individual &_indiv );
+
+      //! Prints conceration attributes and structure
+      std::string print() const;
 
     protected:
       //! Loads epitaxial growth parameters and constructs the structure

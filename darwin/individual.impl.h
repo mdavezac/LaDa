@@ -4,6 +4,7 @@
 #ifndef _INDIVIDUAL_IMPL_H_
 #define _INDIVIDUAL_IMPL_H_
 
+#include <opt/debug.h>
 
 namespace Individual
 {
@@ -18,7 +19,7 @@ namespace Individual
   template<class T_INDIVTRAITS>
   bool Base<T_INDIVTRAITS> :: operator==( const t_This &_indiv ) const
   {
-    if ( std::abs(get_concentration() - _indiv.get_concentration()) > types::tolerance )
+    if ( Fuzzy::neq(get_concentration(), _indiv.get_concentration() ) )
       return false;
     if ( invalid() or _indiv.invalid() )
       return object == _indiv.object; 
@@ -44,11 +45,7 @@ namespace Individual
   bool Base<T_INDIVTRAITS> :: Save( TiXmlElement &_node, SaveOp &_saveop ) const
   {
     TiXmlElement *xmlindiv = new TiXmlElement("Individual");
-    if ( not xmlindiv )
-    {
-      std::cerr << "Memory Allocation Error while saving individual" << std::endl;
-      return false;
-    }
+    __DOASSERT( not xmlindiv, "Memory Allocation Error\n" )
 
     if (     repFitness.Save(*xmlindiv)
          and _saveop(*this, *xmlindiv)  )
@@ -58,7 +55,7 @@ namespace Individual
     }
 
     delete xmlindiv;
-    std::cerr << "Errow while save individual" << std::endl <<  *this << std::endl;
+    __THROW_ERROR( "Errow while save individual\n" <<  *this << "\n" )
     return false;
   }
 
@@ -70,11 +67,9 @@ namespace Individual
     std::string name = parent->Value();
     if ( name.compare("Individual") )
       parent = _node.FirstChildElement("Individual");
-    if ( not parent )
-      return false;
+    if ( not parent ) return false;
 
-    if ( not repFitness.Load(*parent) )
-      return false;
+    if ( not repFitness.Load(*parent) ) return false;
 
     return _loadop(*this,*parent);
   }
@@ -94,11 +89,7 @@ namespace Individual
   bool Multi<T_INDIVTRAITS> :: Save( TiXmlElement &_node, SaveOp &_saveop ) const
   {
     TiXmlElement *xmlindiv = new TiXmlElement("Individual");
-    if ( not xmlindiv )
-    {
-      std::cerr << "Memory Allocation Error while saving individual" << std::endl;
-      return false;
-    }
+    __DOASSERT( not xmlindiv, "Memory Allocation Error.\n")
 
     if (     repFitness.Save(*xmlindiv)
          and _saveop(*this, *xmlindiv)  )
@@ -108,7 +99,7 @@ namespace Individual
     }
 
     delete xmlindiv;
-    std::cerr << "Errow while save individual" << std::endl <<  *this << std::endl;
+    __THROW_ERROR( "Errow while save individual\n" <<  *this << "\n" )
     return false;
   }
 
@@ -119,11 +110,9 @@ namespace Individual
     std::string name = parent->Value();
     if ( name.compare("Individual") )
       parent = _node.FirstChildElement("Individual");
-    if ( not parent )
-      return false;
+    if ( not parent ) return false;
 
-    if ( not repFitness.Load(*parent) )
-      return false;
+    if ( not repFitness.Load(*parent) ) return false;
 
     return _loadop(*this,*parent);
   }

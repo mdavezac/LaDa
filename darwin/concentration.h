@@ -9,12 +9,9 @@
 #endif
 
 #include <stdexcept>       // std::runtime_error
-#include "lamarck/structure.h"
-#include "opt/types.h"
-
-#ifdef _MPI
-#include "mpi/mpi_object.h"
-#endif
+#include <lamarck/structure.h>
+#include <opt/types.h>
+#include <mpi/mpi_object.h>
 
 
 /** \ingroup Genetic
@@ -116,34 +113,24 @@
       return ( _x - c ) / b;
    
     types::t_real det = b*b - 4.0 * (c-_x) * a; 
-    if ( det < 0 )
-    {
-      std::ostringstream sstr;
-      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-           << "Error when using Concentration::get_y(" << _x <<")\n"
-           << "determinent is negative, " << det << "\n";
-      throw std::runtime_error( sstr.str() );
-    }
+    __DOASSERT( det < 0, 
+              "Error when using Concentration::get_y(" << _x <<")\n"
+           << "determinent is negative, " << det << "\n" )
+
     det = std::sqrt(det);
     types::t_real u = 1.0 / ( 2.0 * a );  
     types::t_real r0 =  (-b + det ) * u;
     types::t_real r1 =  (-b - det ) * u;
-    if ( std::abs(r0 - 1.0 ) < types::tolerance ) r0 = 1.0;
-    if ( std::abs(r0 + 1.0 ) < types::tolerance ) r0 = -1.0;
-    if ( std::abs(r1 - 1.0 ) < types::tolerance ) r1 = 1.0;
-    if ( std::abs(r1 + 1.0 ) < types::tolerance ) r1 = -1.0;
-    if (     ( r0 < -1.0 or r0 > 1.0 )
-         and ( r1 < -1.0 or r1 > 1.0 ) )
-    {
-      std::ostringstream sstr;
-      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-           << a + b +c << " " << a - b + c << std::endl 
-           << "Error when using Concentration::get_y(" << _x << ")\n" 
-           << " r0= " << r0  << " and r1= " << r1 << "\n";
-      throw std::runtime_error( sstr.str() );
-    }
-    if ( r0 < -1.0 or r0 > 1.0 ) 
-      return r1; 
+    if ( Fuzzy::eq(r0, 1.0 ) )  r0 =  1.0;
+    if ( Fuzzy::eq(r0, -1.0 ) ) r0 = -1.0;
+    if ( Fuzzy::eq(r1, 1.0 ) )  r1 =  1.0;
+    if ( Fuzzy::eq(r1, -1.0 ) ) r1 = -1.0;
+    __DOASSERT(     ( Fuzzy::le(r0, -1.0) or Fuzzy::gt(r0, 1.0 ) )
+                and ( Fuzzy::le(r1, -1.0) or Fuzzy::gt(r1, 1.0 ) ),
+                   a + b +c << " " << a - b + c
+                << "\nError when using Concentration::get_y(" << _x << ")\n" 
+                << " r0= " << r0  << " and r1= " << r1 << "\n" )
+    if ( Fuzzy::geq(r1, -1.0) and Fuzzy::leq(r1, 1.0) )   return r1; 
     return r0;
   }
 //! \deprecated normalizes the concentration of  a structure.

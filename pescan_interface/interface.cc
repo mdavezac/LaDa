@@ -6,6 +6,7 @@
 #include <stdexcept>       // std::runtime_error
 
 #include <print/manip.h>
+#include <opt/debug.h>
 
 #include "interface.h"
 
@@ -16,7 +17,8 @@ namespace Pescan
     create_directory();
     create_potential();
     launch_pescan();
-    return read_result();
+    __TRYCODE( return read_result();,
+               "Error while reading and/or parsing escan output.\n" ) 
   }
 
   void Interface :: create_directory()
@@ -131,16 +133,15 @@ namespace Pescan
       maskr = Print::reformat_home(child->Attribute("filename"));
 
     child = _node.FirstChildElement("GenPot");
-    if (    (not child)
-         or (not child->Attribute("x")) 
-         or (not child->Attribute("y")) 
-         or (not child->Attribute("z")) 
-         or (not child->Attribute("cutoff")) 
-         or (not child->FirstChildElement("Pseudo")) )
-    {
-      std::cerr << "Need genpot input !!" << std::endl;
-      return false;
-    }
+    __DOASSERT( not child, "No <GenPot> tag found on input.\nAborting\n" )
+    __DOASSERT( not child->Attribute("x"), "x attributes are missing in <GenPot>.\n")
+    __DOASSERT( not child->Attribute("y"), "y attributes are missing in <GenPot>.\n")
+    __DOASSERT( not child->Attribute("z"), "z attributes are missing in <GenPot>.\n")
+    __DOASSERT( not child->Attribute("cutoff"),
+                "cutoff attributes are missing in <GenPot>.\n")
+    __DOASSERT( not child->FirstChildElement("Pseudo"),
+                "Could not find <Pseudo/> in <GenPot>\nAborting\n")
+
     child->Attribute("x", &genpot.x);
     child->Attribute("y", &genpot.y);
     child->Attribute("z", &genpot.z);
@@ -151,11 +152,8 @@ namespace Pescan
     for(; child; child = child->NextSiblingElement() )
       if ( child->Attribute("filename") )
         genpot.pseudos.push_back( Print::reformat_home(child->Attribute("filename")) );
-    if( not genpot.check() )
-    {
-      std::cerr << "Insufficient or Incorrect Genpot input!! " << std::endl;
-      return false;
-    }
+    __DOASSERT( not genpot.check(),
+                "Insufficient or Incorrect Genpot input.\nAborting\n" )
 
 
     child = _node.FirstChildElement("Wavefunctions");
@@ -171,16 +169,18 @@ namespace Pescan
       child->Attribute("value", &escan.Eref);
 
     child = _node.FirstChildElement("Hamiltonian");
-    if (    ( not child )
-         or (not child->Attribute("kinscal"))
-         or (not child->Attribute("realcutoff")) 
-         or (not child->Attribute("potential")) )
-    {
-      std::cerr << "Please Specify hamiltonian on input" << std::endl;
-      exit(0);
-    }
+    __DOASSERT( not child, "Could not find <Hamiltonian> tag on input.\n")
+    __DOASSERT( not child->Attribute("kinscal"),
+                "kinscal attribute is missing in <Hamiltonian> tag.\n")
+    __DOASSERT( not child->Attribute("realcutoff"),
+                "realcutoff attribute is missing in <Hamiltonian> tag.\n")
+    __DOASSERT( not child->Attribute("potential"),
+                "potential attribute is missing in <Hamiltonian> tag.\n")
     if ( child->Attribute("launch") )
       escan.launch = child->Attribute("launch");
+
+    __TRYCODE( check_existence();, "Some files and/or programs are missing.\n" )
+
     child->Attribute("kinscal", &escan.kinscal);
     if( child->Attribute("smooth") )
       child->Attribute("smooth", &escan.smooth);
@@ -189,10 +189,11 @@ namespace Pescan
       child->Attribute("potential", &j);
       switch( j )
       {
-        case Escan::NOPOT: std::cerr << "Error, incorrect escan potential " << std::cerr; return false;
-        case Escan::LOCAL: escan.potential = Escan::LOCAL;
-        case Escan::NONLOCAL: escan.potential = Escan::NONLOCAL;
-        case Escan::SPINORBIT: escan.potential = Escan::SPINORBIT;
+        default:
+        case Escan::NOPOT: __THROW_ERROR( "Error, incorrect escan potential\n" ) break;
+        case Escan::LOCAL: escan.potential = Escan::LOCAL; break;
+        case Escan::NONLOCAL: escan.potential = Escan::NONLOCAL; break;
+        case Escan::SPINORBIT: escan.potential = Escan::SPINORBIT; break;
       }
     }
     if( child->Attribute("realcutoff") )
@@ -219,8 +220,7 @@ namespace Pescan
         escan.spinorbit.push_back(so);
       }
     child = _node.FirstChildElement("Minimizer");
-    if( not child )
-     return true;
+    if( not child ) return true;
 
     if( child->Attribute("niter") )
       child->Attribute("niter", &escan.niter);
@@ -237,6 +237,10 @@ namespace Pescan
     std::ofstream file;
     std::string name = Print::StripEdges(dirname) + "/" + Print::StripEdges(genpot.filename);
     file.open( name.c_str(), std::ios_base::out|std::ios_base::trunc ); 
+
+    __DOASSERT( file.bad() or ( not file.is_open() ),
+                   "Could not open file " << name
+                << " for writing.\nAborting.\n" )
 
     file << Print::StripDir(atom_input) << std::endl 
          << genpot.x << " " 
@@ -260,14 +264,11 @@ namespace Pescan
     std::ofstream file;
     std::string name = Print::StripEdges(dirname) + "/" + Print::StripEdges(escan.filename);
     file.open( name.c_str(), std::ios_base::out|std::ios_base::trunc ); 
-    if( file.bad() or ( not file.is_open() ) )
-    {
-      std::ostringstream error;
-      error << __FILE__ << ", line: " << __LINE__ << ":\n"
-            <<  " Could not open file " << name << " for writing.\n"
-            <<  " Aborting." << std::endl;
-      throw std::runtime_error( error.str() );
-    }
+
+    __DOASSERT( file.bad() or ( not file.is_open() ),
+                   "Could not open file " << name
+                << " for writing.\nAborting.\n" )
+
     file << "1 " << Print::StripDir(dirname, genpot.output) << "\n"
          << "2 " << escan.wavefunction_out << "\n"
          << "3 " << escan.method << "\n"
@@ -321,17 +322,10 @@ namespace Pescan
     std::ostringstream sstr;
     sstr << dirname; 
     sstr << "/" << Print::StripEdges(escan.output);
-    file.open( sstr.str().c_str(), std::ios_base::in ); 
-    if( file.fail() )
-    {
-      std::string filename = sstr.str();
-      sstr.str("");
-      sstr << __FILE__ << ", line " << __LINE__ << ":\n"
-           << "Could not open file "
-           << filename
-           << " in Pescan::Interface::read_result " << std::endl;
-      throw std::runtime_error( sstr.str() );
-    }
+    std::string name = sstr.str();
+    file.open( name.c_str(), std::ios_base::in ); 
+    __DOASSERT( not file.is_open(), 
+                "Could not open file " << (std::string) name << "\n" )
 
     char cline[256];
     std::string line("");
@@ -341,6 +335,9 @@ namespace Pescan
       file.getline( cline, 256 );
       line = cline;
     }
+    __DOASSERT( file.eof(),
+                   "Reached end of " << name
+                << " without encoutering eigenvalues\n" )
 
     eigenvalues.clear(); eigenvalues.reserve(escan.nbstates);
     types::t_unsigned u(0);
@@ -351,12 +348,12 @@ namespace Pescan
       file >> eig;
       eigenvalues.push_back( eig );
     }
-    if( u == escan.nbstates ) return true;
-    
-    std::cerr << __FILE__ << ", line: " << __LINE__ << "\n"
-              << "Found " << u << " eigenvalues when " 
-              << escan.nbstates << " expected " << std::endl;
-    return false;
+
+    __DOASSERT( u != escan.nbstates,
+                   "Found " << u << " eigenvalues in " << name
+                << " where " << escan.nbstates
+                << " were expected.\n" )
+    return true;
   }
                
 #ifdef _MPI 

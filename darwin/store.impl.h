@@ -4,6 +4,7 @@
 #ifndef _STORE_IMPL_H_
 #define _STORE_IMPL_H_
 
+#include <opt/debug.h>
 #include <print/xmg.h>
 
 namespace Store
@@ -30,33 +31,38 @@ namespace Store
   template<class T_CONDITION, class T_GATRAITS>
   void Conditional<T_CONDITION, T_GATRAITS> :: operator()( const t_Individual &_indiv )
   {
-    // if first evaluation, adds it directly
-    if( condition( _indiv ) ) return;
+#ifdef __WCONT
+#error "__WCONT already defined. Replace __WCONT with a more awkward name.\n"
+#endif
+#define __WCONT __MPISERIALCODE(new_optima, results)
 
     // checks wether result should be stored
-    typename t_Container :: iterator i_found;
-#ifdef _MPI
-    if ( not new_optima.empty() )
+    if( condition( _indiv ) ) return;
+
+    // checks wether result has already been found
+    __DOMPICODE(
+      if(     ( not results.empty() )
+          and results.end() !=  std::find( results.begin(),
+                                           results.end(),
+                                            _indiv )         ) return;
+    )
+
+    if ( not __WCONT.empty() )
     {
-      i_found = std::find( new_optima.begin(), new_optima.end(), _indiv );
-      if ( i_found != new_optima.end() ) return;
+      if ( __WCONT.end() != std::find( __WCONT.begin(),
+                                       __WCONT.end(),
+                                       _indiv )             ) return;
+
+      // remove individuals who's score are not good enough anymore.
+      __WCONT.remove_if( condition );
+      // remove_if should have changed Objective::current_indiv 
+      condition( _indiv );
     }
-#endif
-    if ( not results.empty() )
-    {
-      i_found = std::find( results.begin(), results.end(), _indiv );
-      if ( i_found != results.end() ) return;
-    }
-    new_results = true; 
-#ifdef _MPI
-    if ( not new_optima.empty() ) new_optima.remove_if( condition );
-    new_optima.push_back( _indiv );
-#else
-    if ( not results.empty() ) results.remove_if( condition );
-    results.push_back( _indiv );
-#endif
-    // remove_if should have changed Objective::current_indiv 
-    condition( _indiv );
+   
+    // finally, add the new result
+    __WCONT.push_back( _indiv );
+     new_results = true; 
+#undef __WCONT
   }
 
   template<class T_CONDITION, class T_GATRAITS>
@@ -193,20 +199,33 @@ namespace Store
   namespace Condition
   {
     template< class T_GATRAITS >
+    BaseOptima<T_GATRAITS> :: ~BaseOptima()
+    {
+      if( not ( owns_optimum and optimum ) ) return;
+      __TRYDEBUGCODE( delete optimum;,
+                      "Could not delete pointer to optimum\n" )
+      owns_optimum = false;
+      optimum = NULL;
+    }
+
+    template< class T_GATRAITS >
     bool BaseOptima<T_GATRAITS> :: Restart( const TiXmlElement &_node, t_LoadOp & _op)
     {
       const TiXmlElement *child = _node.FirstChildElement("optimum");
       if( not child ) return false;
-      return optimum.Load( *child, _op );
+      if( optimum and owns_optimum ) delete optimum;
+      __TRYCODE( optimum = new t_Individual; owns_optimum = true;,
+                 "Memory Allocation Error\nCould not create optimum\n" )
+      return optimum->Load( *child, _op );
     }
 
     template< class T_GATRAITS >
     bool BaseOptima<T_GATRAITS> :: Save( TiXmlElement &_node, t_SaveOp & _op) const
     {
-      if ( optimum.invalid() )
+      if ( (not optimum) or optimum->invalid() )
       {
-        std::cerr << "Optimum is invalid!! when trying to save" << std::endl;
-        Print::out << "Optimum is invalid!! when trying to save\n";
+        std::cerr << "Optimum is invalid when trying to save" << std::endl;
+        Print::out << "Optimum is invalid when trying to save\n";
         return false;
       }
 
@@ -216,7 +235,7 @@ namespace Store
         std::cerr << "Memory allocation error while save results" << std::endl;
         return false;
       }
-      if ( not optimum.Save( *child, _op ) )
+      if ( not optimum->Save( *child, _op ) )
       {
         std::cerr << "Could not save optimum" << std::endl;
         return false;
@@ -229,12 +248,22 @@ namespace Store
     template< class T_GATRAITS >
     std::string BaseOptima<T_GATRAITS> :: print() const
     {
+      if( (not optimum) or optimum->invalid() ) return "";
       std::ostringstream sstr;
-      sstr << optimum << std::setw(12) << std::setprecision(7) 
-           << optimum.fitness();
+      sstr << (*optimum) << std::setw(12) << std::setprecision(7) 
+           << optimum->fitness();
       return sstr.str(); 
     }
 
+    template< class T_GATRAITS >
+    FromObjective<T_GATRAITS> :: ~FromObjective()  
+    { 
+      if ( objective and owns_objective )
+        __TRYDEBUGCODE( delete objective;,
+                        "Error while deleting objective\n" )
+      owns_objective = false;
+      objective = NULL;
+    }
 
     template< class T_GATRAITS >
     FromObjective<T_GATRAITS> :: FromObjective   ( const TiXmlElement &_node ) 
@@ -246,15 +275,18 @@ namespace Store
         _node.Attribute("delta", &d);
       delta = (t_ScalarQuantity) std::abs(d);
 
-      objective = t_Objective :: new_from_xml( _node );
-      if ( not objective )
-      {
-         std::ostringstream sstr;
-         sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-              << "Could not Load objective from input in conditional store\n";
-         throw std::runtime_error( sstr.str() );
-      }
+      Print::xmg << Print::Xmg::comment << "Store, delta = " << delta 
+                 << " -- begin " << Print::endl << Print::Xmg::indent;
+      const TiXmlElement *child = _node.FirstChildElement( "Objective" ); 
+      __DOASSERT( not child, "Found <Store> tag, but it does not contain any <Objective/>.\n" )
+
+      __TRYCODE( objective = t_Objective :: new_from_xml( *child );
+                 __DOASSERT( not child, "" ),
+                 "Could not load objectives from input file.\n" )
+
       owns_objective = true;
+      Print::xmg << Print::Xmg::unindent << Print::Xmg::comment 
+                 << "Store -- end" << Print::endl;
     }
     template< class T_GATRAITS >
     FromObjective<T_GATRAITS> :: FromObjective   ( typename t_Objective::Vector* _type,
@@ -275,36 +307,32 @@ namespace Store
              or name.compare("condition") == 0 ) print_condition=true;
       }
  
-      if ( not objective )
-      {
-         std::ostringstream sstr;
-         sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-              << "Could not Load objective from input in conditional store\n";
-         throw std::runtime_error( sstr.str() );
-      }
+      __DOASSERT( not objective,
+                 "Could not Load objective from input in conditional store\n" ) 
     }
 
     template< class T_GATRAITS >
     bool FromObjective<T_GATRAITS> :: operator()( const t_Individual &_indiv )
     {
       objective->init( _indiv );
-      if ( optimum.invalid() )
+      if ( ( not optimum ) or optimum->invalid() )
       {
-        optimum = _indiv;
-        val = (*objective)( optimum.const_quantities() );
+        __TRYCODE( optimum = new t_Individual(_indiv); owns_optimum = true;,
+                   "Could not create optimum\n" )
+        val = (*objective)( optimum->const_quantities() );
         end_val = val + delta;
         return false;
       }
       t_ScalarQuantity indiv_val = (*objective)(_indiv.const_quantities());
       if ( t_QuantityTraits::le(indiv_val, val) )
       {
-        optimum = _indiv;
+        (*optimum) = _indiv;
         val = indiv_val;
         end_val = val + delta;
         return false;
       }
 
-      return t_QuantityTraits::ge(indiv_val, end_val); 
+      return t_QuantityTraits::gt(indiv_val, end_val); 
     }
     template< class T_GATRAITS >
     inline std::string FromObjective<T_GATRAITS> :: print() const
@@ -324,10 +352,10 @@ namespace Store
     template< class T_GATRAITS >
     bool FromObjective<T_GATRAITS> :: Save( TiXmlElement &_node, t_SaveOp & _op) const
     {
-      if (     t_Base::Save( _node, _op)  
-           and objective->Save( _node, _op) )  return true;
-      
-      std::cerr << "Could not save objective" << std::endl;
+      __TRYDEBUGCODE( if (     t_Base::Save( _node, _op)  
+                           and objective->Save( _node, _op) )  return true;,
+                      "Could not save objective\n" )
+      __NDEBUGCODE( std::cerr << "Could not save objective\n"; )
       return false;
     }
   } // namespace Condition

@@ -1,4 +1,3 @@
-#
 #  Version: $Id$
 #
 
@@ -69,8 +68,8 @@ MPI_DOC = $(MPI_H) $(MPI_CC)
 OPT_H = ndim_iterator.h minimize_base.h polynome.h frprmn_minimizer.h \
         gsl_minimizers.h types.h convex_hull.h function_base.h \
 	va_minimizer.h fitness_function.h  function_functors.h monome.h traits.h \
-        fuzzy.h 
-OPT_F90 = dbrent.F90  df1dim.F90  frprmn.F90  linmin.F90
+        fuzzy.h atat.h
+OPT_F90 =  df1dim.f90  frprmn.f90  linmin.f90
 OPT_DOC = $(OPT_H) $(OPT_CC) 
 
 EMASS_CC = emass.cc
@@ -91,8 +90,8 @@ PRINT_DOC = $(PRINT_H) $(PRINT_CC)
 VFF_FORTRAN_CC = fortran.cc
 VFF_FORTRAN_H  = fortran.h
 VFF_FORTRAN_DOC = $(VFF_FORTRAN_H) $(VFF_FORTRAN_CC) 
-VFF_CC = functional.cc layered.cc pescan_perturbation.cc 
-VFF_H  = functional.h  layered.h  pescan_perturbation.h  va.h
+VFF_CC = functional.cc layered.cc # pescan_perturbation.cc 
+VFF_H  = functional.h  layered.h  va.h # pescan_perturbation.h 
 VFF_IMPLS = va.impl.h
 VFF_DOC = $(VFF_H) $(VFF_IMPLS) $(VFF_CC) 
 

@@ -13,12 +13,10 @@
 #include <pescan_interface/bandgap.h>
 #include <lamarck/structure.h>
 #include <opt/types.h>
+#include <mpi/mpi_object.h>
 
 #include "vff.h"
 
-#ifdef _MPI
-#include "mpi/mpi_object.h"
-#endif
 
 namespace BandGap
 {
@@ -187,10 +185,7 @@ namespace BandGap
   {
     // creates an mpi aware file name for atomic configurations
     std::ostringstream  sstr;
-    sstr << "atom_config";
-#ifdef _MPI
-    sstr << "." << mpi::main.rank();
-#endif
+    sstr << "atom_config" __DOMPICODE(<< "." << mpi::main.rank());
     // prints atomic configurations
     _vff.print_escan_input(sstr.str());
     // tells bandgap where to find atomic configurations

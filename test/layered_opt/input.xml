@@ -1,24 +1,29 @@
 <?xml version="1.0" standalone="no" ?>
 <Job>
-    <Structure direction=" 1 0 0 "  multiplicity="30" />
-    <GA popsize="40" rate="0.4">
-        <Objective>
-          <Objective type="minimize" />
-          <Objective type="target" target="0.31" delta="0.05" print="all" />
+    <Structure direction=" 1 0 0 "  multiplicity="3" />
+    <GA popsize="5" rate="0.4" >
+        <Objective delta="5" >
+          <Objective type="minimize" coef=1 />
+          <Objective type="target" target="0.31" delta="0.05" print="all" coef=10 />
         </Objective>
+        <Scaling type="pareto" />
+        <Scaling type="niching" distance="hamming" alpha=1 d0=3 />
+        <Store>
+          <Objective delta="5" >
+            <Objective type="minimize" coef=0 />
+            <Objective type="target" target="0.31" delta="0.05" print="all" />
+          </Objective>
+        </Store>
         <Breeding>
             <TabooOp>
-               <Operators type="or">
-                 <Krossover prob=0.75/>
-                 <Mutation rate="0.01" prob=0.25/>
-               </Operators>
+               <Random />
             </TabooOp>
         </Breeding>
         <Taboos>
-            <PopTaboo />
-            <OffspringTaboo />
+            <Population />
+            <Offspring  />
         </Taboos>
-        <Terminator ref="evaluation" value="10000" />
+        <Terminator ref="evaluation" value="15" />
         <Save what="all" every="1" />
         <tRestart what="all"/>
         <Filenames    stop="stop"/>
@@ -26,11 +31,13 @@
         <Filenames    save="save.xml"/>
         <Filenames     out="output"/>
         <Filenames BandEdge="edge" />
+        <Filenames animation="anim" />
         <Statistics type="AverageFitness"/>
         <Print type="offspring"/>
         <Print type="pop"/>
+        <Print type="animation"/>
     </GA>
-    <Lattice scale="6.1" >
+    <Lattice scale="6" >
         <column x="0.0" y="0.5" z="0.5" />
         <column x="0.5" y="0.0" z="0.5" />
         <column x="0.5" y="0.5" z="0.0" />
@@ -44,7 +51,8 @@
         </site>
     </Lattice>
     <Functional type="vff">
-        <Minimizer type="gsl_bfgs2" itermax="4000" tolerance="0.00001" linetolerance="0.5" zeps="0.02" linestep="0.001" />
+        <Minimizer type="gsl_bfgs2" itermax="4000" tolerance="0.00001" linetolerance="0.5" zeps="0.02" linestep="0.001" doprint=true />
+        <Minimizer type="frprmn" itermax="40000" tolerance="0.00001" linetolerance="0.01" zeps="0.001" />
         <Bond A="In" B="As" d0="2.622" alpha="35.180" />
         <Bond A="Ga" B="As" d0="2.448" alpha="41.190" />
         <Bond A="Ga" B="Sb" d0="2.640" alpha="33.160" />
@@ -62,28 +70,28 @@
         <Angle A="In" B="Sb" C="In" gamma="tet" sigma="0" beta="4.2842" />
         <Angle A="Ga" B="Sb" C="In" gamma="tet" sigma="0" beta="5.75655" />
     </Functional>
-    <Functional type="escan" method="1">
-        <Maskr filename="../pseudos/maskr"/>
-        <GenPot x="48" y="48" z="96" cutoff="5.0" launch="~/usr/bin/getVLarg">
-            <Pseudo filename="../pseudos/vq.atom1" />
-            <Pseudo filename="../pseudos/vq.atom2" />
-            <Pseudo filename="../pseudos/vq.atom3" />
-            <Pseudo filename="../pseudos/vq.atom4" />
-            <Pseudo filename="../pseudos/vq.atom5" />
-            <Pseudo filename="../pseudos/vq.atom6" />
-            <Pseudo filename="../pseudos/vq.atom7" />
-            <Pseudo filename="../pseudos/vq.atom8" />
+    <Functional type="escan" method="1" >
+        <Maskr filename="../../pseudos/maskr"/>
+        <GenPot x="48" y="16" z="16" cutoff="5.0" launch="~/usr/bin/getVLarg">
+            <Pseudo filename="../../pseudos/vq.atom1" />
+            <Pseudo filename="../../pseudos/vq.atom2" />
+            <Pseudo filename="../../pseudos/vq.atom3" />
+            <Pseudo filename="../../pseudos/vq.atom4" />
+            <Pseudo filename="../../pseudos/vq.atom5" />
+            <Pseudo filename="../../pseudos/vq.atom6" />
+            <Pseudo filename="../../pseudos/vq.atom7" />
+            <Pseudo filename="../../pseudos/vq.atom8" />
         </GenPot>
         <References VBM="-4.8" CBM="-4.5" />
         <Hamiltonian kinscal="1.23" smooth="0.8" potential="3" realcutoff="4.5" nbstates="1" launch="~/usr/bin/escanCNL">
-            <SpinOrbit filename="../pseudos/vwr.pso" izz="49051" pnl="1.271254 " />
-            <SpinOrbit filename="../pseudos/vwr.pso" izz="51049" pnl="0.946102 " />
-            <SpinOrbit filename="../pseudos/vwr.pso" izz="49033" pnl="1.0747401" />
-            <SpinOrbit filename="../pseudos/vwr.pso" izz="33049" pnl="0.2779539" />
-            <SpinOrbit filename="../pseudos/vwr.pso" izz="31051" pnl="0.2979240" />
-            <SpinOrbit filename="../pseudos/vwr.pso" izz="51031" pnl="0.8113915" />
-            <SpinOrbit filename="../pseudos/vwr.pso" izz="31033" pnl="0.2347250" />
-            <SpinOrbit filename="../pseudos/vwr.pso" izz="33031" pnl="0.2338090" />
+            <SpinOrbit filename="../../pseudos/vwr.pso" izz="49051" pnl="1.271254 " />
+            <SpinOrbit filename="../../pseudos/vwr.pso" izz="51049" pnl="0.946102 " />
+            <SpinOrbit filename="../../pseudos/vwr.pso" izz="49033" pnl="1.0747401" />
+            <SpinOrbit filename="../../pseudos/vwr.pso" izz="33049" pnl="0.2779539" />
+            <SpinOrbit filename="../../pseudos/vwr.pso" izz="31051" pnl="0.2979240" />
+            <SpinOrbit filename="../../pseudos/vwr.pso" izz="51031" pnl="0.8113915" />
+            <SpinOrbit filename="../../pseudos/vwr.pso" izz="31033" pnl="0.2347250" />
+            <SpinOrbit filename="../../pseudos/vwr.pso" izz="33031" pnl="0.2338090" />
         </Hamiltonian>
     </Functional>
 </Job>

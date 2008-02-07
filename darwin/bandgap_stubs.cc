@@ -33,6 +33,28 @@ errorout:
   bool Darwin :: Load( const TiXmlElement &_node )
   {
     if ( not bandgap.Load( _node ) ) return false;
+
+    // Sets to folded spectrum if Pescan::BandGap::Eref have been specified
+    // correctly
+    if( Fuzzy::gt( bandgap.Eref.cbm, bandgap.Eref.vbm ) )
+    {
+       bandgap.set_method(); 
+       Print::xmg << Print::Xmg::comment 
+                  << "Pescan References (from input): "
+                  << bandgap.Eref.vbm << " " << bandgap.Eref.cbm 
+                  << Print::endl;
+       Print::out << "Pescan References (from input): "
+                  << bandgap.Eref.vbm << " " << bandgap.Eref.cbm 
+                  << "\n";
+    }
+    else
+    {
+       Print::xmg << Print::Xmg::comment 
+                  << "No references given on input. " << Print::endl;
+       Print::out << "No references given on input.\n"
+                  << "Will start with an all-electron calculation of the band-gap\n";
+    }
+
     
     if ( not _node.FirstChildElement("GA") ) return true;
     const TiXmlElement *child = _node.FirstChildElement("GA");
@@ -47,6 +69,17 @@ errorout:
       Print::xmg << Print::Xmg::comment 
                  << "Will store Reference energies at: " << references_filename << Print::endl;
     }
+ 
+    // Writes band edges to file
+    // In case the band edges are unknown (all-electron calculation)
+    // just creates file.
+    if ( bandgap.get_method() != Pescan::Interface::FOLDED_SPECTRUM )
+    {
+      __NOTMPIROOT( return true; )
+      std::ofstream file( references_filename.c_str(), std::ios_base::out | std::ios_base::trunc ); 
+      file.close();
+    }
+    else write_references();
 
     return true;
   }
@@ -54,11 +87,9 @@ errorout:
   void Darwin::operator()()
   {
     // Creates an mpi aware directory: one per proc
-    std::ostringstream sstr; sstr << "escan" << nbeval; 
+    std::ostringstream sstr;
+    sstr << "ESCAN" << nbeval __DOMPICODE( << "." << mpi::main.rank() ); 
     ++nbeval;
-#ifdef _MPI
-    sstr << mpi::main.rank();
-#endif
     dirname =  sstr.str();
     bandgap.set_dirname( dirname );
     bandgap.set_atom_input( atomicconfig );
@@ -66,20 +97,14 @@ errorout:
     // then evaluates band gap
     types::t_real result = bandgap(structure);
 
-    // checks that non-zero band gap has been found (and non-negative!)
-    if ( result < types::tolerance )
-    {
-#ifdef _DEBUG
-      Print::out << __FILE__ << ", line: " << __LINE__ << "\n";
-#endif
-      Print::out << " Found metallic or negative band gap!! " << result << "\n" 
-                 << " Will Try and Recompute Band Gap \n";
-      set_all_electron();
-      Darwin::operator()();
-      return;
-    }
     if ( bandgap.get_method() == Pescan::Interface::FOLDED_SPECTRUM ) return;
     bandgap.set_method(); // resets to folded spectrum if necessary
+    bandgap.set_nbstates(1);
+    bandgap.Eref = bandgap.bands;
+    Print::out << "Reference Energies are: CBM=" << bandgap.Eref.cbm
+               << ", VBM=" << bandgap.Eref.vbm << "\n";
+    Print::xmg << Print::Xmg::comment << "Reference Energies are: CBM=" << bandgap.Eref.cbm
+               << ", VBM=" << bandgap.Eref.vbm << Print::endl;
 
 
     // writes referecnce
@@ -96,9 +121,8 @@ errorout:
     ++age;
     read_references();
 
-#ifdef _MPI
-    if ( not mpi::main.is_root_node() ) return true;
-#endif
+    __NOTMPIROOT( return true; )
+
     // recomputes all electron references every so often, if required
     if (     check_ref_every != -1 
          and age % check_ref_every == 0 )  set_all_electron();
@@ -110,14 +134,8 @@ errorout:
   {
     types :: t_real a, b;
 
-    bandgap.Eref = bandgap.bands;
-    Print::out << "Reference Energies are: CBM=" << bandgap.Eref.cbm
-               << ", VBM=" << bandgap.Eref.vbm << "\n";
-    Print::xmg << Print::Xmg::comment << "Reference Energies are: CBM=" << bandgap.Eref.cbm
-               << ", VBM=" << bandgap.Eref.vbm << Print::endl;
-#ifdef _MPI 
-    if ( not mpi::main.is_root_node() ) return;
-#endif
+    __NOTMPIROOT( return; )
+
     std::ofstream file( references_filename.c_str(), std::ios_base::out | std::ios_base::trunc ); 
     if ( not file.is_open() ) return;
     file << bandgap.Eref.vbm << "   "; if ( file.fail() ) return;
@@ -125,40 +143,33 @@ errorout:
     file.close();
     return;
   }
+
   void Darwin::read_references()
   {
     types :: t_real a, b;
-#ifdef _MPI 
-    mpi::BroadCast bc(mpi::main);
-    if ( mpi::main.is_root_node() )
-    {
-#endif
-      std::ifstream file( references_filename.c_str(), std::ios_base::in ); 
-      if ( not file.is_open() ) goto failure;
-      file >> a; if ( file.fail() ) goto failure;
-      file >> b; if ( file.fail() ) goto failure;
-      file.close();
-#ifdef _MPI
-    }
-    bc << a << b << mpi::BroadCast::allocate 
-       << a << b << mpi::BroadCast::broadcast
-       << a << b << mpi::BroadCast::clear;
-#endif 
 
-    if ( a >= b )  return;
+    __NOTMPIROOT( goto broadcast; )
+
+    { // only serial and root node
+      std::ifstream file( references_filename.c_str(), std::ios_base::in ); 
+      if ( not file.is_open() )     { a = b = 0; goto broadcast; }
+      file >> a; if ( file.fail() ) { a = b = 0; goto broadcast; }
+      file >> b; if ( file.fail() ) { a = b = 0; goto broadcast; }
+      file.close();
+    }
+
+broadcast:
+    __DOMPICODE( 
+      mpi::BroadCast bc(mpi::main); 
+      bc << a << b << mpi::BroadCast::allocate 
+         << a << b << mpi::BroadCast::broadcast
+         << a << b << mpi::BroadCast::clear;
+    )
+
+    if ( Fuzzy::geq(a, b) )  return;
     bandgap.Eref.vbm = a; 
     bandgap.Eref.cbm = b; 
-    return;
-
-failure:
-#ifdef _MPI
-    bc << a << a << mpi::BroadCast::allocate 
-       << a << a << mpi::BroadCast::broadcast
-       << a << a << mpi::BroadCast::clear;
-#endif
-    return;
   }
-
 
 } // namespace Pescan
 

@@ -6,8 +6,8 @@
 
 #include <algorithm>
 
-#include "print/xmg.h"
-#include "print/stdout.h"
+#include <print/xmg.h>
+#include <print/stdout.h>
 
 namespace TwoSites
 {
@@ -215,10 +215,10 @@ namespace TwoSites
     }
   template<class T_INDIVIDUAL> 
     inline void Evaluator<T_INDIVIDUAL> :: init( t_Individual &_indiv )
-      {
-        t_Base :: init( _indiv );
-        // sets structure to this object 
-        structure << *current_object;
-      }
+    {
+      t_Base :: init( _indiv );
+      // sets structure to this object 
+      structure << *current_object;
+    }  
 } // namespace TwoSites
 #endif // _TWOSITES_IMPL_H_

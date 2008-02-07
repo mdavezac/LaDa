@@ -1,0 +1,52 @@
+<?xml version="1.0" standalone="no" ?>
+<Job>
+   <Structure >
+        <Cell>
+            <column x="1.0" y="0.0" z="0.0" />
+            <column x="0.0" y="1.0" z="0.0" />
+            <column x="0.0" y="0.0" z="1.0" />
+        </Cell>
+        <Atom type="Ga" x="0.00" y="0.00" z="0.00" />
+        <Atom type="As" x="0.25" y="0.25" z="0.25" />
+        <Atom type="In" x="0.50" y="0.50" z="0.00" />
+        <Atom type="As" x="0.75" y="0.75" z="0.25" />
+        <Atom type="In" x="0.50" y="0.00" z="0.50" />
+        <Atom type="Sb" x="0.75" y="0.25" z="0.75" />
+        <Atom type="Ga" x="0.00" y="0.50" z="0.50" />
+        <Atom type="Sb" x="0.25" y="0.75" z="0.75" />
+    </Structure>
+    <Lattice scale="6.1">
+        <column x="0.0" y="0.5" z="0.5" />
+        <column x="0.5" y="0.0" z="0.5" />
+        <column x="0.5" y="0.5" z="0.0" />
+        <site x="0.25" y="0.25" z="0.25">
+            <atom type="As" />
+            <atom type="Sb" />
+        </site>
+        <site x="0.0" y="0.0" z="0.0">
+            <atom type="In" />
+            <atom type="Ga" />
+        </site>
+    </Lattice>
+    <Functional type="vff" direction="1 0 0" >
+        <Minimizer type="frprmn" itermax="40000" tolerance="0.00001" linetolerance="0.1" zeps="0.001" />
+        <Minimizer type="gsl_bfgs2" itermax="40000" tolerance="0.00001" linetolerance="0.5" linestep="0.001" doprint="true" />
+        <Bond A="In" B="As" d0="2.62332" alpha="21.6739" alpha3="-112.0" alpha4="150.0"/>
+        <Bond A="Ga" B="As" d0="2.44795" alpha="32.1530" alpha3="-105.0" alpha4="150.0"/>
+        <Bond A="Ga" B="Sb" d0="2.640" alpha="33.160" />
+        <Bond A="In" B="Sb" d0="2.805" alpha="26.610" />
+        <Angle A="As" B="Ga" C="As" gamma="tet" sigma="-4.099" beta="9.3703" />
+        <Angle A="Ga" B="As" C="Ga" gamma="tet" sigma="-4.099" beta="9.3703" />
+        <Angle A="In" B="As" C="In" gamma="tet" sigma="-5.753" beta="5.7599" />
+        <Angle A="As" B="In" C="As" gamma="tet" sigma="-5.753" beta="5.7599" />
+        <Angle A="Ga" B="As" C="In" gamma="-0.35016" sigma="-4.926" beta="7.5651" />
+        <Angle A="In" B="As" C="Ga" gamma="-0.35016" sigma="-4.926" beta="7.5651" />
+        <Angle A="As" B="Ga" C="Sb" gamma="tet" sigma="0" beta="8.08355" />
+        <Angle A="Sb" B="Ga" C="Sb" gamma="tet" sigma="0" beta="7.2289" />
+        <Angle A="Sb" B="In" C="As" gamma="tet" sigma="0" beta="4.88615" />
+        <Angle A="Sb" B="In" C="Sb" gamma="tet" sigma="0" beta="4.2842" />
+        <Angle A="Ga" B="Sb" C="Ga" gamma="tet" sigma="0" beta="7.2289" />
+        <Angle A="In" B="Sb" C="In" gamma="tet" sigma="0" beta="4.2842" />
+        <Angle A="Ga" B="Sb" C="In" gamma="tet" sigma="0" beta="5.75655" />
+    </Functional>
+</Job>

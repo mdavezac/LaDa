@@ -5,6 +5,8 @@
 #ifndef _DARWIN_TABOO_IMPL_H_
 #define _DARWIN_TABOO_IMPL_H_
 
+#include "debug.h"
+
 namespace GA 
 {
   template< class T_INDIVIDUAL, class T_CONTAINER >
@@ -261,8 +263,7 @@ namespace GA
       {
         ++i;
         op( _indiv );
-        if ( not taboo( *_indiv ) )
-          return;
+        if ( not taboo( *_indiv ) ) return;
         *_indiv = _indiv.select();
       } while ( i < max );
 

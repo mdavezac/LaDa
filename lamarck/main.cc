@@ -10,40 +10,56 @@
 
 #include "functional_builder.h"
 
+#include <revision.h>
+#define __PROGNAME__ "lamarck"
+
+void parse_cli( int argc, char *argv[], std::string &_filename )
+{
+  if( argc < 2 ) return;
+  
+  std::ostringstream sstr;
+  for( types::t_int i = 1; i < argc; ++i )
+    sstr << argv[i] << " "; 
+  std::istringstream istr( sstr.str() );
+  while ( istr.good() )
+  {
+    std::string is_op;
+    istr >> is_op; is_op = Print::StripEdges( is_op );
+    if( is_op.empty() ) continue;
+    else if(     istr.good()
+             and (is_op == "-i" or is_op == "--input") ) istr >> _filename;
+    else if( is_op == "-h" or is_op == "--help" )
+    {
+      std::cout << "\n" << __PROGNAME__ << " from the " << PACKAGE_STRING << " package.\n"
+                << "Command-line options:\n\t -h, --help this message"
+                << "\n\t -v, --version Subversion Revision and Package version"
+                << "\n\t -i, --input XML input file (default: input.xml)\n\n";
+      exit(1);
+    }
+    else if( is_op == "-v" or is_op == "--version" )
+    {
+      std::cout << "\n" << __PROGNAME__ << " from the " << PACKAGE_STRING << " package\n"
+                << "Subversion Revision: " << SVN::Revision << "\n\n"; 
+      exit(1);
+    }
+  }
+  _filename = Print::reformat_home( _filename );
+}
+
 int main(int argc, char *argv[]) 
 {
   TiXmlElement *child;
   atat::rVector3d vec;
   Ising_CE::Lattice lattice;
 
+  std::string filename("input.xml");
 #ifdef _MPI
   mpi::main(argc, argv);
+  if( mpi::main.is_root_node() )
 #endif
+  parse_cli( argc, argv, filename );
   
   
-  std::string filename("input.xml");
-  if( argc > 1 )
-  {
-    std::ostringstream sstr;
-    for( types::t_int i = 1; i < argc; ++i )
-      sstr << argv[i] << " "; 
-    std::istringstream istr( sstr.str() );
-    while ( istr.good() )
-    {
-      std::string is_op;
-      istr >> is_op; is_op = Print::StripEdges( is_op );
-      if( is_op.empty() ) continue;
-      else if(     istr.good()
-               and (is_op == "-i" or is_op == "--input") ) istr >> filename;
-      else if( is_op == "-h" or is_op == "--help" )
-        std::cout << "Command-line options:\n\t -h, --help this message"
-                  << "\n\t -i, --input XML input file (default: input.xml)\n\n";
-    }
-    filename = Print::reformat_home( filename );
-    if( filename != "input.xml" )
-      std::cout << "Reading from input file " << filename << std::endl;
-  }
-
   TiXmlDocument doc( filename.c_str() );
   
   if  ( !doc.LoadFile() )

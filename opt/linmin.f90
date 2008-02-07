@@ -35,16 +35,14 @@
       double precision fret,fret1,fret2,fret3
 ! Parameters:
       integer mxparm
-      parameter (mxparm = 135)
+      parameter (mxparm = 300)
 ! Local:
       integer j
 !      double precision ax,xx,bx,fa,fx,fb,xmin
       double precision ax,xx,bx,fa,fx,fb
 ! External:
-      double precision dbrent,df1dim
-!     double precision brent,df1dim
-      external dbrent,df1dim
-!     external brent,df1dim
+      double precision df1dim
+      external df1dim
 ! Common:
 	double precision xmin
 	common /myxmin/xmin

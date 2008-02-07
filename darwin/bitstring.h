@@ -15,10 +15,8 @@
 #include<tinyxml/tinyxml.h>
 
 #include<opt/types.h>
+#include <mpi/mpi_object.h>
 
-#ifdef _MPI
-#include "mpi/mpi_object.h"
-#endif
 
 /** \ingroup Genetic
  * @{ */
@@ -397,6 +395,25 @@ namespace BitString
       return has_changed;
     }
 
+  //! Compares two bitsrings lexicographically
+  template<class T_INDIVIDUAL>
+  class Bitorder
+  {
+    public:
+      //! functor
+      bool operator()(const T_INDIVIDUAL &_i1, const T_INDIVIDUAL &_i2)
+      {
+        typedef typename T_INDIVIDUAL :: t_IndivTraits :: t_Object :: t_Container 
+                                      :: const_iterator t_iterator;
+        t_iterator i_var1 = _i1.Object().begin();
+        t_iterator i_var1_end = _i1.Object().end();
+        t_iterator i_var2 = _i2.Object().begin();
+        for(; i_var1 != i_var1_end; ++i_var1, ++i_var2 )
+          if( *i_var1 < *i_var2 ) return true;
+          else if( *i_var1 > *i_var2 ) return false;
+        return false;
+      }
+  };
 }
 /* @} */
 

@@ -13,6 +13,7 @@
 
 #include <opt/function_functors.h>
 #include <tinyxml/tinyxml.h>
+#include <mpi/mpi_object.h>
 
 #include <atat/vectmac.h>
 
@@ -22,9 +23,7 @@
 #include "constituent_strain.h"
 #include "lattice.h"
 
-#ifdef _MPI 
-  #include <mpi/mpi_object.h>
-#endif
+#include <mpi/mpi_object.h>
 
 //! \brief Nonsense namespace which should become %CE (probably)
 namespace VA_CE {

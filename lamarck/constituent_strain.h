@@ -12,15 +12,13 @@
 #include <tinyxml/tinyxml.h>
 #include <opt/function_base.h>
 #include <opt/types.h>
+#include <mpi/mpi_object.h>
 
 #include "atat/vectmac.h"
 
 #include "structure.h"
 #include "harmonic.h"
 
-#ifdef _MPI 
-  #include "mpi/mpi_object.h"
-#endif
 
 namespace Ising_CE 
 {

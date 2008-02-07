@@ -263,7 +263,7 @@ namespace Minimizer
             types::t_real grad =   current_func->evaluate_one_gradient( *i_dir ) 
                                  * ( *i_var > t_Type(0) ? -1e0: 1e0 );
             
-            if ( Fuzzy::geq<t_Type>(grad, 0) ) continue;
+            if ( Fuzzy::gt<t_Type>(grad, 0) ) continue;
           }
 
           if( save_state ) save_state->save();
@@ -285,7 +285,7 @@ namespace Minimizer
             save_new_state->reset();
           }
 
-          if ( Fuzzy::geq(current_e, next_e) )
+          if ( Fuzzy::gt(current_e, next_e) )
           {
             is_not_converged = true;
             current_e = next_e;

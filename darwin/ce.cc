@@ -3,13 +3,12 @@
 //
 #include <functional>
 #include <algorithm>
-#include <ext/algorithm>
 
+#include <lamarck/atom.h>
+#include <lamarck/structure.h>
 
 #include "ce.h"
 #include "functors.h"
-#include "lamarck/atom.h"
-#include "lamarck/structure.h"
 #include "concentration.h"
 
 namespace CE
@@ -28,7 +27,8 @@ namespace CE
     std::sort( structure.k_vecs.begin(), structure.k_vecs.end(),  Ising_CE::sort_kvec );
     
     const TiXmlElement *functional_xml = _node.FirstChildElement("Functional");
-    for(; functional_xml; functional_xml = functional_xml->NextSiblingElement("Functional") )
+    for(; functional_xml;
+          functional_xml = functional_xml->NextSiblingElement("Functional") )
     {
       std::string str = ""; 
       if ( functional_xml->Attribute("type") )

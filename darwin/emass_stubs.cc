@@ -88,11 +88,8 @@ errorout:
   void Darwin::operator()()
   {
     // Creates an mpi aware directory: one per proc
-    std::ostringstream sstr; sstr << "escan" << nbeval; 
-    ++nbeval;
-#ifdef _MPI
-    sstr << mpi::main.rank();
-#endif
+    std::ostringstream sstr;  
+    sstr << "escan" << nbeval __DOMPICODE( << mpi::main.rank() );
     dirname =  sstr.str();
     emass.set_dirname( dirname );
     emass.set_atom_input( atomicconfig );
@@ -112,9 +109,8 @@ errorout:
 
 
     // writes referecnce
-#ifdef _MPI
-    if ( not mpi::main.is_root_node() ) return; // not root no read write
-#endif 
+    __NOTMPIROOT( return; )
+
     Print::out << " Writing band edges to file " << references_filename << "\n";
     write_references();
   }
@@ -125,9 +121,7 @@ errorout:
     ++age;
     read_references();
 
-#ifdef _MPI
-    if ( not mpi::main.is_root_node() ) return true;
-#endif
+    __NOTMPIROOT( return true; )
     // recomputes all electron references every so often, if required
     if (     check_ref_every != -1 
          and age % check_ref_every == 0 )  set_all_electron();
@@ -143,9 +137,9 @@ errorout:
     Print::out << "Reference Energies are: CBM=" << emass.get_reference() << "\n";
     Print::xmg << Print::Xmg::comment << "Reference Energies are: CBM=" 
                << emass.get_reference() << Print::endl;
-#ifdef _MPI 
-    if ( not mpi::main.is_root_node() ) return;
-#endif
+     
+    __NOTMPIROOT( return; )
+
     std::ofstream file( references_filename.c_str(), std::ios_base::out | std::ios_base::trunc ); 
     if ( not file.is_open() ) return;
     file << emass.get_reference() << "   "; if ( file.fail() ) return;

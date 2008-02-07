@@ -8,13 +8,44 @@
 #include <config.h>
 #endif
 
+#ifndef _MPI
+#define __DOMPICODE(code) 
+#define __TRYMPICODE(code, error) 
+#define __MPIROOT(code) 
+#define __ROOTCODE(code) code
+#define __NOTMPIROOT(code) 
+#define __SERIALCODE(code) code
+#define __MPISEQUENTIAL(code) 
+#define __MPISERIALCODE(coda, codb) codb
+#else
+#include <opt/debug.h>
+#define __DOMPICODE(code) code
+#define __TRYMPICODE(code, error) try { code }\
+        catch ( std::exception &_e )\
+        {\
+          std::ostringstream sstr;\
+          sstr << __SPOT_ERROR << error << _e.what();\
+          throw std::runtime_error( sstr.str() );\
+        }
+#define __MPIROOT(code) if( mpi::main.is_root_node() ) { code }
+#define __ROOTCODE(code) __MPIROOT(code)
+#define __NOTMPIROOT(code) if( not mpi::main.is_root_node() ) { code }
+#define __SERIALCODE(code) 
+#define __MPISEQUENTIAL(code) \
+    for( types::t_int i = 0; i < mpi::main.size(); ++i )\
+    {\
+      if ( mpi::main.rank() == i ) { code }\
+      mpi::main.barrier();\
+    }
+#define __MPISERIALCODE(coda, codb) coda
 
 #include <stdexcept>       // std::runtime_error
 #include <iostream>
 #include <math.h>
-#ifdef _MPI
-// #include <openmpi/mpi.h>
+#ifdef _MPICH_MPI_
 #include <mpi2c++/mpi++.h>
+#elif defined(_OPENMPI_MPI_)
+#include <mpi.h>
 #endif
 
 #include "opt/types.h"
@@ -443,13 +474,8 @@ extern const types::t_int ROOT_NODE;
   template<class T_TYPE> inline bool BroadCast :: operator_( T_TYPE &_type )
   {
     if ( not keep_going ) return true;
-    if (not serialize( _type ) )
-    {
-      std::ostringstream sstr;
-      sstr << __FILE__ << ", line: " << __LINE__ << "\n"
-           << "Error while BroadCasting " << _type << "\n";
-      throw std::runtime_error( sstr.str() );
-    }
+    __DOASSERT( not serialize( _type ),
+                "Error while BroadCasting " << _type << "\n"; )
     return true;
   }
 
@@ -565,13 +591,8 @@ extern const types::t_int ROOT_NODE;
   template<class T_TYPE> inline bool AllGather :: operator_( T_TYPE &_type )
   {
     if ( not keep_going ) return true;
-    if (not serialize( _type ) )
-    {
-      std::ostringstream sstr;
-      sstr << __FILE__ << ", line: " << __LINE__ << "\n"
-           << "Error while AllGathering " << _type << "\n";
-      throw std::runtime_error( sstr.str() );
-    }
+    __DOASSERT( not serialize( _type ),
+                "Error while BroadCasting " << _type << "\n"; )
     return true;
   }
 
@@ -748,4 +769,5 @@ extern const types::t_int ROOT_NODE;
 }
 /*@}*/
 
+#endif
 #endif

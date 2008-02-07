@@ -11,10 +11,6 @@
 #include <opt/types.h>
 #include <lamarck/structure.h>
 
-#ifdef _MPI 
-  #include <mpi/mpi_object.h>
-#endif
-
 namespace function
 {
 

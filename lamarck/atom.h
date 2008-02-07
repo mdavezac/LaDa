@@ -17,6 +17,7 @@
 #include <tinyxml/tinyxml.h>
 
 #include <opt/types.h>
+#include <opt/traits.h>
 #include <opt/fuzzy.h>
 
 #include <atat/vectmac.h>
@@ -81,20 +82,22 @@ namespace Ising_CE {
       types::t_int site;
       
       //! Constructor
-      Atom_Type() : pos(atat::rVector3d(0,0,0)), freeze(FREEZE_NONE), site(-1) {};
+      Atom_Type() : pos(atat::rVector3d(0,0,0)),
+                    freeze(FREEZE_NONE), site(-1) {};
       //! Constructor and Initializer
       explicit 
         Atom_Type   ( const atat::rVector3d &_pos, t_Type _type) 
-                  : pos(_pos), type(_type), freeze(FREEZE_NONE), site(-1) {};
+                  : pos(_pos), type(_type), freeze(FREEZE_NONE),
+                    site(-1) {};
       //! Copy Constructor
       Atom_Type   ( const Ising_CE::Atom_Type<t_Type> &_atom )
-                : pos(_atom.pos), type(_atom.type), freeze(_atom.freeze), site(_atom.site) {};
+                : pos(_atom.pos), type(_atom.type),
+                  freeze(_atom.freeze), site(_atom.site) {};
       //! Equality operator. Returns true if the \e positions are equal.
       template <class TTYPE>
       bool operator== (const Atom_Type<TTYPE> &_atom) const;
       //! Compares both occupation and type.
-      bool equal (const Atom_Type<t_Type> &_atom) const
-       { return operator==(_atom.pos) and type == _atom.type; };
+      bool equal (const Atom_Type<t_Type> &_atom) const;
       //! Returns a constant reference to the atomic position.
       operator const atat::rVector3d& () const { return pos; }
       //! Returns a constant reference to the atomic occupation.
@@ -131,12 +134,24 @@ namespace Ising_CE {
              and Fuzzy::eq( pos[2], _atom.pos[2] ); 
     }
 
+  template<class T_TYPE> 
+    inline bool Atom_Type<T_TYPE> :: equal (const Atom_Type<t_Type> &_atom) const
+      {
+        return     Fuzzy::eq(_atom.pos[0], pos[0] )
+               and Fuzzy::eq(_atom.pos[1], pos[1] )
+               and Fuzzy::eq(_atom.pos[2], pos[2] )
+               and type == _atom.type;
+      };
+
   template<class T_TYPE>
     inline std::ostream& Atom_Type<T_TYPE> :: print_out( std::ostream &stream ) const
     {
       stream << std::fixed << std::setprecision(5);
-      stream << std::setw(8) << pos[0] << std::setw(8) << pos[1] << std::setw(8) << pos[2];
-      stream << "  type: " << std::setw(16) << type;
+      stream << std::setw(8) << pos[0] << "  "
+             << std::setw(8) << pos[1] << "  " 
+             << std::setw(8) << pos[2];
+      stream << "  type: " << std::setw(16)
+             << Traits::Quantity< t_Type > :: print(type);
       if ( site != -1 )
         stream << "  site: " << site;
       stream << "  freeze: " << freeze;
@@ -179,7 +194,11 @@ namespace Ising_CE {
 
       site = -1;
       if ( _element.Attribute("site") )
-        _element.Attribute("site", &site);
+      {
+        int i=0;
+        _element.Attribute("site", &i);
+        site = (types::t_int) i;
+      }
 
       freeze = FREEZE_NONE;
       if ( _element.Attribute("freeze") )
@@ -264,15 +283,15 @@ namespace Ising_CE {
 
 
 
+//! Prints an atom to a stream.
+template<class T_TYPE>
+  std::ostream& operator<<(std::ostream& _stream, const Ising_CE::Atom_Type<T_TYPE> &_at )
+    { _at.print_out( _stream ); return _stream; }
 
 
 
 
 } // namespace Ising_CE
 
-//! Prints an atom to a stream.
-template<class T_TYPE>
-  std::ostream& operator<<(std::ostream& _stream, Ising_CE::Atom_Type<T_TYPE> &_at )
-    { _at.print_out( _stream ); return _stream; }
   
 #endif

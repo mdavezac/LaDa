@@ -26,13 +26,7 @@
 #include "functors.h"
 #include "taboos.h"
 #include "gatraits.h"
-
-#ifdef _MPI
-#include <mpi/mpi_object.h>
-#endif
-
 #include "single_site.h"
-
 #include "gaoperators.h"
 
 /** \ingroup Genetic

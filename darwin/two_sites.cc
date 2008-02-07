@@ -6,21 +6,13 @@
 
 #include <lamarck/atom.h>
 #include <opt/fuzzy.h>
+#include <opt/debug.h> 
+#include <opt/atat.h>
 
 #include "two_sites.h"
 
 namespace TwoSites
 {
-  class norm_compare
-  {
-    const atat::rVector3d &vec;
-    public:
-      norm_compare( const atat::rVector3d &_vec ) : vec(_vec) {};
-      norm_compare( const norm_compare &_c ) : vec(_c.vec) {};
-     bool operator()( const atat::rVector3d &_a, const atat::rVector3d &_b ) const
-       { return Fuzzy::le( atat::norm2( _a - vec ), atat::norm2( _b - vec ) ); }
-  };
-
   void rearrange_structure( Ising_CE::Structure &_str)
   {
     if ( not _str.lattice and _str.lattice->sites.size() != 2)
@@ -43,7 +35,7 @@ namespace TwoSites
     for(; i_0 != i_end; ++i_0 )
     {
       atat::rVector3d atom = i_0->pos + translation;
-      i_1 = std::min_element( sites1.begin(), sites1.end(), norm_compare( atom ) );
+      i_1 = std::min_element( sites1.begin(), sites1.end(), atat::norm_compare( atom ) );
       _str.atoms.push_back( *i_0 ); 
       _str.atoms.push_back( *i_1 ); 
     }
@@ -58,13 +50,7 @@ namespace TwoSites
   void Concentration :: operator()( Ising_CE::Structure &_str )
   {
     types::t_complex  *hold = new types::t_complex[ N ];
-    if ( not hold )
-    {
-      std::ostringstream sstr;
-      sstr << __FILE__ << ", line: " << __LINE__ << "\n"
-           << " Could not allocate memory while setting concentration.\n" << std::endl; 
-      throw std::runtime_error( sstr.str() );
-    }
+    __DOASSERT( not hold,  "Memory allocation error\n" )
 
     // creates individual with unnormalized occupation
     types::t_complex  *i_hold = hold;
@@ -137,30 +123,59 @@ namespace TwoSites
       else                                    y0 = get_y(x0);
     }
 
-    // finally normalizes
-    types::t_real xto_change = (types::t_real) N * ( x0 - x );
-    types::t_real yto_change = (types::t_real) N * ( y0 - y );
-    if (      xto_change > -1.0 and xto_change < 1.0 
-         and  yto_change > -1.0 and xto_change < 1.0 ) return;
-    do
-    {
-      types::t_unsigned i = rng.random(2*N-1);
-      if ( sites[i] )
-      {
-        if ( xto_change > 1.0 and _obj.bitstring[i] < 0 )
-          { _obj.bitstring[i] = 1; xto_change-=2; }
-        else if ( xto_change < -1.0 and _obj.bitstring[i] > 0 )
-          { _obj.bitstring[i] = -1; xto_change+=2; }
-        continue;
-      }
-      
-      if ( yto_change > 1.0 and _obj.bitstring[i] < 0 )
-        { _obj.bitstring[i] = 1; yto_change-=2; }
-      else if ( yto_change < -1.0 and _obj.bitstring[i] > 0 )
-        { _obj.bitstring[i] = -1; yto_change+=2; }
+    // compute number of changes to make per site type
+    types::t_real to_change[2];
+    to_change[0] = (types::t_real) N * ( x0 - x );
+    to_change[1] = (types::t_real) N * ( y0 - y );
+    if(     Fuzzy::gt(to_change[0],  -1.0)  and Fuzzy::le(to_change[0], 1.0 )
+        and Fuzzy::gt(to_change[1],  -1.0)  and Fuzzy::le(to_change[1], 1.0 ) ) return;
 
-    } while (    xto_change < -1.0 or xto_change > 1.0
-              or yto_change < -1.0 or yto_change > 1.0 );
+    __ASSERT( sites.size() != _obj.Container().size(), "Inequivalent sizes.\n" )
+
+    // Puts the positions which can be changed into a list
+    std::vector<types::t_unsigned> pos[2];
+    typedef Object :: t_Container :: const_iterator const_iterator;
+    std::vector<bool> :: const_iterator i_site = sites.begin();
+    const_iterator i_bit = _obj.Container().begin();
+    const_iterator i_bit_end = _obj.Container().end();
+    types::t_unsigned a = 0, b = 0;
+    for(types::t_unsigned i=0; i_bit != i_bit_end; ++i_bit, ++i, ++i_site)
+    {
+      if( *i_site ) ++a;
+      else ++b;
+      types::t_unsigned site_index = *i_site ? 0: 1;
+      if( to_change[site_index] > 0.0 and BitString::spin_down(*i_bit)  )
+        pos[site_index].push_back( i );
+      else if( to_change[site_index] < 0.0 and BitString::spin_up(*i_bit)  )
+        pos[site_index].push_back( i );
+    }
+
+    // shuffle position lists
+    types::t_unsigned (*ptr_to_rng)(const types::t_unsigned& )
+        = &eo::random<types::t_unsigned>;
+    for( types::t_unsigned i=0; i < 2; ++i )
+    {
+      if( Fuzzy::gt(to_change[i],  -1.0) and Fuzzy::le(to_change[i], 1.0 ) ) continue;
+      std::vector<types::t_unsigned> :: iterator i_pos = pos[i].begin();
+      std::vector<types::t_unsigned> :: iterator i_pos_end = pos[i].end();
+      std::random_shuffle(i_pos, i_pos_end, ptr_to_rng );
+      i_pos = pos[i].begin();
+      for(; i_pos != i_pos_end; ++i_pos)
+      {
+        BitString::flip<Object::t_Container::value_type>(_obj.bitstring[*i_pos]);
+        ( to_change[i] > 0 ) ? to_change[i] -= 2: to_change[i] += 2;
+      
+        // Fuzzy math at this point could create infinit loop
+        if( Fuzzy::gt(to_change[i],  -1.0) and Fuzzy::leq(to_change[i], 1.0 ) ) break;
+      }
+      __DOASSERT( Fuzzy::leq(to_change[i],  -1.0) or Fuzzy::gt(to_change[i], 1.0 ),
+                     "Concentration could not be set\n"
+                  << "Incompatibility between required x/y and frozen atoms?\n"; )
+    }
+
+  // __DODEBUGCODE( get( _obj ); )
+  // __DOASSERT( Fuzzy::neq(x, x0), x << " == " << x0 << "\n" )
+  // __DOASSERT( Fuzzy::neq(y, y0), y << " == " << y0 << "\n" )
   }
 
   void Concentration :: normalize( Ising_CE::Structure &_str, const types::t_int _site, 
@@ -202,13 +217,8 @@ namespace TwoSites
 endofloop: 
         if ( not _site ) ++i_atom;
       }
-      if ( i_which == i_end )
-      {
-        std::ostringstream sstr;
-        sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-             << "Error while normalizing constituents of site " << _site << "\n";
-        throw std::runtime_error( sstr.str() );
-      }
+      __DOASSERT( i_which == i_end,
+                  "Error while normalizing constituents of site " << _site << "\n")
 
 
       i_which->type = ( _tochange > 0 ) ? -1.0: 1.0;
@@ -223,7 +233,6 @@ endofloop:
       i_atom->type = ( i_atom->type > 0 ) ? 1.0: -1.0;
       if ( not _site ) ++i_atom;
     }
-// #ifdef _DEBUG
     types::t_real concx = 0;
     types::t_real concy = 0;
     types :: t_unsigned N = _str.atoms.size() >> 1;
@@ -237,16 +246,10 @@ endofloop:
     types::t_real result =  _site ? (types::t_real ) concy / (types::t_real) N:
                                     (types::t_real ) concx / (types::t_real) N;
     types::t_real inv = 2.0 / (types::t_real) N;
-    if ( std::abs( result - (_site ? y0:x0) ) > inv )
-    {
-      std::ostringstream sstr;
-      sstr << "Could not normalize site\n" << ( _site ? " x= ": " y= " )
-           << result <<  ( _site ? " x0= ": " y0= " ) <<  ( _site ? x0: y0 )
-           << "\n"; 
-
-      throw std::runtime_error( sstr.str() );
-    }
-// #endif
+    __DOASSERT( std::abs( result - (_site ? y0:x0) ) > inv,
+                   "Could not normalize site\n" << ( _site ? " x= ": " y= " )
+                << result <<  ( _site ? " x0= ": " y0= " ) <<  ( _site ? x0: y0 )
+                << "\n" )
   }
 
   void Concentration :: get( const Ising_CE::Structure &_str)
@@ -254,7 +257,7 @@ endofloop:
     Ising_CE::Structure::t_Atoms :: const_iterator i_atom = _str.atoms.begin();
     Ising_CE::Structure::t_Atoms :: const_iterator i_atom_end = _str.atoms.end();
     types :: t_unsigned Nx = 0, Ny = 0;
-    for(; i_atom != i_atom_end; ++i_atom )
+    for(x = y = 0e0; i_atom != i_atom_end; ++i_atom )
       ( i_atom->site > 0 ) ? ++Ny, y += i_atom->type: 
                              ++Nx, x += i_atom->type;
     x /= (types::t_real) Nx;
@@ -263,16 +266,17 @@ endofloop:
 
   void Concentration :: get( const Object &_obj )
   {
-    if ( sites.size() != _obj.bitstring.size() ) return;
+    __ASSERT( sites.size() != _obj.bitstring.size(),
+              "Unequal sizes.\n" )
 
     // computes concentrations first
     Object::t_Container::const_iterator i_bit = _obj.bitstring.begin();
     Object::t_Container::const_iterator i_bit_end = _obj.bitstring.end();
     std::vector<bool>::const_iterator i_site = sites.begin();
-    types::t_real concx = 0, concy = 0;
+    types::t_int concx = 0, concy = 0;
     for(; i_bit != i_bit_end; ++i_bit, ++i_site )
-      if( *i_site ) concx += *i_bit > 0 ? 1: -1;
-      else          concy += *i_bit > 0 ? 1: -1;
+      if( *i_site ) *i_bit > 0 ? ++concx: --concx;
+      else          *i_bit > 0 ? ++concy: --concy;
 
     // add frozen bits
     concx += Nfreeze_x;
@@ -286,6 +290,8 @@ endofloop:
 
   void Concentration :: setfrozen( const Ising_CE::Structure &_str )
   {
+    __DOASSERT( _str.atoms.size() % 2 != 0,
+                "Uneven number of sites in structure.\n" )
     N = _str.atoms.size() >> 1;
 
     Ising_CE::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();

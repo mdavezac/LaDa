@@ -55,7 +55,7 @@ namespace GA
       types::t_unsigned n = (types::t_unsigned)
          std::floor(   (types::t_real) rng.random ( str1.k_vecs.size() - 1 ) 
                      * (types::t_real) rate );
-      __gnu_cxx::copy_n( str2.k_vecs.begin(), n, str1.k_vecs.begin() );
+      std::copy( str2.k_vecs.begin(), str2.k_vecs.begin() + n, str1.k_vecs.begin() );
     }
     else // every point crossover
     {
@@ -295,7 +295,7 @@ errorout:
   {
     concentration.get( _indiv.Object() );
     return    Fuzzy::le(concentration.x, lessthan)
-           or Fuzzy::ge(concentration.x, morethan);
+           or Fuzzy::gt(concentration.x, morethan);
   }
   template< class T_INDIVIDUAL >
   bool xTaboo<T_INDIVIDUAL> :: Load( const TiXmlElement &_el ) 
@@ -311,12 +311,12 @@ errorout:
     if ( child->Attribute( "lessthan" ) )
     {
       child->Attribute( "lessthan", &d );
-      lessthan = ( Fuzzy::ge( d, 0e0) and Fuzzy::le( d, 1e0 ) ) ? 2.0*d-1.0: 1.0;
+      lessthan = ( Fuzzy::gt( d, 0e0) and Fuzzy::le( d, 1e0 ) ) ? 2.0*d-1.0: 1.0;
     }
     if ( child->Attribute( "morethan" ) )
     {
       child->Attribute( "morethan", &d );
-      morethan = ( Fuzzy::ge( d, 0e0 ) and Fuzzy::le( d, 1e0 ) )? 2.0*d-1.0: 1.0;
+      morethan = ( Fuzzy::gt( d, 0e0 ) and Fuzzy::le( d, 1e0 ) )? 2.0*d-1.0: 1.0;
     }
     if ( Fuzzy::geq( lessthan, morethan ) ) return false;
    

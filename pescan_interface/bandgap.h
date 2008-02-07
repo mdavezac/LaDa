@@ -4,15 +4,14 @@
 #ifndef _PESCAN_BANDGAP_H_
 #define _PESCAN_BANDGAP_H_
 
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
-#ifdef _MPI
 #include <mpi/mpi_object.h>
-#endif
-
 #include <lamarck/structure.h>
+#include <print/stdout.h>
 
 #include "interface.h"
 
@@ -64,12 +63,12 @@ namespace Pescan
       //! Constructor
       BandGap  () 
              : bands(0,0), Eref(0,0), computation( CBM ), do_correct(true),
-               metallicity(0.001), inc_dec(0.05) {}
+               metallicity(0.001), inc_dec(0.1) {}
       //! Copy Constructor
       BandGap   ( const BandGap & _c ) 
               : Interface( _c ), bands( _c.bands ), Eref( _c.Eref ),
                 computation( CBM ), do_correct( _c.do_correct ),
-                metallicity(0.001), inc_dec(0.05) {} 
+                metallicity(0.001), inc_dec(0.1) {} 
       //! Destructor
       ~BandGap() {};
 
@@ -82,13 +81,8 @@ namespace Pescan
       types::t_real operator()( const Ising_CE::Structure &_str ); 
 
     protected:
-#ifdef _NOLAUNCH
-        //! Folded spectrum computation (with --enable-nolaunch)
-        types::t_real folded_spectrum(const Ising_CE::Structure& );
-#else
-        //! Folded spectrum computation
-        types::t_real folded_spectrum();
-#endif
+      //! Folded spectrum computation
+      types::t_real folded_spectrum(const Ising_CE::Structure& );
       //! All-electron spectrum computation
       types::t_real all_electron( const Ising_CE::Structure &_str );
       //! Returns the closest eigenvalue to \a _ref
@@ -102,6 +96,8 @@ namespace Pescan
       //!          BandGap::correct. Once a true band-gap has been found, all
       //!          escan parameters are reset (including references).
       void correct( const std::string &_dir );
+      //!  Read results + Throw error if eigenvalues cannot be found. 
+      void read_and_throw();
   };
 
   //! \cond
@@ -109,11 +105,8 @@ namespace Pescan
   {
     set_scale( _str );
 
-#ifdef _NOLAUNCH
-    return escan.method == ALL_ELECTRON ? all_electron( _str ): folded_spectrum( _str );
-#else
-    return escan.method == ALL_ELECTRON ? all_electron( _str ): folded_spectrum();
-#endif
+    return escan.method == ALL_ELECTRON ? all_electron( _str ):
+                                          folded_spectrum( _str );
   }
 
   inline types::t_real BandGap :: find_closest_eig( types::t_real _ref )

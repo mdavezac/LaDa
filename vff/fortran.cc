@@ -4,9 +4,15 @@
 
 #include <stdexcept>       // std::runtime_error
 
-#include "fortran.h"
 #include <physics/physics.h>
-#include <opt/opt_minimize_gsl.h>
+#include <opt/opt_frprmn.h>
+#include <opt/debug.h>
+
+#include "fortran.h"
+
+//! Evaluation function for Minimizer::Frpr
+extern "C" double fortranvff_for_frprmn( double* _x, double* _y)
+    { return Minimizer::typical_frprfun<Vff::Fortran>( _x, _y); }
 
 namespace Vff
 { 
@@ -66,13 +72,7 @@ namespace Vff
       //! Then extracts next symbol.
       std::string symbol;
       types::t_int n = Physics::Atomic::ExtractSymbol( i_char, symbol );
-      if( n <= 0  ) 
-      {
-        std::ostringstream sstr;
-        sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-             << "Error while extracting atomic symbol\n";
-        throw std::runtime_error ( sstr.str() );
-      }
+      __DOASSERT( n <= 0, "Error while extracting atomic symbol: " << symbol << "\n" )
       i_char += n;
 
       //! Then determines if it is a known type
@@ -110,7 +110,7 @@ namespace Vff
                            structure, 1, 0) );
     if ( structure.lattice->get_nb_types(1) == 2 )
       functionals.push_back( Atomic_Functional( structure.lattice->get_atom_string(1,1),
-                             structure, 1, 1) );
+                         structure, 1, 1) );
 
     //! Constructs the tree...
     initialize_centers();
@@ -122,22 +122,10 @@ namespace Vff
     std::string A, B; 
     char *i_char = _bond;
     types::t_int n = Physics::Atomic::ExtractSymbol( i_char, A );
-    if( n <= 0 ) 
-    {
-      std::ostringstream sstr;
-      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-           << "Error while extracting atomic symbol\n";
-      throw std::runtime_error ( sstr.str() );
-    }
+    __DOASSERT( n <= 0, "Error while extracting atomic symbol: " << A << "\n" )
     i_char += n;
     n = Physics::Atomic::ExtractSymbol( i_char, B );
-    if( n <= 0 ) 
-    {
-      std::ostringstream sstr;
-      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-           << "Error while extracting atomic symbol\n";
-      throw std::runtime_error ( sstr.str() );
-    }
+    __DOASSERT( n <= 0, "Error while extracting atomic symbol: " << B << "\n" )
     i_char += n;
 
     
@@ -155,31 +143,13 @@ namespace Vff
     std::string A, B, C; 
     char *i_char = _angle;
     types::t_int n = Physics::Atomic::ExtractSymbol( i_char, A );
-    if( n <= 0  ) 
-    {
-      std::ostringstream sstr;
-      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-           << "Error while extracting atomic symbol\n";
-      throw std::runtime_error ( sstr.str() );
-    }
+    __DOASSERT( n <= 0, "Error while extracting atomic symbol: " << A << "\n" )
     i_char += n;
     n = Physics::Atomic::ExtractSymbol( i_char, B );
-    if( n <= 0  ) 
-    {
-      std::ostringstream sstr;
-      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-           << "Error while extracting atomic symbol\n";
-      throw std::runtime_error ( sstr.str() );
-    }
+    __DOASSERT( n <= 0, "Error while extracting atomic symbol: " << B << "\n" )
     i_char += n;
     n = Physics::Atomic::ExtractSymbol( i_char, C );
-    if( n <= 0  ) 
-    {
-      std::ostringstream sstr;
-      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-           << "Error while extracting atomic symbol\n";
-      throw std::runtime_error ( sstr.str() );
-    }
+    __DOASSERT( n <= 0, "Error while extracting atomic symbol: " << C << "\n" )
     i_char += n;
 
     types::t_int where[3];
@@ -190,15 +160,11 @@ namespace Vff
 
 extern "C" void FC_FUNC_(vff_create, VFF_CREATE)()
 {
-  if( Vff :: fortran ) delete Vff :: fortran;
-  Vff :: fortran = new Vff::Fortran;
-  if( Vff :: fortran ) return;
- 
-  std::ostringstream sstr;
-  sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-       << "Could not create Vff object\n";
-  throw std::runtime_error ( sstr.str() );
-  
+  if( Vff :: fortran )
+    __TRYDEBUGCODE( delete Vff :: fortran;,
+                    "Could not delete Vff object.\n" )
+  __TRYCODE( Vff :: fortran = new Vff::Fortran;,
+             "Could not create Vff object.\n")
 }
 extern "C" void FC_FUNC_(vff_destroy, VFF_DESTROY)()
 {
@@ -207,97 +173,50 @@ extern "C" void FC_FUNC_(vff_destroy, VFF_DESTROY)()
 }
 extern "C" void FC_FUNC_(vff_print_structure, VFF_PRINT_STRUCTURE)()
 {
-  if( not Vff :: fortran )
-  {
-    std::ostringstream sstr;
-    sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-         << "Fortran object not initialized\n";
-    throw std::runtime_error( sstr.str() );
-  }
+  __DOASSERT( not Vff :: fortran, "Fortran object not initialized\n"; ) 
   Vff :: fortran->print_structure();
 }
 extern "C" void FC_FUNC_(vff_print_lattice, VFF_PRINT_LATTICE)()
 {
-  if( not Vff :: fortran )
-  {
-    std::ostringstream sstr;
-    sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-         << "Fortran object not initialized\n";
-    throw std::runtime_error( sstr.str() );
-  }
+  __DOASSERT( not Vff :: fortran, "Fortran object not initialized\n"; ) 
   Vff :: fortran->print_lattice();
 }
 extern "C" void FC_FUNC_(vff_scale, VFF_SCALE)( types::t_real* _scale )
 {
-  if( not Vff :: fortran )
-  {
-    std::ostringstream sstr;
-    sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-         << "Fortran object not initialized\n";
-    throw std::runtime_error( sstr.str() );
-  }
+  __DOASSERT( not Vff :: fortran, "Fortran object not initialized\n"; ) 
   Vff :: fortran->set_scale( *_scale );
 }
 extern "C" void FC_FUNC_(vff_cell, VFF_CELL)( types::t_real* _mat)
 {
-  if( not Vff :: fortran )
-  {
-    std::ostringstream sstr;
-    sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-         << "Fortran object not initialized\n";
-    throw std::runtime_error( sstr.str() );
-  }
+  __DOASSERT( not Vff :: fortran, "Fortran object not initialized\n"; ) 
   Vff :: fortran->set_cell( _mat );
 }
 extern "C" void FC_FUNC_(vff_atoms, VFF_ATOMS)( types::t_int *_n, 
                                                 types::t_real* _pos, char *_type )
 {
-  if( not Vff :: fortran )
-  {
-    std::ostringstream sstr;
-    sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-         << "Fortran object not initialized\n";
-    throw std::runtime_error( sstr.str() );
-  }
+  __DOASSERT( not Vff :: fortran, "Fortran object not initialized\n"; ) 
   Vff :: fortran->set_atoms( *_n, _pos, _type );
 }
 extern "C" void FC_FUNC_(vff_bond, VFF_BOND)( char *_bond, types::t_real *_d0,
                                               types::t_real *_alphas )
 {
-  if( not Vff :: fortran )
-  {
-    std::ostringstream sstr;
-    sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-         << "Fortran object not initialized\n";
-    throw std::runtime_error( sstr.str() );
-  }
+  __DOASSERT( not Vff :: fortran, "Fortran object not initialized\n"; ) 
   Vff :: fortran->set_bond_parameters( _bond, *_d0, _alphas );
 }
 extern "C" void FC_FUNC_(vff_angle, VFF_ANGLE)( char *_angle, types::t_real *_gamma, 
-                                                types::t_real *_sigma, types::t_real *_betas )
+                                                types::t_real *_sigma,
+                                                types::t_real *_betas )
 {
-  if( not Vff :: fortran )
-  {
-    std::ostringstream sstr;
-    sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-         << "Fortran object not initialized\n";
-    throw std::runtime_error( sstr.str() );
-  }
+  __DOASSERT( not Vff :: fortran, "Fortran object not initialized\n"; ) 
   Vff :: fortran->set_angle_parameters( _angle, *_gamma, *_sigma, _betas );
 }
 extern "C" void FC_FUNC_(vff_minimize, VFF_MINIMIZE)( types::t_real *_energy )
 {
-  if( not Vff :: fortran )
-  {
-    std::ostringstream sstr;
-    sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-         << "Fortran object not initialized\n";
-    throw std::runtime_error( sstr.str() );
-  }
-
-  minimizer::GnuSL<Vff::Functional> minimize( *Vff :: fortran );
-  minimize.set_parameters( minimizer::GnuSL<Vff::Functional>::BFGS2,
-                           4000, types::tolerance, 0.1, 0.01 );
+  __DOASSERT( not Vff :: fortran, "Fortran object not initialized\n"; ) 
+  typedef Minimizer::Frpr<Vff::Fortran> t_Minimizer;
+  t_Minimizer minimize( *Vff :: fortran, fortranvff_for_frprmn );
+  fortranvff_for_frprmn( (double*) Vff::fortran, NULL );
+  minimize.set_parameters( 4000, types::tolerance, 0.1, 0.01 );
   minimize();
 
   *_energy = Vff::fortran->energy() / 16.0217733;

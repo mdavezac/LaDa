@@ -12,6 +12,7 @@
 #include <lamarck/structure.h>
 #include <lamarck/atom.h>
 #include <opt/fuzzy.h>
+#include <opt/debug.h>
 
 namespace Layered
 {
@@ -91,25 +92,12 @@ namespace Layered
   template <types::t_unsigned _D>
   void Concentration<_D> :: operator()( Ising_CE::Structure &_str )
   {
-    if ( _str.atoms.size() % _D != 0 )
-    {
-      std::ostringstream sstr;
-      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-           << "Number of atoms in structure is not a multiple of _D\n"
-           << _str.atoms.size() << " % " << _D << " != 0\n";
-      throw std::runtime_error( sstr.str() );
-    }
-
-    if ( not single_c ) return;
+    __DOASSERT( _str.atoms.size() % _D != 0,
+                   "Number of atoms in structure is not a multiple of _D\n"
+                << _str.atoms.size() << " % " << _D << " != 0\n"; )
 
     types::t_complex  *hold = new types::t_complex[ N ];
-    if ( not hold )
-    {
-      std::ostringstream sstr;
-      sstr << __FILE__ << ", line: " << __LINE__ << "\n"
-           << " Could not allocate memory in set_concentration!! " << std::endl; 
-      throw std::runtime_error( sstr.str() );
-    }
+    __DOASSERT( not hold, " Could not allocate memory.\n" )
 
     // creates individual with unnormalized occupation
     types::t_complex  *i_hold = hold;
@@ -186,13 +174,8 @@ namespace Layered
         i_which = i_atom;
         minr = i_atom->type;
       }
-      if ( i_which == i_end )
-      {
-        std::ostringstream sstr;
-        sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-             << "Error while normalizing x constituents\n";
-        throw std::runtime_error( sstr.str() );
-      }
+      __DOASSERT( i_which == i_end, 
+                  "Error while normalizing x constituents\n"; )
 
 
       i_which->type = ( _tochange > 0 ) ? -1.0: 1.0;
@@ -218,9 +201,9 @@ namespace Layered
     // computes concentrations first
     get( _obj );
 
-    types::t_real to_change = (types::t_real) N * ( x0  - x );
+    types::t_real to_change = ((types::t_real) N) * ( x0  - x );
     // inline with non-use of fzzy math below...
-    if ( to_change > -1.0 and to_change < 1.0 ) return;
+    if ( Fuzzy::gt(to_change, -1.0) and Fuzzy::leq(to_change, 1.0) ) return;
 
     // Puts the positions which can be changed into a list
     std::vector<types::t_unsigned> pos;
@@ -231,7 +214,7 @@ namespace Layered
     for(types::t_unsigned i=0; i_bit != i_bit_end; ++i_bit, ++i)
       if( to_change > 0.0 and BitString::spin_down(*i_bit)  )
         pos.push_back( i );
-      else if( to_change < 0.0 and BitString::spin_down(*i_bit)  )
+      else if( to_change < 0.0 and BitString::spin_up(*i_bit)  )
         pos.push_back( i );
 
     // shuffle directions
@@ -246,16 +229,12 @@ namespace Layered
       BitString::flip<typename T_CONT::value_type>(_obj.bitstring[*i_pos]);
       ( to_change > 0 ) ? to_change -= 2: to_change += 2;
 
-      // Fuzzy math at this point could create infinit loop
-      if ( to_change < -1.0 or to_change > 1.0 ) break;
+      if ( Fuzzy::gt(to_change, -1.0) and Fuzzy::leq(to_change, 1.0) ) break;
     }
-    if ( not (to_change < -1.0 or to_change > 1.0) )
-    {
-      std::ostringstream sstr;
-      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-           << "Could not set the concentration of an object\n";
-      throw std::runtime_error( sstr.str() );
-    }
+      
+    __DOASSERT( Fuzzy::leq(to_change, -1.0) or Fuzzy::gt(to_change, 1.0),
+                   "Concentration could not be set\n"
+                << "Incompatibility between required x/y and frozen atoms?\n"; )
   }
 
 
@@ -265,20 +244,18 @@ namespace Layered
   {
     Ising_CE::Structure::t_Atoms :: const_iterator i_atom = _str.atoms.begin();
     Ising_CE::Structure::t_Atoms :: const_iterator i_atom_end = _str.atoms.end();
-    for(; i_atom != i_atom_end; i_atom += _D )
+    for(x=0e0; i_atom != i_atom_end; i_atom += _D )
       x += BitString::spin_up(i_atom->type) ?  1.0: -1.0;
     x /= (types::t_real) N; 
   }
   template <types::t_unsigned _D> template<class T_CONT>
   void Concentration<_D> :: get( const BitString::Object<T_CONT> &_obj )
   {
-    if ( not single_c ) return;
-
     // computes concentrations first
     typedef typename BitString :: Object<T_CONT> :: const_iterator const_iterator;
     const_iterator i_bit = _obj.bitstring.begin();
     const_iterator i_bit_end = _obj.bitstring.end();
-    types::t_unsigned conc = 0;
+    types::t_int conc = 0;
     for(; i_bit != i_bit_end; ++i_bit )
       conc += BitString::spin_up(*i_bit) ? 1: -1;
 
@@ -293,15 +270,9 @@ namespace Layered
   void Concentration<_D> :: setfrozen( const Ising_CE::Structure &_str )
   {
     N = _str.atoms.size();
-    if( N % _D )
-    {
-      std::ostringstream sstr;
-      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-           << "Number of atoms in structure is not a multiple of _D\n"
-           << N << " % " << _D << " != 0\n";
-      throw std::runtime_error( sstr.str() );
-    }
-
+    __DOASSERT( N % _D,
+                   "Number of atoms in structure is not a multiple of _D\n"
+                << N << " % " << _D << " != 0\n" )
     N /= _D;
 
     Ising_CE::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
@@ -329,11 +300,12 @@ namespace Layered
     
     double d;
     d = _att.DoubleValue();
-    if( d < 0 or d > 1 ) goto errorout;
+    if( d < 0e0 or d > 1e0 ) goto errorout;
     single_c = true;
     x0 = 2.0 * (types::t_real) d - 1.0;
+    return;
 errorout:
-    std::cerr << "Error while reading concentration input\n";
+    std::cerr << "Error while reading concentration input: x0= " << d << std::endl;
   }
 
   template<class T_INDIVIDUAL>
@@ -348,19 +320,10 @@ errorout:
   template<class T_INDIVIDUAL>
   bool Evaluator<T_INDIVIDUAL> :: Load( const TiXmlElement &_node )
   {
-    if ( not lattice.Load( _node ) )
-    {
-      std::cerr << " Could not load lattice type from input!! " << std::endl; 
-      return false;
-    }
+    __DOASSERT( not lattice.Load( _node ),
+                " Could not load lattice from input.\n" )
     const TiXmlElement *parent = _node.FirstChildElement("Structure");
-    if ( not parent )
-    {
-      std::ostringstream sstr;
-      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-           << "No Structure tag on input ?!\n";
-      throw std::runtime_error(sstr.str());
-    }
+    __DOASSERT( not parent, "No Structure tag found in input.\n")
 
     bool loadedstructure = false;
     Ising_CE::Structure::lattice = &lattice;
@@ -385,7 +348,6 @@ errorout:
       return false;
     }
     atat::rVector3d cdir;
-    types :: t_unsigned multiplicity; 
     atat::rMatrix3d &cell = structure.cell;
     
     // First, Load Attributes 
@@ -402,6 +364,8 @@ errorout:
       std::cerr << "Error while trying to read direction of cell\n";
       return false; 
     }
+    direction = (!lattice.cell) * direction;
+    
     
     int u;
     _node.Attribute( "multiplicity", &u );
@@ -483,49 +447,45 @@ errorout:
     structure.atoms.clear();
     structure.atoms.reserve( lattice.sites.size() * copy_structure.atoms.size() );
     bool only_one_site = lattice.sites.size() == 1;
-    atat::rVector3d origin = lattice.sites.front().pos;
+    i_site_end = lattice.sites.end();
     for(; i_vec != i_vec_end; ++i_vec )
-    {
-      Ising_CE::Structure::t_Atom atom;
-      atom.site = -1; atom.pos = i_vec->pos;
-      atom.type = Ising_CE::Structure::t_Atom::t_Type(0);
-      atom.freeze = lattice.sites.front().freeze;
-      structure.atoms.push_back(atom);
-
-      if( only_one_site ) continue;
-
-      i_site = lattice.sites.begin(); 
-      i_site_end = lattice.sites.end();
-      for(++i_site; i_site != i_site_end; ++i_site )
+      for( i_site = lattice.sites.begin(); i_site != i_site_end; ++i_site )
       {
-        Ising_CE::Structure::t_Atom atom2(atom);
-        atom2.pos += ( i_site->pos - origin );
-        atom2.site = i_site->site;
+        Ising_CE::Structure::t_Atom atom;
+        atom.pos = i_vec->pos + i_site->pos;
+        atom.site = i_site->site;
+        atom.freeze = i_site->freeze;
+        atom.type = -1e0;
         // vewy impowtant. Otherwise GA::KRandom and GA::Random produce
         // individuals which are to big.
-        atom2.freeze = i_site->freeze | Ising_CE::Structure::t_Atom::FREEZE_T;
-        structure.atoms.push_back(atom2);
+        if( i_site != lattice.sites.begin() )
+          atom.freeze = i_site->freeze | Ising_CE::Structure::t_Atom::FREEZE_T;
+        structure.atoms.push_back(atom);
       }
-    }
-   
+
     // More of the same... but for kvecs
     structure.find_k_vectors();
 
     concentration.setfrozen( structure );
 
-#ifdef _MPI
-    if( mpi::main.is_root_node() )
-    {
-#endif
-    structure.print_xcrysden( std::cout );
-    std::cout << std::endl;
-#ifdef _MPI
-    }
-#endif
+    __ROOTCODE( structure.print_xcrysden( std::cout );
+                std::cout << std::endl; )
 
     return true;
 
   }
+
+  template< class T_INDIVIDUAL >
+    inline std::string Evaluator<T_INDIVIDUAL> :: print() const
+    {
+      std::ostringstream sstr;
+      atat::rVector3d dir = lattice.cell * direction;
+      sstr << concentration.print() << "\n"
+           << "Structure: " << multiplicity
+           << " (" << dir(0) << ", " << dir(1) << ", " << dir(2)
+           << ")\n" << structure << "\n";
+      return sstr.str();
+    }
 
   template< class T_INDIVIDUAL >
   GA::Taboo_Base<T_INDIVIDUAL>*
@@ -536,10 +496,13 @@ errorout:
 
     if( name == "Layer" ) 
       taboo = new Taboo< t_Individual >( structure );
-    else if (     name == "Concentration" 
-              and ( not concentration.is_single_c() ) )
-      taboo = new GA::xTaboo< t_Individual >( concentration );
-
+    else if ( name == "Concentration"  )
+    {
+      if( concentration.is_single_c() )
+        std::cerr << "Concentration is fixed from attribute x0 of <GA> ... </GA>.\n"
+                  << "Ignoring Concentration tag found in <Taboos>...</Taboos>.\n";
+      else taboo = new GA::xTaboo< t_Individual >( concentration );
+    }
 
     if ( taboo and taboo->Load( _el ) )  return taboo;
     if ( taboo ) delete taboo;
@@ -705,13 +668,8 @@ errorout:
       if ( *i_site == 0 )  ++i_var;
     }
 
-    if ( i_site != i_site_end or i_var != i_var_end )
-    {
-      std::ostringstream sstr;
-      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-           << "Size of Layered::Taboo and individivual's container do not match\n";
-      throw std::runtime_error(sstr.str());
-    }
+    __ASSERT( i_site != i_site_end or i_var != i_var_end,
+              "Size of Layered::Taboo and individivual's container do not match\n"; )
 
 
     //! periodicicity: adds first to current (eg last) layer if are the same type 

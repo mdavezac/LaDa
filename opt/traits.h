@@ -17,9 +17,7 @@
 #include "types.h"
 #include "fuzzy.h"
 
-#ifdef _MPI
 #include <mpi/mpi_object.h>
-#endif
 
 //! \brief %Traits and functions capable of discerning between a few standard
 //! %types and containers
@@ -64,6 +62,20 @@ namespace Traits
   template<>
    struct Dim<bool> { const static bool is_scalar = true;   //!< \a IS_SCALAR is a scalar
                       const static bool is_vector = false;  //!< \a IS_SCALAR is not a vector
+   };
+  //! Specialize version of Dim for types::t_complex
+  template<>
+   struct Dim< types::t_complex >
+   { 
+     const static bool is_scalar = true;   //!< \a IS_SCALAR is a scalar
+     const static bool is_vector = false;  //!< \a IS_SCALAR is not a vector
+   };
+  //! Specialize version of Dim for std::string
+  template<>
+   struct Dim< std::string >
+   { 
+     const static bool is_scalar = true;   //!< \a IS_SCALAR is a scalar
+     const static bool is_vector = false;  //!< \a IS_SCALAR is not a vector
    };
   //! Specialize version of Dim for constant %types
   template<class T_QUANTITY>
@@ -264,10 +276,12 @@ namespace opt
     template< class t_Quantity >
     static void print_out( std::ostream& _stream, const t_Quantity &_quantity )
     {
+      typedef Traits::Dim<typename t_Quantity :: value_type> t_Dim;
+      typedef IsAScalar< t_Dim :: is_scalar > t_IsAScalar;
       typename t_Quantity :: const_iterator i_scal = _quantity.begin();
       typename t_Quantity :: const_iterator i_end = _quantity.end();
       for(; i_scal != i_end; ++i_scal )
-        _stream << *i_scal << " ";
+        _stream <<  t_IsAScalar :: print(*i_scal) << " ";
     }
     //! Returns a string in which is printed \a _quantity 
     template< class t_Quantity >
@@ -381,15 +395,18 @@ namespace Traits
       //! Incorporates Fuzzy::leq
       static bool leq( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
         { return Fuzzy::leq(_a,_b); }
-      //! Incorporates Fuzzy::ge
-      static bool ge( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
-        { return Fuzzy::ge(_a,_b); }
+      //! Incorporates Fuzzy::gt
+      static bool gt( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
+        { return Fuzzy::gt(_a,_b); }
       //! Incorporates Fuzzy::geq
       static bool geq( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
         { return Fuzzy::geq(_a,_b); }
       //! Incorporates Fuzzy::eq
       static bool eq( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
         { return Fuzzy::eq(_a,_b); }
+      //! Incorporates Fuzzy::neq
+      static bool neq( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
+        { return not Fuzzy::eq(_a,_b); }
       //! Prints out the full vector into the stream
       static void print_out( std::ostream& _stream, const t_Quantity &_quantity )
         { opt::IsAScalar<is_scalar>::print_out(_stream, _quantity); }

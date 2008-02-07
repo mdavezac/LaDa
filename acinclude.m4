@@ -290,7 +290,7 @@ ac_cv_cxx_full_default_template_parameters,
 [AC_LANG_SAVE
  AC_LANG_CPLUSPLUS
  AC_TRY_COMPILE([
-template<class T, class N = typename T::N> class A {public: int f() {return 0;}};
+template<class T, class N = typename T::N> class A {public: typename T::N a; int f() {a=5; return a;}};
 class B {public: typedef int N; };
 ],[A<B> a; return a.f();],
  ac_cv_cxx_full_default_template_parameters=yes, ac_cv_cxx_full_default_template_parameters=no)

@@ -29,12 +29,20 @@ AC_ARG_ENABLE(all,
 
 
 AC_ARG_ENABLE(fortran,
-     [  --enable-fortran              Turn on fortran code snipets],
+     [  --enable-fortran              Turn on fortran minimization. Incompatible with gsl/nag.],
      [case "${enableval}" in
        yes) fortran=true ;;
        no)  fortran=false ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-fortran) ;;
      esac],[fortran=false])
+
+AC_ARG_ENABLE(nag,
+     [  --enable-nag              Turn on NAG minimization. Incompatible with gsl/fortran],
+     [case "${enableval}" in
+       yes) nag=true ;;
+       no)  nag=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-fortran) ;;
+     esac],[nag=false])
 
 AC_ARG_ENABLE(emass,
      [  --enable-emass                Turn on electronic mass optimization],
@@ -109,19 +117,13 @@ AC_ARG_ENABLE(debug,
      esac],[debug=true])
 AH_TEMPLATE([_PRINT_ALL_PROCS])
 
-ismultiproc=`grep processor /proc/cpuinfo | wc -l`
-if test $ismultiproc > 1; then
-  ismultiproc="true"
-else
-  ismultiproc="false"
-fi
 AC_ARG_ENABLE(mpi,
      [  --enable-mpi                  Turn on mpi],
      [case "${enableval}" in
        yes) mpi=true ;;
        no)  mpi=false ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-mpi) ;;
-     esac],[mpi=$ismultiproc])
+     esac],[mpi=false])
 AH_TEMPLATE([_MPI])
 
 AC_ARG_ENABLE(nolaunch,
@@ -156,12 +158,48 @@ if test x$emass = xtrue; then
   lapack=true
 fi
 
+AH_TEMPLATE([_DONAG])
+AH_TEMPLATE([_DOGSL])
+if test $vff = false; then
+  gsl=false
+  fortran=false
+  nag=false
+fi
+if test $nag = true; then
+  gsl=false
+  fortran=false
+  AC_DEFINE([_DONAG],[],[])
+  PKG_CHECK_MODULES(NAG, nag )
+fi
+AC_SUBST(GSL_CFLAGS)
+AC_SUBST(GSL_LIBS)
+if test $fortran = true; then
+  gsl=false
+  nag=false
+else
+  gsl=true
+fi
+AC_SUBST(NAG_CFLAGS)
+AC_SUBST(NAG_LIBS)
+if test x$gsl = xtrue; then
+  fortran=false
+  AC_DEFINE([_DOGSL],[],[])
+  PKG_CHECK_MODULES(GSL, gsl >= 1.8 )
+fi 
+
 # ************************************
 # ****** Checks compiler compliances
 # ************************************
 
-AH_TEMPLATE([_DOFORTRAN_])
-if test x$fortran = xtrue || test x$lapack = xtrue; then
+AH_TEMPLATE([_DOFORTRAN])
+fortrancompiler=false
+if test x$fortran = xtrue; then
+ fortrancompiler=true
+fi
+if test x$lapack = xtrue; then
+  fortrancompiler=true
+fi
+if test x$fortrancompiler = xtrue; then
   AC_PROG_FC
   NREL_AC_PROG_FCPP
   AC_FC_LIBRARY_LDFLAGS
@@ -169,7 +207,7 @@ if test x$fortran = xtrue || test x$lapack = xtrue; then
   AC_FC_WRAPPERS
 fi
 if test x$fortran = xtrue; then
-  AC_DEFINE([_DOFORTRAN_],[],[])
+  AC_DEFINE([_DOFORTRAN],[],[])
 fi
 
 AX_COMPILER_VENDOR
@@ -191,17 +229,14 @@ AC_CHECK_HEADERS([sys/time.h],[],[{(exit 1); exit 1; }] )
 AC_HEADER_STDBOOL
 AC_HEADER_TIME
 
+AH_TEMPLATE([_DEBUG])
 if test x$debug = xtrue; then
   CXXFLAGS=`echo $CXXFLAGS | sed "s/-O2//"`
   CFLAGS=`echo $CFLAGS | sed "s/-O2//"`
   AC_DEFINE([_PRINT_ALL_PROCS],[],[])
   AX_CHECK_COMPILER_FLAGS([-fbounds-check], 
                           [CPP_DEBUG_FLAGS+=" -fbounds-check"],)
-  AH_TOP([
-#ifndef _DEBUG
-#define _DEBUG
-#endif
-  ])
+  AC_DEFINE([_DEBUG],[1],[])
 else
   CXXFLAGS=`echo $CXXFLAGS | sed "s/-g//"`
   CFLAGS=`echo $CFLAGS | sed "s/-g//"`
@@ -216,24 +251,30 @@ AC_SUBST(CPP_DEBUG_FLAGS)
 
 #  MPI libs
 if test x$mpi = xtrue; then
-  PKG_CHECK_MODULES(WHATEVER, mpich >= 1.2.7, [mpichisthere=yes], [mpichisthere=no] )
-  PKG_CHECK_MODULES(WHATEVER, openmpi >= 1.2, [openmpiisther=yes], [openmpiisther=no] )
-  if test $mpichisthere = yes; then
-    PKG_CHECK_MODULES(MPICH, mpich >= 1.2.7 )
+  if test $CXX = mpic++ || test $CXX = mpiCC; then
     AC_DEFINE([_MPI],[1],[])
     MPI_ADDLIB="../mpi/libmpiobject.la"
-  elif test $openmpiisther = yes; then
-    PKG_CHECK_MODULES(OPENMPI, openmpi >= 1.2.7 )
-    AC_DEFINE([_MPI],[1],[])
-    MPI_ADDLIB="../mpi/libmpiobject.la"
-    MPICH_CFLAGS="$OPENMPI_CFLAGS"
-    MPICH_LIBS="$OPENMPI_LIBS"
+    MPI_CFLAGS="$MPI_CFLAGS -D _OPENMPI_MPI_"
+    mpicompilers=true
   else
-    $mpi=false;
+    mpicompilers=false
+    PKG_CHECK_MODULES(WHATEVER, mpich >= 1.2.7, [mpichisthere=yes], [mpichisthere=no] )
+    PKG_CHECK_MODULES(WHATEVER, openmpi >= 1.2, [openmpiisther=yes], [openmpiisther=no] )
+    if test $openmpiisther = yes; then
+      PKG_CHECK_MODULES(MPI, openmpi >= 1.2 )
+      AC_DEFINE([_MPI],[1],[])
+      MPI_ADDLIB="../mpi/libmpiobject.la"
+      MPI_CFLAGS="$MPI_CFLAGS -D _OPENMPI_MPI_"
+    elif test $mpichisthere = yes; then
+      PKG_CHECK_MODULES(MPI, mpich >= 1.2.7 )
+      AC_DEFINE([_MPI],[1],[])
+      MPI_ADDLIB="../mpi/libmpiobject.la"
+      MPI_CFLAGS="$MPI_CFLAGS -D _MPICH_MPI_"
+    fi
   fi
 fi
-AC_SUBST(MPICH_CFLAGS)
-AC_SUBST(MPICH_LIBS)
+AC_SUBST(MPI_CFLAGS)
+AC_SUBST(MPI_LIBS)
 AC_SUBST(MPI_ADDLIB)
 
 #  XML libs
@@ -257,34 +298,16 @@ AM_CONDITIONAL(DOLAPACK, test x$lapack = xtrue)
 AM_CONDITIONAL(DOEMASS, test x$emass = xtrue)
 AM_CONDITIONAL(DOEMASSOPT, test x$emassopt = xtrue)
 AM_CONDITIONAL(DOFORTRAN, test x$fortran = xtrue)
+AM_CONDITIONAL(DOGSL, test x$gsl = xtrue)
+AM_CONDITIONAL(DONAG, test x$nag = xtrue)
 
-#  gsl libs iff vff is enabled 
-if test x$vff = xtrue; then
-  AC_FIND_FILE(libgslcblas.a,[$HOME/usr/lib /usr/lib /usr/local/lib], gsllibcblas)
-  AC_FIND_FILE(libgsl.a,[$HOME/usr/lib /usr/lib /usr/local/lib], gsllib)
-  AC_FIND_FILE(gsl_multimin.h,[$HOME/usr/include/gsl /usr/include/gsl /usr/local/include/gsl], gslinclude)
-  if test $gslinclude != NO; then
-    GSL_INCLUDE="-I $gslinclude"
-    GSL_LIB="-L$gsllibcblas -lgslcblas -L$gsllib -lgsl"
-  else
-    AC_MSG_ERROR("Could not find gsl headers")
-  fi
-  if test $gsllib = NO; then
-    AC_MSG_ERROR("Could not find libgsl.a")
-  fi
-  if test $gsllibcblas = NO; then
-    AC_MSG_ERROR("Could not find libgslcblas.a")
-  fi
-fi 
-AC_SUBST(GSL_INCLUDE)
-AC_SUBST(GSL_LIB)
 
 #  eo libs iff galib is enabled 
 if test x$galib = xtrue; then
   PKG_CHECK_MODULES(EO, eo >= 1.0.1 )
 fi 
-AC_SUBST(GSL_INCLUDE)
-AC_SUBST(GSL_LIB)
+AC_SUBST(NAG_CFLAGS)
+AC_SUBST(NAG_LIBS)
 
 # checks for compiler specific flags 
 #
@@ -310,7 +333,7 @@ if test "$ac_cv_cxx_have_stl" = yes; then
     gnu) LIBS=" ${LIBS} -lstdc++";;
     intel) LIBS=" ${LIBS} -lstdc++ -lcxa -lcxaguard";;
     ibm) FFLAGS="-qsuffix=f=f90 -lC";;
-    portland) LIBS=" ${LIBS} -L/usr/lib -lstdc++ ";;
+    portland) LIBS=" ${LIBS} -lC ";;
   esac
  else
    AC_MSG_ERROR("Could not find standard template libraries")
@@ -361,9 +384,14 @@ if test x$emassopt = xtrue; then
   echo " _ Genetic Algorithm for Electronic Mass Optimization"
 fi
 echo ""
+if test $fortran = true; then
+  echo "Will use fortran minimizer"
+fi
 if test $mpi$mpichisthere = trueyes; then
   echo "Will Include MPI where available, using mpich"
 elif test $mpi$openmpiisther = trueyes; then
+  echo "Will Include MPI where available, using openmpi"
+elif test $mpi$mpicompilers = truetrue; then
   echo "Will Include MPI where available, using openmpi"
 fi
 if test $lapack = true; then

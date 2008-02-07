@@ -18,10 +18,9 @@
 #include <opt/types.h>
 #include <opt/fuzzy.h>
 #include <atat/vectmac.h>
+#include <mpi/mpi_object.h>
 
-#ifdef _MPI 
-  #include <mpi/mpi_object.h>
-#endif
+#include <mpi/mpi_object.h>
 
 namespace Ising_CE 
 {
@@ -51,7 +50,7 @@ namespace Ising_CE
       Point(const types::t_real _x, const types::t_real _y) : x(_x), y(_y)  {}
       //! Compares (Fuzzy math) the \e x axis coordinate with \a _x
       bool x_greater( const types::t_real _x ) const
-        { return Fuzzy::ge(x, _x); }
+        { return Fuzzy::gt(x, _x); }
       //! Compares (Fuzzy math) the \e x axis coordinate with \a _x
       bool x_lesser( const types::t_real _x ) const 
         { return Fuzzy::le(x, _x); }

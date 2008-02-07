@@ -11,7 +11,6 @@
 
 #include <string>
 #include <algorithm>
-#include <ext/algorithm>
 #include <functional>
 #include <string>
 #include <sstream>
@@ -23,13 +22,11 @@
 #include <lamarck/structure.h>
 #include <print/stdout.h>
 #include <opt/types.h>
+#include <mpi/mpi_object.h>
 
 #include "functors.h"
 #include "gatraits.h"
 
-#ifdef _MPI
-#include <mpi/mpi_object.h>
-#endif
 
 /** \ingroup Genetic 
  * @{*/

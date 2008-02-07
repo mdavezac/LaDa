@@ -18,15 +18,8 @@
 #include <lamarck/lattice.h>
 #include <opt/types.h>
 #include <opt/function_base.h>
-
-#ifdef _MPI 
-  #include "mpi/mpi_object.h"
-#endif
-
-
-#ifdef _DOFORTRAN
- extern "C" double vff_for_frprmn( const double* const _x, double* const _y);
-#endif
+#include <opt/debug.h>
+#include <mpi/mpi_object.h>
 
 //! \brief Reimplements the Valence Force Field %Functional in c++
 //! \details Vff, or Valence Force Field functional, is an empirical functional which
@@ -64,6 +57,17 @@ namespace Vff
     friend class Functional;
     //! The type of the atom  
     typedef Ising_CE::Structure::t_Atom  t_Atom;
+    //! The container of atomic centers. Defined here once and for all.
+    typedef std::vector<Atomic_Center> t_Centers;
+    //! Type of pointer/iterator to the atomic center on the other side of the bond
+    typedef t_Centers :: iterator t_Bond;
+    //! A reference to the of pointer/iterator to the atomic center on the other side of the bond
+    typedef t_Centers :: iterator& t_BondRefd;
+    //! \brief A constant reference to the of pointer/iterator to the atomic
+    //!        center on the other side of the bond
+    typedef const t_Centers :: iterator& const_t_BondRefd;
+    //! A transformation from a t_Center :: iterator to a t_Bond
+    static t_BondRefd __make__iterator__( t_Centers::iterator &_i ) { return _i; }
 
     public:
       class const_iterator;
@@ -76,7 +80,7 @@ namespace Vff
       //! using Atomic_Center::const_iterator.
       //! \sa Atomic_Center::const_iterator, Vff::Functional::construct_centers, 
       //!     Vff::functional::initialize_centers
-      std::vector< Atomic_Center* > bonds; 
+      std::vector< t_Bond > bonds; 
       //! \brief Allow to relate origin pointer of Atomic_center::bonds to the correct
       //! periodic image with which the bond is made
       std::vector< atat::rVector3d > translations;
@@ -120,7 +124,7 @@ namespace Vff
       //! Atomic_Center::translations and Atomic_Center::do_translate are set accordingly.
       //! \param _e Atomic_Center object for which first neighbor relationship is checked
       //! \param _cutoff distance below which first neighborness is implied
-      types::t_int add_bond( Atomic_Center &_e, const types::t_real _cutoff  );
+      types::t_int add_bond( t_BondRefd _bond, const types::t_real _cutoff  );
 
       //! Returns a Atomic_Center::const_iterator object pointing to the first bond
       const_iterator begin() const;
@@ -186,12 +190,19 @@ namespace Vff
   {
     //! The type of the atom  
     typedef Ising_CE::Structure::t_Atom  t_Atom;
+    //! Type of pointer/iterator to the atomic center on the other side of the bond
+    typedef Atomic_Center::t_Bond t_Bond;
+    //! A reference to the of pointer/iterator to the atomic center on the other side of the bond
+    typedef Atomic_Center::t_BondRefd t_BondRefd;
+    //! \brief A constant reference to the of pointer/iterator to the atomic
+    //         center on the other side of the bond
+    typedef Atomic_Center::const_t_BondRefd const_t_BondRefd;
 
     protected:
       //! current origin of the bonds
       const Atomic_Center *parent;
       //! current bond being iterated
-      std::vector< Atomic_Center* > :: const_iterator i_bond;
+      std::vector< t_Bond > :: const_iterator i_bond;
       //! tranlation, if current bond is an atomic image
       std::vector< atat::rVector3d > :: const_iterator i_translation;
       //! swtich for doing periodic imeage translation or not
@@ -217,6 +228,11 @@ namespace Vff
           return;
         }
         i_bond = parent->bonds.end();
+        __DOTRYDEBUGCODE( check();,
+                             "error in constructor\n"
+                          << " _parent != NULL " << (_parent!=NULL)
+                          << " \n" << " _is_begin "
+                          << _is_begin << "\n" )
       }
       //! Copy Constrcutor 
       const_iterator   ( const const_iterator &_c ) 
@@ -249,20 +265,15 @@ namespace Vff
       types::t_int operator -( const const_iterator &_i )
         { return _i.i_bond - i_bond; }
       //! Dereferences the iterator: returns Atomic_Center to which bond points
-      Atomic_Center& operator *()
-        { return *(*i_bond); }
+      Atomic_Center& operator *()  { return *(*i_bond); }
       //! Dereferences the iterator: returns Atomic_Center to which bond points
-      const Atomic_Center& operator *() const
-        { return *(*i_bond); }
+      const Atomic_Center& operator *() const { return *(*i_bond); }
       //! Dereferences the iterator: returns Atomic_Center to which bond points
-      Atomic_Center* operator ->()
-        { return *i_bond; }
-      //! Dereferences the iterator: returns Atomic_Center to which bond points
-      const Atomic_Center* operator ->() const
-        { return *i_bond; }
+      const_t_BondRefd operator ->() const { return *i_bond; }
       //! Returns bond length squared
       types::t_real norm2() const
       {
+        __DOTRYDEBUGCODE( check_valid();, "Invalid pointers in norm2()\n")
         if ( not *i_do_translate )
           return atat::norm2 ( parent->origin->pos - (*i_bond)->origin->pos );
         return atat::norm2( parent->origin->pos - (*i_bond)->origin->pos -
@@ -311,6 +322,49 @@ namespace Vff
       //! \param _v vector to translate
       void translate( atat::rVector3d &_v )
         { if( *i_do_translate ) _v += parent->structure->cell * ( *i_translation ); }
+#ifdef _DEBUG
+      void check() const
+      {
+        __ASSERT(not parent,
+                 "Pointer to parent atom is invalid.\n")
+        __ASSERT( parent->bonds.size() == 0,
+                  "The number of bond is zero.\n")
+        __ASSERT( parent->translations.size() == 0,
+                  "The number of translations is zero.\n")
+        __ASSERT( parent->do_translates.size() == 0,
+                  "The number of translation switches is zero.\n")
+        __ASSERT( i_bond - parent->bonds.end() > 0,
+                  "The bond iterator is beyond the last bond.\n")
+        if( i_bond ==  parent->bonds.end() ) return;
+        __ASSERT( i_bond - parent->bonds.begin() < 0,
+                  "The bond iterator is before the first bond.\n")
+        types::t_int pos = i_bond -  parent->bonds.begin();
+        __ASSERT( i_translation - parent->translations.end() > 0,
+                  "The translation iterator is beyond the last bond.\n")
+        __ASSERT( i_translation - parent->translations.begin() < 0,
+                  "The translation iterator is before the first bond.\n")
+        __ASSERT( i_translation != parent->translations.begin() + pos,
+                     "The bond iterator and the translation "
+                  << "iterator are out of sync.\n")
+        __ASSERT( i_do_translate - parent->do_translates.end() > 0,
+                  "The do_translate iterator is beyond the last bond.\n")
+        __ASSERT( i_do_translate - parent->do_translates.begin() < 0,
+                  "The do_translate iterator is before the first bond.\n")
+        __ASSERT( i_do_translate != parent->do_translates.begin() + pos,
+                     "The bond iterator and the do_translate "
+                  << "iterator are out of sync.\n")
+      }
+      void check_valid() const
+      {
+        check();
+        __ASSERT( i_bond == parent->bonds.end(),
+                  "Invalid iterator.\n";)
+        __ASSERT( not parent->origin,
+                  "Origin of the parent atom is invalid.\n")
+        __ASSERT( not (*i_bond)->origin,
+                  "Origin of the bond atom is invalid.\n")
+      }
+#endif
   }; // end of const_iterator definition
 
   //! \brief An atom centered functional
@@ -531,10 +585,10 @@ namespace Vff
       typedef t_Container :: const_iterator const_iterator; //!< see Functional::Base
 
     protected:
-      //! Type of the container holding the atomic centers
-      typedef std::vector< Atomic_Center > t_Centers;  
       //! Type of the atomic centers
       typedef Atomic_Center t_Center;  
+      //! Type of the container holding the atomic centers
+      typedef t_Center :: t_Centers t_Centers;  
       //! Type of the container holding the atomic functionals
       typedef std::vector< Atomic_Functional > t_AtomicFunctionals;  
 
@@ -543,23 +597,32 @@ namespace Vff
       //! Ising_CE::Structure for which to compute energy and stress
       Ising_CE :: Structure &structure;
       Ising_CE :: Structure structure0; //!< original structure,  needed for gradients
-      types::t_real bond_cutoff; //!< length below which first-neighbor relationship is defined
-      //! list of all Atomic_Center created from Functional::structure
+      //! length below which first-neighbor relationship is defined
+      types::t_real bond_cutoff; 
+      //! \brief list of all Atomic_Center created from Functional::structure
+      //! \details Space for the atomic centers are reserved in the
+      //!          constructor. It is expected that the iterators will be valid
+      //!          throughout the life of the functional, starting with a call
+      //!          to the construction of the tree. If the order of the atoms
+      //!          in Functional::structure is changed, then it is imperative
+      //!          that the tree be reconstructed from scratch.
       t_Centers centers;  
       //! list of all possbile Atomic_Functionals for Functional::structure.lattice
       t_AtomicFunctionals functionals;
-      atat::rMatrix3d stress; //!< stores stress in Functional::structure after computation
-      atat::rMatrix3d strain; //!< stores stress in Functional::structure after computation
-      atat::rVector3d center_of_mass; //!< center of mass of atoms in Functional::structure
+      //! stores stress in Functional::structure after computation
+      atat::rMatrix3d stress;
+      //! stores stress in Functional::structure after computation
+      atat::rMatrix3d strain; 
+      //! Index of the first atoms with fixed x, y, z;
+      atat::iVector3d fixed_index; 
       
     public:
       //! \brief Constructor and Initializer
       //! \param _str structure for which to compute energy and stress
       Functional   ( Ising_CE :: Structure &_str )
                  : structure(_str), structure0(_str),
-                   bond_cutoff(0), center_of_mass(0,0,0) 
+                   bond_cutoff(0), fixed_index(-1,-1,-1)
       {
-        centers.reserve(_str.atoms.size());
         functionals.reserve( _str.atoms.size()); 
         stress.zero(); strain.zero();
       };
@@ -568,7 +631,7 @@ namespace Vff
                  : function::Base<>( _c ), structure( _c.structure ),
                    structure0( _c.structure0 ), bond_cutoff( _c.bond_cutoff ),
                    centers( _c.centers ), functionals( _c.functionals ),
-                   center_of_mass(_c.center_of_mass) {}
+                   fixed_index( _c.fixed_index ) {}
       //! \brief Destructor
       ~Functional() {}
 
@@ -576,6 +639,15 @@ namespace Vff
       //! \param _element should point to an xml node which is the functional data
       //! or contains a node to the funtional data as a direct child
       bool Load( const TiXmlElement &_element );
+
+      //! \brief Finds the node - if it is there - which describes this minimizer
+      //! \details Looks for a \<Functional \> tag first as \a _node, then as a
+      //!          child of \a _node. Different minimizer, defined by the
+      const TiXmlElement* find_node( const TiXmlElement &_node );
+       
+      //! \brief Loads Functional directly from \a _node.
+      //! \details If \a _node is not the correct node, the results are undefined.
+      bool Load_( const TiXmlElement &_node );
       
       //! \brief unpacks function::Base::variables, then calls energy
       //! \sa function::Base, function::Base::evaluate
@@ -632,7 +704,7 @@ namespace Vff
       //  types::t_int where[2];
       //  bond_indices( A, B, where )
 
-      //  functionals[ where[0] ].add_bond( where[0], d0, alphas );
+      //  functionals[ where[0] ].add_bond( where[1], d0, alphas );
       //  functionals[ where[1]+structure.lattice->get_nb_types(0)]
       //                         .add_bond( where[0], d0, alphas );
       //!          \endcode
@@ -666,16 +738,28 @@ namespace Vff
       //! \details Functional knows about Functional::Structure, whereas minizers now
       //! about function::Base, this function does the interface between the two
       void unpack_variables(atat::rMatrix3d& strain);
+      //! Unpacks position variables only.
+      void unpack_positions(atat::rMatrix3d& strain, const_iterator& _i_x);
       //! \brief packs variables from minimizer
       //! \details Functional knows about Functional::Structure, whereas minizers now
       //! about function::Base, this function does the interface between the two
       void pack_variables(const atat::rMatrix3d& _strain);
+      //! Packs position variables only.
+      void pack_positions(iterator& _i_x);
+      //! Counts positional degrees of freedom.
+      types::t_unsigned posdofs();
       //! \brief packs variables from minimizer
       //! \details Functional knows about Functional::Structure, whereas
       //! minizers now about function::Base, this function does the interface
       //! between the two
       template< typename t_grad_iterator>
-      void pack_gradients(const atat::rMatrix3d& _stress, t_grad_iterator const &_grad) const;
+      void pack_gradients(const atat::rMatrix3d& _stress,
+                          t_grad_iterator const &_grad) const;
+
+#ifdef _DEBUG
+      //! Checks that the list of centers are valid. somewhat.
+      void check_tree() const;
+#endif
   };
 
   template< typename t_grad_iterator>
@@ -728,8 +812,8 @@ namespace Vff
     atat::rMatrix3d K0 = (!(~strain));
 
     // computes energy and gradient
-    std::vector<Atomic_Center> :: iterator i_center = centers.begin();
-    std::vector<Atomic_Center> :: iterator i_end = centers.end();
+    t_Centers :: iterator i_center = centers.begin();
+    t_Centers :: iterator i_end = centers.end();
     stress.zero();
     for (; i_center != i_end; ++i_center)
       energy += functionals[i_center->kind()].
@@ -745,7 +829,42 @@ namespace Vff
     { return const_iterator( this ); }
   inline Atomic_Center::const_iterator Atomic_Center :: end() const
     { return const_iterator( this, false ); }
+
+  // same as energy, but unpacks values from
+  // opt::Function_Base::variables
+  inline types::t_real Functional :: evaluate()
+  {
+    unpack_variables(strain);
+    return energy();
+  }
 } // namespace vff 
+
+#ifdef _DOFORTRAN
+#include<opt/opt_frprmn.h>
+  //! Creates an instance of a typical Minimizer::Frpr "C" function for calling Vff::Functional
+  extern "C" inline double vff_frprfun(double* _x, double* _y)
+    { return Minimizer::typical_frprfun<Vff::Functional>( _x, _y); }
+  //! \brief returns a pointer to the correct extern "C" evaluation function
+  //!        for Minimizer::Frpr.
+  //! \details This routine allows for a standard for Vff::VA to intialize
+  //!          Minimizer::Frpr.
+  template<> inline t_FrprFunction choose_frpr_function<Vff::Functional>() { return vff_frprfun; }
+
+#elif defined(_DONAG)
+#include <nag.h>
+#include <nage04.h>
+  //! Creates an instance of a typical NAG "C" function for calling Vff::Functional
+  extern "C" inline void vff_nagfun(int _n, double* _x, double* _r, double* _g, Nag_Comm* _p)
+    { Minimizer::typical_nagfun<Vff::Functional>( _n, _x, _r, _g, _p ); }
+  //! \brief returns a pointer to the correct extern "C" evaluation function
+  //!        for Minimizer::Nag.
+  //! \details This routine allows for a standard for Vff::VA to intialize
+  //!          Minimizer::Nag.
+  template<>
+  inline Minimizer::t_NagFunction choose_nag_function<Vff::Functional>()
+    { return vff_nagfun; }
+
+#endif
 
 #ifdef _MPI
 namespace mpi {

@@ -14,8 +14,8 @@
 
 #include <tinyxml/tinyxml.h>
 
-#include "lamarck/structure.h"
-#include "opt/types.h"
+#include <lamarck/structure.h>
+#include <opt/types.h>
 
 #include "evaluator.h"
 #include "functors.h"
@@ -24,9 +24,6 @@
 #include "gaoperators.h"
 #include "scaling.h"
 
-#ifdef _MPI
-#include "mpi/mpi_object.h"
-#endif
 
 /** \ingroup Genetic
  * @{ */
@@ -288,6 +285,9 @@ namespace SingleSite
       //! \see Evaluator::LoadPrintBest()
       eoMonOp<const t_Individual>* LoadPrintBest( const TiXmlElement &_node );
 
+      //! Prints conceration attributes and structure
+      std::string print() const;
+
     protected:
       //! \brief Does simple consistency checks between the structure as loaded from
       //!        \<Structure\> and the lattice, as loaded from \<Lattice\>
@@ -356,12 +356,20 @@ namespace SingleSite
     new_Niche_from_xml( const TiXmlElement &_node,
                         typename T_GATRAITS :: t_IndivTraits :: t_Concentration &_conce );
 
+  template<class T_INDIVIDUAL> 
+    inline std::string Evaluator<T_INDIVIDUAL> :: print() const
+    {
+      std::ostringstream sstr;
+      sstr << concentration.print() << "\n" << structure;
+      return sstr.str();
+    }
 } // namespace TwoSites
 /* @} */
 
 #include "single_site.impl.h"
 
 #ifdef _MPI
+#include "mpi/mpi_object.h"
 namespace mpi
 {
   /** \ingroup MPI

@@ -1,0 +1,54 @@
+<?xml version="1.0" standalone="no" ?>
+<Job>
+   <Structure >
+        <Cell>
+            <column x="10.000000" y="0.000000" z="0.000000" />
+            <column x="0.500000" y="0.500000" z="0.000000" />
+            <column x="0.500000" y="0.000000" z="0.500000" />
+        </Cell>
+        <Atom x="0.000000" y="0.000000" z="0.000000" type="Ga" />
+        <Atom x="0.250000" y="0.250000" z="0.250000" type="As" />
+        <Atom x="1.000000" y="0.000000" z="0.000000" type="Ga" />
+        <Atom x="1.250000" y="0.250000" z="0.250000" type="As" />
+        <Atom x="2.000000" y="0.000000" z="0.000000" type="In" />
+        <Atom x="2.250000" y="0.250000" z="0.250000" type="As" />
+        <Atom x="3.000000" y="0.000000" z="0.000000" type="In" />
+        <Atom x="3.250000" y="0.250000" z="0.250000" type="As" />
+        <Atom x="4.000000" y="0.000000" z="0.000000" type="Ga" />
+        <Atom x="4.250000" y="0.250000" z="0.250000" type="As" />
+        <Atom x="5.000000" y="0.000000" z="0.000000" type="In" />
+        <Atom x="5.250000" y="0.250000" z="0.250000" type="As" />
+        <Atom x="6.000000" y="0.000000" z="0.000000" type="In" />
+        <Atom x="6.250000" y="0.250000" z="0.250000" type="As" />
+        <Atom x="7.000000" y="0.000000" z="0.000000" type="Ga" />
+        <Atom x="7.250000" y="0.250000" z="0.250000" type="As" />
+        <Atom x="8.000000" y="0.000000" z="0.000000" type="Ga" />
+        <Atom x="8.250000" y="0.250000" z="0.250000" type="As" />
+        <Atom x="9.000000" y="0.000000" z="0.000000" type="Ga" />
+        <Atom x="9.250000" y="0.250000" z="0.250000" type="As" />
+    </Structure>
+    <Lattice scale="6.0">
+        <column x="0.0" y="0.5" z="0.5" />
+        <column x="0.5" y="0.0" z="0.5" />
+        <column x="0.5" y="0.5" z="0.0" />
+        <site x="0.25" y="0.25" z="0.25">
+            <atom type="As" />
+        </site>
+        <site x="0.0" y="0.0" z="0.0">
+            <atom type="In" />
+            <atom type="Ga" />
+        </site>
+    </Lattice>
+    <Functional type="vff" direction="1 0 0" >
+        <Minimizer type="frprmn" itermax="40000" tolerance="0.00001" linetolerance="0.01" zeps="0.001" />
+        <Minimizer type="gsl_bfgs2" itermax="40000" tolerance="0.00001" linetolerance="0.5" linestep="0.001" doprint="true" />
+        <Bond A="In" B="As" d0="2.62332" alpha="21.6739" alpha3="-112.0" alpha4="150.0"/>
+        <Bond A="Ga" B="As" d0="2.44795" alpha="32.1530" alpha3="-105.0" alpha4="150.0"/>
+        <Angle A="As" B="Ga" C="As" gamma="tet" sigma="-4.099" beta="9.3703" />
+        <Angle A="Ga" B="As" C="Ga" gamma="tet" sigma="-4.099" beta="9.3703" />
+        <Angle A="In" B="As" C="In" gamma="tet" sigma="-5.753" beta="5.7599" />
+        <Angle A="As" B="In" C="As" gamma="tet" sigma="-5.753" beta="5.7599" />
+        <Angle A="Ga" B="As" C="In" gamma="-0.35016" sigma="-4.926" beta="7.5651" />
+        <Angle A="In" B="As" C="Ga" gamma="-0.35016" sigma="-4.926" beta="7.5651" />
+    </Functional>
+</Job>

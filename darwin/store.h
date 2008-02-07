@@ -20,10 +20,7 @@
 #include <opt/fitness_function.h>
 #include <opt/convex_hull.h>
 #include <print/xmg.h>
-
-#ifdef _MPI
 #include <mpi/mpi_object.h>
-#endif
 
 #include "objective.h"
 #include "loadsave.h"
@@ -265,15 +262,19 @@ namespace Store
         typedef GA::LoadObject<t_GATraits>           t_LoadOp; //!< Functor for loading individuals
 
       protected:
-        t_Individual optimum; //!< "best" individual
+        t_Individual *optimum; //!< "best" individual
+        //! Whether the memory pointed to by optimum is owned by this object
+        bool owns_optimum;
 
       public:
         //! Constructor
-        BaseOptima   ( const TiXmlElement &_node ) {};
+        BaseOptima   ( const TiXmlElement &_node )
+                   : optimum(NULL), owns_optimum(false) {};
         //! Copy Constructor
-        BaseOptima   ( const BaseOptima &_c ) : optimum(_c.optimum) {};
+        BaseOptima   ( const BaseOptima &_c )
+                   : optimum(_c.optimum), owns_optimum(false) {};
         //! Destructor
-        ~BaseOptima() {};
+        ~BaseOptima();
 
         //! \brief Reloads stored BaseOptima::optimum from XML input
         bool Restart( const TiXmlElement &_node, t_LoadOp & _op);
@@ -287,14 +288,14 @@ namespace Store
         * \sa mpi::BroadCast::serialize
         */
         bool broadcast( mpi::BroadCast &_bc )
-          { return optimum.broadcast(_bc); }
+          { return optimum->broadcast(_bc); }
 #endif
         //! \brief Returns a string characterizing BaseOptima
         std::string what_is() const { return " BaseOptima "; } 
         //! \brief prints out BaseOptima::optimum characteristics
         std::string print() const;
         //! Applies \a _op to best stored individuals.
-        void apply2optimum( eoMonOp<const t_Individual> *_op ) const { (*_op)( optimum ); }
+        void apply2optimum( eoMonOp<const t_Individual> *_op ) const { (*_op)( *optimum ); }
     };
 
     //! \brief Implements \e Best-Of behavior using an individual's fitness and an Objective
@@ -316,15 +317,16 @@ namespace Store
         typedef BaseOptima<t_GATraits>                       t_Base;     //!< base class type
         typedef typename t_GATraits :: t_Individual          t_Individual; //!< individual type
         typedef typename t_GATraits :: t_QuantityTraits      t_QuantityTraits;//!< quantity traits
-        typedef typename t_QuantityTraits :: t_Quantity       t_Quantity; //!< quantity type
+        typedef typename t_QuantityTraits :: t_Quantity      t_Quantity;  //!< quantity type
          //! scalar quantity type
         typedef typename t_QuantityTraits :: t_ScalarQuantity t_ScalarQuantity; 
-        typedef typename Objective::Types< t_GATraits>       t_Objective; //!< objective typedef
+        typedef typename Objective::Types<t_GATraits>        t_Objective; //!< objective typedef
         typedef GA::SaveObject<t_GATraits> t_SaveOp; //!< Save functor
         typedef GA::LoadObject<t_GATraits> t_LoadOp; //!< load functor
 
       protected:
         using t_Base :: optimum;
+        using t_Base :: owns_optimum;
         typename t_Objective :: Vector *objective;  //!< objective type
         t_ScalarQuantity val; //!< optimal value
         t_ScalarQuantity end_val; //!< end of storage interval
@@ -350,11 +352,16 @@ namespace Store
         //! \sa BaseOptima::BaseOptima(const TiXmlElement&), 
         //! Store and Store::Conditional overview
         FromObjective   ( typename t_Objective::Vector* _type, const TiXmlElement &_node );
+        //! \brief Copy Constructor
+        FromObjective   (const FromObjective &_c )
+                      : t_Base( _c ), objective( _c.objective ),
+                        val( _c.val ), end_val( _c.end_val ), delta( _c.delta ),
+                        owns_objective( false ), print_condition( _c.print_condition ) {}
         //! \brief Destructor
         //! \details deleletes FromObjective::objective only if objective is
         //! non-null and if FromObjective::objective is owned according to
         //! FromObjective::owns_objective.
-        ~FromObjective()  { if ( objective and owns_objective ) delete objective; }
+        ~FromObjective();
 
         //! \brief returns false if \a _indiv should <em>not</em> be stored
         bool operator()( const t_Individual &_indiv );
@@ -419,8 +426,9 @@ namespace Store
         //! which should be defined.
         bool operator()( const t_Individual &_indiv )
         {
-          if (  (not optimum.invalid()) and _indiv > optimum ) return true; 
-          optimum = _indiv;
+          if (  (not optimum) or optimum->invalid() ) return true;
+          if (  _indiv > *optimum ) return true; 
+          *optimum = _indiv;
           return false; 
         }
         //! Returns a string characteristic of Optima.

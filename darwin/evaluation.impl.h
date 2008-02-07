@@ -4,6 +4,8 @@
 #ifndef _EVALUATION_IMPL_H_
 #define _EVALUATION_IMPL_H_
 
+#include <opt/debug.h>
+
 namespace Evaluation
 {
   template< class T_GATRAITS >
@@ -15,10 +17,18 @@ namespace Evaluation
       {
         // fitness AND quantities of _indiv must be valid from here-on
         ++nb_eval;
-        evaluator.evaluate();
+        __DODEBUGCODE( Print::out << "Evaluating Individual: " << _indiv << Print::endl; )
+        __TRYDEBUGCODE( evaluator.evaluate();,
+                        "Error while evaluating individual.\n" )
       }
-      _indiv.set_fitness( objective( _indiv.const_quantities() ) );
-      store( _indiv );
+
+      __TRYDEBUGCODE(
+          _indiv.set_fitness( objective( _indiv.const_quantities() ) );,
+          "Error while evaluating fitness.\n" )
+
+      __TRYDEBUGCODE( store( _indiv );,
+                      "Error while checking individual for storage.\n" )
+
       return _indiv.fitness();
     }
 
@@ -34,13 +44,22 @@ namespace Evaluation
       {
         // fitness AND quantities of _indiv must be valid from here-on
         ++nb_eval; 
-        evaluator.evaluate_with_gradient( _grad );
+        __TRYDEBUGCODE( evaluator.evaluate_with_gradient( _grad );,
+                        "Error while evaluating individual and gradient.\n" )
       }
-      else evaluator.evaluate_gradient( _grad );
+      else __TRYDEBUGCODE( evaluator.evaluate_gradient( _grad );,
+                           "Error while evaluating gradient of individual\n" )
 
-      _indiv.set_fitness( objective.evaluate_with_gradient( _indiv.const_quantities(),
-                                                            _grad, _i_grad ) );
-      store( _indiv );
+
+      __TRYDEBUGCODE(
+          _indiv.set_fitness(
+            objective.evaluate_with_gradient( _indiv.const_quantities(),
+                                              _grad, _i_grad ) );,
+          "Error while evaluating fitness and its gradient.\n" )
+
+      __TRYDEBUGCODE( store( _indiv );,
+                      "Caught Error while checking individual for storage.\n" )
+
       return _indiv.fitness();
     }
 
@@ -55,9 +74,7 @@ namespace Evaluation
         evaluate( *i_indiv );
       }
 
-#ifdef _MPI
-      store.synchronize();
-#endif
+      __DOMPICODE( store.synchronize(); )
     }
 
   template< class T_GATRAITS >
@@ -136,15 +153,18 @@ namespace Evaluation
       // and its "quantities" should have been computed
       if ( do_evaluate )
       {
-        evaluator.evaluate();
         ++nb_eval;
+        __TRYDEBUGCODE( evaluator.evaluate();,
+                        "Error while evaluating individual.\n" )
       }
-      _indiv.set_fitness( objective( _indiv.const_quantities() ) ); 
-
+      __TRYDEBUGCODE( _indiv.set_fitness( objective( _indiv.const_quantities() ) );,
+                      "Error while evaluating fitness\n" )
       // isnot_clone is true only if history exists
       // and prior call to history->clone( _indiv ) returned false
       if( isnot_clone ) history->add( _indiv );
-      store( _indiv );
+
+      __TRYDEBUGCODE( store( _indiv );,
+                      "Error while checking individual for storage.\n" )
 
       return _indiv.fitness();
     }
@@ -170,13 +190,20 @@ namespace Evaluation
       {
         // fitness AND quantities of _indiv must be valid from here-on
         ++nb_eval; 
-        evaluator.evaluate_with_gradient( _grad );
+        __TRYDEBUGCODE( evaluator.evaluate_with_gradient( _grad );,
+                        "Error while evaluating individual and gradient.\n" )
       }
-      else evaluator.evaluate_gradient( _grad );
+      else __TRYDEBUGCODE( evaluator.evaluate_gradient( _grad );,
+                           "Error while evaluating gradient of individual\n" )
+      __TRYDEBUGCODE(
+          _indiv.set_fitness(
+            objective.evaluate_with_gradient( _indiv.const_quantities(),
+                                              _grad, _i_grad ) );,
+          "Error while evaluating fitness and its gradient.\n" )
 
-      _indiv.set_fitness( objective.evaluate_with_gradient( _indiv.const_quantities(),
-                                                            _grad, _i_grad ) );
-      store( _indiv );
+      __TRYDEBUGCODE( store( _indiv );,
+                      "Caught Error while checking individual for storage.\n" )
+
       return _indiv.fitness();
     }
 }

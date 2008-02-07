@@ -21,9 +21,7 @@
 #include "fuzzy.h"
 #include <iomanip>
 
-#ifdef _MPI
 #include <mpi/mpi_object.h>
-#endif
 
 namespace function {
 

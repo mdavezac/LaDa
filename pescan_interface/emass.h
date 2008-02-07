@@ -8,10 +8,7 @@
 #include <config.h>
 #endif
 
-#ifdef _MPI
 #include <mpi/mpi_object.h>
-#endif
-
 #include <lamarck/structure.h>
 #include <atat/vectmac.h>
 #include <physics/physics.h>

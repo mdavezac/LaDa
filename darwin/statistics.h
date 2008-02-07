@@ -11,8 +11,8 @@
 #include <eo/eoPop.h>
 #include <eo/eoGenOp.h>
 
-#include "opt/types.h"
-#include "print/xmg.h"
+#include <opt/types.h>
+#include <print/xmg.h>
 
 namespace GA
 {
@@ -121,8 +121,7 @@ namespace GA
     for( ; i_indiv1 != i_end; ++i_indiv1 )
     {
       i_indiv2 = i_indiv1; ++i_indiv2;
-      if ( i_end != std::find_if( i_indiv2, i_end,
-                                  std::bind1st(std::equal_to<t_Object>(), *i_indiv1) ) )
+      if ( i_end != std::find( i_indiv2, i_end, *i_indiv1 ) )
         --N;
     }
 

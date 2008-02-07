@@ -135,18 +135,19 @@ namespace Scaling
     t_Column :: iterator i_2sum;
     for(; i_indiv != i_end; ++i_indiv, ++i_sum )
     {
-      const t_Individual& indiv  = Modifier::const_innermost( *i_indiv );
+      const t_Fitness& fit1  = Modifier::const_innermost( *i_indiv ).fitness();
       i_2indiv = i_indiv + 1;  
       i_2sum = i_sum + 1;
       --(*i_sum);
+      // "Minimizes" the objectives/fitnesses by default
       for(; i_2indiv != i_end; ++i_2indiv, ++i_2sum )
-      {
-        const t_Individual& indiv2  = Modifier::const_innermost( *i_2indiv );
-        // minimizes by default -- see objectives.h
-        if     ( indiv.fitness()   <  indiv2.fitness() )   --(*i_sum);
-        else if( indiv2.fitness()  <  indiv.fitness()  )               --(*i_2sum);
-        else if( indiv.fitness()  ==  indiv2.fitness() ) { --(*i_sum); --(*i_2sum); }
-      }
+        switch( fit1.compare( Modifier::const_innermost( *i_2indiv ).fitness() ) )
+        {
+          case Fitness::INDIFFERENT: break;
+          case Fitness::WEAKER: --(*i_sum); break;
+          case Fitness::STRONGER: --(*i_2sum); break;
+          case Fitness::EQUAL: --(*i_sum); --(*i_2sum); break;
+        }
     }
   }
 
@@ -180,13 +181,9 @@ namespace Scaling
       {
         int d = 0;
         parent->Attribute("alpha", &d );
-        if ( d < 1 ) 
-        {
-          std::cerr << __FILE__ << ", line:" << __LINE__ << "\n"
-                    << "Invalid alpha = " << d 
-                    << " in Sharing::Triangular " << std::endl;
-          return false;
-        } 
+        __DOASSERT( d < 1, 
+                       "Invalid alpha = " << d 
+                    << " in Sharing::Triangular.\n" )
           
         alpha = types::t_unsigned( std::abs(d) );
       }
@@ -194,13 +191,9 @@ namespace Scaling
       {
         double d = 0;
         parent->Attribute("d0", &d );
-        if ( Fuzzy::le(d, 0e0) ) 
-        {
-          std::cerr << __FILE__ << ", line:" << __LINE__ << "\n"
-                    << "Invalid d0 = " << d 
-                    << " in Sharing::Triangular " << std::endl;
-          return false;
-        } 
+        __DOASSERT( Fuzzy::le(d, 0e0),
+                       "Invalid d0 = " << d 
+                    << " in Sharing::Triangular.\n" )
           
         d_0 = t_ScalarFitnessQuantity( d );
       }
@@ -238,15 +231,10 @@ namespace Scaling
        GeneralHamming<T_GAOPTRAITS>::operator()( const t_Individual &_i1, 
                                                  const t_Individual &_i2) const
        {
-         if ( _i1.Object().Container().size() != _i1.Object().Container().size() )
-         {
-            std::ostringstream sstr;
-            sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-                 << "Cannot compute distance between individuals of different sizes\n"
-                 << "Size of individual A: " << _i1.Object().Container().size() << "\n"
-                 << "Size of individual B: " << _i2.Object().Container().size() << "\n";
-            throw std::runtime_error( sstr.str() );
-         }
+         __ASSERT( _i1.Object().Container().size() != _i1.Object().Container().size(),
+                      "Cannot compute distance between individuals of different sizes\n"
+                   << "Size of individual A: " << _i1.Object().Container().size() << "\n"
+                   << "Size of individual B: " << _i2.Object().Container().size() << "\n")
          typename t_Object::const_iterator i_bit2 = _i2.Object().begin();
          typename t_Object::const_iterator i_bit1 = _i1.Object().begin();
          typename t_Object::const_iterator i_bit1_end = _i1.Object().end();
@@ -261,16 +249,11 @@ namespace Scaling
     typename Hamming<T_GAOPTRAITS>::t_ScalarFitnessQuantity 
        Hamming<T_GAOPTRAITS>::operator()( const t_Individual &_i1, const t_Individual &_i2) const
        {
+         __ASSERT( _i1.Object().Container().size() != _i1.Object().Container().size(),
+                      "Cannot compute distance between individuals of different sizes\n"
+                   << "Size of individual A: " << _i1.Object().Container().size() << "\n"
+                   << "Size of individual B: " << _i2.Object().Container().size() << "\n")
          typedef typename t_GATraits::t_QuantityTraits::t_ScalarQuantityTraits t_SQTraits;
-         if ( _i1.Object().Container().size() != _i1.Object().Container().size() )
-         {
-            std::ostringstream sstr;
-            sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-                 << "Cannot compute distance between individuals of different sizes\n"
-                 << "Size of individual A: " << _i1.Object().Container().size() << "\n"
-                 << "Size of individual B: " << _i2.Object().Container().size() << "\n";
-            throw std::runtime_error( sstr.str() );
-         }
          typename t_Object::const_iterator i_bit2 = _i2.Object().begin();
          typename t_Object::const_iterator i_bit1 = _i1.Object().begin();
          typename t_Object::const_iterator i_bit1_end = _i1.Object().end();
@@ -302,7 +285,8 @@ namespace Scaling
 
       if( name == "Niching" or name == "niching" )
         container->push_back( new_Niche_from_xml<T_GATRAITS>( *parent, _eval ) );
-      if( T_GATRAITS::t_QuantityTraits::is_vector and ( name == "Pareto" or name == "pareto" ) )
+      if(     T_GATRAITS::t_QuantityTraits::is_vector
+          and ( name == "Pareto" or name == "pareto" ) )
         container->push_back( new ParetoRanking<T_GATRAITS>() );
       else if ( _eval )
         container->push_back( (Base<T_GATRAITS>*) _eval->Load_Scaling( _node ) );
@@ -328,7 +312,8 @@ namespace Scaling
     Base<T_GATRAITS> *result;
     if( name != "GeneralHamming" or name != "generalhamming" ) 
     {
-      typedef Niching< Sharing::Triangular< Distance::GeneralHamming<T_GATRAITS> > > t_Niche;
+      typedef Niching< Sharing::Triangular<
+                           Distance::GeneralHamming<T_GATRAITS> > > t_Niche;
       result = new t_Niche;
     }
     else if( name == "Hamming" or name == "hamming" )
@@ -338,7 +323,12 @@ namespace Scaling
     }
     else if ( _eval ) result = ( Base<T_GATRAITS>* ) _eval->Load_Niche( _node );
      
-    if ( result and result->Load(_node ) ) return result;
+    try { if ( result and result->Load(_node ) ) return result; }
+    catch( std::exception &_e )
+    {
+      delete result; 
+      __THROW_ERROR("Error while reading Niche input.\n"; )
+    }
     if ( result ) delete result;
     return NULL;
   }

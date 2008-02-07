@@ -12,12 +12,8 @@
 
 #include <vff/pescan_perturbation.h>
 #include <opt/va_function.h>
-
 #include <opt/types.h>
-
-#ifdef _MPI
 #include <mpi/mpi_object.h>
-#endif
 
 namespace Pescan
 {

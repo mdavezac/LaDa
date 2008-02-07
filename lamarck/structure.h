@@ -133,6 +133,9 @@ namespace Ising_CE {
     
     //! Prints a structure to a stream.
     void print_out( std::ostream &stream ) const;
+    //! Prints a structure to a string
+    const std::string string() const
+      { std::ostringstream sstr; print_out(sstr); return sstr.str(); }
 
     //! \brief Sets the occupations from the vector \a %types.
     //! \details If \a %types is smaller than Structure::atoms than only the
@@ -341,11 +344,11 @@ namespace Ising_CE {
                       T_K_IT _kfirst, T_K_IT _kend,
                       T_O_IT _rout ) // sets rvector values from kspace values
   {
-    const std::complex<types::t_real>
+    const types::t_complex
        imath(0, 2*3.1415926535897932384626433832795028841971693993751058208);
     for (; _rfirst != _rend; ++_rfirst, ++_rout)
     {
-      *_rout = 0.0;
+      *_rout = types::t_complex(0,0);
       for(T_K_IT i_k=_kfirst; i_k != _kend; ++i_k)
       {
         *_rout +=   exp( imath * ( _rfirst->pos[0] * i_k->pos[0] +

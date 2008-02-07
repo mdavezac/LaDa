@@ -4,9 +4,8 @@
 #ifndef _SINGLE_SITE_IMPL_H_
 #define _SINGLE_SITE_IMPL_H_
 
-#include <ext/algorithm>
-
-#include "print/xmg.h"
+#include <print/xmg.h>
+#include <opt/debug.h>
 #include "concentration.h"
 #include "gaoperators.h"
 
@@ -105,27 +104,17 @@ namespace SingleSite
       {
         typedef typename t_GATraits :: t_QuantityTraits t_QuantityTraits;
         typedef typename t_QuantityTraits :: t_Quantity t_Quantity;
-        if ( t_QuantityTraits::size( _i1.const_quantities() ) != 
-             t_QuantityTraits::size( _i2.const_quantities() )     )
-        {
-           std::ostringstream sstr;
-           sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-                << "Inconsistent number of quantities between individuals"
-                << "when computing phenotypic distances \n"
-                << "For individual A: " << _i1.Object().Container().size() << "\n"
-                << "For individual B: " << _i2.Object().Container().size() << "\n";
-           throw std::runtime_error( sstr.str() );
-        }
-        if ( t_QuantityTraits::size( _i1.const_quantities() ) < _D )
-        {
-           std::ostringstream sstr;
-           sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-                << "Inconsistent number of quantities "
-                << "when computing phenotypic distances \n"
-                << "Found " << _i1.Object().Container().size() << "\n"
-                << "Expected at most " << _D << "\n";
-           throw std::runtime_error( sstr.str() );
-        }
+        __ASSERT( t_QuantityTraits::size( _i1.const_quantities() ) != 
+                  t_QuantityTraits::size( _i2.const_quantities() ),
+                     "Inconsistent number of quantities between individuals"
+                  << "when computing phenotypic distances \n"
+                  << "For individual A: " << _i1.Object().Container().size() << "\n"
+                  << "For individual B: " << _i2.Object().Container().size() << "\n" )
+        __ASSERT( t_QuantityTraits::size( _i1.const_quantities() ) < _D,
+                     "Inconsistent number of quantities "
+                  << "when computing phenotypic distances \n"
+                  << "Found " << _i1.Object().Container().size() << "\n"
+                  << "Expected at most " << _D << "\n" )
     
         concentration.get( _i1.Object() ); 
         // Modifier::const_innermost() is a dirty hack which allows us to use

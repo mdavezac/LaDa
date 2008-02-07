@@ -13,15 +13,14 @@
 #include <fstream>
 #include <string>
 #include <complex>
-#include <exception>
-
 
 #include <tinyxml/tinyxml.h>
-#include "opt/types.h"
 
-#include "atat/findsym.h"
-#include "atat/vectmac.h"
-#include "atat/machdep.h"
+#include <opt/debug.h>
+#include <opt/types.h>
+#include <atat/findsym.h>
+#include <atat/vectmac.h>
+#include <atat/machdep.h>
 
 #include "atom.h"
 
@@ -93,6 +92,14 @@ namespace Ising_CE {
       types::t_unsigned get_nb_types( types::t_unsigned i ) const
         { return sites[i].type.size(); } 
 
+      //! \brief Returns the site index of an atom \a _at.
+      //! \details \a _at can be given modulo the unit-cell of the lattice.
+      template<class TTYPE>
+      types::t_int get_atom_site_index( Atom_Type<TTYPE> &_at ) const
+      {
+        if( _at.site == -1 ) _at.site = get_atom_site_index( _at.pos ); 
+        return _at.site;
+      }
       //! \brief Returns the site index of an atom at position \a _at.
       //! \details \a _at can be given modulo the unit-cell of the lattice.
       types::t_int get_atom_site_index( const atat::rVector3d &_at ) const;
@@ -151,7 +158,10 @@ namespace Ising_CE {
 
   inline std::string Lattice::get_atom_string( const Ising_CE::Atom &_at ) const
   {
-    types::t_int i = get_atom_site_index( _at );
+    types::t_int i;
+    __TRYDEBUGCODE(
+        i = get_atom_site_index( _at );,
+           "Caught error while converting string to numerical atom\n" )
     if ( i == -1 ) return "error";
     if ( get_nb_types(i) == 1 ) return sites[i].type[0];
     return ( std::abs( _at.type - 1.0 ) < atat::zero_tolerance ) ? 

@@ -28,10 +28,6 @@
 #include "individual.h"
 #include "gaoperators.h"
 
-#ifdef _MPI
-#include "mpi/mpi_object.h"
-#endif
-
 //! \ingroup Genetic
 //! \brief Decoration search for band-gaps and in-plane-stress of layered structures.
 //! \details This is mostly an application of Layered to band-gap optimization.

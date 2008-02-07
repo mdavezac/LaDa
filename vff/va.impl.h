@@ -4,7 +4,7 @@
 #ifndef _VFF_VA_IMPL_H_
 #define _VFF_VA_IMPL_H_
 
-#include <stdexcept>
+#include <opt/debug.h>
 
 namespace Vff
 {
@@ -58,18 +58,18 @@ namespace Vff
     {
       t_VABase::unpack_variables();
     
-      minimizer();
+      minimizer(Vff());
    
       t_VffBase :: structure.energy = t_VffBase::energy();
-    
+
       return t_VffBase::structure.energy;
     }
 
   template< class T_VFFBASE > typename VABase<T_VFFBASE> :: t_Type 
     VABase<T_VFFBASE> :: evaluate_one_gradient( types::t_unsigned _pos )
     {
-      if( _pos > va_vars.size() )
-        throw std::runtime_error( "Requesting out-of-range gradient.\n");
+      __ASSERT( _pos > va_vars.size(),
+                "Requesting out-of-range gradient.\n")
     
       typename t_Centers :: iterator i_center = centers.begin();
       typename t_Centers :: iterator i_center_end = centers.end();
@@ -137,8 +137,9 @@ namespace Vff
   template< class T_VFFBASE > 
     inline bool VABase<T_VFFBASE> :: init( bool _redocenters )
     {
-      return     t_VABase::init()
-             and ( _redocenters ? t_VffBase::construct_centers(): true ); 
+      if ( _redocenters )
+       if ( not t_VffBase::initialize_centers() ) return false;
+      return t_VABase::init(); //  and t_VffBase::init();
     }
 
 } // namespace VFF

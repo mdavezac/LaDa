@@ -11,26 +11,20 @@
 #include <string>
 #include <algorithm>
 #include <functional>
-#ifndef __PGI
-  #include<ext/algorithm>
-  using __gnu_cxx::copy_n;
-#endif
 
 #include <tinyxml/tinyxml.h>
 #include <eo/eoOp.h>
 
-#include "lamarck/structure.h"
-#include "lamarck/functional_builder.h"
-#include "opt/function_base.h"
-#include "opt/types.h"
+#include <lamarck/structure.h>
+#include <lamarck/functional_builder.h>
+#include <opt/function_base.h>
+#include <opt/types.h>
+#include <mpi/mpi_object.h>
 
 #include "evaluator.h"
 #include "individual.h"
 #include "single_site.h"
 
-#ifdef _MPI
-#include "mpi/mpi_object.h"
-#endif
 
 //! all things Cluster Expansion (should be...)
 namespace CE
@@ -107,34 +101,30 @@ namespace CE
   {
     // note that t_Function sets gradient to 0
     types::t_unsigned N = functional.size();
-    types::t_real *gradient = new types::t_real[N];
+
+    types::t_real *gradient;
+    try { gradient = new types::t_real[N]; }
+    catch (...) { __THROW_ERROR("Memory Allocation Error") }
     types::t_real *keep = gradient;
-    if ( not gradient ) 
-    {
-       std::ostringstream sstr;
-       sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-            << "Could not allocate memory";
-       throw std::runtime_error( sstr.str() );
-    }
+    __DOASSERT(not gradient, "Memory Allocation Error")
+
     functional.evaluate_gradient( gradient );
-    copy_n( gradient, N, _grad.begin() );
+    std::copy( gradient, gradient + N, _grad.begin() );
     delete[] keep;
   }
   template< class T_QUANTITYGRADIENTS >
   inline types::t_real Darwin::evaluate_with_gradient( T_QUANTITYGRADIENTS& _grad )
   {
     types::t_unsigned N = functional.size();
-    types::t_real *gradient = new types::t_real[N];
+    
+    types::t_real *gradient;
+    try { gradient = new types::t_real[N]; }
+    catch (...) { __THROW_ERROR("Memory Allocation Error") }
     types::t_real *keep = gradient;
-    if ( not gradient ) 
-    {
-       std::ostringstream sstr;
-       sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-            << "Could not allocate memory";
-       throw std::runtime_error( sstr.str() );
-    }
+    __DOASSERT(not gradient, "Memory Allocation Error")
+
     types::t_real result = functional.evaluate_with_gradient( gradient );
-    copy_n( gradient, N, _grad.begin() );
+    std::copy( gradient, gradient + N, _grad.begin() );
     delete[] keep;
     return result;
   }

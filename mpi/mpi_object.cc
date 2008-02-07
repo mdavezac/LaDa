@@ -7,18 +7,17 @@
 #include <iostream>
 #include <stdexcept>       // std::runtime_error
 
-#include "mpi_object.h"
-#include "atat/vectmac.h"
+#include <atat/vectmac.h>
+#include <opt/debug.h>
 
-namespace mpi
-{
-  InitDestroy main; 
-  const types::t_int ROOT_NODE = 0;
-}
+#include "mpi_object.h"
 
 #ifdef _MPI
 namespace mpi
 {
+  InitDestroy main; 
+  const types::t_int ROOT_NODE = 0;
+
   const BroadCast::t_operation BroadCast::nextstage = BroadCast::NEXTSTAGE;
   const BroadCast::t_operation BroadCast::clear     = BroadCast::CLEAR;
   const BroadCast::t_operation BroadCast::sizeup    = BroadCast::SIZEUP;
@@ -30,17 +29,17 @@ namespace mpi
   
   bool BroadCast :: allocate_buffers( types::t_unsigned _root )
   {
-    if ( stage != GETTING_SIZE )
-      return false;
+    if ( stage != GETTING_SIZE ) return false;
 
-    if (    int_buff or cur_int_buff or end_int_buff 
-         or char_buff or cur_char_buff or end_char_buff 
-         or real_buff or cur_real_buff or end_real_buff )
-    {
-      std::cerr << "Buffers already allocated in call to mpi::BroadCast::alllocate_buffers() ??? " 
-                << std::endl << "Quitting program " << std::endl; 
-      exit(0);
-    }
+    __ASSERT(     int_buff,  "Pointer to integer buffer is already allocated.\n" )
+    __ASSERT( cur_int_buff,  "Pointer to integer buffer is already allocated.\n" )
+    __ASSERT( end_int_buff,  "Pointer to integer buffer is already allocated.\n" )
+    __ASSERT(     char_buff,  "Pointer to character buffer is already allocated.\n" )
+    __ASSERT( cur_char_buff,  "Pointer to character buffer is already allocated.\n" )
+    __ASSERT( end_char_buff,  "Pointer to character buffer is already allocated.\n" )
+    __ASSERT(     real_buff,  "Pointer to real-number buffer is already allocated.\n" )
+    __ASSERT( cur_real_buff,  "Pointer to real-number buffer is already allocated.\n" )
+    __ASSERT( end_real_buff,  "Pointer to real-number buffer is already allocated.\n" )
     stage = COPYING_TO_HERE;
 
     // now broadcasts sizes
@@ -72,33 +71,28 @@ namespace mpi
     return true;
 
 broadcast_erase:
-    if ( int_buff ) 
-      delete[] int_buff;
+    if ( int_buff )  delete[] int_buff;
     int_buff = cur_int_buff = end_int_buff = NULL;
-    if ( char_buff ) 
-      delete[] char_buff;
+    if ( char_buff ) delete[] char_buff;
     char_buff = cur_char_buff = end_char_buff = NULL;
-    if ( real_buff ) 
-      delete[] real_buff;
+    if ( real_buff ) delete[] real_buff;
     real_buff = cur_real_buff = end_real_buff = NULL;
     std::cerr << "Could not allocate memory for broadcast" << std::endl;
     return false;
   }
   bool AllGather :: allocate_buffers( types::t_unsigned _root )
   {
-    if ( stage != GETTING_SIZE )
-      return false;
+    if ( stage != GETTING_SIZE ) return false;
 
-    if (    int_buff or cur_int_buff or end_int_buff 
-         or char_buff or cur_char_buff or end_char_buff 
-         or real_buff or cur_real_buff or end_real_buff )
-    {
-      std::ostringstream sstr;
-      sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-           << "Buffers already allocated in call to mpi::AlltoAll::alllocate_buffers() ???\n" 
-           << "Could not allocate memory for broadcast\n";
-      throw std::runtime_error(sstr.str());
-    }
+    __ASSERT(     int_buff,  "Pointer to integer buffer is already allocated.\n" )
+    __ASSERT( cur_int_buff,  "Pointer to integer buffer is already allocated.\n" )
+    __ASSERT( end_int_buff,  "Pointer to integer buffer is already allocated.\n" )
+    __ASSERT(     char_buff,  "Pointer to character buffer is already allocated.\n" )
+    __ASSERT( cur_char_buff,  "Pointer to character buffer is already allocated.\n" )
+    __ASSERT( end_char_buff,  "Pointer to character buffer is already allocated.\n" )
+    __ASSERT(     real_buff,  "Pointer to real-number buffer is already allocated.\n" )
+    __ASSERT( cur_real_buff,  "Pointer to real-number buffer is already allocated.\n" )
+    __ASSERT( end_real_buff,  "Pointer to real-number buffer is already allocated.\n" )
     stage = COPYING_TO_HERE;
 
     // now broadcasts sizes
@@ -124,8 +118,7 @@ broadcast_erase:
       if ( not char_buff ) goto gather_erase;
       cur_char_buff = char_buff; end_char_buff = char_buff + buffer_size[1]; 
     }
-    if ( not buffer_size[2] )
-      return true;
+    if ( not buffer_size[2] ) return true;
    
     real_buff = new types::t_real[buffer_size[2]];
     if ( not real_buff ) goto gather_erase;
@@ -414,44 +407,40 @@ gather_erase:
   template<>
   bool BroadCast :: serialize<std::string>( std::string &_str )
   {
-    if( stage != GETTING_SIZE )
+    if( stage == GETTING_SIZE )
     {
-      if ( end_int_buff - cur_int_buff < 1) 
-      {
-        std::ostringstream sstr;
-        sstr << __FILE__ << ", line: " << __LINE__ << "\n"
-             << "Unexpected end of integer buffer\nCannot serialize string\n";
-        throw std::runtime_error( sstr.str() );
-      }
-
+      ++buffer_size[0];
+      buffer_size[1] += _str.size();
+      return true;
+    }
+    
+    if ( stage == COPYING_TO_HERE )
+    {
+      __DOASSERT( end_int_buff - cur_int_buff < 1,
+                  "Unexpected end of integer buffer\nCannot serialize string\n"; )
       std::string::iterator i_str;
       std::string::iterator i_str_end;
-      if ( stage == COPYING_TO_HERE )
-      {
-        *cur_int_buff = _str.size();
-        ++cur_int_buff; 
-        if( _str.size() == 0 ) return true;
-        
-        i_str = _str.begin(); i_str_end = _str.end();
-        for (; i_str != i_str_end and cur_char_buff != end_char_buff; 
-              ++i_str, ++cur_char_buff )
-          *cur_char_buff = *i_str;
-      }
-      else 
-      {
-        types::t_int size = *cur_int_buff; ++cur_int_buff; 
-        _str.resize( size );
-        i_str = _str.begin(); i_str_end = _str.end();
-        for (; i_str != i_str_end and cur_char_buff != end_char_buff; ++i_str, ++cur_char_buff )
-          *i_str =  *cur_char_buff;
-      }
-
+      *cur_int_buff = _str.size();
+      ++cur_int_buff; 
+      if( _str.size() == 0 ) return true;
+      
+      i_str = _str.begin(); i_str_end = _str.end();
+      for (; i_str != i_str_end and cur_char_buff != end_char_buff; 
+            ++i_str, ++cur_char_buff )
+        *cur_char_buff = *i_str;
       return i_str == i_str_end;
     }
 
-    ++buffer_size[0];
-    buffer_size[1] += _str.size();
-    return true;
+    std::string::iterator i_str;
+    std::string::iterator i_str_end;
+    if( end_int_buff - cur_int_buff < 1) return false;
+    types::t_int size = *cur_int_buff; ++cur_int_buff; 
+    _str.resize( size );
+    i_str = _str.begin(); i_str_end = _str.end();
+    for (; i_str != i_str_end and cur_char_buff != end_char_buff; ++i_str, ++cur_char_buff )
+      *i_str =  *cur_char_buff;
+
+    return i_str == i_str_end;
   }
   template<>
   bool BroadCast :: serialize<types::t_real>( types::t_real &_real )

@@ -67,10 +67,10 @@ template<class T, types::t_int D>
   public:
     T x[D];
   public:
-/*
     FixedVector(void) {
-//    FORALLi {x[i]=(T)0;}
+      FORALLi {x[i]=(T)0;}
     }
+/*
     FixedVector(const FixedVector<T,D>& a) {
       FORALLi {x[i]=a.x[i];}
     }

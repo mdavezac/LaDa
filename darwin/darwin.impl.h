@@ -12,10 +12,11 @@
 #include <eo/utils/eoRNG.h>
 #include <tinyxml/tinystr.h>
 
-#include "pescan_interface/interface.h"
-#include "print/stdout.h"
-#include "print/xmg.h"
-#include "print/manip.h"
+#include <pescan_interface/interface.h>
+#include <print/stdout.h>
+#include <print/xmg.h>
+#include <print/manip.h>
+#include <opt/debug.h>
 
 #include "functors.h"
 #include "statistics.h"
@@ -26,14 +27,13 @@
 
 namespace GA
 {
-# define OPENXMLINPUT \
-    TiXmlDocument doc( filename.c_str() ); \
+# define OPENXMLINPUT(name) \
+    TiXmlDocument doc( name.c_str() ); \
     TiXmlHandle docHandle( &doc ); \
-    if  ( !doc.LoadFile() ) \
-    { \
-      std::cerr << doc.ErrorDesc() << std::endl; \
-      throw "Could not load input file in  Darwin<T_EVALUATOR> "; \
-    } 
+    __DOASSERT( not doc.LoadFile(), \
+                   doc.ErrorDesc() << "\n" \
+                << "Could not load input file " << name \
+                << " in  Darwin<T_EVALUATOR>.\nAborting.\n" ) 
 
   template<class T_EVALUATOR>
   Darwin<T_EVALUATOR> :: ~Darwin()
@@ -81,30 +81,30 @@ namespace GA
       else if ( str.compare("seed")==0 ) // seed from given number
       { 
         types::t_int d = att->IntValue();
-        Print::xmg << Print::Xmg::comment <<  "Seed: " 
-                   << Print::fixed << Print::setw(8) << d << Print::endl;
-#ifdef _MPI
-        rng.reseed( std::abs(d) * (mpi::main.rank()+1) );
-#else
-        rng.reseed( std::abs(d) );
-#endif
+        if( d == 0 ) continue;
+        seed = std::abs(d) __DOMPICODE( + mpi::main.rank() );
+        rng.reseed( seed );
       }
       else if ( str.compare("populate")==0 ) // seed from given number
       {
         std::string string = att->Value();
-        Print::xmg << Print::Xmg::comment << "Populate Style: ";
         populate_style = RANDOM_POPULATE;
         if ( string.compare("partition") == 0 )
-        {
           populate_style = PARTITION_POPULATE;
-          Print::xmg << "Partition Populate";
-        }
-        else
-          Print::xmg << "Random Populate";
-        Print::xmg << Print::endl;
       }
       else
+      {
+#ifdef _MPI
+        std::ostringstream sstr;
+        sstr << "seed" << mpi::main.rank();
+        if( str.compare(sstr.str()) == 0 )
+        {
+          seed = std::abs( att->IntValue() );
+          rng.reseed( seed );
+        }
+#endif
         evaluator.LoadAttribute( *att );
+      }
     }
 
     // some checking
@@ -141,30 +141,21 @@ namespace GA
     const TiXmlElement *child = _parent.FirstChildElement("Objective");
     if ( not child ) child = _parent.FirstChildElement("Method");
     objective = t_ObjectiveType :: new_from_xml( *child );
-    if( not objective )
-    {
-       std::ostringstream sstr;
-       sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-            << " Could not find Objective tag in input file "
-            << filename << "\n";
-       throw std::runtime_error( sstr.str() );
-    }
+    __DOASSERT( not objective,
+                " Could not find Objective tag in input file.\n")
 
     const TiXmlElement *store_xml = _parent.FirstChildElement("Store");
     if ( store_xml )
         store = new typename t_Store::FromObjective( evaluator, *store_xml );
     else
+    {
       store = new typename t_Store::FromObjective( evaluator, objective, *child );
+      if( store ) Print::xmg << Print::Xmg::comment << "Store: "
+                             << store->what_is() << Print::endl;
+    }
     if ( not store )
       store = new typename t_Store::Optima( evaluator, *child );
-    if ( not store )
-    {
-       std::ostringstream sstr;
-       sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-            << "Memory Error: could not create Store object \n";
-       throw std::runtime_error( sstr.str() );
-    }
-    Print::xmg << Print::Xmg::comment << "Store: " << store->what_is() << Print::endl;
+    __DOASSERT( not store, "Memory Allocation Error.\n")
 
     if( history )
       evaluation = new Evaluation::WithHistory<t_GATraits>
@@ -172,15 +163,9 @@ namespace GA
     if ( not evaluation )
       evaluation = new Evaluation::Base<t_GATraits>( evaluator, *objective, *store );
 
-    if ( not evaluation )
-    {
-       std::ostringstream sstr;
-       sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-            << "Memory Error? could not create evaluation object \n";
-       throw std::runtime_error( sstr.str() );
-    }
+    __DOASSERT( not evaluation, "Memory Allocation Error.\n")
+    
     scaling = Scaling::new_from_xml<t_GATraits>( _parent, &evaluator );
-    if( scaling ) Print::xmg << Print::Xmg::comment << scaling->what_is() << Print::endl;
       
   }
   
@@ -270,11 +255,8 @@ namespace GA
     eostates.storeFunctor( breeder_ops );
     breeder_ops = make_genetic_op(*child->FirstChildElement(), breeder_ops);
     Print::xmg << Print::Xmg::comment << "Breeding Operator End" << Print::endl;
-    if ( not breeder_ops )
-    {
-      std::cerr << "Error while creating breeding operators" << std::endl;
-      throw "Error while creating operators in  Darwin<T_EVALUATOR>  :: make_genetic_op() ";
-    }
+    __DOASSERT( not breeder_ops,
+               "Error while creating breeding operators")
     return true;
   }
   
@@ -295,7 +277,7 @@ namespace GA
 
     // The following synchronizes Results::nb_val 
     // all procs. Should always be there!!
-#ifdef _MPI
+    __DOMPICODE(
         Synchronize<types::t_unsigned> *synchro = 
                  new Synchronize<types::t_unsigned>( evaluation->nb_eval );
         eostates.storeFunctor( synchro );
@@ -304,7 +286,7 @@ namespace GA
         synchro = new Synchronize<types::t_unsigned>( evaluation->nb_grad );
         eostates.storeFunctor( synchro );
         continuator->add( *synchro );
-#endif
+    )
 
     // Creates SaveEvery object if necessary
     if (      _parent.FirstChildElement("Save") 
@@ -420,13 +402,9 @@ namespace GA
         if ( not op ) continue;
         eostates.storeFunctor( op );
         Apply2Best<t_GATraits> *printbest = new Apply2Best<t_GATraits>( *store );
-        if( not printbest )
-        {
-          std::ostringstream sstr;
-          sstr << __FILE__ << ", line: " << __LINE__ << "\n"
-               << "Memory allocation error\n"; 
-          throw std::runtime_error( sstr.str() );
-        }
+        try{ printbest = new Apply2Best<t_GATraits>( *store ); }
+        catch(...) { __THROW_ERROR( "Memory allocation error.\n" ) }
+        __DOASSERT(not printbest,  "Memory allocation error.\n");
         printbest->set_functor( op );
         continuator->add(*printbest);
       }
@@ -611,8 +589,7 @@ namespace GA
   {
     eoOp<t_Individual>* this_op;
     const TiXmlElement *sibling = &el;
-    if (not sibling)
-      return NULL;
+    if (not sibling) return NULL;
  
     Print::xmg << Print::Xmg::indent;
 
@@ -633,16 +610,28 @@ namespace GA
           Print::xmg << Print::Xmg::removelast;
         else
         {
-          Print::xmg << Print::Xmg::comment << "TabooOp End" << Print::endl;
-          eoMonOp<t_Individual> *utterrandom;
-          utterrandom = new mem_monop_t<t_GATraits>
-                              ( evaluator, &t_Evaluator::initialize, std::string( "Initialize" ) );
-          eostates.storeFunctor(utterrandom);
-          this_op = new TabooOp<t_Individual> ( *taboo_op, *taboos, 
-                                                (types::t_unsigned)(pop_size+1),
-                                                *utterrandom );
-          eostates.storeFunctor( static_cast< TabooOp<t_Individual> *>(this_op) );
-          is_gen_op = true;
+          eoMonOp<t_Individual> *utterrandom = NULL;
+          try
+          {
+            Print::xmg << Print::Xmg::comment << "TabooOp End" << Print::endl;
+            utterrandom = new mem_monop_t<t_GATraits>
+                                ( evaluator, &t_Evaluator::initialize, std::string( "Initialize" ) );
+            __DOASSERT( not utterrandom, "Memory Allocation error.\n" )
+            eostates.storeFunctor(utterrandom);
+            this_op = new TabooOp<t_Individual> ( *taboo_op, *taboos, 
+                                                  (types::t_unsigned)(pop_size+1),
+                                                  *utterrandom );
+            __DOASSERT( not this_op, "Memory Allocation error.\n" )
+            eostates.storeFunctor( static_cast< TabooOp<t_Individual> *>(this_op) );
+            is_gen_op = true;
+          }
+          __CATCHCODE( if( utterrandom) delete utterrandom,
+                       "Error encountered while creating Taboo genetic operator.\n")
+          catch(...) 
+          {
+            if ( utterrandom ) delete utterrandom; 
+            __THROW_ERROR( "Error encountered while creating Taboo genetic operator.\n")
+          }
         }
       }
       else if ( str.compare("TabooOp") == 0 )
@@ -660,24 +649,32 @@ namespace GA
       }
       else if ( str.compare("Minimizer") == 0 )
       {
-        Minimizer_Functional<t_GATraits> *func = 
-          new Minimizer_Functional<t_GATraits>( *evaluation, *taboos ); 
-        if ( not func )
+        Minimizer_Functional<t_GATraits> *func = NULL;
+        MinimizerGenOp<t_GATraits> *mingenop = NULL;
+        try
         {
-           std::ostringstream sstr;
-           sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-                << "Memory Allocation Error when allocating " << str << "\n"; 
-           throw std::runtime_error( sstr.str() );
+          func =  new Minimizer_Functional<t_GATraits>( *evaluation, *taboos ); 
+          __DOASSERT( not func, "Memory Allocation Error.\n")
+        
+          mingenop = new MinimizerGenOp<t_GATraits>( *func ); 
+          __DOASSERT( not mingenop, "Memory Allocation Error.\n")
+
+          if ( not mingenop->Load( *sibling ) ) 
+            { delete mingenop; delete func; this_op = NULL; }
+          else
+          {
+            eostates.storeFunctor( mingenop );
+            this_op = mingenop;
+          }
         }
-        MinimizerGenOp<t_GATraits> *mingenop
-            = new MinimizerGenOp<t_GATraits>( *func );
-        if ( not mingenop ) { delete func; this_op = NULL; }
-        else if ( not mingenop->Load( *sibling ) ) 
-          { delete mingenop; delete func; this_op = NULL; }
-        else
-        {
-          eostates.storeFunctor( mingenop );
-          this_op = mingenop;
+        __CATCHCODE( delete func; this_op = NULL;,
+                     "Could  not load minimizer genetic operator.\n" )
+        catch(...)
+        { 
+          if( func ) delete func;
+          if( mingenop ) delete mingenop;
+          this_op = NULL;
+          __THROW_ERROR( "Memory Allocation Error.\n" ) 
         }
       }
       else if ( str.compare("Operators") == 0 )
@@ -793,12 +790,13 @@ namespace GA
     typename t_Islands :: iterator i_pop = islands.begin();
     typename t_Islands :: iterator i_end = islands.end();
     types::t_unsigned target = pop_size;
-#ifdef _MPI
-    types::t_int residual = target % (mpi::main.size());
-    target = target / mpi::main.size();
-    if ( mpi::main.rank() < residual )
-      ++target;
-#endif
+    __DOMPICODE(
+      types::t_int residual = target % (mpi::main.size());
+      target = target / mpi::main.size();
+      if ( mpi::main.rank() < residual ) ++target;
+      Print::out << "Creating " << target
+                 << " Individuals on this processor" << Print::endl;
+    )
     for(; i_pop != i_end; ++i_pop)
     {
       switch ( populate_style )
@@ -814,13 +812,25 @@ namespace GA
   template<class T_EVALUATOR>
   void Darwin<T_EVALUATOR> :: random_populate ( t_Population &_pop, types::t_unsigned _size)
   {
-    while ( _pop.size() < _size )
+    types::t_unsigned i = 0, j = 0;
+    types::t_unsigned maxiter = _size * 50;
+    while ( _pop.size() < _size and i < maxiter)
     {
       t_Individual indiv;
       evaluator.initialize(indiv);
       if ( not ( taboos and (*taboos)(indiv) ) )
+      {
         _pop.push_back(indiv);
+        __DODEBUGCODE( Print::out << "Generated Individual " 
+                                  << _pop.size() << " of " 
+                                  << _size << " " << indiv << ".\n"; )
+          ++j;
+      }
+      ++i;
     } // while ( i_pop->size() < target )
+    __DOASSERT( j < _size,
+                   "Created " << j << " individuals in " << i << " iterations.\n"
+                << "Are taboos/concentration constraints to restrictive?\n" )
     _pop.resize( _size );
   }
   template<class T_EVALUATOR>
@@ -828,6 +838,7 @@ namespace GA
   {
     while ( _pop.size() < _size )
     {
+      Print::out << "partition populate" << Print::endl;
       // first random object
       t_Individual indiv;
       evaluator.initialize(indiv);
@@ -897,6 +908,8 @@ namespace GA
     std::copy( dummy.begin(), dummy.end(), offspring.begin() );
     (*evaluation)(dummy2, offspring);
     offspring.clear();
+    evaluation->nb_eval = 0;
+    evaluation->nb_grad = 0;
   }
 
   template<class T_EVALUATOR>
@@ -904,23 +917,12 @@ namespace GA
   {
     presubmit();
 
-#ifdef _MPI 
-    for( types::t_int i = 0; i < mpi::main.size(); ++i )
-    {
-      if ( mpi::main.rank() == i )
-      {
-        struct timeval tv;
-        struct timezone tz;
-        gettimeofday(&tv,&tz);
-        rng.reseed(tv.tv_usec);
-      }
-      mpi::main.barrier();
-    }
-#endif
     Print::xmg << Print::flush;
     Print::out << "\nCreating population" << Print::endl;
-
+    __DOMPICODE( mpi::main.barrier(); )
     populate();
+    __DOMPICODE( mpi::main.barrier(); )
+
     offspring.clear();
     typename t_Islands :: iterator i_island_begin = islands.begin();
     typename t_Islands :: iterator i_island_end = islands.end();
@@ -928,22 +930,15 @@ namespace GA
     Print::out << "\nEvaluating starting population" << Print::endl;
     for ( i_island = i_island_begin; i_island != i_island_end; ++i_island )
     {
-      (*evaluation)(offspring, *i_island); // A first eval of pop.
-#ifdef _MPI // "All Gather" new population
-      try 
-      {
+      // A first eval of pop.
+      __TRYDEBUGCODE( (*evaluation)(offspring, *i_island);,
+                      "Error while evaluating starting population\n" )
+      // "All Gather" new population
+      __TRYMPICODE(
         breeder->synchronize_offspring( *i_island );
-        if(history) history->synchronize();
-      }
-      catch ( std::exception &e )
-      {
-        std::ostringstream sstr;
-        sstr << __FILE__ << ", line: " << __LINE__ << "\n"
-             << "Caught error while synchronizing starting population.\n" 
-             << e.what();
-        throw std::runtime_error( sstr.str() );
-      }
-#endif 
+        if(history) history->synchronize();,
+        "Caught error while synchronizing starting population.\n" 
+      )
     }
     types::t_unsigned n = 0;
 
@@ -954,47 +949,47 @@ namespace GA
       Print::xmg << Print::flush;
       ++n;
       i_island = i_island_begin;
-      for (int i=0; i_island != i_island_end; ++i, ++i_island )
+      for (; i_island != i_island_end; ++i_island )
       {
         types::t_unsigned pSize = i_island->size();
         offspring.clear(); // new offspring
         
+        __DODEBUGCODE( Print::out << "Scaling prior to breeding" << Print::endl; )
+
         if( scaling ) (*scaling)( *i_island );
-        
+
+        __DODEBUGCODE( Print::out << "Breeding" << Print::endl; )
+
         (*breeder)(*i_island, offspring);
         
-        (*evaluation)(*i_island, offspring); // eval of parents + offspring if necessary
+        __DODEBUGCODE( Print::out << "Evaluating" << Print::endl; )
 
+        // eval of parents + offspring if necessary
+        __TRYDEBUGCODE( (*evaluation)(*i_island, offspring);,
+                        "Error while Evaluating generation " << n << "\n" )
 
-#ifdef _MPI // "All Gather" offspring -- note that replacement scheme is deterministic!!
-        try
-        {
+        // "All Gather" offspring -- note that replacement scheme is deterministic!!
+        __TRYMPICODE( 
+          __DODEBUGCODE(Print::out << "Synchronizing" << Print::endl;)
           breeder->synchronize_offspring( offspring );
-          if(history) history->synchronize();
-        }
-        catch ( std::exception &e )
-        {
-          std::ostringstream sstr;
-          sstr << __FILE__ << ", line: " << __LINE__ << "\n"
-               << "Caught error while synchronizing offsprings and history.\n" 
-               << e.what();
-          throw std::runtime_error( sstr.str() );
-        }
-#endif 
+          if(history) history->synchronize();,
+          "Caught error while synchronizing offsprings and history.\n" 
+        )
+
+        __DODEBUGCODE(Print::out << "Scaling prior to replacing" << Print::endl;)
         // Does scaling simultaneously over both populations
         if( scaling ) (*scaling)( *i_island, offspring );
 
+        __DODEBUGCODE(Print::out << "Replacing" << Print::endl;)
+
         (*replacement)(*i_island, offspring); // after replace, the new pop. is in population
         
-        if (pSize != i_island->size())
-        {
-           std::ostringstream sstr;
-           sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-                << "Population "
-                << ( pSize > i_island->size() ? "shrinking": "growing" )
-                << " from " << pSize << " to " << i_island->size() << "\n";
-           throw std::runtime_error( sstr.str() );
-        }
+        __ASSERT( pSize != i_island->size(),
+                  "Population " << ( pSize > i_island->size() ? "shrinking": "growing" )
+                  << " from " << pSize << " to " << i_island->size() << "\n"
+                )
+
+        __DODEBUGCODE(Print::out << "Continuing" << Print::endl;)
       }
     } while ( continuator->apply( i_island_begin, i_island_end ) );
 
@@ -1011,7 +1006,7 @@ namespace GA
   {
     if ( mpi::main.is_root_node() )
     { 
-      OPENXMLINPUT
+      OPENXMLINPUT(filename)
       TIXML_OSTREAM stream;
       const TiXmlElement *parent = doc.RootElement();
       stream << *parent;
@@ -1024,8 +1019,11 @@ namespace GA
         doc.LoadFile( restart_filename.c_str() );
         if  ( !doc.LoadFile() ) 
         { 
-          std::cerr << doc.ErrorDesc() << std::endl; 
-          std::cerr << "Could not load restart file " << std::endl;
+          std::cerr << __SPOT_ERROR
+                    << doc.ErrorDesc() << "\n"
+                    << "Could not load restart file.\n"
+                    << "Will ignore restart input and start run from scratch"
+                    << std::endl;
           _restart = "";
           goto nextfilename;
         } 
@@ -1038,50 +1036,50 @@ nextfilename:
       if ( evaluator_filename != filename )
       {
         doc.LoadFile( evaluator_filename.c_str() );
-        if  ( !doc.LoadFile() ) 
-        { 
-          std::ostringstream sstr;
-          sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-               << " Could not load restart file\n";
-          throw std::runtime_error("Could not load restart file"); 
-        } 
-
+        __DOASSERT( not doc.LoadFile(), " Could not load restart file\n" )
         parent = doc.RootElement();
         TIXML_OSTREAM stream;
         _evaluator = stream.c_str();
       }
     }
 
-    try
-    {
+    __TRYCODE( 
       // Empty strings before allocating size.
-      if( not mpi::main.is_root_node() )
-      {
+      __NOTMPIROOT( 
         _input == "";
         _restart = "";
         _evaluator = "";
-      }
+      )
       mpi::BroadCast bc( mpi::main );
       bc << _input << _restart << _evaluator
          << mpi::BroadCast::allocate
          << _input << _restart << _evaluator
          << mpi::BroadCast::broadcast
-         << _input << _restart << _evaluator;
-    }
-    catch ( std::exception &e )
-    {
-      std::ostringstream sstr;
-      sstr << __FILE__ << ", line: " << __LINE__ << "\n"
-           << "Caught error while synchronizing input files.\n" 
-           << e.what();
-      throw std::runtime_error( sstr.str() );
-    }
+         << _input << _restart << _evaluator;,
+      "Caught error while synchronizing input files.\n" 
+    )
   }
 #endif
 
   template<class T_EVALUATOR>
   bool Darwin<T_EVALUATOR> :: Load(const std::string &_filename) 
   {
+    __MPISEQUENTIAL(
+      struct timeval tv;
+      struct timezone tz;
+      gettimeofday(&tv,&tz);
+      seed = tv.tv_usec;
+      rng.reseed(seed);
+    )
+    __SERIALCODE(
+      struct timeval tv;
+      struct timezone tz;
+      gettimeofday(&tv,&tz);
+      seed = tv.tv_usec;
+      rng.reseed(seed);
+    )
+
+    // Initializes each proc differently
     filename = _filename;
     evaluator_filename = _filename;
     restart_filename = _filename;
@@ -1089,124 +1087,123 @@ nextfilename:
 
     std::string xmg_filename = "out.xmg";
     std::string out_filename = "out";
-    // first loads all inputfiles 
-#ifdef _MPI
-    if ( mpi::main.is_root_node() )
-    {
-#endif
-      OPENXMLINPUT
-      const TiXmlElement *parent = docHandle.FirstChild("Job").Element();
-      if ( not parent )
-      {
-        std::ostringstream sstr;
-        sstr << __FILE__ << ", line: " << __LINE__ << "\n"
-             << "Could not find Job tag in  " << filename << "\n";
-        throw std::runtime_error( sstr.str() );
-      }
-      parent = docHandle.FirstChild("Job")
-                        .FirstChild("GA").Element();
-      if ( not parent )
-      {
-        std::ostringstream sstr;
-        sstr << __FILE__ << ", line: " << __LINE__ << "\n"
-             << "Could not find GA tag in  " << filename << "\n";
-        throw std::runtime_error( sstr.str() );
-      }
-      const TiXmlElement *child = parent->FirstChildElement("Filenames");
-      for( ; child; child = child->NextSiblingElement("Filenames") )
-      {
-        if (     child->Attribute("evaluator") 
-             and evaluator_filename == filename )
-          evaluator_filename = Print::reformat_home(child->Attribute("evaluator"));
-        if (     child->Attribute("restart") 
-                  and restart_filename == filename )
-          restart_filename = Print::reformat_home(child->Attribute("restart"));
-        if (     child->Attribute("save") 
-                  and save_filename == filename )
-          save_filename = Print::reformat_home(child->Attribute("save"));
-        if ( child->Attribute("out")  )
-          out_filename = child->Attribute("out");
-        if ( child->Attribute("xmgrace") )
-          xmg_filename = Print::reformat_home(child->Attribute("xmgrace"));
-      }
-#ifdef _MPI
-    }
-    try
-    {
-      Print::out.sync_filename( out_filename );
-      Print::xmg.sync_filename( xmg_filename );
-    }
-    catch ( std::exception &e )
-    {
-      std::ostringstream sstr;
-      sstr << __FILE__ << ", line: " << __LINE__ << "\n"
-           << "Caught error while synchronizing output filenames\n" 
-           << e.what();
-      throw std::runtime_error( sstr.str() );
-    }
-#else
-    Print::xmg.init( xmg_filename );
-    Print::out.init( out_filename );
-#endif
 
-    Print::xmg << Print::Xmg :: comment << "new GA run" << Print::endl;
-#ifdef _MPI
-    if( mpi::main.size() > 1 ) 
+    TiXmlDocument doc( filename.c_str() ); 
+    TiXmlHandle docHandle( &doc ); 
+    const TiXmlElement *parent, *child;
+
+    __NOTMPIROOT( goto syncfilenames; )
+
+    // first loads all inputfiles 
+    __DOASSERT( not doc.LoadFile(), 
+                   doc.ErrorDesc() << "\n" 
+                << "Could not load input file " << filename 
+                << " in  Darwin<T_EVALUATOR>.\nAborting.\n" ) 
+
+    parent = docHandle.FirstChild("Job").Element();
+    __DOASSERT( not parent, 
+                "Could not find <Job> tag in  " << filename << "\n"; )
+    parent = docHandle.FirstChild("Job")
+                      .FirstChild("GA").Element();
+    __DOASSERT( not parent, 
+                "Could not find <GA> tag in  " << filename << "\n"; )
+    child = parent->FirstChildElement("Filenames");
+    for( ; child; child = child->NextSiblingElement("Filenames") )
+    {
+      if (     child->Attribute("evaluator") 
+           and evaluator_filename == filename )
+        evaluator_filename = Print::reformat_home(child->Attribute("evaluator"));
+      if (     child->Attribute("restart") 
+                and restart_filename == filename )
+        restart_filename = Print::reformat_home(child->Attribute("restart"));
+      if (     child->Attribute("save") 
+                and save_filename == filename )
+        save_filename = Print::reformat_home(child->Attribute("save"));
+      if ( child->Attribute("out")  )
+        out_filename = child->Attribute("out");
+      if ( child->Attribute("xmgrace") )
+        xmg_filename = Print::reformat_home(child->Attribute("xmgrace"));
+    }
+
+
+syncfilenames:
+    __MPISERIALCODE( 
+      // MPI code
+      __TRYCODE(    Print::out.sync_filename( out_filename );
+                    Print::xmg.sync_filename( xmg_filename );,
+                 "Caught error while synchronizing output filenames\n" 
+      )
       Print::out << "Starting genetic algorithm run on processor "
                  << ( 1 + mpi::main.rank() ) << " of " 
-                 << mpi::main.size() << ".\n\n";
-    else
-#endif
-    Print::out << "Starting (serial) genetic algorithm run\n\n";
-    Print::out << "GA Input file is located at " << evaluator_filename << "\n"
-               << "Functional Input file is located at " << evaluator_filename << "\n"
-               << "Restart Input file is located at " << restart_filename << "\n"
-               << "Xmgrace output file is located at " << Print::xmg.get_filename() << "\n"
-               << "Will Save to file located at " << save_filename << "\n" << Print::endl
-               << Print::flush;
-    Print::xmg << Print::Xmg::comment << "GA Input file is located at "
-                                      << evaluator_filename << Print::endl
-               << Print::Xmg::comment << "Functional Input file is located at "
-                                      << evaluator_filename << Print::endl
-               << Print::Xmg::comment << "Restart Input file is located at "
-                                      << restart_filename << Print::endl
-               << Print::Xmg::comment << "Standard output file is located at "
-                                      << Print::out.get_filename() << Print::endl
-               << Print::Xmg::comment << "Will Save to file located at "
-                                      << save_filename << Print::endl;
+                 << mpi::main.size() << ".\n\n";,
+      // Serial code
+      Print::xmg.init( xmg_filename );
+      Print::out.init( out_filename );
+      Print::out << "Starting (serial) genetic algorithm run\n\n";
+    )
+
+    __ROOTCODE( 
+      Print::out << "GA Input file is located at " << evaluator_filename << "\n"
+                 << "Functional Input file is located at " << evaluator_filename << "\n"
+                 << "Restart Input file is located at " << restart_filename << "\n"
+                 << "Xmgrace output file is located at " << Print::xmg.get_filename() << "\n"
+                 << "Will Save to file located at " << save_filename << "\n" << Print::endl
+                 << Print::flush;
+
+      Print::xmg << Print::Xmg :: comment << "new GA run" << Print::endl
+                 << Print::Xmg::comment << "GA Input file is located at "
+                                        << evaluator_filename << Print::endl
+                 << Print::Xmg::comment << "Functional Input file is located at "
+                                        << evaluator_filename << Print::endl
+                 << Print::Xmg::comment << "Restart Input file is located at "
+                                        << restart_filename << Print::endl
+                 << Print::Xmg::comment << "Standard output file is located at "
+                                        << Print::out.get_filename() << Print::endl
+                 << Print::Xmg::comment << "Will Save to file located at "
+                                        << save_filename << Print::endl;
+    )
+    __NOTMPIROOT( 
+      Print::out << "Xmgrace output file is located at " << Print::xmg.get_filename() << "\n"
+                 << "Will Save to file located at " << save_filename << "\n" << Print::endl
+                 << Print::flush;
+      Print::xmg << Print::Xmg :: comment << "new GA run" << Print::endl;
+    )
 
 #ifdef _MPI
     // broadcasts all input files and filenames
     std::string input_str, restart_str, evaluator_str;
     LoadAllInputFiles(input_str, restart_str, evaluator_str);
-
-    TiXmlDocument doc;
+    
     if ( evaluator_filename == filename ) // works for all nodes!!
       doc.Parse( evaluator_str.c_str() );
-    TiXmlHandle docHandle(&doc);
 #endif
+
     // Loads evaluator first 
-    if ( evaluator_filename != filename )
-    { 
-      if ( not evaluator.Load(evaluator_filename) ) return false;
-    } // for following, we know docHandle.FirstChild("Job") exists
-    else if ( not evaluator.Load(*docHandle.FirstChild("Job").Element() ) )
-      return false;
+    if( evaluator_filename != filename )
+      __TRYASSERT( not evaluator.Load(evaluator_filename),
+                      "Could not load functional input from "
+                   << evaluator_filename << "\n" )
+    else
+      __TRYASSERT( not evaluator.Load(*docHandle.FirstChild("Job").Element() ),
+                      "Could not load functional input from "
+                   << filename << "\n" )
           
     // finds <GA> ... </GA> block 
-#ifdef _MPI
-    doc.Parse( input_str.c_str() );
-    const TiXmlElement *parent = docHandle.FirstChild("Job")
-                                          .FirstChild("GA").Element();
-#endif
-    if ( not Load_Parameters( *parent ) )  return false;
+    __DOMPICODE( 
+      doc.Parse( input_str.c_str() );
+      parent = docHandle.FirstChild("Job")
+                        .FirstChild("GA").Element();
+    )
+    __TRYASSERT( not Load_Parameters( *parent ), 
+                 "Error while reading GA attributes\n" )
 
 
 
     make_History( *parent );
     Load_Taboos( *parent );
     Load_Method( *parent );
-    if ( not  Load_Mating( *parent ) ) return false; 
+    __DOASSERT( not  Load_Mating( *parent ),
+                "Error while loading mating operators.\n" )
     Load_CheckPoints( *parent );
     
     make_breeder();
@@ -1230,10 +1227,7 @@ nextfilename:
     }
     if ( do_restart )
     {
-#ifdef _MPI
-      if ( not mpi::main.is_root_node() )
-        doc.Parse( restart_str.c_str() );
-#endif
+      __NOTMPIROOT( doc.Parse( restart_str.c_str() ); )
       if ( restart_filename != filename )
       { 
         if ( not Restart() )
@@ -1253,9 +1247,9 @@ nextfilename:
       }
     }
     do_save = 0;
-#ifdef _MPI
-    if ( not mpi::main.is_root_node() ) goto out;
-#endif 
+
+    __NOTMPIROOT( goto out; )
+
     do_save = SAVE_RESULTS;
     restart_xml = parent->FirstChildElement("Save");
     Print::xmg << Print::Xmg::comment << "Will Save Results";
@@ -1281,20 +1275,33 @@ nextfilename:
         Print::xmg << ", History";
       }
     }
-out:  Print::xmg << Print::endl;
+out:
+    Print::xmg << Print::endl;
 
-    {
-      Print::xmg << Print::Xmg::comment << "Mating Tournament Size: " << tournament_size << Print::endl
-                 << Print::Xmg::comment << "Offspring Replacement Rate: " << replacement_rate << Print::endl
-                 << Print::Xmg::comment << "Population Size: " << pop_size << Print::endl;
-      if ( max_generations )
-        Print::xmg << Print::Xmg::comment << "Maximum Number of Generations: " << max_generations
-                   << Print::endl;
-      else
-        Print::xmg << Print::Xmg::comment << "Unlimited Number of Generations" << Print::endl;
-      Print::xmg << Print::Xmg::comment << "Number of Islands: " << nb_islands << Print::endl 
-                 << Print::Xmg::comment << "Will save to " << save_filename << Print::endl;
-    }
+    Print::xmg << Print::Xmg::comment << "Mating Tournament Size: "
+                                      << tournament_size << Print::endl
+               << Print::Xmg::comment << "Offspring Replacement Rate: "
+                                      << replacement_rate << Print::endl
+               << Print::Xmg::comment << "Population Size: "
+                                      << pop_size << Print::endl
+               << Print::Xmg::comment << "Seed: " << seed << Print::endl
+               << Print::Xmg::comment << (  populate_style == RANDOM_POPULATE ?
+                                           "Random Starting Population":
+                                           "Partitionned Starting Population" )
+                                      << Print::endl;
+    if ( max_generations )
+      Print::xmg << Print::Xmg::comment << "Maximum Number of Generations: "
+                                        << max_generations << Print::endl;
+    else
+      Print::xmg << Print::Xmg::comment << "Unlimited Number of Generations"
+                                        << Print::endl;
+    Print::xmg << Print::Xmg::comment << "Number of Islands: "
+                                      << nb_islands << Print::endl;
+    if( scaling ) Print::xmg << Print::Xmg::comment << scaling->what_is() << Print::endl;
+    __ROOTCODE( Print::xmg << Print::Xmg::comment << "Will save to "
+                           << save_filename << Print::endl; )
+    std::string evalparams = evaluator.print();
+    Print::xmg << Print::make_commented_string( evalparams ) << Print::endl;
     return true;
   }
 

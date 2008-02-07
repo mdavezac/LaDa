@@ -1,0 +1,26 @@
+>bond-length parameters
+#   types        dist                 alfa
+   Ga  Sb       2.640                33.16 15 5 3 1
+   Ga  As       2.44795              32.1530 -105.0 150.0
+   In  As       2.62332              21.6739 -112.0 150.0
+   In  Sb       2.805                26.610
+
+>bond-angle parameters
+#    types        gamma  sigma      beta  beta3   beta4
+   Ga  Sb  Ga     tet    10.0      7.2289  5 4 3 2
+   Sb  Ga  Sb     tet    10.0      7.2289  5 4 3 2
+   
+   As  Ga  As     tet      -4.099   9.3703
+   Ga  As  Ga     tet      -4.099   9.3703
+   In  As  In     tet      -5.753   5.7599
+   As  In  As     tet      -5.753   5.7599
+   Ga  As  In     -0.35016 -4.926   7.5651
+   In  As  Ga     -0.35016 -4.926   7.5651
+   As  Ga  Sb     tet       0       8.08355
+   Sb  Ga  Sb     tet       0       7.2289
+   Sb  In  As     tet       0       4.88615
+   Sb  In  Sb     tet       0       4.2842
+   Ga  Sb  Ga     tet       0       7.2289
+   In  Sb  In     tet       0       4.2842
+   Ga  Sb  In     tet       0       5.75655
+

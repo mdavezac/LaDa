@@ -8,7 +8,6 @@
 #include <config.h>
 #endif
 
-#include <ext/functional>
 #include <list>
 #include <algorithm>
 
@@ -17,6 +16,7 @@
 #include <eo/eoGenOp.h>
 
 #include <opt/types.h>
+#include <mpi/mpi_object.h>
 
 #include "functors.h"
 #include "gatraits.h"

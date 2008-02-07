@@ -12,10 +12,7 @@
 
 #include <opt/types.h>
 #include <revision.h>
-
-#ifdef _MPI
 #include <mpi/mpi_object.h>
-#endif
 
 #include "base.h"
 #include "operations.h"

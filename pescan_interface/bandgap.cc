@@ -6,21 +6,20 @@
 #include <physics/physics.h>
 #include <print/stdout.h>
 #include <opt/fuzzy.h>
+#include <print/manip.h>
+#include <opt/debug.h>
 
 #include "bandgap.h"
 
 namespace Pescan
 {
+
 #ifdef _NOLAUNCH
   //! Fake and fast functional, when compiled with --enable-nolaunch
   void nolaunch_functional( const Ising_CE::Structure &_str, Bands &bands );
 #endif
 
-#ifdef _NOLAUNCH
   types::t_real BandGap::folded_spectrum(const Ising_CE::Structure &_str)
-#else
-  types::t_real BandGap::folded_spectrum()
-#endif
   {
     std::string olddirname = dirname;
     create_directory();
@@ -30,28 +29,38 @@ namespace Pescan
     escan.Eref = Eref.cbm;
     if ( not do_destroy_dir ) 
     {
-      dirname = olddirname + ( computation == CBM ?  "/cbm": "/vbm" );
+      dirname = olddirname + "/cbm";
       create_directory();
     }
     create_potential();
-    launch_pescan();
-    read_result();
+    __TRYCODE( launch_pescan();
+               read_and_throw();,
+               "Error while computing CBM.\n") 
     bands.cbm = find_closest_eig( Eref.cbm );
-    destroy_directory_();
 
     // Then computes VBM
     computation = VBM;
     escan.Eref = Eref.vbm;
     if ( not do_destroy_dir ) 
-      dirname = olddirname + ( computation == CBM ?  "/cbm": "/vbm" );
-    create_directory();
-    launch_pescan();
-    read_result();
+    {
+      dirname = olddirname + "/vbm";
+      create_directory();
+      create_potential();
+    }
+    __TRYCODE( launch_pescan();
+               read_and_throw();,
+               "Error while computing VBM.\n") 
     bands.vbm = find_closest_eig( Eref.cbm );
-    destroy_directory_();
 
 #ifndef _NOLAUNCH
     if( do_correct and bands.gap() < metallicity ) correct( olddirname );
+    if( bands.gap() < metallicity )
+    {
+      escan.method = ALL_ELECTRON;
+      Print :: out << "Failed to find non-metallic band gap.\n"
+                   << "Will try an all-electron calculation." << Print::endl;
+      all_electron( _str );
+    }
 #else
     nolaunch_functional( _str, bands );
 #endif // _NOLAUNCH
@@ -71,35 +80,48 @@ namespace Pescan
     escan.read_in.resize( escan.nbstates );
     std::vector<types::t_unsigned> :: iterator i_r = escan.read_in.begin();
     std::vector<types::t_unsigned> :: iterator i_r_end = escan.read_in.end();
-    for(types::t_unsigned u=0; i_r != i_r_end; ++i_r, ++u ) *i_r = u;
+    for(types::t_unsigned u=1; i_r != i_r_end; ++i_r, ++u ) *i_r = u;
 
+    types::t_unsigned i = 0;
     do 
     {
-#ifdef _DEBUG
-      Print::out << __FILE__ << ", line: " << __LINE__ << "\n";
-#endif
-      Print::out << " Found metallic band gap!! " << bands.gap() << "\n" 
-                 << " Will Try and modify references. \n";
+      Print::out __DODEBUGCODE(<< __SPOT_ERROR)
+                 << " Found metallic band gap: " << bands.gap() << "\n" 
+                 << "    VBM=" << bands.vbm << "  CBM=" << bands.cbm << "\n" 
+                 << " Will Try and modify references.\n";
 
       if( std::abs( bands.vbm - Eref.vbm ) > std::abs( bands.cbm - Eref.cbm ) )
       {
         Eref.vbm -= inc_dec;
         computation = VBM;
         escan.Eref = Eref.vbm;
+        Print::out << "Modifying VBM reference: " << Eref.vbm
+                   << Print::endl << Print::flush;
       }
       else
       {
         Eref.cbm += inc_dec;
         computation = CBM;
         escan.Eref = Eref.cbm;
+        Print::out << "Modifying CBM reference: " << Eref.cbm
+                   << Print::endl << Print::flush;
       }
       if ( not do_destroy_dir )
         dirname = _dir + ( computation == CBM ?  "/cbm": "/vbm" );
-      launch_pescan();
-      read_result();
+      do_correct = false;
+      
+      __TRYCODE( launch_pescan();
+                 read_and_throw();,
+                    "Error while computing"
+                 << ( computation == CBM ?  "/cbm": "/vbm" )
+                 << "\n" )
+      do_correct = true;
       computation == VBM ?  bands.vbm = find_closest_eig( Eref.vbm ):
                             bands.cbm = find_closest_eig( Eref.cbm );
-    } while ( bands.gap() < metallicity );
+      Print::out << "After Correction: VBM=" << bands.vbm
+                 << " CBM=" << bands.cbm << Print::endl;
+      ++i;
+    } while ( bands.gap() < metallicity and i < 5 );
 
     escan = saved_state;
     Eref  = keeprefs;
@@ -116,12 +138,13 @@ namespace Pescan
       _str.lattice->convert_Atom_to_StrAtom( *i_atom, atom );
       escan.nbstates += Physics::Atomic::Charge( atom.type );
     }
+    escan.nbstates += 2;
     if (    escan.potential != Escan::SPINORBIT
          or atat::norm2(escan.kpoint) < types::tolerance )
       escan.nbstates /= 2;
-    ++escan.nbstates;
 
-    if ( not Interface::operator()() ) return -1;
+    __TRYCODE( Interface::operator()();,
+               "All-electron calculation failed.\n" )
 
 #ifndef _NOLAUNCH
     bands.cbm = eigenvalues[ escan.nbstates - 1 ];
@@ -138,28 +161,23 @@ namespace Pescan
   bool BandGap :: Load( const TiXmlElement &_node )
   {
     const TiXmlElement *parent = find_node( _node );
-    if ( not parent )
-    {
-      std::cerr << "Could not find <Functional type=\"escan\"> in input" << std::endl;
-      return false;
-    }
-    if ( not Interface :: Load_( *parent ) )
-    {
-      std::cerr << "Could not load Pescan functional" << std::endl;
-      return false;
-    }
-
+    __DOASSERT( not parent, 
+                "Could not find <Functional type=\"escan\"> in input\n"; )
+    __TRYCODE( __DOASSERT( not Interface :: Load_( *parent ), "" ),
+               "Encountered error while loading bandgap interface:\n" )
     
     t_method m = escan.method;
     escan.method = ALL_ELECTRON;
     const TiXmlElement *child = parent->FirstChildElement("Reference");
+    if( not child ) child = parent->FirstChildElement("References"); 
     if( not child ) return true;
     if(     (not child->Attribute("VBM") )
         and (not child->Attribute("CBM") ) ) return true;
     if(     (not child->Attribute("VBM") )
         or (not child->Attribute("CBM") ) )
     {
-      std::cerr << "Found only one VBM/CBM reference when expecting two in input \n"
+      std::cerr __DODEBUGCODE(<< __SPOT_ERROR)
+                << "Found only one VBM/CBM reference when expecting two in input \n"
                 << "Will continue with all electron calculation." << std::endl;
       return true;
     }
@@ -172,7 +190,8 @@ namespace Pescan
 
     if( Eref.gap() < 0.0 )  
     {
-      std::cerr << "Found strange VBM/CBM references in input \n"
+      std::cerr __DODEBUGCODE(<< __SPOT_ERROR)
+                << "Found strange VBM/CBM references in input \n"
                 << "VBM = " <<  Eref.vbm << " > CBM = " << Eref.cbm << "\n" 
                 << "Will continue with all electron calculation." << std::endl;
       return true;
@@ -182,6 +201,37 @@ namespace Pescan
     return true;
   }
 
+  void BandGap :: read_and_throw()
+  {
+    try { read_result(); }
+    catch( std::exception &_e )
+    { 
+      std::ifstream file;
+      std::ostringstream sstr;
+      sstr << dirname; 
+      sstr << "/" << Print::StripEdges(escan.output);
+      std::string name = sstr.str();
+      file.open( name.c_str(), std::ios_base::in ); 
+      
+      __DOASSERT( not file.is_open(),
+                    "Could not open escan output file "
+                 << (std::string) name << "\n" );
+      __DOASSERT( file.bad(),
+                    "Error while opening escan output file "
+                 << (std::string) name << "\n" );
+      char cline[256];
+      std::string line("");
+      std::cout << "\n\n--- ESCAN OUTPUT ---\n";
+      while( not file.eof() )
+      {
+        file.getline( cline, 256 );
+        line = cline;
+        std::cout << line << "\n";
+      }
+      std::cout  << "\n\n--- ESCAN OUTPUT ---\n" << std::endl;
+      __THROW_ERROR( _e.what() )
+    }
+  }
 
 #ifdef _NOLAUNCH
   void nolaunch_functional( const Ising_CE::Structure &_str, Bands &bands )
@@ -202,7 +252,7 @@ namespace Pescan
 
     bands.cbm += bands.vbm;
 
-    if ( Fuzzy::ge( bands.cbm, bands.vbm ) ) return;
+    if ( Fuzzy::gt( bands.cbm, bands.vbm ) ) return;
     std::swap( bands.cbm, bands.vbm );
     if ( Fuzzy::eq(bands.vbm, bands.cbm ) ) bands.cbm += 0.1;
   }

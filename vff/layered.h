@@ -10,10 +10,12 @@
 
 #include "functional.h"
 
+
 namespace Vff
 {
   //! Computes in-plane stress from stress matrix \a _stress and plane \a _dir.
-  types::t_real inplane_stress( const atat::rMatrix3d &_stress, const atat::rVector3d &_dir );
+  types::t_real inplane_stress( const atat::rMatrix3d &_stress,
+                                const atat::rVector3d &_dir );
 
 
   //! \brief Valence Force Field for "layered" structures
@@ -43,7 +45,8 @@ namespace Vff
       typedef t_Base::t_Type t_Type;            //!< see Functional::Base
       typedef t_Base::t_Container t_Container;  //!< see Functional::Base
       typedef t_Container :: iterator iterator; //!< see Functional::Base
-      typedef t_Container :: const_iterator const_iterator; //!< see Functional::Base
+      //! see Functional::Base
+      typedef t_Container :: const_iterator const_iterator;
 
     protected:
       //! Type of the container holding the atomic centers
@@ -64,17 +67,21 @@ namespace Vff
        * \f$\hat{S} = \hat{1}+\epsilon \hat{S}'\f$, with
        * \f$\hat{S}'\f$ the template strain. */
       atat::rMatrix3d  template_strain; 
+      //! Wether epitaxial direction if fixed by input or  structure cell
+      bool is_fixed_by_input;
       
     public:
       //! \brief Constructor and Initializer
       //! \param _str structure for which to compute energy and stress
       Layered   ( Ising_CE :: Structure &_str )
-              : Vff::Functional( _str ), direction(0,0,0), u(0,0,0) 
+              : Vff::Functional( _str ), direction(0,0,0), u(0,0,0),
+                template_strain(), is_fixed_by_input(false)
         { template_strain.zero(); }
       //! \brief Copy Constructor
       Layered   ( const Vff::Layered &_c )
-              : t_Base( _c ), direction( _c.direction ), u(_c.u) 
-        { template_strain.zero(); }
+              : t_Base( _c ), direction( _c.direction ), u(_c.u),
+                template_strain(_c.template_strain), 
+                is_fixed_by_input(_c.is_fixed_by_input) {}
       //! \brief Destructor
       ~Layered() {}
 
@@ -111,6 +118,9 @@ namespace Vff
       //! degrees of liberty are known to the minimizer
       //! \sa function::Base, Minimizer::Base
       bool init();
+
+      //! Prints functional to \a stream.
+      void print_out( std::ostream &stream ) const;
       
     protected:
       //! \brief unpacks variables from minimizer
@@ -131,6 +141,13 @@ namespace Vff
 
       //! Initializes Layered::u and Layered::template_strain
       void create_template_strain();
+
+      //! Load from XML
+      bool Load( const TiXmlElement &_node );
+
+      //! \brief Loads Functional directly from \a _node.
+      //! \details If \a _node is not the correct node, the results are undefined.
+      bool Load_( const TiXmlElement &_node );
   };
 
   template< typename t_grad_iterator>
@@ -219,4 +236,29 @@ namespace mpi {
   }
 }
 #endif
+
+#ifdef _DOFORTRAN
+  //! Creates an instance of a typical Minimizer::Frpr "C" function for calling Vff::Layered
+  extern "C" inline double layeredvff_frprfun(double* _x, double* _y)
+    { return Minimizer::typical_frprfun<Vff::Layered>( _x, _y); }
+  //! \brief returns a pointer to the correct extern "C" evaluation function
+  //!        for Minimizer::Frpr.
+  //! \details This routine allows for a standard for Vff::VA to intialize
+  //!          Minimizer::Frpr.
+  template<> inline t_FrprFunction choose_frpr_function<Vff::Layered>() { return layeredvff_frprfun; }
+#elif defined(_DONAG)
+#include <nag.h>
+#include <nage04.h>
+  //! Creates an instance of a typical NAG "C" function for calling Vff::Layered
+  extern "C" inline void layeredvff_nagfun(int _n, double* _x, double* _r, double* _g, Nag_Comm* _p)
+    { Minimizer::typical_nagfun<Vff::Layered>( _n, _x, _r, _g, _p ); }
+  //! \brief returns a pointer to the correct extern "C" evaluation function
+  //!        for Minimizer::Nag.
+  //! \details This routine allows for a standard for Vff::VA to intialize
+  //!          Minimizer::Nag.
+  template<>
+  inline Minimizer::t_NagFunction choose_nag_function<Vff::Layered>()
+    { return layeredvaff_nagfun; }
+#endif
+
 #endif // _VFF_FUNCTIONAL_H_

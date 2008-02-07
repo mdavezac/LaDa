@@ -80,15 +80,10 @@ errorout:
 
   void Concentration :: operator()( Ising_CE::Structure &_str )
   {
-    types::t_complex  *hold = new types::t_complex[ N ];
-    if ( not hold )
-    {
-      std::ostringstream sstr;
-      sstr << __FILE__ << ", line: " << __LINE__ << "\n"
-           << " Could not allocate memory while setting concentration.\n" << std::endl; 
-      throw std::runtime_error( sstr.str() );
-    }
-
+    types::t_complex  *hold ;
+    __TRYCODE( hold = new types::t_complex[ N ];,
+               "Memory allocation error\n" )
+        
     // creates individual with unnormalized occupation
     types::t_complex  *i_hold = hold;
     Fourier( _str.atoms.begin(), _str.atoms.end(),
@@ -108,6 +103,7 @@ errorout:
                 i_atom->type = rng.flip() ? 1.0: -1.0;
           else  i_atom->type = std::real(*i_hold) > 0.0 ? 1.0: -1.0;
         }
+      delete[] hold;
       return;
     }
 
@@ -208,7 +204,7 @@ errorout:
   }
   void Concentration :: get( const Object &_obj )
   {
-    if ( not single_c ) return;
+    if ( single_c ) return;
 
     // computes concentrations first
     Object::t_Container::const_iterator i_bit = _obj.bitstring.begin();

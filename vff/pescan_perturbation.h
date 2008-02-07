@@ -14,9 +14,7 @@
 #include "functional.h"
 #include "va.h"
 
-#ifdef _MPI 
-  #include <mpi/mpi_object.h>
-#endif
+#include <mpi/mpi_object.h>
 
 namespace Vff
 {

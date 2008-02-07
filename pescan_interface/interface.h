@@ -12,17 +12,17 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <fstream>
+
+#include <tinyxml/tinyxml.h>
 
 #include <physics/physics.h>
 #include <opt/types.h>
 #include <atat/vectmac.h>
 #include <lamarck/structure.h>
-
-#include <tinyxml/tinyxml.h>
-
-#ifdef _MPI
 #include <mpi/mpi_object.h>
-#endif
+#include <print/manip.h>
+
 
 //! \brief Holds everything pescan
 //! \details Escan is a semi-empirical potential code capable of computing
@@ -244,6 +244,14 @@ namespace Pescan
      //! \details Checks wether \a _node or its immediate offpsrings are the
      //!          right functional node.
      const TiXmlElement* find_node (const TiXmlElement &_node );
+     //! \brief Sets the scale to that of the structure
+     void set_scale( const Ising_CE::Structure &_str )
+       { escan.scale = _str.scale; }
+     //! sets the number of states to compute
+     void set_nbstates( const types::t_unsigned _n )
+       { escan.nbstates = std::max<types::t_unsigned>(_n, 1); }
+ 
+     void check_existence() const;
 
     protected:
      //! Launches a calculation 
@@ -264,10 +272,6 @@ namespace Pescan
      bool read_result();
      //! Loads functional directly from \a _node
      bool Load_( const TiXmlElement &_node );
-     //! \brief Sets scale of reciprocal in mesh as \f$\frac{2\pi}{a}\f$, with \e a the
-     //! lattice in constant in atomic units.
-     void set_scale( const Ising_CE::Structure &_str )
-       { escan.scale = _str.scale; }
   };
 
 
@@ -281,6 +285,69 @@ namespace Pescan
     return false;
   }
     
+
+  inline void Interface::check_existence() const 
+  { 
+    std::ifstream stream;
+    std::string name;
+
+#ifndef _NOLAUNCH
+    name = Print::reformat_home( genpot.launch );
+    __TRYCODE( stream.open(name.c_str(), std::ios::in | std::ios::binary);,
+               "Program " << (std::string) name << " does not appear to exist.\n" )
+    __ASSERTCATCHCODE( not stream.is_open(),
+                       stream.close(),
+                       "Error while opening " << (std::string) name << ".\n" )
+    stream.close();
+
+    name = Print::reformat_home( escan.launch );
+    __TRYCODE( stream.open(name.c_str(), std::ios::in | std::ios::binary);,
+               "Program " << (std::string) name << " does not appear to exist.\n" )
+    __ASSERTCATCHCODE( not stream.is_open(),
+                       stream.close(),
+                       "Error while opening " << (std::string) name << ".\n" )
+    stream.close();
+#endif
+
+    name = Print::reformat_home( maskr );
+    __TRYCODE( stream.open(name.c_str(), std::ios::in);,
+               "File " << (std::string) name << " does not appear to exist.\n" )
+    __ASSERTCATCHCODE( not stream.is_open(),
+                       stream.close(),
+                       "Error while opening " << (std::string) name << ".\n" )
+    stream.close();
+
+
+    std::vector<std::string> :: const_iterator i_ps = genpot.pseudos.begin();
+    std::vector<std::string> :: const_iterator i_ps_end = genpot.pseudos.end();
+    for(; i_ps != i_ps_end; ++i_ps )
+    {
+      if ( name == *i_ps ) continue;
+      name = *i_ps;
+      __TRYCODE( stream.open(name.c_str(), std::ios::in);,
+                 "File " << (std::string) name << " does not appear to exist.\n" )
+      __ASSERTCATCHCODE( not stream.is_open(),
+                         stream.close(),
+                         "Error while opening " << (std::string) name << ".\n" )
+      stream.close();
+    }
+
+    if( escan.potential != Escan::SPINORBIT ) return;
+    std::vector<SpinOrbit> :: const_iterator i_so = escan.spinorbit.begin();
+    std::vector<SpinOrbit> :: const_iterator i_so_end = escan.spinorbit.end();
+    for(; i_ps != i_ps_end; ++i_ps )
+    {
+      if ( name == *i_ps ) continue;
+      name = *i_ps;
+      __TRYCODE( stream.open(name.c_str(), std::ios::in);,
+                 "File " << (std::string) name << " does not appear to exist.\n" )
+      __ASSERTCATCHCODE( not stream.is_open(),
+                         stream.close(),
+                         "Error while opening " << (std::string) name << ".\n" )
+      stream.close();
+    }
+
+  }
 
 } // namespace pescan_interface
 

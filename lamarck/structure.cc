@@ -43,32 +43,32 @@ namespace Ising_CE {
                                                                  
   void Structure :: print_out (std::ostream &stream) const
   {
-    stream << std::endl << " Structure, scale " << scale << ", Cell "
-           << std::endl << std::fixed << std::setprecision(5)
-           << " " << std::setw(9) << cell(0,0)
-           << " " << std::setw(9) << cell(1,0)
-           << " " << std::setw(9) << cell(2,0) << std::endl
-           << " " << std::setw(9) << cell(0,1)
-           << " " << std::setw(9) << cell(1,1)
-           << " " << std::setw(9) << cell(2,1) << std::endl
-           << " " << std::setw(9) << cell(0,2)
-           << " " << std::setw(9) << cell(1,2)
-           << " " << std::setw(9) << cell(2,2) << std::endl;
+    stream << "\n Structure, scale: " << scale << ", Volume: "
+           << atat::det( cell )
+           << ", Cell\n"
+           << std::fixed << std::setprecision(5)
+           << "   " << std::setw(9) << cell(0,0)
+           << "   " << std::setw(9) << cell(1,0)
+           << "   " << std::setw(9) << cell(2,0) << "\n"
+           << "   " << std::setw(9) << cell(0,1)
+           << "   " << std::setw(9) << cell(1,1)
+           << "   " << std::setw(9) << cell(2,1) << "\n"
+           << "   " << std::setw(9) << cell(0,2)
+           << "   " << std::setw(9) << cell(1,2)
+           << "   " << std::setw(9) << cell(2,2) << "\n"
+           << "\n   Atoms:\n";
+            
     
-    #ifdef _DEBUG_LADA_
-      if (atoms.size() == 0 )
-      {
-        std::cerr << " Structure contains no atoms!! " << std::endl;
-        exit(0);
-      }
-    #endif
     stream << " Structure atoms " << std::endl;
     std::vector<Atom> :: const_iterator i_atom = atoms.begin();
     std::vector<Atom> :: const_iterator i_end = atoms.end();
     for( ; i_atom != i_end; ++i_atom )
     {
       stream << "  Position: ";
-      i_atom->print_out(stream); 
+      StrAtom stratom;
+      if( lattice and lattice->convert_Atom_to_StrAtom( *i_atom, stratom ) )
+        stratom.print_out(stream); 
+      else i_atom->print_out(stream); 
       stream << std::endl;
     }
     if ( not k_vecs.size() ) 
@@ -84,17 +84,10 @@ namespace Ising_CE {
     }
   }
 
+
   void Structure :: set_atom_types( const std::vector<types::t_real> &types)
   {
-    #ifdef _DEBUG_LADA_
-      if ( types.size() != atoms.size() )
-      {
-        std::cerr << "Vectors are not of equivalent size in "
-                  << "void set_atom_types( const std::vector<types::t_real> &)"
-                  << std::endl;
-        exit(0);
-      }
-    #endif // _DEBUG_LADA_
+    __ASSERT( types.size() != atoms.size(), "Inequivalent vectors.\n" )
 
     std::vector<types::t_real> :: const_iterator i_type = types.begin();
     std::vector<types::t_real> :: const_iterator i_type_last = types.end();
@@ -108,15 +101,7 @@ namespace Ising_CE {
 
   void Structure :: get_atom_types( std::vector<types::t_real> &types) const
   {
-    #ifdef _DEBUG_LADA_
-      if ( types.size() != atoms.size() )
-      {
-        std::cerr << "Vectors are not of equivalent size in "
-                  << "void set_atom_types( const std::vector<types::t_real> &)"
-                  << std::endl;
-        exit(0);
-      }
-    #endif // _DEBUG_LADA_
+    __ASSERT( types.size() != atoms.size(), "Inequivalent vectors.\n" )
 
     std::vector<types::t_real> :: iterator i_type = types.begin();
     std::vector<types::t_real> :: iterator i_type_last = types.end();
@@ -166,8 +151,7 @@ namespace Ising_CE {
 
     // reads in cell
     child = parent->FirstChildElement( "Cell" );
-    if ( !child )
-      return false;
+    __DOASSERT( not child, "Unit-cell not found in structure input\n")
     child = child->FirstChildElement( "column" );
     freeze = FREEZE_NONE;
     for (i=0 ; child and i<3; child=child->NextSiblingElement( "column" ), i++ )
@@ -216,7 +200,7 @@ namespace Ising_CE {
         }  
       }
     }
-    if (i != 3)  return false; 
+    __DOASSERT(i != 3, "More than three columns for unit-cell in input\n")
 
     scale = 0;
     parent->Attribute("scale", &scale);
@@ -228,22 +212,27 @@ namespace Ising_CE {
     }
 
     // reads in atoms
-    types::t_real (*ptr_norm)(const atat::FixedVector<types::t_real, 3> &) = &atat::norm2;
     child = parent->FirstChildElement( "Atom" );
-    Atom atom;
-    StrAtom stratom;
     atoms.clear();
     for (; child; child=child->NextSiblingElement( "Atom" ) )
     {
-      if ( not stratom.Load(*child) )
-       return false;
-      if ( (not lattice) or (not lattice->convert_StrAtom_to_Atom( stratom, atom )) )
-        if ( not atom.Load( *child ) )
-          return false;
+      Atom atom;
+      StrAtom stratom;
+      __DOASSERT( not stratom.Load(*child),
+                  "Error while reading atom from input\n" )
+
+      if( not ( lattice or atom.Load( *child ) ) )
+        __THROW_ERROR("Error while reading atom from input.\n")
+      else if ( lattice ) 
+        __TRYASSERT( lattice->convert_StrAtom_to_Atom( stratom, atom ), 
+                     "Error while reading atom from input\n" )
+        
       if (    ( lattice and atom.site > (types::t_int)lattice->sites.size() )
            or atom.site < -1 )
         atom.site = -1;
-      if ( lattice and atom.site != -1 )
+      if ( lattice and atom.site < 0e0 )
+        atom.site = lattice->get_atom_site_index( atom );
+      if ( lattice and atom.site > 5e-1 )
         atom.freeze |= lattice->sites[ atom.site ].freeze;
       atoms.push_back(atom);
     }
@@ -621,8 +610,10 @@ namespace mpi
     for(; i_kvec != i_kvec_end; ++i_kvec )
     {
       if ( not serialize( i_kvec->pos ) ) return false;
-      if ( not serialize( std::real(i_kvec->type) ) ) return false;
-      if ( not serialize( std::imag(i_kvec->type) ) ) return false;
+      types::t_real a = std::real(i_kvec->type), b = std::imag( i_kvec->type );
+      if ( not serialize( a ) ) return false;
+      if ( not serialize( b ) ) return false;
+      if ( stage == COPYING_FROM_HERE ) i_kvec->type = types::t_complex( a, b );
       if ( not serialize( i_kvec->freeze ) ) return false;
     }
 

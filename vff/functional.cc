@@ -6,30 +6,12 @@
 #include <algorithm>
 #include <functional>
 
-#include "functional.h"
 #include <physics/physics.h>
 #include <opt/ndim_iterator.h>
-#include <opt/compose_functors.h>
+#include <opt/debug.h>
+#include <opt/atat.h>
 
-#ifdef _DOFORTRAN_
-  extern "C" double vff_for_frprmn( const double* const _x, double* const _y)
-  {
-    static Vff::Functional* this_func;
-    if ( not _y  )
-    {
-      this_func = (Vff::Functional*) _x;
-      return 0;
-    }
-
-    if ( not this_func )  return 0;
-
-    const double *i_x_copy = _x;
-    const double *i_x_end = _x + this_func->size();
-    std::copy(i_x_copy, i_x_end, this_func->begin());
-    types::t_real result = this_func->evaluate_with_gradient(_y);
-    return result;
-  }
-#endif
+#include "functional.h"
   
 namespace Vff
 { 
@@ -101,10 +83,7 @@ namespace Vff
     }
 
     // Sorts the neighbors according to distance from origin
-    types::t_real (*ptr_norm)(const atat::FixedVector<types::t_real, 3> &) = &atat::norm2;
-    std::sort( neighbors.begin(), neighbors.end(), 
-               opt::ref_compose2( std::less<types::t_real>(), std::ptr_fun( ptr_norm ),
-                                  std::ptr_fun( ptr_norm ) ) );
+    std::sort( neighbors.begin(), neighbors.end(), atat::norm_compare() );
     // And reduces to first neighbors only
     neighbors.resize(4*structure.lattice->sites.size());
 
@@ -133,7 +112,7 @@ namespace Vff
             cut = structure.cell * cut;
             if( atat::norm2( cut ) < cutoff )
             {
-              i_center->bonds.push_back( &(*i_bond) );
+              i_center->bonds.push_back( t_Center ::__make__iterator__(i_bond) );
               i_center->translations.push_back( frac_image );
               i_center->do_translates.push_back( atat::norm2(frac_image) > atat::zero_tolerance );
             }
@@ -141,6 +120,9 @@ namespace Vff
         }
     }
 
+#ifdef _DEBUG
+    check_tree();
+#endif
     return true;
   } // Functional :: construct_bond_list
 
@@ -164,7 +146,7 @@ namespace Vff
       
       for( i_bond = i_begin; i_bond != i_end; ++i_bond )
         if ( i_bond != i_center )
-          nb_bonds = i_center->add_bond ( *i_bond, bond_cutoff);
+          nb_bonds = i_center->add_bond ( t_Center::__make__iterator__(i_bond), bond_cutoff);
     } // loop over atomic centers
 
     
@@ -178,6 +160,9 @@ namespace Vff
         return false;
       } 
 
+#ifdef _DEBUG
+    check_tree();
+#endif
     return true;
   } // Functional :: construct_bond_list
 
@@ -202,36 +187,21 @@ namespace Vff
       return false;
     }
 
-    const TiXmlElement *child, *parent;
+    const TiXmlElement* parent = find_node( _element );
+    if( parent ) return Load_(*parent);
+    std::cerr << "Could not find an <Functional type=\"vff\"> tag in input file" 
+              << std::endl;
+    return false;
+  }
+
+  bool Functional :: Load_( const TiXmlElement &_element )
+  {
+    const TiXmlElement *child;
     std::string str;
 
-    // This whole section tries to find a <Functional type="vff"> tag
-    // in _element or its child
-    str = _element.Value();
-    if ( str.compare("Functional" ) != 0 )
-      parent = _element.FirstChildElement("Functional");
-    else
-      parent = &_element;
-
-    
-    while (parent)
-    {
-      str = "";
-      if ( parent->Attribute( "type" )  )
-        str = parent->Attribute("type");
-      if ( str.compare("vff" ) == 0 )
-        break;
-      parent = parent->NextSiblingElement("Functional");
-    }
-    if ( not parent )
-    {
-      std::cerr << "Could not find an <Functional type=\"vff\"> tag in input file" 
-                << std::endl;
-      return false;
-    } 
 
     // reads and initializes bond cutoff
-    parent->Attribute( "cutoff", &bond_cutoff );
+    _element.Attribute( "cutoff", &bond_cutoff );
     if ( bond_cutoff == 0 )
       bond_cutoff = 1.25; 
     bond_cutoff *= std::sqrt(3.0) / 4.0; // axes bs same as CE
@@ -253,7 +223,7 @@ namespace Vff
     // **************************************************************
     // first reads bond interactions
     // **************************************************************
-    child = parent->FirstChildElement( "Bond" );
+    child = _element.FirstChildElement( "Bond" );
     for( types::t_unsigned i=0; child and i < functionals.size();
          child = child->NextSiblingElement( "Bond" ), ++i )
     {
@@ -290,7 +260,7 @@ namespace Vff
     // **************************************************************
     // then reads angle and bond-angle interactions 
     // **************************************************************
-    child = parent->FirstChildElement( "Angle" );
+    child = _element.FirstChildElement( "Angle" );
     for(; child; child = child->NextSiblingElement( "Angle" ) )
     {
       // reads input
@@ -338,6 +308,34 @@ namespace Vff
     return true;
   }  // Functional :: Load
 
+  const TiXmlElement* Functional :: find_node ( const TiXmlElement &_element )
+  {
+    const TiXmlElement *parent;
+    std::string str;
+
+    // This whole section tries to find a <Functional type="vff"> tag
+    // in _element or its child
+    str = _element.Value();
+    if ( str.compare("Functional" ) != 0 )
+      parent = _element.FirstChildElement("Functional");
+    else parent = &_element;
+    
+    while (parent)
+    {
+      str = "";
+      if ( parent->Attribute( "type" )  )
+        str = parent->Attribute("type");
+      if ( str.compare("vff" ) == 0 )
+        break;
+      parent = parent->NextSiblingElement("Functional");
+    }
+    if ( parent ) return parent;
+    
+    std::cerr << "Could not find an <Functional type=\"vff\"> tag in input file" 
+              << std::endl;
+    return NULL;
+  }  // Functional :: find_node
+
   types::t_real Atomic_Functional :: evaluate( const Atomic_Center &_center ) const
   {
     types :: t_real energy = 0;
@@ -355,7 +353,7 @@ namespace Vff
       
       // adds energy only if center is site 0 
       // computes e0 for bond-angle now 
-      types::t_real e0 = i_bond.norm2() * scale2 / bond_length - bond_length;
+      types::t_real e0 = i_bond.norm2() * scale2 / bond_length - bond_length; 
       if ( _center.site_one() ) 
       {
         std::vector<types::t_real>::const_iterator i_alpha = alphas.begin() + 5 * bond_kind;
@@ -368,7 +366,7 @@ namespace Vff
 
       // Three body terms
       Atomic_Center :: const_iterator i_angle ( i_bond_begin );
-      for ( ; i_angle != i_bond_end; ++i_angle )
+      for (; i_angle != i_bond_end; ++i_angle )
         if ( i_angle != i_bond )
         {
           // sets up parameters
@@ -399,10 +397,11 @@ namespace Vff
     return energy * three8;
   }
 
-  types::t_real Atomic_Functional :: evaluate_with_gradient( Atomic_Center &_center,
-                                                             const atat::rMatrix3d &_strain,
-                                                             atat::rMatrix3d &_stress,
-                                                             const atat::rMatrix3d &_K0 ) const
+  types::t_real Atomic_Functional
+     :: evaluate_with_gradient( Atomic_Center &_center,
+                                const atat::rMatrix3d &_strain,
+                                atat::rMatrix3d &_stress,
+                                const atat::rMatrix3d &_K0 ) const
   {
     types :: t_real energy = 0;
     types :: t_real scale2 = structure->scale * structure->scale;
@@ -434,7 +433,7 @@ namespace Vff
         // then gradient 
         i_alpha -= 4; // alphas.begin() + 5 * bond_kind;
         types::t_real e0grad = 2.0 * scale2 / bond_length *
-                                 e0 * ( *(  i_alpha) * 1.5
+                                 e0 * ( *(  i_alpha) * 1.5e0
                                + e0 * ( *(++i_alpha) * s33o8
                                + e0 * ( *(++i_alpha) * thre16
                                + e0 * ( *(++i_alpha) * s33128
@@ -532,7 +531,7 @@ namespace Vff
                                     types::t_unsigned _i )
                                  : origin(&_e), structure(&_str)
   {
-     is_site_one = ( structure->lattice->get_atom_site_index( _e.pos ) == 0 );
+     is_site_one = ( structure->lattice->get_atom_site_index( _e ) == 0 );
      is_site_one_two_species = ( structure->lattice->get_nb_types( 0 ) == 2 );
      index = _i;
   }
@@ -541,12 +540,9 @@ namespace Vff
   {
     if ( is_site_one )
       return structure->lattice->convert_real_to_type_index( 0, origin->type );
-    else
-    {
-      if ( is_site_one_two_species )
-        return  2 + structure->lattice->convert_real_to_type_index( 1, origin->type );
-      return  1 + structure->lattice->convert_real_to_type_index( 1, origin->type );
-    }
+    else if ( is_site_one_two_species )
+      return 2 + structure->lattice->convert_real_to_type_index( 1, origin->type );
+    return 1 + structure->lattice->convert_real_to_type_index( 1, origin->type );
   }
 
   void Functional :: angle_indices( const std::string &_A, const std::string &_B, 
@@ -574,13 +570,9 @@ namespace Vff
     return;
 
 failure:
-    std::ostringstream sstr;
-    sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-         << "Something wrong with your input" 
-         << std::endl 
-         << "Did not expect angle type " << _A << "-" << _B << "-" << _C
-         << std::endl;
-    throw std::runtime_error( sstr.str() );
+    __THROW_ERROR(   "Something wrong with your input\n" 
+                   << "Did not expect angle type " << _A << "-"
+                   << _B << "-" << _C << "\n" )
   }
 
   void Functional :: bond_indices( const std::string &_A, const std::string &_B,
@@ -608,23 +600,21 @@ failure:
 
     return;
 failure:
-    std::ostringstream sstr;
-    sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-         << "Something wrong with your input" 
-         << std::endl 
-         << "Could not find bond type " << _A << "-" << _B
-         << std::endl;
-    throw std::runtime_error( sstr.str() );
+    __THROW_ERROR(   "Something wrong with your input\n" 
+                   << "Did not expect bond type " << _A << "-"
+                   << _B << "-" << "\n" )
   }
 
   types::t_unsigned  Atomic_Center :: bond_kind( const Atomic_Center &_bond ) const
   {
-    if ( is_site_one_two_species )
+    if ( is_site_one ) 
+      return  structure->lattice->convert_real_to_type_index( 1, _bond.origin->type );
+    else if ( is_site_one_two_species )
       return  structure->lattice->convert_real_to_type_index( 0, _bond.origin->type );
-    return  structure->lattice->convert_real_to_type_index( 1, _bond.origin->type );
+    return 0; 
   }
 
-  types::t_int Atomic_Center :: add_bond( Atomic_Center &_bond, 
+  types::t_int Atomic_Center :: add_bond( t_BondRefd _bond, 
                                           const types::t_real _cutoff ) 
   {
     bool found_bond = false;
@@ -640,7 +630,7 @@ failure:
       frac_image[0] =  (types::t_real) period.access(0);
       frac_image[1] =  (types::t_real) period.access(1);
       frac_image[2] =  (types::t_real) period.access(2);
-      image = _bond.origin->pos + structure->cell * frac_image;
+      image = _bond->origin->pos + structure->cell * frac_image;
 
       // checks if within 
       if( atat::norm2( image - origin->pos ) < _cutoff  )
@@ -650,7 +640,7 @@ failure:
         if ( (not site) == is_site_one )
           return -1;  // error bond between same site
 
-        bonds.push_back( &_bond );
+        bonds.push_back( _bond );
         translations.push_back( frac_image );
         do_translates.push_back( atat::norm2( frac_image ) > atat::zero_tolerance );
         found_bond = true;
@@ -673,19 +663,11 @@ failure:
     return energy;
   }
 
-  // same as energy, but unpacks values from
-  // opt::Function_Base::variables
-  types::t_real Functional :: evaluate()
-  {
-    unpack_variables(strain);
-    return energy();
-  }
-
   // Unpacks opt::Function_Base::variables into Vff::Functional format
   void Functional :: unpack_variables(atat::rMatrix3d& strain)
   {
-    std::vector<types::t_real> :: const_iterator i_x = variables->begin();
-    std::vector<types::t_real> :: const_iterator i_x_end = variables->end();
+    __ASSERT( variables->size() == 0, "Too few variables.\n" )
+    const_iterator i_x = variables->begin();
 
     strain(0,0) = ( structure.freeze & Ising_CE::Structure::FREEZE_XX ) ?
                   1.0 : (*i_x++);
@@ -702,36 +684,53 @@ failure:
 
     // compute resulting cell vectors
     structure.cell = strain * structure0.cell;
+    unpack_positions( strain, i_x );
+  }
 
+  void Functional :: unpack_positions(atat::rMatrix3d& strain,
+                                      const_iterator &_i_x )
+  {
     // then computes positions
-    t_Atoms :: const_iterator i_atom0 = structure0.atoms.begin();
     t_Atoms :: iterator i_atom = structure.atoms.begin();
     t_Atoms :: iterator i_atom_end = structure.atoms.end();
-    atat::rVector3d com(0,0,0);
-    atat::rMatrix3d cell_inv = !structure.cell;
-    for(; i_atom != i_atom_end; ++i_atom, ++i_atom0 )
+    for(; i_atom != i_atom_end; ++i_atom )
     {
       atat::rVector3d pos;
-      pos[0] = ( i_atom0->freeze & t_Atom::FREEZE_X ) ?
-               i_atom0->pos[0] : 2.0 * (*i_x++);
-      pos[1] = ( i_atom0->freeze & t_Atom::FREEZE_Y ) ?
-               i_atom0->pos[1] : 2.0 * (*i_x++);
-      pos[2] = ( i_atom0->freeze & t_Atom::FREEZE_Z ) ?
-               i_atom0->pos[2] : 2.0 * (*i_x++);
+      if ( not (i_atom->freeze & t_Atom::FREEZE_X ) )
+        { pos[0] = 2.0 * (*_i_x ); ++_i_x; }
+      else pos[0] = i_atom->pos[0];
+      if ( not (i_atom->freeze & t_Atom::FREEZE_Y ) )
+        { pos[1] = 2.0 * (*_i_x ); ++_i_x; }
+      else pos[1] = i_atom->pos[1];
+      if ( not (i_atom->freeze & t_Atom::FREEZE_Z ) )
+        { pos[2] = 2.0 * (*_i_x ); ++_i_x; }
+      else pos[2] = i_atom->pos[2];
+
       i_atom->pos = strain * pos;
-      com -= cell_inv * i_atom->pos;
+      __ASSERT( variables->end() - _i_x < 0, "Too few variables.\n" )
     }
 
-    com += center_of_mass;
-    com[0] /= (double) structure.atoms.size();
-    com[1] /= (double) structure.atoms.size();
-    com[2] /= (double) structure.atoms.size();
-    if ( atat::norm2( com ) < types::tolerance )
-      return;
+    // Correct stray movements of the center of mass
+    __ASSERT(    fixed_index[0] < 0
+              or fixed_index[1] < 0
+              or fixed_index[2] < 0,
+              "fixed_index contains negative indices. Was init() called?\n" )
+    __ASSERT(    fixed_index[0] >= structure0.atoms.size()
+              or fixed_index[1] >= structure0.atoms.size()
+              or fixed_index[2] >= structure0.atoms.size(),
+              "fixed_index contains out-of-range indices.\n" )
+    atat::rMatrix3d cell_inv = !structure.cell;
 
+    types::t_real x =   structure0.atoms[fixed_index[0]].pos[0] 
+                      - structure.atoms [fixed_index[0]].pos[0];
+    types::t_real y =   structure0.atoms[fixed_index[1]].pos[1] 
+                      - structure.atoms [fixed_index[1]].pos[1];
+    types::t_real z =   structure0.atoms[fixed_index[2]].pos[2] 
+                      - structure.atoms [fixed_index[2]].pos[2];
 
+    if ( Fuzzy::eq(x, 0e0) and Fuzzy::eq(y, 0e0) and Fuzzy::eq(z, 0e0) ) return;
     for(i_atom = structure.atoms.begin(); i_atom != i_atom_end; ++i_atom )
-      i_atom->pos += com; 
+      { i_atom->pos[0] += x; i_atom->pos[1] += y; i_atom->pos[2] += z; }
   }
 
 
@@ -741,15 +740,7 @@ failure:
     // sets up structure0, needed for fractional vs cartesian shit
     structure0 = structure;
 
-    // Computes center of Mass
-    // frozen (i.e. three components of the atomic positions )
-    t_Atoms :: iterator i_atom =  structure0.atoms.begin();
-    t_Atoms :: iterator i_atom_end =  structure0.atoms.end();
-    center_of_mass = atat::rVector3d(0,0,0);
-    for(; i_atom != i_atom_end; ++i_atom )
-      center_of_mass += (!structure0.cell) * i_atom->pos;
-
-    // Now counts the leftover degrees of freedom
+    // Now counts the degrees of freedom
     types::t_unsigned dof = 0;
     if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_XX ) ) ++dof;
     if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_XY ) ) ++dof;
@@ -757,62 +748,86 @@ failure:
     if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_YY ) ) ++dof;
     if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_YZ ) ) ++dof;
     if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_ZZ ) ) ++dof;
-    for( i_atom = structure0.atoms.begin(); 
-         i_atom != i_atom_end; ++i_atom ) 
-    {
-      if ( not (i_atom->freeze & t_Atom::FREEZE_X ) ) ++dof;
-      if ( not (i_atom->freeze & t_Atom::FREEZE_Y ) ) ++dof;
-      if ( not (i_atom->freeze & t_Atom::FREEZE_Z ) ) ++dof;
-    }
-    if ( not dof )
-    {
-      std::cerr << " Structure is frozen!! " << std::endl;
-      std::cerr << " give me something to work with... " << std::endl;
-      return false;
-    }
+    dof += posdofs();
 
-    function::Base<> :: resize( dof );
-    if ( not variables ) return false;
+    __DOASSERT( not dof, "No degrees of freedom.\n" )
+   
+    __TRYCODE( function::Base<> :: resize( dof );,
+               "Could not resize function.\n" )
+    __DOASSERT( not variables, "Could not resize function.\n" )
 
     strain.zero(); 
     strain(0,0) = 1.0;
     strain(1,1) = 1.0;
     strain(2,2) = 1.0;
+
     pack_variables(strain);
+    unpack_variables(strain);
     
     return true;
+  }
+
+  types::t_unsigned Functional :: posdofs()
+  {
+    fixed_index[0] = -1; fixed_index[1] = -1; fixed_index[2] = -1; 
+    types::t_unsigned dof = 0;
+    atat::rMatrix3d cell_inv = !structure.cell;
+    t_Atoms :: iterator i_atom =  structure0.atoms.begin();
+    t_Atoms :: iterator i_atom_end =  structure0.atoms.end();
+    for( types::t_unsigned n = 0; i_atom != i_atom_end; ++i_atom, ++n ) 
+    {
+      if ( not (i_atom->freeze & t_Atom::FREEZE_X ) ) ++dof;
+      else if (fixed_index[0] == -1 ) fixed_index[0] = n;
+      if ( not (i_atom->freeze & t_Atom::FREEZE_Y ) ) ++dof;
+      else if (fixed_index[1] == -1 ) fixed_index[1] = n;
+      if ( not (i_atom->freeze & t_Atom::FREEZE_Z ) ) ++dof;
+      else if (fixed_index[2] == -1 ) fixed_index[2] = n;
+    }
+    
+    if( fixed_index[0] == -1 ) fixed_index[0] = 0;
+    if( fixed_index[1] == -1 ) fixed_index[1] = 0;
+    if( fixed_index[2] == -1 ) fixed_index[2] = 0;
+
+    return dof;
   }
 
   // variables is expected to be of sufficient size!!
   // call init() first
   void Functional :: pack_variables( const atat::rMatrix3d& _strain)
   {
+    __ASSERT( variables->size() == 0, "Too few variables\n" )
     // finally, packs vff format into function::Base format
     iterator i_var = begin();
     if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_XX ) )
-      *i_var = _strain(0,0), ++i_var;
+      { *i_var = _strain(0,0); ++i_var; }
     if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_YY ) )
-      *i_var = _strain(1,1), ++i_var;
+      { *i_var = _strain(1,1); ++i_var; }
     if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_ZZ ) )
-      *i_var = _strain(2,2), ++i_var;
+      { *i_var = _strain(2,2); ++i_var; }
     if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_XY ) )
-      *i_var = 0.5*(_strain(1,0) + _strain(0,1)), ++i_var;
+      { *i_var = 0.5*(_strain(1,0) + _strain(0,1)); ++i_var; }
     if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_XZ ) )
-      *i_var = 0.5*(_strain(2,0) + _strain(0,2)), ++i_var;
+      { *i_var = 0.5*(_strain(2,0) + _strain(0,2)); ++i_var; }
     if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_YZ ) )
-      *i_var = 0.5*(_strain(2,1) + _strain(1,2)), ++i_var;
+      { *i_var = 0.5*(_strain(2,1) + _strain(1,2)); ++i_var; }
 
-    t_Atoms :: const_iterator i_atom =  structure0.atoms.begin();
-    t_Atoms :: const_iterator i_atom_end =  structure0.atoms.end();
-    for(; i_atom != i_atom_end; ++i_atom )
-    {
-      if ( not (i_atom->freeze & t_Atom::FREEZE_X ) )
-        *i_var = i_atom->pos[0] * 0.5, ++i_var;
-      if ( not (i_atom->freeze & t_Atom::FREEZE_Y ) )
-        *i_var = i_atom->pos[1] * 0.5, ++i_var;
-      if ( not (i_atom->freeze & t_Atom::FREEZE_Z ) )
-        *i_var = i_atom->pos[2] * 0.5, ++i_var;
-    }
+    pack_positions( i_var );
+  }
+
+  void Functional :: pack_positions( iterator &_i_var )
+  {
+     t_Atoms :: const_iterator i_atom =  structure0.atoms.begin();
+     t_Atoms :: const_iterator i_atom_end =  structure0.atoms.end();
+     for(; i_atom != i_atom_end; ++i_atom )
+     {
+       if ( not (i_atom->freeze & t_Atom::FREEZE_X ) )
+         { *_i_var = i_atom->pos[0] * 0.5; ++_i_var; }
+       if ( not (i_atom->freeze & t_Atom::FREEZE_Y ) )
+         { *_i_var = i_atom->pos[1] * 0.5; ++_i_var; }
+       if ( not (i_atom->freeze & t_Atom::FREEZE_Z ) )
+         { *_i_var = i_atom->pos[2] * 0.5; ++_i_var; }
+       __ASSERT( variables->end() - _i_var < 0, "Too few variables.\n" )
+     }
   }
 
   void Functional :: print_escan_input( const std::string &_f ) const
@@ -824,9 +839,12 @@ failure:
     // whatever nanopes other may be
     for( types::t_unsigned i = 0; i < 3; ++i )
       stream << std::fixed << std::setprecision(7) 
-             << std::setw(12) << std::setprecision(8) << structure.cell(0,i) * structure0.scale / Physics::a0("A")
-             << std::setw(12) << std::setprecision(8) << structure.cell(1,i) * structure0.scale / Physics::a0("A")
-             << std::setw(12) << std::setprecision(8) << structure.cell(2,i) * structure0.scale / Physics::a0("A")
+             << std::setw(12) << std::setprecision(8)
+             << structure.cell(0,i) * structure0.scale / Physics::a0("A")
+             << std::setw(12) << std::setprecision(8)
+             << structure.cell(1,i) * structure0.scale / Physics::a0("A")
+             << std::setw(12) << std::setprecision(8)
+             << structure.cell(2,i) * structure0.scale / Physics::a0("A")
              << std::setw(18) << std::setprecision(8) << structure.cell(0,i) 
              << std::setw(12) << std::setprecision(8) << structure.cell(1,i) 
              << std::setw(12) << std::setprecision(8) << structure.cell(2,i) << "\n";
@@ -839,9 +857,16 @@ failure:
     {
       // first gets pseudo index
       Ising_CE::StrAtom stratom;
-      structure.lattice->convert_Atom_to_StrAtom( structure0.atoms[i_center->get_index()], stratom );
+      __TRYDEBUGCODE( 
+        structure.lattice->convert_Atom_to_StrAtom(
+           structure0.atoms[i_center->get_index()], stratom );, 
+           "Error while printing escan input for atom " 
+        << i_center->get_index() << ": \n"
+        << structure0.atoms[i_center->get_index()] << "\n" << structure0 )
+        
       types::t_unsigned index = Physics::Atomic::Z( stratom.type );
-      types::t_real msstrain = functionals[i_center->kind()].MicroStrain( *i_center, structure0 );
+      types::t_real msstrain = functionals[i_center->kind()]
+                                          .MicroStrain( *i_center, structure0 );
 
       // finally goes over bonds and finds number of pseudos and their
       // weights
@@ -852,7 +877,11 @@ failure:
       t_pseudos pseudos;
       for(; i_bond != i_bond_end; ++i_bond )
       { 
-        structure.lattice->convert_Atom_to_StrAtom( structure0.atoms[i_bond->get_index()], stratom );
+        __TRYDEBUGCODE( 
+          structure.lattice->convert_Atom_to_StrAtom( 
+            structure0.atoms[i_bond->get_index()], stratom );, 
+             "Error while printing escan input for atoms\n" 
+          << structure0.atoms[i_bond->get_index()] << "\n" )
         types::t_unsigned Z = Physics::Atomic::Z( stratom.type );
         t_pseudos::iterator i_pseudo = pseudos.begin();
         t_pseudos::iterator i_pseudo_end = pseudos.end();
@@ -869,9 +898,6 @@ failure:
       for( ; i_pseudo != i_pseudo_end; ++i_pseudo )
       {
         atat::rVector3d pos = (!structure.cell) * i_center->Origin().pos;
-//       pos[0] -= rint(pos[0]);
-//       pos[1] -= rint(pos[1]);
-//       pos[2] -= rint(pos[2]);
         ++nb_pseudos;
         stream << std::fixed    << std::setprecision(7)
                << std::setw(6)  << index << '0' << i_pseudo->first  // pseudo index
@@ -879,7 +905,8 @@ failure:
                << std::setw(12) << pos[1] 
                << std::setw(12) << pos[2] 
                << std::setw(18) << msstrain << " " // microscopic strain
-               << std::setw(6) << std::setprecision(2) << types::t_real( i_pseudo->second ) * 0.25  // weight
+               << std::setw(6) << std::setprecision(2)
+                               << types::t_real( i_pseudo->second ) * 0.25  // weight
                << std::setw(18) << std::setprecision(7) << pos[0] // pseudo position
                << std::setw(12) << pos[1] 
                << std::setw(12) << pos[2] << "\n";
@@ -895,13 +922,15 @@ failure:
     file.close();
   }
 
-  types::t_real Atomic_Functional :: MicroStrain( const Atomic_Center &_center, 
-                                                  const Ising_CE::Structure &_str0 ) const 
+  types::t_real Atomic_Functional
+    :: MicroStrain( const Atomic_Center &_center, 
+                    const Ising_CE::Structure &_str0 ) const 
   {
     if ( _center.size() != 4 )
     { 
       std::cerr << "Microscopic strain cannot be computed "
-                << "Because atom " << _center.get_index() << " " << _center.Origin().pos
+                << "Because atom " << _center.get_index()
+                << " " << _center.Origin().pos
                 << " has only " << _center.size() << " bonds " << std::endl;
       return 0;
     }
@@ -915,7 +944,8 @@ failure:
 
     // first vector
     i_bond.vector(dR0); 
-    R0 = _str0.atoms[i_bond->get_index()].pos - _str0.atoms[ _center.get_index() ].pos;
+    R0 =   _str0.atoms[i_bond->get_index()].pos
+         - _str0.atoms[ _center.get_index() ].pos;
     i_bond.translate( R0, _str0.cell );
     types::t_real aeq = lengths[i_bond.kind()]; // equilibrium lattice constant
     types::t_real deq = std::sqrt(i_bond.norm2());
@@ -925,7 +955,8 @@ failure:
     {
       aeq += lengths[i_bond.kind()];
       i_bond.vector( dR1 );
-      R1 = _str0.atoms[i_bond->get_index()].pos - _str0.atoms[ _center.get_index() ].pos;
+      R1 =   _str0.atoms[i_bond->get_index()].pos
+           - _str0.atoms[ _center.get_index() ].pos;
       i_bond.translate( R1, _str0.cell ); 
       R0 -= R1; dR0 -= dR1;
       tetra0.set_row( i, R0 );
@@ -970,12 +1001,32 @@ failure:
 
   void Functional :: print_out( std::ostream &stream ) const
   {
-    stream << "Vff::Functional " << " " << bond_cutoff << std::endl;
     t_AtomicFunctionals :: const_iterator i_func = functionals.begin();
     t_AtomicFunctionals :: const_iterator i_func_end = functionals.end();
     for(; i_func != i_func_end; ++i_func )
       i_func->print_out(stream);
   }
+
+#ifdef _DEBUG
+  void Functional :: check_tree() const
+  {
+    t_Centers :: const_iterator i_center = centers.begin();
+    t_Centers :: const_iterator i_center_end = centers.end();
+    for(; i_center != i_center_end; ++i_center )
+    {
+      __DOASSERT( not i_center->origin, 
+                  "Origin of the center is invalid\n"; )
+      __DOASSERT( not i_center->structure, 
+                  "Invalid pointer to structure\n"; )
+      __DOASSERT( i_center->bonds.size() != 4,
+                     "Invalid number of bonds: "
+                  << i_center->bonds.size() << "\n"; )
+      __DOASSERT( i_center->translations.size() != 4,
+                     "Invalid number of translations: "
+                  << i_center->translations.size() << "\n"; )
+    }
+  }
+#endif
 } // namespace vff
 
 #ifdef _MPI
@@ -1003,7 +1054,9 @@ namespace mpi
   {
     // first serializes bond_cutoff and freeze_none 
     if ( not serialize( _vff.bond_cutoff ) ) return false;
-    if ( not serialize( _vff.center_of_mass ) ) return false;
+    if ( not serialize( _vff.fixed_index[0] ) ) return false;
+    if ( not serialize( _vff.fixed_index[1] ) ) return false;
+    if ( not serialize( _vff.fixed_index[2] ) ) return false;
 
     // finally, serializes atomic functionals
     types::t_int n = _vff.functionals.size();
@@ -1011,8 +1064,9 @@ namespace mpi
     if ( stage == COPYING_FROM_HERE )
       _vff.functionals.resize(n, Vff::Atomic_Functional(_vff.structure));
 
-    Vff::Functional::t_AtomicFunctionals :: iterator i_func = _vff.functionals.begin();
-    Vff::Functional::t_AtomicFunctionals :: iterator i_func_end = _vff.functionals.end();
+    typedef Vff::Functional::t_AtomicFunctionals :: iterator t_iterator;
+    t_iterator i_func = _vff.functionals.begin();
+    t_iterator i_func_end = _vff.functionals.end();
     for(; i_func != i_func_end; ++i_func )
       if ( not serialize( *i_func ) ) return false;
 

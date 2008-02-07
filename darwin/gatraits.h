@@ -14,9 +14,10 @@
 
 #include <eo/eoPop.h>
 
-#ifdef _MPI
-#include "mpi/mpi_object.h"
-#endif
+#include <mpi/mpi_object.h>
+#include <opt/types.h>
+#include <opt/function_base.h>
+#include <opt/traits.h>
 
 #include <opt/types.h>
 #include <opt/function_base.h>
@@ -24,9 +25,6 @@
 
 #include "fitness.h"
 
-#ifdef _MPI
-#include "mpi/mpi_object.h"
-#endif
 
 namespace Traits 
 {

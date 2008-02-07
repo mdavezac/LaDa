@@ -3,19 +3,20 @@
 //
 #include <stdexcept>       // std::runtime_error
 
+#include <revision.h>
 #ifdef _PESCAN
   #include "bandgap.h"
   typedef BandGap :: Evaluator t_Evaluator;
-#define __PROGNAME__ "bandgap_opt"
-#elif _CE
+#define __PROGNAME__ "Band-Gap Optimization"
+#elif defined(_CE)
   #include "groundstate.h"
   typedef GroundState :: Evaluator t_Evaluator;
-#define __PROGNAME__ "ce_opt"
-#elif _MOLECULARITY
+#define __PROGNAME__ "Cluster Expansion Optimization"
+#elif defined(_MOLECULARITY)
   #include "molecularity.h"
   typedef Molecularity :: Evaluator t_Evaluator;
-#define __PROGNAME__ "layered_opt"
-#elif _EMASS
+#define __PROGNAME__ "Band-Gap Optimization for Epitaxial Structure"
+#elif defined(_EMASS)
   #include "emass.h"
   typedef eMassSL :: Evaluator t_Evaluator;
 #define __PROGNAME__ "emass_opt"
@@ -26,98 +27,109 @@
 #include "darwin.h"
 #include "print/xmg.h"
 
-#ifdef _MPI
-#  include "mpi/mpi_object.h"
-#endif
+#include <opt/debug.h>
+#include <mpi/mpi_object.h>
 
-void parse_cli( int argc, char *argv[], std::string &_filename )
+bool parse_cli( int argc, char *argv[], std::string &_filename )
 {
-  if( argc < 2 ) return;
-  
-  std::ostringstream sstr;
-  for( types::t_int i = 1; i < argc; ++i )
-    sstr << argv[i] << " "; 
-  std::istringstream istr( sstr.str() );
-  while ( istr.good() )
-  {
-    std::string is_op;
-    istr >> is_op; is_op = Print::StripEdges( is_op );
-    if( is_op.empty() ) continue;
-    else if(     istr.good()
-             and (is_op == "-i" or is_op == "--input") ) istr >> _filename;
-    else if( is_op == "-h" or is_op == "--help" )
-      std::cout << "Command-line options:\n\t -h, --help this message"
-                << "\n\t -i, --input XML input file (default: input.xml)\n\n";
+  bool dostop = false;
+
+  __NOTMPIROOT( goto syncfilename; )
+
+  { // serial and root node 
+    std::ostringstream sstr;
+    for( types::t_int i = 1; i < argc; ++i )
+      sstr << argv[i] << " "; 
+    std::istringstream istr( sstr.str() );
+    
+    while ( istr.good() and (not dostop) )
+    {
+      std::string is_op;
+      istr >> is_op; is_op = Print::StripEdges( is_op );
+      if( is_op.empty() ) continue;
+      else if(     istr.good()
+               and (is_op == "-i" or is_op == "--input") ) istr >> _filename;
+      else if( is_op == "-h" or is_op == "--help" )
+      {
+        std::cout << "\n" << __PROGNAME__ << " from the " << PACKAGE_STRING << " package."
+                  << "\nCommand-line options:\n\t -h, --help this message"
+                  << "\n\t -v, --version Subversion Revision and Package version"
+                  << "\n\t -i, --input XML input file (default: input.xml)\n\n";
+        dostop = true;
+      }
+      else if( is_op == "-v" or is_op == "--version" )
+      {
+        std::cout << "\n" << __PROGNAME__ << " from the " << PACKAGE_STRING << " package\n"
+                  << "Subversion Revision: " << SVN::Revision << "\n\n"; 
+        dostop = true;
+      }
+    }
+    _filename = Print::reformat_home( _filename );
   }
-  _filename = Print::reformat_home( _filename );
+
+syncfilename:
+  __TRYMPICODE(
+    mpi::BroadCast bc(mpi::main);
+    __NOTMPIROOT(  _filename.clear(); )
+    bc << _filename  << dostop
+       << mpi::BroadCast::allocate 
+       << _filename  << dostop
+       << mpi::BroadCast::broadcast 
+       << _filename  << dostop
+       << mpi::BroadCast::clear;,
+    "Error while syncing input file " << _filename << " between procs.\n"
+  )
+
+dostopnow:
+  if( dostop ) return false;
+  
+  __NOTMPIROOT( return true; )
+
+  if( _filename != "input.xml" )
+    std::cout << "Reading from input file " << _filename << std::endl;
+  return true;
 }
 
 int main(int argc, char *argv[]) 
 {
   std::string filename("input.xml");
-#ifdef _MPI
-  mpi::main(argc, argv);
-  if( mpi::main.is_root_node() )
-#endif
-  parse_cli( argc, argv, filename );
+  __DOMPICODE( mpi::main(argc, argv); )
 
-#ifdef _MPI
-  mpi::BroadCast bc(mpi::main);
-  if( not mpi::main.is_root_node() ) filename.clear();
-  bc << filename 
-     << mpi::BroadCast::allocate 
-     << filename 
-     << mpi::BroadCast::broadcast 
-     << filename
-     << mpi::BroadCast::clear;
-  if( mpi::main.is_root_node() )
-#endif
-  if( filename != "input.xml" )
-    std::cout << "Reading from input file " << filename << std::endl;
+  if( not parse_cli( argc, argv, filename ) ) return true;
+
 
   try
   {
     GA::Darwin< t_Evaluator > ga;
-    if ( not  ga.Load(filename) )
-    {
-      std::ostringstream sstr;
-      sstr << __FILE__ << ", line: " << __LINE__ << "\n"
-           << "Could not load input from file " << filename << "\n";
-      throw std::runtime_error( sstr.str() ); 
-    }
+    __DOASSERT( not ga.Load(filename),
+                "Could not load input from file " << filename << "\n" )
 
     ga.run();
   }
   catch ( std::exception &e )
   {
     std::ostringstream sstr;
-#ifdef _MPI
-    sstr.str("");
-    sstr << "\nProcessor " << mpi::main.rank() + 1
-         << " of " << mpi::main.size()
-         << " says:\n";
-#endif
+    __DOMPICODE( sstr << "\nProcessor " << mpi::main.rank() + 1
+                      << " of " << mpi::main.size()
+                      << " says:\n"; )
+
     sstr << "Caught error while running " << __PROGNAME__ 
          << "\n" << e.what() << "\n";
-#ifdef _MPI
-    mpi::AllGather bc( mpi::main );
-    std::string message = sstr.str();
-    bc << mpi::BroadCast::clear
-       << message
-       << mpi::BroadCast::allocate
-       << message
-       << mpi::BroadCast::broadcast;
-    sstr.str("");
-    for( types::t_int n = mpi::main.size(); n > 0; --n )
-    {
-      bc.serialize( message );
-      sstr << message;
-    }
-    bc << mpi::BroadCast::clear;
-    if( mpi::main.is_root_node() ) 
-#endif
-      std::cerr << sstr.str() << std::endl;
 
+    __DOMPICODE( 
+      mpi::AllGather bc( mpi::main );
+      std::string message = sstr.str();
+      bc << mpi::BroadCast::clear
+         << message
+         << mpi::BroadCast::allocate
+         << message
+         << mpi::BroadCast::broadcast;
+      sstr.str("");
+      while( bc.serialize( message ) ) sstr << message;
+      bc << mpi::BroadCast::clear;
+    )
+    __NOTMPIROOT( return 0; )
+    std::cerr << sstr.str() << std::endl;
   }
   return 0;
 }

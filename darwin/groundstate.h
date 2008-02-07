@@ -11,24 +11,18 @@
 #include <string>
 #include <algorithm>
 #include <functional>
-#ifndef __PGI
-  #include<ext/algorithm>
-  using __gnu_cxx::copy_n;
-#endif
 
 #include <tinyxml/tinyxml.h>
 #include <eo/eoOp.h>
 
-#include "opt/types.h"
+#include <opt/types.h>
+#include <mpi/mpi_object.h>
 
 #include "evaluator.h"
 #include "individual.h"
 #include "single_site.h"
 #include "ce.h"
 
-#ifdef _MPI
-#include "mpi/mpi_object.h"
-#endif
 
 /** \ingroup Genetic
  * @{ */

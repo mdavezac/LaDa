@@ -4,10 +4,9 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <exception>
-#include <stdexcept>
 
 #include <opt/types.h>
+#include <opt/debug.h>
 
 #include "functional_builder.h"
 
@@ -62,21 +61,13 @@ namespace VA_CE
      } 
 
      // creates static quantities
-     try
-     {
+     __TRYCODE(
        lattice    = new Ising_CE::Lattice;
        clusters   = new std::vector<Ising_CE::Cluster>;
-       harmonics  = new Constituent_Strain;
-     }
-     catch( std::exception &e )
-     {
-       std::ostringstream sstr;
-       sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-            << " Memory allocation failure in Functional_Builder :: Load (...) \n"
-            << e.what() << "\n";
-       throw std::runtime_error(sstr.str());
-     }
-     
+       harmonics  = new Constituent_Strain;,
+       " Memory allocation failure in Functional_Builder :: Load (...) \n" 
+     )
+
      // then loads lattice
      child = parent->FirstChildElement( "Lattice" );
      if ( not child )

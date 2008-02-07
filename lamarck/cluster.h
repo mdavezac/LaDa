@@ -12,14 +12,10 @@
 
 #include <tinyxml/tinyxml.h>
 
-#include "opt/types.h"
-
-#include "atat/machdep.h" 
-#include "atat/vectmac.h"
-
-#ifdef _MPI
-#include "mpi/mpi_object.h"
-#endif
+#include <opt/types.h>
+#include <atat/machdep.h>
+#include <atat/vectmac.h>
+#include <mpi/mpi_object.h>
 
 //! \cond
 namespace VA_CE{ class Functional_Builder; };

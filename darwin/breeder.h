@@ -20,6 +20,7 @@
 #include <eo/utils/eoHowMany.h>
 
 #include <opt/types.h>
+#include <mpi/mpi_object.h>
 
 #include "checkpoints.h"
 #include "gatraits.h"
@@ -103,11 +104,11 @@ namespace GA
                                                 t_Population& _offspring)
   {
     types::t_unsigned target = (*howMany)( (types::t_unsigned) _parents.size());
-#ifdef _MPI
-    types::t_int residual = target % (mpi::main.size());
-    target /= mpi::main.size();
-    if ( mpi::main.rank() < residual ) ++target;
-#endif
+    __DOMPICODE( 
+      types::t_int residual = target % (mpi::main.size());
+      target /= mpi::main.size();
+      if ( mpi::main.rank() < residual ) ++target;
+    )
   
     _offspring.clear();
     eoSelectivePopulator<t_Individual> it(_parents, _offspring, select);

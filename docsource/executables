@@ -145,9 +145,10 @@
          </Functional>
        </Job>
     \endcode
-    The direction is a string of three numbers (mind the spaces. They are
-    necessary) defining the epitaxial direction. The multiplicity defines the
+    The direction \f$\mathbf{d}\f$ is a string of three numbers (mind the spaces. They are
+    necessary) defining the epitaxial direction. The multiplicity \e m defines the
     number of (epitaxial) unit-cells to use in the epitaxial direction, eg the number of layers. 
+    \f$m\mathbf{d}\f$ must be a vector of the direct lattice, in units of \a scale.
     \warning There is not \ref TagConcentration tag here. Concentrations are
     set by specifying a x0 attribute in the \<GA\> tag. 
     The \<Structure\> tag also accepts the following attributes \a PI, \a

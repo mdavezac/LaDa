@@ -1,8 +1,11 @@
 //
 //  Version: $Id$
 //
-#include "atat/array.h"
-#include "atat/misc.h"
+#include<stdexcept> 
+
+#include <atat/array.h>
+#include <atat/misc.h>
+
 #include "lattice.h"
 
 
@@ -20,8 +23,7 @@ namespace Ising_CE {
       parent = _element.FirstChildElement("Lattice");
     else
       parent = &_element;
-    if ( not parent )
-      return false;
+    if ( not parent ) return false;
 
     // reads cell first
     child = parent->FirstChildElement( "column" );
@@ -105,9 +107,7 @@ namespace Ising_CE {
       if ( atat::equivalent_mod_cell(_at, i_site->pos,inv_cell) ) 
         return i_site - sites.begin();
 
-    std::cerr << __FILE__ << ", line:" << __LINE__
-              << " Could not find atomic site index!! " << _at << std::endl;
-    return -1;
+    __THROW_ERROR("Could not find atomic site index!! " << _at << "\n" )
   }
 
   // returns  -1 on error
@@ -125,9 +125,7 @@ namespace Ising_CE {
           return i_site - sites.begin();
     }
 
-    std::cerr << __FILE__ << ", line:" << __LINE__
-              << "Could not find atom site " << _at << "!!" << std::endl;
-    return -1;
+    __THROW_ERROR( "Could not find atomic site index!! " << _at << "\n" ) 
   }
 
   types::t_int Lattice :: get_atom_type_index( const Ising_CE :: Atom &_at ) const
@@ -143,8 +141,7 @@ namespace Ising_CE {
         return convert_real_to_type_index( _at.type );
       }
 
-    std::cerr << "Could not find equivalent site!! " << std::endl;
-    return -1;
+    __THROW_ERROR("Could not find atomic site index!! " << _at << "\n" )
   }
 
   // returns  -1 on error
@@ -161,9 +158,8 @@ namespace Ising_CE {
         if ( i_type->compare(_at) == 0 )
           return i_type - i_site->type.begin();
     }
-    std::cerr << __FILE__ << ", line:" << __LINE__
-              << "Could not find atom site " << _at << "!!" << std::endl;
-    return -1;
+
+    __THROW_ERROR("Could not find atomic site index!! " << _at << "\n" )
   }
   
   bool Lattice :: convert_StrAtom_to_Atom( const Ising_CE::StrAtom &_in,
@@ -173,14 +169,17 @@ namespace Ising_CE {
     _out.pos = _in.pos; 
     _out.freeze = _in.freeze;
     _out.type = 0;
-    _out.site = _in.site;
 
-    types::t_int site = (_in.site > -1 ) ? _in.site : get_atom_site_index( _in.pos );
+    types::t_int site;
+    __TRYDEBUGCODE( site = (_in.site > -1 ) ? _in.site : get_atom_site_index( _in.pos );,
+                    "Caught error while converting numerical to string atom\n" )
+    if( site < 0 ) return false;
+    _out.site = site;
     if ( sites[site].type.size() == 1 )
       { _out.type = convert_type_index_to_real(0); return true; }
-    if ( sites[site].type.size() > 2 )
-      std::cerr << "More than three types at site " << sites[site].pos
-                << std::endl << "Conversion should not work " << std::endl;
+    __ASSERT( sites[site].type.size() > 2,
+                 "More than two types at site " << sites[site].pos
+              << "\nConversion should not work\n"; )
 
     types::t_int type;
     std::vector< std::string > :: const_iterator i_type, i_type_end;
@@ -206,12 +205,15 @@ namespace Ising_CE {
     _out.type = "";
     _out.site = _in.site;
 
-    types::t_int site = (_in.site > -1 ) ? _in.site : get_atom_site_index( _in.pos );
+    types::t_int site;
+    __TRYDEBUGCODE( site = (_in.site > -1 ) ? _in.site : get_atom_site_index( _in.pos );,
+                    "Caught error while converting numerical to string atom\n" )
+    if( site < 0 ) return false;
     if ( sites[site].type.size() == 1 )
       { _out.type = sites[site].type[0]; return true; }
-    if ( sites[site].type.size() > 2 )
-      std::cerr << "More than three types at site " << sites[site].pos
-                << std::endl << "Conversion should not work " << std::endl;
+    __ASSERT( sites[site].type.size() > 2,
+                 "More than two types at site " << sites[site].pos
+              << "\nConversion should not work\n"; )
 
     types::t_unsigned type = convert_real_to_type_index( _in.type );
     _out.type = sites[site].type[type];
@@ -229,12 +231,9 @@ namespace Ising_CE {
     t_Sites :: const_iterator i_end = sites.end();
     for( ; i_site != i_end; ++i_site )
     {
-      stream << "  Position: " << i_site->pos[0] << " "
-             << i_site->pos[1] << " "
-             << i_site->pos[2] << " ";
-      for( types::t_unsigned i = 0; i < i_site->type.size(); ++i )
-        stream << i_site->type[i] << " ";
-      stream << std::endl;
+      stream << "  Position: ";
+      i_site->print_out(stream);
+      stream << "\n";
     }
   }
 

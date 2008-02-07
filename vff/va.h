@@ -11,16 +11,19 @@
 
 #include <opt/va_function.h>
 #include <lamarck/structure.h>
+#include <mpi/mpi_object.h>
+
+#include "functional.h"
 
 #ifdef _DOFORTRAN
 #include <opt/frprmn_minimizer.h>
+#elif defined(_DONAG)
+#include <opt/nag_minimizer.h>
 #else
 #include <opt/gsl_minimizers.h>
 #endif
 
-#ifdef _MPI 
-  #include "mpi/mpi_object.h"
-#endif
+
 
 namespace Vff
 {
@@ -75,13 +78,16 @@ namespace Vff
        typedef t_VABase :: t_Type t_Type;
        //! see functional::Base::t_Container
        typedef t_VABase :: t_Container  t_Container;
-       #ifdef _DOFORTRAN
-         //! Type of the minimizer for minimizing strain
-         typedef Minimizer::Frpr<t_VffBase> t_Minimizer;
-       #else
-         //! Type of the minimizer for minimizing strain
-         typedef Minimizer::GnuSL<t_VffBase> t_Minimizer;
-       #endif
+#ifdef _DOFORTRAN
+       //! Type of the minimizer for minimizing strain
+       typedef Minimizer::Frpr<t_VffBase> t_Minimizer;
+#elif _DONAG
+       //! Type of the minimizer for minimizing strain
+       typedef Minimizer::Nag<t_VffBase> t_Minimizer;
+#else
+       //! Type of the minimizer for minimizing strain
+       typedef Minimizer::GnuSL<t_VffBase> t_Minimizer;
+#endif
 
      protected:
        //! The minimizer with which vff is minimized
@@ -92,16 +98,20 @@ namespace Vff
        //! Constructor and Initializer
        VABase   ( Ising_CE::Structure &_str )
               : t_VffBase( _str ), t_VABase( _str ),
-                minimizer( *this, vff_for_frprmn )
-         { vff_for_frprmn( (double*) this, NULL ); }
+                minimizer( choose_frpr_function<t_VffBase>() ) {}
+#elif _DONAG
+       //! Constructor and Initializer
+       VABase   ( Ising_CE::Structure &_str )
+              : t_VffBase( _str ), t_VABase( _str ),
+                minimizer( choose_nag_function<t_VffBase>() ) {}
 #else
        //! Constructor and Initializer
        VABase   ( Ising_CE::Structure &_str )
-              : t_VffBase( _str ), t_VABase( _str ), minimizer( *this ) {}
+              : t_VffBase( _str ), t_VABase( _str ), minimizer() {}
 #endif
        //! Copy Constructor
        VABase   ( const VABase &_c )
-              : t_VffBase( _c ), t_VABase( _c ), minimizer( *this ) {}
+              : t_VffBase( _c ), t_VABase( _c ), minimizer( _c.minimizer ) {}
        //! Destructor
        ~VABase() {}
         

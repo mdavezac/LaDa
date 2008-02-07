@@ -15,13 +15,13 @@
 
 #include <tinyxml/tinyxml.h>
 
+#include <mpi/mpi_object.h>
+
 #include "types.h"
 #include "function_functors.h"
 #include "fuzzy.h"
 
-#ifdef _MPI
 #include <mpi/mpi_object.h>
-#endif
 
 //! trash-can namespace for anything that doesn't quite go anywhere
 namespace opt
@@ -408,7 +408,7 @@ namespace ConvexHull
      {
        if ( Fuzzy::eq(i_begin->x, vertex.x) )
        { 
-         if ( Fuzzy::ge(i_begin->x, vertex.x) )
+         if ( Fuzzy::gt(i_begin->x, vertex.x) )
            *i_begin = vertex;
          return false; // only one point, no convexhull yet!
        }
@@ -422,7 +422,7 @@ namespace ConvexHull
                                const types::t_real> func(&t_Vertex::x_geq );
      
      // does not change convex hull if this is true
-     if ( Fuzzy::ge(vertex.y, evaluate(vertex.x) ) )
+     if ( Fuzzy::gt(vertex.y, evaluate(vertex.x) ) )
        return false; 
      
      // first finds where to insert new vertex

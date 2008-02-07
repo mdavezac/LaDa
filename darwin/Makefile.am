@@ -11,14 +11,18 @@ endif
 if DOEMASSOPT
   EMASSOPT = emass_opt
 endif
+if DOFORTRAN
+  fortranLDADD =  ../opt/libopt.la @FCLIBS@
+endif
 bin_PROGRAMS = $(CEOPT) $(BANDGAPOPT) $(LAYEREDOPT) $(EMASSOPT)
-AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ @MPICH_CFLAGS@ @EO_CFLAGS@
-AM_LDFLAGS = @TINYXML_LIBS@ @EO_LIBS@
+AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
+	      @MPI_CFLAGS@ @EO_CFLAGS@ -I ..
+AM_LDFLAGS = @TINYXML_LIBS@ @EO_LIBS@ @MPI_LIBS@ 
 ce_opt_SOURCES = main.cc $(DARWIN_CE_CC)
 ce_opt_HEADERS = $(DARWIN_CE_H) $(DARWIN_CE_IMPLS)
 ce_optdir = $(includedir)/darwin
-ce_opt_CPPFLAGS =  -D _CE $(AM_CPPFLAGS) -I .. @GSL_INCLUDE@ 
-ce_opt_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIB@ @MPICH_LIBS@
+ce_opt_CPPFLAGS =  -D _CE $(AM_CPPFLAGS) @GSL_CFLAGS@ 
+ce_opt_LDFLAGS =  $(AM_LDFLAGS)
 ce_opt_LDADD = libdarwin.la \
 	       ../lamarck/liblamarck.la \
 	       ../physics/libphysics.la \
@@ -29,25 +33,26 @@ ce_opt_LDADD = libdarwin.la \
 bandgap_opt_SOURCES = main.cc $(DARWIN_BG_CC)
 bandgap_opt_HEADERS = $(DARWIN_BG_H) $(DARWIN_BG_IMPLS) 
 bandgap_optdir = $(includedir)/darwin
-bandgap_opt_CPPFLAGS =  -D _PESCAN $(AM_CPPFLAGS) -I .. @GSL_INCLUDE@ 
-bandgap_opt_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIB@ @MPICH_LIBS@
+bandgap_opt_CPPFLAGS =  -D _PESCAN $(AM_CPPFLAGS) @NAG_CFLAGS@ @GSL_CFLAGS@ 
+bandgap_opt_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIBS@ @NAG_LIBS@ 
 bandgap_opt_LDADD = $(ce_opt_LDADD) \
                     ../vff/libvff.la \
 	            ../pescan_interface/libpescan.la \
-		    ../physics/libphysics.la 
+		    ../physics/libphysics.la \
+		    $(fortranLDADD)
 
 layered_opt_SOURCES = main.cc $(DARWIN_L_CC)
 layered_opt_HEADERS = $(DARWIN_L_H) $(DARWIN_L_IMPLS)
 layered_optdir = $(includedir)/darwin
-layered_opt_CPPFLAGS =  -D _MOLECULARITY $(AM_CPPFLAGS) -I .. @GSL_INCLUDE@ 
-layered_opt_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIB@ @MPICH_LIBS@
+layered_opt_CPPFLAGS =  -D _MOLECULARITY $(AM_CPPFLAGS) @NAG_CFLAGS@ @GSL_CFLAGS@ 
+layered_opt_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIBS@ @NAG_LIBS@ 
 layered_opt_LDADD = $(bandgap_opt_LDADD)
 
 emass_opt_SOURCES = main.cc $(DARWIN_E_CC)
 emass_opt_HEADERS = $(DARWIN_E_H) $(DARWIN_E_IMPLS)
 emass_optdir = $(includedir)/darwin
-emass_opt_CPPFLAGS =  -D _EMASS $(AM_CPPFLAGS) -I .. @GSL_INCLUDE@ 
-emass_opt_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIB@ @MPICH_LIBS@
+emass_opt_CPPFLAGS =  -D _EMASS $(AM_CPPFLAGS) @NAG_CFLAGS@ @GSL_CFLAGS@ 
+emass_opt_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIBS@ @NAG_LIBS@ 
 emass_opt_LDADD = $(bandgap_opt_LDADD) \
 		  ../lapack/liblapack.la @FCLIBS@
 

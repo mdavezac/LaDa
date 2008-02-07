@@ -16,9 +16,6 @@
 
 #include <opt/types.h>
 #include <opt/convex_hull.h>
-#ifdef _MPI
-#include <mpi/mpi_object.h>
-#endif
 #include <print/xmg.h>
 #include <print/manip.h>
 

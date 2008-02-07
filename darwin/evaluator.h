@@ -16,6 +16,7 @@
 
 #include <opt/types.h>
 #include <opt/function_base.h>
+
 #include "taboos.h"
 #include "loadsave.h"
 
@@ -197,6 +198,9 @@ namespace GA
       //! Hence it does not know about Traits::GA::t_Population. So we input this
       //! population an eoPop<t_Individual> directly.
       void presubmit( std::list<t_Individual>& ) { return; }
+      //! \brief Prints parameters.
+      //! \details Any and all, but is meant mostly for GA parameters.
+      std::string print() const{  return ""; }
   };
 
   template< class T_INDIVIDUAL>

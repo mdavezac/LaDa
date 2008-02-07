@@ -17,16 +17,13 @@ namespace Print
     if ( is_open() ) close();
     filename = reformat_home( _f );
     do_print = true;
-#ifdef _MPI
-    if ( not mpi::main.is_root_node() )
-    {
+    __NOTMPIROOT( 
       std::ostringstream sstr; 
       sstr << filename << ".mpi:" <<  mpi::main.rank();
       filename = sstr.str();
-    }
-#ifndef _PRINT_ALL_PROCS
-    do_print = mpi::main.is_root_node();
-#endif
+    )
+#ifndef _PRINT_ALL_PROCS 
+    do_print = __MPISERIALCODE(mpi::main.is_root_node();, true;)
 #endif 
     is_empty = true;
     if ( not do_print ) return;

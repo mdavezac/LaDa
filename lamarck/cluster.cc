@@ -7,6 +7,7 @@
 
 #include <opt/types.h>
 #include <opt/fuzzy.h>
+#include <opt/atat.h>
 #include <atat/findsym.h>
 #include <atat/xtalutil.h>
 
@@ -14,19 +15,6 @@
 
 
 namespace Ising_CE {
-
-  class norm_compare
-  {
-    const atat::rVector3d vec;
-    public:
-      norm_compare( const atat::rVector3d &_vec ) : vec(_vec) {};
-      norm_compare( const norm_compare &_c ) : vec(_c.vec) {};
-     bool operator()( const atat::rVector3d &_a, const atat::rVector3d &_b ) const
-       { return Fuzzy::le( atat::norm2( _a - vec ), atat::norm2( _b - vec ) ); }
-     bool operator()( const atat::rVector3d &_a ) const
-       { return Fuzzy::eq( atat::norm2( _a - vec ), 0.0 ); } 
-  };
-
 
   void Cluster :: apply_symmetry( const atat::rMatrix3d &_op,
                                   const atat::rVector3d &_trans    ) 
@@ -63,7 +51,7 @@ namespace Ising_CE {
       {
         is_found  = std::find_if( _cluster.vectors.begin(),
                                   _cluster.vectors.end(),
-                                  norm_compare( *i2_vec - shift ) );
+                                  atat::norm_compare( *i2_vec - shift ) );
 
         if ( is_found == _cluster.vectors.end() ) break;
       }
