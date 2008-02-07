@@ -73,21 +73,21 @@ namespace Pescan
                   gamma_all_electron( _str );
 
     // Then compute other points
-    escan.read_in.clear();
-    escan.nbstates = 2;
-    escan.wavefunction_in = escan.wavefunction_out;
-    escan.wavefunction_out = "dummy";
-   
-
-    other_kpoints( amplitude * Lx, eig_Lx);
-    other_kpoints( amplitude * Ly, eig_Ly);
-    other_kpoints( amplitude * Lz, eig_Lz);
-    other_kpoints( amplitude * Hxy, eig_Hxy);
-    other_kpoints( amplitude * Hxmy, eig_Hxmy);
-    other_kpoints( amplitude * Hyz, eig_Hyz);
-    other_kpoints( amplitude * Hymz, eig_Hymz);
-    other_kpoints( amplitude * Hxz, eig_Hxz);
-    other_kpoints( amplitude * Hmxz, eig_Hmxz);
+//   escan.read_in.clear();
+//   escan.nbstates = 2;
+//   escan.wavefunction_in = escan.wavefunction_out;
+//   escan.wavefunction_out = "dummy";
+//  
+//
+//   other_kpoints( amplitude * Lx, eig_Lx);
+//   other_kpoints( amplitude * Ly, eig_Ly);
+//   other_kpoints( amplitude * Lz, eig_Lz);
+//   other_kpoints( amplitude * Hxy, eig_Hxy);
+//   other_kpoints( amplitude * Hxmy, eig_Hxmy);
+//   other_kpoints( amplitude * Hyz, eig_Hyz);
+//   other_kpoints( amplitude * Hymz, eig_Hymz);
+//   other_kpoints( amplitude * Hxz, eig_Hxz);
+//   other_kpoints( amplitude * Hmxz, eig_Hmxz);
 
 #ifdef _DEBUG
     std::cout << " ****** Gamma " << eig_Gamma   << std::endl;
@@ -109,6 +109,7 @@ namespace Pescan
               << std::setw(12) << eig_Hxz[1]  << std::endl;
     std::cout << " ****** Hmxz "  << std::setw(12) << eig_Hmxz[0] << " "
               << std::setw(12) << eig_Hmxz[1] << std::endl;
+    throw std::runtime_error("Stop Here\n");
 #endif
 
     escan = saved_escan;

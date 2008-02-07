@@ -7,16 +7,16 @@ if NOLAUNCH
   AM_LDFLAGS  += @EO_LIBS@
 endif    
 
+fortranLDFLAGS = 
+fortranLDADD =
+gslCPPFLAGS =
+gslLDFLAGS = 
 if DOFORTRAN
   fortranLDFLAGS =  @FCLIBS@
   fortranLDADD = ../opt/libopt.la 
-else
+endif
 if DOEMASS
  fortranLDFLAGS =  @FCLIBS@
-else
-  fortranLDFLAGS = 
-endif
-  fortranLDADD = 
 endif
 
 if DOEMASS
