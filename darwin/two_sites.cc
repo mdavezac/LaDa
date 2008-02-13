@@ -2,7 +2,6 @@
 //  Version: $Id$
 //
 #include <algorithm>
-#include <bits/stl_algo.h>
 
 #include <lamarck/atom.h>
 #include <opt/fuzzy.h>

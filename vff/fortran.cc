@@ -76,7 +76,6 @@ namespace Vff
       i_char += n;
 
       //! Then determines if it is a known type
-      types::t_int site = -1;
       Ising_CE::Lattice::t_Site::t_Type &type = lattice.sites[ i_atom->site ].type;
       if( type.empty() )  type.push_back( symbol );
       else 

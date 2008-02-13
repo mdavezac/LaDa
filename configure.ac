@@ -8,16 +8,6 @@ AC_PROG_CXX
 AC_PROG_INSTALL
 
 AM_CONFIG_HEADER(config.h)
-AH_TOP([
-#ifndef _G_HAVE_BOOL
-#define _G_HAVE_BOOL
-#endif
-#ifndef ANSI_HEADERS
-#define ANSI_HEADERS
-#endif
-#ifndef HAVE_SSTREAM
-#define HAVE_SSTREAM
-#endif])
 
 AC_ARG_ENABLE(all,
      [  --enable-all                  Turn off/on all (most) modules],
@@ -27,6 +17,13 @@ AC_ARG_ENABLE(all,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-all) ;;
      esac],[enall=true])
 
+AC_ARG_ENABLE(all,
+     [  --enable-forcempi                  Forces mpi to be on],
+     [case "${enableval}" in
+       yes) enall=true ;;
+       no)  enall=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-all) ;;
+     esac],[forcempi=false])
 
 AC_ARG_ENABLE(fortran,
      [  --enable-fortran              Turn on fortran minimization. Incompatible with gsl/nag.],
@@ -250,8 +247,11 @@ AC_SUBST(CPP_DEBUG_FLAGS)
 
 
 #  MPI libs
+if test $forcempi = true; then
+  mpi=true
+fi
 if test x$mpi = xtrue; then
-  if test $CXX = mpic++ || test $CXX = mpiCC; then
+  if test $CXX = mpic++ || test $CXX = mpiCC || test $forcempi=true; then
     AC_DEFINE([_MPI],[1],[])
     MPI_ADDLIB="../mpi/libmpiobject.la"
     MPI_CFLAGS="$MPI_CFLAGS -D _OPENMPI_MPI_"

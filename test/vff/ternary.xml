@@ -27,7 +27,7 @@
         <Atom x="9.000000" y="0.000000" z="0.000000" type="Ga" />
         <Atom x="9.250000" y="0.250000" z="0.250000" type="As" />
     </Structure>
-    <Lattice scale="6.0">
+    <Lattice scale="6.5">
         <column x="0.0" y="0.5" z="0.5" />
         <column x="0.5" y="0.0" z="0.5" />
         <column x="0.5" y="0.5" z="0.0" />

@@ -53,8 +53,9 @@
         <Angle A="Ga" B="Sb" C="Ga" gamma="tet" sigma="0" beta="7.2289" />
         <Angle A="In" B="Sb" C="In" gamma="tet" sigma="0" beta="4.2842" />
         <Angle A="Ga" B="Sb" C="In" gamma="tet" sigma="0" beta="5.75655" />
-    </Functional>
     <Minimizer type="gsl_bfgs" itermax="4000" tolerance="0.00001" linetolerance="0.5" zeps="0.02" linestep="0.001" />
+    <Minimizer type="frprmn" itermax="4000" tolerance="0.00001" linetolerance="0.5" zeps="0.02" linestep="0.001" />
+    </Functional>
     <Functional type="escan" method="2" keepdirs="true">
         <Maskr filename="../../pseudos/maskr"/>
         <GenPot x="48" y="48" z="96" cutoff="5.0" launch="~/usr/bin/getVLarg">

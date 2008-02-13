@@ -8,6 +8,7 @@
 
 #include <physics/physics.h>
 #include <opt/ndim_iterator.h>
+#include <opt/atat.h>
 #include <opt/debug.h>
 #include <opt/atat.h>
 
@@ -141,13 +142,9 @@ namespace Vff
     t_Centers :: iterator i_center, i_bond;
 
     for( i_center = i_begin; i_center != i_end; ++i_center )
-    {
-      types::t_int nb_bonds;
-      
       for( i_bond = i_begin; i_bond != i_end; ++i_bond )
         if ( i_bond != i_center )
-          nb_bonds = i_center->add_bond ( t_Center::__make__iterator__(i_bond), bond_cutoff);
-    } // loop over atomic centers
+          i_center->add_bond ( t_Center::__make__iterator__(i_bond), bond_cutoff);
 
     
     // consistency check
@@ -356,12 +353,13 @@ namespace Vff
       types::t_real e0 = i_bond.norm2() * scale2 / bond_length - bond_length; 
       if ( _center.site_one() ) 
       {
-        std::vector<types::t_real>::const_iterator i_alpha = alphas.begin() + 5 * bond_kind;
-        energy +=   e0 * e0 * ( (*i_alpha) 
-                  + e0 * ( *(++i_alpha) / twos3
-                  + e0 * ( *(++i_alpha) * one16
-                  + e0 * ( *(++i_alpha) * s3o160
-                  + e0 * ( *(++i_alpha) * one640 )))));
+        std::vector<types::t_real>::const_iterator i_alpha =   alphas.begin()
+                                                             + 5 * bond_kind + 4;
+        types::t_real dummy = e0 * one640 * (*i_alpha); --i_alpha;
+        dummy =   e0 * ( (*i_alpha) * s3o160 + dummy ); --i_alpha;
+        dummy =   e0 * ( (*i_alpha) * one16 + dummy ); --i_alpha;
+        dummy =   e0 * ( (*i_alpha) / twos3 + dummy ); --i_alpha;
+        energy +=   e0 * e0 * ( (*i_alpha)  + dummy ); 
       } 
 
       // Three body terms
@@ -380,12 +378,13 @@ namespace Vff
                              - end_length * gamma;
           if ( i_bond - i_angle > 0 )
           {
-            std::vector< types::t_real > :: const_iterator i_beta = betas.begin() + 5 * angle_kind;
-            energy +=   e1 * e1 * ( (*i_beta) 
-                      + e1 * ( *(++i_beta) / twos3 
-                      + e1 * ( *(++i_beta) * one16
-                      + e1 * ( *(++i_beta) * s3o160
-                      + e1 * ( *(++i_beta) * one640 )))));
+            std::vector< types::t_real > :: const_iterator i_beta =   betas.begin()
+                                                                    + 5 * angle_kind + 4;
+            types::t_real dummy = e1 * one640 * (*i_beta); --i_beta;
+            dummy =   e1 * ( (*i_beta) * s3o160 + dummy ); --i_beta;
+            dummy =   e1 * ( (*i_beta) * one16 + dummy ); --i_beta;
+            dummy =   e1 * ( (*i_beta) / twos3 + dummy ); --i_beta;
+            energy +=   e1 * e1 * ( (*i_beta)  + dummy ); 
           }
 
           // Bond angle
@@ -423,21 +422,22 @@ namespace Vff
       if ( _center.site_one() ) 
       {
         // energy 
-        std::vector<types::t_real>::const_iterator i_alpha = alphas.begin() + 5 * bond_kind;
-        energy +=  e0 * e0 * ( (*i_alpha) 
-                   + e0 * ( *(++i_alpha) / twos3
-                   + e0 * ( *(++i_alpha) * one16
-                   + e0 * ( *(++i_alpha) * s3o160
-                   + e0 * ( *(++i_alpha) * one640 )))));
+        std::vector<types::t_real>::const_iterator i_alpha =   alphas.begin()
+                                                             + 5 * bond_kind + 4;
+        types::t_real dummy = e0 * one640 * (*i_alpha); --i_alpha;
+        dummy = e0 * ( (*i_alpha) * s3o160 + dummy ); --i_alpha;
+        dummy = e0 * ( (*i_alpha) * one16 + dummy ); --i_alpha;
+        dummy = e0 * ( (*i_alpha) / twos3 + dummy ); --i_alpha;
+        energy +=   e0 * e0 * ( (*i_alpha)  + dummy ); 
 
         // then gradient 
-        i_alpha -= 4; // alphas.begin() + 5 * bond_kind;
-        types::t_real e0grad = 2.0 * scale2 / bond_length *
-                                 e0 * ( *(  i_alpha) * 1.5e0
-                               + e0 * ( *(++i_alpha) * s33o8
-                               + e0 * ( *(++i_alpha) * thre16
-                               + e0 * ( *(++i_alpha) * s33128
-                               + e0 * ( *(++i_alpha) * no1280 )))));
+        i_alpha += 4; // alphas.begin() + 5 * bond_kind;
+        dummy = e0 * no1280 * (*i_alpha); --i_alpha;
+        dummy = e0 * ( (*i_alpha) * s33128 + dummy ); --i_alpha;
+        dummy = e0 * ( (*i_alpha) * thre16 + dummy ); --i_alpha;
+        dummy = e0 * ( (*i_alpha) * s33o8 + dummy ); --i_alpha;
+        types::t_real e0grad =   2.0 * scale2 / bond_length 
+                               * e0 * ( 1.5e0 * (*i_alpha) + dummy); 
         atat::rVector3d hold = e0grad * _strain * d0;
         _center.get_gradient() -= hold; // with respect to atomic positions
         i_bond->get_gradient() += hold;  
@@ -468,21 +468,23 @@ namespace Vff
           if ( i_bond - i_angle > 0 )
           {
             // energy
-            std::vector< types::t_real > :: const_iterator i_beta = betas.begin() + 5 * angle_kind;
-            energy +=   e1 * e1 * ( (*i_beta) 
-                      + e1 * ( *(++i_beta) / twos3
-                      + e1 * ( *(++i_beta) * one16
-                      + e1 * ( *(++i_beta) * s3o160
-                      + e1 * ( *(++i_beta) * one640 )))));
+            std::vector< types::t_real > :: const_iterator i_beta =   betas.begin() 
+                                                                    + 5 * angle_kind
+                                                                    + 4;
+            types::t_real dummy = e1 * one640 * (*i_beta); --i_beta;
+            dummy = e1 * ( (*i_beta) * s3o160 + dummy ); --i_beta;
+            dummy = e1 * ( (*i_beta) * one16 + dummy ); --i_beta;
+            dummy = e1 * ( (*i_beta) / twos3 + dummy ); --i_beta;
+            energy +=   e1 * e1 * ( (*i_beta)  + dummy ); 
             
             // then gradient 
-            i_beta -= 4; // goes back to beginning of array
-            types::t_real e1grad = 2.0 * scale2 / mean_length *
-                                     e1 * ( *(  i_beta) * 0.75
-                                   + e1 * ( *(++i_beta) * s33o16
-                                   + e1 * ( *(++i_beta) * thre32
-                                   + e1 * ( *(++i_beta) * s33256
-                                   + e1 * ( *(++i_beta) * no2560 )))));
+            i_beta += 4; // goes back to beginning of array
+            dummy = e1 * no2560 * (*i_beta); --i_beta;
+            dummy = e1 * ( (*i_beta) * s33256 + dummy ); --i_beta;
+            dummy = e1 * ( (*i_beta) * thre32 + dummy ); --i_beta;
+            dummy = e1 * ( (*i_beta) * s33o16 + dummy ); --i_beta;
+            types::t_real e1grad =   2.0 * scale2 / mean_length
+                                   * e1 * ( *(  i_beta) * 0.75e0 + dummy);
             atat::rVector3d hold0 = e1grad * _strain * d0;
             atat::rVector3d hold1 = e1grad * _strain * d1;
             _center.get_gradient() -= ( hold0 + hold1); // with respect to atomic positions
@@ -493,7 +495,8 @@ namespace Vff
             for( int i = 0; i < 3; ++i )
               for( int j = 0; j < 3; ++j )
                 for( int k = 0; k < 3; ++k )
-                  _stress(i,j) += (d1[i] * d0[k] + d0[i] * d1[k]) * _K0(k,j) * e1grad * 0.5;
+                  _stress(i,j) +=   (d1[i] * d0[k] + d0[i] * d1[k]) 
+                                  * _K0(k,j) * e1grad * 0.5;
           }
 
           // Bond angle energy
@@ -516,9 +519,10 @@ namespace Vff
           for( int i = 0; i < 3; ++i )
             for( int j = 0; j < 3; ++j )
               for( int k = 0; k < 3; ++k )
-                _stress(i,j) += _K0(k,j) * 0.375 * sigma * scale2 *
-                                ( 2.0 * e1 / bond_length * d0[i] * d0[k] 
-                                  + e0 / mean_length * (d0[i] * d1[k] + d1[i] * d0[k]) );
+                _stress(i,j) +=   _K0(k,j) * 0.375 * sigma * scale2 
+                                * (   2.0 * e1 / bond_length * d0[i] * d0[k] 
+                                    +   e0 / mean_length 
+                                      * (d0[i] * d1[k] + d1[i] * d0[k]) );
         } // angle loop
 
     } // for( ; i_bond != i_bond_end; ++i_bond )
@@ -545,8 +549,10 @@ namespace Vff
     return 1 + structure->lattice->convert_real_to_type_index( 1, origin->type );
   }
 
-  void Functional :: angle_indices( const std::string &_A, const std::string &_B, 
-                                    const std::string &_C, types::t_int _indices[3] ) const
+  void Functional :: angle_indices( const std::string &_A,
+                                    const std::string &_B, 
+                                    const std::string &_C, 
+                                    types::t_int _indices[3] ) const
   {
     types::t_int siteA, siteB, siteC;
     siteA = structure.lattice->get_atom_site_index( _A );

@@ -41,7 +41,7 @@ libpescan_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS)
 
 escan_SOURCES = main.cc
 escan_CPPFLAGS = $(AM_CPPFLAGS)  -I .. 
-escan_LDFLAGS =  $(AM_LDFLAGS) $(fortranLDFLAGS)
+escan_LDFLAGS =  $(AM_LDFLAGS)
 escan_LDADD = libpescan.la \
 	      ../lamarck/liblamarck.la \
 	      ../atat/libatat.la \
@@ -49,7 +49,8 @@ escan_LDADD = libpescan.la \
               ../physics/libphysics.la \
 	      ../print/libprint.la \
 	      @MPI_ADDLIB@ \
-	      $(fortranLDADD)
+	      $(fortranLDADD) \
+              $(fortranLDFLAGS)
 
 
 if DOEMASS
