@@ -61,9 +61,10 @@ LAPACK_CC = lapack.cc
 LAPACK_H  = lapack.h
 LAPACK_DOC = $(LAPACK_H) $(LAPACK_CC) 
 
-MPI_CC = mpi_object.cc
-MPI_H  = mpi_object.h
-MPI_DOC = $(MPI_H) $(MPI_CC) 
+MPI_CC     = mpi_object.cc comm.cc
+MPI_H      = mpi_object.h base.h macros.h comm.h 
+MPI_H_IMPL = comm.impl.h
+MPI_DOC    = $(MPI_H) $(MPI_CC) $(MPI_IMPL_H)
 
 OPT_H = ndim_iterator.h minimize_base.h polynome.h frprmn_minimizer.h \
         gsl_minimizers.h types.h convex_hull.h function_base.h \
