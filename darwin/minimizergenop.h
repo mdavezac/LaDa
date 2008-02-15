@@ -88,7 +88,7 @@ namespace GA
       //! Constructor and initializer
       Minimizer_Functional( t_Evaluation &_r, t_Taboo &_t ) : evaluation(&_r), taboo(&_t) {};
       //! Evaluates and returns the evaluation
-      t_VA_Type evaluate() { return (t_VA_Type) evaluation->evaluate( *current_indiv ); }
+      t_VA_Type evaluate();
       //! \brief Evaluates and returns the evaluation. Also computes the gradient and
       //!        stores in in \a _i_grad.
       //! \pre \a _i_grad should point to a valid and sufficiently large memory block.
@@ -98,8 +98,7 @@ namespace GA
       void evaluate_gradient( t_VA_Type *_i_grad )
         { evaluation->evaluate_gradient( *current_indiv, gradients, _i_grad ); }
       //! Returns the gradient evaluated in direction \a _pos
-      t_VA_Type evaluate_one_gradient( types::t_unsigned _pos )
-        { return evaluation->evaluate_one_gradient( *current_indiv, gradients, _pos ); }
+      t_VA_Type evaluate_one_gradient( types::t_unsigned _pos );
       //! Returns true if the current state is taboo
       bool is_taboo() const { return taboo ? (*taboo)( *current_indiv ): false; }
       //! Does all initialization  neeed before minimizing.

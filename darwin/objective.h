@@ -355,6 +355,7 @@ namespace Objective
         static Vector* vector_from_xml( const TiXmlElement &_node );
     };
 
+
   //! \brief Implements maximization of a scalar quantity with \f$\mathcal{O}(q) = -q \f$
   //! \details In practice, this mean transforming any quantity \a q into \a -q.
   //! \note This is a <STRONG>scalar</STRONG> objective

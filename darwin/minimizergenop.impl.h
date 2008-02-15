@@ -9,10 +9,26 @@ namespace GA
 
   template<class T_GATRAITS>
     inline typename Minimizer_Functional<T_GATRAITS> :: t_VA_Type 
+      Minimizer_Functional<T_GATRAITS> :: evaluate()
+      { 
+        evaluation->evaluate( *current_indiv ); 
+        return (t_VA_Type) current_indiv->Fitness(); 
+      }
+  template<class T_GATRAITS>
+    inline typename Minimizer_Functional<T_GATRAITS> :: t_VA_Type 
       Minimizer_Functional<T_GATRAITS> :: evaluate_with_gradient( t_VA_Type *_i_grad )
       {
-        return (t_VA_Type) evaluation->evaluate_with_gradient( *current_indiv,
-                                                               gradients, _i_grad ); 
+        evaluation->evaluate_with_gradient( *current_indiv,
+                                            gradients, _i_grad ); 
+        return current_indiv->Fitness(); 
+      }
+  template<class T_GATRAITS>
+    inline typename Minimizer_Functional<T_GATRAITS> :: t_VA_Type 
+      Minimizer_Functional<T_GATRAITS> :: evaluate_one_gradient( types::t_unsigned _pos )
+      {
+        types::t_real result;
+        evaluation->evaluate_one_gradient( *current_indiv, gradients, _pos, result ); 
+        return result;
       }
   template<class T_GATRAITS>
     inline bool Minimizer_Functional<T_GATRAITS> :: init( t_Individual & _indiv)

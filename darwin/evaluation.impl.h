@@ -26,7 +26,7 @@ namespace Evaluation
           _indiv.set_fitness( objective( _indiv.const_quantities() ) );,
           "Error while evaluating fitness.\n" )
 
-      __TRYDEBUGCODE( store( _indiv );,
+      __TRYDEBUGCODE( if( store ) (*store)( _indiv );,
                       "Error while checking individual for storage.\n" )
 
       return _indiv.fitness();
@@ -57,7 +57,7 @@ namespace Evaluation
                                               _grad, _i_grad ) );,
           "Error while evaluating fitness and its gradient.\n" )
 
-      __TRYDEBUGCODE( store( _indiv );,
+      __TRYDEBUGCODE( if( store ) (*store)( _indiv );,
                       "Caught Error while checking individual for storage.\n" )
 
       return _indiv.fitness();
@@ -73,8 +73,6 @@ namespace Evaluation
         init( *i_indiv );
         evaluate( *i_indiv );
       }
-
-      __DOMPICODE( store.synchronize(); )
     }
 
   template< class T_GATRAITS >
@@ -163,7 +161,7 @@ namespace Evaluation
       // and prior call to history->clone( _indiv ) returned false
       if( isnot_clone ) history->add( _indiv );
 
-      __TRYDEBUGCODE( store( _indiv );,
+      __TRYDEBUGCODE( if( store ) (*store)( _indiv );,
                       "Error while checking individual for storage.\n" )
 
       return _indiv.fitness();
@@ -201,7 +199,7 @@ namespace Evaluation
                                               _grad, _i_grad ) );,
           "Error while evaluating fitness and its gradient.\n" )
 
-      __TRYDEBUGCODE( store( _indiv );,
+      __TRYDEBUGCODE( if( store ) (*store)( _indiv );,
                       "Caught Error while checking individual for storage.\n" )
 
       return _indiv.fitness();

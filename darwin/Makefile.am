@@ -1,4 +1,6 @@
 include ../Files
+EXTRA_DIST = $(DARWIN_LIBS_IMPLS) $(DARWIN_CE_IMPLS) $(DARWIN_BG_IMPLS) \
+	     $(DARWIN_L_IMPLS) $(DARWIN_E_IMPLS)
 if DOBANDGAPOPT
   BANDGAPOPT=bandgap_opt
 endif

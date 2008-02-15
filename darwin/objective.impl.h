@@ -18,7 +18,6 @@ namespace Objective
     typename Base<T_GA_TRAITS, T_QUANTITY_TRAITS, T_VA_TRAITS> :: t_Fitness 
       Base<T_GA_TRAITS, T_QUANTITY_TRAITS, T_VA_TRAITS> :: fitness;
 
-
   template< class T_GA_TRAITS >
   inline void Maximize<T_GA_TRAITS> :: evaluate_gradient( const t_Quantity &_val,
                                                           t_QuantityGradients &_grad,

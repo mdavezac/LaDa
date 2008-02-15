@@ -49,6 +49,10 @@ namespace Evaluation
 template< class T_GATRAITS >
   class Base
   {
+      //! Return type of evaluation routines
+    _MPICODE( typedef bool t_Return; )
+    _SEQUENTIALCODE( typedef void t_Return; )
+
     public:
       //! Should contain all GA definitions \sa Traits::GA
       typedef T_GATRAITS  t_GATraits;
@@ -84,7 +88,7 @@ template< class T_GATRAITS >
       t_Evaluator &evaluator;
       //! \brief Links quantities and Fitness. \sa Fitness, Objective
       t_Objective &objective; 
-      t_Store &store; //!< Stores results!! \sa Store
+      t_Store *store; //!< Stores results!! \sa Store
 
     public:
       //! records the number of effective calls to the functional
@@ -95,7 +99,7 @@ template< class T_GATRAITS >
     public:
       //! \brief Constructor and Initializer
       Base   ( t_Evaluator &_eval, t_Objective &_obj, t_Store &_store )
-           : evaluator(_eval), objective(_obj), store(_store), nb_eval(0), nb_grad(0) {};
+           : evaluator(_eval), objective(_obj), store(&_store), nb_eval(0), nb_grad(0) {};
       //! \brief Copy Constructor 
       Base   ( const Base<t_Evaluator> &_x )
            : evaluator(_x.evaluator), objective(_x.objective),
@@ -115,7 +119,7 @@ template< class T_GATRAITS >
       //! results in the object Base::store.
       //! \sa GA::Evaluator::evaluate, SingleSite::Evaluator::evaluate,
       //! TwoSites::Evaluator::evaluate
-      virtual t_FitnessQuantity evaluate( t_Individual &_indiv );
+      virtual t_Return evaluate( t_Individual &_indiv );
       //! \brief calls on the functional to evaluate the (VA) gradients of _indiv
       //! \details Simply links together Objective and the gradients of
       //! Individual::Base::quantities(). Also keeps a tab on the number of
@@ -125,9 +129,9 @@ template< class T_GATRAITS >
                                       t_VA_Type *_i_grad );
       //! \brief combines Evaluation::Base::evaluate(t_Individual&) with 
       //! Evaluation::Base::evaluate_gradient().
-      virtual t_FitnessQuantity evaluate_with_gradient( t_Individual &_indiv,
-                                                        t_QuantityGradients& _grad,
-                                                        t_VA_Type *_i_grad );
+      virtual t_Return evaluate_with_gradient( t_Individual &_indiv,
+                                               t_QuantityGradients& _grad,
+                                               t_VA_Type *_i_grad );
       //! \brief calls on the functional to evaluate the (VA) gradients of _indiv
       //! \details Simply links together Objective and the gradients of
       //! Individual::Base::quantities(). Also keeps a tab on the number of
@@ -136,9 +140,10 @@ template< class T_GATRAITS >
       //! \param _grad Storage for all gradients, as filled by GA::Evaluator derived classes.
       //! \param _pos index of the gradient to evaluate (eg. position in the
       //! presumably vectorial container Traits::Indiv::t_Object::Container)
-      virtual t_VA_Type evaluate_one_gradient( t_Individual &_indiv,
+      virtual t_VA_type evaluate_one_gradient( t_Individual &_indiv,
                                                t_QuantityGradients& _grad,
-                                               types::t_unsigned _pos );
+                                               types::t_unsigned _pos,
+                                               t_VA_Type &_result );
 
     protected:
       //! \brief Wrapper function which calls Base::evaluate(t_Individual &)
@@ -175,6 +180,8 @@ template< class T_GATRAITS >
     public:
       //! Should contain all GA definitions \sa Traits::GA
       typedef T_GATRAITS t_GATraits;
+      //! Return type of evaluation routines
+      typedef Base<t_GATraits>::t_Return t_Return;
 
     private:
       //! Base class type
@@ -237,12 +244,12 @@ template< class T_GATRAITS >
       //! previously evaluated individual, its evaluation in
       //! Evaluation::WithHistory::history is used. 
       //! \sa Evaluation::Base::evaluate 
-      virtual t_FitnessQuantity evaluate( t_Individual &_indiv );
+      virtual t_Return evaluate( t_Individual &_indiv );
       //! \brief combines Evaluation::WithHistory::evaluate(t_Individual&) with 
       //! Evaluation::Base::evaluate_gradient().
-      virtual t_FitnessQuantity evaluate_with_gradient( t_Individual &_indiv,
-                                                        t_QuantityGradients& _grad,
-                                                        t_VA_Type *_i_grad );
+      virtual t_Return evaluate_with_gradient( t_Individual &_indiv,
+                                               t_QuantityGradients& _grad,
+                                               t_VA_Type *_i_grad );
     protected:
 #ifdef _MPI
       //! \brief adds history synchronization over all processors to

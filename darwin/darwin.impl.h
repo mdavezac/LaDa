@@ -790,13 +790,6 @@ namespace GA
     typename t_Islands :: iterator i_pop = islands.begin();
     typename t_Islands :: iterator i_end = islands.end();
     types::t_unsigned target = pop_size;
-    __DOMPICODE(
-      types::t_int residual = target % (mpi::main.size());
-      target = target / mpi::main.size();
-      if ( mpi::main.rank() < residual ) ++target;
-      Print::out << "Creating " << target
-                 << " Individuals on this processor" << Print::endl;
-    )
     for(; i_pop != i_end; ++i_pop)
     {
       switch ( populate_style )
@@ -919,9 +912,7 @@ namespace GA
 
     Print::xmg << Print::flush;
     Print::out << "\nCreating population" << Print::endl;
-    __DOMPICODE( mpi::main.barrier(); )
-    populate();
-    __DOMPICODE( mpi::main.barrier(); )
+    __ROOTCODE(populate();)
 
     offspring.clear();
     typename t_Islands :: iterator i_island_begin = islands.begin();
