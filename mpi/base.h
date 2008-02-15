@@ -49,12 +49,18 @@ namespace mpi
     protected:
       types::t_int this_rank; //!< rank of current process.
       types::t_int nproc; //!< size of mpi pool
+      MPI::Comm *comm;
 
     public:
-      Base () : this_rank(0), nproc(1) {} //<! constructor 
+       //! Constructor and Initializer
+      Base () : this_rank(0), nproc(1), comm(&MPI::COMM_WORLD)  {}
+       //! Constructor and Initializer
+      Base   ( MPI::Comm &_comm ) 
+           : this_rank( _comm.rank() ), nproc( _comm.size() ),
+             comm(&_comm)  {}
       //! Copy Constructor
       Base   ( const Base &_c)  
-           : this_rank( _c.this_rank), nproc( _c.nproc) {}
+           : this_rank( _c.this_rank), nproc( _c.nproc), comm(_c.comm) {}
       virtual ~Base() {} //!< destructor
 
       //! returns rank of current process
@@ -69,7 +75,7 @@ namespace mpi
       //
       //! Processes stop when mpi::barrier() const is called until all process
       //! have reached mpi::barrier() const
-      void barrier() const  { MPI::COMM_WORLD.Barrier(); }
+      void barrier() const  { comm->Barrier(); }
 
       //! \brief sums an unsigned integer across all processes
       //
@@ -103,6 +109,8 @@ namespace mpi
       //! \param _bool  bool value to be tested for true across all procs,
       //!             is input and output
       bool all_xor_all( bool &_bool) const;
+      //! Sets the commiunication handle
+      void set_comm( Mpi::Comm *_comm ) { comm = _comm; }
   };
 
   //! \brief Handles creation and destruction of mpi aspect
@@ -127,8 +135,8 @@ namespace mpi
         if ( MPI::Is_initialized() or finalized )
           return;
         MPI::Init( _argc, _argv );
-        this_rank = MPI::COMM_WORLD.Get_rank();
-        nproc = MPI::COMM_WORLD.Get_size();
+        this_rank = comm->Get_rank();
+        nproc = comm->Get_size();
       }
       //! \brief Destructor, disables mpi calls
       //! \details Disables mpi calls. After this function is called, no other mpi calls
@@ -145,7 +153,7 @@ namespace mpi
   inline types::t_unsigned Base::all_sum_all( types::t_unsigned &_in) const
   {
     types::t_unsigned out;
-    MPI::COMM_WORLD.Allreduce( &_in, &out, 1, UNSIGNED, MPI::SUM ); 
+    comm->Allreduce( &_in, &out, 1, UNSIGNED, MPI::SUM ); 
     _in = out;
     return out;
   }
@@ -153,7 +161,7 @@ namespace mpi
   inline types::t_int Base::all_sum_all( types::t_int &_in) const
   {
     types::t_int out;
-    MPI::COMM_WORLD.Allreduce( &_in, &out, 1, INT, MPI::SUM ); 
+    comm->Allreduce( &_in, &out, 1, INT, MPI::SUM ); 
     _in = out;
     return out;
   }
@@ -161,7 +169,7 @@ namespace mpi
   inline types::t_real Base::all_sum_all( types::t_real &_in) const
   {
     types::t_real out;
-    MPI::COMM_WORLD.Allreduce( &_in, &out, 1, REAL, MPI::SUM ); 
+    comm->Allreduce( &_in, &out, 1, REAL, MPI::SUM ); 
     _in = out;
     return out;
   }
@@ -169,7 +177,7 @@ namespace mpi
   inline bool Base::all_sum_all( bool &_bool) const
   {
     types::t_int out, in = _bool ? 1 : 0;
-    MPI::COMM_WORLD.Allreduce( &in, &out, 1, UNSIGNED, MPI::SUM ); 
+    comm->Allreduce( &in, &out, 1, UNSIGNED, MPI::SUM ); 
     _bool = ( out == nproc );
     return _bool;
   }
@@ -177,7 +185,7 @@ namespace mpi
   inline bool Base::all_or_all( bool &_bool) const
   {
     types::t_int out, in = _bool ? 1 : 0;
-    MPI::COMM_WORLD.Allreduce( &in, &out, 1, UNSIGNED, MPI::SUM ); 
+    comm->Allreduce( &in, &out, 1, UNSIGNED, MPI::SUM ); 
     _bool = ( out != 0 );
     return _bool;
   }
@@ -185,7 +193,7 @@ namespace mpi
   inline bool Base::all_xor_all( bool &_bool) const
   {
     types::t_int out, in = _bool ? 1 : 0;
-    MPI::COMM_WORLD.Allreduce( &in, &out, 1, UNSIGNED, MPI::SUM ); 
+    comm->Allreduce( &in, &out, 1, UNSIGNED, MPI::SUM ); 
     _bool = ( out == 0 or out == nproc );
     return _bool;
   }
@@ -195,8 +203,8 @@ namespace mpi
     if ( MPI::Is_initialized() or finalized )
       return;
     MPI::Init( _argc, _argv );
-    this_rank = MPI::COMM_WORLD.Get_rank();
-    nproc = MPI::COMM_WORLD.Get_size();
+    this_rank = comm->Get_rank();
+    nproc = comm->Get_size();
   }
   
   inline InitDestroy::~InitDestroy()

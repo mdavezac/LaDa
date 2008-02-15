@@ -40,7 +40,7 @@ namespace mpi
     stage = COPYING_TO_HERE;
 
     // now broadcasts sizes
-    MPI::COMM_WORLD.Bcast( buffer_size, 3, UNSIGNED, _root );
+    comm->Bcast( buffer_size, 3, UNSIGNED, _root );
 
     if ( not( buffer_size[0] or buffer_size[1] or buffer_size[2] ) )
       return false;
@@ -94,7 +94,7 @@ broadcast_erase:
 
     // now broadcasts sizes
     all_sizes = new types::t_int[ Base::nproc * 3 ];
-    MPI::COMM_WORLD.Allgather( buffer_size, 3, UNSIGNED, all_sizes, 3, UNSIGNED );
+    comm->Allgather( buffer_size, 3, UNSIGNED, all_sizes, 3, UNSIGNED );
     buffer_size[0]=0; buffer_size[1]=0; buffer_size[2]=0;
     for( types::t_int i=0; i < Base::nproc; ++i)
     {
@@ -151,11 +151,11 @@ gather_erase:
       return true;
 
     if ( int_buff and buffer_size[0] )
-      MPI::COMM_WORLD.Bcast( int_buff, buffer_size[0], INT, _root );
+      comm->Bcast( int_buff, buffer_size[0], INT, _root );
     if ( char_buff and buffer_size[1] )
-      MPI::COMM_WORLD.Bcast( char_buff, buffer_size[1], CHAR, _root );
+      comm->Bcast( char_buff, buffer_size[1], CHAR, _root );
     if ( real_buff and buffer_size[2] )
-      MPI::COMM_WORLD.Bcast( real_buff, buffer_size[2], REAL, _root );
+      comm->Bcast( real_buff, buffer_size[2], REAL, _root );
 
     stage = COPYING_FROM_HERE;
     cur_int_buff = int_buff;
@@ -186,7 +186,7 @@ gather_erase:
       *displs=0;
       for( types::t_int i=1; i < Base::nproc; ++i )
         *(displs + i) = *(displs + i - 1) + *(all_sizes + 3*(i-1));
-      MPI::COMM_WORLD.Allgatherv( int_buff, *(all_sizes+3*Base::this_rank), INT, int_buff,
+      comm->Allgatherv( int_buff, *(all_sizes+3*Base::this_rank), INT, int_buff,
                                   recvcounts, displs, INT );
     }
 
@@ -197,7 +197,7 @@ gather_erase:
       *displs=0;
       for( types::t_int i=1; i < Base::nproc; ++i )
         *(displs + i) = *(displs + i - 1) + *(all_sizes + 3*(i-1) + 1);
-      MPI::COMM_WORLD.Allgatherv( char_buff, *(all_sizes+3*Base::this_rank+1), CHAR, char_buff,
+      comm->Allgatherv( char_buff, *(all_sizes+3*Base::this_rank+1), CHAR, char_buff,
                                   recvcounts, displs, CHAR );
     }
     if ( real_buff and buffer_size[2] )
@@ -207,7 +207,7 @@ gather_erase:
       *displs=0;
       for( types::t_int i=1; i < Base::nproc; ++i )
         *(displs + i) = *(displs + i - 1) + *(all_sizes + 3*(i-1) + 2);
-      MPI::COMM_WORLD.Allgatherv( real_buff, *(all_sizes+3*Base::this_rank+2), REAL, real_buff,
+      comm->Allgatherv( real_buff, *(all_sizes+3*Base::this_rank+2), REAL, real_buff,
                                   recvcounts, displs, REAL );
     }
     

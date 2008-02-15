@@ -1,4 +1,5 @@
 include ../Files
+EXTRA_DIST = $(MPI_H_IMPL)
 AM_CPPFLAGS = @CPP_DEBUG_FLAGS@ @COMPILER_CXXFLAGS@ @MPI_CFLAGS@
 AM_LDFLAGS = 
 noinst_LTLIBRARIES = libmpiobject.la
