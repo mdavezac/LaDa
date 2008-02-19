@@ -47,35 +47,60 @@ namespace GA
   //! MPI for the Genetic Algorithm.
   namespace mpi
   {
-    class Farmer : private ::mpi::Base
+    template< T_GATRAITS >
+    class FarmerComm : private ::mpi::Base
     {
+      public:
+        //! All %GA traits
+        typedef typename T_GATRAITS                           t_GATraits;
+      private:
+        //! Type of this class
+        typedef Farmer<t_GATraits>                            t_This;
+        //! Type of the individuals
+        typedef typename t_GATraits :: t_Individual           t_Individual;
+        //! %Traits of the quantity (or raw fitness)
+        typedef typename t_GATraits :: t_QuantityTraits       t_QuantityTraits;
+        //! Type of the genomic object
+        typedef typename t_GATraits :: t_Object               t_Object;
+        //! Type of the population
+        typedef typename t_GATraits :: t_Population           t_Population;
+        //! Type of the collection of populations
+        typedef typename t_GATraits :: t_Islands              t_Islands;
+        //! Type of the scalar quantity (or scalar raw fitness)
+        typedef typename t_QuantityTraits :: t_ScalarQuantity t_ScalarQuantity;
+        //! Type of the objective type holder
+        typedef typename Objective :: Types < t_GATraits >    t_ObjectiveType;
+        //! Type of the storage type holder
+        typedef typename Store :: Types< t_GATraits >         t_Store;
       protected:
-        struct t_ToBull
+        struct t_Operations
         {
-          const static ::mpi::INT UNDEFINED = -1;
-          const static ::mpi::INT EXITLOOP = 0;
-          const static ::mpi::INT EVALUATEINDIVIDUAL = 1;
-        };
-        struct t_FromBull
-        {
-          const static ::mpi::INT UNDEFINED = -1;
           const static ::mpi::INT WAITING = 0;
-          const static ::mpi::INT SENDINGRESULT = 1;
+          const static ::mpi::INT REQUESTINGOBJECTIVE = 1;
           const static ::mpi::INT REQUESTINGTABOOCHECK = 2;
+          const static ::mpi::INT REQUESTINGHISTORYCHECK = 2;
         };
         const static types::t_int TAG = 1;
       
       protected:
-        MPI::Prequest *to_bulls;
+        //! Holds requests from bull;
         MPI::Prequest *from_bulls;
-        types::t_unsigned *in;
-        types::t_unsigned *out;
-        types::t_unsigned nbulls;
+        //! Request buffers
+        types::t_unsigned *requests;
+        //! Taboo functor.
+        Taboo_Base<t_Individual>*          taboos;
+        //! Objective functor.
+        typename t_ObjectiveType::Vector*  objective;
+        //! Store functor.
+        typename t_Store :: Base*          store;
 
 
       public:
         Farmer( MPI :: Comm &_comm );
         ~Farmer();
+
+        bool ProbeBulls()
+        types::t_real ReceiveReal( types::t_unsigned _bull );
     
     };
 
