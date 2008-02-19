@@ -5,10 +5,93 @@ namespace GA
 {
   namespace mpi
   {
-    template<class T_GATRAITS>
-    FarmerComm<T_GATRAITS> :: FarmerComm   ( MPI::Comm &_comm )
-                                         : ::mpi::Base( _comm ),
-                                           from_bulls(NULL), requests(NULL)
+
+    template< class T_QUANTITY >
+      void send_quantities( types::t_int _bull, T_QUANTITY &_q,
+                            MPI::Comm *_comm )
+      {
+        typedef Traits::Quantity< T_QUANTITY > t_QuantityTraits;
+        mpi::BroadCast bc( _comm );
+        t_QuantityTraits :: broadcast(_q, bc );
+        bc.allocate_buffers();
+        t_QuantityTraits :: broadcast(_q, bc );
+        bc.receive_ptp( _bull );
+        t_QuantityTraits :: broadcast(_q, bc );
+      }
+
+    template< class T_QUANTITY >  
+      void receive_quantities( types::t_int _bull, T_QUANTITY &_q,
+                               MPI::Comm *_comm )
+      {
+        typedef Traits::Quantity< T_QUANTITY > t_QuantityTraits;
+        mpi::BroadCast bc( _comm );
+        t_QuantityTraits :: broadcast(_q, bc );
+        bc.allocate_buffers();
+        t_QuantityTraits :: broadcast(_q, bc );
+        bc.send_ptp( _bull );
+        t_QuantityTraits :: broadcast(_q, bc );
+      }
+
+    template< class T_OBJECT >  
+      void bcast_template_object( types::t_int _root, T_OBJECT &_object,
+                                  MPI::Comm *_comm )
+      {
+        mpi::BroadCast bc( _comm );
+        _object.broadcast( bc );
+        bc.allocate_buffers();
+        _object.broadcast( bc ); 
+        bc( _root );
+        _object.broadcast( bc );
+      }
+
+    template< class T_OBJECT >  
+      void receive_template_object( types::t_int _bull, T_OBJECT &_object,
+                                    MPI::Comm *_comm )
+      {
+        mpi::BroadCast bc( _comm );
+        _object.broadcast( bc );
+        bc.allocate_buffers();
+        _object.broadcast( bc );
+        bc.receive_ptp( _bull );
+        _object.broadcast( bc );
+      }
+
+    template< class T_OBJECT >  
+      void send_template_object( types::t_int _bull, T_OBJECT &_object,
+                                 MPI::Comm *_comm )
+      {
+        mpi::BroadCast bc( _comm );
+        _indiv.broadcast( bc );
+        bc.allocate_buffers();
+        _indiv.broadcast( bc );
+        bc.send_ptp( _bull );
+        _indiv.broadcast( bc );
+      }
+    template< class T_OBJECT >  
+      void receive_object( types::t_int _bull, T_OBJECT &_object, MPI::Comm *_comm )
+      {
+        mpi::BroadCast bc( _comm );
+        bc << _object << mpi::BroadCast::allocate << _object;
+        bc.receive_ptp( _bull );
+        bc << _object;
+      }
+
+    template< class T_OBJECT >  
+      void send_object( types::t_int _bull, T_OBJECT &_object, MPI::Comm *_comm )
+      {
+        mpi::BroadCast bc( _comm );
+        bc << _object << mpi::BroadCast::allocate << _object;
+        bc.send_ptp( _bull );
+        bc << _object;
+      }
+
+    template<class T_GATRAITS, class T_DERIVED>
+    FarmerComm<T_GATRAITS, T_DERIVED> :: FarmerComm   ( MPI::Comm *_comm )
+                                                    : ::mpi::Base( _comm ),
+                                                      from_bulls(NULL), nbulls(0),
+                                                      requests(NULL), taboos(NULL),
+                                                      objective(NULL), store(NULL),
+                                                      history(NULL)
     {
       __ASSERT( is_root_node() ); 
 
@@ -30,8 +113,8 @@ namespace GA
       }
     }
 
-    template<class T_GATRAITS>
-    FarmerComm<T_GATRAITS> :: ~FarmerComm ()
+    template<class T_GATRAITS, class T_DERIVED>
+    FarmerComm<T_GATRAITS, T_DERIVED> :: ~FarmerComm ()
     {
       if( to_bulls )
       {
@@ -48,9 +131,16 @@ namespace GA
       nbulls = 0;
     }
 
+    template<class T_GATRAITS, class T_DERIVED>
+    inline void FarmerComm<T_GATRAITS, T_DERIVED> :: send_command( types::t_unsigned _bull,
+                                                                   t_Commands _c )
+    {
+      MPI::UNSIGNED buff = _c;
+      _comm->Send( &buff, 1, MPI::UNSIGNED, _bull );
+    }
 
-    template<class T_GATRAITS>
-    void FarmerComm<T_GATRAITS> :: TestBulls()
+    template<class T_GATRAITS, class T_DERIVED>
+    void FarmerComm<T_GATRAITS, T_DERIVED> :: test_bulls()
     {
       try
       {
@@ -87,23 +177,94 @@ namespace GA
       }
     }
 
-    template< class T_GATRAITS > 
-      void FarmerComm<T_GATRAITS> :: onObjective( types::t_int _bull )
+
+    template<class T_GATRAITS, class T_DERIVED>
+    inline void BullComm<T_GATRAITS, T_DERIVED> :: bcast( t_Commands _c )
+    {
+      MPI::UNSIGNED buff = _c;
+      cowcomm->Bcast( &buff, 1, MPI::UNSIGNED, 0 );
+    }
+
+    template<class T_GATRAITS, class T_DERIVED>
+    inline t_Commands BullComm<T_GATRAITS, T_DERIVED> :: obey()
+    {
+      MPI::UNSIGNED buff;
+      comm->Recv( &buff, 1, MPI::UNSIGNED, 0 );
+      return buff;
+    }
+
+    template<class T_GATRAITS, class T_DERIVED>
+    inline void BullComm<T_GATRAITS, T_DERIVED> :: request( t_Requests &_c )
+    {
+      MPI::UNSIGNED buff = _c;
+      MPI::Request request = comm->Isend( &buff, 1, MPI::UNSIGNED, 0 );
+      request.Wait();
+    }
+
+    template<class T_GATRAITS, class T_DERIVED>
+    inline t_Command CowComm<T_GATRAITS, T_DERIVED> :: obey()
+    {
+      __ASSERT( evaluator, "Pointer to evaluator has not been set.\n" )
+      MPI::UNSIGNED buff = t_Commands::DONE;
+      comm->Bcast( &buff, 1, MPI::UNSIGNED, 0 );
+      switch( (t_Commands) buff )
       {
-        
+        case t_Commands :: EVALUATE: onEvaluate(); break;
+        case t_Commands :: EVALUATE_WITH_GRADIENT: onEvaluateWithGradient(); break;
+        case t_Commands :: EVALUATE_GRADIENT: onEvaluateGradient(); break; 
+        case t_Commands :: EVALUATE_ONE_GRADIENT: onEvaluateOneGradient(); break;
+        case t_Commands :: DONE: return t_Commands :: DONE; break;
       }
+      return t_Commands :: CONTINUE;
+    }
+
+    template<class T_GATRAITS, class T_DERIVED>
+    inline void CowComm<T_GATRAITS, T_DERIVED> :: onEvaluate()
+    {
+      t_Individual individual;
+      bcast_template_object( 0, individual, t_Base::comm );
+      evaluator->init( individual );
+      evaluator->evaluate();
+    }
+
+    template<class T_GATRAITS, class T_DERIVED>
+    inline void CowComm<T_GATRAITS, T_DERIVED> :: onEvaluateGradient()
+    {
+      t_Individual individual;
+      bcast_template_object( 0, individual, t_Base::comm );
+      gradients.resize( individual.Object().Container().size() );
+      Traits::zero_out( gradients );
+      evaluator->init( individual );
+      evaluator->evaluate_gradients( gradients );
+    }
+
+    template<class T_GATRAITS, class T_DERIVED>
+    inline void CowComm<T_GATRAITS, T_DERIVED> :: onEvaluateWithGradient()
+    {
+      t_Individual individual;
+      bcast_template_object( 0, individual, t_Base::comm );
+      gradients.resize( individual.Object().Container().size() );
+      Traits::zero_out( gradients );
+      evaluator->init( individual );
+      evaluator->evaluate_with_gradients( gradients );
+    }
+
+    template<class T_GATRAITS, class T_DERIVED>
+    inline void CowComm<T_GATRAITS, T_DERIVED> :: onEvaluateOneGradient()
+    {
+      t_Individual individual;
+      bcast_template_object( 0, individual, t_Base::comm );
+      MPI::UNSIGNED pos;
+      comm->Recv( &pos, 1, MPI::UNSIGNED, t_Base::comm, TAG );
+      gradients.resize( individual.Object().Container().size() );
+      Traits::zero_out( gradients );
+      evaluator->init( individual );
+      evaluator->evaluate_one_gradient( gradients, pos );
+    }
 
 
-    Bull :: Bull   ( MPI::Comm &_farmercomm, MPI::Comm & _cowcomm)
-                 : ::mpi::Base( _farmercomm ), cowcomm(NULL),
-                    to_cows( NULL ), farmer_in(t_FromFarmer::UNDEFINED),
-                    farmer_out(t_ToFarmer::UNDEFINED), cows_out(NULL), ncows(0)
-   {
-      __ASSERT( not ::mpi::main::is_root_node() ); 
-      __ASSERT( (not _cowcomm) or _cowcomm->rank() == ::mpi::ROOT_NODE ); 
-   }
-
-}
+  } // namespace mpi
+} // namespace GA
 
 
 #endif

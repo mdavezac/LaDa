@@ -130,8 +130,7 @@ namespace GA
         FarmhandGraphBreeder( Graph *_topo ) : t_Base( _topo );
 
         //! Creates \a _offspring population from \a _parent
-        void operator()(const t_Population& _parents, t_Population& _offspring)
-          { return; }
+        void operator()(const t_Population& _parents, t_Population& _offspring) {};
    
         ///! The class name. EO required
         virtual std::string className() const { return "GA::mpi::FarmhandGraphBreeder"; }
@@ -178,6 +177,76 @@ namespace GA
         // Response to WAITING request
         void onWait( types::t_int _bull );
     };
+
+    template<class T_GATRAITS>
+    class BullGraphBreeder : private BullComm< T_GATRAITS, CowGraphBreeder>,
+                             public Graph::Breeder<T_GATRAITS>
+    {
+      public:
+        typedef T_GATRAITS t_GATraits; //!< all %GA traits
+
+      protected:
+        //! all individual traits
+        typedef typename t_GATraits::t_IndivTraits t_IndivTraits;
+        //! type of an individual
+        typedef typename t_GATraits::t_Individual  t_Individual; 
+        //! type of the population
+        typedef typename t_GATraits::t_Population  t_Population; 
+        //! Base class type.
+        typedef Graph::Breeder<T_GATRAITS> t_Base;
+        //! Communication base class
+        typedef BullComm< T_GATRAITS, FarmerGraphBreeder> t_CommBase;
+
+        const MPI::INT TAG = 2;
+
+
+      public:
+        //! Constructor.
+        BullGraphBreeder   ( Graph *_topo )
+                         : t_CommBase(_topo->Com() ), t_Base( _topo->Comm() ) {}
+
+        //! Creates \a _offspring population from \a _parent
+        void operator()(const t_Population& _parents, t_Population& _offspring);
+   
+        //! The class name. EO required
+        virtual std::string className() const { return "GA::mpi::BullGraphBreeder"; }
+    };
+
+    template<class T_GATRAITS>
+    class CowGraphBreeder : private BullComm< T_GATRAITS, CowGraphBreeder>,
+                             public Graph::Breeder<T_GATRAITS>
+    {
+      public:
+        typedef T_GATRAITS t_GATraits; //!< all %GA traits
+
+      protected:
+        //! all individual traits
+        typedef typename t_GATraits::t_IndivTraits t_IndivTraits;
+        //! type of an individual
+        typedef typename t_GATraits::t_Individual  t_Individual; 
+        //! type of the population
+        typedef typename t_GATraits::t_Population  t_Population; 
+        //! Base class type.
+        typedef Graph::Breeder<T_GATRAITS> t_Base;
+        //! Communication base class
+        typedef CowComm< T_GATRAITS, FarmerGraphBreeder> t_CommBase;
+
+        const MPI::INT TAG = 2;
+
+
+      public:
+        //! Constructor.
+        BullGraphBreeder   ( Graph *_topo )
+                         : t_CommBase(_topo->Com() ), t_Base( _topo->Comm() ) {}
+
+        //! Creates \a _offspring population from \a _parent
+        void operator()(const t_Population& _parents, t_Population& _offspring);
+          { while( t_CommBase :: wait() != t_CommBase::DONE ); }
+   
+        //! The class name. EO required
+        virtual std::string className() const { return "GA::mpi::CowGraphBreeder"; }
+    };
+
   } // namespace mpi
 } // namespace GA
 

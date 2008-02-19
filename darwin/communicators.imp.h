@@ -258,7 +258,7 @@ namespace GA
     t_CommBase::startall();
   
     while (_offspring.size() < target)
-      t_CommBase::TestBulls();
+      t_CommBase::test_bulls();
   
     _offspring.resize(target);   // you might have generated a few more
   }
@@ -266,28 +266,20 @@ namespace GA
   inline void FarmerGraphBreeder<T_GATRAITS> :: onWait( types::t_int _bull )
   {
     types::t_int buff;
-    if (offspring.size() >= target)
-    {
-      t_Individual indiv;
-      t_CommBase::ReceiveIndividual( _bull, indiv );
-      buff = t_CommBase::GO;
-      comm->Send( &buff, 1, MPI::INT, _bull, TAG );
-      return;
-    }
-    buff = t_CommBase::DONE;
-    comm->Send( &buff, 1, MPI::INT, _bull, TAG );
+    t_Individual indiv;
+    t_CommBase::receive_individual( _bull, indiv );
+    offspring->push_back( indiv );
+    t_CommBase::send_command( offspring->size() >= target ? t_CommBase::DONE: 
+                                                            t_CommBase::Done, 
+                               _bull );
   }
   template<class T_GATRAITS>
   inline void FarmerGraphBreeder<T_GATRAITS> :: onTaboo( types::t_int _bull )
   {
-    MPI::BOOL buff = false;
-    if( taboo )
-    {
-      t_Individual indiv;
-      t_CommBase::receive_individual( _bull, indiv );
-      buff = (*taboo)( indiv );
-    }
-    comm->Send( &buff, 1, MPI::BOOL, _bull, TAG );
+    __ASSERT( taboo, "Taboo pointer has not been set.\n")
+    t_Individual indiv;
+    t_CommBase::receive_individual( _bull, indiv );
+    t_CommBase::send_command( _bull, (*taboo)( indiv ) );
   }
   template<class T_GATRAITS>
   inline void FarmerGraphBreeder<T_GATRAITS> :: onObjective( types::t_int _bull )
@@ -307,7 +299,7 @@ namespace GA
     t_Individual indiv;
     t_CommBase::receive_individual( _bull, indiv );
     MPI::BOOL buff = history->clone( indiv );
-    comm->Send( &buff, 1, MPI::BOOL, _bull, TAG );
+    t_CommBase::send_command( buff, _bull );
     if( not buff ) return;
     t_CommBase::send_individual( _bull, indiv );
   }
@@ -320,30 +312,18 @@ namespace GA
                   t_Population& _offspring)
   {
     eoSelectivePopulator<t_Individual> it(_parents, _offspring, select);
-    types::t_int command = t_CommBase :: GO;
-    t_CommBase::startall();
     do
     {
       (*op)(it);
       (*it).set_age( age() );
-      command = t_CommBase :: send_waiting();
+      t_CommBase :: request( t_CommBase::t_Requests::WAITING );
       t_CommBase :: send_individual();
       ++it;
     }
-    while ( command != t_CommBase :: DONE );
-    t_CommBase :: broadcast_done();
+    while ( t_CommBase::obey() != t_CommBase :: t_Commands :: DONE );
+    t_CommBase :: bcast( t_CommBase::t_CowCommands::DONE );
 
     _offspring.clear();
-  }
-
-  template<class T_GATRAITS>
-  inline void BullGraphBreeder<T_GATRAITS> 
-    :: operator()(const t_Population& _parents,
-                  t_Population& _offspring)
-  {
-    types::t_int command = t_CommBase :: GO;
-    t_CommBase::startall();
-    while( t_CommBase :: wait_bull() );
   }
 
 }
