@@ -55,6 +55,8 @@ namespace GA
         template< class T_GATRAITS >
         Breeder<T_GATRAITS>* create_breeder( eoState &_state );
 
+        MPI::IntraComm *Comm() { return group_comm; }
+
       protected:
         template< class T_CONDITION > void init_collectivists( T_CONDITION &_condition );
     };
@@ -136,7 +138,8 @@ namespace GA
     };
 
     template<class T_GATRAITS>
-    class FarmerGraphBreeder : public Graph::Breeder<T_GATRAITS>
+    class FarmerGraphBreeder :private FarmerComm< T_GATRAITS, FarmerGraphBreeder>,
+                              public Graph::Breeder<T_GATRAITS>
     {
       public:
         typedef T_GATRAITS t_GATraits; //!< all %GA traits
@@ -150,16 +153,30 @@ namespace GA
         typedef typename t_GATraits::t_Population  t_Population; 
         //! Base class type.
         typedef Graph::Breeder<T_GATRAITS> t_Base;
+        //! Communication base class
+        typedef FarmerComm< T_GATRAITS, FarmerGraphBreeder> t_CommBase;
+
+        const MPI::INT TAG = 2;
+
+      protected:
+        types::t_unsigned target;
+        t_Population *offspring;
+        
 
       public:
         //! Constructor.
-        FarmerGraphBreeder( Graph *_topo ) : t_Base( _topo );
+        FarmerGraphBreeder   ( Graph *_topo )
+                           : t_CommBase(_topo->Com() ), t_Base( _topo->Comm() ),
+                             target(0), offspring(NULL) {};
 
         //! Creates \a _offspring population from \a _parent
         void operator()(const t_Population& _parents, t_Population& _offspring);
    
-        ///! The class name. EO required
+        //! The class name. EO required
         virtual std::string className() const { return "GA::mpi::FarmerGraphBreeder"; }
+
+        // Response to WAITING request
+        void onWait( types::t_int _bull );
     };
   } // namespace mpi
 } // namespace GA

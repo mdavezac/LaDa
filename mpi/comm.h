@@ -209,6 +209,12 @@ namespace mpi
       template< class T_CONTAINER >
       bool serialize_container ( T_CONTAINER &_cont );
 
+
+      //! Point to Point transfer: Sends buffers to target. 
+      void send_ptp( types::t_unsigned _target );
+      //! Point to Point transfer: Receive buffers to target. 
+      void receive_ptp( types::t_unsigned _source );
+
     protected:
       //! \brief Don't touch unless you know what you are doing
       //! \details allows operator<<(BroadCast &, T_TYPE&) to call both operations and to

@@ -251,34 +251,99 @@ namespace GA
     :: operator()(const t_Population& _parents,
                   t_Population& _offspring)
   {
-    types::t_unsigned target = (*howMany)( (types::t_unsigned) _parents.size());
+    target = (*howMany)( (types::t_unsigned) _parents.size());
 
     _offspring.clear();
+    offspring = &_offspring;
+    t_CommBase::startall();
   
     while (_offspring.size() < target)
-    {
-      (*op)(it);
-      (*it).set_age(age());
-      ++it;
-    }
+      t_CommBase::TestBulls();
   
     _offspring.resize(target);   // you might have generated a few more
   }
   template<class T_GATRAITS>
-  inline void Graph::Breeder<T_GATRAITS> :: Farmer(const t_Population& _parents,
-                                                   t_Population& _offspring)
+  inline void FarmerGraphBreeder<T_GATRAITS> :: onWait( types::t_int _bull )
   {
-    types::t_unsigned target = (*howMany)( (types::t_unsigned) _parents.size());
-    _offspring.clear();
+    types::t_int buff;
+    if (offspring.size() >= target)
+    {
+      t_Individual indiv;
+      t_CommBase::ReceiveIndividual( _bull, indiv );
+      buff = t_CommBase::GO;
+      comm->Send( &buff, 1, MPI::INT, _bull, TAG );
+      return;
+    }
+    buff = t_CommBase::DONE;
+    comm->Send( &buff, 1, MPI::INT, _bull, TAG );
+  }
+  template<class T_GATRAITS>
+  inline void FarmerGraphBreeder<T_GATRAITS> :: onTaboo( types::t_int _bull )
+  {
+    MPI::BOOL buff = false;
+    if( taboo )
+    {
+      t_Individual indiv;
+      t_CommBase::receive_individual( _bull, indiv );
+      buff = (*taboo)( indiv );
+    }
+    comm->Send( &buff, 1, MPI::BOOL, _bull, TAG );
+  }
+  template<class T_GATRAITS>
+  inline void FarmerGraphBreeder<T_GATRAITS> :: onObjective( types::t_int _bull )
+  {
+    __ASSERT( objective, "Objective pointer not set.\n" )
+    MPI::DOUBLE buff = 0;
+    typename t_Individual :: t_Quantities quantities;
+    t_CommBase::receive_quantities( quantities );
+    typename t_Individual :: t_Fitness fitness = (*objective)( quantities );
+    t_CommBase::send_fitness( fitness );
+  }
+  template<class T_GATRAITS>
+  inline void FarmerGraphBreeder<T_GATRAITS> :: onHistory( types::t_int _bull )
+  {
+    // Don't expect this message if history is not set
+    __ASSERT( history, "History Pointer not set.\n")
+    t_Individual indiv;
+    t_CommBase::receive_individual( _bull, indiv );
+    MPI::BOOL buff = history->clone( indiv );
+    comm->Send( &buff, 1, MPI::BOOL, _bull, TAG );
+    if( not buff ) return;
+    t_CommBase::send_individual( _bull, indiv );
+  }
+
+
+
+  template<class T_GATRAITS>
+  inline void BullGraphBreeder<T_GATRAITS> 
+    :: operator()(const t_Population& _parents,
+                  t_Population& _offspring)
+  {
     eoSelectivePopulator<t_Individual> it(_parents, _offspring, select);
-  
-    while (_offspring.size() < target)
+    types::t_int command = t_CommBase :: GO;
+    t_CommBase::startall();
+    do
     {
       (*op)(it);
-      (*it).set_age(age());
+      (*it).set_age( age() );
+      command = t_CommBase :: send_waiting();
+      t_CommBase :: send_individual();
       ++it;
     }
-  
-    _offspring.resize(target);   // you might have generated a few more
+    while ( command != t_CommBase :: DONE );
+    t_CommBase :: broadcast_done();
+
+    _offspring.clear();
   }
+
+  template<class T_GATRAITS>
+  inline void BullGraphBreeder<T_GATRAITS> 
+    :: operator()(const t_Population& _parents,
+                  t_Population& _offspring)
+  {
+    types::t_int command = t_CommBase :: GO;
+    t_CommBase::startall();
+    while( t_CommBase :: wait_bull() );
+  }
+
 }

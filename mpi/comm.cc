@@ -164,6 +164,59 @@ gather_erase:
 
     return true;
   }
+  bool BroadCast :: send_ptp( types::t_unsigned _target )
+  {
+    if ( stage != COPYING_TO_HERE )
+      return false;
+
+    stage = COPYING_FROM_HERE;
+    cur_int_buff = int_buff;
+    cur_char_buff = char_buff;
+    cur_real_buff = real_buff;
+    if ( nproc == 1 )
+      return true;
+
+    if ( int_buff and buffer_size[0] )
+      comm->Send( int_buff, buffer_size[0], INT, _target );
+    if ( char_buff and buffer_size[1] )
+      comm->Send( char_buff, buffer_size[1], CHAR, _target );
+    if ( real_buff and buffer_size[2] )
+      comm->Send( real_buff, buffer_size[2], REAL, _target );
+
+    stage = COPYING_FROM_HERE;
+    cur_int_buff = int_buff;
+    cur_char_buff = char_buff;
+    cur_real_buff = real_buff;
+
+    return true;
+  }
+  bool BroadCast :: receive_ptp( types::t_unsigned _source )
+  {
+    if ( stage != COPYING_TO_HERE )
+      return false;
+
+    stage = COPYING_FROM_HERE;
+    cur_int_buff = int_buff;
+    cur_char_buff = char_buff;
+    cur_real_buff = real_buff;
+    if ( nproc == 1 )
+      return true;
+
+    if ( int_buff and buffer_size[0] )
+      comm->Send( int_buff, buffer_size[0], INT, _source );
+    if ( char_buff and buffer_size[1] )
+      comm->Send( char_buff, buffer_size[1], CHAR, _source );
+    if ( real_buff and buffer_size[2] )
+      comm->Send( real_buff, buffer_size[2], REAL, _source );
+
+    stage = COPYING_FROM_HERE;
+    cur_int_buff = int_buff;
+    cur_char_buff = char_buff;
+    cur_real_buff = real_buff;
+
+    return true;
+  }
+
   bool AllGather :: operator()( types::t_unsigned _root )
   {
     if ( stage != COPYING_TO_HERE )

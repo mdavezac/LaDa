@@ -47,10 +47,12 @@ namespace GA
   //! MPI for the Genetic Algorithm.
   namespace mpi
   {
-    template< T_GATRAITS >
+    template< T_GATRAITS, T_DERIVED >
     class FarmerComm : private ::mpi::Base
     {
       public:
+        //! Type of the derived class
+        typedef T_DERIVED t_Derived;
         //! All %GA traits
         typedef typename T_GATRAITS                           t_GATraits;
       private:
@@ -93,15 +95,25 @@ namespace GA
         typename t_ObjectiveType::Vector*  objective;
         //! Store functor.
         typename t_Store :: Base*          store;
-
+        //! History functor
+        History<t_Individual>*             history;
 
       public:
         Farmer( MPI :: Comm &_comm );
         ~Farmer();
 
-        bool ProbeBulls()
+        bool ProbeBulls();
+
         types::t_real ReceiveReal( types::t_unsigned _bull );
-    
+        //! Sets taboo pointer
+        set( Taboo_Base<t_Individual> *_taboo ) { taboos = _taboos; }
+        //! Sets objective pointer
+        set(  typename t_ObjectiveType::Vector*  _o )
+          { objective = _o; }
+        //! Sets objective pointer
+        set(  typename t_Store::Base*  _s ) { store = _s; }
+        //! Sets history pointer
+        set(  typename t_Store::Base*  _history ) { history = _history; }
     };
 
     class Bull : private ::mpi::Base
