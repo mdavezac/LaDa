@@ -110,7 +110,8 @@ namespace mpi
       //!             is input and output
       bool all_xor_all( bool &_bool) const;
       //! Sets the commiunication handle
-      void set_comm( Mpi::Comm *_comm ) { comm = _comm; }
+      void set_comm( Mpi::Comm *_comm )
+       { comm = _comm; this_rank = comm->rank(); nproc = comm->size(); }
   };
 
   //! \brief Handles creation and destruction of mpi aspect
@@ -150,6 +151,13 @@ namespace mpi
       }
   };
 
+  inline Base :: set_comm( Mpi::Comm *_comm )
+  { 
+    __ASSERT( _comm, "Communicator is null,\n" )
+    comm = _comm;
+    this_rank = comm->rank(); 
+    nproc = comm->size(); 
+  }
   inline types::t_unsigned Base::all_sum_all( types::t_unsigned &_in) const
   {
     types::t_unsigned out;

@@ -53,11 +53,12 @@ namespace GA
             Base   ( Topology *_topo )
                  : select(NULL), op(NULL), age(NULL),
                    howmany(0), topo(_topo) {}
-    
             //! Copy Constructor
-            Breeder ( Breeder<t_Individual> & _breeder )
-                    : select( _breeder.topo ), op(_breeder.op), age(_breeder.age),
-                      howmany(_breeder.howMany), topo( _breeder.topo ) {}
+            Base   ( Base<t_Individual> & _breeder )
+                 : select( _breeder.topo ), op(_breeder.op), age(_breeder.age),
+                   howmany(_breeder.howMany), topo( _breeder.topo ) {}
+            //! Destructor
+            virtual ~Base() {}
     
             //! Sets the selector.
             void set( eoSelectOne<t_Individual> *_select ){ select = _select; }
@@ -69,10 +70,9 @@ namespace GA
             void set( GenCount *_age ){ age = _age; }
             //! Sets the topology.
             void set( Topology *_topo) { topo(_topo); }
-            //! Destructor
-            virtual ~Breeder() {}
             //! EO required.
-            virtual std::string className() const { return "GA::mpi::Graph::Breeder::Base"; }
+            virtual std::string className() const
+              { return "GA::mpi::Graph::Breeder::Base"; }
         }
     
         //! A breeder class which does nothing.
@@ -108,7 +108,8 @@ namespace GA
         //! \details This functor dispatches commands to the bulls, such as breed
         //!          one and stop breeding. 
         template<class T_GATRAITS>
-        class Farmer : private Comm::Farmer< Farmer >, public Base<T_GATRAITS>
+        class Farmer : private Comm::Farmer< Farmer<T_GATRAITS> >, 
+                       public Base<T_GATRAITS>
         {
           public:
             typedef T_GATRAITS t_GATraits; //!< all %GA traits
@@ -123,7 +124,7 @@ namespace GA
             //! Base class type.
             typedef Base<t_GATraits> t_Base;
             //! Communication base class
-            typedef Comm::Farmer< t_GATraits, Farmer > t_CommBase;
+            typedef Comm::Farmer< Farmer<t_GATraits> > t_CommBase;
     
           protected:
             types::t_unsigned target;
@@ -140,20 +141,19 @@ namespace GA
             void operator()(const t_Population& _parents, t_Population& _offspring);
        
             //! The class name. EO required
-            virtual std::string className() const { return "GA::mpi::Graph::Breeder::Farmer"; }
+            virtual std::string className() const
+              { return "GA::mpi::Graph::Breeder::Farmer"; }
     
-            // Response to WAITING request
+            //! \brief Response to WAITING request.
+            //! \details Receives the individual. If still more are to be
+            //!          created, sends t_CommBase::t_Commands::DONE, otherwise
+            //!          t_CommBase::t_Commands::GO. The persistent request is
+            //!          only activated in the latter case.
             void onWait( types::t_int _bull );
-            // Response to REQUESTINGTABOOCHECK request
-            void onTaboo( types::t_int _bull );
-            // Response to REQUESTINGOBJECTIVE request
-            void onObjective( types::t_int _bull );
-            // Response to REQUESTINGHISTORYCHECK request
-            void onHistory( types::t_int _bull );
         };
     
         template<class T_GATRAITS>
-        class Bull : private Comm::Bull<T_GATRAITS, Bull>, public Base<T_GATRAITS>
+        class Bull : private Comm::Bull< Bull<T_GATRAITS> >, public Base<T_GATRAITS>
         {
           public:
             typedef T_GATRAITS t_GATraits; //!< all %GA traits
@@ -168,7 +168,7 @@ namespace GA
             //! Base class type.
             typedef Base<t_GATraits> t_Base;
             //! Communication base class
-            typedef Comm::Bull< t_GATraits, Farmer> t_CommBase;
+            typedef Comm::Bull< Bull<t_GATraits> > t_CommBase;
     
             //! Tag for communications with the cows
             const MPI::INT COWTAG = 2;
@@ -183,11 +183,12 @@ namespace GA
             void operator()(const t_Population& _parents, t_Population& _offspring);
        
             //! The class name. EO required
-            virtual std::string className() const { return "GA::mpi::Graph::Breeder::Bull"; }
+            virtual std::string className() const
+              { return "GA::mpi::Graph::Breeder::Bull"; }
         };
     
         template<class T_GATRAITS>
-        class Cow : private CommBull< T_GATRAITS, Cow >, public Base<T_GATRAITS>
+        class Cow : private Comm::Cow< Cow >, public Base<T_GATRAITS>
         {
           public:
             typedef T_GATRAITS t_GATraits; //!< all %GA traits
@@ -202,7 +203,7 @@ namespace GA
             //! Base class type.
             typedef Graph::Breeder<t_GATraits> t_Base;
             //! Communication base class
-            typedef Comm::Cow< t_GATraits, Cow > t_CommBase;
+            typedef Comm::Cow< Cow<t_GATraits> > t_CommBase;
     
     
           public:
@@ -215,7 +216,8 @@ namespace GA
               { while( t_CommBase :: wait() != t_CommBase::DONE ); }
        
             //! The class name. EO required
-            virtual std::string className() const { return "GA::mpi::Graph::Breeder::Cow"; }
+            virtual std::string className() const
+              { return "GA::mpi::Graph::Breeder::Cow"; }
         };
 
   } // namespace mpi

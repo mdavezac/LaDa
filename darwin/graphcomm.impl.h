@@ -72,7 +72,8 @@ namespace GA
             _indiv.broadcast( bc );
           }
         template< class T_OBJECT >  
-          void receive_object( types::t_int _bull, T_OBJECT &_object, MPI::Comm *_comm )
+          void receive_object( types::t_int _bull,
+                               T_OBJECT &_object, MPI::Comm *_comm )
           {
             mpi::BroadCast bc( _comm );
             bc << _object << mpi::BroadCast::allocate << _object;
@@ -89,13 +90,13 @@ namespace GA
             bc << _object;
           }
 
-        template<class T_GATRAITS, class T_DERIVED>
-        Farmer<T_GATRAITS, T_DERIVED> :: Farmer   ( MPI::Comm *_comm )
-                                                : ::mpi::Base( _comm ),
-                                                  from_bulls(NULL), nbulls(0),
-                                                  requests(NULL), taboos(NULL),
-                                                  objective(NULL), store(NULL),
-                                                  history(NULL)
+        template<class T_DERIVED>
+        Farmer<T_DERIVED> :: Farmer   ( MPI::Comm *_comm )
+                                    : ::mpi::Base( _comm ),
+                                      from_bulls(NULL), nbulls(0),
+                                      requests(NULL), taboos(NULL),
+                                      objective(NULL), store(NULL),
+                                      history(NULL)
         {
           __ASSERT( is_root_node() ); 
 
@@ -117,8 +118,8 @@ namespace GA
           }
         }
 
-        template<class T_GATRAITS, class T_DERIVED>
-        Farmer<T_GATRAITS, T_DERIVED> :: ~Farmer ()
+        template<class T_DERIVED>
+        Farmer<T_DERIVED> :: ~Farmer ()
         {
           if( to_bulls )
           {
@@ -135,16 +136,16 @@ namespace GA
           nbulls = 0;
         }
 
-        template<class T_GATRAITS, class T_DERIVED>
-        inline void Farmer<T_GATRAITS, T_DERIVED> :: send_command( types::t_unsigned _bull,
-                                                                   t_Commands _c )
+        template<class T_DERIVED>
+        inline void Farmer<T_DERIVED> :: send_command( types::t_unsigned _bull,
+                                                       t_Commands _c )
         {
           MPI::UNSIGNED buff = _c;
           _comm->Send( &buff, 1, MPI::UNSIGNED, _bull );
         }
 
-        template<class T_GATRAITS, class T_DERIVED>
-        void Farmer<T_GATRAITS, T_DERIVED> :: test_bulls()
+        template<class T_DERIVED>
+        void Farmer<T_DERIVED> :: test_bulls()
         {
           try
           {
@@ -181,32 +182,103 @@ namespace GA
           }
         }
 
+        template<class T_DERIVED>
+        void Farmer<T_DERIVED> :: wait_bulls()
+        {
+          try
+          {
+            types::t_int *completed = types::t_int [nbulls];
+            types::t_int ncomp = MPI::WaitAll( nbulls, from_bulls, completed );
+            MPI::types::t_int *i_comp = completed;
+            MPI::types::t_int *i_comp_end = completed + ncomp;
+            t_Derived derived = static_cast<t_Derived*>( this );
+            for(; i_comp != i_comp_end; ++i_comp )
+            {
+              __ASSERT( *i_comp > 0 and *i_comp < nbulls, 
+                        "Process index out of range: " << *i_comp << ".\n" );
+              switch( in[*i_comp] )
+              {
+                case WAITING: derived->onWait( *i_comp ); break;
+                case REQUESTINGOBJECTIVE: derived->onObjective( *i_comp ); break;
+                case REQUESTINGTABOO: derived->onTaboo( *i_comp ); break;
+                case REQUESTINGHISTORYCHECK: derived->onHistory( *i_comp ); break;
+                default: __THROW_ERROR( "Unknown command" << in[*i_comp] << "." )
+              }
+            }
 
-        template<class T_GATRAITS, class T_DERIVED>
-        inline void Bull<T_GATRAITS, T_DERIVED> :: bcast( t_Commands _c )
+            delete[] completed;
+          }
+          catch( std::Exception &_e ) 
+          {
+            if( completed ) delete completed; completed = NULL;
+            __THROW_ERROR( "Encountered error while testing bulls: " << _e.what() )
+          }
+          catch( MPI::Exception &_e ) 
+          {
+            if( completed ) delete completed; completed = NULL;
+            __THROW_ERROR( "MPI error encountered: " << _e.what() )
+          }
+        }
+        template<class T_DERIVED>
+        inline void Farmer<T_DERIVED> :: onTaboo( types::t_int _bull )
+        {
+          __ASSERT( taboo, "Taboo pointer has not been set.\n")
+          t_Individual indiv;
+          t_CommBase::receive_individual( _bull, indiv );
+          t_CommBase::send_command( _bull, (*taboo)( indiv ) );
+          t_CommBase::activate(_bull);
+        }
+        template<class T_DERIVED>
+        inline void Farmer<T_DERIVED> :: onObjective( types::t_int _bull )
+        {
+          __ASSERT( objective, "Objective pointer not set.\n" )
+          MPI::DOUBLE buff = 0;
+          typename t_Individual :: t_Quantities quantities;
+          t_CommBase::receive_quantities( quantities );
+          typename t_Individual :: t_Fitness fitness = (*objective)( quantities );
+          t_CommBase::send_fitness( fitness );
+          t_CommBase::activate(_bull);
+        }
+        template<class T_DERIVED>
+        inline void Farmer<T_DERIVED> :: onHistory( types::t_int _bull )
+        {
+          // Don't expect this message if history is not set
+          __ASSERT( history, "History Pointer not set.\n")
+          t_Individual indiv;
+          t_CommBase::receive_individual( _bull, indiv );
+          MPI::BOOL buff = history->clone( indiv );
+          t_CommBase::send_command( buff, _bull );
+          t_CommBase::activate(_bull);
+          if( not buff ) return;
+          t_CommBase::send_individual( _bull, indiv );
+        }
+      
+
+        template<class T_DERIVED>
+        inline void Bull<T_DERIVED> :: command( t_Commands _c )
         {
           MPI::UNSIGNED buff = _c;
           cowcomm->Bcast( &buff, 1, MPI::UNSIGNED, 0 );
         }
 
-        template<class T_GATRAITS, class T_DERIVED>
-        inline t_Commands Bull<T_GATRAITS, T_DERIVED> :: obey()
+        template<class T_DERIVED>
+        inline t_Commands Bull<T_DERIVED> :: obey()
         {
           MPI::UNSIGNED buff;
           comm->Recv( &buff, 1, MPI::UNSIGNED, 0 );
           return buff;
         }
 
-        template<class T_GATRAITS, class T_DERIVED>
-        inline void Bull<T_GATRAITS, T_DERIVED> :: request( t_Requests &_c )
+        template<class T_DERIVED>
+        inline void Bull<T_DERIVED> :: request( t_Requests &_c )
         {
           MPI::UNSIGNED buff = _c;
           MPI::Request request = comm->Isend( &buff, 1, MPI::UNSIGNED, 0 );
           request.Wait();
         }
 
-        template<class T_GATRAITS, class T_DERIVED>
-        inline t_Command Cow<T_GATRAITS, T_DERIVED> :: obey()
+        template<class T_DERIVED>
+        inline t_Command Cow<T_DERIVED> :: obey()
         {
           __ASSERT( evaluator, "Pointer to evaluator has not been set.\n" )
           MPI::UNSIGNED buff = t_Commands::DONE;
@@ -215,16 +287,18 @@ namespace GA
           switch( (t_Commands) buff )
           {
             case t_Commands :: EVALUATE: _this->onEvaluate(); break;
-            case t_Commands :: EVALUATE_WITH_GRADIENT: _this->onEvaluateWithGradient(); break;
+            case t_Commands :: EVALUATE_WITH_GRADIENT:
+              _this->onEvaluateWithGradient(); break;
             case t_Commands :: EVALUATE_GRADIENT: _this->onEvaluateGradient(); break; 
-            case t_Commands :: EVALUATE_ONE_GRADIENT: _this->onEvaluateOneGradient(); break;
+            case t_Commands :: EVALUATE_ONE_GRADIENT:
+              _this->onEvaluateOneGradient(); break;
             case t_Commands :: DONE: return t_Commands :: DONE; break;
           }
           return t_Commands :: CONTINUE;
         }
 
-        template<class T_GATRAITS, class T_DERIVED>
-        inline void Cow<T_GATRAITS, T_DERIVED> :: onEvaluate()
+        template<class T_DERIVED>
+        inline void Cow<T_DERIVED> :: onEvaluate()
         {
           t_Individual individual;
           bcast_template_object( 0, individual, t_Base::comm );
@@ -232,8 +306,8 @@ namespace GA
           evaluator->evaluate();
         }
 
-        template<class T_GATRAITS, class T_DERIVED>
-        inline void Cow<T_GATRAITS, T_DERIVED> :: onEvaluateGradient()
+        template<class T_DERIVED>
+        inline void Cow<T_DERIVED> :: onEvaluateGradient()
         {
           t_Individual individual;
           bcast_template_object( 0, individual, t_Base::comm );
@@ -243,8 +317,8 @@ namespace GA
           evaluator->evaluate_gradients( gradients );
         }
 
-        template<class T_GATRAITS, class T_DERIVED>
-        inline void Cow<T_GATRAITS, T_DERIVED> :: onEvaluateWithGradient()
+        template<class T_DERIVED>
+        inline void Cow<T_DERIVED> :: onEvaluateWithGradient()
         {
           t_Individual individual;
           bcast_template_object( 0, individual, t_Base::comm );
@@ -254,8 +328,8 @@ namespace GA
           evaluator->evaluate_with_gradients( gradients );
         }
 
-        template<class T_GATRAITS, class T_DERIVED>
-        inline void Cow<T_GATRAITS, T_DERIVED> :: onEvaluateOneGradient()
+        template<class T_DERIVED>
+        inline void Cow<T_DERIVED> :: onEvaluateOneGradient()
         {
           t_Individual individual;
           bcast_template_object( 0, individual, t_Base::comm );

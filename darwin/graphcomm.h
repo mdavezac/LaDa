@@ -33,28 +33,37 @@ namespace GA
       {
         //! Sends a template object to bull \a _bull.
         template< class T_QUANTITY >
-        void send_quantity( types::t_unsigned _bull, T_QUANTITY &_q, MPI::Comm *_comm);
+        void send_quantity( types::t_unsigned _bull,
+                            T_QUANTITY &_q, MPI::Comm *_comm);
         //! Receives a template object from bull \a _bull.
         template< class T_QUANTITY >
-        void receive_quantity( types::t_unsigned _bull, T_QUANTITY &_q, MPI::Comm *_comm);
+        void receive_quantity( types::t_unsigned _bull,
+                               T_QUANTITY &_q, MPI::Comm *_comm);
         //! Sends a template object to bull \a _bull.
         template< class T_OBJECT >
-        void send_template_object( types::t_unsigned _bull, T_OBJECT &_o, MPI::Comm *_comm);
+        void send_template_object( types::t_unsigned _bull,
+                                   T_OBJECT &_o, MPI::Comm *_comm);
         //! Receives a template object from bull \a _bull.
         template< class T_OBJECT >
-        void receive_template_object( types::t_unsigned _bull, T_OBJECT &_o, MPI::Comm *_comm);
+        void receive_template_object( types::t_unsigned _bull,
+                                      T_OBJECT &_o, MPI::Comm *_comm);
         //! Sends a (non-template) object to bull \a _bull.
         template< class T_OBJECT >
-        void send_template_object( types::t_unsigned _bull, T_OBJECT &_o, MPI::Comm *_comm);
+        void send_template_object( types::t_unsigned _bull,
+                                   T_OBJECT &_o, MPI::Comm *_comm);
         //! Receives a (non-template) object from bull \a _bull.
         template< class T_OBJECT >
-        void receive_template_object( types::t_unsigned _bull, T_OBJECT &_o, MPI::Comm *_comm);
+        void receive_template_object( types::t_unsigned _bull,
+                                      T_OBJECT &_o, MPI::Comm *_comm);
         //! Broadcasts a template object from \a _root.
         template< class T_OBJECT >  
-        void bcast_template_object( types::t_int _root, T_OBJECT &_object, MPI::Comm *_comm )
+        void bcast_template_object( types::t_int _root,
+                                    T_OBJECT &_object, MPI::Comm *_comm )
         
+        //! \cond
         template< T_GATRAITS, T_DERIVED > class Cow;
         template< T_GATRAITS, T_DERIVED > class Bull;
+        //! \endcond
         
         //! \brief Communication CRT class for farmers.
         //! \details This class defines a number of persistent requests a farmer
@@ -74,7 +83,7 @@ namespace GA
         //!          The CRT will make calls to onWaiting(), onTaboo(),
         //!          onObjective(), onHistory() for each of these requests
         //!          respectively. These routines should be defined in the
-        //!          derived classes. No defaults are provided.
+        //!          derived classes. Defaults are provided for the last three.
         template< T_GATRAITS, T_DERIVED >
         class Farmer : private ::mpi::Base
         {
@@ -140,7 +149,7 @@ namespace GA
             //! History functor
             History<t_Individual>*             history;
         
-          public:
+          protected:
             Farmer( MPI :: Comm *_comm );
             ~Farmer();
         
@@ -151,7 +160,47 @@ namespace GA
             //!          a CRT mechanism (Curriuosly Recurring Template), e.g. to
             //!          the member functions of the derivatives of this class.
             bool test_bulls();
+            //! Wait for bulls to finish.
+            bool wait_bulls();
         
+            //! Sends an individual to bull \a _bull.
+            void send_individual( types::t_unsigned _bull, t_Individual &_indiv)
+              { send_template_object< t_Individual >( _bull + 1, _indiv, 
+                                                      t_CommBase::comm ); }
+            //! Sends an individual to bull \a _bull.
+            void receive_individual( types::t_unsigned _bull, t_Individual &_indiv )
+              { receive_template_object< t_Individual >( _bull + 1, _indiv,
+                                                         t_CommBase::comm ); }
+            //! Sends an individual to bull \a _bull.
+            void send_fitness( types::t_unsigned _bull, t_Fitness &_fit )
+              { send_template_object< t_Fitness >( _bull + 1, _fit,
+                                                   t_CommBase::comm ); }
+            //! Sends an individual to bull \a _bull.
+            void receive_individual( types::t_unsigned _bull, t_Fitness &_fit )
+              { receive_template_object< t_Fitness >( _bull + 1, _fit,
+                                                      t_CommBase::comm ); }
+            //! Sends an individual to bull \a _bull.
+            void send_quantities( types::t_unsigned _bull, t_Quantities &_q );
+              { send_quantities< t_Fitness >( _bull + 1, _q, t_CommBase::comm ); }
+            //! Sends an individual to bull \a _bull.
+            void receive_quantities( types::t_unsigned _bull, t_Quantities &_fit );
+              { receive_quantities< t_Fitness >( _bull + 1, _q, t_CommBase::comm ); }
+            //! Starts all persistent requests from bulls ( Farmer::requests )
+            void startall() { _comm->StartAll( nbulls, requests ); } 
+            //! Sends a command to \a _bull.
+            void send_command( types::t_unsigned _bull, t_Commands _c );
+            //! Activates request for \a _bull.
+            void activate( types::t_unsigned _bull)
+              { request[_bull].start(); }
+            
+            //! Response to REQUESTINGTABOOCHECK request
+            void onTaboo( types::t_int _bull );
+            //! Response to REQUESTINGOBJECTIVE request
+            void onObjective( types::t_int _bull );
+            //! Response to REQUESTINGHISTORYCHECK request
+            void onHistory( types::t_int _bull );
+        
+          public:
             //! Sets taboo pointer
             set( Taboo_Base<t_Individual> *_taboo ) { taboos = _taboos; }
             //! Sets objective pointer
@@ -161,29 +210,6 @@ namespace GA
             set(  typename t_Store::Base*  _s ) { store = _s; }
             //! Sets history pointer
             set(  typename t_Store::Base*  _history ) { history = _history; }
-        
-            //! Sends an individual to bull \a _bull.
-            void send_individual( types::t_unsigned _bull, t_Individual &_indiv)
-              { send_template_object< t_Individual >( _bull, _indiv, t_CommBase::comm ); }
-            //! Sends an individual to bull \a _bull.
-            void receive_individual( types::t_unsigned _bull, t_Individual &_indiv )
-              { receive_template_object< t_Individual >( _bull, _indiv, t_CommBase::comm ); }
-            //! Sends an individual to bull \a _bull.
-            void send_fitness( types::t_unsigned _bull, t_Fitness &_fit )
-              { send_template_object< t_Fitness >( _bull, _fit, t_CommBase::comm ); }
-            //! Sends an individual to bull \a _bull.
-            void receive_individual( types::t_unsigned _bull, t_Fitness &_fit )
-              { receive_template_object< t_Fitness >( _bull, _fit, t_CommBase::comm ); }
-            //! Sends an individual to bull \a _bull.
-            void send_quantities( types::t_unsigned _bull, t_Quantities &_q );
-              { send_quantities< t_Fitness >( _bull, _q, t_CommBase::comm ); }
-            //! Sends an individual to bull \a _bull.
-            void receive_quantities( types::t_unsigned _bull, t_Quantities &_fit );
-              { receive_quantities< t_Fitness >( _bull, _q, t_CommBase::comm ); }
-            //! Starts all persistent requests from bulls ( Farmer::requests )
-            void startall() { _comm->StartAll( nbulls, requests ); } 
-            //! Sends a command to \a _bull.
-            void send_command( types::t_unsigned _bull, t_Commands _c );
         };
         
         //! \brief Communication CRT class for bulls.
@@ -200,17 +226,17 @@ namespace GA
         //!          A number of helper functions are also declared for
         //!          broadcasting stuff to cows and requesting stuff from the
         //!          farmer.
-        template< T_GATRAITS, T_DERIVED >
+        template< T_DERIVED >
         class Bull : private ::mpi::Base
         {
           friend class Cow<T_GATRAITS, T_DERIVED>;
           public:
             //! Type of the derived class
             typedef T_DERIVED t_Derived;
-            //! All %GA traits
-            typedef typename T_GATRAITS t_GATraits;
         
           protected:
+            //! All %GA traits
+            typedef typename t_Derived::t_GATraits t_GATraits;
             //! Type of the farmer communication class
             typedef Farmer<t_GATraits, t_Derived> t_Farmer;
             //! Requests to send to farmer.
@@ -236,8 +262,9 @@ namespace GA
           protected:
             MPI::Comm *cowcomm;
         
-          public:
-            Bull( MPI::Comm *_fcomm, MPI::Comm *_ccom ) : t_Base( _fcom ), cowcomm( _ccom ) {}
+          protected:
+            Bull   ( MPI::Comm *_fcomm, MPI::Comm *_ccom )
+                 : t_Base( _fcom ), cowcomm( _ccom ) {}
         
             //! Sends an individual to bull \a _bull.
             void send_individual( t_Individual &_indiv)
@@ -262,7 +289,7 @@ namespace GA
             //! Sends a request to Farmer.
             void request( t_Requests _request );
             //! Broadcasts a command to all cows
-            void bcast( t_Commands _c );
+            void command( t_Commands _c );
             //! Broadcasts and individual to all cows
             void bcast( t_Individual &_individual )
               { bcast_template_object( 0, _indiv, _comm ); }
@@ -276,22 +303,22 @@ namespace GA
         //!          behavior of cows is expected not to vary much, the
         //!          complete behaviors are defined here. As such, it is
         //!          important to call the routine Cow::set() prior to use.
-        template< T_GATRAITS, T_DERIVED >
+        template< T_DERIVED >
         class Cow : private ::mpi::Base
         {
           public:
             //! Type of the derived class
             typedef T_DERIVED t_Derived;
-            //! All %GA traits
-            typedef T_GATRAITS t_GATraits;
         
           private:
+            //! All %GA traits
+            typedef typename t_Derived::t_GATraits             t_GATraits;
             //! Type of the evaluator
-            typedef typename T_GATRAITS :: t_Evaluator t_Evaluator;
+            typedef typename T_GATRAITS :: t_Evaluator         t_Evaluator;
             //! \brief quantity traits pertaining to Virtual Atom minimization
-            typedef typename t_GATraits :: t_VA_Traits                   t_VATraits;
+            typedef typename t_GATraits :: t_VA_Traits         t_VATraits;
             //! \brief Gradients type for Virtual Atom minimization
-            typedef typename t_VATraits :: t_QuantityGradients           t_QuantityGradients;
+            typedef typename t_VATraits :: t_QuantityGradients t_QuantityGradients;
         
           protected:
             //! Type of the bull communication class
@@ -309,12 +336,9 @@ namespace GA
             //! Pointer to the interface to the functional(s).
             t_Evaluator *evaluator;
         
-          public:
+          protected:
             //! Constructor and Initializer
             Cow( MPI::Comm *_comm ): t_Base( _comm ), evaluator(NULL) {}
-        
-            //! Sets the pointer to the evaluator
-            void set( t_Evaluator *_eval ) { evaluator = _eval; }
         
             //! Wait for a command from the bull
             t_Commands obey();
@@ -326,6 +350,11 @@ namespace GA
             void onEvaluateWithGradient();
             //! Evaluates the gradient of an individual in one direction.
             void onEvaluateOneGradient();
+
+          public:
+            //! Sets the pointer to the evaluator
+            void set( t_Evaluator *_eval ) { evaluator = _eval; }
+        
         };
       } // namespace Comm
     } // namespace Graph

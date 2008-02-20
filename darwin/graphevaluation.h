@@ -8,9 +8,13 @@
 #include <config.h>
 #endif
 
+#include <list>
+#include <pair>
+
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
+#include "evaluation.h"
 
 namespace GA
 {
@@ -64,7 +68,7 @@ namespace GA
         //!          specifically, it makes a list of unknown individuals and
         //!          dispatches them for evaluation to the bulls.
         template<class T_BASE>
-        class Farmer : private Comm::Farmer< Farmer >, public T_BASE
+        class Farmer : private Comm::Farmer< Farmer<T_BASE> >, public T_BASE
         {
           public:
             //! Base class type
@@ -79,38 +83,56 @@ namespace GA
             typedef typename t_GATraits::t_Individual  t_Individual; 
             //! type of the population
             typedef typename t_GATraits::t_Population  t_Population; 
+            //! Type of the history
+            typedef GA::History<t_Individual> t_History;
             //! Communication base class
-            typedef Comm::Farmer< t_GATraits, Farmer > t_CommBase;
+            typedef Comm::Farmer< Farmer<T_BASE> > t_CommBase;
+            //! first holds iterator, second holds assigned proc.
+            typedef std::pair< typename t_Population :: iterator,
+                               types::t_int > t_Unknown;
+            //! Container of individuals needing evaluation.
+            typedef std::list< t_Unknown > t_Unknowns;
     
           protected:
             types::t_unsigned target;
             t_Population *offspring;
-            std::list< t_Population :: iterator > unknowns;
+            t_Unknowns unknowns;
     
           public:
             //! Constructor.
             Farmer   ( Topology *_topo )
-                   : t_CommBase(_topo->Com() ), t_Base( _topo->Comm() ),
+                   : t_CommBase( _topo ), T_BASE()
                      target(0), offspring(NULL) {};
     
             //! Creates \a _offspring population from \a _parent
             void operator()(const t_Population& _parents, t_Population& _offspring);
-       
-            //! The class name. EO required
-            virtual std::string className() const { return "GA::mpi::Graph::Breeder::Farmer"; }
     
-            // Response to WAITING request
+            //! The class name. EO required
+            virtual std::string className() const
+              { return "GA::mpi::Graph::Evaluation::Farmer"; }
+
+            //! Sets taboo pointer
+            set( Taboo_Base<t_Individual> *_taboo )
+              { t_CommBase :: taboos = t_Base :: taboos = _taboos; }
+            //! Sets objective pointer
+            set(  typename t_ObjectiveType::Vector*  _o )
+              { t_CommBase :: objective = t_Base :: objective = _o; }
+            //! Sets objective pointer
+            set(  typename t_Store::Base*  _s )
+              { t_CommBase :: store = t_Base :: store =  _s; }
+            //! Sets history pointer
+            set(  typename t_History*  _h)
+              { t_CommBase :: history = _h; set_Base_history<t_Base>(_h); }
+
+          protected:
+            //! Response to WAITING request
             void onWait( types::t_int _bull );
-            // Response to REQUESTINGTABOOCHECK request
-            void onTaboo( types::t_int _bull );
-            // Response to REQUESTINGOBJECTIVE request
-            void onObjective( types::t_int _bull );
-            // Response to REQUESTINGHISTORYCHECK request
-            void onHistory( types::t_int _bull );
+            //! Sets history for t_Base != Evaluation::WithHistory.
+            template < class TT_BASE > set_base_history( t_History *_history ) {}
         };
     
-        template<class T_GATRAITS>
-        class Bull : private Comm::Bull<T_GATRAITS, Bull>, public Base<T_GATRAITS>
+        template<class T_BASE>
+        class Bull : private Comm::Bull< Bull<T_BASE> >, public T_BASE
         {
           public:
             typedef T_GATRAITS t_GATraits; //!< all %GA traits
@@ -140,7 +162,8 @@ namespace GA
             void operator()(const t_Population& _parents, t_Population& _offspring);
        
             //! The class name. EO required
-            virtual std::string className() const { return "GA::mpi::Graph::Breeder::Bull"; }
+            virtual std::string className() const
+              { return "GA::mpi::Graph::Evaluation::Bull"; }
         };
     
         template<class T_GATRAITS>
@@ -174,7 +197,8 @@ namespace GA
               { while( t_CommBase :: wait() != t_CommBase::DONE ); }
        
             //! The class name. EO required
-            virtual std::string className() const { return "GA::mpi::Graph::Breeder::Cow"; }
+            virtual std::string className() const
+              { return "GA::mpi::Graph::Breeder::Cow"; }
         };
       } // namespace Evaluation
     } // namespace Graph
