@@ -85,9 +85,9 @@ template< class T_GATRAITS >
       //! \brief Evaluator to which all functional calls should be tunneled.
       //! \sa GA::Evaluator, SingleSite::Evaluator, TwoSite::Evaluator,
       //! BandGap::Evaluator, CE::Evaluator, Molecularity::Evaluator
-      t_Evaluator &evaluator;
+      t_Evaluator *evaluator;
       //! \brief Links quantities and Fitness. \sa Fitness, Objective
-      t_Objective &objective; 
+      t_Objective *objective; 
       t_Store *store; //!< Stores results!! \sa Store
 
     public:
@@ -98,8 +98,11 @@ template< class T_GATRAITS >
 
     public:
       //! \brief Constructor and Initializer
-      Base   ( t_Evaluator &_eval, t_Objective &_obj, t_Store &_store )
-           : evaluator(_eval), objective(_obj), store(&_store), nb_eval(0), nb_grad(0) {};
+      Base () : evaluator(NULL), objective(NULL), store(NULL),
+                nb_eval(0), nb_grad(0) {};
+      //! \brief Constructor and Initializer
+      Base   ( t_Evaluator *_eval, t_Objective *_obj, t_Store *_store )
+           : evaluator(_eval), objective(_obj), store(_store), nb_eval(0), nb_grad(0) {};
       //! \brief Copy Constructor 
       Base   ( const Base<t_Evaluator> &_x )
            : evaluator(_x.evaluator), objective(_x.objective),
@@ -108,6 +111,13 @@ template< class T_GATRAITS >
       virtual ~Base() {};
 
     public:
+      //! Sets the pointer to the functional interface.
+      void set( t_Evaluator *_eval ) { evaluator = eval; }
+      //! Sets the pointer to the objective interface.
+      void set( t_Objective *_obj ) { objective = obj; }
+      //! Sets the pointer to the storage interface.
+      void set( t_Objective *_stor ) { store = _stor; }
+      //! \brief  calls on the functional to evaluate \a _indiv
       //! \brief  calls on the functional to evaluate \a _indiv
       //¡ \details All individuals for which the quantities are unknowned
       //! should be evaluated <em>via</em>  this function. The evaluation call

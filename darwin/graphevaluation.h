@@ -20,115 +20,72 @@ namespace GA
 
     namespace Graph
     {
-      //! Contains all Breeder related stuff in the mpi::Graph Topology.
-      namespace Breeder
+      //! \brief Contains all evalaution related stuff in the mpi::Graph Topology.
+      //! \details The classes below are meant to be used as derived from
+      //!          "standard" Evaluation classes. They will simply overwrite
+      //!          the behavior of the Evaluation::Base::operator()(
+      //!          t_Population &_parent, t_Population &_offspring ) routine.
+      //!          Instead of the standard approach to evaluating offsprings,
+      //!          each invalid individual is dispatched by the farmer to the
+      //!          herds for evaluation. Individuals are dispatched as herds
+      //!          become available. The classes from which the following
+      //!          classes are derive is defined through a template. These
+      //!          classes also derive from the Comm classes, \e via the CRT
+      //!          mechanism.
+      namespace Evaluation
       {
 
-        //! \brief Base class for breeders in the GA::mpi::Graph topology
-        //! \details Contains helper functions which may be of help to any of the
-        //!          specific breeders.
-        template<class T_GATRAITS>
-        class Base : public eoBreed<typename T_GATRAITS::t_Individual>
+        //! An evaluation class which does nothing.
+        template<class T_BASE>
+        class Farmhand
         {
           public:
-            typedef T_GATRAITS t_GATraits; //!< all %GA traits
-          protected:
-            //! type of an individual
-            typedef typename t_GATraits::t_Individual  t_Individual; 
+            //! Base class type
+            typedef T_BASE t_Base;
     
           protected:
-            //! A selection operator for the obtention of parents
-            eoSelectOne<t_Individual>* select;
-            //! Mating operator
-            eoGenOp<t_Individual> *op;
-            //! Generation counter
-            GenCount *age;
-            //! Number of offspring to change
-            eoHowMany howMany;
-            //! mpi topology
-            Topology *topo;
-    
-          public:
-            //! Constructor and Initializer
-            Base   ( Topology *_topo )
-                 : select(NULL), op(NULL), age(NULL),
-                   howmany(0), topo(_topo) {}
-    
-            //! Copy Constructor
-            Breeder ( Breeder<t_Individual> & _breeder )
-                    : select( _breeder.topo ), op(_breeder.op), age(_breeder.age),
-                      howmany(_breeder.howMany), topo( _breeder.topo ) {}
-    
-            //! Sets the selector.
-            void set( eoSelectOne<t_Individual> *_select ){ select = _select; }
-            //! Sets the breeding operators
-            void set( eoSelectOne<t_Individual> *_op ){ op = _op; }
-            //! Sets the replacement rate
-            void set( types::t_real _rep ){ howMany = _rep; }
-            //! Sets the generation counter.
-            void set( GenCount *_age ){ age = _age; }
-            //! Sets the topology.
-            void set( Topology *_topo) { topo(_topo); }
-            //! Destructor
-            virtual ~Breeder() {}
-            //! EO required.
-            virtual std::string className() const { return "GA::mpi::Graph::Breeder::Base"; }
-        }
-    
-        //! A breeder class which does nothing.
-        template<class T_GATRAITS>
-        class Farmhand : public Base<T_GATRAITS>
-        {
-          public:
-            typedef T_GATRAITS t_GATraits; //!< all %GA traits
-    
-          protected:
+            //! all %GA traits
+            typedef typename t_Base::t_GATraits t_GATraits;
             //! all individual traits
             typedef typename t_GATraits::t_IndivTraits t_IndivTraits;
-            //! type of an individual
-            typedef typename t_GATraits::t_Individual  t_Individual; 
             //! type of the population
             typedef typename t_GATraits::t_Population  t_Population; 
-            //! Base class type.
-            typedef Base<t_GATraits> t_Base;
     
           public:
             //! Constructor.
-            Farmhand( Topology *_topo ) : t_Base( _topo );
+            Farmhand();
     
             //! Creates \a _offspring population from \a _parent
             void operator()(const t_Population& _parents, t_Population& _offspring) {};
-       
-            ///! The class name. EO required
-            virtual std::string className() const
-              { return "GA::mpi::Graph::Breeder::Farmhand"; }
         };
     
         //! \brief A breeder class to rule them all.
-        //! \details This functor dispatches commands to the bulls, such as breed
-        //!          one and stop breeding. 
-        template<class T_GATRAITS>
-        class Farmer : private Comm::Farmer< Farmer >, public Base<T_GATRAITS>
+        //! \details This functor dispatches commands to the bulls. More
+        //!          specifically, it makes a list of unknown individuals and
+        //!          dispatches them for evaluation to the bulls.
+        template<class T_BASE>
+        class Farmer : private Comm::Farmer< Farmer >, public T_BASE
         {
           public:
-            typedef T_GATRAITS t_GATraits; //!< all %GA traits
+            //! Base class type
+            typedef T_BASE t_Base;
     
           protected:
+            //! all %GA traits
+            typedef typename t_Base::t_GATraits t_GATraits;
             //! all individual traits
             typedef typename t_GATraits::t_IndivTraits t_IndivTraits;
             //! type of an individual
             typedef typename t_GATraits::t_Individual  t_Individual; 
             //! type of the population
             typedef typename t_GATraits::t_Population  t_Population; 
-            //! Base class type.
-            typedef Base<t_GATraits> t_Base;
             //! Communication base class
             typedef Comm::Farmer< t_GATraits, Farmer > t_CommBase;
     
           protected:
             types::t_unsigned target;
             t_Population *offspring;
-            
+            std::list< t_Population :: iterator > unknowns;
     
           public:
             //! Constructor.
@@ -166,9 +123,9 @@ namespace GA
             //! type of the population
             typedef typename t_GATraits::t_Population  t_Population; 
             //! Base class type.
-            typedef Base<t_GATraits> t_Base;
+            typedef Base<T_GATRAITS> t_Base;
             //! Communication base class
-            typedef Comm::Bull< t_GATraits, Farmer> t_CommBase;
+            typedef Comm::Bull< T_GATRAITS, Farmer> t_CommBase;
     
             //! Tag for communications with the cows
             const MPI::INT COWTAG = 2;
@@ -200,9 +157,11 @@ namespace GA
             //! type of the population
             typedef typename t_GATraits::t_Population  t_Population; 
             //! Base class type.
-            typedef Graph::Breeder<t_GATraits> t_Base;
+            typedef Graph::Breeder<T_GATRAITS> t_Base;
             //! Communication base class
-            typedef Comm::Cow< t_GATraits, Cow > t_CommBase;
+            typedef Comm::Cow< T_GATRAITS, Cow > t_CommBase;
+    
+            const MPI::INT TAG = 2;
     
     
           public:
@@ -217,7 +176,8 @@ namespace GA
             //! The class name. EO required
             virtual std::string className() const { return "GA::mpi::Graph::Breeder::Cow"; }
         };
-
+      } // namespace Evaluation
+    } // namespace Graph
   } // namespace mpi
 } // namespace GA
 
