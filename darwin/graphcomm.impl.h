@@ -19,7 +19,7 @@ namespace GA
             t_QuantityTraits :: broadcast(_q, bc );
             bc.allocate_buffers();
             t_QuantityTraits :: broadcast(_q, bc );
-            bc.receive_ptp( _bull );
+            bc.send_ptp( _bull );
             t_QuantityTraits :: broadcast(_q, bc );
           }
 
@@ -32,8 +32,32 @@ namespace GA
             t_QuantityTraits :: broadcast(_q, bc );
             bc.allocate_buffers();
             t_QuantityTraits :: broadcast(_q, bc );
-            bc.send_ptp( _bull );
+            bc.receive_ptp( _bull );
             t_QuantityTraits :: broadcast(_q, bc );
+          }
+
+        template< class T_ITERATOR >
+          void send_range( types::t_int _bull, T_ITERATOR _first,
+                           T_ITERATOR _last, MPI::Comm *_comm )
+          {
+            mpi::BroadCast bc( _comm );
+            bc.serialize_range( _first, _last, bc );
+            bc.allocate_buffers();
+            bc.serialize_range( _first, _last, bc );
+            bc.send_ptp( _bull );
+            bc.serialize_range( _first, _last, bc );
+          }
+
+        template< class T_ITERATOR >
+          void receive_range( types::t_int _bull, T_ITERATOR _first,
+                              T_ITERATOR _last, MPI::Comm *_comm )
+          {
+            mpi::BroadCast bc( _comm );
+            bc.serialize_range( _first, _last, bc );
+            bc.allocate_buffers();
+            bc.serialize_range( _first, _last, bc );
+            bc.receive_ptp( _bull );
+            bc.serialize_range( _first, _last, bc );
           }
 
         template< class T_OBJECT >  
@@ -47,6 +71,26 @@ namespace GA
             bc( _root );
             _object.broadcast( bc );
           }
+        template< class T_ITERATOR >  
+          void bcast_range( types::t_int _root, T_ITERATOR _first,
+                            T_ITERATOR _last, MPI::Comm *_comm )
+          {
+            mpi::BroadCast bc( _comm );
+            bc.serialize_range( _first, _last, bc );
+            bc.allocate_buffers();
+            bc.serialize_range( _first, _last, bc );
+            bc( _root );
+            bc.serialize_range( _first, _last, bc );
+          }
+        template< class T_OBJECT >  
+          void bcast_object( T_OBJECT &_object, MPI::Comm *_comm )
+          {
+            mpi::BroadCast bc( _comm );
+            bc << _object << mpi::BroadCast::allocate
+               << _object << mpi::BroadCast::broadcast
+               << _object;
+          }
+
 
         template< class T_OBJECT >  
           void receive_template_object( types::t_int _bull, T_OBJECT &_object,
@@ -161,9 +205,12 @@ namespace GA
               switch( in[*i_comp] )
               {
                 case WAITING: derived->onWait( *i_comp ); break;
-                case REQUESTINGOBJECTIVE: derived->onObjective( *i_comp ); break;
-                case REQUESTINGTABOO: derived->onTaboo( *i_comp ); break;
-                case REQUESTINGHISTORYCHECK: derived->onHistory( *i_comp ); break;
+                case OBJECTIVE: derived->onObjective( *i_comp ); break;
+                case OBJECTIVE_GRADIENT: derived->onGradient( *i_comp ); break;
+                case OBJECTIVE_WITH_GRADIENT: derived->onWithGradient( *i_comp ); break;
+                case OBJECTIVE_ONE_GRADIENT: derived->onOneGradient( *i_comp ); break;
+                case TABOO: derived->onTaboo( *i_comp ); break;
+                case HISTORYCHECK: derived->onHistory( *i_comp ); break;
                 default: __THROW_ERROR( "Unknown command" << in[*i_comp] << "." )
               }
             }
@@ -199,9 +246,12 @@ namespace GA
               switch( in[*i_comp] )
               {
                 case WAITING: derived->onWait( *i_comp ); break;
-                case REQUESTINGOBJECTIVE: derived->onObjective( *i_comp ); break;
-                case REQUESTINGTABOO: derived->onTaboo( *i_comp ); break;
-                case REQUESTINGHISTORYCHECK: derived->onHistory( *i_comp ); break;
+                case OBJECTIVE: derived->onObjective( *i_comp ); break;
+                case OBJECTIVE_GRADIENT: derived->onGradient( *i_comp ); break;
+                case OBJECTIVE_WITH_GRADIENT: derived->onWithGradient( *i_comp ); break;
+                case OBJECTIVE_ONE_GRADIENT: derived->onOneGradient( *i_comp ); break;
+                case TABOO: derived->onTaboo( *i_comp ); break;
+                case HISTORYCHECK: derived->onHistory( *i_comp ); break;
                 default: __THROW_ERROR( "Unknown command" << in[*i_comp] << "." )
               }
             }
@@ -232,11 +282,62 @@ namespace GA
         inline void Farmer<T_DERIVED> :: onObjective( types::t_int _bull )
         {
           __ASSERT( objective, "Objective pointer not set.\n" )
-          MPI::DOUBLE buff = 0;
           typename t_Individual :: t_Quantities quantities;
           t_CommBase::receive_quantities( quantities );
           typename t_Individual :: t_Fitness fitness = (*objective)( quantities );
           t_CommBase::send_fitness( fitness );
+          t_CommBase::activate(_bull);
+        }
+        template<class T_DERIVED>
+        inline void Farmer<T_DERIVED> :: onGradient( types::t_int _bull )
+        {
+          __ASSERT( objective, "Objective pointer not set.\n" )
+          t_Quantities quantities;
+          t_CommBase::receive_quantities( quantities );
+          t_QuantityGradients gradients;
+          t_CommBase::receive_gradients( gradients );
+          t_VA_Type *ptrs = new t_VA_Type[ gradients.size() ];
+          std::fill( ptrs, ptrs + gradients.size(), t_VA_Type(0) );
+          (*objective)->evaluate_gradients( quantities,
+                                            gradients,
+                                            ptrs );
+          t_CommBase::send_gradients( _bull, ptrs, gradients.size() );
+          t_CommBase::activate(_bull);
+          delete[] ptrs;
+        }
+        template<class T_DERIVED>
+        inline void Farmer<T_DERIVED> :: onWithGradient( types::t_int _bull )
+        {
+          __ASSERT( objective, "Objective pointer not set.\n" )
+          t_Quantities quantities;
+          t_CommBase::receive_quantities( quantities );
+          t_QuantityGradients gradients;
+          t_CommBase::receive_gradients( gradients );
+          t_VA_Type *ptrs = new t_VA_Type[ gradients.size() ];
+          std::fill( ptrs, ptrs + gradients.size(), t_VA_Type(0) );
+          t_VA_Type result = (*objective)->evaluate_with_gradients( quantities,
+                                                                    gradients,
+                                                                    ptrs );
+          t_CommBase::send_gradients( _bull, ptrs, gradients.size() );
+          t_CommBase::send_object( _bull, result );
+          t_CommBase::activate(_bull);
+          delete[] ptrs;
+        }
+        template<class T_DERIVED>
+        inline void Farmer<T_DERIVED> :: onOneGradient( types::t_int _bull )
+        {
+          __ASSERT( objective, "Objective pointer not set.\n" )
+          t_Quantities quantities;
+          t_CommBase::receive_quantities( quantities );
+          t_QuantityGradients gradients;
+          t_CommBase::receive_gradients( gradients );
+          types::t_unsigned pos;
+          t_CommBase::receive_object( pos );
+          std::fill( ptrs, ptrs + gradients.size(), t_VA_Type(0) );
+          t_VA_Type result = (*objective)->evaluate_one_gradients( quantities,
+                                                                   gradients,
+                                                                   pos );
+          t_CommBase::send_object( pos );
           t_CommBase::activate(_bull);
         }
         template<class T_DERIVED>
@@ -287,11 +388,11 @@ namespace GA
           switch( (t_Commands) buff )
           {
             case t_Commands :: EVALUATE: _this->onEvaluate(); break;
-            case t_Commands :: EVALUATE_WITH_GRADIENT:
-              _this->onEvaluateWithGradient(); break;
-            case t_Commands :: EVALUATE_GRADIENT: _this->onEvaluateGradient(); break; 
-            case t_Commands :: EVALUATE_ONE_GRADIENT:
-              _this->onEvaluateOneGradient(); break;
+            case t_Commands :: WITH_GRADIENT:
+              _this->onWithGradient(); break;
+            case t_Commands :: GRADIENT: _this->onGradient(); break; 
+            case t_Commands :: ONE_GRADIENT:
+              _this->onOneGradient(); break;
             case t_Commands :: DONE: return t_Commands :: DONE; break;
           }
           return t_Commands :: CONTINUE;
@@ -307,7 +408,7 @@ namespace GA
         }
 
         template<class T_DERIVED>
-        inline void Cow<T_DERIVED> :: onEvaluateGradient()
+        inline void Cow<T_DERIVED> :: onGradient()
         {
           t_Individual individual;
           bcast_template_object( 0, individual, t_Base::comm );
@@ -318,7 +419,7 @@ namespace GA
         }
 
         template<class T_DERIVED>
-        inline void Cow<T_DERIVED> :: onEvaluateWithGradient()
+        inline void Cow<T_DERIVED> :: onWithGradient()
         {
           t_Individual individual;
           bcast_template_object( 0, individual, t_Base::comm );
@@ -329,12 +430,12 @@ namespace GA
         }
 
         template<class T_DERIVED>
-        inline void Cow<T_DERIVED> :: onEvaluateOneGradient()
+        inline void Cow<T_DERIVED> :: onOneGradient()
         {
           t_Individual individual;
           bcast_template_object( 0, individual, t_Base::comm );
           MPI::UNSIGNED pos;
-          comm->Recv( &pos, 1, MPI::UNSIGNED, t_Base::comm, TAG );
+          bcast_object( pos, t_Base::comm );
           gradients.resize( individual.Object().Container().size() );
           Traits::zero_out( gradients );
           evaluator->init( individual );

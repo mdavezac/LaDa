@@ -15,6 +15,7 @@
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
 #include "evaluation.h"
+#include "graphevaluation.h"
 
 namespace GA
 {
@@ -24,7 +25,7 @@ namespace GA
 
     namespace Graph
     {
-      //! \brief Contains all evalaution related stuff in the mpi::Graph Topology.
+      //! \brief Contains all evaluation related stuff in the mpi::Graph Topology.
       //! \details The classes below are meant to be used as derived from
       //!          "standard" Evaluation classes. They will simply overwrite
       //!          the behavior of the Evaluation::Base::operator()(
@@ -67,16 +68,22 @@ namespace GA
         //! \details This functor dispatches commands to the bulls. More
         //!          specifically, it makes a list of unknown individuals and
         //!          dispatches them for evaluation to the bulls.
-        template<class T_BASE>
-        class Farmer : private Comm::Farmer< Farmer<T_BASE> >, public T_BASE
+        template< class T_GATRAITS, template < class > class T_BASE>
+        class Farmer : private Comm::Farmer< Farmer<T_GATRAITS, T_BASE> >,
+                       public T_BASE< GA::Traits< Evaluator::Farmer<T_GATRAITS>,
+                                                  typename T_GATRAITS :: t_Population,
+                                                  typename T_GATRAITS :: t_Islands > >
         {
+          typedef Traits::GA< Evaluator<T_GATRAITS>,
+                              typename T_GATRAITS :: t_Population,
+                              typename T_GATRAITS :: t_Islands > t_BaseTraits;
           public:
-            //! Base class type
-            typedef T_BASE t_Base;
+            //! Base class type with cache-evaluator.
+            typedef T_BASE<t_BaseTraits> t_Base;
+            //! all %GA traits
+            typedef typename T_GATRAITS t_GATraits;
     
           protected:
-            //! all %GA traits
-            typedef typename t_Base::t_GATraits t_GATraits;
             //! all individual traits
             typedef typename t_GATraits::t_IndivTraits t_IndivTraits;
             //! type of an individual
@@ -87,22 +94,17 @@ namespace GA
             typedef GA::History<t_Individual> t_History;
             //! Communication base class
             typedef Comm::Farmer< Farmer<T_BASE> > t_CommBase;
-            //! first holds iterator, second holds assigned proc.
-            typedef std::pair< typename t_Population :: iterator,
-                               types::t_int > t_Unknown;
-            //! Container of individuals needing evaluation.
-            typedef std::list< t_Unknown > t_Unknowns;
+            //! Type of the meta-evaluator.
+            typedef GA::mpi::Graph::Evaluator::Farmer< t_GATraits > t_CacheEvaluator;
     
           protected:
-            types::t_unsigned target;
-            t_Population *offspring;
-            t_Unknowns unknowns;
+            t_CacheEvaluator cache_eval;
     
           public:
             //! Constructor.
             Farmer   ( Topology *_topo )
-                   : t_CommBase( _topo ), T_BASE()
-                     target(0), offspring(NULL) {};
+                   : t_CommBase( _topo ), t_Base()
+                     target(0), offspring(NULL) { t_Base::evaluator = &cache_eval; };
     
             //! Creates \a _offspring population from \a _parent
             void operator()(const t_Population& _parents, t_Population& _offspring);
@@ -111,6 +113,8 @@ namespace GA
             virtual std::string className() const
               { return "GA::mpi::Graph::Evaluation::Farmer"; }
 
+            //! Does nothing.
+            set( t_Evaluator *_e ) {}
             //! Sets taboo pointer
             set( Taboo_Base<t_Individual> *_taboo )
               { t_CommBase :: taboos = t_Base :: taboos = _taboos; }
@@ -120,22 +124,26 @@ namespace GA
             //! Sets objective pointer
             set(  typename t_Store::Base*  _s )
               { t_CommBase :: store = t_Base :: store =  _s; }
-            //! Sets history pointer
-            set(  typename t_History*  _h)
-              { t_CommBase :: history = _h; set_Base_history<t_Base>(_h); }
 
           protected:
             //! Response to WAITING request
             void onWait( types::t_int _bull );
-            //! Sets history for t_Base != Evaluation::WithHistory.
-            template < class TT_BASE > set_base_history( t_History *_history ) {}
         };
     
-        template<class T_BASE>
-        class Bull : private Comm::Bull< Bull<T_BASE> >, public T_BASE
+        template< class T_GATRAITS, template < class > class T_BASE>
+        class Bull : private Comm::Bull< Bull<T_GATRAITS, T_BASE> >,
+                     public T_BASE< GA::Traits< Evaluator::Bull<T_GATRAITS>,
+                                                typename T_GATRAITS :: t_Population,
+                                                typename T_GATRAITS :: t_Islands > >
         {
+          typedef Traits::GA< Evaluator<T_GATRAITS>,
+                              typename T_GATRAITS :: t_Population,
+                              typename T_GATRAITS :: t_Islands > t_BaseTraits;
           public:
-            typedef T_GATRAITS t_GATraits; //!< all %GA traits
+            //! Base class type with meta-evaluator
+            typedef T_BASE<t_BaseTraits> t_Base;
+            //! all %GA traits
+            typedef typename T_GATRAITS t_GATraits;
     
           protected:
             //! all individual traits
@@ -156,7 +164,7 @@ namespace GA
           public:
             //! Constructor.
             Bull   ( Topology *_topo )
-                 : t_CommBase(_topo->Com() ), t_Base( _topo->Comm() ) {}
+                 : t_CommBase( _topo ) {}
     
             //! Creates \a _offspring population from \a _parent
             void operator()(const t_Population& _parents, t_Population& _offspring);
@@ -165,46 +173,17 @@ namespace GA
             virtual std::string className() const
               { return "GA::mpi::Graph::Evaluation::Bull"; }
         };
+
+        
+        //! Just a typedef for Comm::BaseCow.
+        template< class T_GATRAITS, template < class > class T_BASE>
+        class Cow : public Comm::LaNormande< T_GATRAITS, T_BASE > {};
     
-        template<class T_GATRAITS>
-        class Cow : private CommBull< T_GATRAITS, Cow >, public Base<T_GATRAITS>
-        {
-          public:
-            typedef T_GATRAITS t_GATraits; //!< all %GA traits
-    
-          protected:
-            //! all individual traits
-            typedef typename t_GATraits::t_IndivTraits t_IndivTraits;
-            //! type of an individual
-            typedef typename t_GATraits::t_Individual  t_Individual; 
-            //! type of the population
-            typedef typename t_GATraits::t_Population  t_Population; 
-            //! Base class type.
-            typedef Graph::Breeder<T_GATRAITS> t_Base;
-            //! Communication base class
-            typedef Comm::Cow< T_GATRAITS, Cow > t_CommBase;
-    
-            const MPI::INT TAG = 2;
-    
-    
-          public:
-            //! Constructor.
-            Cow   ( Topology *_topo )
-                 : t_CommBase(_topo->Com() ), t_Base( _topo->Comm() ) {}
-    
-            //! Creates \a _offspring population from \a _parent
-            void operator()(const t_Population& _parents, t_Population& _offspring);
-              { while( t_CommBase :: wait() != t_CommBase::DONE ); }
-       
-            //! The class name. EO required
-            virtual std::string className() const
-              { return "GA::mpi::Graph::Breeder::Cow"; }
-        };
       } // namespace Evaluation
     } // namespace Graph
   } // namespace mpi
 } // namespace GA
 
-#include "comminucators.impl.h"
+#include "graphevaluation.impl.h"
 
 #endif

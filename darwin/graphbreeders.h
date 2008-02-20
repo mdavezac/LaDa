@@ -45,14 +45,11 @@ namespace GA
             GenCount *age;
             //! Number of offspring to change
             eoHowMany howMany;
-            //! mpi topology
-            Topology *topo;
     
           public:
             //! Constructor and Initializer
-            Base   ( Topology *_topo )
-                 : select(NULL), op(NULL), age(NULL),
-                   howmany(0), topo(_topo) {}
+            Base () : select(NULL), op(NULL), age(NULL),
+                      howmany(0), topo(_topo) {}
             //! Copy Constructor
             Base   ( Base<t_Individual> & _breeder )
                  : select( _breeder.topo ), op(_breeder.op), age(_breeder.age),
@@ -134,7 +131,7 @@ namespace GA
           public:
             //! Constructor.
             Farmer   ( Topology *_topo )
-                   : t_CommBase(_topo->Com() ), t_Base( _topo->Comm() ),
+                   : t_CommBase( _topo ), t_Base(),
                      target(0), offspring(NULL) {};
     
             //! Creates \a _offspring population from \a _parent
@@ -177,7 +174,7 @@ namespace GA
           public:
             //! Constructor.
             Bull   ( Topology *_topo )
-                 : t_CommBase(_topo->Com() ), t_Base( _topo->Comm() ) {}
+                 : t_CommBase(_topo ), t_Base() {}
     
             //! Creates \a _offspring population from \a _parent
             void operator()(const t_Population& _parents, t_Population& _offspring);
@@ -187,39 +184,10 @@ namespace GA
               { return "GA::mpi::Graph::Breeder::Bull"; }
         };
     
-        template<class T_GATRAITS>
-        class Cow : private Comm::Cow< Cow >, public Base<T_GATRAITS>
-        {
-          public:
-            typedef T_GATRAITS t_GATraits; //!< all %GA traits
+        //! Just a typedef for Comm::BaseCow.
+        template< class T_GATRAITS >
+        class Cow : public Comm::LaNormande< T_GATRAITS, Base > {};
     
-          protected:
-            //! all individual traits
-            typedef typename t_GATraits::t_IndivTraits t_IndivTraits;
-            //! type of an individual
-            typedef typename t_GATraits::t_Individual  t_Individual; 
-            //! type of the population
-            typedef typename t_GATraits::t_Population  t_Population; 
-            //! Base class type.
-            typedef Graph::Breeder<t_GATraits> t_Base;
-            //! Communication base class
-            typedef Comm::Cow< Cow<t_GATraits> > t_CommBase;
-    
-    
-          public:
-            //! Constructor.
-            Cow   ( Topology *_topo )
-                 : t_CommBase(_topo->Com() ), t_Base( _topo->Comm() ) {}
-    
-            //! Creates \a _offspring population from \a _parent
-            void operator()(const t_Population& _parents, t_Population& _offspring);
-              { while( t_CommBase :: wait() != t_CommBase::DONE ); }
-       
-            //! The class name. EO required
-            virtual std::string className() const
-              { return "GA::mpi::Graph::Breeder::Cow"; }
-        };
-
   } // namespace mpi
 } // namespace GA
 

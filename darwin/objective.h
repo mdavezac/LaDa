@@ -903,20 +903,20 @@ namespace Objective
       //! \param _objective pointer to a scalar objective
       //! \param _coef coefficient in the linear sum
       void add( t_Objective *_objective, t_ScalarQuantity _coef );
-      //! Returns a weighted linear average of scalar objectives,
+      //! \brief Returns a weighted linear average of scalar objectives,
       //! \f$ \mathcal{O}(q) = \sum_i\omega_i\mathcal{O}_i(q)\f$.
       virtual const t_Fitness& operator()(const t_Quantity& _q);
-      //! Computes both  \f$ \mathcal{O}(q) = \sum_i\omega_i\mathcal{O}_i(q)\f$ and
+      //! \brief Computes both  \f$ \mathcal{O}(q) = \sum_i\omega_i\mathcal{O}_i(q)\f$ and
       //! \f$ \partial\mathcal{O}(q) = \partial \sum_i\omega_i\partial\mathcal{O}_i(q)\f$.
       virtual t_ScalarQuantity evaluate_with_gradient( const t_Quantity &,
                                                        t_QuantityGradients&,
                                                        t_VA_Type *);
-      //! Computes the weighted linear average of the gradients 
+      //! \brief Computes the weighted linear average of the gradients 
       //! \f$ \partial\mathcal{O}(q) = \partial \sum_i\omega_i\partial\mathcal{O}_i(q)\f$.
       virtual void evaluate_gradient( const t_Quantity &_q,
                                       t_QuantityGradients &_grad,
                                       t_VA_Type *_i_grad);
-      //! Computes the weighted linear average of the gradients in direction \a _n,
+      //! \brief Computes the weighted linear average of the gradients in direction \a _n,
       //! \f$ \partial_n\mathcal{O}(q) = \partial \sum_i\omega_i\partial_n\mathcal{O}_i(q)\f$.
       virtual t_VA_Type evaluate_one_gradient( const t_Quantity &,
                                                t_QuantityGradients& _grad,
