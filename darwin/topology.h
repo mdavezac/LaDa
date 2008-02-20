@@ -74,16 +74,16 @@ namespace GA
           //! \brief Constructor and Initializer.
           //! \details The MPI::WORLD_COMM is duplicated and the duplicated is
           //!          pointed to by ::mpi::Base::comm.
-          Graph() : ::mpi::Base::Base(), herd_comm(NULL), farmer_comm(NULL),
-                    graph_comm(NULL), pools(0), type(FARMHANDS)
+          Topology() : ::mpi::Base::Base(), herd_comm(NULL), farmer_comm(NULL),
+                       graph_comm(NULL), pools(0), type(FARMHANDS)
              { comm = &_comm->Clone(); }
           //! Copy Constructor.
-          Graph   ( MPI::Comm &_comm )
-                : ::mpi::Base::Base(_comm), herd_comm(NULL), farmer_comm(NULL),
-                  graph_comm(NULL), pools(0), type(FARMHANDS)
+          Topology   ( MPI::Comm &_comm )
+                   : ::mpi::Base::Base(_comm), herd_comm(NULL), farmer_comm(NULL),
+                     graph_comm(NULL), pools(0), type(FARMHANDS)
             { comm = &_comm->Clone(); }
           //! Destructor
-          ~Graph();
+          ~Topology();
       
           //! \brief Creates the GA mpi topology and groups.
           template< class T_CONDITION > void init( T_CONDITION &_condition );
