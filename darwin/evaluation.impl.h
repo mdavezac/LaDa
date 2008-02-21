@@ -6,6 +6,9 @@
 
 #include <opt/debug.h>
 
+namespace GA
+{
+
 namespace Evaluation
 {
   template< class T_GATRAITS >
@@ -243,5 +246,7 @@ namespace Evaluation
 
       return _indiv.fitness();
     }
-}
+} // namespace Evaluation
+
+} // namespace GA
 #endif

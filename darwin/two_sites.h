@@ -231,7 +231,10 @@ namespace TwoSites
       Evaluator   () {}
       //! Copy Constructor
       Evaluator   ( const t_This &_c )
-                : lattice( _c.lattice ), structure( _c.structure ) {}
+                : t_Base( _c ),
+                  lattice( _c.lattice ),
+                  structure( _c.structure ),
+                  concentration( _c.concentration ) {}
       //! Destructor
       ~Evaluator() {};
 

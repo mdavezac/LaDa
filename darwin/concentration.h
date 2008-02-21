@@ -63,8 +63,9 @@
       //! Constructor
       X_vs_y() : a(0), b(0), c(0), x0(0), y0(0), single_c(false) {}
       //! Copy Constructor
-      X_vs_y( const X_vs_y &_c) : a(_c.a), b(_c.b), c(_c.c), 
-                                  x0(_c.x0), y0(_c.y0), single_c(_c.single_c) {}
+      X_vs_y   ( const X_vs_y &_c) 
+             : a(_c.a), b(_c.b), c(_c.c), x0(_c.x0), y0(_c.y0),
+               single_c(_c.single_c) {}
       //! Destructor
       ~X_vs_y () {}
 

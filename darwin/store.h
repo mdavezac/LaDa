@@ -27,6 +27,8 @@
 #include "gatraits.h"
 #include "loadsave.h"
 
+namespace GA
+{
 /** \ingroup Genetic 
  * @{*/
 //! \brief Implements storage capacity for use with Evaluation classes
@@ -100,17 +102,6 @@ namespace Store
       virtual void apply_all( eoMonOp<const t_Individual> *_op ) const = 0; 
       //! Applies \a _op to best stored individuals.
       virtual void apply_best( eoMonOp<const t_Individual> *_op ) const = 0; 
-#ifdef _MPI
-      /** \ingroup MPI
-      * \brief Syncrhonizes Base::new_results across all processors.
-      * \details If Base::new_results is true on one proc, then it is set to
-      *          true on all procs (see mpi::Base::all_or_all() ). Derived
-      *          classes should also synchronize storage containers across all procs. 
-      * \sa mpi
-      */
-      virtual void synchronize() 
-        { mpi::main.all_or_all( new_results ); }
-#endif
   };
 
   //! \brief stores individuals depending upon the return value of a
@@ -143,14 +134,6 @@ namespace Store
       const static types::t_unsigned PRINT_RESULTS = 1; //!< print_what says print results 
       const static types::t_unsigned PRINT_CONDITION = 2;  //!< print_what says print condition 
       t_Container results; //!< Container where to store "good" individuals
-#ifdef _MPI
-      /** \ingroup MPI
-      * \brief processor dependant temporary container 
-      * \details results in new_optima should passed on to Conditional::results in
-      * Conditional::synchronize, and then flushed. 
-      */
-      t_Container new_optima;
-#endif 
 
     public:
       //! \brief Constructor and Initializor
@@ -171,10 +154,6 @@ namespace Store
 
       //! \brief simply stores results for which T_CONDTION::operator()( const t_Individual& )
       //!    returns false
-      //! \details MPI version is a bit of a hack
-      //! the object is for MPI version to be able to store in "unsynchronized"
-      //! new_optima by default and then into "synchronized" result upon call
-      //! to synchronize. \sa Evaluation::Base::Evaluate, Evaluation::WithHistory::Evaluate
       virtual void operator()( const t_Individual &_indiv );
 
       //! \brief Reloads stored individuals from XML input
@@ -199,26 +178,6 @@ namespace Store
       //! Applies \a _op to best stored individuals.
       virtual void apply_best( eoMonOp<const t_Individual> *_op ) const
         { condition.apply2optimum(_op); }
-
-#ifdef _MPI
-      /** \ingroup MPI
-      * \brief Serializes Store::Conditional class
-      * \details The container Conditional::results is serialized here.
-      * Since t_Individual is a template class, it does not itsef declare a
-      * BroadCast::serialize() %function, and we cannot use
-      * BroadCast::serialize_container. Instead, each individual is broadcast,
-      * one at a time, throught its broadcast member %function.
-      * \sa mpi::BroadCast::serialize
-      */
-      virtual bool broadcast( mpi::BroadCast &_bc );
-      /* \ingroup MPI
-      * \brief synchronizes stored results across all processors
-      * \details this %function is called directly by Evaluation classes
-      * \sa Evaluation::Base::evaluate, Evaluation::WithHistory::evaluate
-      *     Conditional::new_optima
-      */
-      virtual void synchronize();
-#endif
 
     private:
       //! Checks from XML input what to print out in print_results 
@@ -280,16 +239,6 @@ namespace Store
         bool Restart( const TiXmlElement &_node, t_LoadOp & _op);
         //! \brief Saves stored BaseOptima::optimum from XML input
         bool Save( TiXmlElement &_node, t_SaveOp & _op) const;
-
-#ifdef _MPI
-        /** \ingroup MPI
-        * \brief Serializes Store::BaseOptima class
-        * \details Only BaseOptima::optimum is serialized here
-        * \sa mpi::BroadCast::serialize
-        */
-        bool broadcast( mpi::BroadCast &_bc )
-          { return optimum->broadcast(_bc); }
-#endif
         //! \brief Returns a string characterizing BaseOptima
         std::string what_is() const { return " BaseOptima "; } 
         //! \brief prints out BaseOptima::optimum characteristics
@@ -454,6 +403,7 @@ namespace Store
     };
 } // namespace Store
 
+} //namespace GA
 #include "store.impl.h"
 /*@}*/
 

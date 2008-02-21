@@ -93,7 +93,7 @@ dostopnow:
 int main(int argc, char *argv[]) 
 {
   std::string filename("input.xml");
-  __DOMPICODE( mpi::main(argc, argv); )
+  __MPICODE( mpi::main(argc, argv); )
 
   if( not parse_cli( argc, argv, filename ) ) return true;
 
@@ -109,14 +109,14 @@ int main(int argc, char *argv[])
   catch ( std::exception &e )
   {
     std::ostringstream sstr;
-    __DOMPICODE( sstr << "\nProcessor " << mpi::main.rank() + 1
-                      << " of " << mpi::main.size()
-                      << " says:\n"; )
+    __MPICODE( sstr << "\nProcessor " << mpi::main.rank() + 1
+                    << " of " << mpi::main.size()
+                    << " says:\n"; )
 
     sstr << "Caught error while running " << __PROGNAME__ 
          << "\n" << e.what() << "\n";
 
-    __DOMPICODE( 
+    __MPICODE( 
       mpi::AllGather bc( mpi::main );
       std::string message = sstr.str();
       bc << mpi::BroadCast::clear

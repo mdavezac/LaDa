@@ -6,6 +6,9 @@
 
 #include <opt/debug.h>
 
+namespace GA
+{
+
 namespace Objective
 {
   template< class T_GA_TRAITS, class T_QUANTITY_TRAITS, class T_VA_TRAITS >
@@ -540,5 +543,7 @@ namespace Objective
           return NULL;
         }
 
-}
+} // namespace Objective
+
+} // namspace GA
 #endif

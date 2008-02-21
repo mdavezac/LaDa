@@ -88,7 +88,7 @@ errorout:
   {
     // Creates an mpi aware directory: one per proc
     std::ostringstream sstr;
-    sstr << "ESCAN" << nbeval __DOMPICODE( << "." << mpi::main.rank() ); 
+    sstr << "ESCAN" << nbeval __MPICODE( << "." << mpi::main.rank() ); 
     ++nbeval;
     dirname =  sstr.str();
     bandgap.set_dirname( dirname );
@@ -159,7 +159,7 @@ errorout:
     }
 
 broadcast:
-    __DOMPICODE( 
+    __MPICODE( 
       mpi::BroadCast bc(mpi::main); 
       bc << a << b << mpi::BroadCast::allocate 
          << a << b << mpi::BroadCast::broadcast

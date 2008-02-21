@@ -28,6 +28,7 @@
 #include "breeder.h"
 #include "scaling.h"
 #include "gatraits.h"
+#include "topology.h"
 
 namespace GA
 {

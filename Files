@@ -8,39 +8,42 @@ ATAT_H  = findsym.h  integer.h  xtalutil.h \
 
 
 DARWIN_LIB_CC = concentration.cc debug.cc
-DARWIN_LIB_H = $(addsuffix .h, $(basename $(DARWIN_LIB_CC))) \
+DARWIN_LIB_IMPL_H = darwin.impl.h  evaluation.impl.h individual.impl.h \
+	            scaling.impl.h store.impl.h  fitness.impl.h taboos.impl.h \
+                    objective.impl.h bitstring.impl.h gaoperators.impl.h \
+                    checkpoints.impl.h minimizergenop.impl.h
+DARWIN_LIB_H = concentration.h debug.h \
                breeder.h evaluation.h functors.h loadsave.h \
 	       operators.h statistics.h darwin.h gencount.h store.h \
 	       checkpoints.h evaluator.h individual.h objective.h \
 	       taboos.h gatraits.h  bitstring.h fitness.h gaoperators.h \
-	       scaling.h minimizergenop.h 
-DARWIN_LIB_IMPLS = darwin.impl.h  evaluation.impl.h individual.impl.h \
-	           scaling.impl.h store.impl.h  fitness.impl.h taboos.impl.h \
-                   objective.impl.h bitstring.impl.h gaoperators.impl.h \
-                   checkpoints.impl.h minimizergenop.impl.h
-DARWIN_LIB_DOC = $(DARWIN_LIB_H) $(DARWIN_LIB_IMPLS) $(DARWIN_LIB_CC) 
+	       scaling.h minimizergenop.h  $(DARWIN_LIB_IMPL_H)
+DARWIN_LIB_DOC = $(DARWIN_LIB_H) $(DARWIN_LIB_CC) 
 
 DARWIN_CE_CC = ce.cc single_site.cc groundstate.cc
-DARWIN_CE_H  = ce.h  single_site.h  groundstate.h
-DARWIN_CE_IMPLS = single_site.impl.h 
-DARWIN_CE_DOC = $(DARWIN_CE_H) $(DARWIN_CE_IMPLS) $(DARWIN_CE_CC) 
+DARWIN_CE_IMPL_H = single_site.impl.h 
+DARWIN_CE_H  = ce.h  single_site.h  groundstate.h $(DARWIN_CE_IMPL_H)
+DARWIN_CE_DOC = $(DARWIN_CE_H) $(DARWIN_CE_CC) 
 
 DARWIN_BG_CC = bandgap_stubs.cc two_sites.cc single_site.cc vff.cc bandgap.cc 
-DARWIN_BG_H  = bandgap_stubs.h  two_sites.h  single_site.h  vff.h  bandgap.h 
-DARWIN_BG_IMPLS = bandgap_stubs.impl.h  two_sites.impl.h  single_site.impl.h  
-DARWIN_BG_DOC = $(DARWIN_BG_H) $(DARWIN_BG_IMPLS) $(DARWIN_BG_CC) 
+DARWIN_BG_IMPL_H = bandgap_stubs.impl.h  two_sites.impl.h  single_site.impl.h  
+DARWIN_BG_H  = bandgap_stubs.h  two_sites.h  single_site.h  vff.h  bandgap.h \
+               $(DARWIN_BG_IMPL_H)
+DARWIN_BG_DOC = $(DARWIN_BG_H) $(DARWIN_BG_CC) 
 
 DARWIN_L_CC = bandgap_stubs.cc two_sites.cc single_site.cc vff.cc molecularity.cc layered.cc
-DARWIN_L_H  = bandgap_stubs.h   two_sites.h single_site.h  vff.h  molecularity.h  layered.h 
-DARWIN_L_IMPLS = bandgap_stubs.impl.h two_sites.impl.h single_site.impl.h molecularity.impl.h \
-                 layered.impl.h 
-DARWIN_L_DOC = $(DARWIN_L_H) $(DARWIN_L_IMPLS) $(DARWIN_L_CC) 
+DARWIN_L_IMPL_H = bandgap_stubs.impl.h two_sites.impl.h single_site.impl.h molecularity.impl.h \
+                  layered.impl.h 
+DARWIN_L_H  = bandgap_stubs.h   two_sites.h single_site.h  vff.h  molecularity.h  layered.h \
+              $(DARWIN_L_IMPL_H)
+DARWIN_L_DOC = $(DARWIN_L_H) $(DARWIN_L_CC) 
 
 DARWIN_E_CC = emass_stubs.cc two_sites.cc single_site.cc vff.cc emass.cc layered.cc
-DARWIN_E_H  = emass_stubs.h  two_sites.h  single_site.h  vff.h  emass.h  layered.h 
-DARWIN_E_IMPLS = emass_stubs.impl.h  two_sites.impl.h  single_site.impl.h \
-                 emass.impl.h  layered.impl.h 
-DARWIN_E_DOC = $(DARWIN_E_H) $(DARWIN_E_IMPLS) $(DARWIN_E_CC) 
+DARWIN_E_IMPL_H = emass_stubs.impl.h  two_sites.impl.h  single_site.impl.h \
+                  emass.impl.h  layered.impl.h 
+DARWIN_E_H  = emass_stubs.h  two_sites.h  single_site.h  vff.h  emass.h  layered.h \
+              $(DARWIN_E_IMPL_H)
+DARWIN_E_DOC = $(DARWIN_E_H) $(DARWIN_E_CC) 
 
 CRYSTAL_CC = lattice.cc structure.cc 
 CRYSTAL_H  = lattice.h  structure.h  atom.h 
@@ -62,9 +65,9 @@ LAPACK_H  = lapack.h
 LAPACK_DOC = $(LAPACK_H) $(LAPACK_CC) 
 
 MPI_CC     = mpi_object.cc comm.cc
-MPI_H      = mpi_object.h base.h macros.h comm.h 
-MPI_H_IMPL = comm.impl.h
-MPI_DOC    = $(MPI_H) $(MPI_CC) $(MPI_IMPL_H)
+MPI_IMPL_H = comm.impl.h
+MPI_H      = mpi_object.h base.h macros.h comm.h $(MPI_IMPL_H)
+MPI_DOC    = $(MPI_H) $(MPI_CC)
 
 OPT_H = ndim_iterator.h minimize_base.h polynome.h frprmn_minimizer.h \
         gsl_minimizers.h types.h convex_hull.h function_base.h \
@@ -92,8 +95,8 @@ VFF_FORTRAN_CC = fortran.cc
 VFF_FORTRAN_H  = fortran.h
 VFF_FORTRAN_DOC = $(VFF_FORTRAN_H) $(VFF_FORTRAN_CC) 
 VFF_CC = functional.cc layered.cc # pescan_perturbation.cc 
-VFF_H  = functional.h  layered.h  va.h # pescan_perturbation.h 
-VFF_IMPLS = va.impl.h 
+VFF_IMPL_H = va.impl.h 
+VFF_H  = functional.h  layered.h  va.h $(VFF_IMPL_H) # pescan_perturbation.h 
 VFF_DOC = $(VFF_H) $(VFF_IMPLS) $(VFF_CC) 
 
 DOCS_H = revision.h

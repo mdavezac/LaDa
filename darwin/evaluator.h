@@ -16,6 +16,7 @@
 
 #include <opt/types.h>
 #include <opt/function_base.h>
+#include <mpi/mpi_object.h>
 
 #include "taboos.h"
 #include "loadsave.h"
@@ -97,10 +98,19 @@ namespace GA
       //! \brief see Evaluator::current_individual
       //! \details Provided for convenience.
       t_Object *current_object;
+      //! Communication group for which this evaluator is set up.
+      __MPICODE( mpi::Base mpi_comm; ) 
 
     public:
       //! Constructor
-      Evaluator() {};
+      Evaluator() : current_individual(NULL),
+                    current_object(NULL)
+                    __MPICONSTRUCTORCODE( mpi_comm() ) {};
+      //! Copy Constructor
+      Evaluator   ( const Evaluator &_c )
+                : current_individual( _c.current_individual ),
+                  current_object( _c.current_object )
+                  __MPICONSTRUCTORCODE( mpi_comm( _c.mpi_comm ) ) {};
       //! Destructor
       ~Evaluator() {}
 

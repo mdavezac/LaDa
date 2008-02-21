@@ -24,6 +24,8 @@
 
 /** \ingroup Genetic
  * @{ */
+namespace GA
+{
 //! \brief Implements optimization goals by linking "raw fitness" to "polished" fitness
 //! \details The raw fitness is simply whatever comes out of the functional (e.g. some
 //! class derived from GA::Evaluator). The fitness is whatever quantity is used
@@ -954,6 +956,7 @@ namespace Objective
 
 }  // namespace Objective
 
+} // namespace GA
 #include "objective.impl.h"
 
  /* @} */

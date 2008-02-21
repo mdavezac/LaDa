@@ -71,6 +71,8 @@ namespace GroundState
     public:
       //! Constructor
       Evaluator() : ce( structure ) {}; 
+      Evaluator   ( const Evaluator & _c )
+                : t_Base( _c ), ce( structure ) {}; 
       //! Destructor
       ~Evaluator() {}
 

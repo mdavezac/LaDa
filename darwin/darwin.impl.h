@@ -85,7 +85,7 @@ namespace GA
         if ( string.compare("partition") == 0 )
           populate_style = PARTITION_POPULATE;
       }
-      else if ( not topology.LoadSeeds( *_att ) )
+      else if ( not topology.LoadSeeds( *att ) )
         evaluator.LoadAttribute( *att ); 
     }
 
@@ -126,11 +126,14 @@ namespace GA
 
     if( topology.store() )
     {
-      store = topology.special_store();
+      store = topology.special_store<t_GATraits>( evaluator );
+      const TiXmlElement *store_xml = _parent.FirstChildElement("Store");
+      const TiXmlElement *child = _parent.FirstChildElement("Objective");
+
+      __DOASSERT( child, "No objective tags found on input.\n" )
 
       if( not store )
       {
-        const TiXmlElement *store_xml = _parent.FirstChildElement("Store");
         if ( store_xml )
             store = new typename t_Store::FromObjective( evaluator, *store_xml );
         else
@@ -171,8 +174,8 @@ namespace GA
 
     // Checks for topology specifics
     if( not topology.taboos() ) return;
-    taboos = topology.special_taboos( eostates );
-    if( not docontinue ) return; 
+    taboos = topology.special_taboos<t_GATraits>( eostates );
+    if( taboos ) return;
 
     // creates Taboo container if there are more than one taboo list
     taboos = new Taboos<t_Individual>;
@@ -1144,12 +1147,12 @@ syncfilenames:
     )
 
 #ifdef _MPI
-    // broadcasts all input files and filenames
-    std::string input_str, restart_str, evaluator_str;
-    LoadAllInputFiles(input_str, restart_str, evaluator_str);
-    
-    if ( evaluator_filename == filename ) // works for all nodes!!
-      doc.Parse( evaluator_str.c_str() );
+      // broadcasts all input files and filenames
+      std::string input_str, restart_str, evaluator_str;
+      LoadAllInputFiles(input_str, restart_str, evaluator_str);
+      
+      if ( evaluator_filename == filename ) // works for all nodes!!
+        doc.Parse( evaluator_str.c_str() );
 #endif
 
     // Loads evaluator first 
@@ -1161,9 +1164,16 @@ syncfilenames:
       __TRYASSERT( not evaluator.Load(*docHandle.FirstChild("Job").Element() ),
                       "Could not load functional input from "
                    << filename << "\n" )
-          
+
+    // Loads topology and assigns comms to evaluators
+    __MPICODE( 
+      doc.Parse( input_str.c_str() );
+    )
+    parent = docHandle.FirstChild("Job").Element();
+    topology.Load( evaluator );
+        
     // finds <GA> ... </GA> block 
-    __DOMPICODE( 
+    __MPICODE( 
       doc.Parse( input_str.c_str() );
       parent = docHandle.FirstChild("Job")
                         .FirstChild("GA").Element();

@@ -7,6 +7,8 @@
 #include <opt/debug.h>
 #include <print/xmg.h>
 
+namespace GA
+{
 namespace Store
 {
 
@@ -31,38 +33,25 @@ namespace Store
   template<class T_CONDITION, class T_GATRAITS>
   void Conditional<T_CONDITION, T_GATRAITS> :: operator()( const t_Individual &_indiv )
   {
-#ifdef __WCONT
-#error "__WCONT already defined. Replace __WCONT with a more awkward name.\n"
-#endif
-#define __WCONT __MPISERIALCODE(new_optima, results)
-
     // checks wether result should be stored
     if( condition( _indiv ) ) return;
 
     // checks wether result has already been found
-    __DOMPICODE(
-      if(     ( not results.empty() )
-          and results.end() !=  std::find( results.begin(),
-                                           results.end(),
-                                            _indiv )         ) return;
-    )
-
-    if ( not __WCONT.empty() )
+    if ( not results.empty() )
     {
-      if ( __WCONT.end() != std::find( __WCONT.begin(),
-                                       __WCONT.end(),
+      if ( results.end() != std::find( results.begin(),
+                                       results.end(),
                                        _indiv )             ) return;
 
       // remove individuals who's score are not good enough anymore.
-      __WCONT.remove_if( condition );
+      results.remove_if( condition );
       // remove_if should have changed Objective::current_indiv 
       condition( _indiv );
     }
    
     // finally, add the new result
-    __WCONT.push_back( _indiv );
-     new_results = true; 
-#undef __WCONT
+    results.push_back( _indiv );
+    new_results = true; 
   }
 
   template<class T_CONDITION, class T_GATRAITS>
@@ -150,52 +139,6 @@ namespace Store
       for(; i_indiv != i_indiv_end; ++i_indiv ) (*_op)( *i_indiv );
     }
  
-#ifdef _MPI
-  template<class T_CONDITION, class T_GATRAITS>
-  bool Conditional<T_CONDITION, T_GATRAITS> :: broadcast( mpi::BroadCast &_bc )
-  {
-    if ( not condition.broadcast(_bc) ) return false;
-    types::t_int n = results.size();
-    if ( not _bc.serialize(n) ) return false;
-    if ( _bc.get_stage() == mpi::BroadCast::COPYING_FROM_HERE )
-      results.resize(n);
-    typename t_Container :: iterator i_res = results.begin();
-    typename t_Container :: iterator i_res_end = results.end();
-    for(; i_res != i_res_end; ++i_res )
-      if( not i_res->broadcast( _bc ) ) return false;
-    return true;
-  }
-  template<class T_CONDITION, class T_GATRAITS>
-  void Conditional<T_CONDITION, T_GATRAITS> :: synchronize()
-  {
-    t_Base::synchronize();
-    mpi::AllGather allgather( mpi::main );
-    typename t_Container :: iterator i_res = new_optima.begin();
-    typename t_Container :: iterator i_res_end = new_optima.end();
-    for(; i_res != i_res_end; ++i_res )
-      i_res->broadcast( allgather );
-    allgather.allocate_buffers();
-    i_res = new_optima.begin();
-    for(; i_res != i_res_end; ++i_res )
-      i_res->broadcast( allgather );
-    allgather();
-    new_optima.clear();
-    t_Individual indiv;
-    while( indiv.broadcast( allgather ) )
-    {
-      if( condition( indiv ) ) continue;
-      
-      // checks wether result should be stored
-      typename t_Container :: iterator i_found;
-      i_found = std::find( results.begin(), results.end(), indiv );
-      if ( i_found != results.end() ) continue;
-      results.push_back( indiv );
-    }
-    results.remove_if( condition );
-  }
-#endif // _MPI
-
-
   namespace Condition
   {
     template< class T_GATRAITS >
@@ -361,5 +304,7 @@ namespace Store
   } // namespace Condition
 
 } // namespace Store
+
+} // namespace GA
 
 #endif // _STORE_IMPL_H_

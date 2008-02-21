@@ -89,7 +89,7 @@ errorout:
   {
     // Creates an mpi aware directory: one per proc
     std::ostringstream sstr;  
-    sstr << "escan" << nbeval __DOMPICODE( << mpi::main.rank() );
+    sstr << "escan" << nbeval __MPICODE( << mpi::main.rank() );
     dirname =  sstr.str();
     emass.set_dirname( dirname );
     emass.set_atom_input( atomicconfig );

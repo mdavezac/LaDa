@@ -1,6 +1,4 @@
 include ../Files
-EXTRA_DIST = $(DARWIN_LIBS_IMPLS) $(DARWIN_CE_IMPLS) $(DARWIN_BG_IMPLS) \
-	     $(DARWIN_L_IMPLS) $(DARWIN_E_IMPLS)
 if DOBANDGAPOPT
   BANDGAPOPT=bandgap_opt
 endif
@@ -21,7 +19,7 @@ AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
 	      @MPI_CFLAGS@ @EO_CFLAGS@ -I ..
 AM_LDFLAGS = @TINYXML_LIBS@ @EO_LIBS@ @MPI_LIBS@ 
 ce_opt_SOURCES = main.cc $(DARWIN_CE_CC)
-ce_opt_HEADERS = $(DARWIN_CE_H) $(DARWIN_CE_IMPLS)
+ce_opt_HEADERS = $(DARWIN_CE_H)
 ce_optdir = $(includedir)/darwin
 ce_opt_CPPFLAGS =  -D _CE $(AM_CPPFLAGS) @GSL_CFLAGS@ 
 ce_opt_LDFLAGS =  $(AM_LDFLAGS)
@@ -33,7 +31,7 @@ ce_opt_LDADD = libdarwin.la \
 	       @MPI_ADDLIB@
 
 bandgap_opt_SOURCES = main.cc $(DARWIN_BG_CC)
-bandgap_opt_HEADERS = $(DARWIN_BG_H) $(DARWIN_BG_IMPLS) 
+bandgap_opt_HEADERS = $(DARWIN_BG_H) 
 bandgap_optdir = $(includedir)/darwin
 bandgap_opt_CPPFLAGS =  -D _PESCAN $(AM_CPPFLAGS) @NAG_CFLAGS@ @GSL_CFLAGS@ 
 bandgap_opt_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIBS@ @NAG_LIBS@ 
@@ -44,14 +42,14 @@ bandgap_opt_LDADD = $(ce_opt_LDADD) \
 		    $(fortranLDADD)
 
 layered_opt_SOURCES = main.cc $(DARWIN_L_CC)
-layered_opt_HEADERS = $(DARWIN_L_H) $(DARWIN_L_IMPLS)
+layered_opt_HEADERS = $(DARWIN_L_H) 
 layered_optdir = $(includedir)/darwin
 layered_opt_CPPFLAGS =  -D _MOLECULARITY $(AM_CPPFLAGS) @NAG_CFLAGS@ @GSL_CFLAGS@ 
 layered_opt_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIBS@ @NAG_LIBS@ 
 layered_opt_LDADD = $(bandgap_opt_LDADD)
 
 emass_opt_SOURCES = main.cc $(DARWIN_E_CC)
-emass_opt_HEADERS = $(DARWIN_E_H) $(DARWIN_E_IMPLS)
+emass_opt_HEADERS = $(DARWIN_E_H)
 emass_optdir = $(includedir)/darwin
 emass_opt_CPPFLAGS =  -D _EMASS $(AM_CPPFLAGS) @NAG_CFLAGS@ @GSL_CFLAGS@ 
 emass_opt_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIBS@ @NAG_LIBS@ 
@@ -61,7 +59,7 @@ emass_opt_LDADD = $(bandgap_opt_LDADD) \
 noinst_LTLIBRARIES = libdarwin.la
 libdarwin_ladir = $(includedir)/darwin
 libdarwin_la_SOURCES = $(DARWIN_LIB_CC)
-nobase_libdarwin_la_HEADERS = $(DARWIN_LIB_H) $(DARWIN_LIB_IMPLS)
+nobase_libdarwin_la_HEADERS = $(DARWIN_LIB_H) 
 libdarwin_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 

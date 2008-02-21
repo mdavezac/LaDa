@@ -1,10 +1,9 @@
 include ../Files
-EXTRA_DIST = $(MPI_H_IMPL)
 AM_CPPFLAGS = @CPP_DEBUG_FLAGS@ @COMPILER_CXXFLAGS@ @MPI_CFLAGS@
 AM_LDFLAGS = 
 noinst_LTLIBRARIES = libmpiobject.la
 libmpiobject_la_SOURCES = $(MPI_CC)
-libmpiobject_la_HEADERS = $(MPI_H) $(MPI_IMPL_H)
+libmpiobject_la_HEADERS = $(MPI_H) 
 libmpiobject_ladir = $(includedir)/mpi
 libmpiobject_la_LDFLAGS = $(AM_LDFLAGS) @MPI_LIBS@
 libmpiobject_la_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CFLAGS)

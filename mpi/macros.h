@@ -9,7 +9,8 @@
 #endif
 
 #ifndef _MPI
-#define __DOMPICODE(code) 
+#define __MPICODE(code) 
+#define __MPICONSTRUCTORCODE(code) 
 #define __TRYMPICODE(code, error) 
 #define __MPIROOT(code) 
 #define __ROOTCODE(code) code
@@ -19,7 +20,8 @@
 #define __MPISERIALCODE(coda, codb) codb
 #else
 #include <opt/debug.h>
-#define __DOMPICODE(code) code
+#define __MPICODE(code) code
+#define __MPICONSTRUCTORCODE(code) , code
 #define __TRYMPICODE(code, error) try { code }\
         catch ( std::exception &_e )\
         {\
@@ -38,4 +40,5 @@
       mpi::main.barrier();\
     }
 #define __MPISERIALCODE(coda, codb) coda
+#endif
 #endif
