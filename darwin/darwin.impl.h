@@ -92,9 +92,11 @@ namespace GA
     // some checking
     if ( std::floor( pop_size * replacement_rate ) == 0 )
     {
-      Print::xmg << Print::Xmg::comment << "Error: replacement_rate is too small." << Print::endl 
+      Print::xmg << Print::Xmg::comment
+                 << "Error: replacement_rate is too small." << Print::endl 
                  << Print::Xmg::comment 
-                 << "Error: setting replacement_rate too 1.0 / pop_size ." << Print::endl;
+                 << "Error: setting replacement_rate too 1.0 / pop_size ."
+                 << Print::endl;
       Print::out << "Error: replacement_rate is too small.\n"
                  << "Error: setting replacement_rate too 1.0 / pop_size .\n";
       replacement_rate = 1.00 / pop_size + 10*types::tolerance;
@@ -107,10 +109,10 @@ namespace GA
   template<class T_EVALUATOR>
   void Darwin<T_EVALUATOR> :: make_History(const TiXmlElement &_parent)
   {
+    if( not topology.history() ) return false;
     // checks if there are more than one taboo list
     const TiXmlElement *child = _parent.FirstChildElement("History");
-    if ( not child )
-      return;
+    if ( not child ) return;
     Print::xmg << Print::Xmg::comment << "Track History" << Print::endl;
     history = topology.history<t_GATraits>( eostates );
   }
@@ -119,36 +121,43 @@ namespace GA
   template<class T_EVALUATOR>
   void Darwin<T_EVALUATOR> :: Load_Method(const TiXmlElement &_parent)
   {
-    // checks if there are more than one taboo list
-    const TiXmlElement *child = _parent.FirstChildElement("Objective");
-    if ( not child ) child = _parent.FirstChildElement("Method");
-    objective = t_ObjectiveType :: new_from_xml( *child );
-    __DOASSERT( not objective,
-                " Could not find Objective tag in input file.\n")
+    if( topology.objective() ) 
+      objective = topology.objective<t_GATraits>( _parent );
 
-    const TiXmlElement *store_xml = _parent.FirstChildElement("Store");
-    if ( store_xml )
-        store = new typename t_Store::FromObjective( evaluator, *store_xml );
-    else
+    if( topology.store() )
     {
-      store = new typename t_Store::FromObjective( evaluator, objective, *child );
-      if( store ) Print::xmg << Print::Xmg::comment << "Store: "
-                             << store->what_is() << Print::endl;
+      store = topology.special_store();
+
+      if( not store )
+      {
+        const TiXmlElement *store_xml = _parent.FirstChildElement("Store");
+        if ( store_xml )
+            store = new typename t_Store::FromObjective( evaluator, *store_xml );
+        else
+        {
+          store = new typename t_Store::FromObjective( evaluator,
+                                                       objective, *child );
+          if( store ) Print::xmg << Print::Xmg::comment << "Store: "
+                                 << store->what_is() << Print::endl;
+        }
+      }
+      if ( not store ) store = new typename t_Store::Optima( evaluator, *child );
     }
-    if ( not store )
-      store = new typename t_Store::Optima( evaluator, *child );
-    __DOASSERT( not store, "Memory Allocation Error.\n")
 
-    if( history )
-      evaluation = new Evaluation::WithHistory<t_GATraits>
-                                              ( evaluator, *objective, *store, history );
+    if( topology.history() and history )
+    {
+      evaluation = topology.evaluation< t_GATraits, Evaluation::WithHistory >();
+      evaluation->set( history );
+    }
     if ( not evaluation )
-      evaluation = new Evaluation::Base<t_GATraits>( evaluator, *objective, *store );
-
+      evaluation = topology.evaluation<t_GATraits, Evaluation::Base >();
     __DOASSERT( not evaluation, "Memory Allocation Error.\n")
+    evaluation->set( objective );
+    evaluation->set( store );
+    evaluation->set( &evaluator );
     
+    if( not topology.scaling() ) return;
     scaling = Scaling::new_from_xml<t_GATraits>( _parent, &evaluator );
-      
   }
   
   // create Taboos
@@ -159,6 +168,11 @@ namespace GA
     if ( not _node.FirstChildElement("Taboos") ) return;
     const TiXmlElement &parent = *_node.FirstChildElement("Taboos");
     const TiXmlElement *child = parent.FirstChildElement();
+
+    // Checks for topology specifics
+    if( not topology.taboos() ) return;
+    taboos = topology.special_taboos( eostates );
+    if( not docontinue ) return; 
 
     // creates Taboo container if there are more than one taboo list
     taboos = new Taboos<t_Individual>;
@@ -225,6 +239,7 @@ namespace GA
   template<class T_EVALUATOR>
   bool Darwin<T_EVALUATOR> :: Load_Mating (const TiXmlElement &_parent)
   {
+    if( not topology.mating() ) return true;
     const TiXmlElement *child = _parent.FirstChildElement("Breeding");
     if ( not child )
     {
@@ -257,19 +272,6 @@ namespace GA
     eostates.storeFunctor( continuator );
     GenCount &generation_counter = continuator->get_generation_counter();
 
-    // The following synchronizes Results::nb_val 
-    // all procs. Should always be there!!
-    __DOMPICODE(
-        Synchronize<types::t_unsigned> *synchro = 
-                 new Synchronize<types::t_unsigned>( evaluation->nb_eval );
-        eostates.storeFunctor( synchro );
-        continuator->add( *synchro );
-
-        synchro = new Synchronize<types::t_unsigned>( evaluation->nb_grad );
-        eostates.storeFunctor( synchro );
-        continuator->add( *synchro );
-    )
-
     // Creates SaveEvery object if necessary
     if (      _parent.FirstChildElement("Save") 
          and  _parent.FirstChildElement("Save")->Attribute("every") )
@@ -281,7 +283,9 @@ namespace GA
       {
         Print::xmg << Print::Xmg::comment << "Will Save Every " << n
                    << " Generations " << Print::endl;
-        SaveEvery<t_This> *save = new SaveEvery<t_This>( *this, &Darwin::Save, std::abs(n) );
+        SaveEvery<t_This> *save = new SaveEvery<t_This>( *this,
+                                                         &Darwin::Save, 
+                                                         std::abs(n) );
         eostates.storeFunctor( save );
         continuator->add( *save );
       }
@@ -297,7 +301,8 @@ namespace GA
       {
         continuator->add( eostates.storeFunctor( new TrueCensus< t_GATraits >() ) );
         Print::xmg << Print::Xmg::comment
-                   << "Statistics: True population size, discounting twins" << Print::endl;
+                   << "Statistics: True population size, discounting twins"
+                   << Print::endl;
       }
       else if( name.compare("AverageFitness") == 0 )
       {
@@ -307,7 +312,8 @@ namespace GA
       }
       else if( name.compare("AverageQuantity") == 0 )
       {
-        continuator->add( eostates.storeFunctor( new AverageQuantities< t_GATraits >() ) );
+        continuator->add(
+            eostates.storeFunctor( new AverageQuantities< t_GATraits >() ) );
         Print::xmg << Print::Xmg::comment
                    << "Statistics: Average Quantity " << Print::endl;
       }
@@ -330,7 +336,8 @@ namespace GA
 
       if ( ref.compare("evaluation") != 0 ) continue;
       
-      terminator = new Terminator< types::t_unsigned, std::less<types::t_unsigned>, t_GATraits >
+      terminator = new Terminator< types::t_unsigned,
+                                   std::less<types::t_unsigned>, t_GATraits >
                                  ( evaluation->nb_eval, (types::t_unsigned) abs(max),
                                    std::less<types::t_unsigned>(), "nb_eval < term" );
       eostates.storeFunctor( terminator );
@@ -346,14 +353,16 @@ namespace GA
     if ( specific )
     {
       eostates.storeFunctor(specific); 
-      continuator->add( eostates.storeFunctor(new Continuator<t_GATraits>(*specific)) );
+      continuator->add(
+          eostates.storeFunctor(new Continuator<t_GATraits>(*specific)) );
     }
 
     // Creates Print object
     {
-      typedef PrintGA< Store::Base<t_GATraits>, Evaluation::Base<t_GATraits> > t_PrintGA;
-      t_PrintGA* printga = 
-          new t_PrintGA( *store, *evaluation, generation_counter, do_print_each_call);
+      typedef PrintGA< Store::Base<t_GATraits>,
+                       Evaluation::Base<t_GATraits> > t_PrintGA;
+      t_PrintGA* printga = new t_PrintGA( *store, *evaluation,
+                                          generation_counter, do_print_each_call);
       eostates.storeFunctor(printga);
       continuator->add( *printga );
     }
@@ -366,8 +375,9 @@ namespace GA
       std::string name = child->Attribute("type");
       if( name.compare("offspring") == 0 )
       {
-        continuator->add( eostates.storeFunctor( new PrintOffspring< t_GATraits >
-                                                                   ( generation_counter ) ) );
+        continuator->add(
+            eostates.storeFunctor( new PrintOffspring< t_GATraits >
+                                                     ( generation_counter ) ) );
         Print::xmg << Print::Xmg::comment
                    << "Print: offspring" << Print::endl;
       }
@@ -397,6 +407,7 @@ namespace GA
   template<class T_EVALUATOR>
   bool Darwin<T_EVALUATOR> :: Restart()
   {
+    if( not topology.restart() ) return true;
     TiXmlDocument doc( restart_filename.c_str() );
     TiXmlHandle docHandle( &doc ); 
     if  ( !doc.LoadFile() ) 
@@ -415,6 +426,7 @@ namespace GA
   template<class T_EVALUATOR>
   bool Darwin<T_EVALUATOR> :: Restart (const TiXmlElement &_node)
   {
+    if( not topology.restart() ) return true;
     const TiXmlElement *parent = &_node;
     std::string name = _node.Value();
     if ( name.compare("Restart") )
@@ -453,7 +465,8 @@ namespace GA
           LoadIndividuals( *island_xml, loadop, pop, pop_size);
           islands.push_back( pop );
           Print::xmg << Print::Xmg::comment << "Loaded " << pop.size() 
-                     << " individuals into island " << islands.size() << "" << Print::endl;
+                     << " individuals into island " << islands.size()
+                     << Print::endl;
         }
       } // end of "Population" Restart
     }
@@ -463,8 +476,8 @@ namespace GA
   template<class T_EVALUATOR>
   bool Darwin<T_EVALUATOR> :: Save()
   {
-    if ( not do_save )
-      return true;
+    if ( not do_save ) return true;
+    if ( not topology.save() ) return true;
 
     TiXmlDocument doc;
     TiXmlElement *node;
@@ -553,9 +566,11 @@ namespace GA
   eoReplacement<typename T_EVALUATOR::t_GATraits::t_Individual>*
     Darwin<T_EVALUATOR> :: make_replacement()
   {
+    if (not topology.replacement() ) return NULL;
     eoTruncate<t_Individual>* truncate       = new  eoTruncate<t_Individual>;
     eoMerge<t_Individual>* merge             = new  eoPlus<t_Individual>;
-    eoReduceMerge<t_Individual>* reducemerge = new eoReduceMerge<t_Individual>( *truncate, *merge );
+    eoReduceMerge<t_Individual>* reducemerge
+      = new eoReduceMerge<t_Individual>( *truncate, *merge );
     eostates.storeFunctor(truncate);
     eostates.storeFunctor(merge);
     eostates.storeFunctor(reducemerge);
@@ -587,7 +602,8 @@ namespace GA
       if ( str.compare("TabooOp") == 0  and taboos )
       {
         Print::xmg << Print::Xmg::comment << "TabooOp Begin" << Print::endl;
-        eoGenOp<t_Individual> *taboo_op = make_genetic_op( *sibling->FirstChildElement(), NULL);
+        eoGenOp<t_Individual> *taboo_op
+          = make_genetic_op( *sibling->FirstChildElement(), NULL);
         if ( not taboo_op )
           Print::xmg << Print::Xmg::removelast;
         else
@@ -597,7 +613,8 @@ namespace GA
           {
             Print::xmg << Print::Xmg::comment << "TabooOp End" << Print::endl;
             utterrandom = new mem_monop_t<t_GATraits>
-                                ( evaluator, &t_Evaluator::initialize, std::string( "Initialize" ) );
+                                ( evaluator, &t_Evaluator::initialize,
+                                  std::string( "Initialize" ) );
             __DOASSERT( not utterrandom, "Memory Allocation error.\n" )
             eostates.storeFunctor(utterrandom);
             this_op = new TabooOp<t_Individual> ( *taboo_op, *taboos, 
@@ -612,7 +629,8 @@ namespace GA
           catch(...) 
           {
             if ( utterrandom ) delete utterrandom; 
-            __THROW_ERROR( "Error encountered while creating Taboo genetic operator.\n")
+            __THROW_ERROR(    "Error encountered while creating"
+                           << " Taboo genetic operator.\n" )
           }
         }
       }
@@ -626,7 +644,8 @@ namespace GA
       {
         Print::xmg << Print::Xmg::comment << "UtterRandom" << Print::endl;
         this_op = new mem_monop_t<t_GATraits>
-                         ( evaluator, &t_Evaluator::initialize, std::string( "UtterRandom" ) );
+                         ( evaluator, &t_Evaluator::initialize,
+                           std::string( "UtterRandom" ) );
         eostates.storeFunctor( static_cast< TabooOp<t_Individual> *>(this_op) );
       }
       else if ( str.compare("Minimizer") == 0 )
@@ -672,7 +691,8 @@ namespace GA
             if ( not this_op )
             {
               Print::xmg << Print::Xmg::removelast;
-              Print::out << " Failure, or No Operators Found in \"And\" operator \n";
+              Print::out << " Failure, or No Operators Found"
+                         << " in \"And\" operator \n";
               delete new_branch;
             }
             else
@@ -713,9 +733,13 @@ namespace GA
                    or (types::t_unsigned)std::abs(period) < max_generations ) 
              and period > 0 )
         {
-          Print::xmg << Print::Xmg::addtolast << " period = " << period << Print::endl;
-          this_op = new PeriodicOp<t_GATraits>( *this_op, (types::t_unsigned) abs(period),
-                                              continuator->get_generation_counter(), eostates );
+          Print::xmg << Print::Xmg::addtolast << " period = "
+                     << period << Print::endl;
+          this_op = new PeriodicOp<t_GATraits>( *this_op,
+                                                (types::t_unsigned) abs(period),
+                                                 continuator 
+                                                    ->get_generation_counter(),
+                                                  eostates );
           eostates.storeFunctor( static_cast< PeriodicOp<t_GATraits> *>(this_op) );
           is_gen_op = true;
         }
@@ -726,11 +750,11 @@ namespace GA
           prob = 1.0;
         Print::xmg << Print::Xmg::addtolast << " prob = " << prob << Print::endl;
         if ( current_op->className().compare("GA::SequentialOp") == 0 )
-          static_cast< SequentialOp<t_GATraits>* >(current_op)->add( *this_op,
-                                                                   static_cast<double>(prob) );
+          static_cast< SequentialOp<t_GATraits>* >(current_op)
+             ->add( *this_op, static_cast<double>(prob) );
         else if ( current_op->className().compare("GA::ProportionalOp") == 0 )
-          static_cast< ProportionalOp<t_GATraits>* >(current_op)->add( *this_op, 
-                                                                     static_cast<double>(prob) );
+          static_cast< ProportionalOp<t_GATraits>* >(current_op)
+            ->add( *this_op, static_cast<double>(prob) );
       }
       else if ( this_op )
       {
@@ -755,11 +779,15 @@ namespace GA
   template<class T_EVALUATOR>
   void Darwin<T_EVALUATOR> :: make_breeder()
   {
+    bool docontinue = true;
     eoSelectOne<t_Individual> *select;
 
+    breeder = topology.breeder( &evaluator ); 
+    if( not breeder ) return;
     select = new eoDetTournamentSelect<t_Individual>(tournament_size);
-    breeder = new Breeder<t_GATraits>(*select, *breeder_ops, continuator->get_generation_counter() );
-    breeder->set_howmany(replacement_rate);
+    breeder->set(replacement_rate);
+    breeder->set(select);
+    breeder->set(breeder_ops);
 
     eostates.storeFunctor(breeder);
     eostates.storeFunctor(select);
@@ -768,6 +796,7 @@ namespace GA
   template<class T_EVALUATOR>
   void Darwin<T_EVALUATOR> :: populate ()
   {
+    if( not topology.populate() ) return;
     islands.resize( nb_islands );
     typename t_Islands :: iterator i_pop = islands.begin();
     typename t_Islands :: iterator i_end = islands.end();
@@ -785,7 +814,8 @@ namespace GA
   }
 
   template<class T_EVALUATOR>
-  void Darwin<T_EVALUATOR> :: random_populate ( t_Population &_pop, types::t_unsigned _size)
+  void Darwin<T_EVALUATOR> :: random_populate ( t_Population &_pop,
+                                                types::t_unsigned _size)
   {
     types::t_unsigned i = 0, j = 0;
     types::t_unsigned maxiter = _size * 50;
@@ -809,7 +839,8 @@ namespace GA
     _pop.resize( _size );
   }
   template<class T_EVALUATOR>
-  void Darwin<T_EVALUATOR> :: partition_populate ( t_Population &_pop, types::t_unsigned _size)
+  void Darwin<T_EVALUATOR> :: partition_populate ( t_Population &_pop,
+                                                   types::t_unsigned _size)
   {
     while ( _pop.size() < _size )
     {
@@ -894,25 +925,17 @@ namespace GA
 
     Print::xmg << Print::flush;
     Print::out << "\nCreating population" << Print::endl;
-    __ROOTCODE(populate();)
+    populate();
 
     offspring.clear();
     typename t_Islands :: iterator i_island_begin = islands.begin();
     typename t_Islands :: iterator i_island_end = islands.end();
     typename t_Islands :: iterator i_island;
     Print::out << "\nEvaluating starting population" << Print::endl;
+    // A first eval of pop.
     for ( i_island = i_island_begin; i_island != i_island_end; ++i_island )
-    {
-      // A first eval of pop.
       __TRYDEBUGCODE( (*evaluation)(offspring, *i_island);,
                       "Error while evaluating starting population\n" )
-      // "All Gather" new population
-      __TRYMPICODE(
-        breeder->synchronize_offspring( *i_island );
-        if(history) history->synchronize();,
-        "Caught error while synchronizing starting population.\n" 
-      )
-    }
     types::t_unsigned n = 0;
 
     Print::out << "\nEntering Generational Loop" << Print::endl;
@@ -927,13 +950,13 @@ namespace GA
         types::t_unsigned pSize = i_island->size();
         offspring.clear(); // new offspring
         
+        topology.syncronize_population( *i_island );
         __DODEBUGCODE( Print::out << "Scaling prior to breeding" << Print::endl; )
-
         if( scaling ) (*scaling)( *i_island );
 
         __DODEBUGCODE( Print::out << "Breeding" << Print::endl; )
 
-        (*breeder)(*i_island, offspring);
+        if( breeder ) (*breeder)(*i_island, offspring);
         
         __DODEBUGCODE( Print::out << "Evaluating" << Print::endl; )
 
@@ -941,24 +964,17 @@ namespace GA
         __TRYDEBUGCODE( (*evaluation)(*i_island, offspring);,
                         "Error while Evaluating generation " << n << "\n" )
 
-        // "All Gather" offspring -- note that replacement scheme is deterministic!!
-        __TRYMPICODE( 
-          __DODEBUGCODE(Print::out << "Synchronizing" << Print::endl;)
-          breeder->synchronize_offspring( offspring );
-          if(history) history->synchronize();,
-          "Caught error while synchronizing offsprings and history.\n" 
-        )
-
         __DODEBUGCODE(Print::out << "Scaling prior to replacing" << Print::endl;)
         // Does scaling simultaneously over both populations
         if( scaling ) (*scaling)( *i_island, offspring );
 
         __DODEBUGCODE(Print::out << "Replacing" << Print::endl;)
-
-        (*replacement)(*i_island, offspring); // after replace, the new pop. is in population
+        // after replace, the new pop. is in population
+        if( replacement ) (*replacement)(*i_island, offspring); 
         
         __ASSERT( pSize != i_island->size(),
-                  "Population " << ( pSize > i_island->size() ? "shrinking": "growing" )
+                     "Population "
+                  << ( pSize > i_island->size() ? "shrinking": "growing" )
                   << " from " << pSize << " to " << i_island->size() << "\n"
                 )
 

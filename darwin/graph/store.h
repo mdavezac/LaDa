@@ -42,7 +42,8 @@ namespace GA
 
         public:
           //! Constructor and Initializer
-          BullStore   (t_Evaluator &_eval ) : t_Base( _eval) {}
+          BullStore   (t_Evaluator &_eval, Graph::Topology *_topo )
+                     :  t_CommBase( _topo ), t_Base( _eval) {}
           //! Destructor
           virtual ~BullStore() {}
 
@@ -55,7 +56,8 @@ namespace GA
           bool Save( TiXmlElement &_node ) const {}
 
           //! Does nothing
-          virtual void print_results(types::t_unsigned _age, bool is_comment = false) const {};
+          virtual void print_results(types::t_unsigned _age,
+                                     bool is_comment = false) const {};
           //! Does nothing
           virtual std::string print() const { return condition.print(); }
           //! Returns "GA::mpi::Graph::BullStore"

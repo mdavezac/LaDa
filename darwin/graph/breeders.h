@@ -25,56 +25,14 @@ namespace GA
     namespace Graph
     {
       //! Contains all Breeder related stuff in the mpi::Graph Topology.
-      namespace Breeder
+      namespace Breeders
       {
 
         //! \brief Base class for breeders in the GA::mpi::Graph topology
         //! \details Contains helper functions which may be of help to any of the
         //!          specific breeders.
         template<class T_GATRAITS>
-        class Base : public eoBreed<typename T_GATRAITS::t_Individual>
-        {
-          public:
-            typedef T_GATRAITS t_GATraits; //!< all %GA traits
-          protected:
-            //! type of an individual
-            typedef typename t_GATraits::t_Individual  t_Individual; 
-    
-          protected:
-            //! A selection operator for the obtention of parents
-            eoSelectOne<t_Individual>* select;
-            //! Mating operator
-            eoGenOp<t_Individual> *op;
-            //! Generation counter
-            GenCount *age;
-            //! Number of offspring to change
-            eoHowMany howMany;
-    
-          public:
-            //! Constructor and Initializer
-            Base () : select(NULL), op(NULL), age(NULL),
-                      howmany(0), topo(_topo) {}
-            //! Copy Constructor
-            Base   ( Base<t_Individual> & _breeder )
-                 : select( _breeder.topo ), op(_breeder.op), age(_breeder.age),
-                   howmany(_breeder.howMany), topo( _breeder.topo ) {}
-            //! Destructor
-            virtual ~Base() {}
-    
-            //! Sets the selector.
-            void set( eoSelectOne<t_Individual> *_select ){ select = _select; }
-            //! Sets the breeding operators
-            void set( eoSelectOne<t_Individual> *_op ){ op = _op; }
-            //! Sets the replacement rate
-            void set( types::t_real _rep ){ howMany = _rep; }
-            //! Sets the generation counter.
-            void set( GenCount *_age ){ age = _age; }
-            //! Sets the topology.
-            void set( Topology *_topo) { topo(_topo); }
-            //! EO required.
-            virtual std::string className() const
-              { return "GA::mpi::Graph::Breeder::Base"; }
-        }
+        class Base : public GA::Breeder<typename T_GATRAITS::t_Individual> {};
     
         //! A breeder class which does nothing.
         template<class T_GATRAITS>
@@ -98,7 +56,8 @@ namespace GA
             Farmhand( Topology *_topo ) : t_Base( _topo );
     
             //! Creates \a _offspring population from \a _parent
-            void operator()(const t_Population& _parents, t_Population& _offspring) {};
+            void operator()(const t_Population& _parents,
+                            t_Population& _offspring) {};
        
             ///! The class name. EO required
             virtual std::string className() const

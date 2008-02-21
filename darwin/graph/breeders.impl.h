@@ -9,7 +9,7 @@ namespace GA
 
     namespace Graph
     {
-      namespace Breeder
+      namespace Breeders
       {
 
         template<class T_GATRAITS>

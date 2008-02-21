@@ -40,14 +40,18 @@ namespace GA
     public:
       typedef T_GATRAITS t_GATraits; //!< all %GA traits
     protected:
-      typedef typename t_GATraits::t_IndivTraits t_IndivTraits; //!< all individual traits
-      typedef typename t_GATraits::t_Individual  t_Individual;  //!< type of an individual
-      typedef typename t_GATraits::t_Population  t_Population;  //!< type of the population
+      //!  all individual traits
+      typedef typename t_GATraits::t_IndivTraits t_IndivTraits;
+       //!  type of an individual
+      typedef typename t_GATraits::t_Individual  t_Individual; 
+        //! type of the population
+      typedef typename t_GATraits::t_Population  t_Population;
 
     protected:
-      eoSelectOne<t_Individual>& select; //!< A selection operator for the obtention of parents
+      //! A selection operator for the obtention of parents
+      eoSelectOne<t_Individual>* select;
       eoGenOp<t_Individual> *op;  //!< Mating operator
-      GenCount &age;              //!< Generation counter
+      GenCount *age;              //!< Generation counter
       //! \brief Number of offspring to create
       //! \details It is declared a pointer so that it can be changed
       //! dynamically during the run. This is useful mostly for
@@ -58,12 +62,13 @@ namespace GA
     
     public:
       //! Constructor and Initializer
-      Breeder   ( eoSelectOne<t_Individual>& _select, eoGenOp<t_Individual>& _op,
-                  GenCount &_age )
-              : select( _select ), op(&_op),
+      Breeder   ( eoSelectOne<t_Individual>* _select,
+                  eoGenOp<t_Individual>* _op,
+                  GenCount *_age )
+              : select( _select ), op(_op),
                 age(_age), howMany(NULL), howMany_save(NULL) {}
       //! Copy Constructor
-      Breeder   ( Breeder<t_Individual> & _breeder )
+      Breeder   ( Breeder<t_Individual>& _breeder )
               : select( _breeder.select ), op(_breeder.op),
                 age(_breeder.age), howMany(_breeder.howMany), howMany_save(NULL) {}
       //! Destructor
@@ -83,8 +88,14 @@ namespace GA
       //! under the nose of  a Breeeder instance. Used by GA::NuclearWinter.
       //! \todo remove this dirty hack
       eoHowMany** get_howmany_address()  { return &howMany; }
-      //! \brief sets the ratio of offspring to create (w.r.t. main population)
-      void set_howmany(types::t_real _rate);
+      //! Sets the selector.
+      void set( eoSelectOne<t_Individual> *_select ){ select = _select; }
+      //! Sets the breeding operators
+      void set( eoSelectOne<t_Individual> *_op ){ op = _op; }
+      //! Sets the replacement rate
+      void set( types::t_real _rep ){ howMany = _rep; }
+      //! Sets the generation counter.
+      void set( GenCount *_age ){ age = _age; }
      
       ///! The class name. EO required
       virtual std::string className() const { return "Darwin::Breeder"; }
@@ -104,19 +115,13 @@ namespace GA
                                                 t_Population& _offspring)
   {
     types::t_unsigned target = (*howMany)( (types::t_unsigned) _parents.size());
-    __DOMPICODE( 
-      types::t_int residual = target % (mpi::main.size());
-      target /= mpi::main.size();
-      if ( mpi::main.rank() < residual ) ++target;
-    )
-  
     _offspring.clear();
-    eoSelectivePopulator<t_Individual> it(_parents, _offspring, select);
+    eoSelectivePopulator<t_Individual> it(_parents, _offspring, *select);
   
     while (_offspring.size() < target)
     {
       (*op)(it);
-      (*it).set_age(age());
+      (*it).set_age( (*age)() );
       ++it;
     }
   
