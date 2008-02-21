@@ -1,12 +1,6 @@
 //
 //  Version: $Id$
 //
-#ifndef  _DARWIN_COMMUNICATORS_H_
-#define  _DARWIN_COMMUNICATORS_H_
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
 
 namespace GA
 {

@@ -1,12 +1,14 @@
 //
 //  Version: $Id$
 //
-#ifndef  _DARWIN_COMMUNICATORS_H_
-#define  _DARWIN_COMMUNICATORS_H_
+#ifndef  _GRAPH_EVALUATION_H_
+#define  _GRAPH_EVALUATION_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
+#ifdef _MPI
 
 #include <list>
 #include <pair>
@@ -184,6 +186,7 @@ namespace GA
   } // namespace mpi
 } // namespace GA
 
-#include "graphevaluation.impl.h"
+#include "evaluation.impl.h"
 
+#endif
 #endif

@@ -1,12 +1,6 @@
 //
 //  Version: $Id$
 //
-#ifndef  _DARWIN_COMMUNICATORS_H_
-#define  _DARWIN_COMMUNICATORS_H_
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
 
 namespace GA
 {
@@ -15,30 +9,6 @@ namespace GA
 
     namespace Graph
     {
-
-      template< class T_CONDITION >
-      void Topology<T_CONDITION>::init_collectivists( T_CONDITION &_condition )
-      {
-        group_comm = comm;
-        types::t_unsigned per_pool = ::mpi::Base::size();
-        while ( per_pool and ( not _condition( per_pool) ) ) --per_pool;
-        if( per_pool == 0 )
-          __THROW_ERROR(    "Could not satisfy the mandatory condition\n"
-                         << "regarding the number of procs despite \n"
-                         << "only using one pool\n" )
-        types::t_unsigned nb = ::mpi::Base::size() - per_pool;
-        Print::out << "MPI Process Organization: \n"
-                   << "  _ Single pool of " << per_pool << " processes.\n"
-                   << "  _ " << nb << " donothings.\n";
-        type = COLLECTIVIST;
-        if( not nb ) return;
-        // distributes farmhands all over the spectrum;
-        nb = ::mpi::Base::size() / nb;
-        types::t_int color = (rank() + 1) % nb ? 0: MPI::UNDEFINED;
-        type = color == MPI::UNDEFINED ? FARMHANDS: COLLECTIVIST;
-        group_comm = &comm->Split( color, rank() );
-        return;
-      }
 
       template< class T_CONDITION >
       void Topology<T_CONDITION>::init( T_CONDITION &_condition )
@@ -171,11 +141,11 @@ namespace GA
         // First we create the communicator between Farmer and Bulls.
         types::t_int color = MPI::UNDEFINED;
         if( rank() == 0 ) type = FARMER;
-        if( rank() < pools ) color = 0;
+        if( rank() <= pools ) color = 0;
         farmer_comm = &comm->Split( color, rank() );
         // Now we create the communicator for the herd.
         color = MPI::UNDEFINED;
-        if( rank() < pools and rank() > 0 ) { color = rank(); type = BULLS; }
+        if( rank() <= pools and rank() > 0 ) { color = rank(); type = BULLS; }
         first_cow_in_herd = pools + 1;
         for(types::t_int i = 1; i_herd != i_herd_end; ++i_herd, ++i )
           if(     rank() >= first_cow_in_herd

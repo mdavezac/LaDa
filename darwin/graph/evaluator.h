@@ -1,12 +1,14 @@
 //
 //  Version: $Id$
 //
-#ifndef  _DARWIN_COMMUNICATORS_H_
-#define  _DARWIN_COMMUNICATORS_H_
+#ifndef  _GRAPH_EVALUATOR_H_
+#define  _GRAPH_EVALUATOR_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
+#ifdef _MPI
 
 #include <list>
 #include <pair>
@@ -14,7 +16,8 @@
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
-#include "evaluation.h"
+#include <darwin/evaluator.h>
+#include <darwin/comm.h>
 
 namespace GA
 {
@@ -37,6 +40,7 @@ namespace GA
       //!          classes also derive from the Comm classes, \e via the CRT
       //!          mechanism.
       namespace Evaluator
+      {
 
         //! \brief A meta-evaluator class for GA::mpi::Graph::Evaluation::Farmer.
         //! \details This class catches calls to GA::Evaluator::evaluate() and
@@ -98,6 +102,9 @@ namespace GA
               { __THROW_ERROR( "Should not be called.\n" ) }
         };
     
+        //! \brief A meta-evaluator for bulls.
+        //! \details It catches the evaluation calls and first broadcasts the
+        //!          approapriate information to the bulls.
         template<class T_GATRAITS>
         class Bull : public GA::Evaluator< typename T_GATRAITS :: t_Evaluator >
         {
@@ -118,18 +125,18 @@ namespace GA
             typedef typename t_GATraits::t_Population  t_Population; 
             //! Base class type.
             typedef Base<T_GATRAITS> t_Base;
+            //! Base class type.
+            typedef Base<T_GATRAITS> t_Base;
             //! Communication base class
             typedef Comm::Bull< T_GATRAITS, Farmer> t_CommBase;
     
-            //! Tag for communications with the cows
-            const MPI::INT COWTAG = 2;
     
     
           public:
             //! Constructor.
             Bull () : t_Base() {}
             //! Copy Constructor
-            Farmer ( const t_This &_c ) : t_Base( _c ) {}
+            Bull ( const t_This &_c ) : t_Base( _c ) {}
     
             //! Commands herd to evaluate t_This::current_individual.
             void evaluate();
@@ -150,6 +157,6 @@ namespace GA
   } // namespace mpi
 } // namespace GA
 
-#include "graphevaluator.impl.h"
+#include "evaluator.impl.h"
 
 #endif

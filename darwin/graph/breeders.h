@@ -1,16 +1,20 @@
 //
 //  Version: $Id$
 //
-#ifndef  _DARWIN_COMMUNICATORS_H_
-#define  _DARWIN_COMMUNICATORS_H_
+#ifndef  _GRAPH_BRREEDERS_H_
+#define  _GRAPH_BRREEDERS_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
+#ifdef _MPI
+
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
+#include <darwin/breeder.h>
+#include "comm.h"
 
 namespace GA
 {
@@ -191,6 +195,7 @@ namespace GA
   } // namespace mpi
 } // namespace GA
 
-#include "comminucators.impl.h"
+#include "breeders.impl.h"
 
+#endif
 #endif

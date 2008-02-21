@@ -1,17 +1,19 @@
 //
 //  Version: $Id$
 //
-#ifdef _MPI
-#ifndef _MPI_REQUESTFARM_H_
-#define _MPI_REQUESTFARM_H_
+#ifndef _GRAPH_COMM_H_
+#define _GRAPH_COMM_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
+#ifdef _MPI
 
 #include <opt/types.h>
+#include <opt/debug.h>
 #include <mpi/mpi_object.h>
+#include "topology.h"
 
 namespace GA
 {
@@ -49,12 +51,12 @@ namespace GA
                                       T_OBJECT &_o, MPI::Comm *_comm);
         //! Sends a (non-template) object to bull \a _bull.
         template< class T_OBJECT >
-        void send_template_object( types::t_unsigned _bull,
-                                   T_OBJECT &_o, MPI::Comm *_comm);
+        void send_object( types::t_unsigned _bull,
+                          T_OBJECT _o, MPI::Comm *_comm);
         //! Receives a (non-template) object from bull \a _bull.
         template< class T_OBJECT >
-        void receive_template_object( types::t_unsigned _bull,
-                                      T_OBJECT &_o, MPI::Comm *_comm);
+        void receive_object( types::t_unsigned _bull,
+                             T_OBJECT &_o, MPI::Comm *_comm);
         //! Sends a range (must be iterators or pointers).
         template< class T_ITERATOR >
         void send_range( types::t_unsigned _bull, T_ITERATOR _first,
@@ -103,12 +105,14 @@ namespace GA
         //!          - Farmer::t_Requests::HISTORYCHECK for when a
         //!            bull needs to know whether a specific individual is
         //!            already known or not.
+        //!          - Farmer::t_Requests::STORE for a bull to propose an
+        //!            individual for storage
         //!          .
         //!          The CRT will make calls to onWaiting(), onTaboo(),
         //!          onObjective(), onHistory() for each of these requests
         //!          respectively. These routines should be defined in the
         //!          derived classes. Defaults are provided for the last three.
-        template< T_GATRAITS, T_DERIVED >
+        template< T_DERIVED >
         class Farmer : private ::mpi::Base
         {
           friend class Bull<T_GATRAITS, T_DERIVED>;
@@ -151,7 +155,8 @@ namespace GA
               OBJECTIVE_WITH_GRADIENT, //!< Requesting an objective evaluation with gradient.
               OBJECTIVE_ONE_GRADIENT, //!< Requesting an objective evaluation of one gradient.
               TABOOCHECK, //!< Requesting to know whether an individual is taboo.
-              HISTORYCHECK; //!< Requesting to know whether an individual is known.
+              HISTORYCHECK, //!< Requesting to know whether an individual is known.
+              STORE; //!< Proposes an individual for storage.
             };
             enum t_Commands
             {
@@ -221,7 +226,7 @@ namespace GA
               { receive_quantities< t_QuantityGradients >( _bull, _grad, t_CommBase::comm ); }
             //! Sends an object to \a _bull.
             template < class t_OBJECT > void send_object( types::t_unsigned _bull,
-                                                          T_OBJECT &_object );
+                                                          T_OBJECT _object );
               { send_object< T_OBJECT >( _bull, _object, t_CommBase::comm ); }
             //! Receives an object from \a _bull.
             template < class t_OBJECT > void receive_object( types::t_object _bull, 
@@ -247,6 +252,8 @@ namespace GA
             void onOneGradient( types::t_int _bull );
             //! Response to HISTORYCHECK request
             void onHistory( types::t_int _bull );
+            //! Response to STORE request
+            void onStore( types::t_int _bull );
         
           public:
             //! Sets taboo pointer
@@ -353,7 +360,7 @@ namespace GA
             void receive_quantities( t_Quantities &_fit );
               { receive_quantities< t_Fitness >( 0, _q, t_CommBase::comm ); }
             //! Sends an object to \a _bull.
-            template < class t_OBJECT > void send_object( T_OBJECT &_object );
+            template < class t_OBJECT > void send_object( T_OBJECT _object );
               { send_object< T_OBJECT >( 0, _object, t_CommBase::comm ); }
             //! Receives an object from \a _bull.
             template < class t_OBJECT > void receive_object( T_OBJECT &_object );
@@ -470,6 +477,8 @@ namespace GA
 
   } // namespace mpi
 } // namespace GA
+
+#include "comm.impl.h"
 
 #endif
 #endif

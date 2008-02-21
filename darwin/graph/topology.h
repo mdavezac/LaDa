@@ -1,12 +1,14 @@
 //
 //  Version: $Id$
 //
-#ifndef  _DARWIN_COMMUNICATORS_H_
-#define  _DARWIN_COMMUNICATORS_H_
+#ifndef  _GRAPH_TOPOLOGY_H_
+#define  _GRAPH_TOPOLOGY_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
+#ifdef _MPI
 
 #include <opt/types.h>
 #include <opt/debug.h>
@@ -46,6 +48,12 @@ namespace GA
     //!          Graph::Topology::init()) \e sine \e qua \e non.
     namespace Graph
     {
+      //! One possible condition for Topology::init()
+      struct AlwaysTrue
+      {
+        //! Always returns true
+        bool operator()( types::t_unsigned i ) { return true; }
+      };
 
       //! Creates and contains the graph topology itself.
       class Topology : private ::mpi::Base
@@ -62,7 +70,6 @@ namespace GA
           //! Type of the process
           enum t_Type 
           {
-            COLLECTIVIST, //!<  Equivalent to pool == 1.
             FARMER, //!< The head boss.
             FARMHANDS, //!< Will do nothing.
             BULL,   //!< Takes orders from the farmer.
@@ -87,22 +94,27 @@ namespace GA
       
           //! \brief Creates the GA mpi topology and groups.
           template< class T_CONDITION > void init( T_CONDITION &_condition );
+          //! Creates the mpi topology with the condition AlwaysTrue
+          void init () { init( AlwaysTrue() ); }
+
       
-          //! \brief Returns a pointer to FarmerGraphBreeder, BullsGraphBreeder,
-          //!        FarmhandGraphBreeder, or CowGraphBreeder.
-          template< class T_GATRAITS >
-          Breeder<T_GATRAITS>* create_breeder( eoState &_state );
+          //! \brief sends random seeds to processes
+          //! \details The seeds are resized to the number of pools+1. Any seed
+          //!          equal to zero implies that seeding is done from the
+          //!          current time.
+          void reseed( std::vector< types::t_int > &_seeds );
+
+          //! Loads the number of pools
+          bool Load( const TiXmlElement &_node );
       
-        protected:
-          //! \brief Creates a GA mpi topology consisting of a single unit.
-          template< class T_CONDITION > void init_collectivists( T_CONDITION &_condition );
       };
+
     } // namespace Graph
 
 
   } // namespace mpi
 } // namespace GA
 
-#include "comminucators.impl.h"
+#include "topology.impl.h"
 
 #endif

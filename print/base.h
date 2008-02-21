@@ -81,6 +81,7 @@ namespace Print
              << "### " << std::endl;
         is_empty = false;
       }
+      void doprint( bool _d  ) { do_print = _d; init( filename ); }
         
   };
 

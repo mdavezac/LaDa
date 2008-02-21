@@ -78,40 +78,23 @@ namespace GA
       }
       else if ( str.compare("print")==0 ) // print at each generation
         do_print_each_call = true;
-      else if ( str.compare("seed")==0 ) // seed from given number
-      { 
-        types::t_int d = att->IntValue();
-        if( d == 0 ) continue;
-        seed = std::abs(d) __DOMPICODE( + mpi::main.rank() );
-        rng.reseed( seed );
-      }
-      else if ( str.compare("populate")==0 ) // seed from given number
+      else if ( str.compare("populate")==0 ) 
       {
         std::string string = att->Value();
         populate_style = RANDOM_POPULATE;
         if ( string.compare("partition") == 0 )
           populate_style = PARTITION_POPULATE;
       }
-      else
-      {
-#ifdef _MPI
-        std::ostringstream sstr;
-        sstr << "seed" << mpi::main.rank();
-        if( str.compare(sstr.str()) == 0 )
-        {
-          seed = std::abs( att->IntValue() );
-          rng.reseed( seed );
-        }
-#endif
-        evaluator.LoadAttribute( *att );
-      }
+      else if ( not topology.LoadSeeds( *_att ) )
+        evaluator.LoadAttribute( *att ); 
     }
 
     // some checking
     if ( std::floor( pop_size * replacement_rate ) == 0 )
     {
       Print::xmg << Print::Xmg::comment << "Error: replacement_rate is too small." << Print::endl 
-                 << Print::Xmg::comment << "Error: setting replacement_rate too 1.0 / pop_size ." << Print::endl;
+                 << Print::Xmg::comment 
+                 << "Error: setting replacement_rate too 1.0 / pop_size ." << Print::endl;
       Print::out << "Error: replacement_rate is too small.\n"
                  << "Error: setting replacement_rate too 1.0 / pop_size .\n";
       replacement_rate = 1.00 / pop_size + 10*types::tolerance;
@@ -129,8 +112,7 @@ namespace GA
     if ( not child )
       return;
     Print::xmg << Print::Xmg::comment << "Track History" << Print::endl;
-    history = new History< t_Individual>;
-    eostates.storeFunctor(history);
+    history = topology.history<t_GATraits>( eostates );
   }
   
   // creates history object if required
@@ -1055,21 +1037,6 @@ nextfilename:
   template<class T_EVALUATOR>
   bool Darwin<T_EVALUATOR> :: Load(const std::string &_filename) 
   {
-    __MPISEQUENTIAL(
-      struct timeval tv;
-      struct timezone tz;
-      gettimeofday(&tv,&tz);
-      seed = tv.tv_usec;
-      rng.reseed(seed);
-    )
-    __SERIALCODE(
-      struct timeval tv;
-      struct timezone tz;
-      gettimeofday(&tv,&tz);
-      seed = tv.tv_usec;
-      rng.reseed(seed);
-    )
-
     // Initializes each proc differently
     filename = _filename;
     evaluator_filename = _filename;
@@ -1269,13 +1236,16 @@ syncfilenames:
 out:
     Print::xmg << Print::endl;
 
+    // reseeds accordint to mpi/serial topology
+    topology.reseed();
+
     Print::xmg << Print::Xmg::comment << "Mating Tournament Size: "
                                       << tournament_size << Print::endl
                << Print::Xmg::comment << "Offspring Replacement Rate: "
                                       << replacement_rate << Print::endl
                << Print::Xmg::comment << "Population Size: "
-                                      << pop_size << Print::endl
-               << Print::Xmg::comment << "Seed: " << seed << Print::endl
+                                      << pop_size << Print::endl;
+               << Print::Xmg::comment << topology.print_seeds()
                << Print::Xmg::comment << (  populate_style == RANDOM_POPULATE ?
                                            "Random Starting Population":
                                            "Partitionned Starting Population" )

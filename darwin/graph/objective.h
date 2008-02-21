@@ -1,12 +1,14 @@
 //
 //  Version: $Id$
 //
-#ifndef  _DARWIN_COMMUNICATORS_H_
-#define  _DARWIN_COMMUNICATORS_H_
+#ifndef  _GRAPH_OBJECTIVE_H_
+#define  _GRAPH_OBJECTIVE_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
+#ifdef _MPI
 
 #include <list>
 #include <pair>
@@ -14,8 +16,8 @@
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
-#include "objective.h"
-#include "graphcomm.h"
+#include <darwin/objective.h>
+#include "comm.h"
 
 namespace GA
 {
@@ -24,7 +26,7 @@ namespace GA
     namespace Graph
     {
       template< class T_GATRAITS >
-      class BullObjective : private Comm::Bull< BullObjective<T_BASE> >,
+      class BullObjective : private Comm::Bull< BullObjective<T_GATRAITS> >,
                             public ::Objective::Type<T_GATRAITS> :: Vector
       {
         public:
@@ -50,6 +52,8 @@ namespace GA
           typedef GA::SaveObject<t_GATraits>                  t_SaveOp;
           //! A functor to for loading individuals
           typedef GA::LoadObject<t_GATraits>                  t_LoadOp;
+          //! Type of the communication base class.
+          typedef Comm::Bull< BullObjective<T_GATRAITS>       t_CommBase;
     
         public:
           //! Constructor.
@@ -89,6 +93,7 @@ namespace GA
   } // namespace mpi
 } // namespace GA
 
-#include "graphobjective.impl.h"
+#include "objective.impl.h"
 
+#endif
 #endif

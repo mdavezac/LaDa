@@ -197,8 +197,8 @@ namespace GA
       //! those pointers once the game is up. Go check out EO to find out how it
       //! works.
       eoState eostates;
-      //! Seed of the random number generator;
-      types::t_int seed;
+      //! The mpi/serial topology wrapper
+      Topology topology;
 
     public:
       //! Constructor
@@ -207,7 +207,8 @@ namespace GA
                   do_restart(0), replacement_rate(0.1), do_print_each_call(false),
                   populate_style(RANDOM_POPULATE), continuator(NULL), history(NULL),
                   taboos(NULL), breeder_ops(NULL), breeder(NULL), replacement(NULL),
-                  objective(NULL), store(NULL), evaluation(NULL), scaling(NULL), seed(0) {}
+                  objective(NULL), store(NULL), evaluation(NULL), scaling(NULL),
+                  topology(__MPICODE( mpi::main ) ) {}
       //! Destructor
       virtual ~Darwin ();
 

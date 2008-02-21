@@ -14,6 +14,7 @@ namespace GA
           void send_quantities( types::t_int _bull, T_QUANTITY &_q,
                                 MPI::Comm *_comm )
           {
+            if( comm->rank() < 2 ) return;
             typedef Traits::Quantity< T_QUANTITY > t_QuantityTraits;
             mpi::BroadCast bc( _comm );
             t_QuantityTraits :: broadcast(_q, bc );
@@ -27,6 +28,7 @@ namespace GA
           void receive_quantities( types::t_int _bull, T_QUANTITY &_q,
                                    MPI::Comm *_comm )
           {
+            if( comm->rank() < 2 ) return;
             typedef Traits::Quantity< T_QUANTITY > t_QuantityTraits;
             mpi::BroadCast bc( _comm );
             t_QuantityTraits :: broadcast(_q, bc );
@@ -40,6 +42,7 @@ namespace GA
           void send_range( types::t_int _bull, T_ITERATOR _first,
                            T_ITERATOR _last, MPI::Comm *_comm )
           {
+            if( comm->rank() < 2 ) return;
             mpi::BroadCast bc( _comm );
             bc.serialize_range( _first, _last, bc );
             bc.allocate_buffers();
@@ -52,6 +55,7 @@ namespace GA
           void receive_range( types::t_int _bull, T_ITERATOR _first,
                               T_ITERATOR _last, MPI::Comm *_comm )
           {
+            if( comm->rank() < 2 ) return;
             mpi::BroadCast bc( _comm );
             bc.serialize_range( _first, _last, bc );
             bc.allocate_buffers();
@@ -64,6 +68,7 @@ namespace GA
           void bcast_template_object( types::t_int _root, T_OBJECT &_object,
                                       MPI::Comm *_comm )
           {
+            if( comm->rank() < 2 ) return;
             mpi::BroadCast bc( _comm );
             _object.broadcast( bc );
             bc.allocate_buffers();
@@ -75,6 +80,7 @@ namespace GA
           void bcast_range( types::t_int _root, T_ITERATOR _first,
                             T_ITERATOR _last, MPI::Comm *_comm )
           {
+            if( comm->rank() < 2 ) return;
             mpi::BroadCast bc( _comm );
             bc.serialize_range( _first, _last, bc );
             bc.allocate_buffers();
@@ -85,6 +91,7 @@ namespace GA
         template< class T_OBJECT >  
           void bcast_object( T_OBJECT &_object, MPI::Comm *_comm )
           {
+            if( comm->rank() < 2 ) return;
             mpi::BroadCast bc( _comm );
             bc << _object << mpi::BroadCast::allocate
                << _object << mpi::BroadCast::broadcast
@@ -96,6 +103,7 @@ namespace GA
           void receive_template_object( types::t_int _bull, T_OBJECT &_object,
                                         MPI::Comm *_comm )
           {
+            if( comm->rank() < 2 ) return;
             mpi::BroadCast bc( _comm );
             _object.broadcast( bc );
             bc.allocate_buffers();
@@ -108,6 +116,7 @@ namespace GA
           void send_template_object( types::t_int _bull, T_OBJECT &_object,
                                      MPI::Comm *_comm )
           {
+            if( comm->rank() < 2 ) return;
             mpi::BroadCast bc( _comm );
             _indiv.broadcast( bc );
             bc.allocate_buffers();
@@ -119,6 +128,7 @@ namespace GA
           void receive_object( types::t_int _bull,
                                T_OBJECT &_object, MPI::Comm *_comm )
           {
+            if( comm->rank() < 2 ) return;
             mpi::BroadCast bc( _comm );
             bc << _object << mpi::BroadCast::allocate << _object;
             bc.receive_ptp( _bull );
@@ -126,8 +136,9 @@ namespace GA
           }
 
         template< class T_OBJECT >  
-          void send_object( types::t_int _bull, T_OBJECT &_object, MPI::Comm *_comm )
+          void send_object( types::t_int _bull, T_OBJECT _object, MPI::Comm *_comm )
           {
+            if( comm->rank() < 2 ) return;
             mpi::BroadCast bc( _comm );
             bc << _object << mpi::BroadCast::allocate << _object;
             bc.send_ptp( _bull );
@@ -211,6 +222,7 @@ namespace GA
                 case OBJECTIVE_ONE_GRADIENT: derived->onOneGradient( *i_comp ); break;
                 case TABOO: derived->onTaboo( *i_comp ); break;
                 case HISTORYCHECK: derived->onHistory( *i_comp ); break;
+                case STIRE: derived->onStore( *i_comp ); break;
                 default: __THROW_ERROR( "Unknown command" << in[*i_comp] << "." )
               }
             }
@@ -252,6 +264,7 @@ namespace GA
                 case OBJECTIVE_ONE_GRADIENT: derived->onOneGradient( *i_comp ); break;
                 case TABOO: derived->onTaboo( *i_comp ); break;
                 case HISTORYCHECK: derived->onHistory( *i_comp ); break;
+                case STORE: derived->onStore( *i_comp ); break;
                 default: __THROW_ERROR( "Unknown command" << in[*i_comp] << "." )
               }
             }
@@ -275,7 +288,7 @@ namespace GA
           __ASSERT( taboo, "Taboo pointer has not been set.\n")
           t_Individual indiv;
           t_CommBase::receive_individual( _bull, indiv );
-          t_CommBase::send_command( _bull, (*taboo)( indiv ) );
+          t_CommBase::send_object( _bull, (*taboo)( indiv ) );
           t_CommBase::activate(_bull);
         }
         template<class T_DERIVED>
@@ -353,6 +366,19 @@ namespace GA
           if( not buff ) return;
           t_CommBase::send_individual( _bull, indiv );
         }
+        template<class T_DERIVED>
+        inline void Farmer<T_DERIVED> :: onStore( types::t_int _bull )
+        {
+          // Don't expect this message if history is not set
+          __ASSERT( store, "History Pointer not set.\n")
+          t_Individual indiv;
+          t_CommBase::receive_individual( _bull, indiv );
+          (*store)( indiv );
+          t_CommBase::activate(_bull);
+          if( not buff ) return;
+          t_CommBase::send_individual( _bull, indiv );
+        }
+      
       
 
         template<class T_DERIVED>
