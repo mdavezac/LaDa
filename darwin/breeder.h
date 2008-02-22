@@ -62,6 +62,9 @@ namespace GA
     
     public:
       //! Constructor and Initializer
+      Breeder () : select(NULL), op(NULL), age(NULL),
+                   howMany(NULL), howMany_save(NULL) {}
+
       Breeder   ( eoSelectOne<t_Individual>* _select,
                   eoGenOp<t_Individual>* _op,
                   GenCount *_age )
@@ -91,7 +94,7 @@ namespace GA
       //! Sets the selector.
       void set( eoSelectOne<t_Individual> *_select ){ select = _select; }
       //! Sets the breeding operators
-      void set( eoSelectOne<t_Individual> *_op ){ op = _op; }
+      void set( eoGenOp<t_Individual> *_op ){ op = _op; }
       //! Sets the replacement rate
       void set( types::t_real _rep );
       //! Sets the generation counter.
@@ -105,6 +108,11 @@ namespace GA
   inline void Breeder<T_GATRAITS> :: operator()(const t_Population& _parents,
                                                 t_Population& _offspring)
   {
+    __ASSERT( select, "Breeder::select pointer was not set.\n" ) 
+    __ASSERT( op, "Breeder::op pointer was not set.\n" ) 
+    __ASSERT( age, "Breeder::age pointer was not set.\n" ) 
+    __ASSERT( howMany, "Breeder::howMany pointer was not set.\n" ) 
+    __ASSERT( howMany_save, "Breeder::howMany_save pointer was not set.\n" ) 
     types::t_unsigned target = (*howMany)( (types::t_unsigned) _parents.size());
     _offspring.clear();
     eoSelectivePopulator<t_Individual> it(_parents, _offspring, *select);

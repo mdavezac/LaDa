@@ -12,7 +12,7 @@ namespace GA
       Minimizer_Functional<T_GATRAITS> :: evaluate()
       { 
         evaluation->evaluate( *current_indiv ); 
-        return (t_VA_Type) current_indiv->Fitness(); 
+        return (t_VA_Type) current_indiv->fitness(); 
       }
   template<class T_GATRAITS>
     inline typename Minimizer_Functional<T_GATRAITS> :: t_VA_Type 
@@ -20,14 +20,13 @@ namespace GA
       {
         evaluation->evaluate_with_gradient( *current_indiv,
                                             gradients, _i_grad ); 
-        return current_indiv->Fitness(); 
+        return current_indiv->fitness(); 
       }
   template<class T_GATRAITS>
     inline typename Minimizer_Functional<T_GATRAITS> :: t_VA_Type 
       Minimizer_Functional<T_GATRAITS> :: evaluate_one_gradient( types::t_unsigned _pos )
       {
-        types::t_real result;
-        evaluation->evaluate_one_gradient( *current_indiv, gradients, _pos, result ); 
+        types::t_real result = evaluation->evaluate_one_gradient( *current_indiv, gradients, _pos); 
         return result;
       }
   template<class T_GATRAITS>

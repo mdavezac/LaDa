@@ -114,7 +114,7 @@ template< class T_GATRAITS >
       //! Sets the pointer to the objective interface.
       void set( t_Objective *_obj ) { objective = _obj; }
       //! Sets the pointer to the storage interface.
-      void set( t_Objective *_stor ) { store = _stor; }
+      void set( t_Store *_stor ) { store = _stor; }
       //! \brief  calls on the functional to evaluate \a _indiv
       //! \brief  calls on the functional to evaluate \a _indiv
       //¡ \details All individuals for which the quantities are unknowned
@@ -232,16 +232,17 @@ template< class T_GATRAITS >
       using t_Base::evaluate;
 
     public:
+      //! \brief Constructor.
+      WithHistory () : Base<T_GATRAITS>(), history(NULL) {};
       //! \brief Constructor and Initializer
-      WithHistory   ( t_Evaluator &_eval, t_Objective &_obj, t_Store &_store, t_History *_hist )
+      WithHistory   ( t_Evaluator *_eval, t_Objective *_obj, t_Store *_store, t_History *_hist )
            : Base<T_GATRAITS>(_eval, _obj, _store), history(_hist) {};
       //! \brief Copy Constructor 
       WithHistory   ( const WithHistory<t_Individual> &_c )
                   : Base<T_GATRAITS>( _c ), history(_c.history ) {}
       //! \brief Destructor
       virtual ~WithHistory() {};
-
-    protected:
+    
       //! \brief  calls on the functional to evaluate \a _indiv
       //! \details Performs exactly as Evaluation::Base::evaluate, except that
       //! if Evaluation::WithHistory::history is non-zero, it does keep tracks of
@@ -255,13 +256,8 @@ template< class T_GATRAITS >
       virtual t_FitnessQuantity evaluate_with_gradient( t_Individual &_indiv,
                                                         t_QuantityGradients& _grad,
                                                         t_VA_Type *_i_grad );
-    protected:
-#ifdef _MPI
-      //! \brief adds history synchronization over all processors to
-      //! Base::evaluation(t_Population&)
-      //! \details Only defined with _MPI.
-      virtual void evaluate( t_Population &_pop );
-#endif
+      //! Sets the pointer to the history interface.
+      void set( t_History *_history ) { history = _history; }
   };
 
 } // namespace Evaluation

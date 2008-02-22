@@ -109,7 +109,7 @@ namespace GA
   template<class T_EVALUATOR>
   void Darwin<T_EVALUATOR> :: make_History(const TiXmlElement &_parent)
   {
-    if( not topology.history() ) return false;
+    if( not topology.history() ) return;
     // checks if there are more than one taboo list
     const TiXmlElement *child = _parent.FirstChildElement("History");
     if ( not child ) return;
@@ -150,7 +150,7 @@ namespace GA
     if( topology.history() and history )
     {
       evaluation = topology.evaluation< t_GATraits, Evaluation::WithHistory >();
-      evaluation->set( history );
+      static_cast< Evaluation::WithHistory<t_GATraits>* >(evaluation)->set( history );
     }
     if ( not evaluation )
       evaluation = topology.evaluation<t_GATraits, Evaluation::Base >();
@@ -785,7 +785,7 @@ namespace GA
     bool docontinue = true;
     eoSelectOne<t_Individual> *select;
 
-    breeder = topology.breeder( &evaluator ); 
+    breeder = topology.breeder<t_GATraits>( evaluator ); 
     if( not breeder ) return;
     select = new eoDetTournamentSelect<t_Individual>(tournament_size);
     breeder->set(replacement_rate);
@@ -953,7 +953,7 @@ namespace GA
         types::t_unsigned pSize = i_island->size();
         offspring.clear(); // new offspring
         
-        topology.syncronize_population( *i_island );
+        topology.syncpop( *i_island );
         __DODEBUGCODE( Print::out << "Scaling prior to breeding" << Print::endl; )
         if( scaling ) (*scaling)( *i_island );
 
@@ -1170,7 +1170,7 @@ syncfilenames:
       doc.Parse( input_str.c_str() );
     )
     parent = docHandle.FirstChild("Job").Element();
-    topology.Load( evaluator );
+    topology.Load( *parent, evaluator );
         
     // finds <GA> ... </GA> block 
     __MPICODE( 
@@ -1270,7 +1270,7 @@ out:
                << Print::Xmg::comment << "Offspring Replacement Rate: "
                                       << replacement_rate << Print::endl
                << Print::Xmg::comment << "Population Size: "
-                                      << pop_size << Print::endl;
+                                      << pop_size << Print::endl
                << Print::Xmg::comment << topology.print_seeds()
                << Print::Xmg::comment << (  populate_style == RANDOM_POPULATE ?
                                            "Random Starting Population":

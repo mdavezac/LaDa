@@ -2,11 +2,13 @@
 //  Version: $Id$
 //
 
+#include <print/stdout.h>
+
 #include "topology.h"
 
 namespace GA
 {
-  bool Topology :: LoadSeeds( TiXmlAttibute &_att )
+  bool Topology :: LoadSeeds( const TiXmlAttribute &_att )
   {
     std::string str = _att.Name();
     if ( str.find("seed") != 0 ) return false;
@@ -20,8 +22,8 @@ namespace GA
       __MPICODE( if( graph and n > graph->pools ) return false; )
       __SERIALCODE( if( n != 0 ) return false; )
     }
-    types::t_int d = att->IntValue();
-    if( d == 0 ) return false
+    types::t_int d = _att.IntValue();
+    if( d == 0 ) return false;
     if( n >= seeds.size() ) seeds.resize( n, 0 );
     seeds[n] = d;
   }
@@ -43,7 +45,7 @@ namespace GA
 #endif // _MPI
     return sstr.str(); 
   }
-  void Topology :: reseed() const
+  void Topology :: reseed()
   {
     std::ostringstream sstr;
 #ifndef _MPI
