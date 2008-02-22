@@ -216,7 +216,7 @@ namespace GA
     }
 
   template <class T_GATRAITS> typename GA::Store::Base<T_GATRAITS>*
-    Topology :: special_store ( typename T_GATRAITS :: t_Evaluator )
+    Topology :: special_store ( typename T_GATRAITS :: t_Evaluator& _eval )
     {
       __TRYMPICODE( if( graph and graph->type == BULL ) 
                       return new BullStore( graph, _eval );,

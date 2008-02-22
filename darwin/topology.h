@@ -104,7 +104,7 @@ namespace GA
 
       //! Creates special storage interfaces for very special people.
       template <class T_GATRAITS> typename GA::Store::Base<T_GATRAITS>*
-        special_store ( typename T_GATRAITS :: t_Evaluator );
+        special_store ( typename T_GATRAITS :: t_Evaluator& _eval );
       //! Creates special_taboo interfaces for very special people.
       template < class T_GATRAITS > Taboo_Base<typename T_GATRAITS::t_Individual>*
         special_taboos( eoState & _e );

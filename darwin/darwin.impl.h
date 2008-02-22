@@ -117,52 +117,85 @@ namespace GA
     history = topology.history<t_GATraits>( eostates );
   }
   
-  // creates history object if required
   template<class T_EVALUATOR>
   void Darwin<T_EVALUATOR> :: Load_Method(const TiXmlElement &_parent)
   {
-    if( topology.objective() ) 
-      objective = topology.objective<t_GATraits>( _parent );
-
-    if( topology.store() )
+    try
     {
-      store = topology.special_store<t_GATraits>( evaluator );
-      const TiXmlElement *store_xml = _parent.FirstChildElement("Store");
-      const TiXmlElement *child = _parent.FirstChildElement("Objective");
-
-      __DOASSERT( child, "No objective tags found on input.\n" )
-
-      if( not store )
+      if( topology.objective() ) 
+        objective = topology.objective<t_GATraits>( _parent );
+      
+      if( topology.history() and history )
       {
-        if ( store_xml )
-            store = new typename t_Store::FromObjective( evaluator, *store_xml );
-        else
-        {
-          store = new typename t_Store::FromObjective( evaluator,
-                                                       objective, *child );
-          if( store ) Print::xmg << Print::Xmg::comment << "Store: "
-                                 << store->what_is() << Print::endl;
-        }
+        evaluation = topology.evaluation< t_GATraits, Evaluation::WithHistory >();
+        static_cast< Evaluation::WithHistory<t_GATraits>* >(evaluation)->set( history );
       }
-      if ( not store ) store = new typename t_Store::Optima( evaluator, *child );
+      if ( not evaluation )
+        evaluation = topology.evaluation<t_GATraits, Evaluation::Base >();
+      Load_Storage( _parent );
+      evaluation->set( objective );
+      evaluation->set( store );
+      evaluation->set( &evaluator );
+      
+      if( not topology.scaling() ) return;
+      scaling = Scaling::new_from_xml<t_GATraits>( _parent, &evaluator );
     }
-
-    if( topology.history() and history )
+    catch( std::exception &_e )
     {
-      evaluation = topology.evaluation< t_GATraits, Evaluation::WithHistory >();
-      static_cast< Evaluation::WithHistory<t_GATraits>* >(evaluation)->set( history );
-    }
-    if ( not evaluation )
-      evaluation = topology.evaluation<t_GATraits, Evaluation::Base >();
-    __DOASSERT( not evaluation, "Memory Allocation Error.\n")
-    evaluation->set( objective );
-    evaluation->set( store );
-    evaluation->set( &evaluator );
-    
-    if( not topology.scaling() ) return;
-    scaling = Scaling::new_from_xml<t_GATraits>( _parent, &evaluator );
+      cleanup();
+      __THROW_ERROR( "Could not create method.\n" << _e.what() )
+    } 
   }
   
+  template<class T_EVALUATOR>
+  void Darwin<T_EVALUATOR> :: Load_Storage(const TiXmlElement &_parent)
+  {
+    try
+    {
+      if( not topology.store() ) return;
+      const TiXmlElement *child = NULL, *store_xml = NULL;
+      
+      store = topology.special_store<t_GATraits>( evaluator );
+      if( store ) goto endstorage;
+      
+      
+      store_xml = _parent.FirstChildElement("Store");
+      if ( store_xml )
+      {
+        store = new typename t_Store::FromObjective( evaluator, *store_xml );
+        goto endstorage;
+      }
+
+      // Note that one of these tags have already been found and should exist
+      child = _parent.FirstChildElement("Objective");
+      if ( not child ) child = _parent.FirstChildElement("Method");
+
+      store = new typename t_Store::FromObjective( evaluator, objective, *child );
+      if ( store ) goto endstorage;
+
+      store = new typename t_Store::Optima( evaluator, *child );
+
+endstorage:
+      Print::xmg << Print::Xmg::comment << "Store: "
+                 << store->what_is() << Print::endl;
+    }
+    catch( std::exception &_e )
+    {
+      cleanup();
+      __THROW_ERROR( "Could not create storage interface.\n" << _e.what() )
+    }
+  }
+  
+  template<class T_EVALUATOR>
+  void Darwin<T_EVALUATOR> :: cleanup()
+  {
+    if( objective ) delete objective;
+    if( store ) delete store;
+    if( evaluation ) delete evaluation;
+    if( scaling ) delete scaling;
+    eostates.~eoState();
+  }
+
   // create Taboos
   template<class T_EVALUATOR>
   void Darwin<T_EVALUATOR> :: Load_Taboos( const TiXmlElement &_node )
@@ -398,7 +431,7 @@ namespace GA
         eostates.storeFunctor( op );
         Apply2Best<t_GATraits> *printbest = new Apply2Best<t_GATraits>( *store );
         try{ printbest = new Apply2Best<t_GATraits>( *store ); }
-        catch(...) { __THROW_ERROR( "Memory allocation error.\n" ) }
+        catch(...) { cleanup(); __THROW_ERROR( "Memory allocation error.\n" ) }
         __DOASSERT(not printbest,  "Memory allocation error.\n");
         printbest->set_functor( op );
         continuator->add(*printbest);
@@ -627,10 +660,11 @@ namespace GA
             eostates.storeFunctor( static_cast< TabooOp<t_Individual> *>(this_op) );
             is_gen_op = true;
           }
-          __CATCHCODE( if( utterrandom) delete utterrandom,
+          __CATCHCODE( if( utterrandom) delete utterrandom; cleanup(),
                        "Error encountered while creating Taboo genetic operator.\n")
           catch(...) 
           {
+            cleanup();
             if ( utterrandom ) delete utterrandom; 
             __THROW_ERROR(    "Error encountered while creating"
                            << " Taboo genetic operator.\n" )
@@ -664,19 +698,21 @@ namespace GA
           __DOASSERT( not mingenop, "Memory Allocation Error.\n")
 
           if ( not mingenop->Load( *sibling ) ) 
-            { delete mingenop; delete func; this_op = NULL; }
+            { delete mingenop; this_op = NULL; }
           else
           {
             eostates.storeFunctor( mingenop );
             this_op = mingenop;
           }
         }
-        __CATCHCODE( delete func; this_op = NULL;,
-                     "Could  not load minimizer genetic operator.\n" )
+        catch( std::exception &_e )
+        {
+          cleanup(); 
+          __THROW_ERROR( "Could  not load minimizer genetic operator.\n" << _e.what() )
+        }
         catch(...)
         { 
-          if( func ) delete func;
-          if( mingenop ) delete mingenop;
+          cleanup();
           this_op = NULL;
           __THROW_ERROR( "Memory Allocation Error.\n" ) 
         }
@@ -789,6 +825,7 @@ namespace GA
     if( not breeder ) return;
     select = new eoDetTournamentSelect<t_Individual>(tournament_size);
     breeder->set(replacement_rate);
+    breeder->set(&continuator->get_generation_counter());
     breeder->set(select);
     breeder->set(breeder_ops);
 
@@ -1121,10 +1158,13 @@ syncfilenames:
 
     __ROOTCODE( 
       Print::out << "GA Input file is located at " << evaluator_filename << "\n"
-                 << "Functional Input file is located at " << evaluator_filename << "\n"
+                 << "Functional Input file is located at "
+                   << evaluator_filename << "\n"
                  << "Restart Input file is located at " << restart_filename << "\n"
-                 << "Xmgrace output file is located at " << Print::xmg.get_filename() << "\n"
-                 << "Will Save to file located at " << save_filename << "\n" << Print::endl
+                 << "Xmgrace output file is located at "
+                   << Print::xmg.get_filename() << "\n"
+                 << "Will Save to file located at "
+                   << save_filename << "\n" << Print::endl
                  << Print::flush;
 
       Print::xmg << Print::Xmg :: comment << "new GA run" << Print::endl
@@ -1140,8 +1180,10 @@ syncfilenames:
                                         << save_filename << Print::endl;
     )
     __NOTMPIROOT( 
-      Print::out << "Xmgrace output file is located at " << Print::xmg.get_filename() << "\n"
-                 << "Will Save to file located at " << save_filename << "\n" << Print::endl
+      Print::out << "Xmgrace output file is located at "
+                   << Print::xmg.get_filename() << "\n"
+                 << "Will Save to file located at "
+                   << save_filename << "\n" << Print::endl
                  << Print::flush;
       Print::xmg << Print::Xmg :: comment << "new GA run" << Print::endl;
     )
@@ -1166,18 +1208,13 @@ syncfilenames:
                    << filename << "\n" )
 
     // Loads topology and assigns comms to evaluators
-    __MPICODE( 
-      doc.Parse( input_str.c_str() );
-    )
+    __MPICODE(  doc.Parse( input_str.c_str() ); )
     parent = docHandle.FirstChild("Job").Element();
     topology.Load( *parent, evaluator );
         
     // finds <GA> ... </GA> block 
-    __MPICODE( 
-      doc.Parse( input_str.c_str() );
-      parent = docHandle.FirstChild("Job")
-                        .FirstChild("GA").Element();
-    )
+    parent = docHandle.FirstChild("Job")
+                      .FirstChild("GA").Element();
     __TRYASSERT( not Load_Parameters( *parent ), 
                  "Error while reading GA attributes\n" )
 

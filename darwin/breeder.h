@@ -108,11 +108,11 @@ namespace GA
   inline void Breeder<T_GATRAITS> :: operator()(const t_Population& _parents,
                                                 t_Population& _offspring)
   {
-    __ASSERT( select, "Breeder::select pointer was not set.\n" ) 
-    __ASSERT( op, "Breeder::op pointer was not set.\n" ) 
-    __ASSERT( age, "Breeder::age pointer was not set.\n" ) 
-    __ASSERT( howMany, "Breeder::howMany pointer was not set.\n" ) 
-    __ASSERT( howMany_save, "Breeder::howMany_save pointer was not set.\n" ) 
+    __ASSERT( not select, "Breeder::select pointer was not set.\n" ) 
+    __ASSERT( not op, "Breeder::op pointer was not set.\n" ) 
+    __ASSERT( not age, "Breeder::age pointer was not set.\n" ) 
+    __ASSERT( not howMany, "Breeder::howMany pointer was not set.\n" ) 
+    __ASSERT( not howMany_save, "Breeder::howMany_save pointer was not set.\n" ) 
     types::t_unsigned target = (*howMany)( (types::t_unsigned) _parents.size());
     _offspring.clear();
     eoSelectivePopulator<t_Individual> it(_parents, _offspring, *select);

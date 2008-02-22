@@ -15,9 +15,9 @@ namespace Evaluation
     typename Base<T_GATRAITS> :: t_FitnessQuantity
     Base<T_GATRAITS> :: evaluate( t_Individual &_indiv )
     {
-      __ASSERT( evaluator, "Pointer to Evaluator is not set.\n")
-      __ASSERT( objective, "Pointer to Evaluator is not set.\n")
-      __ASSERT( store, "Pointer to Evaluator is not set.\n")
+      __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
+      __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
+      __ASSERT( not store, "Pointer to Evaluator is not set.\n")
                
       // only computes "expensive" evaluator functionals once!
       if ( _indiv.invalid() ) 
@@ -45,9 +45,9 @@ namespace Evaluation
                                                 t_QuantityGradients& _grad,
                                                 t_VA_Type *_i_grad )
     {
-      __ASSERT( evaluator, "Pointer to Evaluator is not set.\n")
-      __ASSERT( objective, "Pointer to Evaluator is not set.\n")
-      __ASSERT( store, "Pointer to Evaluator is not set.\n")
+      __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
+      __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
+      __ASSERT( not store, "Pointer to Evaluator is not set.\n")
 
       // only computes "expensive" evaluator functionals once!
       nb_grad += _grad.size(); 
@@ -77,9 +77,9 @@ namespace Evaluation
   template< class T_GATRAITS >
     void Base<T_GATRAITS> :: evaluate( t_Population &_pop )
     {
-      __ASSERT( evaluator, "Pointer to Evaluator is not set.\n")
-      __ASSERT( objective, "Pointer to Evaluator is not set.\n")
-      __ASSERT( store, "Pointer to Evaluator is not set.\n")
+      __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
+      __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
+      __ASSERT( not store, "Pointer to Evaluator is not set.\n")
 
       typename t_Population :: iterator i_indiv = _pop.begin();
       typename t_Population :: iterator i_end = _pop.end();
@@ -95,9 +95,9 @@ namespace Evaluation
                                                 t_QuantityGradients& _grad,
                                                 t_VA_Type *_i_grad )
     {
-      __ASSERT( evaluator, "Pointer to Evaluator is not set.\n")
-      __ASSERT( objective, "Pointer to Evaluator is not set.\n")
-      __ASSERT( store, "Pointer to Evaluator is not set.\n")
+      __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
+      __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
+      __ASSERT( not store, "Pointer to Evaluator is not set.\n")
 
       // resets _i_grad
       types::t_unsigned N = _indiv.Object().Container().size();
@@ -115,9 +115,9 @@ namespace Evaluation
                                                  t_QuantityGradients& _grad,
                                                  types::t_unsigned _pos )
       {
-        __ASSERT( evaluator, "Pointer to Evaluator is not set.\n")
-        __ASSERT( objective, "Pointer to Evaluator is not set.\n")
-        __ASSERT( store, "Pointer to Evaluator is not set.\n")
+        __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
+        __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
+        __ASSERT( not store, "Pointer to Evaluator is not set.\n")
 
         ++nb_grad;
         evaluate( _indiv );
@@ -128,9 +128,9 @@ namespace Evaluation
   template< class T_GATRAITS >
     void Base<T_GATRAITS> :: operator()( t_Population &_pop, t_Population &_offspring ) 
     { 
-      __ASSERT( evaluator, "Pointer to Evaluator is not set.\n")
-      __ASSERT( objective, "Pointer to Evaluator is not set.\n")
-      __ASSERT( store, "Pointer to Evaluator is not set.\n")
+      __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
+      __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
+      __ASSERT( not store, "Pointer to Evaluator is not set.\n")
 
       evaluate(_offspring); 
 
@@ -145,9 +145,9 @@ namespace Evaluation
   template< class T_GATRAITS >
     inline void Base<T_GATRAITS> :: init( t_Individual &_indiv)
       {
-        __ASSERT( evaluator, "Pointer to Evaluator is not set.\n")
-        __ASSERT( objective, "Pointer to Evaluator is not set.\n")
-        __ASSERT( store, "Pointer to Evaluator is not set.\n")
+        __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
+        __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
+        __ASSERT( not store, "Pointer to Evaluator is not set.\n")
 
         objective->init( _indiv );
         evaluator->init( _indiv );
@@ -160,9 +160,9 @@ namespace Evaluation
     typename WithHistory<T_GATRAITS> :: t_FitnessQuantity
     WithHistory<T_GATRAITS> :: evaluate( t_Individual &_indiv )
     {
-      __ASSERT( evaluator, "Pointer to Evaluator is not set.\n")
-      __ASSERT( objective, "Pointer to Evaluator is not set.\n")
-      __ASSERT( store, "Pointer to Evaluator is not set.\n")
+      __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
+      __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
+      __ASSERT( not store, "Pointer to Evaluator is not set.\n")
 
       bool isnot_clone = (history != NULL); // isnot_clone is false if history does not exist
       bool do_evaluate = _indiv.invalid();
@@ -199,9 +199,9 @@ namespace Evaluation
                                                        t_QuantityGradients& _grad,
                                                        t_VA_Type *_i_grad )
     {
-      __ASSERT( evaluator, "Pointer to Evaluator is not set.\n")
-      __ASSERT( objective, "Pointer to Evaluator is not set.\n")
-      __ASSERT( store, "Pointer to Evaluator is not set.\n")
+      __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
+      __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
+      __ASSERT( not store, "Pointer to Evaluator is not set.\n")
 
       bool isnot_clone = (history != NULL); // isnot_clone is false if history does not exist
       bool do_evaluate = _indiv.invalid();

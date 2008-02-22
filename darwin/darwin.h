@@ -237,9 +237,11 @@ namespace GA
       void make_History( const TiXmlElement &_parent );
       //! Creates the mating operations from input
       bool Load_Mating( const TiXmlElement &_parent );
-      //! \brief Creates the objectives, the storage, the evaluation, all that says
+      //! \brief Creates the objectives, the evaluation, all that says
       //! what it is you are looking for. 
       void Load_Method( const TiXmlElement &_parent );
+      //! Creates the storage interface.
+      void Load_Storage( const TiXmlElement &_parent );
       //! \brief Creates taboo objects if required on input
       //! \note This %function makes a call to Evaluator::LoadTaboo()
       void Load_Taboos( const TiXmlElement &_node );
@@ -290,6 +292,8 @@ namespace GA
       //! Presubmitted individuals are not put inot the population.
       //! \note This %function makes a call to Evaluator::presubmit()
       void presubmit();
+      //! deletes all allocate memory
+      void cleanup();
 #ifdef _MPI
       /** \ingroup MPI
        * \brief Loads the input filenames and input files, and broadcasts them
