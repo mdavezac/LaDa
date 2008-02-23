@@ -16,10 +16,10 @@
 #include <mpi/mpi_object.h>
 
 #include "graph/topology.h"
-#include "objective.h"
-#include "taboos.h"
-#include "store.h"
-#include "breeder.h"
+#include "graph/objective.h"
+#include "graph/taboo.h"
+#include "graph/store.h"
+#include "graph/breeders.h"
 
 namespace GA
 {
@@ -31,7 +31,7 @@ namespace GA
     std::vector< types::t_int > seeds; 
    
     //! graph topology if created
-    __MPICODE( Graph::Topology *graph; )
+    __MPICODE( mpi::Graph::Topology *graph; )
 
     public:  
 #ifndef _MPI

@@ -49,14 +49,14 @@ namespace mpi
     protected:
       types::t_int this_rank; //!< rank of current process.
       types::t_int nproc; //!< size of mpi pool
-      MPI::Comm *comm;
+      MPI::Intracomm *comm;
 
     public:
        //! Constructor and Initializer
       Base () : this_rank(0), nproc(1), comm(&MPI::COMM_WORLD)  {}
        //! Constructor and Initializer
-      Base   ( MPI::Comm &_comm ) 
-           : this_rank( _comm.rank() ), nproc( _comm.size() ),
+      Base   ( MPI::Intracomm &_comm ) 
+           : this_rank( _comm.Get_rank() ), nproc( _comm.Get_size() ),
              comm(&_comm)  {}
       //! Copy Constructor
       Base   ( const Base &_c)  
@@ -110,8 +110,7 @@ namespace mpi
       //!             is input and output
       bool all_xor_all( bool &_bool) const;
       //! Sets the commiunication handle
-      void set_comm( Mpi::Comm *_comm )
-       { comm = _comm; this_rank = comm->rank(); nproc = comm->size(); }
+      void set( MPI::Intracomm *_comm );
   };
 
   //! \brief Handles creation and destruction of mpi aspect
@@ -131,32 +130,19 @@ namespace mpi
       //! \details Enables mpi and initializes Base::this_rank and Base::nproc
       //!    \param _argc see main(int, char**)
       //!    \param _argv see main(int, char**)
-      void operator()( int _argc, char **_argv )
-      { 
-        if ( MPI::Is_initialized() or finalized )
-          return;
-        MPI::Init( _argc, _argv );
-        this_rank = comm->Get_rank();
-        nproc = comm->Get_size();
-      }
+      void operator()( int _argc, char **_argv );
       //! \brief Destructor, disables mpi calls
       //! \details Disables mpi calls. After this function is called, no other mpi calls
       //! should be made.
-      virtual ~InitDestroy()
-      { 
-        if ( ( not MPI::Is_initialized() ) or finalized )
-          return;
-        MPI::Finalize();
-        finalized = true;
-      }
+      virtual ~InitDestroy();
   };
 
-  inline Base :: set_comm( Mpi::Comm *_comm )
+  inline void Base :: set( MPI::Intracomm *_comm )
   { 
     __ASSERT( _comm, "Communicator is null,\n" )
     comm = _comm;
-    this_rank = comm->rank(); 
-    nproc = comm->size(); 
+    this_rank = comm->Get_rank(); 
+    nproc = comm->Get_size(); 
   }
   inline types::t_unsigned Base::all_sum_all( types::t_unsigned &_in) const
   {
@@ -225,4 +211,5 @@ namespace mpi
 
 } // namespace mpi
 /*@}*/
+#endif
 #endif

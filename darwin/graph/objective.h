@@ -11,7 +11,7 @@
 #ifdef _MPI
 
 #include <list>
-#include <pair>
+#include <utility>
 
 #include <opt/types.h>
 #include <opt/debug.h>

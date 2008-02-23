@@ -1,8 +1,6 @@
 //
 //  Version: $Id$
 //
-#ifndef _CHECKPOINT_IMPL_H_
-#define _CHECKPOINT_IMPL_H_
 
 namespace GA
 {
@@ -315,7 +313,7 @@ namespace GA
 
         // checks if stop file exists
 #ifdef _MPI
-    if ( mpi::main.is_root_node() )
+    if ( ::mpi::main.is_root_node() )
     {
 #endif
       std::ifstream file( stop_filename.c_str(), std::ios_base::in );
@@ -329,7 +327,7 @@ namespace GA
       }
 #ifdef _MPI
     }
-    result = mpi::main.all_sum_all(result);
+    result = ::mpi::main.all_sum_all(result);
 #endif 
 
     // last call
@@ -375,7 +373,7 @@ namespace GA
   inline void Synchronize<T_TYPE> :: operator()()
   {
     t_Type diff = object - current_value;
-    mpi::main.all_sum_all(diff);
+    ::mpi::main.all_sum_all(diff);
     current_value += diff;
     object = current_value;
   }
@@ -383,4 +381,3 @@ namespace GA
 
 
 }
-#endif

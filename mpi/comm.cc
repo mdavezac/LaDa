@@ -10,7 +10,7 @@
 #include <atat/vectmac.h>
 #include <opt/debug.h>
 
-#include "comm.h"
+#include "mpi_object.h"
 
 #ifdef _MPI
 namespace mpi
@@ -23,7 +23,6 @@ namespace mpi
   const BroadCast::t_operation BroadCast::broadcast = BroadCast::BROADCAST;
   const BroadCast::t_operation BroadCast::fromhere  = BroadCast::FROMHERE;
 
-  
   bool BroadCast :: allocate_buffers( types::t_unsigned _root )
   {
     if ( stage != GETTING_SIZE ) return false;
@@ -177,11 +176,11 @@ gather_erase:
       return true;
 
     if ( int_buff and buffer_size[0] )
-      comm->Send( int_buff, buffer_size[0], INT, _target );
+      comm->Send( int_buff, buffer_size[0], INT, _target, TAG );
     if ( char_buff and buffer_size[1] )
-      comm->Send( char_buff, buffer_size[1], CHAR, _target );
+      comm->Send( char_buff, buffer_size[1], CHAR, _target, TAG );
     if ( real_buff and buffer_size[2] )
-      comm->Send( real_buff, buffer_size[2], REAL, _target );
+      comm->Send( real_buff, buffer_size[2], REAL, _target, TAG );
 
     stage = COPYING_FROM_HERE;
     cur_int_buff = int_buff;
@@ -203,11 +202,11 @@ gather_erase:
       return true;
 
     if ( int_buff and buffer_size[0] )
-      comm->Send( int_buff, buffer_size[0], INT, _source );
+      comm->Send( int_buff, buffer_size[0], INT, _source, TAG );
     if ( char_buff and buffer_size[1] )
-      comm->Send( char_buff, buffer_size[1], CHAR, _source );
+      comm->Send( char_buff, buffer_size[1], CHAR, _source, TAG );
     if ( real_buff and buffer_size[2] )
-      comm->Send( real_buff, buffer_size[2], REAL, _source );
+      comm->Send( real_buff, buffer_size[2], REAL, _source, TAG );
 
     stage = COPYING_FROM_HERE;
     cur_int_buff = int_buff;

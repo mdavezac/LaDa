@@ -32,6 +32,9 @@ namespace mpi
       //! \brief array to communicate size of all three buffers
       types::t_unsigned buffer_size[3]; 
 
+      //! MPI tag. Part of the mpi envelope.
+      static const types::t_int TAG = 10;
+
 
     public:
       //! Constructor, initializes all variables to NULL or zero
@@ -211,9 +214,9 @@ namespace mpi
 
 
       //! Point to Point transfer: Sends buffers to target. 
-      void send_ptp( types::t_unsigned _target );
+      bool send_ptp( types::t_unsigned _target );
       //! Point to Point transfer: Receive buffers to target. 
-      void receive_ptp( types::t_unsigned _source );
+      bool receive_ptp( types::t_unsigned _source );
 
     protected:
       //! \brief Don't touch unless you know what you are doing

@@ -23,6 +23,7 @@
 #include <opt/types.h>
 #include <print/xmg.h>
 #include <print/stdout.h>
+#include <mpi/mpi_object.h>
 
 #include "taboos.h"
 #include "operators.h"

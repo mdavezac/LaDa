@@ -1,9 +1,6 @@
 //
 //  Version: $Id$
 //
-#ifndef _MPI_COMM_H_
-#define _MPI_COMM_H_
-
 namespace mpi
 {
   inline CommBase::CommBase () : Base(), int_buff(NULL), end_int_buff(NULL), cur_int_buff(NULL),
@@ -202,4 +199,3 @@ namespace mpi
 
 }
 
-#endif

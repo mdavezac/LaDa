@@ -186,14 +186,6 @@ namespace GA
       using Taboo<t_Individual, t_Container> :: taboo_list;
       using Taboo<t_Individual, t_Container> :: owns_pointer;
       using Taboo<t_Individual, t_Container> :: problematic;
-#ifdef _MPI
-      //! \ingroup MPI 
-      //! \brief Container with newest additions of previously assessed individuals.
-      //! \details This container is used to synchronized History::taboo_list
-      //!          across all procs.
-      //! \see History :: synchronize()
-      t_Container new_taboos;
-#endif 
 
     public:
       //! Constructor
@@ -203,19 +195,6 @@ namespace GA
 
       //! If \a _indiv already exists, copy the quantities and fitness()
       virtual bool clone(t_Individual &_indiv);
-#ifdef _MPI
-      //! \ingroup MPI
-      //! \brief adds an individual to History::taboo_list and History::new_taboos.
-      //! \see %mpi version of Taboo::add()
-      void add( const t_Individual &_indiv, bool add_fast = true );
-      //! \ingroup MPI
-      //! \brief Synchronize History::new_taboo across all procs and adds them
-      //!        to History::taboo_list.
-      void synchronize();
-      //! \ingroup MPI
-      //! \brief broadcasts individuals in history list.
-      bool broadcast( mpi::BroadCast &_bc );
-#endif
   };
 
   //! Container class for multiple taboos.

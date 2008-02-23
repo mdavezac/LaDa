@@ -8,9 +8,6 @@
 #include <config.h>
 #endif
 
-#include <list>
-#include <pair>
-
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>

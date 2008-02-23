@@ -22,9 +22,10 @@
 #include <iostream>
 #include <math.h>
 
-#include "opt/types.h"
+#include <opt/types.h>
 
 #include "base.h"
+#include "comm.h"
 
 
 namespace mpi

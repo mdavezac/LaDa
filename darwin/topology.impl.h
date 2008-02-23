@@ -8,7 +8,7 @@ namespace GA
   bool Topology::Load( const TiXmlElement &_node, T_EVALUATOR &_eval )
   {
     __SERIALCODE( return true; )
-    __TRYMPICODE( graph = new Graph::Topology( _comm );
+    __TRYMPICODE( graph = new mpi::Graph::Topology( comm );
                   if( graph->Load( _node ) and graph->init() ) return true;
                   delete graph;
                   graph = NULL;,
@@ -27,52 +27,52 @@ namespace GA
       if( not graph ) return;
 
       //! Farmhands never need do anything, except wait for the end of the run.
-      if( graph->type == FARMHAND ) return;
+      if( graph->type == mpi::Graph::t_Type::FARMHAND ) return;
 
       //! Cows receive individuals to analyze on a per-operation basis.
       //! They do not require full containers.
-      if( graph->type == COW ) return;
+      if( graph->type == mpi::Graph::t_Type::COW ) return;
       //! Bulls receive the container as broadcasted by the farmer.
-      mpi::BroadCast bc( graph->farmer_comm );
-      if( graph->type == BULL ) 
-      {
-        bc << mpi::BroadCast::allocate << mpi::BroadCast::broadcast;
-        _cont.clear();
-        typename T_CONTAINER :: value_type value;
-        while( value->broadcast( bc ) ) _cont.push_back( value );
-        return;
-      }
-      //! Finally, the farmer gets to broadcast the goods
-      typename T_CONTAINER :: iterator i_var = _cont.begin();
-      typename T_CONTAINER :: iterator i_var_end = _cont.end();
-      for(; i_var != i_var_end; ++i_var )
-        i_var->broadcast( bc );
-      bc << mpi::BroadCast::allocate;
-      for( i_var = _cont.begin(); i_var != i_var_end; ++i_var )
-        i_var->broadcast( bc );
-      bc << mpi::BroadCast::broadcast << mpi::BroadCast::reset();
+//     ::mpi::BroadCast bc( graph->farmer_comm );
+//     if( graph->type == mpi::Graph::t_Type::BULL ) 
+//     {
+//       bc << ::mpi::BroadCast::allocate << ::mpi::BroadCast::broadcast;
+//       _cont.clear();
+//       typename T_CONTAINER :: value_type value;
+//       while( value->broadcast( bc ) ) _cont.push_back( value );
+//       return;
+//     }
+//     //! Finally, the farmer gets to broadcast the goods
+//     typename T_CONTAINER :: iterator i_var = _cont.begin();
+//     typename T_CONTAINER :: iterator i_var_end = _cont.end();
+//     for(; i_var != i_var_end; ++i_var )
+//       i_var->broadcast( bc );
+//     bc << ::mpi::BroadCast::allocate;
+//     for( i_var = _cont.begin(); i_var != i_var_end; ++i_var )
+//       i_var->broadcast( bc );
+//     bc << ::mpi::BroadCast::broadcast << ::mpi::BroadCast::reset();
 #endif
     }
 
   inline bool Topology :: history() const
   {
-    __MPICODE( if(      graph and graph->type == COW ) return false;
-               else if( graph and graph->type == FARMHAND ) return false;
+    __MPICODE( if(      graph and graph->type == mpi::Graph::t_Type::COW ) return false;
+               else if( graph and graph->type == mpi::Graph::t_Type::FARMHAND ) return false;
              )
     return true;
   }
   inline bool Topology :: mating() const
   {
-    __MPICODE( if(      graph and graph->type == FARMER ) return false;
-               else if( graph and graph->type == COW ) return false;
-               else if( graph and graph->type == FARMHAND ) return false;
+    __MPICODE( if(      graph and graph->type == mpi::Graph::t_Type::FARMER ) return false;
+               else if( graph and graph->type == mpi::Graph::t_Type::COW ) return false;
+               else if( graph and graph->type == mpi::Graph::t_Type::FARMHAND ) return false;
              )
     return true;
   }
   inline bool Topology :: objective () const
   {
-    __MPICODE( if( graph and graph->type == FARMHAND ) return false;
-               if( graph and graph->type == COW ) return false;
+    __MPICODE( if( graph and graph->type == mpi::Graph::t_Type::FARMHAND ) return false;
+               if( graph and graph->type == mpi::Graph::t_Type::COW ) return false;
              )
     return true;
   }
@@ -80,7 +80,7 @@ namespace GA
   {
     __SERIALCODE( return true; )
     __MPICODE( if( not graph ) return true;
-               else if( graph->type == FARMER ) return true;
+               else if( graph->type == mpi::Graph::t_Type::FARMER ) return true;
                return false;
              )
   }
@@ -88,23 +88,23 @@ namespace GA
   {
     __SERIALCODE( return true; )
     __MPICODE( if( not graph ) return true;
-               else if( graph->type == FARMER ) return true;
+               else if( graph->type == mpi::Graph::t_Type::FARMER ) return true;
                return false;
              )
   }
   inline bool Topology :: restart() const
   {
     __SERIALCODE( return true; )
-    __MPICODE( if( (not graph) and comm->rank() == 0 ) return true;
-               else if( graph->type == FARMER ) return true;
+    __MPICODE( if( (not graph) and comm->Get_rank() == 0 ) return true;
+               else if( graph->type == mpi::Graph::t_Type::FARMER ) return true;
                return false;
              )
   }
   inline bool Topology :: save() const
   {
     __SERIALCODE( return true; )
-    __MPICODE( if( (not graph) and comm->rank() == 0 ) return true;
-               else if( graph->type == FARMER ) return true;
+    __MPICODE( if( (not graph) and comm->Get_rank() == 0 ) return true;
+               else if( graph->type == mpi::Graph::t_Type::FARMER ) return true;
                return false;
              )
   }
@@ -112,22 +112,22 @@ namespace GA
   {
     __SERIALCODE( return true; )
     __MPICODE( if( not graph ) return true;
-               else if( graph->type == FARMER ) return true;
+               else if( graph->type == mpi::Graph::t_Type::FARMER ) return true;
                return false;
              )
   }
   inline bool Topology :: store () const
   {
-    __MPICODE( if( graph and graph->type == FARMHAND ) return false;
-               if( graph and graph->type == COW ) return false;
+    __MPICODE( if( graph and graph->type == mpi::Graph::t_Type::FARMHAND ) return false;
+               if( graph and graph->type == mpi::Graph::t_Type::COW ) return false;
              )
     return true;
   }
   inline bool Topology :: taboos() const
   {
     __MPICODE( if( (not graph) ) return true;
-               else if( graph->type == COW ) return false;
-               else if( graph->type == FARMHAND` ) return false;
+               else if( graph->type == mpi::Graph::t_Type::COW ) return false;
+               else if( graph->type == mpi::Graph::t_Type::FARMHAND ) return false;
              )
     return true;
   }
@@ -141,11 +141,11 @@ namespace GA
                  
       __TRYCODE( __SERIALCODE( return new GA::Breeder<t_GATraits>; )
                  __MPICODE( if( not graph ) return new GA::Breeder<t_GATraits>();
-                            if( graph->type == FARMER )
-                              return new Breeders::Farm<t_GATraits>(graph);
-                            if( graph->type == BULL )
-                              return new Breeders::BULL<t_GATraits>(graph)
-                            Breeders::Cow<t_GATraits > *breeder 
+                            if( graph->type == mpi::Graph::t_Type::FARMER )
+                              return new Breeder::Farm<t_GATraits>(graph);
+                            if( graph->type == mpi::Graph::t_Type::BULL )
+                              return new Breeder::Bull<t_GATraits>(graph)
+                            Breeder::Cow<t_GATraits > *breeder 
                               = Breeder::Cow<t_GATraits >(graph);
                             breeder->set( _eval );
                             return breeder;
@@ -165,11 +165,11 @@ namespace GA
         return new t_Base();
 #else
          if( not graph ) return new t_Base();
-         if( graph->type == FARMER )
+         if( graph->type == mpi::Graph::t_Type::FARMER )
            return new Evaluation::Farm<t_GATraits, T_BASE>(graph);
-         if( graph->type == BULL )
+         if( graph->type == mpi::Graph::t_Type::BULL )
            return new Evaluation::Bull<t_GATraits, T_BASE>(graph);
-         if( graph->type == FARMHAND )
+         if( graph->type == mpi::Graph::t_Type::FARMHAND )
            return new Evaluation::FarmHand<t_GATraits, T_BASE>(graph);
          Evaluation::Cow<t_GATraits, T_BASE> *evaluation; 
          evaluation = Evaluation::Cow<t_GATraits, T_BASE>(graph);
@@ -189,9 +189,9 @@ namespace GA
         t_History *result = NULL;
         __SERIALCODE( result = new t_History; )
         __TRYMPICODE( if( (not graph) ) result = new History< t_Individual >; 
-                      else if( graph->type == FARMER ) 
+                      else if( graph->type == mpi::Graph::t_Type::FARMER ) 
                         result = new t_History;
-                      else if( graph->type == BULL )
+                      else if( graph->type == mpi::Graph::t_Type::BULL )
                         result = new mpi::Graph::BullHistory< t_GATraits >;,
                       "Error while creating history.\n" 
                     )
@@ -203,9 +203,9 @@ namespace GA
     {
       typedef typename GA::Objective::Types<T_GATRAITS> t_ObjectiveType;
       __TRYCODE( 
-        __MPICODE( if (      graph and graph->type == COW ) return NULL;
-                   else if ( graph and graph->type == FARMHAND ) return NULL;
-                   else if ( graph and graph->type == BULL )
+        __MPICODE( if (      graph and graph->type == mpi::Graph::t_Type::COW ) return NULL;
+                   else if ( graph and graph->type == mpi::Graph::t_Type::FARMHAND ) return NULL;
+                   else if ( graph and graph->type == mpi::Graph::t_Type::BULL )
                        return new BullObjective( graph ); 
                  )
         const TiXmlElement *child = _node.FirstChildElement("Objective");
@@ -218,7 +218,7 @@ namespace GA
   template <class T_GATRAITS> typename GA::Store::Base<T_GATRAITS>*
     Topology :: special_store ( typename T_GATRAITS :: t_Evaluator& _eval )
     {
-      __TRYMPICODE( if( graph and graph->type == BULL ) 
+      __TRYMPICODE( if( graph and graph->type == mpi::Graph::t_Type::BULL ) 
                       return new BullStore( graph, _eval );,
                     "Error while creating BullStore.\n"
                   )
@@ -232,9 +232,9 @@ namespace GA
         typedef typename t_GATraits :: t_Individual t_Individual;
         __SERIALCODE( return NULL; )
         __TRYMPICODE( if( (not graph) ) return NULL;
-                      else if( graph->type == FARMER ) return NULL;
-                      else if( graph->type == COW ) return NULL;
-                      else if( graph->type == FARMHAND ) return NULL;
+                      else if( graph->type == mpi::Graph::t_Type::FARMER ) return NULL;
+                      else if( graph->type == mpi::Graph::t_Type::COW ) return NULL;
+                      else if( graph->type == mpi::Graph::t_Type::FARMHAND ) return NULL;
                       Taboo_Base<t_Individual> taboo 
                         = new mpi::Graph::BullTaboo< t_GATraits >;
                       _e.storeFunctor(taboo);,

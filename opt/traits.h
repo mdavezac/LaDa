@@ -1,8 +1,8 @@
 //
 //  Version: $Id$
 //
-#ifndef _TRAITS_H_
-#define _TRAITS_H_
+#ifndef _OPT_TRAITS_H_
+#define _OPT_TRAITS_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -431,6 +431,7 @@ namespace Traits
 #endif
     };
 
+
   //! \brief General traits for any %function
   //! \details Defines the type of arguments and the type of the return
   template< class T_ARG, class T_RET = T_ARG >
@@ -444,6 +445,7 @@ namespace Traits
     typedef Quantity< typename opt::MakeVector< t_Return,
                           Dim<T_ARG>::is_vector > :: t_Vector > t_GradientTraits;
   };
+
 
 }
 

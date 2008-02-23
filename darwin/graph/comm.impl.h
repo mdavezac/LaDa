@@ -9,34 +9,36 @@ namespace GA
     {
       namespace Comm
       {
-
-        template< class T_QUANTITY >
-          void send_quantities( types::t_int _bull, T_QUANTITY &_q,
-                                MPI::Comm *_comm )
-          {
-            if( comm->rank() < 2 ) return;
-            typedef Traits::Quantity< T_QUANTITY > t_QuantityTraits;
-            mpi::BroadCast bc( _comm );
-            t_QuantityTraits :: broadcast(_q, bc );
-            bc.allocate_buffers();
-            t_QuantityTraits :: broadcast(_q, bc );
-            bc.send_ptp( _bull );
-            t_QuantityTraits :: broadcast(_q, bc );
-          }
-
-        template< class T_QUANTITY >  
-          void receive_quantities( types::t_int _bull, T_QUANTITY &_q,
-                                   MPI::Comm *_comm )
-          {
-            if( comm->rank() < 2 ) return;
-            typedef Traits::Quantity< T_QUANTITY > t_QuantityTraits;
-            mpi::BroadCast bc( _comm );
-            t_QuantityTraits :: broadcast(_q, bc );
-            bc.allocate_buffers();
-            t_QuantityTraits :: broadcast(_q, bc );
-            bc.receive_ptp( _bull );
-            t_QuantityTraits :: broadcast(_q, bc );
-          }
+#ifdef _MPI
+    //! Sends a template object to bull \a _bull.
+    template< class T_QUANTITY >
+    void send_quantity( types::t_unsigned _bull,
+                        T_QUANTITY &_q, MPI::Comm *_comm)
+    {
+      if( comm->rank() < 2 ) return;
+      typedef Traits::Quantity< T_QUANTITY > t_QuantityTraits;
+      mpi::BroadCast bc( _comm );
+      t_QuantityTraits :: broadcast(_q, bc );
+      bc.allocate_buffers();
+      t_QuantityTraits :: broadcast(_q, bc );
+      bc.send_ptp( _bull );
+      t_QuantityTraits :: broadcast(_q, bc );
+    }
+    //! Receives a template object from bull \a _bull.
+    template< class T_QUANTITY >
+    void receive_quantity( types::t_unsigned _bull,
+                           T_QUANTITY &_q, MPI::Comm *_comm);
+    {
+      if( comm->rank() < 2 ) return;
+      typedef Quantity< T_QUANTITY > t_QuantityTraits;
+      mpi::BroadCast bc( _comm );
+      t_QuantityTraits :: broadcast(_q, bc );
+      bc.allocate_buffers();
+      t_QuantityTraits :: broadcast(_q, bc );
+      bc.receive_ptp( _bull );
+      t_QuantityTraits :: broadcast(_q, bc );
+    }
+#endif
 
         template< class T_ITERATOR >
           void send_range( types::t_int _bull, T_ITERATOR _first,
@@ -153,8 +155,6 @@ namespace GA
                                       objective(NULL), store(NULL),
                                       history(NULL)
         {
-          __ASSERT( is_root_node() ); 
-
           // Allocates Memory
           nbulls = :: mpi::Base::comm->size() -1;
           in = new types::t_unsigned[ nbulls ];
@@ -213,16 +213,16 @@ namespace GA
             {
               __ASSERT( *i_comp > 0 and *i_comp < nbulls, 
                         "Process index out of range: " << *i_comp << ".\n" );
-              switch( in[*i_comp] )
+              switch( (t_Requests::Requests) in[*i_comp] )
               {
-                case WAITING: derived->onWait( *i_comp ); break;
-                case OBJECTIVE: derived->onObjective( *i_comp ); break;
-                case OBJECTIVE_GRADIENT: derived->onGradient( *i_comp ); break;
-                case OBJECTIVE_WITH_GRADIENT: derived->onWithGradient( *i_comp ); break;
-                case OBJECTIVE_ONE_GRADIENT: derived->onOneGradient( *i_comp ); break;
-                case TABOO: derived->onTaboo( *i_comp ); break;
-                case HISTORYCHECK: derived->onHistory( *i_comp ); break;
-                case STIRE: derived->onStore( *i_comp ); break;
+                case t_Requests::WAITING: derived->onWait( *i_comp ); break;
+                case t_Requests::OBJECTIVE: derived->onObjective( *i_comp ); break;
+                case t_Requests::OBJECTIVE_GRADIENT: derived->onGradient( *i_comp ); break;
+                case t_Requests::OBJECTIVE_WITH_GRADIENT: derived->onWithGradient( *i_comp ); break;
+                case t_Requests::OBJECTIVE_ONE_GRADIENT: derived->onOneGradient( *i_comp ); break;
+                case t_Requests::TABOO: derived->onTaboo( *i_comp ); break;
+                case t_Requests::HISTORYCHECK: derived->onHistory( *i_comp ); break;
+                case t_Requests::STORE: derived->onStore( *i_comp ); break;
                 default: __THROW_ERROR( "Unknown command" << in[*i_comp] << "." )
               }
             }
@@ -257,14 +257,22 @@ namespace GA
                         "Process index out of range: " << *i_comp << ".\n" );
               switch( in[*i_comp] )
               {
-                case WAITING: derived->onWait( *i_comp ); break;
-                case OBJECTIVE: derived->onObjective( *i_comp ); break;
-                case OBJECTIVE_GRADIENT: derived->onGradient( *i_comp ); break;
-                case OBJECTIVE_WITH_GRADIENT: derived->onWithGradient( *i_comp ); break;
-                case OBJECTIVE_ONE_GRADIENT: derived->onOneGradient( *i_comp ); break;
-                case TABOO: derived->onTaboo( *i_comp ); break;
-                case HISTORYCHECK: derived->onHistory( *i_comp ); break;
-                case STORE: derived->onStore( *i_comp ); break;
+                case t_Requests::WAITING:
+                  derived->onWait( *i_comp ); break;
+                case t_Requests::OBJECTIVE:
+                  derived->onObjective( *i_comp ); break;
+                case t_Requests::OBJECTIVE_GRADIENT:
+                  derived->onGradient( *i_comp ); break;
+                case t_Requests::OBJECTIVE_WITH_GRADIENT:
+                  derived->onWithGradient( *i_comp ); break;
+                case t_Requests::OBJECTIVE_ONE_GRADIENT:
+                  derived->onOneGradient( *i_comp ); break;
+                case t_Requests::TABOO:
+                  derived->onTaboo( *i_comp ); break;
+                case t_Requests::HISTORYCHECK:
+                  derived->onHistory( *i_comp ); break;
+                case t_Requests::STORE:
+                  derived->onStore( *i_comp ); break;
                 default: __THROW_ERROR( "Unknown command" << in[*i_comp] << "." )
               }
             }
@@ -475,4 +483,3 @@ namespace GA
 } // namespace GA
 
 
-#endif

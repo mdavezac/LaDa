@@ -11,18 +11,17 @@ namespace GA
     {
 
       template< class T_CONDITION >
-      void Topology<T_CONDITION>::init( T_CONDITION &_condition )
+      bool Topology :: init( T_CONDITION _condition )
       {
-        //! One single pool
-        if( pools <= 1 ) init_collectivists( _condition );
+        if( pools < 2 ) return false;
         types::t_int per_pool = ( size() - 1) / pools;
         types::t_int leftovers = ( size() - 1) % pools;
-
+ 
         while ( per_pool and ( not _condition( per_pool) ) ) --per_pool;
         leftovers += size() - per_pool * pools;
-
+ 
         typedef std::pair<types::t_int, types::t_int > t_pairs;
-        std::vector< types::t_pairs > pairs(1, t_pairs(pools, per_pool) );
+        std::vector< t_pairs > pairs(1, t_pairs(pools, per_pool) );
         std::vector< types::t_int > herds( pools, per_pool);
         while ( leftovers )
         {
@@ -34,9 +33,8 @@ namespace GA
           { 
             std::cerr << "Herds cannot be balanced.\n"
                       << "reducing the number of herds.\n";
-            --pool;
-            init( _condition );
-            return;
+            --pools;
+            return init( _condition );
           }
           if( extra == extramax ) break;
           leftovers %= (extra - per_pool);
@@ -52,7 +50,7 @@ namespace GA
                    << "  _ " << pools << " Herd" << ( pools > 1 ? "s.\n": ".\n")
                    << "The Herd" << (pools > 1 ? "s are ": " is " ) 
                    << "organized as follows.\n";
-
+ 
         std::vector< t_pairs > :: const_iterator i_pair = pairs.begin();
         std::vector< t_pairs > :: const_iterator i_pair_end = pairs.end();
         for(; i_pair != i_pair_end; ++i_pair )
@@ -60,7 +58,7 @@ namespace GA
                      << ( i_pair->first > 1 ? "s ": " ")
                      << "consisting of: \n"
                      <<"    . 1 bull\n    . " << i_pair->second-1 
-                     <<" cow" << (i_her->second > 2 ? "s.\n": ".\n");
+                     <<" cow" << (i_pair->second > 2 ? "s.\n": ".\n");
         
         // Now creates the graph.
         // First the numbers of nodes (eg Farmer + Bulls + Cows )
@@ -78,8 +76,8 @@ namespace GA
         // cows. The complete herd forms a ring
         // EXCEPTION CASES: 1. There are no cows in the herd.
         //                  2. There is only one cow in the herd.
-        std::vector<types::t_unsigned> :: const_iterator i_herd = herd.begin();
-        std::vector<types::t_unsigned> :: const_iterator i_herd_end = herd.end();
+        std::vector<types::t_unsigned> :: const_iterator i_herd = herds.begin();
+        std::vector<types::t_unsigned> :: const_iterator i_herd_end = herds.end();
         for(; i_herd != i_herd_end; ++i_herd, ++i_index )
           switch( *i_herd )
           {
@@ -91,7 +89,7 @@ namespace GA
         // EXCEPTION CASES: 1. There are no cows in the herd.
         //                  2. There is only one cow in the herd.
         // The first exception case does not enter the second loop.
-        i_herd = herd.begin();
+        i_herd = herds.begin();
         for(; i_herd != i_herd_end; ++i_herd )
           for( types::t_int i = *i_herd - 1; i > 0; --i, ++i_index )
             *i_index = *(i_index-1) + ( *i_herd == 2 ? 1: 2); 
@@ -115,7 +113,7 @@ namespace GA
         // First cow is linked to the bull and the second cow.
         // Last cow is linkerd to the previous cow and the bull.
         // All other cows are linked to the next and previous cow.
-        i_herd = herd.begin();
+        i_herd = herds.begin();
         types::t_int current_cow = pools + 1;
         for(types::t_int i = 1; i_herd != i_herd_end; ++i_herd, ++i )
         {
@@ -123,7 +121,7 @@ namespace GA
           *i_edge = i; ++i_edge; 
           if( *i_herd == 2 ) continue;
           *i_edge = current_cow + 1; ++i_edge; ++current_cow;
-          for( types::t_int i = *i_herd - 3; i > 0; --i, ++next_cow)
+          for( types::t_int j = *i_herd - 3; j > 0; --j, ++current_cow)
           {
             *i_edge = current_cow - 1; ++i_edge;
             *i_edge = current_cow + 1; ++i_edge;
@@ -131,62 +129,33 @@ namespace GA
           *i_edge = current_cow - 1; ++i_edge; ++current_cow;
           *i_edge = i; ++i_edge; 
         }
-
-
+ 
+ 
         // At this point, we can construct the graph
         graph_comm =  comm->Create_graph( nnodes, indices, edges, true);
-        if( graph_comm = MPI::COMM_NULL ) type = FARMHAND;
-
+        if( graph_comm = MPI::COMM_NULL ) type = t_Type::t_Type::FARMHAND;
+ 
         // Now we can create the herds.
         // First we create the communicator between Farmer and Bulls.
         types::t_int color = MPI::UNDEFINED;
-        if( rank() == 0 ) type = FARMER;
+        if( rank() == 0 ) type = t_Type::FARMER;
         if( rank() <= pools ) color = 0;
         farmer_comm = &comm->Split( color, rank() );
         // Now we create the communicator for the herd.
         color = MPI::UNDEFINED;
-        if( rank() <= pools and rank() > 0 ) { color = rank(); type = BULLS; }
+        if( rank() <= pools and rank() > 0 ) { color = rank(); type = t_Type::BULL; }
         first_cow_in_herd = pools + 1;
         for(types::t_int i = 1; i_herd != i_herd_end; ++i_herd, ++i )
           if(     rank() >= first_cow_in_herd
               and rank() < first_cow_in_herd - (*i_herd) - 1 )
           {
             color = i;
-            type = COW;
+            type = t_Type::COW;
           }
         herd_comm = &comm->Split( color, rank() );
-
+ 
+        return true;
       }    
-
-
-      template<class T_GATRAITS>
-      inline eoBreed<T_GATRAITS>* Topology :: create_breeder( eoState &_state )
-      {
-        Breeder * result = NULL;
-
-        try
-        {
-          switch( topo->type )
-          {
-            case mpi::Topology::COLLECTIVISTS: 
-               result = new Breeder::Collectivist( this ); break;
-            case mpi::Topology::COW: 
-               result = new Breeder::Cow( this ); break;
-            case mpi::Topology::BULL: 
-               result = new Breeder::Bull( this ); break;
-            case mpi::Topology::FARMHANDS: return; break;
-               result = new Breeder::Farmhand( this ); break;
-          }
-
-          _state.saveFunctor( result );
-          return result;
-        }
-        catch ( std::exception &_e ) 
-        {
-          if( result ) delete result;
-          __THROW_ERROR( "Error encountered while creating Breeder.\n" << _e.what() )
-        }
-      } 
 
     } // namspace Graph
       

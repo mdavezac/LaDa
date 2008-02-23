@@ -16,6 +16,10 @@
 
 namespace GA
 {
+  //! \cond
+  class Topology; // declared in darwin/topology.h
+  //! \endcond 
+  
   namespace mpi 
   {
     //! \brief Graph topology.
@@ -48,6 +52,17 @@ namespace GA
     //!          Graph::Topology::init()) \e sine \e qua \e non.
     namespace Graph
     {
+      struct t_Type
+      {
+        enum Process 
+        {
+          FARMER, //!< The head boss.
+          FARMHAND, //!< Will do nothing.
+          BULL,   //!< Takes orders from the farmer.
+          COW     //!< Takes orders from one specific bull
+        };
+      };
+
       //! One possible condition for Topology::init()
       struct AlwaysTrue
       {
@@ -58,44 +73,38 @@ namespace GA
       //! Creates and contains the graph topology itself.
       class Topology : private ::mpi::Base
       {
+        friend class GA::Topology;
         protected: 
           //! If set, group of bull+cows of this process.
-          MPI::IntraComm *herd_comm;
+          MPI::Intracomm *herd_comm;
           //! If set, group of farmer+bulls of this process.
-          MPI::IntraComm *farmer_comm;
+          MPI::Intracomm *farmer_comm;
           //! Graph communicator created by a call to MPI graph routine.
-          MPI::GraphComm  *graph_comm;
+          MPI::Graphcomm  *graph_comm;
           //! The number of pools (e.g. herds) in the graph topology.
           types::t_unsigned pools;
           //! Type of the process
-          enum t_Type 
-          {
-            FARMER, //!< The head boss.
-            FARMHANDS, //!< Will do nothing.
-            BULL,   //!< Takes orders from the farmer.
-            COW     //!< Takes orders from one specific bull
-          }
-          t_Type type;
+          t_Type::Process type;
       
         public:  
           //! \brief Constructor and Initializer.
           //! \details The MPI::WORLD_COMM is duplicated and the duplicated is
           //!          pointed to by ::mpi::Base::comm.
           Topology() : ::mpi::Base::Base(), herd_comm(NULL), farmer_comm(NULL),
-                       graph_comm(NULL), pools(0), type(FARMHANDS)
-             { comm = &_comm->Clone(); }
+                       graph_comm(NULL), pools(0), type(t_Type::FARMHAND)
+             { comm = &MPI::COMM_WORLD.Clone(); }
           //! Copy Constructor.
-          Topology   ( MPI::Comm &_comm )
+          Topology   ( MPI::Intracomm &_comm )
                    : ::mpi::Base::Base(_comm), herd_comm(NULL), farmer_comm(NULL),
-                     graph_comm(NULL), pools(0), type(FARMHANDS)
-            { comm = &_comm->Clone(); }
+                     graph_comm(NULL), pools(0), type(t_Type::FARMHAND)
+            { comm = &_comm.Clone(); }
           //! Destructor
           ~Topology();
       
           //! \brief Creates the GA mpi topology and groups.
-          template< class T_CONDITION > void init( T_CONDITION &_condition );
+          template< class T_CONDITION > bool init( T_CONDITION _condition );
           //! Creates the mpi topology with the condition AlwaysTrue
-          void init () { init( AlwaysTrue() ); }
+          bool init () { return init( AlwaysTrue() ); }
 
       
           //! \brief sends random seeds to processes

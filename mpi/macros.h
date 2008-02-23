@@ -29,15 +29,15 @@
           sstr << __SPOT_ERROR << error << _e.what();\
           throw std::runtime_error( sstr.str() );\
         }
-#define __MPIROOT(code) if( mpi::main.is_root_node() ) { code }
+#define __MPIROOT(code) if( ::mpi::main.is_root_node() ) { code }
 #define __ROOTCODE(code) __MPIROOT(code)
-#define __NOTMPIROOT(code) if( not mpi::main.is_root_node() ) { code }
+#define __NOTMPIROOT(code) if( not ::mpi::main.is_root_node() ) { code }
 #define __SERIALCODE(code) 
 #define __MPISEQUENTIAL(code) \
-    for( types::t_int i = 0; i < mpi::main.size(); ++i )\
+    for( types::t_int i = 0; i < ::mpi::main.size(); ++i )\
     {\
-      if ( mpi::main.rank() == i ) { code }\
-      mpi::main.barrier();\
+      if ( ::mpi::main.rank() == i ) { code }\
+      ::mpi::main.barrier();\
     }
 #define __MPISERIALCODE(coda, codb) coda
 #endif

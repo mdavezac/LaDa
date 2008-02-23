@@ -114,64 +114,6 @@ namespace GA
       return true;
     }
 
-#ifdef _MPI
-  template<class T_INDIVIDUAL, class T_CONTAINER >
-    void History<T_INDIVIDUAL, T_CONTAINER> ::
-      add( const t_Individual &_indiv, bool add_fast ) 
-      {
-        if ( not owns_pointer ) return;
-        if ( add_fast )
-        {
-          taboo_list->push_back( _indiv );
-          new_taboos.push_back( _indiv );
-          return;
-        }
-        if ( not operator()(_indiv) )
-        {
-          taboo_list->push_back( _indiv );
-          new_taboos.push_back( _indiv );
-          problematic = true;
-        }
-      }
-  template<class T_INDIVIDUAL, class T_CONTAINER >
-    void History<T_INDIVIDUAL, T_CONTAINER> :: synchronize()
-    {
-      mpi::AllGather allgather(mpi::main);
-      typename t_Container :: iterator i_indiv = new_taboos.begin();
-      typename t_Container :: iterator i_end = new_taboos.end();
-      for(; i_indiv != i_end; ++i_indiv)
-        i_indiv->broadcast(allgather);
-      allgather.allocate_buffers();
-      i_indiv = new_taboos.begin();
-      for(; i_indiv != i_end; ++i_indiv)
-        i_indiv->broadcast(allgather);
-      allgather();
-      new_taboos.clear();
-      t_Individual indiv;
-      while( indiv.broadcast(allgather) )
-        { Taboo<t_Individual, t_Container>::add( indiv ); }
-      new_taboos.clear();
-    }
-
-  template<class T_INDIVIDUAL, class T_CONTAINER >
-    bool History<T_INDIVIDUAL, T_CONTAINER> :: broadcast( mpi::BroadCast &_bc )
-    {
-      types::t_int n = taboo_list->size();
-      if( not _bc.serialize(n) ) return false;
-      if( _bc.get_stage() == mpi::BroadCast::COPYING_FROM_HERE )
-        taboo_list->resize(n);
-      typename t_Container :: iterator i_indiv = taboo_list->begin();
-      typename t_Container :: iterator i_indiv_end = taboo_list->end();
-      for(; i_indiv != i_indiv_end; ++i_indiv )
-        if ( not i_indiv->broadcast(_bc) ) return false;
-      return true;
-    }
-#endif
-
-
-
-
-
   template<class T_INDIVIDUAL>
     inline void Taboos<T_INDIVIDUAL> :: add( Taboo_Base<t_Individual> * _taboo )
     {

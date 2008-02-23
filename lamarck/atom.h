@@ -151,7 +151,7 @@ namespace Ising_CE {
              << std::setw(8) << pos[1] << "  " 
              << std::setw(8) << pos[2];
       stream << "  type: " << std::setw(16)
-             << Traits::Quantity< t_Type > :: print(type);
+             << Traits::Quantity< T_TYPE > :: print(type);
       if ( site != -1 )
         stream << "  site: " << site;
       stream << "  freeze: " << freeze;

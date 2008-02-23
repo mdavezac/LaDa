@@ -71,17 +71,14 @@ namespace Ising_CE {
       else i_atom->print_out(stream); 
       stream << std::endl;
     }
-    if ( not k_vecs.size() ) 
-      return;
+    if ( not k_vecs.size() ) return;
     stream << " Structure K vectors " << std::endl;
-    std::vector<CAtom> :: const_iterator i_kvec = k_vecs.begin();
-    std::vector<CAtom> :: const_iterator i_kvec_end = k_vecs.end();
+    t_kAtoms :: const_iterator i_kvec = k_vecs.begin();
+    t_kAtoms :: const_iterator i_kvec_end = k_vecs.end();
     for( ; i_kvec != i_kvec_end; ++i_kvec )
-    {
-      stream << "  Kvec: " << std::fixed << std::setprecision(5);
-      i_kvec->print_out(stream);
-      stream << std::endl;
-    }
+      stream << "  Kvec: " 
+             << std::fixed << std::setprecision(5)
+             << *i_kvec << "\n";
   }
 
 
