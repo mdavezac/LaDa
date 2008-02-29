@@ -29,7 +29,7 @@ namespace GA
   //!          in argument should not be allowed to proceed in the population.
   //!          This class merely declares the relevant virtual interface.
   template<class T_INDIVIDUAL>
-  class Taboo_Base : public const_eoUF<const T_INDIVIDUAL&, bool>
+  class Taboo_Base : public eoUF<const T_INDIVIDUAL&, bool>
   {
     protected:
       //! The type of the individual
@@ -88,14 +88,14 @@ namespace GA
       Taboo() : problematic(false), owns_pointer(true)
         { taboo_list = new t_Container; }
       //! Copy Constructor
-      Taboo   ( const Taboo<t_Individual, t_Container> & _taboo )
+      Taboo   ( Taboo<t_Individual, t_Container> & _taboo )
             : owns_pointer( false ),
               taboo_list(_taboo.taboo_list) {};
       //! Destructor. If owned, deletes Taboo::taboo_list;
       virtual ~Taboo();
 
       //! returns true if _indiv is in taboo_list
-      virtual bool operator()( const t_Individual& _indiv ) const;
+      virtual bool operator()( const t_Individual& _indiv );
 
       //! \brief Adds an individual to the tabooed list. 
       //! \details If \a add_fast is false, then \a _indiv is added only if it
@@ -163,7 +163,7 @@ namespace GA
       virtual ~OffspringTaboo() {};
        
       //! returns true if _indiv is in taboo_list 
-      virtual bool operator()( const t_Individual& _indiv ) const;
+      virtual bool operator()( const t_Individual& _indiv );
   };
 
   //! \brief Creates a list of historically previously individuals. 
@@ -234,7 +234,7 @@ namespace GA
       void clear() { taboos.clear(); } 
 
       //! Returns true as soon as one taboo operator returns true,
-      virtual bool operator()( const t_Individual &_indiv ) const;
+      virtual bool operator()( const t_Individual &_indiv );
 
       //! \cond
       virtual bool is_problematic() const;
@@ -283,7 +283,7 @@ namespace GA
       virtual ~IslandsTaboos(){};
 
       //! Returns true as soon as \a _indiv is found in one of the populations
-      virtual bool operator()( const t_Individual &_indiv ) const;
+      virtual bool operator()( const t_Individual &_indiv );
       //! Does nothing
       virtual void print_out( std::ostream &str ) const {}
 
@@ -350,7 +350,7 @@ namespace GA
       //! Type of the evaluator
       typedef T_EVALUATOR t_Evaluator;
       //! Pointer to the member %function
-      typedef bool ( t_Evaluator::*t_Function )(const typename t_Evaluator::t_Individual &);
+      typedef bool ( t_Evaluator::*t_Function )(typename t_Evaluator::t_Individual &);
     protected:
       //! Type of the individual
       typedef typename t_Evaluator::t_Individual t_Individual;
@@ -375,7 +375,7 @@ namespace GA
       std::string className() const { return class_name; }
 
       //! Returns the application specific taboo.
-      bool operator()( const t_Individual& _indiv ) const
+      bool operator()( const t_Individual& _indiv )
         { return ( (evaluator.*member_func) )( _indiv); }
   };
 

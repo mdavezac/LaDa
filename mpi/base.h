@@ -34,11 +34,6 @@
 */
 namespace mpi
 {
-#define REAL MPI::DOUBLE //!< renames the openmpi macro for double values
-#define INT MPI::INT     //!< renames the openmpi macro for integer values
-#define CHAR MPI::CHAR   //!< renames the openmpi macro for character values
-//! renames the openmpi macro for unsigned integer values
-#define UNSIGNED MPI::UNSIGNED
 
   //! one root to rule them all, a priori
   extern const types::t_int ROOT_NODE;
@@ -54,14 +49,18 @@ namespace mpi
     public:
        //! Constructor and Initializer
       Base () : this_rank(0), nproc(1), comm(&MPI::COMM_WORLD)  {}
-       //! Constructor and Initializer
+      //! Constructor and Initializer
+      Base   ( MPI::Intracomm *_comm ) 
+           : this_rank( _comm->Get_rank() ), nproc( _comm->Get_size() ),
+             comm(_comm)  {}
+      //! Constructor and Initializer
       Base   ( MPI::Intracomm &_comm ) 
            : this_rank( _comm.Get_rank() ), nproc( _comm.Get_size() ),
              comm(&_comm)  {}
       //! Copy Constructor
       Base   ( const Base &_c)  
            : this_rank( _c.this_rank), nproc( _c.nproc), comm(_c.comm) {}
-      virtual ~Base() {} //!< destructor
+      ~Base() {} //!< destructor
 
       //! returns rank of current process
       types::t_int rank() const { return this_rank; } 
@@ -134,7 +133,7 @@ namespace mpi
       //! \brief Destructor, disables mpi calls
       //! \details Disables mpi calls. After this function is called, no other mpi calls
       //! should be made.
-      virtual ~InitDestroy();
+      ~InitDestroy();
   };
 
   inline void Base :: set( MPI::Intracomm *_comm )
@@ -147,7 +146,7 @@ namespace mpi
   inline types::t_unsigned Base::all_sum_all( types::t_unsigned &_in) const
   {
     types::t_unsigned out;
-    comm->Allreduce( &_in, &out, 1, UNSIGNED, MPI::SUM ); 
+    comm->Allreduce( &_in, &out, 1, MPI::UNSIGNED, MPI::SUM ); 
     _in = out;
     return out;
   }
@@ -155,7 +154,7 @@ namespace mpi
   inline types::t_int Base::all_sum_all( types::t_int &_in) const
   {
     types::t_int out;
-    comm->Allreduce( &_in, &out, 1, INT, MPI::SUM ); 
+    comm->Allreduce( &_in, &out, 1, MPI::INT, MPI::SUM ); 
     _in = out;
     return out;
   }
@@ -163,7 +162,7 @@ namespace mpi
   inline types::t_real Base::all_sum_all( types::t_real &_in) const
   {
     types::t_real out;
-    comm->Allreduce( &_in, &out, 1, REAL, MPI::SUM ); 
+    comm->Allreduce( &_in, &out, 1, MPI::DOUBLE, MPI::SUM ); 
     _in = out;
     return out;
   }
@@ -171,7 +170,7 @@ namespace mpi
   inline bool Base::all_sum_all( bool &_bool) const
   {
     types::t_int out, in = _bool ? 1 : 0;
-    comm->Allreduce( &in, &out, 1, UNSIGNED, MPI::SUM ); 
+    comm->Allreduce( &in, &out, 1, MPI::UNSIGNED, MPI::SUM ); 
     _bool = ( out == nproc );
     return _bool;
   }
@@ -179,7 +178,7 @@ namespace mpi
   inline bool Base::all_or_all( bool &_bool) const
   {
     types::t_int out, in = _bool ? 1 : 0;
-    comm->Allreduce( &in, &out, 1, UNSIGNED, MPI::SUM ); 
+    comm->Allreduce( &in, &out, 1, MPI::UNSIGNED, MPI::SUM ); 
     _bool = ( out != 0 );
     return _bool;
   }
@@ -187,7 +186,7 @@ namespace mpi
   inline bool Base::all_xor_all( bool &_bool) const
   {
     types::t_int out, in = _bool ? 1 : 0;
-    comm->Allreduce( &in, &out, 1, UNSIGNED, MPI::SUM ); 
+    comm->Allreduce( &in, &out, 1, MPI::UNSIGNED, MPI::SUM ); 
     _bool = ( out == 0 or out == nproc );
     return _bool;
   }

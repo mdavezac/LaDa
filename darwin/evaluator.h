@@ -99,7 +99,7 @@ namespace GA
       //! \details Provided for convenience.
       t_Object *current_object;
       //! Communication group for which this evaluator is set up.
-      __MPICODE( mpi::Base mpi_comm; ) 
+      __MPICODE( ::mpi::Base mpi_comm; ) 
 
     public:
       //! Constructor

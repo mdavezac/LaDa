@@ -28,15 +28,9 @@ namespace GA
       namespace Breeders
       {
 
-        //! \brief Base class for breeders in the GA::mpi::Graph topology
-        //! \details Contains helper functions which may be of help to any of the
-        //!          specific breeders.
-        template<class T_GATRAITS>
-        class Base : public GA::Breeder<typename T_GATRAITS::t_Individual> {};
-    
         //! A breeder class which does nothing.
         template<class T_GATRAITS>
-        class Farmhand : public Base<T_GATRAITS>
+        class Farmhand : public GA::Breeder<T_GATRAITS>
         {
           public:
             typedef T_GATRAITS t_GATraits; //!< all %GA traits
@@ -49,11 +43,11 @@ namespace GA
             //! type of the population
             typedef typename t_GATraits::t_Population  t_Population; 
             //! Base class type.
-            typedef Base<t_GATraits> t_Base;
+            typedef GA::Breeder<t_GATraits> t_Base;
     
           public:
             //! Constructor.
-            Farmhand( Topology *_topo ) : t_Base( _topo );
+            Farmhand() : t_Base() {};
     
             //! Creates \a _offspring population from \a _parent
             void operator()(const t_Population& _parents,
@@ -68,8 +62,8 @@ namespace GA
         //! \details This functor dispatches commands to the bulls, such as breed
         //!          one and stop breeding. 
         template<class T_GATRAITS>
-        class Farmer : private Comm::Farmer< Farmer<T_GATRAITS> >, 
-                       public Base<T_GATRAITS>
+        class Farmer : protected Comm::Farmer< T_GATRAITS, Farmer<T_GATRAITS> >, 
+                       public GA::Breeder<T_GATRAITS>
         {
           public:
             typedef T_GATRAITS t_GATraits; //!< all %GA traits
@@ -82,9 +76,9 @@ namespace GA
             //! type of the population
             typedef typename t_GATraits::t_Population  t_Population; 
             //! Base class type.
-            typedef Base<t_GATraits> t_Base;
+            typedef GA::Breeder<t_GATraits> t_Base;
             //! Communication base class
-            typedef Comm::Farmer< Farmer<t_GATraits> > t_CommBase;
+            typedef Comm::Farmer< T_GATRAITS, Farmer<t_GATraits> > t_CommBase;
     
           protected:
             types::t_unsigned target;
@@ -113,7 +107,8 @@ namespace GA
         };
     
         template<class T_GATRAITS>
-        class Bull : private Comm::Bull< Bull<T_GATRAITS> >, public Base<T_GATRAITS>
+        class Bull : protected Comm::Bull< T_GATRAITS, Bull<T_GATRAITS> >,
+                     public GA::Breeder<T_GATRAITS>
         {
           public:
             typedef T_GATRAITS t_GATraits; //!< all %GA traits
@@ -126,12 +121,9 @@ namespace GA
             //! type of the population
             typedef typename t_GATraits::t_Population  t_Population; 
             //! Base class type.
-            typedef Base<t_GATraits> t_Base;
+            typedef GA::Breeder<t_GATraits> t_Base;
             //! Communication base class
-            typedef Comm::Bull< Bull<t_GATraits> > t_CommBase;
-    
-            //! Tag for communications with the cows
-            const MPI::INT COWTAG = 2;
+            typedef Comm::Bull< T_GATRAITS, Bull<t_GATraits> > t_CommBase;
     
     
           public:
@@ -149,7 +141,18 @@ namespace GA
     
         //! Just a typedef for Comm::BaseCow.
         template< class T_GATRAITS >
-        class Cow : public Comm::LaNormande< T_GATRAITS, Base > {};
+        class Cow : public Comm::LaNormande< T_GATRAITS, GA::Breeder > 
+        {
+          public:  
+            //! All %GA types.
+            typedef T_GATRAITS t_GATraits;
+            //! Constructor.
+            Cow   ( Topology * _topo )
+                : Comm::LaNormande< t_GATraits, GA::Breeder >( _topo ){}
+            using Comm::LaNormande< T_GATRAITS, GA::Breeder > :: set;
+        };
+      } // namespace Breeders
+    } // namespace Graph
     
   } // namespace mpi
 } // namespace GA

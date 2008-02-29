@@ -1,18 +1,20 @@
 //
 //  Version: $Id$
 //
-#ifndef  _DARWIN_COMMUNICATORS_H_
-#define  _DARWIN_COMMUNICATORS_H_
+#ifndef  _GRAPH_TABOO_H_
+#define  _GRAPH_TABOO_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
+#ifdef _MPI
+
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
 #include <darwin/taboos.h>
-#include "comm.h"
+#include "graph/comm.h"
 
 namespace GA
 {
@@ -22,7 +24,7 @@ namespace GA
     {
       //! Transfer storage calls to the Farmer
       template< class T_GATRAITS >
-      class BullTaboo : private Comm::Bull< BullTaboo<T_GATRAITS> >,
+      class BullTaboo : protected Comm::Bull< T_GATRAITS, BullTaboo<T_GATRAITS> >,
                         public ::GA::Taboo_Base<typename T_GATRAITS :: t_Individual>
       {
         public:
@@ -36,19 +38,19 @@ namespace GA
           //! Type of this class.
           typedef BullTaboo<t_GATraits> t_This;
           //! Type of the communication base class.
-          typedef Comm::Bull< t_This > t_CommBase;
+          typedef Comm::Bull< t_GATraits, t_This > t_CommBase;
 
         public:
           //! Constructor
-          BullTaboo() {}
+          BullTaboo ( Topology* _topo ) : t_CommBase(_topo), t_Base() {}
           //! Copy constructor
           BullTaboo   ( const t_This &_taboo )
                     : t_Base(_taboo), t_CommBase( _taboo ){}
           //! Destructor
           virtual ~BullTaboo() {};
     
-          //! returns true if _indiv is in taboo_list
-          virtual bool operator()( const t_Individual& _indiv ) const;
+          //! returns true if _indiv is in taboo_list.
+          virtual bool operator()( const t_Individual& _indiv );
       };
       
       template < class T_GATRAITS >
@@ -64,4 +66,5 @@ namespace GA
   } // namespace mpi
 } // namespace GA
 
+#endif
 #endif

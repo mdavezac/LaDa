@@ -239,12 +239,15 @@ namespace Individual
 
 #ifdef _MPI
       /** \ingroup MPI
-       * \brief Serializes Individual::Base class for mpi purposes
-       * \details It serializes Base::age, Base::repFitness, Base::object,
-       * Base::quantity.
-       */
-      bool broadcast( mpi::BroadCast &_bc );
+       * \brief Serializes an Individual::Base.
+       **/
+      bool serialize( mpi::BroadCast &_bc );
+      /** \ingroup MPI
+       * \brief Serializes a constant Individual::Base.
+       **/
+      bool serialize( mpi::BroadCast &_bc ) const;
 #endif
+
   };
 
   //! \brief Multi-Objective individual

@@ -2,10 +2,7 @@
 //  Version: $Id$
 //
 #include<iostream>
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include<sstream>
 
 #include <eo/eoDetTournamentSelect.h>
 #include <eo/eoReduceMerge.h>
@@ -1033,13 +1030,13 @@ endstorage:
                                                 std::string &_restart, 
                                                 std::string &_evaluator ) 
   {
-    if ( mpi::main.is_root_node() )
+    if ( ::mpi::main.is_root_node() )
     { 
       OPENXMLINPUT(filename)
-      TIXML_OSTREAM stream;
+      std::ostringstream stream;
       const TiXmlElement *parent = doc.RootElement();
       stream << *parent;
-      _input = stream.c_str();
+      _input = stream.str();
       _restart = _input; 
       _evaluator = _input;
 
@@ -1058,8 +1055,9 @@ endstorage:
         } 
 
         parent = doc.RootElement();
-        TIXML_OSTREAM stream;
-        _restart = stream.c_str();
+        std::ostringstream stream;
+        stream << *parent;
+        _restart = stream.str();
       }
 nextfilename:
       if ( evaluator_filename != filename )
@@ -1067,8 +1065,9 @@ nextfilename:
         doc.LoadFile( evaluator_filename.c_str() );
         __DOASSERT( not doc.LoadFile(), " Could not load restart file\n" )
         parent = doc.RootElement();
-        TIXML_OSTREAM stream;
-        _evaluator = stream.c_str();
+        std::ostringstream stream;
+        stream << *parent;
+        _evaluator = stream.str();
       }
     }
 
@@ -1079,11 +1078,11 @@ nextfilename:
         _restart = "";
         _evaluator = "";
       )
-      mpi::BroadCast bc( mpi::main );
+      ::mpi::BroadCast bc( ::mpi::main );
       bc << _input << _restart << _evaluator
-         << mpi::BroadCast::allocate
+         << ::mpi::BroadCast::allocate
          << _input << _restart << _evaluator
-         << mpi::BroadCast::broadcast
+         << ::mpi::BroadCast::broadcast
          << _input << _restart << _evaluator;,
       "Caught error while synchronizing input files.\n" 
     )
@@ -1148,8 +1147,8 @@ syncfilenames:
                  "Caught error while synchronizing output filenames\n" 
       )
       Print::out << "Starting genetic algorithm run on processor "
-                 << ( 1 + mpi::main.rank() ) << " of " 
-                 << mpi::main.size() << ".\n\n";,
+                 << ( 1 + ::mpi::main.rank() ) << " of " 
+                 << ::mpi::main.size() << ".\n\n";,
       // Serial code
       Print::xmg.init( xmg_filename );
       Print::out.init( out_filename );

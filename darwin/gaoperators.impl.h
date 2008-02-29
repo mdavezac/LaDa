@@ -291,7 +291,7 @@ errorout:
 
 
   template< class T_INDIVIDUAL >
-  bool xTaboo<T_INDIVIDUAL> :: operator()( const t_Individual& _indiv ) const
+  bool xTaboo<T_INDIVIDUAL> :: operator()( const t_Individual& _indiv )
   {
     concentration.get( _indiv.Object() );
     return    Fuzzy::le(concentration.x, lessthan)

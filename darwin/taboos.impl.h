@@ -35,7 +35,7 @@ namespace GA
   
   template< class T_INDIVIDUAL, class T_CONTAINER >
     inline bool Taboo<T_INDIVIDUAL, T_CONTAINER> ::  
-      operator()( const t_Individual& _indiv ) const
+      operator()( const t_Individual& _indiv )
       {
         typename t_Container :: const_iterator i_end = taboo_list->end();
         typename t_Container :: const_iterator i_begin = taboo_list->begin();
@@ -79,7 +79,7 @@ namespace GA
 
   template<class T_GATRAITS>
     inline bool OffspringTaboo<T_GATRAITS> :: 
-      operator()( const t_Individual& _indiv ) const
+      operator()( const t_Individual& _indiv )
       {
         typename t_Population :: const_iterator i_end = taboo_list->end();
         typename t_Population :: const_iterator i_begin = taboo_list->begin();
@@ -124,14 +124,14 @@ namespace GA
 
 
   template<class T_INDIVIDUAL>
-    bool Taboos<T_INDIVIDUAL> :: operator()( const t_Individual &_indiv ) const
+    bool Taboos<T_INDIVIDUAL> :: operator()( const t_Individual &_indiv )
     {
       if ( not taboos.empty() )
       {
         typename std::list< Taboo_Base<t_Individual> * >
-            :: const_iterator i_taboo = taboos.begin();
+            :: iterator i_taboo = taboos.begin();
         typename std::list< Taboo_Base<t_Individual> * >
-            :: const_iterator i_end = taboos.end();
+            :: iterator i_end = taboos.end();
         for ( ; i_taboo != i_end; ++i_taboo )
           if ( (*i_taboo)->operator()( _indiv ) )
             return true;
@@ -173,7 +173,7 @@ namespace GA
 
 
   template<class T_GATRAITS>
-    bool IslandsTaboos<T_GATRAITS> :: operator()( const t_Individual &_indiv ) const
+    bool IslandsTaboos<T_GATRAITS> :: operator()( const t_Individual &_indiv )
     {
       if ( populations.empty() )
         return false;

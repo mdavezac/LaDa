@@ -17,6 +17,8 @@
 
 #include "graph/topology.h"
 #include "graph/objective.h"
+#include "graph/evaluation.h"
+#include "graph/history.h"
 #include "graph/taboo.h"
 #include "graph/store.h"
 #include "graph/breeders.h"
@@ -38,13 +40,17 @@ namespace GA
       //! Constructor and Initializer.
       Topology() : seeds(1,0) {}
       //! Copy Constructor.
-      Topology   ( Topology &_comm ) : seeds( _comm.seeds ) {};
+      Topology   ( const Topology &_comm ) : seeds( _comm.seeds ) {};
 #else
       //! Constructor and Initializer.
       Topology() : ::mpi::Base::Base(), seeds(1,0),
                    graph(NULL)  {}
+      //! Constructor and Initializer.
+      Topology   ( ::mpi::Base &_comm )
+               : ::mpi::Base::Base( _comm ), seeds(1,0),
+                 graph(NULL)  {}
       //! Copy Constructor.
-      Topology   ( Topology &_comm ) 
+      Topology   ( const Topology &_comm ) 
                : ::mpi::Base::Base(_comm), seeds( _comm.seeds),
                  graph( _comm.graph ) {}
 #endif

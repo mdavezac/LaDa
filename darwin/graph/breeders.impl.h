@@ -16,7 +16,7 @@ namespace GA
         inline void Farmer<T_GATRAITS> :: operator()(const t_Population& _parents,
                                                      t_Population& _offspring)
         {
-          target = (*howMany)( (types::t_unsigned) _parents.size());
+          target = (*t_Base::howMany)( (types::t_unsigned) _parents.size());
       
           _offspring.clear();
           offspring = &_offspring;
@@ -37,7 +37,7 @@ namespace GA
           offspring->push_back( indiv );
           t_CommBase::send_command( _bull, offspring->size() >= target ?
                                              t_CommBase::t_Commands::DONE: 
-                                             t_CommBase::t_Commands::GO )
+                                             t_CommBase::t_Commands::GO );
           if( offspring->size() < target ) t_CommBase::activate(_bull);
         }
       
@@ -45,13 +45,13 @@ namespace GA
         inline void Bull<T_GATRAITS> :: operator()(const t_Population& _parents,
                                                    t_Population& _offspring)
         {
-          eoSelectivePopulator<t_Individual> it(_parents, _offspring, select);
+          eoSelectivePopulator<t_Individual> it(_parents, _offspring, *t_Base::select);
           do
           {
-            (*op)(it);
-            (*it).set_age( age() );
+            (*t_Base::op)(it);
+            (*it).set_age( (*t_Base::age)() );
             t_CommBase :: request( t_CommBase::t_Requests::WAITING );
-            t_CommBase :: send_individual();
+            t_CommBase :: send_individual( *it );
             ++it;
           }
           while ( t_CommBase::obey() != t_CommBase :: t_Commands :: DONE );

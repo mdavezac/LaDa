@@ -35,11 +35,6 @@ namespace BandGap
   //! \a SOMETAG will generally be an %Individual.
   struct Keeper
   {
-#ifdef _MPI
-    //! \cond
-    friend bool mpi::BroadCast::serialize<BandGap::Keeper>(BandGap::Keeper &);
-    //! \endcond
-#endif
     types::t_real cbm; //!< Conduction Band Minimum
     types::t_real vbm; //!< Valence Band Maximum
 
@@ -197,18 +192,20 @@ namespace BandGap
 
 
 #ifdef _MPI
+
 namespace mpi
 {
+#define ___OBJECTCODE \
+  return     _bc.serialize( _keeper.cbm ) \
+         and _bc.serialize( _keeper.vbm );
+#define ___TYPE__ BandGap::Keeper
   /** \ingroup MPI
-   * \brief Serializes BandGap::Keeper class for mpi purposes.
-   * \details It serializes Keeper::cbm and Keeper::vbm.    */
-  template<>
-  inline bool BroadCast::serialize<BandGap::Keeper>( BandGap::Keeper & _keeper )
-  {
-    return     serialize( _keeper.cbm ) 
-           and serialize( _keeper.vbm );
-  }
+  * \brief Serializes an BandGap::Keeper.
+  * \details It serializes Keeper::cbm and Keeper::vbm. **/
+#include <mpi/serialize.impl.h>
+#undef ___OBJECTCODE
 }
+
 #endif
 
 #endif // _PESCAN_H_

@@ -109,9 +109,9 @@ namespace Fitness
       //! Constructor
       Scalar() : is_valid( false )  {}
       //! Copy Constructor
-      explicit Scalar   ( const t_This & _c )
-                      : quantity( _c.quantity ), 
-                        is_valid( _c.is_valid ) {}
+      Scalar   ( const t_This & _c )
+             : quantity( _c.quantity ), 
+               is_valid( _c.is_valid ) {}
       //! Constructor and Initializer
       void operator=( const t_Quantity _fit ) 
         { quantity = _fit; is_valid = true; }
@@ -160,15 +160,14 @@ namespace Fitness
       //! \brief Returns a t_Comparison giving the relationship between this
       //!        object and \a _f.
       t_Comparison compare( const t_This &_f ) const;
-
 #ifdef _MPI
       /** \ingroup MPI
-       * \brief allows the serialization of a Fitness::Scalar object.
-       * \details serializes the object completely, eg both quantity and
-       * validity are set.
-       */
-      bool broadcast( mpi::BroadCast &_bc );
-#endif 
+       * \brief Serializes an Fitness::Scalar. */
+      bool serialize( ::mpi::BroadCast &_bc );
+      /** \ingroup MPI
+       * \brief Serializes a constant Fitness::Scalar. */
+      bool serialize( ::mpi::BroadCast &_bc ) const;
+#endif
   };
 
 
@@ -244,9 +243,9 @@ namespace Fitness
       //! Constructor
       Vectorial() : vec_is_valid( false )  {}
       //! Copy Constructor
-      explicit Vectorial   ( const t_This & _c )
-                         : t_Base(_c), vec_is_valid( _c.vec_is_valid ),
-                           vec_quantity( _c.vec_quantity ) {}
+      Vectorial   ( const t_This & _c )
+                : t_Base(_c), vec_is_valid( _c.vec_is_valid ),
+                  vec_quantity( _c.vec_quantity ) {}
       //! Constructor and Initializer
       void operator=( const t_Quantity &_fit )
         { vec_is_valid = true; vec_quantity = _fit; }
@@ -319,12 +318,12 @@ namespace Fitness
       t_Comparison compare( const t_This &_f ) const;
 #ifdef _MPI
       /** \ingroup MPI
-       * \brief allows the serialization of a Fitness::Vectorial object.
-       * \details serializes the object completely, eg both quantity and
-       * validity are set for both t_This and t_Base.
-       */
-      bool broadcast( mpi::BroadCast &_bc );
-#endif 
+       * \brief Serializes an Fitness::Vectorial. */
+      bool serialize( ::mpi::BroadCast &_bc );
+      /** \ingroup MPI
+       * \brief Serializes a constant Fitness::Vectorial. */
+      bool serialize( ::mpi::BroadCast &_bc ) const;
+#endif
   };
 
   //! \brief Template type returning scalar fitnesses on demand

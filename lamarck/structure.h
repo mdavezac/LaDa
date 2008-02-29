@@ -364,5 +364,24 @@ namespace Ising_CE {
 
 } // namespace Ising_CE
 
+#ifdef _MPI
+namespace mpi
+{
+#define ___OBJECTCODE \
+  return     _this.serialize( _ob.cell ) \
+         and _this.serialize_container( _ob.atoms ) \
+         and _this.serialize_container( _ob.k_vecs ) \
+         and _this.serialize( _ob.Pi_name ) \
+         and _this.serialize( _ob.energy ) \
+         and _this.serialize( _ob.freeze ) \
+         and _this.serialize( _ob.scale );
+#define ___TYPE__ Ising_CE::Structure
+  /** \ingroup MPI
+  * \brief Serializes an Ising_CE::Cluster.
+  */
+#include <mpi/serialize.impl.h>
+#undef ___OBJECTCODE
+}
+#endif
 
 #endif

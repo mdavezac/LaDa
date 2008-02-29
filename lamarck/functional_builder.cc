@@ -251,40 +251,7 @@ namespace VA_CE
      return true;
    }
 
-
-
-
 } // namespace VA_CE
 
 
 
-
-#ifdef _MPI
-
-namespace mpi
-{
-  template<>
-  bool BroadCast :: serialize<VA_CE::Functional_Builder>( VA_CE::Functional_Builder &_b )
-  {
-    if ( not _b.lattice ) _b.lattice = new Ising_CE::Lattice;
-    if ( not _b.harmonics ) _b.harmonics = new Ising_CE::Constituent_Strain;
-    if ( not _b.clusters ) _b.clusters = new std::vector<Ising_CE::Cluster>;
-
-    if ( not serialize( *_b.lattice ) ) return false;
-    if ( not serialize( *_b.harmonics ) ) return false;
-    
-    // then serializes rvecs and kvecs
-    types::t_int n = _b.clusters->size();
-    if( not serialize( n ) ) return false;
-    if ( stage == COPYING_FROM_HERE )
-      _b.clusters->resize(n);
-    std::vector<Ising_CE::Cluster> :: iterator i_cluster = _b.clusters->begin();
-    std::vector<Ising_CE::Cluster> :: iterator i_cluster_end = _b.clusters->end();
-    for(; i_cluster != i_cluster_end; ++i_cluster )
-      if ( not serialize( *i_cluster ) ) return false;
-
-    return true;
-  }
-}
-
-#endif

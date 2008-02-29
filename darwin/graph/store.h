@@ -21,21 +21,21 @@ namespace GA
     namespace Graph
     {
       template< class T_GATRAITS >
-      class BullStore : private Comm::Bull< BullStore<T_GATRAITS> >,
-                        public ::Store::Base<T_GATRAITS>
+      class BullStore : protected Comm::Bull< T_GATRAITS, BullStore<T_GATRAITS> >,
+                        public GA::Store::Base<T_GATRAITS>
       {
         public:
           typedef T_GATRAITS t_GATraits; //!< all GA classes \sa Traits::GA
         
         private:
           //! Type of the evaluator class .
-          typedef typename t_GATraits :: t_Evaluator  t_Evaluator;
+          typedef typename t_GATraits :: t_Evaluator              t_Evaluator;
           //! Type of the base class.
-          typedef ::Store::Base<t_GATraits>           t_Base;   
+          typedef GA::Store::Base<t_GATraits>                     t_Base;   
           //! Type of the Individual.
-          typedef typename t_GATraits :: t_Individual t_Individual;
+          typedef typename t_GATraits :: t_Individual             t_Individual;
           //! Type of the communication base class.
-          typedef Comm::Bull< BullStore<T_GATRAITS> > t_CommBase;
+          typedef Comm::Bull< t_GATraits, BullStore<t_GATraits> > t_CommBase;
 
         public:
           //! Constructor and Initializer
@@ -56,7 +56,7 @@ namespace GA
           virtual void print_results(types::t_unsigned _age,
                                      bool is_comment = false) const {};
           //! Does nothing
-          virtual std::string print() const { return condition.print(); }
+          virtual std::string print() const { return ""; }
           //! Returns "GA::mpi::Graph::BullStore"
           virtual std::string what_is() const { return "GA::mpi::Graph::BullStore"; }
      

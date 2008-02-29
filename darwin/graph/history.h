@@ -10,9 +10,6 @@
 
 #ifdef _MPI
 
-#include <list>
-#include <pair>
-
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
@@ -27,7 +24,7 @@ namespace GA
     {
       //! Transfer storage calls to the Farmer
       template< class T_GATRAITS >
-      class BullHistory : private Comm::Bull< BullHistory<T_GATRAITS> >,
+      class BullHistory : protected Comm::Bull< T_GATRAITS, BullHistory<T_GATRAITS> >,
                           public ::GA::History<typename T_GATRAITS :: t_Individual>
       {
         public:
@@ -37,15 +34,15 @@ namespace GA
           //! Type of the individual
           typedef typename t_GATraits :: t_Individual t_Individual;
           //! Type of the public base class.
-          typedef ::GA::History< t_Individual > t_Base;
+          typedef ::GA::History< t_Individual >       t_Base;
           //! Type of this class.
-          typedef BullHistory<t_GATraits> t_This;
+          typedef BullHistory<t_GATraits>             t_This;
           //! Type of the communication base class.
-          typedef Comm::Bull< t_This > t_CommBase;
+          typedef Comm::Bull<t_GATraits, t_This>      t_CommBase;
 
         public:
           //! Constructor
-          BullHistory() {}
+          BullHistory( Topology *_topo ) : t_CommBase( _topo ), t_Base() {}
           //! Copy constructor
           BullHistory   ( const t_This &_taboo )
                     : t_Base(_taboo), t_CommBase( _taboo ){}
@@ -53,7 +50,7 @@ namespace GA
           virtual ~BullHistory() {};
     
           //! returns true if _indiv is in taboo_list
-          virtual bool clone(t_Individual &_indiv);
+          virtual bool clone(t_Individual &_indiv );
 
           //! Should not be called as a taboo. throws.
           virtual bool operator()( const t_Individual& _indiv ) const
@@ -61,7 +58,7 @@ namespace GA
       };
       
       template < class T_GATRAITS >
-        bool BullHistory<T_GATRAITS> :: clone()( const t_Individual &_indiv )
+        bool BullHistory<T_GATRAITS> :: clone( t_Individual &_indiv )
         {
           t_CommBase::request( t_CommBase::t_Requests::TABOOCHECK );
           t_CommBase::send_individual( _indiv );

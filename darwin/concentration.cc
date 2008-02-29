@@ -225,24 +225,3 @@ types::t_real set_concentration( Ising_CE::Structure &_str,
     return sstr.str();
   }
 
-
-
-
-#ifdef _MPI
-namespace mpi
-{
-  template<>
-  bool mpi::BroadCast::serialize<X_vs_y>( X_vs_y & _xy )
-  {
-    if( not serialize( _xy.a ) ) return false;
-    if( not serialize( _xy.b ) ) return false;
-    if( not serialize( _xy.c ) ) return false;
-    if( not serialize( _xy.x0 ) ) return false;
-    if( not serialize( _xy.y0 ) ) return false;
-    if( not serialize( _xy.single_c ) ) return false;
-
-    return true;
-  }
-}
-#endif
-

@@ -26,6 +26,7 @@
 
 #include "base.h"
 #include "comm.h"
+#include "standalone.h"
 
 
 namespace mpi

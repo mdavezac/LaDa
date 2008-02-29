@@ -19,6 +19,8 @@
 
 //! \cond
 namespace VA_CE{ class Functional_Builder; };
+namespace Ising_CE{ class Cluster; }
+___DECLAREMPIOBJECT( Ising_CE::Cluster )
 //! \endcond
 
 //! \brief Contains most everything %Cluster Expansion and structure related.
@@ -44,11 +46,9 @@ namespace Ising_CE
    */ 
   class Cluster 
   {
-#ifdef _MPI
     //! \cond
-    friend bool mpi::BroadCast::serialize<Ising_CE::Cluster> ( Ising_CE::Cluster& );
+    ___FRIENDMPIOBJECT(Ising_CE::Cluster)
     //! \endcond
-#endif
     friend class VA_CE::Functional_Builder;
     
     protected:
@@ -103,12 +103,20 @@ namespace Ising_CE
 } // namespace Ising_CE
 
 #ifdef _MPI
-namespace mpi {
+#include <mpi/mpi_object.h>
+#include <atat/serialize.h>
+namespace mpi
+{
+#define ___OBJECTCODE \
+   return     _this.serialize( _ob.eci ) \
+          and _this.serialize_container( _ob.vectors );
+#define ___TYPE__ Ising_CE::Cluster
   /** \ingroup MPI
-  * \brief Serializes an Ising_CE::Cluster.
+  * \brief Serializes an Ising_CE::Cluster
   */
-  template<>
-  bool BroadCast::serialize<Ising_CE::Cluster> ( Ising_CE::Cluster& );
+#include <mpi/serialize.impl.h>
+#undef ___OBJECTCODE
 }
 #endif
+
 #endif

@@ -216,27 +216,6 @@ namespace Vff
 
 } // namespace vff 
 
-#ifdef _MPI
-namespace mpi {
-  /** \ingroup MPI
-  * \brief Serializes Vff::Layered. 
-  * \details It serializes Vff::Layered::direction, as well as everything else
-  *          BroadCast::serialize<Vff::Functional>() did. 
-  */
-  template<>
-  inline bool BroadCast::serialize<Vff::Layered> ( Vff::Layered& _vff )
-  {
-    bool result =     BroadCast::serialize<Vff::Functional>( _vff )
-                  and BroadCast::serialize( _vff.direction );
-
-    if ( stage == COPYING_FROM_HERE ) 
-      _vff.create_template_strain();
-
-    return result;
-  }
-}
-#endif
-
 #ifdef _DOFORTRAN
   //! Creates an instance of a typical Minimizer::Frpr "C" function for calling Vff::Layered
   extern "C" inline double layeredvff_frprfun(double* _x, double* _y)

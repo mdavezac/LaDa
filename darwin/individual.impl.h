@@ -74,17 +74,6 @@ namespace Individual
     return _loadop(*this,*parent);
   }
 
-#ifdef _MPI
-  template<class T_INDIVTRAITS> 
-  bool Base<T_INDIVTRAITS> :: broadcast( mpi::BroadCast &_bc )
-  {
-    return      _bc.serialize( age ) 
-            and repFitness.broadcast(_bc)
-            and _bc.serialize<t_Object>( object )
-            and t_QuantityTraits::broadcast( quantity, _bc );
-  }
-#endif
-
   template<class T_INDIVTRAITS>  template<class SaveOp>
   bool Multi<T_INDIVTRAITS> :: Save( TiXmlElement &_node, SaveOp &_saveop ) const
   {
@@ -117,6 +106,30 @@ namespace Individual
     return _loadop(*this,*parent);
   }
   
+#ifdef _MPI
+  template<class T_INDIVTRAITS>  
+  bool Base<T_INDIVTRAITS> :: serialize( mpi::BroadCast &_bc )
+  {
+    return      _bc.serialize( age ) \
+            and repFitness.serialize(_bc)\
+            and _bc.serialize<t_Object>( object )\
+            and t_QuantityTraits::serialize( quantity, _bc );
+  }
+  template<class T_INDIVTRAITS>  
+  bool Base<T_INDIVTRAITS> :: serialize( mpi::BroadCast &_bc ) const
+  {
+    return      _bc.serialize( age ) \
+            and repFitness.serialize(_bc)\
+            and _bc.serialize<t_Object>( object )\
+            and t_QuantityTraits::serialize( quantity, _bc );
+  }
+#endif
+
 } // namespace Individual
+
+
+
+
+
 
 #endif // _INDIVIDUAL_IMPL_H_

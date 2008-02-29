@@ -183,18 +183,19 @@ namespace BandGap
 #ifdef _MPI
 namespace mpi
 {
-  /** \ingroup Genetic
-   *  \brief Serializes a BandGap::Object.
+#define ___OBJECTCODE \
+    return     _this.serialize<BandGap::Keeper>( _ob )\
+           and _this.serialize( _ob.x ) \
+           and _this.serialize( _ob.y ) \
+           and _object.serialize( *this );
+#define ___TYPE__ BandGap::Object
+  /** \ingroup MPI
+  * \brief Serializes an BandGap::Object.
    *  \details Includes the serialization of the BitString::container, the
-   *  concentrations x and y, and the BandGap::Keeper member variables. */
-  template<>
-  inline bool mpi::BroadCast::serialize<BandGap::Object>( BandGap::Object & _object )
-  {
-    return     serialize<BandGap::Keeper>( _object )
-           and serialize( _object.x )
-           and serialize( _object.y )
-           and _object.broadcast( *this );
-  }
+   *  concentrations x and y, and the BandGap::Keeper member variables. 
+  */
+#include <mpi/serialize.impl.h>
+#undef ___OBJECTCODE
 }
 #endif
 

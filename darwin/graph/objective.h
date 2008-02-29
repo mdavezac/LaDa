@@ -26,24 +26,27 @@ namespace GA
     namespace Graph
     {
       template< class T_GATRAITS >
-      class BullObjective : private Comm::Bull< BullObjective<T_GATRAITS> >,
-                            public ::Objective::Type<T_GATRAITS> :: Vector
+      class BullObjective : protected Comm::Bull< T_GATRAITS,
+                                                  BullObjective<T_GATRAITS> >,
+                            public GA::Objective::Types<T_GATRAITS> :: Vector
       {
         public:
           //! all %GA traits
-          typedef typename T_GATRAITS t_GATraits;
+          typedef T_GATRAITS t_GATraits;
     
         protected:
           //! Type of individual in this %GA
           typedef typename t_GATraits :: t_Individual         t_Individual;
           //! Type of the fitness, as declared in the base class
-          typedef typename t_Base :: t_Fitness                t_Fitness;
+          typedef typename t_GATraits :: t_Fitness            t_Fitness;
+          //! Type of the quantity traits, as declared in the base class
+          typedef typename t_GATraits :: t_QuantityTraits     t_QuantityTraits;
           //! Type of the quantity, as declared in the base class
-          typedef typename t_Base :: t_Quantity               t_Quantity;
+          typedef typename t_QuantityTraits :: t_Quantity     t_Quantity;
           //! Type of the scalar quantity, as declared in the base class
-          typedef typename t_Base :: t_ScalarQuantity         t_ScalarQuantity;
+          typedef typename t_QuantityTraits :: t_ScalarQuantity t_ScalarQuantity;
           //! Type of the lamarckian traits, as declared in the base class
-          typedef typename t_Base :: t_VA_Traits              t_VA_Traits;
+          typedef typename t_GATraits :: t_VA_Traits          t_VA_Traits;
           //! Type of the lamarckian gradients, as declared in the base class
           typedef typename t_VA_Traits :: t_QuantityGradients t_QuantityGradients;
           //! Type of the lamarckian variables, as declared in the base class
@@ -53,7 +56,9 @@ namespace GA
           //! A functor to for loading individuals
           typedef GA::LoadObject<t_GATraits>                  t_LoadOp;
           //! Type of the communication base class.
-          typedef Comm::Bull< BullObjective<T_GATRAITS>       t_CommBase;
+          typedef Comm::Bull< t_GATraits, BullObjective<t_GATraits> > t_CommBase;
+          //! Type of the objective base class.
+          typedef typename GA::Objective::Types<t_GATraits> :: Vector t_Base;
     
         public:
           //! Constructor.
@@ -87,6 +92,11 @@ namespace GA
           virtual t_VA_Type evaluate_one_gradient( const t_Quantity &,
                                                    t_QuantityGradients& _grad,
                                                    types::t_unsigned _n);
+          //! Not needed by bull.
+          virtual bool is_valid() const { return true; }
+          //! Reeturns "GA::mpi::Graph::BullObjective".
+          virtual std::string what_is() const 
+            { return "GA::mpi::Graph::BullObjective"; }
       };
       
     } // namespace Graph

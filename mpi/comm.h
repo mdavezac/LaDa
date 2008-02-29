@@ -8,9 +8,29 @@
 #include <config.h>
 #endif
 
+#include <list>
+#include <vector>
 
 #include <opt/types.h>
+#include <opt/modifiers.h>
 #include "base.h"
+
+#ifdef _MPI
+#define ___DECLAREMPIOBJECT( name )\
+ namespace mpi \
+ { \
+   template<> class BroadCast::Object< name >;\
+ }
+#define ___FRIENDMPIOBJECT( name )\
+  friend class mpi::BroadCast::Object< name >;
+#else
+#define  ___DECLAREMPIOBJECT( name )
+#define ___MAKEOBJECTFRIEND( name )
+#endif
+
+
+
+
 
 namespace mpi
 {
@@ -43,9 +63,11 @@ namespace mpi
       //! \details Should be used in conjunction with mpi::main to initialize any data
       //! communication helper class. Only mpi::Base members are copied,
       //! Members from CommBase are set to 0 or NULL. 
-      CommBase   ( const Base &_c );
+      CommBase ( const Base &_c );
+      //! Constructor and Initializer
+      CommBase ( MPI::Intracomm *_comm );
       //! \brief true Copy Constructor
-      CommBase   ( const CommBase &_c);
+      CommBase ( const CommBase &_c);
       //! \brief Destructor. Does nothing ;)
       //! \details Destructor leaves it to derived classes to destroy buffers!!
       virtual ~CommBase() {}
@@ -126,12 +148,26 @@ namespace mpi
   //!       transparent to the user somehow.
   class BroadCast : public CommBase 
   {
+    public:
+      //! \brief Functor for serializing objects.
+      //! \details A number of basic types are already implemented: types::t_int,
+      //!          types::t_char, types::t_real, vectors and lists of the previous,
+      //!          atat::Vector3d and atat::Matrix3d of the three first. Others you
+      //!          have to implement for yourselves, taking any of these for
+      //!          template.
+      template <class T_OBJECT> struct Object;
+      //! Serializes containers.
+      template <class T_CONTAINER> struct Container;
+      //! Serializes range of iterators/pointers.
+      template <class T_CONTAINER> struct Range;
+    private:
     //! \brief interface to this class! see class description for use
     //! \details handles both object serialization and broadcasting
     //! operation in one clear call.
     //! \param _this a BroadCast Object
     //! \param _type Make sure BroadCast::serialize() has been declared for your T_TYPE.
-    template< class T_TYPE > friend BroadCast& operator<< ( BroadCast& _this, T_TYPE &_type );
+    template< class T_TYPE > friend BroadCast& operator<< ( BroadCast& _this,
+                                                            T_TYPE &_type );
     public:
       //! Defines all stages for BroadCast transactions
       enum t_stages { GETTING_SIZE,       //!< Size-up stage
@@ -171,10 +207,15 @@ namespace mpi
     public:
       //! Constructor, should not be used
       BroadCast() : CommBase(), stage(GETTING_SIZE), keep_going(true) {}
+      //! Constructor and Initializer
+      BroadCast   ( MPI::Intracomm *_comm )
+                : CommBase( _comm ), stage(GETTING_SIZE), keep_going(true) {}
       //! Copy Constructor
-      BroadCast( const BroadCast &_b ) : CommBase(_b), stage(_b.stage), keep_going(true) {}
+      BroadCast   ( const BroadCast &_b )
+                : CommBase(_b), stage(_b.stage), keep_going(true) {}
       //! Initialization Constructor, should be used in conjunction with mpi::main
-      BroadCast( const Base &_b ) : CommBase(_b), stage(GETTING_SIZE), keep_going(true) {}
+      BroadCast   ( const Base &_b )
+                : CommBase(_b), stage(GETTING_SIZE), keep_going(true) {}
       //! Destructor, destroy CommBase ineherited buffers
       virtual ~BroadCast() { destroy_buffers(); };
 
@@ -185,32 +226,63 @@ namespace mpi
       bool allocate_buffers( types::t_unsigned _root = ROOT_NODE );
 
       //! \brief Allows to pass data to this class
-      //! \details serialize() is used for sizing-up data, loading-up data, and then forwarding data
-      //! It is defined only for a few basic types: you need to "overload" it for your own use
-      //! \param _object object to be passed, make sure template function has been explicitely 
-      //!        defined for T_OBJET!! Otherwise, you'll get a linkage error ;)
-      template< class T_OBJECT > bool serialize( T_OBJECT& _object );
+      //! \details serialize() is used for sizing-up data, loading-up data, and
+      //!          then forwarding data It is defined only for a few basic
+      //!          types: you need to "overload" it for your own use
+      //! \param _object object to be passed, make sure template class has
+      //!                been explicitely defined for T_OBJET!! Otherwise,
+      //!                you'll get a linkage error ;)
+      template< class T_OBJECT > bool serialize( T_OBJECT& _object )
+        { return Object<T_OBJECT>(*this)( _object ); }
+      //! \brief Allows to pass constant data to this class
+      //! \details serialize() is used for sizing-up data, loading-up data, and
+      //!          then forwarding data It is defined only for a few basic
+      //!          types: you need to "overload" it for your own use
+      //! \param _object object to be passed, make sure template class has
+      //!                been explicitely defined for T_OBJET!! Otherwise,
+      //!                you'll get a linkage error ;)
+      template< class T_OBJECT > bool serialize( const T_OBJECT& _object )
+        { return Object<T_OBJECT>(*this)( _object ); }
       //! \brief Serialize function for iterator ranges.
       //! \details Range must be valid from _first to _last, excluding _last.
-      //! Furthermore a BroadCast::serialize() must be explicitely declared which
-      //! takes T_ITERATOR::value_type as an argument.
+      //!          Furthermore a BroadCast::serialize() must be explicitely
+      //!          declared which takes T_ITERATOR::value_type as an argument.
       //! \param _first object to be serialized
       //! \param _last object in range, will \em not be  serialized
-      template< class T_ITERATOR > bool serialize( T_ITERATOR _first, T_ITERATOR _last );
+      template< class T_POINTER > bool serialize( T_POINTER* _first,
+                                                  T_POINTER* _last )
+        { return Range<T_POINTER>(*this)( _first, _last ); }
+      //! \brief Serialize function for const iterator ranges.
+      //! \details Range must be valid from _first to _last, excluding _last.
+      //!          Furthermore a BroadCast::serialize() must be explicitely
+      //!          declared which takes T_ITERATOR::value_type as an argument.
+      //! \param _first object to be serialized
+      //! \param _last object in range, will \em not be  serialized
+      template< class T_POINTER > bool serialize( const T_POINTER* _first,
+                                                  const T_POINTER* _last )
+        { return Range<T_POINTER>(*this)( _first, _last ); }
+      //! \brief Serialize function for containers
+      //! \details serialize_container() does just that. Keeps track of size of
+      //!          container. Upon loading, container will be  resized
+      //! \param _cont to be serialized. Input and Output
+      template< class T_CONTAINER >
+      bool serialize_container ( T_CONTAINER &_cont )
+        { Container<T_CONTAINER>( *this )( _cont ); }
+      //! \brief Serialize function for constant containers
+      //! \details serialize_container() does just that. Keeps track of size of
+      //!          container. Upon loading, container will be  resized
+      //! \param _cont to be serialized. Input and Output
+      template< class T_CONTAINER >
+      bool serialize_container ( const T_CONTAINER &_cont )
+        { Container<T_CONTAINER>( *this )( _cont ); }
       //! Use this to go to next stage
       bool operator()( types::t_unsigned _root = ROOT_NODE );
       //! destorys buffers, and resets object to stage 0
       void reset() { destroy_buffers(); stage = GETTING_SIZE; keep_going = true; }
 
-      //! returns which stage we are at, can be usefull in definition of serialize functions
+      //! \brief returns which stage we are at, can be usefull in definition of
+      //!        serialize functions
       t_stages get_stage() const { return stage; } 
-
-      //! \brief Serialize function for containers
-      //! \details serialize_container() does just that. Keeps track of size of
-      //! container. Upon loading, container will be  resized
-      //! \param _cont to be serialized. Input and Output
-      template< class T_CONTAINER >
-      bool serialize_container ( T_CONTAINER &_cont );
 
 
       //! Point to Point transfer: Sends buffers to target. 
@@ -224,6 +296,7 @@ namespace mpi
       //! serialize objects
       template<class T_TYPE> bool operator_( T_TYPE &_type );
   };
+
 
 
   //! \brief Can be used to send gather data from all processes and then 
@@ -281,6 +354,9 @@ namespace mpi
     public:
       //! Constructor, don't use
       AllGather() : BroadCast(), all_sizes(NULL) {}
+      //! Constructor and Initializer
+      AllGather   ( MPI::Intracomm *_comm )
+                : BroadCast( _comm ), all_sizes(NULL) {}
       //! Copy Constructor
       AllGather( const AllGather &_b ) : BroadCast(_b), all_sizes(NULL) {}
       //! Initialization Constructor, use in conljunction with mpi::main
@@ -306,4 +382,5 @@ namespace mpi
 }
 
 #include "comm.impl.h"
+#include "serialize.h"
 #endif

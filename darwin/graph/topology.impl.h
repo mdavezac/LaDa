@@ -76,8 +76,8 @@ namespace GA
         // cows. The complete herd forms a ring
         // EXCEPTION CASES: 1. There are no cows in the herd.
         //                  2. There is only one cow in the herd.
-        std::vector<types::t_unsigned> :: const_iterator i_herd = herds.begin();
-        std::vector<types::t_unsigned> :: const_iterator i_herd_end = herds.end();
+        std::vector<types::t_int> :: const_iterator i_herd = herds.begin();
+        std::vector<types::t_int> :: const_iterator i_herd_end = herds.end();
         for(; i_herd != i_herd_end; ++i_herd, ++i_index )
           switch( *i_herd )
           {
@@ -133,14 +133,14 @@ namespace GA
  
         // At this point, we can construct the graph
         graph_comm =  comm->Create_graph( nnodes, indices, edges, true);
-        if( graph_comm = MPI::COMM_NULL ) type = t_Type::t_Type::FARMHAND;
+        if( graph_comm == MPI::COMM_NULL ) type = t_Type::t_Type::FARMHAND;
  
         // Now we can create the herds.
         // First we create the communicator between Farmer and Bulls.
         types::t_int color = MPI::UNDEFINED;
         if( rank() == 0 ) type = t_Type::FARMER;
         if( rank() <= pools ) color = 0;
-        farmer_comm = &comm->Split( color, rank() );
+        head_comm = comm->Split( color, rank() );
         // Now we create the communicator for the herd.
         color = MPI::UNDEFINED;
         if( rank() <= pools and rank() > 0 ) { color = rank(); type = t_Type::BULL; }
@@ -152,7 +152,7 @@ namespace GA
             color = i;
             type = t_Type::COW;
           }
-        herd_comm = &comm->Split( color, rank() );
+        pool_comm = comm->Split( color, rank() );
  
         return true;
       }    

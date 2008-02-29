@@ -506,7 +506,7 @@ namespace GA
       std::string className() const { return "Darwin::xTaboo"; }
 
       //! \brief returns true if \a _indiv is within allowed concentration range
-      bool operator()( const t_Individual& _indiv ) const;
+      bool operator()( const t_Individual& _indiv );
   };
 
 

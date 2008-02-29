@@ -38,13 +38,18 @@ namespace Fitness
   }
 #ifdef _MPI
   template<class T_QUANTITYTRAITS>
-  inline bool Scalar<T_QUANTITYTRAITS> :: broadcast( mpi::BroadCast &_bc )
+  bool Scalar<T_QUANTITYTRAITS> :: serialize( ::mpi::BroadCast &_bc ) 
   {
-    return     _bc.serialize( is_valid )
-           and t_QuantityTraits::broadcast( quantity, _bc );
+    return     _bc.serialize( is_valid )\
+           and t_QuantityTraits::serialize( quantity, _bc );
+  }
+  template<class T_QUANTITYTRAITS>
+  bool Scalar<T_QUANTITYTRAITS> :: serialize( ::mpi::BroadCast &_bc ) const
+  {
+    return     _bc.serialize( is_valid )\
+           and t_QuantityTraits::serialize( quantity, _bc );
   }
 #endif
-
 
 
 
@@ -144,15 +149,25 @@ namespace Fitness
     _node.SetAttribute("fitness", ostr.str().c_str() );
     return true;
   }
+
 #ifdef _MPI
   template<class T_QUANTITYTRAITS>
-  inline bool Vectorial<T_QUANTITYTRAITS> :: broadcast( mpi::BroadCast &_bc )
+  bool Vectorial<T_QUANTITYTRAITS> :: serialize( ::mpi::BroadCast &_bc ) 
   {
-    return     _bc.serialize( vec_is_valid )
-           and t_QuantityTraits::broadcast( vec_quantity, _bc )
-           and Vectorial<T_QUANTITYTRAITS>::t_ScalarFitness::broadcast( _bc );
+    return     _bc.serialize( vec_is_valid )\
+           and t_QuantityTraits::serialize( vec_quantity, _bc )\
+           and t_Base::serialize( _bc );
+  }
+  template<class T_QUANTITYTRAITS>
+  bool Vectorial<T_QUANTITYTRAITS> :: serialize( ::mpi::BroadCast &_bc ) const
+  {
+    return     _bc.serialize( vec_is_valid )\
+           and t_QuantityTraits::serialize( vec_quantity, _bc )\
+           and t_Base::serialize( _bc );
   }
 #endif
+
+
 
   template<class T_QUANTITYTRAITS>
   inline std::ostream & operator<<( std::ostream &_os,

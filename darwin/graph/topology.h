@@ -76,11 +76,11 @@ namespace GA
         friend class GA::Topology;
         protected: 
           //! If set, group of bull+cows of this process.
-          MPI::Intracomm *herd_comm;
+          MPI::Intracomm pool_comm;
           //! If set, group of farmer+bulls of this process.
-          MPI::Intracomm *farmer_comm;
+          MPI::Intracomm head_comm;
           //! Graph communicator created by a call to MPI graph routine.
-          MPI::Graphcomm  *graph_comm;
+          MPI::Graphcomm  graph_comm;
           //! The number of pools (e.g. herds) in the graph topology.
           types::t_unsigned pools;
           //! Type of the process
@@ -90,12 +90,11 @@ namespace GA
           //! \brief Constructor and Initializer.
           //! \details The MPI::WORLD_COMM is duplicated and the duplicated is
           //!          pointed to by ::mpi::Base::comm.
-          Topology() : ::mpi::Base::Base(), herd_comm(NULL), farmer_comm(NULL),
-                       graph_comm(NULL), pools(0), type(t_Type::FARMHAND)
+          Topology() : ::mpi::Base::Base(), pools(0), type(t_Type::FARMHAND)
              { comm = &MPI::COMM_WORLD.Clone(); }
           //! Copy Constructor.
           Topology   ( MPI::Intracomm &_comm )
-                   : ::mpi::Base::Base(_comm), herd_comm(NULL), farmer_comm(NULL),
+                   : ::mpi::Base::Base(_comm), pool_comm(NULL), head_comm(NULL),
                      graph_comm(NULL), pools(0), type(t_Type::FARMHAND)
             { comm = &_comm.Clone(); }
           //! Destructor
@@ -115,6 +114,11 @@ namespace GA
 
           //! Loads the number of pools
           bool Load( const TiXmlElement &_node );
+
+          //! Returns pointer to farmer+bull intracomm.
+          MPI::Intracomm* farmer_comm() { return &head_comm; }
+          //! Returns pointer to bull/cows intracomm.
+          MPI::Intracomm* herd_comm() { return &pool_comm; }
       
       };
 

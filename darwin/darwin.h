@@ -209,7 +209,7 @@ namespace GA
                   populate_style(RANDOM_POPULATE), continuator(NULL), history(NULL),
                   taboos(NULL), breeder_ops(NULL), breeder(NULL), replacement(NULL),
                   objective(NULL), store(NULL), evaluation(NULL), scaling(NULL),
-                  topology(__MPICODE( mpi::main ) ) {}
+                  topology(__MPICODE( ::mpi::main ) ) {}
       //! Destructor
       virtual ~Darwin ();
 

@@ -39,7 +39,7 @@ namespace mpi
     stage = COPYING_TO_HERE;
 
     // now broadcasts sizes
-    comm->Bcast( buffer_size, 3, UNSIGNED, _root );
+    comm->Bcast( buffer_size, 3, MPI::UNSIGNED, _root );
 
     if ( not( buffer_size[0] or buffer_size[1] or buffer_size[2] ) )
       return false;
@@ -93,7 +93,7 @@ broadcast_erase:
 
     // now broadcasts sizes
     all_sizes = new types::t_int[ Base::nproc * 3 ];
-    comm->Allgather( buffer_size, 3, UNSIGNED, all_sizes, 3, UNSIGNED );
+    comm->Allgather( buffer_size, 3, MPI::UNSIGNED, all_sizes, 3, MPI::UNSIGNED );
     buffer_size[0]=0; buffer_size[1]=0; buffer_size[2]=0;
     for( types::t_int i=0; i < Base::nproc; ++i)
     {
@@ -150,11 +150,11 @@ gather_erase:
       return true;
 
     if ( int_buff and buffer_size[0] )
-      comm->Bcast( int_buff, buffer_size[0], INT, _root );
+      comm->Bcast( int_buff, buffer_size[0], MPI::INT, _root );
     if ( char_buff and buffer_size[1] )
-      comm->Bcast( char_buff, buffer_size[1], CHAR, _root );
+      comm->Bcast( char_buff, buffer_size[1], MPI::CHAR, _root );
     if ( real_buff and buffer_size[2] )
-      comm->Bcast( real_buff, buffer_size[2], REAL, _root );
+      comm->Bcast( real_buff, buffer_size[2], MPI::DOUBLE, _root );
 
     stage = COPYING_FROM_HERE;
     cur_int_buff = int_buff;
@@ -176,11 +176,11 @@ gather_erase:
       return true;
 
     if ( int_buff and buffer_size[0] )
-      comm->Send( int_buff, buffer_size[0], INT, _target, TAG );
+      comm->Send( int_buff, buffer_size[0], MPI::INT, _target, TAG );
     if ( char_buff and buffer_size[1] )
-      comm->Send( char_buff, buffer_size[1], CHAR, _target, TAG );
+      comm->Send( char_buff, buffer_size[1], MPI::CHAR, _target, TAG );
     if ( real_buff and buffer_size[2] )
-      comm->Send( real_buff, buffer_size[2], REAL, _target, TAG );
+      comm->Send( real_buff, buffer_size[2], MPI::DOUBLE, _target, TAG );
 
     stage = COPYING_FROM_HERE;
     cur_int_buff = int_buff;
@@ -202,11 +202,11 @@ gather_erase:
       return true;
 
     if ( int_buff and buffer_size[0] )
-      comm->Send( int_buff, buffer_size[0], INT, _source, TAG );
+      comm->Send( int_buff, buffer_size[0], MPI::INT, _source, TAG );
     if ( char_buff and buffer_size[1] )
-      comm->Send( char_buff, buffer_size[1], CHAR, _source, TAG );
+      comm->Send( char_buff, buffer_size[1], MPI::CHAR, _source, TAG );
     if ( real_buff and buffer_size[2] )
-      comm->Send( real_buff, buffer_size[2], REAL, _source, TAG );
+      comm->Send( real_buff, buffer_size[2], MPI::REAL, _source, TAG );
 
     stage = COPYING_FROM_HERE;
     cur_int_buff = int_buff;
@@ -238,8 +238,8 @@ gather_erase:
       *displs=0;
       for( types::t_int i=1; i < Base::nproc; ++i )
         *(displs + i) = *(displs + i - 1) + *(all_sizes + 3*(i-1));
-      comm->Allgatherv( int_buff, *(all_sizes+3*Base::this_rank), INT, int_buff,
-                                  recvcounts, displs, INT );
+      comm->Allgatherv( int_buff, *(all_sizes+3*Base::this_rank), MPI::INT,
+                        int_buff, recvcounts, displs, MPI::INT );
     }
 
     if ( char_buff and buffer_size[1] )
@@ -249,8 +249,8 @@ gather_erase:
       *displs=0;
       for( types::t_int i=1; i < Base::nproc; ++i )
         *(displs + i) = *(displs + i - 1) + *(all_sizes + 3*(i-1) + 1);
-      comm->Allgatherv( char_buff, *(all_sizes+3*Base::this_rank+1), CHAR, char_buff,
-                                  recvcounts, displs, CHAR );
+      comm->Allgatherv( char_buff, *(all_sizes+3*Base::this_rank+1), MPI::CHAR,
+                        char_buff, recvcounts, displs, MPI::CHAR );
     }
     if ( real_buff and buffer_size[2] )
     {
@@ -259,8 +259,8 @@ gather_erase:
       *displs=0;
       for( types::t_int i=1; i < Base::nproc; ++i )
         *(displs + i) = *(displs + i - 1) + *(all_sizes + 3*(i-1) + 2);
-      comm->Allgatherv( real_buff, *(all_sizes+3*Base::this_rank+2), REAL, real_buff,
-                                  recvcounts, displs, REAL );
+      comm->Allgatherv( real_buff, *(all_sizes+3*Base::this_rank+2), MPI::DOUBLE,
+                        real_buff, recvcounts, displs, MPI::DOUBLE );
     }
     
     delete[] recvcounts;
@@ -270,421 +270,6 @@ gather_erase:
 
     return true;
   }
-
-
-  template<>
-  bool BroadCast :: serialize<types::t_int>( types::t_int &_int )
-  {
-    if( stage != GETTING_SIZE )
-    {
-      if ( end_int_buff - cur_int_buff < 1) 
-        return false;
-      ( stage == COPYING_TO_HERE ) ? 
-        *cur_int_buff = _int : _int = *cur_int_buff;
-      ++cur_int_buff; 
-      return true;
-    }
-
-    ++buffer_size[0]; 
-    return true;
-  }
-  template<>
-  bool BroadCast :: serialize<types::t_unsigned>( types::t_unsigned &_unsigned )
-  {
-    if( stage != GETTING_SIZE )
-    {
-      if ( end_int_buff - cur_int_buff < 1) 
-        return false;
-      ( stage == COPYING_TO_HERE ) ? 
-        *cur_int_buff = (types::t_int) _unsigned : _unsigned = std::abs(*cur_int_buff);
-      ++cur_int_buff; 
-      return true;
-    }
-
-    ++buffer_size[0]; 
-    return true;
-  }
-  template<>
-  bool BroadCast :: serialize<bool>( bool &_b )
-  {
-    if( stage != GETTING_SIZE )
-    {
-      if ( end_int_buff - cur_int_buff < 1) 
-        return false;
-      ( stage == COPYING_TO_HERE ) ? 
-        *cur_int_buff = ( _b ? 1 : 0 ) : _b =  ( *cur_int_buff == 1 ) ? 1 : 0;
-      ++cur_int_buff; 
-      return true;
-    }
-
-    ++buffer_size[0]; 
-    return true;
-  }
-  template<>
-  bool BroadCast :: serialize< std::vector<types::t_int> >
-                             ( std::vector<types::t_int> &_cont )
-  {
-    if( stage == COPYING_TO_HERE )
-    {
-      types::t_int n = _cont.size();
-      if ( end_int_buff - cur_int_buff < n+1 ) return false;
-      *cur_int_buff = n; ++cur_int_buff;
-      std::vector<types::t_int> :: iterator i_in = _cont.begin();
-      std::vector<types::t_int> :: iterator i_end = _cont.end();
-      for(; i_in != i_end; ++i_in, ++cur_real_buff )
-        *cur_int_buff = *i_in;
-
-      return true;
-    }
-    else if( stage == COPYING_FROM_HERE )
-    {
-      if ( end_int_buff - cur_int_buff < 1 ) return false;
-      types::t_int n = *cur_int_buff; ++cur_int_buff;
-      if ( end_int_buff - cur_int_buff < n ) return false;
-      _cont.resize(n);
-      std::vector<types::t_int> :: iterator i_in = _cont.begin();
-      std::vector<types::t_int> :: iterator i_end = _cont.end();
-      for(; i_in != i_end; ++i_in, ++cur_int_buff )
-        *i_in = *cur_int_buff;
-
-      return true;
-    }
-
-    buffer_size[0] += ( _cont.size() + 1);
-    return true;
-  }
-  template<>
-  bool BroadCast :: serialize< std::vector<types::t_unsigned> >
-                             ( std::vector<types::t_unsigned> &_cont )
-  {
-    if( stage == COPYING_TO_HERE )
-    {
-      types::t_int n = _cont.size();
-      if ( end_int_buff - cur_int_buff < n+1 ) return false;
-      *cur_int_buff = n; ++cur_int_buff;
-      std::vector<types::t_unsigned> :: iterator i_in = _cont.begin();
-      std::vector<types::t_unsigned> :: iterator i_end = _cont.end();
-      for(; i_in != i_end; ++i_in, ++cur_real_buff )
-        *cur_int_buff = *i_in;
-
-      return true;
-    }
-    else if( stage == COPYING_FROM_HERE )
-    {
-      if ( end_int_buff - cur_int_buff < 1 ) return false;
-      types::t_int n = *cur_int_buff; ++cur_int_buff;
-      if ( end_int_buff - cur_int_buff < n ) return false;
-      _cont.resize(n);
-      std::vector<types::t_unsigned> :: iterator i_in = _cont.begin();
-      std::vector<types::t_unsigned> :: iterator i_end = _cont.end();
-      for(; i_in != i_end; ++i_in, ++cur_int_buff )
-        *i_in = std::abs(*cur_int_buff);
-
-      return true;
-    }
-
-    buffer_size[0] += ( _cont.size() + 1);
-    return true;
-  }
-  template<>
-  bool BroadCast :: serialize< std::list<types::t_int> >
-                             ( std::list<types::t_int> &_cont )
-  {
-    if( stage == COPYING_TO_HERE )
-    {
-      types::t_int n = _cont.size();
-      if ( end_int_buff - cur_int_buff < n+1 ) return false;
-      *cur_int_buff = n; ++cur_int_buff;
-      std::list<types::t_int> :: iterator i_in = _cont.begin();
-      std::list<types::t_int> :: iterator i_end = _cont.end();
-      for(; i_in != i_end; ++i_in, ++cur_real_buff )
-        *cur_int_buff = *i_in;
-
-      return true;
-    }
-    else if( stage == COPYING_FROM_HERE )
-    {
-      if ( end_int_buff - cur_int_buff < 1 ) return false;
-      types::t_int n = *cur_int_buff; ++cur_int_buff;
-      if ( end_int_buff - cur_int_buff < n ) return false;
-      _cont.resize(n);
-      std::list<types::t_int> :: iterator i_in = _cont.begin();
-      std::list<types::t_int> :: iterator i_end = _cont.end();
-      for(; i_in != i_end; ++i_in, ++cur_int_buff )
-        *i_in = *cur_int_buff;
-
-      return true;
-    }
-
-    buffer_size[0] += ( _cont.size() + 1);
-    return true;
-  }
-  template<>
-  bool BroadCast :: serialize< std::list<types::t_unsigned> >
-                             ( std::list<types::t_unsigned> &_cont )
-  {
-    if( stage == COPYING_TO_HERE )
-    {
-      types::t_int n = _cont.size();
-      if ( end_int_buff - cur_int_buff < n+1 ) return false;
-      *cur_int_buff = n; ++cur_int_buff;
-      std::list<types::t_unsigned> :: iterator i_in = _cont.begin();
-      std::list<types::t_unsigned> :: iterator i_end = _cont.end();
-      for(; i_in != i_end; ++i_in, ++cur_real_buff )
-        *cur_int_buff = *i_in;
-
-      return true;
-    }
-    else if( stage == COPYING_FROM_HERE )
-    {
-      if ( end_int_buff - cur_int_buff < 1 ) return false;
-      types::t_int n = *cur_int_buff; ++cur_int_buff;
-      if ( end_int_buff - cur_int_buff < n ) return false;
-      _cont.resize(n);
-      std::list<types::t_unsigned> :: iterator i_in = _cont.begin();
-      std::list<types::t_unsigned> :: iterator i_end = _cont.end();
-      for(; i_in != i_end; ++i_in, ++cur_int_buff )
-        *i_in = std::abs(*cur_int_buff);
-
-      return true;
-    }
-
-    buffer_size[0] += ( _cont.size() + 1);
-    return true;
-  }
-
-  template<>
-  bool BroadCast :: serialize<std::string>( std::string &_str )
-  {
-    if( stage == GETTING_SIZE )
-    {
-      ++buffer_size[0];
-      buffer_size[1] += _str.size();
-      return true;
-    }
-    
-    if ( stage == COPYING_TO_HERE )
-    {
-      __DOASSERT( end_int_buff - cur_int_buff < 1,
-                  "Unexpected end of integer buffer\nCannot serialize string\n"; )
-      std::string::iterator i_str;
-      std::string::iterator i_str_end;
-      *cur_int_buff = _str.size();
-      ++cur_int_buff; 
-      if( _str.size() == 0 ) return true;
-      
-      i_str = _str.begin(); i_str_end = _str.end();
-      for (; i_str != i_str_end and cur_char_buff != end_char_buff; 
-            ++i_str, ++cur_char_buff )
-        *cur_char_buff = *i_str;
-      return i_str == i_str_end;
-    }
-
-    std::string::iterator i_str;
-    std::string::iterator i_str_end;
-    if( end_int_buff - cur_int_buff < 1) return false;
-    types::t_int size = *cur_int_buff; ++cur_int_buff; 
-    _str.resize( size );
-    i_str = _str.begin(); i_str_end = _str.end();
-    for (; i_str != i_str_end and cur_char_buff != end_char_buff; ++i_str, ++cur_char_buff )
-      *i_str =  *cur_char_buff;
-
-    return i_str == i_str_end;
-  }
-  template<>
-  bool BroadCast :: serialize<types::t_real>( types::t_real &_real )
-  {
-    if( stage != GETTING_SIZE )
-    {
-      if ( end_real_buff - cur_real_buff < 1 ) 
-        return false;
-      ( stage == COPYING_TO_HERE ) ? 
-        *cur_real_buff = _real : _real = *cur_real_buff;
-      ++cur_real_buff; 
-      return true;
-    }
-
-    ++buffer_size[2]; 
-    return true;
-  }
-  template<>
-  bool BroadCast :: serialize<types::t_int*>( types::t_int *_first, types::t_int *_last)
-  {
-    if( stage != GETTING_SIZE )
-    {
-      if ( stage == COPYING_TO_HERE )
-        for (; cur_int_buff != end_int_buff and _first != _last;
-             ++cur_int_buff, ++_first )
-         *cur_int_buff = *_first;
-      else
-        for (; cur_int_buff != end_int_buff and _first != _last;
-             ++cur_int_buff, ++_first )
-         *_first = *cur_int_buff;
-
-      return _first == _last;
-    }
-
-    buffer_size[0] += (_last - _first);
-    return true;
-  }
-  template<>
-  bool BroadCast :: serialize<types::t_real*>( types::t_real *_first, types::t_real *_last)
-  {
-    if( stage != GETTING_SIZE )
-    {
-      if ( stage == COPYING_TO_HERE )
-        for (; cur_real_buff != end_real_buff and _first != _last;
-             ++cur_real_buff, ++_first )
-         *cur_real_buff = *_first;
-      else
-        for (; cur_real_buff != end_real_buff and _first != _last;
-             ++cur_real_buff, ++_first )
-         *_first = *cur_real_buff;
-
-      return _first == _last;
-    }
-
-    buffer_size[2] += (_last - _first);
-    return true;
-  }
-  template<>
-  bool BroadCast :: serialize< std::vector<types::t_real> >
-                             ( std::vector<types::t_real> &_cont )
-  {
-    if( stage == COPYING_TO_HERE )
-    {
-      types::t_int n = _cont.size();
-      if (    end_int_buff - cur_int_buff < 1 
-           or end_real_buff - cur_real_buff < n ) return false;
-      *cur_int_buff = n; ++cur_int_buff;
-      std::vector<types::t_real> :: iterator i_in = _cont.begin();
-      std::vector<types::t_real> :: iterator i_end = _cont.end();
-      for(; i_in != i_end; ++i_in, ++cur_real_buff )
-        *cur_real_buff = *i_in;
-
-      return true;
-    }
-    else if( stage == COPYING_FROM_HERE )
-    {
-      if ( end_int_buff - cur_int_buff < 1 ) return false;
-      types::t_int n = *cur_int_buff; ++cur_int_buff;
-      if ( end_real_buff - cur_real_buff < n ) return false;
-      _cont.resize(n);
-      std::vector<types::t_real> :: iterator i_in = _cont.begin();
-      std::vector<types::t_real> :: iterator i_end = _cont.end();
-      for(; i_in != i_end; ++i_in, ++cur_real_buff )
-        *i_in = *cur_real_buff;
-
-      return true;
-    }
-
-    ++buffer_size[0];
-    buffer_size[2] += _cont.size();
-    return true;
-  }
-  template<>
-  bool BroadCast :: serialize< std::list<types::t_real> >
-                             ( std::list<types::t_real> &_cont )
-  {
-    if( stage == COPYING_TO_HERE )
-    {
-      types::t_int n = _cont.size();
-      if (    end_int_buff - cur_int_buff < 1 
-           or end_real_buff - cur_real_buff < n ) return false;
-      *cur_int_buff = n; ++cur_int_buff;
-      std::list<types::t_real> :: iterator i_in = _cont.begin();
-      std::list<types::t_real> :: iterator i_end = _cont.end();
-      for(; i_in != i_end; ++i_in, ++cur_real_buff )
-        *cur_real_buff = *i_in;
-
-      return true;
-    }
-    else if( stage == COPYING_FROM_HERE )
-    {
-      if ( end_int_buff - cur_int_buff < 1 ) return false;
-      types::t_int n = *cur_int_buff; ++cur_int_buff;
-      if ( end_real_buff - cur_real_buff < n ) return false;
-      _cont.resize(n);
-      std::list<types::t_real> :: iterator i_in = _cont.begin();
-      std::list<types::t_real> :: iterator i_end = _cont.end();
-      for(; i_in != i_end; ++i_in, ++cur_real_buff )
-        *i_in = *cur_real_buff;
-
-      return true;
-    }
-
-    ++buffer_size[0];
-    buffer_size[2] += _cont.size();
-    return true;
-  }
-
-  template<>
-  bool BroadCast :: serialize< atat::rVector3d >
-                             ( atat::rVector3d& _vec )
-  {
-    if( stage == COPYING_TO_HERE )
-    {
-      if ( end_real_buff - cur_real_buff < 3 ) return false;
-      *cur_real_buff = _vec[0]; ++cur_real_buff;
-      *cur_real_buff = _vec[1]; ++cur_real_buff;
-      *cur_real_buff = _vec[2]; ++cur_real_buff;
-
-      return true;
-    }
-    else if( stage == COPYING_FROM_HERE )
-    {
-      if ( end_real_buff - cur_real_buff < 3 ) return false;
-      _vec[0] = *cur_real_buff; ++cur_real_buff;
-      _vec[1] = *cur_real_buff; ++cur_real_buff;
-      _vec[2] = *cur_real_buff; ++cur_real_buff;
-
-      return true;
-    }
-
-    buffer_size[2] += 3;
-    return true;
-    
-  }
-
-  template<>
-  bool BroadCast :: serialize< atat::rMatrix3d >
-                             ( atat::rMatrix3d &_mat )
-  {
-    if( stage == COPYING_TO_HERE )
-    {
-      if ( end_real_buff - cur_real_buff < 9 ) return false;
-      *cur_real_buff = _mat(0,0); ++cur_real_buff;
-      *cur_real_buff = _mat(0,1); ++cur_real_buff;
-      *cur_real_buff = _mat(0,2); ++cur_real_buff;
-      *cur_real_buff = _mat(1,0); ++cur_real_buff;
-      *cur_real_buff = _mat(1,1); ++cur_real_buff;
-      *cur_real_buff = _mat(1,2); ++cur_real_buff;
-      *cur_real_buff = _mat(2,0); ++cur_real_buff;
-      *cur_real_buff = _mat(2,1); ++cur_real_buff;
-      *cur_real_buff = _mat(2,2); ++cur_real_buff;
-      return true;
-    }
-    if( stage == COPYING_FROM_HERE )
-    {
-      if ( end_real_buff - cur_real_buff < 9 ) return false;
-      _mat(0,0) = *cur_real_buff; ++cur_real_buff;
-      _mat(0,1) = *cur_real_buff; ++cur_real_buff;
-      _mat(0,2) = *cur_real_buff; ++cur_real_buff;
-      _mat(1,0) = *cur_real_buff; ++cur_real_buff;
-      _mat(1,1) = *cur_real_buff; ++cur_real_buff;
-      _mat(1,2) = *cur_real_buff; ++cur_real_buff;
-      _mat(2,0) = *cur_real_buff; ++cur_real_buff;
-      _mat(2,1) = *cur_real_buff; ++cur_real_buff;
-      _mat(2,2) = *cur_real_buff; ++cur_real_buff;
-
-      return true;
-    }
-
-    buffer_size[2] += 9;
-    return true;
-  }
-
-
 }
 
 #endif

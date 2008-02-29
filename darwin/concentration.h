@@ -46,10 +46,6 @@
 //! input as in the XML example above.
   class X_vs_y
   {
-#ifdef _MPI
-    //! allows the serialization of an X_vs_y object
-    friend bool mpi::BroadCast::serialize<X_vs_y>( X_vs_y & );
-#endif
     protected:
       types::t_real a; //!< Second order parameter, as in \f$a\cdot y^2\f$
       types::t_real b; //!< First order parameter, as in \f$b\cdot y\f$

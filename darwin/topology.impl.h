@@ -8,7 +8,7 @@ namespace GA
   bool Topology::Load( const TiXmlElement &_node, T_EVALUATOR &_eval )
   {
     __SERIALCODE( return true; )
-    __TRYMPICODE( graph = new mpi::Graph::Topology( comm );
+    __TRYMPICODE( graph = new mpi::Graph::Topology( *comm );
                   if( graph->Load( _node ) and graph->init() ) return true;
                   delete graph;
                   graph = NULL;,
@@ -133,25 +133,30 @@ namespace GA
   }
 
 
-  template <class T_GATRAITS> Breeder<T_GATRAITS>*
+  template <class T_GATRAITS> GA::Breeder<T_GATRAITS>*
     Topology :: breeder ( typename T_GATRAITS :: t_Evaluator &_eval )
     {
       typedef T_GATRAITS t_GATraits;
       typedef typename t_GATraits :: t_Individual t_Individual;
+      typedef GA::Breeder<T_GATRAITS> t_Return;
                  
-      __TRYCODE( __SERIALCODE( return new GA::Breeder<t_GATraits>; )
-                 __MPICODE( if( not graph ) return new GA::Breeder<t_GATraits>();
-                            if( graph->type == mpi::Graph::t_Type::FARMER )
-                              return new Breeder::Farm<t_GATraits>(graph);
-                            if( graph->type == mpi::Graph::t_Type::BULL )
-                              return new Breeder::Bull<t_GATraits>(graph)
-                            Breeder::Cow<t_GATraits > *breeder 
-                              = Breeder::Cow<t_GATraits >(graph);
-                            breeder->set( _eval );
-                            return breeder;
-                          ), 
-                 "Error while creating Breeders.\n" 
-               )
+      __TRYCODE(
+        __SERIALCODE( return new GA::Breeder<t_GATraits>; )
+        __MPICODE(
+           if( not graph ) return new GA::Breeder<t_GATraits>();
+           if( graph->type == mpi::Graph::t_Type::FARMER )
+             return (t_Return*) new mpi::Graph::Breeders::Farmer<t_GATraits>(graph);
+           if( graph->type == mpi::Graph::t_Type::BULL )
+             return (t_Return*) new mpi::Graph::Breeders::Bull<t_GATraits>(graph);
+           if( graph->type == mpi::Graph::t_Type::FARMHAND )
+             return (t_Return*) new mpi::Graph::Breeders::Farmhand<t_GATraits>;
+           mpi::Graph::Breeders::Cow<t_GATraits> *breeder 
+               = new mpi::Graph::Breeders::Cow<t_GATraits>(graph);
+           breeder->set( &_eval );
+           return (t_Return*) breeder;
+         ), 
+         "Error while creating Breeders.\n" 
+       )
     }
   template <class T_GATRAITS, template <class> class T_BASE > 
     T_BASE<T_GATRAITS>* Topology :: evaluation ()
@@ -166,15 +171,15 @@ namespace GA
 #else
          if( not graph ) return new t_Base();
          if( graph->type == mpi::Graph::t_Type::FARMER )
-           return new Evaluation::Farm<t_GATraits, T_BASE>(graph);
+           return (t_Base*) 
+                  new mpi::Graph::Evaluation::Farmer<t_GATraits, T_BASE>(graph);
          if( graph->type == mpi::Graph::t_Type::BULL )
-           return new Evaluation::Bull<t_GATraits, T_BASE>(graph);
+           return (t_Base*)
+                  new mpi::Graph::Evaluation::Bull<t_GATraits, T_BASE>(graph);
          if( graph->type == mpi::Graph::t_Type::FARMHAND )
-           return new Evaluation::FarmHand<t_GATraits, T_BASE>(graph);
-         Evaluation::Cow<t_GATraits, T_BASE> *evaluation; 
-         evaluation = Evaluation::Cow<t_GATraits, T_BASE>(graph);
-         evaluation->set( _eval );
-         return evaluation;
+           return (t_Base*)
+                  new mpi::Graph::Evaluation::Farmhand< T_BASE<t_GATraits> >;
+         return (t_Base*) new mpi::Graph::Evaluation::Cow<t_GATraits, T_BASE>(graph);
 #endif
       }
       __CATCHCODE(, "Error while creating Evaluation.\n" )
@@ -188,38 +193,42 @@ namespace GA
         typedef History<t_Individual> t_History;
         t_History *result = NULL;
         __SERIALCODE( result = new t_History; )
-        __TRYMPICODE( if( (not graph) ) result = new History< t_Individual >; 
-                      else if( graph->type == mpi::Graph::t_Type::FARMER ) 
-                        result = new t_History;
-                      else if( graph->type == mpi::Graph::t_Type::BULL )
-                        result = new mpi::Graph::BullHistory< t_GATraits >;,
-                      "Error while creating history.\n" 
-                    )
+        __TRYMPICODE(
+          if( (not graph) ) result = new t_History; 
+          else if( graph->type == mpi::Graph::t_Type::FARMER ) 
+            result = new t_History;
+          else if( graph->type == mpi::Graph::t_Type::BULL )
+            result = (t_History*) new mpi::Graph::BullHistory< t_GATraits >(graph);,
+          "Error while creating history.\n" 
+        )
         if( result ) _eostates.storeFunctor( static_cast<t_History*>(result) );
         return result;
       }
   template <class T_GATRAITS> typename GA::Objective::Types<T_GATRAITS>::Vector*
     Topology :: objective ( const TiXmlElement &_node )
     {
-      typedef typename GA::Objective::Types<T_GATRAITS> t_ObjectiveType;
-      __TRYCODE( 
-        __MPICODE( if (      graph and graph->type == mpi::Graph::t_Type::COW ) return NULL;
-                   else if ( graph and graph->type == mpi::Graph::t_Type::FARMHAND ) return NULL;
-                   else if ( graph and graph->type == mpi::Graph::t_Type::BULL )
-                       return new BullObjective( graph ); 
-                 )
+      typedef T_GATRAITS t_GATraits;
+      typedef typename GA::Objective::Types<t_GATraits> t_ObjectiveType;
+//     __TRYCODE( 
+//       __MPICODE(
+          if (      graph and graph->type == mpi::Graph::t_Type::COW ) return NULL;
+          else if ( graph and graph->type == mpi::Graph::t_Type::FARMHAND )
+            return NULL;
+          else if ( graph and graph->type == mpi::Graph::t_Type::BULL )
+            return new mpi::Graph::BullObjective<t_GATraits>( graph ); 
+//       )
         const TiXmlElement *child = _node.FirstChildElement("Objective");
         if ( not child ) child = _node.FirstChildElement("Method");
-        return t_ObjectiveType :: new_from_xml( *child );,
-        " Could not find Objective tag in input file.\n" 
-      )
+        return t_ObjectiveType :: new_from_xml( *child ); //,
+//       " Could not find Objective tag in input file.\n" 
+//     )
     }
 
   template <class T_GATRAITS> typename GA::Store::Base<T_GATRAITS>*
     Topology :: special_store ( typename T_GATRAITS :: t_Evaluator& _eval )
     {
       __TRYMPICODE( if( graph and graph->type == mpi::Graph::t_Type::BULL ) 
-                      return new BullStore( graph, _eval );,
+                      return new mpi::Graph::BullStore<T_GATRAITS>( _eval, graph );,
                     "Error while creating BullStore.\n"
                   )
       return NULL;
@@ -232,12 +241,16 @@ namespace GA
         typedef typename t_GATraits :: t_Individual t_Individual;
         __SERIALCODE( return NULL; )
         __TRYMPICODE( if( (not graph) ) return NULL;
-                      else if( graph->type == mpi::Graph::t_Type::FARMER ) return NULL;
-                      else if( graph->type == mpi::Graph::t_Type::COW ) return NULL;
-                      else if( graph->type == mpi::Graph::t_Type::FARMHAND ) return NULL;
-                      Taboo_Base<t_Individual> taboo 
-                        = new mpi::Graph::BullTaboo< t_GATraits >;
-                      _e.storeFunctor(taboo);,
+                      else if( graph->type == mpi::Graph::t_Type::FARMER )
+                        return NULL;
+                      else if( graph->type == mpi::Graph::t_Type::COW )
+                        return NULL;
+                      else if( graph->type == mpi::Graph::t_Type::FARMHAND )
+                        return NULL;
+                      mpi::Graph::BullTaboo< t_GATraits > *taboo 
+                        = new mpi::Graph::BullTaboo< t_GATraits >(graph);
+                      _e.storeFunctor(taboo);
+                      return (Taboo_Base<t_Individual>*) taboo;,
                       "Error while creating taboos.\n"
                     )
       }

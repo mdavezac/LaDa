@@ -3,18 +3,33 @@
 //
 namespace mpi
 {
-  inline CommBase::CommBase () : Base(), int_buff(NULL), end_int_buff(NULL), cur_int_buff(NULL),
-                                 char_buff(NULL), end_char_buff(NULL), cur_char_buff(NULL),
-                                 real_buff(NULL), end_real_buff(NULL), cur_real_buff(NULL)
+  inline CommBase::CommBase () : Base(), int_buff(NULL), end_int_buff(NULL),
+                                 cur_int_buff(NULL), char_buff(NULL),
+                                 end_char_buff(NULL), cur_char_buff(NULL),
+                                 real_buff(NULL), end_real_buff(NULL),
+                                 cur_real_buff(NULL)
+  { 
+    buffer_size[0] = 0;
+    buffer_size[1] = 0;
+    buffer_size[2] = 0;
+  }
+  inline CommBase::CommBase   ( MPI::Intracomm *_comm )
+                            : Base( _comm ), int_buff(NULL), end_int_buff(NULL),
+                              cur_int_buff(NULL), char_buff(NULL),
+                              end_char_buff(NULL), cur_char_buff(NULL),
+                              real_buff(NULL), end_real_buff(NULL),
+                              cur_real_buff(NULL)
   { 
     buffer_size[0] = 0;
     buffer_size[1] = 0;
     buffer_size[2] = 0;
   }
   inline CommBase::CommBase   ( const Base &_c ) 
-                            : Base(_c), int_buff(NULL), end_int_buff(NULL), cur_int_buff(NULL),
-                              char_buff(NULL), end_char_buff(NULL), cur_char_buff(NULL),
-                              real_buff(NULL), end_real_buff(NULL), cur_real_buff(NULL)
+                            : Base(), int_buff(NULL), end_int_buff(NULL),
+                              cur_int_buff(NULL), char_buff(NULL),
+                              end_char_buff(NULL), cur_char_buff(NULL),
+                              real_buff(NULL), end_real_buff(NULL),
+                              cur_real_buff(NULL)
   { 
     buffer_size[0] = 0;
     buffer_size[1] = 0;
@@ -41,21 +56,6 @@ namespace mpi
     int_buff = NULL;  end_int_buff = NULL;  cur_int_buff = NULL;  buffer_size[0] = 0;  
     real_buff = NULL; end_real_buff = NULL; cur_real_buff = NULL; buffer_size[1] = 0; 
     char_buff = NULL; end_char_buff = NULL; cur_char_buff = NULL; buffer_size[2] = 0; 
-  }
-
-  template< class T_CONTAINER >
-  bool BroadCast::serialize_container ( T_CONTAINER &_cont )
-  {
-    types::t_int n = _cont.size();
-    if ( not serialize( n ) ) return false;
-    if ( n == 0 ) return true;
-    if( stage == COPYING_FROM_HERE ) _cont.resize(n);
-    typename T_CONTAINER :: iterator i_ob = _cont.begin();
-    typename T_CONTAINER :: iterator i_ob_end = _cont.end();
-    for(; i_ob != i_ob_end; ++i_ob )
-      if( not serialize( *i_ob ) ) return false;
-  
-    return true;
   }
 
   template<class T_TYPE> inline bool BroadCast :: operator_( T_TYPE &_type )

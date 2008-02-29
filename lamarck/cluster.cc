@@ -105,28 +105,3 @@ namespace Ising_CE {
 
 } // namespace Ising_CE
 
-
-
-#ifdef _MPI
-
-namespace mpi
-{
-  template<>
-  bool BroadCast :: serialize<Ising_CE::Cluster>( Ising_CE::Cluster &_c )
-  {
-    if ( not serialize( _c.eci ) ) return false;
-    
-    types::t_int n = _c.vectors.size();
-    if( not serialize( n ) ) return false;
-    if ( stage == COPYING_FROM_HERE )
-      _c.vectors.resize(n);
-    std::vector<atat::rVector3d> :: iterator i_vec = _c.vectors.begin();
-    std::vector<atat::rVector3d> :: iterator i_vec_end = _c.vectors.end();
-    for(; i_vec != i_vec_end; ++i_vec )
-      if ( not serialize( i_vec->x, i_vec->x+3 ) ) return false;
-
-    return true;
-  }
-}
-
-#endif

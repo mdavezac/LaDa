@@ -293,5 +293,36 @@ template<class T_TYPE>
 
 } // namespace Ising_CE
 
+#ifdef _MPI
+#include <atat/serialize.h>
+namespace mpi
+{
+#define ___OBJECTCODE \
+  return     _this.serialize( _ob.pos ) \
+         and _this.serialize( _ob.type ) \
+         and _this.serialize( _ob.freeze ) \
+         and _this.serialize( _ob.site );
+#define ___TYPE__ Ising_CE::Atom_Type<types::t_real>
+  /** \ingroup MPI
+  * \brief Serializes an Ising_CE::Atom_Type< types::t_real >
+  */
+#include <mpi/serialize.impl.h>
+
+#define ___TYPE__ Ising_CE::Atom_Type<std::string>
+  /** \ingroup MPI
+  * \brief Serializes an Ising_CE::Atom_Type< std::string >
+  */
+#include <mpi/serialize.impl.h>
+
+#define ___TYPE__ Ising_CE::Atom_Type<types::t_complex>
+  /** \ingroup MPI
+  * \brief Serializes an Ising_CE::Atom_Type< types::t_complex >
+  */
+#include <mpi/serialize.impl.h>
+#undef ___OBJECTCODE
+
+}
+
+#endif 
   
 #endif

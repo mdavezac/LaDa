@@ -72,7 +72,7 @@ namespace GA
      gettimeofday(&tv,&tz);
      seeds.front() = tv.tv_usec;
    }
-   types::t_int seed = seeds.font();
+   types::t_int seed = seeds.front();
    comm->Bcast( &seed, 1, MPI::INT, 0 );
    rng.reseed( seed );
 #endif // _MPI

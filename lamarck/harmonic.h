@@ -22,6 +22,11 @@
 
 #include <mpi/mpi_object.h>
 
+//! \cond
+namespace Ising_CE { class Harmonic; }
+___DECLAREMPIOBJECT( Ising_CE::Harmonic )
+//! \endcond
+
 namespace Ising_CE 
 {
 
@@ -55,13 +60,11 @@ namespace Ising_CE
       bool x_lesser( const types::t_real _x ) const 
         { return Fuzzy::le(x, _x); }
     };
-
 #ifdef _MPI
     //! \cond
-    friend bool mpi::BroadCast::serialize<Linear_Interpolator> ( Linear_Interpolator& );
+    template< class _T > friend class mpi::BroadCast::Object;
     //! \endcond
 #endif
-    
 
     protected:
       //! A collection of Points between which to interpolate.
@@ -131,7 +134,7 @@ namespace Ising_CE
   {
 #ifdef _MPI
     //! \cond
-    friend bool mpi::BroadCast::serialize<Harmonic> ( Harmonic& );
+    friend class mpi::BroadCast::Object<Harmonic>;
     //! \endcond
 #endif
 
@@ -236,22 +239,39 @@ namespace Ising_CE
 } // namespace Ising_CE 
 
 #ifdef _MPI
-
 namespace mpi
 {
+#define ___OBJECTCODE \
+  return     _this.serialize( _ob.x ) \
+         and _this.serialize( _ob.y );
+#define ___TYPE__ Ising_CE::Linear_Interpolator::Point
   /** \ingroup MPI
-   *  \brief serializes an Ising_CE::Linear_Interpolator
-   *  \details This includes serializing all points ant their x and y members. */
-  template<>
-  bool BroadCast :: serialize<Ising_CE::Linear_Interpolator>
-                             ( Ising_CE::Linear_Interpolator &_l);
-  /** \ingroup MPI
-   *  \brief serializes an Ising_CE::Harmonic
-   *  \details This includes serializing the rank, the attenuation, and the
-   *           interpolation. */
-  template<>
-  bool BroadCast :: serialize<Ising_CE::Harmonic>( Ising_CE::Harmonic &_h );
-}
+  * \brief Serializes an Ising_CE::Linear_Interpolator::Point.
+  */
+#include <mpi/serialize.impl.h>
+#undef ___OBJECTCODE
 
+#define ___OBJECTCODE \
+  return     _this.serialize_container( _ob.points );
+#define ___TYPE__ Ising_CE::Linear_Interpolator
+  /** \ingroup MPI
+  * \brief Serializes an Ising_CE::Linear_Interpolator.
+  */
+#include <mpi/serialize.impl.h>
+#undef ___OBJECTCODE
+
+#define ___OBJECTCODE \
+  return     _this.serialize( _ob.rank ) \
+         and _this.serialize( _ob.attenuation ) \
+         and _this.serialize( _ob.interpolation );
+#define ___TYPE__ Ising_CE::Harmonic
+  /** \ingroup MPI
+  * \brief Serializes an Ising_CE::Linear_Interpolator.
+  */
+#include <mpi/serialize.impl.h>
+
+#undef ___OBJECTCODE
+}
 #endif
+
 #endif // _HARMONICS_H_

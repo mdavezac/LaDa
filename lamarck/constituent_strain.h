@@ -19,6 +19,10 @@
 #include "structure.h"
 #include "harmonic.h"
 
+//! \cond
+namespace Ising_CE{ class Constituent_Strain; }
+___DECLAREMPIOBJECT( Ising_CE::Constituent_Strain )
+//! \endcond
 
 namespace Ising_CE 
 {
@@ -52,7 +56,7 @@ namespace Ising_CE
   {
 #ifdef _MPI
     //! \cond
-    friend bool mpi::BroadCast::serialize<Constituent_Strain> ( Constituent_Strain& );
+    friend class mpi::BroadCast::Object<Constituent_Strain>;
     //! \endcond
 #endif
 
@@ -118,15 +122,21 @@ namespace Ising_CE
 
   };
 } // namespace Ising_CE
+
 #ifdef _MPI
-namespace mpi {
+namespace mpi
+{
+#define ___OBJECTCODE \
+  return     _this.serialize_container( _ob.r_vecs ) \
+         and _this.serialize_container( _ob.k_vecs ) \
+         and _this.serialize_container( _ob.harmonics );
+#define ___TYPE__ Ising_CE::Constituent_Strain
   /** \ingroup MPI
   * \brief Serializes an Ising_CE::Constituent_Strain.
-  * \details This includes serializing the real and reciprocal space vectors,
-  *          as well as the harmonics.
   */
-  template<>
-  bool BroadCast::serialize<Ising_CE::Constituent_Strain> ( Ising_CE::Constituent_Strain& );
+#include <mpi/serialize.impl.h>
+#undef ___OBJECTCODE
 }
 #endif
+
 #endif // _CONSTITTUENT_STRAIN_H_

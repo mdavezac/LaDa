@@ -375,24 +375,19 @@ namespace Vff
   {
     //! The type of the atom  
     typedef Ising_CE::Structure::t_Atom  t_Atom;
-#ifdef _MPI
-    /// \cond
-    friend bool mpi::BroadCast::serialize<Vff::Atomic_Functional> ( Vff::Atomic_Functional& );
-    /// \endcond
-#endif
-     const static types::t_real twos3;  //!<\f$2*\sqrt(3)\f$
-     const static types::t_real one16;  //!<\f$\frac{1}{16}\f$
-     const static types::t_real s3o160; //!<\f$\frac{\sqrt(3)}{8}\f$
-     const static types::t_real one640; //!<\f$\frac{1}{640}\f$
-     const static types::t_real three8; //!<\f$\frac{3}{8}\f$
-     const static types::t_real s33o8;  //!<\f$\frac{3}{8}\sqrt(3)\f$
-     const static types::t_real s33o16; //!<\f$\frac{3}{16}\sqrt(3)\f$
-     const static types::t_real thre16; //!<\f$\frac{3}{16}\f$
-     const static types::t_real thre32; //!<\f$\frac{3}{32}\f$
-     const static types::t_real s33128; //!<\f$\frac{3}{128}\sqrt(3)\f$
-     const static types::t_real s33256; //!<\f$\frac{3}{256}\sqrt(3)\f$
-     const static types::t_real no1280; //!< some number, but which?
-     const static types::t_real no2560; //!< some number, but which?
+    const static types::t_real twos3;  //!<\f$2*\sqrt(3)\f$
+    const static types::t_real one16;  //!<\f$\frac{1}{16}\f$
+    const static types::t_real s3o160; //!<\f$\frac{\sqrt(3)}{8}\f$
+    const static types::t_real one640; //!<\f$\frac{1}{640}\f$
+    const static types::t_real three8; //!<\f$\frac{3}{8}\f$
+    const static types::t_real s33o8;  //!<\f$\frac{3}{8}\sqrt(3)\f$
+    const static types::t_real s33o16; //!<\f$\frac{3}{16}\sqrt(3)\f$
+    const static types::t_real thre16; //!<\f$\frac{3}{16}\f$
+    const static types::t_real thre32; //!<\f$\frac{3}{32}\f$
+    const static types::t_real s33128; //!<\f$\frac{3}{128}\sqrt(3)\f$
+    const static types::t_real s33256; //!<\f$\frac{3}{256}\sqrt(3)\f$
+    const static types::t_real no1280; //!< some number, but which?
+    const static types::t_real no2560; //!< some number, but which?
 
     protected:
       std::string str;                  //!< atomic type as a string
@@ -406,14 +401,6 @@ namespace Vff
       std::vector< types::t_real > sigmas;   //!< equilibrium tetrahedral symmetry
       
     public:
-#ifdef _MPI
-      /** \ingroup MPI
-      *   \brief Constructor,  should only be used by serialize
-      *   \details Can't remember why anymore...
-      */ 
-      Atomic_Functional   ( Ising_CE::Structure &_struct ) 
-                        : structure(&_struct) {}  
-#endif
       //! \brief Constructor and Initializer
       //! \param _str atomic type as a string
       //! \param _struct structure to which Atomic_Center belongs
@@ -573,11 +560,6 @@ namespace Vff
     typedef Ising_CE::Structure::t_Atom  t_Atom;
     //! The type of the atom container
     typedef Ising_CE::Structure::t_Atoms t_Atoms;
-#ifdef _MPI
-    /// \cond
-    friend bool mpi::BroadCast::serialize<Vff::Functional> ( Vff::Functional& );
-    /// \endcond
-#endif
     public:
       typedef types::t_real t_Type;            //!< see Functional::Base
       typedef std::vector<t_Type> t_Container; //!< see Functional::Base
@@ -866,20 +848,4 @@ namespace Vff
 
 #endif
 
-#ifdef _MPI
-namespace mpi {
-  /** \ingroup MPI
-  * \brief Serializes Vff::Functional. Not sure this works anymore.
-  */
-  template<>
-  bool BroadCast::serialize<Vff::Functional> ( Vff::Functional& );
-  
-  /** \ingroup MPI
-  * \brief Serializes Vff::Atom_Functional, meaning all member variables
-  * without exception.
-  */
-  template<>
-  bool BroadCast::serialize<Vff::Atomic_Functional> ( Vff::Atomic_Functional& );
-}
-#endif
 #endif // _VFF_FUNCTIONAL_H_

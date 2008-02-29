@@ -343,7 +343,8 @@ namespace SingleSite
         { for( unsigned u=0; u < _D; ++u ) qcoefs[u] = _c.qcoefs[u]; }
       /** Returns \f$ \alpha_x | x_{\sigma_i} - x_{\sigma_j} | 
                       + \sum_{e=0}^{D}\alpha_e |q_{\sigma_i} - q_{\sigma_j} |  \f$ */
-      t_ScalarFitnessQuantity operator()( const t_Individual &_i1, const t_Individual &_i2) const;
+      t_ScalarFitnessQuantity operator()( const t_Individual &_i1,
+                                          const t_Individual &_i2) const;
       //! Returns "SingleSite::Distance"
       std::string what_is() const;
 
@@ -369,20 +370,18 @@ namespace SingleSite
 #include "single_site.impl.h"
 
 #ifdef _MPI
-#include "mpi/mpi_object.h"
+
 namespace mpi
 {
+#define ___OBJECTCODE \
+  return     _ob.serialize( _this );
+#define ___TYPE__ SingleSite::Object
   /** \ingroup MPI
-   *  \brief Serializes a SingleSite::Object.
-   *  \details Calls mpi::Broadcast::serialize( BitString::Object&)
-   */
-  template<>
-  inline bool mpi::BroadCast::serialize< SingleSite::Object >
-                                       ( SingleSite::Object & _object )
-  {
-    return serialize( _object.bitstring );
-  }
+  * \brief Serializes a SingleSite::Object **/
+#include <mpi/serialize.impl.h>
+#undef ___OBJECTCODE
 }
+
 #endif
 
-#endif // _TWOSITES_OBJECT_H_
+#endif // _SINGLESITES_H_

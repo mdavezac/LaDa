@@ -10,14 +10,10 @@
 
 #ifdef _MPI
 
-#include <list>
-#include <pair>
-
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
 #include <darwin/evaluator.h>
-#include <darwin/comm.h>
 
 namespace GA
 {
@@ -54,27 +50,29 @@ namespace GA
         {
           public:
             //! all %GA traits
-            typedef typename T_GATRAITS t_GATraits;
+            typedef T_GATRAITS t_GATraits;
+            //! type of an individual.
+            typedef typename t_GATraits::t_Individual             t_Individual; 
     
           protected:
             //! This class type 
-            typedef Farmer<t_GATraits> t_This;
-            //! all individual traits
-            typedef typename t_GATraits::t_IndivTraits t_IndivTraits;
-            //! type of an individual
-            typedef typename t_GATraits::t_Individual  t_Individual; 
-            //! type of the population
-            typedef typename t_GATraits::t_Population  t_Population; 
-            //! Type of the history
-            typedef GA::History<t_Individual> t_History;
-            //! Communication base class
-            typedef Comm::Farmer< Farmer<T_BASE> > t_CommBase;
+            typedef Farmer<t_GATraits>                            t_This;
+            //! all individual traits.
+            typedef typename t_GATraits::t_IndivTraits            t_IndivTraits;
+            //! type of the population.
+            typedef typename t_GATraits::t_Population             t_Population; 
+            //! Type of the lamarckian traits, as declared in the base class.
+            typedef typename t_GATraits :: t_VA_Traits            t_VA_Traits;
+            //! Type of the lamarckian gradients, as declared in the base class.
+            typedef typename t_VA_Traits :: t_QuantityGradients   t_QuantityGradients;
+            //! Type of the history.
+            typedef GA::History<t_Individual>                     t_History;
             //! first holds pointer, second holds assigned proc.
-            typedef std::pair< t_Individual*, types::t_int > t_Unknown;
+            typedef std::pair< t_Individual*, types::t_int >      t_Unknown;
             //! Container of individuals needing evaluation.
-            typedef std::list< t_Unknown > t_Unknowns;
+            typedef std::list< t_Unknown >                        t_Unknowns;
             //! Base class type
-            typedef GA::Evaluator<t_Individual> t_Base;
+            typedef GA::Evaluator<t_Individual>                   t_Base;
     
           protected:
             t_Unknowns unknowns;
@@ -87,7 +85,10 @@ namespace GA
 
             //! Shoves individual which need evaluating in a list.
             void evaluate() 
-             { unknowns.push_back( t_Unknown( &Modifier::innermost(i_indiv), -1 ) ); }
+             { unknowns.push_back( t_Unknown( t_Base::current_individual, -1 ) ); }
+
+            //! Returns true as long a Farmer::unknowns is not empty;
+            bool notdone() const { return not unknowns.empty(); }
 
             //! Returns next unknown to evaluate.
             t_Individual* onWait( types::t_unsigned _bull );
@@ -98,7 +99,8 @@ namespace GA
             void evaluate_with_gradient( t_QuantityGradients& _grad )
               { __THROW_ERROR( "Should not be called.\n" ) }
             //! Should not be called: throws.
-            void evaluate_one_gradient( t_QuantityGradients& _grad, types::t_unsigned _pos) 
+            void evaluate_one_gradient( t_QuantityGradients& _grad,
+                                        types::t_unsigned _pos) 
               { __THROW_ERROR( "Should not be called.\n" ) }
         };
     
@@ -106,35 +108,35 @@ namespace GA
         //! \details It catches the evaluation calls and first broadcasts the
         //!          approapriate information to the bulls.
         template<class T_GATRAITS>
-        class Bull : public GA::Evaluator< typename T_GATRAITS :: t_Evaluator >
+        class Bull : public GA::Evaluator< typename T_GATRAITS :: t_Individual >,
+                     private Comm::Bull< T_GATRAITS, Bull<T_GATRAITS > >
         {
           public:
             //! all %GA traits
-            typedef typename T_GATRAITS t_GATraits;
+            typedef T_GATRAITS t_GATraits;
+            //! type of an individual
+            typedef typename t_GATraits::t_Individual           t_Individual; 
     
           protected:
             //! This class type 
-            typedef Bull<t_GATraits> t_This;
+            typedef Bull<t_GATraits>                            t_This;
+            //! all individual traits.
+            typedef typename t_GATraits::t_IndivTraits          t_IndivTraits;
             //! Base class type
-            typedef GA::Evaluator<typename t_GATraits :: t_Evaluator> t_Base;
-            //! type of an individual
-            typedef typename t_Base::t_Individual  t_Individual; 
-            //! all individual traits
-            typedef typename t_Individual::t_IndivTraits t_IndivTraits;
+            typedef GA::Evaluator<t_Individual>                 t_Base;
+            //! Communication base class type
+            typedef Comm::Bull<t_GATraits, t_This>              t_CommBase;
             //! type of the population
-            typedef typename t_GATraits::t_Population  t_Population; 
-            //! Base class type.
-            typedef Base<T_GATRAITS> t_Base;
-            //! Base class type.
-            typedef Base<T_GATRAITS> t_Base;
-            //! Communication base class
-            typedef Comm::Bull< T_GATRAITS, Farmer> t_CommBase;
-    
+            typedef typename t_GATraits::t_Population           t_Population; 
+            //! Type of the lamarckian traits, as declared in the base class
+            typedef typename t_GATraits :: t_VA_Traits          t_VA_Traits;
+            //! Type of the lamarckian gradients, as declared in the base class
+            typedef typename t_VA_Traits :: t_QuantityGradients t_QuantityGradients;
     
     
           public:
             //! Constructor.
-            Bull () : t_Base() {}
+            Bull ( Topology *_topo ) : t_Base(), t_CommBase( _topo ) {}
             //! Copy Constructor
             Bull ( const t_This &_c ) : t_Base( _c ) {}
     
@@ -145,7 +147,8 @@ namespace GA
             //! Commands herd to perform an evaluation with a gradient evaluation.
             void evaluate_with_gradient( t_QuantityGradients& _grad );
             //! Commands herd to perform the evaluation of one gradient.
-            void evaluate_one_gradient( t_QuantityGradients& _grad, types::t_unsigned _pos);
+            void evaluate_one_gradient( t_QuantityGradients& _grad,
+                                        types::t_unsigned _pos);
        
             //! The class name. EO required
             virtual std::string className() const
@@ -159,4 +162,5 @@ namespace GA
 
 #include "evaluator.impl.h"
 
+#endif
 #endif
