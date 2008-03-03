@@ -209,19 +209,19 @@ namespace GA
     {
       typedef T_GATRAITS t_GATraits;
       typedef typename GA::Objective::Types<t_GATraits> t_ObjectiveType;
-//     __TRYCODE( 
-//       __MPICODE(
-          if (      graph and graph->type == mpi::Graph::t_Type::COW ) return NULL;
-          else if ( graph and graph->type == mpi::Graph::t_Type::FARMHAND )
-            return NULL;
-          else if ( graph and graph->type == mpi::Graph::t_Type::BULL )
-            return new mpi::Graph::BullObjective<t_GATraits>( graph ); 
-//       )
+      __TRYCODE( 
+        __MPICODE(
+         if (      graph and graph->type == mpi::Graph::t_Type::COW ) return NULL;
+         else if ( graph and graph->type == mpi::Graph::t_Type::FARMHAND )
+           return NULL;
+         else if ( graph and graph->type == mpi::Graph::t_Type::BULL )
+           return new mpi::Graph::BullObjective<t_GATraits>( graph ); 
+        )
         const TiXmlElement *child = _node.FirstChildElement("Objective");
         if ( not child ) child = _node.FirstChildElement("Method");
-        return t_ObjectiveType :: new_from_xml( *child ); //,
-//       " Could not find Objective tag in input file.\n" 
-//     )
+        return t_ObjectiveType :: new_from_xml( *child );,
+        " Could not find Objective tag in input file.\n" 
+      )
     }
 
   template <class T_GATRAITS> typename GA::Store::Base<T_GATRAITS>*

@@ -312,8 +312,11 @@ namespace Traits
 }
 
 
+#ifdef _MPI
 namespace mpi
 {
+  /** \ingroup MPI
+   *  Point to point communication of quantity \a _q. */
   template< class T_QUANTITY >
   void send_quantity( types::t_unsigned _bull,
                       const T_QUANTITY &_q, MPI::Intracomm *_comm)
@@ -327,6 +330,8 @@ namespace mpi
     bc.send_ptp( _bull );
   }
 
+  /** \ingroup MPI
+   *  Point to point communication of quantity \a _q. */
   template< class T_QUANTITY >
   void receive_quantity( types::t_unsigned _bull,
                          T_QUANTITY &_q, MPI::Intracomm *_comm)
@@ -341,5 +346,6 @@ namespace mpi
     t_QuantityTraits :: serialize(_q, bc );
   }
 }
+#endif
 
 #endif

@@ -8,6 +8,8 @@
 #include <config.h>
 #endif
 
+#include <darwin/evaluation.h>
+
 #ifdef _MPI
 
 #include <opt/types.h>

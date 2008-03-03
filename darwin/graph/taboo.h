@@ -8,12 +8,13 @@
 #include <config.h>
 #endif
 
+#include <darwin/taboos.h>
+
 #ifdef _MPI
 
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
-#include <darwin/taboos.h>
 #include "graph/comm.h"
 
 namespace GA

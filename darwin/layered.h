@@ -415,7 +415,7 @@ namespace Layered
       bool Load( const TiXmlElement &_node );
 
       //! Returns true of the individual \a _indiv is taboo. Eg finds a heavy layer.
-      bool operator()( const t_Individual &_indiv ) const;
+      bool operator()( const t_Individual &_indiv );
   };
 
 

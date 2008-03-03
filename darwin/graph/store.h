@@ -8,10 +8,14 @@
 #include <config.h>
 #endif
 
+#include <darwin/store.h>
+
+#ifdef _MPI
+
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
-#include <darwin/store.h>
+
 #include "comm.h"
 
 namespace GA
@@ -76,4 +80,5 @@ namespace GA
   } // namespace mpi
 } // namespace GA
 
+#endif
 #endif

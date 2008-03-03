@@ -8,12 +8,13 @@
 #include <config.h>
 #endif
 
+#include <darwin/breeder.h>
+
 #ifdef _MPI
 
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
-#include <darwin/breeder.h>
 #include "comm.h"
 
 namespace GA

@@ -15,7 +15,7 @@
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
 
-#include "graph/topology.h"
+#include "graph/graph.h"
 #include "graph/objective.h"
 #include "graph/evaluation.h"
 #include "graph/history.h"

@@ -15,21 +15,6 @@
 #include <opt/modifiers.h>
 #include "base.h"
 
-#ifdef _MPI
-#define ___DECLAREMPIOBJECT( name )\
- namespace mpi \
- { \
-   template<> class BroadCast::Object< name >;\
- }
-#define ___FRIENDMPIOBJECT( name )\
-  friend class mpi::BroadCast::Object< name >;
-#else
-#define  ___DECLAREMPIOBJECT( name )
-#define ___MAKEOBJECTFRIEND( name )
-#endif
-
-
-
 
 
 namespace mpi

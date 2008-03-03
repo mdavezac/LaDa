@@ -8,6 +8,8 @@
 #include <config.h>
 #endif
 
+#include <darwin/objective.h>
+
 #ifdef _MPI
 
 #include <list>
@@ -16,7 +18,7 @@
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
-#include <darwin/objective.h>
+
 #include "comm.h"
 
 namespace GA

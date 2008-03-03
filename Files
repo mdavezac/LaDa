@@ -7,7 +7,11 @@ ATAT_H  = findsym.h  integer.h  xtalutil.h \
 	  linklist.h  machdep.h  misc.h  vectmac.h  
 
 
-DARWIN_LIB_CC = concentration.cc debug.cc topology.cc graph/topology.cc
+DARWIN_LIB_CC = concentration.cc debug.cc topology.cc 
+if DOMPI
+  DARWIN_LIB_CC += graph/graph.cc
+endif
+ 
 DARWIN_LIB_IMPL_H = darwin.impl.h  evaluation.impl.h individual.impl.h \
 	            scaling.impl.h store.impl.h  fitness.impl.h taboos.impl.h \
                     objective.impl.h bitstring.impl.h gaoperators.impl.h \

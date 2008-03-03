@@ -18,6 +18,10 @@
 #define __SERIALCODE(code) code
 #define __MPISEQUENTIAL(code) 
 #define __MPISERIALCODE(coda, codb) codb
+
+// mpi::Broadcast macros
+#define  ___DECLAREMPIOBJECT( name )
+#define ___FRIENDMPIOBJECT( name )
 #else
 #include <opt/debug.h>
 #define __MPICODE(code) code
@@ -40,5 +44,14 @@
       ::mpi::main.barrier();\
     }
 #define __MPISERIALCODE(coda, codb) coda
+
+// mpi::Broadcast macros
+#define ___DECLAREMPIOBJECT( name )\
+ namespace mpi \
+ { \
+   template<> class BroadCast::Object< name >;\
+ }
+#define ___FRIENDMPIOBJECT( name )\
+  friend class mpi::BroadCast::Object< name >;
 #endif
 #endif

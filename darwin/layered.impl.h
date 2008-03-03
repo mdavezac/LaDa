@@ -636,7 +636,7 @@ errorout:
 
 
   template< class T_INDIVIDUAL >
-  bool Taboo<T_INDIVIDUAL> :: operator() ( const t_Individual &_indiv ) const
+  bool Taboo<T_INDIVIDUAL> :: operator() ( const t_Individual &_indiv ) 
   {
     std::vector<types::t_int> :: const_iterator i_site = sites.begin();
     std::vector<types::t_int> :: const_iterator i_site_end = sites.end();
