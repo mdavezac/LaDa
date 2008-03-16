@@ -10,16 +10,17 @@
 
 #ifdef _MPI
 
+#include <tinyxml/tinyxml.h>
+
 #include <opt/types.h>
 #include <opt/debug.h>
+#include <print/stdout.h>
 #include <mpi/mpi_object.h>
 
 namespace GA
 {
-  //! \cond
-  class Topology; // declared in darwin/topology.h
-  //! \endcond 
-  
+  class Topology; 
+
   namespace mpi 
   {
     //! \brief Graph topology.
@@ -90,12 +91,15 @@ namespace GA
           //! \brief Constructor and Initializer.
           //! \details The MPI::WORLD_COMM is duplicated and the duplicated is
           //!          pointed to by ::mpi::Base::comm.
-          Topology() : ::mpi::Base::Base(), pools(0), type(t_Type::FARMHAND)
+          Topology() : ::mpi::Base::Base(), pool_comm(MPI::COMM_NULL), 
+                       head_comm(MPI::COMM_NULL), graph_comm(MPI::COMM_NULL), 
+                       pools(0), type(t_Type::FARMHAND)
              { comm = &MPI::COMM_WORLD.Clone(); }
           //! Copy Constructor.
           Topology   ( MPI::Intracomm &_comm )
-                   : ::mpi::Base::Base(_comm), pool_comm(NULL), head_comm(NULL),
-                     graph_comm(NULL), pools(0), type(t_Type::FARMHAND)
+                   : ::mpi::Base::Base(_comm), pool_comm(MPI::COMM_NULL), 
+                     head_comm(MPI::COMM_NULL), graph_comm(MPI::COMM_NULL), 
+                     pools(0), type(t_Type::FARMHAND)
             { comm = &_comm.Clone(); }
           //! Destructor
           ~Topology();
@@ -128,7 +132,7 @@ namespace GA
   } // namespace mpi
 } // namespace GA
 
-#include "topology.impl.h"
+#include "graph.impl.h"
 
 #endif
 #endif
