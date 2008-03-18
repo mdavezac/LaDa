@@ -17,16 +17,25 @@ AC_ARG_ENABLE(all,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-all) ;;
      esac],[enall=true])
 
-AC_ARG_ENABLE(all,
-     [  --enable-forcempi                  Forces mpi to be on],
+AC_ARG_ENABLE(force-mpi,
+     [  --enable-force-mpi             Forces mpi to be on],
      [case "${enableval}" in
-       yes) enall=true ;;
-       no)  enall=false ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-all) ;;
-     esac],[forcempi=false])
+       yes) force_mpi=true ;;
+       no)  force_mpi=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-force-mpi) ;;
+     esac],[force_mpi=false])
+AC_ARG_ENABLE(mpi,
+     [  --enable-mpi                  Turn on mpi],
+     [case "${enableval}" in
+       yes) mpi=true ;;
+       no)  mpi=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-mpi) ;;
+     esac],[mpi=$force_mpi])
+AH_TEMPLATE([_MPI])
 
 AC_ARG_ENABLE(fortran,
-     [  --enable-fortran              Turn on fortran minimization. Incompatible with gsl/nag.],
+     [  --enable-fortran              Turn on fortran minimization.
+                                Incompatible with gsl/nag.],
      [case "${enableval}" in
        yes) fortran=true ;;
        no)  fortran=false ;;
@@ -34,7 +43,8 @@ AC_ARG_ENABLE(fortran,
      esac],[fortran=false])
 
 AC_ARG_ENABLE(nag,
-     [  --enable-nag              Turn on NAG minimization. Incompatible with gsl/fortran],
+     [  --enable-nag                  Turn on NAG minimization.
+                                Incompatible with gsl/fortran],
      [case "${enableval}" in
        yes) nag=true ;;
        no)  nag=false ;;
@@ -114,15 +124,6 @@ AC_ARG_ENABLE(debug,
      esac],[debug=true])
 AH_TEMPLATE([_PRINT_ALL_PROCS])
 
-AC_ARG_ENABLE(mpi,
-     [  --enable-mpi                  Turn on mpi],
-     [case "${enableval}" in
-       yes) mpi=true ;;
-       no)  mpi=false ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-mpi) ;;
-     esac],[mpi=false])
-AH_TEMPLATE([_MPI])
-
 AC_ARG_ENABLE(nolaunch,
      [  --enable-nolaunch             Runs fake pescan/darwin],
      [case "${enableval}" in
@@ -134,6 +135,12 @@ AH_TEMPLATE([_NOLAUNCH])
 if test x$nolaunch = xtrue; then
   AC_DEFINE([_NOLAUNCH],[],[])
 fi
+
+AC_ARG_ENABLE(iaga-dir,
+              [  --enable-iaga-dir=?  specifies the base nanopse
+                                directory, eg $HOME/usr/src/nanopse ],
+              [ iaga_dir=${enableval} ] )
+
 
 # enables vff and pescan for GA
 if test x$bandgapopt = xtrue || test x$molecularity = xtrue; then
@@ -196,6 +203,9 @@ fi
 if test x$lapack = xtrue; then
   fortrancompiler=true
 fi
+if test $pescan = true; then
+  fortrancompiler=true;
+fi
 if test x$fortrancompiler = xtrue; then
   AC_PROG_FC
   NREL_AC_PROG_FCPP
@@ -206,6 +216,21 @@ fi
 if test x$fortran = xtrue; then
   AC_DEFINE([_DOFORTRAN],[],[])
 fi
+
+AH_TEMPLATE([_DIRECTIAGA])
+direct_iaga=false;
+if test "x$pescan$mpi" = "xtruetrue"; then
+  if test "x$iaga_dir" = "x" ; then
+    direct_iaga=false;
+  else
+    direct_iaga=true;
+    FC_IAGA_FLAGS="$FCFLAGS -J$iaga_dir/pescan/lib -J$iaga_dir/genpot/lib"
+    LD_IAGA_FLAGS="-L$iaga_dir/pescan/lib -lpescan -L$iaga_dir/genpot/lib -lgenpot "
+    AC_DEFINE([_DIRECTIAGA],[1],[])
+  fi
+fi
+AC_SUBST(LD_IAGA_FLAGS )
+AC_SUBST(FC_IAGA_FLAGS )
 
 AX_COMPILER_VENDOR
 
@@ -247,11 +272,8 @@ AC_SUBST(CPP_DEBUG_FLAGS)
 
 
 #  MPI libs
-if test $forcempi = true; then
-  mpi=true
-fi
 if test x$mpi = xtrue; then
-  if test $CXX = mpic++ || test $CXX = mpiCC || test $forcempi=true; then
+  if test $CXX = mpic++ || test $CXX = mpiCC || test $force_mpi=true; then
     AC_DEFINE([_MPI],[1],[])
     MPI_ADDLIB="../mpi/libmpiobject.la"
     MPI_CFLAGS="$MPI_CFLAGS -D _OPENMPI_MPI_"
@@ -300,6 +322,7 @@ AM_CONDITIONAL(DOEMASSOPT, test x$emassopt = xtrue)
 AM_CONDITIONAL(DOFORTRAN, test x$fortran = xtrue)
 AM_CONDITIONAL(DOGSL, test x$gsl = xtrue)
 AM_CONDITIONAL(DONAG, test x$nag = xtrue)
+AM_CONDITIONAL(DODIRECTIAGA, test x$direct_iaga = xtrue)
 
 
 #  eo libs iff galib is enabled 
@@ -365,8 +388,12 @@ fi
 if test $vff = true; then
   echo " _ vff functional ";
 fi
-if test $pescan = true; then
-  echo " _ interface to nanopse/pescan functional ";
+if test $pescan$direct_iaga = truefalse; then
+  echo " _ interface to nanopse/pescan functional as external program. ";
+fi
+if test $pescan$direct_iaga = truetrue; then
+  echo " _ interface to nanopse/pescan functional as external library. ";
+  echo "   iaga base directory = $iaga_dir ";
 fi
 if test x$emass = xtrue; then
   echo " _ Effective Electronic Mass calculations for ternary (100) uperlattices" 

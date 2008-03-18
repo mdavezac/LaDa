@@ -108,8 +108,12 @@ namespace mpi
       //! \param _bool  bool value to be tested for true across all procs,
       //!             is input and output
       bool all_xor_all( bool &_bool) const;
-      //! Sets the commiunication handle
+      //! Sets the commiunication handle.
       void set( MPI::Intracomm *_comm );
+      //! Gets the commiunication handle.
+      MPI::Intracomm* get() { return comm; }
+      //! Gets the commiunication handle, constant version.
+      const MPI::Intracomm* get() const { return comm; }
   };
 
   //! \brief Handles creation and destruction of mpi aspect

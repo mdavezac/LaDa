@@ -18,6 +18,6 @@ system "ln -s ../../../pescan_interface/escan " if ( not -e "escan" );
 
 print "$prefix ./escan -i ../input.xml >& stdout \n";
 
-system "bandgap_opt" if ( -e "escan" );
+system "$prefix ./escan -i ../input.xml >& stdout" if ( -e "escan" );
 chdir "..";
 

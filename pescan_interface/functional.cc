@@ -39,9 +39,6 @@ namespace Pescan
 
     std::ostringstream sstr;
     sstr << "cp " << atom_input << " ";
-#ifndef _NOLAUNCH
-    sstr <<  genpot.launch << " ";
-#endif
     std::vector<std::string> :: const_iterator i_str = genpot.pseudos.begin();
     std::vector<std::string> :: const_iterator i_str_end = genpot.pseudos.end();
     for(; i_str != i_str_end; ++i_str)
@@ -53,13 +50,8 @@ namespace Pescan
     sstr.str("");
     sstr << "cd " << dirname << "; ./" << Print::StripDir(genpot.launch);
 #ifndef _NOLAUNCH
-#ifndef _DIRECTIAGA
-    system(sstr.str().c_str());
-#else
-    int __rank = comm->rank();
-    FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( (int*) comm->get(), &__rank );
+    FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( );
     FC_FUNC(getvlarg, GETVLARG)();
-#endif
 #endif
   }
   types::t_real Interface :: launch_pescan()

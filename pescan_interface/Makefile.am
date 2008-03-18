@@ -7,16 +7,13 @@ if NOLAUNCH
   AM_LDFLAGS  += @EO_LIBS@
 endif    
 
-fortranLDFLAGS = 
-fortranLDADD =
-gslCPPFLAGS =
-gslLDFLAGS = 
+LDADD = 
 if DOFORTRAN
-  fortranLDFLAGS =  @FCLIBS@
-  fortranLDADD = ../opt/libopt.la 
+   LDADD += @FCLIBS@ ../opt/libopt.la 
+else 
+if DODIRECTIAGA
+   AM_LDFLAGS += @FCLIBS@ @LD_IAGA_FLAGS@
 endif
-if DOEMASS
- fortranLDFLAGS =  @FCLIBS@
 endif
 
 if DOEMASS
@@ -38,6 +35,10 @@ libpescan_ladir = $(includedir)/pescan_interface
 libpescan_la_SOURCES = $(PESCAN_CC) $(emassSOURCE)
 nobase_libpescan_la_HEADERS = $(PESCAN_H) $(emassHEADER)
 libpescan_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
+if DODIRECTIAGA
+  libpescan_la_SOURCES += $(PESCAN_CC) $(emassSOURCE) $(PESCAN_F90)
+  libpescan_la_FCFLAGS = $(FCFLAGS) $(FC_IAGA_FLAGS) ../mpi/libmpi.a
+endif
 
 escan_SOURCES = main.cc
 escan_CPPFLAGS = $(AM_CPPFLAGS)  -I .. 
@@ -49,8 +50,7 @@ escan_LDADD = libpescan.la \
               ../physics/libphysics.la \
 	      ../print/libprint.la \
 	      @MPI_ADDLIB@ \
-	      $(fortranLDADD) \
-              $(fortranLDFLAGS)
+	      $(LD_ADD)
 
 
 if DOEMASS

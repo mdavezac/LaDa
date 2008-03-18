@@ -83,9 +83,10 @@ OPT_DOC = $(OPT_H) $(OPT_CC)
 EMASS_CC = emass.cc
 EMASS_H  = emass.h
 EMASS_DOC = $(EMASS_H) $(EMASS_CC) 
+PESCAN_F90 = fortran.f90
 PESCAN_CC = interface.cc bandgap.cc va.cc 
 PESCAN_H  = interface.h  bandgap.h  va.h 
-PESCAN_DOC = $(PESCAN_H) $(PESCAN_CC) 
+PESCAN_DOC = $(PESCAN_H) $(PESCAN_CC) $(PESCAN_F90)
 
 PHYSICS_CC = physics.cc
 PHYSICS_H  = physics.h

@@ -23,7 +23,6 @@
 #include <mpi/mpi_object.h>
 #include <print/manip.h>
 
-#ifdef _DIRECTIAGA
 // declares fortran interface
 //! \cond
 extern "C"
@@ -31,13 +30,6 @@ extern "C"
   void FC_FUNC(getvlarg, GETVLARG)();
   void FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( int *, int *);
 }
-#define __DIAGA( code ) code
-#define __IIAGA( code ) 
-#else
-#define __DIAGA( code ) 
-#define __IIAGA( code ) code
-#endif
-
 
 //! \brief Holds everything pescan
 //! \details Escan is a semi-empirical potential code capable of computing
@@ -75,22 +67,27 @@ namespace Pescan
     {
       //! Filenam where to write the output.
       std::string filename;
-      types::t_int x; //!< Number of points in x coordinate of real space mesh
-      types::t_int y; //!< Number of points in y coordinate of real space mesh
-      types::t_int z; //!< Number of points in z coordinate of real space mesh
-      types::t_real cutoff; //!< Plane-wave energy cutoff 
-      std::string output;   //!< File to which to write the potential
-      std::string launch;   //!< Command for launching pescan's getVLarg.
-      std::vector<std::string> pseudos; //!< Name of the files describing each pseudo-potentials
+      //! Number of points in x coordinate of real space mesh
+      types::t_int x;
+      //! Number of points in y coordinate of real space mesh
+      types::t_int y;
+      //! Number of points in z coordinate of real space mesh
+      types::t_int z; 
+      //! Plane-wave energy cutoff 
+      types::t_real cutoff;
+      //! File to which to write the potential
+      std::string output; 
+      //! Name of the files describing each pseudo-potentials
+      std::vector<std::string> pseudos; 
 
       //! Constructor
       GenPot   () 
              : filename("pot.input"), x(0), y(0), z(0), 
-               cutoff(0), output("pot.output"), launch("getVLarg") {}
+               cutoff(0), output("pot.output") {}
       //! Copy Constructor
       GenPot   ( const GenPot & _c )
              : filename( _c.filename ), x( _c.x ), y( _c.y ), z( _c.z ),
-               cutoff( _c.cutoff ), output( _c.output ), launch( _c.launch ),
+               cutoff( _c.cutoff ), output( _c.output ), 
                pseudos( _c.pseudos ) {}
       //! Some coherency checks.
       bool check() { return x && y && z && cutoff && ( pseudos.size() >= 2 ); }
@@ -166,8 +163,9 @@ namespace Pescan
 
       //! Constructor.
       Escan () : filename("escan.input"), output("escan.out"),
-                 wavefunction_out("wavefunction"), wavefunction_in("wavefunction"), 
-                 method(FOLDED_SPECTRUM), Eref(0), smooth(0.5), kinscal(0.0), nbstates(3),
+                 wavefunction_out("wavefunction"),
+                 wavefunction_in("wavefunction"), method(FOLDED_SPECTRUM),
+                 Eref(0), smooth(0.5), kinscal(0.0), nbstates(3),
                  niter(10), nlines(50), tolerance(types::tolerance),
                  kpoint(0,0,0), scale(0), potential(LOCAL), rcut(0), 
                  launch("escanCNL") { read_in.clear(); read_in.reserve(nbstates); }
@@ -193,10 +191,6 @@ namespace Pescan
       std::string maskr;
       //! Whether to delete directory where computations are being performed.
       bool do_destroy_dir;
-      __DIAGA( 
-        //! Pointer to the base wrapper for the MPI intracommunicator
-        mpi::Base *comm;
-      )
      
     public:
       //! Stores results
@@ -246,11 +240,6 @@ namespace Pescan
  
      void check_existence() const;
 
-#ifdef _DIRECTIAGA
-     //! Sets the communicator.
-     void set_mpi( mpi::Base &_c ) { comm = &_c; }
-#endif
-
     protected:
      //! Launches a calculation 
      bool operator()(); 
@@ -290,14 +279,6 @@ namespace Pescan
     std::string name;
 
 #ifndef _NOLAUNCH
-    name = Print::reformat_home( genpot.launch );
-    __TRYCODE( stream.open(name.c_str(), std::ios::in | std::ios::binary);,
-               "Program " << (std::string) name << " does not appear to exist.\n" )
-    __ASSERTCATCHCODE( not stream.is_open(),
-                       stream.close(),
-                       "Error while opening " << (std::string) name << ".\n" )
-    stream.close();
-
     name = Print::reformat_home( escan.launch );
     __TRYCODE( stream.open(name.c_str(), std::ios::in | std::ios::binary);,
                "Program " << (std::string) name << " does not appear to exist.\n" )

@@ -168,6 +168,7 @@ int main(int argc, char *argv[])
 #else
   t_Pescan pescan( structure );
   t_Vff &vff = pescan.Vff();
+  __DIAGA( pescan.set_mpi( mpi::main ); )
 #endif
   child = handle.FirstChild( "Job" ).Element();
   if ( not pescan.Load(*child) )
