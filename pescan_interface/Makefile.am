@@ -12,6 +12,7 @@ if DOFORTRAN
    LDADD += @FCLIBS@ ../opt/libopt.la 
 else 
 if DODIRECTIAGA
+   LDADD +=  ../mpi/libmpi.a
    AM_LDFLAGS += @FCLIBS@ @LD_IAGA_FLAGS@
 endif
 endif
@@ -37,7 +38,7 @@ nobase_libpescan_la_HEADERS = $(PESCAN_H) $(emassHEADER)
 libpescan_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
 if DODIRECTIAGA
   libpescan_la_SOURCES += $(PESCAN_CC) $(emassSOURCE) $(PESCAN_F90)
-  libpescan_la_FCFLAGS = $(FCFLAGS) $(FC_IAGA_FLAGS) ../mpi/libmpi.a
+  libpescan_la_FCFLAGS = $(FCFLAGS) 
 endif
 
 escan_SOURCES = main.cc
@@ -80,3 +81,9 @@ if DOEMASS
 ../lapack/liblapack.la:
 	cd ../lapack; $(MAKE)
 endif 
+if DODIRECTIAGA
+.libs/libpescan_la-fortran.o: 
+	ln @IAGA_DIR/pescan/*.mod .
+../lapack/libmpi.la:
+	cd ../mpi; $(MAKE)
+endif

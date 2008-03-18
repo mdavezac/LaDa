@@ -1,13 +1,17 @@
-subroutine iaga_set_mpi( _comm_handle, _rank )
-  implicit none
-
-  include "mpif.h"
+!
+! Version: $Id$
+!
+subroutine iaga_set_mpi( comm_handle_, rank_ )
 
   use mpigroup
+  implicit none
+  include "mpif.h"
 
-  integer( intent = in ) _comm_handle, _rank
 
-  rank = _rank
-  _comm_handle = _handle
+        integer, intent(in) :: comm_handle_
+        integer, intent(in) :: rank_
+
+  irank = rank_
+  comm_handle = comm_handle_
 
 end subroutine

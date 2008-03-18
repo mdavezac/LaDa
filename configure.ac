@@ -224,13 +224,13 @@ if test "x$pescan$mpi" = "xtruetrue"; then
     direct_iaga=false;
   else
     direct_iaga=true;
-    FC_IAGA_FLAGS="$FCFLAGS -J$iaga_dir/pescan/lib -J$iaga_dir/genpot/lib"
+#   FC_IAGA_FLAGS="$FCFLAGS -J$iaga_dir/pescan/lib -J$iaga_dir/genpot/lib"
     LD_IAGA_FLAGS="-L$iaga_dir/pescan/lib -lpescan -L$iaga_dir/genpot/lib -lgenpot "
     AC_DEFINE([_DIRECTIAGA],[1],[])
   fi
 fi
 AC_SUBST(LD_IAGA_FLAGS )
-AC_SUBST(FC_IAGA_FLAGS )
+# AC_SUBST(FC_IAGA_FLAGS )
 
 AX_COMPILER_VENDOR
 

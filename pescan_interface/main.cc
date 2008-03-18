@@ -102,7 +102,7 @@ bool evaluate( const TiXmlElement &_node,
 #ifndef _EMASS
    Pescan::BandGap& bandgap = (Pescan::BandGap&) _pescan;
    bandgap.set_method( Pescan::Interface::ALL_ELECTRON );
-   if( _doeval ) _structure.energy = _pescan.evaluate();
+   if( _doeval ) _structure.energy = bandgap.operator()( _structure );
 #else
    _vff.evaluate();
    _pescan << _vff;
@@ -118,6 +118,7 @@ bool evaluate( const TiXmlElement &_node,
 
 int main(int argc, char *argv[]) 
 {
+  __MPICODE( mpi::main(argc, argv); )
   std::string filename("input.xml");
   std::string checkfilename("");
   bool do_check_results = false;
@@ -155,7 +156,7 @@ int main(int argc, char *argv[])
   std::cout << "Successfuly read Lattice input from file " << filename << std::endl;
 
 #ifdef _EMASS
-  t_Pescan pescan;
+  t_Pescan pescan(structure);
   t_Vff vff( structure );
   child = handle.FirstChild( "Job" ).Element();
   if ( not vff.Load(*child) )
@@ -166,9 +167,9 @@ int main(int argc, char *argv[])
   std::cout << "Successfuly read vff input from file " << filename << std::endl;
 
 #else
-  t_Pescan pescan( structure );
+  t_Pescan pescan(structure);
   t_Vff &vff = pescan.Vff();
-  __DIAGA( pescan.set_mpi( mpi::main ); )
+  __DIAGA( ( (Pescan::BandGap*) &pescan)->set_mpi( mpi::main ); )
 #endif
   child = handle.FirstChild( "Job" ).Element();
   if ( not pescan.Load(*child) )
