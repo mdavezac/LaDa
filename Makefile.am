@@ -42,7 +42,7 @@ SUBDIRS = $(MPISUBDIR) atat physics opt lamarck print $(VFFSUBDIR) \
 revision.h: force
 	@scripts/max_revision.pl
 force: 
-all: revision.h
+all-local: revision.h
 if DODOC
 doc: $(ALL_DOCS)
 	@cp doxy.conf doxy.tmp

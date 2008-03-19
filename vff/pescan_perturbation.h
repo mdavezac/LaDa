@@ -101,7 +101,8 @@ namespace Vff
       //! Prints \f$\Delta \mathcal{H}_{\mathrm{stress}}\f$ input for Pescan::VirtualAtom
       types::t_real stress( types::t_unsigned _pos );
       //! Prints \f$\mathcal{H}\f$ input to file for PescanVirtualAtom
-      void zero_order() { t_Base :: print_escan_input( filename ); }
+      void zero_order( std::string &_filename)
+        { t_Base :: print_escan_input( _filename ); }
 
     protected:
       //! \brief Finds escan potentials

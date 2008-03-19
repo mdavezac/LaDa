@@ -100,9 +100,9 @@ bool evaluate( const TiXmlElement &_node,
   }
 
 #ifndef _EMASS
-   Pescan::BandGap& bandgap = (Pescan::BandGap&) _pescan;
+   Pescan::BandGap& bandgap = _pescan.BandGap();
    bandgap.set_method( Pescan::Interface::ALL_ELECTRON );
-   if( _doeval ) _structure.energy = bandgap.operator()( _structure );
+   if( _doeval ) _structure.energy = _pescan.evaluate();
 #else
    _vff.evaluate();
    _pescan << _vff;
@@ -169,7 +169,7 @@ int main(int argc, char *argv[])
 #else
   t_Pescan pescan(structure);
   t_Vff &vff = pescan.Vff();
-  __DIAGA( ( (Pescan::BandGap*) &pescan)->set_mpi( mpi::main ); )
+  __DIAGA( pescan.BandGap().set_mpi( mpi::main ); )
 #endif
   child = handle.FirstChild( "Job" ).Element();
   if ( not pescan.Load(*child) )

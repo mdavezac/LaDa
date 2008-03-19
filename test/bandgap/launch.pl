@@ -12,6 +12,7 @@ my $argument = shift;
 my $np = shift;
 my $prefix = "";
 $prefix = "valgrind -v --leak-check=full --show-reachable=yes "  if( $argument  =~ /valgrind/ );
+$prefix = "mpirun -n 2 "  if( $argument  =~ /mpirun/ );
 
 chdir "calc";
 system "ln -s ../../../pescan_interface/escan " if ( not -e "escan" );

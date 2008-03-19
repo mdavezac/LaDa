@@ -28,8 +28,8 @@
 //! \cond
 extern "C"
 {
-  void FC_FUNC(getvlarg, GETVLARG)();
-  void FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( int *, int *);
+  void FC_FUNC_(iaga_call_genpot, IAGA_CALL_GENPOT)( MPI_Fint *, int *);
+  void FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)();
 }
 #define __DIAGA( code ) code
 #define __IIAGA( code ) 
@@ -290,13 +290,15 @@ namespace Pescan
     std::string name;
 
 #ifndef _NOLAUNCH
-    name = Print::reformat_home( genpot.launch );
-    __TRYCODE( stream.open(name.c_str(), std::ios::in | std::ios::binary);,
-               "Program " << (std::string) name << " does not appear to exist.\n" )
-    __ASSERTCATCHCODE( not stream.is_open(),
-                       stream.close(),
-                       "Error while opening " << (std::string) name << ".\n" )
-    stream.close();
+    __IIAGA(
+      name = Print::reformat_home( genpot.launch );
+      __TRYCODE( stream.open(name.c_str(), std::ios::in | std::ios::binary);,
+                 "Program " << (std::string) name << " does not appear to exist.\n" )
+      __ASSERTCATCHCODE( not stream.is_open(),
+                         stream.close(),
+                         "Error while opening " << (std::string) name << ".\n" )
+      stream.close();
+    )
 
     name = Print::reformat_home( escan.launch );
     __TRYCODE( stream.open(name.c_str(), std::ios::in | std::ios::binary);,

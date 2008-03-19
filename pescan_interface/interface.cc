@@ -4,9 +4,14 @@
 #include <fstream>
 #include <sstream>
 #include <stdexcept>       // std::runtime_error
+#ifdef _DIRECT_IAGA
+#include <unistd.h>
+#endif
 
 #include <print/manip.h>
 #include <opt/debug.h>
+
+#include <mpi/macros.h>
 
 #include "interface.h"
 
@@ -24,42 +29,51 @@ namespace Pescan
   void Interface :: create_directory()
   {
     std::ostringstream sstr;
-    sstr << "mkdir " << dirname;
-    system( sstr.str().c_str() );
+    sstr << "mkdir -p " << dirname;
+    __DOMPISEQUENTIAL( system( sstr.str().c_str() ); )
+    mpi::main.barrier();
   }
   void Interface :: destroy_directory()
   {
     std::ostringstream sstr;
     sstr << "rm -rf " << dirname;
-    system( sstr.str().c_str() );
+    __DOMPISEQUENTIAL( system( sstr.str().c_str() ); )
   }
   void Interface :: create_potential()
   {
     write_genpot_input();
 
     std::ostringstream sstr;
-    sstr << "cp " << atom_input << " ";
+    sstr << "cp -u " << atom_input __DIAGA( << "." << comm->rank() ) << " ";
 #ifndef _NOLAUNCH
-    sstr <<  genpot.launch << " ";
+    __IIAGA( sstr <<  genpot.launch << " "; )
 #endif
-    std::vector<std::string> :: const_iterator i_str = genpot.pseudos.begin();
-    std::vector<std::string> :: const_iterator i_str_end = genpot.pseudos.end();
-    for(; i_str != i_str_end; ++i_str)
-      sstr << *i_str << " ";
+    if( mpi::main.is_root_node() )
+    {
+      std::vector<std::string> :: const_iterator i_str = genpot.pseudos.begin();
+      std::vector<std::string> :: const_iterator i_str_end = genpot.pseudos.end();
+      for(; i_str != i_str_end; ++i_str)  sstr << *i_str << " ";
+    }
     sstr << " " << dirname;
-    system( sstr.str().c_str() );
+    // Makes sure that procs don't simultaneously access the same file.
+    __DOMPISEQUENTIAL( system( sstr.str().c_str() ); )
 
     
-    sstr.str("");
-    sstr << "cd " << dirname << "; ./" << Print::StripDir(genpot.launch);
+    __IIAGA( 
+      sstr.str("");
+      sstr << "cd " << dirname << "; ./" << Print::StripDir(genpot.launch);
+    )
 #ifndef _NOLAUNCH
-#ifndef _DIRECTIAGA
-    system(sstr.str().c_str());
-#else
-    int __rank = comm->rank();
-    FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( (int*) comm->get(), &__rank );
-    FC_FUNC(getvlarg, GETVLARG)();
-#endif
+    __IIAGA( system(sstr.str().c_str()); )
+    __DIAGA( 
+      chdir( dirname.c_str() );
+      int __rank = comm->rank();
+      MPI_Comm __commC = (MPI_Comm) *( (MPI::Comm*) comm->get() ) ;
+      MPI_Fint __commF = MPI_Comm_c2f( __commC );
+      std::cout << "rank: " << comm->rank() << std::endl;
+      FC_FUNC_(iaga_call_genpot, IAGA_CALL_GENPOT)( &__commF, &__rank );
+      chdir( ".." );
+    )
 #endif
   }
   types::t_real Interface :: launch_pescan()
@@ -67,9 +81,9 @@ namespace Pescan
     std::ostringstream sstr;
     write_escan_input();
 
-    sstr << "cp " << maskr << " "; 
+    sstr << "cp -u " << maskr << " "; 
 #ifndef _NOLAUNCH
-    sstr << escan.launch << " ";
+    __IIAGA(sstr << escan.launch << " ";)
 #endif
     std::vector<SpinOrbit> :: const_iterator i_so = escan.spinorbit.begin();
     std::vector<SpinOrbit> :: const_iterator i_so_end = escan.spinorbit.end();
@@ -84,13 +98,18 @@ namespace Pescan
       }
     }
     sstr << dirname;
-    system( sstr.str().c_str() );
+    __DOMPISEQUENTIAL( system( sstr.str().c_str() ); ) 
 
     std::string output = Print::StripEdges(escan.output);
     sstr.str("");
     sstr << "cd " << dirname << "; ./" << Print::StripDir(escan.launch) << " > " << output;
 #ifndef _NOLAUNCH
-    system(sstr.str().c_str());
+    __IIAGA(system(sstr.str().c_str());)
+    __DIAGA(
+      chdir( dirname.c_str() );
+      FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)();
+      chdir( ".." );
+    )
 #endif
     return 0.0;
   }
@@ -241,26 +260,29 @@ namespace Pescan
   void Interface::write_genpot_input()
   {
     std::ofstream file;
-    std::string name = Print::StripEdges(dirname) + "/" + Print::StripEdges(genpot.filename);
-    file.open( name.c_str(), std::ios_base::out|std::ios_base::trunc ); 
+    std::ostringstream sstr;
+    sstr << Print::StripEdges(dirname)
+         << "/" << Print::StripEdges(genpot.filename)
+         __DIAGA( << "." << comm->rank() );
+    file.open( sstr.str().c_str(), std::ios_base::out|std::ios_base::trunc ); 
 
     __DOASSERT( file.bad() or ( not file.is_open() ),
-                   "Could not open file " << name
+                   "Could not open file " << sstr.str()
                 << " for writing.\nAborting.\n" )
 
-    file << Print::StripDir(atom_input) << std::endl 
+    file << Print::StripDir(atom_input) << "\n"
          << genpot.x << " " 
          << genpot.y << " " 
-         << genpot.z << std::endl 
+         << genpot.z << "\n"
          << genpot.x << " " 
          << genpot.y << " " 
-         << genpot.z << std::endl << " 0 0 0 " << std::endl
-         << genpot.cutoff << std::endl
+         << genpot.z << "\n" << " 0 0 0\n" 
+         << genpot.cutoff << "\n"
          << genpot.pseudos.size() << std::endl;
     std::vector< std::string > :: const_iterator i_str = genpot.pseudos.begin();
     std::vector< std::string > :: const_iterator i_str_end = genpot.pseudos.end();
     for(; i_str != i_str_end; ++i_str )
-     file << Print::StripDir(*i_str) << std::endl;
+     file << Print::StripDir(*i_str) << "\n";
     file.flush();
     file.close();
   }
@@ -268,14 +290,19 @@ namespace Pescan
   void Interface::write_escan_input()
   {
     std::ofstream file;
-    std::string name = Print::StripEdges(dirname) + "/" + Print::StripEdges(escan.filename);
+    std::ostringstream sstr;
+    sstr << Print::StripEdges(dirname) << "/"
+         __IIAGA( << Print::StripEdges(escan.filename) )
+         __DIAGA( << "escan_input." << comm->rank() );
+    std::string name = sstr.str();
     file.open( name.c_str(), std::ios_base::out|std::ios_base::trunc ); 
 
     __DOASSERT( file.bad() or ( not file.is_open() ),
-                   "Could not open file " << name
+                   "Could not open file " << (std::string) name
                 << " for writing.\nAborting.\n" )
 
-    file << "1 " << Print::StripDir(dirname, genpot.output) << "\n"
+    file << "1 " << Print::StripDir(dirname, genpot.output) 
+                 __DIAGA( << "." << comm->rank() ) << "\n"
          << "2 " << escan.wavefunction_out << "\n"
          << "3 " << escan.method << "\n"
          << "4 " << escan.Eref << " " << genpot.cutoff << " "
@@ -305,7 +332,7 @@ namespace Pescan
                       << escan.scale / Physics::a0("A") <<  "\n";
     }
     file << "12 " << escan.potential << "\n"
-         << "13 " << atom_input << "\n"
+         << "13 " << atom_input __DIAGA( << "." << comm->rank() ) << "\n"
          << "14 " << escan.rcut << "\n"
          << "15 " << escan.spinorbit.size() << "\n";
     std::vector<SpinOrbit> :: const_iterator i_so = escan.spinorbit.begin();

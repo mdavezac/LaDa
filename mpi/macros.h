@@ -17,6 +17,7 @@
 #define __NOTMPIROOT(code) 
 #define __SERIALCODE(code) code
 #define __MPISEQUENTIAL(code) 
+#define __DOMPISEQUENTIAL(code) code
 #define __MPISERIALCODE(coda, codb) codb
 
 // mpi::Broadcast macros
@@ -37,12 +38,13 @@
 #define __ROOTCODE(code) __MPIROOT(code)
 #define __NOTMPIROOT(code) if( not ::mpi::main.is_root_node() ) { code }
 #define __SERIALCODE(code) 
-#define __MPISEQUENTIAL(code) \
+#define __DOMPISEQUENTIAL(code) \
     for( types::t_int i = 0; i < ::mpi::main.size(); ++i )\
     {\
       if ( ::mpi::main.rank() == i ) { code }\
       ::mpi::main.barrier();\
     }
+#define __MPISEQUENTIAL(code) __DOMPISEQUENTIAL(code)
 #define __MPISERIALCODE(coda, codb) coda
 
 // mpi::Broadcast macros

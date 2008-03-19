@@ -203,11 +203,12 @@ namespace Pescan
                    : t_PescanBase(), t_VABase( _str ),
                      vff( structure ), do_gradients(CHEMICAL_STRESS_GRADIENTS) 
        {
-#ifdef _MPI
-         std::ostringstream sstr;
-         sstr << vff.filename << "." << mpi::main.rank();
-         vff.filename = sstr.str();
-#endif
+         __MPICODE( __IIAGA( 
+             std::ostringstream sstr;
+             sstr << vff.filename << "." << mpi::main.rank();
+             vff.filename = sstr.str();
+           )
+         )
          atom_input = vff.filename;
        }
        //! Copy Constructor
@@ -235,9 +236,9 @@ namespace Pescan
        //! Returns a constant reference to the virtual atom vff minimizer
        const t_Vff& Vff() const { return vff; }
        //! Returns a reference to the BandGap base
-       operator BandGap&() { return *( (BandGap*) this ); }
+       t_PescanBase& BandGap() { return *( (t_PescanBase*) this ); }
        //! Returns a constant reference to the BandGap base
-       operator const BandGap&() const { return *( (const BandGap*) this ); }
+       const t_PescanBase& BandGap() const { return *( (const t_PescanBase*) this ); }
 
      protected:
        //! \details Applies wavefunctions to current potential
@@ -249,15 +250,21 @@ namespace Pescan
   inline VirtualAtom::t_Type VirtualAtom::evaluate()
   { 
     vff.evaluate();
-    vff.zero_order();
+    __IIAGA( vff.zero_order( vff.filename ); )
+    __DIAGA( 
+      std::ostringstream sstr; sstr << vff.filename << "." << comm->rank();
+      std::string f = sstr.str();
+      vff.zero_order( f );
+    )
     t_PescanBase::escan.read_in.clear();
     t_PescanBase::escan.wavefunction_out = "zero_order";
     
     if( not t_PescanBase::operator()( structure ) ) return false; 
 
     t_PescanBase::escan.read_in.reserve( t_PescanBase::escan.nbstates );
-    std::vector<types::t_unsigned> :: iterator i_r = t_PescanBase::escan.read_in.begin();
-    std::vector<types::t_unsigned> :: iterator i_r_end = t_PescanBase::escan.read_in.end();
+    typedef std::vector<types::t_unsigned> :: iterator t_iterator;
+    t_iterator i_r = t_PescanBase::escan.read_in.begin();
+    t_iterator i_r_end = t_PescanBase::escan.read_in.end();
     for( types::t_unsigned u=1; i_r != i_r_end; ++i_r, ++u ) *i_r = u;
 
     return true;
