@@ -29,8 +29,10 @@
 extern "C"
 {
   void FC_FUNC_(iaga_call_genpot, IAGA_CALL_GENPOT)( MPI_Fint *, int *);
-  void FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)();
+  void FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( int* );
+  void FC_FUNC_(iaga_get_eigenvalues, IAGA_GET_EIGENVALUES)( double*, int* );
 }
+//! \endcond
 #define __DIAGA( code ) code
 #define __IIAGA( code ) 
 #else
@@ -52,6 +54,19 @@ extern "C"
 //!          HREF="http://dx.doi.org/10.1103/PhysRevB.66.045208"> K. Kim. P. R.
 //!          C. Kent, Alex Zunger and C. B. Geller, PRB \b 66, 045208 (2002)
 //!          </A>. 
+//!
+//!          The interface comes in one of two flavors: pescan (and genpot) can
+//!          be called as an external program specified on input, or it comes
+//!          as a library which is directly integrated at compile time. In the
+//!          former case, pescan itself can only be called in serial by
+//!          subsequent programs ( eg genetic algorithms ). In the second case,
+//!          it computes the eigenvalues using all the procs available to the
+//!          Pescan::Interface::comm communicator. This communicator must be
+//!          set prior to any computation through a call to
+//!          Pescan::Interface::set_mpi(). This last member is not available
+//!          when the interface is compiled for use with external programs. You
+//!          can use the __DIAGA and __IAGA macros to include/exclude code
+//!          depending on the type of call.
 namespace Pescan
 {
 
@@ -167,17 +182,21 @@ namespace Pescan
       //! Constructor.
       Escan () : filename("escan.input"), output("escan.out"),
                  wavefunction_out("wavefunction"), wavefunction_in("wavefunction"), 
-                 method(FOLDED_SPECTRUM), Eref(0), smooth(0.5), kinscal(0.0), nbstates(3),
-                 niter(10), nlines(50), tolerance(types::tolerance),
-                 kpoint(0,0,0), scale(0), potential(LOCAL), rcut(0), 
-                 launch("escanCNL") { read_in.clear(); read_in.reserve(nbstates); }
+                 method(FOLDED_SPECTRUM), Eref(0), smooth(0.5), kinscal(0.0),
+                 nbstates(3), niter(10), nlines(50),
+                 tolerance(types::tolerance), kpoint(0,0,0), scale(0),
+                 potential(LOCAL), rcut(0), launch("escanCNL")
+        { read_in.clear(); read_in.reserve(nbstates); }
       //! Copy Constructor
       Escan   ( const Escan &_c)
-            : filename(_c.filename), output(_c.output), wavefunction_out( _c.wavefunction_out), 
-              wavefunction_in( _c.wavefunction_in ), read_in( _c.read_in ), method(_c.method), 
-              Eref(_c.Eref), smooth( _c.smooth ), kinscal( _c.kinscal), nbstates(_c.nbstates), 
-              niter(_c.niter), nlines(_c.nlines), tolerance(_c.tolerance), kpoint(_c.kpoint), 
-              scale(_c.scale), potential(_c.potential), rcut(_c.rcut), launch(_c.launch) {}
+            : filename(_c.filename), output(_c.output),
+              wavefunction_out( _c.wavefunction_out),
+              wavefunction_in( _c.wavefunction_in ), read_in( _c.read_in ),
+              method(_c.method), Eref(_c.Eref), smooth( _c.smooth ),
+              kinscal( _c.kinscal), nbstates(_c.nbstates), niter(_c.niter),
+              nlines(_c.nlines), tolerance(_c.tolerance), kpoint(_c.kpoint),
+              scale(_c.scale), potential(_c.potential), rcut(_c.rcut),
+              launch(_c.launch) {}
     };
   
     protected:

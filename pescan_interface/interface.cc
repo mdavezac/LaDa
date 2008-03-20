@@ -4,7 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <stdexcept>       // std::runtime_error
-#ifdef _DIRECT_IAGA
+#ifdef _DIRECTIAGA
 #include <unistd.h>
 #endif
 
@@ -70,7 +70,6 @@ namespace Pescan
       int __rank = comm->rank();
       MPI_Comm __commC = (MPI_Comm) *( (MPI::Comm*) comm->get() ) ;
       MPI_Fint __commF = MPI_Comm_c2f( __commC );
-      std::cout << "rank: " << comm->rank() << std::endl;
       FC_FUNC_(iaga_call_genpot, IAGA_CALL_GENPOT)( &__commF, &__rank );
       chdir( ".." );
     )
@@ -107,7 +106,7 @@ namespace Pescan
     __IIAGA(system(sstr.str().c_str());)
     __DIAGA(
       chdir( dirname.c_str() );
-      FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)();
+      FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( &escan.nbstates );
       chdir( ".." );
     )
 #endif
@@ -351,6 +350,7 @@ namespace Pescan
 #ifdef _NOLAUNCH
     return true;
 #endif
+#ifndef _DIRECTIAGA
     std::ifstream file;
     std::ostringstream sstr;
     sstr << dirname; 
@@ -381,11 +381,19 @@ namespace Pescan
       file >> eig;
       eigenvalues.push_back( eig );
     }
+#endif
 
-    __DOASSERT( u != escan.nbstates,
-                   "Found " << u << " eigenvalues in " << name
-                << " where " << escan.nbstates
-                << " were expected.\n" )
+    __DIAGA(
+      double values[ escan.nbstates ];
+      eigenvalues.resize( escan.nbstates );
+      FC_FUNC_(iaga_get_eigenvalues, IAGA_GET_EIGENVALUES)( values, &escan.nbstates );
+      std::copy( values, values + escan.nbstates, eigenvalues.begin() );
+    )
+
+    __IIAGA( __DOASSERT( u != escan.nbstates,
+                            "Found " << u << " eigenvalues in " << name
+                         << " where " << escan.nbstates
+                         << " were expected.\n" ) )
     return true;
   }
                

@@ -230,6 +230,8 @@ if test "x$pescan$mpi" = "xtruetrue"; then
     cp -u $iaga_dir/genpot/lib/MPIGROUP.mod pescan_interface
     cp -u $iaga_dir/pescan/lib/escan_comp_api.mod pescan_interface
     cp -u $iaga_dir/pescan/lib/ESCAN_COMP_API.mod pescan_interface
+    cp -u $iaga_dir/pescan/lib/eigenenergy.mod pescan_interface
+    cp -u $iaga_dir/pescan/lib/EIGENENERGY.mod pescan_interface
     LD_IAGA_FLAGS=" $iaga_dir/pescan/lib/libpescan.a  $iaga_dir/genpot/lib/libgenpot.a  -lfftw -llapack "
     IAGA_DIR="$iaga_dir"
     AC_DEFINE([_DIRECTIAGA],[1],[])
