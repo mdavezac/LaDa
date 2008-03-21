@@ -63,15 +63,10 @@ subroutine iaga_get_eigenvalues( states_, n_ )
 
   if( .not. allocated( zebn ) ) stop "Storage for eigenergies was never allocated."
 
+! call MPI_Bcast( zebn, 2, MPI_DOUBLE_PRECISION, 0, comm_handle )
   if( irank == 0 ) then
     do i = 1, n_, 1
       states_(i) = zebn(i)*27.211396d0 ! goes to eV
-    enddo
-  endif
-  call MPI_Bcast( states_, n_, MPI_REAL, 0, comm_handle )
-  if( irank > 0 ) then
-    do i = 1, n_, 1
-      write(6,*) i, zebn(i), states_(i)
     enddo
   endif
 

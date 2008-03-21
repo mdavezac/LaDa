@@ -387,6 +387,7 @@ namespace Pescan
       double values[ escan.nbstates ];
       eigenvalues.resize( escan.nbstates );
       FC_FUNC_(iaga_get_eigenvalues, IAGA_GET_EIGENVALUES)( values, &escan.nbstates );
+      comm->get()->Bcast( values, escan.nbstates, MPI::DOUBLE, 0 );
       std::copy( values, values + escan.nbstates, eigenvalues.begin() );
     )
 
