@@ -303,6 +303,9 @@ endstorage:
     str = Print::reformat_home(str);
     continuator = new IslandsContinuator<t_GATraits>(max_generations, str );
     eostates.storeFunctor( continuator );
+
+    __MPICODE( if( not topology.continuators() ) return; )
+
     GenCount &generation_counter = continuator->get_generation_counter();
 
     // Creates SaveEvery object if necessary

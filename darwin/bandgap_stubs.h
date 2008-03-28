@@ -10,12 +10,11 @@
 
 #include <tinyxml/tinyxml.h>
 
-#include <pescan_interface/bandgap.h>
+#include <pescan_interface/va.h>
 #include <lamarck/structure.h>
 #include <opt/types.h>
 #include <mpi/mpi_object.h>
 
-#include "vff.h"
 
 
 namespace BandGap
@@ -68,13 +67,6 @@ namespace BandGap
   //! \see BandGap::Evaluator, Molecularity::Evaluator
   class Darwin 
   {
-    public:
-      //! \brief File from which to read the atomic configuration.
-      //! \details This is supposed to be given to/by vff. It should be
-      //!          processor specific when executing in MPI.
-      //! \see Darwin::operator<<()
-      std::string atomicconfig;
-      
     protected:
       //! \brief Structure on which to perform calculations
       //! \details The structure which is referenced should be updated prior to
@@ -84,7 +76,7 @@ namespace BandGap
       //!          calculations) does not.
       Ising_CE::Structure &structure;
       //! The pescan interface
-      Pescan::BandGap bandgap;
+      Pescan::VirtualAtom bandgap;
       //! \brief File in which energy references for the VBM/CBM are written and read.
       //! \details This file should contain only one line with two number: the
       //!          first number is the VBM and the second number is the CBM.
@@ -101,11 +93,15 @@ namespace BandGap
       types::t_int age;
       //! How often all-electron calculations should be performed
       types::t_int check_ref_every;
+      //! Communication group for which this evaluator is set up.
+      __MPICODE( ::mpi::Base *comm; ) 
+      //! Suffix string for files/directories
+      __MPICODE( std::string suffix; ) 
 
     public:
       //! Constructor and Initializer
       Darwin   ( Ising_CE::Structure &_s )
-             : structure(_s), references_filename("BandEdge"), 
+             : structure(_s), bandgap( _s ), references_filename("BandEdge"), 
                nbeval(0), age(0), check_ref_every(-1) {}
       //! Copy Constructor
       Darwin   ( const Darwin &_b ) 
@@ -149,6 +145,12 @@ namespace BandGap
       //!          practice, the compiler should find the type out for itself.
       template<class T_BASE>
       void operator<<( const Vff::Darwin<T_BASE> &_vff );
+        { _vff.print_escan_input( atomicconfig ); }
+#ifdef _MPI
+      //! Sets communicator and suffix for mpi stuff.
+      set_mpi( ::mpi::Base *_comm, std::string &_suffix )
+        { comm = _comm; suffix = _suffix; bandgap.set_mpi( _comm ); }
+#endif
 
     protected:
       //! \brief Sets the next computation to be all-electron
@@ -163,8 +165,10 @@ namespace BandGap
 
   inline std::ostream& operator<<(std::ostream &_stream, const Keeper &_o)
   { 
-    _stream << " CBM " << std::fixed << std::setw(12) << std::setprecision(6) << _o.cbm 
-            << "  --  VBM " << std::fixed << std::setw(12) << std::setprecision(6) << _o.vbm; 
+    _stream << " CBM " 
+            << std::fixed << std::setw(12) << std::setprecision(6) << _o.cbm 
+            << "  --  VBM "
+            << std::fixed << std::setw(12) << std::setprecision(6) << _o.vbm; 
     return _stream; 
   } 
 
@@ -174,17 +178,6 @@ namespace BandGap
     // copies band edges into object
     _keeper.vbm = bandgap.bands.vbm; 
     _keeper.cbm = bandgap.bands.cbm;
-  }
-  template <class T_BASE> 
-  inline void Darwin::operator<<( const Vff::Darwin<T_BASE> &_vff )
-  {
-    // creates an mpi aware file name for atomic configurations
-    std::ostringstream  sstr;
-    sstr << "atom_config" __MPICODE(<< "." << mpi::main.rank());
-    // prints atomic configurations
-    _vff.print_escan_input(sstr.str());
-    // tells bandgap where to find atomic configurations
-    atomicconfig = sstr.str();
   }
 
 

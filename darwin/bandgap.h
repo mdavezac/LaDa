@@ -173,6 +173,11 @@ namespace BandGap
       //! Presubmitted individuals are not put into the population.
       //! \see GA::Evaluator::presubmit(), TwoSites::Evaluator::presubmit()
       void presubmit( std::list<t_Individual> &_pop ) { _pop.clear(); }
+#ifdef _MPI
+      //! forwards comm and suffix to bandgap.
+      void set_mpi( ::mpi::Base *_comm, std::string &_str );
+        { t_Base::set_mpi( _comm, _str ); bandgap.set_mpi( _comm, str ); }
+#endif
   };
 
 

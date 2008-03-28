@@ -99,18 +99,22 @@ namespace GA
       //! \details Provided for convenience.
       t_Object *current_object;
       //! Communication group for which this evaluator is set up.
-      __MPICODE( ::mpi::Base mpi_comm; ) 
+      __MPICODE( ::mpi::Base *comm; ) 
+      //! Suffix string for files/directories
+      __MPICODE( std::string suffix; ) 
 
     public:
       //! Constructor
       Evaluator() : current_individual(NULL),
                     current_object(NULL)
-                    __MPICONSTRUCTORCODE( mpi_comm() ) {};
+                    __MPICONSTRUCTORCODE( comm() )
+                    __MPICONSTRUCTORCODE( suffix("") ) {};
       //! Copy Constructor
       Evaluator   ( const Evaluator &_c )
                 : current_individual( _c.current_individual ),
                   current_object( _c.current_object )
-                  __MPICONSTRUCTORCODE( mpi_comm( _c.mpi_comm ) ) {};
+                  __MPICONSTRUCTORCODE( comm( _c.comm ) )
+                  __MPICONSTRUCTORCODE( suffix( _c.suffix ) ) {};
       //! Destructor
       ~Evaluator() {}
 
@@ -211,6 +215,12 @@ namespace GA
       //! \brief Prints parameters.
       //! \details Any and all, but is meant mostly for GA parameters.
       std::string print() const{  return ""; }
+
+#ifdef _MPI
+      //! Sets communicator and suffix for mpi stuff.
+      set_mpi( ::mpi::Base *_comm, std::string &_suffix )
+        { comm = _comm; suffix = _suffix; }
+#endif
   };
 
   template< class T_INDIVIDUAL>

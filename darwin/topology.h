@@ -74,6 +74,8 @@ namespace GA
       //!          exists.
       template< class T_CONTAINER > void syncpop( T_CONTAINER &_cont );
 
+      //! Whether to create continuators (other than continuator container.)
+      bool continuators() const;
       //! Whether to create a history.
       bool history() const;
       //! Whether to create mating operators.

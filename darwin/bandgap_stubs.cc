@@ -65,9 +65,11 @@ errorout:
       if( not child->Attribute("BandEdge") ) continue;
       references_filename = child->Attribute("BandEdge");
       references_filename = Print::reformat_home( references_filename );
-      Print::out << "Will store Reference energies at: " << references_filename << "\n";
+      Print::out << "Will store Reference energies at: "
+                 << references_filename << "\n";
       Print::xmg << Print::Xmg::comment 
-                 << "Will store Reference energies at: " << references_filename << Print::endl;
+                 << "Will store Reference energies at: "
+                 << references_filename << Print::endl;
     }
  
     // Writes band edges to file
@@ -75,8 +77,9 @@ errorout:
     // just creates file.
     if ( bandgap.get_method() != Pescan::Interface::FOLDED_SPECTRUM )
     {
-      __NOTMPIROOT( return true; )
-      std::ofstream file( references_filename.c_str(), std::ios_base::out | std::ios_base::trunc ); 
+      __MPICODE( if( not comm->is_root_node() ) return true; )
+      std::ofstream file( references_filename.c_str(),
+                          std::ios_base::out | std::ios_base::trunc ); 
       file.close();
     }
     else write_references();
@@ -88,29 +91,29 @@ errorout:
   {
     // Creates an mpi aware directory: one per proc
     std::ostringstream sstr;
-    sstr << "ESCAN" << nbeval __MPICODE( << "." << mpi::main.rank() ); 
+    sstr << "ESCAN" << nbeval __MPICODE( << suffix ); 
     ++nbeval;
     dirname =  sstr.str();
-    bandgap.set_dirname( dirname );
-    bandgap.set_atom_input( atomicconfig );
+    bandgap.BandGap().set_dirname( dirname );
 
     // then evaluates band gap
-    types::t_real result = bandgap(structure);
+    types::t_real result = bandgap.evaluate()
 
-    if ( bandgap.get_method() == Pescan::Interface::FOLDED_SPECTRUM ) return;
-    bandgap.set_method(); // resets to folded spectrum if necessary
-    bandgap.set_nbstates(1);
-    bandgap.Eref = bandgap.bands;
+    if ( bandgap.BandGap().get_method() == Pescan::Interface::FOLDED_SPECTRUM )
+      return;
+    bandgap.BandGap().set_method(); // resets to folded spectrum if necessary
+    bandgap.BandGap().set_nbstates(1);
+    bandgap.BandGap().Eref = bandgap.BandGap().bands;
     Print::out << "Reference Energies are: CBM=" << bandgap.Eref.cbm
-               << ", VBM=" << bandgap.Eref.vbm << "\n";
-    Print::xmg << Print::Xmg::comment << "Reference Energies are: CBM=" << bandgap.Eref.cbm
-               << ", VBM=" << bandgap.Eref.vbm << Print::endl;
+               << ", VBM=" << bandgap.BandGap().Eref.vbm << "\n";
+    Print::xmg << Print::Xmg::comment << "Reference Energies are: CBM="
+               << bandgap.Eref.cbm
+               << ", VBM=" << bandgap.BandGap().Eref.vbm << Print::endl;
 
 
     // writes referecnce
-#ifdef _MPI
-    if ( not mpi::main.is_root_node() ) return; // not root no read write
-#endif 
+    __MPICODE( if( not comm->is_root_node() ) return; )
+
     Print::out << " Writing band edges to file " << references_filename << "\n";
     write_references();
   }
@@ -121,7 +124,7 @@ errorout:
     ++age;
     read_references();
 
-    __NOTMPIROOT( return true; )
+    __MPICODE( if( not comm->is_root_node() ) return true; )
 
     // recomputes all electron references every so often, if required
     if (     check_ref_every != -1 
@@ -134,9 +137,10 @@ errorout:
   {
     types :: t_real a, b;
 
-    __NOTMPIROOT( return; )
+    __MPICODE( if( not comm->is_root_node() ) return; )
 
-    std::ofstream file( references_filename.c_str(), std::ios_base::out | std::ios_base::trunc ); 
+    std::ofstream file( references_filename.c_str(),
+                        std::ios_base::out | std::ios_base::trunc ); 
     if ( not file.is_open() ) return;
     file << bandgap.Eref.vbm << "   "; if ( file.fail() ) return;
     file << bandgap.Eref.cbm << std::endl; if ( file.fail() ) return;
@@ -148,7 +152,7 @@ errorout:
   {
     types :: t_real a, b;
 
-    __NOTMPIROOT( goto broadcast; )
+    __MPICODE( if( not comm->is_root_node() ) goto broadcast; )
 
     { // only serial and root node
       std::ifstream file( references_filename.c_str(), std::ios_base::in ); 

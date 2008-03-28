@@ -396,15 +396,15 @@ namespace GA
 
 
       //! adds a continuator
-      void add(eoContinue<t_Individual>& _cont)       { continuators.push_back(&_cont); }
+      void add(eoContinue<t_Individual>& _cont) { continuators.push_back(&_cont); }
       //! adds a sorted statistic
       void add(eoSortedStatBase<t_Individual>& _stat) { sorted.push_back(&_stat); }
       //! adds an unsorted statistic
-      void add(eoStatBase<t_Individual>& _stat)       { stats.push_back(&_stat); }
+      void add(eoStatBase<t_Individual>& _stat) { stats.push_back(&_stat); }
       //! adds a monitor
-      void add(eoMonitor& _mon)                       { monitors.push_back(&_mon); }
+      void add(eoMonitor& _mon) { monitors.push_back(&_mon); }
       //! adds an updater
-      void add(eoUpdater& _upd)                       { updaters.push_back(&_upd); }
+      void add(eoUpdater& _upd) { updaters.push_back(&_upd); }
 
       //! \brief Don't use
       //! \details EO declares this function virtual, but we don't need it.

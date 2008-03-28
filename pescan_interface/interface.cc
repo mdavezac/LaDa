@@ -59,20 +59,20 @@ namespace Pescan
     __DOMPISEQUENTIAL( system( sstr.str().c_str() ); )
 
     
+#ifndef _NOLAUNCH
+    chdir( dirname.c_str() );
     __IIAGA( 
       sstr.str("");
-      sstr << "cd " << dirname << "; ./" << Print::StripDir(genpot.launch);
+      sstr << "./" << Print::StripDir(genpot.launch);
+      system(sstr.str().c_str()); 
     )
-#ifndef _NOLAUNCH
-    __IIAGA( system(sstr.str().c_str()); )
     __DIAGA( 
-      chdir( dirname.c_str() );
       int __rank = comm->rank();
       MPI_Comm __commC = (MPI_Comm) *( (MPI::Comm*) comm->get() ) ;
       MPI_Fint __commF = MPI_Comm_c2f( __commC );
       FC_FUNC_(iaga_call_genpot, IAGA_CALL_GENPOT)( &__commF, &__rank );
-      chdir( ".." );
     )
+    chdir( ".." );
 #endif
   }
   types::t_real Interface :: launch_pescan()
@@ -99,16 +99,16 @@ namespace Pescan
     sstr << dirname;
     __DOMPISEQUENTIAL( system( sstr.str().c_str() ); ) 
 
-    std::string output = Print::StripEdges(escan.output);
-    sstr.str("");
-    sstr << "cd " << dirname << "; ./" << Print::StripDir(escan.launch) << " > " << output;
 #ifndef _NOLAUNCH
-    __IIAGA(system(sstr.str().c_str());)
-    __DIAGA(
-      chdir( dirname.c_str() );
-      FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( &escan.nbstates );
-      chdir( ".." );
+    chdir( dirname.c_str() );
+    __IIAGA(
+      std::string output = Print::StripEdges(escan.output);
+      sstr.str("");
+      sstr << " ./" << Print::StripDir(escan.launch) << " > " << output;
+      system(sstr.str().c_str());
     )
+    __DIAGA( FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( &escan.nbstates ); )
+    chdir( ".." );
 #endif
     return 0.0;
   }

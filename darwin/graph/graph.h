@@ -123,7 +123,8 @@ namespace GA
           MPI::Intracomm* farmer_comm() { return &head_comm; }
           //! Returns pointer to bull/cows intracomm.
           MPI::Intracomm* herd_comm() { return &pool_comm; }
-      
+          //! Sets mpi communicator and suffix.
+          template< class T_EVALUATOR > void set_mpi( T_EVALUATOR &_eval );
       };
 
     } // namespace Graph

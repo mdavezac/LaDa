@@ -201,16 +201,7 @@ namespace Pescan
        //! Constructor and Initializer
        VirtualAtom   ( Ising_CE::Structure &_str )
                    : t_PescanBase(), t_VABase( _str ),
-                     vff( structure ), do_gradients(CHEMICAL_STRESS_GRADIENTS) 
-       {
-         __MPICODE( __IIAGA( 
-             std::ostringstream sstr;
-             sstr << vff.filename << "." << mpi::main.rank();
-             vff.filename = sstr.str();
-           )
-         )
-         atom_input = vff.filename;
-       }
+                     vff( structure ), do_gradients(CHEMICAL_STRESS_GRADIENTS)  {}
        //! Copy Constructor
        VirtualAtom   ( const VirtualAtom &_c )
                    : t_PescanBase( _c ), t_VABase( _c ),
@@ -239,6 +230,8 @@ namespace Pescan
        t_PescanBase& BandGap() { return *( (t_PescanBase*) this ); }
        //! Returns a constant reference to the BandGap base
        const t_PescanBase& BandGap() const { return *( (const t_PescanBase*) this ); }
+       __MPICODE( void set_mpi( ::mpi::Base *_comm, std::string &_s ); )
+
 
      protected:
        //! \details Applies wavefunctions to current potential
@@ -249,13 +242,14 @@ namespace Pescan
 
   inline VirtualAtom::t_Type VirtualAtom::evaluate()
   { 
-    vff.evaluate();
-    __IIAGA( vff.zero_order( vff.filename ); )
-    __DIAGA( 
-      std::ostringstream sstr; sstr << vff.filename << "." << comm->rank();
-      std::string f = sstr.str();
-      vff.zero_order( f );
+    __ROOTCODE( vff.evaluate(); )
+    __MPICODE(
+      ::mpi::BroadCast bc( *comm );
+      bc << structure << ::mpi::BroadCast::allocate
+         << structure << ::mpi::BroadCast::broadcast
+         << structure << ::mpi::BroadCast::clear;
     )
+    vff.zero_order( vff.filename );
     t_PescanBase::escan.read_in.clear();
     t_PescanBase::escan.wavefunction_out = "zero_order";
     
@@ -317,6 +311,20 @@ namespace Pescan
     return _stream << _va.structure;
   }
 
+#ifdef _MPI
+  inline void VirtualAtom :: set_mpi( ::mpi::Base *_comm, std::string &_s ) 
+  {
+    __IIAGA( return; )
+    __DIAGA(
+      std::ostringstream sstr;
+      sstr << vff.filename << "." <<
+           __IIAGA( mpi::main.rank() )
+           __DIAGA( comm->rank() ); 
+      vff.filename = sstr.str();
+      t_PescanBase::set_mpi( *_comm ); 
+    )
+  }
+#endif
 } // namespace Pescan
 
 #endif
