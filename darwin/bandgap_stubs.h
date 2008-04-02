@@ -137,26 +137,18 @@ namespace BandGap
       //! Computes the band-gap of Darwin::structure and stores the results in
       //! \a _keeper.
       void operator()( Keeper &_keeper );
-      //! \brief Correlates bandgap to  %Vff results.
-      //! \details More accurately, \a _vff is asked to print atomic
-      //!          configurations to Darwin::atomicconfig. That's all folks.
-      //!          The templating makes this routine functional for both
-      //!          Vff::Functional and its derived class Vff::Layered. In
-      //!          practice, the compiler should find the type out for itself.
-      template<class T_BASE>
-      void operator<<( const Vff::Darwin<T_BASE> &_vff );
-        { _vff.print_escan_input( atomicconfig ); }
 #ifdef _MPI
       //! Sets communicator and suffix for mpi stuff.
-      set_mpi( ::mpi::Base *_comm, std::string &_suffix )
-        { comm = _comm; suffix = _suffix; bandgap.set_mpi( _comm ); }
+      void set_mpi( ::mpi::Base *_comm, const std::string &_suffix )
+        { comm = _comm; suffix = _suffix; bandgap.set_mpi( _comm, _suffix ); }
 #endif
 
     protected:
       //! \brief Sets the next computation to be all-electron
       //! \details The next call to Darwin::operator()() will automatically
       //!          return the setting to folded spectra calculations.
-      void set_all_electron() { bandgap.set_method( Pescan::Interface::ALL_ELECTRON ); }
+      void set_all_electron()
+        { bandgap.BandGap().set_method( Pescan::Interface::ALL_ELECTRON ); }
       //! Reads Folded Spectra reference energies from file
       void read_references();
       //! Writes Folded Spectra reference energies to file 
@@ -176,8 +168,8 @@ namespace BandGap
   {
     Darwin::operator()();
     // copies band edges into object
-    _keeper.vbm = bandgap.bands.vbm; 
-    _keeper.cbm = bandgap.bands.cbm;
+    _keeper.vbm = bandgap.BandGap().bands.vbm; 
+    _keeper.cbm = bandgap.BandGap().bands.cbm;
   }
 
 
@@ -189,8 +181,8 @@ namespace BandGap
 namespace mpi
 {
 #define ___OBJECTCODE \
-  return     _bc.serialize( _keeper.cbm ) \
-         and _bc.serialize( _keeper.vbm );
+  return     _this.serialize( _ob.cbm ) \
+         and _this.serialize( _ob.vbm );
 #define ___TYPE__ BandGap::Keeper
   /** \ingroup MPI
   * \brief Serializes an BandGap::Keeper.

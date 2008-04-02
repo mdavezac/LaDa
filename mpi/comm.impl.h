@@ -62,7 +62,8 @@ namespace mpi
   {
     if ( not keep_going ) return true;
     __DOASSERT( not serialize( _type ),
-                "Error while BroadCasting " << _type << "\n"; )
+                   "Error while BroadCasting " << _type
+                << " at stage " << stage << "\n"; )
     return true;
   }
 

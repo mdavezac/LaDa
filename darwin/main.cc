@@ -68,7 +68,7 @@ bool parse_cli( int argc, char *argv[], std::string &_filename )
   }
 
 syncfilename:
-  __TRYMPICODE(
+// __TRYMPICODE(
     mpi::BroadCast bc(mpi::main);
     __NOTMPIROOT(  _filename.clear(); )
     bc << _filename  << dostop
@@ -76,9 +76,9 @@ syncfilename:
        << _filename  << dostop
        << mpi::BroadCast::broadcast 
        << _filename  << dostop
-       << mpi::BroadCast::clear;,
-    "Error while syncing input file " << _filename << " between procs.\n"
-  )
+       << mpi::BroadCast::clear; // ,
+ //  "Error while syncing input filename " << _filename << " between procs.\n"
+ //)
 
 dostopnow:
   if( dostop ) return false;

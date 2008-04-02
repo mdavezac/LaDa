@@ -175,8 +175,8 @@ namespace BandGap
       void presubmit( std::list<t_Individual> &_pop ) { _pop.clear(); }
 #ifdef _MPI
       //! forwards comm and suffix to bandgap.
-      void set_mpi( ::mpi::Base *_comm, std::string &_str );
-        { t_Base::set_mpi( _comm, _str ); bandgap.set_mpi( _comm, str ); }
+      void set_mpi( ::mpi::Base *_comm, const std::string &_str )
+        { t_Base::set_mpi( _comm, _str ); bandgap.set_mpi( _comm, _str ); }
 #endif
   };
 
@@ -192,7 +192,7 @@ namespace mpi
     return     _this.serialize<BandGap::Keeper>( _ob )\
            and _this.serialize( _ob.x ) \
            and _this.serialize( _ob.y ) \
-           and _object.serialize( *this );
+           and _this.serialize<TwoSites::Object>( _ob );
 #define ___TYPE__ BandGap::Object
   /** \ingroup MPI
   * \brief Serializes an BandGap::Object.

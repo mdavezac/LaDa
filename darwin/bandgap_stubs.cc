@@ -36,15 +36,17 @@ errorout:
 
     // Sets to folded spectrum if Pescan::BandGap::Eref have been specified
     // correctly
-    if( Fuzzy::gt( bandgap.Eref.cbm, bandgap.Eref.vbm ) )
+    if( Fuzzy::gt( bandgap.BandGap().Eref.cbm, bandgap.BandGap().Eref.vbm ) )
     {
-       bandgap.set_method(); 
+       bandgap.BandGap().set_method(); 
        Print::xmg << Print::Xmg::comment 
                   << "Pescan References (from input): "
-                  << bandgap.Eref.vbm << " " << bandgap.Eref.cbm 
+                  << bandgap.BandGap().Eref.vbm << " "
+                  << bandgap.BandGap().Eref.cbm 
                   << Print::endl;
        Print::out << "Pescan References (from input): "
-                  << bandgap.Eref.vbm << " " << bandgap.Eref.cbm 
+                  << bandgap.BandGap().Eref.vbm << " "
+                  << bandgap.BandGap().Eref.cbm 
                   << "\n";
     }
     else
@@ -75,7 +77,7 @@ errorout:
     // Writes band edges to file
     // In case the band edges are unknown (all-electron calculation)
     // just creates file.
-    if ( bandgap.get_method() != Pescan::Interface::FOLDED_SPECTRUM )
+    if ( bandgap.BandGap().get_method() != Pescan::Interface::FOLDED_SPECTRUM )
     {
       __MPICODE( if( not comm->is_root_node() ) return true; )
       std::ofstream file( references_filename.c_str(),
@@ -97,17 +99,17 @@ errorout:
     bandgap.BandGap().set_dirname( dirname );
 
     // then evaluates band gap
-    types::t_real result = bandgap.evaluate()
+    types::t_real result = bandgap.evaluate();
 
     if ( bandgap.BandGap().get_method() == Pescan::Interface::FOLDED_SPECTRUM )
       return;
     bandgap.BandGap().set_method(); // resets to folded spectrum if necessary
     bandgap.BandGap().set_nbstates(1);
     bandgap.BandGap().Eref = bandgap.BandGap().bands;
-    Print::out << "Reference Energies are: CBM=" << bandgap.Eref.cbm
+    Print::out << "Reference Energies are: CBM=" << bandgap.BandGap().Eref.cbm
                << ", VBM=" << bandgap.BandGap().Eref.vbm << "\n";
     Print::xmg << Print::Xmg::comment << "Reference Energies are: CBM="
-               << bandgap.Eref.cbm
+               << bandgap.BandGap().Eref.cbm
                << ", VBM=" << bandgap.BandGap().Eref.vbm << Print::endl;
 
 
@@ -142,8 +144,8 @@ errorout:
     std::ofstream file( references_filename.c_str(),
                         std::ios_base::out | std::ios_base::trunc ); 
     if ( not file.is_open() ) return;
-    file << bandgap.Eref.vbm << "   "; if ( file.fail() ) return;
-    file << bandgap.Eref.cbm << std::endl; if ( file.fail() ) return;
+    file << bandgap.BandGap().Eref.vbm << "   "; if ( file.fail() ) return;
+    file << bandgap.BandGap().Eref.cbm << std::endl; if ( file.fail() ) return;
     file.close();
     return;
   }
@@ -171,8 +173,8 @@ broadcast:
     )
 
     if ( Fuzzy::geq(a, b) )  return;
-    bandgap.Eref.vbm = a; 
-    bandgap.Eref.cbm = b; 
+    bandgap.BandGap().Eref.vbm = a; 
+    bandgap.BandGap().Eref.cbm = b; 
   }
 
 } // namespace Pescan

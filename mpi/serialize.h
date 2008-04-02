@@ -28,6 +28,9 @@
 #ifdef ___BUFFNUM
 #error Cannot use ___BUFFUM.
 #endif
+#ifdef ___NUMTYPE
+#error Cannot use ___NUMTYPE.
+#endif
 #ifdef ___CODE1
 #error Cannot use ___CODE1.
 #endif
@@ -37,15 +40,15 @@
 
 
 #define ___DOTYPES
-#define ___BUFFNUM 0
+#define ___NUMTYPE 0
 #include "serialize.impl.h"
-#define ___BUFFNUM 1 // types::t_char
+#define ___NUMTYPE 1 // types::t_char
 #include "serialize.impl.h"
-#define ___BUFFNUM 2 // types::t_real
+#define ___NUMTYPE 2 // types::t_real
 #include "serialize.impl.h"
-#define ___BUFFNUM 3 // types::t_unsigned
+#define ___NUMTYPE 3 // types::t_unsigned
 #include "serialize.impl.h"
-#define ___BUFFNUM 4 // bool
+#define ___NUMTYPE 4 // bool
 #include "serialize.impl.h"
 #undef ___DOTYPES
 
@@ -205,11 +208,11 @@ namespace mpi
   };
 
 }
-#define ___BUFFNUM 0
+#define ___NUMTYPE 0
 #define ___DOATAT 
 #define ___DOCONTAINER
 #include "serialize.impl.h"
-#define ___BUFFNUM 2
+#define ___NUMTYPE 2
 #include "serialize.impl.h"
 #undef ___DOATAT
 #define ___TYPE__ types::t_char

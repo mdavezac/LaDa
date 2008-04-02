@@ -4,43 +4,48 @@
 
 #ifndef _SERIALIZE_ATAT_H_
 
-#ifndef ___BUFFNUM
+#ifndef ___NUMTYPE
 
-#define ___BUFFNUM 0
+#define ___NUMTYPE 0
 #include "serialize.h"
-#define ___BUFFNUM 2
+#define ___NUMTYPE 2
 #include "serialize.h"
-#undef ___BUFFNUM
+#undef ___NUMTYPE
 
 #define _SERIALIZE_ATAT_H_
 
 #else
 
-#if ___BUFFNUM == 0
+#if ___NUMTYPE == 0
+#define ___BUFFNUM 0
 #define ___TYPE__  types::t_int
 #define ___BUFF    cur_int_buff
 #define ___ENDBUFF end_int_buff
 #define ___CODE1( code ) code
 #define ___CODE2( code ) code
-#elif ___BUFFNUM == 1 
+#elif ___NUMTYPE == 1 
+#define ___BUFFNUM 1
 #define ___TYPE__  types::t_char
 #define ___BUFF    cur_char_buff
 #define ___ENDBUFF end_char_buff
 #define ___CODE1( code ) code
 #define ___CODE2( code ) code
-#elif ___BUFFNUM == 2 
+#elif ___NUMTYPE == 2 
+#define ___BUFFNUM 2
 #define ___TYPE__  types::t_real
 #define ___BUFF    cur_real_buff
 #define ___ENDBUFF end_real_buff
 #define ___CODE1( code ) code
 #define ___CODE2( code ) code
-#elif ___BUFFNUM == 3
+#elif ___NUMTYPE == 3
+#define ___BUFFNUM 0
 #define ___TYPE__  types::t_unsigned
 #define ___BUFF    cur_int_buff
 #define ___ENDBUFF end_int_buff
 #define ___CODE1( code ) (___TYPE__) code 
 #define ___CODE2( code ) std::abs(code)
-#elif ___BUFFNUM == 4
+#elif ___NUMTYPE == 4
+#define ___BUFFNUM 0
 #define ___TYPE__  bool
 #define ___BUFF    cur_int_buff
 #define ___ENDBUFF end_int_buff
@@ -189,6 +194,7 @@ namespace mpi
 #undef ___BUFF
 #undef ___ENDBUFF
 #undef ___BUFFNUM
+#undef ___NUMTYPE
 #undef ___CODE1
 #undef ___CODE2
 

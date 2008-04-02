@@ -218,7 +218,7 @@ namespace GA
 
 #ifdef _MPI
       //! Sets communicator and suffix for mpi stuff.
-      set_mpi( ::mpi::Base *_comm, std::string &_suffix )
+      void set_mpi( ::mpi::Base *_comm, const std::string &_suffix )
         { comm = _comm; suffix = _suffix; }
 #endif
   };

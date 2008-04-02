@@ -160,12 +160,12 @@ namespace GA
       template <class T_EVALUATOR> 
         void Topology :: set_mpi( T_EVALUATOR &_eval )
         {
-          if(    graph->type == t_Type::FARMER 
-              or graph->type == t_Type::FARMHAND ) return;
+          if(    type == t_Type::FARMER 
+              or type == t_Type::FARMHAND ) return;
           std::ostringstream sstr;
-          mpi::Base comm( pool_comm );
-          sstr << "." << head_comm.get_rank();
-          _eval.set_mpi( comm, sstr.str() );
+          ::mpi::Base comm( pool_comm );
+          sstr << "." << head_comm.Get_rank();
+          _eval.set_mpi( &comm, sstr.str() );
         }
 
     } // namspace Graph

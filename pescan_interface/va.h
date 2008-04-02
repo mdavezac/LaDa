@@ -230,7 +230,10 @@ namespace Pescan
        t_PescanBase& BandGap() { return *( (t_PescanBase*) this ); }
        //! Returns a constant reference to the BandGap base
        const t_PescanBase& BandGap() const { return *( (const t_PescanBase*) this ); }
-       __MPICODE( void set_mpi( ::mpi::Base *_comm, std::string &_s ); )
+       __MPICODE(
+         //! Assigns mpi communicator and suffix.
+         void set_mpi( ::mpi::Base *_comm, const std::string &_s ); 
+       )
 
 
      protected:
@@ -312,7 +315,7 @@ namespace Pescan
   }
 
 #ifdef _MPI
-  inline void VirtualAtom :: set_mpi( ::mpi::Base *_comm, std::string &_s ) 
+  inline void VirtualAtom :: set_mpi( ::mpi::Base *_comm, const std::string &_s ) 
   {
     __IIAGA( return; )
     __DIAGA(

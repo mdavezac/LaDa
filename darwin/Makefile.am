@@ -1,4 +1,7 @@
 include ../Files
+AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
+	      @MPI_CFLAGS@ @EO_CFLAGS@ -I ..
+AM_LDFLAGS = @TINYXML_LIBS@ @EO_LIBS@ @MPI_LIBS@ 
 if DOBANDGAPOPT
   BANDGAPOPT=bandgap_opt
 endif
@@ -11,13 +14,15 @@ endif
 if DOEMASSOPT
   EMASSOPT = emass_opt
 endif
+LDADD =
 if DOFORTRAN
-  fortranLDADD =  ../opt/libopt.la @FCLIBS@
+  LDADD +=  ../opt/libopt.la @FCLIBS@
+endif
+if DODIRECTIAGA
+   LDADD +=  ../mpi/libmpiobject.la
+   AM_LDFLAGS += @FCLIBS@
 endif
 bin_PROGRAMS = $(CEOPT) $(BANDGAPOPT) $(LAYEREDOPT) $(EMASSOPT)
-AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
-	      @MPI_CFLAGS@ @EO_CFLAGS@ -I ..
-AM_LDFLAGS = @TINYXML_LIBS@ @EO_LIBS@ @MPI_LIBS@ 
 ce_opt_SOURCES = main.cc $(DARWIN_CE_CC)
 ce_opt_HEADERS = $(DARWIN_CE_H)
 ce_optdir = $(includedir)/darwin
@@ -37,9 +42,11 @@ bandgap_opt_CPPFLAGS =  -D _PESCAN $(AM_CPPFLAGS) @NAG_CFLAGS@ @GSL_CFLAGS@
 bandgap_opt_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIBS@ @NAG_LIBS@ 
 bandgap_opt_LDADD = $(ce_opt_LDADD) \
                     ../vff/libvff.la \
-	            ../pescan_interface/libpescan.la \
+	            ../pescan_interface/libescan.la \
 		    ../physics/libphysics.la \
-		    $(fortranLDADD)
+		    $(fortranLDADD) \
+	            @MPI_ADDLIB@ \
+	            $(LDADD) @LD_IAGA_FLAGS@
 
 layered_opt_SOURCES = main.cc $(DARWIN_L_CC)
 layered_opt_HEADERS = $(DARWIN_L_H) 
@@ -69,7 +76,7 @@ libdarwin_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS)
 	cd ../physics; $(MAKE)
 ../mpi/libmpiobject.la:
 	cd ../mpi; $(MAKE)
-../pescan_interface/libpescan.la:
+../pescan_interface/libescan.la:
 	cd ../pescan; $(MAKE)
 ../print/libprint.la:
 	cd ../print; $(MAKE)

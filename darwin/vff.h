@@ -135,7 +135,7 @@ namespace mpi
   * \details It serializes Vff::Keeper::energy and Vff::Keeper::stress. 
   */
   template<>
-  inline bool mpi::BroadCast::serialize< Vff::Keeper >( Vff::Keeper & _k )
+  inline bool BroadCast::serialize< Vff::Keeper >( Vff::Keeper & _k )
   {
     return     serialize( _k.energy ) 
            and serialize( _k.stress ); 

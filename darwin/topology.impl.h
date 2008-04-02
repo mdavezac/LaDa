@@ -14,8 +14,9 @@ namespace GA
       if( goodgraph ) graph->set_mpi( _eval );
       if( goodgraph ) return true;
       delete graph;
-      graph = NULL;,
-      _eval.set_mpi( comm, "" );
+      graph = NULL;
+      std::string str = "";
+      _eval.set_mpi( static_cast< ::mpi::Base* >(this), str );,
       "Error while loading topology.\n"
     )
   }
@@ -58,7 +59,7 @@ namespace GA
 #endif
     }
 
-  inline bool Topology :: history() const
+  inline bool Topology :: continuators() const
   {
     __MPICODE(
       if( graph and graph->type != mpi::Graph::t_Type::FARMER ) return false;
@@ -161,9 +162,9 @@ namespace GA
       typedef typename t_GATraits :: t_Individual t_Individual;
       typedef GA::Breeder<T_GATRAITS> t_Return;
                  
-      __TRYCODE(
-        __SERIALCODE( return new GA::Breeder<t_GATraits>; )
-        __MPICODE(
+//     __TRYCODE(
+//       __SERIALCODE( return new GA::Breeder<t_GATraits>; )
+//       __MPICODE(
            if( not graph ) return new GA::Breeder<t_GATraits>();
            if( graph->type == mpi::Graph::t_Type::FARMER )
              return (t_Return*) new mpi::Graph::Breeders::Farmer<t_GATraits>(graph);
@@ -175,23 +176,23 @@ namespace GA
                = new mpi::Graph::Breeders::Cow<t_GATraits>(graph);
            breeder->set( &_eval );
            return (t_Return*) breeder;
-         ), 
-         "Error while creating Breeders.\n" 
-       )
+//        ), 
+//        "Error while creating Breeders.\n" 
+//      )
     }
   template <class T_GATRAITS, template <class> class T_BASE > 
     T_BASE<T_GATRAITS>* Topology :: evaluation ()
     {
       typedef T_GATRAITS t_GATraits;
       typedef T_BASE<t_GATraits> t_Base;
-                 
+      typedef mpi::Graph::Evaluation::Farmer<t_GATraits, T_BASE> t_Farmer;
+      typedef mpi::Graph::Evaluation::Bull<t_GATraits, T_BASE> t_Bull;
+      typedef mpi::Graph::Evaluation::Farmhand< t_Base > t_Farmhand;
+      typedef mpi::Graph::Evaluation::Cow<t_GATraits, T_BASE> t_Cow;
+
       __TRYCODE(
         __SERIALCODE( return new t_Base(); )
         __MPICODE( 
-          typedef mpi::Graph::Evaluation::Farmer<t_GATraits, T_BASE> t_Farmer;
-          typedef mpi::Graph::Evaluation::Bull<t_GATraits, T_BASE> t_Bull;
-          typedef mpi::Graph::Evaluation::Farmhand< t_Base > t_Farmhand;
-          typedef mpi::Graph::Evaluation::Cow<t_GATraits, T_BASE> t_Cow;
           if( not graph ) return new t_Base();
           if( graph->type == mpi::Graph::t_Type::FARMER )
             return (t_Base*) new t_Farmer(graph);
@@ -199,9 +200,9 @@ namespace GA
             return (t_Base*) new t_Bull(graph);
           if( graph->type == mpi::Graph::t_Type::FARMHAND )
             return (t_Base*) new t_Farmhand;
-          return (t_Base*) new t_Cow(graph);,
-          "Error while creating Evaluation.\n" 
-        )
+          return (t_Base*) new t_Cow(graph);
+        ),
+        "Error while creating Evaluation.\n" 
       )
    }
   template< class T_GATRAITS > 
