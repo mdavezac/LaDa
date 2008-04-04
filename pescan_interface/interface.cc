@@ -31,7 +31,7 @@ namespace Pescan
     std::ostringstream sstr;
     sstr << "mkdir -p " << dirname;
     __DOMPISEQUENTIAL( system( sstr.str().c_str() ); )
-    mpi::main.barrier();
+    comm->barrier();
   }
   void Interface :: destroy_directory()
   {
@@ -48,7 +48,7 @@ namespace Pescan
 #ifndef _NOLAUNCH
     __IIAGA( sstr <<  genpot.launch << " "; )
 #endif
-    if( mpi::main.is_root_node() )
+    if( comm->is_root_node() )
     {
       std::vector<std::string> :: const_iterator i_str = genpot.pseudos.begin();
       std::vector<std::string> :: const_iterator i_str_end = genpot.pseudos.end();

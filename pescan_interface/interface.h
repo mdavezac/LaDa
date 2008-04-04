@@ -224,13 +224,15 @@ namespace Pescan
     public:
       //! Constructor
       Interface () : atom_input("atom.config"), genpot(), escan(),
-                     maskr("maskr"), dirname("ESCAN"), do_destroy_dir(true) {}
+                     maskr("maskr"), dirname("ESCAN"), do_destroy_dir(true)
+                     __MPICONSTRUCTORCODE( comm( &::mpi::main ) ) {}
       //! Copy Constructor
       Interface   ( const Interface &_c )
                 : atom_input( _c.atom_input ), genpot( _c.genpot ),
                   escan( _c.escan ), maskr( _c.maskr ),
                   dirname( _c.dirname ), do_destroy_dir( _c.do_destroy_dir ),
-                  eigenvalues( _c.eigenvalues ) {}
+                  eigenvalues( _c.eigenvalues )
+                  __MPICONSTRUCTORCODE( comm( &::mpi::main ) ) {}
       //! Destructor
      ~Interface() {};
 

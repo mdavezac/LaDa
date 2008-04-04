@@ -166,7 +166,7 @@ errorout:
 
 broadcast:
     __MPICODE( 
-      mpi::BroadCast bc(mpi::main); 
+      mpi::BroadCast bc(*comm); 
       bc << a << b << mpi::BroadCast::allocate 
          << a << b << mpi::BroadCast::broadcast
          << a << b << mpi::BroadCast::clear;

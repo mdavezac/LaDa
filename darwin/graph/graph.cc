@@ -64,7 +64,7 @@ namespace GA
       bool Topology :: Load ( const TiXmlElement &_node )
       {
         const TiXmlElement *child = _node.FirstChildElement( "MPI" );
-        if ( not child->Attribute( "pools" ) ) return false;
+        if ( not ( child and child->Attribute("pools") ) ) return false;
         types::t_int i;
         child->Attribute( "pools", &i );
         if ( i < 1 ) return false;

@@ -102,12 +102,16 @@ namespace BandGap
       //! Constructor and Initializer
       Darwin   ( Ising_CE::Structure &_s )
              : structure(_s), bandgap( _s ), references_filename("BandEdge"), 
-               nbeval(0), age(0), check_ref_every(-1) {}
+               nbeval(0), age(0), check_ref_every(-1) 
+               __MPICONSTRUCTORCODE( comm( &::mpi::main ) )
+               __MPICONSTRUCTORCODE( suffix("") ) {}
       //! Copy Constructor
       Darwin   ( const Darwin &_b ) 
              : structure(_b.structure), bandgap( _b.bandgap ),
                references_filename(_b.references_filename),
-               nbeval(_b.nbeval), age(_b.age), check_ref_every(_b.check_ref_every) {}
+               nbeval(_b.nbeval), age(_b.age), check_ref_every(_b.check_ref_every) 
+               __MPICONSTRUCTORCODE( comm( &::mpi::main ) )
+               __MPICONSTRUCTORCODE( suffix("") ) {}
       //! Destructor
       ~Darwin() {};
 
