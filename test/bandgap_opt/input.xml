@@ -98,7 +98,7 @@
             <Pseudo filename="../../pseudos/vq.atom7" />
             <Pseudo filename="../../pseudos/vq.atom8" />
         </GenPot>
-        <References VBM="-4.8" CBM="-4.5" />
+        <tReferences VBM="-4.8" CBM="-4.5" />
         <Hamiltonian kinscal="1.23" smooth="0.8" potential="3" realcutoff="4.5" nbstates="1" launch="~/usr/bin/escanCNL">
             <SpinOrbit filename="../../pseudos/vwr.pso" izz="49051" pnl="1.271254 " />
             <SpinOrbit filename="../../pseudos/vwr.pso" izz="51049" pnl="0.946102 " />

@@ -235,6 +235,15 @@ namespace Pescan
          void set_mpi( ::mpi::Base *_comm, const std::string &_s ); 
        )
 
+       //! gets already computed stress from vff. 
+       void get_stress( atat::rMatrix3d &_s ) const { vff.get_stress( _s ); }
+
+       //! \brief Initializes the va variables, and optionnally the centers
+       //! \details This routine compounds the function::Base::init()
+       //!          capabilities expected by Minimizer objects, while adding
+       //!          the capacity for recomputing the first-neighbor tree of
+       //!          vff.
+       bool init( bool _redocenters = false );
 
      protected:
        //! \details Applies wavefunctions to current potential
@@ -252,7 +261,14 @@ namespace Pescan
          << structure << ::mpi::BroadCast::broadcast
          << structure << ::mpi::BroadCast::clear;
     )
-    vff.zero_order( vff.filename );
+    __DIAGA(
+      std::ostringstream sstr;
+      sstr << vff.filename << "." << comm->rank();
+      std::string filename = sstr.str(); 
+      vff.zero_order( filename );
+    )
+    __IIAGA( vff.zero_order( vff.filename ); )
+    set_atom_input( vff.filename );
     t_PescanBase::escan.read_in.clear();
     t_PescanBase::escan.wavefunction_out = "zero_order";
     
@@ -314,15 +330,20 @@ namespace Pescan
     return _stream << _va.structure;
   }
 
+  inline bool VirtualAtom :: init( bool _redocenters )
+  {
+    return vff.init( _redocenters ) and 
+           t_VABase::init(); //  and t_VffBase::init();
+  }
+
 #ifdef _MPI
   inline void VirtualAtom :: set_mpi( ::mpi::Base *_comm, const std::string &_s ) 
   {
     __IIAGA( return; )
     __DIAGA(
       std::ostringstream sstr;
-      sstr << vff.filename << "." <<
-           __IIAGA( mpi::main.rank() )
-           __DIAGA( comm->rank() ); 
+      sstr << vff.filename 
+           __IIAGA( << "." << mpi::main.rank() );
       vff.filename = sstr.str();
       t_PescanBase::set_mpi( *_comm ); 
     )

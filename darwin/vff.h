@@ -130,16 +130,15 @@ namespace Vff
 #include <mpi/mpi_object.h>
 namespace mpi
 {
+#define ___OBJECTCODE \
+  return     _this.serialize( _ob.energy ) \
+         and _this.serialize( _ob.stress );
+#define ___TYPE__ Vff::Keeper
   /** \ingroup MPI
   * \brief Serializes Vff::Keeper. 
-  * \details It serializes Vff::Keeper::energy and Vff::Keeper::stress. 
-  */
-  template<>
-  inline bool BroadCast::serialize< Vff::Keeper >( Vff::Keeper & _k )
-  {
-    return     serialize( _k.energy ) 
-           and serialize( _k.stress ); 
-  }
+  * \details It serializes Vff::Keeper::energy and Vff::Keeper::stress. **/
+#include <mpi/serialize.impl.h>
+#undef ___OBJECTCODE
 }
 #endif
 

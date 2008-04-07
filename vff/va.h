@@ -140,6 +140,11 @@ namespace Vff
        bool init( bool _redocenters = false );
        //! Returns reference to the Vff base class
        t_VffBase& Vff() { return *static_cast<t_VffBase*>(this); }
+       //! Returns constant reference to the Vff base class
+       const t_VffBase& Vff() const
+        { return *static_cast<const t_VffBase*>(this); }
+       //! gets already computed stress from vff. 
+       void get_stress( atat::rMatrix3d &_s ) const { _s = Vff().stress; }
 
      protected:
 

@@ -21,8 +21,6 @@ namespace BandGap
   {
     __DOASSERT( not t_Base::Load( _node ),
                 " Could not load TwoSites::Evaluator<Object> input.\n" )
-    __DOASSERT( not vff.Load( _node ),
-                " Could not load vff input\n" )
     __DOASSERT( not bandgap.Load( _node ),
                 " Could not load bandgap interface from input.\n" )
 

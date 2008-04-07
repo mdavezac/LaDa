@@ -103,6 +103,9 @@ namespace Vff
       //! Prints \f$\mathcal{H}\f$ input to file for PescanVirtualAtom
       void zero_order( std::string &_filename)
         { t_Base :: print_escan_input( _filename ); }
+     
+       //! gets already computed stress from vff. 
+       void get_stress( atat::rMatrix3d &_s ) const { _s = Vff().get_stress(); }
 
     protected:
       //! \brief Finds escan potentials

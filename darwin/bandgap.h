@@ -14,7 +14,6 @@
 
 #include <tinyxml/tinyxml.h>
 
-#include <vff/functional.h>
 #include <lamarck/structure.h>
 #include <opt/function_base.h>
 #include <opt/gsl_minimizers.h>
@@ -26,7 +25,6 @@
 #include "concentration.h"
 #include "functors.h"
 #include "individual.h"
-#include "vff.h"
 #include "bandgap_stubs.h"
 
 
@@ -134,15 +132,13 @@ namespace BandGap
     protected:
       //! BandGap functional
       BandGap::Darwin bandgap; 
-      //! Interface to Vff::Functional.
-      Vff::Darwin<Vff::Functional> vff; 
 
     public:
       //! Constructor
-      Evaluator() : t_Base(), bandgap(structure), vff(structure) {}
+      Evaluator() : t_Base(), bandgap(structure) {}
       //! Copy Constructor
       Evaluator   ( const Evaluator &_c )
-                : t_Base(_c), bandgap(_c.bandgap), vff(_c.vff) {}
+                : t_Base(_c), bandgap(_c.bandgap) {}
       //! Destructor
       ~Evaluator() {};
 
@@ -163,7 +159,7 @@ namespace BandGap
       //!          explicitely, its "initialization" is carried out in the body
       //!          of Darwin::evaluate().
       void init( t_Individual &_indiv )
-        { t_Base :: init( _indiv ); vff.init(); }
+        { t_Base :: init( _indiv ); bandgap.init(); }
 
       //! Evaluates the band gap after strain minimization
       void evaluate();

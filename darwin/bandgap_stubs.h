@@ -15,6 +15,7 @@
 #include <opt/types.h>
 #include <mpi/mpi_object.h>
 
+#include "vff.h"
 
 
 namespace BandGap
@@ -32,7 +33,7 @@ namespace BandGap
   //   <SOMETAG cvm="?" vbm="?"/>
   //! \endcode
   //! \a SOMETAG will generally be an %Individual.
-  struct Keeper
+  struct Keeper: public Vff::Keeper
   {
     types::t_real cbm; //!< Conduction Band Minimum
     types::t_real vbm; //!< Valence Band Maximum
@@ -65,7 +66,7 @@ namespace BandGap
   //!          In practive an evaluator class should be derived from
   //!          GA::Evaluator and a BandGap::Darwin object used for obtaining band-gaps.
   //! \see BandGap::Evaluator, Molecularity::Evaluator
-  class Darwin 
+  class Darwin
   {
     protected:
       //! \brief Structure on which to perform calculations
@@ -146,6 +147,9 @@ namespace BandGap
       void set_mpi( ::mpi::Base *_comm, const std::string &_suffix )
         { comm = _comm; suffix = _suffix; bandgap.set_mpi( _comm, _suffix ); }
 #endif
+      //! initializes the vff part
+      bool init( bool _redocenters = false )
+        { bandgap.init( _redocenters ); }
 
     protected:
       //! \brief Sets the next computation to be all-electron
@@ -174,8 +178,9 @@ namespace BandGap
     // copies band edges into object
     _keeper.vbm = bandgap.BandGap().bands.vbm; 
     _keeper.cbm = bandgap.BandGap().bands.cbm;
+    _keeper.energy = structure.energy;
+    bandgap.get_stress(_keeper.stress);
   }
-
 
 } // namespace BandGap
 
@@ -186,11 +191,12 @@ namespace mpi
 {
 #define ___OBJECTCODE \
   return     _this.serialize( _ob.cbm ) \
-         and _this.serialize( _ob.vbm );
+         and _this.serialize( _ob.vbm ) \
+         and _this.serialize<Vff::Keeper>( _ob ); 
 #define ___TYPE__ BandGap::Keeper
   /** \ingroup MPI
   * \brief Serializes an BandGap::Keeper.
-  * \details It serializes Keeper::cbm and Keeper::vbm. **/
+  * \details It serializes Keeper::cbm and Keeper::vbm and Vff::Keeper. **/
 #include <mpi/serialize.impl.h>
 #undef ___OBJECTCODE
 }

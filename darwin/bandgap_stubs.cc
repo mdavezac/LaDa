@@ -17,6 +17,7 @@ namespace BandGap
     cbm = types::t_real(d);
     if ( not _node.Attribute("vbm", &d ) ) goto errorout;
     vbm = types::t_real(d);
+    if( not Vff::Keeper::Load( _node ) ) goto errorout;
 
     return true;
 errorout:
@@ -27,6 +28,7 @@ errorout:
   {
     _node.SetDoubleAttribute("vbm", vbm );
     _node.SetDoubleAttribute("cbm", cbm );
+    if( not Vff::Keeper::Save( _node ) ) return false;
 
     return true;
   }
