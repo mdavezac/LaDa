@@ -114,6 +114,9 @@ namespace Vff
             if( atat::norm2( cut ) < cutoff )
             {
               i_center->bonds.push_back( t_Center ::__make__iterator__(i_bond) );
+              frac_image[0] = rint( frac_image[0] );
+              frac_image[1] = rint( frac_image[1] );
+              frac_image[2] = rint( frac_image[2] );
               i_center->translations.push_back( frac_image );
               i_center->do_translates.push_back( atat::norm2(frac_image) > atat::zero_tolerance );
             }
@@ -768,7 +771,7 @@ failure:
     strain(2,2) = 1.0;
 
     pack_variables(strain);
-    unpack_variables(strain);
+//   unpack_variables(strain);
     
     return true;
   }

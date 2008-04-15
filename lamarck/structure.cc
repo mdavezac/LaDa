@@ -213,20 +213,14 @@ namespace Ising_CE {
     atoms.clear();
     for (; child; child=child->NextSiblingElement( "Atom" ) )
     {
+      StrAtom stratom;
       Atom atom;
+      if( not (     lattice
+                and stratom.Load( *child ) 
+                and lattice->convert_StrAtom_to_Atom( stratom, atom )  ) )
+        __TRYASSERT( atom.Load( *child ),
+                     "Could not read atom from input" )
 
-      if( not atom.Load( *child ) )
-      {
-        if( not ( lattice or atom.Load( *child ) ) )
-          __THROW_ERROR("Error while reading atom from input.\n")
-
-        StrAtom stratom;
-        __TRYASSERT( not stratom.Load(*child),
-                    "Error while reading atom from input\n" )
-        __TRYASSERT( not lattice->convert_StrAtom_to_Atom( stratom, atom ), 
-                     "Error while reading atom from input\n" )
-      }
-        
       if (    ( lattice and atom.site > (types::t_int)lattice->sites.size() )
            or atom.site < -1 )
         atom.site = -1;
