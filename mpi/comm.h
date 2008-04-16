@@ -252,14 +252,14 @@ namespace mpi
       //! \param _cont to be serialized. Input and Output
       template< class T_CONTAINER >
       bool serialize_container ( T_CONTAINER &_cont )
-        { Container<T_CONTAINER>( *this )( _cont ); }
+        { return Container<T_CONTAINER>( *this )( _cont ); }
       //! \brief Serialize function for constant containers
       //! \details serialize_container() does just that. Keeps track of size of
       //!          container. Upon loading, container will be  resized
       //! \param _cont to be serialized. Input and Output
       template< class T_CONTAINER >
       bool serialize_container ( const T_CONTAINER &_cont )
-        { Container<T_CONTAINER>( *this )( _cont ); }
+        { return Container<T_CONTAINER>( *this )( _cont ); }
       //! Use this to go to next stage
       bool operator()( types::t_unsigned _root = ROOT_NODE );
       //! destorys buffers, and resets object to stage 0

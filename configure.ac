@@ -100,7 +100,7 @@ AC_ARG_ENABLE(ceopt,
      esac],[ceopt=$enall])
 
 AC_ARG_ENABLE(bandgapopt,
-     [  --enable-bandgap              Turn on bandgap optimization],
+     [  --enable-bandgapopt           Turn on bandgap optimization],
      [case "${enableval}" in
        yes) bandgapopt=true ;;
        no)  bandgapopt=false ;;
@@ -142,23 +142,29 @@ AC_ARG_ENABLE(iaga-dir,
               [ iaga_dir=${enableval} ] )
 
 
-# enables vff and pescan for GA
-if test x$bandgapopt = xtrue || test x$molecularity = xtrue; then
+if test x$bandgapopt = xtrue ; then 
   galib=true
+  pescan=true
+  vff=true
 fi
-if test x$ceopt = xtrue || test x$emass = true; then
+if test x$molecularity = xtrue; then
   galib=true
+  pescan=true
+  vff=true
 fi
 if test x$emassopt = xtrue; then
   galib=true
   emass=true
-fi
-if test x$bandgapopt = xtrue || test x$molecularity = xtrue || test $emass = true; then
   pescan=true
   vff=true
 fi
+if test x$ceopt = xtrue; then
+  galib=true
+fi
 lapack=false
 if test x$emass = xtrue; then
+  pescan=true
+  vff=true
   lapack=true
 fi
 
@@ -265,8 +271,8 @@ if test x$debug = xtrue; then
   CXXFLAGS=`echo $CXXFLAGS | sed "s/-O2//"`
   CFLAGS=`echo $CFLAGS | sed "s/-O2//"`
   AC_DEFINE([_PRINT_ALL_PROCS],[],[])
-  AX_CHECK_COMPILER_FLAGS([-fbounds-check], 
-                          [CPP_DEBUG_FLAGS+=" -fbounds-check"],)
+# AX_CHECK_COMPILER_FLAGS([-fbounds-check], 
+#                         [CPP_DEBUG_FLAGS+=" -fbounds-check"],)
   AC_DEFINE([_DEBUG],[1],[])
 else
   CXXFLAGS=`echo $CXXFLAGS | sed "s/-g//"`
@@ -282,7 +288,7 @@ AC_SUBST(CPP_DEBUG_FLAGS)
 
 #  MPI libs
 if test x$mpi = xtrue; then
-  if test $CXX = mpic++ || test $CXX = mpiCC || test $force_mpi=true; then
+  if test $force_mpi = true; then
     AC_DEFINE([_MPI],[1],[])
     MPI_ADDLIB="../mpi/libmpiobject.la"
     MPI_CFLAGS="$MPI_CFLAGS -D _OPENMPI_MPI_"
@@ -345,12 +351,10 @@ AC_SUBST(NAG_LIBS)
 #
 COMPILER_CXXFLAGS=
 # first checks if friend injection is needed (for atat) (gcc >= 4.0)
-if test "$ac_compiler_gnu"="yes"; then
-AX_CHECK_COMPILER_FLAGS([-ffriend-injection], 
-                        [COMPILER_CXXFLAGS+=" -ffriend-injection"],)
-AX_CHECK_COMPILER_FLAGS([-malign-double], 
-                        [COMPILER_CXXFLAGS+=" -malign-double"],)
-fi
+# if test "$ac_compiler_gnu"="yes"; then
+# AX_CHECK_COMPILER_FLAGS([-malign-double], 
+#                         [COMPILER_CXXFLAGS+=" -malign-double"],)
+# fi
 AC_SUBST(COMPILER_CXXFLAGS)
 
 #
