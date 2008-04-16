@@ -255,13 +255,11 @@ namespace Pescan
   inline VirtualAtom::t_Type VirtualAtom::evaluate()
   { 
     __ROOTCODE( vff.evaluate(); )
-    __MPICODE(
+    __DIAGA(
       ::mpi::BroadCast bc( *comm );
       bc << structure << ::mpi::BroadCast::allocate
          << structure << ::mpi::BroadCast::broadcast
          << structure << ::mpi::BroadCast::clear;
-    )
-    __DIAGA(
       std::ostringstream sstr;
       sstr << vff.filename << "." << comm->rank();
       std::string filename = sstr.str(); 

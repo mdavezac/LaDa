@@ -18,6 +18,7 @@
 #define __SERIALCODE(code) code
 #define __MPISEQUENTIAL(code) 
 #define __DOMPISEQUENTIAL(code) code
+#define __DOCOMMSEQUENTIAL(code, comm) code
 #define __MPISERIALCODE(coda, codb) codb
 
 // mpi::Broadcast macros
@@ -38,12 +39,13 @@
 #define __ROOTCODE(code) __MPIROOT(code)
 #define __NOTMPIROOT(code) if( not ::mpi::main.is_root_node() ) { code }
 #define __SERIALCODE(code) 
-#define __DOMPISEQUENTIAL(code) \
-    for( types::t_int i = 0; i < ::mpi::main.size(); ++i )\
+#define __DOCOMMSEQUENTIAL(comm, code) \
+    for( types::t_int i = 0; i < comm.size(); ++i )\
     {\
-      if ( ::mpi::main.rank() == i ) { code }\
-      ::mpi::main.barrier();\
+      if ( comm.rank() == i ) { code }\
+        comm.barrier();\
     }
+#define __DOMPISEQUENTIAL(code)  __DOCOMMSEQUENTIAL( ::mpi::main, code )
 #define __MPISEQUENTIAL(code) __DOMPISEQUENTIAL(code)
 #define __MPISERIALCODE(coda, codb) coda
 

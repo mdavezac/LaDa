@@ -30,14 +30,15 @@ namespace Pescan
   {
     std::ostringstream sstr;
     sstr << "mkdir -p " << dirname;
-    __DOMPISEQUENTIAL( system( sstr.str().c_str() ); )
-    comm->barrier();
+    __DIAGA( __DOCOMMSEQUENTIAL( (*comm), system( sstr.str().c_str() ); ) )
+    __IIAGA( system( sstr.str().c_str() ); ) 
   }
   void Interface :: destroy_directory()
   {
     std::ostringstream sstr;
     sstr << "rm -rf " << dirname;
-    __DOMPISEQUENTIAL( system( sstr.str().c_str() ); )
+    __DIAGA( __DOCOMMSEQUENTIAL( (*comm), system( sstr.str().c_str() ); ) )
+    __IIAGA( system( sstr.str().c_str() ); ) 
   }
   void Interface :: create_potential()
   {
@@ -48,7 +49,7 @@ namespace Pescan
 #ifndef _NOLAUNCH
     __IIAGA( sstr <<  genpot.launch << " "; )
 #endif
-    if( comm->is_root_node() )
+    __DIAGA( if( comm->is_root_node() ) )
     {
       std::vector<std::string> :: const_iterator i_str = genpot.pseudos.begin();
       std::vector<std::string> :: const_iterator i_str_end = genpot.pseudos.end();
@@ -56,7 +57,8 @@ namespace Pescan
     }
     sstr << " " << dirname;
     // Makes sure that procs don't simultaneously access the same file.
-    __DOMPISEQUENTIAL( system( sstr.str().c_str() ); )
+    __DIAGA( __DOCOMMSEQUENTIAL( (*comm), system( sstr.str().c_str() ); ) )
+    __IIAGA( system( sstr.str().c_str() ); ) 
 
     
 #ifndef _NOLAUNCH
@@ -97,7 +99,8 @@ namespace Pescan
       }
     }
     sstr << dirname;
-    __DOMPISEQUENTIAL( system( sstr.str().c_str() ); ) 
+    __DIAGA( __DOCOMMSEQUENTIAL( (*comm), system( sstr.str().c_str() ); ) )
+    __IIAGA( system( sstr.str().c_str() ); )  
 
 #ifndef _NOLAUNCH
     chdir( dirname.c_str() );
