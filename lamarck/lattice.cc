@@ -23,7 +23,7 @@ namespace Ising_CE {
       parent = _element.FirstChildElement("Lattice");
     else
       parent = &_element;
-    if ( not parent ) return false;
+    __DOASSERT( not parent, "Could not find lattice tag on input.\n" )
 
     // reads cell first
     child = parent->FirstChildElement( "column" );
@@ -34,8 +34,7 @@ namespace Ising_CE {
       child->Attribute("z", &d); vec(2) = d;
       cell.set_column(i, vec);
     }
-    if ( i != 3 )
-      return false;
+    __DOASSERT( i != 3, "Incorrect cell in lattice tag on input.\n" )
 
     // reads scale if it exist
     scale = 0;
@@ -45,8 +44,7 @@ namespace Ising_CE {
 
     // then read sites
     child = parent->FirstChildElement("site" );
-    if ( not child )
-      return false;
+    __DOASSERT( not child, "Could not find site tag in lattice input.\n" )
     for (types::t_int i=0 ; child; i++, child = child->NextSiblingElement("site") )
     {
       t_Site site;

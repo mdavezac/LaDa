@@ -110,30 +110,19 @@ namespace TwoSites
   template<class T_INDIVIDUAL>
   inline bool Evaluator<T_INDIVIDUAL> :: Load( const TiXmlElement &_node )
   {
-    if ( not lattice.Load( _node ) )
-    {
-      std::cerr << " Could not load lattice type from input!! " << std::endl; 
-      return false;
-    }
+    __DOASSERT( not lattice.Load( _node ), 
+                "Could not load lattice type from input.\n" )
     Ising_CE::Structure::lattice = &lattice;
-    if ( not structure.Load( _node ) )
-    {
-      std::cerr << " Could not load input structure!! " << std::endl; 
-      return false;
-    }
-    if ( not structure.set_site_indices() )
-    {
-      std::cerr << " Could not set atomic indices! " << std::endl; 
-      return false;
-    }
+    __DOASSERT( not structure.Load( _node ),
+                "Could not load input structure.\n" )
+    __DOASSERT( not structure.set_site_indices(),
+                "Could not set atomic indices.\n" )
     rearrange_structure(structure);
-    if ( not consistency_check() )  return false;
+    __DOASSERT( not consistency_check(),
+                "Inconsistent data.\n" )
 
-    if ( not concentration.Load( _node ) ) 
-    {
-      std::cerr << " Could not load Concentration input!! " << std::endl; 
-      return false;
-    }
+    __DOASSERT( not concentration.Load( _node ),
+                "Could not load Concentration input.\n" )
 
     concentration.setfrozen( structure );
     Print::xmg << Print::Xmg::comment << concentration.print() << Print::endl;

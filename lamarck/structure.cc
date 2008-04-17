@@ -134,8 +134,7 @@ namespace Ising_CE {
       parent = _element.FirstChildElement("Structure");
     else
       parent = &_element;
-    if ( not parent )
-      return false;
+    __DOASSERT( not parent, "Could not find Structure tag in xml.\n" )
 
     // read PI name if available
     if ( not parent->Attribute("PI", &i) )
@@ -153,9 +152,12 @@ namespace Ising_CE {
     freeze = FREEZE_NONE;
     for (i=0 ; child and i<3; child=child->NextSiblingElement( "column" ), i++ )
     {
-      d=1.0; if( not child->Attribute("x", &d) ) return false; vec(0) = d;
-      d=1.0; if( not child->Attribute("y", &d) ) return false; vec(1) = d;
-      d=1.0; if( not child->Attribute("z", &d) ) return false; vec(2) = d;
+      d=1.0; __DOASSERT( not child->Attribute("x", &d),
+                         "Incomplete cell in structure tag.\n" ); vec(0) = d;
+      d=1.0; __DOASSERT( not child->Attribute("y", &d),
+                         "Incomplete cell in structure tag.\n"); vec(1) = d;
+      d=1.0; __DOASSERT( not child->Attribute("z", &d),
+                         "Incomplete cell in structure tag.\n"); vec(2) = d;
       cell.set_column(i,vec);
       if ( child->Attribute("freeze") )
       {
@@ -218,8 +220,8 @@ namespace Ising_CE {
       if( not (     lattice
                 and stratom.Load( *child ) 
                 and lattice->convert_StrAtom_to_Atom( stratom, atom )  ) )
-        __TRYASSERT( atom.Load( *child ),
-                     "Could not read atom from input" )
+        __TRYASSERT( not atom.Load( *child ),
+                     "Could not read atom from input.\n" )
 
       if (    ( lattice and atom.site > (types::t_int)lattice->sites.size() )
            or atom.site < -1 )
@@ -238,8 +240,8 @@ namespace Ising_CE {
     for (; child; child=child->NextSiblingElement( "Kvec" ) )
     {
       CAtom kvec;
-      if ( not kvec.Load(*child) )
-        return false;
+      __DOASSERT( not kvec.Load(*child),
+                  "Could not load k-vector from xml input.\n" )
       k_vecs.push_back(kvec);
     }
     if ( lattice and ( not k_vecs.size() ) )

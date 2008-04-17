@@ -39,7 +39,7 @@ namespace BandGap
     t_Fourier( structure.atoms.begin(), structure.atoms.end(),
                structure.k_vecs.begin(), structure.k_vecs.end() );
 #endif
-    bandgap();
+    bandgap( *current_object );
 
     // set quantity
     current_individual->quantities() = current_object->cbm - current_object->vbm;

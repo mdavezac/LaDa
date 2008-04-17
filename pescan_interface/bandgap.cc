@@ -21,6 +21,18 @@ namespace Pescan
 
   types::t_real BandGap::folded_spectrum(const Ising_CE::Structure &_str)
   {
+    long length = 100;
+    while( length < 2000 )
+    {
+      char dir[length];
+      if( getcwd( dir, length ) )
+      {
+        curdir = dir;
+        break;
+      }
+      length += 100;
+    }
+    if( length == 2000 ) __THROW_ERROR( "Could not read pwd.\n" ) 
     std::string olddirname = dirname;
     create_directory();
 
@@ -149,6 +161,8 @@ namespace Pescan
 #ifndef _NOLAUNCH
     bands.cbm = eigenvalues[ escan.nbstates - 1 ];
     bands.vbm = eigenvalues[ escan.nbstates - 2 ];
+    std::cout << "BandGap: " << bands.gap() << " = " 
+              << bands.cbm << " - " << bands.vbm << std::endl;
 #else
     nolaunch_functional( _str, bands );
 #endif // _NOLAUNCH

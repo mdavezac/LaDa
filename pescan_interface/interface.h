@@ -208,7 +208,9 @@ namespace Pescan
       Escan escan;
       //! Directory where to perform computations.
       std::string dirname;
-      //! Name of the maskr file
+      //! Current Directory.
+      std::string curdir;
+      //! Name of the maskr file.
       std::string maskr;
       //! Whether to delete directory where computations are being performed.
       bool do_destroy_dir;

@@ -19,6 +19,20 @@ namespace Pescan
 {
   bool Interface :: operator()()
   {
+    long length = 100;
+    while( length < 2000 )
+    {
+      char dir[length];
+      if( getcwd( dir, length ) )
+      {
+        curdir = dir;
+        break;
+      }
+      length += 100;
+    }
+    if( length == 2000 ) __THROW_ERROR( "Could not read pwd.\n" ) 
+    std::cout << "curdir: " << curdir << std::endl;
+
     create_directory();
     create_potential();
     launch_pescan();
@@ -74,7 +88,7 @@ namespace Pescan
       MPI_Fint __commF = MPI_Comm_c2f( __commC );
       FC_FUNC_(iaga_call_genpot, IAGA_CALL_GENPOT)( &__commF, &__rank );
     )
-    chdir( ".." );
+    chdir( curdir.c_str() );
 #endif
   }
   types::t_real Interface :: launch_pescan()
@@ -111,7 +125,7 @@ namespace Pescan
       system(sstr.str().c_str());
     )
     __DIAGA( FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( &escan.nbstates ); )
-    chdir( ".." );
+    chdir( curdir.c_str() );
 #endif
     return 0.0;
   }
@@ -392,6 +406,9 @@ namespace Pescan
       FC_FUNC_(iaga_get_eigenvalues, IAGA_GET_EIGENVALUES)( values, &escan.nbstates );
       comm->get()->Bcast( values, escan.nbstates, MPI::DOUBLE, 0 );
       std::copy( values, values + escan.nbstates, eigenvalues.begin() );
+        std::cout << "Eigenvalues: " << std::endl;
+      for( types :: t_int i = 0; i < escan.nbstates; i++) 
+        std::cout << eigenvalues[i] << " ---> " << i << std::endl;
     )
 
     __IIAGA( __DOASSERT( u != escan.nbstates,

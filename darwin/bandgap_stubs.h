@@ -179,6 +179,8 @@ namespace BandGap
     _keeper.vbm = bandgap.BandGap().bands.vbm; 
     _keeper.cbm = bandgap.BandGap().bands.cbm;
     _keeper.energy = structure.energy;
+    std::cout << "Keeper: " << _keeper.cbm - _keeper.vbm << " = " 
+              << _keeper.cbm << " - " << _keeper.vbm << std::endl;
     bandgap.get_stress(_keeper.stress);
   }
 

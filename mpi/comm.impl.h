@@ -25,7 +25,7 @@ namespace mpi
     buffer_size[2] = 0;
   }
   inline CommBase::CommBase   ( const Base &_c ) 
-                            : Base(), int_buff(NULL), end_int_buff(NULL),
+                            : Base( _c ), int_buff(NULL), end_int_buff(NULL),
                               cur_int_buff(NULL), char_buff(NULL),
                               end_char_buff(NULL), cur_char_buff(NULL),
                               real_buff(NULL), end_real_buff(NULL),
@@ -192,9 +192,11 @@ namespace mpi
   }
 
   //! \cond 
-  template< class T_TYPE > inline AllGather& operator<< ( AllGather& _this, T_TYPE &_type )
+  template< class T_TYPE > inline AllGather& operator<< ( AllGather& _this,
+                                                          T_TYPE &_type )
     { _this.operator_( _type ); return _this; }
-  template< class T_TYPE > inline BroadCast& operator<< ( BroadCast& _this, T_TYPE &_type )
+  template< class T_TYPE > inline BroadCast& operator<< ( BroadCast& _this,
+                                                          T_TYPE &_type )
     { _this.operator_( _type ); return _this; }
   //! \endcond
 

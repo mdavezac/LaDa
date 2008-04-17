@@ -194,6 +194,8 @@ namespace Pescan
        t_Vff vff;
        //! Tracks which gradients to do
        types::t_unsigned do_gradients;
+       //! tracks wether vff functional has been correctly initialized
+       bool is_vff_uninitialized;
        
 
 
@@ -201,11 +203,13 @@ namespace Pescan
        //! Constructor and Initializer
        VirtualAtom   ( Ising_CE::Structure &_str )
                    : t_PescanBase(), t_VABase( _str ),
-                     vff( structure ), do_gradients(CHEMICAL_STRESS_GRADIENTS)  {}
+                     vff( structure ), do_gradients(CHEMICAL_STRESS_GRADIENTS),
+                     is_vff_uninitialized(true)  {}
        //! Copy Constructor
        VirtualAtom   ( const VirtualAtom &_c )
                    : t_PescanBase( _c ), t_VABase( _c ),
-                     vff(_c.vff), do_gradients(_c.do_gradients) {}
+                     vff(_c.vff), do_gradients(_c.do_gradients),
+                     is_vff_uninitialized(true)  {}
         
 
        //! \brief Evaluated the strain after copying the occupations from
@@ -330,8 +334,10 @@ namespace Pescan
 
   inline bool VirtualAtom :: init( bool _redocenters )
   {
-    return vff.init( _redocenters ) and 
-           t_VABase::init(); //  and t_VffBase::init();
+    bool ret =     vff.init( _redocenters or is_vff_uninitialized ) 
+               and t_VABase::init(); 
+    is_vff_uninitialized = false;
+    return ret;
   }
 
 #ifdef _MPI
