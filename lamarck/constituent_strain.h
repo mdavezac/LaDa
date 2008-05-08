@@ -78,15 +78,23 @@ namespace Ising_CE
       std::vector<atat::rVector3d> k_vecs;
       //! Harmonics functions.
       static t_Harmonics harmonics;
+      __MPICODE(
+        /** \ingroup Genetic
+         *  \brief Communicator for parallel computation.
+         *  \details During evaluations, the computation over the list of
+         *           \b k-vectors is scattered across all processes. **/
+        ::mpi::Base *comm;
+      )
  
     public:
       //! Constructor
-      Constituent_Strain() : t_Base() {};
+      Constituent_Strain() : t_Base() __MPICONSTRUCTORCODE( comm( &::mpi::main ) ) {}
       //! Constructor and Initializer
       Constituent_Strain(const Ising_CE::Structure& str, t_Container *vars=NULL);
       //! Copy Constructor
       Constituent_Strain   ( const Constituent_Strain &_c )
-                        : t_Base(_c), r_vecs( _c.r_vecs), k_vecs( _c.k_vecs) {}
+                        : t_Base(_c), r_vecs( _c.r_vecs), k_vecs( _c.k_vecs) 
+                          __MPICONSTRUCTORCODE( comm( _c.comm ) ) {}
       //! Destructorq
       ~Constituent_Strain(){};
 
@@ -119,6 +127,12 @@ namespace Ising_CE
         //! Debug stuff.
         void check_derivative();
       #endif // _DEBUG_LADA_
+
+#ifdef _MPI
+        /** \ingroup Genetic
+         *  \brief Sets the communicator. **/
+        void set_mpi( mpi::Base &_c ) { comm = &_c; }
+#endif
 
   };
 } // namespace Ising_CE

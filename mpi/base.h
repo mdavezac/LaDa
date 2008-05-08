@@ -63,9 +63,9 @@ namespace mpi
       ~Base() {} //!< destructor
 
       //! returns rank of current process
-      types::t_int rank() const { return this_rank; } 
+      types::t_unsigned rank() const { return this_rank; } 
       //! returns size of mpi pool
-      types::t_int size() const { return nproc; }
+      types::t_unsigned size() const { return nproc; }
       
       //! returns true if node is root, as defined by mpi::ROOT_NODE
       bool is_root_node() const { return this_rank == ROOT_NODE; }

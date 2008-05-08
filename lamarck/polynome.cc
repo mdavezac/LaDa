@@ -25,8 +25,8 @@ namespace VA_CE {
   void Polynome :: resize_variables()
   {
     types::t_int m1 = 0, m2 = 0;
-    std::list< function::Monome<> > :: iterator i_monome = monomes.begin();
-    std::list< function::Monome<> > :: iterator i_last   = monomes.end();
+    t_Monomes :: iterator i_monome = monomes.begin();
+    t_Monomes :: iterator i_last   = monomes.end();
     for( ; i_monome != i_last ; i_monome++)
     {
       m1 = i_monome->max_term();
@@ -51,8 +51,8 @@ namespace VA_CE {
     if ( monomes.size() == 0 )
       return; 
 
-    std::list< function::Monome<> > :: const_iterator i_monome = monomes.begin(); 
-    std::list< function::Monome<> > :: const_iterator i_end = monomes.end(); 
+    t_Monomes :: const_iterator i_monome = monomes.begin(); 
+    t_Monomes :: const_iterator i_end = monomes.end(); 
     for( ;  i_monome != i_end; ++i_monome )
       print_xml(*i_monome, parent);
   }
@@ -60,7 +60,7 @@ namespace VA_CE {
   bool Polynome :: Load( TiXmlElement* const node )
   {
     TiXmlElement *child;
-    function::Monome<> monome;
+    t_Monome monome;
     monomes.clear();
 
     if ( not node ) 
@@ -134,7 +134,7 @@ namespace VA_CE {
       variables->push_back(0.0);
       variables->push_back(0.0);
       monomes.clear();
-      function::Monome<> monome;
+      t_Monome monome;
       monome.coefficient = 1;
       monome.add_term(0);
       monome.add_term(1);

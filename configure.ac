@@ -6,11 +6,13 @@ AC_PROG_CC
 AC_PROG_CXX
 
 dompidefault=false
-if [[ `expr match $CXX:'mpicxx'` > 0 ]]; then 
+if [[ `expr match $CXX: 'mpicxx'` > 0 ]]; then 
  dompidefault=true
+ mpicompilers=true
 fi
-if [[ `expr match $CXX:'mpicxx'` > 0 ]]; then 
+if [[ `expr match $CXX: 'mpicxx'` > 0 ]]; then 
  dompidefault=true
+ mpicompilers=true
 fi
 
 AC_PROG_INSTALL
@@ -151,6 +153,13 @@ AC_ARG_ENABLE(iaga-dir,
 AC_ARG_ENABLE(iaga-ld,
               [  --enable-iaga-ld=?  specifies the base iaga ld flags ],
               [ iaga_ld=${enableval} ] )
+
+AC_ARG_ENABLE(boost-ld,
+              [  --enable-boost-ld=?  specifies the base boost ld flags ],
+              [ boost_ld=${enableval} ] )
+AC_ARG_ENABLE(boost-cxx,
+              [  --enable-boost-cxx=?  specifies the boost cxx flags ],
+              [ boost_cxx=${enableval} ] )
 
 
 if test x$bandgapopt = xtrue ; then 
@@ -311,6 +320,7 @@ if test x$mpi = xtrue; then
     MPI_ADDLIB="../mpi/libmpiobject.la"
     MPI_CFLAGS="$MPI_CFLAGS -D _OPENMPI_MPI_"
     mpicompilers=true
+
   else
     mpicompilers=false
     PKG_CHECK_MODULES(WHATEVER, mpich >= 1.2.7, [mpichisthere=yes], [mpichisthere=no] )
@@ -404,6 +414,20 @@ else
   DOCDIR="$datadir"
 fi
 AC_SUBST(DOCDIR)
+
+# boost stuff
+if test "x$boost_ld" = "x" ; then
+  BOOST_LDFLAGS="-L/usr/lib -lboost_signals"
+else
+  BOOST_LDFLAGS="$boost_ld"
+fi
+if test "x$boost_cxx" = "x" ; then
+  BOOST_CXXFLAGS="-I /usr/include"
+else
+  BOOST_CXXFLAGS="$boost_cxx"
+fi
+AC_SUBST(BOOST_LDFLAGS)
+AC_SUBST(BOOST_CXXFLAGS)
 
 AC_OUTPUT(Makefile atat/Makefile physics/Makefile opt/Makefile lamarck/Makefile
           vff/Makefile mpi/Makefile pescan_interface/Makefile darwin/Makefile 

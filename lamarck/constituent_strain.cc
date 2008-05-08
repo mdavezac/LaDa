@@ -1,12 +1,17 @@
 //
 //  Version: $Id$
 //
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include<numeric>
 #include<complex>
 #include<iomanip>
 #include<math.h>
 #include<limits.h>
 
+#include <boost/lambda/lambda.hpp>
 
 #include "constituent_strain.h"
 
@@ -14,8 +19,10 @@ namespace Ising_CE
 {
   std::vector<Harmonic> Constituent_Strain :: harmonics;
 
-  Constituent_Strain :: Constituent_Strain   ( const Ising_CE::Structure& _str, t_Container *vars )
+  Constituent_Strain :: Constituent_Strain   ( const Ising_CE::Structure& _str, 
+                                               t_Container *vars )
                                            : function::Base<t_Type>(vars)
+                                             __MPICONSTRUCTORCODE( comm( &::mpi::main ) ) 
   {
     if (    _str.atoms.size() < 1 
          or _str.k_vecs.size() < 1 )
@@ -75,7 +82,7 @@ namespace Ising_CE
 
     
     std::vector<atat::rVector3d> :: const_iterator i_k_vec = k_vecs.begin();
-    std::vector<atat::rVector3d> :: const_iterator i_k_vec_end = k_vecs.end();
+    std::vector<atat::rVector3d> :: const_iterator i_k_vec_end __SERIALCODE( = k_vecs.end() );
     std::vector<atat::rVector3d> :: const_iterator i_r_vec;
     std::vector<atat::rVector3d> :: const_iterator i_r_vec_begin = r_vecs.begin();
     std::vector<atat::rVector3d> :: const_iterator i_r_vec_end = r_vecs.end();
@@ -99,6 +106,13 @@ namespace Ising_CE
       *i_inter = i_harmonic->evaluate(x);
 
     types::t_real value = 0.0;
+    __MPICODE(
+      types :: t_unsigned nperproc = k_vecs.size() / comm->size(); 
+      types :: t_unsigned remainder = k_vecs.size() % comm->size();
+      i_k_vec +=  comm->rank() * nperproc + std::min( remainder, comm->rank() );
+      i_k_vec_end = i_k_vec + nperproc;
+      if( remainder and comm->rank() < remainder ) ++i_k_vec_end;
+    )
     for ( ; i_k_vec != i_k_vec_end; ++i_k_vec )
     {
       if ( norm2( *i_k_vec ) < types::tolerance ) // don't need to compute Gamma
@@ -122,6 +136,7 @@ namespace Ising_CE
       }
       value +=  (real(sum_exp * conj( sum_exp ))) * sum_harm;
     }
+    __MPICODE( comm->all_sum_all( value ); )
     value /= ( (types::t_real)  k_vecs.size() ) * (types::t_real) r_vecs.size();
 
     delete[] interpolation;
@@ -140,7 +155,7 @@ namespace Ising_CE
       }
     #endif // _DEBUG_LADA_
     std::vector<atat::rVector3d> :: const_iterator i_k_vec = k_vecs.begin();
-    std::vector<atat::rVector3d> :: const_iterator i_k_vec_end = k_vecs.end();
+    std::vector<atat::rVector3d> :: const_iterator i_k_vec_end __SERIALCODE( = k_vecs.end() );
     std::vector<atat::rVector3d> :: const_iterator i_r_vec;
     std::vector<atat::rVector3d> :: const_iterator i_r_vec_begin = r_vecs.begin();
     std::vector<atat::rVector3d> :: const_iterator i_r_vec_end = r_vecs.end();
@@ -179,7 +194,13 @@ namespace Ising_CE
         *ig_inter /= (types::t_real) N;
     }
 
-
+    __MPICODE(
+      types :: t_unsigned nperproc = k_vecs.size() / comm->size(); 
+      types :: t_unsigned remainder = k_vecs.size() % comm->size();
+      i_k_vec +=  comm->rank() * nperproc + std::min( remainder, comm->rank() );
+      i_k_vec_end = i_k_vec + nperproc;
+      if( remainder and comm->rank() < remainder ) ++i_k_vec_end;
+    )
     for ( ; i_k_vec != i_k_vec_end; ++i_k_vec )
     {
       if ( norm2( *i_k_vec ) < types::tolerance ) // don't need to compute Gamma
@@ -215,6 +236,7 @@ namespace Ising_CE
 
     }
 
+    __MPICODE( comm->all_sum_all( result ); )
     delete[] interpolation;
     return result * inv_N;
   }
@@ -230,7 +252,7 @@ namespace Ising_CE
       }
     #endif // _DEBUG_LADA_
     std::vector<atat::rVector3d> :: const_iterator i_k_vec = k_vecs.begin();
-    std::vector<atat::rVector3d> :: const_iterator i_k_vec_end = k_vecs.end();
+    std::vector<atat::rVector3d> :: const_iterator i_k_vec_end __SERIALCODE( = k_vecs.end() ); 
     std::vector<atat::rVector3d> :: const_iterator i_r_vec;
     std::vector<atat::rVector3d> :: const_iterator i_r_vec_begin = r_vecs.begin();
     std::vector<atat::rVector3d> :: const_iterator i_r_vec_end = r_vecs.end();
@@ -277,11 +299,22 @@ namespace Ising_CE
         *ig_inter /= (types::t_real) N;
     }
 
-    grad = gradient;
-    for (types::t_unsigned i=0; i< variables->size(); ++grad, ++i)
-      *grad *= 0.0;
+    std::fill( gradient, gradient + variables->size(), t_Type(0) );
 
     types::t_real value = 0.0;
+#ifdef __ADDHERE__
+#error Please change __ADDHERE__ to something not already defined
+#endif
+#define __ADDHERE__ __MPISERIALCODE( array, gradient )
+    __MPICODE(
+      types :: t_unsigned nperproc = k_vecs.size() / comm->size(); 
+      types :: t_unsigned remainder = k_vecs.size() % comm->size();
+      i_k_vec +=  comm->rank() * nperproc + std::min( remainder, comm->rank() );
+      i_k_vec_end = i_k_vec + nperproc;
+      if( remainder and comm->rank() < remainder ) ++i_k_vec_end;
+      types::t_real *__ADDHERE__ = new types::t_real[ variables->size() ];
+      std::fill( __ADDHERE__, __ADDHERE__ + variables->size(), types::t_real(0) );
+    )
     for ( ; i_k_vec != i_k_vec_end; ++i_k_vec )
     {
       if ( norm2( *i_k_vec ) < types::tolerance ) // don't need to compute Gamma
@@ -310,7 +343,7 @@ namespace Ising_CE
         sum_exp +=  (*i_spin) * (*i_exp);
       }
 
-      grad = gradient;
+      grad = __ADDHERE__;
       i_exp = exp_begin;
       for ( ; i_exp != i_exp_end; ++grad, ++i_exp)
         *grad +=   real( sum_exp  * conj( sum_exp ) ) * deriv_harm 
@@ -318,10 +351,19 @@ namespace Ising_CE
 
       value += real(sum_exp * conj( sum_exp )) * sum_harm;
     }
+    __MPICODE( 
+      comm->get()->Allreduce( MPI::IN_PLACE, __ADDHERE__,
+                              variables->size(), ::MPI::DOUBLE, MPI::SUM ); 
+      std::transform( gradient, gradient + variables->size(), __ADDHERE__, gradient,
+                      boost::lambda::_1 + boost::lambda::_2 * boost::lambda::constant(inv_N) ); 
+      delete[] __ADDHERE__;
+      comm->all_sum_all( value );
+    )
+    __SERIALCODE( 
+      std::for_each( gradient, gradient + variables->size(),
+                     boost::lambda::_1 *= boost::lambda::constant( inv_N ) );
+    )
     value *= inv_N;
-    grad = gradient;
-    for (types::t_unsigned i=0; i< variables->size(); ++grad, ++i)
-      *grad *= inv_N;
 
     delete[] exp_begin;
     delete[] interpolation;

@@ -22,6 +22,9 @@
 #include <iomanip>
 
 #include <mpi/mpi_object.h>
+#ifdef _MPI
+#include <boost/lambda/lambda.hpp>
+#endif 
 
 namespace function {
 
@@ -56,7 +59,7 @@ namespace function {
       //! The type of the monomials
       typedef Monome<t_Type, t_Term> t_Monome;
       //! The type of the container of monomials
-      typedef typename std::list< t_Monome > t_Monomes;
+      typedef typename std::vector< t_Monome > t_Monomes;
 
     protected:
       using t_Base :: variables;
@@ -64,14 +67,26 @@ namespace function {
     protected: 
       //! The list of monomials
       t_Monomes monomes;
+      __MPICODE(
+        /** \ingroup Genetic
+         *  \brief Communicator for parallel computation.
+         *  \details During evaluations, the computation over the list of
+         *           monomes is scattered across all processes. **/
+        ::mpi::Base *comm;
+      )
 
     public: 
       //! Constructor.
-      Polynome() : t_Base() {};
+      Polynome() : t_Base() __MPICONSTRUCTORCODE( comm( &::mpi::main ) ) {}
       //! Constructor and variables initializer.
-      Polynome( types::t_int nb ) : t_Base(nb) {};
+      Polynome   ( types::t_int nb )
+               : t_Base(nb)
+                 __MPICONSTRUCTORCODE( comm( &::mpi::main ) ) {}
       //! Copy constructor
-      Polynome( const t_This &_p ) : monomes(_p.monomes) {};
+      Polynome  ( const t_This &_p ) 
+               : monomes(_p.monomes)
+                 __MPICONSTRUCTORCODE( comm( _p.comm ) ) {}
+
       //! Destructor
       virtual ~Polynome() {};
       
@@ -132,6 +147,9 @@ namespace function {
       *           monomial. It does not include the variables of the
       *           polynomials. */
      bool broadcast( mpi::BroadCast &_bc );
+     /** \ingroup Genetic
+      *  \brief Sets the communicator. **/
+     void set_mpi( mpi::Base &_c ) { comm = &_c; }
 #endif 
   };
  
@@ -171,8 +189,8 @@ namespace function {
     inline void Polynome<T_TYPE, T_TERM> :: add(t_This &_polynome)
     {
       typename t_Monomes :: iterator i_monome = _polynome.monomes.begin();
-      typename t_Monomes :: iterator i_last = _polynome.monomes.end();
-      for( ; i_monome != i_last; ++i_monome)
+      typename t_Monomes :: iterator i_end = _polynome.monomes.end();
+      for( ; i_monome != i_end; ++i_monome)
         add(*i_monome);
     }
   
@@ -180,8 +198,8 @@ namespace function {
     inline void Polynome<T_TYPE, T_TERM> :: sub(t_This &_polynome)
     {
       typename t_Monomes :: iterator i_monome = _polynome.monomes.begin();
-      typename std::list< t_Monome > :: iterator i_last = _polynome.monomes.end();
-      for( ; i_monome != i_last; ++i_monome)
+      typename std::list< t_Monome > :: iterator i_end = _polynome.monomes.end();
+      for( ; i_monome != i_end; ++i_monome)
         { i_monome->coefficient *= -1.0; add(*i_monome); i_monome->coefficient *= -1.0; }
     }
     
@@ -238,20 +256,28 @@ namespace function {
         t_Type value(0);
       
         typename t_Monomes :: const_iterator i_monome = monomes.begin();
-        typename t_Monomes :: const_iterator i_monome_last = monomes.end();
+        typename t_Monomes :: const_iterator i_monome_end __SERIALCODE( = monomes.end() ); 
         typename t_Container :: const_iterator i_real = variables->begin();
-        for ( ; i_monome != i_monome_last; ++i_monome )
+        __MPICODE(
+          types :: t_unsigned nperproc = monomes.size() / comm->size(); 
+          types :: t_unsigned remainder = monomes.size() % comm->size();
+          i_monome +=  comm->rank() * nperproc + std::min( remainder, comm->rank() );
+          i_monome_end = i_monome + nperproc;
+          if( remainder and comm->rank() < remainder ) ++i_monome_end;
+        )
+        for ( ; i_monome != i_monome_end; ++i_monome )
         {
           typename t_Monome :: t_Terms :: const_iterator i_term = i_monome->terms.begin();
-          typename t_Monome :: t_Terms :: const_iterator i_term_last = i_monome->terms.end();
+          typename t_Monome :: t_Terms :: const_iterator i_term_end = i_monome->terms.end();
           t_Type v_monome = i_monome->coefficient;
       
-          for( ; i_term != i_term_last; i_term++)
+          for( ; i_term != i_term_end; i_term++)
             v_monome *= t_Type( *(i_real + *i_term) );
       
           value += v_monome;
         } // end of loop over monomes
       
+        __MPICODE( comm->all_sum_all( value ); )
         return value;
       }
     
@@ -260,45 +286,65 @@ namespace function {
     {
       // clears gradient
       t_Type *ptr_grad = _i_grad;
-      t_Type *ptr_last = _i_grad + variables->size();
-      for(; ptr_grad != ptr_last; ptr_grad++)
+      t_Type *ptr_end = _i_grad + variables->size();
+      for(; ptr_grad != ptr_end; ptr_grad++)
         *ptr_grad = t_Type(0);
 
-      if ( monomes.empty() or not variables )
-        return;
+      if ( monomes.empty() or not variables ) return;
     
       t_Type g_monome;
        
       // loops over each monome.
       typename t_Monomes :: const_iterator i_monome = monomes.begin();
-      typename t_Monomes :: const_iterator i_monome_last = monomes.end();
+      typename t_Monomes :: const_iterator i_monome_end __SERIALCODE( = monomes.end() );
       typename t_Container :: const_iterator i_real = variables->begin();
-      for ( ; i_monome != i_monome_last; ++i_monome ) // monome loop 
+#ifdef __ADDHERE__
+#error Please change __ADDHERE__ to something not already defined
+#endif
+#define __ADDHERE__ __MPISERIALCODE( array, _i_grad )
+      __MPICODE(
+        types::t_unsigned nperproc = monomes.size() / comm->size(); 
+        types :: t_unsigned remainder = monomes.size() % comm->size();
+        i_monome +=  comm->rank() * nperproc + std::min( remainder, comm->rank() );
+        i_monome_end = i_monome + nperproc;
+        if( remainder and comm->rank() < remainder ) ++i_monome_end;
+        types::t_real *__ADDHERE__ = new types::t_real[ monomes.size() ];
+        std::fill( __ADDHERE__, __ADDHERE__ + monomes.size(), types::t_real(0) );
+      )
+      for ( ; i_monome != i_monome_end; ++i_monome ) // monome loop 
       {
         typename t_Monome :: t_Terms :: const_iterator i_term_begin = i_monome->terms.begin();
-        typename t_Monome :: t_Terms :: const_iterator i_term_last = i_monome->terms.end();
+        typename t_Monome :: t_Terms :: const_iterator i_term_end = i_monome->terms.end();
         typename t_Monome :: t_Terms :: const_iterator i_excluded = i_term_begin;
         typename t_Monome :: t_Terms :: const_iterator i_included;
     
       
         // outer loop runs over derivatives
-        for( i_excluded = i_term_begin; i_excluded != i_term_last;
+        for( i_excluded = i_term_begin; i_excluded != i_term_end;
              ++i_excluded)
         {
           // sets monome gradient storage
           g_monome = i_monome->coefficient;
     
           // inner loop runs over other variables in monome
-          for( i_included = i_term_begin; i_included != i_term_last;
+          for( i_included = i_term_begin; i_included != i_term_end;
                ++i_included )
             if ( i_included != i_excluded )
               g_monome *= t_Type( *(i_real + *i_included) );
     
           // now sums gradient
-          *(_i_grad + *i_excluded) += g_monome;
+          *(__ADDHERE__ + *i_excluded) += g_monome;
     
         } // end of outer "derivative" loop
       } // end of loop over monomes
+      __MPICODE( 
+        comm->get()->Allreduce( MPI::IN_PLACE, __ADDHERE__,
+                                monomes.size(), ::MPI::DOUBLE, MPI::SUM ); 
+        std::transform( _i_grad, _i_grad + monomes.size(), __ADDHERE__, _i_grad,
+                        boost::lambda::_1 + boost::lambda::_2 ); 
+        delete[] __ADDHERE__;
+      )
+#undef __ADDHERE__
     }
   
   template<class T_TYPE, class T_TERM >
@@ -307,8 +353,8 @@ namespace function {
       {
         // clears gradient
         t_Type *ptr_grad = _i_grad;
-        t_Type *ptr_last = _i_grad + variables->size();
-        for(; ptr_grad != ptr_last; ptr_grad++)
+        t_Type *ptr_end = _i_grad + variables->size();
+        for(; ptr_grad != ptr_end; ptr_grad++)
           *ptr_grad = t_Type(0);
 
         if ( monomes.empty() or not variables )
@@ -319,25 +365,37 @@ namespace function {
          
         // loops over each monome.
         typename t_Monomes :: const_iterator i_monome = monomes.begin();
-        typename t_Monomes :: const_iterator i_monome_last = monomes.end();
+        typename t_Monomes :: const_iterator i_monome_end __SERIALCODE( = monomes.end() );
         typename t_Container :: const_iterator i_real = variables->begin();
-        for ( ; i_monome != i_monome_last; i_monome++ ) // monome loop 
+#ifdef __ADDHERE__
+#error Please change __ADDHERE__ to something not already defined
+#endif
+#define __ADDHERE__ __MPISERIALCODE( array, _i_grad )
+        __MPICODE(
+          types :: t_unsigned nperproc = monomes.size() / comm->size(); 
+          types :: t_unsigned remainder = monomes.size() % comm->size();
+          i_monome +=  comm->rank() * nperproc + std::min( remainder, comm->rank() );
+          i_monome_end = i_monome + nperproc;
+          if( remainder and comm->rank() < remainder ) ++i_monome_end;
+          types::t_real *__ADDHERE__ = new types::t_real[ monomes.size() ];
+        )
+        for ( ; i_monome != i_monome_end; i_monome++ ) // monome loop 
         {
           typename t_Monome :: t_Terms :: const_iterator i_term_begin = i_monome->terms.begin();
-          typename t_Monome :: t_Terms :: const_iterator i_term_last = i_monome->terms.end();
+          typename t_Monome :: t_Terms :: const_iterator i_term_end = i_monome->terms.end();
           typename t_Monome :: t_Terms :: const_iterator i_excluded = i_term_begin;
           typename t_Monome :: t_Terms :: const_iterator i_included;
       
           v_monome = i_monome->coefficient;
           
           // outer loop runs over derivatives
-          for(i_excluded = i_term_begin; i_excluded!=i_term_last; ++i_excluded)
+          for(i_excluded = i_term_begin; i_excluded!=i_term_end; ++i_excluded)
           {
             // sets monome gradient storage
             g_monome = i_monome->coefficient;
       
             // inner loop runs over other variables in monome
-            for( i_included = i_term_begin; i_included!=i_term_last; ++i_included )
+            for( i_included = i_term_begin; i_included!=i_term_end; ++i_included )
               if ( i_included != i_excluded )
                 g_monome *= t_Type( *(i_real + *i_included) );
       
@@ -352,6 +410,15 @@ namespace function {
       
         } // end of loop over monomes
       
+        __MPICODE( 
+          comm->get()->Allreduce( MPI::IN_PLACE, __ADDHERE__,
+                                  monomes.size(), ::MPI::DOUBLE, MPI::SUM ); 
+          std::transform( _i_grad, _i_grad + monomes.size(), __ADDHERE__, _i_grad,
+                          boost::lambda::_1 + boost::lambda::_2 ); 
+          delete[] __ADDHERE__;
+          comm->all_sum_all( value );
+        )
+#undef __ADDHERE__
         return value;
       }
       
@@ -362,27 +429,33 @@ namespace function {
         // clears gradient
         t_Type result = t_Type(0);
 
-        if ( monomes.empty() or not variables )
-          return t_Type(0);
+        if ( monomes.empty() or not variables ) return t_Type(0);
       
          
         // loops over each monome.
         typename t_Monomes :: const_iterator i_monome = monomes.begin();
-        typename t_Monomes :: const_iterator i_monome_last = monomes.end();
+        typename t_Monomes :: const_iterator i_monome_end __SERIALCODE( = monomes.end() );
         typename t_Container :: const_iterator i_real = variables->begin();
-        for ( ; i_monome != i_monome_last; i_monome++ ) // monome loop 
+        __MPICODE(
+          types :: t_unsigned nperproc = monomes.size() / comm->size(); 
+          types :: t_unsigned remainder = monomes.size() % comm->size();
+          i_monome +=  comm->rank() * nperproc + std::min( remainder, comm->rank() );
+          i_monome_end = i_monome + nperproc;
+          if( remainder and comm->rank() < remainder ) ++i_monome_end;
+        )
+        for ( ; i_monome != i_monome_end; i_monome++ ) // monome loop 
         {
           typename t_Monome :: t_Terms :: const_iterator i_term = i_monome->terms.begin();
-          typename t_Monome :: t_Terms :: const_iterator i_term_last = i_monome->terms.end();
+          typename t_Monome :: t_Terms :: const_iterator i_term_end = i_monome->terms.end();
           t_Type partial_grad = t_Type(0);
       
-          t_Term exponent = std::count( i_term, i_term_last, t_Term(_pos) );
+          t_Term exponent = std::count( i_term, i_term_end, t_Term(_pos) );
           
           if ( exponent > 0 )
           {
             partial_grad = i_monome->coefficient;
             i_term = i_monome->terms.begin();
-            for( ; i_term != i_term_last; ++i_term )
+            for( ; i_term != i_term_end; ++i_term )
               if ( *i_term != t_Term(_pos) )
                 partial_grad *= t_Type( *(i_real + *i_term ) );
 
@@ -395,6 +468,7 @@ namespace function {
           result += partial_grad;
       
         } // end of loop over monomes
+        __MPICODE( comm->all_sum_all( result ); )
       
         return result;
       }
@@ -403,13 +477,13 @@ namespace function {
     inline void Polynome<T_TYPE, T_TERM> :: print_out( std::ostream &stream ) const
     {
       typename t_Monomes :: const_iterator i_monome = monomes.begin();
-      typename t_Monomes :: const_iterator i_monome_last = monomes.end();
+      typename t_Monomes :: const_iterator i_monome_end = monomes.end();
       types::t_int i = 1;
     
       std::cout << std::right << std::noshowpos;
       stream << "Polynome: ";
       i_monome->print_out(stream);
-      for(++i_monome; i_monome != i_monome_last; ++i_monome )
+      for(++i_monome; i_monome != i_monome_end; ++i_monome )
       {
         stream << " +";
         i_monome->print_out(stream);
