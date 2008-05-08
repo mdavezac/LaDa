@@ -11,6 +11,16 @@
 
 namespace Print
 {
+  void Base :: do_checks()
+  {
+    if ( not is_open() ) open();
+    if ( not is_empty ) return;
+    
+    file << "### " << std::endl 
+         << "### Subversion Revision Number " << SVN::Revision << std::endl
+         << "### " << std::endl;
+    is_empty = false;
+  }
 
   void Base :: init_ (const std::string &_f)
   { 

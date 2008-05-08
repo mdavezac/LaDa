@@ -203,7 +203,7 @@ namespace Pescan
        //! Constructor and Initializer
        VirtualAtom   ( Ising_CE::Structure &_str )
                    : t_PescanBase(), t_VABase( _str ),
-                     vff( structure ), do_gradients(CHEMICAL_STRESS_GRADIENTS),
+                     vff( _str ), do_gradients(CHEMICAL_STRESS_GRADIENTS),
                      is_vff_uninitialized(true)  {}
        //! Copy Constructor
        VirtualAtom   ( const VirtualAtom &_c )

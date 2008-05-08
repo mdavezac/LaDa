@@ -13,10 +13,7 @@
 
 #include <opt/types.h>
 
-#include <revision.h>
 #include <mpi/mpi_object.h>
-
-#include "operations.h"
 
 namespace Print
 {
@@ -71,16 +68,7 @@ namespace Print
       void init_(const std::string &_f);
       //! \brief Checks that the stream is open.
       //! \details If the file is empty, prints the revision number.
-      void do_checks()
-      {
-        if ( not is_open() ) open();
-        if ( not is_empty ) return;
-        
-        file << "### " << std::endl 
-             << "### Subversion Revision Number " << SVN::Revision << std::endl
-             << "### " << std::endl;
-        is_empty = false;
-      }
+      void do_checks();
       void doprint( bool _d  ) { do_print = _d; init( filename ); }
         
   };
