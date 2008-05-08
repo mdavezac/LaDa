@@ -5,6 +5,14 @@ AM_INIT_AUTOMAKE()
 AC_PROG_CC
 AC_PROG_CXX
 
+dompidefault=false
+if [[ `expr match $CXX:'mpicxx'` > 0 ]]; then 
+ dompidefault=true
+fi
+if [[ `expr match $CXX:'mpicxx'` > 0 ]]; then 
+ dompidefault=true
+fi
+
 AC_PROG_INSTALL
 
 AM_CONFIG_HEADER(config.h)
@@ -23,7 +31,7 @@ AC_ARG_ENABLE(force-mpi,
        yes) force_mpi=true ;;
        no)  force_mpi=false ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-force-mpi) ;;
-     esac],[force_mpi=false])
+     esac],[force_mpi=$dompidefault])
 AC_ARG_ENABLE(mpi,
      [  --enable-mpi                  Turn on mpi],
      [case "${enableval}" in
@@ -140,6 +148,9 @@ AC_ARG_ENABLE(iaga-dir,
               [  --enable-iaga-dir=?  specifies the base nanopse
                                 directory, eg $HOME/usr/src/nanopse ],
               [ iaga_dir=${enableval} ] )
+AC_ARG_ENABLE(iaga-ld,
+              [  --enable-iaga-ld=?  specifies the base iaga ld flags ],
+              [ iaga_ld=${enableval} ] )
 
 
 if test x$bandgapopt = xtrue ; then 
@@ -238,9 +249,16 @@ if test "x$pescan$mpi" = "xtruetrue"; then
     cp -u $iaga_dir/pescan/lib/ESCAN_COMP_API.mod pescan_interface
     cp -u $iaga_dir/pescan/lib/eigenenergy.mod pescan_interface
     cp -u $iaga_dir/pescan/lib/EIGENENERGY.mod pescan_interface
-    LD_IAGA_FLAGS=" $iaga_dir/pescan/lib/libpescan.a  $iaga_dir/genpot/lib/libgenpot.a  -lfftw -llapack "
-    IAGA_DIR="$iaga_dir"
+    IAGA_DIR="$iaga_dir/"
+    LD_IAGA_FLAGS=" $iaga_dir/pescan/lib/libpescan.a  $iaga_dir/genpot/lib/libgenpot.a "
     AC_DEFINE([_DIRECTIAGA],[1],[])
+    if test "x$iaga_ld" = "x" ; then
+      LD_IAGA_FLAGS=" $iaga_dir/pescan/lib/libpescan.a  $iaga_dir/genpot/lib/libgenpot.a "
+    else
+      LD_IAGA_FLAGS="$LD_IAGA_FLAGS $iaga_ld"
+      echo " am here $iaga_ld "
+      echo " am here $LD_IAGA_FLAGS "
+    fi
   fi
 fi
 AC_SUBST(LD_IAGA_FLAGS )

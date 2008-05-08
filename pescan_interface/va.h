@@ -258,8 +258,8 @@ namespace Pescan
 
   inline VirtualAtom::t_Type VirtualAtom::evaluate()
   { 
-    __ROOTCODE( vff.evaluate(); )
     __DIAGA(
+      vff.evaluate();
       ::mpi::BroadCast bc( *comm );
       bc << structure << ::mpi::BroadCast::allocate
          << structure << ::mpi::BroadCast::broadcast
@@ -267,9 +267,13 @@ namespace Pescan
       std::ostringstream sstr;
       sstr << vff.filename << "." << comm->rank();
       std::string filename = sstr.str(); 
+      std::cout << "vff.filename: " << vff.filename << std::endl;
       vff.zero_order( filename );
     )
-    __IIAGA( vff.zero_order( vff.filename ); )
+    __IIAGA( 
+      __ROOTCODE( vff.evaluate(); )
+      vff.zero_order( vff.filename );
+    )
     set_atom_input( vff.filename );
     t_PescanBase::escan.read_in.clear();
     t_PescanBase::escan.wavefunction_out = "zero_order";

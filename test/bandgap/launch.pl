@@ -11,6 +11,11 @@ system "rm -rf calc/*";
 my $argument = shift;
 my $np = shift;
 my $prefix = "";
+if ( $argument =~ /make/ )
+{
+  system "cd ../../; make";
+  exit;
+}
 $prefix = "valgrind -v --leak-check=full --show-reachable=yes "  if( $argument  =~ /valgrind/ );
 $prefix = "mpirun -n 2 "  if( $argument  =~ /mpirun/ );
 
