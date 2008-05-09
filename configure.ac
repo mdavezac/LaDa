@@ -6,11 +6,11 @@ AC_PROG_CC
 AC_PROG_CXX
 
 dompidefault=false
-if [[ `expr match $CXX: 'mpicxx'` > 0 ]]; then 
+if [[ $(echo $CXX | egrep "mpicxx" - ) > 0 ]]; then 
  dompidefault=true
  mpicompilers=true
 fi
-if [[ `expr match $CXX: 'mpicxx'` > 0 ]]; then 
+if [[ $(echo $CXX | egrep "mpic++" - ) > 0 ]]; then 
  dompidefault=true
  mpicompilers=true
 fi
