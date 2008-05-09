@@ -30,6 +30,8 @@ namespace Print
       bool is_empty;
       //! True if this processor should write.
       bool do_print;
+      //! Whether to truncate or append;
+      bool truncate;
       //! The name of the file to which to print.
       std::string filename;
       //! The file stream
@@ -37,7 +39,7 @@ namespace Print
 
     public:
       //! Constructor
-      Base () : is_empty(true), do_print(false), filename("") {}
+      Base () : is_empty(true), do_print(false), truncate(true), filename("") {}
       //! Destructor
       ~Base() { close(); }
       
@@ -62,6 +64,10 @@ namespace Print
       //! Syncs filname across all procs.
       void sync_filename( std::string &_filename );
 #endif
+      //! Sets to appending file when running init.
+      void dont_truncate() { truncate = false; }
+      //! Sets to truncating file when running init.
+      void do_truncate() { truncate = true; }
 
     private:
       //! Initializes new file.
@@ -70,7 +76,6 @@ namespace Print
       //! \details If the file is empty, prints the revision number.
       void do_checks();
       void doprint( bool _d  ) { do_print = _d; init( filename ); }
-        
   };
 
 }

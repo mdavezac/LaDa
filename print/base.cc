@@ -37,7 +37,9 @@ namespace Print
 #endif 
     is_empty = true;
     if ( not do_print ) return;
-    file.open( filename.c_str(), std::ios_base::out|std::ios_base::trunc ); 
+    
+    file.open( filename.c_str(),
+               truncate ? std::ios_base::trunc: std::ios_base::app | std::ios_base::out); 
     if (file.fail() )
     {
       std::cerr << "Could not open " << filename << std::endl;

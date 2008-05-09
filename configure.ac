@@ -1,4 +1,4 @@
-AC_INIT([LaDa],[3.1])
+AC_INIT([LaDa],[3.2])
 AM_INIT_AUTOMAKE()
 # fi
 
@@ -417,7 +417,7 @@ AC_SUBST(DOCDIR)
 
 # boost stuff
 if test "x$boost_ld" = "x" ; then
-  BOOST_LDFLAGS="-L/usr/lib -lboost_signals"
+  BOOST_LDFLAGS="-L/usr/lib -lboost_signals -lboost_program_options"
 else
   BOOST_LDFLAGS="$boost_ld"
 fi

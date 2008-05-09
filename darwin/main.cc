@@ -1,9 +1,11 @@
 //
 //  Version: $Id$
 //
-#include <stdexcept>       // std::runtime_error
 
-#include <revision.h>
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #ifdef _PESCAN
   #include "bandgap.h"
   typedef BandGap :: Evaluator t_Evaluator;
@@ -23,88 +25,136 @@
 #else 
 #error Need to define _CE or _PESCAN or _MOLECULARITY
 #endif
-#include "individual.h"
-#include "darwin.h"
-#include "print/xmg.h"
 
+#include <stdexcept>       // std::runtime_error
+#include <revision.h>
+#include <boost/program_options.hpp>
+
+#include <print/xmg.h>
+#include <print/stdout.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
 
-bool parse_cli( int argc, char *argv[], std::string &_filename )
-{
-  bool dostop = false;
-
-  __NOTMPIROOT( goto syncfilename; )
-
-  { // serial and root node 
-    std::ostringstream sstr;
-    for( types::t_int i = 1; i < argc; ++i )
-      sstr << argv[i] << " "; 
-    std::istringstream istr( sstr.str() );
-    
-    while ( istr.good() and (not dostop) )
-    {
-      std::string is_op;
-      istr >> is_op; is_op = Print::StripEdges( is_op );
-      if( is_op.empty() ) continue;
-      else if(     istr.good()
-               and (is_op == "-i" or is_op == "--input") ) istr >> _filename;
-      else if( is_op == "-h" or is_op == "--help" )
-      {
-        std::cout << "\n" << __PROGNAME__ << " from the " << PACKAGE_STRING << " package."
-                  << "\nCommand-line options:\n\t -h, --help this message"
-                  << "\n\t -v, --version Subversion Revision and Package version"
-                  << "\n\t -i, --input XML input file (default: input.xml)\n\n";
-        dostop = true;
-      }
-      else if( is_op == "-v" or is_op == "--version" )
-      {
-        std::cout << "\n" << __PROGNAME__ << " from the " << PACKAGE_STRING << " package\n"
-                  << "Subversion Revision: " << SVN::Revision << "\n\n"; 
-        dostop = true;
-      }
-    }
-    _filename = Print::reformat_home( _filename );
-  }
-
-syncfilename:
-  __TRYMPICODE(
-    mpi::BroadCast bc(mpi::main);
-    __NOTMPIROOT(  _filename.clear(); )
-    bc << _filename  << dostop
-       << mpi::BroadCast::allocate 
-       << _filename  << dostop
-       << mpi::BroadCast::broadcast 
-       << _filename  << dostop
-       << mpi::BroadCast::clear;,
-    "Error while syncing input filename " << _filename << " between procs.\n"
-  )
-
-dostopnow:
-  if( dostop ) return false;
-  
-  __NOTMPIROOT( return true; )
-
-  if( _filename != "input.xml" )
-    std::cout << "Reading from input file " << _filename << std::endl;
-  return true;
-}
+#include "individual.h"
+#include "darwin.h"
 
 int main(int argc, char *argv[]) 
 {
-  std::string filename("input.xml");
-  __MPICODE( mpi::main(argc, argv); )
-
-  if( not parse_cli( argc, argv, filename ) ) return true;
-
-
   try
   {
-    GA::Darwin< t_Evaluator > ga;
-    __DOASSERT( not ga.Load(filename),
-                "Could not load input from file " << filename << "\n" )
+    namespace po = boost::program_options;
+ 
+    std::string filename("input.xml");
+    __MPICODE( mpi::main(argc, argv); )
+    unsigned reruns = 1;
+ 
+    po::options_description generic("Generic Options");
+    generic.add_options()
+           ("help,h", "produces this help message.")
+           ("version,v", "prints version string.");
+    po::options_description specific("GA Options");
+    specific.add_options()
+        ("input,i", po::value<std::string>()->default_value("input.xml"), "input filename." )
+        ("reruns,r", po::value<unsigned>()->default_value(1),
+                     "number of times to run the algorithm.\n"
+                     "Is equivalent to manually re-launching the program.\n");
+ 
+    po::options_description all;
+    all.add(generic).add(specific);
+ 
+    po::positional_options_description p;
+    p.add("input", 1);
+ 
+    po::variables_map vm;
+    po::store(po::command_line_parser(argc, argv).
+              options(all).positional(p).run(), vm);
+    po::notify(vm);
+ 
+    if ( vm.count("help") )
+    {
+      __ROOTCODE(
+        std::cout << "Usage: " << argv[0] << " [options] file.xml\n"
+                  << "  file.xml is an optional filename for XML input.\n"
+                  << "  Default input is input.xml.\n\n"
+                  << all << "\n"; 
+      )
+      return 1;
+    }
+    if ( vm.count("version") )
+    {
+      __ROOTCODE( 
+        std::cout << "\n" << __PROGNAME__ << " from the " << PACKAGE_STRING << " package\n"
+                  << "Subversion Revision: " << SVN::Revision << "\n\n"; 
+      )
+      return 1;
+    }
+    if ( vm.count("input") )
+    {
+      filename = vm["input"].as< std::string >();
+      __ROOTCODE(std::cout << "Input: " << filename << ".\n";)
+    }
+    if ( vm.count("reruns") and vm["reruns"].as<unsigned>() > 1 )
+    {
+      reruns = vm["reruns"].as<unsigned>();
+      __ROOTCODE( 
+        std::cout << "Will rerun algorithm " << reruns 
+                  << " independent times.\n";
+      )
+    }
+      
+    __TRYMPICODE(
+      mpi::BroadCast bc(mpi::main);
+      __NOTMPIROOT(  filename.clear(); )
+      bc << filename << reruns 
+         << mpi::BroadCast::allocate 
+         << filename << reruns 
+         << mpi::BroadCast::broadcast 
+         << filename << reruns 
+         << mpi::BroadCast::clear;,
+      "Error while syncing input filename " << filename << " between procs.\n"
+    )
 
-    ga.run();
+
+    for( types::t_int i = 0; i < reruns; ++i )
+    {
+      GA::Darwin< t_Evaluator > ga;
+      __DOASSERT( not ga.Load(filename),
+                  "Could not load input from file " << filename << "\n" )
+      
+      std::cout << "Rerun " << i+1 << " of " << reruns << ".\n";
+      ga.run();
+      // for reruns.
+      Print::xmg.dont_truncate();
+      Print::out.dont_truncate();
+    }
+  }
+  catch ( boost::program_options::invalid_command_line_syntax &_b)
+  {
+    std::cerr << "Caught error while running " << __PROGNAME__ << "\n"
+              << "Something wrong with the command-line input.\n"
+              << _b.what() << "\n";
+    return 0;
+  }
+  catch ( boost::program_options::invalid_option_value &_i )
+  {
+    std::cerr << "Caught error while running " << __PROGNAME__ << "\n"
+              << "Argument of option in command-line is invalid.\n"
+              << _i.what() << "\n";
+    return 0;
+  }
+  catch ( boost::program_options::unknown_option &_u)
+  {
+    std::cerr << "Caught error while running " << __PROGNAME__ << "\n"
+              << "Unknown option in command-line.\n"
+              << _u.what() << "\n";
+    return 0;
+  }
+  catch (  boost::program_options::too_many_positional_options_error &_e )
+  {
+    std::cerr << "Caught error while running " << __PROGNAME__ << "\n"
+              << "Too many arguments in command-line.\n"
+              << _e.what() << "\n";
+    return 0;
   }
   catch ( std::exception &e )
   {
@@ -131,6 +181,7 @@ int main(int argc, char *argv[])
     )
     __NOTMPIROOT( return 0; )
     std::cerr << sstr.str() << std::endl;
+    return 0;
   }
-  return 0;
+  return 1;
 }
