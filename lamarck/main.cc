@@ -113,8 +113,8 @@ int main(int argc, char *argv[])
 
     VA_CE::Functional_Builder::t_VA_Functional functional;
     ce.generate_functional(structure, &functional);
-    __MPICODE( functional.get_functional1()->set_mpi( ::mpi::main ); )
-    __MPICODE( functional.get_functional2()->set_mpi( ::mpi::main ); )
+    __MPICODE( functional.get_functional1()->set_mpi( &::mpi::main ); )
+    __MPICODE( functional.get_functional2()->set_mpi( &::mpi::main ); )
   
     functional.resize( structure.atoms.size() );
     std::transform( structure.atoms.begin(), structure.atoms.end(), functional.begin(),

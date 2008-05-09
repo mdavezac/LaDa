@@ -23,6 +23,11 @@
 #include "graph/store.h"
 #include "graph/breeders.h"
 
+#ifdef _MPI
+#include <boost/lambda/lambda.hpp>
+#include <boost/lambda/bind.hpp>
+#endif
+
 namespace GA
 {
   //! Wrapper around possible mpi topologies
@@ -36,23 +41,16 @@ namespace GA
     __MPICODE( mpi::Graph::Topology *graph; )
 
     public:  
-#ifndef _MPI
       //! Constructor and Initializer.
-      Topology() : seeds(1,0) {}
+      Topology() : seeds(1,0) __MPICONSTRUCTORCODE( graph(NULL) ) {}
       //! Copy Constructor.
-      Topology   ( const Topology &_comm ) : seeds( _comm.seeds ) {};
-#else
-      //! Constructor and Initializer.
-      Topology() : ::mpi::Base::Base(), seeds(1,0),
-                   graph(NULL)  {}
+      Topology   ( const Topology &_comm )
+               : seeds( _comm.seeds ) __MPICONSTRUCTORCODE( graph(_comm.graph) ) {};
+#ifdef _MPI
       //! Constructor and Initializer.
       Topology   ( ::mpi::Base &_comm )
                : ::mpi::Base::Base( _comm ), seeds(1,0),
                  graph(NULL)  {}
-      //! Copy Constructor.
-      Topology   ( const Topology &_comm ) 
-               : ::mpi::Base::Base(_comm), seeds( _comm.seeds),
-                 graph( _comm.graph ) {}
 #endif
       //! Destructor
       ~Topology() {};
@@ -60,6 +58,8 @@ namespace GA
       //! \brief Creates the GA mpi topology and groups.
       template < class T_EVALUATOR >
       bool Load( const TiXmlElement &_node, T_EVALUATOR &_eval );
+      //! Print parameters of this run.
+      std::string print() const;
 
       //! Loads seeds from attribute.
       bool LoadSeeds( const TiXmlAttribute &_att );

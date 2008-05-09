@@ -57,6 +57,14 @@ namespace CE
     return true;
   }
 
+#ifdef _MPI
+  void Darwin :: set_mpi( ::mpi::Base *_comm )
+  {
+    functional.get_functional1()->set_mpi( _comm );
+    functional.get_functional2()->set_mpi( _comm );
+  }
+#endif
+
 } // namespace CE
 
 

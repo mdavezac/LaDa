@@ -38,24 +38,24 @@ namespace GA
       //! They do not require full containers.
       if( graph->type == mpi::Graph::t_Type::COW ) return;
       //! Bulls receive the container as broadcasted by the farmer.
-//     ::mpi::BroadCast bc( graph->farmer_comm );
-//     if( graph->type == mpi::Graph::t_Type::BULL ) 
-//     {
-//       bc << ::mpi::BroadCast::allocate << ::mpi::BroadCast::broadcast;
-//       _cont.clear();
-//       typename T_CONTAINER :: value_type value;
-//       while( value->broadcast( bc ) ) _cont.push_back( value );
-//       return;
-//     }
-//     //! Finally, the farmer gets to broadcast the goods
-//     typename T_CONTAINER :: iterator i_var = _cont.begin();
-//     typename T_CONTAINER :: iterator i_var_end = _cont.end();
-//     for(; i_var != i_var_end; ++i_var )
-//       i_var->broadcast( bc );
-//     bc << ::mpi::BroadCast::allocate;
-//     for( i_var = _cont.begin(); i_var != i_var_end; ++i_var )
-//       i_var->broadcast( bc );
-//     bc << ::mpi::BroadCast::broadcast << ::mpi::BroadCast::reset();
+      ::mpi::BroadCast bc( graph->farmer_comm() );
+      if( graph->type == mpi::Graph::t_Type::BULL ) 
+      {
+        bc << ::mpi::BroadCast::allocate << ::mpi::BroadCast::broadcast;
+        _cont.clear();
+        typename T_CONTAINER :: value_type value;
+        while( value.serialize( bc ) ) _cont.push_back( value );
+        return;
+      }
+      //! Finally, the farmer gets to broadcast the goods
+      typename T_CONTAINER :: iterator i_var = _cont.begin();
+      typename T_CONTAINER :: iterator i_var_end = _cont.end();
+      for(; i_var != i_var_end; ++i_var )
+        i_var->serialize( bc );
+      bc << ::mpi::BroadCast::allocate;
+      for( i_var = _cont.begin(); i_var != i_var_end; ++i_var )
+        i_var->serialize( bc );
+      bc << ::mpi::BroadCast::broadcast;
 #endif
     }
 
@@ -162,9 +162,9 @@ namespace GA
       typedef typename t_GATraits :: t_Individual t_Individual;
       typedef GA::Breeder<T_GATRAITS> t_Return;
                  
-//     __TRYCODE(
-//       __SERIALCODE( return new GA::Breeder<t_GATraits>; )
-//       __MPICODE(
+      __TRYCODE(
+        __SERIALCODE( return new GA::Breeder<t_GATraits>; )
+        __MPICODE(
            if( not graph ) return new GA::Breeder<t_GATraits>();
            if( graph->type == mpi::Graph::t_Type::FARMER )
              return (t_Return*) new mpi::Graph::Breeders::Farmer<t_GATraits>(graph);
@@ -176,9 +176,9 @@ namespace GA
                = new mpi::Graph::Breeders::Cow<t_GATraits>(graph);
            breeder->set( &_eval );
            return (t_Return*) breeder;
-//        ), 
-//        "Error while creating Breeders.\n" 
-//      )
+         ), 
+         "Error while creating Breeders.\n" 
+       )
     }
   template <class T_GATRAITS, template <class> class T_BASE > 
     T_BASE<T_GATRAITS>* Topology :: evaluation ()

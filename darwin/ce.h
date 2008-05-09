@@ -92,6 +92,10 @@ namespace CE
       //! Returns the gradient of the CE functional in direction \a _pos
       types::t_real evaluate_one_gradient( types::t_unsigned _pos ) 
         {  return functional.evaluate_one_gradient( _pos ); }
+      __MPICODE( 
+        //! Sets communicator and suffix for mpi stuff.
+        void set_mpi( ::mpi::Base *_comm );
+      )
   };
 
 

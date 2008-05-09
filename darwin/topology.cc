@@ -39,9 +39,11 @@ namespace GA
      return sstr.str(); 
    }
    std::vector< types::t_int > :: const_iterator i_seed = seeds.begin();
-   std::vector< types::t_int > :: const_iterator i_seed_end = seeds.end();
-   for( types::t_int i = 0; i_seed != i_seed_end; ++i_seed, ++i )
+   std::vector< types::t_int > :: const_iterator i_seed_end = seeds.end() - 1;
+   types::t_int i = 0;
+   for(; i_seed != i_seed_end; ++i_seed, ++i )
      sstr << "Seed" << i << " = " << seeds.front() << ", "; 
+   sstr << "Seed" << i << " = " << seeds.front() << "."; 
 #endif // _MPI
     return sstr.str(); 
   }
@@ -76,5 +78,13 @@ namespace GA
    comm->Bcast( &seed, 1, MPI::INT, 0 );
    rng.reseed( seed );
 #endif // _MPI
+  }
+
+  std::string Topology :: print() const 
+  {
+    __MPICODE( if( (not graph) and comm->Get_size() == 1 ) )
+      return "Starting Serial Run.";
+    __MPICODE( else if(  graph ) return "Starting Graphed-Pools Run.";
+               else return "Starting Single-Pool Run."; )
   }
 }

@@ -19,7 +19,7 @@
     <Atom x="1.000000" y="1.000000" z="1.000000" type="0.000000" />
     <Atom x="1.500000" y="1.500000" z="1.000000" type="0.000000" />
   </Structure>
-    <GA popsize=20 rate=0.1 >
+    <GA popsize=20 rate=0.2 >
         <Objective type="convexhull" />
         <Breeding>
           <TabooOp>
@@ -38,6 +38,7 @@
         <Terminator ref="evaluation" value="3000" />
         <Print type="offspring" />
         <Print type="population" />
+        <Terminator ref="evaluation" value=100 />
     </GA>
     <Lattice>
         <column x="0.00000000" y="0.50000000" z="0.50000000" />

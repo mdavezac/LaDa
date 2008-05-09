@@ -1310,11 +1310,12 @@ out:
                                       << replacement_rate << Print::endl
                << Print::Xmg::comment << "Population Size: "
                                       << pop_size << Print::endl
-               << Print::Xmg::comment << topology.print_seeds()
+               << Print::Xmg::comment << topology.print_seeds() << Print::endl 
                << Print::Xmg::comment << (  populate_style == RANDOM_POPULATE ?
                                            "Random Starting Population":
                                            "Partitionned Starting Population" )
-                                      << Print::endl;
+                                      << Print::endl
+               << Print::Xmg::comment << topology.print() << Print::endl;
     if ( max_generations )
       Print::xmg << Print::Xmg::comment << "Maximum Number of Generations: "
                                         << max_generations << Print::endl;

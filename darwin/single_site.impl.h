@@ -62,14 +62,12 @@ namespace SingleSite
       std::cerr << " Could not load lattice type from input!! " << std::endl; 
       return false;
     }
-    std::cout << lattice << std::endl;
     Ising_CE::Structure::lattice = &lattice;
     if ( not structure.Load( _node ) )
     {
       std::cerr << " Could not load input structure!! " << std::endl; 
       return false;
     }
-    std::cout << structure << std::endl;
     
     concentration.setfrozen( structure );
     Print::xmg << Print::Xmg::comment << concentration.print() << Print::endl;

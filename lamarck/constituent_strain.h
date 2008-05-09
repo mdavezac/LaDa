@@ -131,7 +131,7 @@ namespace Ising_CE
 #ifdef _MPI
         /** \ingroup Genetic
          *  \brief Sets the communicator. **/
-        void set_mpi( mpi::Base &_c ) { comm = &_c; }
+        void set_mpi( mpi::Base *_c ) { comm = _c; }
 #endif
 
   };

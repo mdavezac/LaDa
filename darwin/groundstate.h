@@ -105,6 +105,11 @@ namespace GroundState
       //!        _pos of \a _grad
       void evaluate_one_gradient( t_QuantityGradients& _grad, types::t_unsigned _pos ) 
         { _grad[_pos] = ce.evaluate_one_gradient( _pos ); }
+#ifdef _MPI
+        //! Sets communicator and suffix for mpi stuff.
+        void set_mpi( ::mpi::Base *_comm, const std::string &_str )
+          { t_Base::set_mpi(_comm, _str); ce.set_mpi( _comm ); }
+#endif
   };
 
 } // namespace GROUNDSTATE
