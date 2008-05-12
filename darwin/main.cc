@@ -27,9 +27,9 @@
 #endif
 
 #include <stdexcept>       // std::runtime_error
-#include <revision.h>
 #include <boost/program_options.hpp>
 
+#include <revision.h>
 #include <print/xmg.h>
 #include <print/stdout.h>
 #include <opt/debug.h>

@@ -270,7 +270,8 @@ namespace Pescan
      void check_existence() const;
 
 #ifdef _DIRECTIAGA
-     //! Sets the communicator.
+     /** \ingroup Genetic
+      *  \brief Sets the communicator. **/
      void set_mpi( mpi::Base &_c ) { comm = &_c; }
 #endif
 

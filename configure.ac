@@ -9,6 +9,9 @@ dompidefault=false
 if [[ $(echo $CXX | egrep "mpicxx" - ) > 0 ]]; then 
  dompidefault=true
  mpicompilers=true
+echo "here"
+echo "here"
+echo "here"
 fi
 if [[ $(echo $CXX | egrep "mpic++" - ) > 0 ]]; then 
  dompidefault=true
@@ -265,8 +268,6 @@ if test "x$pescan$mpi" = "xtruetrue"; then
       LD_IAGA_FLAGS=" $iaga_dir/pescan/lib/libpescan.a  $iaga_dir/genpot/lib/libgenpot.a "
     else
       LD_IAGA_FLAGS="$LD_IAGA_FLAGS $iaga_ld"
-      echo " am here $iaga_ld "
-      echo " am here $LD_IAGA_FLAGS "
     fi
   fi
 fi

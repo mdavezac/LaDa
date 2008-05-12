@@ -185,10 +185,12 @@ namespace GA
     {
       typedef T_GATRAITS t_GATraits;
       typedef T_BASE<t_GATraits> t_Base;
-      typedef mpi::Graph::Evaluation::Farmer<t_GATraits, T_BASE> t_Farmer;
-      typedef mpi::Graph::Evaluation::Bull<t_GATraits, T_BASE> t_Bull;
-      typedef mpi::Graph::Evaluation::Farmhand< t_Base > t_Farmhand;
-      typedef mpi::Graph::Evaluation::Cow<t_GATraits, T_BASE> t_Cow;
+      __MPICODE((
+        typedef mpi::Graph::Evaluation::Farmer<t_GATraits, T_BASE> t_Farmer;
+        typedef mpi::Graph::Evaluation::Bull<t_GATraits, T_BASE> t_Bull;
+        typedef mpi::Graph::Evaluation::Farmhand< t_Base > t_Farmhand;
+        typedef mpi::Graph::Evaluation::Cow<t_GATraits, T_BASE> t_Cow;
+      ))
 
       __TRYCODE(
         __SERIALCODE( return new t_Base(); )

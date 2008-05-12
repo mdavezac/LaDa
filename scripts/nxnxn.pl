@@ -4,20 +4,9 @@
 #
 
 my %params;
-open IN, "COMMANDS";
-$params{'iaga call'}            =  <IN>;
-$params{'agr'}{'filename'}      =  <IN>;
-$params{'directory'}{'result'}  =  <IN>;
-$params{'GA string'}            =  <IN>;
-$params{'method string'}        =  <IN>;
-$params{'breeding string'}      =  <IN>;
-$params{'taboos string'}        =  <IN>;
-$params{'terminator string'}    =  <IN>;
-$params{'other string'}         =  <IN>;
-close IN;
+read_params();
 
 $params{"home"} = `cd; pwd`; chomp $params{"home"};
-$params{'max GA iters'} = 400;
 
 $params{'GA'}{'maxgen'} = 0;
 $params{'GA'}{'popsize'} = 100;
@@ -47,14 +36,14 @@ if ( $params{'GA string'} =~ /rate:(\S+)/ )
 if ( $params{'GA string'} =~ /x=(\S+)/ )
   { $params{'GA'}{'x'} = $1; }
 
-if ( $params{'method string'} =~ /optimum/ )
+if ( $params{'GA string'} =~ /optimum/ )
   { $params{'method'}{'type'} = "optimum"; }
-elsif ( $params{'method string'} =~ /BestOf:(\S+)/ )
+elsif ( $params{'GA string'} =~ /BestOf:(\S+)/ )
 {
   $params{'method'}{'type'} =  "BestOf";
   $params{'method'}{'delta'} = $1;
 }
-elsif ( $params{'method string'} =~ /target:(\S+)/ )
+elsif ( $params{'GA string'} =~ /target:(\S+)/ )
 {
   $params{'method'}{'type'} = "Target";
   $params{'method'}{'target'} = $1;
@@ -62,33 +51,34 @@ elsif ( $params{'method string'} =~ /target:(\S+)/ )
     { print " Forgot to include delta in method target \n"; exit; }
   $params{'method'}{'delta'} = $1;
 }
-elsif ( $params{'method string'} =~ /CH/ )
+elsif ( $params{'GA string'} =~ /CH/ )
   { $params{'method'}{'type'} = "CH"; }
 else
   { print "Couldn't determine method on input!!\n"; exit; }
 
 
-$params{'breeding'} .= " UtterRandom" if ( $params{'breeding string'} =~ /UtterRandom/ );
-$params{'breeding'} .= " Crossover"   if ( $params{'breeding string'} =~ /Crossover/ );
-$params{'breeding'} .= " Krossover"   if ( $params{'breeding string'} =~ /Krossover/ );
-$params{'breeding'} .= " SA" if ( $params{'breeding string'} =~ /SA/ );
-$params{'breeding'} .= " VA" if ( $params{'breeding string'} =~ /VA/ );
-$params{'breeding'} .= " Beratan" if ( $params{'breeding string'} =~ /Beratan/ );
+$params{'breeding'} .= " utterRandom" if ( $params{'GA string'} =~ /utterRandom/ );
+$params{'breeding'} .= " crossover"   if ( $params{'GA string'} =~ /crossover/ );
+$params{'breeding'} .= " krossover"   if ( $params{'GA string'} =~ /krossover/ );
+$params{'breeding'} .= " SA" if ( $params{'GA string'} =~ /SA/ );
+$params{'breeding'} .= " VA" if ( $params{'GA string'} =~ /VA/ );
+$params{'breeding'} .= " Beratan" if ( $params{'GA string'} =~ /Beratan/ );
+if ( $params{'GA string'} =~ /mut(ation|):(\S+)(-|_)(\S+)/ )
+ { $params{'breeding'} .= " mut:$2-$4"; }
   
-$params{'taboos'} .= " pop" if ( $params{'taboos string'} =~ /pop/ );
-$params{'taboos'} .= " history" if ( $params{'taboos string'} =~ /history/ );
-if ( $params{'taboos string'} =~ /c:(\S+)-(\S+)/ )
+$params{'taboos'} .= " pop" if ( $params{'GA string'} =~ /poptaboo/ );
+$params{'taboos'} .= " history" if ( $params{'GA string'} =~ /history/ );
+if ( $params{'GA string'} =~ /c:(\S+)-(\S+)/ )
 {
   $params{'taboo'} .= " concentration:$1-$2";
 }
 
-if ( $params{'terminator string'} =~ /(\d+)/ )
+if ( $params{'GA string'} =~ /terminator:(\d+)/ )
   { $params{'terminator'} = $1; }
 
 $params{'other'} = "";
-$params{'other'} = " history " if ( $params{'other string'} =~ /history/ );
-$params{'other'} = " stats " if ( $params{'other string'} =~ /stats/ );
-$params{'restart'} = " results " if ( $params{'other string'} =~ /true/ );
+$params{'other'} = " history " if ( $params{'GA string'} =~ /history/ );
+$params{'other'} = " stats " if ( $params{'GA string'} =~ /stats/ );
 
 $params{'ssc'} = 0;
 $params{'nb atoms'} = 20;
@@ -105,7 +95,6 @@ if ( $params{'agr'}{'filename'} =~ /atoms:(\d+)_(\d+)_(\d+)/ )
 
 
 $params{'agr'}{'filename'} = "";
-$params{'agr'}{'filename'} = "true_" if ($params{'restart'} =~ /results/ );
 $params{'agr'}{'filename'} .= sprintf "atoms:%i_%i_%i_", $params{'x'}, $params{'y'}, $params{'z'};
 $params{'agr'}{'filename'} .= $params{'method'}{'type'};
 $params{'agr'}{'filename'} .= sprintf ":%.2f_%.2f", $params{'target'}, $params{'delta'}
@@ -130,9 +119,12 @@ if( $params{'taboo'} =~ /concentration:(\S+)-(\S+)/ )
   $params{'agr'}{'filename'} .= sprintf "_c:%.4f-%.4f", $params{'taboo'}{'c'} 
 }
 
+my $taboos = $params{'taboos'};
+$taboos =~ s/^(\s+)//;
+$taboos =~ s/\s/_/g;
+$params{'agr'}{'filename'} .= "_taboos:" . $taboos;
+
 $params{'xml'}{"filename"} = $params{'agr'}{'filename'};
-$params{'agr'}{"filename"} .= ".agr";
-$params{'xml'}{"filename"} .= ".xml";
 
 print $params{'agr'}{"filename"}, "\n"; 
 
@@ -142,23 +134,11 @@ my %structure;
 my $cosa = 0;
 #system "rm -f $params{'agr'}{'filename'}";
 read_structure(); # data passes from PIfile to %structure hash
-launch_iaga(); 
 
+write_lamarck_input();
 
 exit;
 
-
-sub launch_iaga()
-{
-  for( my $count =0; $count < $params{'max GA iters'}; $count++)
-  {
-    write_lamarck_input();
-    system "$params{'iaga call'}";
-    system "cat convex_hull.agr >> $params{'agr'}{'filename'}";
-    system "cp convex_hull.xml $params{'xml'}{'filename'}  ";
-    system "cp $params{'xml'}{'filename'} $params{'agr'}{'filename'}  $params{'directory'}{'result'} ";
-  }
-}
 
 sub read_structure()
 {
@@ -240,20 +220,19 @@ sub write_lamarck_input()
       printf OUT " />\n";
       
       printf OUT "    <Breeding>\n";
+      my $space = "";
       if ( $params{'taboos'} =~ /(pop|history|concentration)/ )
       {
+        $space = " ";
         printf OUT "      <TabooOp>\n";
-        printf OUT "        <UtterRandom/>\n" if ( $params{"breeding"} =~ /UtterRandom/ );
-        printf OUT "        <Krossover />\n" if ( $params{"breeding"} =~ /Krossover/ );
-        printf OUT "        <Crossover/>\n" if ( $params{"breeding"} =~ /Crossover/ );
-        printf OUT "      </TabooOp>\n";
       }
-      else
-      { 
-        printf OUT "      <UtterRandom/>\n" if ( $params{"breeding"} =~ /UtterRandom/ );
-        printf OUT "      <Krossover/>\n" if ( $params{"breeding"} =~ /Krossover/ );
-        printf OUT "      <Crossover/>\n" if ( $params{"breeding"} =~ /Crossover/ );
-      }
+      printf OUT "  %s      <UtterRandom/>\n", $space if ( $params{"breeding"} =~ /utterRandom/ );
+      printf OUT "  %s      <Krossover />\n", $space if ( $params{"breeding"} =~ /krossover/ );
+      printf OUT "  %s      <Crossover/>\n", $space if ( $params{"breeding"} =~ /crossover/ );
+      if ( $params{'breeding'} =~ /mut(ation|):(\S+)-(\S+)/ )
+        { printf OUT "        <Mutation prob=\"%5.4f\" value=\"%5.4f\" />\n", $2, $3; }
+      printf OUT "      </TabooOp>\n"
+        if ( $params{'taboos'} =~ /(pop|history|concentration)/ );
       printf OUT "      <Minimizer type=\"VA\" />\n" if ( $params{"breeding"} =~ /VA/ );
       printf OUT "      <Minimizer type=\"SA\" />\n" if ( $params{"breeding"} =~ /SA/ );
       printf OUT "      <Minimizer type=\"Beratan\" />\n" if ( $params{"breeding"} =~ /Beratan/ );
@@ -280,8 +259,9 @@ sub write_lamarck_input()
 
       printf OUT "    <Terminator ref=\"evaluation\" value=%i/>\n", $params{'terminator'}; 
       printf OUT "    <Save what=\"all\"/>\n";
-      printf OUT "    <Restart what=\"results\"/>\n" if ( $params{'restart'} =~ /results/ );
-      printf OUT "    <Filenames save=\"convex_hull.xml\" xmgrace=\"convex_hull.agr\" />\n";
+      printf OUT "    <Filenames save=\"%s.xml\"/>\n", $params{'xml'}{'filename'};
+      printf OUT "    <Filenames xmgrace=\"%s/%s.agr\" />\n", 
+                      $params{"directory"}{'working'}, $params{'xml'}{'filename'};
 
       printf OUT "  </GA>\n";
     }
@@ -295,4 +275,32 @@ sub write_lamarck_input()
   close IN;
   close OUT;
 }
+
+
+sub read_params()
+{
+  open IN, "COMMANDS";
+  $params{'agr'}{'filename'}      =  <IN>;
+  $params{'directory'}{'result'}  =  <IN>;
+  $params{'directory'}{'working'}  =  <IN>;
+  while( ($_=<IN>) )
+  {
+     my $text = $_; chomp $text;
+
+     $text =~ s/(^\s+|\s+$)//g;
+     $params{'GA string'} .= " $text";
+  }
+  close IN;
+
+  chomp $params{'agr'}{'filename'};
+  chomp $params{'directory'}{'result'};
+  chomp $params{'directory'}{'working'};
+  chomp $params{'GA string'};
+  $params{'agr'}{'filename'}     =~ s/(^\s+|\s+$)//g;
+  $params{'directory'}{'result'} =~ s/(^\s+|\s+$)//g;
+  $params{'directory'}{'working'} =~ s/(^\s+|\s+$)//g;
+  $params{'GA string'}           =~ s/(^\s+|\s+$)//g;
+}
+
+
 

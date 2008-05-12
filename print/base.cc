@@ -40,12 +40,14 @@ namespace Print
     
     file.open( filename.c_str(),
                truncate ? std::ios_base::trunc: std::ios_base::app | std::ios_base::out); 
+
     if (file.fail() )
     {
       std::cerr << "Could not open " << filename << std::endl;
       do_print = false;
       return;
     }
+    if( truncate ) file << "\n\n"; 
     close();
   }
   bool Base :: open ()
