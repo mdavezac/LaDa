@@ -10,9 +10,12 @@ namespace GA
     __SERIALCODE( return true; )
     __TRYMPICODE(
       graph = new mpi::Graph::Topology( *comm );
-      bool goodgraph = graph->Load( _node ) and graph->init();
-      if( goodgraph ) graph->set_mpi( _eval );
-      if( goodgraph ) return true;
+      if( graph->Load( _node ) )
+        if( graph->init() )
+        { 
+          graph->set_mpi( _eval );
+          return true;
+        }
       delete graph;
       graph = NULL;
       std::string str = "";
@@ -185,23 +188,28 @@ namespace GA
     {
       typedef T_GATRAITS t_GATraits;
       typedef T_BASE<t_GATraits> t_Base;
-      __MPICODE((
-        typedef mpi::Graph::Evaluation::Farmer<t_GATraits, T_BASE> t_Farmer;
-        typedef mpi::Graph::Evaluation::Bull<t_GATraits, T_BASE> t_Bull;
-        typedef mpi::Graph::Evaluation::Farmhand< t_Base > t_Farmhand;
-        typedef mpi::Graph::Evaluation::Cow<t_GATraits, T_BASE> t_Cow;
-      ))
+#ifdef _MPI
+      typedef mpi::Graph::Evaluation::Farmer<t_GATraits, T_BASE> t_Farmer;
+      typedef mpi::Graph::Evaluation::Bull<t_GATraits, T_BASE> t_Bull;
+      typedef mpi::Graph::Evaluation::Farmhand< t_Base > t_Farmhand;
+      typedef mpi::Graph::Evaluation::Cow<t_GATraits, T_BASE> t_Cow;
+#endif
 
       __TRYCODE(
         __SERIALCODE( return new t_Base(); )
         __MPICODE( 
+          Print :: out << "topology.evaluation " << Print::endl;
           if( not graph ) return new t_Base();
+          Print :: out << "topology.evaluation Farmer "  << Print::endl;
           if( graph->type == mpi::Graph::t_Type::FARMER )
             return (t_Base*) new t_Farmer(graph);
+          Print :: out << "topology.evaluation Bull "  << Print::endl;
           if( graph->type == mpi::Graph::t_Type::BULL )
             return (t_Base*) new t_Bull(graph);
+          Print :: out << "topology.evaluation Farmhand "  << Print::endl;
           if( graph->type == mpi::Graph::t_Type::FARMHAND )
             return (t_Base*) new t_Farmhand;
+          Print :: out << "topology.evaluation Cow "  << Print::endl;
           return (t_Base*) new t_Cow(graph);
         ),
         "Error while creating Evaluation.\n" 

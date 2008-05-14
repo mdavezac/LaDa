@@ -2,6 +2,11 @@
 //  Version: $Id$
 //
 
+#ifdef _DEBUG
+#include <boost/lambda/lambda.hpp>
+#include <algorithm>
+#endif
+
 namespace GA
 {
   namespace mpi 
@@ -15,10 +20,9 @@ namespace GA
       {
         if( pools < 2 ) return false;
         types::t_int per_pool = ( size() - 1) / pools;
-        types::t_int leftovers = ( size() - 1) % pools;
  
         while ( per_pool and ( not _condition( per_pool) ) ) --per_pool;
-        leftovers += size() - per_pool * pools;
+        types::t_int leftovers = size() - per_pool * pools - 1;
  
         typedef std::pair<types::t_int, types::t_int > t_pairs;
         std::vector< t_pairs > pairs(1, t_pairs(pools, per_pool) );
@@ -58,14 +62,15 @@ namespace GA
                      << ( i_pair->first > 1 ? "s ": " ")
                      << "consisting of: \n"
                      <<"    . 1 bull\n    . " << i_pair->second-1 
-                     <<" cow" << (i_pair->second > 2 ? "s.\n": ".\n");
+                     <<" cow" << (i_pair->second > 2 ? "s.": ".")
+                     << Print::endl;
         
         // Now creates the graph.
         // First the numbers of nodes (eg Farmer + Bulls + Cows )
         types::t_int nnodes =  1;
         i_pair = pairs.begin();
         for(; i_pair != i_pair_end; ++i_pair )
-          nnodes = i_pair->first * i_pair->second;
+          nnodes += i_pair->first * i_pair->second;
         // Then the number of neighbors.
         types::t_int *indices = new types::t_int[ nnodes ];
         types::t_int *i_index = indices;
@@ -93,6 +98,9 @@ namespace GA
         for(; i_herd != i_herd_end; ++i_herd )
           for( types::t_int i = *i_herd - 1; i > 0; --i, ++i_index )
             *i_index = *(i_index-1) + ( *i_herd == 2 ? 1: 2); 
+
+
+
         // Finally, we create the edges of the graph.
         types::t_int *edges = new types::t_int[ *(i_index - 1) ];
         // first the edges of the Farmer.
@@ -106,8 +114,9 @@ namespace GA
           *i_edge = 0; ++i_edge;
           if( *i_herd == 1 ) continue;
           *i_edge = first_cow_in_herd; ++i_edge;
+          first_cow_in_herd += *i_herd - 1;
           if( *i_herd == 2 ) continue;
-          *i_edge = first_cow_in_herd + (*i_herd) - 2; ++i_edge;
+          *i_edge = first_cow_in_herd - 1; ++i_edge;
         }
         // now for the cows
         // First cow is linked to the bull and the second cow.
@@ -131,13 +140,14 @@ namespace GA
         }
  
  
+        types::t_int color = MPI::UNDEFINED;
         // At this point, we can construct the graph
         graph_comm =  comm->Create_graph( nnodes, indices, edges, true);
-        if( graph_comm == MPI::COMM_NULL ) type = t_Type::t_Type::FARMHAND;
+        if( graph_comm == MPI::COMM_NULL )
+          { type = t_Type::t_Type::FARMHAND; goto exit; }
  
         // Now we can create the herds.
         // First we create the communicator between Farmer and Bulls.
-        types::t_int color = MPI::UNDEFINED;
         if( rank() == 0 ) type = t_Type::FARMER;
         if( rank() <= pools ) color = 0;
         head_comm = comm->Split( color, rank() );
@@ -145,15 +155,35 @@ namespace GA
         color = MPI::UNDEFINED;
         if( rank() <= pools and rank() > 0 ) { color = rank(); type = t_Type::BULL; }
         first_cow_in_herd = pools + 1;
+        i_herd = herds.begin();
         for(types::t_int i = 1; i_herd != i_herd_end; ++i_herd, ++i )
+        {
           if(     rank() >= first_cow_in_herd
-              and rank() < first_cow_in_herd - (*i_herd) - 1 )
+              and rank() < first_cow_in_herd + (*i_herd) - 1 )
           {
             color = i;
             type = t_Type::COW;
           }
+          first_cow_in_herd += *i_herd - 1;
+        }
         pool_comm = comm->Split( color, rank() );
  
+ 
+exit:
+#ifdef _DEBUG
+         switch( type )
+         {
+           case t_Type::FARMER:
+             Print::out << "This process is the Farmer."; break;
+           case t_Type::FARMHAND:
+             Print::out << "This process is a Farmhand."; break;
+           case t_Type::BULL:
+             Print::out << "This process is a Bull."; break;
+           case t_Type::COW:
+             Print::out << "This process is a Cow."; break;
+         }
+         Print::out << Print::endl;
+#endif
         return true;
       }    
 
@@ -164,7 +194,7 @@ namespace GA
               or type == t_Type::FARMHAND ) return;
           std::ostringstream sstr;
           ::mpi::Base comm( pool_comm );
-          sstr << "." << head_comm.Get_rank();
+          sstr << "." << pool_comm.Get_rank();
           _eval.set_mpi( &comm, sstr.str() );
         }
 

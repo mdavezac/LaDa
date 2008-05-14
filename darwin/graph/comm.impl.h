@@ -264,8 +264,17 @@ namespace GA
         inline typename Bull<T_GATRAITS, T_DERIVED> :: t_Commands :: Commands
           Bull<T_GATRAITS, T_DERIVED> :: obey()
           {
+            Print::out << "Obeying" << Print::endl; 
             types::t_unsigned buff;
             comm->Recv( &buff, 1, MPI::UNSIGNED, 0, TAG );
+#ifdef _DEBUG
+            switch( buff )
+            {
+              case 0: Print::out << "Obey: go" << Print::endl; break;
+              case 1: Print::out << "Obey: done" << Print::endl; break;
+              default: Print::out << "Obey: problem" << Print::endl; break;
+            }
+#endif
             return (typename t_Commands :: Commands) buff;
           }
 

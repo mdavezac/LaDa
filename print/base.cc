@@ -47,7 +47,7 @@ namespace Print
       do_print = false;
       return;
     }
-    if( truncate ) file << "\n\n"; 
+    if( not truncate ) file << "\n\n"; 
     close();
   }
   bool Base :: open ()

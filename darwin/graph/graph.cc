@@ -43,20 +43,20 @@ namespace GA
             }
           i_seed = _seeds.begin();
           rng.reseed( *i_seed ); ++i_seed;
-          for( types::t_unsigned i = 0; i_seed != i_seed_end; ++i_seed, ++i)
+          for( types::t_unsigned i = 1; i_seed != i_seed_end; ++i_seed, ++i)
             head_comm.Send( &(*i_seed), 1, MPI::INT, i, 666 );
         }
         else if( type == t_Type::BULL )
         {
           types::t_int seed;
-          comm->Recv( &seed, 1, MPI::INT, 0, 666 );
+          head_comm.Recv( &seed, 1, MPI::INT, 0, 666 );
           pool_comm.Bcast( &seed, 1, MPI::INT, 0 );
           rng.reseed( seed );
         }
         else if ( type == t_Type::COW )
         {
           types::t_int seed;
-          comm->Bcast( &seed, 1, MPI::INT, 0 );
+          pool_comm.Bcast( &seed, 1, MPI::INT, 0 );
           rng.reseed( seed );
         }
       }

@@ -944,28 +944,39 @@ endstorage:
   template<class T_EVALUATOR>
   void Darwin<T_EVALUATOR> :: presubmit()
   {
+    Print::out << "presubmit: 0 " << Print::endl;
     // GA::Evaluator does not know about Traits::GA, and even less about
     // Traits::GA::t_Population, hence this bit of hackery.
     std::list< t_Individual > dummy;
     eoPop<t_Individual> dummy2;
+    Print::out << "presubmit: 1 " << Print::endl;
     evaluator.presubmit(dummy);
+    Print::out << "presubmit: 2 " << dummy.empty() << Print::endl;
     if ( dummy.empty() ) return;
+    Print::out << "presubmit: 3 " << Print::endl;
     offspring.resize( dummy.size() );
+    Print::out << "presubmit: 4 " << Print::endl;
     std::copy( dummy.begin(), dummy.end(), offspring.begin() );
+    Print::out << "presubmit: 5 " << Print::endl;
     (*evaluation)(dummy2, offspring);
+    Print::out << "presubmit: 6 " << Print::endl;
     offspring.clear();
     evaluation->nb_eval = 0;
     evaluation->nb_grad = 0;
+    Print::out << "presubmit: 7 " << Print::endl;
   }
 
   template<class T_EVALUATOR>
   void Darwin<T_EVALUATOR> :: run()
   {
+    Print::out << " 0 " << Print::endl;
     presubmit();
 
+    Print::out << " 1 " << Print::endl;
     Print::xmg << Print::flush;
     Print::out << "\nCreating population" << Print::endl;
     populate();
+    Print::out << " 2 " << Print::endl;
 
     offspring.clear();
     typename t_Islands :: iterator i_island_begin = islands.begin();

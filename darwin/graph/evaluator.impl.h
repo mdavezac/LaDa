@@ -18,19 +18,22 @@ namespace GA
             {
               typename t_Unknowns :: iterator i_unknown = unknowns.begin();
               typename t_Unknowns :: iterator i_unknown_end = unknowns.end();
-              for(; i_unknown != i_unknown_end; ++i_unknown )
-                if( i_unknown->second == _bull - 1 )
+              typename t_ProcessIds :: iterator i_id = process_ids.end();
+              for(; i_unknown != i_unknown_end; ++i_unknown, ++i_id )
+                if( *i_id == _bull )
                 {
                   unknowns.erase( i_unknown );
+                  process_ids.erase( i_id );
                   break;
                 }
               i_unknown = unknowns.begin();
-              for(; i_unknown != i_unknown_end; ++i_unknown )
-                if( i_unknown->second == -1 ) break;
+              i_id = process_ids.begin();
+              for(; i_unknown != i_unknown_end; ++i_unknown, ++i_id )
+                if( *i_id == -1 ) break;
            
               if( i_unknown == i_unknown_end ) return NULL;
-              i_unknown->second = _bull;
-              return i_unknown->first;
+              *i_id = _bull;
+              return *i_unknown;
             }
           
 

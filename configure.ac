@@ -5,15 +5,9 @@ AM_INIT_AUTOMAKE()
 AC_PROG_CC
 AC_PROG_CXX
 
+AC_PROG_EGREP
 dompidefault=false
-if [[ $(echo $CXX | egrep "mpicxx" - ) > 0 ]]; then 
- dompidefault=true
- mpicompilers=true
-echo "here"
-echo "here"
-echo "here"
-fi
-if [[ $(echo $CXX | egrep "mpic++" - ) > 0 ]]; then 
+if [[[ $(echo $CXX | $EGREP "mpic(xx|\+\+)" - ) == $CXX ]]]; then 
  dompidefault=true
  mpicompilers=true
 fi

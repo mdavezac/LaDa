@@ -242,7 +242,7 @@ namespace GA
                                                              T_OBJECT &_object )
               { ::mpi::receive_object< T_OBJECT >( _bull, _object, t_Base::comm ); }
             //! Starts all persistent requests from bulls ( Farmer::requests )
-            void startall() { MPI::Prequest::Startall( nbulls, requests ); } 
+            void start_all() { MPI::Prequest::Startall( nbulls, requests ); } 
             //! Sends a command to \a _bull.
             void send_command( types::t_unsigned _bull, const t_Commands :: Commands _c );
             //! Activates request for \a _bull.
@@ -486,7 +486,7 @@ namespace GA
                        : t_CommBase( _topo ), t_Base() {}
     
             //! Creates \a _offspring population from \a _parent
-            void operator()(const t_Population& _parents, t_Population& _offspring)
+            void operator()(t_Population& _parents, t_Population& _offspring)
               { while( t_CommBase :: obey() != t_CommBase::t_Commands::DONE ); }
        
             //! The class name. EO required

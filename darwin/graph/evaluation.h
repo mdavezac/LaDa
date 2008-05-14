@@ -77,6 +77,7 @@ namespace GA
                                                   typename T_GATRAITS :: t_Population,
                                                   typename T_GATRAITS :: t_Islands > >
         {
+          friend class Comm::Farmer< T_GATRAITS, Farmer<T_GATRAITS, T_BASE> >;
           typedef Traits::GA< Evaluator::Farmer<T_GATRAITS>,
                               typename T_GATRAITS :: t_Population,
                               typename T_GATRAITS :: t_Islands > t_BaseTraits;
@@ -115,7 +116,7 @@ namespace GA
                      { t_Base::evaluator = &cache_eval; };
     
             //! Creates \a _offspring population from \a _parent
-            void operator()(const t_Population& _parents, t_Population& _offspring);
+            void operator()(t_Population& _parents, t_Population& _offspring);
     
             //! The class name. EO required
             virtual std::string className() const
@@ -133,9 +134,11 @@ namespace GA
             void set(  typename GA::Store::Base<t_GATraits>*  _s )
               { t_CommBase :: store = t_Base :: store =  _s; }
 
+
           protected:
             //! Response to WAITING request
             void onWait( types::t_unsigned _bull );
+            using t_Base::evaluate;
         };
     
         template< class T_GATRAITS, template < class > class T_BASE>
@@ -179,7 +182,7 @@ namespace GA
                    metaeval(_topo) { t_Base::evaluator = &metaeval; }
     
             //! Creates \a _offspring population from \a _parent
-            void operator()(const t_Population& _parents, t_Population& _offspring);
+            virtual void operator()(t_Population& _parents, t_Population& _offspring);
        
             //! The class name. EO required
             virtual std::string className() const

@@ -20,7 +20,7 @@ namespace GA
       
           _offspring.clear();
           offspring = &_offspring;
-          t_CommBase::startall();
+          t_CommBase::start_all();
         
           while (_offspring.size() < target)
             t_CommBase::test_bulls();

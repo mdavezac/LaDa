@@ -10,6 +10,8 @@
 
 #ifdef _MPI
 
+#include <list>
+
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
@@ -67,25 +69,35 @@ namespace GA
             typedef typename t_VA_Traits :: t_QuantityGradients   t_QuantityGradients;
             //! Type of the history.
             typedef GA::History<t_Individual>                     t_History;
-            //! first holds pointer, second holds assigned proc.
-            typedef std::pair< t_Individual*, types::t_int >      t_Unknown;
             //! Container of individuals needing evaluation.
-            typedef std::list< t_Unknown >                        t_Unknowns;
+            typedef std::list< t_Individual* >                    t_Unknowns;
+            //! Container of individuals needing evaluation.
+            typedef std::list< types::t_int >                     t_ProcessIds;
             //! Base class type
             typedef GA::Evaluator<t_Individual>                   t_Base;
     
           protected:
             t_Unknowns unknowns;
+            t_ProcessIds process_ids;
     
           public:
             //! Constructor.
-            Farmer () : t_Base() {};
+            Farmer () : t_Base(), unknowns(), process_ids() {};
             //! Copy Constructor
-            Farmer ( const t_This &_c ) : t_Base( _c ), unknowns( _c.unknowns ) {};
+            Farmer   ( const t_This &_c ) 
+                   : t_Base( _c ), unknowns( _c.unknowns ),
+                     process_ids( _c.process_ids ) {};
 
             //! Shoves individual which need evaluating in a list.
             void evaluate() 
-             { unknowns.push_back( t_Unknown( t_Base::current_individual, -1 ) ); }
+            {
+              t_Individual *indiv = t_Base::current_individual;
+              Print :: out << "Farmer evaluator begin " << *indiv << Print::endl;
+              process_ids.push_back( -1 ); 
+              Print :: out << "Farmer evaluator mid " << Print::endl;
+              unknowns.push_back( indiv ); 
+              Print :: out << "Farmer evaluator end " << Print::endl;
+            }
 
             //! Returns true as long a Farmer::unknowns is not empty;
             bool notdone() const { return not unknowns.empty(); }
@@ -102,6 +114,15 @@ namespace GA
             void evaluate_one_gradient( t_QuantityGradients& _grad,
                                         types::t_unsigned _pos) 
               { __THROW_ERROR( "Should not be called.\n" ) }
+#ifdef _DEBUG
+            //! returns iterator to first unknown.
+            void print()
+            {
+              typename t_Unknowns :: const_iterator i_u = unknowns.begin();
+              typename t_Unknowns :: const_iterator i_ue = unknowns.end();
+              for(; i_u != i_ue; ++i_u) Print::out << *i_u << Print::endl; 
+            }
+#endif
         };
     
         //! \brief A meta-evaluator for bulls.
@@ -153,6 +174,8 @@ namespace GA
             //! The class name. EO required
             virtual std::string className() const
               { return "GA::mpi::Graph::Evaluation::Bull"; }
+
+            using t_Base::evaluate;
         };
     
       } // namespace Evaluation
