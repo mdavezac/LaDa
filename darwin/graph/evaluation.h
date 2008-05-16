@@ -73,19 +73,14 @@ namespace GA
         template< class T_GATRAITS, template < class > class T_BASE>
         class Farmer : protected Comm::Farmer< T_GATRAITS,
                                                Farmer<T_GATRAITS, T_BASE> >,
-                       public T_BASE< Traits::GA< Evaluator::Farmer<T_GATRAITS>,
-                                                  typename T_GATRAITS :: t_Population,
-                                                  typename T_GATRAITS :: t_Islands > >
+                       public T_BASE< T_GATRAITS >
         {
           friend class Comm::Farmer< T_GATRAITS, Farmer<T_GATRAITS, T_BASE> >;
-          typedef Traits::GA< Evaluator::Farmer<T_GATRAITS>,
-                              typename T_GATRAITS :: t_Population,
-                              typename T_GATRAITS :: t_Islands > t_BaseTraits;
           public:
-            //! Base class type with cache-evaluator.
-            typedef T_BASE<t_BaseTraits> t_Base;
             //! all %GA traits
             typedef T_GATRAITS t_GATraits;
+            //! Base class type with cache-evaluator.
+            typedef T_BASE<t_GATraits> t_Base;
     
           protected:
             //! Type of this class.
@@ -102,18 +97,24 @@ namespace GA
             typedef GA::History<t_Individual>            t_History;
             //! Communication base class.
             typedef Comm::Farmer< T_GATRAITS, t_This >   t_CommBase;
-            //! Type of the meta-evaluator.
-            typedef typename t_BaseTraits :: t_Evaluator t_CacheEvaluator;
+            //! \brief Scalar Fitness type
+            typedef typename t_GATraits :: t_Fitness :: t_ScalarFitness  t_Fitness;
+            //! \brief Quantity of the Scalar Fitness 
+            typedef typename t_Fitness :: t_Quantity                     t_FitnessQuantity;
+            //! \brief Pair containing an individual to evaluate and the process to
+            //!        which it is assigned.
+            typedef std::pair< t_Individual*, types::t_int >   t_Unknown;
+            //! Container of individuals needing evaluation.
+            typedef std::list< t_Unknown >                     t_Unknowns;
     
           protected:
-            //! Meta-evaluator for distributing evaluations to procs.
-            t_CacheEvaluator cache_eval;
+            //! List of unknown individuals to be dispatched to herds.
+            t_Unknowns unknowns;
     
           public:
             //! Constructor.
             Farmer   ( Topology *_topo )
-                   : t_CommBase( _topo ), t_Base(), cache_eval() 
-                     { t_Base::evaluator = &cache_eval; };
+                   : t_CommBase( _topo ), t_Base() {}
     
             //! Creates \a _offspring population from \a _parent
             void operator()(t_Population& _parents, t_Population& _offspring);
@@ -122,8 +123,6 @@ namespace GA
             virtual std::string className() const
               { return "GA::mpi::Graph::Evaluation::Farmer"; }
 
-            //! Does nothing.
-            void set( t_Evaluator *_e ) {}
             //! Sets taboo pointer
             void set( GA::Taboo_Base<t_Individual> *_taboo )
               { t_CommBase :: taboos = t_Base :: taboos = _taboo; }
@@ -134,11 +133,25 @@ namespace GA
             void set(  typename GA::Store::Base<t_GATraits>*  _s )
               { t_CommBase :: store = t_Base :: store =  _s; }
 
+            //! \brief  calls on the functional to evaluate \a _indiv
+            //! \details Catches call and directs it to base class if
+            //!          individual has been evaluated. Otherwise, puts it into
+            //!          a list for herds to evaluate. The point is to avoid
+            //!          doing history, storage and whatever other kind of
+            //!          post-processing until the individual has been
+            //!          evaluated by the herd.
+            virtual t_FitnessQuantity evaluate( t_Individual &_indiv );
 
           protected:
             //! Response to WAITING request
             void onWait( types::t_unsigned _bull );
-            using t_Base::evaluate;
+            //! Returns true as long a Farmer::unknowns is not empty;
+            bool notdone() const { return not unknowns.empty(); }
+            //! \brief Returns the next individual to evaluate.
+            //! \details Returns NULL if there are no individuals left to
+            //!          evaluate. Erases \e _bull from the list of individuals
+            //!          being currently evaluated.
+            t_Individual* next( types::t_unsigned _bull );
         };
     
         template< class T_GATRAITS, template < class > class T_BASE>

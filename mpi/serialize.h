@@ -131,7 +131,7 @@ namespace mpi
   template<class T_CONTAINER>
   bool BroadCast::Container<T_CONTAINER>::operator()( t_constant &_cont )
   {
-    if( _this.stage != COPYING_FROM_HERE ) return true;
+    if( _this.stage == COPYING_FROM_HERE ) return true;
     types::t_int n = _cont.size();
     if( not BroadCast::Object<types::t_unsigned>(_this)( n ) )
       return false;
@@ -174,7 +174,7 @@ namespace mpi
     //! Function for serializing
     bool operator()( const types::t_complex &_ob )
     {
-      if( _this.stage != COPYING_FROM_HERE ) return true;
+      if( _this.stage == COPYING_FROM_HERE ) return true;
       if( _this.stage == ::mpi::BroadCast::COPYING_TO_HERE )
       {
         if ( _this.end_real_buff - _this.cur_real_buff < 2 ) return false;

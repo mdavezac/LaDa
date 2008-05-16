@@ -65,7 +65,8 @@ namespace mpi
       //! transaction scheme and CommBase::buffer_size. May become non-virtual
       //! in the future.
       //! \param _root optionally, specifies root process of data transaction
-      virtual bool allocate_buffers( types::t_unsigned _root = ROOT_NODE ) = 0;
+      virtual bool allocate_buffers( types::t_unsigned _root = ROOT_NODE,
+                                     types::t_int _target = -1 ) = 0;
       //!\brief  Historycally, was meant to be the main function of all data
       //! transaction helper classes. 
       //! \details Historycally, was meant to be the main interface function of all
@@ -208,7 +209,8 @@ namespace mpi
       //! \details allocate_buffers(types::t_unsigned _root) does just that. May
       //! become non-virtual in the future.
       //! \param _root optionally, specifies root process of data transaction
-      bool allocate_buffers( types::t_unsigned _root = ROOT_NODE );
+      bool allocate_buffers( types::t_unsigned _root = ROOT_NODE,
+                             types::t_int _taget = -1 );
 
       //! \brief Allows to pass data to this class
       //! \details serialize() is used for sizing-up data, loading-up data, and
@@ -352,7 +354,8 @@ namespace mpi
       //! \details allocate_buffers(types::t_unsigned _root) does just that. May
       //! become non-virtual in the future.
       //! \param _root optionally, specifies root process of data transaction
-      bool allocate_buffers( types::t_unsigned _root = ROOT_NODE );
+      bool allocate_buffers( types::t_unsigned _root = ROOT_NODE,
+                             types::t_int _taget = -1 );
       //! Use this to go to next stage
       //! \param _root optionally, specifies root process of data transaction
       bool operator()( types::t_unsigned _root = ROOT_NODE );

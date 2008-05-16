@@ -18,8 +18,9 @@ namespace GA
       template< class T_CONDITION >
       bool Topology :: init( T_CONDITION _condition )
       {
-        if( pools < 2 ) return false;
+        if ( pools < 2 ) return false;
         types::t_int per_pool = ( size() - 1) / pools;
+        if ( per_pool <= 0 ) return false;
  
         while ( per_pool and ( not _condition( per_pool) ) ) --per_pool;
         types::t_int leftovers = size() - per_pool * pools - 1;

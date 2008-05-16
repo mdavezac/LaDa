@@ -9,6 +9,7 @@
 #endif
 
 #include <opt/types.h>
+
 #include "comm.h"
 
 namespace mpi
@@ -65,7 +66,7 @@ namespace mpi
       void send_range( types::t_unsigned _bull, const T_ITERATOR _first,
                        const T_ITERATOR _last, MPI::Intracomm *_comm )
       {
-        if( _comm->Get_rank() < 2 ) return;
+        if( _comm->Get_size() < 2 ) return;
         BroadCast bc( _comm );
         bc.serialize( _first, _last );
         bc.allocate_buffers();
@@ -77,7 +78,7 @@ namespace mpi
       void receive_range( types::t_unsigned _bull, T_ITERATOR _first,
                           T_ITERATOR _last, MPI::Intracomm *_comm )
       {
-        if( _comm->Get_rank() < 2 ) return;
+        if( _comm->Get_size() < 2 ) return;
         BroadCast bc( _comm );
         bc.serialize( _first, _last );
         bc.allocate_buffers();
@@ -90,7 +91,7 @@ namespace mpi
       void bcast_template_object( types::t_unsigned _root, T_OBJECT &_object,
                                   MPI::Intracomm *_comm )
       {
-        if( _comm->Get_rank() < 2 ) return;
+        if( _comm->Get_size() < 2 ) return;
         BroadCast bc( _comm );
         _object.serialize( bc );
         bc.allocate_buffers();
@@ -102,7 +103,7 @@ namespace mpi
       void const_bcast_template_object( types::t_unsigned _root, const T_OBJECT &_object,
                                         MPI::Intracomm *_comm )
       {
-        if( _comm->Get_rank() < 2 ) return;
+        if( _comm->Get_size() < 2 ) return;
         BroadCast bc( _comm );
         _object.serialize( bc );
         bc.allocate_buffers();
@@ -113,7 +114,7 @@ namespace mpi
       void bcast_range( types::t_unsigned _root, T_ITERATOR _first,
                         T_ITERATOR _last, MPI::Intracomm *_comm )
       {
-        if( _comm->Get_rank() < 2 ) return;
+        if( _comm->Get_size() < 2 ) return;
         BroadCast bc( _comm );
         bc.serialize( _first, _last );
         bc.allocate_buffers();
@@ -125,7 +126,7 @@ namespace mpi
       void const_bcast_range( types::t_unsigned _root, const T_ITERATOR _first,
                               const T_ITERATOR _last, MPI::Intracomm *_comm )
       {
-        if( _comm->Get_rank() < 2 ) return;
+        if( _comm->Get_size() < 2 ) return;
         BroadCast bc( _comm );
         bc.serialize( _first, _last );
         bc.allocate_buffers();
@@ -135,7 +136,7 @@ namespace mpi
     template< class T_OBJECT >  
       void bcast_object( types::t_unsigned _root, T_OBJECT &_object, MPI::Intracomm *_comm )
       {
-        if( _comm->Get_rank() < 2 ) return;
+        if( _comm->Get_size() < 2 ) return;
         BroadCast bc( _comm );
         bc << _object << BroadCast::allocate
            << _object; 
@@ -146,7 +147,7 @@ namespace mpi
       void const_bcast_object( types::t_unsigned _root, const T_OBJECT &_object, 
                                MPI::Intracomm *_comm )
       {
-        if( _comm->Get_rank() < 2 ) return;
+        if( _comm->Get_size() < 2 ) return;
         BroadCast bc( _comm );
         bc << _object << BroadCast::allocate
            << _object;
@@ -159,7 +160,7 @@ namespace mpi
       void receive_template_object( types::t_unsigned _bull, T_OBJECT &_object,
                                     MPI::Intracomm *_comm )
       {
-        if( _comm->Get_rank() < 2 ) return;
+        if( _comm->Get_size() < 2 ) return;
         BroadCast bc( _comm );
         _object.serialize( bc );
         bc.allocate_buffers();
@@ -172,7 +173,8 @@ namespace mpi
       void send_template_object( types::t_unsigned _bull, const T_OBJECT &_object,
                                  MPI::Intracomm *_comm )
       {
-        if( _comm->Get_rank() < 2 ) return;
+        if( _comm->Get_size() < 2 ) return;
+        std::cout << "sending template object " << _object << std::endl;
         BroadCast bc( _comm );
         _object.serialize( bc );
         bc.allocate_buffers();
@@ -183,7 +185,7 @@ namespace mpi
       void receive_object( types::t_unsigned _bull,
                            T_OBJECT &_object, MPI::Intracomm *_comm )
       {
-        if( _comm->Get_rank() < 2 ) return;
+        if( _comm->Get_size() < 2 ) return;
         BroadCast bc( _comm );
         bc << _object << BroadCast::allocate << _object;
         bc.receive_ptp( _bull );
@@ -194,7 +196,7 @@ namespace mpi
       void send_object( types::t_unsigned _bull, const T_OBJECT _object,
                         MPI::Intracomm *_comm )
       {
-        if( _comm->Get_rank() < 2 ) return;
+        if( _comm->Get_size() < 2 ) return;
         BroadCast bc( _comm );
         bc << _object << BroadCast::allocate << _object;
         bc.send_ptp( _bull );

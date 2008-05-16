@@ -8,8 +8,8 @@ lamarck_LDFLAGS =  $(AM_LDFLAGS)  @MPI_LIBS@
 lamarck_LDADD = liblamarck.la \
 		../atat/libatat.la \
 		../physics/libphysics.la \
-		../print/libprint.la \
-		@MPI_ADDLIB@
+		@MPI_ADDLIB@ \
+		../print/libprint.la 
 noinst_LTLIBRARIES = liblamarck.la
 liblamarck_la_SOURCES = $(CRYSTAL_CC) $(CE_CC)
 liblamarck_ladir = $(includedir)/lamarck

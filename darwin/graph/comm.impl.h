@@ -28,7 +28,7 @@ namespace GA
           MPI::Request *i_first = requests;
           MPI::Request *i_end = requests + nbulls;
           types::t_int *i_buff = in;
-          for(types::t_int i=0; i_first != i_end; ++i_first, ++i_buff, ++i )
+          for(types::t_int i=1; i_first != i_end; ++i_first, ++i_buff, ++i )
           {
             *i_buff = BullRequests :: UNDEFINED;
             *i_first = comm->Recv_init( i_buff, 1, MPI::INTEGER, i, TAG );
@@ -74,20 +74,38 @@ namespace GA
             t_Derived *derived = static_cast<t_Derived*>( this );
             for(; i_comp != i_comp_end; ++i_comp )
             {
-              __ASSERT( *i_comp > 0 and *i_comp < nbulls, 
+              __ASSERT( not (*i_comp >= 0 and *i_comp < nbulls), 
                         "Process index out of range: " << *i_comp << ".\n" );
+#ifdef _DEBUG
+              Print::out << "Bull " <<  *i_comp + 1 << " is ";
               switch( in[*i_comp] )
               {
-                case t_Requests::WAITING: derived->onWait( *i_comp ); break;
-                case t_Requests::OBJECTIVE: derived->onObjective( *i_comp ); break;
-                case t_Requests::GRADIENT: derived->onGradient( *i_comp ); break;
+                case t_Requests::WAITING:       Print::out << "waiting"; break;
+                case t_Requests::OBJECTIVE:     Print::out << "requesting an objective"; break;
+                case t_Requests::GRADIENT:      Print::out << "requesting a gradient"; break;
+                case t_Requests::WITH_GRADIENT: Print::out << "requesting with gradient"; break; 
+                case t_Requests::ONE_GRADIENT:  Print::out << "requesting one gradient"; break;
+                case t_Requests::TABOOCHECK:    Print::out << "requesting a taboo check"; break;
+                case t_Requests::HISTORYCHECK:  Print::out << "requesting a history check"; break;
+                case t_Requests::STORE:         Print::out << "requesting storage"; break;
+                case t_Requests::UNDEFINED:
+                  __THROW_ERROR( "This request should not have been sent.\n" ) 
+                  break;
+              }
+              Print :: out << "." << Print::endl;
+#endif
+              switch( in[*i_comp] )
+              {
+                case t_Requests::WAITING: derived->onWait( *i_comp + 1 ); break;
+                case t_Requests::OBJECTIVE: derived->onObjective( *i_comp + 1 ); break;
+                case t_Requests::GRADIENT: derived->onGradient( *i_comp + 1 ); break;
                 case t_Requests::WITH_GRADIENT:
-                  derived->onWithGradient( *i_comp ); break;
+                  derived->onWithGradient( *i_comp + 1 ); break;
                 case t_Requests::ONE_GRADIENT:
-                  derived->onOneGradient( *i_comp ); break;
-                case t_Requests::TABOOCHECK: derived->onTaboo( *i_comp ); break;
-                case t_Requests::HISTORYCHECK: derived->onHistory( *i_comp ); break;
-                case t_Requests::STORE: derived->onStore( *i_comp ); break;
+                  derived->onOneGradient( *i_comp + 1 ); break;
+                case t_Requests::TABOOCHECK: derived->onTaboo( *i_comp + 1 ); break;
+                case t_Requests::HISTORYCHECK: derived->onHistory( *i_comp + 1 ); break;
+                case t_Requests::STORE: derived->onStore( *i_comp + 1 ); break;
                 case t_Requests::UNDEFINED:
                   __THROW_ERROR( "This request should not have been sent.\n" ) 
                   break;
@@ -114,28 +132,20 @@ namespace GA
             types::t_int *i_comp = in;
             types::t_int *i_comp_end = in + nbulls;
             t_Derived *derived = static_cast<t_Derived*>( this );
-            for(; i_comp != i_comp_end; ++i_comp )
+            for(types::t_int bull = 1; i_comp != i_comp_end; ++i_comp, ++bull )
             {
-              __ASSERT( *i_comp > 0 and *i_comp < nbulls, 
+              __ASSERT( not ( *i_comp >= 0 and *i_comp < nbulls ), 
                         "Process index out of range: " << *i_comp << ".\n" );
               switch( (typename t_Requests::Requests) *i_comp )
               {
-                case t_Requests::WAITING:
-                  derived->onWait( *i_comp ); break;
-                case t_Requests::OBJECTIVE:
-                  derived->onObjective( *i_comp ); break;
-                case t_Requests::GRADIENT:
-                  derived->onGradient( *i_comp ); break;
-                case t_Requests::WITH_GRADIENT:
-                  derived->onWithGradient( *i_comp ); break;
-                case t_Requests::ONE_GRADIENT:
-                  derived->onOneGradient( *i_comp ); break;
-                case t_Requests::TABOOCHECK:
-                  derived->onTaboo( *i_comp ); break;
-                case t_Requests::HISTORYCHECK:
-                  derived->onHistory( *i_comp ); break;
-                case t_Requests::STORE:
-                  derived->onStore( *i_comp ); break;
+                case t_Requests::WAITING:       derived->onWait( bull );         break;
+                case t_Requests::OBJECTIVE:     derived->onObjective( bull );    break;
+                case t_Requests::GRADIENT:      derived->onGradient( bull );     break;
+                case t_Requests::WITH_GRADIENT: derived->onWithGradient( bull ); break;
+                case t_Requests::ONE_GRADIENT:  derived->onOneGradient( bull );  break;
+                case t_Requests::TABOOCHECK:    derived->onTaboo( bull );        break;
+                case t_Requests::HISTORYCHECK:  derived->onHistory( bull );      break;
+                case t_Requests::STORE:         derived->onStore( bull );        break;
                 case t_Requests::UNDEFINED:
                   __THROW_ERROR( "This request should not have been sent.\n" ) 
                   break;
@@ -155,6 +165,7 @@ namespace GA
         template<class T_GATRAITS, class T_DERIVED>
         inline void Farmer<T_GATRAITS, T_DERIVED> :: onTaboo( types::t_int _bull )
         {
+          __ASSERT( _bull < 1 or _bull > nbulls, "bull index out of range." )
           __ASSERT( taboos, "Taboo pointer has not been set.\n")
           t_Individual indiv;
           receive_individual( _bull, indiv );
@@ -165,6 +176,7 @@ namespace GA
         inline void Farmer<T_GATRAITS, T_DERIVED> :: onObjective( types::t_int _bull )
         {
           __ASSERT( objective, "Objective pointer not set.\n" )
+          __ASSERT( _bull < 1 or _bull > nbulls, "bull index out of range." )
           t_Quantity quantities;
           receive_quantity( _bull, quantities );
           typename t_Individual :: t_Fitness fitness = (*objective)( quantities );
@@ -175,6 +187,7 @@ namespace GA
         inline void Farmer<T_GATRAITS, T_DERIVED> :: onGradient( types::t_int _bull )
         {
           __ASSERT( objective, "Objective pointer not set.\n" )
+          __ASSERT( _bull < 1 or _bull > nbulls, "bull index out of range." )
           t_Quantity quantities;
           receive_quantity( _bull, quantities );
           t_QuantityGradients gradients;
@@ -193,6 +206,7 @@ namespace GA
           :: onWithGradient( types::t_int _bull )
         {
           __ASSERT( objective, "Objective pointer not set.\n" )
+          __ASSERT( _bull < 1 or _bull > nbulls, "bull index out of range." )
           t_Quantity quantities;
           receive_quantity( _bull, quantities );
           t_QuantityGradients gradients;
@@ -212,6 +226,7 @@ namespace GA
           :: onOneGradient( types::t_int _bull )
         {
           __ASSERT( objective, "Objective pointer not set.\n" )
+          __ASSERT( _bull < 1 or _bull > nbulls, "bull index out of range." )
           t_Quantity quantities;
           receive_quantity( _bull, quantities );
           t_QuantityGradients gradients;
@@ -231,6 +246,7 @@ namespace GA
         {
           // Don't expect this message if history is not set
           __ASSERT( history, "History Pointer not set.\n")
+          __ASSERT( _bull < 1 or _bull > nbulls, "bull index out of range." )
           t_Individual indiv;
           receive_individual( _bull, indiv );
           bool buff = history->clone( indiv );
@@ -242,6 +258,7 @@ namespace GA
         template<class T_GATRAITS, class T_DERIVED>
         inline void Farmer<T_GATRAITS, T_DERIVED> :: onStore( types::t_int _bull )
         {
+          __ASSERT( _bull < 1 or _bull > nbulls, "bull index out of range." )
           // Don't expect this message if history is not set
           __ASSERT( store, "History Pointer not set.\n")
           t_Individual indiv;
@@ -250,6 +267,13 @@ namespace GA
           activate(_bull);
         }
       
+        template<class T_GATRAITS, class T_DERIVED>
+        inline void Farmer<T_GATRAITS, T_DERIVED> :: activate( types::t_unsigned _bull )
+        {
+          __ASSERT( _bull < 1 or _bull > nbulls,
+                    "bull index out of range." )
+          requests[_bull - 1].Start(); 
+        }
       
 
         template<class T_GATRAITS, class T_DERIVED>

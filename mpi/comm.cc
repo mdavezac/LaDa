@@ -10,6 +10,8 @@
 #include <atat/vectmac.h>
 #include <opt/debug.h>
 
+#include <print/stdout.h>
+
 #include "mpi_object.h"
 
 #ifdef _MPI
@@ -23,7 +25,7 @@ namespace mpi
   const BroadCast::t_operation BroadCast::broadcast = BroadCast::BROADCAST;
   const BroadCast::t_operation BroadCast::fromhere  = BroadCast::FROMHERE;
 
-  bool BroadCast :: allocate_buffers( types::t_unsigned _root )
+  bool BroadCast :: allocate_buffers( types::t_unsigned _root, types::t_int _target )
   {
     if ( stage != GETTING_SIZE ) return false;
 
@@ -39,7 +41,12 @@ namespace mpi
     stage = COPYING_TO_HERE;
 
     // now broadcasts sizes
-    comm->Bcast( buffer_size, 3, MPI::UNSIGNED, _root );
+    if( _target < 0 )
+      comm->Bcast( buffer_size, 3, MPI::UNSIGNED, _root );
+    else if( rank() == _root )
+      comm->Send( buffer_size, 3, MPI::UNSIGNED, (types::t_unsigned) _target, TAG );
+    else if( rank() == (types::t_unsigned) _target )
+      comm->Recv( buffer_size, 3, MPI::UNSIGNED, _root, TAG );
 
     if ( not( buffer_size[0] or buffer_size[1] or buffer_size[2] ) )
       return false;
@@ -76,7 +83,7 @@ broadcast_erase:
     std::cerr << "Could not allocate memory for broadcast" << std::endl;
     return false;
   }
-  bool AllGather :: allocate_buffers( types::t_unsigned _root )
+  bool AllGather :: allocate_buffers( types::t_unsigned _root, types::t_int _target )
   {
     if ( stage != GETTING_SIZE ) return false;
 
@@ -165,16 +172,18 @@ gather_erase:
   }
   bool BroadCast :: send_ptp( types::t_unsigned _target )
   {
-    if ( stage != COPYING_TO_HERE )
-      return false;
+    if ( stage != COPYING_TO_HERE ) return false;
 
     stage = COPYING_FROM_HERE;
     cur_int_buff = int_buff;
     cur_char_buff = char_buff;
     cur_real_buff = real_buff;
-    if ( nproc == 1 )
-      return true;
+    Print :: out << "nproc: " << nproc << Print::endl;
+    if ( nproc == 1 ) return true;
 
+    Print :: out << "buffer_size[0] " << buffer_size[0]  << Print::endl;
+    Print :: out << "buffer_size[1] " << buffer_size[1]  << Print::endl;
+    Print :: out << "buffer_size[2] " << buffer_size[2]  << Print::endl;
     if ( int_buff and buffer_size[0] )
       comm->Send( int_buff, buffer_size[0], MPI::INT, _target, TAG );
     if ( char_buff and buffer_size[1] )
@@ -201,12 +210,16 @@ gather_erase:
     if ( nproc == 1 )
       return true;
 
+    Print :: out << "source " << _source  << Print::endl;
+    Print :: out << "buffer_size[0] " << buffer_size[0]  << Print::endl;
     if ( int_buff and buffer_size[0] )
-      comm->Send( int_buff, buffer_size[0], MPI::INT, _source, TAG );
+      comm->Recv( int_buff, buffer_size[0], MPI::INT, _source, TAG );
     if ( char_buff and buffer_size[1] )
-      comm->Send( char_buff, buffer_size[1], MPI::CHAR, _source, TAG );
+      comm->Recv( char_buff, buffer_size[1], MPI::CHAR, _source, TAG );
     if ( real_buff and buffer_size[2] )
-      comm->Send( real_buff, buffer_size[2], MPI::REAL, _source, TAG );
+      comm->Recv( real_buff, buffer_size[2], MPI::REAL, _source, TAG );
+    Print :: out << "buffer_size[1] " << buffer_size[1]  << Print::endl;
+    Print :: out << "buffer_size[2] " << buffer_size[2]  << Print::endl;
 
     stage = COPYING_FROM_HERE;
     cur_int_buff = int_buff;

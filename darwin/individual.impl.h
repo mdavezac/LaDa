@@ -5,6 +5,7 @@
 #define _INDIVIDUAL_IMPL_H_
 
 #include <opt/debug.h>
+#include <print/stdout.h>
 
 namespace Individual
 {
@@ -110,6 +111,7 @@ namespace Individual
   template<class T_INDIVTRAITS>  
   bool Base<T_INDIVTRAITS> :: serialize( mpi::BroadCast &_bc )
   {
+    Print :: out << "Serializing individual" << Print::endl;
     return      _bc.serialize( age ) \
             and repFitness.serialize(_bc)\
             and _bc.serialize<t_Object>( object )\
@@ -118,6 +120,7 @@ namespace Individual
   template<class T_INDIVTRAITS>  
   bool Base<T_INDIVTRAITS> :: serialize( mpi::BroadCast &_bc ) const
   {
+    Print :: out << "Serializing const individual" << Print::endl;
     return      _bc.serialize( age ) \
             and repFitness.serialize(_bc)\
             and _bc.serialize<t_Object>( object )\

@@ -13,4 +13,6 @@ libmpiobject_la_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CFLAGS)
 bin_PROGRAMS = mpitest
 mpitest_SOURCES = main.cc 
 mpitest_LDFLAGS =  $(AM_LDFLAGS) @MPI_LIBS@
-mpitest_LDADD = @MPI_ADDLIB@
+mpitest_LDADD = @MPI_ADDLIB@ ../print/libprint.la
+../print/libprint.la: 
+	cd ../print; $(MAKE)

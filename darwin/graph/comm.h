@@ -122,7 +122,7 @@ namespace GA
         //!          respectively. These routines should be defined in the
         //!          derived classes. Defaults are provided for the last three.
         template< class T_GATRAITS, class T_DERIVED >
-        class Farmer : private ::mpi::Base
+        class Farmer : protected ::mpi::Base
         {
           public:
             //! Type of the derived class
@@ -205,49 +205,44 @@ namespace GA
         
             //! Sends an individual to bull \a _bull.
             void send_individual( types::t_unsigned _bull, const t_Individual &_indiv)
-              { ::mpi::send_template_object< t_Individual >( _bull + 1, _indiv, 
-                                                             t_Base::comm ); }
+              { ::mpi::send_template_object< t_Individual >( _bull, _indiv, comm ); }
             //! Sends an individual to bull \a _bull.
             void receive_individual( types::t_unsigned _bull, t_Individual &_indiv )
-              { ::mpi::receive_template_object< t_Individual >( _bull + 1, _indiv,
-                                                         t_Base::comm ); }
+              { ::mpi::receive_template_object< t_Individual >( _bull, _indiv, comm ); }
             //! Sends an individual to bull \a _bull.
             void send_fitness( types::t_unsigned _bull, const t_Fitness &_fit )
-              { ::mpi::send_template_object< t_Fitness >( _bull + 1, _fit,
-                                                          t_Base::comm ); }
+              { ::mpi::send_template_object< t_Fitness >( _bull, _fit, comm ); }
             //! Sends an individual to bull \a _bull.
             void receive_individual( types::t_unsigned _bull, t_Fitness &_fit )
-              { ::mpi::receive_template_object< t_Fitness >( _bull + 1, _fit,
-                                                             t_Base::comm ); }
+              { ::mpi::receive_template_object< t_Fitness >( _bull, _fit, comm ); }
             //! Sends an individual to bull \a _bull.
             void send_quantity( types::t_unsigned _bull, const t_Quantity &_q )
-              { ::mpi::send_quantity< t_Quantity >( _bull + 1, _q, t_Base::comm ); }
+              { ::mpi::send_quantity< t_Quantity >( _bull, _q, comm ); }
             //! Sends an individual to bull \a _bull.
             void receive_quantity( types::t_unsigned _bull, t_Quantity &_q )
-              { ::mpi::receive_quantity< t_Quantity >( _bull + 1, _q, t_Base::comm ); }
+              { ::mpi::receive_quantity< t_Quantity >( _bull, _q, comm ); }
             //! Sends gradients to bull.
             void send_gradients( types::t_unsigned _bull, const t_VA_Type *_grad,
                                  types::t_unsigned _n  )
               { ::mpi::send_range< const t_VA_Type* >( _bull, _grad, 
-                                                       _grad + _n, t_Base::comm ); }
+                                                       _grad + _n, comm ); }
             //! Receives gradients from bull.
             void receive_gradients( types::t_unsigned _bull, t_QuantityGradients &_grad) 
-              { ::mpi::send_quantity< t_QuantityGradients >( _bull, _grad, t_Base::comm ); }
+              { ::mpi::send_quantity< t_QuantityGradients >( _bull, _grad, comm ); }
             //! Sends an object to \a _bull.
             template < class T_OBJECT > void send_object( types::t_unsigned _bull,
                                                           const T_OBJECT _object )
-              { ::mpi::send_object< T_OBJECT >( _bull, _object, t_Base::comm ); }
+              { ::mpi::send_object< T_OBJECT >( _bull, _object, comm ); }
             //! Receives an object from \a _bull.
             template < class T_OBJECT > void receive_object( types::t_unsigned _bull, 
                                                              T_OBJECT &_object )
-              { ::mpi::receive_object< T_OBJECT >( _bull, _object, t_Base::comm ); }
+              { ::mpi::receive_object< T_OBJECT >( _bull, _object, comm ); }
             //! Starts all persistent requests from bulls ( Farmer::requests )
             void start_all() { MPI::Prequest::Startall( nbulls, requests ); } 
             //! Sends a command to \a _bull.
             void send_command( types::t_unsigned _bull, const t_Commands :: Commands _c );
             //! Activates request for \a _bull.
-            void activate( types::t_unsigned _bull)
-              { requests[_bull].Start(); }
+            void activate( types::t_unsigned _bull);
             
             //! Response to TABOOCHECK request
             void onTaboo( types::t_int _bull );
@@ -291,7 +286,7 @@ namespace GA
         //!          broadcasting stuff to cows and requesting stuff from the
         //!          farmer.
         template< class T_GATRAITS, class T_DERIVED >
-        class Bull : private ::mpi::Base
+        class Bull : protected ::mpi::Base
         {
           public:
             //! Type of the derived class
@@ -351,7 +346,8 @@ namespace GA
             //! Receives an individual from farmer.
             void receive_individual( t_Individual &_indiv )
               { ::mpi::receive_template_object< t_Individual >( 0, _indiv,
-                                                                t_Base::comm ); }
+                                                                t_Base::comm ); 
+                Print::out << "Received Individual: " << _indiv << Print ::endl; }
             //! Sends an fitness to farmer.
             void send_fitness( types::t_unsigned _bull, const t_Fitness &_fit )
               { ::mpi::send_template_object< t_Fitness >( 0, _fit, t_Base::comm ); }

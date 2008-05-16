@@ -78,7 +78,7 @@ namespace mpi
     //! constant serializing
     bool operator()( t_constant &_ob )
     { 
-      if( _this.stage != COPYING_FROM_HERE ) return true;
+      if( _this.stage == COPYING_FROM_HERE ) return true;
       if( _this.stage == ::mpi::BroadCast::COPYING_TO_HERE )
       {
         if ( _this.___ENDBUFF - _this.___BUFF < 1 ) return false;

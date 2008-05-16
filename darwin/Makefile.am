@@ -19,7 +19,6 @@ if DOFORTRAN
   LDADD +=  ../opt/libopt.la @FCLIBS@
 endif
 if DODIRECTIAGA
-   LDADD +=  ../mpi/libmpiobject.la
    AM_LDFLAGS += @FCLIBS@
 endif
 bin_PROGRAMS = $(CEOPT) $(BANDGAPOPT) $(LAYEREDOPT) $(EMASSOPT)
@@ -33,6 +32,7 @@ ce_opt_LDADD = libdarwin.la \
 	       ../physics/libphysics.la \
 	       ../atat/libatat.la \
 	       ../print/libprint.la \
+	       ../mpi/libmpiobject.la \
 	       @MPI_ADDLIB@
 
 bandgap_opt_SOURCES = main.cc $(DARWIN_BG_CC)

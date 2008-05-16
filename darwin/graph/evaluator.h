@@ -69,8 +69,11 @@ namespace GA
             typedef typename t_VA_Traits :: t_QuantityGradients   t_QuantityGradients;
             //! Type of the history.
             typedef GA::History<t_Individual>                     t_History;
+            //! \brief Pair containing an individual to evaluate and the process to
+            //!        which it is assigned.
+            typedef std::pair< t_Individual*, types::t_int >      t_Unknown;
             //! Container of individuals needing evaluation.
-            typedef std::list< t_Individual* >                    t_Unknowns;
+            typedef std::list< t_Unknown >                        t_Unknowns;
             //! Container of individuals needing evaluation.
             typedef std::list< types::t_int >                     t_ProcessIds;
             //! Base class type
@@ -78,26 +81,17 @@ namespace GA
     
           protected:
             t_Unknowns unknowns;
-            t_ProcessIds process_ids;
     
           public:
             //! Constructor.
-            Farmer () : t_Base(), unknowns(), process_ids() {};
+            Farmer () : t_Base(), unknowns() {};
             //! Copy Constructor
             Farmer   ( const t_This &_c ) 
-                   : t_Base( _c ), unknowns( _c.unknowns ),
-                     process_ids( _c.process_ids ) {};
+                   : t_Base( _c ), unknowns( _c.unknowns ) {}
 
             //! Shoves individual which need evaluating in a list.
             void evaluate() 
-            {
-              t_Individual *indiv = t_Base::current_individual;
-              Print :: out << "Farmer evaluator begin " << *indiv << Print::endl;
-              process_ids.push_back( -1 ); 
-              Print :: out << "Farmer evaluator mid " << Print::endl;
-              unknowns.push_back( indiv ); 
-              Print :: out << "Farmer evaluator end " << Print::endl;
-            }
+              { unknowns.push_back( t_Unknown( t_Base::current_individual, -1) ); }
 
             //! Returns true as long a Farmer::unknowns is not empty;
             bool notdone() const { return not unknowns.empty(); }
@@ -120,7 +114,7 @@ namespace GA
             {
               typename t_Unknowns :: const_iterator i_u = unknowns.begin();
               typename t_Unknowns :: const_iterator i_ue = unknowns.end();
-              for(; i_u != i_ue; ++i_u) Print::out << *i_u << Print::endl; 
+              for(; i_u != i_ue; ++i_u) Print::out << *i_u->first << Print::endl; 
             }
 #endif
         };

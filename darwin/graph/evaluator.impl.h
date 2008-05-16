@@ -2,6 +2,9 @@
 //  Version: $Id$
 //
 
+#include <algorithm>
+#include <boost/lambda/lambda.hpp>
+#include <boost/lambda/bind.hpp>
 
 
 namespace GA
@@ -16,24 +19,22 @@ namespace GA
           typename Farmer<T_GATRAITS>::t_Individual*
             Farmer<T_GATRAITS> :: onWait( types::t_unsigned _bull )
             {
-              typename t_Unknowns :: iterator i_unknown = unknowns.begin();
-              typename t_Unknowns :: iterator i_unknown_end = unknowns.end();
-              typename t_ProcessIds :: iterator i_id = process_ids.end();
-              for(; i_unknown != i_unknown_end; ++i_unknown, ++i_id )
-                if( *i_id == _bull )
-                {
-                  unknowns.erase( i_unknown );
-                  process_ids.erase( i_id );
-                  break;
-                }
-              i_unknown = unknowns.begin();
-              i_id = process_ids.begin();
-              for(; i_unknown != i_unknown_end; ++i_unknown, ++i_id )
-                if( *i_id == -1 ) break;
-           
-              if( i_unknown == i_unknown_end ) return NULL;
-              *i_id = _bull;
-              return *i_unknown;
+              namespace blamb = boost::lambda;
+              typename t_Unknowns :: iterator i_unknown
+                 = std::find_if( unknowns.begin(), unknowns.end(), 
+                                   blamb::bind( &t_Unknown::second, blamb::_1 )
+                                == blamb::constant( _bull ) );
+              if( i_unknown == unknowns.end() )
+                __THROW_ERROR( "Individual evaluation returned from unassigned process" );
+              unknowns.erase( i_unknown );
+
+
+              i_unknown = std::find_if( unknowns.begin(), unknowns.end(), 
+                                           blamb::bind( &t_Unknown::second, blamb::_1 )
+                                        == blamb::constant(-1) );
+              if( i_unknown == unknowns.end() ) return NULL;
+              i_unknown->second = _bull;
+              return i_unknown->first;
             }
           
 

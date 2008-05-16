@@ -116,7 +116,6 @@ template< class T_GATRAITS >
       //! Sets the pointer to the storage interface.
       void set( t_Store *_stor ) { store = _stor; }
       //! \brief  calls on the functional to evaluate \a _indiv
-      //! \brief  calls on the functional to evaluate \a _indiv
       //¡ \details All individuals for which the quantities are unknowned
       //! should be evaluated <em>via</em>  this function. The evaluation call
       //! itself is redirected to the Evaluator if and only if the individual is

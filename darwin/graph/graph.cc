@@ -15,9 +15,13 @@ namespace GA
     {
       Topology :: ~Topology()
       {
-        if( graph_comm != *comm and graph_comm != MPI::COMM_NULL )
+        if( graph_comm != MPI::COMM_NULL )
           graph_comm.Free();
-        if( comm ) comm->Free();
+        if( comm and *comm != MPI::COMM_NULL)
+        {
+          comm->Free();
+          delete comm;
+        }
         if( head_comm != MPI::COMM_NULL ) head_comm.Free();
         if( pool_comm != MPI::COMM_NULL ) pool_comm.Free();
         graph_comm = NULL;
