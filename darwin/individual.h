@@ -1,4 +1,4 @@
-//
+/
 //  Version: $Id$
 //
 #ifndef _INDIVIDUAL_H_
@@ -236,18 +236,8 @@ namespace Individual
       //! \param _node  XML node from which to load this instance
       //! \param _loadop a functor capable of loading a Base::t_Object to XML
       template<class LoadOp> bool Load( const TiXmlElement &_node, LoadOp &_loadop );
-
-#ifdef _MPI
-      /** \ingroup MPI
-       * \brief Serializes an Individual::Base.
-       **/
-      bool serialize( mpi::BroadCast &_bc );
-      /** \ingroup MPI
-       * \brief Serializes a constant Individual::Base.
-       **/
-      bool serialize( mpi::BroadCast &_bc ) const;
-#endif
-
+      //! Serializes a scalar individual.
+      template<class Archive> void serialize(Archive & _ar, const unsigned int _version);
   };
 
   //! \brief Multi-Objective individual

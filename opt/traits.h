@@ -160,20 +160,6 @@ namespace opt
     template< class t_Quantity >
     static bool resize( const t_Quantity& _q, types::t_unsigned n ) 
       { return _q.resize(n); }
-#ifdef _MPI
-    /** \ingroup MPI
-     * \brief Serializes  a t_Quantity type \a _q 
-     **/
-    template< class t_Quantity >
-    static bool serialize( t_Quantity& _q, mpi::BroadCast &_bc )
-      { return mpi::BroadCast::Container<t_Quantity>(_bc)( _q ); }
-    /** \ingroup MPI
-     * \brief Serializes  a constant t_Quantity type \a _q
-     **/
-    template< class t_Quantity >
-    static bool serialize( const t_Quantity& _q, mpi::BroadCast &_bc )
-      { return mpi::BroadCast::Container<t_Quantity>(_bc)( _q ); }
-#endif
   };
   //! Specialization of IsAScalar of \a IS_SCALAR = true
   template<>
@@ -206,16 +192,6 @@ namespace opt
     template< class t_Quantity >
     static bool resize( const t_Quantity& _q, types::t_unsigned n ) 
       { return true; }
-#ifdef _MPI
-    //! Broadcasts  the scalar type \a _q
-    template< class t_Quantity >
-    static bool serialize( t_Quantity& _q, mpi::BroadCast &_bc )
-      { return _bc.serialize(_q); }
-    //! Broadcasts  the constant scalar type \a _q
-    template< class t_Quantity >
-    static bool serialize( const t_Quantity& _q, mpi::BroadCast &_bc )
-      { return _bc.serialize(_q); }
-#endif
   };
 
 } // namspace opt
@@ -283,14 +259,6 @@ namespace Traits
       //! resizes \a _q, if \a is a vector
       static bool resize( const t_Quantity& _q, types::t_unsigned n ) 
         { return opt::IsAScalar<is_scalar>::resize(_q); }
-#ifdef _MPI
-      //! Serializes quantity \sa mpi::BroadCast::serialize
-      static bool serialize( t_Quantity& _q, mpi::BroadCast &_bc )
-        { return opt::IsAScalar<is_scalar>::serialize(_q, _bc); }
-      //! Serializes constant quantity \sa mpi::BroadCast::serialize
-      static bool serialize( const t_Quantity& _q, mpi::BroadCast &_bc )
-        { return opt::IsAScalar<is_scalar>::serialize(_q, _bc); }
-#endif
     };
 
 
@@ -311,41 +279,5 @@ namespace Traits
 
 }
 
-
-#ifdef _MPI
-namespace mpi
-{
-  /** \ingroup MPI
-   *  Point to point communication of quantity \a _q. */
-  template< class T_QUANTITY >
-  void send_quantity( types::t_unsigned _bull,
-                      const T_QUANTITY &_q, MPI::Intracomm *_comm)
-  {
-    if( _comm->Get_rank() < 2 ) return;
-    typedef Traits::Quantity< T_QUANTITY > t_QuantityTraits;
-    BroadCast bc( _comm );
-    t_QuantityTraits :: serialize(_q, bc );
-    bc.allocate_buffers();
-    t_QuantityTraits :: serialize(_q, bc );
-    bc.send_ptp( _bull );
-  }
-
-  /** \ingroup MPI
-   *  Point to point communication of quantity \a _q. */
-  template< class T_QUANTITY >
-  void receive_quantity( types::t_unsigned _bull,
-                         T_QUANTITY &_q, MPI::Intracomm *_comm)
-  {
-    if( _comm->Get_rank() < 2 ) return;
-    typedef Traits::Quantity< T_QUANTITY > t_QuantityTraits;
-    BroadCast bc( _comm );
-    t_QuantityTraits :: serialize(_q, bc );
-    bc.allocate_buffers();
-    t_QuantityTraits :: serialize(_q, bc );
-    bc.receive_ptp( _bull );
-    t_QuantityTraits :: serialize(_q, bc );
-  }
-}
-#endif
 
 #endif

@@ -19,11 +19,6 @@
 #include "structure.h"
 #include "harmonic.h"
 
-//! \cond
-namespace Ising_CE{ class Constituent_Strain; }
-___DECLAREMPIOBJECT( Ising_CE::Constituent_Strain )
-//! \endcond
-
 namespace Ising_CE 
 {
 
@@ -54,12 +49,6 @@ namespace Ising_CE
    */
   class Constituent_Strain : public function::Base<types::t_real>
   {
-#ifdef _MPI
-    //! \cond
-    friend class mpi::BroadCast::Object<Constituent_Strain>;
-    //! \endcond
-#endif
-
       //! Type of the base class
       typedef function::Base<types::t_real> t_Base;
 
@@ -79,11 +68,11 @@ namespace Ising_CE
       //! Harmonics functions.
       static t_Harmonics harmonics;
       __MPICODE(
-        /** \ingroup Genetic
+        /** \ingroup mpi
          *  \brief Communicator for parallel computation.
          *  \details During evaluations, the computation over the list of
          *           \b k-vectors is scattered across all processes. **/
-        ::mpi::Base *comm;
+        boost::mpi::communicator *comm;
       )
  
     public:
@@ -133,24 +122,19 @@ namespace Ising_CE
          *  \brief Sets the communicator. **/
         void set_mpi( mpi::Base *_c ) { comm = _c; }
 #endif
-
+      //! Serializes a cluster.
+      template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
   };
-} // namespace Ising_CE
 
-#ifdef _MPI
-namespace mpi
-{
-#define ___OBJECTCODE \
-  return     _this.serialize_container( _ob.r_vecs ) \
-         and _this.serialize_container( _ob.k_vecs ) \
-         and _this.serialize_container( _ob.harmonics );
-#define ___TYPE__ Ising_CE::Constituent_Strain
-  /** \ingroup MPI
-  * \brief Serializes an Ising_CE::Constituent_Strain.
-  */
-#include <mpi/serialize.impl.h>
-#undef ___OBJECTCODE
-}
-#endif
+  template<class Archive>
+    void Constituent_Strain(Archive & _ar, const unsigned int _version)
+    {
+      _ar & r_vecs;
+      _ar & k_vecs;
+      _ar & harmonics;
+    }
+
+
+} // namespace Ising_CE
 
 #endif // _CONSTITTUENT_STRAIN_H_

@@ -24,6 +24,7 @@
 #include <mpi/mpi_object.h>
 #ifdef _MPI
 #include <boost/lambda/lambda.hpp>
+#include <functional>
 #endif 
 
 namespace function {
@@ -68,11 +69,11 @@ namespace function {
       //! The list of monomials
       t_Monomes monomes;
       __MPICODE(
-        /** \ingroup Genetic
+        /** \ingroup mpi
          *  \brief Communicator for parallel computation.
          *  \details During evaluations, the computation over the list of
          *           monomes is scattered across all processes. **/
-        ::mpi::Base *comm;
+        boost::mpi::communicator *comm;
       )
 
     public: 
@@ -142,14 +143,8 @@ namespace function {
 #ifdef _MPI
     public: 
      /** \ingroup Genetic
-      *  \brief Serializes a Polynomial opt::Polynome.
-      *  \details Serialization includes the terms and coefficient of each
-      *           monomial. It does not include the variables of the
-      *           polynomials. */
-     bool broadcast( mpi::BroadCast &_bc );
-     /** \ingroup Genetic
       *  \brief Sets the communicator. **/
-     void set_mpi( mpi::Base *_c ) { comm = _c; }
+     void set_mpi( boost::mpi::communicator *_c ) { comm = _c; }
 #endif 
   };
  
@@ -277,7 +272,7 @@ namespace function {
           value += v_monome;
         } // end of loop over monomes
       
-        __MPICODE( comm->all_sum_all( value ); )
+        __MPICODE( value = boost::mpi::all_reduce( *comm, value, std::plus() ); )
         return value;
       }
     
@@ -338,8 +333,7 @@ namespace function {
         } // end of outer "derivative" loop
       } // end of loop over monomes
       __MPICODE( 
-        comm->get()->Allreduce( MPI::IN_PLACE, __ADDHERE__,
-                                monomes.size(), ::MPI::DOUBLE, MPI::SUM ); 
+        boost::mpi::all_reduce( *comm, value, monomes.size(), value, std::plus() );
         std::transform( _i_grad, _i_grad + monomes.size(), __ADDHERE__, _i_grad,
                         boost::lambda::_1 + boost::lambda::_2 ); 
         delete[] __ADDHERE__;
@@ -411,12 +405,11 @@ namespace function {
         } // end of loop over monomes
       
         __MPICODE( 
-          comm->get()->Allreduce( MPI::IN_PLACE, __ADDHERE__,
-                                  monomes.size(), ::MPI::DOUBLE, MPI::SUM ); 
+          boost::mpi::all_reduce( *comm, value, monomes.size(), value, std::plus() );
           std::transform( _i_grad, _i_grad + monomes.size(), __ADDHERE__, _i_grad,
                           boost::lambda::_1 + boost::lambda::_2 ); 
           delete[] __ADDHERE__;
-          comm->all_sum_all( value );
+          value = boost::mpi::all_reduce( *comm, value, std::plus() );
         )
 #undef __ADDHERE__
         return value;
@@ -468,7 +461,7 @@ namespace function {
           result += partial_grad;
       
         } // end of loop over monomes
-        __MPICODE( comm->all_sum_all( result ); )
+        __MPICODE( value = boost::mpi::all_reduce( *comm, value, std::plus() ); )
       
         return result;
       }
@@ -494,22 +487,5 @@ namespace function {
       stream << std::endl;
     }
     
-#ifdef _MPI
-  template<class T_TYPE, class T_TERM >
-    inline bool Polynome<T_TYPE, T_TERM> :: broadcast( mpi::BroadCast &_bc )
-    {
-      types::t_int n = monomes.size();
-      if ( not _bc.serialize( n ) ) return false;
-      if ( _bc.get_stage() == mpi::BroadCast::COPYING_FROM_HERE )
-        monomes.resize(n);
-      typename t_Monomes :: iterator i_monome = monomes.begin();
-      typename t_Monomes :: iterator i_monome_end = monomes.end();
-      for(; i_monome != i_monome_end; ++i_monome )
-        if(    ( not _bc.serialize( i_monome->coefficient ) )
-            or ( not _bc.serialize( i_monome->terms ) ) ) return false;
-      return true;
-    }
-#endif 
-
 } // namespace opt
 #endif

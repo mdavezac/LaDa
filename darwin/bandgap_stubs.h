@@ -49,6 +49,8 @@ namespace BandGap
     bool Load( const TiXmlElement &_node );
     //! Saves Keeper::vbm and Keeper::cvm as attributes of \a _node.
     bool Save( TiXmlElement &_node ) const;
+    //! Serializes a scalar individual.
+    template<class Archive> void serialize(Archive & _ar, const unsigned int _version);
   };
   //! Dumps a BandGap::Keeper to a stream.
   std::ostream& operator<<(std::ostream &_stream, const Keeper &_o);
@@ -184,24 +186,15 @@ namespace BandGap
     bandgap.get_stress(_keeper.stress);
   }
 
+  template<class Archive>
+    void Keeper :: serialize(Archive & _ar, const unsigned int _version)
+    {
+      ar & boost::serialization::base_object< Vff::Keeper >(*this); 
+      ar & vbm;
+      ar & cbm;
+    }
 } // namespace BandGap
 
-
-#ifdef _MPI
-
-namespace mpi
-{
-#define ___OBJECTCODE \
-  return     _this.serialize( _ob.cbm ) \
-         and _this.serialize( _ob.vbm ) \
-         and _this.serialize<Vff::Keeper>( _ob ); 
-#define ___TYPE__ BandGap::Keeper
-  /** \ingroup MPI
-  * \brief Serializes an BandGap::Keeper.
-  * \details It serializes Keeper::cbm and Keeper::vbm and Vff::Keeper. **/
-#include <mpi/serialize.impl.h>
-#undef ___OBJECTCODE
-}
 
 #endif
 

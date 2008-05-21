@@ -22,11 +22,6 @@
 
 #include <mpi/mpi_object.h>
 
-//! \cond
-namespace Ising_CE { class Harmonic; }
-___DECLAREMPIOBJECT( Ising_CE::Harmonic )
-//! \endcond
-
 namespace Ising_CE 
 {
 
@@ -59,12 +54,10 @@ namespace Ising_CE
       //! Compares (Fuzzy math) the \e x axis coordinate with \a _x
       bool x_lesser( const types::t_real _x ) const 
         { return Fuzzy::le(x, _x); }
+      //! Serializes a point.
+      template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
+        { _ar & x; _ar & y; } 
     };
-#ifdef _MPI
-    //! \cond
-    template< class _T > friend class mpi::BroadCast::Object;
-    //! \endcond
-#endif
 
     protected:
       //! A collection of Points between which to interpolate.
@@ -91,6 +84,9 @@ namespace Ising_CE
 
       //! Cleats the set of interpolation point.
       void clear() { points.clear(); };
+      //! Serializes a linear interpolation.
+      template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
+        { _ar & points; } 
   };
 
 
@@ -132,12 +128,6 @@ namespace Ising_CE
    */                                    
   class Harmonic 
   {
-#ifdef _MPI
-    //! \cond
-    friend class mpi::BroadCast::Object<Harmonic>;
-    //! \endcond
-#endif
-
     protected:
       //! Interpolation %function for the harmonic
       Linear_Interpolator interpolation;
@@ -208,6 +198,9 @@ namespace Ising_CE
 
       //! Clears the interpolation.
       void clear() { interpolation.clear(); };
+      //! Serializes a harmonic.
+      template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
+        { _ar & interpolation; _ar & rank; _ar & attenuation; } 
   };
 
   inline types::t_real Harmonic :: evaluate(const types::t_real _x,
@@ -237,41 +230,5 @@ namespace Ising_CE
   }
 
 } // namespace Ising_CE 
-
-#ifdef _MPI
-namespace mpi
-{
-#define ___OBJECTCODE \
-  return     _this.serialize( _ob.x ) \
-         and _this.serialize( _ob.y );
-#define ___TYPE__ Ising_CE::Linear_Interpolator::Point
-  /** \ingroup MPI
-  * \brief Serializes an Ising_CE::Linear_Interpolator::Point.
-  */
-#include <mpi/serialize.impl.h>
-#undef ___OBJECTCODE
-
-#define ___OBJECTCODE \
-  return     _this.serialize_container( _ob.points );
-#define ___TYPE__ Ising_CE::Linear_Interpolator
-  /** \ingroup MPI
-  * \brief Serializes an Ising_CE::Linear_Interpolator.
-  */
-#include <mpi/serialize.impl.h>
-#undef ___OBJECTCODE
-
-#define ___OBJECTCODE \
-  return     _this.serialize( _ob.rank ) \
-         and _this.serialize( _ob.attenuation ) \
-         and _this.serialize( _ob.interpolation );
-#define ___TYPE__ Ising_CE::Harmonic
-  /** \ingroup MPI
-  * \brief Serializes an Ising_CE::Linear_Interpolator.
-  */
-#include <mpi/serialize.impl.h>
-
-#undef ___OBJECTCODE
-}
-#endif
 
 #endif // _HARMONICS_H_

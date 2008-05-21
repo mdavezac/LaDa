@@ -40,11 +40,6 @@ namespace VA_CE {
   //!          of a polynomial and a constituent strain instance.
   class Functional_Builder
   {
-#ifdef _MPI
-    //! \cond
-    friend bool mpi::BroadCast::serialize<Functional_Builder> ( Functional_Builder& );
-    //! \endcond
-#endif
     public:
       //! Type of the specialized functional
       typedef function::Plus< Polynome, Constituent_Strain > t_VA_Functional;

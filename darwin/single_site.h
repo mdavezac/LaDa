@@ -89,6 +89,9 @@ namespace SingleSite
       //! Destructor
       ~Object() {};
     
+      //! Serializes a single-site object.
+      template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
+        { _ar & boost::serialization::base_object< BitString::Object<> >(*this); }
   };
 
   //! Dumps the decoration of \a _str into the object \a _o
@@ -368,20 +371,5 @@ namespace SingleSite
 /* @} */
 
 #include "single_site.impl.h"
-
-#ifdef _MPI
-
-namespace mpi
-{
-#define ___OBJECTCODE \
-  return     _ob.serialize( _this );
-#define ___TYPE__ SingleSite::Object
-  /** \ingroup MPI
-  * \brief Serializes a SingleSite::Object **/
-#include <mpi/serialize.impl.h>
-#undef ___OBJECTCODE
-}
-
-#endif
 
 #endif // _SINGLESITES_H_

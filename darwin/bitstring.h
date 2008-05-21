@@ -120,18 +120,10 @@ namespace BitString
         result /= static_cast<types::t_real>(bitstring.size());
         return result;
       }
-#ifdef _MPI
-      /** \ingroup MPI
-       * \brief Serializes a Bitstring::Object.
-       **/
-      bool serialize( mpi::BroadCast &_bc )
-        { return ::mpi::BroadCast::Container< t_Container >(_bc)( bitstring ); }
-      /** \ingroup MPI
-       * \brief Serializes a constant Bitstring::Object.
-       **/
-      bool serialize( mpi::BroadCast &_bc ) const
-        { return ::mpi::BroadCast::Container< t_Container >(_bc)( bitstring ); }
-#endif
+
+      //! Serializes an atom.
+      template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
+        { ar & bitstring; }
   };
 
   //! \brief Dumps a BitString::Object to a stream.

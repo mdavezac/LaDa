@@ -4,7 +4,7 @@
 #include<iostream>
 #include <sstream>
 
-#include <revision.h>
+#include "../revision.h"
 
 #include "xmg.h"
 #include "manip.h"

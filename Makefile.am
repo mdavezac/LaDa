@@ -40,8 +40,9 @@ endif
 SUBDIRS = $(MPISUBDIR) atat physics opt lamarck print $(VFFSUBDIR) \
 	  $(PESCANSUBDIR) $(LAPACKDIR) $(DARWINSUBDIR) 
 revision.h: force
-	@scripts/max_revision.pl
-force: 
+	@./scripts/max_revision.pl
+force: ;
+all: all-local
 all-local: revision.h
 if DODOC
 doc: $(ALL_DOCS)

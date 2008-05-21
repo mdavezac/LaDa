@@ -35,9 +35,9 @@
           sstr << __SPOT_ERROR << error << _e.what();\
           throw std::runtime_error( sstr.str() );\
         }
-#define __MPIROOT(code) if( ::mpi::main.is_root_node() ) { code }
+#define __MPIROOT(code) if( ::mpi::main.rank() != 0 ) { code }
 #define __ROOTCODE(code) __MPIROOT(code)
-#define __NOTMPIROOT(code) if( not ::mpi::main.is_root_node() ) { code }
+#define __NOTMPIROOT(code) if( not ::mpi::main.rank() != 0 ) { code }
 #define __SERIALCODE(code) 
 #define __DOCOMMSEQUENTIAL(comm, code) \
     for( types::t_int i = 0; i < comm.size(); ++i )\

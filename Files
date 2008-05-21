@@ -68,7 +68,7 @@ LAPACK_CC = lapack.cc
 LAPACK_H  = lapack.h
 LAPACK_DOC = $(LAPACK_H) $(LAPACK_CC) 
 
-MPI_CC     = mpi_object.cc comm.cc
+MPI_CC     = mpi_object.cc # comm.cc
 MPI_IMPL_H = comm.impl.h
 MPI_H      = mpi_object.h base.h macros.h comm.h $(MPI_IMPL_H)
 MPI_DOC    = $(MPI_H) $(MPI_CC)
@@ -125,4 +125,3 @@ ALL_DOCS = doxy.conf $(DOCS_H) \
            $(addprefix print/,$(PRINT_DOC)) \
            $(addprefix vff/,$(VFF_FORTRAN_DOC)) \
            $(addprefix vff/,$(VFF_DOC))
-

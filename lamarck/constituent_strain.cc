@@ -136,7 +136,7 @@ namespace Ising_CE
       }
       value +=  (real(sum_exp * conj( sum_exp ))) * sum_harm;
     }
-    __MPICODE( comm->all_sum_all( value ); )
+    __MPICODE( value = boost::mpi::all_reduce( *comm, value, std::plus() ); )
     value /= ( (types::t_real)  k_vecs.size() ) * (types::t_real) r_vecs.size();
 
     delete[] interpolation;
@@ -236,7 +236,7 @@ namespace Ising_CE
 
     }
 
-    __MPICODE( comm->all_sum_all( result ); )
+    __MPICODE( value = boost::mpi::all_reduce( *comm, value, std::plus() ); )
     delete[] interpolation;
     return result * inv_N;
   }
@@ -352,12 +352,11 @@ namespace Ising_CE
       value += real(sum_exp * conj( sum_exp )) * sum_harm;
     }
     __MPICODE( 
-      comm->get()->Allreduce( MPI::IN_PLACE, __ADDHERE__,
-                              variables->size(), ::MPI::DOUBLE, MPI::SUM ); 
+      boost::mpi::all_reduce( *comm, value, monomes.size(), value, std::plus() );
       std::transform( gradient, gradient + variables->size(), __ADDHERE__, gradient,
                       boost::lambda::_1 + boost::lambda::_2 * boost::lambda::constant(inv_N) ); 
       delete[] __ADDHERE__;
-      comm->all_sum_all( value );
+      value = boost::mpi::all_reduce( *comm, value, std::plus() ); 
     )
     __SERIALCODE( 
       std::for_each( gradient, gradient + variables->size(),

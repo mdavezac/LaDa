@@ -98,25 +98,11 @@ namespace Ising_CE
       void print_out( std::ostream &stream ) const; 
       //! Load a cluster from XML.
       bool Load(const TiXmlElement &_node);
+      //! Serializes a cluster.
+      template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
+        { _ar & eci; _ar & vectors; } 
   };
   
 } // namespace Ising_CE
-
-#ifdef _MPI
-#include <mpi/mpi_object.h>
-#include <atat/serialize.h>
-namespace mpi
-{
-#define ___OBJECTCODE \
-   return     _this.serialize( _ob.eci ) \
-          and _this.serialize_container( _ob.vectors );
-#define ___TYPE__ Ising_CE::Cluster
-  /** \ingroup MPI
-  * \brief Serializes an Ising_CE::Cluster
-  */
-#include <mpi/serialize.impl.h>
-#undef ___OBJECTCODE
-}
-#endif
 
 #endif

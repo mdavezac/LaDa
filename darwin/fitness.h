@@ -160,14 +160,8 @@ namespace Fitness
       //! \brief Returns a t_Comparison giving the relationship between this
       //!        object and \a _f.
       t_Comparison compare( const t_This &_f ) const;
-#ifdef _MPI
-      /** \ingroup MPI
-       * \brief Serializes an Fitness::Scalar. */
-      bool serialize( ::mpi::BroadCast &_bc );
-      /** \ingroup MPI
-       * \brief Serializes a constant Fitness::Scalar. */
-      bool serialize( ::mpi::BroadCast &_bc ) const;
-#endif
+      //! Serializes a scalar fitness.
+      template<class Archive> void serialize(Archive & _ar, const unsigned int _version);
   };
 
 
@@ -316,14 +310,8 @@ namespace Fitness
       //! \brief Returns a t_Comparison giving the relationship between this
       //!        object and \a _f.
       t_Comparison compare( const t_This &_f ) const;
-#ifdef _MPI
-      /** \ingroup MPI
-       * \brief Serializes an Fitness::Vectorial. */
-      bool serialize( ::mpi::BroadCast &_bc );
-      /** \ingroup MPI
-       * \brief Serializes a constant Fitness::Vectorial. */
-      bool serialize( ::mpi::BroadCast &_bc ) const;
-#endif
+      //! Serializes a vectorial fitness.
+      template<class Archive> void serialize(Archive & _ar, const unsigned int _version);
   };
 
   //! \brief Template type returning scalar fitnesses on demand

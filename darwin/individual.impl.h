@@ -107,27 +107,13 @@ namespace Individual
     return _loadop(*this,*parent);
   }
   
-#ifdef _MPI
-  template<class T_INDIVTRAITS>  
-  bool Base<T_INDIVTRAITS> :: serialize( mpi::BroadCast &_bc )
+  template<class T_INDIVTRAITS> template< class Archive >
+  void Base<T_INDIVTRAITS> :: serialize(Archive & _ar, const unsigned int _version)
   {
-    Print :: out << "Serializing individual" << Print::endl;
-    return      _bc.serialize( age ) \
-            and repFitness.serialize(_bc)\
-            and _bc.serialize<t_Object>( object )\
-            and t_QuantityTraits::serialize( quantity, _bc );
+    _ar & age;
+    _ar & repFitness;
+    _ar & object;
   }
-  template<class T_INDIVTRAITS>  
-  bool Base<T_INDIVTRAITS> :: serialize( mpi::BroadCast &_bc ) const
-  {
-    Print :: out << "Serializing const individual" << Print::endl;
-    return      _bc.serialize( age ) \
-            and repFitness.serialize(_bc)\
-            and _bc.serialize<t_Object>( object )\
-            and t_QuantityTraits::serialize( quantity, _bc );
-  }
-#endif
-
 } // namespace Individual
 
 

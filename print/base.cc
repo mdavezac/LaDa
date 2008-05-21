@@ -32,9 +32,8 @@ namespace Print
       sstr << filename << ".mpi:" <<  mpi::main.rank();
       filename = sstr.str();
     )
-#ifndef _PRINT_ALL_PROCS 
-    do_print = __MPISERIALCODE(mpi::main.is_root_node();, true;)
-#endif 
+    do_print = false;
+    __ROOTCODE( do_print = true; )
     is_empty = true;
     if ( not do_print ) return;
     
@@ -74,16 +73,7 @@ namespace Print
   }
   void Base::sync_filename()
   {
-    mpi::BroadCast bc( mpi::main );
-
-    if( not mpi::main.is_root_node() ) filename.clear();
-    bc << filename
-       << mpi::BroadCast::allocate
-       << filename
-       << mpi::BroadCast::broadcast
-       << filename
-       << mpi::BroadCast::clear;
-
+    boost::mpi::broadcast( mpi::main, filename, 0 );
     init_(filename);
   }
 #endif

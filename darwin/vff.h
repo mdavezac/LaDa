@@ -52,6 +52,9 @@ namespace Vff
     bool Load( const TiXmlElement &_node );
     //! Saves Keeper::energy and Keeper::stress to XML.
     bool Save( TiXmlElement &_node ) const;
+    //! Serializes a vff Keeper.
+    template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
+      { ar & energy; ar & stress; }
   };
   /* @} */
 
@@ -125,21 +128,5 @@ namespace Vff
   }
 
 } // namespace BandGap
-
-#ifdef _MPI
-#include <mpi/mpi_object.h>
-namespace mpi
-{
-#define ___OBJECTCODE \
-  return     _this.serialize( _ob.energy ) \
-         and _this.serialize( _ob.stress );
-#define ___TYPE__ Vff::Keeper
-  /** \ingroup MPI
-  * \brief Serializes Vff::Keeper. 
-  * \details It serializes Vff::Keeper::energy and Vff::Keeper::stress. **/
-#include <mpi/serialize.impl.h>
-#undef ___OBJECTCODE
-}
-#endif
 
 #endif // _BANDGAP_H_

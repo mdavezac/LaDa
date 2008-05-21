@@ -115,6 +115,8 @@ namespace Ising_CE {
       void print_xml( TiXmlElement* const node ) const;
       //! Compares the position of two atoms.
       template< class TTYPE > bool operator < ( const Atom_Type<TTYPE> &_atom ) const;
+      //! Serializes an atom.
+      template<class Archive> void serialize(Archive & _ar, const unsigned int _version);
   };
 
   //! An atom with a complex occupation variable (eg kspace vector).
@@ -124,6 +126,14 @@ namespace Ising_CE {
   //! An atom with a double occupation variable.
   typedef Atom_Type<types::t_real> Atom;
 
+  template<class T_TYPE> template< class ARCHIVE >
+    void Atom_Type<T_TYPE> :: serialize<ARCHIVE>( ARCHIVE & _ar, const unsigned int _version)
+    {
+      _ar & pos;
+      _ar & type;
+      _ar & freeze;
+      _ar & size;
+    }
 
 
   template<class T_TYPE> template< class TTYPE >
@@ -293,36 +303,5 @@ template<class T_TYPE>
 
 } // namespace Ising_CE
 
-#ifdef _MPI
-#include <atat/serialize.h>
-namespace mpi
-{
-#define ___OBJECTCODE \
-  return     _this.serialize( _ob.pos ) \
-         and _this.serialize( _ob.type ) \
-         and _this.serialize( _ob.freeze ) \
-         and _this.serialize( _ob.site );
-#define ___TYPE__ Ising_CE::Atom_Type<types::t_real>
-  /** \ingroup MPI
-  * \brief Serializes an Ising_CE::Atom_Type< types::t_real >
-  */
-#include <mpi/serialize.impl.h>
-
-#define ___TYPE__ Ising_CE::Atom_Type<std::string>
-  /** \ingroup MPI
-  * \brief Serializes an Ising_CE::Atom_Type< std::string >
-  */
-#include <mpi/serialize.impl.h>
-
-#define ___TYPE__ Ising_CE::Atom_Type<types::t_complex>
-  /** \ingroup MPI
-  * \brief Serializes an Ising_CE::Atom_Type< types::t_complex >
-  */
-#include <mpi/serialize.impl.h>
-#undef ___OBJECTCODE
-
-}
-
-#endif 
   
 #endif

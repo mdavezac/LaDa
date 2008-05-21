@@ -77,6 +77,8 @@ namespace BandGap
              x(_c.x), y(_c.y) {};
     //! Destructor
     ~Object() {};
+    //! Serializes a scalar individual.
+    template<class Archive> void serialize(Archive & _ar, const unsigned int _version);
   };
 
   //! \brief Dumps a BandGap::Object to a stream.
@@ -175,29 +177,19 @@ namespace BandGap
         { t_Base::set_mpi( _comm, _str ); bandgap.set_mpi( _comm, _str ); }
 #endif
   };
-
-
+  
+  template<class Archive>
+    void Object :: serialize(Archive & _ar, const unsigned int _version)
+    {
+      _ar & boost::serialization::base_object< BandGap::Keeper >( *this ); 
+      _ar & boost::serialization::base_object< TwoSites::Object >( *this ); 
+      _ar & x;
+      _ar & y;
+    }
+  
 } // namespace BandGap
 
 /** @} */
 
-#ifdef _MPI
-namespace mpi
-{
-#define ___OBJECTCODE \
-    return     _this.serialize<BandGap::Keeper>( _ob )\
-           and _this.serialize( _ob.x ) \
-           and _this.serialize( _ob.y ) \
-           and _this.serialize<TwoSites::Object>( _ob );
-#define ___TYPE__ BandGap::Object
-  /** \ingroup MPI
-  * \brief Serializes an BandGap::Object.
-   *  \details Includes the serialization of the BitString::container, the
-   *  concentrations x and y, and the BandGap::Keeper member variables. 
-  */
-#include <mpi/serialize.impl.h>
-#undef ___OBJECTCODE
-}
-#endif
 
 #endif // _BANDGAP_H_
