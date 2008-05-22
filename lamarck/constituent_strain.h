@@ -123,11 +123,12 @@ namespace Ising_CE
         void set_mpi( mpi::Base *_c ) { comm = _c; }
 #endif
       //! Serializes a cluster.
-      template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
+      template<class ARCHIVE> void serialize(ARCHIVE & _ar,
+                                             const unsigned int _version);
   };
 
-  template<class Archive>
-    void Constituent_Strain(Archive & _ar, const unsigned int _version)
+  template<class ARCHIVE>
+    void Constituent_Strain :: serialize(ARCHIVE & _ar, const unsigned int _version)
     {
       _ar & r_vecs;
       _ar & k_vecs;

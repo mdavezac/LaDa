@@ -10,6 +10,8 @@
 
 #ifdef _MPI
 
+#include <boost/mpi/graph_communicator.hpp>
+
 #include <tinyxml/tinyxml.h>
 
 #include <opt/types.h>
@@ -72,16 +74,18 @@ namespace GA
       };
 
       //! Creates and contains the graph topology itself.
-      class Topology : private ::mpi::Base
+      class Topology 
       {
         friend class GA::Topology;
         protected: 
+          //! The communicator for which processes will be graphed.
+          boost::mpi::communicator *comm;
           //! If set, group of bull+cows of this process.
-          MPI::Intracomm pool_comm;
+          boost::mpi::communicator pool_comm;
           //! If set, group of farmer+bulls of this process.
-          MPI::Intracomm head_comm;
+          boost::mpi::communicator head_comm;
           //! Graph communicator created by a call to MPI graph routine.
-          MPI::Graphcomm  graph_comm;
+          boost::mpi::graph_communicator  graph_comm;
           //! The number of pools (e.g. herds) in the graph topology.
           types::t_unsigned pools;
           //! Type of the process
@@ -91,16 +95,15 @@ namespace GA
           //! \brief Constructor and Initializer.
           //! \details The MPI::WORLD_COMM is duplicated and the duplicated is
           //!          pointed to by ::mpi::Base::comm.
-          Topology() : ::mpi::Base::Base(), pool_comm(MPI::COMM_NULL), 
+          Topology() : comm(::mpi::main), pool_comm(MPI::COMM_NULL), 
                        head_comm(MPI::COMM_NULL), graph_comm(MPI::COMM_NULL), 
                        pools(0), type(t_Type::FARMHAND)
              { comm = &MPI::COMM_WORLD.Clone(); }
           //! Copy Constructor.
-          Topology   ( MPI::Intracomm &_comm )
-                   : ::mpi::Base::Base(_comm), pool_comm(MPI::COMM_NULL), 
+          Topology   ( boost::mpi::communicator &_comm )
+                   : comm(&_comm), pool_comm(MPI::COMM_NULL), 
                      head_comm(MPI::COMM_NULL), graph_comm(MPI::COMM_NULL), 
-                     pools(0), type(t_Type::FARMHAND)
-            { comm = &_comm.Clone(); }
+                     pools(0), type(t_Type::FARMHAND) {}
           //! Destructor
           ~Topology();
       
@@ -120,9 +123,9 @@ namespace GA
           bool Load( const TiXmlElement &_node );
 
           //! Returns pointer to farmer+bull intracomm.
-          MPI::Intracomm* farmer_comm() { return &head_comm; }
+          mpi::boost::communicator* farmer_comm() { return &head_comm; }
           //! Returns pointer to bull/cows intracomm.
-          MPI::Intracomm* herd_comm() { return &pool_comm; }
+          mpi::boost::communicator* herd_comm() { return &pool_comm; }
           //! Sets mpi communicator and suffix.
           template< class T_EVALUATOR > void set_mpi( T_EVALUATOR &_eval );
       };

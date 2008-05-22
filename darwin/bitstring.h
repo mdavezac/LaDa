@@ -122,8 +122,9 @@ namespace BitString
       }
 
       //! Serializes an atom.
-      template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
-        { ar & bitstring; }
+      template<class ARCHIVE> void serialize( ARCHIVE & _ar,
+                                              const unsigned int _version)
+        { _ar & bitstring; }
   };
 
   //! \brief Dumps a BitString::Object to a stream.

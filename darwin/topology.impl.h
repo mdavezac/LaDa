@@ -40,25 +40,8 @@ namespace GA
       //! Cows receive individuals to analyze on a per-operation basis.
       //! They do not require full containers.
       if( graph->type == mpi::Graph::t_Type::COW ) return;
-      //! Bulls receive the container as broadcasted by the farmer.
-      ::mpi::BroadCast bc( graph->farmer_comm() );
-      if( graph->type == mpi::Graph::t_Type::BULL ) 
-      {
-        bc << ::mpi::BroadCast::allocate << ::mpi::BroadCast::broadcast;
-        _cont.clear();
-        typename T_CONTAINER :: value_type value;
-        while( value.serialize( bc ) ) _cont.push_back( value );
-        return;
-      }
-      //! Finally, the farmer gets to broadcast the goods
-      typename T_CONTAINER :: iterator i_var = _cont.begin();
-      typename T_CONTAINER :: iterator i_var_end = _cont.end();
-      for(; i_var != i_var_end; ++i_var )
-        i_var->serialize( bc );
-      bc << ::mpi::BroadCast::allocate;
-      for( i_var = _cont.begin(); i_var != i_var_end; ++i_var )
-        i_var->serialize( bc );
-      bc << ::mpi::BroadCast::broadcast;
+      //! Broadcast from farmer to bulls
+      boost::mpi::broadcast( *graph->farmer_comm(), _cont, 0 );
 #endif
     }
 
@@ -116,7 +99,7 @@ namespace GA
   {
     __SERIALCODE( return true; )
     __MPICODE(
-      if( (not graph) and comm->Get_rank() == 0 ) return true;
+      if( (not graph) and comm->rank() == 0 ) return true;
       else if( graph->type == mpi::Graph::t_Type::FARMER ) return true;
       return false;
     )
@@ -125,7 +108,7 @@ namespace GA
   {
     __SERIALCODE( return true; )
     __MPICODE(
-      if( (not graph) and comm->Get_rank() == 0 ) return true;
+      if( (not graph) and comm->rank() == 0 ) return true;
       else if( graph->type == mpi::Graph::t_Type::FARMER ) return true;
       return false;
     )

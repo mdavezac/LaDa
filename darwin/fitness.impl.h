@@ -4,6 +4,8 @@
 #ifndef _FITNESS_IMPL_H_
 #define _FITNESS_IMPL_H_
 
+#include <boost/serialization/serialization.hpp>
+
 #include <opt/debug.h>
 
 namespace Fitness
@@ -36,11 +38,12 @@ namespace Fitness
     if( this->operator==(_f) ) return EQUAL;
     return STRONGER;
   }
-  template<class T_QUANTITYTRAITS> template< class Archive >
-  void Scalar<T_QUANTITYTRAITS> :: serialize(Archive & _ar, const unsigned int _version)
+  template<class T_QUANTITYTRAITS> template< class ARCHIVE >
+  void Scalar<T_QUANTITYTRAITS> :: serialize( ARCHIVE & _ar,
+                                              const unsigned int _version)
   {
-    ar & quantity;
-    ar & is_valid;
+    _ar & quantity;
+    _ar & is_valid;
   }
 
 
@@ -141,8 +144,9 @@ namespace Fitness
     _node.SetAttribute("fitness", ostr.str().c_str() );
     return true;
   }
-  template<class T_QUANTITYTRAITS> template< class Archive >
-  void Vectorial<T_QUANTITYTRAITS> :: serialize(Archive & _ar, const unsigned int _version)
+  template<class T_QUANTITYTRAITS> template< class ARCHIVE >
+  void Vectorial<T_QUANTITYTRAITS> :: serialize( ARCHIVE & _ar,
+                                                 const unsigned int _version)
   {
     _ar & boost::serialization::base_object< t_Base >( *this );
     _ar & vec_quantity;

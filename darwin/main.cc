@@ -42,6 +42,7 @@ int main(int argc, char *argv[])
 {
   try
   {
+    __MPICODE( boost::mpi::environment env(argc, argv); )
     namespace po = boost::program_options;
  
     std::string filename("input.xml");
@@ -54,7 +55,8 @@ int main(int argc, char *argv[])
            ("version,v", "prints version string.");
     po::options_description specific("GA Options");
     specific.add_options()
-        ("input,i", po::value<std::string>()->default_value("input.xml"), "input filename." )
+        ("input,i", po::value<std::string>()->default_value("input.xml"), 
+         "input filename." )
         ("reruns,r", po::value<unsigned>()->default_value(1),
                      "number of times to run the algorithm.\n"
                      "Is equivalent to manually re-launching the program.\n");
@@ -83,7 +85,8 @@ int main(int argc, char *argv[])
     if ( vm.count("version") )
     {
       __ROOTCODE( 
-        std::cout << "\n" << __PROGNAME__ << " from the " << PACKAGE_STRING << " package\n"
+        std::cout << "\n" << __PROGNAME__
+                  << " from the " << PACKAGE_STRING << " package\n"
                   << "Subversion Revision: " << SVN::Revision << "\n\n"; 
       )
       return 1;
@@ -102,17 +105,7 @@ int main(int argc, char *argv[])
       )
     }
       
-    __TRYMPICODE(
-      mpi::BroadCast bc(mpi::main);
-      __NOTMPIROOT(  filename.clear(); )
-      bc << filename << reruns 
-         << mpi::BroadCast::allocate 
-         << filename << reruns 
-         << mpi::BroadCast::broadcast 
-         << filename << reruns 
-         << mpi::BroadCast::clear;,
-      "Error while syncing input filename " << filename << " between procs.\n"
-    )
+    __MPICODE( boost::mpi::broadcast( ::mpi::main, filename, 0 ); )
 
 
     for( types::t_int i = 0; i < reruns; ++i )
@@ -167,17 +160,8 @@ int main(int argc, char *argv[])
          << "\n" << e.what() << "\n";
 
     __MPICODE( 
-      mpi::AllGather bc( mpi::main );
-      std::string message = sstr.str();
-      bc << mpi::BroadCast::clear
-         << message
-         << mpi::BroadCast::allocate
-         << message
-         << mpi::BroadCast::broadcast;
-      sstr.str("");
-      while( bc.serialize( message ) ) sstr << message;
-      bc << mpi::BroadCast::clear;
-      ::mpi::main.barrier();
+      std::string message;
+      boost::mpi::gather( ::mpi::main, sstr.str(), message, 0 );
     )
     __NOTMPIROOT( return 0; )
     std::cerr << sstr.str() << std::endl;

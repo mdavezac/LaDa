@@ -116,7 +116,7 @@ namespace Ising_CE {
       //! Compares the position of two atoms.
       template< class TTYPE > bool operator < ( const Atom_Type<TTYPE> &_atom ) const;
       //! Serializes an atom.
-      template<class Archive> void serialize(Archive & _ar, const unsigned int _version);
+      template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
   };
 
   //! An atom with a complex occupation variable (eg kspace vector).
@@ -127,12 +127,12 @@ namespace Ising_CE {
   typedef Atom_Type<types::t_real> Atom;
 
   template<class T_TYPE> template< class ARCHIVE >
-    void Atom_Type<T_TYPE> :: serialize<ARCHIVE>( ARCHIVE & _ar, const unsigned int _version)
+    void Atom_Type<T_TYPE> :: serialize( ARCHIVE & _ar, const unsigned int _version)
     {
       _ar & pos;
       _ar & type;
       _ar & freeze;
-      _ar & size;
+      _ar & site;
     }
 
 

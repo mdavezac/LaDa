@@ -107,7 +107,7 @@ namespace GroundState
         { _grad[_pos] = ce.evaluate_one_gradient( _pos ); }
 #ifdef _MPI
         //! Sets communicator and suffix for mpi stuff.
-        void set_mpi( ::mpi::Base *_comm, const std::string &_str )
+        void set_mpi( boost::mpi::communicator *_comm, const std::string &_str )
           { t_Base::set_mpi(_comm, _str); ce.set_mpi( _comm ); }
 #endif
   };

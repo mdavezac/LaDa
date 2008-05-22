@@ -1,4 +1,4 @@
-/
+//
 //  Version: $Id$
 //
 #ifndef _INDIVIDUAL_H_
@@ -222,7 +222,8 @@ namespace Individual
       //! reference to Base::quantity, whatever the value of \a _n
       t_ScalarQuantity& quantities( types::t_unsigned _n )
         { return t_QuantityTraits::scalar(quantity,_n); }
-      //! \brief returns a constant reference to the \a _n(th) component of Base::quantity
+      //! \brief returns a constant reference to the \a _n(th) component of
+      //!        Base::quantity
       //! \details In the case of a scalar quantity, this always returns a
       //! constant reference to Base::quantity, whatever the value of \a _n
       const t_ScalarQuantity& const_quantities( types::t_unsigned _n ) const
@@ -237,7 +238,8 @@ namespace Individual
       //! \param _loadop a functor capable of loading a Base::t_Object to XML
       template<class LoadOp> bool Load( const TiXmlElement &_node, LoadOp &_loadop );
       //! Serializes a scalar individual.
-      template<class Archive> void serialize(Archive & _ar, const unsigned int _version);
+      template<class ARCHIVE> void serialize( ARCHIVE & _ar,
+                                              const unsigned int _version);
   };
 
   //! \brief Multi-Objective individual

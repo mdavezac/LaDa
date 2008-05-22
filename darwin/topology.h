@@ -31,7 +31,7 @@
 namespace GA
 {
   //! Wrapper around possible mpi topologies
-  class Topology __MPICODE( : private ::mpi::Base )
+  class Topology
   {
     protected:
     //! Seed of the random number generator;
@@ -39,18 +39,26 @@ namespace GA
    
     //! graph topology if created
     __MPICODE( mpi::Graph::Topology *graph; )
+    //! Head Communicator.
+    __MPICODE( ::boost::mpi::communicator comm )
 
     public:  
       //! Constructor and Initializer.
-      Topology() : seeds(1,0) __MPICONSTRUCTORCODE( graph(NULL) ) {}
+      Topology() : seeds(1,0)
+                   __MPICONSTRUCTORCODE( graph(NULL) )
+                   __MPICONSTRUCTORCODE( comm( ::mpi::main, 
+                                               boost::mpi::comm_duplicate ) ) {}
       //! Copy Constructor.
       Topology   ( const Topology &_comm )
-               : seeds( _comm.seeds ) __MPICONSTRUCTORCODE( graph(_comm.graph) ) {};
+               : seeds( _comm.seeds )
+                 __MPICONSTRUCTORCODE( graph(_comm.graph) ) 
+                 __MPICONSTRUCTORCODE( comm( _comm.comm,
+                                             boost::mpi::comm_attach) ) {}
 #ifdef _MPI
       //! Constructor and Initializer.
-      Topology   ( ::mpi::Base &_comm )
-               : ::mpi::Base::Base( _comm ), seeds(1,0),
-                 graph(NULL)  {}
+      Topology   ( ::mpi::boost::communicator &_comm )
+               : seeds(1,0), graph(NULL), 
+                 comm( _comm, boost::mpi::comm_duplicate )  {}
 #endif
       //! Destructor
       ~Topology() {};

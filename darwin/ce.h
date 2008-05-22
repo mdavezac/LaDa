@@ -94,7 +94,7 @@ namespace CE
         {  return functional.evaluate_one_gradient( _pos ); }
       __MPICODE( 
         //! Sets communicator and suffix for mpi stuff.
-        void set_mpi( ::mpi::Base *_comm );
+        void set_mpi( ::mpi::communicator *_comm );
       )
   };
 

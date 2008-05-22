@@ -161,7 +161,8 @@ namespace Fitness
       //!        object and \a _f.
       t_Comparison compare( const t_This &_f ) const;
       //! Serializes a scalar fitness.
-      template<class Archive> void serialize(Archive & _ar, const unsigned int _version);
+      template<class ARCHIVE> void serialize(ARCHIVE & _ar, 
+                                             const unsigned int _version);
   };
 
 
@@ -311,7 +312,8 @@ namespace Fitness
       //!        object and \a _f.
       t_Comparison compare( const t_This &_f ) const;
       //! Serializes a vectorial fitness.
-      template<class Archive> void serialize(Archive & _ar, const unsigned int _version);
+      template<class ARCHIVE> void serialize(ARCHIVE & _ar,
+                                             const unsigned int _version);
   };
 
   //! \brief Template type returning scalar fitnesses on demand

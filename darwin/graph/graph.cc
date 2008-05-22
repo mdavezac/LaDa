@@ -13,22 +13,7 @@ namespace GA
   {
     namespace Graph
     {
-      Topology :: ~Topology()
-      {
-        if( graph_comm != MPI::COMM_NULL )
-          graph_comm.Free();
-        if( comm and *comm != MPI::COMM_NULL)
-        {
-          comm->Free();
-          delete comm;
-        }
-        if( head_comm != MPI::COMM_NULL ) head_comm.Free();
-        if( pool_comm != MPI::COMM_NULL ) pool_comm.Free();
-        graph_comm = NULL;
-        comm = NULL;
-        pool_comm = NULL;
-        head_comm = NULL;
-      }
+      Topology :: ~Topology() {}
      
       void Topology :: reseed( std::vector< types::t_int > &_seeds )
       {
@@ -48,19 +33,19 @@ namespace GA
           i_seed = _seeds.begin();
           rng.reseed( *i_seed ); ++i_seed;
           for( types::t_unsigned i = 1; i_seed != i_seed_end; ++i_seed, ++i)
-            head_comm.Send( &(*i_seed), 1, MPI::INT, i, 666 );
+            head_comm.send( i, 666, *i_seed);
         }
         else if( type == t_Type::BULL )
         {
           types::t_int seed;
-          head_comm.Recv( &seed, 1, MPI::INT, 0, 666 );
-          pool_comm.Bcast( &seed, 1, MPI::INT, 0 );
+          head_comm.recv( 0, 666, seed);
+          boost::mpi::broadcast( pool_comm, seed, 0 );
           rng.reseed( seed );
         }
         else if ( type == t_Type::COW )
         {
           types::t_int seed;
-          pool_comm.Bcast( &seed, 1, MPI::INT, 0 );
+          boost::mpi::broadcast( pool_comm, seed, 0 );
           rng.reseed( seed );
         }
       }

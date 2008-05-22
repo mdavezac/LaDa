@@ -107,8 +107,8 @@ namespace Individual
     return _loadop(*this,*parent);
   }
   
-  template<class T_INDIVTRAITS> template< class Archive >
-  void Base<T_INDIVTRAITS> :: serialize(Archive & _ar, const unsigned int _version)
+  template<class T_INDIVTRAITS> template< class ARCHIVE >
+  void Base<T_INDIVTRAITS> :: serialize(ARCHIVE & _ar, const unsigned int _version)
   {
     _ar & age;
     _ar & repFitness;

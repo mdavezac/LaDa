@@ -1,10 +1,11 @@
 include ../Files
 bin_PROGRAMS = lamarck
-AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ @MPI_CFLAGS@ @BOOST_CXXFLAGS@
+AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
+	      @MPI_CFLAGS@ @BOOST_CXXFLAGS@
 AM_LDFLAGS = @TINYXML_LIBS@
 lamarck_SOURCES = main.cc 
 lamarck_CPPFLAGS =  $(AM_CPPFLAGS) -I .. 
-lamarck_LDFLAGS =  $(AM_LDFLAGS)  @MPI_LIBS@
+lamarck_LDFLAGS =  $(AM_LDFLAGS)  @MPI_LIBS@ @BOOST_LDFLAGS@
 lamarck_LDADD = liblamarck.la \
 		../atat/libatat.la \
 		../physics/libphysics.la \

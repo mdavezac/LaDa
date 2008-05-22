@@ -198,11 +198,11 @@ namespace Ising_CE {
     std::ostream& print_xyz( std::ostream &_stream,
                              const std::string &_name = "" ) const;
     //! Serializes a structure.
-    template<class Archive> void serialize(Archive & _ar, const unsigned int _version);
+    template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
   };
 
   template< class ARCHIVE >
-    void Structure :: serialize<ARCHIVE>( ARCHIVE & _ar, const unsigned int _version)
+    void Structure :: serialize( ARCHIVE & _ar, const unsigned int _version)
     {
       _ar & cell;
       _ar & atoms;
