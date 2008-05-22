@@ -13,8 +13,6 @@ namespace GA
   {
     namespace Graph
     {
-      Topology :: ~Topology() {}
-     
       void Topology :: reseed( std::vector< types::t_int > &_seeds )
       {
         if( type == t_Type::FARMER )

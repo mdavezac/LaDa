@@ -59,9 +59,7 @@ namespace GA
             Print::out << "Sending go to bull " << _bull << "." << Print::endl;
             t_CommBase::send_command( _bull, t_CommBase::t_Commands::GO );
             Print::out << "Sending individual to bull " << _bull << "." << Print::endl;
-            t_CommBase::send_individual( _bull, *indiv );
-            Print::out << "2.0 Sending individual to bull " << _bull << "." << Print::endl;
-            t_CommBase::send_individual( _bull, *indiv );
+            t_CommBase::comm->send( _bull, ONWAIT_TAG( TAG ), *indiv );
             Print::out << "Activating " << _bull << "." << Print::endl;
             t_CommBase::activate( _bull );
           }
@@ -97,10 +95,8 @@ namespace GA
             {
               Print :: out << "received go" << Print::endl;
               t_Individual individual;
-              t_CommBase :: receive_individual( individual );
               Print :: out << "received individual" << Print::endl;
-              t_CommBase :: receive_individual( individual );
-              Print :: out << "2.0 received individual" << Print::endl;
+              t_CommBase::comm->recv( 0, ONWAIT_TAG( TAG ), individual );
               metaeval.init( individual );
               metaeval.evaluate();
               Print :: out << "sending request" << Print::endl;

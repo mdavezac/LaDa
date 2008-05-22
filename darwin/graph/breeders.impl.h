@@ -33,7 +33,7 @@ namespace GA
         {
           types::t_int buff;
           t_Individual indiv;
-          t_CommBase::receive_individual( _bull, indiv );
+          t_CommBase :: comm->send( _bull, ONWAIT_TAG( TAG ), indiv );
           offspring->push_back( indiv );
           t_CommBase::send_command( _bull, offspring->size() >= target ?
                                              t_CommBase::t_Commands::DONE: 
@@ -51,7 +51,7 @@ namespace GA
             (*t_Base::op)(it);
             (*it).set_age( (*t_Base::age)() );
             t_CommBase :: request( t_CommBase::t_Requests::WAITING );
-            t_CommBase :: send_individual( *it );
+            t_CommBase :: comm->send( 0, ONWAIT_TAG( TAG ), *it );
             ++it;
           }
           while ( t_CommBase::obey() != t_CommBase :: t_Commands :: DONE );

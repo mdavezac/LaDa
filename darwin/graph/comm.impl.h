@@ -1,6 +1,8 @@
 //
 //  Version: $Id$
 //
+
+
 namespace GA
 {
   namespace mpi
@@ -9,16 +11,17 @@ namespace GA
     {
       namespace Comm
       {
+
         template<class T_GATRAITS, class T_DERIVED>
         Farmer<T_GATRAITS, T_DERIVED> :: Farmer   ( Topology *_topo )
-                                                : t_Base( *_topo->farmer_comm() ),
-                                                  nbulls(0), in(NULL),
+                                                : nbulls(0), in(NULL),
                                                   requests(NULL), taboos(NULL),
                                                   objective(NULL), store(NULL),
-                                                  history(NULL)
+                                                  history(NULL),
+                                                  comm( _topo->farmer_comm() )
         {
           // Allocates Memory
-          nbulls = t_Base::size() - 1;
+          nbulls = comm->size() - 1;
           in = new types::t_int[ nbulls ];
           if( not in) return;
           requests = new MPI::Prequest[ nbulls ];
@@ -31,7 +34,8 @@ namespace GA
           for(types::t_int i=1; i_first != i_end; ++i_first, ++i_buff, ++i )
           {
             *i_buff = BullRequests :: UNDEFINED;
-            *i_first = comm->Recv_init( i_buff, 1, MPI::INTEGER, i, TAG );
+            *i_first = ( (MPI::Intracomm) *comm).Recv_init( i_buff, 1, MPI::INTEGER,
+                                                            i, REQUEST_TAG( TAG ) );
           }
         }
 
@@ -58,7 +62,7 @@ namespace GA
                            typename t_Commands :: Commands _c )
         {
           types::t_unsigned buff = _c;
-          t_Base::comm->Send( &buff, 1, MPI::UNSIGNED, _bull, TAG );
+          comm->send( buff, _bull, COMMAND_TAG( TAG )  );
         }
 
         template<class T_GATRAITS, class T_DERIVED>
@@ -168,8 +172,9 @@ namespace GA
           __ASSERT( _bull < 1 or _bull > nbulls, "bull index out of range." )
           __ASSERT( taboos, "Taboo pointer has not been set.\n")
           t_Individual indiv;
-          receive_individual( _bull, indiv );
-          send_object( _bull, (*taboos)( indiv ) );
+          comm->recv( _bull, ONTABOO_TAG1( TAG ), indiv );
+          bool result = (*taboos)( indiv );
+          comm->send( _bull, ONTABOO_TAG2( TAG ), result );
           activate(_bull);
         }
         template<class T_GATRAITS, class T_DERIVED>
@@ -178,9 +183,9 @@ namespace GA
           __ASSERT( objective, "Objective pointer not set.\n" )
           __ASSERT( _bull < 1 or _bull > nbulls, "bull index out of range." )
           t_Quantity quantities;
-          receive_quantity( _bull, quantities );
+          comm->recv( _bull, ONOBJECTIVE_TAG1( TAG ), quantities );
           typename t_Individual :: t_Fitness fitness = (*objective)( quantities );
-          send_fitness( _bull, fitness );
+          comm->send( _bull, ONOBJECTIVE_TAG2( TAG ), fitness );
           activate(_bull);
         }
         template<class T_GATRAITS, class T_DERIVED>
@@ -189,15 +194,15 @@ namespace GA
           __ASSERT( objective, "Objective pointer not set.\n" )
           __ASSERT( _bull < 1 or _bull > nbulls, "bull index out of range." )
           t_Quantity quantities;
-          receive_quantity( _bull, quantities );
+          comm->recv( _bull, ONGRADIENT_TAG1( TAG ), quantities );
           t_QuantityGradients gradients;
-          receive_gradients( _bull, gradients );
+          comm->recv( _bull, ONGRADIENT_TAG2( TAG ), gradients );
           t_VA_Type *ptrs = new t_VA_Type[ gradients.size() ];
           std::fill( ptrs, ptrs + gradients.size(), t_VA_Type(0) );
           objective->evaluate_gradient( quantities,
                                         gradients,
                                         ptrs );
-          send_gradients( _bull, ptrs, gradients.size() );
+          comm->send( _bull, ONGRADIENT_TAG3( TAG ), ptrs, gradients.size() );
           activate(_bull);
           delete[] ptrs;
         }
@@ -208,16 +213,16 @@ namespace GA
           __ASSERT( objective, "Objective pointer not set.\n" )
           __ASSERT( _bull < 1 or _bull > nbulls, "bull index out of range." )
           t_Quantity quantities;
-          receive_quantity( _bull, quantities );
+          comm->recv( _bull, ONWITHGRADIENT_TAG1( TAG ), quantities );
           t_QuantityGradients gradients;
-          receive_gradients( _bull, gradients );
+          comm->recv( _bull, ONWITHGRADIENT_TAG2( TAG ), gradients );
           t_VA_Type *ptrs = new t_VA_Type[ gradients.size() ];
           std::fill( ptrs, ptrs + gradients.size(), t_VA_Type(0) );
           t_VA_Type result = objective->evaluate_with_gradient( quantities,
                                                                 gradients,
                                                                 ptrs );
-          send_gradients( _bull, ptrs, gradients.size() );
-          send_object( _bull, result );
+          comm->send( _bull, ONWITHGRADIENT_TAG3( TAG ), ptrs, gradients.size() );
+          comm->send( _bull, ONWITHGRADIENT_TAG4( TAG ), result );
           activate(_bull);
           delete[] ptrs;
         }
@@ -228,17 +233,17 @@ namespace GA
           __ASSERT( objective, "Objective pointer not set.\n" )
           __ASSERT( _bull < 1 or _bull > nbulls, "bull index out of range." )
           t_Quantity quantities;
-          receive_quantity( _bull, quantities );
+          comm->recv( _bull, ONONEGRADIENT_TAG1( TAG ), quantities );
           t_QuantityGradients gradients;
-          receive_gradients( _bull, gradients );
+          comm->recv( _bull, ONONEGRADIENT_TAG2( TAG ), gradients );
           types::t_unsigned pos;
-          receive_object( _bull, pos );
+          comm->recv( _bull, ONONEGRADIENT_TAG3( TAG ), pos );
           types::t_real ptrs[ gradients.size() ];
           std::fill( ptrs, ptrs + gradients.size(), t_VA_Type(0) );
           t_VA_Type result = objective->evaluate_one_gradient( quantities,
                                                                gradients,
                                                                pos );
-          send_object( _bull, pos );
+          comm->send( _bull, ONONEGRADIENT_TAG4( TAG ), result );
           activate(_bull);
         }
         template<class T_GATRAITS, class T_DERIVED>
@@ -248,12 +253,12 @@ namespace GA
           __ASSERT( history, "History Pointer not set.\n")
           __ASSERT( _bull < 1 or _bull > nbulls, "bull index out of range." )
           t_Individual indiv;
-          receive_individual( _bull, indiv );
+          comm->recv( _bull, ONHISTORY_TAG1( TAG ), indiv );
           bool buff = history->clone( indiv );
-          send_object( _bull, buff );
+          comm->send( _bull, ONHISTORY_TAG2( TAG ), buff );
           activate(_bull);
           if( not buff ) return;
-          send_individual( _bull, indiv );
+          comm->send( _bull, ONHISTORY_TAG3( TAG ), indiv);
         }
         template<class T_GATRAITS, class T_DERIVED>
         inline void Farmer<T_GATRAITS, T_DERIVED> :: onStore( types::t_int _bull )
@@ -262,7 +267,7 @@ namespace GA
           // Don't expect this message if history is not set
           __ASSERT( store, "History Pointer not set.\n")
           t_Individual indiv;
-          receive_individual( _bull, indiv );
+          comm->recv( _bull, ONSTORE_TAG( TAG ), indiv );
           (*store)( indiv );
           activate(_bull);
         }
@@ -281,8 +286,18 @@ namespace GA
           command( const typename t_CowCommands :: Commands _c )
           {
             types::t_unsigned buff = _c;
-            cowcomm->Bcast( &buff, 1, MPI::UNSIGNED, 0 );
+            boost::mpi::broadcast( *cowcomm, buff, 0 );
           }
+
+        template<class T_GATRAITS, class T_DERIVED>
+        inline void Bull<T_GATRAITS, T_DERIVED>
+          :: request( typename t_Requests :: Requests _c ) const
+        {
+          types::t_unsigned buff = _c;
+          MPI::Request request = ( (MPI::Intracomm) *comm).Isend( &buff, 1, MPI::UNSIGNED,
+                                                                  0, REQUEST_TAG( TAG ) );
+          request.Wait();
+        }
 
         template<class T_GATRAITS, class T_DERIVED>
         inline typename Bull<T_GATRAITS, T_DERIVED> :: t_Commands :: Commands
@@ -290,7 +305,7 @@ namespace GA
           {
             Print::out << "Obeying" << Print::endl; 
             types::t_unsigned buff;
-            comm->Recv( &buff, 1, MPI::UNSIGNED, 0, TAG );
+            comm->send( 0, COMMAND_TAG( TAG ), buff );
 #ifdef _DEBUG
             switch( buff )
             {
@@ -303,21 +318,12 @@ namespace GA
           }
 
         template<class T_GATRAITS, class T_DERIVED>
-        inline void Bull<T_GATRAITS, T_DERIVED>
-          :: request( typename t_Requests :: Requests _c ) const
-        {
-          types::t_unsigned buff = _c;
-          MPI::Request request = comm->Isend( &buff, 1, MPI::UNSIGNED, 0, TAG );
-          request.Wait();
-        }
-
-        template<class T_GATRAITS, class T_DERIVED>
         inline typename Cow<T_GATRAITS, T_DERIVED> :: t_Commands :: Commands
           Cow<T_GATRAITS, T_DERIVED> :: obey()
           {
             __ASSERT( evaluator, "Pointer to evaluator has not been set.\n" )
             types::t_unsigned buff = t_Commands::DONE;
-            comm->Bcast( &buff, 1, MPI::UNSIGNED, 0 );
+            boost::mpi::broadcast( *comm, buff, 0 );
             t_Derived *_this = static_cast< t_Derived* >(this);
             switch( (typename t_Commands :: Commands) buff )
             {
@@ -336,7 +342,7 @@ namespace GA
         inline void Cow<T_GATRAITS, T_DERIVED> :: onEvaluate()
         {
           typename t_GATraits :: t_Individual individual;
-          ::mpi::bcast_template_object( 0, individual, t_Base::comm );
+          boost::mpi::broadcast( *comm, individual, 0 );
           evaluator->init( individual );
           evaluator->evaluate();
         }
@@ -345,7 +351,7 @@ namespace GA
         inline void Cow<T_GATRAITS, T_DERIVED> :: onGradient()
         {
           typename t_GATraits :: t_Individual individual;
-          ::mpi::bcast_template_object( 0, individual, t_Base::comm );
+          boost::mpi::broadcast( *comm, individual, 0 );
           gradients.resize( individual.Object().Container().size() );
           Traits::zero_out( gradients );
           evaluator->init( individual );
@@ -356,7 +362,7 @@ namespace GA
         inline void Cow<T_GATRAITS, T_DERIVED> :: onWithGradient()
         {
           typename t_GATraits :: t_Individual individual;
-          ::mpi::bcast_template_object( 0, individual, t_Base::comm );
+          boost::mpi::broadcast( *comm, individual, 0 );
           gradients.resize( individual.Object().Container().size() );
           Traits::zero_out( gradients );
           evaluator->init( individual );
@@ -367,9 +373,9 @@ namespace GA
         inline void Cow<T_GATRAITS, T_DERIVED> :: onOneGradient()
         {
           typename t_GATraits :: t_Individual individual;
-          ::mpi::bcast_template_object( 0, individual, t_Base::comm );
+          boost::mpi::broadcast( *comm, individual, 0 );
           types::t_unsigned pos;
-          ::mpi::bcast_object( 0, pos, t_Base::comm );
+          boost::mpi::broadcast( *comm, pos, 0 );
           gradients.resize( individual.Object().Container().size() );
           Traits::zero_out( gradients );
           evaluator->init( individual );

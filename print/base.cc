@@ -22,18 +22,24 @@ namespace Print
     is_empty = false;
   }
 
+  void Base :: init(const std::string &_f)
+  { 
+    do_print = false;
+    __ROOTCODE( (*::mpi::main), do_print = true; )
+    if ( filename == _f ) return;
+    init_(_f); 
+  }
+
   void Base :: init_ (const std::string &_f)
   { 
     if ( is_open() ) close();
     filename = reformat_home( _f );
     do_print = true;
-    __NOTMPIROOT( 
+    __NOTMPIROOT( (*::mpi::main), 
       std::ostringstream sstr; 
-      sstr << filename << ".mpi:" <<  mpi::main.rank();
+      sstr << filename << ".mpi:" <<  ::mpi::main->rank();
       filename = sstr.str();
     )
-    do_print = false;
-    __ROOTCODE( do_print = true; )
     is_empty = true;
     if ( not do_print ) return;
     
@@ -73,7 +79,7 @@ namespace Print
   }
   void Base::sync_filename()
   {
-    boost::mpi::broadcast( mpi::main, filename, 0 );
+    boost::mpi::broadcast( *::mpi::main, filename, 0 );
     init_(filename);
   }
 #endif

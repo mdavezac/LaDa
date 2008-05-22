@@ -6,7 +6,7 @@
 #ifdef _MPI
 namespace mpi
 {
-  boost::mpi::communicator main; 
+  boost::mpi::communicator *main = NULL; 
 }
 
 #endif

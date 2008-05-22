@@ -9,7 +9,7 @@ namespace GA
   {
     __SERIALCODE( return true; )
     __TRYMPICODE(
-      graph = new mpi::Graph::Topology( *comm );
+      graph = new mpi::Graph::Topology( comm );
       if( graph->Load( _node ) )
         if( graph->init() )
         { 
@@ -19,7 +19,7 @@ namespace GA
       delete graph;
       graph = NULL;
       std::string str = "";
-      _eval.set_mpi( static_cast< ::mpi::Base* >(this), str );,
+      _eval.set_mpi( &comm, str );,
       "Error while loading topology.\n"
     )
   }
@@ -99,7 +99,7 @@ namespace GA
   {
     __SERIALCODE( return true; )
     __MPICODE(
-      if( (not graph) and comm->rank() == 0 ) return true;
+      if( (not graph) and comm.rank() == 0 ) return true;
       else if( graph->type == mpi::Graph::t_Type::FARMER ) return true;
       return false;
     )
@@ -108,7 +108,7 @@ namespace GA
   {
     __SERIALCODE( return true; )
     __MPICODE(
-      if( (not graph) and comm->rank() == 0 ) return true;
+      if( (not graph) and comm.rank() == 0 ) return true;
       else if( graph->type == mpi::Graph::t_Type::FARMER ) return true;
       return false;
     )

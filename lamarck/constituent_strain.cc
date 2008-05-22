@@ -11,7 +11,11 @@
 #include<math.h>
 #include<limits.h>
 
+
+#ifdef _MPI
 #include <boost/lambda/lambda.hpp>
+#include <boost/mpi/collectives.hpp>
+#endif
 
 #include "constituent_strain.h"
 
@@ -22,7 +26,7 @@ namespace Ising_CE
   Constituent_Strain :: Constituent_Strain   ( const Ising_CE::Structure& _str, 
                                                t_Container *vars )
                                            : function::Base<t_Type>(vars)
-                                             __MPICONSTRUCTORCODE( comm( &::mpi::main ) ) 
+                                             __MPICONSTRUCTORCODE( comm( ::mpi::main ) ) 
   {
     if (    _str.atoms.size() < 1 
          or _str.k_vecs.size() < 1 )
@@ -109,7 +113,8 @@ namespace Ising_CE
     __MPICODE(
       types :: t_unsigned nperproc = k_vecs.size() / comm->size(); 
       types :: t_unsigned remainder = k_vecs.size() % comm->size();
-      i_k_vec +=  comm->rank() * nperproc + std::min( remainder, comm->rank() );
+      i_k_vec +=  comm->rank() * nperproc + std::min( (types::t_int) remainder,
+                                                      comm->rank() );
       i_k_vec_end = i_k_vec + nperproc;
       if( remainder and comm->rank() < remainder ) ++i_k_vec_end;
     )
@@ -136,7 +141,8 @@ namespace Ising_CE
       }
       value +=  (real(sum_exp * conj( sum_exp ))) * sum_harm;
     }
-    __MPICODE( value = boost::mpi::all_reduce( *comm, value, std::plus() ); )
+    __MPICODE( value = boost::mpi::all_reduce( *comm, value,
+                                               std::plus<types::t_real>() ); )
     value /= ( (types::t_real)  k_vecs.size() ) * (types::t_real) r_vecs.size();
 
     delete[] interpolation;
@@ -197,7 +203,8 @@ namespace Ising_CE
     __MPICODE(
       types :: t_unsigned nperproc = k_vecs.size() / comm->size(); 
       types :: t_unsigned remainder = k_vecs.size() % comm->size();
-      i_k_vec +=  comm->rank() * nperproc + std::min( remainder, comm->rank() );
+      i_k_vec +=  comm->rank() * nperproc + std::min( (types::t_int) remainder,
+                                                      comm->rank() );
       i_k_vec_end = i_k_vec + nperproc;
       if( remainder and comm->rank() < remainder ) ++i_k_vec_end;
     )
@@ -236,7 +243,8 @@ namespace Ising_CE
 
     }
 
-    __MPICODE( value = boost::mpi::all_reduce( *comm, value, std::plus() ); )
+    __MPICODE( result = boost::mpi::all_reduce( *comm, result, 
+                                                std::plus<types::t_real>() ); )
     delete[] interpolation;
     return result * inv_N;
   }
@@ -309,7 +317,8 @@ namespace Ising_CE
     __MPICODE(
       types :: t_unsigned nperproc = k_vecs.size() / comm->size(); 
       types :: t_unsigned remainder = k_vecs.size() % comm->size();
-      i_k_vec +=  comm->rank() * nperproc + std::min( remainder, comm->rank() );
+      i_k_vec +=  comm->rank() * nperproc + std::min( (types::t_int) remainder,
+                                                      comm->rank() );
       i_k_vec_end = i_k_vec + nperproc;
       if( remainder and comm->rank() < remainder ) ++i_k_vec_end;
       types::t_real *__ADDHERE__ = new types::t_real[ variables->size() ];
@@ -352,11 +361,13 @@ namespace Ising_CE
       value += real(sum_exp * conj( sum_exp )) * sum_harm;
     }
     __MPICODE( 
-      boost::mpi::all_reduce( *comm, value, monomes.size(), value, std::plus() );
+      boost::mpi::all_reduce( *comm, grad, k_vecs.size(), grad,
+                              std::plus<types::t_real>() ); 
       std::transform( gradient, gradient + variables->size(), __ADDHERE__, gradient,
                       boost::lambda::_1 + boost::lambda::_2 * boost::lambda::constant(inv_N) ); 
       delete[] __ADDHERE__;
-      value = boost::mpi::all_reduce( *comm, value, std::plus() ); 
+      value = boost::mpi::all_reduce( *comm, value,
+                                      std::plus<types::t_real>() );
     )
     __SERIALCODE( 
       std::for_each( gradient, gradient + variables->size(),

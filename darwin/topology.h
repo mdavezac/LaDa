@@ -40,13 +40,13 @@ namespace GA
     //! graph topology if created
     __MPICODE( mpi::Graph::Topology *graph; )
     //! Head Communicator.
-    __MPICODE( ::boost::mpi::communicator comm )
+    __MPICODE( ::boost::mpi::communicator comm; )
 
     public:  
       //! Constructor and Initializer.
       Topology() : seeds(1,0)
                    __MPICONSTRUCTORCODE( graph(NULL) )
-                   __MPICONSTRUCTORCODE( comm( ::mpi::main, 
+                   __MPICONSTRUCTORCODE( comm( *::mpi::main, 
                                                boost::mpi::comm_duplicate ) ) {}
       //! Copy Constructor.
       Topology   ( const Topology &_comm )
@@ -56,7 +56,7 @@ namespace GA
                                              boost::mpi::comm_attach) ) {}
 #ifdef _MPI
       //! Constructor and Initializer.
-      Topology   ( ::mpi::boost::communicator &_comm )
+      Topology   ( boost::mpi::communicator &_comm )
                : seeds(1,0), graph(NULL), 
                  comm( _comm, boost::mpi::comm_duplicate )  {}
 #endif

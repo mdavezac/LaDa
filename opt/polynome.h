@@ -24,6 +24,7 @@
 #include <mpi/mpi_object.h>
 #ifdef _MPI
 #include <boost/lambda/lambda.hpp>
+#include <boost/mpi/collectives.hpp>
 #include <functional>
 #endif 
 
@@ -78,11 +79,11 @@ namespace function {
 
     public: 
       //! Constructor.
-      Polynome() : t_Base() __MPICONSTRUCTORCODE( comm( &::mpi::main ) ) {}
+      Polynome() : t_Base() __MPICONSTRUCTORCODE( comm( ::mpi::main ) ) {}
       //! Constructor and variables initializer.
       Polynome   ( types::t_int nb )
                : t_Base(nb)
-                 __MPICONSTRUCTORCODE( comm( &::mpi::main ) ) {}
+                 __MPICONSTRUCTORCODE( comm( ::mpi::main ) ) {}
       //! Copy constructor
       Polynome  ( const t_This &_p ) 
                : monomes(_p.monomes)
@@ -256,7 +257,8 @@ namespace function {
         __MPICODE(
           types :: t_unsigned nperproc = monomes.size() / comm->size(); 
           types :: t_unsigned remainder = monomes.size() % comm->size();
-          i_monome +=  comm->rank() * nperproc + std::min( remainder, comm->rank() );
+          i_monome +=  comm->rank() * nperproc + std::min( (types::t_int) remainder,
+                                                           comm->rank() );
           i_monome_end = i_monome + nperproc;
           if( remainder and comm->rank() < remainder ) ++i_monome_end;
         )
@@ -272,7 +274,9 @@ namespace function {
           value += v_monome;
         } // end of loop over monomes
       
-        __MPICODE( value = boost::mpi::all_reduce( *comm, value, std::plus() ); )
+        __MPICODE( value = boost::mpi::all_reduce( *comm, value,
+                                                   std::plus<types::t_real>() ); )
+
         return value;
       }
     
@@ -300,7 +304,8 @@ namespace function {
       __MPICODE(
         types::t_unsigned nperproc = monomes.size() / comm->size(); 
         types :: t_unsigned remainder = monomes.size() % comm->size();
-        i_monome +=  comm->rank() * nperproc + std::min( remainder, comm->rank() );
+        i_monome +=  comm->rank() * nperproc + std::min( (types::t_int) remainder,
+                                                         comm->rank() );
         i_monome_end = i_monome + nperproc;
         if( remainder and comm->rank() < remainder ) ++i_monome_end;
         types::t_real *__ADDHERE__ = new types::t_real[ monomes.size() ];
@@ -333,7 +338,8 @@ namespace function {
         } // end of outer "derivative" loop
       } // end of loop over monomes
       __MPICODE( 
-        boost::mpi::all_reduce( *comm, value, monomes.size(), value, std::plus() );
+        boost::mpi::all_reduce( *comm, __ADDHERE__, monomes.size(), __ADDHERE__, 
+                                std::plus<types::t_real>() ); 
         std::transform( _i_grad, _i_grad + monomes.size(), __ADDHERE__, _i_grad,
                         boost::lambda::_1 + boost::lambda::_2 ); 
         delete[] __ADDHERE__;
@@ -368,7 +374,8 @@ namespace function {
         __MPICODE(
           types :: t_unsigned nperproc = monomes.size() / comm->size(); 
           types :: t_unsigned remainder = monomes.size() % comm->size();
-          i_monome +=  comm->rank() * nperproc + std::min( remainder, comm->rank() );
+          i_monome +=  comm->rank() * nperproc + std::min( (types::t_int) remainder,
+                                                           comm->rank() );
           i_monome_end = i_monome + nperproc;
           if( remainder and comm->rank() < remainder ) ++i_monome_end;
           types::t_real *__ADDHERE__ = new types::t_real[ monomes.size() ];
@@ -405,11 +412,13 @@ namespace function {
         } // end of loop over monomes
       
         __MPICODE( 
-          boost::mpi::all_reduce( *comm, value, monomes.size(), value, std::plus() );
+          boost::mpi::all_reduce( *comm, __ADDHERE__, monomes.size(),
+                                  __ADDHERE__, std::plus<types::t_real>() ); 
           std::transform( _i_grad, _i_grad + monomes.size(), __ADDHERE__, _i_grad,
                           boost::lambda::_1 + boost::lambda::_2 ); 
           delete[] __ADDHERE__;
-          value = boost::mpi::all_reduce( *comm, value, std::plus() );
+          value = boost::mpi::all_reduce( *comm, value,
+                                          std::plus<types::t_real>() ); 
         )
 #undef __ADDHERE__
         return value;
@@ -432,7 +441,8 @@ namespace function {
         __MPICODE(
           types :: t_unsigned nperproc = monomes.size() / comm->size(); 
           types :: t_unsigned remainder = monomes.size() % comm->size();
-          i_monome +=  comm->rank() * nperproc + std::min( remainder, comm->rank() );
+          i_monome +=  comm->rank() * nperproc + std::min( (types::t_int) remainder,
+                                                           comm->rank() );
           i_monome_end = i_monome + nperproc;
           if( remainder and comm->rank() < remainder ) ++i_monome_end;
         )
@@ -461,7 +471,8 @@ namespace function {
           result += partial_grad;
       
         } // end of loop over monomes
-        __MPICODE( value = boost::mpi::all_reduce( *comm, value, std::plus() ); )
+        __MPICODE( result = boost::mpi::all_reduce( *comm, result,
+                                                    std::plus<types::t_real>() ); )
       
         return result;
       }

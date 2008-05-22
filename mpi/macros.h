@@ -13,7 +13,7 @@
 #define __MPICONSTRUCTORCODE(code) 
 #define __TRYMPICODE(code, error) 
 #define __MPIROOT(code) 
-#define __ROOTCODE(code) code
+#define __ROOTCODE(comm, code) code
 #define __NOTMPIROOT(code) 
 #define __SERIALCODE(code) code
 #define __MPISEQUENTIAL(code) 
@@ -35,9 +35,9 @@
           sstr << __SPOT_ERROR << error << _e.what();\
           throw std::runtime_error( sstr.str() );\
         }
-#define __MPIROOT(code) if( ::mpi::main.rank() != 0 ) { code }
-#define __ROOTCODE(code) __MPIROOT(code)
-#define __NOTMPIROOT(code) if( not ::mpi::main.rank() != 0 ) { code }
+#define __MPIROOT(__comm, code) if( __comm.rank() == 0 ) { code }
+#define __ROOTCODE(__comm, code) __MPIROOT( __comm, code)
+#define __NOTMPIROOT(__comm, code) if( __comm.rank() != 0 ) { code }
 #define __SERIALCODE(code) 
 #define __DOCOMMSEQUENTIAL(comm, code) \
     for( types::t_int i = 0; i < comm.size(); ++i )\
@@ -45,7 +45,7 @@
       if ( comm.rank() == i ) { code }\
         comm.barrier();\
     }
-#define __DOMPISEQUENTIAL(code)  __DOCOMMSEQUENTIAL( ::mpi::main, code )
+#define __DOMPISEQUENTIAL(comm, code)  __DOCOMMSEQUENTIAL( comm, code )
 #define __MPISEQUENTIAL(code) __DOMPISEQUENTIAL(code)
 #define __MPISERIALCODE(coda, codb) coda
 

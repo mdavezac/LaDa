@@ -218,6 +218,9 @@ namespace ConvexHull
     //! return Vertex::x
     types::t_real get_concentration() const
       { return x; }
+    //! Serializes a vertex.
+    template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
+      { _ar & x; _ar & y; _ar & object; }
   };
 
   //! \brief Defines a halfline in the \f$(x,y)\f$ plane
@@ -338,32 +341,12 @@ namespace ConvexHull
       //! Returns number of breakpoints in convex-hull
       types::t_unsigned size() const { return vertices.size(); }
 
-#ifdef _MPI
-      /** \ingroup MPI
-       * \brief Serializes ConvexHull::Base class for mpi purposes
-       */
-      bool broadcast( mpi::BroadCast &_bc )
-      {
-        types::t_int n = vertices.size();
-        if ( not _bc.serialize(n) ) return false;
-        if ( _bc.get_stage() == mpi::BroadCast::COPYING_FROM_HERE )
-          vertices.resize(n);
-        typename t_Vertices :: iterator i_vertex = vertices.begin();
-        typename t_Vertices :: iterator i_vertex_end = vertices.end();
-        for(; i_vertex != i_vertex_end; ++i_vertex )
-          if(    ( not _bc.serialize<t_Object>( i_vertex->object ) ) 
-              or ( not _bc.serialize( i_vertex->x ) )
-              or ( not _bc.serialize( i_vertex->y ) )       ) return false;
-
-        if ( _bc.get_stage() == mpi::BroadCast::COPYING_FROM_HERE )
-        {
-          while( not weed_out() ) {}
-          build_function();
-        }
-
-        return true;
-      }
-#endif
+      //! loads a convex-hull.
+      template<class ARCHIVE> void load(ARCHIVE & _ar, const unsigned int _version)
+        { _ar & vertices; }
+      //! saves a convex-hull.
+      template<class ARCHIVE> void save(ARCHIVE & _ar, const unsigned int _version) const;
+      BOOST_SERIALIZATION_SPLIT_MEMBER()
       //! Returns  a string containing the convex-hull in xmgrace .agr format.
       std::string print() const
       { 
@@ -386,6 +369,15 @@ namespace ConvexHull
       bool weed_out(); // removes unconvex points one by one
   };
       
+  template<class T_OBJECT> template<class ARCHIVE>
+    void Base<T_OBJECT> :: save(ARCHIVE & _ar, const unsigned int _version) const
+    {
+      _ar & vertices;
+      while( not weed_out() ) {}
+      build_function();
+    
+      return true;
+    }
 
   template<class T_OBJECT>
   bool Base<T_OBJECT> :: add( const types::t_real _y, const t_Object &_o, bool _do_check )

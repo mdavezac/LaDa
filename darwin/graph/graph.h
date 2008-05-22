@@ -79,13 +79,13 @@ namespace GA
         friend class GA::Topology;
         protected: 
           //! The communicator for which processes will be graphed.
-          boost::mpi::communicator *comm;
+          boost::mpi::communicator comm;
           //! If set, group of bull+cows of this process.
           boost::mpi::communicator pool_comm;
           //! If set, group of farmer+bulls of this process.
           boost::mpi::communicator head_comm;
           //! Graph communicator created by a call to MPI graph routine.
-          boost::mpi::graph_communicator  graph_comm;
+          boost::mpi::graph_communicator  *graph_comm;
           //! The number of pools (e.g. herds) in the graph topology.
           types::t_unsigned pools;
           //! Type of the process
@@ -95,17 +95,14 @@ namespace GA
           //! \brief Constructor and Initializer.
           //! \details The MPI::WORLD_COMM is duplicated and the duplicated is
           //!          pointed to by ::mpi::Base::comm.
-          Topology() : comm(::mpi::main), pool_comm(MPI::COMM_NULL), 
-                       head_comm(MPI::COMM_NULL), graph_comm(MPI::COMM_NULL), 
-                       pools(0), type(t_Type::FARMHAND)
-             { comm = &MPI::COMM_WORLD.Clone(); }
+          Topology() : comm(*::mpi::main, boost::mpi::comm_duplicate),
+                       graph_comm( NULL ), pools(0), type(t_Type::FARMHAND) {}
           //! Copy Constructor.
           Topology   ( boost::mpi::communicator &_comm )
-                   : comm(&_comm), pool_comm(MPI::COMM_NULL), 
-                     head_comm(MPI::COMM_NULL), graph_comm(MPI::COMM_NULL), 
-                     pools(0), type(t_Type::FARMHAND) {}
+                   : comm(_comm, boost::mpi::comm_attach), 
+                     graph_comm( NULL ), pools(0), type(t_Type::FARMHAND) {}
           //! Destructor
-          ~Topology();
+          ~Topology() { if( graph_comm ) delete graph_comm; graph_comm = NULL; }
       
           //! \brief Creates the GA mpi topology and groups.
           template< class T_CONDITION > bool init( T_CONDITION _condition );
@@ -123,9 +120,9 @@ namespace GA
           bool Load( const TiXmlElement &_node );
 
           //! Returns pointer to farmer+bull intracomm.
-          mpi::boost::communicator* farmer_comm() { return &head_comm; }
+          boost::mpi::communicator* farmer_comm() { return &head_comm; }
           //! Returns pointer to bull/cows intracomm.
-          mpi::boost::communicator* herd_comm() { return &pool_comm; }
+          boost::mpi::communicator* herd_comm() { return &pool_comm; }
           //! Sets mpi communicator and suffix.
           template< class T_EVALUATOR > void set_mpi( T_EVALUATOR &_eval );
       };

@@ -41,6 +41,9 @@ namespace GA
           //! Type of the communication base class.
           typedef Comm::Bull< t_GATraits, t_This > t_CommBase;
 
+        protected:
+          using t_CommBase :: TAG; 
+
         public:
           //! Constructor
           BullTaboo ( Topology* _topo ) : t_CommBase(_topo), t_Base() {}
@@ -58,9 +61,9 @@ namespace GA
         bool BullTaboo<T_GATRAITS> :: operator()( const t_Individual &_indiv )
         {
           t_CommBase::request( t_CommBase::t_Requests::TABOOCHECK );
-          t_CommBase::send_individual( _indiv );
+          t_CommBase::comm->send( 0, ONTABOO_TAG1( TAG ), _indiv );
           bool result;
-          t_CommBase::receive_object( result );
+          t_CommBase::comm->recv( 0, ONTABOO_TAG2( TAG ), result );
           return result;
         }
     } // namespace Graph

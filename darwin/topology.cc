@@ -75,14 +75,14 @@ namespace GA
      seeds.front() = tv.tv_usec;
    }
    types::t_int seed = seeds.front();
-   comm->Bcast( &seed, 1, MPI::INT, 0 );
+   boost::mpi::broadcast( comm, seed, 0 );
    rng.reseed( seed );
 #endif // _MPI
   }
 
   std::string Topology :: print() const 
   {
-    __MPICODE( if( (not graph) and comm->Get_size() == 1 ) )
+    __MPICODE( if( (not graph) and comm.size() == 1 ) )
       return "Starting Serial Run.";
     __MPICODE( else if(  graph ) return "Starting Graphed-Pools Run.";
                else return "Starting Single-Pool Run."; )

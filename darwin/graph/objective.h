@@ -61,6 +61,9 @@ namespace GA
           typedef Comm::Bull< t_GATraits, BullObjective<t_GATraits> > t_CommBase;
           //! Type of the objective base class.
           typedef typename GA::Objective::Types<t_GATraits> :: Vector t_Base;
+        
+        protected:
+          using t_CommBase::TAG;
     
         public:
           //! Constructor.

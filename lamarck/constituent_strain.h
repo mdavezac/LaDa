@@ -77,7 +77,7 @@ namespace Ising_CE
  
     public:
       //! Constructor
-      Constituent_Strain() : t_Base() __MPICONSTRUCTORCODE( comm( &::mpi::main ) ) {}
+      Constituent_Strain() : t_Base() __MPICONSTRUCTORCODE( comm( ::mpi::main ) ) {}
       //! Constructor and Initializer
       Constituent_Strain(const Ising_CE::Structure& str, t_Container *vars=NULL);
       //! Copy Constructor
@@ -120,7 +120,7 @@ namespace Ising_CE
 #ifdef _MPI
         /** \ingroup Genetic
          *  \brief Sets the communicator. **/
-        void set_mpi( mpi::Base *_c ) { comm = _c; }
+        void set_mpi( boost::mpi::communicator *_c ) { comm = _c; }
 #endif
       //! Serializes a cluster.
       template<class ARCHIVE> void serialize(ARCHIVE & _ar,

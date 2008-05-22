@@ -20,7 +20,6 @@
 //! \cond
 namespace VA_CE{ class Functional_Builder; };
 namespace Ising_CE{ class Cluster; }
-___DECLAREMPIOBJECT( Ising_CE::Cluster )
 //! \endcond
 
 //! \brief Contains most everything %Cluster Expansion and structure related.
@@ -46,9 +45,6 @@ namespace Ising_CE
    */ 
   class Cluster 
   {
-    //! \cond
-    ___FRIENDMPIOBJECT(Ising_CE::Cluster)
-    //! \endcond
     friend class VA_CE::Functional_Builder;
     
     protected:

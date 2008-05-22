@@ -99,7 +99,7 @@ namespace GA
       //! \details Provided for convenience.
       t_Object *current_object;
       //! Communication group for which this evaluator is set up.
-      __MPICODE( ::mpi::communicator *comm; ) 
+      __MPICODE( boost::mpi::communicator *comm; ) 
       //! Suffix string for files/directories
       __MPICODE( std::string suffix; ) 
 
@@ -218,7 +218,7 @@ namespace GA
 
 #ifdef _MPI
       //! Sets communicator and suffix for mpi stuff.
-      void set_mpi( ::mpi::communicator *_comm, const std::string &_suffix )
+      void set_mpi( boost::mpi::communicator *_comm, const std::string &_suffix )
         { comm = _comm; suffix = _suffix; }
 #endif
   };

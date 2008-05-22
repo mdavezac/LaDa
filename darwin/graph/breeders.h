@@ -85,6 +85,8 @@ namespace GA
             types::t_unsigned target;
             t_Population *offspring;
             
+          protected:
+            using t_CommBase :: TAG;
     
           public:
             //! Constructor.
@@ -126,6 +128,8 @@ namespace GA
             //! Communication base class
             typedef Comm::Bull< T_GATRAITS, Bull<t_GATraits> > t_CommBase;
     
+          protected:
+            using t_CommBase :: TAG;
     
           public:
             //! Constructor.

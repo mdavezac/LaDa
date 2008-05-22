@@ -21,14 +21,29 @@
 #include <revision.h>
 #define __PROGNAME__ "lamarck"
 
+#ifdef _DEBUG
+#include <print/stdout.h>
+#define OUTPUT Print::out
+#define ENDLINE Print::endl
+#else
+#define OUTPUT std::cout
+#define ENDLINE "\n"
+#endif
+
 int main(int argc, char *argv[]) 
 {
   try
   {
-    __MPICODE( boost::mpi::environment env(argc, argv); )
+    __MPICODE(
+      boost::mpi::environment env(argc, argv); 
+      boost::mpi::communicator world;
+      ::mpi::main = &world;
+      Print::out.init( "out" );
+      Print::out.doprint( true );
+    )
 
-    namespace po = boost::program_options;
     std::string filename("input.xml");
+    namespace po = boost::program_options;
 
     po::options_description generic("Generic Options");
     generic.add_options()
@@ -54,8 +69,8 @@ int main(int argc, char *argv[])
  
     if ( vm.count("help") )
     {
-      __ROOTCODE(
-        std::cout << "Usage: " << argv[0] << " [options] file.xml\n"
+      __ROOTCODE( (*::mpi::main),
+        OUTPUT << "Usage: " << argv[0] << " [options] file.xml\n"
                   << "  file.xml is an optional filename for XML input.\n"
                   << "  Default input is input.xml.\n\n"
                   << all << "\n"; 
@@ -64,8 +79,8 @@ int main(int argc, char *argv[])
     }
     if ( vm.count("version") )
     {
-      __ROOTCODE( 
-        std::cout << "\n" << __PROGNAME__
+      __ROOTCODE( (*::mpi::main),
+        OUTPUT << "\n" << __PROGNAME__
                   << " from the " << PACKAGE_STRING << " package\n"
                   << "Subversion Revision: " << SVN::Revision << "\n\n"; 
       )
@@ -74,7 +89,7 @@ int main(int argc, char *argv[])
     if ( vm.count("input") )
     {
       filename = vm["input"].as< std::string >();
-      __ROOTCODE(std::cout << "Input: " << filename << ".\n";)
+      __ROOTCODE( (*::mpi::main), OUTPUT << "Input: " << filename << ".\n";)
     }
 
     TiXmlElement *child;
@@ -82,70 +97,67 @@ int main(int argc, char *argv[])
     Ising_CE::Lattice lattice;
  
     
-    __MPICODE( boost::mpi::broadcast( ::mpi::main, filename, 0 ); )
-    TiXmlDocument doc( filename.c_str() );
-    
-    if  ( !doc.LoadFile() )
-    {
-      std::cerr << "error while opening input file " << filename << std::endl
-                << doc.ErrorDesc() << std::endl; 
-      return false;
-    }
+    __MPICODE(
+      Print :: out << "Before broadcasting" << Print::endl;
+      boost::mpi::broadcast( *::mpi::main, filename, 0 );
+      Print :: out << "After broadcasting" << Print::endl;
+      std::string input;
+    )
  
+    __ROOTCODE( (*::mpi::main),
+      TiXmlDocument doc( filename.c_str() );
+      __DOASSERT( not doc.LoadFile(), 
+                    "error while opening input file "
+                 << filename << "\n" << doc.ErrorDesc()  )
+      __MPICODE( 
+        std::ostringstream stream;
+        stream << *doc.RootElement();
+        input = stream.str();
+      )
+    )
+    
+    __MPICODE(
+        boost::mpi::broadcast( *::mpi::main, input, 0 ); 
+        TiXmlDocument doc;
+        doc.Parse( input.c_str() );
+    )
     TiXmlHandle handle( &doc );
  
     // loads lattice
     child = handle.FirstChild( "Job" ).FirstChild( "Lattice" ).Element();
-    if ( not child )
-    {
-      std::cerr << "Could not find Lattice in input" << std::endl;
-      return false;
-    }
-    if ( not lattice.Load(*child) )
-    {
-      std::cerr << "Error while reading Lattice from input" << std::endl;
-      return false;
-    }
+    __DOASSERT( not child, "Could not find Lattice in input." )
+    __DOASSERT( not lattice.Load(*child), "Error while reading Lattice from input.")
  
     // loads lamarck functional
     child = handle.FirstChild( "Job" ).Element();
-    if ( not child )
-    {
-      std::cerr << "Could not find Functional in input" << std::endl;
-      return false;
-    }
+    __DOASSERT( not child, "Could not find Functional in input." )
+
     VA_CE::Functional_Builder ce;
-    if ( not ce.Load(*child) )
-    {
-      std::cerr << "Error while reading Functional from input" << std::endl;
-      return false;
-    }
+    __DOASSERT( not ce.Load(*child), "Error while reading Functional from input." )
     ce.add_equivalent_clusters();
  
+    __MPIROOT( (*::mpi::main), OUTPUT << "Nb procs: " << ::mpi::main->size() << ENDLINE; )
     // do structure
     child = handle.FirstChild( "Job" ).FirstChild( "Structure" ).Element();
     for (; child; child = child->NextSiblingElement("Structure") )
     {
       Ising_CE::Structure structure;
       Ising_CE :: Structure :: lattice = &lattice;
-      if ( not structure.Load(*child) )
-      {
-        std::cerr << "Error while reading Structure from input" << std::endl;
-        return false;
-      }
+      __DOASSERT( not structure.Load(*child), "Error while reading Structure from input." )
  
       VA_CE::Functional_Builder::t_VA_Functional functional;
+      OUTPUT << "generating functional" << ENDLINE;
       ce.generate_functional(structure, &functional);
-      __MPICODE( functional.get_functional1()->set_mpi( &::mpi::main ); )
-      __MPICODE( functional.get_functional2()->set_mpi( &::mpi::main ); )
+      __MPICODE( functional.get_functional1()->set_mpi( ::mpi::main ); )
+      __MPICODE( functional.get_functional2()->set_mpi( ::mpi::main ); )
     
       functional.resize( structure.atoms.size() );
       std::transform( structure.atoms.begin(), structure.atoms.end(), functional.begin(),
                       boost::lambda::bind( &Ising_CE::Structure::t_Atom::type,
                                            boost::lambda::_1 ) );
     
-      std::cout << "Energy: " << functional.evaluate() << "\n"
-                << "Concentration: " << structure.get_concentration() << "\n\n";
+      OUTPUT << "Energy: " << functional.evaluate() << "\n"
+             << "Concentration: " << structure.get_concentration() << "\n" << ENDLINE;
 //   Ising_CE::Fourier( structure.atoms.begin(), structure.atoms.end(),
 //                      structure.k_vecs.begin(), structure.k_vecs.end() );
 //   structure.print_out( std::cout );
@@ -185,8 +197,8 @@ int main(int argc, char *argv[])
   catch ( std::exception &e )
   {
     std::ostringstream sstr;
-    __MPICODE( sstr << "\nProcessor " << mpi::main.rank() + 1
-                    << " of " << mpi::main.size()
+    __MPICODE( sstr << "\nProcessor " << mpi::main->rank() + 1
+                    << " of " << mpi::main->size()
                     << " says:\n"; )
 
     sstr << "Caught error while running " << __PROGNAME__ 
@@ -194,10 +206,11 @@ int main(int argc, char *argv[])
 
     __MPICODE( 
       std::string message;
-      boost::mpi::gather( ::mpi::main, sstr.str(), message, 0 );
+      boost::mpi::reduce( *::mpi::main, sstr.str(), message, std::plus<std::string>(), 0 );
     )
-    __NOTMPIROOT( return 0; )
-    std::cerr << sstr.str() << std::endl;
+    __NOTMPIROOT( (*::mpi::main), return 0; )
+    std::cerr << message << std::endl;
+    __DODEBUGCODE( Print::out << message << Print::endl; )
     return 0;
   }
   return 1;

@@ -1044,62 +1044,54 @@ endstorage:
                                                 std::string &_restart, 
                                                 std::string &_evaluator ) 
   {
-    if ( ::mpi::main.is_root_node() )
-    { 
-      OPENXMLINPUT(filename)
+    __NOTMPIROOT( (*::mpi::main),
+      boost::mpi::broadcast( *::mpi::main, _input, 0 );
+      boost::mpi::broadcast( *::mpi::main, _restart, 0 );
+      boost::mpi::broadcast( *::mpi::main, _evaluator, 0 );
+      return;
+    )
+
+    OPENXMLINPUT(filename)
+    std::ostringstream stream;
+    const TiXmlElement *parent = doc.RootElement();
+    stream << *parent;
+    _input = stream.str();
+    _restart = _input; 
+    _evaluator = _input;
+
+    if ( restart_filename == filename )
+    {
+      doc.LoadFile( restart_filename.c_str() );
+      if  ( !doc.LoadFile() ) 
+      { 
+        std::cerr << __SPOT_ERROR
+                  << doc.ErrorDesc() << "\n"
+                  << "Could not load restart file.\n"
+                  << "Will ignore restart input and start run from scratch"
+                  << std::endl;
+        _restart = "";
+        goto nextfilename;
+      } 
+
+      parent = doc.RootElement();
       std::ostringstream stream;
-      const TiXmlElement *parent = doc.RootElement();
       stream << *parent;
-      _input = stream.str();
-      _restart = _input; 
-      _evaluator = _input;
-
-      if ( restart_filename == filename )
-      {
-        doc.LoadFile( restart_filename.c_str() );
-        if  ( !doc.LoadFile() ) 
-        { 
-          std::cerr << __SPOT_ERROR
-                    << doc.ErrorDesc() << "\n"
-                    << "Could not load restart file.\n"
-                    << "Will ignore restart input and start run from scratch"
-                    << std::endl;
-          _restart = "";
-          goto nextfilename;
-        } 
-
-        parent = doc.RootElement();
-        std::ostringstream stream;
-        stream << *parent;
-        _restart = stream.str();
-      }
+      _restart = stream.str();
+    }
 nextfilename:
-      if ( evaluator_filename != filename )
-      {
-        doc.LoadFile( evaluator_filename.c_str() );
-        __DOASSERT( not doc.LoadFile(), " Could not load restart file\n" )
-        parent = doc.RootElement();
-        std::ostringstream stream;
-        stream << *parent;
-        _evaluator = stream.str();
-      }
+    if ( evaluator_filename != filename )
+    {
+      doc.LoadFile( evaluator_filename.c_str() );
+      __DOASSERT( not doc.LoadFile(), " Could not load restart file\n" )
+      parent = doc.RootElement();
+      std::ostringstream stream;
+      stream << *parent;
+      _evaluator = stream.str();
     }
 
-    __TRYCODE( 
-      // Empty strings before allocating size.
-      __NOTMPIROOT( 
-        _input == "";
-        _restart = "";
-        _evaluator = "";
-      )
-      ::mpi::BroadCast bc( ::mpi::main );
-      bc << _input << _restart << _evaluator
-         << ::mpi::BroadCast::allocate
-         << _input << _restart << _evaluator
-         << ::mpi::BroadCast::broadcast
-         << _input << _restart << _evaluator;,
-      "Caught error while synchronizing input files.\n" 
-    )
+    boost::mpi::broadcast( *::mpi::main, _input, 0 );
+    boost::mpi::broadcast( *::mpi::main, _restart, 0 );
+    boost::mpi::broadcast( *::mpi::main, _evaluator, 0 );
   }
 #endif
 
@@ -1119,7 +1111,7 @@ nextfilename:
     TiXmlHandle docHandle( &doc ); 
     const TiXmlElement *parent, *child;
 
-    __NOTMPIROOT( goto syncfilenames; )
+    __NOTMPIROOT( (*::mpi::main), goto syncfilenames; )
 
     // first loads all inputfiles 
     __DOASSERT( not doc.LoadFile(), 
@@ -1161,15 +1153,15 @@ syncfilenames:
                  "Caught error while synchronizing output filenames\n" 
       )
       Print::out << "Starting genetic algorithm run on processor "
-                 << ( 1 + ::mpi::main.rank() ) << " of " 
-                 << ::mpi::main.size() << ".\n\n";,
+                 << ( 1 + ::mpi::main->rank() ) << " of " 
+                 << ::mpi::main->size() << ".\n\n";,
       // Serial code
       Print::xmg.init( xmg_filename );
       Print::out.init( out_filename );
       Print::out << "Starting (serial) genetic algorithm run\n\n";
     )
 
-    __ROOTCODE( 
+    __ROOTCODE( (*::mpi::main),
       Print::out << "GA Input file is located at " << evaluator_filename << "\n"
                  << "Functional Input file is located at "
                    << evaluator_filename << "\n"
@@ -1192,7 +1184,7 @@ syncfilenames:
                  << Print::Xmg::comment << "Will Save to file located at "
                                         << save_filename << Print::endl;
     )
-    __NOTMPIROOT( 
+    __NOTMPIROOT( (*::mpi::main), 
       Print::out << "Xmgrace output file is located at "
                    << Print::xmg.get_filename() << "\n"
                  << "Will Save to file located at "
@@ -1261,7 +1253,7 @@ syncfilenames:
     }
     if ( do_restart )
     {
-      __NOTMPIROOT( doc.Parse( restart_str.c_str() ); )
+      __NOTMPIROOT( (*::mpi::main), doc.Parse( restart_str.c_str() ); )
       if ( restart_filename != filename )
       { 
         if ( not Restart() )
@@ -1282,7 +1274,7 @@ syncfilenames:
     }
     do_save = 0;
 
-    __NOTMPIROOT( goto out; )
+    __NOTMPIROOT( (*::mpi::main), goto out; )
 
     do_save = SAVE_RESULTS;
     restart_xml = parent->FirstChildElement("Save");
@@ -1336,8 +1328,8 @@ out:
     Print::xmg << Print::Xmg::comment << "Number of Islands: "
                                       << nb_islands << Print::endl;
     if( scaling ) Print::xmg << Print::Xmg::comment << scaling->what_is() << Print::endl;
-    __ROOTCODE( Print::xmg << Print::Xmg::comment << "Will save to "
-                           << save_filename << Print::endl; )
+    __ROOTCODE( (*::mpi::main), Print::xmg << Print::Xmg::comment << "Will save to "
+                                           << save_filename << Print::endl; )
     std::string evalparams = evaluator.print();
     Print::xmg << Print::make_commented_string( evalparams ) << Print::endl;
     return true;

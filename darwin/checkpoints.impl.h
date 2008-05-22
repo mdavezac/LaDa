@@ -312,10 +312,8 @@ namespace GA
         result = false;
 
         // checks if stop file exists
-#ifdef _MPI
-    if ( ::mpi::main.is_root_node() )
+    __MPICODE( if ( ::mpi::main->rank() == 0 ) )
     {
-#endif
       std::ifstream file( stop_filename.c_str(), std::ios_base::in );
       if ( file.is_open() )
       {
@@ -325,10 +323,9 @@ namespace GA
                    << stop_filename << Print::endl;
         result = false; 
       }
-#ifdef _MPI
     }
-    result = ::mpi::main.all_sum_all(result);
-#endif 
+    __MPICODE( result = boost::mpi::all_reduce( *::mpi::main, result,
+                                                std::logical_and<bool>() ); )
 
     // last call
     if ( not result )
@@ -373,7 +370,7 @@ namespace GA
   inline void Synchronize<T_TYPE> :: operator()()
   {
     t_Type diff = object - current_value;
-    ::mpi::main.all_sum_all(diff);
+    diff = boost::mpi::all_reduce( *::mpi::main, diff, std::plus<t_Type>() );
     current_value += diff;
     object = current_value;
   }

@@ -110,6 +110,7 @@ namespace GA
           protected:
             //! List of unknown individuals to be dispatched to herds.
             t_Unknowns unknowns;
+            using t_CommBase :: TAG;
     
           public:
             //! Constructor.
@@ -187,6 +188,7 @@ namespace GA
     
           protected:
             t_BullEvaluator metaeval;
+            using t_CommBase :: TAG;
 
           public:
             //! Constructor.

@@ -13,6 +13,8 @@
 int main(int argc, char *argv[]) 
 {
   boost::mpi::environment env(argc, argv);
+  boost::mpi::communicator world;
+  ::mpi::main = &world;
 
 //  std::cout << "rank: " << mpi::main.rank() << std::endl;
 //  std::ostringstream sstr; sstr << "Am Proc " << mpi::main.rank();

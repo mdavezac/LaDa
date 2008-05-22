@@ -20,6 +20,8 @@
 
 #include "topology.h"
 
+#include <boost/preprocessor/inc.hpp>
+
 namespace GA
 {
 
@@ -28,6 +30,33 @@ namespace GA
   {
     namespace Graph
     {
+
+#ifndef REQUEST_TAG
+#define INCREMENTTAG( tag ) tag + 1
+#define REQUEST_TAG( tag ) tag 
+#define COMMAND_TAG( tag ) INCREMENTTAG( tag ) 
+#define ONTABOO_TAG1( tag ) INCREMENTTAG( COMMAND_TAG( tag ) )
+#define ONTABOO_TAG2( tag ) INCREMENTTAG( ONTABOO_TAG1( tag ) )
+#define ONOBJECTIVE_TAG1( tag ) INCREMENTTAG( ONTABOO_TAG2( tag ) )
+#define ONOBJECTIVE_TAG2( tag ) INCREMENTTAG( ONOBJECTIVE_TAG1( tag ) )
+#define ONGRADIENT_TAG1( tag ) INCREMENTTAG( ONOBJECTIVE_TAG2( tag ) )
+#define ONGRADIENT_TAG2( tag ) INCREMENTTAG( ONGRADIENT_TAG1( tag ) )
+#define ONGRADIENT_TAG3( tag ) INCREMENTTAG( ONGRADIENT_TAG2( tag ) )
+#define ONWITHGRADIENT_TAG1( tag ) INCREMENTTAG( ONGRADIENT_TAG3( tag ) )
+#define ONWITHGRADIENT_TAG2( tag ) INCREMENTTAG( ONWITHGRADIENT_TAG1( tag ) )
+#define ONWITHGRADIENT_TAG3( tag ) INCREMENTTAG( ONWITHGRADIENT_TAG2( tag ) )
+#define ONWITHGRADIENT_TAG4( tag ) INCREMENTTAG( ONWITHGRADIENT_TAG3( tag ) )
+#define ONONEGRADIENT_TAG1( tag ) INCREMENTTAG( ONWITHGRADIENT_TAG4( tag ) )
+#define ONONEGRADIENT_TAG2( tag ) INCREMENTTAG( ONONEGRADIENT_TAG1( tag ) )
+#define ONONEGRADIENT_TAG3( tag ) INCREMENTTAG( ONONEGRADIENT_TAG2( tag ) )
+#define ONONEGRADIENT_TAG4( tag ) INCREMENTTAG( ONONEGRADIENT_TAG3( tag ) )
+#define ONHISTORY_TAG1( tag ) INCREMENTTAG( ONONEGRADIENT_TAG4( tag ) )
+#define ONHISTORY_TAG2( tag ) INCREMENTTAG( ONHISTORY_TAG1( tag ) )
+#define ONHISTORY_TAG3( tag ) INCREMENTTAG( ONHISTORY_TAG2( tag ) )
+#define ONSTORE_TAG( tag ) INCREMENTTAG( ONHISTORY_TAG3( tag ) )
+#define ONWAIT_TAG( tag ) INCREMENTTAG( ONSTORE_TAG( tag ) )
+#endif
+
       //! \brief Holds all things communication related for the GA::mpi::Graph
       //!        topology
       //! \details In practice, it includes a number of helper functions which
@@ -122,7 +151,7 @@ namespace GA
         //!          respectively. These routines should be defined in the
         //!          derived classes. Defaults are provided for the last three.
         template< class T_GATRAITS, class T_DERIVED >
-        class Farmer : protected ::mpi::Base
+        class Farmer 
         {
           public:
             //! Type of the derived class
@@ -160,8 +189,6 @@ namespace GA
             typedef typename t_VA_Traits :: t_QuantityGradients   t_QuantityGradients;
             //! Type of the lamarckian variables, as declared in the base class
             typedef typename t_VA_Traits :: t_Type                t_VA_Type;
-            //! Type of the base class
-            typedef ::mpi::Base                                   t_Base;
 
           public:
             //! Codenames for requests from bull to farmer.
@@ -186,6 +213,8 @@ namespace GA
             typename t_Store :: Base*          store;
             //! History functor
             History<t_Individual>*             history;
+            //! Pointer to the communicator with bulls.
+            boost::mpi::communicator *comm;
         
           protected:
             //! Constructor and Initializer
@@ -203,40 +232,6 @@ namespace GA
             //! Wait for bulls to finish.
             void wait_bulls();
         
-            //! Sends an individual to bull \a _bull.
-            void send_individual( types::t_unsigned _bull, const t_Individual &_indiv)
-              { ::mpi::send_template_object< t_Individual >( _bull, _indiv, comm ); }
-            //! Sends an individual to bull \a _bull.
-            void receive_individual( types::t_unsigned _bull, t_Individual &_indiv )
-              { ::mpi::receive_template_object< t_Individual >( _bull, _indiv, comm ); }
-            //! Sends an individual to bull \a _bull.
-            void send_fitness( types::t_unsigned _bull, const t_Fitness &_fit )
-              { ::mpi::send_template_object< t_Fitness >( _bull, _fit, comm ); }
-            //! Sends an individual to bull \a _bull.
-            void receive_individual( types::t_unsigned _bull, t_Fitness &_fit )
-              { ::mpi::receive_template_object< t_Fitness >( _bull, _fit, comm ); }
-            //! Sends an individual to bull \a _bull.
-            void send_quantity( types::t_unsigned _bull, const t_Quantity &_q )
-              { ::mpi::send_quantity< t_Quantity >( _bull, _q, comm ); }
-            //! Sends an individual to bull \a _bull.
-            void receive_quantity( types::t_unsigned _bull, t_Quantity &_q )
-              { ::mpi::receive_quantity< t_Quantity >( _bull, _q, comm ); }
-            //! Sends gradients to bull.
-            void send_gradients( types::t_unsigned _bull, const t_VA_Type *_grad,
-                                 types::t_unsigned _n  )
-              { ::mpi::send_range< const t_VA_Type* >( _bull, _grad, 
-                                                       _grad + _n, comm ); }
-            //! Receives gradients from bull.
-            void receive_gradients( types::t_unsigned _bull, t_QuantityGradients &_grad) 
-              { ::mpi::send_quantity< t_QuantityGradients >( _bull, _grad, comm ); }
-            //! Sends an object to \a _bull.
-            template < class T_OBJECT > void send_object( types::t_unsigned _bull,
-                                                          const T_OBJECT _object )
-              { ::mpi::send_object< T_OBJECT >( _bull, _object, comm ); }
-            //! Receives an object from \a _bull.
-            template < class T_OBJECT > void receive_object( types::t_unsigned _bull, 
-                                                             T_OBJECT &_object )
-              { ::mpi::receive_object< T_OBJECT >( _bull, _object, comm ); }
             //! Starts all persistent requests from bulls ( Farmer::requests )
             void start_all() { MPI::Prequest::Startall( nbulls, requests ); } 
             //! Sends a command to \a _bull.
@@ -286,7 +281,7 @@ namespace GA
         //!          broadcasting stuff to cows and requesting stuff from the
         //!          farmer.
         template< class T_GATRAITS, class T_DERIVED >
-        class Bull : protected ::mpi::Base
+        class Bull
         {
           public:
             //! Type of the derived class
@@ -315,8 +310,6 @@ namespace GA
             typedef typename t_VA_Traits :: t_QuantityGradients t_QuantityGradients;
             //! Type of the lamarckian variables, as declared in the base class
             typedef typename t_VA_Traits :: t_Type              t_VA_Type;
-            //! Type of the base class
-            typedef ::mpi::Base t_Base;
         
           public:
             //! Codenames for requests from bull to farmer.
@@ -332,59 +325,22 @@ namespace GA
 
         
           protected:
-            MPI::Intracomm *cowcomm;
+            //! Communicator with the farmer.
+            boost::mpi::communicator *comm;
+            //! Communicator with the cows.
+            boost::mpi::communicator *cowcomm;
         
           protected:
             Bull   ( Topology *_topo )
-                 : t_Base( *_topo->farmer_comm() ),
+                 : comm( _topo->farmer_comm() ),
                    cowcomm( _topo->herd_comm() ) {}
         
-            //! Sends an individual to farmer.
-            void send_individual( const t_Individual &_indiv) 
-              { ::mpi::send_template_object< t_Individual >( 0, _indiv,
-                                                             t_Base::comm ); }
-            //! Receives an individual from farmer.
-            void receive_individual( t_Individual &_indiv )
-              { ::mpi::receive_template_object< t_Individual >( 0, _indiv,
-                                                                t_Base::comm ); 
-                Print::out << "Received Individual: " << _indiv << Print ::endl; }
-            //! Sends an fitness to farmer.
-            void send_fitness( types::t_unsigned _bull, const t_Fitness &_fit )
-              { ::mpi::send_template_object< t_Fitness >( 0, _fit, t_Base::comm ); }
-            //! Receives a fitness from farmer.
-            void receive_fitness( t_Fitness &_fit )
-              { ::mpi::receive_template_object< t_Fitness >( 0, _fit, t_Base::comm ); }
-            //! Sends quantities to farmer.
-            void send_quantity( const t_Quantity &_q )
-              { ::mpi::send_quantity< t_Quantity >( 0, _q, t_Base::comm ); }
-            //! Sends gradients to farmer.
-            void send_gradients( t_QuantityGradients &_grad )
-              { ::mpi::send_quantity< t_QuantityGradients >( 0, _grad, t_Base::comm ); }
-            //! Receives gradients from farmer
-            void receive_gradients( t_VA_Type *_grad, types::t_unsigned _n )
-              { ::mpi::receive_range< t_VA_Type* >( 0, _grad, _grad + _n,
-                                                    t_Base::comm ); }
-            //! Sends an individual to bull \a _bull.
-            void receive_quantity( t_Quantity &_q )
-              { ::mpi::receive_quantity< t_Quantity >( 0, _q, t_Base::comm ); }
-            //! Sends an object to \a _bull.
-            template < class T_OBJECT > void send_object( const T_OBJECT _object )
-              { ::mpi::send_object< T_OBJECT >( 0, _object, t_Base::comm ); }
-            //! Receives an object from \a _bull.
-            template < class T_OBJECT > void receive_object( T_OBJECT &_object )
-              { ::mpi::receive_object< T_OBJECT >( 0, _object, t_Base::comm ); }
             //! Receives a command from Farmer.
             typename t_Commands :: Commands obey();
             //! Sends a request to Farmer.
             void request( typename t_Requests :: Requests _request ) const;
             //! Broadcasts a command to all cows
             void command( const typename t_CowCommands :: Commands _c );
-            //! Broadcasts an individual to all cows
-            void bcast( const t_Individual &_indiv )
-              { ::mpi::const_bcast_template_object( 0, _indiv, cowcomm ); }
-            //! Broadcasts an object to all cows
-            template <class T_OBJECT> void bcast( const T_OBJECT &_object )
-              { ::mpi::const_bcast_object( 0, _object, cowcomm ); }
         };
         
         
@@ -395,7 +351,7 @@ namespace GA
         //!          complete behaviors are defined here. As such, it is
         //!          important to call the routine Cow::set() prior to use.
         template< class T_GATRAITS, class T_DERIVED >
-        class Cow : private ::mpi::Base
+        class Cow 
         {
           public:
             //! Type of the derived class
@@ -412,8 +368,6 @@ namespace GA
             typedef typename t_VATraits :: t_QuantityGradients t_QuantityGradients;
             //! Type of the bull.
             typedef Bull<t_GATraits, t_Derived>                t_Bull;
-            //! Type of the base class
-            typedef ::mpi::Base t_Base;
             //! Gradients for minimization
             t_QuantityGradients gradients;
 
@@ -428,10 +382,12 @@ namespace GA
           protected:
             //! Pointer to the interface to the functional(s).
             t_Evaluator *evaluator;
+            //! Communicator with the bull.
+            boost::mpi::communicator *comm;
         
           protected:
             //! Constructor and Initializer
-            Cow( Topology* _topo ): t_Base( *_topo->herd_comm() ), evaluator(NULL) {}
+            Cow( Topology* _topo ): comm( _topo->herd_comm() ), evaluator(NULL) {}
         
             //! Wait for a command from the bull
             typename t_Commands :: Commands obey();

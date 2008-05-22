@@ -19,6 +19,11 @@ elsif( $argument =~ /one/ )
 {
     system "./ce_opt -i ../input.xml";
 }
+elsif( $argument =~ /mpirun/ )
+{
+  my $nb = shift;
+  system  "mpirun -n $nb ./ce_opt -i ../input.xml";
+} 
 else
 { 
   for( my $i = 0; $i < 200; $i++)

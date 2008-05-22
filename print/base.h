@@ -55,7 +55,7 @@ namespace Print
       //! Returns true if the file stream is opened.
       bool is_open() { return do_print and file.is_open(); }
       //! Sets the filename, checks that the file can be opened, and truncates the file.
-      void init(const std::string &_f) { if ( filename == _f ) return; init_(_f); }
+      void init(const std::string &_f);
 #ifdef _MPI
       //! \ingroup MPI
       //! Syncs filname across all procs.
@@ -68,6 +68,8 @@ namespace Print
       void dont_truncate() { truncate = false; }
       //! Sets to truncating file when running init.
       void do_truncate() { truncate = true; }
+      //! Sets to printing.
+      void doprint( bool _d  ) { do_print = _d; init_( filename ); }
 
     private:
       //! Initializes new file.
@@ -75,7 +77,6 @@ namespace Print
       //! \brief Checks that the stream is open.
       //! \details If the file is empty, prints the revision number.
       void do_checks();
-      void doprint( bool _d  ) { do_print = _d; init( filename ); }
   };
 
 }

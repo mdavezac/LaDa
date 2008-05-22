@@ -41,6 +41,9 @@ namespace GA
           //! Type of the communication base class.
           typedef Comm::Bull< t_GATraits, BullStore<t_GATraits> > t_CommBase;
 
+        protected:
+          using t_CommBase :: TAG; 
+
         public:
           //! Constructor and Initializer
           BullStore   (t_Evaluator &_eval, Graph::Topology *_topo )
@@ -74,7 +77,7 @@ namespace GA
         void BullStore<T_GATRAITS> :: operator()( const t_Individual &_indiv )
         {
           t_CommBase::request( t_CommBase::t_Requests::STORE );
-          t_CommBase::send_individual( _indiv );
+          t_CommBase::comm->send( 0, ONSTORE_TAG( TAG ), _indiv );
         }
     } // namespace Graph
   } // namespace mpi

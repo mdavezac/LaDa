@@ -58,7 +58,7 @@ namespace mpi
 {
   //! \brief Main object for creation and destruction of mpich, as well as for
   //!        intialization of transaction helpers
-  extern boost::mpi::communicator main;
+  extern boost::mpi::communicator *main;
 }
 
 #endif

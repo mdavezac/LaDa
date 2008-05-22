@@ -11,6 +11,8 @@
 #include <string>
 #include <list>
 
+#include <boost/serialization/serialization.hpp>
+
 #include <eo/eoPop.h>
 #include <eo/eoGenOp.h>
 #include <eo/utils/eoState.h>
@@ -209,7 +211,7 @@ namespace GA
                   populate_style(RANDOM_POPULATE), continuator(NULL), history(NULL),
                   taboos(NULL), breeder_ops(NULL), breeder(NULL), replacement(NULL),
                   objective(NULL), store(NULL), evaluation(NULL), scaling(NULL),
-                  topology(__MPICODE( ::mpi::main ) ) {}
+                  topology(__MPICODE( *::mpi::main ) ) {}
       //! Destructor
       virtual ~Darwin ();
 
@@ -318,6 +320,18 @@ namespace GA
 //   const types::t_unsigned Darwin<T_EVALUATOR> :: SAVE_HISTORY     = 4;
 
 } // namespace GA
+
+namespace boost {
+  namespace serialization {
+
+    template<class Archive, class T_INDIVIDUAL >
+    void serialize(Archive & _ar,  eoPop<T_INDIVIDUAL>& _pop, const unsigned int version)
+    {
+        _ar & boost::serialization::base_object< std::vector<T_INDIVIDUAL> >( _pop );
+    }
+
+  } // namespace serialization
+} // namespace
 
 #include "darwin.impl.h"
 
