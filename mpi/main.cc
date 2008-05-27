@@ -9,6 +9,9 @@
 
 #include "mpi_object.h"
 
+#ifdef _MPI
+#include <boost/mpi/environment.hpp>
+#endif
 
 int main(int argc, char *argv[]) 
 {

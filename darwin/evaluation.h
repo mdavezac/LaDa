@@ -17,6 +17,8 @@
 #include <mpi/mpi_object.h>
 #include <print/stdout.h>
 
+#include <typeinfo>
+
 #include "objective.h"
 #include "store.h"
 #include "taboos.h"
@@ -110,7 +112,11 @@ template< class T_GATRAITS >
 
     public:
       //! Sets the pointer to the functional interface.
-      void set( t_Evaluator *_eval ) { evaluator = _eval; }
+      void set( t_Evaluator &_eval )
+      { 
+        Print :: out << "Original " << typeid( _eval ).name() << Print::endl;
+        evaluator = &_eval; 
+      }
       //! Sets the pointer to the objective interface.
       void set( t_Objective *_obj ) { objective = _obj; }
       //! Sets the pointer to the storage interface.
@@ -229,6 +235,7 @@ template< class T_GATRAITS >
 
     public:
       using t_Base::evaluate;
+      using t_Base :: set;
 
     public:
       //! \brief Constructor.

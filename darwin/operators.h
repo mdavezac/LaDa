@@ -62,14 +62,23 @@ namespace GA
   template<class T_GATRAITS>
     inline void SequentialOp<T_GATRAITS> :: apply(eoPopulator<t_Individual> &_populator)
     {
+      Print :: out << "SequentialOp 0 " << Print::endl;
       typename std::vector< types::t_real > :: const_iterator i_rate = rates.begin();
       typename std::vector< eoGenOp<t_Individual>* > :: iterator i_op = ops.begin();
       typename std::vector< eoGenOp<t_Individual>* > :: iterator i_end = ops.end();
+      Print :: out << "SequentialOp 1 " << Print::endl;
       for (; i_op != i_end; ++i_op, ++i_rate )
       {
+      Print :: out << "SequentialOp 2 " << Print::endl;
         if ( eo::rng.flip( *i_rate ) )
+        {
+      Print :: out << "SequentialOp 3 " << typeid( *(*i_op) ).name() << Print::endl;
           (*i_op)->operator()( _populator );
+      Print :: out << "SequentialOp 4 " << Print::endl;
+        }
+      Print :: out << "SequentialOp 5 " << Print::endl;
       }
+      Print :: out << "SequentialOp 6 " << Print::endl;
     }
 
 

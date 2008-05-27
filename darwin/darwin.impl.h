@@ -122,17 +122,20 @@ namespace GA
       if( topology.objective() ) 
         objective = topology.objective<t_GATraits>( _parent );
       
+      Print :: out << "Setting evaluation " << typeid( evaluator ).name() << Print::endl;
       if( topology.history() and history )
       {
-        evaluation = topology.evaluation< t_GATraits, Evaluation::WithHistory >();
-        static_cast< Evaluation::WithHistory<t_GATraits>* >(evaluation)->set( history );
+        evaluation = topology.evaluation< t_GATraits,
+                                          Evaluation::WithHistory >( evaluator );
+        static_cast< Evaluation::WithHistory<t_GATraits>* >
+                   (evaluation)->set( history );
       }
       if ( not evaluation )
-        evaluation = topology.evaluation<t_GATraits, Evaluation::Base >();
+        evaluation = topology.evaluation<t_GATraits, Evaluation::Base >( evaluator );
+      Print :: out << "After Setting evaluation" << Print::endl;
       Load_Storage( _parent );
       evaluation->set( objective );
       evaluation->set( store );
-      evaluation->set( &evaluator );
       
       if( not topology.scaling() ) return;
       scaling = Scaling::new_from_xml<t_GATraits>( _parent, &evaluator );
@@ -836,7 +839,11 @@ endstorage:
   template<class T_EVALUATOR>
   void Darwin<T_EVALUATOR> :: populate ()
   {
-    if( not topology.populate() ) return;
+    if( not topology.populate() ) 
+    {
+      islands.resize( nb_islands );
+      return;
+    }
     islands.resize( nb_islands );
     typename t_Islands :: iterator i_pop = islands.begin();
     typename t_Islands :: iterator i_end = islands.end();
@@ -969,19 +976,17 @@ endstorage:
   template<class T_EVALUATOR>
   void Darwin<T_EVALUATOR> :: run()
   {
-    Print::out << " 0 " << Print::endl;
     presubmit();
 
-    Print::out << " 1 " << Print::endl;
     Print::xmg << Print::flush;
     Print::out << "\nCreating population" << Print::endl;
     populate();
-    Print::out << " 2 " << Print::endl;
 
     offspring.clear();
     typename t_Islands :: iterator i_island_begin = islands.begin();
     typename t_Islands :: iterator i_island_end = islands.end();
     typename t_Islands :: iterator i_island;
+    ::mpi::main->barrier();
     Print::out << "\nEvaluating starting population" << Print::endl;
     // A first eval of pop.
     for ( i_island = i_island_begin; i_island != i_island_end; ++i_island )
@@ -998,10 +1003,10 @@ endstorage:
       i_island = i_island_begin;
       for (; i_island != i_island_end; ++i_island )
       {
+        topology.syncpop( *i_island );
         types::t_unsigned pSize = i_island->size();
         offspring.clear(); // new offspring
         
-        topology.syncpop( *i_island );
         __DODEBUGCODE( Print::out << "Scaling prior to breeding" << Print::endl; )
         if( scaling ) (*scaling)( *i_island );
 

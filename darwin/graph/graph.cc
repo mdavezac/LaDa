@@ -7,6 +7,10 @@
 
 #include "graph.h"
 
+#ifdef _MPI
+#include <boost/mpi/collectives.hpp>
+#endif
+
 namespace GA
 {
   namespace mpi 

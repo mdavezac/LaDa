@@ -94,7 +94,7 @@ namespace GroundState
       //! \brief Evaluates the functional and stores result in the current
       //!        individual's quantity
       void evaluate()
-        { current_individual->quantities() = ce.evaluate(); }
+        { Print :: out << "GroundStates::evaluate " << Print::endl; current_individual->quantities() = ce.evaluate(); }
       //! Computes the gradient of the the functional
       void evaluate_gradient( t_QuantityGradients& _grad )
         { ce.evaluate_gradient( _grad ); }

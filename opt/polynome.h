@@ -23,6 +23,7 @@
 
 #include <mpi/mpi_object.h>
 #ifdef _MPI
+#include <print/stdout.h>
 #include <boost/lambda/lambda.hpp>
 #include <boost/mpi/collectives.hpp>
 #include <functional>
@@ -255,6 +256,7 @@ namespace function {
         typename t_Monomes :: const_iterator i_monome_end __SERIALCODE( = monomes.end() ); 
         typename t_Container :: const_iterator i_real = variables->begin();
         __MPICODE(
+          Print :: out << "Evaluating pool size: " << comm->size() << Print::endl;
           types :: t_unsigned nperproc = monomes.size() / comm->size(); 
           types :: t_unsigned remainder = monomes.size() % comm->size();
           i_monome +=  comm->rank() * nperproc + std::min( (types::t_int) remainder,

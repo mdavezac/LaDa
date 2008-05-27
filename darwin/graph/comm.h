@@ -20,8 +20,6 @@
 
 #include "topology.h"
 
-#include <boost/preprocessor/inc.hpp>
-
 namespace GA
 {
 
@@ -189,6 +187,8 @@ namespace GA
             typedef typename t_VA_Traits :: t_QuantityGradients   t_QuantityGradients;
             //! Type of the lamarckian variables, as declared in the base class
             typedef typename t_VA_Traits :: t_Type                t_VA_Type;
+            //! List of actives processes.
+            typedef std::list< types::t_unsigned >                t_Actives;
 
           public:
             //! Codenames for requests from bull to farmer.
@@ -215,6 +215,8 @@ namespace GA
             History<t_Individual>*             history;
             //! Pointer to the communicator with bulls.
             boost::mpi::communicator *comm;
+            //! A list of active bulls.
+            t_Actives actives;
         
           protected:
             //! Constructor and Initializer
@@ -230,12 +232,14 @@ namespace GA
             //!          the member functions of the derivatives of this class.
             void test_bulls();
             //! Wait for bulls to finish.
-            void wait_bulls();
+            void wait_bulls()
+              { while( not actives.empty() ) { test_bulls(); } }
         
             //! Starts all persistent requests from bulls ( Farmer::requests )
-            void start_all() { MPI::Prequest::Startall( nbulls, requests ); } 
+            void start_all();
             //! Sends a command to \a _bull.
-            void send_command( types::t_unsigned _bull, const t_Commands :: Commands _c );
+            void send_command( types::t_unsigned _bull,
+                               const t_Commands :: Commands _c );
             //! Activates request for \a _bull.
             void activate( types::t_unsigned _bull);
             
@@ -402,7 +406,7 @@ namespace GA
 
           public:
             //! Sets the pointer to the evaluator
-            void set( t_Evaluator *_eval ) { evaluator = _eval; }
+            void set( t_Evaluator &_eval ) { evaluator = &_eval; }
         };
 
         //! \brief Your average cow class.
@@ -421,6 +425,8 @@ namespace GA
             using Comm::Cow<T_GATRAITS, LaNormande< T_GATRAITS, T_BASE> > :: set;
     
           protected:
+            //! Type of the evaluator
+            typedef typename t_GATraits :: t_Evaluator t_Evaluator;
             //! all individual traits
             typedef typename t_GATraits::t_IndivTraits t_IndivTraits;
             //! type of an individual
@@ -437,14 +443,25 @@ namespace GA
             LaNormande   ( Topology *_topo )
                        : t_CommBase( _topo ), t_Base() {}
     
-            //! Creates \a _offspring population from \a _parent
+            //! Waits for commands from bull.
             void operator()(t_Population& _parents, t_Population& _offspring)
+              { while( t_CommBase :: obey() != t_CommBase::t_Commands::DONE ); }
+            //! Waits for commands from bull.
+            void operator()(const t_Population& _parents, t_Population& _offspring)
               { while( t_CommBase :: obey() != t_CommBase::t_Commands::DONE ); }
        
             //! The class name. EO required
             virtual std::string className() const
               { return "GA::mpi::Graph::Comm::LaNormande"; }
+            //! Sets the pointer to the evaluator
+            void set( t_Evaluator &_eval )
+              { t_CommBase :: evaluator = &_eval; }
+
+
+          protected:
+            using t_Base :: set;
         };
+
       } // namespace Comm
     } // namespace Graph
 

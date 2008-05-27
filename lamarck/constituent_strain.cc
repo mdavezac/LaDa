@@ -12,8 +12,8 @@
 #include<limits.h>
 
 
-#ifdef _MPI
 #include <boost/lambda/lambda.hpp>
+#ifdef _MPI
 #include <boost/mpi/collectives.hpp>
 #endif
 

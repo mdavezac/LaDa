@@ -68,7 +68,11 @@ namespace GA
             typedef typename t_GATraits :: t_VA_Traits          t_VA_Traits;
             //! Type of the lamarckian gradients, as declared in the base class
             typedef typename t_VA_Traits :: t_QuantityGradients t_QuantityGradients;
-    
+            //! Type of the true evaluator
+            typedef typename t_GATraits :: t_Evaluator          t_TrueEvaluator;
+
+          protected:
+            t_TrueEvaluator *trueEvaluator;
     
           public:
             //! Constructor.
@@ -89,8 +93,17 @@ namespace GA
             //! The class name. EO required
             virtual std::string className() const
               { return "GA::mpi::Graph::Evaluation::Bull"; }
-
-            using t_Base::evaluate;
+            void set( t_TrueEvaluator *_eval )
+            {
+              if( not _eval ) Print :: out << "Evaluator pointer is null" << Print::endl;
+              trueEvaluator = _eval; 
+            }
+            void init( t_Individual &_indiv )
+            {
+              __ASSERT( not trueEvaluator, "True Evaluator pointer not set" )
+              t_Base::init( _indiv );
+              trueEvaluator->init( _indiv );
+            } 
         };
     
       } // namespace Evaluation

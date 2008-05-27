@@ -13,8 +13,9 @@ namespace GA
             BullObjective<T_GA_TRAITS> :: operator()( const t_Quantity& _q ) 
             {
               t_CommBase :: request( t_CommBase :: t_Requests :: OBJECTIVE );
-              t_CommBase::comm->send( 0, ONHISTORY_TAG1( TAG ), _q );
-              t_CommBase::comm->recv( 0, ONHISTORY_TAG2( TAG ), t_Base::fitness );
+              t_CommBase::comm->send( 0, ONOBJECTIVE_TAG1( TAG ), 
+                                      *t_Base::current_indiv );
+              t_CommBase::comm->recv( 0, ONOBJECTIVE_TAG2( TAG ), t_Base::fitness );
               return t_Base::fitness;
             };
 
@@ -25,9 +26,11 @@ namespace GA
                                          t_QuantityGradients &_grad,
                                          t_VA_Type *_i_grad)
             {
-              t_CommBase::comm->send( 0, ONWITHGRADIENT_TAG1( TAG ), _q );
+              t_CommBase::comm->send( 0, ONWITHGRADIENT_TAG1( TAG ), 
+                                      *t_Base::current_indiv );
               t_CommBase::comm->send( 0, ONWITHGRADIENT_TAG2( TAG ), _grad );
-              t_CommBase::comm->recv( 0, ONWITHGRADIENT_TAG3( TAG ), _i_grad, _grad.size() );
+              t_CommBase::comm->recv( 0, ONWITHGRADIENT_TAG3( TAG ),
+                                      _i_grad, _grad.size() );
               types::t_real result;
               t_CommBase::comm->recv( 0, ONWITHGRADIENT_TAG4( TAG ), result );
               return result;
@@ -39,7 +42,8 @@ namespace GA
                                   t_QuantityGradients &_grad,
                                   t_VA_Type *_i_grad)
           {
-            t_CommBase::comm->send( 0, ONGRADIENT_TAG1( TAG ), _q );
+            t_CommBase::comm->send( 0, ONGRADIENT_TAG1( TAG ), 
+                                    *t_Base::current_indiv );
             t_CommBase::comm->send( 0, ONGRADIENT_TAG2( TAG ), _grad );
             t_CommBase::comm->recv( 0, ONGRADIENT_TAG3( TAG ), _i_grad, _grad.size() );
           };
@@ -51,7 +55,8 @@ namespace GA
                                         t_QuantityGradients &_grad,
                                         types::t_unsigned _n)
             {
-              t_CommBase::comm->send( 0, ONONEGRADIENT_TAG1( TAG ), _q );
+              t_CommBase::comm->send( 0, ONONEGRADIENT_TAG1( TAG ), 
+                                      *t_Base::current_indiv );
               t_CommBase::comm->send( 0, ONONEGRADIENT_TAG2( TAG ), _grad );
               t_CommBase::comm->send( 0, ONONEGRADIENT_TAG3( TAG ), _n );
               t_VA_Type result;

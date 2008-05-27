@@ -23,6 +23,11 @@
 
 #include <mpi/mpi_object.h>
 
+#include <boost/serialization/serialization.hpp>
+#include <boost/lambda/lambda.hpp>
+#include <boost/lambda/bind.hpp>
+#include <print/stdout.h>
+
 //! trash-can namespace for anything that doesn't quite go anywhere
 namespace opt
 {
@@ -222,6 +227,10 @@ namespace ConvexHull
     template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
       { _ar & x; _ar & y; _ar & object; }
   };
+  //! Prints out vertex using usual << operator.
+  template< class T_OBJECT >
+  std::ostream& operator<<( std::ostream &_os, const Vertex<T_OBJECT> &_v )
+    { _v.print_out( _os ); return _os; }
 
   //! \brief Defines a halfline in the \f$(x,y)\f$ plane
   //! \details The half line is defined using three values,
@@ -351,10 +360,11 @@ namespace ConvexHull
       std::string print() const
       { 
         std::ostringstream sstr;
-        typename t_Vertices :: const_iterator i_vert = vertices.begin();
-        typename t_Vertices :: const_iterator i_end = vertices.end();
-        for(; i_vert != i_end; ++i_vert )
-          i_vert->print_out(sstr);
+        std::for_each( vertices.begin(), vertices.end(),
+                       boost::lambda::var(sstr) 
+                         << boost::lambda::bind( &Vertex<T_OBJECT>::object, boost::lambda::_1 )
+                         << boost::lambda::constant( " " )
+                         << boost::lambda::_1  );
         sstr << "&";
         return sstr.str();
       }
@@ -368,6 +378,12 @@ namespace ConvexHull
       //! function should be called over and over again until it returns true.
       bool weed_out(); // removes unconvex points one by one
   };
+  //! Prints out convex-hull using usual << operator.
+  template< class T_OBJECT >
+  std::ostream& operator<<( std::ostream &_os, const Base<T_OBJECT> &_b )
+  {
+    return _os << _b.print();
+  }
       
   template<class T_OBJECT> template<class ARCHIVE>
     void Base<T_OBJECT> :: save(ARCHIVE & _ar, const unsigned int _version) const
@@ -387,6 +403,8 @@ namespace ConvexHull
      if ( vertices.empty() )
      {
        vertices.push_back(vertex);
+       Print :: out << "Storing first vertex " << vertex 
+                    << *this << Print::endl;
        return true;
      }
 
@@ -406,6 +424,8 @@ namespace ConvexHull
        }
        else if ( i_begin->x > vertex.x ) vertices.push_front( vertex );
        else vertices.push_back( vertex );
+       Print :: out << "Storing second vertex " << vertex 
+                    << *this << Print::endl;
        build_function();
        return true;
      }
@@ -429,6 +449,8 @@ namespace ConvexHull
      else // otherwise, inserts new vertex
        vertices.insert(i_insert, vertex );
      
+       Print :: out << "Storing other vertex " << vertex
+                    << *this << Print::endl;
      // makes convex-hull convex
      while ( not ( _do_check and weed_out() ) );
      

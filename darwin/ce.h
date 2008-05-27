@@ -78,7 +78,14 @@ namespace CE
         { functional.set_variables( &_indiv.Object().Container() ); }
 
       //! Returns the evaluation of the CE functional
-      types::t_real evaluate() { return functional.evaluate(); }
+      types::t_real evaluate()
+      { 
+        Print :: out << "CE::Darwin::evaluate" << Print::endl;
+        Print :: out << "CE::Darwin::evaluate" 
+                     << functional.get_variables()->size() 
+                     << Print::endl;
+        return functional.evaluate(); 
+      }
       //! \brief Computes the gradient of the CE functional
       //! \param _grad is a container holding the gradient. It should accept a
       //!              begin() member routine for which std::copy() can be called.

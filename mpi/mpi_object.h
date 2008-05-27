@@ -11,7 +11,7 @@
 #include "macros.h"
 
 #ifdef _MPI
-#include <boost/mpi.hpp>
+#include <boost/mpi/communicator.hpp>
 
 // #ifdef _MPICH_MPI_
 // #include <mpi2c++/mpi++.h>

@@ -38,7 +38,8 @@ namespace GA
   }
   // expects kspace value to exist!!
   template<class T_INDIVIDUAL>
-  bool Krossover<T_INDIVIDUAL> :: operator()( t_Individual &_indiv, const t_Individual &_parent )
+  bool Krossover<T_INDIVIDUAL> :: operator()( t_Individual &_indiv,
+                                              const t_Individual &_parent )
   {
     t_Object &offspring  = _indiv.Object();
     const t_Object &parent  = _parent.Object();
@@ -74,9 +75,13 @@ namespace GA
   template<class T_INDIVIDUAL>
   void Krossover<T_INDIVIDUAL> :: apply(eoPopulator<t_Individual>& _pop)
   {
+    Print :: out << "Krossover::apply 0 " << Print::endl;
     t_Individual &offspring = *_pop;
+    Print :: out << "Krossover::apply 1 " << Print::endl;
     const t_Individual &parent = _pop.select();
+    Print :: out << "Krossover::apply 2 " << Print::endl;
     if ( operator()( offspring, parent ) ) (*_pop).invalidate(); 
+    Print :: out << "Krossover::apply 3 " << Print::endl;
   }
 
   template<class T_INDIVIDUAL>

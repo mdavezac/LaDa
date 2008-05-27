@@ -9,6 +9,10 @@
 #include "base.h"
 #include "manip.h"
 
+#ifdef _MPI
+#include <boost/mpi/collectives.hpp>
+#endif
+
 namespace Print
 {
   void Base :: do_checks()

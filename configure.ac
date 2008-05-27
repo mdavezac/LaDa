@@ -7,7 +7,7 @@ AC_PROG_CXX
 
 AC_PROG_EGREP
 dompidefault=false
-if [[[ $(echo $CXX | $EGREP "mpic(xx|\+\+)" - ) == $CXX ]]]; then 
+if [[[ $(echo $CXX | $EGREP "mpi(cxx|c\+\+|CC)" - ) == $CXX ]]]; then 
  dompidefault=true
  mpicompilers=true
 fi

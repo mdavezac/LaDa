@@ -28,7 +28,9 @@ namespace GA
               t_CommBase :: start_all();
               while( notdone() ) t_CommBase::test_bulls();
               Print :: out << "Waiting on all bulls" << Print::endl;
-              t_CommBase :: wait_bulls();
+              t_CommBase::comm->barrier();
+              Print :: out << "passed barrier" << Print::endl;
+//             t_CommBase :: wait_bulls();
 
               // Ok, now recomputes everything through base class. 
               // if invalid, recomputes whole population
@@ -49,7 +51,9 @@ namespace GA
         template<class T_GATRAITS, template< class > class T_BASE >
           void Farmer<T_GATRAITS, T_BASE> :: onWait( types::t_unsigned _bull )
           {
+              Print::out << "calling next " << _bull << "." << Print::endl;
             t_Individual *indiv = next( _bull );
+              Print::out << "after next " << _bull << "." << Print::endl;
             if( not indiv )
             {
               Print::out << "Sending done to bull " << _bull << "." << Print::endl;
@@ -73,13 +77,29 @@ namespace GA
                  = std::find_if( unknowns.begin(), unknowns.end(), 
                                    blamb::bind( &t_Unknown::second, blamb::_1 )
                                 == blamb::constant( _bull ) );
-              if ( i_unknown != unknowns.end() ) unknowns.erase( i_unknown );
-  
+              if ( i_unknown != unknowns.end() )
+              {
+                t_CommBase::comm->recv( _bull, ONWAIT_TAG( TAG+1 ), 
+                                        i_unknown->first->quantities() );
+                Print :: out << "received quantities: " 
+                             << *(i_unknown->first) 
+                             << " " << i_unknown->first->quantities() 
+                             << " from " << _bull << Print::endl;
+                __TRYDEBUGCODE(
+                    t_Base::objective->init( *i_unknown->first );
+                    i_unknown->first->set_fitness(
+                      (*t_Base::objective)( i_unknown->first->const_quantities() ) );,
+                    "Error while evaluating fitness.\n" )
+                Print :: out << "set fitness." << Print::endl;
+                unknowns.erase( i_unknown );
+              }
   
               i_unknown = std::find_if( unknowns.begin(), unknowns.end(), 
                                            blamb::bind( &t_Unknown::second, blamb::_1 )
                                         == blamb::constant(-1) );
               if( i_unknown == unknowns.end() ) return NULL;
+              Print :: out << "Assigning " << *i_unknown->first
+                           << " to " << _bull << Print::endl;
               i_unknown->second = _bull;
               return i_unknown->first;
             }
@@ -93,15 +113,16 @@ namespace GA
             t_CommBase :: request( t_CommBase::t_Requests::WAITING );
             while ( t_CommBase::obey() != t_CommBase :: t_Commands :: DONE )
             {
-              Print :: out << "received go" << Print::endl;
               t_Individual individual;
-              Print :: out << "received individual" << Print::endl;
               t_CommBase::comm->recv( 0, ONWAIT_TAG( TAG ), individual );
               metaeval.init( individual );
               metaeval.evaluate();
-              Print :: out << "sending request" << Print::endl;
+              t_CommBase::comm->send( 0, ONWAIT_TAG( TAG+1 ),
+                                      individual.quantities() ); 
               t_CommBase :: request( t_CommBase::t_Requests::WAITING );
             }
+            t_CommBase::command( t_CommBase::t_CowCommands::DONE );
+            t_CommBase::comm->barrier();
           }
 
       } // namespace Evaluation

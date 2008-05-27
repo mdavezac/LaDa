@@ -12,9 +12,9 @@
 #define __MPICODE(code) 
 #define __MPICONSTRUCTORCODE(code) 
 #define __TRYMPICODE(code, error) 
-#define __MPIROOT(code) 
+#define __MPIROOT(comm, code) 
 #define __ROOTCODE(comm, code) code
-#define __NOTMPIROOT(code) 
+#define __NOTMPIROOT(comm, code) 
 #define __SERIALCODE(code) code
 #define __MPISEQUENTIAL(code) 
 #define __DOMPISEQUENTIAL(code) code

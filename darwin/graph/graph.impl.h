@@ -2,13 +2,16 @@
 //  Version: $Id$
 //
 
+#include <boost/mpi/graph_communicator.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 
 #ifdef _DEBUG
 #include <boost/lambda/lambda.hpp>
+#include <boost/graph/graphviz.hpp>
 #include <algorithm>
 #endif
+
 
 namespace GA
 {
@@ -40,30 +43,63 @@ namespace GA
           // first add farmer-bull edges
           for( types::t_int i = pools; i > 0; --i )
             edges.push_back( t_Edge( 0, i ) );
-          // Then add for each bull, add the cow edges.
-          for( types::t_int j= comm.size(); j > pools; )
+          // Then add for each bull the first cow it can be connected to.
+          if( comm.size() - 1 > pools ) 
+          {
+            types::t_int j = comm.size() - 1; 
             for( types::t_int i = pools; i > 0 and j > pools; --i, --j )
               edges.push_back( t_Edge(i, j) );
+          }
+          // then adds cows connected to cows.
+          if( comm.size() - 1 > 2*pools ) 
+          {
+            for( types::t_int j = comm.size() - 1 - pools; j > pools; )
+              for( types::t_int i = pools; i > 0 and j > pools; --i, --j )
+                edges.push_back( t_Edge( j+pools, j) );
+          }
           
           // Now creates graph.
           typedef boost::adjacency_list< boost::vecS, 
                                          boost::vecS, 
                                          boost::bidirectionalS > t_Graph;
           t_Graph g( edges.begin(), edges.end(), comm.size() );
+          __DODEBUGCODE(
+            std::ostringstream sstr;
+            boost::write_graphviz( sstr, g );
+            Print :: out << "Graph Topology\n" << sstr.str() << "\n\n";
+            __ROOTCODE( comm,
+              std::ofstream file;
+              file.open( "../topo.dot", std::ios_base::trunc );
+              file << sstr.str() << std::endl;
+              file.close();
+            )
+          )
           
           // Creates a graph_communicator
           if( graph_comm ) delete graph_comm;
-          __TRYCODE( 
-            graph_comm = new boost::mpi::graph_communicator( comm, g, true );,
-            "Could not create graph communicator.\n" 
-          )
+          try 
+          {
+            graph_comm = new boost::mpi::graph_communicator( comm, g, true );
+          }
+          catch( boost::mpi::exception& _e )
+          {
+            if( comm.rank() == 0 )
+              std::cerr << __SPOT_ERROR
+                        << "Could not create graph communicator.\n" 
+                        << _e.what() << "\n";
+            Print :: out << "Could not create mpi graph topology.\n" 
+                         << "Will proceed with single-pool topology.\n";
+            if ( graph_comm ) delete graph_comm;
+            graph_comm = NULL;
+            return false;
+          }
           __DOASSERT( not graph_comm, "Could not create graph communicator.\n")
           
-          // Finally, prints graph
-          Print::out << "Graph Connection:\n";
-          print_edges( boost::mpi::edges(*graph_comm).first, 
-                       boost::mpi::edges(*graph_comm).second );
-          Print::out << Print::endl;
+//         // Finally, prints graph
+//         Print::out << "Graph Connection:\n";
+//         print_edges( boost::mpi::edges(*graph_comm).first, 
+//                      boost::mpi::edges(*graph_comm).second );
+//         Print::out << Print::endl;
           
           
           // Now creates groups
@@ -82,13 +118,29 @@ namespace GA
             color = comm.rank();
             type = t_Type::BULL;
           }
-          for( types::t_int j= comm.size(); j > pools; )
+          // Then add for each bull the first cow it can be connected to.
+          if( comm.size() - 1 > pools ) 
+          {
+            types::t_int j = comm.size() - 1; 
             for( types::t_int i = pools; i > 0 and j > pools; --i, --j )
               if( comm.rank() == j )
               {
                 color = i;
                 type = t_Type::COW;
               }
+          }
+          // then adds cows connected to cows.
+          if( comm.size() - 1 > 2*pools ) 
+          {
+            for( types::t_int j = comm.size() - 1 - pools; j > pools; )
+              for( types::t_int i = pools; i > 0 and j > pools; --i, --j )
+                if( comm.rank() == j )
+                {
+                  color = i;
+                  type = t_Type::COW;
+                }
+          }
+          Print :: out << "color: " << color << Print::endl;
           pool_comm = comm.split( color );
         }
         catch( std::exception &_e )

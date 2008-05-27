@@ -23,11 +23,7 @@
     <GA popsize=20 rate=0.2 >
         <Objective type="convexhull" />
         <Breeding>
-          <TabooOp>
-           <Operators type="and">
              <Krossover />
-           </Operators>
-          </TabooOp>
         </Breeding>
         <Taboos>
             <Population />

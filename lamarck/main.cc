@@ -30,6 +30,10 @@
 #define ENDLINE "\n"
 #endif
 
+#ifdef _MPI
+#include <boost/mpi/environment.hpp>
+#endif
+
 int main(int argc, char *argv[]) 
 {
   try
@@ -204,8 +208,8 @@ int main(int argc, char *argv[])
     sstr << "Caught error while running " << __PROGNAME__ 
          << "\n" << e.what() << "\n";
 
+    std::string message = sstr.str();
     __MPICODE( 
-      std::string message;
       boost::mpi::reduce( *::mpi::main, sstr.str(), message, std::plus<std::string>(), 0 );
     )
     __NOTMPIROOT( (*::mpi::main), return 0; )

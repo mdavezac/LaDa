@@ -38,6 +38,10 @@
 #include "individual.h"
 #include "darwin.h"
 
+#ifdef _MPI
+#include <boost/mpi/environment.hpp>
+#endif
+
 int main(int argc, char *argv[]) 
 {
   try
@@ -165,12 +169,12 @@ int main(int argc, char *argv[])
            << "\n" << e.what() << "\n";
     
       std::string message = sstr.str();
+      Print::out << message << Print::endl;
       __MPICODE( 
         message = boost::mpi::all_reduce( world, message, std::plus<std::string>() );
       )
       __ROOTCODE( world, std::cerr << message << std::endl; )
-      __NOTMPIROOT( world, return 0; )
-      throw;
+      return 0;
     }
   }
   catch ( std::exception &e ) {}

@@ -26,14 +26,14 @@ namespace GA
             t_CommBase::test_bulls();
           t_CommBase::wait_bulls();
         
-          _offspring.resize(target);   // you might have generated a few more
+          _offspring.resize(target);   // you might have generated a too many
         }
         template<class T_GATRAITS>
         inline void Farmer<T_GATRAITS> :: onWait( types::t_int _bull )
         {
           types::t_int buff;
           t_Individual indiv;
-          t_CommBase :: comm->send( _bull, ONWAIT_TAG( TAG ), indiv );
+          t_CommBase :: comm->recv( _bull, ONWAIT_TAG( TAG ), indiv );
           offspring->push_back( indiv );
           t_CommBase::send_command( _bull, offspring->size() >= target ?
                                              t_CommBase::t_Commands::DONE: 
@@ -45,9 +45,13 @@ namespace GA
         inline void Bull<T_GATRAITS> :: operator()(const t_Population& _parents,
                                                    t_Population& _offspring)
         {
+          __ASSERT( not t_Base::select, "Selection pointer is not assigned." )
+          __ASSERT( not t_Base::age, "Age pointer is not assigned." )
+          __ASSERT( not t_Base::op, "Op pointer is not assigned." )
           eoSelectivePopulator<t_Individual> it(_parents, _offspring, *t_Base::select);
           do
           {
+            if( not t_Base :: op ) Print :: out << "operator not set" << Print ::endl;
             (*t_Base::op)(it);
             (*it).set_age( (*t_Base::age)() );
             t_CommBase :: request( t_CommBase::t_Requests::WAITING );

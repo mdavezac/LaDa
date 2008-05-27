@@ -44,7 +44,7 @@ namespace GA
 
         //! An evaluation class which does nothing.
         template<class T_BASE>
-        class Farmhand
+        class Farmhand : public T_BASE
         {
           public:
             //! Base class type
@@ -64,6 +64,7 @@ namespace GA
     
             //! Creates \a _offspring population from \a _parent
             void operator()(const t_Population& _parents, t_Population& _offspring) {};
+            using t_Base :: set;
         };
     
         //! \brief A breeder class to rule them all.
@@ -143,6 +144,8 @@ namespace GA
             //!          evaluated by the herd.
             virtual t_FitnessQuantity evaluate( t_Individual &_indiv );
 
+            using t_Base :: set;
+
           protected:
             //! Response to WAITING request
             void onWait( types::t_unsigned _bull );
@@ -187,6 +190,7 @@ namespace GA
             typedef typename t_BaseTraits :: t_Evaluator t_BullEvaluator;
     
           protected:
+            //! Proxy which catches calls to evaluations.
             t_BullEvaluator metaeval;
             using t_CommBase :: TAG;
 
@@ -203,7 +207,18 @@ namespace GA
             virtual std::string className() const
               { return "GA::mpi::Graph::Evaluation::Bull"; }
             //! Does nothing.
-            void set( t_Evaluator *_e ) { metaeval = *_e; }
+            void set( t_Evaluator &_e )
+            { 
+              Print :: out << "Am here" << Print::endl;
+              metaeval.set( &_e ); 
+            }
+            void set( t_BullEvaluator &_e )
+            { 
+              Print :: out << "caught here" << Print::endl;
+              Print :: out << typeid( metaeval ).name() << Print::endl;
+              Print :: out << typeid( _e ).name() << Print::endl;
+            }
+            using t_Base :: set;
         };
 
         

@@ -2,6 +2,10 @@
 //  Version: $Id$
 //
 
+#ifdef _MPI
+#include <boost/mpi/collectives.hpp>
+#endif
+
 namespace GA
 {
   
