@@ -89,7 +89,7 @@ namespace Pescan
 //   other_kpoints( amplitude * Hxz, eig_Hxz);
 //   other_kpoints( amplitude * Hmxz, eig_Hmxz);
 
-#ifdef _DEBUG
+#ifdef _LADADEBUG
     std::cout << " ****** Gamma " << eig_Gamma   << std::endl;
     std::cout << " ****** Lx "    << std::setw(12) << eig_Lx[0]   << " "
               << std::setw(12) << eig_Lx[1]   << std::endl;

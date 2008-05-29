@@ -21,7 +21,7 @@
 #include <revision.h>
 #define __PROGNAME__ "lamarck"
 
-#ifdef _DEBUG
+#ifdef _LADADEBUG
 #include <print/stdout.h>
 #define OUTPUT Print::out
 #define ENDLINE Print::endl

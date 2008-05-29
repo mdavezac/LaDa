@@ -1,7 +1,8 @@
-AC_INIT([LaDa],[3.2])
+AC_INIT([LaDa],[3.25])
 AM_INIT_AUTOMAKE()
 # fi
 
+AX_PYTHON
 AC_PROG_CC
 AC_PROG_CXX
 
@@ -10,6 +11,10 @@ dompidefault=false
 if [[[ $(echo $CXX | $EGREP "mpi(cxx|c\+\+|CC)" - ) == $CXX ]]]; then 
  dompidefault=true
  mpicompilers=true
+fi
+
+if [[ -e ".env" ]]; then
+  . ".env"
 fi
 
 AC_PROG_INSTALL
@@ -150,13 +155,13 @@ AC_ARG_ENABLE(iaga-dir,
 AC_ARG_ENABLE(iaga-ld,
               [  --enable-iaga-ld=?  specifies the base iaga ld flags ],
               [ iaga_ld=${enableval} ] )
-
-AC_ARG_ENABLE(boost-ld,
-              [  --enable-boost-ld=?  specifies the base boost ld flags ],
-              [ boost_ld=${enableval} ] )
-AC_ARG_ENABLE(boost-cxx,
-              [  --enable-boost-cxx=?  specifies the boost cxx flags ],
-              [ boost_cxx=${enableval} ] )
+#
+# AC_ARG_ENABLE(boost-ld,
+#               [  --enable-boost-ld=?  specifies the base boost ld flags ],
+#               [ boost_ld=${enableval} ] )
+# AC_ARG_ENABLE(boost-cxx,
+#               [  --enable-boost-cxx=?  specifies the boost cxx flags ],
+#               [ boost_cxx=${enableval} ] )
 
 
 if test x$bandgapopt = xtrue ; then 
@@ -288,14 +293,14 @@ AC_CHECK_HEADERS([sys/time.h],[],[{(exit 1); exit 1; }] )
 AC_HEADER_STDBOOL
 AC_HEADER_TIME
 
-AH_TEMPLATE([_DEBUG])
+AH_TEMPLATE([_LADADEBUG])
 if test x$debug = xtrue; then
   CXXFLAGS=`echo $CXXFLAGS | sed "s/-O2//"`
   CFLAGS=`echo $CFLAGS | sed "s/-O2//"`
   AC_DEFINE([_PRINT_ALL_PROCS],[],[])
 # AX_CHECK_COMPILER_FLAGS([-fbounds-check], 
 #                         [CPP_DEBUG_FLAGS+=" -fbounds-check"],)
-  AC_DEFINE([_DEBUG],[1],[])
+  AC_DEFINE([_LADADEBUG],[1],[])
 else
   CXXFLAGS=`echo $CXXFLAGS | sed "s/-g//"`
   CFLAGS=`echo $CFLAGS | sed "s/-g//"`
@@ -411,17 +416,23 @@ fi
 AC_SUBST(DOCDIR)
 
 # boost stuff
-if test "x$boost_ld" = "x" ; then
-  BOOST_LDFLAGS="-L/usr/lib -lboost_signals -lboost_program_options"
-else
-  BOOST_LDFLAGS="$boost_ld"
-fi
-if test "x$boost_cxx" = "x" ; then
-  BOOST_CXXFLAGS="-I /usr/include"
-else
-  BOOST_CXXFLAGS="$boost_cxx"
+# if test "x$boost_ld" = "x" ; then
+#   BOOST_LDFLAGS="-L/usr/lib -lboost_signals -lboost_program_options"
+# else
+#   BOOST_LDFLAGS="$boost_ld"
+# fi
+# if test "x$boost_cxx" = "x" ; then
+#   BOOST_CXXFLAGS="-I /usr/include"
+# else
+#   BOOST_CXXFLAGS="$boost_cxx"
+# fi
+if test $mpi != true; then
+  BOOST_MPI=""
 fi
 AC_SUBST(BOOST_LDFLAGS)
+AC_SUBST(BOOST_MPI)
+AC_SUBST(BOOST_PROGOP)
+AC_SUBST(BOOST_PYTHON)
 AC_SUBST(BOOST_CXXFLAGS)
 
 AC_OUTPUT(Makefile atat/Makefile physics/Makefile opt/Makefile lamarck/Makefile

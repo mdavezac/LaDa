@@ -1,0 +1,17 @@
+
+lib ce : cluster.cc constituent_strain.cc functional_builder.cc harmonic.cc  polynome.cc 
+         ../print//print.lib 
+         ../atat//atat.lib 
+         ../mpi//mpi.lib
+         ..//tinyxml ;
+
+lib crystal :  lattice.cc structure.cc
+               ../print//print.lib 
+               ../atat//atat.lib 
+               ../mpi//mpi.lib 
+               ..//tinyxml 
+             : <include>..//tinyxml ;
+
+alias lamarck.lib : ce crystal ; 
+
+exe lamarck : main.cc lamarck.lib ..//revision.h ;

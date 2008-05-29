@@ -216,7 +216,7 @@ namespace VA_CE
                  if ( atat::equivalent_mod_cell(*i_cpos + shift, str.atoms[index].pos,inv_cell) ) 
                    break;
                
-               #ifdef _DEBUG_LADA_
+               #ifdef _LADADEBUG
                  if ( index == str.atoms.size() )
                  {
                    std::cerr << "Could not find equivalent atom"

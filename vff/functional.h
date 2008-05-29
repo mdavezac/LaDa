@@ -322,7 +322,7 @@ namespace Vff
       //! \param _v vector to translate
       void translate( atat::rVector3d &_v )
         { if( *i_do_translate ) _v += parent->structure->cell * ( *i_translation ); }
-#ifdef _DEBUG
+#ifdef _LADADEBUG
       void check() const
       {
         __ASSERT(not parent,
@@ -738,7 +738,7 @@ namespace Vff
       void pack_gradients(const atat::rMatrix3d& _stress,
                           t_grad_iterator const &_grad) const;
 
-#ifdef _DEBUG
+#ifdef _LADADEBUG
       //! Checks that the list of centers are valid. somewhat.
       void check_tree() const;
 #endif

@@ -5,7 +5,7 @@ AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
 AM_LDFLAGS = @TINYXML_LIBS@
 lamarck_SOURCES = main.cc 
 lamarck_CPPFLAGS =  $(AM_CPPFLAGS) -I .. 
-lamarck_LDFLAGS =  $(AM_LDFLAGS)  @MPI_LIBS@ @BOOST_LDFLAGS@
+lamarck_LDFLAGS =  $(AM_LDFLAGS)  @MPI_LIBS@ @BOOST_LDFLAGS@ @BOOST_MPI@ @BOOST_PROGOP@
 lamarck_LDADD = liblamarck.la \
 		../atat/libatat.la \
 		../physics/libphysics.la \

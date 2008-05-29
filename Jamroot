@@ -1,0 +1,10 @@
+include env.jam ;
+
+project LaDa : requirements <include>. <include>$(boostinclude)
+                            <define>PACKAGE_STRING='\"LaDa\ 3.25\"' ; 
+
+obj revision.h   ;
+actions findrev
+{
+    "./scripts/max_revision.pl"
+}

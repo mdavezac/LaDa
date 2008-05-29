@@ -1,0 +1,1 @@
+lib print.lib : manip.cc xmg.cc stdout.cc base.cc ;

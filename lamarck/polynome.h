@@ -75,10 +75,10 @@ namespace VA_CE {
       //! Load a polynomial from an XML node.
       bool Load( TiXmlElement* const node );
 
-      #ifdef _DEBUG_LADA_ 
+      #ifdef _LADADEBUG
         //! Doesn't do anything...
         bool is_consistent() const;
-      #endif // _DEBUG_LADA_ 
+      #endif // _LADADEBUG
   };
 
   

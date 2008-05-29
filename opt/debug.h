@@ -32,7 +32,7 @@
 #define __TRYASSERT(condition, error) \
           __TRYCODE( __DOASSERT( condition, "" ), error )
 
-#ifdef _DEBUG
+#ifdef _LADADEBUG
 #define __DODEBUGCODE(code) code
 #define __TRYDEBUGCODE(code, error) __TRYCODE(code, error)
 #define __DOTRYDEBUGCODE(code, error) __TRYCODE(code, error)

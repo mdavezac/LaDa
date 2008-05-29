@@ -283,7 +283,7 @@ namespace Minimizer {
     gsl_vector *x;
     int status;
 
-#ifdef _DEBUG
+#ifdef _LADADEBUG
     try
     {
 #endif
@@ -351,7 +351,7 @@ namespace Minimizer {
       gsl_multimin_fdfminimizer_free (s);
       gsl_vector_free (x);
 
-#ifdef _DEBUG
+#ifdef _LADADEBUG
     }
     catch( std::exception &_e )
     {

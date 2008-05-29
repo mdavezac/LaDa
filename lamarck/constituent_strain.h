@@ -112,10 +112,10 @@ namespace Ising_CE
       const std::vector<atat::rVector3d>& get_kvectors() const
           { return k_vecs; }
 
-      #ifdef _DEBUG_LADA_
+      #ifdef _LADADEBUG
         //! Debug stuff.
         void check_derivative();
-      #endif // _DEBUG_LADA_
+      #endif // _LADADEBUG
 
 #ifdef _MPI
         /** \ingroup Genetic

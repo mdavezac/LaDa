@@ -124,7 +124,7 @@ namespace Vff
         }
     }
 
-#ifdef _DEBUG
+#ifdef _LADADEBUG
     check_tree();
 #endif
     return true;
@@ -160,7 +160,7 @@ namespace Vff
         return false;
       } 
 
-#ifdef _DEBUG
+#ifdef _LADADEBUG
     check_tree();
 #endif
     return true;
@@ -1016,7 +1016,7 @@ failure:
       i_func->print_out(stream);
   }
 
-#ifdef _DEBUG
+#ifdef _LADADEBUG
   void Functional :: check_tree() const
   {
     t_Centers :: const_iterator i_center = centers.begin();

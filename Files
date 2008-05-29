@@ -5,6 +5,8 @@ ATAT_CC = findsym.cc integer.cc xtalutil.cc
 ATAT_H  = findsym.h  integer.h  xtalutil.h \
           array.h  arraylist.h   fixagg.h  fxvector.h \
 	  linklist.h  machdep.h  misc.h  vectmac.h  
+ATAT_PYTHON_H = atat.py.hpp
+ATAT_PYTHON_CC = atat.py.cc
 
 
 DARWIN_LIB_CC = concentration.cc debug.cc topology.cc 

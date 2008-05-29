@@ -11,6 +11,7 @@
 #include<math.h>
 #include<limits.h>
 
+#include <boost/lambda/lambda.hpp>
 
 #include <boost/lambda/lambda.hpp>
 #ifdef _MPI
@@ -70,7 +71,7 @@ namespace Ising_CE
 
   types::t_real Constituent_Strain :: evaluate()
   {
-    #ifdef _DEBUG_LADA_
+    #ifdef _LADADEBUG
       if( variables->size() == 0 ) 
       {
         std::cerr << "variables have not been initialized in "
@@ -78,7 +79,7 @@ namespace Ising_CE
                   << std::endl;
         exit(0);
       }
-    #endif // _DEBUG_LADA_
+    #endif // _LADADEBUG
     types::t_real sum_harm;
     std::complex<types::t_real> sum_exp;
     const std::complex<types::t_real> imath(0, -2*3.1415926535897932384626433832795028841971693993751058208);
@@ -151,7 +152,7 @@ namespace Ising_CE
 
   types::t_real Constituent_Strain :: evaluate_one_gradient( types::t_unsigned _pos ) 
   {
-    #ifdef _DEBUG_LADA_
+    #ifdef _LADADEBUG
       if( variables->size() == 0 ) 
       {
         std::cerr << "variables have not been initialized in "
@@ -159,7 +160,7 @@ namespace Ising_CE
                   << std::endl;
         exit(0);
       }
-    #endif // _DEBUG_LADA_
+    #endif // _LADADEBUG
     std::vector<atat::rVector3d> :: const_iterator i_k_vec = k_vecs.begin();
     std::vector<atat::rVector3d> :: const_iterator i_k_vec_end __SERIALCODE( = k_vecs.end() );
     std::vector<atat::rVector3d> :: const_iterator i_r_vec;
@@ -250,7 +251,7 @@ namespace Ising_CE
   }
   types::t_real Constituent_Strain :: evaluate_with_gradient( types::t_real* const gradient ) 
   {
-    #ifdef _DEBUG_LADA_
+    #ifdef _LADADEBUG
       if( variables->size() == 0 ) 
       {
         std::cerr << "variables have not been initialized in "
@@ -258,7 +259,7 @@ namespace Ising_CE
                   << std::endl;
         exit(0);
       }
-    #endif // _DEBUG_LADA_
+    #endif // _LADADEBUG
     std::vector<atat::rVector3d> :: const_iterator i_k_vec = k_vecs.begin();
     std::vector<atat::rVector3d> :: const_iterator i_k_vec_end __SERIALCODE( = k_vecs.end() ); 
     std::vector<atat::rVector3d> :: const_iterator i_r_vec;
@@ -451,7 +452,7 @@ namespace Ising_CE
 
   
 
-  #ifdef _DEBUG_LADA_
+  #ifdef _LADADEBUG
     void Constituent_Strain :: check_derivative()
     {
       const types::t_int n_spin = 0;
@@ -483,6 +484,6 @@ namespace Ising_CE
       delete[] gradient;
 
     }
-  #endif // _DEBUG_LADA_
+  #endif // _LADADEBUG
 
 } // namespace Ising_CE 

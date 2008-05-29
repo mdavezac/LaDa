@@ -162,14 +162,14 @@ namespace function {
   template<typename T_QUANTITY, typename T_BASELINE>
     inline void Fitness<T_QUANTITY, T_BASELINE> :: check_pointers(const char *stream) const
     {
-      #ifdef _DEBUG_LADA_
+      _DODEBUGCODE(
         if ( !quantity or !baseline )
         {
           std::cerr << "Pointers not set in Fitness::" << stream
                     << std::endl;
           exit(0);
         } 
-      #endif // _DEBUG_LADA_
+      )
     }
 
 } // namespace opt
