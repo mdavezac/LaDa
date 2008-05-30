@@ -1,4 +1,21 @@
-lib atat.lib : findsym.cc integer.cc xtalutil.cc  
-               findsym.h  integer.h  xtalutil.h 
-               array.h  arraylist.h   fixagg.h  fxvector.h 
-               linklist.h  machdep.h  misc.h  vectmac.h ;
+ATAT_CC = findsym.cc integer.cc xtalutil.cc ;
+
+lib atat.lib : $(ATAT_CC) ;
+#              findsym.h  integer.h  xtalutil.h 
+#              array.h  arraylist.h   fixagg.h  fxvector.h 
+#              linklist.h  machdep.h  misc.h  vectmac.h  ;
+
+python-extension atat : atat.py.cc : : <library>..//boost-python ;
+
+# # A little "rule" (function) to clean up the syntax of declaring tests
+# # of these extension modules.
+# local rule run-test ( test-name : sources + )
+# {
+#     import testing ;
+#     testing.make-test run-pyd : $(sources) : : $(test-name) ;
+# }
+#
+# # Declare test targets
+# run-test atat_test : atat atat_test.py ;
+
+

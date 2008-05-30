@@ -12,6 +12,6 @@ lib crystal :  lattice.cc structure.cc
                ..//tinyxml 
              : <include>..//tinyxml ;
 
-alias lamarck.lib : ce crystal ; 
+alias lamarck.lib : ce crystal ;
 
-exe lamarck : main.cc lamarck.lib ..//revision.h ;
+exe lamarck : main.cc lamarck.lib $(TOP)//boost-pg ;

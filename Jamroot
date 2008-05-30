@@ -1,10 +1,20 @@
+path-constant TOP : . ;
+
 include env.jam ;
 
-project LaDa : requirements <include>. <include>$(boostinclude)
-                            <define>PACKAGE_STRING='\"LaDa\ 3.25\"' ; 
-
-obj revision.h   ;
+rule findrev
+{
+  Depends all : $(1) ;
+  Always $(1) ;
+} 
 actions findrev
 {
-    "./scripts/max_revision.pl"
+  ./scripts/max_revision.pl
 }
+
+findrev revision.h ;
+
+project LaDa : requirements <include>. 
+                            <define>PACKAGE_STRING='\"LaDa\ 3.25\"' 
+                            <include>$(boostinclude) ;
+
