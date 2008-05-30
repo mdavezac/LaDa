@@ -1,3 +1,6 @@
+//
+//  Version: $Id$
+//
 #ifdef _TYPE_
 #  undef _TYPE_
 #endif
