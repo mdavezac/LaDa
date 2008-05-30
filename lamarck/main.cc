@@ -29,6 +29,9 @@
 #define OUTPUT std::cout
 #define ENDLINE "\n"
 #endif
+#ifndef TIXML_USE_STL
+#error not using TIXML_USE_STL
+#endif
 
 #ifdef _MPI
 #include <boost/mpi/environment.hpp>
@@ -109,7 +112,7 @@ int main(int argc, char *argv[])
     )
  
     __ROOTCODE( (*::mpi::main),
-      TiXmlDocument doc( filename.c_str() );
+      TiXmlDocument doc( filename );
       __DOASSERT( not doc.LoadFile(), 
                     "error while opening input file "
                  << filename << "\n" << doc.ErrorDesc()  )

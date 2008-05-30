@@ -1,3 +1,4 @@
+constant PACKAGE : '\"LaDa\ 3.25\"' ;
 path-constant TOP : . ;
 
 include env.jam ;
@@ -14,7 +15,23 @@ actions findrev
 
 findrev revision.h ;
 
-project LaDa : requirements <include>. 
-                            <define>PACKAGE_STRING='\"LaDa\ 3.25\"' 
-                            <include>$(boostinclude) ;
+
+lib tinyxml : : <search>$(tinyxmlldflags) <name>tinyxml <define>TIXML_USE_STL :
+            : <include>$(tinyxmlinclude) <define>TIXML_USE_STL ;
+lib boost-pg     : : <name>boost_program_options$(boostldsuffix) 
+                     <search>$(boostldflags) ;
+lib boost-mpi    : : <name>boost_mpi-gcc41-mt$(boostldsuffix) 
+                     <search>$(boostldflags) ;
+lib boost-ser    : : <name>boost_serialization$(boostldsuffix) 
+                     <search>$(boostldflags) ;
+lib boost-python : : <name>boost_python$(boostldsuffix) 
+                     <search>$(boostldflags) ;
+
+
+project LaDa : requirements <include>.  
+                            <include>$(boostinclude) 
+                            <include>$(generalinclude) 
+                            <define>PACKAGE_STRING=$(PACKAGE) ;
+Depends LaDa : general ;
+
 

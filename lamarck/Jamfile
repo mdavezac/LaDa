@@ -1,10 +1,6 @@
 
 lib ce : cluster.cc constituent_strain.cc functional_builder.cc
          harmonic.cc  polynome.cc 
-         ../print//print.lib 
-         ../atat//atat.lib 
-         ../mpi//mpi.lib
-         ..//tinyxml 
          crystal ;
 
 lib crystal :  lattice.cc structure.cc
@@ -15,9 +11,9 @@ lib crystal :  lattice.cc structure.cc
 
 alias lamarck.lib : ce crystal ;
 
-exe lamarck : main.cc lamarck.lib $(TOP)//boost-pg ;
+exe lamarck : main.cc lamarck.lib $(TOP)//boost-pg ..//tinyxml ;
 
-python-extension atom : atom.py.cc  $(TOP)/atat//atatpy $(TOP)//tinyxml
+python-extension atom : atom.py.cc  $(TOP)/atat//atat ..//tinyxml
                       : : <library>..//boost-python ;
 
 # A little "rule" (function) to clean up the syntax of declaring tests
@@ -30,6 +26,6 @@ local rule run-test ( test-name : sources + )
 
 # Declare test targets
 # run-test lamarck_test : atom lamarck_test.py
-#                         $(TOP)/atat//atatpy $(TOP)//tinyxml ;
+#                         $(TOP)/atat//atat $(TOP)//tinyxml ;
 
 

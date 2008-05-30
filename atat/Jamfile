@@ -5,7 +5,7 @@ lib atat.lib : $(ATAT_CC) ;
 #              array.h  arraylist.h   fixagg.h  fxvector.h 
 #              linklist.h  machdep.h  misc.h  vectmac.h  ;
 
-python-extension atatpy : atat.py.cc : : <library>..//boost-python ;
+python-extension atat : atat.py.cc : : <library>..//boost-python ;
 
 # A little "rule" (function) to clean up the syntax of declaring tests
 # of these extension modules.
@@ -16,6 +16,6 @@ local rule run-test ( test-name : sources + )
 }
 
 # Declare test targets
-run-test atat_test : atatpy atat_test.py ;
+run-test atat_test : atat atat_test.py ;
 
 

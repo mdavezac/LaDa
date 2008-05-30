@@ -9,7 +9,10 @@
 
 #include <opt/types.h>
 
+#include "structure.h"
 #include "atom.h"
+
+typedef Ising_CE::Structure::t_Atom t_Atom;
 
 #include "atom.py.hpp"
 

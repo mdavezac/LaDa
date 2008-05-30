@@ -32,17 +32,28 @@
 
 #ifndef _INMODULE_
 
-namespace Ising_CE
+
+namespace python
 {
+  namespace
+  {
+    std::string print_atom( const ::t_Atom *_at )
+    { 
+      std::ostringstream sstr;
+      _at->print_out( sstr );
+      return sstr.str();
+    }
+  }
 }
 
 #else
 
-   class_< Ising_CE::Atom >( "Atom" )
-     .def_readwrite( "pos", &Ising_CE::Atom::pos )
-     .def_readwrite( "site", &Ising_CE::Atom::site )
-     .def_readwrite( "type", &Ising_CE::Atom::type )
-     .def_readwrite( "freeze", &Ising_CE::Atom::freeze );
+   class_< t_Atom >( "Atom" )
+     .def_readwrite( "pos", &t_Atom::pos )
+     .def_readwrite( "site", &t_Atom::site )
+     .def_readwrite( "type", &t_Atom::type )
+     .def_readwrite( "freeze", &t_Atom::freeze )
+     .def( "__str__",  &python::print_atom ) ;
 
 #endif
 

@@ -42,7 +42,7 @@
 #  include "atat.py.hpp"
 
 #define _INMODULE_
-BOOST_PYTHON_MODULE(atatpy)
+BOOST_PYTHON_MODULE(atat)
 {
   using namespace boost::python;
   using namespace atat;
