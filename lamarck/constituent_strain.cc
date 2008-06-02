@@ -26,12 +26,17 @@ namespace Ising_CE
 
   Constituent_Strain :: Constituent_Strain   ( const Ising_CE::Structure& _str, 
                                                t_Container *vars )
-                                           : function::Base<t_Type>(vars)
-                                             __MPICONSTRUCTORCODE( comm( ::mpi::main ) ) 
+                                       : function::Base<t_Type>(vars)
+                                         __MPICONSTRUCTORCODE( comm( ::mpi::main ) ) 
+    { operator<<( _str ); }
+  void Constituent_Strain :: operator<<( const Ising_CE::Structure &_str )
   {
-    if (    _str.atoms.size() < 1 
-         or _str.k_vecs.size() < 1 )
-      return;
+    __DOASSERT( _str.atoms.size() < 1,  "No atoms in structure.\n" 
+                                        "Cannot create constituent strain"
+                                        " for structure.\n" )
+    __DOASSERT( _str.k_vecs.size() < 1, "No kvectors in structure.\n" 
+                                        "Cannot create constituent strain"
+                                        " for structure.\n" )
     k_vecs.clear(); r_vecs.clear();
     k_vecs.reserve(_str.k_vecs.size()); r_vecs.reserve(_str.atoms.size());
     Ising_CE::Structure::t_kAtoms::const_iterator i_kvec = _str.k_vecs.begin();
@@ -55,13 +60,13 @@ namespace Ising_CE
       Harmonic::set_attenuation( d );
     
     child = _element.FirstChildElement( "Harmonic" );
-    if ( !child )
-      return false;
+    __DOASSERT( not child, "Could not find <Harmonic> tag " 
+                           "when loading constituent strain" )
     for ( ; child; child=child->NextSiblingElement( "Harmonic" ) )
     {
       harmonic.clear(); // clear harmonic
-      if ( not harmonic.Load( *child ) )
-        return false;
+       __DOASSERT( not harmonic.Load( *child), 
+                   "Error while parsing <Harmonic> tag for constituent strain" )
       harmonics.push_back( harmonic );
     }
 
@@ -420,13 +425,13 @@ namespace Ising_CE
 
     // advance to Structure tag
     str = _element.FirstChildElement( "Structure" );
-    if ( not str )
-      return false;
+    __DOASSERT( not str,    "Could not find <Structure> tag when loading"
+                         << "constituent strain.\n" )
     
     // read kvec tags
     child = str->FirstChildElement( "kvec" );
-    if ( !child )
-      return false;
+    __DOASSERT( not child,    "Could not find <kvec> tag when loading"
+                           << "constituent strain.\n" )
     for ( ; child; child=child->NextSiblingElement( "kvec" ) )
     {
       d = 1.0; child->Attribute("x", &d); vec(0) = d;
@@ -437,8 +442,8 @@ namespace Ising_CE
 
     // read Atom tags
     child = str->FirstChildElement( "Atom" );
-    if ( !child )
-      return false;
+    __DOASSERT( not child,    "Could not find <Atom> tag when loading"
+                           << "constituent strain.\n" )
     for ( ; child; child=child->NextSiblingElement( "Atom" ) )
     {
       d = 1.0; child->Attribute("x", &d); vec(0) = d;

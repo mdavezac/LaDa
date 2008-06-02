@@ -91,7 +91,7 @@ namespace Print
 
     types::t_int old = 0;
     types::t_int i = copy.find('\n', 0);
-    while ( i != std::string::npos  )
+    while ( (types::t_unsigned) std::abs(i) != std::string::npos  )
     {
       result << copy.substr(old, i - old +1 ) << Xmg::comment_string;
       ++i; old = i;

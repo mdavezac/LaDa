@@ -125,6 +125,7 @@ namespace Ising_CE
       //! Serializes a cluster.
       template<class ARCHIVE> void serialize(ARCHIVE & _ar,
                                              const unsigned int _version);
+      void operator<<( const Ising_CE::Structure &_str );
   };
 
   template<class ARCHIVE>

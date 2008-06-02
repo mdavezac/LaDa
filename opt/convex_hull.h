@@ -175,7 +175,7 @@ namespace ConvexHull
     types::t_real y; //!< the \a y coordinate in the convex-hull place
     t_Object object; //!< a copied instance of a t_Object
 
-    Vertex() : y(0), x(0), object() {}; //!< Constructor
+    Vertex() : x(0), y(0), object() {}; //!< Constructor
     //! \brief Constructor capable of loading itself from an XML node
     //! \param _node XML node from which to load the Vertex
     //! \param _op Functor capable of loading an instance of t_Object
@@ -184,9 +184,9 @@ namespace ConvexHull
     //! \brief Constructor and Initializer
     //! \details Vertex::x is set using \a _object.get_concentration()
     Vertex   (const types::t_real _y, const t_Object &_object) 
-           : y(_y), x( _object.get_concentration() ), object(_object) {}
+           : x( _object.get_concentration() ), y(_y), object(_object) {}
     //! copy constructor
-    Vertex(const Vertex<t_Object> &_v ) : y(_v.y), x(_v.x), object(_v.object) {};
+    Vertex(const Vertex<t_Object> &_v ) : x(_v.x), y(_v.y), object(_v.object) {};
 
     //! defines an operator< for the Vertex::x coordinate
     bool x_less(const Vertex<t_Object> &_v) const
@@ -360,11 +360,10 @@ namespace ConvexHull
       std::string print() const
       { 
         std::ostringstream sstr;
-        std::for_each( vertices.begin(), vertices.end(),
-                       boost::lambda::var(sstr) 
-                         << boost::lambda::bind( &Vertex<T_OBJECT>::object, boost::lambda::_1 )
-                         << boost::lambda::constant( " " )
-                         << boost::lambda::_1  );
+        typename t_Vertices :: const_iterator i_first = vertices.begin();
+        typename t_Vertices :: const_iterator i_end = vertices.end();
+        for(; i_first != i_end; ++i_first )
+          sstr << i_first->object << " " << *i_first; 
         sstr << "&";
         return sstr.str();
       }

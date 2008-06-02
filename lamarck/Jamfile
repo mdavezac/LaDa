@@ -14,6 +14,7 @@ alias lamarck.lib : ce crystal ;
 exe lamarck : main.cc lamarck.lib $(TOP)//boost-pg ..//tinyxml ;
 
 python-extension atom : atom.py.cc  $(TOP)/atat//atat ..//tinyxml
+                        lamarck.lib
                       : : <library>..//boost-python ;
 
 # A little "rule" (function) to clean up the syntax of declaring tests

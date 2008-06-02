@@ -6,6 +6,7 @@
 #include <iostream>
 #include <algorithm>
 #include <boost/lambda/lambda.hpp>
+#include <stdexcept>
 
 #include <opt/types.h>
 

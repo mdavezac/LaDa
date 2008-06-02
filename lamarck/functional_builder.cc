@@ -53,12 +53,8 @@ namespace VA_CE
          break;
        parent = parent->NextSiblingElement("Functional");
      }
-     if ( not parent )
-     {
-       std::cerr << "Could not find an <Functional type=\"CE\"> tag in input file" 
-                 << std::endl;
-       return false;
-     } 
+     __DOASSERT( not parent,
+                 "Could not find an <Functional type=\"CE\"> tag in input file.\n" )
 
      // creates static quantities
      __TRYCODE(
@@ -75,48 +71,32 @@ namespace VA_CE
        const TiXmlNode *grandparent = parent->Parent();
        if ( parent )
          child = grandparent->FirstChildElement( "Lattice" );
-       if ( not child )
-       {
-         std::cerr << "Could not find Lattice in input" << std::endl;
-         return false;
-       }
+       __DOASSERT( not child, "Could not find Lattice in input.\n" )
      }
-     if ( not lattice->Load(*child) )
-     {
-       std::cerr << "Error while reading Lattice from input" << std::endl;
-       return false;
-     }
+     __DOASSERT( not lattice->Load(*child),
+                 "Error while reading Lattice from input.\n" )
      lattice->find_space_group();
      Ising_CE :: Structure :: lattice = lattice;
      
      // then load clusters
      child = parent->FirstChildElement( "Clusters" );
-     if (not child )
-     {
-       std::cerr << "Could not find Clusters in input" << std::endl;
-       return false;
-     }
+     __DOASSERT( not child,
+                 "Could not find Clusters in input.\n" )
      child = child->FirstChildElement( "Cluster" );
      Ising_CE::Cluster cluster;
      for (  ; child; child = child->NextSiblingElement("Cluster") )
      {
-       if( !cluster.Load( *child ) )
-         return false;
+       __DOASSERT( not cluster.Load( *child ),
+                   "Error while loading cluster from input.\n" )
        clusters->push_back(cluster);
      }
      
      // reads in Constituent Strain (coefficients are static)
      child = parent->FirstChildElement( "CS" );
-     if ( not child )
-     {
-       std::cerr << "Could not find CS in input" << std::endl;
-       return false;
-     }
-     if( not harmonics->Load_Harmonics( *child ) )
-     {
-       std::cerr << "Error while loading harmonics from input" << std::endl;
-       return false;
-     }
+     __DOASSERT( not child,
+                 "Could not find CS in input.\n" )
+     __DOASSERT( not harmonics->Load_Harmonics( *child ),
+                 "Error while loading harmonics from input.\n" )
 
      return true;
    }
@@ -188,10 +168,11 @@ namespace VA_CE
        
        for( ; i_cluster != i_cluster_last; ++i_cluster ) // loop over clusters
        {
-         std::vector<atat::rVector3d> :: iterator i_cpos_begin = i_cluster->vectors.begin();
-         std::vector<atat::rVector3d> :: iterator i_cpos_center = i_cluster->vectors.begin();
-         std::vector<atat::rVector3d> :: iterator i_cpos_last = i_cluster->vectors.end();
-         std::vector<atat::rVector3d> :: iterator i_cpos;
+         typedef std::vector<atat::rVector3d> :: iterator vec_iterator;
+         vec_iterator i_cpos_begin = i_cluster->vectors.begin();
+         vec_iterator i_cpos_center = i_cluster->vectors.begin();
+         vec_iterator i_cpos_last = i_cluster->vectors.end();
+         vec_iterator i_cpos;
          if ( i_cluster->vectors.size() == 0 )
          {
            i_cpos_center = i_cpos_last;
@@ -201,7 +182,8 @@ namespace VA_CE
          for (; i_cpos_center != i_cpos_last; ++i_cpos_center ) 
          {   
            // sets up a monome with the correct coefficient
-           function::Monome<> monome( i_cluster->eci / ( (Real) i_cluster->vectors.size() ) );
+           function::Monome<> monome(   i_cluster->eci
+                                      / ( (Real) i_cluster->vectors.size() ) );
  
            i_cpos = i_cpos_begin;
            for (; i_cpos != i_cpos_last; ++i_cpos ) // loop over cluster points
@@ -213,7 +195,8 @@ namespace VA_CE
                // finds atom to which "point" is equivalent
                types::t_unsigned index;
                for (index = 0; index<str.atoms.size(); ++index)  
-                 if ( atat::equivalent_mod_cell(*i_cpos + shift, str.atoms[index].pos,inv_cell) ) 
+                 if ( atat::equivalent_mod_cell(*i_cpos + shift,
+                                                str.atoms[index].pos,inv_cell) ) 
                    break;
                
                #ifdef _LADADEBUG

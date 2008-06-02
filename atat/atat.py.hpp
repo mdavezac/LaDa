@@ -50,7 +50,8 @@
 #  define _CLASSNAME_(object) _CONCAT_( r, object, 3, d )
 #  define _PYTHONNAME_(object) "r"#object"3d"
 #else
-# undef _WASINCLUDED_
+#  undef _WASINCLUDED_
+#  undef __OPP__
 #endif
 
 #if defined(_WASINCLUDED_)
@@ -59,136 +60,147 @@
 
 namespace atat
 {
+  namespace details
+  {
+#ifndef __OPP__
+#define __OPP__
+    template < class A, class B, class R > 
+    R* mul( const A& _a, const B& _b )
+    {
+       R* result = new R;
+       *result = _a * _b;
+       return result;
+    }
+    template < class A, class B, class R > 
+    R* rmul( const A& _a, const B& _b )
+      { return mul< B, A, R>( _b, _a); }
+    template < class A, class B, class R > 
+    R* div( const A& _a, const B& _b )
+    {
+       R* result = new R;
+       *result = _a / _b;
+       return result;
+    }
+    template < class A, class B > 
+    A* add( const A& _a, const B& _b )
+    {
+       A* result = new A;
+       *result = _a + _b;
+       return result;
+    }
+    template < class A, class B > 
+    B* radd( const A& _a, const B& _b )
+      { return add( _b, _a); }
+    template < class A, class B > 
+    A* diff( const A& _a, const B& _b )
+    {
+       A* result = new A;
+       *result = _a - _b;
+       return result;
+    }
+    template < class A, class B > 
+    B* rdiff( const A& _a, const B& _b )
+      { return diff( _b, _a); }
 
-  struct _CLASSNAME_(WVector) : public _CLASSNAME_(Vector)
-  {
-    typedef _CLASSNAME_(Vector) t_Base;
-    public:
-      _CLASSNAME_(WVector)() { std::fill( x, x + _DIM_, _TYPE_(0) ); }
-      _CLASSNAME_(WVector) ( const _CLASSNAME_(WVector) &_V )
-        { std::copy( _V.x, _V.x + _DIM_, x ); }
-      _CLASSNAME_(WVector) ( const _CLASSNAME_(Vector) &_V )
-        { std::copy( _V.x, _V.x + _DIM_, x ); }
-      _CLASSNAME_(WVector) ( const boost::python::object & _ob );
-      std::string print() const;
-  };
+    template< types::t_unsigned d > types::t_unsigned length() { return d; }
+#endif
 
-  _CLASSNAME_(WVector)* operator+( const _CLASSNAME_(WVector) &_v, const _CLASSNAME_(WVector) &_b )
-  {
-    _CLASSNAME_(WVector) *result = new _CLASSNAME_(WVector);
-    std::transform( _v.x, _v.x + _DIM_, _b.x, result->x,
-                    boost::lambda::_1 + boost::lambda::_2 );
-    return result;
+    _TYPE_ _CLASSNAME_( getVecItem )( const _CLASSNAME_(Vector) &_v,
+                                      types::t_int _i )
+    {
+      if( _i > _DIM_ or _i < -_DIM_ )
+      {
+        std::ostringstream sstr;
+        sstr << _PYTHONNAME_(Vector) << " holds exactly " 
+             << (types::t_unsigned) _DIM_ << " elements. " 
+             << "Requested element " << _i << ".";
+        throw std::out_of_range( sstr.str() ); 
+      }
+      return _v.x[ _i < 0 ? _DIM_ + _i: _i ];
+    }
+    void _CLASSNAME_( setVecItem )( _CLASSNAME_(Vector) &_v,
+                                    types::t_int _i, _TYPE_ _a )
+    {
+      if( _i > _DIM_ or _i < -_DIM_ )
+      {
+        std::ostringstream sstr;
+        sstr << _PYTHONNAME_(Vector) << " holds exactly " 
+             << (types::t_unsigned) _DIM_ << " elements. " 
+             << "Requested element " << _i << ".";
+        throw std::out_of_range( sstr.str() ); 
+      }
+      _v.x[ _i < 0 ? _DIM_ + _i: _i ] = _a;
+    }
+
+    _TYPE_ _CLASSNAME_( getMatItem )( const _CLASSNAME_(Matrix) &_v,
+                                      tuple _t )
+    {
+      types::t_int _i = extract< types::t_int >( _t[0] );
+      types::t_int _j = extract< types::t_int >( _t[1] );
+      if( _i > _DIM_ or _i < -_DIM_ or
+          _j > _DIM_ or _j < -_DIM_ )
+      {
+        std::ostringstream sstr;
+        sstr << _PYTHONNAME_(Matrix) << " holds exactly " 
+             << (types::t_unsigned) _DIM_ << "x" 
+             << (types::t_unsigned) _DIM_ << " elements. " 
+             << "Requested element " << _i << ", " << _j << ".";
+        throw std::out_of_range( sstr.str() ); 
+      }
+      return _v.x[ _i < 0 ? _DIM_ + _i: _i ][ _j < 0 ? _DIM_ + _j: _j ];
+    }
+    void _CLASSNAME_( setMatItem )( _CLASSNAME_(Matrix) &_v,
+                                    tuple _t, _TYPE_ _a )
+    {
+      types::t_int _i = extract< types::t_int >( _t[0] );
+      types::t_int _j = extract< types::t_int >( _t[1] );
+      if( _i > _DIM_ or _i < -_DIM_ or
+          _j > _DIM_ or _j < -_DIM_ )
+      {
+        std::ostringstream sstr;
+        sstr << _PYTHONNAME_(Vector) << " holds exactly " 
+             << (types::t_unsigned) _DIM_ << "x" 
+             << (types::t_unsigned) _DIM_ << " elements. " 
+             << "Requested element " << _i << ", " << _j << ".";
+        throw std::out_of_range( sstr.str() ); 
+      }
+      _v.x[ _i < 0 ? _DIM_ + _i: _i ][ _j < 0 ? _DIM_ + _j: _j ] = _a;
+    }
+
+
+    std::string _CLASSNAME_(printVector)(const _CLASSNAME_(Vector) &_v)
+    { 
+      std::ostringstream sstr;
+      sstr << _v;
+      return sstr.str();
+    }
+    _CLASSNAME_(Vector)* _CLASSNAME_(makeVector)( object &_ob )
+    {
+      _CLASSNAME_(Vector)* result = new _CLASSNAME_(Vector);
+      for( types::t_int i=_DIM_-1; i >= 0; --i )
+        result->x[i] = extract<_TYPE_>(_ob[i]);
+      return result;
+    }
   }
-  _CLASSNAME_(WVector)* operator-( const _CLASSNAME_(WVector) &_v, const _CLASSNAME_(WVector) &_b )
-  {
-    _CLASSNAME_(WVector) *result = new _CLASSNAME_(WVector);
-    std::transform( _v.x, _v.x + _DIM_, _b.x, result->x,
-                    boost::lambda::_1 - boost::lambda::_2 );
-    return result;
-  }
-  _CLASSNAME_(WVector)* operator*( const _CLASSNAME_(WVector) &_v, const _TYPE_ _b )
-  {
-    _CLASSNAME_(WVector) *result = new _CLASSNAME_(WVector);
-    std::transform( _v.x, _v.x + _DIM_, result->x,
-                    boost::lambda::_1 * boost::lambda::constant(_b) );
-    return result;
-  }
-  _CLASSNAME_(WVector)* operator/( const _CLASSNAME_(WVector) &_v, const _TYPE_ _b )
-  {
-    _CLASSNAME_(WVector) *result = new _CLASSNAME_(WVector);
-    std::transform( _v.x, _v.x + _DIM_, result->x,
-                    boost::lambda::_1 / boost::lambda::constant(_b) );
-    return result;
-  }
-  _CLASSNAME_(WVector)* operator*( const _TYPE_ _b, const _CLASSNAME_(WVector) &_v)
+
+  _CLASSNAME_(Vector) operator*( const _TYPE_ _b, const _CLASSNAME_(Vector) &_v)
     { return operator*( _v, _b ); }
-  bool operator==( const _CLASSNAME_(WVector) &_v, const _CLASSNAME_(WVector) &_b )
+  bool operator==( const _CLASSNAME_(Vector) &_v, const _CLASSNAME_(Vector) &_b )
     { return std::equal( _v.x, _v.x + _DIM_, _b.x ); }
-  bool operator!=( const _CLASSNAME_(WVector) &_v, const _CLASSNAME_(WVector) &_b )
+  bool operator!=( const _CLASSNAME_(Vector) &_v, const _CLASSNAME_(Vector) &_b )
     { return std::equal( _v.x, _v.x + _DIM_, _b.x, 
                          boost::lambda::_1 != boost::lambda::_2 ); }
 
 
 
-  _CLASSNAME_(WVector) :: _CLASSNAME_(WVector)( const boost::python::object &_ob )
-  {
-    for( types::t_int i = 0; i < _DIM_; ++i )
-      x[i] = boost::python::extract<_TYPE_>( _ob[i] ); 
-  }
-
-  std::ostream& operator<<( std::ostream &_o, const _CLASSNAME_(WVector)& _v )
-  {
-    std::for_each( _v.x, _v.x + _DIM_, 
-                   boost::lambda::var( _o ) << boost::lambda::_1
-                                            << boost::lambda::constant(" ") );
-    return _o;
-  }
-  std::string _CLASSNAME_(WVector) :: print() const
-  {
-    std::ostringstream sstr;
-    sstr << *this;
-    return sstr.str();
-  }
-
-
-
-  struct _CLASSNAME_(WMatrix) : public FixedMatrix<_TYPE_, _DIM_> 
-  {
-    public:
-      _CLASSNAME_(WMatrix)() { zero(); }
-      _CLASSNAME_(WMatrix) ( const _CLASSNAME_(WMatrix) &_V ) : FixedMatrix<_TYPE_, _DIM_>( _V ) {}
-      _CLASSNAME_(WMatrix) ( const boost::python::object & _ob );
-      std::string print() const;
-      void operator+=( const _CLASSNAME_(WMatrix) &_b );
-      void operator-=( const _CLASSNAME_(WMatrix) &_b );
-      void diag( const _CLASSNAME_(WVector) & _v );
-  };
-
-  void _CLASSNAME_(WMatrix) :: diag( const _CLASSNAME_(WVector) &_v )
-  {
-    for( types::t_int i = 0; i < _DIM_; ++i )
-      for( types::t_int j = 0; j < _DIM_; ++j )
-        x[i][j] = i == j ? _v[i]: _TYPE_(0);
-  }
-
-
-  void _CLASSNAME_(WMatrix) :: operator+=( const _CLASSNAME_(WMatrix) &_v )
-  {
-    for( types::t_int i = 0; i < _DIM_; ++i )
-      for( types::t_int j = 0; j < _DIM_; ++j )
-        x[i][j] +=  _v.x[i][j];
-  }
-  void _CLASSNAME_(WMatrix) :: operator-=( const _CLASSNAME_(WMatrix) &_v )
-  {
-    for( types::t_int i = 0; i < _DIM_; ++i )
-      for( types::t_int j = 0; j < _DIM_; ++j )
-        x[i][j] +=  _v.x[i][j];
-  }
-  _CLASSNAME_(WMatrix)* operator+( const _CLASSNAME_(WMatrix) &_v, const _CLASSNAME_(WMatrix) &_b )
-  {
-    _CLASSNAME_(WMatrix) *result = new _CLASSNAME_(WMatrix);
-    for( types::t_int i = 0; i < _DIM_; ++i )
-      for( types::t_int j = 0; j < _DIM_; ++j )
-        result->x[i][j] =  _v.x[i][j] + _b.x[i][j]; 
-    return result;
-  }
-  _CLASSNAME_(WMatrix)* operator-( const _CLASSNAME_(WMatrix) &_v, const _CLASSNAME_(WMatrix) &_b )
-  {
-    _CLASSNAME_(WMatrix) *result = new _CLASSNAME_(WMatrix);
-    for( types::t_int i = 0; i < _DIM_; ++i )
-      for( types::t_int j = 0; j < _DIM_; ++j )
-        result->x[i][j] =  _v.x[i][j] - _b.x[i][j]; 
-    return result;
-  }
-  bool operator==( const _CLASSNAME_(WMatrix) &_v, const _CLASSNAME_(WMatrix) &_b )
+  bool operator==( const _CLASSNAME_(Matrix) &_v, const _CLASSNAME_(Matrix) &_b )
   {
     for( types::t_int i = 0; i < _DIM_; ++i )
       for( types::t_int j = 0; j < _DIM_; ++j )
         if( _v.x[i][j] != _b.x[i][j] ) return false;
     return true;
   }
-  bool operator!=( const _CLASSNAME_(WMatrix) &_v, const _CLASSNAME_(WMatrix) &_b )
+  bool operator!=( const _CLASSNAME_(Matrix) &_v, const _CLASSNAME_(Matrix) &_b )
   {
     for( types::t_int i = 0; i < _DIM_; ++i )
       for( types::t_int j = 0; j < _DIM_; ++j )
@@ -196,107 +208,107 @@ namespace atat
     return true;
   }
 
-  _CLASSNAME_(WMatrix) :: _CLASSNAME_(WMatrix)( const boost::python::object &_ob )
-  {
-    for( types::t_int i = 0; i < _DIM_; ++i )
-    {
-      boost::python::object a = _ob[i];
-      for( types::t_int j = 0; j < _DIM_; ++j )
-        x[i][j] = boost::python::extract<_TYPE_>( a[j] ); 
-    }
-  }
-
-  std::ostream& operator<<( std::ostream &_o, const _CLASSNAME_(WMatrix)& _v )
-  {
-    _o << "( ";
-    for( types::t_int i = 0; i < _DIM_; ++i )
-    {
-      _o << "[";
-      for( types::t_int j = 0; j < _DIM_; ++j )
-        _o << _v.x[i][j] << ( j < 2 ? ", ": "]" );
-      _o << ( i <  _DIM_ - 1 ? ", ": " )" );
-    }
-    return _o;
-  }
-  std::string _CLASSNAME_(WMatrix) :: print() const
-  {
-    std::ostringstream sstr;
-    sstr << *this;
-    return sstr.str();
-  }
-
-  _CLASSNAME_(WMatrix)* operator*( const _CLASSNAME_(WMatrix) &_v,
-                                  const _CLASSNAME_(WMatrix) &_b )
-  {
-    _CLASSNAME_(WMatrix) *result = new _CLASSNAME_(WMatrix);
-    *( (FixedMatrix<_TYPE_, _DIM_>*) result) 
-       = (FixedMatrix< _TYPE_, _DIM_ > ) _v * (FixedMatrix< _TYPE_, _DIM_ > ) _b;
-    return result;
-  }
-  _CLASSNAME_(WMatrix)* operator*( const _CLASSNAME_(WMatrix) &_v, const _TYPE_ _b )
-  {
-    _CLASSNAME_(WMatrix) *result = new _CLASSNAME_(WMatrix);
-    *( (FixedMatrix<_TYPE_, _DIM_>*) result) 
-       = (FixedMatrix< _TYPE_, _DIM_ > ) _v * _b;
-    return result;
-  }
-  _CLASSNAME_(WMatrix)* operator/( const _CLASSNAME_(WMatrix) &_v, const _TYPE_ _b )
-  {
-    _CLASSNAME_(WMatrix) *result = new _CLASSNAME_(WMatrix);
-    *( (FixedMatrix<_TYPE_, _DIM_>*) result) 
-       = (FixedMatrix< _TYPE_, _DIM_ > ) _v / _b;
-    return result;
-  }
-  _CLASSNAME_(WMatrix)* operator*( const _TYPE_ _b, const _CLASSNAME_(WMatrix) &_v )
+  _CLASSNAME_(Matrix) operator*( const _TYPE_ _b, const _CLASSNAME_(Matrix) &_v )
     { return operator*(_v, _b); }
 
-  _CLASSNAME_(WVector)* operator*( const _CLASSNAME_(WMatrix) &_v,
-                                  const _CLASSNAME_(WVector) &_b )
+  namespace details
   {
-    _CLASSNAME_(WVector) *result = new _CLASSNAME_(WVector);
-    *( (FixedVector<_TYPE_, _DIM_>*) result) 
-       = (FixedMatrix< _TYPE_, _DIM_ > ) _v * (FixedVector< _TYPE_, _DIM_ > ) _b;
-    return result;
+    std::string _CLASSNAME_(printMatrix)(const _CLASSNAME_(Matrix) &_v)
+    { 
+      std::ostringstream sstr;
+      sstr << _v;
+      return sstr.str();
+    }
+    _CLASSNAME_(Matrix)* _CLASSNAME_(makeMatrix)( object &_ob )
+    {
+      _CLASSNAME_(Matrix)* result = new _CLASSNAME_(Matrix);
+      for( types::t_int i=_DIM_-1; i >= 0; --i )
+        for( types::t_int j=_DIM_-1; j >= 0; --j )
+          result->x[i][j] = extract<_TYPE_>(_ob[i][j]);
+      return result;
+    }
   }
-
 
 }
 
 #else
 
-   class_< _CLASSNAME_(WVector) >( _PYTHONNAME_(Vector) )
-     .def( init< object >() )
-     .def( self += other<_CLASSNAME_(WVector)>() )
-     .def( self + other<_CLASSNAME_(WVector)>() )
-     .def( self - other<_CLASSNAME_(WVector)>() )
-     .def( self -= other<_CLASSNAME_(WVector)>() )
-     .def( other<_TYPE_>() * self )
-     .def( self * other<_TYPE_>() )
-     .def( self / other<_TYPE_>() )
-     .def( self == other<_CLASSNAME_(WVector)>() )
-     .def( other<_CLASSNAME_(WVector)>() == self )
-     .def( self != other<_CLASSNAME_(WVector)>() )
-     .def( other<_CLASSNAME_(WVector)>() != self )
-     .def( "__str__", &_CLASSNAME_(WVector)::print );
+   class_< FixedVector<_TYPE_, _DIM_> >( _PYTHONNAME_(FixedVector), no_init );
+   class_< _CLASSNAME_(Vector), bases< FixedVector<_TYPE_, _DIM_> > >
+         ( _PYTHONNAME_(detailsVector), no_init )
+     .def( "__add__", 
+           &details::add< _CLASSNAME_(Vector),
+                          _CLASSNAME_(Vector) >,
+           return_value_policy<manage_new_object>() )
+     .def( "__diff__", 
+           &details::add< _CLASSNAME_(Vector),
+                          _CLASSNAME_(Vector) >,
+           return_value_policy<manage_new_object>() )
+     .def( "__mul__", 
+           &details::mul< _CLASSNAME_(Vector),
+                          _TYPE_, _CLASSNAME_(Vector) >,
+           return_value_policy<manage_new_object>() )
+     .def( "__rmul__", 
+           &details::rmul< _CLASSNAME_(Vector),
+                           _TYPE_, _CLASSNAME_(Vector) >,
+           return_value_policy<manage_new_object>() )
+     .def( "__div__", 
+           &details::div< _CLASSNAME_(Vector),
+                          _TYPE_, _CLASSNAME_(Vector) >,
+           return_value_policy<manage_new_object>() )
+     .def( self == other<_CLASSNAME_(Vector)>() )
+     .def( self != other<_CLASSNAME_(Vector)>() )
+     .def( "__getitem__", &details::_CLASSNAME_(getVecItem) )
+     .def( "__setitem__", &details::_CLASSNAME_(setVecItem) ) 
+     .def( "__len__", &details::length<_DIM_> ) 
+     .def( "__str__", &details::_CLASSNAME_(printVector) );
 
-   class_< _CLASSNAME_(WMatrix) >( _PYTHONNAME_(Matrix) )
-     .def( init< object >() )
-     .def( self += other<_CLASSNAME_(WMatrix)>() )
-     .def( self -= other<_CLASSNAME_(WMatrix)>() )
-     .def( self * other<_CLASSNAME_(WMatrix)>() )
-     .def( self + other<_CLASSNAME_(WMatrix)>() )
-     .def( self - other<_CLASSNAME_(WMatrix)>() )
-     .def( self * other<_CLASSNAME_(WVector)>() )
-     .def( other<_TYPE_>() * self )
-     .def( self * other<_TYPE_>() )
-     .def( self / other<_TYPE_>() )
-     .def( self == other<_CLASSNAME_(WMatrix)>() )
-     .def( other<_CLASSNAME_(WMatrix)>() == self )
-     .def( self != other<_CLASSNAME_(WMatrix)>() )
-     .def( other<_CLASSNAME_(WMatrix)>() != self )
-     .def( "diag", &_CLASSNAME_(WMatrix)::diag )
-     .def( "__str__", &_CLASSNAME_(WMatrix)::print );
+   def( _PYTHONNAME_(Vector),
+        &details::_CLASSNAME_(makeVector),
+        return_value_policy<manage_new_object>() );
 
+   class_< _CLASSNAME_(Matrix) >( _PYTHONNAME_(Matrix) )
+     .def( "__mul__", 
+           &details::mul< _CLASSNAME_(Matrix),
+                          _CLASSNAME_(Matrix),
+                          _CLASSNAME_(Matrix) >,
+           return_value_policy<manage_new_object>() )
+     .def( "__add__", 
+           &details::add< _CLASSNAME_(Matrix),
+                          _CLASSNAME_(Matrix) >,
+           return_value_policy<manage_new_object>() )
+     .def( "__diff__", 
+           &details::diff< _CLASSNAME_(Matrix),
+                          _CLASSNAME_(Matrix) >,
+           return_value_policy<manage_new_object>() )
+     .def( "__mul__", 
+           &details::mul< _CLASSNAME_(Matrix),
+                          _TYPE_, _CLASSNAME_(Matrix) >,
+           return_value_policy<manage_new_object>() )
+     .def( "__rmul__", 
+           &details::rmul< _CLASSNAME_(Matrix),
+                           _TYPE_, _CLASSNAME_(Matrix) >,
+           return_value_policy<manage_new_object>() )
+     .def( "__div__", 
+           &details::mul< _CLASSNAME_(Matrix),
+                          _TYPE_, _CLASSNAME_(Matrix) >,
+           return_value_policy<manage_new_object>() )
+     .def( "__mul__", 
+           &details::mul< _CLASSNAME_(Matrix),
+                          _CLASSNAME_(Vector),
+                          _CLASSNAME_(Vector) >,
+           return_value_policy<manage_new_object>() )
+     .def( self == other<_CLASSNAME_(Matrix)>() )
+     .def( self != other<_CLASSNAME_(Matrix)>() )
+     .def( "__str__", &details::_CLASSNAME_(printMatrix) )
+     .def( "__getitem__", &details::_CLASSNAME_(getMatItem) )
+     .def( "__setitem__", &details::_CLASSNAME_(setMatItem) ) 
+     .def( "__len__", &details::length<_DIM_> ) 
+     .def( "diag", &_CLASSNAME_(Matrix)::diag );
+
+   def( "make_"_PYTHONNAME_(Matrix),
+        &details::_CLASSNAME_(makeMatrix),
+        return_value_policy<manage_new_object>() );
 
 #endif
 

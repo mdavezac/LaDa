@@ -3,23 +3,27 @@
 //
 
 #include <boost/python.hpp>
+#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <iostream>
 #include <algorithm>
 #include <boost/lambda/lambda.hpp>
 
 #include <opt/types.h>
+#include <opt/convex_hull.h>
 
+#include "constituent_strain.h"
+#include "lattice.h"
 #include "structure.h"
 #include "atom.h"
 
-typedef Ising_CE::Structure::t_Atom t_Atom;
+#include<tinyxml/tinyxml.h>
 
+using namespace boost::python;
 #include "atom.py.hpp"
 
 #define _INMODULE_
 BOOST_PYTHON_MODULE(atom)
 {
-   using namespace boost::python;
 
 #  include "atom.py.hpp"
 // #  define _TYPE_ types::t_real

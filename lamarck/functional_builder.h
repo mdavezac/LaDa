@@ -73,7 +73,8 @@ namespace VA_CE {
       //!          every potin-symmetry operation of the lattice,
       void add_equivalent_clusters();
       //! \brief Creates a specialized cluster expansion functional for structure \a str.
-      bool generate_functional(const Ising_CE::Structure &str, t_VA_Functional * const functional);
+      bool generate_functional(const Ising_CE::Structure &str,
+                               t_VA_Functional * const functional);
 
   };
 

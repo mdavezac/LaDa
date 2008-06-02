@@ -146,12 +146,14 @@ namespace Ising_CE {
       //! \details Pretty much focused on binary and unary sites.
       types::t_real convert_type_index_to_real( const types::t_unsigned _s,
                                                 const types::t_unsigned _i ) const
-        { return ( sites[_s].type.size() == 1 ) ? -1: convert_type_index_to_real( _i ); }
+        { return ( sites[_s].type.size() == 1 ) ? 
+                 -1: convert_type_index_to_real( _i ); }
       //! \brief Converts a real value to the index of site \a _s.
       //! \details Pretty much focused on binary and unary sites.
       types::t_unsigned convert_real_to_type_index( const types::t_unsigned _s,
                                                     const types::t_real _r ) const
-        { return ( sites[_s].type.size() == 1 ) ? 0: convert_real_to_type_index( _r ); }
+        { return ( sites[_s].type.size() == 1 ) ?
+                 0: convert_real_to_type_index( _r ); }
       //! Dumps the lattice to a stream. 
       void print_out (std::ostream &stream) const;
   };
