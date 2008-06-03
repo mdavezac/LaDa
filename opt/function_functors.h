@@ -124,8 +124,8 @@ namespace function
 
     public:  
       //! Constructor and Initializer.
-      explicit Binary_Functor   ( const t_Functional1 *_functional1,
-                                  const t_Functional2 *_functional2 );
+      explicit Binary_Functor   ( t_Functional1 *_functional1,
+                                  t_Functional2 *_functional2 );
       //! Copy Constructor.
       Binary_Functor   (const Binary_Functor<t_Functional1, t_Functional2> &_f) 
                      : t_Base( _f ), functional1( _f.functional1 ),
@@ -191,7 +191,7 @@ namespace function
 
     public:     
       //! Constructor and Initializer
-      explicit Minus  (const t_Functional1 *_f1, const t_Functional2 *_f2)
+      explicit Minus  (t_Functional1 *_f1, t_Functional2 *_f2)
                      : t_Base( _f1, _f2 ) {}
       //! Constructor
       Minus() : t_Base() {};
@@ -234,7 +234,7 @@ namespace function
 
     public:   
       //! Constructor and Initializer
-      explicit Plus  (const t_Functional1 *_f1, const t_Functional2 *_f2)
+      explicit Plus  (t_Functional1 *_f1, t_Functional2 *_f2)
                      : t_Base( _f1, _f2 ) {}
       //! Constructor
       Plus() : t_Base() {};
@@ -335,8 +335,8 @@ namespace function
 
 
   template<typename T_FUNC1, typename T_FUNC2>
-    Binary_Functor<T_FUNC1, T_FUNC2> :: Binary_Functor   ( const t_Functional1 *_functional1,
-                                                           const t_Functional2 *_functional2 )
+    Binary_Functor<T_FUNC1, T_FUNC2> :: Binary_Functor   ( t_Functional1 *_functional1,
+                                                           t_Functional2 *_functional2 )
                                                        : functional1(_functional1),
                                                          functional2(_functional2)
     { 
