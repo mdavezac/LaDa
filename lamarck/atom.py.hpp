@@ -227,7 +227,52 @@ namespace Ising_CE
     std::ostream& operator<< ( std::ostream &_os, const PiStructure &_ch )
       { return _os << _ch.index; }
 
-    tuple* generateCEs( t_Builder &_builder, t_Structure &_str )
+    template< class T_TYPE >
+    types::t_unsigned length( const T_TYPE& _type )
+      { return _type.size(); }
+
+    class CEFunc : public t_Builder :: t_VA_Functional 
+    {
+      typedef t_Builder :: t_Chemical t_Chemical;
+      typedef t_Builder :: t_CS t_CS;
+      typedef t_Builder :: t_VA_functional t_Base;
+
+      public:
+        CEFunc() : t_Base() {} 
+        CEFunc( t_Chemical* _chem, t_CS* _cs ) : t_Base( _chem, _cs ) {}
+        ~CEfunc ()
+        { 
+          if( _chem ) delete _chem;
+          if( _cs ) delete _cs; 
+        } 
+        types::t_real getitem( types::t_int _i, object ) const;
+        {
+          if( _i < types::t_int(0) ) _i = size() - _i;
+          if( _i >= (types::t_int) size() ) throw std::out_of_range( "CE functional." );
+          return (*variables)[ _i ];
+        }
+        void setitem( types::t_int _i, const object &_object )
+        {
+          if( _i < types::t_int(0) ) _i = size() - _i;
+          if( _i >= (types::t_int) size() ) throw std::out_of_range( "CE functional." );
+          types::t_real &var = (*variables)[_i];
+          try { var = extract< typename T_TYPE :: t_Type>( _object ); }
+          catch(...) 
+          {
+            if( not Structure::lattice )
+              throw std::runtime_error( "Could not convert atom type.\n" ); 
+            std::string string =  extract< std::string >( _object );
+            if( string.compare( Structure::lattice->sites[0].type[0] ) == 0 )
+              var = typename T_TYPE::t_Type(-1);
+            else if( string.compare( Structure::lattice->sites[0].type[1] ) == 0 )
+              var = typename T_TYPE::t_Type(1);
+            else
+              throw std::runtime_error( "Requested Atomic type is not within lattice" );
+          }
+        }
+    };
+
+    CEFunc* generateCEs( t_Builder &_builder, t_Structure &_str )
     {
       typedef std::pair<t_Builder::t_Chemical*, t_Builder::t_CS*> t_Pair;
       t_Pair pair( _builder.generate_functional(_str) );
@@ -237,42 +282,11 @@ namespace Ising_CE
         if( pair.second ) delete pair.second;
         throw std::runtime_error( "Could not create functional" );
       }
-      pair.first->resize( _str.atoms.size() );
-      pair.second->set_variables( pair.first->get_variables() );
+      CEFunc *result = new CEFunc( pair.first, pair.second );
+      result->resize( _str.atoms.size() );
       
-      return new tuple( make_tuple( pair.first, pair.second ) );
+      return result;
     }
-    template< class T_TYPE >
-    types::t_real getitem( const T_TYPE& _type, types::t_int _i )
-    {
-      if( _i > (types::t_int) _type.size() ) 
-        throw std::out_of_range( "CE functional." );
-      return _type.get_variables()->operator[]( _i );
-    }
-    template< class T_TYPE >
-    void setitem( const T_TYPE& _type, types::t_int _i, object &_object )
-    {
-      if( _i > (types::t_int) _type.size() ) 
-        throw std::out_of_range( "CE functional." );
-      types::t_real &var = _type.get_variables()->operator[]( _i );
-      try { var = extract< typename T_TYPE :: t_Type>( _object ); }
-      catch(...) 
-      {
-        if( not Structure::lattice )
-          throw std::runtime_error( "Could not convert atom type.\n" ); 
-        std::string string =  extract< std::string >( _object );
-        if( string.compare( Structure::lattice->sites[0].type[0] ) == 0 )
-          var = typename T_TYPE::t_Type(-1);
-        else if( string.compare( Structure::lattice->sites[0].type[1] ) == 0 )
-          var = typename T_TYPE::t_Type(1);
-        else
-          throw std::runtime_error( "Requested Atomic type is not within lattice" );
-      }
-    }
-    template< class T_TYPE >
-    types::t_unsigned length( const T_TYPE& _type )
-      { return _type.size(); }
-
   }
 
 }
@@ -352,18 +366,17 @@ namespace Ising_CE
 
    class_< t_Builder::t_Chemical >( "Chemical" )
      .def( init< t_Builder :: t_Chemical >() )
-     .def( "evaluate", &t_Builder::t_Chemical::evaluate )
-     .def( "__len__",     &Ising_CE::details::length <t_Builder::t_Chemical> )
-     .def( "__getitem__", &Ising_CE::details::getitem<t_Builder::t_Chemical> )
-     .def( "__setitem__", &Ising_CE::details::setitem<t_Builder::t_Chemical> );
+     .def( "evaluate", &t_Builder::t_Chemical::evaluate );
 
    class_< t_Builder::t_CS >( "ConstituentStrain" )
      .def( init< t_Builder :: t_CS >() )
-     .def( "evaluate", &t_Builder::t_CS::evaluate )
-     .def( "__len__",     &Ising_CE::details::length <t_Builder::t_CS> )
-     .def( "__getitem__", &Ising_CE::details::getitem<t_Builder::t_CS> )
-     .def( "__setitem__", &Ising_CE::details::setitem<t_Builder::t_CS> );
+     .def( "evaluate", &t_Builder::t_CS::evaluate );
 
+   class_< CEFunc >( "CE", noinit )
+     .def( "evaluate", &Ising_CE::details::CEFunc::evaluate );
+     .def( "__len__",     &Ising_CE::details::CEFunc::size )
+     .def( "__getitem__", &Ising_CE::details::CEFunc::getitem )
+     .def( "__setitem__", &Ising_CE::details::CEFunc::setitem );
 #endif
 
 #include "atom.py.hpp"
