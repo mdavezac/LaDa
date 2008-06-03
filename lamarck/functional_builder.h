@@ -28,7 +28,6 @@
 //! \brief Nonsense namespace which should become %CE (probably)
 namespace VA_CE {
 
-  using Ising_CE::Constituent_Strain;
   using Ising_CE::Atat_Structure;
 
   //! \brief This creates a cell-shape specialized functional out of a set of clusters.
@@ -38,46 +37,66 @@ namespace VA_CE {
   //!          effective. This class transforms a set of cluster interactions
   //!          and harmonics to a cell-shape specialized functional constituted
   //!          of a polynomial and a constituent strain instance.
-  class Functional_Builder
+  template< class T_HARMONIC >
+  class Builder
   {
     public:
+      //! Type of the harmonic used.
+      typedef T_HARMONIC t_Harmonic;
+      //! Type of the constituent strain.
+      typedef Ising_CE :: ConstituentStrain 
+                       :: Functional< t_Harmonic > t_CS;
+      //! Type of the chemical functional.
+      typedef Polynome t_Chemical;
       //! Type of the specialized functional
-      typedef function::Plus< Polynome, Constituent_Strain > t_VA_Functional;
+      typedef function::Plus< t_Chemical, t_CS > t_VA_Functional;
+      //! Type of the clusters.
+      typedef Ising_CE::Cluster t_Cluster;
+      //! Type of the vector of clusters.
+      typedef std::vector< t_Cluster > t_Clusters;
 
     protected:
       //! Pointer to the lattice 
-      static Ising_CE::Lattice*              lattice;
+      static Ising_CE::Lattice* lattice;
       //! Pointer to the set of clusters
-      static std::vector<Ising_CE::Cluster>* clusters;
+      static t_Clusters*        clusters;
       //! Pointer to the harmonics
-      static Constituent_Strain*             harmonics;
+      static t_CS*              harmonics;
       
     // constructor, destructor
     public:
       //! Constructor
-      Functional_Builder() {}
+      Builder() {}
       //! Copy Constructor
-      Functional_Builder   (const Functional_Builder &_c)  {}
+      Builder   (const Builder &_c)  {}
       //! Destructor
-      virtual ~Functional_Builder();
+      virtual ~Builder();
 
       //! Loads a %Cluster Expansion functional from XML
       virtual bool Load( const TiXmlElement &handle );
 
     public: 
       //! \brief Finds all symmetrically equivalent clusters of the clusters in
-      //!        Functional_Builder::clusters.
-      //! \details In effect, if those clusters in Functional_Builder::Clusters
+      //!        Builder::clusters.
+      //! \details In effect, if those clusters in Builder::Clusters
       //!          a generating family prior to call, then after call,
-      //!          Functional_Builder::Clusters forms a group with respect to
+      //!          Builder::Clusters forms a group with respect to
       //!          every potin-symmetry operation of the lattice,
       void add_equivalent_clusters();
       //! \brief Creates a specialized cluster expansion functional for structure \a str.
       bool generate_functional(const Ising_CE::Structure &str,
                                t_VA_Functional * const functional);
+      //! \brief Builds and returns a pair of chemical and strain functionals.
+      //! \details The functional are specialized for the structure on input.
+      //! \warning the variables of the functionals are not set to anything.
+      //!          see function::Base for details.
+      std::pair<t_Chemical*, t_CS*> generate_functional(const Ising_CE::Structure &_str );
 
   };
 
   
 } // end of namespace VA_CE
+
+#include "functional_builder.impl.h"
+
 #endif

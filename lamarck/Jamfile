@@ -1,20 +1,13 @@
+lib ce : cluster.cc harmonic.cc  polynome.cc lattice.cc structure.cc
+         ../print//print.lib 
+         ../atat//atat.lib 
+         ../mpi//mpi.lib 
+         ..//tinyxml ;
 
-lib ce : cluster.cc constituent_strain.cc functional_builder.cc
-         harmonic.cc  polynome.cc 
-         crystal ;
 
-lib crystal :  lattice.cc structure.cc
-               ../print//print.lib 
-               ../atat//atat.lib 
-               ../mpi//mpi.lib 
-               ..//tinyxml ;
+exe lamarck : main.cc ce $(TOP)//boost-pg ;
 
-alias lamarck.lib : ce crystal ;
-
-exe lamarck : main.cc lamarck.lib $(TOP)//boost-pg ..//tinyxml ;
-
-python-extension atom : atom.py.cc  $(TOP)/atat//atat ..//tinyxml
-                        lamarck.lib
+python-extension atom : atom.py.cc ce  $(TOP)/atat//atat ..//tinyxml
                       : : <library>..//boost-python ;
 
 # A little "rule" (function) to clean up the syntax of declaring tests

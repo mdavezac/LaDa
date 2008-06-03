@@ -28,11 +28,15 @@ lib boost-python : : <name>boost_python$(boostldsuffix)
                      <search>$(boostldflags) ;
 
 
+import feature : feature ;
+feature cstype : cubic tetragonal : composite propagated ;
+feature.compose <cstype>cubic : <define>_CUBIC_CE_ ;
+feature.compose <cstype>tetragonal : <define>_TETRAGONAL_CE_ ;
+
 project LaDa : requirements <include>.  
                             <include>$(boostinclude) 
                             <include>$(generalinclude) 
-                            <include>/usr/include/python2.5
-                            <define>PACKAGE_STRING=$(PACKAGE) ;
-Depends LaDa : general ;
+                            <define>PACKAGE_STRING=$(PACKAGE) 
+             : default-build debug <cstype>cubic ;
 
 

@@ -30,25 +30,16 @@ namespace CE
     for(; functional_xml;
           functional_xml = functional_xml->NextSiblingElement("Functional") )
     {
-      std::string str = ""; 
-      if ( functional_xml->Attribute("type") )
-        str = functional_xml->Attribute("type");
-      if ( str.compare("CE") == 0 )
-        break;
+      if ( not functional_xml->Attribute("type") ) continue;
+      std::string str =  functional_xml->Attribute("type");
+      if ( str.compare("CE") == 0 ) break;
     }
-    if ( not functional_xml )
-    {
-      std::cerr << "No <Functional type=\"CE\"> found "
-                << std::endl << "Giving up" << std::endl;
-      return false;
-    }
-
-    if ( not VA_CE::Functional_Builder::Load(*functional_xml) )
-    {
-      std::cerr << "Could not load CE functional from XML\n";
-      return false;
-    }
-    Ising_CE::Structure::lattice = VA_CE::Functional_Builder::lattice;
+    __DOASSERT( not functional_xml,
+                "No <Functional type=\"CE\"> found.\n"
+                "Giving up\n" )
+    __DOASSERT( not t_Base::Load(*functional_xml),
+                "Could not load CE functional from XML.\n" )
+    Ising_CE::Structure::lattice = t_Base::lattice;
        
     add_equivalent_clusters();
 

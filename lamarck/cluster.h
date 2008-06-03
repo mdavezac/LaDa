@@ -18,7 +18,7 @@
 #include <mpi/mpi_object.h>
 
 //! \cond
-namespace VA_CE{ class Functional_Builder; };
+namespace VA_CE{ template<class T_HARMONIC> class Builder; };
 namespace Ising_CE{ class Cluster; }
 //! \endcond
 
@@ -45,7 +45,7 @@ namespace Ising_CE
    */ 
   class Cluster 
   {
-    friend class VA_CE::Functional_Builder;
+    template<class T_HARMONIC> friend class VA_CE::Builder;
     
     protected:
       //! Vectors linking sites which interact through this cluster.

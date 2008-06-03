@@ -10,8 +10,11 @@
 
 #include <opt/types.h>
 #include <opt/convex_hull.h>
+#include <opt/debug.h>
 
+#include "functional_builder.h"
 #include "constituent_strain.h"
+#include "harmonic.h"
 #include "lattice.h"
 #include "structure.h"
 #include "atom.h"

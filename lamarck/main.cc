@@ -37,6 +37,18 @@
 #include <boost/mpi/environment.hpp>
 #endif
 
+#include "constituent_strain.h"
+#include "harmonic.h"
+
+#if defined(_CUBIC_CE_)
+typedef Ising_CE::ConstituentStrain::Harmonic::Cubic t_Harmonic;
+#elif defined( _TETRAGONAL_CE_ )
+typedef Ising_CE::ConstituentStrain::Harmonic::Tetragonal t_Harmonic;
+#else
+#error Please specify _CUBIC_CE_ or _TETRAGONAL_CE_
+#endif
+typedef VA_CE::Builder<t_Harmonic> t_Builder;
+
 int main(int argc, char *argv[]) 
 {
   try
@@ -139,7 +151,7 @@ int main(int argc, char *argv[])
     child = handle.FirstChild( "Job" ).Element();
     __DOASSERT( not child, "Could not find Functional in input." )
 
-    VA_CE::Functional_Builder ce;
+    t_Builder ce;
     __DOASSERT( not ce.Load(*child), "Error while reading Functional from input." )
     ce.add_equivalent_clusters();
  
@@ -152,7 +164,7 @@ int main(int argc, char *argv[])
       Ising_CE :: Structure :: lattice = &lattice;
       __DOASSERT( not structure.Load(*child), "Error while reading Structure from input." )
  
-      VA_CE::Functional_Builder::t_VA_Functional functional;
+      t_Builder::t_VA_Functional functional;
       OUTPUT << "generating functional" << ENDLINE;
       ce.generate_functional(structure, &functional);
       __MPICODE( functional.get_functional1()->set_mpi( ::mpi::main ); )

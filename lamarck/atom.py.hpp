@@ -38,7 +38,15 @@ typedef Ising_CE::Lattice     t_Lattice;
 typedef Ising_CE::Structure   t_Structure;
 typedef t_Structure::t_Atom   t_Atom;
 typedef t_Lattice::t_Site     t_Site;
-typedef Ising_CE::Constituent_Strain t_CS;
+#if defined( _CUBIC_CE_ )
+  typedef Ising_CE::ConstituentStrain::Harmonic::Cubic      t_Harmonic;
+#elif defined( _TETRAGONAL_CE_ )
+  typedef Ising_CE::ConstituentStrain::Harmonic::Tetragonal t_Harmonic;
+#else 
+# error Please define either _CUBIC_CE_ or _TETRAGONAL_CE_
+#endif
+typedef Ising_CE::ConstituentStrain::Functional<t_Harmonic> t_CS;
+typedef VA_CE::Builder<t_Harmonic> t_Builder;
 typedef Ising_CE::details::PiStructure t_PiStructure;
 typedef opt::ConvexHull::Base<t_PiStructure> t_CH;
 
@@ -136,6 +144,8 @@ namespace Ising_CE
     template<> std::string nodename<t_Lattice>()    { return "Lattice"; }
     template<> std::string nodename<t_Structure>()  { return "Structure"; }
     template< class T_TYPE > void do_specialcode( T_TYPE &_type ) {}
+    template<> void do_specialcode< t_Builder >( t_Builder &_type )
+      { _type.add_equivalent_clusters(); }
     template<> void do_specialcode< t_Lattice >( t_Lattice &_type )
       { t_Structure::lattice = &_type; }
     template< class T_TYPE > bool doloadcode( T_TYPE &_type, TiXmlElement *_parent )
@@ -144,7 +154,7 @@ namespace Ising_CE
       { return _type.Load_Harmonics( *_parent ); }
 
     template< class T_TYPE > TiXmlElement* findnode( TiXmlHandle &_doc )
-      {return _doc.FirstChild("Job").FirstChild(nodename<T_TYPE>()).Element(); }
+      { return _doc.FirstChild("Job").FirstChild(nodename<T_TYPE>()).Element(); }
     template<> TiXmlElement *findnode<t_CS>( TiXmlHandle &_doc )
     {
       TiXmlElement *result = _doc.FirstChild("Job")
@@ -164,6 +174,8 @@ namespace Ising_CE
       result = result->FirstChildElement(nodename<t_CS>());
       return result;
     }
+    template<> TiXmlElement *findnode<t_Builder>( TiXmlHandle &_doc )
+      { return _doc.FirstChild("Job").Element(); }
 
 
     template< class T_TYPE >
@@ -214,6 +226,52 @@ namespace Ising_CE
     };
     std::ostream& operator<< ( std::ostream &_os, const PiStructure &_ch )
       { return _os << _ch.index; }
+
+    tuple* generateCEs( t_Builder &_builder, t_Structure &_str )
+    {
+      typedef std::pair<t_Builder::t_Chemical*, t_Builder::t_CS*> t_Pair;
+      t_Pair pair( _builder.generate_functional(_str) );
+      if( (not pair.first) or (not pair.second) ) 
+      {
+        if( pair.first ) delete pair.first;
+        if( pair.second ) delete pair.second;
+        throw std::runtime_error( "Could not create functional" );
+      }
+      pair.first->resize( _str.atoms.size() );
+      pair.second->set_variables( pair.first->get_variables() );
+      
+      return new tuple( make_tuple( pair.first, pair.second ) );
+    }
+    template< class T_TYPE >
+    types::t_real getitem( const T_TYPE& _type, types::t_int _i )
+    {
+      if( _i > (types::t_int) _type.size() ) 
+        throw std::out_of_range( "CE functional." );
+      return _type.get_variables()->operator[]( _i );
+    }
+    template< class T_TYPE >
+    void setitem( const T_TYPE& _type, types::t_int _i, object &_object )
+    {
+      if( _i > (types::t_int) _type.size() ) 
+        throw std::out_of_range( "CE functional." );
+      types::t_real &var = _type.get_variables()->operator[]( _i );
+      try { var = extract< typename T_TYPE :: t_Type>( _object ); }
+      catch(...) 
+      {
+        if( not Structure::lattice )
+          throw std::runtime_error( "Could not convert atom type.\n" ); 
+        std::string string =  extract< std::string >( _object );
+        if( string.compare( Structure::lattice->sites[0].type[0] ) == 0 )
+          var = typename T_TYPE::t_Type(-1);
+        else if( string.compare( Structure::lattice->sites[0].type[1] ) == 0 )
+          var = typename T_TYPE::t_Type(1);
+        else
+          throw std::runtime_error( "Requested Atomic type is not within lattice" );
+      }
+    }
+    template< class T_TYPE >
+    types::t_unsigned length( const T_TYPE& _type )
+      { return _type.size(); }
 
   }
 
@@ -286,6 +344,25 @@ namespace Ising_CE
      .def_readwrite( "index", &t_PiStructure::index )
      .def_readwrite( "x", &t_PiStructure::x );
 
+   class_< t_Builder >( "Builder" )
+     .def( init< t_Builder >() )
+     .def( "fromXML",  &Ising_CE::details::fromXML<t_Builder> )
+     .def( "build",    &Ising_CE::details::generateCEs,
+           return_value_policy<manage_new_object>() );
+
+   class_< t_Builder::t_Chemical >( "Chemical" )
+     .def( init< t_Builder :: t_Chemical >() )
+     .def( "evaluate", &t_Builder::t_Chemical::evaluate )
+     .def( "__len__",     &Ising_CE::details::length <t_Builder::t_Chemical> )
+     .def( "__getitem__", &Ising_CE::details::getitem<t_Builder::t_Chemical> )
+     .def( "__setitem__", &Ising_CE::details::setitem<t_Builder::t_Chemical> );
+
+   class_< t_Builder::t_CS >( "ConstituentStrain" )
+     .def( init< t_Builder :: t_CS >() )
+     .def( "evaluate", &t_Builder::t_CS::evaluate )
+     .def( "__len__",     &Ising_CE::details::length <t_Builder::t_CS> )
+     .def( "__getitem__", &Ising_CE::details::getitem<t_Builder::t_CS> )
+     .def( "__setitem__", &Ising_CE::details::setitem<t_Builder::t_CS> );
 
 #endif
 

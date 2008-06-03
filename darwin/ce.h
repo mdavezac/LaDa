@@ -26,9 +26,21 @@
 #include "single_site.h"
 
 
+
 //! all things Cluster Expansion (should be...)
 namespace CE
 {
+  namespace details 
+  {
+#   if defined(_CUBIC_CE_)
+      typedef Ising_CE::ConstituentStrain::Harmonic::Cubic t_Harmonic;
+#   elif defined( _TETRAGONAL_CE_ )
+      typedef Ising_CE::ConstituentStrain::Harmonic::Tetragonal t_Harmonic;
+#   else
+#     error Please specify _CUBIC_CE_ or _TETRAGONAL_CE_
+#   endif
+    typedef VA_CE::Builder<t_Harmonic> t_Builder;
+  }
 
   //! \ingroup Genetic
   //! \brief Interface between the genetic algorithm and the cluster expansion
@@ -36,11 +48,11 @@ namespace CE
   //! \xmlinput The functional is expected to be found directly under the
   //!           overall \<Job\/> tag. The exact format should be described
   //!           elsewhere.
-  class Darwin : public VA_CE :: Functional_Builder
+  class Darwin : public details::t_Builder
   {
     protected:
       //! Type of the base class
-      typedef VA_CE::Functional_Builder t_Base;
+      typedef details::t_Builder t_Base;
       //! single-cell-shape specialized cluster expansion functional type
       typedef t_Base::t_VA_Functional t_Functional;
       
