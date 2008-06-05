@@ -5,7 +5,8 @@ lib ce : cluster.cc harmonic.cc  polynome.cc lattice.cc structure.cc
          ..//tinyxml ;
 
 
-exe lamarck : main.cc ce $(TOP)//boost-pg ;
+exe cubic : main.cc ce $(TOP)//boost-pg : : <cstype>cubic ;
+exe tetra : main.cc ce $(TOP)//boost-pg : : <cstype>tetragonal ;
 
 python-extension atom : atom.py.cc ce  $(TOP)/atat//atat ..//tinyxml
                       : : <library>..//boost-python ;

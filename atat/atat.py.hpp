@@ -103,6 +103,10 @@ namespace atat
       { return diff( _b, _a); }
 
     template< types::t_unsigned d > types::t_unsigned length() { return d; }
+    template< class T_MAT > T_MAT* transpose( T_MAT &_mat )
+      { return new T_MAT( ~_mat ); }
+    template< class T_MAT > T_MAT* inverse( T_MAT &_mat )
+      { return new T_MAT( !_mat ); }
 #endif
 
     _TYPE_ _CLASSNAME_( getVecItem )( const _CLASSNAME_(Vector) &_v,
@@ -227,6 +231,7 @@ namespace atat
           result->x[i][j] = extract<_TYPE_>(_ob[i][j]);
       return result;
     }
+    
   }
 
 }
@@ -304,6 +309,10 @@ namespace atat
      .def( "__getitem__", &details::_CLASSNAME_(getMatItem) )
      .def( "__setitem__", &details::_CLASSNAME_(setMatItem) ) 
      .def( "__len__", &details::length<_DIM_> ) 
+     .def( "transpose", details::transpose< _CLASSNAME_(Matrix) >,
+           return_value_policy< manage_new_object >() )
+     .def( "inverse", details::inverse< _CLASSNAME_(Matrix) >,
+           return_value_policy< manage_new_object >() )
      .def( "diag", &_CLASSNAME_(Matrix)::diag );
 
    def( "make_"_PYTHONNAME_(Matrix),

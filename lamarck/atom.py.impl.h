@@ -121,8 +121,8 @@
       if( result ) return result;
       
       result = _doc.FirstChild("Job")
-                   .FirstChild("functional").Element();
-      for(; result; result = result->NextSiblingElement("functional") )
+                   .FirstChild("Functional").Element();
+      for(; result; result = result->NextSiblingElement("Functional") )
       {
         if( not result->Attribute("type") ) continue;
       

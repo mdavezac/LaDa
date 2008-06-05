@@ -108,7 +108,8 @@ int main(int argc, char *argv[])
     if ( vm.count("input") )
     {
       filename = vm["input"].as< std::string >();
-      __ROOTCODE( (*::mpi::main), OUTPUT << "Input: " << filename << ".\n";)
+      if( filename.compare("input.xml") )
+        __ROOTCODE( (*::mpi::main), OUTPUT << "Input: " << filename << ".\n";)
     }
 
     TiXmlElement *child;
@@ -165,7 +166,6 @@ int main(int argc, char *argv[])
       __DOASSERT( not structure.Load(*child), "Error while reading Structure from input." )
  
       t_Builder::t_VA_Functional functional;
-      OUTPUT << "generating functional" << ENDLINE;
       ce.generate_functional(structure, &functional);
       __MPICODE( functional.get_functional1()->set_mpi( ::mpi::main ); )
       __MPICODE( functional.get_functional2()->set_mpi( ::mpi::main ); )
@@ -175,8 +175,8 @@ int main(int argc, char *argv[])
                       boost::lambda::bind( &Ising_CE::Structure::t_Atom::type,
                                            boost::lambda::_1 ) );
     
-      OUTPUT << "Energy: " << functional.evaluate() << "\n"
-             << "Concentration: " << structure.get_concentration() << "\n" << ENDLINE;
+      OUTPUT << "Energy: " << functional.evaluate() // << "\n";
+             << "  Concentration: " << structure.get_concentration() << "\n" ; //<< ENDLINE;
 //   Ising_CE::Fourier( structure.atoms.begin(), structure.atoms.end(),
 //                      structure.k_vecs.begin(), structure.k_vecs.end() );
 //   structure.print_out( std::cout );

@@ -65,6 +65,7 @@ namespace Ising_CE
         typedef std::vector<types::t_real>  t_Container;
 
       protected: 
+        using t_Base::variables;
         //! Real-space cartesian coordinates of the structure.
         std::vector<atat::rVector3d> r_vecs;
         //! Reciprocal-space cartesian coordinates of the structure.

@@ -120,7 +120,7 @@ namespace Ising_CE
       for ( ; i_k_vec != i_k_vec_end; ++i_k_vec )
       {
         if ( norm2( *i_k_vec ) < types::tolerance ) // don't need to compute Gamma
-          ++i_k_vec;
+          continue;
 
         i_harmonic = i_harmonic_begin;
         sum_harm = 0.0;
@@ -204,7 +204,7 @@ namespace Ising_CE
       for ( ; i_k_vec != i_k_vec_end; ++i_k_vec )
       {
         if ( norm2( *i_k_vec ) < types::tolerance ) // don't need to compute Gamma
-          ++i_k_vec; 
+          continue;
 
         i_harmonic = i_harmonic_begin;
         i_inter = interpolation;
@@ -315,7 +315,7 @@ namespace Ising_CE
       for ( ; i_k_vec != i_k_vec_end; ++i_k_vec )
       {
         if ( norm2( *i_k_vec ) < types::tolerance ) // don't need to compute Gamma
-          ++i_k_vec; 
+          continue;
 
         i_harmonic = i_harmonic_begin;
         i_inter = interpolation;

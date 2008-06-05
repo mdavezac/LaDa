@@ -53,8 +53,8 @@ BOOST_PYTHON_MODULE(atom)
 
    class_< t_Structure::t_Atoms >("Atoms")
      .def(vector_indexing_suite< t_Structure::t_Atoms >());
-   class_< t_Structure::t_Atoms >("Sites")
-     .def(vector_indexing_suite< t_Lattice::t_Sites >());
+//  class_< t_Structure::t_Atoms >("Sites")
+//    .def(vector_indexing_suite< t_Lattice::t_Sites >());
 
    class_< t_Structure >( "Structure" )
      .def( init< t_Structure >() )
@@ -62,8 +62,10 @@ BOOST_PYTHON_MODULE(atom)
      .def_readwrite( "atoms",  &t_Structure::atoms )
      .def_readwrite( "energy", &t_Structure::energy )
      .def_readwrite( "scale",  &t_Structure::scale )
+     .def_readwrite( "index", &t_Structure::Pi_name )
      .def( "__str__",  &print<t_Structure> ) 
-     .def( "fromXML",  &XML::from<t_Structure> );
+     .def( "fromXML",  &XML::from<t_Structure> )
+     .def( "toXML",  &XML::to<t_Structure> );
 
    class_< t_Lattice >( "Lattice" )
      .def( init< t_Lattice >() )
@@ -87,9 +89,6 @@ BOOST_PYTHON_MODULE(atom)
      .def_readwrite( "index", &PiStructure::index )
      .def_readwrite( "x", &PiStructure::x );
 
-   class_< function::Base<>::t_Container >( "details_variables" )
-     .def( vector_indexing_suite< function::Base<>::t_Container >() );
-     
    typedef Builder< ConstituentStrain::Harmonic::Cubic > :: t_Chemical t_Chemical;
    class_< t_Chemical >( "Chemical" )
      .def( init< t_Chemical >() )
@@ -98,8 +97,14 @@ BOOST_PYTHON_MODULE(atom)
    def( "toAtomType", &toReal );
    def( "fromAtomType", &toType );
 
-   ExposeHarmonicRelated< ConstituentStrain::Harmonic::Cubic >();
-   ExposeHarmonicRelated< ConstituentStrain::Harmonic::Tetragonal >();
+   class_< std::vector<types::t_real> >( "details_variables" )
+     .def( vector_indexing_suite< std::vector<types::t_real> >() );
+     
+#  if   defined (_CUBIC_CE_)
+     ExposeHarmonicRelated< ConstituentStrain::Harmonic::Cubic >();
+#  elif defined (_TETRAGONAL_CE_)
+     ExposeHarmonicRelated< ConstituentStrain::Harmonic::Tetragonal >();
+#  endif
 }
 
 #undef _INMODULE_

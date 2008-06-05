@@ -88,6 +88,36 @@ namespace details
                   << " from " << _filename << ".\n" )
       do_specialcode( _type );
     }
+
+    template< class T_TYPE >
+      void to( const T_TYPE &_type, const std::string &_filename )
+      {
+        
+        TiXmlElement* parent = new TiXmlElement( nodename<T_TYPE>() ); 
+        _type.print_xml( *parent );
+
+        std::ifstream doesexist;
+        doesexist.open(_filename.c_str(), std::ifstream::in);
+        doesexist.close();
+        TiXmlDocument doc;
+        if(doesexist.fail())
+        {
+          doc.SetTabSize(1);
+          doc.LinkEndChild( new TiXmlDeclaration("1.0", "", "") );
+          TiXmlElement *node = new TiXmlElement("Job");
+          node->LinkEndChild( parent );
+          doc.LinkEndChild( node );
+          doesexist.clear(std::ios::failbit);
+        }
+        else
+        {
+          doc.LoadFile( _filename.c_str());
+          TiXmlHandle docHandle( &doc );
+          TiXmlElement *child = docHandle.FirstChild("Job").Element();
+          child->LinkEndChild( parent );
+        }
+        doc.SaveFile(_filename.c_str() );
+      }
   }
 
 
@@ -109,7 +139,14 @@ namespace details
   CEFunc<T_HARMONIC>* generateCEs( Builder<T_HARMONIC> &_builder, t_Structure &_str );
 
   template< class  T_FUNC > void assign( T_FUNC&, t_Structure&); 
-  template< class  T_FUNC > void createCS( T_FUNC& _f, t_Structure& _s) { _f << _s; }  
+  template< class  T_FUNC > void createCS( T_FUNC& _f, t_Structure& _s)
+  { 
+     _s.find_k_vectors();
+    _f << _s; _f.resize( _s.atoms.size() ); 
+  }  
+  template< class  T_FUNC > typename T_FUNC::t_Container& get_vars( T_FUNC& _f )
+  { return *_f.get_variables(); }
+
 
   template< class T_HARMONIC >
     void ExposeHarmonicRelated()
@@ -119,13 +156,14 @@ namespace details
       typedef Builder< t_Harmonic > t_Builder;
       typedef CEFunc< t_Harmonic > t_CEFunc;
 
+      typename t_CS::t_Container* (t_CS::*varfunc)() const = &t_CS::get_variables;
       std::string name = t_Harmonic::type + "CS";
       class_< t_CS >( name.c_str() )
         .def( init< t_CS >() )
         .def( "evaluate", &t_CS::evaluate )
         .def( "assign",   &assign<t_CS> )
-        .def( "define",   &t_CS::operator<< )
-        .def( "vars",     &t_CEFunc::get_variables,
+        .def( "define",   &createCS<t_CS> )
+        .def( "vars",     varfunc,
               return_internal_reference<1>() )
         .def( "fromXML",  &XML::from< t_CS > );
      

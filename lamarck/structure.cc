@@ -286,6 +286,8 @@ namespace Ising_CE {
     parent = new TiXmlElement( "Cell" );
     structure->LinkEndChild( parent );
     structure->SetAttribute("N", atoms.size() );
+    structure->SetAttribute("N", atoms.size() );
+    structure->SetAttribute("PI", Pi_name );
     
     for (int i=0; i < 3; ++i)
     {
@@ -392,17 +394,12 @@ namespace Ising_CE {
      // A is the basis used to determine "a" first brillouin zone
      atat::rMatrix3d A = (!k_lat) * k_cell;
      
-     // computes range up to first periodic image
-     atat::rVector3d r = ~( (!k_cell) * ( k_lat ) ) * atat::rVector3d(1,1,1);
-     atat::iVector3d range( (types::t_int) std::ceil( std::abs(r(0) ) ), 
-                            (types::t_int) std::ceil( std::abs(r(1) ) ), 
-                            (types::t_int) std::ceil( std::abs(r(2) ) ) );
-     
+     types::t_int range =  2 * types::t_int( atoms.size() );
      // sets up the n-dimensional iterators
      opt::Ndim_Iterator< types::t_int, std::less_equal<types::t_int> > global_iterator;
-     global_iterator.add( -range[0], range[0]);
-     global_iterator.add( -range[1], range[1]);
-     global_iterator.add( -range[2], range[2]);
+     global_iterator.add( -range, range);
+     global_iterator.add( -range, range);
+     global_iterator.add( -range, range);
      
      // the following loop creates all possible k-vectors,
      // it then refolds them and adds them to the k vector list

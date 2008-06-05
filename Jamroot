@@ -37,6 +37,6 @@ project LaDa : requirements <include>.
                             <include>$(boostinclude) 
                             <include>$(generalinclude) 
                             <define>PACKAGE_STRING=$(PACKAGE) 
-             : default-build debug <cstype>cubic ;
+             : default-build debug ;
 
 
