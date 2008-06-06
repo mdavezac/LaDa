@@ -2,6 +2,8 @@
 //  Version: $Id$
 //
 
+
+#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <boost/python.hpp>
 #include <iostream>
 #include <algorithm>
@@ -30,7 +32,6 @@ BOOST_PYTHON_MODULE(atat)
 {
   using namespace atat;
 # include "atat.py.hpp"
-
 }
 
 #undef _INMODULE_

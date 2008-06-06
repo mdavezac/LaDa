@@ -11,61 +11,41 @@ namespace Ising_CE
       template< class T_DERIVED > inline 
         types::t_real Base<T_DERIVED> :: evaluate(const atat::rVector3d &_k) const
         {
-#if       defined( _CUBIC_CE_ )
-#           define __AKCT__ _k
-#elif     defined( _TETRAGONAL_CE_ )
-          atat::rVector3d k = _k;
-          k[2] *= 1.2 ;
-#           define __AKCT__ k
-#endif
-          return (  exp( -norm2(__AKCT__) * attenuation ) * 
-                 (*static_cast<const t_Derived*>(this))( __AKCT__ ) ); 
+          atat::rVector3d k;
+          static_cast< const t_Derived* >(this)->transform_k( _k, k );
+          return (  exp( -norm2(k) * attenuation ) * 
+                 (*static_cast<const t_Derived*>(this))( k ) ); 
         }
 
       template< class T_DERIVED > inline 
       types::t_real Base<T_DERIVED> :: evaluate(const types::t_real _x,
                                                 const atat::rVector3d &_k) const
       {
-#if       defined( _CUBIC_CE_ )
-#           define __AKCT__ _k
-#elif     defined( _TETRAGONAL_CE_ )
-          atat::rVector3d k = _k;
-          k[2] *= 1.2 ;
-#           define __AKCT__ k
-#endif
+        atat::rVector3d k;
+        static_cast< const t_Derived* >(this)->transform_k( _k, k );
         return (   interpolation.evaluate(_x) 
-                 * exp( -norm2(__AKCT__) * attenuation )
-                 * (*static_cast<const t_Derived*>(this))( __AKCT__ ) );
+                 * exp( -norm2(k) * attenuation )
+                 * (*static_cast<const t_Derived*>(this))( k ) );
       }
       template< class T_DERIVED > inline 
       types::t_real Base<T_DERIVED> :: evaluate_gradient(const types::t_real _x,
                                                          const atat::rVector3d &_k) const
       {
-#if       defined( _CUBIC_CE_ )
-#           define __AKCT__ _k
-#elif     defined( _TETRAGONAL_CE_ )
-          atat::rVector3d k = _k;
-          k[2] *= 1.2 ;
-#           define __AKCT__ k
-#endif
+        atat::rVector3d k;
+        static_cast< const t_Derived >(this)->transform_k( _k, k );
         return (   interpolation.evaluate_gradient(_x) 
-                 * exp( -norm2(__AKCT__) *  attenuation )
-                 * (*static_cast<const t_Derived*>(this))( __AKCT__ ) );
+                 * exp( -norm2(k) *  attenuation )
+                 * (*static_cast<const t_Derived*>(this))( k ) );
       }
       template< class T_DERIVED > inline 
       types::t_real Base<T_DERIVED> :: evaluate_with_gradient(const types::t_real _x, 
                                                               const atat::rVector3d &_k,
                                                               types::t_real &_grad) const
       {
-#if       defined( _CUBIC_CE_ )
-#           define __AKCT__ _k
-#elif     defined( _TETRAGONAL_CE_ )
-          atat::rVector3d k = _k;
-          k[2] *= 1.2 ;
-#           define __AKCT__ k
-#endif
-        types::t_real factor = exp( -norm2(__AKCT__) * attenuation )
-                        * (*static_cast<const t_Derived*>(this))( __AKCT__ );
+        atat::rVector3d k;
+        static_cast< const t_Derived* >(this)->transform_k( _k, k );
+        types::t_real factor = exp( -norm2(k) * attenuation )
+                        * (*static_cast<const t_Derived*>(this))( k );
         types::t_real result =   interpolation.evaluate_with_gradient(_x, _grad) 
                         * factor ;
         _grad *= factor;

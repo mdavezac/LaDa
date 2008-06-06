@@ -1,6 +1,7 @@
 lib ce : cluster.cc harmonic.cc  polynome.cc lattice.cc structure.cc
          ../print//print.lib 
-         ../atat//atat.lib 
+         ../atat//libatat
+         ../physics//physics
          ../mpi//mpi.lib 
          ..//tinyxml ;
 
@@ -24,3 +25,31 @@ local rule run-test ( test-name : sources + )
 #                         $(TOP)/atat//atat $(TOP)//tinyxml ;
 
 
+import stage ;
+import option ;
+import property ;
+# First, figure out all locations. Use the default if no prefix option given.
+local prefix = [ option.get prefix :
+    [ property.select <install-default-prefix> : $(requirements) ] ] ;
+requirements = [ property.change $(requirements) : <install-default-prefix> ] ;
+# Or some likely defaults if neither is given.
+if ! $(prefix)
+{
+    if [ modules.peek : NT ] { prefix = C:\\$(name) ; }
+    else if [ modules.peek : UNIX ] { prefix = /usr/local ; }        
+}
+local lib-locate = [ option.get libdir : $(prefix)/lib/python ] ;
+# stage.install python : atat
+#     : <location>$(lib-locate) 
+#       <install-dependencies>on <install-type>LIB  ;
+
+import package ;
+package.install libs : <install-header-subdir>LaDa/lamarck
+                     : : ce : [ glob *.h ] ; 
+# package.install pylibs :  <prefix>$(lib-locate)/python  : : ce  ;
+stage.install pylibs : 
+    atom 
+    : <location>$(lib-locate) 
+      <install-dependencies>on <install-type>LIB 
+    ;
+alias install : libs pylibs ;

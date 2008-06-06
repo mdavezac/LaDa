@@ -107,7 +107,10 @@
     template<> void do_specialcode< t_TetraBuilder >( t_TetraBuilder &_type )
       { _type.add_equivalent_clusters(); }
     template<> void do_specialcode< t_Lattice >( t_Lattice &_type )
-      { t_Structure::lattice = &_type; }
+    {
+      t_Structure::lattice = &_type; 
+      _type.find_space_group();
+    }
     
     template<> bool doloadcode<t_CubicCS>( t_CubicCS &_type, TiXmlElement *_parent )
       { return _type.Load_Harmonics( *_parent ); }
@@ -195,3 +198,19 @@
        boost::lambda::bind( &t_Structure::t_Atom::type, boost::lambda::_1 ) 
     );
   }
+
+  list symmetry_ops( const t_Lattice& _lat )
+  {
+    types::t_int N( _lat.space_group.point_op.getSize() );
+    list result;
+    for( types::t_int i = 0; i < N; ++i )
+    {
+      list inner;
+      inner.append( _lat.space_group.point_op(i) );
+      inner.append( _lat.space_group.trans(i) );
+      result.append( inner );
+    }
+    return result;
+  }
+
+

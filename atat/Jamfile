@@ -1,6 +1,6 @@
 ATAT_CC = findsym.cc integer.cc xtalutil.cc ;
 
-lib atat.lib : $(ATAT_CC) ;
+lib libatat : $(ATAT_CC) ;
 #              findsym.h  integer.h  xtalutil.h 
 #              array.h  arraylist.h   fixagg.h  fxvector.h 
 #              linklist.h  machdep.h  misc.h  vectmac.h  ;
@@ -16,6 +16,33 @@ local rule run-test ( test-name : sources + )
 }
 
 # Declare test targets
-run-test atat_test : atat atat_test.py ;
+# run-test atat_test : atat atat_test.py ;
 
+import stage ;
+import option ;
+import property ;
+# First, figure out all locations. Use the default if no prefix option given.
+local prefix = [ option.get prefix :
+    [ property.select <install-default-prefix> : $(requirements) ] ] ;
+requirements = [ property.change $(requirements) : <install-default-prefix> ] ;
+# Or some likely defaults if neither is given.
+if ! $(prefix)
+{
+    if [ modules.peek : NT ] { prefix = C:\\$(name) ; }
+    else if [ modules.peek : UNIX ] { prefix = /usr/local ; }        
+}
+local lib-locate = [ option.get libdir : $(prefix)/lib/python ] ;
+# stage.install python : atat
+#     : <location>$(lib-locate) 
+#       <install-dependencies>on <install-type>LIB  ;
 
+import package ;
+package.install libs : <install-header-subdir>LaDa/atat
+                     : : libatat : [ glob *.h ] ; 
+# package.install pylibs :  <prefix>$(lib-locate)/python  : : atat  ;
+stage.install pylibs : 
+    atat 
+    : <location>$(lib-locate) 
+      <install-dependencies>on <install-type>LIB 
+    ;
+alias install : libs pylibs ;

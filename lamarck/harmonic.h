@@ -196,6 +196,11 @@ namespace Ising_CE
           //! Serializes a harmonic.
           template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
             { _ar & interpolation; _ar & rank; _ar & attenuation; } 
+        protected:
+          //! Ugly hack to deal with inconsistent tetragonal lattice used in CE@nrel.
+          void transform_k( const atat::rVector3d &_in, atat::rVector3d &_out ) const 
+            { _out = _in; }
+
       };
       template< class T_DERIVED > types::t_real Base<T_DERIVED> :: attenuation = 1000000.0;
     
@@ -229,6 +234,7 @@ namespace Ising_CE
        */                                    
       class Cubic : public Base< Cubic >
       {
+        friend class Base< Cubic >;
         public:
           //! Constructor
           Cubic() {};
@@ -251,6 +257,7 @@ namespace Ising_CE
       //! Defines a tetragonal harmonic %function of rank 0-9.
       class Tetragonal : public Base< Tetragonal >
       {
+        friend class Base< Tetragonal >;
         public:
           //! Constructor
           Tetragonal() {};
@@ -268,6 +275,10 @@ namespace Ising_CE
           const static std::string type;
           //! Maximum rank of the cubic harmonic
           const static types::t_int maxrank = 9;
+        protected:
+          //! Ugly hack to deal with inconsistent tetragonal lattice used in CE@nrel.
+          void transform_k( const atat::rVector3d &_in, atat::rVector3d &_out ) const 
+            { _out[0] = _in[0], _out[1] = _in[1]; _out[2] = _in[2] * 1.2;  }
       };
     
     } // namespace Harmonic

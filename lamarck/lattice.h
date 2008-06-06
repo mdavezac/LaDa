@@ -26,6 +26,8 @@
 
 
 namespace Ising_CE {
+  //! Refolds a periodic vector into the unit-cell, as defined by \a lat.
+  void refold( atat::rVector3d &vec, const atat::rMatrix3d &lat );
 
   //! \brief Defines a lattice.
   //! \details A lattice is actually quite similar to a structure.

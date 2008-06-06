@@ -107,6 +107,16 @@ namespace atat
       { return new T_MAT( ~_mat ); }
     template< class T_MAT > T_MAT* inverse( T_MAT &_mat )
       { return new T_MAT( !_mat ); }
+    template< class T_TYPE, class T_MAT > T_TYPE det( T_MAT &_mat )
+      { return ::atat::det( _mat ); }
+
+    template< class T_TYPE, template< class > class T_CONTAINER > 
+      void exposeContainer( std::string &_name )
+      {
+        class_< T_CONTAINER<T_TYPE> >( _name.c_str() )
+          .def(vector_indexing_suite< T_CONTAINER< T_TYPE > >());
+      }
+
 #endif
 
     _TYPE_ _CLASSNAME_( getVecItem )( const _CLASSNAME_(Vector) &_v,
@@ -313,6 +323,7 @@ namespace atat
            return_value_policy< manage_new_object >() )
      .def( "inverse", details::inverse< _CLASSNAME_(Matrix) >,
            return_value_policy< manage_new_object >() )
+     .def( "det", details::det< _TYPE_, _CLASSNAME_(Matrix) > )
      .def( "diag", &_CLASSNAME_(Matrix)::diag );
 
    def( "make_"_PYTHONNAME_(Matrix),

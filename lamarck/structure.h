@@ -216,8 +216,6 @@ namespace Ising_CE {
   void  find_range( const atat::rMatrix3d &A, atat::iVector3d &kvec );
   //! \endcond
  
-  //! Refolds a periodic vector into the unit-cell, as defined by \a lat.
-  void refold( atat::rVector3d &vec, const atat::rMatrix3d &lat );
   //! Returns true if \a _a and \a _b are periodic equivalents of the unit-cell \a _cell.
   bool are_equivalent( const atat::rVector3d &_a,
                        const atat::rVector3d &_b,

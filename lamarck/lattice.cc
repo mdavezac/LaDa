@@ -5,6 +5,7 @@
 
 #include <atat/array.h>
 #include <atat/misc.h>
+#include <opt/ndim_iterator.h>
 
 #include "lattice.h"
 
@@ -93,6 +94,22 @@ namespace Ising_CE {
                     cell, atom_pos, atom_type);
     if (contains_pure_translations(space_group.point_op,space_group.trans)) 
       std::cerr << "Warning: unit cell is not primitive." << std::endl;
+    // Makes sure that translations are not by some integer combination of the
+    // unit cell.
+    for( types::t_int i = 0; i < space_group.trans.getSize(); ++i )
+    {
+      atat::rVector3d &trans = space_group.trans(i);
+      if( Fuzzy::eq( atat::norm2( trans ), types::t_real(0) ) ) continue;
+      atat::rVector3d zeroed = (!cell) * trans;
+      zeroed[0] = zeroed[0] - std::floor( zeroed[0] + 0.1 ); 
+      zeroed[1] = zeroed[1] - std::floor( zeroed[1] + 0.1 ); 
+      zeroed[2] = zeroed[2] - std::floor( zeroed[2] + 0.1 ); 
+      if( Fuzzy::eq( zeroed[0], types::t_real(0) ) ) zeroed[0] = types::t_real( 0 );
+      if( Fuzzy::eq( zeroed[1], types::t_real(0) ) ) zeroed[1] = types::t_real( 0 );
+      if( Fuzzy::eq( zeroed[2], types::t_real(0) ) ) zeroed[2] = types::t_real( 0 );
+      trans = zeroed;
+    }
+    
   }
 
   types::t_int Lattice :: get_atom_site_index( const atat::rVector3d &_at ) const
@@ -233,6 +250,37 @@ namespace Ising_CE {
       i_site->print_out(stream);
       stream << "\n";
     }
+  }
+
+  // refold by one vector
+  void refold( atat::rVector3d &vec, const atat::rMatrix3d &lat )
+  {
+    opt::Ndim_Iterator<types::t_int, std::less_equal<types::t_int> > i_cell;
+    atat::rVector3d hold = vec;
+    atat::rVector3d compute;
+    atat::rVector3d current = vec;
+    types::t_real norm_c = norm2(vec);
+
+    i_cell.add(-2,2);
+    i_cell.add(-2,2);
+    i_cell.add(-2,2);
+
+    do
+    {
+      compute(0) = (types::t_real) i_cell.access(0);
+      compute(1) = (types::t_real) i_cell.access(1);
+      compute(2) = (types::t_real) i_cell.access(2);
+
+      vec = hold + lat*compute;
+      if ( norm2( vec ) < norm_c ) 
+      {
+        current = vec;
+        norm_c = norm2(vec);
+      }
+
+    } while ( (++i_cell) );
+
+    vec = current;
   }
 
 } // namespace Ising_CE

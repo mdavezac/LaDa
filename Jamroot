@@ -40,3 +40,5 @@ project LaDa : requirements <include>.
              : default-build debug ;
 
 
+alias install :  atat//install print//install lamarck//install physics//install ;
+

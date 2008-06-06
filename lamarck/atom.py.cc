@@ -53,8 +53,8 @@ BOOST_PYTHON_MODULE(atom)
 
    class_< t_Structure::t_Atoms >("Atoms")
      .def(vector_indexing_suite< t_Structure::t_Atoms >());
-//  class_< t_Structure::t_Atoms >("Sites")
-//    .def(vector_indexing_suite< t_Lattice::t_Sites >());
+   class_< t_Lattice::t_Sites >("Sites")
+     .def(vector_indexing_suite< t_Lattice::t_Sites >());
 
    class_< t_Structure >( "Structure" )
      .def( init< t_Structure >() )
@@ -73,6 +73,7 @@ BOOST_PYTHON_MODULE(atom)
      .def_readwrite( "sites", &t_Lattice::sites )
      .def_readwrite( "scale", &t_Lattice::scale )
      .def( "__str__",  &print<t_Lattice> )
+     .def( "syms",  &symmetry_ops )
      .def( "fromXML",  &XML::from<t_Lattice> );
 
    typedef opt::ConvexHull::Base< PiStructure >  t_CH;
@@ -100,11 +101,8 @@ BOOST_PYTHON_MODULE(atom)
    class_< std::vector<types::t_real> >( "details_variables" )
      .def( vector_indexing_suite< std::vector<types::t_real> >() );
      
-#  if   defined (_CUBIC_CE_)
-     ExposeHarmonicRelated< ConstituentStrain::Harmonic::Cubic >();
-#  elif defined (_TETRAGONAL_CE_)
-     ExposeHarmonicRelated< ConstituentStrain::Harmonic::Tetragonal >();
-#  endif
+   ExposeHarmonicRelated< ConstituentStrain::Harmonic::Cubic >();
+   ExposeHarmonicRelated< ConstituentStrain::Harmonic::Tetragonal >();
 }
 
 #undef _INMODULE_

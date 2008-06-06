@@ -56,6 +56,11 @@ namespace details
 
   template< class T_TYPE > std::string print( const T_TYPE &_at );
 
+    
+  list symmetry_ops(  const t_Lattice& );
+
+
+
   t_Atom* AtomFromObject( list& _ob );
   t_Site* SiteFromObject( list& _ob );
 
