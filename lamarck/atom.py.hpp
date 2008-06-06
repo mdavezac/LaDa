@@ -191,7 +191,7 @@ namespace details
               return_internal_reference<1>() );
     }
 
-# include "atom.py.impl.h"
+# include "atom.py.impl.hpp"
 }
 
 

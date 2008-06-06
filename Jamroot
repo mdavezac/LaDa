@@ -41,4 +41,5 @@ project LaDa : requirements <include>.
 
 
 alias install :  atat//install print//install lamarck//install physics//install ;
+alias install-python :  atat//install-python lamarck//install-python ;
 

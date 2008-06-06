@@ -31,7 +31,7 @@ if ! $(prefix)
     if [ modules.peek : NT ] { prefix = C:\\$(name) ; }
     else if [ modules.peek : UNIX ] { prefix = /usr/local ; }        
 }
-local lib-locate = [ option.get libdir : $(prefix)/lib/python ] ;
+local lib-locate = [ option.get libdir : $(prefix)/lib ] ;
 # stage.install python : atat
 #     : <location>$(lib-locate) 
 #       <install-dependencies>on <install-type>LIB  ;
@@ -46,3 +46,4 @@ stage.install pylibs :
       <install-dependencies>on <install-type>LIB 
     ;
 alias install : libs pylibs ;
+alias install-python : pylibs ;

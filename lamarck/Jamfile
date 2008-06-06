@@ -53,3 +53,4 @@ stage.install pylibs :
       <install-dependencies>on <install-type>LIB 
     ;
 alias install : libs pylibs ;
+alias install-python : pylibs ;
