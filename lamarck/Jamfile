@@ -14,21 +14,8 @@ lib ce : cluster.cc harmonic.cc  polynome.cc lattice.cc structure.cc
 exe cubic : main.cc ce ..//boost-pg : : <cstype>cubic ;
 exe tetra : main.cc ce ..//boost-pg : : <cstype>tetragonal ;
 
-python-extension atom : atom.py.cc ce  $(TOP)/atat//atat ..//tinyxml
+python-extension atom : atom.py.cc ce  ../atat//atat 
                       : : <library>..//boost-python ;
-
-# A little "rule" (function) to clean up the syntax of declaring tests
-# of these extension modules.
-local rule run-test ( test-name : sources + )
-{
-    import testing ;
-    testing.make-test run-pyd : $(sources) : : $(test-name) ;
-}
-
-# Declare test targets
-# run-test lamarck_test : atom lamarck_test.py
-#                         ../atat//atat ..//tinyxml ;
-
 
 import stage ;
 import option ;
@@ -60,4 +47,4 @@ stage.install pylibs :
 alias install : libs pylibs ;
 alias install-python : pylibs ;
 
-explicit install install-python libs pylibs ;
+explicit install install-python libs pylibs ; 

@@ -47,5 +47,4 @@ stage.install pylibs :
     ;
 alias install : libs pylibs ;
 alias install-python : pylibs ;
-
-explicit install install-python libs pylibs ;
+explicit install install-python libs pylibs ; 

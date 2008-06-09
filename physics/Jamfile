@@ -4,3 +4,5 @@ import package ;
 package.install libs : <install-header-subdir>LaDa/physics
                      : : physics : [ glob *.h ] ; 
 alias install : libs ;
+
+explicit install libs ; 

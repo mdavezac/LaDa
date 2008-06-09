@@ -4,4 +4,4 @@ import package ;
 package.install libs : <install-header-subdir>LaDa/print
                      : : libprint : [ glob *.h ] ; 
 alias install : libs ;
-explicit install install-python libs ;
+explicit install libs ;
