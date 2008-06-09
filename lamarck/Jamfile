@@ -1,13 +1,18 @@
 lib ce : cluster.cc harmonic.cc  polynome.cc lattice.cc structure.cc
-         ../print//print.lib 
+         ../print//libprint
          ../atat//libatat
          ../physics//physics
-         ../mpi//mpi.lib 
-         ..//tinyxml ;
+         ../mpi//libmpi
+         ..//tinyxml 
+       : : : <library>../print//libprint
+             <library>../atat//libatat
+             <library>../physics//physics
+             <library>../mpi//libmpi
+             <library>..//tinyxml ;
 
 
-exe cubic : main.cc ce $(TOP)//boost-pg : : <cstype>cubic ;
-exe tetra : main.cc ce $(TOP)//boost-pg : : <cstype>tetragonal ;
+exe cubic : main.cc ce ..//boost-pg : : <cstype>cubic ;
+exe tetra : main.cc ce ..//boost-pg : : <cstype>tetragonal ;
 
 python-extension atom : atom.py.cc ce  $(TOP)/atat//atat ..//tinyxml
                       : : <library>..//boost-python ;
@@ -22,7 +27,7 @@ local rule run-test ( test-name : sources + )
 
 # Declare test targets
 # run-test lamarck_test : atom lamarck_test.py
-#                         $(TOP)/atat//atat $(TOP)//tinyxml ;
+#                         ../atat//atat ..//tinyxml ;
 
 
 import stage ;
@@ -54,3 +59,5 @@ stage.install pylibs :
     ;
 alias install : libs pylibs ;
 alias install-python : pylibs ;
+
+explicit install install-python libs pylibs ;

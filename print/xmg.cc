@@ -90,8 +90,8 @@ namespace Print
     result << Xmg::comment_string;
 
     types::t_int old = 0;
-    types::t_int i = copy.find('\n', 0);
-    while ( (types::t_unsigned) std::abs(i) != std::string::npos  )
+    types::t_unsigned i = copy.find('\n', 0);
+    while ( copy.find('\n', old ) != std::string::npos  )
     {
       result << copy.substr(old, i - old +1 ) << Xmg::comment_string;
       ++i; old = i;

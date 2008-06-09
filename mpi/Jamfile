@@ -1,1 +1,8 @@
-lib mpi.lib : mpi_object.cc ; 
+lib libmpi : mpi_object.cc : <parallelism>none ; 
+lib libmpi : mpi_object.cc : <parallelism>mpi 
+           : : <library>/mpi//mpi ;
+
+import package ;
+package.install libs : <install-header-subdir>LaDa/mpi
+                     : : libmpi : [ glob *.h ] ; 
+explicit install install-python libs  ;

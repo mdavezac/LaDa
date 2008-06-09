@@ -1,34 +1,32 @@
 constant PACKAGE : '\"LaDa\ 3.25\"' ;
 path-constant TOP : . ;
 
+import mpi ;
 include env.jam ;
 
-rule findrev
-{
-  Depends all : $(1) ;
-  Always $(1) ;
-} 
+import notfile ;
+notfile revision.h : @findrev ;
 actions findrev
 {
   ./scripts/max_revision.pl
 }
-
-findrev revision.h ;
 
 
 lib tinyxml : : <search>$(tinyxmlldflags) <name>tinyxml <define>TIXML_USE_STL :
             : <include>$(tinyxmlinclude) <define>TIXML_USE_STL ;
 lib boost-pg     : : <name>boost_program_options$(boostldsuffix) 
                      <search>$(boostldflags) ;
-lib boost-mpi    : : <name>boost_mpi-gcc41-mt$(boostldsuffix) 
-                     <search>$(boostldflags) ;
 lib boost-ser    : : <name>boost_serialization$(boostldsuffix) 
                      <search>$(boostldflags) ;
 lib boost-python : : <name>boost_python$(boostldsuffix) 
                      <search>$(boostldflags) ;
 
-
 import feature : feature ;
+
+feature parallelism : mpi none : composite link-incompatible ;
+feature.compose <parallelism>mpi : <define>_MPI ;
+feature.compose <parallelism>none ;
+
 feature cstype : cubic tetragonal : composite propagated ;
 feature.compose <cstype>cubic : <define>_CUBIC_CE_ ;
 feature.compose <cstype>tetragonal : <define>_TETRAGONAL_CE_ ;
@@ -37,9 +35,13 @@ project LaDa : requirements <include>.
                             <include>$(boostinclude) 
                             <include>$(generalinclude) 
                             <define>PACKAGE_STRING=$(PACKAGE) 
-             : default-build debug ;
+             : default-build debug <parallelism>mpi ;
 
 
-alias install :  atat//install print//install lamarck//install physics//install ;
+alias install :  atat//install print//install
+                 lamarck//install physics//install 
+                 MPI//install ;
+
 alias install-python :  atat//install-python lamarck//install-python ;
 
+explicit install install-python ;

@@ -54,9 +54,12 @@ DARWIN_E_DOC = $(DARWIN_E_H) $(DARWIN_E_CC)
 CRYSTAL_CC = lattice.cc structure.cc 
 CRYSTAL_H  = lattice.h  structure.h  atom.h 
 CRYSTAL_DOC = $(CRYSTAL_H) $(CRYSTAL_CC) 
-CE_CC = cluster.cc constituent_strain.cc functional_builder.cc harmonic.cc  polynome.cc 
+CE_CC = cluster.cc harmonic.cc  polynome.cc 
 CE_H  = cluster.h  constituent_strain.h  functional_builder.h  harmonic.h   polynome.h  
+CE_IMPL_H  =  constituent_strain.impl.h  functional_builder.impl.h  harmonic.impl.h
 CE_DOC = $(CE_H) $(CE_CC) 
+CE_PYTHON_H = atom.py.hpp atom.py.impl.hpp
+CE_PYTHON_CC = atom.py.cc
 
 LAPACK_F90 = dlae2.f   dlanst.f  dlapy2.f  dlarf.f   dlarft.f  dlascl.f \
 	     dlasr.f   dlassq.f  dorg2l.f  dorgql.f  dorgtr.f  dsterf.f \

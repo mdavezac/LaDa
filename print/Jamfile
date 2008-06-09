@@ -1,6 +1,7 @@
-lib print.lib : manip.cc xmg.cc stdout.cc base.cc ;
+lib libprint : manip.cc xmg.cc stdout.cc base.cc ;
 
 import package ;
 package.install libs : <install-header-subdir>LaDa/print
-                     : : print.lib : [ glob *.h ] ; 
+                     : : libprint : [ glob *.h ] ; 
 alias install : libs ;
+explicit install install-python libs ;
