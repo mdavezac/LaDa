@@ -127,7 +127,15 @@ namespace Separable
       t_GroupOp groupop;
       //! Links scalars to basis functions.
       t_ScalarOp scalarop;
+
+    protected:
+      //! For alternating least-square purposes.
+      template< class T_ITIN, class T_ITOUT>
+        t_Return expand( T_ITIN _first, T_ITIN _last, T_ITOUT _out ) const;
   };
+
+  // Forward declaration.
+  template< class T_ALLSQ > class AllsqInterface;
 
   //! Factor of a separable function
   //! \tparam T_BASIS is a container of 1d functions. These functions should
@@ -147,6 +155,7 @@ namespace Separable
   template< class T_BASIS >
     class Function : public Base< std::vector< Summand<T_BASIS> > >
     {
+        template<class T_ALLSQ>  friend class AllsqInterface;
         //! Type of the base class.
         typedef Base< std::vector< Summand<T_BASIS> > > t_Base;
       public:
@@ -181,6 +190,31 @@ namespace Separable
         using t_Base::groupop;
         using t_Base::scalarop;
     };
+
+  //! \brief Creates the collapsed matrices and vectors for the
+  //!        alternating linear least-square fit method.
+  //! \param[in] _func a function for which to map out the Altenating
+  //!             linear least-square fit matrices
+  //! \param[out] The Alternating linear least-square fit matrix.
+  //!             It is organized as follows:
+  //!             Each dimension dependent sub-matrix is one value in the vector _A.
+  //!             each sub-matrix is a vector organized as follows
+  //!               obs 0     obs 1
+  //!             yyyyyyyy  yyyyyyyyyy
+  //!             Each yyyyyyy runs as 
+  //!               r=0    r=1  rank of separable function
+  //!              xxxxx  xxxxx 
+  //!             Each xxxxx as 
+  //!               m=0     m=1   basis for factor n of separable function.
+  //! \tparam T_BASIS is the 1d basis for the separable functions.
+  template< class T_ALLSQ, class T_BASIS >
+    void assign_Allsq_matrix( const Function<T_BASIS> &_func,
+                              const T_ALLSQ::t_Vectors &_input,
+                             T_ALLSQ::t_Matrices &_A )
+  //! \brief assigns coefficients computed from an Alternating linear
+  //         least-square fit to \a _func.
+  template<class T_ALLSQ, class T_BASIS >
+    void assign_from_allsq( Function<T_BASIS> &_func, const t_Vectors &_coefs );
 
 }
 

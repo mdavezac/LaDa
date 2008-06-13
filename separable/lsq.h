@@ -21,13 +21,13 @@ namespace Fitting
       //! Type of the 1d least-square method.
       typedef T_LLSQ t_LLSQ;
       //! Type of the Matrix for collapsed 1d problem.
-      typedef T_LLSQ :: t_Matrix t_1dMatrix;
+      typedef typename T_LLSQ :: t_Matrix t_Matrix;
       //! Type of the Vector for collapsed 1d-problem.
-      typedef T_LLSQ :: t_Vector t_1dVector;
+      typedef typename T_LLSQ :: t_Vector t_Vector;
       //! Conmtainer of Matrices for each alternating direction.
-      typedef std::vector< t_1dMatrix > t_Matrices;
+      typedef std::vector< t_Matrix > t_Matrices;
       //! Conmtainer of Matrices for each alternating direction.
-      typedef std::vector< t_1dVector > t_Vectors;
+      typedef std::vector< t_Vector > t_Vectors;
 
     public:
       //! Maximum number of iterations.
@@ -45,7 +45,7 @@ namespace Fitting
       //! Pre-minimizer stuff.
       void init( t_Matrices &_m, t_Vectors &_v ) { init_A(_m); init_b(_v); }; 
       //! Pre-minimizer stuff.
-      void init_b( t_1dVector &_v )
+      void init_b( t_Vector &_v )
         { lsq.init_b( _v ) }; 
       //! Pre-minimizer stuff.
       void init_A( t_Matrices &_m ) { matrices = _m; }; 
