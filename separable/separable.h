@@ -144,42 +144,43 @@ namespace Separable
   //! \tparam T_BASIS is a container of 1d functions. These functions should
   //!         zero order evaluation via a functor call, and grdient evaluation
   //!         via a t_Return gradient( t_Arg ) member function.
-  template< class T_BASIS > class Function : public Base< std::vector< Summand<T_BASIS> > >
-  {
-      //! Type of the base class.
-      typedef Base< std::vector< Summand<T_BASIS> > > t_Base;
-    public:
-      //! Type of the basis
-      typedef T_BASIS t_Basis;
-      //! Type of the arguments to the one-dimensional functions.
-      typedef typename t_Basis::value_type :: t_Arg t_Arg;
-      //! Type of the return of the one-dimensional functions.
-      typedef typename t_Basis::value_type :: t_Return t_Return;
-
-    public:
-      //! Constructor
-      Function() : t_Base() {}
-      //! Destructor
-      ~Function() {}
-
-      //! Returns the function evaluated at \a _args.
-      template< template<class> class T_CONTAINER >
-        t_Return operator()( const T_CONTAINER<t_Args> &_args ) const
-        { return operator()( _args.begin(), _args.end() ); }
-      //! \brief Returns the function evaluated by variables in range 
-      //!        \a _first to \a _last.
-      //! \details In this case, the function is of as many variables as there
-      //!          are functions in the basis.
-      template< class T_ITERATOR >
-        t_Return operator()( T_ITERATOR _first, T_ITERATOR _last ) const;
-      //! Computes the gradient and stores in \a _ret.
-      template< class T_ARGIT, class T_RETIT >
-        void gradient( T_ARGIT _first, T_RETIT _ret ) const;
-
-    protected:
-      using t_Base::groupop;
-      using t_Base::scalarop;
-  };
+  template< class T_BASIS >
+    class Function : public Base< std::vector< Summand<T_BASIS> > >
+    {
+        //! Type of the base class.
+        typedef Base< std::vector< Summand<T_BASIS> > > t_Base;
+      public:
+        //! Type of the basis
+        typedef T_BASIS t_Basis;
+        //! Type of the arguments to the one-dimensional functions.
+        typedef typename t_Basis::value_type :: t_Arg t_Arg;
+        //! Type of the return of the one-dimensional functions.
+        typedef typename t_Basis::value_type :: t_Return t_Return;
+ 
+      public:
+        //! Constructor
+        Function() : t_Base() {}
+        //! Destructor
+        ~Function() {}
+ 
+        //! Returns the function evaluated at \a _args.
+        template< template<class> class T_CONTAINER >
+          t_Return operator()( const T_CONTAINER<t_Args> &_args ) const
+          { return operator()( _args.begin(), _args.end() ); }
+        //! \brief Returns the function evaluated by variables in range 
+        //!        \a _first to \a _last.
+        //! \details In this case, the function is of as many variables as there
+        //!          are functions in the basis.
+        template< class T_ITERATOR >
+          t_Return operator()( T_ITERATOR _first, T_ITERATOR _last ) const;
+        //! Computes the gradient and stores in \a _ret.
+        template< class T_ARGIT, class T_RETIT >
+          void gradient( T_ARGIT _first, T_RETIT _ret ) const;
+ 
+      protected:
+        using t_Base::groupop;
+        using t_Base::scalarop;
+    };
 
 }
 

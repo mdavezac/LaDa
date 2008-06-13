@@ -4,23 +4,28 @@
 
 namespace Separable
 {
+#define _FUNCBODY_ (code) \
+        {\
+          typedef typename t_Basis :: iterator function_iterator;\
+          typedef typename t_Coefs :: const_iterator coef_iterator;\
+          __ASSERT(     basis.size() == coefs.size()\
+                    "Incoherent basis/coefficient sizes.\n" )\
+          function_iterator i_func = basis.begin();\
+          coef_iterator i_coef = coefs.begin();\
+          t_Return result( (*i_coef) * ( (*i_func)( code _first ) ) ) ; \
+          for( ++_first, ++i_func, ++i_coef; \
+               _first != _last; ++i_func, ++_first, ++i_coef ) \
+            groupop( result, scalarop( *i_coef, (*i_func)( code _first ) ) ); \
+          return result; \
+        }
+
   template< class T_BASIS, template<class> class T_LAW >
     template< class T_ITERATOR >
       typename Base<T_BASIS, T_LAW >::t_Return
-        Base<T_BASIS, T_LAW> :: operator()( T_ITERATOR _first, T_ITERATOR _last ) const
-        {
-          typedef typename t_Basis :: iterator function_iterator;
-          typedef typename t_Coefs :: const_iterator coef_iterator;
-          __ASSERT(     basis.size() == coefs.size()
-                    "Incoherent basis/coefficient sizes.\n" )
-          function_iterator i_func = basis.begin();
-          coef_iterator i_coef = coefs.begin();
-          t_Return result( (*i_coef) * ( (*i_func)( *_first ) ) ) ;
-          for( ++_first, ++i_func, ++i_coef; 
-               _first != _last; ++i_func, ++_first, ++i_coef )
-            groupop( result, scalarop( *i_coef, (*i_func)( *_first ) ) );
-          return result;
-        }
+        Base<T_BASIS, T_LAW> :: operator()( T_ITERATOR _first,
+                                            T_ITERATOR _last ) const
+        _FUNCBODY_( * )
+
   template< class T_BASIS, template<class> class T_LAW >
       typename Base<T_BASIS, T_LAW>::t_Return
         Base<T_BASIS, T_LAW> :: operator()( t_Arg _arg ) const
@@ -49,7 +54,8 @@ namespace Separable
         }
   template< class T_BASIS, template<class> class T_LAW >
     template<class ARCHIVE>
-      void BASE<T_BASIS, T_LAW> :: serialize( ARCHIVE & _ar, const unsigned int _version)
+      void BASE<T_BASIS, T_LAW> :: serialize( ARCHIVE & _ar,
+                                              const unsigned int _version)
       {
         ar & basis;
         ar & coefs;
@@ -58,20 +64,10 @@ namespace Separable
   template< class T_BASIS, template<class> class T_LAW >
     template< class T_ITERATOR >
       typename Function<T_BASIS, T_LAW >::t_Return
-        Function<T_BASIS, T_LAW> :: operator()( T_ITERATOR _first, T_ITERATOR _last ) const
-        {
-          typedef typename t_Basis :: iterator function_iterator;
-          typedef typename t_Coefs :: const_iterator coef_iterator;
-          __ASSERT(     basis.size() == coefs.size()
-                    "Incoherent basis/coefficient sizes.\n" )
-          function_iterator i_func = basis.begin();
-          coef_iterator i_coef = coefs.begin();
-          t_Return result( (*i_coef) * ( (*i_func)( _first ) ) ) ;
-          for( ++i_func, ++i_coef; 
-               _first != _last; ++i_func, ++i_coef )
-            groupop( result, scalarop( *i_coef, (*i_func)( _first ) ) );
-          return result;
-        }
+        Function<T_BASIS, T_LAW> :: operator()( T_ITERATOR _first,
+                                                T_ITERATOR _last ) const
+        _FUNCBODY_()
+        
   template< class T_BASIS, template<class> class T_LAW >
     template< class T_ARGIT, class T_RETIT >
       typename Function<T_BASIS, T_LAW >::t_Return
@@ -246,5 +242,3 @@ namespace Separable
 
 
 }
-
-#endif
