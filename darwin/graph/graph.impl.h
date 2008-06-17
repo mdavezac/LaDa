@@ -140,7 +140,6 @@ namespace GA
                   type = t_Type::COW;
                 }
           }
-          Print :: out << "color: " << color << Print::endl;
           pool_comm = comm.split( color );
         }
         catch( std::exception &_e )

@@ -831,6 +831,7 @@ endstorage:
     breeder->set(&continuator->get_generation_counter());
     breeder->set(select);
     breeder->set(breeder_ops);
+    topology.set<t_GATraits>( breeder, taboos );
 
     eostates.storeFunctor(breeder);
     eostates.storeFunctor(select);

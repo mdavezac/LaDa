@@ -30,6 +30,15 @@ AC_ARG_ENABLE(all,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-all) ;;
      esac],[enall=true])
 
+AC_ARG_ENABLE(python,
+     [  --enable-python               Compiles python bindings.],
+     [case "${enableval}" in
+       yes) python=true ;;
+       no)  python=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-fortran) ;;
+     esac],[python=false])
+
+
 AC_ARG_ENABLE(force-mpi,
      [  --enable-force-mpi             Forces mpi to be on],
      [case "${enableval}" in
@@ -367,6 +376,7 @@ AM_CONDITIONAL(DOFORTRAN, test x$fortran = xtrue)
 AM_CONDITIONAL(DOGSL, test x$gsl = xtrue)
 AM_CONDITIONAL(DONAG, test x$nag = xtrue)
 AM_CONDITIONAL(DODIRECTIAGA, test x$direct_iaga = xtrue)
+AM_CONDITIONAL(DOPYTHON, test x$python = xtrue)
 
 
 #  eo libs iff galib is enabled 
@@ -430,6 +440,9 @@ AC_SUBST(DOCDIR)
 if test $mpi != true; then
   BOOST_MPI=""
 fi
+if test $python != true; then
+  BOOST_PYTHON=""
+fi
 AC_SUBST(BOOST_LDFLAGS)
 AC_SUBST(BOOST_MPI)
 AC_SUBST(BOOST_PROGOP)
@@ -484,7 +497,10 @@ elif test $mpi$mpicompilers = truetrue; then
   echo "Will Include MPI where available, using openmpi"
 fi
 if test $lapack = true; then
-  echo "Will Include some lapack/blas routines for Matrix diagonalization"
+  echo "Will Include some lapack/blas routines for Matrix diagonalization."
+fi
+if test $python = true; then
+  echo "Will compile python bindings."
 fi
 if test $debug = true; then
   echo "Compiling with debug options"

@@ -27,23 +27,21 @@ namespace GA
   template< class T_CONTAINER >
     void Topology :: syncpop( T_CONTAINER &_cont )
     {
-#ifdef _MPI
-      //! In the case of a \e not \e graph, eg single pool topology, 
-      //! all data should be equivalent across all processes at all times.
-      //! the only exception are printing and saving and such.
-      if( not graph ) return;
-
-      //! Farmhands never need do anything, except wait for the end of the run.
-      if( graph->type == mpi::Graph::t_Type::FARMHAND ) return;
-
-      //! Cows receive individuals to analyze on a per-operation basis.
-      //! They do not require full containers.
-      if( graph->type == mpi::Graph::t_Type::COW ) return;
-      //! Broadcast from farmer to bulls
-      Print :: out << "Broadcasting population: " << _cont.size() << Print::endl;
-      boost::mpi::broadcast( *graph->farmer_comm(), _cont, 0 );
-      Print :: out << "Broadcasted population: " << _cont.size() << Print::endl;
-#endif
+      __MPICODE( 
+        //! In the case of a \e not \e graph, eg single pool topology, 
+        //! all data should be equivalent across all processes at all times.
+        //! the only exception are printing and saving and such.
+        if( not graph ) return;
+        
+        //! Farmhands never need do anything, except wait for the end of the run.
+        if( graph->type == mpi::Graph::t_Type::FARMHAND ) return;
+        
+        //! Cows receive individuals to analyze on a per-operation basis.
+        //! They do not require full containers.
+        if( graph->type == mpi::Graph::t_Type::COW ) return;
+        //! Broadcast from farmer to bulls
+        boost::mpi::broadcast( *graph->farmer_comm(), _cont, 0 );
+      )
     }
 
   inline bool Topology :: continuators() const
@@ -179,45 +177,40 @@ namespace GA
         typedef mpi::Graph::Evaluation::Farmhand< t_Base > t_Farmhand;
         typedef mpi::Graph::Evaluation::Cow<t_GATraits, T_BASE> t_Cow;
 #endif
-//
-//       __TRYCODE(
-//         __SERIALCODE( return new t_Base(); )
-//         __MPICODE( 
-            if( not graph )
-            {
-              Print :: out << "topology.evaluation " << Print::endl;
-              t_Base *result = new t_Base;
-              result->set( _eval );
-              return result;
-            }
-            if( graph->type == mpi::Graph::t_Type::FARMER )
-            {
-              Print :: out << "topology.evaluation Farmer "  << Print::endl;
-              t_Farmer *result = new t_Farmer( graph );
-              result->set( _eval );
-              return (t_Base*) result;
-            }
-            if( graph->type == mpi::Graph::t_Type::BULL )
-            {
-              Print :: out << "topology.evaluation Bull "  << Print::endl;
-              t_Bull *result = new t_Bull( graph );
-              result->set( _eval );
-              return (t_Base*) result;
-            }
-            if( graph->type == mpi::Graph::t_Type::FARMHAND )
-            {
-              Print :: out << "topology.evaluation Farmhand "  << Print::endl;
-              t_Farmhand *result = new t_Farmhand;
-              result->set( _eval );
-              return (t_Base*) result;
-            }
-            t_Cow *result = new t_Cow( graph );
-            result->set( _eval );
-            return (t_Base*) result;
-            Print :: out << "topology.evaluation Cow "  << Print::endl;
- //        ),
- //        "Error while creating Evaluation.\n" 
- //      )
+ 
+        __TRYCODE(
+          __SERIALCODE( return new t_Base(); )
+          __MPICODE( 
+           if( not graph )
+           {
+             t_Base *result = new t_Base;
+             result->set( _eval );
+             return result;
+           }
+           if( graph->type == mpi::Graph::t_Type::FARMER )
+           {
+             t_Farmer *result = new t_Farmer( graph );
+             result->set( _eval );
+             return (t_Base*) result;
+           }
+           if( graph->type == mpi::Graph::t_Type::BULL )
+           {
+             t_Bull *result = new t_Bull( graph );
+             result->set( _eval );
+             return (t_Base*) result;
+           }
+           if( graph->type == mpi::Graph::t_Type::FARMHAND )
+           {
+             t_Farmhand *result = new t_Farmhand;
+             result->set( _eval );
+             return (t_Base*) result;
+           }
+           t_Cow *result = new t_Cow( graph );
+           result->set( _eval );
+           return (t_Base*) result;
+          ),
+          "Error while creating Evaluation.\n" 
+        )
      }
   template< class T_GATRAITS > 
     History<typename T_GATRAITS :: t_Individual >*
@@ -258,6 +251,18 @@ namespace GA
         " Could not find Objective tag in input file.\n" 
       )
     }
+                      
+  template <class T_GATRAITS> 
+    void Topology :: set ( GA::Breeder<T_GATRAITS> *_breeder,
+                           Taboo_Base<typename T_GATRAITS::t_Individual> *_taboos)
+    {
+      __MPICODE(
+        typedef mpi::Graph::Breeders::Farmer<T_GATRAITS> t_Farmer;
+        if ( graph and graph->type == mpi::Graph::t_Type::FARMER )
+          static_cast<t_Farmer*>( _breeder )->t_Farmer::set( _taboos ); 
+      )
+    } 
+          
 
   template <class T_GATRAITS> typename GA::Store::Base<T_GATRAITS>*
     Topology :: special_store ( typename T_GATRAITS :: t_Evaluator& _eval )

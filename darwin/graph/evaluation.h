@@ -208,16 +208,7 @@ namespace GA
               { return "GA::mpi::Graph::Evaluation::Bull"; }
             //! Does nothing.
             void set( t_Evaluator &_e )
-            { 
-              Print :: out << "Am here" << Print::endl;
-              metaeval.set( &_e ); 
-            }
-            void set( t_BullEvaluator &_e )
-            { 
-              Print :: out << "caught here" << Print::endl;
-              Print :: out << typeid( metaeval ).name() << Print::endl;
-              Print :: out << typeid( _e ).name() << Print::endl;
-            }
+              { metaeval.set( &_e ); }
             using t_Base :: set;
         };
 

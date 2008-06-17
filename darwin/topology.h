@@ -118,6 +118,10 @@ namespace GA
       template <class T_GATRAITS> typename GA::Objective::Types<T_GATRAITS>::Vector*
         objective ( const TiXmlElement &_node );
 
+      //! Passes taboo pointer to farmer breeder.
+      template <class T_GATRAITS> 
+        void set ( GA::Breeder<T_GATRAITS> *_breeder,
+                   Taboo_Base<typename T_GATRAITS::t_Individual> *_taboos);
       //! Creates special storage interfaces for very special people.
       template <class T_GATRAITS> typename GA::Store::Base<T_GATRAITS>*
         special_store ( typename T_GATRAITS :: t_Evaluator& _eval );

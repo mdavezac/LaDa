@@ -100,6 +100,10 @@ namespace GA
             //! The class name. EO required
             virtual std::string className() const
               { return "GA::mpi::Graph::Breeder::Farmer"; }
+
+            //! Sets taboo pointer
+            void set( Taboo_Base<t_Individual> *_taboo )
+              { t_CommBase::set( _taboo ); }
     
             //! \brief Response to WAITING request.
             //! \details Receives the individual. If still more are to be

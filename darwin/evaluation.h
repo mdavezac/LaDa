@@ -241,7 +241,8 @@ template< class T_GATRAITS >
       //! \brief Constructor.
       WithHistory () : Base<T_GATRAITS>(), history(NULL) {};
       //! \brief Constructor and Initializer
-      WithHistory   ( t_Evaluator *_eval, t_Objective *_obj, t_Store *_store, t_History *_hist )
+      WithHistory   ( t_Evaluator *_eval, t_Objective *_obj,
+                      t_Store *_store, t_History *_hist )
            : Base<T_GATRAITS>(_eval, _obj, _store), history(_hist) {};
       //! \brief Copy Constructor 
       WithHistory   ( const WithHistory<t_Individual> &_c )

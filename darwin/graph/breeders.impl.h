@@ -51,7 +51,6 @@ namespace GA
           eoSelectivePopulator<t_Individual> it(_parents, _offspring, *t_Base::select);
           do
           {
-            if( not t_Base :: op ) Print :: out << "operator not set" << Print ::endl;
             (*t_Base::op)(it);
             (*it).set_age( (*t_Base::age)() );
             t_CommBase :: request( t_CommBase::t_Requests::WAITING );

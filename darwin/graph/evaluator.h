@@ -94,10 +94,7 @@ namespace GA
             virtual std::string className() const
               { return "GA::mpi::Graph::Evaluation::Bull"; }
             void set( t_TrueEvaluator *_eval )
-            {
-              if( not _eval ) Print :: out << "Evaluator pointer is null" << Print::endl;
-              trueEvaluator = _eval; 
-            }
+              { trueEvaluator = _eval; }
             void init( t_Individual &_indiv )
             {
               __ASSERT( not trueEvaluator, "True Evaluator pointer not set" )

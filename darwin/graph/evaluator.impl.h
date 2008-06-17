@@ -19,15 +19,11 @@ namespace GA
           inline void Bull<T_GATRAITS> :: evaluate()
           {
             __ASSERT( not trueEvaluator, "True Evaluator is not set." )
-            Print ::out << "sending order to evaluate" << Print::endl;
             t_CommBase :: command( t_CommBase::t_CowCommands::EVALUATE );
-            Print ::out << "broadcasting individual" << Print::endl;
             boost::mpi::broadcast( *t_CommBase :: cowcomm,
                                    *t_Base::current_individual, 0 );
 
-            Print ::out << "evaluation" << Print::endl;
             trueEvaluator->evaluate();
-            Print ::out << "done evaluating" << Print::endl;
           }
         template<class T_GATRAITS>
           inline void Bull<T_GATRAITS>
