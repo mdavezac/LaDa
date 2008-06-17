@@ -55,7 +55,6 @@ namespace Separable
   //! \tparam T_SCALAROP is template class defining how to link return values from
   //!         a basis function with a scalar coefficient.
   template< class T_BASIS, 
-  template< class T_BASIS, 
             template<class> class T_GROUPOP  = std::sum, 
             template<class> class T_SCALAROP = std::multiplies >
   class Base : public details :: Base
@@ -148,10 +147,20 @@ namespace Separable
   //!         via a t_Return gradient( t_Arg ) member function.
   template< class T_BASIS > class Summand :
       public Base< std::vector< Factor<T_BASIS, std::multiplies, std::sum> > >{};
-  //! \brief A sum of separable functions.
-  //! \tparam T_BASIS is a container of 1d functions. These functions should
-  //!         zero order evaluation via a functor call, and grdient evaluation
-  //!         via a t_Return gradient( t_Arg ) member function.
+  /** \brief A sum of separable functions.
+   * \details The separable function \f$F(\mathbf{x})\f$ acting upon vector
+   *          \f$\mathbf{x}\f$ and returning a scalar can be defined as 
+   *    \f[
+   *        F(\mathbf{x}) = \sum_r \prod_i \sum_n \lambda_{i,n}^{(r)}
+   *                        g_{i,n}^{(r)}(x_i),
+   *    \f]
+   *          with the sum over \e r running over the ranks of the separable
+   *          functions, the product over \e i are the separable functions
+   *          proper, and the sum_n is an expansion of the factors ver some
+   *          family of 1d-functions.
+   * \tparam T_BASIS is a container of 1d functions. These functions should
+   *         zero order evaluation via a functor call, and grdient evaluation
+   *         via a t_Return gradient( t_Arg ) member function. **/
   template< class T_BASIS >
     class Function : public Base< std::vector< Summand<T_BASIS> > >
     {
@@ -215,6 +224,91 @@ namespace Separable
   //         least-square fit to \a _func.
   template<class T_ALLSQ, class T_BASIS >
     void assign_from_allsq( Function<T_BASIS> &_func, const t_Vectors &_coefs );
+
+  template< class T_FUNCTION >
+  class Collapse
+  {
+    public:
+      typedef T_FUNCTION t_Function;
+
+      //! Constructor
+      Collapse   ( T_FUNCTION &_function )
+               : is_initialized(false), function( _function ) {}
+
+      template< class T_MATRIX, class T_VECTORS >
+      void operator()( T_MATRIX &_A, types::t_unsigned _dim, T_VECTORS &_coefs )
+
+      //! Constructs the completely expanded matrix.
+      void init();
+
+    protected:
+      //! False if unitialized.
+      bool is_initialized;
+      //! Reference to the function to fit.
+      T_FUNCTION &function;
+      //! Return type of the function
+      typedef typename T_FUNCTION :: t_Return t_Type;
+      //! \brief Type of the matrix containing expanded function elements.
+      //! \details This is, more or less, a 2d matrix. Each row contains the
+      //!          \f$ g_{i,n}^{(r)}(x_i^{(u)}) \f$ described in Separable::Function for a
+      //!          specific dimension \e i and an observable
+      //!          \f$\mathbs{x}^{(u)}\f$. The rows encoded in \e n major and
+      //!          \e r minor. The columns are encoded in \e i major, \e u minor.
+      typedef std::vector< std::vector< t_Type > > t_Expanded;
+      //! A matrix with all expanded function elements.
+      t_Expanded expanded;
+      /** \brief A matrix wich is exanded only up to \e i.
+       *  \details The sum over \e n in the expression of Separable::Function
+       *           is not expanded. Otherwise, the encoding is similar to the
+       *           one described in Separable :: Collapse :: t_Expanded, with
+       *           \f$ \phi_i^{(r)}( x_i^{(u)} ) = \sum_n
+       *           \lambda_{i,n}^{(r)}g_{i,n}^{(r)}( x_i^{(u)} )\f$. Note that
+       *           this time the coefficients are contained in the matrix.
+       **/
+      t_Expanded factors;
+  }
+
+  template<class T_FUNCTION> template< class T_VECTORS >
+  void Collapse<T_FUNCTION> :: init( const T_VECTORS &_x ) 
+  {
+    // finds maximum size of separable function.
+    size_t max_size;
+    {
+      using namespace boost::lambda;
+      typename t_Function::t_Basis::const_iterator i_max;
+      i_max = std::max_element( _x.basis.begin(), x.basis.end(), 
+                                bind( &T_FUNCTION::t_Basis::value_type::size, _1 ) 
+                                < 
+                                bind( &T_FUNCTION::t_Basis::value_type::size, _2 )  );
+      size_t max_size = i_max->size();
+    }
+                      
+    expanded.reserve( _x.size() * function.basis[0].basis.size() );
+    typename T_VECTORS::const_iterator i_x = _x.begin(); 
+    typename T_VECTORS::const_iterator i_x_end = _x.end(); 
+    for(; i_x != i_x_end; ++i_x ) // loop over observables.
+    {
+      typename T_VECTORS::value_type::const_iterator i_var = i_x->begin();
+      for( size_t dim = 0; dim < max_size; ++dim, ++i_var )
+      {
+        __ASSERT( i_var != i_x->end(), "Inconsistent sizes.\n" )
+        expanded.resize( expanded.size() + 1 );
+        typename t_Expanded :: value_type &row = expanded.back();
+        typename t_Function::t_Basis::const_iterator i_rank = function.basis[dim].begin();
+        typename t_Function::t_Basis::const_iterator i_rank_end = function.basis[dim].end();
+        for(; i_rank != i_rank_end; ++i_rank )
+        {
+          if( i_rank->size() < dim ) continue;
+          typename t_Function::t_Basis::value_type
+                             ::t_Basis::const_iterator i_func = i_rank->begin();
+          typename t_Function::t_Basis::value_type
+                             ::t_Basis::const_iterator i_func_end = i_rank->end();
+          for(; i_func != i_func_end; ++i_func )
+            row.push_back( (*i_func)(*i_var) );
+        }
+      }
+    }
+  }
 
 }
 

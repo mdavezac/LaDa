@@ -121,6 +121,20 @@ namespace Separable
       typedef typename t_Allsq :: t_Matrices t_Matrices;
       typedef const Function<T_BASIS> t_Function;
 
+
+    }
+
+  template< class T_ALLSQ, class T_BASIS >
+    void assign_Allsq_matrix( const Function<T_BASIS> &_func,
+                              const T_ALLSQ::t_Vectors &_input,
+                              T_ALLSQ::t_Matrices &_A )
+    {
+      typedef T_ALLSQ t_Allsq;
+      typedef typename t_Allsq :: t_Vectors t_Vectors;
+      typedef typename t_Vectors :: t_Vector t_Vector;
+      typedef typename t_Allsq :: t_Matrices t_Matrices;
+      typedef const Function<T_BASIS> t_Function;
+
       // Variable expanded holder.
       typedef std::vector< t_Function::t_Basis::value_type::t_Basis::t_Return >  t_Vex;
       // Rank/Variable expanded holder.
