@@ -367,6 +367,7 @@ namespace Ising_CE
       delete[] interpolation;
 
       return value;
+#undef __ADDHERE__
     }
 
     // writes k_vecs into a Structure tag

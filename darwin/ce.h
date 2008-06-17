@@ -15,6 +15,8 @@
 #include <tinyxml/tinyxml.h>
 #include <eo/eoOp.h>
 
+#include <lamarck/harmonic.h>
+#include <lamarck/constituent_strain.h>
 #include <lamarck/structure.h>
 #include <lamarck/functional_builder.h>
 #include <opt/function_base.h>

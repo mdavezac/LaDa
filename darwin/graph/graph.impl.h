@@ -6,7 +6,7 @@
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 
-#ifdef _DEBUG
+#ifdef _LADADEBUG
 #include <boost/lambda/lambda.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <algorithm>

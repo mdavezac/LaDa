@@ -1,6 +1,5 @@
 AC_INIT([LaDa],[3.25])
 AM_INIT_AUTOMAKE()
-# fi
 
 AX_PYTHON
 AC_PROG_CC
@@ -15,6 +14,8 @@ fi
 
 if [[ -e ".env" ]]; then
   . ".env"
+else
+  echo "Environment variables in file .env not found."
 fi
 
 AC_PROG_INSTALL

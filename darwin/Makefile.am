@@ -1,7 +1,8 @@
 include ../Files
 AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
-	      @MPI_CFLAGS@ @EO_CFLAGS@ -I .. @BOOST_CXXFLAGS@
-AM_LDFLAGS = @TINYXML_LIBS@ @EO_LIBS@ @MPI_LIBS@ @BOOST_LDFLAGS@
+	      @MPI_CFLAGS@ @EO_CFLAGS@ -I .. @BOOST_CXXFLAGS@ 
+AM_LDFLAGS = @TINYXML_LIBS@ @EO_LIBS@ @MPI_LIBS@ @BOOST_LDFLAGS@ @BOOST_MPI@ \
+	     @BOOST_PROGOP@
 if DOBANDGAPOPT
   BANDGAPOPT=bandgap_opt
 endif
@@ -25,7 +26,7 @@ bin_PROGRAMS = $(CEOPT) $(BANDGAPOPT) $(LAYEREDOPT) $(EMASSOPT)
 ce_opt_SOURCES = main.cc $(DARWIN_CE_CC)
 ce_opt_HEADERS = $(DARWIN_CE_H)
 ce_optdir = $(includedir)/darwin
-ce_opt_CPPFLAGS =  -D _CE $(AM_CPPFLAGS) @GSL_CFLAGS@ 
+ce_opt_CPPFLAGS =  -D _CE $(AM_CPPFLAGS) @GSL_CFLAGS@ -D _CUBIC_CE_
 ce_opt_LDFLAGS =  $(AM_LDFLAGS)
 ce_opt_LDADD = libdarwin.la \
 	       ../lamarck/liblamarck.la \
