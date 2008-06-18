@@ -34,13 +34,10 @@ namespace Fitting
       types::t_real tolerance;
       //! A least-square-method
       t_LLSQ llsq;
-      //! \brief Whether to update after all dims have been optimized, or in
-      //!        between dimensions.
-      bool update_between_dims;
 
     public:
       //! Constructor.
-      Allsq() : itermax(20), tolerance( 1e-4 ), update_between_dims(false)  {}
+      Allsq() : itermax(20), tolerance( 1e-4 ) {}
       //! Destructor
       ~Allsq() {}
       //! Pre-minimizer stuff.
@@ -52,17 +49,29 @@ namespace Fitting
       //!         be of appropriate type for the chosen least-square fit
       //!         method. On output, \a _solution contains the solution.
       //!         On input _solution is used as the starting guess.
+      //!         \a _solution is an  std::vector of "something", where
+      //!         "something" is a type appropriate for the least-square-fit
+      //!         method specified by \a T_LLSQ. 
+      //! \tparam T_COLLAPSED is a function type or a functor providing
+      //!         void (Collapsed::t_Matrix&, types::t_unsigned, Collapsed::t_Vectors& ).
+      //!         - The first argument is a matrix suitable for a 1d
+      //!           least-square-fit as required by the templated
+      //!           Collapsed::t_Llsq method. 
+      //!         - The second argument is dimension which will next undergo
+      //!           the least-square fit.
+      //!         - The last argument is a reference to the \a _solution, eg
+      //!           the current solution vector.
+      //!         .
       template< class T_COLLAPSED >
-        types::t_real operator()( t_Vectors& _solution, T_COLLAPSE collapse );
+        types::t_real operator()( t_Vectors& _solution, T_COLLAPSE* collapse );
       //! Loads parameters from XML element
       void Load( const TiXmlElement &_node );
   };
 
   template< class T_LLSQ > template< class T_COLLAPSE >
     types::t_real Allsq<T_LLSQ> :: operator()( t_Vectors& _solution, 
-                                               T_COLLAPSE collapse  )
+                                               const T_COLLAPSE* collapse  )
     {
-      t_Vectors *save(NULL);
       __DOASSERT(     _solution.size() == matrices.size()
                   and matrices.size() == vectors.size(),
                   "Incoherent sizes of matrices/vectors Ax=b." )
@@ -72,7 +81,6 @@ namespace Fitting
         types::t_unsigned iter = 0;
         types::t_int D( _solution.size() );
         t_Matrix A;
-        if( not update_between_dims ) save = new t_Vectors( _solution );
         do
         {
           types::t_real convergence;
@@ -81,7 +89,7 @@ namespace Fitting
           types::t_unsigned dim(0);
           for(convergence = 0e0; i_sol != i_sol_end; ++i_sol, ++dim )
           {
-            collapse( A, dim, save ? *save: _solution )
+            collapse( A, dim, _solution )
             llsq.init( A );
             convergence += llsq( *i_sol );
           }
@@ -92,12 +100,9 @@ namespace Fitting
         while(     ( convergence < tolerance or tolerance < 0e0 )
                and ( iter < itermax or itermax > 0 ) );
 
-        if( save ) delete save;
-
         return convergence;
       }
-      __CATCHCODE( if( save ) delete save; save = NULL;,
-                   "Error encountered in Alternating-least square fit." )
+      __CATCHCODE(, "Error encountered in Alternating-least square fit.\n" )
     }
 
   template< class T_LLSQ >

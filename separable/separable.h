@@ -151,7 +151,7 @@ namespace Separable
    * \details The separable function \f$F(\mathbf{x})\f$ acting upon vector
    *          \f$\mathbf{x}\f$ and returning a scalar can be defined as 
    *    \f[
-   *        F(\mathbf{x}) = \sum_r \prod_i \sum_n \lambda_{i,n}^{(r)}
+   *        F(\mathbf{x}) = \sum_r \prod_d \sum_i \lambda_{d,i}^{(r)}
    *                        g_{i,n}^{(r)}(x_i),
    *    \f]
    *          with the sum over \e r running over the ranks of the separable
@@ -200,47 +200,58 @@ namespace Separable
         using t_Base::scalarop;
     };
 
-  //! \brief Creates the collapsed matrices and vectors for the
-  //!        alternating linear least-square fit method.
-  //! \param[in] _func a function for which to map out the Altenating
-  //!             linear least-square fit matrices
-  //! \param[out] The Alternating linear least-square fit matrix.
-  //!             It is organized as follows:
-  //!             Each dimension dependent sub-matrix is one value in the vector _A.
-  //!             each sub-matrix is a vector organized as follows
-  //!               obs 0     obs 1
-  //!             yyyyyyyy  yyyyyyyyyy
-  //!             Each yyyyyyy runs as 
-  //!               r=0    r=1  rank of separable function
-  //!              xxxxx  xxxxx 
-  //!             Each xxxxx as 
-  //!               m=0     m=1   basis for factor n of separable function.
-  //! \tparam T_BASIS is the 1d basis for the separable functions.
-  template< class T_ALLSQ, class T_BASIS >
-    void assign_Allsq_matrix( const Function<T_BASIS> &_func,
-                              const T_ALLSQ::t_Vectors &_input,
-                             T_ALLSQ::t_Matrices &_A )
-  //! \brief assigns coefficients computed from an Alternating linear
-  //         least-square fit to \a _func.
-  template<class T_ALLSQ, class T_BASIS >
-    void assign_from_allsq( Function<T_BASIS> &_func, const t_Vectors &_coefs );
 
+  /** \brief Collapses a sum of separable function into Fitting::Allsq format.
+   *  \details This is quite a complex process. A sum of separable functions is
+   *           expressed as follows: 
+   *    \f[
+   *        F(\mathbf{x}) = \sum_r \prod_d \sum_i \lambda_{d,i}^{(r)}
+   *                        g_{i,n}^{(r)}(x_i),
+   *    \f]
+   *    We will keep track of the r, i, and n indices. Furthermore, the least
+   *    square-fit method fits to  \e o observables. It expects a "2d" input matrix
+   *    I[d, (r,i) ], where the slowest running index is the dimension \e d.
+   *    I[d] should be a vecrtor container type of scalar values. These scalar
+   *    values are orderer with  \e i the fastest running index and \e r the
+   *    slowest. The method also expects a functor which can create the matrix
+   *    \e A (as in \e Ax = \e b ) for each specific dimension \e d. The type
+   *    of A is a vector of scalars. The fastest running index is \e i,
+   *    followed by \e r, and finally \e o. 
+   **/
   template< class T_FUNCTION >
   class Collapse
   {
     public:
       typedef T_FUNCTION t_Function;
+      //! Wether to update the coefficients between each dimension or not.
+      bool do_update;
 
       //! Constructor
       Collapse   ( T_FUNCTION &_function )
-               : is_initialized(false), D(0), nb_obs(0),
+               : do_update(bool), is_initialized(false), D(0), nb_obs(0),
                  nb_ranks(0), function( _function ) {}
 
+      //! \brief Constructs the matrix \a A for dimension \a _dim. 
+      //! \details Note that depending \a _coef are used only for dim == 0,
+      //!          and/or do_update == true.
       template< class T_MATRIX, class T_VECTORS >
       void operator()( T_MATRIX &_A, types::t_unsigned _dim, T_VECTORS &_coefs )
 
       //! Constructs the completely expanded matrix.
       void init();
+
+    protected:
+      //! Initializes Collapse::factors.
+      template< class T_MATRIX, class T_VECTORS >
+      void initialize_factors( const T_VECTORS &_coefs );
+      //! Updates Collapse::factors.
+      template< class T_VECTORS >
+      void initialize_factors( const T_VECTORS &_coefs )
+      //! Assigns coeficients to function.
+      template< class T_VECTORS >
+      void reassign( const T_VECTORS &_solution );
+      //! Resets collapse functor. Clears memory.
+      void reset();
 
     protected:
       //! False if unitialized.
@@ -256,144 +267,33 @@ namespace Separable
       //! Return type of the function
       typedef typename T_FUNCTION :: t_Return t_Type;
       //! \brief Type of the matrix containing expanded function elements.
-      //! \details This is, more or less, a 2d matrix. Each row contains the
-      //!          \f$ g_{i,n}^{(r)}(x_i^{(u)}) \f$ described in Separable::Function for a
-      //!          specific dimension \e i and an observable
-      //!          \f$\mathbs{x}^{(u)}\f$. The rows encoded in \e n major and
-      //!          \e r minor. The columns are encoded in \e i major, \e u minor.
       typedef std::vector< std::vector< t_Type > > t_Expanded;
       //! A matrix with all expanded function elements.
+      //! \details expanded[ (o,d), (r,i) ]. The type is a vector of vectors.
+      //!          The fastest-running \e internal index is \e i. The
+      //!          fastest-running \e external index is d.
+      //!          \f$ \text{expanded}[(o,d), (r,i)] = g_{d,i}^{(r)}(x_d^{(o)})\f$.
       t_Expanded expanded;
       //! Type of the factors.
       typedef std::vector< std::vector< t_Type > > t_Factors;
-      /** \brief A matrix wich is exanded only up to \e i.
-       *  \details The sum over \e n in the expression of Separable::Function
-       *           is not expanded. Otherwise, the encoding is similar to the
-       *           one described in Separable :: Collapse :: t_Expanded, with
-       *           \f$ \phi_i^{(r)}( x_i^{(u)} ) = \sum_n
-       *           \lambda_{i,n}^{(r)}g_{i,n}^{(r)}( x_i^{(u)} )\f$. Note that
-       *           this time the coefficients are contained in the matrix.
-       **/
+      /** \brief A matrix wich contains the factors of the separable functions.
+       *  \details factors[(o,r), d]. A vector of vectors. The \e internal
+       *           index is \e d. The fastest-running \e external
+       *           index is \e r.
+       *           \f$
+       *               \text{factors}[d, (r,i)] = \sum_i
+       *               \lambda_{d,i}^{(r)}g_{d,i}^{(r)}(x_d^{(o)})
+       *           \f$. **/
       t_Factors factors;
       //! Type of the sizes.
       typedef std::vector< std::vector< types::t_unsigned > > t_Sizes;
-      //! Sizes of the basis per dimension and rank.
+      //! \brief Sizes of the basis per dimension and rank.
+      //! \details sizes[ d, r ] = max i \@ (d,r). r is the fastest running
+      //!          vector.
       t_Sizes sizes;
   }
 
-  template<class T_FUNCTION> template< class T_VECTORS >
-  void Collapse<T_FUNCTION> :: init( const T_VECTORS &_x ) 
-  {
-    // finds maximum size of separable function.
-    {
-      using namespace boost::lambda;
-      typename t_Function::t_Basis::const_iterator i_max;
-      i_max = std::max_element( _x.basis.begin(), x.basis.end(), 
-                                bind( &T_FUNCTION::t_Basis::value_type::size, _1 ) 
-                                < 
-                                bind( &T_FUNCTION::t_Basis::value_type::size, _2 )  );
-      D = i_max->size();
-    }
-                      
-    nb_obs = _x.size();
-    nb_ranks = function.basis.size();
-    sizes.resize( D );
-    expanded.reserve( nb_obs * D );
-    typename T_VECTORS::const_iterator i_x = _x.begin(); 
-    typename T_VECTORS::const_iterator i_x_end = _x.end(); 
-    for(; i_x != i_x_end; ++i_x ) // loop over observables.
-    {
-      typename T_VECTORS::value_type::const_iterator i_var = i_x->begin();
-      for( size_t dim = 0; dim < D; ++dim, ++i_var )
-      {
-        __ASSERT( i_var != i_x->end(), "Inconsistent sizes.\n" )
-        __ASSERT( nb_ranks != function.basis[dim].size(),
-                  "Inconsistent number of ranks.\n" )
-
-        expanded.resize( expanded.size() + 1 );
-
-        typename t_Expanded :: value_type &row = expanded.back();
-        typedef typename t_Function::t_Basis::const_iterator t_const_iterator;
-        t_const_iterator i_rank = function.basis[dim].begin();
-        t_const_iterator i_rank_end = function.basis[dim].end();
-        for(; i_rank != i_rank_end; ++i_rank )
-        {
-          if( i_rank->size() < dim ) continue;
-          sizes[dim].push_back( i_rank->basis.size() );
-          typedef typename t_Function::t_Basis::value_type
-                                     ::t_Basis::const_iterator t_citerator;
-          t_citerator i_func = i_rank->basis.begin();
-          t_citerator i_func_end = i_rank->basis.end();
-          for(; i_func != i_func_end; ++i_func )
-            row.push_back( (*i_func)(*i_var) );
-        }
-      }
-    }
-  }
-
-  template< class T_MATRIX, class T_VECTORS >
-  void Collapse<T_FUNCTION>::operator()( T_MATRIX &_A, types::t_unsigned _dim,
-                                         const T_VECTORS &_coefs )
-  {
-    if( ( not is_initialized ) or ( ( not do_update ) and _dim == 0 ) )
-      initialize_factors( _coefs );
-    else if ( do_update ) update_factors( _dim, _coefs );
-    is_initialized = true;   
-
-    _A.resize( nb_obs );
-    typename T_MATRIX :: iterator i_A = _A.begin();
-    typename T_MATRIX :: iterator i_A_end = _A.end();
-    typename t_Expanded :: const_iterator i_ex = expanded.begin() + dim;
-    for(; i_A != i_A_end; i_ex += dim ) // loops over observables
-    {
-      t_Size :: const_iterator i_size = sizes[dim].begin();
-      t_Size :: const_iterator i_size_end = sizes[dim].end();
-      t_Factors :: const_iterator i_facs = factors.begin();
-      __ASSERT( factors.size() != sizes[dim].size(),
-                "Inconsistent sizes.\n" )
-      typename t_Expanded :: value_type const_iterator i_var = i_ex->begin();
-      for(; i_size != i_size_end; ++i_size, ++i_facs ) // loops over ranks.
-      {
-        // Computes factor for this rank.
-        typename t_Factors :: value_type :: const_iterator i_fac = i_facs.begin();
-        typename t_Factors :: value_type :: const_iterator i_fac_end = i_facs.end();
-        typename t_Factors ::value_type :: value_type factor(1);
-        for(types::t_unsigned i = 0; i_fac != i_fac_end; ++i_fac, ++i )
-          if( i != Dim ) factor *= (*i_fac);
-
-        // loops over basis set of factor function of current dimension and rank.
-        for( types::t_unsigned i = *i_size; i > 0; --i, ++i_var, ++i_A )
-        {
-          __ASSERT( i_var != expanded.end(), "Inconsistent sizes.\n" )
-          __ASSERT( i_A != _A.end(), "Inconsistent sizes.\n" )
-          *i_A = (*i_var) * factor;
-        }
-      }
-    }
-  }
-
-  template< class T_MATRIX, class T_VECTORS >
-  void Collapse<T_FUNCTION>::initialize_factors( const T_VECTORS &_coefs )
-  {
-    __ASSERT( nb_ranks != function.basis.size(),
-              "Inconsistent rank size.\n" )
-    factors.resize( nb_ranks );
-    typename t_Function :: t_Basis :: const_iterator i_rank = function.basis.begin();
-    typename t_Factors :: iterator i_facs = factors.begin();
-    typename t_Factors :: iterator i_facs_end = factors.end();
-    typename t_Expanded :: const_iterator i_ex = expanded.begin();
-    for(; i_facs != i_facs_end; ++i_rank, ++i_facs )
-    {
-      i_facs->resize( i_rank->basis.size() );
-      typename t_Factors :: value_type :: iterator i_fac = i_fac->begin();
-      typename t_Factors :: value_type :: iterator i_fac_end = i_fac->end();
-      for(types::t_unsigned dim = 0; i_fac != i_fac_end; ++i_fac, ++dim )
-      {
-        *i_fac = t_Type(1);
-      }
-    }
-  }
-}
+} // end of Separable namespace
 
 #include "separable.impl.h"
 

@@ -109,155 +109,239 @@ namespace Separable
           }
         }
 
-
-  template< class T_ALLSQ, class T_BASIS >
-    void assign_Allsq_matrix( const Function<T_BASIS> &_func,
-                              const T_ALLSQ::t_Vectors &_input,
-                              T_ALLSQ::t_Matrices &_A )
+  template<class T_FUNCTION> template< class T_VECTORS >
+  void Collapse<T_FUNCTION> :: init( const T_VECTORS &_x ) 
+  {
+    // finds maximum size of separable function.
     {
-      typedef T_ALLSQ t_Allsq;
-      typedef typename t_Allsq :: t_Vectors t_Vectors;
-      typedef typename t_Vectors :: t_Vector t_Vector;
-      typedef typename t_Allsq :: t_Matrices t_Matrices;
-      typedef const Function<T_BASIS> t_Function;
-
-
+      using namespace boost::lambda;
+      typename t_Function::t_Basis::const_iterator i_max;
+      i_max = std::max_element( _x.basis.begin(), x.basis.end(), 
+                                bind( &T_FUNCTION::t_Basis::value_type::size, _1 ) 
+                                < 
+                                bind( &T_FUNCTION::t_Basis::value_type::size, _2 )  );
+      D = i_max->size();
     }
 
-  template< class T_ALLSQ, class T_BASIS >
-    void assign_Allsq_matrix( const Function<T_BASIS> &_func,
-                              const T_ALLSQ::t_Vectors &_input,
-                              T_ALLSQ::t_Matrices &_A )
+    // computes sizes
+    sizes.resize( D );
+    for( size_t dim = 0; dim < D; ++dim, ++i_var )
     {
-      typedef T_ALLSQ t_Allsq;
-      typedef typename t_Allsq :: t_Vectors t_Vectors;
-      typedef typename t_Vectors :: t_Vector t_Vector;
-      typedef typename t_Allsq :: t_Matrices t_Matrices;
-      typedef const Function<T_BASIS> t_Function;
-
-      // Variable expanded holder.
-      typedef std::vector< t_Function::t_Basis::value_type::t_Basis::t_Return >  t_Vex;
-      // Rank/Variable expanded holder.
-      typedef std::vector< t_Vex >  t_Rex;
-      // Observarion/Rank/Variable expanded holder.
-      typedef std::vector< t_Rex > t_Obsex;
-      // obsex will contain all factors multiplied but the collapsed one.
-      // leading dimension is observations, followed by rank, and collapsed-dimension.
-      t_Obsex obsex( input.size() ); 
-      t_Obsex :: iterator i_ob = obsex.begin();
-      t_Vectors :: const_iterator i_input = input.begin();
-      t_Vectors :: const_iterator i_input_end = input.end();
-      for(; i_input != i_input_end; ++i_input, ++i_ob )
+      typedef typename t_Function::t_Basis::const_iterator t_const_iterator;
+      t_const_iterator i_rank = function.basis.begin();
+      t_const_iterator i_rank_end = function.basis.end();
+      for(; i_rank != i_rank_end; ++i_rank )
       {
-        i_ob->resize( _func.basis.size() );
-        t_Rex :: iterator i_rank = i_ob->begin();
-        t_Rex :: iterator i_rank_end = i_ob->end();
-        t_Function::t_Basis::const_iterator i_funcrank = _func.basis.begin();
-        for(; i_rank != i_rank_end; ++i_rank, ++i_func_rank )
-        {
-          t_Vex vex( i_funcrank->basis.size(), t_Vex::value_type(0) );
-          i_funcrank->expand( i_input.begin(), i_input.end(), vex.begin() );
+        if( i_rank->basis.size() < dim ) continue;
+        sizes[dim].push_back( i_rank->basis[dim].basis.size() );
+      }
+    }
+                      
+    // computes expanded matrix.
+    nb_obs = _x.size();
+    nb_ranks = function.basis.size();
+    expanded.reserve( nb_obs * D );
+    typename T_VECTORS::const_iterator i_x = _x.begin(); 
+    typename T_VECTORS::const_iterator i_x_end = _x.end(); 
+    for(; i_x != i_x_end; ++i_x ) // loop over observables.
+    {
+      typename T_VECTORS::value_type::const_iterator i_var = i_x->begin();
+      for( size_t dim = 0; dim < D; ++dim, ++i_var )
+      {
+        __ASSERT( i_var != i_x->end(), "Inconsistent sizes.\n" )
+        __ASSERT( nb_ranks != function.basis[dim].size(),
+                  "Inconsistent number of ranks.\n" )
 
-          t_Vex :: const_iterator i_vex = vex.begin();
-          t_Vex :: const_iterator i_vex_end = vex.end();
-          t_Vex :: iterator i_result = i_rank->begin();
-          i_rank->resize( vex.size(), t_Vex::value_type(1) );
-          // Multiplies all factors but one.
-          for(; i_vex != i_vex_end; ++i_vex, ++i_funcfac )
+        expanded.resize( expanded.size() + 1 );
+
+        typename t_Expanded :: value_type &row = expanded.back();
+        typedef typename t_Function::t_Basis::const_iterator t_const_iterator;
+        t_const_iterator i_rank = function.basis.begin();
+        t_const_iterator i_rank_end = function.basis.end();
+        for(; i_rank != i_rank_end; ++i_rank ) // loop over ranks
+        {
+          if( i_rank->basis.size() < dim ) continue;
+          typedef typename t_Function::t_Basis::value_type
+                                     ::t_Basis::const_iterator t_citerator;
+          t_citerator i_func = i_rank->basis.begin();
+          t_citerator i_func_end = i_rank->basis.end();
+          for(; i_func != i_func_end; ++i_func )
+            row.push_back( (*i_func)(*i_var) );
+        } // end of loop over ranks.
+      } // end of loop over dimensions.
+    } // end of loop over observables.
+  }
+
+  template<class T_FUNCTION>  template< class T_MATRIX, class T_VECTORS >
+    void Collapse<T_FUNCTION>::operator()( T_MATRIX &_A, types::t_unsigned _dim,
+                                           const T_VECTORS &_coefs )
+    {
+      if( ( not is_initialized ) or ( ( not do_update ) and _dim == 0 ) )
+        initialize_factors( _coefs );
+      else if ( do_update ) update_factors( _dim, _coefs );
+      is_initialized = true;   
+ 
+      _A.resize( nb_obs );
+      typename T_MATRIX :: iterator i_A = _A.begin();
+      typename T_MATRIX :: iterator i_A_end = _A.end();
+      typename t_Expanded :: const_iterator i_ex = expanded.begin() + dim;
+      t_Factors :: const_iterator i_facs = factors.begin();
+      for(; i_A != i_A_end; i_ex += dim ) // loops over observables
+      {
+        t_Size :: const_iterator i_size = sizes[dim].begin();
+        t_Size :: const_iterator i_size_end = sizes[dim].end();
+        __ASSERT( factors.size() != sizes[dim].size(),
+                  "Inconsistent sizes.\n" )
+        typename t_Expanded :: value_type const_iterator i_var = i_ex->begin();
+        for(; i_size != i_size_end; ++i_size, ++i_facs ) // loops over ranks.
+        {
+          // Computes factor for this rank.
+          typename t_Factors :: value_type :: const_iterator i_fac = i_facs.begin();
+          typename t_Factors :: value_type :: const_iterator i_fac_end = i_facs.end();
+          typename t_Factors ::value_type :: value_type factor(1);
+          for(types::t_unsigned i = 0; i_fac != i_fac_end; ++i_fac, ++i )
+            if( i != dim ) factor *= (*i_fac);
+ 
+          // loops over basis set of factor function of current dimension and rank.
+          for( types::t_unsigned i = *i_size; i > 0; --i, ++i_var, ++i_A )
           {
-            t_Vex :: const_iterator i_vex2 = vex.begin();
-            for(; i_vex2 != i_vex_end; ++i_vex2 )
-              if( i_vex2 != i_vex ) *i_result *= i_vex2;
+            __ASSERT( i_var != expanded.end(), "Inconsistent sizes.\n" )
+            __ASSERT( i_A != _A.end(), "Inconsistent sizes.\n" )
+            *i_A = (*i_var) * factor;
           }
         }
       }
-        
-      // Organization of the _A matrices.
-      // Each dimension dependent sub-matrix is one value in the vector _A.
-      // each sub-matrix is a vector organized as follows
-      //   obs 0     obs 1
-      // yyyyyyyy  yyyyyyyyyy
-      // Each yyyyyyy runs as 
-      //   r=0    r=1  rank of separable function
-      //  xxxxx  xxxxx 
-      //  Each xxxxx as 
-      //   m=0     m=1   basis for factor n of separable function.
-      //  aaaaaa aaaaaa
-      t_Allsq :: t_Matrices :: iterator i_mat = _A.begin();
-      t_Allsq :: t_Matrices :: iterator i_mat_end = _A.end();
-      // Loop over collapsed dimensions.
-      for(types::t_int dim=0; i_mat != i_mat_end; ++i_mat, ++dim )
-      {
-        // Loop over observations
-        i_input = i_input.begin();
-        i_ob = obsex.begin();
-        i_mat->reserve( input.size() *  obsex.size()
-                                     *  obsex[0].size()
-                                     *  obsex[0][0].size() );
-        for(; i_input != i_input_end; ++i_input, ++obsex )
-        {
-
-
-          // Loop over ranks. 
-          t_Function::t_Basis::const_iterator i_rank = _func.basis.begin();
-          t_Function::t_Basis::const_iterator i_rank_end = _func.basis.end();
-          t_Rex :: iterator i_rex = i_ob->begin();
-          for(; i_rank != i_rank_end; ++i_rank, ++i_rex )
-          {
-            // Finds function for this dimension
-            const t_Function::t_Basis::value_type &dim_func = (*i_rank)[dim];
-            // Finds factor for this dimension
-            t_Vex :: value_type factor( (*i_rex)[dim] );
-
-            // Loops over 1d basis of this collapsed dimension.
-            t_Function::t_Basis::value_type::t_Basis::const_iterator i_1d = dim_func->begin();
-            t_Vector :: const_iterator i_var = i_input->begin();
-            t_Vector :: const_iterator i_var_end = i_input->begin();
-            for(; i_var != i_var_end; ++i_1d, ++i_var )
-              i_mat->push_back( (*i_1d)( *i_var ) * factor );  
-
-          } // end loop over ranks.
-
-        }  // end loop over observations
-
-      } // end loop over collapsed dimensions
     }
 
-  template< class T_ALLSQ, class T_BASIS >
-    assign_from_allsq<T_BASIS,T_ALLSQ>( Function<T_BASIS> &_func,
-                                        const T_ALLSQ::t_Vectors &_coefs )
+  template< class T_FUNCTION> template< class T_VECTORS >
+    void Collapse<T_FUNCTION>::initialize_factors( const T_VECTORS &_coefs )
     {
-      // Type of the fitting method.
-      typedef T_ALLSQ t_Allsq;
-      // Type of the input vectors.
-      typedef typename t_Allsq :: t_Vectors t_Vectors;
-      // Type of a single input vector.
-      typedef typename t_Vectors :: t_Vector t_Vector;
-
-      t_Vectors :: const_iterator i_vec = _coefs.begin();
-      t_Vectors :: const_iterator i_vec_end = _coefs.end();
-      // Loop over collapsed dimensions.
-      for(types::t_int dim=0; i_vec != i_vec_end; ++i_vec, ++dim )
+      __ASSERT( nb_ranks != function.basis.size(),
+                "Inconsistent rank size.\n" )
+      factors.resize( nb_ranks * nb_obs );
+      typename t_Function :: t_Basis :: const_iterator i_rank = function.basis.begin();
+      typename t_Factors :: iterator i_facs = factors.begin();
+      typename t_Factors :: iterator i_facs_end = factors.end();
+      for(types :: t_unsigned o(0); o < nb_obs; --o ) // over observables
       {
-        // Loop over ranks. 
-        t_Function::t_Basis::const_iterator i_rank = _func.basis.begin();
-        t_Function::t_Basis::const_iterator i_rank_end = _func.basis.end();
-        for(; i_rank != i_rank_end; ++i_rank )
+        for(types::t_unsigned r(0); i_facs != i_facs_end; ++i_rank, ++i_facs, ++r ) // over ranks
         {
-          // Finds function for this dimension
-          const t_Function::t_Basis::value_type &dim_func = (*i_rank)[dim];
-         
-          // Loops over 1d basis of this collapsed dimension.
-          t_Vector :: const_iterator i_var = i_vec->begin();
-          t_Vector :: const_iterator i_var_end = i_vec->begin();
-          for(types::t_int i=0; i_var != i_var_end; ++i, ++i_var )
-            dim_func[i] = *i_var;
-
-        } // end loop over ranks.
-
-      } // end loop over collapsed dimensions
+          i_facs->resize( i_rank->basis.size() );
+          // loop over dimensions
+          typename t_Factors :: value_type :: iterator i_fac = i_fac->begin();
+          typename t_Factors :: value_type :: iterator i_fac_end = i_fac->end();
+          for(types::t_unsigned d = 0; i_fac != i_fac_end; ++i_fac, ++d )
+          {
+            *i_fac = t_Type(0);
+            // performs cdot calculation: 
+            //  _ first compute the accumulated number of elements over ranks and basis functions.
+            __ASSERT( sizes.size() <= d, "Inconsistent size of array Collapse::sizes.\n" )
+            __ASSERT( sizes[d].size() <= r, "Inconsistent size of array Collapse::sizes.\n" )
+            types::t_unsigned acc = std::accumulate( sizes[d].begin(),
+                                                     sizes[d].begin() + r,
+                                                     types::t_unsigned(0) );
+            //  _ second retrieve iterator to expanded function for current
+            //    observable, rank, and dimension.
+            __ASSERT( expanded.size() <= d + o * D, "Inconsistent size of input vectors.\n" )
+            __ASSERT( expanded[d+o*D].size() < acc + sizes[d][r],
+                      "Inconsistent size of input vectors.\n" )
+            typedef typename t_Expanded :: value_type :: const_iterator t_citerator;
+            t_citerator i_func =   expanded[ d + o * D ].begin()  + acc;
+            t_citerator i_func_end =  i_func + sizes[d][r];
+            // _ second retrieve the coefficients.
+            typedef typename T_VECTORS :: value_type :: const_iterator t_coefit; 
+            __ASSERT( _coef.size() <= dim, "Inconsistent size of input vectors." )
+            __ASSERT( _coef[dim].size() < acc+sizes[d][r],
+                      "Inconsistent size of input vectors." )
+            t_coefit i_coef = _coefs[dim].begin() + acc;
+            // _ finally perform dot product and store in factors matrix.
+            for(; i_func != i_func_end; ++i_func, i_coef )
+              *i_fac += ( *i_coef  ) * ( *i_func );
+          } // end of loop over dimensions
+        } // end of loop over ranks
+      } // end of loop over observables
+    }
+ 
+  template< class T_FUNCTION > template< class T_VECTORS >
+    void Collapse<T_FUNCTION>::update_factors( types::t_unsigned _dim,
+                                               const T_VECTORS &_coefs )
+    {
+      dim == 0 ? dim = D: --_dim;
+      __ASSERT( nb_ranks != function.basis.size(),
+                "Inconsistent rank size.\n" )
+      factors.resize( nb_ranks * nb_obs );
+      typename t_Function :: t_Basis :: const_iterator i_rank = function.basis.begin();
+      typename t_Factors :: iterator i_facs = factors.begin();
+      typename t_Factors :: iterator i_facs_end = factors.end();
+      for(types :: t_unsigned o(0); o < nb_obs; --o ) // over observables
+      {
+        for(types::t_unsigned r(0); i_facs != i_facs_end; ++i_rank, ++i_facs, ++r ) // over ranks
+        {
+          __ASSERT( i_facs->size() <= _dim, "Incoherent number of factors.\n" )
+          t_Type &factor = (*i_facs)[_dim];
+          factor = t_Type(0);
+          // performs cdot calculation: 
+          //  _ first compute the accumulated number of elements over ranks and basis functions.
+          __ASSERT( sizes.size() <= _dim, "Inconsistent size of array Collapse::sizes.\n" )
+          __ASSERT( sizes[dim].size() <= r, "Inconsistent size of array Collapse::sizes.\n" )
+          types::t_unsigned acc = std::accumulate( sizes[dim].begin(),
+                                                   sizes[dim].begin() + r,
+                                                   types::t_unsigned(0) );
+          //  _ second retrieve iterator to expanded function for current
+          //    observable, rank, and dimension.
+          __ASSERT( expanded.size() <= dim + o * D, "Inconsistent size of input vectors.\n" )
+          __ASSERT( expanded[dim+o*D].size() < acc + sizes[dim][r],
+                    "Inconsistent size of input vectors.\n" )
+          typedef typename t_Expanded :: value_type :: const_iterator t_citerator;
+          t_citerator i_func =   expanded[ dim + o * D ].begin()  + acc;
+          t_citerator i_func_end =  i_func + sizes[dim][r];
+          // _ second retrieve the coefficients.
+          typedef typename T_VECTORS :: value_type :: const_iterator t_coefit; 
+          __ASSERT( _coef.size() <= dim, "Inconsistent size of input vectors." )
+          __ASSERT( _coef[dim].size() < acc+sizes[dim][r],
+                    "Inconsistent size of input vectors." )
+          t_coefit i_coef = _coefs[dim].begin() + acc;
+          // _ finally perform dot product and store in factors matrix.
+          for(; i_func != i_func_end; ++i_func, i_coef )
+            factor += ( *i_coef  ) * ( *i_func );
+        } // end of loop over ranks
+      } // end of loop over observables
     }
 
+  template< class T_FUNCTION > template< T_VECTORS >
+    void Collapse<T_FUNCTION> :: reassign( const T_VECTORS& _solution ) const
+    {
+      typedef T_VECTORS t_Vectors;
+      typedef t_Vectors :: const_iterator const_solit;
+      typedef t_Vectors :: value_type :: const_iterator const_soldimit;
+      const_solit i_dim = _solution.begin();
+      const_solit i_dim_end = _solution.end();
+      for(size_t d=0; i_dim != i_dim_end; ++i_dim, ++d ) // loop over dimensions.
+      {
+        const_soldimit i_coef = i_dim->begin();
+        const_soldimit i_coef_ = i_coef;
+        const_soldimit i_coef_end = i_dim->begin();
+        for(size_t r=0; i_coef != i_coef_end; ++r )
+        {
+          typedef t_Function :: t_Basis :: value_type
+                             :: t_Basis :: value_type t_factor_func;
+          t_factor_func &facfunc = function.basis[r].basis[d];
+          i_coef_ += facfunc.coefs.size();
+          __ASSERT( i_coef_end - i_coef_ < 0, "Inconsistent number of coefficients." )
+          std::copy( boost::ref(i_coef), boost::ref(i_coef_), 
+                     facfunc.coefs.begin() );
+        }
+      }
+    }
+
+  template< class T_FUNCTION >
+    void Collapse<T_FUNCTION> :: reset() 
+    {
+      is_initialized = false;
+      expanded.clear();
+      factors.clear();
+      sizes.clear();
+    }
 
   //! \cond
   namespace details
@@ -402,6 +486,7 @@ namespace Separable
            //! Function pointer to gradient function.
            t_Function *grad;
        }
+
 
 
 
