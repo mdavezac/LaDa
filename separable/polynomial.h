@@ -27,10 +27,10 @@ namespace Separable
     //! Degree of the polynomial.
     types::t_int degree;
     //! \f$\_x^{\text{degree}}$\f.
-    t_Return operator()( t_Arg _x ) const
+    t_Return operator()( const t_Arg _x ) const
       { return details::Pow<degree>::pow<t_Arg>( _x ); }
     //! \f$\text{degree}\cdot\_x^{\text{degree}-1}$\f.
-    t_Return gradient( t_Arg _x ) const
+    t_Return gradient( const t_Arg _x ) const
       { return details::Pow<degree>::gradient<t_Arg>( _x ); }
   };
 
