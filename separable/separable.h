@@ -62,20 +62,21 @@ namespace Separable
     public:
       //! Type of the basis
       typedef T_BASIS t_Basis;
-      //! Type of the operator linking a basis function and its coefficient.
-      typedef T_SCALAROP< typename t_Basis::t_Return > t_ScalarOp;
-      //! Type of the operator linking to basis functions.
-      typedef T_GROUOP< typename t_Basis::t_Return > t_GroupOp;
-
-    public:
       //! Type of the arguments to the one-dimensional functions.
       typedef typename t_Basis::value_type :: t_Arg t_Arg;
       //! Type of the return of the one-dimensional functions.
       typedef typename t_Basis::value_type :: t_Return t_Return;
+      //! Type of the operator linking a basis function and its coefficient.
+      typedef T_SCALAROP< typename t_Return > t_ScalarOp;
+      //! Type of the operator linking to basis functions.
+      typedef T_GROUOP< typename t_Return > t_GroupOp;
 
-    public:
+      //! Whether this function has gradients
+      const static bool has_gradient;
+
       //! Constructor
-      Base() : basis() { coefs.resize( basis.size() ); }
+      Base() : basis(), has_gradient( T_BASIS::has_gradient )
+       { coefs.resize( basis.size() ); }
       //! Destructor
       ~Base() {}
 
@@ -91,11 +92,11 @@ namespace Separable
         t_Return operator()( T_ITERATOR _first, T_ITERATOR _last ) const;
       //! \brief Returns the gradient of the one dimensional function.
       t_Return gradient( t_Arg _arg ) const 
-        { return details::gradient( *this, _arg ); }
+        { return has_gradient ? details::gradient( *this, _arg ) : t_Return(0); }
       //! Computes the gradient and stores it in \a _ret.
       template< class T_ARGIT, class T_RETIT >
         void gradient( T_ARGIT _first, T_RETIT _ret ) const
-        { return details::gradient( *this, _first, _ret ); }
+        { if( has_gradient ) details::gradient( *this, _first, _ret); }
       //! \brief Return the function evaluated at \a _arg
       t_Return operator()( t_Arg _arg ) const;
       //! Returns a reference to coeficient _i
@@ -121,7 +122,7 @@ namespace Separable
       //!        separable function.
       typedef std::vector< t_Return > t_Coefs;
       //! A container of coefficients.
-      std::vector< t_Return > coefs;
+      t_Coefs coefs;
       //! Links basis functions.
       t_GroupOp groupop;
       //! Links scalars to basis functions.
@@ -159,14 +160,15 @@ namespace Separable
    *          proper, and the sum_n is an expansion of the factors ver some
    *          family of 1d-functions.
    * \tparam T_BASIS is a container of 1d functions. These functions should
-   *         zero order evaluation via a functor call, and grdient evaluation
-   *         via a t_Return gradient( t_Arg ) member function. **/
+   *         return a zero order evaluation via a functor call, and optionally
+   *         a gradient evaluation via a t_Return gradient( t_Arg ) member
+   *         function. **/
   template< class T_BASIS >
-    class Function : public Base< std::vector< Summand<T_BASIS> > >
+    class Function : public Base< std::vector< T_BASIS > >
     {
         template<class T_ALLSQ>  friend class AllsqInterface;
         //! Type of the base class.
-        typedef Base< std::vector< Summand<T_BASIS> > > t_Base;
+        typedef Base< std::vector< T_BASIS > > t_Base;
       public:
         //! Type of the basis
         typedef T_BASIS t_Basis;
@@ -202,8 +204,9 @@ namespace Separable
 
 
   /** \brief Collapses a sum of separable function into Fitting::Allsq format.
-   *  \details This is quite a complex process. A sum of separable functions is
-   *           expressed as follows: 
+   *  \details This flavor keeps track of computed basis functions
+   *           (\f$g_{d,i}^{(r)}\f$).  This is quite a complex process. A sum
+   *           of separable functions is expressed as follows: 
    *    \f[
    *        F(\mathbf{x}) = \sum_r \prod_d \sum_i \lambda_{d,i}^{(r)}
    *                        g_{i,n}^{(r)}(x_i),
@@ -217,9 +220,10 @@ namespace Separable
    *    \e A (as in \e Ax = \e b ) for each specific dimension \e d. The type
    *    of A is a vector of scalars. The fastest running index is \e i,
    *    followed by \e r, and finally \e o. 
+   *    \tparam T_FUNCTION must be a Function< Summand< T_BASIS > > 
    **/
   template< class T_FUNCTION >
-  class Collapse
+  class MemCollapse
   {
     public:
       typedef T_FUNCTION t_Function;
@@ -227,9 +231,9 @@ namespace Separable
       bool do_update;
 
       //! Constructor
-      Collapse   ( T_FUNCTION &_function )
-               : do_update(bool), is_initialized(false), D(0), nb_obs(0),
-                 nb_ranks(0), function( _function ) {}
+      MemCollapse   ( T_FUNCTION &_function )
+                  : do_update(bool), is_initialized(false), D(0), nb_obs(0),
+                    nb_ranks(0), function( _function ) {}
 
       //! \brief Constructs the matrix \a A for dimension \a _dim. 
       //! \details Note that depending \a _coef are used only for dim == 0,
@@ -241,10 +245,10 @@ namespace Separable
       void init();
 
     protected:
-      //! Initializes Collapse::factors.
+      //! Initializes MemCollapse::factors.
       template< class T_MATRIX, class T_VECTORS >
       void initialize_factors( const T_VECTORS &_coefs );
-      //! Updates Collapse::factors.
+      //! Updates MemCollapse::factors.
       template< class T_VECTORS >
       void initialize_factors( const T_VECTORS &_coefs )
       //! Assigns coeficients to function.

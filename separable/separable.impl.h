@@ -4,27 +4,25 @@
 
 namespace Separable
 {
-#define _FUNCBODY_ (code) \
-        {\
-          typedef typename t_Basis :: iterator function_iterator;\
-          typedef typename t_Coefs :: const_iterator coef_iterator;\
-          __ASSERT(     basis.size() == coefs.size()\
-                    "Incoherent basis/coefficient sizes.\n" )\
-          function_iterator i_func = basis.begin();\
-          coef_iterator i_coef = coefs.begin();\
-          t_Return result( (*i_coef) * ( (*i_func)( code _first ) ) ) ; \
-          for( ++_first, ++i_func, ++i_coef; \
-               _first != _last; ++i_func, ++_first, ++i_coef ) \
-            groupop( result, scalarop( *i_coef, (*i_func)( code _first ) ) ); \
-          return result; \
-        }
 
   template< class T_BASIS, template<class> class T_LAW >
     template< class T_ITERATOR >
       typename Base<T_BASIS, T_LAW >::t_Return
         Base<T_BASIS, T_LAW> :: operator()( T_ITERATOR _first,
                                             T_ITERATOR _last ) const
-        _FUNCBODY_( * )
+        {
+          typedef typename t_Basis :: iterator function_iterator;
+          typedef typename t_Coefs :: const_iterator coef_iterator;
+          __ASSERT(     basis.size() == coefs.size()
+                    "Incoherent basis/coefficient sizes.\n" )
+          function_iterator i_func = basis.begin();
+          coef_iterator i_coef = coefs.begin();
+          t_Return result( (*i_coef) * ( (*i_func)( *_first ) ) ) ; 
+          for( ++_first, ++i_func, ++i_coef; 
+               _first != _last; ++i_func, ++_first, ++i_coef ) 
+            groupop( result, scalarop( *i_coef, (*i_func)( *_first ) ) ); 
+          return result; 
+        }
 
   template< class T_BASIS, template<class> class T_LAW >
     template< class T_ITIN, class T_ITOUT>
@@ -84,13 +82,26 @@ namespace Separable
       typename Function<T_BASIS, T_LAW >::t_Return
         Function<T_BASIS, T_LAW> :: operator()( T_ITERATOR _first,
                                                 T_ITERATOR _last ) const
-        _FUNCBODY_()
+        {
+          typedef typename t_Basis :: iterator function_iterator;
+          typedef typename t_Coefs :: const_iterator coef_iterator;
+          __ASSERT(     basis.size() == coefs.size()
+                    "Incoherent basis/coefficient sizes.\n" )
+          function_iterator i_func = basis.begin();
+          function_iterator i_func_end = basis.end();
+          coef_iterator i_coef = coefs.begin();
+          t_Return result( (*i_coef) * ( (*i_func)( _first, _last ) ) ) ; 
+          for( ++i_func, ++i_coef; _func != _func_end; ++i_func, ++i_coef ) 
+            groupop( result, scalarop( *i_coef, (*i_func)( _first, _last ) ) ); 
+          return result; 
+        }
         
   template< class T_BASIS, template<class> class T_LAW >
     template< class T_ARGIT, class T_RETIT >
       typename Function<T_BASIS, T_LAW >::t_Return
         Function<T_BASIS, T_LAW> :: gradient(T_ARGIT _in, T_RETIT _out ) const
         {
+          if( not has_gradient ) return;
           typedef typename t_Basis :: iterator function_iterator;
           typedef typename t_Coefs :: const_iterator coef_iterator;
           __ASSERT(     basis.size() == coefs.size()
@@ -110,7 +121,7 @@ namespace Separable
         }
 
   template<class T_FUNCTION> template< class T_VECTORS >
-  void Collapse<T_FUNCTION> :: init( const T_VECTORS &_x ) 
+  void MemCollapse<T_FUNCTION> :: init( const T_VECTORS &_x ) 
   {
     // finds maximum size of separable function.
     {
@@ -173,7 +184,7 @@ namespace Separable
   }
 
   template<class T_FUNCTION>  template< class T_MATRIX, class T_VECTORS >
-    void Collapse<T_FUNCTION>::operator()( T_MATRIX &_A, types::t_unsigned _dim,
+    void MemCollapse<T_FUNCTION>::operator()( T_MATRIX &_A, types::t_unsigned _dim,
                                            const T_VECTORS &_coefs )
     {
       if( ( not is_initialized ) or ( ( not do_update ) and _dim == 0 ) )
@@ -214,17 +225,18 @@ namespace Separable
     }
 
   template< class T_FUNCTION> template< class T_VECTORS >
-    void Collapse<T_FUNCTION>::initialize_factors( const T_VECTORS &_coefs )
+    void MemCollapse<T_FUNCTION>::initialize_factors( const T_VECTORS &_coefs )
     {
       __ASSERT( nb_ranks != function.basis.size(),
                 "Inconsistent rank size.\n" )
       factors.resize( nb_ranks * nb_obs );
-      typename t_Function :: t_Basis :: const_iterator i_rank = function.basis.begin();
+      typename t_Function :: t_Basis :: const_iterator i_rank=function.basis.begin();
       typename t_Factors :: iterator i_facs = factors.begin();
       typename t_Factors :: iterator i_facs_end = factors.end();
       for(types :: t_unsigned o(0); o < nb_obs; --o ) // over observables
       {
-        for(types::t_unsigned r(0); i_facs != i_facs_end; ++i_rank, ++i_facs, ++r ) // over ranks
+        // loop over ranks
+        for(types::t_unsigned r(0); i_facs != i_facs_end; ++i_rank, ++i_facs, ++r ) 
         {
           i_facs->resize( i_rank->basis.size() );
           // loop over dimensions
@@ -234,15 +246,19 @@ namespace Separable
           {
             *i_fac = t_Type(0);
             // performs cdot calculation: 
-            //  _ first compute the accumulated number of elements over ranks and basis functions.
-            __ASSERT( sizes.size() <= d, "Inconsistent size of array Collapse::sizes.\n" )
-            __ASSERT( sizes[d].size() <= r, "Inconsistent size of array Collapse::sizes.\n" )
+            //  _ first compute the accumulated number of elements over ranks
+            //    and basis functions.
+            __ASSERT( sizes.size() <= d,
+                      "Inconsistent size of array MemCollapse::sizes.\n" )
+            __ASSERT( sizes[d].size() <= r,
+                      "Inconsistent size of array Collapse::sizes.\n" )
             types::t_unsigned acc = std::accumulate( sizes[d].begin(),
                                                      sizes[d].begin() + r,
                                                      types::t_unsigned(0) );
             //  _ second retrieve iterator to expanded function for current
             //    observable, rank, and dimension.
-            __ASSERT( expanded.size() <= d + o * D, "Inconsistent size of input vectors.\n" )
+            __ASSERT( expanded.size() <= d + o * D,
+                      "Inconsistent size of input vectors.\n" )
             __ASSERT( expanded[d+o*D].size() < acc + sizes[d][r],
                       "Inconsistent size of input vectors.\n" )
             typedef typename t_Expanded :: value_type :: const_iterator t_citerator;
@@ -263,33 +279,38 @@ namespace Separable
     }
  
   template< class T_FUNCTION > template< class T_VECTORS >
-    void Collapse<T_FUNCTION>::update_factors( types::t_unsigned _dim,
+    void MemCollapse<T_FUNCTION>::update_factors( types::t_unsigned _dim,
                                                const T_VECTORS &_coefs )
     {
       dim == 0 ? dim = D: --_dim;
       __ASSERT( nb_ranks != function.basis.size(),
                 "Inconsistent rank size.\n" )
       factors.resize( nb_ranks * nb_obs );
-      typename t_Function :: t_Basis :: const_iterator i_rank = function.basis.begin();
+      typename t_Function :: t_Basis :: const_iterator i_rank=function.basis.begin();
       typename t_Factors :: iterator i_facs = factors.begin();
       typename t_Factors :: iterator i_facs_end = factors.end();
       for(types :: t_unsigned o(0); o < nb_obs; --o ) // over observables
       {
-        for(types::t_unsigned r(0); i_facs != i_facs_end; ++i_rank, ++i_facs, ++r ) // over ranks
+        // loop over ranks
+        for(types::t_unsigned r(0); i_facs != i_facs_end; ++i_rank, ++i_facs, ++r ) 
         {
           __ASSERT( i_facs->size() <= _dim, "Incoherent number of factors.\n" )
           t_Type &factor = (*i_facs)[_dim];
           factor = t_Type(0);
           // performs cdot calculation: 
-          //  _ first compute the accumulated number of elements over ranks and basis functions.
-          __ASSERT( sizes.size() <= _dim, "Inconsistent size of array Collapse::sizes.\n" )
-          __ASSERT( sizes[dim].size() <= r, "Inconsistent size of array Collapse::sizes.\n" )
+          //  _ first compute the accumulated number of elements over ranks and
+          //    basis functions.
+          __ASSERT( sizes.size() <= _dim,
+                    "Inconsistent size of array MemCollapse::sizes.\n" )
+          __ASSERT( sizes[dim].size() <= r,
+                    "Inconsistent size of array MemCollapse::sizes.\n" )
           types::t_unsigned acc = std::accumulate( sizes[dim].begin(),
                                                    sizes[dim].begin() + r,
                                                    types::t_unsigned(0) );
           //  _ second retrieve iterator to expanded function for current
           //    observable, rank, and dimension.
-          __ASSERT( expanded.size() <= dim + o * D, "Inconsistent size of input vectors.\n" )
+          __ASSERT( expanded.size() <= dim + o * D,
+                    "Inconsistent size of input vectors.\n" )
           __ASSERT( expanded[dim+o*D].size() < acc + sizes[dim][r],
                     "Inconsistent size of input vectors.\n" )
           typedef typename t_Expanded :: value_type :: const_iterator t_citerator;
@@ -309,7 +330,7 @@ namespace Separable
     }
 
   template< class T_FUNCTION > template< T_VECTORS >
-    void Collapse<T_FUNCTION> :: reassign( const T_VECTORS& _solution ) const
+    void MemCollapse<T_FUNCTION> :: reassign( const T_VECTORS& _solution ) const
     {
       typedef T_VECTORS t_Vectors;
       typedef t_Vectors :: const_iterator const_solit;
@@ -327,7 +348,8 @@ namespace Separable
                              :: t_Basis :: value_type t_factor_func;
           t_factor_func &facfunc = function.basis[r].basis[d];
           i_coef_ += facfunc.coefs.size();
-          __ASSERT( i_coef_end - i_coef_ < 0, "Inconsistent number of coefficients." )
+          __ASSERT( i_coef_end - i_coef_ < 0,
+                    "Inconsistent number of coefficients." )
           std::copy( boost::ref(i_coef), boost::ref(i_coef_), 
                      facfunc.coefs.begin() );
         }
@@ -335,7 +357,7 @@ namespace Separable
     }
 
   template< class T_FUNCTION >
-    void Collapse<T_FUNCTION> :: reset() 
+    void MemCollapse<T_FUNCTION> :: reset() 
     {
       is_initialized = false;
       expanded.clear();
