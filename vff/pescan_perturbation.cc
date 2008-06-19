@@ -30,7 +30,7 @@ namespace Vff
     // For periodicity reasons, we make the hypothesis that the cell-vectors
     // will not change with the atomic swap.
     types::t_unsigned cell_freeze = t_VA::structure.freeze;
-    t_VA::structure.freeze = Ising_CE::Structure::FREEZE_ALL;
+    t_VA::structure.freeze = Crystal::Structure::FREEZE_ALL;
 
     // Flip atom and minimize strain
     atom.type = (atom.type > 0) ? -1.0: 1.0;
@@ -58,9 +58,9 @@ namespace Vff
       types::t_real msstrain = functionals[i_center->kind()].MicroStrain( *i_center,
                                                                           structure0 );
       // then goes over bonds and finds number of pseudos and their weights
-      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_X ) vec[0] = 0.0;
-      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_Y ) vec[1] = 0.0;
-      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_Z ) vec[2] = 0.0;
+      if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_X ) vec[0] = 0.0;
+      if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_Y ) vec[1] = 0.0;
+      if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_Z ) vec[2] = 0.0;
       if(     ( not Fuzzy::eq( vec[0], 0e0 ) )  
           and ( not Fuzzy::eq( vec[1], 0e0 ) )  
           and ( not Fuzzy::eq( vec[2], 0e0 ) )  ) continue;
@@ -70,7 +70,7 @@ namespace Vff
       find_escan_pseudos( *i_center, pseudos );
 
       // gets pseudo Z
-      Ising_CE::StrAtom stratom;
+      Crystal::StrAtom stratom;
       t_VA::structure.lattice->convert_Atom_to_StrAtom( structure0.atoms[i_center->get_index()],
                                                         stratom );
       types::t_unsigned Z = Physics::Atomic::Z( stratom.type );
@@ -157,7 +157,7 @@ namespace Vff
     t_pseudos pseudos; pseudos.reserve(4);
       
     // first gets pseudo index
-    Ising_CE::StrAtom stratom;
+    Crystal::StrAtom stratom;
     t_VA::structure.lattice->convert_Atom_to_StrAtom( structure0.atoms[center.get_index()],
                                                       stratom );
     types::t_unsigned index1 = Physics::Atomic::Z( stratom.type );
@@ -272,7 +272,7 @@ namespace Vff
     t_Center :: const_iterator i_bond_end = _center.end();
     for(; i_bond != i_bond_end; ++i_bond )
     { 
-      Ising_CE::StrAtom stratom;
+      Crystal::StrAtom stratom;
       t_VA::structure.lattice->convert_Atom_to_StrAtom( structure0.atoms[i_bond->get_index()],
                                                         stratom );
       types::t_unsigned Z = Physics::Atomic::Z( stratom.type );

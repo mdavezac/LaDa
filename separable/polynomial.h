@@ -8,6 +8,8 @@
 #include <config.h>
 #endif
 
+#include<opt/types.h>
+
 // Create polynomials from degree -21 to degree 21
 //! \cond
 #     define __POLYFUNCTIONS__

@@ -5,7 +5,7 @@
 
 #include <opt/debug.h>       // std::runtime_error
 
-types::t_real set_concentration( Ising_CE::Structure &_str,
+types::t_real set_concentration( Crystal::Structure &_str,
                                  types::t_real _target )
 {
   types::t_unsigned N = (types::t_int) _str.atoms.size();
@@ -15,17 +15,17 @@ types::t_real set_concentration( Ising_CE::Structure &_str,
               " Could not allocate memory in set_concentration.\n" )
 
   types::t_complex  *i_hold = hold;
-  Ising_CE::Fourier( _str.atoms.begin(), _str.atoms.end(),
+  Crystal::Fourier( _str.atoms.begin(), _str.atoms.end(),
                      _str.k_vecs.begin(), _str.k_vecs.end(),
                      i_hold );
 
-  Ising_CE::Structure::t_Atoms::iterator i_atom = _str.atoms.begin();
-  Ising_CE::Structure::t_Atoms::iterator i_atom_end = _str.atoms.end();
+  Crystal::Structure::t_Atoms::iterator i_atom = _str.atoms.begin();
+  Crystal::Structure::t_Atoms::iterator i_atom_end = _str.atoms.end();
   types :: t_int result = 0; 
   i_hold = hold;
   for (; i_atom != i_atom_end; ++i_atom, ++i_hold)
   {
-    if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
+    if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T )
       ( i_atom->type > 0 ) ? ++result : --result;
     else 
     {
@@ -50,7 +50,7 @@ types::t_real set_concentration( Ising_CE::Structure &_str,
   i_atom = _str.atoms.begin();
   i_hold = hold;
   for (; i_atom != i_atom_end; ++i_atom, ++i_hold)
-    if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
+    if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T )
       *i_hold = to_change;
     else if ( to_change > 0 and std::real( *i_hold ) > 0 )
       *i_hold = to_change;

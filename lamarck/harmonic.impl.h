@@ -1,7 +1,7 @@
 //
 //  Version: $Id$
 //
-namespace Ising_CE 
+namespace Crystal 
 {
   namespace ConstituentStrain
   {
@@ -83,5 +83,5 @@ namespace Ising_CE
 
     } // namespace Harmonic
   } // namespace ConstituentStrain
-} // namespace Ising_CE
+} // namespace Crystal
     

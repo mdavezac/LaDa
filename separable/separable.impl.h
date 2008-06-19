@@ -121,13 +121,13 @@ namespace Separable
         }
 
   template<class T_FUNCTION> template< class T_VECTORS >
-  void MemCollapse<T_FUNCTION> :: init( const T_VECTORS &_x ) 
+  void Collapse<T_FUNCTION> :: init( const T_VECTORS &_x ) 
   {
     // finds maximum size of separable function.
     {
       using namespace boost::lambda;
       typename t_Function::t_Basis::const_iterator i_max;
-      i_max = std::max_element( _x.basis.begin(), x.basis.end(), 
+      i_max = std::max_element( function.basis.begin(), function.basis.end(), 
                                 bind( &T_FUNCTION::t_Basis::value_type::size, _1 ) 
                                 < 
                                 bind( &T_FUNCTION::t_Basis::value_type::size, _2 )  );
@@ -184,7 +184,7 @@ namespace Separable
   }
 
   template<class T_FUNCTION>  template< class T_MATRIX, class T_VECTORS >
-    void MemCollapse<T_FUNCTION>::operator()( T_MATRIX &_A, types::t_unsigned _dim,
+    void Collapse<T_FUNCTION>::operator()( T_MATRIX &_A, types::t_unsigned _dim,
                                            const T_VECTORS &_coefs )
     {
       if( ( not is_initialized ) or ( ( not do_update ) and _dim == 0 ) )
@@ -225,7 +225,7 @@ namespace Separable
     }
 
   template< class T_FUNCTION> template< class T_VECTORS >
-    void MemCollapse<T_FUNCTION>::initialize_factors( const T_VECTORS &_coefs )
+    void Collapse<T_FUNCTION>::initialize_factors( const T_VECTORS &_coefs )
     {
       __ASSERT( nb_ranks != function.basis.size(),
                 "Inconsistent rank size.\n" )
@@ -249,7 +249,7 @@ namespace Separable
             //  _ first compute the accumulated number of elements over ranks
             //    and basis functions.
             __ASSERT( sizes.size() <= d,
-                      "Inconsistent size of array MemCollapse::sizes.\n" )
+                      "Inconsistent size of array Collapse::sizes.\n" )
             __ASSERT( sizes[d].size() <= r,
                       "Inconsistent size of array Collapse::sizes.\n" )
             types::t_unsigned acc = std::accumulate( sizes[d].begin(),
@@ -279,7 +279,7 @@ namespace Separable
     }
  
   template< class T_FUNCTION > template< class T_VECTORS >
-    void MemCollapse<T_FUNCTION>::update_factors( types::t_unsigned _dim,
+    void Collapse<T_FUNCTION>::update_factors( types::t_unsigned _dim,
                                                const T_VECTORS &_coefs )
     {
       dim == 0 ? dim = D: --_dim;
@@ -301,9 +301,9 @@ namespace Separable
           //  _ first compute the accumulated number of elements over ranks and
           //    basis functions.
           __ASSERT( sizes.size() <= _dim,
-                    "Inconsistent size of array MemCollapse::sizes.\n" )
+                    "Inconsistent size of array Collapse::sizes.\n" )
           __ASSERT( sizes[dim].size() <= r,
-                    "Inconsistent size of array MemCollapse::sizes.\n" )
+                    "Inconsistent size of array Collapse::sizes.\n" )
           types::t_unsigned acc = std::accumulate( sizes[dim].begin(),
                                                    sizes[dim].begin() + r,
                                                    types::t_unsigned(0) );
@@ -330,7 +330,7 @@ namespace Separable
     }
 
   template< class T_FUNCTION > template< T_VECTORS >
-    void MemCollapse<T_FUNCTION> :: reassign( const T_VECTORS& _solution ) const
+    void Collapse<T_FUNCTION> :: reassign( const T_VECTORS& _solution ) const
     {
       typedef T_VECTORS t_Vectors;
       typedef t_Vectors :: const_iterator const_solit;
@@ -356,8 +356,25 @@ namespace Separable
       }
     }
 
+  template< class T_FUNCTION > template< T_VECTORS >
+    void Collapse<T_FUNCTION> :: create_coefs( T_VECTORS& _coefs ) const
+    {
+      typedef T_VECTORS t_Vectors;
+      typedef t_Vectors :: const_iterator const_solit;
+      typedef t_Vectors :: value_type :: const_iterator const_soldimit;
+      _coefs.resize( sizes.size() );
+      const_solit i_dim = _coefs.begin();
+      const_solit i_dim_end = _coefs.end();
+      t_Sizes i_size = sizes.begin();
+      for(; i_dim != i_dim_end; ++i_dim, ++i_size ) // loop over dimensions.
+      {
+        types::t_int ri = std::accumulate( i_size->begin(), i_size->end(), 0 );
+        i_dim->resize( ris );
+      }
+    }
+
   template< class T_FUNCTION >
-    void MemCollapse<T_FUNCTION> :: reset() 
+    void Collapse<T_FUNCTION> :: reset() 
     {
       is_initialized = false;
       expanded.clear();

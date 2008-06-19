@@ -120,8 +120,8 @@ namespace BandGap
       //! \cond
       typedef Evaluator t_This;
       typedef TwoSites::Evaluator< t_Individual > t_Base;
-      typedef Ising_CE::Structure::t_kAtoms t_kvecs;
-      typedef Ising_CE::Structure::t_Atoms t_rvecs;
+      typedef Crystal::Structure::t_kAtoms t_kvecs;
+      typedef Crystal::Structure::t_Atoms t_rvecs;
       //! \endcond
 
     public:

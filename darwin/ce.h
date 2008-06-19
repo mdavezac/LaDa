@@ -35,13 +35,13 @@ namespace CE
   namespace details 
   {
 #   if defined(_CUBIC_CE_)
-      typedef Ising_CE::ConstituentStrain::Harmonic::Cubic t_Harmonic;
+      typedef Crystal::ConstituentStrain::Harmonic::Cubic t_Harmonic;
 #   elif defined( _TETRAGONAL_CE_ )
-      typedef Ising_CE::ConstituentStrain::Harmonic::Tetragonal t_Harmonic;
+      typedef Crystal::ConstituentStrain::Harmonic::Tetragonal t_Harmonic;
 #   else
 #     error Please specify _CUBIC_CE_ or _TETRAGONAL_CE_
 #   endif
-    typedef VA_CE::Builder<t_Harmonic> t_Builder;
+    typedef CE::Builder<t_Harmonic> t_Builder;
   }
 
   //! \ingroup Genetic
@@ -62,11 +62,11 @@ namespace CE
       //! Single-cell-shape cluster expansion functional instance
       t_Functional functional; 
       //! Structure (cell-shape) for which the CE functional is specialized
-      Ising_CE::Structure &structure; 
+      Crystal::Structure &structure; 
 
     public:
       //! Constructor
-      Darwin( Ising_CE::Structure& _str ) : functional(), structure(_str) {}; 
+      Darwin( Crystal::Structure& _str ) : functional(), structure(_str) {}; 
       //! Copy Constructor
       Darwin   ( const Darwin &_c )
              : t_Base(_c), functional(_c.functional),

@@ -77,7 +77,7 @@ namespace BandGap
       //!          information should come from Darwin::atomicconfig, such
       //!          things as the number of electrons (for all-electron
       //!          calculations) does not.
-      Ising_CE::Structure &structure;
+      Crystal::Structure &structure;
       //! The pescan interface
       Pescan::VirtualAtom bandgap;
       //! \brief File in which energy references for the VBM/CBM are written and read.
@@ -103,7 +103,7 @@ namespace BandGap
 
     public:
       //! Constructor and Initializer
-      Darwin   ( Ising_CE::Structure &_s )
+      Darwin   ( Crystal::Structure &_s )
              : structure(_s), bandgap( _s ), references_filename("BandEdge"), 
                nbeval(0), age(0), check_ref_every(-1) 
                __MPICONSTRUCTORCODE( comm( &::mpi::main ) )

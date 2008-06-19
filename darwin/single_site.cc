@@ -9,27 +9,27 @@
 
 namespace SingleSite
 {
-  void operator<<(Ising_CE::Structure &_str, const Object &_o)
+  void operator<<(Crystal::Structure &_str, const Object &_o)
   {
     Object::t_Container :: const_iterator i_var = _o.bitstring.begin();
     Object::t_Container :: const_iterator i_end = _o.bitstring.end();
-    Ising_CE::Structure :: t_Atoms :: iterator i_atom = _str.atoms.begin();
-    Ising_CE::Structure :: t_Atoms :: iterator i_atom_end = _str.atoms.end();
+    Crystal::Structure :: t_Atoms :: iterator i_atom = _str.atoms.begin();
+    Crystal::Structure :: t_Atoms :: iterator i_atom_end = _str.atoms.end();
     for(; i_var != i_end and i_atom != i_atom_end; ++i_atom )
     {
-      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) 
+      if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T ) 
         continue;
       i_atom->type = BitString::spin_up(*i_var) ? 1.0 : -1.0;
       ++i_var;
     }
   }
-  void operator<<(Object &_o, const Ising_CE::Structure &_c)
+  void operator<<(Object &_o, const Crystal::Structure &_c)
   {
     _o.bitstring.clear(); _o.bitstring.reserve( _c.atoms.size() );
-    Ising_CE::Structure :: t_Atoms :: const_iterator i_atom = _c.atoms.begin();
-    Ising_CE::Structure :: t_Atoms :: const_iterator i_end = _c.atoms.end();
+    Crystal::Structure :: t_Atoms :: const_iterator i_atom = _c.atoms.begin();
+    Crystal::Structure :: t_Atoms :: const_iterator i_end = _c.atoms.end();
     for(; i_atom != i_end; ++i_atom )
-      if ( not (i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T) )
+      if ( not (i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T) )
         _o.bitstring.push_back( BitString::spin_up(i_atom->type) ? 1.0: -1.0 );
   }
 
@@ -67,18 +67,18 @@ errorout:
   }
 
 
-  void Concentration :: setfrozen ( const Ising_CE::Structure &_str )
+  void Concentration :: setfrozen ( const Crystal::Structure &_str )
   {
     N = _str.atoms.size();
-    Ising_CE::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
-    Ising_CE::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
+    Crystal::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
+    Crystal::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
     Nfreeze = 0;
     for(; i_atom != i_atom_end; ++i_atom )
-      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
+      if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T )
         Nfreeze += i_atom->type > 0 ? 1 : -1; 
   }
 
-  void Concentration :: operator()( Ising_CE::Structure &_str )
+  void Concentration :: operator()( Crystal::Structure &_str )
   {
     types::t_complex  *hold ;
     __TRYCODE( hold = new types::t_complex[ N ];,
@@ -90,14 +90,14 @@ errorout:
              _str.k_vecs.begin(), _str.k_vecs.end(),
             i_hold );
 
-    Ising_CE::Structure::t_Atoms::iterator i_atom = _str.atoms.begin();
-    Ising_CE::Structure::t_Atoms::iterator i_atom_end = _str.atoms.end();
+    Crystal::Structure::t_Atoms::iterator i_atom = _str.atoms.begin();
+    Crystal::Structure::t_Atoms::iterator i_atom_end = _str.atoms.end();
     types :: t_int concx = 0;
     i_hold = hold;
     if( not single_c )
     {
       for (; i_atom != i_atom_end; ++i_atom, ++i_hold)
-        if ( not ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
+        if ( not ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T ) )
         {
           if ( Fuzzy::eq( std::real(*i_hold), 0.0 ) )
                 i_atom->type = rng.flip() ? 1.0: -1.0;
@@ -109,7 +109,7 @@ errorout:
 
     for (; i_atom != i_atom_end; ++i_atom, ++i_hold)
     {
-      if ( not ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
+      if ( not ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T ) )
       {
         if ( Fuzzy::eq( std::real(*i_hold), 0.0 ) )
           i_atom->type = rng.flip() ? 10.0*types::tolerance: -10.0*types::tolerance;
@@ -147,11 +147,11 @@ errorout:
   // Takes an "unphysical" individual and normalizes its sites \a _sites to +/-1,
   // after flipping the _tochange spins closest to zero.
   // ie sets the concentration
-  void Concentration :: normalize( Ising_CE::Structure &_str, types::t_real _tochange ) 
+  void Concentration :: normalize( Crystal::Structure &_str, types::t_real _tochange ) 
   {
-    Ising_CE::Structure::t_Atoms::iterator i_end = _str.atoms.end();
-    Ising_CE::Structure::t_Atoms::iterator i_which;
-    Ising_CE::Structure::t_Atoms::iterator i_atom;
+    Crystal::Structure::t_Atoms::iterator i_end = _str.atoms.end();
+    Crystal::Structure::t_Atoms::iterator i_which;
+    Crystal::Structure::t_Atoms::iterator i_atom;
     while( _tochange < -1.0 or _tochange > 1.0 ) 
     {
       // first finds atom with type closest to zero from +1 or -1 side,
@@ -161,7 +161,7 @@ errorout:
       types::t_real minr = 0.0;
       for(; i_atom != i_end; ++i_atom )
       {
-        if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) continue;
+        if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T ) continue;
         if ( _tochange > 0 )
         {
           if ( i_atom->type < 0 )                    continue;
@@ -194,10 +194,10 @@ errorout:
       i_atom->type = ( i_atom->type > 0 ) ? 1.0: -1.0;
   }
 
-  void Concentration :: get( const Ising_CE::Structure &_str)
+  void Concentration :: get( const Crystal::Structure &_str)
   {
-    Ising_CE::Structure::t_Atoms :: const_iterator i_atom = _str.atoms.begin();
-    Ising_CE::Structure::t_Atoms :: const_iterator i_atom_end = _str.atoms.end();
+    Crystal::Structure::t_Atoms :: const_iterator i_atom = _str.atoms.begin();
+    Crystal::Structure::t_Atoms :: const_iterator i_atom_end = _str.atoms.end();
     for(; i_atom != i_atom_end; ++i_atom )
       x += i_atom->type;
     x /= (types::t_real) N;

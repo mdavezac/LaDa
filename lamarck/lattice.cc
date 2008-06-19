@@ -10,7 +10,7 @@
 #include "lattice.h"
 
 
-namespace Ising_CE {
+namespace Crystal {
 
        
   bool Lattice :: Load( const TiXmlElement &_element )
@@ -143,7 +143,7 @@ namespace Ising_CE {
     __THROW_ERROR( "Could not find atomic site index!! " << _at << "\n" ) 
   }
 
-  types::t_int Lattice :: get_atom_type_index( const Ising_CE :: Atom &_at ) const
+  types::t_int Lattice :: get_atom_type_index( const Crystal :: Atom &_at ) const
   {
     const atat::rMatrix3d inv_cell = !cell;
     std::vector< t_Site > :: const_iterator i_site = sites.begin(); 
@@ -177,8 +177,8 @@ namespace Ising_CE {
     __THROW_ERROR("Could not find atomic site index!! " << _at << "\n" )
   }
   
-  bool Lattice :: convert_StrAtom_to_Atom( const Ising_CE::StrAtom &_in,
-                                           Ising_CE::Atom &_out ) const
+  bool Lattice :: convert_StrAtom_to_Atom( const Crystal::StrAtom &_in,
+                                           Crystal::Atom &_out ) const
   {
     // on exit, _out is initialized, even is site and type not found
     _out.pos = _in.pos; 
@@ -211,8 +211,8 @@ namespace Ising_CE {
     return true;
   }
 
-  bool Lattice :: convert_Atom_to_StrAtom( const Ising_CE::Atom &_in,
-                                           Ising_CE::StrAtom &_out ) const
+  bool Lattice :: convert_Atom_to_StrAtom( const Crystal::Atom &_in,
+                                           Crystal::StrAtom &_out ) const
   {
     // on exit, _out is initialized, even is site and type not found
     _out.pos = _in.pos; 
@@ -283,5 +283,5 @@ namespace Ising_CE {
     vec = current;
   }
 
-} // namespace Ising_CE
+} // namespace Crystal
 

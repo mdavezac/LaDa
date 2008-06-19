@@ -19,7 +19,7 @@ namespace Vff
 
   Fortran :: Fortran() : Functional(structure) 
   {
-    Ising_CE::Structure::lattice = &lattice;
+    Crystal::Structure::lattice = &lattice;
 
     lattice.cell.zero();
     lattice.cell(0,1) = 0.5;
@@ -29,8 +29,8 @@ namespace Vff
     lattice.cell(2,0) = 0.5;
     lattice.cell(2,1) = 0.5;
   
-    Ising_CE::Lattice::t_Site site;
-    site.site = 0; site.freeze = Ising_CE::Lattice::t_Site::FREEZE_NONE;
+    Crystal::Lattice::t_Site site;
+    site.site = 0; site.freeze = Crystal::Lattice::t_Site::FREEZE_NONE;
     site.pos = atat::rVector3d(0,0,0);
     lattice.sites.push_back(site);
     site.pos = atat::rVector3d(0.25,0.25,0.25);
@@ -47,9 +47,9 @@ namespace Vff
 
   void Fortran :: set_atoms( types::t_int n, types::t_real *_position, char *_type )
   {
-    std::vector< Ising_CE::StrAtom > atoms(n); 
-    std::vector< Ising_CE::StrAtom > :: iterator i_atom = atoms.begin();
-    std::vector< Ising_CE::StrAtom > :: iterator i_atom_end = atoms.end();
+    std::vector< Crystal::StrAtom > atoms(n); 
+    std::vector< Crystal::StrAtom > :: iterator i_atom = atoms.begin();
+    std::vector< Crystal::StrAtom > :: iterator i_atom_end = atoms.end();
 
     types::t_real *i_pos = _position;
     char *i_char = _type;
@@ -76,24 +76,24 @@ namespace Vff
       i_char += n;
 
       //! Then determines if it is a known type
-      Ising_CE::Lattice::t_Site::t_Type &type = lattice.sites[ i_atom->site ].type;
+      Crystal::Lattice::t_Site::t_Type &type = lattice.sites[ i_atom->site ].type;
       if( type.empty() )  type.push_back( symbol );
       else 
       {
-        Ising_CE::Lattice::t_Site::t_Type :: const_iterator i_which;
+        Crystal::Lattice::t_Site::t_Type :: const_iterator i_which;
         i_which = std::find( type.begin(), type.end(), symbol );
         if ( i_which == type.end() ) type.push_back( symbol );
       }
 
       // Finally sets the string atom
       i_atom->type = symbol;
-      i_atom->freeze = Ising_CE::StrAtom::FREEZE_NONE;
+      i_atom->freeze = Crystal::StrAtom::FREEZE_NONE;
     }
 
     // Finally, copies string atoms to structure
     for( i_atom = atoms.begin(); i_atom != i_atom_end; ++i_atom )
     {
-      Ising_CE::Structure::t_Atom atom;
+      Crystal::Structure::t_Atom atom;
       lattice.convert_StrAtom_to_Atom( *i_atom, atom );
       structure.atoms.push_back( atom );
     }

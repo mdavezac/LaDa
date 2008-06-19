@@ -65,10 +65,10 @@ int main(int argc, char *argv[])
     
     TiXmlElement *child;
     atat::rVector3d vec;
-    Ising_CE::Structure structure;
-    Ising_CE::Lattice lattice;
+    Crystal::Structure structure;
+    Crystal::Lattice lattice;
     
-    Ising_CE :: Structure :: lattice = &lattice;
+    Crystal :: Structure :: lattice = &lattice;
     
     TiXmlDocument doc( filename.c_str() );
     
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
       vff.print_escan_input( "atomic.config" );
     
     
-      Ising_CE::Fourier( structure.atoms.begin(),  structure.atoms.end(),
+      Crystal::Fourier( structure.atoms.begin(),  structure.atoms.end(),
                          structure.k_vecs.begin(), structure.k_vecs.end() );
       structure.print_out(std::cout );
     

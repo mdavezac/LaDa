@@ -177,7 +177,7 @@ namespace Pescan
        const static types::t_real deriv_amplitude = 0.01;
 
        //! The type of atom container
-       typedef Ising_CE::Structure :: t_Atoms t_Atoms;
+       typedef Crystal::Structure :: t_Atoms t_Atoms;
        //! The type of atoms 
        typedef t_Atoms :: value_type  t_Atom;
        
@@ -201,7 +201,7 @@ namespace Pescan
 
      public:
        //! Constructor and Initializer
-       VirtualAtom   ( Ising_CE::Structure &_str )
+       VirtualAtom   ( Crystal::Structure &_str )
                    : t_PescanBase(), t_VABase( _str ),
                      vff( _str ), do_gradients(CHEMICAL_STRESS_GRADIENTS),
                      is_vff_uninitialized(true)  {}
@@ -331,7 +331,7 @@ namespace Pescan
   //! Dumps structure to \a _stream
   inline std::ostream& operator<<( std::ostream& _stream, const VirtualAtom& _va )
   {
-    Ising_CE::Fourier( _va.structure.atoms.begin(),  _va.structure.atoms.end(),
+    Crystal::Fourier( _va.structure.atoms.begin(),  _va.structure.atoms.end(),
                        _va.structure.k_vecs.begin(), _va.structure.k_vecs.end() );
     return _stream << _va.structure;
   }

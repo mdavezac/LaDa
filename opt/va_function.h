@@ -22,9 +22,9 @@ namespace function
   class VirtualAtom 
   {
      //! The type of the atom container
-     typedef Ising_CE::Structure::t_Atoms t_Atoms;
+     typedef Crystal::Structure::t_Atoms t_Atoms;
      //! The type of the atom
-     typedef Ising_CE::Structure::t_Atom  t_Atom;
+     typedef Crystal::Structure::t_Atom  t_Atom;
 
      public:
        //! see functional::Base::t_Type
@@ -33,12 +33,12 @@ namespace function
        typedef std::vector< t_Type >  t_Container;
 
      protected:
-       Ising_CE::Structure& structure;
+       Crystal::Structure& structure;
        t_Container va_vars;
 
      public:
        //! Constructor and Initializer
-       VirtualAtom   ( Ising_CE::Structure &_str )
+       VirtualAtom   ( Crystal::Structure &_str )
                    : structure( _str )
         { va_vars.reserve( _str.atoms.size() ); }
        //! Copy Constructor

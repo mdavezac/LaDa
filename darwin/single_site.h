@@ -37,13 +37,13 @@
 //!          type or others). This is the type of search performed <A
 //!          HREF="http://dx.doi.org/10.1088/0953-8984/19/40/402201"> here </A>
 //!          with the objective being a simple minimization.
-//!          More specifically, the fourier transform from Ising_CE is used. A
+//!          More specifically, the fourier transform from Crystal is used. A
 //!          Bitstring object is defined which can load and be loaded from an
-//!          Ising_CE::Structure instance. A concentration class is created
+//!          Crystal::Structure instance. A concentration class is created
 //!          which can ecaluate the contration of SingleSite::Object and of an
-//!          Ising_CE::Structure, whatever the number and type of frozen atoms.
+//!          Crystal::Structure, whatever the number and type of frozen atoms.
 //!          It can also set the concentration of SingleSite::Object and 
-//!          Ising_CE::Structure instances. Finally, and evaluator class is
+//!          Crystal::Structure instances. Finally, and evaluator class is
 //!          derived from GA::Evaluator to use physical %GA operators.
 //! \xmlinput If the \<GA\> tag contains an x0 attribute, then the
 //!           concentration is fixed. The structure which the individuals
@@ -54,20 +54,20 @@ namespace SingleSite
   //! \brief Type of the Fourier functor.
   //! \details Once doxygen is smart enough, should become
   //! \code
-  //  using Ising_CE::Fourier;
+  //  using Crystal::Fourier;
   //! \endcode
   //!      
-  typedef Ising_CE::Fourier Fourier;
+  typedef Crystal::Fourier Fourier;
 
   //! \brief Object describing the decoration of a structure.
   //! \details Mostly, this is a redefinition of a BitString::Object<>. The
   //!          point is to be able to define 
-  //!          SingleSite::operator<<( Ising_CE::Structure&, const Object&) and 
-  //!          SingleSite::operator<<( Object&, const Ising_CE::Structure&) without
+  //!          SingleSite::operator<<( Crystal::Structure&, const Object&) and 
+  //!          SingleSite::operator<<( Object&, const Crystal::Structure&) without
   //!          interfering with possible previous
   //!          decalarations.
-  //! \see SingleSite::operator<<( Ising_CE::Structure&, const Object& ), 
-  //!      SingleSite::operator<<( Object&, const Ising_CE::Structure& ). 
+  //! \see SingleSite::operator<<( Crystal::Structure&, const Object& ), 
+  //!      SingleSite::operator<<( Object&, const Crystal::Structure& ). 
   struct Object : public BitString::Object<> 
   {
     protected:
@@ -95,14 +95,14 @@ namespace SingleSite
   };
 
   //! Dumps the decoration of \a _str into the object \a _o
-  void operator<<(Ising_CE::Structure &_str, const Object &_o);
+  void operator<<(Crystal::Structure &_str, const Object &_o);
   //! Dumps the decoration \a _o into the structure \a _str
-  void operator<<(Object &_o, const Ising_CE::Structure &_str);
+  void operator<<(Object &_o, const Crystal::Structure &_str);
 
   //! \brief Concentration related behaviors for the decorations of single-site
   //!        structures.
   //! \details It can compute and set the concentrations of Object and
-  //!          Ising_CE::Structure instances for single-site lattices. It works
+  //!          Crystal::Structure instances for single-site lattices. It works
   //!          correctly with structure for which the occupation of some sites
   //!          are frozen.
   //! \xmlinput Specifying an x0 attribute in the \<%GA\> tag implies that the
@@ -115,7 +115,7 @@ namespace SingleSite
       types::t_real x0;
     public:
       //! \brief Stores the concentation of the last computed Object of
-      //!        Ising_CE::Structure instance..
+      //!        Crystal::Structure instance..
       types::t_real x;
       //! The number of sites in the current cell-shape
       types::t_unsigned N;
@@ -151,19 +151,19 @@ namespace SingleSite
       //!          real value of the complex occupation  are closest to zero
       //!          are flipped first.
       //! \see GA::Krossover, GA::KRandom, GA::KMutation.
-      void operator()( Ising_CE::Structure &_str );
+      void operator()( Crystal::Structure &_str );
       //! \brief Sets \a _obj to concentration Concentration::x0 if the concentration
       //!        is fixed.
       void operator()( Object &_obj );
       //! \brief Computes the concentration of \a _str and stores the result in
       //!        Concentration::x
-      void get( const Ising_CE::Structure &_str);
+      void get( const Crystal::Structure &_str);
       //! \brief Computes the concentration of \a _obj and stores the result in
       //!        Concentration::x
       void get( const Object &_obj );
       //! \brief Computes the number of sites in \a _str for which the
       //!        occupation is fixed
-      void setfrozen ( const Ising_CE::Structure &_str );
+      void setfrozen ( const Crystal::Structure &_str );
 
       //! \brief Returns a string describing the statuc of this instance
       //! \returns "Single Concentration, x0 =?" with ?=Concentration::x0 or 
@@ -172,8 +172,8 @@ namespace SingleSite
 
     protected:
       //! \brief Actually does the job of normalizing the site occupations for
-      //!        Concentration::operator()(Ising_CE::Structure&)
-      void normalize( Ising_CE::Structure &_str, 
+      //!        Concentration::operator()(Crystal::Structure&)
+      void normalize( Crystal::Structure &_str, 
                       types::t_real _tochange);
 
   };
@@ -185,7 +185,7 @@ namespace SingleSite
   //!          bitstring objects defined above, as well as the concetration
   //!          functor SingleSite::Concentration. Saving and Restarting of
   //!          individuals is partially implementated as relates to
-  //!          BitString::Object and Ising_CE::Structure.
+  //!          BitString::Object and Crystal::Structure.
   //! \xmlrestart Individuals are save in \<Individual\> tags in two possible format:
   //!             a long explicit format 
   //! \code
@@ -223,15 +223,15 @@ namespace SingleSite
       using t_Base :: current_object;
 
     protected:
-      typedef Ising_CE::Structure::t_kAtoms t_kvecs;
-      typedef Ising_CE::Structure::t_Atoms t_rvecs;
+      typedef Crystal::Structure::t_kAtoms t_kvecs;
+      typedef Crystal::Structure::t_Atoms t_rvecs;
     //! \endcond
       
     protected:
       //! The lattice for which decoration search is done
-      Ising_CE::Lattice lattice; 
+      Crystal::Lattice lattice; 
       //! The structure (cell-shape) for which decoration search is done
-      Ising_CE::Structure structure;
+      Crystal::Structure structure;
       //! \brief A concentration instance as define by
       //!        T_INDIVIDUAL::t_IndivTraits::t_Concentration
       t_Concentration concentration;
@@ -295,7 +295,7 @@ namespace SingleSite
       //! \brief Does simple consistency checks between the structure as loaded from
       //!        \<Structure\> and the lattice, as loaded from \<Lattice\>
       //! \details If the structure is loaded after the lattice, and if
-      //!          Ising_CE::Structure::Lattice is set corretly, this should
+      //!          Crystal::Structure::Lattice is set corretly, this should
       //!          probably not be necessary.
       bool consistency_check();
   };

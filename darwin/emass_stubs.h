@@ -87,7 +87,7 @@ namespace eMassSL
       //!          information should come from Darwin::atomicconfig, such
       //!          things as the number of electrons (for all-electron
       //!          calculations) does not.
-      Ising_CE::Structure &structure;
+      Crystal::Structure &structure;
       //! The pescan interface
       Pescan::eMassSL emass;
       //! The filename to/from are written/read the energy references for the
@@ -108,7 +108,7 @@ namespace eMassSL
 
     public:
       //! Constructor and Initializer
-      Darwin   ( Ising_CE::Structure &_s )
+      Darwin   ( Crystal::Structure &_s )
              : structure(_s), references_filename("BandEdge"), 
                nbeval(0), age(0), check_ref_every(-1) {}
       //! Copy Constructor

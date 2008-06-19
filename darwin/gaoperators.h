@@ -71,7 +71,7 @@ namespace GA
 
     protected:
       t_Concentration &concentration; //!< reference to a t_Concentration object
-      Ising_CE::Structure &structure; //!< reference to a structure
+      Crystal::Structure &structure; //!< reference to a structure
       types::t_real rate; //!< crossover rate (0.5 by default)
       bool do_range; //!< Whether to a range or indifferent krossover
 
@@ -80,7 +80,7 @@ namespace GA
 
     public:
       //! Constructor and Initializer
-      Krossover   ( t_Concentration &_c, Ising_CE::Structure &_str )
+      Krossover   ( t_Concentration &_c, Crystal::Structure &_str )
                 : concentration(_c), structure(_str), rate(0.5), do_range(false) {}
       //! Copy Constructor
       Krossover   ( const Krossover &_k )
@@ -156,7 +156,7 @@ namespace GA
 
     protected:
       t_Concentration &concentration; //!< reference to a t_Concentration object
-      Ising_CE::Structure &structure; //!< reference to a structure
+      Crystal::Structure &structure; //!< reference to a structure
       types::t_real rate; //!< crossover rate (0.5 by default)
 
     public:
@@ -164,7 +164,7 @@ namespace GA
 
     public:
       //! Constructor and Initializer
-      KMutation   ( t_Concentration &_c, Ising_CE::Structure &_str )
+      KMutation   ( t_Concentration &_c, Crystal::Structure &_str )
                 : concentration(_c), structure(_str), rate(0.5) {}
       //! Copy Constructor
       KMutation   ( const KMutation &_k )
@@ -217,17 +217,17 @@ namespace GA
 
     protected:
       t_Concentration &concentration; //!< reference to a t_Concentration object
-      Ising_CE::Structure &structure; //!< reference to a structure
+      Crystal::Structure &structure; //!< reference to a structure
 
     public:
       using t_Base::operator();
 
     public:
       //! Constructor and Initializer
-      KRandom   ( t_Concentration &_c, Ising_CE::Structure &_str )
+      KRandom   ( t_Concentration &_c, Crystal::Structure &_str )
               : concentration(_c), structure(_str) {}
       //! Acts a functor. For convenience
-      KRandom   ( t_Concentration &_c, Ising_CE::Structure &_str, t_Individual &_indiv )
+      KRandom   ( t_Concentration &_c, Crystal::Structure &_str, t_Individual &_indiv )
               : concentration(_c), structure(_str) { operator()(_indiv); }
       //! Copy Constructor
       KRandom   ( const KRandom &_k )
@@ -405,17 +405,17 @@ namespace GA
 
     protected:
       t_Concentration &concentration; //!< reference to a t_Concentration object
-      Ising_CE::Structure &structure; //!< reference to a structure
+      Crystal::Structure &structure; //!< reference to a structure
 
     public:
       using t_Base::operator();
 
     public:
       //! Constructor and Initializer
-      Random   ( t_Concentration &_c, Ising_CE::Structure &_str )
+      Random   ( t_Concentration &_c, Crystal::Structure &_str )
              : concentration(_c), structure(_str) {}
       //! Acts a functor. For convenience
-      Random   ( t_Concentration &_c, Ising_CE::Structure &_str, t_Individual &_indiv )
+      Random   ( t_Concentration &_c, Crystal::Structure &_str, t_Individual &_indiv )
              : concentration(_c), structure(_str) { operator()(_indiv); }
       //! Copy Constructor
       Random   ( const Random &_k )
@@ -462,7 +462,7 @@ namespace GA
   //! the responsability of the caller, not the callee.
   template<class T_INDIVIDUAL>
     eoGenOp<T_INDIVIDUAL>*
-      LoadGaOp(const TiXmlElement &_el, Ising_CE::Structure &_structure, 
+      LoadGaOp(const TiXmlElement &_el, Crystal::Structure &_structure, 
                typename T_INDIVIDUAL :: t_IndivTraits :: t_Concentration &_concentration );
 
 
@@ -513,7 +513,7 @@ namespace GA
   //! \brief Creates a functor which writes to file an individual as an
   //!        xyz animation.
   //! \details It is expected that
-  //!          operator<<( Ising_CE::Structure&, const t_Object )
+  //!          operator<<( Crystal::Structure&, const t_Object )
   //!          is appropriately overloaded.
   template< class T_INDIVIDUAL >
   class XYZAnim : public eoMonOp<const T_INDIVIDUAL>
@@ -536,13 +536,13 @@ namespace GA
       //! Whether XYZAnim::file should be deleted by destructor.
       bool owns_pointer;
       //! Reference to a structure. 
-      Ising_CE::Structure &structure;
+      Crystal::Structure &structure;
       //! The number of calls made to XYZAnim::operator()().
       types::t_unsigned n;
 
     public:
       //! Constructor.
-      XYZAnim   (Ising_CE::Structure &_str)
+      XYZAnim   (Crystal::Structure &_str)
               : t_OpBase(), file(NULL), owns_pointer(false),
                 structure(_str), n(0) {}
       //! Copy Constructor.

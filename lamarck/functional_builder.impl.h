@@ -11,9 +11,9 @@
 #include "functional_builder.h"
 
 
-namespace VA_CE 
+namespace CE 
 {
-   template< class T_HARMONIC > Ising_CE::Lattice*
+   template< class T_HARMONIC > Crystal::Lattice*
      Builder<T_HARMONIC>::lattice     = NULL;
    template< class T_HARMONIC > typename Builder<T_HARMONIC> :: t_Clusters*
      Builder<T_HARMONIC>::clusters    = NULL;
@@ -59,8 +59,8 @@ namespace VA_CE
 
      // creates static quantities
      __TRYCODE(
-       lattice    = new Ising_CE::Lattice;
-       clusters   = new std::vector<Ising_CE::Cluster>;
+       lattice    = new Crystal::Lattice;
+       clusters   = new t_Clusters;
        harmonics  = new t_CS;,
        " Memory allocation failure in Builder :: Load (...) \n" 
      )
@@ -77,14 +77,14 @@ namespace VA_CE
      __DOASSERT( not lattice->Load(*child),
                  "Error while reading Lattice from input.\n" )
      lattice->find_space_group();
-     Ising_CE :: Structure :: lattice = lattice;
+     Crystal :: Structure :: lattice = lattice;
      
      // then load clusters
      child = parent->FirstChildElement( "Clusters" );
      __DOASSERT( not child,
                  "Could not find Clusters in input.\n" )
      child = child->FirstChildElement( "Cluster" );
-     Ising_CE::Cluster cluster;
+     t_Cluster cluster;
      for (  ; child; child = child->NextSiblingElement("Cluster") )
      {
        __DOASSERT( not cluster.Load( *child ),
@@ -117,7 +117,7 @@ namespace VA_CE
  
      t_Clusters :: iterator i_old_list_last = old_cluster_list.end();
      t_Clusters :: iterator i_old_list = old_cluster_list.begin();
-     Ising_CE::Cluster *transfo_cluster = new Ising_CE::Cluster;
+     t_Cluster *transfo_cluster = new t_Cluster;
  
      for (; i_old_list != i_old_list_last ; ++i_old_list )
      {
@@ -150,7 +150,7 @@ namespace VA_CE
    // each function is made up of a polynomial and constituent strain
    // part
    template< class T_HARMONIC >
-   bool Builder<T_HARMONIC> :: generate_functional( const Ising_CE::Structure &str,
+   bool Builder<T_HARMONIC> :: generate_functional( const Crystal::Structure &str,
                                                    t_VA_Functional * const functional )
    {
      std::pair<t_Chemical*, t_CS*> pair( generate_functional( str ) );
@@ -169,7 +169,7 @@ namespace VA_CE
    template< class T_HARMONIC >
    std::pair< typename Builder<T_HARMONIC> :: t_Chemical*,
               typename Builder<T_HARMONIC> :: t_CS* >
-     Builder<T_HARMONIC> :: generate_functional( const Ising_CE::Structure &str )
+     Builder<T_HARMONIC> :: generate_functional( const Crystal::Structure &str )
      {
        t_Chemical *polynome;
   
@@ -177,8 +177,8 @@ namespace VA_CE
   
        atat::rMatrix3d inv_cell = !str.cell;
        polynome = new t_Chemical();
-       Ising_CE :: Structure :: t_Atoms :: const_iterator i_atom = str.atoms.begin();
-       Ising_CE :: Structure :: t_Atoms :: const_iterator i_atom_last = str.atoms.end();
+       Crystal :: Structure :: t_Atoms :: const_iterator i_atom = str.atoms.begin();
+       Crystal :: Structure :: t_Atoms :: const_iterator i_atom_last = str.atoms.end();
   
        for(; i_atom != i_atom_last; ++i_atom) // loop over atoms
        {
@@ -246,7 +246,7 @@ namespace VA_CE
        // now computes constituent strain 
        return std::pair< t_Chemical*, t_CS* >( polynome, new t_CS(str) );
      }
-} // namespace VA_CE
+} // namespace CE
 
 
 

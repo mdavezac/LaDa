@@ -96,15 +96,15 @@ namespace Traits
   //!                 which characterize an individual (say a bitstring).
   //! \param T_CONCENTRATION is the type to a concentration functor from which
   //!                        the concentration an object and
-  //!                        Ising_CE::Structure can be set and computed.
+  //!                        Crystal::Structure can be set and computed.
   //! \param T_FOURIER_RTOK defines the type of a functor which can perform a
   //!                       fourier transform from real space to indirect
   //!                       space. For the arguments to this functor, see
-  //!                       Ising_CE::Fourier.
+  //!                       Crystal::Fourier.
   //! \param T_FOURIER_RTOK defines the type of a functor which can perform a
   //!                       fourier transform from indirect space to real
   //!                       space. For the arguments to this functor, see
-  //!                       Ising_CE::Fourier.
+  //!                       Crystal::Fourier.
   //! \param T_QUANTITY_TRAITS traits to the quantity used in this
   //!                          optimization. See Traits::Quantity.  
   //! \param T_VA_TRAITS traits for functional minimization with gradients. See Traits::VA.
@@ -131,13 +131,13 @@ namespace Traits
       typedef T_CONCENTRATION                       t_Concentration;
       //! \brief defines a Fourier transform from real to indirect space.
       //! \details It is expected that this fourier transform works well with
-      //!          an Ising_CE::Structure instance. Indeed, for the details of
-      //!          the expected interface, see Ising_CE::Fourier.
+      //!          an Crystal::Structure instance. Indeed, for the details of
+      //!          the expected interface, see Crystal::Fourier.
       typedef T_FOURIER_RTOK                        t_FourierRtoK;
       //! \brief defines a Fourier transform from indirect to real space.
       //! \details It is expected that this fourier transform works well with
-      //!          an Ising_CE::Structure instance. Indeed, for the details of
-      //!          the expected interface, see Ising_CE::Fourier.
+      //!          an Crystal::Structure instance. Indeed, for the details of
+      //!          the expected interface, see Crystal::Fourier.
       typedef T_FOURIER_KTOR                        t_FourierKtoR;
       //! \brief Type of the quantity used in search.
       //! \details Determins whether this is a \e scalar or \e vectorial search.

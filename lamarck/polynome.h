@@ -20,7 +20,7 @@
 #include <opt/polynome.h>
 #include <opt/types.h>
 
-namespace VA_CE {
+namespace CE {
 
   //! \brief Adds a bit of XML and accounting to function::Polynome.
   //! \details The accounting comes from threre new static member variables,
@@ -82,5 +82,5 @@ namespace VA_CE {
   };
 
   
-} // namespace VA_CE
+} // namespace CE
 #endif

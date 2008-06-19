@@ -1,11 +1,11 @@
 //
 //  Version: $Id$
 //
-using namespace Ising_CE;
-using namespace VA_CE;
+using namespace Crystal;
+using namespace CE;
 
-typedef Ising_CE::Lattice     t_Lattice;
-typedef Ising_CE::Structure   t_Structure;
+typedef Crystal::Lattice     t_Lattice;
+typedef Crystal::Structure   t_Structure;
 typedef t_Structure::t_Atom   t_Atom;
 typedef t_Lattice::t_Site     t_Site;
 

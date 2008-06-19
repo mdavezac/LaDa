@@ -16,10 +16,10 @@ namespace Pescan
 
 #ifdef _NOLAUNCH
   //! Fake and fast functional, when compiled with --enable-nolaunch
-  void nolaunch_functional( const Ising_CE::Structure &_str, Bands &bands );
+  void nolaunch_functional( const Crystal::Structure &_str, Bands &bands );
 #endif
 
-  types::t_real BandGap::folded_spectrum(const Ising_CE::Structure &_str)
+  types::t_real BandGap::folded_spectrum(const Crystal::Structure &_str)
   {
     long length = 100;
     while( length < 2000 )
@@ -139,14 +139,14 @@ namespace Pescan
     Eref  = keeprefs;
   }
   
-  types::t_real BandGap::all_electron( const Ising_CE::Structure &_str ) 
+  types::t_real BandGap::all_electron( const Crystal::Structure &_str ) 
   {
-    Ising_CE::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
-    Ising_CE::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
+    Crystal::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
+    Crystal::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
     escan.nbstates = 0; 
     for(; i_atom != i_atom_end; ++i_atom)
     {
-      Ising_CE::StrAtom atom; 
+      Crystal::StrAtom atom; 
       _str.lattice->convert_Atom_to_StrAtom( *i_atom, atom );
       escan.nbstates += Physics::Atomic::Charge( atom.type );
     }
@@ -248,10 +248,10 @@ namespace Pescan
   }
 
 #ifdef _NOLAUNCH
-  void nolaunch_functional( const Ising_CE::Structure &_str, Bands &bands )
+  void nolaunch_functional( const Crystal::Structure &_str, Bands &bands )
   {
-    Ising_CE::Structure::t_kAtoms::const_iterator i_k = _str.k_vecs.begin();
-    Ising_CE::Structure::t_kAtoms::const_iterator i_k_end = _str.k_vecs.end();
+    Crystal::Structure::t_kAtoms::const_iterator i_k = _str.k_vecs.begin();
+    Crystal::Structure::t_kAtoms::const_iterator i_k_end = _str.k_vecs.end();
     bands.vbm = 0.0; bands.cbm = 0.0;
     bool which = true, sign = true;
     for(; i_k != i_k_end; ++i_k, which = not which )

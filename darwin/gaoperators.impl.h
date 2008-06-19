@@ -43,7 +43,7 @@ namespace GA
   {
     t_Object &offspring  = _indiv.Object();
     const t_Object &parent  = _parent.Object();
-    Ising_CE::Structure str1 = structure, str2 = structure;
+    Crystal::Structure str1 = structure, str2 = structure;
     str1 << offspring; str2 << parent;
     t_FourierRtoK( str1.atoms.begin(),  str1.atoms.end(),
                    str1.k_vecs.begin(), str1.k_vecs.end() );
@@ -60,9 +60,9 @@ namespace GA
     }
     else // every point crossover
     {
-      Ising_CE::Structure::t_kAtoms :: const_iterator i_p = str2.k_vecs.begin();
-      Ising_CE::Structure::t_kAtoms :: const_iterator i_p_end = str2.k_vecs.end();
-      Ising_CE::Structure::t_kAtoms :: iterator i_o = str1.k_vecs.begin();
+      Crystal::Structure::t_kAtoms :: const_iterator i_p = str2.k_vecs.begin();
+      Crystal::Structure::t_kAtoms :: const_iterator i_p_end = str2.k_vecs.end();
+      Crystal::Structure::t_kAtoms :: iterator i_o = str1.k_vecs.begin();
       for ( ; i_p != i_p_end; ++i_p, ++i_o)
         if ( rng.flip(rate) )  i_o->type = i_p->type;
     }
@@ -102,14 +102,14 @@ namespace GA
   bool KMutation<T_INDIVIDUAL> :: operator()(t_Individual &_indiv )
   {
     t_Object &object  = _indiv.Object();
-    Ising_CE::Structure str = structure;
+    Crystal::Structure str = structure;
     str << object;
     t_FourierRtoK( str.atoms.begin(),  str.atoms.end(),
                    str.k_vecs.begin(), str.k_vecs.end() );
 
     
-    Ising_CE::Structure::t_kAtoms :: iterator i_k = str.k_vecs.begin();
-    Ising_CE::Structure::t_kAtoms :: iterator i_k_end = str.k_vecs.end();
+    Crystal::Structure::t_kAtoms :: iterator i_k = str.k_vecs.begin();
+    Crystal::Structure::t_kAtoms :: iterator i_k_end = str.k_vecs.end();
     types::t_real max = std::norm( i_k->type );
     for(; i_k != i_k_end; ++i_k)
       if ( max < std::norm( i_k->type ) ) max = std::norm( i_k->type );
@@ -135,8 +135,8 @@ namespace GA
   {
     t_Object &obj = _indiv.Object();
 
-    Ising_CE::Structure::t_kAtoms :: const_iterator i_kvec = structure.k_vecs.begin();
-    Ising_CE::Structure::t_kAtoms :: const_iterator i_kvec_end = structure.k_vecs.end();
+    Crystal::Structure::t_kAtoms :: const_iterator i_kvec = structure.k_vecs.begin();
+    Crystal::Structure::t_kAtoms :: const_iterator i_kvec_end = structure.k_vecs.end();
     types::t_real n = 3.0 / (types::t_real) structure.k_vecs.size(); 
     for(; i_kvec != i_kvec_end; ++i_kvec )
       if( rng.flip(n) )
@@ -198,10 +198,10 @@ namespace GA
     t_Object &obj = _indiv.Object();
     obj.bitstring.clear();
 
-    Ising_CE::Structure::t_Atoms :: const_iterator i_atom = structure.atoms.begin();
-    Ising_CE::Structure::t_Atoms :: const_iterator i_atom_end = structure.atoms.end();
+    Crystal::Structure::t_Atoms :: const_iterator i_atom = structure.atoms.begin();
+    Crystal::Structure::t_Atoms :: const_iterator i_atom_end = structure.atoms.end();
     for(; i_atom != i_atom_end; ++i_atom )
-      if ( not (i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T) )
+      if ( not (i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T) )
         obj.bitstring.push_back( rng.flip() ? -1.0: 1.0 );
 
     concentration( obj );
@@ -212,7 +212,7 @@ namespace GA
 
   template<class T_INDIVIDUAL>
     eoGenOp<T_INDIVIDUAL>*
-      LoadGaOp(const TiXmlElement &_el, Ising_CE::Structure &_structure, 
+      LoadGaOp(const TiXmlElement &_el, Crystal::Structure &_structure, 
                typename T_INDIVIDUAL :: t_IndivTraits :: t_Concentration &_concentration )
   {
     std::string value = _el.Value();

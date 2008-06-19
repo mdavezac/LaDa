@@ -41,13 +41,13 @@
 #include "harmonic.h"
 
 #if defined(_CUBIC_CE_)
-typedef Ising_CE::ConstituentStrain::Harmonic::Cubic t_Harmonic;
+typedef Crystal::ConstituentStrain::Harmonic::Cubic t_Harmonic;
 #elif defined( _TETRAGONAL_CE_ )
-typedef Ising_CE::ConstituentStrain::Harmonic::Tetragonal t_Harmonic;
+typedef Crystal::ConstituentStrain::Harmonic::Tetragonal t_Harmonic;
 #else
 #error Please specify _CUBIC_CE_ or _TETRAGONAL_CE_
 #endif
-typedef VA_CE::Builder<t_Harmonic> t_Builder;
+typedef CE::Builder<t_Harmonic> t_Builder;
 
 int main(int argc, char *argv[]) 
 {
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
 
     TiXmlElement *child;
     atat::rVector3d vec;
-    Ising_CE::Lattice lattice;
+    Crystal::Lattice lattice;
  
     
     __MPICODE(
@@ -161,8 +161,8 @@ int main(int argc, char *argv[])
     child = handle.FirstChild( "Job" ).FirstChild( "Structure" ).Element();
     for (; child; child = child->NextSiblingElement("Structure") )
     {
-      Ising_CE::Structure structure;
-      Ising_CE :: Structure :: lattice = &lattice;
+      Crystal::Structure structure;
+      Crystal :: Structure :: lattice = &lattice;
       __DOASSERT( not structure.Load(*child), "Error while reading Structure from input." )
  
       t_Builder::t_VA_Functional functional;
@@ -172,12 +172,12 @@ int main(int argc, char *argv[])
     
       functional.resize( structure.atoms.size() );
       std::transform( structure.atoms.begin(), structure.atoms.end(), functional.begin(),
-                      boost::lambda::bind( &Ising_CE::Structure::t_Atom::type,
+                      boost::lambda::bind( &Crystal::Structure::t_Atom::type,
                                            boost::lambda::_1 ) );
     
       OUTPUT << "Energy: " << functional.evaluate() // << "\n";
              << "  Concentration: " << structure.get_concentration() << "\n" ; //<< ENDLINE;
-//   Ising_CE::Fourier( structure.atoms.begin(), structure.atoms.end(),
+//   Crystal::Fourier( structure.atoms.begin(), structure.atoms.end(),
 //                      structure.k_vecs.begin(), structure.k_vecs.end() );
 //   structure.print_out( std::cout );
 

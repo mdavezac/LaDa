@@ -22,7 +22,7 @@
 
 #include <mpi/mpi_object.h>
 
-namespace Ising_CE 
+namespace Crystal 
 {
   namespace ConstituentStrain
   {
@@ -286,7 +286,7 @@ namespace Ising_CE
   } // namespace ConstituentStrain
 
 
-} // namespace Ising_CE 
+} // namespace Crystal 
 
 #include "harmonic.impl.h"
 #endif // _HARMONICS_H_

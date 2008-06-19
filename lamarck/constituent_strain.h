@@ -18,7 +18,7 @@
 
 #include "structure.h"
 
-namespace Ising_CE 
+namespace Crystal 
 {
   //! Contains everything constituent-strain related.
   namespace ConstituentStrain
@@ -33,7 +33,7 @@ namespace Ising_CE
      *           reciprocal space vectors, \f$S(\overrightarrow{k})\f$ are the
      *           structure factors of the structure, \e x is the concentration,
      *           and \f$J_{Functional}(x, \overrightarrow{k})\f$ are the sum of the
-     *           harmonics. Each harmonic is an instance of Ising_CE::Harmonic.
+     *           harmonics. Each harmonic is an instance of Crystal::Harmonic.
      *           
      *           This %function, like other funtion::Base derived type,
      *           interfaces to minimizers through its function::Base::variables
@@ -84,7 +84,7 @@ namespace Ising_CE
         //! Constructor
         Functional() : t_Base() __MPICONSTRUCTORCODE( comm( ::mpi::main ) ) {}
         //! Constructor and Initializer
-        Functional   ( const Ising_CE::Structure& _str,
+        Functional   ( const Crystal::Structure& _str,
                        t_Container *_vars=NULL) 
                    : function::Base<t_Type>(_vars)
                      __MPICONSTRUCTORCODE( comm( ::mpi::main ) ) 
@@ -135,7 +135,7 @@ namespace Ising_CE
         //! Serializes a cluster.
         template<class ARCHIVE> void serialize(ARCHIVE & _ar,
                                                const unsigned int _version);
-        void operator<<( const Ising_CE::Structure &_str );
+        void operator<<( const Crystal::Structure &_str );
     };
 
     template<class T_HARMONIC> template<class ARCHIVE>
@@ -147,7 +147,7 @@ namespace Ising_CE
       }
   } // namespace ConstituentStrain
 
-} // namespace Ising_CE
+} // namespace Crystal
 
 #include "constituent_strain.impl.h"
 

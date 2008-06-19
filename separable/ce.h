@@ -4,119 +4,101 @@
 #ifndef _SEPARABLE_CE_H_
 #define _SEPARABLE_CE_H_
 
-#include <lamarck/atom.h>
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
-//! Should come to replace less sensibly named Ising_CE/VA_CE
+#include <string>
+
+#include <opt/types.h>
+
+#include "separable.h"
+
 namespace CE
 {
-  //! A boolean basis of one true and one false function.
-  class BooleanBasis;
-  //! \brief A scalar function which takes a boolean arguments.
-  class Boolean
+  //! A separable function for fixed-lattice, fixed orientation, fixed-origin.
+  class Separables : public ::Separable::Function< 
+                                ::Separable::Summand<
+                                   ::Separable::BooleanBasis > >
   {
-    friend class BooleanBasis;
-    public:
-      //! Type of the argument.
-      typedef bool t_Arg;
-      //! Type of the return.
-      typedef types::t_real t_Return;
-      //! Does not have gradient.
-      bool const static has_gradient;
-     
-      //! Constructor 
-      Boolean ( bool _which = false ) : has_gradient(false), which( _which ) {}
-      //! Destructor
-      ~Separable() {}
-
-      //! evaluates the function over a range of positions.
-      t_Return operator()( const t_Arg _bool ) const
-        { return  _bool == which ? t_Return(0): t_Return(1); }
-
-    protected:
-      //! Decides whether this is a true or false function.
-      bool which;
-  };
-
-  class BooleanBasis : public::array< Boolean, 2 >
-  {
-    public:
-      //! Type of argument.
-      typedef t_Basis :: value_type :: t_Arg t_Arg;
-      //! Type of return.
-      typedef t_Basis :: value_type :: t_Return t_Return;
-      //! Does not have gradient.
-      bool const static has_gradient;
-
+      //! Type of the base.
+      typedef ::Separable::Function< 
+                            ::Separable::Summand<
+                               ::Separable::BooleanBasis > > t_Base;
     public:
       //! Constructor.
-      BooleanBasis() : has_gradient( t_Basis :: value_type :: has_gradient )
-        { elemns[0].which = true; elemns[1].which = false; }
-      //! Destructor.
-      ~BooleanBasis() {}
+      Separables( types::t_unsigned _rank = 2,
+                  types::t_unsigned _size = 3, 
+                  std::string basis_type = "cube" );
+
+      //! Sets the rank of the separable function.
+      void set_rank( types::t_unsigned _rank ) 
+       { basis.resize( _rank ); }
+      //! Sets the rank of the separable function.
+      void set_basis( types::t_unsigned _size, std::string _size );
+      //! Returns the rank of the separable function.
+      types::t_unsigned rank() const  { return basis.size(); }
+      //! Returns the type of the basis.
+      types::t_unsigned type() const  { return basis_type; }
+      //! Returns the size of the basis.
+      std::string size() const  { return basis_size; }
+
+
+    protected:
+      //! Size of the basis.
+      types::t_unsigned basis_size;
+      //! Type of the basis.
+      std::string basis_type;
+      //! A vector of positions used in creating the basis.
+      std::vector< atat::rVector3d > positions;
+  };
+
+  //! A separable function for a fixed-lattice incorporating all symmetry
+  //! operations.
+  class SymSeparables
+  {
+    public:
+      //! Type of the container of positions.
+      typedef std::vector< atat::rVector3d > t_Basis;
+      //! Type of the container of symmetry operations.
+      typedef std::vector< atat::rMatrix3d > t_SymOps;
+      //! Type of the pure bitset representing a configuration for a set symmetry.
+      typedef std::vector< bool > t_Bitset;
+      //! Type  containing a pure bitset and an attached coefficient.
+      typedef std::pair< t_Bitset, types::t_real > t_CoefBitset;
+      //! Type representing a set of configurations with all possible symmetries.
+      typedef std::vector< t_CoefBitset > t_Configurations;
+
+      //! Constructor.
+      SymSeparables  ( t_Basis &_poss, 
+                    Crystal::lattice &_lat )
+                 : basis( _poss ) { init_syms( _lat ); }
+
+      //! Creates all necessary configurations for a given structure.
+      t_Configurations* configurations( Crystal::Structure &_structure );
+      //! Evaluates a set of configurations. 
+      types::t_real operator()( t_Configurations *_conf,
+                                const t_SepFunction &_func ) const;
+
+    protected:
+      //! Initializes list of symmetry operations.
+      void init_syms ( Crystal::lattice &_lat )
+      
+      //! A reference to the positions.
+      t_Basis &basis;
+      //! The syemmetry operations.
+      t_SymOps syms;
+      //! A working array of positions.
+      t_Basis work;
+  };
+
+
+  namespace details
+  {
+    void cubic_basis( types::t_unsigned _n, const atat::rVector3d &_cell,
+                      std::vector< atat::rVector3d >& _positions );
   }
-
-// //! A separable function which takes a boolean arguments.
-// class Separable
-// {
-//   public:
-//     //! Type of the argument.
-//     typedef bool t_Arg;
-//     //! Type of the return.
-//     typedef types::t_real t_Return;
-//     //! Does not have gradient.
-//     bool const static has_gradient;
-//    
-//     //! Constructor 
-//     Separable   ( const t_Atom & _atom ) 
-//               : pos( _atom.pos ), type( _atom.type ),
-//                 coef( 1.0 ), has_gradient(false) {}
-//     //! Destructor
-//     ~Separable() {}
-//
-//     //! evaluates the function over a range of positions.
-//     template< class T_ITERATOR >
-//     t_Return operator()( T_ITERATOR _first, T_ITERATOR _last );
-//
-//   protected:
-//     //! type of the coefficients.
-//     typedef std::pair< t_Return, t_Return > t_Coefficient;
-//     //! Type of the map
-//     typedef std::vector< t_Coefficient > t_Coefficients;
-//     //! A container of coefficients
-//     t_Coefficients coefs;
-// };
-//
-// //! A sum of separable CE functions.
-// class SumSeparable : public ::Separable::Base< Separable >  {};
-// bool Separable::Compare::operator()( const t_Key &_a, const t_Key &_b ) const
-// {
-//   if ( not fuzzy::eq( a[0], b[0] ) )
-//     return fuzzy::le( a[0], b[0] );
-//   if ( not fuzzy::eq( a[1], b[1] ) )
-//     return fuzzy::le( a[1], b[1] );
-//   return fuzzy::le( a[2], b[2] );
-// }
-//
-// void Separable :: add( atat::rVector3d & _pos )
-// {
-//   // position is already in basis.
-//   if( map.find( _pos ) != map.end() ) return;
-//   map[ _pos ] = t_Coefficient( 1,1 );
-// }
-
-// template< class T_ITERATOR > 
-//   Separable::t_Return Separable :: operator() ( T_ITERATOR _first,
-//                                                 T_ITERATOR _last ) const
-//   {
-//     t_Return result( *_first `);
-//     t_Coefficients :: const_iterator i_coef = coefs.begin();
-//     for(; _first != _last; ++_first, ++i_coef )
-//     {
-//       __ASSERT( i_coef != coefs.end(), "Inconsistent size.\n" );
-//       result *= *_first ? i_coef->first : i_found->second;
-//     }
-//     return 
-//   }
+  
 } // end of CE namespace
 
 #endif //  _SEPARABLE_CE_H_

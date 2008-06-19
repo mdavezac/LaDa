@@ -45,8 +45,8 @@ namespace Vff
 
   //! \brief Represents a single Structure::t_Atom and its first neighbor relationships
   //! \details This class is meant to be used in conjunction with a list of
-  //! Ising_CE::Structure::t_Atom, most likely in a Ising_CE::Structure. It contains a
-  //! pointer, Atomic_Center::origin, which points a single Ising_CE::Structure::t_Atom. The
+  //! Crystal::Structure::t_Atom, most likely in a Crystal::Structure. It contains a
+  //! pointer, Atomic_Center::origin, which points a single Crystal::Structure::t_Atom. The
   //! first neighbor bonds of this atom are collected as vector of pointers to
   //! Vff::Atomic_Center objects in Atomic_Center::bonds. Since we are concerned
   //! with periodic structures, Atomic_Center::translations and
@@ -56,7 +56,7 @@ namespace Vff
   {
     friend class Functional;
     //! The type of the atom  
-    typedef Ising_CE::Structure::t_Atom  t_Atom;
+    typedef Crystal::Structure::t_Atom  t_Atom;
     //! The container of atomic centers. Defined here once and for all.
     typedef std::vector<Atomic_Center> t_Centers;
     //! Type of pointer/iterator to the atomic center on the other side of the bond
@@ -87,12 +87,12 @@ namespace Vff
       //! \brief A switch to say wether a bond is made directely or with a periodic
       //! image of an Atomic_Center
       std::vector< bool > do_translates;
-      //! Ising_CE::Structure on which the Vff  functional is applied.
-      Ising_CE :: Structure *structure;
+      //! Crystal::Structure on which the Vff  functional is applied.
+      Crystal :: Structure *structure;
       bool is_site_one; //!< helps determine the kind of atom this is
       bool is_site_one_two_species; //!< helps determine the kind of atom this is
       atat::rVector3d gradient; //!< place holder to compute gradient
-      //! atomic index in Ising_CE::Structure::t_Atoms collection of Atomic_Center::structure
+      //! atomic index in Crystal::Structure::t_Atoms collection of Atomic_Center::structure
       types::t_unsigned index;
 
     public:
@@ -100,7 +100,7 @@ namespace Vff
       //! \param _str structure in which \a _e can be found
       //! \param _e atom to which this Atomic_Center relates
       //! \param _i index of _i in _str.atoms collection. Usefull for mpi processing
-      Atomic_Center ( Ising_CE::Structure &_str, t_Atom &_e, types::t_unsigned _i);
+      Atomic_Center ( Crystal::Structure &_str, t_Atom &_e, types::t_unsigned _i);
       //! \brief Copy Constructor
       //! \param[in] _c Atomic_Center object to copy
       Atomic_Center   ( const Atomic_Center &_c )
@@ -189,7 +189,7 @@ namespace Vff
   class Atomic_Center :: const_iterator
   {
     //! The type of the atom  
-    typedef Ising_CE::Structure::t_Atom  t_Atom;
+    typedef Crystal::Structure::t_Atom  t_Atom;
     //! Type of pointer/iterator to the atomic center on the other side of the bond
     typedef Atomic_Center::t_Bond t_Bond;
     //! A reference to the of pointer/iterator to the atomic center on the other side of the bond
@@ -374,7 +374,7 @@ namespace Vff
   class Atomic_Functional 
   {
     //! The type of the atom  
-    typedef Ising_CE::Structure::t_Atom  t_Atom;
+    typedef Crystal::Structure::t_Atom  t_Atom;
     const static types::t_real twos3;  //!<\f$2*\sqrt(3)\f$
     const static types::t_real one16;  //!<\f$\frac{1}{16}\f$
     const static types::t_real s3o160; //!<\f$\frac{\sqrt(3)}{8}\f$
@@ -391,8 +391,8 @@ namespace Vff
 
     protected:
       std::string str;                  //!< atomic type as a string
-      Ising_CE :: Structure *structure; //!< structure to which the Atomic_Center belongs
-      types::t_unsigned site;           //!< site number of Atomic_Center in Ising_CE::lattice
+      Crystal :: Structure *structure; //!< structure to which the Atomic_Center belongs
+      types::t_unsigned site;           //!< site number of Atomic_Center in Crystal::lattice
       types::t_unsigned type;           //!< atomic type of Atomic_Center
       std::vector< types::t_real > lengths;  //!< equilibrium bond lengths
       std::vector< types::t_real > alphas;   //!< bond stretching parameters
@@ -406,7 +406,7 @@ namespace Vff
       //! \param _struct structure to which Atomic_Center belongs
       //! \param _site site number of Atomic_Center
       //! \param _type type number of Atomic_Center
-      Atomic_Functional   ( std::string _str, Ising_CE::Structure &_struct, 
+      Atomic_Functional   ( std::string _str, Crystal::Structure &_struct, 
                             types::t_unsigned _site, 
                             types::t_unsigned _type )
                         : structure(&_struct), site(_site), type(_type) {}
@@ -511,7 +511,7 @@ namespace Vff
       //!  structure0 and the atomic centers are expected to be related 
       //! \details To be used for pescan
       types::t_real MicroStrain( const Atomic_Center &_center, 
-                                 const Ising_CE::Structure &_str0 ) const;
+                                 const Crystal::Structure &_str0 ) const;
 
       //! prints out all parameters
       void print_out( std::ostream &stream ) const;
@@ -523,9 +523,9 @@ namespace Vff
   //! and eventually is able to compute its the energy and strain.
   //! One possible use is the following:
   //! \code
-  //! Ising_CE::Structure structure;
-  //! Ising_CE::Lattice lattice;
-  //! Ising_CE :: Structure :: lattice = &lattice; // don't forget this hack
+  //! Crystal::Structure structure;
+  //! Crystal::Lattice lattice;
+  //! Crystal :: Structure :: lattice = &lattice; // don't forget this hack
   //! // load lattice, structure, etc from input
   //! // Then load Vff input itself
   //! TiXmlElement *vff_xml = handle.FirstChild( "Job" ).Element();
@@ -557,9 +557,9 @@ namespace Vff
   class Functional : public function :: Base<types::t_real, std::vector<types::t_real> >
   {
     //! The type of the atom  
-    typedef Ising_CE::Structure::t_Atom  t_Atom;
+    typedef Crystal::Structure::t_Atom  t_Atom;
     //! The type of the atom container
-    typedef Ising_CE::Structure::t_Atoms t_Atoms;
+    typedef Crystal::Structure::t_Atoms t_Atoms;
     public:
       typedef types::t_real t_Type;            //!< see Functional::Base
       typedef std::vector<t_Type> t_Container; //!< see Functional::Base
@@ -576,9 +576,9 @@ namespace Vff
 
 
     protected:
-      //! Ising_CE::Structure for which to compute energy and stress
-      Ising_CE :: Structure &structure;
-      Ising_CE :: Structure structure0; //!< original structure,  needed for gradients
+      //! Crystal::Structure for which to compute energy and stress
+      Crystal :: Structure &structure;
+      Crystal :: Structure structure0; //!< original structure,  needed for gradients
       //! length below which first-neighbor relationship is defined
       types::t_real bond_cutoff; 
       //! \brief list of all Atomic_Center created from Functional::structure
@@ -601,7 +601,7 @@ namespace Vff
     public:
       //! \brief Constructor and Initializer
       //! \param _str structure for which to compute energy and stress
-      Functional   ( Ising_CE :: Structure &_str )
+      Functional   ( Crystal :: Structure &_str )
                  : structure(_str), structure0(_str),
                    bond_cutoff(0), fixed_index(-1,-1,-1)
       {
@@ -751,17 +751,17 @@ namespace Vff
     t_grad_iterator i_grad(_grad);
 
     // first, external stuff
-    if ( not (structure.freeze & Ising_CE::Structure::FREEZE_XX) )
+    if ( not (structure.freeze & Crystal::Structure::FREEZE_XX) )
       *i_grad = _stress(0,0), ++i_grad;
-    if ( not (structure.freeze & Ising_CE::Structure::FREEZE_YY) ) 
+    if ( not (structure.freeze & Crystal::Structure::FREEZE_YY) ) 
       *i_grad = _stress(1,1), ++i_grad;
-    if ( not (structure.freeze & Ising_CE::Structure::FREEZE_ZZ) ) 
+    if ( not (structure.freeze & Crystal::Structure::FREEZE_ZZ) ) 
       *i_grad = _stress(2,2), ++i_grad;
-    if ( not (structure.freeze & Ising_CE::Structure::FREEZE_XY) ) 
+    if ( not (structure.freeze & Crystal::Structure::FREEZE_XY) ) 
       *i_grad = 0.5 * (_stress(0,1) + _stress(1,0)), ++i_grad;
-    if ( not (structure.freeze & Ising_CE::Structure::FREEZE_XZ) ) 
+    if ( not (structure.freeze & Crystal::Structure::FREEZE_XZ) ) 
       *i_grad = 0.5 * (_stress(0,2) + _stress(2,0)), ++i_grad;
-    if ( not (structure.freeze & Ising_CE::Structure::FREEZE_YZ) ) 
+    if ( not (structure.freeze & Crystal::Structure::FREEZE_YZ) ) 
       *i_grad = 0.5 * (_stress(1,2) + _stress(2,1)), ++i_grad;
 
     // then atomic position stuff

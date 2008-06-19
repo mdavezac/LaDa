@@ -28,10 +28,10 @@ namespace Vff
   class Fortran : public Functional
   {
     protected:
-      //! Ising_CE::Structure instance to minimize
-      Ising_CE::Structure structure;
-      //! Ising_CE::Lattice instance on which Fortran::structure exists.
-      Ising_CE::Lattice lattice;
+      //! Crystal::Structure instance to minimize
+      Crystal::Structure structure;
+      //! Crystal::Lattice instance on which Fortran::structure exists.
+      Crystal::Lattice lattice;
 
     public:
       //! Constructor

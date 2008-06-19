@@ -12,22 +12,22 @@
 
 namespace TwoSites
 {
-  void rearrange_structure( Ising_CE::Structure &_str)
+  void rearrange_structure( Crystal::Structure &_str)
   {
     if ( not _str.lattice and _str.lattice->sites.size() != 2)
       return;
 
-    std::list< Ising_CE::Structure::t_Atom > sites0;
-    std::list< Ising_CE::Structure::t_Atom > sites1;
-    Ising_CE::Structure::t_Atoms :: const_iterator i_atom = _str.atoms.begin();
-    Ising_CE::Structure::t_Atoms :: const_iterator i_atom_end = _str.atoms.end();
+    std::list< Crystal::Structure::t_Atom > sites0;
+    std::list< Crystal::Structure::t_Atom > sites1;
+    Crystal::Structure::t_Atoms :: const_iterator i_atom = _str.atoms.begin();
+    Crystal::Structure::t_Atoms :: const_iterator i_atom_end = _str.atoms.end();
     for(; i_atom != i_atom_end; ++i_atom )
       ( i_atom->site == 0 ) ?
         sites0.push_back( *i_atom ): sites1.push_back( *i_atom );
 
-    std::list< Ising_CE::Structure::t_Atom > :: iterator i_0 = sites0.begin();
-    std::list< Ising_CE::Structure::t_Atom > :: iterator i_end = sites0.end();
-    std::list< Ising_CE::Structure::t_Atom > :: iterator i_1;
+    std::list< Crystal::Structure::t_Atom > :: iterator i_0 = sites0.begin();
+    std::list< Crystal::Structure::t_Atom > :: iterator i_end = sites0.end();
+    std::list< Crystal::Structure::t_Atom > :: iterator i_1;
     atat::rVector3d translation =   _str.lattice->sites[1].pos
                                   - _str.lattice->sites[0].pos; 
     _str.atoms.clear();
@@ -46,7 +46,7 @@ namespace TwoSites
   //  a normalization procedure is applied which takes into account:
   //  (i) that this ga run is at set concentration (x =x0, y=y0)
   //  (ii) that x and y are only constrained by load-balancing
-  void Concentration :: operator()( Ising_CE::Structure &_str )
+  void Concentration :: operator()( Crystal::Structure &_str )
   {
     types::t_complex  *hold = new types::t_complex[ N ];
     __DOASSERT( not hold,  "Memory allocation error\n" )
@@ -57,13 +57,13 @@ namespace TwoSites
                        _str.k_vecs.begin(), _str.k_vecs.end(),
                        i_hold );
 
-    Ising_CE::Structure::t_Atoms::iterator i_atom = _str.atoms.begin();
-    Ising_CE::Structure::t_Atoms::iterator i_atom_end = _str.atoms.end();
+    Crystal::Structure::t_Atoms::iterator i_atom = _str.atoms.begin();
+    Crystal::Structure::t_Atoms::iterator i_atom_end = _str.atoms.end();
     types :: t_int concx = 0, concy = 0; 
     i_hold = hold;
     for (; i_atom != i_atom_end; ++i_atom, ++i_hold)
     {
-      if ( not ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
+      if ( not ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T ) )
       {
         if ( std::abs( std::real(*i_hold) ) < types::tolerance )
           i_atom->type = rng.flip() ? 10.0*types::tolerance: -10.0*types::tolerance;
@@ -72,7 +72,7 @@ namespace TwoSites
       ( i_atom->type > 0.0 ) ? ++concx : --concx;
 
       ++i_atom;
-      if ( not ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
+      if ( not ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T ) )
       {
         if ( std::abs( std::imag(*i_hold) ) < types::tolerance )
           i_atom->type = rng.flip() ? 10.0*types::tolerance: -10.0*types::tolerance;
@@ -177,12 +177,12 @@ namespace TwoSites
   // __DOASSERT( Fuzzy::neq(y, y0), y << " == " << y0 << "\n" )
   }
 
-  void Concentration :: normalize( Ising_CE::Structure &_str, const types::t_int _site, 
+  void Concentration :: normalize( Crystal::Structure &_str, const types::t_int _site, 
                                    types::t_real _tochange ) 
   {
-    Ising_CE::Structure::t_Atoms::iterator i_end = _str.atoms.end();
-    Ising_CE::Structure::t_Atoms::iterator i_which;
-    Ising_CE::Structure::t_Atoms::iterator i_atom;
+    Crystal::Structure::t_Atoms::iterator i_end = _str.atoms.end();
+    Crystal::Structure::t_Atoms::iterator i_which;
+    Crystal::Structure::t_Atoms::iterator i_atom;
     while( _tochange < -1.0 or _tochange > 1.0 )
     {
       // first finds atom with type closest to zero from +1 or -1 side,
@@ -193,7 +193,7 @@ namespace TwoSites
       for(; i_atom != i_end; ++i_atom )
       {
         if ( _site ) ++i_atom; 
-        if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
+        if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T )
           goto endofloop;
         if ( _tochange > 0 )
         {
@@ -251,10 +251,10 @@ endofloop:
                 << "\n" )
   }
 
-  void Concentration :: get( const Ising_CE::Structure &_str)
+  void Concentration :: get( const Crystal::Structure &_str)
   {
-    Ising_CE::Structure::t_Atoms :: const_iterator i_atom = _str.atoms.begin();
-    Ising_CE::Structure::t_Atoms :: const_iterator i_atom_end = _str.atoms.end();
+    Crystal::Structure::t_Atoms :: const_iterator i_atom = _str.atoms.begin();
+    Crystal::Structure::t_Atoms :: const_iterator i_atom_end = _str.atoms.end();
     types :: t_unsigned Nx = 0, Ny = 0;
     for(x = y = 0e0; i_atom != i_atom_end; ++i_atom )
       ( i_atom->site > 0 ) ? ++Ny, y += i_atom->type: 
@@ -287,29 +287,29 @@ endofloop:
   }
 
 
-  void Concentration :: setfrozen( const Ising_CE::Structure &_str )
+  void Concentration :: setfrozen( const Crystal::Structure &_str )
   {
     __DOASSERT( _str.atoms.size() % 2 != 0,
                 "Uneven number of sites in structure.\n" )
     N = _str.atoms.size() >> 1;
 
-    Ising_CE::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
-    Ising_CE::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
+    Crystal::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
+    Crystal::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
     Nfreeze_x = 0; Nfreeze_y = 0;
     for(; i_atom != i_atom_end; ++i_atom )
     {
-      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
+      if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T )
         Nfreeze_x += i_atom->type > 0 ? 1 : -1; 
       else sites.push_back( true );
       ++i_atom;
-      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
+      if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T )
         Nfreeze_y += i_atom->type > 0 ? 1 : -1; 
       else sites.push_back( false );
     }
 
  //  if ( not _str.lattice ) return;
- //  if (    ( _str.lattice->sites[0].freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) 
- //       or ( _str.lattice->sites[1].freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
+ //  if (    ( _str.lattice->sites[0].freeze & Crystal::Structure::t_Atom::FREEZE_T ) 
+ //       or ( _str.lattice->sites[1].freeze & Crystal::Structure::t_Atom::FREEZE_T ) )
  //  {
  //    set_xy( x, y );
  //    Print::xmg << Print::Xmg::comment << " Setting Concentrations to x="

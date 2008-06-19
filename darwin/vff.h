@@ -66,7 +66,7 @@ namespace Vff
   //!          can be used. Whatever the flavor of Vff, the structure is
   //!          minimized using a GSL minimizer.
   //!          Communication between an Evaluator class and this class are done
-  //!          \e via the reference to the Ising_CE::Structure
+  //!          \e via the reference to the Crystal::Structure
   //!          Vff::Functional::structure which is (should) fed to the
   //!          constructor. This is not quite obvious until you see the
   //!          constructor code of BandGap::Evaluator and

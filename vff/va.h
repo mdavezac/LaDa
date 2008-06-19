@@ -50,7 +50,7 @@ namespace Vff
 
     protected:
      //! The type of the atom container
-     typedef Ising_CE :: Structure :: t_Atoms   t_Atoms;
+     typedef Crystal :: Structure :: t_Atoms   t_Atoms;
      //! The type of the atom
      typedef t_Atoms :: value_type t_Atom;
      //! Type of the container holding the atomic centers
@@ -96,17 +96,17 @@ namespace Vff
      public:
 #ifdef _DOFORTRAN
        //! Constructor and Initializer
-       VABase   ( Ising_CE::Structure &_str )
+       VABase   ( Crystal::Structure &_str )
               : t_VffBase( _str ), t_VABase( _str ),
                 minimizer( choose_frpr_function<t_VffBase>() ) {}
 #elif _DONAG
        //! Constructor and Initializer
-       VABase   ( Ising_CE::Structure &_str )
+       VABase   ( Crystal::Structure &_str )
               : t_VffBase( _str ), t_VABase( _str ),
                 minimizer( choose_nag_function<t_VffBase>() ) {}
 #else
        //! Constructor and Initializer
-       VABase   ( Ising_CE::Structure &_str )
+       VABase   ( Crystal::Structure &_str )
               : t_VffBase( _str ), t_VABase( _str ), minimizer() {}
 #endif
        //! Copy Constructor

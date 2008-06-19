@@ -11,13 +11,13 @@
 
 #include "layered.h"
 
-void FillStructure( Ising_CE::Structure &_str )
+void FillStructure( Crystal::Structure &_str )
 {
   if( not _str.lattice ) return;
   
   atat::rVector3d vec;
   atat::rMatrix3d &cell = _str.cell; 
-  Ising_CE::Lattice &lattice = *_str.lattice; 
+  Crystal::Lattice &lattice = *_str.lattice; 
 
   // Construct the transition matrix from the lattice basis to this cell-shape basis
   atat::rMatrix3d M = (!cell) * lattice.cell;
@@ -64,7 +64,7 @@ void FillStructure( Ising_CE::Structure &_str )
     // And then to cartesian
     vec = lattice.cell * vec;
 
-    _str.atoms.push_back( Ising_CE::Structure::t_Atom(vec,0) );
+    _str.atoms.push_back( Crystal::Structure::t_Atom(vec,0) );
     
   } while( ++global_iterator );
 

@@ -28,7 +28,7 @@
 #include "atom.h"
 #include "lattice.h"
 
-namespace Ising_CE {
+namespace Crystal {
 
   //! The atat structure type.
   typedef atat::Structure Atat_Structure;
@@ -102,7 +102,7 @@ namespace Ising_CE {
     //! The scale in which cartesian units are given.
     types::t_real scale;
     //! A pointer to the lattice,
-    static Lattice *lattice;
+    static Crystal::Lattice *lattice;
 
     public: 
 
@@ -221,7 +221,7 @@ namespace Ising_CE {
                        const atat::rVector3d &_b,
                        const atat::rMatrix3d &_cell);
   //! Dumps a structure to a stream.
-  inline std::ostream& operator<<( std::ostream& _stream, const Ising_CE::Structure& _struc )
+  inline std::ostream& operator<<( std::ostream& _stream, const Crystal::Structure& _struc )
     { _struc.print_out(_stream); return _stream; }
 
   //! compares two kvectors according to length and position.
@@ -233,34 +233,34 @@ namespace Ising_CE {
   {
     //! \brief From real to k space
     //! \details The first range is most likely some instance of
-    //!          Ising_CE::Structure::t_Atoms. The second range is similarly an
-    //!          instance of Ising_CE::Structure::t_kAtoms. The third range
+    //!          Crystal::Structure::t_Atoms. The second range is similarly an
+    //!          instance of Crystal::Structure::t_kAtoms. The third range
     //! \param[in, out] _rfirst iterator to the first real space atom (of a type
-    //!                similar to Ising_CE::Atom_Type)
+    //!                similar to Crystal::Atom_Type)
     //! \param[in, out] _rend iterator to the last real space atom (of a type
-    //!              similar to Ising_CE::Atom_Type)
+    //!              similar to Crystal::Atom_Type)
     //! \param[in] _kfirst iterator to the first real space atom (of a type
-    //!                similar to Ising_CE::Atom_Type< std::complex >)
+    //!                similar to Crystal::Atom_Type< std::complex >)
     //! \param[in] _kend iterator to the last real space atom (of a type
-    //!              similar to Ising_CE::Atom_Type< std::complex >)
+    //!              similar to Crystal::Atom_Type< std::complex >)
     template<class T_R_IT, class T_K_IT>
     Fourier( T_R_IT _rfirst, T_R_IT _rend,
              T_K_IT _kfirst, T_K_IT _kend );
     //! \brief From k space to real space. 
     //! \details The first range is most likely some instance of
-    //!          Ising_CE::Structure::t_Atoms. The second range is similarly an
-    //!          instance of Ising_CE::Structure::t_kAtoms. The third range
+    //!          Crystal::Structure::t_Atoms. The second range is similarly an
+    //!          instance of Crystal::Structure::t_kAtoms. The third range
     //!          should be iterators to std::complex.
     //! \pre The range [ \a _rout, \a _rout += \a _rfirst - \a _rend  ) should
     //!      be valid.
     //! \param[in] _rfirst iterator to the first real space atom (of a type
-    //!                similar to Ising_CE::Atom_Type)
+    //!                similar to Crystal::Atom_Type)
     //! \param[in] _rend iterator to the last real space atom (of a type
-    //!              similar to Ising_CE::Atom_Type)
+    //!              similar to Crystal::Atom_Type)
     //! \param[in] _kfirst iterator to the first real space atom (of a type
-    //!                similar to Ising_CE::Atom_Type< std::complex >)
+    //!                similar to Crystal::Atom_Type< std::complex >)
     //! \param[in] _kend iterator to the last real space atom (of a type
-    //!              similar to Ising_CE::Atom_Type< std::complex >)
+    //!              similar to Crystal::Atom_Type< std::complex >)
     //! \param[out] _rout iterator to the first complex real-space
     //!              occupation ( of std::complex type )
     template<class T_R_IT, class T_K_IT, class T_O_IT >
@@ -373,7 +373,7 @@ namespace Ising_CE {
 
 
 
-} // namespace Ising_CE
+} // namespace Crystal
 
 
 #endif

@@ -14,7 +14,7 @@
 #include "cluster.h"
 
 
-namespace Ising_CE {
+namespace CE {
 
   void Cluster :: apply_symmetry( const atat::rMatrix3d &_op,
                                   const atat::rVector3d &_trans    ) 
@@ -103,5 +103,5 @@ namespace Ising_CE {
     return true;
   }
 
-} // namespace Ising_CE
+} // namespace CE
 

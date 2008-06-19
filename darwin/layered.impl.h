@@ -57,17 +57,17 @@ namespace Layered
 
 
   template<class T_CONTAINER>
-  void operator<<(Ising_CE::Structure &_str, const Object<T_CONTAINER> &_o)
+  void operator<<(Crystal::Structure &_str, const Object<T_CONTAINER> &_o)
   {
     typedef typename Object<T_CONTAINER>::const_iterator const_iterator;
     const_iterator i_var = _o.bitstring.begin();
     const_iterator i_end = _o.bitstring.end();
-    Ising_CE::Structure :: t_Atoms :: iterator i_atom = _str.atoms.begin();
-    Ising_CE::Structure :: t_Atoms :: iterator i_atom_end = _str.atoms.end();
+    Crystal::Structure :: t_Atoms :: iterator i_atom = _str.atoms.begin();
+    Crystal::Structure :: t_Atoms :: iterator i_atom_end = _str.atoms.end();
     types :: t_unsigned _D = _str.lattice->sites.size();
     for(; i_var != i_end and i_atom != i_atom_end; )
     {
-      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) 
+      if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T ) 
         { i_atom += _D; continue; }
       
       for(types::t_unsigned i=0; i < _D; ++i, ++i_atom )
@@ -76,21 +76,21 @@ namespace Layered
     }
   }
   template<class T_CONTAINER>
-  void operator<<(Object<T_CONTAINER> &_o, const Ising_CE::Structure &_c)
+  void operator<<(Object<T_CONTAINER> &_o, const Crystal::Structure &_c)
   {
     _o.bitstring.clear(); _o.bitstring.reserve( _c.atoms.size() );
-    Ising_CE::Structure :: t_Atoms :: const_iterator i_atom = _c.atoms.begin();
-    Ising_CE::Structure :: t_Atoms :: const_iterator i_end = _c.atoms.end();
+    Crystal::Structure :: t_Atoms :: const_iterator i_atom = _c.atoms.begin();
+    Crystal::Structure :: t_Atoms :: const_iterator i_end = _c.atoms.end();
     types :: t_unsigned _D = _c.lattice->sites.size();
     for(; i_atom != i_end; i_atom += _D )
-      if ( not (i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T) )
+      if ( not (i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T) )
         _o.bitstring.push_back( BitString::spin_up(i_atom->type) ? 1.0: -1.0 );
   }
 
 
 
   template <types::t_unsigned _D>
-  void Concentration<_D> :: operator()( Ising_CE::Structure &_str )
+  void Concentration<_D> :: operator()( Crystal::Structure &_str )
   {
     __DOASSERT( _str.atoms.size() % _D != 0,
                    "Number of atoms in structure is not a multiple of _D\n"
@@ -105,15 +105,15 @@ namespace Layered
                  _str.k_vecs.begin(), _str.k_vecs.end(),
                  i_hold );
 
-    Ising_CE::Structure::t_Atoms::iterator i_atom = _str.atoms.begin();
-    Ising_CE::Structure::t_Atoms::iterator i_atom_end = _str.atoms.end();
+    Crystal::Structure::t_Atoms::iterator i_atom = _str.atoms.begin();
+    Crystal::Structure::t_Atoms::iterator i_atom_end = _str.atoms.end();
     types :: t_int concx = 0;
     i_hold = hold;
     if( not single_c )
     {
       for (; i_atom != i_atom_end; ++i_atom, ++i_hold)
       {
-        if (i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )  continue;
+        if (i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T )  continue;
       
         if ( std::abs( std::real(*i_hold) ) < types::tolerance )
               i_atom->type = rng.flip() ? 1.0: -1.0;
@@ -127,7 +127,7 @@ namespace Layered
 
     for (; i_atom != i_atom_end; i_atom+=_D, ++i_hold)
     {
-      if ( not ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
+      if ( not ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T ) )
         i_atom->type = std::real(*i_hold);
       BitString::spin_up(i_atom->type) ? ++concx : --concx;
     }
@@ -144,12 +144,12 @@ namespace Layered
   // after flipping the _tochange spins closest to zero.
   // ie sets the concentration
   template <types::t_unsigned _D>
-  void Concentration<_D> :: normalize( Ising_CE::Structure &_str,
+  void Concentration<_D> :: normalize( Crystal::Structure &_str,
                                        types::t_real _tochange ) 
   {
-    Ising_CE::Structure::t_Atoms::iterator i_end = _str.atoms.end();
-    Ising_CE::Structure::t_Atoms::iterator i_which;
-    Ising_CE::Structure::t_Atoms::iterator i_atom;
+    Crystal::Structure::t_Atoms::iterator i_end = _str.atoms.end();
+    Crystal::Structure::t_Atoms::iterator i_which;
+    Crystal::Structure::t_Atoms::iterator i_atom;
     while( _tochange < -1.0 or _tochange > 1.0 )
     {
       // first finds atom with type closest to zero from +1 or -1 side,
@@ -159,7 +159,7 @@ namespace Layered
       types::t_real minr = 0.0;
       for(; i_atom != i_end; i_atom += _D )
       {
-        if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) continue;
+        if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T ) continue;
         if ( _tochange > 0 )
         {
           if ( i_atom->type < 0 )                    continue;
@@ -240,10 +240,10 @@ namespace Layered
 
 
   template <types::t_unsigned _D>
-  void Concentration<_D> :: get( const Ising_CE::Structure &_str)
+  void Concentration<_D> :: get( const Crystal::Structure &_str)
   {
-    Ising_CE::Structure::t_Atoms :: const_iterator i_atom = _str.atoms.begin();
-    Ising_CE::Structure::t_Atoms :: const_iterator i_atom_end = _str.atoms.end();
+    Crystal::Structure::t_Atoms :: const_iterator i_atom = _str.atoms.begin();
+    Crystal::Structure::t_Atoms :: const_iterator i_atom_end = _str.atoms.end();
     for(x=0e0; i_atom != i_atom_end; i_atom += _D )
       x += BitString::spin_up(i_atom->type) ?  1.0: -1.0;
     x /= (types::t_real) N; 
@@ -267,7 +267,7 @@ namespace Layered
   }
 
   template <types::t_unsigned _D>
-  void Concentration<_D> :: setfrozen( const Ising_CE::Structure &_str )
+  void Concentration<_D> :: setfrozen( const Crystal::Structure &_str )
   {
     N = _str.atoms.size();
     __DOASSERT( N % _D,
@@ -275,11 +275,11 @@ namespace Layered
                 << N << " % " << _D << " != 0\n" )
     N /= _D;
 
-    Ising_CE::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
-    Ising_CE::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
+    Crystal::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
+    Crystal::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
     Nfreeze = 0;
     for(; i_atom != i_atom_end; i_atom += _D )
-      if ( i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
+      if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T )
         Nfreeze += BitString::spin_up(i_atom->type) ? 1 : -1; 
   }
 
@@ -326,7 +326,7 @@ errorout:
     __DOASSERT( not parent, "No Structure tag found in input.\n")
 
     bool loadedstructure = false;
-    Ising_CE::Structure::lattice = &lattice;
+    Crystal::Structure::lattice = &lattice;
     if ( Load_Structure( *parent ) )  return true;
 
     std::cerr << "Found attributes for constructing a layered structure...\n" 
@@ -426,7 +426,7 @@ errorout:
     }
 
     // Fills in a structure lattice points.
-    Ising_CE::Structure copy_structure = structure;
+    Crystal::Structure copy_structure = structure;
     FillStructure( copy_structure );
     
     // We now sort the real space atoms according to layer
@@ -435,15 +435,15 @@ errorout:
     // The lattice sites are also sorted the same way
     std::sort( lattice.sites.begin(), lattice.sites.end(),
                Depth( cell ) );
-    Ising_CE::Lattice::t_Sites::iterator i_site = lattice.sites.begin(); 
-    Ising_CE::Lattice::t_Sites::iterator i_site_end = lattice.sites.end();
+    Crystal::Lattice::t_Sites::iterator i_site = lattice.sites.begin(); 
+    Crystal::Lattice::t_Sites::iterator i_site_end = lattice.sites.end();
     for( types::t_unsigned n=0; i_site != i_site_end; ++i_site, ++n )
       i_site->site = n;
 
 
     // Finally, we copy the kvector positions as atoms, and the related sites
-    Ising_CE::Structure::t_Atoms::const_iterator i_vec = copy_structure.atoms.begin();
-    Ising_CE::Structure::t_Atoms::const_iterator i_vec_end = copy_structure.atoms.end();
+    Crystal::Structure::t_Atoms::const_iterator i_vec = copy_structure.atoms.begin();
+    Crystal::Structure::t_Atoms::const_iterator i_vec_end = copy_structure.atoms.end();
     structure.atoms.clear();
     structure.atoms.reserve( lattice.sites.size() * copy_structure.atoms.size() );
     bool only_one_site = lattice.sites.size() == 1;
@@ -451,7 +451,7 @@ errorout:
     for(; i_vec != i_vec_end; ++i_vec )
       for( i_site = lattice.sites.begin(); i_site != i_site_end; ++i_site )
       {
-        Ising_CE::Structure::t_Atom atom;
+        Crystal::Structure::t_Atom atom;
         atom.pos = i_vec->pos + i_site->pos;
         atom.site = i_site->site;
         atom.freeze = i_site->freeze;
@@ -459,7 +459,7 @@ errorout:
         // vewy impowtant. Otherwise GA::KRandom and GA::Random produce
         // individuals which are to big.
         if( i_site != lattice.sites.begin() )
-          atom.freeze = i_site->freeze | Ising_CE::Structure::t_Atom::FREEZE_T;
+          atom.freeze = i_site->freeze | Crystal::Structure::t_Atom::FREEZE_T;
         structure.atoms.push_back(atom);
       }
 
@@ -531,7 +531,7 @@ errorout:
       return true;
     }
 
-    Ising_CE::Structure s; 
+    Crystal::Structure s; 
     if ( not s.Load(_node) )
       return false;
     (_indiv.Object()) << s;
@@ -550,7 +550,7 @@ errorout:
       return true;
     }
 
-    Ising_CE::Structure s = structure; 
+    Crystal::Structure s = structure; 
     s << _indiv.Object();
     t_FourierRtoK( s.atoms.begin(),  s.atoms.end(),
                    s.k_vecs.begin(), s.k_vecs.end() );
@@ -583,12 +583,12 @@ errorout:
 
 
   template< class T_INDIVIDUAL > 
-  Taboo<T_INDIVIDUAL> :: Taboo   ( const Ising_CE::Structure &_str )
+  Taboo<T_INDIVIDUAL> :: Taboo   ( const Crystal::Structure &_str )
                                          : t_Base(), d0(0), d1(0)
   {
-    Ising_CE::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
-    Ising_CE::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
-    const types::t_unsigned is_frozen = Ising_CE::Structure::t_Atom::FREEZE_T;
+    Crystal::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
+    Crystal::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
+    const types::t_unsigned is_frozen = Crystal::Structure::t_Atom::FREEZE_T;
     const types::t_unsigned _d = _str.lattice->sites.size();
     for(; i_atom != i_atom_end; i_atom += _d )
       if ( i_atom->freeze & is_frozen ) 
@@ -601,11 +601,11 @@ errorout:
   template< class T_INDIVIDUAL >
   bool Taboo<T_INDIVIDUAL> :: Load ( const TiXmlElement &_node )
   {
-    if( not Ising_CE::Structure::lattice ) return false;
+    if( not Crystal::Structure::lattice ) return false;
     std::string name = _node.Value();
     if( name.compare("Layer") != 0 ) return false;
 
-    const Ising_CE::Lattice& lattice  = *Ising_CE::Structure::lattice;
+    const Crystal::Lattice& lattice  = *Crystal::Structure::lattice;
     const std::vector< std::string > &strings = lattice.sites.front().type;
     std::vector< std::string > :: const_iterator i_string = strings.begin();
 

@@ -29,7 +29,7 @@ namespace BandGap
 
   void Evaluator::evaluate()
   {
-    Ising_CE::Structure copy_structure = structure;
+    Crystal::Structure copy_structure = structure;
     concentration.get( *current_object );
     current_object->x = concentration.x;
     current_object->y = concentration.y;

@@ -24,7 +24,7 @@ namespace CE
 
   bool Darwin :: Load( const TiXmlElement &_node )
   {
-    std::sort( structure.k_vecs.begin(), structure.k_vecs.end(),  Ising_CE::sort_kvec );
+    std::sort( structure.k_vecs.begin(), structure.k_vecs.end(),  Crystal::sort_kvec );
     
     const TiXmlElement *functional_xml = _node.FirstChildElement("Functional");
     for(; functional_xml;
@@ -39,7 +39,7 @@ namespace CE
                 "Giving up\n" )
     __DOASSERT( not t_Base::Load(*functional_xml),
                 "Could not load CE functional from XML.\n" )
-    Ising_CE::Structure::lattice = t_Base::lattice;
+    Crystal::Structure::lattice = t_Base::lattice;
        
     add_equivalent_clusters();
 

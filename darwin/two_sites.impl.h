@@ -79,7 +79,7 @@ namespace TwoSites
       return true;
     }
 
-    Ising_CE::Structure s; 
+    Crystal::Structure s; 
     if ( not s.Load(_node) )
       return false;
     (_indiv.Object()) << s;
@@ -98,7 +98,7 @@ namespace TwoSites
       return true;
     }
 
-    Ising_CE::Structure s = structure; 
+    Crystal::Structure s = structure; 
     s << _indiv.Object();
     TwoSites::Fourier( s.atoms.begin(),  s.atoms.end(),
                        s.k_vecs.begin(), s.k_vecs.end() );
@@ -112,7 +112,7 @@ namespace TwoSites
   {
     __DOASSERT( not lattice.Load( _node ), 
                 "Could not load lattice type from input.\n" )
-    Ising_CE::Structure::lattice = &lattice;
+    Crystal::Structure::lattice = &lattice;
     __DOASSERT( not structure.Load( _node ),
                 "Could not load input structure.\n" )
     __DOASSERT( not structure.set_site_indices(),
@@ -133,37 +133,37 @@ namespace TwoSites
   template<class T_INDIVIDUAL>
   bool Evaluator<T_INDIVIDUAL> :: consistency_check()
   {
-    Ising_CE::Structure::t_Atoms :: iterator i_atom = structure.atoms.begin();
-    Ising_CE::Structure::t_Atoms :: iterator i_atom_end = structure.atoms.end();
+    Crystal::Structure::t_Atoms :: iterator i_atom = structure.atoms.begin();
+    Crystal::Structure::t_Atoms :: iterator i_atom_end = structure.atoms.end();
     for(; i_atom != i_atom_end; ++i_atom )
       if ( i_atom->site != 1 and i_atom->site != 0 )
         return false;
     i_atom = structure.atoms.begin();
 
     for(; i_atom != i_atom_end; ++i_atom )
-      if ( i_atom->site == 0 and not (i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
+      if ( i_atom->site == 0 and not (i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T ) )
         break;
     if (     i_atom == i_atom_end
-         and not (lattice.sites[0].freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
-      lattice.sites[0].freeze |=  Ising_CE::Structure::t_Atom::FREEZE_T;
+         and not (lattice.sites[0].freeze & Crystal::Structure::t_Atom::FREEZE_T ) )
+      lattice.sites[0].freeze |=  Crystal::Structure::t_Atom::FREEZE_T;
     if (     i_atom != i_atom_end 
-         and (lattice.sites[0].freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
+         and (lattice.sites[0].freeze & Crystal::Structure::t_Atom::FREEZE_T ) )
       for(i_atom = structure.atoms.begin(); i_atom != i_atom_end; i_atom+=2 )
-        i_atom->freeze |= Ising_CE::Structure::t_Atom::FREEZE_T;
+        i_atom->freeze |= Crystal::Structure::t_Atom::FREEZE_T;
 
     for(i_atom = structure.atoms.begin(); i_atom != i_atom_end; ++i_atom )
-      if ( i_atom->site == 1 and not (i_atom->freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
+      if ( i_atom->site == 1 and not (i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T ) )
         break;
     if (     i_atom == i_atom_end
-         and not (lattice.sites[1].freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
-      lattice.sites[1].freeze |=  Ising_CE::Structure::t_Atom::FREEZE_T;
+         and not (lattice.sites[1].freeze & Crystal::Structure::t_Atom::FREEZE_T ) )
+      lattice.sites[1].freeze |=  Crystal::Structure::t_Atom::FREEZE_T;
     if (     i_atom != i_atom_end
-         and (lattice.sites[1].freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
+         and (lattice.sites[1].freeze & Crystal::Structure::t_Atom::FREEZE_T ) )
       for(i_atom = structure.atoms.begin(); i_atom != i_atom_end; i_atom+=2 )
-        (i_atom+1)->freeze |= Ising_CE::Structure::t_Atom::FREEZE_T;
+        (i_atom+1)->freeze |= Crystal::Structure::t_Atom::FREEZE_T;
 
-    if (     ( lattice.sites[0].freeze & Ising_CE::Structure::t_Atom::FREEZE_T )
-         and ( lattice.sites[1].freeze & Ising_CE::Structure::t_Atom::FREEZE_T ) )
+    if (     ( lattice.sites[0].freeze & Crystal::Structure::t_Atom::FREEZE_T )
+         and ( lattice.sites[1].freeze & Crystal::Structure::t_Atom::FREEZE_T ) )
     {
       std::cerr << "No atoms to optimize !? " << std::endl;
       return false;

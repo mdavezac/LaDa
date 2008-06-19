@@ -57,9 +57,9 @@ namespace Vff
 
     // Creates a list of closest neighbors
     std::vector< atat::rVector3d > neighbors;
-    Ising_CE::Lattice::t_Sites :: iterator i_site_begin = structure.lattice->sites.begin();
-    Ising_CE::Lattice::t_Sites :: iterator i_site, i_site2;
-    Ising_CE::Lattice::t_Sites :: iterator i_site_end = structure.lattice->sites.end();
+    Crystal::Lattice::t_Sites :: iterator i_site_begin = structure.lattice->sites.begin();
+    Crystal::Lattice::t_Sites :: iterator i_site, i_site2;
+    Crystal::Lattice::t_Sites :: iterator i_site_end = structure.lattice->sites.end();
     
     for(i_site = i_site_begin; i_site != i_site_end; ++i_site )
     {
@@ -534,7 +534,7 @@ namespace Vff
   }
 
 
-  Atomic_Center :: Atomic_Center  ( Ising_CE::Structure &_str, t_Atom &_e,
+  Atomic_Center :: Atomic_Center  ( Crystal::Structure &_str, t_Atom &_e,
                                     types::t_unsigned _i )
                                  : origin(&_e), structure(&_str)
   {
@@ -678,17 +678,17 @@ failure:
     __ASSERT( variables->size() == 0, "Too few variables.\n" )
     const_iterator i_x = variables->begin();
 
-    strain(0,0) = ( structure.freeze & Ising_CE::Structure::FREEZE_XX ) ?
+    strain(0,0) = ( structure.freeze & Crystal::Structure::FREEZE_XX ) ?
                   1.0 : (*i_x++);
-    strain(1,1) = ( structure.freeze & Ising_CE::Structure::FREEZE_YY ) ?
+    strain(1,1) = ( structure.freeze & Crystal::Structure::FREEZE_YY ) ?
                   1.0 : (*i_x++);
-    strain(2,2) = ( structure.freeze & Ising_CE::Structure::FREEZE_ZZ ) ?
+    strain(2,2) = ( structure.freeze & Crystal::Structure::FREEZE_ZZ ) ?
                   1.0 : (*i_x++);
-    strain(0,1) = strain (1,0) = (structure.freeze & Ising_CE::Structure::FREEZE_XY) ?
+    strain(0,1) = strain (1,0) = (structure.freeze & Crystal::Structure::FREEZE_XY) ?
                                  0.0 : (*i_x++);
-    strain(0,2) = strain (2,0) = (structure.freeze & Ising_CE::Structure::FREEZE_XZ) ?
+    strain(0,2) = strain (2,0) = (structure.freeze & Crystal::Structure::FREEZE_XZ) ?
                                  0.0 : (*i_x++);
-    strain(2,1) = strain (1,2) = (structure.freeze & Ising_CE::Structure::FREEZE_YZ) ?
+    strain(2,1) = strain (1,2) = (structure.freeze & Crystal::Structure::FREEZE_YZ) ?
                                  0.0 : (*i_x++);
 
     // compute resulting cell vectors
@@ -751,12 +751,12 @@ failure:
 
     // Now counts the degrees of freedom
     types::t_unsigned dof = 0;
-    if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_XX ) ) ++dof;
-    if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_XY ) ) ++dof;
-    if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_XZ ) ) ++dof;
-    if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_YY ) ) ++dof;
-    if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_YZ ) ) ++dof;
-    if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_ZZ ) ) ++dof;
+    if ( not (structure0.freeze & Crystal::Structure::FREEZE_XX ) ) ++dof;
+    if ( not (structure0.freeze & Crystal::Structure::FREEZE_XY ) ) ++dof;
+    if ( not (structure0.freeze & Crystal::Structure::FREEZE_XZ ) ) ++dof;
+    if ( not (structure0.freeze & Crystal::Structure::FREEZE_YY ) ) ++dof;
+    if ( not (structure0.freeze & Crystal::Structure::FREEZE_YZ ) ) ++dof;
+    if ( not (structure0.freeze & Crystal::Structure::FREEZE_ZZ ) ) ++dof;
     dof += posdofs();
 
     __DOASSERT( not dof, "No degrees of freedom.\n" )
@@ -807,17 +807,17 @@ failure:
     __ASSERT( variables->size() == 0, "Too few variables\n" )
     // finally, packs vff format into function::Base format
     iterator i_var = begin();
-    if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_XX ) )
+    if ( not (structure0.freeze & Crystal::Structure::FREEZE_XX ) )
       { *i_var = _strain(0,0); ++i_var; }
-    if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_YY ) )
+    if ( not (structure0.freeze & Crystal::Structure::FREEZE_YY ) )
       { *i_var = _strain(1,1); ++i_var; }
-    if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_ZZ ) )
+    if ( not (structure0.freeze & Crystal::Structure::FREEZE_ZZ ) )
       { *i_var = _strain(2,2); ++i_var; }
-    if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_XY ) )
+    if ( not (structure0.freeze & Crystal::Structure::FREEZE_XY ) )
       { *i_var = 0.5*(_strain(1,0) + _strain(0,1)); ++i_var; }
-    if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_XZ ) )
+    if ( not (structure0.freeze & Crystal::Structure::FREEZE_XZ ) )
       { *i_var = 0.5*(_strain(2,0) + _strain(0,2)); ++i_var; }
-    if ( not (structure0.freeze & Ising_CE::Structure::FREEZE_YZ ) )
+    if ( not (structure0.freeze & Crystal::Structure::FREEZE_YZ ) )
       { *i_var = 0.5*(_strain(2,1) + _strain(1,2)); ++i_var; }
 
     pack_positions( i_var );
@@ -865,7 +865,7 @@ failure:
     for(; i_center != i_end; ++i_center )
     {
       // first gets pseudo index
-      Ising_CE::StrAtom stratom;
+      Crystal::StrAtom stratom;
       __TRYDEBUGCODE( 
         structure.lattice->convert_Atom_to_StrAtom(
            structure0.atoms[i_center->get_index()], stratom );, 
@@ -933,7 +933,7 @@ failure:
 
   types::t_real Atomic_Functional
     :: MicroStrain( const Atomic_Center &_center, 
-                    const Ising_CE::Structure &_str0 ) const 
+                    const Crystal::Structure &_str0 ) const 
   {
     if ( _center.size() != 4 )
     { 

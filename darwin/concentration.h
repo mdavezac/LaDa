@@ -132,7 +132,7 @@
   }
 //! \deprecated normalizes the concentration of  a structure.
 //! Replaced by SingleSite::Concentration and affiliated
-types::t_real set_concentration( Ising_CE::Structure &_str,
+types::t_real set_concentration( Crystal::Structure &_str,
                                  types::t_real _target = -2.0);
 
 

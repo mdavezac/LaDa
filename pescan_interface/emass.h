@@ -88,7 +88,7 @@ namespace Pescan
 
 
       //! Launches a calculation for structure \a _str
-      bool operator()( const Ising_CE::Structure &_str ); 
+      bool operator()( const Crystal::Structure &_str ); 
       //! Loads Functional from XML
       bool Load( const TiXmlElement &_node );
 
@@ -97,11 +97,11 @@ namespace Pescan
       //! Folded Spectrum gamma computation
       types::t_real gamma_folded_spectrum();
       //! All Electron gamma computation
-      types::t_real gamma_all_electron( const Ising_CE :: Structure& );
+      types::t_real gamma_all_electron( const Crystal :: Structure& );
       //! Kpoints other than Gamm
       void other_kpoints( const atat::rVector3d &_v, types :: t_real *_eig );
       //! Regroups all escan computations
-      void escan_calls( const Ising_CE::Structure &_str );
+      void escan_calls( const Crystal::Structure &_str );
   };
 
   inline void eMassSL :: other_kpoints( const atat::rVector3d &_v, 

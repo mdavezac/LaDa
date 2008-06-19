@@ -168,7 +168,7 @@ namespace Pescan
       //! Reciprocal-space vector for which to compute eigenvalue.
       atat::rVector3d kpoint;
       //! \brief Reciprocal-Space scale \f$\frac{2\pi}{a}\f$, with \e a the lattice
-      //! constant Ising_CE::Structure::scale
+      //! constant Crystal::Structure::scale
       types::t_real scale;
       //! Type of Hamiltonian to solve.
       t_potential potential;
@@ -261,7 +261,7 @@ namespace Pescan
      //!          right functional node.
      const TiXmlElement* find_node (const TiXmlElement &_node );
      //! \brief Sets the scale to that of the structure
-     void set_scale( const Ising_CE::Structure &_str )
+     void set_scale( const Crystal::Structure &_str )
        { escan.scale = _str.scale; }
      //! sets the number of states to compute
      void set_nbstates( const types::t_unsigned _n )

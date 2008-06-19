@@ -4,6 +4,10 @@
 #ifndef _SEPARABLE_LLSQ_H_
 #define _SEPARABLE_LLSQ_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <vector>
 
 #include <opt/types.h>
@@ -95,7 +99,6 @@ namespace Fitting
           }
           ++iter;
           convergence /= (types::t_real) D;
-          if( save ) std::copy( _solution.begin(), _solution.end(), save->begin() );
         }
         while(     ( convergence < tolerance or tolerance < 0e0 )
                and ( iter < itermax or itermax > 0 ) );

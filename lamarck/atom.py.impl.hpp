@@ -28,7 +28,7 @@
       {
         if( not t_Structure::lattice )
           throw std::runtime_error( "Did you forget to initialize the Lattice?" );
-        Ising_CE::StrAtom stratom;
+        Crystal::StrAtom stratom;
         stratom.pos = result->pos;
         stratom.type = extract< std::string >( _ob[3] );
         t_Structure::lattice->convert_StrAtom_to_Atom( stratom, *result );

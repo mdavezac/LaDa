@@ -26,7 +26,7 @@ namespace SingleSite
       return true;
     }
 
-    Ising_CE::Structure s; 
+    Crystal::Structure s; 
     if ( not s.Load(_node) )
       return false;
     (_indiv.Object()) << s;
@@ -45,7 +45,7 @@ namespace SingleSite
       return true;
     }
 
-    Ising_CE::Structure s = structure; 
+    Crystal::Structure s = structure; 
     s << _indiv.Object();
     t_FourierRtoK( s.atoms.begin(),  s.atoms.end(),
                    s.k_vecs.begin(), s.k_vecs.end() );
@@ -62,7 +62,7 @@ namespace SingleSite
       std::cerr << " Could not load lattice type from input!! " << std::endl; 
       return false;
     }
-    Ising_CE::Structure::lattice = &lattice;
+    Crystal::Structure::lattice = &lattice;
     if ( not structure.Load( _node ) )
     {
       std::cerr << " Could not load input structure!! " << std::endl; 

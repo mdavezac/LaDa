@@ -22,7 +22,7 @@ namespace Pescan
   const atat::rVector3d eMassSL :: Hxz(eMassSL::sqrt2_over2,0,eMassSL::sqrt2_over2);
   const atat::rVector3d eMassSL :: Hmxz(eMassSL::msqrt2_over2,0,eMassSL::sqrt2_over2);
 
-  bool eMassSL::operator()( const Ising_CE::Structure &_str )
+  bool eMassSL::operator()( const Crystal::Structure &_str )
   {
     set_scale( _str );
     escan_calls( _str );
@@ -58,7 +58,7 @@ namespace Pescan
     return true;
   }
 
-  void eMassSL :: escan_calls( const Ising_CE::Structure &_str )
+  void eMassSL :: escan_calls( const Crystal::Structure &_str )
   {
     // Stuff to save
     Escan saved_escan = escan;
@@ -116,16 +116,16 @@ namespace Pescan
     destroy_directory_();
   }
 
-  types::t_real eMassSL::gamma_all_electron( const Ising_CE::Structure &_str ) 
+  types::t_real eMassSL::gamma_all_electron( const Crystal::Structure &_str ) 
   {
     escan.kpoint = Gamma;
     
-    Ising_CE::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
-    Ising_CE::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
+    Crystal::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
+    Crystal::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
     escan.nbstates = 2; 
     for(; i_atom != i_atom_end; ++i_atom)
     {
-      Ising_CE::StrAtom atom; 
+      Crystal::StrAtom atom; 
       _str.lattice->convert_Atom_to_StrAtom( *i_atom, atom );
       escan.nbstates += Physics::Atomic::Charge( atom.type );
     }

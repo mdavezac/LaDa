@@ -10,7 +10,9 @@
 
 #include<vector>
 #include<boost/lambda/lambda.hpp>
-#include<boost//boost/type_traits/function_traits.hpp>
+#include<boost/boost/type_traits/function_traits.hpp>
+
+#include<opt/types.h>
 
 //! Contains all things separable functions.
 namespace Separable
@@ -114,7 +116,7 @@ namespace Separable
       //! Serializes a structure.
       template<class ARCHIVE> void serialize( ARCHIVE & _ar,
                                               const unsigned int _version);
-     
+
     protected:
       //! A family of functions. 
       Basis basis;
@@ -223,15 +225,16 @@ namespace Separable
    *    \tparam T_FUNCTION must be a Function< Summand< T_BASIS > > 
    **/
   template< class T_FUNCTION >
-  class MemCollapse
+  class Collapse
   {
     public:
+      //! Type of the sum of separable functions to collapse.
       typedef T_FUNCTION t_Function;
       //! Wether to update the coefficients between each dimension or not.
       bool do_update;
 
       //! Constructor
-      MemCollapse   ( T_FUNCTION &_function )
+      Collapse   ( T_FUNCTION &_function )
                   : do_update(bool), is_initialized(false), D(0), nb_obs(0),
                     nb_ranks(0), function( _function ) {}
 
@@ -241,21 +244,27 @@ namespace Separable
       template< class T_MATRIX, class T_VECTORS >
       void operator()( T_MATRIX &_A, types::t_unsigned _dim, T_VECTORS &_coefs )
 
-      //! Constructs the completely expanded matrix.
-      void init();
+      //! \brief Constructs the completely expanded matrix.
+      //! \tparams T_VECTORS is a vector of vectors, input[ o, d ] 
+      template< class T_VECTORS >
+      void init( const T_VECTORS &_x );
+      //! Resets collapse functor. Clears memory.
+      void reset();
+      //! Creates a collection of random coefficients.
+      //! \tparams should be a vector of vectors, coefs[d, (r,i) ].
+      template< class T_VECTORS >
+      void create_coefs( T_VECTORS &_coefs );
 
     protected:
-      //! Initializes MemCollapse::factors.
+      //! Initializes Collapse::factors.
       template< class T_MATRIX, class T_VECTORS >
       void initialize_factors( const T_VECTORS &_coefs );
-      //! Updates MemCollapse::factors.
+      //! Updates Collapse::factors.
       template< class T_VECTORS >
-      void initialize_factors( const T_VECTORS &_coefs )
+      void update_factors( types::t_unsigned _dim, const T_VECTORS &_coefs )
       //! Assigns coeficients to function.
       template< class T_VECTORS >
       void reassign( const T_VECTORS &_solution );
-      //! Resets collapse functor. Clears memory.
-      void reset();
 
     protected:
       //! False if unitialized.

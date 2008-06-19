@@ -26,11 +26,11 @@
 #include "vff.h"
 
 
-//! \brief fills in \a atoms member of an Ising_CE::Structure instance from the
+//! \brief fills in \a atoms member of an Crystal::Structure instance from the
 //!        cell-shape and the lattice.
 //! \todo make sure that the guessed range is large enough, so that any
 //!       structure is completely filled with atoms.
-void FillStructure( Ising_CE::Structure &_str );
+void FillStructure( Crystal::Structure &_str );
 
 /** \ingroup Genetic
  * @{ */
@@ -42,7 +42,7 @@ void FillStructure( Ising_CE::Structure &_str );
 //!             - An epitaxial growth direction.
 //!             . The number of independent layers
 //!             .
-//!          From this information a complete instance of anIsing_CE::Structure
+//!          From this information a complete instance of anCrystal::Structure
 //!          is constructed, The atoms are ordered according to depth in the
 //!          epitaxial growth direction. The structure can then be mapped onto
 //!          a bitstring in which bits correspond to atomic-site with
@@ -53,7 +53,7 @@ void FillStructure( Ising_CE::Structure &_str );
 //!          coherently. Two one cation correspond one anion. To the other
 //!          cation corresponds the other anion. The bitstring of
 //!          Layered::Object<2> contains only half as many atoms as the
-//!          Ising_CE::Structure which it characterizes. Note that all sites -
+//!          Crystal::Structure which it characterizes. Note that all sites -
 //!          other than the first - are set to have  their occupations frozen.
 //!          This allows us to work correctly with the physical operators
 //!          defined in gaoperators.h.
@@ -71,34 +71,34 @@ namespace Layered
   {
     //! \brief From real to k space
     //! \details The first range is most likely some instance of
-    //!          Ising_CE::Structure::t_Atoms. The second range is similarly an
-    //!          instance of Ising_CE::Structure::t_kAtoms. The third range
+    //!          Crystal::Structure::t_Atoms. The second range is similarly an
+    //!          instance of Crystal::Structure::t_kAtoms. The third range
     //! \param[in, out] _rfirst iterator to the first real space atom (of a type
-    //!                similar to Ising_CE::Atom_Type)
+    //!                similar to Crystal::Atom_Type)
     //! \param[in, out] _rend iterator to the last real space atom (of a type
-    //!              similar to Ising_CE::Atom_Type)
+    //!              similar to Crystal::Atom_Type)
     //! \param[in] _kfirst iterator to the first real space atom (of a type
-    //!                similar to Ising_CE::Atom_Type< std::complex >)
+    //!                similar to Crystal::Atom_Type< std::complex >)
     //! \param[in] _kend iterator to the last real space atom (of a type
-    //!              similar to Ising_CE::Atom_Type< std::complex >)
+    //!              similar to Crystal::Atom_Type< std::complex >)
     template<class T_R_IT, class T_K_IT>
     Fourier( T_R_IT _rfirst, T_R_IT _rend,
              T_K_IT _kfirst, T_K_IT _kend );
     //! \brief From k space to real space. 
     //! \details The first range is most likely some instance of
-    //!          Ising_CE::Structure::t_Atoms. The second range is similarly an
-    //!          instance of Ising_CE::Structure::t_kAtoms. The third range
+    //!          Crystal::Structure::t_Atoms. The second range is similarly an
+    //!          instance of Crystal::Structure::t_kAtoms. The third range
     //!          should be iterators to std::complex.
     //! \pre The range [ \a _rout, \a _rout += \a _rfirst - \a _rend  ) should
     //!      be valid.
     //! \param[in] _rfirst iterator to the first real space atom (of a type
-    //!                similar to Ising_CE::Atom_Type)
+    //!                similar to Crystal::Atom_Type)
     //! \param[in] _rend iterator to the last real space atom (of a type
-    //!              similar to Ising_CE::Atom_Type)
+    //!              similar to Crystal::Atom_Type)
     //! \param[in] _kfirst iterator to the first real space atom (of a type
-    //!                similar to Ising_CE::Atom_Type< std::complex >)
+    //!                similar to Crystal::Atom_Type< std::complex >)
     //! \param[in] _kend iterator to the last real space atom (of a type
-    //!              similar to Ising_CE::Atom_Type< std::complex >)
+    //!              similar to Crystal::Atom_Type< std::complex >)
     //! \param[out] _rout iterator to the first complex real-space
     //!              occupation ( of std::complex type )
     template<class T_R_IT, class T_K_IT, class T_O_IT >
@@ -110,11 +110,11 @@ namespace Layered
 
   //! \brief %Layered %Object Type
   //! \details Redefines BitString::Object with the sole purpose of implementing
-  //!          overloaded operator<<() on and from Ising_CE::Structures.
+  //!          overloaded operator<<() on and from Crystal::Structures.
   //!          Note that we could run into awkward redefinitions by using typedefs
   //!          rather than a complete redeclaration.
-  //! \see Layered::operator<<( Ising_CE::Structure&, const Layered::Object& ), 
-  //!      Layered::operator<<( Layered::Object&, const Ising_CE::Structure& ). 
+  //! \see Layered::operator<<( Crystal::Structure&, const Layered::Object& ), 
+  //!      Layered::operator<<( Layered::Object&, const Crystal::Structure& ). 
   template<class T_CONTAINER = std::vector<types::t_real> >
   class Object: public BitString :: Object<T_CONTAINER>
   {
@@ -145,14 +145,14 @@ namespace Layered
 
   //! Dumps the decoration of \a _str into the object \a _o
   template<class T_CONTAINER>
-    void operator<<(Ising_CE::Structure &_str, const Object<T_CONTAINER> &_o);
+    void operator<<(Crystal::Structure &_str, const Object<T_CONTAINER> &_o);
   //! Dumps the decoration of \a _str into the object \a _o
   template<class T_CONTAINER>
-    void operator<<(Object<T_CONTAINER> &_o, const Ising_CE::Structure &_str);
+    void operator<<(Object<T_CONTAINER> &_o, const Crystal::Structure &_str);
 
   //! \brief Declares concentration related behaviors for layered structures.
   //! \details It can compute and set the concentrations of Object and
-  //!          Ising_CE::Structure instances for layered structures. It works
+  //!          Crystal::Structure instances for layered structures. It works
   //!          correctly with structure for which the occupation of some sites
   //!          are frozen.
   //! \xmlinput Specifying an x0 attribute in the \<%GA\> tag implies that the
@@ -178,7 +178,7 @@ namespace Layered
 
     public:
       //! \brief Stores the concentation of the last computed Object of
-      //!        Ising_CE::Structure instance..
+      //!        Crystal::Structure instance..
       types::t_real x;
 
     public:
@@ -204,19 +204,19 @@ namespace Layered
       //!       lattice-site only. The occupation of other lattice sites depend
       //!       upon the occupation of the corresponding first lattice-site
       //! \see GA::Krossover, GA::KRandom, GA::KMutation.
-      void operator()( Ising_CE::Structure &_str );
+      void operator()( Crystal::Structure &_str );
       //! \brief Sets \a _obj to concentration Concentration::x0 if the concentration
       //!        is fixed.
       template<class T_CONT> void operator()( BitString::Object<T_CONT> &_obj );
       //! \brief Computes the concentration of \a _str and stores the result in
       //!        Concentration::x
-      void get( const Ising_CE::Structure &_str);
+      void get( const Crystal::Structure &_str);
       //! \brief Computes the concentration of \a _obj and stores the result in
       //!        Concentration::x
       template<class T_CONT> void get( const BitString::Object<T_CONT> &_obj );
       //! \brief Computes the number of sites in \a _str for which the
       //!        occupation is fixed
-      void setfrozen ( const Ising_CE::Structure &_str );
+      void setfrozen ( const Crystal::Structure &_str );
 
       //! \brief Returns a string describing the statuc of this instance
       std::string print() const;
@@ -233,8 +233,8 @@ namespace Layered
 
     protected:
       //! \brief Actually does the job of normalizing the site occupations for
-      //!        Concentration::operator()(Ising_CE::Structure&)
-      void normalize( Ising_CE::Structure &_str, 
+      //!        Concentration::operator()(Crystal::Structure&)
+      void normalize( Crystal::Structure &_str, 
                       types::t_real _tochange);
 
   };
@@ -246,7 +246,7 @@ namespace Layered
   //!          bitstring objects defined above, as well as the concentration
   //!          functor SingleSite::Concentration. Saving and Restarting of
   //!          individuals is partially implementated as relates to
-  //!          BitString::Object and Ising_CE::Structure.
+  //!          BitString::Object and Crystal::Structure.
   //! \xmlrestart Individuals are save in \<Individual\> tags in two possible format:
   //!             a long explicit format 
   //! \code
@@ -286,9 +286,9 @@ namespace Layered
 
     protected:
       //! The lattice for which decoration search is done
-      Ising_CE :: Lattice lattice;
+      Crystal :: Lattice lattice;
       //! The structure (cell-shape) for which decoration search is done
-      Ising_CE :: Structure structure;
+      Crystal :: Structure structure;
       //! The epitaxial growth direction
       atat::rVector3d direction;
       //! The number of independent layers
@@ -403,7 +403,7 @@ namespace Layered
 
     public: 
       //! Constructor and Initializer
-      Taboo ( const Ising_CE::Structure &_str );
+      Taboo ( const Crystal::Structure &_str );
 
       //! Copy Constructor
       Taboo   ( const Taboo &_c )

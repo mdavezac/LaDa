@@ -66,9 +66,9 @@ namespace Vff
      //! Helps in determining escan pseudo
      typedef std::vector< t_pseudo > t_pseudos;
      //! The type of the atom container
-     typedef Ising_CE::Structure::t_Atoms t_Atoms;
+     typedef Crystal::Structure::t_Atoms t_Atoms;
      //! The type of the atom
-     typedef Ising_CE::Structure::t_Atom  t_Atom;
+     typedef Crystal::Structure::t_Atom  t_Atom;
 
      //! Type of the container holding the atomic centers
      typedef t_Base :: t_Centers t_Centers;  
@@ -88,7 +88,7 @@ namespace Vff
 
     public:
       //! Constructor and Initializer
-      PescanPerturbations   ( Ising_CE::Structure &_str )
+      PescanPerturbations   ( Crystal::Structure &_str )
                          : t_Base( _str ), filename("atomic_config") {}
       //! Copy Constructor
       PescanPerturbations   ( const PescanPerturbations &_c )

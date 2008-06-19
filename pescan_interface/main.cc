@@ -84,7 +84,7 @@ inline void operator<<( t_Pescan &_pescan, const t_Vff &_vff )
 #endif
 
 bool evaluate( const TiXmlElement &_node,
-               Ising_CE::Structure &_structure,
+               Crystal::Structure &_structure,
                t_Pescan &_pescan, t_Vff &_vff,
                bool _doeval )
 {
@@ -109,7 +109,7 @@ bool evaluate( const TiXmlElement &_node,
    if( _doeval ) _structure.energy = _pescan( _structure );
 #endif
 
-  Ising_CE::Fourier( _structure.atoms.begin(), _structure.atoms.end(),
+  Crystal::Fourier( _structure.atoms.begin(), _structure.atoms.end(),
                      _structure.k_vecs.begin(), _structure.k_vecs.end() );
 
   return true;
@@ -137,9 +137,9 @@ int main(int argc, char *argv[])
 
   TiXmlHandle handle( &doc );
 
-  Ising_CE::Lattice lattice;
-  Ising_CE::Structure structure;
-  Ising_CE::Structure::lattice = &lattice;
+  Crystal::Lattice lattice;
+  Crystal::Structure structure;
+  Crystal::Structure::lattice = &lattice;
 
   // loads lattice
   TiXmlElement *child = handle.FirstChild( "Job" ).FirstChild( "Lattice" ).Element();

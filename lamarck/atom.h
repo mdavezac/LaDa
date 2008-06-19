@@ -25,7 +25,7 @@
 #include <atat/machdep.h>
 #include <atat/fxvector.h>
 
-namespace Ising_CE {
+namespace Crystal {
 
   //! \brief Describes an atom.
   //! \details An atom consists of a position, a type, and frozen status
@@ -90,7 +90,7 @@ namespace Ising_CE {
                   : pos(_pos), type(_type), freeze(FREEZE_NONE),
                     site(-1) {};
       //! Copy Constructor
-      Atom_Type   ( const Ising_CE::Atom_Type<t_Type> &_atom )
+      Atom_Type   ( const Crystal::Atom_Type<t_Type> &_atom )
                 : pos(_atom.pos), type(_atom.type),
                   freeze(_atom.freeze), site(_atom.site) {};
       //! Equality operator. Returns true if the \e positions are equal.
@@ -295,13 +295,13 @@ namespace Ising_CE {
 
 //! Prints an atom to a stream.
 template<class T_TYPE>
-  std::ostream& operator<<(std::ostream& _stream, const Ising_CE::Atom_Type<T_TYPE> &_at )
+  std::ostream& operator<<(std::ostream& _stream, const Crystal::Atom_Type<T_TYPE> &_at )
     { _at.print_out( _stream ); return _stream; }
 
 
 
 
-} // namespace Ising_CE
+} // namespace Crystal
 
   
 #endif

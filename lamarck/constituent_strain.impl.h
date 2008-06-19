@@ -14,7 +14,7 @@
 #include <boost/mpi/collectives.hpp>
 #endif
 
-namespace Ising_CE 
+namespace Crystal 
 {
   namespace ConstituentStrain
   {
@@ -22,7 +22,7 @@ namespace Ising_CE
     typename Functional<T_HARMONIC>::t_Harmonics Functional<T_HARMONIC> :: harmonics;
 
     template<class T_HARMONIC>
-    void Functional<T_HARMONIC> :: operator<<( const Ising_CE::Structure &_str )
+    void Functional<T_HARMONIC> :: operator<<( const Crystal::Structure &_str )
     {
       __DOASSERT( _str.atoms.size() < 1,  "No atoms in structure.\n" 
                                           "Cannot create constituent strain"
@@ -32,12 +32,12 @@ namespace Ising_CE
                                           " for structure.\n" )
       k_vecs.clear(); r_vecs.clear();
       k_vecs.reserve(_str.k_vecs.size()); r_vecs.reserve(_str.atoms.size());
-      Ising_CE::Structure::t_kAtoms::const_iterator i_kvec = _str.k_vecs.begin();
-      Ising_CE::Structure::t_kAtoms::const_iterator i_kvec_end = _str.k_vecs.end();
+      Crystal::Structure::t_kAtoms::const_iterator i_kvec = _str.k_vecs.begin();
+      Crystal::Structure::t_kAtoms::const_iterator i_kvec_end = _str.k_vecs.end();
       for(; i_kvec != i_kvec_end; ++i_kvec )
         k_vecs.push_back( i_kvec->pos );
-      Ising_CE::Structure::t_Atoms::const_iterator i_rvec = _str.atoms.begin();
-      Ising_CE::Structure::t_Atoms::const_iterator i_rvec_end = _str.atoms.end();
+      Crystal::Structure::t_Atoms::const_iterator i_rvec = _str.atoms.begin();
+      Crystal::Structure::t_Atoms::const_iterator i_rvec_end = _str.atoms.end();
       for(; i_rvec != i_rvec_end; ++i_rvec )
         r_vecs.push_back( i_rvec->pos );
     }
@@ -478,4 +478,4 @@ namespace Ising_CE
     #endif // _LADADEBUG
   }
 
-} // namespace Ising_CE 
+} // namespace Crystal 

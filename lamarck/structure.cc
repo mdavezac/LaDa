@@ -14,7 +14,7 @@
 
 
 
-namespace Ising_CE {
+namespace Crystal {
 
   bool sort_kvec( const atat::rVector3d &_vec1, const atat::rVector3d &_vec2 )
   {
@@ -31,7 +31,7 @@ namespace Ising_CE {
   }
 
   using atat::rndseed;
-  Lattice* Structure :: lattice = NULL;
+  Crystal::Lattice* Structure :: lattice = NULL;
 
   void Structure :: convert_from_ATAT ( const Atat_Structure &atat  )
   {
@@ -527,5 +527,5 @@ namespace Ising_CE {
     return _stream;
   } 
 
-} // namespace Ising_CE
+} // namespace Crystal
 

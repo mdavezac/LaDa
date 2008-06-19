@@ -134,12 +134,12 @@ namespace loop
 } // namespace loop
 //   typedef  mpi::broadcast_functor< types::t_real > t_broadcast
 //   typedef OverFixedArray< types::t_real, 3, t_broadcast > t_OverFixedArray;
-//   typedef Component< Ising_CE::Atom, atat::rVector3d, t_OverFixedArray > t_Component1;
-//   typedef Component< Ising_CE::Structure::t_Atoms, t_broadcast >  t_Component2;
-//   OverContainer< Ising_CE::Structure::t_Atoms, And< t_Component1, t_Component2 > >
-//     serialize_structure( And( t_Component1( &Ising_CE::Atom::pos, 
+//   typedef Component< Crystal::Atom, atat::rVector3d, t_OverFixedArray > t_Component1;
+//   typedef Component< Crystal::Structure::t_Atoms, t_broadcast >  t_Component2;
+//   OverContainer< Crystal::Structure::t_Atoms, And< t_Component1, t_Component2 > >
+//     serialize_structure( And( t_Component1( &Crystal::Atom::pos, 
 //                                             OverFixedArray( t_broadcast( mpiobject ) ) ),
-//                               t_Component2( &Ising_CE::Atom::type, t_broadcast( mpiobject ) ) ) );
+//                               t_Component2( &Crystal::Atom::type, t_broadcast( mpiobject ) ) ) );
 //
 //   serialize_structure( structure.atoms );
 #endif

@@ -78,7 +78,7 @@ namespace Pescan
       bool Load( const TiXmlElement &_node );
 
       //! Launches a calculation for structure \a _str
-      types::t_real operator()( const Ising_CE::Structure &_str ); 
+      types::t_real operator()( const Crystal::Structure &_str ); 
 
 #ifdef _DIRECTIAGA
      //! Sets the communicator.
@@ -87,9 +87,9 @@ namespace Pescan
 
     protected:
       //! Folded spectrum computation
-      types::t_real folded_spectrum(const Ising_CE::Structure& );
+      types::t_real folded_spectrum(const Crystal::Structure& );
       //! All-electron spectrum computation
-      types::t_real all_electron( const Ising_CE::Structure &_str );
+      types::t_real all_electron( const Crystal::Structure &_str );
       //! Returns the closest eigenvalue to \a _ref
       types::t_real find_closest_eig( types::t_real _ref );
       //! \brief Makes sure that a non-metallic bandgap has been obtained.
@@ -106,7 +106,7 @@ namespace Pescan
   };
 
   //! \cond
-  inline types::t_real BandGap :: operator()( const Ising_CE::Structure &_str )
+  inline types::t_real BandGap :: operator()( const Crystal::Structure &_str )
   {
     set_scale( _str );
 

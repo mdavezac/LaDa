@@ -13,7 +13,7 @@
 
 #include "polynome.h"
 
-namespace VA_CE {
+namespace CE {
 
   types::t_unsigned Polynome::nb_eval           = 0;
   types::t_unsigned Polynome::nb_eval_grad      = 0;
@@ -187,4 +187,4 @@ namespace VA_CE {
     return true;
   }
 
-} // namespace VA_CE
+} // namespace CE

@@ -18,14 +18,17 @@
 #include <mpi/mpi_object.h>
 
 //! \cond
-namespace VA_CE{ template<class T_HARMONIC> class Builder; };
-namespace Ising_CE{ class Cluster; }
+namespace CE
+{ 
+  template<class T_HARMONIC> class Builder; 
+  class Cluster;  
+};
 //! \endcond
 
 //! \brief Contains most everything %Cluster Expansion and structure related.
 //! \todo move structure related stuff to Physics
-//! \todo Rename Ising_CE to CE
-namespace Ising_CE
+//! \todo Rename Crystal to CE
+namespace CE
 {
   /** \brief Defines a cluster of a %Cluster Expansion %Functional
    *  \details A Cluster consists of an interaction energy Cluster::eci
@@ -45,7 +48,7 @@ namespace Ising_CE
    */ 
   class Cluster 
   {
-    template<class T_HARMONIC> friend class VA_CE::Builder;
+    template<class T_HARMONIC> friend class Builder;
     
     protected:
       //! Vectors linking sites which interact through this cluster.
@@ -99,6 +102,6 @@ namespace Ising_CE
         { _ar & eci; _ar & vectors; } 
   };
   
-} // namespace Ising_CE
+} // namespace CE
 
 #endif

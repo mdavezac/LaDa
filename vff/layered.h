@@ -32,9 +32,9 @@ namespace Vff
   class Layered : public Vff::Functional
   {
     //! The type of the atom  
-    typedef Ising_CE::Structure::t_Atom  t_Atom;
+    typedef Crystal::Structure::t_Atom  t_Atom;
     //! The type of the atom container
-    typedef Ising_CE::Structure::t_Atoms t_Atoms;
+    typedef Crystal::Structure::t_Atoms t_Atoms;
 #ifdef _MPI
     /// \cond
     friend bool mpi::BroadCast::serialize<Vff::Layered> ( Vff::Layered& );
@@ -73,7 +73,7 @@ namespace Vff
     public:
       //! \brief Constructor and Initializer
       //! \param _str structure for which to compute energy and stress
-      Layered   ( Ising_CE :: Structure &_str )
+      Layered   ( Crystal :: Structure &_str )
               : Vff::Functional( _str ), direction(0,0,0), u(0,0,0),
                 template_strain(), is_fixed_by_input(false)
         { template_strain.zero(); }

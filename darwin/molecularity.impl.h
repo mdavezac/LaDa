@@ -20,7 +20,7 @@ namespace Molecularity
   
   inline void Evaluator :: evaluate()
   {
-    Ising_CE :: Structure structure0 = structure;
+    Crystal :: Structure structure0 = structure;
     // relax structure
     vff( *current_object );
     // Load relaxed structure into bandgap

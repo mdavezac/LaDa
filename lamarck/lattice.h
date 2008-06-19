@@ -25,7 +25,7 @@
 #include "atom.h"
 
 
-namespace Ising_CE {
+namespace Crystal {
   //! Refolds a periodic vector into the unit-cell, as defined by \a lat.
   void refold( atat::rVector3d &vec, const atat::rMatrix3d &lat );
 
@@ -114,7 +114,7 @@ namespace Ising_CE {
       //!          Atom_Type< std::vector<std::string> >::type. The position
       //!          can be given modulo a lattice unit-cell.
       //! \warning works only as well as Lattice::convert_type_index_to_real().
-      types::t_int get_atom_type_index( const Ising_CE::Atom &_at ) const;
+      types::t_int get_atom_type_index( const Crystal::Atom &_at ) const;
       //! \brief Returns the index of the atomic occupation of \a _at.
       //! \details More specifically, returns the index of the string in member
       //!          Atom_Type< std::vector<std::string> >::type. 
@@ -123,16 +123,16 @@ namespace Ising_CE {
       //!          is returned.
       types::t_int get_atom_type_index( const std::string &_at ) const;
       //! Returns the atomic symbol of \a _at.
-      std::string get_atom_string( const Ising_CE::Atom &_at ) const;
+      std::string get_atom_string( const Crystal::Atom &_at ) const;
       //! Returns the atomic symbol \a _i of site \a _s
       const std::string& get_atom_string( const unsigned _s, const unsigned _i ) const
         { return sites[_s].type[_i]; }
       //! Converts a atomic-symbol coded atom to an atom with a numeric value.
-      bool convert_StrAtom_to_Atom( const Ising_CE::StrAtom &_in,
-                                    Ising_CE::Atom &_out ) const;
+      bool convert_StrAtom_to_Atom( const Crystal::StrAtom &_in,
+                                    Crystal::Atom &_out ) const;
       //! Converts a numerically coded atom to an atom with an atomic symbol.
-      bool convert_Atom_to_StrAtom( const Ising_CE::Atom &_in,
-                                    Ising_CE::StrAtom &_out ) const;
+      bool convert_Atom_to_StrAtom( const Crystal::Atom &_in,
+                                    Crystal::StrAtom &_out ) const;
   
     protected:
       //! \brief Converts an index to a real value.
@@ -160,7 +160,7 @@ namespace Ising_CE {
       void print_out (std::ostream &stream) const;
   };
 
-  inline std::string Lattice::get_atom_string( const Ising_CE::Atom &_at ) const
+  inline std::string Lattice::get_atom_string( const Crystal::Atom &_at ) const
   {
     types::t_int i;
     __TRYDEBUGCODE(
@@ -173,7 +173,7 @@ namespace Ising_CE {
   }
 
   //! Dumps a lattice to a stream.
-  inline std::ostream& operator<<( std::ostream& _stream, const Ising_CE::Lattice& _lat )
+  inline std::ostream& operator<<( std::ostream& _stream, const Crystal::Lattice& _lat )
     { _lat.print_out(_stream); return _stream; }
-} // namespace Ising_CE
+} // namespace Crystal
 #endif
