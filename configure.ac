@@ -81,6 +81,14 @@ AC_ARG_ENABLE(emass,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-emass) ;;
      esac],[emass=$enall])
 
+AC_ARG_ENABLE(separable,
+     [  --enable-separable            Turn on sum of separable functions module.],
+     [case "${enableval}" in
+       yes) separable=true ;;
+       no)  separable=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-separable) ;;
+     esac],[separable=$enall])
+
 AC_ARG_ENABLE(vff,
      [  --enable-vff                  Turn on vff],
      [case "${enableval}" in
@@ -377,6 +385,7 @@ AM_CONDITIONAL(DOGSL, test x$gsl = xtrue)
 AM_CONDITIONAL(DONAG, test x$nag = xtrue)
 AM_CONDITIONAL(DODIRECTIAGA, test x$direct_iaga = xtrue)
 AM_CONDITIONAL(DOPYTHON, test x$python = xtrue)
+AM_CONDITIONAL(DOSEPARABLE, test x$separable = xtrue)
 
 
 #  eo libs iff galib is enabled 
@@ -451,7 +460,7 @@ AC_SUBST(BOOST_CXXFLAGS)
 
 AC_OUTPUT(Makefile atat/Makefile physics/Makefile opt/Makefile lamarck/Makefile
           vff/Makefile mpi/Makefile pescan_interface/Makefile darwin/Makefile 
-          print/Makefile lapack/Makefile )
+          print/Makefile lapack/Makefile separable/Makefile )
 
 echo ""; echo ""
 echo "Will Compile following modules: "
@@ -484,6 +493,9 @@ if test x$molecularity = xtrue; then
 fi
 if test x$emassopt = xtrue; then
   echo " _ Genetic Algorithm for Electronic Mass Optimization"
+fi
+if test x$separable = xtrue; then
+  echo " _ Sum of separable functions fitting."
 fi
 echo ""
 if test $fortran = true; then

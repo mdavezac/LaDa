@@ -101,6 +101,14 @@ PRINT_CC = manip.cc xmg.cc stdout.cc base.cc
 PRINT_H  = manip.h  xmg.h  stdout.h  base.h  operations.h 
 PRINT_DOC = $(PRINT_H) $(PRINT_CC) 
 
+SEPARABLE_CC = cefitting.cc  main.cc  polynomial.cc
+SEPARABLE_H = boolean.h cefitting.h ce.h lsq.h polynomial.h \
+              separable.h
+SEPARABLE_IMPL_H = cefitting.impl.h  ce.impl.h  polynomial.impl.h  \
+                   separable.impl.h
+SEPARABLE_DOC = $(SEPARABLE_CC) $(SEPARABLE_H) $(SEPARABLE_IMPL_H)
+
+
 VFF_FORTRAN_CC = fortran.cc
 VFF_FORTRAN_H  = fortran.h
 VFF_FORTRAN_DOC = $(VFF_FORTRAN_H) $(VFF_FORTRAN_CC) 
@@ -128,5 +136,6 @@ ALL_DOCS = doxy.conf $(DOCS_H) \
            $(addprefix pescan_interface/,$(PESCAN_DOC)) \
            $(addprefix physics/,$(PHYSICS_DOC)) \
            $(addprefix print/,$(PRINT_DOC)) \
+           $(addprefix separable/,$(SEPARABLE_DOC)) \
            $(addprefix vff/,$(VFF_FORTRAN_DOC)) \
            $(addprefix vff/,$(VFF_DOC))

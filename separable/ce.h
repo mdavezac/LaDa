@@ -16,11 +16,15 @@
 
 namespace CE
 {
+  //! A separable function for a fixed-lattice incorporating all symmetry
+  //! operations.
+  class SymSeparables;
   //! A separable function for fixed-lattice, fixed orientation, fixed-origin.
   class Separables : public ::Separable::Function< 
                                 ::Separable::Summand<
                                    ::Separable::BooleanBasis > >
   {
+      friend class SymSeparables;
       //! Type of the base.
       typedef ::Separable::Function< 
                             ::Separable::Summand<
@@ -53,8 +57,8 @@ namespace CE
       std::vector< atat::rVector3d > positions;
   };
 
-  //! A separable function for a fixed-lattice incorporating all symmetry
-  //! operations.
+  // A separable function for a fixed-lattice incorporating all symmetry
+  // operations.
   class SymSeparables
   {
     public:
@@ -70,9 +74,11 @@ namespace CE
       typedef std::vector< t_CoefBitset > t_Configurations;
 
       //! Constructor.
-      SymSeparables  ( t_Basis &_poss, 
-                    Crystal::lattice &_lat )
-                 : basis( _poss ) { init_syms( _lat ); }
+      SymSeparables ( Separables &_sep ) : basis( _sep.positions )
+        { init_syms( *Crystal::Structure::lattice ); }
+      //! Constructor.
+      SymSeparables   ( t_Basis &_poss, Crystal::lattice &_lat )
+                    : basis( _poss ) { init_syms( _lat ); }
 
       //! Creates all necessary configurations for a given structure.
       t_Configurations* configurations( Crystal::Structure &_structure );

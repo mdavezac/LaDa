@@ -26,7 +26,7 @@ namespace Fitting
       bool doweights;
       //! Whether to perform single-value-decomposition flavor.
       bool dosvd;
-      //! Whether to perform single-value-decomposition flavor.
+      //! Required convergence.
       types::t_real tolerance;
 
 

@@ -100,4 +100,52 @@ namespace Fitting
     __CATCHCODE(, "Error while reading " << (path / _filename) << "\n" )
   }
 
+  std::pair<types::t_real, types::t_real> 
+   SepCeInterface :: check( CE::Separables &_sep,
+                                         bool verbose, bool _which ) const
+    {
+      types::t_real average(0);
+      types::t_real maxerr(0);
+      std::vector< t_Configurations > :: const_iterator i_train( training.begin() );
+      std::vector< t_Configurations > :: const_iterator i_train_end( training.end() );
+      std::vector< types::t_real > :: const_iterator i_weight( weight.begin() );
+      std::vector< types::t_real > :: const_iterator i_target( targets.begin() );
+      std::vector< std::string > :: const_iterator i_name( names.begin() );
+      for( types::t_unsigned u=0; i_train != i_train_end ;
+           ++i, ++i_train, ++i_weight, ++i_target, ++i_name )
+      {
+        // Checks whether fit or prediction.
+        if( exclude.size() )
+        {
+          bool notfound
+            = ( std::find( _excpt->begin, _excpt->end(), i ) == _excpt.end() );
+          if( _which != notfound ) continue;
+        }
+        // Sums over all equivalent structure
+        t_Configurations :: const_iterator i_conf( i_train->begin() );
+        t_Configurations :: const_iterator i_conf_end( i_train->end() );
+        types::t_real intermed(0);
+        for(; i_conf != i_conf_end; ++i_conf )
+          intermed +=  _sep( i_conf->second ) * ( *i_conf->first );
+        // Prints each structure if _verbose=true.
+        if( _verbose )
+          std::cout << "  structure: " << *i_name << "   "
+                    << "Target: " << *i_target << " "
+                    << "Separable: " << intermed << "   "
+                    << "|Target-Separable| * weight: "
+                    << std::abs( intermed - (*i_target) ) * (*i_weight) << "\n";
+        intermed = std::abs( intermed - (*i_target) ) * (*i_weight);
+        if( intermed > maxerr ) maxerr = intermed;
+        average += intermed;
+      }
+      types::t_real div( training.size() );
+      if( _except.size() )
+      {
+        if( _which ) div  = (types::t_real ) _except.size();
+        else         div -= (types::t_real ) _except.size();
+      }
+      average /= div;
+      return std::pair< types::t_real, types::t_real>(average, maxerr);
+    }
+
 }
