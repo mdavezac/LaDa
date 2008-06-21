@@ -1,7 +1,6 @@
 AC_INIT([LaDa],[3.25])
 AM_INIT_AUTOMAKE()
 
-AX_PYTHON
 AC_PROG_CC
 AC_PROG_CXX
 
@@ -449,12 +448,15 @@ AC_SUBST(DOCDIR)
 if test $mpi != true; then
   BOOST_MPI=""
 fi
-if test $python != true; then
+if test $python = true; then
+  AX_PYTHON
+else
   BOOST_PYTHON=""
 fi
 AC_SUBST(BOOST_LDFLAGS)
 AC_SUBST(BOOST_MPI)
 AC_SUBST(BOOST_PROGOP)
+AC_SUBST(BOOST_FS)
 AC_SUBST(BOOST_PYTHON)
 AC_SUBST(BOOST_CXXFLAGS)
 

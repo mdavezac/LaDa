@@ -19,7 +19,7 @@ namespace CE
     __ASSERT( Crystal::Structure::lattice == NULL, "Lattice type has not been set.\n" )
     basis_size = _size;
     basis_type = _type;
-    details::cubic_basis( basis_size, Crystal::Structure::latttice->cell, positions );
+    details::cubic_basis( basis_size, Crystal::Structure::lattice->cell, positions );
     t_Basis :: iterator i_sep = basis.begin();
     t_Basis :: iterator i_sep_end = basis.begin();
     for(; i_sep != i_sep_end; ++i_sep )
@@ -31,7 +31,7 @@ namespace CE
 
 
 
-  void SymSeparables :: init_syms ( Crystal::lattice &_lat )
+  void SymSeparables :: init_syms( Crystal::Lattice &_lat )
   {
     types::t_int N( _lat.space_group.point_op.getSize() );
     syms.reserve( N );
@@ -61,7 +61,7 @@ namespace CE
         typedef Crystal::Structure::t_Atoms::const_iterator t_shift_iterator;
         t_shift_iterator i_shift( _structure.atoms.begin() );
         t_shift_iterator i_shift_end( _structure.atoms.end() );
-        for(; i_shift != i_shif_end; ++i_shift )
+        for(; i_shift != i_shift_end; ++i_shift )
         {
           // Loops over symmetries.
           t_SymOps :: const_iterator i_op( syms.begin() );
@@ -70,12 +70,12 @@ namespace CE
           {
             // constructs a work array of shifted, rotated atomic positions in
             // fractional coordinates.
-            atat::rVector3d shift = inv * (*i_shift );
+            atat::rVector3d shift = inv * i_shift->pos;
             atat::rMatrix3d op = inv * (*i_op );
             using namespace boost::lambda;
             std::transform
             ( 
-              _structure.atom.begin(), _structure.atom.end(), _work.begin(),
+              _structure.atoms.begin(), _structure.atoms.end(), work.begin(),
                 constant( op ) * bind( &Crystal::Structure::t_Atom::pos, _1 ) 
               - constant( shift )
             );
@@ -83,16 +83,17 @@ namespace CE
             // For each basis position, finds closest atomic-position modulo
             // structure-periodicity.
             t_Bitset bitset( basis.size() );
-            t_Basis :: const_iterator i_pos( basis.begin() )
-            t_Basis :: const_iterator i_pos_end( basis.end() )
+            t_Basis :: const_iterator i_pos( basis.begin() );
+            t_Basis :: const_iterator i_pos_end( basis.end() );
             for(types::t_int i=0; i_pos != i_pos_end; ++i_pos, ++i )
             {
               atat::rVector3d pos = inv * (*i_pos);
               t_Basis::const_iterator i_found( work.begin() );
               t_Basis::const_iterator i_end( work.end() );
-              for(; i_found != i_end; ++i_found )
+              types::t_int j(0);
+              for(; i_found != i_end; ++i_found, ++j )
               {
-                atat::rVector3d a = pos - i_found->x;
+                atat::rVector3d a = pos - (*i_found);
                 a[0] += 0.5e0; a[0] -= std::floor(a[0]); a[0] -= 0.5e0;
                 a[1] += 0.5e0; a[1] -= std::floor(a[1]); a[1] -= 0.5e0;
                 a[2] += 0.5e0; a[2] -= std::floor(a[2]); a[2] -= 0.5e0;
@@ -100,22 +101,22 @@ namespace CE
               }
               __DOASSERT( i_found == work.end(), "Could not find equivalent position.\n" ) 
               // Found the position in atomic structure.
-              bistset[ i ] = Fuzzy::eq( i_found->type, -1e0 );
+              bitset[ i ] = Fuzzy::eq( _structure.atoms[j].type, -1e0 );
             }
             // adds to configurations if similar bitset cannot be found.
             // otherwise increase weight of similar structure.
-            if( result->size() == 0 ) result->push_back( t_CoefBitset( weight, bitset ) );
+            if( result->size() == 0 ) result->push_back( t_CoefBitset( bitset, weight ) );
             else
             {
-              t_Configurations :: const_iterator i_found;
+              t_Configurations :: iterator i_found;
               i_found = std::find_if
                         (
                           result->begin(), result->end(), 
-                          bind( t_CoefBitset::first, _1 ) == constant( bitset )
+                          bind( t_CoefBitset::second, _1 ) == constant( bitset )
                         );
               if( i_found == result->end() ) 
-                result->push_back( t_CoefBitset( weight, bitset ) );
-              else i_found->first += weight;
+                result->push_back( t_CoefBitset( bitset, weight ) );
+              else i_found->second += weight;
             }
           } // loop over symmetry operations.
 
@@ -127,8 +128,8 @@ namespace CE
     
     }
   
-    types::t_real SymSeparables :: operator()( const t_Configurations &_configs, 
-                                               const t_SepFunction &_func ) const
+    types::t_real SymSeparables :: operator()( t_Configurations &_configs, 
+                                               const Separables &_func ) const
     {
       using namespace boost::lambda;
       types::t_real result(0);
@@ -136,7 +137,7 @@ namespace CE
       (
         _configs.begin(), _configs.end(),
         var(result) +=   bind( &t_CoefBits::second, _1 )
-                       * bind( &t_SepFunction::operator(), constant(_func), 
+                       * bind( &Separables::operator(), constant(_func), 
                                bind( &t_CoefBists::first, _2 ) )
       );
       return result; 
@@ -145,7 +146,7 @@ namespace CE
 
   namespace details
   {
-    void cubic_basis( types::t_unsigned _n, const atat::rVector3d &_cell,
+    void cubic_basis( types::t_unsigned _n, const atat::rMatrix3d &_cell,
                       std::vector< atat::rVector3d >& _positions )
     {
       _positions.clear();

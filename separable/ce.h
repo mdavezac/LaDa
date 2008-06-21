@@ -11,8 +11,12 @@
 #include <string>
 
 #include <opt/types.h>
+#include <atat/vectmac.h>
+#include <lamarck/lattice.h>
+#include <lamarck/structure.h>
 
 #include "separable.h"
+#include "boolean.h"
 
 namespace CE
 {
@@ -21,8 +25,9 @@ namespace CE
   class SymSeparables;
   //! A separable function for fixed-lattice, fixed orientation, fixed-origin.
   class Separables : public ::Separable::Function< 
+                               std::vector< 
                                 ::Separable::Summand<
-                                   ::Separable::BooleanBasis > >
+                                   ::Separable::BooleanBasis > > >
   {
       friend class SymSeparables;
       //! Type of the base.
@@ -43,9 +48,9 @@ namespace CE
       //! Returns the rank of the separable function.
       types::t_unsigned rank() const  { return basis.size(); }
       //! Returns the type of the basis.
-      types::t_unsigned type() const  { return basis_type; }
+      std::string type() const  { return basis_type; }
       //! Returns the size of the basis.
-      std::string size() const  { return basis_size; }
+      types::t_unsigned size() const  { return basis_size; }
 
 
     protected:
@@ -77,18 +82,18 @@ namespace CE
       SymSeparables ( Separables &_sep ) : basis( _sep.positions )
         { init_syms( *Crystal::Structure::lattice ); }
       //! Constructor.
-      SymSeparables   ( t_Basis &_poss, Crystal::lattice &_lat )
+      SymSeparables   ( t_Basis &_poss, Crystal::Lattice &_lat )
                     : basis( _poss ) { init_syms( _lat ); }
 
       //! Creates all necessary configurations for a given structure.
       t_Configurations* configurations( Crystal::Structure &_structure );
       //! Evaluates a set of configurations. 
-      types::t_real operator()( t_Configurations *_conf,
-                                const t_SepFunction &_func ) const;
+      types::t_real operator()( t_Configurations &_conf,
+                                const Separables &_func ) const;
 
     protected:
       //! Initializes list of symmetry operations.
-      void init_syms ( Crystal::lattice &_lat )
+      void init_syms ( Crystal::Lattice &_lat );
       
       //! A reference to the positions.
       t_Basis &basis;
@@ -101,10 +106,12 @@ namespace CE
 
   namespace details
   {
-    void cubic_basis( types::t_unsigned _n, const atat::rVector3d &_cell,
+    void cubic_basis( types::t_unsigned _n, const atat::rMatrix3d &_cell,
                       std::vector< atat::rVector3d >& _positions );
   }
   
 } // end of CE namespace
+
+#include "ce.impl.h"
 
 #endif //  _SEPARABLE_CE_H_

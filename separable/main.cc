@@ -15,6 +15,8 @@
 
 #include <tinyxml/tinyxml.h> 
 
+#include <opt/gsl_lsq.h>
+#include "lsq.h"
 #include "cefitting.h"
 
 #include <revision.h>
@@ -30,10 +32,11 @@ int main(int argc, char *argv[])
     generic.add_options()
            ("help,h", "produces this help message.")
            ("version,v", "prints version string.");
-           ("verbose,p", po::value<bool>()->default_value(bool),
+           ("verbose,p", po::value<bool>()->default_value(false),
                          "Verbose output.\n"  );
            ("reruns,r", po::value<unsigned>()->default_value(1),
-                        "number of times to run the algorithm.\n"
+                        "number of times to run the algorithm.\n" 
+                        "Is equivalent to manually re-launching the program.\n");
     po::options_description specific("GA Options");
     specific.add_options()
         ("cross,c", po::value<types::t_real>()->default_value(1e-4),
@@ -49,8 +52,7 @@ int main(int argc, char *argv[])
                     "Maximum number of iterations for"
                     " Alternating linear-least square fit.\n"  )
         ("1dtolerance", po::value<types::t_real>()->default_value(1e-4),
-                        "Tolerance of the 1d linear-least square fit.\n"  )
-                        "Is equivalent to manually re-launching the program.\n")
+                        "Tolerance of the 1d linear-least square fit.\n" )
         ("update", po::value<bool>()->default_value(false),
                    "Whether to update during 1d least-square fits.\n" )
         ("svd", po::value<bool>()->default_value(false),
@@ -87,40 +89,42 @@ int main(int argc, char *argv[])
     }
 
     std::string dir(".");
-    if( vm.count("dir") ) dir = vm["dir"].as< std::string >()
+    if( vm.count("dir") ) dir = vm["dir"].as< std::string >();
     std::string filename(".");
-    if( vm.count("input") ) filename = vm["input"].as< std::string >()
-    types::t_unsigned maxiter( vm["maxiter"].as< types::t_unsigned >() );
+    if( vm.count("input") ) filename = vm["input"].as< std::string >();
 
+    bool verbose = vm.count("verbose");
+    types::t_unsigned reruns( vm["reruns"].as< types::t_unsigned >() );
+    __ASSERT( reruns == 0, "0 number of runs performed... As required on input.\n" )
     bool cross = vm.count("cross");
     types::t_unsigned rank( vm["rank"].as< types::t_unsigned >() );
     types::t_unsigned size( vm["size"].as< types::t_unsigned >() );
-    bool verbose = vm.count("verbose");
     types::t_real tolerance( vm["tolerance"].as< types::t_real >() );
     types::t_unsigned maxiter( vm["maxiter"].as< types::t_unsigned >() );
-    types::t_real 1dtolerance( vm["1dtolerance"].as< types::t_real >() );
+    types::t_real dtolerance( vm["1dtolerance"].as< types::t_real >() );
     bool doupdate = vm.count("doupdate");
     bool svd = vm.count("svd");
-    if( 1dtolerance > tolerance )
+    if( dtolerance > tolerance )
     {
       std::cout << "1d tolerance cannot be smaller then alternating tolerance.\n" 
-                << tolerance << " < " << 1dtolerance << "\n";
+                << tolerance << " < " << dtolerance << "\n";
       return 0;
     }
 
     std::cout << "Performing " << (cross ? "Cross-Validation" : "Fitting" ) << ".\n"
               << "Size of the cubic basis: " << size << "\n"
               << "Rank of the sum of separable functions: " << rank << "\n"
-              << "Data directory: " << dir << "\n"
-              << ( reruns ? "single": reruns ) 
-                 << " Run" << (reruns ? ".": "s." )  << "\n"
+              << "Data directory: " << dir << "\n";
+    if( reruns <= 1 )  std::cout << "single";
+    else               std::cout << reruns;
+    std::cout << " Run" << (reruns <= 1 ? ".": "s." )  << "\n"
               << (verbose ? "Verbose": "Quiet") << " output.\n"
               << "Alternating linear-least square tolerance: " 
                  << tolerance << "\n"
               << "Maximum number of iterations for alternating least-square fit: "
                  << maxiter << "\n"
               << "1d linear-least square tolerance: " 
-                 << 1dtolerance << "\n";
+                 << dtolerance << "\n"
               << "Will" << ( doupdate ? " ": " not " )
                  << "update between dimensions.\n"
               << ( svd ? "Single": "No Single" ) << " Value Decomposition."
@@ -132,18 +136,19 @@ int main(int argc, char *argv[])
       __DOASSERT( not doc.LoadFile(), 
                     "error while opening lattice input file "
                  << filename << "\n" << doc.ErrorDesc()  )
-      child = handle.FirstChild( "Job" ).FirstChild( "Lattice" ).Element();
+      TiXmlHandle handle( &doc );
+      TiXmlElement *child = handle.FirstChild( "Job" ).FirstChild( "Lattice" ).Element();
       __DOASSERT( not child, "Could not find Lattice in input." )
-      Crystal::Structure::lattice = new Crystal :: lattice;
-      __DOASSERT( not Crystal::Structure::lattice.Load(*child),
+      Crystal::Structure::lattice = new Crystal :: Lattice;
+      __DOASSERT( not Crystal::Structure::lattice->Load(*child),
                   "Error while reading Lattice from input.")
     }
 
     // Initializes fitting.
     Fitting::Allsq< Fitting::Gsl > allsq;
-    allsq.maxiter = maxiter;
+    allsq.itermax = maxiter;
     allsq.tolerance = tolerance;
-    allsq.llsq.tolerance = 1dtolerance;
+    allsq.llsq.tolerance = dtolerance;
     allsq.llsq.dosvd = svd;
     allsq.llsq.doweights = true;
 
@@ -154,14 +159,15 @@ int main(int argc, char *argv[])
     CE::SymSeparables symsep( separables );
 
     // Initializes collapse functor.
-    Collapse< CE::Separables > collapse( separables );
+    Separable::Collapse< CE::Separables > collapse( separables );
     collapse.do_update = doupdate;
 
     // Initializes Interface to allsq.
-    SepCeInterface interface();
+    Fitting::SepCeInterface interface;
     interface.read( symsep, dir );
     
     // loops over reruns
+    typedef Fitting::SepCeInterface::t_PairErrors t_PairErrors;
     if( reruns > 1 ) std::cout << "\n\n*********  Run 1.  *********\n";
     for( types::t_unsigned n(0); n < reruns; ++n )
     {
@@ -172,7 +178,7 @@ int main(int argc, char *argv[])
       {
         std::cout << "\nFitting using whole training set:" << std::endl;
         interface.fit( allsq, collapse );
-        std::pair<types::t_real, types::t_real > result; 
+        t_PairErrors result; 
         result = interface.check_training( separables, verbose );
         std::cout << " average error: " << result.first
                   << " maximum error: " << result.second << std::endl;
@@ -180,8 +186,8 @@ int main(int argc, char *argv[])
       else
       {
         std::cout << "\nLeave-one-out prediction:" << std::endl;
-        std::pair< std::pair<types::t_real, types::t_real > > result; 
-        result = Fitting::leave_one_out( interface, allsq, collapse, _verbose );
+        std::pair< t_PairErrors, t_PairErrors> result;
+        result = Fitting::leave_one_out( interface, allsq, collapse, verbose );
         std::cout << " Training errors:\n"
                   << "    average error: " << result.first.first
                   << "    maximum error: " << result.first.second << "\n"
@@ -190,7 +196,7 @@ int main(int argc, char *argv[])
                   << "    maximum error: " << result.second.second << std::endl;
       }
     }
-    std::cout << "\n\n\nEnd of " << __PROGNAME__ << ".\n" << std::end;
+    std::cout << "\n\n\nEnd of " << __PROGNAME__ << ".\n" << std::endl;
 
     if( Crystal::Structure::lattice ) delete Crystal::Structure::lattice;
     Crystal::Structure::lattice = NULL;

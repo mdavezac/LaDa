@@ -1,20 +1,24 @@
 //
 //  Version: $Id$
 //
-#ifndef _SEPARABLE_CE_H_
-#define _SEPARABLE_CE_H_
+#ifndef _SEPARABLE_CEFITTING_H_
+#define _SEPARABLE_CEFITTING_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
+#include <vector>
 #include <string>
-#include <istringstream>
+#include <sstream>
+
+#include <boost/random/uniform_real.hpp>
+#include <boost/random/variate_generator.hpp>
+#include <boost/random/mersenne_twister.hpp>
 
 #include <boost/filesystem.hpp>
 
 #include <opt/types.h>
-#include <boost/random/uniform_real.hpp>
 
 #include "ce.h"
 
@@ -24,20 +28,21 @@ namespace Fitting
   class SepCeInterface
   {
     public:
+      typedef std::pair< types::t_real, types::t_real > t_PairErrors;
       //! Structures excluded from fit.
       std::vector< types::t_unsigned > exclude;
       //! A random number generator
-      boost::variate_generator< booos::random::mt11213b&, 
-                                boost::uniform_real<> > uni;
+      mutable boost::variate_generator< boost::mt11213b&, 
+                                        boost::uniform_real<> > rng;
 
       //! Constructor
       SepCeInterface() : generator( 42u ), uni_dist(0,1), rng(generator, uni_dist)
-        { random_engine.seed( static_cast<unsigned int>(std::time(0)) ); }
+        { generator.seed( static_cast<unsigned int>(std::time(0)) ); }
       
       //! Reads the structures from input.
       void read( CE::SymSeparables &_symseps,
-                 std::string _dir,
-                 std::string _ldasdat = "LDAs.dat" );
+                 const std::string &_dir,
+                 const std::string &_ldasdat = "LDAs.dat" );
 
       //! Fits a separable function to the complete training set.
       template< class T_ALLSQ, class T_COLLAPSE>
@@ -47,11 +52,11 @@ namespace Fitting
       //! Check training convergence.
       std::pair< types::t_real, types::t_real>
         check_training( CE::Separables &_sep, bool _verbose = false ) const
-        { return check( false, _verbose ); } 
+        { return check( _sep, false, _verbose ); } 
       //! Check predictions.
       std::pair< types::t_real, types::t_real>
         check_predictions( CE::Separables &_sep, bool _verbose = false ) const
-        { return check( true, _verbose ); } 
+        { return check( _sep, true, _verbose ); } 
 
       //! Number of structures in training set.
       types::t_unsigned training_set_size() const
@@ -60,12 +65,12 @@ namespace Fitting
 
     protected:
       //! Reads structure names and energies.
-      void read_ldasdat( boost::filesystem::path &_path,
-                         const std::string _ldasdat );
+      void read_ldasdat( const boost::filesystem::path &_path,
+                         const std::string& _ldasdat );
       //! Reads structure names and energies.
       void read_structure( CE::SymSeparables &_symseps,
-                           boost::filesystem::path &_path, 
-                           const std::string _filename );
+                           const boost::filesystem::path &_path, 
+                           const std::string& _filename );
       //! \brief Check convergence.
       //! \param _which = true checks training convergence.
       //!               = false checks prediction.
@@ -88,15 +93,15 @@ namespace Fitting
       //! The complete training set.
       std::vector< t_Configurations > training;
       //! The names of the structures.
-      std::vectors< std::string > names;
+      std::vector< std::string > names;
       //! A random number generator.
-      boost::random::mt11213b generator;
+      mutable boost::mt11213b generator;
       //! A uniform distribution.
-      boost::uniform_real<> uni_dist;
+      mutable boost::uniform_real<> uni_dist;
   };
 
   template< class T_ALLSQ, class T_COLLAPSE>
-    std::pair<types::t_real, types::t_real> 
+    std::pair< SepCeInterface::t_PairErrors, SepCeInterface::t_PairErrors> 
       leave_one_out( SepCeInterface &_interface,
                     T_ALLSQ &_allsq, 
                     T_COLLAPSE &_collapse, 

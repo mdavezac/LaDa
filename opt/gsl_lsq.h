@@ -1,13 +1,21 @@
 //
 //  Version: $Id$
 //
-#ifndef _SEPARABLE_LLSQ_H_
-#define _SEPARABLE_LLSQ_H_
+#ifndef _GSL_LLSQ_H_
+#define _GSL_LLSQ_H_
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <vector>
 
+#include<opt/debug.h>
 #include <opt/types.h>
 #include <tinyxml/tinyxml.h>
+
+#include <gsl/gsl_block.h>
+#include <gsl/gsl_multifit.h>
 
 //! Namespace for least-square fitting methods
 namespace Fitting
@@ -31,7 +39,7 @@ namespace Fitting
 
 
       //! Constructor.
-      Gsl() : doweight( false ), dosvd( false ), tolerance( 1e-4 ) {}
+      Gsl() : doweights( false ), dosvd( false ), tolerance( 1e-4 ) {}
       //! Destructor.
       ~Gsl() {}
       //! Initialises matrix and vector.
@@ -58,35 +66,36 @@ namespace Fitting
       //! Weight vector.
       t_Vector w; 
     
-  }
+  };
 
   namespace details
   {
     class GslVector
     {
       protected:
-        gsl_bloc bloc;
+        gsl_block bloc;
         gsl_vector vector;
 
       public:
         GslVector( Gsl::t_Vector& _vec );
         ~GslVector() {};
 
-        const gsl_vector* operator() { return gsl_vector; }
-        const gsl_vector* const operator() const { return gsl_vector; }
+        operator gsl_vector*() { return &vector; }
+        operator const gsl_vector* const () const { return &vector; }
     };
     class GslMatrix
     {
       protected:
-        gsl_bloc bloc;
-        gsl_Matrix matrix;
+        gsl_block bloc;
+        gsl_matrix matrix;
 
       public:
-        GslVector( types::t_int _nrow, Gsl::t_Matrix& _vec );
-        ~GslVector() {};
+        GslMatrix( types::t_int _nrow, Gsl::t_Matrix& _vec );
+        ~GslMatrix() {};
 
-        const gsl_matrix* operator() { return &gsl_matrix; }
-        const gsl_matrix* const operator() const { return &gsl_matrix; }
+        operator gsl_matrix*() { return &matrix; }
+        operator const gsl_matrix* const () const { return &matrix; }
     };
   }
 }
+#endif

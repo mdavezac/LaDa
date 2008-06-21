@@ -9,37 +9,26 @@
 #endif
 
 #include<vector>
+#include<functional>
+#include<numeric>
+
 #include<boost/lambda/lambda.hpp>
-#include<boost/boost/type_traits/function_traits.hpp>
+#include<boost/type_traits/function_traits.hpp>
 
 #include<opt/types.h>
+#include<opt/debug.h>
 
 //! Contains all things separable functions.
 namespace Separable
 {
   // Forward declarations
   //! \cond
+  template< class T_FUNCTION >  class Collapse;
   namespace details
   { 
-
-    template< class T_BASE >
-      typename T_RETIT::value_type gradient( const T_BASE &_base,
-                                             typename T_BASE :: t_Arg _arg );
-    template< class T_BASE, class T_ARGSIT, class T_RETIT >
-      typename T_RETIT::value_type gradient( const T_BASE &_base,
-                                             T_ARGSIT _arg,
-                                             T_RETIT _ret  );
-    //! \brief Do not use this class. Is here for type identification within
-    //!        templates.
-    class Base {};
     template< class T_FUNCTION,
               bool arity = boost::function_traits<T_FUNCTION> :: arity >
        class FreeFunction;
-
-    template< class T_TYPE, bool d = false >
-      T_TYPE& deref( T_TYPE );
-    template< class T_TYPE, bool d = false >
-      T_TYPE& deref( T_TYPE );
   }
   //! \endcond
 
@@ -49,18 +38,18 @@ namespace Separable
   //!          This function is both one-dimensional when invoked with a
   //!          scalar, and n-dimensional when invoked with iterators.
   //! \tparam T_BASIS is a container of 1d functions. These functions should
-  //!         zero order evaluation via a functor call, and grdient evaluation
-  //!         via a t_Return gradient( t_Arg ) member function.
+  //!         zero order evaluation via a functor call.
   //! \tparam T_GROUPOP is template class defining how to link return values from
   //!         different basis functions together. It will be, generally,
-  //!         either std::sum, or std::multiplies.
+  //!         either std::plus, or std::multiplies.
   //! \tparam T_SCALAROP is template class defining how to link return values from
   //!         a basis function with a scalar coefficient.
   template< class T_BASIS, 
-            template<class> class T_GROUPOP  = std::sum, 
+            template<class> class T_GROUPOP  = std::plus, 
             template<class> class T_SCALAROP = std::multiplies >
-  class Base : public details :: Base
+  class Base 
   {
+      template< class T_FUNCTION > friend class Collapse;
     public:
       //! Type of the basis
       typedef T_BASIS t_Basis;
@@ -69,22 +58,28 @@ namespace Separable
       //! Type of the return of the one-dimensional functions.
       typedef typename t_Basis::value_type :: t_Return t_Return;
       //! Type of the operator linking a basis function and its coefficient.
-      typedef T_SCALAROP< typename t_Return > t_ScalarOp;
+      typedef T_SCALAROP< t_Return > t_ScalarOp;
       //! Type of the operator linking to basis functions.
-      typedef T_GROUOP< typename t_Return > t_GroupOp;
+      typedef T_GROUPOP< t_Return > t_GroupOp;
+      //! \brief Type of the contained for the coefficients of a single
+      //!        separable function.
+      typedef std::vector< t_Return > t_Coefs;
 
       //! Whether this function has gradients
       const static bool has_gradient;
+      //! A family of functions. 
+      t_Basis basis;
+      //! A container of coefficients.
+      t_Coefs coefs;
 
       //! Constructor
-      Base() : basis(), has_gradient( T_BASIS::has_gradient )
-       { coefs.resize( basis.size() ); }
+      Base() : basis() { coefs.resize( basis.size() ); }
       //! Destructor
       ~Base() {}
 
       //! Returns the function evaluated at \a _args.
       template< template<class> class T_CONTAINER >
-        t_Return operator()( const T_CONTAINER<t_Args> &_args ) const
+        t_Return operator()( const T_CONTAINER<t_Arg> &_args ) const
         { return operator()( _args.begin(), _args.end() ); }
       //! \brief Returns the function evaluated by variables in range 
       //!        \a _first to \a _last.
@@ -92,13 +87,6 @@ namespace Separable
       //!          are functions in the basis.
       template< class T_ITERATOR >
         t_Return operator()( T_ITERATOR _first, T_ITERATOR _last ) const;
-      //! \brief Returns the gradient of the one dimensional function.
-      t_Return gradient( t_Arg _arg ) const 
-        { return has_gradient ? details::gradient( *this, _arg ) : t_Return(0); }
-      //! Computes the gradient and stores it in \a _ret.
-      template< class T_ARGIT, class T_RETIT >
-        void gradient( T_ARGIT _first, T_RETIT _ret ) const
-        { if( has_gradient ) details::gradient( *this, _first, _ret); }
       //! \brief Return the function evaluated at \a _arg
       t_Return operator()( t_Arg _arg ) const;
       //! Returns a reference to coeficient _i
@@ -108,23 +96,12 @@ namespace Separable
         { return coefs[_i]; }
       //! Sets all coefs in range \a _first to \a _last.
       template< class T_ITERATOR >
-        void set( T_ITERATOR _first, T_ITERATOR _last )
-      //! Returns a reference to the basis
-      t_Basis& Basis() { return basis; }
-      //! Returns a constant reference to the basis.
-      const t_Basis& Basis() const { return basis; }
+        void set( T_ITERATOR _first, T_ITERATOR _last );
       //! Serializes a structure.
-      template<class ARCHIVE> void serialize( ARCHIVE & _ar,
-                                              const unsigned int _version);
+      template<class ARCHIVE>
+        void serialize( ARCHIVE & _ar, const unsigned int _version);
 
     protected:
-      //! A family of functions. 
-      Basis basis;
-      //! \brief Type of the contained for the coefficients of a single
-      //!        separable function.
-      typedef std::vector< t_Return > t_Coefs;
-      //! A container of coefficients.
-      t_Coefs coefs;
       //! Links basis functions.
       t_GroupOp groupop;
       //! Links scalars to basis functions.
@@ -135,6 +112,11 @@ namespace Separable
       template< class T_ITIN, class T_ITOUT>
         t_Return expand( T_ITIN _first, T_ITIN _last, T_ITOUT _out ) const;
   };
+  
+  template< class T_BASIS, 
+            template<class> class T_GROUPOP,
+            template<class> class T_SCALAROP>
+   const bool Base<T_BASIS, T_GROUPOP, T_SCALAROP> :: has_gradient = T_BASIS::has_gradient;
 
   // Forward declaration.
   template< class T_ALLSQ > class AllsqInterface;
@@ -146,10 +128,9 @@ namespace Separable
   template< class T_BASIS > class Factor : public Base< T_BASIS >{};
   //! One single separable function.
   //! \tparam T_BASIS is a container of 1d functions. These functions should
-  //!         zero order evaluation via a functor call, and grdient evaluation
-  //!         via a t_Return gradient( t_Arg ) member function.
+  //!         zero order evaluation via a functor call.
   template< class T_BASIS > class Summand :
-      public Base< std::vector< Factor<T_BASIS, std::multiplies, std::sum> > >{};
+      public Base< std::vector< Factor<T_BASIS> >, std::multiplies, std::plus >{};
   /** \brief A sum of separable functions.
    * \details The separable function \f$F(\mathbf{x})\f$ acting upon vector
    *          \f$\mathbf{x}\f$ and returning a scalar can be defined as 
@@ -162,22 +143,21 @@ namespace Separable
    *          proper, and the sum_n is an expansion of the factors ver some
    *          family of 1d-functions.
    * \tparam T_BASIS is a container of 1d functions. These functions should
-   *         return a zero order evaluation via a functor call, and optionally
-   *         a gradient evaluation via a t_Return gradient( t_Arg ) member
-   *         function. **/
+   *         return a zero order evaluation via a functor call. **/
   template< class T_BASIS >
-    class Function : public Base< std::vector< T_BASIS > >
+    class Function : public Base< T_BASIS >
     {
+        friend class Collapse< Function<T_BASIS> >;
         template<class T_ALLSQ>  friend class AllsqInterface;
         //! Type of the base class.
-        typedef Base< std::vector< T_BASIS > > t_Base;
+        typedef Base< T_BASIS > t_Base;
       public:
         //! Type of the basis
         typedef T_BASIS t_Basis;
         //! Type of the arguments to the one-dimensional functions.
-        typedef typename t_Basis::value_type :: t_Arg t_Arg;
+        typedef typename t_Basis :: value_type :: t_Arg t_Arg;
         //! Type of the return of the one-dimensional functions.
-        typedef typename t_Basis::value_type :: t_Return t_Return;
+        typedef typename t_Basis :: value_type :: t_Return t_Return;
  
       public:
         //! Constructor
@@ -187,7 +167,7 @@ namespace Separable
  
         //! Returns the function evaluated at \a _args.
         template< template<class> class T_CONTAINER >
-          t_Return operator()( const T_CONTAINER<t_Args> &_args ) const
+          t_Return operator()( const T_CONTAINER<t_Arg> &_args ) const
           { return operator()( _args.begin(), _args.end() ); }
         //! \brief Returns the function evaluated by variables in range 
         //!        \a _first to \a _last.
@@ -195,13 +175,16 @@ namespace Separable
         //!          are functions in the basis.
         template< class T_ITERATOR >
           t_Return operator()( T_ITERATOR _first, T_ITERATOR _last ) const;
-        //! Computes the gradient and stores in \a _ret.
-        template< class T_ARGIT, class T_RETIT >
-          void gradient( T_ARGIT _first, T_RETIT _ret ) const;
  
       protected:
-        using t_Base::groupop;
-        using t_Base::scalarop;
+        //! \cond 
+        using t_Base :: groupop;
+        using t_Base :: scalarop;
+        using t_Base :: coefs;
+        using t_Base :: basis;
+        using t_Base :: has_gradient;
+        typedef typename t_Base :: t_Coefs t_Coefs;
+        //! \endconf
     };
 
 
@@ -232,41 +215,39 @@ namespace Separable
       typedef T_FUNCTION t_Function;
       //! Wether to update the coefficients between each dimension or not.
       bool do_update;
+      //! Reference to the function to fit.
+      T_FUNCTION &function;
 
       //! Constructor
       Collapse   ( T_FUNCTION &_function )
-                  : do_update(bool), is_initialized(false), D(0), nb_obs(0),
+                  : do_update(false), is_initialized(false), D(0), nb_obs(0),
                     nb_ranks(0), function( _function ) {}
 
       //! \brief Constructs the matrix \a A for dimension \a _dim. 
       //! \details Note that depending \a _coef are used only for dim == 0,
       //!          and/or do_update == true.
       template< class T_MATRIX, class T_VECTORS >
-      void operator()( T_MATRIX &_A, types::t_unsigned _dim, T_VECTORS &_coefs )
+      void operator()( T_MATRIX &_A, types::t_unsigned _dim, const T_VECTORS &_coefs );
 
       //! \brief Constructs the completely expanded matrix.
       //! \tparams T_VECTORS is a vector of vectors, input[ o, d ] 
-      template< class T_VECTORS >
-      void init( const T_VECTORS &_x );
+      template< class T_VECTORS > void init( const T_VECTORS &_x );
       //! Resets collapse functor. Clears memory.
       void reset();
       //! Creates a collection of random coefficients.
       //! \tparams should be a vector of vectors, coefs[d, (r,i) ].
-      template< class T_VECTORS >
-      void create_coefs( T_VECTORS &_coefs );
+      template< class T_VECTORS > void create_coefs( T_VECTORS &_coefs ) const;
+      //! Assigns coeficients to function.
+      template< class T_VECTORS > void reassign( const T_VECTORS &_solution ) const;
 
     protected:
       //! Initializes Collapse::factors.
-      template< class T_MATRIX, class T_VECTORS >
-      void initialize_factors( const T_VECTORS &_coefs );
+      template< class T_VECTORS >
+        void initialize_factors( const T_VECTORS &_coefs );
       //! Updates Collapse::factors.
       template< class T_VECTORS >
-      void update_factors( types::t_unsigned _dim, const T_VECTORS &_coefs )
-      //! Assigns coeficients to function.
-      template< class T_VECTORS >
-      void reassign( const T_VECTORS &_solution );
+        void update_factors( types::t_unsigned _dim, const T_VECTORS &_coefs );
 
-    protected:
       //! False if unitialized.
       bool is_initialized;
       //! Maximum dimension.
@@ -275,8 +256,6 @@ namespace Separable
       types::t_unsigned nb_obs;
       //! Number of ranks.
       types::t_unsigned nb_ranks;
-      //! Reference to the function to fit.
-      T_FUNCTION &function;
       //! Return type of the function
       typedef typename T_FUNCTION :: t_Return t_Type;
       //! \brief Type of the matrix containing expanded function elements.
@@ -304,7 +283,7 @@ namespace Separable
       //! \details sizes[ d, r ] = max i \@ (d,r). r is the fastest running
       //!          vector.
       t_Sizes sizes;
-  }
+  };
 
 } // end of Separable namespace
 

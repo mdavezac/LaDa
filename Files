@@ -81,7 +81,8 @@ MPI_DOC    = $(MPI_H) $(MPI_CC)
 OPT_H = ndim_iterator.h minimize_base.h polynome.h frprmn_minimizer.h \
         gsl_minimizers.h types.h convex_hull.h function_base.h \
 	va_minimizer.h fitness_function.h  function_functors.h monome.h traits.h \
-        fuzzy.h atat.h debug.h va_function.h
+        fuzzy.h atat.h debug.h va_function.h gsl_lsq.h
+OPT_CC = gsl_lsq.cc
 OPT_F90 =  df1dim.f90  frprmn.f90  linmin.f90
 OPT_DOC = $(OPT_H) $(OPT_CC) 
 
@@ -101,11 +102,9 @@ PRINT_CC = manip.cc xmg.cc stdout.cc base.cc
 PRINT_H  = manip.h  xmg.h  stdout.h  base.h  operations.h 
 PRINT_DOC = $(PRINT_H) $(PRINT_CC) 
 
-SEPARABLE_CC = cefitting.cc  main.cc  polynomial.cc
-SEPARABLE_H = boolean.h cefitting.h ce.h lsq.h polynomial.h \
-              separable.h
-SEPARABLE_IMPL_H = cefitting.impl.h  ce.impl.h  polynomial.impl.h  \
-                   separable.impl.h
+SEPARABLE_CC = cefitting.cc  main.cc
+SEPARABLE_H = boolean.h cefitting.h ce.h lsq.h separable.h
+SEPARABLE_IMPL_H = cefitting.impl.h ce.impl.h separable.impl.h
 SEPARABLE_DOC = $(SEPARABLE_CC) $(SEPARABLE_H) $(SEPARABLE_IMPL_H)
 
 

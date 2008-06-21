@@ -38,10 +38,10 @@ if DOLAPACK
   LAPACKDIR = lapack
 endif
 if DOSEPARABLE
-  SEPARABLEDIR = lapack
+  SEPARABLEDIR = separable
 endif
 SUBDIRS = $(MPISUBDIR) atat physics opt lamarck print $(VFFSUBDIR) \
-	  $(PESCANSUBDIR) $(LAPACKDIR) $(DARWINSUBDIR) $(SEPARABLE)
+	  $(PESCANSUBDIR) $(LAPACKDIR) $(DARWINSUBDIR) $(SEPARABLEDIR)
 revision.h: force
 	@./scripts/max_revision.pl
 force: ;

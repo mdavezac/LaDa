@@ -4,6 +4,15 @@
 #ifndef _SEPARABLE_BOOLEAN_H_
 #define _SEPARABLE_BOOLEAN_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include<boost/array.hpp>
+
+#include<opt/debug.h>
+#include<opt/types.h>
+
 namespace Separable
 {
   //! A boolean basis of one true and one false function.
@@ -21,9 +30,9 @@ namespace Separable
       bool const static has_gradient;
      
       //! Constructor 
-      Boolean ( bool _which = false ) : has_gradient(false), which( _which ) {}
+      Boolean ( bool _which = false ) : which( _which ) {}
       //! Destructor
-      ~Separable() {}
+      ~Boolean() {}
 
       //! evaluates the function over a range of positions.
       t_Return operator()( const t_Arg _bool ) const
@@ -33,24 +42,27 @@ namespace Separable
       //! Decides whether this is a true or false function.
       bool which;
   };
+  const bool Boolean :: has_gradient(false);
 
-  class BooleanBasis : public::array< Boolean, 2 >
+  class BooleanBasis : public  boost::array< Boolean, 2 >
   {
     public:
       //! Type of argument.
-      typedef t_Basis :: value_type :: t_Arg t_Arg;
+      typedef Boolean :: t_Arg t_Arg;
       //! Type of return.
-      typedef t_Basis :: value_type :: t_Return t_Return;
+      typedef Boolean :: t_Return t_Return;
       //! Does not have gradient.
       bool const static has_gradient;
 
     public:
       //! Constructor.
-      BooleanBasis() : has_gradient( t_Basis :: value_type :: has_gradient )
-        { elemns[0].which = true; elemns[1].which = false; }
+      BooleanBasis() 
+        { elems[0].which = true; elems[1].which = false; }
       //! Destructor.
       ~BooleanBasis() {}
-  }
+  };
+
+  const bool BooleanBasis :: has_gradient( Boolean :: has_gradient );
 
 // //! A separable function which takes a boolean arguments.
 // class Separable

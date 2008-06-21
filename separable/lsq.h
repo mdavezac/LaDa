@@ -11,6 +11,7 @@
 #include <vector>
 
 #include <opt/types.h>
+#include <opt/debug.h>
 #include <tinyxml/tinyxml.h>
 
 namespace Fitting
@@ -46,7 +47,7 @@ namespace Fitting
       ~Allsq() {}
       //! Pre-minimizer stuff.
       void init_b( t_Vector &_v )
-        { lsq.init_b( _v ) }; 
+        { llsq.init_b( _v ); }; 
       //! \brief Perform Alternating Linear Least-Square Fit.
       //! \params _solution should be a vector of vectors. The outer vectors
       //!         have the dimension of the problem. The inner vectors should
@@ -66,7 +67,7 @@ namespace Fitting
       //!         - The last argument is a reference to the \a _solution, eg
       //!           the current solution vector.
       //!         .
-      template< class T_COLLAPSED >
+      template< class T_COLLAPSE >
         types::t_real operator()( t_Vectors& _solution, T_COLLAPSE* collapse );
       //! Loads parameters from XML element
       void Load( const TiXmlElement &_node );
@@ -74,27 +75,23 @@ namespace Fitting
 
   template< class T_LLSQ > template< class T_COLLAPSE >
     types::t_real Allsq<T_LLSQ> :: operator()( t_Vectors& _solution, 
-                                               const T_COLLAPSE* collapse  )
+                                               T_COLLAPSE* collapse  )
     {
-      __DOASSERT(     _solution.size() == matrices.size()
-                  and matrices.size() == vectors.size(),
-                  "Incoherent sizes of matrices/vectors Ax=b." )
-
       try
       {
         types::t_unsigned iter = 0;
         types::t_int D( _solution.size() );
         t_Matrix A;
+        types::t_real convergence(0);
         do
         {
-          types::t_real convergence;
           typename t_Vectors :: iterator i_sol = _solution.begin();
           typename t_Vectors :: iterator i_sol_end = _solution.end();
           types::t_unsigned dim(0);
           for(convergence = 0e0; i_sol != i_sol_end; ++i_sol, ++dim )
           {
-            collapse( A, dim, _solution )
-            llsq.init( A );
+            (*collapse)( A, dim, _solution );
+            llsq.init_A( A );
             convergence += llsq( *i_sol );
           }
           ++iter;
@@ -116,12 +113,12 @@ namespace Fitting
       if( name.compare( "ALLSQ" ) ) 
        parent = _node.FirstChildElement( "ALLSQ" );
       __DOASSERT( not parent, "Could not find ALLSQ tag in input.\n" )
-      if( parent->Attribute( "convergence" ) )
-        parent->Attribute( "convergence", &convergence );
+      if( parent->Attribute( "tolerance" ) )
+        parent->Attribute( "tolerance", &tolerance );
       if( parent->Attribute( "itermax" ) )
         parent->Attribute( "itermax", &itermax );
 
-      lsq.Load( *parent );
+      llsq.Load( *parent );
     }
 
 }
