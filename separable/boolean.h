@@ -27,7 +27,7 @@ namespace Separable
       //! Type of the return.
       typedef types::t_real t_Return;
       //! Does not have gradient.
-      bool const static has_gradient;
+      bool const static has_gradient = false;
      
       //! Constructor 
       Boolean ( bool _which = false ) : which( _which ) {}
@@ -42,7 +42,7 @@ namespace Separable
       //! Decides whether this is a true or false function.
       bool which;
   };
-  const bool Boolean :: has_gradient(false);
+// const bool Boolean :: has_gradient(false);
 
   class BooleanBasis : public  boost::array< Boolean, 2 >
   {
@@ -52,7 +52,7 @@ namespace Separable
       //! Type of return.
       typedef Boolean :: t_Return t_Return;
       //! Does not have gradient.
-      bool const static has_gradient;
+      bool const static has_gradient = false;
 
     public:
       //! Constructor.
@@ -62,7 +62,7 @@ namespace Separable
       ~BooleanBasis() {}
   };
 
-  const bool BooleanBasis :: has_gradient( Boolean :: has_gradient );
+// const bool BooleanBasis :: has_gradient( Boolean :: has_gradient );
 
 // //! A separable function which takes a boolean arguments.
 // class Separable
