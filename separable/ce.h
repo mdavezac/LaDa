@@ -112,6 +112,4 @@ namespace CE
   
 } // end of CE namespace
 
-#include "ce.impl.h"
-
 #endif //  _SEPARABLE_CE_H_

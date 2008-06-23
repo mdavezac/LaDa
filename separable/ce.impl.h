@@ -1,6 +1,15 @@
+//
+//  Version: $Id$
+//
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <algorithm>
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
+
+#include "ce.h"
 
 namespace CE
 {
@@ -76,8 +85,9 @@ namespace CE
             std::transform
             ( 
               _structure.atoms.begin(), _structure.atoms.end(), work.begin(),
-                constant( op ) * bind( &Crystal::Structure::t_Atom::pos, _1 ) 
-              - constant( shift )
+              ret<atat::rVector3d>(
+                ret<atat::rVector3d>( constant(op) * bind(&Crystal::Structure::t_Atom::pos, _1) )
+                 -  constant( shift ) )
             );
 
             // For each basis position, finds closest atomic-position modulo
@@ -112,7 +122,7 @@ namespace CE
               i_found = std::find_if
                         (
                           result->begin(), result->end(), 
-                          bind( t_CoefBitset::second, _1 ) == constant( bitset )
+                          bind( &t_CoefBitset::first, _1 ) == constant( bitset )
                         );
               if( i_found == result->end() ) 
                 result->push_back( t_CoefBitset( bitset, weight ) );
@@ -136,9 +146,12 @@ namespace CE
       std::for_each
       (
         _configs.begin(), _configs.end(),
-        var(result) +=   bind( &t_CoefBits::second, _1 )
-                       * bind( &Separables::operator(), constant(_func), 
-                               bind( &t_CoefBists::first, _2 ) )
+        var(result) +=
+          ret<t_CoefBitset::second_type>
+             (
+                 bind( &t_CoefBitset::second, _1 )
+               * bind<t_CoefBitset::second_type>( _func, bind( &t_CoefBitset::first, _1 ) )
+             )
       );
       return result; 
     }
@@ -150,7 +163,7 @@ namespace CE
                       std::vector< atat::rVector3d >& _positions )
     {
       _positions.clear();
-      _positions.reserve( i*j*k );
+      _positions.reserve( _n*_n*_n );
       for( types::t_unsigned i = 0; i < _n; ++i )
         for( types::t_unsigned j = 0; j < _n; ++j )
           for( types::t_unsigned k = 0; k < _n; ++k )
