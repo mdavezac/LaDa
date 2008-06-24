@@ -13,6 +13,9 @@
 #include <boost/lambda/bind.hpp>
 #include <boost/program_options.hpp>
 
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
+
 #include <tinyxml/tinyxml.h> 
 
 #include <opt/gsl_lsq.h>
@@ -24,6 +27,7 @@
 
 int main(int argc, char *argv[]) 
 {
+  Crystal::Lattice *lattice = NULL;
   try
   {
     namespace po = boost::program_options;
@@ -34,10 +38,10 @@ int main(int argc, char *argv[])
            ("version,v", "prints version string.");
            ("verbose,p", po::value<bool>()->default_value(false),
                          "Verbose output.\n"  );
-           ("reruns,r", po::value<unsigned>()->default_value(1),
+           ("reruns,r", po::value<types::t_unsigned>()->default_value(1),
                         "number of times to run the algorithm.\n" 
                         "Is equivalent to manually re-launching the program.\n");
-    po::options_description specific("GA Options");
+    po::options_description specific("Separables Options");
     specific.add_options()
         ("cross,c", po::value<types::t_real>()->default_value(1e-4),
                     "Performs leave-one-out"
@@ -58,17 +62,23 @@ int main(int argc, char *argv[])
         ("svd", po::value<bool>()->default_value(false),
                 "Whether the 1d least-square fit should use"
                 " single-value decomposition.\n"  );
+    po::options_description hidden("hidden");
+    hidden.add_options()
+        ("datadir", po::value<std::string>()->default_value("./"))
+        ("latticeinput", po::value<std::string>()->default_value("input.xml"));
  
     po::options_description all;
     all.add(generic).add(specific);
+    po::options_description allnhidden;
+    allnhidden.add(all).add(hidden);
  
     po::positional_options_description p;
-    p.add("dir", 1);
-    p.add("input", 2);
+    p.add("datadir", 1);
+    p.add("latticeinput", 2);
  
     po::variables_map vm;
     po::store(po::command_line_parser(argc, argv).
-              options(all).positional(p).run(), vm);
+              options(allnhidden).positional(p).run(), vm);
     po::notify(vm);
  
     std::cout << "\n" << __PROGNAME__
@@ -77,24 +87,25 @@ int main(int argc, char *argv[])
     if ( vm.count("version") ) return 1;
     if ( vm.count("help") )
     {
-      std::cout << "Usage: " << argv[0] << " [options] directory filename\n"
-                  << "  directory is an optional path to the training set input.\n"
-                  << "  Default is current directory.\n"
-                  << "  filename is an option filename for the file from\n" 
-                  << "  which to load the lattice.\n"
-                  << "  (starting from current directory)\n"
-                  << "  Default is input.xml.\n\n"
-                  << all << "\n"; 
+      std::cout << "Usage: " << argv[0] << " [options] DATADIR LATTICEINPUT\n"
+                << "  _ DATATDIR (=./) is an optional path to the training set input.\n"
+                << "  _ LATTICEINPUT (=input.xml) is an optional filename for the file\n"
+                << "                 from which to load the lattice. LATTICEINPUT should be\n"
+                << "                 full path, a relative path starting from the current\n"
+                << "                 directory, or a relative path starting from the DATADIR\n"
+                << "                 directory (checked in that order.)\n\n" 
+                << all << "\n"; 
       return 1;
     }
 
     std::string dir(".");
-    if( vm.count("dir") ) dir = vm["dir"].as< std::string >();
-    std::string filename(".");
-    if( vm.count("input") ) filename = vm["input"].as< std::string >();
+    if( vm.count("datadir") ) dir = vm["datadir"].as< std::string >();
+    std::string filename("input.xml");
+    if( vm.count("latticeinput") ) filename = vm["latticeinput"].as< std::string >();
 
     bool verbose = vm.count("verbose");
-    types::t_unsigned reruns( vm["reruns"].as< types::t_unsigned >() );
+    types::t_unsigned reruns(1);
+    if( vm.count("reruns") ) reruns = vm["reruns"].as< types::t_unsigned >();
     __ASSERT( reruns == 0, "0 number of runs performed... As required on input.\n" )
     bool cross = vm.count("cross");
     types::t_unsigned rank( vm["rank"].as< types::t_unsigned >() );
@@ -131,17 +142,55 @@ int main(int argc, char *argv[])
               << std::endl;
 
     // Loads lattice
+    lattice = new Crystal :: Lattice;
     { 
-      TiXmlDocument doc( filename );
-      __DOASSERT( not doc.LoadFile(), 
-                    "error while opening lattice input file "
-                 << filename << "\n" << doc.ErrorDesc()  )
+      TiXmlDocument doc;
+      if( boost::filesystem::exists( filename ) )
+      {
+        __ASSERT( not doc.LoadFile( filename ), 
+                     "Found " << filename << " but could not parse.\n"
+                  << "Possible incorrect XML syntax.\n" 
+                  << doc.ErrorDesc()  )
+      }
+      else 
+      {
+        boost::filesystem::path path( dir );
+        boost::filesystem::path fullpath = path / filename;
+        __ASSERT( not boost::filesystem::exists( fullpath ),
+                     "Could not find "<< filename 
+                  << " in current directory, nor in " <<  path )
+        __ASSERT( not doc.LoadFile( fullpath.string() ),
+                     "Could not parse " << fullpath 
+                  << ".\nPossible incorrect XML syntax.\n"
+                  << doc.ErrorDesc()  )
+      }
       TiXmlHandle handle( &doc );
       TiXmlElement *child = handle.FirstChild( "Job" ).FirstChild( "Lattice" ).Element();
       __DOASSERT( not child, "Could not find Lattice in input." )
-      Crystal::Structure::lattice = new Crystal :: Lattice;
-      __DOASSERT( not Crystal::Structure::lattice->Load(*child),
+      lattice = new Crystal :: Lattice;
+      Crystal::Structure::lattice = lattice;
+      __DOASSERT( not lattice->Load(*child),
                   "Error while reading Lattice from input.")
+#     if defined (_TETRAGONAL_CE_)
+      std::cout << "lattice:\n" << lattice->cell << std::endl;
+        // Only Constituent-Strain expects and space group determination
+        // expect explicitely tetragonal lattice. 
+        // Other expect a "cubic" lattice wich is implicitely tetragonal...
+        // Historical bullshit from input structure files @ nrel.
+        for( types::t_int i=0; i < 3; ++i ) 
+          if( Fuzzy::eq( lattice->cell.x[i][2], 0.5e0 ) )
+            lattice->cell.x[i][2] = 0.6e0;
+#     endif
+      lattice->find_space_group();
+#     if defined (_TETRAGONAL_CE_)
+        // Only Constituent-Strain expects and space group determination
+        // expect explicitely tetragonal lattice. 
+        // Other expect a "cubic" lattice wich is implicitely tetragonal...
+        // Historical bullshit from input structure files @ nrel.
+        for( types::t_int i=0; i < 3; ++i ) 
+          if( Fuzzy::eq( lattice->cell.x[i][2], 0.6e0 ) )
+            lattice->cell.x[i][2] = 0.5e0;
+#     endif
     }
 
     // Initializes fitting.
@@ -165,6 +214,12 @@ int main(int argc, char *argv[])
     // Initializes Interface to allsq.
     Fitting::SepCeInterface interface;
     interface.read( symsep, dir );
+#     if defined (_TETRAGONAL_CE_)
+        // From here on, lattice should be explicitely tetragonal.
+        for( types::t_int i=0; i < 3; ++i ) 
+          if( Fuzzy::eq( lattice->cell.x[i][2], 0.5e0 ) )
+            lattice->cell.x[i][2] = 0.6e0;
+#     endif
     
     // loops over reruns
     typedef Fitting::SepCeInterface::t_PairErrors t_PairErrors;
@@ -198,12 +253,12 @@ int main(int argc, char *argv[])
     }
     std::cout << "\n\n\nEnd of " << __PROGNAME__ << ".\n" << std::endl;
 
-    if( Crystal::Structure::lattice ) delete Crystal::Structure::lattice;
-    Crystal::Structure::lattice = NULL;
+    if( lattice ) delete lattice;
+    lattice = NULL;
   }
   catch ( boost::program_options::invalid_command_line_syntax &_b)
   {
-    if( Crystal::Structure::lattice ) delete Crystal::Structure::lattice;
+    if( lattice ) delete lattice;
     Crystal::Structure::lattice = NULL;
     std::cerr << "Caught error while running " << __PROGNAME__ << "\n"
               << "Something wrong with the command-line input.\n"
@@ -212,7 +267,7 @@ int main(int argc, char *argv[])
   }
   catch ( boost::program_options::invalid_option_value &_i )
   {
-    if( Crystal::Structure::lattice ) delete Crystal::Structure::lattice;
+    if( lattice ) delete lattice;
     Crystal::Structure::lattice = NULL;
     std::cerr << "Caught error while running " << __PROGNAME__ << "\n"
               << "Argument of option in command-line is invalid.\n"
@@ -221,7 +276,7 @@ int main(int argc, char *argv[])
   }
   catch ( boost::program_options::unknown_option &_u)
   {
-    if( Crystal::Structure::lattice ) delete Crystal::Structure::lattice;
+    if( lattice ) delete lattice;
     Crystal::Structure::lattice = NULL;
     std::cerr << "Caught error while running " << __PROGNAME__ << "\n"
               << "Unknown option in command-line.\n"

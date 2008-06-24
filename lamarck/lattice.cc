@@ -27,13 +27,13 @@ namespace Crystal {
     __DOASSERT( not parent, "Could not find lattice tag on input.\n" )
 
     // reads cell first
-    child = parent->FirstChildElement( "column" );
-    for (i=0 ; child; i++, child = child->NextSiblingElement("column") )
+    child = parent->FirstChildElement( "row" );
+    for (i=0 ; child; i++, child = child->NextSiblingElement("row") )
     {
       child->Attribute("x", &d); vec(0) = d;
       child->Attribute("y", &d); vec(1) = d;
       child->Attribute("z", &d); vec(2) = d;
-      cell.set_column(i, vec);
+      cell.set_row(i, vec);
     }
     __DOASSERT( i != 3, "Incorrect cell in lattice tag on input.\n" )
 

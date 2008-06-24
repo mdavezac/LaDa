@@ -26,7 +26,10 @@ namespace Fitting
       std::vector< std::string > :: const_iterator i_name( names.begin() );
       std::vector< std::string > :: const_iterator i_name_end( names.end() );
       for(; i_name != i_name_end; ++i_name )
+      { 
+        std::cout << "doing: " << *i_name << std::endl;
         read_structure( _symseps, path, *i_name );
+      }
     }
     __CATCHCODE(, "Error while reading training set.\n" )
   }
@@ -38,7 +41,7 @@ namespace Fitting
     boost::filesystem::path fullpath = _path / _ldasdat;
     try
     {
-      __ASSERT( boost::filesystem::exists( fullpath ), 
+      __ASSERT( not boost::filesystem::exists( fullpath ), 
                 "Cannot find " << fullpath << ".\n"   )
       std::ifstream ldas( fullpath.string().c_str(), std::ifstream::in );
       while( not ldas.eof() )
@@ -62,7 +65,7 @@ namespace Fitting
     try
     {
       // Reads structure from structure file @ nrel.
-      __ASSERT( boost::filesystem::exists( fullpath ),
+      __ASSERT( not boost::filesystem::exists( fullpath ),
                 "Cannot find " << fullpath  << ".\n" )
       std::ifstream structfile( fullpath.string().c_str(), std::ifstream::in );
       std::string line;
@@ -70,16 +73,19 @@ namespace Fitting
 
       Crystal::Structure structure;
       types::t_int N;  // number of atoms;
+      std::getline( structfile, line ); // name and inconsequential data.
+      std::istringstream sstr( line );
+      sstr >> N;
       // cell 
       for(types::t_int i(0); i < 3; ++i )
       {
         __ASSERT( structfile.eof(),
                   "Reached unexpected end of file: " << fullpath << ".\n" )
         std::getline( structfile, line );
-        std::istringstream sstr( line );
-        sstr >> structure.cell.x[0][i]
-             >> structure.cell.x[1][i]
-             >> structure.cell.x[2][i];
+        sstr.str( line ); sstr.seekg (0, std::ios::beg); sstr.clear();
+        sstr >> structure.cell.x[i][0]
+             >> structure.cell.x[i][1]
+             >> structure.cell.x[i][2];
       }
       structure.freeze = Crystal::Structure::FREEZE_NONE;
       // now atoms.
@@ -88,18 +94,20 @@ namespace Fitting
         __ASSERT( structfile.eof(),
                   "Reached unexpected end of file: " << _filename << ".\n" )
         std::getline( structfile, line );
-        std::istringstream sstr( line );
+        sstr.str( line ); sstr.seekg (0, std::ios::beg); sstr.clear();
         Crystal::Structure::t_Atom a;
         types::t_int type;
         sstr >> type;
-        if( type != 1 or type != 2 ) continue;
+        if( type != 1 and type != 2 ) continue;
         a.type = ( type == 1 ) ? -1.e0: 1.e0;
         sstr >> a.pos.x[0] >> a.pos.x[1]  >> a.pos.x[2];
         a.freeze = Crystal::Structure::t_Atom::FREEZE_NONE;
         a.site = 0;
+        structure.atoms.push_back(a);
       }
       __ASSERT( structure.atoms.size() != N,
-                "Could not read " << N << "atoms from " << fullpath << ".\n" )
+                   "Could find only " << structure.atoms.size() 
+                << " of " << N << " atoms in " << fullpath << ".\n" )
       
       // Adds structure to structure set.
       structures.push_back( structure );
@@ -108,6 +116,7 @@ namespace Fitting
       delete confs; 
     }
     __CATCHCODE(, "Error while reading " << fullpath << "\n" )
+    exit(1);
   }
 
   std::pair<types::t_real, types::t_real> 

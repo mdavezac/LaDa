@@ -148,9 +148,9 @@ namespace Crystal {
     // reads in cell
     child = parent->FirstChildElement( "Cell" );
     __DOASSERT( not child, "Unit-cell not found in structure input\n")
-    child = child->FirstChildElement( "column" );
+    child = child->FirstChildElement( "row" );
     freeze = FREEZE_NONE;
-    for (i=0 ; child and i<3; child=child->NextSiblingElement( "column" ), i++ )
+    for (i=0 ; child and i<3; child=child->NextSiblingElement( "row" ), i++ )
     {
       d=1.0; __DOASSERT( not child->Attribute("x", &d),
                          "Incomplete cell in structure tag.\n" ); vec(0) = d;
@@ -158,7 +158,7 @@ namespace Crystal {
                          "Incomplete cell in structure tag.\n"); vec(1) = d;
       d=1.0; __DOASSERT( not child->Attribute("z", &d),
                          "Incomplete cell in structure tag.\n"); vec(2) = d;
-      cell.set_column(i,vec);
+      cell.set_row(i,vec);
       if ( child->Attribute("freeze") )
       {
         str = child->Attribute("freeze");
@@ -199,7 +199,7 @@ namespace Crystal {
         }  
       }
     }
-    __DOASSERT(i != 3, "More than three columns for unit-cell in input\n")
+    __DOASSERT(i != 3, "More than three row for unit-cell in input\n")
 
     scale = 0;
     parent->Attribute("scale", &scale);
@@ -291,10 +291,10 @@ namespace Crystal {
     
     for (int i=0; i < 3; ++i)
     {
-      child = new TiXmlElement( "column" );
-      child->SetDoubleAttribute( "x", cell.get_column(i)(0) );
-      child->SetDoubleAttribute( "y", cell.get_column(i)(1) );
-      child->SetDoubleAttribute( "z", cell.get_column(i)(2) );
+      child = new TiXmlElement( "row" );
+      child->SetDoubleAttribute( "x", cell.get_row(i)(0) );
+      child->SetDoubleAttribute( "y", cell.get_row(i)(1) );
+      child->SetDoubleAttribute( "z", cell.get_row(i)(2) );
       parent->LinkEndChild(child);
       if ( i == 0 and
            freeze & FREEZE_XX or 
@@ -386,8 +386,8 @@ namespace Crystal {
      if ( not lattice ) return;
    
      atat::rVector3d kvec;
-     atat::rMatrix3d k_lat = !( ~(lattice->cell) );
-     atat::rMatrix3d k_cell = !( ~(cell) );
+     atat::rMatrix3d k_lat = !( lattice->cell );
+     atat::rMatrix3d k_cell = !( cell );
      k_vecs.clear();
   
   
@@ -445,20 +445,20 @@ namespace Crystal {
 
   void  find_range( const atat::rMatrix3d &A, atat::iVector3d &kvec )
   {
-    atat::rVector3d a = A.get_column(0), b;
+    atat::rVector3d a = A.get_row(0), b;
     types::t_int n = 1;
     b = a;
     while( not is_int(b) )
       { b += a; n++;  }
     kvec[0] = n;
 
-    a = A.get_column(1);
+    a = A.get_row(1);
     b = a; n = 1;
     while( not is_int(b) )
       { b += a; n++;  }
     kvec[1] = n;
     
-    a = A.get_column(2);
+    a = A.get_row(2);
     b = a; n = 1;
     while( not is_int(b) )
       { b += a; n++;  }

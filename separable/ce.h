@@ -79,8 +79,7 @@ namespace CE
       typedef std::vector< t_CoefBitset > t_Configurations;
 
       //! Constructor.
-      SymSeparables ( Separables &_sep ) : basis( _sep.positions )
-        { init_syms( *Crystal::Structure::lattice ); }
+      SymSeparables ( Separables &_sep );
       //! Constructor.
       SymSeparables   ( t_Basis &_poss, Crystal::Lattice &_lat )
                     : basis( _poss ) { init_syms( _lat ); }
