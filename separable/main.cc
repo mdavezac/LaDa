@@ -172,7 +172,6 @@ int main(int argc, char *argv[])
       __DOASSERT( not lattice->Load(*child),
                   "Error while reading Lattice from input.")
 #     if defined (_TETRAGONAL_CE_)
-      std::cout << "lattice:\n" << lattice->cell << std::endl;
         // Only Constituent-Strain expects and space group determination
         // expect explicitely tetragonal lattice. 
         // Other expect a "cubic" lattice wich is implicitely tetragonal...

@@ -10,6 +10,7 @@
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
+#include <boost/lambda/bind.hpp>
 
 #include "cefitting.h" 
 
@@ -23,13 +24,19 @@ namespace Fitting
     {
       boost::filesystem::path path( _dir );
       read_ldasdat( path, _ldasdat );
-      std::vector< std::string > :: const_iterator i_name( names.begin() );
-      std::vector< std::string > :: const_iterator i_name_end( names.end() );
-      for(; i_name != i_name_end; ++i_name )
-      { 
-        std::cout << "doing: " << *i_name << std::endl;
-        read_structure( _symseps, path, *i_name );
+      { using namespace boost::lambda;
+        std::cout << "---\n";
+        std::for_each( names.begin(), names.end(), 
+                       std::cout << _1 << "\n" );
+        std::cout << "+++\n";
+        std::for_each
+        ( 
+          names.begin(), names.end(),
+          bind( &SepCeInterface::read_structure, var(*this),
+                var( _symseps ), constant( path ), _1 )
+        );
       }
+      exit(1);
     }
     __CATCHCODE(, "Error while reading training set.\n" )
   }
@@ -48,7 +55,11 @@ namespace Fitting
       {
         std::string name;
         types::t_real energy;
-        ldas >> name >> energy;
+        std::string line;
+        std::getline( ldas, line );
+        std::istringstream sstr( line );
+        sstr >> name >> energy;
+        std::cout << name << " -- " << line << "\n";
         names.push_back( name );
         targets.push_back( energy );
         weight.push_back( 1 );
@@ -89,7 +100,8 @@ namespace Fitting
       }
       structure.freeze = Crystal::Structure::FREEZE_NONE;
       // now atoms.
-      while( structure.atoms.size() < N and structfile.good() )
+      types::t_int nfound(0);
+      while( nfound < N and structfile.good() )
       {
         __ASSERT( structfile.eof(),
                   "Reached unexpected end of file: " << _filename << ".\n" )
@@ -98,6 +110,7 @@ namespace Fitting
         Crystal::Structure::t_Atom a;
         types::t_int type;
         sstr >> type;
+        ++nfound;
         if( type != 1 and type != 2 ) continue;
         a.type = ( type == 1 ) ? -1.e0: 1.e0;
         sstr >> a.pos.x[0] >> a.pos.x[1]  >> a.pos.x[2];
@@ -105,9 +118,8 @@ namespace Fitting
         a.site = 0;
         structure.atoms.push_back(a);
       }
-      __ASSERT( structure.atoms.size() != N,
-                   "Could find only " << structure.atoms.size() 
-                << " of " << N << " atoms in " << fullpath << ".\n" )
+      __ASSERT( nfound != N,    "Could find only " << nfound << " of " 
+                             << N << " atoms in " << fullpath << ".\n" )
       
       // Adds structure to structure set.
       structures.push_back( structure );
@@ -116,7 +128,6 @@ namespace Fitting
       delete confs; 
     }
     __CATCHCODE(, "Error while reading " << fullpath << "\n" )
-    exit(1);
   }
 
   std::pair<types::t_real, types::t_real> 

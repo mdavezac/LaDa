@@ -70,23 +70,25 @@ namespace CE
       t_Configurations *result(NULL);
       try
       {
+        using namespace boost::lambda;
         // Allocates memory.
         result = new t_Configurations;
         result->reserve( syms.size() );
         
         types::t_real weight( 1e0 / ( syms.size() * _structure.atoms.size() ) );
         work.resize( _structure.atoms.size() );
+        std::vector< atat::rVector3d > fractionals( _structure.atoms.size() );
+        std::transform
+        ( 
+          _structure.atoms.begin(), _structure.atoms.end(), fractionals.begin(),
+               ret<atat::rMatrix3d>(constant( !(~_structure.cell) ))
+             * bind(&Crystal::Structure::t_Atom::pos, _1) 
+        );
+
         // Loops over shifts.
-        typedef Crystal::Structure::t_Atoms::const_iterator t_shift_iterator;
-        t_shift_iterator i_shift( _structure.atoms.begin() );
-        t_shift_iterator i_shift_end( _structure.atoms.end() );
-        {
-          using namespace boost::lambda;
-          std::cout << "Atoms:\n ";
-          std::for_each( _structure.atoms.begin(), _structure.atoms.end(),
-                         std::cout << bind(&Crystal::Structure::t_Atom::pos, _1) << " || " );
-          std::cout << std::endl;
-        }
+        typedef std::vector<atat::rVector3d> :: const_iterator t_shift_iterator;
+        t_shift_iterator i_shift( fractionals.begin() );
+        t_shift_iterator i_shift_end( fractionals.end() );
         for(; i_shift != i_shift_end; ++i_shift )
         {
           // Loops over symmetries.
@@ -94,43 +96,15 @@ namespace CE
           t_SymOps :: const_iterator i_op_end( syms.end() );
           for(; i_op != i_op_end; ++i_op )
           {
-            std::cout << " Op: \n" << (*i_op) << std::endl;
-            // constructs a work array of shifted, rotated atomic positions in
-            // fractional coordinates.
-            atat::rMatrix3d inv = !( _structure.cell * (*i_op) );
-            atat::rVector3d shift = inv * i_shift->pos;
-            atat::rMatrix3d op = (*i_op );
-            using namespace boost::lambda;
+            // constructs a work array of shifted atomic positions in
+            // fractional coordinates (rotation does not alter fractional coordinates).
             std::transform
             ( 
-              _structure.atoms.begin(), _structure.atoms.end(), work.begin(),
-              ret<atat::rVector3d>(
-                ret<atat::rVector3d>( constant(op) * bind(&Crystal::Structure::t_Atom::pos, _1) )
-                 -  constant( shift ) )
+              fractionals.begin(), fractionals.end(), work.begin(), 
+                 _1 - constant( *i_shift )
             );
-            {
-              using namespace boost::lambda;
-              std::cout << "op * Atoms:\n ";
-              std::for_each( work.begin(), work.end(),
-                             std::cout << _1 << " || " );
-              std::cout << std::endl;
-            }
-            op = inv * (*i_op );
-            std::cout << "inv op\n" << op << "\n";
-            std::transform
-            ( 
-              _structure.atoms.begin(), _structure.atoms.end(), work.begin(),
-              ret<atat::rVector3d>(
-                ret<atat::rVector3d>( constant(op) * bind(&Crystal::Structure::t_Atom::pos, _1) )
-                 -  constant( shift ) )
-            );
-            {
-              using namespace boost::lambda;
-              std::cout << "inv * op * Atoms:\n ";
-              std::for_each( work.begin(), work.end(),
-                             std::cout << _1 << " || " );
-              std::cout << std::endl;
-            }
+
+            atat::rMatrix3d inv = !( (*i_op) * (~_structure.cell)  );
 
             // For each basis position, finds closest atomic-position modulo
             // structure-periodicity.
@@ -140,18 +114,15 @@ namespace CE
             for(types::t_int i=0; i_pos != i_pos_end; ++i_pos, ++i )
             {
               atat::rVector3d pos = inv * (*i_pos);
-              std::cout << " pos: " << pos <<  " || " << (*i_pos) << std::endl;
               t_Basis::const_iterator i_found( work.begin() );
               t_Basis::const_iterator i_end( work.end() );
               types::t_int j(0);
               for(; i_found != i_end; ++i_found, ++j )
               {
                 atat::rVector3d a = pos - (*i_found);
-                std::cout << "   diff: " << a;
-                a[0] += 0.5e0; a[0] -= std::floor(a[0]); a[0] -= 0.5e0;
-                a[1] += 0.5e0; a[1] -= std::floor(a[1]); a[1] -= 0.5e0;
-                a[2] += 0.5e0; a[2] -= std::floor(a[2]); a[2] -= 0.5e0;
-                std::cout << "   ||  " << a << std::endl;
+                a[0] += 0.05e0; a[0] -= std::floor(a[0]); a[0] -= 0.05e0;
+                a[1] += 0.05e0; a[1] -= std::floor(a[1]); a[1] -= 0.05e0;
+                a[2] += 0.05e0; a[2] -= std::floor(a[2]); a[2] -= 0.05e0;
                 if( Fuzzy::eq( atat::norm2( a ), 0e0 ) ) break; 
               }
               __DOASSERT( i_found == work.end(), "Could not find equivalent position.\n" ) 
@@ -177,6 +148,7 @@ namespace CE
 
         } // loop over origin-shifts 
 
+        return result;
       }  // try
       __CATCHCODE( if( result ) delete result;,
                    "Error while creating configurations.\n" )

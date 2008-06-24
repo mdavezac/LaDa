@@ -72,4 +72,7 @@ inline iMatrix3d to_int(const rMatrix3d &a) {
 
 } // namespace atat
 
+// includes return type declaration for usual operators.
+#include "lambda.impl.h"
+
 #endif
