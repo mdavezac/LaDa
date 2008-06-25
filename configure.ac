@@ -453,11 +453,15 @@ if test $python = true; then
 else
   BOOST_PYTHON=""
 fi
+if test $separables != true; then
+  BOOST_REGEX = ""
+fi
 AC_SUBST(BOOST_LDFLAGS)
 AC_SUBST(BOOST_MPI)
 AC_SUBST(BOOST_PROGOP)
 AC_SUBST(BOOST_FS)
 AC_SUBST(BOOST_PYTHON)
+AC_SUBST(BOOST_REGEX)
 AC_SUBST(BOOST_CXXFLAGS)
 
 AC_OUTPUT(Makefile atat/Makefile physics/Makefile opt/Makefile lamarck/Makefile

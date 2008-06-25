@@ -11,6 +11,9 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/lambda/bind.hpp>
+#include <boost/regex.hpp>
+#include <boost/lexical_cast.hpp>
+
 
 #include "cefitting.h" 
 
@@ -51,17 +54,20 @@ namespace Fitting
       __ASSERT( not boost::filesystem::exists( fullpath ), 
                 "Cannot find " << fullpath << ".\n"   )
       std::ifstream ldas( fullpath.string().c_str(), std::ifstream::in );
-      while( not ldas.eof() )
+      std::string line;
+      while( std::getline( ldas, line ) )
       {
+        const boost::regex e("(\\S+)\\s+(\\d+(\\.\\d+)?)");
+        boost::match_results<std::string::const_iterator> what;
+        if( not boost::search_regex( line, e, what ) ) continue;
+
         std::string name;
         types::t_real energy;
-        std::string line;
-        std::getline( ldas, line );
         std::istringstream sstr( line );
-        sstr >> name >> energy;
-        std::cout << name << " -- " << line << "\n";
-        names.push_back( name );
-        targets.push_back( energy );
+
+
+        names.push_back( what.str(0) );
+        targets.push_back( boost::lexical_cast<short>( what.str(1) ) );
         weight.push_back( 1 );
       }
     }
