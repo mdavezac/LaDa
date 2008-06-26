@@ -7,7 +7,6 @@
 #include "vectmac.h"
 #include "arraylist.h"
 #include "integer.h"
-
 #include <opt/types.h>
 
 namespace atat

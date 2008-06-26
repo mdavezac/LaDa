@@ -4,6 +4,7 @@
 #ifndef __VECTMAC_H__
 #define __VECTMAC_H__
 
+#include <boost/cstdlib.hpp>
 #define STREAM_VECTOR
 #include "fxvector.h"
 

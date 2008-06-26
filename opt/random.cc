@@ -5,6 +5,8 @@
 #include <config.h>
 #endif
 
+#include <ctime>
+
 #include "random.h"
 
 #include <boost/random/uniform_real.hpp>

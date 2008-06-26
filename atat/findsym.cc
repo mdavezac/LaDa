@@ -1,6 +1,7 @@
 //
 //  Version: $Id$
 //
+#include <stdlib.h>
 #include "findsym.h"
 
 

@@ -46,7 +46,7 @@
 #endif
 
 #if _ATAT_LAMBDA_IMPL_H_ < 4
-#include <boost/lambda/lambda.hpp>
+#include <boost/lambda/control_structures.hpp>
 //! \cond
 namespace boost { 
   namespace lambda {
