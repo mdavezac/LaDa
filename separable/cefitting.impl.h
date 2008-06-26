@@ -51,12 +51,11 @@ namespace Fitting
     typename T_ALLSQ :: t_Vectors :: iterator i_coefs = coefs.begin();
     typename T_ALLSQ :: t_Vectors :: iterator i_coefs_end = coefs.end();
     for(; i_coefs != i_coefs_end; ++i_coefs )
-    {
-      typename T_ALLSQ::t_Vectors::value_type::iterator i_coef = i_coefs->begin();
-      typename T_ALLSQ::t_Vectors::value_type::iterator i_coef_end = i_coefs->end();
-      for(; i_coef != i_coef_end; ++i_coef )
-        *i_coef = opt::random::rng()*10e0;
-    }
+      std::for_each
+      (
+        i_coefs->begin(), i_coefs->end(),
+        boost::lambda::_1 = 1e0 //boost::lambda::bind( &opt::random::rng ) - 0.5e0
+      );
 
     // finally performs fit
     types::t_real convergence = _allsq( coefs, &_collapse );

@@ -7,7 +7,6 @@
 #include "../revision.h"
 
 #include "xmg.h"
-#include "manip.h"
 
 namespace Print
 {
@@ -80,25 +79,6 @@ namespace Print
       case REMOVELAST: line_list.pop_back(); break;
       case CLEARALL: stream.str(""); clear_all(); break;
     }
-  }
-
-  std::string make_commented_string( const std::string &_str )
-  {
-    std::string copy(_str);
-    std::ostringstream result;
-    if ( copy.empty() ) return "";
-    result << Xmg::comment_string;
-
-    types::t_int old = 0;
-    types::t_unsigned i = copy.find('\n', 0);
-    while ( copy.find('\n', old ) != std::string::npos  )
-    {
-      result << copy.substr(old, i - old +1 ) << Xmg::comment_string;
-      ++i; old = i;
-      i = copy.find('\n', old);
-    }
-    result << copy.substr(old);
-    return result.str();
   }
 
   Xmg xmg;

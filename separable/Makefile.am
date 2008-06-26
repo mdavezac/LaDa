@@ -14,7 +14,8 @@ cubic_LDADD = libseparable.la \
               ../lamarck/liblamarck.la \
               ../atat/libatat.la \
               ../opt/libopt.la \
-              ../physics/libphysics.la 
+              ../physics/libphysics.la \
+              ../print/libprint.la 
 
 tetra_SOURCES = $(cubic_SOURCES)
 tetra_CPPFLAGS =  $(AM_CPPFLAGS) -I .. -D_TETRAGONAL_CE_
@@ -35,3 +36,5 @@ libseparable_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS)
 	cd ../physics; $(MAKE) 
 ../opt/libopt.la: 
 	cd ../opt; $(MAKE) 
+../opt/libprint.la: 
+	cd ../print; $(MAKE) 

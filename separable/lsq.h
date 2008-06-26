@@ -48,7 +48,7 @@ namespace Fitting
       //! \brief Pre-minimizer stuff.
       //! \param _v[in] is a vector with as many elements as there observed
       //!               data points.
-      void init_b( t_Vector &_v ) { llsq.init_b( _v ); }; 
+      void init_b( t_Vector &_v ) { b = _v; }; 
       //! \brief Perform Alternating Linear Least-Square Fit.
       //! \params _solution should be a vector of vectors. The outer vectors
       //!         have the dimension of the problem. The inner vectors should
@@ -72,30 +72,60 @@ namespace Fitting
         types::t_real operator()( t_Vectors& _solution, T_COLLAPSE* collapse );
       //! Loads parameters from XML element
       void Load( const TiXmlElement &_node );
+
+    protected:
+      //! The target values.
+      t_Vector b;
   };
 
   template< class T_LLSQ > template< class T_COLLAPSE >
     types::t_real Allsq<T_LLSQ> :: operator()( t_Vectors& _solution, 
                                                T_COLLAPSE* collapse  )
     {
+      std::cout << "Starting point: " << std::endl;
+          typename t_Vectors :: iterator i_sol = _solution.begin();
+          typename t_Vectors :: iterator i_sol_end = _solution.end();
+          for(i_sol = _solution.begin(); i_sol != i_sol_end; ++i_sol)
+          {
+            std::cout << "      ";
+            std::for_each( i_sol->begin(), i_sol->end(),
+                           std::cout << boost::lambda::_1 << "   " );
+            std::cout << "\n";
+          }
+          std::cout << "\n\n";
       try
       {
         types::t_unsigned iter = 0;
         types::t_int D( _solution.size() );
         t_Matrix A;
+        t_Vector error;
         types::t_real convergence(0);
         do
         {
-          typename t_Vectors :: iterator i_sol = _solution.begin();
-          typename t_Vectors :: iterator i_sol_end = _solution.end();
           types::t_unsigned dim(0);
+          i_sol = _solution.begin();
           for(convergence = 0e0; i_sol != i_sol_end; ++i_sol, ++dim )
           {
             (*collapse)( A, dim, _solution );
             llsq.init_A( A );
+//           llsq.init_b( error );
+            std::cout << "A: ";
+            std::for_each( A.begin(), A.end(), std::cout << boost::lambda::_1 << " " );
+            std::cout << "\ny: ";
+            std::for_each( llsq.b.begin(), llsq.b.end(), std::cout << boost::lambda::_1 << " " );
+            std::cout << "\nw: ";
+            std::for_each( llsq.w.begin(), llsq.w.end(), std::cout << boost::lambda::_1 << " " );
+            std::cout << "\n";
             types::t_real result = llsq( *i_sol );
             std::cout << "    dim: " << dim << " conv: " << result << std::endl;
             convergence += result;
+          }
+          for(i_sol = _solution.begin(); i_sol != i_sol_end; ++i_sol)
+          {
+            std::cout << "      ";
+            std::for_each( i_sol->begin(), i_sol->end(),
+                           std::cout << boost::lambda::_1 << "   " );
+            std::cout << "\n";
           }
           ++iter;
           convergence /= (types::t_real) D;

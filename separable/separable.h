@@ -18,12 +18,15 @@
 #include<opt/types.h>
 #include<opt/debug.h>
 
+#include "collapse.h"
+
 //! Contains all things separable functions.
 namespace Separable
 {
   // Forward declarations
   //! \cond
   template< class T_FUNCTION >  class Collapse;
+  template< class T_B, template<class> class T_G, template<class> class T_S > class Base;
   namespace details
   { 
     template< class T_FUNCTION,
@@ -32,6 +35,14 @@ namespace Separable
   }
   //! \endcond
 
+// //! Prints out function.
+// template< class T_B>  std::ostream& operator<<( std::ostream& _stream,
+//                                                 const Function<T_B>& _func );
+  //! Prints out function.
+  template< class T_B, template<class> class T_G, template<class> class T_S>
+  std::ostream& operator<<( std::ostream& _stream,
+                            const Base<T_B, T_G, T_S>& _func );
+ 
   //! \brief Defines a separable function of many-variables.
   //! \details Programmatically the law for which this function is "separable"
   //!          is defined via \a T_GROUPOP. \a T_BASIS defines a family of 1d functions.
@@ -50,6 +61,11 @@ namespace Separable
   class Base 
   {
       template< class T_FUNCTION > friend class Collapse;
+      friend std::ostream& operator<< <T_BASIS, T_GROUPOP, T_SCALAROP>
+                                      ( std::ostream& _stream,
+                                        const Base< T_BASIS, 
+                                                    T_GROUPOP,
+                                                    T_SCALAROP >& _func );
     public:
       //! Type of the basis
       typedef T_BASIS t_Basis;
@@ -73,7 +89,7 @@ namespace Separable
       t_Coefs coefs;
 
       //! Constructor
-      Base() : basis() { coefs.resize( basis.size() ); }
+      Base() : basis(), name("Function") { coefs.resize( basis.size() ); }
       //! Destructor
       ~Base() {}
 
@@ -100,6 +116,8 @@ namespace Separable
       //! Serializes a structure.
       template<class ARCHIVE>
         void serialize( ARCHIVE & _ar, const unsigned int _version);
+      //! Sets name of function.
+      void set_name( const std::string &_str ) { name = _str; }
 
     protected:
       //! Links basis functions.
@@ -108,9 +126,9 @@ namespace Separable
       t_ScalarOp scalarop;
 
     protected:
-      //! For alternating least-square purposes.
-      template< class T_ITIN, class T_ITOUT>
-        t_Return expand( T_ITIN _first, T_ITIN _last, T_ITOUT _out ) const;
+      //! \brief Name of this stage of the separable function.
+      //! \details Should be set by the sum of separable function.
+      std::string name;
   };
   
   template< class T_BASIS, 
@@ -147,6 +165,8 @@ namespace Separable
   template< class T_BASIS >
     class Function : public Base< T_BASIS >
     {
+//       friend std::ostream& operator<< <T_BASIS>( std::ostream& _stream,
+//                                                  const Function<T_BASIS>& _func );
         friend class Collapse< Function<T_BASIS> >;
         template<class T_ALLSQ>  friend class AllsqInterface;
         //! Type of the base class.
@@ -186,136 +206,6 @@ namespace Separable
         typedef typename t_Base :: t_Coefs t_Coefs;
         //! \endconf
     };
-
-
-  /** \brief Collapses a sum of separable function into Fitting::Allsq format.
-   *  \details This flavor keeps track of computed basis functions
-   *           (\f$g_{d,i}^{(r)}\f$).  This is quite a complex process. A sum
-   *           of separable functions is expressed as follows: 
-   *    \f[
-   *        F(\mathbf{x}) = \sum_r \prod_d \sum_i \lambda_{d,i}^{(r)}
-   *                        g_{i,n}^{(r)}(x_i),
-   *    \f]
-   *    We will keep track of the r, i, and n indices. Furthermore, the least
-   *    square-fit method fits to  \e o observables. It expects a "2d" input matrix
-   *    I[d, (r,i) ], where the slowest running index is the dimension \e d.
-   *    I[d] should be a vecrtor container type of scalar values. These scalar
-   *    values are orderer with  \e i the fastest running index and \e r the
-   *    slowest. The method also expects a functor which can create the matrix
-   *    \e A (as in \e Ax = \e b ) for each specific dimension \e d. The type
-   *    of A is a vector of scalars. The fastest running index is \e i,
-   *    followed by \e r, and finally \e o. 
-   *    \tparam T_FUNCTION must be a Function< Summand< T_BASIS > > 
-   **/
-  template< class T_FUNCTION >
-  class Collapse
-  {
-    public:
-      //! Type of the sum of separable functions to collapse.
-      typedef T_FUNCTION t_Function;
-      //! Wether to update the coefficients between each dimension or not.
-      bool do_update;
-      //! Reference to the function to fit.
-      T_FUNCTION &function;
-
-      //! Constructor
-      Collapse   ( t_Function &_function )
-                  : do_update(false), is_initialized(false), D(0), nb_obs(0),
-                    nb_ranks(0), function( _function ) {}
-
-      //! \brief Constructs the matrix \a A for dimension \a _dim. 
-      //! \details Note that depending \a _coef are used only for dim == 0,
-      //!          and/or do_update == true.
-      //! \tparam T_MATRIX is a vector, e.~g. a flattened matrix. This class is
-      //!                  meant for %GSL which expects this type of memory
-      //!                  setup for matrices. 
-      //! \tparam T_VECTORS is a vector of vectors or similar. 
-      //! \param[out] _A will contain the collapsed matrix for the linear
-      //!                least-square fit. \a _A[ (o,r,i ) ].
-      //! \param[in] The dimension for which to create \a _A.
-      //! \param[in] _coefs contains the coefficients for \e all dimensions.
-      //!                   \a _coefs[d, (r,i) ]
-      template< class T_MATRIX, class T_VECTORS >
-      void operator()( T_MATRIX &_A, types::t_unsigned _dim, const T_VECTORS &_coefs );
-
-      //! \brief Constructs the completely expanded matrix.
-      //! \tparams T_VECTORS is a vector of vectors.
-      //! \params[in] _x contains the input to sum of separable function in the
-      //!                format \a _x[ o,d ].
-      template< class T_VECTORS > void init( const T_VECTORS &_x );
-      //! Resets collapse functor. Clears memory.
-      void reset();
-      //! Creates a collection of random coefficients.
-      //! \details A vector of vectors of correct dimensions is created but not
-      //!          necessarily initialized.
-      //! \tparams should be a vector of vectors.
-      //! \params[out] _coefs creates \a _coefs[d, (r,i) ] uninitialized.
-      template< class T_VECTORS > void create_coefs( T_VECTORS &_coefs ) const;
-      //! Assigns solution coefficients to Collapse::function.
-      //! \tparam T_VECTORS is a vector of vectors or similar. 
-      //! \param[in] _solution contains the coefficients for \e all dimensions.
-      //!                      \a _solution[d, (r,i) ]
-      template< class T_VECTORS > void reassign( const T_VECTORS &_solution ) const;
-
-      __DODEBUGCODE
-      ( 
-        //! \cond
-        template<class T_VECTORS> void print_funcs( const T_VECTORS &_x ) const; 
-        //! \endcond
-      )
-
-    protected:
-      //! Initializes Collapse::factors.
-      //! \tparam T_VECTORS is a vector of vectors or similar. 
-      //! \param[in] _coefs contains the coefficients for \e all dimensions.
-      //!                   \a _coefs[d, (r,i) ]
-      template< class T_VECTORS >
-        void initialize_factors( const T_VECTORS &_coefs );
-      //! Updates Collapse::factors.
-      //! \tparam T_VECTORS is a vector of vectors or similar. 
-      //! \param[in] The dimension for which to create \a _A. Passed from
-      //!            Collapse::operator()().
-      //! \param[in] _coefs contains the coefficients for \e all dimensions.
-      //!                   \a _coefs[d, (r,i) ].
-      template< class T_VECTORS >
-        void update_factors( types::t_unsigned _dim, const T_VECTORS &_coefs );
-
-      //! False if unitialized.
-      bool is_initialized;
-      //! Maximum dimension.
-      types::t_unsigned D;
-      //! Number of observables.
-      types::t_unsigned nb_obs;
-      //! Number of ranks.
-      types::t_unsigned nb_ranks;
-      //! Return type of the function
-      typedef typename T_FUNCTION :: t_Return t_Type;
-      //! \brief Type of the matrix containing expanded function elements.
-      typedef std::vector< std::vector< t_Type > > t_Expanded;
-      //! A matrix with all expanded function elements.
-      //! \details expanded[ (o,d), (r,i) ]. The type is a vector of vectors.
-      //!          The fastest-running \e internal index is \e i. The
-      //!          fastest-running \e external index is d.
-      //!          \f$ \text{expanded}[(o,d), (r,i)] = g_{d,i}^{(r)}(x_d^{(o)})\f$.
-      t_Expanded expanded;
-      //! Type of the factors.
-      typedef std::vector< std::vector< t_Type > > t_Factors;
-      /** \brief A matrix wich contains the factors of the separable functions.
-       *  \details factors[(o,r), d]. A vector of vectors. The \e internal
-       *           index is \e d. The fastest-running \e external
-       *           index is \e r.
-       *           \f$
-       *               \text{factors}[d, (r,i)] = \sum_i
-       *               \lambda_{d,i}^{(r)}g_{d,i}^{(r)}(x_d^{(o)})
-       *           \f$. **/
-      t_Factors factors;
-      //! Type of the sizes.
-      typedef std::vector< std::vector< types::t_unsigned > > t_Sizes;
-      //! \brief Sizes of the basis per dimension and rank.
-      //! \details sizes[ d, r ] = max i \@ (d,r). r is the fastest running
-      //!          index.
-      t_Sizes sizes;
-  };
 
 } // end of Separable namespace
 

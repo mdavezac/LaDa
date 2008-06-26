@@ -41,8 +41,7 @@ namespace CE
                   std::string basis_type = "cube" );
 
       //! Sets the rank of the separable function.
-      void set_rank( types::t_unsigned _rank ) 
-       { basis.resize( _rank ); coefs.resize( _rank, 1e0 ); }
+      void set_rank( types::t_unsigned _rank );
       //! Sets the rank of the separable function.
       void set_basis( types::t_unsigned _size, std::string _size );
       //! Returns the rank of the separable function.
@@ -60,6 +59,8 @@ namespace CE
       std::string basis_type;
       //! A vector of positions used in creating the basis.
       std::vector< atat::rVector3d > positions;
+      //! Name of this function.
+      std::string name;
   };
 
   // A separable function for a fixed-lattice incorporating all symmetry

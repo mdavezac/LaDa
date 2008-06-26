@@ -15,6 +15,7 @@
 
 #include "operations.h"
 #include "base.h"
+#include "manip.h"
 
 namespace Print
 {
@@ -175,6 +176,9 @@ namespace Print
     if ( do_print ) to_current_stream( _whatever );
     return *this;
   }
+
+  std::string make_commented_string( const std::string &_str )
+    { return indent( Xmg::comment_string, _str ); }
 
 }
 

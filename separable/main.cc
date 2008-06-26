@@ -23,7 +23,7 @@
 #include "cefitting.h"
 
 #include <revision.h>
-#define __PROGNAME__ "Fixed-Lattice Sum of Separable function.\n" 
+#define __PROGNAME__ "Fixed-Lattice Sum of Separable functions" 
 
 int main(int argc, char *argv[]) 
 {
@@ -35,11 +35,11 @@ int main(int argc, char *argv[])
     po::options_description generic("Generic Options");
     generic.add_options()
            ("help,h", "produces this help message.")
-           ("version,v", "prints version string.");
-           ("verbose,p", "Verbose output.\n"  );
-           ("reruns,r", po::value<types::t_unsigned>()->default_value(1),
-                        "number of times to run the algorithm.\n" 
-                        "Is equivalent to manually re-launching the program.\n");
+           ("version,v", "prints version string.")
+           ("verbose,p", "Verbose output.\n"  )
+           ("reruns", po::value<types::t_unsigned>()->default_value(1),
+                      "number of times to run the algorithm.\n" 
+                      "Is equivalent to manually re-launching the program.\n");
     po::options_description specific("Separables Options");
     specific.add_options()
         ("cross,c", "Performs leave-one-out"
@@ -50,13 +50,12 @@ int main(int argc, char *argv[])
                    "Rank of the sum of separable functions." )
         ("tolerance", po::value<types::t_real>()->default_value(1e-4),
                       "Tolerance of the alternating linear-least square fit.\n"  )
-        ("maxiter", po::value<types::t_unsigned>()->default_value(40),
-                    "Maximum number of iterations for"
-                    " Alternating linear-least square fit.\n"  )
+        ("maxiter,m", po::value<types::t_unsigned>()->default_value(40),
+                      "Maximum number of iterations for"
+                      " Alternating linear-least square fit.\n"  )
         ("1dtolerance", po::value<types::t_real>()->default_value(1e-4),
                         "Tolerance of the 1d linear-least square fit.\n" )
-        ("update", po::value<bool>()->default_value(false),
-                   "Whether to update during 1d least-square fits.\n" )
+        ("update", "Whether to update during 1d least-square fits.\n" )
         ("svd", po::value<bool>()->default_value(false),
                 "Whether the 1d least-square fit should use"
                 " single-value decomposition.\n"  );
@@ -80,7 +79,7 @@ int main(int argc, char *argv[])
     po::notify(vm);
  
     std::cout << "\n" << __PROGNAME__
-              << " from the " << PACKAGE_STRING << " package\n"
+              << " from the " << PACKAGE_STRING << " package.\n"
               << "Subversion Revision: " << SVN::Revision << "\n\n"; 
     if ( vm.count("version") ) return 1;
     if ( vm.count("help") )
@@ -113,7 +112,7 @@ int main(int argc, char *argv[])
     types::t_real tolerance( vm["tolerance"].as< types::t_real >() );
     types::t_unsigned maxiter( vm["maxiter"].as< types::t_unsigned >() );
     types::t_real dtolerance( vm["1dtolerance"].as< types::t_real >() );
-    bool doupdate = vm.count("doupdate");
+    bool doupdate = vm.count("update");
     bool svd = vm.count("svd");
     if( dtolerance > tolerance )
     {
@@ -167,7 +166,6 @@ int main(int argc, char *argv[])
       TiXmlHandle handle( &doc );
       TiXmlElement *child = handle.FirstChild( "Job" ).FirstChild( "Lattice" ).Element();
       __DOASSERT( not child, "Could not find Lattice in input." )
-      lattice = new Crystal :: Lattice;
       Crystal::Structure::lattice = lattice;
       __DOASSERT( not lattice->Load(*child),
                   "Error while reading Lattice from input.")
@@ -229,7 +227,7 @@ int main(int argc, char *argv[])
     if( reruns > 1 ) std::cout << "\n\n*********  Run 1.  *********\n";
     for( types::t_unsigned n(0); n < reruns; ++n )
     {
-      if( n > 1 ) std::cout << "\n\n*********  Run " << n+1 << ".  *********\n";
+      if( n > 0 ) std::cout << "\n\n*********  Run " << n+1 << ".  *********\n";
 
       // fitting.
       if( not cross )
@@ -238,6 +236,7 @@ int main(int argc, char *argv[])
         interface.fit( allsq, collapse );
         t_PairErrors result; 
         result = interface.check_training( separables, verbose );
+        if( verbose ) std::cout << separables << "\n";
         std::cout << " average error: " << result.first
                   << " maximum error: " << result.second << std::endl;
       }
@@ -256,6 +255,7 @@ int main(int argc, char *argv[])
     }
     std::cout << "\n\n\nEnd of " << __PROGNAME__ << ".\n" << std::endl;
 
+    opt::random::destroy();
     if( lattice ) delete lattice;
     lattice = NULL;
   }

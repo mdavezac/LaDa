@@ -11,6 +11,9 @@
 #include <string>
 #include <cctype>
 
+#include <opt/types.h>
+#include <opt/debug.h>
+
 //! Contains print out related stuff.
 namespace Print
 {
@@ -39,5 +42,8 @@ namespace Print
   inline bool is_uppercase( char c ) { return c != std::tolower( c ); }
   //! Returns true if c is lowercase
   inline bool is_lowercase( char c ) { return c != std::toupper( c ); }
+ 
+  //! Returns true if c is lowercase
+  std::string indent( const std::string& _ind, const std::string& _str );
 }
 #endif 

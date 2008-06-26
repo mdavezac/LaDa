@@ -1,9 +1,11 @@
 //
 //  Version: $Id$
 //
-#include <stdlib.h>
+#include <cstdlib>
+#include <sstream>
 
 #include "manip.h"
+
 
 namespace Print
 {
@@ -81,5 +83,23 @@ namespace Print
 //   if ( i < 0 ) i = 0;
 //   while(
 // }
+
+  std::string indent( const std::string &_ind, const std::string &_str )
+  {
+    if ( _str.empty() ) return _ind;
+    std::ostringstream result;
+    result << _ind;
+
+    types::t_int old = 0;
+    types::t_unsigned i = _str.find('\n', 0);
+    while ( _str.find('\n', old ) != std::string::npos  )
+    {
+      result << _str.substr(old, i - old +1 ) << _ind;
+      ++i; old = i;
+      i = _str.find('\n', old);
+    }
+    result << _str.substr(old);
+    return result.str();
+  }
 
 }

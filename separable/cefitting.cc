@@ -14,20 +14,12 @@
 #include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include <opt/algorithms.h>
 
 #include "cefitting.h" 
 
 namespace Fitting
 {
-  namespace details
-  {
-    template< class T_IT1, class T_IT2, class __APP >
-      void concurrent_loop( T_IT1 _first, T_IT1 _last, T_IT2 _second, __APP _app )
-      {
-        for(; _first != _last; ++_first, ++_second )
-          _app( *_first, *_second );
-      }
-  }
   void SepCeInterface::read( CE::SymSeparables &_symseps,
                              const std::string &_dir,
                              const std::string &_ldasdat,
@@ -44,7 +36,7 @@ namespace Fitting
           bind( &SepCeInterface::read_structure, var(*this),
                 constant( _symseps ), constant( path ), _1 )
         );
-        details::concurrent_loop
+        opt::concurrent_loop
         ( 
           structures.begin(), structures.end(), targets.begin(),
           bind( &Crystal::Structure::energy, _1 ) = _2
@@ -151,7 +143,7 @@ namespace Fitting
 
   std::pair<types::t_real, types::t_real> 
    SepCeInterface :: check( CE::Separables &_sep,
-                            bool _verbose, bool _which ) const
+                            bool _which, bool _verbose ) const
     {
       types::t_real average(0);
       types::t_real maxerr(0);

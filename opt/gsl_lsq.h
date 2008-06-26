@@ -62,7 +62,7 @@ namespace Fitting
       //! Loads input from XML
       bool Load( const TiXmlElement &_node );
 
-    protected:
+    public:
       //! Linear operator.
       t_Matrix A;
       //! Vector to which to fit.

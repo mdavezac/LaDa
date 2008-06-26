@@ -63,12 +63,12 @@ namespace opt
 
     void destroy()
     {
-      __ASSERT( not details::uni_dist, "random number generator was not created" );
-      delete details::uni_dist; details::uni_dist = NULL;
-      __ASSERT( not details::generator, "random number generator was not created" );
-      delete details::generator; details::generator = NULL;
-      __ASSERT( not details::rng, "random number generator was not created" );
-      delete details::rng; details::rng = NULL;
+      if( details::uni_dist ) delete details::uni_dist;
+      details::uni_dist = NULL;
+      if( details::generator ) delete details::generator;
+      details::generator = NULL;
+      if( details::rng ) delete details::rng;
+      details::rng = NULL;
     }
   }
 }

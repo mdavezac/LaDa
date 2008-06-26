@@ -8,6 +8,8 @@
 #include <config.h>
 #endif
 
+#include<iostream>
+
 #include<boost/array.hpp>
 
 #include<opt/debug.h>
@@ -15,11 +17,20 @@
 
 namespace Separable
 {
+  //! \cond
+  class Boolean;
+  //! \endcond
+
+  //! Writes the name of the function to a stream.
+  std::ostream& operator<<( std::ostream& _stream, const Boolean& _func );
+
   //! A boolean basis of one true and one false function.
   class BooleanBasis;
+
   //! \brief A scalar function which takes a boolean arguments.
   class Boolean
   {
+    friend std::ostream& operator<<( std::ostream& _stream, const Boolean& _func );
     friend class BooleanBasis;
     public:
       //! Type of the argument.
@@ -30,7 +41,8 @@ namespace Separable
       bool const static has_gradient = false;
      
       //! Constructor 
-      Boolean ( bool _which = false ) : which( _which ) {}
+      Boolean ( bool _which = false ) : which( _which ) 
+        { name = _which ? "True": "False"; }
       //! Destructor
       ~Boolean() {}
 
@@ -41,8 +53,11 @@ namespace Separable
     protected:
       //! Decides whether this is a true or false function.
       bool which;
+      //! name of this function.
+      std::string name;
   };
-// const bool Boolean :: has_gradient(false);
+  inline std::ostream& operator<<( std::ostream& _stream, const Boolean& _func )
+    {  return _stream << _func.name; }
 
   class BooleanBasis : public  boost::array< Boolean, 2 >
   {
@@ -57,7 +72,7 @@ namespace Separable
     public:
       //! Constructor.
       BooleanBasis() 
-        { elems[0].which = true; elems[1].which = false; }
+        { elems[0].which = true; elems[0].name = "True"; elems[1].which = false; }
       //! Destructor.
       ~BooleanBasis() {}
   };
