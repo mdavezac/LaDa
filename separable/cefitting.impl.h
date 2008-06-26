@@ -2,6 +2,7 @@
 //  Version: $Id$
 //
 
+#include<opt/random.h>
 #include<algorithm>
 
 namespace Fitting
@@ -25,15 +26,16 @@ namespace Fitting
       if(     exclude.size() 
           and std::find( exclude.begin(), exclude.end(), i ) == exclude.end() ) 
         continue;
+
+      // all energies of equivalent structures are ... equivalent.
+      // hence resize rather than pushback.
+      y.resize( y.size() + i_train->size(),  *i_target );
       t_Configurations :: const_iterator i_conf( i_train->begin() );
       t_Configurations :: const_iterator i_conf_end( i_train->end() );
       for(; i_conf != i_conf_end; ++i_conf )
       {
         input.push_back( i_conf->first ); 
-        w.resize( weight.size() + i_conf->first.size(),
-                  (*i_weight) * i_conf->second );
-        y.resize( y.size() + i_conf->first.size(), 
-                  *i_target );
+        w.push_back( (*i_weight) * i_conf->second );
       }
     }
     // initializes the collapse functor.
@@ -53,7 +55,7 @@ namespace Fitting
       typename T_ALLSQ::t_Vectors::value_type::iterator i_coef = i_coefs->begin();
       typename T_ALLSQ::t_Vectors::value_type::iterator i_coef_end = i_coefs->end();
       for(; i_coef != i_coef_end; ++i_coef )
-        *i_coef = rng();
+        *i_coef = opt::random::rng()*10e0;
     }
 
     // finally performs fit

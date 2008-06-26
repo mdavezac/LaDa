@@ -38,7 +38,9 @@ namespace Fitting
   {
     size_t dim2 = _solution.size();
     size_t dim1 = b.size();
-    __ASSERT( dim1 * dim2 != A.size(), "Incoherent matrix/vector size.\n" )
+    __ASSERT( dim1 * dim2 != A.size(),
+                "Incoherent matrix/vector size: " 
+             << dim1 << "x" << dim2 << "!=" << A.size() <<".\n" )
     gsl_multifit_linear_workspace *work;
     work = gsl_multifit_linear_alloc ( dim1, dim2 );
 
@@ -48,7 +50,7 @@ namespace Fitting
     gsl_matrix *cov = gsl_matrix_alloc( dim2, dim2 );
 
     size_t rank;
-    double chisq;
+    double chisq = 0;
     if( doweights )
     {
       details::GslVector gslw( w );
@@ -99,10 +101,12 @@ namespace Fitting
       bloc.data = &_mat[0];
       matrix.size1 = _nrow;
       matrix.size2 = _mat.size() / _nrow;
-      __DOASSERT( matrix.size1 * matrix.size2 == _mat.size(),
-                  "Matrix dimensions are not coherent.\n" )
-      matrix.tda = 0;
-      matrix.data = &_mat[0];
+      __DOASSERT( matrix.size1 * matrix.size2 != _mat.size(),
+                     "Matrix dimensions are not coherent: "
+                  << matrix.size1 << "x" << matrix.size2
+                  << "!=" << bloc.size << ".\n" )
+      matrix.tda = matrix.size2;
+      matrix.data = bloc.data;
       matrix.block = &bloc;
       matrix.owner = 0;
     }

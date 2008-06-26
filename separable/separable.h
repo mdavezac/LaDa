@@ -219,32 +219,64 @@ namespace Separable
       T_FUNCTION &function;
 
       //! Constructor
-      Collapse   ( T_FUNCTION &_function )
+      Collapse   ( t_Function &_function )
                   : do_update(false), is_initialized(false), D(0), nb_obs(0),
                     nb_ranks(0), function( _function ) {}
 
       //! \brief Constructs the matrix \a A for dimension \a _dim. 
       //! \details Note that depending \a _coef are used only for dim == 0,
       //!          and/or do_update == true.
+      //! \tparam T_MATRIX is a vector, e.~g. a flattened matrix. This class is
+      //!                  meant for %GSL which expects this type of memory
+      //!                  setup for matrices. 
+      //! \tparam T_VECTORS is a vector of vectors or similar. 
+      //! \param[out] _A will contain the collapsed matrix for the linear
+      //!                least-square fit. \a _A[ (o,r,i ) ].
+      //! \param[in] The dimension for which to create \a _A.
+      //! \param[in] _coefs contains the coefficients for \e all dimensions.
+      //!                   \a _coefs[d, (r,i) ]
       template< class T_MATRIX, class T_VECTORS >
       void operator()( T_MATRIX &_A, types::t_unsigned _dim, const T_VECTORS &_coefs );
 
       //! \brief Constructs the completely expanded matrix.
-      //! \tparams T_VECTORS is a vector of vectors, input[ o, d ] 
+      //! \tparams T_VECTORS is a vector of vectors.
+      //! \params[in] _x contains the input to sum of separable function in the
+      //!                format \a _x[ o,d ].
       template< class T_VECTORS > void init( const T_VECTORS &_x );
       //! Resets collapse functor. Clears memory.
       void reset();
       //! Creates a collection of random coefficients.
-      //! \tparams should be a vector of vectors, coefs[d, (r,i) ].
+      //! \details A vector of vectors of correct dimensions is created but not
+      //!          necessarily initialized.
+      //! \tparams should be a vector of vectors.
+      //! \params[out] _coefs creates \a _coefs[d, (r,i) ] uninitialized.
       template< class T_VECTORS > void create_coefs( T_VECTORS &_coefs ) const;
-      //! Assigns coeficients to function.
+      //! Assigns solution coefficients to Collapse::function.
+      //! \tparam T_VECTORS is a vector of vectors or similar. 
+      //! \param[in] _solution contains the coefficients for \e all dimensions.
+      //!                      \a _solution[d, (r,i) ]
       template< class T_VECTORS > void reassign( const T_VECTORS &_solution ) const;
+
+      __DODEBUGCODE
+      ( 
+        //! \cond
+        template<class T_VECTORS> void print_funcs( const T_VECTORS &_x ) const; 
+        //! \endcond
+      )
 
     protected:
       //! Initializes Collapse::factors.
+      //! \tparam T_VECTORS is a vector of vectors or similar. 
+      //! \param[in] _coefs contains the coefficients for \e all dimensions.
+      //!                   \a _coefs[d, (r,i) ]
       template< class T_VECTORS >
         void initialize_factors( const T_VECTORS &_coefs );
       //! Updates Collapse::factors.
+      //! \tparam T_VECTORS is a vector of vectors or similar. 
+      //! \param[in] The dimension for which to create \a _A. Passed from
+      //!            Collapse::operator()().
+      //! \param[in] _coefs contains the coefficients for \e all dimensions.
+      //!                   \a _coefs[d, (r,i) ].
       template< class T_VECTORS >
         void update_factors( types::t_unsigned _dim, const T_VECTORS &_coefs );
 
@@ -281,7 +313,7 @@ namespace Separable
       typedef std::vector< std::vector< types::t_unsigned > > t_Sizes;
       //! \brief Sizes of the basis per dimension and rank.
       //! \details sizes[ d, r ] = max i \@ (d,r). r is the fastest running
-      //!          vector.
+      //!          index.
       t_Sizes sizes;
   };
 

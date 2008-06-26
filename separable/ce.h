@@ -42,7 +42,7 @@ namespace CE
 
       //! Sets the rank of the separable function.
       void set_rank( types::t_unsigned _rank ) 
-       { basis.resize( _rank ); }
+       { basis.resize( _rank ); coefs.resize( _rank, 1e0 ); }
       //! Sets the rank of the separable function.
       void set_basis( types::t_unsigned _size, std::string _size );
       //! Returns the rank of the separable function.
@@ -85,7 +85,8 @@ namespace CE
                     : basis( _poss ) { init_syms( _lat ); }
 
       //! Creates all necessary configurations for a given structure.
-      t_Configurations* configurations( Crystal::Structure &_structure );
+      void configurations( const Crystal :: Structure &_structure,
+                           SymSeparables :: t_Configurations& _confs ) const;
       //! Evaluates a set of configurations. 
       types::t_real operator()( t_Configurations &_conf,
                                 const Separables &_func ) const;
@@ -98,8 +99,6 @@ namespace CE
       t_Basis &basis;
       //! The syemmetry operations.
       t_SymOps syms;
-      //! A working array of positions.
-      t_Basis work;
   };
 
 

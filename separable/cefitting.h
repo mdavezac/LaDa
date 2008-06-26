@@ -12,10 +12,6 @@
 #include <string>
 #include <sstream>
 
-#include <boost/random/uniform_real.hpp>
-#include <boost/random/variate_generator.hpp>
-#include <boost/random/mersenne_twister.hpp>
-
 #include <boost/filesystem.hpp>
 
 #include <opt/types.h>
@@ -31,18 +27,14 @@ namespace Fitting
       typedef std::pair< types::t_real, types::t_real > t_PairErrors;
       //! Structures excluded from fit.
       std::vector< types::t_unsigned > exclude;
-      //! A random number generator
-      mutable boost::variate_generator< boost::mt11213b&, 
-                                        boost::uniform_real<> > rng;
-
       //! Constructor
-      SepCeInterface() : generator( 42u ), uni_dist(0,1), rng(generator, uni_dist)
-        { generator.seed( static_cast<unsigned int>(std::time(0)) ); }
+      SepCeInterface(){}
       
       //! Reads the structures from input.
       void read( CE::SymSeparables &_symseps,
                  const std::string &_dir,
-                 const std::string &_ldasdat = "LDAs.dat" );
+                 const std::string &_ldasdat = "LDAs.dat",
+                 bool _verbose = false );
 
       //! Fits a separable function to the complete training set.
       template< class T_ALLSQ, class T_COLLAPSE>
@@ -68,7 +60,7 @@ namespace Fitting
       void read_ldasdat( const boost::filesystem::path &_path,
                          const std::string& _ldasdat );
       //! Reads structure names and energies.
-      void read_structure( CE::SymSeparables &_symseps,
+      void read_structure( const CE::SymSeparables &_symseps,
                            const boost::filesystem::path &_path, 
                            const std::string& _filename );
       //! \brief Check convergence.
@@ -94,10 +86,6 @@ namespace Fitting
       std::vector< t_Configurations > training;
       //! The names of the structures.
       std::vector< std::string > names;
-      //! A random number generator.
-      mutable boost::mt11213b generator;
-      //! A uniform distribution.
-      mutable boost::uniform_real<> uni_dist;
   };
 
   template< class T_ALLSQ, class T_COLLAPSE>

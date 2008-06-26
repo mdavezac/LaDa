@@ -36,7 +36,7 @@ namespace Separable
 
       //! evaluates the function over a range of positions.
       t_Return operator()( const t_Arg _bool ) const
-        { return  _bool == which ? t_Return(0): t_Return(1); }
+        { return  _bool == which ? t_Return(1): t_Return(0); }
 
     protected:
       //! Decides whether this is a true or false function.

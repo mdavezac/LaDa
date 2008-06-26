@@ -45,9 +45,10 @@ namespace Fitting
       Allsq() : itermax(20), tolerance( 1e-4 ) {}
       //! Destructor
       ~Allsq() {}
-      //! Pre-minimizer stuff.
-      void init_b( t_Vector &_v )
-        { llsq.init_b( _v ); }; 
+      //! \brief Pre-minimizer stuff.
+      //! \param _v[in] is a vector with as many elements as there observed
+      //!               data points.
+      void init_b( t_Vector &_v ) { llsq.init_b( _v ); }; 
       //! \brief Perform Alternating Linear Least-Square Fit.
       //! \params _solution should be a vector of vectors. The outer vectors
       //!         have the dimension of the problem. The inner vectors should
@@ -92,14 +93,19 @@ namespace Fitting
           {
             (*collapse)( A, dim, _solution );
             llsq.init_A( A );
-            convergence += llsq( *i_sol );
+            types::t_real result = llsq( *i_sol );
+            std::cout << "    dim: " << dim << " conv: " << result << std::endl;
+            convergence += result;
           }
           ++iter;
           convergence /= (types::t_real) D;
-        }
-        while(     ( convergence < tolerance or tolerance < 0e0 )
-               and ( iter < itermax or itermax > 0 ) );
 
+          std::cout << "iter: " << iter << " conv: " << convergence << std::endl;
+        }
+        while(     ( convergence > tolerance or tolerance < 0e0 )
+               and ( iter < itermax or itermax == 0 ) );
+
+        std::cout << "final conv: " << convergence << std::endl;
         return convergence;
       }
       __CATCHCODE(, "Error encountered in Alternating-least square fit.\n" )

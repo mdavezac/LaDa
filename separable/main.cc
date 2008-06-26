@@ -36,15 +36,13 @@ int main(int argc, char *argv[])
     generic.add_options()
            ("help,h", "produces this help message.")
            ("version,v", "prints version string.");
-           ("verbose,p", po::value<bool>()->default_value(false),
-                         "Verbose output.\n"  );
+           ("verbose,p", "Verbose output.\n"  );
            ("reruns,r", po::value<types::t_unsigned>()->default_value(1),
                         "number of times to run the algorithm.\n" 
                         "Is equivalent to manually re-launching the program.\n");
     po::options_description specific("Separables Options");
     specific.add_options()
-        ("cross,c", po::value<types::t_real>()->default_value(1e-4),
-                    "Performs leave-one-out"
+        ("cross,c", "Performs leave-one-out"
                     " cross-validation, rather than simple fit.\n"  )
         ("size,s", po::value<types::t_unsigned>()->default_value(3),
                    "Size of the cubic basis." )
@@ -109,7 +107,9 @@ int main(int argc, char *argv[])
     __ASSERT( reruns == 0, "0 number of runs performed... As required on input.\n" )
     bool cross = vm.count("cross");
     types::t_unsigned rank( vm["rank"].as< types::t_unsigned >() );
+    __ASSERT( rank == 0, "Separable function of rank 0 is obnoxious.\n" )
     types::t_unsigned size( vm["size"].as< types::t_unsigned >() );
+    __ASSERT( size == 0, "Separable function of dimension 0 is obnoxious.\n" )
     types::t_real tolerance( vm["tolerance"].as< types::t_real >() );
     types::t_unsigned maxiter( vm["maxiter"].as< types::t_unsigned >() );
     types::t_real dtolerance( vm["1dtolerance"].as< types::t_real >() );
@@ -192,6 +192,10 @@ int main(int argc, char *argv[])
 #     endif
     }
 
+    // Creates global random number generator.
+    opt::random::create();
+    opt::random::seed();
+
     // Initializes fitting.
     Fitting::Allsq< Fitting::Gsl > allsq;
     allsq.itermax = maxiter;
@@ -212,7 +216,7 @@ int main(int argc, char *argv[])
 
     // Initializes Interface to allsq.
     Fitting::SepCeInterface interface;
-    interface.read( symsep, dir );
+    interface.read( symsep, dir, "LDAs.dat", verbose );
 #     if defined (_TETRAGONAL_CE_)
         // From here on, lattice should be explicitely tetragonal.
         for( types::t_int i=0; i < 3; ++i ) 
@@ -257,48 +261,44 @@ int main(int argc, char *argv[])
   }
   catch ( boost::program_options::invalid_command_line_syntax &_b)
   {
-    if( lattice ) delete lattice;
-    Crystal::Structure::lattice = NULL;
     std::cerr << "Caught error while running " << __PROGNAME__ << "\n"
               << "Something wrong with the command-line input.\n"
               << _b.what() << "\n";
-    return 0;
+    goto errorout;
   }
   catch ( boost::program_options::invalid_option_value &_i )
   {
-    if( lattice ) delete lattice;
-    Crystal::Structure::lattice = NULL;
     std::cerr << "Caught error while running " << __PROGNAME__ << "\n"
               << "Argument of option in command-line is invalid.\n"
               << _i.what() << "\n";
-    return 0;
+    goto errorout;
   }
   catch ( boost::program_options::unknown_option &_u)
   {
-    if( lattice ) delete lattice;
-    Crystal::Structure::lattice = NULL;
     std::cerr << "Caught error while running " << __PROGNAME__ << "\n"
               << "Unknown option in command-line.\n"
               << _u.what() << "\n";
-    return 0;
+    goto errorout;
   }
   catch (  boost::program_options::too_many_positional_options_error &_e )
   {
-    if( Crystal::Structure::lattice ) delete Crystal::Structure::lattice;
-    Crystal::Structure::lattice = NULL;
     std::cerr << "Caught error while running " << __PROGNAME__ << "\n"
               << "Too many arguments in command-line.\n"
               << _e.what() << "\n";
-    return 0;
+    goto errorout;
   }
   catch ( std::exception &e )
   {
-    if( Crystal::Structure::lattice ) delete Crystal::Structure::lattice;
-    Crystal::Structure::lattice = NULL;
     std::cerr << "Caught error while running " << __PROGNAME__ 
               << "\n" << e.what() << "\n";
-    return 0;
+    goto errorout;
   }
   return 1;
+
+errorout:
+  if( lattice ) delete lattice;
+  Crystal::Structure::lattice = NULL;
+  opt::random::destroy();
+  return 0;
 }
 

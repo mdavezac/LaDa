@@ -17,6 +17,10 @@
 #include <gsl/gsl_block.h>
 #include <gsl/gsl_multifit.h>
 
+#ifdef _LADADEBUG
+#include <boost/lambda/lambda.hpp>
+#endif
+
 //! Namespace for least-square fitting methods
 namespace Fitting
 {

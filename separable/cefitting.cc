@@ -19,27 +19,43 @@
 
 namespace Fitting
 {
+  namespace details
+  {
+    template< class T_IT1, class T_IT2, class __APP >
+      void concurrent_loop( T_IT1 _first, T_IT1 _last, T_IT2 _second, __APP _app )
+      {
+        for(; _first != _last; ++_first, ++_second )
+          _app( *_first, *_second );
+      }
+  }
   void SepCeInterface::read( CE::SymSeparables &_symseps,
                              const std::string &_dir,
-                             const std::string &_ldasdat )
+                             const std::string &_ldasdat,
+                             bool _verbose )
   {
     try
     {
       boost::filesystem::path path( _dir );
       read_ldasdat( path, _ldasdat );
       { using namespace boost::lambda;
-        std::cout << "---\n";
-        std::for_each( names.begin(), names.end(), 
-                       std::cout << _1 << "\n" );
-        std::cout << "+++\n";
         std::for_each
         ( 
           names.begin(), names.end(),
           bind( &SepCeInterface::read_structure, var(*this),
-                var( _symseps ), constant( path ), _1 )
+                constant( _symseps ), constant( path ), _1 )
+        );
+        details::concurrent_loop
+        ( 
+          structures.begin(), structures.end(), targets.begin(),
+          bind( &Crystal::Structure::energy, _1 ) = _2
+        );
+        if( not _verbose ) return;
+        std::for_each
+        ( 
+          structures.begin(), structures.end(), 
+          std::cout << _1 << "\n" 
         );
       }
-      exit(1);
     }
     __CATCHCODE(, "Error while reading training set.\n" )
   }
@@ -57,24 +73,19 @@ namespace Fitting
       std::string line;
       while( std::getline( ldas, line ) )
       {
-        const boost::regex e("(\\S+)\\s+(\\d+(\\.\\d+)?)");
+        const boost::regex re("^(\\s+)?(\\S+)\\s+(-?\\d+(\\.\\d+)?)");
         boost::match_results<std::string::const_iterator> what;
-        if( not boost::search_regex( line, e, what ) ) continue;
+        if( not boost::regex_search( line, what, re ) ) continue;
 
-        std::string name;
-        types::t_real energy;
-        std::istringstream sstr( line );
-
-
-        names.push_back( what.str(0) );
-        targets.push_back( boost::lexical_cast<short>( what.str(1) ) );
+        names.push_back( what.str(2) );
+        targets.push_back( boost::lexical_cast<types::t_real>( what.str(3) ) );
         weight.push_back( 1 );
       }
     }
     __CATCHCODE(, "Error while reading " << fullpath << "\n" )
   }
 
-  void SepCeInterface :: read_structure( CE::SymSeparables &_symseps,
+  void SepCeInterface :: read_structure( const CE::SymSeparables &_symseps,
                                          const boost::filesystem::path &_path, 
                                          const std::string &_filename )
   {
@@ -89,6 +100,7 @@ namespace Fitting
       std::getline( structfile, line ); // name and inconsequential data.
 
       Crystal::Structure structure;
+      structure.name = _filename;
       types::t_int N;  // number of atoms;
       std::getline( structfile, line ); // name and inconsequential data.
       std::istringstream sstr( line );
@@ -129,9 +141,10 @@ namespace Fitting
       
       // Adds structure to structure set.
       structures.push_back( structure );
-      t_Configurations *confs = _symseps.configurations( structure );
-      training.push_back( *confs );
-      delete confs; 
+      training.resize( training.size() + 1 );
+      t_Configurations &confs( training.back() );
+      confs.clear();
+      _symseps.configurations( structure, confs );
     }
     __CATCHCODE(, "Error while reading " << fullpath << "\n" )
   }

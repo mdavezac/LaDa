@@ -94,7 +94,7 @@ namespace Crystal {
     //! The reciprocal-space vector position in cartesian unit and their intensity.
     std::vector< CAtom > k_vecs;
     //! Just an old variable with the number of the structure in those NREL PI files.
-    types::t_int Pi_name;
+    std::string name;
     //! The energy of the structure, whatever (and if) it is computed with.
     types::t_real energy;
     //! The frozen coordinates of the unit-cell.
@@ -107,19 +107,19 @@ namespace Crystal {
     public: 
 
     //! Constructor
-    Structure() : Pi_name(0), energy(0), freeze(FREEZE_NONE) {};
+    Structure() : name(""), energy(0), freeze(FREEZE_NONE) {};
     //! Constructor and Initializer
     Structure   ( const Atat_Structure &atat ) 
-              : Pi_name(0), energy(0), freeze(FREEZE_NONE)
+              : name(""), energy(0), freeze(FREEZE_NONE)
         { convert_from_ATAT( atat ); };
     //! Constructor. Loads itself from XML node \a _element.
     Structure   ( const TiXmlElement &_element )
-              : Pi_name(0), energy(0), freeze(FREEZE_NONE)
+              : name(""), energy(0), freeze(FREEZE_NONE)
       { Load( _element ); };
     //! Copy Constructor
     Structure   ( const Structure &_str )
               : cell(_str.cell), atoms(_str.atoms), k_vecs(_str.k_vecs),
-                Pi_name(_str.Pi_name), energy(_str.energy), freeze(_str.freeze),
+                name(_str.name), energy(_str.energy), freeze(_str.freeze),
                 scale( _str.scale ) {}
     //! Destructor.
     ~Structure () {};

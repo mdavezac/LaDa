@@ -137,9 +137,9 @@ namespace Crystal {
     __DOASSERT( not parent, "Could not find Structure tag in xml.\n" )
 
     // read PI name if available
-    if ( not parent->Attribute("PI", &i) )
-      Pi_name = 0;
-    Pi_name = types::t_int(i);
+    name = "";
+    if ( parent->Attribute("name") )
+      name = parent->Attribute("name");
     energy = 1.0;
     if ( not parent->Attribute("energy", &d) )
       energy = 666.666;
@@ -287,7 +287,7 @@ namespace Crystal {
     structure->LinkEndChild( parent );
     structure->SetAttribute("N", atoms.size() );
     structure->SetAttribute("N", atoms.size() );
-    structure->SetAttribute("PI", Pi_name );
+    structure->SetAttribute("name", name );
     
     for (int i=0; i < 3; ++i)
     {
