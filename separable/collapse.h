@@ -30,14 +30,14 @@ namespace Separable
    *                        g_{i,n}^{(r)}(x_i),
    *    \f]
    *    We will keep track of the r, i, and n indices. Furthermore, the least
-   *    square-fit method fits to  \e o observables. It expects a "2d" input matrix
-   *    I[d, (r,i) ], where the slowest running index is the dimension \e d.
-   *    I[d] should be a vecrtor container type of scalar values. These scalar
-   *    values are orderer with  \e i the fastest running index and \e r the
-   *    slowest. The method also expects a functor which can create the matrix
-   *    \e A (as in \e Ax = \e b ) for each specific dimension \e d. The type
-   *    of A is a vector of scalars. The fastest running index is \e i,
-   *    followed by \e r, and finally \e o. 
+   *    square-fit method fits to  \e o targets values. It expects a "2d"
+   *    input matrix I[d, (r,i) ], where the slowest running index is the
+   *    dimension \e d.  I[d] should be a vecrtor container type of scalar
+   *    values. These scalar values are orderer with  \e i the fastest running
+   *    index and \e r the slowest. The method also expects a functor which
+   *    can create the matrix \e A (as in \e Ax = \e b ) for each specific
+   *    dimension \e d. The type of A is a vector of scalars. The fastest
+   *    running index is \e i, followed by \e r, and finally \e o. 
    *    \tparam T_FUNCTION must be a Function< Summand< T_BASIS > > 
    **/
   template< class T_FUNCTION >
@@ -53,23 +53,28 @@ namespace Separable
 
       //! Constructor
       Collapse   ( t_Function &_function )
-                  : do_update(false), is_initialized(false), D(0), nb_obs(0),
+                  : do_update(false), is_initialized(false), D(0), nb_targets(0),
                     nb_ranks(0), function( _function ) {}
 
       //! \brief Constructs the matrix \a A for dimension \a _dim. 
       //! \details Note that depending \a _coef are used only for dim == 0,
       //!          and/or do_update == true.
+      //! \tparam T_VECTOR is a vector.
       //! \tparam T_MATRIX is a vector, e.~g. a flattened matrix. This class is
       //!                  meant for %GSL which expects this type of memory
       //!                  setup for matrices. 
       //! \tparam T_VECTORS is a vector of vectors or similar. 
+      //! \param[out] _b are the target value of the collapsed least square
+      //                 fit along dimension \a _dim, \a _b[ (r,i) ].
       //! \param[out] _A will contain the collapsed matrix for the linear
-      //!                least-square fit. \a _A[ (o,r,i ) ].
+      //!                least-square fit. \a _A[ (r,i,r',i') ].
       //! \param[in] The dimension for which to create \a _A.
+      //! \param[in] _targets are the structural target value, \a _target[o].
       //! \param[in] _coefs contains the coefficients for \e all dimensions.
       //!                   \a _coefs[d, (r,i) ]
-      template< class T_MATRIX, class T_VECTORS >
-      void operator()( T_MATRIX &_A, types::t_unsigned _dim, const T_VECTORS &_coefs );
+      template< class T_VECTOR, class T_MATRIX, class T_VECTORS >
+      void operator()( T_VECTOR &_b, T_MATRIX &_A, types::t_unsigned _dim,
+                       const T_VECTOR &_targets, const T_VECTORS &_coefs  );
 
       //! \brief Constructs the completely expanded matrix.
       //! \tparams T_VECTORS is a vector of vectors.
@@ -89,13 +94,6 @@ namespace Separable
       //! \param[in] _solution contains the coefficients for \e all dimensions.
       //!                      \a _solution[d, (r,i) ]
       template< class T_VECTORS > void reassign( const T_VECTORS &_solution ) const;
-
-      __DODEBUGCODE
-      ( 
-        //! \cond
-        template<class T_VECTORS> void print_funcs( const T_VECTORS &_x ) const; 
-        //! \endcond
-      )
 
     protected:
       //! Initializes Collapse::factors.
@@ -117,28 +115,28 @@ namespace Separable
       bool is_initialized;
       //! Maximum dimension.
       types::t_unsigned D;
-      //! Number of observables.
-      types::t_unsigned nb_obs;
+      //! Number of target values.
+      types::t_unsigned nb_targets;
       //! Number of ranks.
       types::t_unsigned nb_ranks;
       //! Return type of the function
-      typedef typename T_FUNCTION :: t_Return t_Type;
+      typedef typename T_FUNCTION :: t_Basis :: value_type
+                                  :: t_Basis :: value_type
+                                  :: t_Basis :: value_type :: t_Return t_Type;
       //! \brief Type of the matrix containing expanded function elements.
-      typedef std::vector< std::vector< t_Type > > t_Expanded;
+      typedef std::vector< std::vector< std::vector< t_Type > > > t_Expanded;
       //! A matrix with all expanded function elements.
-      //! \details expanded[ (o,d), (r,i) ]. The type is a vector of vectors.
+      //! \details expanded[ d, r, (i,o) ]. The type is a vector of vectors.
       //!          The fastest-running \e internal index is \e i. The
       //!          fastest-running \e external index is d.
-      //!          \f$ \text{expanded}[(o,d), (r,i)] = g_{d,i}^{(r)}(x_d^{(o)})\f$.
+      //!          \f$ \text{expanded}[ d, r, (i,o)] = g_{d,i}^{(r)}(x_d^{(o)})\f$.
       t_Expanded expanded;
       //! Type of the factors.
       typedef std::vector< std::vector< t_Type > > t_Factors;
       /** \brief A matrix wich contains the factors of the separable functions.
-       *  \details factors[(o,r), d]. A vector of vectors. The \e internal
-       *           index is \e d. The fastest-running \e external
-       *           index is \e r.
+       *  \details factors[ (r, o), d ]. A vector of vectors. 
        *           \f$
-       *               \text{factors}[d, (r,i)] = \sum_i
+       *               \text{factors}[d, (r, o)] = \sum_i
        *               \lambda_{d,i}^{(r)}g_{d,i}^{(r)}(x_d^{(o)})
        *           \f$. **/
       t_Factors factors;

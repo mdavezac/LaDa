@@ -48,7 +48,7 @@ namespace Fitting
       //! \brief Pre-minimizer stuff.
       //! \param _v[in] is a vector with as many elements as there observed
       //!               data points.
-      void init_b( t_Vector &_v ) { b = _v; }; 
+      void init_targets( t_Vector &_v ) { b = _v; }; 
       //! \brief Perform Alternating Linear Least-Square Fit.
       //! \params _solution should be a vector of vectors. The outer vectors
       //!         have the dimension of the problem. The inner vectors should
@@ -75,7 +75,7 @@ namespace Fitting
 
     protected:
       //! The target values.
-      t_Vector b;
+      t_Vector targets;
   };
 
   template< class T_LLSQ > template< class T_COLLAPSE >
@@ -98,7 +98,7 @@ namespace Fitting
         types::t_unsigned iter = 0;
         types::t_int D( _solution.size() );
         t_Matrix A;
-        t_Vector error;
+        t_Vector b;
         types::t_real convergence(0);
         do
         {
@@ -106,9 +106,9 @@ namespace Fitting
           i_sol = _solution.begin();
           for(convergence = 0e0; i_sol != i_sol_end; ++i_sol, ++dim )
           {
-            (*collapse)( A, dim, _solution );
+            (*collapse)( targets, b, A, dim, _solution );
             llsq.init_A( A );
-//           llsq.init_b( error );
+            llsq.init_b( b );
             std::cout << "A: ";
             std::for_each( A.begin(), A.end(), std::cout << boost::lambda::_1 << " " );
             std::cout << "\ny: ";
