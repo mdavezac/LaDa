@@ -16,7 +16,7 @@ namespace CE
   Separables :: Separables   ( types::t_unsigned _rank,
                                types::t_unsigned _size,
                                std::string _type )
-                           : basis_size( _size ), basis_type( _type ), 
+                           : t_Base(), basis_size( _size ), basis_type( _type ), 
                              name("Sum of Separables")
   {
     set_rank( _rank );
@@ -181,18 +181,13 @@ namespace CE
   types::t_real SymSeparables :: operator()( t_Configurations &_configs, 
                                              const Separables &_func ) const
   {
-    using namespace boost::lambda;
+    namespace bl = boost::lambda;
     types::t_real result(0);
-    std::for_each
-    (
-      _configs.begin(), _configs.end(),
-      var(result) +=
-        ret<t_CoefBitset::second_type>
-           (
-               bind( &t_CoefBitset::second, _1 )
-             * bind<t_CoefBitset::second_type>( _func, bind( &t_CoefBitset::first, _1 ) )
-           )
-    );
+    t_Configurations :: const_iterator i_conf = _configs.begin();
+    t_Configurations :: const_iterator i_conf_end = _configs.end();
+    for(; i_conf != i_conf_end; ++i_conf )
+      result += i_conf->second * _func( i_conf->first.begin(),
+                                        i_conf->first.end()   );
     return result; 
   }
 

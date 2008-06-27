@@ -9,6 +9,7 @@
 #endif
 
 #include <string>
+#include <vector>
 
 #include <opt/types.h>
 #include <atat/vectmac.h>
@@ -31,9 +32,8 @@ namespace CE
   {
       friend class SymSeparables;
       //! Type of the base.
-      typedef ::Separable::Function< 
-                            ::Separable::Summand<
-                               ::Separable::BooleanBasis > > t_Base;
+      typedef ::Separable::Function< std::vector< ::Separable::Summand<
+                                     ::Separable::BooleanBasis > > > t_Base;
     public:
       //! Constructor.
       Separables( types::t_unsigned _rank = 2,
@@ -43,14 +43,13 @@ namespace CE
       //! Sets the rank of the separable function.
       void set_rank( types::t_unsigned _rank );
       //! Sets the rank of the separable function.
-      void set_basis( types::t_unsigned _size, std::string _size );
+      void set_basis( types::t_unsigned _size, std::string _type );
       //! Returns the rank of the separable function.
       types::t_unsigned rank() const  { return basis.size(); }
       //! Returns the type of the basis.
       std::string type() const  { return basis_type; }
       //! Returns the size of the basis.
       types::t_unsigned size() const  { return basis_size; }
-
 
     protected:
       //! Size of the basis.

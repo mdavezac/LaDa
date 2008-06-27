@@ -26,7 +26,8 @@ namespace Separable
   // Forward declarations
   //! \cond
   template< class T_FUNCTION >  class Collapse;
-  template< class T_B, template<class> class T_G, template<class> class T_S > class Base;
+  template< class T_B, template<class> class T_G, template<class> class T_S >
+    class Base;
   namespace details
   { 
     template< class T_FUNCTION,
@@ -45,9 +46,9 @@ namespace Separable
  
   //! \brief Defines a separable function of many-variables.
   //! \details Programmatically the law for which this function is "separable"
-  //!          is defined via \a T_GROUPOP. \a T_BASIS defines a family of 1d functions.
-  //!          This function is both one-dimensional when invoked with a
-  //!          scalar, and n-dimensional when invoked with iterators.
+  //!          is defined via \a T_GROUPOP. \a T_BASIS defines a family of 1d
+  //!          functions.  This function is both one-dimensional when invoked
+  //!          with a scalar, and n-dimensional when invoked with iterators.
   //! \tparam T_BASIS is a container of 1d functions. These functions should
   //!         zero order evaluation via a functor call.
   //! \tparam T_GROUPOP is template class defining how to link return values from
@@ -134,7 +135,8 @@ namespace Separable
   template< class T_BASIS, 
             template<class> class T_GROUPOP,
             template<class> class T_SCALAROP>
-   const bool Base<T_BASIS, T_GROUPOP, T_SCALAROP> :: has_gradient = T_BASIS::has_gradient;
+    const bool Base<T_BASIS, T_GROUPOP, T_SCALAROP> 
+                   :: has_gradient = T_BASIS::has_gradient;
 
   // Forward declaration.
   template< class T_ALLSQ > class AllsqInterface;
@@ -143,12 +145,43 @@ namespace Separable
   //! \tparam T_BASIS is a container of 1d functions. These functions should
   //!         zero order evaluation via a functor call, and grdient evaluation
   //!         via a t_Return gradient( t_Arg ) member function.
-  template< class T_BASIS > class Factor : public Base< T_BASIS >{};
+  template< class T_BASIS > class Factor : public Base< T_BASIS >
+  {
+    //! Type of the base class.
+    typedef Base<T_BASIS> t_Base;
+    public:
+      //! Constructor
+      Factor() : t_Base() {}
+      //! Destructor
+      ~Factor() {}
+
+      using t_Base::operator(); 
+      using t_Base::operator[]; 
+      using t_Base::set;
+      using t_Base::set_name;
+      using t_Base::serialize;
+  };
   //! One single separable function.
   //! \tparam T_BASIS is a container of 1d functions. These functions should
   //!         zero order evaluation via a functor call.
   template< class T_BASIS > class Summand :
-      public Base< std::vector< Factor<T_BASIS> >, std::multiplies, std::plus >{};
+      public Base< std::vector< Factor<T_BASIS> >, std::multiplies, std::plus >
+  {
+    //! Type of the base class.
+    typedef Base< std::vector< Factor<T_BASIS> >, std::multiplies, std::plus >
+            t_Base;
+    public:
+      //! Constructor
+      Summand() : t_Base() {}
+      //! Destructor
+      ~Summand() {}
+
+      using t_Base::operator(); 
+      using t_Base::operator[]; 
+      using t_Base::set;
+      using t_Base::set_name;
+      using t_Base::serialize;
+  };
   /** \brief A sum of separable functions.
    * \details The separable function \f$F(\mathbf{x})\f$ acting upon vector
    *          \f$\mathbf{x}\f$ and returning a scalar can be defined as 
@@ -165,8 +198,6 @@ namespace Separable
   template< class T_BASIS >
     class Function : public Base< T_BASIS >
     {
-//       friend std::ostream& operator<< <T_BASIS>( std::ostream& _stream,
-//                                                  const Function<T_BASIS>& _func );
         friend class Collapse< Function<T_BASIS> >;
         template<class T_ALLSQ>  friend class AllsqInterface;
         //! Type of the base class.

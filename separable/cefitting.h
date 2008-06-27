@@ -43,11 +43,11 @@ namespace Fitting
 
       //! Check training convergence.
       std::pair< types::t_real, types::t_real>
-        check_training( CE::Separables &_sep, bool _verbose = false ) const
+        check_training( const CE::Separables &_sep, bool _verbose = false ) const
         { return check( _sep, false, _verbose ); } 
       //! Check predictions.
       std::pair< types::t_real, types::t_real>
-        check_predictions( CE::Separables &_sep, bool _verbose = false ) const
+        check_predictions( const CE::Separables &_sep, bool _verbose = false ) const
         { return check( _sep, true, _verbose ); } 
 
       //! Number of structures in training set.
@@ -70,7 +70,8 @@ namespace Fitting
       //! \return an std::pair where the first value is the average error,
       //!         and the second value the maximum error.
       std::pair< types::t_real, types::t_real>
-        check( CE::Separables &_sep, bool _which , bool _verbose = false ) const;
+        check( const CE::Separables &_sep,
+               bool _which , bool _verbose = false ) const;
 
 
       //! The type of vector holding all equvivalent configurations.

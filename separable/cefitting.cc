@@ -29,23 +29,23 @@ namespace Fitting
     {
       boost::filesystem::path path( _dir );
       read_ldasdat( path, _ldasdat );
-      { using namespace boost::lambda;
+      {
+        namespace bl = boost::lambda;
         std::for_each
         ( 
           names.begin(), names.end(),
-          bind( &SepCeInterface::read_structure, var(*this),
-                constant( _symseps ), constant( path ), _1 )
+          bl::bind( &SepCeInterface::read_structure, bl::var(*this),
+                    bl::constant( _symseps ), bl::constant( path ), bl::_1 )
         );
-        opt::concurrent_loop
-        ( 
-          structures.begin(), structures.end(), targets.begin(),
-          bind( &Crystal::Structure::energy, _1 ) = _2
-        );
+        std::vector< Crystal::Structure > :: iterator i_s = structures.begin();
+        std::vector< Crystal::Structure > :: iterator i_se = structures.end();
+        std::vector< types::t_real > :: const_iterator i_t = targets.begin();
+        for(; i_s != i_se; ++i_s, ++i_t ) i_s->energy = *i_t;
         if( not _verbose ) return;
         std::for_each
         ( 
           structures.begin(), structures.end(), 
-          std::cout << _1 << "\n" 
+          std::cout << bl::_1 << "\n" 
         );
       }
     }
@@ -142,7 +142,7 @@ namespace Fitting
   }
 
   std::pair<types::t_real, types::t_real> 
-   SepCeInterface :: check( CE::Separables &_sep,
+   SepCeInterface :: check( const CE::Separables &_sep,
                             bool _which, bool _verbose ) const
     {
       types::t_real average(0);
@@ -167,7 +167,8 @@ namespace Fitting
         t_Configurations :: const_iterator i_conf_end( i_train->end() );
         types::t_real intermed(0);
         for(; i_conf != i_conf_end; ++i_conf )
-          intermed +=  _sep( i_conf->first ) * ( i_conf->second );
+          intermed +=  _sep.operator()( i_conf->first.begin(),
+                                        i_conf->first.end() ) * ( i_conf->second );
         // Prints each structure if _verbose=true.
         if( _verbose )
           std::cout << "  structure: " << *i_name << "   "

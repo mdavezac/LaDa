@@ -56,22 +56,33 @@ namespace Separable
                   : do_update(false), is_initialized(false), D(0), nb_targets(0),
                     nb_ranks(0), function( _function ) {}
 
-      //! \brief Constructs the matrix \a A for dimension \a _dim. 
-      //! \details Note that depending \a _coef are used only for dim == 0,
-      //!          and/or do_update == true.
-      //! \tparam T_VECTOR is a vector.
-      //! \tparam T_MATRIX is a vector, e.~g. a flattened matrix. This class is
-      //!                  meant for %GSL which expects this type of memory
-      //!                  setup for matrices. 
-      //! \tparam T_VECTORS is a vector of vectors or similar. 
-      //! \param[out] _b are the target value of the collapsed least square
-      //                 fit along dimension \a _dim, \a _b[ (r,i) ].
-      //! \param[out] _A will contain the collapsed matrix for the linear
-      //!                least-square fit. \a _A[ (r,i,r',i') ].
-      //! \param[in] The dimension for which to create \a _A.
-      //! \param[in] _targets are the structural target value, \a _target[o].
-      //! \param[in] _coefs contains the coefficients for \e all dimensions.
-      //!                   \a _coefs[d, (r,i) ]
+      /** \brief Constructs the matrix \a A for dimension \a _dim. 
+       *  \details Note that depending \a _coef are used only for dim == 0,
+       *           and/or do_update == true.
+       *  \tparam T_VECTOR is a vector.
+       *  \tparam T_MATRIX is a vector, e.~g. a flattened matrix. This class is
+       *                   meant for %GSL which expects this type of memory
+       *                   setup for matrices. 
+       *  \tparam T_VECTORS is a vector of vectors or similar. 
+       *  \param[out] _b are the target value of the collapsed least square
+       *                 fit along dimension \a _dim, \a _b[ (r,i) ].
+       *      \f[
+       *         \_b[ (r,i) ] = \sum_o \text{targets}[o] g_{i,d}^{(r)}(x_d^{(o)})
+       *                              \prod_{u\neq d} \text{factor}[u,(r,o)]
+       *      \f]
+       *  \param[out] _A will contain the collapsed matrix for the linear
+       *                 least-square fit. 
+       *      \f[
+       *         \_A[ (r,i,r',i') ] = \sum_o g_{i,d}^{(r)}(x_d^{(o)})
+       *                              \prod_{u\neq d} \text{factors}[u,(r,o)]
+       *                              \prod_{u\neq d} \text{factors}[u,(r',o)]
+       *                               g_{i',d}^{(r')}(x_d^{(o)})
+       *      \f]
+       *  \param[in] The dimension for which to create \a _A.
+       *  \param[in] _targets are the structural target value, \a _target[o].
+       *  \param[in] _coefs contains the coefficients for \e all dimensions.
+       *                    \a _coefs[d, (r,i) ]
+       **/
       template< class T_VECTOR, class T_MATRIX, class T_VECTORS >
       void operator()( T_VECTOR &_b, T_MATRIX &_A, types::t_unsigned _dim,
                        const T_VECTOR &_targets, const T_VECTORS &_coefs  );
@@ -120,9 +131,7 @@ namespace Separable
       //! Number of ranks.
       types::t_unsigned nb_ranks;
       //! Return type of the function
-      typedef typename T_FUNCTION :: t_Basis :: value_type
-                                  :: t_Basis :: value_type
-                                  :: t_Basis :: value_type :: t_Return t_Type;
+      typedef typename T_FUNCTION :: t_Basis :: value_type :: t_Return t_Type;
       //! \brief Type of the matrix containing expanded function elements.
       typedef std::vector< std::vector< std::vector< t_Type > > > t_Expanded;
       //! A matrix with all expanded function elements.
@@ -136,7 +145,7 @@ namespace Separable
       /** \brief A matrix wich contains the factors of the separable functions.
        *  \details factors[ (r, o), d ]. A vector of vectors. 
        *           \f$
-       *               \text{factors}[d, (r, o)] = \sum_i
+       *               \text{factors}[(r, o), d] = \sum_i
        *               \lambda_{d,i}^{(r)}g_{d,i}^{(r)}(x_d^{(o)})
        *           \f$. **/
       t_Factors factors;

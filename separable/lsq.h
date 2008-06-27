@@ -48,7 +48,7 @@ namespace Fitting
       //! \brief Pre-minimizer stuff.
       //! \param _v[in] is a vector with as many elements as there observed
       //!               data points.
-      void init_targets( t_Vector &_v ) { b = _v; }; 
+      void init_targets( t_Vector &_v ) { targets = _v; }; 
       //! \brief Perform Alternating Linear Least-Square Fit.
       //! \params _solution should be a vector of vectors. The outer vectors
       //!         have the dimension of the problem. The inner vectors should
@@ -106,7 +106,7 @@ namespace Fitting
           i_sol = _solution.begin();
           for(convergence = 0e0; i_sol != i_sol_end; ++i_sol, ++dim )
           {
-            (*collapse)( targets, b, A, dim, _solution );
+            (*collapse)( b, A, dim, targets, _solution );
             llsq.init_A( A );
             llsq.init_b( b );
             std::cout << "A: ";

@@ -2,6 +2,7 @@
 //  Version: $Id$
 //
 
+#include "opt/algorithms.h"
 
 namespace Separable
 {
@@ -36,38 +37,38 @@ namespace Separable
     expanded.resize( D );
     typename t_Expanded :: iterator i_dexp = expanded.begin();
     t_Sizes :: const_iterator i_dsize = sizes.begin();
-    for( types::t_unsigned d(0); d < D; ++d, ++i_dexp, ++i_dsize, ++i_dfacs )
+    for( types::t_unsigned d(0); d < D; ++d, ++i_dexp, ++i_dsize, ++i_dexp )
     {
       // prepares loop over ranks
-      i_dexp->resize( rsize.end() );
+      i_dexp->resize( i_dsize->size() );
       typename t_Expanded :: value_type :: iterator i_rexp = i_dexp->begin();
       typename t_Sizes :: value_type :: const_iterator i_rsize = i_dsize->begin();
       typename t_Sizes :: value_type :: const_iterator i_rsize_end = i_dsize->end();
-      for( types::t_unsigned r(0); i_rsize != i_rsize_end ; ++r, ++i_rexp, ++i_rsize ) 
+      for( types::t_unsigned r(0); i_rsize != i_rsize_end;
+           ++r, ++i_rexp, ++i_rsize ) 
       {
-        __ASSERT( _function.basis[r].basis[d].size() != *i_rsize,
+        __ASSERT( function.basis[r].basis[d].basis.size() != *i_rsize,
                   "Inconsistent size.\n" )
 
         // prepares loop over functions.
-        i_rex->resize( (*i_rsize) * nb_obs );
+        i_rexp->resize( (*i_rsize) * nb_targets );
         typename t_Expanded :: value_type
-                            :: value_type iterator i_iexp = i_rexp->begin();
+                            :: value_type :: iterator i_iexp = i_rexp->begin();
         typename t_Function :: t_Basis :: value_type
                             :: t_Basis :: value_type 
-                            :: t_Basis :: const_iterator i_ifunc = _function.basis[r]
-                                                                            .basis[d].begin();
+                            :: t_Basis
+                            :: const_iterator i_ifunc = function.basis[r]
+                                                                .basis[d]
+                                                                .basis.begin();
         namespace bl = boost::lambda;
         for( types::t_unsigned i(0); i < *i_rsize; ++i, ++i_ifunc )
-          opt::concurrent_loop // loop over target values
-          (
-            _x.begin(), _x.end(), boost::ref( i_iexp ),
-            // computes expanded[d,r, (i,o)] = g_{d,i}^{(r)}(x_d^{(o)}).
-            bl::_2 = bl::bind( bl::var( *i_ifunc ), bl::_1 )
-          ); // end of loop over target values
+          for( types::t_unsigned o(0); o < _x.size(); ++o )
+            *i_iexp = (*i_ifunc)( _x[o][d] );
 
 
         __ASSERT( i_iexp  != i_rexp->end(), "Inconsistent size.\n" )
-        __ASSERT( i_ifunc != i_function.basis[r].basis[d].end(), "Inconsistent size.\n" )
+        __ASSERT( i_ifunc != function.basis[r].basis[d].basis.end(),
+                  "Inconsistent size.\n" )
       } // end of loop over ranks
       __ASSERT( i_rexp  != i_dexp->end(), "Inconsistent size.\n" )
       __ASSERT( i_rsize != i_dsize->end(), "Inconsistent size.\n" )
@@ -82,63 +83,127 @@ namespace Separable
     // computes factors.
   }
 
-  template<class T_FUNCTION>  template< class T_MATRIX, class T_VECTORS >
-    void Collapse<T_FUNCTION>::matrixA( T_MATRIX &_A, types::t_unsigned _dim,
-                                        const T_VECTORS &_coefs )
-    {
-#     ifdef _LADADEBUG
-        try {
-#     endif
-      __ASSERT( sizes.size() <= _dim, "Inconsistent sizes.\n" )
-      __ASSERT( _coefs.size() != D,
-                "Inconsistent number of dimensions/coefficients.\n" )
-      __ASSERT
-      ( 
-        _coefs[_dim].size() != std::accumulate( sizes[_dim].begin(),
-                                                sizes[_dim].end(), 0 ),
-        "Inconsistent number of ranks/dimensions/coefficients.\n" 
-      )
-      __ASSERT( factors.size() == _coefs[_dim].size(), "Inconsistent sizes.\n" )
-      __ASSERT( expanded.size() <= _dim, "Inconsistent sizes.\n" )
-
-      if( ( not is_initialized ) or ( ( not do_update ) and _dim == 0 ) )
-        initialize_factors( _coefs );
-      else if ( do_update ) update_factors( _dim, _coefs );
-      is_initialized = true;   
- 
-      _A.resize( nb_obs * _coefs[_dim].size() );
-      typename T_MATRIX :: iterator i_A = _A.begin();
-      typename T_MATRIX :: iterator i_A_end = _A.end();
-      typename t_Expanded :: const_iterator i_ex = expanded.begin() + _dim;
-      typename t_Factors :: const_iterator i_facs = factors.begin();
-      std::cout << "C0 A:\n";
-      for(; i_A != i_A_end; i_ex += D ) // loops over observables
+  template<class T_FUNCTION>  
+    template< class T_VECTOR, class T_MATRIX, class T_VECTORS >
+      void Collapse<T_FUNCTION>::operator()( T_VECTOR &_b, T_MATRIX &_A, 
+                                             types::t_unsigned _dim,
+                                             const T_VECTOR &_targets,
+                                             const T_VECTORS &_coefs     )
       {
-        __ASSERT( i_ex->size() != _coefs[_dim].size(), "Inconsistent sizes.\n" )
-        t_Sizes :: value_type :: const_iterator i_size = sizes[_dim].begin();
-        t_Sizes :: value_type :: const_iterator i_size_end = sizes[_dim].end();
-        typename t_Expanded :: value_type :: const_iterator i_var = i_ex->begin();
-        for(; i_size != i_size_end; ++i_size, ++i_facs ) // loops over ranks.
+#       ifdef _LADADEBUG
+          try {
+#       endif
+
+        __ASSERT( _dim  >= D, "Input dimension out of range.\n" )
+        __ASSERT( sizes.size()  != D, "Inconsistent sizes.\n" )
+        __ASSERT( _coefs.size() != D,
+                  "Inconsistent number of dimensions/coefficients.\n" )
+        __ASSERT
+        ( 
+          _coefs[_dim].size() != std::accumulate( sizes[_dim].begin(),
+                                                  sizes[_dim].end(), 0 ),
+          "Inconsistent number of ranks/dimensions/coefficients.\n" 
+        )
+        __ASSERT( factors.size() == _coefs[_dim].size(), "Inconsistent sizes.\n" )
+        __ASSERT( expanded.size() <= _dim, "Inconsistent sizes.\n" )
+     
+        if( ( not is_initialized ) or ( ( not do_update ) and _dim == 0 ) )
+          initialize_factors( _coefs );
+        else if ( do_update ) update_factors( _dim, _coefs );
+        is_initialized = true;   
+     
+        _b.resize( _coefs[_dim].size() );
+        _A.resize( _b.size() * _b.size() );
+     
+        typename T_VECTOR :: iterator i_ctarget = _b.begin();
+        typename T_MATRIX :: iterator i_A = _A.begin();
+        typename t_Expanded :: value_type 
+                            :: const_iterator i_rexpI = expanded[_dim].begin();
+        typename t_Expanded :: value_type
+                            :: const_iterator i_rexp_end = expanded[_dim].end();
+        typename t_Factors :: const_iterator i_facsI = factors.begin();
+        typename t_Sizes :: value_type
+                         :: const_iterator i_sizeI = sizes[_dim].begin();
+        typename t_Sizes :: value_type :: const_iterator i_size_first( i_sizeI );
+        // loops over ranks I
+        for(; i_rexpI < i_rexp_end; ++i_rexpI, ++i_sizeI ) 
         {
-          // Computes factor for this rank.
-          typename t_Factors :: value_type :: const_iterator i_fac = i_facs->begin();
-          typename t_Factors :: value_type :: const_iterator i_fac_end = i_facs->end();
-          typename t_Factors ::value_type :: value_type factor(1);
-          for(types::t_unsigned d = 0; i_fac != i_fac_end; ++i_fac, ++d )
-            if( d != _dim ) factor *= (*i_fac);
- 
-          // loops over basis set of factor function of current dimension and rank.
-          for( types::t_unsigned i = *i_size; i > 0; --i, ++i_var, ++i_A )
-            { *i_A = (*i_var) * factor; std::cout << *i_A << " "; }
-        } // end of loop over ranks.
-      } // end of loop over observables.
-      std::cout << "\nC A: ";
-      std::for_each( _A.begin(), _A.end(), std::cout << boost::lambda::_1 << " " );
-      std::cout << "\n";
-#     ifdef _LADADEBUG
-        } __CATCHCODE(, "Error while creating collapsed A-matrix.\n" )
-#     endif
-    }
+     
+          // loop over basis functions I
+          typename t_Expanded :: value_type :: value_type
+                              :: const_iterator i_iexp_inc = i_rexpI->begin();
+          for(types::t_unsigned iI(0); iI < *i_sizeI;
+              ++iI, i_iexp_inc += nb_targets, ++i_ctarget )
+          {
+     
+            // loops over ranks I
+            typename t_Expanded :: value_type 
+                                :: const_iterator i_rexpII = expanded[_dim].begin();
+            typename t_Factors :: const_iterator i_facsII = factors.begin();
+            typename t_Sizes :: value_type 
+                             :: const_iterator i_sizeII( i_size_first );
+            for(; i_rexpII < i_rexp_end; ++i_rexpII, ++i_sizeII ) 
+            {
+     
+              // loop over basis functions II
+              typename t_Expanded :: value_type :: value_type
+                                  :: const_iterator i_iexpII = i_rexpII->begin();
+              typename T_VECTOR :: const_iterator i_starget = _targets.begin();
+              for(types::t_unsigned iII(0); iII < *i_sizeII;
+                  ++iII, ++i_A, ++i_starget )
+              {
+                __ASSERT( i_A == _A.end(), "Inconsistent size.\n" )
+     
+                // Initializes element to 0 before summing over structural targets.
+                *i_A = typename T_MATRIX :: value_type(0);
+     
+                // loop over target values
+                typename t_Expanded :: value_type :: value_type
+                                    :: const_iterator i_iexpI( i_iexp_inc );
+                for(types::t_unsigned o(0); o < nb_targets; ++o, ++i_iexpI)
+                {
+                  __ASSERT( i_iexpI == i_rexpI->end(), "Inconsistent size.\n" )
+                  __ASSERT( i_facsI->size()  != D,     "Inconsistent size.\n" )
+                  __ASSERT( i_facsII->size() != D,     "Inconsistent size.\n" )
+     
+                  // Computes first factor.
+                  t_Type UI( 1 );
+                  typename t_Factors :: value_type 
+                                     :: const_iterator i_fac = i_facsI->begin();
+                  for(types::t_unsigned d(0); d < D; ++i_fac, ++d )
+                    if( d != _dim ) UI *= *i_fac;
+                 
+                  // Computes second factor.
+                  t_Type UII( 1 ); i_fac = i_facsII->begin();
+                  for(types::t_unsigned d(0); d < D; ++i_fac, ++d )
+                    if( d != _dim ) UII *= *i_fac;
+     
+                  // Computes matrix element.
+                  *i_A += (*i_iexpI) * UI * UII * (*i_iexpII );
+     
+                  // bypasses collapsed target on second dimension of A.
+                  if( i_sizeII != i_size_first or iII != 0 ) continue;
+                 
+                  // Computes collapsed target element.
+                  __ASSERT( i_ctarget != _b.end(),       "Inconsistent size.\n" )
+                  __ASSERT( i_starget != _targets.end(), "Inconsistent size.\n" )
+                  *i_ctarget = (*i_iexpI) * UI * (*i_starget);
+                }
+     
+              } // loop over basis functions II
+     
+            } // end of loop over ranks II
+     
+          } // loop over basis functions I
+          __ASSERT( i_iexp_inc != i_rexpI->end(), "Inconsistent size.\n" )
+     
+        } // end of loop over ranks I
+
+#       ifdef _LADADEBUG
+          } __CATCHCODE(, "Error while creating factors.\n" )
+#       endif
+     
+      } // end of functor.
 
   template< class T_FUNCTION> template< class T_VECTORS >
     void Collapse<T_FUNCTION>::initialize_factors( const T_VECTORS &_coefs )
@@ -150,7 +215,7 @@ namespace Separable
       __ASSERT( nb_ranks != function.basis.size(),
                 "Inconsistent rank size.\n" )
 
-      factors.resize( nb_ranks * nb_obs );
+      factors.resize( nb_ranks * nb_targets );
       typename t_Factors :: iterator i_facs = factors.begin();
       for( types::t_unsigned r(0); r < nb_ranks; ++r )
       {
@@ -162,7 +227,8 @@ namespace Separable
           for( types::t_unsigned d(0); d < D; ++d, ++i_fac )
           {
             __ASSERT( function.size() <= r, "Inconsistent rank size.\n" )
-            if( function.basis[r].size() <= d ) { *i_fac = t_Type(1); continue; }
+            if( function.basis[r].basis.size() <= d )
+              { *i_fac = t_Type(1); continue; }
 
             types::t_unsigned acc = std::accumulate( sizes[d].begin(),
                                                      sizes[d].begin() + r, 0 );
@@ -171,21 +237,22 @@ namespace Separable
             __ASSERT( expanded[d][r].size() <= ( acc + sizes[d][r] ) * nb_targets + o, 
                        "Inconsistent size.\n" )
 
-            typedef typename t_Expanded :: value_type :: value_type :: const_iterator t_itexp;
+            typedef typename t_Expanded :: value_type
+                                        :: value_type :: const_iterator t_itexp;
             typedef typename T_VECTORS :: value_type :: const_iterator t_itcoefs;
-     
-            t_coefs i_coef = _coefs[d].begin() + acc;
+            t_itcoefs i_coef = _coefs[d].begin() + acc;
             t_itexp i_iexp = expanded[d][r].begin() + acc * nb_targets + o;
 
             *i_fac = t_Type(0);
-            for( types::t_unsigned i( sizes[d][r] ); i > o; ++i, i_iexp += o, ++i_coef )
+            for( types::t_unsigned i( sizes[d][r] ); i > o;
+                 ++i, i_iexp += o, ++i_coef )
               *i_fac += (*i_coef) * (*i_iexp ); 
             
           } // end of loop over dimensions
+          __ASSERT( i_fac != i_facs->end(), "Inconsistent size.\n" )
         } // end of loop over target values.
-        __ASSERT( i_fac != factors.end(), "Inconsistent size.\n" )
+        __ASSERT( i_facs != factors.end(), "Inconsistent size.\n" )
       } // end of loop over ranks
-      __ASSERT( i_facs != factors.end(), "Inconsistent size.\n" )
 
 #     ifdef _LADADEBUG
         } __CATCHCODE(, "Error while creating factors.\n" )
@@ -202,7 +269,7 @@ namespace Separable
 
       __ASSERT( nb_ranks != function.basis.size(),
                 "Inconsistent rank size.\n" )
-      __ASSERT( factors.size() != nb_ranks * nb_obs,
+      __ASSERT( factors.size() != nb_ranks * nb_targets,
                 "Inconsistent rank size.\n" )
 
       _dim == 0 ? _dim = D-1: --_dim;
@@ -213,23 +280,28 @@ namespace Separable
         for(types::t_unsigned o(0); o < nb_targets; ++o, ++i_facs )
         {
           __ASSERT( factors.size() != D, "Inconsistent size.\n" )
-          if( function.basis[r].size() <= _dim ) { (*i_facs)[_dim] = t_Type(1); continue; }
+          if( function.basis[r].basis.size() <= _dim )
+            { (*i_facs)[_dim] = t_Type(1); continue; }
 
           types::t_unsigned acc = std::accumulate( sizes[_dim].begin(),
                                                    sizes[_dim].begin() + r, 0 );
           __ASSERT( _coefs.size()  <= _dim, "Inconsistent dimension size.\n" )
-          __ASSERT( _coefs[d].size() <= acc + sizes[_dim][r], "Inconsistent size.\n" )
-          __ASSERT( expanded[d][r].size() <= ( acc + sizes[_dim][r] ) * nb_targets + o, 
-                     "Inconsistent size.\n" )
+          __ASSERT( _coefs[_dim].size() <= acc + sizes[_dim][r],
+                    "Inconsistent size.\n" )
+          __ASSERT( expanded[_dim][r].size()
+                       <= ( acc + sizes[_dim][r] ) * nb_targets + o, 
+                    "Inconsistent size.\n" )
 
-          typedef typename t_Expanded :: value_type :: value_type :: const_iterator t_itexp;
+          typedef typename t_Expanded :: value_type
+                                      :: value_type :: const_iterator t_itexp;
           typedef typename T_VECTORS :: value_type :: const_iterator t_itcoefs;
      
-          t_coefs i_coef = _coefs[_dim].begin() + acc;
+          t_itcoefs i_coef = _coefs[_dim].begin() + acc;
           t_itexp i_iexp = expanded[_dim][r].begin() + acc * nb_targets + o;
 
           (*i_facs)[_dim] = t_Type(0);
-          for( types::t_unsigned i( sizes[_dim][r] ); i > o; ++i, i_iexp += o, ++i_coef )
+          for( types::t_unsigned i( sizes[_dim][r] ); i > o;
+               ++i, i_iexp += o, ++i_coef )
             (*i_facs)[_dim] += (*i_coef) * (*i_iexp ); 
           
         } // end of loop over target values.
@@ -264,7 +336,7 @@ namespace Separable
           t_factor_func &facfunc = function.basis[r].basis[d];
           i_coef_ += facfunc.coefs.size();
           __ASSERT( i_coef_end - i_coef_ < 0,
-                    "Inconsistent number of coefficients." )
+                    "Inconsistent number of coefficients.\n" )
           std::copy( i_coef, i_coef_, facfunc.coefs.begin() );
           i_coef = i_coef_;
         }

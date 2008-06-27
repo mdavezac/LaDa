@@ -63,9 +63,9 @@ namespace Separable
   {
     public:
       //! Type of argument.
-      typedef Boolean :: t_Arg t_Arg;
+      typedef boost::array< Boolean, 2 > :: value_type :: t_Arg t_Arg;
       //! Type of return.
-      typedef Boolean :: t_Return t_Return;
+      typedef boost::array< Boolean, 2 > :: value_type :: t_Return t_Return;
       //! Does not have gradient.
       bool const static has_gradient = false;
 
