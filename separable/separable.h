@@ -145,43 +145,13 @@ namespace Separable
   //! \tparam T_BASIS is a container of 1d functions. These functions should
   //!         zero order evaluation via a functor call, and grdient evaluation
   //!         via a t_Return gradient( t_Arg ) member function.
-  template< class T_BASIS > class Factor : public Base< T_BASIS >
-  {
-    //! Type of the base class.
-    typedef Base<T_BASIS> t_Base;
-    public:
-      //! Constructor
-      Factor() : t_Base() {}
-      //! Destructor
-      ~Factor() {}
-
-      using t_Base::operator(); 
-      using t_Base::operator[]; 
-      using t_Base::set;
-      using t_Base::set_name;
-      using t_Base::serialize;
-  };
+  template< class T_BASIS > class Factor : public Base< T_BASIS > {};
   //! One single separable function.
   //! \tparam T_BASIS is a container of 1d functions. These functions should
   //!         zero order evaluation via a functor call.
   template< class T_BASIS > class Summand :
-      public Base< std::vector< Factor<T_BASIS> >, std::multiplies, std::plus >
-  {
-    //! Type of the base class.
-    typedef Base< std::vector< Factor<T_BASIS> >, std::multiplies, std::plus >
-            t_Base;
-    public:
-      //! Constructor
-      Summand() : t_Base() {}
-      //! Destructor
-      ~Summand() {}
-
-      using t_Base::operator(); 
-      using t_Base::operator[]; 
-      using t_Base::set;
-      using t_Base::set_name;
-      using t_Base::serialize;
-  };
+      public Base< std::vector< Factor<T_BASIS> >, std::multiplies, std::plus > {};
+  
   /** \brief A sum of separable functions.
    * \details The separable function \f$F(\mathbf{x})\f$ acting upon vector
    *          \f$\mathbf{x}\f$ and returning a scalar can be defined as 

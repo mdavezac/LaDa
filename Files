@@ -103,8 +103,8 @@ PRINT_H  = manip.h  xmg.h  stdout.h  base.h  operations.h
 PRINT_DOC = $(PRINT_H) $(PRINT_CC) 
 
 SEPARABLE_CC = cefitting.cc  main.cc ce.cc
-SEPARABLE_H = boolean.h cefitting.h ce.h lsq.h separable.h
-SEPARABLE_IMPL_H = cefitting.impl.h separable.impl.h
+SEPARABLE_H = boolean.h cefitting.h ce.h lsq.h separable.h collapse.h
+SEPARABLE_IMPL_H = cefitting.impl.h separable.impl.h collapse.impl.h
 SEPARABLE_DOC = $(SEPARABLE_CC) $(SEPARABLE_H) $(SEPARABLE_IMPL_H)
 
 
