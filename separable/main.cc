@@ -200,7 +200,7 @@ int main(int argc, char *argv[])
     allsq.tolerance = tolerance;
     allsq.llsq.tolerance = dtolerance;
     allsq.llsq.dosvd = svd;
-    allsq.llsq.doweights = true;
+    allsq.llsq.doweights = false;
 
     // Initializes the symmetry-less separable function.
     CE::Separables separables( rank, size, "cube" );

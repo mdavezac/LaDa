@@ -13,6 +13,7 @@
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <tinyxml/tinyxml.h>
+#include <gsl/gsl_linalg.h>
 
 namespace Fitting
 {
@@ -100,6 +101,8 @@ namespace Fitting
         t_Matrix A;
         t_Vector b;
         types::t_real convergence(0);
+        llsq.doweights = false;
+        t_Matrix copy;
         do
         {
           types::t_unsigned dim(0);
@@ -107,16 +110,38 @@ namespace Fitting
           for(convergence = 0e0; i_sol != i_sol_end; ++i_sol, ++dim )
           {
             (*collapse)( b, A, dim, targets, _solution );
-            llsq.init_A( A );
-            llsq.init_b( b );
-            std::cout << "A: ";
-            std::for_each( A.begin(), A.end(), std::cout << boost::lambda::_1 << " " );
-            std::cout << "\ny: ";
-            std::for_each( llsq.b.begin(), llsq.b.end(), std::cout << boost::lambda::_1 << " " );
-            std::cout << "\nw: ";
-            std::for_each( llsq.w.begin(), llsq.w.end(), std::cout << boost::lambda::_1 << " " );
-            std::cout << "\n";
-            types::t_real result = llsq( *i_sol );
+           //llsq.init_A( A );
+           //llsq.init_b( b );
+           
+            copy = A;
+            details::GslMatrix gslA( b.size(), copy );
+            details::GslVector gslb( b );
+            details::GslVector gslx( *i_sol );
+
+            gsl_linalg_HH_solve( (gsl_matrix*) gslA, (gsl_vector*) gslb,
+                                 (gsl_vector*) gslx );
+
+
+            // types::t_real result = llsq( *i_sol );
+            types::t_real result( 0 );
+            typename t_Matrix::const_iterator i_A = A.begin();
+            typename t_Vector :: const_iterator i_b = b.begin();
+            typename t_Vector :: const_iterator i_b_end = b.end();
+            for(; i_b != i_b_end; ++i_b )
+            {
+              types::t_real col(0);
+              typename t_Vectors :: value_type :: const_iterator i_var = i_sol->begin();
+              typename t_Vectors :: value_type :: const_iterator i_var_end = i_sol->end();
+              for(; i_var != i_var_end; ++i_var, ++i_A )
+              {
+                __ASSERT( i_A == A.end(), "" );
+                col += (*i_A) * (*i_var );
+              }
+              std::cout << "|" << col << " - " << *i_b << "| = "
+                        << std::abs( col - *i_b ) << std::endl;
+              result += col;
+            } 
+            __ASSERT( i_A != A.end(), "" );
             std::cout << "    dim: " << dim << " conv: " << result << std::endl;
             convergence += result;
           }

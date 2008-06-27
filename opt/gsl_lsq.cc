@@ -36,18 +36,17 @@ namespace Fitting
 
   types::t_real Gsl::operator()( t_Vector &_solution )
   {
-    size_t dim2 = _solution.size();
-    size_t dim1 = b.size();
-    __ASSERT( dim1 * dim2 != A.size(),
+    size_t dim = _solution.size();
+    __ASSERT( dim * dim != A.size(),
                 "Incoherent matrix/vector size: " 
-             << dim1 << "x" << dim2 << "!=" << A.size() <<".\n" )
+             << dim << "x" << dim << "!=" << A.size() <<".\n" )
     gsl_multifit_linear_workspace *work;
-    work = gsl_multifit_linear_alloc ( dim1, dim2 );
+    work = gsl_multifit_linear_alloc ( dim, dim );
 
     details::GslVector gslb( b );
     details::GslVector gslx( _solution );
-    details::GslMatrix gslA( dim1, A );
-    gsl_matrix *cov = gsl_matrix_alloc( dim2, dim2 );
+    details::GslMatrix gslA( dim, A );
+    gsl_matrix *cov = gsl_matrix_alloc( dim, dim );
 
     size_t rank;
     double chisq = 0;

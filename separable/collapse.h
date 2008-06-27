@@ -89,9 +89,14 @@ namespace Separable
 
       //! \brief Constructs the completely expanded matrix.
       //! \tparams T_VECTORS is a vector of vectors.
+      //! \tparams T_VECTOR is a vector of return types.
       //! \params[in] _x contains the input to sum of separable function in the
       //!                format \a _x[ o,d ].
-      template< class T_VECTORS > void init( const T_VECTORS &_x );
+      //! \params[in] _w contains the weights attached to each structural
+      //!                target value. This array is copied to a local
+      //!                container. \a _w[o].
+      template< class T_VECTORS, class T_VECTOR > 
+        void init( const T_VECTORS &_x, const T_VECTOR &_w );
       //! Resets collapse functor. Clears memory.
       void reset();
       //! Creates a collection of random coefficients.
@@ -155,6 +160,10 @@ namespace Separable
       //! \details sizes[ d, r ] = max i \@ (d,r). r is the fastest running
       //!          index.
       t_Sizes sizes;
+      //! Type of the weights.
+      typedef std::vector< t_Type > t_Weights;
+      //! Weights attached to each structural target value.
+      t_Weights weights;
   };
 
 } // end of Separable namespace

@@ -6,9 +6,13 @@
 
 namespace Separable
 {
-  template<class T_FUNCTION> template< class T_VECTORS >
-  void Collapse<T_FUNCTION> :: init( const T_VECTORS &_x ) 
+  template<class T_FUNCTION> template< class T_VECTORS, class T_VECTOR >
+  void Collapse<T_FUNCTION> :: init( const T_VECTORS &_x, const T_VECTOR &_w ) 
   {
+    __ASSERT( _x.size() != _w.size(), "Inconsistent array-sizes on input.\n" )
+    weights.resize( _w.size() );
+    std::copy( _w.begin(), _w.end(), weights.begin() );
+
     // finds maximum size of separable function.
     typename t_Function::t_Basis::const_iterator i_first = function.basis.begin();
     typename t_Function::t_Basis::const_iterator i_last = function.basis.end();
@@ -37,8 +41,11 @@ namespace Separable
     expanded.resize( D );
     typename t_Expanded :: iterator i_dexp = expanded.begin();
     t_Sizes :: const_iterator i_dsize = sizes.begin();
-    for( types::t_unsigned d(0); d < D; ++d, ++i_dexp, ++i_dsize, ++i_dexp )
+    for( types::t_unsigned d(0); d < D; ++d, ++i_dexp, ++i_dsize )
     {
+      __ASSERT( i_dexp  == expanded.end(), "Iterator out of range.\n" )
+      __ASSERT( i_dsize == sizes.end(),    "Iterator out of range.\n" )
+      
       // prepares loop over ranks
       i_dexp->resize( i_dsize->size() );
       typename t_Expanded :: value_type :: iterator i_rexp = i_dexp->begin();
@@ -47,6 +54,9 @@ namespace Separable
       for( types::t_unsigned r(0); i_rsize != i_rsize_end;
            ++r, ++i_rexp, ++i_rsize ) 
       {
+        __ASSERT( _x.size() != nb_targets, "Unexpected array size.\n" )
+        __ASSERT( i_rexp  == i_dexp->end(),  "Iterator out of range.\n" )
+        __ASSERT( i_rsize == i_dsize->end(), "Iterator out of range.\n" )
         __ASSERT( function.basis[r].basis[d].basis.size() != *i_rsize,
                   "Inconsistent size.\n" )
 
@@ -60,28 +70,28 @@ namespace Separable
                             :: const_iterator i_ifunc = function.basis[r]
                                                                 .basis[d]
                                                                 .basis.begin();
-        namespace bl = boost::lambda;
+        // loop over basis functions.
         for( types::t_unsigned i(0); i < *i_rsize; ++i, ++i_ifunc )
-          for( types::t_unsigned o(0); o < _x.size(); ++o )
+          // loop over structural target values.
+          for( types::t_unsigned o(0); o < nb_targets; ++o, ++i_iexp )
+          {
+            __ASSERT( _x[o].size() != D, "Unexpected array-size.\n" )
+            __ASSERT( i_iexp == i_rexp->end(), "Iterator out of range.\n" )
             *i_iexp = (*i_ifunc)( _x[o][d] );
+          }
 
-
-        __ASSERT( i_iexp  != i_rexp->end(), "Inconsistent size.\n" )
+        __ASSERT( i_iexp  != i_rexp->end(), "Unexpected iterator position.\n" )
         __ASSERT( i_ifunc != function.basis[r].basis[d].basis.end(),
-                  "Inconsistent size.\n" )
+                  "Unexpected iterator position.\n" )
       } // end of loop over ranks
-      __ASSERT( i_rexp  != i_dexp->end(), "Inconsistent size.\n" )
-      __ASSERT( i_rsize != i_dsize->end(), "Inconsistent size.\n" )
-
+      __ASSERT( i_rexp  != i_dexp->end(),  "Unexpected iterator position.\n" )
+      __ASSERT( i_rsize != i_dsize->end(), "Unexpected iterator position.\n" )
 
     } // end of loop over dimensions.
-    __ASSERT( i_dexp  != expanded.end(), "Inconsistent size.\n" )
-    __ASSERT( i_dsize != sizes.end(), "Inconsistent size.\n" )
+    __ASSERT( i_dexp  != expanded.end(), "Unexpected iterator position.\n" )
+    __ASSERT( i_dsize != sizes.end(),    "Unexpected iterator position.\n" )
 
-
-
-    // computes factors.
-  }
+  } // end of init member function.
 
   template<class T_FUNCTION>  
     template< class T_VECTOR, class T_MATRIX, class T_VECTORS >
@@ -95,15 +105,20 @@ namespace Separable
 #       endif
 
         __ASSERT( _dim  >= D, "Input dimension out of range.\n" )
-        __ASSERT( sizes.size()  != D, "Inconsistent sizes.\n" )
         __ASSERT( _coefs.size() != D,
                   "Inconsistent number of dimensions/coefficients.\n" )
+        __ASSERT( _targets.size() != nb_targets,
+                  "Unexpected array-size on input.\n" )
+        __ASSERT( weights.size() != nb_targets,
+                  "Unexpected array-size on input.\n" )
         __ASSERT
         ( 
           _coefs[_dim].size() != std::accumulate( sizes[_dim].begin(),
                                                   sizes[_dim].end(), 0 ),
           "Inconsistent number of ranks/dimensions/coefficients.\n" 
         )
+        
+        __ASSERT( sizes.size()  != D, "Inconsistent sizes.\n" )
         __ASSERT( factors.size() == _coefs[_dim].size(), "Inconsistent sizes.\n" )
         __ASSERT( expanded.size() <= _dim, "Inconsistent sizes.\n" )
      
@@ -125,6 +140,7 @@ namespace Separable
         typename t_Sizes :: value_type
                          :: const_iterator i_sizeI = sizes[_dim].begin();
         typename t_Sizes :: value_type :: const_iterator i_size_first( i_sizeI );
+
         // loops over ranks I
         for(; i_rexpI < i_rexp_end; ++i_rexpI, ++i_sizeI ) 
         {
@@ -135,6 +151,9 @@ namespace Separable
           for(types::t_unsigned iI(0); iI < *i_sizeI;
               ++iI, i_iexp_inc += nb_targets, ++i_ctarget )
           {
+            __ASSERT( i_ctarget == _b.end(),        "Iterator out of range.\n" )
+            __ASSERT( i_iexp_inc == i_rexpI->end(), "Iterator out of range.\n" )
+            *i_ctarget = typename T_VECTOR :: value_type(0);
      
             // loops over ranks I
             typename t_Expanded :: value_type 
@@ -144,15 +163,15 @@ namespace Separable
                              :: const_iterator i_sizeII( i_size_first );
             for(; i_rexpII < i_rexp_end; ++i_rexpII, ++i_sizeII ) 
             {
+              __ASSERT( i_sizeII == sizes[_dim].end(), "Iterator out of range.\n" )
      
               // loop over basis functions II
               typename t_Expanded :: value_type :: value_type
                                   :: const_iterator i_iexpII = i_rexpII->begin();
-              typename T_VECTOR :: const_iterator i_starget = _targets.begin();
               for(types::t_unsigned iII(0); iII < *i_sizeII;
-                  ++iII, ++i_A, ++i_starget )
+                  ++iII, ++i_A)
               {
-                __ASSERT( i_A == _A.end(), "Inconsistent size.\n" )
+                __ASSERT( i_A == _A.end(), "Iterator out of range.\n" )
      
                 // Initializes element to 0 before summing over structural targets.
                 *i_A = typename T_MATRIX :: value_type(0);
@@ -160,11 +179,14 @@ namespace Separable
                 // loop over target values
                 typename t_Expanded :: value_type :: value_type
                                     :: const_iterator i_iexpI( i_iexp_inc );
-                for(types::t_unsigned o(0); o < nb_targets; ++o, ++i_iexpI)
+                typename T_VECTOR :: const_iterator i_starget = _targets.begin();
+                typename T_VECTOR :: const_iterator i_starget_end = _targets.end();
+                typename t_Weights :: const_iterator i_weight = weights.begin();
+                for(; i_starget < i_starget_end; ++i_iexpI, ++i_iexpII, ++i_starget, ++i_weight )
                 {
-                  __ASSERT( i_iexpI == i_rexpI->end(), "Inconsistent size.\n" )
-                  __ASSERT( i_facsI->size()  != D,     "Inconsistent size.\n" )
-                  __ASSERT( i_facsII->size() != D,     "Inconsistent size.\n" )
+                  __ASSERT( i_iexpI == i_rexpI->end(), "Iterator out of range.\n" )
+                  __ASSERT( i_facsI->size()  != D,     "Unexpected array-size.\n" )
+                  __ASSERT( i_facsII->size() != D,     "Unexpected array-size.\n" )
      
                   // Computes first factor.
                   t_Type UI( 1 );
@@ -179,23 +201,22 @@ namespace Separable
                     if( d != _dim ) UII *= *i_fac;
      
                   // Computes matrix element.
-                  *i_A += (*i_iexpI) * UI * UII * (*i_iexpII );
+                  *i_A += (*i_iexpI) * UI * UII * (*i_iexpII ) * (*i_weight) * (*i_weight);
      
                   // bypasses collapsed target on second dimension of A.
                   if( i_sizeII != i_size_first or iII != 0 ) continue;
                  
                   // Computes collapsed target element.
-                  __ASSERT( i_ctarget != _b.end(),       "Inconsistent size.\n" )
-                  __ASSERT( i_starget != _targets.end(), "Inconsistent size.\n" )
-                  *i_ctarget = (*i_iexpI) * UI * (*i_starget);
-                }
+                  __ASSERT( i_ctarget == _b.end(), "Iterator out of range.\n" )
+                  *i_ctarget += (*i_iexpI) * UI * (*i_starget) * (*i_weight);
+                } // loop over structural target values.
      
               } // loop over basis functions II
      
             } // end of loop over ranks II
      
           } // loop over basis functions I
-          __ASSERT( i_iexp_inc != i_rexpI->end(), "Inconsistent size.\n" )
+          __ASSERT( i_iexp_inc != i_rexpI->end(), "Unexpected iterator position.\n" )
      
         } // end of loop over ranks I
 
@@ -227,32 +248,42 @@ namespace Separable
           for( types::t_unsigned d(0); d < D; ++d, ++i_fac )
           {
             __ASSERT( function.size() <= r, "Inconsistent rank size.\n" )
+
+            // if there less than d dimensions for this rank, the factor is
+            // evaluated to 1, such that it will have no influence.
             if( function.basis[r].basis.size() <= d )
               { *i_fac = t_Type(1); continue; }
 
             types::t_unsigned acc = std::accumulate( sizes[d].begin(),
                                                      sizes[d].begin() + r, 0 );
             __ASSERT( _coefs.size()  <= d, "Inconsistent dimension size.\n" )
-            __ASSERT( _coefs[d].size() <= acc + sizes[d][r], "Inconsistent size.\n" )
-            __ASSERT( expanded[d][r].size() <= ( acc + sizes[d][r] ) * nb_targets + o, 
-                       "Inconsistent size.\n" )
+            __ASSERT( _coefs[d].size() < acc + sizes[d][r],
+                         "Inconsistent size: " << _coefs[d].size()
+                       << " < " << acc + sizes[d][r] << ".\n" )
+            __ASSERT( expanded[d][r].size() !=  sizes[d][r] * nb_targets,
+                         "Unexpected array size. " << expanded[d][r].size()
+                      << " != " << sizes[d][r] * nb_targets << ".\n" )
 
             typedef typename t_Expanded :: value_type
                                         :: value_type :: const_iterator t_itexp;
             typedef typename T_VECTORS :: value_type :: const_iterator t_itcoefs;
             t_itcoefs i_coef = _coefs[d].begin() + acc;
-            t_itexp i_iexp = expanded[d][r].begin() + acc * nb_targets + o;
+            t_itexp i_iexp = expanded[d][r].begin() + o;
 
             *i_fac = t_Type(0);
-            for( types::t_unsigned i( sizes[d][r] ); i > o;
-                 ++i, i_iexp += o, ++i_coef )
+            for( types::t_unsigned i( sizes[d][r] ); i > 0;
+                 --i, i_iexp += nb_targets, ++i_coef )
+            {
+              __ASSERT( i_iexp == expanded[d][r].end(), "Iterator out of range.\n" )
+              __ASSERT( i_coef == _coefs[d].end(), "Iterator out of range.\n" )
               *i_fac += (*i_coef) * (*i_iexp ); 
+            }
             
           } // end of loop over dimensions
-          __ASSERT( i_fac != i_facs->end(), "Inconsistent size.\n" )
+          __ASSERT( i_fac != i_facs->end(), "Unexpected iterator position.\n" )
         } // end of loop over target values.
-        __ASSERT( i_facs != factors.end(), "Inconsistent size.\n" )
       } // end of loop over ranks
+      __ASSERT( i_facs != factors.end(), "Unexpected iterator position.\n" )
 
 #     ifdef _LADADEBUG
         } __CATCHCODE(, "Error while creating factors.\n" )
@@ -267,6 +298,8 @@ namespace Separable
         try {
 #     endif
 
+      __ASSERT( _dim < D, "Dimension out of range on input.\n" ) 
+      __ASSERT( sizes.size() != D, "Unexpected array-size.\n" ) 
       __ASSERT( nb_ranks != function.basis.size(),
                 "Inconsistent rank size.\n" )
       __ASSERT( factors.size() != nb_ranks * nb_targets,
@@ -276,33 +309,45 @@ namespace Separable
       typename t_Factors :: iterator i_facs = factors.begin();
       for( types::t_unsigned r(0); r < nb_ranks; ++r )
       {
+        __ASSERT( sizes[_dim].size() != nb_ranks, "Unexpected array-size.\n" ) 
+
         // loop over target values.
         for(types::t_unsigned o(0); o < nb_targets; ++o, ++i_facs )
         {
-          __ASSERT( factors.size() != D, "Inconsistent size.\n" )
+          __ASSERT( i_facs == factors.end(), "Iterator out of range.\n" )
+          __ASSERT( i_facs->size() != D, "Unexpected array size.\n" )
+          __ASSERT( function.size() <= r, "Inconsistent rank size.\n" )
+           
+          // if there less than d dimensions for this rank, the factor is
+          // evaluated to 1, such that it will have no influence.
           if( function.basis[r].basis.size() <= _dim )
             { (*i_facs)[_dim] = t_Type(1); continue; }
 
           types::t_unsigned acc = std::accumulate( sizes[_dim].begin(),
                                                    sizes[_dim].begin() + r, 0 );
           __ASSERT( _coefs.size()  <= _dim, "Inconsistent dimension size.\n" )
-          __ASSERT( _coefs[_dim].size() <= acc + sizes[_dim][r],
+          __ASSERT( _coefs[_dim].size() < acc + sizes[_dim][r],
                     "Inconsistent size.\n" )
-          __ASSERT( expanded[_dim][r].size()
-                       <= ( acc + sizes[_dim][r] ) * nb_targets + o, 
-                    "Inconsistent size.\n" )
+          __ASSERT( expanded[_dim][r].size() !=  sizes[_dim][r] * nb_targets,
+                       "Unexpected array size. " << expanded[_dim][r].size()
+                    << " != " << sizes[_dim][r] * nb_targets << ".\n" )
 
           typedef typename t_Expanded :: value_type
                                       :: value_type :: const_iterator t_itexp;
           typedef typename T_VECTORS :: value_type :: const_iterator t_itcoefs;
      
           t_itcoefs i_coef = _coefs[_dim].begin() + acc;
-          t_itexp i_iexp = expanded[_dim][r].begin() + acc * nb_targets + o;
+          t_itexp i_iexp = expanded[_dim][r].begin() + o;
 
           (*i_facs)[_dim] = t_Type(0);
-          for( types::t_unsigned i( sizes[_dim][r] ); i > o;
-               ++i, i_iexp += o, ++i_coef )
+          for( types::t_unsigned i( sizes[_dim][r] ); i > 0;
+               --i, i_iexp += nb_targets, ++i_coef )
+          {
+            __ASSERT( i_iexp == expanded[_dim][r].end(), 
+                      "Iterator out of range.\n" )
+            __ASSERT( i_coef == _coefs[_dim].end(), "Iterator out of range.\n" )
             (*i_facs)[_dim] += (*i_coef) * (*i_iexp ); 
+          }
           
         } // end of loop over target values.
       } // end of loop over ranks

@@ -40,10 +40,9 @@ namespace Fitting
     }
     // initializes the collapse functor.
     _collapse.reset();
-    _collapse.init( input );
-    _allsq.llsq.init_w( w );
-    _allsq.llsq.init_b( y );
-    _allsq.llsq.doweights = true;
+    _collapse.init( input, w );
+    _allsq.init_targets( y );
+    _allsq.llsq.doweights = false;
 
     // Then creates the vectors of coefficients with random initial value.
     typename T_ALLSQ :: t_Vectors coefs;
@@ -54,7 +53,7 @@ namespace Fitting
       std::for_each
       (
         i_coefs->begin(), i_coefs->end(),
-        boost::lambda::_1 = 1e0 //boost::lambda::bind( &opt::random::rng ) - 0.5e0
+        boost::lambda::_1 = 3e0-boost::lambda::bind( &opt::random::rng ) - 1.5e0
       );
 
     // finally performs fit
