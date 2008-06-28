@@ -18,8 +18,7 @@
 
 #include <tinyxml/tinyxml.h> 
 
-#include <opt/gsl_lsq.h>
-#include "lsq.h"
+#include <opt/allsq.h>
 #include "cefitting.h"
 
 #include <revision.h>
@@ -195,12 +194,9 @@ int main(int argc, char *argv[])
     opt::random::seed();
 
     // Initializes fitting.
-    Fitting::Allsq< Fitting::Gsl > allsq;
+    Fitting::Allsq allsq;
     allsq.itermax = maxiter;
     allsq.tolerance = tolerance;
-    allsq.llsq.tolerance = dtolerance;
-    allsq.llsq.dosvd = svd;
-    allsq.llsq.doweights = false;
 
     // Initializes the symmetry-less separable function.
     CE::Separables separables( rank, size, "cube" );

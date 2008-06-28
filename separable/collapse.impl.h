@@ -2,7 +2,7 @@
 //  Version: $Id$
 //
 
-#include "opt/algorithms.h"
+#include <opt/random.h>
 
 namespace Separable
 {
@@ -422,6 +422,22 @@ namespace Separable
       {
         types::t_int ri = std::accumulate( i_size->begin(), i_size->end(), 0 );
         i_dim->resize( ri );
+        typename T_VECTORS::value_type::value_type norm(0);
+        std::for_each
+        (
+          i_dim->begin(), i_dim->end(),
+          ( 
+            boost::lambda::_1 = boost::lambda::bind( &opt::random::rng ),
+            norm += boost::lambda::_1 
+          )
+        );
+        norm = typename T_VECTORS::value_type::value_type(1) / norm;
+        std::for_each
+        (
+          i_dim->begin(), i_dim->end(),
+          boost::lambda::_1 *= norm
+        );
+
       }
     }
 

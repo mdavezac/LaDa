@@ -2,7 +2,6 @@
 //  Version: $Id$
 //
 
-#include<opt/random.h>
 #include<algorithm>
 
 namespace Fitting
@@ -42,20 +41,11 @@ namespace Fitting
     _collapse.reset();
     _collapse.init( input, w );
     _allsq.init_targets( y );
-    _allsq.llsq.doweights = false;
 
     // Then creates the vectors of coefficients with random initial value.
     typename T_ALLSQ :: t_Vectors coefs;
     _collapse.create_coefs( coefs );
-    typename T_ALLSQ :: t_Vectors :: iterator i_coefs = coefs.begin();
-    typename T_ALLSQ :: t_Vectors :: iterator i_coefs_end = coefs.end();
-    for(; i_coefs != i_coefs_end; ++i_coefs )
-      std::for_each
-      (
-        i_coefs->begin(), i_coefs->end(),
-        boost::lambda::_1 = 1e0 + 0.1e0 * boost::lambda::bind( &opt::random::rng ) - 0.05e0 
-      );
-
+   
     // finally performs fit
     types::t_real convergence = _allsq( coefs, &_collapse );
 

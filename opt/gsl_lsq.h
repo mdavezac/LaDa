@@ -72,32 +72,5 @@ namespace Fitting
     
   };
 
-  namespace details
-  {
-    class GslVector
-    {
-      protected:
-        gsl_vector *vector;
-
-      public:
-        GslVector( Gsl::t_Vector& _vec );
-        ~GslVector() {};
-
-        operator gsl_vector*() { return &vector; }
-        operator const gsl_vector* const () const { return &vector; }
-    };
-    class GslMatrix
-    {
-      protected:
-        gsl_matrix *matrix;
-
-      public:
-        GslMatrix( types::t_int _nrow, Gsl::t_Matrix& _vec );
-        ~GslMatrix() {};
-
-        operator gsl_matrix*() { return &matrix; }
-        operator const gsl_matrix* const () const { return &matrix; }
-    };
-  }
 }
 #endif
