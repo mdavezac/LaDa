@@ -53,7 +53,7 @@ namespace Fitting
       std::for_each
       (
         i_coefs->begin(), i_coefs->end(),
-        boost::lambda::_1 = 3e0-boost::lambda::bind( &opt::random::rng ) - 1.5e0
+        boost::lambda::_1 = 1e0 + 0.1e0 * boost::lambda::bind( &opt::random::rng ) - 0.05e0 
       );
 
     // finally performs fit

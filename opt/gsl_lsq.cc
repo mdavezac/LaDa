@@ -104,7 +104,7 @@ namespace Fitting
                      "Matrix dimensions are not coherent: "
                   << matrix.size1 << "x" << matrix.size2
                   << "!=" << bloc.size << ".\n" )
-      matrix.tda = matrix.size2;
+      matrix.tda = _mat.size() / _nrow;
       matrix.data = bloc.data;
       matrix.block = &bloc;
       matrix.owner = 0;

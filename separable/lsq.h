@@ -115,12 +115,21 @@ namespace Fitting
            
             copy = A;
             details::GslMatrix gslA( b.size(), copy );
+            std::cout << ( (gsl_matrix*)gslA )->size1 << " "
+                      << ( (gsl_matrix*)gslA )->size2 << " "
+                      << ( (gsl_matrix*)gslA )->tda << "\n";
             details::GslVector gslb( b );
             details::GslVector gslx( *i_sol );
+            std::cout << "1A: " ;
+            std::for_each( A.begin(), A.end(), std::cout << boost::lambda::_1 << " " );
+            std::cout << std::endl;;
 
             gsl_linalg_HH_solve( (gsl_matrix*) gslA, (gsl_vector*) gslb,
                                  (gsl_vector*) gslx );
 
+            std::cout << "2A: " ;
+            std::for_each( A.begin(), A.end(), std::cout << boost::lambda::_1 << " " );
+            std::cout << std::endl;;
 
             // types::t_real result = llsq( *i_sol );
             types::t_real result( 0 );

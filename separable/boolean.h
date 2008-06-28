@@ -48,7 +48,11 @@ namespace Separable
 
       //! evaluates the function over a range of positions.
       t_Return operator()( const t_Arg _bool ) const
-        { return  _bool == which ? t_Return(1): t_Return(0); }
+      { 
+        const types::t_real sqrt2(0.70710678118654752440e0);
+        if( which ) return _bool ? t_Return( sqrt2 ): t_Return( -sqrt2 );
+        return sqrt2;
+      }
 
     protected:
       //! Decides whether this is a true or false function.

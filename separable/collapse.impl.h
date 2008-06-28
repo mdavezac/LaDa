@@ -136,20 +136,23 @@ namespace Separable
                             :: const_iterator i_rexpI = expanded[_dim].begin();
         typename t_Expanded :: value_type
                             :: const_iterator i_rexp_end = expanded[_dim].end();
-        typename t_Factors :: const_iterator i_facsI = factors.begin();
         typename t_Sizes :: value_type
                          :: const_iterator i_sizeI = sizes[_dim].begin();
         typename t_Sizes :: value_type :: const_iterator i_size_first( i_sizeI );
-
+ 
+        std::cout << "init:\n";
         // loops over ranks I
-        for(; i_rexpI < i_rexp_end; ++i_rexpI, ++i_sizeI ) 
+        for( types::t_unsigned rI(0); 
+             i_rexpI < i_rexp_end; 
+             ++rI, ++i_rexpI, ++i_sizeI ) 
         {
      
           // loop over basis functions I
           typename t_Expanded :: value_type :: value_type
                               :: const_iterator i_iexp_inc = i_rexpI->begin();
-          for(types::t_unsigned iI(0); iI < *i_sizeI;
-              ++iI, i_iexp_inc += nb_targets, ++i_ctarget )
+          for( types::t_unsigned iI(0); 
+               iI < *i_sizeI;
+               ++iI, i_iexp_inc += nb_targets, ++i_ctarget )
           {
             __ASSERT( i_ctarget == _b.end(),        "Iterator out of range.\n" )
             __ASSERT( i_iexp_inc == i_rexpI->end(), "Iterator out of range.\n" )
@@ -158,10 +161,11 @@ namespace Separable
             // loops over ranks I
             typename t_Expanded :: value_type 
                                 :: const_iterator i_rexpII = expanded[_dim].begin();
-            typename t_Factors :: const_iterator i_facsII = factors.begin();
             typename t_Sizes :: value_type 
                              :: const_iterator i_sizeII( i_size_first );
-            for(; i_rexpII < i_rexp_end; ++i_rexpII, ++i_sizeII ) 
+            for( types::t_unsigned rII(0); 
+                 i_rexpII < i_rexp_end;
+                 ++rII, ++i_rexpII, ++i_sizeII ) 
             {
               __ASSERT( i_sizeII == sizes[_dim].end(), "Iterator out of range.\n" )
      
@@ -182,26 +186,37 @@ namespace Separable
                 typename T_VECTOR :: const_iterator i_starget = _targets.begin();
                 typename T_VECTOR :: const_iterator i_starget_end = _targets.end();
                 typename t_Weights :: const_iterator i_weight = weights.begin();
-                for(; i_starget < i_starget_end; ++i_iexpI, ++i_iexpII, ++i_starget, ++i_weight )
+                for( types::t_unsigned o(0);
+                     i_starget < i_starget_end;
+                     ++o, ++i_iexpI, ++i_iexpII, ++i_starget, ++i_weight )
                 {
                   __ASSERT( i_iexpI == i_rexpI->end(), "Iterator out of range.\n" )
-                  __ASSERT( i_facsI->size()  != D,     "Unexpected array-size.\n" )
-                  __ASSERT( i_facsII->size() != D,     "Unexpected array-size.\n" )
+                  __ASSERT( factors.size() <= rI * nb_targets + o, 
+                            "Unexpected array-size.\n" )
+                  __ASSERT( factors.size() <= rII * nb_targets + o, 
+                            "Unexpected array-size.\n" )
      
                   // Computes first factor.
                   t_Type UI( 1 );
                   typename t_Factors :: value_type 
-                                     :: const_iterator i_fac = i_facsI->begin();
+                                     :: const_iterator i_fac = factors[ rI * nb_targets + o]
+                                                                      .begin();
                   for(types::t_unsigned d(0); d < D; ++i_fac, ++d )
-                    if( d != _dim ) UI *= *i_fac;
+                    if( d != _dim )  UI *= (*i_fac);
                  
                   // Computes second factor.
-                  t_Type UII( 1 ); i_fac = i_facsII->begin();
+                  t_Type UII( 1 ); i_fac = factors[ rII * nb_targets + o ].begin();
                   for(types::t_unsigned d(0); d < D; ++i_fac, ++d )
-                    if( d != _dim ) UII *= *i_fac;
+                    if( d != _dim ) UII *= (*i_fac);
      
                   // Computes matrix element.
                   *i_A += (*i_iexpI) * UI * UII * (*i_iexpII ) * (*i_weight) * (*i_weight);
+//                  std::cout << UI << " " << UII << "  ||  ";
+//                  std::cout << (i_iexpI - i_rexpI->begin()) 
+//                            << " " <<  (i_iexpII  - i_rexpII->begin())
+//                            << (*i_iexpI ) << " "
+//                            << " " <<  (*i_iexpII )
+//                            << "\n";
      
                   // bypasses collapsed target on second dimension of A.
                   if( i_sizeII != i_size_first or iII != 0 ) continue;
@@ -210,12 +225,15 @@ namespace Separable
                   __ASSERT( i_ctarget == _b.end(), "Iterator out of range.\n" )
                   *i_ctarget += (*i_iexpI) * UI * (*i_starget) * (*i_weight);
                 } // loop over structural target values.
+//               std::cout << *i_A << " ";
      
               } // loop over basis functions II
+              std::cout << "\n";
      
             } // end of loop over ranks II
      
           } // loop over basis functions I
+          std::cout << "\n";
           __ASSERT( i_iexp_inc != i_rexpI->end(), "Unexpected iterator position.\n" )
      
         } // end of loop over ranks I
@@ -247,7 +265,7 @@ namespace Separable
           typename t_Factors :: value_type :: iterator i_fac = i_facs->begin();
           for( types::t_unsigned d(0); d < D; ++d, ++i_fac )
           {
-            __ASSERT( function.size() <= r, "Inconsistent rank size.\n" )
+            __ASSERT( function.basis.size() <= r, "Inconsistent rank size.\n" )
 
             // if there less than d dimensions for this rank, the factor is
             // evaluated to 1, such that it will have no influence.

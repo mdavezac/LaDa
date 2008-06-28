@@ -77,8 +77,7 @@ namespace Fitting
     class GslVector
     {
       protected:
-        gsl_block bloc;
-        gsl_vector vector;
+        gsl_vector *vector;
 
       public:
         GslVector( Gsl::t_Vector& _vec );
@@ -90,8 +89,7 @@ namespace Fitting
     class GslMatrix
     {
       protected:
-        gsl_block bloc;
-        gsl_matrix matrix;
+        gsl_matrix *matrix;
 
       public:
         GslMatrix( types::t_int _nrow, Gsl::t_Matrix& _vec );
