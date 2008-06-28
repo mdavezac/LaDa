@@ -127,11 +127,15 @@ namespace Separable
         else if ( do_update ) update_factors( _dim, _coefs );
         is_initialized = true;   
      
-        _b.resize( _coefs[_dim].size() );
-        _A.resize( _b.size() * _b.size() );
+        if( _b.size() != _coefs[_dim].size() )
+        {
+          _b.resize( _coefs[_dim].size() );
+          _A.resize( _b.size(), _b.size() );
+        }
+        __ASSERT( _A.size1() != _b.size(), "Wrong size for matrix _A.\n" );
+        __ASSERT( _A.size2() != _b.size(), "Wrong size for matrix _A.\n" );
      
         typename T_VECTOR :: iterator i_ctarget = _b.begin();
-        typename T_MATRIX :: iterator i_A = _A.begin();
         typename t_Expanded :: value_type 
                             :: const_iterator i_rexpI = expanded[_dim].begin();
         typename t_Expanded :: value_type
@@ -139,20 +143,16 @@ namespace Separable
         typename t_Sizes :: value_type
                          :: const_iterator i_sizeI = sizes[_dim].begin();
         typename t_Sizes :: value_type :: const_iterator i_size_first( i_sizeI );
+        size_t k1(0);
  
-        std::cout << "init:\n";
         // loops over ranks I
-        for( types::t_unsigned rI(0); 
-             i_rexpI < i_rexp_end; 
-             ++rI, ++i_rexpI, ++i_sizeI ) 
+        for( size_t rI(0); i_rexpI < i_rexp_end; ++rI, ++i_rexpI, ++i_sizeI ) 
         {
-     
           // loop over basis functions I
           typename t_Expanded :: value_type :: value_type
                               :: const_iterator i_iexp_inc = i_rexpI->begin();
-          for( types::t_unsigned iI(0); 
-               iI < *i_sizeI;
-               ++iI, i_iexp_inc += nb_targets, ++i_ctarget )
+          for( size_t iI(0); iI < *i_sizeI;
+               ++iI, i_iexp_inc += nb_targets, ++i_ctarget, ++k1 )
           {
             __ASSERT( i_ctarget == _b.end(),        "Iterator out of range.\n" )
             __ASSERT( i_iexp_inc == i_rexpI->end(), "Iterator out of range.\n" )
@@ -163,8 +163,7 @@ namespace Separable
                                 :: const_iterator i_rexpII = expanded[_dim].begin();
             typename t_Sizes :: value_type 
                              :: const_iterator i_sizeII( i_size_first );
-            for( types::t_unsigned rII(0); 
-                 i_rexpII < i_rexp_end;
+            for( size_t rII(0), k2(0); i_rexpII < i_rexp_end;
                  ++rII, ++i_rexpII, ++i_sizeII ) 
             {
               __ASSERT( i_sizeII == sizes[_dim].end(), "Iterator out of range.\n" )
@@ -172,13 +171,10 @@ namespace Separable
               // loop over basis functions II
               typename t_Expanded :: value_type :: value_type
                                   :: const_iterator i_iexpII = i_rexpII->begin();
-              for(types::t_unsigned iII(0); iII < *i_sizeII;
-                  ++iII, ++i_A)
+              for(size_t iII(0); iII < *i_sizeII; ++iII, ++k2) //, ++i_A)
               {
-                __ASSERT( i_A == _A.end(), "Iterator out of range.\n" )
-     
                 // Initializes element to 0 before summing over structural targets.
-                *i_A = typename T_MATRIX :: value_type(0);
+                _A( k1, k2 ) = 0;
      
                 // loop over target values
                 typename t_Expanded :: value_type :: value_type
@@ -198,9 +194,8 @@ namespace Separable
      
                   // Computes first factor.
                   t_Type UI( 1 );
-                  typename t_Factors :: value_type 
-                                     :: const_iterator i_fac = factors[ rI * nb_targets + o]
-                                                                      .begin();
+                  typename t_Factors :: value_type :: const_iterator
+                     i_fac = factors[ rI * nb_targets + o].begin();
                   for(types::t_unsigned d(0); d < D; ++i_fac, ++d )
                     if( d != _dim )  UI *= (*i_fac);
                  
@@ -210,13 +205,7 @@ namespace Separable
                     if( d != _dim ) UII *= (*i_fac);
      
                   // Computes matrix element.
-                  *i_A += (*i_iexpI) * UI * UII * (*i_iexpII ) * (*i_weight) * (*i_weight);
-//                  std::cout << UI << " " << UII << "  ||  ";
-//                  std::cout << (i_iexpI - i_rexpI->begin()) 
-//                            << " " <<  (i_iexpII  - i_rexpII->begin())
-//                            << (*i_iexpI ) << " "
-//                            << " " <<  (*i_iexpII )
-//                            << "\n";
+                  _A(k1,k2) += (*i_iexpI) * UI * UII * (*i_iexpII ) * (*i_weight);
      
                   // bypasses collapsed target on second dimension of A.
                   if( i_sizeII != i_size_first or iII != 0 ) continue;
@@ -225,21 +214,19 @@ namespace Separable
                   __ASSERT( i_ctarget == _b.end(), "Iterator out of range.\n" )
                   *i_ctarget += (*i_iexpI) * UI * (*i_starget) * (*i_weight);
                 } // loop over structural target values.
-//               std::cout << *i_A << " ";
      
               } // loop over basis functions II
-              std::cout << "\n";
      
             } // end of loop over ranks II
      
           } // loop over basis functions I
-          std::cout << "\n";
-          __ASSERT( i_iexp_inc != i_rexpI->end(), "Unexpected iterator position.\n" )
+          __ASSERT( i_iexp_inc != i_rexpI->end(),
+                    "Unexpected iterator position.\n" )
      
         } // end of loop over ranks I
 
 #       ifdef _LADADEBUG
-          } __CATCHCODE(, "Error while creating factors.\n" )
+          } __CATCHCODE(, "Error while creating collapsed matrix and target.\n" )
 #       endif
      
       } // end of functor.
@@ -254,14 +241,15 @@ namespace Separable
       __ASSERT( nb_ranks != function.basis.size(),
                 "Inconsistent rank size.\n" )
 
-      factors.resize( nb_ranks * nb_targets );
+      if( factors.size() != nb_ranks * nb_targets )
+        factors.resize( nb_ranks * nb_targets );
       typename t_Factors :: iterator i_facs = factors.begin();
       for( types::t_unsigned r(0); r < nb_ranks; ++r )
       {
         // loop over target values.
         for(types::t_unsigned o(0); o < nb_targets; ++o, ++i_facs )
         {
-          i_facs->resize( D );
+          if( i_facs->size() != D ) i_facs->resize( D );
           typename t_Factors :: value_type :: iterator i_fac = i_facs->begin();
           for( types::t_unsigned d(0); d < D; ++d, ++i_fac )
           {
@@ -316,7 +304,7 @@ namespace Separable
         try {
 #     endif
 
-      __ASSERT( _dim < D, "Dimension out of range on input.\n" ) 
+      __ASSERT( _dim >= D, "Dimension out of range on input.\n" ) 
       __ASSERT( sizes.size() != D, "Unexpected array-size.\n" ) 
       __ASSERT( nb_ranks != function.basis.size(),
                 "Inconsistent rank size.\n" )
@@ -417,27 +405,32 @@ namespace Separable
       _coefs.resize( sizes.size() );
       t_solit i_dim = _coefs.begin();
       t_solit i_dim_end = _coefs.end();
-      t_Sizes :: const_iterator i_size = sizes.begin();
-      for(; i_dim != i_dim_end; ++i_dim, ++i_size ) // loop over dimensions.
+      t_Sizes :: const_iterator i_sizes = sizes.begin();
+      for(; i_dim != i_dim_end; ++i_dim, ++i_sizes ) // loop over dimensions.
       {
-        types::t_int ri = std::accumulate( i_size->begin(), i_size->end(), 0 );
+        types::t_int ri = std::accumulate( i_sizes->begin(), i_sizes->end(), 0 );
         i_dim->resize( ri );
-        typename T_VECTORS::value_type::value_type norm(0);
         std::for_each
         (
           i_dim->begin(), i_dim->end(),
-          ( 
-            boost::lambda::_1 = boost::lambda::bind( &opt::random::rng ),
-            norm += boost::lambda::_1 
-          )
+          boost::lambda::_1 = boost::lambda::bind( &opt::random::rng )
         );
-        norm = typename T_VECTORS::value_type::value_type(1) / norm;
-        std::for_each
-        (
-          i_dim->begin(), i_dim->end(),
-          boost::lambda::_1 *= norm
-        );
-
+        t_Sizes :: value_type :: const_iterator i_size = i_sizes->begin();
+        t_Sizes :: value_type :: const_iterator i_size_end = i_sizes->end();
+        typename t_Vectors :: value_type :: iterator i_coef = i_dim->begin();
+        for(; i_size != i_size_end; ++i_size )
+        {
+          typename T_VECTORS::value_type::value_type norm(0);
+          typename t_Vectors :: value_type :: iterator i_c( i_coef ); 
+          std::for_each
+          (
+            i_c, i_c + *i_size, 
+            boost::lambda::var(norm) += boost::lambda::_1 * boost::lambda::_1 
+          );
+          norm = typename T_VECTORS::value_type::value_type(1) / std::sqrt(norm);
+          std::for_each( i_c, i_c + *i_size, 
+                         boost::lambda::_1 *= boost::lambda::constant(norm) );
+        }
       }
     }
 

@@ -25,7 +25,7 @@ namespace Separable
           t_Return result( scalarop( *i_coef, (*i_func)( *_first ) ) );
           for( ++_first, ++i_func, ++i_coef; 
                _first != _last; ++i_func, ++_first, ++i_coef ) 
-            groupop( result, scalarop( *i_coef, (*i_func)( *_first ) ) ); 
+            result = groupop( result, scalarop( *i_coef, (*i_func)( *_first ) ) ); 
           return result; 
         }
 
@@ -42,7 +42,7 @@ namespace Separable
         coef_iterator i_coef = coefs.begin();
         t_Return result( scalarop( *i_coef, (*i_func)( _arg ) ) );
         for( ++i_func, ++i_coef; i_func != i_func_end; ++i_func, ++i_coef )
-          groupop( result, scalarop( *i_coef, (*i_func)( _arg ) ) );
+          result = groupop( result, scalarop( *i_coef, (*i_func)( _arg ) ) );
         return result;
       }
 
@@ -79,7 +79,8 @@ namespace Separable
         coef_iterator i_coef = coefs.begin();
         t_Return result( scalarop( *i_coef, (*i_func)( _first, _last ) ) );
         for( ++i_func, ++i_coef; i_func != i_func_end; ++i_func, ++i_coef ) 
-          groupop( result, scalarop( *i_coef, (*i_func)( _first, _last ) ) ); 
+          result = groupop( result, 
+                            scalarop( *i_coef, (*i_func)( _first, _last ) ) ); 
         return result; 
       }
         

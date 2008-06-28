@@ -11,9 +11,9 @@ namespace Fitting
   {
     // First creates the input vector.
     std::vector<t_Configurations::value_type::first_type> input;
-    typename T_ALLSQ :: t_Vector w, y;
+    typename std::vector< typename T_ALLSQ :: t_Vector :: value_type > w, y;
     input.reserve( training.size() * training[0].size() );
-    w.reserve( training.size() * training[0].size() );
+    // w.reserve( training.size() * training[0].size() );
     y.reserve( training.size() * training[0].size() );
     std::vector< t_Configurations > :: const_iterator i_train( training.begin() );
     std::vector< t_Configurations > :: const_iterator i_train_end( training.end() );
@@ -34,18 +34,22 @@ namespace Fitting
       for(; i_conf != i_conf_end; ++i_conf )
       {
         input.push_back( i_conf->first ); 
-        w.push_back( (*i_weight) * i_conf->second );
+        // for fitting, weights are all the same.
+        // w.push_back( (*i_weight) * i_conf->second );
       }
     }
     // initializes the collapse functor.
+    w.resize( y.size(), 1 );
     _collapse.reset();
     _collapse.init( input, w );
     _allsq.init_targets( y );
+    w.clear();
 
     // Then creates the vectors of coefficients with random initial value.
     typename T_ALLSQ :: t_Vectors coefs;
     _collapse.create_coefs( coefs );
-   
+    _collapse.reassign( coefs );
+    
     // finally performs fit
     types::t_real convergence = _allsq( coefs, &_collapse );
 

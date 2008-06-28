@@ -57,8 +57,10 @@ int main(int argc, char *argv[])
       boost::mpi::environment env(argc, argv); 
       boost::mpi::communicator world;
       ::mpi::main = &world;
-      Print::out.init( "out" );
-      Print::out.doprint( true );
+      __DODEBUGCODE( 
+        Print::out.init( "out" );
+        Print::out.doprint( true );
+      )
     )
 
     std::string filename("input.xml");
@@ -118,9 +120,7 @@ int main(int argc, char *argv[])
  
     
     __MPICODE(
-      Print :: out << "Before broadcasting" << Print::endl;
       boost::mpi::broadcast( *::mpi::main, filename, 0 );
-      Print :: out << "After broadcasting" << Print::endl;
       std::string input;
     )
  

@@ -168,7 +168,7 @@ namespace Fitting
         types::t_real intermed(0);
         for(; i_conf != i_conf_end; ++i_conf )
           intermed +=  _sep.operator()( i_conf->first.begin(),
-                                        i_conf->first.end() ) * ( i_conf->second );
+                                        i_conf->first.end()   ) * i_conf->second;
         // Prints each structure if _verbose=true.
         if( _verbose )
           std::cout << "  structure: " << *i_name << "   "

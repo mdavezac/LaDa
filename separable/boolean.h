@@ -41,8 +41,7 @@ namespace Separable
       bool const static has_gradient = false;
      
       //! Constructor 
-      Boolean ( bool _which = false ) : which( _which ) 
-        { name = _which ? "True": "False"; }
+      Boolean ( bool _which = false ) { set( _which ); }
       //! Destructor
       ~Boolean() {}
 
@@ -50,9 +49,12 @@ namespace Separable
       t_Return operator()( const t_Arg _bool ) const
       { 
         const types::t_real sqrt2(0.70710678118654752440e0);
-        if( which ) return _bool ? t_Return( sqrt2 ): t_Return( -sqrt2 );
-        return sqrt2;
+        return _bool == which ? t_Return( 1 ): t_Return( 0 );
+       //if( which ) return _bool ? t_Return( sqrt2 ): t_Return( -sqrt2 );
+       //return sqrt2;
       }
+      void set( bool _which )
+        { which = _which; name = _which ? "True": "False"; }
 
     protected:
       //! Decides whether this is a true or false function.
@@ -76,7 +78,7 @@ namespace Separable
     public:
       //! Constructor.
       BooleanBasis() 
-        { elems[0].which = true; elems[0].name = "True"; elems[1].which = false; }
+        { elems[0].set(true); elems[1].set(false); }
       //! Destructor.
       ~BooleanBasis() {}
   };

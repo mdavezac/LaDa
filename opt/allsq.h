@@ -8,26 +8,38 @@
 #include <config.h>
 #endif
 
+
 #include <vector>
+
 
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <tinyxml/tinyxml.h>
-#include <gsl/gsl_linalg.h>
-#include <opt/gsl.h>
+#include <boost/numeric/ublas/vector.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/io.hpp>
+#include <boost/numeric/ublas/vector_proxy.hpp>
+#include <boost/numeric/ublas/matrix_proxy.hpp>
+#include "cgs.h"
+// #include <gsl/gsl_linalg.h>
+// #include <opt/gsl.h>
+
 
 namespace Fitting
 {
   //! \brief Makes an alternating linear least-square method from templated 1d
   //!        least-square method.
-  //! \tparam T_LSQ The 1d least-square method to alternate for.
+  //! \tparam T_SOLVER A linear solver type.
+  template< class T_SOLVER >
   class Allsq
   {
     public:
       //! Type of the Matrix for collapsed 1d problem.
-      typedef std::vector<types::t_real> t_Matrix;
+      typedef T_SOLVER t_Solver;
+      //! Type of the Matrix for collapsed 1d problem.
+      typedef boost::numeric::ublas::matrix<types::t_real> t_Matrix;
       //! Type of the Vector for collapsed 1d-problem.
-      typedef std::vector<types::t_real> t_Vector;
+      typedef boost::numeric::ublas::vector<types::t_real> t_Vector;
       //! Type of the input vectors. One for each collapsible dimension.
       typedef std::vector< t_Vector > t_Vectors;
 
@@ -36,16 +48,21 @@ namespace Fitting
       types::t_int itermax;
       //! Convergence criteria.
       types::t_real tolerance;
+      //! The linear solver
+      t_Solver linear_solver;
+      //! Verbosity
+      bool verbose;
 
     public:
       //! Constructor.
-      Allsq() : itermax(20), tolerance( 1e-4 ) {}
+      Allsq() : itermax(20), tolerance( 1e-4 ), verbose( false )
+        { linear_solver.itermax = itermax; linear_solver.tolerance = tolerance;  }
       //! Destructor
       ~Allsq() {}
       //! \brief Pre-minimizer stuff.
       //! \param _v[in] is a vector with as many elements as there observed
       //!               data points.
-      void init_targets( t_Vector &_v ) { targets = _v; }; 
+      template< class T_CONTAINER > void init_targets( T_CONTAINER &_v );
       //! \brief Perform Alternating Linear Least-Square Fit.
       //! \params _solution should be a vector of vectors. The outer vectors
       //!         have the dimension of the problem. The inner vectors should
@@ -75,28 +92,29 @@ namespace Fitting
       t_Vector targets;
   };
 
-  template< class T_COLLAPSE >
-    types::t_real Allsq :: operator()( t_Vectors& _solution, T_COLLAPSE* collapse  )
+  template< class T_SOLVER > template< class T_CONTAINER >
+    inline void Allsq<T_SOLVER> :: init_targets( T_CONTAINER &_v )
+      { 
+        targets.resize( _v.size() ); 
+        std::copy( _v.begin(), _v.end(), targets.begin() );
+      }; 
+
+  template< class T_SOLVER > template< class T_COLLAPSE >
+    types::t_real Allsq<T_SOLVER> :: operator()( t_Vectors& _solution,
+                                                 T_COLLAPSE* collapse  )
     {
-      std::cout << "Starting point: " << std::endl;
-          typename t_Vectors :: iterator i_sol = _solution.begin();
-          typename t_Vectors :: iterator i_sol_end = _solution.end();
-          for(i_sol = _solution.begin(); i_sol != i_sol_end; ++i_sol)
-          {
-            std::cout << "      ";
-            std::for_each( i_sol->begin(), i_sol->end(),
-                           std::cout << boost::lambda::_1 << "   " );
-            std::cout << "\n";
-          }
-          std::cout << "\n\n";
+
       try
       {
+        if( verbose ) std::cout << "Starting Alternating-least-square fit.\n";
+        ConjGrad::IdPreCond precond;
         types::t_unsigned iter = 0;
         types::t_int D( _solution.size() );
         t_Matrix A;
         t_Vector b;
         types::t_real convergence(0);
-        t_Matrix copy;
+        typename t_Vectors :: iterator i_sol;
+        typename t_Vectors :: iterator i_sol_end = _solution.end();
         do
         {
           types::t_unsigned dim(0);
@@ -104,79 +122,44 @@ namespace Fitting
           for(convergence = 0e0; i_sol != i_sol_end; ++i_sol, ++dim )
           {
             (*collapse)( b, A, dim, targets, _solution );
-           
-            copy = A;
-            Gsl::Matrix gslA( b.size(), copy );
-            std::cout << ( (gsl_matrix*)gslA )->size1 << " "
-                      << ( (gsl_matrix*)gslA )->size2 << " "
-                      << ( (gsl_matrix*)gslA )->tda << "\n";
-            Gsl::Vector gslb( b );
-            Gsl::Vector gslx( *i_sol );
-            std::cout << "1A: " ;
-            std::for_each( A.begin(), A.end(), std::cout << boost::lambda::_1 << " " );
-            std::cout << std::endl;;
+            types::t_real result;
+            linear_solver.tolerance = tolerance; //boost::numeric::ublas::norm_2(b);
+            typename t_Solver :: t_Return ret;
+            ret = linear_solver( A, *i_sol, b );
+            result = ret.second;
 
-            gsl_linalg_HH_solve( (gsl_matrix*) gslA, (gsl_vector*) gslb,
-                                 (gsl_vector*) gslx );
-
-
-            types::t_real result( 0 );
-            typename t_Matrix::const_iterator i_A = A.begin();
-            typename t_Vector :: const_iterator i_b = b.begin();
-            typename t_Vector :: const_iterator i_b_end = b.end();
-            for(; i_b != i_b_end; ++i_b )
-            {
-              types::t_real col(0);
-              typename t_Vectors :: value_type
-                                 :: const_iterator i_var = i_sol->begin();
-              typename t_Vectors :: value_type
-                                 :: const_iterator i_var_end = i_sol->end();
-              for(; i_var != i_var_end; ++i_var, ++i_A )
-              {
-                __ASSERT( i_A == A.end(), "" );
-                col += (*i_A) * (*i_var );
-              }
-              std::cout << "|" << col << " - " << *i_b << "| = "
-                        << std::abs( col - *i_b ) << std::endl;
-              result += col;
-            } 
-            __ASSERT( i_A != A.end(), "" );
-            std::cout << "    dim: " << dim << " conv: " << result << std::endl;
             convergence += result;
-          }
-          for(i_sol = _solution.begin(); i_sol != i_sol_end; ++i_sol)
-          {
-            std::cout << "      ";
-            std::for_each( i_sol->begin(), i_sol->end(),
-                           std::cout << boost::lambda::_1 << "   " );
-            std::cout << "\n";
           }
           ++iter;
           convergence /= (types::t_real) D;
 
-          std::cout << "iter: " << iter << " conv: " << convergence << std::endl;
+          if( verbose )
+            std::cout << "  iter: " << iter
+                      << "  conv: " << convergence << std::endl;
         }
-        while(     ( convergence > tolerance or tolerance < 0e0 )
+        while( true //   ( convergence > tolerance or tolerance < 0e0 )
                and ( iter < itermax or itermax == 0 ) );
 
-        std::cout << "final conv: " << convergence << std::endl;
+        if( verbose )
+          std::cout << "final conv: " << convergence << std::endl;
         return convergence;
       }
       __CATCHCODE(, "Error encountered in Alternating-least square fit.\n" )
     }
 
-    inline void Allsq :: Load( const TiXmlElement &_node )
-    {
-      std::string name = _node.Value();
-      const TiXmlElement *parent = &_node;
-      if( name.compare( "Allsq" ) ) 
-       parent = _node.FirstChildElement( "Allsq" );
-      __DOASSERT( not parent, "Could not find Allsq tag in input.\n" )
-      if( parent->Attribute( "tolerance" ) )
-        parent->Attribute( "tolerance", &tolerance );
-      if( parent->Attribute( "itermax" ) )
-        parent->Attribute( "itermax", &itermax );
-    }
+    template< class T_SOLVER > 
+      void Allsq<T_SOLVER> :: Load( const TiXmlElement &_node )
+      {
+        std::string name = _node.Value();
+        const TiXmlElement *parent = &_node;
+        if( name.compare( "Allsq" ) ) 
+         parent = _node.FirstChildElement( "Allsq" );
+        __DOASSERT( not parent, "Could not find Allsq tag in input.\n" )
+        if( parent->Attribute( "tolerance" ) )
+          parent->Attribute( "tolerance", &tolerance );
+        if( parent->Attribute( "itermax" ) )
+          parent->Attribute( "itermax", &itermax );
+      }
 
 }
 #endif

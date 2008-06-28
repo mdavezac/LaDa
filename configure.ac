@@ -152,6 +152,7 @@ AC_ARG_ENABLE(debug,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-debug) ;;
      esac],[debug=true])
 AH_TEMPLATE([_PRINT_ALL_PROCS])
+AH_TEMPLATE([NDEBUG])
 
 AC_ARG_ENABLE(nolaunch,
      [  --enable-nolaunch             Runs fake pescan/darwin],
@@ -322,6 +323,7 @@ else
   CXXFLAGS=`echo $CXXFLAGS | sed "s/-g//"`
   CFLAGS=`echo $CFLAGS | sed "s/-g//"`
   CPP_DEBUG_FLAGS=
+  AC_DEFINE([NDEBUG],[1],[])
 fi
 AC_SUBST(CPP_DEBUG_FLAGS)
 

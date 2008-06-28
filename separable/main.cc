@@ -19,6 +19,7 @@
 #include <tinyxml/tinyxml.h> 
 
 #include <opt/allsq.h>
+#include <opt/cgs.h>
 #include "cefitting.h"
 
 #include <revision.h>
@@ -102,12 +103,12 @@ int main(int argc, char *argv[])
     bool verbose = vm.count("verbose");
     types::t_unsigned reruns(1);
     if( vm.count("reruns") ) reruns = vm["reruns"].as< types::t_unsigned >();
-    __ASSERT( reruns == 0, "0 number of runs performed... As required on input.\n" )
+    __DOASSERT( reruns == 0, "0 number of runs performed... As required on input.\n" )
     bool cross = vm.count("cross");
     types::t_unsigned rank( vm["rank"].as< types::t_unsigned >() );
-    __ASSERT( rank == 0, "Separable function of rank 0 is obnoxious.\n" )
+    __DOASSERT( rank == 0, "Separable function of rank 0 is obnoxious.\n" )
     types::t_unsigned size( vm["size"].as< types::t_unsigned >() );
-    __ASSERT( size == 0, "Separable function of dimension 0 is obnoxious.\n" )
+    __DOASSERT( size == 0, "Separable function of dimension 0 is obnoxious.\n" )
     types::t_real tolerance( vm["tolerance"].as< types::t_real >() );
     types::t_unsigned maxiter( vm["maxiter"].as< types::t_unsigned >() );
     types::t_real dtolerance( vm["1dtolerance"].as< types::t_real >() );
@@ -132,6 +133,8 @@ int main(int argc, char *argv[])
                  << tolerance << "\n"
               << "Maximum number of iterations for alternating least-square fit: "
                  << maxiter << "\n"
+              << "Alternating linear-least square tolerance: " 
+                 << tolerance << "\n"
               << "1d linear-least square tolerance: " 
                  << dtolerance << "\n"
               << "Will" << ( doupdate ? " ": " not " )
@@ -145,7 +148,7 @@ int main(int argc, char *argv[])
       TiXmlDocument doc;
       if( boost::filesystem::exists( filename ) )
       {
-        __ASSERT( not doc.LoadFile( filename ), 
+        __DOASSERT( not doc.LoadFile( filename ), 
                      "Found " << filename << " but could not parse.\n"
                   << "Possible incorrect XML syntax.\n" 
                   << doc.ErrorDesc()  )
@@ -154,16 +157,17 @@ int main(int argc, char *argv[])
       {
         boost::filesystem::path path( dir );
         boost::filesystem::path fullpath = path / filename;
-        __ASSERT( not boost::filesystem::exists( fullpath ),
+        __DOASSERT( not boost::filesystem::exists( fullpath ),
                      "Could not find "<< filename 
                   << " in current directory, nor in " <<  path )
-        __ASSERT( not doc.LoadFile( fullpath.string() ),
+        __DOASSERT( not doc.LoadFile( fullpath.string() ),
                      "Could not parse " << fullpath 
                   << ".\nPossible incorrect XML syntax.\n"
                   << doc.ErrorDesc()  )
       }
       TiXmlHandle handle( &doc );
-      TiXmlElement *child = handle.FirstChild( "Job" ).FirstChild( "Lattice" ).Element();
+      TiXmlElement *child = handle.FirstChild( "Job" )
+                                  .FirstChild( "Lattice" ).Element();
       __DOASSERT( not child, "Could not find Lattice in input." )
       Crystal::Structure::lattice = lattice;
       __DOASSERT( not lattice->Load(*child),
@@ -194,9 +198,11 @@ int main(int argc, char *argv[])
     opt::random::seed();
 
     // Initializes fitting.
-    Fitting::Allsq allsq;
+    Fitting::Allsq<ConjGrad::Cgs> allsq;
     allsq.itermax = maxiter;
     allsq.tolerance = tolerance;
+    allsq.linear_solver.tolerance = dtolerance;
+    allsq.linear_solver.verbose = verbose;
 
     // Initializes the symmetry-less separable function.
     CE::Separables separables( rank, size, "cube" );

@@ -82,7 +82,7 @@ OPT_H = ndim_iterator.h minimize_base.h polynome.h frprmn_minimizer.h \
         gsl_minimizers.h types.h convex_hull.h function_base.h \
 	va_minimizer.h fitness_function.h  function_functors.h monome.h traits.h \
         fuzzy.h atat.h debug.h va_function.h gsl_lsq.h random.h algorithms.h \
-        gsl.h allsq.h
+        gsl.h allsq.h cgs.h
 OPT_CC = gsl_lsq.cc random.cc gsl.cc
 OPT_F90 =  df1dim.f90  frprmn.f90  linmin.f90
 OPT_DOC = $(OPT_H) $(OPT_CC) 
