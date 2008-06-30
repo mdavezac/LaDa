@@ -410,30 +410,34 @@ namespace Separable
       t_solit i_dim = _coefs.begin();
       t_solit i_dim_end = _coefs.end();
       t_Sizes :: const_iterator i_sizes = sizes.begin();
+      types::t_real ndim( sizes.size() );
       for(; i_dim != i_dim_end; ++i_dim, ++i_sizes ) // loop over dimensions.
       {
         types::t_int ri = std::accumulate( i_sizes->begin(), i_sizes->end(), 0 );
         i_dim->resize( ri );
-        std::for_each
-        (
-          i_dim->begin(), i_dim->end(),
-          boost::lambda::_1 = boost::lambda::bind( &opt::random::rng )
-        );
         t_Sizes :: value_type :: const_iterator i_size = i_sizes->begin();
         t_Sizes :: value_type :: const_iterator i_size_end = i_sizes->end();
         typename t_Vectors :: value_type :: iterator i_coef = i_dim->begin();
         for(; i_size != i_size_end; ++i_size )
         {
+          types::t_real a = std::exp( std::log( 1e1)/(2e0 * ndim - 2e0) );
+          types::t_real b = std::exp( std::log(1e-1)/(2e0 * ndim - 2e0) );
+          types::t_real c = a-c;
           typename T_VECTORS::value_type::value_type norm(0);
           typename t_Vectors :: value_type :: iterator i_c( i_coef ); 
-          std::for_each
+          void (*ptr_swap)( types::t_real &, types::t_real& ) = std::swap;
+          std::generate
           (
             i_c, i_c + *i_size, 
-            boost::lambda::var(norm) += boost::lambda::_1 * boost::lambda::_1 
+            (
+                boost::lambda::bind( &opt::random::rng ) * boost::lambda::constant(c)
+              + boost::lambda::constant(b) 
+            ) * boost::lambda::bind( &opt::random::rflip )
           );
-          norm = typename T_VECTORS::value_type::value_type(1) / std::sqrt(norm);
-          std::for_each( i_c, i_c + *i_size, 
-                         boost::lambda::_1 *= boost::lambda::constant(norm) );
+          i_coef += *i_size;
+//         norm = typename T_VECTORS::value_type::value_type(1) / std::sqrt(norm);
+//         std::for_each( i_c, i_c + *i_size, 
+//                        boost::lambda::_1 *= boost::lambda::constant(norm) );
         }
       }
     }

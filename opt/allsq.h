@@ -9,6 +9,7 @@
 #endif
 
 
+#include <iomanip>
 #include <vector>
 
 
@@ -20,7 +21,6 @@
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/vector_proxy.hpp>
 #include <boost/numeric/ublas/matrix_proxy.hpp>
-#include "cgs.h"
 // #include <gsl/gsl_linalg.h>
 // #include <opt/gsl.h>
 
@@ -107,7 +107,6 @@ namespace Fitting
       try
       {
         if( verbose ) std::cout << "Starting Alternating-least-square fit.\n";
-        ConjGrad::IdPreCond precond;
         types::t_unsigned iter = 0;
         types::t_int D( _solution.size() );
         t_Matrix A;
@@ -135,18 +134,12 @@ namespace Fitting
             {
               namespace bl = boost::lambda;
               (*collapse)( b, A, dim, targets, _solution );
+              types::t_real n = boost::numeric::ublas::norm_1(b);
               b -= boost::numeric::ublas::prod( A, *i_sol );
-              types::t_real (*abs_ptr) ( types::t_real const ) = &std::abs;
-              std::for_each
-              (
-                 b.begin(), b.end(), 
-                 bl::var( convergence ) += bl::bind( abs_ptr, bl::_1 )
-              );
-              N += b.size();
+              convergence += boost::numeric::ublas::norm_2(b) / n;
             }
-            convergence /= types::t_real( N );
-            std::cout << "  iter: " << iter
-                      << "  conv: " << convergence << " " << N << std::endl;
+            std::cout << "\n  Allsq iter: " << iter
+                      << "  conv: " << convergence << " " << N << "\n\n";
           }
         }
         while(  true //   ( convergence > tolerance or tolerance < 0e0 )

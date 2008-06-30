@@ -60,6 +60,16 @@ namespace opt
       __ASSERT( not details::rng, "random number generator was not created" );
       return (*details::rng)();
     } 
+    bool flip()
+    {
+      __ASSERT( not details::rng, "random number generator was not created" );
+      return (*details::rng)() -0.5e0 > 0e0;
+    }
+    types::t_real rflip()
+    {
+      __ASSERT( not details::rng, "random number generator was not created" );
+      return 2e0*(*details::rng)() - 1e0;
+    }
 
     void destroy()
     {

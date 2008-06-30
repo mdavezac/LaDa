@@ -7,6 +7,7 @@
 #endif
 
 #include <string> 
+#include <iomanip>
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
@@ -167,18 +168,24 @@ namespace Fitting
         t_Configurations :: const_iterator i_conf_end( i_train->end() );
         types::t_real intermed(0);
         for(; i_conf != i_conf_end; ++i_conf )
+        {
           intermed +=  _sep.operator()( i_conf->first.begin(),
                                         i_conf->first.end()   ) * i_conf->second;
+        }
         // Prints each structure if _verbose=true.
         if( _verbose )
-          std::cout << "  structure: " << *i_name << "   "
-                    << "Target: " << *i_target << " "
-                    << "Separable: " << intermed << "   "
+          std::cout << "  structure: " << std::setw(30) << *i_name << "   "
+                    << "Target: " << std::fixed << std::setw(8)
+                           << std::setprecision(2) << *i_target + offset << " "
+                    << "Separable: " << std::fixed << std::setw(8)
+                           << std::setprecision(2) << intermed << "   "
                     << "|Target-Separable| * weight: "
-                    << std::abs( intermed - (*i_target) ) * (*i_weight) << "\n";
-        intermed = std::abs( intermed - (*i_target) ) * (*i_weight);
+                    << std::fixed << std::setw(10) << std::setprecision(3) 
+                           << std::abs( intermed - (*i_target) - offset ) * (*i_weight) << "\n";
+        intermed = std::abs( intermed - (*i_target) - offset ) * (*i_weight);
         if( intermed > maxerr ) maxerr = intermed;
         average += intermed;
+        
       }
       types::t_real div( training.size() );
       if( exclude.size() )

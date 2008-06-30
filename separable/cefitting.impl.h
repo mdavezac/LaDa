@@ -26,20 +26,17 @@ namespace Fitting
           and std::find( exclude.begin(), exclude.end(), i ) == exclude.end() ) 
         continue;
 
-      // all energies of equivalent structures are ... equivalent.
-      // hence resize rather than pushback.
-      y.resize( y.size() + i_train->size(),  *i_target );
+      y.resize( y.size() + i_train->size(),  *i_target + offset );
       t_Configurations :: const_iterator i_conf( i_train->begin() );
       t_Configurations :: const_iterator i_conf_end( i_train->end() );
       for(; i_conf != i_conf_end; ++i_conf )
       {
         input.push_back( i_conf->first ); 
-        // for fitting, weights are all the same.
-        // w.push_back( (*i_weight) * i_conf->second );
+        w.push_back( (*i_weight) * i_conf->second );
       }
     }
     // initializes the collapse functor.
-    w.resize( y.size(), 1 );
+//   w.resize( y.size(), 1 );
     _collapse.reset();
     _collapse.init( input, w );
     _allsq.init_targets( y );

@@ -1,6 +1,6 @@
-//
-//  Version: $Id$
-//
+#
+#  Version: $Id$
+#
 bsuf="-gcc41-mt"
 BOOST_LDFLAGS="-L/home/davezac/usr/lib"
 BOOST_MPI="-lboost_serialization$bsuf -lboost_mpi$bsuf"

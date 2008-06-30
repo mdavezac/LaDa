@@ -20,6 +20,10 @@
 
 #include <opt/allsq.h>
 #include <opt/cgs.h>
+#include <opt/types.h>
+#include <opt/fuzzy.h>
+#include <opt/debug.h>
+
 #include "cefitting.h"
 
 #include <revision.h>
@@ -61,6 +65,8 @@ int main(int argc, char *argv[])
                 " single-value decomposition.\n"  );
     po::options_description hidden("hidden");
     hidden.add_options()
+        ("offset", po::value<types::t_real>()->default_value(0e0), 
+                   "Adds an offset to the energies.\n" )
         ("datadir", po::value<std::string>()->default_value("./"))
         ("latticeinput", po::value<std::string>()->default_value("input.xml"));
  
@@ -114,12 +120,8 @@ int main(int argc, char *argv[])
     types::t_real dtolerance( vm["1dtolerance"].as< types::t_real >() );
     bool doupdate = vm.count("update");
     bool svd = vm.count("svd");
-    if( dtolerance > tolerance )
-    {
-      std::cout << "1d tolerance cannot be smaller then alternating tolerance.\n" 
-                << tolerance << " < " << dtolerance << "\n";
-      return 0;
-    }
+    types::t_real offset ( vm["offset"].as< types::t_real >() );
+    if( Fuzzy::eq( offset, types::t_real(0) ) ) offset = types::t_real(0);
 
     std::cout << "Performing " << (cross ? "Cross-Validation" : "Fitting" ) << ".\n"
               << "Size of the cubic basis: " << size << "\n"
@@ -141,6 +143,7 @@ int main(int argc, char *argv[])
                  << "update between dimensions.\n"
               << ( svd ? "Single": "No Single" ) << " Value Decomposition."
               << std::endl;
+    if( Fuzzy :: neq( offset, 0e0 ) ) std::cout << "Offset: " << offset << "\n";
 
     // Loads lattice
     lattice = new Crystal :: Lattice;
@@ -198,7 +201,7 @@ int main(int argc, char *argv[])
     opt::random::seed();
 
     // Initializes fitting.
-    Fitting::Allsq<ConjGrad::Cgs> allsq;
+    Fitting::Allsq<Fitting::Cgs> allsq;
     allsq.itermax = maxiter;
     allsq.tolerance = tolerance;
     allsq.verbose = verbose;
@@ -217,6 +220,7 @@ int main(int argc, char *argv[])
 
     // Initializes Interface to allsq.
     Fitting::SepCeInterface interface;
+    interface.set_offset( offset );
     interface.read( symsep, dir, "LDAs.dat", verbose );
 #     if defined (_TETRAGONAL_CE_)
         // From here on, lattice should be explicitely tetragonal.
@@ -236,9 +240,10 @@ int main(int argc, char *argv[])
       if( not cross )
       {
         std::cout << "\nFitting using whole training set:" << std::endl;
+        allsq.verbose = true;
         interface.fit( allsq, collapse );
         t_PairErrors result; 
-        result = interface.check_training( separables, verbose );
+        result = interface.check_training( separables, true );
        //if( verbose ) std::cout << separables << "\n";
         std::cout << " average error: " << result.first
                   << " maximum error: " << result.second << std::endl;

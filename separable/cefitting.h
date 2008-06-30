@@ -28,7 +28,7 @@ namespace Fitting
       //! Structures excluded from fit.
       std::vector< types::t_unsigned > exclude;
       //! Constructor
-      SepCeInterface(){}
+      SepCeInterface() : offset( 0e0 ) {}
       
       //! Reads the structures from input.
       void read( CE::SymSeparables &_symseps,
@@ -54,6 +54,8 @@ namespace Fitting
       types::t_unsigned training_set_size() const
         { return training.size(); }
 
+      //! Sets the offset. 
+      void set_offset( types::t_real _offset ) { offset = _offset; }
 
     protected:
       //! Reads structure names and energies.
@@ -87,6 +89,8 @@ namespace Fitting
       std::vector< t_Configurations > training;
       //! The names of the structures.
       std::vector< std::string > names;
+      //! An energy offset to add to the structures.
+      types::t_real offset;
   };
 
   template< class T_ALLSQ, class T_COLLAPSE>
