@@ -122,22 +122,34 @@ namespace Fitting
           for(convergence = 0e0; i_sol != i_sol_end; ++i_sol, ++dim )
           {
             (*collapse)( b, A, dim, targets, _solution );
-            types::t_real result;
-            linear_solver.tolerance = tolerance; //boost::numeric::ublas::norm_2(b);
-            typename t_Solver :: t_Return ret;
-            ret = linear_solver( A, *i_sol, b );
-            result = ret.second;
-
-            convergence += result;
+            linear_solver( A, *i_sol, b );
           }
           ++iter;
           convergence /= (types::t_real) D;
 
           if( verbose )
+          {
+            i_sol = _solution.begin();
+            types::t_real N(0);
+            for(convergence = 0e0, dim = 0; i_sol != i_sol_end; ++i_sol, ++dim )
+            {
+              namespace bl = boost::lambda;
+              (*collapse)( b, A, dim, targets, _solution );
+              b -= boost::numeric::ublas::prod( A, *i_sol );
+              types::t_real (*abs_ptr) ( types::t_real const ) = &std::abs;
+              std::for_each
+              (
+                 b.begin(), b.end(), 
+                 bl::var( convergence ) += bl::bind( abs_ptr, bl::_1 )
+              );
+              N += b.size();
+            }
+            convergence /= types::t_real( N );
             std::cout << "  iter: " << iter
-                      << "  conv: " << convergence << std::endl;
+                      << "  conv: " << convergence << " " << N << std::endl;
+          }
         }
-        while( true //   ( convergence > tolerance or tolerance < 0e0 )
+        while(  true //   ( convergence > tolerance or tolerance < 0e0 )
                and ( iter < itermax or itermax == 0 ) );
 
         if( verbose )

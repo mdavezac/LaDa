@@ -253,7 +253,9 @@ namespace Separable
           typename t_Factors :: value_type :: iterator i_fac = i_facs->begin();
           for( types::t_unsigned d(0); d < D; ++d, ++i_fac )
           {
-            __ASSERT( function.basis.size() <= r, "Inconsistent rank size.\n" )
+            __ASSERT( function.basis.size() <= r,
+                         "Inconsistent rank size.: " 
+                      << function.basis.size() << " " << r << ".n" )
 
             // if there less than d dimensions for this rank, the factor is
             // evaluated to 1, such that it will have no influence.
@@ -322,7 +324,9 @@ namespace Separable
         {
           __ASSERT( i_facs == factors.end(), "Iterator out of range.\n" )
           __ASSERT( i_facs->size() != D, "Unexpected array size.\n" )
-          __ASSERT( function.size() <= r, "Inconsistent rank size.\n" )
+          __ASSERT( function.basis.size() <= r,
+                     "Inconsistent rank size.: " 
+                    << function.basis.size() << " " << r << ".n" )
            
           // if there less than d dimensions for this rank, the factor is
           // evaluated to 1, such that it will have no influence.

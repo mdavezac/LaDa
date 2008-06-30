@@ -201,6 +201,7 @@ int main(int argc, char *argv[])
     Fitting::Allsq<ConjGrad::Cgs> allsq;
     allsq.itermax = maxiter;
     allsq.tolerance = tolerance;
+    allsq.verbose = verbose;
     allsq.linear_solver.tolerance = dtolerance;
     allsq.linear_solver.verbose = verbose;
 
@@ -238,7 +239,7 @@ int main(int argc, char *argv[])
         interface.fit( allsq, collapse );
         t_PairErrors result; 
         result = interface.check_training( separables, verbose );
-        if( verbose ) std::cout << separables << "\n";
+       //if( verbose ) std::cout << separables << "\n";
         std::cout << " average error: " << result.first
                   << " maximum error: " << result.second << std::endl;
       }
