@@ -472,11 +472,13 @@ namespace Separable
         typename t_Weights :: const_iterator i_weight = weights.begin();
         for(; i_target != i_target_end; ++i_target, ++i_val, ++i_weight )
         {
-          std::cout << "values: " << *i_val << " " << (*i_target) << "\n";
           t_Type intermed = *i_target - *i_val;
           result += intermed * intermed * (*i_weight);
         }
         return result;
+#     ifdef _LADADEBUG
+        } __CATCHCODE(, "Error while assessing squares.\n" )
+#     endif
       }
 
   template< class T_FUNCTION >

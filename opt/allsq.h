@@ -126,12 +126,12 @@ namespace Fitting
           ++iter;
           convergence /= (types::t_real) D;
 
-        // if( verbose )
-        // {
-        //   std::cout << "\n  Allsq iter: " << iter
-        //             << "  evaluation: " << collapse->evaluate( _solution, targets)
-        //             << "\n";
-        // }
+          if( verbose )
+          {
+            std::cout << "\n  Allsq iter: " << iter
+                      << "  evaluation: " << collapse->evaluate( _solution, targets)
+                      << "\n";
+          }
         }
         while(  true //   ( convergence > tolerance or tolerance < 0e0 )
                and ( iter < itermax or itermax == 0 ) );
