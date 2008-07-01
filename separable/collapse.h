@@ -110,6 +110,10 @@ namespace Separable
       //! \param[in] _solution contains the coefficients for \e all dimensions.
       //!                      \a _solution[d, (r,i) ]
       template< class T_VECTORS > void reassign( const T_VECTORS &_solution ) const;
+      //! Evaluates the sum of squares.
+      template< class T_VECTORS, class T_VECTOR >
+        typename t_Function::t_Return evaluate( const T_VECTORS &_coefs,
+                                                const T_VECTOR &_targets );
 
     protected:
       //! Initializes Collapse::factors.
@@ -136,7 +140,7 @@ namespace Separable
       //! Number of ranks.
       types::t_unsigned nb_ranks;
       //! Return type of the function
-      typedef typename T_FUNCTION :: t_Basis :: value_type :: t_Return t_Type;
+      typedef typename T_FUNCTION :: t_Return t_Type;
       //! \brief Type of the matrix containing expanded function elements.
       typedef std::vector< std::vector< std::vector< t_Type > > > t_Expanded;
       //! A matrix with all expanded function elements.

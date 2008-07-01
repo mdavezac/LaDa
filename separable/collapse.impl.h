@@ -420,8 +420,8 @@ namespace Separable
         typename t_Vectors :: value_type :: iterator i_coef = i_dim->begin();
         for(; i_size != i_size_end; ++i_size )
         {
-          types::t_real a = std::exp( std::log( 1e1)/(2e0 * ndim - 2e0) );
-          types::t_real b = std::exp( std::log(1e-1)/(2e0 * ndim - 2e0) );
+          types::t_real a = std::exp( std::log( 1e2)/(2e0 * ndim - 2e0) );
+          types::t_real b = std::exp( std::log(1e-2)/(2e0 * ndim - 2e0) );
           types::t_real c = a-c;
           typename T_VECTORS::value_type::value_type norm(0);
           typename t_Vectors :: value_type :: iterator i_c( i_coef ); 
@@ -435,12 +435,49 @@ namespace Separable
             ) * boost::lambda::bind( &opt::random::rflip )
           );
           i_coef += *i_size;
-//         norm = typename T_VECTORS::value_type::value_type(1) / std::sqrt(norm);
-//         std::for_each( i_c, i_c + *i_size, 
-//                        boost::lambda::_1 *= boost::lambda::constant(norm) );
         }
       }
+#     ifdef _LADADEBUG
+        } __CATCHCODE(, "Error while assigning solution coefs to function.\n" )
+#     endif
     }
+
+  template< class T_FUNCTION > template< class T_VECTORS, class T_VECTOR > 
+    typename T_FUNCTION :: t_Return
+      Collapse<T_FUNCTION> :: evaluate( const T_VECTORS &_coefs,
+                                        const T_VECTOR &_target ) 
+      {
+#       ifdef _LADADEBUG
+          try {
+#       endif
+        initialize_factors( _coefs );
+
+        typename t_Factors :: const_iterator i_facs = factors.begin();
+        std::vector< t_Type > values( _target.size(), 0 );
+        for( size_t r(0); r < nb_ranks; ++r )
+        {
+          typename std::vector< t_Type > :: iterator i_val = values.begin();
+          for( size_t o(0); o < nb_targets; ++o, ++i_facs, ++i_val )
+            *i_val += std::accumulate
+                      (
+                        i_facs->begin(), i_facs->end(), 1e0,
+                        std::multiplies<t_Type>()
+                      );
+        } // end of loop over ranks.
+
+        t_Type result(0);
+        typename std::vector< t_Type > :: iterator i_val = values.begin();
+        typename T_VECTOR :: const_iterator i_target = _target.begin();
+        typename T_VECTOR :: const_iterator i_target_end = _target.end();
+        typename t_Weights :: const_iterator i_weight = weights.begin();
+        for(; i_target != i_target_end; ++i_target, ++i_val, ++i_weight )
+        {
+          std::cout << "values: " << *i_val << " " << (*i_target) << "\n";
+          t_Type intermed = *i_target - *i_val;
+          result += intermed * intermed * (*i_weight);
+        }
+        return result;
+      }
 
   template< class T_FUNCTION >
     void Collapse<T_FUNCTION> :: reset() 

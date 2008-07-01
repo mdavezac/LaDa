@@ -49,9 +49,9 @@ namespace Separable
       t_Return operator()( const t_Arg _bool ) const
       { 
         const types::t_real sqrt2(1.0); //0.70710678118654752440e0);
-      // return _bool == which ? t_Return( 1 ): t_Return( 0 );
-        if( which ) return _bool ? t_Return( sqrt2 ): t_Return( -sqrt2 );
-        return sqrt2;
+        return _bool == which ? t_Return( 1 ): t_Return( 0 );
+      // if( which ) return _bool ? t_Return( sqrt2 ): t_Return( -sqrt2 );
+      // return sqrt2;
       }
       void set( bool _which )
         { which = _which; name = _which ? "True": "False"; }

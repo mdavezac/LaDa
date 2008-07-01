@@ -126,21 +126,12 @@ namespace Fitting
           ++iter;
           convergence /= (types::t_real) D;
 
-          if( verbose )
-          {
-            i_sol = _solution.begin();
-            types::t_real N(0);
-            for(convergence = 0e0, dim = 0; i_sol != i_sol_end; ++i_sol, ++dim )
-            {
-              namespace bl = boost::lambda;
-              (*collapse)( b, A, dim, targets, _solution );
-              types::t_real n = boost::numeric::ublas::norm_1(b);
-              b -= boost::numeric::ublas::prod( A, *i_sol );
-              convergence += boost::numeric::ublas::norm_2(b) / n;
-            }
-            std::cout << "\n  Allsq iter: " << iter
-                      << "  conv: " << convergence << " " << N << "\n\n";
-          }
+        // if( verbose )
+        // {
+        //   std::cout << "\n  Allsq iter: " << iter
+        //             << "  evaluation: " << collapse->evaluate( _solution, targets)
+        //             << "\n";
+        // }
         }
         while(  true //   ( convergence > tolerance or tolerance < 0e0 )
                and ( iter < itermax or itermax == 0 ) );
