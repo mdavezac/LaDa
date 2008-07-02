@@ -210,12 +210,12 @@ fi
 
 AH_TEMPLATE([_DONAG])
 AH_TEMPLATE([_DOGSL])
-if test $vff = false; then
+if test "$vff" = false; then
   gsl=false
   fortran=false
   nag=false
 fi
-if test $nag = true; then
+if test "$nag" = true; then
   gsl=false
   fortran=false
   AC_DEFINE([_DONAG],[],[])
@@ -223,7 +223,7 @@ if test $nag = true; then
 fi
 AC_SUBST(GSL_CFLAGS)
 AC_SUBST(GSL_LIBS)
-if test $fortran = true; then
+if test "$fortran" = true; then
   gsl=false
   nag=false
 else
@@ -249,7 +249,7 @@ fi
 if test x$lapack = xtrue; then
   fortrancompiler=true
 fi
-if test $pescan = true; then
+if test "$pescan" = true; then
   fortrancompiler=true;
 fi
 if test x$fortrancompiler = xtrue; then
@@ -334,7 +334,7 @@ AC_SUBST(CPP_DEBUG_FLAGS)
 
 #  MPI libs
 if test x$mpi = xtrue; then
-  if test $force_mpi = true; then
+  if test "$force_mpi" = true; then
     AC_DEFINE([_MPI],[1],[])
     MPI_ADDLIB="../mpi/libmpiobject.la"
     MPI_CFLAGS="$MPI_CFLAGS -D _OPENMPI_MPI_"
@@ -344,12 +344,12 @@ if test x$mpi = xtrue; then
     mpicompilers=false
     PKG_CHECK_MODULES(WHATEVER, mpich >= 1.2.7, [mpichisthere=yes], [mpichisthere=no] )
     PKG_CHECK_MODULES(WHATEVER, openmpi >= 1.2, [openmpiisther=yes], [openmpiisther=no] )
-    if test $openmpiisther = yes; then
+    if test "$openmpiisther" = yes; then
       PKG_CHECK_MODULES(MPI, openmpi >= 1.2 )
       AC_DEFINE([_MPI],[1],[])
       MPI_ADDLIB="../mpi/libmpiobject.la"
       MPI_CFLAGS="$MPI_CFLAGS -D _OPENMPI_MPI_"
-    elif test $mpichisthere = yes; then
+    elif test "$mpichisthere" = yes; then
       PKG_CHECK_MODULES(MPI, mpich >= 1.2.7 )
       AC_DEFINE([_MPI],[1],[])
       MPI_ADDLIB="../mpi/libmpiobject.la"
@@ -429,7 +429,7 @@ AM_CONDITIONAL(DODOC, test x$founddox = xtrue)
 AC_CHECK_PROG(FOUNDDOT, dot, "YES", "NO")
 
 DOCDIR="doc"
-if test $datadir = "\${prefix}/share"; then
+if test "$datadir" = "\${prefix}/share"; then
   DOCDIR="doc"
 else
   DOCDIR="$datadir"
@@ -447,16 +447,16 @@ AC_SUBST(DOCDIR)
 # else
 #   BOOST_CXXFLAGS="$boost_cxx"
 # fi
-if test $mpi != true; then
+if test "$mpi" != true; then
   BOOST_MPI=""
 fi
-if test $python = true; then
+if test "$python" = true; then
   AX_PYTHON
 else
   BOOST_PYTHON=""
 fi
-if test $separables != true; then
-  BOOST_REGEX = ""
+if test "$separables" != true; then
+  BOOST_REGEX=""
 fi
 AC_SUBST(BOOST_LDFLAGS)
 AC_SUBST(BOOST_MPI)
@@ -474,26 +474,26 @@ echo ""; echo ""
 echo "Will Compile following modules: "
 echo " _ CE related stuff in lamarck directory"
 
-if test $galib = true; then
+if test "$galib" = true; then
   echo " _ GA libraries"
 fi
-if test $vff = true; then
+if test "$vff" = true; then
   echo " _ vff functional ";
 fi
-if test $pescan$direct_iaga = truefalse; then
+if test "$pescan$direct_iaga" = truefalse; then
   echo " _ interface to nanopse/pescan functional as external program. ";
 fi
-if test $pescan$direct_iaga = truetrue; then
+if test "$pescan$direct_iaga" = truetrue; then
   echo " _ interface to nanopse/pescan functional as external library. ";
   echo "   iaga base directory = $iaga_dir ";
 fi
-if test x$emass = xtrue; then
+if test "x$emass" = xtrue; then
   echo " _ Effective Electronic Mass calculations for ternary (100) uperlattices" 
 fi
-if test $bandgapopt = true; then
+if test "$bandgapopt" = true; then
   echo " _ Genetic Algorithm for Band Gap"
 fi
-if test $ceopt = true; then
+if test "$ceopt" = true; then
   echo " _ Genetic Algorithm for Cluster Expansion"
 fi
 if test x$molecularity = xtrue; then
@@ -506,36 +506,36 @@ if test x$separable = xtrue; then
   echo " _ Sum of separable functions fitting."
 fi
 echo ""
-if test $fortran = true; then
+if test "$fortran" = true; then
   echo "Will use fortran minimizer"
 fi
-if test $mpi$mpichisthere = trueyes; then
+if test "$mpi$mpichisthere" = trueyes; then
   echo "Will Include MPI where available, using mpich"
-elif test $mpi$openmpiisther = trueyes; then
+elif test "$mpi$openmpiisther" = trueyes; then
   echo "Will Include MPI where available, using openmpi"
-elif test $mpi$mpicompilers = truetrue; then
+elif test "$mpi$mpicompilers" = truetrue; then
   echo "Will Include MPI where available, using openmpi"
 fi
-if test $lapack = true; then
+if test "$lapack" = true; then
   echo "Will Include some lapack/blas routines for Matrix diagonalization."
 fi
-if test $python = true; then
+if test "$python" = true; then
   echo "Will compile python bindings."
 fi
-if test $debug = true; then
+if test "$debug" = true; then
   echo "Compiling with debug options"
 fi
-if test $nolaunch = true; then
+if test "$nolaunch" = true; then
   echo "Compiling with _NOLAUNCH.... Are you sure you know what you're doing? "
 fi
 echo ""
-if test $founddox = true; then
+if test "$founddox" = true; then
   echo "Type \"make doc\" for doxygen documentation"
   echo "Then check out $DOCDIR/html/index.html"
 else
   echo "You will need to install doxygen to generate the documentation"
 fi
-if test $FOUNDDOT = NO; then
+if test "$FOUNDDOT" = NO; then
   echo "Install dot for Documentation pretty graph with GraphView"
 fi
 echo ""; echo ""
