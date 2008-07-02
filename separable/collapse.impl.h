@@ -419,8 +419,8 @@ namespace Separable
         for(; i_size != i_size_end; ++i_size )
         {
           namespace bl = boost::lambda;
-          types::t_real a = std::exp( std::log( 1e2)/(2e0 * ndim - 2e0) );
-          types::t_real b = std::exp( std::log(1e-2)/(2e0 * ndim - 2e0) );
+          types::t_real a = std::exp( std::log( 1e1)/(2e0 * ndim - 2e0) );
+          types::t_real b = std::exp( std::log(1e-1)/(2e0 * ndim - 2e0) );
           types::t_real c = a-c;
           typename T_VECTORS::value_type::value_type norm(0);
           typename t_Vectors :: value_type :: iterator i_c( i_coef ); 
@@ -431,12 +431,12 @@ namespace Separable
             * bl::bind( &opt::random::rflip )
           );
           void (*ptr_swap)( types::t_real &, types::t_real& ) = std::swap;
-          a = 1e1; b = 1e-1;
-          std::generate
-          (
-            i_c, i_c + *i_size, 
-            ( bl::bind( ptr_swap, bl::var(a), bl::var(b) ), bl::var(a) )
-          );
+//         a = 1e1; b = 1e-1;
+//         std::generate
+//         (
+//           i_c, i_c + *i_size, 
+//           ( bl::bind( ptr_swap, bl::var(a), bl::var(b) ), bl::var(a) )
+//         );
           i_coef += *i_size;
         }
       }

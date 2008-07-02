@@ -132,7 +132,8 @@ namespace Separable
                     i_eweight = i_eweights->begin();
                   t_eWeights :: value_type :: const_iterator
                     i_eweight_end = i_eweights->end();
-                  t_Type akk(0), bk(0);
+                  t_Type ak1(0), ak2(0);
+                  typename t_Factors :: value_type :: const_iterator i_fac;
                   for(; i_eweight != i_eweight_end;
                       ++i_eweight, ++o, ++i_iexpI, ++i_iexpII )
                      
@@ -148,17 +149,23 @@ namespace Separable
                     __ASSERT( factors[rII * nb_targets + o].size() != D,
                               "Iterator out of range.\n" )
 
-                    if( Fuzzy::eq( *i_iexpI, 0e0 ) ) continue;
-
-                    t_Type UI( 1 );
-                    typename t_Factors :: value_type :: const_iterator 
-                       i_fac = factors[ rI * nb_targets + o].begin();
-                    for( types::t_unsigned d(0); d < D; ++i_fac, ++d )
-                      if( d != _dim )  UI *= (*i_fac);
-                 
-                    // Computes collapsed target element.
-                    if( i_sizeII == i_size_first and iII == 0 ) 
-                      bk += (*i_iexpI) * UI * (*i_starget) * (*i_eweight);
+                    if( Fuzzy::neq( *i_iexpI, 0e0 ) )
+                    {
+                      t_Type UI( 1 );
+                      i_fac = factors[ rI * nb_targets + o].begin();
+                      for( types::t_unsigned d(0); d < D; ++i_fac, ++d )
+                        if( d != _dim )  UI *= (*i_fac);
+                     
+                      // first half of A(k,k')
+                      ak1 += (*i_iexpI) * UI * (*i_eweight);
+                     
+                      // Computes collapsed target element.
+                      if( i_sizeII == i_size_first and iII == 0 ) 
+                      {
+                        __ASSERT( i_ctarget == _b.end(), "Iterator out of range.\n" )
+                        *i_ctarget += (*i_iexpI) * UI * (*i_starget) * (*i_eweight);
+                      }
+                    }
                     
                     if( Fuzzy::eq( *i_iexpII, 0e0 ) ) continue;
 
@@ -168,21 +175,15 @@ namespace Separable
                     for(types::t_unsigned d(0); d < D; ++i_fac, ++d )
                       if( d != _dim ) UII *= (*i_fac);
                     
-                    // Computes matrix element for one configuration.
-                    akk += (*i_iexpI) * UI * UII * (*i_iexpII ) * (*i_eweight);
+                    // second half of A(k,k')
+                    ak2 += UII * (*i_iexpII ) * (*i_eweight);
 //                   std::cout << "akk: " << akk << "\n";
                    
-                  }
+                  } // end of loop over equivalent structures.
        
                   // Computes matrix element for all equiv configurations.
-                  _A(k1,k2) += akk * (*i_weight);
+                  _A(k1,k2) += ak1 * ak2 * (*i_weight);
        
-                  // bypasses collapsed target on second dimension of A.
-                  if( i_sizeII != i_size_first or iII != 0 ) continue;
-                 
-                  // Computes collapsed target element.
-                  __ASSERT( i_ctarget == _b.end(), "Iterator out of range.\n" )
-                  *i_ctarget += bk * (*i_weight);
                 } // loop over structural target values.
        
               } // loop over basis functions II
@@ -233,9 +234,10 @@ namespace Separable
         opt::concurrent_loop
         (
           values.begin(), values.end(), _targets.begin(), weights.begin(),
-          bl::var( result ) = ( bl::var(dummy) = bl::_2 - bl::_1,
-                                bl::var(dummy) * bl::var(dummy) * bl::_3 )
+          bl::var( result ) += ( bl::var(dummy) = bl::_2 - bl::_1,
+                                 bl::var(dummy) * bl::var(dummy) * bl::_3 )
         );
+        return result;
         __DEBUGTRYEND(,"Error while assessing sum of squares.\n" )
       }
 

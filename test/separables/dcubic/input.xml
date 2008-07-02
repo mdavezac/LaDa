@@ -1,0 +1,12 @@
+<?xml version="1.0" standalone="no" ?>
+<Job>
+    <Lattice>
+        <row x="0.0" y="0.5" z="0.5" />
+        <row x="0.5" y="0.0" z="0.5" />
+        <row x="0.5" y="0.5" z="0.0" />
+        <site x="0.00000000" y="0.00000000" z="0.00000000">
+            <atom type="Mo" />
+            <atom type="Ta" />
+        </site>
+    </Lattice>
+</Job>

@@ -105,7 +105,7 @@ PRINT_DOC = $(PRINT_H) $(PRINT_CC)
 
 SEPARABLE_CC = cefitting.cc  main.cc ce.cc
 SEPARABLE_H = boolean.h cefitting.h ce.h lsq.h separable.h collapse.h \
-              cecollapse.h
+              cecollapse.h bestof.h
 SEPARABLE_IMPL_H = cefitting.impl.h separable.impl.h collapse.impl.h \
                    cecollapse.impl.h
 SEPARABLE_DOC = $(SEPARABLE_CC) $(SEPARABLE_H) $(SEPARABLE_IMPL_H)

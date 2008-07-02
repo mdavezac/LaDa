@@ -91,6 +91,10 @@ namespace Separable
 
       //! Constructor
       Base() : basis(), name("Function") { coefs.resize( basis.size() ); }
+      //! Copy Constructor
+      Base   ( const Base &_c ) 
+           : basis( _c.basis ), coefs( _c.coefs ), groupop( _c.groupop ),
+             scalarop( _c.scalarop ), name( _c.name ) {}
       //! Destructor
       ~Base() {}
 
@@ -183,6 +187,8 @@ namespace Separable
       public:
         //! Constructor
         Function() : t_Base() {}
+        //! Copy Constructor
+        Function ( const Function &_c ) : t_Base( _c ) {}
         //! Destructor
         ~Function() {}
  

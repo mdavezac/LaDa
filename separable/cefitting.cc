@@ -161,7 +161,7 @@ namespace Fitting
         {
           bool notfound
             = ( std::find( exclude.begin(), exclude.end(), i ) == exclude.end() );
-          if( _which != notfound ) continue;
+          if( _which == notfound ) continue;
         }
         // Sums over all equivalent structure
         t_Configurations :: const_iterator i_conf( i_train->begin() );

@@ -42,6 +42,8 @@ namespace Separable
      
       //! Constructor 
       Boolean ( bool _which = false ) { set( _which ); }
+      //! Copy Constructor 
+      Boolean ( const Boolean &_c ) : which( _c.which ), name( _c.name ) {}
       //! Destructor
       ~Boolean() {}
 
@@ -79,6 +81,8 @@ namespace Separable
       //! Constructor.
       BooleanBasis() 
         { elems[0].set(true); elems[1].set(false); }
+      //! Copy Constructor.
+      BooleanBasis( const BooleanBasis &_c ) : boost::array< Boolean, 2 >( _c ) {}
       //! Destructor.
       ~BooleanBasis() {}
   };

@@ -47,6 +47,10 @@ namespace Fitting
 
       //! Constructor.
       Cgs() : verbose( false ), tolerance( 1e-4 ), itermax(10) {}
+      //! Copy Constructor.
+      Cgs   ( const Cgs &_c )
+          : verbose( _c.verbose ), tolerance( _c.tolerance ),
+            itermax( _c.itermax ) {}
       //! Destructor.
       ~Cgs() {}
 

@@ -1,0 +1,15 @@
+GaPInP Luzonite 1
+    8                                # atoms
+ 1.0       0.0       0.0
+ 0.0       1.0       0.0
+ 0.0       0.0       1.0
+2  0.0         0.0         0.0       type, position (A)
+2  0.5         0.5         0.0       type, position (A)
+2  0.5         0.0         0.5       type, position (A)
+1  0.0         0.5         0.5       type, position (B)
+15  0.25        0.25        0.25      type, position (C)
+15  0.75        0.75        0.25      type, position (C)
+15  0.75        0.25        0.75      type, position (C)
+15  0.25        0.75        0.75      type, position (C)
+    5.6175
+

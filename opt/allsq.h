@@ -57,6 +57,11 @@ namespace Fitting
       //! Constructor.
       Allsq() : itermax(20), tolerance( 1e-4 ), verbose( false )
         { linear_solver.itermax = itermax; linear_solver.tolerance = tolerance;  }
+      //! Copy Constructor.
+      Allsq   ( const Allsq &_c ) 
+            : itermax(_c.itermax), tolerance( _c.tolerance ),
+              linear_solver( _c.linear_solver ), verbose( _c.verbose ),
+              targets( _c.targets ) {}
       //! Destructor
       ~Allsq() {}
       //! \brief Pre-minimizer stuff.
@@ -106,53 +111,61 @@ namespace Fitting
 
       try
       {
+        types::t_real convergence( 1e1 * tolerance );
         if( verbose ) std::cout << "Starting Alternating-least-square fit.\n";
         types::t_unsigned iter = 0;
         types::t_int D( _solution.size() );
         t_Matrix A;
         t_Vector b;
-        types::t_real convergence(0);
         typename t_Vectors :: iterator i_sol;
         typename t_Vectors :: iterator i_sol_end = _solution.end();
+        types::t_real oldvalue;
         do
         {
           types::t_unsigned dim(0);
           i_sol = _solution.begin();
-          for(convergence = 0e0; i_sol != i_sol_end; ++i_sol, ++dim )
+          for(; i_sol != i_sol_end; ++i_sol, ++dim )
           {
             (*collapse)( b, A, dim, targets, _solution );
-           // for( size_t i(0); i < A.size1(); ++i )
-           // {
-           //   for( size_t j(0); j < A.size2(); ++j )
-           //     std::cout << std::scientific 
-           //               << std::setw(8) 
-           //               << std::setprecision(4)
-           //               << A(i,j) << " ";
-           //   std::cout << "      " 
-           //             << std::scientific 
-           //             << std::setw(8) 
-           //             << std::setprecision(4)
-           //             << b(i) << "\n";
-           // }
-           // std::cout << "\n";
+          // for( size_t i(0); i < A.size1(); ++i )
+          // {
+          //   for( size_t j(0); j < A.size2(); ++j )
+          //     std::cout << std::scientific 
+          //               << std::setw(8) 
+          //               << std::setprecision(4)
+          //               << A(i,j) << " ";
+          //   std::cout << "      " 
+          //             << std::scientific 
+          //             << std::setw(8) 
+          //             << std::setprecision(4)
+          //             << b(i) << "\n";
+          // }
+          // std::cout << "\n";
             linear_solver( A, *i_sol, b );
           }
           ++iter;
-          convergence /= (types::t_real) D;
 
-          if( verbose )
+          if( tolerance > 0e0  )
           {
-            std::cout << "\n  Allsq iter: " << iter
-                      << "  evaluation: " << collapse->evaluate( _solution, targets)
-                      << "\n";
-          }
+            types::t_real newvalue = collapse->evaluate( _solution, targets );
+            convergence = oldvalue - newvalue;
+            oldvalue = newvalue;
+            if( verbose )
+            {
+              if( iter == 1 )
+                std::cout << "\n  Allsq iter: " << iter
+                          << "  evaluation: " << oldvalue << "\n";
+              else
+                std::cout << "\n  Allsq iter: " << iter
+                          << "  evaluation: " << newvalue 
+                          << "  convergence: " << convergence << "\n";
+            } // end of if( verbose )
+            if( iter > 1 and std::abs(convergence) < tolerance ) return newvalue; 
+          } // end of if( tolerance > 0e0 )
         }
-        while(  true //   ( convergence > tolerance or tolerance < 0e0 )
-               and ( iter < itermax or itermax == 0 ) );
+        while( iter < itermax or itermax == 0 );
 
-        if( verbose )
-          std::cout << "final conv: " << convergence << std::endl;
-        return convergence;
+        return collapse->evaluate( _solution, targets );
       }
       __CATCHCODE(, "Error encountered in Alternating-least square fit.\n" )
     }

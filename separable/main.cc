@@ -26,9 +26,17 @@
 
 #include "cefitting.h"
 #include "cecollapse.h"
+#include "bestof.h"
 
 #include <revision.h>
 #define __PROGNAME__ "Fixed-Lattice Sum of Separable functions" 
+
+const types::t_unsigned print_reruns   = 1;
+const types::t_unsigned print_checks   = 2;
+const types::t_unsigned print_allsq    = 3;
+const types::t_unsigned print_function = 4;
+const types::t_unsigned print_data     = 5;
+const types::t_unsigned print_llsq     = 6;
 
 int main(int argc, char *argv[]) 
 {
@@ -41,7 +49,8 @@ int main(int argc, char *argv[])
     generic.add_options()
            ("help,h", "produces this help message.")
            ("version,v", "prints version string.")
-           ("verbose,p", "Verbose output.\n"  )
+           ("verbose,p", po::value<types::t_unsigned>()->default_value(0),
+                         "Level of verbosity.\n"  )
            ("reruns", po::value<types::t_unsigned>()->default_value(1),
                       "number of times to run the algorithm.\n" 
                       "Is equivalent to manually re-launching the program.\n");
@@ -107,7 +116,7 @@ int main(int argc, char *argv[])
     std::string filename("input.xml");
     if( vm.count("latticeinput") ) filename = vm["latticeinput"].as< std::string >();
 
-    bool verbose = vm.count("verbose");
+    types::t_unsigned verbose = vm["verbose"].as<types::t_unsigned>();
     types::t_unsigned reruns(1);
     if( vm.count("reruns") ) reruns = vm["reruns"].as< types::t_unsigned >();
     __DOASSERT( reruns == 0, "0 number of runs performed... As required on input.\n" )
@@ -127,12 +136,14 @@ int main(int argc, char *argv[])
     std::cout << "Performing " << (cross ? "Cross-Validation" : "Fitting" ) << ".\n"
               << "Size of the cubic basis: " << size << "\n"
               << "Rank of the sum of separable functions: " << rank << "\n"
+              << "d.o.f.: " << size*size*size * rank << "\n"
               << "Data directory: " << dir << "\n";
     if( reruns <= 1 )  std::cout << "single";
     else               std::cout << reruns;
-    std::cout << " Run" << (reruns <= 1 ? ".": "s." )  << "\n"
-              << (verbose ? "Verbose": "Quiet") << " output.\n"
-              << "Alternating linear-least square tolerance: " 
+    std::cout << " Run" << (reruns <= 1 ? ".": "s." )  << "\n";
+    if( not verbose ) std::cout << "Quiet output.\n";
+    else std::cout << "Level of verbosity: " << verbose << "\n";
+    std::cout << "Alternating linear-least square tolerance: " 
                  << tolerance << "\n"
               << "Maximum number of iterations for alternating least-square fit: "
                  << maxiter << "\n"
@@ -202,27 +213,34 @@ int main(int argc, char *argv[])
     opt::random::seed();
 
     // Initializes fitting.
-    Fitting::Allsq<Fitting::Cgs> allsq;
-    allsq.itermax = maxiter;
-    allsq.tolerance = tolerance;
-    allsq.verbose = verbose;
-    allsq.linear_solver.tolerance = dtolerance;
-    allsq.linear_solver.verbose = verbose;
+    typedef Fitting::Allsq<Fitting::Cgs> t_Fitting;
+    t_Fitting allsq;
+
+    Separables::BestOf< t_Fitting > bestof;
+    bestof.n = reruns;
+    bestof.verbose = verbose >= print_reruns;
+
+    bestof.t_Fitting::itermax = maxiter;
+    bestof.t_Fitting::tolerance = tolerance;
+    bestof.t_Fitting::verbose = verbose >= print_allsq;
+    bestof.t_Fitting::linear_solver.tolerance = dtolerance;
+    bestof.t_Fitting::linear_solver.verbose = verbose >= print_llsq;
 
     // Initializes the symmetry-less separable function.
-    CE::Separables separables( rank, size, "cube" );
+    typedef CE::Separables t_Function;
+    t_Function separables( rank, size, "cube" );
     
     // Initializes cum-symmetry separable function.
     CE::SymSeparables symsep( separables );
 
     // Initializes collapse functor.
-    Separable::EquivCollapse< CE::Separables > collapse( separables );
+    Separable::EquivCollapse< t_Function > collapse( separables );
     collapse.do_update = doupdate;
 
     // Initializes Interface to allsq.
     Fitting::SepCeInterface interface;
     interface.set_offset( offset );
-    interface.read( symsep, dir, "LDAs.dat", verbose );
+    interface.read( symsep, dir, "LDAs.dat", verbose >= print_data );
 #     if defined (_TETRAGONAL_CE_)
         // From here on, lattice should be explicitely tetragonal.
         for( types::t_int i=0; i < 3; ++i ) 
@@ -230,38 +248,33 @@ int main(int argc, char *argv[])
             lattice->cell.x[i][2] = 0.6e0;
 #     endif
     
-    // loops over reruns
-    typedef Fitting::SepCeInterface::t_PairErrors t_PairErrors;
-    if( reruns > 1 ) std::cout << "\n\n*********  Run 1.  *********\n";
-    for( types::t_unsigned n(0); n < reruns; ++n )
-    {
-      if( n > 0 ) std::cout << "\n\n*********  Run " << n+1 << ".  *********\n";
 
-      // fitting.
-      if( not cross )
-      {
-        std::cout << "\nFitting using whole training set:" << std::endl;
-        allsq.verbose = true;
-        interface.fit( allsq, collapse );
-        t_PairErrors result; 
-        result = interface.check_training( separables, true );
-       //if( verbose ) std::cout << separables << "\n";
-        std::cout << " average error: " << result.first
-                  << " maximum error: " << result.second << std::endl;
-      }
-      else
-      {
-        std::cout << "\nLeave-one-out prediction:" << std::endl;
-        std::pair< t_PairErrors, t_PairErrors> result;
-        result = Fitting::leave_one_out( interface, allsq, collapse, verbose );
-        std::cout << " Training errors:\n"
-                  << "    average error: " << result.first.first
-                  << "    maximum error: " << result.first.second << "\n"
-                  << " Prediction errors:\n"
-                  << "    average error: " << result.second.first
-                  << "    maximum error: " << result.second.second << std::endl;
-      }
+    typedef Fitting::SepCeInterface::t_PairErrors t_PairErrors;
+
+    // fitting.
+    if( not cross )
+    {
+      std::cout << "\nFitting using whole training set:" << std::endl;
+      interface.fit( bestof, collapse );
+      t_PairErrors result; 
+      result = interface.check_training( separables, verbose >= print_checks );
+      std::cout << " average error: " << result.first
+                << " maximum error: " << result.second << std::endl;
     }
+    else
+    {
+      std::cout << "\nLeave-one-out prediction:" << std::endl;
+      std::pair< t_PairErrors, t_PairErrors> result;
+      result = Fitting::leave_one_out( interface, bestof, collapse, verbose >= print_checks );
+      std::cout << " Training errors:\n"
+                << "    average error: " << result.first.first
+                << "    maximum error: " << result.first.second << "\n"
+                << " Prediction errors:\n"
+                << "    average error: " << result.second.first
+                << "    maximum error: " << result.second.second << std::endl;
+    }
+    if( verbose >= print_function ) std::cout << separables << "\n";
+
     std::cout << "\n\n\nEnd of " << __PROGNAME__ << ".\n" << std::endl;
 
     opt::random::destroy();

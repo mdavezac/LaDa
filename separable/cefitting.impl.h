@@ -24,7 +24,7 @@ namespace Fitting
         ++i, ++i_train, ++i_weight, ++i_target )
     {
       if(     exclude.size() 
-          and std::find( exclude.begin(), exclude.end(), i ) == exclude.end() ) 
+          and std::find( exclude.begin(), exclude.end(), i ) != exclude.end() ) 
         continue;
 
       y.push_back( *i_target + offset );
@@ -36,16 +36,16 @@ namespace Fitting
       {
         input.push_back( i_conf->first ); 
         dummy.push_back( i_conf->second );
-        std::cout << i_conf->second << "  ";
-        t_Configurations :: value_type
-                         :: first_type
-                         :: const_iterator i_1 = i_conf->first.begin();
-        t_Configurations :: value_type
-                         :: first_type
-                         :: const_iterator i_2 = i_conf->first.end();
-        for(; i_1 != i_2; ++i_1 )
-          std::cout << ( *i_1 ? "1": "0" );
-        std::cout << "\n";
+    //   std::cout << i_conf->second << "  ";
+    //   t_Configurations :: value_type
+    //                    :: first_type
+    //                    :: const_iterator i_1 = i_conf->first.begin();
+    //   t_Configurations :: value_type
+    //                    :: first_type
+    //                    :: const_iterator i_2 = i_conf->first.end();
+    //   for(; i_1 != i_2; ++i_1 )
+    //     std::cout << ( *i_1 ? "1": "0" );
+    //   std::cout << "\n";
       }
       eweights.push_back( dummy );
     }
@@ -59,8 +59,6 @@ namespace Fitting
     // Then creates the vectors of coefficients with random initial value.
     typename T_ALLSQ :: t_Vectors coefs;
     _collapse.create_coefs( coefs );
-    _collapse.reassign( coefs );
-//   std::cout << _collapse.function << "\n";
     
     // finally performs fit
     types::t_real convergence = _allsq( coefs, &_collapse );
@@ -89,18 +87,24 @@ namespace Fitting
 
         if( _verbose ) std::cout << "Training:\n";
         intermediate = _interface.check_training( _collapse.function, _verbose );
-        training.first += intermediate.first * (types::t_real) (N-1);
+        training.first += intermediate.first;
         if( intermediate.second > training.second ) 
           training.second = intermediate.second;
+        if( _verbose ) 
+          std::cout << "    average error: " << intermediate.first
+                    << "    maximum error: " << intermediate.second << "\n";
 
         if( _verbose ) std::cout << "Prediction:\n";
-        intermediate = _interface.check_training( _collapse.function, _verbose );
+        intermediate = _interface.check_predictions( _collapse.function, _verbose );
         prediction.first += intermediate.first;
         if( intermediate.second > prediction.second ) 
           training.second = prediction.second;
+        if( _verbose ) 
+          std::cout << "    average error: " << intermediate.first
+                    << "    maximum error: " << intermediate.second << "\n";
       }
 
-      training.first /= (types::t_real) (N*N - N);
+      training.first /= (types::t_real) N;
       prediction.first /= (types::t_real) N;
       return t_Pairs( training, prediction);
     }
