@@ -181,7 +181,8 @@ namespace Fitting
                            << std::setprecision(2) << intermed << "   "
                     << "|Target-Separable| * weight: "
                     << std::fixed << std::setw(10) << std::setprecision(3) 
-                           << std::abs( intermed - (*i_target) - offset ) * (*i_weight) << "\n";
+                           <<   std::abs( intermed - (*i_target) - offset )
+                              * (*i_weight) << "\n";
         intermed = std::abs( intermed - (*i_target) - offset ) * (*i_weight);
         if( intermed > maxerr ) maxerr = intermed;
         average += intermed;

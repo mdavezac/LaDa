@@ -9,7 +9,6 @@ namespace Separable
   template<class T_FUNCTION> template< class T_VECTORS, class T_VECTOR >
   void Collapse<T_FUNCTION> :: init( const T_VECTORS &_x, const T_VECTOR &_w ) 
   {
-    __ASSERT( _x.size() != _w.size(), "Inconsistent array-sizes on input.\n" )
     weights.resize( _w.size() );
     std::copy( _w.begin(), _w.end(), weights.begin() );
 
@@ -107,9 +106,7 @@ namespace Separable
         __ASSERT( _dim  >= D, "Input dimension out of range.\n" )
         __ASSERT( _coefs.size() != D,
                   "Inconsistent number of dimensions/coefficients.\n" )
-        __ASSERT( _targets.size() != nb_targets,
-                  "Unexpected array-size on input.\n" )
-        __ASSERT( weights.size() != nb_targets,
+        __ASSERT( _targets.size() != weights.size(),
                   "Unexpected array-size on input.\n" )
         __ASSERT
         ( 
@@ -183,7 +180,7 @@ namespace Separable
                 typename T_VECTOR :: const_iterator i_starget_end = _targets.end();
                 typename t_Weights :: const_iterator i_weight = weights.begin();
                 for( types::t_unsigned o(0);
-                     i_starget < i_starget_end;
+                     i_starget != i_starget_end;
                      ++o, ++i_iexpI, ++i_iexpII, ++i_starget, ++i_weight )
                 {
                   __ASSERT( i_iexpI == i_rexpI->end(), "Iterator out of range.\n" )
@@ -404,6 +401,7 @@ namespace Separable
   template< class T_FUNCTION > template< class T_VECTORS >
     void Collapse<T_FUNCTION> :: create_coefs( T_VECTORS& _coefs ) const
     {
+      __DEBUGTRYBEGIN
       typedef T_VECTORS t_Vectors;
       typedef typename t_Vectors :: iterator t_solit;
       _coefs.resize( sizes.size() );
@@ -420,26 +418,29 @@ namespace Separable
         typename t_Vectors :: value_type :: iterator i_coef = i_dim->begin();
         for(; i_size != i_size_end; ++i_size )
         {
+          namespace bl = boost::lambda;
           types::t_real a = std::exp( std::log( 1e2)/(2e0 * ndim - 2e0) );
           types::t_real b = std::exp( std::log(1e-2)/(2e0 * ndim - 2e0) );
           types::t_real c = a-c;
           typename T_VECTORS::value_type::value_type norm(0);
           typename t_Vectors :: value_type :: iterator i_c( i_coef ); 
-          void (*ptr_swap)( types::t_real &, types::t_real& ) = std::swap;
           std::generate
           (
             i_c, i_c + *i_size, 
-            (
-                boost::lambda::bind( &opt::random::rng ) * boost::lambda::constant(c)
-              + boost::lambda::constant(b) 
-            ) * boost::lambda::bind( &opt::random::rflip )
+              ( bl::bind( &opt::random::rng ) * bl::constant(c) + bl::constant(b) )
+            * bl::bind( &opt::random::rflip )
+          );
+          void (*ptr_swap)( types::t_real &, types::t_real& ) = std::swap;
+          a = 1e1; b = 1e-1;
+          std::generate
+          (
+            i_c, i_c + *i_size, 
+            ( bl::bind( ptr_swap, bl::var(a), bl::var(b) ), bl::var(a) )
           );
           i_coef += *i_size;
         }
       }
-#     ifdef _LADADEBUG
-        } __CATCHCODE(, "Error while assigning solution coefs to function.\n" )
-#     endif
+      __DEBUGTRYEND(, "Error while assigning solution coefs to function.\n" )
     }
 
   template< class T_FUNCTION > template< class T_VECTORS, class T_VECTOR > 

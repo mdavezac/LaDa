@@ -25,6 +25,7 @@
 #include <opt/debug.h>
 
 #include "cefitting.h"
+#include "cecollapse.h"
 
 #include <revision.h>
 #define __PROGNAME__ "Fixed-Lattice Sum of Separable functions" 
@@ -215,7 +216,7 @@ int main(int argc, char *argv[])
     CE::SymSeparables symsep( separables );
 
     // Initializes collapse functor.
-    Separable::Collapse< CE::Separables > collapse( separables );
+    Separable::EquivCollapse< CE::Separables > collapse( separables );
     collapse.do_update = doupdate;
 
     // Initializes Interface to allsq.

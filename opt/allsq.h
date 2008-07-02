@@ -121,6 +121,20 @@ namespace Fitting
           for(convergence = 0e0; i_sol != i_sol_end; ++i_sol, ++dim )
           {
             (*collapse)( b, A, dim, targets, _solution );
+           // for( size_t i(0); i < A.size1(); ++i )
+           // {
+           //   for( size_t j(0); j < A.size2(); ++j )
+           //     std::cout << std::scientific 
+           //               << std::setw(8) 
+           //               << std::setprecision(4)
+           //               << A(i,j) << " ";
+           //   std::cout << "      " 
+           //             << std::scientific 
+           //             << std::setw(8) 
+           //             << std::setprecision(4)
+           //             << b(i) << "\n";
+           // }
+           // std::cout << "\n";
             linear_solver( A, *i_sol, b );
           }
           ++iter;

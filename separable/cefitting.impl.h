@@ -12,6 +12,7 @@ namespace Fitting
     // First creates the input vector.
     std::vector<t_Configurations::value_type::first_type> input;
     typename std::vector< typename T_ALLSQ :: t_Vector :: value_type > w, y;
+    typename std::vector< std::vector< types::t_real > > eweights;
     input.reserve( training.size() * training[0].size() );
     // w.reserve( training.size() * training[0].size() );
     y.reserve( training.size() * training[0].size() );
@@ -26,19 +27,32 @@ namespace Fitting
           and std::find( exclude.begin(), exclude.end(), i ) == exclude.end() ) 
         continue;
 
-      y.resize( y.size() + i_train->size(),  *i_target + offset );
+      y.push_back( *i_target + offset );
+      w.push_back( *i_weight );
       t_Configurations :: const_iterator i_conf( i_train->begin() );
       t_Configurations :: const_iterator i_conf_end( i_train->end() );
+      std::vector< types::t_real > dummy;
       for(; i_conf != i_conf_end; ++i_conf )
       {
         input.push_back( i_conf->first ); 
-        w.push_back( (*i_weight) * i_conf->second );
+        dummy.push_back( i_conf->second );
+        std::cout << i_conf->second << "  ";
+        t_Configurations :: value_type
+                         :: first_type
+                         :: const_iterator i_1 = i_conf->first.begin();
+        t_Configurations :: value_type
+                         :: first_type
+                         :: const_iterator i_2 = i_conf->first.end();
+        for(; i_1 != i_2; ++i_1 )
+          std::cout << ( *i_1 ? "1": "0" );
+        std::cout << "\n";
       }
+      eweights.push_back( dummy );
     }
+
     // initializes the collapse functor.
-//   w.resize( y.size(), 1 );
     _collapse.reset();
-    _collapse.init( input, w );
+    _collapse.init( input, w, eweights );
     _allsq.init_targets( y );
     w.clear();
 
@@ -46,6 +60,7 @@ namespace Fitting
     typename T_ALLSQ :: t_Vectors coefs;
     _collapse.create_coefs( coefs );
     _collapse.reassign( coefs );
+//   std::cout << _collapse.function << "\n";
     
     // finally performs fit
     types::t_real convergence = _allsq( coefs, &_collapse );

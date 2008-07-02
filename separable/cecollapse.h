@@ -18,6 +18,8 @@
 #include<opt/types.h>
 #include<opt/debug.h>
 
+#include "collapse.h"
+
 //! Contains all things separable functions.
 namespace Separable
 {
@@ -30,12 +32,15 @@ namespace Separable
       //! Type of the base class.
       typedef Collapse<T_FUNCTION> t_Base;
     public:
+      using t_Base :: do_update;
       //! Type of the separable function.
       typedef T_FUNCTION t_Function;
-      using Collapse<T_FUNCTION> :: function;
+      using t_Base :: function;
 
       //! Constructor
       EquivCollapse   ( t_Function &_function ) : t_Base( _function ) {}
+      //! Destructor
+      ~EquivCollapse() {}
 
       //! \brief Constructs the matrix \a A for dimension \a _dim. 
       //! \see Collapse::operator()().
@@ -45,7 +50,8 @@ namespace Separable
 
       //! Constructs the completely expanded matrix.
       template< class T_VECTORS, class T_VECTOR, class T_EWEIGHTS > 
-        void init( const T_VECTORS &_x, const T_VECTOR &_w, const T_EWEIGHTS &_eweights );
+        void init( const T_VECTORS &_x, const T_VECTOR &_w,
+                   const T_EWEIGHTS &_eweights );
       //! Resets collapse functor. Clears memory.
       void reset() { t_Base :: reset(); }
       //! Creates a collection of random coefficients.
@@ -59,7 +65,7 @@ namespace Separable
       //! \tparam T_VECTORS is a vector of vectors or similar. 
       //! \param[in] _solution contains the coefficients for \e all dimensions.
       //!                      \a _solution[d, (r,i) ]
-      template< class T_VECTORS > void reassign( const T_VECTORS &_solution ) const;
+      template< class T_VECTORS > void reassign( const T_VECTORS &_solution ) const
         { t_Base::reassign( _solution ); }
       //! Evaluates the sum of squares.
       template< class T_VECTORS, class T_VECTOR >
@@ -84,10 +90,10 @@ namespace Separable
       typedef typename t_Base :: t_Sizes t_Sizes;
       using t_Base :: sizes;
       //! Type of the weights.
-      typedef t_Base :: t_Weights t_Weights;
+      typedef typename t_Base :: t_Weights t_Weights;
       using t_Base :: weights;
       //! Type of the equivalent structure indexing.
-      std::vector< std::vector<types::t_real> > t_eWeights;
+      typedef std::vector< std::vector<types::t_real> > t_eWeights;
       //! Equivalent structure indexing.
       t_eWeights eweights;
   };

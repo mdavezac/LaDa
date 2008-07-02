@@ -39,6 +39,8 @@
 #define __ASSERT( condition, error ) __DOASSERT(condition, error)
 #define __NDEBUGCODE( code ) 
 #define __DEBUGCATCHCODE( code, error ) __CATCHCODE( code, error )
+#define __DEBUGTRYBEGIN try {
+#define __DEBUGTRYEND( code, error ) } __CATCHCODE( code, error ) 
 #else
 #define __ASSERT( condition, error ) 
 #define __DODEBUGCODE(code) 
@@ -46,6 +48,8 @@
 #define __DOTRYDEBUGCODE(code, error) 
 #define __NDEBUGCODE( code ) code
 #define __DEBUGCATCHCODE( code, error ) 
+#define __DEBUGTRYBEGIN 
+#define __DEBUGTRYEND( code, error ) 
 #endif
 
 #endif
