@@ -455,7 +455,7 @@ if test "$python" = true; then
 else
   BOOST_PYTHON=""
 fi
-if test "$separables" != true; then
+if test "$separable" != true; then
   BOOST_REGEX=""
 fi
 AC_SUBST(BOOST_LDFLAGS)
