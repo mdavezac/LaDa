@@ -99,7 +99,7 @@ namespace Separable
                       << bl::_1 << bl::constant("\n") 
     );
     std::string str = sstr.str();
-    types::t_unsigned i = str.rfind('\n');
+    size_t i = str.rfind('\n');
     if( i != std::string::npos ) str = str.substr( 0, i );
     _stream << _func.name << ":\n" << Print::indent( "   ", str );
     return _stream;
