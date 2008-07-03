@@ -92,17 +92,17 @@ namespace Fitting
         if( intermediate.second > training.second or first_iter ) 
           training.second = intermediate.second;
         if( _verbose ) 
-          std::cout << "    average error: " << intermediate.first
-                    << "    maximum error: " << intermediate.second << "\n";
+          std::cout << "    average error: " << training.first
+                    << "    maximum error: " << training.second << "\n";
 
         if( _verbose ) std::cout << "Prediction:\n";
         intermediate = _interface.check_predictions( _collapse.function, _verbose );
         prediction.first += intermediate.first;
         if( intermediate.second > prediction.second or first_iter ) 
-          training.second = prediction.second;
+          prediction.second = intermediate.second;
         if( _verbose ) 
-          std::cout << "    average error: " << intermediate.first
-                    << "    maximum error: " << intermediate.second << "\n";
+          std::cout << "    average error: " << prediction.first
+                    << "    maximum error: " << prediction.second << "\n";
       }
 
       training.first /= (types::t_real) N;

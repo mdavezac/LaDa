@@ -36,7 +36,7 @@ namespace Fitting
       //! Constructor.
       LeaveManyOut() : do_perform(false), verbose( false ), 
                        cmdl_set( "sets" ), cmdl_file("setsname"),
-                       nb_sets(0), nb_perset(0) {}
+                       filename( "lmo_sets" ), nb_sets(0), nb_perset(0) {}
       //! Destructor..
       ~LeaveManyOut() {}
 
@@ -83,9 +83,10 @@ namespace Fitting
     __DEBUGTRYBEGIN
     namespace po = boost::program_options;
     _options.add_options()
-      ( cmdl_set.c_str(), "Defines the size and number "
-                          "of leave-many-out sets \" NUMBER-SETS  NUMBER-PER-SET \"." )
-      ( cmdl_file.c_str(), po::value<std::string>()->default_value("lmo_set"),
+      ( cmdl_set.c_str(), po::value<std::string>(),
+        "Defines the size and number "
+        "of leave-many-out sets \" NUMBER-SETS  NUMBER-PER-SET \"." )
+      ( cmdl_file.c_str(), po::value<std::string>(),
         "Name of a file where to save/load the leave-many-out sets." );
     __DEBUGTRYEND(, "Error while creating LeaveManyOut command-line options.\n" );
   }
@@ -117,7 +118,7 @@ namespace Fitting
 
         if( verbose >= vlevel1 ) std::cout << "Training:\n";
         intermediate = _interface.check_training( _collapse.function, verbose >= vlevel2 );
-        training.first = intermediate.first;
+        training.first += intermediate.first;
         if( intermediate.second > training.second or first_iter ) 
           training.second = intermediate.second;
         if( verbose >= vlevel1 ) 
@@ -126,16 +127,16 @@ namespace Fitting
 
         if( verbose >= vlevel1 ) std::cout << "Prediction:\n";
         intermediate = _interface.check_predictions( _collapse.function, verbose >= vlevel2 );
-        prediction.first = intermediate.first;
+        prediction.first += intermediate.first;
         if( intermediate.second > prediction.second or first_iter ) 
-          training.second = prediction.second;
+          prediction.second = intermediate.second;
         if( verbose >= vlevel1 ) 
           std::cout << "    average error: " << intermediate.first
                     << "    maximum error: " << intermediate.second << "\n";
       }
 
-//     training.first /= (types::t_real) sets.size();
-//     prediction.first /= (types::t_real) sets.size();
+      training.first /= (types::t_real) sets.size();
+      prediction.first /= (types::t_real) sets.size();
       return t_Return( training, prediction);
     }
     __CATCHCODE(, "Error while performing leave-many-out.\n" )
