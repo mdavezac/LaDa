@@ -1,3 +1,6 @@
+#
+# Version: $Id$
+#
 include ../Files
 AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
 	      @MPI_CFLAGS@ @NAG_CFLAGS@ @GSL_CFLAGS@

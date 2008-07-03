@@ -12,9 +12,9 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
 #include <boost/program_options.hpp>
-
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <tinyxml/tinyxml.h> 
 
@@ -27,6 +27,7 @@
 #include "cefitting.h"
 #include "cecollapse.h"
 #include "bestof.h"
+#include "leave_many_out.h"
 
 #include <revision.h>
 #define __PROGNAME__ "Fixed-Lattice Sum of Separable functions" 
@@ -40,10 +41,11 @@ const types::t_unsigned print_llsq     = 6;
 
 int main(int argc, char *argv[]) 
 {
-  Crystal::Lattice *lattice = NULL;
   try
   {
     namespace po = boost::program_options;
+
+    Fitting::LeaveManyOut leavemanyout;
 
     po::options_description generic("Generic Options");
     generic.add_options()
@@ -73,6 +75,7 @@ int main(int argc, char *argv[])
         ("svd", po::value<bool>()->default_value(false),
                 "Whether the 1d least-square fit should use"
                 " single-value decomposition.\n"  );
+    leavemanyout.add_cmdl( specific );
     po::options_description hidden("hidden");
     hidden.add_options()
         ("offset", po::value<types::t_real>()->default_value(0e0), 
@@ -158,7 +161,7 @@ int main(int argc, char *argv[])
     if( Fuzzy :: neq( offset, 0e0 ) ) std::cout << "Offset: " << offset << "\n";
 
     // Loads lattice
-    lattice = new Crystal :: Lattice;
+    boost::shared_ptr< Crystal::Lattice > lattice( new Crystal :: Lattice );
     { 
       TiXmlDocument doc;
       if( boost::filesystem::exists( filename ) )
@@ -184,7 +187,7 @@ int main(int argc, char *argv[])
       TiXmlElement *child = handle.FirstChild( "Job" )
                                   .FirstChild( "Lattice" ).Element();
       __DOASSERT( not child, "Could not find Lattice in input." )
-      Crystal::Structure::lattice = lattice;
+      Crystal::Structure::lattice = &( *lattice );
       __DOASSERT( not lattice->Load(*child),
                   "Error while reading Lattice from input.")
 #     if defined (_TETRAGONAL_CE_)
@@ -209,7 +212,6 @@ int main(int argc, char *argv[])
     }
 
     // Creates global random number generator.
-    opt::random::create();
     opt::random::seed();
 
     // Initializes fitting.
@@ -247,12 +249,29 @@ int main(int argc, char *argv[])
           if( Fuzzy::eq( lattice->cell.x[i][2], 0.5e0 ) )
             lattice->cell.x[i][2] = 0.6e0;
 #     endif
+
+    // extract leave-many-out commandline
+    leavemanyout.extract_cmdl( vm );
+    leavemanyout.verbose = verbose;
+
     
 
     typedef Fitting::SepCeInterface::t_PairErrors t_PairErrors;
 
     // fitting.
-    if( not cross )
+    if( leavemanyout.do_perform )
+    {
+      std::cout << "\nStarting leave-many out predictive fit." << std::endl;
+      Fitting::LeaveManyOut::t_Return result;
+      result = leavemanyout( interface, bestof, collapse );
+      std::cout << " Training errors:\n"
+                << "    average error: " << result.first.first
+                << "    maximum error: " << result.first.second << "\n"
+                << " Prediction errors:\n"
+                << "    average error: " << result.second.first
+                << "    maximum error: " << result.second.second << std::endl;
+    }
+    else if( not cross )
     {
       std::cout << "\nFitting using whole training set:" << std::endl;
       interface.fit( bestof, collapse );
@@ -277,50 +296,41 @@ int main(int argc, char *argv[])
 
     std::cout << "\n\n\nEnd of " << __PROGNAME__ << ".\n" << std::endl;
 
-    opt::random::destroy();
-    if( lattice ) delete lattice;
-    lattice = NULL;
   }
   catch ( boost::program_options::invalid_command_line_syntax &_b)
   {
     std::cerr << "Caught error while running " << __PROGNAME__ << "\n"
               << "Something wrong with the command-line input.\n"
               << _b.what() << "\n";
-    goto errorout;
+    return 0;
   }
   catch ( boost::program_options::invalid_option_value &_i )
   {
     std::cerr << "Caught error while running " << __PROGNAME__ << "\n"
               << "Argument of option in command-line is invalid.\n"
               << _i.what() << "\n";
-    goto errorout;
+    return 0;
   }
   catch ( boost::program_options::unknown_option &_u)
   {
     std::cerr << "Caught error while running " << __PROGNAME__ << "\n"
               << "Unknown option in command-line.\n"
               << _u.what() << "\n";
-    goto errorout;
+    return 0;
   }
   catch (  boost::program_options::too_many_positional_options_error &_e )
   {
     std::cerr << "Caught error while running " << __PROGNAME__ << "\n"
               << "Too many arguments in command-line.\n"
               << _e.what() << "\n";
-    goto errorout;
+    return 0;
   }
   catch ( std::exception &e )
   {
     std::cerr << "Caught error while running " << __PROGNAME__ 
               << "\n" << e.what() << "\n";
-    goto errorout;
+    return 0;
   }
   return 1;
-
-errorout:
-  if( lattice ) delete lattice;
-  Crystal::Structure::lattice = NULL;
-  opt::random::destroy();
-  return 0;
 }
 

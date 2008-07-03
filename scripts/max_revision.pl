@@ -76,11 +76,12 @@ sub dodir()
 
 sub get_max_revision()
 {
-  foreach $file ( <*.h>, <*.cc>, <*.pl>, <*.hpp> ) 
+  foreach $file ( <*.h>, <*.cc>, <*.pl>, <*.hpp>, "configure.ac", "Makefile.am" ) 
   {
     next if ( $file =~ /config\.h/ );
+    next if ( $file =~ /revision\.h/ );
 
-    open IN, "$file";
+    open IN, "$file" or next;
     my $n = 0;
     my $found = 0;
     while ( ($_=<IN>) and ($n < 5) )
@@ -103,7 +104,7 @@ sub get_max_revision()
       $n ++;
     }
     close IN; 
-    print "Revision String not found in $file\n" if ($found != 1 and $file !~ /revision.h/ );
+    print "Revision String not found in $file\n" if ($found != 1 )
   }
 }
 

@@ -57,6 +57,9 @@ namespace Fitting
       //! Sets the offset. 
       void set_offset( types::t_real _offset ) { offset = _offset; }
 
+      //! Sets the offset. 
+      types::t_unsigned nb_structs() const { return structures.size(); }
+
     protected:
       //! Reads structure names and energies.
       void read_ldasdat( const boost::filesystem::path &_path,

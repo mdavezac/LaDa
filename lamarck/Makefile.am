@@ -1,3 +1,6 @@
+#
+# Version: $Id$
+#
 include ../Files
 if DOPYTHON
   pythonlib = liblamarckpy.la

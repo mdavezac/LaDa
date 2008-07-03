@@ -22,10 +22,10 @@ namespace opt
     bool flip();
     //! Flips a coin, returns +1 or -1.
     types::t_real rflip();
-    //! Stops the radom number generator
-    void destroy();
     //! calls generator
     types::t_real rng();
+    //! Gets a random number from a range [\a _first, \a_last).
+    types::t_unsigned range( types::t_unsigned _first, types::t_unsigned _last );
   }
 }
 

@@ -1,3 +1,6 @@
+#
+# Version: $Id$
+#
 include ../Files
 AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @CPP_DEBUG_FLAGS@ @MPI_CFLAGS@ @BOOST_CXXFLAGS@
 noinst_LTLIBRARIES = libprint.la

@@ -1,3 +1,6 @@
+#
+# Version: $Id$
+#
 include ../Files
 
 bin_PROGRAMS = tetra cubic

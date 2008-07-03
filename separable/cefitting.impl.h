@@ -81,14 +81,15 @@ namespace Fitting
       _interface.exclude.resize(1, 0);
       types::t_unsigned N = _interface.training_set_size();
 
-      for(; _interface.exclude[0] < N; ++_interface.exclude[0] )
+      bool first_iter = true;
+      for(; _interface.exclude[0] < N; ++_interface.exclude[0], first_iter=false )
       {
         _interface.fit( _allsq, _collapse );
 
         if( _verbose ) std::cout << "Training:\n";
         intermediate = _interface.check_training( _collapse.function, _verbose );
         training.first += intermediate.first;
-        if( intermediate.second > training.second ) 
+        if( intermediate.second > training.second or first_iter ) 
           training.second = intermediate.second;
         if( _verbose ) 
           std::cout << "    average error: " << intermediate.first
@@ -97,7 +98,7 @@ namespace Fitting
         if( _verbose ) std::cout << "Prediction:\n";
         intermediate = _interface.check_predictions( _collapse.function, _verbose );
         prediction.first += intermediate.first;
-        if( intermediate.second > prediction.second ) 
+        if( intermediate.second > prediction.second or first_iter ) 
           training.second = prediction.second;
         if( _verbose ) 
           std::cout << "    average error: " << intermediate.first

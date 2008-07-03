@@ -1,3 +1,6 @@
+#
+#  Version: $Id$
+#
 AC_INIT([LaDa],[3.25])
 AM_INIT_AUTOMAKE()
 

@@ -1,3 +1,6 @@
+#
+# Version: $Id$
+#
 AUTOMAKE_OPTIONS = foreign
 EXTRA_DIST = max_revision.pl bootstrap.sh \
 	     scripts/* doxy.conf docsource/* \
