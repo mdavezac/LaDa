@@ -40,13 +40,14 @@ namespace CE
               "Unknown basis type " << _type << ".\n")
     __ASSERT( Crystal::Structure::lattice == NULL,
               "Lattice type has not been set.\n" )
-    basis_size = _size;
-    basis_type = _type;
     if( basis_type.compare("conv") == 0 ) 
-      details::convcell_basis( basis_size, positions );
-    else details::cubic_basis( basis_size,
+      details::convcell_basis( _size, positions );
+    else details::cubic_basis( _size,
                                Crystal::Structure::lattice->cell,
                                positions );
+    basis_type = _type;
+    basis_size = positions.size();
+
     // loop over ranks.
     t_Basis :: iterator i_sep = basis.begin();
     t_Basis :: iterator i_sep_end = basis.end();

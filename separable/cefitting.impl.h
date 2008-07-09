@@ -71,7 +71,7 @@ namespace Fitting
       leave_one_out( SepCeInterface &_interface,
                     T_ALLSQ &_allsq, 
                     T_COLLAPSE &_collapse, 
-                    bool _verbose = false )
+                    bool _verbose )
     {
       typedef SepCeInterface::t_PairErrors t_PairErrors;
       typedef std::pair< t_PairErrors, t_PairErrors > t_Pairs;

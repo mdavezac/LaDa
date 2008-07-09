@@ -140,31 +140,6 @@ int main(int argc, char *argv[])
     types::t_real offset ( vm["offset"].as< types::t_real >() );
     if( Fuzzy::eq( offset, types::t_real(0) ) ) offset = types::t_real(0);
 
-    std::cout << "Performing " << (cross ? "Cross-Validation" : "Fitting" ) << ".\n"
-              << "Size of the cubic basis: " << size << "\n"
-              << "Rank of the sum of separable functions: " << rank << "\n"
-              << "d.o.f.: " << size*size*size * rank << "\n"
-              << "Data directory: " << dir << "\n";
-    if( reruns <= 1 )  std::cout << "single";
-    else               std::cout << reruns;
-    std::cout << " Run" << (reruns <= 1 ? ".": "s." )  << "\n";
-    if( not verbose ) std::cout << "Quiet output.\n";
-    else std::cout << "Level of verbosity: " << verbose << "\n";
-    std::cout << "Alternating linear-least square tolerance: " 
-                 << tolerance << "\n"
-              << "Maximum number of iterations for alternating least-square fit: "
-                 << maxiter << "\n"
-              << "Alternating linear-least square tolerance: " 
-                 << tolerance << "\n"
-              << "1d linear-least square tolerance: " 
-                 << dtolerance << "\n"
-              << "Will" << ( doupdate ? " ": " not " )
-                 << "update between dimensions.\n"
-              << "Using " << ( convcell ? "conventional ": "unit-" )
-                 << "cell for basis determination.\n"
-              << std::endl;
-    if( Fuzzy :: neq( offset, 0e0 ) ) std::cout << "Offset: " << offset << "\n";
-
     // Loads lattice
     boost::shared_ptr< Crystal::Lattice > lattice( new Crystal :: Lattice );
     { 
@@ -262,6 +237,31 @@ int main(int argc, char *argv[])
     
 
     typedef Fitting::SepCeInterface::t_PairErrors t_PairErrors;
+
+    std::cout << "Performing " << (cross ? "Cross-Validation" : "Fitting" ) << ".\n"
+              << "Using " << ( convcell ? "conventional ": "unit-" )
+                 << "cell for basis determination.\n"
+              << "Size of a separable function " << separables.size() << "\n"
+              << "Rank of the sum of separable functions: " << rank << "\n"
+              << "d.o.f.: " << separables.size() * rank << "\n"
+              << "Data directory: " << dir << "\n";
+    if( reruns <= 1 )  std::cout << "single";
+    else               std::cout << reruns;
+    std::cout << " Run" << (reruns <= 1 ? ".": "s." )  << "\n";
+    if( not verbose ) std::cout << "Quiet output.\n";
+    else std::cout << "Level of verbosity: " << verbose << "\n";
+    std::cout << "Alternating linear-least square tolerance: " 
+                 << tolerance << "\n"
+              << "Maximum number of iterations for alternating least-square fit: "
+                 << maxiter << "\n"
+              << "Alternating linear-least square tolerance: " 
+                 << tolerance << "\n"
+              << "1d linear-least square tolerance: " 
+                 << dtolerance << "\n"
+              << "Will" << ( doupdate ? " ": " not " )
+                 << "update between dimensions.\n"
+              << std::endl;
+    if( Fuzzy :: neq( offset, 0e0 ) ) std::cout << "Offset: " << offset << "\n";
 
     // fitting.
     if( leavemanyout.do_perform )

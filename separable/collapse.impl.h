@@ -421,7 +421,7 @@ namespace Separable
           namespace bl = boost::lambda;
           types::t_real a = std::exp( std::log( 1e1)/(2e0 * ndim - 2e0) );
           types::t_real b = std::exp( std::log(1e-1)/(2e0 * ndim - 2e0) );
-          types::t_real c = a-c;
+          types::t_real c = a-b;
           typename T_VECTORS::value_type::value_type norm(0);
           typename t_Vectors :: value_type :: iterator i_c( i_coef ); 
           std::generate
