@@ -269,6 +269,10 @@ namespace Crystal {
              T_O_IT _rout ); // sets rvector values from kspace values
   };
 
+  //! \brief fills in \a atoms member of an Crystal::Structure instance from the
+  //!        cell-shape and the lattice.
+  void fill_structure( Crystal::Structure &_str );
+
 
   //! \cond
   template <class CONTAINER>

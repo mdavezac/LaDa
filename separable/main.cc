@@ -71,10 +71,9 @@ int main(int argc, char *argv[])
                       " Alternating linear-least square fit.\n"  )
         ("1dtolerance", po::value<types::t_real>()->default_value(1e-4),
                         "Tolerance of the 1d linear-least square fit.\n" )
-        ("update", "Whether to update during 1d least-square fits.\n" )
-        ("svd", po::value<bool>()->default_value(false),
-                "Whether the 1d least-square fit should use"
-                " single-value decomposition.\n"  );
+        ("noupdate", "Whether to update during 1d least-square fits.\n" )
+        ("conv", "Use conventional cell rather than unit-cell.\n"
+                 "Should work for fcc and bcc if lattice is inputed right.\n" );
     leavemanyout.add_cmdl( specific );
     po::options_description hidden("hidden");
     hidden.add_options()
@@ -104,12 +103,17 @@ int main(int argc, char *argv[])
     if ( vm.count("help") )
     {
       std::cout << "Usage: " << argv[0] << " [options] DATADIR LATTICEINPUT\n"
-                << "  _ DATATDIR (=./) is an optional path to the training set input.\n"
-                << "  _ LATTICEINPUT (=input.xml) is an optional filename for the file\n"
-                << "                 from which to load the lattice. LATTICEINPUT should be\n"
-                << "                 full path, a relative path starting from the current\n"
-                << "                 directory, or a relative path starting from the DATADIR\n"
-                << "                 directory (checked in that order.)\n\n" 
+                   "  _ DATATDIR (=./) is an optional path to the"
+                   " training set input.\n"
+                   "  _ LATTICEINPUT (=input.xml) is an optional filename"
+                   " for the file\n"
+                   "                 from which to load the lattice. "
+                   "LATTICEINPUT should be\n"
+                   "                 full path, a relative path "
+                   "starting from the current\n"
+                   "                 directory, or a relative path "
+                   "starting from the DATADIR\n"
+                   "                 directory (checked in that order.)\n\n" 
                 << all << "\n"; 
       return 1;
     }
@@ -131,8 +135,8 @@ int main(int argc, char *argv[])
     types::t_real tolerance( vm["tolerance"].as< types::t_real >() );
     types::t_unsigned maxiter( vm["maxiter"].as< types::t_unsigned >() );
     types::t_real dtolerance( vm["1dtolerance"].as< types::t_real >() );
-    bool doupdate = vm.count("update");
-    bool svd = vm.count("svd");
+    bool doupdate = not vm.count("noupdate");
+    bool convcell = vm.count("conv");
     types::t_real offset ( vm["offset"].as< types::t_real >() );
     if( Fuzzy::eq( offset, types::t_real(0) ) ) offset = types::t_real(0);
 
@@ -156,7 +160,8 @@ int main(int argc, char *argv[])
                  << dtolerance << "\n"
               << "Will" << ( doupdate ? " ": " not " )
                  << "update between dimensions.\n"
-              << ( svd ? "Single": "No Single" ) << " Value Decomposition."
+              << "Using " << ( convcell ? "conventional ": "unit-" )
+                 << "cell for basis determination.\n"
               << std::endl;
     if( Fuzzy :: neq( offset, 0e0 ) ) std::cout << "Offset: " << offset << "\n";
 
@@ -230,7 +235,7 @@ int main(int argc, char *argv[])
 
     // Initializes the symmetry-less separable function.
     typedef CE::Separables t_Function;
-    t_Function separables( rank, size, "cube" );
+    t_Function separables( rank, size, convcell ? "conv": "cube" );
     
     // Initializes cum-symmetry separable function.
     CE::SymSeparables symsep( separables );

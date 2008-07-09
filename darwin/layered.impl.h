@@ -427,7 +427,7 @@ errorout:
 
     // Fills in a structure lattice points.
     Crystal::Structure copy_structure = structure;
-    FillStructure( copy_structure );
+    Crystal::fill_structure( copy_structure );
     
     // We now sort the real space atoms according to layer
     std::sort( copy_structure.atoms.begin(), copy_structure.atoms.end(),

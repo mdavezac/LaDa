@@ -101,13 +101,6 @@ namespace CE
       t_SymOps syms;
   };
 
-
-  namespace details
-  {
-    void cubic_basis( types::t_unsigned _n, const atat::rMatrix3d &_cell,
-                      std::vector< atat::rVector3d >& _positions );
-  }
-  
 } // end of CE namespace
 
 #endif //  _SEPARABLE_CE_H_

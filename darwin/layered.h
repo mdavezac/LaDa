@@ -26,12 +26,6 @@
 #include "vff.h"
 
 
-//! \brief fills in \a atoms member of an Crystal::Structure instance from the
-//!        cell-shape and the lattice.
-//! \todo make sure that the guessed range is large enough, so that any
-//!       structure is completely filled with atoms.
-void FillStructure( Crystal::Structure &_str );
-
 /** \ingroup Genetic
  * @{ */
 //! \brief allows the optimization of a (specified) structure's decoration,

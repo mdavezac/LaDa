@@ -13,6 +13,17 @@
 
 namespace CE
 {
+  // Forward declarations.
+  namespace details
+  {
+    void cubic_basis( types::t_unsigned _n, const atat::rMatrix3d &_cell,
+                      std::vector< atat::rVector3d >& _positions );
+    void supercell_basis( types::t_unsigned _n, const atat::rMatrix3d &_cell,
+                          std::vector< atat::rVector3d >& _positions );
+    void convcell_basis( types::t_unsigned _n,
+                         std::vector< atat::rVector3d >& _positions );
+  }
+  
   Separables :: Separables   ( types::t_unsigned _rank,
                                types::t_unsigned _size,
                                std::string _type )
@@ -25,11 +36,17 @@ namespace CE
 
   void Separables :: set_basis( types::t_unsigned _size, std::string _type )
   {
-    __ASSERT( _type.compare("cube"), "Unknown basis type.\n" )
-    __ASSERT( Crystal::Structure::lattice == NULL, "Lattice type has not been set.\n" )
+    __ASSERT( _type.compare("cube") and _type.compare("conv"),
+              "Unknown basis type " << _type << ".\n")
+    __ASSERT( Crystal::Structure::lattice == NULL,
+              "Lattice type has not been set.\n" )
     basis_size = _size;
     basis_type = _type;
-    details::cubic_basis( basis_size, Crystal::Structure::lattice->cell, positions );
+    if( basis_type.compare("conv") == 0 ) 
+      details::convcell_basis( basis_size, positions );
+    else details::cubic_basis( basis_size,
+                               Crystal::Structure::lattice->cell,
+                               positions );
     // loop over ranks.
     t_Basis :: iterator i_sep = basis.begin();
     t_Basis :: iterator i_sep_end = basis.end();
@@ -212,6 +229,68 @@ namespace CE
         _positions.begin(), _positions.end(),
          bl::_1 * bl::_1  > bl::_2 * bl::_2
       );
+    }
+    void supercell_basis( types::t_unsigned _n, const atat::rMatrix3d &_cell,
+                          std::vector< atat::rVector3d >& _positions )
+    {
+      __DEBUGTRYBEGIN
+      namespace bl = boost::lambda;
+
+      Crystal::Structure structure;
+      atat::rMatrix3d mat;
+      mat.identity(); mat =  mat * (types::t_real)_n;
+      structure.cell = _cell * mat;
+      __ASSERT( not Crystal::Structure::lattice,
+                "Lattice of structure has not beens set.\n" )
+      Crystal :: fill_structure( structure );
+      std::for_each
+      (
+        structure.atoms.begin(), structure.atoms.end(),
+        ( 
+          bl::bind( &Crystal::Structure::t_Atom::type, bl::_1 ) = 1e0,
+          bl::bind( &Crystal::Structure::t_Atom::site, bl::_1 ) = 0
+        )
+      );
+      std::cout << structure << std::endl;
+      exit(1);
+
+      _positions.clear();
+      _positions.resize( structure.atoms.size() );
+      std::transform
+      (
+        structure.atoms.begin(), structure.atoms.end(), _positions.begin(),
+        bl::bind( &Crystal::Structure::t_Atom::pos, bl::_1 )
+      );
+      std::sort
+      ( 
+        _positions.begin(), _positions.end(),
+         bl::_1 * bl::_1  > bl::_2 * bl::_2
+      );
+      __DEBUGTRYEND(, "Error while creating super-cell basis.\n" )
+    }
+    void convcell_basis( types::t_unsigned _n, 
+                         std::vector< atat::rVector3d >& _positions )
+    {
+      __DEBUGTRYBEGIN
+      __ASSERT( not Crystal::Structure::lattice, 
+                "Lattice has not been set.\n" )
+      atat::rMatrix3d mult;
+      // assume fcc
+      if( Fuzzy::eq( Crystal::Structure::lattice->cell.x[0][0], 0e0 ) ) 
+      {
+        mult.x[0][0] = -1e0; mult.x[1][0] =  1e0; mult.x[2][0] =  1e0; 
+        mult.x[0][1] =  1e0; mult.x[1][1] = -1e0; mult.x[2][1] =  1e0; 
+        mult.x[0][2] =  1e0; mult.x[1][2] =  1e0; mult.x[2][2] = -1e0; 
+      }
+      else // assume bcc
+      {
+        mult.x[0][0] = 0e0; mult.x[1][0] = 1e0; mult.x[2][0] = 1e0; 
+        mult.x[0][1] = 1e0; mult.x[1][1] = 0e0; mult.x[2][1] = 1e0; 
+        mult.x[0][2] = 1e0; mult.x[1][2] = 1e0; mult.x[2][2] = 0e0; 
+      }
+      mult = Crystal::Structure::lattice->cell * mult;
+      supercell_basis( _n, mult, _positions );
+      __DEBUGTRYEND(, "Error while creating conventional-cell basis.\n" )
     }
   }
 

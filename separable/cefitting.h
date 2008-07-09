@@ -21,9 +21,12 @@
 namespace Fitting
 {
 
+  //! Interface for training separable functions for fixed-lattice.
   class SepCeInterface
   {
     public:
+      //! \brief Type of the return of SepCeInterface :: check_training() and
+      //!        SepCeInterface :: check_predictions()
       typedef std::pair< types::t_real, types::t_real > t_PairErrors;
       //! Structures excluded from fit.
       std::vector< types::t_unsigned > exclude;
@@ -42,12 +45,12 @@ namespace Fitting
 
 
       //! Check training convergence.
-      std::pair< types::t_real, types::t_real>
-        check_training( const CE::Separables &_sep, bool _verbose = false ) const
+      t_PairErrors check_training( const CE::Separables &_sep,
+                                    bool _verbose = false ) const
         { return check( _sep, false, _verbose ); } 
       //! Check predictions.
-      std::pair< types::t_real, types::t_real>
-        check_predictions( const CE::Separables &_sep, bool _verbose = false ) const
+      t_PairErrors check_predictions( const CE::Separables &_sep,
+                                      bool _verbose = false ) const
         { return check( _sep, true, _verbose ); } 
 
       //! Number of structures in training set.
@@ -96,6 +99,10 @@ namespace Fitting
       types::t_real offset;
   };
 
+  //! \brief Leave-one-out procedure.
+  //! \details Performs a fitting over  whole set minus one structure, and
+  //!          predicts leftover structure. Repeats the procedure for all
+  //!          structures.
   template< class T_ALLSQ, class T_COLLAPSE>
     std::pair< SepCeInterface::t_PairErrors, SepCeInterface::t_PairErrors> 
       leave_one_out( SepCeInterface &_interface,
