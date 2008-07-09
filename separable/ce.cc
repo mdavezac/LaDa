@@ -251,8 +251,6 @@ namespace CE
           bl::bind( &Crystal::Structure::t_Atom::site, bl::_1 ) = 0
         )
       );
-      std::cout << structure << std::endl;
-      exit(1);
 
       _positions.clear();
       _positions.resize( structure.atoms.size() );
