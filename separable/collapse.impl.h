@@ -106,6 +106,8 @@ namespace Separable
                   "Inconsistent number of dimensions/coefficients.\n" )
         __ASSERT( _targets.size() != weights.size(),
                   "Unexpected array-size on input.\n" )
+        __ASSERT( function.coefs.size() != nb_ranks,
+                  "Unexpected array-size on input.\n" )
         __ASSERT
         ( 
           _coefs[_dim].size() != std::accumulate( sizes[_dim].begin(),
@@ -183,14 +185,15 @@ namespace Separable
                             "Unexpected array-size.\n" )
      
                   // Computes first factor.
-                  t_Type UI( 1 );
+                  t_Type UI( function.coefs[ rI ] );
                   typename t_Factors :: value_type :: const_iterator
                      i_fac = factors[ rI * nb_targets + o].begin();
                   for(types::t_unsigned d(0); d < D; ++i_fac, ++d )
                     if( d != _dim )  UI *= (*i_fac);
                  
                   // Computes second factor.
-                  t_Type UII( 1 ); i_fac = factors[ rII * nb_targets + o ].begin();
+                  t_Type UII( function.coefs[ rII ] ); 
+                  i_fac = factors[ rII * nb_targets + o ].begin();
                   for(types::t_unsigned d(0); d < D; ++i_fac, ++d )
                     if( d != _dim ) UII *= (*i_fac);
      
@@ -220,8 +223,9 @@ namespace Separable
       } // end of functor.
 
   template< class T_FUNCTION> template< class T_VECTORS >
-    void Collapse<T_FUNCTION>::update_all( const T_VECTORS &_coefs )
+    void Collapse<T_FUNCTION>::update_all( T_VECTORS &_coefs )
     {
+      namespace bl = boost::lambda;
       __DEBUGTRYBEGIN
 
       __ASSERT( nb_ranks != function.basis.size(),
@@ -260,16 +264,33 @@ namespace Separable
 
             typedef typename t_Expanded :: value_type
                                         :: value_type :: const_iterator t_itexp;
-            typedef typename T_VECTORS :: value_type :: const_iterator t_itcoefs;
+            typedef typename T_VECTORS :: value_type :: iterator t_itcoefs;
             t_itcoefs i_coef = _coefs[d].begin() + acc;
             t_itexp i_iexp = expanded[d][r].begin() + o;
 
+            // normalize the coefficients of function family in (r,d)
+            types::t_real norm(0);
+            std::for_each
+            (
+              i_coef, i_coef + sizes[d][r],
+              bl::var(norm) += bl::_1 * bl::_1
+            );
+            if( Fuzzy::neq( norm, 0e0 ) )
+            { 
+              norm = std::sqrt( norm );
+              function.coefs[r] *= norm; 
+              norm = 1e0 / norm;
+            }
+            else norm = 1e0;
+
+            // updates the factors.
             *i_fac = t_Type(0);
             for( types::t_unsigned i( sizes[d][r] ); i > 0;
                  --i, i_iexp += nb_targets, ++i_coef )
             {
               __ASSERT( i_iexp == expanded[d][r].end(), "Iterator out of range.\n" )
               __ASSERT( i_coef == _coefs[d].end(), "Iterator out of range.\n" )
+              *i_coef *= norm;
               *i_fac += (*i_coef) * (*i_iexp ); 
             }
             
@@ -281,10 +302,11 @@ namespace Separable
 
       __DEBUGTRYEND(, "Error while creating factors.\n" )
     }
- 
+
   template< class T_FUNCTION > template< class T_VECTORS >
-    void Collapse<T_FUNCTION>::update( types::t_unsigned _dim, const T_VECTORS &_coefs )
+    void Collapse<T_FUNCTION>::update( types::t_unsigned _dim, T_VECTORS &_coefs )
     {
+      namespace bl = boost::lambda;
       __DEBUGTRYBEGIN
 
       __ASSERT( _dim >= D, "Dimension out of range on input.\n" ) 
@@ -312,7 +334,7 @@ namespace Separable
           // evaluated to 1, such that it will have no influence.
           if( function.basis[r].basis.size() <= _dim )
             { (*i_facs)[_dim] = t_Type(1); continue; }
-
+          
           types::t_unsigned acc = std::accumulate( sizes[_dim].begin(),
                                                    sizes[_dim].begin() + r, 0 );
           __ASSERT( _coefs.size()  <= _dim, "Inconsistent dimension size.\n" )
@@ -324,10 +346,25 @@ namespace Separable
 
           typedef typename t_Expanded :: value_type
                                       :: value_type :: const_iterator t_itexp;
-          typedef typename T_VECTORS :: value_type :: const_iterator t_itcoefs;
+          typedef typename T_VECTORS :: value_type :: iterator t_itcoefs;
      
           t_itcoefs i_coef = _coefs[_dim].begin() + acc;
           t_itexp i_iexp = expanded[_dim][r].begin() + o;
+          
+          // normalize the coefficients of function family in (r,d)
+          types::t_real norm(0);
+          std::for_each
+          (
+            i_coef, i_coef + sizes[_dim][r],
+            bl::var(norm) += bl::_1 * bl::_1
+          );
+          if( Fuzzy::neq( norm, 0e0 ) )
+          { 
+            norm = std::sqrt( norm );
+            function.coefs[r] *= norm; 
+            norm = 1e0 / norm;
+          }
+          else norm = 1e0;
 
           (*i_facs)[_dim] = t_Type(0);
           for( types::t_unsigned i( sizes[_dim][r] ); i > 0;
@@ -336,6 +373,7 @@ namespace Separable
             __ASSERT( i_iexp == expanded[_dim][r].end(), 
                       "Iterator out of range.\n" )
             __ASSERT( i_coef == _coefs[_dim].end(), "Iterator out of range.\n" )
+            *i_coef *= norm;
             (*i_facs)[_dim] += (*i_coef) * (*i_iexp ); 
           }
           
@@ -424,7 +462,8 @@ namespace Separable
 
         typename t_Factors :: const_iterator i_facs = factors.begin();
         std::vector< t_Type > values( _target.size(), 0 );
-        for( size_t r(0); r < nb_ranks; ++r )
+        typename t_Function :: t_Coefs :: const_iterator i_coef = function.coefs.begin();
+        for( size_t r(0); r < nb_ranks; ++r, ++i_coef )
         {
           typename std::vector< t_Type > :: iterator i_val = values.begin();
           for( size_t o(0); o < nb_targets; ++o, ++i_facs, ++i_val )
@@ -432,7 +471,7 @@ namespace Separable
                       (
                         i_facs->begin(), i_facs->end(), 1e0,
                         std::multiplies<t_Type>()
-                      );
+                      ) * (*i_coef);
         } // end of loop over ranks.
 
         t_Type result(0);

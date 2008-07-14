@@ -111,19 +111,23 @@ namespace Separable
         typename t_Function::t_Return evaluate( const T_VECTORS &_coefs,
                                                 const T_VECTOR &_targets );
 
-      //! Initializes Collapse::factors using values from \a _coefs.
+      //! \brief Initializes Collapse::factors using values from \a _coefs.
+      //! \details Also normalizes coefficients (r,d) and stores norm in rank
+      //!          coefficient.
       //! \tparam T_VECTORS is a vector of vectors or similar. 
       //! \param[in] _coefs contains the coefficients for \e all dimensions.
       //!                   \a _coefs[d, (r,i) ]
-      template< class T_VECTORS > void update_all( const T_VECTORS &_coefs );
-      //! Updates Collapse::factors for dimension \a _dim.
+      template< class T_VECTORS > void update_all( T_VECTORS &_coefs );
+      //! \brief Updates Collapse::factors for dimension \a _dim.
+      //! \details Also normalizes coefficients (r,d) and stores norm in rank
+      //!          coefficient.
       //! \tparam T_VECTORS is a vector of vectors or similar. 
       //! \param[in] The dimension for which to create \a _A. Passed from
       //!            Collapse::operator()().
       //! \param[in] _coefs contains the coefficients for \e all dimensions.
       //!                   \a _coefs[d, (r,i) ].
       template< class T_VECTORS >
-        void update( types::t_unsigned _dim, const T_VECTORS &_coefs );
+        void update( types::t_unsigned _dim, T_VECTORS &_coefs );
 
     protected:
       //! Maximum dimension.

@@ -83,6 +83,8 @@ int main(int argc, char *argv[])
     hidden.add_options()
         ("offset", po::value<types::t_real>()->default_value(0e0), 
                    "Adds an offset to the energies.\n" )
+        ("prerun", "Wether to perform real-runs, or small pre-runs followed"
+                   " by a a longer, converged run.\n" )
         ("datadir", po::value<std::string>()->default_value("./"))
         ("latticeinput", po::value<std::string>()->default_value("input.xml"));
  
@@ -143,6 +145,7 @@ int main(int argc, char *argv[])
     bool convcell = vm.count("conv");
     types::t_real offset ( vm["offset"].as< types::t_real >() );
     if( Fuzzy::eq( offset, types::t_real(0) ) ) offset = types::t_real(0);
+    bool prerun ( vm.count("prerun") != 0 );
     types::t_real howrandom( vm["random"].as<types::t_real>() );
     types::t_unsigned nbguesses( vm["nbguesses"].as<types::t_unsigned>() );
     __ASSERT( nbguesses == 0, "Invalid input nbguesses = 0.\n" )
@@ -208,6 +211,7 @@ int main(int argc, char *argv[])
     Separables::BestOf< t_Fitting > bestof;
     bestof.n = reruns;
     bestof.verbose = verbose >= print_reruns;
+    bestof.prerun = prerun;
 
     bestof.t_Fitting::itermax = maxiter;
     bestof.t_Fitting::tolerance = tolerance;
@@ -276,6 +280,8 @@ int main(int argc, char *argv[])
               << "Data Variance: " << variance << "\n"
               << "Range of initial guesses:[ " <<  howrandom << ", " << howrandom << "].\n"
               << "Number of initial guesses: " <<  nbguesses << ".\n";
+    if( prerun )
+     std::cout << "Performing prerun.\n";
 
     if( Fuzzy :: neq( offset, 0e0 ) ) std::cout << "Offset: " << offset << "\n";
 

@@ -183,6 +183,8 @@ namespace Separable
         typedef typename t_Basis :: value_type :: t_Arg t_Arg;
         //! Type of the return of the one-dimensional functions.
         typedef typename t_Basis :: value_type :: t_Return t_Return;
+        //! Type of the container of coefficients
+        typedef typename t_Base :: t_Coefs t_Coefs;
  
       public:
         //! Constructor
@@ -210,7 +212,6 @@ namespace Separable
         using t_Base :: coefs;
         using t_Base :: basis;
         using t_Base :: has_gradient;
-        typedef typename t_Base :: t_Coefs t_Coefs;
         //! \endconf
     };
 

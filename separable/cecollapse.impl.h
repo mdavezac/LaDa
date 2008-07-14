@@ -58,6 +58,10 @@ namespace Separable
         __ASSERT( sizes.size()  != D, "Inconsistent sizes.\n" )
         __ASSERT( factors.size() == _coefs[_dim].size(), "Inconsistent sizes.\n" )
         __ASSERT( expanded.size() <= _dim, "Inconsistent sizes.\n" )
+        __ASSERT( function.coefs.size() != nb_ranks,
+                  "Function's rank-coefficients have not been set.\n" )
+        __ASSERT( function.basis.size() != nb_ranks,
+                  "Inconsistent rank-basis size.\n" )
        
         if( _b.size() != _coefs[_dim].size() )
         {
@@ -143,10 +147,14 @@ namespace Separable
                               "Iterator out of range.\n" )
                     __ASSERT( factors[rII * nb_targets + o].size() != D,
                               "Iterator out of range.\n" )
+                    __ASSERT( function.coefs.size() <= rI,
+                              "Rank index out of range.\n" )
+                    __ASSERT( function.coefs.size() <= rII,
+                              "Rank index out of range.\n" )
 
                     if( Fuzzy::neq( *i_iexpI, 0e0 ) )
                     {
-                      t_Type UI( 1 );
+                      t_Type UI( function.coefs[ rI ] );
                       i_fac = factors[ rI * nb_targets + o].begin();
                       for( types::t_unsigned d(0); d < D; ++i_fac, ++d )
                         if( d != _dim )  UI *= (*i_fac);
@@ -165,7 +173,7 @@ namespace Separable
                     if( Fuzzy::eq( *i_iexpII, 0e0 ) ) continue;
 
                     // Computes second factor.
-                    t_Type UII( 1 ); 
+                    t_Type UII( function.coefs[ rII ] ); 
                     i_fac = factors[ rII * nb_targets + o].begin();
                     for(types::t_unsigned d(0); d < D; ++i_fac, ++d )
                       if( d != _dim ) UII *= (*i_fac);
@@ -204,8 +212,9 @@ namespace Separable
         __DEBUGTRYBEGIN
 
         typename t_Factors :: const_iterator i_facs = factors.begin();
+        typename t_Function :: t_Coefs :: const_iterator i_coef = function.coefs.begin();
         std::vector< t_Type > values( _targets.size(), 0 );
-        for( size_t r(0); r < nb_ranks; ++r )
+        for( size_t r(0); r < nb_ranks; ++r, ++i_coef )
         {
           typename std::vector< t_Type > :: iterator i_val = values.begin();
           t_eWeights :: const_iterator i_eweights = eweights.begin();
@@ -219,7 +228,7 @@ namespace Separable
                         (
                           i_facs->begin(), i_facs->end(), 1e0,
                           std::multiplies<t_Type>()
-                        ) * (*i_eweight);
+                        ) * (*i_eweight) * (*i_coef);
           } // loop over equivalent structures.
         } // end of loop over ranks.
 

@@ -31,12 +31,16 @@ namespace Separables
       types::t_unsigned n;
       //! Verbosity
       bool verbose;
+      //! Wether to perform reruns as preruns.
+      bool prerun;
 
     public:
       //! Constructor.
-      BestOf ( types::t_unsigned _n = 1 ) : t_Solver(), n(_n), verbose(false) {}
+      BestOf   ( types::t_unsigned _n = 1 ) 
+             : t_Solver(), n(_n), verbose(false), prerun(false) {}
       //! Copy Constructor.
-      BestOf ( BestOf &_c ) : t_Solver( _c ), n(_c.n), verbose(_c.verbose) {}
+      BestOf   ( BestOf &_c )
+             : t_Solver( _c ), n(_c.n), verbose(_c.verbose), prerun(_c.prerun) {}
       //! Destructor
       ~BestOf() {}
       //! The functor itself.
@@ -57,7 +61,7 @@ namespace Separables
         best.first = t_Solver :: operator()( _coefs, _collapse );
         best.second = _coefs;
         if( verbose ) std::cout << "Run 1: " << best.first << "\n";
-        for( types::t_unsigned i(1); i <= n; ++i )
+        for( types::t_unsigned i(2); i <= n; ++i )
         {
           docopy = true;
           _collapse->create_coefs( _coefs );
@@ -73,7 +77,14 @@ namespace Separables
         }
 
         if( docopy ) _coefs = best.second;
-        return best.first;
+
+        // if above were not pre-runs, this is it.
+        if( not prerun ) return best.first;
+
+        // Continue runs with a tolerance criterion only.
+        t_Solver :: itermax = 0;
+        t_Solver :: verbose = verbose;
+        return t_Solver :: operator()( _coefs, _collapse );
       }
 
     template< class T_COEFS, class T_TARGETS, class T_COLLAPSE > 
