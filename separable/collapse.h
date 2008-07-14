@@ -46,19 +46,14 @@ namespace Separable
     public:
       //! Type of the sum of separable functions to collapse.
       typedef T_FUNCTION t_Function;
-      //! Wether to update the coefficients between each dimension or not.
-      bool do_update;
       //! Reference to the function to fit.
       T_FUNCTION &function;
 
       //! Constructor
       Collapse   ( t_Function &_function )
-                  : do_update(false), is_initialized(false), D(0), nb_targets(0),
-                    nb_ranks(0), function( _function ) {}
+                  : D(0), nb_targets(0), nb_ranks(0), function( _function ) {}
 
       /** \brief Constructs the matrix \a A for dimension \a _dim. 
-       *  \details Note that depending \a _coef are used only for dim == 0,
-       *           and/or do_update == true.
        *  \tparam T_VECTOR is a vector.
        *  \tparam T_MATRIX is a vector, e.~g. a flattened matrix. This class is
        *                   meant for %GSL which expects this type of memory
@@ -104,7 +99,8 @@ namespace Separable
       //!          necessarily initialized.
       //! \tparams should be a vector of vectors.
       //! \params[out] _coefs creates \a _coefs[d, (r,i) ] uninitialized.
-      template< class T_VECTORS > void create_coefs( T_VECTORS &_coefs ) const;
+      template< class T_VECTORS > void create_coefs( T_VECTORS &_coefs,
+                                                     types::t_real = 0.5e0 ) const;
       //! Assigns solution coefficients to Collapse::function.
       //! \tparam T_VECTORS is a vector of vectors or similar. 
       //! \param[in] _solution contains the coefficients for \e all dimensions.
@@ -115,24 +111,21 @@ namespace Separable
         typename t_Function::t_Return evaluate( const T_VECTORS &_coefs,
                                                 const T_VECTOR &_targets );
 
-    protected:
-      //! Initializes Collapse::factors.
+      //! Initializes Collapse::factors using values from \a _coefs.
       //! \tparam T_VECTORS is a vector of vectors or similar. 
       //! \param[in] _coefs contains the coefficients for \e all dimensions.
       //!                   \a _coefs[d, (r,i) ]
-      template< class T_VECTORS >
-        void initialize_factors( const T_VECTORS &_coefs );
-      //! Updates Collapse::factors.
+      template< class T_VECTORS > void update_all( const T_VECTORS &_coefs );
+      //! Updates Collapse::factors for dimension \a _dim.
       //! \tparam T_VECTORS is a vector of vectors or similar. 
       //! \param[in] The dimension for which to create \a _A. Passed from
       //!            Collapse::operator()().
       //! \param[in] _coefs contains the coefficients for \e all dimensions.
       //!                   \a _coefs[d, (r,i) ].
       template< class T_VECTORS >
-        void update_factors( types::t_unsigned _dim, const T_VECTORS &_coefs );
+        void update( types::t_unsigned _dim, const T_VECTORS &_coefs );
 
-      //! False if unitialized.
-      bool is_initialized;
+    protected:
       //! Maximum dimension.
       types::t_unsigned D;
       //! Number of target values.

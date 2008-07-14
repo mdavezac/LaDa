@@ -75,5 +75,40 @@ namespace Separables
         if( docopy ) _coefs = best.second;
         return best.first;
       }
+
+    template< class T_COEFS, class T_TARGETS, class T_COLLAPSE > 
+      void bestofcoefs( T_COEFS &_coefs, const T_TARGETS &_targets, T_COLLAPSE &_collapse,
+                        types::t_real _howrandom = 5e-1, types::t_unsigned n = 1,
+                        bool _verbose = false )
+      {
+        __DOASSERT( n==0, "0 runs required on input. We are done here.\n" )
+
+        typedef typename std::pair< types::t_real, T_COEFS > t_Best;
+        t_Best best;
+
+        bool docopy( false );
+        _collapse.update_all( _coefs );
+        _collapse.evaluate( _coefs, _targets );
+        best.first = _collapse.evaluate( _coefs, _targets );
+        best.second = _coefs;
+        if( _verbose ) std::cout << "Try Coefs 1: " << best.first << "\n";
+        for( types::t_unsigned i(2); i <= n; ++i )
+        {
+          docopy = true;
+          _collapse.create_coefs( _coefs, _howrandom );
+          _collapse.update_all( _coefs );
+          types::t_real result( _collapse.evaluate( _coefs, _targets ) );
+
+          if( _verbose ) std::cout << "Try Coefs " << i << ": " << result << "\n";
+
+          if( Fuzzy::geq( result, best.first ) ) continue;
+          
+          best.first = result;
+          best.second = _coefs;
+          docopy = false;
+        }
+
+        if( docopy ) _coefs = best.second;
+      }
 }
 #endif

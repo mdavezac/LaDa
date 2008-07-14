@@ -50,12 +50,14 @@ namespace Fitting
       types::t_real tolerance;
       //! The linear solver
       t_Solver linear_solver;
+      //! Whether to update between dimensions
+      bool do_update;
       //! Verbosity
       bool verbose;
 
     public:
       //! Constructor.
-      Allsq() : itermax(20), tolerance( 1e-4 ), verbose( false )
+      Allsq() : itermax(20), tolerance( 1e-4 ), do_update(true), verbose( false )
         { linear_solver.itermax = itermax; linear_solver.tolerance = tolerance;  }
       //! Copy Constructor.
       Allsq   ( const Allsq &_c ) 
@@ -120,6 +122,12 @@ namespace Fitting
         typename t_Vectors :: iterator i_sol;
         typename t_Vectors :: iterator i_sol_end = _solution.end();
         types::t_real oldvalue;
+        collapse->update_all( _solution );
+        if( verbose )
+        {
+          oldvalue = collapse->evaluate( _solution, targets );
+          std::cout << "Allsq start: " << oldvalue << "\n";
+        }
         do
         {
           types::t_unsigned dim(0);
@@ -127,22 +135,10 @@ namespace Fitting
           for(; i_sol != i_sol_end; ++i_sol, ++dim )
           {
             (*collapse)( b, A, dim, targets, _solution );
-          // for( size_t i(0); i < A.size1(); ++i )
-          // {
-          //   for( size_t j(0); j < A.size2(); ++j )
-          //     std::cout << std::scientific 
-          //               << std::setw(8) 
-          //               << std::setprecision(4)
-          //               << A(i,j) << " ";
-          //   std::cout << "      " 
-          //             << std::scientific 
-          //             << std::setw(8) 
-          //             << std::setprecision(4)
-          //             << b(i) << "\n";
-          // }
-          // std::cout << "\n";
             linear_solver( A, *i_sol, b );
+            if( do_update ) collapse->update( dim, _solution );
           }
+          if( not do_update ) collapse->update_all( _solution );
           ++iter;
 
           if( tolerance > 0e0  )

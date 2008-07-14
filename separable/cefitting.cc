@@ -198,4 +198,27 @@ namespace Fitting
       return std::pair< types::t_real, types::t_real>(average, maxerr);
     }
 
+
+  types::t_real SepCeInterface :: mean() const
+  {
+    return   std::accumulate( targets.begin(), targets.end(), 0e0 )
+           / (types::t_real) targets.size();
+  }
+  types::t_real SepCeInterface :: variance() const
+  {
+    namespace bl = boost::lambda;
+
+    types::t_real mean = SepCeInterface::mean();
+    types::t_real dummy;
+    types::t_real result(0);
+
+    std::for_each
+    ( 
+       targets.begin(), targets.end(),
+       bl::var(result) += ( bl::var(dummy) = bl::_1 - bl::constant( mean ),
+                            bl::var(dummy) * bl::var(dummy) )
+    );
+    return result / (types::t_real) targets.size();
+  }
+
 }

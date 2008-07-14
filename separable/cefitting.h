@@ -30,8 +30,16 @@ namespace Fitting
       typedef std::pair< types::t_real, types::t_real > t_PairErrors;
       //! Structures excluded from fit.
       std::vector< types::t_unsigned > exclude;
+      //! Randomness of the initial parameters.
+      types::t_real howrandom;
+      //! Initial random coefficient configs to try prior to fit.
+      types::t_unsigned nb_initial_guesses;
+      //! Verbosity.
+      bool verbose;
+      
       //! Constructor
-      SepCeInterface() : offset( 0e0 ) {}
+      SepCeInterface() : offset( 0e0 ), howrandom(5e-1),
+                         nb_initial_guesses(1), verbose(false) {}
       
       //! Reads the structures from input.
       void read( CE::SymSeparables &_symseps,
@@ -41,7 +49,7 @@ namespace Fitting
 
       //! Fits a separable function to the complete training set.
       template< class T_ALLSQ, class T_COLLAPSE>
-      void fit( T_ALLSQ &_allsq, T_COLLAPSE &_collapse ) const;
+      types::t_real fit( T_ALLSQ &_allsq, T_COLLAPSE &_collapse ) const;
 
 
       //! Check training convergence.
@@ -62,6 +70,11 @@ namespace Fitting
 
       //! Sets the offset. 
       types::t_unsigned nb_structs() const { return structures.size(); }
+      
+      //! Returns the mean of the target values.
+      types::t_real mean() const;
+      //! Returns the variance of the target values.
+      types::t_real variance() const;
 
     protected:
       //! Reads structure names and energies.

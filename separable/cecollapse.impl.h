@@ -59,11 +59,6 @@ namespace Separable
         __ASSERT( factors.size() == _coefs[_dim].size(), "Inconsistent sizes.\n" )
         __ASSERT( expanded.size() <= _dim, "Inconsistent sizes.\n" )
        
-        if( ( not is_initialized ) or ( ( not do_update ) and _dim == 0 ) )
-          initialize_factors( _coefs );
-        else if ( do_update ) update_factors( _dim, _coefs );
-        is_initialized = true;   
-       
         if( _b.size() != _coefs[_dim].size() )
         {
           _b.resize( _coefs[_dim].size() );
@@ -207,7 +202,6 @@ namespace Separable
                                              const T_VECTOR &_targets ) 
       {
         __DEBUGTRYBEGIN
-        t_Base::update_factors( 0, _coefs );
 
         typename t_Factors :: const_iterator i_facs = factors.begin();
         std::vector< t_Type > values( _targets.size(), 0 );
@@ -237,7 +231,7 @@ namespace Separable
           bl::var( result ) += ( bl::var(dummy) = bl::_2 - bl::_1,
                                  bl::var(dummy) * bl::var(dummy) * bl::_3 )
         );
-        return result;
+        return result / (types::t_real) _targets.size();
         __DEBUGTRYEND(,"Error while assessing sum of squares.\n" )
       }
 

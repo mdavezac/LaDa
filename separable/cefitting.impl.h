@@ -2,12 +2,13 @@
 //  Version: $Id$
 //
 
-#include<algorithm>
+#include <algorithm>
+#include "bestof.h"
 
 namespace Fitting
 {
   template< class T_ALLSQ, class T_COLLAPSE >
-  void SepCeInterface :: fit( T_ALLSQ &_allsq, T_COLLAPSE &_collapse ) const
+  types::t_real SepCeInterface :: fit( T_ALLSQ &_allsq, T_COLLAPSE &_collapse ) const
   {
     // First creates the input vector.
     std::vector<t_Configurations::value_type::first_type> input;
@@ -36,16 +37,6 @@ namespace Fitting
       {
         input.push_back( i_conf->first ); 
         dummy.push_back( i_conf->second );
-    //   std::cout << i_conf->second << "  ";
-    //   t_Configurations :: value_type
-    //                    :: first_type
-    //                    :: const_iterator i_1 = i_conf->first.begin();
-    //   t_Configurations :: value_type
-    //                    :: first_type
-    //                    :: const_iterator i_2 = i_conf->first.end();
-    //   for(; i_1 != i_2; ++i_1 )
-    //     std::cout << ( *i_1 ? "1": "0" );
-    //   std::cout << "\n";
       }
       eweights.push_back( dummy );
     }
@@ -58,12 +49,16 @@ namespace Fitting
 
     // Then creates the vectors of coefficients with random initial value.
     typename T_ALLSQ :: t_Vectors coefs;
-    _collapse.create_coefs( coefs );
+    _collapse.create_coefs( coefs, howrandom );
+    if( nb_initial_guesses > 1 )
+      Separables::bestofcoefs( coefs, y, _collapse, howrandom,
+                               nb_initial_guesses, verbose );
     
     // finally performs fit
-    types::t_real convergence = _allsq( coefs, &_collapse );
+    types::t_real residual = _allsq( coefs, &_collapse );
 
     _collapse.reassign( coefs );
+    return residual;
   }
 
   template< class T_ALLSQ, class T_COLLAPSE>

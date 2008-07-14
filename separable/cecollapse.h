@@ -27,12 +27,11 @@ namespace Separable
    *         while keeping track of equivalent configurations.
    **/
   template< class T_FUNCTION >
-  class EquivCollapse : protected Collapse<T_FUNCTION>
+  class EquivCollapse : public Collapse<T_FUNCTION>
   {
       //! Type of the base class.
       typedef Collapse<T_FUNCTION> t_Base;
     public:
-      using t_Base :: do_update;
       //! Type of the separable function.
       typedef T_FUNCTION t_Function;
       using t_Base :: function;
@@ -52,21 +51,12 @@ namespace Separable
       template< class T_VECTORS, class T_VECTOR, class T_EWEIGHTS > 
         void init( const T_VECTORS &_x, const T_VECTOR &_w,
                    const T_EWEIGHTS &_eweights );
-      //! Resets collapse functor. Clears memory.
-      void reset() { t_Base :: reset(); }
-      //! Creates a collection of random coefficients.
-      //! \details A vector of vectors of correct dimensions is created but not
-      //!          necessarily initialized.
-      //! \tparams should be a vector of vectors.
-      //! \params[out] _coefs creates \a _coefs[d, (r,i) ] uninitialized.
-      template< class T_VECTORS > void create_coefs( T_VECTORS &_coefs ) const
-        { t_Base::create_coefs( _coefs ); } 
-      //! Assigns solution coefficients to Collapse::function.
-      //! \tparam T_VECTORS is a vector of vectors or similar. 
-      //! \param[in] _solution contains the coefficients for \e all dimensions.
-      //!                      \a _solution[d, (r,i) ]
-      template< class T_VECTORS > void reassign( const T_VECTORS &_solution ) const
-        { t_Base::reassign( _solution ); }
+
+      using t_Base :: reset;
+      using t_Base :: update;
+      using t_Base :: update_all;
+      using t_Base :: create_coefs;
+      using t_Base :: reassign;
       //! Evaluates the sum of squares.
       template< class T_VECTORS, class T_VECTOR >
         typename t_Function::t_Return evaluate( const T_VECTORS &_coefs,
@@ -74,7 +64,6 @@ namespace Separable
 
     protected:
 
-      using t_Base :: is_initialized;
       using t_Base :: D;
       using t_Base :: nb_targets;
       using t_Base :: nb_ranks;

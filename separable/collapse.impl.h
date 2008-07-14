@@ -99,9 +99,7 @@ namespace Separable
                                              const T_VECTOR &_targets,
                                              const T_VECTORS &_coefs     )
       {
-#       ifdef _LADADEBUG
-          try {
-#       endif
+        __DEBUGTRYBEGIN
 
         __ASSERT( _dim  >= D, "Input dimension out of range.\n" )
         __ASSERT( _coefs.size() != D,
@@ -118,11 +116,6 @@ namespace Separable
         __ASSERT( sizes.size()  != D, "Inconsistent sizes.\n" )
         __ASSERT( factors.size() == _coefs[_dim].size(), "Inconsistent sizes.\n" )
         __ASSERT( expanded.size() <= _dim, "Inconsistent sizes.\n" )
-     
-        if( ( not is_initialized ) or ( ( not do_update ) and _dim == 0 ) )
-          initialize_factors( _coefs );
-        else if ( do_update ) update_factors( _dim, _coefs );
-        is_initialized = true;   
      
         if( _b.size() != _coefs[_dim].size() )
         {
@@ -222,18 +215,14 @@ namespace Separable
      
         } // end of loop over ranks I
 
-#       ifdef _LADADEBUG
-          } __CATCHCODE(, "Error while creating collapsed matrix and target.\n" )
-#       endif
+        __DEBUGTRYEND(, "Error while creating collapsed matrix and target.\n" )
      
       } // end of functor.
 
   template< class T_FUNCTION> template< class T_VECTORS >
-    void Collapse<T_FUNCTION>::initialize_factors( const T_VECTORS &_coefs )
+    void Collapse<T_FUNCTION>::update_all( const T_VECTORS &_coefs )
     {
-#     ifdef _LADADEBUG
-        try {
-#     endif
+      __DEBUGTRYBEGIN
 
       __ASSERT( nb_ranks != function.basis.size(),
                 "Inconsistent rank size.\n" )
@@ -290,18 +279,13 @@ namespace Separable
       } // end of loop over ranks
       __ASSERT( i_facs != factors.end(), "Unexpected iterator position.\n" )
 
-#     ifdef _LADADEBUG
-        } __CATCHCODE(, "Error while creating factors.\n" )
-#     endif
+      __DEBUGTRYEND(, "Error while creating factors.\n" )
     }
  
   template< class T_FUNCTION > template< class T_VECTORS >
-    void Collapse<T_FUNCTION>::update_factors( types::t_unsigned _dim,
-                                               const T_VECTORS &_coefs )
+    void Collapse<T_FUNCTION>::update( types::t_unsigned _dim, const T_VECTORS &_coefs )
     {
-#     ifdef _LADADEBUG
-        try {
-#     endif
+      __DEBUGTRYBEGIN
 
       __ASSERT( _dim >= D, "Dimension out of range on input.\n" ) 
       __ASSERT( sizes.size() != D, "Unexpected array-size.\n" ) 
@@ -310,7 +294,6 @@ namespace Separable
       __ASSERT( factors.size() != nb_ranks * nb_targets,
                 "Inconsistent rank size.\n" )
 
-      _dim == 0 ? _dim = D-1: --_dim;
       typename t_Factors :: iterator i_facs = factors.begin();
       for( types::t_unsigned r(0); r < nb_ranks; ++r )
       {
@@ -360,17 +343,14 @@ namespace Separable
       } // end of loop over ranks
       __ASSERT( i_facs != factors.end(), "Inconsistent size.\n" )
 
-#     ifdef _LADADEBUG
-        } __CATCHCODE(, "Error while updating factors.\n" )
-#     endif
+      __DEBUGTRYEND(, "Error while updating factors.\n" )
     }
 
   template< class T_FUNCTION > template< class T_VECTORS >
     void Collapse<T_FUNCTION> :: reassign( const T_VECTORS& _solution ) const
     {
-#     ifdef _LADADEBUG
-        try {
-#     endif
+      __DEBUGTRYBEGIN
+
       typedef T_VECTORS t_Vectors;
       typedef typename t_Vectors :: const_iterator const_solit;
       typedef typename t_Vectors :: value_type :: const_iterator const_soldimit;
@@ -393,13 +373,13 @@ namespace Separable
           i_coef = i_coef_;
         }
       }
-#     ifdef _LADADEBUG
-        } __CATCHCODE(, "Error while assigning solution coefs to function.\n" )
-#     endif
+
+      __DEBUGTRYEND(, "Error while assigning solution coefs to function.\n" )
     }
 
   template< class T_FUNCTION > template< class T_VECTORS >
-    void Collapse<T_FUNCTION> :: create_coefs( T_VECTORS& _coefs ) const
+    void Collapse<T_FUNCTION> :: create_coefs( T_VECTORS& _coefs,
+                                               types::t_real _howrandom ) const
     {
       __DEBUGTRYBEGIN
       typedef T_VECTORS t_Vectors;
@@ -416,27 +396,19 @@ namespace Separable
         t_Sizes :: value_type :: const_iterator i_size = i_sizes->begin();
         t_Sizes :: value_type :: const_iterator i_size_end = i_sizes->end();
         typename t_Vectors :: value_type :: iterator i_coef = i_dim->begin();
+        types::t_real offset = _howrandom / 2.e0;
         for(; i_size != i_size_end; ++i_size )
         {
           namespace bl = boost::lambda;
-          types::t_real a = std::exp( std::log( 1e1)/(2e0 * ndim - 2e0) );
-          types::t_real b = std::exp( std::log(1e-1)/(2e0 * ndim - 2e0) );
-          types::t_real c = a-b;
           typename T_VECTORS::value_type::value_type norm(0);
           typename t_Vectors :: value_type :: iterator i_c( i_coef ); 
           std::generate
           (
             i_c, i_c + *i_size, 
-              ( bl::bind( &opt::random::rng ) * bl::constant(c) + bl::constant(b) )
-            * bl::bind( &opt::random::rflip )
+              bl::bind( &opt::random::rng ) * bl::constant(_howrandom) 
+            - bl::constant( offset )
           );
           void (*ptr_swap)( types::t_real &, types::t_real& ) = std::swap;
-//         a = 1e1; b = 1e-1;
-//         std::generate
-//         (
-//           i_c, i_c + *i_size, 
-//           ( bl::bind( ptr_swap, bl::var(a), bl::var(b) ), bl::var(a) )
-//         );
           i_coef += *i_size;
         }
       }
@@ -448,10 +420,7 @@ namespace Separable
       Collapse<T_FUNCTION> :: evaluate( const T_VECTORS &_coefs,
                                         const T_VECTOR &_target ) 
       {
-#       ifdef _LADADEBUG
-          try {
-#       endif
-        initialize_factors( _coefs );
+        __DEBUGTRYBEGIN
 
         typename t_Factors :: const_iterator i_facs = factors.begin();
         std::vector< t_Type > values( _target.size(), 0 );
@@ -476,19 +445,16 @@ namespace Separable
           t_Type intermed = *i_target - *i_val;
           result += intermed * intermed * (*i_weight);
         }
-        return result;
-#     ifdef _LADADEBUG
-        } __CATCHCODE(, "Error while assessing squares.\n" )
-#     endif
+        return result / (types::t_real) _target.size();
+      
+        __DEBUGTRYEND(, "Error while assessing squares.\n" )
       }
 
   template< class T_FUNCTION >
     void Collapse<T_FUNCTION> :: reset() 
     {
-      is_initialized = false;
       expanded.clear();
       factors.clear();
       sizes.clear();
     }
-
 }

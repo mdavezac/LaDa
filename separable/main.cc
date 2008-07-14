@@ -73,7 +73,11 @@ int main(int argc, char *argv[])
                         "Tolerance of the 1d linear-least square fit.\n" )
         ("noupdate", "Whether to update during 1d least-square fits.\n" )
         ("conv", "Use conventional cell rather than unit-cell.\n"
-                 "Should work for fcc and bcc if lattice is inputed right.\n" );
+                 "Should work for fcc and bcc if lattice is inputed right.\n" )
+        ("random", po::value<types::t_real>()->default_value(5e-1),
+                   "Coefficients will be chosen randomly in the range [random,-random].\n" )
+        ("nbguesses", po::value<types::t_unsigned>()->default_value(1),
+                      "Number of initial guesses to try prior to (any) fitting.\n" );
     leavemanyout.add_cmdl( specific );
     po::options_description hidden("hidden");
     hidden.add_options()
@@ -139,6 +143,9 @@ int main(int argc, char *argv[])
     bool convcell = vm.count("conv");
     types::t_real offset ( vm["offset"].as< types::t_real >() );
     if( Fuzzy::eq( offset, types::t_real(0) ) ) offset = types::t_real(0);
+    types::t_real howrandom( vm["random"].as<types::t_real>() );
+    types::t_unsigned nbguesses( vm["nbguesses"].as<types::t_unsigned>() );
+    __ASSERT( nbguesses == 0, "Invalid input nbguesses = 0.\n" )
 
     // Loads lattice
     boost::shared_ptr< Crystal::Lattice > lattice( new Crystal :: Lattice );
@@ -205,6 +212,7 @@ int main(int argc, char *argv[])
     bestof.t_Fitting::itermax = maxiter;
     bestof.t_Fitting::tolerance = tolerance;
     bestof.t_Fitting::verbose = verbose >= print_allsq;
+    bestof.t_Fitting::do_update = doupdate;
     bestof.t_Fitting::linear_solver.tolerance = dtolerance;
     bestof.t_Fitting::linear_solver.verbose = verbose >= print_llsq;
 
@@ -217,18 +225,22 @@ int main(int argc, char *argv[])
 
     // Initializes collapse functor.
     Separable::EquivCollapse< t_Function > collapse( separables );
-    collapse.do_update = doupdate;
 
     // Initializes Interface to allsq.
     Fitting::SepCeInterface interface;
+    interface.howrandom = howrandom;
+    interface.nb_initial_guesses = nbguesses;
+    interface.verbose = verbose >= 4;
     interface.set_offset( offset );
     interface.read( symsep, dir, "LDAs.dat", verbose >= print_data );
-#     if defined (_TETRAGONAL_CE_)
-        // From here on, lattice should be explicitely tetragonal.
-        for( types::t_int i=0; i < 3; ++i ) 
-          if( Fuzzy::eq( lattice->cell.x[i][2], 0.5e0 ) )
-            lattice->cell.x[i][2] = 0.6e0;
-#     endif
+#   if defined (_TETRAGONAL_CE_)
+      // From here on, lattice should be explicitely tetragonal.
+      for( types::t_int i=0; i < 3; ++i ) 
+        if( Fuzzy::eq( lattice->cell.x[i][2], 0.5e0 ) )
+          lattice->cell.x[i][2] = 0.6e0;
+#   endif
+    types::t_real mean = interface.mean();
+    types::t_real variance = interface.variance();
 
     // extract leave-many-out commandline
     leavemanyout.extract_cmdl( vm );
@@ -260,7 +272,11 @@ int main(int argc, char *argv[])
                  << dtolerance << "\n"
               << "Will" << ( doupdate ? " ": " not " )
                  << "update between dimensions.\n"
-              << std::endl;
+              << "Data mean: " << mean << "\n"
+              << "Data Variance: " << variance << "\n"
+              << "Range of initial guesses:[ " <<  howrandom << ", " << howrandom << "].\n"
+              << "Number of initial guesses: " <<  nbguesses << ".\n";
+
     if( Fuzzy :: neq( offset, 0e0 ) ) std::cout << "Offset: " << offset << "\n";
 
     // fitting.
@@ -271,19 +287,28 @@ int main(int argc, char *argv[])
       result = leavemanyout( interface, bestof, collapse );
       std::cout << " Training errors:\n"
                 << "    average error: " << result.first.first
+                <<  " ( " << result.first.first / std::abs(mean) *1e2 << "% )" 
                 << "    maximum error: " << result.first.second << "\n"
+                <<  " ( " << result.first.second / std::abs(mean) *1e2 << "% )" 
                 << " Prediction errors:\n"
                 << "    average error: " << result.second.first
-                << "    maximum error: " << result.second.second << std::endl;
+                <<  " ( " << result.second.first / std::abs(mean) *1e2 << "% )" 
+                << "    maximum error: " << result.second.second 
+                <<  " ( " << result.second.second / std::abs(mean) *1e2 << "% )\n"; 
     }
     else if( not cross )
     {
       std::cout << "\nFitting using whole training set:" << std::endl;
-      interface.fit( bestof, collapse );
+      types::t_real residual = interface.fit( bestof, collapse );
       t_PairErrors result; 
       result = interface.check_training( separables, verbose >= print_checks );
-      std::cout << " average error: " << result.first
-                << " maximum error: " << result.second << std::endl;
+      std::cout << " Residual: " << residual 
+                <<  " ( " << residual / variance *1e2 << "% )" 
+                << " average error: " << result.first
+                <<  " ( " << result.first / std::abs(mean) *1e2 << "% )" 
+                << " maximum error: " << result.second 
+                <<  " ( " << result.second / std::abs(mean) *1e2 << "% )" 
+                << std::endl;
     }
     else
     {
@@ -292,10 +317,14 @@ int main(int argc, char *argv[])
       result = Fitting::leave_one_out( interface, bestof, collapse, verbose >= print_checks );
       std::cout << " Training errors:\n"
                 << "    average error: " << result.first.first
+                <<  " ( " << result.first.first / std::abs(mean) *1e2 << "% )" 
                 << "    maximum error: " << result.first.second << "\n"
+                <<  " ( " << result.first.second / std::abs(mean) *1e2 << "% )" 
                 << " Prediction errors:\n"
                 << "    average error: " << result.second.first
-                << "    maximum error: " << result.second.second << std::endl;
+                <<  " ( " << result.second.first / std::abs(mean) *1e2 << "% )" 
+                << "    maximum error: " << result.second.second
+                <<  " ( " << result.second.second / std::abs(mean) *1e2 << "% )\n"; 
     }
     if( verbose >= print_function ) std::cout << separables << "\n";
 
