@@ -154,7 +154,7 @@ namespace Separable
 
                     if( Fuzzy::neq( *i_iexpI, 0e0 ) )
                     {
-                      t_Type UI( function.coefs[ rI ] );
+                      t_Type UI( function[ rI ] );
                       i_fac = factors[ rI * nb_targets + o].begin();
                       for( types::t_unsigned d(0); d < D; ++i_fac, ++d )
                         if( d != _dim )  UI *= (*i_fac);
@@ -173,7 +173,7 @@ namespace Separable
                     if( Fuzzy::eq( *i_iexpII, 0e0 ) ) continue;
 
                     // Computes second factor.
-                    t_Type UII( function.coefs[ rII ] ); 
+                    t_Type UII( function[ rII ] ); 
                     i_fac = factors[ rII * nb_targets + o].begin();
                     for(types::t_unsigned d(0); d < D; ++i_fac, ++d )
                       if( d != _dim ) UII *= (*i_fac);
@@ -212,9 +212,8 @@ namespace Separable
         __DEBUGTRYBEGIN
 
         typename t_Factors :: const_iterator i_facs = factors.begin();
-        typename t_Function :: t_Coefs :: const_iterator i_coef = function.coefs.begin();
         std::vector< t_Type > values( _targets.size(), 0 );
-        for( size_t r(0); r < nb_ranks; ++r, ++i_coef )
+        for( size_t r(0); r < nb_ranks; ++r )
         {
           typename std::vector< t_Type > :: iterator i_val = values.begin();
           t_eWeights :: const_iterator i_eweights = eweights.begin();
@@ -228,7 +227,7 @@ namespace Separable
                         (
                           i_facs->begin(), i_facs->end(), 1e0,
                           std::multiplies<t_Type>()
-                        ) * (*i_eweight) * (*i_coef);
+                        ) * (*i_eweight) * function[r];
           } // loop over equivalent structures.
         } // end of loop over ranks.
 

@@ -53,6 +53,8 @@ int main(int argc, char *argv[])
            ("version,v", "prints version string.")
            ("verbose,p", po::value<types::t_unsigned>()->default_value(0),
                          "Level of verbosity.\n"  )
+           ("seed", po::value<types::t_unsigned>()->default_value(0),
+                    "Seed of the random number generator.\n"  )
            ("reruns", po::value<types::t_unsigned>()->default_value(1),
                       "number of times to run the algorithm.\n" 
                       "Is equivalent to manually re-launching the program.\n");
@@ -130,6 +132,7 @@ int main(int argc, char *argv[])
     if( vm.count("latticeinput") ) filename = vm["latticeinput"].as< std::string >();
 
     types::t_unsigned verbose = vm["verbose"].as<types::t_unsigned>();
+    types::t_unsigned seed = vm["seed"].as<types::t_unsigned>();
     types::t_unsigned reruns(1);
     if( vm.count("reruns") ) reruns = vm["reruns"].as< types::t_unsigned >();
     __DOASSERT( reruns == 0, "0 number of runs performed... As required on input.\n" )
@@ -202,7 +205,7 @@ int main(int argc, char *argv[])
     }
 
     // Creates global random number generator.
-    opt::random::seed();
+    opt::random::seed( seed );
 
     // Initializes fitting.
     typedef Fitting::Allsq<Fitting::Cgs> t_Fitting;
@@ -282,6 +285,7 @@ int main(int argc, char *argv[])
               << "Number of initial guesses: " <<  nbguesses << ".\n";
     if( prerun )
      std::cout << "Performing prerun.\n";
+    std::cout << "Random Seed: " << seed << "\n";
 
     if( Fuzzy :: neq( offset, 0e0 ) ) std::cout << "Offset: " << offset << "\n";
 

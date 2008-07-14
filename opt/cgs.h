@@ -32,7 +32,7 @@ namespace Fitting
       public:
         //! The required interface for the preconditionner.
         template< class T_VECTOR >
-          void solve( const T_VECTOR& _x ) const {};
+          void solve( const T_VECTOR& _x ) const {}
     };
 
     public:

@@ -15,9 +15,9 @@ namespace opt
   namespace random
   {
     //! Starts the radom number generator
-    void create( types::t_unsigned _seed = 0 );
+    types::t_unsigned create( types::t_unsigned _seed = 0 );
     //! Starts the radom number generator
-    void seed( types::t_unsigned _seed = 0 );
+    types::t_unsigned seed( types::t_unsigned _seed = 0 );
     //! Flips a coin, retuns true or false.
     bool flip();
     //! Flips a coin, returns +1 or -1.

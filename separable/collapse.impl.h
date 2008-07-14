@@ -438,7 +438,6 @@ namespace Separable
         for(; i_size != i_size_end; ++i_size )
         {
           namespace bl = boost::lambda;
-          typename T_VECTORS::value_type::value_type norm(0);
           typename t_Vectors :: value_type :: iterator i_c( i_coef ); 
           std::generate
           (
@@ -446,7 +445,6 @@ namespace Separable
               bl::bind( &opt::random::rng ) * bl::constant(_howrandom) 
             - bl::constant( offset )
           );
-          void (*ptr_swap)( types::t_real &, types::t_real& ) = std::swap;
           i_coef += *i_size;
         }
       }
