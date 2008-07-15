@@ -343,34 +343,34 @@ int main(int argc, char *argv[])
   {
     std::cerr << "Caught error while running " << __PROGNAME__ << "\n"
               << "Something wrong with the command-line input.\n"
-              << _b.what() << "\n";
+              << _b.what() << std::endl;
     return 0;
   }
   catch ( boost::program_options::invalid_option_value &_i )
   {
     std::cerr << "Caught error while running " << __PROGNAME__ << "\n"
               << "Argument of option in command-line is invalid.\n"
-              << _i.what() << "\n";
+              << _i.what() << std::endl;
     return 0;
   }
   catch ( boost::program_options::unknown_option &_u)
   {
     std::cerr << "Caught error while running " << __PROGNAME__ << "\n"
               << "Unknown option in command-line.\n"
-              << _u.what() << "\n";
+              << _u.what() << std::endl;
     return 0;
   }
   catch (  boost::program_options::too_many_positional_options_error &_e )
   {
     std::cerr << "Caught error while running " << __PROGNAME__ << "\n"
               << "Too many arguments in command-line.\n"
-              << _e.what() << "\n";
+              << _e.what() << std::endl;
     return 0;
   }
   catch ( std::exception &e )
   {
     std::cerr << "Caught error while running " << __PROGNAME__ 
-              << "\n" << e.what() << "\n";
+              << "\n" << e.what() << std::endl;
     return 0;
   }
   return 1;

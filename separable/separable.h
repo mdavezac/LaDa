@@ -209,6 +209,9 @@ namespace Separable
         //! \cond 
         using t_Base :: groupop;
         using t_Base :: scalarop;
+        //! \endconf
+      public:
+        //! \cond 
         using t_Base :: coefs;
         using t_Base :: basis;
         using t_Base :: has_gradient;

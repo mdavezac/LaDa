@@ -419,7 +419,7 @@ if test "$ac_cv_cxx_have_stl" = yes; then
   LIBS="${LIBS} -lm "
   case "$ax_cv_c_compiler_vendor" in 
     gnu) LIBS=" ${LIBS} -lstdc++";;
-    intel) LIBS=" ${LIBS} -lstdc++ -lcxa -lcxaguard";;
+#   intel) LIBS=" ${LIBS} -lstdc++ -lcxa -lcxaguard";;
     ibm) FFLAGS="-qsuffix=f=f90 -lC";;
     portland) LIBS=" ${LIBS} -lC ";;
   esac
