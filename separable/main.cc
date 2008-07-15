@@ -133,6 +133,7 @@ int main(int argc, char *argv[])
 
     types::t_unsigned verbose = vm["verbose"].as<types::t_unsigned>();
     types::t_unsigned seed = vm["seed"].as<types::t_unsigned>();
+    seed = opt::random::seed( seed );
     types::t_unsigned reruns(1);
     if( vm.count("reruns") ) reruns = vm["reruns"].as< types::t_unsigned >();
     __DOASSERT( reruns == 0, "0 number of runs performed... As required on input.\n" )
@@ -203,9 +204,6 @@ int main(int argc, char *argv[])
             lattice->cell.x[i][2] = 0.5e0;
 #     endif
     }
-
-    // Creates global random number generator.
-    opt::random::seed( seed );
 
     // Initializes fitting.
     typedef Fitting::Allsq<Fitting::Cgs> t_Fitting;

@@ -102,7 +102,10 @@ namespace Separables
         _collapse.evaluate( _coefs, _targets );
         best.first = _collapse.evaluate( _coefs, _targets );
         best.second = _coefs;
-        if( _verbose ) std::cout << "Try Coefs 1: " << best.first << "\n";
+        size_t fieldsize = (size_t) std::ceil( std::log(n)/log(10) );
+        if( _verbose ) std::cout << "Try Coefs " << std::setw(fieldsize)
+                                 << 1 << ": " << std::setw(15)
+                                 << std::setprecision(3) << best.first << "\n";
         for( types::t_unsigned i(2); i <= n; ++i )
         {
           docopy = true;
@@ -110,7 +113,9 @@ namespace Separables
           _collapse.update_all( _coefs );
           types::t_real result( _collapse.evaluate( _coefs, _targets ) );
 
-          if( _verbose ) std::cout << "Try Coefs " << i << ": " << result << "\n";
+          if( _verbose ) std::cout << "Try Coefs " << std::setw(fieldsize)
+                                   << i << ": " << std::setw(15)
+                                   << std::setprecision(3) << best.first << "\n";
 
           if( Fuzzy::geq( result, best.first ) ) continue;
           

@@ -39,8 +39,8 @@ namespace opt
       boost::shared_ptr< boost::mt11213b > a( new boost::mt11213b(42u) );
       __DOASSERT( not a.get(), "Could not create random number generator boost::mt11213b.\n" )
       details::generator = a;
-      if( not _seed ) details::generator->seed( static_cast<unsigned int>( std::time(0) ) );
-      else details::generator->seed( static_cast<unsigned int>(_seed) );
+      if( not _seed ) _seed = (types::t_unsigned) std::time(0);
+      details::generator->seed( static_cast<unsigned int>(_seed) );
 
       boost::shared_ptr< boost::uniform_real<> > b( new boost::uniform_real<>(0,1) );
       __DOASSERT( not a.get(), "Could not create uniform distribution.\n" )
@@ -61,7 +61,7 @@ namespace opt
       if( not details::generator.get() ) return create( _seed );
 
       __ASSERT( not details::generator.get(), "random number generator was not created" );
-      _seed = static_cast<unsigned int>( std::time(0) );
+      if( not _seed ) _seed = (types::t_unsigned) std::time(0);
       details::generator->seed( static_cast<unsigned int>(_seed) );
       return _seed;
     }
