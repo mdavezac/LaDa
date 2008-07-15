@@ -60,14 +60,22 @@ namespace Separables
         bool docopy( false );
         best.first = t_Solver :: operator()( _coefs, _collapse );
         best.second = _coefs;
-        if( verbose ) std::cout << "Run 1: " << best.first << "\n";
+        size_t fieldsize = (size_t) std::ceil( std::log( (types::t_real) n)/std::log(10e0) );
+        ++fieldsize;
+        if( verbose ) std::cout << "Run " << std::setw(fieldsize)
+                                << 1 << ": " << std::setw(15)
+                                << std::fixed
+                                << std::setprecision(3) << best.first << "\n";
         for( types::t_unsigned i(2); i <= n; ++i )
         {
           docopy = true;
           _collapse->create_coefs( _coefs );
           types::t_real result( t_Solver ::operator()( _coefs, _collapse ) );
 
-          if( verbose ) std::cout << "Run " << i << ": " << result << "\n";
+          if( verbose ) std::cout << "Run " << std::setw(fieldsize)
+                                  << i << ": " << std::setw(15)
+                                  << std::fixed
+                                  << std::setprecision(3) << result << "\n";
 
           if( Fuzzy::geq( result, best.first ) ) continue;
           
@@ -102,9 +110,11 @@ namespace Separables
         _collapse.evaluate( _coefs, _targets );
         best.first = _collapse.evaluate( _coefs, _targets );
         best.second = _coefs;
-        size_t fieldsize = (size_t) std::ceil( std::log(n)/log(10) );
+        size_t fieldsize = (size_t) std::ceil( std::log( (types::t_real) n)/std::log(10e0) );
+        ++fieldsize;
         if( _verbose ) std::cout << "Try Coefs " << std::setw(fieldsize)
                                  << 1 << ": " << std::setw(15)
+                                 << std::fixed
                                  << std::setprecision(3) << best.first << "\n";
         for( types::t_unsigned i(2); i <= n; ++i )
         {
@@ -115,7 +125,8 @@ namespace Separables
 
           if( _verbose ) std::cout << "Try Coefs " << std::setw(fieldsize)
                                    << i << ": " << std::setw(15)
-                                   << std::setprecision(3) << best.first << "\n";
+                                   << std::fixed
+                                   << std::setprecision(3) << result << "\n";
 
           if( Fuzzy::geq( result, best.first ) ) continue;
           
