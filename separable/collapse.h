@@ -43,6 +43,10 @@ namespace Separable
   template< class T_FUNCTION >
   class Collapse
   {
+    protected:
+      //! Return type of the function
+      typedef typename T_FUNCTION :: t_Return t_Type;
+
     public:
       //! Type of the sum of separable functions to collapse.
       typedef T_FUNCTION t_Function;
@@ -100,7 +104,7 @@ namespace Separable
       //! \tparams should be a vector of vectors.
       //! \params[out] _coefs creates \a _coefs[d, (r,i) ] uninitialized.
       template< class T_VECTORS > void create_coefs( T_VECTORS &_coefs,
-                                                     types::t_real = 0.5e0 ) const;
+                                                     t_Type _howrandom= 0.5e0 ) const;
       //! Assigns solution coefficients to Collapse::function.
       //! \tparam T_VECTORS is a vector of vectors or similar. 
       //! \param[in] _solution contains the coefficients for \e all dimensions.
@@ -136,8 +140,6 @@ namespace Separable
       types::t_unsigned nb_targets;
       //! Number of ranks.
       types::t_unsigned nb_ranks;
-      //! Return type of the function
-      typedef typename T_FUNCTION :: t_Return t_Type;
       //! \brief Type of the matrix containing expanded function elements.
       typedef std::vector< std::vector< std::vector< t_Type > > > t_Expanded;
       //! A matrix with all expanded function elements.

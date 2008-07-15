@@ -417,8 +417,11 @@ namespace Separable
 
   template< class T_FUNCTION > template< class T_VECTORS >
     void Collapse<T_FUNCTION> :: create_coefs( T_VECTORS& _coefs,
-                                               types::t_real _howrandom ) const
+                                               t_Type _howrandom ) const
     {
+      // Initializes norms to 1
+      std::fill( function.coefs.begin(), function.coefs.end(), t_Type(1) );
+
       __DEBUGTRYBEGIN
       typedef T_VECTORS t_Vectors;
       typedef typename t_Vectors :: iterator t_solit;
@@ -427,27 +430,50 @@ namespace Separable
       t_solit i_dim_end = _coefs.end();
       t_Sizes :: const_iterator i_sizes = sizes.begin();
       types::t_real ndim( sizes.size() );
-      for(; i_dim != i_dim_end; ++i_dim, ++i_sizes ) // loop over dimensions.
+
+      // loop over dimensions
+      for(; i_dim != i_dim_end; ++i_dim, ++i_sizes)
       {
         types::t_int ri = std::accumulate( i_sizes->begin(), i_sizes->end(), 0 );
         i_dim->resize( ri );
         t_Sizes :: value_type :: const_iterator i_size = i_sizes->begin();
         t_Sizes :: value_type :: const_iterator i_size_end = i_sizes->end();
         typename t_Vectors :: value_type :: iterator i_coef = i_dim->begin();
-        types::t_real offset = _howrandom / 2.e0;
-        for(; i_size != i_size_end; ++i_size )
+        // loop over ranks.
+        for(size_t r(0); i_size != i_size_end; ++i_size, ++r )
         {
+          // First creates a normalized random vector.
           namespace bl = boost::lambda;
           typename t_Vectors :: value_type :: iterator i_c( i_coef ); 
-          std::generate
+          t_Type norm;
+          do
+          {
+            norm = 0e0;
+            const t_Type two(2);
+            const t_Type one(1);
+            std::for_each 
+            (
+              i_c, i_c + *i_size, 
+              bl::var( norm ) += (
+                                       bl::_1 =   bl::constant(two)
+                                     * bl::bind( &opt::random::rng )
+                                   - bl::constant(one),
+                                   bl::_1 * bl::_1
+                                 )
+            );
+          }
+          while( Fuzzy::eq( norm, t_Type(0) ) );
+          norm = t_Type(1) / std::sqrt(norm);
+          std::for_each 
           (
             i_c, i_c + *i_size, 
-              bl::bind( &opt::random::rng ) * bl::constant(_howrandom) 
-            - bl::constant( offset )
+            bl::_1 *= bl::constant(norm)
           );
           i_coef += *i_size;
-        }
-      }
+          // Then adds random norm to coefficient
+          function[r] = (t_Type) opt::random::rng() * _howrandom;
+        } // end of loop over ranks.
+      } // end of loop over dimensions.
       __DEBUGTRYEND(, "Error while assigning solution coefs to function.\n" )
     }
 
