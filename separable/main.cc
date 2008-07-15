@@ -296,8 +296,8 @@ int main(int argc, char *argv[])
       std::cout << " Training errors:\n"
                 << "    average error: " << result.first.first
                 <<  " ( " << result.first.first / std::abs(mean) *1e2 << "% )" 
-                << "    maximum error: " << result.first.second << "\n"
-                <<  " ( " << result.first.second / std::abs(mean) *1e2 << "% )\b" 
+                << "    maximum error: " << result.first.second 
+                <<  " ( " << result.first.second / std::abs(mean) *1e2 << "% )\n" 
                 << " Prediction errors:\n"
                 << "    average error: " << result.second.first
                 <<  " ( " << result.second.first / std::abs(mean) *1e2 << "% )" 
@@ -326,7 +326,7 @@ int main(int argc, char *argv[])
       std::cout << " Training errors:\n"
                 << "    average error: " << result.first.first
                 <<  " ( " << result.first.first / std::abs(mean) *1e2 << "% )" 
-                << "    maximum error: " << result.first.second << "\n"
+                << "    maximum error: " << result.first.second 
                 <<  " ( " << result.first.second / std::abs(mean) *1e2 << "% )\n" 
                 << " Prediction errors:\n"
                 << "    average error: " << result.second.first

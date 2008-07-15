@@ -90,9 +90,14 @@ namespace Separables
         if( not prerun ) return best.first;
 
         // Continue runs with a tolerance criterion only.
+        types :: t_unsigned itersave = t_Solver :: itermax;
+        bool verbsave = t_Solver :: verbose;
         t_Solver :: itermax = 0;
         t_Solver :: verbose = verbose;
-        return t_Solver :: operator()( _coefs, _collapse );
+        types::t_real result = t_Solver :: operator()( _coefs, _collapse );
+        t_Solver :: itermax = itersave;
+        t_Solver :: verbose = verbsave;
+        return result;
       }
 
     template< class T_COEFS, class T_TARGETS, class T_COLLAPSE > 
