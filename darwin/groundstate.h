@@ -39,7 +39,7 @@ namespace GroundState
   //! The physical individual type
   typedef Individual::Types< Object, 
                              SingleSite::Concentration, 
-                             SingleSite::Fourier        > :: Scalar t_Individual;
+                             SingleSite::Fourier        > :: t_Scalar t_Individual;
 
   //! \brief Evaluator class for doing %GA over a cluster-expansion functional
   //! \xmlrestart the CE results are saved into an individual as the attribute CE.

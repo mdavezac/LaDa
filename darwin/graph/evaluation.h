@@ -129,7 +129,7 @@ namespace GA
             void set( GA::Taboo_Base<t_Individual> *_taboo )
               { t_CommBase :: taboos = t_Base :: taboos = _taboo; }
             //! Sets objective pointer
-            void set(  typename GA::Objective::Types<t_GATraits>::Vector*  _o )
+            void set(  typename GA::Objective::Types<t_GATraits>::t_Vector*  _o )
               { t_CommBase :: objective = t_Base :: objective = _o; }
             //! Sets objective pointer
             void set(  typename GA::Store::Base<t_GATraits>*  _s )

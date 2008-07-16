@@ -65,7 +65,7 @@ template< class T_GATRAITS >
       //! Population type
       typedef typename t_GATraits :: t_Population                  t_Population;
       //! \brief Objective type
-      typedef typename Objective :: Types < t_GATraits > :: Vector t_Objective;
+      typedef typename Objective :: Types < t_GATraits > :: t_Vector t_Objective;
       //! \brief Store type
       typedef Store :: Base<t_GATraits>                            t_Store;
       //! \brief quantity traits pertaining to Virtual Atom minimization
@@ -203,7 +203,7 @@ template< class T_GATRAITS >
       //! Population type
       typedef typename t_GATraits :: t_Population                  t_Population;
       //! Objective type
-      typedef typename Objective :: Types < t_GATraits > :: Vector t_Objective;
+      typedef typename Objective :: Types < t_GATraits > :: t_Vector t_Objective;
       //! \brief quantity traits pertaining to Virtual Atom minimization
       typedef typename t_GATraits :: t_VA_Traits                   t_VATraits;
       //! \brief Gradients type for Virtual Atom minimization

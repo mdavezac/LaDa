@@ -99,7 +99,7 @@ namespace BandGap
   //!          declares a \e scalar fitness.
   typedef Individual::Types< BandGap::Object, 
                              TwoSites::Concentration, 
-                             TwoSites::Fourier > :: Scalar t_Individual;
+                             TwoSites::Fourier > :: t_Scalar t_Individual;
 
   //! \brief %Evaluator class for band-gap decoration search
   //! \details A BandGap::Darwin and a Vff::Darwin<Vff::Functional> objects are

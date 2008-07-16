@@ -232,7 +232,7 @@ namespace Store
                  << "Store -- end" << Print::endl;
     }
     template< class T_GATRAITS >
-    FromObjective<T_GATRAITS> :: FromObjective   ( typename t_Objective::Vector* _type,
+    FromObjective<T_GATRAITS> :: FromObjective   ( typename t_Objective::t_Vector* _type,
                                                    const TiXmlElement &_node )
                                                : t_Base(_node), objective(_type),
                                                  val(0), end_val(0), delta(0),

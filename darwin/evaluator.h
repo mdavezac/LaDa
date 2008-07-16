@@ -39,7 +39,7 @@ namespace GA
   //! \code
   // typedef Individual::Types< SingleSite::Object, 
   //                            SingleSite::Concentration, 
-  //                            SingleSite::Fourier        > :: Scalar t_Individual;
+  //                            SingleSite::Fourier        > :: t_Scalar t_Individual;
   //!  \endcode 
   //! You can use whatever else you want, as long as the required behaviors are there.
   //! The next step is to derive a class from GA::Evaluator as follows,

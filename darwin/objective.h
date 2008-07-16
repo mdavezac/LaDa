@@ -47,7 +47,7 @@ namespace GA
 //! 
 //! For ease of use a class Objective::Types is declared which contains
 //! typedefs to scalar and vectorial objectives, Objective::Types::Scalar and
-//! Objective::Types::Vector. It also contains a static %function  capable of
+//! Objective::Types::t_Vector. It also contains a static %function  capable of
 //! reading XML input and returning a pointer to one of the objectives defined below. 
 //! \note Fitnesses can be made to depend upon the whole population, say for
 //! niching, via objects from the Scaling namespace. Scaling are applied after
@@ -161,9 +161,9 @@ namespace Objective
   //! dealt with directly as a number (or vector).
   //!
   //! The class Objective::Types contains two types, Objective::Types::Scalar
-  //! and Objective::Types::Vector which define a scalar and a vectorial
+  //! and Objective::Types::t_Vector which define a scalar and a vectorial
   //! objective. In the case of a single-objective %GA, there is no difference
-  //! between Objective::Types::Scalar and Objective::Types::Vector.
+  //! between Objective::Types::Scalar and Objective::Types::t_Vector.
   //! \xmlinput Generally, objective tags should have the following syntax
   //! \code  <Objective type="??" attribute="??" /> \endcode
   //! See each implementation for details
@@ -303,7 +303,7 @@ namespace Objective
   //! objectives. It only takes one argument on instanciation and deduces those
   //! for Base automatically. Note that if T_GA_TRAITS::t_QuantityTraits defines
   //! a scalar quantity, than Objective::Types::Scalar and
-  //! Objective::Types::Vector are equivalent.
+  //! Objective::Types::t_Vector are equivalent.
   //
   //! Finally, this class also contains a %function capable of creating
   //! objectives from XML input.
@@ -331,30 +331,30 @@ namespace Objective
         typedef Base< t_GATraits, 
                       t_ScalarQuantityTraits,
                       typename Traits::VA< std::vector<t_ScalarQuantity>,
-                                           t_ScalarQuantity > >           Scalar;
+                                           t_ScalarQuantity > >           t_Scalar;
         //! \brief Vector objective type
         //! \details If Types::t_QuantityTraits describes a scalar, then
-        //! Types::Scalar and Types::Vector are equivalent (and scalars).
-        typedef Base< t_GATraits >  Vector;
+        //! Types::Scalar and Types::t_Vector are equivalent (and scalars).
+        typedef Base< t_GATraits >  t_Vector;
 
 
 
         //! \brief Creates an objective according to XML input
         //! \return A pointer to an objective if \a _node describes a valid objective, 
         //!         or returns NULL if something goes wrong.
-        //! \note The return value always points to a Types::Vector. See
-        //! previous note on equivalence or non-equivalence of Types::Vector and
+        //! \note The return value always points to a Types::t_Vector. See
+        //! previous note on equivalence or non-equivalence of Types::t_Vector and
         //! Types::Scalar.
         //! \warning It is the job of the caller (not of Base::new_from_xml() )
         //! to check the status of the return. It is also the job of the caller
         //! to deallocate the returned pointer after use.
-        static Vector* new_from_xml( const TiXmlElement &_node )
+        static t_Vector* new_from_xml( const TiXmlElement &_node )
           { fork<Types, t_QuantityTraits::is_vector > s; return s( _node ); }
       protected:
         //! Creates a scalar objective from XML
-        static Scalar* scalar_from_xml( const TiXmlElement &_node );
+        static t_Scalar* scalar_from_xml( const TiXmlElement &_node );
         //! Creates a vector objective from XML
-        static Vector* vector_from_xml( const TiXmlElement &_node );
+        static t_Vector* vector_from_xml( const TiXmlElement &_node );
     };
 
 
@@ -364,10 +364,10 @@ namespace Objective
   //! \xmlinput No attributes
   //! \code  <Objective type="maximize"/> \endcode
   template< class T_GA_TRAITS >
-  class Maximize : public Types< T_GA_TRAITS > :: Scalar
+  class Maximize : public Types< T_GA_TRAITS > :: t_Scalar
   {
       //! %Base of this class
-      typedef typename Types<T_GA_TRAITS> :: Scalar        t_Base; 
+      typedef typename Types<T_GA_TRAITS> :: t_Scalar        t_Base; 
     public:
       typedef T_GA_TRAITS t_GATraits; //!< All %GA traits
     protected:
@@ -444,10 +444,10 @@ namespace Objective
   //! \xmlinput There are no attributes
   //! \code <Objective type="minimize"/> \endcode
   template< class T_GA_TRAITS >
-  class Minimize : public Types< T_GA_TRAITS > :: Scalar
+  class Minimize : public Types< T_GA_TRAITS > :: t_Scalar
   {
       //! %Base of this class
-      typedef typename Types<T_GA_TRAITS> :: Scalar        t_Base; 
+      typedef typename Types<T_GA_TRAITS> :: t_Scalar     t_Base; 
     public:
       typedef T_GA_TRAITS t_GATraits; //!< All %GA traits
     protected:
@@ -526,10 +526,10 @@ namespace Objective
   //!           an integer or a real, depending on the type of Target::t_ScalarQuantity
   //!           \code <Objective type="target" target="??" /> \endcode
   template< class T_GA_TRAITS >
-  class Target : public Types< T_GA_TRAITS > :: Scalar
+  class Target : public Types< T_GA_TRAITS > :: t_Scalar
   {
       //! %Base of this class
-      typedef typename Types<T_GA_TRAITS> :: Scalar        t_Base; 
+      typedef typename Types<T_GA_TRAITS> :: t_Scalar     t_Base; 
     public:
       typedef T_GA_TRAITS t_GATraits; //!< All %GA traits
     protected:
@@ -643,10 +643,10 @@ namespace Objective
       convex-hull. See opt::ConvexHull
   */
   template< class T_GA_TRAITS >
-  class ConvexHull : public Types< T_GA_TRAITS > :: Scalar
+  class ConvexHull : public Types< T_GA_TRAITS > :: t_Scalar
   {
       //! %Base of this class
-      typedef typename Types<T_GA_TRAITS> :: Scalar        t_Base; 
+      typedef typename Types<T_GA_TRAITS> :: t_Scalar     t_Base; 
     public:
       typedef T_GA_TRAITS t_GATraits; //!< All %GA traits
     protected:
@@ -777,10 +777,10 @@ namespace Objective
   //! \xmlrestart This objectives saves and restart the scalar objectives in
   //!             the order given Container::objectives.
   template<class T_GA_TRAITS >
-  class Container : public Types<T_GA_TRAITS> :: Vector
+  class Container : public Types<T_GA_TRAITS> :: t_Vector
   {
       //! %Base of this class
-      typedef typename Types<T_GA_TRAITS> :: Vector        t_Base; 
+      typedef typename Types<T_GA_TRAITS> :: t_Vector        t_Base; 
     public:
       typedef T_GA_TRAITS t_GATraits; //!< All %GA traits
     protected:
@@ -803,7 +803,7 @@ namespace Objective
       //! A functor to for loading individuals
       typedef GA::LoadObject<t_GATraits>                  t_LoadOp;
       //! Scalar objective type
-      typedef typename Types<t_GATraits>::Scalar          t_Objective;
+      typedef typename Types<t_GATraits>::t_Scalar        t_Objective;
       //! Type of container for objectives
       typedef typename std::vector<t_Objective*>          t_Objectives;
       
@@ -935,9 +935,9 @@ namespace Objective
     struct fork<T_TYPE, true>
     {
       //! (Vectorial) Hack, don't touch
-      typename T_TYPE :: Vector* operator()( const TiXmlElement &_node )
+      typename T_TYPE :: t_Vector* operator()( const TiXmlElement &_node )
       {
-        typename T_TYPE :: Vector* result;
+        typename T_TYPE :: t_Vector* result;
         result = T_TYPE::vector_from_xml( _node );
         if( not result ) std::cerr << "Could not create multi-objective..." << std::endl;
         return result;
@@ -948,7 +948,7 @@ namespace Objective
     struct fork<T_TYPE, false>
     {
       //! (Scalar) Hack, don't touch
-      typename T_TYPE :: Vector* operator()( const TiXmlElement &_node )
+      typename T_TYPE :: t_Vector* operator()( const TiXmlElement &_node )
       {
         return T_TYPE::scalar_from_xml( _node );
       }

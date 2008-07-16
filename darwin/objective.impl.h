@@ -457,7 +457,7 @@ namespace Objective
 
 
   template< class T_GA_TRAITS >
-     typename Types<T_GA_TRAITS> :: Scalar*
+     typename Types<T_GA_TRAITS> :: t_Scalar*
       Types<T_GA_TRAITS> :: scalar_from_xml( const TiXmlElement &_node )
       {
         if ( not &_node ) return NULL;
@@ -502,7 +502,7 @@ namespace Objective
         return NULL;
       }
     template< class T_GA_TRAITS >
-       typename Types<T_GA_TRAITS> :: Vector*
+       typename Types<T_GA_TRAITS> :: t_Vector*
         Types<T_GA_TRAITS> :: vector_from_xml( const TiXmlElement &_node )
         {
           if ( not &_node ) return NULL;
@@ -514,7 +514,7 @@ namespace Objective
 //           if ( _node.Attribute( "type" ) )
 //             str = Print::lowercase(_node.Attribute( "type" ));
 //         }
-          if ( Vector::t_QuantityTraits::is_vector ) // and str.compare("LinearSum") == 0 )
+          if ( t_Vector::t_QuantityTraits::is_vector ) // and str.compare("LinearSum") == 0 )
           {
             LinearSum<T_GA_TRAITS> *linear = new LinearSum<T_GA_TRAITS>;
             __DOASSERT( not linear, "Mememory allocation error\n" )
@@ -524,7 +524,7 @@ namespace Objective
             const TiXmlElement *child = _node.FirstChildElement("Objective");
             for(; child; child = child->NextSiblingElement("Objective") )
             {
-              Scalar* scalar = scalar_from_xml( *child );
+              t_Scalar* scalar = scalar_from_xml( *child );
               if ( not scalar ) continue;
               double d = 0.0;
               if ( not child->Attribute("coef", &d) ) d = 1.0;

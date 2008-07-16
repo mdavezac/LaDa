@@ -245,7 +245,7 @@ namespace Individual
   //! \brief Multi-Objective individual
   //! \details Multi overides a few functions of its base class \a T_BASE in
   //! order to adapt it to use with a vectorial quantity and fitness. The best
-  //! way to use this class  is through Individual::Types::Vector.
+  //! way to use this class  is through Individual::Types::t_Vector.
   //! \param T_BASE is meant to be some instanciation of Individual::Base
   //! \warning \a T_BASE is quite strange a templatization: you should not use
   //! this class directtly, unless you know what you are doing.
@@ -318,14 +318,14 @@ namespace Individual
   //! \code
   //!   typedef Individual::Types< SingleSite::Object, 
   //!                              SingleSite::Concentration, 
-  //!                              SingleSite::Fourier        > :: Scalar t_Individual;
+  //!                              SingleSite::Fourier        > :: t_Scalar t_Individual;
   //! \endcode
   //! Where it is expected that the template quantities are declared.
   //! To declare a Vectorial individual use as in molecularity.h,
   //! \code
   //!   typedef Individual::Types< Object, 
   //!                              Concentration, 
-  //!                              Fourier        > :: Vector t_Individual;
+  //!                              Fourier        > :: t_Vector t_Individual;
   //! \endcode
   //! \param T_OBJECT the type of the object 
   //! \param T_CONCENTRATION the type of a functor capable of computing the
@@ -359,8 +359,8 @@ namespace Individual
         typedef Base< t_vectortraits > VectorBase;
 
       public:
-        typedef Base< t_realtraits > Scalar; //!< A scalar individual type for real quantities
-        typedef Multi< VectorBase > Vector;  //!< A vectorial individual type for real quantities
+        typedef Base< t_realtraits > t_Scalar; //!< A scalar individual type for real quantities
+        typedef Multi< VectorBase > t_Vector;  //!< A vectorial individual type for real quantities
     };
 
 

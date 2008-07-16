@@ -40,7 +40,7 @@
 //! namespace Scaling.
 //! 
 //! A third class, Fitness::Types defines two typedefs, Fitness::Types::Scalar
-//! and Fitness::Types::Vector. Much like Objective::Types, these two types are
+//! and Fitness::Types::t_Vector. Much like Objective::Types, these two types are
 //! equivalent in the case of single-objective %GA. You should use
 //! Fitness::Types to obtain a fitness, rather than Fitness::Scalar or
 //! Fitness::Vectorial directly.
@@ -332,26 +332,26 @@ namespace Fitness
 
 
   //! \brief Helper class for defining fitnesses.
-  //! \details Two fitness types are defined automatically: Types::Scalar and Types::Vector.
+  //! \details Two fitness types are defined automatically: Types::Scalar and Types::t_Vector.
   //!          In the case of a multi-objective %GA (vector quantity), each is
   //!          what you would expect. In the case of single-objective %GA
-  //!          (scalar quantity), both Types::Vector and Types::Scalar are
+  //!          (scalar quantity), both Types::t_Vector and Types::Scalar are
   //!          equivalent and simply typedef a Fitness::Scalar. Generally, you
-  //!          will only want to use Types::Vector.
+  //!          will only want to use Types::t_Vector.
   template<class T_QUANTITYTRAITS,
            bool IS_SCALAR = T_QUANTITYTRAITS::is_scalar >
   struct Types 
   {
-    typedef Vectorial<T_QUANTITYTRAITS> Vector; //!< A \e truly vectorial fitness type
+    typedef Vectorial<T_QUANTITYTRAITS> t_Vector; //!< A \e truly vectorial fitness type
     //! A scalar fitness type
-    typedef typename Vectorial<T_QUANTITYTRAITS> :: t_ScalarFitness Scalar;
+    typedef typename Vectorial<T_QUANTITYTRAITS> :: t_ScalarFitness t_Scalar;
   };
   //! %Scalar flavor 
   template<class T_QUANTITYTRAITS >
   struct Types <T_QUANTITYTRAITS, true >
   {
-    typedef Scalar<T_QUANTITYTRAITS> Vector; //!< A scalar fitness type (sic)
-    typedef Scalar<T_QUANTITYTRAITS> Scalar; //!< A scalar fitness type
+    typedef Scalar<T_QUANTITYTRAITS> t_Vector; //!< A scalar fitness type (sic)
+    typedef Scalar<T_QUANTITYTRAITS> t_Scalar; //!< A scalar fitness type
   };
 
 

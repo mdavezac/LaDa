@@ -30,7 +30,7 @@ namespace GA
       template< class T_GATRAITS >
       class BullObjective : protected Comm::Bull< T_GATRAITS,
                                                   BullObjective<T_GATRAITS> >,
-                            public GA::Objective::Types<T_GATRAITS> :: Vector
+                            public GA::Objective::Types<T_GATRAITS> :: t_Vector
       {
         public:
           //! all %GA traits
@@ -60,7 +60,7 @@ namespace GA
           //! Type of the communication base class.
           typedef Comm::Bull< t_GATraits, BullObjective<t_GATraits> > t_CommBase;
           //! Type of the objective base class.
-          typedef typename GA::Objective::Types<t_GATraits> :: Vector t_Base;
+          typedef typename GA::Objective::Types<t_GATraits> :: t_Vector t_Base;
         
         protected:
           using t_CommBase::TAG;

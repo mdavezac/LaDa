@@ -208,7 +208,7 @@ namespace GA
             //! Taboo functor.
             Taboo_Base<t_Individual>*          taboos;
             //! Objective functor.
-            typename t_ObjectiveType::Vector*  objective;
+            typename t_ObjectiveType::t_Vector*  objective;
             //! Store functor.
             typename t_Store :: Base*          store;
             //! History functor
@@ -262,7 +262,7 @@ namespace GA
             //! Sets taboo pointer
             void set( Taboo_Base<t_Individual> *_taboo ) { taboos = _taboo; }
             //! Sets objective pointer
-            void set( typename t_ObjectiveType::Vector*  _o )
+            void set( typename t_ObjectiveType::t_Vector*  _o )
               { objective = _o; }
             //! Sets objective pointer
             void set( typename t_Store::Base*  _s ) { store = _s; }

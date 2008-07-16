@@ -70,7 +70,7 @@ namespace Traits
             class T_QUANTITY_TRAITS = Traits :: Quantity< typename T_OBJECT :: t_Quantity >,
             class T_VA_TRAITS = Traits::VA<typename T_OBJECT :: t_Container, 
                                            typename T_QUANTITY_TRAITS::t_Quantity >,
-            class T_FITNESS = typename Fitness::Types< T_QUANTITY_TRAITS > :: Vector >
+            class T_FITNESS = typename Fitness::Types< T_QUANTITY_TRAITS > :: t_Vector >
   struct Indiv
   {
       //! Type of the application-specific object 
@@ -119,7 +119,7 @@ namespace Traits
             class T_QUANTITY_TRAITS = Traits :: Quantity< typename T_OBJECT :: t_Quantity >,
             class T_VA_TRAITS = Traits::VA<typename T_OBJECT :: t_Container, 
                                            typename T_QUANTITY_TRAITS::t_Quantity >,
-            class T_FITNESS = typename Fitness::Types< T_QUANTITY_TRAITS > :: Vector >
+            class T_FITNESS = typename Fitness::Types< T_QUANTITY_TRAITS > :: t_Vector >
   struct PhysicsIndiv
   {
       //! Type of the application-specific object 

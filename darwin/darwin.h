@@ -172,7 +172,7 @@ namespace GA
       //! \details This objective is vectorial by default in  multi-objective
       //! applications. It is scalar in single-objective applications. 
       //! \see Darwin::Load_Method()
-      typename t_ObjectiveType::Vector*  objective;
+      typename t_ObjectiveType::t_Vector*  objective;
       //! \brief Pointer to a class implementing storage capabilities
       //! \see Darwin::Load_Method()
       typename t_Store :: Base*          store;

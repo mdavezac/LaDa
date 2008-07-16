@@ -232,7 +232,7 @@ namespace GA
         if( result ) _eostates.storeFunctor( static_cast<t_History*>(result) );
         return result;
       }
-  template <class T_GATRAITS> typename GA::Objective::Types<T_GATRAITS>::Vector*
+  template <class T_GATRAITS> typename GA::Objective::Types<T_GATRAITS>::t_Vector*
     Topology :: objective ( const TiXmlElement &_node )
     {
       typedef T_GATRAITS t_GATraits;

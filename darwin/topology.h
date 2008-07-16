@@ -115,7 +115,7 @@ namespace GA
       template < class T_GATRAITS > History<typename T_GATRAITS::t_Individual>*
         history( eoState & _eostates );
       //! returns objective.
-      template <class T_GATRAITS> typename GA::Objective::Types<T_GATRAITS>::Vector*
+      template <class T_GATRAITS> typename GA::Objective::Types<T_GATRAITS>::t_Vector*
         objective ( const TiXmlElement &_node );
 
       //! Passes taboo pointer to farmer breeder.

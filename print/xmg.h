@@ -177,7 +177,7 @@ namespace Print
     return *this;
   }
 
-  std::string make_commented_string( const std::string &_str )
+  inline std::string make_commented_string( const std::string &_str )
     { return indent( Xmg::comment_string, _str ); }
 
 }

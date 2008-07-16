@@ -86,7 +86,7 @@ namespace Molecularity
   //!          transform functors are also specialized for layered objects.
   typedef Individual::Types< Object, 
                              Layered::Concentration<2>, 
-                             Layered::Fourier<2>    > :: Vector t_Individual;
+                             Layered::Fourier<2>    > :: t_Vector t_Individual;
 
   //! \brief Evaluator class for band-gap search of a layered structure.
   //! \details Mostly, this class defines  a BandGap::Darwin instance, and a

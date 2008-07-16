@@ -276,7 +276,7 @@ namespace Store
       protected:
         using t_Base :: optimum;
         using t_Base :: owns_optimum;
-        typename t_Objective :: Vector *objective;  //!< objective type
+        typename t_Objective :: t_Vector *objective;  //!< objective type
         t_ScalarQuantity val; //!< optimal value
         t_ScalarQuantity end_val; //!< end of storage interval
         t_ScalarQuantity delta; //!< length of storage interval
@@ -300,7 +300,7 @@ namespace Store
         //! \brief XML and objective constructor 
         //! \sa BaseOptima::BaseOptima(const TiXmlElement&), 
         //! Store and Store::Conditional overview
-        FromObjective   ( typename t_Objective::Vector* _type, const TiXmlElement &_node );
+        FromObjective   ( typename t_Objective::t_Vector* _type, const TiXmlElement &_node );
         //! \brief Copy Constructor
         FromObjective   (const FromObjective &_c )
                       : t_Base( _c ), objective( _c.objective ),
