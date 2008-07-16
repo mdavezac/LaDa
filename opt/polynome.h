@@ -26,6 +26,7 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/mpi/collectives.hpp>
 #include <functional>
+#include "print/stdout.h"
 #endif 
 
 namespace function {
@@ -252,7 +253,8 @@ namespace function {
         t_Type value(0);
       
         typename t_Monomes :: const_iterator i_monome = monomes.begin();
-        typename t_Monomes :: const_iterator i_monome_end __SERIALCODE( = monomes.end() ); 
+        typename t_Monomes :: const_iterator i_monome_end
+           __SERIALCODE( = monomes.end() ); 
         typename t_Container :: const_iterator i_real = variables->begin();
         __MPICODE(
           types :: t_unsigned nperproc = monomes.size() / comm->size(); 

@@ -27,6 +27,7 @@ namespace GA
               // At this point,  unknowns are evaluated. 
               t_CommBase :: start_all();
               while( notdone() ) t_CommBase::test_bulls();
+              t_CommBase :: wait_bulls(); 
               t_CommBase::comm->barrier();
 
               // Ok, now recomputes everything through base class. 
@@ -51,6 +52,7 @@ namespace GA
             t_Individual *indiv = next( _bull );
             if( not indiv )
             {
+              Print :: out << "Sending done to: " << _bull << Print::endl;
               t_CommBase::send_command( _bull, t_CommBase::t_Commands::DONE );
               return;
             }

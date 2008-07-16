@@ -20,11 +20,11 @@
     <Atom x="1.000000" y="1.000000" z="1.000000" type="0.000000" />
     <Atom x="1.500000" y="1.500000" z="1.000000" type="0.000000" />
   </Structure>
-    <GA popsize=20 rate=0.2 >
+    <GA popsize=10 rate=0.2 >
         <Objective type="convexhull" />
         <Breeding>
           <TabooOp>
-             <Crossover />
+             <Krossover />
           </TabooOp>
         </Breeding>
         <Taboos>
@@ -34,7 +34,7 @@
         <Filenames save="save.xml" />
         <Filenames out="out" />
         <Filenames xmgrace="out.xmg" />
-        <Terminator ref="evaluation" value="3000" />
+        <Terminator ref="evaluation" value="500" />
         <Print type="offspring" />
         <Print type="population" />
     </GA>

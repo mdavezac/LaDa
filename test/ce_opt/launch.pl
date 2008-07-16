@@ -1,36 +1,36 @@
 #! /usr/bin/perl
+use Getopt::Long;
 
 exit if( not -e "../../darwin/ce_opt" );
-my $argument = shift;
+my %options = ();
+$options{"reruns"} = 1;
+GetOptions (\%options, 'mpirun|n=i', 'reruns=i', 'make', 'kdbg' );
+die "Cannot perform $options{'reruns'} runs.\n" if ( $options{"reruns"} <= 0 );
 
-system "rm calc/krossover_VA_gen:20.agr" if ( -e "calc/krossover_VA_gen:20.agr" );
-system "cd calc; ln -s ../../../darwin/ce_opt " if ( not -e "calc/ce_opt" );
+my $cmdl = "./ce_opt -i ../input.xml";
+
+
 chdir "calc";
-if( $argument =~ /kdbg/ )
+system "rm krossover_VA_gen:20.agr" if ( -e "krossover_VA_gen:20.agr" );
+system "ln -s ../../../darwin/ce_opt " unless ( -e "ce_opt" );
+
+system "cd ../../../; make" if ( exists $options{"make"} );
+
+if( exists $options{"kdbg"} ) 
 {
   system "ln -s ../input.xml" if( not -e "input.xml" );
   system "kdbg ce_opt";
+  exit;
 }
-elsif( $argument =~ /make/ )
+
+if( exists $options{"mpirun"} )
 {
-  system "cd ../../../; make";
-}
-elsif( $argument =~ /one/ )
-{
-    system "./ce_opt -i ../input.xml";
-}
-elsif( $argument =~ /mpirun/ )
-{
-  my $nb = shift;
-  system  "mpirun -n $nb ./ce_opt -i ../input.xml";
+  die "Cannot run on $options{'mpirun'} procs.\n" if ( $options{"mpirun"} <= 0 );
+  $cmdl = sprintf "mpirun -n %i %s", $options{"mpirun"}, $cmdl;
 } 
-else
-{ 
-  for( my $i = 0; $i < 200; $i++)
-  {
-    system "./ce_opt -i ../input.xml";
-    system "cat ../calc/out.xmg >> calc/krossover_VA_gen:20.agr";
-  }
-}
-system "rm calc/ce_opt" if ( -e "calc/ce_opt" );
+$cmdl = sprintf "%s --reruns %i ", $cmdl, $options{"reruns"} unless( $options{"reruns"} == 1 );
+print "$cmdl\n";
+system "$cmdl";
+system "rm ce_opt" if ( -e "ce_opt" );
+chdir "../";
 
