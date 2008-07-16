@@ -448,22 +448,25 @@ namespace Separable
           t_Type norm;
           do
           {
-            norm = 0e0;
-            const t_Type two(2);
+            norm = t_Type(0);
+            const t_Type range(_howrandom);
+            const t_Type offset( t_Type(1) - t_Type(0.5) * range);
             const t_Type one(1);
             std::for_each 
             (
               i_c, i_c + *i_size, 
               bl::var( norm ) += (
-                                       bl::_1 =   bl::constant(two)
-                                     * bl::bind( &opt::random::rng )
-                                   - bl::constant(one),
+                                   bl::_1 =   bl::constant(range) 
+                                            * bl::bind( &opt::random::rng )
+                                            + bl::constant(offset),
                                    bl::_1 * bl::_1
                                  )
             );
           }
           while( Fuzzy::eq( norm, t_Type(0) ) );
-          norm = t_Type(1) / std::sqrt(norm);
+          norm = std::sqrt(norm);
+          function[r] = norm;
+          norm = t_Type(1) / norm;
           std::for_each 
           (
             i_c, i_c + *i_size, 
@@ -471,7 +474,6 @@ namespace Separable
           );
           i_coef += *i_size;
           // Then adds random norm to coefficient
-          function[r] = (t_Type) opt::random::rng() * _howrandom;
         } // end of loop over ranks.
       } // end of loop over dimensions.
       __DEBUGTRYEND(, "Error while assigning solution coefs to function.\n" )
