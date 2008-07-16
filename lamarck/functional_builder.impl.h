@@ -175,7 +175,7 @@ namespace CE
   
        // finally, creates polynomials
   
-       atat::rMatrix3d inv_cell = !str.cell;
+       atat::rMatrix3d inv_cell = !(~str.cell);
        polynome = new t_Chemical();
        Crystal :: Structure :: t_Atoms :: const_iterator i_atom = str.atoms.begin();
        Crystal :: Structure :: t_Atoms :: const_iterator i_atom_last = str.atoms.end();
@@ -219,15 +219,9 @@ namespace CE
                                                   str.atoms[index].pos,inv_cell) ) 
                      break;
                  
-                 #ifdef _LADADEBUG
-                   if ( index == str.atoms.size() )
-                   {
-                     std::cerr << "Could not find equivalent atom"
-                               << " of cluster in Lamarck::generate_functionals" 
-                               << std::endl;
-                     exit(0);
-                   }
-                 #endif 
+                 __ASSERT( index == str.atoms.size(),
+                             "Could not find equivalent of atom "
+                           << (*i_cpos + shift) << " in Lamarck::generate_functionals\n" )
                  monome.add_term(index, true);
                }
                
