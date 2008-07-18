@@ -38,7 +38,7 @@ namespace CE
       //! Constructor.
       Separables( types::t_unsigned _rank = 2,
                   types::t_unsigned _size = 3, 
-                  std::string basis_type = "cube" );
+                  std::string basis_type = "cube");
 
       //! Sets the rank of the separable function.
       void set_rank( types::t_unsigned _rank );

@@ -450,15 +450,13 @@ namespace Separable
           {
             norm = t_Type(0);
             const t_Type range(_howrandom);
-            const t_Type offset( t_Type(1) - t_Type(0.5) * range);
-            const t_Type one(1);
             std::for_each 
             (
               i_c, i_c + *i_size, 
               bl::var( norm ) += (
                                    bl::_1 =   bl::constant(range) 
                                             * bl::bind( &opt::random::rng )
-                                            + bl::constant(offset),
+                                            + bl::constant( t_Type(1e0 - 0.5*range) ),
                                    bl::_1 * bl::_1
                                  )
             );

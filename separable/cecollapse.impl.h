@@ -7,6 +7,79 @@
 
 namespace Separable
 {
+# ifdef __DOHALFHALF__
+    template< class T_FUNCTION > template< class T_VECTORS >
+      void EquivCollapse<T_FUNCTION> :: create_coefs( T_VECTORS& _coefs,
+                                                      t_Type _howrandom ) const
+      {
+        // Initializes norms to 1
+        std::fill( function.coefs.begin(), function.coefs.end(), t_Type(1) );
+       
+        __DEBUGTRYBEGIN
+        typedef T_VECTORS t_Vectors;
+        typedef typename t_Vectors :: iterator t_solit;
+        _coefs.resize( sizes.size() );
+        t_solit i_dim = _coefs.begin();
+        t_solit i_dim_end = _coefs.end();
+        typename t_Base::t_Sizes :: const_iterator i_sizes = sizes.begin();
+        types::t_real ndim( sizes.size() );
+       
+        // loop over dimensions
+        for(; i_dim != i_dim_end; ++i_dim, ++i_sizes)
+        {
+          types::t_int ri = std::accumulate( i_sizes->begin(), i_sizes->end(), 0 );
+          i_dim->resize( ri );
+          typename t_Base::t_Sizes :: value_type :: const_iterator
+            i_size = i_sizes->begin();
+          typename t_Base::t_Sizes :: value_type :: const_iterator
+            i_size_end = i_sizes->end();
+          typename t_Vectors :: value_type :: iterator i_coef = i_dim->begin();
+          // loop over ranks.
+          for(size_t r(0); i_size != i_size_end; ++i_size, ++r )
+          {
+            // First creates a normalized random vector.
+            namespace bl = boost::lambda;
+            typename t_Vectors :: value_type :: iterator i_c( i_coef ); 
+            t_Type norm;
+            do
+            {
+              norm = t_Type(0);
+              const t_Type range(_howrandom);
+              bool centered = true;
+              std::for_each 
+              (
+                i_c, i_c + *i_size, 
+                bl::var( norm ) += (
+                                     bl::_1 =   bl::constant(range) 
+                                              * bl::bind( &opt::random::rng )
+                                                + bl::if_then_else_return
+                                                  ( 
+                                                    bl::var(centered), 
+                                                    bl::constant( t_Type(-0.5*range) ),
+                                                    bl::constant( t_Type(1e0-0.5*range) )
+                                                  ),
+                                     bl::var(centered) = !bl::var(centered),
+                                     bl::_1 * bl::_1
+                                   )
+              );
+            }
+            while( Fuzzy::eq( norm, t_Type(0) ) );
+            norm = std::sqrt(norm);
+            function[r] = norm;
+            norm = t_Type(1) / norm;
+            std::for_each 
+            (
+              i_c, i_c + *i_size, 
+              bl::_1 *= bl::constant(norm)
+            );
+            i_coef += *i_size;
+            // Then adds random norm to coefficient
+          } // end of loop over ranks.
+        } // end of loop over dimensions.
+        __DEBUGTRYEND(, "Error while assigning solution coefs to function.\n" )
+    }
+  #endif
+
   template<class T_FUNCTION>
     template< class T_VECTORS, class T_VECTOR, class T_EWEIGHTS >
       void EquivCollapse<T_FUNCTION> :: init( const T_VECTORS &_x, const T_VECTOR &_w,
@@ -192,12 +265,26 @@ namespace Separable
               } // loop over basis functions II
        
             } // end of loop over ranks II
-       
+
           } // loop over basis functions I
           __ASSERT( i_iexp_inc != i_rexpI->end(),
                     "Unexpected iterator position.\n" )
        
         } // end of loop over ranks I
+       
+
+#       ifdef __DOHALFHALF__
+          // adds regularization.
+          if( Fuzzy::leq( regular_factor, 0e0 ) ) return;
+          //  -- loop over ranks
+          __ASSERT( _coefs.size() % 2 != 0, "Odd number of coefficients.\n" )
+          typename T_VECTORS :: value_type 
+                             :: const_iterator i_coef = _coefs[_dim].begin();
+          typename T_VECTORS :: value_type 
+                             :: const_iterator i_coef_end = _coefs[_dim].end();
+          for(types::t_unsigned k(0); i_coef != i_coef_end; i_coef += 2, k+=2 )
+             _A( k, k ) += regular_factor * (*i_coef);
+#       endif
 
         __DEBUGTRYEND(, "Error while creating collapsed matrix and target.\n" )
      

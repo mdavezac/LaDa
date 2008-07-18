@@ -6,11 +6,11 @@ include ../Files
 bin_PROGRAMS = tetra cubic
 
 AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
-	      @BOOST_CXXFLAGS@
+	      @BOOST_CXXFLAGS@ -D __DOHALFHALF__
 AM_LDFLAGS = @TINYXML_LIBS@ @BOOST_LDFLAGS@ @BOOST_PROGOP@ \
              @BOOST_FS@ @BOOST_REGEX@ @BOOST_SYSTEM@
 
-cubic_SOURCES = main.cc 
+cubic_SOURCES = main.cc  
 cubic_CPPFLAGS =  $(AM_CPPFLAGS) -I ..  -D _CUBIC_CE_
 cubic_LDFLAGS =  $(AM_LDFLAGS)
 cubic_LDADD = libseparable.la \

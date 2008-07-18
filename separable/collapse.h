@@ -12,8 +12,8 @@
 #include<functional>
 #include<numeric>
 
-#include<boost/lambda/lambda.hpp>
-#include<boost/type_traits/function_traits.hpp>
+#include <boost/lambda/lambda.hpp>
+#include <boost/type_traits/function_traits.hpp>
 
 #include<opt/types.h>
 #include<opt/debug.h>
@@ -99,8 +99,8 @@ namespace Separable
       //! Resets collapse functor. Clears memory.
       void reset();
       //! Creates a collection of random coefficients.
-      //! \details A vector of vectors of correct dimensions is created but not
-      //!          necessarily initialized.
+      //! \details A vector of vectors of correct dimensions is created and
+      //!          initialized.
       //! \tparams should be a vector of vectors.
       //! \params[out] _coefs creates \a _coefs[d, (r,i) ] uninitialized.
       template< class T_VECTORS > void create_coefs( T_VECTORS &_coefs,

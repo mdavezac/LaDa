@@ -29,15 +29,29 @@ namespace Separable
   template< class T_FUNCTION >
   class EquivCollapse : public Collapse<T_FUNCTION>
   {
+    protected:
       //! Type of the base class.
       typedef Collapse<T_FUNCTION> t_Base;
+      //! Return type of the function
+      typedef typename t_Base :: t_Type t_Type;
     public:
       //! Type of the separable function.
       typedef T_FUNCTION t_Function;
       using t_Base :: function;
+#     ifdef __DOHALFHALF__
+        //! A regularization factor.
+        t_Type regular_factor;
+#     endif
 
-      //! Constructor
-      EquivCollapse   ( t_Function &_function ) : t_Base( _function ) {}
+#     ifdef __DOHALFHALF__
+        //! Constructor
+        EquivCollapse   ( t_Function &_function )
+                      : t_Base( _function ), regular_factor(0e0) {}
+#     else
+        //! Constructor
+        EquivCollapse ( t_Function &_function ) : t_Base( _function ) {}
+#     endif
+
       //! Destructor
       ~EquivCollapse() {}
 
@@ -55,7 +69,18 @@ namespace Separable
       using t_Base :: reset;
       using t_Base :: update;
       using t_Base :: update_all;
-      using t_Base :: create_coefs;
+#     ifdef __DOHALFHALF__
+        //! Creates a collection of random coefficients.
+        //! \details A vector of vectors of correct dimensions is created and
+        //!          initialized.  This member is equivalent to the base class
+        //!          member except when __DOHALFHALF__ is defined, in which
+        //!          case, the True/True basis function is centered around 0
+        //!          (rather than 1).
+        //! \tparams should be a vector of vectors.
+        //! \params[out] _coefs creates \a _coefs[d, (r,i) ] uninitialized.
+        template< class T_VECTORS > void create_coefs( T_VECTORS &_coefs,
+                                                       t_Type _howrandom= 0.5e0 ) const;
+#     endif
       using t_Base :: reassign;
       //! Evaluates the sum of squares.
       template< class T_VECTORS, class T_VECTOR >
@@ -67,8 +92,6 @@ namespace Separable
       using t_Base :: D;
       using t_Base :: nb_targets;
       using t_Base :: nb_ranks;
-      //! Return type of the function
-      typedef typename t_Base :: t_Type t_Type;
       //! \brief Type of the matrix containing expanded function elements.
       typedef typename t_Base::t_Expanded t_Expanded;
       using t_Base :: expanded;

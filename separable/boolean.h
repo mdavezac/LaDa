@@ -37,11 +37,10 @@ namespace Separable
       typedef bool t_Arg;
       //! Type of the return.
       typedef types::t_real t_Return;
-      //! Does not have gradient.
-      bool const static has_gradient = false;
      
       //! Constructor 
-      Boolean ( bool _which = false ) { set( _which ); }
+      Boolean ( bool _which = false )
+        { set( _which ); }
       //! Copy Constructor 
       Boolean ( const Boolean &_c ) : which( _c.which ), name( _c.name ) {}
       //! Destructor
@@ -49,13 +48,24 @@ namespace Separable
 
       //! evaluates the function over a range of positions.
       t_Return operator()( const t_Arg _bool ) const
-        { return _bool == which ? t_Return( 1 ): t_Return( 0 ); }
-      // const types::t_real sqrt2(1.0); //0.70710678118654752440e0);
-      // if( which ) return _bool ? t_Return( sqrt2 ): t_Return( -sqrt2 );
-      // return sqrt2;
-      
+      {
+#       ifdef __DOHALFHALF__
+          return  which ? ( _bool ? t_Return(1) : t_Return(0) ): 
+                          t_Return(1);
+#       else 
+          return  _bool == which ? t_Return( 1 ): t_Return( 0 );
+#       endif
+      }
+      //! Sets function to true/false or false/true.
       void set( bool _which )
-        { which = _which; name = _which ? "True": "False"; }
+      {
+        which = _which;
+#       ifdef __DOHALFHALF__
+          name = _which ? "True/False": "True/True"; 
+#       else
+          name = _which ? "True/False": "False/True"; 
+#       endif
+      }
 
     protected:
       //! Decides whether this is a true or false function.

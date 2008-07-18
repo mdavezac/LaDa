@@ -78,6 +78,10 @@ int main(int argc, char *argv[])
                  "Should work for fcc and bcc if lattice is inputed right.\n" )
         ("random", po::value<types::t_real>()->default_value(5e-1),
                    "Coefficients will be chosen randomly in the range [random,-random].\n" )
+#       ifdef __DOHALFHALF__
+          ("lambda,l", po::value<types::t_real>()->default_value(0),
+                       "Regularization factor.\n" )
+#       endif
         ("nbguesses", po::value<types::t_unsigned>()->default_value(1),
                       "Number of initial guesses to try prior to (any) fitting.\n" );
     leavemanyout.add_cmdl( specific );
@@ -151,6 +155,9 @@ int main(int argc, char *argv[])
     if( Fuzzy::eq( offset, types::t_real(0) ) ) offset = types::t_real(0);
     bool prerun ( vm.count("prerun") != 0 );
     types::t_real howrandom( vm["random"].as<types::t_real>() );
+#   ifdef __DOHALFHALF__
+      types::t_real lambda( vm["lambda"].as<types::t_real>() );
+#   endif
     types::t_unsigned nbguesses( vm["nbguesses"].as<types::t_unsigned>() );
     __ASSERT( nbguesses == 0, "Invalid input nbguesses = 0.\n" )
 
@@ -230,6 +237,9 @@ int main(int argc, char *argv[])
 
     // Initializes collapse functor.
     Separable::EquivCollapse< t_Function > collapse( separables );
+#   ifdef __DOHALFHALF
+      collapse.regular_factor = lambda;
+#   endif
 
     // Initializes Interface to allsq.
     Fitting::SepCeInterface interface;
@@ -284,6 +294,13 @@ int main(int argc, char *argv[])
     if( prerun )
      std::cout << "Performing prerun.\n";
     std::cout << "Random Seed: " << seed << "\n";
+#   ifdef __DOHALFHALF__
+      if( Fuzzy::gt( lambda, 0e0 ) )
+        std::cout << "Regularizing with factor: " << lambda << "\n";
+      std::cout << "Using True/False and True/True inner basis.\n"; 
+#   else
+      std::cout << "Using True/False and False/True inner basis.\n"; 
+#   endif
 
     if( Fuzzy :: neq( offset, 0e0 ) ) std::cout << "Offset: " << offset << "\n";
 
