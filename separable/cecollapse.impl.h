@@ -282,8 +282,8 @@ namespace Separable
                              :: const_iterator i_coef = _coefs[_dim].begin();
           typename T_VECTORS :: value_type 
                              :: const_iterator i_coef_end = _coefs[_dim].end();
-          for(types::t_unsigned k(0); i_coef != i_coef_end; i_coef += 2, k+=2 )
-             _A( k, k ) += regular_factor * (*i_coef);
+          for(types::t_unsigned k(0); i_coef != i_coef_end; i_coef+=2, k+=2 )
+             _A( k, k ) += regular_factor; 
 #       endif
 
         __DEBUGTRYEND(, "Error while creating collapsed matrix and target.\n" )
@@ -296,6 +296,7 @@ namespace Separable
       EquivCollapse<T_FUNCTION> :: evaluate( const T_VECTORS &_coefs,
                                              const T_VECTOR &_targets ) 
       {
+        namespace bl = boost::lambda;
         __DEBUGTRYBEGIN
 
         typename t_Factors :: const_iterator i_facs = factors.begin();
@@ -318,7 +319,6 @@ namespace Separable
           } // loop over equivalent structures.
         } // end of loop over ranks.
 
-        namespace bl = boost::lambda;
         t_Type result(0), dummy(0);
         opt::concurrent_loop
         (
@@ -326,6 +326,22 @@ namespace Separable
           bl::var( result ) += ( bl::var(dummy) = bl::_2 - bl::_1,
                                  bl::var(dummy) * bl::var(dummy) * bl::_3 )
         );
+#       ifdef __DOHALFHALF__
+          if( Fuzzy::leq( regular_factor, 0e0 ) )
+            return result / (types::t_real) _targets.size();
+          typename T_VECTORS :: const_iterator i_coefs = _coefs.begin();
+          typename T_VECTORS :: const_iterator i_coefs_end = _coefs.end();
+          for(; i_coefs != i_coefs_end; ++i_coefs )
+          {
+            __ASSERT( i_coefs->size() % 2 != 0, "Odd number of coefficients.\n" )
+            typename T_VECTORS :: value_type
+                               :: const_iterator i_coef = i_coefs->begin();
+            typename T_VECTORS :: value_type
+                               :: const_iterator i_coef_end = i_coefs->end();
+            for(; i_coef != i_coef_end; ++i_coef )
+              result += regular_factor * (*i_coef) * (*i_coef) * 0.5e0; 
+          }
+#       endif
         return result / (types::t_real) _targets.size();
         __DEBUGTRYEND(,"Error while assessing sum of squares.\n" )
       }

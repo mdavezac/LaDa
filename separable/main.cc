@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
 
     // Initializes collapse functor.
     Separable::EquivCollapse< t_Function > collapse( separables );
-#   ifdef __DOHALFHALF
+#   ifdef __DOHALFHALF__
       collapse.regular_factor = lambda;
 #   endif
 
@@ -281,8 +281,6 @@ int main(int argc, char *argv[])
                  << tolerance << "\n"
               << "Maximum number of iterations for alternating least-square fit: "
                  << maxiter << "\n"
-              << "Alternating linear-least square tolerance: " 
-                 << tolerance << "\n"
               << "1d linear-least square tolerance: " 
                  << dtolerance << "\n"
               << "Will" << ( doupdate ? " ": " not " )

@@ -54,12 +54,12 @@ namespace Separables
         __DOASSERT( n==0, "0 runs required on input. We are done here.\n" )
         if( n == 1 ) return t_Solver :: operator()( _coefs, _collapse );
 
-        typedef typename std::pair< types::t_real, T_COEFS > t_Best;
-        t_Best best;
-
         bool docopy( false );
-        best.first = t_Solver :: operator()( _coefs, _collapse );
-        best.second = _coefs;
+        typedef typename std::pair< types::t_real, T_COEFS > t_Best;
+        t_Best best( t_Solver :: operator()( _coefs, _collapse ),
+                     _coefs );
+        typename T_COLLAPSE::t_Function::t_Coefs
+          norms( _collapse->function.coefs );
         size_t fieldsize = (size_t) std::ceil( std::log( (types::t_real) n)/std::log(10e0) );
         ++fieldsize;
         if( verbose ) std::cout << "Run " << std::setw(fieldsize)
@@ -81,10 +81,15 @@ namespace Separables
           
           best.first = result;
           best.second = _coefs;
+          norms = _collapse->function.coefs;
           docopy = false;
         }
 
-        if( docopy ) _coefs = best.second;
+        if( docopy )
+        {
+          _coefs = best.second;
+          _collapse->function.coefs = norms;
+        }
 
         // if above were not pre-runs, this is it.
         if( not prerun ) return best.first;
