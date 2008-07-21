@@ -158,6 +158,12 @@ namespace Crystal {
                  0: convert_real_to_type_index( _r ); }
       //! Dumps the lattice to a stream. 
       void print_out (std::ostream &stream) const;
+      //! Compares two positions in lattice \a _lat.
+      bool pos_are_eqiv( const atat::rVector3d &_a,
+                         const atat::rVector3d &_b ) const
+        { return atat::equivalent_by_symmetry( _a, _b, cell,
+                                               space_group.point_op, 
+                                               space_group.trans ) == 1; }
   };
 
   inline std::string Lattice::get_atom_string( const Crystal::Atom &_at ) const
@@ -175,5 +181,6 @@ namespace Crystal {
   //! Dumps a lattice to a stream.
   inline std::ostream& operator<<( std::ostream& _stream, const Crystal::Lattice& _lat )
     { _lat.print_out(_stream); return _stream; }
+
 } // namespace Crystal
 #endif

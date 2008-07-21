@@ -9,10 +9,12 @@
 #endif
 
 #include <vector>
+#include <boost/filesystem/path.hpp>
 
 #include <tinyxml/tinyxml.h>
 
 #include <opt/types.h>
+#include <opt/ndim_iterator.h>
 #include <atat/machdep.h>
 #include <atat/vectmac.h>
 #include <mpi/mpi_object.h>
@@ -30,6 +32,22 @@ namespace CE
 //! \todo Rename Crystal to CE
 namespace CE
 {
+  //! \brief Finds all clusters which are at most the \a _max_neigh and with at
+  //!        most \a _maxN spins.
+  //! \return A vector of vectors of cluster. The inner vectors contain
+  //!         symmetrically equivalent clusters. The new cluster classes are
+  //!         added to the output vector without checking for duplicates.
+  //!
+  void find_all_clusters( Crystal :: Lattice &_lat,
+                          types::t_unsigned _max_neigh,
+                          types::t_unsigned _maxN,
+                          std::vector< std::vector<Cluster> > &_out );
+  //! Reads clusters from a NREL Jfile.
+  void read_clusters( Crystal::Lattice &_lat, 
+                      boost::filesystem::path &_path, 
+                      std::vector< std::vector< Cluster > > &_out );
+
+  
   /** \brief Defines a cluster of a %Cluster Expansion %Functional
    *  \details A Cluster consists of an interaction energy Cluster::eci
    *           (\f$J\f$) and of \e N vectors Cluster::vectors
@@ -49,6 +67,13 @@ namespace CE
   class Cluster 
   {
     template<class T_HARMONIC> friend class Builder;
+    friend void find_all_clusters( Crystal :: Lattice &,
+                                   types::t_unsigned,
+                                   types::t_unsigned,
+                                   std::vector< std::vector<Cluster> > &);
+    friend void read_clusters( Crystal::Lattice &_lat,
+                               boost::filesystem::path &_path, 
+                               std::vector< std::vector< Cluster > > &_out );
     
     protected:
       //! Vectors linking sites which interact through this cluster.
@@ -101,7 +126,10 @@ namespace CE
       template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
         { _ar & eci; _ar & vectors; } 
   };
-  
+
+
+
+ 
 } // namespace CE
 
 #endif
