@@ -6,9 +6,6 @@ ATAT_CC = findsym.cc integer.cc xtalutil.cc
 ATAT_H  = findsym.h  integer.h  xtalutil.h \
           array.h  arraylist.h   fixagg.h  fxvector.h \
 	  linklist.h  machdep.h  misc.h  vectmac.h  
-ATAT_PYTHON_H = atat.py.hpp
-ATAT_PYTHON_CC = atat.py.cc
-
 
 DARWIN_LIB_CC = concentration.cc debug.cc topology.cc 
 if DOMPI
@@ -59,8 +56,6 @@ CE_CC = cluster.cc harmonic.cc  polynome.cc
 CE_H  = cluster.h  constituent_strain.h  functional_builder.h  harmonic.h   polynome.h  
 CE_IMPL_H  =  constituent_strain.impl.h  functional_builder.impl.h  harmonic.impl.h
 CE_DOC = $(CE_H) $(CE_CC) 
-CE_PYTHON_H = atom.py.hpp atom.py.impl.hpp
-CE_PYTHON_CC = atom.py.cc
 
 LAPACK_F90 = dlae2.f   dlanst.f  dlapy2.f  dlarf.f   dlarft.f  dlascl.f \
 	     dlasr.f   dlassq.f  dorg2l.f  dorgql.f  dorgtr.f  dsterf.f \
@@ -104,6 +99,12 @@ PRINT_CC = manip.cc xmg.cc stdout.cc base.cc
 PRINT_H  = manip.h  xmg.h  stdout.h  base.h  operations.h 
 PRINT_DOC = $(PRINT_H) $(PRINT_CC) 
 
+PYTHON_CE_CC = ce.cc
+PYTHON_CE_H = ce.hpp
+PYTHON_H = atat.hpp atom.hpp structure.hpp lattice.hpp xml.hpp misc.hpp 
+PYTHON_CC = atat.cc atom.cc structure.cc lattice.cc ce.cc
+PYTHON_DOC = $(PYTHON_CC) $(PYTHON_H) $(PYTHON_CE_CC) $(PYTHON_CE_H)
+
 SEPARABLE_CC = cefitting.cc  main.cc ce.cc leave_many_out.cc
 SEPARABLE_H = boolean.h cefitting.h ce.h lsq.h separable.h collapse.h \
               cecollapse.h bestof.h leave_many_out.h
@@ -141,4 +142,5 @@ ALL_DOCS = doxy.conf $(DOCS_H) \
            $(addprefix print/,$(PRINT_DOC)) \
            $(addprefix separable/,$(SEPARABLE_DOC)) \
            $(addprefix vff/,$(VFF_FORTRAN_DOC)) \
-           $(addprefix vff/,$(VFF_DOC))
+           $(addprefix vff/,$(VFF_DOC)) \
+           $(addprefix python/,$(PYTHON_DOC)) 

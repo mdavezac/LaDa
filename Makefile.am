@@ -43,8 +43,15 @@ endif
 if DOSEPARABLE
   SEPARABLEDIR = separable
 endif
-SUBDIRS = $(MPISUBDIR) atat physics opt crystal ce print $(VFFSUBDIR) \
-	  $(PESCANSUBDIR) $(LAPACKDIR) $(DARWINSUBDIR) $(SEPARABLEDIR)
+if DOPYTHON
+  PYTHONDIR = python
+endif
+if DOCE
+  CEDIR = ce
+endif
+SUBDIRS = $(MPISUBDIR) atat physics opt crystal print $(CEDIR) $(VFFSUBDIR) \
+	  $(PESCANSUBDIR) $(LAPACKDIR) $(DARWINSUBDIR) $(SEPARABLEDIR) \
+	  $(PYTHONDIR)
 revision.h: force
 	@./scripts/max_revision.pl
 force: ;

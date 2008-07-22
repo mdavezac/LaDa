@@ -2,6 +2,9 @@
 //  Version: $Id$
 //
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <boost/python.hpp>
@@ -13,8 +16,8 @@
 #include <opt/types.h>
 
 #define STREAM_VECTOR
-#include "fxvector.h"
-#include "vectmac.h"
+#include <atat/fxvector.h>
+#include <atat/vectmac.h>
 
 #ifdef _TYPE_
 #error "Please change _TYPE_ to something else, as it is already being used."
@@ -25,13 +28,17 @@
 
 using namespace boost::python;
 
-#include "atat.py.hpp"
-
-#define _INMODULE_
-BOOST_PYTHON_MODULE(atat)
+namespace PythonLaDa
 {
   using namespace atat;
-# include "atat.py.hpp"
-}
+# include "atat.hpp"
+
+# define _INMODULE_
+  void export_atat()
+  {
+    using namespace atat;
+#   include "atat.hpp"
+  }
 
 #undef _INMODULE_
+}

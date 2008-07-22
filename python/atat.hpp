@@ -314,7 +314,7 @@ namespace atat
                           _CLASSNAME_(Vector) >,
            return_value_policy<manage_new_object>() )
      .def( self == other<_CLASSNAME_(Matrix)>() )
-     .def( self != other<_CLASSNAME_(Matrix)>() )
+//    .def( self != other<_CLASSNAME_(Matrix)>() )
      .def( "__str__", &details::_CLASSNAME_(printMatrix) )
      .def( "__getitem__", &details::_CLASSNAME_(getMatItem) )
      .def( "__setitem__", &details::_CLASSNAME_(setMatItem) ) 
@@ -332,6 +332,6 @@ namespace atat
 
 #endif
 
-#include "atat.py.hpp"
+#include "atat.hpp"
 
 #endif 

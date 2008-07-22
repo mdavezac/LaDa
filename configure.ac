@@ -123,6 +123,14 @@ AC_ARG_ENABLE(galib,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-galib) ;;
      esac],[galib=$enall])
 
+AC_ARG_ENABLE(ce,
+     [  --enable-ce                   Turn on cluster-expansion module],
+     [case "${enableval}" in
+       yes) ce=true ;;
+       no)  ce=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-ce) ;;
+     esac],[ce=$enall])
+
 AC_ARG_ENABLE(ceopt,
      [  --enable-ceopt                Turn on cluster-expansion optimization],
      [case "${enableval}" in
@@ -202,6 +210,7 @@ if test x$emassopt = xtrue; then
   vff=true
 fi
 if test x$ceopt = xtrue; then
+  ce=true
   galib=true
 fi
 lapack=false
@@ -239,6 +248,10 @@ if test x$gsl = xtrue; then
   AC_DEFINE([_DOGSL],[],[])
   PKG_CHECK_MODULES(GSL, gsl >= 1.8 )
 fi 
+AH_TEMPLATE([_DOCE])
+if test x$ce = xtrue; then
+  AC_DEFINE([_DOCE],[],[])
+fi
 
 # ************************************
 # ****** Checks compiler compliances
@@ -376,6 +389,7 @@ AC_CHECK_LIB(m,main)
 AM_CONDITIONAL(DOMPI, test x$mpi = xtrue)
 AM_CONDITIONAL(DOPESCAN, test x$pescan = xtrue)
 AM_CONDITIONAL(DOLAYEREDOPT, test x$molecularity = xtrue)
+AM_CONDITIONAL(DOCE, test x$ce = xtrue)
 AM_CONDITIONAL(DOCEOPT, test x$ceopt = xtrue)
 AM_CONDITIONAL(DOVFF, test x$vff = xtrue)
 AM_CONDITIONAL(DOBANDGAPOPT, test x$bandgapopt = xtrue)
@@ -472,7 +486,7 @@ AC_SUBST(BOOST_CXXFLAGS)
 
 AC_OUTPUT(Makefile atat/Makefile physics/Makefile opt/Makefile crystal/Makefile
           vff/Makefile mpi/Makefile pescan_interface/Makefile darwin/Makefile 
-          print/Makefile lapack/Makefile separable/Makefile ce/Makefile )
+          print/Makefile lapack/Makefile separable/Makefile ce/Makefile python/Makefile )
 
 echo ""; echo ""
 echo "Will Compile following modules: "
