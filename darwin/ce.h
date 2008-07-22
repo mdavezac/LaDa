@@ -15,10 +15,10 @@
 #include <tinyxml/tinyxml.h>
 #include <eo/eoOp.h>
 
-#include <lamarck/structure.h>
-#include <CE/harmonic.h>
-#include <CE/constituent_strain.h>
-#include <CE/functional_builder.h>
+#include <crystal/structure.h>
+#include <ce/harmonic.h>
+#include <ce/constituent_strain.h>
+#include <ce/functional_builder.h>
 #include <opt/function_base.h>
 #include <opt/types.h>
 #include <mpi/mpi_object.h>

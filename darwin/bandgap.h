@@ -14,7 +14,7 @@
 
 #include <tinyxml/tinyxml.h>
 
-#include <lamarck/structure.h>
+#include <crystal/structure.h>
 #include <opt/function_base.h>
 #include <opt/gsl_minimizers.h>
 #include <opt/types.h>

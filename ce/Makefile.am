@@ -14,7 +14,7 @@ cubic_CPPFLAGS =  $(AM_CPPFLAGS) -I .. -D_CUBIC_CE_
 cubic_LDFLAGS =  $(AM_LDFLAGS)  @MPI_LIBS@ @BOOST_LDFLAGS@\
                  @BOOST_MPI@ @BOOST_PROGOP@ @BOOST_FS@
 cubic_LDADD =   libce.la \
-                ../lamarck/libcrystal.la \
+                ../crystal/libcrystal.la \
 		../atat/libatat.la \
 		../physics/libphysics.la \
 		@MPI_ADDLIB@ \
@@ -35,8 +35,8 @@ libce_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS)
 # libcepy_la_LDFLAGS = $(AM_LDFLAGS) -Bshared 
 # libcepy_la_LIBADD = @BOOST_LDFLAGS@ @BOOST_PYTHON@
 # endif
-../atat/licrystal.la: 
-	cd ../lamarck; $(MAKE) 
+../crystal/licrystal.la: 
+	cd ../crystal; $(MAKE) 
 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 

@@ -9,7 +9,7 @@
 #endif
 
 #include <mpi/mpi_object.h>
-#include <lamarck/structure.h>
+#include <crystal/structure.h>
 #include <atat/vectmac.h>
 #include <physics/physics.h>
 

@@ -11,8 +11,8 @@
 #include <opt/types.h>
 #include <mpi/mpi_object.h>
 
-#include <lamarck/structure.h>
-#include <lamarck/lattice.h>
+#include <crystal/structure.h>
+#include <crystal/lattice.h>
 
 #include "functional.h"
 

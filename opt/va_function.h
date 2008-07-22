@@ -9,7 +9,7 @@
 #endif
 
 #include <opt/types.h>
-#include <lamarck/structure.h>
+#include <crystal/structure.h>
 
 namespace function
 {

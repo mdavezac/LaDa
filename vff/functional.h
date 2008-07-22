@@ -13,9 +13,9 @@
 
 #include <tinyxml/tinyxml.h>
 
-#include <lamarck/atom.h>
-#include <lamarck/structure.h>
-#include <lamarck/lattice.h>
+#include <crystal/atom.h>
+#include <crystal/structure.h>
+#include <crystal/lattice.h>
 #include <opt/types.h>
 #include <opt/function_base.h>
 #include <opt/debug.h>

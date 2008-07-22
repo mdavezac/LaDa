@@ -14,7 +14,7 @@
 
 #include <vff/functional.h>
 #include <vff/va.h>
-#include <lamarck/structure.h>
+#include <crystal/structure.h>
 #include <opt/function_base.h>
 #include <opt/gsl_minimizers.h>
 #include <opt/types.h>

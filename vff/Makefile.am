@@ -27,7 +27,7 @@ libvff_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS)
 vff_SOURCES = main.cc 
 vff_CPPFLAGS =  $(AM_CPPFLAGS) -I .. 
 vff_LDFLAGS =  $(AM_LDFLAGS)
-vff_LDADD = ../lamarck/libcrystal.la \
+vff_LDADD = ../crystal/libcrystal.la \
 	    ../atat/libatat.la \
 	    libvff.la \
             ../physics/libphysics.la \
@@ -46,8 +46,8 @@ layered_vff_LDADD = $(vff_LDADD)
 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 
-../lamarck/libcrystal.la: 
-	cd ../lamarck; $(MAKE)
+../crystal/libcrystal.la: 
+	cd ../crystal; $(MAKE)
 ../physics/libphysics.la:
 	cd ../physics; $(MAKE)
 ../mpi/libmpiobject.la:

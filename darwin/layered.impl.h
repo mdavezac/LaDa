@@ -9,8 +9,8 @@
 
 #include <print/stdout.h>
 #include <print/manip.h>
-#include <lamarck/structure.h>
-#include <lamarck/atom.h>
+#include <crystal/structure.h>
+#include <crystal/atom.h>
 #include <opt/fuzzy.h>
 #include <opt/debug.h>
 

@@ -32,8 +32,8 @@ ce_optdir = $(includedir)/darwin
 ce_opt_CPPFLAGS =  -D _CE $(AM_CPPFLAGS) @GSL_CFLAGS@ -D _CUBIC_CE_
 ce_opt_LDFLAGS =  $(AM_LDFLAGS)
 ce_opt_LDADD = libdarwin.la \
-	       ../CE/libce.la \
-	       ../lamarck/libcrystal.la \
+	       ../ce/libce.la \
+	       ../crystal/libcrystal.la \
 	       ../physics/libphysics.la \
 	       ../atat/libatat.la \
 	       ../print/libprint.la \
@@ -75,10 +75,10 @@ nobase_libdarwin_la_HEADERS = $(DARWIN_LIB_H)
 libdarwin_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 
-../CE/libce.la: 
-	cd ../CE; $(MAKE)
-../lamarck/libcrystal.la: 
-	cd ../lamarck; $(MAKE)
+../ce/libce.la: 
+	cd ../ce; $(MAKE)
+../crystal/libcrystal.la: 
+	cd ../crystal; $(MAKE)
 ../physics/libphysics.la:
 	cd ../physics; $(MAKE)
 ../mpi/libmpiobject.la:

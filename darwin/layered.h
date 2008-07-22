@@ -15,7 +15,7 @@
 
 #include <tinyxml/tinyxml.h>
 
-#include <lamarck/structure.h>
+#include <crystal/structure.h>
 #include <opt/types.h>
 #include <mpi/mpi_object.h>
 

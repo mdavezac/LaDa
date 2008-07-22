@@ -14,7 +14,7 @@
 #include <eo/utils/eoState.h>
 
 #include <opt/types.h>
-#include <lamarck/structure.h>
+#include <crystal/structure.h>
 
 #include "gatraits.h"
 

@@ -3,8 +3,6 @@
 //
 #include <fstream>
 
-#include <lamarck/atom.h>
-
 #include "single_site.h"
 
 namespace SingleSite

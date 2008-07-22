@@ -5,8 +5,8 @@
 
 #include <tinyxml/tinyxml.h>
 
-#include <lamarck/lattice.h>
-#include <lamarck/structure.h>
+#include <crystal/lattice.h>
+#include <crystal/structure.h>
 #include <revision.h>
 #include <opt/debug.h>
 

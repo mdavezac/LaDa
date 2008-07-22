@@ -13,8 +13,8 @@
 
 #include <opt/types.h>
 #include <atat/vectmac.h>
-#include <lamarck/lattice.h>
-#include <lamarck/structure.h>
+#include <crystal/lattice.h>
+#include <crystal/structure.h>
 
 #include "separable.h"
 #include "boolean.h"

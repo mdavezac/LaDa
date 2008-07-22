@@ -470,13 +470,14 @@ AC_SUBST(BOOST_PYTHON)
 AC_SUBST(BOOST_REGEX)
 AC_SUBST(BOOST_CXXFLAGS)
 
-AC_OUTPUT(Makefile atat/Makefile physics/Makefile opt/Makefile lamarck/Makefile
+AC_OUTPUT(Makefile atat/Makefile physics/Makefile opt/Makefile crystal/Makefile
           vff/Makefile mpi/Makefile pescan_interface/Makefile darwin/Makefile 
-          print/Makefile lapack/Makefile separable/Makefile CE/Makefile )
+          print/Makefile lapack/Makefile separable/Makefile ce/Makefile )
 
 echo ""; echo ""
 echo "Will Compile following modules: "
-echo " _ CE related stuff in lamarck directory"
+echo " _ Crystal module library"
+echo " _ Cluster Expansion library module"
 
 if test "$galib" = true; then
   echo " _ GA libraries"

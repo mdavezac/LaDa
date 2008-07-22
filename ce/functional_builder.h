@@ -15,8 +15,8 @@
 #include <tinyxml/tinyxml.h>
 #include <mpi/mpi_object.h>
 #include <atat/vectmac.h>
-#include <lamarck/structure.h>
-#include <lamarck/lattice.h>
+#include <crystal/structure.h>
+#include <crystal/lattice.h>
 
 
 #include "polynome.h"

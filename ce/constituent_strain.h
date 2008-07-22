@@ -16,7 +16,7 @@
 
 #include "atat/vectmac.h"
 
-#include <lamarck/structure.h>
+#include <crystal/structure.h>
 
 namespace CE
 {

@@ -4,9 +4,6 @@
 #include <functional>
 #include <algorithm>
 
-#include <lamarck/atom.h>
-#include <lamarck/structure.h>
-
 #include "ce.h"
 #include "functors.h"
 #include "concentration.h"

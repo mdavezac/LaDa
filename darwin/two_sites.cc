@@ -3,7 +3,6 @@
 //
 #include <algorithm>
 
-#include <lamarck/atom.h>
 #include <opt/fuzzy.h>
 #include <opt/debug.h> 
 #include <opt/atat.h>

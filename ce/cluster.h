@@ -19,7 +19,7 @@
 #include <atat/vectmac.h>
 #include <mpi/mpi_object.h>
 
-#include <lamarck/lattice.h>
+#include <crystal/lattice.h>
 
 //! \cond
 namespace CE

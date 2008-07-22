@@ -48,7 +48,7 @@ escan_SOURCES = main.cc
 escan_CPPFLAGS = $(AM_CPPFLAGS)  -I .. 
 escan_LDFLAGS =  $(AM_LDFLAGS) 
 escan_LDADD = libescan.la \
-	      ../lamarck/libcrystal.la \
+	      ../crystal/libcrystal.la \
 	      ../atat/libatat.la \
 	      ../vff/libvff.la \
               ../physics/libphysics.la \
@@ -66,8 +66,8 @@ endif
 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 
-../lamarck/libcrystal.la: 
-	cd ../lamarck; $(MAKE)
+../crystal/libcrystal.la: 
+	cd ../crystal; $(MAKE)
 ../physics/libphysics.la:
 	cd ../physics; $(MAKE)
 ../mpi/libmpiobject.la:

@@ -10,7 +10,7 @@
 
 
 #include <opt/va_function.h>
-#include <lamarck/structure.h>
+#include <crystal/structure.h>
 #include <mpi/mpi_object.h>
 
 #include "functional.h"

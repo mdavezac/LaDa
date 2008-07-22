@@ -4,8 +4,7 @@
 #include <functional>
 #include <algorithm>
 
-#include <lamarck/atom.h>
-#include <lamarck/structure.h>
+#include <crystal/structure.h>
 
 #include "groundstate.h"
 #include "functors.h"
