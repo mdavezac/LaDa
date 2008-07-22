@@ -2,9 +2,11 @@
 //  Version: $Id$
 //
 #include <algorithm>
+#include <boost/filesystem/operations.hpp>
 
 #include <opt/ndim_iterator.h>
 #include <opt/traits.h>
+#include <opt/debug.h>
 
 #include <atat/misc.h>
 #include <physics/physics.h>
@@ -582,6 +584,63 @@ namespace Crystal {
       
     } while( ++global_iterator );
 
+  }
+ 
+  void read_structure( Structure &_struct,
+                       const boost::filesystem::path &_path )
+  {
+    __TRYBEGIN
+
+    namespace fs = boost::filesystem;  
+    __DOASSERT( not fs::exists( _path ), "Path " << _path << " does not exits.\n" )
+    __DOASSERT( not( fs::is_regular( _path ) or fs::is_symlink( _path ) ),
+                _path << " is neither a regulare file nor a system link.\n" )
+    std::ifstream file( _path.string().c_str(), std::ifstream::in );
+    std::string line;
+    size_t i(0);
+
+    std::getline( file, line ); // name and inconsequential data.
+
+    _struct.name = _path.string();
+    types::t_int N;  // number of atoms;
+    std::getline( file, line ); // name and inconsequential data.
+    std::istringstream sstr( line );
+    sstr >> N;
+    // cell 
+    for(types::t_int i(0); i < 3; ++i )
+    {
+      __ASSERT( file.eof(),
+                "Reached unexpected end of file: " << _path << ".\n" )
+      std::getline( file, line );
+      sstr.str( line ); sstr.seekg (0, std::ios::beg); sstr.clear();
+      sstr >> _struct.cell.x[i][0]
+           >> _struct.cell.x[i][1]
+           >> _struct.cell.x[i][2];
+    }
+    _struct.freeze = Crystal::Structure::FREEZE_NONE;
+    // now atoms.
+    types::t_int nfound(0);
+    while( nfound < N and file.good() )
+    {
+      __ASSERT( file.eof(),
+                "Reached unexpected end of file: " << _path << ".\n" )
+      std::getline( file, line );
+      sstr.str( line ); sstr.seekg (0, std::ios::beg); sstr.clear();
+      Crystal::Structure::t_Atom a;
+      types::t_int type;
+      sstr >> type;
+      ++nfound;
+      if( type != 1 and type != 2 ) continue;
+      a.type = ( type == 1 ) ? -1.e0: 1.e0;
+      sstr >> a.pos.x[0] >> a.pos.x[1]  >> a.pos.x[2];
+      a.freeze = Structure::t_Atom::FREEZE_NONE;
+      a.site = 0;
+      _struct.atoms.push_back(a);
+    }
+    __ASSERT( nfound != N,    "Could find only " << nfound << " of " 
+                           << N << " atoms in " << _path << ".\n" )
+      
+    __TRYEND(, "Error while reading " << _path << "\n" )
   }
 } // namespace Crystal
 

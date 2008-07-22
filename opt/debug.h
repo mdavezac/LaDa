@@ -31,6 +31,8 @@
           __ASSERTCATCHCODE( condition, ,error )
 #define __TRYASSERT(condition, error) \
           __TRYCODE( __DOASSERT( condition, "" ), error )
+#define __TRYBEGIN try {
+#define __TRYEND( code, error ) } __CATCHCODE( code, error ) 
 
 #ifdef _LADADEBUG
 #define __DODEBUGCODE(code) code

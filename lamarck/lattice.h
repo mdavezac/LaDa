@@ -159,8 +159,8 @@ namespace Crystal {
       //! Dumps the lattice to a stream. 
       void print_out (std::ostream &stream) const;
       //! Compares two positions in lattice \a _lat.
-      bool pos_are_eqiv( const atat::rVector3d &_a,
-                         const atat::rVector3d &_b ) const
+      bool pos_are_equiv( const atat::rVector3d &_a,
+                          const atat::rVector3d &_b ) const
         { return atat::equivalent_by_symmetry( _a, _b, cell,
                                                space_group.point_op, 
                                                space_group.trans ) == 1; }

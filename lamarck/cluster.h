@@ -19,6 +19,8 @@
 #include <atat/vectmac.h>
 #include <mpi/mpi_object.h>
 
+#include "lattice.h"
+
 //! \cond
 namespace CE
 { 
@@ -38,7 +40,7 @@ namespace CE
   //!         symmetrically equivalent clusters. The new cluster classes are
   //!         added to the output vector without checking for duplicates.
   //!
-  void find_all_clusters( Crystal :: Lattice &_lat,
+  void find_all_clusters( const Crystal :: Lattice &_lat,
                           types::t_unsigned _max_neigh,
                           types::t_unsigned _maxN,
                           std::vector< std::vector<Cluster> > &_out );
@@ -67,7 +69,7 @@ namespace CE
   class Cluster 
   {
     template<class T_HARMONIC> friend class Builder;
-    friend void find_all_clusters( Crystal :: Lattice &,
+    friend void find_all_clusters( const Crystal :: Lattice &,
                                    types::t_unsigned,
                                    types::t_unsigned,
                                    std::vector< std::vector<Cluster> > &);

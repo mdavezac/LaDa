@@ -17,6 +17,13 @@
 
 
 namespace CE {
+  //! \cond
+  namespace details
+  {
+    void  add_equivalent_clusters( Crystal::Lattice &_lat, 
+                                   std::vector< Cluster > &_out  );
+  }
+  //! \endcond
 
   void Cluster :: apply_symmetry( const atat::rMatrix3d &_op,
                                   const atat::rVector3d &_trans    ) 
@@ -116,20 +123,27 @@ namespace CE {
     namespace bl = boost::lambda;
     // Creates a vector of all positions within a cube \a _max_neigh big.
     std::vector< atat::rVector3d > nn;
-    nn.reserve( _max_neigh**3 );
+    nn.reserve( _max_neigh*_max_neigh*_max_neigh );
     for( types::t_real x(-_max_neigh);
-         Fuzzy::lt(x, (types::t_real)_max_neigh); x+=1e0 )
+         Fuzzy::le(x, (types::t_real)_max_neigh); x+=1e0 )
       for( types::t_real y(-_max_neigh);
-           Fuzzy::lt(y, (types::t_real)_max_neigh); y+=1e0 )
+           Fuzzy::le(y, (types::t_real)_max_neigh); y+=1e0 )
         for( types::t_real z(-_max_neigh);
-             Fuzzy::lt(z, (types::t_real)_max_neigh); z+=1e0 )
+             Fuzzy::le(z, (types::t_real)_max_neigh); z+=1e0 )
           nn.push_back( _lat.cell * atat::rVector3d( x, y, z ) );
 
     // Sorts these positions by size.
+    types::t_real (*ptr_norm2)( const atat::FixedVector<types::t_real,3>& ) 
+                         = &atat::norm2<types::t_real, 3>;
     std::sort
     ( 
       nn.begin(), nn.end(), 
-      bl::bind( &atat::norm2, bl::_1 ) <= bl::bind( &atat::norm2, bl::_2 )
+      bl::bind
+      (
+        std::less<types::t_real>(),
+        bl::bind<types::t_real>( ptr_norm2, bl::_1 ),
+        bl::bind<types::t_real>( ptr_norm2, bl::_2 ) 
+      )
     );
 
     // finds _max_neigh neighbor.
@@ -147,7 +161,7 @@ namespace CE {
     nn.resize( n_it - nn.begin() - 1 );
     
     // Create classes of equivalent positions.
-    std::vector< vector< atat::rVector3d > > classes, onesize;
+    std::vector< std::vector< atat::rVector3d > > classes, onesize;
     //    -- first adds first (null) position.
     onesize.push_back( std::vector< atat::rVector3d >( 1, nn.front() ) );
     n_it = nn.begin(); ++n_it;
@@ -159,35 +173,38 @@ namespace CE {
     {
       if( Fuzzy::neq( norm, atat::norm2( *n_it ) ) )
       {
-        classes.append( onesize );
+        std::copy( onesize.begin(), onesize.end(),
+                   std::back_inserter( classes ) );
         onesize.clear();
         onesize.push_back( std::vector< atat::rVector3d >( 1, *n_it ) );
         norm = atat::norm2( *n_it );
         continue;
       }
       // looks for position in class i_found.
-      std::vector< vector< atat::rVector3d > > :: iterator i_found = onesize.begin();
-      std::vector< vector< atat::rVector3d > > :: iterator i_found_end = onesize.end();
+      std::vector< std::vector< atat::rVector3d > > :: iterator i_found = onesize.begin();
+      std::vector< std::vector< atat::rVector3d > > :: iterator i_found_end = onesize.end();
       for(; i_found != i_found_end; ++i_found )
       {
-        std::vector< atat::rVector3d > i_equiv;
+        std::vector< atat::rVector3d > :: const_iterator i_equiv;
         // checks if position is equivalent to something in class i_found.
         i_equiv = std::find_if
                   (
                     i_found->begin(), i_found->end(),
-                    bl::bind( &Lattice::pos_are_equiv, &lattice, bl::_1, bl::_2 ) 
+                    bl::bind<bool>( &Crystal::Lattice::pos_are_equiv,
+                                    &_lat, *n_it, bl::_1 ) 
                   ); 
         // there are no equivalents, continue;
         if( i_equiv == i_found->end() ) continue;
         // adds to i_found and breaks.
-        i_found->add( *n_it );
+        i_found->push_back( *n_it );
         break;
       }
       if( i_found != onesize.end() ) continue;
       // Current position is new. Adds a class to onesize.
       onesize.push_back( std::vector< atat::rVector3d >( 1, *n_it ) );
     }
-    if( onesize.size() ) classes.append( onesize );
+    if( onesize.size() ) std::copy( onesize.begin(), onesize.end(),
+                                    std::back_inserter( classes ) );
     onesize.clear();
 
     // Creates classes of clusters, by taking one of each equivalent position class.
@@ -204,12 +221,11 @@ namespace CE {
       {
         for(size_t N( _maxN - 1 ); N-1; --N )
         {
-          if( ndim.acess[N] > ndim.access[N-1] ) continue;
+          if( ndim.access(N) > ndim.access(N-1) ) continue;
           notordered = true;
           break;
         }
-      }
-      while( notordered );
+      } while( notordered );
 
       // now creates two body figures.
       Cluster cluster;
@@ -224,8 +240,7 @@ namespace CE {
       }
 
       // then adds higher order clusters, if required.
-      if( _maxN == 2 ) continue;
-      for( size_t i(1); i < _maxN; ++i )
+      for( size_t i(2); i < _maxN; ++i )
       {
         std::vector< Cluster > :: const_iterator i_cluster = new_clusters.back().begin();
         std::vector< Cluster > :: const_iterator i_cluster_end = new_clusters.back().end();
@@ -244,19 +259,21 @@ namespace CE {
         }
       } // end of higher order clusters.
 
+      // Appends new cluster classes to output vector.
+      // At this point, we could verify that the classes do not already exist in
+      // the output.
+      std::copy( new_clusters.begin(), new_clusters.end(),
+                 std::back_inserter( _out ) );
+
     } while( ++ndim );
 
-    // Finally, appends new cluster classes to output vector.
-    // At this point, we could verify that the classes do not already exist in
-    // the output.
-    _out.append( new_clusters );
 
     __DEBUGTRYEND(,"Could not create clusters.\n" )
   }
  
   void read_clusters( Crystal::Lattice &_lat, 
                       boost::filesystem::path &_path, 
-                      std::vector< std::vector< Cluster > > &_out );
+                      std::vector< std::vector< Cluster > > &_out )
   {
     __DEBUGTRYBEGIN
 
@@ -264,7 +281,7 @@ namespace CE {
     __DOASSERT( not fs::exists( _path ), "Path " << _path << " does not exits.\n" )
     __DOASSERT( not( fs::is_regular( _path ) or fs::is_symlink( _path ) ),
                 _path << " is neither a regulare file nor a system link.\n" )
-    std::ifstream file( fullpath.string().c_str(), std::ifstream::in );
+    std::ifstream file( _path.string().c_str(), std::ifstream::in );
     std::string line;
     size_t i(0);
 
@@ -333,7 +350,7 @@ namespace CE {
           t_Clusters :: iterator i_cluster  = _out.begin();
           t_Clusters :: iterator i_last = _out.end();
           for ( ; i_cluster != i_last ; ++i_cluster)
-            if ( transfo_cluster->equivalent_mod_cell(*i_cluster, inv_cell) ) 
+            if ( transfo_cluster.equivalent_mod_cell(*i_cluster, inv_cell) ) 
               break;
   
           // if it isn't, adds cluster to clusters

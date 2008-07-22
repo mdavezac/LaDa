@@ -15,6 +15,7 @@
 #include <string>
 #include <complex>
 #include <math.h>
+#include <boost/filesystem/path.hpp>
 
 
 #include <tinyxml/tinyxml.h>
@@ -32,7 +33,7 @@ namespace Crystal {
 
   //! The atat structure type.
   typedef atat::Structure Atat_Structure;
-  
+
   //! \brief Defines a periodic structure for a specific lattice.
   //! \details The definition is mostly sufficient and self contain. It include:
   //!          - Structure::cell the lattice cell
@@ -272,6 +273,9 @@ namespace Crystal {
   //! \brief fills in \a atoms member of an Crystal::Structure instance from the
   //!        cell-shape and the lattice.
   void fill_structure( Crystal::Structure &_str );
+  //! Reads structure in NREL format.
+  void read_structure( Structure &_struct, const boost::filesystem::path &_path );
+  
 
 
   //! \cond

@@ -11,7 +11,8 @@ AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
 AM_LDFLAGS = @TINYXML_LIBS@
 cubic_SOURCES = main.cc 
 cubic_CPPFLAGS =  $(AM_CPPFLAGS) -I .. -D_CUBIC_CE_
-cubic_LDFLAGS =  $(AM_LDFLAGS)  @MPI_LIBS@ @BOOST_LDFLAGS@ @BOOST_MPI@ @BOOST_PROGOP@
+cubic_LDFLAGS =  $(AM_LDFLAGS)  @MPI_LIBS@ @BOOST_LDFLAGS@\
+                 @BOOST_MPI@ @BOOST_PROGOP@ @BOOST_FS@
 cubic_LDADD = liblamarck.la \
 		../atat/libatat.la \
 		../physics/libphysics.la \
