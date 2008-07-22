@@ -12,7 +12,7 @@
 
 #include "harmonic.h"
 
-namespace Crystal
+namespace CE
 {
   namespace ConstituentStrain
   {
@@ -245,5 +245,5 @@ namespace Crystal
     } // namespace Harmonic
   } // namespace ConstituentStrain
 
-} // namespace Crystal
+} // namespace CE
 

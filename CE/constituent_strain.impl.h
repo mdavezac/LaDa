@@ -14,7 +14,7 @@
 #include <boost/mpi/collectives.hpp>
 #endif
 
-namespace Crystal 
+namespace CE
 {
   namespace ConstituentStrain
   {
@@ -478,4 +478,4 @@ namespace Crystal
     #endif // _LADADEBUG
   }
 
-} // namespace Crystal 
+} // namespace CE

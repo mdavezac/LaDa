@@ -5,7 +5,7 @@ include ../Files
 AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
 	      @MPI_CFLAGS@ @EO_CFLAGS@ -I .. @BOOST_CXXFLAGS@ 
 AM_LDFLAGS = @TINYXML_LIBS@ @EO_LIBS@ @MPI_LIBS@ @BOOST_LDFLAGS@ @BOOST_MPI@ \
-	     @BOOST_PROGOP@
+	     @BOOST_PROGOP@ @BOOST_FS@
 if DOBANDGAPOPT
   BANDGAPOPT=bandgap_opt
 endif
@@ -32,7 +32,8 @@ ce_optdir = $(includedir)/darwin
 ce_opt_CPPFLAGS =  -D _CE $(AM_CPPFLAGS) @GSL_CFLAGS@ -D _CUBIC_CE_
 ce_opt_LDFLAGS =  $(AM_LDFLAGS)
 ce_opt_LDADD = libdarwin.la \
-	       ../lamarck/liblamarck.la \
+	       ../CE/libce.la \
+	       ../lamarck/libcrystal.la \
 	       ../physics/libphysics.la \
 	       ../atat/libatat.la \
 	       ../print/libprint.la \
@@ -74,7 +75,9 @@ nobase_libdarwin_la_HEADERS = $(DARWIN_LIB_H)
 libdarwin_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 
-../lamarck/liblamarck.la: 
+../CE/libce.la: 
+	cd ../CE; $(MAKE)
+../lamarck/libcrystal.la: 
 	cd ../lamarck; $(MAKE)
 ../physics/libphysics.la:
 	cd ../physics; $(MAKE)

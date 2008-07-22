@@ -250,13 +250,8 @@ namespace Minimizer {
       bool Load_( const TiXmlElement &_node );
       //! Loads the minimizer from XML
       bool Load( const TiXmlElement &_node );
-#ifdef _MPI
-     /** \ingroup MPI
-      *  \brief Serializes for MPI purposes.
-      *  \details Serializes GnuSL::itermax, GnuSL::tolerance,
-      *           GnuSL::linetolerance, and GnuSL::linestep */
-     bool broadcast( mpi::BroadCast &_bc );
-#endif 
+      //! Serializes a structure.
+      template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
   };
 
   template<typename T_FUNCTIONAL> 
@@ -283,10 +278,8 @@ namespace Minimizer {
     gsl_vector *x;
     int status;
 
-#ifdef _LADADEBUG
-    try
-    {
-#endif
+    __DEBUGTRYBEGIN
+
       // initializes object related stuff
       if( not current_func )  return false;
       if( not current_func->init() )  return false;
@@ -351,19 +344,12 @@ namespace Minimizer {
       gsl_multimin_fdfminimizer_free (s);
       gsl_vector_free (x);
 
-#ifdef _LADADEBUG
-    }
-    catch( std::exception &_e )
-    {
+    __DEBUGTRYEND
+    (
       gsl_multimin_fdfminimizer_free (s);
-      gsl_vector_free (x);
-      std::ostringstream sstr;
-      sstr << __SPOT_ERROR
-           << "Error encountered while minimizing with the GSL library\n"
-           << _e.what();
-      throw std::runtime_error( sstr.str() );
-    }
-#endif
+      gsl_vector_free (x);,
+      "Error encountered while minimizing with the GSL library\n"
+    )
 
     return status == GSL_SUCCESS;
   }  // dummy minimizer
@@ -429,16 +415,14 @@ namespace Minimizer {
     return false;
   }
 
-#ifdef _MPI
-  template<typename T_FUNCTIONAL> 
-  inline bool GnuSL<T_FUNCTIONAL> :: broadcast( mpi::BroadCast &_bc )
-  {
-     return     _bc.serialize( itermax )
-            and _bc.serialize( tolerance )     
-            and _bc.serialize( linetolerance ) 
-            and _bc.serialize( linestep );
-  }
-#endif 
+  template<typename T_FUNCTIONAL> template<class ARCHIVE>
+    void GnuSL<T_FUNCTIONAL> :: serialize(ARCHIVE & _ar, const unsigned int _version)
+    {
+       _ar & itermax;
+       _ar & tolerance;
+       _ar & linetolerance;
+       _ar & linestep;
+    }
   
   //! Interface for evaluating the functioanl
   template<typename T_FUNTIONAL>

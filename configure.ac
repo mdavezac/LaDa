@@ -472,7 +472,7 @@ AC_SUBST(BOOST_CXXFLAGS)
 
 AC_OUTPUT(Makefile atat/Makefile physics/Makefile opt/Makefile lamarck/Makefile
           vff/Makefile mpi/Makefile pescan_interface/Makefile darwin/Makefile 
-          print/Makefile lapack/Makefile separable/Makefile )
+          print/Makefile lapack/Makefile separable/Makefile CE/Makefile )
 
 echo ""; echo ""
 echo "Will Compile following modules: "

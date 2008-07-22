@@ -3,7 +3,7 @@
 #
 include ../Files
 AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
-	      @MPI_CFLAGS@ @NAG_CFLAGS@ @GSL_CFLAGS@
+	      @MPI_CFLAGS@ @NAG_CFLAGS@ @GSL_CFLAGS@ @BOOST_CXXFLAGS@
 AM_LDFLAGS = @TINYXML_LIBS@ @NAG_LIBS@ @GSL_LIBS@ @MPI_LIBS@
 if NOLAUNCH
   AM_CPPFLAGS += @EO_CFLAGS@
@@ -48,7 +48,7 @@ escan_SOURCES = main.cc
 escan_CPPFLAGS = $(AM_CPPFLAGS)  -I .. 
 escan_LDFLAGS =  $(AM_LDFLAGS) 
 escan_LDADD = libescan.la \
-	      ../lamarck/liblamarck.la \
+	      ../lamarck/libcrystal.la \
 	      ../atat/libatat.la \
 	      ../vff/libvff.la \
               ../physics/libphysics.la \
@@ -66,7 +66,7 @@ endif
 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 
-../lamarck/liblamarck.la: 
+../lamarck/libcrystal.la: 
 	cd ../lamarck; $(MAKE)
 ../physics/libphysics.la:
 	cd ../physics; $(MAKE)

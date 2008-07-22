@@ -14,14 +14,14 @@
 #include <opt/function_functors.h>
 #include <tinyxml/tinyxml.h>
 #include <mpi/mpi_object.h>
-
 #include <atat/vectmac.h>
+#include <lamarck/structure.h>
+#include <lamarck/lattice.h>
+
 
 #include "polynome.h"
 #include "cluster.h"
-#include "structure.h"
 #include "constituent_strain.h"
-#include "lattice.h"
 
 #include <mpi/mpi_object.h>
 
@@ -44,8 +44,7 @@ namespace CE {
       //! Type of the harmonic used.
       typedef T_HARMONIC t_Harmonic;
       //! Type of the constituent strain.
-      typedef Crystal :: ConstituentStrain 
-                       :: Functional< t_Harmonic > t_CS;
+      typedef ConstituentStrain :: Functional< t_Harmonic > t_CS;
       //! Type of the chemical functional.
       typedef Polynome t_Chemical;
       //! Type of the specialized functional

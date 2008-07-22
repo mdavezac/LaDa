@@ -16,9 +16,9 @@
 
 #include "atat/vectmac.h"
 
-#include "structure.h"
+#include <lamarck/structure.h>
 
-namespace Crystal 
+namespace CE
 {
   //! Contains everything constituent-strain related.
   namespace ConstituentStrain
@@ -147,7 +147,7 @@ namespace Crystal
       }
   } // namespace ConstituentStrain
 
-} // namespace Crystal
+} // namespace CE
 
 #include "constituent_strain.impl.h"
 

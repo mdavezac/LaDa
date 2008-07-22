@@ -41,9 +41,9 @@
 #include "harmonic.h"
 
 #if defined(_CUBIC_CE_)
-typedef Crystal::ConstituentStrain::Harmonic::Cubic t_Harmonic;
+typedef CE::ConstituentStrain::Harmonic::Cubic t_Harmonic;
 #elif defined( _TETRAGONAL_CE_ )
-typedef Crystal::ConstituentStrain::Harmonic::Tetragonal t_Harmonic;
+typedef CE::ConstituentStrain::Harmonic::Tetragonal t_Harmonic;
 #else
 #error Please specify _CUBIC_CE_ or _TETRAGONAL_CE_
 #endif

@@ -35,11 +35,6 @@ namespace Vff
     typedef Crystal::Structure::t_Atom  t_Atom;
     //! The type of the atom container
     typedef Crystal::Structure::t_Atoms t_Atoms;
-#ifdef _MPI
-    /// \cond
-    friend bool mpi::BroadCast::serialize<Vff::Layered> ( Vff::Layered& );
-    /// \endcond
-#endif
     typedef Vff::Functional t_Base; //!< Base Class
     public:
       typedef t_Base::t_Type t_Type;            //!< see Functional::Base

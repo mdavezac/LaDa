@@ -15,10 +15,10 @@
 #include <tinyxml/tinyxml.h>
 #include <eo/eoOp.h>
 
-#include <lamarck/harmonic.h>
-#include <lamarck/constituent_strain.h>
 #include <lamarck/structure.h>
-#include <lamarck/functional_builder.h>
+#include <CE/harmonic.h>
+#include <CE/constituent_strain.h>
+#include <CE/functional_builder.h>
 #include <opt/function_base.h>
 #include <opt/types.h>
 #include <mpi/mpi_object.h>
@@ -35,9 +35,9 @@ namespace CE
   namespace details 
   {
 #   if defined(_CUBIC_CE_)
-      typedef Crystal::ConstituentStrain::Harmonic::Cubic t_Harmonic;
+      typedef CE::ConstituentStrain::Harmonic::Cubic t_Harmonic;
 #   elif defined( _TETRAGONAL_CE_ )
-      typedef Crystal::ConstituentStrain::Harmonic::Tetragonal t_Harmonic;
+      typedef CE::ConstituentStrain::Harmonic::Tetragonal t_Harmonic;
 #   else
 #     error Please specify _CUBIC_CE_ or _TETRAGONAL_CE_
 #   endif

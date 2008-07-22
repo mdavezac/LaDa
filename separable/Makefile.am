@@ -14,7 +14,7 @@ cubic_SOURCES = main.cc
 cubic_CPPFLAGS =  $(AM_CPPFLAGS) -I ..  -D _CUBIC_CE_
 cubic_LDFLAGS =  $(AM_LDFLAGS)
 cubic_LDADD = libseparable.la \
-              ../lamarck/liblamarck.la \
+              ../lamarck/libcrystal.la \
               ../atat/libatat.la \
               ../opt/libopt.la \
               ../physics/libphysics.la \
@@ -33,8 +33,8 @@ libseparable_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS)
 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 
-../lamarck/liblamarck.la: 
-	cd ../lamarck; $(MAKE) 
+../lamarck/libcrystal.la: 
+	cd ../crystal; $(MAKE) 
 ../physics/libphysic.la: 
 	cd ../physics; $(MAKE) 
 ../opt/libopt.la: 

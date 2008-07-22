@@ -4,7 +4,7 @@
 include ../Files
 AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
 	      @MPI_CFLAGS@ @NAG_CFLAGS@ @GSL_CFLAGS@ @BOOST_CXXFLAGS@
-AM_LDFLAGS = @TINYXML_LIBS@ @GSL_LIBS@ @NAG_LIBS@ @MPI_LIBS@ 
+AM_LDFLAGS = @TINYXML_LIBS@ @GSL_LIBS@ @NAG_LIBS@ @MPI_LIBS@ @BOOST_FS@ 
 LDADD =
 fortranSOURCE = 
 fortranHEADER = 
@@ -27,7 +27,7 @@ libvff_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS)
 vff_SOURCES = main.cc 
 vff_CPPFLAGS =  $(AM_CPPFLAGS) -I .. 
 vff_LDFLAGS =  $(AM_LDFLAGS)
-vff_LDADD = ../lamarck/liblamarck.la \
+vff_LDADD = ../lamarck/libcrystal.la \
 	    ../atat/libatat.la \
 	    libvff.la \
             ../physics/libphysics.la \
@@ -46,7 +46,7 @@ layered_vff_LDADD = $(vff_LDADD)
 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 
-../lamarck/liblamarck.la: 
+../lamarck/libcrystal.la: 
 	cd ../lamarck; $(MAKE)
 ../physics/libphysics.la:
 	cd ../physics; $(MAKE)

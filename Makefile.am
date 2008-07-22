@@ -43,7 +43,7 @@ endif
 if DOSEPARABLE
   SEPARABLEDIR = separable
 endif
-SUBDIRS = $(MPISUBDIR) atat physics opt lamarck print $(VFFSUBDIR) \
+SUBDIRS = $(MPISUBDIR) atat physics opt lamarck CE print $(VFFSUBDIR) \
 	  $(PESCANSUBDIR) $(LAPACKDIR) $(DARWINSUBDIR) $(SEPARABLEDIR)
 revision.h: force
 	@./scripts/max_revision.pl
