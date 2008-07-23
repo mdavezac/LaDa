@@ -59,6 +59,8 @@ namespace Physics
     types::t_unsigned Charge(types::t_unsigned _n );
     //! Returns the number of valence electrons from the atomic symbol
     types::t_unsigned Charge( const std::string &_str );
+    //! Returns the atomic mass from the atomic symbol
+    types::t_real Mass(const std::string &_str);
 
     //! \brief Returns true if an atomic symbol is found in the next non-blank
     //!        and non '-' characters of \a _char 
@@ -171,6 +173,33 @@ namespace Physics
       else if( _str ==  "Te" ) return 52;
       else if( _str ==  "Au" ) return 79;
       else if( _str ==  "Hg" ) return 80;
+      return 0;
+    }
+    inline types::t_real Mass(const std::string &_str)
+    {
+      if( _str ==  "Li" ) return  6.941;
+      else if( _str ==  "C" ) return  12.0107; 
+      else if( _str ==  "N" ) return  14.00674; 
+      else if( _str ==  "O" ) return  15.9994; 
+      else if( _str ==  "Al" ) return 5.9858;
+      else if( _str ==  "Si" ) return 28.0855;
+      else if( _str ==  "P" ) return 30.97376; 
+      else if( _str ==  "S" ) return 32.066; 
+      else if( _str ==  "Ni" ) return 58.6934;
+      else if( _str ==  "Cu" ) return 63.546;
+      else if( _str ==  "Zn" ) return 65.39;
+      else if( _str ==  "Ga" ) return 69.723;
+      else if( _str ==  "Ge" ) return 72.61;
+      else if( _str ==  "As" ) return 74.92160;
+      else if( _str ==  "Se" ) return 78.96;
+      else if( _str ==  "Br" ) return 79.904;
+      else if( _str ==  "Cd" ) return 112.411;
+      else if( _str ==  "In" ) return 114.818;
+      else if( _str ==  "Sn" ) return 118.710;
+      else if( _str ==  "Sb" ) return 121.760;
+      else if( _str ==  "Te" ) return 127.60;
+      else if( _str ==  "Au" ) return 196.96655;
+      else if( _str ==  "Hg" ) return 200.59;
       return 0;
     }
     inline std::string Symbol(types::t_unsigned _n )

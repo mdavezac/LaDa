@@ -2,6 +2,9 @@
 //  Version: $Id$
 //
 
+#ifndef _PYTHONLADA_STRUCTURE_HPP_
+#define _PYTHONLADA_STRUCTURE_HPP_
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -10,9 +13,7 @@
 
 namespace PythonLaDa
 {
-  namespace XML
-  {
-    template<> std::string nodename<Crystal::Structure>();
-  }
-  void export_structure();
+  void expose_structure();
 }
+
+#endif

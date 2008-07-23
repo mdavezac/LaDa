@@ -14,6 +14,7 @@
 #include <opt/debug.h>
 
 #include "ce.hpp"
+#include "ce.impl.hpp"
 
 namespace PythonLaDa
 {
@@ -74,7 +75,7 @@ namespace PythonLaDa
     template<> TiXmlElement *findnode<t_TetraBuilder>( TiXmlHandle &_doc )
       { return findnode<t_CubicBuilder>( _doc ); }
   }
-  void export_ce()
+  void expose_ce()
   {
     using namespace boost::python;
     typedef opt::ConvexHull::Base< PiStructure >  t_CH;

@@ -9,7 +9,9 @@
 #include <boost/python.hpp>
 #include <opt/types.h>
 #include <crystal/structure.h>
+#include <crystal/lattice.h>
 
+#include "xml.hpp"
 #include "misc.hpp"
 #include "lattice.hpp"
 

@@ -26,18 +26,20 @@
 #error "Please change _TYPE_ to something else, as it is already being used."
 #endif
 
+#include "atat.hpp"
+
 using namespace boost::python;
 
 namespace PythonLaDa
 {
   using namespace atat;
-# include "atat.hpp"
+# include "atat.impl.hpp"
 
 # define _INMODULE_
-  void export_atat()
+  void expose_atat()
   {
     using namespace atat;
-#   include "atat.hpp"
+#   include "atat.impl.hpp"
   }
 
 #undef _INMODULE_

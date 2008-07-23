@@ -57,16 +57,13 @@ namespace Crystal {
   //! \xmlinput A structure can load and save itself to and from XML. See \ref
   //!           TagStructure. It is better to load the lattice first and the
   //!           structure(s) second.
-  struct Structure
+  template < class T_TYPE >
+  struct TStructure
   {
     //! The atomic type
-    typedef Atom_Type<types::t_real>  t_Atom;
+    typedef Atom_Type<T_TYPE>  t_Atom;
     //! The type of the collection of atoms. 
     typedef std::vector< t_Atom >     t_Atoms;
-    //! The reciprocal-space vector type
-    typedef CAtom                     t_kAtom;
-    //! The type of the collection of reciprocal-space vector.
-    typedef std::vector< t_kAtom >    t_kAtoms;
 
     //! Freeze no coordinate of the unit-cell
     const static types::t_unsigned FREEZE_NONE =  0;
@@ -91,9 +88,7 @@ namespace Crystal {
     //! The unit-cell of the structure in cartesian coordinate.
     atat::rMatrix3d cell;
     //! The atomic position in cartesian unit and their occupation.
-    std::vector< Atom_Type<types::t_real> > atoms;
-    //! The reciprocal-space vector position in cartesian unit and their intensity.
-    std::vector< CAtom > k_vecs;
+    std::vector< Atom_Type<T_TYPE> > atoms;
     //! Just an old variable with the number of the structure in those NREL PI files.
     std::string name;
     //! The energy of the structure, whatever (and if) it is computed with.
@@ -102,26 +97,71 @@ namespace Crystal {
     types::t_unsigned freeze;
     //! The scale in which cartesian units are given.
     types::t_real scale;
+
+    public: 
+
+    //! Constructor
+    TStructure() : name(""), energy(0), freeze(FREEZE_NONE) {};
+    //! Constructor. Loads itself from XML node \a _element.
+    TStructure   ( const TiXmlElement &_element )
+               : name(""), energy(0), freeze(FREEZE_NONE)
+      { Load( _element ); };
+    //! Copy Constructor
+    TStructure   ( const TStructure<T_TYPE> &_str )
+               : cell(_str.cell), atoms(_str.atoms), name(_str.name), 
+                 energy(_str.energy), freeze(_str.freeze), scale( _str.scale ) {}
+    //! Destructor.
+    ~TStructure () {};
+
+    //! Prints a structure to a stream.
+    void print_out( std::ostream &stream ) const;
+    //! Prints a structure to a string
+    const std::string string() const
+      { std::ostringstream sstr; print_out(sstr); return sstr.str(); }
+
+    //! Loads a structure from XML.
+    bool Load( const TiXmlElement &_element );
+    //! Saves a structure to XML.
+    void print_xml( TiXmlElement &_node ) const;
+
+    //! \brief Equates to \e geometic structure.
+    //! \details The unit-cell and the atomic positions are compared, but not
+    //!           the occupations.
+    bool operator== (const TStructure<T_TYPE> &_str ) const;
+    
+    //! Serializes a structure.
+    template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
+  };
+  
+  struct Structure : public TStructure< types::t_real >
+  {
+    //! The atomic type
+    typedef Atom_Type<types::t_real>  t_Atom;
+    //! The type of the collection of atoms. 
+    typedef std::vector< t_Atom >     t_Atoms;
+    //! The reciprocal-space vector type
+    typedef CAtom                     t_kAtom;
+    //! The type of the collection of reciprocal-space vector.
+    typedef std::vector< t_kAtom >    t_kAtoms;
+
+    //! The reciprocal-space vector position in cartesian unit and their intensity.
+    std::vector< CAtom > k_vecs;
     //! A pointer to the lattice,
     static Crystal::Lattice *lattice;
 
     public: 
 
     //! Constructor
-    Structure() : name(""), energy(0), freeze(FREEZE_NONE) {};
+    Structure() : TStructure<types::t_real>() {}
     //! Constructor and Initializer
     Structure   ( const Atat_Structure &atat ) 
-              : name(""), energy(0), freeze(FREEZE_NONE)
-        { convert_from_ATAT( atat ); };
+              : TStructure<types::t_real>() { convert_from_ATAT( atat ); };
     //! Constructor. Loads itself from XML node \a _element.
     Structure   ( const TiXmlElement &_element )
-              : name(""), energy(0), freeze(FREEZE_NONE)
-      { Load( _element ); };
+              : TStructure<types::t_real>() { Load( _element ); };
     //! Copy Constructor
     Structure   ( const Structure &_str )
-              : cell(_str.cell), atoms(_str.atoms), k_vecs(_str.k_vecs),
-                name(_str.name), energy(_str.energy), freeze(_str.freeze),
-                scale( _str.scale ) {}
+              : TStructure<types::t_real>( _str ), k_vecs(_str.k_vecs) {}
     //! Destructor.
     ~Structure () {};
 
@@ -158,11 +198,6 @@ namespace Crystal {
     //! Saves a structure to XML.
     void print_xml( TiXmlElement &_node ) const;
 
-    //! \brief Equates to \e geometic structure.
-    //! \details The unit-cell and the atomic positions are compared, but not
-    //!           the occupations.
-    bool operator== (const Structure &_str ) const;
-    
     //! \brief Copies the reciprocal-space vectors to a container.
     //! \details Since Atom_Type automatically returns reference to a
     //!          atat::rVector3d and its type, this routien can copy the full
@@ -170,9 +205,6 @@ namespace Crystal {
     //!          intensities only, depending on the type of
     //!          t_container::value_type.
     template<class t_container > void set_kvectors( const t_container &_container );
-
-    //! Sets the site index of each atom according to Structure::lattice.
-    bool set_site_indices();
 
     //! \brief Computes the position of the reciprocal-space vectors in the first
     //!        Brillouin zone of the lattice unit-cell.
@@ -198,25 +230,14 @@ namespace Crystal {
     //!                  character.
     std::ostream& print_xyz( std::ostream &_stream,
                              const std::string &_name = "" ) const;
+    
+    //! Sets the site index of each atom according to Structure::lattice.
+    bool set_site_indices();
+
     //! Serializes a structure.
     template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
   };
 
-  template< class ARCHIVE >
-    void Structure :: serialize( ARCHIVE & _ar, const unsigned int _version)
-    {
-      _ar & cell;
-      _ar & atoms;
-      _ar & k_vecs;
-      _ar & energy;
-      _ar & freeze;
-      _ar & scale;
-    }
-
-  //! \cond
-  void  find_range( const atat::rMatrix3d &A, atat::iVector3d &kvec );
-  //! \endcond
- 
   //! Returns true if \a _a and \a _b are periodic equivalents of the unit-cell \a _cell.
   bool are_equivalent( const atat::rVector3d &_a,
                        const atat::rVector3d &_b,
@@ -275,113 +296,10 @@ namespace Crystal {
   void fill_structure( Crystal::Structure &_str );
   //! Reads structure in NREL format.
   void read_structure( Structure &_struct, const boost::filesystem::path &_path );
-  
-
-
-  //! \cond
-  template <class CONTAINER>
-  void remove_equivalents( CONTAINER &_cont, const atat::rMatrix3d &_cell)
-  {
-    typename CONTAINER :: iterator i_vec = _cont.begin();
-    typename CONTAINER :: iterator i_end = _cont.end();
-    typename CONTAINER :: iterator i_which;
-
-    while( i_vec != i_end )
-    {
-      i_which = i_vec+1;
-      for ( ; i_which != i_end; i_which++ )
-        if ( are_equivalent( *i_which, *i_vec, _cell ) )
-          break;
-
-      if ( i_which == i_end )
-      { 
-        ++i_vec;
-        continue;
-      }
-      
-      ( atat::norm2( (atat::rVector3d&) *i_vec ) < atat::norm2( (atat::rVector3d&) *i_which ) ) ? 
-            _cont.erase(i_which): _cont.erase(i_vec);
-      i_vec = _cont.begin();
-      i_end = _cont.end();
-    }
-
-  }
-  //! \endcond
-
-
-  inline bool Structure :: operator== (const Structure &_str ) const
-  {
-    return     Fuzzy :: eq( cell(0,0), _str.cell(0,0) )
-           and Fuzzy :: eq( cell(1,0), _str.cell(1,0) )
-           and Fuzzy :: eq( cell(2,0), _str.cell(2,0) )
-           and Fuzzy :: eq( cell(0,1), _str.cell(0,1) )
-           and Fuzzy :: eq( cell(1,1), _str.cell(1,1) )
-           and Fuzzy :: eq( cell(2,1), _str.cell(2,1) )
-           and Fuzzy :: eq( cell(0,2), _str.cell(0,2) )
-           and Fuzzy :: eq( cell(1,2), _str.cell(1,2) )
-           and Fuzzy :: eq( cell(2,2), _str.cell(2,2) )
-           and atoms == _str.atoms;
-  }
-    
-  template<class t_container >
-    void Structure :: set_kvectors( const t_container &_container )
-    {
-      typename t_container :: const_iterator i_kvec =  _container.begin();
-      typename t_container :: const_iterator i_end =  _container.end();
-      CAtom kvec;
-      k_vecs.clear();
-      k_vecs.reserve( _container.size() );
-      for( ; i_kvec != i_end; ++i_kvec ) 
-      {
-        kvec = (*i_kvec);
-        k_vecs.push_back( kvec );
-      }
-    }
-
-
-  template<class T_R_IT, class T_K_IT>
-  Fourier :: Fourier( T_R_IT _rfirst, T_R_IT _rend,
-                      T_K_IT _kfirst, T_K_IT _kend )
-  {
-    const std::complex<types::t_real>
-       imath(0, -2*3.1415926535897932384626433832795028841971693993751058208);
-    
-    for (; _kfirst != _kend; ++_kfirst)
-    {
-      _kfirst->type = std::complex<types::t_real>(0);
-      for(T_R_IT i_r( _rfirst ); i_r != _rend; ++i_r )
-      {
-        _kfirst->type +=   exp( imath * ( i_r->pos[0] * _kfirst->pos[0] +
-                                          i_r->pos[1] * _kfirst->pos[1] +
-                                          i_r->pos[2] * _kfirst->pos[2] ) )
-                         * i_r->type;
-      }
-    }
-  }
-  template<class T_R_IT, class T_K_IT, class T_O_IT >
-  Fourier :: Fourier( T_R_IT _rfirst, T_R_IT _rend,
-                      T_K_IT _kfirst, T_K_IT _kend,
-                      T_O_IT _rout ) // sets rvector values from kspace values
-  {
-    const types::t_complex
-       imath(0, 2*3.1415926535897932384626433832795028841971693993751058208);
-    for (; _rfirst != _rend; ++_rfirst, ++_rout)
-    {
-      *_rout = types::t_complex(0,0);
-      for(T_K_IT i_k=_kfirst; i_k != _kend; ++i_k)
-      {
-        *_rout +=   exp( imath * ( _rfirst->pos[0] * i_k->pos[0] +
-                                   _rfirst->pos[1] * i_k->pos[1] +
-                                   _rfirst->pos[2] * i_k->pos[2] ) )
-                  * i_k->type;
-      }
-    }
-  }
-
-
-
 
 } // namespace Crystal
+
+#include "structure.impl.h"
 
 
 #endif

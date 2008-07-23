@@ -252,24 +252,6 @@ namespace Crystal {
     return true;
   }
 
-  bool Structure :: set_site_indices()
-  {
-    if ( not lattice )
-      return false;
-
-    bool result = true;
-    t_Atoms :: iterator i_atom = atoms.begin();
-    t_Atoms :: iterator i_atom_end = atoms.end();
-    for(; i_atom != i_atom_end; ++i_atom )
-    {
-      i_atom->site = lattice->get_atom_site_index( i_atom->pos );
-      (i_atom->site == -1) ?
-        result = false:
-        i_atom->freeze |= lattice->sites[ i_atom->site ].freeze;
-    }
-    return result;
-  }
-
   // prints an xml Structure tag. 
   // It may or may not have been created by a call
   // to Constituent_Stain :: print_xml( ... )

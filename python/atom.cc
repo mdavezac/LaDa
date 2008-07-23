@@ -6,13 +6,15 @@
 #include <config.h>
 #endif
 
+#include <boost/python.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
-#include <algorithm>
-#include <boost/lambda/lambda.hpp>
+#include <sstream>
 
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <crystal/structure.h>
+#include <crystal/atom.h>
+
 
 #include "misc.hpp"
 #include "xml.hpp"
@@ -22,7 +24,14 @@
 
 namespace PythonLaDa
 {
-  void export_atom()
+  Crystal::TStructure<std::string>::t_Atom* SAtomFromObject( boost::python::list& _ob );
+  Crystal::Structure::t_Atom* AtomFromObject( boost::python::list& _ob );
+  Crystal::Lattice::t_Site* SiteFromObject( boost::python::list& _ob );
+
+  types::t_real toReal(std::string _str );
+  std::string toType( types::t_real _r );
+
+  void expose_atom()
   {
     using namespace boost::python;
     typedef Crystal::Structure::t_Atom t_Atom;
@@ -46,11 +55,15 @@ namespace PythonLaDa
       .def( "__str__",  &print<t_Site> ) ;
 
 
+    def( "SAtom", &SAtomFromObject,
+         return_value_policy<manage_new_object>() );
     def( "Atom", &AtomFromObject,
          return_value_policy<manage_new_object>() );
     def( "Site", &SiteFromObject,
          return_value_policy<manage_new_object>() );
 
+    class_< Crystal::Structure::t_Atoms >("SAtoms")
+      .def(vector_indexing_suite< Crystal::TStructure<std::string>::t_Atoms >());
     class_< Crystal::Structure::t_Atoms >("Atoms")
       .def(vector_indexing_suite< Crystal::Structure::t_Atoms >());
     class_< Crystal::Lattice::t_Sites >("Sites")
@@ -58,6 +71,43 @@ namespace PythonLaDa
 
     def( "toAtomType", &toReal );
     def( "fromAtomType", &toType );
+  }
+
+  Crystal::TStructure<std::string>::t_Atom* SAtomFromObject( boost::python::list& _ob )
+  {
+    using namespace boost::python;
+    typedef Crystal::TStructure<std::string>::t_Atom t_Atom;
+    t_Atom *result = NULL;
+    try
+    { 
+      result = new t_Atom;
+      types::t_unsigned length = len(_ob);
+      if( length < 3 ) return result;
+
+      result->pos.x[0] = extract< types::t_real >( _ob[0] );
+      result->pos.x[1] = extract< types::t_real >( _ob[1] );
+      result->pos.x[2] = extract< types::t_real >( _ob[2] );
+      if( length == 3 ) return result;
+      result->pos = result->pos;
+      result->type = extract< std::string >( _ob[3] );
+      if( length == 4 ) return result;
+      result->site = extract< types::t_real >( _ob[4] );
+      return result;
+    }
+    catch( std::exception &_e )
+    {
+      if( result ) delete result;
+      std::ostringstream sstr;
+      sstr << "Object cannot be converted to an atom: \n"
+           << _e.what() << "\n";
+      throw std::runtime_error( sstr.str() );
+    }
+    catch( ... )
+    {
+      if( result ) delete result;
+      throw std::runtime_error( "Could not convert object to Atom." );
+    }
+    return NULL;
   }
 
   Crystal::Structure::t_Atom* AtomFromObject( boost::python::list& _ob )

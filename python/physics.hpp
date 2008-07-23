@@ -2,8 +2,8 @@
 //  Version: $Id$
 //
 
-#ifndef _LADAPYTHON_LATTICE_HPP_
-#define _LADAPYTHON_LATTICE_HPP_
+#ifndef _LADAPYTHON_PHYSICS_HPP_
+#define _LADAPYTHON_PHYSICS_HPP_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -11,7 +11,7 @@
 
 namespace PythonLaDa
 {
-  void expose_lattice();
+  void expose_physics();
 }
 
 #endif
