@@ -3,6 +3,7 @@
 //
 
 #include <boost/lambda/lambda.hpp>
+#include <boost/serialization/base_object.hpp>
 
 
 namespace Crystal

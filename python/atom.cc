@@ -34,11 +34,19 @@ namespace PythonLaDa
   void expose_atom()
   {
     using namespace boost::python;
+    typedef Crystal::TStructure<std::string>::t_Atom t_StrAtom;
     typedef Crystal::Structure::t_Atom t_Atom;
     typedef Crystal::Lattice::t_Site t_Site;
     class_< Crystal::Structure::t_Atoms >("VecStrings")
       .def(vector_indexing_suite< t_Site::t_Type >());
 
+    class_< t_StrAtom >( "details_StrAtom" )
+      .def( init< t_StrAtom >() )
+      .def_readwrite( "pos",    &t_StrAtom::pos )
+      .def_readwrite( "site",   &t_StrAtom::site )
+      .def_readwrite( "type",   &t_StrAtom::type )
+      .def_readwrite( "freeze", &t_StrAtom::freeze )
+      .def( "__str__",  &print<t_StrAtom> ) ;
     class_< t_Atom >( "details_Atom" )
       .def( init< t_Atom >() )
       .def_readwrite( "pos",    &t_Atom::pos )
@@ -62,7 +70,7 @@ namespace PythonLaDa
     def( "Site", &SiteFromObject,
          return_value_policy<manage_new_object>() );
 
-    class_< Crystal::Structure::t_Atoms >("SAtoms")
+    class_< Crystal::TStructure<std::string>::t_Atoms >("SAtoms")
       .def(vector_indexing_suite< Crystal::TStructure<std::string>::t_Atoms >());
     class_< Crystal::Structure::t_Atoms >("Atoms")
       .def(vector_indexing_suite< Crystal::Structure::t_Atoms >());

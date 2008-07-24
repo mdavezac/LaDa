@@ -42,7 +42,7 @@ namespace PythonLaDa
     return result;
   }
 
-  void export_lattice()
+  void expose_lattice()
   {
     using namespace boost::python;
     class_< Crystal::Lattice >( "Lattice" )

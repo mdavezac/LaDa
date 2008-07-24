@@ -102,7 +102,7 @@ PRINT_DOC = $(PRINT_H) $(PRINT_CC)
 PYTHON_CE_CC = ce.cc
 PYTHON_CE_H = ce.hpp ce.impl.hpp
 PYTHON_H = atat.hpp atat.impl.hpp atom.hpp atom.impl.hpp structure.hpp lattice.hpp xml.hpp misc.hpp 
-PYTHON_CC = atat.cc atom.cc structure.cc lattice.cc ce.cc lada.cc
+PYTHON_CC = atat.cc atom.cc structure.cc lattice.cc lada.cc physics.cc
 PYTHON_DOC = $(PYTHON_CC) $(PYTHON_H) $(PYTHON_CE_CC) $(PYTHON_CE_H)
 
 SEPARABLE_CC = cefitting.cc  main.cc ce.cc leave_many_out.cc

@@ -8,6 +8,8 @@
 
 #include <boost/python.hpp>
 
+#include <revision.h>
+
 #include "atat.hpp"
 #include "lattice.hpp"
 #include "atom.hpp"
@@ -17,8 +19,22 @@
 #  include "ce.hpp"
 #endif
 
+// namespace PythonLaDa
+// {
+//   void expose_svn()
+//   {
+//     using namespace boost::python;
+//     def( "Revision", &SVN::Revision );
+//     def( "Year",     &SVN::Year );
+//     def( "Month",    &SVN::Month );
+//     def( "Day",      &SVN::Day );
+//     def( "User",     &SVN::User );
+//   }
+// }
+
 BOOST_PYTHON_MODULE(LaDa)
 {
+  // PythonLaDa::expose_svn();
   PythonLaDa::expose_physics();
   PythonLaDa::expose_atat();
   PythonLaDa::expose_lattice();

@@ -9,7 +9,7 @@ if DOCE
 endif 
 AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
 	      @MPI_CFLAGS@ @BOOST_CXXFLAGS@ -I@PYTHON_INCLUDE_DIR@
-AM_LDFLAGS = @TINYXML_LIBS@  @BOOST_LDFLAGS@ @BOOST_PYTHON@
+AM_LDFLAGS = @TINYXML_LIBS@  @BOOST_LDFLAGS@
 lib_LTLIBRARIES = liblada.la 
 liblada_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) @BOOST_CXXFLAGS@ \
               	-I@PYTHON_INCLUDE_DIR@
@@ -19,7 +19,7 @@ liblada_la_LIBADD =  $(CELIB) \
                      ../crystal/libcrystal.la \
 		     ../atat/libatat.la \
 		     ../physics/libphysics.la \
-                     @MPI_ADDLIB@ 
+                     @MPI_ADDLIB@  @BOOST_PYTHON@ @BOOST_FS@ 
 ../crystal/licrystal.la: 
 	cd ../crystal; $(MAKE) 
 
