@@ -158,6 +158,7 @@ namespace Physics
       else if( _str ==  "Si" ) return 14;
       else if( _str ==  "P" ) return 15; 
       else if( _str ==  "S" ) return 16; 
+      else if( _str ==  "Sc" ) return 21; 
       else if( _str ==  "Ni" ) return 28;
       else if( _str ==  "Cu" ) return 29;
       else if( _str ==  "Zn" ) return 30;
@@ -177,22 +178,23 @@ namespace Physics
     }
     inline types::t_real Mass(const std::string &_str)
     {
-      if( _str ==  "Li" ) return  6.941;
-      else if( _str ==  "C" ) return  12.0107; 
-      else if( _str ==  "N" ) return  14.00674; 
-      else if( _str ==  "O" ) return  15.9994; 
-      else if( _str ==  "Al" ) return 5.9858;
-      else if( _str ==  "Si" ) return 28.0855;
-      else if( _str ==  "P" ) return 30.97376; 
-      else if( _str ==  "S" ) return 32.066; 
-      else if( _str ==  "Ni" ) return 58.6934;
-      else if( _str ==  "Cu" ) return 63.546;
-      else if( _str ==  "Zn" ) return 65.39;
-      else if( _str ==  "Ga" ) return 69.723;
-      else if( _str ==  "Ge" ) return 72.61;
-      else if( _str ==  "As" ) return 74.92160;
-      else if( _str ==  "Se" ) return 78.96;
-      else if( _str ==  "Br" ) return 79.904;
+      if     ( _str ==  "Li" ) return   6.941;
+      else if( _str ==   "C" ) return  12.0107; 
+      else if( _str ==   "N" ) return  14.00674; 
+      else if( _str ==   "O" ) return  15.9994; 
+      else if( _str ==  "Al" ) return  26.9815;
+      else if( _str ==  "Si" ) return  28.0855;
+      else if( _str ==   "P" ) return  30.97376; 
+      else if( _str ==   "S" ) return  32.066; 
+      else if( _str ==  "Sc" ) return  44.956;
+      else if( _str ==  "Ni" ) return  58.6934;
+      else if( _str ==  "Cu" ) return  63.546;
+      else if( _str ==  "Zn" ) return  65.39;
+      else if( _str ==  "Ga" ) return  69.723;
+      else if( _str ==  "Ge" ) return  72.61;
+      else if( _str ==  "As" ) return  74.92160;
+      else if( _str ==  "Se" ) return  78.96;
+      else if( _str ==  "Br" ) return  79.904;
       else if( _str ==  "Cd" ) return 112.411;
       else if( _str ==  "In" ) return 114.818;
       else if( _str ==  "Sn" ) return 118.710;
@@ -207,13 +209,14 @@ namespace Physics
       switch( _n )
       {
         case   3: return "Li"; __BREAK
-        case   6:  return "C"; __BREAK
-        case   7:  return "N"; __BREAK
-        case   8:  return "O"; __BREAK
+        case   6: return  "C"; __BREAK
+        case   7: return  "N"; __BREAK
+        case   8: return  "O"; __BREAK
         case  13: return "Al"; __BREAK
         case  14: return "Si"; __BREAK
-        case  15:  return "P"; __BREAK
-        case  16:  return "S"; __BREAK
+        case  15: return  "P"; __BREAK
+        case  16: return  "S"; __BREAK
+        case  21: return "Sc"; __BREAK
         case  28: return "Ni"; __BREAK
         case  29: return "Cu"; __BREAK
         case  30: return "Zn"; __BREAK
@@ -244,6 +247,7 @@ namespace Physics
         case  14: return  4; __BREAK
         case  15: return  5; __BREAK
         case  16: return  6; __BREAK
+        case  21: return  3; __BREAK
         case  28: return  9; __BREAK
         case  29: return 10; __BREAK
         case  30: return 11; __BREAK

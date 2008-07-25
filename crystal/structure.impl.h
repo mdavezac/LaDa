@@ -148,7 +148,7 @@ namespace Crystal
              << "\n   Atoms:\n";
               
       
-      stream << " Structure atoms " << std::endl;
+      stream << " Structure atoms\n";
       std::for_each( atoms.begin(), atoms.end(),
                      bl::var(stream) << bl::_1 << "\n" );
     }
