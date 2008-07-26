@@ -72,7 +72,7 @@ namespace function {
       t_Monomes monomes;
       __MPICODE(
         /** \ingroup mpi
-         *  \brief Communicator for parallel computation.
+         *  Communicator for parallel computation.
          *  \details During evaluations, the computation over the list of
          *           monomes is scattered across all processes. **/
         boost::mpi::communicator *comm;

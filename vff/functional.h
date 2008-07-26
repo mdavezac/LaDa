@@ -122,7 +122,7 @@ namespace Vff
       //! \details This function returns -1 if \a _e is not a bond, and returns the
       //! number of bounds if it is. Note that poeriodic images of _bond are checked and 
       //! Atomic_Center::translations and Atomic_Center::do_translate are set accordingly.
-      //! \param _e Atomic_Center object for which first neighbor relationship is checked
+      //! \param _bond Atomic_Center object for which first neighbor relationship is checked
       //! \param _cutoff distance below which first neighborness is implied
       types::t_int add_bond( t_BondRefd _bond, const types::t_real _cutoff  );
 
@@ -713,7 +713,7 @@ namespace Vff
       //! \param _C External atom. 
       //! \param _indices The resulting indices.
       void angle_indices( const std::string &_A, const std::string &_B,
-                          const std::string &_C, types::t_int _indices[2] ) const;
+                          const std::string &_C, types::t_int _indices[3] ) const;
 
     protected:
       //! \brief unpacks variables from minimizer

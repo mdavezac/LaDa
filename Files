@@ -35,14 +35,14 @@ DARWIN_BG_H  = bandgap_stubs.h  two_sites.h  single_site.h  vff.h  bandgap.h \
                $(DARWIN_BG_IMPL_H)
 DARWIN_BG_DOC = $(DARWIN_BG_H) $(DARWIN_BG_CC) 
 
-DARWIN_L_CC = bandgap_stubs.cc two_sites.cc single_site.cc vff.cc molecularity.cc layered.cc
+DARWIN_L_CC = bandgap_stubs.cc two_sites.cc single_site.cc vff.cc molecularity.cc layered.impl.h
 DARWIN_L_IMPL_H = bandgap_stubs.impl.h two_sites.impl.h single_site.impl.h molecularity.impl.h \
                   layered.impl.h 
 DARWIN_L_H  = bandgap_stubs.h   two_sites.h single_site.h  vff.h  molecularity.h  layered.h \
               $(DARWIN_L_IMPL_H)
 DARWIN_L_DOC = $(DARWIN_L_H) $(DARWIN_L_CC) 
 
-DARWIN_E_CC = emass_stubs.cc two_sites.cc single_site.cc vff.cc emass.cc layered.cc
+DARWIN_E_CC = emass_stubs.cc two_sites.cc single_site.cc vff.cc emass.cc layered.impl.h
 DARWIN_E_IMPL_H = emass_stubs.impl.h  two_sites.impl.h  single_site.impl.h \
                   emass.impl.h  layered.impl.h 
 DARWIN_E_H  = emass_stubs.h  two_sites.h  single_site.h  vff.h  emass.h  layered.h \
@@ -52,9 +52,11 @@ DARWIN_E_DOC = $(DARWIN_E_H) $(DARWIN_E_CC)
 CRYSTAL_CC = lattice.cc structure.cc 
 CRYSTAL_H  = lattice.h  structure.h  atom.h 
 CRYSTAL_DOC = $(CRYSTAL_H) $(CRYSTAL_CC) 
-CE_CC = cluster.cc harmonic.cc  polynome.cc 
-CE_H  = cluster.h  constituent_strain.h  functional_builder.h  harmonic.h   polynome.h  
-CE_IMPL_H  =  constituent_strain.impl.h  functional_builder.impl.h  harmonic.impl.h
+CE_CC     = cluster.cc harmonic.cc  polynome.cc regularization.cc
+CE_H      = cluster.h  constituent_strain.h  functional_builder.h  harmonic.h   polynome.h \
+            regularization.h
+CE_IMPL_H = constituent_strain.impl.h  functional_builder.impl.h  harmonic.impl.h \
+            regularization.impl.h
 CE_DOC = $(CE_H) $(CE_CC) 
 
 LAPACK_F90 = dlae2.f   dlanst.f  dlapy2.f  dlarf.f   dlarft.f  dlascl.f \
@@ -131,8 +133,8 @@ ALL_DOCS = doxy.conf $(DOCS_H) \
            $(addprefix darwin/, $(DARWIN_BG_DOC)) \
            $(addprefix darwin/, $(DARWIN_L_DOC)) \
            $(addprefix darwin/, $(DARWIN_E_DOC)) \
-           $(addprefix lamarck/,$(CRYSTAL_DOC)) \
-           $(addprefix lamarck/,$(CE_DOC)) \
+           $(addprefix crystal/,$(CRYSTAL_DOC)) \
+           $(addprefix ce/,$(CE_DOC)) \
            $(addprefix lapack/,$(LAPACK_DOC)) \
            $(addprefix mpi/,$(MPI_DOC)) \
            $(addprefix opt/,$(OPT_DOC)) \
@@ -142,5 +144,4 @@ ALL_DOCS = doxy.conf $(DOCS_H) \
            $(addprefix print/,$(PRINT_DOC)) \
            $(addprefix separable/,$(SEPARABLE_DOC)) \
            $(addprefix vff/,$(VFF_FORTRAN_DOC)) \
-           $(addprefix vff/,$(VFF_DOC)) \
-           $(addprefix python/,$(PYTHON_DOC)) 
+           $(addprefix vff/,$(VFF_DOC)) 

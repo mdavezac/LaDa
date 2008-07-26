@@ -74,7 +74,7 @@ namespace CE
         static t_Harmonics harmonics;
         __MPICODE(
           /** \ingroup mpi
-           *  \brief Communicator for parallel computation.
+           *  Communicator for parallel computation.
            *  \details During evaluations, the computation over the list of
            *           \b k-vectors is scattered across all processes. **/
           boost::mpi::communicator *comm;

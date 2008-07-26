@@ -66,15 +66,15 @@ namespace Separable
        *  \param[out] _b are the target value of the collapsed least square
        *                 fit along dimension \a _dim, \a _b[ (r,i) ].
        *      \f[
-       *         \_b[ (r,i) ] = \sum_o \text{targets}[o] g_{i,d}^{(r)}(x_d^{(o)})
-       *                              \prod_{u\neq d} \text{factor}[u,(r,o)]
+       *         \_b[ (r,i) ] = \sum_o \mathrm{targets}[o] g_{i,d}^{(r)}(x_d^{(o)})
+       *                              \prod_{u\neq d} \mathrm{factor}[u,(r,o)]
        *      \f]
        *  \param[out] _A will contain the collapsed matrix for the linear
        *                 least-square fit. 
        *      \f[
        *         \_A[ (r,i,r',i') ] = \sum_o g_{i,d}^{(r)}(x_d^{(o)})
-       *                              \prod_{u\neq d} \text{factors}[u,(r,o)]
-       *                              \prod_{u\neq d} \text{factors}[u,(r',o)]
+       *                              \prod_{u\neq d} \mathrm{factors}[u,(r,o)]
+       *                              \prod_{u\neq d} \mathrm{factors}[u,(r',o)]
        *                               g_{i',d}^{(r')}(x_d^{(o)})
        *      \f]
        *  \param[in] The dimension for which to create \a _A.
@@ -146,14 +146,14 @@ namespace Separable
       //! \details expanded[ d, r, (i,o) ]. The type is a vector of vectors.
       //!          The fastest-running \e internal index is \e i. The
       //!          fastest-running \e external index is d.
-      //!          \f$ \text{expanded}[ d, r, (i,o)] = g_{d,i}^{(r)}(x_d^{(o)})\f$.
+      //!          \f$ \mathrm{expanded}[ d, r, (i,o)] = g_{d,i}^{(r)}(x_d^{(o)})\f$.
       t_Expanded expanded;
       //! Type of the factors.
       typedef std::vector< std::vector< t_Type > > t_Factors;
       /** \brief A matrix wich contains the factors of the separable functions.
        *  \details factors[ (r, o), d ]. A vector of vectors. 
        *           \f$
-       *               \text{factors}[(r, o), d] = \sum_i
+       *               \mathrm{factors}[(r, o), d] = \sum_i
        *               \lambda_{d,i}^{(r)}g_{d,i}^{(r)}(x_d^{(o)})
        *           \f$. **/
       t_Factors factors;

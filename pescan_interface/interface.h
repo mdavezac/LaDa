@@ -217,7 +217,7 @@ namespace Pescan
       __DIAGA( 
         //! Pointer to the base wrapper for the MPI intracommunicator
         mpi::Base *comm;
-      )
+      );
      
     public:
       //! Stores results

@@ -196,6 +196,4 @@ namespace BandGap
 } // namespace BandGap
 
 
-#endif
-
 #endif // _PESCAN_H_

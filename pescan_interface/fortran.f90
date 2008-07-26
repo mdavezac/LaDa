@@ -13,7 +13,7 @@ subroutine iaga_call_genpot( comm_handle_, rank_ )
 
   irank = rank_
   write(arank,'(I6)') irank
-  arank = adjustl( arank );
+  arank = adjustl( arank )
   comm_handle = comm_handle_
 
   call getVLarg()
