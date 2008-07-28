@@ -81,9 +81,7 @@ namespace Fitting
       Cgs::t_Return Cgs :: operator()( T_MATRIX &_A, T_VECTOR &_x, 
                                        const T_VECTOR &_b, T_PRECOND &_precond ) const
       {
-#       ifdef _LADADEBUG
-          try {
-#       endif
+        __DEBUGTRYBEGIN
         namespace ublas = boost::numeric::ublas;
         typedef T_VECTOR t_Vector;
         typedef typename t_Vector::value_type t_Type;
@@ -144,9 +142,7 @@ out:
                     << (iter > 0 ? " iterations": " iteration")
                     << " and with a residual "  << resid << ".\n";
         return t_Return( resid, iter );
-#       ifdef _LADADEBUG
-          } __CATCHCODE(, "Error encountered while solving Ax = b system.\n" )
-#       endif
+        __DEBUGTRYEND(, "Error encountered while solving Ax = b system.\n" )
       }
 
 } // end of Fitting namespace.

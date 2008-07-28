@@ -624,5 +624,35 @@ namespace Crystal {
       
     __TRYEND(, "Error while reading " << _path << "\n" )
   }
+
+  void read_ce_structures( const boost::filesystem::path &_dir,
+                           std::vector<Crystal::Structure> &_structures )
+  {
+    __TRYBEGIN
+    namespace fs = boost::filesystem;
+
+    // First finds directory of LDAs.dat.
+    __DOASSERT( fs::exists( _dir ), _dir << " does not exist.\n" );
+    fs::path dir( _dir.branch_path()  );
+
+    // then starts reading file.
+    std::ifstream ldas( _dir.string().c_str(), std::ifstream::in );
+    std::string line;
+    while( std::getline( ldas, line ) )
+    {
+      const boost::regex re("^(\\s+)?(\\S+)\\s+(-?\\d+(\\.\\d+)?)");
+      boost::match_results<std::string::const_iterator> what;
+      if( not boost::regex_search( line, what, re ) ) continue;
+
+      Crystal :: Structure structure;
+      structure.name = what.str(2);
+      structure.energy = boost::lexical_cast<types::t_real>( what.str(3) );
+
+      Crystal :: read_structure( structure, dir / structure.name );
+      _structures.push_back(structure);
+    }
+
+    __TRYEND(,"Error while parsing " << _dir << " and structures.\n" )
+  }
 } // namespace Crystal
 

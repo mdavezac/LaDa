@@ -297,6 +297,14 @@ namespace Crystal {
   //! Reads structure in NREL format.
   void read_structure( Structure &_struct, const boost::filesystem::path &_path );
 
+  //! \brief reads lda energies and structures from NREL input files.
+  //! \param[in] _path is the full or relative path to the "LDAs.dat" file.
+  //!                  Structure files are expected to be found in the same
+  //!                  directory as the LDAs.dat and is deduced from \a _path.
+  //! \param[inout] _structures are added to this container.
+  void read_ce_structures( const boost::filesystem::path &_dir,
+                           std::vector<Crystal::Structure> &_structures );
+
 } // namespace Crystal
 
 #include "structure.impl.h"

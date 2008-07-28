@@ -13,6 +13,8 @@
 #include <fstream>
 #include <string>
 #include <complex>
+#include <boost/shared_ptr.hpp>
+#include <boost/filesystem/path.hpp>
 
 #include <tinyxml/tinyxml.h>
 
@@ -181,6 +183,11 @@ namespace Crystal {
   //! Dumps a lattice to a stream.
   inline std::ostream& operator<<( std::ostream& _stream, const Crystal::Lattice& _lat )
     { _lat.print_out(_stream); return _stream; }
+
+  //! Reads lattice from input file \a _fpath in current directory, or in \a _dpath.
+  boost::shared_ptr< Crystal::Lattice >
+    read_lattice( const boost::filesystem::path &_fpath, 
+                  const boost::filesystem::path &_dpath );
 
 } // namespace Crystal
 #endif

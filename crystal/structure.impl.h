@@ -4,6 +4,9 @@
 
 #include <boost/lambda/lambda.hpp>
 #include <boost/serialization/base_object.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/regex.hpp>
+#include <boost/lexical_cast.hpp>
 
 
 namespace Crystal
@@ -345,6 +348,5 @@ namespace Crystal
       }
  
     }
-
 
 }

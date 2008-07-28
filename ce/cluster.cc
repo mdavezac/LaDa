@@ -20,7 +20,7 @@ namespace CE {
   //! \cond
   namespace details
   {
-    void  add_equivalent_clusters( Crystal::Lattice &_lat, 
+    void  add_equivalent_clusters( const Crystal::Lattice &_lat, 
                                    std::vector< Cluster > &_out  );
   }
   //! \endcond
@@ -181,8 +181,10 @@ namespace CE {
         continue;
       }
       // looks for position in class i_found.
-      std::vector< std::vector< atat::rVector3d > > :: iterator i_found = onesize.begin();
-      std::vector< std::vector< atat::rVector3d > > :: iterator i_found_end = onesize.end();
+      std::vector< std::vector< atat::rVector3d > > :: iterator
+        i_found = onesize.begin();
+      std::vector< std::vector< atat::rVector3d > > :: iterator
+        i_found_end = onesize.end();
       for(; i_found != i_found_end; ++i_found )
       {
         std::vector< atat::rVector3d > :: const_iterator i_equiv;
@@ -271,8 +273,8 @@ namespace CE {
     __DEBUGTRYEND(,"Could not create clusters.\n" )
   }
  
-  void read_clusters( Crystal::Lattice &_lat, 
-                      boost::filesystem::path &_path, 
+  void read_clusters( const Crystal::Lattice &_lat, 
+                      const boost::filesystem::path &_path, 
                       std::vector< std::vector< Cluster > > &_out )
   {
     __DEBUGTRYBEGIN
@@ -323,7 +325,7 @@ namespace CE {
     // finds all clusters, including symmetric equivalents
     // starting from cluster included in Lamarck::clusters
     // results are stored in a new Lamarck::clusters
-    void  add_equivalent_clusters( Crystal::Lattice &_lat, 
+    void  add_equivalent_clusters( const Crystal::Lattice &_lat, 
                                    std::vector< Cluster > &_out  ) 
     {
       typedef std::vector< Cluster > t_Clusters;

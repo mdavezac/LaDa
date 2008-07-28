@@ -45,8 +45,8 @@ namespace CE
                           types::t_unsigned _maxN,
                           std::vector< std::vector<Cluster> > &_out );
   //! Reads clusters from a NREL Jfile.
-  void read_clusters( Crystal::Lattice &_lat, 
-                      boost::filesystem::path &_path, 
+  void read_clusters( const Crystal::Lattice &_lat, 
+                      const boost::filesystem::path &_path, 
                       std::vector< std::vector< Cluster > > &_out );
 
   
@@ -73,17 +73,18 @@ namespace CE
                                    types::t_unsigned,
                                    types::t_unsigned,
                                    std::vector< std::vector<Cluster> > &);
-    friend void read_clusters( Crystal::Lattice &_lat,
-                               boost::filesystem::path &_path, 
+    friend void read_clusters( const Crystal::Lattice &_lat,
+                               const boost::filesystem::path &_path, 
                                std::vector< std::vector< Cluster > > &_out );
     
     protected:
       //! Vectors linking sites which interact through this cluster.
       std::vector<atat::rVector3d> vectors;
+
+    public:
       //! Interaction energy of the cluster.
       types::t_real eci;
 
-    public:
       //! Constructor
       Cluster () { eci = 0; };
       //! Copy Constructor
@@ -125,10 +126,13 @@ namespace CE
       //! Load a cluster from XML.
       bool Load(const TiXmlElement &_node);
       //! Serializes a cluster.
-      template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
+      template<class Archive> void serialize( Archive & _ar,
+                                              const unsigned int _version)
         { _ar & eci; _ar & vectors; } 
   };
 
+  inline std::ostream &operator<<( std::ostream &_sstr, const Cluster &_cl )
+    { _cl.print_out( _sstr ); return _sstr; }
 
 
  

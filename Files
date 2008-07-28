@@ -24,9 +24,9 @@ DARWIN_LIB_H = concentration.h debug.h \
 	       scaling.h minimizergenop.h topology.h $(DARWIN_LIB_IMPL_H)
 DARWIN_LIB_DOC = $(DARWIN_LIB_H) $(DARWIN_LIB_CC) 
 
-DARWIN_CE_CC = ce.cc single_site.cc groundstate.cc
+DARWIN_CE_CC = ce.cc single_site.cc groundstate.cc 
 DARWIN_CE_IMPL_H = single_site.impl.h 
-DARWIN_CE_H  = ce.h  single_site.h  groundstate.h $(DARWIN_CE_IMPL_H)
+DARWIN_CE_H  = ce.h  single_site.h  groundstate.h  $(DARWIN_CE_IMPL_H)
 DARWIN_CE_DOC = $(DARWIN_CE_H) $(DARWIN_CE_CC) 
 
 DARWIN_BG_CC = bandgap_stubs.cc two_sites.cc single_site.cc vff.cc bandgap.cc 
@@ -53,8 +53,8 @@ CRYSTAL_CC = lattice.cc structure.cc
 CRYSTAL_H  = lattice.h  structure.h  atom.h 
 CRYSTAL_DOC = $(CRYSTAL_H) $(CRYSTAL_CC) 
 CE_CC     = cluster.cc harmonic.cc  polynome.cc regularization.cc
-CE_H      = cluster.h  constituent_strain.h  functional_builder.h  harmonic.h   polynome.h \
-            regularization.h
+CE_H      = cluster.h  constituent_strain.h  functional_builder.h  harmonic.h \
+            polynome.h regularization.h
 CE_IMPL_H = constituent_strain.impl.h  functional_builder.impl.h  harmonic.impl.h \
             regularization.impl.h
 CE_DOC = $(CE_H) $(CE_CC) 
@@ -80,8 +80,8 @@ OPT_H = ndim_iterator.h minimize_base.h polynome.h frprmn_minimizer.h \
         gsl_minimizers.h types.h convex_hull.h function_base.h \
 	va_minimizer.h fitness_function.h  function_functors.h monome.h traits.h \
         fuzzy.h atat.h debug.h va_function.h gsl_lsq.h random.h algorithms.h \
-        gsl.h allsq.h cgs.h
-OPT_CC = gsl_lsq.cc random.cc gsl.cc
+        gsl.h allsq.h cgs.h gsl_nllsq.h
+OPT_CC = gsl_lsq.cc random.cc gsl.cc gsl_nllsq.cc
 OPT_F90 =  df1dim.f90  frprmn.f90  linmin.f90
 OPT_DOC = $(OPT_H) $(OPT_CC) 
 

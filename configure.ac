@@ -472,9 +472,6 @@ if test "$python" = true; then
 else
   BOOST_PYTHON=""
 fi
-if test "$separable" != true; then
-  BOOST_REGEX=""
-fi
 AC_SUBST(BOOST_LDFLAGS)
 AC_SUBST(BOOST_MPI)
 AC_SUBST(BOOST_PROGOP)

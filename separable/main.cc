@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
                    " for the file\n"
                    "                 from which to load the lattice. "
                    "LATTICEINPUT should be\n"
-                   "                 full path, a relative path "
+                   "                 a full path or a relative path "
                    "starting from the current\n"
                    "                 directory, or a relative path "
                    "starting from the DATADIR\n"
