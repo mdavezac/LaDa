@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
       ("latinput", po::value<std::string>()->default_value("input.xml"),
                    "Lattice input file." )
       ("tolerance", po::value<types::t_real>()->default_value(1e-4),
-                    "Tolerance of the alternating linear-least square fit."  )
+                    "Tolerance of the non-linear-least square fit."  )
       ("maxpairs", po::value<types::t_unsigned>()->default_value(5),
                     "Max distance for pairs (in neighbors)."  );
     po::options_description hidden("hidden");
@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
     // initialization.
     reg.init( structures );
     
-    CE::perform_variation( reg, verbosity - 1);
+    CE::drautz_diaz_ortiz( reg, tolerance, verbosity - 1);
   }
   catch ( boost::program_options::invalid_command_line_syntax &_b)
   {

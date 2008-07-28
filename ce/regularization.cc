@@ -393,9 +393,9 @@ namespace CE
     return square_errors();
   }
 
-  void variational_figure_plot( Regulated &_reg, 
-                                types::t_real _tolerance,
-                                types::t_int _verbosity )
+  void drautz_diaz_ortiz( Regulated &_reg, 
+                          types::t_real _tolerance,
+                          types::t_int _verbosity )
   {
     namespace bl = boost::lambda;
 

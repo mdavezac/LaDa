@@ -22,30 +22,13 @@ namespace CE
   class Regulated;
   //! \endcond
 
-  //! \brief Computes pis of \a _str for \a _clusters.
-  //! \param[in] _cluster is a vector of containers of symmetrically equivalent
-  //!                     cluster, centered on the origin.
-  //! \param[in] _str the structure for which to compute the pis.
-  //! \param[out] _pis the computed pis, one per class of symmetrically
-  //!                  equivalent clusters.
-  template< class T_CLUSTERS, class T_PIS >
-  void find_pis( const T_CLUSTERS &_clusters,
-                 const Crystal::Structure & _str,
-                 T_PIS &_pis );
-  //! \brief Computes pis of \a _str for \a _clusters.
-  //! \see[in] _cluster is a vector of containers of symmetrically equivalent
-  //!                     cluster, centered on the origin.
-  //! \param[in] _str structures for which to compute the pis.
-  //! \param[out] _pis the computed pis, one per class of symmetrically
-  //!                  equivalent clusters.
-  template< class T_CLUSTERS, class T_PIS >
-  void find_pis( const T_CLUSTERS &_clusters,
-                 const std::vector< Crystal::Structure > & _str,
-                 T_PIS &_pis );
-
   //! \brief Computes CV scores and reduces number of clusters to zero.
   //! \details Regulated::clusters are unchanged at the end of the run.
-  void perform_variation( Regulated &_reg, types::t_unsigned _verbosity );
+  //! \brief Regulated Cluster-Expansion.
+  //! \see <A HREF="http://dx.doi.org/10.1103/PhysRevB.73.224207"> Ralf Drautz
+  void drautz_diaz_ortiz( Regulated &_reg,
+                          types::t_real tolerance = 1e-4,
+                          types::t_int _verbosity = 0 );
 
   //! \brief Regulated Cluster-Expansion.
   //! \see <A HREF="http://dx.doi.org/10.1103/PhysRevB.73.224207"> Ralf Drautz
@@ -131,7 +114,5 @@ namespace CE
   };
 
 } // end of namespace CE
-
-#include "regularization.impl.h"
 
 #endif 

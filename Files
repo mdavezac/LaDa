@@ -56,7 +56,7 @@ CE_CC     = cluster.cc harmonic.cc  polynome.cc regularization.cc
 CE_H      = cluster.h  constituent_strain.h  functional_builder.h  harmonic.h \
             polynome.h regularization.h
 CE_IMPL_H = constituent_strain.impl.h  functional_builder.impl.h  harmonic.impl.h \
-            regularization.impl.h
+            cluster.impl.h
 CE_DOC = $(CE_H) $(CE_CC) 
 
 LAPACK_F90 = dlae2.f   dlanst.f  dlapy2.f  dlarf.f   dlarft.f  dlascl.f \
