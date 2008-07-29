@@ -88,7 +88,7 @@ namespace CE
                 "Inconsistent number of pis and numsums.\n" )
       __ASSERT( denumsums.size() != nb_cls,
                 "Inconsistent number of pis and denumsums.\n" )
-      *i_ret = (*i_w) * (*i_target);
+      types::t_real intermed(*i_target);
 
       // loop over alpha.
       const types::t_real * i_arg = _arg;
@@ -115,9 +115,10 @@ namespace CE
           denum = (*i_denum) - (*i_w) * (*i_alphapi) * (*i_betapi);
           if( i_alphapi == i_betapi ) denum += (*i_arg) * (*i_arg);
           
-          *i_ret -= num / denum;
+          intermed -= num / denum;
         } // end of loop over beta.
       }  // end of loop over alpha.
+      *i_ret = intermed * (*i_w);
     } // end of loop over return values.
     types::t_real result(0);
     for( size_t i(0); i < targets.size(); ++i  )
@@ -167,11 +168,11 @@ namespace CE
         __ASSERT( i >= nb_cls, "Index i is out of range.\n" )
         types::t_real num, denum;
         num  = (*i_num) - (*i_w) * (*i_target) * (*i_alphapi );
-        num *= (*i_alphapi);
+        num *= 2e0 * (*i_alphapi) * (*i_arg) * (*i_w);
         denum =   (*i_denums)[i] - (*i_w) * (*i_alphapi) * (*i_alphapi)
                 + (*i_arg) * (*i_arg);
         
-        *i_jac = num / ( denum * denum );
+        *i_jac = num / ( denum * denum ); 
       }  // end of loop over alpha.
     } // end of loop over targets.
   }
@@ -343,6 +344,59 @@ namespace CE
       );
   }
 
+  types::t_real Regulated :: anafit()
+  {
+    __ASSERT( targets.size() != weights.size(),
+              "Inconsistent number of returns and weights.\n" )
+    __ASSERT( targets.size() != pis.size(),
+              "Inconsistent number of returns and pis.\n" )
+
+    // loop over return values.
+    types::t_real result(0);
+    t_Targets :: const_iterator i_target = targets.begin();
+    t_Targets :: const_iterator i_target_end = targets.end();
+    t_Targets :: const_iterator i_w = weights.begin();
+    t_Pis :: const_iterator i_pis = pis.begin();
+    for(; i_target != i_target_end; ++i_target, ++i_w, ++i_pis)
+    {
+      __ASSERT( i_w == weights.end(), "Iterator out-of-range.\n" )
+      __ASSERT( i_pis == pis.end(), "Iterator out-of-range.\n" )
+      __ASSERT( i_pis->size() != nb_cls,
+                "Inconsistent number of pis and numsums.\n" )
+      __ASSERT( numsums.size() != nb_cls,
+                "Inconsistent number of pis and numsums.\n" )
+      __ASSERT( denumsums.size() != nb_cls,
+                "Inconsistent number of pis and denumsums.\n" )
+      types::t_real intermed( *i_target );
+
+      // loop over alpha.
+      t_StructPis :: const_iterator i_alphapi = i_pis->begin();
+      t_StructPis :: const_iterator i_pi_end = i_pis->end();
+      t_DenumSums :: const_iterator i_denums = denumsums.begin();
+      for(; i_alphapi != i_pi_end; ++i_alphapi, ++i_denums )
+      {
+        __ASSERT( i_denums == denumsums.end(), "Iterator out-of-range.\n" )
+        __ASSERT( i_denums->size() != nb_cls,
+                  "Inconsistent number of pis and inner denumsums: " 
+                  << i_denums->size() << " != " << nb_cls << ".\n")
+        // loop over beta.
+        t_StructPis :: const_iterator i_betapi = i_pis->begin();
+        t_DenumSums :: value_type :: const_iterator i_denum = i_denums->begin();
+        t_NumSums :: const_iterator i_num = numsums.begin();
+        for(; i_betapi != i_pi_end; ++i_betapi, ++i_num, ++i_denum )
+        {
+          __ASSERT( i_num == numsums.end(), "Iterator out-of-range.\n" )
+          __ASSERT( i_denum == i_denums->end(), "Iterator out-of-range.\n" )
+          types::t_real num, denum;
+          
+          intermed -= (*i_num) * (*i_alphapi) / (*i_denum);
+        } // end of loop over beta.
+      }  // end of loop over alpha.
+      std::cout << "intermed: " << intermed <<"\n";
+      result += (*i_w) * intermed * intermed;
+    } // end of loop over return values.
+    return result / types::t_real( targets.size() );
+  }
 
   types::t_real Regulated :: fit( types::t_real _tol,
                                   types::t_unsigned _imax,
@@ -474,7 +528,7 @@ namespace CE
       std::cout << " Number of clusters: " << nb_cls << "\n"
                 << "  CV with weights: " << cvw << "\n"
                 << "  CV with weights=0: " << cvwz << "\n"
-                << "  Fitting squared error: " << fit << "\n";
+                << "  Fitting squared error: " << fit << " " << _reg.anafit() << "\n";
 //               << "  Dropping cluster " << index << "\n"
 //               << i_found->front() << "\n\n";
       exit(1);

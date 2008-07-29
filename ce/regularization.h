@@ -85,6 +85,8 @@ namespace CE
       types::t_real fit( types::t_real _tol = 1e-4, 
                          types::t_unsigned _imax = 40, 
                          bool verbose = false );
+      //! Analytical fit
+      types::t_real anafit();
       //! Computes square errors.
       types::t_unsigned square_errors() const;
       //! Reassigns ecis from argument values.
