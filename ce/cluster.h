@@ -54,16 +54,15 @@ namespace CE
                  const std::vector< Crystal::Structure > & _str,
                  T_PIS &_pis );
 
-  //! \brief Finds all clusters which are at most the \a _max_neigh and with at
+  //! \brief Finds all pair clusters which are at most the \a _max_neigh and with at
   //!        most \a _maxN spins.
   //! \return A vector of vectors of cluster. The inner vectors contain
   //!         symmetrically equivalent clusters. The new cluster classes are
   //!         added to the output vector without checking for duplicates.
   //!
-  void find_all_clusters( const Crystal :: Lattice &_lat,
-                          types::t_unsigned _max_neigh,
-                          types::t_unsigned _maxN,
-                          std::vector< std::vector<Cluster> > &_out );
+  void create_pairs( const Crystal :: Lattice &_lat,
+                     types::t_unsigned _max_neigh,
+                     std::vector< std::vector<Cluster> > &_out );
   //! Reads clusters from a NREL Jfile.
   void read_clusters( const Crystal::Lattice &_lat, 
                       const boost::filesystem::path &_path, 
@@ -93,10 +92,9 @@ namespace CE
                             const Crystal::Structure & _str,
                             T_PIS &_pis );
     template<class T_HARMONIC> friend class Builder;
-    friend void find_all_clusters( const Crystal :: Lattice &,
-                                   types::t_unsigned,
-                                   types::t_unsigned,
-                                   std::vector< std::vector<Cluster> > &);
+    friend void create_pairs( const Crystal :: Lattice &,
+                              types::t_unsigned,
+                              std::vector< std::vector<Cluster> > &);
     friend void read_clusters( const Crystal::Lattice &_lat,
                                const boost::filesystem::path &_path, 
                                std::vector< std::vector< Cluster > > &_out );

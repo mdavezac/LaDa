@@ -31,7 +31,7 @@ namespace CE
     denumsums.resize( nb_cls );
     std::fill( numsums.begin(), numsums.end(), 0e0 );
     t_DenumSums :: iterator i_denums = denumsums.begin();
-    t_DenumSums :: iterator i_denums_end = denumsums.begin();
+    t_DenumSums :: iterator i_denums_end = denumsums.end();
     for(; i_denums != i_denums_end; ++i_denums )
     {
       i_denums->resize( nb_cls );
@@ -45,7 +45,7 @@ namespace CE
     t_Weights :: const_iterator i_w = weights.begin();
     for(; i_target != i_target_end; ++i_target, ++i_pis, ++i_w )
     {
-      __ASSERT( i_pis->size() == nb_cls, "Inconsistent number of targets pis.\n" )
+      __ASSERT( i_pis->size() != nb_cls, "Inconsistent number of targets pis.\n" )
       // loop over alpha.
       t_NumSums :: iterator i_num = numsums.begin();
       t_StructPis :: const_iterator i_alphapi = i_pis->begin();
@@ -55,12 +55,11 @@ namespace CE
         *i_num += (*i_w) * (*i_target) * (*i_alphapi);
 
         // loop over betas.
-        t_DenumSums :: value_type :: iterator i_denum = i_denums->begin();
-        t_DenumSums :: value_type :: iterator i_denum_end = i_denums->end();
-        t_StructPis :: const_iterator i_betapi = i_pis->begin();
-        for(; i_denum != i_denum_end; ++i_denum, ++i_betapi )
-          *i_denum += (*i_w) * (*i_alphapi) * (*i_betapi);
-
+        opt::concurrent_loop
+        (
+          i_denums->begin(), i_denums->end(), i_pis->begin(),
+          bl::_1 += (*i_w) * (*i_alphapi) * bl::_2
+        );
       } // end of loop over alphas.
     } // end of loop over betas.
   } 
@@ -81,9 +80,13 @@ namespace CE
     t_Pis :: const_iterator i_pis = pis.begin();
     for(; i_target != i_target_end; ++i_ret, ++i_target, ++i_w, ++i_pis)
     {
-      __ASSERT( i_pis->size() == numsums.size(),
+      __ASSERT( i_w == weights.end(), "Iterator out-of-range.\n" )
+      __ASSERT( i_pis == pis.end(), "Iterator out-of-range.\n" )
+      __ASSERT( i_pis->size() != nb_cls,
                 "Inconsistent number of pis and numsums.\n" )
-      __ASSERT( i_pis->size() == denumsums.size(),
+      __ASSERT( numsums.size() != nb_cls,
+                "Inconsistent number of pis and numsums.\n" )
+      __ASSERT( denumsums.size() != nb_cls,
                 "Inconsistent number of pis and denumsums.\n" )
       *i_ret = (*i_w) * (*i_target);
 
@@ -94,12 +97,18 @@ namespace CE
       t_DenumSums :: const_iterator i_denums = denumsums.begin();
       for(; i_alphapi != i_pi_end; ++i_alphapi, ++i_denums )
       {
+        __ASSERT( i_denums == denumsums.end(), "Iterator out-of-range.\n" )
+        __ASSERT( i_denums->size() != nb_cls,
+                  "Inconsistent number of pis and inner denumsums: " 
+                  << i_denums->size() << " != " << nb_cls << ".\n")
         // loop over beta.
         t_StructPis :: const_iterator i_betapi = i_pis->begin();
         t_DenumSums :: value_type :: const_iterator i_denum = i_denums->begin();
         t_NumSums :: const_iterator i_num = numsums.begin();
         for(; i_betapi != i_pi_end; ++i_betapi, ++i_num, ++i_denum )
         {
+          __ASSERT( i_num == numsums.end(), "Iterator out-of-range.\n" )
+          __ASSERT( i_denum == i_denums->end(), "Iterator out-of-range.\n" )
           types::t_real num, denum;
           num  = (*i_num) - (*i_w) * (*i_target) * (*i_betapi );
           num *= (*i_alphapi);
@@ -110,6 +119,11 @@ namespace CE
         } // end of loop over beta.
       }  // end of loop over alpha.
     } // end of loop over return values.
+    types::t_real result(0);
+    for( size_t i(0); i < targets.size(); ++i  )
+      result += ( *(_return + i) ) * ( *(_return+i) );
+    std::cout << "result: " << result / types::t_real( targets.size() ) << "\n";
+
   }
 
   void Regulated :: jacobian( const types::t_real * _arg,
@@ -128,9 +142,13 @@ namespace CE
     t_Pis :: const_iterator i_pis = pis.begin();
     for(; i_target != i_target_end; ++i_target, ++i_w, ++i_pis)
     {
-      __ASSERT( i_pis->size() == numsums.size(),
+      __ASSERT( i_w == weights.end(), "Iterator out-of-range.\n" )
+      __ASSERT( i_pis == pis.end(), "Iterator out-of-range.\n" )
+      __ASSERT( i_pis->size() != nb_cls,
                 "Inconsistent number of pis and numsums.\n" )
-      __ASSERT( i_pis->size() == denumsums.size(),
+      __ASSERT( numsums.size() != nb_cls,
+                "Inconsistent number of pis and numsums.\n" )
+      __ASSERT( denumsums.size() != nb_cls,
                 "Inconsistent number of pis and denumsums.\n" )
 
       // loop over alpha.
@@ -142,8 +160,11 @@ namespace CE
       for( size_t i(0); i_alphapi != i_pi_end; 
            ++i_alphapi, ++i_denums, ++i_jac, ++i, ++i_num, ++i_arg )
       {
-        __ASSERT( i_denums->size() <= i,
-                  "Could not access fiagonal element of denumsums.\n" )
+        __ASSERT( i_denums == denumsums.end(), "Iterator out-of-range.\n" )
+        __ASSERT( i_denums->size() != nb_cls,
+                  "Inconsistent number of pis and inner denumsums: " 
+                  << i_denums->size() << " != " << nb_cls << ".\n")
+        __ASSERT( i >= nb_cls, "Index i is out of range.\n" )
         types::t_real num, denum;
         num  = (*i_num) - (*i_w) * (*i_target) * (*i_alphapi );
         num *= (*i_alphapi);
@@ -173,7 +194,9 @@ namespace CE
     // init pis.
     find_pis( clusters, _structures, pis );
 
+    // initializes intermediate quantities.
     nb_cls = clusters.size();
+    init_sums();
   } 
  
   types::t_unsigned Regulated :: reduce()
@@ -215,6 +238,8 @@ namespace CE
      for(size_t i(index); i > 0; ++i_num, ++i_denums, --i );
      numsums.erase( i_num );
      denumsums.erase( i_denums );
+
+     return index;
   }
 
   types::t_unsigned Regulated :: square_errors() const
@@ -228,7 +253,7 @@ namespace CE
 
     // loop over return values.
     t_Targets :: const_iterator i_target = targets.begin();
-    t_Targets :: const_iterator i_target_end = targets.begin();
+    t_Targets :: const_iterator i_target_end = targets.end();
     t_Weights :: const_iterator i_w = weights.begin();
     t_Pis :: const_iterator i_pis = pis.begin();
     for(; i_target != i_target_end; ++i_target, ++i_w, ++i_pis)
@@ -242,7 +267,7 @@ namespace CE
       t_StructPis :: const_iterator i_pi_end = i_pis->end();
       t_Clusters :: const_iterator i_clusters = clusters.begin();
       for(; i_pi != i_pi_end; ++i_pi, ++i_clusters )
-        intermed -= i_clusters->size() * i_clusters->front().eci * (*i_pi);
+        intermed -= i_clusters->front().eci * (*i_pi);
 
       result += (*i_w) * intermed * intermed;
     } // end of loop over target values.
@@ -270,9 +295,13 @@ namespace CE
     t_Pis :: const_iterator i_pis = pis.begin();
     for(; i_target != i_target_end; ++i_target, ++i_w, ++i_pis)
     {
-      __ASSERT( i_pis->size() == numsums.size(),
+      __ASSERT( i_w == weights.end(), "Iterator out-of-range.\n" )
+      __ASSERT( i_pis == pis.end(), "Iterator out-of-range.\n" )
+      __ASSERT( i_pis->size() != nb_cls,
                 "Inconsistent number of pis and numsums.\n" )
-      __ASSERT( i_pis->size() == denumsums.size(),
+      __ASSERT( numsums.size() != nb_cls,
+                "Inconsistent number of pis and numsums.\n" )
+      __ASSERT( denumsums.size() != nb_cls,
                 "Inconsistent number of pis and denumsums.\n" )
       // loop over alpha.
       t_Arg :: const_iterator i_arg = _arg.begin();
@@ -282,12 +311,16 @@ namespace CE
       std::vector< types::t_real > :: iterator i_eci = ecis.begin();
       for(; i_alphapi != i_pi_end; ++i_alphapi, ++i_denums, ++i_eci )
       {
+        __ASSERT( i_denums == denumsums.end(), "Iterator out-of-range.\n" )
+        __ASSERT( i_eci == ecis.end(), "Iterator out-of-range.\n" )
         // loop over beta.
         t_StructPis :: const_iterator i_betapi = i_pis->begin();
         t_DenumSums :: value_type :: const_iterator i_denum = i_denums->begin();
         t_NumSums :: const_iterator i_num = numsums.begin();
         for(; i_betapi != i_pi_end; ++i_betapi, ++i_num, ++i_denum )
         {
+          __ASSERT( i_num == numsums.end(), "Iterator out-of-range.\n" )
+          __ASSERT( i_denum == i_denums->end(), "Iterator out-of-range.\n" )
           types::t_real num, denum;
           num  = (*i_num) - (*i_w) * (*i_target) * (*i_betapi );
           denum = (*i_denum) - (*i_w) * (*i_alphapi) * (*i_betapi);
@@ -306,8 +339,7 @@ namespace CE
       std::for_each
       (
         i_clusters->begin(), i_clusters->end(),
-          bl::bind( &Cluster::eci, bl::_1 )
-        = bl::constant( *i_eci / (types::t_real) i_clusters->size() )
+        bl::bind( &Cluster::eci, bl::_1 ) = *i_eci 
       );
   }
 
@@ -331,12 +363,12 @@ namespace CE
     bblas :: vector<types::t_real> x( nb_cls );
     std::fill( A.data().begin(), A.data().end(), 0e0 );
     std::fill( b.data().begin(), b.data().end(), 0e0 );
-
-    std::vector< types::t_real > multip( nb_cls );
-    std::transform
-    (
-      clusters.begin(), clusters.end(), multip.begin(),
-      bl::bind<types::t_real>( &t_Clusters::value_type::size, bl::_1 ) 
+    const types::t_real range(4e0);
+    std::for_each
+    ( 
+      x.begin(), x.end(),
+      bl::_1 =   bl::bind( &opt::random::rng ) * bl::constant(range)
+               - bl::constant( 0.5*range )
     );
 
     // loop over targets.
@@ -350,21 +382,17 @@ namespace CE
                 "Inconsistent number of pis and clusters.\n" )
       // loop over alpha
       bblas::vector<types::t_real> :: iterator i_b = b.begin();
-      std::vector< types::t_real > :: const_iterator i_alphamul = multip.begin();
       t_StructPis :: const_iterator i_alphapi = i_pis->begin();
       t_StructPis :: const_iterator i_pi_end = i_pis->end();
-      for( size_t alpha(0); i_alphapi != i_pi_end; 
-           ++i_b, ++i_alphapi, ++i_alphamul, ++alpha )
+      for( size_t alpha(0); i_alphapi != i_pi_end; ++i_b, ++i_alphapi, ++alpha )
       {
         // adds to target vector.
-        types::t_real row( (*i_w) * (*i_target) * (*i_alphamul ) * (*i_alphapi) );
-        *i_b += row;
+        *i_b += (*i_w) * (*i_target) * (*i_alphapi);
 
         // loop over beta
-        std::vector< types::t_real > :: const_iterator i_betamul = multip.begin();
         t_StructPis :: const_iterator i_betapi = i_pis->begin();
-        for( size_t beta(0); i_betapi != i_pi_end; ++i_betapi, ++i_betamul, ++beta )
-          A( alpha, beta ) += row * (*i_betamul) * (*i_betapi );
+        for( size_t beta(0); i_betapi != i_pi_end; ++i_betapi, ++beta )
+          A( alpha, beta ) += (*i_w) * (*i_alphapi) * (*i_betapi );
       } // end of loop over alpha
     } // end of loop over structures.
 
@@ -381,12 +409,11 @@ namespace CE
     bblas::vector<types::t_real>::array_type :: const_iterator
       i_x_end = x.data().end();
     t_Clusters :: iterator i_clusters = clusters.begin();
-    for(; i_x != i_x_end; ++i_x )
+    for(; i_x != i_x_end; ++i_x, ++i_clusters )
       std::for_each
       (
         i_clusters->begin(), i_clusters->end(),
-          bl::bind( &t_Clusters::value_type::value_type::eci, bl::_1 ) 
-        = bl::constant( *i_x ) 
+        bl::bind( &t_Clusters::value_type::value_type::eci, bl::_1 ) = *i_x 
       );
 
     // returns error.
@@ -411,12 +438,12 @@ namespace CE
     Fitting :: NonLinearGsl:: t_Vector solution( nb_cls );
     const Fitting :: NonLinearGsl :: t_Vector zero_vec( solution.size(), 0e0);
     Fitting :: NonLinearGsl :: t_Vector cv_vec( _reg.dim() );
-    const types::t_real range(1);
+    const types::t_real range(10);
     std::for_each
     ( 
       solution.begin(), solution.end(),
-      bl::_1 =   bl::bind( &opt::random::rng ) * bl::constant(range)
-               + bl::constant( 1e0 - 0.5*range )
+      bl::_1 =  0e0 // bl::bind( &opt::random::rng ) * bl::constant(range)
+          //    + bl::constant( 1e0 - 0.5*range )
     );
 
     while( _reg.clusters.size() > 0 )
@@ -434,22 +461,23 @@ namespace CE
       );
 
       // CV with optimized weights
-      types::t_real cvw = solver( _reg, solution );
+      types::t_real cvw = 0; //solver( _reg, solution );
       
       // reduces figures by one.
-      _reg.reassign( solution );
-      types::t_unsigned index = _reg.reduce();
+//     _reg.reassign( solution );
+//     types::t_unsigned index = _reg.reduce();
 
-      __ASSERT( index > nb_cls, "index out-of-range.\n" )
-      Regulated :: t_Clusters :: const_iterator i_found( save_clusters.begin() );
-      for( size_t i(index); i > 0; --i, ++i_found );
+//     __ASSERT( index > nb_cls, "index out-of-range.\n" )
+//     Regulated :: t_Clusters :: const_iterator i_found( save_clusters.begin() );
+//     for( size_t i(index); i > 0; --i, ++i_found );
 
-      std::cout << " Number of clusters: " << index << "\n"
+      std::cout << " Number of clusters: " << nb_cls << "\n"
                 << "  CV with weights: " << cvw << "\n"
                 << "  CV with weights=0: " << cvwz << "\n"
-                << "  Fitting squared error: " << fit << "\n"
-                << "  Dropping cluster " << index << "\n"
-                << i_found->front() << "\n\n";
+                << "  Fitting squared error: " << fit << "\n";
+//               << "  Dropping cluster " << index << "\n"
+//               << i_found->front() << "\n\n";
+      exit(1);
     }
   }
 

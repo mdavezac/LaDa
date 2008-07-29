@@ -9,7 +9,6 @@
 
 #include <opt/types.h>
 #include <opt/fuzzy.h>
-#include <opt/atat.h>
 #include <atat/findsym.h>
 #include <atat/xtalutil.h>
 
@@ -42,6 +41,7 @@ namespace CE {
 
   bool Cluster :: equivalent_mod_cell( Cluster &_cluster, const atat::rMatrix3d &_icell) 
   {
+    namespace bl = boost::lambda;
     if ( vectors.size() != _cluster.vectors.size() ) return false;
     if ( vectors.size() == 0 ) return true;
 
@@ -58,9 +58,18 @@ namespace CE {
       std::vector<atat::rVector3d> :: iterator i2_vec = vectors.begin();
       for(; i2_vec != i_vec_last; ++i2_vec)
       {
-        is_found  = std::find_if( _cluster.vectors.begin(),
-                                  _cluster.vectors.end(),
-                                  atat::norm_compare( *i2_vec - shift ) );
+        types::t_real (*ptr_norm2)( const atat::FixedVector<types::t_real,3>& ) 
+                             = &atat::norm2<types::t_real, 3>;
+        is_found  = std::find_if
+                    (
+                      _cluster.vectors.begin(),  _cluster.vectors.end(),
+                      bl::bind
+                      ( 
+                        &Fuzzy::eq<types::t_real>, 
+                        bl::bind<types::t_real>( ptr_norm2, bl::_1 - *i2_vec - shift ),
+                        0e0
+                      )
+                    );
 
         if ( is_found == _cluster.vectors.end() ) break;
       }
@@ -113,23 +122,27 @@ namespace CE {
   }
 
 
-  void find_all_clusters( const Crystal :: Lattice &_lat,
-                          types::t_unsigned _max_neigh,
-                          types::t_unsigned _maxN,
-                          std::vector< std::vector<Cluster> > &_out )
+  void create_pairs( const Crystal :: Lattice &_lat,
+                     types::t_unsigned _max_neigh,
+                     std::vector< std::vector<Cluster> > &_out )
   {
     __DEBUGTRYBEGIN
-
+    typedef std::vector< std::vector< Cluster > > t_EquivClusters;
+    if( _max_neigh == 0 ) return;
+    
     namespace bl = boost::lambda;
     // Creates a vector of all positions within a cube \a _max_neigh big.
     std::vector< atat::rVector3d > nn;
     nn.reserve( _max_neigh*_max_neigh*_max_neigh );
-    for( types::t_real x(-_max_neigh);
-         Fuzzy::le(x, (types::t_real)_max_neigh); x+=1e0 )
-      for( types::t_real y(-_max_neigh);
-           Fuzzy::le(y, (types::t_real)_max_neigh); y+=1e0 )
-        for( types::t_real z(-_max_neigh);
-             Fuzzy::le(z, (types::t_real)_max_neigh); z+=1e0 )
+    for( types::t_real x(-types::t_real(_max_neigh));
+         Fuzzy::leq(x, (types::t_real)_max_neigh); x+=1e0 )
+      for( types::t_real y(-types::t_real(_max_neigh));
+           Fuzzy::leq(y, (types::t_real)_max_neigh); y+=1e0 )
+        for( types::t_real z(-types::t_real(_max_neigh));
+             Fuzzy::leq(z, (types::t_real)_max_neigh); z+=1e0 )
+          if(    Fuzzy::neq( x, types::t_real(0) )
+              or Fuzzy::neq( y, types::t_real(0) )
+              or Fuzzy::neq( z, types::t_real(0) ) )
           nn.push_back( _lat.cell * atat::rVector3d( x, y, z ) );
 
     // Sorts these positions by size.
@@ -149,10 +162,10 @@ namespace CE {
     // finds _max_neigh neighbor.
     std::vector< atat :: rVector3d > :: iterator n_it = nn.begin();
     __DODEBUGCODE( std::vector< atat :: rVector3d > :: iterator n_it_end = nn.end(); )
-    types::t_real norm = atat::norm2( *n_it );
+    types::t_real norm = atat::norm2( *n_it ); 
     for( types::t_unsigned N( _max_neigh ); N != 0; ++n_it )
     {
-      __ASSERT( n_it != n_it_end, "Iterator out of range.\n" )
+      __ASSERT( n_it == n_it_end, "Iterator out of range with N=" << N << ".\n" )
       if( Fuzzy::eq( norm, atat::norm2( *n_it ) ) ) continue;
       --N;
       norm = atat::norm2( *n_it );
@@ -164,10 +177,10 @@ namespace CE {
     std::vector< std::vector< atat::rVector3d > > classes, onesize;
     //    -- first adds first (null) position.
     onesize.push_back( std::vector< atat::rVector3d >( 1, nn.front() ) );
-    n_it = nn.begin(); ++n_it;
+    n_it = nn.begin();
     __NDEBUGCODE(std::vector< atat :: rVector3d > :: iterator)
       n_it_end = nn.end();
-    norm = 0e0;
+    norm = atat::norm2( *n_it );
     //    -- then goes across all neighboring atoms and organizes in classes.
     for(; n_it != n_it_end; ++n_it )
     {
@@ -209,68 +222,28 @@ namespace CE {
                                     std::back_inserter( classes ) );
     onesize.clear();
 
-    // Creates classes of clusters, by taking one of each equivalent position class.
-    opt::Ndim_Iterator<size_t, std::less<size_t> > ndim;
-    for(size_t N( _maxN -1 ); N; --N )
-      ndim.add( 0, classes.size() );
-
-    std::vector< std::vector< Cluster > > newclusters;
-    do
+    Cluster cluster;
+    cluster.vectors.resize(2);
+    cluster.vectors[0] = atat::rVector3d(0,0,0); 
+    cluster.eci = 0e0;
+    std::vector< std::vector< atat::rVector3d > > :: const_iterator
+      i_class = classes.begin();
+    std::vector< std::vector< atat::rVector3d > > :: const_iterator
+      i_class_end = classes.end();
+    for(; i_class != i_class_end; ++i_class )
     {
-      // makes sure indices are ordered k > .. > j > i.
-      bool notordered = false;
-      do
-      {
-        for(size_t N( _maxN - 1 ); N-1; --N )
-        {
-          if( ndim.access(N) > ndim.access(N-1) ) continue;
-          notordered = true;
-          break;
-        }
-      } while( notordered );
-
-      // now creates two body figures.
-      Cluster cluster;
-      cluster.vectors.resize(2, atat::rVector3d(0,0,0) );
-      std::vector< std::vector< Cluster > > new_clusters(1);
-      std::vector< atat::rVector3d > :: const_iterator i_pos = classes[ ndim.access(0) ].begin();
-      std::vector< atat::rVector3d > :: const_iterator i_pos_end = classes[ ndim.access(0) ].end();
+      _out.resize( _out.size() + 1 );
+      t_EquivClusters :: value_type& back = _out.back();
+      std::vector< atat::rVector3d > :: const_iterator i_pos = i_class->begin();
+      std::vector< atat::rVector3d > :: const_iterator i_pos_end = i_class->end();
       for(; i_pos != i_pos_end; ++i_pos )
       {
         cluster.vectors.back() = *i_pos;
-        new_clusters.front().push_back( cluster ); 
+        back.push_back( cluster );
       }
+    }
 
-      // then adds higher order clusters, if required.
-      for( size_t i(2); i < _maxN; ++i )
-      {
-        std::vector< Cluster > :: const_iterator i_cluster = new_clusters.back().begin();
-        std::vector< Cluster > :: const_iterator i_cluster_end = new_clusters.back().end();
-        new_clusters.resize( new_clusters.size() + 1 );
-        for(; i_cluster != i_cluster_end; ++i_cluster )
-        {
-          cluster = *i_cluster;
-          cluster.vectors.push_back( atat::rVector3d(0,0,0) );
-          i_pos = classes[ ndim.access( i ) ].begin();
-          i_pos_end = classes[ ndim.access( i ) ].end();
-          for(; i_pos != i_pos_end; ++i_pos )
-          {
-            cluster.vectors.back() = *i_pos;
-            new_clusters.back().push_back( cluster );
-          }
-        }
-      } // end of higher order clusters.
-
-      // Appends new cluster classes to output vector.
-      // At this point, we could verify that the classes do not already exist in
-      // the output.
-      std::copy( new_clusters.begin(), new_clusters.end(),
-                 std::back_inserter( _out ) );
-
-    } while( ++ndim );
-
-
-    __DEBUGTRYEND(,"Could not create clusters.\n" )
+    __DEBUGTRYEND(,"Could not create pair clusters.\n" )
   }
  
   void read_clusters( const Crystal::Lattice &_lat, 
@@ -287,13 +260,32 @@ namespace CE {
     std::string line;
     size_t i(0);
 
-    while( std::getline( file, line ) )
+    while( not file.eof() )
     {
+      // First line should be a name.
+      { // check for comment.
+        std::getline( file, line ); ++i;
+        boost::match_results<std::string::const_iterator> what;
+        const boost::regex re("^(\\s+)?#");
+        while(     boost::regex_search( line, what, re )
+               and ( not file.eof() ) )
+          std::getline( file, line ); ++i;
+        if( file.eof() ) break;
+      }
+      // second line should contain order and multiplicity.
+      { // check for comment.
+        std::getline( file, line ); ++i;
+        boost::match_results<std::string::const_iterator> what;
+        const boost::regex re("^(\\s+)?#");
+        while(     boost::regex_search( line, what, re )
+               and ( not file.eof() ) )
+          std::getline( file, line ); ++i;
+        if( file.eof() ) break;
+      }
       ++i;
       // first line should be a name. Ignore it.
-      std::getline( file, line ); ++i;
-      __DOASSERT( not file.eof(),    "Unexpected end of file at line "
-                                  << i << " in " << _path << ".\n" )
+      __DOASSERT( file.eof(),    "Unexpected end of file at line "
+                              << i << " in " << _path << ".\n" )
       std::istringstream sstr( line ); // should contain the order and the multiplicity.
       types::t_unsigned order;
       types::t_unsigned multiplicity;
@@ -303,13 +295,22 @@ namespace CE {
       Cluster cluster;
       for(; order; --order)
       {
-        std::getline( file, line ); ++i;
-        __DOASSERT( not file.eof(),    "Unexpected end of file at line "
-                                    << i << " in " << _path << ".\n" )
+        { // check for comment.
+          std::getline( file, line ); ++i;
+          boost::match_results<std::string::const_iterator> what;
+          const boost::regex re("^(\\s+)?#");
+          while(     boost::regex_search( line, what, re )
+                 and ( not file.eof() ) )
+            std::getline( file, line ); ++i;
+          __DOASSERT( file.eof(), "Unexpected end of file.\n" )
+        }
+        __DOASSERT( file.eof(),    "Unexpected end of file at line "
+                                << i << " in " << _path << ".\n" )
+        sstr.clear();
         sstr.str(line);
-        atat::rVector3d pos;
-        sstr >> pos[0] >> pos[1] >> pos[2];
-        cluster.vectors.push_back( pos );
+        types::t_real x, y, z;
+        sstr >> x >> y >> z;
+        cluster.vectors.push_back( atat::rVector3d( x, y, z ) );
       }
       // creates a new class from cluster.
       _out.push_back( std::vector< Cluster >( 1, cluster ) );
@@ -356,8 +357,8 @@ namespace CE {
               break;
   
           // if it isn't, adds cluster to clusters
-          if (i_cluster == i_last ) 
-            _out.push_back( transfo_cluster );
+          if (i_cluster != i_last ) continue;
+          _out.push_back( transfo_cluster );
         }
       }
     }

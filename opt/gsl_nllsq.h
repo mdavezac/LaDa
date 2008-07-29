@@ -67,10 +67,12 @@ namespace Fitting
     types::t_real NonLinearGsl::operator()( T_FUNCTION &_func, 
                                             t_Vector &_solution )
     {
+      gsl_multifit_fdfsolver *solver = NULL;
+
+      __TRYBEGIN
       if( verbose )
         std::cout << " Starting Gsl Non-linear least-square fit.\n";
 
-      gsl_multifit_fdfsolver *solver;
       int status;
       unsigned int i, iter = 0;
      
@@ -80,8 +82,8 @@ namespace Fitting
       gsl_function.f = &details::gsl_f<T_FUNCTION>;
       gsl_function.df = &details::gsl_df<T_FUNCTION>;
       gsl_function.fdf = &details::gsl_fdf<T_FUNCTION>;
-      gsl_function.n = _solution.size();
-      gsl_function.p = _func.dim();
+      gsl_function.p = _solution.size();
+      gsl_function.n = _func.dim();
       gsl_function.params = (void*) &_func;
      
      
@@ -111,6 +113,13 @@ namespace Fitting
         std::cout << " Final Iteration " << iter << ": " << result << "\n";
       gsl_multifit_fdfsolver_free (solver);
       return result;
+
+      __DEBUGTRYEND
+      ( 
+        if( solver) gsl_multifit_fdfsolver_free (solver);,
+        "Error encountered while solving non-linear"
+        " least-square fit with Gsl library.\n"
+      )
     }
 
 

@@ -632,7 +632,9 @@ namespace Crystal {
     namespace fs = boost::filesystem;
 
     // First finds directory of LDAs.dat.
-    __DOASSERT( fs::exists( _dir ), _dir << " does not exist.\n" );
+    __DOASSERT( not fs::exists( _dir ), _dir << " does not exist.\n" );
+    __DOASSERT( not ( fs::is_regular( _dir ) or fs::is_symlink( _dir ) ),
+                _dir << " is a not a valid file.\n" );
     fs::path dir( _dir.branch_path()  );
 
     // then starts reading file.

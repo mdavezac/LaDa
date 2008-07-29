@@ -43,7 +43,7 @@ namespace CE
       //! Container of classes of equivalent clusters.
       typedef std::vector< t_EquivClusters > t_Clusters;
       //! A container of Pis for a single structure.
-      typedef std::vector< types::t_int > t_StructPis;
+      typedef std::vector< types::t_real > t_StructPis;
       //! A container of Pis for a single structure.
       typedef std::vector< t_StructPis > t_Pis;
       //! A container of structures.

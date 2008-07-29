@@ -91,20 +91,30 @@ int main(int argc, char *argv[])
       return 1;
     }
 
-    fs::path dir(".");
-    if( vm.count("datadir") ) dir = vm["datadir"].as< std::string >();
-    __DOASSERT( fs::exists( dir ), dir << " does not exist.\n" );
-    std::string jtypes("jtypes");
-    jtypes = vm["jtypes"].as< std::string >();
-    __DOASSERT(    fs::exists( fs::path( jtypes ) )
-                or fs::exists( fs::path( dir / jtypes ) ),
-                jtypes << " could not be found in ./ nor in " << dir << ".\n" )
-    std::string latinput( vm["latinput"].as< std::string >() );
-    __DOASSERT(    fs::exists( fs::path( latinput ) )
-                or fs::exists( fs::path( dir / latinput ) ),
-                latinput << " could not be found in ./ nor in " << dir << ".\n" )
-    types::t_unsigned maxpairs = vm["maxpairs"].as<types::t_unsigned>();
+    fs::path dir( vm["datadir"].as< std::string >() );
+    __DOASSERT( not fs::exists( dir ), dir << " does not exist.\n" );
 
+    fs::path jtypes( vm["jtypes"].as< std::string >() );
+    if(    ( not fs::exists( jtypes ) )
+        or ( not ( fs::is_symlink(jtypes) or fs::is_regular(jtypes) ) ) )
+      jtypes = dir / jtypes;
+    __DOASSERT( not fs::exists( jtypes ),
+                   "Jtypes input file " << jtypes
+                << " could not be found in ./ nor in " << dir << ".\n" )
+    __DOASSERT( not ( fs::is_regular( jtypes ) or fs::is_symlink( jtypes ) ),
+                jtypes << " is a not a valid file.\n" );
+
+    fs::path latinput( vm["latinput"].as< std::string >() );
+    if(    ( not fs::exists( latinput ) )
+        or ( not ( fs::is_symlink(latinput) or fs::is_regular(latinput) ) ) )
+     latinput = dir / latinput;
+    __DOASSERT( not fs::exists( latinput ),
+                   "Lattice input file " << latinput
+                << " could not be found in ./ nor in " << dir << ".\n" )
+    __DOASSERT( not ( fs::is_regular( latinput ) or fs::is_symlink( latinput ) ),
+                latinput << " is a not a valid file.\n" );
+
+    types::t_unsigned maxpairs = vm["maxpairs"].as<types::t_unsigned>();
     types::t_int verbosity = vm["verbose"].as<types::t_int>();
     types::t_unsigned seed = vm["seed"].as<types::t_unsigned>();
     seed = opt::random::seed( seed );
@@ -127,19 +137,21 @@ int main(int argc, char *argv[])
 
     // read structures as lda\@nrel input.
     std::vector< Crystal :: Structure > structures;
-    const fs::path bs( dir / "LDAs.dat" );
-    Crystal::read_ce_structures( bs, structures );
+    Crystal::read_ce_structures( dir / "LDAs.dat", structures );
+    Crystal::Structure::lattice = lattice.get();
 
     // Construct regularization.
     CE::Regulated reg;
 
     // reads jtypes
     std::vector< std::vector< CE::Cluster > > clusters;
-    CE::read_clusters( *lattice,
-                       fs::exists( jtypes ) ? jtypes: dir / jtypes, 
-                       reg.clusters ); 
+    CE::read_clusters( *lattice, jtypes, reg.clusters ); 
+    std::cout << "Read " << reg.clusters.size()
+              << " figures from " << jtypes << ".\n";
     // add pair terms.
-    CE::find_all_clusters( *lattice, maxpairs, 2, reg.clusters );
+    CE::create_pairs( *lattice, maxpairs, reg.clusters );
+    std::cout << "Read " << reg.clusters.size()
+              << " figures from " << jtypes << ".\n";
 
     // initialization.
     reg.init( structures );
