@@ -11,7 +11,6 @@ namespace Minimizer {
 
 
 
-  template<typename T_FUNCTIONAL> 
   void Gsl :: set_parameters( t_gsl_minimizer_type _type, 
                               types::t_unsigned _itermax,
                               types::t_real _tol, 
@@ -69,7 +68,7 @@ namespace Minimizer {
     linetolerance = d ? types::t_real(d) : 0.01;
     _node.Attribute( "linestep", &d );
     linestep = d ? types::t_real(d) : 0.1;
-    if( _node.Attribute("doprint") ) do_print = true;
+    if( _node.Attribute("verbose") ) verbose = true;
   
     return true;
   }
@@ -84,4 +83,3 @@ namespace Minimizer {
   }
 }
 
-#endif

@@ -107,8 +107,9 @@ namespace Minimizer {
                            types::t_real _linestep );
       //! Minimization functor
       template< class T_FUNCTION >
-      typename T_FUNCTION :: t_Return operator()( const T_FUNCTION &_func,
-                                                  typename T_FUNCTION :: t_Arg &_arg );
+        typename T_FUNCTION :: t_Return
+          operator()( const T_FUNCTION &_func,
+                      typename T_FUNCTION :: t_Arg &_arg ) const;
       //! \brief Finds the node - if it is there - which describes this minimizer
       //! \details Looks for a \<Minimizer\> tag first as \a _node, then as a
       //!          child of \a _node. Different minimizer, defined by the
@@ -124,88 +125,90 @@ namespace Minimizer {
   };
 
   template<typename T_FUNCTION> 
-  typename T_FUNCTION :: t_Return Gsl :: operator()( const T_FUNCTION &_func,
-                                                     typename T_FUNCTION :: t_Arg &_arg )
-  {
-    namespace bl = boost::lambda;
-    gsl_multimin_fdfminimizer *solver;
-
-    __DEBUGTRYBEGIN
-
-      if ( verbose ) std::cout << "Starting GSL minimization\n";
-
-      gsl_multimin_function_fdf gsl_func;
-      gsl_func.f = &details::gsl_f<const T_FUNCTION>;
-      gsl_func.df = &details::gsl_df<const T_FUNCTION>;
-      gsl_func.fdf =  &details::gsl_fdf<const T_FUNCTION>;
-      gsl_func.n = _arg.size();
-      gsl_func.params = (void*) &_func;
-      
-      const gsl_multimin_fdfminimizer_type *T;
-      switch( type )
-      {
-        default:
-        case GSL_BFGS2: T = gsl_multimin_fdfminimizer_vector_bfgs2; break;
-        case GSL_FR: T = gsl_multimin_fdfminimizer_conjugate_fr; break;
-        case GSL_PR: T = gsl_multimin_fdfminimizer_conjugate_pr; break;
-        case GSL_BFGS: T = gsl_multimin_fdfminimizer_vector_bfgs; break;
-        case GSL_SD: T = gsl_multimin_fdfminimizer_steepest_descent; break;
-      }
-      solver = gsl_multimin_fdfminimizer_alloc (T, gsl_func.n);
-      if (not solver) return false;
-      
-      ::Gsl::Vector x( _arg );
-      gsl_multimin_fdfminimizer_set( solver, &gsl_func, (gsl_vector*) x, 
-                                     0.01, 0.0001);
-      
-      int status;
-      double newe(0), olde(0);
-      types::t_unsigned iter( 0 );
-
-      do
-      {
-        iter++;
-        olde=newe;
-        status = gsl_multimin_fdfminimizer_iterate (solver);
-
-        if( status )
-        { std::cout << "break on shit" << std::endl; break; }
-
-        status = gsl_multimin_test_gradient (solver->gradient, tolerance);
-        if (status == GSL_SUCCESS) 
-        { std::cout << "break on gradient small" << std::endl; break; }
-
-        newe = gsl_multimin_fdfminimizer_minimum(solver);
-        if ( verbose ) std::cout << "--Iteration " << iter 
-                                 << ": " << newe << "\n";
-      }
-      while ( status == GSL_CONTINUE and iter < itermax );
-      __ASSERT( status != GSL_SUCCESS and iter != itermax, 
-                "Error while minimizing with gsl.\n" )
-
-      newe = gsl_multimin_fdfminimizer_minimum( solver );
-      if ( verbose )
-        std::cout << "Final Iteration: " << newe << std::endl;
-  
-      gsl_vector *minx = gsl_multimin_fdfminimizer_x( solver );
-      types::t_unsigned i(0);
-      opt::concurrent_loop
+    typename T_FUNCTION :: t_Return 
+      Gsl :: operator()( const T_FUNCTION &_func,
+                         typename T_FUNCTION :: t_Arg &_arg ) const
+    {
+      namespace bl = boost::lambda;
+      gsl_multimin_fdfminimizer *solver;
+ 
+      __DEBUGTRYBEGIN
+ 
+        if ( verbose ) std::cout << "Starting GSL minimization\n";
+ 
+        gsl_multimin_function_fdf gsl_func;
+        gsl_func.f = &details::gsl_f<const T_FUNCTION>;
+        gsl_func.df = &details::gsl_df<const T_FUNCTION>;
+        gsl_func.fdf =  &details::gsl_fdf<const T_FUNCTION>;
+        gsl_func.n = _arg.size();
+        gsl_func.params = (void*) &_func;
+        
+        const gsl_multimin_fdfminimizer_type *T;
+        switch( type )
+        {
+          default:
+          case GSL_BFGS2: T = gsl_multimin_fdfminimizer_vector_bfgs2; break;
+          case GSL_FR: T = gsl_multimin_fdfminimizer_conjugate_fr; break;
+          case GSL_PR: T = gsl_multimin_fdfminimizer_conjugate_pr; break;
+          case GSL_BFGS: T = gsl_multimin_fdfminimizer_vector_bfgs; break;
+          case GSL_SD: T = gsl_multimin_fdfminimizer_steepest_descent; break;
+        }
+        solver = gsl_multimin_fdfminimizer_alloc (T, gsl_func.n);
+        if (not solver) return false;
+        
+        ::Gsl::Vector x( _arg );
+        gsl_multimin_fdfminimizer_set( solver, &gsl_func, (gsl_vector*) x, 
+                                       linestep, linetolerance);
+        
+        int status;
+        double newe(0), olde(0);
+        types::t_unsigned iter( 0 );
+ 
+        do
+        {
+          iter++;
+          olde=newe;
+          status = gsl_multimin_fdfminimizer_iterate (solver);
+ 
+          if( status )
+          { std::cout << "break on shit" << std::endl; break; }
+ 
+          status = gsl_multimin_test_gradient (solver->gradient, tolerance);
+          if (status == GSL_SUCCESS) 
+          { std::cout << "break on gradient small" << std::endl; break; }
+ 
+          newe = gsl_multimin_fdfminimizer_minimum(solver);
+          std::cout << "--Iteration " << iter 
+                    << ": " << newe << "\n";
+        }
+        while ( status == GSL_CONTINUE and ( itermax == 0 or iter < itermax ) );
+        if( verbose and ( status != GSL_SUCCESS and iter != itermax ) ) 
+          std::cout << "Error while minimizing with gsl: "
+                    << gsl_strerror( status ) << ".\n";
+ 
+        newe = gsl_multimin_fdfminimizer_minimum( solver );
+        if ( verbose )
+          std::cout << "Final Iteration: " << newe << std::endl;
+    
+        gsl_vector *minx = gsl_multimin_fdfminimizer_x( solver );
+        types::t_unsigned i(0);
+        opt::concurrent_loop
+        (
+          _arg.begin(), _arg.end(), i,
+          bl::_1 = bl::bind( &gsl_vector_get, minx, bl::_2 )
+        );
+ 
+        gsl_multimin_fdfminimizer_free (solver);
+ 
+        return newe;
+ 
+      __DEBUGTRYEND
       (
-        _arg.begin(), _arg.end(), i,
-        bl::_1 = bl::bind( &gsl_vector_get, minx, bl::_2 )
-      );
-
-      gsl_multimin_fdfminimizer_free (solver);
-
-      return newe;
-
-    __DEBUGTRYEND
-    (
-      gsl_multimin_fdfminimizer_free (solver);,
-      "Error encountered while minimizing with the GSL library\n"
-    )
-
-  }  // dummy minimizer
+        gsl_multimin_fdfminimizer_free (solver);,
+        "Error encountered while minimizing with the GSL library\n"
+      )
+ 
+    }  // dummy minimizer
 
 
   template<class ARCHIVE>
@@ -224,9 +227,7 @@ namespace Minimizer {
       double gsl_f( const gsl_vector* _x, void* _data )
       {
         T_FUNCTION *_this = (T_FUNCTION*) _data;
-        types::t_real result = (*_this)( _x->data );
-        std::cout << "f: " << std::setw( 18 ) << std::setprecision(12) << result << "\n";
-        return result;
+        return (*_this)( _x->data );
       }
     template< class T_FUNCTION >
       void gsl_df( const gsl_vector* _x, void* _data, gsl_vector* _grad )
@@ -234,7 +235,6 @@ namespace Minimizer {
         T_FUNCTION *_this = (T_FUNCTION*) _data;
         _this->gradient( _x->data, _grad->data );
         types::t_real result = (*_this)( _x->data );
-        std::cout << "grad " << result << "\n";
       }
     template< class T_FUNCTION >
       void gsl_fdf( const gsl_vector *_x, void *_data, double *_r, gsl_vector *_grad)
@@ -243,9 +243,6 @@ namespace Minimizer {
         T_FUNCTION *_this = (T_FUNCTION*) _data;
         *_r = (*_this)( _x->data );
         _this->gradient( _x->data, _grad->data );
-        std::cout << "r: " << std::setw( 18 ) << std::setprecision(12) << *_r << "\n";
-        std::for_each( _grad->data, _grad->data + 3, std::cout << bl::_1 << " "); 
-        std::cout << "\n";
       } 
   }
   //! \endcond

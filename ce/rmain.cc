@@ -16,6 +16,7 @@
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <opt/random.h>
+#include <opt/gsl_mins.h>
 #include <crystal/lattice.h>
 #include <crystal/structure.h>
 
@@ -47,6 +48,8 @@ int main(int argc, char *argv[])
                    "Lattice input file." )
       ("tolerance", po::value<types::t_real>()->default_value(1e-4),
                     "Tolerance of the non-linear-least square fit."  )
+      ("itermax,i", po::value<types::t_unsigned>()->default_value(0),
+                    "Maximum number of iterations for the minimizer."  )
       ("maxpairs", po::value<types::t_unsigned>()->default_value(5),
                     "Max distance for pairs (in neighbors)."  );
     po::options_description hidden("hidden");
@@ -119,11 +122,13 @@ int main(int argc, char *argv[])
     types::t_unsigned seed = vm["seed"].as<types::t_unsigned>();
     seed = opt::random::seed( seed );
     types::t_real tolerance( vm["tolerance"].as< types::t_real >() );
+    types::t_unsigned itermax( vm["itermax"].as< types::t_unsigned >() );
 
     std::cout << " Input Parameters:\n"
               << "   Verbosity: " << verbosity << "\n"
               << "   Seed: " << seed << "\n"
               << "   Tolerance: " << tolerance << "\n"
+              << "   Maximum number of iterations: " << itermax << "\n"
               << "   Lattice input file: " << latinput << "\n"
               << "   LDA energy input file: LDAs.dat\n"
               << "   Directory of structures input files: " << dir << "\n"
@@ -145,6 +150,15 @@ int main(int argc, char *argv[])
     reg.cgs.tolerance = tolerance;
     reg.cgs.verbose = verbosity >= 4;
     reg.cgs.itermax = 40;
+    //! The non-linear minimization procedure.
+    Minimizer::Simplex minimizer;
+//   minimizer.type =  Minimizer::Gsl::SteepestDescent; //BFGS2; // Minimizer::Gsl::SteepestDescent; //
+    minimizer.tolerance = tolerance;
+    minimizer.verbose = verbosity >= 2;
+    minimizer.itermax = itermax;
+    minimizer.stepsize = 1;
+//   minimizer.linestep = 0.001;
+     // minimizer.linetolerance = 0.0001;
 
     // reads jtypes
     std::vector< std::vector< CE::Cluster > > clusters;
@@ -159,7 +173,7 @@ int main(int argc, char *argv[])
     // initialization.
     reg.init( structures );
     
-    CE::drautz_diaz_ortiz( reg, tolerance, verbosity - 1);
+    CE::drautz_diaz_ortiz( reg, minimizer, verbosity - 1);
   }
   catch ( boost::program_options::invalid_command_line_syntax &_b)
   {

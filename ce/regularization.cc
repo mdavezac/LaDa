@@ -82,8 +82,19 @@ namespace CE
               "Incorrect number of fitting interactions.\n" )
 
     types::t_real result(0), dummy;
+//   opt::concurrent_loop
+//   (
+//     _arg, _arg + nb_cls, targets.begin(), 
+//     bl::var(result) += 
+//     (
+//       bl::var(dummy) = bl::_1 - bl::_2,
+//       bl::var(dummy) * bl::var(dummy) 
+//     )
+//   );
+//   return result;
 
     t_Matrix A(nb_cls, nb_cls); 
+    t_Vector x(nb_cls );
     // loop over target values.
     t_Targets :: const_iterator i_target = targets.begin();
     t_Targets :: const_iterator i_target_end = targets.end();
@@ -103,30 +114,32 @@ namespace CE
       A = i_pair->first;
       const types::t_real *i_arg = _arg;
       for( size_t i(0); i < nb_cls; ++i, ++i_arg )
+      {
         A(i,i) += (*i_arg) * (*i_arg);
+      }
+      const types::t_real range(0);
+      std::for_each
+      ( 
+        x.begin(), x.end(),
+        bl::_1 =  bl::bind( &opt::random::rng ) * range - range * 0.5e0
+      );
 
       // fits.
-      cgs( A, *i_feci, i_pair->second );
+      cgs( A, x, i_pair->second );
 
       // computes error for this target.
-      types::t_real intermed( *i_target - bblas::inner_prod( *i_feci, *i_pis ) );
+      types::t_real intermed( *i_target - bblas::inner_prod( x, *i_pis ) );
       // adds to result
       result += (*i_w) * intermed * intermed;
     } // end of loop over target values.
 
-//   if( not doinggradient ) 
-//   {
-//     namespace bl = boost::lambda;
-//     std::for_each( _arg, _arg + nb_cls, std::cout << bl::_1 << " " );
-//     std::cout << "  -> result: " << result / types::t_real( targets.size() ) << std::endl;
-//   }
     return result / types::t_real( targets.size() );
   }
 
   void Regulated :: gradient( const types::t_real * _arg,
                               types::t_real *_gradient ) const
   {
-    types::t_real delta = 1e-4;
+    types::t_real delta = 1e-4; // * cgs.tolerance;
     types::t_real delta_inv = 2e0 / delta;
     types::t_real right, left, keep;
     const types::t_real *i_arg( _arg );
@@ -372,7 +385,7 @@ namespace CE
   }
 
   void drautz_diaz_ortiz( Regulated &_reg, 
-                          types::t_real _tolerance,
+                          const Minimizer::Simplex &_minimizer,
                           types::t_int _verbosity )
   {
     namespace bl = boost::lambda;
@@ -381,11 +394,6 @@ namespace CE
 
     Regulated::t_Clusters save_clusters( _reg.clusters );
 
-    Minimizer :: Gsl solver;
-    solver.type =  Minimizer::Gsl::BFGS2; // Minimizer::Gsl::SteepestDescent; //
-    solver.tolerance = _tolerance;
-    solver.verbose = _verbosity >= 2;
-    solver.itermax = 20;
     
     types::t_unsigned nb_cls( _reg.clusters.size() );
 
@@ -412,7 +420,10 @@ namespace CE
       types::t_real cvwz( _reg( &zero_vec[0] ) ); 
 
       // CV with optimized weights
-      types::t_real cvw( solver( _reg, solution ) );
+      types::t_real cvw;
+      try { cvw = _minimizer( _reg, solution ); }
+      catch( std::exception &_e )
+        { std::cout << __SPOT_ERROR << _e.what(); }
       
       // reduces figures by one.
 //     _reg.reassign( solution );

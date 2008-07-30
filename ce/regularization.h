@@ -15,6 +15,7 @@
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <opt/cgs.h>
+#include <opt/gsl_simplex.h>
 #include <crystal/structure.h>
 
 #include "cluster.h"
@@ -31,7 +32,7 @@ namespace CE
   //! \brief Regulated Cluster-Expansion.
   //! \see <A HREF="http://dx.doi.org/10.1103/PhysRevB.73.224207"> Ralf Drautz
   void drautz_diaz_ortiz( Regulated &_reg,
-                          types::t_real tolerance = 1e-4,
+                          const Minimizer :: Simplex &_minimizer,
                           types::t_int _verbosity = 0 );
 
   //! \brief Regulated Cluster-Expansion.
@@ -39,7 +40,6 @@ namespace CE
   //!      and Alejandro Diaz-Ortiz, PRB \bf 73, 224207 (2007)</A>.
   class Regulated
   {
-    mutable bool doinggradient;
     public:
       //! Type of the fitting matrices.
       typedef boost::numeric::ublas::matrix<types::t_real> t_Matrix;
