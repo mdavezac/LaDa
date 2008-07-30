@@ -1,5 +1,5 @@
 //
-//  Version: $Id: gsl_minimizers.h 685 2008-07-22 17:20:39Z davezac $
+//  Version: $Id$
 //
 #ifdef HAVE_CONFIG_H
 #include <config.h>
