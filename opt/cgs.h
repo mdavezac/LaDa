@@ -82,6 +82,13 @@ namespace Fitting
                                        const T_VECTOR &_b, T_PRECOND &_precond ) const
       {
         __DEBUGTRYBEGIN
+        __ASSERT( _A.size1() != _A.size2(), "matrix is not square.\n" )
+        __ASSERT( _x.size() != _A.size2(), 
+                     "Matrix and solution vector have different sizes.\n" 
+                  << "  " << _x.size() << " != " << _A.size2() << "\n" )
+        __ASSERT( _b.size() != _A.size1(), 
+                     "Matrix and solution vector have different sizes.\n" 
+                  << "  " << _b.size() << " != " << _A.size1() << "\n" )
         namespace ublas = boost::numeric::ublas;
         typedef T_VECTOR t_Vector;
         typedef typename t_Vector::value_type t_Type;

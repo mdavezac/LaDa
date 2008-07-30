@@ -19,6 +19,12 @@ namespace opt
       for(; _first != _last; ++_first, ++_second )
         _app( *_first, *_second );
     }
+  template< class T_IT1, class __APP >
+    void concurrent_loop( T_IT1 _first, T_IT1 _last, types::t_unsigned _second, __APP _app )
+    {
+      for(; _first != _last; ++_first, ++_second )
+        _app( *_first, _second );
+    }
   template< class T_IT1, class T_IT2, class T_IT3, class __APP >
     void concurrent_loop( T_IT1 _first, T_IT1 _last,
                           T_IT2 _second, T_IT3 _third, __APP _app )

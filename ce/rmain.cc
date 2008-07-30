@@ -142,6 +142,9 @@ int main(int argc, char *argv[])
 
     // Construct regularization.
     CE::Regulated reg;
+    reg.cgs.tolerance = tolerance;
+    reg.cgs.verbose = verbosity >= 4;
+    reg.cgs.itermax = 40;
 
     // reads jtypes
     std::vector< std::vector< CE::Cluster > > clusters;
