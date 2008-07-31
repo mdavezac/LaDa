@@ -170,16 +170,20 @@ namespace Minimizer {
           olde=newe;
           status = gsl_multimin_fdfminimizer_iterate (solver);
  
-          if( status )
-          { std::cout << "break on shit" << std::endl; break; }
+          if( status ) break;
  
           status = gsl_multimin_test_gradient (solver->gradient, tolerance);
-          if (status == GSL_SUCCESS) 
-          { std::cout << "break on gradient small" << std::endl; break; }
+          if(status == GSL_SUCCESS) 
+          {
+            if( verbose )
+              std::cout << "break on gradient small" << std::endl; 
+            break; 
+          }
  
           newe = gsl_multimin_fdfminimizer_minimum(solver);
-          std::cout << "--Iteration " << iter 
-                    << ": " << newe << "\n";
+          if( verbose )
+            std::cout << "  Gsl Iteration " << iter 
+                      << ": " << newe << "\n";
         }
         while ( status == GSL_CONTINUE and ( itermax == 0 or iter < itermax ) );
         if( verbose and ( status != GSL_SUCCESS and iter != itermax ) ) 

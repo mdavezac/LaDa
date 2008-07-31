@@ -32,8 +32,11 @@ namespace CE
       typename t_Clusters :: const_iterator i_clusters = _clusters.begin();
       typename t_Clusters :: const_iterator i_clusters_end = _clusters.end();
       typename t_Pis :: iterator i_pi = _pis.begin();
-      for( size_t i(0) ; i_clusters != i_clusters_end; ++i_clusters, ++i_pi, ++i ) 
+
+      for( ; i_clusters != i_clusters_end; ++i_clusters, ++i_pi ) 
       {
+        types::t_real nm = 1e0 / types::t_real(   _str.atoms.size()
+                                                * i_clusters->size() );
         __ASSERT( i_clusters->size() == 0, "Cluster class is empty.\n" );
         if( not i_clusters->front().vectors.size() )
           { *i_pi = 1; continue; }
@@ -51,7 +54,7 @@ namespace CE
           for (; i_cpos_center != i_cpos_end; ++i_cpos_center ) 
           {   
             // loop over lattice positions in cluster.
-            types::t_int result(1);
+            types::t_real result(1);
             for ( i_cpos = i_cpos_begin; i_cpos != i_cpos_end; ++i_cpos )
             {
               atat::rVector3d shift = i_atom->pos - *i_cpos_center;
@@ -59,32 +62,19 @@ namespace CE
               if ( not is_int( (!_str.lattice->cell)*shift) ) continue;
               
               // finds atom to which lattice site is equivalent
-             types::t_int (*ptr_func)( const atat::rVector3d &a,
-                                       const atat::rVector3d &b,
-                                       const atat::rMatrix3d &inv_cell);
-             ptr_func = &atat::equivalent_mod_cell;
-              Crystal::Structure::t_Atoms::const_iterator
-                i_equiv = std::find_if
-                          (
-                            _str.atoms.begin(), i_atom_end,
-                            bl::bind
-                            ( 
-                              ptr_func, 
-                              *i_cpos + shift, 
-                              bl::bind( &Crystal::Structure::t_Atom::pos, bl::_1 ),
-                              inv_cell
-                            )
-                          );
-              
+              Crystal::Structure::t_Atoms::const_iterator i_equiv = _str.atoms.begin();
+              for (; i_equiv != i_atom_end; ++i_equiv)  
+                if ( atat::equivalent_mod_cell( *i_cpos + shift, i_equiv->pos,inv_cell) ) 
+                  break;
+
               __ASSERT( i_equiv == i_atom_end,
                         "Could not find equivalent site.\n" )
-              result *= i_equiv->type > 0e0 ? 1: -1;
+              result *= i_equiv->type > 0e0 ? 1e0: -1e0;
 
             }  // end of loop over cluster points
-            *i_pi += result;
+            *i_pi += result * nm / (types::t_real) i_cluster->vectors.size();
           } // end of rotation
         }  // end of loop over equivalent clusters
-        *i_pi /= (types::t_real) i_clusters->front().vectors.size();
       } // end of loop over cluster classes.
     }  // end of loop over atoms 
   }
@@ -97,13 +87,19 @@ namespace CE
     namespace bl = boost::lambda;
     typedef typename T_PIS::value_type t_Pis;
     _pis.resize( _str.size() );
-    void (*ptr_func)( const T_CLUSTERS &, const Crystal::Structure &, t_Pis & );
-    ptr_func = &find_pis<T_CLUSTERS, t_Pis>;
-    opt::concurrent_loop
-    (
-      _str.begin(), _str.end(), _pis.begin(),
-      bl::bind( ptr_func, bl::constant( _clusters ), bl::_1, bl::_2 )
-    );
+    std::vector< Crystal::Structure > :: const_iterator i_str = _str.begin();
+    std::vector< Crystal::Structure > :: const_iterator i_str_end = _str.end();
+    typename T_PIS :: iterator i_pis = _pis.begin();
+    for( ; i_str != i_str_end; ++i_str, ++i_pis )
+      find_pis( _clusters, *i_str, *i_pis );
+//
+//   void (*ptr_func)( const T_CLUSTERS &, const Crystal::Structure &, t_Pis & );
+//   ptr_func = &find_pis<T_CLUSTERS, t_Pis>;
+//   opt::concurrent_loop
+//   (
+//     _str.begin(), _str.end(), _pis.begin(),
+//     bl::bind( ptr_func, bl::constant( _clusters ), bl::_1, bl::_2 )
+//   );
   }
 
 } // end of namespace CE

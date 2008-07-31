@@ -133,17 +133,21 @@ namespace Minimizer {
           olde=newe;
           status = gsl_multimin_fminimizer_iterate (solver);
  
-          if( status )
-          { std::cout << "break on shit" << std::endl; break; }
+          if( status ) break;
  
           types::t_real size = gsl_multimin_fminimizer_size (solver);
           status = gsl_multimin_test_size (size, 1e-2);
-          if( status == GSL_SUCCESS ) break;
+          if( status == GSL_SUCCESS )
+          {
+            if( verbose )
+              std::cout << "break on simplex small" << std::endl; 
+            break; 
+          }
 
 
           newe = gsl_multimin_fminimizer_minimum(solver);
-          std::cout << "--Iteration " << iter 
-                    << ": " << newe << "\n";
+          if( verbose )
+            std::cout << "  Simplex Iteration " << iter << ": " << newe << "\n";
         }
         while ( status == GSL_CONTINUE and ( itermax == 0 or iter < itermax ) );
         if( verbose and ( status != GSL_SUCCESS and iter != itermax ) ) 

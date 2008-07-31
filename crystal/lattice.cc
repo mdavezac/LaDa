@@ -338,5 +338,16 @@ namespace Crystal {
       return result;
       __TRYEND(, "Could not read lattice from input.\n" )
   }
+
+  bool Lattice :: equiv_by_point_group( const atat::rVector3d &_a,
+                                        const atat::rVector3d &_b ) const
+  {
+    if( atat::norm2( _a - _b ) < types::tolerance ) return false;
+    for (types::t_int op=0; op<space_group.point_op.get_size(); ++op) 
+      if ( atat::norm2(   _a 
+                        - space_group.point_op(op) * _b
+                        - space_group.trans(op)          ) < types::tolerance ) return true;
+    return false;
+  }
 } // namespace Crystal
 

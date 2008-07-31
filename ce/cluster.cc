@@ -9,6 +9,7 @@
 
 #include <opt/types.h>
 #include <opt/fuzzy.h>
+#include <opt/atat.h>
 #include <atat/findsym.h>
 #include <atat/xtalutil.h>
 
@@ -58,18 +59,9 @@ namespace CE {
       std::vector<atat::rVector3d> :: iterator i2_vec = vectors.begin();
       for(; i2_vec != i_vec_last; ++i2_vec)
       {
-        types::t_real (*ptr_norm2)( const atat::FixedVector<types::t_real,3>& ) 
-                             = &atat::norm2<types::t_real, 3>;
-        is_found  = std::find_if
-                    (
-                      _cluster.vectors.begin(),  _cluster.vectors.end(),
-                      bl::bind
-                      ( 
-                        &Fuzzy::eq<types::t_real>, 
-                        bl::bind<types::t_real>( ptr_norm2, bl::_1 - *i2_vec - shift ),
-                        0e0
-                      )
-                    );
+        is_found  = std::find_if( _cluster.vectors.begin(),
+                                  _cluster.vectors.end(),
+                                  atat::norm_compare( *i2_vec - shift ) );
 
         if ( is_found == _cluster.vectors.end() ) break;
       }
@@ -177,7 +169,7 @@ namespace CE {
     std::vector< std::vector< atat::rVector3d > > classes, onesize;
     //    -- first adds first (null) position.
     onesize.push_back( std::vector< atat::rVector3d >( 1, nn.front() ) );
-    n_it = nn.begin();
+    n_it = nn.begin() + 1;
     __NDEBUGCODE(std::vector< atat :: rVector3d > :: iterator)
       n_it_end = nn.end();
     norm = atat::norm2( *n_it );
@@ -200,22 +192,20 @@ namespace CE {
         i_found_end = onesize.end();
       for(; i_found != i_found_end; ++i_found )
       {
-        std::vector< atat::rVector3d > :: const_iterator i_equiv;
         // checks if position is equivalent to something in class i_found.
-        i_equiv = std::find_if
-                  (
-                    i_found->begin(), i_found->end(),
-                    bl::bind<bool>( &Crystal::Lattice::pos_are_equiv,
-                                    &_lat, *n_it, bl::_1 ) 
-                  ); 
+        std::vector< atat::rVector3d > :: const_iterator i_equiv = i_found->begin();
+        std::vector< atat::rVector3d > :: const_iterator i_notequiv = i_found->end();
+        for(; i_equiv != i_notequiv; ++i_equiv )
+          if( _lat.equiv_by_point_group( *i_equiv, *n_it ) ) break;
         // there are no equivalents, continue;
-        if( i_equiv == i_found->end() ) continue;
+        if( i_equiv == i_notequiv ) continue;
         // adds to i_found and breaks.
         i_found->push_back( *n_it );
         break;
       }
       if( i_found != onesize.end() ) continue;
       // Current position is new. Adds a class to onesize.
+      std::cout << "Adding class: " << onesize.size() << ".\n";
       onesize.push_back( std::vector< atat::rVector3d >( 1, *n_it ) );
     }
     if( onesize.size() ) std::copy( onesize.begin(), onesize.end(),

@@ -166,6 +166,8 @@ namespace Crystal {
         { return atat::equivalent_by_symmetry( _a, _b, cell,
                                                space_group.point_op, 
                                                space_group.trans ) == 1; }
+      bool equiv_by_point_group( const atat::rVector3d &_a,
+                                 const atat::rVector3d &_b ) const;
   };
 
   inline std::string Lattice::get_atom_string( const Crystal::Atom &_at ) const

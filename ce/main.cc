@@ -21,7 +21,7 @@
 #include <revision.h>
 #define __PROGNAME__ "lamarck"
 
-#ifdef _LADADEBUG
+#if defined( _LADADEBUG ) && defined( _MPI )
 #include <print/stdout.h>
 #define OUTPUT Print::out
 #define ENDLINE Print::endl
@@ -229,7 +229,7 @@ int main(int argc, char *argv[])
     )
     __NOTMPIROOT( (*::mpi::main), return 0; )
     std::cerr << message << std::endl;
-    __DODEBUGCODE( Print::out << message << Print::endl; )
+    __DODEBUGCODE( OUTPUT << message << ENDLINE; )
     return 0;
   }
   return 1;

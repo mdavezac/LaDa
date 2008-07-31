@@ -50,8 +50,18 @@ int main(int argc, char *argv[])
                     "Tolerance of the non-linear-least square fit."  )
       ("itermax,i", po::value<types::t_unsigned>()->default_value(0),
                     "Maximum number of iterations for the minimizer."  )
-      ("maxpairs", po::value<types::t_unsigned>()->default_value(5),
-                    "Max distance for pairs (in neighbors)."  );
+      ("maxpairs,m", po::value<types::t_unsigned>()->default_value(5),
+                     "Max distance for pairs (in neighbors)."  )
+      ("minimizer", po::value<std::string>()->default_value("simplex"),
+                    "Type of Minimizer"  )
+      ("iw", po::value<types::t_real>()->default_value(0),
+             "Initial value of the weights."  )
+      ("loo", "Single leave-one-out procedure." )
+      ("lambda", po::value<types::t_real>()->default_value(1),
+                 "Lambda for pair regularization. With --loo only. " )
+      ("tcoef", po::value<types::t_real>()->default_value(1),
+                "\"t\" coefficient. With --loo only. " );
+       
     po::options_description hidden("hidden");
     hidden.add_options()
         ("datadir", po::value<std::string>()->default_value("./"))
@@ -123,6 +133,11 @@ int main(int argc, char *argv[])
     seed = opt::random::seed( seed );
     types::t_real tolerance( vm["tolerance"].as< types::t_real >() );
     types::t_unsigned itermax( vm["itermax"].as< types::t_unsigned >() );
+    std::string minimizer_type( vm["minimizer"].as< std::string >() );
+    types::t_real iweights( vm["iw"].as< types::t_real >() );
+    bool doloo = vm.count("loo") != 0;
+    std::pair<types::t_real, types::t_real> pairreg( vm["lambda"].as<types::t_real>(),
+                                                     vm["tcoef"].as<types::t_real>() );
 
     std::cout << " Input Parameters:\n"
               << "   Verbosity: " << verbosity << "\n"
@@ -133,8 +148,14 @@ int main(int argc, char *argv[])
               << "   LDA energy input file: LDAs.dat\n"
               << "   Directory of structures input files: " << dir << "\n"
               << "   J0, J1, and many-body description file: " << jtypes << "\n"
-              << "   Maximum distance of pairs (nth neighbor): " << maxpairs << "\n"
-              << "\n";
+              << "   Maximum distance of pairs (nth neighbor): " << maxpairs << "\n";
+    if( not doloo )
+      std::cout << "   Non-linear Minimizer: " << minimizer_type << "\n"
+                << "   Initial value of the weights " << iweights << "\n";
+    else
+      std::cout << "   lambda: " << pairreg.first << "\n"
+                << "   t: " << pairreg.second << "\n";
+    std::cout << "\n";
 
     // Loads lattice
     boost::shared_ptr< Crystal::Lattice >
@@ -144,36 +165,106 @@ int main(int argc, char *argv[])
     std::vector< Crystal :: Structure > structures;
     Crystal::read_ce_structures( dir / "LDAs.dat", structures );
     Crystal::Structure::lattice = lattice.get();
+    if( verbosity >= 5 )
+      std::for_each( structures.begin(),
+                     structures.end(), 
+                     std::cout << bl::_1 << "\n");
 
     // Construct regularization.
     CE::Regulated reg;
     reg.cgs.tolerance = tolerance;
     reg.cgs.verbose = verbosity >= 4;
     reg.cgs.itermax = 40;
-    //! The non-linear minimization procedure.
-    Minimizer::Simplex minimizer;
-//   minimizer.type =  Minimizer::Gsl::SteepestDescent; //BFGS2; // Minimizer::Gsl::SteepestDescent; //
-    minimizer.tolerance = tolerance;
-    minimizer.verbose = verbosity >= 2;
-    minimizer.itermax = itermax;
-    minimizer.stepsize = 1;
-//   minimizer.linestep = 0.001;
-     // minimizer.linetolerance = 0.0001;
 
     // reads jtypes
-    std::vector< std::vector< CE::Cluster > > clusters;
-    CE::read_clusters( *lattice, jtypes, reg.clusters ); 
-    std::cout << "Read " << reg.clusters.size()
-              << " figures from " << jtypes << ".\n";
+    CE::Regulated :: t_Clusters clusters;
     // add pair terms.
-    CE::create_pairs( *lattice, maxpairs, reg.clusters );
+    CE::create_pairs( *lattice, maxpairs, clusters );
+    std::cout << "Creating " << clusters.size()
+              << " pair figures from " << jtypes << ".\n";
+    CE::read_clusters( *lattice, jtypes, reg.clusters ); 
+    CE::Regulated :: t_Clusters :: const_iterator i_class = clusters.begin();
+    CE::Regulated :: t_Clusters :: const_iterator i_class_end = clusters.end();
     std::cout << "Read " << reg.clusters.size()
               << " figures from " << jtypes << ".\n";
+    reg.clusters.insert( reg.clusters.begin() + std::min( (size_t)2, reg.clusters.size() ), 
+                         clusters.begin(), clusters.end() );
+    clusters.clear();
+    if( verbosity >= 6 )
+      for(; i_class != i_class_end; ++i_class )
+      {
+        std::for_each( i_class->begin(), i_class->end(), std::cout << bl::_1 << "\n" );
+        std::cout << i_class->size() << "\n";
+      }
 
     // initialization.
     reg.init( structures );
     
-    CE::drautz_diaz_ortiz( reg, minimizer, verbosity - 1);
+
+
+    // now for the real job.
+    if( doloo ) // single leave-one-out with pair regulation.
+    {
+      CE::Regulated :: t_Vector weights( reg.clusters.size() );
+      std::fill( weights.begin(), weights.end(), 0e0 );
+      if( not Fuzzy::is_zero( pairreg.second ) and maxpairs )
+      {
+        CE::Regulated :: t_Clusters :: const_iterator i_clusters = reg.clusters.begin();
+        CE::Regulated :: t_Clusters :: const_iterator i_clusters_end = reg.clusters.end();
+        CE::Regulated :: t_Vector :: iterator i_weight = weights.begin();
+         
+        // Now loop over pairs.
+        types::t_real normalization(0);
+        for(; i_clusters != i_clusters_end; ++i_clusters, ++i_weight )
+        {
+          __ASSERT( i_clusters->size() > 0, "No clusters in class.\n" )
+          if( i_clusters->front().size() != 2 ) continue;
+
+          types::t_real D( i_clusters->size() );
+          types::t_real R( atat::norm2(   i_clusters->front()[0] 
+                                        - i_clusters->front()[1] ) );
+
+          *i_weight = std::pow( R, pairreg.first ) / D;
+          normalization += (*i_weight);
+          *i_weight = std::sqrt( *i_weight );
+        }
+        normalization = std::sqrt( normalization * pairreg.second );
+        std::for_each( weights.begin(), weights.end(),
+                       bl::_1 *= bl::constant( normalization ) );
+      }
+      std::cout << "Leave-One-Out MSE: " << reg( &weights[0] ) << "\n"; 
+    }
+    else if( minimizer_type.compare( "simplex" ) == 0 )
+    {
+      Minimizer::Simplex simplex;
+      simplex.tolerance = tolerance;
+      simplex.verbose = verbosity >= 2;
+      simplex.itermax = itermax;
+      simplex.stepsize = 1;
+      CE::drautz_diaz_ortiz( reg, simplex, verbosity - 1, iweights);
+    }
+    else 
+    {
+      Minimizer::Gsl gsl;
+      gsl.type =  Minimizer::Gsl::SteepestDescent;
+      gsl.tolerance = tolerance;
+      gsl.verbose = verbosity >= 2;
+      gsl.itermax = itermax;
+      gsl.linestep = 0.01;
+      gsl.linetolerance = tolerance * 1e1;
+      if( minimizer_type.compare("bfgs2") == 0 )
+        gsl.type = Minimizer::Gsl::BFGS2;
+      if( minimizer_type.compare("bfgs") == 0 )
+        gsl.type = Minimizer::Gsl::BFGS;
+      if( minimizer_type.compare("sd") == 0 )
+        gsl.type = Minimizer::Gsl::SteepestDescent;
+      if( minimizer_type.compare("fr") == 0 )
+        gsl.type = Minimizer::Gsl::FletcherReeves;
+      if( minimizer_type.compare("pr") == 0 )
+        gsl.type = Minimizer::Gsl::PolakRibiere;
+    
+      CE::drautz_diaz_ortiz( reg, gsl, verbosity - 1, iweights);
+    }
   }
   catch ( boost::program_options::invalid_command_line_syntax &_b)
   {

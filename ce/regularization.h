@@ -31,9 +31,11 @@ namespace CE
   //! \details Regulated::clusters are unchanged at the end of the run.
   //! \brief Regulated Cluster-Expansion.
   //! \see <A HREF="http://dx.doi.org/10.1103/PhysRevB.73.224207"> Ralf Drautz
+  template< class T_MINIMIZER >
   void drautz_diaz_ortiz( Regulated &_reg,
-                          const Minimizer :: Simplex &_minimizer,
-                          types::t_int _verbosity = 0 );
+                          const T_MINIMIZER &_minimizer,
+                          types::t_int _verbosity = 0,
+                          types::t_real _initweights = 0e0 );
 
   //! \brief Regulated Cluster-Expansion.
   //! \see <A HREF="http://dx.doi.org/10.1103/PhysRevB.73.224207"> Ralf Drautz
@@ -140,5 +142,7 @@ namespace CE
   };
 
 } // end of namespace CE
+
+#include "regularization.impl.h"
 
 #endif 

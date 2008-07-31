@@ -128,7 +128,7 @@ namespace CE
          
          // transforms cluster according to symmetry group
          transfo_cluster->apply_symmetry(point_op(op),trans(op));
- 
+
          // checks wether transformed cluster is in Lamarck::clusters
          t_Clusters :: iterator i_cluster  = clusters->begin();
          t_Clusters :: iterator i_last = clusters->end();
@@ -210,20 +210,19 @@ namespace CE
              {
                atat::rVector3d shift = atom_pos - *i_cpos_center;
                
-               if (is_int( (!lattice->cell)*shift)) 
-               {
-                 // finds atom to which "point" is equivalent
-                 types::t_unsigned index;
-                 for (index = 0; index<str.atoms.size(); ++index)  
-                   if ( atat::equivalent_mod_cell(*i_cpos + shift,
-                                                  str.atoms[index].pos,inv_cell) ) 
-                     break;
-                 
-                 __ASSERT( index == str.atoms.size(),
-                             "Could not find equivalent of atom "
-                           << (*i_cpos + shift) << " in Lamarck::generate_functionals\n" )
-                 monome.add_term(index, true);
-               }
+               if ( not is_int( (!lattice->cell)*shift)) continue;
+               
+               // finds atom to which "point" is equivalent
+               Crystal::Structure::t_Atoms::const_iterator i_equiv = str.atoms.begin();
+               size_t index(0);
+               for (; i_equiv != i_atom_last; ++i_equiv, ++index)  
+                 if ( atat::equivalent_mod_cell( *i_cpos + shift, i_equiv->pos,inv_cell) ) 
+                   break;
+               
+               __ASSERT( i_equiv == i_atom_last, 
+                           "Could not find equivalent of atom "
+                         << (*i_cpos + shift) << " in Lamarck::generate_functionals\n" )
+               monome.add_term(index, true);
                
              }  // end of loop over cluster points
   

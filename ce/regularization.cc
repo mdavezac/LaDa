@@ -6,6 +6,7 @@
 #include <config.h>
 #endif
 
+#include<iomanip>
 #include<algorithm>
 #include<boost/numeric/ublas/vector_proxy.hpp>
 #include<boost/numeric/ublas/matrix_proxy.hpp>
@@ -78,8 +79,6 @@ namespace CE
               "Inconsistent number of returns and weights.\n" )
     __ASSERT( targets.size() != fittingpairs.size(),
               "Incorrect number of fitting pairs.\n" )
-    __ASSERT( targets.size() != fittedecis.size(),
-              "Incorrect number of fitting interactions.\n" )
 
     types::t_real result(0), dummy;
 //   opt::concurrent_loop
@@ -99,14 +98,12 @@ namespace CE
     t_Targets :: const_iterator i_target = targets.begin();
     t_Targets :: const_iterator i_target_end = targets.end();
     t_Targets :: const_iterator i_w = weights.begin();
-    t_FittedEcis :: iterator i_feci = fittedecis.begin();
     t_FittingPairs :: const_iterator i_pair = fittingpairs.begin();
     t_Pis :: const_iterator i_pis = pis.begin();
     for( ; i_target != i_target_end;
-         ++i_target, ++i_feci, ++i_w, ++i_pair, ++i_pis )
+         ++i_target, ++i_w, ++i_pair, ++i_pis )
     {
       __ASSERT( i_w == weights.end(), "Iterator out of range.\n" )
-      __ASSERT( i_feci == fittedecis.end(), "Iterator out of range.\n" )
       __ASSERT( i_pair == fittingpairs.end(), "Iterator out of range.\n" )
       __ASSERT( i_pis == pis.end(), "Iterator out of range.\n" )
 
@@ -173,25 +170,24 @@ namespace CE
 
     // init pis.
     find_pis( clusters, _structures, pis );
+    // t_Structures :: const_iterator i_structure = _structures.begin();
+    // t_Structures :: const_iterator i_structure_end = _structures.end();
+    // t_Pis ::const_iterator i_pis = pis.begin();
+    // for(; i_structure != i_structure_end; ++i_structure, ++i_pis )
+    // {
+    //   std::cout << i_structure->name << ": ";
+    //   std::for_each
+    //   (
+    //     i_pis->begin(), i_pis->end(),
+    //     bl::var( std::cout ) << std::fixed << bl::_1 << " " 
+    //   );
+    //   std::cout << "\n";
+    // }
 
     // initializes intermediate quantities.
     nb_cls = clusters.size();
     init_sums();
     construct_pairs();
-    if( fittedecis.size() != targets.size() )
-      fittedecis.resize( targets.size() );
-    std::vector< t_Vector > :: iterator i_ecis = fittedecis.begin();
-    std::vector< t_Vector > :: iterator i_ecis_end = fittedecis.end();
-    const types::t_real range(2);
-    for(; i_ecis != i_ecis_end; ++i_ecis )
-    {
-      if( i_ecis->size() != nb_cls ) i_ecis->resize( nb_cls );
-      std::for_each
-      ( 
-        i_ecis->begin(), i_ecis->end(), 
-        bl::_1 = bl::bind<types::t_real>( &opt::random::rng ) * range - range * 0.5e0 
-      );
-    }
   } 
  
   types::t_unsigned Regulated :: reduce()
@@ -233,21 +229,6 @@ namespace CE
     init_sums();
     construct_pairs();
       
-    std::vector< t_Vector > :: iterator i_ecis = fittedecis.begin();
-    std::vector< t_Vector > :: iterator i_ecis_end = fittedecis.end();
-    const types::t_real range(2);
-    for(; i_ecis != i_ecis_end; ++i_ecis )
-    {
-      t_Vector temp( nb_cls );
-      if( index != 0 ) 
-        bblas::noalias( bblas::subrange( temp, 0, index ) )
-           = bblas::subrange( *i_ecis, 0, index );
-      if( index != nb_cls - 1 ) 
-        bblas::noalias( bblas::subrange( temp, index, nb_cls ) )
-           = bblas::subrange( *i_ecis, index+1, nb_cls );
-      *i_ecis = temp; 
-    }
-
     return index;
   }
 
@@ -382,65 +363,6 @@ namespace CE
         *i_A += (*i_psum) - weight * (*i_alphapi) * (*i_betapi );
       } // end of loop over beta
     } // end of loop over alpha.
-  }
-
-  void drautz_diaz_ortiz( Regulated &_reg, 
-                          const Minimizer::Simplex &_minimizer,
-                          types::t_int _verbosity )
-  {
-    namespace bl = boost::lambda;
-
-    std::cout << "Starting Variational figure plot.\n";
-
-    Regulated::t_Clusters save_clusters( _reg.clusters );
-
-    
-    types::t_unsigned nb_cls( _reg.clusters.size() );
-
-    while( _reg.clusters.size() > 0 )
-    {
-      Regulated :: t_Vector solution( nb_cls );
-      Regulated :: t_Vector ecis( nb_cls );
-      Regulated :: t_Vector zero_vec( nb_cls, 0e0);
-      const types::t_real range(100);
-      std::for_each
-      ( 
-        solution.begin(), solution.end(),
-        bl::_1 =  bl::bind( &opt::random::rng ) * range - range * 0.5e0
-      );
-      std::for_each
-      ( 
-        ecis.begin(), ecis.end(),
-        bl::_1 =  bl::bind( &opt::random::rng ) * range - range * 0.5e0
-      );
-      // Fitting Error
-      types::t_real fit = _reg.fit( ecis );
-
-      // CV with zero weights
-      types::t_real cvwz( _reg( &zero_vec[0] ) ); 
-
-      // CV with optimized weights
-      types::t_real cvw;
-      try { cvw = _minimizer( _reg, solution ); }
-      catch( std::exception &_e )
-        { std::cout << __SPOT_ERROR << _e.what(); }
-      
-      // reduces figures by one.
-//     _reg.reassign( solution );
-//     types::t_unsigned index = _reg.reduce();
-
-//     __ASSERT( index > nb_cls, "index out of range.\n" )
-//     Regulated :: t_Clusters :: const_iterator i_found( save_clusters.begin() );
-//     for( size_t i(index); i > 0; --i, ++i_found );
-
-      std::cout << " Number of clusters: " << nb_cls << "\n"
-                << "  CV with weights: " << cvw << "\n"
-                << "  CV with weights=0: " << cvwz << "\n"
-                << "  Fitting squared error: " << fit << "\n";
-//               << "  Dropping cluster " << index << "\n"
-//               << i_found->front() << "\n\n";
-      exit(1);
-    }
   }
 
 } // end of namespace CE

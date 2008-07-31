@@ -2,7 +2,7 @@
 # Version: $Id$
 #
 include ../Files
-bin_PROGRAMS = regular # cubic tetra 
+bin_PROGRAMS = regular cubic tetra 
 AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
 	      @MPI_CFLAGS@ @BOOST_CXXFLAGS@
 AM_LDFLAGS = @TINYXML_LIBS@

@@ -987,7 +987,7 @@ endstorage:
     typename t_Islands :: iterator i_island_begin = islands.begin();
     typename t_Islands :: iterator i_island_end = islands.end();
     typename t_Islands :: iterator i_island;
-    ::mpi::main->barrier();
+    __MPICODE( ::mpi::main->barrier(); )
     Print::out << "\nEvaluating starting population" << Print::endl;
     // A first eval of pop.
     for ( i_island = i_island_begin; i_island != i_island_end; ++i_island )

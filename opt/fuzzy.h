@@ -52,6 +52,11 @@ namespace Fuzzy
     //! \f$|\_a - \_b| >= \f$ types::tolerance.
     template< class T_ARG >
     inline bool neq( const T_ARG _a, const T_ARG _b ) { return _a != _b; }
+    //! \brief returns true if \a _a  == 0.
+    //! \details if \a T_ARG is a types::real, return true if 
+    //!          \a _a < types::tolerance.
+    template< class T_ARG >
+    inline bool is_zero( const T_ARG _a ) { return Fuzzy::eq( _a, T_ARG(0) ); }
 } // end namsepace Fuzzy
 
 

@@ -151,6 +151,7 @@ namespace CE
       template<class Archive> void serialize( Archive & _ar,
                                               const unsigned int _version)
         { _ar & eci; _ar & vectors; } 
+      const std::vector< atat::rVector3d >& Vectors() const { return vectors; }
   };
 
   inline std::ostream &operator<<( std::ostream &_sstr, const Cluster &_cl )
