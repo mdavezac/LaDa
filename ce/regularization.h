@@ -37,11 +37,18 @@ namespace CE
                           types::t_int _verbosity = 0,
                           types::t_real _initweights = 0e0 );
 
+  void leave_one_out( const Regulated &_reg,
+                      const boost::numeric::ublas::vector<types::t_real> &_weights,
+                      const std::vector< Crystal::Structure > &_strs );
+
   //! \brief Regulated Cluster-Expansion.
   //! \see <A HREF="http://dx.doi.org/10.1103/PhysRevB.73.224207"> Ralf Drautz
   //!      and Alejandro Diaz-Ortiz, PRB \bf 73, 224207 (2007)</A>.
   class Regulated
   {
+    friend void leave_one_out( const Regulated &_reg,
+                     const boost::numeric::ublas::vector<types::t_real> &_weights,
+                     const std::vector< Crystal::Structure > &_strs );
     public:
       //! Type of the fitting matrices.
       typedef boost::numeric::ublas::matrix<types::t_real> t_Matrix;

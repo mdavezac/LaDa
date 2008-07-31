@@ -10,6 +10,8 @@
 #include<algorithm>
 #include<boost/numeric/ublas/vector_proxy.hpp>
 #include<boost/numeric/ublas/matrix_proxy.hpp>
+#include<boost/filesystem/path.hpp>
+#include<boost/filesystem/operations.hpp>
 #include<boost/lambda/lambda.hpp>
 #include<boost/lambda/bind.hpp>
 
@@ -365,5 +367,119 @@ namespace CE
     } // end of loop over alpha.
   }
 
+  void leave_one_out( const Regulated &_reg, 
+                      const boost::numeric::ublas::vector<types::t_real> &_weights,
+                      const std::vector< Crystal::Structure > &_strs )
+  {
+    namespace fs = boost::filesystem;
+    namespace bblas = boost::numeric::ublas;
+    namespace bl = boost::lambda;
+
+    types::t_real mse(0), average(0), max(0);
+    types::t_real fmse(0), faverage(0), fmax(0);
+    types::t_real N( _reg.targets.size() );
+
+    Regulated :: t_Matrix A(_reg.nb_cls, _reg.nb_cls); 
+    Regulated :: t_Vector x(_reg.nb_cls );
+    // loop over target values.
+    Regulated :: t_Targets :: const_iterator i_target = _reg.targets.begin();
+    Regulated :: t_Targets :: const_iterator i_target_end = _reg.targets.end();
+    Regulated :: t_Weights :: const_iterator i_w = _reg.weights.begin();
+    Regulated :: t_FittingPairs :: const_iterator i_pair = _reg.fittingpairs.begin();
+    Regulated :: t_Pis :: const_iterator i_pis = _reg.pis.begin();
+    std::vector<Crystal::Structure> :: const_iterator i_str = _strs.begin();
+    for( ; i_target != i_target_end;
+         ++i_target, ++i_w, ++i_pair, ++i_pis, ++i_str )
+    {
+      // construct matrix with weights.
+      A = i_pair->first;
+      Regulated::t_Vector :: const_iterator i_arg = _weights.begin();
+      Regulated::t_Vector :: const_iterator i_arg_end = _weights.end();
+      for( size_t i(0); i_arg != i_arg_end; ++i_arg, ++i )
+        A(i,i) += (*i_arg) * (*i_arg);
+
+      const types::t_real range(0);
+      std::for_each
+      ( 
+        x.begin(), x.end(),
+        bl::_1 =  bl::bind( &opt::random::rng ) * range - range * 0.5e0
+      );
+
+      // fits.
+      _reg.cgs( A, x, i_pair->second );
+
+      types::t_real ifmse(0), ifaverage(0), ifmax(0);
+      Regulated :: t_Pis :: const_iterator i_2pis = _reg.pis.begin();
+      Regulated :: t_Targets :: const_iterator i_2target = _reg.targets.begin();
+      Regulated :: t_Weights :: const_iterator i_2w = _reg.weights.begin();
+      std::vector<Crystal::Structure> :: const_iterator i_2str = _strs.begin();
+      std::cout << "Training:\n";
+      for(; i_2target != i_target_end; ++i_2pis, ++i_2target, ++i_2w, ++i_2str )
+      {
+        if( i_2target == i_target ) continue;
+        types::t_real predic2( bblas::inner_prod( x, *i_2pis ) );
+        std::cout << "  structure: " << std::setw(30)
+                  << fs::path( i_2str->name ).leaf() << "   "
+                  << "Target: " << std::fixed << std::setw(8)
+                  << std::setprecision(2) << *i_2target << " "
+                  << "Separable: " << std::fixed << std::setw(8)
+                  << std::setprecision(2) << predic2 << "   "
+                  << "|Target-Separable| * weight: "
+                  << std::fixed << std::setw(10) << std::setprecision(3) 
+                  << std::abs( predic2 - (*i_2target) ) * (*i_2w) 
+                  << "\n";
+        fmse +=   std::abs( predic2 - (*i_2target) ) 
+                * std::abs( predic2 - (*i_2target) )
+                * (*i_2w);
+        faverage += std::abs( predic2 - (*i_2target) ) * (*i_2w);
+        fmax = std::max( fmax, std::abs( predic2 - (*i_2target) ) );
+        ifmse +=   std::abs( predic2 - (*i_2target) ) 
+                * std::abs( predic2 - (*i_2target) )
+                * (*i_2w);
+        ifaverage += std::abs( predic2 - (*i_2target) ) * (*i_2w);
+        ifmax = std::max( ifmax, std::abs( predic2 - (*i_2target) ) );
+      }
+      std::cout << "    average error: " << ifaverage
+                << "    maximum error: " << ifmax
+                << "    mse error: " 
+                << ifmse / types::t_real( N - 1 ) 
+                << "\nPrediction:\n";
+      types::t_real predic( bblas::inner_prod( x, *i_pis ) );
+      mse +=   std::abs( predic - (*i_target) ) 
+             * std::abs( predic - (*i_target) )
+             * (*i_w);
+      average += std::abs( predic - (*i_target) ) * (*i_w);
+      max = std::max( fmax, std::abs( predic - (*i_target) ) );
+      std::cout << "  structure: " << std::setw(30)
+                << fs::path( i_str->name ).leaf() << "   "
+                << "Target: " << std::fixed << std::setw(8)
+                << std::setprecision(2) << *i_target << " "
+                << "Separable: " << std::fixed << std::setw(8)
+                << std::setprecision(2) << predic << "   "
+                << "|Target-Separable| * weight: "
+                << std::fixed << std::setw(10) << std::setprecision(3) 
+                << std::abs( predic - (*i_target) ) * (*i_w) 
+                << "\n";
+      std::cout << "    average error: " << std::abs( predic - (*i_target) ) 
+                << "    maximum error: " << std::abs( predic - (*i_target) ) 
+                << "    mse error: " 
+                <<   std::abs( predic - (*i_target) )
+                   * std::abs( predic - (*i_target) ) * (*i_w)
+                << "\n\n";
+    } // end of loop over target values.
+
+    fmse /= types::t_real( N - 1  ) * types::t_real( N );
+    faverage /= types::t_real( N-1 ) * types::t_real( N );
+    mse /= types::t_real( N );
+    average /= types::t_real( N );
+    std::cout << "\n\nTraining Errors:\n"
+              << "    average error: " << faverage
+              << "    maximum error: " << fmax
+              << "    mse error: " << fmse << "\n"
+              << "Prediction Errors:\n"
+              << "    average error: " << average
+              << "    maximum error: " << max
+              << "    mse error: " << mse << "\n";
+  }
 } // end of namespace CE
 
