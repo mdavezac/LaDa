@@ -11,6 +11,7 @@
 
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
+#include <boost/tuple/tuple.hpp>
 
 #include <opt/types.h>
 #include <opt/debug.h>
@@ -25,6 +26,53 @@ namespace CE
   // forward declaration
   //! \cond
   class Regulated;
+  class Fit;
+  namespace details
+  {
+    //! An error tuple.
+    class ErrorTuple : public boost::tuple<types::t_real, types::t_real, types::t_real> 
+    {  
+      //! Base class.
+      typedef boost::tuple<types::t_real, types::t_real, types::t_real> t_Base;
+      public:
+        ErrorTuple() { get<0>() = 0e0; get<1>() = 0e0; get<2>() = 0e0; }
+        ErrorTuple  ( types::t_real _a, types::t_real _b, types::t_real _c )
+                  : t_Base( _a, _b, _c ) {} 
+        ErrorTuple  ( types::t_real _a, types::t_real _b )
+                  : t_Base( _a * _a * _b, _a * _b, std::max( _a, get<2>() ) ) {} 
+        ErrorTuple  ( types::t_real _a )
+                  : t_Base( _a * _a, _a, std::max( _a, get<2>() ) ) {} 
+        ErrorTuple  ( const ErrorTuple &_e ) : t_Base( _e ) {} 
+    };
+    //! A normalized error tuple.
+    struct NErrorTuple : public ErrorTuple
+    {
+      //! Base class.
+      typedef ErrorTuple t_Base;
+      public:
+        //! Variance.
+        types::t_real variance;
+        //! Mean.
+        types::t_real mean;
+
+        NErrorTuple() : t_Base(), variance(0), mean(0) {}
+        NErrorTuple  ( types::t_real _a, types::t_real _b, types::t_real _c )
+                   : t_Base( _a, _b, _c ), variance(0), mean(0) {} 
+        NErrorTuple  ( types::t_real _a, types::t_real _b )
+                   : t_Base( _a * _a * _b, _a * _b, std::max( _a, get<2>() ) ),
+                     variance(0), mean(0) {}
+        NErrorTuple  ( types::t_real _a )
+                   : t_Base( _a * _a, _a, std::max( _a, get<2>() ) ),
+                     variance(0), mean(0) {}
+        NErrorTuple  ( const NErrorTuple &_e )
+                   : t_Base( _e ), variance( _e.variance ), mean( _e.mean ) {}
+        const NErrorTuple& operator=( const ErrorTuple &_e )
+        { 
+          get<0>() = _e.get<0>(); get<1>() = _e.get<1>(); get<2>() = _e.get<2>(); 
+          return *this;
+        }
+    };
+  }
   //! \endcond
 
   //! \brief Computes CV scores and reduces number of clusters to zero.
@@ -37,15 +85,13 @@ namespace CE
                           types::t_int _verbosity = 0,
                           types::t_real _initweights = 0e0 );
 
-  void leave_one_out( const Regulated &_reg,
-                      const boost::numeric::ublas::vector<types::t_real> &_weights,
-                      const std::vector< Crystal::Structure > &_strs );
 
   //! \brief Regulated Cluster-Expansion.
   //! \see <A HREF="http://dx.doi.org/10.1103/PhysRevB.73.224207"> Ralf Drautz
   //!      and Alejandro Diaz-Ortiz, PRB \bf 73, 224207 (2007)</A>.
   class Regulated
   {
+    friend class Fit;
     friend void leave_one_out( const Regulated &_reg,
                      const boost::numeric::ublas::vector<types::t_real> &_weights,
                      const std::vector< Crystal::Structure > &_strs );
@@ -146,6 +192,59 @@ namespace CE
       t_FittingPairs fittingpairs;
       //! A container of fitted interactions.
       mutable t_FittedEcis fittedecis;
+  };
+
+
+  class Fit 
+  {
+    public:
+      //! Index of structures excluded from the set.
+      typedef std::vector< Crystal::Structure > t_Structures;
+      //! A container of structures.
+      t_Structures structures;
+      //! lambda for pair regulation
+      types::t_real lambda;
+      //! t for pair regulation
+      types::t_real tcoef;
+      //! Wether to perform pair regulation.
+      bool do_pairreg;
+      //! Which pair regulation to perform: Laks or Volkers?
+      bool laksreg;
+      //! Wether to be verbose.
+      bool verbose;
+
+      
+      //! Constructor.
+      Fit() : lambda(0), tcoef(0), do_pairreg(false), laksreg(false), verbose(false) {}
+      //! Destructor.
+      ~Fit() {};
+
+      //! Performs leave-one-out.
+      void leave_one_out( const Regulated &_reg );
+      //! Performs leave-one-out.
+      void fit( const Regulated &_reg );
+
+    protected:
+      //! An error tuple.
+      typedef details::ErrorTuple t_ErrorTuple;
+      //! Compute pair regulation terms.
+      //! Compute pair regulation terms.
+      void pair_reg( const Regulated &_reg, Regulated::t_Vector &_weights );
+      //! Performs fit (e.g. leave-none-out).
+      void fit_but_one( const Regulated &_reg,
+                        Regulated :: t_Vector &_x,
+                        const Regulated :: t_Vector &_weights,
+                        const types::t_unsigned _n ) const;
+      //! Check results.
+      types::t_real check_one( const Regulated &_reg, 
+                               const Regulated :: t_Vector &_ecis,
+                               types::t_unsigned _n );
+      //! Check all (but one )
+      t_ErrorTuple check_all( const Regulated &_reg, 
+                              const Regulated :: t_Vector &_ecis,
+                              types::t_int _n = -1 );
+      //! computes mean and variance of data
+      details :: NErrorTuple mean_n_var( const Regulated &_reg ); 
   };
 
 } // end of namespace CE

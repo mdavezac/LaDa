@@ -205,7 +205,6 @@ namespace CE {
       }
       if( i_found != onesize.end() ) continue;
       // Current position is new. Adds a class to onesize.
-      std::cout << "Adding class: " << onesize.size() << ".\n";
       onesize.push_back( std::vector< atat::rVector3d >( 1, *n_it ) );
     }
     if( onesize.size() ) std::copy( onesize.begin(), onesize.end(),
@@ -300,7 +299,7 @@ namespace CE {
         sstr.str(line);
         types::t_real x, y, z;
         sstr >> x >> y >> z;
-        cluster.vectors.push_back( atat::rVector3d( x, y, z ) );
+        cluster.vectors.push_back( atat::rVector3d( x * 5e-1, y * 5e-1, z * 5e-1 ) );
       }
       // creates a new class from cluster.
       _out.push_back( std::vector< Cluster >( 1, cluster ) );

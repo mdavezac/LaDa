@@ -57,10 +57,13 @@ int main(int argc, char *argv[])
       ("iw", po::value<types::t_real>()->default_value(0),
              "Initial value of the weights."  )
       ("loo", "Single leave-one-out procedure." )
+      ("fit", "Single leave-none-out procedure." )
       ("lambda", po::value<types::t_real>()->default_value(1),
-                 "Lambda for pair regularization. With --loo only. " )
-      ("tcoef", po::value<types::t_real>()->default_value(1),
-                "\"t\" coefficient. With --loo only. " );
+                 "Lambda for pair regularization. With --loo/fit and --tcoef only. " )
+      ("tcoef", po::value<types::t_real>()->default_value(0),
+                "\"t\" coefficient. With --loo/fit only. " )
+      ("volkerreg", " Pair regulation done with Volker Blum's"
+                    " normalization (changes the units of the \"t\" coefficient). " );
        
     po::options_description hidden("hidden");
     hidden.add_options()
@@ -136,6 +139,8 @@ int main(int argc, char *argv[])
     std::string minimizer_type( vm["minimizer"].as< std::string >() );
     types::t_real iweights( vm["iw"].as< types::t_real >() );
     bool doloo = vm.count("loo") != 0;
+    bool dofit = vm.count("fit") != 0;
+    bool volkerreg = vm.count("volkerreg") != 0;
     std::pair<types::t_real, types::t_real> pairreg( vm["lambda"].as<types::t_real>(),
                                                      vm["tcoef"].as<types::t_real>() );
 
@@ -149,25 +154,40 @@ int main(int argc, char *argv[])
               << "   Directory of structures input files: " << dir << "\n"
               << "   J0, J1, and many-body description file: " << jtypes << "\n"
               << "   Maximum distance of pairs (nth neighbor): " << maxpairs << "\n";
-    if( not doloo )
+    if( not ( doloo or dofit ) )
       std::cout << "   Non-linear Minimizer: " << minimizer_type << "\n"
-                << "   Initial value of the weights " << iweights << "\n";
+                << "   Initial value of the weights: " << iweights << "\n";
     else
+    {
+      if( doloo ) std::cout << "   Will perform leave-one-out.\n";
+      if( dofit ) std::cout << "   Will perform leave-none-out.\n";
       std::cout << "   lambda: " << pairreg.first << "\n"
                 << "   t: " << pairreg.second << "\n";
+      if( volkerreg ) std::cout << "   Using Volker's normalization for t.\n";
+    }
     std::cout << "\n";
+
+    // consistency checks.
+    __ASSERT( Fuzzy::le(pairreg.second, 0e0), "Coefficient \"t\" cannot negative.\n" )
 
     // Loads lattice
     boost::shared_ptr< Crystal::Lattice >
       lattice( Crystal::read_lattice( latinput, dir ) );
 
+    // Create object for fitting procedures.
+    CE::Fit fitprocedures;
+    fitprocedures.lambda = pairreg.first;
+    fitprocedures.tcoef = pairreg.second;
+    fitprocedures.do_pairreg = ( not Fuzzy::is_zero( pairreg.second ) and maxpairs );
+    fitprocedures.laksreg = not volkerreg;
+    fitprocedures.verbose = verbosity >= 1;
+
     // read structures as lda\@nrel input.
-    std::vector< Crystal :: Structure > structures;
-    Crystal::read_ce_structures( dir / "LDAs.dat", structures );
+    Crystal::read_ce_structures( dir / "LDAs.dat", fitprocedures.structures );
     Crystal::Structure::lattice = lattice.get();
     if( verbosity >= 5 )
-      std::for_each( structures.begin(),
-                     structures.end(), 
+      std::for_each( fitprocedures.structures.begin(),
+                     fitprocedures.structures.end(), 
                      std::cout << bl::_1 << "\n");
 
     // Construct regularization.
@@ -183,57 +203,35 @@ int main(int argc, char *argv[])
     std::cout << "Creating " << clusters.size()
               << " pair figures from " << jtypes << ".\n";
     CE::read_clusters( *lattice, jtypes, reg.clusters ); 
-    CE::Regulated :: t_Clusters :: const_iterator i_class = clusters.begin();
-    CE::Regulated :: t_Clusters :: const_iterator i_class_end = clusters.end();
     std::cout << "Read " << reg.clusters.size()
               << " figures from " << jtypes << ".\n";
     reg.clusters.insert( reg.clusters.begin() + std::min( (size_t)2, reg.clusters.size() ), 
                          clusters.begin(), clusters.end() );
     clusters.clear();
     if( verbosity >= 6 )
+    {
+      CE::Regulated :: t_Clusters :: const_iterator i_class = reg.clusters.begin();
+      CE::Regulated :: t_Clusters :: const_iterator i_class_end = reg.clusters.end();
       for(; i_class != i_class_end; ++i_class )
       {
-        std::for_each( i_class->begin(), i_class->end(), std::cout << bl::_1 << "\n" );
-        std::cout << i_class->size() << "\n";
+        if( verbosity == 6 )
+          std::cout << i_class->front() << " D=" << i_class->size() << "\n";
+        else
+          std::for_each( i_class->begin(), i_class->end(), std::cout << bl::_1 << "\n" );
       }
+    }
 
     // initialization.
-    reg.init( structures );
+    reg.init( fitprocedures.structures );
     
 
 
     // now for the real job.
     if( doloo ) // single leave-one-out with pair regulation.
-    {
-      CE::Regulated :: t_Vector weights( reg.clusters.size() );
-      std::fill( weights.begin(), weights.end(), 0e0 );
-      if( not Fuzzy::is_zero( pairreg.second ) and maxpairs )
-      {
-        CE::Regulated :: t_Clusters :: const_iterator i_clusters = reg.clusters.begin();
-        CE::Regulated :: t_Clusters :: const_iterator i_clusters_end = reg.clusters.end();
-        CE::Regulated :: t_Vector :: iterator i_weight = weights.begin();
-         
-        // Now loop over pairs.
-        types::t_real normalization(0);
-        for(; i_clusters != i_clusters_end; ++i_clusters, ++i_weight )
-        {
-          __ASSERT( i_clusters->size() > 0, "No clusters in class.\n" )
-          if( i_clusters->front().size() != 2 ) continue;
-
-          types::t_real D( i_clusters->size() );
-          types::t_real R( atat::norm2(   i_clusters->front()[0] 
-                                        - i_clusters->front()[1] ) );
-
-          *i_weight = std::pow( R, pairreg.first ) / D;
-          normalization += (*i_weight);
-          *i_weight = std::sqrt( *i_weight );
-        }
-        normalization = std::sqrt( normalization * pairreg.second );
-        std::for_each( weights.begin(), weights.end(),
-                       bl::_1 *= bl::constant( normalization ) );
-      }
-      std::cout << "Leave-One-Out MSE: " << reg( &weights[0] ) << "\n"; 
-    }
+      fitprocedures.leave_one_out( reg );
+    if( dofit ) // single leave-none-out with pair regulation.
+      fitprocedures.fit( reg );
+    if( doloo or dofit ) return 1;
     else if( minimizer_type.compare( "simplex" ) == 0 )
     {
       Minimizer::Simplex simplex;

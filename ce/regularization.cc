@@ -8,6 +8,8 @@
 
 #include<iomanip>
 #include<algorithm>
+#include<numeric>
+#include<iostream>
 #include<boost/numeric/ublas/vector_proxy.hpp>
 #include<boost/numeric/ublas/matrix_proxy.hpp>
 #include<boost/filesystem/path.hpp>
@@ -28,6 +30,28 @@ namespace CE
     types::t_real innerprod( const boost::numeric::ublas::vector<types::t_real> &_a1,
                              const boost::numeric::ublas::vector<types::t_real> &_a2 )
       { return boost::numeric::ublas::inner_prod( _a1, _a2 ); }
+
+    std::ostream& operator<<( std::ostream &_stream, const ErrorTuple &_b )
+    {
+      return _stream << "    mse error: " << _b.get<0>()
+                     << "    average error: " << _b.get<1>()
+                     << "    maximum error: " << _b.get<2>();
+    }
+    void operator+=( ErrorTuple &_a, const ErrorTuple &_b )
+    {
+      _a.get<0>() += _b.get<0>();
+      _a.get<1>() += _b.get<1>();
+      _a.get<2>() = std::max( _a.get<2>(), _b.get<2>() );
+    }
+    std::ostream& operator<<( std::ostream &_stream, const NErrorTuple &_b )
+    {
+      return _stream << "    mse error: " << _b.get<0>()
+                       << " ( " << 1e2 * _b.get<0>() /  _b.variance << "% )"
+                     << "    average error: " << _b.get<1>()
+                       << " ( " << 1e2 * _b.get<1>() / std::abs( _b.mean ) << "% )"
+                     << "    maximum error: " << _b.get<2>()
+                       << " ( " << 1e2 * _b.get<2>() / std::abs( _b.mean ) << "% )";
+    }
   }
   void Regulated :: init_sums()
   {
@@ -57,17 +81,17 @@ namespace CE
       t_StructPis :: const_iterator i_pi_begin = i_pis->begin();
       t_StructPis :: const_iterator i_pi_end = i_pis->end();
       t_StructPis :: const_iterator i_alphapi( i_pi_begin );
-      for(; i_alphapi != i_pi_end; ++i_alphapi, ++i_esum )
+      for(size_t i(0); i_alphapi != i_pi_end; ++i_alphapi, ++i_esum, ++i)
       {
         __ASSERT( i_esum == esums.end(), "Iterator out of range.\n" )
-        *i_esum += (*i_w) * (*i_target) * (*i_alphapi);
+        esums(i) += (*i_w) * (*i_target) * (*i_alphapi);
 
         // loop over betas.
         t_StructPis :: const_iterator i_betapi( i_pi_begin );
-        for(; i_betapi != i_pi_end; ++i_betapi, ++i_psum )
+        for(size_t j(0); i_betapi != i_pi_end; ++i_betapi, ++i_psum, ++j )
         {
           __ASSERT( i_psum == psums.data().end(), "Iterator out of range.\n" )
-          *i_psum += (*i_w) * (*i_alphapi) * (*i_betapi);
+          psums(i,j) += (*i_w) * (*i_alphapi) * (*i_betapi);
         }
       } // end of loop over alphas.
     } // end of loop over betas.
@@ -80,7 +104,7 @@ namespace CE
     __ASSERT( targets.size() != weights.size(),
               "Inconsistent number of returns and weights.\n" )
     __ASSERT( targets.size() != fittingpairs.size(),
-              "Incorrect number of fitting pairs.\n" )
+              "Incorrect number of training pairs.\n" )
 
     types::t_real result(0), dummy;
 //   opt::concurrent_loop
@@ -295,7 +319,7 @@ namespace CE
               "Inconsistent number of targets and pis.\n" )
 
     t_Matrix A = psums;
-    cgs( psums, _x, esums );
+    cgs( A, _x, esums );
 
     // computes square errors.
     types::t_real result(0), dummy;
@@ -362,124 +386,212 @@ namespace CE
       {
         __ASSERT( i_psum == psums.data().end(), "Iterator out of range.\n" )
         __ASSERT( i_A == _A.data().end(), "Iterator out of range.\n" )
-        *i_A += (*i_psum) - weight * (*i_alphapi) * (*i_betapi );
+        *i_A = (*i_psum) - weight * (*i_alphapi) * (*i_betapi );
       } // end of loop over beta
     } // end of loop over alpha.
   }
 
-  void leave_one_out( const Regulated &_reg, 
-                      const boost::numeric::ublas::vector<types::t_real> &_weights,
-                      const std::vector< Crystal::Structure > &_strs )
+  void Fit :: leave_one_out( const Regulated &_reg )
   {
-    namespace fs = boost::filesystem;
     namespace bblas = boost::numeric::ublas;
     namespace bl = boost::lambda;
 
-    types::t_real mse(0), average(0), max(0);
-    types::t_real fmse(0), faverage(0), fmax(0);
-    types::t_real N( _reg.targets.size() );
+    t_ErrorTuple training(0,0,0), prediction(0,0,0);
 
-    Regulated :: t_Matrix A(_reg.nb_cls, _reg.nb_cls); 
-    Regulated :: t_Vector x(_reg.nb_cls );
-    // loop over target values.
-    Regulated :: t_Targets :: const_iterator i_target = _reg.targets.begin();
-    Regulated :: t_Targets :: const_iterator i_target_end = _reg.targets.end();
+    std::cout << "\nLeave-one-out procedure\n";
+
+    // computes mean and variance.
+    types::t_real norm( 0 );
+    details::NErrorTuple nerror( mean_n_var( _reg ) );
+    std::cout << "  Weighted mean of data: " << nerror.mean << "\n" 
+              << "  Weighted variance of data: " << nerror.variance << "\n";
+
+
+    Regulated :: t_Vector ecis(_reg.nb_cls );
+    Regulated :: t_Vector weights(_reg.nb_cls );
+    std::fill( weights.begin(), weights.end(), 0e0 );
+    std::fill( ecis.begin(), ecis.end(), 0e0 );
+    if( do_pairreg ) pair_reg( _reg, weights );
+
+    // loop over structures
     Regulated :: t_Weights :: const_iterator i_w = _reg.weights.begin();
-    Regulated :: t_FittingPairs :: const_iterator i_pair = _reg.fittingpairs.begin();
-    Regulated :: t_Pis :: const_iterator i_pis = _reg.pis.begin();
-    std::vector<Crystal::Structure> :: const_iterator i_str = _strs.begin();
-    for( ; i_target != i_target_end;
-         ++i_target, ++i_w, ++i_pair, ++i_pis, ++i_str )
+    for( types::t_int n = 0; n < structures.size(); ++n, ++i_w )
     {
-      // construct matrix with weights.
-      A = i_pair->first;
-      Regulated::t_Vector :: const_iterator i_arg = _weights.begin();
-      Regulated::t_Vector :: const_iterator i_arg_end = _weights.end();
-      for( size_t i(0); i_arg != i_arg_end; ++i_arg, ++i )
-        A(i,i) += (*i_arg) * (*i_arg);
+      fit_but_one( _reg, ecis, weights, n );
+      if( verbose ) std::cout <<  "Training errors:\n" ;
+      t_ErrorTuple train( check_all( _reg, ecis, n ) );
+      training += train;
+      if( verbose ) std::cout << "    " << ( nerror = train ) << "\n"; 
+      if( verbose ) std::cout <<  "Prediction errors:\n" ;
+      t_ErrorTuple pred( check_one( _reg, ecis, n ), *i_w );
+      if( verbose ) std::cout << "    " << ( nerror = pred ) << "\n"; 
+      prediction += pred;
+      norm += *i_w;
+    }
+    prediction.get<0>() /= norm;
+    prediction.get<1>() /= norm;
+    training.get<0>() /= norm;
+    training.get<1>() /= norm;
+    std::cout << "\nTraining Errors:\n" << "   " << ( nerror = training ) << "\n";
+    std::cout << "Prediction Errors:\n" << "   " << ( nerror = prediction ) << "\n";
+  }
+  void Fit :: fit( const Regulated &_reg )
+  {
+    namespace bblas = boost::numeric::ublas;
+    namespace bl = boost::lambda;
 
-      const types::t_real range(0);
-      std::for_each
-      ( 
-        x.begin(), x.end(),
-        bl::_1 =  bl::bind( &opt::random::rng ) * range - range * 0.5e0
-      );
+    std::cout << "\nFitting procedure\n";
+    details::NErrorTuple nerror( mean_n_var( _reg ) );
+    std::cout << "  Weighted mean of data: " << nerror.mean << "\n" 
+              << "  Weighted variance of data: " << nerror.variance << "\n";
 
-      // fits.
-      _reg.cgs( A, x, i_pair->second );
+    Regulated :: t_Vector ecis(_reg.nb_cls );
+    Regulated :: t_Vector weights(_reg.nb_cls );
+    std::fill( weights.begin(), weights.end(), 0e0 );
+    std::fill( ecis.begin(), ecis.end(), 0e0 );
+    if( do_pairreg ) pair_reg( _reg, weights );
 
-      types::t_real ifmse(0), ifaverage(0), ifmax(0);
-      Regulated :: t_Pis :: const_iterator i_2pis = _reg.pis.begin();
-      Regulated :: t_Targets :: const_iterator i_2target = _reg.targets.begin();
-      Regulated :: t_Weights :: const_iterator i_2w = _reg.weights.begin();
-      std::vector<Crystal::Structure> :: const_iterator i_2str = _strs.begin();
-      std::cout << "Training:\n";
-      for(; i_2target != i_target_end; ++i_2pis, ++i_2target, ++i_2w, ++i_2str )
-      {
-        if( i_2target == i_target ) continue;
-        types::t_real predic2( bblas::inner_prod( x, *i_2pis ) );
-        std::cout << "  structure: " << std::setw(30)
-                  << fs::path( i_2str->name ).leaf() << "   "
-                  << "Target: " << std::fixed << std::setw(8)
-                  << std::setprecision(2) << *i_2target << " "
-                  << "Separable: " << std::fixed << std::setw(8)
-                  << std::setprecision(2) << predic2 << "   "
-                  << "|Target-Separable| * weight: "
-                  << std::fixed << std::setw(10) << std::setprecision(3) 
-                  << std::abs( predic2 - (*i_2target) ) * (*i_2w) 
-                  << "\n";
-        fmse +=   std::abs( predic2 - (*i_2target) ) 
-                * std::abs( predic2 - (*i_2target) )
-                * (*i_2w);
-        faverage += std::abs( predic2 - (*i_2target) ) * (*i_2w);
-        fmax = std::max( fmax, std::abs( predic2 - (*i_2target) ) );
-        ifmse +=   std::abs( predic2 - (*i_2target) ) 
-                * std::abs( predic2 - (*i_2target) )
-                * (*i_2w);
-        ifaverage += std::abs( predic2 - (*i_2target) ) * (*i_2w);
-        ifmax = std::max( ifmax, std::abs( predic2 - (*i_2target) ) );
-      }
-      std::cout << "    average error: " << ifaverage
-                << "    maximum error: " << ifmax
-                << "    mse error: " 
-                << ifmse / types::t_real( N - 1 ) 
-                << "\nPrediction:\n";
-      types::t_real predic( bblas::inner_prod( x, *i_pis ) );
-      mse +=   std::abs( predic - (*i_target) ) 
-             * std::abs( predic - (*i_target) )
-             * (*i_w);
-      average += std::abs( predic - (*i_target) ) * (*i_w);
-      max = std::max( fmax, std::abs( predic - (*i_target) ) );
-      std::cout << "  structure: " << std::setw(30)
-                << fs::path( i_str->name ).leaf() << "   "
-                << "Target: " << std::fixed << std::setw(8)
-                << std::setprecision(2) << *i_target << " "
+    // construct matrix with weights.
+    Regulated :: t_Matrix A( _reg.psums );
+    Regulated::t_Vector :: const_iterator i_arg = weights.begin();
+    Regulated::t_Vector :: const_iterator i_arg_end = weights.end();
+    for( size_t i(0); i_arg != i_arg_end; ++i_arg, ++i )
+      A(i,i) += (*i_arg) * (*i_arg);
+
+    // fits.
+    types::t_real norm( std::accumulate( _reg.weights.begin(), _reg.weights.end(), 0e0 ) );
+    _reg.cgs( A, ecis, _reg.esums );
+    std::cout << "\nTraining Errors:\n";
+    t_ErrorTuple training( check_all( _reg, ecis ) );
+    std::cout << ( nerror = training ) << "\n";
+  }
+
+  details :: NErrorTuple Fit :: mean_n_var( const Regulated &_reg )
+  {
+    namespace bl = boost::lambda;
+    types::t_real norm( 0 );
+    details::NErrorTuple nerror;
+    opt::concurrent_loop
+    (
+       _reg.targets.begin(), _reg.targets.end(), _reg.weights.begin(),
+       (
+         bl::bind( &details::NErrorTuple::mean, bl::var(nerror) )
+           += bl::_1 * bl::_2,
+         bl::var( norm ) += bl::_2
+       )
+    );
+    nerror.mean /= norm;
+    opt::concurrent_loop
+    (
+       _reg.targets.begin(), _reg.targets.end(), _reg.weights.begin(),
+       bl::bind( &details::NErrorTuple::variance, bl::var(nerror) )
+         +=   ( bl::_1 - bl::constant( nerror.mean ) )
+            * ( bl::_1 - bl::constant( nerror.mean ) )
+            * bl::_2
+    );
+    nerror.variance /= norm;
+    return nerror;
+  }
+
+  void Fit :: pair_reg( const Regulated &_reg, Regulated :: t_Vector &_weights )
+  {
+    Regulated :: t_Clusters :: const_iterator i_clusters = _reg.clusters.begin();
+    Regulated :: t_Clusters :: const_iterator i_clusters_end = _reg.clusters.end();
+    Regulated :: t_Vector :: iterator i_weight = _weights.begin();
+     
+    // Now loop over pairs.
+    types::t_real normalization(0);
+    for(; i_clusters != i_clusters_end; ++i_clusters, ++i_weight )
+    {
+      __ASSERT( i_clusters->size() == 0, "No clusters in class.\n" )
+      if( i_clusters->front().size() != 2 ) continue;
+
+      types::t_real D( i_clusters->size() );
+      types::t_real R( atat::norm2(   i_clusters->front()[0] 
+                                    - i_clusters->front()[1] ) );
+
+      *i_weight = std::pow( R, lambda ) / D;
+      normalization += laksreg ?
+                         ( std::pow( R, lambda ) * D ):
+                         ( std::sqrt( std::pow( R, lambda  ) / D ) );
+      *i_weight = std::sqrt( *i_weight );
+    }
+    normalization = laksreg ?
+                      std::sqrt( tcoef / normalization ):
+                      std::sqrt( tcoef ) / normalization;
+    i_clusters = _reg.clusters.begin();
+    i_weight = _weights.begin();
+    for(; i_clusters != i_clusters_end; ++i_clusters, ++i_weight )
+    {
+      if( i_clusters->front().size() != 2 ) continue;
+      *i_weight *= normalization;
+    }
+  }
+
+  void Fit :: fit_but_one( const Regulated &_reg,
+                           Regulated :: t_Vector &_x,
+                           const Regulated :: t_Vector &_weights,
+                           const types::t_unsigned _n ) const 
+  {
+    // loop over target values.
+    const Regulated :: t_FittingPairs :: value_type pair = _reg.fittingpairs[_n];
+
+    // construct matrix with weights.
+    Regulated :: t_Matrix A( pair.first );
+    Regulated::t_Vector :: const_iterator i_arg = _weights.begin();
+    Regulated::t_Vector :: const_iterator i_arg_end = _weights.end();
+    for( size_t i(0); i_arg != i_arg_end; ++i_arg, ++i )
+      A(i,i) += (*i_arg) * (*i_arg);
+
+    // fits.
+    _reg.cgs( A, _x, pair.second );
+  }
+
+  types::t_real Fit :: check_one( const Regulated &_reg, 
+                                  const Regulated :: t_Vector &_ecis,
+                                  types::t_unsigned _n )
+  {
+    namespace fs = boost::filesystem;
+    namespace bblas = boost::numeric::ublas;
+    const Regulated :: t_Targets :: value_type &target = _reg.targets[_n];
+    const Regulated :: t_Weights :: value_type &weight = _reg.weights[_n];
+    const Regulated :: t_Pis :: value_type pis = _reg.pis[_n];
+    const std::string name = fs::path( structures[_n].name ).leaf() ;
+ 
+    types::t_real predic( bblas::inner_prod( _ecis, pis ) );
+    types::t_real error( std::abs( target - predic ) );
+    if( verbose )
+      std::cout << "  structure: " << std::setw(30) << name << "  "
+                << "Target: " << std::fixed << std::setw(8) 
+                << std::setprecision(2) << target << " "
                 << "Separable: " << std::fixed << std::setw(8)
                 << std::setprecision(2) << predic << "   "
                 << "|Target-Separable| * weight: "
                 << std::fixed << std::setw(10) << std::setprecision(3) 
-                << std::abs( predic - (*i_target) ) * (*i_w) 
+                << weight * error
                 << "\n";
-      std::cout << "    average error: " << std::abs( predic - (*i_target) ) 
-                << "    maximum error: " << std::abs( predic - (*i_target) ) 
-                << "    mse error: " 
-                <<   std::abs( predic - (*i_target) )
-                   * std::abs( predic - (*i_target) ) * (*i_w)
-                << "\n\n";
-    } // end of loop over target values.
-
-    fmse /= types::t_real( N - 1  ) * types::t_real( N );
-    faverage /= types::t_real( N-1 ) * types::t_real( N );
-    mse /= types::t_real( N );
-    average /= types::t_real( N );
-    std::cout << "\n\nTraining Errors:\n"
-              << "    average error: " << faverage
-              << "    maximum error: " << fmax
-              << "    mse error: " << fmse << "\n"
-              << "Prediction Errors:\n"
-              << "    average error: " << average
-              << "    maximum error: " << max
-              << "    mse error: " << mse << "\n";
+    return error;
   }
+
+  Fit :: t_ErrorTuple Fit :: check_all( const Regulated &_reg, 
+                                        const Regulated :: t_Vector &_ecis,
+                                        types::t_int _n  )
+  {
+    t_ErrorTuple result( 0,0,0 );
+    types::t_real norm(0);
+    Regulated :: t_Weights :: const_iterator i_weight = _reg.weights.begin();
+    for(types::t_int n(0); n < structures.size(); ++n, ++i_weight )
+    {
+      if( _n == n ) continue;
+      types::t_real error( check_one( _reg, _ecis, n ) );
+      result += details::ErrorTuple( error, (*i_weight) );
+      norm += (*i_weight);
+    }
+    types::t_real N( structures.size() );
+    result.get<0>() /= norm;
+    result.get<1>() /= norm;
+    return result;
+  }
+
 } // end of namespace CE
 

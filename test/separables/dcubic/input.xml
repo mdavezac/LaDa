@@ -5,8 +5,8 @@
         <row x="0.5" y="-0.5" z="0.5" />
         <row x="0.5" y="0.5" z="-0.5" />
         <site x="0.00000000" y="0.00000000" z="0.00000000">
-            <atom type="Mo" />
             <atom type="Ta" />
+            <atom type="Mo" />
         </site>
     </Lattice>
 </Job>
