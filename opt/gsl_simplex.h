@@ -147,7 +147,9 @@ namespace Minimizer {
 
           newe = gsl_multimin_fminimizer_minimum(solver);
           if( verbose )
-            std::cout << "  Simplex Iteration " << iter << ": " << newe << "\n";
+            std::cout << "  Simplex Iteration " << iter
+                      << ": minimum = " << newe
+                      << "   size =  " << size << "\n";
         }
         while ( status == GSL_CONTINUE and ( itermax == 0 or iter < itermax ) );
         if( verbose and ( status != GSL_SUCCESS and iter != itermax ) ) 

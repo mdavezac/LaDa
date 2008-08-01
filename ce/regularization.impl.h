@@ -10,6 +10,7 @@ namespace CE
                             types::t_int _verbosity,
                             types::t_real _initweights )
     {
+      __DEBUGTRYBEGIN
       namespace bl = boost::lambda;
  
       std::cout << "Starting Variational figure plot.\n";
@@ -48,20 +49,23 @@ namespace CE
           { std::cout << __SPOT_ERROR << _e.what(); }
         
         // reduces figures by one.
-  //     _reg.reassign( solution );
-  //     types::t_unsigned index = _reg.reduce();
- 
-  //     __ASSERT( index > nb_cls, "index out of range.\n" )
-  //     Regulated :: t_Clusters :: const_iterator i_found( save_clusters.begin() );
-  //     for( size_t i(index); i > 0; --i, ++i_found );
+        _reg.reassign( solution );
+        if( _verbosity >= 5 )
+        {
+          Regulated::t_Clusters :: const_iterator i_clusters = _reg.clusters.begin();
+          Regulated::t_Clusters :: const_iterator i_clusters_end = _reg.clusters.end();
+          for(; i_clusters != i_clusters_end; ++i_clusters )
+            std::cout << i_clusters->front();
+        }
+        Cluster cluster( _reg.reduce() );
+        --nb_cls;
  
         std::cout << " Number of clusters: " << nb_cls << "\n"
                   << "  CV with weights: " << cvw << "\n"
                   << "  CV with weights=0: " << cvwz << "\n"
-                  << "  Fitting squared error: " << fit << "\n";
-  //               << "  Dropping cluster " << index << "\n"
-  //               << i_found->front() << "\n\n";
-        return;
+                  << "  Fitting squared error: " << fit << "\n"
+                  << "  Dropping " << cluster << "\n\n";
       }
+      __DEBUGTRYEND(, "Error encountered in procedure drautz_ortiz_diaz.\n" )
     }
 }

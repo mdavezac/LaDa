@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
                     "Level of verbosity."  )
       ("seed", po::value<types::t_unsigned>()->default_value(0),
                "Seed of the random number generator."  );
-    po::options_description specific("Regulation Options");
+    po::options_description specific("Regularization Options");
     specific.add_options()
       ("latinput", po::value<std::string>()->default_value("input.xml"),
                    "Lattice input file." )
@@ -90,19 +90,19 @@ int main(int argc, char *argv[])
     if ( vm.count("version") ) return 1;
     if ( vm.count("help") )
     {
-      std::cout << "Usage: " << argv[0] << " [options] DATADIR JTYPES\n"
-                   "  _ DATATDIR (=./) is an optional path to the"
-                   " training set input.\n"
-                   "  _ JTYPES (=jtypes) is an optional filename"
-                   " for the file \n"
-                   "                 from which to load the lattice.\n"
-                   "                 (DATADIR must be present when using JTYPES).\n"
-                   "JTYPES should be\n"
-                   "                 a full path or a relative path "
-                   "starting from the current\n"
-                   "                 directory, or a relative path "
-                   "starting from the DATADIR\n"
-                   "                 directory (checked in that order.)\n\n" 
+      std::cout << "Usage: regular  [options] DATADIR JTYPES\n"
+                   "  _ DATATDIR (=./) is an optional path to the training set input.\n"
+                   "  _ JTYPES (=jtypes) is an optional filename for the file"
+                   "from which to load\n"
+                   "                     the lattice. (DATADIR must be present"
+                   "when using JTYPES).\n"
+                   "                     JTYPES should be a full path or a"
+                   "relative path\n"
+                   "                     starting from the current directory,"
+                   " or a relative path\n"
+                   "                     starting from the DATADIR directory"
+                   "(checked in that\n"
+                   "                     order.)\n"
                 << all << "\n"; 
       return 1;
     }
@@ -200,8 +200,7 @@ int main(int argc, char *argv[])
     CE::Regulated :: t_Clusters clusters;
     // add pair terms.
     CE::create_pairs( *lattice, maxpairs, clusters );
-    std::cout << "Creating " << clusters.size()
-              << " pair figures from " << jtypes << ".\n";
+    std::cout << "Creating " << clusters.size() << " pair figures.\n";
     CE::read_clusters( *lattice, jtypes, reg.clusters ); 
     std::cout << "Read " << reg.clusters.size()
               << " figures from " << jtypes << ".\n";

@@ -55,6 +55,7 @@ namespace CE
   }
   void Regulated :: init_sums()
   {
+    __DEBUGTRYBEGIN
     namespace bl = boost::lambda;
     __ASSERT( pis.size() != targets.size(),
               "Inconsistent number of targets and pis.\n" )
@@ -95,10 +96,12 @@ namespace CE
         }
       } // end of loop over alphas.
     } // end of loop over betas.
+    __DEBUGTRYEND(, "Error in Regulated::init_sums.\n" )
   } 
 
   Regulated::t_Return Regulated :: operator()( const types::t_real * _arg ) const
   {
+    __DEBUGTRYBEGIN
     namespace bblas = boost::numeric::ublas;
     namespace bl = boost::lambda;
     __ASSERT( targets.size() != weights.size(),
@@ -157,11 +160,13 @@ namespace CE
     } // end of loop over target values.
 
     return result / types::t_real( targets.size() );
+    __DEBUGTRYEND(, "Error in Regulated::operator().\n" )
   }
 
   void Regulated :: gradient( const types::t_real * _arg,
                               types::t_real *_gradient ) const
   {
+    __DEBUGTRYBEGIN
     types::t_real delta = 1e-4; // * cgs.tolerance;
     types::t_real delta_inv = 2e0 / delta;
     types::t_real right, left, keep;
@@ -177,10 +182,12 @@ namespace CE
       types::t_real right( Regulated::operator()( &arg[0] ) ); 
       *( _gradient + i ) = ( left - right ) * delta_inv;
     }
+    __DEBUGTRYEND(, "Error in Regulated::gradient().\n" )
   }
 
   void Regulated :: init( const t_Structures &_structures )
   {
+    __DEBUGTRYBEGIN
     namespace bl = boost::lambda;
     // inits weights
     weights.resize( _structures.size() );
@@ -214,10 +221,12 @@ namespace CE
     nb_cls = clusters.size();
     init_sums();
     construct_pairs();
+    __DEBUGTRYEND(, "Error in Regulated::init().\n" )
   } 
  
-  types::t_unsigned Regulated :: reduce()
+  Cluster Regulated :: reduce()
   {
+    __DEBUGTRYBEGIN
     namespace bblas = boost::numeric::ublas;
     t_Clusters :: iterator i_cls = clusters.begin(); 
     t_Clusters :: iterator i_cls_end = clusters.end(); 
@@ -232,6 +241,7 @@ namespace CE
         index = i;
       }
 
+    Cluster result( i_found->front() );
     clusters.erase( i_found );
     --nb_cls;
 
@@ -242,24 +252,29 @@ namespace CE
       __ASSERT( pis.size()-1 == clusters.size(),
                 "Inconsistent sizes of Pis and clusters.\n")
 
-      t_Vector temp( nb_cls );
-      if( index != 0 ) 
-        bblas::noalias( bblas::subrange( temp, 0, index ) )
-           = bblas::subrange( *i_pis, 0, index );
-      if( index != nb_cls - 1 ) 
-        bblas::noalias( bblas::subrange( temp, index, nb_cls ) )
-           = bblas::subrange( *i_pis, index+1, nb_cls );
-      *i_pis = temp; 
+      t_Vector temp( *i_pis );
+      i_pis->resize( nb_cls );
+      t_Vector :: const_iterator i_temp = temp.begin();
+      t_Vector :: const_iterator i_temp_end = temp.end();
+      t_Vector :: const_iterator i_pi = i_pis->begin();
+      for( size_t i(0); i_temp != i_temp_end; ++i_temp, ++i )
+      {
+        if( i == index ) continue;
+        *i_pi == *i_temp;
+        ++i_pi;
+      }
     }
 
     init_sums();
     construct_pairs();
       
-    return index;
+    return result;
+    __DEBUGTRYEND(, "Error in Regulated::reduce().\n" )
   }
 
   types::t_unsigned Regulated :: square_errors() const
   {
+    __DEBUGTRYBEGIN
     __ASSERT( targets.size() != weights.size(),
               "Inconsistent number of returns and weights.\n" )
     __ASSERT( targets.size() != pis.size(),
@@ -289,10 +304,12 @@ namespace CE
     } // end of loop over target values.
 
     return result / (types::t_real) targets.size(); 
+    __DEBUGTRYEND(, "Error in Regulated::square_errors().\n" )
   }
 
   void Regulated :: reassign( const t_Arg &_arg )
   {
+    __DEBUGTRYBEGIN
     namespace bl = boost::lambda;
 
     // now copies to clusters.
@@ -305,10 +322,12 @@ namespace CE
         i_clusters->begin(), i_clusters->end(),
         bl::bind( &Cluster::eci, bl::_1 ) = *i_arg
       );
+    __DEBUGTRYEND(, "Error in Regulated::reassign().\n" )
   }
 
   types::t_real Regulated :: fit( t_Vector &_x ) 
   {
+    __DEBUGTRYBEGIN
     namespace bl = boost::lambda;
     namespace bblas = boost::numeric::ublas;
     __ASSERT( nb_cls != clusters.size(),
@@ -333,10 +352,12 @@ namespace CE
       )
     );
     return result / types::t_real( targets.size() );
+    __DEBUGTRYEND(, "Error in Regulated::fit().\n" )
   }
 
   void Regulated :: construct_pairs()
   {
+    __DEBUGTRYBEGIN
     namespace bl = boost::lambda;
     if( fittingpairs.size() != targets.size() )
       fittingpairs.resize( targets.size() );
@@ -346,10 +367,12 @@ namespace CE
        fittingpairs.begin(), fittingpairs.end(), k,
        bl::bind( &Regulated :: construct_pair, bl::var(this), bl::_1, bl::_2 )
     );
+    __DEBUGTRYEND(, "Error in Regulated::construct_pairs().\n" )
   }
 
   void Regulated :: construct_pair( t_FittingPair &_pair, types::t_unsigned &_k )
   {
+    __DEBUGTRYBEGIN
     namespace bl = boost::lambda;
     __ASSERT( _k >= targets.size(),
               "Index out of range: " << _k << " >= " << targets.size() << ".\n" )
@@ -389,10 +412,12 @@ namespace CE
         *i_A = (*i_psum) - weight * (*i_alphapi) * (*i_betapi );
       } // end of loop over beta
     } // end of loop over alpha.
+    __DEBUGTRYEND(, "Error in Regulated::construct_pair().\n" )
   }
 
   void Fit :: leave_one_out( const Regulated &_reg )
   {
+    __DEBUGTRYBEGIN
     namespace bblas = boost::numeric::ublas;
     namespace bl = boost::lambda;
 
@@ -434,9 +459,11 @@ namespace CE
     training.get<1>() /= norm;
     std::cout << "\nTraining Errors:\n" << "   " << ( nerror = training ) << "\n";
     std::cout << "Prediction Errors:\n" << "   " << ( nerror = prediction ) << "\n";
+    __DEBUGTRYEND(, "Error in Fit::leave_one_out().\n" )
   }
   void Fit :: fit( const Regulated &_reg )
   {
+    __DEBUGTRYBEGIN
     namespace bblas = boost::numeric::ublas;
     namespace bl = boost::lambda;
 
@@ -464,10 +491,12 @@ namespace CE
     std::cout << "\nTraining Errors:\n";
     t_ErrorTuple training( check_all( _reg, ecis ) );
     std::cout << ( nerror = training ) << "\n";
+    __DEBUGTRYEND(, "Error in Fit::fit().\n" )
   }
 
   details :: NErrorTuple Fit :: mean_n_var( const Regulated &_reg )
   {
+    __DEBUGTRYBEGIN
     namespace bl = boost::lambda;
     types::t_real norm( 0 );
     details::NErrorTuple nerror;
@@ -491,10 +520,12 @@ namespace CE
     );
     nerror.variance /= norm;
     return nerror;
+    __DEBUGTRYEND(, "Error in Fit::mean_n_var().\n" )
   }
 
   void Fit :: pair_reg( const Regulated &_reg, Regulated :: t_Vector &_weights )
   {
+    __DEBUGTRYBEGIN
     Regulated :: t_Clusters :: const_iterator i_clusters = _reg.clusters.begin();
     Regulated :: t_Clusters :: const_iterator i_clusters_end = _reg.clusters.end();
     Regulated :: t_Vector :: iterator i_weight = _weights.begin();
@@ -526,6 +557,7 @@ namespace CE
       if( i_clusters->front().size() != 2 ) continue;
       *i_weight *= normalization;
     }
+    __DEBUGTRYEND(, "Error in Fit::pair_reg().\n" )
   }
 
   void Fit :: fit_but_one( const Regulated &_reg,
@@ -533,6 +565,7 @@ namespace CE
                            const Regulated :: t_Vector &_weights,
                            const types::t_unsigned _n ) const 
   {
+    __DEBUGTRYBEGIN
     // loop over target values.
     const Regulated :: t_FittingPairs :: value_type pair = _reg.fittingpairs[_n];
 
@@ -545,12 +578,14 @@ namespace CE
 
     // fits.
     _reg.cgs( A, _x, pair.second );
+    __DEBUGTRYEND(, "Error in Fit::fit_but_one().\n" )
   }
 
   types::t_real Fit :: check_one( const Regulated &_reg, 
                                   const Regulated :: t_Vector &_ecis,
                                   types::t_unsigned _n )
   {
+    __DEBUGTRYBEGIN
     namespace fs = boost::filesystem;
     namespace bblas = boost::numeric::ublas;
     const Regulated :: t_Targets :: value_type &target = _reg.targets[_n];
@@ -571,12 +606,14 @@ namespace CE
                 << weight * error
                 << "\n";
     return error;
+    __DEBUGTRYEND(, "Error in Fit::check_one().\n" )
   }
 
   Fit :: t_ErrorTuple Fit :: check_all( const Regulated &_reg, 
                                         const Regulated :: t_Vector &_ecis,
                                         types::t_int _n  )
   {
+    __DEBUGTRYBEGIN
     t_ErrorTuple result( 0,0,0 );
     types::t_real norm(0);
     Regulated :: t_Weights :: const_iterator i_weight = _reg.weights.begin();
@@ -591,6 +628,7 @@ namespace CE
     result.get<0>() /= norm;
     result.get<1>() /= norm;
     return result;
+    __DEBUGTRYEND(, "Error in Fit::check_all().\n" )
   }
 
 } // end of namespace CE

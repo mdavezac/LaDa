@@ -151,7 +151,7 @@ namespace CE
       //! Initializes from structures. 
       void init( const t_Structures &_structures );
       //! Reduce regulated function and cluster by 1.
-      types::t_unsigned reduce();
+      Cluster reduce();
       //! Fit to all data using linear-least square fit.
       types::t_real fit( t_Vector &_x );
       //! Analytical fit
