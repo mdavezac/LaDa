@@ -30,7 +30,7 @@ namespace Gsl
       ~Vector() {};
 
       operator gsl_vector*() { return &vector; }
-      operator const gsl_vector* const () const { return &vector; }
+      operator const gsl_vector* () const { return &vector; }
   };
   class Matrix
   {
@@ -43,7 +43,7 @@ namespace Gsl
       ~Matrix() {};
 
       operator gsl_matrix*() { return &matrix; }
-      operator const gsl_matrix* const () const { return &matrix; }
+      operator const gsl_matrix* () const { return &matrix; }
   };
   template< class T_CONTAINER >
     Vector::Vector( T_CONTAINER &_vec )

@@ -153,7 +153,7 @@ namespace CE
       //! Reduce regulated function and cluster by 1.
       Cluster reduce();
       //! Fit to all data using linear-least square fit.
-      types::t_real fit( t_Vector &_x );
+      types::t_real fit( t_Vector &_x, const t_Vector &_weight ) const;
       //! Analytical fit
       types::t_real anafit();
       //! Computes square errors.

@@ -4,6 +4,7 @@
 #include <string>
 #include <iomanip>
 #include <algorithm>
+#include <functional>
 #include <boost/filesystem/operations.hpp>
 #include <boost/lambda/bind.hpp>
 
@@ -75,7 +76,7 @@ namespace CE {
 
   void Cluster :: print_out (  std::ostream &stream)  const
   {
-    stream << std::fixed << std::setprecision(2) << std::setw(6);
+    stream << std::fixed << std::setprecision(5) << std::setw(9);
     stream << " Cluster: " << eci << std::endl;
     
     if (vectors.size() == 0 )
@@ -146,8 +147,8 @@ namespace CE {
       bl::bind
       (
         std::less<types::t_real>(),
-        bl::bind<types::t_real>( ptr_norm2, bl::_1 ),
-        bl::bind<types::t_real>( ptr_norm2, bl::_2 ) 
+        bl::bind<types::t_real>( std::ptr_fun( ptr_norm2 ), bl::_1 ),
+        bl::bind<types::t_real>( std::ptr_fun( ptr_norm2 ), bl::_2 ) 
       )
     );
 

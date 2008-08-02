@@ -69,7 +69,7 @@ namespace Fitting
     {
       gsl_multifit_fdfsolver *solver = NULL;
 
-      __TRYBEGIN
+      __DEBUGTRYBEGIN
       if( verbose )
         std::cout << " Starting Gsl Non-linear least-square fit.\n";
 

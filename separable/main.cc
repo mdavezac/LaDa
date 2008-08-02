@@ -81,6 +81,7 @@ int main(int argc, char *argv[])
 #       ifdef __DOHALFHALF__
           ("lambda,l", po::value<types::t_real>()->default_value(0),
                        "Regularization factor.\n" )
+          ("withrankcoef", "Regularizaton including rank coefficients.\n" )
 #       endif
         ("nbguesses", po::value<types::t_unsigned>()->default_value(1),
                       "Number of initial guesses to try prior to (any) fitting.\n" );
@@ -157,6 +158,7 @@ int main(int argc, char *argv[])
     types::t_real howrandom( vm["random"].as<types::t_real>() );
 #   ifdef __DOHALFHALF__
       types::t_real lambda( vm["lambda"].as<types::t_real>() );
+      bool include_rank_coef_in_reg( vm.count("withrankcoef") != 0 );
 #   endif
     types::t_unsigned nbguesses( vm["nbguesses"].as<types::t_unsigned>() );
     __ASSERT( nbguesses == 0, "Invalid input nbguesses = 0.\n" )
@@ -239,6 +241,7 @@ int main(int argc, char *argv[])
     Separable::EquivCollapse< t_Function > collapse( separables );
 #   ifdef __DOHALFHALF__
       collapse.regular_factor = lambda;
+      collapse.include_rank_coef_in_reg = include_rank_coef_in_reg;
 #   endif
 
     // Initializes Interface to allsq.
@@ -294,7 +297,9 @@ int main(int argc, char *argv[])
     std::cout << "Random Seed: " << seed << "\n";
 #   ifdef __DOHALFHALF__
       if( Fuzzy::gt( lambda, 0e0 ) )
-        std::cout << "Regularizing with factor: " << lambda << "\n";
+        std::cout << "Regularizing with factor: " << lambda << "\n"
+                  << "Will" << ( include_rank_coef_in_reg ? " not": " " )
+                  << "include rank coefficients in regularization.\n";
       std::cout << "Using True/False and True/True inner basis.\n"; 
 #   else
       std::cout << "Using True/False and False/True inner basis.\n"; 

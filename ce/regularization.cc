@@ -231,15 +231,18 @@ namespace CE
     t_Clusters :: iterator i_cls = clusters.begin(); 
     t_Clusters :: iterator i_cls_end = clusters.end(); 
     t_Clusters :: iterator i_found( i_cls );
-    types::t_real least( std::abs(i_cls->front().eci ) );
+    types::t_real least( -1e0 );
     types::t_unsigned index(0); ++i_cls;
     for(types::t_unsigned i(0); i_cls != i_cls_end; ++i_cls, ++i )
-      if( least > std::abs(i_cls->front().eci ) )
+    {
+      if( i_cls->front().size() < 2 ) continue;
+      if( least > std::abs( i_cls->front().eci ) or least < 0e0 )
       {
         i_found = i_cls;
         least = std::abs(i_cls->front().eci );
         index = i;
       }
+    }
 
     Cluster result( i_found->front() );
     clusters.erase( i_found );
@@ -320,12 +323,12 @@ namespace CE
       std::for_each
       (
         i_clusters->begin(), i_clusters->end(),
-        bl::bind( &Cluster::eci, bl::_1 ) = *i_arg
+        bl::bind( &Cluster::eci, bl::_1 ) = bl::constant(*i_arg)
       );
     __DEBUGTRYEND(, "Error in Regulated::reassign().\n" )
   }
 
-  types::t_real Regulated :: fit( t_Vector &_x ) 
+  types::t_real Regulated :: fit( t_Vector &_x, const t_Vector &_weights ) const
   {
     __DEBUGTRYBEGIN
     namespace bl = boost::lambda;
@@ -338,6 +341,10 @@ namespace CE
               "Inconsistent number of targets and pis.\n" )
 
     t_Matrix A = psums;
+    Regulated::t_Vector :: const_iterator i_arg = _weights.begin();
+    Regulated::t_Vector :: const_iterator i_arg_end = _weights.end();
+    for( size_t i(0); i_arg != i_arg_end; ++i_arg, ++i )
+      A(i,i) += (*i_arg) * (*i_arg);
     cgs( A, _x, esums );
 
     // computes square errors.
@@ -361,12 +368,11 @@ namespace CE
     namespace bl = boost::lambda;
     if( fittingpairs.size() != targets.size() )
       fittingpairs.resize( targets.size() );
-    types::t_unsigned k(0);
-    opt::concurrent_loop
-    (
-       fittingpairs.begin(), fittingpairs.end(), k,
-       bl::bind( &Regulated :: construct_pair, bl::var(this), bl::_1, bl::_2 )
-    );
+    ;
+    t_FittingPairs :: iterator i_fpair = fittingpairs.begin();
+    t_FittingPairs :: iterator i_fpair_end = fittingpairs.end();
+    for(types::t_unsigned k(0); i_fpair != i_fpair_end; ++i_fpair, ++k )
+      construct_pair( *i_fpair, k );
     __DEBUGTRYEND(, "Error in Regulated::construct_pairs().\n" )
   }
 
@@ -478,16 +484,8 @@ namespace CE
     std::fill( ecis.begin(), ecis.end(), 0e0 );
     if( do_pairreg ) pair_reg( _reg, weights );
 
-    // construct matrix with weights.
-    Regulated :: t_Matrix A( _reg.psums );
-    Regulated::t_Vector :: const_iterator i_arg = weights.begin();
-    Regulated::t_Vector :: const_iterator i_arg_end = weights.end();
-    for( size_t i(0); i_arg != i_arg_end; ++i_arg, ++i )
-      A(i,i) += (*i_arg) * (*i_arg);
-
     // fits.
-    types::t_real norm( std::accumulate( _reg.weights.begin(), _reg.weights.end(), 0e0 ) );
-    _reg.cgs( A, ecis, _reg.esums );
+    _reg.fit( ecis, weights );
     std::cout << "\nTraining Errors:\n";
     t_ErrorTuple training( check_all( _reg, ecis ) );
     std::cout << ( nerror = training ) << "\n";

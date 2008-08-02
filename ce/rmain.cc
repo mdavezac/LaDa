@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
     // read structures as lda\@nrel input.
     Crystal::read_ce_structures( dir / "LDAs.dat", fitprocedures.structures );
     Crystal::Structure::lattice = lattice.get();
-    if( verbosity >= 5 )
+    if( verbosity >= 9 )
       std::for_each( fitprocedures.structures.begin(),
                      fitprocedures.structures.end(), 
                      std::cout << bl::_1 << "\n");
@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
     // Construct regularization.
     CE::Regulated reg;
     reg.cgs.tolerance = tolerance;
-    reg.cgs.verbose = verbosity >= 4;
+    reg.cgs.verbose = verbosity >= 11;
     reg.cgs.itermax = 40;
 
     // reads jtypes
@@ -207,13 +207,13 @@ int main(int argc, char *argv[])
     reg.clusters.insert( reg.clusters.begin() + std::min( (size_t)2, reg.clusters.size() ), 
                          clusters.begin(), clusters.end() );
     clusters.clear();
-    if( verbosity >= 6 )
+    if( verbosity >= 8 )
     {
       CE::Regulated :: t_Clusters :: const_iterator i_class = reg.clusters.begin();
       CE::Regulated :: t_Clusters :: const_iterator i_class_end = reg.clusters.end();
       for(; i_class != i_class_end; ++i_class )
       {
-        if( verbosity == 6 )
+        if( verbosity < 10 )
           std::cout << i_class->front() << " D=" << i_class->size() << "\n";
         else
           std::for_each( i_class->begin(), i_class->end(), std::cout << bl::_1 << "\n" );
@@ -235,17 +235,17 @@ int main(int argc, char *argv[])
     {
       Minimizer::Simplex simplex;
       simplex.tolerance = tolerance;
-      simplex.verbose = verbosity >= 2;
+      simplex.verbose = verbosity >= 11;
       simplex.itermax = itermax;
       simplex.stepsize = 1;
-      CE::drautz_diaz_ortiz( reg, simplex, verbosity - 1, iweights);
+      CE::drautz_diaz_ortiz( reg, simplex, verbosity, iweights);
     }
     else 
     {
       Minimizer::Gsl gsl;
       gsl.type =  Minimizer::Gsl::SteepestDescent;
       gsl.tolerance = tolerance;
-      gsl.verbose = verbosity >= 2;
+      gsl.verbose = verbosity >= 11;
       gsl.itermax = itermax;
       gsl.linestep = 0.01;
       gsl.linetolerance = tolerance * 1e1;
@@ -260,7 +260,7 @@ int main(int argc, char *argv[])
       if( minimizer_type.compare("pr") == 0 )
         gsl.type = Minimizer::Gsl::PolakRibiere;
     
-      CE::drautz_diaz_ortiz( reg, gsl, verbosity - 1, iweights);
+      CE::drautz_diaz_ortiz( reg, gsl, verbosity, iweights);
     }
   }
   catch ( boost::program_options::invalid_command_line_syntax &_b)

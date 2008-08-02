@@ -20,8 +20,17 @@ namespace CE
       
       types::t_unsigned nb_cls( _reg.clusters.size() );
  
-      while( _reg.clusters.size() > 0 )
+      while( _reg.clusters.size() > 2 )
       {
+        std::cout << " Number of clusters in optimization set: " << nb_cls << "\n";
+        if( _verbosity >= 2 )
+        {
+          std::cout << " List of Clusters:\n";
+          Regulated::t_Clusters :: const_iterator i_clusters = _reg.clusters.begin();
+          Regulated::t_Clusters :: const_iterator i_clusters_end = _reg.clusters.end();
+          for(; i_clusters != i_clusters_end; ++i_clusters )
+            std::cout << i_clusters->front();
+        }
         Regulated :: t_Vector solution( nb_cls );
         Regulated :: t_Vector ecis( nb_cls );
         Regulated :: t_Vector zero_vec( nb_cls, 0e0);
@@ -37,33 +46,33 @@ namespace CE
           bl::_1 =  bl::bind( &opt::random::rng ) * range - range * 0.5e0
         );
         // Fitting Error
-        types::t_real fit = _reg.fit( ecis );
+        types::t_real fitnoreg = _reg.fit( ecis, zero_vec );
  
         // CV with zero weights
         types::t_real cvwz( _reg( &zero_vec[0] ) ); 
  
         // CV with optimized weights
         types::t_real cvw;
-        try { cvw = _minimizer( _reg, solution ); }
-        catch( std::exception &_e )
-          { std::cout << __SPOT_ERROR << _e.what(); }
+        __TRYBEGIN
+          cvw = _minimizer( _reg, solution ); 
+        __TRYEND(," ") 
+        std::for_each( solution.begin(), solution.end(), std::cout << bl::_1 << " " );
+        std::cout << "\n";
+        
+        // Fitting Error
+        types::t_real fitwithreg = _reg.fit( ecis, solution );
+        std::for_each( ecis.begin(), ecis.end(), std::cout << bl::_1 << " " );
+        std::cout << "\n";
         
         // reduces figures by one.
-        _reg.reassign( solution );
-        if( _verbosity >= 5 )
-        {
-          Regulated::t_Clusters :: const_iterator i_clusters = _reg.clusters.begin();
-          Regulated::t_Clusters :: const_iterator i_clusters_end = _reg.clusters.end();
-          for(; i_clusters != i_clusters_end; ++i_clusters )
-            std::cout << i_clusters->front();
-        }
+        _reg.reassign( ecis );
         Cluster cluster( _reg.reduce() );
         --nb_cls;
  
-        std::cout << " Number of clusters: " << nb_cls << "\n"
-                  << "  CV with weights: " << cvw << "\n"
+        std::cout << "  CV with weights: " << cvw << "\n"
                   << "  CV with weights=0: " << cvwz << "\n"
-                  << "  Fitting squared error: " << fit << "\n"
+                  << "  Fitting squared error (no regulation): " << fitnoreg << "\n"
+                  << "  Fitting squared error (with regulation): " << fitwithreg << "\n"
                   << "  Dropping " << cluster << "\n\n";
       }
       __DEBUGTRYEND(, "Error encountered in procedure drautz_ortiz_diaz.\n" )

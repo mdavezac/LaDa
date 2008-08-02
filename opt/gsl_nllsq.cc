@@ -5,7 +5,6 @@
 #include "gsl_nllsq.h"
 #include "gsl.h"
 
-#include<boost/type_traits/is_same.hpp>
 
 namespace Fitting
 {
