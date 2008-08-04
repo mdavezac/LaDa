@@ -57,6 +57,19 @@ revision.h: force
 force: ;
 all: all-local
 all-local: revision.h
+
+ce/cubic: force
+	@cd ce; $(MAKE) cubic
+ce/tetra: force
+	@cd ce; $(MAKE) tetra
+ce/regular: force
+	@cd ce; $(MAKE) regular
+
+separable/cubic: force
+	@cd separable; $(MAKE) cubic
+separable/tetra: force
+	@cd separable; $(MAKE) tetra
+
 if DODOC
 doc: $(ALL_DOCS)
 	@cp doxy.conf doxy.tmp

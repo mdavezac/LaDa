@@ -34,8 +34,8 @@
 
 const types::t_unsigned print_reruns   = 1;
 const types::t_unsigned print_checks   = 2;
-const types::t_unsigned print_allsq    = 3;
-const types::t_unsigned print_function = 4;
+const types::t_unsigned print_function = 3;
+const types::t_unsigned print_allsq    = 4;
 const types::t_unsigned print_data     = 5;
 const types::t_unsigned print_llsq     = 6;
 
@@ -298,8 +298,8 @@ int main(int argc, char *argv[])
 #   ifdef __DOHALFHALF__
       if( Fuzzy::gt( lambda, 0e0 ) )
         std::cout << "Regularizing with factor: " << lambda << "\n"
-                  << "Will" << ( include_rank_coef_in_reg ? " not": " " )
-                  << "include rank coefficients in regularization.\n";
+                  << "Will" << ( include_rank_coef_in_reg ? " ": " not" )
+                  << " include rank coefficients in regularization.\n";
       std::cout << "Using True/False and True/True inner basis.\n"; 
 #   else
       std::cout << "Using True/False and False/True inner basis.\n"; 

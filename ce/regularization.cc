@@ -167,7 +167,7 @@ namespace CE
                               types::t_real *_gradient ) const
   {
     __DEBUGTRYBEGIN
-    types::t_real delta = 1e-4; // * cgs.tolerance;
+    types::t_real delta = 1e-2; // * cgs.tolerance;
     types::t_real delta_inv = 2e0 / delta;
     types::t_real right, left, keep;
     const types::t_real *i_arg( _arg );
