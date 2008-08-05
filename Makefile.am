@@ -75,17 +75,21 @@ force: ;
 all: all-local
 all-local: revision.h
 
+if DOCE
 ce/cubic: force
 	@cd ce; $(MAKE) cubic
 ce/tetra: force
 	@cd ce; $(MAKE) tetra
 ce/regular: force
 	@cd ce; $(MAKE) regular
+endif
 
+if DOSEPARABLE
 separable/cubic: force
 	@cd separable; $(MAKE) cubic
 separable/tetra: force
 	@cd separable; $(MAKE) tetra
+endif
 
 if DODOC
 doc: $(ALL_DOCS)

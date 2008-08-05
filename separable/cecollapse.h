@@ -43,8 +43,7 @@ namespace Separable
         t_Type regular_factor;
         //! Constructor
         EquivCollapse   ( t_Function &_function )
-                      : t_Base( _function ), regular_factor(0e0),
-                        include_rank_coef_in_reg( true ) {}
+                      : t_Base( _function ), regular_factor(0e0) {}
 #     else
         //! Constructor
         EquivCollapse ( t_Function &_function ) : t_Base( _function ) {}

@@ -45,8 +45,6 @@ namespace CE
 
   void Separables :: set_basis( const atat::rMatrix3d &_cell, const std::string &_type )
   {
-    __ASSERT( _type.compare("cube") and _type.compare("conv"),
-              "Unknown basis type " << _type << ".\n")
     __ASSERT( Crystal::Structure::lattice == NULL,
               "Lattice type has not been set.\n" )
     details::supercell_basis( 1, _cell, positions );
@@ -67,7 +65,7 @@ namespace CE
                                positions );
     basis_type = _type;
     basis_size = positions.size();
-    rename;
+    rename();
   }
   void Separables :: set_rank( types::t_unsigned _rank ) 
   {
