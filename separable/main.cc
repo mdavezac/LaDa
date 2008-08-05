@@ -244,7 +244,6 @@ int main(int argc, char *argv[])
       __DOASSERT( not boost::regex_search( bdesc, what, re ),
                   "Could not parse --basis input: " << bdesc << "\n" )
       atat::rMatrix3d cell;
-      std::cout << what.str(1) << " | " << what.str(2) << " | " << what.str(3) << "\n";
       cell.set_diagonal( boost::lexical_cast<types::t_real>(what.str(1)),
                          boost::lexical_cast<types::t_real>(what.str(2)),
                          boost::lexical_cast<types::t_real>(what.str(3)) );
