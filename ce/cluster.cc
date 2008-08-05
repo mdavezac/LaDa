@@ -7,6 +7,7 @@
 #include <functional>
 #include <boost/filesystem/operations.hpp>
 #include <boost/lambda/bind.hpp>
+#include <boost/regex.hpp>
 
 #include <opt/types.h>
 #include <opt/fuzzy.h>
