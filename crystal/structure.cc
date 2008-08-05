@@ -3,6 +3,8 @@
 //
 #include <algorithm>
 #include <boost/filesystem/operations.hpp>
+#include <boost/regex.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <opt/ndim_iterator.h>
 #include <opt/traits.h>

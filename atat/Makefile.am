@@ -9,7 +9,7 @@ AM_CPPFLAGS = @COMPILER_CXXFLAGS@  @CPP_DEBUG_FLAGS@ @BOOST_CXXFLAGS@
 AM_LDFLAGS = 
 noinst_LTLIBRARIES = libatat.la $(pythonlib)
 libatat_la_SOURCES = $(ATAT_CC)
-libatat_ladir = $(includedir)/atat
+libatat_ladir = $(includedir)/LaDa/atat
 nobase_libatat_la_HEADERS = $(ATAT_H)
 if DOPYTHON
 libatatpy_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) \

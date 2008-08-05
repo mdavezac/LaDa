@@ -35,15 +35,22 @@ namespace CE
       typedef ::Separable::Function< std::vector< ::Separable::Summand<
                                      ::Separable::BooleanBasis > > > t_Base;
     public:
+
       //! Constructor.
       Separables( types::t_unsigned _rank = 2,
                   types::t_unsigned _size = 3, 
-                  std::string basis_type = "cube");
+                  const std::string &basis_type = "cube");
+      //! Constructor.
+      Separables( types::t_unsigned _rank,
+                  const atat::rMatrix3d &_cell, 
+                  const std::string &basis_type = "parallelepiped");
 
       //! Sets the rank of the separable function.
       void set_rank( types::t_unsigned _rank );
-      //! Sets the rank of the separable function.
-      void set_basis( types::t_unsigned _size, std::string _type );
+      //! Sets the basis of the separable function.
+      void set_basis( types::t_unsigned _size, const std::string &_type = "cube" );
+      //! Sets the basis of the separable function.
+      void set_basis( const atat::rMatrix3d& _cell, const std::string &_type = "cell" );
       //! Returns the rank of the separable function.
       types::t_unsigned rank() const  { return basis.size(); }
       //! Returns the type of the basis.
@@ -52,6 +59,8 @@ namespace CE
       types::t_unsigned size() const  { return basis_size; }
 
     protected:
+      //! Renames functions in sep. basis.
+      void rename();
       //! Size of the basis.
       types::t_unsigned basis_size;
       //! Type of the basis.

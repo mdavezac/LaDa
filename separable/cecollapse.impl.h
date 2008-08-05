@@ -278,23 +278,10 @@ namespace Separable
           //  -- loop over ranks
           __ASSERT( _coefs[_dim].size() % 2 != 0, 
                     "Odd number of coefficients: " << _coefs[_dim].size() << ".\n" )
-          if( include_rank_coef_in_reg )
-          {
-            typename t_Function :: t_Coefs  
-                                :: const_iterator i_rcoef = function.coefs.begin();
-            for( types::t_unsigned k(0); k < _coefs[_dim].size(); ++k, ++i_rcoef )
-            {
-               _A( k, k ) += regular_factor * (*i_rcoef) * (*i_rcoef) ; 
-               ++k;
-               _A( k, k ) += regular_factor * (*i_rcoef) * (*i_rcoef) ; 
-            }
-          }
-          else for( types::t_unsigned k(0); k < _coefs[_dim].size(); ++k )
-               {
-                 _A( k, k ) += regular_factor; 
-                 ++k;
-                 _A( k, k ) += regular_factor; 
-               }
+          typename t_Function :: t_Coefs  
+                              :: const_iterator i_rcoef = function.coefs.begin();
+          for( types::t_unsigned k(0); k < _coefs[_dim].size(); k+=2, ++i_rcoef )
+             _A( k, k ) += regular_factor * (*i_rcoef) * (*i_rcoef) ; 
 #       endif
 
         __DEBUGTRYEND(, "Error while creating collapsed matrix and target.\n" )
@@ -349,26 +336,13 @@ namespace Separable
                                :: const_iterator i_coef = i_coefs->begin();
             typename T_VECTORS :: value_type
                                :: const_iterator i_coef_end = i_coefs->end();
-            if( include_rank_coef_in_reg )
+            typename t_Function :: t_Coefs  
+                                :: const_iterator i_rcoef = function.coefs.begin();
+            for(; i_coef != i_coef_end; i_coef+=2, ++i_rcoef )
             {
-              typename t_Function :: t_Coefs  
-                                  :: const_iterator i_rcoef = function.coefs.begin();
-              for(; i_coef != i_coef_end; ++i_coef, ++i_rcoef )
-              {
-                types::t_real a = (*i_coef) * (*i_rcoef);
-                result += regular_factor * a * a * 0.5e0; 
-                ++i_coef;
-                a = (*i_coef) * (*i_rcoef);
-                result += regular_factor * a * a * 0.5e0; 
-              }
+              types::t_real a = (*i_coef) * (*i_rcoef);
+              result += regular_factor * a * a * 0.5e0; 
             }
-            else
-              for(; i_coef != i_coef_end; ++i_coef)
-              {
-                result += regular_factor * (*i_coef) * (*i_coef) * 0.5e0; 
-                ++i_coef;
-                result += regular_factor * (*i_coef) * (*i_coef) * 0.5e0; 
-              }
           }
 #       endif
         return result / (types::t_real) _targets.size();

@@ -41,11 +41,6 @@ namespace Separable
 #     ifdef __DOHALFHALF__
         //! A regularization factor.
         t_Type regular_factor;
-        //! Wether to include rank coefs in regularization.
-        bool include_rank_coef_in_reg;
-#     endif
-
-#     ifdef __DOHALFHALF__
         //! Constructor
         EquivCollapse   ( t_Function &_function )
                       : t_Base( _function ), regular_factor(0e0),

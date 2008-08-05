@@ -11,5 +11,5 @@ endif
 noinst_LTLIBRARIES = libopt.la
 libopt_la_SOURCES = $(OPTF90) $(OPT_CC)
 libopt_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS)
-libopt_ladir = $(includedir)/opt
+libopt_ladir = $(includedir)/LaDa/opt
 nobase_libopt_la_HEADERS = $(OPT_H)

@@ -27,7 +27,7 @@ tetra_LDADD = $(cubic_LDADD)
 
 noinst_LTLIBRARIES = libseparable.la 
 libseparable_la_SOURCES = $(SEPARABLE_CC)
-libseparable_ladir = $(includedir)/separable
+libseparable_ladir = $(includedir)/LaDa/separable
 nobase_libseparable_la_HEADERS = $(SEPARABLE_H) $(SEPARABLE_IMPL_H)
 libseparable_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
 

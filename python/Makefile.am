@@ -20,7 +20,7 @@ liblada_la_LIBADD =  $(CELIB) \
 		     ../atat/libatat.la \
 		     ../physics/libphysics.la \
                      @MPI_ADDLIB@  @BOOST_PYTHON@ @BOOST_FS@ 
-../crystal/licrystal.la: 
+../crystal/libcrystal.la: 
 	cd ../crystal; $(MAKE) 
 
 ../atat/libatat.la: 

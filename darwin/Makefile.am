@@ -28,7 +28,7 @@ endif
 bin_PROGRAMS = $(CEOPT) $(BANDGAPOPT) $(LAYEREDOPT) $(EMASSOPT)
 ce_opt_SOURCES = main.cc $(DARWIN_CE_CC)
 ce_opt_HEADERS = $(DARWIN_CE_H)
-ce_optdir = $(includedir)/darwin
+ce_optdir = $(includedir)/LaDa/darwin
 ce_opt_CPPFLAGS =  -D _CE $(AM_CPPFLAGS) @GSL_CFLAGS@ -D _CUBIC_CE_
 ce_opt_LDFLAGS =  $(AM_LDFLAGS)
 ce_opt_LDADD = libdarwin.la \
@@ -42,7 +42,7 @@ ce_opt_LDADD = libdarwin.la \
 
 bandgap_opt_SOURCES = main.cc $(DARWIN_BG_CC)
 bandgap_opt_HEADERS = $(DARWIN_BG_H) 
-bandgap_optdir = $(includedir)/darwin
+bandgap_optdir = $(includedir)/LaDa/darwin
 bandgap_opt_CPPFLAGS =  -D _PESCAN $(AM_CPPFLAGS) @NAG_CFLAGS@ @GSL_CFLAGS@ 
 bandgap_opt_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIBS@ @NAG_LIBS@ 
 bandgap_opt_LDADD = $(ce_opt_LDADD) \
@@ -69,7 +69,7 @@ emass_opt_LDADD = $(bandgap_opt_LDADD) \
 		  ../lapack/liblapack.la @FCLIBS@
 
 noinst_LTLIBRARIES = libdarwin.la
-libdarwin_ladir = $(includedir)/darwin
+libdarwin_ladir = $(includedir)/LaDa/darwin
 libdarwin_la_SOURCES = $(DARWIN_LIB_CC)
 nobase_libdarwin_la_HEADERS = $(DARWIN_LIB_H) 
 libdarwin_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 

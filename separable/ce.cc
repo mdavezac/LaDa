@@ -26,15 +26,35 @@ namespace CE
   
   Separables :: Separables   ( types::t_unsigned _rank,
                                types::t_unsigned _size,
-                               std::string _type )
+                               const std::string &_type )
                            : t_Base(), basis_size( _size ), basis_type( _type ), 
                              name("Sum of Separables")
   {
     set_rank( _rank );
     set_basis( _size, _type );
   }
+  Separables :: Separables   ( types::t_unsigned _rank,
+                               const atat::rMatrix3d &_cell,
+                               const std::string &_type )
+                           : t_Base(), basis_type( _type ), 
+                             name("Sum of Separables")
+  {
+    set_rank( _rank );
+    set_basis( _cell, _type );
+  }
 
-  void Separables :: set_basis( types::t_unsigned _size, std::string _type )
+  void Separables :: set_basis( const atat::rMatrix3d &_cell, const std::string &_type )
+  {
+    __ASSERT( _type.compare("cube") and _type.compare("conv"),
+              "Unknown basis type " << _type << ".\n")
+    __ASSERT( Crystal::Structure::lattice == NULL,
+              "Lattice type has not been set.\n" )
+    details::supercell_basis( 1, _cell, positions );
+    basis_type = _type;
+    basis_size = positions.size();
+    rename();
+  }
+  void Separables :: set_basis( types::t_unsigned _size, const std::string &_type )
   {
     __ASSERT( _type.compare("cube") and _type.compare("conv"),
               "Unknown basis type " << _type << ".\n")
@@ -47,7 +67,26 @@ namespace CE
                                positions );
     basis_type = _type;
     basis_size = positions.size();
+    rename;
+  }
+  void Separables :: set_rank( types::t_unsigned _rank ) 
+  {
+    basis.resize( _rank );
+    coefs.resize( _rank, 1e0 );
+    namespace bl = boost::lambda;
+    std::for_each // loop over ranks.
+    ( 
+      basis.begin(), basis.end(),
+      bl::bind
+      (
+        &t_Basis::value_type::set_name,
+        bl::_1, bl::constant("Rank Function") 
+      ) // end of bl::bind
+    ); // end of loop over ranks.
+  }
 
+  void Separables::rename() 
+  {
     // loop over ranks.
     t_Basis :: iterator i_sep = basis.begin();
     t_Basis :: iterator i_sep_end = basis.end();
@@ -66,21 +105,6 @@ namespace CE
         ) // end of bl::bind
       ); // end of loop over dimensions
     } // end of loop over ranks
-  }
-  void Separables :: set_rank( types::t_unsigned _rank ) 
-  {
-    basis.resize( _rank );
-    coefs.resize( _rank, 1e0 );
-    namespace bl = boost::lambda;
-    std::for_each // loop over ranks.
-    ( 
-      basis.begin(), basis.end(),
-      bl::bind
-      (
-        &t_Basis::value_type::set_name,
-        bl::_1, bl::constant("Rank Function") 
-      ) // end of bl::bind
-    ); // end of loop over ranks.
   }
 
 

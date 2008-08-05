@@ -15,6 +15,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/regex.hpp>
 
 #include <tinyxml/tinyxml.h> 
 
@@ -66,6 +67,8 @@ int main(int argc, char *argv[])
                    "Size of the cubic basis." )
         ("rank,r", po::value<types::t_unsigned>()->default_value(3),
                    "Rank of the sum of separable functions." )
+        ("basis,r", po::value<std::string>(),
+                   "Description of the ranks/size of the figure used\n." )
         ("tolerance", po::value<types::t_real>()->default_value(1e-4),
                       "Tolerance of the alternating linear-least square fit.\n"  )
         ("maxiter,m", po::value<types::t_unsigned>()->default_value(40),
@@ -81,7 +84,6 @@ int main(int argc, char *argv[])
 #       ifdef __DOHALFHALF__
           ("lambda,l", po::value<types::t_real>()->default_value(0),
                        "Regularization factor.\n" )
-          ("withrankcoef", "Regularizaton including rank coefficients.\n" )
 #       endif
         ("nbguesses", po::value<types::t_unsigned>()->default_value(1),
                       "Number of initial guesses to try prior to (any) fitting.\n" );
@@ -156,9 +158,11 @@ int main(int argc, char *argv[])
     if( Fuzzy::eq( offset, types::t_real(0) ) ) offset = types::t_real(0);
     bool prerun ( vm.count("prerun") != 0 );
     types::t_real howrandom( vm["random"].as<types::t_real>() );
+    std::string bdesc("");
+    if( vm.count("basis") == 1 )
+      bdesc = vm["basis"].as<std::string>();
 #   ifdef __DOHALFHALF__
       types::t_real lambda( vm["lambda"].as<types::t_real>() );
-      bool include_rank_coef_in_reg( vm.count("withrankcoef") != 0 );
 #   endif
     types::t_unsigned nbguesses( vm["nbguesses"].as<types::t_unsigned>() );
     __ASSERT( nbguesses == 0, "Invalid input nbguesses = 0.\n" )
@@ -233,6 +237,19 @@ int main(int argc, char *argv[])
     // Initializes the symmetry-less separable function.
     typedef CE::Separables t_Function;
     t_Function separables( rank, size, convcell ? "conv": "cube" );
+    if( not bdesc.empty() )
+    {
+      const boost::regex re("(\\d+)(?:\\s+)?x(?:\\s+)?(\\d+)(?:\\s+)?x(?:\\s+)?(\\d+)" );
+      boost::match_results<std::string::const_iterator> what;
+      __DOASSERT( not boost::regex_search( bdesc, what, re ),
+                  "Could not parse --basis input: " << bdesc << "\n" )
+      atat::rMatrix3d cell;
+      std::cout << what.str(1) << " | " << what.str(2) << " | " << what.str(3) << "\n";
+      cell.set_diagonal( boost::lexical_cast<types::t_real>(what.str(1)),
+                         boost::lexical_cast<types::t_real>(what.str(2)),
+                         boost::lexical_cast<types::t_real>(what.str(3)) );
+      separables.set_basis( cell );
+    }
     
     // Initializes cum-symmetry separable function.
     CE::SymSeparables symsep( separables );
@@ -241,7 +258,6 @@ int main(int argc, char *argv[])
     Separable::EquivCollapse< t_Function > collapse( separables );
 #   ifdef __DOHALFHALF__
       collapse.regular_factor = lambda;
-      collapse.include_rank_coef_in_reg = include_rank_coef_in_reg;
 #   endif
 
     // Initializes Interface to allsq.
@@ -270,9 +286,11 @@ int main(int argc, char *argv[])
 
     std::cout << "Performing " << (cross ? "Cross-Validation" : "Fitting" ) << ".\n"
               << "Using " << ( convcell ? "conventional ": "unit-" )
-                 << "cell for basis determination.\n"
-              << "Size of a separable function " << separables.size() << "\n"
-              << "Rank of the sum of separable functions: " << rank << "\n"
+                 << "cell for basis determination.\n";
+    if( not bdesc.empty() )
+      std::cout << "Shape of separable function: " << bdesc << "\n";
+    else std::cout << "Size of a separable function " << separables.size() << "\n";
+    std::cout << "Rank of the sum of separable functions: " << rank << "\n"
               << "d.o.f.: " << separables.size() * rank << "\n"
               << "Data directory: " << dir << "\n";
     if( reruns <= 1 )  std::cout << "single";
@@ -297,9 +315,7 @@ int main(int argc, char *argv[])
     std::cout << "Random Seed: " << seed << "\n";
 #   ifdef __DOHALFHALF__
       if( Fuzzy::gt( lambda, 0e0 ) )
-        std::cout << "Regularizing with factor: " << lambda << "\n"
-                  << "Will" << ( include_rank_coef_in_reg ? " ": " not" )
-                  << " include rank coefficients in regularization.\n";
+        std::cout << "Regularizing with factor: " << lambda << "\n";
       std::cout << "Using True/False and True/True inner basis.\n"; 
 #   else
       std::cout << "Using True/False and False/True inner basis.\n"; 

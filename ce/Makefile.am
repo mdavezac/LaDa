@@ -31,10 +31,10 @@ regular_LDADD = libce.la \
 		../print/libprint.la 
 noinst_LTLIBRARIES = libce.la 
 libce_la_SOURCES = $(CE_CC)
-libce_ladir = $(includedir)/ce
+libce_ladir = $(includedir)/LaDa/ce
 nobase_libce_la_HEADERS = $(CE_H)
 libce_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
-../crystal/licrystal.la: 
+../crystal/libcrystal.la: 
 	cd ../crystal; $(MAKE) 
 
 ../atat/libatat.la: 

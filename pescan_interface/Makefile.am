@@ -35,7 +35,7 @@ endif
 bin_PROGRAMS = escan $(binEMASS)
 
 noinst_LTLIBRARIES = libescan.la
-libescan_ladir = $(includedir)/pescan_interface 
+libescan_ladir = $(includedir)/LaDa/pescan_interface 
 libescan_la_SOURCES = $(PESCAN_CC) $(emassSOURCE)
 nobase_libescan_la_HEADERS = $(PESCAN_H) $(emassHEADER)
 libescan_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
