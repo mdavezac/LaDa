@@ -17,6 +17,7 @@
 #include <opt/debug.h>
 #include <opt/cgs.h>
 #include <opt/gsl_simplex.h>
+#include <opt/errors.h>
 #include <crystal/structure.h>
 
 #include "cluster.h"
@@ -27,52 +28,6 @@ namespace CE
   //! \cond
   class Regulated;
   class Fit;
-  namespace details
-  {
-    //! An error tuple.
-    class ErrorTuple : public boost::tuple<types::t_real, types::t_real, types::t_real> 
-    {  
-      //! Base class.
-      typedef boost::tuple<types::t_real, types::t_real, types::t_real> t_Base;
-      public:
-        ErrorTuple() { get<0>() = 0e0; get<1>() = 0e0; get<2>() = 0e0; }
-        ErrorTuple  ( types::t_real _a, types::t_real _b, types::t_real _c )
-                  : t_Base( _a, _b, _c ) {} 
-        ErrorTuple  ( types::t_real _a, types::t_real _b )
-                  : t_Base( _a * _a * _b, _a * _b, std::max( _a, get<2>() ) ) {} 
-        ErrorTuple  ( types::t_real _a )
-                  : t_Base( _a * _a, _a, std::max( _a, get<2>() ) ) {} 
-        ErrorTuple  ( const ErrorTuple &_e ) : t_Base( _e ) {} 
-    };
-    //! A normalized error tuple.
-    struct NErrorTuple : public ErrorTuple
-    {
-      //! Base class.
-      typedef ErrorTuple t_Base;
-      public:
-        //! Variance.
-        types::t_real variance;
-        //! Mean.
-        types::t_real mean;
-
-        NErrorTuple() : t_Base(), variance(0), mean(0) {}
-        NErrorTuple  ( types::t_real _a, types::t_real _b, types::t_real _c )
-                   : t_Base( _a, _b, _c ), variance(0), mean(0) {} 
-        NErrorTuple  ( types::t_real _a, types::t_real _b )
-                   : t_Base( _a * _a * _b, _a * _b, std::max( _a, get<2>() ) ),
-                     variance(0), mean(0) {}
-        NErrorTuple  ( types::t_real _a )
-                   : t_Base( _a * _a, _a, std::max( _a, get<2>() ) ),
-                     variance(0), mean(0) {}
-        NErrorTuple  ( const NErrorTuple &_e )
-                   : t_Base( _e ), variance( _e.variance ), mean( _e.mean ) {}
-        const NErrorTuple& operator=( const ErrorTuple &_e )
-        { 
-          get<0>() = _e.get<0>(); get<1>() = _e.get<1>(); get<2>() = _e.get<2>(); 
-          return *this;
-        }
-    };
-  }
   //! \endcond
 
   //! \brief Computes CV scores and reduces number of clusters to zero.
@@ -225,8 +180,6 @@ namespace CE
       void fit( const Regulated &_reg );
 
     protected:
-      //! An error tuple.
-      typedef details::ErrorTuple t_ErrorTuple;
       //! Compute pair regulation terms.
       //! Compute pair regulation terms.
       void pair_reg( const Regulated &_reg, Regulated::t_Vector &_weights );
@@ -240,11 +193,9 @@ namespace CE
                                const Regulated :: t_Vector &_ecis,
                                types::t_unsigned _n );
       //! Check all (but one )
-      t_ErrorTuple check_all( const Regulated &_reg, 
-                              const Regulated :: t_Vector &_ecis,
-                              types::t_int _n = -1 );
-      //! computes mean and variance of data
-      details :: NErrorTuple mean_n_var( const Regulated &_reg ); 
+      opt::ErrorTuple check_all( const Regulated &_reg, 
+                                 const Regulated :: t_Vector &_ecis,
+                                 types::t_int _n = -1 );
   };
 
 } // end of namespace CE

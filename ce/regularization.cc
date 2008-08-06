@@ -30,28 +30,6 @@ namespace CE
     types::t_real innerprod( const boost::numeric::ublas::vector<types::t_real> &_a1,
                              const boost::numeric::ublas::vector<types::t_real> &_a2 )
       { return boost::numeric::ublas::inner_prod( _a1, _a2 ); }
-
-    std::ostream& operator<<( std::ostream &_stream, const ErrorTuple &_b )
-    {
-      return _stream << "    mse error: " << _b.get<0>()
-                     << "    average error: " << _b.get<1>()
-                     << "    maximum error: " << _b.get<2>();
-    }
-    void operator+=( ErrorTuple &_a, const ErrorTuple &_b )
-    {
-      _a.get<0>() += _b.get<0>();
-      _a.get<1>() += _b.get<1>();
-      _a.get<2>() = std::max( _a.get<2>(), _b.get<2>() );
-    }
-    std::ostream& operator<<( std::ostream &_stream, const NErrorTuple &_b )
-    {
-      return _stream << "    mse error: " << _b.get<0>()
-                       << " ( " << 1e2 * _b.get<0>() /  _b.variance << "% )"
-                     << "    average error: " << _b.get<1>()
-                       << " ( " << 1e2 * _b.get<1>() / std::abs( _b.mean ) << "% )"
-                     << "    maximum error: " << _b.get<2>()
-                       << " ( " << 1e2 * _b.get<2>() / std::abs( _b.mean ) << "% )";
-    }
   }
   void Regulated :: init_sums()
   {
@@ -427,13 +405,13 @@ namespace CE
     namespace bblas = boost::numeric::ublas;
     namespace bl = boost::lambda;
 
-    t_ErrorTuple training(0,0,0), prediction(0,0,0);
+    opt::ErrorTuple training(0,0,0), prediction(0,0,0);
 
     std::cout << "\nLeave-one-out procedure\n";
 
     // computes mean and variance.
     types::t_real norm( 0 );
-    details::NErrorTuple nerror( mean_n_var( _reg ) );
+    opt::NErrorTuple nerror( opt::mean_n_var( _reg.targets, _reg.weights ) );
     std::cout << "  Weighted mean of data: " << nerror.mean << "\n" 
               << "  Weighted variance of data: " << nerror.variance << "\n";
 
@@ -450,11 +428,11 @@ namespace CE
     {
       fit_but_one( _reg, ecis, weights, n );
       if( verbose ) std::cout <<  "Training errors:\n" ;
-      t_ErrorTuple train( check_all( _reg, ecis, n ) );
+      opt::ErrorTuple train( check_all( _reg, ecis, n ) );
       training += train;
       if( verbose ) std::cout << "    " << ( nerror = train ) << "\n"; 
       if( verbose ) std::cout <<  "Prediction errors:\n" ;
-      t_ErrorTuple pred( check_one( _reg, ecis, n ), *i_w );
+      opt::ErrorTuple pred( check_one( _reg, ecis, n ), *i_w );
       if( verbose ) std::cout << "    " << ( nerror = pred ) << "\n"; 
       prediction += pred;
       norm += *i_w;
@@ -474,7 +452,7 @@ namespace CE
     namespace bl = boost::lambda;
 
     std::cout << "\nFitting procedure\n";
-    details::NErrorTuple nerror( mean_n_var( _reg ) );
+    opt::NErrorTuple nerror( opt::mean_n_var( _reg.targets, _reg.weights ) );
     std::cout << "  Weighted mean of data: " << nerror.mean << "\n" 
               << "  Weighted variance of data: " << nerror.variance << "\n";
 
@@ -487,38 +465,9 @@ namespace CE
     // fits.
     _reg.fit( ecis, weights );
     std::cout << "\nTraining Errors:\n";
-    t_ErrorTuple training( check_all( _reg, ecis ) );
+    opt::ErrorTuple training( check_all( _reg, ecis ) );
     std::cout << ( nerror = training ) << "\n";
     __DEBUGTRYEND(, "Error in Fit::fit().\n" )
-  }
-
-  details :: NErrorTuple Fit :: mean_n_var( const Regulated &_reg )
-  {
-    __DEBUGTRYBEGIN
-    namespace bl = boost::lambda;
-    types::t_real norm( 0 );
-    details::NErrorTuple nerror;
-    opt::concurrent_loop
-    (
-       _reg.targets.begin(), _reg.targets.end(), _reg.weights.begin(),
-       (
-         bl::bind( &details::NErrorTuple::mean, bl::var(nerror) )
-           += bl::_1 * bl::_2,
-         bl::var( norm ) += bl::_2
-       )
-    );
-    nerror.mean /= norm;
-    opt::concurrent_loop
-    (
-       _reg.targets.begin(), _reg.targets.end(), _reg.weights.begin(),
-       bl::bind( &details::NErrorTuple::variance, bl::var(nerror) )
-         +=   ( bl::_1 - bl::constant( nerror.mean ) )
-            * ( bl::_1 - bl::constant( nerror.mean ) )
-            * bl::_2
-    );
-    nerror.variance /= norm;
-    return nerror;
-    __DEBUGTRYEND(, "Error in Fit::mean_n_var().\n" )
   }
 
   void Fit :: pair_reg( const Regulated &_reg, Regulated :: t_Vector &_weights )
@@ -607,19 +556,19 @@ namespace CE
     __DEBUGTRYEND(, "Error in Fit::check_one().\n" )
   }
 
-  Fit :: t_ErrorTuple Fit :: check_all( const Regulated &_reg, 
-                                        const Regulated :: t_Vector &_ecis,
-                                        types::t_int _n  )
+  opt::ErrorTuple Fit :: check_all( const Regulated &_reg, 
+                                    const Regulated :: t_Vector &_ecis,
+                                    types::t_int _n  )
   {
     __DEBUGTRYBEGIN
-    t_ErrorTuple result( 0,0,0 );
+    opt::ErrorTuple result( 0,0,0 );
     types::t_real norm(0);
     Regulated :: t_Weights :: const_iterator i_weight = _reg.weights.begin();
     for(types::t_int n(0); n < structures.size(); ++n, ++i_weight )
     {
       if( _n == n ) continue;
       types::t_real error( check_one( _reg, _ecis, n ) );
-      result += details::ErrorTuple( error, (*i_weight) );
+      result += opt::ErrorTuple( error, (*i_weight) );
       norm += (*i_weight);
     }
     types::t_real N( structures.size() );

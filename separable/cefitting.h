@@ -53,12 +53,12 @@ namespace Fitting
 
 
       //! Check training convergence.
-      t_PairErrors check_training( const CE::Separables &_sep,
-                                    bool _verbose = false ) const
+      opt::ErrorTuple check_training( const CE::Separables &_sep,
+                                      bool _verbose = false ) const
         { return check( _sep, false, _verbose ); } 
       //! Check predictions.
-      t_PairErrors check_predictions( const CE::Separables &_sep,
-                                      bool _verbose = false ) const
+      opt::ErrorTuple check_predictions( const CE::Separables &_sep,
+                                         bool _verbose = false ) const
         { return check( _sep, true, _verbose ); } 
 
       //! Number of structures in training set.
@@ -90,9 +90,8 @@ namespace Fitting
       //! \param _verbose whether to print error for each structure.
       //! \return an std::pair where the first value is the average error,
       //!         and the second value the maximum error.
-      std::pair< types::t_real, types::t_real>
-        check( const CE::Separables &_sep,
-               bool _which , bool _verbose = false ) const;
+      opt::ErrorTuple check( const CE::Separables &_sep,
+                             bool _which , bool _verbose = false ) const;
 
 
       //! The type of vector holding all equvivalent configurations.
@@ -110,6 +109,9 @@ namespace Fitting
       std::vector< std::string > names;
       //! An energy offset to add to the structures.
       types::t_real offset;
+      //! Returns a normalized error tuple with mean and variance set.
+      opt::NerrorTuple mean_n_var() const 
+        { return opt::mean_n_var( targets, weights ); }
   };
 
   //! \brief Leave-one-out procedure.
@@ -117,7 +119,7 @@ namespace Fitting
   //!          predicts leftover structure. Repeats the procedure for all
   //!          structures.
   template< class T_ALLSQ, class T_COLLAPSE>
-    std::pair< SepCeInterface::t_PairErrors, SepCeInterface::t_PairErrors> 
+    std::pair< opt::ErrorTuple, opt::ErrorTuple > 
       leave_one_out( SepCeInterface &_interface,
                     T_ALLSQ &_allsq, 
                     T_COLLAPSE &_collapse, 

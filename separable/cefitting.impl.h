@@ -62,46 +62,40 @@ namespace Fitting
   }
 
   template< class T_ALLSQ, class T_COLLAPSE>
-    std::pair< SepCeInterface::t_PairErrors, SepCeInterface::t_PairErrors> 
+    std::pair< opt::ErrorTuple, opt::ErrorTuple > 
       leave_one_out( SepCeInterface &_interface,
                     T_ALLSQ &_allsq, 
                     T_COLLAPSE &_collapse, 
                     bool _verbose )
     {
       typedef SepCeInterface::t_PairErrors t_PairErrors;
-      typedef std::pair< t_PairErrors, t_PairErrors > t_Pairs;
-      t_PairErrors training(0,0);
-      t_PairErrors prediction(0,0);
-      t_PairErrors intermediate;
-      _interface.exclude.resize(1, 0);
+      opt::ErrorTuple training(0,0);
+      opt::ErrorTuple prediction(0,0);
       types::t_unsigned N = _interface.training_set_size();
 
       bool first_iter = true;
       for(; _interface.exclude[0] < N; ++_interface.exclude[0], first_iter=false )
       {
+        opt::ErrorTuple intermediate(0,0);
         _interface.fit( _allsq, _collapse );
 
         if( _verbose ) std::cout << "Training:\n";
-        intermediate = _interface.check_training( _collapse.function, _verbose );
-        training.first += intermediate.first;
-        if( intermediate.second > training.second or first_iter ) 
-          training.second = intermediate.second;
+        intermediate += _interface.check_training( _collapse.function, _verbose );
         if( _verbose ) 
-          std::cout << "    average error: " << training.first
-                    << "    maximum error: " << training.second << "\n";
+          std::cout << "    average error: " << intermediate.first
+                    << "    maximum error: " << intermediate.second << "\n";
+        training += intermediate;
 
         if( _verbose ) std::cout << "Prediction:\n";
         intermediate = _interface.check_predictions( _collapse.function, _verbose );
-        prediction.first += intermediate.first;
-        if( intermediate.second > prediction.second or first_iter ) 
-          prediction.second = intermediate.second;
         if( _verbose ) 
           std::cout << "    average error: " << prediction.first
                     << "    maximum error: " << prediction.second << "\n";
+        prediction += intermediate;
       }
 
-      training.first /= (types::t_real) N;
-      prediction.first /= (types::t_real) N;
-      return t_Pairs( training, prediction);
+      prediction /= N;
+      training /= N;
+      return std::make_pair( training, prediction );
     }
 }
