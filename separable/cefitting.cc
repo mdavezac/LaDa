@@ -99,51 +99,48 @@ namespace Fitting
     __TRYEND(, "Error while reading " << fullpath << "\n" )
   }
 
-  opt::ErrorTuple
-   SepCeInterface :: check( const CE::Separables &_sep,
-                            bool _which, bool _verbose ) const
+  opt::ErrorTuple SepCeInterface :: check( const CE::Separables &_sep,
+                                           bool _which, bool _verbose ) const
+  {
+    opt::ErrorTuple error;
+    std::vector< t_Configurations > :: const_iterator i_train( training.begin() );
+    std::vector< t_Configurations > :: const_iterator i_train_end( training.end() );
+    std::vector< types::t_real > :: const_iterator i_weight( weights.begin() );
+    std::vector< types::t_real > :: const_iterator i_target( targets.begin() );
+    std::vector< std::string > :: const_iterator i_name( names.begin() );
+    for( types::t_unsigned i=0; i_train != i_train_end ;
+         ++i, ++i_train, ++i_weight, ++i_target, ++i_name )
     {
-      opt::ErrorTuple error;
-      types::t_real average(0);
-      types::t_real maxerr(0);
-      std::vector< t_Configurations > :: const_iterator i_train( training.begin() );
-      std::vector< t_Configurations > :: const_iterator i_train_end( training.end() );
-      std::vector< types::t_real > :: const_iterator i_weight( weights.begin() );
-      std::vector< types::t_real > :: const_iterator i_target( targets.begin() );
-      std::vector< std::string > :: const_iterator i_name( names.begin() );
-      for( types::t_unsigned i=0; i_train != i_train_end ;
-           ++i, ++i_train, ++i_weight, ++i_target, ++i_name )
+      // Checks whether fit or prediction.
+      if( exclude.size() )
       {
-        // Checks whether fit or prediction.
-        if( exclude.size() )
-        {
-          bool notfound
-            = ( std::find( exclude.begin(), exclude.end(), i ) == exclude.end() );
-          if( _which == notfound ) continue;
-        }
-        // Sums over all equivalent structure
-        t_Configurations :: const_iterator i_conf( i_train->begin() );
-        t_Configurations :: const_iterator i_conf_end( i_train->end() );
-        types::t_real intermed(0);
-        for(; i_conf != i_conf_end; ++i_conf )
-        {
-          intermed +=  _sep.operator()( i_conf->first.begin(),
-                                        i_conf->first.end()   ) * i_conf->second;
-        }
-        // Prints each structure if _verbose=true.
-        if( _verbose )
-          std::cout << "  structure: " << std::setw(30) << *i_name << "   "
-                    << "Target: " << std::fixed << std::setw(8)
-                           << std::setprecision(2) << *i_target + offset << " "
-                    << "Separable: " << std::fixed << std::setw(8)
-                           << std::setprecision(2) << intermed << "   "
-                    << "|Target-Separable| * weight: "
-                    << std::fixed << std::setw(10) << std::setprecision(3) 
-                           <<   std::abs( intermed - (*i_target) - offset )
-                              * (*i_weight) << "\n";
-        error += opt::ErrorTuple( intermed - (*i_target) - offset, *i_weight );
+        bool notfound
+          = ( std::find( exclude.begin(), exclude.end(), i ) == exclude.end() );
+        if( _which == notfound ) continue;
       }
-      return error;
+      // Sums over all equivalent structure
+      t_Configurations :: const_iterator i_conf( i_train->begin() );
+      t_Configurations :: const_iterator i_conf_end( i_train->end() );
+      types::t_real intermed(0);
+      for(; i_conf != i_conf_end; ++i_conf )
+      {
+        intermed +=  _sep.operator()( i_conf->first.begin(),
+                                      i_conf->first.end()   ) * i_conf->second;
+      }
+      // Prints each structure if _verbose=true.
+      if( _verbose )
+        std::cout << "  structure: " << std::setw(30) << *i_name << "   "
+                  << "Target: " << std::fixed << std::setw(8)
+                         << std::setprecision(2) << *i_target + offset << " "
+                  << "Separable: " << std::fixed << std::setw(8)
+                         << std::setprecision(2) << intermed << "   "
+                  << "|Target-Separable| * weight: "
+                  << std::fixed << std::setw(10) << std::setprecision(3) 
+                         <<   std::abs( intermed - (*i_target) - offset )
+                            * (*i_weight) << "\n";
+      error += opt::ErrorTuple( intermed - (*i_target) - offset, *i_weight );
     }
+    return error;
+  }
 
 }

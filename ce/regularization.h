@@ -186,9 +186,9 @@ namespace CE
                         const Regulated :: t_Vector &_weights,
                         const types::t_unsigned _n ) const;
       //! Check results.
-      types::t_real check_one( const Regulated &_reg, 
-                               const Regulated :: t_Vector &_ecis,
-                               types::t_unsigned _n );
+      opt::ErrorTuple check_one( const Regulated &_reg, 
+                                 const Regulated :: t_Vector &_ecis,
+                                 types::t_unsigned _n );
       //! Check all (but one )
       opt::ErrorTuple check_all( const Regulated &_reg, 
                                  const Regulated :: t_Vector &_ecis,

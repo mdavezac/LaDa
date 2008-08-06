@@ -428,11 +428,11 @@ namespace CE
     {
       fit_but_one( _reg, ecis, weights, n );
       if( verbose ) std::cout <<  "Training errors:\n" ;
-      opt::ErrorTuple train( check_all( _reg, ecis, n ).get<1>(), 1e0 );
+      opt::ErrorTuple train( check_all( _reg, ecis, n ).mean(), 1e0 );
       training += train;
       if( verbose ) std::cout << "    " << ( nerror = train ) << "\n"; 
       if( verbose ) std::cout <<  "Prediction errors:\n" ;
-      opt::ErrorTuple pred( check_one( _reg, ecis, n ), 1e0 );
+      opt::ErrorTuple pred( check_one( _reg, ecis, n ) );
       if( verbose ) std::cout << "    " << ( nerror = pred ) << "\n"; 
       prediction += pred;
     }
@@ -523,9 +523,9 @@ namespace CE
     __DEBUGTRYEND(, "Error in Fit::fit_but_one().\n" )
   }
 
-  types::t_real Fit :: check_one( const Regulated &_reg, 
-                                  const Regulated :: t_Vector &_ecis,
-                                  types::t_unsigned _n )
+  opt::ErrorTuple Fit :: check_one( const Regulated &_reg, 
+                                    const Regulated :: t_Vector &_ecis,
+                                    types::t_unsigned _n )
   {
     __DEBUGTRYBEGIN
     namespace fs = boost::filesystem;
@@ -536,7 +536,7 @@ namespace CE
     const std::string name = fs::path( structures[_n].name ).leaf() ;
  
     types::t_real predic( bblas::inner_prod( _ecis, pis ) );
-    types::t_real error( std::abs( target - predic ) );
+    opt::ErrorTuple error( target - predic,  weight );
     if( verbose )
       std::cout << "  structure: " << std::setw(30) << name << "  "
                 << "Target: " << std::fixed << std::setw(8) 
@@ -545,7 +545,7 @@ namespace CE
                 << std::setprecision(2) << predic << "   "
                 << "|Target-Separable| * weight: "
                 << std::fixed << std::setw(10) << std::setprecision(3) 
-                << weight * error
+                << error.mean()
                 << "\n";
     return error;
     __DEBUGTRYEND(, "Error in Fit::check_one().\n" )
@@ -556,19 +556,12 @@ namespace CE
                                     types::t_int _n  )
   {
     __DEBUGTRYBEGIN
-    opt::ErrorTuple result( 0,0,0 );
-    types::t_real norm(0);
-    Regulated :: t_Weights :: const_iterator i_weight = _reg.weights.begin();
+    opt::ErrorTuple result;
     for(types::t_int n(0); n < structures.size(); ++n, ++i_weight )
     {
       if( _n == n ) continue;
-      types::t_real error( check_one( _reg, _ecis, n ) );
-      result += opt::ErrorTuple( error, (*i_weight) );
-      norm += (*i_weight);
+      result += check_one( _reg, _ecis, n )
     }
-    types::t_real N( structures.size() );
-    result.get<0>() /= norm;
-    result.get<1>() /= norm;
     return result;
     __DEBUGTRYEND(, "Error in Fit::check_all().\n" )
   }

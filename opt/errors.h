@@ -20,53 +20,92 @@ namespace opt
   //! An error tuple.
   class ErrorTuple : public boost::tuple<types::t_real, types::t_real, types::t_real> 
   {  
-    //! Base class.
-    typedef boost::tuple<types::t_real, types::t_real, types::t_real> t_Base;
-    public:
+    protected:
+      //! Base class.
+      typedef boost::tuple<types::t_real, types::t_real, types::t_real> t_Base;
+      //! Number of quantities over which to average, or sum of their weights in average.
       types::t_real norm;
+    public:
+      //! Default constructor.
       ErrorTuple() : t_Base(0,0,0), norm(0) {}
+      //! \brief Constructor.
+      //! \details ErrorTuple::norm is set to one.
+      //! \param[in] _a is the variance.
+      //! \param[in] _b is the mean.
+      //! \param[in] |_c| is the max.
       ErrorTuple  ( types::t_real _a, types::t_real _b, types::t_real _c )
-                : t_Base( _a, _b, _c ), norm(1)  {} 
-      ErrorTuple  ( types::t_real _a, types::t_real _b )
-                : t_Base( _a * _a * _b, _a * _b, std::max( _a, get<2>() ) ),
+                : t_Base( _a, _b, std::abs(_c) ), norm(1)  {} 
+      //! \brief Constructor. 
+      //! \details The variance is set to \a _a * \a _a * \a _b, 
+      //!          the mean to \a _a * \a _b, and the max to |\a _a|.
+      //! \param[in] _a is the error.
+      //! \param[in] _b is the weight.
+      ErrorTuple  ( types::t_real _a, types::t_real _b = 1e0 )
+                : t_Base( _a * _a * _b, _a * _b, std::abs(_a) ),
                   norm(_b){} 
-      ErrorTuple  ( types::t_real _a )
-                : t_Base( _a * _a, _a, std::max( _a, get<2>() ) ), norm(1) {} 
+      //! Copy constructor, 
       ErrorTuple  ( const ErrorTuple &_e ) : t_Base( _e ), norm(_e.norm) {} 
+      //! returns variance.
+      types::t_real variance() const { return get<0>() / norm; }
+      //! returns mean.
+      types::t_real mean() const { return get<1>() / norm; }
+      //! returns max.
+      types::t_real max() const { return get<2>(); }
+      //! Sums errors.
+      ErrorTuple& operator+=( const ErrorTuple &_b );
   };
   //! A normalized error tuple.
   struct NErrorTuple : public ErrorTuple
   {
     //! Base class.
     typedef ErrorTuple t_Base;
-    public:
-      //! Variance.
-      types::t_real variance;
-      //! Mean.
-      types::t_real mean;
+    //! Variance.
+    types::t_real variance_;
+    //! Mean.
+    types::t_real mean_;
  
-      NErrorTuple() : t_Base(), variance(0), mean(0) {}
+    public:
+      //! Default constructor.
+      NErrorTuple() : t_Base(), variance_(0), mean_(0) {}
+      //! \brief Constructor. Normalization is set to zero.
+      //! \details ErrorTuple::norm is set to one.
+      //! \param[in] _a is the variance.
+      //! \param[in] _b is the mean.
+      //! \param[in] _c is the max.
       NErrorTuple  ( types::t_real _a, types::t_real _b, types::t_real _c )
-                 : t_Base( _a, _b, _c ), variance(0), mean(0) {} 
-      NErrorTuple  ( types::t_real _a, types::t_real _b )
+                 : t_Base( _a, _b, _c ), variance_(0), mean_(0) {} 
+      //! \brief Constructor. Normalization is set to zero.
+      //! \details The variance is set to \a _a * \a _a * \a _b, 
+      //!          the mean to \a _a * \a _b, and the max to \a _a.
+      //! \param[in] _a is the error.
+      //! \param[in] _b is the weight.
+      NErrorTuple  ( types::t_real _a, types::t_real _b = 1e0 )
                  : t_Base( _a * _a * _b, _a * _b, std::max( _a, get<2>() ) ),
-                   variance(0), mean(0) {}
-      NErrorTuple  ( types::t_real _a )
-                 : t_Base( _a * _a, _a, std::max( _a, get<2>() ) ),
-                   variance(0), mean(0) {}
+                   variance_(0), mean_(0) {}
+      //! Copy constructor.
       NErrorTuple  ( const NErrorTuple &_e )
-                 : t_Base( _e ), variance( _e.variance ), mean( _e.mean ) {}
+                 : t_Base( _e ), variance_( _e.variance_ ), mean_( _e.mean_ ) {}
+      //! Copies error tuple and sum of weights into normalized error tuple.
       const NErrorTuple& operator=( const ErrorTuple &_e )
-      { 
-        get<0>() = _e.get<0>(); get<1>() = _e.get<1>(); get<2>() = _e.get<2>(); 
-        return *this;
-      }
+       { *this = _e; return *this; }
+      //! returns variance.
+      types::t_real variance() const { return get<0>() / norm / variance_; }
+      //! returns mean.
+      types::t_real mean() const { return get<1>() / norm / mean_; }
+      //! returns max.
+      types::t_real max() const { return get<2>() / mean_; }
+      //! return normalization coef of mean.
+      types::t_real& nmean() { return mean_; }
+      //! return normalization coef of mean.
+      const types::t_real& nmean() const { return mean_; }
+      //! return normalization coef of variance.
+      types::t_real& nvariance() { return variance_; }
+      //! return normalization coef of variance.
+      const types::t_real& nvariance() const { return variance_; }
   };
   //! computes mean and variance of data
   template< class T_VECTOR >
   NErrorTuple mean_n_var( const T_VECTOR &_targets, const T_VECTOR &_weights );
-  //! Sums errors.
-  void operator+=( ErrorTuple &_a, const ErrorTuple &_b );
   //! Outputs an error tuple.
   std::ostream& operator<<( std::ostream &_stream, const ErrorTuple &_b );
   //! Outputs a normalized error tuple.
@@ -89,8 +128,8 @@ namespace opt
       square += (*i_target) * (*i_target) * (*i_weight);
       norm += (*i_weight);
     }
-    nerror.mean = types::t_real(mean) / types::t_real(norm);
-    nerror.variance = types::t_real(square - mean*mean) / types::t_real(norm);
+    nerror.mean_ = types::t_real(mean) / types::t_real(norm);
+    nerror.variance_ = types::t_real(square - mean*mean) / types::t_real(norm);
     return nerror;
     __DEBUGTRYEND(, "Error in opt::mean_n_var().\n" )
   }

@@ -69,26 +69,24 @@ namespace Fitting
                     T_COLLAPSE &_collapse, 
                     bool _verbose )
     {
-      typedef SepCeInterface::t_PairErrors t_PairErrors;
-      opt::ErrorTuple training(0,0);
-      opt::ErrorTuple prediction(0,0);
+      opt::ErrorTuple training, prediction;
       types::t_unsigned N = _interface.training_set_size();
 
       bool first_iter = true;
       for(; _interface.exclude[0] < N; ++_interface.exclude[0], first_iter=false )
       {
-        opt::ErrorTuple intermediate(0,0);
+        opt::ErrorTuple intermediate;
         _interface.fit( _allsq, _collapse );
 
         if( _verbose ) std::cout << "Training:\n";
-        intermediate += _interface.check_training( _collapse.function, _verbose );
+        intermediate = _interface.check_training( _collapse.function, _verbose );
         if( _verbose ) std::cout << intermediate << "\n";
-        training += opt::ErrorTuple( intermediate.get<1>(), 1e0 );
+        training += opt::ErrorTuple( intermediate.mean(), 1e0 );
 
         if( _verbose ) std::cout << "Prediction:\n";
         intermediate = _interface.check_predictions( _collapse.function, _verbose );
         if( _verbose ) std::cout << intermediate << "\n";
-        prediction += opt::ErrorTuple( intermediate.get<1>(), 1e0 );
+        prediction += intermediate;
       }
 
       return std::make_pair( training, prediction );

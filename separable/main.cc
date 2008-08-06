@@ -305,8 +305,8 @@ int main(int argc, char *argv[])
                  << dtolerance << "\n"
               << "Will" << ( doupdate ? " ": " not " )
                  << "update between dimensions.\n"
-              << "Data mean: " << nerror.mean << "\n"
-              << "Data Variance: " << nerror.variance << "\n"
+              << "Data mean: " << nerror.nmean() << "\n"
+              << "Data Variance: " << nerror.nvariance() << "\n"
               << "Range of initial guesses:[ " <<  howrandom << ", " << howrandom << "].\n"
               << "Number of initial guesses: " <<  nbguesses << ".\n";
     if( prerun )
