@@ -526,7 +526,7 @@ namespace Crystal {
     // The next few operations should tell us the maximum range of the structure
     // cell int terms of the lattice cell.
     atat::rVector3d r = (!lattice.cell) * ( cell * atat::rVector3d(1,1,1) );
-    types::t_int range = std::ceil( atat::det( cell ) / atat::det(lattice.cell) );
+    types::t_int range = (types::t_int) std::ceil( atat::det( cell ) / atat::det(lattice.cell) );
     
     // now that we have the range, we can fully explore the region
     // sets up the n-dimensional iterators

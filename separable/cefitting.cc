@@ -28,27 +28,26 @@ namespace Fitting
   {
     try
     {
+      namespace bl = boost::lambda;
       boost::filesystem::path path( _dir );
       read_ldasdat( path, _ldasdat );
-      {
-        namespace bl = boost::lambda;
-        std::for_each
-        ( 
-          names.begin(), names.end(),
-          bl::bind( &SepCeInterface::read_structure, bl::var(*this),
-                    bl::constant( _symseps ), bl::constant( path ), bl::_1 )
-        );
-        std::vector< Crystal::Structure > :: iterator i_s = structures.begin();
-        std::vector< Crystal::Structure > :: iterator i_se = structures.end();
-        std::vector< types::t_real > :: const_iterator i_t = targets.begin();
-        for(; i_s != i_se; ++i_s, ++i_t ) i_s->energy = *i_t;
-        if( not _verbose ) return;
-        std::for_each
-        ( 
-          structures.begin(), structures.end(), 
-          std::cout << bl::_1 << "\n" 
-        );
-      }
+      
+      std::for_each
+      ( 
+        names.begin(), names.end(),
+        bl::bind( &SepCeInterface::read_structure, bl::var(*this),
+                  bl::constant( _symseps ), bl::constant( path ), bl::_1 )
+      );
+      std::vector< Crystal::Structure > :: iterator i_s = structures.begin();
+      std::vector< Crystal::Structure > :: iterator i_se = structures.end();
+      std::vector< types::t_real > :: const_iterator i_t = targets.begin();
+      for(; i_s != i_se; ++i_s, ++i_t ) i_s->energy = *i_t;
+      if( not _verbose ) return;
+      std::for_each
+      ( 
+        structures.begin(), structures.end(), 
+        std::cout << bl::_1 << "\n" 
+      );
     }
     __CATCHCODE(, "Error while reading training set.\n" )
   }
