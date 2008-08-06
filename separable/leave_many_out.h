@@ -17,6 +17,7 @@
 
 #include <opt/types.h>
 #include <opt/debug.h>
+#include <opt/errors.h>
 
 namespace Fitting
 {
@@ -26,7 +27,7 @@ namespace Fitting
       //! Type containing an average and a max error.
       typedef std::pair< types::t_real, types::t_real > t_PairErrors;
       //! Type returned by the functor.
-      typedef std::pair< t_PairErrors, t_PairErrors > t_Return;
+      typedef std::pair< opt::ErrorTuple, opt::ErrorTuple > t_Return;
 
       //! Whether or no to perform.
       bool do_perform;
@@ -78,7 +79,8 @@ namespace Fitting
       //! \endcond
   };
 
-  inline void LeaveManyOut :: add_cmdl( boost::program_options::options_description &_options )
+  inline void LeaveManyOut :: add_cmdl( boost::program_options
+                                             ::options_description &_options )
   {
     __DEBUGTRYBEGIN
     namespace po = boost::program_options;
@@ -96,47 +98,41 @@ namespace Fitting
                                                        T_ALLSQ &_allsq, 
                                                        T_COLLAPSE &_collapse )
   {
-    if( not do_perform ) return t_Return( t_PairErrors(-1,-1), t_PairErrors(-1,-1) );
+    opt::ErrorTuple training;
+    opt::ErrorTuple prediction;
+    if( not do_perform ) return t_Return( training, prediction );
     try
     {
       if( not sets.size() ) create_sets( _interface.nb_structs() );
-      t_PairErrors training(0,0);
-      t_PairErrors prediction(0,0);
-      t_PairErrors intermediate;
       _interface.exclude.resize(1, 0);
 
       bool first_iter = true;
-      typedef std::vector< std::vector< types::t_unsigned > > :: const_iterator const_iterator;
+      typedef std::vector< std::vector< types::t_unsigned > >
+                                    :: const_iterator const_iterator;
       const_iterator i_set = sets.begin();
       const_iterator i_set_end = sets.end();
+      opt::ErrorTuple error;
       for(; i_set != i_set_end; ++i_set, first_iter=false )
       {
+        opt::ErrorTuple intermediate;
         _interface.exclude.resize( i_set->size() );
         std::copy( i_set->begin(), i_set->end(), _interface.exclude.begin() );
 
         _interface.fit( _allsq, _collapse );
 
         if( verbose >= vlevel1 ) std::cout << "Training:\n";
-        intermediate = _interface.check_training( _collapse.function, verbose >= vlevel2 );
-        training.first += intermediate.first;
-        if( intermediate.second > training.second or first_iter ) 
-          training.second = intermediate.second;
-        if( verbose >= vlevel1 ) 
-          std::cout << "    average error: " << intermediate.first
-                    << "    maximum error: " << intermediate.second << "\n";
+        intermediate = _interface.check_training( _collapse.function,
+                                                  verbose >= vlevel2 );
+        training += opt::ErrorTuple( intermediate.get<1>(), 1e1 );
+        if( verbose >= vlevel1 ) std::cout << intermediate << "\n";
 
         if( verbose >= vlevel1 ) std::cout << "Prediction:\n";
-        intermediate = _interface.check_predictions( _collapse.function, verbose >= vlevel2 );
-        prediction.first += intermediate.first;
-        if( intermediate.second > prediction.second or first_iter ) 
-          prediction.second = intermediate.second;
-        if( verbose >= vlevel1 ) 
-          std::cout << "    average error: " << intermediate.first
-                    << "    maximum error: " << intermediate.second << "\n";
+        intermediate = _interface.check_predictions( _collapse.function,
+                                                     verbose >= vlevel2 );
+        training += opt::ErrorTuple( intermediate.get<1>(), 1e1 );
+        if( verbose >= vlevel1 ) std::cout << intermediate << "\n";
       }
 
-      training.first /= (types::t_real) sets.size();
-      prediction.first /= (types::t_real) sets.size();
       return t_Return( training, prediction);
     }
     __CATCHCODE(, "Error while performing leave-many-out.\n" )

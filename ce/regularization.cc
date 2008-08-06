@@ -428,19 +428,14 @@ namespace CE
     {
       fit_but_one( _reg, ecis, weights, n );
       if( verbose ) std::cout <<  "Training errors:\n" ;
-      opt::ErrorTuple train( check_all( _reg, ecis, n ) );
+      opt::ErrorTuple train( check_all( _reg, ecis, n ).get<1>(), 1e0 );
       training += train;
       if( verbose ) std::cout << "    " << ( nerror = train ) << "\n"; 
       if( verbose ) std::cout <<  "Prediction errors:\n" ;
-      opt::ErrorTuple pred( check_one( _reg, ecis, n ), *i_w );
+      opt::ErrorTuple pred( check_one( _reg, ecis, n ), 1e0 );
       if( verbose ) std::cout << "    " << ( nerror = pred ) << "\n"; 
       prediction += pred;
-      norm += *i_w;
     }
-    prediction.get<0>() /= norm;
-    prediction.get<1>() /= norm;
-    training.get<0>() /= norm;
-    training.get<1>() /= norm;
     std::cout << "\nTraining Errors:\n" << "   " << ( nerror = training ) << "\n";
     std::cout << "Prediction Errors:\n" << "   " << ( nerror = prediction ) << "\n";
     __DEBUGTRYEND(, "Error in Fit::leave_one_out().\n" )

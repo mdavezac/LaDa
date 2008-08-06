@@ -24,6 +24,7 @@
 #include <opt/types.h>
 #include <opt/fuzzy.h>
 #include <opt/debug.h>
+#include <opt/errors.h>
 
 #include "cefitting.h"
 #include "cecollapse.h"
@@ -272,13 +273,12 @@ int main(int argc, char *argv[])
         if( Fuzzy::eq( lattice->cell.x[i][2], 0.5e0 ) )
           lattice->cell.x[i][2] = 0.6e0;
 #   endif
-    types::t_real mean = interface.mean();
-    types::t_real variance = interface.variance();
 
     // extract leave-many-out commandline
     leavemanyout.extract_cmdl( vm );
     leavemanyout.verbose = verbose;
 
+    opt::NErrorTuple nerror( interface.mean_n_var() ); 
     
 
     typedef Fitting::SepCeInterface::t_PairErrors t_PairErrors;
@@ -305,8 +305,8 @@ int main(int argc, char *argv[])
                  << dtolerance << "\n"
               << "Will" << ( doupdate ? " ": " not " )
                  << "update between dimensions.\n"
-              << "Data mean: " << mean << "\n"
-              << "Data Variance: " << variance << "\n"
+              << "Data mean: " << nerror.mean << "\n"
+              << "Data Variance: " << nerror.variance << "\n"
               << "Range of initial guesses:[ " <<  howrandom << ", " << howrandom << "].\n"
               << "Number of initial guesses: " <<  nbguesses << ".\n";
     if( prerun )
@@ -328,46 +328,24 @@ int main(int argc, char *argv[])
       std::cout << "\nStarting leave-many out predictive fit." << std::endl;
       Fitting::LeaveManyOut::t_Return result;
       result = leavemanyout( interface, bestof, collapse );
-      std::cout << " Training errors:\n"
-                << "    average error: " << result.first.first
-                <<  " ( " << result.first.first / std::abs(mean) *1e2 << "% )" 
-                << "    maximum error: " << result.first.second 
-                <<  " ( " << result.first.second / std::abs(mean) *1e2 << "% )\n" 
-                << " Prediction errors:\n"
-                << "    average error: " << result.second.first
-                <<  " ( " << result.second.first / std::abs(mean) *1e2 << "% )" 
-                << "    maximum error: " << result.second.second 
-                <<  " ( " << result.second.second / std::abs(mean) *1e2 << "% )\n"; 
+      std::cout << " Training errors:\n" << ( nerror = result.first ) << "\n"
+                << " Prediction errors:\n" << ( nerror = result.second ) << "\n";
     }
     else if( not cross )
     {
       std::cout << "\nFitting using whole training set:" << std::endl;
-      types::t_real residual = interface.fit( bestof, collapse );
-      t_PairErrors result; 
-      result = interface.check_training( separables, verbose >= print_checks );
-      std::cout << " Residual: " << residual 
-                <<  " ( " << residual / variance *1e2 << "% )" 
-                << " average error: " << result.first
-                <<  " ( " << result.first / std::abs(mean) *1e2 << "% )" 
-                << " maximum error: " << result.second 
-                <<  " ( " << result.second / std::abs(mean) *1e2 << "% )" 
-                << std::endl;
+      interface.fit( bestof, collapse );
+      nerror = interface.check_training( separables, verbose >= print_checks );
+      std::cout << nerror << "\n"; 
     }
     else
     {
       std::cout << "\nLeave-one-out prediction:" << std::endl;
-      std::pair< t_PairErrors, t_PairErrors> result;
-      result = Fitting::leave_one_out( interface, bestof, collapse, verbose >= print_checks );
-      std::cout << " Training errors:\n"
-                << "    average error: " << result.first.first
-                <<  " ( " << result.first.first / std::abs(mean) *1e2 << "% )" 
-                << "    maximum error: " << result.first.second 
-                <<  " ( " << result.first.second / std::abs(mean) *1e2 << "% )\n" 
-                << " Prediction errors:\n"
-                << "    average error: " << result.second.first
-                <<  " ( " << result.second.first / std::abs(mean) *1e2 << "% )" 
-                << "    maximum error: " << result.second.second
-                <<  " ( " << result.second.second / std::abs(mean) *1e2 << "% )\n"; 
+      std::pair< opt::ErrorTuple, opt::ErrorTuple > result;
+      result = Fitting::leave_one_out( interface, bestof, collapse,
+                                       verbose >= print_checks );
+      std::cout << " Training errors:\n" << ( nerror = result.first ) << "\n"
+                << " Prediction errors:\n" << ( nerror = result.second ) << "\n";
     }
     if( verbose >= print_function ) std::cout << separables << "\n";
 

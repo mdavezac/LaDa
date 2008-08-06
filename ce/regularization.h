@@ -47,9 +47,6 @@ namespace CE
   class Regulated
   {
     friend class Fit;
-    friend void leave_one_out( const Regulated &_reg,
-                     const boost::numeric::ublas::vector<types::t_real> &_weights,
-                     const std::vector< Crystal::Structure > &_strs );
     public:
       //! Type of the fitting matrices.
       typedef boost::numeric::ublas::matrix<types::t_real> t_Matrix;
@@ -176,7 +173,7 @@ namespace CE
 
       //! Performs leave-one-out.
       void leave_one_out( const Regulated &_reg );
-      //! Performs leave-one-out.
+      //! Performs single fit.
       void fit( const Regulated &_reg );
 
     protected:

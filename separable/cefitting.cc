@@ -72,7 +72,7 @@ namespace Fitting
 
         names.push_back( what.str(2) );
         targets.push_back( boost::lexical_cast<types::t_real>( what.str(3) ) );
-        weight.push_back( 1 );
+        weights.push_back( 1 );
       }
     }
     __CATCHCODE(, "Error while reading " << fullpath << "\n" )
@@ -99,15 +99,16 @@ namespace Fitting
     __TRYEND(, "Error while reading " << fullpath << "\n" )
   }
 
-  std::pair<types::t_real, types::t_real> 
+  opt::ErrorTuple
    SepCeInterface :: check( const CE::Separables &_sep,
                             bool _which, bool _verbose ) const
     {
+      opt::ErrorTuple error;
       types::t_real average(0);
       types::t_real maxerr(0);
       std::vector< t_Configurations > :: const_iterator i_train( training.begin() );
       std::vector< t_Configurations > :: const_iterator i_train_end( training.end() );
-      std::vector< types::t_real > :: const_iterator i_weight( weight.begin() );
+      std::vector< types::t_real > :: const_iterator i_weight( weights.begin() );
       std::vector< types::t_real > :: const_iterator i_target( targets.begin() );
       std::vector< std::string > :: const_iterator i_name( names.begin() );
       for( types::t_unsigned i=0; i_train != i_train_end ;
@@ -140,42 +141,9 @@ namespace Fitting
                     << std::fixed << std::setw(10) << std::setprecision(3) 
                            <<   std::abs( intermed - (*i_target) - offset )
                               * (*i_weight) << "\n";
-        intermed = std::abs( intermed - (*i_target) - offset ) * (*i_weight);
-        if( intermed > maxerr ) maxerr = intermed;
-        average += intermed;
-        
+        error += opt::ErrorTuple( intermed - (*i_target) - offset, *i_weight );
       }
-      types::t_real div( training.size() );
-      if( exclude.size() )
-      {
-        if( _which ) div  = (types::t_real ) exclude.size();
-        else         div -= (types::t_real ) exclude.size();
-      }
-      average /= div;
-      return std::pair< types::t_real, types::t_real>(average, maxerr);
+      return error;
     }
-
-
-  types::t_real SepCeInterface :: mean() const
-  {
-    return   std::accumulate( targets.begin(), targets.end(), 0e0 )
-           / (types::t_real) targets.size();
-  }
-  types::t_real SepCeInterface :: variance() const
-  {
-    namespace bl = boost::lambda;
-
-    types::t_real mean = SepCeInterface::mean();
-    types::t_real dummy;
-    types::t_real result(0);
-
-    std::for_each
-    ( 
-       targets.begin(), targets.end(),
-       bl::var(result) += ( bl::var(dummy) = bl::_1 - bl::constant( mean ),
-                            bl::var(dummy) * bl::var(dummy) )
-    );
-    return result / (types::t_real) targets.size();
-  }
 
 }

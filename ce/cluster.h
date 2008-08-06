@@ -84,6 +84,7 @@ namespace CE
    *           are equivalent through the point-symmetry operations of the lattice.
    *  \pre As for any %Cluster Expansion, a fixed lattice is implied throughout.
    *  \todo add a pointer to the lattice so that things are more self container?
+   *  \todo Make this a collection of equivalent clusters.
    */ 
   class Cluster 
   {

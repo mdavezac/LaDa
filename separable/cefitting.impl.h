@@ -2,6 +2,7 @@
 //  Version: $Id$
 //
 
+#include <utility>
 #include <algorithm>
 #include "bestof.h"
 
@@ -19,7 +20,7 @@ namespace Fitting
     y.reserve( training.size() * training[0].size() );
     std::vector< t_Configurations > :: const_iterator i_train( training.begin() );
     std::vector< t_Configurations > :: const_iterator i_train_end( training.end() );
-    std::vector< types::t_real > :: const_iterator i_weight( weight.begin() );
+    std::vector< types::t_real > :: const_iterator i_weight( weights.begin() );
     std::vector< types::t_real > :: const_iterator i_target( targets.begin() );
     for(types::t_unsigned i=0; i_train != i_train_end ;
         ++i, ++i_train, ++i_weight, ++i_target )
@@ -81,21 +82,15 @@ namespace Fitting
 
         if( _verbose ) std::cout << "Training:\n";
         intermediate += _interface.check_training( _collapse.function, _verbose );
-        if( _verbose ) 
-          std::cout << "    average error: " << intermediate.first
-                    << "    maximum error: " << intermediate.second << "\n";
-        training += intermediate;
+        if( _verbose ) std::cout << intermediate << "\n";
+        training += opt::ErrorTuple( intermediate.get<1>(), 1e0 );
 
         if( _verbose ) std::cout << "Prediction:\n";
         intermediate = _interface.check_predictions( _collapse.function, _verbose );
-        if( _verbose ) 
-          std::cout << "    average error: " << prediction.first
-                    << "    maximum error: " << prediction.second << "\n";
-        prediction += intermediate;
+        if( _verbose ) std::cout << intermediate << "\n";
+        prediction += opt::ErrorTuple( intermediate.get<1>(), 1e0 );
       }
 
-      prediction /= N;
-      training /= N;
       return std::make_pair( training, prediction );
     }
 }

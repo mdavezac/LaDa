@@ -15,6 +15,8 @@
 #include <boost/filesystem.hpp>
 
 #include <opt/types.h>
+#include <opt/debug.h>
+#include <opt/errors.h>
 
 #include "ce.h"
 
@@ -71,10 +73,9 @@ namespace Fitting
       //! Sets the offset. 
       types::t_unsigned nb_structs() const { return structures.size(); }
       
-      //! Returns the mean of the target values.
-      types::t_real mean() const;
-      //! Returns the variance of the target values.
-      types::t_real variance() const;
+      //! Returns a normalized error tuple with mean and variance set.
+      opt::NErrorTuple mean_n_var() const 
+        { return opt::mean_n_var( targets, weights ); }
 
     protected:
       //! Reads structure names and energies.
@@ -97,8 +98,8 @@ namespace Fitting
       //! The type of vector holding all equvivalent configurations.
       typedef CE::SymSeparables::t_Configurations t_Configurations;
 
-      //! An optional weight vector.
-      std::vector< types::t_real > weight;
+      //! An optional weights vector.
+      std::vector< types::t_real > weights;
       //! A vector of target values.
       std::vector< types::t_real > targets;
       //! A vector of structures.
@@ -109,9 +110,6 @@ namespace Fitting
       std::vector< std::string > names;
       //! An energy offset to add to the structures.
       types::t_real offset;
-      //! Returns a normalized error tuple with mean and variance set.
-      opt::NerrorTuple mean_n_var() const 
-        { return opt::mean_n_var( targets, weights ); }
   };
 
   //! \brief Leave-one-out procedure.

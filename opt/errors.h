@@ -23,14 +23,16 @@ namespace opt
     //! Base class.
     typedef boost::tuple<types::t_real, types::t_real, types::t_real> t_Base;
     public:
-      ErrorTuple() { get<0>() = 0e0; get<1>() = 0e0; get<2>() = 0e0; }
+      types::t_real norm;
+      ErrorTuple() : t_Base(0,0,0), norm(0) {}
       ErrorTuple  ( types::t_real _a, types::t_real _b, types::t_real _c )
-                : t_Base( _a, _b, _c ) {} 
+                : t_Base( _a, _b, _c ), norm(1)  {} 
       ErrorTuple  ( types::t_real _a, types::t_real _b )
-                : t_Base( _a * _a * _b, _a * _b, std::max( _a, get<2>() ) ) {} 
+                : t_Base( _a * _a * _b, _a * _b, std::max( _a, get<2>() ) ),
+                  norm(_b){} 
       ErrorTuple  ( types::t_real _a )
-                : t_Base( _a * _a, _a, std::max( _a, get<2>() ) ) {} 
-      ErrorTuple  ( const ErrorTuple &_e ) : t_Base( _e ) {} 
+                : t_Base( _a * _a, _a, std::max( _a, get<2>() ) ), norm(1) {} 
+      ErrorTuple  ( const ErrorTuple &_e ) : t_Base( _e ), norm(_e.norm) {} 
   };
   //! A normalized error tuple.
   struct NErrorTuple : public ErrorTuple
@@ -63,10 +65,12 @@ namespace opt
   //! computes mean and variance of data
   template< class T_VECTOR >
   NErrorTuple mean_n_var( const T_VECTOR &_targets, const T_VECTOR &_weights );
-  //! Normalizes over a set of values.
-  void operator/=( ErrorTuple &_a, const types::t_unsigned _N )
   //! Sums errors.
-  void operator+=( ErrorTuple &_a, const ErrorTuple &_b )
+  void operator+=( ErrorTuple &_a, const ErrorTuple &_b );
+  //! Outputs an error tuple.
+  std::ostream& operator<<( std::ostream &_stream, const ErrorTuple &_b );
+  //! Outputs a normalized error tuple.
+  std::ostream& operator<<( std::ostream &_stream, const NErrorTuple &_b );
 
   template< class T_VECTOR >
   NErrorTuple mean_n_var( const T_VECTOR &_targets, const T_VECTOR &_weights )
