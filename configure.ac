@@ -468,10 +468,14 @@ if test "$mpi" != true; then
   BOOST_MPI=""
 fi
 if test "$python" = true; then
-  AX_PYTHON
+  if test "x$PYTHON_INCLUDE_DIR$PYTHON_LIB" = "x"; then
+    AX_PYTHON
+  fi
 else
   BOOST_PYTHON=""
 fi
+AC_SUBST(PYTHON_INCLUDE_DIR)
+AC_SUBST(PYTHON_LIB)
 AC_SUBST(BOOST_LDFLAGS)
 AC_SUBST(BOOST_MPI)
 AC_SUBST(BOOST_PROGOP)
@@ -535,7 +539,7 @@ fi
 if test "$lapack" = true; then
   echo "Will Include some lapack/blas routines for Matrix diagonalization."
 fi
-if test "$python" = true; then
+if test "x$python" = "xtrue"; then
   echo "Will compile python bindings."
 fi
 if test "$debug" = true; then

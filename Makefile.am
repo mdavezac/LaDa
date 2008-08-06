@@ -54,23 +54,6 @@ SUBDIRS = $(MPISUBDIR) atat physics opt crystal print $(CEDIR) $(VFFSUBDIR) \
 	  $(PYTHONDIR)
 revision.h: force
 	@./scripts/max_revision.pl
-
-ce/cubic: force
-	@cd ce; $(MAKE) cubic
-ce/tetra: force
-	@cd ce; $(MAKE) tetra
-ce/regular: force
-	@cd ce; $(MAKE) regular
-
-python: python/liblada
-python/liblada: force
-	@cd python; $(MAKE) liblada.la
-
-separable/cubic: force
-	@cd separable; $(MAKE) cubic
-separable/tetra: force
-	@cd separable; $(MAKE) tetra
-
 force: ;
 all: all-local
 all-local: revision.h
@@ -90,6 +73,13 @@ separable/cubic: force
 separable/tetra: force
 	@cd separable; $(MAKE) tetra
 endif
+
+if DOPYTHON
+python: python/liblada
+python/liblada: force
+	@cd python; $(MAKE) liblada.la
+endif
+
 
 if DODOC
 doc: $(ALL_DOCS)
