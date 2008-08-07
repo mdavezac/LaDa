@@ -2,8 +2,8 @@
 //  Version: $Id: functional_builder.impl.h 685 2008-07-22 17:20:39Z davezac $
 //
 
-#ifndef _CE_REGULARIZATION_H_
-#define _CE_REGULARIZATION_H_
+#ifndef _CE_FIT_H_
+#define _CE_FIT_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -24,29 +24,11 @@
 
 namespace CE
 {
-  // forward declaration
-  //! \cond
-  class Regulated;
-  class Fit;
-  //! \endcond
-
-  //! \brief Computes CV scores and reduces number of clusters to zero.
-  //! \details Regulated::clusters are unchanged at the end of the run.
-  //! \brief Regulated Cluster-Expansion.
-  //! \see <A HREF="http://dx.doi.org/10.1103/PhysRevB.73.224207"> Ralf Drautz
-  template< class T_MINIMIZER >
-  void drautz_diaz_ortiz( Regulated &_reg,
-                          const T_MINIMIZER &_minimizer,
-                          types::t_int _verbosity = 0,
-                          types::t_real _initweights = 0e0 );
-
-
   //! \brief Regulated Cluster-Expansion.
   //! \see <A HREF="http://dx.doi.org/10.1103/PhysRevB.73.224207"> Ralf Drautz
   //!      and Alejandro Diaz-Ortiz, PRB \bf 73, 224207 (2007)</A>.
-  class Regulated
+  class Fit
   {
-    friend class Fit;
     public:
       //! Type of the fitting matrices.
       typedef boost::numeric::ublas::matrix<types::t_real> t_Matrix;
@@ -84,22 +66,19 @@ namespace CE
       typedef std::vector< t_StructPis > t_Pis;
 
     public:
-      //! The clusters to fit.
-      t_Clusters clusters;
-      //! The fitting procedure.
-      Fitting::Cgs cgs;
-
-
+      //! A container of structures.
+      t_Structures structures;
+      //! \brief A container of indices to the structures which should be
+      //! excluded from the fit.
+      
       //! Constructor.
-      Regulated() {};
+      Fit() {};
       //! Destructor.
-      ~Regulated() {};
+      ~Fit() {};
 
       //! Evaluates the cv score for the weights on input.
-      t_Return operator()( const types::t_real * _arg ) const; 
-      //! Evaluates the gradient.
-      void gradient( const types::t_real * _arg,
-                     types::t_real *_gradient ) const;
+      opt::ErrorTuple operator()( t_Vector &_arg ) const; 
+
       //! Initializes from structures. 
       void init( const t_Structures &_structures );
       //! Reduce regulated function and cluster by 1.
@@ -114,36 +93,10 @@ namespace CE
       void reassign( const t_Arg &_arg );
 
     protected:
-      //! Initializes Regulated::sums.
-      void init_sums();
-      //! \brief Constructs \a _A and \a _b fitting matrix and vector excluding
-      //!        structure \a _k.
-      //! \details Does not include wights.
-      void construct_pair( t_FittingPair &_pair, types::t_unsigned &_k );
-      //! Constructs all fitting pairs, without the weights.
-      void construct_pairs();
-
-    protected:
-      //! The number of clusters.
-      types::t_unsigned nb_cls;
       //! A container of pis for all structures.
       t_Pis pis;
-      //! Type of Regulated::esums.
-      typedef t_Vector t_ESums;
-      //! Type of Regulated::psums.
-      typedef t_Matrix t_PSums;
-      //! \f$=\sum_s w_s \phi_{\alpha, s}\phi_{\beta, s}\f$.
-      t_PSums psums;
-      //! \f$=\sum_s w_s E_s\phi_{\beta, s}\f$.
-      t_ESums esums;
       //! A container of weights.
       t_Weights weights;
-      //! A container of weights.
-      t_Targets targets;
-      //! A container of fitting matrices and vectors.
-      t_FittingPairs fittingpairs;
-      //! A container of fitted interactions.
-      mutable t_FittedEcis fittedecis;
   };
 
 
