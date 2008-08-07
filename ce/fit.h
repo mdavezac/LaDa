@@ -24,10 +24,9 @@
 
 namespace CE
 {
-  //! \brief Regulated Cluster-Expansion.
-  //! \see <A HREF="http://dx.doi.org/10.1103/PhysRevB.73.224207"> Ralf Drautz
-  //!      and Alejandro Diaz-Ortiz, PRB \bf 73, 224207 (2007)</A>.
-  class Fit
+  //! A class for fitting cluster-expansions to LDA data.
+  template< class T_POLICY >
+  class Fit : public T_POLICY
   {
     public:
       //! Type of the fitting matrices.
@@ -36,18 +35,8 @@ namespace CE
       typedef boost::numeric::ublas::vector<types::t_real> t_Vector;
       //! A container of structures.
       typedef std::vector< Crystal::Structure > t_Structures;
-      //! Type of the return.
-      typedef types::t_real t_Return;
-      //! Type of the input variables.
-      typedef boost::numeric::ublas::vector<t_Return> t_Arg;
 
     protected:
-      //! Type of a pair of fitting matrix and vector.
-      typedef std::pair< t_Matrix, t_Vector > t_FittingPair;
-      //! A container of fitting pairs.
-      typedef std::vector< t_FittingPair > t_FittingPairs;
-      //! Type of the ecis.
-      typedef std::vector< t_Vector > t_FittedEcis;
       //! Type of the class representing a cluster.
       typedef Cluster t_Cluster;
       //! Container of equivalent clusters.
@@ -56,8 +45,6 @@ namespace CE
       typedef t_Vector t_StructPis;
       //! A container of weights.
       typedef std::vector< types::t_real > t_Weights;
-      //! A container of targets.
-      typedef std::vector< types::t_real > t_Targets;
 
     public:
       //! Container of classes of equivalent clusters.
@@ -68,8 +55,6 @@ namespace CE
     public:
       //! A container of structures.
       t_Structures structures;
-      //! \brief A container of indices to the structures which should be
-      //! excluded from the fit.
       
       //! Constructor.
       Fit() {};
@@ -80,71 +65,135 @@ namespace CE
       opt::ErrorTuple operator()( t_Vector &_arg ) const; 
 
       //! Initializes from structures. 
-      void init( const t_Structures &_structures );
-      //! Reduce regulated function and cluster by 1.
-      Cluster reduce();
-      //! Fit to all data using linear-least square fit.
-      types::t_real fit( t_Vector &_x, const t_Vector &_weight ) const;
-      //! Analytical fit
-      types::t_real anafit();
-      //! Computes square errors.
-      types::t_unsigned square_errors() const;
+      void init( const t_Clusters &_clusters )
+      {
+        find_pis( _clusters, structures, pis );
+        nb_cls = _clusters.size();
+        weights.resize( structures.size() );
+        std::fill( weights.begin(), weights.end(), 1e0 );
+      }
+
       //! Reassigns ecis from argument values.
-      void reassign( const t_Arg &_arg );
+      void reassign( const t_Vector &_arg ) const;
+
+      //! Computes error for training set.
+      opt::ErrorTuple check_training( const t_Vector &_ecis,
+                                      bool _verbose ) const
+       { return check( _ecis, true, _verbose ); }
+      //! Computes error for prediction set.
+      opt::ErrorTuple check_prediction( const t_Vector &_ecis,
+                                      bool _verbose ) const
+       { return check( _ecis, true, _verbose ); }
 
     protected:
+      //! Computes \a _A and \a _b excluding excluded structures.
+      void create_A_n_b( t_Vector &_A, t_Vector &_b ) const;
+      //! Adds current pis to \a _A and \a _b.
+      void add_to_A_n_b( t_Vector &_A, t_Vector &_b,
+                         const t_StructPis &_pis,
+                         const types::t_real _weight,
+                         const types::t_real _energy ) const;
+      //! Computes error for training or prediction set.
+      opt::ErrorTuple check( const t_Vector &_ecis,
+                             bool _training,
+                             bool _verbose ) const
+      //! Computes error for one structure.
+      opt::ErrorTuple check_one( const t_Vector &_ecis,
+                                 types::t_unsigned _n, 
+                                 bool _verbose = false ) const;
+
       //! A container of pis for all structures.
       t_Pis pis;
       //! A container of weights.
       t_Weights weights;
   };
 
-
-  class Fit 
+  //! A class for fitting cluster-expansions to LDA data, excluding some.
+  class ExFit : public Fit
   {
     public:
-      //! Index of structures excluded from the set.
-      typedef std::vector< Crystal::Structure > t_Structures;
+      //! Type of the fitting matrices.
+      typedef Fit :: t_Matrix t_Matrix;
+      //! Type of the fitting target vectors.
+      typedef Fit :: t_Vector t_Vector;
+      //! A container of structures.
+      typedef Fit :: t_Structures t_Structures;
+
+    protected:
+      //! Type of the class representing a cluster.
+      typedef Fit :: t_Cluster t_Cluster;
+      //! Container of equivalent clusters.
+      typedef Fit :: t_EquivClusters t_EquivClusters;
+      //! A container of Pis for a single structure.
+      typedef Fit :: t_StructPis t_StructPis;
+      //! A container of weights.
+      typedef Fit :: t_Weights t_Weights;
+
+    public:
+      //! Container of classes of equivalent clusters.
+      typedef Fit :: t_Clusters t_Clusters;
+      //! A container of Pis for a single structure.
+      typedef Fit :: t_Pis t_Pis;
+      //! A container of Pis for a single structure.
+      typedef std::vector< types::t_unsigned > t_Excluded;
+
+    public:
       //! A container of structures.
       t_Structures structures;
-      //! lambda for pair regulation
-      types::t_real lambda;
-      //! t for pair regulation
-      types::t_real tcoef;
-      //! Wether to perform pair regulation.
-      bool do_pairreg;
-      //! Which pair regulation to perform: Laks or Volkers?
-      bool laksreg;
-      //! Wether to be verbose.
-      bool verbose;
-
+      //! \brief A container of indices to the structures which should be
+      //!        excluded from the fit.
+      t_Excluded excluded;
       
       //! Constructor.
-      Fit() : lambda(0), tcoef(0), do_pairreg(false), laksreg(false), verbose(false) {}
+      Fit() {};
       //! Destructor.
       ~Fit() {};
 
-      //! Performs leave-one-out.
-      void leave_one_out( const Regulated &_reg );
-      //! Performs single fit.
-      void fit( const Regulated &_reg );
+      //! Evaluates the cv score for the weights on input.
+      opt::ErrorTuple operator()( t_Vector &_arg ) const; 
+
+      //! Initializes from structures. 
+      void init( const t_Clusters &_clusters )
+      {
+        find_pis( _clusters, structures, pis );
+        nb_cls = _clusters.size();
+        weights.resize( structures.size() );
+        std::fill( weights.begin(), weights.end(), 1e0 );
+      }
+
+      //! Reassigns ecis from argument values.
+      void reassign( const t_Vector &_arg ) const;
+
+      //! Computes error for training set.
+      opt::ErrorTuple check_training( const t_Vector &_ecis,
+                                      bool _verbose ) const
+       { return check( _ecis, true, _verbose ); }
+      //! Computes error for prediction set.
+      opt::ErrorTuple check_training( const t_Vector &_ecis,
+                                      bool _verbose ) const
+       { return check( _ecis, true, _verbose ); }
 
     protected:
-      //! Compute pair regulation terms.
-      void pair_reg( const Regulated &_reg, Regulated::t_Vector &_weights );
-      //! Performs fit (e.g. leave-none-out).
-      void fit_but_one( const Regulated &_reg,
-                        Regulated :: t_Vector &_x,
-                        const Regulated :: t_Vector &_weights,
-                        const types::t_unsigned _n ) const;
-      //! Check results.
-      opt::ErrorTuple check_one( const Regulated &_reg, 
-                                 const Regulated :: t_Vector &_ecis,
-                                 types::t_unsigned _n );
-      //! Check all (but one )
-      opt::ErrorTuple check_all( const Regulated &_reg, 
-                                 const Regulated :: t_Vector &_ecis,
-                                 types::t_int _n = -1 );
+      //! Computes \a _A and \a _b excluding excluded structures.
+      void create_A_n_b( t_Vector &_A, t_Vector &_b ) const;
+      //! Adds current pis to \a _A and \a _b.
+      void add_to_A_n_b( t_Vector &_A, t_Vector &_b,
+                         const t_StructPis &_pis,
+                         const types::t_real _weight,
+                         const types::t_real _energy ) const;
+      //! Computes error for training or prediction set.
+      opt::ErrorTuple Fit :: check( const t_Vector &_ecis,
+                                    bool _training,
+                                    bool _verbose ) const
+      //! Computes error for one structure.
+      opt::ErrorTuple check_one( const t_Vector &_ecis,
+                                 types::t_unsigned _n, 
+                                 bool _verbose = false ) const;
+
+      //! A container of pis for all structures.
+      t_Pis pis;
+      //! A container of weights.
+      t_Weights weights;
   };
 
 } // end of namespace CE
