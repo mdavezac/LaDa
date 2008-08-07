@@ -1,5 +1,5 @@
 //
-//  Version: $Id: functional_builder.impl.h 685 2008-07-22 17:20:39Z davezac $
+//  Version: $Id$
 //
 
 #ifndef _CE_REGULARIZATION_H_
@@ -20,14 +20,13 @@
 #include <opt/errors.h>
 #include <crystal/structure.h>
 
-#include "cluster.h"
+#include "fit.h"
 
 namespace CE
 {
   // forward declaration
   //! \cond
   class Regulated;
-  class Fit;
   //! \endcond
 
   //! \brief Computes CV scores and reduces number of clusters to zero.
@@ -44,51 +43,25 @@ namespace CE
   //! \brief Regulated Cluster-Expansion.
   //! \see <A HREF="http://dx.doi.org/10.1103/PhysRevB.73.224207"> Ralf Drautz
   //!      and Alejandro Diaz-Ortiz, PRB \bf 73, 224207 (2007)</A>.
-  class Regulated
+  class Regulated : public RegulatedFit< CE::FittingPolicy::Excluded<> > 
   {
-    friend class Fit;
+      //! Type of the base class.
+      typedef RegulatedFit< CE::FittingPolicy::Excluded<> > t_Base;
     public:
       //! Type of the fitting matrices.
-      typedef boost::numeric::ublas::matrix<types::t_real> t_Matrix;
+      typedef BaseFit::t_Matrix t_Matrix;
       //! Type of the fitting target vectors.
-      typedef boost::numeric::ublas::vector<types::t_real> t_Vector;
-      //! A container of structures.
-      typedef std::vector< Crystal::Structure > t_Structures;
+      typedef BaseFit::t_Vector t_Vector;
       //! Type of the return.
       typedef types::t_real t_Return;
-      //! Type of the input variables.
-      typedef boost::numeric::ublas::vector<t_Return> t_Arg;
-
-    protected:
-      //! Type of a pair of fitting matrix and vector.
-      typedef std::pair< t_Matrix, t_Vector > t_FittingPair;
-      //! A container of fitting pairs.
-      typedef std::vector< t_FittingPair > t_FittingPairs;
-      //! Type of the ecis.
-      typedef std::vector< t_Vector > t_FittedEcis;
-      //! Type of the class representing a cluster.
-      typedef Cluster t_Cluster;
-      //! Container of equivalent clusters.
-      typedef std::vector< t_Cluster > t_EquivClusters;
-      //! A container of Pis for a single structure.
-      typedef t_Vector t_StructPis;
-      //! A container of weights.
-      typedef std::vector< types::t_real > t_Weights;
-      //! A container of targets.
-      typedef std::vector< types::t_real > t_Targets;
-
-    public:
-      //! Container of classes of equivalent clusters.
-      typedef std::vector< t_EquivClusters > t_Clusters;
-      //! A container of Pis for a single structure.
-      typedef std::vector< t_StructPis > t_Pis;
+      //! Type of the argument for the minimizer.
+      typedef BaseFit::t_Vector t_Arg;
 
     public:
       //! The clusters to fit.
       t_Clusters clusters;
       //! The fitting procedure.
       Fitting::Cgs cgs;
-
 
       //! Constructor.
       Regulated() {};
@@ -97,102 +70,23 @@ namespace CE
 
       //! Evaluates the cv score for the weights on input.
       t_Return operator()( const types::t_real * _arg ) const; 
+      //! Single fit.
+      opt::ErrorTuple fit( BaseFit::t_Vector &_x,
+                           const types::t_real *_weights ) const
+        { return t_Base::operator()( _x, _weights, cgs ); }
       //! Evaluates the gradient.
       void gradient( const types::t_real * _arg,
                      types::t_real *_gradient ) const;
-      //! Initializes from structures. 
-      void init( const t_Structures &_structures );
       //! Reduce regulated function and cluster by 1.
       Cluster reduce();
-      //! Fit to all data using linear-least square fit.
-      types::t_real fit( t_Vector &_x, const t_Vector &_weight ) const;
-      //! Analytical fit
-      types::t_real anafit();
-      //! Computes square errors.
-      types::t_unsigned square_errors() const;
       //! Reassigns ecis from argument values.
-      void reassign( const t_Arg &_arg );
-
-    protected:
-      //! Initializes Regulated::sums.
-      void init_sums();
-      //! \brief Constructs \a _A and \a _b fitting matrix and vector excluding
-      //!        structure \a _k.
-      //! \details Does not include wights.
-      void construct_pair( t_FittingPair &_pair, types::t_unsigned &_k );
-      //! Constructs all fitting pairs, without the weights.
-      void construct_pairs();
-
-    protected:
-      //! The number of clusters.
-      types::t_unsigned nb_cls;
-      //! A container of pis for all structures.
-      t_Pis pis;
-      //! Type of Regulated::esums.
-      typedef t_Vector t_ESums;
-      //! Type of Regulated::psums.
-      typedef t_Matrix t_PSums;
-      //! \f$=\sum_s w_s \phi_{\alpha, s}\phi_{\beta, s}\f$.
-      t_PSums psums;
-      //! \f$=\sum_s w_s E_s\phi_{\beta, s}\f$.
-      t_ESums esums;
-      //! A container of weights.
-      t_Weights weights;
-      //! A container of weights.
-      t_Targets targets;
-      //! A container of fitting matrices and vectors.
-      t_FittingPairs fittingpairs;
-      //! A container of fitted interactions.
-      mutable t_FittedEcis fittedecis;
+      void reassign( const BaseFit::t_Vector &_arg )
+        { t_Base :: reassign( _arg, clusters ); }
+      //! Init on owned clusters.
+      void init() { t_Base :: init( clusters ); }
   };
 
 
-  class Fit 
-  {
-    public:
-      //! Index of structures excluded from the set.
-      typedef std::vector< Crystal::Structure > t_Structures;
-      //! A container of structures.
-      t_Structures structures;
-      //! lambda for pair regulation
-      types::t_real lambda;
-      //! t for pair regulation
-      types::t_real tcoef;
-      //! Wether to perform pair regulation.
-      bool do_pairreg;
-      //! Which pair regulation to perform: Laks or Volkers?
-      bool laksreg;
-      //! Wether to be verbose.
-      bool verbose;
-
-      
-      //! Constructor.
-      Fit() : lambda(0), tcoef(0), do_pairreg(false), laksreg(false), verbose(false) {}
-      //! Destructor.
-      ~Fit() {};
-
-      //! Performs leave-one-out.
-      void leave_one_out( const Regulated &_reg );
-      //! Performs single fit.
-      void fit( const Regulated &_reg );
-
-    protected:
-      //! Compute pair regulation terms.
-      void pair_reg( const Regulated &_reg, Regulated::t_Vector &_weights );
-      //! Performs fit (e.g. leave-none-out).
-      void fit_but_one( const Regulated &_reg,
-                        Regulated :: t_Vector &_x,
-                        const Regulated :: t_Vector &_weights,
-                        const types::t_unsigned _n ) const;
-      //! Check results.
-      opt::ErrorTuple check_one( const Regulated &_reg, 
-                                 const Regulated :: t_Vector &_ecis,
-                                 types::t_unsigned _n );
-      //! Check all (but one )
-      opt::ErrorTuple check_all( const Regulated &_reg, 
-                                 const Regulated :: t_Vector &_ecis,
-                                 types::t_int _n = -1 );
-  };
 
 } // end of namespace CE
 

@@ -174,28 +174,12 @@ int main(int argc, char *argv[])
     boost::shared_ptr< Crystal::Lattice >
       lattice( Crystal::read_lattice( latinput, dir ) );
 
-    // Create object for fitting procedures.
-    CE::Fit fitprocedures;
-    fitprocedures.lambda = pairreg.first;
-    fitprocedures.tcoef = pairreg.second;
-    fitprocedures.do_pairreg = ( not Fuzzy::is_zero( pairreg.second ) and maxpairs );
-    fitprocedures.laksreg = not volkerreg;
-    fitprocedures.verbose = verbosity >= 1;
-
-    // read structures as lda\@nrel input.
-    Crystal::read_ce_structures( dir / "LDAs.dat", fitprocedures.structures );
-    Crystal::Structure::lattice = lattice.get();
-    if( verbosity >= 9 )
-      std::for_each( fitprocedures.structures.begin(),
-                     fitprocedures.structures.end(), 
-                     std::cout << bl::_1 << "\n");
-
     // Construct regularization.
     CE::Regulated reg;
     reg.cgs.tolerance = tolerance;
     reg.cgs.verbose = verbosity >= 11;
     reg.cgs.itermax = 40;
-
+    
     // reads jtypes
     CE::Regulated :: t_Clusters clusters;
     // add pair terms.
@@ -220,47 +204,60 @@ int main(int argc, char *argv[])
       }
     }
 
-    // initialization.
-    reg.init( fitprocedures.structures );
-    
-
-
     // now for the real job.
-    if( doloo ) // single leave-one-out with pair regulation.
-      fitprocedures.leave_one_out( reg );
-    if( dofit ) // single leave-none-out with pair regulation.
-      fitprocedures.fit( reg );
-    if( doloo or dofit ) return 1;
-    else if( minimizer_type.compare( "simplex" ) == 0 )
+    if( doloo or dofit )
     {
-      Minimizer::Simplex simplex;
-      simplex.tolerance = tolerance;
-      simplex.verbose = verbosity >= 11;
-      simplex.itermax = itermax;
-      simplex.stepsize = 1;
-      CE::drautz_diaz_ortiz( reg, simplex, verbosity, iweights);
+      // Create object for fitting procedures.
+      CE::Fit< CE::FittingPolicy::PairReg<> > fit;
+      fit.lambda = pairreg.first;
+      fit.tcoef = pairreg.second;
+      fit.do_pairreg = ( not Fuzzy::is_zero( pairreg.second ) and maxpairs );
+      fit.laksreg = not volkerreg;
+      fit.verbose = verbosity >= 1;
+      // initialization
+      fit.init( reg.clusters );
+
+      CE::BaseFit::t_Vector x( reg.clusters.size() );
+      if( doloo ) leave_one_out( fit, reg.cgs, x, verbosity >= 5 );
+      if( dofit ) fit( x, reg.cgs );
     }
-    else 
+    else
     {
-      Minimizer::Gsl gsl;
-      gsl.type =  Minimizer::Gsl::SteepestDescent;
-      gsl.tolerance = tolerance;
-      gsl.verbose = verbosity >= 11;
-      gsl.itermax = itermax;
-      gsl.linestep = 0.01;
-      gsl.linetolerance = tolerance * 1e1;
-      if( minimizer_type.compare("bfgs2") == 0 )
-        gsl.type = Minimizer::Gsl::BFGS2;
-      if( minimizer_type.compare("bfgs") == 0 )
-        gsl.type = Minimizer::Gsl::BFGS;
-      if( minimizer_type.compare("sd") == 0 )
-        gsl.type = Minimizer::Gsl::SteepestDescent;
-      if( minimizer_type.compare("fr") == 0 )
-        gsl.type = Minimizer::Gsl::FletcherReeves;
-      if( minimizer_type.compare("pr") == 0 )
-        gsl.type = Minimizer::Gsl::PolakRibiere;
+     
+      // initialization.
+      reg.init();
     
-      CE::drautz_diaz_ortiz( reg, gsl, verbosity, iweights);
+      if( minimizer_type.compare( "simplex" ) == 0 )
+      {
+        Minimizer::Simplex simplex;
+        simplex.tolerance = tolerance;
+        simplex.verbose = verbosity >= 11;
+        simplex.itermax = itermax;
+        simplex.stepsize = 1;
+        CE::drautz_diaz_ortiz( reg, simplex, verbosity, iweights);
+      }
+      else 
+      {
+        Minimizer::Gsl gsl;
+        gsl.type =  Minimizer::Gsl::SteepestDescent;
+        gsl.tolerance = tolerance;
+        gsl.verbose = verbosity >= 11;
+        gsl.itermax = itermax;
+        gsl.linestep = 0.01;
+        gsl.linetolerance = tolerance * 1e1;
+        if( minimizer_type.compare("bfgs2") == 0 )
+          gsl.type = Minimizer::Gsl::BFGS2;
+        if( minimizer_type.compare("bfgs") == 0 )
+          gsl.type = Minimizer::Gsl::BFGS;
+        if( minimizer_type.compare("sd") == 0 )
+          gsl.type = Minimizer::Gsl::SteepestDescent;
+        if( minimizer_type.compare("fr") == 0 )
+          gsl.type = Minimizer::Gsl::FletcherReeves;
+        if( minimizer_type.compare("pr") == 0 )
+          gsl.type = Minimizer::Gsl::PolakRibiere;
+      
+        CE::drautz_diaz_ortiz( reg, gsl, verbosity, iweights);
+      }
     }
   }
   catch ( boost::program_options::invalid_command_line_syntax &_b)

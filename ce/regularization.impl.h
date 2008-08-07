@@ -46,7 +46,7 @@ namespace CE
           bl::_1 =  bl::bind( &opt::random::rng ) * range - range * 0.5e0
         );
         // Fitting Error
-        types::t_real fitnoreg = _reg.fit( ecis, zero_vec );
+        opt::ErrorTuple fitnoreg = _reg.fit( ecis, &zero_vec[0] );
  
         // CV with zero weights
         types::t_real cvwz( _reg( &zero_vec[0] ) ); 
@@ -54,13 +54,13 @@ namespace CE
         // CV with optimized weights
         types::t_real cvw;
         __TRYBEGIN
-          cvw = _minimizer( _reg, solution ); 
+          cvw = _minimizer.operator()( _reg, solution ); 
         __TRYEND(," ") 
         std::for_each( solution.begin(), solution.end(), std::cout << bl::_1 << " " );
         std::cout << "\n";
         
         // Fitting Error
-        types::t_real fitwithreg = _reg.fit( ecis, solution );
+        opt::ErrorTuple fitwithreg = _reg.fit( ecis, &solution[0] );
         std::for_each( ecis.begin(), ecis.end(), std::cout << bl::_1 << " " );
         std::cout << "\n";
         

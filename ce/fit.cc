@@ -1,5 +1,5 @@
 //
-//  Version: $Id: functional_builder.impl.h 685 2008-07-22 17:20:39Z davezac $
+//  Version: $Id$
 //
 
 #ifdef HAVE_CONFIG_H
@@ -25,64 +25,59 @@
 
 namespace CE
 {
-  void Fit :: add_to_A_n_b( t_Vector &_A, t_Vector &_b,
-                            const t_StructPis &_pis,
-                            const types::t_real _weight,
-                            const types::t_real _energy )
+  opt::ErrorTuple BaseFit :: check_one( const t_Vector &_ecis,
+                                        types::t_unsigned _n, 
+                                        bool _verbose ) const
   {
-    __ASSERT( i_pis->size() != nb_cls, "Inconsistent number of targets pis.\n" )
-    // loop over alpha.
-    t_ESums :: iterator i_b = _b.begin();
-    t_PSums :: array_type :: iterator i_A = _A.data().begin();
-    t_StructPis :: const_iterator i_pi_begin = _pis.begin();
-    t_StructPis :: const_iterator i_pi_end = i_pis.end();
-    t_StructPis :: const_iterator i_alphapi( i_pi_begin );
-    for(; i_alphapi != i_pi_end; ++i_alphapi, ++i_esum)
-    {
-      __ASSERT( i_esum == _b.end(), "Iterator out of range.\n" )
-      *i_b += _weight * energy * (*i_alphapi);
+    __DEBUGTRYBEGIN
+    namespace fs = boost::filesystem;
+    namespace bblas = boost::numeric::ublas;
+    const t_Structures :: value_type &structure = structures[_n];
+    const t_Weights :: value_type &weight = weights[_n];
+    const std::string name = fs::path( structure.name ).leaf() ;
+    const types::t_real target = structure.energy;
+ 
+    types::t_real predic( bblas::inner_prod( _ecis, pis[_n] ) );
+    opt::ErrorTuple error( target - predic,  weight );
+    if( _verbose )
+      std::cout << "  structure: " << std::setw(30) << name << "  "
+                << "Target: " << std::fixed << std::setw(8) 
+                << std::setprecision(2) << target << " "
+                << "Separable: " << std::fixed << std::setw(8)
+                << std::setprecision(2) << predic << "   "
+                << "|Target-Separable| * weight: "
+                << std::fixed << std::setw(10) << std::setprecision(3) 
+                << error.mean()
+                << "\n";
+    return error;
+    __DEBUGTRYEND(, "Error in Fit::check_one().\n" )
+  }
 
-      // loop over betas.
-      t_StructPis :: const_iterator i_betapi( i_pi_begin );
-      for(; i_betapi != i_pi_end; ++i_betapi, ++i_A )
-      {
-        __ASSERT( i_A == _A.data().end(), "Iterator out of range.\n" )
-        *i_A += _weight * (*i_alphapi) * (*i_betapi);
-      }
-    } // end of loop over alphas.
-  } 
-
-  void Fit :: create_A_n_b( t_Vector &_A, t_Vector &_b )
+  void BaseFit :: reassign( const t_Vector &_arg, t_Clusters &_clusters ) const
   {
     __DEBUGTRYBEGIN
     namespace bl = boost::lambda;
-    __ASSERT( pis.size() != structures.size(),
-              "Inconsistent number of structures and pis.\n" )
-    __ASSERT( structures.size() != weights.size(),
-              "Inconsistent number of structures and weights.\n" )
+  
+    // now copies to clusters.
+    t_Clusters :: iterator i_clusters = _clusters.begin();
+    t_Clusters :: iterator i_clusters_end = _clusters.end();
+    t_Vector :: const_iterator i_arg = _arg.begin();
+    for(; i_clusters != i_clusters_end; ++i_clusters, ++i_arg )
+      std::for_each
+      (
+        i_clusters->begin(), i_clusters->end(),
+        bl::bind( &Cluster::eci, bl::_1 ) = bl::constant(*i_arg)
+      );
+    __DEBUGTRYEND(, "Error in Regulated::reassign().\n" )
+  }
 
-    // Resizes the clusters and fills with zeros.
-    _b.resize( nb_cls );
-    _A.resize( nb_cls, nb_cls );
-    std::fill( _b.begin(), _b.end(), 0e0 );
-    std::fill( _A.data().begin(), _A.data().end(), 0e0 );
-
-    // loop over targets.
-    t_Structures :: const_iterator i_target = structures.begin();
-    t_Structures :: const_iterator i_target_end = structures.end();
-    t_Pis :: const_iterator i_pis = pis.begin();
-    t_Weights :: const_iterator i_w = weights.begin();
-    for( types::t_unsigned i(0); 
-         i_target != i_target_end; 
-         ++i_target, ++i_pis, ++i_w, ++i )
-    {
-      if( std::find( excluded.begin(), excluded.end(), i ) != excluded.end() )
-        continue; 
-
-      add_to_A_n_b( _A, _b, *i_pis, *i_w, i_target->energy );
-    } // end of loop over betas.
-    __DEBUGTRYEND(, "Error in Fit::create_A_n_b.\n" )
-  } 
+  void BaseFit :: init( const t_Clusters &_clusters )
+  {
+    find_pis( _clusters, structures, pis );
+    nb_cls = _clusters.size();
+    weights.resize( structures.size() );
+    std::fill( weights.begin(), weights.end(), 1e0 );
+  }
 
 } // end of namespace CE
 

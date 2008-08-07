@@ -52,11 +52,12 @@ DARWIN_E_DOC = $(DARWIN_E_H) $(DARWIN_E_CC)
 CRYSTAL_CC = lattice.cc structure.cc 
 CRYSTAL_H  = lattice.h  structure.h  atom.h 
 CRYSTAL_DOC = $(CRYSTAL_H) $(CRYSTAL_CC) 
-CE_CC     = cluster.cc harmonic.cc  polynome.cc regularization.cc
+
+CE_CC     = cluster.cc harmonic.cc  polynome.cc regularization.cc fit.cc
 CE_H      = cluster.h  constituent_strain.h  functional_builder.h  harmonic.h \
-            polynome.h regularization.h
+            polynome.h regularization.h fit.h
 CE_IMPL_H = constituent_strain.impl.h  functional_builder.impl.h  harmonic.impl.h \
-            cluster.impl.h regularization.impl.h
+            cluster.impl.h regularization.impl.h fit.impl.h
 CE_DOC = $(CE_H) $(CE_CC) 
 
 LAPACK_F90 = dlae2.f   dlanst.f  dlapy2.f  dlarf.f   dlarft.f  dlascl.f \

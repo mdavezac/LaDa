@@ -73,6 +73,7 @@ namespace Fitting
       types::t_unsigned N = _interface.training_set_size();
 
       bool first_iter = true;
+      _interface.exclude.resize(1);
       for(; _interface.exclude[0] < N; ++_interface.exclude[0], first_iter=false )
       {
         opt::ErrorTuple intermediate;
