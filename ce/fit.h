@@ -175,11 +175,6 @@ namespace CE
     protected:
       //! Computes \a _A and \a _b excluding excluded structures.
       void create_A_n_b( t_Matrix &_A, t_Vector &_b ) const;
-      //! Adds current pis to \a _A and \a _b.
-      void add_to_A_n_b( t_Matrix &_A, t_Vector &_b,
-                         const t_StructPis &_pis,
-                         const types::t_real _weight,
-                         const types::t_real _energy ) const;
 
     protected:  
       using t_Policy :: pis;

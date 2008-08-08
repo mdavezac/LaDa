@@ -26,38 +26,12 @@ namespace CE
       }
   }
 
-  template< class T_POLICY >
-  void Fit<T_POLICY> :: add_to_A_n_b( t_Matrix &_A, t_Vector &_b,
-                                      const t_StructPis &_pis,
-                                      const types::t_real _weight,
-                                      const types::t_real _energy ) const
-  {
-    // loop over alpha.
-    t_Vector :: iterator i_b = _b.begin();
-    t_Matrix :: array_type :: iterator i_A = _A.data().begin();
-    t_StructPis :: const_iterator i_pi_begin = _pis.begin();
-    t_StructPis :: const_iterator i_pi_end = _pis.end();
-    t_StructPis :: const_iterator i_alphapi( i_pi_begin );
-    for(; i_alphapi != i_pi_end; ++i_alphapi, ++i_b)
-    {
-      __ASSERT( i_b == _b.end(), "Iterator out of range.\n" )
-      *i_b += _weight * _energy * (*i_alphapi);
-
-      // loop over betas.
-      t_StructPis :: const_iterator i_betapi( i_pi_begin );
-      for(; i_betapi != i_pi_end; ++i_betapi, ++i_A )
-      {
-        __ASSERT( i_A == _A.data().end(), "Iterator out of range.\n" )
-        *i_A += _weight * (*i_alphapi) * (*i_betapi);
-      }
-    } // end of loop over alphas.
-  } 
-
   template<class T_POLICY>
   void Fit<T_POLICY> :: create_A_n_b( t_Matrix &_A, t_Vector &_b ) const
   {
     __DEBUGTRYBEGIN
     namespace bl = boost::lambda;
+    namespace bblas = boost::numeric::ublas;
     __ASSERT( pis.size() != structures.size(),
               "Inconsistent number of structures and pis.\n" )
     __ASSERT( structures.size() != weights.size(),
@@ -79,7 +53,8 @@ namespace CE
          ++i_target, ++i_pis, ++i_w, ++i )
     {
       if( t_Policy :: found( i ) ) continue; 
-      add_to_A_n_b( _A, _b, *i_pis, *i_w, i_target->energy );
+      _A += (*i_w) * bblas::outer_prod( *i_pis, *i_pis );
+      _b += (*i_w) * i_target->energy * (*i_pis);
     } // end of loop over betas.
     __DEBUGTRYEND(, "Error in Fit::create_A_n_b.\n" )
   } 
