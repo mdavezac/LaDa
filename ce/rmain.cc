@@ -109,6 +109,14 @@ int main(int argc, char *argv[])
 
     fs::path dir( vm["datadir"].as< std::string >() );
     __DOASSERT( not fs::exists( dir ), dir << " does not exist.\n" );
+    __DOASSERT( not fs::exists( dir / "LDAs.dat" ), 
+                ( dir / "LDAs.dat" ) << " does not exist.\n" );
+    __DOASSERT
+    (
+      not (    fs::is_regular( dir / "LDAs.dat" ) 
+            or fs::is_symlink( dir / "LDAs.dat" ) ),
+      ( dir / "LDAs.dat" ) << " is neither a regular file nor a symlink.\n"
+    ) 
 
     fs::path jtypes( vm["jtypes"].as< std::string >() );
     if(    ( not fs::exists( jtypes ) )
@@ -173,6 +181,7 @@ int main(int argc, char *argv[])
     // Loads lattice
     boost::shared_ptr< Crystal::Lattice >
       lattice( Crystal::read_lattice( latinput, dir ) );
+    Crystal::Structure::lattice = lattice.get();
 
     // Construct regularization.
     CE::Regulated reg;
@@ -188,7 +197,8 @@ int main(int argc, char *argv[])
     CE::read_clusters( *lattice, jtypes, reg.clusters ); 
     std::cout << "Read " << reg.clusters.size()
               << " figures from " << jtypes << ".\n";
-    reg.clusters.insert( reg.clusters.begin() + std::min( (size_t)2, reg.clusters.size() ), 
+    reg.clusters.insert(   reg.clusters.begin()
+                         + std::min( (size_t)2, reg.clusters.size() ), 
                          clusters.begin(), clusters.end() );
     clusters.clear();
     if( verbosity >= 8 )
@@ -197,10 +207,13 @@ int main(int argc, char *argv[])
       CE::Regulated :: t_Clusters :: const_iterator i_class_end = reg.clusters.end();
       for(; i_class != i_class_end; ++i_class )
       {
-        if( verbosity < 10 )
-          std::cout << i_class->front() << " D=" << i_class->size() << "\n";
-        else
-          std::for_each( i_class->begin(), i_class->end(), std::cout << bl::_1 << "\n" );
+        if( verbosity < 10 )  std::cout << i_class->front()
+                                        << " D=" << i_class->size() 
+                                        << "\n";
+        else std::for_each( 
+                            i_class->begin(), i_class->end(), 
+                            std::cout << bl::_1 << "\n"
+                          );
       }
     }
 
@@ -213,19 +226,44 @@ int main(int argc, char *argv[])
       fit.tcoef = pairreg.second;
       fit.do_pairreg = ( not Fuzzy::is_zero( pairreg.second ) and maxpairs );
       fit.laksreg = not volkerreg;
-      fit.verbose = verbosity >= 1;
+      fit.verbose = verbosity >= 2;
       // initialization
+      Crystal::read_ce_structures( dir / "LDAs.dat", fit.structures );
+      if( verbosity >= 6 ) std::for_each
+                           (
+                             fit.structures.begin(), fit.structures.end(), 
+                             std::cout << bl::_1 << "\n"
+                           );
       fit.init( reg.clusters );
+      opt::NErrorTuple nerror = fit.mean_n_var();
 
       CE::BaseFit::t_Vector x( reg.clusters.size() );
-      if( doloo ) leave_one_out( fit, reg.cgs, x, verbosity >= 5 );
-      if( dofit ) fit( x, reg.cgs );
+      if( doloo )
+      {
+        std::cout << "Starting Leave-One-Out Procedure.\n";
+        std::pair< opt::ErrorTuple, opt::ErrorTuple > errors;
+        errors = leave_one_out( fit, reg.cgs, x, verbosity >= 1 );
+        std::cout << "Average Training Errors:\n " << ( nerror = errors.first ) << "\n";
+        std::cout << "Final Prediction Errors:\n " << ( nerror = errors.second ) << "\n\n";
+      }
+      if( dofit )
+      {
+        std::cout << "Starting Fitting Procedure.\n";
+        opt::ErrorTuple errors( fit( x, reg.cgs ) );
+        std::cout << "Training Errors:\n " << ( nerror = errors ) << "\n\n";
+      }
     }
     else
     {
-     
       // initialization.
+      Crystal::read_ce_structures( dir / "LDAs.dat", reg.structures );
+      if( verbosity >= 6 ) std::for_each
+                           (
+                             reg.structures.begin(), reg.structures.end(), 
+                             std::cout << bl::_1 << "\n"
+                           );
       reg.init();
+      opt::NErrorTuple nerror = reg.mean_n_var();
     
       if( minimizer_type.compare( "simplex" ) == 0 )
       {

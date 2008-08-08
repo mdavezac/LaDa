@@ -67,6 +67,8 @@ namespace CE
     public:
       //! A container of structures.
       t_Structures structures;
+      //! A container of weights.
+      t_Weights weights;
       
       //! Constructor.
       BaseFit() : nb_cls(0) {};
@@ -77,6 +79,8 @@ namespace CE
       void init( const t_Clusters &_clusters );
       //! Reassigns ecis to clusters.
       void reassign( const t_Vector &_arg, t_Clusters &_clusters ) const;
+      //! Computes mean and variance.
+      opt::NErrorTuple mean_n_var() const;
 
     protected:
       //! Computes error for one structure.
@@ -86,8 +90,6 @@ namespace CE
 
       //! A container of pis for all structures.
       t_Pis pis;
-      //! A container of weights.
-      t_Weights weights;
       //! Number of clusters.
       types::t_unsigned nb_cls;
   };
@@ -165,7 +167,7 @@ namespace CE
       template< class T_SOLVER>
         opt::ErrorTuple operator()( t_Vector &_x,
                                     const T_SOLVER &_solver ) const
-          { details::operator_( *this, _x, _solver ); }
+          { return details::operator_( *this, _x, _solver ); }
       //! Initializes from structures. 
       void init( const t_Clusters &_clusters )
         { t_Policy :: init( _clusters ); }
@@ -281,15 +283,14 @@ namespace CE
           //! Computes error for prediction set.
           opt::ErrorTuple check_predictions( const BaseFit::t_Vector &_ecis,
                                              bool _verbose ) const
-           { return check( _ecis, true, _verbose ); }
+           { return check( _ecis, false, _verbose ); }
 
         protected:
           //! Computes error for training or prediction set.
           opt::ErrorTuple check( const BaseFit::t_Vector &_ecis,
                                  bool _training, bool _verbose ) const;
           //! Returns true if index \a _i is an excluded structures.
-          bool found( types::t_unsigned _i ) const
-            { return std::find( excluded.begin(), excluded.end(), _i ) != excluded.end(); }
+          bool found( types::t_unsigned _i ) const;
 
         protected:  
           using t_Base :: pis;

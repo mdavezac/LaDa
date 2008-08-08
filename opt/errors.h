@@ -90,9 +90,9 @@ namespace opt
       //! returns variance.
       types::t_real variance() const { return ErrorTuple::variance() / variance_; }
       //! returns mean.
-      types::t_real mean() const { return ErrorTuple::mean() / mean_; }
+      types::t_real mean() const { return ErrorTuple::mean() / std::abs(mean_); }
       //! returns max.
-      types::t_real max() const { return ErrorTuple::max() / mean_; }
+      types::t_real max() const { return ErrorTuple::max() / std::abs(mean_); }
       //! return normalization coef of mean.
       types::t_real& nmean() { return mean_; }
       //! return normalization coef of mean.

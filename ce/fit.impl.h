@@ -20,7 +20,8 @@ namespace CE
         _solver( A, _x, b );
   
         // computes square errors.
-        return _class.check_training( _x, _class.verbose );
+        opt::ErrorTuple result = _class.check_training( _x, _class.verbose );
+        return result;
         __DEBUGTRYEND(, "Error in CE::details::operator_().\n" )
       }
   }
@@ -91,8 +92,9 @@ namespace CE
                     T_SOLVER &_solver ) const
      {
        regweights = _weights;
-       details::operator_( *this, _x, _solver );
+       opt::ErrorTuple result = details::operator_( *this, _x, _solver );
        regweights = NULL;
+       return result;
      }
   template< class T_BASE >
     void RegulatedFit<T_BASE> :: other_A_n_b( BaseFit::t_Matrix &_A,
@@ -111,17 +113,20 @@ namespace CE
   namespace FittingPolicy
   {
     template< class T_BASE >
+      bool Excluded<T_BASE> :: found( types::t_unsigned _i ) const 
+      {
+        if( not excluded.size() ) return false;
+        return std::find( excluded.begin(), excluded.end(), _i ) != excluded.end();
+      }
+    template< class T_BASE >
       opt::ErrorTuple Excluded<T_BASE> :: check( const BaseFit::t_Vector &_ecis,
                                                  bool _training, bool _verbose ) const
       {
         __DEBUGTRYBEGIN
         opt::ErrorTuple result;
         for(types::t_int n(0); n < structures.size(); ++n)
-        {
-          if( found(n) xor _training ) continue;
-   
-          result += t_Base::check_one( _ecis, n, _verbose );
-        }
+          if( found(n) xor _training ) 
+            result += t_Base::check_one( _ecis, n, _verbose );
         return result;
         __DEBUGTRYEND(, "Error in Fit::check_all().\n" )
       }
@@ -147,7 +152,7 @@ namespace CE
         BaseFit::t_Clusters::const_iterator i_clusters_end = _clusters.end();
          
         // Now loop over pairs.
-        weights.clear();
+        pairweights.clear();
         types::t_real normalization(0);
         for(size_t i(0); i_clusters != i_clusters_end; ++i_clusters, ++i )
         {
@@ -180,6 +185,7 @@ namespace CE
       {
         t_Base :: other_A_n_b( _A, _b );
         __DEBUGTRYBEGIN
+        if( not do_pairreg ) return;
         t_PairWeights :: const_iterator i_w = pairweights.begin();
         t_PairWeights :: const_iterator i_w_end = pairweights.end();
         for(; i_w != i_w_end; ++i_w )
@@ -201,15 +207,15 @@ namespace CE
         for(; _fit.excluded[0] < N; ++_fit.excluded[0], first_iter=false )
         {
           opt::ErrorTuple intermediate;
-          _fit( _x, _solver );
-     
-          if( _verbose ) std::cout << "Training:\n";
-          intermediate = _fit.check_training( _x, _verbose );
+          if( _verbose ) std::cout << "  " << _fit.excluded[0]
+                                   << ". Training Errors: ";
+          intermediate = _fit( _x, _solver );
           if( _verbose ) std::cout << intermediate << "\n";
-          training += opt::ErrorTuple( intermediate.mean(), 1e0 );
+          training += intermediate;
      
-          if( _verbose ) std::cout << "Prediction:\n";
-          intermediate = _fit.check_predictions( _x, _verbose );
+          if( _verbose ) std::cout << "  " << _fit.excluded[0]
+                                   << ". Prediction Errors: ";
+          intermediate = _fit.check_predictions( _x, _fit.verbose );
           if( _verbose ) std::cout << intermediate << "\n";
           prediction += intermediate;
         }
@@ -232,15 +238,15 @@ namespace CE
         for(; _fit.excluded[0] < N; ++_fit.excluded[0], first_iter=false )
         {
           opt::ErrorTuple intermediate;
-          _fit( _x, _w, _solver );
-     
-          if( _verbose ) std::cout << "Training:\n";
-          intermediate = _fit.check_training( _x, _verbose );
+          if( _verbose ) std::cout << "  " << _fit.excluded[0]
+                                   << ". Training Errors: ";
+          intermediate = _fit( _x, _w, _solver );
           if( _verbose ) std::cout << intermediate << "\n";
-          training += opt::ErrorTuple( intermediate.mean(), 1e0 );
+          training += intermediate;
      
-          if( _verbose ) std::cout << "Prediction:\n";
-          intermediate = _fit.check_predictions( _x, _verbose );
+          if( _verbose ) std::cout << "  " << _fit.excluded[0]
+                                   << ". Prediction Errors: ";
+          intermediate = _fit.check_predictions( _x, _fit.verbose );
           if( _verbose ) std::cout << intermediate << "\n";
           prediction += intermediate;
         }

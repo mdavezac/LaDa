@@ -82,7 +82,7 @@ namespace Fitting
         if( _verbose ) std::cout << "Training:\n";
         intermediate = _interface.check_training( _collapse.function, _verbose );
         if( _verbose ) std::cout << intermediate << "\n";
-        training += opt::ErrorTuple( intermediate.mean(), 1e0 );
+        training += intermediate;
 
         if( _verbose ) std::cout << "Prediction:\n";
         intermediate = _interface.check_predictions( _collapse.function, _verbose );

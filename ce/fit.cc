@@ -17,10 +17,6 @@
 #include<boost/lambda/lambda.hpp>
 #include<boost/lambda/bind.hpp>
 
-#include <opt/random.h>
-#include <opt/algorithms.h>
-#include <opt/gsl_mins.h>
-
 #include "fit.h"
 
 namespace CE
@@ -77,6 +73,20 @@ namespace CE
     nb_cls = _clusters.size();
     weights.resize( structures.size() );
     std::fill( weights.begin(), weights.end(), 1e0 );
+  }
+
+  opt::NErrorTuple BaseFit :: mean_n_var() const
+  {
+    namespace bl = boost::lambda;
+    t_Weights targets( structures.size() );
+    std::transform
+    (
+      structures.begin(), structures.end(), targets.begin(),
+      bl::bind( &Crystal::Structure::energy, bl::_1 )
+    );
+    __ASSERT( weights.size() != targets.size(),
+              "Inconsistent weight and target sizes.\n" )
+    return opt::mean_n_var( targets, weights );
   }
 
 } // end of namespace CE
