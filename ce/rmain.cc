@@ -26,6 +26,16 @@
 #include "regularization.h"
 #include "cluster.h"
 
+const types::t_int least = 0;
+const types::t_int serrors = 1;
+const types::t_int detailederrors = 2;
+const types::t_int outermin = 3;
+const types::t_int dclusters = 5;
+const types::t_int startclusters = 6;
+const types::t_int startstructures = 6;
+const types::t_int allclusters = 7;
+const types::t_int innermin = 8;
+
 int main(int argc, char *argv[]) 
 {
   namespace fs = boost::filesystem;
@@ -186,7 +196,7 @@ int main(int argc, char *argv[])
     // Construct regularization.
     CE::Regulated reg;
     reg.cgs.tolerance = tolerance;
-    reg.cgs.verbose = verbosity >= 11;
+    reg.cgs.verbose = verbosity >= innermin;
     reg.cgs.itermax = 40;
     
     // reads jtypes
@@ -201,15 +211,15 @@ int main(int argc, char *argv[])
                          + std::min( (size_t)2, reg.clusters.size() ), 
                          clusters.begin(), clusters.end() );
     clusters.clear();
-    if( verbosity >= 8 )
+    if( verbosity >= startclusters )
     {
       CE::Regulated :: t_Clusters :: const_iterator i_class = reg.clusters.begin();
       CE::Regulated :: t_Clusters :: const_iterator i_class_end = reg.clusters.end();
       for(; i_class != i_class_end; ++i_class )
       {
-        if( verbosity < 10 )  std::cout << i_class->front()
-                                        << " D=" << i_class->size() 
-                                        << "\n";
+        if( verbosity < allclusters )  std::cout << i_class->front()
+                                                 << " D=" << i_class->size() 
+                                                 << "\n";
         else std::for_each( 
                             i_class->begin(), i_class->end(), 
                             std::cout << bl::_1 << "\n"
@@ -226,14 +236,16 @@ int main(int argc, char *argv[])
       fit.tcoef = pairreg.second;
       fit.do_pairreg = ( not Fuzzy::is_zero( pairreg.second ) and maxpairs );
       fit.laksreg = not volkerreg;
-      fit.verbose = verbosity >= 2;
+      fit.verbose = verbosity >= detailederrors;
+      reg.cgs.verbose = verbosity >= outermin;
       // initialization
       Crystal::read_ce_structures( dir / "LDAs.dat", fit.structures );
-      if( verbosity >= 6 ) std::for_each
-                           (
-                             fit.structures.begin(), fit.structures.end(), 
-                             std::cout << bl::_1 << "\n"
-                           );
+      if( verbosity >= startstructures )
+        std::for_each
+        (
+          fit.structures.begin(), fit.structures.end(), 
+          std::cout << bl::_1 << "\n"
+        );
       fit.init( reg.clusters );
       opt::NErrorTuple nerror = fit.mean_n_var();
 
@@ -242,7 +254,7 @@ int main(int argc, char *argv[])
       {
         std::cout << "Starting Leave-One-Out Procedure.\n";
         std::pair< opt::ErrorTuple, opt::ErrorTuple > errors;
-        errors = leave_one_out( fit, reg.cgs, x, verbosity >= 1 );
+        errors = leave_one_out( fit, reg.cgs, x, verbosity >= serrors );
         std::cout << "Average Training Errors:\n " << ( nerror = errors.first ) << "\n";
         std::cout << "Final Prediction Errors:\n " << ( nerror = errors.second ) << "\n\n";
       }
@@ -257,11 +269,12 @@ int main(int argc, char *argv[])
     {
       // initialization.
       Crystal::read_ce_structures( dir / "LDAs.dat", reg.structures );
-      if( verbosity >= 6 ) std::for_each
-                           (
-                             reg.structures.begin(), reg.structures.end(), 
-                             std::cout << bl::_1 << "\n"
-                           );
+      if( verbosity >= startstructures )
+        std::for_each
+        (
+          reg.structures.begin(), reg.structures.end(), 
+          std::cout << bl::_1 << "\n"
+        );
       reg.init();
       opt::NErrorTuple nerror = reg.mean_n_var();
     
@@ -269,7 +282,7 @@ int main(int argc, char *argv[])
       {
         Minimizer::Simplex simplex;
         simplex.tolerance = tolerance;
-        simplex.verbose = verbosity >= 11;
+        simplex.verbose = verbosity >= outermin;
         simplex.itermax = itermax;
         simplex.stepsize = 1;
         CE::drautz_diaz_ortiz( reg, simplex, verbosity, iweights);
@@ -279,7 +292,7 @@ int main(int argc, char *argv[])
         Minimizer::Gsl gsl;
         gsl.type =  Minimizer::Gsl::SteepestDescent;
         gsl.tolerance = tolerance;
-        gsl.verbose = verbosity >= 11;
+        gsl.verbose = verbosity >= outermin;
         gsl.itermax = itermax;
         gsl.linestep = 0.01;
         gsl.linetolerance = tolerance * 1e1;

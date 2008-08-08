@@ -202,10 +202,10 @@ namespace CE
         opt::ErrorTuple training, prediction;
         types::t_unsigned N = _fit.structures.size();
      
-        bool first_iter = true;
         _fit.excluded.resize(1);
-        for(; _fit.excluded[0] < N; ++_fit.excluded[0], first_iter=false )
+        for(size_t i(0); i < N; ++i )
         {
+          _fit.excluded[0] = i;
           opt::ErrorTuple intermediate;
           if( _verbose ) std::cout << "  " << _fit.excluded[0]
                                    << ". Training Errors: ";
@@ -233,10 +233,10 @@ namespace CE
         opt::ErrorTuple training, prediction;
         types::t_unsigned N = _fit.structures.size();
      
-        bool first_iter = true;
         _fit.excluded.resize(1);
-        for(; _fit.excluded[0] < N; ++_fit.excluded[0], first_iter=false )
+        for(size_t i(0); i < N; ++i )
         {
+          _fit.excluded[0] = i;
           opt::ErrorTuple intermediate;
           if( _verbose ) std::cout << "  " << _fit.excluded[0]
                                    << ". Training Errors: ";
