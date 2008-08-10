@@ -36,6 +36,18 @@ namespace CE
                                        typename T_OUT::value_type _s  
                                            = typename T_OUT::value_type(1) )
           { _out[ size_t( _conf ) ] += typename T_OUT::value_type(_s); }
+        //! Normalizes vector.
+        template< class T_ITCOEF, clas T_NORM >
+          const static void apply( T_ITCOEF &_coef,  T_OUT &_out )
+          {
+            types::t_real norm(0);
+            std::for_each( _coef, _coef + D, bl::var(norm) += bl::_1 * bl::_1 );
+            if( Fuzzy::is_zero( norm) ) return;
+            norm = std::sqrt( norm );
+            _out *= norm;
+            norm = T_OUT(1) / norm;
+            std::for_each( _coef, _coef + D, bl::_1 *= bl::constant(norm) );
+          }
     };
     //! \brief Allows different types of mapping from confs to coef parameters.
     //! \detail This mapping is equivalent to VectorPlus, with one constant
@@ -64,6 +76,18 @@ namespace CE
             _out[0] += typename T_OUT::value_type(_s);
             if( Fuzzy::is_zero( _conf ) ) return;
             _out[ size_t( _conf ) ] +=  typename T_OUT::value_type(_s); 
+          }
+        //! Normalizes vector.
+        template< class T_ITCOEF, clas T_NORM >
+          const static void apply( T_ITCOEF &_coef,  T_OUT &_out )
+          {
+            types::t_real norm(0);
+            std::for_each( _coef, _coef + D, bl::var(norm) += bl::_1 * bl::_1 );
+            if( Fuzzy::is_zero( norm) ) return;
+            norm = std::sqrt( norm );
+            _out *= norm;
+            norm = T_OUT(1) / norm;
+            std::for_each( _coef, _coef + D, bl::_1 *= bl::constant(norm) );
           }
     };
   } // end of Mapping namespace.

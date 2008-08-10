@@ -81,7 +81,7 @@ namespace CE
                              row.begin() + dim * t_SepMap::D,
                              result );
           if( not Fuzzy::is_zero( result ) ) 
-            return scaling(_r, _kv) / result;
+            return scaling(_r, _kv) / result * norm_vec[_r];
 
           // we should never have to be here...
           typedef bblas::matrix_column< t_Matrix > t_Column;
@@ -96,14 +96,26 @@ namespace CE
           for( size_t d(0); i_conf != i_conf_end; 
                ++d, ++i_conf, i_coef += t_SepMap::D )
             if( d != dim ) t_SepMap::apply( *i_conf, i_coef, result );
-          return result;
+          return result * norm_vec[_r];
         }
 
   template< class T_SEPARABLES, T_MAPPING >
-    void Collapse<T_SEPARABLES, T_MAPPING> :: update_all( const t_Matrix &_coefs )
+    void Collapse<T_SEPARABLES, T_MAPPING> :: update_all( t_Matrix &_coefs )
       {
+        namespace bblas = boost::numeric::ublas;
         __ASSERT( scales.size1() == configurations.size1(),
                   "Inconsistent sizes.\n" )
+        // First, normalizes coefficients.
+        for( size_t i(0); i < _coefs.size1(); ++i )
+        {
+          typedef bblas::matrix_row< t_Matrix > t_Row;
+          t_Row row( _coef, i );
+          typename t_Row :: iterator i_coef = row.begin();
+          typename t_Row :: iterator i_coef_end = row.end();
+          for(; i_coef != i_coef_end; i_coef += t_Normalization :: D )
+            t_Normalization :: apply( i_coef, norm_vec[_r] );
+        }
+        // Then, updates scales. 
         typedef typename t_Matrix :: const_iterator2 :: value_type t_Column;
         typedef typename t_Separables :: t_Mapping t_SepMap;
         t_Matrix :: const_iterator2 i_scales = scales.begin2();

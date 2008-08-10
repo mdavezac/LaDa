@@ -62,14 +62,12 @@ namespace CE
   //!          is a different rank of the sum of seps. The colums are organized
   //!          along direction and inner basis for direction. The inner basis
   //!          is the faster running index.
-  template< class T_MAPPING, class T_NORMALIZATION >
+  template< class T_MAPPING >
     class Separables
     {
       public:
         //! Type of mapping used to go from conf to coefs.
         typedef T_MAPPING t_Mapping;
-        //! Type of normalization used.
-        typedef T_NORMALIZATION t_Normalization;
         //! Type of boost matrices.
         boost::numeric::ublas::matrix<types::t_real> t_Matrix;
         //! Type of boost vectors.
@@ -104,7 +102,9 @@ namespace CE
         t_Vector norms;
     };
 
-  template< class T_SEPARABLES, class T_MAPPING >
+  //! Collapse functor for fitting CE::Separables
+  template< class T_SEPARABLES, class T_MAPPING,
+            class T_NORMALIZATION = typename T_SEPARABLES :: t_Mapping >
     class Collapse
     {
       public:
@@ -112,6 +112,8 @@ namespace CE
         typedef T_SEPARABLES t_Separables;
         //! Type of the mapping function from structures to targets.
         typedef T_MAPPING t_Mapping;
+        //! Type of normalization used.
+        typedef T_NORMALIZATION t_Normalization;
         //! Type of the Normalization function.
         typedef typename t_Separable :: t_Normalization t_Normalization;
         //! Type of the matrices.
@@ -122,7 +124,6 @@ namespace CE
         //! \brief The mapping from target values to symetrically equivalent
         //!        structures.
         t_Mapping mapping;
-
 
         //! Constructor.
         Collapse() : dim(0) {}
@@ -135,8 +136,8 @@ namespace CE
                          types::t_unsigned &_dim );
           { dim = _dim; create_A_n_b( _A, _b, _coef ); }
 
-        //! Updates the scales vector.
-        void update_all( const t_Matrix &_coefs )
+        //! Updates the scales vector and  normalizes.
+        void update_all( t_Matrix &_coefs )
         //! Updates the scales vector, should update only one dim.
         void update( types::t_unsigned _d, t_Matrix &_coefs )
           { update_all( _coefs ); }
@@ -163,5 +164,7 @@ namespace CE
         size_t dim;
         //! holds the sep. func. split up by rank and confs.
         t_Matrix scales;
+        //! Holds the normalizations. 
+        t_Vector norm_vec;
     };
 }

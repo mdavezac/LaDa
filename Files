@@ -114,6 +114,10 @@ SEPARABLE_H = boolean.h cefitting.h ce.h lsq.h separable.h collapse.h \
 SEPARABLE_IMPL_H = cefitting.impl.h separable.impl.h collapse.impl.h \
                    cecollapse.impl.h
 SEPARABLE_DOC = $(SEPARABLE_CC) $(SEPARABLE_H) $(SEPARABLE_IMPL_H)
+SEPARABLES_FXL_CC = prepare.cc
+SEPARABLES_FXL_H = colmappings.h sepmappings.h functional.h prepare.h
+SEPARABLES_FXL_IMPL_H = functional.impl.h 
+SEPARABLES_DOC = $(SEPARABLES_FXL_CC) $(SEPARABLES_FXL_H) $(SEPARABLES_FXL_IMPL_H)
 
 
 VFF_FORTRAN_CC = fortran.cc
@@ -144,5 +148,6 @@ ALL_DOCS = doxy.conf $(DOCS_H) \
            $(addprefix physics/,$(PHYSICS_DOC)) \
            $(addprefix print/,$(PRINT_DOC)) \
            $(addprefix separable/,$(SEPARABLE_DOC)) \
+           $(addprefix separable/fixedlattice,$(SEPARABLES_DOC)) \
            $(addprefix vff/,$(VFF_FORTRAN_DOC)) \
            $(addprefix vff/,$(VFF_DOC)) 

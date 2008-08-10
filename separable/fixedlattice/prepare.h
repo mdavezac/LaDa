@@ -1,5 +1,5 @@
 //
-//  Version: $Id: separable.h 626 2008-06-18 22:05:05Z davezac $
+//  Version: $Id$
 //
 #ifndef _CE_POSTOCONF_H_
 #define _CE_POSTOCONF_H_
