@@ -51,9 +51,8 @@ namespace CE
         t_Vector::value_type eweight( size_t _i, size_t _c )
           { return equivweights[ nb_[_i] + _c ]; }
         //! Initializes the mapping.
-       template< class T_CONFIGURATIONS, class T_WEIGHTS, class T_CONFIGURATIONS >
+       template< class T_CONFIGURATIONS, class T_CONFIGURATIONS >
          void init( const T_STRUCTURES& _strs, 
-                    const T_WEIGHTS& _weights,
                     const T_CONFIGURATION& _confs )
 
         //! Allows to skip out on a structure for leave-one or many-out.
@@ -90,16 +89,19 @@ namespace CE
         bool do_skip( size_t _i ) const { return do_exclude and _i == n; }
     };
 
-  template< class T_CONFIGURATIONS, class T_WEIGHTS, class T_CONFIGURATIONS >
+  template< class T_CONFIGURATIONS, class T_CONFIGURATIONS >
     void init( const T_STRUCTURES& _strs, 
-               const T_WEIGHTS& _weights,
                const T_CONFIGURATION& _confs )
     {
       namespace bl = boost::lambda;
       __ASSERT( _strs.size() ==  _weights.size(), "Inconsistent sizes\n" )
       // Copy structural weights first.
       weights_.resize( _weights.size() ) ;
-      std::copy( _weights.begin(), _weights.end(), weights_.begin() );
+      std::transform
+      (
+        _strs.begin(), _strs.end(), weights_.begin() 
+        bl::bind( &T_STRUCTURES :: value_type :: weight, bl::_1 )
+      );
 
       // Copy structural energies second.
       targets_.resize( _strs.size() ) ;

@@ -114,6 +114,49 @@ namespace CE
                               ( _coefs, *i_conf, *i_scales );
       }
 
+  template< class T_SEPARABLES, T_MAPPING > template< class T_STRUCTURES >
+    void Collapse<T_SEPARABLES, T_MAPPING> :: init( const T_STRUCTURES& _strs, 
+                                                    const std::string& _bdesc )
+    {
+      namespace bl = boost::lambda;
+      __ASSERT( not Crystal::Structure::lattice, 
+                "Crystal::Structure::lattice has not been set.\n" )
+      // creates configurations.
+      PosToConfs postoconfs( *Crystal::Structure::lattice );
+      typedef std::vector< PosToConfs::t_Configuations > t_Confs; 
+      t_Confs confs;
+      postoconf.create_positions( _bdesc );
+      typename T_STRUCTURES :: const_iterator i_str = structures.begin();
+      typename T_STRUCTURES :: const_iterator i_str_end = structures.end();
+      size_t nbconfs(0);
+      for(; i_str != i_str_end; ++i_str )
+      {
+        PosToConfs strconf;
+        nbconfs += strconf.size();
+        postoconfs( *i_str, strconf );
+        confs.push_back( strconf ); 
+      }
+
+      // translates to matrix.
+      configurations.resize( postoconfs.basis.size(), nbconfs );
+      t_Configurations :: const_iterator i_confs = confs.begin();
+      t_Configurations :: const_iterator i_confs_end = confs.end();
+      for(size_t j(0); i_confs != i_confs_end; ++i_confs )
+      {
+        PosToConfs :: t_Configurations :: const_iterator i_conf = i_confs->begin();
+        PosToConfs :: t_Configurations :: const_iterator i_conf_end = i_confs->end();
+        for(; i_conf != i_conf_end; ++i_conf, ++j )
+        {
+          __ASSERT( j != nbconfs, "Inconsistent sizes" );
+          for( size_t i(0); i < postoconfs.basis.size(); ++i )
+            configurations(i,j) = i_conf->first[i] ? 0: 1;
+        }
+      }
+
+      // initializes mapping.
+      mapping.init( _strs, confs );
+    }
+
   namespace details 
   {
     template< class T_MATRIX, class T_VECTOR1, class T_VECTOR2, class T_MAPPING > 

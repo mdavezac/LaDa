@@ -93,6 +93,8 @@ namespace Crystal {
     std::string name;
     //! The energy of the structure, whatever (and if) it is computed with.
     types::t_real energy;
+    //! Weight of structure in "some" set.
+    types::t_real weight;
     //! The frozen coordinates of the unit-cell.
     types::t_unsigned freeze;
     //! The scale in which cartesian units are given.
@@ -101,15 +103,15 @@ namespace Crystal {
     public: 
 
     //! Constructor
-    TStructure() : name(""), energy(0), freeze(FREEZE_NONE) {};
+    TStructure() : name(""), energy(0), weight(1), freeze(FREEZE_NONE) {};
     //! Constructor. Loads itself from XML node \a _element.
     TStructure   ( const TiXmlElement &_element )
-               : name(""), energy(0), freeze(FREEZE_NONE)
+               : name(""), energy(0), weight(1), freeze(FREEZE_NONE)
       { Load( _element ); };
     //! Copy Constructor
     TStructure   ( const TStructure<T_TYPE> &_str )
                : cell(_str.cell), atoms(_str.atoms), name(_str.name), 
-                 energy(_str.energy), freeze(_str.freeze), scale( _str.scale ) {}
+                 energy(_str.energy), weight(1), freeze(_str.freeze), scale( _str.scale ) {}
     //! Destructor.
     ~TStructure () {};
 

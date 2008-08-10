@@ -148,6 +148,8 @@ namespace Crystal {
     if ( not parent->Attribute("energy", &d) )
       energy = 666.666;
     energy = types::t_real(d);
+    if ( parent->Attribute("weight", &d) )
+      energy = types::t_real(d);
 
     // reads in cell
     child = parent->FirstChildElement( "Cell" );
@@ -272,7 +274,8 @@ namespace Crystal {
     parent = new TiXmlElement( "Cell" );
     structure->LinkEndChild( parent );
     structure->SetAttribute("N", atoms.size() );
-    structure->SetAttribute("N", atoms.size() );
+    structure->SetAttribute("energy", energy );
+    structure->SetAttribute("weight", weight );
     structure->SetAttribute("name", name );
     
     for (int i=0; i < 3; ++i)

@@ -239,7 +239,8 @@ namespace Separable
                       if( i_sizeII == i_size_first and iII == 0 ) 
                       {
                         __ASSERT( i_ctarget == _b.end(), "Iterator out of range.\n" )
-                        *i_ctarget += (*i_iexpI) * UI * (*i_starget) * (*i_weight);
+                        *i_ctarget +=   (*i_iexpI) * UI * (*i_starget)
+                                       * (*i_eweight) * (*i_weight);
                       }
                     }
                     

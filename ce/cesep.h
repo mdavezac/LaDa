@@ -144,10 +144,8 @@ namespace CE
         void reset() {}
 
         //! Initializes collapse functor.
-        template< class T_CONFIGURATIONS, class T_WEIGHTS, class T_BASIS >
-        void init( const T_STRUCTURES& _strs, 
-                   const T_WEIGHTS& _weights,
-                   const T_BASIS& _basis );
+        template< class T_STRUCTURES >
+        void init( const T_STRUCTURES& _strs, const std::string& _bdesc );
 
       protected:
         //! Creates the _A and _b matrices for fitting.
@@ -166,9 +164,4 @@ namespace CE
         //! holds the sep. func. split up by rank and confs.
         t_Matrix scales;
     };
-
-    //! \brief Returns the sum of the separable function \a _seps evaluated
-    //!        over each column of \a _confs.
-    template< class T_MATRIX, class T_SEPS >
-    types::t_real sum_over_confs( const T_SEPS &_seps, const T_MATRIX &_confs );
 }
