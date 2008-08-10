@@ -1,9 +1,119 @@
 //
 //  Version: $Id$
 //
+#include<boost/blas/numeric/vector_proxies.hpp>
+#include<boost/blas/numeric/matrix_proxies.hpp>
+#include<boost/blas/numeric/operations.hpp>
 
 namespace CE
 {
+  template< class T_MATRIX, class T_SEPS >
+  types::t_real sum_over_confs( const T_SEPS &_seps, const T_MATRIX &_confs )
+  {
+    t_Vector intermed( coefficients.size1() );
+    std::fill( intermed.begin(), intermed.end(), 0e0 );
+    details::allconfs_rank_vector< typename T_SEPS :: t_Matrix,
+                                   T_MATRIX, 
+                                   typename T_SEPS :: t_Vector,
+                                   typename T_SEPS :: t_Mapping >
+                                 ( _seps.coefficients, _confs, intermed );
+    return bblas::inner_prod( intermed, _seps.norms );
+  }
+
+  template< class T_SEPARABLES, T_MAPPING >
+    void Collapse<T_SEPARABLES, T_MAPPING>
+      :: create_A_n_b( t_Matrix &_A, t_Vector &_b, const t_Matrix &_coef )
+      {
+        __ASSERT( dim >= configurations.size1(),
+                  "Inconsistent sizes.\n" )
+        // Loop over inequivalent configurations.
+        t_Vector X( nb_ranks * t_Separable::t_Mapping::D );
+        for( size_t i(0); i < mapping.size(); ++i )
+        {
+          // allows leave-one-out, or leave-many-out.
+          if( mapping.do_skip(i) ) continue;
+     
+          // create the X vector.
+          std::fill( X.begin(), X.end(), typename t_Vector::value_type(0) );
+          create_X( i, X );
+     
+          _A += mapping.weight(i) * bblas::outer_prod( X, X ); 
+          _b += mapping.weight(i) * mapping.target(i) * X;
+        }
+      }
+
+  template< class T_SEPARABLES, T_MAPPING >
+    void Collapse<T_SEPARABLES, T_MAPPING> :: create_X( size_t _i,
+                                                        t_Vector &_out,
+                                                        const t_Matrix &_coefs  )
+    {
+      namespace bblas = boost::numeric::ublas;
+      __ASSERT( _nbranks * t_Separables::t_Mapping::D == _out.size(),
+                "Incompatible sizes.\n" )
+      typedef const bblas::matrix_range< t_Matrix > t_Range;
+      const bblas::range range( mapping.range( _i ) );
+      t_Range confs_range( configurations, range,
+                           bblas::range( 0, configurations.size1() ) );
+      const matrix_row< t_Range > conf_rows( confs_range, dim );
+      typename T_CONFS :: const_iterator i_conf = confs.begin();
+      typename T_CONFS :: const_iterator i_conf_end = confs.end();
+      for(size_t c(0); i_conf != i_conf_end; ++i_conf, ++c )
+        for(size_t r(0); r < _coefs.size1(); ++r )
+        {
+          typename t_Vector::value_type scalar( mapping.eweight(_i,c) );
+          scalar *= factor( _coef, range.start() + c, r ); 
+          bblas::vector_range< t_Vector > vecr( _out, range( r * D, (r+1) * D ) );
+          t_Separables::t_Mapping::add_tovec( *i_conf, vecr, scalar );
+        }
+    }
+
+  template< class T_SEPARABLES, T_MAPPING >
+    typename T_SEPARABLES::t_Vector::value_type
+      Collapse<T_SEPARABLES, T_MAPPING>  
+        :: factor( t_Matrix &_coef, size_t _kv, size_t _r )
+        {
+          namespace bblas = boost::numeric::ublas;
+          typedef typename t_Separables :: t_Mapping t_SepMap;
+
+          typename t_Vector :: value_type result(1);
+          bblas::matrix_row< t_Matrix > row( _coef, _r );
+          t_SepMap :: apply( configurations( dim, _kv),
+                             row.begin() + dim * t_SepMap::D,
+                             result );
+          if( not Fuzzy::is_zero( result ) ) 
+            return scaling(_r, _kv) / result;
+
+          // we should never have to be here...
+          typedef bblas::matrix_column< t_Matrix > t_Column;
+          const t_Column coefs( _coefs, _r );
+          const t_Column config( configurations, _kv );
+
+
+          result = typename t_Vector::value_type( 1 );
+          t_Column :: const_iterator i_conf = config.begin();
+          t_Column :: const_iterator i_conf_end = config.end();
+          t_Column :: const_iterator i_coef = coefs.end();
+          for( size_t d(0); i_conf != i_conf_end; 
+               ++d, ++i_conf, i_coef += t_SepMap::D )
+            if( d != dim ) t_SepMap::apply( *i_conf, i_coef, result );
+          return result;
+        }
+
+  template< class T_SEPARABLES, T_MAPPING >
+    void Collapse<T_SEPARABLES, T_MAPPING> :: update_all( const t_Matrix &_coefs )
+      {
+        __ASSERT( scales.size1() == configurations.size1(),
+                  "Inconsistent sizes.\n" )
+        typedef typename t_Matrix :: const_iterator2 :: value_type t_Column;
+        typedef typename t_Separables :: t_Mapping t_SepMap;
+        t_Matrix :: const_iterator2 i_scales = scales.begin2();
+        t_Matrix :: const_iterator2 i_conf = configurations.begin2();
+        t_Matrix :: const_iterator2 i_conf_end = configurations.end2();
+        for(; i_conf != i_conf_end; ++i_conf, ++i_scales )
+          details::rank_vector< t_Matrix, t_Column, t_Column, t_SepMap>
+                              ( _coefs, *i_conf, *i_scales );
+      }
+
   namespace details 
   {
     template< class T_MATRIX, class T_VECTOR1, class T_VECTOR2, class T_MAPPING > 
@@ -93,71 +203,5 @@ namespace CE
           *i_out += result;
         }
       }
-
-    //! \brief Allows different types of mapping from confs to coef parameters.
-    //! \detail This mapping is equivalent to VectorPlus, eg (1,0..), (0,1,....), and so on.
-    template< size_t DIM > class VectorPlus 
-    {
-      public:
-        //! A D dimensional mapping.
-        const static size_t D = DIM;
-        //! Applies function itself.
-        template< class T_CONF, class T_ITCOEF, clas T_OUT >
-          const void apply( const T_CONF &_conf, const T_ITCOEF &_coef, T_OUT &_out )
-          {
-            _out += *( _coef + typename T_ITCOEF::difference_type( _conf ) );
-          }
-    };
-    //! \brief Allows different types of mapping from confs to coef parameters.
-    //! \detail This mapping is equivalent to VectorPlus, eg (1,0) and (0,1),
-    //!         specialized for two species.
-    template<> class VectorPlus<2>
-    {
-      public:
-        //! A D dimensional mapping.
-        const static size_t D = 2;
-        //! Applies function itself.
-        template< class T_CONF, class T_ITCOEF, clas T_OUT >
-          const void apply( const T_CONF &_conf, const T_ITCOEF &_coef, T_OUT &_out )
-          {
-            typedef T_ITCOEF :: difference_type t_difftype;
-            _out *= *( _coef + _conf > T_CONF(0) ? t_difftype(1): t_difftype(0) );
-          }
-    };
-    //! \brief Allows different types of mapping from confs to coef parameters.
-    //! \detail This mapping is equivalent to VectorPlus, with one constant
-    //!         vector, and all other vectors with a single non-zero component.
-    template< size_t DIM > class VectorDiff
-    {
-      public:
-        //! A D dimensional mapping.
-        const static size_t D = DIM;
-        //! Applies functions with appropriate coef.
-        template< class T_CONF, class T_ITCOEF, clas T_OUT >
-          const void apply( const T_CONF &_conf, const T_ITCOEF &_coef, T_OUT &_out )
-          {
-            // Constant term.
-            Fuzzy::is_zero( _conf ) ?
-              _out *= *_coef:
-              _out *= *_coef + *( _coef + typename T_ITCOEF::difference_type( _conf ) );
-          }
-    };
-    //! \brief Allows different types of mapping from confs to coef parameters.
-    //! \detail This mapping is equivalent to VectorPlus, with one constant
-    //!         vector, and all other vectors with a single non-zero component.
-    //!         This version is specialized for two species.
-    template<> class VectorDiff<2>
-    {
-      public:
-        //! A D dimensional mapping.
-        const static size_t D = 2;
-        //! Applies function itself.
-        template< class T_CONF, class T_ITCOEF, clas T_OUT >
-          const void apply( const T_CONF &_conf, const T_ITCOEF &_coef, T_OUT &_out )
-          {
-            Fuzzy::geq( _conf, T_CONF(0) ) ? _out *= *_coef: 
-                                             _out *= *_coef + *(_coef+1);
-          }
-    };
   } // end of details namespace.
 } // end of CE namespace.

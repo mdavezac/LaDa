@@ -123,11 +123,7 @@ namespace Fitting
         typename t_Vectors :: iterator i_sol_end = _solution.end();
         types::t_real oldvalue;
         collapse->update_all( _solution );
-        if( verbose )
-        {
-          oldvalue = collapse->evaluate( _solution, targets );
-          std::cout << "Allsq start: " << oldvalue << "\n";
-        }
+        if( verbose ) std::cout << "Allsq start: \n";
         do
         {
           types::t_unsigned dim(0);

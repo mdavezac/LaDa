@@ -112,7 +112,7 @@ namespace Fitting
   
         for (++iter; iter <= itermax; ++iter)
         {
-          rho_1 = ublas::inner_prod(rtilde, r);
+          rho_1 = ublas::prec_inner_prod(rtilde, r);
           if (rho_1 == 0) 
           {
             resid = ublas::norm_2(r) / normb;
@@ -127,7 +127,7 @@ namespace Fitting
           }
           phat = p; _precond.solve( phat );
           vhat = ublas::prod( _A, phat );
-          alpha = rho_1 / ublas::inner_prod(rtilde, vhat);
+          alpha = rho_1 / ublas::prec_inner_prod(rtilde, vhat);
           q = u - alpha * vhat;
           uhat = u + q; _precond.solve( uhat );
           _x += alpha * uhat;
