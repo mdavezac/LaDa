@@ -26,7 +26,7 @@ namespace CE
   {
     public:
       //! Type of the container of positions.
-      typedef std::vector< atat::rVector3d > t_Basis;
+      typedef std::vector< atat::rVector3d > t_Positions;
       //! Type of the container of symmetry operations.
       typedef std::vector< atat::rMatrix3d > t_SymOps;
       //! Type of the pure bitset representing a configuration for a set symmetry.
@@ -37,10 +37,11 @@ namespace CE
       typedef std::vector< t_CoefBitset > t_Configurations;
 
       //! the positions as currently computed.
-      t_Basis basis;
+      t_Positions positions;
 
       //! Constructor.
-      PosToConfs ( Crystal::Lattice &_lat ) { init_syms( _lat ); }
+      PosToConfs ( Crystal::Lattice &_lat = *Crystal::Structure::lattice ) 
+        { init_syms( _lat ); }
       //! Creates a basis of positions.
       void create_positions( const std::string &_desc );
       

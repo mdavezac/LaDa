@@ -9,6 +9,7 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
 #include <boost/regex.hpp>
+#include <boost/lexical_cast.hpp>
 
 
 #include "prepare.h"
@@ -40,18 +41,18 @@ namespace CE
     }
   }
 
-  void PosToConfs :: create_basis( const std::string &_desc )
+  void PosToConfs :: create_positions( const std::string &_bdesc )
   {
     const boost::regex re("(\\d+)(?:\\s+)?x(?:\\s+)?"
                           "(\\d+)(?:\\s+)?x(?:\\s+)?(\\d+)" );
     boost::match_results<std::string::const_iterator> what;
-    __DOASSERT( not boost::regex_search( bdesc, what, re ),
-                "Could not parse --basis input: " << bdesc << "\n" )
+    __DOASSERT( not boost::regex_search( _bdesc, what, re ),
+                "Could not parse --basis input: " << _bdesc << "\n" )
     atat::rMatrix3d cell;
     cell.set_diagonal( boost::lexical_cast<types::t_real>(what.str(1)),
                        boost::lexical_cast<types::t_real>(what.str(2)),
                        boost::lexical_cast<types::t_real>(what.str(3)) );
-    details::supercell_basis( 1, _cell, positions );
+    details::supercell_basis( 1, cell, positions );
   }
 
    
@@ -65,8 +66,8 @@ namespace CE
     _confs.reserve( _confs.size() + syms.size() );
     
     types::t_real weight( 1e0 / ( syms.size() * _structure.atoms.size() ) );
-    t_Basis shifted_fracs( _structure.atoms.size() );
-    t_Basis fractionals( _structure.atoms.size() );
+    t_Positions shifted_fracs( _structure.atoms.size() );
+    t_Positions fractionals( _structure.atoms.size() );
     std::transform
     ( 
       _structure.atoms.begin(), _structure.atoms.end(), fractionals.begin(),
@@ -97,14 +98,14 @@ namespace CE
   
         // For each basis position, finds closest atomic-position modulo
         // structure-periodicity.
-        t_Bitset bitset( basis.size() );
-        t_Basis :: const_iterator i_pos( basis.begin() );
-        t_Basis :: const_iterator i_pos_end( basis.end() );
+        t_Bitset bitset( positions.size() );
+        t_Positions :: const_iterator i_pos( positions.begin() );
+        t_Positions :: const_iterator i_pos_end( positions.end() );
         for(types::t_int i=0; i_pos != i_pos_end; ++i_pos, ++i )
         {
           atat::rVector3d pos = inv * (*i_pos);
-          t_Basis::const_iterator i_found( shifted_fracs.begin() );
-          t_Basis::const_iterator i_end( shifted_fracs.end() );
+          t_Positions::const_iterator i_found( shifted_fracs.begin() );
+          t_Positions::const_iterator i_end( shifted_fracs.end() );
           types::t_int j(0);
           for(; i_found != i_end; ++i_found, ++j )
           {

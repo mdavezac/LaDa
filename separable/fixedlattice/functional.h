@@ -1,15 +1,15 @@
 //
 //  Version: $Id$
 //
-#ifndef _SEPARABLE_CE_H_
-#define _SEPARABLE_CE_H_
+#ifndef _CE_SEPARABLE_H_
+#define _CE_SEPARABLE_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
-#include<boost/blas/numeric/vector.hpp>
-#include<boost/blas/numeric/matrix.hpp>
+#include<boost/numeric/ublas/vector.hpp>
+#include<boost/numeric/ublas/matrix.hpp>
 
 #include <opt/types.h>
 #include <opt/debug.h>
@@ -69,30 +69,10 @@ namespace CE
         //! Type of mapping used to go from conf to coefs.
         typedef T_MAPPING t_Mapping;
         //! Type of boost matrices.
-        boost::numeric::ublas::matrix<types::t_real> t_Matrix;
+        typedef boost::numeric::ublas::matrix<types::t_real> t_Matrix;
         //! Type of boost vectors.
-        boost::numeric::ublas::matrix<types::t_real> t_Vector;
+        typedef boost::numeric::ublas::vector<types::t_real> t_Vector;
 
-        //! Constructor.
-        Separables() {}
-        //! Copy constructor.
-        Separables   ( const Separables<t_Mapping, t_Normalization> &_c )
-                   : coefficients( _c.coefficients ), norm( _c.norm ) {}
-        //! Destructor.
-        ~Separables() {}
-
-        //! Returns the value of the separable function evaluated at \a _conf.
-        template< class T_VECTOR >
-        types::t_real operator()( const T_VECTOR &_conf ) const
-        {
-          t_Vector intermed( coefficients.size1() );
-          std::fill( intermed.begin(), intermed.end(), 0e0 );
-          details::rank_vector< t_Matrix, t_Vector, T_VECTOR, t_Mapping>
-                              ( coefficients, _conf, intermed );
-          return bblas::inner_prod( intermed, norms );
-        }
-
-      public:
         //! \brief Coefficients of the separable functions. 
         //! \details Rows denote ranks, and columns are indexed according to
         //!          the dimension of the separable function and the family of
@@ -100,71 +80,52 @@ namespace CE
         t_Matrix coefficients;
         //! Holds norms of each rank.
         t_Vector norms;
-    };
-
-  //! Collapse functor for fitting CE::Separables
-  template< class T_SEPARABLES, class T_MAPPING,
-            class T_NORMALIZATION = typename T_SEPARABLES :: t_Mapping >
-    class Collapse
-    {
-      public:
-        //! Type of the separable function.
-        typedef T_SEPARABLES t_Separables;
-        //! Type of the mapping function from structures to targets.
-        typedef T_MAPPING t_Mapping;
-        //! Type of normalization used.
-        typedef T_NORMALIZATION t_Normalization;
-        //! Type of the Normalization function.
-        typedef typename t_Separable :: t_Normalization t_Normalization;
-        //! Type of the matrices.
-        typedef typename t_Separable :: t_Matrix t_Matrix;
-        //! Type of the vectors.
-        typedef typename t_Separable :: t_Vector t_Vector;
-
-        //! \brief The mapping from target values to symetrically equivalent
-        //!        structures.
-        t_Mapping mapping;
 
         //! Constructor.
-        Collapse() : dim(0) {}
+        Separables() {}
+        //! Copy constructor.
+        Separables   ( const Separables<t_Mapping> &_c )
+                   : coefficients( _c.coefficients ), norms( _c.norms ) {}
         //! Destructor.
-        ~Collapse() {}
+        ~Separables() {}
 
-        //! Creates the fitting matrix and target vector.
-        void operator()( t_Matrix &_a, t_Vector &_b,
-                         const t_Vector&, const t_Matrix &_coef,
-                         types::t_unsigned &_dim );
-          { dim = _dim; create_A_n_b( _A, _b, _coef ); }
-
-        //! Updates the scales vector and  normalizes.
-        void update_all( t_Matrix &_coefs )
-        //! Updates the scales vector, should update only one dim.
-        void update( types::t_unsigned _d, t_Matrix &_coefs )
-          { update_all( _coefs ); }
-        //! Does nothing.
-        void reset() {}
-
-        //! Initializes collapse functor.
-        template< class T_STRUCTURES >
-        void init( const T_STRUCTURES& _strs, const std::string& _bdesc );
-
-      protected:
-        //! Creates the _A and _b matrices for fitting.
-        void create_A_n_b( t_Matrix &_A, t_Matrix &_b, const t_Vector &_scal );
-        //! Finds scaling factor for that conf, collapsed dimension, and rank.
-        typename t_Vector::value_type factor( t_Matrix &_coef, size_t _kv, size_t _r );
-        //! \brief Creates an X vector for fitting, for a single rank.
-        //! \details Before the scaling is done, all ranks equal.
-        void create_X( size_t _i, t_Vector &_out, const t_Matrix &_coefs  );
-
-
-        //! The configurations, arranged in columns.
-        t_Matrix configurations;
-        //! Holds current dimension being fitted.
-        size_t dim;
-        //! holds the sep. func. split up by rank and confs.
-        t_Matrix scales;
-        //! Holds the normalizations. 
-        t_Vector norm_vec;
+        //! Returns the value of the separable function evaluated at \a _conf.
+        template< class T_VECTOR >
+        types::t_real operator()( const T_VECTOR &_conf ) const
+        {
+          namespace bblas = boost::numeric::ublas;
+          t_Vector intermed( coefficients.size1() );
+          std::fill( intermed.begin(), intermed.end(), 0e0 );
+          details::rank_vector< t_Matrix, t_Vector, T_VECTOR, t_Mapping>
+                              ( coefficients, _conf, intermed );
+          return bblas::inner_prod( intermed, norms );
+        }
+        //! Sets ranks and sizes.
+        void set_rank_n_size( size_t _rank, size_t _size )
+         { coefficients.resize( _rank, _size * t_Mapping :: D ); } 
     };
+
+  template<class T_MAPPING >
+  std::ostream& operator<<( std::ostream& _stream, const Separables<T_MAPPING> &_sep )
+  {
+    _stream << " Separable Function:\n";
+    for( size_t i(0); i < _sep.coefficients.size1(); ++i )
+    {
+      _stream << "   Rank " << i << ": " << _sep.norms[i] << "\n     `";
+      for( size_t j(0); j < _sep.coefficients.size2(); ++j )
+      {
+        _stream << "(";
+        for( size_t d(0); d >= T_MAPPING::D; ++d )
+         _stream  << _sep.coefficients( i, j * T_MAPPING::D + d ) << " ";
+        _stream << ") ";
+        if( j % 5 == 0 and j ) _stream << "\n     "; 
+      }
+      if( _sep.coefficients.size2() % 5 != 0 ) _stream << "\n";
+    }
+    return _stream;
+  }
 }
+
+#include "functional.impl.h"
+
+#endif

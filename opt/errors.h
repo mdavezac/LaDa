@@ -11,9 +11,12 @@
 
 #include <boost/tuple/tuple.hpp>
 
+#include <vector>
+
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <opt/algorithms.h>
+#include <crystal/structure.h>
 
 namespace opt
 {
@@ -54,6 +57,10 @@ namespace opt
       //! Sums errors.
       ErrorTuple& operator+=( const ErrorTuple &_b );
   };
+
+  //! A pair of error tuple for prediction/training.
+  typedef std::pair<ErrorTuple, ErrorTuple> t_ErrorPair;
+
   //! A normalized error tuple.
   struct NErrorTuple : public ErrorTuple
   {
@@ -137,6 +144,9 @@ namespace opt
     return nerror;
     __DEBUGTRYEND(, "Error in opt::mean_n_var().\n" )
   }
+
+  // Computes mean and variance of energies in structure set.
+  NErrorTuple mean_n_var( const std::vector<Crystal::Structure> &_strs );
 
 }
 

@@ -9,7 +9,8 @@
 #endif
 
 #include<boost/lambda/bind.hpp>
-#include<boost/blas/numeric/vector.hpp>
+#include<boost/numeric/ublas/vector.hpp>
+#include<vector>
 
 #include <opt/types.h>
 #include <opt/debug.h>
@@ -22,12 +23,12 @@ namespace CE
     {
       public:
         //! Type of vectors.
-        typedef boost::numeric::ublas::vector<types::t_real> t_Vector;
+        typedef std::vector<types::t_real> t_Vector;
 
         //! Constructor.
         SymEquiv();
         //! Copy Constructor.
-        SymEquiv(const SymEquiv) { __DOASSERT(true, "No Copy.\n" ) }
+        SymEquiv(const SymEquiv& ) { __DOASSERT(true, "No Copy.\n" ) }
         //! Destructor
         ~SymEquiv() {}
         //! Returns weights.
@@ -49,11 +50,11 @@ namespace CE
           { return boost::numeric::ublas::range( nb_[_i], nb_[_i+1] ); }
         //! Returns the weight for an equivalent structure.
         t_Vector::value_type eweight( size_t _i, size_t _c )
-          { return equivweights[ nb_[_i] + _c ]; }
+          { return equiweights[ nb_[_i] + _c ]; }
         //! Initializes the mapping.
-       template< class T_CONFIGURATIONS, class T_CONFIGURATIONS >
+       template< class T_STRUCTURES, class T_CONFIGURATIONS >
          void init( const T_STRUCTURES& _strs, 
-                    const T_CONFIGURATION& _confs )
+                    const T_CONFIGURATIONS& _confs );
 
         //! Allows to skip out on a structure for leave-one or many-out.
         bool do_skip( size_t _i ) const { return false; }
@@ -89,32 +90,31 @@ namespace CE
         bool do_skip( size_t _i ) const { return do_exclude and _i == n; }
     };
 
-  template< class T_CONFIGURATIONS, class T_CONFIGURATIONS >
-    void init( const T_STRUCTURES& _strs, 
-               const T_CONFIGURATION& _confs )
+  template< class T_STRUCTURES, class T_CONFIGURATIONS >
+    void SymEquiv::init( const T_STRUCTURES& _strs, 
+                         const T_CONFIGURATIONS& _confs )
     {
       namespace bl = boost::lambda;
-      __ASSERT( _strs.size() ==  _weights.size(), "Inconsistent sizes\n" )
       // Copy structural weights first.
-      weights_.resize( _weights.size() ) ;
+      weights_.clear();
       std::transform
       (
-        _strs.begin(), _strs.end(), weights_.begin() 
+        _strs.begin(), _strs.end(), std::back_inserter(weights_),
         bl::bind( &T_STRUCTURES :: value_type :: weight, bl::_1 )
       );
 
       // Copy structural energies second.
-      targets_.resize( _strs.size() ) ;
+      targets_.clear();
       std::transform
       (
-        _strs.begin(), _strs.end(), targets_.begin() 
+        _strs.begin(), _strs.end(), std::back_inserter(targets_),
         bl::bind( &T_STRUCTURES :: value_type :: energy, bl::_1 )
       );
       
       // then construct internal weights (between equivalent confs) 
       // and initializes the nb_ structure.
       nb_.resize(1, 0);
-      equivweights_.clear();
+      equiweights.clear();
       size_t sum(0);
       typename T_CONFIGURATIONS :: const_iterator i_confs = _confs.begin();
       typename T_CONFIGURATIONS :: const_iterator i_confs_end = _confs.end();
@@ -122,11 +122,12 @@ namespace CE
       {
         sum += i_confs->size();
         nb_.push_back( sum );
-        std::transform
-        (
-          i_confs->begin(), i_confs->end(), std::back_inserter( equivweights ),
-          bl::bind( &T_CONFIGURATIONS :: value_type :: second, bl::_1 )
-        );
+        typename T_CONFIGURATIONS :: value_type 
+                                  :: const_iterator i_conf = i_confs->begin();
+        typename T_CONFIGURATIONS :: value_type 
+                                  :: const_iterator i_conf_end = i_confs->end();
+        for(; i_conf != i_conf_end; ++i_conf )
+          equiweights.push_back( i_conf->second );
       }
     }
 

@@ -8,6 +8,8 @@
 #include <config.h>
 #endif
 
+#include <boost/lambda/lambda.hpp>
+
 #include <opt/types.h>
 #include <opt/debug.h>
 
@@ -25,7 +27,7 @@ namespace CE
         //! A D dimensional mapping.
         const static size_t D = DIM;
         //! Applies function itself.
-        template< class T_CONF, class T_ITCOEF, clas T_OUT >
+        template< class T_CONF, class T_ITCOEF, class T_OUT >
           const static void apply( const T_CONF &_conf,
                                    const T_ITCOEF &_coef, 
                                    T_OUT &_out )
@@ -37,15 +39,16 @@ namespace CE
                                            = typename T_OUT::value_type(1) )
           { _out[ size_t( _conf ) ] += typename T_OUT::value_type(_s); }
         //! Normalizes vector.
-        template< class T_ITCOEF, clas T_NORM >
-          const static void apply( T_ITCOEF &_coef,  T_OUT &_out )
+        template< class T_ITCOEF, class T_NORM >
+          const static void apply( T_ITCOEF &_coef,  T_NORM &_out )
           {
+            namespace bl = boost::lambda;
             types::t_real norm(0);
             std::for_each( _coef, _coef + D, bl::var(norm) += bl::_1 * bl::_1 );
             if( Fuzzy::is_zero( norm) ) return;
             norm = std::sqrt( norm );
             _out *= norm;
-            norm = T_OUT(1) / norm;
+            norm = T_NORM(1) / norm;
             std::for_each( _coef, _coef + D, bl::_1 *= bl::constant(norm) );
           }
     };
@@ -58,12 +61,12 @@ namespace CE
         //! A D dimensional mapping.
         const static size_t D = DIM;
         //! Applies functions with appropriate coef.
-        template< class T_CONF, class T_ITCOEF, clas T_OUT >
+        template< class T_CONF, class T_ITCOEF, class T_OUT >
           const static void apply( const T_CONF &_conf,
                                    const T_ITCOEF &_coef, 
                                    T_OUT &_out )
           {
-            _out *= *_coef:
+            _out *= *_coef;
             if( Fuzzy::is_zero( _conf ) ) return;
             _out *= *( _coef + typename T_ITCOEF::difference_type( _conf ) );
           }
@@ -78,15 +81,16 @@ namespace CE
             _out[ size_t( _conf ) ] +=  typename T_OUT::value_type(_s); 
           }
         //! Normalizes vector.
-        template< class T_ITCOEF, clas T_NORM >
-          const static void apply( T_ITCOEF &_coef,  T_OUT &_out )
+        template< class T_ITCOEF, class T_NORM >
+          const static void apply( T_ITCOEF &_coef,  T_NORM &_out )
           {
+            namespace bl = boost::lambda;
             types::t_real norm(0);
             std::for_each( _coef, _coef + D, bl::var(norm) += bl::_1 * bl::_1 );
             if( Fuzzy::is_zero( norm) ) return;
             norm = std::sqrt( norm );
             _out *= norm;
-            norm = T_OUT(1) / norm;
+            norm = T_NORM(1) / norm;
             std::for_each( _coef, _coef + D, bl::_1 *= bl::constant(norm) );
           }
     };

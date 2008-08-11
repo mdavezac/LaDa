@@ -6,6 +6,7 @@
 #include <config.h>
 #endif
 
+#include<boost/lambda/bind.hpp>
 #include "errors.h"
 
 namespace opt
@@ -32,5 +33,21 @@ namespace opt
                      << " ( " << 1e2 * _b.mean() << "% )"
                    << "    maximum error: " << _b.ErrorTuple::max()
                      << " ( " << 1e2 * _b.max() << "% )";
+  }
+  NErrorTuple mean_n_var( const std::vector<Crystal::Structure> &_strs )
+  {
+    namespace bl = boost::lambda;
+    std::vector<types::t_real> t, w;
+    std::transform
+    (
+      _strs.begin(), _strs.end(), std::back_inserter( t ),
+      bl::bind( &Crystal::Structure::energy, bl::_1 )
+    );
+    std::transform
+    (
+      _strs.begin(), _strs.end(), std::back_inserter( w ),
+      bl::bind( &Crystal::Structure::weight, bl::_1 )
+    );
+    return mean_n_var( t, w );
   }
 }
