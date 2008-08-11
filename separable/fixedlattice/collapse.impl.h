@@ -4,6 +4,7 @@
 #include<boost/numeric/ublas/vector_proxy.hpp>
 #include<boost/numeric/ublas/matrix_proxy.hpp>
 #include<boost/numeric/ublas/operation.hpp>
+//#include<boost/lambda/if.hpp>
 
 namespace CE
 {
@@ -11,10 +12,9 @@ namespace CE
 #   error "Macros with same names."
 # endif
 # define COLHEAD \
-    Collapse<T_SEPARABLES, T_MAPPING, T_NORMALIZATION> 
+    Collapse<T_SEPARABLES, T_MAPPING> 
 #  define INCOLLAPSE( var ) \
-     template< class T_SEPARABLES, class T_MAPPING, class T_NORMALIZATION > \
-       var COLHEAD
+     template< class T_SEPARABLES, class T_MAPPING >  var COLHEAD
 
   INCOLLAPSE(void) :: create_A_n_b( t_Matrix &_A, t_Vector &_b )
   {
@@ -22,7 +22,7 @@ namespace CE
     __ASSERT( not separables, "Function pointer not set.\n" )
     __ASSERT( dim >= configurations_.size1(), "Inconsistent sizes.\n" )
     // Loop over inequivalent configurations.
-    t_Vector X( separables->coefs.size1() * t_Separables::t_Mapping::D );
+    t_Vector X( separables->coefficients.size1() );
     for( size_t i(0); i < mapping.size(); ++i )
     {
       // allows leave-one-out, or leave-many-out.
@@ -40,24 +40,24 @@ namespace CE
   INCOLLAPSE(void) :: create_X( size_t _i, t_Vector &_out )
   {
     namespace bblas = boost::numeric::ublas;
-    __ASSERT(   separables->coefficients.size1()
-              * t_Separables::t_Mapping::D == _out.size(),
+    __ASSERT(   separables->coefficients.size1() != _out.size(),
               "Incompatible sizes.\n" )
+    // Create matrix range including only equivalent configurations.
     typedef const bblas::matrix_range< t_Matrix > t_Range;
-    const bblas::range range( mapping.range( _i ) );
-    t_Range confs_range( configurations_, range,
-                         bblas::range( 0, configurations_.size1() ) );
-    const bblas::matrix_row< t_Range > conf_rows( confs_range, dim );
-    typename t_Matrix :: const_iterator i_conf = configurations_.begin();
-    typename t_Matrix :: const_iterator i_conf_end = configurations_.end();
+    const bblas::range equivrange( mapping.range( _i ) );
+    const bblas::range dimrange( dim, dim+1 );
+    t_Range equivconfs( configurations_, dimrange, equivrange );
+
+    typename t_Range :: const_iterator2 i_conf = equivconfs.begin2();
+    typename t_Range :: const_iterator2 i_conf_end = equivconfs.end2();
     for(size_t c(0); i_conf != i_conf_end; ++i_conf, ++c )
       for(size_t r(0); r < separables->coefficients.size1(); ++r )
       {
-        const size_t D( t_Normalization :: D );
+        const size_t D( t_Separables::t_Mapping :: D );
         typename t_Vector::value_type scalar( mapping.eweight(_i,c) );
-        scalar *= factor( separables->coefficients, range.start() + c, r ); 
-        bblas::vector_range< t_Vector > vecr( _out,
-                                             bblas::range( r * D, (r+1) * D ) );
+        scalar *= factor( equivrange.start() + c, r ); 
+        const bblas::range range( r * D, (r+1) * D );
+        bblas::vector_range< t_Vector > vecr( _out, range );
         t_Separables::t_Mapping::add_tovec( *i_conf, vecr, scalar );
       }
   }
@@ -65,57 +65,51 @@ namespace CE
   INCOLLAPSE( typename COLHEAD :: t_Vector :: value_type )
     :: factor( size_t _kv, size_t _r )
     {
+      namespace bl = boost::lambda;
       namespace bblas = boost::numeric::ublas;
-      typedef typename t_Separables :: t_Mapping t_SepMap;
 
-      typename t_Vector :: value_type result(1);
-      bblas::matrix_row< t_Matrix > row( separables->coefficients, _r );
-      t_SepMap :: apply( configurations_( dim, _kv),
-                         row.begin() + dim * t_SepMap::D,
-                         result );
+      typename t_Vector :: value_type result;
+      bblas::matrix_column< t_Matrix > config( configurations_, _kv );
+      t_Separables :: t_Policy :: apply_to_dim_n_rank( separables->coefficients, config, 
+                                                       result, dim, _r, bl::_1 = bl::_2 );
       if( not Fuzzy::is_zero( result ) ) 
         return scales(_r, _kv) / result * separables->norms[_r];
 
       // we should never have to be here...
-      typedef bblas::matrix_column< t_Matrix > t_Column;
-      const t_Column coefs( separables->coefficients, _r );
-      const t_Column config( configurations_, _kv );
-
-
-      result = typename t_Vector::value_type( 1 );
-      typename t_Column :: const_iterator i_conf = config.begin();
-      typename t_Column :: const_iterator i_conf_end = config.end();
-      typename t_Column :: const_iterator i_coef = coefs.end();
-      for( size_t d(0); i_conf != i_conf_end; 
-           ++d, ++i_conf, i_coef += t_SepMap::D )
-        if( d != dim ) t_SepMap::apply( *i_conf, i_coef, result );
+      result = typename t_Vector :: value_type(1);
+      size_t d(0);
+      t_Separables :: t_Policy :: apply_to_rank
+      ( 
+        separables->coefficients, config, result, _r,
+        (
+          bl::if_then( bl::var(d) != bl::constant(dim), bl::_1 *= bl::_2 ),
+          ++bl::var(d)
+        )
+      );
       return result * separables->norms[_r];
     }
 
   INCOLLAPSE( void ) :: update_all()
   {
+    namespace bl = boost::lambda;
     namespace bblas = boost::numeric::ublas;
     __ASSERT( scales.size1() == configurations_.size1(),
               "Inconsistent sizes.\n" )
     // First, normalizes coefficients.
-    for( size_t r(0); r < separables->coefficients.size1(); ++r )
-    {
-      typedef bblas::matrix_row< t_Matrix > t_Row;
-      t_Row row( separables->coefficients, r );
-      typename t_Row :: iterator i_coef = row.begin();
-      typename t_Row :: iterator i_coef_end = row.end();
-      for(; i_coef != i_coef_end; i_coef += t_Normalization :: D )
-        t_Normalization :: apply( i_coef, separables->norms[r] );
-    }
+    separables->normalize();
+
     // Then, updates scales. 
-    typedef typename t_Matrix :: const_iterator2 :: value_type t_Column;
-    typedef typename t_Separables :: t_Mapping t_SepMap;
-    typename t_Matrix :: const_iterator2 i_scales = scales.begin2();
-    typename t_Matrix :: const_iterator2 i_conf = configurations_.begin2();
-    typename t_Matrix :: const_iterator2 i_conf_end = configurations_.end2();
-    for(; i_conf != i_conf_end; ++i_conf, ++i_scales )
-      details::rank_vector< t_Matrix, t_Column, t_Column, t_SepMap>
-                          ( separables->coefficients, *i_conf, *i_scales );
+    for( size_t i(0); i < configurations_.size2(); ++i )
+    {
+      bblas::matrix_column<t_Matrix> conf( configurations_, i );
+      bblas::matrix_column<t_Matrix> scaling( scales, i );
+      std::fill( scaling.begin(), scaling.end(), typename t_Matrix::value_type(1) );
+      t_Separables::t_Policy::rank_vector
+      ( 
+        separables->coefficients, conf, scaling,
+        bl::_1 *= bl::_2
+      );
+    }
   }
 
   INCOLLAPSE( template< class T_STRUCTURES> void  )
@@ -160,16 +154,18 @@ namespace CE
 
   INCOLLAPSE( opt::ErrorTuple ) :: evaluate()
     {
+      namespace bblas = boost::numeric::ublas;
       opt::ErrorTuple error(0);
-      typename t_Matrix :: const_iterator2 i_column = configurations.begin2();
-      typename t_Matrix :: const_iterator2 i_column_end = configurations.end2();
       for(size_t n(0); n < mapping.size(); ++n )
       {
-        size_t nequiv = mapping.range(n).size();
+        bblas::range range( mapping.range(n) );
         types::t_real intermed(0);
-        for( size_t j(0); j < nequiv; ++j, ++i_column )
-          intermed += (*separables)( *i_column ) * mapping.eweights(n,j);
-        error += ErrorTuple( mapping.targets - intermed, mapping.weights(n) );
+        for( bblas::range::const_iterator j( range.begin() ); j != range.end(); ++j )
+        {
+          const bblas::matrix_column<t_Matrix> config( configurations_, *j );
+          intermed += (*separables)( config ) * mapping.eweight(n,*j);
+        }
+        error += opt::ErrorTuple( mapping.target(n) - intermed, mapping.weight(n) );
       }
       return error;
     }

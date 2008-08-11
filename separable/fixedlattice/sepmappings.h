@@ -12,6 +12,7 @@
 
 #include <opt/types.h>
 #include <opt/debug.h>
+#include <opt/fuzzy.h>
 
 namespace CE
 {
@@ -26,21 +27,40 @@ namespace CE
       public:
         //! A D dimensional mapping.
         const static size_t D = DIM;
+        //! \brief Applies a functor with the correct coefficients for that
+        //!        configuration element. 
+        template< class T_OP, class T_CONF, class T_ITCOEF, class T_OUT >
+          static void apply( const T_OP &_op, const T_CONF &_conf,
+                             const T_ITCOEF &_coef, T_OUT &_out )
+          { _op( _out, *( _coef + typename T_ITCOEF::difference_type( _conf ) ) ); }
         //! Applies function itself.
         template< class T_CONF, class T_ITCOEF, class T_OUT >
-          const static void apply( const T_CONF &_conf,
-                                   const T_ITCOEF &_coef, 
-                                   T_OUT &_out )
-            { _out *= *( _coef + typename T_ITCOEF::difference_type( _conf ) ); }
+          static void apply( const T_CONF &_conf, const T_ITCOEF &_coef, 
+                             T_OUT &_out )
+          { 
+            namespace bl = boost::lambda;
+            apply( bl::_1 *= bl::_2, _conf, _coef, _out );
+          }
         //! Returns the normalized, coef-less vector.
         template< class T_CONF, class T_OUT >
-          const static void add_tovec( const T_CONF &_conf, T_OUT &_out, 
-                                       typename T_OUT::value_type _s  
-                                           = typename T_OUT::value_type(1) )
+          static void add_tovec( const T_CONF &_conf, T_OUT &_out, 
+                                 typename T_OUT::value_type _s  
+                                     = typename T_OUT::value_type(1) )
           { _out[ size_t( _conf ) ] += typename T_OUT::value_type(_s); }
+        //! Randomizes coefficients.
+        template< class T_ITCOEF >
+          static void randomize( T_ITCOEF &_coef, typename T_ITCOEF::value_type _range )
+          {
+            typedef typename T_ITCOEF :: value_type t_Type;
+            *_coef = t_Type( opt::random::rng() - 0.5e0 ) * _range + t_Type(1);
+            *(_coef + 1) = t_Type( opt::random::rng() - 0.5e0 ) * _range + t_Type(1);
+            for( size_t i(2); i < D; ++i )
+              *(_coef + i) = t_Type( opt::random::rng() - 0.5e0 ) * _range + t_Type(1);
+          }
+
         //! Normalizes vector.
         template< class T_ITCOEF, class T_NORM >
-          const static void apply( T_ITCOEF &_coef,  T_NORM &_out )
+          static void normalize( T_ITCOEF &_coef, T_NORM &_out )
           {
             namespace bl = boost::lambda;
             types::t_real norm(0);
@@ -60,29 +80,49 @@ namespace CE
       public:
         //! A D dimensional mapping.
         const static size_t D = DIM;
+        //! \brief Applies a functor with the correct coefficients for that
+        //!        configuration element. 
+        template< class T_OP, class T_CONF, class T_ITCOEF, class T_OUT >
+          static void apply( const T_OP &_op, const T_CONF &_conf,
+                             const T_ITCOEF &_coef, 
+                             T_OUT &_out )
+          {
+            _op( _out, Fuzzy::is_zero( _conf ) ?
+                         *_coef:
+                         *_coef + *( _coef + typename T_ITCOEF::difference_type( _conf ) ) );
+          }
         //! Applies functions with appropriate coef.
         template< class T_CONF, class T_ITCOEF, class T_OUT >
-          const static void apply( const T_CONF &_conf,
-                                   const T_ITCOEF &_coef, 
-                                   T_OUT &_out )
+          static void apply( const T_CONF &_conf,
+                             const T_ITCOEF &_coef, 
+                             T_OUT &_out )
           {
-            _out *= *_coef;
-            if( Fuzzy::is_zero( _conf ) ) return;
-            _out *= *( _coef + typename T_ITCOEF::difference_type( _conf ) );
+            namespace bl = boost::lambda;
+            apply( bl::_1 *= bl::_2, _conf, _coef, _out );
           }
         //! Returns the normalized, coef-less vector.
         template< class T_CONF, class T_OUT >
-          const static void add_tovec( const T_CONF &_conf, T_OUT &_out, 
-                                       const typename T_OUT::value_type _s 
-                                               = typename T_OUT::value_type(1) )
+          static void add_tovec( const T_CONF &_conf, T_OUT &_out, 
+                                 const typename T_OUT::value_type _s 
+                                         = typename T_OUT::value_type(1) )
           {
             _out[0] += typename T_OUT::value_type(_s);
             if( Fuzzy::is_zero( _conf ) ) return;
             _out[ size_t( _conf ) ] +=  typename T_OUT::value_type(_s); 
           }
+        template< class T_ITCOEF >
+          static void randomize( T_ITCOEF &_coef, typename T_ITCOEF::value_type _range )
+          {
+            typedef typename T_ITCOEF :: value_type t_Type;
+            *_coef = t_Type( opt::random::rng() - 0.5e0 ) * _range + t_Type(1);
+            *(_coef + 1) = t_Type( opt::random::rng() - 0.5e0 ) * _range;
+            for( size_t i(2); i < D; ++i )
+              *(_coef + i) = t_Type( opt::random::rng() - 0.5e0 ) * _range;
+          }
+
         //! Normalizes vector.
         template< class T_ITCOEF, class T_NORM >
-          const static void apply( T_ITCOEF &_coef,  T_NORM &_out )
+          static void normalize( T_ITCOEF &_coef,  T_NORM &_out )
           {
             namespace bl = boost::lambda;
             types::t_real norm(0);

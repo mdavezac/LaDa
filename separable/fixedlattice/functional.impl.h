@@ -4,99 +4,152 @@
 #include<boost/numeric/ublas/vector_proxy.hpp>
 #include<boost/numeric/ublas/matrix_proxy.hpp>
 #include<boost/numeric/ublas/operation.hpp>
+#include<numeric>
 
 namespace CE
 {
-  namespace details 
+  template<class T_MAPPING, template<class> class T_POLICY>
+  std::ostream& operator<<( std::ostream& _stream, const Separables<T_MAPPING, T_POLICY> &_sep )
   {
-    template< class T_MATRIX, class T_VECTOR1, class T_VECTOR2, class T_MAPPING > 
-      void rank_vector( const T_MATRIX &_mat, const T_VECTOR1 &_in, T_VECTOR2 &_out )
+    _stream << " Separable Function:\n";
+    typedef typename Separables<T_MAPPING, T_POLICY> :: t_Matrix t_Matrix;
+    typename t_Matrix :: const_iterator1 i_row = _sep.coefficients.begin1();
+    typename t_Matrix :: const_iterator1 i_row_end = _sep.coefficients.end1();
+    for( size_t r(0); i_row != i_row_end; i_row += T_MAPPING :: D, ++r )
+    {
+      _stream << "   Rank " << r << ": " << _sep.norms[r] << "\n     ";
+      typename t_Matrix :: const_iterator2 i_column = i_row.begin();
+      typename t_Matrix :: const_iterator2 i_column_end = i_row.end();
+      for( size_t d(0); i_column != i_column_end; ++i_column, ++d )
       {
-        namespace bblas = boost::numeric::ublas;
-        __ASSERT( _in.size() * T_MAPPING::D != _mat.size2(),
-                  "Input vector and matrix of incompatible size.\n" )
-        __ASSERT( _out.size() != _mat.size1(),
-                  "Output vector and matrix of incompatible size.\n" )
-        typename T_VECTOR2 :: iterator i_out = _out.begin();
-        typename T_VECTOR2 :: iterator i_out_end = _out.end();
-        for(size_t i(0); i_out != i_out_end; ++i_out, ++i )
-        {
-          typedef bblas::matrix_row< T_MATRIX > t_Row;
-          t_Row row( _mat(i) );
-          *i_out += conf_coef<t_Row, T_VECTOR1, T_MAPPING>( row, _in );
-        }
+        _stream << "(";
+        typename t_Matrix :: const_iterator1 i_coef = i_column.begin();
+        for( size_t i(0); i < T_MAPPING :: D; ++i, ++i_coef )
+          _stream  << *i_coef << " ";
+        _stream << ") ";
+        if( d % 5 == 0 and d ) _stream << "\n     "; 
       }
- 
-    template< class T_VECTOR1, class T_VECTOR2, class T_MAPPING > 
-      typename T_VECTOR1::value_type conf_coef( const T_VECTOR1 &_coef,
-                                                const T_VECTOR2 &_conf )
+    }
+    return _stream;
+  }
+  namespace Policy 
+  {
+#   if defined(POLICYDEF) || defined(POLICYDEF2) || defined(POLICYDEF3) || defined(POLICYDEF4) 
+#     error "POLICYDEF macros already exists"
+#   endif
+#   define POLICYDEF(code) \
+      template<class T_MAPPING> code void DimensionMatrix<T_MAPPING> ::
+#   define POLICYDEF2(code1, code2) \
+      template<class T_MAPPING> code1, code2 void DimensionMatrix<T_MAPPING> ::
+#   define POLICYDEF3(code1, code2, code3) \
+      template<class T_MAPPING> code1, code2, code3 void DimensionMatrix<T_MAPPING> ::
+#   define POLICYDEF4(code1, code2, code3, code4) \
+      template<class T_MAPPING> code1, code2, code3, code4 void DimensionMatrix<T_MAPPING> ::
+    
+    POLICYDEF4( template< class T_COEFS, class T_VECIN, class T_VECOUT, class T_OP > )
+      rank_vector( const T_COEFS &_coefs, const T_VECIN &_vecin,
+                   T_VECOUT &_vecout, T_OP _op )
       {
-        namespace bblas = boost::numeric::ublas;
-        __ASSERT( _coef.size() != _conf.size() * T_MAPPING::D,
-                  "Coef vector and Conf vector of incompatible size.\n" )
-        typename T_VECTOR1 :: value_type result(1);
-        typename T_VECTOR2 :: const_iterator i_conf = _conf.begin();
-        typename T_VECTOR2 :: const_iterator i_conf_end = _conf.end();
-        typename T_VECTOR1 :: const_iterator i_coef = _coef.end();
-        for(; i_conf != i_conf_end; ++i_conf, i_coef += T_MAPPING::D )
-          T_MAPPING::apply(  *i_conf, i_coef, result );
-      }
-
-    template< class T_MATRIX1, class T_MATRIX2, class T_VECTOR, class T_MAPPING > 
-      void allconfs_rank_vector( const T_MATRIX1 &_mat, const T_MATRIX2 &_in,
-                                 T_VECTOR &_out )
-      {
-        namespace bblas = boost::numeric::ublas;
-        for( size_t i(0); i < _in.size2(); ++i )
+        __ASSERT( _coefs.size1() != _vecout.size() * t_Mapping :: D, "Inconsistent sizes.\n" )
+        __ASSERT( _vecin.size() != _coefs.size2(), "Inconsistent sizes.\n" )
+        typename T_COEFS :: const_iterator2 i_column = _coefs.begin2();
+        typename T_COEFS :: const_iterator2 i_column_end = _coefs.begin2();
+        typename T_VECIN :: const_iterator i_in = _vecin.begin();
+        for(; i_column != i_column_end; ++i_column, ++i_in )
         {
-          typedef bblas::matrix_column< T_MATRIX2 > t_Column;
-          t_Column column( _in( i ) );
-          rank_vector<T_MATRIX1, t_Column, T_VECTOR, T_MAPPING>( _mat, column, _out );
-        }
-      }
-
-    template< class T_MATIN, class T_MATOUT, class T_VEC, class T_MAPPING > 
-      void rank_dim_matrix( const T_MATIN &_in, const T_VEC &_vec, T_MATOUT &_out )
-      {
-        namespace bblas = boost::numeric::ublas;
-        __ASSERT( _vec.size() * T_MAPPING::D != _in.size2(),
-                  "Incompatible size.\n" )
-        __ASSERT( _out.size1() != _vec.size(),
-                  "Incompatible size.\n" )
-        typename T_VEC :: iterator i_out = _out.begin();
-        typename T_VEC :: iterator i_out_end = _out.end();
-        for(size_t i(0); i_out != i_out_end; ++i_out, ++i )
-        {
-          typedef bblas::matrix_row< T_MATIN > t_RowIn;
-          typedef bblas::matrix_row< T_MATOUT > t_RowOut;
-          t_RowIn rowin( _in(i) );
-          t_RowOut rowout( _out(i) );
-          conf_coef_vector<t_RowIn, T_VEC,
-                           t_RowOut, T_MAPPING>( rowin, _vec, rowout );
+          typename T_COEFS :: const_iterator1 i_row = i_column.begin();
+          typename T_COEFS :: const_iterator1 i_row_end = i_column.end();
+          typename T_VECOUT :: iterator i_out = _vecout.begin();
+          for(; i_row != i_row_end; i_row += t_Mapping :: D, ++i_out )
+            t_Mapping :: apply( _op, *i_in, i_row, *i_out );
         }
       }
 
-    template< class T_VECTOR1, class T_VECTOR2, class T_VECTOR3, class T_MAPPING > 
-      typename T_VECTOR1::value_type conf_coef_vector( const T_VECTOR1 &_coef,
-                                                       const T_VECTOR2 &_conf,
-                                                       const T_VECTOR3 &_out )
+    POLICYDEF2( template< class T_COEFS, class T_NORMS > )
+      normalize( T_COEFS &_coefs, T_NORMS &_norms )
       {
-        namespace bblas = boost::numeric::ublas;
-        __ASSERT( _coef.size() != _conf.size() * T_MAPPING::D,
-                  "Coef vector and Conf vector of incompatible size.\n" )
-        __ASSERT( _coef.size() != _conf.size(),
-                  "Coef vector and Conf vector of incompatible size.\n" )
-        typename T_VECTOR3 :: value_type result(0);
-        typename T_VECTOR2 :: const_iterator i_conf = _conf.begin();
-        typename T_VECTOR2 :: const_iterator i_conf_end = _conf.end();
-        typename T_VECTOR1 :: const_iterator i_coef = _coef.end();
-        typename T_VECTOR3 :: const_iterator i_out = _out.end();
-        for(; i_conf != i_conf_end; ++i_conf, ++i_out, i_coef += T_MAPPING::D )
+        typename T_COEFS :: iterator2 i_column = _coefs.begin2();
+        typename T_COEFS :: iterator2 i_column_end = _coefs.begin2();
+        for(; i_column != i_column_end; ++i_column )
         {
-          typename T_VECTOR3 :: value_type result(1);
-          T_MAPPING::apply(  *i_conf, i_coef, result );
-          *i_out += result;
+          typename T_COEFS :: iterator1 i_row = i_column.begin();
+          typename T_COEFS :: iterator1 i_row_end = i_column.end();
+          typename T_NORMS :: iterator i_norm = _norms.begin();
+          for(; i_row != i_row_end; i_row += t_Mapping :: D, ++i_norm )
+            t_Mapping::normalize( i_row, *i_norm );
         }
       }
-  } // end of details namespace.
+    POLICYDEF( template< class T_COEFS > )
+      randomize( T_COEFS &_coefs, typename T_COEFS :: value_type _howrandom)
+      {
+        typename T_COEFS :: iterator2 i_column = _coefs.begin2();
+        typename T_COEFS :: iterator2 i_column_end = _coefs.begin2();
+        for(; i_column != i_column_end; ++i_column )
+        {
+          typename T_COEFS :: iterator1 i_row = i_column.begin();
+          typename T_COEFS :: iterator1 i_row_end = i_column.end();
+          for(; i_row != i_row_end; i_row += t_Mapping :: D ) 
+            t_Mapping::randomize( i_row, _howrandom );
+        }
+      }
+
+    POLICYDEF4( template< class T_COEFS, class T_VECIN, class T_OUT, class T_OP > )
+      apply_throughout( const T_COEFS &_coefs, const T_VECIN &_vecin, 
+                        T_OUT &_out, T_OP _op )
+      {
+        __ASSERT( _coefs.size1() % t_Mapping :: D != 0, "Inconsistent sizes.\n" )
+        std::vector< T_OUT > result( _coefs.size1() / t_Mapping :: D, T_OUT(1) );
+        rank_vector( _coefs, _vecin, result,  _op );
+        _out = std::accumulate( result.begin(), result.end(), _out );
+      }
+
+    POLICYDEF4( template< class T_COEFS, class T_VECIN, class T_VECOUT, class T_OP > )
+      apply_to_dim( const T_COEFS &_coefs, const T_VECIN &_vecin,
+                    T_VECOUT &_vecout, size_t _d, T_OP _op )
+      {
+        namespace bblas = boost::numeric::ublas;
+        __ASSERT( _coefs.size1() != _vecout.size() * t_Mapping :: D, "Inconsistent sizes.\n" )
+        __ASSERT( _vecin.size() != _coefs.size2(), "Inconsistent sizes.\n" )
+        __ASSERT( _d >= _coefs.size2(), "Inconsistent input dimension.\n" )
+        typedef bblas::matrix_column< T_COEFS > t_Column;
+        t_Column column( _coefs, _d );
+        typename T_VECIN :: value_type in = _vecin[_d];
+        typename t_Column :: const_iterator i_row = column.begin();
+        typename t_Column :: const_iterator i_row_end = column.end();
+        typename T_VECOUT :: iterator i_out = _vecout.begin();
+          for(; i_row != i_row_end; i_row += t_Mapping :: D, ++i_out )
+            t_Mapping :: apply( _op, in, i_row, *i_out );
+      }
+    POLICYDEF4( template< class T_COEFS, class T_VECIN, class T_OUT, class T_OP > )
+      apply_to_rank( const T_COEFS &_coefs, const T_VECIN &_vecin,
+                     T_OUT &_out, size_t _r, T_OP _op )
+      {
+        __ASSERT( _r * t_Mapping::D >= _coefs.size1(), "Inconsistent sizes.\n" )
+        __ASSERT( _vecin.size() != _coefs.size2(), "Inconsistent sizes.\n" )
+        typename T_COEFS :: const_iterator1 i_row = _coefs.begin1() + _r * t_Mapping::D;
+        for(size_t i(0); i < t_Mapping::D; ++i, ++i_row )
+        {
+          typename T_COEFS :: const_iterator2 i_column = i_row.begin();
+          typename T_COEFS :: const_iterator2 i_column_end = i_row.end();
+          typename T_VECIN :: const_iterator i_in = _vecin.begin();
+          for(; i_column != i_column_end; ++i_column, ++i_in )
+            t_Mapping::apply( _op, *i_in, i_column.begin(), _out );
+        }
+      }
+    POLICYDEF4( template< class T_COEFS, class T_VECIN, class T_OUT, class T_OP > )
+      apply_to_dim_n_rank( const T_COEFS &_coefs, const T_VECIN &_vecin,
+                           T_OUT &_out, size_t _d, size_t _r, T_OP _op )
+      {
+        __ASSERT( _vecin.size() != _coefs.size2(), "Inconsistent sizes.\n" )
+        __ASSERT( _d >= _coefs.size2(), "Inconsistent input dimension.\n" )
+        typename T_VECIN :: value_type in = _vecin[_d];
+        t_Mapping :: apply( _op, in, 
+                            (_coefs.begin1() + _r * t_Mapping::D ).begin() + _d,
+                            _out );
+      }
+#   undef POLICYDEF
+#   undef POLICYDEF2
+#   undef POLICYDEF3
+#   undef POLICYDEF4
+  } // end of Policy namespace
 } // end of CE namespace.

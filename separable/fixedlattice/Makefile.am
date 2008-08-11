@@ -13,7 +13,7 @@ AM_LDFLAGS = @TINYXML_LIBS@ @BOOST_LDFLAGS@ @BOOST_PROGOP@ \
 cubic_SOURCES = main.cc  
 cubic_CPPFLAGS =  $(AM_CPPFLAGS) -I ..  -D _CUBIC_CE_
 cubic_LDFLAGS =  $(AM_LDFLAGS)
-cubic_LDADD = libseparable.la \
+cubic_LDADD = libfxseparable.la \
               ../../crystal/libcrystal.la \
               ../../atat/libatat.la \
               ../../opt/libopt.la \
@@ -25,13 +25,11 @@ tetra_CPPFLAGS =  $(AM_CPPFLAGS) -I .. -D_TETRAGONAL_CE_
 tetra_LDFLAGS = $(cubic_LDFLAGS)
 tetra_LDADD = $(cubic_LDADD) 
 
-noinst_LTLIBRARIES = libseparable.la 
-libseparable_la_SOURCES = $(SEPARABLES_FXL_CC)
-libseparable_ladir = $(includedir)/LaDa/separable/fixedlattice
-nobase_libseparable_la_HEADERS = $(SEPARABLES_FXL_H) $(SEPARABLES_FXL_IMPL_H)
-libseparable_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
-
-SUBDIR = fixedlattice
+noinst_LTLIBRARIES = libfxseparable.la 
+libfxseparable_la_SOURCES = $(SEPARABLES_FXL_CC)
+libfxseparable_ladir = $(includedir)/LaDa/separable/fixedlattice
+nobase_libfxseparable_la_HEADERS = $(SEPARABLES_FXL_H) $(SEPARABLES_FXL_IMPL_H)
+libfxseparable_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
 
 ../../atat/libatat.la: 
 	cd ../atat; $(MAKE) 

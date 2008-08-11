@@ -44,7 +44,7 @@ namespace CE
 
           if( _verbosity >= 1 ) std::cout << " " << _collapse.mapping.n
                                           << ". Prediction Errors: ";
-          intermediate = check_one( _sep, _collapse, _strs,
+          intermediate = check_one( _sep, _collapse, _strs[ _collapse.mapping.n],
                                     _collapse.mapping.n, _verbosity >= 2 );
           if( _verbosity ) std::cout << intermediate << "\n";
           errors.second += intermediate;
@@ -53,36 +53,32 @@ namespace CE
         __TRYEND(,"Error in CE::Methods::leave_one_out().\n" )
       }
 
-    template< class T_COLLAPSE, class T_SEPARABLES, class T_STRUCTURES >
+    template< class T_COLLAPSE, class T_SEPARABLES >
       opt::ErrorTuple check_one( const T_SEPARABLES &_separables,
                                  const T_COLLAPSE &_collapse,
-                                 const T_STRUCTURES &_strs,
-                                 size_t _n, bool _verbose = false )
+                                 const Crystal::Structure &_structure,
+                                 size_t _n, bool _verbose )
       {
         __DEBUGTRYBEGIN
         namespace fs = boost::filesystem;
         namespace bblas = boost::numeric::ublas;
-        const Crystal :: Structure structure = _strs[_n];
-        const types::t_real weight = structure.weight;
-        const std::string name = fs::path( structure.name ).leaf() ;
+        const types::t_real weight = _structure.weight;
+        const std::string name = fs::path( _structure.name ).leaf() ;
      
         types::t_real predic(0);
-        typedef bblas::matrix_range<typename T_SEPARABLES::t_Vector> t_MatrixRange;
-        t_MatrixRange range( _collapse.configurations_,
-                             bblas::range(0,_collapse.configurations_.size()),
-                                          _collapse.mapping.range(_n) );
-        for( size_t i(0); i < range.size2(); ++i )
+        const bblas::range erange( _collapse.mapping.range(_n) );
+        for( bblas::range::const_iterator i( erange.begin() ); i != erange.end(); ++i )
         {
-          typedef bblas::matrix_column< t_MatrixRange > t_Column;
-          t_Column column( range, i );
+          typedef bblas::matrix_column< const typename T_COLLAPSE :: t_Matrix >  t_Column;
+          t_Column column( _collapse.configurations(), *i );
           predic += _separables( column );
         }
   
-        opt::ErrorTuple error( structure.energy - predic,  weight );
+        opt::ErrorTuple error( _structure.energy - predic,  weight );
         if( _verbose )
           std::cout << "  structure: " << std::setw(30) << name << "  "
                     << "Target: " << std::fixed << std::setw(8) 
-                    << std::setprecision(2) << structure.energy << " "
+                    << std::setprecision(2) << _structure.energy << " "
                     << "Separable: " << std::fixed << std::setw(8)
                     << std::setprecision(2) << predic << "   "
                     << "|Target-Separable| * weight: "
@@ -119,6 +115,7 @@ namespace Fitting
       :: operator()( typename T_COLLAPSE :: t_Matrix &_solution,
                      T_COLLAPSE &_collapse  ) const
       {
+        namespace bblas = boost::numeric::ublas;
         __TRYBEGIN
         typedef typename T_COLLAPSE::t_Matrix t_Matrix;
         types::t_real convergence( 1e1 * tolerance );
@@ -134,8 +131,9 @@ namespace Fitting
         {
           for(size_t dim(0); dim < D; ++dim )
           {
-            _collapse( b, A, dim );
-            linear_solver( A, *i_sol, b );
+            _collapse( A, b, dim );
+            bblas::matrix_column<t_Matrix> column( _solution, dim );
+            linear_solver( A, column, b );
             _collapse.update( dim );
           }
           ++iter;

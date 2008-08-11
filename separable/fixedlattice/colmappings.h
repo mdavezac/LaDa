@@ -26,7 +26,7 @@ namespace CE
         typedef std::vector<types::t_real> t_Vector;
 
         //! Constructor.
-        SymEquiv();
+        SymEquiv() {}
         //! Copy Constructor.
         SymEquiv(const SymEquiv& ) { __DOASSERT(true, "No Copy.\n" ) }
         //! Destructor
@@ -36,13 +36,13 @@ namespace CE
         //! Returns weights.
         const t_Vector& weights() const { return weights_; }
         //! Returns one weight.
-        t_Vector::value_type weights( size_t i ) const { return weights_[i]; }
+        t_Vector::value_type weight( size_t i ) const { return weights_[i]; }
         //! Returns weights.
         t_Vector& targets() { return targets_; }
         //! Returns weights.
         const t_Vector &targets() const { return targets_; }
         //! Returns one weight.
-        t_Vector::value_type targets( size_t i ) const { return targets_[i]; }
+        t_Vector::value_type target( size_t i ) const { return targets_[i]; }
         //! Returns the number of structures.
         size_t size() const { return N; }
         //! Returns the range of equivalent configurations for structure \a _i.

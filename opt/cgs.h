@@ -65,21 +65,21 @@ namespace Fitting
       //!                   member function. 
       //! \return a pair with the number of accomplished iterations in first,
       //!         and the convergence in second.
-      template< class T_MATRIX, class T_VECTOR, class T_PRECOND >
-      t_Return operator()( T_MATRIX &_A, T_VECTOR &_x, 
-                           const T_VECTOR &_b, T_PRECOND &_precond ) const;
+      template< class T_MATRIX, class T_VECTOR1, class T_VECTOR2, class T_PRECOND >
+      t_Return operator()( T_MATRIX &_A, T_VECTOR1 &_x, 
+                           const T_VECTOR2 &_b, T_PRECOND &_precond ) const;
       
       //! \brief Performs a conjugate gradient squared minimization without
       //!        preconditionning.
-      template< class T_MATRIX, class T_VECTOR >
-      t_Return operator()( T_MATRIX &_A, T_VECTOR &_x, const T_VECTOR &_b ) const
+      template< class T_MATRIX, class T_VECTOR1, class T_VECTOR2 >
+      t_Return operator()( T_MATRIX &_A, T_VECTOR1 &_x, const T_VECTOR2 &_b ) const
         { DummyPrecond p; return operator()( _A, _x, _b, p ); }
     };
          
 
-    template< class T_MATRIX, class T_VECTOR, class T_PRECOND >
-      Cgs::t_Return Cgs :: operator()( T_MATRIX &_A, T_VECTOR &_x, 
-                                       const T_VECTOR &_b, T_PRECOND &_precond ) const
+    template< class T_MATRIX, class T_VECTOR1, class T_VECTOR2, class T_PRECOND >
+      Cgs::t_Return Cgs :: operator()( T_MATRIX &_A, T_VECTOR1 &_x, 
+                                       const T_VECTOR2 &_b, T_PRECOND &_precond ) const
       {
         __DEBUGTRYBEGIN
         __ASSERT( _A.size1() != _A.size2(), "matrix is not square.\n" )
@@ -90,7 +90,7 @@ namespace Fitting
                      "Matrix and solution vector have different sizes.\n" 
                   << "  " << _b.size() << " != " << _A.size1() << "\n" )
         namespace ublas = boost::numeric::ublas;
-        typedef T_VECTOR t_Vector;
+        typedef boost::numeric::ublas::vector< typename T_VECTOR1 :: value_type > t_Vector;
         typedef typename t_Vector::value_type t_Type;
         t_Type resid, rho_1, rho_2, alpha, beta;
         t_Vector p, phat, q, qhat, vhat, u, uhat;

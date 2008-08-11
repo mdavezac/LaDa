@@ -15,6 +15,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/bind.hpp>
 
 #include <opt/cgs.h>
 #include <opt/types.h>
@@ -70,7 +71,9 @@ int main(int argc, char *argv[])
                       "Maximum number of iterations for"
                       " Alternating linear-least square fit.\n"  )
         ("1dtolerance", po::value<types::t_real>()->default_value(1e-4),
-                        "Tolerance of the 1d linear-least square fit.\n" );
+                        "Tolerance of the 1d linear-least square fit.\n" ) 
+        ("random", po::value<types::t_real>()->default_value(5e-1),
+                   "Coefficients' randomness.\n" );
     po::options_description hidden("hidden");
     hidden.add_options()
         ("datadir", po::value<std::string>()->default_value("./"))
@@ -141,6 +144,7 @@ int main(int argc, char *argv[])
     const types::t_real tolerance( vm["tolerance"].as< types::t_real >() );
     const types::t_unsigned maxiter( vm["maxiter"].as< types::t_unsigned >() );
     const types::t_real dtolerance( vm["1dtolerance"].as< types::t_real >() );
+    const types::t_real howrandom( vm["random"].as<types::t_real>() );
 
     // Loads lattice
     boost::shared_ptr< Crystal::Lattice >
@@ -193,6 +197,8 @@ int main(int argc, char *argv[])
     typedef CE::Separables< CE::Mapping::VectorDiff<2> > t_Function;
     t_Function separables;
     separables.set_rank_n_size( rank, postoconfs.positions.size() );
+    separables.randomize( howrandom );
+    std::fill( separables.norms.begin(), separables.norms.end(), 1e0 );
 
     // Initializes collapse functor.
     typedef CE::Collapse< t_Function, CE::Mapping::SymEquiv > t_Collapse;

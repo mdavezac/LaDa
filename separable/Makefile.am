@@ -31,7 +31,7 @@ libseparable_ladir = $(includedir)/LaDa/separable
 nobase_libseparable_la_HEADERS = $(SEPARABLE_H) $(SEPARABLE_IMPL_H)
 libseparable_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
 
-SUBDIR = fixedlattice
+SUBDIRS = fixedlattice
 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 

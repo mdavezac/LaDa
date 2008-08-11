@@ -11,6 +11,7 @@
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <opt/errors.h>
+#include <crystal/structure.h>
 
 namespace CE
 {
@@ -35,16 +36,16 @@ namespace CE
                                       const T_MINIMIZER &_min,
                                       types::t_int _verbosity = 1 );
     //! Checks error for one structure.
-    template< class T_COLLAPSE, class T_SEPARABLES, class T_STRUCTURES >
+    template< class T_COLLAPSE, class T_SEPARABLES >
       opt::ErrorTuple check_one( const T_SEPARABLES &_separables,
                                  const T_COLLAPSE &_collapse,
-                                 const T_STRUCTURES &_str,
+                                 const Crystal::Structure &_structure,
                                  size_t _n, bool _verbose = false );
     //! Checks error for all structure.
     template< class T_COLLAPSE, class T_SEPARABLES, class T_STRUCTURES >
       opt::ErrorTuple check_all( const T_SEPARABLES &_separables,
                                  const T_COLLAPSE &_collapse,
-                                 const T_STRUCTURES &_str,
+                                 const T_STRUCTURES &_strs,
                                  bool _verbose = false );
   } // end of namespace Methods.
 } // end of namespace CE.

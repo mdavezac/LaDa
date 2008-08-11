@@ -28,8 +28,7 @@ namespace CE
   }
                                                    
   //! Collapse functor for fitting CE::Separables  
-  template< class T_SEPARABLES, class T_MAPPING,
-            class T_NORMALIZATION = typename T_SEPARABLES :: t_Mapping >
+  template< class T_SEPARABLES, class T_MAPPING >
     class Collapse
     {
       template< class T_COLLAPSE, class TT_SEPARABLES, class T_STRUCTURES > friend
@@ -42,8 +41,6 @@ namespace CE
         typedef T_SEPARABLES t_Separables;
         //! Type of the mapping function from structures to targets.
         typedef T_MAPPING t_Mapping;
-        //! Type of normalization used.
-        typedef T_NORMALIZATION t_Normalization;
         //! Type of the matrices.
         typedef typename t_Separables :: t_Matrix t_Matrix;
         //! Type of the vectors.
@@ -60,7 +57,7 @@ namespace CE
 
         //! Creates the fitting matrix and target vector.
         void operator()( t_Matrix &_A, t_Vector &_b,
-                         types::t_unsigned &_dim )
+                         types::t_unsigned _dim )
           { dim = _dim; create_A_n_b( _A, _b ); }
         //! Evaluates square errors.
         opt::ErrorTuple evaluate();

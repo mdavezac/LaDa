@@ -19,34 +19,15 @@ namespace CE
 
   // Forward Declarations.
   //! \cond
-  namespace details 
+  namespace Mapping 
   {
-    template< class T_MATRIX, class T_VECTOR1, class T_VECTOR2, class T_MAPPING > 
-      void rank_vector( const T_MATRIX &_mat, const T_VECTOR1 &_in,
-                        T_VECTOR2 &_out, const T_MAPPING &_mapping );
- 
-    template< class T_VECTOR1, class T_VECTOR2, class T_MAPPING > 
-      typename T_VECTOR1::value_type conf_coef( const T_VECTOR1 &_coef,
-                                                const T_VECTOR2 &_conf,
-                                                const T_MAPPING &_mapping );
-
-    template< class T_MATRIX1, class T_MATRIX2, class T_VECTOR, class T_MAPPING > 
-      void allconfs_rank_vector( const T_MATRIX1 &_mat, const T_MATRIX2 &_in,
-                                 T_VECTOR &_out, const T_MAPPING &_mapping );
-
-    template< class T_MATIN, class T_MATOUT, class T_VEC, class T_MAPPING > 
-      void rank_dim_matrix( const T_MATIN &_in, const T_VEC &_vec,
-                            T_MATOUT &_out, const T_MAPPING &_mapping );
-
-    template< class T_VECTOR1, class T_VECTOR2, class T_VECTOR3, class T_MAPPING > 
-      typename T_VECTOR1::value_type conf_coef_vector( const T_VECTOR1 &_coef,
-                                                       const T_VECTOR2 &_conf,
-                                                       const T_VECTOR3 &_out,
-                                                       const T_MAPPING &_mapping );
-
-    template< size_t > class VectorPlus;
     template< size_t > class VectorDiff;
   }
+  namespace Policy 
+  {
+    template< class > class DimensionMatrix;
+  }
+  //! \endcond
 
 
   //! \brief A sum of separable functions for a fixed-lattice.
@@ -58,11 +39,12 @@ namespace CE
   //!                  regularization, for which each element is mapped to a
   //!                  constant vector (1,1,1,...) and then subsequently to
   //!                  (0,1,0,..,.) vectors. 
-  //! \details Separables::coefficients are arrange in a matrix where each row
-  //!          is a different rank of the sum of seps. The colums are organized
-  //!          along direction and inner basis for direction. The inner basis
-  //!          is the faster running index.
-  template< class T_MAPPING >
+  //! \details Separables::coefficients are arrange in a matrix where each column 
+  //!          is a different dimension. The row are organized according to
+  //!          rank and inner basis (for that column's dimension) with the
+  //!          latter the fastest runnning index.
+  template< class T_MAPPING = Mapping::VectorDiff<2>, 
+            template<class> class T_POLICY = Policy::DimensionMatrix >
     class Separables
     {
       public:
@@ -72,6 +54,8 @@ namespace CE
         typedef boost::numeric::ublas::matrix<types::t_real> t_Matrix;
         //! Type of boost vectors.
         typedef boost::numeric::ublas::vector<types::t_real> t_Vector;
+        //! Type of the policy class.
+        typedef T_POLICY<t_Mapping> t_Policy;
 
         //! \brief Coefficients of the separable functions. 
         //! \details Rows denote ranks, and columns are indexed according to
@@ -84,7 +68,7 @@ namespace CE
         //! Constructor.
         Separables() {}
         //! Copy constructor.
-        Separables   ( const Separables<t_Mapping> &_c )
+        Separables   ( const Separables &_c )
                    : coefficients( _c.coefficients ), norms( _c.norms ) {}
         //! Destructor.
         ~Separables() {}
@@ -94,35 +78,72 @@ namespace CE
         types::t_real operator()( const T_VECTOR &_conf ) const
         {
           namespace bblas = boost::numeric::ublas;
-          t_Vector intermed( coefficients.size1() );
-          std::fill( intermed.begin(), intermed.end(), 0e0 );
-          details::rank_vector< t_Matrix, t_Vector, T_VECTOR, t_Mapping>
-                              ( coefficients, _conf, intermed );
+          namespace bl = boost::lambda;
+          t_Vector intermed( coefficients.size1(), 1e1 );
+          t_Policy :: rank_vector( coefficients, _conf, intermed, bl::_1 *= bl::_2 );
           return bblas::inner_prod( intermed, norms );
         }
         //! Sets ranks and sizes.
         void set_rank_n_size( size_t _rank, size_t _size )
-         { coefficients.resize( _rank, _size * t_Mapping :: D ); } 
+         { coefficients.resize( _rank * t_Mapping :: D, _size ); } 
+        //! Normalizes coefficients.
+        void normalize() { t_Policy::normalize( coefficients, norms ); }
+        //! Randomizes coefficients.
+        void randomize( t_Vector :: value_type _howrandom )
+          { t_Policy::randomize( coefficients, _howrandom ); }
     };
 
-  template<class T_MAPPING >
-  std::ostream& operator<<( std::ostream& _stream, const Separables<T_MAPPING> &_sep )
+  //! Prints out the separable to a stream.
+  template<class T_MAPPING, template<class> class T_POLICY>
+  std::ostream& operator<<( std::ostream& _stream, const Separables<T_MAPPING, T_POLICY> &_sep );
+
+  //! Holds policies for fixed lattice separables.
+  namespace Policy
   {
-    _stream << " Separable Function:\n";
-    for( size_t i(0); i < _sep.coefficients.size1(); ++i )
+    //! \brief Holds operations for dimensional matrices.
+    //! \details Dimensional matrices in fixed-lattice separable functions are
+    //!          organized such that a complete dimension can be recovered as a
+    //!          vector from each column of the coefficient matrix.
+    template<class T_MAPPING> 
+    struct DimensionMatrix
     {
-      _stream << "   Rank " << i << ": " << _sep.norms[i] << "\n     `";
-      for( size_t j(0); j < _sep.coefficients.size2(); ++j )
-      {
-        _stream << "(";
-        for( size_t d(0); d >= T_MAPPING::D; ++d )
-         _stream  << _sep.coefficients( i, j * T_MAPPING::D + d ) << " ";
-        _stream << ") ";
-        if( j % 5 == 0 and j ) _stream << "\n     "; 
-      }
-      if( _sep.coefficients.size2() % 5 != 0 ) _stream << "\n";
-    }
-    return _stream;
+      //! type of the mapping.
+      typedef T_MAPPING t_Mapping;
+      //! \brief Returns a vector with the computed ranks of the separable function.
+      //! \details The operator \a _op should take three parameters: the first
+      //!          is a reference to the ouput, the second the coefficient (or
+      //!          sum of coefficient ) for that configuration element.
+      //! \see CE::Mapping::VectorPlus::apply() for example.
+      template< class T_COEFS, class T_VECIN, class T_VECOUT, class T_OP >
+        void static rank_vector( const T_COEFS &_coefs, const T_VECIN &_vecin,
+                                 T_VECOUT &_vecout, T_OP _op );
+      //! Applies an operation throughout the separable function.
+      template< class T_COEFS, class T_VECIN, class T_OUT, class T_OP >
+        void static apply_throughout( const T_COEFS &_coefs, const T_VECIN &_vecin,
+                                      T_OUT &_out, T_OP _op );
+      //! \brief Applies an operation to dimension \a _d of the separable function.
+      //! \details Output is a vector with each rank in a separate element.
+      template< class T_COEFS, class T_VECIN, class T_VECOUT, class T_OP >
+        void static apply_to_dim( const T_COEFS &_coefs, const T_VECIN &_vecin,
+                                  T_VECOUT &_out, size_t _d, T_OP _op );
+      //! \brief Applies an operation to rank \a _r of the separable function.
+      //! \details Output is a scalar.
+      template< class T_COEFS, class T_VECIN, class T_OUT, class T_OP >
+        void static apply_to_rank( const T_COEFS &_coefs, const T_VECIN &_vecin,
+                                   T_OUT &_out, size_t _r, T_OP _op );
+      //! \brief Applies an operation to dimension \a _d and rank \a _r of the
+      //!        separable function.
+      //! \details Output is a scalar.
+      template< class T_COEFS, class T_VECIN, class T_OUT, class T_OP >
+        void static apply_to_dim_n_rank( const T_COEFS &_coefs, const T_VECIN &_vecin,
+                                         T_OUT &_out, size_t _d, size_t _r, T_OP _op );
+      //! Applies a normalization functor.
+      template< class T_COEFS, class T_NORMS > 
+        void static normalize( T_COEFS &_coefs, T_NORMS &_norms );
+      //! Applies a randomization functor.
+      template< class T_COEFS > 
+        void static randomize( T_COEFS &_coefs, typename T_COEFS::value_type _howrandom );
+    };
   }
 }
 
