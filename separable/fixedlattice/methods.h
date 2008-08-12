@@ -32,8 +32,8 @@ namespace CE
               class T_MINIMIZER, class T_STRUCTURES >
       opt::t_ErrorPair leave_one_out( T_SEPARABLE &_sep, 
                                       T_COLLAPSE &_collapse,
-                                      const T_STRUCTURES &_strs,
                                       const T_MINIMIZER &_min,
+                                      const T_STRUCTURES &_strs,
                                       types::t_int _verbosity = 1 );
     //! Checks error for one structure.
     template< class T_COLLAPSE, class T_SEPARABLES >

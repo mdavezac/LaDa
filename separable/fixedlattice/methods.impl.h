@@ -26,20 +26,20 @@ namespace CE
               class T_MINIMIZER, class T_STRUCTURES >
       opt::t_ErrorPair leave_one_out( T_SEPARABLE &_sep, 
                                       T_COLLAPSE &_collapse,
-                                      const T_STRUCTURES &_strs,
                                       const T_MINIMIZER &_min,
+                                      const T_STRUCTURES &_strs,
                                       types::t_int _verbosity )
       {
         __TRYBEGIN
         opt::t_ErrorPair errors;
-        for( _collapse.mappin.n = 0;
+        for( _collapse.mapping.n = 0;
              _collapse.mapping.n < _collapse.mapping.size();
              ++_collapse.mapping.n )
         {
           opt::ErrorTuple intermediate;
           if( _verbosity >= 1 ) std::cout << " " << _collapse.mapping.n
                                           << ". Training Errors: ";
-          intermediate = fit( _sep, _collapse, _strs, _verbosity >= 2); 
+          intermediate = fit( _sep, _collapse, _min, _strs, _verbosity >= 2); 
           if( _verbosity ) std::cout << intermediate << "\n";
           errors.first += intermediate;
 

@@ -324,6 +324,18 @@ namespace CE
         for(; i_split != i_split_end; ++i_split )
           i_split->resize( separables_->ranks(), separables_->dimensions() );
       }
+    template< class T_SEPARABLES > template< class t_MATRIX, class T_VECTOR >
+      void Regulation :: operator( T_MATRIX &_A, T_VECTOR &_b, size_t _dim )
+      {
+        if( Fuzzy::is_zero( lambda ) ) return; 
+        typename t_Separables :: t_Vector :: const_iterator i_norm = separables_->norms.begin();
+        for( size_t j(0); i_norm != i_norm_end; ++i_norm )
+        {
+          typename T_Matrix::value_type factor( lambda  * (*i_norm) * (*i_norm) );
+          for( size_t i(0); i < t_Separables :: t_Mapping :: D; ++i, ++j )
+            _A( j, j ) +=  factor * t_Separables::t_Mapping::norm( i );
+        }
+      }
 
  } // end of Policy namespace
 # undef COLHEAD

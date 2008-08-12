@@ -61,6 +61,8 @@ int main(int argc, char *argv[])
                     "Seed of the random number generator.\n"  );
     po::options_description specific("Separables Options");
     specific.add_options()
+        ("loo,l", "Performs leave-one-out cross-validation.\n"  )
+        ("nofit,l", "Does not perform fit.\n"  )
         ("rank,r", po::value<types::t_unsigned>()->default_value(3),
                    "Rank of the sum of separable functions." )
         ("basis,r", po::value<std::string>()->default_value("1x1x4"),
@@ -135,6 +137,9 @@ int main(int argc, char *argv[])
     __DOASSERT( not ( fs::is_regular( latinput ) or fs::is_symlink( latinput ) ),
                 latinput << " is a not a valid file.\n" );
 
+    const bool dofit( vm.count("nofit") == 0 );
+    const bool doloo( vm.count("loo") != 0 );
+    __ASSERT( not ( dofit or doloo ), "Nothing to do..." )
     const types::t_unsigned verbosity = vm["verbose"].as<types::t_unsigned>();
     types::t_unsigned seed = vm["seed"].as<types::t_unsigned>();
     seed = opt::random::seed( seed );
@@ -203,7 +208,7 @@ int main(int argc, char *argv[])
 
     // Initializes collapse functor.
     typedef Traits::CE::Collapse< t_Function, 
-                                  CE::Mapping::SymEquiv,
+                                  CE::Mapping::ExcludeOne< CE::Mapping::SymEquiv >,
                                   CE::Policy::HighMemUpdate > t_CollapseTraits;
     typedef CE::Collapse< t_CollapseTraits > t_Collapse;
     t_Collapse collapse;
@@ -230,12 +235,24 @@ int main(int argc, char *argv[])
               << "Random Seed: " << seed << "\n";
 
     // fitting.
-    std::cout << "\nFitting using whole training set:" << std::endl;
-    nerror = CE::Method::fit( separables, collapse, allsq,
-                              structures, verbosity >= print_checks );
-    std::cout << nerror << "\n"; 
-    if( verbosity >= print_function ) std::cout << separables << "\n";
-
+    if( doloo )
+    {
+      std::cout << "Starting Leave-One-Out Procedure.\n";
+      opt::t_ErrorPair errors;
+      errors = CE::Method::leave_one_out( separables, collapse, allsq,
+                                          structures, verbosity - 1 );
+      std::cout << "Average Training Errors:\n " << ( nerror = errors.first ) << "\n";
+      std::cout << "Final Prediction Errors:\n " << ( nerror = errors.second ) << "\n\n";
+      if( verbosity >= print_function ) std::cout << separables << "\n";
+    }
+    if( dofit )
+    {
+      std::cout << "\nFitting using whole training set:" << std::endl;
+      nerror = CE::Method::fit( separables, collapse, allsq,
+                                structures, verbosity >= print_checks );
+      std::cout << nerror << "\n"; 
+      if( verbosity >= print_function ) std::cout << separables << "\n";
+    }
     std::cout << "\n\n\nEnd of " << __PROGNAME__ << ".\n" << std::endl;
 
   }

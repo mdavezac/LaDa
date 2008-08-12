@@ -42,6 +42,7 @@ namespace Traits
     //! Traits of a collapse functor.
     template< class T_SEPARABLES,
               class T_MAPPING = ::CE::Mapping::SymEquiv, 
+              class T_REGULARIZATIONPOLICY,
               template<class, class, class>
                 class T_UPDATEPOLICY = ::CE::Policy::LowMemUpdate >
     struct Collapse 
@@ -50,6 +51,8 @@ namespace Traits
       typedef boost::numeric::ublas::matrix<size_t> t_iMatrix;
       //! Type of the Mapping.
       typedef T_SEPARABLES t_Separables;
+      //! Type of the Regulations Policy
+      typedef T_REGULARIZATIONPOLICY t_RegPolicy;
       //! Type of the Mapping.
       typedef T_MAPPING t_Mapping;
       //! Type of the Policy.
@@ -241,6 +244,41 @@ namespace CE
           using t_Base :: configurations_;
           using t_Base :: separables_;
       };
+
+    template< class T_SEPARABLES >
+    class NoReg 
+    {
+      public:
+        //! Constructor
+        NoReg() {};
+        //! Updates pointer to separable function.
+        void init( const t_Separables& _sep );
+
+        //! Would modify A matrix and b vector.
+        template< class t_MATRIX, class T_VECTOR >
+          void operator( T_MATRIX &, T_VECTOR &, size_t _dim ) {}
+    };
+    template< class T_SEPARABLES >
+    class Regulation 
+    {
+      public:
+        //! Regulation factor.
+        types::t_real lambda;
+
+        //! Constructor
+        Regulations() {};
+        //! Updates pointer to separable function.
+        void init( const t_Separables& _sep )
+          { separables = &_sep; }
+
+        //! Would modify A matrix and b vector.
+        template< class t_MATRIX, class T_VECTOR >
+          void operator( T_MATRIX &, T_VECTOR &, size_t _dim ) 
+
+      protected:
+        //! A reference to the separable function.
+        const t_Separables *separables_;
+    };
   } // end of Policy namespace.
 
 }
