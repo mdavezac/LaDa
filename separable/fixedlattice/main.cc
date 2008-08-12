@@ -202,7 +202,10 @@ int main(int argc, char *argv[])
     separables.normalize();
 
     // Initializes collapse functor.
-    typedef CE::Collapse< t_Function, CE::Mapping::SymEquiv > t_Collapse;
+    typedef Traits::CE::Collapse< t_Function, 
+                                  CE::Mapping::SymEquiv,
+                                  CE::Policy::HighMemUpdate > t_CollapseTraits;
+    typedef CE::Collapse< t_CollapseTraits > t_Collapse;
     t_Collapse collapse;
     collapse.init( structures, postoconfs );
 

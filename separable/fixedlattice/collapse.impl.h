@@ -4,7 +4,7 @@
 #include<boost/numeric/ublas/vector_proxy.hpp>
 #include<boost/numeric/ublas/matrix_proxy.hpp>
 #include<boost/numeric/ublas/operation.hpp>
-//#include<boost/lambda/if.hpp>
+#include<boost/lambda/bind.hpp>
 
 namespace CE
 {
@@ -12,9 +12,9 @@ namespace CE
 #   error "Macros with same names."
 # endif
 # define COLHEAD \
-    Collapse<T_SEPARABLES, T_MAPPING> 
+    Collapse<T_TRAITS> 
 #  define INCOLLAPSE( var ) \
-     template< class T_SEPARABLES, class T_MAPPING >  var COLHEAD
+     template< class T_TRAITS >  var COLHEAD
 
   INCOLLAPSE(void) :: create_A_n_b( t_Matrix &_A, t_Vector &_b )
   {
@@ -58,63 +58,30 @@ namespace CE
       {
         const size_t D( t_Separables::t_Mapping :: D );
         typename t_Vector::value_type scalar( mapping.eweight(_i,c) );
-        scalar *= factor( equivrange.start() + c, r ); 
+        scalar *=   update_.factor( equivrange.start() + c, r, dim )
+                  * separables_->norms[r]; 
         const bblas::range range( r * D, (r+1) * D );
         bblas::vector_range< t_Vector > vecr( _out, range );
         t_Separables::t_Mapping::add_tovec( *i_conf, vecr, scalar );
       }
   }
 
-  INCOLLAPSE( typename COLHEAD :: t_Vector :: value_type )
-    :: factor( size_t _kv, size_t _r )
-    {
-      namespace bl = boost::lambda;
-      namespace bblas = boost::numeric::ublas;
-
-      typename t_Vector :: value_type result;
-      bblas::matrix_column< t_iMatrix > config( configurations_, _kv );
-      t_Separables :: t_Policy :: apply_to_dim_n_rank( separables_->coefficients,
-                                                       config, result, dim, _r,
-                                                       bl::_1 = bl::_2 );
-      if( not Fuzzy::is_zero( result ) ) 
-        return scales(_r, _kv) / result * separables_->norms[_r];
-
-      // we should never have to be here...
-      result = typename t_Vector :: value_type(1);
-      size_t d(0);
-      t_Separables :: t_Policy :: apply_to_rank
-      ( 
-        separables_->coefficients, config, result, _r,
-        (
-          bl::if_then( bl::var(d) != bl::constant(dim), bl::_1 *= bl::_2  ),
-          ++bl::var(d)
-        )
-      );
-      return result * separables_->norms[_r];
-    }
-
-  INCOLLAPSE( void ) :: update_all()
+  INCOLLAPSE(void) :: update_all()
   {
-    namespace bl = boost::lambda;
-    namespace bblas = boost::numeric::ublas;
-    __ASSERT( scales.size2() != configurations_.size2(),
-              "Inconsistent sizes.\n" )
     // First, normalizes coefficients.
     separables_->normalize();
-
-    // Then, updates scales. 
-    for( size_t i(0); i < configurations_.size2(); ++i )
-    {
-      bblas::matrix_column<t_iMatrix> conf( configurations_, i );
-      bblas::matrix_column<t_Matrix> scaling( scales, i );
-      std::fill( scaling.begin(), scaling.end(), typename t_Matrix::value_type(1) );
-      t_Separables::t_Policy::rank_vector
-      ( 
-        separables_->coefficients, conf, scaling,
-        bl::_1 *= bl::_2
-      );
-    }
+    // then calls policy.
+    update_();
   }
+  INCOLLAPSE(void) :: update( types::t_unsigned _d )
+  {
+    // First, normalizes coefficients.
+    separables_->normalize();
+    // then calls policy.
+    update_( _d );
+  }
+           
+
 
   INCOLLAPSE( template< class T_STRUCTURES> void  )
     :: init( const T_STRUCTURES& _strs, const PosToConfs &_postoconfs )
@@ -179,7 +146,186 @@ namespace CE
     separables_ = &_sep; 
     scales.resize( separables_->coefficients.size1() / t_Separables::t_Mapping::D,
                    configurations_.size2() );
+    update_.init( _sep );
   }
+
+  namespace Policy 
+  {
+    template< class T_SEPARABLES, class T_MAPPING, class T_CONFS >
+      typename T_SEPARABLES :: t_Vector :: value_type
+        LowMemUpdate<T_SEPARABLES, T_MAPPING, T_CONFS>
+          :: factor( size_t _kv, size_t _r, size_t _d ) const
+          {
+            namespace bl = boost::lambda;
+            namespace bblas = boost::numeric::ublas;
+         
+            typename t_Vector :: value_type result;
+            bblas::matrix_column< const t_iMatrix > config( configurations_, _kv );
+            t_Separables :: t_Policy :: apply_to_dim_n_rank( separables_->coefficients,
+                                                             config, result, _d, _r,
+                                                             bl::_1 = bl::_2 );
+            return not Fuzzy::is_zero( result ) ?
+                     scales_(_r, _kv) / result:
+                     factor_from_scratch( _kv, _r, _d );
+          }
+    template< class T_SEPARABLES, class T_MAPPING, class T_CONFS >
+      typename T_SEPARABLES :: t_Vector :: value_type
+        LowMemUpdate<T_SEPARABLES, T_MAPPING, T_CONFS>
+          :: factor_from_scratch( size_t _kv, size_t _r, size_t _d ) const
+          {
+            namespace bl = boost::lambda;
+            namespace bblas = boost::numeric::ublas;
+         
+            typename t_Vector::value_type result(1);
+            size_t d(0);
+            bblas::matrix_column< const t_iMatrix > config( configurations_, _kv );
+            t_Separables :: t_Policy :: apply_to_rank
+            ( 
+              separables_->coefficients, config, result, _r,
+              (
+                bl::if_then( bl::var(d) != bl::constant(_d), bl::_1 *= bl::_2  ),
+                ++bl::var(d)
+              )
+            );
+            return result;
+          }
+
+    template< class T_SEPARABLES, class T_MAPPING, class T_CONFS >
+      void LowMemUpdate<T_SEPARABLES, T_MAPPING, T_CONFS> :: operator()()
+      {
+        namespace bl = boost::lambda;
+        namespace bblas = boost::numeric::ublas;
+        __ASSERT( scales_.size2() != configurations_.size2(),
+                  "Inconsistent sizes.\n" )
+        for( size_t i(0); i < configurations_.size2(); ++i )
+        {
+          bblas::matrix_column<const t_iMatrix> conf( configurations_, i );
+          bblas::matrix_column<t_Matrix> scaling( scales_, i );
+          std::fill( scaling.begin(), scaling.end(), typename t_Matrix::value_type(1) );
+          t_Separables::t_Policy::rank_vector
+          ( 
+            separables_->coefficients, conf, scaling,
+            bl::_1 *= bl::_2
+          );
+        }
+      }
+    template< class T_SEPARABLES, class T_MAPPING, class T_CONFS >
+      void LowMemUpdate<T_SEPARABLES, T_MAPPING, T_CONFS> :: init( const t_Separables& _sep )
+      {
+        separables_ = &_sep;
+        scales_.resize( separables_->ranks(), configurations_.size2() ); 
+      }
+
+    template< class T_SEPARABLES, class T_MAPPING, class T_CONFS >
+      void HighMemUpdate<T_SEPARABLES, T_MAPPING, T_CONFS> :: operator()()
+      {
+        // First updates stuff split along dimensions.
+        namespace bl = boost::lambda;
+        namespace bblas = boost::numeric::ublas;
+        // First updates stuff split along dimensions.
+        typename std::vector< t_Matrix > :: iterator i_split = dimsplit_.begin();
+        typename std::vector< t_Matrix > :: iterator i_split_end = dimsplit_.end();
+        for( size_t i(0); i_split != i_split_end; ++i, ++i_split )
+        {
+          bblas::matrix_column< const t_iMatrix > config( configurations_, i );
+          for( size_t d(0); d < separables_->dimensions(); ++d ) 
+            for(size_t r(0); r < separables_->ranks(); ++r )
+              t_Separables :: t_Policy :: apply_to_dim_n_rank( separables_->coefficients,
+                                                               config, (*i_split)(r,d), d, r,
+                                                               bl::_1 = bl::_2 );
+        }
+
+        // Then  updates scales_.
+        update_scales();
+      }
+    template< class T_SEPARABLES, class T_MAPPING, class T_CONFS >
+      void HighMemUpdate<T_SEPARABLES, T_MAPPING, T_CONFS> :: update_scales()
+      {
+        namespace bl = boost::lambda;
+        namespace bblas = boost::numeric::ublas;
+        __ASSERT( scales_.size2() != configurations_.size2(),
+                  "Inconsistent sizes.\n" )
+        typename std::vector< t_Matrix > :: const_iterator i_split = dimsplit_.begin();
+        typename std::vector< t_Matrix > :: const_iterator i_split_end = dimsplit_.end();
+        for( size_t i(0); i_split != i_split_end; ++i, ++i_split )
+        {
+          for(size_t r(0); r < separables_->ranks(); ++r )
+          {
+            bblas::matrix_row< const t_Matrix > row( *i_split, r );
+            scales_(r,i) = std::accumulate
+                           (
+                             row.begin(), row.end(),
+                             typename t_Matrix::value_type(1),
+                             bl::_1 * bl::_2
+                           );
+          }
+        }
+      }
+    template< class T_SEPARABLES, class T_MAPPING, class T_CONFS >
+      void HighMemUpdate<T_SEPARABLES, T_MAPPING, T_CONFS> :: operator()(size_t _dim )
+      {
+        // First updates stuff split along dimensions.
+        namespace bl = boost::lambda;
+        namespace bblas = boost::numeric::ublas;
+        // First updates stuff split along dimensions.
+        typename std::vector< t_Matrix > :: iterator i_split = dimsplit_.begin();
+        typename std::vector< t_Matrix > :: iterator i_split_end = dimsplit_.end();
+        for( size_t i(0); i_split != i_split_end; ++i, ++i_split )
+        {
+          bblas::matrix_column< const t_iMatrix > config( configurations_, i );
+          for(size_t r(0); r < separables_->ranks(); ++r )
+            t_Separables :: t_Policy :: apply_to_dim_n_rank( separables_->coefficients,
+                                                             config, (*i_split)(r, _dim), _dim, r,
+                                                             bl::_1 = bl::_2 );
+        }
+
+        // Then  updates scales_.
+        update_scales();
+      }
+    template< class T_SEPARABLES, class T_MAPPING, class T_CONFS >
+      typename T_SEPARABLES :: t_Vector :: value_type
+        HighMemUpdate<T_SEPARABLES, T_MAPPING, T_CONFS>
+          :: factor( size_t _kv, size_t _r, size_t _d ) const
+          {
+            typename t_Matrix :: value_type result( dimsplit_[_kv](_r,_d) );
+            return not Fuzzy::is_zero( result ) ?
+                     scales_(_r, _kv) / result:
+                     factor_from_scratch( _kv, _r, _d );
+          }
+    template< class T_SEPARABLES, class T_MAPPING, class T_CONFS >
+      typename T_SEPARABLES :: t_Vector :: value_type
+        HighMemUpdate<T_SEPARABLES, T_MAPPING, T_CONFS>
+          :: factor_from_scratch( size_t _kv, size_t _r, size_t _d ) const
+          {
+            namespace bl = boost::lambda;
+            namespace bblas = boost::numeric::ublas;
+         
+            typename bblas::matrix_row<const t_Matrix> row( dimsplit_[_kv], _r );
+            size_t d(0);
+            return std::accumulate
+                   (
+                     row.begin(), row.end(), d,
+                     bl::if_then_else_return
+                     ( 
+                       bl::var(d) != bl::constant(_d),
+                       bl::_1 * bl::_2,
+                       bl::_1
+                     )
+                   );
+          }
+    template< class T_SEPARABLES, class T_MAPPING, class T_CONFS >
+      void HighMemUpdate<T_SEPARABLES, T_MAPPING, T_CONFS> :: init( const t_Separables& _sep )
+      {
+        namespace bl = boost::lambda;
+        t_Base :: init( _sep );
+        dimsplit_.resize( configurations_.size2() ); 
+        typename std::vector< t_Matrix > :: iterator i_split = dimsplit_.begin();
+        typename std::vector< t_Matrix > :: iterator i_split_end = dimsplit_.end();
+        for(; i_split != i_split_end; ++i_split )
+          i_split->resize( separables_->ranks(), separables_->dimensions() );
+      }
+
+ } // end of Policy namespace
 # undef COLHEAD
 # undef INCOLLAPSE
 } // end of CE namespace.
