@@ -66,24 +66,16 @@ namespace CE
         t_Vector norms;
 
         //! Constructor.
-        Separables() : ranks_(0), dims_(0) {}
+        Separables() {}
         //! Copy constructor.
         Separables   ( const Separables &_c )
-                   : coefficients( _c.coefficients ), norms( _c.norms ),
-                     ranks_(_c.ranks_), dims_(_c.dims_) {}
+                   : coefficients( _c.coefficients ), norms( _c.norms ) {}
         //! Destructor.
         ~Separables() {}
 
         //! Returns the value of the separable function evaluated at \a _conf.
         template< class T_VECTOR >
-        types::t_real operator()( const T_VECTOR &_conf ) const
-        {
-          namespace bblas = boost::numeric::ublas;
-          namespace bl = boost::lambda;
-          t_Vector intermed( coefficients.size1(), 1e1 );
-          t_Policy :: rank_vector( coefficients, _conf, intermed, bl::_1 *= bl::_2 );
-          return bblas::inner_prod( intermed, norms );
-        }
+          types::t_real operator()( const T_VECTOR &_conf ) const;
         //! Sets ranks and sizes.
         void set_rank_n_size( size_t _rank, size_t _size );
         //! Normalizes coefficients.
@@ -93,20 +85,17 @@ namespace CE
           { t_Policy::randomize( coefficients, _howrandom ); }
 
         //! Returns number of ranks.
-        size_t ranks() const { return ranks_; }
+        size_t ranks() const;
         //! Returns number of dimensions;
-        size_t dimensions() const { return dims_; }
-
-      protected:
-        //! Number of ranks.
-        size_t ranks_;
-        //! Number of dimensions.
-        size_t dims_;
+        size_t dimensions() const { return coefficients.size2(); }
+        //! Returns the number of degrees of liberty (per dimension).
+        size_t dof() const { return coefficients.size1(); }
     };
 
   //! Prints out the separable to a stream.
   template<class T_MAPPING, template<class> class T_POLICY>
-  std::ostream& operator<<( std::ostream& _stream, const Separables<T_MAPPING, T_POLICY> &_sep );
+  std::ostream& operator<<( std::ostream& _stream,
+                            const Separables<T_MAPPING, T_POLICY> &_sep );
 
   //! Holds policies for fixed lattice separables.
   namespace Policy

@@ -199,6 +199,7 @@ int main(int argc, char *argv[])
     separables.set_rank_n_size( rank, postoconfs.positions.size() );
     separables.randomize( howrandom );
     std::fill( separables.norms.begin(), separables.norms.end(), 1e0 );
+    separables.normalize();
 
     // Initializes collapse functor.
     typedef CE::Collapse< t_Function, CE::Mapping::SymEquiv > t_Collapse;
@@ -227,6 +228,7 @@ int main(int argc, char *argv[])
 
     // fitting.
     std::cout << "\nFitting using whole training set:" << std::endl;
+    std::cout << separables << "\n";
     nerror = CE::Method::fit( separables, collapse, allsq,
                               structures, verbosity >= print_checks );
     std::cout << nerror << "\n"; 

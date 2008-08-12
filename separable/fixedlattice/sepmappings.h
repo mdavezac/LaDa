@@ -49,7 +49,8 @@ namespace CE
           { _out[ size_t( _conf ) ] += typename T_OUT::value_type(_s); }
         //! Randomizes coefficients.
         template< class T_ITCOEF >
-          static void randomize( T_ITCOEF &_coef, typename T_ITCOEF::value_type _range )
+          static void randomize( T_ITCOEF &_coef,
+                                 typename T_ITCOEF::value_type _range )
           {
             typedef typename T_ITCOEF :: value_type t_Type;
             *_coef = t_Type( opt::random::rng() - 0.5e0 ) * _range + t_Type(1);
@@ -87,9 +88,13 @@ namespace CE
                              const T_ITCOEF &_coef, 
                              T_OUT &_out )
           {
-            _op( _out, Fuzzy::is_zero( _conf ) ?
-                         *_coef:
-                         *_coef + *( _coef + typename T_ITCOEF::difference_type( _conf ) ) );
+            typedef typename T_ITCOEF::difference_type t_size_t;
+            _op
+            ( 
+              _out,
+              Fuzzy::is_zero( _conf ) ? *_coef:
+                                        *_coef + *( _coef + t_size_t( _conf ) ) 
+            );
           }
         //! Applies functions with appropriate coef.
         template< class T_CONF, class T_ITCOEF, class T_OUT >
@@ -111,7 +116,8 @@ namespace CE
             _out[ size_t( _conf ) ] +=  typename T_OUT::value_type(_s); 
           }
         template< class T_ITCOEF >
-          static void randomize( T_ITCOEF &_coef, typename T_ITCOEF::value_type _range )
+          static void randomize( T_ITCOEF &_coef,
+                                 typename T_ITCOEF::value_type _range )
           {
             typedef typename T_ITCOEF :: value_type t_Type;
             *_coef = t_Type( opt::random::rng() - 0.5e0 ) * _range + t_Type(1);

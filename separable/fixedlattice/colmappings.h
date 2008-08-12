@@ -110,6 +110,7 @@ namespace CE
         _strs.begin(), _strs.end(), std::back_inserter(targets_),
         bl::bind( &T_STRUCTURES :: value_type :: energy, bl::_1 )
       );
+      N = _strs.size();
       
       // then construct internal weights (between equivalent confs) 
       // and initializes the nb_ structure.

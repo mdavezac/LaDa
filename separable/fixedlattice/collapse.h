@@ -41,6 +41,8 @@ namespace CE
         typedef T_SEPARABLES t_Separables;
         //! Type of the mapping function from structures to targets.
         typedef T_MAPPING t_Mapping;
+        //! Type of the configuration matrix.
+        typedef boost::numeric::ublas::matrix<size_t> t_iMatrix;
         //! Type of the matrices.
         typedef typename t_Separables :: t_Matrix t_Matrix;
         //! Type of the vectors.
@@ -51,7 +53,7 @@ namespace CE
         t_Mapping mapping;
 
         //! Constructor.
-        Collapse() : dim(0), separables(NULL) {}
+        Collapse() : dim(0), separables_(NULL) {}
         //! Destructor.
         ~Collapse() {}
 
@@ -77,7 +79,14 @@ namespace CE
         void init( t_Separables& _sep );
 
         //! Reference to configuration matrix.
-        const t_Matrix& configurations() const { return configurations_; }
+        const t_iMatrix& configurations() const { return configurations_; }
+        
+        //! Returns the number of dimensions.
+        size_t dimensions() const { return separables_->dimensions(); }
+        //! Returns the number of degrees of liberty (per dimension).
+        size_t dof() const { return separables_->dof(); }
+        //! Returns a constant reference to the separable function;
+        t_Separables& separables() { return *separables_; }
 
       protected:
         //! Creates the _A and _b matrices for fitting.
@@ -90,13 +99,13 @@ namespace CE
 
 
         //! The configurations, arranged in columns.
-        t_Matrix configurations_;
+        t_iMatrix configurations_;
         //! Holds current dimension being fitted.
         size_t dim;
         //! holds the sep. func. split up by rank and confs.
         t_Matrix scales;
         //! Pointer to separable function being minimized.
-        t_Separables *separables;
+        t_Separables *separables_;
     };
 
 }

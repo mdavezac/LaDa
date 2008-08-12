@@ -43,7 +43,7 @@ namespace opt
       //!          the mean to \a _a * \a _b, and the max to |\a _a|.
       //! \param[in] _a is the error.
       //! \param[in] _b is the weight.
-      ErrorTuple  ( types::t_real _a, types::t_real _b = 1e0 )
+      ErrorTuple  ( types::t_real _a, types::t_real _b )
                 : t_Base( _a * _a * _b, std::abs(_a) * _b, std::abs(_a) ),
                   norm(_b){} 
       //! Copy constructor, 

@@ -115,18 +115,18 @@ namespace Fitting
       :: operator()( typename T_COLLAPSE :: t_Matrix &_solution,
                      T_COLLAPSE &_collapse  ) const
       {
-        namespace bblas = boost::numeric::ublas;
         __TRYBEGIN
+        namespace bblas = boost::numeric::ublas;
         typedef typename T_COLLAPSE::t_Matrix t_Matrix;
         types::t_real convergence( 1e1 * tolerance );
         if( verbose ) std::cout << "Starting Alternating-least-square fit.\n";
         types::t_unsigned iter = 0;
         const size_t D( _solution.size2() );
-        t_Matrix A;
-        t_Vector b;
-        opt::ErrorTuple errors;
+        t_Matrix A( _collapse.dof(), _collapse.dof() );
+        t_Vector b( _collapse.dof() );
+        opt::ErrorTuple errors( _collapse.evaluate() );
         _collapse.update_all();
-        if( verbose ) std::cout << "Allsq start: \n";
+        if( verbose ) std::cout << "Allsq start: " << errors << "\n";
         do
         {
           for(size_t dim(0); dim < D; ++dim )
@@ -163,6 +163,7 @@ namespace Fitting
     template< class T_SOLVER > 
       void AlternatingLeastSquare<T_SOLVER> :: Load( const TiXmlElement &_node )
       {
+        __TRYBEGIN
         std::string name = _node.Value();
         const TiXmlElement *parent = &_node;
         if( name.compare( "Allsq" ) ) 
@@ -172,6 +173,7 @@ namespace Fitting
           parent->Attribute( "tolerance", &tolerance );
         if( parent->Attribute( "itermax" ) )
           parent->Attribute( "itermax", &itermax );
+        __TRYEND(,"Error in AlternatingLeastSquare::Load()\n" )
       }
 
 } // end of Fitting namespace
