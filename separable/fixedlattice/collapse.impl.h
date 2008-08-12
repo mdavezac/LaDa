@@ -86,7 +86,7 @@ namespace CE
       ( 
         separables_->coefficients, config, result, _r,
         (
-          bl::if_then( bl::var(d) != bl::constant(dim), bl::_1 *= bl::_2 ),
+          bl::if_then( bl::var(d) != bl::constant(dim), bl::_1 *= bl::_2  ),
           ++bl::var(d)
         )
       );
@@ -97,7 +97,7 @@ namespace CE
   {
     namespace bl = boost::lambda;
     namespace bblas = boost::numeric::ublas;
-    __ASSERT( scales.size1() == configurations_.size1(),
+    __ASSERT( scales.size2() != configurations_.size2(),
               "Inconsistent sizes.\n" )
     // First, normalizes coefficients.
     separables_->normalize();
@@ -167,7 +167,7 @@ namespace CE
       for( bblas::range::const_iterator j( range.begin() ); j != range.end(); ++j )
       {
         const bblas::matrix_column<t_iMatrix> config( configurations_, *j );
-        intermed += (*separables_)( config ) * mapping.eweight(n,*j);
+        intermed += (*separables_)( config ) * mapping.eweight(n,*j - range.start() );
       }
       error += opt::ErrorTuple( mapping.target(n) - intermed, mapping.weight(n) );
     }

@@ -89,12 +89,10 @@ namespace CE
                              T_OUT &_out )
           {
             typedef typename T_ITCOEF::difference_type t_size_t;
-            _op
-            ( 
-              _out,
-              Fuzzy::is_zero( _conf ) ? *_coef:
-                                        *_coef + *( _coef + t_size_t( _conf ) ) 
-            );
+            typename T_ITCOEF::value_type coef( *_coef );
+            if( not Fuzzy::is_zero( _conf ) )
+              coef += *( _coef + t_size_t( _conf ) );
+            _op( _out, coef );
           }
         //! Applies functions with appropriate coef.
         template< class T_CONF, class T_ITCOEF, class T_OUT >
@@ -121,7 +119,7 @@ namespace CE
           {
             typedef typename T_ITCOEF :: value_type t_Type;
             *_coef = t_Type( opt::random::rng() - 0.5e0 ) * _range + t_Type(1);
-            *(_coef + 1) = t_Type( opt::random::rng() - 0.5e0 ) * _range;
+            *( _coef + 1 ) = t_Type( opt::random::rng() - 0.5e0 ) * _range;
             for( size_t i(2); i < D; ++i )
               *(_coef + i) = t_Type( opt::random::rng() - 0.5e0 ) * _range;
           }

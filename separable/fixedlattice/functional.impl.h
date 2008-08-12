@@ -154,15 +154,12 @@ namespace CE
       {
         __ASSERT( _r * t_Mapping::D >= _coefs.size1(), "Inconsistent sizes.\n" )
         __ASSERT( _vecin.size() != _coefs.size2(), "Inconsistent sizes.\n" )
-        typename T_COEFS :: const_iterator1 i_row = _coefs.begin1() + _r * t_Mapping::D;
-        for(size_t i(0); i < t_Mapping::D; ++i, ++i_row )
-        {
-          typename T_COEFS :: const_iterator2 i_column = i_row.begin();
-          typename T_COEFS :: const_iterator2 i_column_end = i_row.end();
-          typename T_VECIN :: const_iterator i_in = _vecin.begin();
-          for(; i_column != i_column_end; ++i_column, ++i_in )
-            t_Mapping::apply( _op, *i_in, i_column.begin(), _out );
-        }
+        const typename T_COEFS :: const_iterator1 i_row = _coefs.begin1() + _r * t_Mapping::D;
+        typename T_COEFS :: const_iterator2 i_column = i_row.begin();
+        typename T_COEFS :: const_iterator2 i_column_end = i_row.end();
+        typename T_VECIN :: const_iterator i_in = _vecin.begin();
+        for(; i_column != i_column_end; ++i_column, ++i_in )
+          t_Mapping::apply( _op, *i_in, i_column.begin(), _out );
       }
     POLICYDEF4( template< class T_COEFS, class T_VECIN, class T_OUT, class T_OP > )
       apply_to_dim_n_rank( const T_COEFS &_coefs, const T_VECIN &_vecin,
@@ -172,7 +169,7 @@ namespace CE
         __ASSERT( _d >= _coefs.size2(), "Inconsistent input dimension.\n" )
         typename T_VECIN :: value_type in = _vecin[_d];
         t_Mapping :: apply( _op, in, 
-                            (_coefs.begin1() + _r * t_Mapping::D ).begin() + _d,
+                            (_coefs.begin2() + _d).begin() + _r * t_Mapping::D,
                             _out );
       }
 #   undef POLICYDEF

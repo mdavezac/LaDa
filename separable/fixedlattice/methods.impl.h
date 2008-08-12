@@ -2,6 +2,7 @@
 //  Version: $Id$
 //
 
+#include <boost/numeric/ublas/io.hpp>
 namespace CE
 {
   namespace Method
@@ -71,7 +72,7 @@ namespace CE
         {
           typedef bblas::matrix_column< const typename T_COLLAPSE :: t_Matrix >  t_Column;
           t_Column column( _collapse.configurations(), *i );
-          predic += _separables( column );
+          predic += _separables( column ) * _collapse.mapping.eweight( _n, *i - erange.start() );
         }
   
         opt::ErrorTuple error( _structure.energy - predic,  weight );
@@ -131,8 +132,8 @@ namespace Fitting
         {
           for(size_t dim(0); dim < D; ++dim )
           {
-            _collapse( A, b, dim );
             bblas::matrix_column<t_Matrix> column( _solution, dim );
+            _collapse( A, b, dim );
             linear_solver( A, column, b );
             _collapse.update( dim );
           }

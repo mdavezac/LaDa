@@ -49,7 +49,7 @@ namespace CE
         boost::numeric::ublas::range range( size_t _i ) const 
           { return boost::numeric::ublas::range( nb_[_i], nb_[_i+1] ); }
         //! Returns the weight for an equivalent structure.
-        t_Vector::value_type eweight( size_t _i, size_t _c )
+        t_Vector::value_type eweight( size_t _i, size_t _c ) const
           { return equiweights[ nb_[_i] + _c ]; }
         //! Initializes the mapping.
        template< class T_STRUCTURES, class T_CONFIGURATIONS >

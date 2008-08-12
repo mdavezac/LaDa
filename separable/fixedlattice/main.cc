@@ -228,7 +228,6 @@ int main(int argc, char *argv[])
 
     // fitting.
     std::cout << "\nFitting using whole training set:" << std::endl;
-    std::cout << separables << "\n";
     nerror = CE::Method::fit( separables, collapse, allsq,
                               structures, verbosity >= print_checks );
     std::cout << nerror << "\n"; 
