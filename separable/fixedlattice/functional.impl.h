@@ -9,6 +9,13 @@
 namespace CE
 {
   template<class T_MAPPING, template<class> class T_POLICY>
+    void Separables<T_MAPPING, T_POLICY> :: set_rank_n_size( size_t _rank, size_t _size )
+    {
+      coefficients.resize( _rank * t_Mapping :: D, _size );
+      norms.resize( _rank ); 
+    }
+
+  template<class T_MAPPING, template<class> class T_POLICY>
   std::ostream& operator<<( std::ostream& _stream, const Separables<T_MAPPING, T_POLICY> &_sep )
   {
     _stream << " Separable Function:\n";
@@ -50,10 +57,12 @@ namespace CE
       rank_vector( const T_COEFS &_coefs, const T_VECIN &_vecin,
                    T_VECOUT &_vecout, T_OP _op )
       {
-        __ASSERT( _coefs.size1() != _vecout.size() * t_Mapping :: D, "Inconsistent sizes.\n" )
+        __ASSERT( _coefs.size1() != _vecout.size() * t_Mapping :: D,
+                     "Inconsistent sizes: " << _coefs.size1() << " < " 
+                  << _vecout.size() << " * " << t_Mapping::D << ".\n" )
         __ASSERT( _vecin.size() != _coefs.size2(), "Inconsistent sizes.\n" )
         typename T_COEFS :: const_iterator2 i_column = _coefs.begin2();
-        typename T_COEFS :: const_iterator2 i_column_end = _coefs.begin2();
+        typename T_COEFS :: const_iterator2 i_column_end = _coefs.end2();
         typename T_VECIN :: const_iterator i_in = _vecin.begin();
         for(; i_column != i_column_end; ++i_column, ++i_in )
         {
@@ -69,7 +78,7 @@ namespace CE
       normalize( T_COEFS &_coefs, T_NORMS &_norms )
       {
         typename T_COEFS :: iterator2 i_column = _coefs.begin2();
-        typename T_COEFS :: iterator2 i_column_end = _coefs.begin2();
+        typename T_COEFS :: iterator2 i_column_end = _coefs.end2();
         for(; i_column != i_column_end; ++i_column )
         {
           typename T_COEFS :: iterator1 i_row = i_column.begin();
@@ -83,7 +92,7 @@ namespace CE
       randomize( T_COEFS &_coefs, typename T_COEFS :: value_type _howrandom)
       {
         typename T_COEFS :: iterator2 i_column = _coefs.begin2();
-        typename T_COEFS :: iterator2 i_column_end = _coefs.begin2();
+        typename T_COEFS :: iterator2 i_column_end = _coefs.end2();
         for(; i_column != i_column_end; ++i_column )
         {
           typename T_COEFS :: iterator1 i_row = i_column.begin();

@@ -51,7 +51,7 @@ namespace CE
     typename t_Range :: const_iterator2 i_conf = equivconfs.begin2();
     typename t_Range :: const_iterator2 i_conf_end = equivconfs.end2();
     for(size_t c(0); i_conf != i_conf_end; ++i_conf, ++c )
-      for(size_t r(0); r < separables->coefficients.size1(); ++r )
+      for(size_t r(0); r < separables->ranks(); ++r )
       {
         const size_t D( t_Separables::t_Mapping :: D );
         typename t_Vector::value_type scalar( mapping.eweight(_i,c) );
@@ -142,7 +142,7 @@ namespace CE
         PosToConfs :: t_Configurations :: const_iterator i_conf_end = i_confs->end();
         for(; i_conf != i_conf_end; ++i_conf, ++j )
         {
-          __ASSERT( j != nbconfs, "Inconsistent sizes" );
+          __ASSERT( j == nbconfs, "Inconsistent sizes" );
           for( size_t i(0); i < _postoconfs.positions.size(); ++i )
             configurations_(i,j) = i_conf->first[i] ? 0: 1;
         }
@@ -153,23 +153,29 @@ namespace CE
     }
 
   INCOLLAPSE( opt::ErrorTuple ) :: evaluate()
+  {
+    namespace bblas = boost::numeric::ublas;
+    opt::ErrorTuple error(0);
+    for(size_t n(0); n < mapping.size(); ++n )
     {
-      namespace bblas = boost::numeric::ublas;
-      opt::ErrorTuple error(0);
-      for(size_t n(0); n < mapping.size(); ++n )
+      bblas::range range( mapping.range(n) );
+      types::t_real intermed(0);
+      for( bblas::range::const_iterator j( range.begin() ); j != range.end(); ++j )
       {
-        bblas::range range( mapping.range(n) );
-        types::t_real intermed(0);
-        for( bblas::range::const_iterator j( range.begin() ); j != range.end(); ++j )
-        {
-          const bblas::matrix_column<t_Matrix> config( configurations_, *j );
-          intermed += (*separables)( config ) * mapping.eweight(n,*j);
-        }
-        error += opt::ErrorTuple( mapping.target(n) - intermed, mapping.weight(n) );
+        const bblas::matrix_column<t_Matrix> config( configurations_, *j );
+        intermed += (*separables)( config ) * mapping.eweight(n,*j);
       }
-      return error;
+      error += opt::ErrorTuple( mapping.target(n) - intermed, mapping.weight(n) );
     }
+    return error;
+  }
 
+  INCOLLAPSE( void ) :: init( t_Separables& _sep )
+  {
+    separables = &_sep; 
+    scales.resize( separables->coefficients.size1() / t_Separables::t_Mapping::D,
+                   configurations_.size2() );
+  }
 # undef COLHEAD
 # undef INCOLLAPSE
 } // end of CE namespace.

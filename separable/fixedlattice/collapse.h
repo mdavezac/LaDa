@@ -74,7 +74,7 @@ namespace CE
         template< class T_STRUCTURES >
         void init( const T_STRUCTURES& _strs, const PosToConfs &_postoconfs );
         //! Sets the norm pointer.
-        void init( t_Separables& _sep ) { separables = &_sep; }
+        void init( t_Separables& _sep );
 
         //! Reference to configuration matrix.
         const t_Matrix& configurations() const { return configurations_; }

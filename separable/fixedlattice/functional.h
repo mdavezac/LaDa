@@ -66,10 +66,11 @@ namespace CE
         t_Vector norms;
 
         //! Constructor.
-        Separables() {}
+        Separables() : ranks_(0), dims_(0) {}
         //! Copy constructor.
         Separables   ( const Separables &_c )
-                   : coefficients( _c.coefficients ), norms( _c.norms ) {}
+                   : coefficients( _c.coefficients ), norms( _c.norms ),
+                     ranks_(_c.ranks_), dims_(_c.dims_) {}
         //! Destructor.
         ~Separables() {}
 
@@ -84,13 +85,23 @@ namespace CE
           return bblas::inner_prod( intermed, norms );
         }
         //! Sets ranks and sizes.
-        void set_rank_n_size( size_t _rank, size_t _size )
-         { coefficients.resize( _rank * t_Mapping :: D, _size ); } 
+        void set_rank_n_size( size_t _rank, size_t _size );
         //! Normalizes coefficients.
         void normalize() { t_Policy::normalize( coefficients, norms ); }
         //! Randomizes coefficients.
         void randomize( t_Vector :: value_type _howrandom )
           { t_Policy::randomize( coefficients, _howrandom ); }
+
+        //! Returns number of ranks.
+        size_t ranks() const { return ranks_; }
+        //! Returns number of dimensions;
+        size_t dimensions() const { return dims_; }
+
+      protected:
+        //! Number of ranks.
+        size_t ranks_;
+        //! Number of dimensions.
+        size_t dims_;
     };
 
   //! Prints out the separable to a stream.

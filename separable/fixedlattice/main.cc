@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
     po::options_description hidden("hidden");
     hidden.add_options()
         ("datadir", po::value<std::string>()->default_value("./"))
-        ("latticeinput", po::value<std::string>()->default_value("input.xml"));
+        ("latinput", po::value<std::string>()->default_value("input.xml"));
  
     po::options_description all;
     all.add(generic).add(specific);
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
  
     po::positional_options_description p;
     p.add("datadir", 1);
-    p.add("latticeinput", 2);
+    p.add("latinput", 2);
  
     po::variables_map vm;
     po::store(po::command_line_parser(argc, argv).
