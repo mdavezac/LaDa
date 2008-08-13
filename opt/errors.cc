@@ -22,7 +22,7 @@ namespace opt
     get<0>() += _b.get<0>();
     get<1>() += _b.get<1>();
     get<2>() = std::max( get<2>(), _b.get<2>() );
-    norm += _b.norm;
+    norm_ += _b.norm_;
     return *this;
   }
   std::ostream& operator<<( std::ostream &_stream, const NErrorTuple &_b )

@@ -129,12 +129,14 @@ namespace CE
     opt::ErrorTuple error;
     for(size_t n(0); n < mapping.size(); ++n )
     {
+      if( mapping.do_skip(n) ) continue;
       bblas::range range( mapping.range(n) );
       types::t_real intermed(0);
       for( bblas::range::const_iterator j( range.begin() ); j != range.end(); ++j )
       {
         const bblas::matrix_column<t_iMatrix> config( configurations_, *j );
-        intermed += (*separables_)( config ) * mapping.eweight(n,*j - range.start() );
+        intermed +=   (*separables_)( config )
+                    * mapping.eweight(n,*j - range.start() );
       }
       error += opt::ErrorTuple( mapping.target(n) - intermed, mapping.weight(n) );
     }
@@ -147,6 +149,7 @@ namespace CE
     scales.resize( separables_->coefficients.size1() / t_Separables::t_Mapping::D,
                    configurations_.size2() );
     update_.init( _sep );
+    regularization.init( _sep );
   }
 
   namespace Policy 
@@ -314,28 +317,33 @@ namespace CE
                    );
           }
     template< class T_SEPARABLES, class T_MAPPING, class T_CONFS >
-      void HighMemUpdate<T_SEPARABLES, T_MAPPING, T_CONFS> :: init( const t_Separables& _sep )
-      {
-        namespace bl = boost::lambda;
-        t_Base :: init( _sep );
-        dimsplit_.resize( configurations_.size2() ); 
-        typename std::vector< t_Matrix > :: iterator i_split = dimsplit_.begin();
-        typename std::vector< t_Matrix > :: iterator i_split_end = dimsplit_.end();
-        for(; i_split != i_split_end; ++i_split )
-          i_split->resize( separables_->ranks(), separables_->dimensions() );
-      }
-    template< class T_SEPARABLES > template< class t_MATRIX, class T_VECTOR >
-      void Regulation :: operator( T_MATRIX &_A, T_VECTOR &_b, size_t _dim )
-      {
-        if( Fuzzy::is_zero( lambda ) ) return; 
-        typename t_Separables :: t_Vector :: const_iterator i_norm = separables_->norms.begin();
-        for( size_t j(0); i_norm != i_norm_end; ++i_norm )
+      void HighMemUpdate<T_SEPARABLES, T_MAPPING, T_CONFS>
+        :: init( const t_Separables& _sep )
         {
-          typename T_Matrix::value_type factor( lambda  * (*i_norm) * (*i_norm) );
-          for( size_t i(0); i < t_Separables :: t_Mapping :: D; ++i, ++j )
-            _A( j, j ) +=  factor * t_Separables::t_Mapping::norm( i );
+          namespace bl = boost::lambda;
+          t_Base :: init( _sep );
+          dimsplit_.resize( configurations_.size2() ); 
+          typename std::vector< t_Matrix > :: iterator i_split = dimsplit_.begin();
+          typename std::vector< t_Matrix > :: iterator i_split_end = dimsplit_.end();
+          for(; i_split != i_split_end; ++i_split )
+            i_split->resize( separables_->ranks(), separables_->dimensions() );
         }
-      }
+    template< class T_SEPARABLES > template< class T_MATRIX, class T_VECTOR >
+      void Regularization<T_SEPARABLES> 
+        :: operator()( T_MATRIX &_A, T_VECTOR &_b, size_t _dim )
+        {
+          if( Fuzzy::is_zero( lambda ) ) return; 
+          typedef typename t_Separables :: t_Vector :: const_iterator t_cit;
+          t_cit i_norm = separables_->norms.begin();
+          t_cit i_norm_end = separables_->norms.end();
+          for( size_t j(0); i_norm != i_norm_end; ++i_norm )
+          {
+            typedef typename T_MATRIX::value_type t_Type;
+            t_Type factor( lambda  * (*i_norm) * (*i_norm) );
+            for( size_t i(0); i < t_Separables :: t_Mapping :: D; ++i, ++j )
+              _A( j, j ) +=  factor * t_Type( t_Separables::t_Mapping::norm( i ) );
+          }
+        }
 
  } // end of Policy namespace
 # undef COLHEAD

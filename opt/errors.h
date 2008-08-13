@@ -23,21 +23,23 @@ namespace opt
   //! An error tuple.
   class ErrorTuple : public boost::tuple<types::t_real, types::t_real, types::t_real> 
   {  
+    friend class NErroTuple;
     protected:
       //! Base class.
       typedef boost::tuple<types::t_real, types::t_real, types::t_real> t_Base;
-      //! Number of quantities over which to average, or sum of their weights in average.
-      types::t_real norm;
+      //! \brief Number of quantities over which to average, or sum of their
+      //!        weights in average.
+      types::t_real norm_;
     public:
       //! Default constructor.
-      ErrorTuple() : t_Base(0,0,0), norm(0) {}
+      ErrorTuple() : t_Base(0,0,0), norm_(0) {}
       //! \brief Constructor.
-      //! \details ErrorTuple::norm is set to one.
+      //! \details ErrorTuple::norm_ is set to one.
       //! \param[in] _a is the variance.
       //! \param[in] _b is the mean.
       //! \param[in] |_c| is the max.
       ErrorTuple  ( types::t_real _a, types::t_real _b, types::t_real _c )
-                : t_Base( _a, _b, _c ), norm(1)  {} 
+                : t_Base( _a, _b, _c ), norm_(1)  {} 
       //! \brief Constructor. 
       //! \details The variance is set to \a _a * \a _a * \a _b, 
       //!          the mean to \a _a * \a _b, and the max to |\a _a|.
@@ -45,17 +47,19 @@ namespace opt
       //! \param[in] _b is the weight.
       ErrorTuple  ( types::t_real _a, types::t_real _b )
                 : t_Base( _a * _a * _b, std::abs(_a) * _b, std::abs(_a) ),
-                  norm(_b){} 
+                  norm_(_b){} 
       //! Copy constructor, 
-      ErrorTuple  ( const ErrorTuple &_e ) : t_Base( _e ), norm(_e.norm) {} 
+      ErrorTuple  ( const ErrorTuple &_e ) : t_Base( _e ), norm_(_e.norm_) {} 
       //! returns variance.
-      types::t_real variance() const { return get<0>() / norm; }
+      types::t_real variance() const { return get<0>() / norm_; }
       //! returns mean.
-      types::t_real mean() const { return get<1>() / norm; }
+      types::t_real mean() const { return get<1>() / norm_; }
       //! returns max.
       types::t_real max() const { return get<2>(); }
       //! Sums errors.
       ErrorTuple& operator+=( const ErrorTuple &_b );
+      //! Returns the number of quantities in the class.
+      types::t_real norm() const { return norm_; }
   };
 
   //! A pair of error tuple for prediction/training.
@@ -75,7 +79,7 @@ namespace opt
       //! Default constructor.
       NErrorTuple() : t_Base(), variance_(0), mean_(0) {}
       //! \brief Constructor. Normalization is set to zero.
-      //! \details ErrorTuple::norm is set to one.
+      //! \details ErrorTuple::norm_ is set to one.
       //! \param[in] _a is the variance.
       //! \param[in] _b is the mean.
       //! \param[in] _c is the max.
@@ -93,7 +97,7 @@ namespace opt
                  : t_Base( _e ), variance_( _e.variance_ ), mean_( _e.mean_ ) {}
       //! Copies error tuple and sum of weights into normalized error tuple.
       const NErrorTuple& operator=( const ErrorTuple &_e )
-       { *( (ErrorTuple*)this ) = _e; return *this; }
+        { *( ErrorTuple* )this = _e; }
       //! returns variance.
       types::t_real variance() const { return ErrorTuple::variance() / variance_; }
       //! returns mean.
@@ -121,7 +125,7 @@ namespace opt
   NErrorTuple mean_n_var( const T_VECTOR &_targets, const T_VECTOR &_weights )
   {
     __DEBUGTRYBEGIN
-    typename T_VECTOR::value_type norm( 0 ), square(0), mean(0);
+    typename T_VECTOR::value_type norm_( 0 ), square(0), mean(0);
     NErrorTuple nerror;
     typename T_VECTOR::const_iterator i_target = _targets.begin();
     typename T_VECTOR::const_iterator i_target_end = _targets.end();
@@ -131,16 +135,16 @@ namespace opt
     for(; i_target != i_target_end; ++i_target, ++i_weight )
     {
       mean += (*i_target) * (*i_weight);
-      norm += (*i_weight);
+      norm_ += (*i_weight);
     }
-    nerror.mean_ = types::t_real(mean) / types::t_real(norm);
+    nerror.mean_ = types::t_real(mean) / types::t_real(norm_);
     i_target = _targets.begin();
     i_weight = _weights.begin();
     for(; i_target != i_target_end; ++i_target, ++i_weight )
-      square +=   ( (*i_target) - mean / norm )
-                * ( (*i_target) - mean / norm )  
+      square +=   ( (*i_target) - mean / norm_ )
+                * ( (*i_target) - mean / norm_ )  
                 * (*i_weight);
-    nerror.variance_ = types::t_real(square) / types::t_real(norm);
+    nerror.variance_ = types::t_real(square) / types::t_real(norm_);
     return nerror;
     __DEBUGTRYEND(, "Error in opt::mean_n_var().\n" )
   }

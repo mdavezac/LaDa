@@ -72,7 +72,7 @@ namespace CE
             norm = T_NORM(1) / norm;
             std::for_each( _coef, _coef + D, bl::_1 *= bl::constant(norm) );
           }
-        static void norm( size_t _i ) { return 1; } 
+        static size_t norm( size_t ) { return 1; } 
     };
     //! \brief Allows different types of mapping from confs to coef parameters.
     //! \detail This mapping is equivalent to VectorPlus, with one constant
@@ -138,7 +138,7 @@ namespace CE
             norm = T_NORM(1) / norm;
             std::for_each( _coef, _coef + D, bl::_1 *= bl::constant(norm) );
           }
-        static void norm( size_t _i ) { return i == 0 ? 0: 1; } 
+        static size_t norm( size_t _i ) { return _i == 0 ? 0: 1; } 
     };
   } // end of Mapping namespace.
 } // end of CE namespace.

@@ -47,7 +47,7 @@ namespace CE
                                           << ". Prediction Errors: ";
           intermediate = check_one( _sep, _collapse, _strs[ _collapse.mapping.n],
                                     _collapse.mapping.n, _verbosity >= 2 );
-          if( _verbosity ) std::cout << intermediate << "\n";
+          if( _verbosity >= 1 ) std::cout << intermediate << "\n";
           errors.second += intermediate;
         }
         return errors;
@@ -70,9 +70,11 @@ namespace CE
         const bblas::range erange( _collapse.mapping.range(_n) );
         for( bblas::range::const_iterator i( erange.begin() ); i != erange.end(); ++i )
         {
-          typedef bblas::matrix_column< const typename T_COLLAPSE :: t_Matrix >  t_Column;
+          typedef bblas::matrix_column< const typename T_COLLAPSE :: t_Matrix > 
+            t_Column;
           t_Column column( _collapse.configurations(), *i );
-          predic += _separables( column ) * _collapse.mapping.eweight( _n, *i - erange.start() );
+          predic +=   _separables( column )
+                    * _collapse.mapping.eweight( _n, *i - erange.start() );
         }
   
         opt::ErrorTuple error( _structure.energy - predic,  weight );

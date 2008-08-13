@@ -75,7 +75,9 @@ int main(int argc, char *argv[])
         ("1dtolerance", po::value<types::t_real>()->default_value(1e-4),
                         "Tolerance of the 1d linear-least square fit.\n" ) 
         ("random", po::value<types::t_real>()->default_value(5e-1),
-                   "Coefficients' randomness.\n" );
+                   "Coefficients' randomness.\n" )
+        ("lambda,l", po::value<types::t_real>()->default_value(0),
+                     "Regularization factor.\n" );
     po::options_description hidden("hidden");
     hidden.add_options()
         ("datadir", po::value<std::string>()->default_value("./"))
@@ -150,6 +152,7 @@ int main(int argc, char *argv[])
     const types::t_unsigned maxiter( vm["maxiter"].as< types::t_unsigned >() );
     const types::t_real dtolerance( vm["1dtolerance"].as< types::t_real >() );
     const types::t_real howrandom( vm["random"].as<types::t_real>() );
+    const types::t_real lambda( vm["lambda"].as<types::t_real>() );
 
     // Loads lattice
     boost::shared_ptr< Crystal::Lattice >
@@ -209,10 +212,12 @@ int main(int argc, char *argv[])
     // Initializes collapse functor.
     typedef Traits::CE::Collapse< t_Function, 
                                   CE::Mapping::ExcludeOne< CE::Mapping::SymEquiv >,
+                                  CE::Policy::Regularization,
                                   CE::Policy::HighMemUpdate > t_CollapseTraits;
     typedef CE::Collapse< t_CollapseTraits > t_Collapse;
     t_Collapse collapse;
     collapse.init( structures, postoconfs );
+    collapse.regularization.lambda = lambda;
 
 
     opt::NErrorTuple nerror( opt::mean_n_var(structures) ); 
@@ -232,21 +237,26 @@ int main(int argc, char *argv[])
                  << dtolerance << "\n"
               << "Data mean: " << nerror.nmean() << "\n"
               << "Data Variance: " << nerror.nvariance() << "\n"
-              << "Random Seed: " << seed << "\n";
+              << "Random Seed: " << seed << "\n"
+              << "Regulation factor: " << lambda << "\n";
 
     // fitting.
     if( doloo )
     {
+      collapse.mapping.do_exclude = true;
       std::cout << "Starting Leave-One-Out Procedure.\n";
       opt::t_ErrorPair errors;
       errors = CE::Method::leave_one_out( separables, collapse, allsq,
                                           structures, verbosity - 1 );
       std::cout << "Average Training Errors:\n " << ( nerror = errors.first ) << "\n";
       std::cout << "Final Prediction Errors:\n " << ( nerror = errors.second ) << "\n\n";
+      std::cout << "Average Training Errors:\n " << errors.first << "\n";
+      std::cout << "Final Prediction Errors:\n " << errors.second << "\n\n";
       if( verbosity >= print_function ) std::cout << separables << "\n";
     }
     if( dofit )
     {
+      collapse.mapping.do_exclude = false;
       std::cout << "\nFitting using whole training set:" << std::endl;
       nerror = CE::Method::fit( separables, collapse, allsq,
                                 structures, verbosity >= print_checks );

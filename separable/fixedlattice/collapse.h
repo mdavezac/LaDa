@@ -31,6 +31,8 @@ namespace CE
   {
     template< class T_SEPARABLES, class T_MAPPING, class T_CONFS >
       class LowMemUpdate;
+    template< class T_SEPARABLES >
+      class NoReg;
   }
   //! \endcond
 } // end of CE namespace
@@ -42,7 +44,7 @@ namespace Traits
     //! Traits of a collapse functor.
     template< class T_SEPARABLES,
               class T_MAPPING = ::CE::Mapping::SymEquiv, 
-              class T_REGULARIZATIONPOLICY,
+              template<class> class T_REGULARIZATIONPOLICY = ::CE::Policy::NoReg,
               template<class, class, class>
                 class T_UPDATEPOLICY = ::CE::Policy::LowMemUpdate >
     struct Collapse 
@@ -51,10 +53,10 @@ namespace Traits
       typedef boost::numeric::ublas::matrix<size_t> t_iMatrix;
       //! Type of the Mapping.
       typedef T_SEPARABLES t_Separables;
-      //! Type of the Regulations Policy
-      typedef T_REGULARIZATIONPOLICY t_RegPolicy;
       //! Type of the Mapping.
       typedef T_MAPPING t_Mapping;
+      //! Type of the Regulations Policy
+      typedef T_REGULARIZATIONPOLICY< t_Separables > t_RegPolicy;
       //! Type of the Policy.
       typedef T_UPDATEPOLICY<t_Separables, t_Mapping, t_iMatrix> t_UpdatePolicy;
     };
@@ -83,6 +85,8 @@ namespace CE
         typedef typename t_Traits :: t_iMatrix t_iMatrix;
         //! Type of the update policy.
         typedef typename t_Traits :: t_UpdatePolicy t_UpdatePolicy;
+        //! Type of the update policy.
+        typedef typename t_Traits :: t_RegPolicy t_RegPolicy;
         //! Type of the matrices.
         typedef typename t_Separables :: t_Matrix t_Matrix;
         //! Type of the vectors.
@@ -91,6 +95,8 @@ namespace CE
         //! \brief The mapping from target values to symetrically equivalent
         //!        structures.
         t_Mapping mapping;
+        //! Regularization.
+        t_RegPolicy regularization;
 
         //! Constructor.
         Collapse() : dim(0), separables_(NULL),
@@ -101,7 +107,7 @@ namespace CE
         //! Creates the fitting matrix and target vector.
         void operator()( t_Matrix &_A, t_Vector &_b,
                          types::t_unsigned _dim )
-          { dim = _dim; create_A_n_b( _A, _b ); }
+          { dim = _dim; create_A_n_b( _A, _b ); regularization( _A, _b, _dim); }
         //! Evaluates square errors.
         opt::ErrorTuple evaluate();
 
@@ -182,7 +188,8 @@ namespace CE
           //! Updates only dimension \a _dim. 
           void operator()( size_t _dim ) { operator()(); }
           //! Returns the factor for configurations _kv, and rank _r, and dimension.
-          typename t_Vector :: value_type factor( size_t _kv, size_t _r, size_t _dim) const;
+          typename t_Vector :: value_type
+            factor( size_t _kv, size_t _r, size_t _dim) const;
           //! Updates pointer to separable function.
           void init( const t_Separables& _sep );
 
@@ -226,7 +233,8 @@ namespace CE
           //! Updates only dimension \a _dim. 
           void operator()( size_t _dim );
           //! Returns the factor for configurations _kv, and rank _r, and dimension.
-          typename t_Vector :: value_type factor( size_t _kv, size_t _r, size_t _dim) const;
+          typename t_Vector :: value_type
+            factor( size_t _kv, size_t _r, size_t _dim) const;
           //! Updates pointer to separable function.
           void init( const t_Separables& _sep );
 
@@ -249,31 +257,35 @@ namespace CE
     class NoReg 
     {
       public:
+        //! Type of the separable function.
+        typedef T_SEPARABLES t_Separables;
         //! Constructor
         NoReg() {};
         //! Updates pointer to separable function.
-        void init( const t_Separables& _sep );
+        void init( const t_Separables& _sep ) {}
 
         //! Would modify A matrix and b vector.
-        template< class t_MATRIX, class T_VECTOR >
-          void operator( T_MATRIX &, T_VECTOR &, size_t _dim ) {}
+        template< class T_MATRIX, class T_VECTOR >
+          void operator()( T_MATRIX &, T_VECTOR &, size_t _dim ) {}
     };
     template< class T_SEPARABLES >
-    class Regulation 
+    class Regularization 
     {
       public:
+        //! Type of the separable function.
+        typedef T_SEPARABLES t_Separables;
+
         //! Regulation factor.
         types::t_real lambda;
 
         //! Constructor
-        Regulations() {};
+        Regularization() : lambda(0) {};
         //! Updates pointer to separable function.
-        void init( const t_Separables& _sep )
-          { separables = &_sep; }
+        void init( const t_Separables& _sep ) { separables_ = &_sep; }
 
         //! Would modify A matrix and b vector.
-        template< class t_MATRIX, class T_VECTOR >
-          void operator( T_MATRIX &, T_VECTOR &, size_t _dim ) 
+        template< class T_MATRIX, class T_VECTOR >
+          void operator()( T_MATRIX &, T_VECTOR &, size_t _dim );
 
       protected:
         //! A reference to the separable function.
