@@ -44,13 +44,14 @@ namespace Traits
     //! Traits of a collapse functor.
     template< class T_SEPARABLES,
               class T_MAPPING = ::CE::Mapping::SymEquiv, 
-              template<class> class T_REGULARIZATIONPOLICY = ::CE::Policy::NoReg,
-              template<class, class, class>
-                class T_UPDATEPOLICY = ::CE::Policy::LowMemUpdate >
+              class T_REGULARIZATIONPOLICY = ::CE::Policy::NoReg<T_SEPARABLES>,
+              class T_CONFS = boost::numeric::ublas::matrix<size_t>,
+              class T_UPDATEPOLICY
+                = ::CE::Policy::LowMemUpdate<T_SEPARABLES, T_MAPPING, T_CONFS >
     struct Collapse 
     {
       //! Type of the configuration matrix.
-      typedef boost::numeric::ublas::matrix<size_t> t_iMatrix;
+      typedef T_CONFS t_iMatrix;
       //! Type of the Mapping.
       typedef T_SEPARABLES t_Separables;
       //! Type of the Mapping.
@@ -105,11 +106,12 @@ namespace CE
         ~Collapse() {}
 
         //! Creates the fitting matrix and target vector.
-        void operator()( t_Matrix &_A, t_Vector &_b,
-                         types::t_unsigned _dim )
-          { dim = _dim; create_A_n_b( _A, _b ); regularization( _A, _b, _dim); }
+        template< class T_MATRIX, class T_VECTOR >
+          void operator()( T_MATRIX &_A, T_VECTOR &_b,
+                           types::t_unsigned _dim )
+            { dim = _dim; create_A_n_b( _A, _b ); regularization( _A, _b, _dim); }
         //! Evaluates square errors.
-        opt::ErrorTuple evaluate();
+        opt::ErrorTuple evaluate() const;
 
         //! Updates the scales vector and  normalizes.
         void update_all();
@@ -131,12 +133,15 @@ namespace CE
         size_t dimensions() const { return separables_->dimensions(); }
         //! Returns the number of degrees of liberty (per dimension).
         size_t dof() const { return separables_->dof(); }
-        //! Returns a constant reference to the separable function;
+        //! Returns a reference to the separable function;
         t_Separables& separables() { return *separables_; }
+        //! Returns a constant reference to the separable function;
+        const t_Separables& separables() const { return *separables_; }
 
       protected:
         //! Creates the _A and _b matrices for fitting.
-        void create_A_n_b( t_Matrix &_A, t_Vector &_b );
+        template< class T_MATRIX, class T_VECTOR >
+          void create_A_n_b( T_MATRIX &_A, T_VECTOR &_b );
         //! Finds scaling factor for that conf, collapsed dimension, and rank.
         typename t_Vector::value_type factor( size_t _kv, size_t _r, size_t _d );
         //! \brief Creates an X vector for fitting, for a single rank.

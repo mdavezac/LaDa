@@ -8,40 +8,39 @@
 
 namespace CE
 {
-  template<class T_MAPPING, template<class> class T_POLICY>
-    void Separables<T_MAPPING, T_POLICY>
-      :: set_rank_n_size( size_t _rank, size_t _size )
-      {
-        coefficients.resize( _rank * t_Mapping::D, _size );
-        norms.resize( _rank  ); 
-      }
-  template<class T_MAPPING, template<class> class T_POLICY>
-    size_t Separables<T_MAPPING, T_POLICY> :: ranks() const
+  template<class T_TRAITS >
+    void Separables<T_TRAITS > :: set_rank_n_size( size_t _rank, size_t _size )
     {
-      __ASSERT( coefficients.size1() % t_Mapping::D, 
-                "Inconsistent sizes.\n" )
-      return coefficients.size1() / t_Mapping::D; 
+      coefficients_.resize( _rank * t_Mapping::D, _size );
+      norms.resize( _rank  ); 
     }
-  template<class T_MAPPING, template<class> class T_POLICY>
-    template< class T_VECTOR > types::t_real
-      Separables<T_MAPPING, T_POLICY> :: operator()( const T_VECTOR &_conf ) const
-      {
-        namespace bblas = boost::numeric::ublas;
-        namespace bl = boost::lambda;
-        t_Vector intermed( ranks(), 1e0 );
-        t_Policy :: rank_vector( coefficients, _conf, intermed, bl::_1 *= bl::_2 );
-        return bblas::inner_prod( intermed, norms );
-      }
+  template<class T_TRAITS >
+    size_t Separables<T_TRAITS> :: ranks() const
+    {
+      __ASSERT( coefficients().size1() % t_Mapping::D, 
+                "Inconsistent sizes.\n" )
+      return coefficients().size1() / t_Mapping::D; 
+    }
+  template<class T_TRAITS > template< class T_VECTOR > 
+    types::t_real Separables<T_TRAITS> :: operator()( const T_VECTOR &_conf ) const
+    {
+      namespace bblas = boost::numeric::ublas;
+      namespace bl = boost::lambda;
+      t_Vector intermed( ranks(), 1e0 );
+      t_Policy :: rank_vector( coefficients(), _conf, intermed, bl::_1 *= bl::_2 );
+      return bblas::inner_prod( intermed, norms );
+    }
 
-  template<class T_MAPPING, template<class> class T_POLICY>
+  template<class T_TRAITS>
   std::ostream& operator<<( std::ostream& _stream,
-                            const Separables<T_MAPPING, T_POLICY> &_sep )
+                            const Separables<T_TRAITS> &_sep )
   {
     _stream << " Separable Function:";
-    typedef typename Separables<T_MAPPING, T_POLICY> :: t_Matrix t_Matrix;
-    typename t_Matrix :: const_iterator1 i_row = _sep.coefficients.begin1();
-    typename t_Matrix :: const_iterator1 i_row_end = _sep.coefficients.end1();
-    for( size_t r(0); i_row != i_row_end; i_row += T_MAPPING :: D, ++r )
+    typedef Separables<T_TRAITS> t_Separables;
+    typedef typename t_Separables :: t_Matrix t_Matrix;
+    typename t_Matrix :: const_iterator1 i_row = _sep.coefficients().begin1();
+    typename t_Matrix :: const_iterator1 i_row_end = _sep.coefficients().end1();
+    for( size_t r(0); i_row != i_row_end; i_row += t_Separables::t_Mapping:: D, ++r )
     {
       _stream << "\n   Rank " << r << ": " << _sep.norms[r] << "\n     ";
       typename t_Matrix :: const_iterator2 i_column = i_row.begin();
@@ -50,7 +49,7 @@ namespace CE
       {
         _stream << "(";
         typename t_Matrix :: const_iterator1 i_coef = i_column.begin();
-        for( size_t i(0); i < T_MAPPING :: D; ++i, ++i_coef )
+        for( size_t i(0); i < t_Separables :: t_Mapping :: D; ++i, ++i_coef )
           _stream  << *i_coef << " ";
         _stream << ") ";
         if( d % 5 == 0 and d ) _stream << "\n     "; 

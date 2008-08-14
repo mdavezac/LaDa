@@ -101,6 +101,8 @@ namespace CE
       opt::ErrorTuple operator_( const T_CLASS &_class,
                                  BaseFit::t_Vector &_x, 
                                  const T_SOLVER &_solver );
+    template< class T_CLASS, class T_MATRIX, class T_VECTOR >
+      void construct_( const T_CLASS &_class, T_MATRIX &_A, T_VECTOR &_b );
   }
   //! \endcond
 
@@ -128,6 +130,9 @@ namespace CE
       opt::ErrorTuple details::operator_( const T_CLASS &_class,
                                           BaseFit::t_Vector &_x, 
                                           const T_SOLVER &_solver );
+
+    template< class T_CLASS, class T_MATRIX, class T_VECTOR > friend
+      void details::construct_( const T_CLASS &_class, T_MATRIX &_A, T_VECTOR &_b ) ;
     public:
       //! Some extra policies.
       typedef T_POLICY t_Policy;
@@ -168,13 +173,22 @@ namespace CE
         opt::ErrorTuple operator()( t_Vector &_x,
                                     const T_SOLVER &_solver ) const
           { return details::operator_( *this, _x, _solver ); }
+      //! \brief Creates fitting matrix and target vector.
+      //! \details Does not fit. Adds values to pre-existing matrix and vector.
+      template< class T_MATRIX, class T_VECTOR >
+        void construct( T_MATRIX &_A, T_VECTOR &_b ) const
+          { details::construct_( *this, _A, _b ); }
       //! Initializes from structures. 
       void init( const t_Clusters &_clusters )
         { t_Policy :: init( _clusters ); }
 
+      //! Number of degrees of liberty.
+      size_t dof() const { return nb_cls; }
+
     protected:
       //! Computes \a _A and \a _b excluding excluded structures.
-      void create_A_n_b( t_Matrix &_A, t_Vector &_b ) const;
+      template< class T_MATRIX, class T_VECTOR >
+        void create_A_n_b( T_MATRIX &_A, T_VECTOR &_b ) const;
 
     protected:  
       using t_Policy :: pis;
@@ -191,6 +205,8 @@ namespace CE
         opt::ErrorTuple details::operator_( const T_CLASS &_class,
                                             BaseFit::t_Vector &_x, 
                                             const T_SOLVER &_solver );
+      template< class T_CLASS, class T_MATRIX, class T_VECTOR > friend
+        void details::construct_( const T_CLASS &_class, T_MATRIX &_A, T_VECTOR &_b ) ;
       public:
         //! A policy base class.
         typedef T_POLICY t_Policy;
@@ -203,16 +219,21 @@ namespace CE
         ~RegulatedFit () {};
 
         //! Fit with regularization weights.
-        template< class T_SOLVER >
+        template< class T_SOLVER > 
         opt::ErrorTuple operator()( BaseFit::t_Vector &_x,
                                     const types::t_real *_weights,
                                     T_SOLVER &_solver ) const;
+        //! \brief Creates fitting matrix and target vector.
+        //! \details Does not fit. Adds values to pre-existing matrix and vector.
+        template< class T_MATRIX, class T_VECTOR >
+          void construct( T_MATRIX &_A, T_VECTOR &_b ) const
+            { details::construct_( *this, _A, _b ); }
 
       protected:
         //! Adds weight regulation to \a _A.
-        void other_A_n_b( BaseFit::t_Matrix &_A,
-                          BaseFit::t_Vector &_b ) const;
-
+        template< class T_MATRIX, class T_VECTOR >
+          void other_A_n_b( T_MATRIX &_A, T_VECTOR &_b ) const;
+  
         //! A pointer to the the weights
         mutable const types::t_real *regweights;
 
@@ -243,7 +264,8 @@ namespace CE
 
         protected:
           //! Computes \a _A and \a _b excluding excluded structures.
-          void other_A_n_b( BaseFit::t_Matrix &_A, BaseFit::t_Vector &_b ) const {};
+          template< class T_MATRIX, class T_VECTOR >
+            void other_A_n_b( T_MATRIX &_A, T_VECTOR &_b ) const {};
           //! Returns true if index \a _i is an excluded structures.
           bool found( types::t_unsigned _i ) const { return false; }
 
@@ -301,8 +323,8 @@ namespace CE
         public:
           //! A policy base class class.
           typedef T_BASE t_Base;
-          //! lambda for pair regulation
-          types::t_real lambda;
+          //! alpha for pair regulation
+          types::t_real alpha;
           //! t for pair regulation
           types::t_real tcoef;
           //! Wether to perform pair regulation.
@@ -319,8 +341,8 @@ namespace CE
           //! Possible initialization stuff.
           void init( const BaseFit::t_Clusters &_clusters );
           //! Adds pair regulation to \a _A.
-          void other_A_n_b( BaseFit::t_Matrix &_A,
-                            BaseFit::t_Vector &_b ) const;
+          template< class T_MATRIX, class T_VECTOR >
+            void other_A_n_b( T_MATRIX &_A, T_VECTOR &_b ) const;
 
           //! A container to the the pair terms.
           typedef std::vector< std::pair< size_t, types::t_real > > t_PairWeights;

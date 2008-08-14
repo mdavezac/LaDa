@@ -26,10 +26,38 @@ namespace CE
   namespace Policy 
   {
     template< class > class DimensionMatrix;
+    class DirectCoefficients;
   }
   //! \endcond
+}
 
+namespace Traits
+{
+  namespace CE
+  {
+    template< class T_MAPPING = ::CE::Mapping::VectorDiff<2>, 
+              class T_POLICY = ::CE::Policy::DimensionMatrix< T_MAPPING >,
+              class T_COEFFICIENTS = ::CE::Policy::DirectCoefficients, 
+              class T_VECTOR = boost::numeric::ublas::vector
+                      < typename T_COEFFICIENTS :: t_Matrix :: value_type > >
+     struct Separables
+     {
+       //! Type of mapping.
+       typedef T_MAPPING t_Mapping;
+       //! Type of policy.
+       typedef T_POLICY t_Policy;
+       //! Type of the coefficient interface.
+       typedef T_COEFFICIENTS t_Coefficients;
+       //! Type of matrix.
+       typedef typename t_Coefficients :: t_Matrix t_Matrix;
+       //! Type of vector.
+       typedef T_VECTOR t_Vector;
+     };
+  } // end of CE namespace 
+} // end of Traits namespace
 
+namespace CE
+{
   //! \brief A sum of separable functions for a fixed-lattice.
   //! \param T_MAPPING specifies how to map from configuration to coefficients
   //!                  elements. This mapping takes care of representing the
@@ -43,25 +71,23 @@ namespace CE
   //!          is a different dimension. The row are organized according to
   //!          rank and inner basis (for that column's dimension) with the
   //!          latter the fastest runnning index.
-  template< class T_MAPPING = Mapping::VectorDiff<2>, 
-            template<class> class T_POLICY = Policy::DimensionMatrix >
+  template< class T_TRAITS >
     class Separables
     {
       public:
+        //! Type of traits for this class.
+        typedef T_TRAITS t_Traits;
         //! Type of mapping used to go from conf to coefs.
-        typedef T_MAPPING t_Mapping;
+        typedef typename t_Traits :: t_Mapping t_Mapping;
         //! Type of boost matrices.
-        typedef boost::numeric::ublas::matrix<types::t_real> t_Matrix;
+        typedef typename t_Traits :: t_Matrix t_Matrix;
         //! Type of boost vectors.
-        typedef boost::numeric::ublas::vector<types::t_real> t_Vector;
+        typedef typename t_Traits :: t_Vector t_Vector;
         //! Type of the policy class.
-        typedef T_POLICY<t_Mapping> t_Policy;
+        typedef typename t_Traits :: t_Policy t_Policy;
+        //! Type of the coefficient interface.
+        typedef typename t_Traits :: t_Coefficients t_Coefficients;
 
-        //! \brief Coefficients of the separable functions. 
-        //! \details Rows denote ranks, and columns are indexed according to
-        //!          the dimension of the separable function and the family of
-        //!          functions of each separable function.
-        t_Matrix coefficients;
         //! Holds norms of each rank.
         t_Vector norms;
 
@@ -69,7 +95,7 @@ namespace CE
         Separables() {}
         //! Copy constructor.
         Separables   ( const Separables &_c )
-                   : coefficients( _c.coefficients ), norms( _c.norms ) {}
+                   : coefficients_( _c.coefficients_ ), norms( _c.norms ) {}
         //! Destructor.
         ~Separables() {}
 
@@ -79,23 +105,39 @@ namespace CE
         //! Sets ranks and sizes.
         void set_rank_n_size( size_t _rank, size_t _size );
         //! Normalizes coefficients.
-        void normalize() { t_Policy::normalize( coefficients, norms ); }
+        void normalize() { t_Policy::normalize( coefficients(), norms ); }
         //! Randomizes coefficients.
-        void randomize( t_Vector :: value_type _howrandom )
-          { t_Policy::randomize( coefficients, _howrandom ); }
+        void randomize( typename t_Vector :: value_type _howrandom )
+          { t_Policy::randomize( coefficients(), _howrandom ); }
 
         //! Returns number of ranks.
         size_t ranks() const;
         //! Returns number of dimensions;
-        size_t dimensions() const { return coefficients.size2(); }
+        size_t dimensions() const { return coefficients().size2(); }
         //! Returns the number of degrees of liberty (per dimension).
-        size_t dof() const { return coefficients.size1(); }
+        size_t dof() const { return coefficients().size1(); }
+
+        //! Returns a reference to the coefficients.
+        t_Matrix& coefficients() { return coefficients_(); }
+        //! Returns a constant reference to the coefficients.
+        const t_Matrix& coefficients() const { return coefficients_(); }
+
+        //! Allows manipulation of the coefficients' interface itself.
+        t_Coefficients& coefficients_interface() { return coefficients_; }
+
+
+      protected:
+        //! \brief Coefficients of the separable functions. 
+        //! \details Rows denote ranks, and columns are indexed according to
+        //!          the dimension of the separable function and the family of
+        //!          functions of each separable function.
+        t_Coefficients coefficients_;
     };
 
   //! Prints out the separable to a stream.
-  template<class T_MAPPING, template<class> class T_POLICY>
+  template<class T_TRAITS >
   std::ostream& operator<<( std::ostream& _stream,
-                            const Separables<T_MAPPING, T_POLICY> &_sep );
+                            const Separables<T_TRAITS> &_sep );
 
   //! Holds policies for fixed lattice separables.
   namespace Policy
@@ -144,7 +186,64 @@ namespace CE
       template< class T_COEFS > 
         void static randomize( T_COEFS &_coefs, typename T_COEFS::value_type _howrandom );
     };
-  }
+
+    //! Interface between the coefficient matrix and the separable function.
+    class DirectCoefficients
+    {
+      public:
+        //! Type of the matrix.
+        typedef boost::numeric::ublas::matrix<types::t_real> t_Matrix;
+ 
+        //! Constructor.
+        DirectCoefficients() {}
+        //! Copy Constructor.
+        DirectCoefficients( const DirectCoefficients &_c ) : matrix_(_c.matrix_) {} 
+        //! Returns a reference to the matrix.
+        t_Matrix& operator()() { return matrix_; }
+        //! Returns a reference to the matrix.
+        const t_Matrix& operator()() const { return matrix_; }
+        //! Resizes matrix.
+        void resize( size_t _i, size_t _j ) { matrix_.resize(_i, _j); }
+ 
+      protected:
+        //! The coefficients themselves.
+        t_Matrix matrix_;
+    };
+    
+    //! Interface between the coefficient matrix and the separable function.
+    class MatrixRangeCoefficients
+    {
+      //! Type of the matrix.
+      typedef boost::numeric::ublas::matrix<types::t_real> t_RealMatrix;
+
+      public:
+        //! Type of the coefficients.
+        typedef boost::numeric::ublas::matrix_range< t_RealMatrix > t_Matrix;
+ 
+        //! Constructor.
+        MatrixRangeCoefficients() {}
+        //! Copy Constructor.
+        MatrixRangeCoefficients( const MatrixRangeCoefficients &_c ) : matrix_(_c.matrix_) {} 
+
+        //! Returns a reference to the matrix.
+        t_Matrix& operator()() { return *matrix_; }
+        //! Returns a reference to the matrix.
+        const t_Matrix& operator()() const { return *matrix_; }
+
+        //! Sets range and reference matrix.
+        void set( t_RealMatrix& _mat,
+                  const boost::numeric::ublas::range &_a,
+                  const boost::numeric::ublas::range &_b )
+          { matrix_.reset( new t_Matrix( _mat, _a, _b ) ); }
+        //! Resize matrix.
+        void resize( size_t, size_t ) {};
+ 
+      protected:
+        //! The coefficients themselves.
+        boost::shared_ptr<t_Matrix> matrix_;
+    };
+  
+  } // end of Policy namespace.
 }
 
 #include "functional.impl.h"

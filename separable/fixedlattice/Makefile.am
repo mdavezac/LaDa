@@ -3,7 +3,7 @@
 #
 include ../../Files
 
-bin_PROGRAMS = tetra cubic
+bin_PROGRAMS = tetra cubic mixed
 
 AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
 	      @BOOST_CXXFLAGS@ -D __DOHALFHALF__
@@ -25,6 +25,11 @@ tetra_CPPFLAGS =  $(AM_CPPFLAGS) -I .. -D_TETRAGONAL_CE_
 tetra_LDFLAGS = $(cubic_LDFLAGS)
 tetra_LDADD = $(cubic_LDADD) 
 
+mixed_SOURCES = mxmain.cc
+mixed_CPPFLAGS =  $(AM_CPPFLAGS) -I .. -D_CUBIC_CE_
+mixed_LDFLAGS = $(cubic_LDFLAGS)
+mixed_LDADD = $(cubic_LDADD) ../../ce/libce.la
+
 noinst_LTLIBRARIES = libfxseparable.la 
 libfxseparable_la_SOURCES = $(SEPARABLES_FXL_CC)
 libfxseparable_ladir = $(includedir)/LaDa/separable/fixedlattice
@@ -39,5 +44,7 @@ libfxseparable_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS)
 	cd ../physics; $(MAKE) 
 ../../opt/libopt.la: 
 	cd ../opt; $(MAKE) 
-../../opt/libprint.la: 
+../../print/libprint.la: 
 	cd ../print; $(MAKE) 
+../../ce/libce.la: 
+	cd ../ce; $(MAKE) 

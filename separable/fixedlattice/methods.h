@@ -19,32 +19,26 @@ namespace CE
   {
     //! \brief Fits a sum of separable functions using specief collapse functor
     //!        and minimizer.
-    template< class T_SEPARABLE, class T_COLLAPSE,
-              class T_MINIMIZER, class T_STRUCTURES >
-      opt::ErrorTuple fit( T_SEPARABLE &_sep, 
-                           T_COLLAPSE &_collapse,
+    template< class T_COLLAPSE, class T_MINIMIZER, class T_STRUCTURES >
+      opt::ErrorTuple fit( T_COLLAPSE &_collapse,
                            const T_MINIMIZER &_min,
                            const T_STRUCTURES &_strs,
                            bool _verbose = false );
     //! \brief Performs leave-one-out for a sum of separable functions using
     //!        specief collapse functor and minimizer.
-    template< class T_SEPARABLE, class T_COLLAPSE,
-              class T_MINIMIZER, class T_STRUCTURES >
-      opt::t_ErrorPair leave_one_out( T_SEPARABLE &_sep, 
-                                      T_COLLAPSE &_collapse,
+    template< class T_COLLAPSE, class T_MINIMIZER, class T_STRUCTURES >
+      opt::t_ErrorPair leave_one_out( T_COLLAPSE &_collapse,
                                       const T_MINIMIZER &_min,
                                       const T_STRUCTURES &_strs,
                                       types::t_int _verbosity = 1 );
     //! Checks error for one structure.
-    template< class T_COLLAPSE, class T_SEPARABLES >
-      opt::ErrorTuple check_one( const T_SEPARABLES &_separables,
-                                 const T_COLLAPSE &_collapse,
+    template< class T_COLLAPSE >
+      opt::ErrorTuple check_one( const T_COLLAPSE &_collapse,
                                  const Crystal::Structure &_structure,
                                  size_t _n, bool _verbose = false );
     //! Checks error for all structure.
-    template< class T_COLLAPSE, class T_SEPARABLES, class T_STRUCTURES >
-      opt::ErrorTuple check_all( const T_SEPARABLES &_separables,
-                                 const T_COLLAPSE &_collapse,
+    template< class T_COLLAPSE, class T_STRUCTURES >
+      opt::ErrorTuple check_all( const T_COLLAPSE &_collapse,
                                  const T_STRUCTURES &_strs,
                                  bool _verbose = false );
   } // end of namespace Methods.

@@ -32,9 +32,10 @@
 #include "collapse.h"
 #include "prepare.h"
 #include "methods.h"
+#include "mixed.h"
 
 #include <revision.h>
-#define __PROGNAME__ "Fixed-Lattice Sum of Separable functions" 
+#define __PROGNAME__ "Mixed Approach: CE and Sum of Separable functions on a fixed lattice." 
 
 const types::t_unsigned print_reruns   = 1;
 const types::t_unsigned print_checks   = 2;
@@ -77,7 +78,15 @@ int main(int argc, char *argv[])
         ("random", po::value<types::t_real>()->default_value(5e-1),
                    "Coefficients' randomness.\n" )
         ("lambda,l", po::value<types::t_real>()->default_value(0),
-                     "Regularization factor.\n" );
+                     "Regularization factor.\n" )
+        ("maxpairs,m", po::value<types::t_unsigned>()->default_value(5),
+                       "Max distance for pairs (in neighbors)."  )
+        ("alpha", po::value<types::t_real>()->default_value(1),
+                   "Lambda for pair regularization. With --loo/fit and --tcoef only. " )
+        ("tcoef", po::value<types::t_real>()->default_value(0),
+                  "\"t\" coefficient. With --loo/fit only. " )
+        ("volkerreg", " Pair regulation done with Volker Blum's"
+                      " normalization (changes the units of the \"t\" coefficient). " );
     po::options_description hidden("hidden");
     hidden.add_options()
         ("datadir", po::value<std::string>()->default_value("./"))
@@ -153,6 +162,11 @@ int main(int argc, char *argv[])
     const types::t_real dtolerance( vm["1dtolerance"].as< types::t_real >() );
     const types::t_real howrandom( vm["random"].as<types::t_real>() );
     const types::t_real lambda( vm["lambda"].as<types::t_real>() );
+    const bool volkerreg = vm.count("volkerreg") != 0;
+    const types::t_real alpha( vm["alpha"].as<types::t_real>() );
+    const types::t_real tcoef( vm["tcoef"].as<types::t_real>() );
+    const types::t_unsigned maxpairs = vm["maxpairs"].as<types::t_unsigned>();
+    __ASSERT( Fuzzy::le(tcoef, 0e0), "Coefficient \"t\" cannot negative.\n" )
 
     // Loads lattice
     boost::shared_ptr< Crystal::Lattice >
@@ -178,15 +192,26 @@ int main(int argc, char *argv[])
           lattice->cell.x[i][2] = 0.5e0;
 #   endif
 
-    // Reads structures.
-    std::vector< Crystal::Structure > structures;
-    Crystal::read_ce_structures( dir / "LDAs.dat", structures );
-    if( verbosity >= print_data )
-      std::for_each
-      (
-        structures.begin(), structures.end(), 
-        std::cout << bl::_1 << "\n"
-      );
+    // create pair terms.
+    CE::Regulated :: t_Clusters clusters;
+    CE::create_pairs( *lattice, maxpairs, clusters );
+    std::cout << "Creating " << clusters.size() << " pair figures.\n";
+    if( verbosity >= printdata )
+    {
+      CE::Regulated :: t_Clusters :: const_iterator i_class = clusters.begin();
+      CE::Regulated :: t_Clusters :: const_iterator i_class_end = clusters.end();
+      for(; i_class != i_class_end; ++i_class )
+      {
+        if( verbosity < allclusters )  std::cout << i_class->front()
+                                                 << " D=" << i_class->size() 
+                                                 << "\n";
+        else std::for_each( 
+                            i_class->begin(), i_class->end(), 
+                            std::cout << bl::_1 << "\n"
+                          );
+      }
+    }
+
 
     // Initializes fitting.
     typedef Fitting::AlternatingLeastSquare<Fitting::Cgs> t_Fitting;
@@ -201,30 +226,45 @@ int main(int argc, char *argv[])
     CE::PosToConfs postoconfs( *Crystal::Structure::lattice );
     postoconfs.create_positions( bdesc );
 
-    // Initializes the symmetry-less separable function.
+    // Separables traits.
     typedef Traits::CE::Separables< CE::Mapping::VectorDiff<2> > t_FunctionTraits;
     typedef CE::Separables< t_FunctionTraits > t_Function;
-    t_Function separables;
-    separables.set_rank_n_size( rank, postoconfs.positions.size() );
-    separables.randomize( howrandom );
-    std::fill( separables.norms.begin(), separables.norms.end(), 1e0 );
-    separables.normalize();
-
-    // Initializes collapse functor.
-    typedef CE::Mapping::ExcludeOne< CE::Mapping::SymEquiv > t_Mapping;
-    typedef CE::Policy::Regularization< t_Function > t_Regularization;
-    typedef boost::numeric::ublas::matrix<size_t> t_Conf;
-    typedef CE::Policy::HighMemUpdate< t_Function, t_Mapping, t_Conf > t_UpdatePolicy;
+    // Collapse Traits
     typedef Traits::CE::Collapse< t_Function, 
-                                  t_Mapping,
-                                  t_Confs,
-                                  t_Regularization,
-                                  t_UpdatePolicy > t_CollapseTraits;
-    typedef CE::Collapse< t_CollapseTraits > t_Collapse;
-    t_Collapse collapse;
-    collapse.init( structures, postoconfs );
-    collapse.regularization.lambda = lambda;
+                                  CE::Mapping::ExcludeOne< CE::Mapping::SymEquiv >,
+                                  CE::Policy::Regularization,
+                                  CE::Policy::HighMemUpdate > t_CollapseTraits;
+    // CE base
+    typedef CE::Fit< CE::FittingPolicy::PairReg<> > t_CEBase;
+    // Mixed approach traits.
+    typedef Traits::CE::Mixed< t_CollapseTraits, t_CEBase > t_MixedTraits;
 
+    // Finally creates mixed approach object.
+    CE::Mixed< t_MixedTraits > mixed;
+    // initializes ce part.
+    Crystal::read_ce_structures( dir / "LDAs.dat", mixed.CEFit().structures );
+    if( verbosity >= print_data )
+      std::for_each
+      (
+        structures.begin(), structures.end(), 
+        std::cout << bl::_1 << "\n"
+      );
+    mixed.CEFit().alpha = alpha;
+    mixed.CEFit().tcoef = tcoef;
+    mixed.CEFit().do_pairreg = ( not Fuzzy::is_zero( alpha ) and maxpairs );
+    mixed.CEFit().laksreg = not volkerreg;
+    mixed.CEFit().verbose = verbosity >= print_checks;
+    mixed.CEFit().init( clusters );
+    // initializes collapse part.
+    mixed.Collapse().init( mixed.CEFit().structures, postoconfs );
+    mixed.Collapse().regularization.lambda = lambda;
+    // initializes mixed.
+    mixed.init()
+    // initializes separables part.
+    mixed.separables().set_rank_n_size( rank, postoconfs.positions.size() );
+    mixed.separables().randomize( howrandom );
+    std::fill( mixed.separables().norms.begin(), mixed.separables().norms.end(), 1e0 );
+    mixed.separables().normalize();
 
     opt::NErrorTuple nerror( opt::mean_n_var(structures) ); 
 
@@ -244,12 +284,16 @@ int main(int argc, char *argv[])
               << "Data mean: " << nerror.nmean() << "\n"
               << "Data Variance: " << nerror.nvariance() << "\n"
               << "Random Seed: " << seed << "\n"
-              << "Regulation factor: " << lambda << "\n";
+              << "Separables Regulation factor: " << lambda << "\n"
+              << "Maximum distance of pairs (nth neighbor): " << maxpairs << "\n"
+              << "CE regulation alpha: " << alpha << "\n"
+              << "CE t-coef: " << tcoef << "\n";
+    if( volkerreg ) std::cout << "   Using Volker's normalization for t.\n";
 
     // fitting.
     if( doloo )
     {
-      collapse.mapping.do_exclude = true;
+      mixed.Collapse().mapping.do_exclude = true;
       std::cout << "Starting Leave-One-Out Procedure.\n";
       opt::t_ErrorPair errors;
       errors = CE::Method::leave_one_out( collapse, allsq, structures, verbosity - 1 );

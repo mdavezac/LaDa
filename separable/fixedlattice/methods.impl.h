@@ -7,25 +7,20 @@ namespace CE
 {
   namespace Method
   {
-    template< class T_SEPARABLE, class T_COLLAPSE,
-              class T_MINIMIZER, class T_STRUCTURES >
-      opt::ErrorTuple fit( T_SEPARABLE &_sep, 
-                           T_COLLAPSE &_collapse,
+    template< class T_COLLAPSE, class T_MINIMIZER, class T_STRUCTURES >
+      opt::ErrorTuple fit( T_COLLAPSE &_collapse,
                            const T_MINIMIZER &_min,
                            const T_STRUCTURES &_strs,
                            bool _verbose )
       {
         __TRYBEGIN
-        _collapse.init( _sep );
-        opt::ErrorTuple errors = _min( _sep.coefficients, _collapse );
-        if( _verbose ) return check_all( _sep, _collapse, _strs, _verbose );
+        opt::ErrorTuple errors = _min( _collapse.separables().coefficients(), _collapse );
+        if( _verbose ) return check_all( _collapse, _strs, _verbose );
         return errors;
         __TRYEND(,"Error in CE::Methods::fit().\n" )
       }
-    template< class T_SEPARABLE, class T_COLLAPSE,
-              class T_MINIMIZER, class T_STRUCTURES >
-      opt::t_ErrorPair leave_one_out( T_SEPARABLE &_sep, 
-                                      T_COLLAPSE &_collapse,
+    template< class T_COLLAPSE, class T_MINIMIZER, class T_STRUCTURES >
+      opt::t_ErrorPair leave_one_out( T_COLLAPSE &_collapse,
                                       const T_MINIMIZER &_min,
                                       const T_STRUCTURES &_strs,
                                       types::t_int _verbosity )
@@ -39,13 +34,13 @@ namespace CE
           opt::ErrorTuple intermediate;
           if( _verbosity >= 1 ) std::cout << " " << _collapse.mapping.n
                                           << ". Training Errors: ";
-          intermediate = fit( _sep, _collapse, _min, _strs, _verbosity >= 2); 
-          if( _verbosity ) std::cout << intermediate << "\n";
+          intermediate = fit( _collapse, _min, _strs, _verbosity >= 2); 
+          if( _verbosity >= 1 ) std::cout << intermediate << "\n";
           errors.first += intermediate;
 
           if( _verbosity >= 1 ) std::cout << " " << _collapse.mapping.n
                                           << ". Prediction Errors: ";
-          intermediate = check_one( _sep, _collapse, _strs[ _collapse.mapping.n],
+          intermediate = check_one( _collapse, _strs[ _collapse.mapping.n],
                                     _collapse.mapping.n, _verbosity >= 2 );
           if( _verbosity >= 1 ) std::cout << intermediate << "\n";
           errors.second += intermediate;
@@ -54,9 +49,8 @@ namespace CE
         __TRYEND(,"Error in CE::Methods::leave_one_out().\n" )
       }
 
-    template< class T_COLLAPSE, class T_SEPARABLES >
-      opt::ErrorTuple check_one( const T_SEPARABLES &_separables,
-                                 const T_COLLAPSE &_collapse,
+    template< class T_COLLAPSE >
+      opt::ErrorTuple check_one( const T_COLLAPSE &_collapse,
                                  const Crystal::Structure &_structure,
                                  size_t _n, bool _verbose )
       {
@@ -73,7 +67,7 @@ namespace CE
           typedef bblas::matrix_column< const typename T_COLLAPSE :: t_Matrix > 
             t_Column;
           t_Column column( _collapse.configurations(), *i );
-          predic +=   _separables( column )
+          predic +=   _collapse.separables()( column )
                     * _collapse.mapping.eweight( _n, *i - erange.start() );
         }
   
@@ -92,9 +86,8 @@ namespace CE
         __DEBUGTRYEND(, "Error in Fit::check_one().\n" )
       }
 
-    template< class T_COLLAPSE, class T_SEPARABLES, class T_STRUCTURES >
-      opt::ErrorTuple check_all( const T_SEPARABLES &_separables,
-                                 const T_COLLAPSE &_collapse,
+    template< class T_COLLAPSE, class T_STRUCTURES >
+      opt::ErrorTuple check_all( const T_COLLAPSE &_collapse,
                                  const T_STRUCTURES &_strs,
                                  bool _verbose = false )
       {
@@ -104,7 +97,7 @@ namespace CE
         for(size_t n(0); i_str != i_str_end; ++i_str, ++n )
         {
           if( _collapse.mapping.do_skip(n) ) continue;
-          result += check_one( _separables, _collapse, *i_str, n, _verbose );
+          result += check_one( _collapse, *i_str, n, _verbose );
         }
         return result;
       }

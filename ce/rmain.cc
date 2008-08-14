@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
              "Initial value of the weights."  )
       ("loo", "Single leave-one-out procedure." )
       ("fit", "Single leave-none-out procedure." )
-      ("lambda", po::value<types::t_real>()->default_value(1),
+      ("alpha", po::value<types::t_real>()->default_value(1),
                  "Lambda for pair regularization. With --loo/fit and --tcoef only. " )
       ("tcoef", po::value<types::t_real>()->default_value(0),
                 "\"t\" coefficient. With --loo/fit only. " )
@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
     bool doloo = vm.count("loo") != 0;
     bool dofit = vm.count("fit") != 0;
     bool volkerreg = vm.count("volkerreg") != 0;
-    std::pair<types::t_real, types::t_real> pairreg( vm["lambda"].as<types::t_real>(),
+    std::pair<types::t_real, types::t_real> pairreg( vm["alpha"].as<types::t_real>(),
                                                      vm["tcoef"].as<types::t_real>() );
 
     std::cout << " Input Parameters:\n"
@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
     {
       if( doloo ) std::cout << "   Will perform leave-one-out.\n";
       if( dofit ) std::cout << "   Will perform leave-none-out.\n";
-      std::cout << "   lambda: " << pairreg.first << "\n"
+      std::cout << "   alpha: " << pairreg.first << "\n"
                 << "   t: " << pairreg.second << "\n";
       if( volkerreg ) std::cout << "   Using Volker's normalization for t.\n";
     }
@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
     {
       // Create object for fitting procedures.
       CE::Fit< CE::FittingPolicy::PairReg<> > fit;
-      fit.lambda = pairreg.first;
+      fit.alpha = pairreg.first;
       fit.tcoef = pairreg.second;
       fit.do_pairreg = ( not Fuzzy::is_zero( pairreg.second ) and maxpairs );
       fit.laksreg = not volkerreg;

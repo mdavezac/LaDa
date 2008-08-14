@@ -8,38 +8,41 @@
 
 namespace CE
 {
-# if defined( COLHEAD ) || defined(INCOLLAPSE)
+# if defined( COLHEAD ) || defined(INCOLLAPSE) || defined(INCOLLAPSE2)
 #   error "Macros with same names."
 # endif
 # define COLHEAD \
     Collapse<T_TRAITS> 
 #  define INCOLLAPSE( var ) \
      template< class T_TRAITS >  var COLHEAD
+#  define INCOLLAPSE2( code1, code2 ) \
+     template< class T_TRAITS >  code1, code2 COLHEAD
 
-  INCOLLAPSE(void) :: create_A_n_b( t_Matrix &_A, t_Vector &_b )
-  {
-    namespace bblas = boost::numeric::ublas;
-    __ASSERT( not separables_, "Function pointer not set.\n" )
-    __ASSERT( dim >= configurations_.size1(), "Inconsistent sizes.\n" )
-    // Loop over inequivalent configurations.
-    t_Vector X( dof() );
-    std::fill( _A.data().begin(), _A.data().end(), 
-               typename t_Matrix::value_type(0) );
-    std::fill( _b.data().begin(), _b.data().end(), 
-               typename t_Vector::value_type(0) );
-    for( size_t i(0); i < mapping.size(); ++i )
+  INCOLLAPSE2(template< class T_MATRIX, class T_VECTOR > void) 
+    :: create_A_n_b( T_MATRIX &_A, T_VECTOR &_b )
     {
-      // allows leave-one-out, or leave-many-out.
-      if( mapping.do_skip(i) ) continue;
-  
-      // create the X vector.
-      std::fill( X.begin(), X.end(), typename t_Vector::value_type(0) );
-      create_X( i, X );
-  
-      _A += mapping.weight(i) * bblas::outer_prod( X, X ); 
-      _b += mapping.weight(i) * mapping.target(i) * X;
+      namespace bblas = boost::numeric::ublas;
+      __ASSERT( not separables_, "Function pointer not set.\n" )
+      __ASSERT( dim >= configurations_.size1(), "Inconsistent sizes.\n" )
+      // Loop over inequivalent configurations.
+      t_Vector X( dof() );
+      std::fill( _A.data().begin(), _A.data().end(), 
+                 typename t_Matrix::value_type(0) );
+      std::fill( _b.data().begin(), _b.data().end(), 
+                 typename t_Vector::value_type(0) );
+      for( size_t i(0); i < mapping.size(); ++i )
+      {
+        // allows leave-one-out, or leave-many-out.
+        if( mapping.do_skip(i) ) continue;
+    
+        // create the X vector.
+        std::fill( X.begin(), X.end(), typename t_Vector::value_type(0) );
+        create_X( i, X );
+    
+        _A += mapping.weight(i) * bblas::outer_prod( X, X ); 
+        _b += mapping.weight(i) * mapping.target(i) * X;
+      }
     }
-  }
 
   INCOLLAPSE(void) :: create_X( size_t _i, t_Vector &_out )
   {
@@ -54,12 +57,12 @@ namespace CE
     typename t_Range :: const_iterator2 i_conf = equivconfs.begin2();
     typename t_Range :: const_iterator2 i_conf_end = equivconfs.end2();
     for(size_t c(0); i_conf != i_conf_end; ++i_conf, ++c )
-      for(size_t r(0); r < separables_->ranks(); ++r )
+      for(size_t r(0); r < separables().ranks(); ++r )
       {
         const size_t D( t_Separables::t_Mapping :: D );
         typename t_Vector::value_type scalar( mapping.eweight(_i,c) );
         scalar *=   update_.factor( equivrange.start() + c, r, dim )
-                  * separables_->norms[r]; 
+                  * separables().norms[r]; 
         const bblas::range range( r * D, (r+1) * D );
         bblas::vector_range< t_Vector > vecr( _out, range );
         t_Separables::t_Mapping::add_tovec( *i_conf, vecr, scalar );
@@ -69,14 +72,14 @@ namespace CE
   INCOLLAPSE(void) :: update_all()
   {
     // First, normalizes coefficients.
-    separables_->normalize();
+    separables().normalize();
     // then calls policy.
     update_();
   }
   INCOLLAPSE(void) :: update( types::t_unsigned _d )
   {
     // First, normalizes coefficients.
-    separables_->normalize();
+    separables().normalize();
     // then calls policy.
     update_( _d );
   }
@@ -123,7 +126,7 @@ namespace CE
       mapping.init( _strs, confs );
     }
 
-  INCOLLAPSE( opt::ErrorTuple ) :: evaluate()
+  INCOLLAPSE( opt::ErrorTuple ) :: evaluate() const
   {
     namespace bblas = boost::numeric::ublas;
     opt::ErrorTuple error;
@@ -134,8 +137,8 @@ namespace CE
       types::t_real intermed(0);
       for( bblas::range::const_iterator j( range.begin() ); j != range.end(); ++j )
       {
-        const bblas::matrix_column<t_iMatrix> config( configurations_, *j );
-        intermed +=   (*separables_)( config )
+        const bblas::matrix_column<const t_iMatrix> config( configurations_, *j );
+        intermed +=   separables()( config )
                     * mapping.eweight(n,*j - range.start() );
       }
       error += opt::ErrorTuple( mapping.target(n) - intermed, mapping.weight(n) );
@@ -146,7 +149,7 @@ namespace CE
   INCOLLAPSE( void ) :: init( t_Separables& _sep )
   {
     separables_ = &_sep; 
-    scales.resize( separables_->coefficients.size1() / t_Separables::t_Mapping::D,
+    scales.resize( separables().coefficients().size1() / t_Separables::t_Mapping::D,
                    configurations_.size2() );
     update_.init( _sep );
     regularization.init( _sep );
@@ -164,7 +167,7 @@ namespace CE
          
             typename t_Vector :: value_type result;
             bblas::matrix_column< const t_iMatrix > config( configurations_, _kv );
-            t_Separables :: t_Policy :: apply_to_dim_n_rank( separables_->coefficients,
+            t_Separables :: t_Policy :: apply_to_dim_n_rank( separables_->coefficients(),
                                                              config, result, _d, _r,
                                                              bl::_1 = bl::_2 );
             return not Fuzzy::is_zero( result ) ?
@@ -184,7 +187,7 @@ namespace CE
             bblas::matrix_column< const t_iMatrix > config( configurations_, _kv );
             t_Separables :: t_Policy :: apply_to_rank
             ( 
-              separables_->coefficients, config, result, _r,
+              separables_->coefficients(), config, result, _r,
               (
                 bl::if_then( bl::var(d) != bl::constant(_d), bl::_1 *= bl::_2  ),
                 ++bl::var(d)
@@ -207,7 +210,7 @@ namespace CE
           std::fill( scaling.begin(), scaling.end(), typename t_Matrix::value_type(1) );
           t_Separables::t_Policy::rank_vector
           ( 
-            separables_->coefficients, conf, scaling,
+            separables_->coefficients(), conf, scaling,
             bl::_1 *= bl::_2
           );
         }
@@ -233,7 +236,7 @@ namespace CE
           bblas::matrix_column< const t_iMatrix > config( configurations_, i );
           for( size_t d(0); d < separables_->dimensions(); ++d ) 
             for(size_t r(0); r < separables_->ranks(); ++r )
-              t_Separables :: t_Policy :: apply_to_dim_n_rank( separables_->coefficients,
+              t_Separables :: t_Policy :: apply_to_dim_n_rank( separables_->coefficients(),
                                                                config, (*i_split)(r,d), d, r,
                                                                bl::_1 = bl::_2 );
         }
@@ -277,7 +280,7 @@ namespace CE
         {
           bblas::matrix_column< const t_iMatrix > config( configurations_, i );
           for(size_t r(0); r < separables_->ranks(); ++r )
-            t_Separables :: t_Policy :: apply_to_dim_n_rank( separables_->coefficients,
+            t_Separables :: t_Policy :: apply_to_dim_n_rank( separables_->coefficients(),
                                                              config, (*i_split)(r, _dim), _dim, r,
                                                              bl::_1 = bl::_2 );
         }
@@ -348,4 +351,5 @@ namespace CE
  } // end of Policy namespace
 # undef COLHEAD
 # undef INCOLLAPSE
+# undef INCOLLAPSE2
 } // end of CE namespace.

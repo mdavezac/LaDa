@@ -15,8 +15,9 @@ namespace CE
         __DEBUGTRYBEGIN
         BaseFit::t_Matrix A( _class.nb_cls, _class.nb_cls );
         BaseFit::t_Vector b( _class.nb_cls );
-        _class.create_A_n_b( A, b );
-        _class.other_A_n_b( A, b );
+        std::fill( b.begin(), b.end(), 0e0 );
+        std::fill( A.data().begin(), A.data().end(), 0e0 );
+        _class.construct( A, b );
         _solver( A, _x, b );
   
         // computes square errors.
@@ -24,10 +25,21 @@ namespace CE
         return result;
         __DEBUGTRYEND(, "Error in CE::details::operator_().\n" )
       }
+    template< class T_CLASS, class T_MATRIX, class T_VECTOR >
+      void construct_( const T_CLASS &_class, T_MATRIX &_A, T_VECTOR &_b ) 
+      {
+        __DEBUGTRYBEGIN
+        __ASSERT( _A.size1() == _class.nb_cls, "Inconsistent sizes.\n" )
+        __ASSERT( _A.size2() == _class.nb_cls, "Inconsistent sizes.\n" )
+        __ASSERT( _b.size() == _class.nb_cls, "Inconsistent sizes.\n" )
+        _class.create_A_n_b( _A, _b );
+        _class.other_A_n_b( _A, _b );
+        __DEBUGTRYEND(, "Error in CE::details::operator_().\n" )
+      }
   }
 
-  template<class T_POLICY>
-  void Fit<T_POLICY> :: create_A_n_b( t_Matrix &_A, t_Vector &_b ) const
+  template<class T_POLICY> template< class T_MATRIX, class T_VECTOR>
+  void Fit<T_POLICY> :: create_A_n_b( T_MATRIX &_A, T_VECTOR &_b ) const
   {
     __DEBUGTRYBEGIN
     namespace bl = boost::lambda;
@@ -36,12 +48,6 @@ namespace CE
               "Inconsistent number of structures and pis.\n" )
     __ASSERT( structures.size() != weights.size(),
               "Inconsistent number of structures and weights.\n" )
-
-    // Resizes the clusters and fills with zeros.
-    _b.resize( nb_cls );
-    _A.resize( nb_cls, nb_cls );
-    std::fill( _b.begin(), _b.end(), 0e0 );
-    std::fill( _A.data().begin(), _A.data().end(), 0e0 );
 
     // loop over targets.
     t_Structures :: const_iterator i_target = structures.begin();
@@ -71,9 +77,8 @@ namespace CE
        regweights = NULL;
        return result;
      }
-  template< class T_BASE >
-    void RegulatedFit<T_BASE> :: other_A_n_b( BaseFit::t_Matrix &_A,
-                                              BaseFit::t_Vector &_b ) const
+  template< class T_BASE > template< class T_MATRIX, class T_VECTOR >
+    void RegulatedFit<T_BASE> :: other_A_n_b( T_MATRIX &_A, T_VECTOR &_b ) const
     {
       t_Base :: other_A_n_b( _A, _b );
       if( not regweights  ) return;
@@ -138,10 +143,10 @@ namespace CE
           types::t_real R( atat::norm2(   i_clusters->front()[0] 
                                         - i_clusters->front()[1] ) );
   
-          types::t_real weight = std::pow( R, lambda ) / D;
+          types::t_real weight = std::pow( R, alpha ) / D;
           normalization += laksreg ?
-                             ( std::pow( R, lambda ) * D ):
-                             ( std::sqrt( std::pow( R, lambda  ) / D ) );
+                             ( std::pow( R, alpha ) * D ):
+                             ( std::sqrt( std::pow( R, alpha  ) / D ) );
           weight = std::sqrt( weight );
           pairweights.push_back( std::make_pair( i, weight ) );
         }
@@ -154,9 +159,8 @@ namespace CE
         __DEBUGTRYEND(, "Error in PairReg<T_POLICY>::init().\n" )
       }
 
-    template< class T_BASE >
-      void PairReg<T_BASE> ::  other_A_n_b( BaseFit::t_Matrix &_A,
-                                            BaseFit::t_Vector &_b ) const
+    template< class T_BASE > template< class T_MATRIX, class T_VECTOR >
+      void PairReg<T_BASE> ::  other_A_n_b( T_MATRIX &_A, T_VECTOR &_b ) const 
       {
         t_Base :: other_A_n_b( _A, _b );
         __DEBUGTRYBEGIN
