@@ -106,6 +106,8 @@ namespace CE
             { dim = _dim; create_A_n_b( _A, _b ); regularization()( _A, _b, _dim); }
         //! Evaluates square errors.
         opt::ErrorTuple evaluate() const;
+        //! Evaluates square errors for one structure.
+        opt::ErrorTuple evaluate( size_t _n ) const;
 
         //! Updates the scales vector and  normalizes.
         void update_all();
@@ -139,6 +141,12 @@ namespace CE
         t_RegPolicy& regularization() { return regularization_; }
         //! Returns a constant reference to the regularization.
         const t_RegPolicy& regularization() const { return regularization_; }
+        //! Returns a reference to the coefficients.
+        typename t_Separables::t_Matrix& coefficients()
+          { return separables().coefficients(); }
+        //! Returns a constant reference to the coefficients.
+        const typename t_Separables::t_Matrix& coefficients() const
+          { return separables().coefficients(); }
 
       protected:
         //! Creates the _A and _b matrices for fitting.

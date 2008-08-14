@@ -130,10 +130,9 @@ namespace CE
           static void normalize( T_ITCOEF &_coef,  T_NORM &_out )
           {
             namespace bl = boost::lambda;
-            types::t_real norm(0);
-            std::for_each( _coef, _coef + D, bl::var(norm) += bl::_1 * bl::_1 );
+            types::t_real norm( *_coef );
             if( Fuzzy::is_zero( norm) ) return;
-            norm = std::sqrt( norm );
+            norm = std::abs( norm );
             _out *= norm;
             norm = T_NORM(1) / norm;
             std::for_each( _coef, _coef + D, bl::_1 *= bl::constant(norm) );

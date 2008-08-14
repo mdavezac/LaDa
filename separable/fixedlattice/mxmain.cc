@@ -72,9 +72,9 @@ int main(int argc, char *argv[])
                    "Description of the ranks/size of the figure used\n." )
         ("tolerance", po::value<types::t_real>()->default_value(1e-4),
                       "Tolerance of the alternating linear-least square fit.\n"  )
-        ("maxiter,m", po::value<types::t_unsigned>()->default_value(40),
-                      "Maximum number of iterations for"
-                      " Alternating linear-least square fit.\n"  )
+        ("maxiter", po::value<types::t_unsigned>()->default_value(40),
+                    "Maximum number of iterations for"
+                    " Alternating linear-least square fit.\n"  )
         ("1dtolerance", po::value<types::t_real>()->default_value(1e-4),
                         "Tolerance of the 1d linear-least square fit.\n" ) 
         ("random", po::value<types::t_real>()->default_value(5e-1),
@@ -83,6 +83,9 @@ int main(int argc, char *argv[])
                      "Regularization factor.\n" )
         ("maxpairs,m", po::value<types::t_unsigned>()->default_value(5),
                        "Max distance for pairs (in neighbors)."  )
+        ("J0", "Introduce J0 in clusters."  )
+        ("J1", "Introduce J1 in clusters."  )
+        ("rm", "Remove clusters which are contained within teh separable-basis."  )
         ("alpha", po::value<types::t_real>()->default_value(1),
                    "Lambda for pair regularization. With --loo/fit and --tcoef only. " )
         ("tcoef", po::value<types::t_real>()->default_value(0),
@@ -168,6 +171,9 @@ int main(int argc, char *argv[])
     const types::t_real alpha( vm["alpha"].as<types::t_real>() );
     const types::t_real tcoef( vm["tcoef"].as<types::t_real>() );
     const types::t_unsigned maxpairs = vm["maxpairs"].as<types::t_unsigned>();
+    const bool J0( vm.count("J0") > 0 );
+    const bool J1( vm.count("J1") > 0 );
+    const bool rmpairs( vm.count("rm") > 0 );
     __ASSERT( Fuzzy::le(tcoef, 0e0), "Coefficient \"t\" cannot negative.\n" )
 
     // Loads lattice
@@ -195,9 +201,13 @@ int main(int argc, char *argv[])
 #   endif
 
     // create pair terms.
-    CE :: Regulated :: t_Clusters clusters;
+    std::vector< std::vector< CE::Cluster > > clusters;
     CE :: create_pairs( *lattice, maxpairs, clusters );
     std::cout << "Creating " << clusters.size() << " pair figures.\n";
+    CE::Cluster cluster;
+    if( J0 ) clusters.push_back( std::vector<CE::Cluster>(1, cluster) ); 
+    cluster.Vectors().resize(1, atat::rVector3d(0,0,0) );
+    if( J1 ) clusters.push_back( std::vector<CE::Cluster>(1, cluster) ); 
     if( verbosity >= print_data )
     {
       CE::Regulated :: t_Clusters :: const_iterator i_class = clusters.begin();
@@ -213,7 +223,6 @@ int main(int argc, char *argv[])
                           );
       }
     }
-
 
     // Initializes fitting.
     typedef Fitting::AlternatingLeastSquare<Fitting::Cgs> t_Fitting;
@@ -259,11 +268,20 @@ int main(int argc, char *argv[])
     mixed.CEFit().do_pairreg = ( not Fuzzy::is_zero( alpha ) and maxpairs );
     mixed.CEFit().laksreg = not volkerreg;
     mixed.CEFit().verbose = verbosity >= print_checks;
-    mixed.CEFit().init( clusters );
     // initializes collapse part.
     mixed.Collapse().init( mixed.CEFit().structures, postoconfs );
     mixed.Collapse().regularization().lambda = lambda;
     // initializes mixed.
+    std::copy( clusters.begin(), clusters.end(), std::back_inserter( mixed.clusters ) );
+    if( rmpairs )
+    {
+      CE::remove_contained_clusters( postoconfs.positions, mixed.clusters );
+      size_t size( mixed.clusters.size() );
+      if( J0 ) --size;
+      if( J1 ) --size;
+      std::cout << "Retained " << size << " pair figures.\n";
+    }
+    clusters.clear();
     mixed.init( rank, postoconfs.positions.size() );
     // initializes separables part.
     mixed.separables().randomize( howrandom );
@@ -289,8 +307,12 @@ int main(int argc, char *argv[])
               << "Data Variance: " << nerror.nvariance() << "\n"
               << "Random Seed: " << seed << "\n"
               << "Separables Regulation factor: " << lambda << "\n"
-              << "Maximum distance of pairs (nth neighbor): " << maxpairs << "\n"
-              << "CE regulation alpha: " << alpha << "\n"
+              << "Maximum distance of pairs (nth neighbor): " << maxpairs << "\n";
+    if( rmpairs ) std::cout << "Will remove clusters completely covered"
+                               " by the separable-function.\n";
+    if( J0 ) std::cout << "Introducing J0 in figures.\n";
+    if( J1 ) std::cout << "Introducing J1 in figures.\n";
+    std::cout << "CE regulation alpha: " << alpha << "\n"
               << "CE t-coef: " << tcoef << "\n";
     if( volkerreg ) std::cout << "   Using Volker's normalization for t.\n";
 
@@ -306,7 +328,6 @@ int main(int argc, char *argv[])
       std::cout << "Final Prediction Errors:\n " << ( nerror = errors.second ) << "\n\n";
       std::cout << "Average Training Errors:\n " << errors.first << "\n";
       std::cout << "Final Prediction Errors:\n " << errors.second << "\n\n";
-      if( verbosity >= print_function ) std::cout << mixed.separables() << "\n";
     }
     if( dofit )
     {
@@ -315,7 +336,8 @@ int main(int argc, char *argv[])
       nerror = CE::Method::fit( mixed, allsq,
                                 mixed.CEFit().structures, verbosity >= print_checks );
       std::cout << nerror << "\n"; 
-      if( verbosity >= print_function ) std::cout << mixed.separables() << "\n";
+      mixed.reassign();
+      if( verbosity >= print_function ) std::cout << mixed << "\n";
     }
     std::cout << "\n\n\nEnd of " << __PROGNAME__ << ".\n" << std::endl;
 

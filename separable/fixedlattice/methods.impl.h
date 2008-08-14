@@ -14,7 +14,7 @@ namespace CE
                            bool _verbose )
       {
         __TRYBEGIN
-        opt::ErrorTuple errors = _min( _collapse.separables().coefficients(), _collapse );
+        opt::ErrorTuple errors = _min( _collapse.coefficients(), _collapse );
         if( _verbose ) return check_all( _collapse, _strs, _verbose );
         return errors;
         __TRYEND(,"Error in CE::Methods::fit().\n" )
@@ -60,18 +60,8 @@ namespace CE
         const types::t_real weight = _structure.weight;
         const std::string name = fs::path( _structure.name ).leaf() ;
      
-        types::t_real predic(0);
-        const bblas::range erange( _collapse.mapping().range(_n) );
-        for( bblas::range::const_iterator i( erange.begin() ); i != erange.end(); ++i )
-        {
-          typedef bblas::matrix_column< const typename T_COLLAPSE :: t_iMatrix > 
-            t_Column;
-          t_Column column( _collapse.configurations(), *i );
-          predic +=   _collapse.separables()( column )
-                    * _collapse.mapping().eweight( _n, *i - erange.start() );
-        }
-  
-        opt::ErrorTuple error( _structure.energy - predic,  weight );
+        opt::ErrorTuple error( _collapse.evaluate(_n) );
+        types::t_real predic( _structure.energy - error.get<1>() / _structure.weight );
         if( _verbose )
           std::cout << "  structure: " << std::setw(30) << name << "  "
                     << "Target: " << std::fixed << std::setw(8) 

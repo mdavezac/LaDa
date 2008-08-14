@@ -11,6 +11,10 @@
 #include<boost/numeric/ublas/vector.hpp>
 #include<boost/numeric/ublas/matrix.hpp>
 
+#include<iostream>
+#include<vector>
+#include<list>
+
 #include <opt/types.h>
 #include <opt/debug.h>
 
@@ -84,11 +88,14 @@ namespace CE
         typedef typename t_Traits :: t_ColTraits :: t_iMatrix t_iMatrix;
         //! \brief Type of the matrix range.
         //! \details Necessary interface for minimizer.
-        typedef typename t_Traits :: t_SepTraits :: t_Matrix t_Matrix;
-        //! Type of the matrices.
-        typedef typename t_Traits :: t_OrigSepTraits :: t_Matrix t_OMatrix;
+        typedef typename t_Traits :: t_OrigSepTraits :: t_Matrix t_Matrix;
         //! Type of the vectors.
-        typedef typename t_Traits :: t_OrigSepTraits :: t_Vector t_OVector;
+        typedef typename t_Traits :: t_OrigSepTraits :: t_Vector t_Vector;
+        //! Type of the classes of equivalent clusters.
+        typedef std::vector< std::vector< ::CE::Cluster > > t_Clusters;
+
+        //! The classes of equivalent clusters for mixing.
+        t_Clusters clusters;
 
         //! Constructor.
         MixedApproach() : t_ColBase(), t_CEBase() {}
@@ -111,6 +118,8 @@ namespace CE
                            types::t_unsigned _dim );
         //! Evaluates square errors.
         opt::ErrorTuple evaluate() const;
+        //! Evaluates square errors for one structure.
+        opt::ErrorTuple evaluate( size_t _n ) const;
 
         //! Updates the separable and copies the eci from column 0 to all other columns.
         void update_all();
@@ -131,9 +140,9 @@ namespace CE
         void init( size_t _ranks, size_t _dims );
 
         //! Returns a reference to the coefficients.
-        t_OMatrix& coefficients() { return coefficients_; }
+        t_Matrix& coefficients() { return coefficients_; }
         //! Returns a constant reference to the coefficients.
-        const t_OMatrix& coefficients() const { return coefficients_; }
+        const t_Matrix& coefficients() const { return coefficients_; }
         //! Returns a reference to the mapping.
         typename t_ColBase::t_Mapping& mapping() { return t_ColBase::mapping(); }
         //! Returns a reference to the mapping.
@@ -149,6 +158,8 @@ namespace CE
         t_Separables& separables() { return separables_; }
         //! Returns a constant reference to the separable function;
         const t_Separables& separables() const { return separables_; }
+        //! Reassigns clusters.
+        void reassign();
 
       protected:
         //! Creates the _A and _b matrices for fitting.
@@ -159,8 +170,17 @@ namespace CE
         t_Separables separables_;
 
         //! The coefficients.
-        t_OMatrix coefficients_;
+        t_Matrix coefficients_;
     };
+
+  //! Prints mixed-approach description to a stream.
+  template< class T_TRAITS >
+  std::ostream& operator<<( std::ostream& _stream, const MixedApproach<T_TRAITS> &_col );
+
+  //! \brief Removes cluster classes for wich at least one custer is contained
+  //!        within \a _positions and the origin.
+  template< class T_POSITIONS, class T_CLUSTERS >
+    void remove_contained_clusters( const T_POSITIONS &_positions, T_CLUSTERS &_clusters );
 } // end of CE namspace
 
 #include "mixed.impl.h"

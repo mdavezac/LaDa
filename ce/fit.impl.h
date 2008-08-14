@@ -168,7 +168,13 @@ namespace CE
         t_PairWeights :: const_iterator i_w = pairweights.begin();
         t_PairWeights :: const_iterator i_w_end = pairweights.end();
         for(; i_w != i_w_end; ++i_w )
+        {
+          __ASSERT( i_w->first >= _A.size1(),
+                    "Inconsistent sizes: " << i_w->first << " >= " << _A.size1() << "\n" )
+          __ASSERT( i_w->first >= _A.size2(),
+                    "Inconsistent sizes: " << i_w->first << " >= " << _A.size2() << "\n" )
           _A( i_w->first, i_w->first ) += i_w->second * i_w->second;
+        }
         __DEBUGTRYEND(, "Error in PairReg<T_POLICY>::other_A_n_b().\n" )
       }
   } // end of namespace FittingPolicy

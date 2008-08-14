@@ -129,22 +129,30 @@ namespace CE
 
   INCOLLAPSE( opt::ErrorTuple ) :: evaluate() const
   {
-    namespace bblas = boost::numeric::ublas;
+    __DEBUGTRYBEGIN
     opt::ErrorTuple error;
     for(size_t n(0); n < mapping().size(); ++n )
-    {
-      if( mapping().do_skip(n) ) continue;
-      bblas::range range( mapping().range(n) );
-      types::t_real intermed(0);
-      for( bblas::range::const_iterator j( range.begin() ); j != range.end(); ++j )
-      {
-        const bblas::matrix_column<const t_iMatrix> config( configurations_, *j );
-        intermed +=   separables()( config )
-                    * mapping().eweight(n,*j - range.start() );
-      }
-      error += opt::ErrorTuple( mapping().target(n) - intermed, mapping().weight(n) );
-    }
+      if( not mapping().do_skip(n) ) 
+        error += evaluate(n);
     return error;
+    __DEBUGTRYEND(, "Error in Collapse::evaluate().\n" )
+  }
+
+  INCOLLAPSE( opt::ErrorTuple ) :: evaluate(size_t _n) const
+  {
+    __DEBUGTRYBEGIN
+    __ASSERT( _n >= mapping().size(), "Inconsistent sizes.\n" )
+    namespace bblas = boost::numeric::ublas;
+    bblas::range range( mapping().range(_n) );
+    types::t_real intermed(0);
+    for( bblas::range::const_iterator j( range.begin() ); j != range.end(); ++j )
+    {
+      const bblas::matrix_column<const t_iMatrix> config( configurations_, *j );
+      intermed +=   separables()( config )
+                  * mapping().eweight(_n,*j - range.start() );
+    }
+    return opt::ErrorTuple( mapping().target(_n) - intermed, mapping().weight(_n) );
+    __DEBUGTRYEND(, "Error in Collapse::evaluate().\n" )
   }
 
   INCOLLAPSE( void ) :: init( t_Separables& _sep )
