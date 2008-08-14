@@ -264,9 +264,8 @@ int main(int argc, char *argv[])
     mixed.Collapse().init( mixed.CEFit().structures, postoconfs );
     mixed.Collapse().regularization().lambda = lambda;
     // initializes mixed.
-    mixed.init();
+    mixed.init( rank, postoconfs.positions.size() );
     // initializes separables part.
-    mixed.separables().set_rank_n_size( rank, postoconfs.positions.size() );
     mixed.separables().randomize( howrandom );
     std::fill( mixed.separables().norms.begin(), mixed.separables().norms.end(), 1e0 );
     mixed.separables().normalize();

@@ -110,7 +110,7 @@ namespace CE
           void operator()( T_MATRIX &_A, T_VECTOR &_b,
                            types::t_unsigned _dim );
         //! Evaluates square errors.
-        opt::ErrorTuple evaluate();
+        opt::ErrorTuple evaluate() const;
 
         //! Updates the separable and copies the eci from column 0 to all other columns.
         void update_all();
@@ -128,7 +128,7 @@ namespace CE
         size_t dof() const { return t_ColBase::dof() + t_CEBase::dof(); }
        
         //! Initializes the mixed approach.
-        void init();
+        void init( size_t _ranks, size_t _dims );
 
         //! Returns a reference to the coefficients.
         t_OMatrix& coefficients() { return coefficients_; }

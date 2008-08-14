@@ -76,6 +76,8 @@ separable/fx/cubic: force
 	@cd separable/fixedlattice; $(MAKE) cubic
 separable/fx/tetra: force
 	@cd separable/fixedlattice; $(MAKE) tetra
+separable/fx/mixed: force
+	@cd separable/fixedlattice; $(MAKE) mixed
 endif
 
 if DOPYTHON

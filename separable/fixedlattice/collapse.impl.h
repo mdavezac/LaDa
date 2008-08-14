@@ -44,30 +44,31 @@ namespace CE
       }
     }
 
-  INCOLLAPSE(void) :: create_X( size_t _i, t_Vector &_out )
-  {
-    namespace bblas = boost::numeric::ublas;
-    __ASSERT( dof() != _out.size(), "Incompatible sizes.\n" )
-    // Create matrix range including only equivalent configurations.
-    typedef const bblas::matrix_range< t_iMatrix > t_Range;
-    const bblas::range equivrange( mapping().range( _i ) );
-    const bblas::range dimrange( dim, dim+1 );
-    t_Range equivconfs( configurations_, dimrange, equivrange );
-
-    typename t_Range :: const_iterator2 i_conf = equivconfs.begin2();
-    typename t_Range :: const_iterator2 i_conf_end = equivconfs.end2();
-    for(size_t c(0); i_conf != i_conf_end; ++i_conf, ++c )
-      for(size_t r(0); r < separables().ranks(); ++r )
-      {
-        const size_t D( t_Separables::t_Mapping :: D );
-        typename t_Vector::value_type scalar( mapping().eweight(_i,c) );
-        scalar *=   update_.factor( equivrange.start() + c, r, dim )
-                  * separables().norms[r]; 
-        const bblas::range range( r * D, (r+1) * D );
-        bblas::vector_range< t_Vector > vecr( _out, range );
-        t_Separables::t_Mapping::add_tovec( *i_conf, vecr, scalar );
-      }
-  }
+  INCOLLAPSE(template< class T_VECTOR > void)
+    :: create_X( size_t _i, T_VECTOR &_out )
+    {
+      namespace bblas = boost::numeric::ublas;
+      __ASSERT( dof() != _out.size(), "Incompatible sizes.\n" )
+      // Create matrix range including only equivalent configurations.
+      typedef const bblas::matrix_range< t_iMatrix > t_Range;
+      const bblas::range equivrange( mapping().range( _i ) );
+      const bblas::range dimrange( dim, dim+1 );
+      t_Range equivconfs( configurations_, dimrange, equivrange );
+ 
+      typename t_Range :: const_iterator2 i_conf = equivconfs.begin2();
+      typename t_Range :: const_iterator2 i_conf_end = equivconfs.end2();
+      for(size_t c(0); i_conf != i_conf_end; ++i_conf, ++c )
+        for(size_t r(0); r < separables().ranks(); ++r )
+        {
+          const size_t D( t_Separables::t_Mapping :: D );
+          typename t_Vector::value_type scalar( mapping().eweight(_i,c) );
+          scalar *=   update_.factor( equivrange.start() + c, r, dim )
+                    * separables().norms[r]; 
+          const bblas::range range( r * D, (r+1) * D );
+          bblas::vector_range< T_VECTOR > vecr( _out, range );
+          t_Separables::t_Mapping::add_tovec( *i_conf, vecr, scalar );
+        }
+    }
 
   INCOLLAPSE(void) :: update_all()
   {

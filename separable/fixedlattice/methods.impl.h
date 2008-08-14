@@ -64,7 +64,7 @@ namespace CE
         const bblas::range erange( _collapse.mapping().range(_n) );
         for( bblas::range::const_iterator i( erange.begin() ); i != erange.end(); ++i )
         {
-          typedef bblas::matrix_column< const typename T_COLLAPSE :: t_Matrix > 
+          typedef bblas::matrix_column< const typename T_COLLAPSE :: t_iMatrix > 
             t_Column;
           t_Column column( _collapse.configurations(), *i );
           predic +=   _collapse.separables()( column )
@@ -114,11 +114,12 @@ namespace Fitting
         __TRYBEGIN
         namespace bblas = boost::numeric::ublas;
         typedef typename T_COLLAPSE::t_Matrix t_Matrix;
+        typedef typename bblas::matrix< typename t_Matrix::value_type> t_OMatrix;
         types::t_real convergence( 1e1 * tolerance );
         if( verbose ) std::cout << "Starting Alternating-least-square fit.\n";
         types::t_unsigned iter = 0;
         const size_t D( _solution.size2() );
-        t_Matrix A( _collapse.dof(), _collapse.dof() );
+        t_OMatrix A( _collapse.dof(), _collapse.dof() );
         t_Vector b( _collapse.dof() );
         opt::ErrorTuple errors( _collapse.evaluate() );
         _collapse.update_all();

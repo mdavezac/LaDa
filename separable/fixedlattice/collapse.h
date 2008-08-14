@@ -148,7 +148,8 @@ namespace CE
         typename t_Vector::value_type factor( size_t _kv, size_t _r, size_t _d );
         //! \brief Creates an X vector for fitting, for a single rank.
         //! \details Before the scaling is done, all ranks equal.
-        void create_X( size_t _i, t_Vector &_out );
+        template< class T_VECTOR >
+          void create_X( size_t _i, T_VECTOR &_out );
 
 
         //! The configurations, arranged in columns.
