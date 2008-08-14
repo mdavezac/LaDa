@@ -160,6 +160,8 @@ namespace CE
         const t_Separables& separables() const { return separables_; }
         //! Reassigns clusters.
         void reassign();
+        //! Randomizes both cluster energies and ecis.
+        void randomize( typename t_Vector :: value_type _howrandom );
 
       protected:
         //! Creates the _A and _b matrices for fitting.

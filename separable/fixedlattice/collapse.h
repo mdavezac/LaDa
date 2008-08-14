@@ -147,6 +147,8 @@ namespace CE
         //! Returns a constant reference to the coefficients.
         const typename t_Separables::t_Matrix& coefficients() const
           { return separables().coefficients(); }
+        void randomize( typename t_Vector :: value_type _howrandom )
+          { separables().randomize( _howrandom ); }
 
       protected:
         //! Creates the _A and _b matrices for fitting.

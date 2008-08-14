@@ -108,7 +108,10 @@ namespace CE
         void normalize() { t_Policy::normalize( coefficients(), norms ); }
         //! Randomizes coefficients.
         void randomize( typename t_Vector :: value_type _howrandom )
-          { t_Policy::randomize( coefficients(), _howrandom ); }
+        {
+          std::fill( norms.begin(), norms.end(), typename t_Vector::value_type(1) );
+          t_Policy::randomize( coefficients(), _howrandom ); 
+        }
 
         //! Returns number of ranks.
         size_t ranks() const;

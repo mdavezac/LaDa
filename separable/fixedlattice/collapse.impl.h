@@ -38,6 +38,8 @@ namespace CE
         // create the X vector.
         std::fill( X.begin(), X.end(), typename t_Vector::value_type(0) );
         create_X( i, X );
+        std::cout << X << "\n";
+        std::cout << coefficients() << "\n";
     
         _A += mapping().weight(i) * bblas::outer_prod( X, X ); 
         _b += mapping().weight(i) * mapping().target(i) * X;

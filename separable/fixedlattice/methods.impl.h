@@ -7,22 +7,50 @@ namespace CE
 {
   namespace Method
   {
-    template< class T_COLLAPSE, class T_MINIMIZER, class T_STRUCTURES >
-      opt::ErrorTuple fit( T_COLLAPSE &_collapse,
-                           const T_MINIMIZER &_min,
-                           const T_STRUCTURES &_strs,
-                           bool _verbose )
-      {
-        __TRYBEGIN
-        opt::ErrorTuple errors = _min( _collapse.coefficients(), _collapse );
-        if( _verbose ) return check_all( _collapse, _strs, _verbose );
-        return errors;
-        __TRYEND(,"Error in CE::Methods::fit().\n" )
-      }
-    template< class T_COLLAPSE, class T_MINIMIZER, class T_STRUCTURES >
+    namespace Policy
+    {   
+      template< class T_SAVEDOBJECT > template< class T_COLLAPSE, class T_MINIMIZER >
+        bool BestOf<T_SAVEDOBJECT> :: go( T_COLLAPSE &_col, T_MINIMIZER &_min, types::t_int _verb )
+        {
+          __ASSERT( restarts == 0, "No runs required.\n" )
+          if( restarts == 1 ) return false;  
+          __ASSERT( which > 2, "Not sure what to check.\n" )
+          
+          if( nbrestarts != 0 )
+            _col.randomize( howrandom ); 
+          opt::ErrorTuple intermed = _min( _col.coefficients(), _col );
+          if(    nbrestarts == 0 
+              or ( which == 0 and Fuzzy::gt( best.variance(), intermed.variance() )  )
+              or ( which == 1 and Fuzzy::gt( best.mean(), intermed.mean() )  )
+              or ( which == 2 and Fuzzy::gt( best.max(), intermed.max() )  ) )
+          {
+            best = intermed;
+            object = _col.coefficients();
+            norms.clear();
+            std::copy( _col.separables().norms.begin(), 
+                       _col.separables().norms.end(), 
+                       std::back_inserter( norms ) );
+          }
+          ++nbrestarts;
+          return nbrestarts < restarts;
+        }
+      template< class T_SAVEDOBJECT > template< class T_COLLAPSE, class T_MINIMIZER >
+        opt::ErrorTuple BestOf<T_SAVEDOBJECT> :: end( T_COLLAPSE &_col,
+                                                      T_MINIMIZER &_min,
+                                                      types::t_int _verb ) const
+        {
+          if( restarts == 1 ) return _min( _col.coefficients(), _col );
+          _col.coefficients() = object;
+          std::copy( norms.begin(), norms.end(), 
+                     _col.separables().norms.begin() );
+          return best; 
+        }
+    } // end of Policy namespace.
+
+    template< class T_COLLAPSE, class T_FIT, class T_MINIMIZER >
       opt::t_ErrorPair leave_one_out( T_COLLAPSE &_collapse,
+                                      T_FIT &_fit,
                                       const T_MINIMIZER &_min,
-                                      const T_STRUCTURES &_strs,
                                       types::t_int _verbosity )
       {
         __TRYBEGIN
@@ -34,13 +62,14 @@ namespace CE
           opt::ErrorTuple intermediate;
           if( _verbosity >= 1 ) std::cout << " " << _collapse.mapping().n
                                           << ". Training Errors: ";
-          intermediate = fit( _collapse, _min, _strs, _verbosity >= 2); 
+          intermediate = _fit( _collapse, _min );
           if( _verbosity >= 1 ) std::cout << intermediate << "\n";
           errors.first += intermediate;
 
           if( _verbosity >= 1 ) std::cout << " " << _collapse.mapping().n
                                           << ". Prediction Errors: ";
-          intermediate = check_one( _collapse, _strs[ _collapse.mapping().n],
+          const Crystal::Structure& structure = _fit.structures()[ _collapse.mapping().n];
+          intermediate = check_one( _collapse, structure,
                                     _collapse.mapping().n, _verbosity >= 2 );
           if( _verbosity >= 1 ) std::cout << intermediate << "\n";
           errors.second += intermediate;

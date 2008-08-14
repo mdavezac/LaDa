@@ -37,20 +37,15 @@ namespace CE
   {
     _stream << " Separable Function:";
     typedef Separables<T_TRAITS> t_Separables;
-    typedef typename t_Separables :: t_Matrix t_Matrix;
-    typename t_Matrix :: const_iterator1 i_row = _sep.coefficients().begin1();
-    typename t_Matrix :: const_iterator1 i_row_end = _sep.coefficients().end1();
-    for( size_t r(0); i_row != i_row_end; i_row += t_Separables::t_Mapping:: D, ++r )
+    const size_t D( t_Separables :: t_Mapping :: D );
+    for( size_t r(0); r < _sep.ranks(); ++r )
     {
       _stream << "\n   Rank " << r << ": " << _sep.norms[r] << "\n     ";
-      typename t_Matrix :: const_iterator2 i_column = i_row.begin();
-      typename t_Matrix :: const_iterator2 i_column_end = i_row.end();
-      for( size_t d(0); i_column != i_column_end; ++i_column, ++d )
+      for( size_t d(0); d < _sep.dimensions(); ++d )
       {
         _stream << "(";
-        typename t_Matrix :: const_iterator1 i_coef = i_column.begin();
-        for( size_t i(0); i < t_Separables :: t_Mapping :: D; ++i, ++i_coef )
-          _stream  << *i_coef << " ";
+        for( size_t i(0); i < D; ++i )
+          _stream  << _sep.coefficients()( r * D + i, d ) << " ";
         _stream << ") ";
         if( d % 5 == 0 and d ) _stream << "\n     "; 
       }

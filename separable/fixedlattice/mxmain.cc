@@ -91,7 +91,11 @@ int main(int argc, char *argv[])
         ("tcoef", po::value<types::t_real>()->default_value(0),
                   "\"t\" coefficient. With --loo/fit only. " )
         ("volkerreg", " Pair regulation done with Volker Blum's"
-                      " normalization (changes the units of the \"t\" coefficient). " );
+                      " normalization (changes the units of the \"t\" coefficient). " )
+        ("bestof,b", po::value<types::t_unsigned>()->default_value(1),
+                     "Performs best-of fit.\n" )
+        ("which,w", po::value<types::t_unsigned>()->default_value(0),
+                     "Performs best-of for 0 (variance), 1 (mean), or 2(max).\n" );
     po::options_description hidden("hidden");
     hidden.add_options()
         ("datadir", po::value<std::string>()->default_value("./"))
@@ -175,6 +179,10 @@ int main(int argc, char *argv[])
     const bool J1( vm.count("J1") > 0 );
     const bool rmpairs( vm.count("rm") > 0 );
     __ASSERT( Fuzzy::le(tcoef, 0e0), "Coefficient \"t\" cannot negative.\n" )
+    const types::t_unsigned bestof( vm["bestof"].as<types::t_unsigned>() );
+    __DOASSERT( bestof == 0, "0 jobs to be performed..." )
+    const types::t_unsigned which( vm["which"].as<types::t_unsigned>() );
+    __DOASSERT( which >= 3, "Don't know which error to perform bestof for.\n" )
 
     // Loads lattice
     boost::shared_ptr< Crystal::Lattice >
@@ -315,6 +323,18 @@ int main(int argc, char *argv[])
     std::cout << "CE regulation alpha: " << alpha << "\n"
               << "CE t-coef: " << tcoef << "\n";
     if( volkerreg ) std::cout << "   Using Volker's normalization for t.\n";
+    std::cout << "Performing best of  " << bestof;
+    if( which == 0 ) std::cout << " for variance\n";
+    if( which == 1 ) std::cout << " for mean\n";
+    if( which == 2 ) std::cout << " for max\n";
+
+    // Initializes best of fit.
+    CE::Method::Fit< CE::Method::Policy::BestOf< t_Function :: t_Matrix > >
+      fit( mixed.CEFit().structures );
+    fit.verbosity = verbosity -1;
+    fit.policy.restarts = bestof;
+    fit.policy.which = which;
+    fit.policy.howrandom = howrandom;
 
     // fitting.
     if( doloo )
@@ -322,8 +342,7 @@ int main(int argc, char *argv[])
       mixed.Collapse().mapping().do_exclude = true;
       std::cout << "Starting Leave-One-Out Procedure.\n";
       opt::t_ErrorPair errors;
-      errors = CE::Method::leave_one_out( mixed, allsq, 
-                                          mixed.CEFit().structures, verbosity - 1 );
+      errors = CE::Method::leave_one_out( mixed, fit, allsq, verbosity - 1 );
       std::cout << "Average Training Errors:\n " << ( nerror = errors.first ) << "\n";
       std::cout << "Final Prediction Errors:\n " << ( nerror = errors.second ) << "\n\n";
       std::cout << "Average Training Errors:\n " << errors.first << "\n";
@@ -333,8 +352,7 @@ int main(int argc, char *argv[])
     {
       mixed.Collapse().mapping().do_exclude = false;
       std::cout << "\nFitting using whole training set:" << std::endl;
-      nerror = CE::Method::fit( mixed, allsq,
-                                mixed.CEFit().structures, verbosity >= print_checks );
+      nerror = fit( mixed, allsq );
       std::cout << nerror << "\n"; 
       mixed.reassign();
       if( verbosity >= print_function ) std::cout << mixed << "\n";

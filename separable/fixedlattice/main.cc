@@ -77,7 +77,11 @@ int main(int argc, char *argv[])
         ("random", po::value<types::t_real>()->default_value(5e-1),
                    "Coefficients' randomness.\n" )
         ("lambda,l", po::value<types::t_real>()->default_value(0),
-                     "Regularization factor.\n" );
+                     "Regularization factor.\n" )
+        ("bestof,b", po::value<types::t_unsigned>()->default_value(1),
+                     "Performs best-of fit.\n" )
+        ("which,w", po::value<types::t_unsigned>()->default_value(0),
+                     "Performs best-of for 0 (variance), 1 (mean), or 2(max).\n" );
     po::options_description hidden("hidden");
     hidden.add_options()
         ("datadir", po::value<std::string>()->default_value("./"))
@@ -153,6 +157,10 @@ int main(int argc, char *argv[])
     const types::t_real dtolerance( vm["1dtolerance"].as< types::t_real >() );
     const types::t_real howrandom( vm["random"].as<types::t_real>() );
     const types::t_real lambda( vm["lambda"].as<types::t_real>() );
+    const types::t_unsigned bestof( vm["bestof"].as<types::t_unsigned>() );
+    __DOASSERT( bestof == 0, "0 jobs to be performed..." )
+    const types::t_unsigned which( vm["which"].as<types::t_unsigned>() );
+    __DOASSERT( which >= 3, "Don't know which error to perform bestof for.\n" )
 
     // Loads lattice
     boost::shared_ptr< Crystal::Lattice >
@@ -188,6 +196,7 @@ int main(int argc, char *argv[])
         std::cout << bl::_1 << "\n"
       );
 
+
     // Initializes fitting.
     typedef Fitting::AlternatingLeastSquare<Fitting::Cgs> t_Fitting;
     t_Fitting allsq;
@@ -207,7 +216,6 @@ int main(int argc, char *argv[])
     t_Function separables;
     separables.set_rank_n_size( rank, postoconfs.positions.size() );
     separables.randomize( howrandom );
-    std::fill( separables.norms.begin(), separables.norms.end(), 1e0 );
     separables.normalize();
 
     // Initializes collapse functor.
@@ -222,6 +230,7 @@ int main(int argc, char *argv[])
     t_Collapse collapse;
     collapse.init( structures, postoconfs );
     collapse.regularization().lambda = lambda;
+    collapse.init( separables );
 
 
     opt::NErrorTuple nerror( opt::mean_n_var(structures) ); 
@@ -242,7 +251,18 @@ int main(int argc, char *argv[])
               << "Data mean: " << nerror.nmean() << "\n"
               << "Data Variance: " << nerror.nvariance() << "\n"
               << "Random Seed: " << seed << "\n"
-              << "Regulation factor: " << lambda << "\n";
+              << "Regulation factor: " << lambda << "\n"
+              << "Performing best of  " << bestof;
+    if( which == 0 ) std::cout << " for variance\n";
+    if( which == 1 ) std::cout << " for mean\n";
+    if( which == 2 ) std::cout << " for max\n";
+
+
+    // Initializes best of fit.
+    CE::Method::Fit< CE::Method::Policy::BestOf< t_Function :: t_Matrix > > fit( structures );
+    fit.verbosity = verbosity -1;
+    fit.policy.restarts = bestof;
+    fit.policy.which = which;
 
     // fitting.
     if( doloo )
@@ -250,7 +270,7 @@ int main(int argc, char *argv[])
       collapse.mapping().do_exclude = true;
       std::cout << "Starting Leave-One-Out Procedure.\n";
       opt::t_ErrorPair errors;
-      errors = CE::Method::leave_one_out( collapse, allsq, structures, verbosity - 1 );
+      errors = CE::Method::leave_one_out( collapse, fit, allsq, verbosity - 1 );
       std::cout << "Average Training Errors:\n " << ( nerror = errors.first ) << "\n";
       std::cout << "Final Prediction Errors:\n " << ( nerror = errors.second ) << "\n\n";
       std::cout << "Average Training Errors:\n " << errors.first << "\n";
@@ -261,7 +281,7 @@ int main(int argc, char *argv[])
     {
       collapse.mapping().do_exclude = false;
       std::cout << "\nFitting using whole training set:" << std::endl;
-      nerror = CE::Method::fit( collapse, allsq, structures, verbosity >= print_checks );
+      nerror = fit( collapse, allsq );
       std::cout << nerror << "\n"; 
       if( verbosity >= print_function ) std::cout << separables << "\n";
     }
