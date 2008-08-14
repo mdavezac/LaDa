@@ -47,7 +47,7 @@ namespace Traits
               class T_REGULARIZATIONPOLICY = ::CE::Policy::NoReg<T_SEPARABLES>,
               class T_CONFS = boost::numeric::ublas::matrix<size_t>,
               class T_UPDATEPOLICY
-                = ::CE::Policy::LowMemUpdate<T_SEPARABLES, T_MAPPING, T_CONFS >
+                = ::CE::Policy::LowMemUpdate<T_SEPARABLES, T_MAPPING, T_CONFS > >
     struct Collapse 
     {
       //! Type of the configuration matrix.
@@ -57,9 +57,9 @@ namespace Traits
       //! Type of the Mapping.
       typedef T_MAPPING t_Mapping;
       //! Type of the Regulations Policy
-      typedef T_REGULARIZATIONPOLICY< t_Separables > t_RegPolicy;
+      typedef T_REGULARIZATIONPOLICY t_RegPolicy;
       //! Type of the Policy.
-      typedef T_UPDATEPOLICY<t_Separables, t_Mapping, t_iMatrix> t_UpdatePolicy;
+      typedef T_UPDATEPOLICY t_UpdatePolicy;
     };
   }
 } // end of traits namespace.
@@ -93,15 +93,9 @@ namespace CE
         //! Type of the vectors.
         typedef typename t_Separables :: t_Vector t_Vector;
 
-        //! \brief The mapping from target values to symetrically equivalent
-        //!        structures.
-        t_Mapping mapping;
-        //! Regularization.
-        t_RegPolicy regularization;
-
         //! Constructor.
         Collapse() : dim(0), separables_(NULL),
-                     update_( mapping, configurations_ ) {}
+                     update_( mapping_, configurations_ ) {}
         //! Destructor.
         ~Collapse() {}
 
@@ -109,7 +103,7 @@ namespace CE
         template< class T_MATRIX, class T_VECTOR >
           void operator()( T_MATRIX &_A, T_VECTOR &_b,
                            types::t_unsigned _dim )
-            { dim = _dim; create_A_n_b( _A, _b ); regularization( _A, _b, _dim); }
+            { dim = _dim; create_A_n_b( _A, _b ); regularization()( _A, _b, _dim); }
         //! Evaluates square errors.
         opt::ErrorTuple evaluate() const;
 
@@ -137,6 +131,14 @@ namespace CE
         t_Separables& separables() { return *separables_; }
         //! Returns a constant reference to the separable function;
         const t_Separables& separables() const { return *separables_; }
+        //! Returns a reference to the mapping.
+        t_Mapping& mapping() { return mapping_; }
+        //! Returns a reference to the mapping.
+        const t_Mapping& mapping() const { return mapping_; }
+        //! Returns a reference to the regularization.
+        t_RegPolicy& regularization() { return regularization_; }
+        //! Returns a constant reference to the regularization.
+        const t_RegPolicy& regularization() const { return regularization_; }
 
       protected:
         //! Creates the _A and _b matrices for fitting.
@@ -153,12 +155,15 @@ namespace CE
         t_iMatrix configurations_;
         //! Holds current dimension being fitted.
         size_t dim;
-        //! holds the sep. func. split up by rank and confs.
-        t_Matrix scales;
         //! Pointer to separable function being minimized.
         t_Separables *separables_;
         //! Update policy.
         t_UpdatePolicy update_;
+        //! \brief The mapping from target values to symetrically equivalent
+        //!        structures.
+        t_Mapping mapping_;
+        //! Regularization.
+        t_RegPolicy regularization_;
     };
 
   namespace Policy
@@ -171,6 +176,12 @@ namespace CE
       class LowMemUpdate
       {
         public:
+          //! Helps to obtain a differently typed update policy.
+          template< class T_SEP, class T_MAP, class T_C = T_CONFS > struct rebind
+          { 
+            //! Type of the regularization policy.
+            typedef LowMemUpdate< T_SEP, T_MAP, T_C > other;
+          };
           //! Type of the separable functions.
           typedef T_SEPARABLES t_Separables;
           //! Type of the mapping from configurations to configurations.
@@ -181,6 +192,9 @@ namespace CE
           typedef typename t_Separables :: t_Vector t_Vector;
           //! Type of the matrices.
           typedef typename t_Separables :: t_Matrix t_Matrix;
+          //! Type of the constructible matrices.
+          typedef boost::numeric::ublas::matrix
+                    < typename t_Matrix :: value_type > t_CMatrix;
 
           //! the constructor.
           LowMemUpdate   ( const t_Mapping &_mapping, const t_iMatrix &_confs )
@@ -204,7 +218,7 @@ namespace CE
             factor_from_scratch( size_t _kv, size_t _r, size_t _dim) const;
 
           //! Holds the sep. func. split up by rank and confs.
-          t_Matrix scales_;
+          t_CMatrix scales_;
           //! A reference to the config. mapping.
           const t_Mapping &mapping_;
           //! A reference to the config. mapping.
@@ -217,6 +231,12 @@ namespace CE
       class HighMemUpdate : protected LowMemUpdate<T_SEPARABLES, T_MAPPING, T_CONFS >
       {
         public:
+          //! Helps to obtain a differently typed update policy.
+          template< class T_SEP, class T_MAP, class T_C = T_CONFS > struct rebind
+          { 
+            //! Type of the regularization policy.
+            typedef HighMemUpdate< T_SEP, T_MAP, T_C > other;
+          };
           //! Type if the base class.
           typedef LowMemUpdate<T_SEPARABLES, T_MAPPING, T_CONFS > t_Base;
           //! Type of the separable functions.
@@ -229,6 +249,9 @@ namespace CE
           typedef typename t_Separables :: t_Vector t_Vector;
           //! Type of the matrices.
           typedef typename t_Separables :: t_Matrix t_Matrix;
+          //! Type of the constructible matrices.
+          typedef boost::numeric::ublas::matrix
+                    < typename t_Matrix :: value_type > t_CMatrix;
 
           //! Constructor.
           HighMemUpdate   ( const t_Mapping &_mapping, const t_iMatrix &_confs )
@@ -251,7 +274,7 @@ namespace CE
             factor_from_scratch( size_t _kv, size_t _r, size_t _dim) const;
 
           //! Holds the sep. func. split along confs, ranks, and dimensions.
-          std::vector< t_Matrix > dimsplit_;
+          std::vector< t_CMatrix > dimsplit_;
           using t_Base :: scales_;
           using t_Base :: mapping_;
           using t_Base :: configurations_;
@@ -262,6 +285,12 @@ namespace CE
     class NoReg 
     {
       public:
+        //! Helps to obtain a differently typed regularization.
+        template< class T_SEP > struct rebind
+        { 
+          //! Type of the regularization policy.
+          typedef NoReg< T_SEP > other;
+        };
         //! Type of the separable function.
         typedef T_SEPARABLES t_Separables;
         //! Constructor
@@ -277,6 +306,12 @@ namespace CE
     class Regularization 
     {
       public:
+        //! Helps to obtain a differently typed regularization.
+        template< class T_SEP > struct rebind
+        { 
+          //! Type of the regularization policy.
+          typedef Regularization< T_SEP > other;
+        };
         //! Type of the separable function.
         typedef T_SEPARABLES t_Separables;
 

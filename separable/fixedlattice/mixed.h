@@ -19,8 +19,10 @@ namespace Traits
   namespace CE
   {
     template< class T_COLTRAITS, class T_CEBASE >
-     struct MixedApproach
+     class MixedApproach
      {
+       public:
+                        
        //! Original separable traits.
        typedef typename T_COLTRAITS :: t_Separables :: t_Traits t_OrigSepTraits;
        //! Separable function traits.
@@ -34,20 +36,30 @@ namespace Traits
                t_SepTraits;
        //! Type of the separable function.
        typedef ::CE::Separables< t_SepTraits > t_Separables;
+       protected:
+       typedef typename T_COLTRAITS :: t_RegPolicy
+                                    ::template rebind< t_Separables > :: other t_Reg;
+       typedef typename T_COLTRAITS :: t_UpdatePolicy
+                           ::template rebind< t_Separables,
+                                              typename T_COLTRAITS :: t_Mapping, 
+                                              typename T_COLTRAITS :: t_iMatrix >
+                           :: other t_Up;
+       public:
        //! collapse traits.
        typedef Collapse
                < 
                  t_Separables,
                  typename T_COLTRAITS :: t_Mapping,
-                 typename T_COLTRAITS :: t_RegularizationPolicy,
-                 typename T_COLTRAITS :: t_UpdatePolicy 
+                 t_Reg,
+                 typename T_COLTRAITS :: t_iMatrix,
+                 t_Up
                > 
                t_ColTraits;
        //! Type of the collapse functor base.
        typedef ::CE::Collapse< t_ColTraits > t_Collapse;
        //! CE fit base.
-       typedef T_CEBASSE t_CEBase;
-     }
+       typedef T_CEBASE t_CEBase;
+     };
 
   } // end of CE namespace 
 
@@ -56,8 +68,8 @@ namespace CE
 {
 
   template< class T_TRAITS >
-    class MixedApproach : protected typename T_TRAITS :: t_Collapse,
-                          protected typename T_TRAITS :: t_CEBase
+    class MixedApproach : protected T_TRAITS :: t_Collapse,
+                          protected T_TRAITS :: t_CEBase
     {
       public:
         //! Type of the traits.
@@ -68,13 +80,18 @@ namespace CE
         typedef typename t_Traits :: t_CEBase  t_CEBase;
         //! Type of the separable function.
         typedef typename t_Traits :: t_Separables  t_Separables;
+        //! Type of the configuration matricex.
+        typedef typename t_Traits :: t_ColTraits :: t_iMatrix t_iMatrix;
+        //! \brief Type of the matrix range.
+        //! \details Necessary interface for minimizer.
+        typedef typename t_Traits :: t_SepTraits :: t_Matrix t_Matrix;
         //! Type of the matrices.
-        typedef typename t_Traits :: t_OrigSepTraits :: t_Matrix t_Matrix;
+        typedef typename t_Traits :: t_OrigSepTraits :: t_Matrix t_OMatrix;
         //! Type of the vectors.
-        typedef typename t_Traits :: t_OrigSepTraits :: t_Vector t_Vector;
+        typedef typename t_Traits :: t_OrigSepTraits :: t_Vector t_OVector;
 
         //! Constructor.
-        MixedApproach() : t_ColBase(), t_CEBase {}
+        MixedApproach() : t_ColBase(), t_CEBase() {}
         //! Destructor.
         ~MixedApproach() {}
 
@@ -96,7 +113,7 @@ namespace CE
         opt::ErrorTuple evaluate();
 
         //! Updates the separable and copies the eci from column 0 to all other columns.
-        void update_all() { t_ColBase::update_all() };
+        void update_all();
         //! Updates the separable and copies the eci from column d to column 0.
         void update( types::t_unsigned _d );
         //! Resets collapse functor.
@@ -108,16 +125,30 @@ namespace CE
         //! Returns the number of dimensions.
         size_t dimensions() const { return t_ColBase::dimensions(); }
         //! Returns the number of degrees of liberty (per dimension).
-        size_t dof() const { return t_ColBase::dof() + t_CEFit::dof(); }
-        //! Returns a constant reference to the separable function;
-        t_Separables& separables() { return separables_; }
-
-        //! Returns a reference to the coefficients.
-        t_Matrix& coefficients() { return coefficients_; }
-        //! Returns a constant reference to the coefficients.
-        const t_Matrix& coefficients() const { return coefficients_; }
+        size_t dof() const { return t_ColBase::dof() + t_CEBase::dof(); }
+       
         //! Initializes the mixed approach.
         void init();
+
+        //! Returns a reference to the coefficients.
+        t_OMatrix& coefficients() { return coefficients_; }
+        //! Returns a constant reference to the coefficients.
+        const t_OMatrix& coefficients() const { return coefficients_; }
+        //! Returns a reference to the mapping.
+        typename t_ColBase::t_Mapping& mapping() { return t_ColBase::mapping(); }
+        //! Returns a reference to the mapping.
+        const typename t_ColBase::t_Mapping& mapping() const
+          { return t_ColBase::mapping(); }
+        //! Returns a reference to the regularization.
+        typename t_ColBase::t_RegPolicy& regularization() 
+          { return t_ColBase::regularization(); }
+        //! Returns a constant reference to the regularization.
+        const typename t_ColBase::t_RegPolicy& regularization() const
+          { return t_ColBase::regularization(); }
+        //! Returns a reference to the separable function;
+        t_Separables& separables() { return separables_; }
+        //! Returns a constant reference to the separable function;
+        const t_Separables& separables() const { return separables_; }
 
       protected:
         //! Creates the _A and _b matrices for fitting.
@@ -128,7 +159,7 @@ namespace CE
         t_Separables separables_;
 
         //! The coefficients.
-        t_Matrix coefficients_;
+        t_OMatrix coefficients_;
     };
 } // end of CE namspace
 

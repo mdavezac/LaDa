@@ -27,21 +27,21 @@ namespace CE
       {
         __TRYBEGIN
         opt::t_ErrorPair errors;
-        for( _collapse.mapping.n = 0;
-             _collapse.mapping.n < _collapse.mapping.size();
-             ++_collapse.mapping.n )
+        for( _collapse.mapping().n = 0;
+             _collapse.mapping().n < _collapse.mapping().size();
+             ++_collapse.mapping().n )
         {
           opt::ErrorTuple intermediate;
-          if( _verbosity >= 1 ) std::cout << " " << _collapse.mapping.n
+          if( _verbosity >= 1 ) std::cout << " " << _collapse.mapping().n
                                           << ". Training Errors: ";
           intermediate = fit( _collapse, _min, _strs, _verbosity >= 2); 
           if( _verbosity >= 1 ) std::cout << intermediate << "\n";
           errors.first += intermediate;
 
-          if( _verbosity >= 1 ) std::cout << " " << _collapse.mapping.n
+          if( _verbosity >= 1 ) std::cout << " " << _collapse.mapping().n
                                           << ". Prediction Errors: ";
-          intermediate = check_one( _collapse, _strs[ _collapse.mapping.n],
-                                    _collapse.mapping.n, _verbosity >= 2 );
+          intermediate = check_one( _collapse, _strs[ _collapse.mapping().n],
+                                    _collapse.mapping().n, _verbosity >= 2 );
           if( _verbosity >= 1 ) std::cout << intermediate << "\n";
           errors.second += intermediate;
         }
@@ -61,14 +61,14 @@ namespace CE
         const std::string name = fs::path( _structure.name ).leaf() ;
      
         types::t_real predic(0);
-        const bblas::range erange( _collapse.mapping.range(_n) );
+        const bblas::range erange( _collapse.mapping().range(_n) );
         for( bblas::range::const_iterator i( erange.begin() ); i != erange.end(); ++i )
         {
           typedef bblas::matrix_column< const typename T_COLLAPSE :: t_Matrix > 
             t_Column;
           t_Column column( _collapse.configurations(), *i );
           predic +=   _collapse.separables()( column )
-                    * _collapse.mapping.eweight( _n, *i - erange.start() );
+                    * _collapse.mapping().eweight( _n, *i - erange.start() );
         }
   
         opt::ErrorTuple error( _structure.energy - predic,  weight );
@@ -96,7 +96,7 @@ namespace CE
         typename T_STRUCTURES :: const_iterator i_str_end = _strs.end();
         for(size_t n(0); i_str != i_str_end; ++i_str, ++n )
         {
-          if( _collapse.mapping.do_skip(n) ) continue;
+          if( _collapse.mapping().do_skip(n) ) continue;
           result += check_one( _collapse, *i_str, n, _verbose );
         }
         return result;

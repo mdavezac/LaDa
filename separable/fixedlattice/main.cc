@@ -213,17 +213,15 @@ int main(int argc, char *argv[])
     // Initializes collapse functor.
     typedef CE::Mapping::ExcludeOne< CE::Mapping::SymEquiv > t_Mapping;
     typedef CE::Policy::Regularization< t_Function > t_Regularization;
-    typedef boost::numeric::ublas::matrix<size_t> t_Conf;
-    typedef CE::Policy::HighMemUpdate< t_Function, t_Mapping, t_Conf > t_UpdatePolicy;
-    typedef Traits::CE::Collapse< t_Function, 
-                                  t_Mapping,
-                                  t_Confs,
-                                  t_Regularization,
+    typedef boost::numeric::ublas::matrix<size_t> t_Confs;
+    typedef CE::Policy::HighMemUpdate< t_Function, t_Mapping, t_Confs > t_UpdatePolicy;
+    typedef Traits::CE::Collapse< t_Function, t_Mapping, 
+                                  t_Regularization, t_Confs,
                                   t_UpdatePolicy > t_CollapseTraits;
     typedef CE::Collapse< t_CollapseTraits > t_Collapse;
     t_Collapse collapse;
     collapse.init( structures, postoconfs );
-    collapse.regularization.lambda = lambda;
+    collapse.regularization().lambda = lambda;
 
 
     opt::NErrorTuple nerror( opt::mean_n_var(structures) ); 
@@ -249,7 +247,7 @@ int main(int argc, char *argv[])
     // fitting.
     if( doloo )
     {
-      collapse.mapping.do_exclude = true;
+      collapse.mapping().do_exclude = true;
       std::cout << "Starting Leave-One-Out Procedure.\n";
       opt::t_ErrorPair errors;
       errors = CE::Method::leave_one_out( collapse, allsq, structures, verbosity - 1 );
@@ -261,7 +259,7 @@ int main(int argc, char *argv[])
     }
     if( dofit )
     {
-      collapse.mapping.do_exclude = false;
+      collapse.mapping().do_exclude = false;
       std::cout << "\nFitting using whole training set:" << std::endl;
       nerror = CE::Method::fit( collapse, allsq, structures, verbosity >= print_checks );
       std::cout << nerror << "\n"; 

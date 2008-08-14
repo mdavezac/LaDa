@@ -149,6 +149,12 @@ namespace CE
     template<class T_MAPPING> 
     struct DimensionMatrix
     {
+      //! Helps retype the policy.
+      template< class T_MAP > struct rebind
+      {
+        //! Type of the rebound policy.
+        typedef DimensionMatrix<T_MAP> other; 
+      };
       //! type of the mapping.
       typedef T_MAPPING t_Mapping;
       //! \brief Returns a vector with the computed ranks of the separable function.
