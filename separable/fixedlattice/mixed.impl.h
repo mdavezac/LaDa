@@ -80,15 +80,13 @@ namespace CE
     INCOLLAPSE( void ) :: randomize( typename t_Vector :: value_type _howrandom )
     {
       namespace bblas = boost::numeric::ublas;
-      namespace bl = boost::lambda;
       separables().randomize( _howrandom );
-      bblas::matrix_column< t_Matrix > column0( coefficients(), 0 );
       typedef typename t_Matrix :: value_type t_Type;
-      std::for_each
-      (
-        column0.begin() + t_ColBase::dof(), column0.end(), 
-        ( bl::bind<t_Type>( &opt::random::rng ) - t_Type(5e-1) ) * _howrandom
-      );
+      bblas::matrix_column< t_Matrix > column0( coefficients(), 0 );
+      typename bblas::matrix_column< t_Matrix > :: iterator i_c = column0.begin();
+      typename bblas::matrix_column< t_Matrix > :: iterator i_c_end = column0.end();
+      for( i_c += t_ColBase::dof(); i_c != i_c_end; ++i_c )
+        *i_c = t_Type( opt::random::rng() - 5e-1 ) * _howrandom;
     }
 
 

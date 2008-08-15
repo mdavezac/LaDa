@@ -97,7 +97,7 @@ namespace opt
                  : t_Base( _e ), variance_( _e.variance_ ), mean_( _e.mean_ ) {}
       //! Copies error tuple and sum of weights into normalized error tuple.
       const NErrorTuple& operator=( const ErrorTuple &_e )
-        { *( ErrorTuple* )this = _e; }
+        { *( ErrorTuple* )this = _e; return *this; }
       //! returns variance.
       types::t_real variance() const { return ErrorTuple::variance() / variance_; }
       //! returns mean.

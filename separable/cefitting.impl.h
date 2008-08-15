@@ -72,6 +72,7 @@ namespace Fitting
       opt::ErrorTuple training, prediction;
       types::t_unsigned N = _interface.training_set_size();
 
+      _interface.exclude.resize(1);
       bool first_iter = true;
       _interface.exclude.resize(1);
       for(; _interface.exclude[0] < N; ++_interface.exclude[0], first_iter=false )

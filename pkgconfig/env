@@ -1,11 +1,15 @@
 #
 #  Version: $Id$
 #
-bsuf="-gcc41-mt"
+bsuf="-il-mt"
+# bsuf="-gcc34-mt"
 BOOST_LDFLAGS="-L$HOME/usr/lib"
 BOOST_MPI="-lboost_serialization$bsuf -lboost_mpi$bsuf"
 BOOST_PROGOP="-lboost_program_options$bsuf"
 BOOST_FS="-lboost_filesystem$bsuf"
 BOOST_PYTHON="-lboost_python$bsuf"
 BOOST_REGEX="-lboost_regex$bsuf"
+BOOST_SYSTEM="-lboost_system$bsuf"
 BOOST_CXXFLAGS="-I$HOME/usr/include/boost-1_35"
+PYTHON_INCLUDE_DIR="$HOME/usr/include/python2.5"
+PYTHON_LIB="$HOME/usr/lib/python2.5"

@@ -16,9 +16,9 @@ cubic_LDFLAGS =  $(AM_LDFLAGS)
 cubic_LDADD = libfxseparable.la \
               ../../crystal/libcrystal.la \
               ../../atat/libatat.la \
-              ../../opt/libopt.la \
               ../../physics/libphysics.la \
-              ../../print/libprint.la 
+              ../../print/libprint.la \
+              ../../opt/libopt.la 
 
 tetra_SOURCES = $(cubic_SOURCES)
 tetra_CPPFLAGS =  $(AM_CPPFLAGS) -I .. -D_TETRAGONAL_CE_
@@ -37,14 +37,14 @@ nobase_libfxseparable_la_HEADERS = $(SEPARABLES_FXL_H) $(SEPARABLES_FXL_IMPL_H)
 libfxseparable_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
 
 ../../atat/libatat.la: 
-	cd ../atat; $(MAKE) 
+	cd ../../atat; $(MAKE) 
 ../../crystal/libcrystal.la: 
-	cd ../crystal; $(MAKE) 
+	cd ../../crystal; $(MAKE) 
 ../../physics/libphysic.la: 
-	cd ../physics; $(MAKE) 
+	cd ../../physics; $(MAKE) 
 ../../opt/libopt.la: 
-	cd ../opt; $(MAKE) 
+	cd ../../opt; $(MAKE) 
 ../../print/libprint.la: 
-	cd ../print; $(MAKE) 
+	cd ../../print; $(MAKE) 
 ../../ce/libce.la: 
-	cd ../ce; $(MAKE) 
+	cd ../../ce; $(MAKE) 

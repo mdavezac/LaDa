@@ -108,7 +108,7 @@ namespace CE
     template< class T_COLLAPSE, class T_STRUCTURES >
       opt::ErrorTuple check_all( const T_COLLAPSE &_collapse,
                                  const T_STRUCTURES &_strs,
-                                 bool _verbose = false )
+                                 bool _verbose )
       {
         opt::ErrorTuple result;
         typename T_STRUCTURES :: const_iterator i_str = _strs.begin();
