@@ -39,7 +39,7 @@ SUBDIRS = fixedlattice
 	cd ../crystal; $(MAKE) 
 ../physics/libphysic.la: 
 	cd ../physics; $(MAKE) 
-../opt/libopt.la: 
+/./opt/libopt.la: 
 	cd ../opt; $(MAKE) 
-../opt/libprint.la: 
+../print/libprint.la: 
 	cd ../print; $(MAKE) 
