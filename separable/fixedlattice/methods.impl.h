@@ -62,12 +62,14 @@ namespace CE
           opt::ErrorTuple intermediate;
           if( _verbosity >= 1 ) std::cout << " " << _collapse.mapping().n
                                           << ". Training Errors: ";
+          if( _verbosity >= 2 ) std::cout << "\n";
           intermediate = _fit( _collapse, _min );
           if( _verbosity >= 1 ) std::cout << intermediate << "\n";
           errors.first += intermediate;
 
           if( _verbosity >= 1 ) std::cout << " " << _collapse.mapping().n
                                           << ". Prediction Errors: ";
+          if( _verbosity >= 2 ) std::cout << "\n";
           const Crystal::Structure& structure = _fit.structures()[ _collapse.mapping().n];
           intermediate = check_one( _collapse, structure,
                                     _collapse.mapping().n, _verbosity >= 2 );
