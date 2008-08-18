@@ -72,6 +72,45 @@ namespace CE
         t_Vector nb_;
     };
 
+  template< class T_BASE, class T_CONTAINER = std::vector< types::t_unsigned>  >
+    class ExcludeMany : public T_BASE
+    {
+      public:
+        //! Type of the base class.
+        typedef T_BASE t_Base;
+        //! Index of structure to exclude.
+        T_CONTAINER excluded;
+        //! Constructor.
+        ExcludeMany() : T_BASE() {}
+        //! Destructor.
+        ~ExcludeMany() {}
+        //! Returns true if \a _i in ExcludeOne::excluded and ExcludeOne::do_exclude is true.
+        bool do_skip( size_t _i ) const
+        { 
+          if( excluded.empty() ) return false;
+          return std::find( excluded.begin(), excluded.end(), _i ) != excluded.end();
+        }
+    };
+  template< class T_BASE, class T_CONTAINER >
+    class ExcludeMany<T_BASE, T_CONTAINER*> : public T_BASE
+    {
+      public:
+        //! Type of the base class.
+        typedef T_BASE t_Base;
+        //! Index of structure to exclude.
+        T_CONTAINER *excluded;
+        //! Constructor.
+        ExcludeMany() : T_BASE(), excluded(NULL) {}
+        //! Destructor.
+        ~ExcludeMany() {}
+        //! Returns true if \a _i in ExcludeOne::excluded and ExcludeOne::do_exclude is true.
+        bool do_skip( size_t _i ) const
+        { 
+          if( excluded->empty() ) return false;
+          return std::find( excluded->begin(), excluded->end(), _i ) != excluded->end();
+        }
+    };
+
   template< class T_BASE >
     class ExcludeOne : public T_BASE
     {
@@ -89,6 +128,7 @@ namespace CE
         //! Returns true if \a _i == ExcludeOne::n and ExcludeOne::do_exclude is true.
         bool do_skip( size_t _i ) const { return do_exclude and _i == n; }
     };
+
 
   template< class T_STRUCTURES, class T_CONFIGURATIONS >
     void SymEquiv::init( const T_STRUCTURES& _strs, 

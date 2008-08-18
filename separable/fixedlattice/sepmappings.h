@@ -16,7 +16,8 @@
 
 namespace CE
 {
-  //! Contains mapping policies for fixed-lattice separable functions.
+  //! \brief Contains mapping policies for fixed-lattice separable functions.
+  //! \todo Use boost::mpl.
   namespace Mapping
   {
     //! \brief Allows different types of mapping from confs to coef parameters.

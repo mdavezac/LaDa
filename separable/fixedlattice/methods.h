@@ -12,6 +12,7 @@
 #include <opt/debug.h>
 #include <opt/errors.h>
 #include <crystal/structure.h>
+#include <separable/leave_many_out.h>
 
 namespace CE
 {

@@ -28,6 +28,8 @@
 #include <ce/cluster.h>
 #include <ce/regularization.h>
 
+#include <separable/leave_many_out.h>
+
 #include "functional.h"
 #include "sepmappings.h"
 #include "colmappings.h"
@@ -96,6 +98,7 @@ int main(int argc, char *argv[])
                      "Performs best-of fit.\n" )
         ("which,w", po::value<types::t_unsigned>()->default_value(0),
                      "Performs best-of for 0 (variance), 1 (mean), or 2(max).\n" );
+    leavemanyout.add_cmdl( specific );
     po::options_description hidden("hidden");
     hidden.add_options()
         ("datadir", po::value<std::string>()->default_value("./"))
@@ -183,6 +186,9 @@ int main(int argc, char *argv[])
     __DOASSERT( bestof == 0, "0 jobs to be performed..." )
     const types::t_unsigned which( vm["which"].as<types::t_unsigned>() );
     __DOASSERT( which >= 3, "Don't know which error to perform bestof for.\n" )
+    // extract leave-many-out commandline
+    leavemanyout.extract_cmdl( vm );
+    leavemanyout.verbose = verbose;
 
     // Loads lattice
     boost::shared_ptr< Crystal::Lattice >
@@ -249,7 +255,8 @@ int main(int argc, char *argv[])
     typedef Traits::CE::Separables< CE::Mapping::VectorDiff<2> > t_FunctionTraits;
     typedef CE::Separables< t_FunctionTraits > t_Function;
     // Collapse Traits
-    typedef CE::Mapping::ExcludeOne< CE::Mapping::SymEquiv > t_Mapping;
+    typedef CE::Mapping::ExcludeMany< CE::Mapping::ExcludeOne< CE::Mapping::SymEquiv >,
+                                      std::vector< types::t_unsigned> * > t_Mapping;
     typedef CE::Policy::Regularization< t_Function > t_Regularization;
     typedef boost::numeric::ublas::matrix<size_t> t_Confs;
     typedef CE::Policy::HighMemUpdate< t_Function, t_Mapping, t_Confs > t_UpdatePolicy;
@@ -345,8 +352,6 @@ int main(int argc, char *argv[])
       errors = CE::Method::leave_one_out( mixed, fit, allsq, verbosity - 1 );
       std::cout << "Average Training Errors:\n " << ( nerror = errors.first ) << "\n";
       std::cout << "Final Prediction Errors:\n " << ( nerror = errors.second ) << "\n\n";
-      std::cout << "Average Training Errors:\n " << errors.first << "\n";
-      std::cout << "Final Prediction Errors:\n " << errors.second << "\n\n";
     }
     if( dofit )
     {
@@ -356,6 +361,14 @@ int main(int argc, char *argv[])
       std::cout << nerror << "\n"; 
       mixed.reassign();
       if( verbosity >= print_function ) std::cout << mixed << "\n";
+    }
+    if( leavemanyout.do_perform )
+    {
+      std::cout << "\nStarting leave-many out predictive fit." << std::endl;
+      Fitting::LeaveManyOut::t_Return result;
+      result = CE::Method::leave_many_out( leavemanyout, mixed, fit, allsq, verbosity - 1 );
+      std::cout << "Average Training Errors:\n " << ( nerror = errors.first ) << "\n";
+      std::cout << "Final Prediction Errors:\n " << ( nerror = errors.second ) << "\n\n";
     }
     std::cout << "\n\n\nEnd of " << __PROGNAME__ << ".\n" << std::endl;
 

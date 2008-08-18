@@ -80,6 +80,57 @@ namespace CE
         __TRYEND(,"Error in CE::Methods::leave_one_out().\n" )
       }
 
+    template< class T_COLLAPSE, class T_FIT, class T_MINIMIZER >
+      opt::t_ErrorPair leave_one_out( LeaveManyOut &_lmo,
+                                      T_COLLAPSE &_collapse,
+                                      T_FIT &_fit,
+                                      const T_MINIMIZER &_min )
+    {
+      __TRYBEGIN
+      opt::t_ErrorPair errors;
+      if( not _lmo.do_perform ) return errors;
+
+      if( not _lmo.sets.size() ) _lmo.create_sets( _collapse.mapping().size() );
+ 
+      bool first_iter = true;
+      typedef std::vector< std::vector< types::t_unsigned > >
+                                    :: const_iterator const_iterator;
+      const_iterator i_set = sets.begin();
+      const_iterator i_set_end = sets.end();
+      for(size_t n(0); i_set != i_set_end; ++i_set, first_iter=false, ++n )
+      {
+        { // Fitting
+          opt::ErrorTuple intermediate;
+          _collapse.mapping().excluded = &(*i_set);
+          
+          if( _verbosity >= 1 ) std::cout << " " << n
+                                          << ". Training Errors: ";
+          if( _verbosity >= 2 ) std::cout << "\n";
+          intermediate = _fit( _collapse, _min );
+          if( _verbosity >= 1 ) std::cout << intermediate << "\n";
+          errors.first += intermediate;
+        }
+
+        { // Prediction
+          opt::ErrorTuple intermediate;
+          if( _verbosity >= 1 ) std::cout << " " << n
+                                          << ". Prediction Errors: ";
+          if( _verbosity >= 2 ) std::cout << "\n";
+          for( size_t i(0); i < _collapse.mapping().n; ++i )
+          {
+            if( not _collapse.mapping().do_skip( i ) ) continue;
+            const Crystal::Structure& structure = _fit.structures()[ i ];
+            intermediate = check_one( _collapse, structure, i, _verbosity >= 2 );
+          }
+          if( _verbosity >= 1 ) std::cout << intermediate << "\n";
+          errors.second += intermediate;
+        }
+      }
+ 
+      return errors;
+      __TRYEND(, "Error while performing leave-many-out.\n" )
+    }
+
     template< class T_COLLAPSE >
       opt::ErrorTuple check_one( const T_COLLAPSE &_collapse,
                                  const Crystal::Structure &_structure,

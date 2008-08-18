@@ -19,10 +19,32 @@
 #include <opt/debug.h>
 #include <opt/errors.h>
 
+// Forard declaration.
+//! \cond
+namespace Fitting { class LeaveManyOut; }
+namespace CE
+{
+  namespace Method
+  {
+    template< class T_COLLAPSE, class T_FIT, class T_MINIMIZER >
+      opt::t_ErrorPair leave_one_out( LeaveManyOut &_lmo,
+                                      T_COLLAPSE &_collapse,
+                                      T_FIT &_fit,
+                                      const T_MINIMIZER &_min );
+  }
+}
+//! \endcond
+
 namespace Fitting
 {
+  //! Creates an object for storing Leave-Many-Out stuff.
   class LeaveManyOut
   {
+    template< class T_COLLAPSE, class T_FIT, class T_MINIMIZER >
+      friend opt::t_ErrorPair leave_one_out( LeaveManyOut &_lmo,
+                                             T_COLLAPSE &_collapse,
+                                             T_FIT &_fit,
+                                             const T_MINIMIZER &_min );
     public:
       //! Type containing an average and a max error.
       typedef std::pair< types::t_real, types::t_real > t_PairErrors;
