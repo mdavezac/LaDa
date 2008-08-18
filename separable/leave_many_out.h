@@ -27,10 +27,10 @@ namespace CE
   namespace Method
   {
     template< class T_COLLAPSE, class T_FIT, class T_MINIMIZER >
-      opt::t_ErrorPair leave_one_out( LeaveManyOut &_lmo,
-                                      T_COLLAPSE &_collapse,
-                                      T_FIT &_fit,
-                                      const T_MINIMIZER &_min );
+      opt::t_ErrorPair leave_many_out( Fitting::LeaveManyOut &_lmo,
+                                       T_COLLAPSE &_collapse,
+                                       T_FIT &_fit,
+                                       const T_MINIMIZER &_min );
   }
 }
 //! \endcond
@@ -41,10 +41,10 @@ namespace Fitting
   class LeaveManyOut
   {
     template< class T_COLLAPSE, class T_FIT, class T_MINIMIZER >
-      friend opt::t_ErrorPair leave_one_out( LeaveManyOut &_lmo,
-                                             T_COLLAPSE &_collapse,
-                                             T_FIT &_fit,
-                                             const T_MINIMIZER &_min );
+      friend opt::t_ErrorPair CE::Method::leave_many_out( LeaveManyOut &_lmo,
+                                                          T_COLLAPSE &_collapse,
+                                                          T_FIT &_fit,
+                                                          const T_MINIMIZER &_min );
     public:
       //! Type containing an average and a max error.
       typedef std::pair< types::t_real, types::t_real > t_PairErrors;
@@ -54,10 +54,10 @@ namespace Fitting
       //! Whether or no to perform.
       bool do_perform;
       //! Level of verbosity.
-      types::t_unsigned verbose;
+      types::t_unsigned verbosity;
       
       //! Constructor.
-      LeaveManyOut() : do_perform(false), verbose( false ), 
+      LeaveManyOut() : do_perform(false), verbosity( 0 ), 
                        cmdl_set( "sets" ), cmdl_file("setsname"),
                        filename( "lmo_sets" ), nb_sets(0), nb_perset(0) {}
       //! Destructor..
@@ -142,17 +142,17 @@ namespace Fitting
 
         _interface.fit( _allsq, _collapse );
 
-        if( verbose >= vlevel1 ) std::cout << "Training:\n";
+        if( verbosity >= vlevel1 ) std::cout << "Training:\n";
         intermediate = _interface.check_training( _collapse.function,
-                                                  verbose >= vlevel2 );
+                                                  verbosity >= vlevel2 );
         training += opt::ErrorTuple( intermediate.get<1>(), 1e1 );
-        if( verbose >= vlevel1 ) std::cout << intermediate << "\n";
+        if( verbosity >= vlevel1 ) std::cout << intermediate << "\n";
 
-        if( verbose >= vlevel1 ) std::cout << "Prediction:\n";
+        if( verbosity >= vlevel1 ) std::cout << "Prediction:\n";
         intermediate = _interface.check_predictions( _collapse.function,
-                                                     verbose >= vlevel2 );
+                                                     verbosity >= vlevel2 );
         training += opt::ErrorTuple( intermediate.get<1>(), 1e1 );
-        if( verbose >= vlevel1 ) std::cout << intermediate << "\n";
+        if( verbosity >= vlevel1 ) std::cout << intermediate << "\n";
       }
 
       return t_Return( training, prediction);

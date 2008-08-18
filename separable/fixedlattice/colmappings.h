@@ -28,7 +28,10 @@ namespace CE
         //! Constructor.
         SymEquiv() {}
         //! Copy Constructor.
-        SymEquiv(const SymEquiv& ) { __DOASSERT(true, "No Copy.\n" ) }
+        SymEquiv  (const SymEquiv& _c)
+                : N(_c.N), weights_( _c.weights_ ),
+                  equiweights( _c.equiweights ), 
+                  targets_( _c.targets_ ), nb_( _c.nb_ ) {} 
         //! Destructor
         ~SymEquiv() {}
         //! Returns weights.
@@ -78,13 +81,21 @@ namespace CE
       public:
         //! Type of the base class.
         typedef T_BASE t_Base;
+        //! Type of the set of excluded.
+        typedef T_CONTAINER t_Container;
         //! Index of structure to exclude.
         T_CONTAINER excluded;
         //! Constructor.
         ExcludeMany() : T_BASE() {}
+        //! Copy Constructor.
+        ExcludeMany( const T_BASE & _c ) : T_BASE( _c ), excluded(NULL) {}
+        //! Copy Constructor.
+        ExcludeMany   ( const ExcludeMany & _c )
+                    : T_BASE( _c ), excluded( _c.excluded ) {}
         //! Destructor.
         ~ExcludeMany() {}
-        //! Returns true if \a _i in ExcludeOne::excluded and ExcludeOne::do_exclude is true.
+        //! \brief Returns true if \a _i in ExcludeOne::excluded and
+        //!        ExcludeOne::do_exclude is true.
         bool do_skip( size_t _i ) const
         { 
           if( excluded.empty() ) return false;
@@ -97,13 +108,21 @@ namespace CE
       public:
         //! Type of the base class.
         typedef T_BASE t_Base;
+        //! Type of the set of excluded.
+        typedef T_CONTAINER* t_Container;
         //! Index of structure to exclude.
         T_CONTAINER *excluded;
         //! Constructor.
         ExcludeMany() : T_BASE(), excluded(NULL) {}
+        //! Copy Constructor.
+        ExcludeMany( const T_BASE & _c ) : T_BASE( _c ), excluded(NULL) {}
+        //! Copy Constructor.
+        ExcludeMany   ( const ExcludeMany & _c )
+                    : T_BASE( _c ), excluded( _c.excluded ) {}
         //! Destructor.
         ~ExcludeMany() {}
-        //! Returns true if \a _i in ExcludeOne::excluded and ExcludeOne::do_exclude is true.
+        //! \brief Returns true if \a _i in ExcludeOne::excluded and
+        //!        ExcludeOne::do_exclude is true.
         bool do_skip( size_t _i ) const
         { 
           if( excluded->empty() ) return false;
@@ -123,6 +142,11 @@ namespace CE
         bool do_exclude;
         //! Constructor.
         ExcludeOne() : T_BASE(), n(0), do_exclude( false ) {}
+        //! Copy Constructor.
+        ExcludeOne( const T_BASE & _c ) : T_BASE( _c ), n(0), do_exclude( false ) {}
+        //! Copy Constructor.
+        ExcludeOne   ( const ExcludeOne & _c )
+                    : T_BASE( _c ), n( _c.n ) {}
         //! Destructor.
         ~ExcludeOne() {}
         //! Returns true if \a _i == ExcludeOne::n and ExcludeOne::do_exclude is true.

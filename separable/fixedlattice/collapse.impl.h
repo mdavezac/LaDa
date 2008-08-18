@@ -23,7 +23,7 @@ namespace CE
     {
       namespace bblas = boost::numeric::ublas;
       __ASSERT( not separables_, "Function pointer not set.\n" )
-      __ASSERT( dim >= configurations_.size1(), "Inconsistent sizes.\n" )
+      __ASSERT( dim >= configurations_->size1(), "Inconsistent sizes.\n" )
       // Loop over inequivalent configurations.
       t_Vector X( dof() );
       std::fill( _A.data().begin(), _A.data().end(), 
@@ -52,10 +52,10 @@ namespace CE
       namespace bblas = boost::numeric::ublas;
       __ASSERT( dof() != _out.size(), "Incompatible sizes.\n" )
       // Create matrix range including only equivalent configurations.
-      typedef const bblas::matrix_range< t_iMatrix > t_Range;
+      typedef const bblas::matrix_range< t_Configurations > t_Range;
       const bblas::range equivrange( mapping().range( _i ) );
       const bblas::range dimrange( dim, dim+1 );
-      t_Range equivconfs( configurations_, dimrange, equivrange );
+      t_Range equivconfs( *configurations_, dimrange, equivrange );
  
       typename t_Range :: const_iterator2 i_conf = equivconfs.begin2();
       typename t_Range :: const_iterator2 i_conf_end = equivconfs.end2();
@@ -74,6 +74,7 @@ namespace CE
 
   INCOLLAPSE(void) :: update_all()
   {
+    update_.init( configurations_ );
     // First, normalizes coefficients.
     separables().normalize();
     // then calls policy.
@@ -110,7 +111,7 @@ namespace CE
       }
  
       // translates to matrix.
-      configurations_.resize( _postoconfs.positions.size(), nbconfs );
+      configurations_->resize( _postoconfs.positions.size(), nbconfs );
       t_Confs :: const_iterator i_confs = confs.begin();
       t_Confs :: const_iterator i_confs_end = confs.end();
       for(size_t j(0); i_confs != i_confs_end; ++i_confs )
@@ -121,7 +122,7 @@ namespace CE
         {
           __ASSERT( j == nbconfs, "Inconsistent sizes" );
           for( size_t i(0); i < _postoconfs.positions.size(); ++i )
-            configurations_(i,j) = i_conf->first[i] ? 0: 1;
+            (*configurations_)(i,j) = i_conf->first[i] ? 0: 1;
         }
       }
  
@@ -149,7 +150,8 @@ namespace CE
     types::t_real intermed(0);
     for( bblas::range::const_iterator j( range.begin() ); j != range.end(); ++j )
     {
-      const bblas::matrix_column<const t_iMatrix> config( configurations_, *j );
+      const bblas::matrix_column<const t_Configurations> 
+        config( *configurations_, *j );
       intermed +=   separables()( config )
                   * mapping().eweight(_n,*j - range.start() );
     }
@@ -175,7 +177,8 @@ namespace CE
             namespace bblas = boost::numeric::ublas;
          
             typename t_Vector :: value_type result;
-            bblas::matrix_column< const t_iMatrix > config( configurations_, _kv );
+            bblas::matrix_column< const t_Configurations >
+              config( *configurations_, _kv );
             t_Separables :: t_Policy
                          :: apply_to_dim_n_rank( separables_->coefficients(),
                                                  config, result, _d, _r,
@@ -194,7 +197,8 @@ namespace CE
          
             typename t_Vector::value_type result(1);
             size_t d(0);
-            bblas::matrix_column< const t_iMatrix > config( configurations_, _kv );
+            bblas::matrix_column< const t_Configurations >
+              config( *configurations_, _kv );
             t_Separables :: t_Policy :: apply_to_rank
             ( 
               separables_->coefficients(), config, result, _r,
@@ -211,11 +215,11 @@ namespace CE
       {
         namespace bl = boost::lambda;
         namespace bblas = boost::numeric::ublas;
-        __ASSERT( scales_.size2() != configurations_.size2(),
+        __ASSERT( scales_.size2() != configurations_->size2(),
                   "Inconsistent sizes.\n" )
-        for( size_t i(0); i < configurations_.size2(); ++i )
+        for( size_t i(0); i < configurations_->size2(); ++i )
         {
-          bblas::matrix_column<const t_iMatrix> conf( configurations_, i );
+          bblas::matrix_column<const t_Configurations> conf( *configurations_, i );
           bblas::matrix_column<t_CMatrix> scaling( scales_, i );
           std::fill( scaling.begin(), scaling.end(), typename t_Matrix::value_type(1) );
           t_Separables::t_Policy::rank_vector
@@ -230,7 +234,7 @@ namespace CE
         :: init( const t_Separables& _sep )
         {
           separables_ = &_sep;
-          scales_.resize( separables_->ranks(), configurations_.size2() ); 
+          scales_.resize( separables_->ranks(), configurations_->size2() ); 
         }
 
     template< class T_SEPARABLES, class T_MAPPING, class T_CONFS >
@@ -244,7 +248,8 @@ namespace CE
         typename std::vector< t_CMatrix > :: iterator i_split_end = dimsplit_.end();
         for( size_t i(0); i_split != i_split_end; ++i, ++i_split )
         {
-          bblas::matrix_column< const t_iMatrix > config( configurations_, i );
+          bblas::matrix_column< const t_Configurations > 
+            config( *configurations_, i );
           for( size_t d(0); d < separables_->dimensions(); ++d ) 
             for(size_t r(0); r < separables_->ranks(); ++r )
               t_Separables :: t_Policy
@@ -261,7 +266,7 @@ namespace CE
       {
         namespace bl = boost::lambda;
         namespace bblas = boost::numeric::ublas;
-        __ASSERT( scales_.size2() != configurations_.size2(),
+        __ASSERT( scales_.size2() != configurations_->size2(),
                   "Inconsistent sizes.\n" )
         typedef typename std::vector< t_CMatrix > :: const_iterator t_cit;
         t_cit i_split = dimsplit_.begin();
@@ -291,7 +296,8 @@ namespace CE
         typename std::vector< t_CMatrix > :: iterator i_split_end = dimsplit_.end();
         for( size_t i(0); i_split != i_split_end; ++i, ++i_split )
         {
-          bblas::matrix_column< const t_iMatrix > config( configurations_, i );
+          bblas::matrix_column< const t_Configurations >
+            config( *configurations_, i );
           for(size_t r(0); r < separables_->ranks(); ++r )
             t_Separables :: t_Policy
                          :: apply_to_dim_n_rank( separables_->coefficients(),
@@ -339,7 +345,7 @@ namespace CE
         {
           namespace bl = boost::lambda;
           t_Base :: init( _sep );
-          dimsplit_.resize( configurations_.size2() ); 
+          dimsplit_.resize( configurations_->size2() ); 
           typename std::vector< t_CMatrix > :: iterator i_split = dimsplit_.begin();
           typename std::vector< t_CMatrix > :: iterator i_split_end = dimsplit_.end();
           for(; i_split != i_split_end; ++i_split )

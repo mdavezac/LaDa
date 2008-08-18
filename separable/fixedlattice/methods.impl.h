@@ -81,10 +81,10 @@ namespace CE
       }
 
     template< class T_COLLAPSE, class T_FIT, class T_MINIMIZER >
-      opt::t_ErrorPair leave_one_out( LeaveManyOut &_lmo,
-                                      T_COLLAPSE &_collapse,
-                                      T_FIT &_fit,
-                                      const T_MINIMIZER &_min )
+      opt::t_ErrorPair leave_many_out( Fitting::LeaveManyOut &_lmo,
+                                       T_COLLAPSE &_collapse,
+                                       T_FIT &_fit,
+                                       const T_MINIMIZER &_min )
     {
       __TRYBEGIN
       opt::t_ErrorPair errors;
@@ -92,37 +92,37 @@ namespace CE
 
       if( not _lmo.sets.size() ) _lmo.create_sets( _collapse.mapping().size() );
  
-      bool first_iter = true;
       typedef std::vector< std::vector< types::t_unsigned > >
                                     :: const_iterator const_iterator;
-      const_iterator i_set = sets.begin();
-      const_iterator i_set_end = sets.end();
-      for(size_t n(0); i_set != i_set_end; ++i_set, first_iter=false, ++n )
+      const_iterator i_set = _lmo.sets.begin();
+      const_iterator i_set_end = _lmo.sets.end();
+      for(size_t n(0); i_set != i_set_end; ++i_set, ++n )
       {
         { // Fitting
           opt::ErrorTuple intermediate;
-          _collapse.mapping().excluded = &(*i_set);
+          _collapse.mapping().excluded =
+             (typename T_COLLAPSE::t_Traits::t_Mapping::t_Container)&(*i_set);
           
-          if( _verbosity >= 1 ) std::cout << " " << n
+          if( _lmo.verbosity >= 1 ) std::cout << " " << n
                                           << ". Training Errors: ";
-          if( _verbosity >= 2 ) std::cout << "\n";
+          if( _lmo.verbosity >= 2 ) std::cout << "\n";
           intermediate = _fit( _collapse, _min );
-          if( _verbosity >= 1 ) std::cout << intermediate << "\n";
+          if( _lmo.verbosity >= 1 ) std::cout << intermediate << "\n";
           errors.first += intermediate;
         }
 
         { // Prediction
           opt::ErrorTuple intermediate;
-          if( _verbosity >= 1 ) std::cout << " " << n
+          if( _lmo.verbosity >= 1 ) std::cout << " " << n
                                           << ". Prediction Errors: ";
-          if( _verbosity >= 2 ) std::cout << "\n";
-          for( size_t i(0); i < _collapse.mapping().n; ++i )
+          if( _lmo.verbosity >= 2 ) std::cout << "\n";
+          for( size_t i(0); i < _collapse.mapping().size(); ++i )
           {
             if( not _collapse.mapping().do_skip( i ) ) continue;
             const Crystal::Structure& structure = _fit.structures()[ i ];
-            intermediate = check_one( _collapse, structure, i, _verbosity >= 2 );
+            intermediate = check_one( _collapse, structure, i, _lmo.verbosity >= 2 );
           }
-          if( _verbosity >= 1 ) std::cout << intermediate << "\n";
+          if( _lmo.verbosity >= 1 ) std::cout << intermediate << "\n";
           errors.second += intermediate;
         }
       }

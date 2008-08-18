@@ -149,7 +149,8 @@ namespace CE
       // Adds Separable part.
       for( bblas::range::const_iterator j( range.begin() ); j != range.end(); ++j )
       {
-        const bblas::matrix_column<const t_iMatrix> config( configurations(), *j );
+        const bblas::matrix_column<const t_Configurations>
+          config( configurations(), *j );
         intermed +=   separables()( config )
                     * t_ColBase::mapping().eweight( _n,*j - range.start() );
       }
@@ -164,10 +165,11 @@ namespace CE
     INCOLLAPSE( void ) ::  init( size_t _ranks, size_t _dims )
     {
       __DEBUGTRYBEGIN
-      CEFit().init( clusters );
+      CEFit().init( *clusters_ );
       namespace bblas = boost::numeric::ublas;
       separables().norms.resize( _ranks );
-      coefficients_.resize( clusters.size() + _ranks * t_Separables::t_Mapping::D, _dims );
+      coefficients().resize(   clusters_->size() 
+                             + _ranks * t_Separables::t_Mapping::D, _dims );
       const bblas::range rows( 0, _ranks * t_Separables::t_Mapping::D );
       const bblas::range columns( 0, _dims );
       separables().coefficients_interface().set( coefficients(), rows, columns );
@@ -179,11 +181,11 @@ namespace CE
     {
       namespace bl = boost::lambda;
       __DEBUGTRYBEGIN
-      __ASSERT( coefficients().size1() - t_ColBase::dof() != clusters.size(),
+      __ASSERT( coefficients().size1() - t_ColBase::dof() != clusters_->size(),
                 "Inconsistent sizes.\n")
 
-      t_Clusters :: iterator i_clusters = clusters.begin();
-      t_Clusters :: iterator i_clusters_end = clusters.end();
+      t_Clusters :: iterator i_clusters = clusters_->begin();
+      t_Clusters :: iterator i_clusters_end = clusters_->end();
       typename t_Matrix :: const_iterator1 i_eci = coefficients().begin1() + t_ColBase::dof();
       for(; i_clusters != i_clusters_end; ++i_clusters, ++i_eci )
         std::for_each
@@ -199,13 +201,14 @@ namespace CE
 #  undef INCOLLAPSE2
 
   template< class T_TRAITS >
-  std::ostream& operator<<( std::ostream& _stream, const MixedApproach<T_TRAITS> &_col )
+  std::ostream& operator<<( std::ostream& _stream,
+                            const MixedApproach<T_TRAITS> &_col )
   {
     _stream << "Mixed-Approach function: " << _col.separables() << "\n";
     typedef typename MixedApproach<T_TRAITS> :: t_Clusters :: const_iterator t_cit;
  
-    t_cit i_clusters = _col.clusters.begin();
-    t_cit i_clusters_end = _col.clusters.end();
+    t_cit i_clusters = _col.clusters().begin();
+    t_cit i_clusters_end = _col.clusters().end();
     for(; i_clusters != i_clusters_end; ++i_clusters )
       _stream << i_clusters->front();
     return _stream;

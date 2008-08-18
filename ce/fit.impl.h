@@ -44,16 +44,16 @@ namespace CE
     __DEBUGTRYBEGIN
     namespace bl = boost::lambda;
     namespace bblas = boost::numeric::ublas;
-    __ASSERT( pis.size() != structures.size(),
+    __ASSERT( pis.size() != structures().size(),
               "Inconsistent number of structures and pis.\n" )
-    __ASSERT( structures.size() != weights.size(),
+    __ASSERT( structures().size() != weights().size(),
               "Inconsistent number of structures and weights.\n" )
 
     // loop over targets.
-    t_Structures :: const_iterator i_target = structures.begin();
-    t_Structures :: const_iterator i_target_end = structures.end();
+    t_Structures :: const_iterator i_target = structures().begin();
+    t_Structures :: const_iterator i_target_end = structures().end();
     t_Pis :: const_iterator i_pis = pis.begin();
-    t_Weights :: const_iterator i_w = weights.begin();
+    t_Weights :: const_iterator i_w = weights().begin();
     for( types::t_unsigned i(0); 
          i_target != i_target_end; 
          ++i_target, ++i_pis, ++i_w, ++i )
@@ -104,7 +104,7 @@ namespace CE
       {
         __DEBUGTRYBEGIN
         opt::ErrorTuple result;
-        for(types::t_int n(0); n < structures.size(); ++n)
+        for(types::t_int n(0); n < structures().size(); ++n)
           if( found(n) xor _training ) 
             result += t_Base::check_one( _ecis, n, _verbose );
         return result;
@@ -117,7 +117,7 @@ namespace CE
     {
       __DEBUGTRYBEGIN
       opt::ErrorTuple result;
-      for(types::t_int n(0); n < structures.size(); ++n)
+      for(types::t_int n(0); n < structures().size(); ++n)
         result += t_Base::check_one( _ecis, n, _verbose );
       return result;
       __DEBUGTRYEND(, "Error in Fit::check_all().\n" )
@@ -185,7 +185,7 @@ namespace CE
                      BaseFit::t_Vector &_x, bool _verbose )
       {
         opt::ErrorTuple training, prediction;
-        types::t_unsigned N = _fit.structures.size();
+        types::t_unsigned N = _fit.structures().size();
      
         _fit.excluded.resize(1);
         for(size_t i(0); i < N; ++i )
@@ -216,7 +216,7 @@ namespace CE
                      bool _verbose )
       {
         opt::ErrorTuple training, prediction;
-        types::t_unsigned N = _fit.structures.size();
+        types::t_unsigned N = _fit.structures().size();
      
         _fit.excluded.resize(1);
         for(size_t i(0); i < N; ++i )

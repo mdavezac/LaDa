@@ -276,7 +276,7 @@ int main(int argc, char *argv[])
 
     // extract leave-many-out commandline
     leavemanyout.extract_cmdl( vm );
-    leavemanyout.verbose = verbose;
+    leavemanyout.verbosity = verbose;
 
     opt::NErrorTuple nerror( interface.mean_n_var() ); 
     

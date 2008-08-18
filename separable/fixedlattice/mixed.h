@@ -23,10 +23,8 @@ namespace Traits
   namespace CE
   {
     template< class T_COLTRAITS, class T_CEBASE >
-     class MixedApproach
+     struct MixedApproach
      {
-       public:
-                        
        //! Original separable traits.
        typedef typename T_COLTRAITS :: t_Separables :: t_Traits t_OrigSepTraits;
        //! Separable function traits.
@@ -40,23 +38,28 @@ namespace Traits
                t_SepTraits;
        //! Type of the separable function.
        typedef ::CE::Separables< t_SepTraits > t_Separables;
-       protected:
+       //! Type of the configuration matrix.
+       typedef typename T_COLTRAITS :: t_Configurations t_Configurations;
+       //! Type of the Mapping.
+       typedef typename T_COLTRAITS :: t_Mapping t_Mapping;
+       //! Type of the Regulations Policy
        typedef typename T_COLTRAITS :: t_RegPolicy
-                                    ::template rebind< t_Separables > :: other t_Reg;
+                                    ::template rebind< t_Separables > :: other 
+          t_RegPolicy;
+       //! Type of the Policy.
        typedef typename T_COLTRAITS :: t_UpdatePolicy
                            ::template rebind< t_Separables,
-                                              typename T_COLTRAITS :: t_Mapping, 
-                                              typename T_COLTRAITS :: t_iMatrix >
-                           :: other t_Up;
-       public:
+                                           typename T_COLTRAITS :: t_Mapping, 
+                                           typename T_COLTRAITS :: t_Configurations >
+                           :: other t_UpdatePolicy;
        //! collapse traits.
        typedef Collapse
                < 
                  t_Separables,
-                 typename T_COLTRAITS :: t_Mapping,
-                 t_Reg,
-                 typename T_COLTRAITS :: t_iMatrix,
-                 t_Up
+                 t_Mapping,
+                 t_RegPolicy,
+                 t_Configurations,
+                 t_UpdatePolicy
                > 
                t_ColTraits;
        //! Type of the collapse functor base.
@@ -75,6 +78,7 @@ namespace CE
     class MixedApproach : protected T_TRAITS :: t_Collapse,
                           protected T_TRAITS :: t_CEBase
     {
+      template< class TT_TRAITS > friend class MixedApproach;
       public:
         //! Type of the traits.
         typedef T_TRAITS t_Traits;
@@ -85,7 +89,7 @@ namespace CE
         //! Type of the separable function.
         typedef typename t_Traits :: t_Separables  t_Separables;
         //! Type of the configuration matricex.
-        typedef typename t_Traits :: t_ColTraits :: t_iMatrix t_iMatrix;
+        typedef typename t_Traits :: t_ColTraits :: t_Configurations t_Configurations;
         //! \brief Type of the matrix range.
         //! \details Necessary interface for minimizer.
         typedef typename t_Traits :: t_OrigSepTraits :: t_Matrix t_Matrix;
@@ -94,11 +98,17 @@ namespace CE
         //! Type of the classes of equivalent clusters.
         typedef std::vector< std::vector< ::CE::Cluster > > t_Clusters;
 
-        //! The classes of equivalent clusters for mixing.
-        t_Clusters clusters;
 
         //! Constructor.
-        MixedApproach() : t_ColBase(), t_CEBase() {}
+        MixedApproach() : t_ColBase(), t_CEBase() 
+          { clusters_.reset( new t_Clusters ); coefficients_.reset( new t_Matrix ); }
+        //! Constructor.
+        template< class TT_TRAITS >
+          MixedApproach   ( const MixedApproach< TT_TRAITS > &_c )
+                        : t_ColBase( _c ), t_CEBase( _c ),
+                          separables_( _c.separables_ ), 
+                          clusters_( _c.clusters_ ), 
+                          coefficients_( _c.coefficients_ ) {}
         //! Destructor.
         ~MixedApproach() {}
 
@@ -129,7 +139,8 @@ namespace CE
         void reset() { t_ColBase::reset(); }
 
         //! Reference to configuration matrix.
-        const t_iMatrix& configurations() const { return t_ColBase::configurations(); }
+        const t_Configurations& configurations() const
+          { return t_ColBase::configurations(); }
         
         //! Returns the number of dimensions.
         size_t dimensions() const { return t_ColBase::dimensions(); }
@@ -140,9 +151,17 @@ namespace CE
         void init( size_t _ranks, size_t _dims );
 
         //! Returns a reference to the coefficients.
-        t_Matrix& coefficients() { return coefficients_; }
+        t_Matrix& coefficients()
+        {
+          __ASSERT( not coefficients_.get(), "Empty smart pointer.\n" ) 
+          return *coefficients_; 
+        }
         //! Returns a constant reference to the coefficients.
-        const t_Matrix& coefficients() const { return coefficients_; }
+        const t_Matrix& coefficients() const 
+        {
+          __ASSERT( not coefficients_.get(), "Empty smart pointer.\n" ) 
+          return *coefficients_; 
+        }
         //! Returns a reference to the mapping.
         typename t_ColBase::t_Mapping& mapping() { return t_ColBase::mapping(); }
         //! Returns a reference to the mapping.
@@ -158,6 +177,18 @@ namespace CE
         t_Separables& separables() { return separables_; }
         //! Returns a constant reference to the separable function;
         const t_Separables& separables() const { return separables_; }
+        //! Returns a reference to the clusters.
+        t_Clusters& clusters()
+        {
+          __ASSERT( not clusters_.get(), "Empty smart pointer.\n" ) 
+          return *clusters_; 
+        }
+        //! Returns a constant reference to the clusters.
+        const t_Clusters& clusters() const 
+        {
+          __ASSERT( not clusters_.get(), "Empty smart pointer.\n" ) 
+          return *clusters_; 
+        }
         //! Reassigns clusters.
         void reassign();
         //! Randomizes both cluster energies and ecis.
@@ -172,7 +203,10 @@ namespace CE
         t_Separables separables_;
 
         //! The coefficients.
-        t_Matrix coefficients_;
+        boost::shared_ptr<t_Matrix> coefficients_;
+
+        //! The classes of equivalent clusters for mixing.
+        boost::shared_ptr<t_Clusters> clusters_;
     };
 
   //! Prints mixed-approach description to a stream.

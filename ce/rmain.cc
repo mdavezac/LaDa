@@ -239,11 +239,11 @@ int main(int argc, char *argv[])
       fit.verbose = verbosity >= detailederrors;
       reg.cgs.verbose = verbosity >= outermin;
       // initialization
-      Crystal::read_ce_structures( dir / "LDAs.dat", fit.structures );
+      Crystal::read_ce_structures( dir / "LDAs.dat", fit.structures() );
       if( verbosity >= startstructures )
         std::for_each
         (
-          fit.structures.begin(), fit.structures.end(), 
+          fit.structures().begin(), fit.structures().end(), 
           std::cout << bl::_1 << "\n"
         );
       fit.init( reg.clusters );
@@ -268,11 +268,11 @@ int main(int argc, char *argv[])
     else
     {
       // initialization.
-      Crystal::read_ce_structures( dir / "LDAs.dat", reg.structures );
+      Crystal::read_ce_structures( dir / "LDAs.dat", reg.structures() );
       if( verbosity >= startstructures )
         std::for_each
         (
-          reg.structures.begin(), reg.structures.end(), 
+          reg.structures().begin(), reg.structures().end(), 
           std::cout << bl::_1 << "\n"
         );
       reg.init();

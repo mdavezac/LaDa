@@ -55,6 +55,7 @@ int main(int argc, char *argv[])
     namespace po = boost::program_options;
     namespace bl = boost::lambda;
     namespace fs = boost::filesystem;
+    Fitting::LeaveManyOut leavemanyout;
 
     po::options_description generic("Generic Options");
     generic.add_options()
@@ -188,7 +189,7 @@ int main(int argc, char *argv[])
     __DOASSERT( which >= 3, "Don't know which error to perform bestof for.\n" )
     // extract leave-many-out commandline
     leavemanyout.extract_cmdl( vm );
-    leavemanyout.verbose = verbose;
+    leavemanyout.verbosity = verbosity;
 
     // Loads lattice
     boost::shared_ptr< Crystal::Lattice >
@@ -222,22 +223,7 @@ int main(int argc, char *argv[])
     if( J0 ) clusters.push_back( std::vector<CE::Cluster>(1, cluster) ); 
     cluster.Vectors().resize(1, atat::rVector3d(0,0,0) );
     if( J1 ) clusters.push_back( std::vector<CE::Cluster>(1, cluster) ); 
-    if( verbosity >= print_data )
-    {
-      CE::Regulated :: t_Clusters :: const_iterator i_class = clusters.begin();
-      CE::Regulated :: t_Clusters :: const_iterator i_class_end = clusters.end();
-      for(; i_class != i_class_end; ++i_class )
-      {
-        if( verbosity < print_data + 1  )  std::cout << i_class->front()
-                                                     << " D=" << i_class->size() 
-                                                     << "\n";
-        else std::for_each( 
-                            i_class->begin(), i_class->end(), 
-                            std::cout << bl::_1 << "\n"
-                          );
-      }
-    }
-
+    //
     // Initializes fitting.
     typedef Fitting::AlternatingLeastSquare<Fitting::Cgs> t_Fitting;
     t_Fitting allsq;
@@ -255,8 +241,7 @@ int main(int argc, char *argv[])
     typedef Traits::CE::Separables< CE::Mapping::VectorDiff<2> > t_FunctionTraits;
     typedef CE::Separables< t_FunctionTraits > t_Function;
     // Collapse Traits
-    typedef CE::Mapping::ExcludeMany< CE::Mapping::ExcludeOne< CE::Mapping::SymEquiv >,
-                                      std::vector< types::t_unsigned> * > t_Mapping;
+    typedef CE::Mapping::SymEquiv t_Mapping;
     typedef CE::Policy::Regularization< t_Function > t_Regularization;
     typedef boost::numeric::ublas::matrix<size_t> t_Confs;
     typedef CE::Policy::HighMemUpdate< t_Function, t_Mapping, t_Confs > t_UpdatePolicy;
@@ -271,11 +256,11 @@ int main(int argc, char *argv[])
     // Finally creates mixed approach object.
     CE::MixedApproach< t_MixedTraits > mixed;
     // initializes ce part.
-    Crystal::read_ce_structures( dir / "LDAs.dat", mixed.CEFit().structures );
+    Crystal::read_ce_structures( dir / "LDAs.dat", mixed.CEFit().structures() );
     if( verbosity >= print_data )
       std::for_each
       (
-        mixed.CEFit().structures.begin(), mixed.CEFit().structures.end(), 
+        mixed.CEFit().structures().begin(), mixed.CEFit().structures().end(), 
         std::cout << bl::_1 << "\n"
       );
     mixed.CEFit().alpha = alpha;
@@ -284,14 +269,32 @@ int main(int argc, char *argv[])
     mixed.CEFit().laksreg = not volkerreg;
     mixed.CEFit().verbose = verbosity >= print_checks;
     // initializes collapse part.
-    mixed.Collapse().init( mixed.CEFit().structures, postoconfs );
+    mixed.Collapse().init( mixed.CEFit().structures(), postoconfs );
     mixed.Collapse().regularization().lambda = lambda;
     // initializes mixed.
-    std::copy( clusters.begin(), clusters.end(), std::back_inserter( mixed.clusters ) );
+    std::copy( clusters.begin(), clusters.end(),
+               std::back_inserter( mixed.clusters() ) );
+    if( verbosity >= print_data )
+    {
+      CE::Regulated :: t_Clusters :: const_iterator i_class = mixed.clusters().begin();
+      CE::Regulated :: t_Clusters :: const_iterator i_class_end =
+         mixed.clusters().end();
+      for(; i_class != i_class_end; ++i_class )
+      {
+        if( verbosity < print_data + 1  )  std::cout << i_class->front()
+                                                     << " D=" << i_class->size() 
+                                                     << "\n";
+        else std::for_each( 
+                            i_class->begin(), i_class->end(), 
+                            std::cout << bl::_1 << "\n"
+                          );
+      }
+    }
+
     if( rmpairs )
     {
-      CE::remove_contained_clusters( postoconfs.positions, mixed.clusters );
-      size_t size( mixed.clusters.size() );
+      CE::remove_contained_clusters( postoconfs.positions, mixed.clusters() );
+      size_t size( mixed.clusters().size() );
       if( J0 ) --size;
       if( J1 ) --size;
       std::cout << "Retained " << size << " pair figures.\n";
@@ -303,7 +306,7 @@ int main(int argc, char *argv[])
     std::fill( mixed.separables().norms.begin(), mixed.separables().norms.end(), 1e0 );
     mixed.separables().normalize();
 
-    opt::NErrorTuple nerror( opt::mean_n_var( mixed.CEFit().structures ) ); 
+    opt::NErrorTuple nerror( opt::mean_n_var( mixed.CEFit().structures() ) ); 
 
     std::cout << "Shape of separable function: " << bdesc << "\n"
               << "Rank of separable function " << rank << "\n"
@@ -337,7 +340,7 @@ int main(int argc, char *argv[])
 
     // Initializes best of fit.
     CE::Method::Fit< CE::Method::Policy::BestOf< t_Function :: t_Matrix > >
-      fit( mixed.CEFit().structures );
+      fit( mixed.CEFit().structures() );
     fit.verbosity = verbosity -1;
     fit.policy.restarts = bestof;
     fit.policy.which = which;
@@ -346,16 +349,22 @@ int main(int argc, char *argv[])
     // fitting.
     if( doloo )
     {
-      mixed.Collapse().mapping().do_exclude = true;
+      typedef CE::Mapping::ExcludeOne< t_Mapping > t_looMapping;
+      typedef Traits::CE::Collapse< t_Function, t_looMapping, 
+                                    t_Regularization, t_Confs,
+                                    t_UpdatePolicy > t_looCollapseTraits;
+      typedef Traits::CE::MixedApproach< t_looCollapseTraits, t_CEBase >
+        t_looMixedTraits;
+      CE::MixedApproach<t_looMixedTraits> loomixed( mixed );
+      loomixed.Collapse().mapping().do_exclude = true;
       std::cout << "Starting Leave-One-Out Procedure.\n";
       opt::t_ErrorPair errors;
-      errors = CE::Method::leave_one_out( mixed, fit, allsq, verbosity - 1 );
+      errors = CE::Method::leave_one_out( loomixed, fit, allsq, verbosity - 1 );
       std::cout << "Average Training Errors:\n " << ( nerror = errors.first ) << "\n";
       std::cout << "Final Prediction Errors:\n " << ( nerror = errors.second ) << "\n\n";
     }
     if( dofit )
     {
-      mixed.Collapse().mapping().do_exclude = false;
       std::cout << "\nFitting using whole training set:" << std::endl;
       nerror = fit( mixed, allsq );
       std::cout << nerror << "\n"; 
@@ -364,11 +373,21 @@ int main(int argc, char *argv[])
     }
     if( leavemanyout.do_perform )
     {
+      typedef std::vector< types::t_unsigned > t_Excluded;
+      typedef CE::Mapping::ExcludeMany< t_Mapping, t_Excluded* > t_lmoMapping;
+      typedef Traits::CE::Collapse< t_Function, t_lmoMapping, 
+                                    t_Regularization, t_Confs,
+                                    t_UpdatePolicy > t_lmoCollapseTraits;
+      typedef Traits::CE::MixedApproach< t_lmoCollapseTraits, t_CEBase >
+        t_lmoMixedTraits;
+      CE::MixedApproach<t_lmoMixedTraits> lmomixed( mixed );
       std::cout << "\nStarting leave-many out predictive fit." << std::endl;
-      Fitting::LeaveManyOut::t_Return result;
-      result = CE::Method::leave_many_out( leavemanyout, mixed, fit, allsq, verbosity - 1 );
+      Fitting::LeaveManyOut::t_Return errors;
+      leavemanyout.verbosity = verbosity - 1;
+      errors = CE::Method::leave_many_out( leavemanyout, lmomixed, fit, allsq );
       std::cout << "Average Training Errors:\n " << ( nerror = errors.first ) << "\n";
-      std::cout << "Final Prediction Errors:\n " << ( nerror = errors.second ) << "\n\n";
+      std::cout << "Final Prediction Errors:\n "
+                << ( nerror = errors.second ) << "\n\n";
     }
     std::cout << "\n\n\nEnd of " << __PROGNAME__ << ".\n" << std::endl;
 

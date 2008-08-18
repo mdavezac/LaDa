@@ -65,13 +65,13 @@ namespace CE
       typedef std::vector< t_StructPis > t_Pis;
 
     public:
-      //! A container of structures.
-      t_Structures structures;
-      //! A container of weights.
-      t_Weights weights;
-      
       //! Constructor.
-      BaseFit() : nb_cls(0) {};
+      BaseFit() : nb_cls(0) 
+       { structures_.reset( new t_Structures ); weights_.reset( new t_Weights ); };
+      //! Copy Constructor.
+      BaseFit   ( const BaseFit &_c )
+              : nb_cls(_c.nb_cls ), pis( _c.pis ), 
+                structures_( _c.structures_ ), weights_( _c.weights_ ) {}
       //! Destructor.
       ~BaseFit() {};
 
@@ -81,6 +81,30 @@ namespace CE
       void reassign( const t_Vector &_arg, t_Clusters &_clusters ) const;
       //! Computes mean and variance.
       opt::NErrorTuple mean_n_var() const;
+      //! Returns a reference to the structures.
+      t_Structures& structures()
+      { 
+        __ASSERT( not structures_.get(), "Empty smart pointer.\n" ) 
+        return *structures_;
+      }
+      //! Returns a constant reference to the structures.
+      const t_Structures& structures() const
+      { 
+        __ASSERT( not structures_.get(), "Empty smart pointer.\n" ) 
+        return *structures_;
+      }
+      //! Returns a reference to the weights.
+      t_Weights& weights() 
+      { 
+        __ASSERT( not weights_.get(), "Empty smart pointer.\n" ) 
+        return *weights_;
+      }
+      //! Returns a constant reference to the weights.
+      const t_Weights& weights() const 
+      { 
+        __ASSERT( not weights_.get(), "Empty smart pointer.\n" ) 
+        return *weights_;
+      }
 
     protected:
       //! Computes error for one structure.
@@ -92,6 +116,11 @@ namespace CE
       t_Pis pis;
       //! Number of clusters.
       types::t_unsigned nb_cls;
+      //! A container of structures.
+      boost::shared_ptr<t_Structures> structures_;
+      //! A container of weights.
+      boost::shared_ptr<t_Weights> weights_;
+      
   };
 
   //! \cond
@@ -165,6 +194,10 @@ namespace CE
 
       //! Constructor.
       Fit() : verbose(false) {};
+      //! Copy Constructor.
+      template< class TT_POLICY >
+        Fit   ( const Fit< TT_POLICY > &_c )
+            : BaseFit(_c), verbose(_c.verbose) {};
       //! Destructor.
       ~Fit() {};
 
@@ -192,9 +225,8 @@ namespace CE
 
     protected:  
       using t_Policy :: pis;
-      using t_Policy :: weights;
       using t_Policy :: nb_cls;
-    public:
+      using t_Policy :: weights;
       using t_Policy :: structures;
   };
 

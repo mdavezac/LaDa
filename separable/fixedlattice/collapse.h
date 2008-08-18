@@ -51,7 +51,7 @@ namespace Traits
     struct Collapse 
     {
       //! Type of the configuration matrix.
-      typedef T_CONFS t_iMatrix;
+      typedef T_CONFS t_Configurations;
       //! Type of the Mapping.
       typedef T_SEPARABLES t_Separables;
       //! Type of the Mapping.
@@ -75,6 +75,7 @@ namespace CE
                                             const T_COLLAPSE &_collapse,
                                             const T_STRUCTURES &_str,
                                             size_t _n, bool _verbose );
+      template< class TT_TRAITS> friend class Collapse;
       public:
         //! Traits of this functor.
         typedef T_TRAITS t_Traits;
@@ -83,7 +84,7 @@ namespace CE
         //! Type of the mapping function from structures to targets.
         typedef typename t_Traits :: t_Mapping t_Mapping;
         //! Type of the configuration matrix.
-        typedef typename t_Traits :: t_iMatrix t_iMatrix;
+        typedef typename t_Traits :: t_Configurations t_Configurations;
         //! Type of the update policy.
         typedef typename t_Traits :: t_UpdatePolicy t_UpdatePolicy;
         //! Type of the update policy.
@@ -94,8 +95,18 @@ namespace CE
         typedef typename t_Separables :: t_Vector t_Vector;
 
         //! Constructor.
-        Collapse() : dim(0), separables_(NULL),
-                     update_( mapping_, configurations_ ) {}
+        Collapse() : dim(0), separables_(NULL), update_( mapping_ )
+          {
+            configurations_.reset( new t_Configurations ); 
+            update_.init( configurations_ ); 
+          }
+        //! Copy Constructor.
+        template< class TT_TRAITS>
+          Collapse   ( const Collapse< TT_TRAITS > &_c ) 
+                   : dim( _c.dim ), separables_( _c.separables_ ),
+                     configurations_( _c.configurations_ ),
+                     mapping_( _c.mapping_ ), update_( mapping_ )
+            { update_.init( _c.configurations_ ); }
         //! Destructor.
         ~Collapse() {}
 
@@ -123,7 +134,7 @@ namespace CE
         void init( t_Separables& _sep );
 
         //! Reference to configuration matrix.
-        const t_iMatrix& configurations() const { return configurations_; }
+        const t_Configurations& configurations() const { return *configurations_; }
         
         //! Returns the number of dimensions.
         size_t dimensions() const { return separables_->dimensions(); }
@@ -163,16 +174,16 @@ namespace CE
 
 
         //! The configurations, arranged in columns.
-        t_iMatrix configurations_;
+        boost::shared_ptr<t_Configurations> configurations_;
         //! Holds current dimension being fitted.
         size_t dim;
         //! Pointer to separable function being minimized.
         t_Separables *separables_;
-        //! Update policy.
-        t_UpdatePolicy update_;
         //! \brief The mapping from target values to symetrically equivalent
         //!        structures.
         t_Mapping mapping_;
+        //! Update policy.
+        t_UpdatePolicy update_;
         //! Regularization.
         t_RegPolicy regularization_;
     };
@@ -198,7 +209,7 @@ namespace CE
           //! Type of the mapping from configurations to configurations.
           typedef T_MAPPING t_Mapping;
           //! Type of the mapping from configurations to configurations.
-          typedef T_CONFS t_iMatrix;
+          typedef T_CONFS t_Configurations;
           //! Type of the vectors.
           typedef typename t_Separables :: t_Vector t_Vector;
           //! Type of the matrices.
@@ -208,8 +219,8 @@ namespace CE
                     < typename t_Matrix :: value_type > t_CMatrix;
 
           //! the constructor.
-          LowMemUpdate   ( const t_Mapping &_mapping, const t_iMatrix &_confs )
-                       : mapping_(_mapping), configurations_(_confs) {}
+          LowMemUpdate   ( const t_Mapping &_mapping )
+                       : mapping_(_mapping) {}
           //! Destructor.
           ~LowMemUpdate() {}
 
@@ -222,6 +233,9 @@ namespace CE
             factor( size_t _kv, size_t _r, size_t _dim) const;
           //! Updates pointer to separable function.
           void init( const t_Separables& _sep );
+          //! Updates pointer to configurations.
+          void init( const boost::shared_ptr<t_Configurations> &_confs )
+            { configurations_ = _confs; } 
 
         protected:
           //! Recomputes factor from nothing.
@@ -233,7 +247,7 @@ namespace CE
           //! A reference to the config. mapping.
           const t_Mapping &mapping_;
           //! A reference to the config. mapping.
-          const t_iMatrix &configurations_;
+          boost::shared_ptr<t_Configurations> configurations_;
           //! A reference to the separable function.
           const t_Separables * separables_;
       };
@@ -255,7 +269,7 @@ namespace CE
           //! Type of the mapping from configurations to configurations.
           typedef T_MAPPING t_Mapping;
           //! Type of the mapping from configurations to configurations.
-          typedef T_CONFS t_iMatrix;
+          typedef T_CONFS t_Configurations;
           //! Type of the vectors.
           typedef typename t_Separables :: t_Vector t_Vector;
           //! Type of the matrices.
@@ -265,8 +279,8 @@ namespace CE
                     < typename t_Matrix :: value_type > t_CMatrix;
 
           //! Constructor.
-          HighMemUpdate   ( const t_Mapping &_mapping, const t_iMatrix &_confs )
-                        : t_Base( _mapping, _confs ) {}
+          HighMemUpdate   ( const t_Mapping &_mapping )
+                        : t_Base( _mapping ) {}
           //! Updates all dimension.
           void operator()();
           //! Updates only dimension \a _dim. 
@@ -276,6 +290,9 @@ namespace CE
             factor( size_t _kv, size_t _r, size_t _dim) const;
           //! Updates pointer to separable function.
           void init( const t_Separables& _sep );
+          //! Updates pointer to configurations.
+          void init( const boost::shared_ptr<t_Configurations> &_confs )
+            { t_Base::init( _confs ); }
 
         protected:
           //! Updates scales_ from dimsplit.

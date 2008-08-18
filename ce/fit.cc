@@ -28,8 +28,8 @@ namespace CE
     __DEBUGTRYBEGIN
     namespace fs = boost::filesystem;
     namespace bblas = boost::numeric::ublas;
-    const t_Structures :: value_type &structure = structures[_n];
-    const t_Weights :: value_type &weight = weights[_n];
+    const t_Structures :: value_type &structure = structures()[_n];
+    const t_Weights :: value_type &weight = weights()[_n];
     const std::string name = fs::path( structure.name ).leaf() ;
     const types::t_real target = structure.energy;
  
@@ -69,24 +69,24 @@ namespace CE
 
   void BaseFit :: init( const t_Clusters &_clusters )
   {
-    find_pis( _clusters, structures, pis );
+    find_pis( _clusters, structures(), pis );
     nb_cls = _clusters.size();
-    weights.resize( structures.size() );
-    std::fill( weights.begin(), weights.end(), 1e0 );
+    weights().resize( structures().size() );
+    std::fill( weights().begin(), weights().end(), 1e0 );
   }
 
   opt::NErrorTuple BaseFit :: mean_n_var() const
   {
     namespace bl = boost::lambda;
-    t_Weights targets( structures.size() );
+    t_Weights targets( structures().size() );
     std::transform
     (
-      structures.begin(), structures.end(), targets.begin(),
+      structures().begin(), structures().end(), targets.begin(),
       bl::bind( &Crystal::Structure::energy, bl::_1 )
     );
-    __ASSERT( weights.size() != targets.size(),
+    __ASSERT( weights().size() != targets.size(),
               "Inconsistent weight and target sizes.\n" )
-    return opt::mean_n_var( targets, weights );
+    return opt::mean_n_var( targets, weights() );
   }
 
 } // end of namespace CE

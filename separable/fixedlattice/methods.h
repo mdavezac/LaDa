@@ -100,7 +100,8 @@ namespace CE
             policy.start();
             while( policy.go( _collapse, _minimizer, verbosity - 1 ) );
             opt::ErrorTuple errors( policy.end( _collapse, _minimizer, verbosity - 1 ) );
-            if( verbosity >= 1 ) return check_all( _collapse, structures(), verbosity >= 2 );
+            if( verbosity >= 1 )
+              return check_all( _collapse, structures(), verbosity >= 2 );
             return errors;
             __TRYEND(,"Error in CE::Methods::fit().\n" )
           }
@@ -129,6 +130,12 @@ namespace CE
                                       T_FIT &_fit,
                                       const T_MINIMIZER &_min,
                                       types::t_int _verbosity );
+    //! Performs leave-many-out for collapsed separable function functor.
+    template< class T_COLLAPSE, class T_FIT, class T_MINIMIZER >
+      opt::t_ErrorPair leave_many_out( Fitting::LeaveManyOut &_lmo,
+                                       T_COLLAPSE &_collapse,
+                                       T_FIT &_fit,
+                                       const T_MINIMIZER &_min );
     //! Checks error for one structure.
     template< class T_COLLAPSE >
       opt::ErrorTuple check_one( const T_COLLAPSE &_collapse,

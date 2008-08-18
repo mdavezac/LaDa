@@ -14,6 +14,7 @@ cubic_SOURCES = main.cc
 cubic_CPPFLAGS =  $(AM_CPPFLAGS) -I ..  -D _CUBIC_CE_
 cubic_LDFLAGS =  $(AM_LDFLAGS)
 cubic_LDADD = libfxseparable.la \
+              ../libseparable.la \
               ../../crystal/libcrystal.la \
               ../../atat/libatat.la \
               ../../physics/libphysics.la \
@@ -36,15 +37,17 @@ libfxseparable_ladir = $(includedir)/LaDa/separable/fixedlattice
 nobase_libfxseparable_la_HEADERS = $(SEPARABLES_FXL_H) $(SEPARABLES_FXL_IMPL_H)
 libfxseparable_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
 
+../libseparable.la:
+	cd ../; $(MAKE) libseparable.la
 ../../atat/libatat.la: 
-	cd ../../atat; $(MAKE) 
+	cd ../../atat; $(MAKE) libatat.la
 ../../crystal/libcrystal.la: 
-	cd ../../crystal; $(MAKE) 
+	cd ../../crystal; $(MAKE) libcrystal.la
 ../../physics/libphysic.la: 
-	cd ../../physics; $(MAKE) 
+	cd ../../physics; $(MAKE) libphysics.la
 ../../opt/libopt.la: 
-	cd ../../opt; $(MAKE) 
+	cd ../../opt; $(MAKE) libopt.la
 ../../print/libprint.la: 
-	cd ../../print; $(MAKE) 
+	cd ../../print; $(MAKE) libprint.la
 ../../ce/libce.la: 
-	cd ../../ce; $(MAKE) 
+	cd ../../ce; $(MAKE) libce.la
