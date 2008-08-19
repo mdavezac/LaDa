@@ -15,7 +15,6 @@
 #include <opt/debug.h>
 
 #include "prepare.h"
-#include "policy.h"
 
 namespace CE
 {
@@ -188,6 +187,179 @@ namespace CE
         //! Regularization.
         t_RegPolicy regularization_;
     };
+
+  namespace Policy
+  {
+    //! \brief Low Memory update scheme.
+    //! \details Only the values of each rank of the separable function is kept
+    //!          for each configuration. As such, updates happen over all
+    //!          dimensions always.
+    template< class T_SEPARABLES, class T_MAPPING, class T_CONFS >
+      class LowMemUpdate
+      {
+        public:
+          //! Helps to obtain a differently typed update policy.
+          template< class T_SEP, class T_MAP, class T_C = T_CONFS > struct rebind
+          { 
+            //! Type of the regularization policy.
+            typedef LowMemUpdate< T_SEP, T_MAP, T_C > other;
+          };
+          //! Type of the separable functions.
+          typedef T_SEPARABLES t_Separables;
+          //! Type of the mapping from configurations to configurations.
+          typedef T_MAPPING t_Mapping;
+          //! Type of the mapping from configurations to configurations.
+          typedef T_CONFS t_Configurations;
+          //! Type of the vectors.
+          typedef typename t_Separables :: t_Vector t_Vector;
+          //! Type of the matrices.
+          typedef typename t_Separables :: t_Matrix t_Matrix;
+          //! Type of the constructible matrices.
+          typedef boost::numeric::ublas::matrix
+                    < typename t_Matrix :: value_type > t_CMatrix;
+
+          //! the constructor.
+          LowMemUpdate   ( const t_Mapping &_mapping )
+                       : mapping_(_mapping) {}
+          //! Destructor.
+          ~LowMemUpdate() {}
+
+          //! Updates all dimension.
+          void operator()();
+          //! Updates only dimension \a _dim. 
+          void operator()( size_t _dim ) { operator()(); }
+          //! Returns the factor for configurations _kv, and rank _r, and dimension.
+          typename t_Vector :: value_type
+            factor( size_t _kv, size_t _r, size_t _dim) const;
+          //! Updates pointer to separable function.
+          void init( const t_Separables& _sep );
+          //! Updates pointer to configurations.
+          void init( const boost::shared_ptr<t_Configurations> &_confs )
+            { configurations_ = _confs; } 
+
+        protected:
+          //! Recomputes factor from nothing.
+          typename t_Vector :: value_type
+            factor_from_scratch( size_t _kv, size_t _r, size_t _dim) const;
+
+          //! Holds the sep. func. split up by rank and confs.
+          t_CMatrix scales_;
+          //! A reference to the config. mapping.
+          const t_Mapping &mapping_;
+          //! A reference to the config. mapping.
+          boost::shared_ptr<t_Configurations> configurations_;
+          //! A reference to the separable function.
+          const t_Separables * separables_;
+      };
+
+    template< class T_SEPARABLES, class T_MAPPING, class T_CONFS >
+      class HighMemUpdate : protected LowMemUpdate<T_SEPARABLES, T_MAPPING, T_CONFS >
+      {
+        public:
+          //! Helps to obtain a differently typed update policy.
+          template< class T_SEP, class T_MAP, class T_C = T_CONFS > struct rebind
+          { 
+            //! Type of the regularization policy.
+            typedef HighMemUpdate< T_SEP, T_MAP, T_C > other;
+          };
+          //! Type if the base class.
+          typedef LowMemUpdate<T_SEPARABLES, T_MAPPING, T_CONFS > t_Base;
+          //! Type of the separable functions.
+          typedef T_SEPARABLES t_Separables;
+          //! Type of the mapping from configurations to configurations.
+          typedef T_MAPPING t_Mapping;
+          //! Type of the mapping from configurations to configurations.
+          typedef T_CONFS t_Configurations;
+          //! Type of the vectors.
+          typedef typename t_Separables :: t_Vector t_Vector;
+          //! Type of the matrices.
+          typedef typename t_Separables :: t_Matrix t_Matrix;
+          //! Type of the constructible matrices.
+          typedef boost::numeric::ublas::matrix
+                    < typename t_Matrix :: value_type > t_CMatrix;
+
+          //! Constructor.
+          HighMemUpdate   ( const t_Mapping &_mapping )
+                        : t_Base( _mapping ) {}
+          //! Updates all dimension.
+          void operator()();
+          //! Updates only dimension \a _dim. 
+          void operator()( size_t _dim );
+          //! Returns the factor for configurations _kv, and rank _r, and dimension.
+          typename t_Vector :: value_type
+            factor( size_t _kv, size_t _r, size_t _dim) const;
+          //! Updates pointer to separable function.
+          void init( const t_Separables& _sep );
+          //! Updates pointer to configurations.
+          void init( const boost::shared_ptr<t_Configurations> &_confs )
+            { t_Base::init( _confs ); }
+
+        protected:
+          //! Updates scales_ from dimsplit.
+          void update_scales();
+          //! Returns the factor for configurations _kv, and rank _r, and dimension.
+          typename t_Vector :: value_type
+            factor_from_scratch( size_t _kv, size_t _r, size_t _dim) const;
+
+          //! Holds the sep. func. split along confs, ranks, and dimensions.
+          std::vector< t_CMatrix > dimsplit_;
+          using t_Base :: scales_;
+          using t_Base :: mapping_;
+          using t_Base :: configurations_;
+          using t_Base :: separables_;
+      };
+
+    template< class T_SEPARABLES >
+    class NoReg 
+    {
+      public:
+        //! Helps to obtain a differently typed regularization.
+        template< class T_SEP > struct rebind
+        { 
+          //! Type of the regularization policy.
+          typedef NoReg< T_SEP > other;
+        };
+        //! Type of the separable function.
+        typedef T_SEPARABLES t_Separables;
+        //! Constructor
+        NoReg() {};
+        //! Updates pointer to separable function.
+        void init( const t_Separables& _sep ) {}
+
+        //! Would modify A matrix and b vector.
+        template< class T_MATRIX, class T_VECTOR >
+          void operator()( T_MATRIX &, T_VECTOR &, size_t _dim ) {}
+    };
+    template< class T_SEPARABLES >
+    class Regularization 
+    {
+      public:
+        //! Helps to obtain a differently typed regularization.
+        template< class T_SEP > struct rebind
+        { 
+          //! Type of the regularization policy.
+          typedef Regularization< T_SEP > other;
+        };
+        //! Type of the separable function.
+        typedef T_SEPARABLES t_Separables;
+
+        //! Regulation factor.
+        types::t_real lambda;
+
+        //! Constructor
+        Regularization() : lambda(0) {};
+        //! Updates pointer to separable function.
+        void init( const t_Separables& _sep ) { separables_ = &_sep; }
+
+        //! Would modify A matrix and b vector.
+        template< class T_MATRIX, class T_VECTOR >
+          void operator()( T_MATRIX &, T_VECTOR &, size_t _dim );
+
+      protected:
+        //! A reference to the separable function.
+        const t_Separables *separables_;
+    };
+  } // end of Policy namespace.
 
 }
 

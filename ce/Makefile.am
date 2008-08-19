@@ -9,13 +9,14 @@ AM_LDFLAGS = @TINYXML_LIBS@
 cubic_SOURCES = main.cc 
 cubic_CPPFLAGS =  $(AM_CPPFLAGS) -I .. -D_CUBIC_CE_
 cubic_LDFLAGS =  $(AM_LDFLAGS)  @MPI_LIBS@ @BOOST_LDFLAGS@\
-                 @BOOST_MPI@ @BOOST_PROGOP@ @BOOST_FS@ @BOOST_REGEX@
+                 @BOOST_MPI@ @BOOST_PROGOP@ @BOOST_SYSTEM@ @BOOST_REGEX@ 
 cubic_LDADD =   libce.la \
                 ../crystal/libcrystal.la \
 		../atat/libatat.la \
 		../physics/libphysics.la \
 		@MPI_ADDLIB@ \
-		../print/libprint.la 
+		../print/libprint.la \
+		@BOOST_FS@
 tetra_SOURCES = $(cubic_SOURCES)
 tetra_CPPFLAGS =  $(AM_CPPFLAGS) -I .. -D_TETRAGONAL_CE_
 tetra_LDFLAGS = $(cubic_LDFLAGS)
