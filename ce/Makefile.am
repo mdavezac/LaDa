@@ -9,7 +9,8 @@ AM_LDFLAGS = @TINYXML_LIBS@
 cubic_SOURCES = main.cc 
 cubic_CPPFLAGS =  $(AM_CPPFLAGS) -I .. -D_CUBIC_CE_
 cubic_LDFLAGS =  $(AM_LDFLAGS)  @MPI_LIBS@ @BOOST_LDFLAGS@\
-                 @BOOST_MPI@ @BOOST_PROGOP@ @BOOST_SYSTEM@ @BOOST_REGEX@ 
+                 @BOOST_MPI@ @BOOST_PROGOP@ @BOOST_FS@ \
+		 @BOOST_SYSTEM@ @BOOST_REGEX@ 
 cubic_LDADD =   libce.la \
                 ../crystal/libcrystal.la \
 		../atat/libatat.la \

@@ -8,6 +8,12 @@
 
 namespace CE
 {
+  template<class T_TRAITS > template<class ARCHIVE> 
+    void Separables<T_TRAITS > :: serialize(ARCHIVE & _ar, const unsigned int _version);
+    {
+      _ar & coefficients;
+      _ar & norms;
+    }
   template<class T_TRAITS >
     void Separables<T_TRAITS > :: set_rank_n_size( size_t _rank, size_t _size )
     {

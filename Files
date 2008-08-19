@@ -82,8 +82,9 @@ OPT_H = ndim_iterator.h minimize_base.h polynome.h frprmn_minimizer.h \
 	va_minimizer.h fitness_function.h  function_functors.h monome.h traits.h \
         fuzzy.h atat.h debug.h va_function.h gsl_lsq.h random.h algorithms.h \
         gsl.h allsq.h cgs.h gsl_nllsq.h gsl_mins.h gsl_simplex.h errors.h
-OPT_CC = gsl_lsq.cc random.cc gsl.cc gsl_nllsq.cc gsl_mins.cc gsl_simplex.cc errors.cc
-OPT_F90 =  df1dim.f90  frprmn.f90  linmin.f90
+OPT_CC = gsl_lsq.cc random.cc gsl.cc gsl_nllsq.cc gsl_mins.cc gsl_simplex.cc errors.cc \
+         leave_many_out.cc
+OPT_F90 =  df1dim.f90  frprmn.f90  linmin.f90 leave_many_out.h
 OPT_DOC = $(OPT_H) $(OPT_CC) 
 
 EMASS_CC = emass.cc
@@ -108,9 +109,9 @@ PYTHON_H = atat.hpp atat.impl.hpp atom.hpp atom.impl.hpp structure.hpp lattice.h
 PYTHON_CC = atat.cc atom.cc structure.cc lattice.cc lada.cc physics.cc
 PYTHON_DOC = $(PYTHON_CC) $(PYTHON_H) $(PYTHON_CE_CC) $(PYTHON_CE_H)
 
-SEPARABLE_CC = cefitting.cc  main.cc ce.cc leave_many_out.cc
+SEPARABLE_CC = cefitting.cc  main.cc ce.cc
 SEPARABLE_H = boolean.h cefitting.h ce.h lsq.h separable.h collapse.h \
-              cecollapse.h bestof.h leave_many_out.h
+              cecollapse.h bestof.h
 SEPARABLE_IMPL_H = cefitting.impl.h separable.impl.h collapse.impl.h \
                    cecollapse.impl.h
 SEPARABLE_DOC = $(SEPARABLE_CC) $(SEPARABLE_H) $(SEPARABLE_IMPL_H)

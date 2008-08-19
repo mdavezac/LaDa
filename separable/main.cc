@@ -29,7 +29,7 @@
 #include "cefitting.h"
 #include "cecollapse.h"
 #include "bestof.h"
-#include "leave_many_out.h"
+#include <opt/leave_many_out.h>
 
 #include <revision.h>
 #define __PROGNAME__ "Fixed-Lattice Sum of Separable functions" 

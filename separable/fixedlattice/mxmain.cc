@@ -28,7 +28,7 @@
 #include <ce/cluster.h>
 #include <ce/regularization.h>
 
-#include <separable/leave_many_out.h>
+#include <opt/leave_many_out.h>
 
 #include "functional.h"
 #include "sepmappings.h"
@@ -187,9 +187,6 @@ int main(int argc, char *argv[])
     __DOASSERT( bestof == 0, "0 jobs to be performed..." )
     const types::t_unsigned which( vm["which"].as<types::t_unsigned>() );
     __DOASSERT( which >= 3, "Don't know which error to perform bestof for.\n" )
-    // extract leave-many-out commandline
-    leavemanyout.extract_cmdl( vm );
-    leavemanyout.verbosity = verbosity;
 
     // Loads lattice
     boost::shared_ptr< Crystal::Lattice >
@@ -337,6 +334,8 @@ int main(int argc, char *argv[])
     if( which == 0 ) std::cout << " for variance\n";
     if( which == 1 ) std::cout << " for mean\n";
     if( which == 2 ) std::cout << " for max\n";
+    // extract leave-many-out commandline
+    leavemanyout.extract_cmdl( vm );
 
     // Initializes best of fit.
     CE::Method::Fit< CE::Method::Policy::BestOf< t_Function :: t_Matrix > >
@@ -356,6 +355,8 @@ int main(int argc, char *argv[])
       typedef Traits::CE::MixedApproach< t_looCollapseTraits, t_CEBase >
         t_looMixedTraits;
       CE::MixedApproach<t_looMixedTraits> loomixed( mixed );
+      std:: cout << mixed.Collapse().regularization().lambda << " ?= " 
+                 << loomixed.Collapse().regularization().lambda << "\n";
       loomixed.Collapse().mapping().do_exclude = true;
       std::cout << "Starting Leave-One-Out Procedure.\n";
       opt::t_ErrorPair errors;

@@ -19,6 +19,7 @@
 
 
 #include <opt/random.h>
+#include<boost/tokenizer.hpp>
 
 #include "leave_many_out.h"
 
@@ -34,6 +35,18 @@ namespace Fitting
       namespace po = boost::program_options;
       namespace fs = boost::filesystem;
 
+      std::string line;
+      boost::match_results<std::string::const_iterator> what;
+      if( _map.count(cmdl_except) )
+      {
+        except.clear();
+        line = _map[cmdl_except].as<std::string>();
+        boost::char_separator<char> sep(", ");
+        typedef boost::tokenizer< boost::char_separator<char> > t_Tokenizer;
+        t_Tokenizer tok(line, sep);
+        for( t_Tokenizer::iterator i_tok=tok.begin(); i_tok!=tok.end();++i_tok)
+          except.push_back( boost::lexical_cast<types::t_unsigned>( *i_tok ) );
+      }
       if( not ( _map.count(cmdl_set) or _map.count(cmdl_file) ) ) 
       {
         do_perform = false;
@@ -51,11 +64,10 @@ namespace Fitting
         return;
       }
 
-      std::string line = _map[cmdl_set].as<std::string>();
+      line = _map[cmdl_set].as<std::string>();
       do_perform = true;
       
       const boost::regex re("(\\d+)\\s+(\\d+)");
-      boost::match_results<std::string::const_iterator> what;
       __DOASSERT( not boost::regex_search( line, what, re ),
                      "Could not make sense of --" << cmdl_set 
                   << "=\"" << line << "\".\n" )
@@ -71,6 +83,18 @@ namespace Fitting
       
       sets.clear();
 out:
+      if( except.size() == 1 )
+        std::cout << "   Structure " << except.front() << " is always included in fit.\n"; 
+      else if( except.size() == 2 )
+        std::cout << "   Structures " << except.front() << " and " 
+                  << except.back() << " are always included in fit.\n"; 
+      else if( except.size() >= 3 )
+      {
+        std::cout << "   Structures ";
+        std::for_each( except.begin(), except.end()-1, std::cout << bl::_1 << ", " );
+        std::cout << ", and " << except.back() << " are always included in fit.\n";
+      }
+      if( nb_sets ==  nbsets and perset == nb_perset ) return;
       nb_sets = nbsets;
       nb_perset = perset;
     }
@@ -82,6 +106,7 @@ out:
     namespace fs = boost::filesystem;
 
     sets.clear();
+    except.clear();
 
     nb_sets = 0;
     nb_perset = 0;
@@ -139,7 +164,11 @@ out:
       std::vector< types::t_unsigned > set;
       for(types::t_unsigned j(nb_perset); j > 0; --j )
       {
-        set.push_back( opt::random::range(0, _tsize ) );
+        types::t_unsigned r;
+        do { r = opt::random::range(0, _tsize ); }
+        while(     except.size() != 0
+               and except.end() != std::find( except.begin(), except.end(), r ) );
+        set.push_back( r );
         sstr << set.back() << " ";
       }
       std::cout << "  _ " << sstr.str() << "\n";

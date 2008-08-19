@@ -15,11 +15,11 @@
 #include <opt/debug.h>
 
 #include "prepare.h"
-#include "policy.h"
+#include "colpolicy.h"
 
+//! \cond
 namespace CE
 {
-  //! \cond
   namespace Methods
   {
     template< class T_COLLAPSE, class T_SEPARABLES, class T_STRUCTURES >
@@ -28,15 +28,8 @@ namespace CE
                                  const T_STRUCTURES &_str,
                                  size_t _n, bool _verbose = false );
   }
-  namespace Policy
-  {
-    template< class T_SEPARABLES, class T_MAPPING, class T_CONFS >
-      class LowMemUpdate;
-    template< class T_SEPARABLES >
-      class NoReg;
-  }
-  //! \endcond
 } // end of CE namespace
+//! \endcond
 
 namespace Traits
 {
@@ -106,7 +99,8 @@ namespace CE
           Collapse   ( const Collapse< TT_TRAITS > &_c ) 
                    : dim( _c.dim ), separables_( _c.separables_ ),
                      configurations_( _c.configurations_ ),
-                     mapping_( _c.mapping_ ), update_( mapping_ )
+                     mapping_( _c.mapping_ ), update_( mapping_ ),
+                     regularization_( _c.regularization_ )
             { update_.init( _c.configurations_ ); }
         //! Destructor.
         ~Collapse() {}
@@ -119,7 +113,7 @@ namespace CE
         //! Evaluates square errors.
         opt::ErrorTuple evaluate() const;
         //! Evaluates square errors for one structure.
-        opt::ErrorTuple evaluate( size_t _n ) const;
+        typename t_Matrix :: value_type evaluate( size_t _n ) const;
 
         //! Updates the scales vector and  normalizes.
         void update_all();

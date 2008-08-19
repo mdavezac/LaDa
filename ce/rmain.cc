@@ -40,9 +40,10 @@ int main(int argc, char *argv[])
 {
   namespace fs = boost::filesystem;
   namespace bl = boost::lambda;
+  namespace po = boost::program_options;
   try
   {
-    namespace po = boost::program_options;
+    Fitting::LeaveManyOut leavemanyout;
 
     po::options_description generic("Generic Options");
     generic.add_options()
@@ -74,6 +75,7 @@ int main(int argc, char *argv[])
                 "\"t\" coefficient. With --loo/fit only. " )
       ("volkerreg", " Pair regulation done with Volker Blum's"
                     " normalization (changes the units of the \"t\" coefficient). " );
+    leavemanyout.add_cmdl( specific );
        
     po::options_description hidden("hidden");
     hidden.add_options()
@@ -148,19 +150,19 @@ int main(int argc, char *argv[])
     __DOASSERT( not ( fs::is_regular( latinput ) or fs::is_symlink( latinput ) ),
                 latinput << " is a not a valid file.\n" );
 
-    types::t_unsigned maxpairs = vm["maxpairs"].as<types::t_unsigned>();
-    types::t_int verbosity = vm["verbose"].as<types::t_int>();
+    const types::t_unsigned maxpairs = vm["maxpairs"].as<types::t_unsigned>();
+    const types::t_int verbosity = vm["verbose"].as<types::t_int>();
     types::t_unsigned seed = vm["seed"].as<types::t_unsigned>();
     seed = opt::random::seed( seed );
-    types::t_real tolerance( vm["tolerance"].as< types::t_real >() );
-    types::t_unsigned itermax( vm["itermax"].as< types::t_unsigned >() );
-    std::string minimizer_type( vm["minimizer"].as< std::string >() );
-    types::t_real iweights( vm["iw"].as< types::t_real >() );
-    bool doloo = vm.count("loo") != 0;
-    bool dofit = vm.count("fit") != 0;
-    bool volkerreg = vm.count("volkerreg") != 0;
-    std::pair<types::t_real, types::t_real> pairreg( vm["alpha"].as<types::t_real>(),
-                                                     vm["tcoef"].as<types::t_real>() );
+    const types::t_real tolerance( vm["tolerance"].as< types::t_real >() );
+    const types::t_unsigned itermax( vm["itermax"].as< types::t_unsigned >() );
+    const std::string minimizer_type( vm["minimizer"].as< std::string >() );
+    const types::t_real iweights( vm["iw"].as< types::t_real >() );
+    const bool doloo = vm.count("loo") != 0;
+    const bool dofit = vm.count("fit") != 0;
+    const bool volkerreg = vm.count("volkerreg") != 0;
+    const std::pair<types::t_real, types::t_real> pairreg( vm["alpha"].as<types::t_real>(),
+                                                           vm["tcoef"].as<types::t_real>() );
 
     std::cout << " Input Parameters:\n"
               << "   Verbosity: " << verbosity << "\n"
@@ -183,6 +185,8 @@ int main(int argc, char *argv[])
                 << "   t: " << pairreg.second << "\n";
       if( volkerreg ) std::cout << "   Using Volker's normalization for t.\n";
     }
+    // extract leave-many-out commandline
+    leavemanyout.extract_cmdl( vm );
     std::cout << "\n";
 
     // consistency checks.
@@ -228,7 +232,7 @@ int main(int argc, char *argv[])
     }
 
     // now for the real job.
-    if( doloo or dofit )
+    if( doloo or dofit or leavemanyout.do_perform )
     {
       // Create object for fitting procedures.
       CE::Fit< CE::FittingPolicy::PairReg<> > fit;
@@ -249,9 +253,9 @@ int main(int argc, char *argv[])
       fit.init( reg.clusters );
       opt::NErrorTuple nerror = fit.mean_n_var();
 
-      CE::BaseFit::t_Vector x( reg.clusters.size() );
       if( doloo )
       {
+        CE::BaseFit::t_Vector x( reg.clusters.size() );
         std::cout << "Starting Leave-One-Out Procedure.\n";
         std::pair< opt::ErrorTuple, opt::ErrorTuple > errors;
         errors = leave_one_out( fit, reg.cgs, x, verbosity >= serrors );
@@ -260,9 +264,20 @@ int main(int argc, char *argv[])
       }
       if( dofit )
       {
+        CE::BaseFit::t_Vector x( reg.clusters.size() );
         std::cout << "Starting Fitting Procedure.\n";
         opt::ErrorTuple errors( fit( x, reg.cgs ) );
         std::cout << "Training Errors:\n " << ( nerror = errors ) << "\n\n";
+      }
+      if( leavemanyout.do_perform )
+      {
+        std::cout << "\nStarting leave-many out predictive fit." << std::endl;
+        opt::t_ErrorPair errors;
+        leavemanyout.verbosity = verbosity - 1;
+        errors = CE::leave_many_out( leavemanyout, fit, reg.cgs );
+        std::cout << "Average Training Errors:\n " << ( nerror = errors.first ) << "\n";
+        std::cout << "Final Prediction Errors:\n "
+                  << ( nerror = errors.second ) << "\n\n";
       }
     }
     else

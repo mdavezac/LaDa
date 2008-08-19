@@ -89,7 +89,6 @@ namespace CE
       __TRYBEGIN
       opt::t_ErrorPair errors;
       if( not _lmo.do_perform ) return errors;
-
       if( not _lmo.sets.size() ) _lmo.create_sets( _collapse.mapping().size() );
  
       typedef std::vector< std::vector< types::t_unsigned > >
@@ -120,7 +119,7 @@ namespace CE
           {
             if( not _collapse.mapping().do_skip( i ) ) continue;
             const Crystal::Structure& structure = _fit.structures()[ i ];
-            intermediate = check_one( _collapse, structure, i, _lmo.verbosity >= 2 );
+            intermediate += check_one( _collapse, structure, i, _lmo.verbosity >= 2 );
           }
           if( _lmo.verbosity >= 1 ) std::cout << intermediate << "\n";
           errors.second += intermediate;
@@ -142,8 +141,8 @@ namespace CE
         const types::t_real weight = _structure.weight;
         const std::string name = fs::path( _structure.name ).leaf() ;
      
-        opt::ErrorTuple error( _collapse.evaluate(_n) );
-        types::t_real predic( _structure.energy - error.get<1>() / _structure.weight );
+        typename T_COLLAPSE::t_Matrix::value_type predic( _collapse.evaluate(_n) );
+        opt::ErrorTuple error( _structure.energy - predic, _structure.weight );
         if( _verbose )
           std::cout << "  structure: " << std::setw(30) << name << "  "
                     << "Target: " << std::fixed << std::setw(8) 

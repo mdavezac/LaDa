@@ -126,39 +126,30 @@ namespace CE
       opt::ErrorTuple error;
       for(size_t n(0); n < t_ColBase::mapping().size(); ++n )
         if( not t_ColBase::mapping().do_skip(n) )
-          error += evaluate(n);
+          error += opt::ErrorTuple(   t_ColBase::mapping().target( n )
+                                    - evaluate(n),
+                                    t_ColBase::mapping().weight( n ) );
       return error;
       __DEBUGTRYEND(, "Error in MixedApproach::evaluate()\n" )
     }
 
-    INCOLLAPSE( opt::ErrorTuple ) :: evaluate(size_t _n) const 
+    INCOLLAPSE( typename COLHEAD::t_Matrix::value_type ) :: evaluate(size_t _n) const 
     {
       namespace bblas = boost::numeric::ublas;
       __DEBUGTRYBEGIN
       __ASSERT(    coefficients().size1() != dof() 
                 or coefficients().size2() != dimensions(),
                 "Inconsistent sizes.\n" )
-      __ASSERT( _n >= mapping().size(), "Index out of range.\n" )
+      // Adds Separable part.
+      types::t_real intermed( t_ColBase::evaluate(_n) );
+      // Adds CE part.
       typedef const bblas::matrix_column<const t_Matrix>  t_Column;
       typedef const bblas::vector_range< t_Column > t_Ecis;
       const bblas::matrix_column< const t_Matrix> col( coefficients(), 0 );
       t_Ecis ecis( col, bblas::range( t_ColBase::dof(), dof() ) );
-      const bblas::range range( t_ColBase::mapping().range( _n ) );
-
-      types::t_real intermed(0);
-      // Adds Separable part.
-      for( bblas::range::const_iterator j( range.begin() ); j != range.end(); ++j )
-      {
-        const bblas::matrix_column<const t_Configurations>
-          config( configurations(), *j );
-        intermed +=   separables()( config )
-                    * t_ColBase::mapping().eweight( _n,*j - range.start() );
-      }
-      // Adds CE part.
       intermed += ( bblas::inner_prod( ecis, t_CEBase::pis[ _n ] ) );
 
-      return opt::ErrorTuple( t_ColBase::mapping().target( _n ) - intermed,
-                              t_ColBase::mapping().weight( _n ) );
+      return intermed;
       __DEBUGTRYEND(, "Error in MixedApproach::evaluate()\n" )
     }
 

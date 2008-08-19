@@ -11,13 +11,13 @@
 
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <vector> 
 #include <utility> 
 
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <opt/errors.h>
+#include <opt/leave_many_out.h>
 #include <crystal/structure.h>
 
 #include "cluster.h"
@@ -135,14 +135,14 @@ namespace CE
   }
   //! \endcond
 
-  //! Performs leave-one-out. Watch out for request \a _fit interface.
+  //! Performs leave-one-out. Watch out for requested \a _fit interface.
   template< class T_FIT, class T_SOLVER >
     std::pair< opt::ErrorTuple, opt::ErrorTuple >
       leave_one_out( const T_FIT &_fit, 
                      const T_SOLVER &_solver,
                      BaseFit::t_Vector &_x,
                      bool _verbose );
-  //! Performs leave-one-out with regularization. Watch out for request \a _fit interface.
+  //! Performs leave-one-out with regularization. Watch out for requested \a _fit interface.
   template< class T_FIT, class T_SOLVER >
     std::pair< opt::ErrorTuple, opt::ErrorTuple >
       leave_one_out( const T_FIT &_fit,
@@ -150,6 +150,11 @@ namespace CE
                      BaseFit::t_Vector &_x, 
                      const types::t_real *_w, 
                      bool _verbose );
+  //! Performs leave-many-out for CE fits.
+  template< class T_FIT, class T_SOLVER >
+    opt::t_ErrorPair leave_many_out( Fitting::LeaveManyOut &_lmo,
+                                     const T_FIT &_fit,
+                                     const T_SOLVER &_solver );
 
   //! A class for fitting cluster-expansions to LDA data.
   template< class T_POLICY = FittingPolicy::Nothing<BaseFit> >

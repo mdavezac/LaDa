@@ -2,6 +2,9 @@
 //  Version: $Id$
 //
 
+#include <boost/lambda/bind.hpp>
+#include <opt/random.h>
+
 namespace CE
 {
 
@@ -207,6 +210,53 @@ namespace CE
      
         return std::make_pair( training, prediction );
       }
+  template< class T_FIT, class T_SOLVER >
+    opt::t_ErrorPair leave_many_out( Fitting::LeaveManyOut &_lmo,
+                                     const T_FIT &_fit, const T_SOLVER &_solver )
+    {
+      namespace bl = boost::lambda;
+      __TRYBEGIN
+      BaseFit::t_Vector x( _fit.dof() );
+      opt::t_ErrorPair errors;
+      if( not _lmo.do_perform ) return errors;
+      if( not _lmo.sets.size() ) _lmo.create_sets( _fit.structures().size() );
+ 
+      typedef std::vector< std::vector< types::t_unsigned > >
+                                    :: const_iterator const_iterator;
+      const_iterator i_set = _lmo.sets.begin();
+      const_iterator i_set_end = _lmo.sets.end();
+      for(size_t n(0); i_set != i_set_end; ++i_set, ++n )
+      {
+        const types::t_real range(10);
+        std::for_each
+        ( 
+          x.begin(), x.end(),
+          bl::_1 =   ( bl::bind( &opt::random::rng ) - bl::constant(5e-1) )
+                   * bl::constant(range)
+        );
+        { // fitting.
+          opt::ErrorTuple intermediate;
+          _fit.excluded = *i_set;
+          if( _lmo.verbosity >= 1 ) std::cout << " " << n
+                                              << ". Training Errors: ";
+          if( _lmo.verbosity >= 2 ) std::cout << "\n";
+          intermediate = _fit( x, _solver );
+          if( _lmo.verbosity >=1 ) std::cout << intermediate << "\n";
+          errors.first += intermediate;
+        } // end of fitting.
+        { // Prediction.
+          opt::ErrorTuple intermediate;
+          if( _lmo.verbosity >= 1 ) std::cout << " " << n
+                                          << ". Training Errors: ";
+          if( _lmo.verbosity >= 2 ) std::cout << "\n";
+          intermediate = _fit.check_predictions( x, _fit.verbose );
+          if( _lmo.verbosity >=1 ) std::cout << intermediate << "\n";
+          errors.second += intermediate;
+        }
+      }
+      return errors;
+      __TRYEND(, "Error while performing leave-many-out.\n")
+    }
   template< class T_FIT, class T_SOLVER >
     std::pair< opt::ErrorTuple, opt::ErrorTuple >
       leave_one_out( const T_FIT &_fit,

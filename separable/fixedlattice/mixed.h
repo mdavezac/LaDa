@@ -108,7 +108,8 @@ namespace CE
                         : t_ColBase( _c ), t_CEBase( _c ),
                           separables_( _c.separables_ ), 
                           clusters_( _c.clusters_ ), 
-                          coefficients_( _c.coefficients_ ) {}
+                          coefficients_( _c.coefficients_ ) 
+            { init( _c.separables().ranks(), _c.separables().dimensions() ); }
         //! Destructor.
         ~MixedApproach() {}
 
@@ -128,8 +129,8 @@ namespace CE
                            types::t_unsigned _dim );
         //! Evaluates square errors.
         opt::ErrorTuple evaluate() const;
-        //! Evaluates square errors for one structure.
-        opt::ErrorTuple evaluate( size_t _n ) const;
+        //! Predicts target value of a structure.
+        typename t_Matrix :: value_type evaluate( size_t _n ) const;
 
         //! Updates the separable and copies the eci from column 0 to all other columns.
         void update_all();

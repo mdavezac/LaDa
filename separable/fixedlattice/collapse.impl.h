@@ -136,12 +136,13 @@ namespace CE
     opt::ErrorTuple error;
     for(size_t n(0); n < mapping().size(); ++n )
       if( not mapping().do_skip(n) ) 
-        error += evaluate(n);
+        error += opt::ErrorTuple( mapping().target( n ) - evaluate(n),
+                                  mapping().weight( n ) );
     return error;
     __DEBUGTRYEND(, "Error in Collapse::evaluate().\n" )
   }
 
-  INCOLLAPSE( opt::ErrorTuple ) :: evaluate(size_t _n) const
+  INCOLLAPSE( typename COLHEAD::t_Matrix::value_type ) :: evaluate(size_t _n) const 
   {
     __DEBUGTRYBEGIN
     __ASSERT( _n >= mapping().size(), "Inconsistent sizes.\n" )
@@ -155,7 +156,7 @@ namespace CE
       intermed +=   separables()( config )
                   * mapping().eweight(_n,*j - range.start() );
     }
-    return opt::ErrorTuple( mapping().target(_n) - intermed, mapping().weight(_n) );
+    return intermed;
     __DEBUGTRYEND(, "Error in Collapse::evaluate().\n" )
   }
 

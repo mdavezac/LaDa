@@ -24,6 +24,10 @@
 namespace Fitting { class LeaveManyOut; }
 namespace CE
 {
+  template< class T_FIT, class T_SOLVER >
+    opt::t_ErrorPair leave_many_out( Fitting::LeaveManyOut &_lmo,
+                                     const T_FIT &_fit,
+                                     const T_SOLVER &_solver );
   namespace Method
   {
     template< class T_COLLAPSE, class T_FIT, class T_MINIMIZER >
@@ -45,6 +49,10 @@ namespace Fitting
                                                           T_COLLAPSE &_collapse,
                                                           T_FIT &_fit,
                                                           const T_MINIMIZER &_min );
+    template< class T_FIT, class T_SOLVER >
+      friend opt::t_ErrorPair CE::leave_many_out( Fitting::LeaveManyOut &_lmo,
+                                                  const T_FIT &_fit,
+                                                  const T_SOLVER &_solver );
     public:
       //! Type containing an average and a max error.
       typedef std::pair< types::t_real, types::t_real > t_PairErrors;
@@ -57,7 +65,7 @@ namespace Fitting
       types::t_unsigned verbosity;
       
       //! Constructor.
-      LeaveManyOut() : do_perform(false), verbosity( 0 ), 
+      LeaveManyOut() : do_perform(false), verbosity( 0 ), cmdl_except("except"),
                        cmdl_set( "sets" ), cmdl_file("setsname"),
                        filename( "lmo_sets" ), nb_sets(0), nb_perset(0) {}
       //! Destructor..
@@ -84,7 +92,11 @@ namespace Fitting
       void read_sets();
 
       //! The target values to leave out.
+      std::vector< types::t_unsigned > except;
+      //! The target values to leave out.
       std::vector< std::vector< types::t_unsigned > > sets;
+      //! The except command-line string.
+      std::string cmdl_except;
       //! The set command-line string.
       std::string cmdl_set;
       //! The input filename command-line string.
@@ -107,6 +119,8 @@ namespace Fitting
     __DEBUGTRYBEGIN
     namespace po = boost::program_options;
     _options.add_options()
+      ( cmdl_except.c_str(), po::value<std::string>(),
+        "A set of structures which should always be in fit (e.g. \" 0 1 2 10 \")" )
       ( cmdl_set.c_str(), po::value<std::string>(),
         "Defines the size and number "
         "of leave-many-out sets \" NUMBER-SETS  NUMBER-PER-SET \"." )
