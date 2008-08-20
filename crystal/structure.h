@@ -306,6 +306,11 @@ namespace Crystal {
   //! \param[inout] _structures are added to this container.
   void read_ce_structures( const boost::filesystem::path &_dir,
                            std::vector<Crystal::Structure> &_structures );
+  //! \brief Reads one structure from input file.
+  //! \details Expects NREL pifile format. Returns true if succesfull, false if
+  //!          reached eof.
+  bool read_pifile_structure( std::istream &_sstr,
+                              std::vector<Crystal::Structure> &_structures );
 
 } // namespace Crystal
 

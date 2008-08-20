@@ -130,7 +130,8 @@ namespace CE
 
 
         //! Serializes a separable function.
-        template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
+        template<class ARCHIVE> void serialize( ARCHIVE & _ar, 
+                                                const unsigned int _version);
 
       protected:
         //! \brief Coefficients of the separable functions. 
@@ -139,14 +140,6 @@ namespace CE
         //!          functions of each separable function.
         t_Coefficients coefficients_;
     };
-
-  //! \brief A mixed CE/Sum of sep. functional.
-  //! \details Because of its mixed status, the functional takes a complete
-  //!          structure on input. 
-  template< class T_TRAITS >
-    class MixedSeparable :: protected Separable< T_TRAITS >
-    {
-    }
 
   //! Prints out the separable to a stream.
   template<class T_TRAITS >

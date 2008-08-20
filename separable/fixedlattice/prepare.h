@@ -42,6 +42,8 @@ namespace CE
       //! Constructor.
       PosToConfs ( Crystal::Lattice &_lat = *Crystal::Structure::lattice ) 
         { init_syms( _lat ); }
+      //! Copy Constructor.
+      PosToConfs ( const PosToConfs &_c ) : syms( _c.syms ) {}
       //! Creates a basis of positions.
       void create_positions( const std::string &_desc );
       

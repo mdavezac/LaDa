@@ -9,7 +9,8 @@
 namespace CE
 {
   template<class T_TRAITS > template<class ARCHIVE> 
-    void Separables<T_TRAITS > :: serialize(ARCHIVE & _ar, const unsigned int _version);
+    void Separables<T_TRAITS > :: serialize( ARCHIVE & _ar,
+                                             const unsigned int _version)
     {
       _ar & coefficients;
       _ar & norms;
