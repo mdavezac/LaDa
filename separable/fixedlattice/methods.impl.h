@@ -219,6 +219,7 @@ namespace Fitting
                 std::cout << "\n  Allsq iter: " << iter << errors
                           << "  convergence: " << convergence << " \n";
             } // end of if( verbose )
+            if( D == 1 ) return errors;
             if( iter > 1 and std::abs(convergence) < tolerance ) return errors; 
           } // end of if( tolerance > 0e0 )
         }

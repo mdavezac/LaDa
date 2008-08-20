@@ -310,7 +310,7 @@ namespace Crystal {
   //! \details Expects NREL pifile format. Returns true if succesfull, false if
   //!          reached eof.
   bool read_pifile_structure( std::istream &_sstr,
-                              std::vector<Crystal::Structure> &_structures );
+                              Crystal::Structure &_structure );
 
 } // namespace Crystal
 

@@ -117,9 +117,9 @@ SEPARABLE_IMPL_H = cefitting.impl.h separable.impl.h collapse.impl.h \
 SEPARABLE_DOC = $(SEPARABLE_CC) $(SEPARABLE_H) $(SEPARABLE_IMPL_H)
 SEPARABLES_FXL_CC = prepare.cc
 SEPARABLES_FXL_H = colmappings.h sepmappings.h functional.h prepare.h collapse.h methods.h \
-                   mixed.h colpolicy.h
+                   mixed.h colpolicy.h mixedfunctional.h
 SEPARABLES_FXL_IMPL_H = functional.impl.h collapse.impl.h methods.impl.h mixed.impl.h \
-                        colpolicy.impl.h
+                        colpolicy.impl.h mixedfunctional.impl.h
 SEPARABLES_DOC = $(SEPARABLES_FXL_CC) $(SEPARABLES_FXL_H) $(SEPARABLES_FXL_IMPL_H)
 
 

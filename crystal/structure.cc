@@ -5,6 +5,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/tokenizer.hpp>
 
 #include <opt/ndim_iterator.h>
 #include <opt/traits.h>
@@ -537,8 +538,6 @@ namespace Crystal {
     global_iterator.add( -range, range);
     global_iterator.add( -range, range);
     global_iterator.add( -range, range);
-  //   std::cout << (!lattice.cell) * cell << std::endl
-  //             << "range: " << r << "  " << range << std::endl;
 
     
     _str.atoms.clear();
@@ -663,58 +662,74 @@ namespace Crystal {
   }
 
   bool read_pifile_structure( std::istream &_sstr,
-                              std::vector<Crystal::Structure> &_structures );
+                              Crystal::Structure &_structure )
   {
-    const boost::regex No("^\\sNO\." );
+    __DEBUGTRYBEGIN
+    // finds first line for structure.
+    const boost::regex No("^\\sNO\\." );
     boost::match_results<std::string::const_iterator> what;
     std::string line;
     do { std::getline( _sstr, line ); } 
-    while(  not ( boost::regex_search( line, what, re ) or _sstr.eof() ) );
-    if( sstr.eof() ) return false;
-    typedef boost::tokenizer<> t_Tokenizer;
-    t_Tokenizer tok(line, sep);
-    t_Tokenizer::const_iterator i_tok = tok.begin();
+    while(  not ( boost::regex_search( line, what, No ) or _sstr.eof() ) );
+    if( _sstr.eof() ) return false;
 
+    // Tokenize first line.
+    boost::char_separator<char> sep(" ");
+    typedef boost::tokenizer< boost::char_separator<char> > t_Tokenizer;
+    t_Tokenizer notoken(line, sep);
+    t_Tokenizer::const_iterator i_tok = notoken.begin();
+    t_Tokenizer::const_iterator i_tok_end = notoken.end();
     // read name.
-    ++i_tok; _structure.name = *i_tok;
+    __DOASSERT( (++i_tok) == i_tok_end, "Unexpected end-of-line.\n" )
+    _structure.name = *i_tok;
     // read size.
-    ++i_tok; ++i_tok;
+    __DOASSERT( (++i_tok) == i_tok_end, "Unexpected end-of-line.\n" )
+    __DOASSERT( (++i_tok) == i_tok_end, "Unexpected end-of-line.\n" )
     const size_t N( boost::lexical_cast<size_t>( *i_tok ) );
     // read decoration.
-    ++i_tok;
+    __DOASSERT( (++i_tok) == i_tok_end, "Unexpected end-of-line.\n" )
     const types::t_int decoration( boost::lexical_cast<types::t_int>( *i_tok ) );
-    ++i_tok;
+    __DOASSERT( (++i_tok) == i_tok_end, "Unexpected end-of-line.\n" )
+    __DOASSERT( (++i_tok) == i_tok_end, "Unexpected end-of-line.\n" )
     // read cell.
     for( size_t i(0); i < 3; ++i )
       for( size_t j(0); j < 3; ++j, ++i_tok )
-       _structure.cell(i,j) = boost::lexical_cast<types::t_real>( i_tok );
-    _structure.cell = ~( _structure.lattice->cell * _structure.cell );
+      {
+        __DOASSERT( i_tok == i_tok_end, "Unexpected end-of-line.\n" )
+        _structure.cell(i,j) = boost::lexical_cast<types::t_real>( *i_tok ) * 0.5e0;
+      }
 
     // read atoms position.
+    // find first line of atomic basis.
     _structure.atoms.clear();
-    const boost::regex No("^\\sBASIS" );
+    const boost::regex Basis("^\\sBASIS" );
     do { std::getline( _sstr, line ); } 
-    while( not ( boost::regex_search( line, what, re ) or _sstr.eof() ) );
+    while( not ( boost::regex_search( line, what, Basis ) or _sstr.eof() ) );
 
     bool is_first = true;
-    while( _structure.atoms.size() <= N ) 
+    while( _structure.atoms.size() < N ) 
     {
       __DOASSERT( _sstr.eof(), "Unexpected end-of-file.\n" )
-      typedef boost::token_iterator_generator<> :: type t_tokit;
-      t_tokit i_tokit = boost::make_token_iterator<std::string>
-                                                  ( line.begin(), line.end() );
-      if( is_first ) ++i_tokit, is_first = false;
-      t_tokit i_tokit_end;
-      Crystal::Structure :: t_Atoms atom;
-      while( i_tokit != i_tokit_end )
+      t_Tokenizer basistoken(line, sep);
+      i_tok = basistoken.begin();
+      i_tok_end = basistoken.end();
+      if( is_first ) 
       {
-        atom->type = decoration >> _structure.atoms.size() % 2 ? 1e0: -1e0;
-        for( size_t i(0); i < 3; ++i, ++i_tokit )
+        is_first = false;
+        __DOASSERT( (++i_tok) == i_tok_end, "Unexpected end-of-line.\n" )
+      }
+      Crystal::Structure :: t_Atom atom;
+      while( i_tok != i_tok_end )
+      {
+        atom.type = ( decoration >> _structure.atoms.size() ) % 2 ? 1e0: -1e0;
+        for( size_t i(0); i < 3; ++i, ++i_tok )
         {
-          __DOASSERT( i_tokit != i_tokit_end, "Unexpected end of line.\n" )
-          atom.pos(i) = boost::lexical_cast<types::t_real>( i_tok ) * 0.5e0;
+          __DOASSERT( i_tok == i_tok_end, "Unexpected end-of-line.\n" )
+          atom.pos(i) = boost::lexical_cast<Crystal::Structure::t_Atom::t_Type> 
+                                           ( *i_tok ) * 0.5e0;
         }
         _structure.atoms.push_back( atom );
+        if( _structure.atoms.size() == N ) break;
       }
       std::getline( _sstr, line );
     }
@@ -722,7 +737,9 @@ namespace Crystal {
 
     _structure.scale = 1e0;
     _structure.k_vecs.clear();
-    _structure.find_k_vecs();
+    _structure.find_k_vectors();
+    return true;
+    __DEBUGTRYEND(, "Error while reading from pifile.\n" )
   }
 } // namespace Crystal
 

@@ -43,6 +43,7 @@ namespace CE
 
   void PosToConfs :: create_positions( const std::string &_bdesc )
   {
+    if( _bdesc.empty() ) return;
     const boost::regex re("(\\d+)(?:\\s+)?x(?:\\s+)?"
                           "(\\d+)(?:\\s+)?x(?:\\s+)?(\\d+)" );
     boost::match_results<std::string::const_iterator> what;

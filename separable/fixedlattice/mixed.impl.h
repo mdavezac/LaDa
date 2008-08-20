@@ -24,8 +24,6 @@ namespace CE
         __DEBUGTRYBEGIN
         namespace bblas = boost::numeric::ublas;
         __ASSERT( not t_ColBase::separables_, "Function pointer not set.\n" )
-        __ASSERT( t_ColBase::dim >= configurations().size1(),
-                  "Inconsistent sizes.\n" )
         // Loop over inequivalent configurations.
         t_Vector X( dof() );
         std::fill( _A.data().begin(), _A.data().end(), 
@@ -33,8 +31,14 @@ namespace CE
         std::fill( _b.data().begin(), _b.data().end(), 
                    typename t_Vector::value_type(0) );
         const bblas::range colrange( 0, t_ColBase::dof() );
-        typename t_CEBase :: t_Pis :: const_iterator i_pis = t_CEBase::pis.begin();
-        for( size_t i(0); i < t_ColBase::mapping().size(); ++i, ++i_pis )
+        typename t_CEBase :: t_Pis :: const_iterator i_pis;
+        if( t_CEBase::dof() ) 
+        {
+          i_pis = t_CEBase::pis.begin();
+          __ASSERT( t_CEBase::pis.size() != t_ColBase::mapping().size(), 
+                    "Inconsistent sizes.\n" )
+        }
+        for( size_t i(0); i < t_ColBase::mapping().size(); ++i )
         {
           // allows leave-one-out, or leave-many-out.
           if( t_ColBase::mapping().do_skip(i) ) continue;
@@ -42,8 +46,12 @@ namespace CE
           // create the X vector.
           bblas::vector_range< t_Vector > colX( X, colrange );
           std::fill( colX.begin(), colX.end(), typename t_Vector::value_type(0) );
-          t_ColBase::create_X( i, colX );
-          std::copy( i_pis->begin(), i_pis->end(), X.begin() + t_ColBase::dof() );
+          if( t_ColBase::dof() ) t_ColBase::create_X( i, colX );
+          if( t_CEBase::dof() )
+          {
+            std::copy( i_pis->begin(), i_pis->end(), X.begin() + t_ColBase::dof() );
+            ++i_pis;
+          }
           
       
           _A += t_ColBase::mapping().weight(i) * bblas::outer_prod( X, X ); 
@@ -60,20 +68,29 @@ namespace CE
         t_ColBase::dim = _dim;
         create_A_n_b( _A, _b );
 
-        const bblas::range seprange( 0, t_ColBase::dof() );
-        bblas::matrix_range<T_MATRIX> sepmat( _A, seprange, seprange );
-        bblas::vector_range<T_VECTOR> sepvec( _b, seprange );
-        t_ColBase::regularization()( _A, _b, _dim); 
-        
-        const bblas::range cerange( t_ColBase::dof(), dof() );
-        bblas::matrix_range<T_MATRIX> cemat( _A, cerange, cerange );
-        bblas::vector_range<T_VECTOR> cevec( _b, cerange );
-        t_CEBase :: other_A_n_b( cemat, cevec );
+        const bool dosep( t_ColBase::dof() > 0 );
+        if( t_ColBase::dof() )
+        {
+          const bblas::range seprange( 0, t_ColBase::dof() );
+          bblas::matrix_range<T_MATRIX> sepmat( _A, seprange, seprange );
+          bblas::vector_range<T_VECTOR> sepvec( _b, seprange );
+          t_ColBase::regularization()( _A, _b, _dim); 
+        }
+        if( t_CEBase::dof() )
+        {
+          const bblas::range cerange( t_ColBase::dof(), dof() );
+          bblas::matrix_range<T_MATRIX> cemat( _A, cerange, cerange );
+          bblas::vector_range<T_VECTOR> cevec( _b, cerange );
+          t_CEBase :: other_A_n_b( cemat, cevec );
 
-        bblas::matrix_column< t_Matrix > columnd( coefficients(), _dim );
-        const bblas::matrix_column< const t_Matrix > column0( coefficients(), 0 );
-        std::copy( column0.begin() + t_ColBase::dof(), column0.end(), 
-                   columnd.begin() + t_ColBase::dof() );
+          if( t_ColBase::dof() )
+          {
+            bblas::matrix_column< t_Matrix > columnd( coefficients(), _dim );
+            const bblas::matrix_column< const t_Matrix > column0( coefficients(), 0 );
+            std::copy( column0.begin() + t_ColBase::dof(), column0.end(), 
+                       columnd.begin() + t_ColBase::dof() );
+          }
+        }
         __DEBUGTRYEND(, "Error in MixedApproach::operator()()\n" )
       }
     
@@ -92,29 +109,35 @@ namespace CE
 
     INCOLLAPSE( void ) :: update_all()
     {
-        __DEBUGTRYBEGIN
-      namespace bblas = boost::numeric::ublas;
-      const bblas::matrix_column< const t_Matrix > column0( coefficients(), 0 );
-      for( size_t i(1); i < coefficients().size1(); ++i )
+      __DEBUGTRYBEGIN
+      if( t_CEBase::dof() )
       {
-        bblas::matrix_column< t_Matrix > columnd( coefficients(), t_ColBase::dim );
-        std::copy( column0.begin() + t_ColBase::dof(), column0.end(), 
-                   columnd.begin() + t_ColBase::dof() );
+        namespace bblas = boost::numeric::ublas;
+        const bblas::matrix_column< const t_Matrix > column0( coefficients(), 0 );
+        for( size_t i(1); i < coefficients().size1(); ++i )
+        {
+          bblas::matrix_column< t_Matrix > columnd( coefficients(), t_ColBase::dim );
+          std::copy( column0.begin() + t_ColBase::dof(), column0.end(), 
+                     columnd.begin() + t_ColBase::dof() );
+        }
       }
+      if( t_ColBase::dof() ) t_ColBase::update_all();
       __DEBUGTRYEND(, "Error in MixedApproach::update_all()\n" )
-      t_ColBase::update_all();
     }
     INCOLLAPSE( void ) :: update( types::t_unsigned _d )
     {
       __DEBUGTRYBEGIN
-      namespace bblas = boost::numeric::ublas;
-      const bblas::matrix_column< t_Matrix > columnd( coefficients(),  
-                                                      t_ColBase::dim );
-      bblas::matrix_column< t_Matrix > column0( coefficients(), 0 );
-      std::copy( columnd.begin() + t_ColBase::dof(), columnd.end(), 
-                 column0.begin() + t_ColBase::dof() );
+      if( t_CEBase::dof() )
+      {
+        namespace bblas = boost::numeric::ublas;
+        const bblas::matrix_column< t_Matrix > columnd( coefficients(),  
+                                                        t_ColBase::dim );
+        bblas::matrix_column< t_Matrix > column0( coefficients(), 0 );
+        std::copy( columnd.begin() + t_ColBase::dof(), columnd.end(), 
+                   column0.begin() + t_ColBase::dof() );
+      }
+      if( t_ColBase::dof() ) t_ColBase::update( _d );
       __DEBUGTRYEND(, "Error in MixedApproach::update()\n" )
-      t_ColBase::update( _d );
     }
 
     INCOLLAPSE( opt::ErrorTuple ) :: evaluate() const 
@@ -140,14 +163,18 @@ namespace CE
       __ASSERT(    coefficients().size1() != dof() 
                 or coefficients().size2() != dimensions(),
                 "Inconsistent sizes.\n" )
+      typename t_Matrix :: value_type intermed(0);
       // Adds Separable part.
-      types::t_real intermed( t_ColBase::evaluate(_n) );
+      if( t_ColBase::dof() ) intermed += t_ColBase::evaluate(_n);
       // Adds CE part.
-      typedef const bblas::matrix_column<const t_Matrix>  t_Column;
-      typedef const bblas::vector_range< t_Column > t_Ecis;
-      const bblas::matrix_column< const t_Matrix> col( coefficients(), 0 );
-      t_Ecis ecis( col, bblas::range( t_ColBase::dof(), dof() ) );
-      intermed += ( bblas::inner_prod( ecis, t_CEBase::pis[ _n ] ) );
+      if( t_CEBase::dof() )
+      {
+        typedef const bblas::matrix_column<const t_Matrix>  t_Column;
+        typedef const bblas::vector_range< t_Column > t_Ecis;
+        const bblas::matrix_column< const t_Matrix> col( coefficients(), 0 );
+        t_Ecis ecis( col, bblas::range( t_ColBase::dof(), dof() ) );
+        intermed += ( bblas::inner_prod( ecis, t_CEBase::pis[ _n ] ) );
+      }
 
       return intermed;
       __DEBUGTRYEND(, "Error in MixedApproach::evaluate()\n" )
@@ -156,7 +183,12 @@ namespace CE
     INCOLLAPSE( void ) ::  init( size_t _ranks, size_t _dims )
     {
       __DEBUGTRYBEGIN
-      CEFit().init( *clusters_ );
+      CEFit().init( clusters() );
+      if ( not ( _ranks and _dims ) )
+      { 
+        _ranks = 0;
+        _dims = 1;
+      }
       namespace bblas = boost::numeric::ublas;
       separables().norms.resize( _ranks );
       coefficients().resize(   clusters_->size() 
@@ -170,20 +202,18 @@ namespace CE
 
     INCOLLAPSE( void ) ::  reassign()
     {
+      if( not t_CEBase::dof() ) return;
       namespace bl = boost::lambda;
       __DEBUGTRYBEGIN
       __ASSERT( coefficients().size1() - t_ColBase::dof() != clusters_->size(),
                 "Inconsistent sizes.\n")
 
-      t_Clusters :: iterator i_clusters = clusters_->begin();
-      t_Clusters :: iterator i_clusters_end = clusters_->end();
       typename t_Matrix :: const_iterator1 i_eci = coefficients().begin1() + t_ColBase::dof();
-      for(; i_clusters != i_clusters_end; ++i_clusters, ++i_eci )
-        std::for_each
-        (
-          i_clusters->begin(), i_clusters->end(), 
-          bl::bind( &::CE::Cluster::eci, bl::_1 ) = bl::constant( *i_eci )
-        );
+      foreach( t_Clusters::value_type & _clusters, clusters() )
+      {
+        foreach( ::CE::Cluster & _cluster, _clusters ) _cluster.eci = *i_eci;
+        ++i_eci;
+      }
       __DEBUGTRYEND(,"Error in MixedApproach::reassign().\n" )
     }
 

@@ -32,12 +32,18 @@ namespace CE
       void construct_( const T_CLASS &_class, T_MATRIX &_A, T_VECTOR &_b ) 
       {
         __DEBUGTRYBEGIN
-        __ASSERT( _A.size1() == _class.nb_cls, "Inconsistent sizes.\n" )
-        __ASSERT( _A.size2() == _class.nb_cls, "Inconsistent sizes.\n" )
-        __ASSERT( _b.size() == _class.nb_cls, "Inconsistent sizes.\n" )
+        __ASSERT( _A.size1() != _class.nb_cls,
+                     "Inconsistent sizes: " << _A.size1()
+                  << " != " << _class.nb_cls << "\n" )
+        __ASSERT( _A.size2() != _class.nb_cls, 
+                     "Inconsistent sizes: " << _A.size2()
+                  << " != " << _class.nb_cls << "\n" )
+        __ASSERT( _b.size() != _class.nb_cls,
+                     "Inconsistent sizes: " << _b.size()
+                  << " != " << _class.nb_cls << "\n" )
         _class.create_A_n_b( _A, _b );
         _class.other_A_n_b( _A, _b );
-        __DEBUGTRYEND(, "Error in CE::details::operator_().\n" )
+        __DEBUGTRYEND(, "Error in CE::details::construct_().\n" )
       }
   }
 
