@@ -436,8 +436,6 @@ int main(int argc, char *argv[])
     typedef Traits::CE::MixedApproach< t_looCollapseTraits, t_CEBase >
       t_looMixedTraits;
     CE::MixedApproach<t_looMixedTraits> loomixed( mixed );
-    std:: cout << mixed.Collapse().regularization().lambda << " ?= " 
-               << loomixed.Collapse().regularization().lambda << "\n";
     loomixed.Collapse().mapping().do_exclude = true;
     std::cout << "Starting Leave-One-Out Procedure.\n";
     opt::t_ErrorPair errors;
