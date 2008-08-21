@@ -7,10 +7,10 @@
 #endif
 
 
+#include <opt/convex_hull.h>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 
 #include <opt/types.h>
-#include <opt/convex_hull.h>
 #include <opt/debug.h>
 
 #include "ce.hpp"
@@ -18,22 +18,6 @@
 
 namespace PythonLaDa
 {
-  struct PiStructure
-  {
-     types::t_int index;
-     types::t_real x;
-     PiStructure  ( types::t_int _pi = 0, types::t_real _x = -2.0 )
-                 : index( _pi ), x( _x ) {}
-     types::t_real get_concentration() const { return x; }
-     std::string print() const
-     { 
-       std::ostringstream sstr; 
-       sstr << index;
-       return sstr.str();
-     }
-  };
-  std::ostream& operator<< ( std::ostream &_os, const PiStructure &_ch );
-
   namespace XML
   {
     template<> std::string nodename<t_CubicCS>()    { return "CS"; }
@@ -74,23 +58,23 @@ namespace PythonLaDa
       { return _doc.FirstChild("Job").Element(); }
     template<> TiXmlElement *findnode<t_TetraBuilder>( TiXmlHandle &_doc )
       { return findnode<t_CubicBuilder>( _doc ); }
-  }
+  } // end of XML namespace
+
+  // include convex-hull stuff in namespace PythonLaDa::CH. 
+# define _TYPE_ types::t_int
+# define _NAMESPACE_ CH
+# include "convexhull.impl.hpp"
+
   void expose_ce()
   {
     using namespace boost::python;
-    typedef opt::ConvexHull::Base< PiStructure >  t_CH;
-    class_< t_CH >( "ConvexHull" )
-      .def( "__str__",  &t_CH::print )
-      .def( "evaluate", &t_CH::evaluate )
-      .def( "add",      &t_CH::add );
 
-    class_< PiStructure >( "PiStructure" )
-      .def( init< PiStructure >() )
-      .def( init< types::t_int >() )
-      .def( init< types::t_int, types::t_real >() )
-      .def( "__str__",  &PiStructure::print )
-      .def_readwrite( "index", &PiStructure::index )
-      .def_readwrite( "x", &PiStructure::x );
+    // Expose convex-hull.
+#   define _PYTHONNAME_ ConvexHull
+#   define _NAMESPACE_ CH
+#   define _INMODULE_
+#   include "convexhull.impl.hpp"
+
 
     typedef CE::Builder< CE::ConstituentStrain::Harmonic::Cubic > :: t_Chemical t_Chemical;
     class_< t_Chemical >( "Chemical" )
@@ -103,7 +87,4 @@ namespace PythonLaDa
     details::ExposeHarmonicRelated< CE::ConstituentStrain::Harmonic::Cubic >();
     details::ExposeHarmonicRelated< CE::ConstituentStrain::Harmonic::Tetragonal >();
   }
-
-  std::ostream& operator<< ( std::ostream &_os, const PiStructure &_ch )
-    { return _os << _ch.index; }
-}
+} // end of PythonLaDa namespace

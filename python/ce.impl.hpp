@@ -11,7 +11,6 @@
 #include <ce/functional_builder.h>
 #include <ce/constituent_strain.h>
 #include <ce/harmonic.h>
-#include <opt/convex_hull.h>
 #include <crystal/lattice.h>
 #include <crystal/structure.h>
 #include <crystal/atom.h>

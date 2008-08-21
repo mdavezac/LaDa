@@ -109,14 +109,6 @@ namespace atat
       { return new T_MAT( !_mat ); }
     template< class T_TYPE, class T_MAT > T_TYPE det( T_MAT &_mat )
       { return ::atat::det( _mat ); }
-
-    template< class T_TYPE, template< class > class T_CONTAINER > 
-      void exposeContainer( std::string &_name )
-      {
-        class_< T_CONTAINER<T_TYPE> >( _name.c_str() )
-          .def(vector_indexing_suite< T_CONTAINER< T_TYPE > >());
-      }
-
 #endif
 
     _TYPE_ _CLASSNAME_( getVecItem )( const _CLASSNAME_(Vector) &_v,

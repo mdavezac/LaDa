@@ -9,6 +9,8 @@
 #include <config.h>
 #endif
 
+#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
+
 #include <sstream>
 #include <string>
 
@@ -21,6 +23,14 @@ namespace PythonLaDa
     _at.print_out( sstr );
     return sstr.str();
   }
+  template< class T_TYPE, template< class > class T_CONTAINER > 
+    void exposeContainer( std::string &_name )
+    {
+      namespace bp = boost::python;
+      bp::class_< T_CONTAINER<T_TYPE> >( _name.c_str() )
+        .def(bp::vector_indexing_suite< T_CONTAINER< T_TYPE > >());
+    }
+
 }
 
 #endif // __PYTHONLADA_MISC_HPP_
