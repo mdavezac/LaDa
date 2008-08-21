@@ -82,10 +82,11 @@ OPT_H = ndim_iterator.h minimize_base.h polynome.h frprmn_minimizer.h \
 	va_minimizer.h fitness_function.h  function_functors.h monome.h traits.h \
         fuzzy.h atat.h debug.h va_function.h gsl_lsq.h random.h algorithms.h \
         gsl.h allsq.h cgs.h gsl_nllsq.h gsl_mins.h gsl_simplex.h errors.h
-OPT_CC = gsl_lsq.cc random.cc gsl.cc gsl_nllsq.cc gsl_mins.cc gsl_simplex.cc errors.cc \
-         leave_many_out.cc convex_hull.cc
+OPT_CC = gsl_lsq.cc random.cc gsl.cc gsl_nllsq.cc gsl_mins.cc gsl_simplex.cc \
+         leave_many_out.cc
+OPT_PYTHON_CONVENIENCE_CC =  convex_hull.cc errors.cc 
 OPT_F90 =  df1dim.f90  frprmn.f90  linmin.f90 leave_many_out.h
-OPT_DOC = $(OPT_H) $(OPT_CC) 
+OPT_DOC = $(OPT_H) $(OPT_CC) $(OPT_PYTHON_CONVENIENCE_CC)
 
 EMASS_CC = emass.cc
 EMASS_H  = emass.h
@@ -106,8 +107,8 @@ PRINT_DOC = $(PRINT_H) $(PRINT_CC)
 PYTHON_CE_CC = ce.cc
 PYTHON_CE_H = ce.hpp ce.impl.hpp
 PYTHON_H = atat.hpp atat.impl.hpp atom.hpp atom.impl.hpp structure.hpp lattice.hpp \
-           xml.hpp misc.hpp convex_hull.impl.hpp errors.hpp
-PYTHON_CC = atat.cc atom.cc structure.cc lattice.cc lada.cc physics.cc errors.cc
+           xml.hpp misc.hpp convex_hull.impl.hpp errortuple.hpp
+PYTHON_CC = atat.cc atom.cc structure.cc lattice.cc lada.cc physics.cc errortuple.cc
 PYTHON_DOC = $(PYTHON_CC) $(PYTHON_H) $(PYTHON_CE_CC) $(PYTHON_CE_H)
 
 SEPARABLE_CC = cefitting.cc  main.cc ce.cc

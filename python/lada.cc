@@ -16,7 +16,7 @@
 #include "structure.hpp"
 #include "physics.hpp"
 #include "convexhull.impl.hpp"
-#include "errors.hpp"
+#include "errortuple.hpp"
 #ifdef __DOCE
 #  include "ce.hpp"
 #endif
@@ -32,19 +32,6 @@
 //     def( "Day",      &SVN::Day );
 //     def( "User",     &SVN::User );
 //   }
-// }
-
-// namespace opt
-// {
-//   namespace ConvexHull
-//   {
-//     template struct Base<opt::ConvexHull::FakeObject<boost::python::api::object> >;
-//   }
-// }
-//
-// namespace PythonLaDa
-// {
-//   template struct PythonConvexHull<boost::python::object>;
 // }
 
 BOOST_PYTHON_MODULE(LaDa)

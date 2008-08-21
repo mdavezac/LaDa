@@ -12,12 +12,13 @@ AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
 AM_LDFLAGS = @TINYXML_LIBS@  @BOOST_LDFLAGS@
 lib_LTLIBRARIES = liblada.la 
 liblada_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
-liblada_la_SOURCES = $(PYTHON_CC) $(CECC) ../opt/convex_hull.cc ../opt/errors.cc
+liblada_la_SOURCES = $(PYTHON_CC) $(CECC)
 liblada_la_LDFLAGS = $(AM_LDFLAGS) -Bshared 
 liblada_la_LIBADD =  $(CELIB) \
                      ../crystal/libcrystal.la \
 		     ../atat/libatat.la \
 		     ../physics/libphysics.la \
+		     ../opt/libpythonconvenience.la \
                      @MPI_ADDLIB@  @BOOST_PYTHON@ @BOOST_FS@ 
 ../crystal/libcrystal.la: 
 	cd ../crystal; $(MAKE) libcrystal.la
@@ -33,3 +34,9 @@ liblada_la_LIBADD =  $(CELIB) \
 
 ../ce/libce.la:
 	cd ../ce; $(MAKE) libce.la
+
+../opt/libpythonconvenience.la : 
+	cd ../opt; $(MAKE) libpythonconvenience.la
+
+../opt/errors.o : ../opt/errors.cc
+	cd ../opt; $(MAKE) errors.o
