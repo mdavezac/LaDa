@@ -1,34 +1,7 @@
 //
 //  Version: $Id$
 //
-#ifndef _CONVEX_HULL_BASE_H_
-#define _CONVEX_HULL_BASE_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
-#include <list>
-#include <functional>
-#include <iostream>
-#include <iomanip>
-
-#include <tinyxml/tinyxml.h>
-
-#include <mpi/mpi_object.h>
-
-#include "types.h"
-#include "function_functors.h"
-#include "fuzzy.h"
-
-#include <mpi/mpi_object.h>
-
-#include <boost/serialization/serialization.hpp>
-#include <boost/lambda/lambda.hpp>
-#include <boost/lambda/bind.hpp>
-#include <print/stdout.h>
-
-//! trash-can namespace for anything that doesn't quite go anywhere
 namespace opt
 {
 
@@ -52,8 +25,6 @@ namespace opt
        if ( vertices.empty() )
        {
          vertices.push_back(vertex);
-         Print :: out << "Storing first vertex " << vertex 
-                      << *this << Print::endl;
          return true;
        }
 
@@ -73,8 +44,6 @@ namespace opt
          }
          else if ( i_begin->x > vertex.x ) vertices.push_front( vertex );
          else vertices.push_back( vertex );
-         Print :: out << "Storing second vertex " << vertex 
-                      << *this << Print::endl;
          build_function();
          return true;
        }
@@ -98,8 +67,6 @@ namespace opt
        else // otherwise, inserts new vertex
          vertices.insert(i_insert, vertex );
        
-         Print :: out << "Storing other vertex " << vertex
-                      << *this << Print::endl;
        // makes convex-hull convex
        while ( not ( _do_check and weed_out() ) );
        
@@ -315,4 +282,3 @@ namespace opt
   } // namespace ConvexHull
 }
 
-#endif //  _CONVEX_HULL_BASE_H_

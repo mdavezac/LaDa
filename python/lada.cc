@@ -15,6 +15,8 @@
 #include "atom.hpp"
 #include "structure.hpp"
 #include "physics.hpp"
+#include "convexhull.impl.hpp"
+#include "errors.hpp"
 #ifdef __DOCE
 #  include "ce.hpp"
 #endif
@@ -32,6 +34,19 @@
 //   }
 // }
 
+// namespace opt
+// {
+//   namespace ConvexHull
+//   {
+//     template struct Base<opt::ConvexHull::FakeObject<boost::python::api::object> >;
+//   }
+// }
+//
+// namespace PythonLaDa
+// {
+//   template struct PythonConvexHull<boost::python::object>;
+// }
+
 BOOST_PYTHON_MODULE(LaDa)
 {
   // PythonLaDa::expose_svn();
@@ -40,6 +55,8 @@ BOOST_PYTHON_MODULE(LaDa)
   PythonLaDa::expose_lattice();
   PythonLaDa::expose_atom();
   PythonLaDa::expose_structure();
+  PythonLaDa::expose_errors();
+  PythonLaDa::exposeConvexHull<boost::python::object>( "ConvexHull" );
 # ifdef __DOCE
   PythonLaDa::expose_ce();
 # endif

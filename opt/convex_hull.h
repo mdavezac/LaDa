@@ -26,7 +26,6 @@
 #include <boost/serialization/serialization.hpp>
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
-#include <print/stdout.h>
 
 //! trash-can namespace for anything that doesn't quite go anywhere
 namespace opt
@@ -398,7 +397,7 @@ namespace opt
         bool operator==( const NullObject& ) const { return false; }
     };
     //! Prints out nothing.
-    std::ostream& operator<<( std::ostream &_str, const NullObject & ) { return _stream; }
+    inline std::ostream& operator<<( std::ostream &_str, const NullObject & ) { return _str; }
 
     //! \brief An object which stores something with no real action on the
     //!        convex hull.
@@ -419,8 +418,8 @@ namespace opt
       };
       //! Prints out object.
       template< class T_OBJECT >
-        std::ostream& operator<<( std::ostream &_str, const FakeObject<T_OBJECT> & )
-          { return _stream << object; }
+        std::ostream& operator<<( std::ostream &_str, const FakeObject<T_OBJECT> & _o )
+          { return _str << _o; }
 
   } // namespace ConvexHull
 }

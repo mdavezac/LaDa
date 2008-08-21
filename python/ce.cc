@@ -7,7 +7,6 @@
 #endif
 
 
-#include <opt/convex_hull.h>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 
 #include <opt/types.h>
@@ -60,21 +59,9 @@ namespace PythonLaDa
       { return findnode<t_CubicBuilder>( _doc ); }
   } // end of XML namespace
 
-  // include convex-hull stuff in namespace PythonLaDa::CH. 
-# define _TYPE_ types::t_int
-# define _NAMESPACE_ CH
-# include "convexhull.impl.hpp"
-
   void expose_ce()
   {
     using namespace boost::python;
-
-    // Expose convex-hull.
-#   define _PYTHONNAME_ ConvexHull
-#   define _NAMESPACE_ CH
-#   define _INMODULE_
-#   include "convexhull.impl.hpp"
-
 
     typedef CE::Builder< CE::ConstituentStrain::Harmonic::Cubic > :: t_Chemical t_Chemical;
     class_< t_Chemical >( "Chemical" )

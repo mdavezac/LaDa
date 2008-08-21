@@ -11,9 +11,8 @@ AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
 	      @MPI_CFLAGS@ @BOOST_CXXFLAGS@ -I@PYTHON_INCLUDE_DIR@
 AM_LDFLAGS = @TINYXML_LIBS@  @BOOST_LDFLAGS@
 lib_LTLIBRARIES = liblada.la 
-liblada_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) @BOOST_CXXFLAGS@ \
-              	-I@PYTHON_INCLUDE_DIR@
-liblada_la_SOURCES = $(PYTHON_CC) $(CECC)
+liblada_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
+liblada_la_SOURCES = $(PYTHON_CC) $(CECC) ../opt/convex_hull.cc ../opt/errors.cc
 liblada_la_LDFLAGS = $(AM_LDFLAGS) -Bshared 
 liblada_la_LIBADD =  $(CELIB) \
                      ../crystal/libcrystal.la \
@@ -21,16 +20,16 @@ liblada_la_LIBADD =  $(CELIB) \
 		     ../physics/libphysics.la \
                      @MPI_ADDLIB@  @BOOST_PYTHON@ @BOOST_FS@ 
 ../crystal/libcrystal.la: 
-	cd ../crystal; $(MAKE) 
+	cd ../crystal; $(MAKE) libcrystal.la
 
 ../atat/libatat.la: 
-	cd ../atat; $(MAKE) 
+	cd ../atat; $(MAKE) libatat.la
 
 ../atat/libphysic.la: 
-	cd ../physics; $(MAKE) 
+	cd ../physics; $(MAKE) libphysics.la
 
 ../mpi/libmpiobject.la:
-	cd ../mpi; $(MAKE)
+	cd ../mpi; $(MAKE) libmpiobject.la
 
 ../ce/libce.la:
-	cd ../ce; $(MAKE)
+	cd ../ce; $(MAKE) libce.la
