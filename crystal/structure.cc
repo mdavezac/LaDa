@@ -721,7 +721,7 @@ namespace Crystal {
       Crystal::Structure :: t_Atom atom;
       while( i_tok != i_tok_end )
       {
-        atom.type = ( decoration >> _structure.atoms.size() ) % 2 ? 1e0: -1e0;
+        atom.type = ( decoration >> _structure.atoms.size() ) % 2 ? -1e0: 1e0;
         for( size_t i(0); i < 3; ++i, ++i_tok )
         {
           __DOASSERT( i_tok == i_tok_end, "Unexpected end-of-line.\n" )

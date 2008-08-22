@@ -93,39 +93,49 @@ namespace CE
   INCOLLAPSE( template< class T_STRUCTURES> void  )
     :: init( const T_STRUCTURES& _strs, const PosToConfs &_postoconfs )
     {
-      namespace bl = boost::lambda;
+      namespace bblas = boost::numeric::ublas;
       __ASSERT( not Crystal::Structure::lattice, 
                 "Crystal::Structure::lattice has not been set.\n" )
       // creates configurations.
       typedef std::vector< PosToConfs::t_Configurations > t_Confs; 
       t_Confs confs;
-      typename T_STRUCTURES :: const_iterator i_str = _strs.begin();
-      typename T_STRUCTURES :: const_iterator i_str_end = _strs.end();
       size_t nbconfs(0);
-      for(; i_str != i_str_end; ++i_str )
+      foreach( const typename T_STRUCTURES::value_type& _structure, _strs )
       {
         PosToConfs::t_Configurations strconf;
-        _postoconfs( *i_str, strconf );
+        _postoconfs( _structure, strconf );
         nbconfs += strconf.size();
         confs.push_back( strconf ); 
       }
  
       // translates to matrix.
       configurations_->resize( _postoconfs.positions.size(), nbconfs );
-      t_Confs :: const_iterator i_confs = confs.begin();
-      t_Confs :: const_iterator i_confs_end = confs.end();
-      for(size_t j(0); i_confs != i_confs_end; ++i_confs )
+      size_t i(0);
+      foreach( t_Confs :: value_type& confs_per_str, confs )
       {
-        PosToConfs :: t_Configurations :: const_iterator i_conf = i_confs->begin();
-        PosToConfs :: t_Configurations :: const_iterator i_conf_end = i_confs->end();
-        for(; i_conf != i_conf_end; ++i_conf, ++j )
+        foreach( t_Confs :: value_type :: value_type& config, confs_per_str )
         {
-          __ASSERT( j == nbconfs, "Inconsistent sizes" );
-          for( size_t i(0); i < _postoconfs.positions.size(); ++i )
-            (*configurations_)(i,j) = i_conf->first[i] ? 0: 1;
+          bblas::matrix_column< t_Configurations > column( configurations(), i );
+          std::copy( config.first.begin(), config.first.end(), column.begin() );
+          ++i;
         }
       }
+//     configurations_->resize( _postoconfs.positions.size(), nbconfs );
+//     t_Confs :: const_iterator i_confs = confs.begin();
+//     t_Confs :: const_iterator i_confs_end = confs.end();
+//     for(size_t j(0); i_confs != i_confs_end; ++i_confs )
+//     {
+//       PosToConfs :: t_Configurations :: const_iterator i_conf = i_confs->begin();
+//       PosToConfs :: t_Configurations :: const_iterator i_conf_end = i_confs->end();
+//       for(; i_conf != i_conf_end; ++i_conf, ++j )
+//       {
+//         __ASSERT( j == nbconfs, "Inconsistent sizes" );
+//         for( size_t i(0); i < _postoconfs.positions.size(); ++i )
+//           (*configurations_)(i,j) = i_conf->first[i] ? 1: 0;
+//       }
+//     }
  
+
       // initializes mapping.
       mapping().init( _strs, confs );
     }

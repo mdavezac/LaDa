@@ -129,6 +129,8 @@ namespace CE
         void init( t_Separables& _sep );
 
         //! Reference to configuration matrix.
+        t_Configurations& configurations() { return *configurations_; }
+        //! Constant reference to configuration matrix.
         const t_Configurations& configurations() const { return *configurations_; }
         
         //! Returns the number of dimensions.
