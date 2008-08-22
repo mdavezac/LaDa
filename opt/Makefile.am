@@ -13,6 +13,6 @@ libpythonconvenience_la_SOURCES = $(OPT_PYTHON_CONVENIENCE_CC)
 libpythonconvenience_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS)
 libopt_la_SOURCES = $(OPTF90) $(OPT_CC) 
 libopt_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS)
-libopt_LIBADD = libpythonconvenience.la
+libopt_la_LIBADD = libpythonconvenience.la
 libopt_ladir = $(includedir)/LaDa/opt
 nobase_libopt_la_HEADERS = $(OPT_H)

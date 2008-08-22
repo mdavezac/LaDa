@@ -69,7 +69,7 @@ namespace CE
 
               __ASSERT( i_equiv == i_atom_end,
                         "Could not find equivalent site.\n" )
-              result *= i_equiv->type > 0e0 ? 1e0: -1e0;
+              result *= i_equiv->type;
 
             }  // end of loop over cluster points
             *i_pi += result * nm / (types::t_real) i_cluster->vectors.size();

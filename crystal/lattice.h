@@ -144,7 +144,7 @@ namespace Crystal {
       //! \brief Converts a real value to an index.
       //! \details Pretty much focused on binary and unary sites.
       types::t_unsigned convert_real_to_type_index( const types::t_real _r ) const
-        { return ( std::abs(_r + 1.0) < atat::zero_tolerance ) ? 0 : 1; }
+        { return ( _r < 0e0 ) ? 0 : 1; }
     public:
       //! \brief Converts the index \a _i of site \a _s to  a real value.
       //! \details Pretty much focused on binary and unary sites.

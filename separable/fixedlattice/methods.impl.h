@@ -145,6 +145,7 @@ namespace CE
         opt::ErrorTuple error( _structure.energy - predic, _structure.weight );
         if( _verbose )
           std::cout << "  structure: " << std::setw(30) << name << "  "
+                    << "  x=" << std::setw(5) << _structure.get_concentration() << "  "
                     << "Target: " << std::fixed << std::setw(8) 
                     << std::setprecision(2) << _structure.energy << " "
                     << "Separable: " << std::fixed << std::setw(8)

@@ -30,7 +30,7 @@ namespace CE
       //! Type of the container of symmetry operations.
       typedef std::vector< atat::rMatrix3d > t_SymOps;
       //! Type of the pure bitset representing a configuration for a set symmetry.
-      typedef std::vector< bool > t_Bitset;
+      typedef std::vector< types::t_unsigned > t_Bitset;
       //! Type  containing a pure bitset and an attached coefficient.
       typedef std::pair< t_Bitset, types::t_real > t_CoefBitset;
       //! Type representing a set of configurations with all possible symmetries.

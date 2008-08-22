@@ -138,12 +138,12 @@ namespace CE
       do
       {
         if( not Crystal :: read_pifile_structure( file, structure ) ) continue;
-        std::cout << "    " << structure.name << " " 
+        std::cout << "    @" << structure.name << " " 
                   << structure.get_concentration()
                   << " " << _op( structure ) << "\n";
         foreach( Crystal::Structure::t_Atom &atom, structure.atoms )
           atom.type = Fuzzy::gt( atom.type, 0e0 ) ? -1e0: 1e0;
-        std::cout << "   -" << structure.name << " " 
+        std::cout << "   -@" << structure.name << " " 
                   << structure.get_concentration()
                   << " " << _op( structure ) << "\n";
       }

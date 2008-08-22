@@ -119,7 +119,8 @@ namespace CE
           __DOASSERT( i_found == shifted_fracs.end(),
                       "Could not find equivalent position.\n" ) 
           // Found the position in atomic structure.
-          bitset[ i ] = Fuzzy::eq( _structure.atoms[j].type, -1e0 );
+          bitset[ i ] = Crystal::Structure::lattice
+                           ->convert_real_to_type_index( 0, _structure.atoms[j].type );
         }
         // adds to configurations if similar bitset cannot be found.
         // otherwise increase weight of similar structure.
