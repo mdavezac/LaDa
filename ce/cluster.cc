@@ -249,66 +249,76 @@ namespace CE {
                 _path << " is neither a regulare file nor a system link.\n" )
     std::ifstream file( _path.string().c_str(), std::ifstream::in );
     std::string line;
-    size_t i(0);
 
-    while( not file.eof() )
+    Cluster cluster;
+    while( read_cluster( _lat, file, cluster ) )
     {
-      // First line should be a name.
-      { // check for comment.
-        std::getline( file, line ); ++i;
-        boost::match_results<std::string::const_iterator> what;
-        const boost::regex re("^(\\s+)?#");
-        while(     boost::regex_search( line, what, re )
-               and ( not file.eof() ) )
-          std::getline( file, line ); ++i;
-        if( file.eof() ) break;
-      }
-      // second line should contain order and multiplicity.
-      { // check for comment.
-        std::getline( file, line ); ++i;
-        boost::match_results<std::string::const_iterator> what;
-        const boost::regex re("^(\\s+)?#");
-        while(     boost::regex_search( line, what, re )
-               and ( not file.eof() ) )
-          std::getline( file, line ); ++i;
-        if( file.eof() ) break;
-      }
-      ++i;
-      // first line should be a name. Ignore it.
-      __DOASSERT( file.eof(),    "Unexpected end of file at line "
-                              << i << " in " << _path << ".\n" )
-      std::istringstream sstr( line ); // should contain the order and the multiplicity.
-      types::t_unsigned order;
-      types::t_unsigned multiplicity;
-      sstr >> order >> multiplicity;
-      __DOASSERT( sstr.bad(), "Error while reading figure.\n" );
-      // creates cluster.
-      Cluster cluster;
-      for(; order; --order)
-      {
-        { // check for comment.
-          std::getline( file, line ); ++i;
-          boost::match_results<std::string::const_iterator> what;
-          const boost::regex re("^(\\s+)?#");
-          while(     boost::regex_search( line, what, re )
-                 and ( not file.eof() ) )
-            std::getline( file, line ); ++i;
-          __DOASSERT( file.eof(), "Unexpected end of file.\n" )
-        }
-        __DOASSERT( file.eof(),    "Unexpected end of file at line "
-                                << i << " in " << _path << ".\n" )
-        sstr.clear();
-        sstr.str(line);
-        types::t_real x, y, z;
-        sstr >> x >> y >> z;
-        cluster.vectors.push_back( atat::rVector3d( x * 5e-1, y * 5e-1, z * 5e-1 ) );
-      }
       // creates a new class from cluster.
       _out.push_back( std::vector< Cluster >( 1, cluster ) );
       // adds symmetrically equivalent clusters.
       details::add_equivalent_clusters( _lat, _out.back() );
     }
 
+    __DEBUGTRYEND(,"Could not read clusters from input.\n" )
+  }
+  bool read_cluster( const Crystal::Lattice &_lat, 
+                     std::istream & _sstr,
+                     Cluster &_out )
+  {
+    __DEBUGTRYBEGIN
+    std::string line;
+    // bypass comments until a name is found.
+    { // check for comment.
+      boost::match_results<std::string::const_iterator> what;
+      const boost::regex re("^(\\s+)?#");
+      do { std::getline( _sstr, line ); }
+      while(     boost::regex_search( line, what, re )
+             and ( not _sstr.eof() ) );
+
+      if( _sstr.eof() ) return false;
+    } while(    line.find( 'B' ) != std::string::npos 
+             or line.find( 'J' ) != std::string::npos  );
+
+    // now read cluster.
+    // second line should contain order and multiplicity.
+    { // check for comment.
+      std::getline( _sstr, line );
+      boost::match_results<std::string::const_iterator> what;
+      const boost::regex re("^(\\s+)?#");
+      while(     boost::regex_search( line, what, re )
+             and ( not _sstr.eof() ) )
+        std::getline( _sstr, line ); 
+      if( _sstr.eof() ) return false;
+    }
+    types::t_unsigned order;
+    types::t_unsigned multiplicity;
+    { // should contain the order and the multiplicity.
+      std::istringstream sstr( line ); 
+      sstr >> order >> multiplicity;
+      __DOASSERT( sstr.bad(), "Error while reading figure.\n" );
+    }
+
+    // creates cluster.
+    Cluster cluster;
+    for(; order; --order)
+    {
+      { // check for comment.
+        std::getline( _sstr, line ); 
+        boost::match_results<std::string::const_iterator> what;
+        const boost::regex re("^(\\s+)?#");
+        while(     boost::regex_search( line, what, re )
+               and ( not _sstr.eof() ) )
+          std::getline( _sstr, line ); 
+        __DOASSERT( _sstr.eof(), "Unexpected end of file.\n" )
+      }
+      __DOASSERT( _sstr.eof(),    "Unexpected end-of-file.\n" )
+      std::istringstream sstr(line);
+      types::t_real x, y, z;
+      sstr >> x >> y >> z;
+      cluster.vectors.push_back( atat::rVector3d( x * 5e-1, y * 5e-1, z * 5e-1 ) );
+    }
+    _out = cluster;
+    return true;
     __DEBUGTRYEND(,"Could not read clusters from input.\n" )
   }
 

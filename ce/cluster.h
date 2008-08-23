@@ -68,6 +68,10 @@ namespace CE
                       const boost::filesystem::path &_path, 
                       std::vector< std::vector< Cluster > > &_out );
 
+  //! Reads a single cluster.
+  bool read_cluster( const Crystal::Lattice &_lat, 
+                     std::istream & _sstr,
+                     Cluster &_out );
   
   /** \brief Defines a cluster of a %Cluster Expansion %Functional
    *  \details A Cluster consists of an interaction energy Cluster::eci
@@ -96,9 +100,9 @@ namespace CE
     friend void create_pairs( const Crystal :: Lattice &,
                               types::t_unsigned,
                               std::vector< std::vector<Cluster> > &);
-    friend void read_clusters( const Crystal::Lattice &_lat,
-                               const boost::filesystem::path &_path, 
-                               std::vector< std::vector< Cluster > > &_out );
+    friend bool read_cluster( const Crystal::Lattice &_lat, 
+                              std::istream & _sstr,
+                              Cluster &_out );
     
     protected:
       //! Vectors linking sites which interact through this cluster.
