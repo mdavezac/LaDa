@@ -2,7 +2,6 @@
 //  Version: $Id$
 //
 #include<stdexcept> 
-#include <boost/filesystem/operations.hpp>
 
 #include <atat/array.h>
 #include <atat/misc.h>
@@ -99,18 +98,23 @@ namespace Crystal {
     // unit cell.
     for( types::t_int i = 0; i < space_group.trans.getSize(); ++i )
     {
+      // for prettier printing.
+      for( size_t j(0); j < 3; ++j )
+        for( size_t k(0); k < 3; ++k )
+          if( Fuzzy::is_zero( space_group.point_op[i](j,k) ) ) 
+            space_group.point_op[i](j,k) = types::t_real(0);
+
       atat::rVector3d &trans = space_group.trans(i);
       if( Fuzzy::eq( atat::norm2( trans ), types::t_real(0) ) ) continue;
       atat::rVector3d zeroed = (!cell) * trans;
       zeroed[0] = zeroed[0] - std::floor( zeroed[0] + 0.1 ); 
       zeroed[1] = zeroed[1] - std::floor( zeroed[1] + 0.1 ); 
       zeroed[2] = zeroed[2] - std::floor( zeroed[2] + 0.1 ); 
-      if( Fuzzy::eq( zeroed[0], types::t_real(0) ) ) zeroed[0] = types::t_real( 0 );
-      if( Fuzzy::eq( zeroed[1], types::t_real(0) ) ) zeroed[1] = types::t_real( 0 );
-      if( Fuzzy::eq( zeroed[2], types::t_real(0) ) ) zeroed[2] = types::t_real( 0 );
-      trans = zeroed;
+      if( Fuzzy::is_zero( zeroed[0] ) ) zeroed[0] = types::t_real( 0 );
+      if( Fuzzy::is_zero( zeroed[1] ) ) zeroed[1] = types::t_real( 0 );
+      if( Fuzzy::is_zero( zeroed[2] ) ) zeroed[2] = types::t_real( 0 );
+      trans = cell * zeroed;
     }
-    
   }
 
   types::t_int Lattice :: get_atom_site_index( const atat::rVector3d &_at ) const
@@ -282,61 +286,6 @@ namespace Crystal {
     } while ( (++i_cell) );
 
     vec = current;
-  }
-
-  boost::shared_ptr< Crystal::Lattice >
-    read_lattice( const boost::filesystem::path &_fpath, 
-                  const boost::filesystem::path &_dpath )
-    { 
-      boost::shared_ptr< Crystal::Lattice > result( new Crystal::Lattice ); 
-
-      __TRYBEGIN
-      TiXmlDocument doc;
-      if( boost::filesystem::exists( _fpath ) )
-      {
-        __DOASSERT( not doc.LoadFile( _fpath.string() ), 
-                     "Found " << _fpath << " but could not parse.\n"
-                  << "Possible incorrect XML syntax.\n" 
-                  << doc.ErrorDesc()  )
-      }
-      else 
-      {
-        boost::filesystem::path fullpath = _dpath / _fpath;
-        __DOASSERT( not boost::filesystem::exists( fullpath ),
-                     "Could not find "<< fullpath 
-                  << " in current directory, nor in " <<  _dpath )
-        __DOASSERT( not doc.LoadFile( fullpath.string() ),
-                     "Could not parse " << fullpath 
-                  << ".\nPossible incorrect XML syntax.\n"
-                  << doc.ErrorDesc()  )
-      }
-      TiXmlHandle handle( &doc );
-      TiXmlElement *child = handle.FirstChild( "Job" )
-                                  .FirstChild( "Lattice" ).Element();
-      __DOASSERT( not child, "Could not find Lattice in input." )
-      __DOASSERT( not result->Load(*child),
-                  "Error while reading Lattice from input.")
-#     if defined (_TETRAGONAL_CE_)
-        // Only Constituent-Strain expects and space group determination
-        // expect explicitely tetragonal lattice. 
-        // Other expect a "cubic" lattice wich is implicitely tetragonal...
-        // Historical bullshit from input structure files @ nrel.
-        for( types::t_int i=0; i < 3; ++i ) 
-          if( Fuzzy::eq( result->cell.x[i][2], 0.5e0 ) )
-            result->cell.x[i][2] = 0.6e0;
-#     endif
-      result->find_space_group();
-#     if defined (_TETRAGONAL_CE_)
-        // Only Constituent-Strain expects and space group determination
-        // expect explicitely tetragonal lattice. 
-        // Other expect a "cubic" lattice wich is implicitely tetragonal...
-        // Historical bullshit from input structure files @ nrel.
-        for( types::t_int i=0; i < 3; ++i ) 
-          if( Fuzzy::eq( result->cell.x[i][2], 0.6e0 ) )
-            result->cell.x[i][2] = 0.5e0;
-#     endif
-      return result;
-      __TRYEND(, "Could not read lattice from input.\n" )
   }
 
   bool Lattice :: equiv_by_point_group( const atat::rVector3d &_a,

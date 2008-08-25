@@ -2,10 +2,11 @@
 # Version: $Id$
 #
 include ../Files
-bin_PROGRAMS = regular cubic tetra 
 AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
 	      @MPI_CFLAGS@ @BOOST_CXXFLAGS@
 AM_LDFLAGS = @TINYXML_LIBS@
+if DOCE
+bin_PROGRAMS = regular cubic tetra 
 cubic_SOURCES = main.cc 
 cubic_CPPFLAGS =  $(AM_CPPFLAGS) -I .. -D_CUBIC_CE_
 cubic_LDFLAGS =  $(AM_LDFLAGS)  @MPI_LIBS@ @BOOST_LDFLAGS@\
@@ -31,10 +32,11 @@ regular_LDADD = libce.la \
 		../atat/libatat.la \
 		../physics/libphysics.la \
 		../print/libprint.la 
+endif
 noinst_LTLIBRARIES = libce.la 
 libce_la_SOURCES = $(CE_CC)
 libce_ladir = $(includedir)/LaDa/ce
-nobase_libce_la_HEADERS = $(CE_H)
+nobase_libce_la_HEADERS = $(CE_H) $(CE_IMPL_H)
 libce_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
 ../crystal/libcrystal.la: 
 	cd ../crystal; $(MAKE) 

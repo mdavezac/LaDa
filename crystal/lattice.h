@@ -15,6 +15,7 @@
 #include <complex>
 #include <boost/shared_ptr.hpp>
 #include <boost/filesystem/path.hpp>
+#include <boost/filesystem/operations.hpp>
 
 #include <tinyxml/tinyxml.h>
 
@@ -190,6 +191,63 @@ namespace Crystal {
   boost::shared_ptr< Crystal::Lattice >
     read_lattice( const boost::filesystem::path &_fpath, 
                   const boost::filesystem::path &_dpath );
+
+  // This is inlined so that it gets recompiled with correct _CUBIC_CE_ or
+  // _TETRAGONAL_CE_ each time.
+  inline boost::shared_ptr< Crystal::Lattice >
+    read_lattice( const boost::filesystem::path &_fpath, 
+                  const boost::filesystem::path &_dpath )
+    { 
+      boost::shared_ptr< Crystal::Lattice > result( new Crystal::Lattice ); 
+
+      __TRYBEGIN
+      TiXmlDocument doc;
+      if( boost::filesystem::exists( _fpath ) )
+      {
+        __DOASSERT( not doc.LoadFile( _fpath.string() ), 
+                     "Found " << _fpath << " but could not parse.\n"
+                  << "Possible incorrect XML syntax.\n" 
+                  << doc.ErrorDesc()  )
+      }
+      else 
+      {
+        boost::filesystem::path fullpath = _dpath / _fpath;
+        __DOASSERT( not boost::filesystem::exists( fullpath ),
+                     "Could not find "<< fullpath 
+                  << " in current directory, nor in " <<  _dpath )
+        __DOASSERT( not doc.LoadFile( fullpath.string() ),
+                     "Could not parse " << fullpath 
+                  << ".\nPossible incorrect XML syntax.\n"
+                  << doc.ErrorDesc()  )
+      }
+      TiXmlHandle handle( &doc );
+      TiXmlElement *child = handle.FirstChild( "Job" )
+                                  .FirstChild( "Lattice" ).Element();
+      __DOASSERT( not child, "Could not find Lattice in input." )
+      __DOASSERT( not result->Load(*child),
+                  "Error while reading Lattice from input.")
+#     if defined (_TETRAGONAL_CE_)
+        // Only Constituent-Strain expects and space group determination
+        // expect explicitely tetragonal lattice. 
+        // Other expect a "cubic" lattice wich is implicitely tetragonal...
+        // Historical bullshit from input structure files @ nrel.
+        for( types::t_int i=0; i < 3; ++i ) 
+          if( Fuzzy::eq( result->cell.x[2][i], 0.5e0 ) )
+            result->cell.x[2][i] = 0.6e0;
+#     endif
+      result->find_space_group();
+#     if defined (_TETRAGONAL_CE_)
+        // Only Constituent-Strain expects and space group determination
+        // expect explicitely tetragonal lattice. 
+        // Other expect a "cubic" lattice wich is implicitely tetragonal...
+        // Historical bullshit from input structure files @ nrel.
+        for( types::t_int i=0; i < 3; ++i ) 
+          if( Fuzzy::eq( result->cell.x[2][i], 0.6e0 ) )
+            result->cell.x[2][i] = 0.5e0;
+#     endif
+      return result;
+      __TRYEND(, "Could not read lattice from input.\n" )
+  }
 
 } // namespace Crystal
 #endif

@@ -42,6 +42,7 @@ if DOLAPACK
 endif
 if DOSEPARABLE
   SEPARABLEDIR = separable
+  CEDIR = ce
 endif
 if DOPYTHON
   PYTHONDIR = python
@@ -78,6 +79,8 @@ separable/fx/tetra: force
 	@cd separable/fixedlattice; $(MAKE) tetra
 separable/fx/mixed: force
 	@cd separable/fixedlattice; $(MAKE) mixed
+separable/fx/mixedt: force
+	@cd separable/fixedlattice; $(MAKE) mixedtetra
 endif
 
 if DOPYTHON

@@ -36,7 +36,7 @@ namespace CE
     {
       if( not Fuzzy::eq( atat::norm2( _lat.space_group.trans(i) ), 0e0 ) ) continue;
       atat::rMatrix3d &op = _lat.space_group.point_op(i);
-      if( not Fuzzy::eq( atat::det( op ), 1e0 ) ) continue;
+//     if( not Fuzzy::eq( atat::det( op ), 1e0 ) ) continue;
       syms.push_back( op );
     }
   }

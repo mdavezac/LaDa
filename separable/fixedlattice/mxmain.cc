@@ -16,6 +16,7 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <opt/cgs.h>
 #include <opt/types.h>
@@ -106,6 +107,7 @@ int main(int argc, char *argv[])
       ("bestof,b", po::value<types::t_unsigned>()->default_value(1),
                    "Performs best-of fit.\n" )
       ("enum", po::value<std::string>(), "Enumerate PI-file.\n" )
+      ("genes", po::value<std::string>()->default_value(""), "Figure bitstring.\n" )
       ("jtypes", po::value<std::string>(), "Figure description file.\n" )
       ("cs", po::value<std::string>(), "Constituent Strain input file.\n" )
       ("which,w", po::value<types::t_unsigned>()->default_value(0),
@@ -239,6 +241,10 @@ int main(int argc, char *argv[])
   const types::t_unsigned bestof( vm["bestof"].as<types::t_unsigned>() );
   __DOASSERT( bestof == 0, "0 jobs to be performed..." )
   const types::t_unsigned which( vm["which"].as<types::t_unsigned>() );
+  const std::string genes( boost::algorithm::trim_copy( vm["genes"].as<std::string>() ) );
+  if( not genes.empty() )
+    __DOASSERT( not boost::algorithm::all( genes, boost::algorithm::is_any_of( "01" ) ),
+                "Unknown bitstring format.\n" )
   __DOASSERT( which >= 3, "Don't know which error to perform bestof for.\n" )
 
   if( not ( doenum.empty() or dofit ) )
@@ -248,25 +254,6 @@ int main(int argc, char *argv[])
   boost::shared_ptr< Crystal::Lattice >
   lattice( Crystal::read_lattice( latinput, dir ) );
   Crystal::Structure::lattice = lattice.get();
-# if defined (_TETRAGONAL_CE_)
-    // Only Constituent-Strain expects and space group determination
-    // expect explicitely tetragonal lattice. 
-    // Other expect a "cubic" lattice wich is implicitely tetragonal...
-    // Historical bullshit from input structure files @ nrel.
-    for( types::t_int i=0; i < 3; ++i ) 
-      if( Fuzzy::eq( lattice->cell.x[i][2], 0.5e0 ) )
-        lattice->cell.x[i][2] = 0.6e0;
-# endif
-  lattice->find_space_group();
-# if defined (_TETRAGONAL_CE_)
-    // Only Constituent-Strain expects and space group determination
-    // expect explicitely tetragonal lattice. 
-    // Other expect a "cubic" lattice wich is implicitely tetragonal...
-    // Historical bullshit from input structure files @ nrel.
-    for( types::t_int i=0; i < 3; ++i ) 
-      if( Fuzzy::eq( lattice->cell.x[i][2], 0.6e0 ) )
-        lattice->cell.x[i][2] = 0.5e0;
-# endif
 
   // create pair terms.
   typedef std::vector< std::vector< CE::Cluster > > t_Clusters;
@@ -276,7 +263,7 @@ int main(int argc, char *argv[])
   if( not jtypes.empty() )
   {
     const size_t d( clusters.size() );
-    CE::read_clusters( *lattice, jtypes, clusters ); 
+    CE::read_clusters( *lattice, jtypes, clusters, genes ); 
     std::cout << "  Read " << clusters.size() - d
               << " from input file " << jtypes << "\n";
   }
@@ -296,7 +283,7 @@ int main(int argc, char *argv[])
       if( _class.front().size() == 1 ) { isfound = true; break; }
     if( isfound ) clusters.push_back( std::vector<CE::Cluster>(1, cluster) ); 
   }
-  //
+  
   // Initializes fitting.
   typedef Fitting::AlternatingLeastSquare<Fitting::Cgs> t_Fitting;
   t_Fitting allsq;
@@ -358,10 +345,12 @@ int main(int argc, char *argv[])
       if( verbosity < print_data + 1  )  std::cout << i_class->front()
                                                    << " D=" << i_class->size() 
                                                    << "\n";
-      else std::for_each( 
-                          i_class->begin(), i_class->end(), 
-                          std::cout << bl::_1 << "\n"
-                        );
+      else
+      {
+        std::cout << "Cluster Class: \n";
+        std::for_each( i_class->begin(), i_class->end(), 
+                       std::cout << bl::_1 << "\n" );
+      }
     }
   }
 
@@ -386,7 +375,10 @@ int main(int argc, char *argv[])
             << "Rank of separable function " << rank << "\n"
             << "Size of separable function "
             << postoconfs.positions.size() << "\n"
-            << "Data directory: " << dir << "\n";
+            << "Data directory: " << dir << "\n"
+            << "Number of data points: " << mixed.mapping().size() << " for " 
+            << mixed.configurations().size2()
+            << " symetrically inequivalent configurations.\n";
   if( not verbosity ) std::cout << "Quiet output.\n";
   else std::cout << "Level of verbosity: " << verbosity << "\n";
   std::cout << "Alternating linear-least square tolerance: " 

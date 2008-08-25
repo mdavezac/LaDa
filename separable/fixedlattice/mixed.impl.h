@@ -173,6 +173,7 @@ namespace CE
         typedef const bblas::vector_range< t_Column > t_Ecis;
         const bblas::matrix_column< const t_Matrix> col( coefficients(), 0 );
         t_Ecis ecis( col, bblas::range( t_ColBase::dof(), dof() ) );
+                                                                            
         intermed += ( bblas::inner_prod( ecis, t_CEBase::pis[ _n ] ) );
       }
 

@@ -90,6 +90,7 @@ namespace CE
       opt::t_ErrorPair errors;
       if( not _lmo.do_perform ) return errors;
       if( not _lmo.sets.size() ) _lmo.create_sets( _collapse.mapping().size() );
+      std::cout << _collapse << "\n";
  
       typedef std::vector< std::vector< types::t_unsigned > >
                                     :: const_iterator const_iterator;

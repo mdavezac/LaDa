@@ -66,7 +66,8 @@ namespace CE
   //! Reads clusters from a NREL Jfile.
   void read_clusters( const Crystal::Lattice &_lat, 
                       const boost::filesystem::path &_path, 
-                      std::vector< std::vector< Cluster > > &_out );
+                      std::vector< std::vector< Cluster > > &_out,
+                      const std::string & _genes = "" );
 
   //! Reads a single cluster.
   bool read_cluster( const Crystal::Lattice &_lat, 

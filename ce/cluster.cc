@@ -239,7 +239,8 @@ namespace CE {
  
   void read_clusters( const Crystal::Lattice &_lat, 
                       const boost::filesystem::path &_path, 
-                      std::vector< std::vector< Cluster > > &_out )
+                      std::vector< std::vector< Cluster > > &_out,
+                      const std::string &_genes )
   {
     __DEBUGTRYBEGIN
 
@@ -251,13 +252,24 @@ namespace CE {
     std::string line;
 
     Cluster cluster;
+    size_t i(0);
     while( read_cluster( _lat, file, cluster ) )
     {
+      // This is a hack to avoid inputing Zhe's tetragonal pair terms.
+      if( cluster.size() == 2 ) continue;
+      if( not _genes.empty() )
+      {
+        __DOASSERT( i >= _genes.size(), "Gene size and jtypes are inconsistent.\n" )
+        if( _genes[i] == '0' ) { ++i; continue; }
+      }
+      ++i;
       // creates a new class from cluster.
       _out.push_back( std::vector< Cluster >( 1, cluster ) );
       // adds symmetrically equivalent clusters.
       details::add_equivalent_clusters( _lat, _out.back() );
     }
+    if( not _genes.empty() )
+      __DOASSERT( i != _genes.size(), "Gene size and jtypes are inconsistent.\n" )
 
     __DEBUGTRYEND(,"Could not read clusters from input.\n" )
   }
@@ -268,24 +280,24 @@ namespace CE {
     __DEBUGTRYBEGIN
     std::string line;
     // bypass comments until a name is found.
+    const boost::regex comment("^(\\s+)?#");
+    boost::match_results<std::string::const_iterator> what;
+
+    do
     { // check for comment.
-      boost::match_results<std::string::const_iterator> what;
-      const boost::regex re("^(\\s+)?#");
       do { std::getline( _sstr, line ); }
-      while(     boost::regex_search( line, what, re )
+      while(     boost::regex_search( line, what, comment )
              and ( not _sstr.eof() ) );
 
       if( _sstr.eof() ) return false;
-    } while(    line.find( 'B' ) != std::string::npos 
-             or line.find( 'J' ) != std::string::npos  );
+    } while( not (    line.find( 'B' ) != std::string::npos 
+                   or line.find( 'J' ) != std::string::npos  ) );
 
     // now read cluster.
     // second line should contain order and multiplicity.
     { // check for comment.
       std::getline( _sstr, line );
-      boost::match_results<std::string::const_iterator> what;
-      const boost::regex re("^(\\s+)?#");
-      while(     boost::regex_search( line, what, re )
+      while(     boost::regex_search( line, what, comment )
              and ( not _sstr.eof() ) )
         std::getline( _sstr, line ); 
       if( _sstr.eof() ) return false;
@@ -304,9 +316,7 @@ namespace CE {
     {
       { // check for comment.
         std::getline( _sstr, line ); 
-        boost::match_results<std::string::const_iterator> what;
-        const boost::regex re("^(\\s+)?#");
-        while(     boost::regex_search( line, what, re )
+        while(     boost::regex_search( line, what, comment )
                and ( not _sstr.eof() ) )
           std::getline( _sstr, line ); 
         __DOASSERT( _sstr.eof(), "Unexpected end of file.\n" )
