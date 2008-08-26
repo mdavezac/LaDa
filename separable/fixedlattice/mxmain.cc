@@ -364,10 +364,6 @@ int main(int argc, char *argv[])
   }
   clusters.clear();
   mixed.init( rank, postoconfs.positions.size() );
-  // initializes separables part.
-  mixed.separables().randomize( howrandom );
-  std::fill( mixed.separables().norms.begin(), mixed.separables().norms.end(), 1e0 );
-  mixed.separables().normalize();
 
   opt::NErrorTuple nerror( opt::mean_n_var( mixed.CEFit().structures() ) ); 
 

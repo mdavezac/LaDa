@@ -94,8 +94,7 @@ namespace CE
                     : T_BASE( _c ), excluded( _c.excluded ) {}
         //! Destructor.
         ~ExcludeMany() {}
-        //! \brief Returns true if \a _i in ExcludeOne::excluded and
-        //!        ExcludeOne::do_exclude is true.
+        //! Returns true if \a _i in ExcludeMany::excluded.
         bool do_skip( size_t _i ) const
         { 
           if( excluded.empty() ) return false;
@@ -121,8 +120,7 @@ namespace CE
                     : T_BASE( _c ), excluded( _c.excluded ) {}
         //! Destructor.
         ~ExcludeMany() {}
-        //! \brief Returns true if \a _i in ExcludeOne::excluded and
-        //!        ExcludeOne::do_exclude is true.
+        //! Returns true if \a _i in ExcludeMany::excluded.
         bool do_skip( size_t _i ) const
         { 
           if( excluded->empty() ) return false;

@@ -32,7 +32,9 @@ namespace CE
                    typename t_Vector::value_type(0) );
         const bblas::range colrange( 0, t_ColBase::dof() );
         typename t_CEBase :: t_Pis :: const_iterator i_pis;
-        if( t_CEBase::dof() ) 
+        const bool doce = t_CEBase::dof() > 0;
+        const bool dosep = t_ColBase::dof() > 0;
+        if( doce )
         {
           i_pis = t_CEBase::pis.begin();
           __ASSERT( t_CEBase::pis.size() != t_ColBase::mapping().size(), 
@@ -41,21 +43,20 @@ namespace CE
         for( size_t i(0); i < t_ColBase::mapping().size(); ++i )
         {
           // allows leave-one-out, or leave-many-out.
-          if( t_ColBase::mapping().do_skip(i) ) continue;
+          if( t_ColBase::mapping().do_skip(i) ) 
+           { if( doce ) ++i_pis; continue; }
       
           // create the X vector.
           bblas::vector_range< t_Vector > colX( X, colrange );
           std::fill( colX.begin(), colX.end(), typename t_Vector::value_type(0) );
-          if( t_ColBase::dof() ) t_ColBase::create_X( i, colX );
-          if( t_CEBase::dof() )
-          {
-            std::copy( i_pis->begin(), i_pis->end(), X.begin() + t_ColBase::dof() );
-            ++i_pis;
-          }
+          if( dosep ) t_ColBase::create_X( i, colX );
+          if( doce ) std::copy( i_pis->begin(), i_pis->end(),
+                                X.begin() + t_ColBase::dof() );
           
       
           _A += t_ColBase::mapping().weight(i) * bblas::outer_prod( X, X ); 
           _b += t_ColBase::mapping().weight(i) * t_ColBase::mapping().target(i) * X;
+          if( doce ) ++i_pis;
         }
         __DEBUGTRYEND(, "Error in MixedApproach::create_A_n_b()\n" )
       }
@@ -98,12 +99,21 @@ namespace CE
     {
       namespace bblas = boost::numeric::ublas;
       separables().randomize( _howrandom );
-      typedef typename t_Matrix :: value_type t_Type;
-      bblas::matrix_column< t_Matrix > column0( coefficients(), 0 );
-      typename bblas::matrix_column< t_Matrix > :: iterator i_c = column0.begin();
-      typename bblas::matrix_column< t_Matrix > :: iterator i_c_end = column0.end();
-      for( i_c += t_ColBase::dof(); i_c != i_c_end; ++i_c )
-        *i_c = t_Type( opt::random::rng() - 5e-1 ) * _howrandom;
+      if( t_CEBase::dof() )
+      {
+        typedef typename t_Matrix :: value_type t_Type;
+        bblas::matrix_column< t_Matrix > column0( coefficients(), 0 );
+        typename bblas::matrix_column< t_Matrix > :: iterator i_c = column0.begin();
+        typename bblas::matrix_column< t_Matrix > :: iterator i_c_end = column0.end();
+        for( i_c += t_ColBase::dof(); i_c != i_c_end; ++i_c )
+          *i_c = t_Type( opt::random::rng() - 5e-1 ) * _howrandom;
+        for( size_t i(1); i < coefficients().size1(); ++i )
+        {
+          bblas::matrix_column< t_Matrix > columnd( coefficients(), t_ColBase::dim );
+          std::copy( column0.begin() + t_ColBase::dof(), column0.end(), 
+                     columnd.begin() + t_ColBase::dof() );
+        }
+      }
     }
 
 

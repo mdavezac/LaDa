@@ -13,11 +13,10 @@ namespace CE
         bool BestOf<T_SAVEDOBJECT> :: go( T_COLLAPSE &_col, T_MINIMIZER &_min, types::t_int _verb )
         {
           __ASSERT( restarts == 0, "No runs required.\n" )
+          _col.randomize( howrandom ); 
           if( restarts == 1 ) return false;  
           __ASSERT( which > 2, "Not sure what to check.\n" )
           
-          if( nbrestarts != 0 )
-            _col.randomize( howrandom ); 
           opt::ErrorTuple intermed = _min( _col.coefficients(), _col );
           if(    nbrestarts == 0 
               or ( which == 0 and Fuzzy::gt( best.variance(), intermed.variance() )  )
@@ -90,7 +89,6 @@ namespace CE
       opt::t_ErrorPair errors;
       if( not _lmo.do_perform ) return errors;
       if( not _lmo.sets.size() ) _lmo.create_sets( _collapse.mapping().size() );
-      std::cout << _collapse << "\n";
  
       typedef std::vector< std::vector< types::t_unsigned > >
                                     :: const_iterator const_iterator;
@@ -106,7 +104,9 @@ namespace CE
           if( _lmo.verbosity >= 1 ) std::cout << " " << n
                                           << ". Training Errors: ";
           if( _lmo.verbosity >= 2 ) std::cout << "\n";
+      std::cout << _collapse << "\n";
           intermediate = _fit( _collapse, _min );
+      std::cout << _collapse << "\n";
           if( _lmo.verbosity >= 1 ) std::cout << intermediate << "\n";
           errors.first += intermediate;
         }
@@ -194,8 +194,8 @@ namespace Fitting
         const size_t D( _solution.size2() );
         t_OMatrix A( _collapse.dof(), _collapse.dof() );
         t_Vector b( _collapse.dof() );
-        opt::ErrorTuple errors( _collapse.evaluate() );
         _collapse.update_all();
+        opt::ErrorTuple errors( _collapse.evaluate() );
         if( verbose ) std::cout << "Allsq start: " << errors << "\n";
         do
         {

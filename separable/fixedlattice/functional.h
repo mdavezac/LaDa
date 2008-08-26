@@ -111,6 +111,7 @@ namespace CE
         {
           std::fill( norms.begin(), norms.end(), typename t_Vector::value_type(1) );
           t_Policy::randomize( coefficients(), _howrandom ); 
+          normalize();
         }
 
         //! Returns number of ranks.
