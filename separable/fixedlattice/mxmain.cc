@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
                      "Max distance for pairs (in neighbors)."  )
       ("J0", "Introduce J0 in clusters."  )
       ("J1", "Introduce J1 in clusters."  )
-      ("rm", "Remove clusters which are contained within teh separable-basis."  )
+      ("rm", "Remove clusters which are contained within the separable-basis."  )
       ("alpha", po::value<types::t_real>()->default_value(1),
                  "Lambda for pair regularization. With --loo/fit and --tcoef only. " )
       ("tcoef", po::value<types::t_real>()->default_value(0),

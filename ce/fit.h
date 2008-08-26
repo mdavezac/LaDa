@@ -232,6 +232,8 @@ namespace CE
       using t_Policy :: pis;
       using t_Policy :: nb_cls;
       using t_Policy :: weights;
+
+    public:
       using t_Policy :: structures;
   };
 
