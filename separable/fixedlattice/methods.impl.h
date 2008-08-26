@@ -104,9 +104,7 @@ namespace CE
           if( _lmo.verbosity >= 1 ) std::cout << " " << n
                                           << ". Training Errors: ";
           if( _lmo.verbosity >= 2 ) std::cout << "\n";
-      std::cout << _collapse << "\n";
           intermediate = _fit( _collapse, _min );
-      std::cout << _collapse << "\n";
           if( _lmo.verbosity >= 1 ) std::cout << intermediate << "\n";
           errors.first += intermediate;
         }
