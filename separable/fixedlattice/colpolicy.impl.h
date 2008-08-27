@@ -172,12 +172,15 @@ namespace CE
             size_t d(0);
             return std::accumulate
                    (
-                     row.begin(), row.end(), d,
-                     bl::if_then_else_return
+                     row.begin(), row.end(), 1e0,
+                     bl::ret< typename t_CMatrix :: value_type >
                      ( 
-                       bl::var(d) != bl::constant(_d),
-                       bl::_1 * bl::_2,
-                       bl::_1
+                       bl::if_then_else_return
+                       ( 
+                         bl::var(d) != bl::constant(_d),
+                         bl::_1 * bl::_2,
+                         bl::_1
+                       )
                      )
                    );
           }

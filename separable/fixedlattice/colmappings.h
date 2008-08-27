@@ -72,7 +72,7 @@ namespace CE
         //! Target values of structures.
         t_Vector targets_;
         //! Structure ranges.
-        t_Vector nb_;
+        std::vector< size_t > nb_;
     };
 
   template< class T_BASE, class T_CONTAINER = std::vector< types::t_unsigned>  >
