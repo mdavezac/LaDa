@@ -403,6 +403,7 @@ int main(int argc, char *argv[])
     std::cout << "Constituent-strain input file: " << cs << "\n";
   if( not jtypes.empty() ) std::cout << "Figures description file: " << jtypes << "\n";
   if( not doenum.empty() ) std::cout << "Enumeration PI-file: " << doenum << "\n";
+  if( not genes.empty() ) std::cout << "genes: " << genes << "\n";
   // extract leave-many-out commandline
   leavemanyout.extract_cmdl( vm );
 
