@@ -11,41 +11,33 @@ namespace CE
       template< class T_DERIVED > inline 
         types::t_real Base<T_DERIVED> :: evaluate(const atat::rVector3d &_k) const
         {
-          atat::rVector3d k;
-          static_cast< const t_Derived* >(this)->transform_k( _k, k );
-          return (  exp( -norm2(k) * attenuation ) * 
-                 (*static_cast<const t_Derived*>(this))( k ) ); 
+          return (  exp( -norm2(_k) * attenuation ) * 
+                 (*static_cast<const t_Derived*>(this))( _k ) ); 
         }
 
       template< class T_DERIVED > inline 
       types::t_real Base<T_DERIVED> :: evaluate(const types::t_real _x,
                                                 const atat::rVector3d &_k) const
       {
-        atat::rVector3d k;
-        static_cast< const t_Derived* >(this)->transform_k( _k, k );
         return (   interpolation.evaluate(_x) 
-                 * exp( -norm2(k) * attenuation )
-                 * (*static_cast<const t_Derived*>(this))( k ) );
+                 * exp( -norm2(_k) * attenuation )
+                 * (*static_cast<const t_Derived*>(this))( _k ) );
       }
       template< class T_DERIVED > inline 
       types::t_real Base<T_DERIVED> :: evaluate_gradient(const types::t_real _x,
                                                          const atat::rVector3d &_k) const
       {
-        atat::rVector3d k;
-        static_cast< const t_Derived >(this)->transform_k( _k, k );
         return (   interpolation.evaluate_gradient(_x) 
-                 * exp( -norm2(k) *  attenuation )
-                 * (*static_cast<const t_Derived*>(this))( k ) );
+                 * exp( -norm2(_k) *  attenuation )
+                 * (*static_cast<const t_Derived*>(this))( _k ) );
       }
       template< class T_DERIVED > inline 
       types::t_real Base<T_DERIVED> :: evaluate_with_gradient(const types::t_real _x, 
                                                               const atat::rVector3d &_k,
                                                               types::t_real &_grad) const
       {
-        atat::rVector3d k;
-        static_cast< const t_Derived* >(this)->transform_k( _k, k );
-        types::t_real factor = exp( -norm2(k) * attenuation )
-                        * (*static_cast<const t_Derived*>(this))( k );
+        types::t_real factor = exp( -norm2(_k) * attenuation )
+                        * (*static_cast<const t_Derived*>(this))( _k );
         types::t_real result =   interpolation.evaluate_with_gradient(_x, _grad) 
                         * factor ;
         _grad *= factor;

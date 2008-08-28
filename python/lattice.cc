@@ -42,6 +42,13 @@ namespace PythonLaDa
     return result;
   }
 
+// Crystal::Lattice& return_crystal_lattice()
+// {
+//   __DOASSERT( not Crystal::Structure::lattice,
+//               "Lattice pointer has not been set.\n" )
+//   return *Crystal::Structure::lattice; 
+// }
+
   void expose_lattice()
   {
     using namespace boost::python;
@@ -53,6 +60,8 @@ namespace PythonLaDa
       .def( "__str__",  &print<Crystal::Lattice> )
       .def( "syms",  &symmetry_ops )
       .def( "fromXML",  &XML::from<Crystal::Lattice> );
+  // def( "StructureLattice", &return_crystal_lattice, 
+  //      return_value_policy<reference_existing_object>() );
   }
 
 }

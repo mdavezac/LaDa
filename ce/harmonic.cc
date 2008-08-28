@@ -177,7 +177,7 @@ namespace CE
 
       types::t_real Tetragonal :: operator()( const atat::rVector3d &_k ) const
       {
-        using types::t_real;
+        typedef types::t_real t_real;
         if( rank == 0 ) return t_real(1);
         types::t_real ctheta(1), cfai(1);
         types::t_real stheta(0), sfai(0);

@@ -1,9 +1,9 @@
 #! /usr/bin/python
 from readpi import importPiStructure, SFtoCE_Structure
-from atat import rMatrix3d, rVector3d, make_rMatrix3d
+from LaDa import rMatrix3d, rVector3d, make_rMatrix3d, Lattice, \
+                 tetragonalCS
 from sys import exit
 from numpy import array
-from atom import *
 from EquivStructure import makeRotationGroup, importLDA,\
                            importStructures
 

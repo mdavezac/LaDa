@@ -382,7 +382,7 @@ namespace Crystal {
   
   
      // A is the basis used to determine "a" first brillouin zone
-     atat::rMatrix3d A = (!k_lat) * k_cell;
+     atat::rMatrix3d A = lattice->cell * k_cell;
      
      types::t_int range =  2 * types::t_int( atoms.size() );
      // sets up the n-dimensional iterators

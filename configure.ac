@@ -248,9 +248,9 @@ if test x$gsl = xtrue; then
   AC_DEFINE([_DOGSL],[],[])
   PKG_CHECK_MODULES(GSL, gsl >= 1.8 )
 fi 
-AH_TEMPLATE([_DOCE])
+AH_TEMPLATE([__DOCE])
 if test x$ce = xtrue; then
-  AC_DEFINE([_DOCE],[],[])
+  AC_DEFINE([__DOCE],[],[])
 fi
 
 # ************************************

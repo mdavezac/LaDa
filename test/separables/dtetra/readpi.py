@@ -34,9 +34,6 @@ def importPiStructure(file):
                     [ int( round( eval(x) ) ) for x in splitted[12:15] ] ] )
     reciprocal=inv(cell)
     index = splitted[1]
-#   print entries
-#   print cell
-#   print reciprocal
     # now gets atomic positions
     reNdec = re.compile('^\sBASIS')
     current_pos = file.tell()
@@ -68,23 +65,16 @@ def importPiStructure(file):
 def SFtoCE_Structure(structure):
     """ Converts EquivStructure.Structure to an atom.Structure
     """
-    import atom
-    from atat import make_rMatrix3d, rMatrix3d, rVector3d
+    import LaDa
     from EquivStructure import Structure
-    result = atom.Structure()
-    dummy = rMatrix3d(); dummy.diag( rVector3d( [0.5, 0.5, 0.5*1.2] ) )
-    result.cell = make_rMatrix3d( structure.period ) * dummy
-    result.cell = result.cell.transpose() 
-    try: 
-      result.index = eval(structure.name)
-    except: 
-      result.index = 0
-
+    result = LaDa.Structure()
+    dummy = LaDa.rMatrix3d(); dummy.diag( LaDa.rVector3d( [0.5, 0.5, 0.5 ] ) )
+    result.cell = LaDa.make_rMatrix3d( structure.period ) * dummy
     
     for i in range( len( structure.entries ) ):
-      result.atoms.append( atom.Atom( [ 0.5 * structure.vectors[i][0],
+      result.atoms.append( LaDa.Atom( [ 0.5 * structure.vectors[i][0],
                                         0.5 * structure.vectors[i][1],
-                                        0.5 * structure.vectors[i][2] * 1.2,
+                                        0.5 * structure.vectors[i][2],
                                         structure.entries[i]*2-1 ] ) )
     result.scale = 1.0 
     return result

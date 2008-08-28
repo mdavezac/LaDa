@@ -91,6 +91,7 @@ namespace PythonLaDa
     template< class  T_FUNC > void createCS( T_FUNC& _f, Crystal::Structure& _s)
     { 
        _s.find_k_vectors();
+       foreach( Crystal::Structure::t_kAtom &kat, _s.k_vecs )
       _f << _s; _f.resize( _s.atoms.size() ); 
     }  
     template< class  T_FUNC > typename T_FUNC::t_Container& get_vars( T_FUNC& _f )

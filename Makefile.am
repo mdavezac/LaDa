@@ -82,6 +82,10 @@ separable/fx/mixed: force
 separable/fx/mixedt: force
 	@cd separable/fixedlattice; $(MAKE) mixedtetra
 endif
+if DOPYTHON 
+python: force
+	@cd python; $(MAKE)
+endif
 
 if DOPYTHON
 python: python/liblada

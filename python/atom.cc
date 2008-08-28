@@ -36,6 +36,7 @@ namespace PythonLaDa
     using namespace boost::python;
     typedef Crystal::TStructure<std::string>::t_Atom t_StrAtom;
     typedef Crystal::Structure::t_Atom t_Atom;
+    typedef Crystal::Structure::t_kAtom t_kAtom;
     typedef Crystal::Lattice::t_Site t_Site;
     class_< Crystal::Structure::t_Atoms >("VecStrings")
       .def(vector_indexing_suite< t_Site::t_Type >());
@@ -54,6 +55,13 @@ namespace PythonLaDa
       .def_readwrite( "type",   &t_Atom::type )
       .def_readwrite( "freeze", &t_Atom::freeze )
       .def( "__str__",  &print<t_Atom> ) ;
+    class_< t_kAtom >( "details_kAtom" )
+      .def( init< t_kAtom >() )
+      .def_readwrite( "pos",    &t_kAtom::pos )
+      .def_readwrite( "site",   &t_kAtom::site )
+      .def_readwrite( "type",   &t_kAtom::type )
+      .def_readwrite( "freeze", &t_kAtom::freeze )
+      .def( "__str__",  &print<t_kAtom> ) ;
     class_< t_Site >( "details_Site" )
       .def( init< t_Site >() )
       .def_readwrite( "pos",    &t_Site::pos )
@@ -74,6 +82,8 @@ namespace PythonLaDa
       .def(vector_indexing_suite< Crystal::TStructure<std::string>::t_Atoms >());
     class_< Crystal::Structure::t_Atoms >("Atoms")
       .def(vector_indexing_suite< Crystal::Structure::t_Atoms >());
+    class_< Crystal::Structure::t_kAtoms >("kAtoms")
+      .def(vector_indexing_suite< Crystal::Structure::t_kAtoms >());
     class_< Crystal::Lattice::t_Sites >("Sites")
       .def(vector_indexing_suite< Crystal::Lattice::t_Sites >());
 
