@@ -482,7 +482,7 @@ int main(int argc, char *argv[])
     CE::enumerate_pifile( doenum.string(), mixedfunc );
     foreach( Crystal::Structure::t_Atom &atom, structure.atoms )
       atom.type *= -1e0;
-    std::cout << "  -@0 " << structure.get_concentration()
+    std::cout << "  @0 " << structure.get_concentration()
               << " " << mixedfunc( structure ) << "\n";
   }
   std::cout << "\n\n\nEnd of " << __PROGNAME__ << ".\n" << std::endl;
