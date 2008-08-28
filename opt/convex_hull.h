@@ -207,7 +207,8 @@ namespace opt
 
       //! prints out Vertex::x and Vertex::y on single line to \a _stream.
       void print_out(std::ostream &_stream) const
-        { _stream << x << " " << y << std::endl; }
+        { _stream << std::fixed << std::setw(8) << x << "  "
+                  << std::fixed << std::setw(8) << y; }
       //! \brief Loads a Vertex from XML
       //! \param _node  XML node from which to load the Vertex
       //! \param _op a functor capable of loading a Vertex::t_Object from XML
@@ -362,7 +363,7 @@ namespace opt
           typename t_Vertices :: const_iterator i_first = vertices.begin();
           typename t_Vertices :: const_iterator i_end = vertices.end();
           for(; i_first != i_end; ++i_first )
-            sstr << i_first->object << " " << *i_first; 
+            sstr << *i_first << "  # " << i_first->object << "\n";
           sstr << "&";
           return sstr.str();
         }
@@ -414,12 +415,12 @@ namespace opt
           //! Constructor.
           FakeObject( const t_Object& _object ) : object( _object ) {}; 
           //! Copy Constructor.
-          FakeObject( const FakeObject& _object ) : object( _object ) {}; 
+          FakeObject( const FakeObject& _object ) : object( _object.object ) {}; 
       };
       //! Prints out object.
       template< class T_OBJECT >
         std::ostream& operator<<( std::ostream &_str, const FakeObject<T_OBJECT> & _o )
-          { return _str << _o; }
+          { return _str << _o.object; }
 
   } // namespace ConvexHull
 }

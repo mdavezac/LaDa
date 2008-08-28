@@ -219,7 +219,6 @@ int main(int argc, char *argv[])
 
   const bool dofit( vm.count("nofit") == 0 );
   const bool doloo( vm.count("loo") != 0 );
-  __ASSERT( not ( dofit or doloo ), "Nothing to do..." )
   const types::t_unsigned verbosity = vm["verbose"].as<types::t_unsigned>();
   types::t_unsigned seed = vm["seed"].as<types::t_unsigned>();
   seed = opt::random::seed( seed );
@@ -466,7 +465,25 @@ int main(int argc, char *argv[])
     t_MixedFunctional mixedfunc( *lattice );
     mixedfunc.init( cs.string(), bdesc );
     mixedfunc = mixed;
+    Crystal :: Structure structure;
+    structure.cell = lattice->cell;
+    size_t n(0);
+    foreach( const Crystal::Lattice::t_Site &site, lattice->sites )
+    {
+      Crystal::Structure::t_Atom atom;
+      atom.pos = site.pos;
+      atom.site = n; ++n;
+      atom.type = -1e0;
+      structure.atoms.push_back( atom );
+    }
+    structure.find_k_vectors();
+    std::cout << "  -@0 " << structure.get_concentration()
+              << " " << << mixedfunc( structure ) << "\n";
     CE::enumerate_pifile( doenum.string(), mixedfunc );
+    foreach( Crystal::Structure::t_Atom &atom, structure.atoms )
+      atom.type *= -1e0;
+    std::cout << "  -@0 " << structure.get_concentration()
+              << " " << << mixedfunc( structure ) << "\n";
   }
   std::cout << "\n\n\nEnd of " << __PROGNAME__ << ".\n" << std::endl;
 
