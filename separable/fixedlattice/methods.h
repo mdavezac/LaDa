@@ -100,8 +100,8 @@ namespace CE
             policy.start();
             while( policy.go( _collapse, _minimizer, verbosity - 1 ) );
             opt::ErrorTuple errors( policy.end( _collapse, _minimizer, verbosity - 1 ) );
-            if( verbosity >= 1 )
-              return check_all( _collapse, structures(), verbosity >= 2 );
+            if( verbosity >= 2 )
+              return check_all( _collapse, structures(), verbosity >= 3 );
             return errors;
             __TRYEND(,"Error in CE::Methods::fit().\n" )
           }

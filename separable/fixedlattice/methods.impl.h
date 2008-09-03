@@ -18,6 +18,7 @@ namespace CE
           __ASSERT( which > 2, "Not sure what to check.\n" )
           
           opt::ErrorTuple intermed = _min( _col.coefficients(), _col );
+          if( _verb >= 1 ) std::cout << "  trial " << nbrestarts << " " << intermed << "\n";
           if(    nbrestarts == 0 
               or ( which == 0 and Fuzzy::gt( best.variance(), intermed.variance() )  )
               or ( which == 1 and Fuzzy::gt( best.mean(), intermed.mean() )  )
