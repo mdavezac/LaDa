@@ -49,8 +49,8 @@ DARWIN_E_H  = emass_stubs.h  two_sites.h  single_site.h  vff.h  emass.h  layered
               $(DARWIN_E_IMPL_H)
 DARWIN_E_DOC = $(DARWIN_E_H) $(DARWIN_E_CC) 
 
-CRYSTAL_CC = lattice.cc structure.cc 
-CRYSTAL_H  = lattice.h  structure.h  atom.h 
+CRYSTAL_CC = lattice.cc structure.cc confsplit.cc
+CRYSTAL_H  = lattice.h  structure.h  atom.h  confsplit.h
 CRYSTAL_DOC = $(CRYSTAL_H) $(CRYSTAL_CC) 
 
 CE_CC     = cluster.cc harmonic.cc  polynome.cc regularization.cc fit.cc

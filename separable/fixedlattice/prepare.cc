@@ -51,9 +51,10 @@ namespace CE
     boost::match_results<std::string::const_iterator> what;
     if( not boost::regex_search( _bdesc, what, re2 ) )
     {
-      __ASSERT( not boost::regex_search( _bdesc, what, re1 ),
-                "Could not parse --basis input: " << _bdesc << "\n" )
-      n = boost::lexical_cast< size_t >( what.str(1) );
+      __DOASSERT( not boost::regex_search( _bdesc, what, re1 ),
+                  "Could not parse --basis input: " << _bdesc << "\n" )
+      __TRYCODE( n = boost::lexical_cast< size_t >( what.str(1) );,
+                 "Could not parse " << _bdesc << " -> " << what.str(1) << "\n" )
       positions.clear();
       return;
     }
@@ -71,23 +72,32 @@ namespace CE
   {
     Crystal::SplitIntoConfs split;
     split( _structure, n );
-    _confs.resize( split.configurations().size() );
-    t_Configurations :: iterator i_conf = _confs.begin(); 
-    typedef const Crystal::SplitIntoConfs::t_Configurations tt_confs;
+    const size_t N( _confs.size() );
+    _confs.reserve( N + split.configurations().size() );
+    typedef Crystal::SplitIntoConfs::t_Configurations tt_confs;
     typedef tt_confs :: value_type tt_conf;
-    typedef tt_conf :: first tt_bits;
-    foreach( tt_conf & _atomconf,  split.configurations() )
+    typedef tt_conf :: first_type tt_bits;
+    foreach( const tt_conf & _atomconf,  split.configurations() )
     {
-      i_conf->first.resize( _atomconf.first.size() );
+      t_Configurations :: value_type bitset;
+      bitset.second = _atomconf.second;
+      bitset.first.resize( _atomconf.first.size() );
       typedef t_Configurations :: value_type :: first_type t_bits;
-      t_bits :: iterator i_bit = i_conf->first.begin();
-      foreach( tt_bits &bit, _atomconf.first )
+      t_bits :: iterator i_bit = bitset.first.begin();
+      foreach( const tt_bits :: value_type &bit, _atomconf.first )
       {
-        const tt_bit::value_type index( split.integer_to_index( bit ) );
-        const Crystal::Structure::t_Atom &atom( _structure.atoms[ index ] );
+        const Crystal::Structure::t_Atom &atom( _structure.atoms[ bit ] );
         const Crystal::Structure::t_Atom::t_Type type( atom.type );
-        *i_bit = Crystal::Structure::lattic->convert_real_to_type_index( atom.site, type );
+        *i_bit = Crystal::Structure::lattice->convert_real_to_type_index( atom.site, type );
+        ++i_bit;
       }
+      // adds to configurations.
+      t_Configurations :: iterator i_found = _confs.begin() + N;
+      t_Configurations :: iterator i_conf_end = _confs.end();
+      for(; i_found != i_conf_end; ++i_found )
+        if( bitset.first == i_found->first ) break;
+      if( i_found == i_conf_end ) _confs.push_back( bitset );
+      else i_found->second += bitset.second;
     }
     split.clear();
   }
