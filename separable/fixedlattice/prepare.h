@@ -40,10 +40,10 @@ namespace CE
       t_Positions positions;
 
       //! Constructor.
-      PosToConfs ( Crystal::Lattice &_lat = *Crystal::Structure::lattice ) 
+      PosToConfs ( Crystal::Lattice &_lat = *Crystal::Structure::lattice ) : n(0)
         { init_syms( _lat ); }
       //! Copy Constructor.
-      PosToConfs ( const PosToConfs &_c ) : syms( _c.syms ) {}
+      PosToConfs ( const PosToConfs &_c ) : syms( _c.syms ), n(_c.n) {}
       //! Creates a basis of positions.
       void create_positions( const std::string &_desc );
       
@@ -51,13 +51,30 @@ namespace CE
       void operator()( const Crystal :: Structure &_structure,
                        t_Configurations& _confs ) const;
 
+      //! Creates all necessary configurations for a given structure for position basis.
+      void posbasis( const Crystal :: Structure &_structure,
+                     t_Configurations& _confs ) const;
+
+      //! Creates all necessary configurations for a given structure for position n sites.
+      void nsites( const Crystal :: Structure &_structure,
+                   t_Configurations& _confs ) const;
+
     protected:
       //! Initializes list of symmetry operations.
       void init_syms ( Crystal::Lattice &_lat );
       
-      //! The syemmetry operations.
+      //! The symmetry operations.
       t_SymOps syms;
+      //! number of sites.
+      size_t n;
   };
+
+  inline void PosToConfs :: operator()( const Crystal :: Structure &_structure,
+                                        t_Configurations& _confs ) const
+  {
+    __ASSERT( n == 0 and positions.empty(), "Nothing initialized.\n" )
+    ( n == 0 ) ? posbasis( _structure, _confs ): nsites( _structure, _confs );
+  }
 
 } // end of CE namespace
 

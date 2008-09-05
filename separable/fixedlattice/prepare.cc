@@ -11,8 +11,9 @@
 #include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
 
-
 #include "prepare.h"
+
+#include <crystal/confsplit.h>
 
 namespace CE
 {
@@ -44,11 +45,20 @@ namespace CE
   void PosToConfs :: create_positions( const std::string &_bdesc )
   {
     if( _bdesc.empty() ) return;
-    const boost::regex re("(\\d+)(?:\\s+)?x(?:\\s+)?"
-                          "(\\d+)(?:\\s+)?x(?:\\s+)?(\\d+)" );
+    const boost::regex re1("(\\d+)" );
+    const boost::regex re2("(\\d+)(?:\\s+)?x(?:\\s+)?"
+                           "(\\d+)(?:\\s+)?x(?:\\s+)?(\\d+)" );
     boost::match_results<std::string::const_iterator> what;
-    __DOASSERT( not boost::regex_search( _bdesc, what, re ),
+    if( not boost::regex_search( _bdesc, what, re2 ) )
+    {
+      __ASSERT( not boost::regex_search( _bdesc, what, re1 ),
                 "Could not parse --basis input: " << _bdesc << "\n" )
+      n = boost::lexical_cast< size_t >( what.str(1) );
+      positions.clear();
+      return;
+    }
+
+    n = 0;
     atat::rMatrix3d cell;
     cell.set_diagonal( boost::lexical_cast<types::t_real>(what.str(1)),
                        boost::lexical_cast<types::t_real>(what.str(2)),
@@ -56,9 +66,34 @@ namespace CE
     details::supercell_basis( 1, cell, positions );
   }
 
+  void PosToConfs :: nsites( const Crystal :: Structure &_structure,
+                             t_Configurations& _confs ) const
+  {
+    Crystal::SplitIntoConfs split;
+    split( _structure, n );
+    _confs.resize( split.configurations().size() );
+    t_Configurations :: iterator i_conf = _confs.begin(); 
+    typedef const Crystal::SplitIntoConfs::t_Configurations tt_confs;
+    typedef tt_confs :: value_type tt_conf;
+    typedef tt_conf :: first tt_bits;
+    foreach( tt_conf & _atomconf,  split.configurations() )
+    {
+      i_conf->first.resize( _atomconf.first.size() );
+      typedef t_Configurations :: value_type :: first_type t_bits;
+      t_bits :: iterator i_bit = i_conf->first.begin();
+      foreach( tt_bits &bit, _atomconf.first )
+      {
+        const tt_bit::value_type index( split.integer_to_index( bit ) );
+        const Crystal::Structure::t_Atom &atom( _structure.atoms[ index ] );
+        const Crystal::Structure::t_Atom::t_Type type( atom.type );
+        *i_bit = Crystal::Structure::lattic->convert_real_to_type_index( atom.site, type );
+      }
+    }
+    split.clear();
+  }
    
-  void PosToConfs :: operator()( const Crystal :: Structure &_structure,
-                                 t_Configurations& _confs ) const
+  void PosToConfs :: posbasis( const Crystal :: Structure &_structure,
+                               t_Configurations& _confs ) const
   {
     __TRYBEGIN
 

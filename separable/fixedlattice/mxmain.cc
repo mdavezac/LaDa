@@ -111,7 +111,9 @@ int main(int argc, char *argv[])
       ("jtypes", po::value<std::string>(), "Figure description file.\n" )
       ("cs", po::value<std::string>(), "Constituent Strain input file.\n" )
       ("which,w", po::value<types::t_unsigned>()->default_value(0),
-                   "Performs best-of for 0 (variance), 1 (mean), or 2(max).\n" );
+                   "Performs best-of for 0 (variance), 1 (mean), or 2(max).\n" )
+      ("print", po::value<std::string>()->default_value(""),
+                   "Prints out: \"function\".\n" );
   leavemanyout.add_cmdl( specific );
   po::options_description hidden("hidden");
   hidden.add_options()
@@ -245,6 +247,7 @@ int main(int argc, char *argv[])
     __DOASSERT( not boost::algorithm::all( genes, boost::algorithm::is_any_of( "01" ) ),
                 "Unknown bitstring format.\n" )
   __DOASSERT( which >= 3, "Don't know which error to perform bestof for.\n" )
+  const std::string print( vm["print"].as<std::string>() );
 
   if( not ( doenum.empty() or dofit ) )
     std::cout << "Must perform a fit when attempting PIfile enumeration.\n";
@@ -298,7 +301,7 @@ int main(int argc, char *argv[])
     postoconfs.create_positions( bdesc );
 
   // Separables traits.
-  typedef Traits::CE::Separables< CE::Mapping::VectorDiff<2> > t_FunctionTraits;
+  typedef Traits::CE::Separables< CE::Mapping::VectorPlus<2> > t_FunctionTraits;
   typedef CE::Separables< t_FunctionTraits > t_Function;
   // Collapse Traits
   typedef CE::Mapping::SymEquiv t_Mapping;
@@ -456,7 +459,8 @@ int main(int argc, char *argv[])
     nerror = fit( mixed, allsq );
     mixed.reassign();
     std::cout << nerror << "\n"; 
-    if( verbosity >= print_function ) std::cout << mixed << "\n";
+    if( verbosity >= print_function or print.find("function") != std::string::npos )
+      std::cout << mixed << "\n";
   }
   if( not doenum.empty() )
   {

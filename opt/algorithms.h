@@ -33,6 +33,20 @@ namespace opt
         _app( *_first, *_second, *_third );
     }
 
+  //! From boost sandbox.
+  template<typename I, typename O, typename Pred> 
+    O copy_if ( I first, I last, O res, Pred p) 
+    {
+      while (first != last)
+      {
+        if (p(*first)) 
+          *res++ = *first; 
+        ++first; 
+      } 
+      return res; 
+    } 
+
+
 } // end of opt namespace
 
 #endif
