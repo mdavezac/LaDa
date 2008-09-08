@@ -28,7 +28,7 @@ namespace Crystal
 
     public:
       //! Type of the pure bitset representing a configuration for a set symmetry.
-      typedef std::vector< types::t_unsigned > t_Bitset;
+      typedef std::vector< t_Position > t_Bitset;
       //! Type  containing a pure bitset and an attached coefficient.
       typedef std::pair< t_Bitset, types::t_real > t_CoefBitset;
       //! Type representing a set of configurations with all possible symmetries.
@@ -42,19 +42,14 @@ namespace Crystal
                        const types::t_unsigned _n );
 
       //! Returns a constant to the computed configurations.
-      const t_Configurations& configurations() const { configurations_; }
+      const t_Configurations& configurations() const { return configurations_; }
       //! Clears results.
       void clear() { configurations_.clear(); structure = NULL; }
 
 
     protected: 
-      //! \brief Adds configurations, knowing the origin.
-      //! \details Origin is indicated by first bit of \a _bitset::first on
-      //!          input. The weight of the configuration will depend on \a
-      //!          _bitset::second as given on input.  \a _bitset is modified
-      //!          by this routine, except for the first bit of \a
-      //!          _bitset::first and \a _bitset::second.
-      void from_origin( t_CoefBitset &_bitset );
+      //! \brief Adds configurations, knowing the origin \a _i.
+      void from_origin( size_t _i );
       //! \brief Compares positions indexed as integers, given the origin and x-axis.
       bool compare_from_x( const atat::rVector3d &_origin, 
                            const atat::rVector3d &_x, 
@@ -79,7 +74,6 @@ namespace Crystal
       //!                            positions on  a sphere.
       void find_atoms_in_sphere( const atat::rVector3d &_origin,
                                  t_Positions &_positions );
-
       //! The number of atoms to included in each configuration.
       types::t_unsigned n;
       //! Structure for which configurations are computed.

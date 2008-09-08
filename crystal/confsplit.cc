@@ -7,7 +7,7 @@
 #include<boost/bind.hpp>
 #include<boost/ref.hpp>
 #include<boost/lambda/bind.hpp>
-#include<boost/math/special_functions/pow.hpp>
+// #include<boost/math/special_functions/pow.hpp>
 
 #include<opt/algorithms.h>
 
@@ -31,6 +31,9 @@ namespace Crystal
       __glibcxx_requires_valid_range(__first, __last);
 
       if (__first == __last) return __first;
+      do if( not __skip( *__first ) ) break;
+      while (++__first != __last);
+      if( __first == __last ) return __last;
       _ForwardIterator __result = __first;
       while (++__first != __last)
       {
@@ -48,28 +51,32 @@ namespace Crystal
     __DOASSERT( _n <= 3, "Requested size of basis too small.\n" )
     n = _n;
     structure = &_structure;
-    types::t_real weight( _structure.atoms.size() ); weight = 1e0 / weight;
     configurations_.clear();
-    t_CoefBitset bitset( t_Bitset( _n ), weight );
     // This loop splits over possible origins.
     for( size_t i(0); i < _structure.atoms.size(); ++i )
     {
-      bitset.first[0] = i;
-      from_origin( bitset );
+      from_origin( i );
+ //    if( not i )
+ //      foreach( t_CoefBitset &bitset, configurations_ )
+ //      {
+ //        std::cout << "conf: " << bitset.second << " \n";
+ //        foreach( t_Position &_pos, bitset.first )
+ //          std::cout << _pos.first << "     " << _pos.second << "\n";
+ //      }
     }
   }
 
   void SplitIntoConfs :: find_atoms_in_sphere( const atat::rVector3d &_origin,
                                                t_Positions &_positions )
   {
-    namespace bm = boost::math;
+    //namespace bm = boost::math;
     __ASSERT( not structure, "Structure pointer not set.\n" )
     // first, computes and sorts nth neighbors.
     const types::t_int N( structure->atoms.size() );
     const types::t_int umax = n / structure->atoms.size() + 1;
     typedef std::pair< types::t_real, t_Position > t_normedpair;
     typedef std::vector< t_normedpair > t_normedpairs;
-    t_normedpairs normedpairs; normedpairs.reserve( N * bm::pow<3>( umax * 3 ) );
+    t_normedpairs normedpairs; normedpairs.reserve( N * ( umax * 3 )^3 );
     for( types::t_int x(-umax); x <= umax; ++x )
       for( types::t_int y(-umax); y <= umax; ++y )
         for( types::t_int z(-umax); z <= umax; ++z )
@@ -77,11 +84,12 @@ namespace Crystal
           Structure :: t_Atoms :: const_iterator i_atom = structure->atoms.begin();
           Structure :: t_Atoms :: const_iterator i_atom_end = structure->atoms.end();
           t_normedpair pair;
-          const atat::rVector3d trans(   structure->cell
+          const atat::rVector3d trans(   (~structure->cell)
                                        * atat::rVector3d( types::t_real(x),
                                                           types::t_real(y),
                                                           types::t_real(z) ) );
-          for( pair.second.second=0; i_atom != i_atom_end; ++i_atom, ++pair.second.second )
+          for( pair.second.second=0; i_atom != i_atom_end;
+               ++i_atom, ++pair.second.second )
           {
             pair.second.first = trans + i_atom->pos - _origin; 
             pair.first = atat::norm2( pair.second.first );
@@ -130,17 +138,18 @@ namespace Crystal
         ++i_pair;
       }
       while( i_pair != i_pair_end and Fuzzy::eq( i_pair->first, current_norm ) );
-      std::cout << "\n";
     }
   }
 
-  void SplitIntoConfs :: from_origin( t_CoefBitset &_bitset )
+  void SplitIntoConfs :: from_origin( size_t _i )
   {
     namespace bl = boost::lambda;
     __ASSERT( not structure, "Structure pointer not set.\n" )
 
-    const atat::rVector3d origin( structure->atoms[ _bitset.first[0] ].pos );
-    const types::t_real weight( _bitset.second );
+    const types::t_real weight( 1e0 / types::t_real(structure->atoms.size()) );
+    t_CoefBitset bitset( t_Bitset( n ), weight );
+    bitset.first[0] = t_Position( structure->atoms[_i].pos, _i );
+    const atat::rVector3d origin( structure->atoms[ _i ].pos );
 
     epositions.clear();
     find_atoms_in_sphere( origin, epositions );
@@ -149,7 +158,8 @@ namespace Crystal
 
     // loop over epositions defining x.
     const t_Positions :: const_iterator i_xpositions = epositions.begin();
-    const types::t_real xweight( _bitset.second / types::t_real( i_xpositions->size() ) );
+    const types::t_real
+      xweight( bitset.second / types::t_real( i_xpositions->size() ) );
     foreach( const t_Positions::value_type::value_type &xPos, *i_xpositions )
     {
       const atat::rVector3d x( xPos.first - origin );
@@ -158,20 +168,31 @@ namespace Crystal
       std::vector< t_Position > ypossibles;
       t_Positions :: const_iterator i_ypositions = i_xpositions;
       if( i_xpositions->size() == 1 ) ++i_ypositions; 
-      const t_Position&
-        max_x_element = *details::max_element
-                         (
-                           i_ypositions->begin(), i_ypositions->end(),
-                           boost::bind( &SplitIntoConfs::compare_from_x,
-                                        this, origin, x, _1, _2 ),
-                           not bl::bind 
-                               (
-                                 &Fuzzy::is_zero<types::t_real>,
-                                   bl::bind( &t_Position::first, bl::_1 ) 
-                                 - bl::bind( &t_Position::first, bl::_2 ) 
-                               )
-                         );
-      const types::t_real max_x_scalar_pos( max_x_element.first * x );
+      const t_Positions :: value_type :: const_iterator 
+        max_x_element = details::max_element
+                        (
+                          i_ypositions->begin(), i_ypositions->end(),
+                          boost::bind( &SplitIntoConfs::compare_from_x,
+                                       this, origin, x, _1, _2 ),
+                          bl::bind 
+                          (
+                            &Fuzzy::is_zero<types::t_real>,
+                            bl::bind
+                            ( 
+                              &atat::norm2<types::t_real, 3>,
+                                bl::bind( &t_Position::first, bl::_1 ) 
+                              - bl::constant(xPos.first)
+                            )
+                          )
+                        );
+      if( max_x_element == i_ypositions->end() ) 
+      {
+        std::cout << *structure << "\n";
+        foreach( const t_Position &_pos, *i_ypositions )
+          std::cout << _pos.first << "\n";
+        __DOASSERT( true, i_ypositions->size() << "\n" )
+      }
+      const types::t_real max_x_scalar_pos( max_x_element->first * x );
       foreach( const t_Position yPos, *i_ypositions )
       {
         if( Fuzzy::neq( yPos.first * x, max_x_scalar_pos ) ) continue;
@@ -179,7 +200,7 @@ namespace Crystal
         ypossibles.push_back( yPos );
       }
 
-      _bitset.second = xweight / types::t_real( ypossibles.size() );
+      bitset.second = xweight / types::t_real( ypossibles.size() );
       foreach( const t_Position yPos, ypossibles )
       {
         // at this point, we can define the complete coordinate system.
@@ -193,9 +214,9 @@ namespace Crystal
         //  _ final ties are broken according to largest z coordinate.
 
         // we iterate over distance from origin first.
-        __ASSERT( _bitset.first.size() != n, "Incoherent sizes.\n" )
-        t_CoefBitset::first_type::iterator i_bit = _bitset.first.begin();
-        t_CoefBitset::first_type::iterator i_bit_end = _bitset.first.end();
+        __ASSERT( bitset.first.size() != n, "Incoherent sizes.\n" )
+        t_CoefBitset::first_type::iterator i_bit = bitset.first.begin();
+        t_CoefBitset::first_type::iterator i_bit_end = bitset.first.end();
         size_t nbit(1);
         foreach( t_Positions :: value_type equaldistance, sorting_pos )
         {
@@ -205,7 +226,7 @@ namespace Crystal
           const size_t edn( std::min( equaldistance.size(), n - nbit ) );
           if( edn == 1 ) 
           {
-            *i_bit = equaldistance.front().second;
+            *i_bit = equaldistance.front();
             ++i_bit;
             ++nbit;
             continue;
@@ -226,11 +247,7 @@ namespace Crystal
                  boost::bind( &SplitIntoConfs::compare_from_coords,
                               this, origin, x, y, z, _1, _2 )
                );
-          std::transform
-          ( 
-            equaldistance.begin(), equaldistance.begin() + edn, i_bit,
-            boost::bind( &t_Position::second, _1 )
-          );
+          std::copy( equaldistance.begin(), equaldistance.begin() + edn, i_bit );
           i_bit += edn;
           nbit += edn;
         } // end of loop over positions at equivalent distance.
@@ -240,15 +257,11 @@ namespace Crystal
         t_Configurations :: iterator i_found = configurations_.begin();
         t_Configurations :: iterator i_conf_end = configurations_.end();
         for(; i_found != i_conf_end; ++i_found )
-          if( _bitset.first == i_found->first ) break;
-        if( i_found == i_conf_end ) configurations_.push_back( _bitset );
-        else i_found->second += _bitset.second;
+          if( bitset.first == i_found->first ) break;
+        if( i_found == i_conf_end ) configurations_.push_back( bitset );
+        else i_found->second += bitset.second;
       } // end of loop over equivalent y coords.
-  
     } // end of loop over equivalent  x coords.
-
-    // resets weight.
-    _bitset.second = weight;
   }
 
   bool SplitIntoConfs :: compare_from_coords( const atat::rVector3d &_origin, 

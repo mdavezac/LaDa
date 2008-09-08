@@ -301,7 +301,7 @@ int main(int argc, char *argv[])
     postoconfs.create_positions( bdesc );
 
   // Separables traits.
-  typedef Traits::CE::Separables< CE::Mapping::VectorPlus<2> > t_FunctionTraits;
+  typedef Traits::CE::Separables< CE::Mapping::VectorDiff<2> > t_FunctionTraits;
   typedef CE::Separables< t_FunctionTraits > t_Function;
   // Collapse Traits
   typedef CE::Mapping::SymEquiv t_Mapping;
@@ -365,14 +365,14 @@ int main(int argc, char *argv[])
     std::cout << "Retained " << size << " pair figures.\n";
   }
   clusters.clear();
-  mixed.init( rank, postoconfs.positions.size() );
+  mixed.init( rank, postoconfs.dof() );
 
   opt::NErrorTuple nerror( opt::mean_n_var( mixed.CEFit().structures() ) ); 
 
   std::cout << "Shape of separable function: " << bdesc << "\n"
             << "Rank of separable function " << rank << "\n"
             << "Size of separable function "
-            << postoconfs.positions.size() << "\n"
+            << postoconfs.dof() << "\n"
             << "Data directory: " << dir << "\n"
             << "Number of data points: " << mixed.mapping().size() << " for " 
             << mixed.configurations().size2()

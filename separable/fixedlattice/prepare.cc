@@ -86,9 +86,10 @@ namespace CE
       t_bits :: iterator i_bit = bitset.first.begin();
       foreach( const tt_bits :: value_type &bit, _atomconf.first )
       {
-        const Crystal::Structure::t_Atom &atom( _structure.atoms[ bit ] );
+        const Crystal::Structure::t_Atom &atom( _structure.atoms[ bit.second ] );
         const Crystal::Structure::t_Atom::t_Type type( atom.type );
-        *i_bit = Crystal::Structure::lattice->convert_real_to_type_index( atom.site, type );
+        *i_bit = Crystal::Structure::lattice
+                     ->convert_real_to_type_index( atom.site, type );
         ++i_bit;
       }
       // adds to configurations.

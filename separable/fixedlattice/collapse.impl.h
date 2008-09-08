@@ -109,7 +109,7 @@ namespace CE
       }
  
       // translates to matrix.
-      configurations_->resize( _postoconfs.positions.size(), nbconfs );
+      configurations_->resize( _postoconfs.dof(), nbconfs );
       size_t i(0);
       foreach( t_Confs :: value_type& confs_per_str, confs )
       {

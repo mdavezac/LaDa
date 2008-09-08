@@ -58,6 +58,8 @@ namespace CE
       //! Creates all necessary configurations for a given structure for position n sites.
       void nsites( const Crystal :: Structure &_structure,
                    t_Configurations& _confs ) const;
+      //! Number of degrees of freedom.
+      size_t dof() const { return n ? n: positions.size(); }
 
     protected:
       //! Initializes list of symmetry operations.

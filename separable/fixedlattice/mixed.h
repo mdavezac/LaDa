@@ -22,6 +22,8 @@ namespace Traits
 {
   namespace CE
   {
+    //! \brief Traits for a combination of Cluster Expansion with Sum of
+    //!       Separable Functions.
     template< class T_COLTRAITS, class T_CEBASE >
      struct MixedApproach
      {
@@ -74,6 +76,7 @@ namespace Traits
 namespace CE
 {
 
+  //! \brief Combination of Cluster Expansion with Sum of Separable Functions.
   template< class T_TRAITS >
     class MixedApproach : protected T_TRAITS :: t_Collapse,
                           protected T_TRAITS :: t_CEBase

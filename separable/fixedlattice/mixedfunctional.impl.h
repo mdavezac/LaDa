@@ -47,7 +47,7 @@ namespace CE
       __DEBUGTRYBEGIN
       typename t_SepBase::t_Matrix::value_type result(0);
       typedef t_PosBase :: t_Configurations t_Configurations;
-      if( t_PosBase::positions.size() )
+      if( t_PosBase::dof() )
       {
         t_Configurations configs;
         t_PosBase::operator()( _structure, configs );
@@ -158,7 +158,7 @@ namespace CE
       typedef typename HEAD :: t_CSBase   t_CSBase;
       typedef typename HEAD :: t_PosBase  t_PosBase;
       std::cout << "Mixed Functional:\n";
-      if( _sep.t_PosBase::positions.size() ) _stream << *( (t_SepBase*) &_sep ) << "\n";
+      if( _sep.t_PosBase::dof() ) _stream << *( (t_SepBase*) &_sep ) << "\n";
       if( _sep.ecis().size() and ( not _sep.clusterclasses().empty() ) )
         foreach( const typename HEAD :: t_ClusterClass &_class, _sep.clusterclasses() )
           _stream << _class.front()  << " D=" << _class.size() << "\n";
