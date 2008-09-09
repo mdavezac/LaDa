@@ -153,6 +153,9 @@ namespace CE
         //! Returns a constant reference to the coefficients.
         const typename t_Separables::t_Matrix& coefficients() const
           { return separables().coefficients(); }
+        //! Allows manipulation of the coefficients' interface itself.
+        typename t_Separables :: t_Coefficients&
+          coefficients_interface() { return separables().coefficients_interface(); }
         //! Randomizes the coefficients.
         void randomize( typename t_Vector :: value_type _howrandom )
           { separables().randomize( _howrandom ); }

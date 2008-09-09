@@ -39,68 +39,11 @@ namespace Traits
       typedef T_MAPPING t_Mapping;
       //! Type of the Regulations Policy
       typedef T_COLLAPSE t_Collapse;
+      //! Type of the coefficients.
+      typedef boost::numeric::ublas::matrix<types::t_real> t_Coefficients;
     };
-
-    //! \brief Traits for a combination of Cluster Expansion with Sum of
-    //!       Separable Functions.
-    template< class T_MANYTRAITS,  class T_CEBASE >
-     struct MixedManyApproach
-     {
-       //! CE::Many traits.
-       typedef T_MANYTRAITS t_ManyTraits;
-       //! Original separable traits.
-       typedef typename t_ManyTraits :: t_Separables :: t_Traits t_OrigSepTraits;
-       protected:
-         //! Original separable traits.
-         typedef typename t_ManyTraits :: t_Collapse :: t_Traits t_CollapseTraits;
-         //! Separable function traits.
-         typedef Separables
-                 < 
-                   typename t_OrigSepTraits :: t_Mapping,
-                   typename t_OrigSepTraits :: t_Policy,
-                   ::CE::Policy::MatrixRangeCoefficients,
-                   typename t_OrigSepTraits :: t_Vector
-                 > 
-                 t_SepTraits;
-       public:
-         //! Type of the separable function.
-         typedef ::CE::Separables< t_SepTraits > t_Separables;
-         //! Type of the configuration matrix.
-         typedef typename t_CollapseTraits ::  t_Configurations t_Configurations;
-         //! Type of the Mapping.
-         typedef typename t_ManyTraits :: t_Mapping t_Mapping;
-         //! Type of the Regulations Policy
-         typedef typename t_CollapseTraits :: t_RegPolicy
-                                      ::template rebind< t_Separables > :: other 
-            t_RegPolicy;
-         //! Type of the Policy.
-         typedef typename t_CollapseTraits :: t_UpdatePolicy
-                             ::template rebind< t_Separables,
-                                     typename t_CollapseTraits :: t_Mapping, 
-                                     typename t_CollapseTraits :: t_Configurations >
-                             :: other t_UpdatePolicy;
-       protected:
-         //! collapse traits.
-         typedef Collapse
-                 < 
-                   t_Separables,
-                   typename t_CollapseTraits :: t_Mapping,
-                   t_RegPolicy,
-                   t_Configurations,
-                   t_UpdatePolicy
-                 > 
-                 t_NewCollapseTraits;
-         //! New Many traits.
-         typedef Many< t_Separables,
-                       ::CE::Collapse<t_NewCollapseTraits>,
-                       t_Mapping > t_NewManyTraits;
-       public:
-         //! Type of the collapse functor base.
-         typedef ::CE::Many< t_NewManyTraits > t_Collapse;
-         //! CE fit base.
-         typedef T_CEBASE t_CEBase;
-     };
   }
+
 } // end of traits namespace.
 
 namespace CE
@@ -199,6 +142,8 @@ namespace CE
         size_t dim;
         //! The mapping to the structures ( e.g. leave-one-out, leave-many-out )
         t_Mapping mapping_;
+        //! The coefficienst.
+        t_Coefficienst coefficients_;
     };
 
   //! Prints mixed-approach description to a stream.
