@@ -48,18 +48,28 @@ namespace CE
     const boost::regex re1("(\\d+)" );
     const boost::regex re2("(\\d+)(?:\\s+)?x(?:\\s+)?"
                            "(\\d+)(?:\\s+)?x(?:\\s+)?(\\d+)" );
+    const boost::regex re3("\\((\\d+)\\,(\\d+)\\)" );
     boost::match_results<std::string::const_iterator> what;
     if( not boost::regex_search( _bdesc, what, re2 ) )
     {
+      if( boost::regex_search( _bdesc, what, re3 ) )
+      {
+        __TRYCODE( n.first = boost::lexical_cast< size_t >( what.str(1) );,
+                   "Could not parse " << _bdesc << " -> " << what.str(1) << "\n" )
+        __TRYCODE( n.second = boost::lexical_cast< size_t >( what.str(2) );,
+                   "Could not parse " << _bdesc << " -> " << what.str(2) << "\n" )
+        return;
+      }
       __DOASSERT( not boost::regex_search( _bdesc, what, re1 ),
                   "Could not parse --basis input: " << _bdesc << "\n" )
-      __TRYCODE( n = boost::lexical_cast< size_t >( what.str(1) );,
+      n.first = 0;
+      __TRYCODE( n.second = boost::lexical_cast< size_t >( what.str(1) );,
                  "Could not parse " << _bdesc << " -> " << what.str(1) << "\n" )
       positions.clear();
       return;
     }
 
-    n = 0;
+    n.first = n.second = 0;
     atat::rMatrix3d cell;
     cell.set_diagonal( boost::lexical_cast<types::t_real>(what.str(1)),
                        boost::lexical_cast<types::t_real>(what.str(2)),

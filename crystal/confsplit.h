@@ -35,11 +35,12 @@ namespace Crystal
       typedef std::vector< t_CoefBitset > t_Configurations;
 
       //! Constructor
-      SplitIntoConfs() : n(0), structure(NULL) {}
+      SplitIntoConfs() : n(0,0), structure(NULL) {}
 
       //! Computes the configurations.
-      void operator()( const Structure &_structure,
-                       const types::t_unsigned _n );
+      void operator()( const Structure &_structure, const size_t _n );
+      //! Computes the configurations.
+      void operator()( const Structure &_structure, const std::pair<size_t,size_t> _n );
 
       //! Returns a constant to the computed configurations.
       const t_Configurations& configurations() const { return configurations_; }
@@ -75,7 +76,7 @@ namespace Crystal
       void find_atoms_in_sphere( const atat::rVector3d &_origin,
                                  t_Positions &_positions );
       //! The number of atoms to included in each configuration.
-      types::t_unsigned n;
+      std::pair<size_t, size_t> n;
       //! Structure for which configurations are computed.
       const  Structure * structure;
       //! The result.

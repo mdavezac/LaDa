@@ -67,10 +67,13 @@ namespace CE
   //!                  regularization, for which each element is mapped to a
   //!                  constant vector (1,1,1,...) and then subsequently to
   //!                  (0,1,0,..,.) vectors. 
-  //! \details Separables::coefficients are arrange in a matrix where each column 
+  //! \details Separables::coefficients_ are arrange in a matrix where each column 
   //!          is a different dimension. The row are organized according to
   //!          rank and inner basis (for that column's dimension) with the
-  //!          latter the fastest runnning index.
+  //!          latter the fastest runnning index. Separables::coefficients_
+  //!          provides an indirection to this matrix, such that it can be a
+  //!          matrix range, a pointer to a matrix, or a direct instantiation
+  //!          of a matrix, depending on the type of T_TRAITS::t_Coefficients.
   template< class T_TRAITS >
     class Separables
     {

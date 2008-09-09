@@ -46,24 +46,26 @@ namespace Crystal
   //! \endcond
 
   void SplitIntoConfs :: operator()( const Structure &_structure,
-                                     const types::t_unsigned _n )
+                                     const size_t _n )
   {
     __DOASSERT( _n <= 3, "Requested size of basis too small.\n" )
+    n.first = 0; n.second = _n;
+    structure = &_structure;
+    configurations_.clear();
+    // This loop splits over possible origins.
+    for( size_t i(0); i < _structure.atoms.size(); ++i )
+      from_origin( i );
+  }
+  void SplitIntoConfs :: operator()( const Structure &_structure,
+                                     const std::pair< size_t, size_t > _n )
+  {
+    __DOASSERT( _n.second - _n.first <= 3, "Requested size of basis too small.\n" )
     n = _n;
     structure = &_structure;
     configurations_.clear();
     // This loop splits over possible origins.
     for( size_t i(0); i < _structure.atoms.size(); ++i )
-    {
       from_origin( i );
- //    if( not i )
- //      foreach( t_CoefBitset &bitset, configurations_ )
- //      {
- //        std::cout << "conf: " << bitset.second << " \n";
- //        foreach( t_Position &_pos, bitset.first )
- //          std::cout << _pos.first << "     " << _pos.second << "\n";
- //      }
-    }
   }
 
   void SplitIntoConfs :: find_atoms_in_sphere( const atat::rVector3d &_origin,
@@ -73,7 +75,7 @@ namespace Crystal
     __ASSERT( not structure, "Structure pointer not set.\n" )
     // first, computes and sorts nth neighbors.
     const types::t_int N( structure->atoms.size() );
-    const types::t_int umax = n / structure->atoms.size() + 1;
+    const types::t_int umax = n.second / structure->atoms.size() + 1;
     typedef std::pair< types::t_real, t_Position > t_normedpair;
     typedef std::vector< t_normedpair > t_normedpairs;
     t_normedpairs normedpairs; normedpairs.reserve( N * ( umax * 3 )^3 );
@@ -98,7 +100,7 @@ namespace Crystal
         }
     std::partial_sort
     ( 
-      normedpairs.begin(), normedpairs.begin() + n, normedpairs.end(),
+      normedpairs.begin(), normedpairs.begin() + n.second, normedpairs.end(),
       boost::bind
       (
         &Fuzzy::le<types::t_real>, 
@@ -112,12 +114,12 @@ namespace Crystal
     // note that the std::partition makes sure we do not miss positions which
     // are the same distance as position n.
     _positions.clear();
-    const types::t_real lastnorm( (normedpairs.begin() + n - 1)->first );
+    const types::t_real lastnorm( (normedpairs.begin() + n.second - 1)->first );
     t_normedpairs::const_iterator i_pair = normedpairs.begin();
     t_normedpairs::const_iterator
       i_pair_end = std::partition
                    ( 
-                     normedpairs.begin() + n, normedpairs.end(),
+                     normedpairs.begin() + n.second, normedpairs.end(),
                      boost::bind
                      ( 
                        &Fuzzy::eq<types::t_real>,
@@ -125,6 +127,14 @@ namespace Crystal
                        lastnorm
                      )
                    );
+    size_t i( n.first );
+    for(; i_pair != i_pair_end and i > 0; ++i_pair )
+    {
+      if( Fuzzy::is_zero(i_pair->first) ) continue; 
+      --i;
+    }
+    __DOASSERT( i_pair == i_pair_end, "Insufficient number of atoms considered.\n" )
+
     while( i_pair != i_pair_end )
     {
       if( Fuzzy::is_zero(i_pair->first) ) { ++i_pair; continue; }
@@ -147,7 +157,8 @@ namespace Crystal
     __ASSERT( not structure, "Structure pointer not set.\n" )
 
     const types::t_real weight( 1e0 / types::t_real(structure->atoms.size()) );
-    t_CoefBitset bitset( t_Bitset( n ), weight );
+    const size_t nsize( n.second - n.first );
+    t_CoefBitset bitset( t_Bitset( nsize  ), weight );
     bitset.first[0] = t_Position( structure->atoms[_i].pos, _i );
     const atat::rVector3d origin( structure->atoms[ _i ].pos );
 
@@ -214,16 +225,16 @@ namespace Crystal
         //  _ final ties are broken according to largest z coordinate.
 
         // we iterate over distance from origin first.
-        __ASSERT( bitset.first.size() != n, "Incoherent sizes.\n" )
+        __ASSERT( bitset.first.size() != nsize, "Bitset too small.\n" );
         t_CoefBitset::first_type::iterator i_bit = bitset.first.begin();
         t_CoefBitset::first_type::iterator i_bit_end = bitset.first.end();
         size_t nbit(1);
         foreach( t_Positions :: value_type equaldistance, sorting_pos )
         {
-          if( nbit == n ) break;
-          __ASSERT( nbit > n, "index out of range.\n" )
+          if( nbit == nsize ) break;
+          __ASSERT( nbit > nsize, "index out of range.\n" )
 
-          const size_t edn( std::min( equaldistance.size(), n - nbit ) );
+          const size_t edn( std::min( equaldistance.size(), nsize - nbit ) );
           if( edn == 1 ) 
           {
             *i_bit = equaldistance.front();
@@ -232,7 +243,7 @@ namespace Crystal
             continue;
           }
 
-          if( edn <= n - nbit ) 
+          if( edn <= nsize - nbit ) 
             std::sort
             ( 
               equaldistance.begin(), equaldistance.end(),
@@ -242,7 +253,7 @@ namespace Crystal
           else std::partial_sort
                ( 
                  equaldistance.begin(),
-                 equaldistance.begin() + n - nbit, 
+                 equaldistance.begin() + nsize - nbit, 
                  equaldistance.end(),
                  boost::bind( &SplitIntoConfs::compare_from_coords,
                               this, origin, x, y, z, _1, _2 )

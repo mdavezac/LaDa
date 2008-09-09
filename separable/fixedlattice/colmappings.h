@@ -19,21 +19,20 @@ namespace CE
 {
   namespace Mapping
   {
-    class SymEquiv
+    class Basic
     {
       public:
         //! Type of vectors.
         typedef std::vector<types::t_real> t_Vector;
 
         //! Constructor.
-        SymEquiv() {}
+        Basic() {}
         //! Copy Constructor.
-        SymEquiv  (const SymEquiv& _c)
-                : N(_c.N), weights_( _c.weights_ ),
-                  equiweights( _c.equiweights ), 
-                  targets_( _c.targets_ ), nb_( _c.nb_ ) {} 
+        Basic  (const Basic& _c)
+              : N(_c.N), weights_( _c.weights_ ),
+                targets_( _c.targets_ ) {}
         //! Destructor
-        ~SymEquiv() {}
+        ~Basic() {}
         //! Returns weights.
         t_Vector& weights() { return weights_; }
         //! Returns weights.
@@ -48,6 +47,36 @@ namespace CE
         t_Vector::value_type target( size_t i ) const { return targets_[i]; }
         //! Returns the number of structures.
         size_t size() const { return N; }
+        //! Allows to skip out on a structure for leave-one or many-out.
+        bool do_skip( size_t _i ) const { return false; }
+        //! Initializes the mapping.
+        template< class T_STRUCTURES >
+          void init( const T_STRUCTURES& _strs );
+
+      protected:
+        //! Number of structures.
+        size_t N;
+        //! Weights of structures.
+        t_Vector weights_;
+        //! Target values of structures.
+        t_Vector targets_;
+    };
+
+    class SymEquiv : public Basic
+    {
+      public:
+        //! Type of vectors.
+        typedef Basic::t_Vector t_Vector;
+
+        //! Constructor.
+        SymEquiv() {}
+        //! Copy Constructor.
+        SymEquiv  (const SymEquiv& _c)
+                : Basic( _c ),
+                  equiweights( _c.equiweights ), 
+                  nb_( _c.nb_ ) {} 
+        //! Destructor
+        ~SymEquiv() {}
         //! Returns the range of equivalent configurations for structure \a _i.
         boost::numeric::ublas::range range( size_t _i ) const 
           { return boost::numeric::ublas::range( nb_[_i], nb_[_i+1] ); }
@@ -55,22 +84,14 @@ namespace CE
         t_Vector::value_type eweight( size_t _i, size_t _c ) const
           { return equiweights[ nb_[_i] + _c ]; }
         //! Initializes the mapping.
-       template< class T_STRUCTURES, class T_CONFIGURATIONS >
-         void init( const T_STRUCTURES& _strs, 
-                    const T_CONFIGURATIONS& _confs );
+        template< class T_STRUCTURES, class T_CONFIGURATIONS >
+          void init( const T_STRUCTURES& _strs, 
+                     const T_CONFIGURATIONS& _confs );
 
-        //! Allows to skip out on a structure for leave-one or many-out.
-        bool do_skip( size_t _i ) const { return false; }
 
       protected:
-        //! Number of structures.
-        size_t N;
-        //! Weights of structures.
-        t_Vector weights_;
         //! Weights of structures.
         t_Vector equiweights;
-        //! Target values of structures.
-        t_Vector targets_;
         //! Structure ranges.
         std::vector< size_t > nb_;
     };
@@ -101,6 +122,7 @@ namespace CE
           return std::find( excluded.begin(), excluded.end(), _i ) != excluded.end();
         }
     };
+
   template< class T_BASE, class T_CONTAINER >
     class ExcludeMany<T_BASE, T_CONTAINER*> : public T_BASE
     {
@@ -152,9 +174,8 @@ namespace CE
     };
 
 
-  template< class T_STRUCTURES, class T_CONFIGURATIONS >
-    void SymEquiv::init( const T_STRUCTURES& _strs, 
-                         const T_CONFIGURATIONS& _confs )
+  template< class T_STRUCTURES >
+    void Basic :: init( const T_STRUCTURES& _strs )
     {
       namespace bl = boost::lambda;
       // Copy structural weights first.
@@ -173,8 +194,17 @@ namespace CE
         bl::bind( &T_STRUCTURES :: value_type :: energy, bl::_1 )
       );
       N = _strs.size();
+    }
+
+  template< class T_STRUCTURES, class T_CONFIGURATIONS >
+    void SymEquiv::init( const T_STRUCTURES& _strs, 
+                         const T_CONFIGURATIONS& _confs )
+    {
+      namespace bl = boost::lambda;
       
-      // then construct internal weights (between equivalent confs) 
+      Basic::init( _strs );
+
+      // Construct internal weights (between equivalent confs) 
       // and initializes the nb_ structure.
       nb_.resize(1, 0);
       equiweights.clear();

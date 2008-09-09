@@ -40,6 +40,7 @@
 #include "methods.h"
 #include "mixed.h"
 #include "mixedfunctional.h"
+#include "many.h"
 
 #include <revision.h>
 #define __PROGNAME__ "Mixed Approach: CE and Sum of Separable functions on a fixed lattice." 
@@ -311,29 +312,30 @@ int main(int argc, char *argv[])
   typedef Traits::CE::Collapse< t_Function, t_Mapping, 
                                 t_Regularization, t_Confs,
                                 t_UpdatePolicy > t_CollapseTraits;
+  typedef CE::Collapse<t_CollapseTraits> t_Collapse;
+  typedef Traits::CE::Many< t_Function, ::CE::Collapse<t_CollapseTraits> > t_ManyTraits;
   // CE base
   typedef CE::Fit< CE::FittingPolicy::PairReg<> > t_CEBase;
   // Mixed approach traits.
-  typedef Traits::CE::MixedApproach< t_CollapseTraits, t_CEBase > t_MixedTraits;
+  typedef Traits::CE::MixedManyApproach< t_ManyTraits, t_CEBase > t_MixedTraits;
 
   // Finally creates mixed approach object.
   CE::MixedApproach< t_MixedTraits > mixed;
   // initializes ce part.
-  Crystal::read_ce_structures( dir / "LDAs.dat", mixed.CEFit().structures() );
+  Crystal::read_ce_structures( dir / "LDAs.dat", mixed.cefit().structures() );
   if( verbosity >= print_data )
     std::for_each
     (
-      mixed.CEFit().structures().begin(), mixed.CEFit().structures().end(), 
+      mixed.cefit().structures().begin(), mixed.cefit().structures().end(), 
       std::cout << bl::_1 << "\n"
     );
-  mixed.CEFit().alpha = alpha;
-  mixed.CEFit().tcoef = tcoef;
-  mixed.CEFit().do_pairreg = ( not Fuzzy::is_zero( alpha ) and maxpairs );
-  mixed.CEFit().laksreg = not volkerreg;
-  mixed.CEFit().verbose = verbosity >= print_checks;
+  mixed.cefit().alpha = alpha;
+  mixed.cefit().tcoef = tcoef;
+  mixed.cefit().do_pairreg = ( not Fuzzy::is_zero( alpha ) and maxpairs );
+  mixed.cefit().laksreg = not volkerreg;
+  mixed.cefit().verbose = verbosity >= print_checks;
   // initializes collapse part.
-  mixed.Collapse().init( mixed.CEFit().structures(), postoconfs );
-  mixed.Collapse().regularization().lambda = lambda;
+  init_many_collapses( bdesc, rank, lambda, mixed.cefit().structures(), mixed.collapse() );
   // initializes mixed.
   std::copy( clusters.begin(), clusters.end(),
              std::back_inserter( mixed.clusters() ) );
@@ -365,9 +367,8 @@ int main(int argc, char *argv[])
     std::cout << "Retained " << size << " pair figures.\n";
   }
   clusters.clear();
-  mixed.init( rank, postoconfs.dof() );
 
-  opt::NErrorTuple nerror( opt::mean_n_var( mixed.CEFit().structures() ) ); 
+  opt::NErrorTuple nerror( opt::mean_n_var( mixed.cefit().structures() ) ); 
 
   std::cout << "Shape of separable function: " << bdesc << "\n"
             << "Rank of separable function " << rank << "\n"
@@ -375,7 +376,7 @@ int main(int argc, char *argv[])
             << postoconfs.dof() << "\n"
             << "Data directory: " << dir << "\n"
             << "Number of data points: " << mixed.mapping().size() << " for " 
-            << mixed.configurations().size2()
+            << mixed.nbconfs()
             << " symetrically inequivalent configurations.\n";
   if( not verbosity ) std::cout << "Quiet output.\n";
   else std::cout << "Level of verbosity: " << verbosity << "\n";
@@ -411,7 +412,7 @@ int main(int argc, char *argv[])
 
   // Initializes best of fit.
   CE::Method::Fit< CE::Method::Policy::BestOf< t_Function :: t_Matrix > >
-    fit( mixed.CEFit().structures() );
+    fit( mixed.cefit().structures() );
   fit.verbosity = verbosity -1;
   fit.policy.restarts = bestof;
   fit.policy.which = which;
@@ -420,14 +421,13 @@ int main(int argc, char *argv[])
   // fitting.
   if( doloo )
   {
-    typedef CE::Mapping::ExcludeOne< t_Mapping > t_looMapping;
-    typedef Traits::CE::Collapse< t_Function, t_looMapping, 
-                                  t_Regularization, t_Confs,
-                                  t_UpdatePolicy > t_looCollapseTraits;
-    typedef Traits::CE::MixedApproach< t_looCollapseTraits, t_CEBase >
-      t_looMixedTraits;
+    typedef CE::Mapping::ExcludeOne< t_ManyTraits::t_Mapping > t_looMapping;
+    typedef Traits::CE::Many< t_Function,
+                              t_Collapse, 
+                              t_looMapping      > t_looManyTraits;
+    typedef Traits::CE::MixedManyApproach< t_looManyTraits, t_CEBase > t_looMixedTraits;
     CE::MixedApproach<t_looMixedTraits> loomixed( mixed );
-    loomixed.Collapse().mapping().do_exclude = true;
+    loomixed.collapse().mapping().do_exclude = true;
     std::cout << "Starting Leave-One-Out Procedure.\n";
     opt::t_ErrorPair errors;
     errors = CE::Method::leave_one_out( loomixed, fit, allsq, verbosity - 1 );
@@ -437,12 +437,13 @@ int main(int argc, char *argv[])
   if( leavemanyout.do_perform )
   {
     typedef std::vector< types::t_unsigned > t_Excluded;
-    typedef CE::Mapping::ExcludeMany< t_Mapping, t_Excluded* > t_lmoMapping;
-    typedef Traits::CE::Collapse< t_Function, t_lmoMapping, 
-                                  t_Regularization, t_Confs,
-                                  t_UpdatePolicy > t_lmoCollapseTraits;
-    typedef Traits::CE::MixedApproach< t_lmoCollapseTraits, t_CEBase >
-      t_lmoMixedTraits;
+    typedef CE::Mapping::ExcludeMany< t_ManyTraits::t_Mapping,
+                                      t_Excluded* > t_lmoMapping;
+    typedef Traits::CE::Many< t_Function,
+                              t_Collapse, 
+                              t_lmoMapping      > t_lmoManyTraits;
+    typedef Traits::CE::MixedManyApproach< t_lmoManyTraits, t_CEBase > t_lmoMixedTraits;
+
     CE::MixedApproach<t_lmoMixedTraits> lmomixed( mixed );
     std::cout << "\nStarting leave-many out predictive fit." << std::endl;
     Fitting::LeaveManyOut::t_Return errors;
@@ -462,33 +463,33 @@ int main(int argc, char *argv[])
     if( verbosity >= print_function or print.find("function") != std::string::npos )
       std::cout << mixed << "\n";
   }
-  if( not doenum.empty() )
-  {
-    std::cout << "\nStarting Exhaustive Enumeration of " << doenum << "\n\n";
-    typedef CE::MixedSeparables< t_FunctionTraits, t_Harmonic > t_MixedFunctional;
-    t_MixedFunctional mixedfunc( *lattice );
-    mixedfunc.init( cs.string(), bdesc );
-    mixedfunc = mixed;
-    Crystal :: Structure structure;
-    structure.cell = lattice->cell;
-    size_t n(0);
-    foreach( const Crystal::Lattice::t_Site &site, lattice->sites )
-    {
-      Crystal::Structure::t_Atom atom;
-      atom.pos = site.pos;
-      atom.site = n; ++n;
-      atom.type = -1e0;
-      structure.atoms.push_back( atom );
-    }
-    structure.find_k_vectors();
-    std::cout << "  -@0 " << structure.get_concentration()
-              << " " << mixedfunc( structure ) << "\n";
-    CE::enumerate_pifile( doenum.string(), mixedfunc );
-    foreach( Crystal::Structure::t_Atom &atom, structure.atoms )
-      atom.type *= -1e0;
-    std::cout << "  @0 " << structure.get_concentration()
-              << " " << mixedfunc( structure ) << "\n";
-  }
+// if( not doenum.empty() )
+// {
+//   std::cout << "\nStarting Exhaustive Enumeration of " << doenum << "\n\n";
+//   typedef CE::MixedSeparables< t_FunctionTraits, t_Harmonic > t_MixedFunctional;
+//   t_MixedFunctional mixedfunc( *lattice );
+//   mixedfunc.init( cs.string(), bdesc );
+//   mixedfunc = mixed;
+//   Crystal :: Structure structure;
+//   structure.cell = lattice->cell;
+//   size_t n(0);
+//   foreach( const Crystal::Lattice::t_Site &site, lattice->sites )
+//   {
+//     Crystal::Structure::t_Atom atom;
+//     atom.pos = site.pos;
+//     atom.site = n; ++n;
+//     atom.type = -1e0;
+//     structure.atoms.push_back( atom );
+//   }
+//   structure.find_k_vectors();
+//   std::cout << "  -@0 " << structure.get_concentration()
+//             << " " << mixedfunc( structure ) << "\n";
+//   CE::enumerate_pifile( doenum.string(), mixedfunc );
+//   foreach( Crystal::Structure::t_Atom &atom, structure.atoms )
+//     atom.type *= -1e0;
+//   std::cout << "  @0 " << structure.get_concentration()
+//             << " " << mixedfunc( structure ) << "\n";
+// }
   std::cout << "\n\n\nEnd of " << __PROGNAME__ << ".\n" << std::endl;
 
   return 1;

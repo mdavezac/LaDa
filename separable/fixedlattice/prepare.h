@@ -10,6 +10,7 @@
 
 #include <string>
 #include <vector>
+#include <utility>
 
 #include <opt/types.h>
 #include <atat/vectmac.h>
@@ -40,7 +41,7 @@ namespace CE
       t_Positions positions;
 
       //! Constructor.
-      PosToConfs ( Crystal::Lattice &_lat = *Crystal::Structure::lattice ) : n(0)
+      PosToConfs ( Crystal::Lattice &_lat = *Crystal::Structure::lattice ) : n(0, 0)
         { init_syms( _lat ); }
       //! Copy Constructor.
       PosToConfs ( const PosToConfs &_c ) : syms( _c.syms ), n(_c.n) {}
@@ -59,7 +60,7 @@ namespace CE
       void nsites( const Crystal :: Structure &_structure,
                    t_Configurations& _confs ) const;
       //! Number of degrees of freedom.
-      size_t dof() const { return n ? n: positions.size(); }
+      size_t dof() const { return n.second - n.first ? n.second - n.first: positions.size(); }
 
     protected:
       //! Initializes list of symmetry operations.
@@ -68,14 +69,14 @@ namespace CE
       //! The symmetry operations.
       t_SymOps syms;
       //! number of sites.
-      size_t n;
+      std::pair<size_t, size_t> n;
   };
 
   inline void PosToConfs :: operator()( const Crystal :: Structure &_structure,
                                         t_Configurations& _confs ) const
   {
-    __ASSERT( n == 0 and positions.empty(), "Nothing initialized.\n" )
-    ( n == 0 ) ? posbasis( _structure, _confs ): nsites( _structure, _confs );
+    __ASSERT( n.second - n.first == 0 and positions.empty(), "Nothing initialized.\n" )
+    ( n.second - n.first == 0 ) ? posbasis( _structure, _confs ): nsites( _structure, _confs );
   }
 
 } // end of CE namespace

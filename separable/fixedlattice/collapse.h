@@ -128,10 +128,8 @@ namespace CE
         //! Sets the norm pointer.
         void init( t_Separables& _sep );
 
-        //! Reference to configuration matrix.
-        t_Configurations& configurations() { return *configurations_; }
-        //! Constant reference to configuration matrix.
-        const t_Configurations& configurations() const { return *configurations_; }
+        //! Number of configurations.
+        const size_t nbconfs() const { return configurations().size2(); }
         
         //! Returns the number of dimensions.
         size_t dimensions() const { return separables_->dimensions(); }
@@ -157,8 +155,17 @@ namespace CE
           { return separables().coefficients(); }
         void randomize( typename t_Vector :: value_type _howrandom )
           { separables().randomize( _howrandom ); }
+        //! \brief Creates an X vector for fitting, for a single rank.
+        //! \details Before the scaling is done, all ranks equal.
+        template< class T_VECTOR >
+          void create_X( size_t _i, size_t _n, T_VECTOR &_out )
+           { dim = _n; create_X( _i, _out ); }
 
       protected:
+        //! Reference to configuration matrix.
+        t_Configurations& configurations() { return *configurations_; }
+        //! Constant reference to configuration matrix.
+        const t_Configurations& configurations() const { return *configurations_; }
         //! Creates the _A and _b matrices for fitting.
         template< class T_MATRIX, class T_VECTOR >
           void create_A_n_b( T_MATRIX &_A, T_VECTOR &_b );
