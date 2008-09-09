@@ -26,27 +26,33 @@ namespace CE
 
     INCOLLAPSE( size_t ) :: dimensions() const 
     {
-      return std::accumulate( collapses_->begin(), collapses_->end(),
-                              boost::bind( &t_Collapse::dimensions, _1 ) );
+      size_t result(0);
+      foreach( const t_Collapse &collapse, separables )
+        result += collapse.self()->dimensions();
+      return result;
     } 
     INCOLLAPSE( size_t ) :: dof() const 
     {
-      return std::accumulate( collapses_->begin(), collapses_->end(),
-                              boost::bind( &t_Collapse::dof, _1 ) );
+      size_t result(0);
+      foreach( const t_Collapse &collapse, separables )
+        result += collapse.self()->dof();
+      return result;
     }
     INCOLLAPSE( size_t ) :: nbconfs() const 
     {
-      return std::accumulate( collapses_->begin(), collapses_->end(),
-                              boost::bind( &t_Collapse::nbconfs, _1 ) );
+      size_t result(0);
+      foreach( const t_Collapse &collapse, separables )
+        result += collapse.self()->nbconfs();
+      return result;
     } 
     INCOLLAPSE( size_t ) :: current_dof() const 
     {
       size_t result(0);
       foreach( const t_Collapse &collapse, separables )
-        if( collapse.dimensions() < dim ) result += collapse.dof();
+        if( collapse.self()->dimensions() < dim ) result += collapse.self()->dof();
     }
     INCOLLAPSE( void ) :: reset() 
-      { foreach( const t_Collapse &collapse, collapses_ ) collapse.reset(); }
+      { foreach( const t_Collapse &collapse, collapses_ ) collapse.self()->reset(); }
 
     INCOLLAPSE2(template< class T_MATRIX, class T_VECTOR > void) 
       :: create_A_n_b( T_MATRIX &_A, T_VECTOR &_b )
@@ -59,15 +65,17 @@ namespace CE
                    typename t_Matrix::value_type(0) );
         std::fill( _b.data().begin(), _b.data().end(), 
                    typename t_Vector::value_type(0) );
-        const t_Collapse &first_collapse = collapses_->front();
+        const t_Collapse *first_col = collapses_->front();
+        const first_col.type()::type& fist_collapse = *first_col.self();
         for( size_t i(0); i < mapping().size(); ++i )
         {
           // allows leave-one-out, or leave-many-out.
           if( mapping().do_skip(i) )  continue;
 
           size_t rangestart(0);
-          foreach( t_Collapse &collapse, *collapses_ )
+          foreach( t_Collapse &_collapse, *collapses_ )
           {
+            first_col.type()::type& collapse = *_collapse.self();
             if( collapse.dimensions() < dim ) continue;
             const bblas::range colrange( rangestart, rangestart + collapse.dof() );
       
@@ -91,12 +99,13 @@ namespace CE
         __DEBUGTRYBEGIN
         namespace bblas = boost::numeric::ublas;
         dim = _dim;
-        foreach( t_Collapse &collapse, *collapses_ ) collapse.dim = _dim;
+        foreach( t_Collapse &collapse, *collapses_ ) collapse.self()->dim = _dim;
         create_A_n_b( _A, _b );
 
         size_t rangestart(0);
-        foreach( t_Collapse &collapse, *collapses_ )
+        foreach( t_Collapse &_collapse, *collapses_ )
         {
+          first_col.type()::type& collapse = *_collapse.self();
           const bblas::range seprange( rangestart, rangestart + collapse.dof() );
           bblas::matrix_range<T_MATRIX> sepmat( _A, seprange, seprange );
           bblas::vector_range<T_VECTOR> sepvec( _b, seprange );
@@ -109,20 +118,20 @@ namespace CE
     INCOLLAPSE( void ) :: randomize( typename t_Vector :: value_type _howrandom )
     {
       foreach( t_Collapse &collapse, *collapses_ )
-        collapse.randomize( _howrandom );
+        collapse.self()->randomize( _howrandom );
     }
 
 
     INCOLLAPSE( void ) :: update_all()
     {
       __DEBUGTRYBEGIN
-      foreach( t_Collapse &collapse, *collapses_ ) collapse.update_all();
+      foreach( t_Collapse &collapse, *collapses_ ) collapse.self()->update_all();
       __DEBUGTRYEND(, "Error in Many::update_all()\n" )
     }
     INCOLLAPSE( void ) :: update( types::t_unsigned _d )
     {
       __DEBUGTRYBEGIN
-      foreach( t_Collapse &collapse, *collapses_ ) collapse.update(_d);
+      foreach( t_Collapse &collapse, *collapses_ ) collapse.self()->update(_d);
       __DEBUGTRYEND(, "Error in Many::update()\n" )
     }
 
@@ -144,19 +153,20 @@ namespace CE
       __DEBUGTRYBEGIN
       typename t_Matrix :: value_type intermed(0);
       foreach( t_Collapse &collapse, (*collapses_) )
-        intermed += collapse.evaluate(_n);
+        intermed += collapse.self()->evaluate(_n);
 
       return intermed;
       __DEBUGTRYEND(, "Error in Many::evaluate( size_t )\n" )
     }
 
-    INCOLLAPSE( size_t ) ::  addone()
-    {
-      separables_->push_back( new t_Separables );
-      collapses_->push_back( new t_Collapse );
-      collapses_->back().init( &separables_->back() );
-      return separables_->size() - 1;
-    }
+    INCOLLAPSE2( template< class T_COLLAPSE, class T_SEPARABLES > size_t )
+      ::  addone()
+      {
+        separables_->push_back( new opt::Indirection< T_SEPARABLES > );
+        collapses_->push_back( new opt::Indirection< T_COLLAPSE > );
+        collapses_->back().self().init( (T_SEPARABLES*) separables_->back().self() );
+        return separables_->size() - 1;
+      }
 
 #  undef COLHEAD
 #  undef INCOLLAPSE
@@ -170,9 +180,10 @@ namespace CE
     return _stream;
   }
 
-  template< class T_STRUCTURES, class T_TRAITS >
-   void init_many_collapses( const std::string &_desc, size_t _rank, types::t_real _lambda,
-                             const T_STRUCTURES &_structures, Many<T_TRAITS> &_many )
+  template< class T_STRUCTURES, class T_COLLAPSE, class T_SEPARABLES >
+   void init_many_collapses( const std::string &_desc, size_t _rank,
+                             types::t_real _lambda, const T_STRUCTURES &_structures,
+                             Many<T_TRAITS> &_many )
    {
      __DEBUGTRYBEGIN
      _many.mapping().init( _structures );
@@ -194,10 +205,10 @@ namespace CE
        }
        __TRYCODE( postoconfs.create_positions( *i_tok );,
                   "Could not parse string " << _desc << "\n" )
-       const size_t index = _many.addone();
-       _many.collapse( index ).init(  _structures, postoconfs );
-       _many.collapse( index ).regularization().lambda = _lambda;
-       _many.separables( index ).init( rank, postoconfs.dof() );
+       const size_t index = _many.addone<T_COLLAPSE, T_SEPARABLES>();
+       _many.collapse( index )->init(  _structures, postoconfs );
+       _many.collapse( index )->regularization().lambda = _lambda;
+       _many.separables( index )->init( rank, postoconfs.dof() );
      }
      __DEBUGTRYEND(,"Error while creating Many collapse/separables.\n" )
    }

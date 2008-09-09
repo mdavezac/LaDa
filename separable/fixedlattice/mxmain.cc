@@ -313,7 +313,7 @@ int main(int argc, char *argv[])
                                 t_Regularization, t_Confs,
                                 t_UpdatePolicy > t_CollapseTraits;
   typedef CE::Collapse<t_CollapseTraits> t_Collapse;
-  typedef Traits::CE::Many< t_Function, ::CE::Collapse<t_CollapseTraits> > t_ManyTraits;
+  typedef Traits::CE::Many< t_Function, CE::Collapse<t_CollapseTraits> > t_ManyTraits;
   // CE base
   typedef CE::Fit< CE::FittingPolicy::PairReg<> > t_CEBase;
   // Mixed approach traits.
@@ -335,7 +335,8 @@ int main(int argc, char *argv[])
   mixed.cefit().laksreg = not volkerreg;
   mixed.cefit().verbose = verbosity >= print_checks;
   // initializes collapse part.
-  init_many_collapses( bdesc, rank, lambda, mixed.cefit().structures(), mixed.collapse() );
+  init_many_collapses( bdesc, rank, lambda,
+                       mixed.cefit().structures(), mixed.collapse() );
   // initializes mixed.
   std::copy( clusters.begin(), clusters.end(),
              std::back_inserter( mixed.clusters() ) );

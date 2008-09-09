@@ -129,7 +129,7 @@ namespace CE
         void init( t_Separables& _sep );
 
         //! Number of configurations.
-        const size_t nbconfs() const { return configurations().size2(); }
+        size_t nbconfs() const { return configurations().size2(); }
         
         //! Returns the number of dimensions.
         size_t dimensions() const { return separables_->dimensions(); }
@@ -153,6 +153,7 @@ namespace CE
         //! Returns a constant reference to the coefficients.
         const typename t_Separables::t_Matrix& coefficients() const
           { return separables().coefficients(); }
+        //! Randomizes the coefficients.
         void randomize( typename t_Vector :: value_type _howrandom )
           { separables().randomize( _howrandom ); }
         //! \brief Creates an X vector for fitting, for a single rank.

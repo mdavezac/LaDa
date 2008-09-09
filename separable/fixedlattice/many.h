@@ -17,6 +17,7 @@
 
 #include <opt/types.h>
 #include <opt/debug.h>
+#include <opt/indirection.h>
 
 //! \cond 
 namespace CE { template< class T_TRAITS > class Many; }
@@ -75,8 +76,8 @@ namespace Traits
          //! Type of the Policy.
          typedef typename t_CollapseTraits :: t_UpdatePolicy
                              ::template rebind< t_Separables,
-                                             typename t_CollapseTraits :: t_Mapping, 
-                                             typename t_CollapseTraits :: t_Configurations >
+                                     typename t_CollapseTraits :: t_Mapping, 
+                                     typename t_CollapseTraits :: t_Configurations >
                              :: other t_UpdatePolicy;
        protected:
          //! collapse traits.
@@ -104,23 +105,24 @@ namespace Traits
 
 namespace CE
 {
+
   template< class T_TRAITS >
     class Many 
     {
       public:
         //! Type of the traits.
         typedef T_TRAITS t_Traits;
-        //! Type of the separable collapse functor.
-        typedef typename t_Traits :: t_Collapse t_Collapse;
+        //! Type of the of separables function.
+        typedef opt::IndirectionBase  t_Separables;
+        //! Type of the of separables function.
+        typedef opt::IndirectionBase  t_Collapse;
         //! \brief Type of the matrix range.
         //! \details Necessary interface for minimizer.
-        typedef typename t_Traits :: t_Collapse :: t_Matrix t_Matrix;
+        typedef typename t_Traits :: t_Matrix t_Matrix;
         //! Type of the vectors.
-        typedef typename t_Traits :: t_Collapse :: t_Vector t_Vector;
+        typedef typename t_Traits :: t_Vector t_Vector;
         //! Type of the container of separables.
         typedef boost::ptr_list< t_Collapse > t_Collapses;
-        //! Type of the of separables function.
-        typedef typename t_Traits :: t_Separables  t_Separables;
         //! Type of the container of separables.
         typedef boost::ptr_list< t_Separables > t_CtnrSeparables;
         //! Type of the general mapping.
@@ -146,7 +148,8 @@ namespace CE
         //! Predicts target value of a structure.
         typename t_Matrix :: value_type evaluate( size_t _n ) const;
 
-        //! Updates the separable and copies the eci from column 0 to all other columns.
+        //! \brief Updates the separable and copies the eci from column 0 to all
+        //!        other columns.
         void update_all();
         //! Updates the separable and copies the eci from column d to column 0.
         void update( types::t_unsigned _d );
@@ -164,16 +167,17 @@ namespace CE
         void randomize( typename t_Vector :: value_type _howrandom );
 
         //! Add new collapse and separables.
-        size_t addone();
+        template< class T_COLLAPSE, class T_SEPARABLES > size_t addone();
         
         //! Returns reference to nth separable function.
-        t_Separables& separables( size_t _n ) { return separables_[_n]; }
+        t_Separables* separables( size_t _n ) { return separables_[_n].self(); }
         //! Returns constant reference to nth separable function.
-        const t_Separables& separables( size_t _n ) const { return separables_[_n]; }
+        const t_Separables* separables( size_t _n ) const
+          { return separables_[_n].self(); }
         //! Returns reference to nth collapse functor.
-        t_Collapse& collapse( size_t _n ) { return collapses_[_n]; }
+        t_Collapse* collapse( size_t _n ) { return collapses_[_n].self(); }
         //! Returns constant reference to nth collapse functor.
-        const t_Collapse& collapse( size_t _n ) const { return collapses_[_n]; }
+        t_Collapse* const collapse( size_t _n ) const { return collapses_[_n].self(); }
         //! Returns the number of collapse and separables functions.
         size_t size() const { return collapses_.size(); }
         //! Returns a reference to the mapping.
@@ -202,9 +206,10 @@ namespace CE
   std::ostream& operator<<( std::ostream& _stream, const Many<T_TRAITS> &_col );
 
   //! Initializes a Many separable function depending on string input and structures.
-  template< class T_STRUCTURES, class T_TRAITS >
-   void init_many_collapses( const std::string &_desc, size_t _rank, types::t_real _lambda,
-                             const T_STRUCTURES &_structures, Many<T_TRAITS> &_many );
+  template< class T_STRUCTURES, class T_COLLAPSE, class T_SEPARABLES >
+   void init_many_collapses( const std::string &_desc, size_t _rank,
+                             types::t_real _lambda, const T_STRUCTURES &_structures,
+                             Many<T_TRAITS> &_many );
 
 } // end of CE namespace
 

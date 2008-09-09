@@ -222,7 +222,8 @@ namespace CE
 
   //! Prints mixed-approach description to a stream.
   template< class T_TRAITS >
-  std::ostream& operator<<( std::ostream& _stream, const MixedApproach<T_TRAITS> &_col );
+  std::ostream& operator<<( std::ostream& _stream,
+                            const MixedApproach<T_TRAITS> &_col );
 
   //! \brief Removes cluster classes for wich at least one custer is contained
   //!        within \a _positions and the origin.
