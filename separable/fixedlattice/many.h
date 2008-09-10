@@ -28,12 +28,18 @@ namespace Traits
   namespace CE
   {
     //! Traits of a "Many" collapse functor.
-    template< class T_MAPPING = ::CE::Mapping::Basic,
+    template< class T_LIST_OF_SEPARABLES,
+              class T_LIST_OF_COLLAPSES,
+              class T_MAPPING = ::CE::Mapping::Basic,
               class T_COEFFICIENTS = boost::numeric::ublas::matrix<types::t_real>,
               class T_VECTOR
                 = boost::numeric::ublas::vector<typename T_COEFFICIENTS::value_type> >
     struct Many 
     {
+      //! List of types in a boost::fusion::list type.
+      typedef T_LIST_OF_SEPARABLES t_ListOfSeparables;
+      //! List of types in a boost::fusion::list type.
+      typedef T_LIST_OF_COLLAPSES t_ListOfCollapses;
       //! Type of the Mapping.
       typedef T_MAPPING t_Mapping;
       //! Type of the coefficients.
@@ -84,6 +90,8 @@ namespace CE
   template< class T_TRAITS >
     class Many 
     {
+        //! Transforms an type into the type of a container of vectors.
+        struct make_ptrvector;
       public:
         //! Type of the traits.
         typedef T_TRAITS t_Traits;

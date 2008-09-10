@@ -24,6 +24,11 @@ namespace CE
 #  define INCOLLAPSE2( code1, code2 ) \
      template< class T_TRAITS >  code1, code2 COLHEAD
 
+    INCOLLAPSE( struct ) :: make_ptrvector
+    {
+      typedef 
+
+    };
     INCOLLAPSE( size_t ) :: dimensions() const 
     {
       size_t result(0);
