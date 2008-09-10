@@ -36,6 +36,7 @@ namespace CE
     template< class T_POLICY > class PairReg;
   }
   template< class T_TRAITS > class MixedApproach;
+  template< class T_TRAITS > class CEasCollapse;
   //! \endcond
   
   //! A class for fitting cluster-expansions to LDA data.
@@ -169,6 +170,7 @@ namespace CE
     template< class T_CLASS, class T_MATRIX, class T_VECTOR > friend
       void details::construct_( const T_CLASS &_class, T_MATRIX &_A, T_VECTOR &_b ) ;
     template< class T_TRAITS > friend class MixedApproach;
+    template< class T_TRAITS > friend class CEasCollapse;
     public:
       //! Some extra policies.
       typedef T_POLICY t_Policy;

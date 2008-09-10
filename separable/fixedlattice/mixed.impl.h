@@ -217,7 +217,8 @@ namespace CE
       __ASSERT( coefficients().size1() - collapse().dof() != clusters_->size(),
                 "Inconsistent sizes.\n")
 
-      typename t_Matrix :: const_iterator1 i_eci = coefficients().begin1() + collapse().dof();
+      typename t_Matrix :: const_iterator1 i_eci =   coefficients().begin1()
+                                                   + collapse().dof();
       foreach( t_Clusters::value_type & _clusters, clusters() )
       {
         foreach( ::CE::Cluster & _cluster, _clusters ) _cluster.eci = *i_eci;

@@ -14,17 +14,17 @@ namespace opt
       struct t_Object
       { 
         //! Type of the indirected object.
-        typedef void type; 
-      }
+        typedef void other; 
+        //! Type of the indirected object.
+        typedef const void const_other; 
+      };
 
     public:
-      //! Constructor.
-      virtual IndirectionBase() = 0;
       //! Destructor.
       virtual ~IndirectionBase() = 0;
   
       //! Returns a reference to self.
-      virtual IndirectionBase* self() = 0; 
+      virtual IndirectionBase* self_() = 0; 
       //! Returns a constant reference to self.
       virtual const IndirectionBase* const self_() const = 0;
       //! Returns an object holding the type of the indirected object.
@@ -36,28 +36,34 @@ namespace opt
   {
     protected:
       //! Holds the type of the indirected object.
-      struct t_ObjectD
+      struct t_ObjectD : public IndirectionBase::t_Object
       { 
         //! Type of the indirected object.
-        typedef T_OBJECT type; 
-      }
+        typedef T_OBJECT other; 
+        //! Type of the indirected object.
+        typedef const T_OBJECT const_other; 
+      };
 
     public:
       //! Constructor.
-      virtual Indirection() {}
+      Indirection() {}
       //! Copy Constructor.
-      virtual Indirection   ( const Indirection& _c ) 
-                          : T_OBJECT( _c ) {}
+      Indirection   ( const Indirection& _c ) 
+                  : T_OBJECT( _c ) {}
       //! Destructor.
       virtual ~Indirection() {}
     
       //! Returns a reference to self.
-      Indirection* self() { return static_cast< T_OBJECT*>( this ); } 
+      T_OBJECT* self() { return static_cast<T_OBJECT*>(self_()); } 
       //! Returns a constant reference to self.
-      virtual const Indirection* self() const 
-        { return static_cast< const T_OBJECT* const >( this ); } 
+      const T_OBJECT* self() const { return static_cast<const T_OBJECT*>(self_()); } 
       //! Returns an object holding the type of the indirected object.
       t_ObjectD type() const { return t_ObjectD(); }
+      //! Returns a reference to self.
+      virtual Indirection<T_OBJECT>* self_() { return this; } 
+      //! Returns a constant reference to self.
+      virtual const Indirection<T_OBJECT>* self_() const 
+        { return this; } 
   };
 }
-
+#endif

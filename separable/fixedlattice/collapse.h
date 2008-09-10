@@ -55,6 +55,9 @@ namespace Traits
       //! Type of the Policy.
       typedef T_UPDATEPOLICY t_UpdatePolicy;
     };
+
+    //! Rebinds collapse with new separables.
+    template< class T_COLLAPSE, class T_NEWSEP > struct CollapseWithNewSeparables; 
   }
 } // end of traits namespace.
 
@@ -71,6 +74,12 @@ namespace CE
                                             size_t _n, bool _verbose );
       template< class TT_TRAITS> friend class Collapse;
       public:
+        //! Allows rebinding of the collapse function.
+        template< class TT_TRAITS > struct rebind
+        {
+          //! new separable type.
+          typedef Collapse< TT_TRAITS > other;
+        };
         //! Traits of this functor.
         typedef T_TRAITS t_Traits;
         //! Type of the separable function.

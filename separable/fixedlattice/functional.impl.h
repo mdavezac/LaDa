@@ -179,3 +179,28 @@ namespace CE
 #   undef POLICYDEF4
   } // end of Policy namespace
 } // end of CE namespace.
+
+
+namespace Traits
+{
+  namespace CE
+  {
+    template< class T_SEPARABLES >
+      struct SeparablesWithMatrixRange
+      {
+        protected:
+          //! Original traits.
+          typedef typename T_SEPARABLES :: t_Traits t_Traits;
+          //! New traits.
+          typedef Separables< typename t_Traits::t_Mapping,
+                              typename t_Traits::t_Policy,
+                              ::CE::Policy::MatrixRangeCoefficients,
+                              typename t_Traits::t_Vector > t_NewTraits;
+        public:
+          //! Newly rebound Separables function.
+          typedef typename T_SEPARABLES ::template rebind< t_NewTraits > :: other other;
+          //! Original Separables function.
+          typedef T_SEPARABLES  original;
+      };
+  } // end of CE namespace 
+} // end of Traits namespace

@@ -27,6 +27,7 @@ namespace CE
   {
     template< class > class DimensionMatrix;
     class DirectCoefficients;
+    class MatrixRangeCoefficients;
   }
   //! \endcond
 }
@@ -53,6 +54,8 @@ namespace Traits
        //! Type of vector.
        typedef T_VECTOR t_Vector;
      };
+
+    template< class T_SEPARABLES >  struct SeparablesWithMatrixRange;
   } // end of CE namespace 
 } // end of Traits namespace
 
@@ -78,6 +81,12 @@ namespace CE
     class Separables
     {
       public:
+        //! Allows rebinding of the separables function.
+        template< class TT_TRAITS > struct rebind
+        {
+          //! new separable type.
+          typedef Separables< TT_TRAITS > other;
+        };
         //! Type of traits for this class.
         typedef T_TRAITS t_Traits;
         //! Type of mapping used to go from conf to coefs.
@@ -240,7 +249,8 @@ namespace CE
         //! Constructor.
         MatrixRangeCoefficients() {}
         //! Copy Constructor.
-        MatrixRangeCoefficients( const MatrixRangeCoefficients &_c ) : matrix_(_c.matrix_) {} 
+        MatrixRangeCoefficients   ( const MatrixRangeCoefficients &_c )
+                                : matrix_(_c.matrix_) {} 
 
         //! Returns a reference to the matrix.
         t_Matrix& operator()() { return *matrix_; }

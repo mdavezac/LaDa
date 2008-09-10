@@ -245,5 +245,4 @@ namespace Fitting
           parent->Attribute( "itermax", &itermax );
         __TRYEND(,"Error in AlternatingLeastSquare::Load()\n" )
       }
-
 } // end of Fitting namespace

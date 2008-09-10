@@ -181,3 +181,43 @@ namespace CE
 # undef INCOLLAPSE
 # undef INCOLLAPSE2
 } // end of CE namespace.
+    
+
+
+namespace Traits
+{
+  namespace CE
+  {
+    template< class T_COLLAPSE, class T_NEWSEP >
+    struct CollapseWithNewSeparables
+    {
+      protected:
+        //! The old traits.
+        typedef typename T_COLLAPSE :: t_Traits t_Traits;
+      public:
+        //! The original collapse functor.
+        typedef T_COLLAPSE original;
+        //! The new separables function.
+        typedef T_NEWSEP newseparables;
+      protected:
+        //! Type of the Regulations Policy
+        typedef typename t_Traits :: t_RegPolicy
+                                  ::template rebind< newseparables > :: other 
+           newregpolicy;
+        //! Type of the Policy.
+        typedef typename t_Traits :: t_UpdatePolicy
+                            ::template rebind< newseparables,
+                                               typename t_Traits :: t_Mapping, 
+                                               typename t_Traits :: t_Configurations >
+                            :: other newupdatepolicy;
+      public:
+        //! The rebound type.
+        typedef typename T_COLLAPSE ::template rebind< newseparables,
+                                              typename t_Traits :: t_Mapping,
+                                              newregpolicy,
+                                              typename t_Traits :: t_Configurations,
+                                              newupdatepolicy >
+                           :: other other;
+    };
+  }
+} // end of traits namespace.

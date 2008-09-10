@@ -128,29 +128,6 @@ namespace CE
     __DEBUGTRYEND(, "Error in MixedFunctional::init().\n" )
   }
 
-  template< class T_TRAITS, class T_HARMONICS >
-    void enumerate_pifile( const std::string &_file,
-                           MixedSeparables< T_TRAITS, T_HARMONICS > &_op )
-    {
-      __DEBUGTRYBEGIN
-      Crystal :: Structure structure;
-      std::ifstream file( _file.c_str(), std::ifstream::in );
-      do
-      {
-        if( not Crystal :: read_pifile_structure( file, structure ) ) continue;
-        std::cout << "    @" << structure.name << " " 
-                  << structure.get_concentration()
-                  << " " << _op( structure ) << "\n";
-        foreach( Crystal::Structure::t_Atom &atom, structure.atoms )
-          atom.type = Fuzzy::gt( atom.type, 0e0 ) ? -1e0: 1e0;
-        std::cout << "   -@" << structure.name << " " 
-                  << structure.get_concentration()
-                  << " " << _op( structure ) << "\n";
-      }
-      while( not file.eof() );
-      __DEBUGTRYEND(, "Error while enumerating pifile.\n" )
-    }
-
   template<class T_TRAITS, class T_HARMONICS> 
     std::ostream& operator<<( std::ostream& _stream, const HEAD &_sep )
     {

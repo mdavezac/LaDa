@@ -24,53 +24,29 @@ namespace Traits
   {
     //! \brief Traits for a combination of Cluster Expansion with Sum of
     //!       Separable Functions.
-    template< class T_COLTRAITS, class T_CEBASE >
+    template< class T_COLLAPSE, class T_CEBASE >
      struct MixedApproach
      {
-       //! Original separable traits.
-       typedef typename T_COLTRAITS :: t_Separables :: t_Traits t_OrigSepTraits;
+       protected:
+         //! Original separables.
+         typedef typename T_COLTRAITS :: t_Separables t_OrigSeparables;
 
-       protected:
-         //! Separable function traits.
-         typedef Separables
-                 < 
-                   typename t_OrigSepTraits :: t_Mapping,
-                   typename t_OrigSepTraits :: t_Policy,
-                   ::CE::Policy::MatrixRangeCoefficients,
-                   typename t_OrigSepTraits :: t_Vector
-                 > 
-                 t_SepTraits;
        public:
+         //! Original separable traits.
+         typedef typename t_OrigSeparables t_Traits t_OrigSepTraits;
          //! Type of the separable function.
-         typedef ::CE::Separables< t_SepTraits > t_Separables;
+         typedef typename SeparablesWithMatrixRange<t_OrigSeparables>
+                                                   :: other t_Separables;
+         //! New Collapse functor.
+         typedef typename CollapseWithNewSeparables<t_Separables> :: other t_Collapse;
          //! Type of the configuration matrix.
-         typedef typename T_COLTRAITS :: t_Configurations t_Configurations;
+         typedef typename t_Collapse :: t_Configurations t_Configurations;
          //! Type of the Mapping.
-         typedef typename T_COLTRAITS :: t_Mapping t_Mapping;
-         //! Type of the Regulations Policy
-         typedef typename T_COLTRAITS :: t_RegPolicy
-                                      ::template rebind< t_Separables > :: other 
-            t_RegPolicy;
-         //! Type of the Policy.
-         typedef typename T_COLTRAITS :: t_UpdatePolicy
-                             ::template rebind< t_Separables,
-                                             typename T_COLTRAITS :: t_Mapping, 
-                                             typename T_COLTRAITS :: t_Configurations >
-                             :: other t_UpdatePolicy;
-       protected:
-         //! collapse traits.
-         typedef Collapse
-                 < 
-                   t_Separables,
-                   t_Mapping,
-                   t_RegPolicy,
-                   t_Configurations,
-                   t_UpdatePolicy
-                 > 
-                 t_ColTraits;
-       public:
-         //! Type of the collapse functor base.
-         typedef ::CE::Collapse< t_ColTraits > t_Collapse;
+         typedef typename t_Collapse :: t_Mapping t_Mapping;
+         //! The Regularization policy.
+         typedef typename t_Collapse :: t_RegPolicy t_RegPolicy;
+         //! Type of the Update Policy.
+         typedef typename t_Collapse :: t_UpdatePolicy t_UpdatePolicy;
          //! CE fit base.
          typedef T_CEBASE t_CEBase;
      };

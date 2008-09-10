@@ -18,6 +18,7 @@ namespace CE
 {
   namespace Method
   {
+
     //! \cond
     namespace Policy
     {

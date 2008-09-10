@@ -311,6 +311,9 @@ namespace Crystal {
   //!          reached eof.
   bool read_pifile_structure( std::istream &_sstr,
                               Crystal::Structure &_structure );
+  //! Computes predictions for all structures in PI file.
+  template< class T_FUNCTIONAL >
+    void enumerate_pifile( const std::string &_file, T_FUNCTIONAL &_op );
 
 } // namespace Crystal
 

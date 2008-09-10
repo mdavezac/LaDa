@@ -351,4 +351,26 @@ namespace Crystal
  
     }
 
+  template< class T_FUNCTIONAL >
+    void enumerate_pifile( const std::string &_file, T_FUNCTIONAL &_op )
+    {
+      __DEBUGTRYBEGIN
+      Crystal :: Structure structure;
+      std::ifstream file( _file.c_str(), std::ifstream::in );
+      do
+      {
+        if( not Crystal :: read_pifile_structure( file, structure ) ) continue;
+        std::cout << "    @" << structure.name << " " 
+                  << structure.get_concentration()
+                  << " " << _op( structure ) << "\n";
+        foreach( Crystal::Structure::t_Atom &atom, structure.atoms )
+          atom.type = Fuzzy::gt( atom.type, 0e0 ) ? -1e0: 1e0;
+        std::cout << "   -@" << structure.name << " " 
+                  << structure.get_concentration()
+                  << " " << _op( structure ) << "\n";
+      }
+      while( not file.eof() );
+      __DEBUGTRYEND(, "Error while enumerating pifile.\n" )
+    }
+
 }

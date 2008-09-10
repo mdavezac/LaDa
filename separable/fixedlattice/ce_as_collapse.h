@@ -65,6 +65,8 @@ namespace CE
       typedef t_Traits :: t_Coefficients t_Coefficients;
       //! Type of the matrices.
       typedef t_Coefficients :: t_Matrix t_Matrix;
+      //! The type of the clusters.
+      typedef typename t_CEFit :: t_Clusters t_Clusters;
      
       //! constructor.
       CEasCollapse() { clusters_.reset( new t_Clusters ); }
@@ -114,7 +116,9 @@ namespace CE
       //! Allows manipulation of the coefficients' interface itself.
       t_Coefficients& coefficients_interface() { return coefficients_; }
       //! Randomizes the coefficients.
-      void randomize( typename t_Matrix :: value_type _howrandom )
+      void randomize( typename t_Matrix :: value_type _howrandom );
+      //! Initializes clusters and mapping.
+      template< class T_CLUSTERS > void init( const T_CLUSTERS &_Clusters );
 
     protected:
       //! Reference to the CE::Fit object.
@@ -151,6 +155,13 @@ namespace CE
       typename t_Matrix :: iterator i_c_end = coefficients().end();
       for(; i_c != i_c_end; ++i_c )
         *i_c = t_Type( opt::random::rng() - 5e-1 ) * _howrandom;
+    }
+  template< class T_TRAITS > template< class T_CLUSTERS >
+    void CEasCollapse<T_TRAITS> :: init( const T_CLUSTERS &_clusters )
+    {
+      std::copy( clusters.begin(), clusters.end(),
+                 std::back_inserter( *clusters_ ) );
+      cefit( *clusters_ );
     }
 
   namespace details

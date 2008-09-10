@@ -25,11 +25,6 @@ namespace CE
   template< class T_TRAITS, class T_HARMONICS > class MixedSeparables;
   //! \endcond
 
-  //! Computes predictions for all structures in PI file.
-  template< class T_TRAITS, class T_HARMONICS >
-    void enumerate_pifile( const std::string &_file,
-                           MixedSeparables< T_TRAITS, T_HARMONICS > &_harmonics );
-
   //! Prints out the separable to a stream.
   template<class T_TRAITS, class T_HARMONICS> 
     std::ostream& operator<<( std::ostream& _stream,
