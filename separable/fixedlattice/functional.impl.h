@@ -199,6 +199,8 @@ namespace Traits
         public:
           //! Newly rebound Separables function.
           typedef typename T_SEPARABLES ::template rebind< t_NewTraits > :: other other;
+          //! Newly rebound Separables function.
+          typedef type;
           //! Original Separables function.
           typedef T_SEPARABLES  original;
       };

@@ -6,9 +6,10 @@
 #include<boost/numeric/ublas/vector_proxy.hpp>
 #include<boost/numeric/ublas/matrix_proxy.hpp>
 #include<boost/numeric/ublas/operation.hpp>
-#include <boost/regex.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/tokenizer.hpp>
+#include<boost/regex.hpp>
+#include<boost/lexical_cast.hpp>
+#include<boost/tokenizer.hpp>
+#include<boost/fusion/algorithm/iteration/for_each.hpp>
 
 #include "prepare.h"
 
@@ -24,49 +25,14 @@ namespace CE
 #  define INCOLLAPSE2( code1, code2 ) \
      template< class T_TRAITS >  code1, code2 COLHEAD
 
-    INCOLLAPSE( struct ) :: make_ptrvector
-    {
-      typedef 
 
-    };
-    INCOLLAPSE( size_t ) :: dimensions() const 
-    {
-      size_t result(0);
-      foreach( const t_Collapse *collapse, *collapses_ )
-        result += collapse->self_()->self()->dimensions();
-      return result;
-    } 
-    INCOLLAPSE( size_t ) :: dof() const 
-    {
-      size_t result(0);
-      foreach( const t_Collapse &collapse, *collapses_ )
-        result += collapse.self()->dof();
-      return result;
-    }
-    INCOLLAPSE( size_t ) :: nbconfs() const 
-    {
-      size_t result(0);
-      foreach( const t_Collapse &collapse, *collapses_ )
-        result += collapse.self()->nbconfs();
-      return result;
-    } 
-    INCOLLAPSE( size_t ) :: current_dof() const 
-    {
-      size_t result(0);
-      foreach( const t_Collapse &collapse, *collapses_ )
-        if( collapse.self()->dimensions() < dim ) result += collapse.self()->dof();
-    }
-    INCOLLAPSE( void ) :: reset() 
-    {
-      foreach( const t_Collapse &collapse, *collapses_ )
-        collapse.self()->reset(); 
-    }
 
     INCOLLAPSE2(template< class T_MATRIX, class T_VECTOR > void) 
       :: create_A_n_b( T_MATRIX &_A, T_VECTOR &_b )
       {
-        __DEBUGTRYBEGIN
+        namespace bf = boost::fusion;
         namespace bblas = boost::numeric::ublas;
+        __DEBUGTRYBEGIN
         // Loop over inequivalent configurations.
         t_Vector X( current_dof() );
         std::fill( _A.data().begin(), _A.data().end(), 
@@ -79,23 +45,10 @@ namespace CE
           // allows leave-one-out, or leave-many-out.
           if( mapping().do_skip(i) )  continue;
 
-          size_t rangestart(0);
-          foreach( t_Collapse &_collapse, *collapses_ )
-          {
-            if( first_col->self()->dimensions() < dim ) continue;
-            const bblas::range colrange( rangestart,
-                                         rangestart + first_col->self()->dof() );
-      
-            // create the X vector.
-            bblas::vector_range< t_Vector > colX( X, colrange );
-            std::fill( colX.begin(), colX.end(), typename t_Vector::value_type(0) );
-            collapse.create_X( i, colX );
-            rangestart += first_col->self()->dof();
-          }
+          bf::for_each( *collapses_, ApplyCreateAnB<t_Vector>( X, i, *this ) );
           
-      
-          _A += first_col->self()->weight(i) * bblas::outer_prod( X, X ); 
-          _b += first_col->self()->weight(i) * mapping().target(i) * X;
+          _A += mapping().weight(i) * bblas::outer_prod( X, X ); 
+          _b += mapping().weight(i) * mapping().target(i) * X;
         }
         __DEBUGTRYEND(, "Error in Many::create_A_n_b()\n" )
       }
@@ -109,39 +62,11 @@ namespace CE
         foreach( t_Collapse &collapse, *collapses_ ) collapse.self()->dim = _dim;
         create_A_n_b( _A, _b );
 
-        size_t rangestart(0);
-        foreach( t_Collapse &_collapse, *collapses_ )
-        {
-          const bblas::range seprange( rangestart,
-                                       rangestart + collapse.self()->dof() );
-          bblas::matrix_range<T_MATRIX> sepmat( _A, seprange, seprange );
-          bblas::vector_range<T_VECTOR> sepvec( _b, seprange );
-          collapse.self()->regularization()( _A, _b, _dim); 
-          rangestart += collapse.self()->dof();
-        }
+        ApplyRegularization< T_MATRIX, T_VECTOR > applyreg( _A, _b, *this );
+        boost::fusion::for_each( *collapses_, applyreg )
         __DEBUGTRYEND(, "Error in Many::operator()()\n" )
       }
     
-    INCOLLAPSE( void ) :: randomize( typename t_Vector :: value_type _howrandom )
-    {
-      foreach( t_Collapse &collapse, *collapses_ )
-        collapse.self()->randomize( _howrandom );
-    }
-
-
-    INCOLLAPSE( void ) :: update_all()
-    {
-      __DEBUGTRYBEGIN
-      foreach( t_Collapse &collapse, *collapses_ ) collapse.self()->update_all();
-      __DEBUGTRYEND(, "Error in Many::update_all()\n" )
-    }
-    INCOLLAPSE( void ) :: update( types::t_unsigned _d )
-    {
-      __DEBUGTRYBEGIN
-      foreach( t_Collapse &collapse, *collapses_ ) collapse.self()->update(_d);
-      __DEBUGTRYEND(, "Error in Many::update()\n" )
-    }
-
     INCOLLAPSE( opt::ErrorTuple ) :: evaluate() const 
     {
       __DEBUGTRYBEGIN
@@ -155,24 +80,21 @@ namespace CE
       __DEBUGTRYEND(, "Error in Many::evaluate()\n" )
     }
 
-    INCOLLAPSE( typename COLHEAD::t_Matrix::value_type ) :: evaluate(size_t _n) const 
-    {
-      __DEBUGTRYBEGIN
-      typename t_Matrix :: value_type intermed(0);
-      foreach( t_Collapse &collapse, *collapses_ )
-        intermed += collapse.self()->evaluate(_n);
-
-      return intermed;
-      __DEBUGTRYEND(, "Error in Many::evaluate( size_t )\n" )
-    }
-
     INCOLLAPSE2( template< class T_COLLAPSE, class T_SEPARABLES > size_t )
       ::  add_as_is()
       {
-        separables_->push_back( new opt::Indirection< T_SEPARABLES > );
-        collapses_->push_back( new opt::Indirection< T_COLLAPSE > );
-        collapses_->back().self().init( separables_->back().self() );
-        return separables_->size() - 1;
+        namespace bm = boost::mpl;
+        namespace bg = boost::fusion;
+        typedef make_ptrlist::apply<T_COLLAPSE> :: type t_ColPtrList;
+        typedef make_ptrlist::apply<T_SEPARABLES> :: type t_SepPtrList;
+        bf::filter_view< t_ListOfSeparables,
+                         bm::is_same<_, t_ColPtrList > > colview( *collapse_ );
+        bf::filter_view< t_ListOfSeparables,
+                         bm::is_same<_, t_SepPtrList > > sepview( *separables_ );
+        bf::at<0>( colview ).push_back( new T_COLLAPSE );
+        bf::at<0>( sepview ).push_back( new T_SEPARABLES );
+        bf::at<0>( colview ).back().init( &bf::at<0>( sepview ).back() );
+        return bf::at<0>( sepview ).size() - 1;
       }
     INCOLLAPSE2( template< class T_COLLAPSE, class T_SEPARABLES > size_t )
       ::  wrap_n_add()
