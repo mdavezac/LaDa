@@ -202,14 +202,14 @@ namespace Traits
       protected:
         //! Type of the Regulations Policy
         typedef typename t_Traits :: t_RegPolicy
-                                  ::template rebind< newseparables > :: other 
+                                  ::template rebind< newseparables > :: type 
            newregpolicy;
         //! Type of the Policy.
         typedef typename t_Traits :: t_UpdatePolicy
                             ::template rebind< newseparables,
                                                typename t_Traits :: t_Mapping, 
                                                typename t_Traits :: t_Configurations >
-                            :: other newupdatepolicy;
+                            :: type newupdatepolicy;
       public:
         //! The rebound type.
         typedef typename T_COLLAPSE ::template rebind< newseparables,
@@ -217,7 +217,7 @@ namespace Traits
                                               newregpolicy,
                                               typename t_Traits :: t_Configurations,
                                               newupdatepolicy >
-                           :: other other;
+                           :: type type;
     };
   }
 } // end of traits namespace.

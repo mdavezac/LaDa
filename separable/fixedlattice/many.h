@@ -15,6 +15,7 @@
 #include<boost/fusion/adapted/mpl.hpp>
 #include<boost/fusion/include/mpl.hpp>
 #include<boost/fusion/container/list.hpp>
+#include<boost/fusion/algorithm.hpp>
 
 
 #include<iostream>
@@ -24,6 +25,8 @@
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <opt/indirection.h>
+
+#include "many.macros.h"
 
 //! \cond 
 namespace CE { template< class T_TRAITS > class Many; }
@@ -43,35 +46,91 @@ namespace Traits
     struct Many 
     {
       protected:
-        //! Transforms a separable into 
-        typedef SeparablesWithMatrixRange< boost::mpl::_ > make_sep;
-        typedef CollapseWithNewSeparables< boost::mpl::_ > make_col;
         //! Transforms an type into the type of a container of vectors.
-        typedef boost::ptr_list< boost::mpl::_ > :: other make_ptrlist;
-        //! List of types in a mpl::list type.
-        typedef boost::mpl::transform
+        typedef boost::ptr_list< boost::mpl::_ >  make_ptrlist;
+        //! \brief Vector of separables type.
+        //! \details After this double transformation, the mpl tuple should
+        //!          contain pointer containers to ranged separables.
+        typedef typename boost::mpl::transform
                 < 
-                  T_LIST_OF_SEPARABLES,
-                  boost::mpl::apply
-                  < 
-                    make_ptrlist,
-                    make_sep,
-                  > :: type 
-                >  t_MPLListOfSeparables;
-        //! List of types in a mpl::list type.
-        typedef mpl::transform< T_LIST_OF_COLLAPSES, make_ptrlist > :: type 
-                t_MPLListOfCollapses;
+                  typename boost::mpl::transform
+                  <
+                    T_LIST_OF_SEPARABLES,
+                    SeparablesWithMatrixRange< boost::mpl::_ >  
+                  > :: type,
+                  make_ptrlist
+                > :: type t_MPLVectorOfSeparables;
+        //! \brief Vector of collapse type.
+        //! \details After this double transformation, the mpl tuple should
+        //!          contain pointer containers to collapses acting on ranged separables.
+        typedef typename boost::mpl::transform
+                < 
+                  typename boost::mpl::transform
+                  <
+                    typename boost::mpl::transform
+                    < 
+                      T_LIST_OF_SEPARABLES,
+                      SeparablesWithMatrixRange< boost::mpl::_ >  
+                    > :: type,
+                    T_LIST_OF_COLLAPSES, 
+                    CollapseWithNewSeparables< boost::mpl::_, boost::mpl::_ >
+                  > :: type,
+                  make_ptrlist
+                >  :: type t_MPLVectorOfCollapses;
       public:
         //! Tuple of containers of separables.
-        typedef t_MPLListOfSeparables t_ListsOfSeparables;
+        typedef t_MPLVectorOfSeparables t_VectorsOfSeparables;
         //! Tuple of containers of collapses.
-        typedef t_MPLListOfSeparables t_ListsOfCollapses;
+        typedef t_MPLVectorOfSeparables t_VectorsOfCollapses;
         //! Type of the Mapping.
         typedef T_MAPPING t_Mapping;
         //! Type of the coefficients.
         typedef T_COEFFICIENTS t_Coefficients;
         //! Type of the vectors.
         typedef T_VECTOR t_Vector;
+
+        //! Meta-function for rebinding with new pararmeters.
+        template< class TT_LIST_OF_SEPARABLES = T_LIST_OF_SEPARABLES, 
+                  class TT_LIST_OF_COLLAPSES = T_LIST_OF_COLLAPSES,
+                  class TT_MAPPING = T_MAPPING,
+                  class TT_COEFFICIENTS = T_COEFFICIENTS, 
+                  class TT_VECTOR = T_VECTOR >
+        struct rebind
+        {
+          //! new rebound type.
+          typedef Many< TT_LIST_OF_SEPARABLES,
+                        TT_LIST_OF_COLLAPSES,
+                        TT_MAPPING,
+                        TT_COEFFICIENTS,
+                        TT_VECTOR > type;
+        };
+        //! Meta-function for rebinding with new mapping.
+        template< class TT_MAPPING = T_MAPPING >
+        struct rebind_with_new_mapping
+        {
+          //! new rebound type.
+          typedef Many< T_LIST_OF_SEPARABLES,
+                        T_LIST_OF_COLLAPSES,
+                        TT_MAPPING,
+                        T_COEFFICIENTS,
+                        T_VECTOR > type;
+        };
+    };
+
+    //! Changes mapping of a ::CE::Many collapse functor.
+    template< class T_MANYSEP, class T_NEW_MAPPING > class ChangeManyMapping
+    {
+        //! The old traits.
+        typedef typename T_MANYSEP :: t_Traits t_Traits;
+        //! The new traits with the new mapping.
+        typedef typename boost::mpl::apply1
+                         < 
+                           typename t_Traits :: rebind_with_new_mapping,
+                           T_NEW_MAPPING
+                         > :: type t_NewTraits;
+      public:
+        //! The resulting type.
+        typedef typename boost::mpl::apply1< typename T_MANYSEP :: rebind, t_NewTraits > type;
     };
   }
 
@@ -79,210 +138,14 @@ namespace Traits
 
 namespace CE
 {
-#define VOID_MFUNC( FunctionName ) Void_Unary_Apply ## FunctionName
-#define VOID_MFUNC_DECLARE( FunctionName ) \
-  struct ACC_METAFUNCTIONNAME( FunctionName )\
-  {\
-    template< class T > void operator()( T &_t ) \
-    {\
-      foreach( const typename T::value_type &_val, _t )\
-        _val.FunctionName(); \
-      return _r;\
-    }\
-  }; 
-#define ACC_MFUNC( FunctionName ) AccApply ## FunctionName
-#define ACC_MFUNC_DECLARE( FunctionName ) \
-  struct ACC_METAFUNCTIONNAME( FunctionName )\
-  {\
-    template< class T > size_t operator()( T &_t, size_t _r )\
-    {\
-      foreach( const typename T::value_type &_val, _t )\
-        _r += _val.FunctionName(); \
-      return _r;\
-    }\
-  }; 
-#define U_MFUNC( FunctionName, Arg ) UApply ## FunctionName( Arg )
-#define U_MFUNC_DECLARE( FunctionName, Type ) \
-  struct U_Apply ## FunctionName \
-  {\
-    Type &arg;\
-    U_Apply ## FunctionName ( const Type &_t ) : arg( _t ) {}\
-    U_Apply ## FunctionName ( const U_Apply ## Functioname &_c ) : arg( _c.arg ) {}\
-    template< class T > void operator()( T &_t )\
-    {\
-      foreach( const typename T::value_type &_val, _t )\
-        _val.FunctionName( arg );\
-    }\
-  };
-
-  namespace details
-  {
-    //! Redefine separables traits such that coefficients are a range.
-    template< class T_TRAITS, class T_COEFFICIENTS >
-    struct SepTraits
-    {
-      //! Mapping traits.
-      typedef typename T_TRAITS :: t_Mapping t_Mapping;
-      //! Policy traits.
-      typedef typename T_TRAITS :: t_Policy t_Policy;
-      //! Range coefficients traits.
-      typedef ::CE::Policy::MatrixRangeCoefficients t_Coefficients;
-      //! Range coefficients traits.
-      typedef typename t_Coefficients :: t_Matrix t_Matrix;
-      //! Range coefficients traits.
-      typedef typename T_TRAITS :: t_Vector t_Vector;
-    };
-    //! Redefines collapse traits with new separables.
-    template< class T_SEPARABLES, class T_TRAITS >
-    struct ColTraits
-    {
-      //! Type of the configuration matrix.
-      typedef typename T_TRAITS :: t_Configurations t_Configurations;
-      //! Type of the Mapping.
-      typedef T_SEPARABLES t_Separables;
-      //! Type of the Mapping.
-      typedef typename T_TRAITS :: t_Mapping t_Mapping;
-      //! Type of the Regulations Policy
-      typedef typename T_TRAITS :: t_RegPolicy t_RegPolicy;
-      //! Type of the Policy.
-      typedef typename T_TRAITS :: t_UpdatePolicy t_UpdatePolicy;
-    };
-  }
-
-  template< class T_TRAITS >
-    class Many 
-    {
-      public:
-        //! Type of the traits.
-        typedef T_TRAITS t_Traits;
-        //! Type of the of separables function.
-        typedef opt::IndirectionBase  t_Separables;
-        //! Type of the of separables function.
-        typedef opt::IndirectionBase  t_Collapse;
-        //! \brief Type of the matrix coefficients.
-        typedef typename t_Traits :: t_Coefficients t_Coefficients;
-        //! \brief Type of the matrix range.
-        //! \details Necessary interface for minimizer.
-        typedef typename t_Traits :: t_Coefficients t_Matrix;
-        //! Type of the vectors.
-        typedef typename t_Traits :: t_Vector t_Vector;
-        //! Type of the container of separables.
-        typedef boost::shared_ptr< t_ListsOfCollapse > t_ListsOfCollapses;
-        //! Type of the container of separables.
-        typedef boost::shared_ptr< t_ListsOfSeparables > t_ListsOfSeparables;
-        //! Type of the general mapping.
-        typedef typename t_Traits :: t_Mapping t_Mapping;
-
-
-        //! Constructor.
-        Many() : separables_( new t_CtnrSeparables ),
-                 collapses_( new t_Collapses ), dim(0) {}
-        //! Copy Constructor.
-        Many( const Many& _c ) : separables_( _c.separables_ ),
-                                 collapses_( _c.collapses ),
-                                 dim( _c.dim ), mapping_( _c.mapping_ ),
-                                 coefficients_( _c.coefficients_ ) {}
-        //! Destructor.
-        ~Many() {}
-
-        //! Creates the fitting matrix and target vector.
-        template< class T_MATRIX, class T_VECTOR >
-          void operator()( T_MATRIX &_A, T_VECTOR &_b,
-                           types::t_unsigned _dim );
-        //! Evaluates square errors.
-        opt::ErrorTuple evaluate() const;
-        //! Predicts target value of a structure.
-        typename t_Matrix :: value_type evaluate( size_t _n ) const
-         { return boost::fusion::accumulate( *collapses_, ApplyEvaluateOne(_n) ); }
-
-
-        //! \brief Updates the separable and copies the eci from column 0 to all
-        //!        other columns.
-        void update_all();
-         { return boost::fusion::for_each( *collapses_, VOID_MFUNC(update_all)() ); }
-        //! Updates the separable and copies the eci from column d to column 0.
-        void update( types::t_unsigned _d )
-         { return boost::fusion::for_each( *collapses_, U_MFUNC(update)(_d) ); }
-        //! Resets collapse functor.
-        void reset();
-         { return boost::fusion::accumulate( *collapses_, VOID_MFUNC(reset)() ); }
-
-        //! Returns the number of dimensions.
-        size_t dimensions() const
-         { return boost::fusion::accumulate( *collapses_, ACC_MFUNC(dimensions)() ); }
-        //! Returns the number of degrees of liberty (per dimension).
-        size_t dof() const
-         { return boost::fusion::accumulate( *collapses_, ACC_MFUNC(dof)() ); }
-        //! Returns the number of configurations.
-        size_t nbconfs() const
-         { return boost::fusion::accumulate( *collapses_, ACC_MFUNC(nbconfs)() ); }
-       
-        //! Randomizes both cluster energies and ecis.
-        void randomize( typename t_Vector :: value_type _howrandom )
-         { return boost::fusion::for_each( *collapses_, U_MFUNC(randomize)(_howrandom) ); }
-
-        //! Add new collapse and separables.
-        template< class T_COLLAPSE, class T_SEPARABLES > size_t add_as_is();
-        //! Add new collapse and separables.
-        template< class T_COLLAPSE, class T_SEPARABLES > size_t wrap_n_add();
-        
-        //! Returns reference to nth separable function.
-        t_Separables* separables( size_t _n ) { return (*separables_)[_n].self(); }
-        //! Returns constant reference to nth separable function.
-        const t_Separables* separables( size_t _n ) const
-          { return (*separables_)[_n].self(); }
-        //! Returns reference to nth collapse functor.
-        t_Collapse* collapse( size_t _n ) { return (*collapses_)[_n].self(); }
-        //! Returns constant reference to nth collapse functor.
-        t_Collapse* const collapse( size_t _n ) const
-          { return (*collapses_)[_n].self(); }
-        //! Returns the number of collapse and separables functions.
-        size_t size() const { return collapses_->size(); }
-        //! Returns a reference to the mapping.
-        t_Mapping mapping() { return mapping_; }
-        //! Returns a constant reference to the mapping.
-        const t_Mapping mapping() const { return mapping_; }
-        //! Initializes a collapse with rank and size.
-        void init( size_t _index, size_t _rank, size_t _dimensions );
-
-      protected:
-        //! Returns the number of degrees of liberty for current dimension.
-        size_t current_dof() const
-         { return boost::fusion::accumulate( *collapses_, ApplyCurrentDof(dim) ); }
-        //! Creates the _A and _b matrices for fitting.
-        template< class T_MATRIX, class T_VECTOR >
-          void create_A_n_b( T_MATRIX &_A, T_VECTOR &_b );
-
-        //! The container of separable functions.
-        t_ListsOfSeparables separables_;
-        //! The collapse functor associated with the separable functions.
-        t_ListsOfCollapses collapses_;
-        //! Current dimension being updated.
-        size_t dim;
-        //! The mapping to the structures ( e.g. leave-one-out, leave-many-out )
-        t_Mapping mapping_;
-        //! The coefficienst.
-        t_Coefficients coefficients_;
-
-        // metafunctions.
-        //! \cond
-        ACC_MFUNC_DECLARE(dimensions)
-        ACC_MFUNC_DECLARE(dof)
-        ACC_MFUNC_DECLARE(nbconfs)
-        struct ApplyCurrentDof;
-        VOID_MFUNC_DECLARE(reset);
-        template< class T_VECTOR > struct ApplyCreateAnB;
-        template< class T_MATRIX, class T_VECTOR > struct ApplyRegularization;
-        U_MFUNC_DECLARE(randomize, typename t_Vector::value_type );
-        VOID_MFUNC_DECLARE(update_all);
-        U_MFUNC_DECLARE(update, types::t_unsigned _d);
-        struct ApplyEvaluateOne;
-        //! \endcond
-    };
-
+  // Forward declaration.
+  //! \cond
+  template< class T_TRAITS > class Many;
+  //! \endcond
+  
   //! Prints mixed-approach description to a stream.
   template< class T_TRAITS >
-  std::ostream& operator<<( std::ostream& _stream, const Many<T_TRAITS> &_col );
+    std::ostream& operator<<( std::ostream& _stream, const Many<T_TRAITS> &_col );
 
   //! Initializes a Many separable function depending on string input and structures.
   template< class T_STRUCTURES, class T_TRAITS >
@@ -290,15 +153,156 @@ namespace CE
                              types::t_real _lambda, const T_STRUCTURES &_structures,
                              Many<T_TRAITS> &_many );
 
+
+  template< class T_TRAITS > class Many 
+  {
+      friend std::ostream& operator<< <T_TRAITS>( std::ostream& _stream, 
+                                                  const Many<T_TRAITS> &_col );
+    public:
+      //! Type of the traits.
+      typedef T_TRAITS t_Traits;
+      //! \brief Type of the matrix coefficients.
+      typedef typename t_Traits :: t_Coefficients t_Coefficients;
+      //! \brief Type of the matrix range.
+      //! \details Necessary interface for minimizer.
+      typedef typename t_Traits :: t_Coefficients t_Matrix;
+      //! Type of the vectors.
+      typedef typename t_Traits :: t_Vector t_Vector;
+      //! Type of the container of separables.
+      typedef typename t_Traits :: t_VectorsOfCollapse t_VectorsOfCollapses;
+      //! Type of the container of separables.
+      typedef typename t_Traits :: t_VectorsOfSeparables t_VectorsOfSeparables;
+      //! Type of the general mapping.
+      typedef typename t_Traits :: t_Mapping t_Mapping;
+
+
+      //! Constructor.
+      Many() : separables_( new t_VectorsOfSeparables ),
+               collapses_( new t_VectorsOfCollapses ), dim(0) {}
+      //! Copy Constructor.
+      Many( const Many& _c ) : separables_( _c.separables_ ),
+                               collapses_( _c.collapses ),
+                               dim( _c.dim ), mapping_( _c.mapping_ ),
+                               coefficients_( _c.coefficients_ ) {}
+      //! Destructor.
+      ~Many() {}
+
+      //! Creates the fitting matrix and target vector.
+      template< class T_MATRIX, class T_VECTOR >
+        void operator()( T_MATRIX &_A, T_VECTOR &_b,
+                         types::t_unsigned _dim );
+      //! Evaluates square errors.
+      opt::ErrorTuple evaluate() const;
+      //! Predicts target value of a structure.
+      typename t_Matrix :: value_type evaluate( size_t _n ) const
+       { return boost::fusion::accumulate( *collapses_, ApplyEvaluateOne(_n) ); }
+
+
+      //! \brief Updates the separable and copies the eci from column 0 to all
+      //!        other columns.
+      void update_all()
+       { return boost::fusion::for_each( *collapses_, VOID_MFUNC(update_all)() ); }
+      //! Updates the separable and copies the eci from column d to column 0.
+      void update( types::t_unsigned _d )
+       { return boost::fusion::for_each( *collapses_, U_MFUNC(update)(_d) ); }
+      //! Resets collapse functor.
+      void reset()
+       { return boost::fusion::accumulate( *collapses_, VOID_MFUNC(reset)() ); }
+
+      //! Returns the number of dimensions.
+      size_t dimensions() const
+       { return boost::fusion::fold( *collapses_, ApplyDimensions() ); }
+      //! Returns the number of degrees of liberty (per dimension).
+      size_t dof() const
+       { return boost::fusion::accumulate( *collapses_, ACC_MFUNC(dof)() ); }
+      //! Returns the number of configurations.
+      size_t nbconfs() const
+       { return boost::fusion::accumulate( *collapses_, ACC_MFUNC(nbconfs)() ); }
+     
+      //! Randomizes both cluster energies and ecis.
+      void randomize( typename t_Vector :: value_type _howrandom )
+       { return boost::fusion::for_each( *collapses_, U_MFUNC(randomize)(_howrandom) ); }
+
+      //! Add new collapse and separables.
+      template< size_t _index > size_t addone();
+      
+      //! Returns reference to nth separable function.
+      template< size_t _index >
+        typename boost::mpl::at< t_VectorsOfSeparables, boost::mpl::int_<_index> >&
+          separables( size_t _n ) { return boost::fusion::at<_index>(*separables_)[_n]; }
+      //! Returns constant reference to nth separable function.
+      template< size_t _index >
+        const typename boost::mpl::at< t_VectorsOfSeparables, boost::mpl::int_<_index> >&
+          separables( size_t _n ) const { return boost::fusion::at<_index>(*separables_)[_n]; }
+      //! Returns reference to nth collapse functor.
+      template< size_t _index >
+        typename boost::mpl::at< t_VectorsOfCollapses, boost::mpl::int_<_index> >&
+          separables( size_t _n ) { return boost::fusion::at<_index>(*collapses_)[_n]; }
+      //! Returns constant reference to nth collapse functor.
+      template< size_t _index >
+        const typename boost::mpl::at< t_VectorsOfCollapses, boost::mpl::int_<_index> >&
+          separables( size_t _n ) const{ return boost::fusion::at<_index>(*collapses_)[_n]; }
+      //! Returns the number of collapse and separables functions.
+      size_t size() const { return collapses_->size(); }
+      //! Returns a reference to the mapping.
+      t_Mapping mapping() { return mapping_; }
+      //! Returns a constant reference to the mapping.
+      const t_Mapping mapping() const { return mapping_; }
+      //! Initializes a collapse with rank and size.
+      template< size_t _index > void init( size_t _rank, size_t _dimensions );
+
+    public:
+      //! Meta-function for rebinding with new traits.
+      template< class TT_TRAITS >
+      struct rebind
+      {
+        //! new rebound type.
+        typedef Many<TT_TRAITS> type;
+      };
+
+    protected:
+      //! Returns the number of degrees of liberty for current dimension.
+      size_t current_dof() const
+       { return boost::fusion::accumulate( *collapses_, ApplyCurrentDof(dim) ); }
+      //! Creates the _A and _b matrices for fitting.
+      template< class T_MATRIX, class T_VECTOR >
+        void create_A_n_b( T_MATRIX &_A, T_VECTOR &_b );
+
+      //! The container of separable functions.
+      boost::shared_ptr< t_VectorsOfSeparables > separables_;
+      //! The collapse functor associated with the separable functions.
+      boost::shared_ptr< t_VectorsOfCollapses > collapses_;
+      //! Current dimension being updated.
+      size_t dim;
+      //! The mapping to the structures ( e.g. leave-one-out, leave-many-out )
+      t_Mapping mapping_;
+      //! The coefficienst.
+      t_Coefficients coefficients_;
+
+      // metafunctions.
+      //! \cond
+      struct ApplyDimensions;
+      ACC_MFUNC_DECLARE(dof)
+      ACC_MFUNC_DECLARE(nbconfs)
+      struct ApplyCurrentDof;
+      VOID_MFUNC_DECLARE(reset);
+      template< class T_VECTOR > struct ApplyCreateAnB;
+      template< class T_MATRIX, class T_VECTOR > struct ApplyRegularization;
+      U_MFUNC_DECLARE( randomize, .randomize(arg), typename t_Vector :: value_type )
+      VOID_MFUNC_DECLARE(update_all)
+      U_MFUNC_DECLARE( update, .update(arg), types::t_unsigned )
+      struct ApplyEvaluateOne;
+      U_MFUNC_DECLARE( assign, .dim = arg, types::t_unsigned )
+      template< class T_COEFFICIENTS > struct ApplyResize;
+      template< class T_STREAM > struct PrintToStream;
+      //! \endcond
+  };
+
 } // end of CE namespace
 
+#include "many.meta.impl.h"
 #include "many.impl.h"
+#include "many.macros.h"
 
-#define VOID_MFUNC
-#define VOID_MFUNC_DECLARE
-#define ACC_MFUNC
-#define ACC_MFUNC_DECLARE
-#define U_MFUNC
-#define U_MFUNC_DECLARE
 
 #endif

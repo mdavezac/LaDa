@@ -78,7 +78,7 @@ namespace CE
         template< class TT_TRAITS > struct rebind
         {
           //! new separable type.
-          typedef Collapse< TT_TRAITS > other;
+          typedef Collapse< TT_TRAITS > type;
         };
         //! Traits of this functor.
         typedef T_TRAITS t_Traits;

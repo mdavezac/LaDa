@@ -36,9 +36,9 @@ namespace Traits
          typedef typename t_OrigSeparables t_Traits t_OrigSepTraits;
          //! Type of the separable function.
          typedef typename SeparablesWithMatrixRange<t_OrigSeparables>
-                                                   :: other t_Separables;
+                                                   :: type t_Separables;
          //! New Collapse functor.
-         typedef typename CollapseWithNewSeparables<t_Separables> :: other t_Collapse;
+         typedef typename CollapseWithNewSeparables<t_Separables> :: type t_Collapse;
          //! Type of the configuration matrix.
          typedef typename t_Collapse :: t_Configurations t_Configurations;
          //! Type of the Mapping.

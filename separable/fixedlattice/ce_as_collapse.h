@@ -31,7 +31,7 @@ namespace Traits
       template< class TT_POLICY > struct rebindCEFit
       { 
         //! Type of the regularization policy.
-        typedef T_CEFIT< TT_POLICY > other;
+        typedef T_CEFIT< TT_POLICY > type;
       };
     };
   }
@@ -175,7 +175,7 @@ namespace CE
         template< class TT_CEFIT > struct rebind
         { 
           //! Type of the regularization policy.
-          typedef Regularization< TT_CEFIT > other;
+          typedef Regularization< TT_CEFIT > type;
         };
         //! Type of the separable function.
         typedef T_CEFIT t_CEFit;

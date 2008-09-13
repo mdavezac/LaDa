@@ -32,7 +32,7 @@ namespace CE
           template< class T_SEP, class T_MAP, class T_C = T_CONFS > struct rebind
           { 
             //! Type of the regularization policy.
-            typedef LowMemUpdate< T_SEP, T_MAP, T_C > other;
+            typedef LowMemUpdate< T_SEP, T_MAP, T_C > type;
           };
           //! Type of the separable functions.
           typedef T_SEPARABLES t_Separables;
@@ -90,7 +90,7 @@ namespace CE
           template< class T_SEP, class T_MAP, class T_C = T_CONFS > struct rebind
           { 
             //! Type of the regularization policy.
-            typedef HighMemUpdate< T_SEP, T_MAP, T_C > other;
+            typedef HighMemUpdate< T_SEP, T_MAP, T_C > type;
           };
           //! Type if the base class.
           typedef LowMemUpdate<T_SEPARABLES, T_MAPPING, T_CONFS > t_Base;
@@ -148,7 +148,7 @@ namespace CE
         template< class T_SEP > struct rebind
         { 
           //! Type of the regularization policy.
-          typedef NoReg< T_SEP > other;
+          typedef NoReg< T_SEP > type;
         };
         //! Type of the separable function.
         typedef T_SEPARABLES t_Separables;
@@ -176,7 +176,7 @@ namespace CE
         template< class T_SEP > struct rebind
         { 
           //! Type of the regularization policy.
-          typedef Regularization< T_SEP > other;
+          typedef Regularization< T_SEP > type;
         };
         //! Type of the separable function.
         typedef T_SEPARABLES t_Separables;

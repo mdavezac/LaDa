@@ -17,6 +17,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/mpl/vector.hpp>
 
 #include <opt/cgs.h>
 #include <opt/types.h>
@@ -29,6 +30,7 @@
 #include <ce/cluster.h>
 #include <ce/regularization.h>
 #include <ce/harmonic.h>
+#include <ce/fit.h>
 
 #include <opt/leave_many_out.h>
 
@@ -40,6 +42,7 @@
 #include "methods.h"
 #include "mixedfunctional.h"
 #include "many.h"
+#include "ce_as_collapse.h"
 
 #include <revision.h>
 #define __PROGNAME__ "Mixed Approach: CE and Sum of Separable functions on a fixed lattice." 
@@ -267,9 +270,6 @@ int main(int argc, char *argv[])
   allsq.linear_solver.tolerance = dtolerance;
   allsq.linear_solver.verbose = verbosity >= print_llsq;
 
-  // Type of the Many collapse functor type.
-  typedef Traits::CE::Many<> t_ManyTraits;
-  typedef CE::Many< t_ManyTraits > t_ManyCollapses;
   // Separables traits.
   typedef Traits::CE::Separables< CE::Mapping::VectorDiff<2> > t_FunctionTraits;
   typedef CE::Separables< t_FunctionTraits > t_Function;
@@ -285,14 +285,21 @@ int main(int argc, char *argv[])
   // CE fit functor.
   typedef CE::Fit< CE::FittingPolicy::PairReg<> > t_CEFit;
   typedef Traits::CE::CEasCollapse< CE::FittingPolicy::PairReg<>,
-                                    CE::Fit, CE::MatrixRangeCoefficients > t_CECollapse;
+                                    CE::Fit, CE::MatrixRangeCoefficients > t_CECollapseTraits;
+  typedef CE::CEasCollapse< t_CECollapseTraits > t_CECollapse;
+  typedef boost::mpl::vector< t_Collapse, t_CECollapse > t_Collapses;
+  typedef boost::mpl::vector< t_Function, t_CEFit > t_Separables;
+  const size_t sepindex(0);
+  const size_t ceindex(1);
 
+  typedef Traits::CE::Many<t_Collapses, t_Separables> t_ManyTraits;
+  typedef CE::Many< t_ManyTraits > t_ManyCollapses;
   // Creates Many collapses functor.
   t_ManyCollapses many;
 
   // Creates ce fit object.
-  const ceindex = many.add_as_is< t_CECollapse, t_CEFit >();
-  t_CEFit &cefit = *many.separables( ceindex )->self();
+  const cefit_index = many.addone<ceindex>();
+  t_CEFit &cefit( many.separables<ceindex>( cefit_index ) );
   Crystal::read_ce_structures( dir / "LDAs.dat", cefit.structures() );
   if( verbosity >= print_data )
     std::for_each
@@ -358,12 +365,12 @@ int main(int argc, char *argv[])
     if( J1 ) --size;
     std::cout << "Retained " << size << " pair figures.\n";
   }
-  many.collapse( ceindex )->self()->init( clusters );
+  many.collapse<ceindex>( cefit_index ).init( clusters );
   clusters.clear();
 
 
   // add other collapse functor.
-  init_many_collapses( bdesc, rank, lambda, cefit.structures(), many );
+  init_many_collapses<sepindex>( bdesc, rank, lambda, cefit.structures(), many );
   
 
   opt::NErrorTuple nerror( opt::mean_n_var( cefit.structures() ) ); 
@@ -419,9 +426,12 @@ int main(int argc, char *argv[])
   // fitting.
   if( doloo )
   {
-    typedef CE::Mapping::ExcludeOne< t_ManyTraits::t_Mapping > t_looMapping;
-    typedef Traits::CE::Many< t_looMapping > t_looManyTraits;
-    typedef Traits::CE::Many< t_looManyTraits > t_looMany;
+    typedef CE :: Mapping
+               :: ExcludeOne< typename t_ManyCollapses :: t_Traits
+                                                       :: t_Mapping > t_looMapping;
+    typedef typename Traits :: CE 
+                            :: ChangeManyMapping< t_ManyCollapses, t_looMapping > 
+                            :: type t_looMany;
     t_looMany loomany( many );
     loomany.collapse()->self()->mapping().do_exclude = true;
     std::cout << "Starting Leave-One-Out Procedure.\n";
@@ -433,9 +443,12 @@ int main(int argc, char *argv[])
   if( leavemanyout.do_perform )
   {
     typedef std::vector< types::t_unsigned > t_Excluded;
-    typedef CE::Mapping::ExcludeMany< t_ManyTraits::t_Mapping,
-                                      t_Excluded* > t_lmoMapping;
-    typedef Traits::CE::Many< t_lmoMapping > t_lmoManyTraits;
+    typedef CE :: Mapping
+               :: ExcludeMany< typename t_ManyCollapses :: t_Traits :: t_Mapping,
+                               t_Excluded > t_lmoMapping;
+    typedef typename Traits :: CE 
+                            :: ChangeManyMapping< t_ManyCollapses, t_lmoMapping > 
+                            :: type t_looMany;
     typedef Traits::CE::Many< t_lmoManyTraits > t_lmoMany;
 
     t_lmoMany lmomany( many );

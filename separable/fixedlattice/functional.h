@@ -85,7 +85,7 @@ namespace CE
         template< class TT_TRAITS > struct rebind
         {
           //! new separable type.
-          typedef Separables< TT_TRAITS > other;
+          typedef Separables< TT_TRAITS > type;
         };
         //! Type of traits for this class.
         typedef T_TRAITS t_Traits;
@@ -173,7 +173,7 @@ namespace CE
       template< class T_MAP > struct rebind
       {
         //! Type of the rebound policy.
-        typedef DimensionMatrix<T_MAP> other; 
+        typedef DimensionMatrix<T_MAP> type; 
       };
       //! type of the mapping.
       typedef T_MAPPING t_Mapping;
