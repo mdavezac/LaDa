@@ -32,7 +32,7 @@ namespace CE
           // allows leave-one-out, or leave-many-out.
           if( mapping().do_skip(i) )  continue;
 
-          bf::for_each( *collapses_, ApplyCreateAnB<t_Vector>( X, i, *this ) );
+          bf::transform( *collapses_, ApplyCreateAnB<t_Vector>( X, i, *this ) );
           
           _A += mapping().weight(i) * bblas::outer_prod( X, X ); 
           _b += mapping().weight(i) * mapping().target(i) * X;
@@ -46,11 +46,11 @@ namespace CE
         __DEBUGTRYBEGIN
         namespace bblas = boost::numeric::ublas;
         dim = _dim;
-        boost::fusion::for_each( collapses_, U_MFUNC( assign )(dim) );
+//       boost::fusion::for_each( collapses_, U_MFUNC( assign )(dim) );
         create_A_n_b( _A, _b );
 
         ApplyRegularization< T_MATRIX, T_VECTOR > applyreg( _A, _b, *this );
-        boost::fusion::for_each( *collapses_, applyreg );
+        boost::fusion::transform( *collapses_, applyreg );
         __DEBUGTRYEND(, "Error in Many::operator()()\n" )
       }
     
@@ -96,8 +96,8 @@ namespace CE
       
         // Now computes rank and dimensions.
         coefficients_.resize( dof(), dimensions() );
-        boost::fusion::for_each( *collapses_,
-                                 ApplyResize<const t_Coefficients>( coefficients_ ) );
+        boost::fusion::transform( *collapses_,
+                                  ApplyResize<const t_Coefficients>( coefficients_ ) );
       }
 
   template< class T_TRAITS >
@@ -105,7 +105,7 @@ namespace CE
   {
     typedef typename Many<T_TRAITS> :: template
                                        PrintToStream< std::ostream > PrintToStream;
-    boost::fusion::for_each( *_many.separables_, PrintToStream( _stream ) );
+//   boost::fusion::transform( *_many.separables_, PrintToStream( _stream ) );
     return _stream;
   }
 
@@ -147,12 +147,12 @@ namespace CE
     {
       coefficients_ = _many.coefficients();
       norms_.clear();
-      boost::fusion::for_each( *_many.collapses_, Save( norms_ ) );
+      boost::fusion::transform( *_many.collapses_, Save( norms_ ) );
     }
    template< class T_MANY > void ManyState :: reset( T_MANY& _many ) const
    {
      _many.coefficients() = coefficients_;
-     boost::fusion::for_each( *_many.collapses_, Reset( norms_ ) );
+     boost::fusion::transform( *_many.collapses_, Reset( norms_ ) );
    }
 
 

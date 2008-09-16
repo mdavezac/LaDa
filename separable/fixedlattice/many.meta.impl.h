@@ -3,6 +3,7 @@
 //
 
 //! \cond
+#include <boost/lambda/lambda.hpp>
 
 namespace CE
 {
@@ -11,7 +12,7 @@ namespace CE
     typedef size_t result_type;
     template< class T > result_type operator()( const T &_t, size_t _r )
     {
-      foreach( const typename T::value_type &_val, _t )
+      foreach( const typename boost::remove_pointer<typename T::value_type> :: type &_val, _t )
         _r = std::max( _r, _val.dimensions() );
       return _r;
     }
@@ -19,8 +20,8 @@ namespace CE
   INMANY( struct ) :: ApplyCurrentDof
   {
     typedef size_t result_type;
-    size_t &dim_;
-    ApplyCurrentDof( size_t &_dim ) : dim_(_dim) {}
+    const size_t &dim_;
+    ApplyCurrentDof( const size_t &_dim ) : dim_(_dim) {}
     ApplyCurrentDof( const ApplyCurrentDof &_c ) : dim_(_c.dim_) {}
     template< class T > result_type operator()( T &_t, size_t _r )
     {
@@ -39,7 +40,7 @@ namespace CE
     ApplyCreateAnB   ( T_VECTOR &_X, const size_t _i, const Many& _self )
                    : X_(_X), i_(_i), self_(_self), rangestart(0) {}
     ApplyCreateAnB   ( const ApplyCreateAnB & _c )
-                   : X_(_c.X_), i_(_c.i_), self_(_c.self), rangestart(_c.rangestart) {}
+                   : X_(_c.X_), i_(_c.i_), self_(_c.self_), rangestart(_c.rangestart) {}
     template< class T > result_type operator()( T &_t )
     {
       namespace bblas = boost::numeric::ublas;
@@ -70,7 +71,7 @@ namespace CE
       ApplyRegularization   ( const ApplyRegularization &_c )
                           : A_(_c.A_), b_(_c.b_), self_(_c.self_),
                             rangestart(_c.rangestart) {}
-      template< class T > result_type operator()( T &_t )
+      template< class T > result_type operator()( T &_t ) 
       {
         namespace bblas = boost::numeric::ublas;
         foreach( const typename T::value_type &_val, _t )
@@ -126,16 +127,46 @@ namespace CE
 
   INMANY( template< class T_STREAM > struct ) :: PrintToStream
   {
-    typedef void result_type;
+    typedef T_STREAM& result_type;
     mutable T_STREAM &stream_;
     PrintToStream( T_STREAM &_stream ) : stream_(_stream) {}
     PrintToStream( PrintToStream &_c ) : stream_(_c.stream_) {}
     template< class T > result_type operator()( const T &_t ) const
     {
+      namespace bl = boost::lambda;
       foreach( const typename T::value_type &_val, _t )
-        stream_ << _val << "\n";
+        stream_  << _val << "\n";
       return stream_;
     }
+  };
+
+  namespace details
+  {
+    struct add_ref
+    {
+        template<typename Sig>
+        struct result;
+    
+        template<typename U>
+        struct result<add_ref(U)>
+        : boost::add_reference<U>
+        {};
+    
+        template <typename T>
+        T& operator()(T& x) const
+          { return x; }
+    };
+  }
+
+  INMANY( template< class T > struct ) ::  ViewAsRef : boost::fusion::transform_view
+              < 
+                T, details :: add_ref
+              >
+  {
+    typedef boost::fusion::transform_view
+            < T, details::add_ref > t_Base;
+
+    explicit ViewAsRef( T& _v ) : t_Base( _v, details::add_ref() ) {}
   };
 
   struct ManyState :: Save
@@ -164,11 +195,11 @@ namespace CE
           : i_norm( _norms.begin() ), i_norm_end( _norms.end() ) {}
     Reset( const Reset &_c ) : i_norm( _c.i_norm ), i_norm_end( i_norm_end ) {}
     template< class T >
-      result_type operator()( const T& _t )
+      result_type operator()( T& _t )
           { foreach( typename T::value_type &_val, _t ) call( _t ); }
     template< class T >
       typename boost::enable_if< ManyState::has_norms<T>, result_type > :: type
-        call( T& _t ) 
+        call( T& _t )
         {
           __ASSERT( i_norm_end - i_norm > 0, "Iterator out of range.\n" )
           _t.norms = *i_norm;
@@ -176,7 +207,7 @@ namespace CE
         }
     template< class T >
       typename  boost::disable_if< ManyState::has_norms<T>, result_type > :: type
-        call( const T& _t ) {}
+        call( T& _t ) {}
   };
 
   template<class T > class ManyState::has_norms
@@ -197,5 +228,7 @@ namespace CE
     Two (&test(...));
     enum { value = 1 == sizeof( has_norms::test( (T*)0 ) ) };
   };
+
+
 }
 //! \endcond

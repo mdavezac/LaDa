@@ -116,7 +116,7 @@ namespace CE
       CEasCollapse   ( t_CEFit& _fit ) 
                    : cefit_( _fit ), clusters_( new t_Clusters ) {}
       //! Copy constructor.
-      CEasCollapse   ( CEasCollapse& _c )
+      CEasCollapse   ( const CEasCollapse& _c )
                    : cefit_( _c.cefit_ ), clusters_(_c.clusters_),
                      mapping_( _c.mapping_), regularization_( _c.regularization_ ),
                      coefficients_(_c.coefficients_) {}

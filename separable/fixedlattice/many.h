@@ -23,13 +23,11 @@
 #include<boost/fusion/mpl.hpp>
 #include<boost/fusion/adapted.hpp>
 
-
 #include<iostream>
 #include<vector>
 
 #include <opt/types.h>
 #include <opt/debug.h>
-#include <opt/indirection.h>
 
 #include "many.macros.h"
 
@@ -211,34 +209,35 @@ namespace CE
       opt::ErrorTuple evaluate() const;
       //! Predicts target value of a structure.
       typename t_Matrix :: value_type evaluate( size_t _n ) const
-       { return boost::fusion::accumulate( *collapses_, 0, ApplyEvaluateOne(_n) ); }
+      {
+        return 0; } //boost::fusion::accumulate( viewasref( *collapses_ ), 0, ApplyEvaluateOne(_n) ); 
+//      { return boost::fusion::accumulate( *collapses_, 0, ApplyEvaluateOne(_n) ); }
 
 
       //! \brief Updates the separable and copies the eci from column 0 to all
       //!        other columns.
       void update_all()
-       { return boost::fusion::for_each( *collapses_, VOID_MFUNC(update_all)() ); }
+       { boost::fusion::transform( *collapses_, VOID_MFUNC(update_all)() ); }
       //! Updates the separable and copies the eci from column d to column 0.
       void update( types::t_unsigned _d )
-       { return boost::fusion::for_each( *collapses_, U_MFUNC(update)(_d) ); }
+       { boost::fusion::transform( *collapses_, U_MFUNC(update)(_d) ); }
       //! Resets collapse functor.
       void reset()
-       { return boost::fusion::for_each( *collapses_, VOID_MFUNC(reset)() ); }
+       { boost::fusion::transform( *collapses_, VOID_MFUNC(reset)() ); }
 
       //! Returns the number of dimensions.
       size_t dimensions() const
-       { return boost::fusion::fold( *collapses_, 0, ApplyDimensions() ); }
+       { return 0; } //boost::fusion::fold( viewasref(*collapses_), 0, ApplyDimensions() ); }
       //! Returns the number of degrees of liberty (per dimension).
       size_t dof() const
-       { return boost::fusion::accumulate( *collapses_, 0, ACC_MFUNC(dof)() ); }
+       { return 0; } //return boost::fusion::accumulate( viewasref(*collapses_), 0, ACC_MFUNC(dof)() ); }
       //! Returns the number of configurations.
       size_t nbconfs() const
-       { return boost::fusion::accumulate( *collapses_, 0, ACC_MFUNC(nbconfs)() ); }
+        { return 0; } //boost::fusion::accumulate( viewasref(*collapses_), 0, ACC_MFUNC(nbconfs)() ); }
      
       //! Randomizes both cluster energies and ecis.
       void randomize( typename t_Vector :: value_type _howrandom )
-       { return boost::fusion::for_each( *collapses_,
-                                          U_MFUNC(randomize)(_howrandom) ); }
+       { boost::fusion::transform( *collapses_, U_MFUNC(randomize)(_howrandom) ); }
 
       //! Add new collapse and separables.
       template< size_t _index > size_t addone();
@@ -290,7 +289,7 @@ namespace CE
     protected:
       //! Returns the number of degrees of liberty for current dimension.
       size_t current_dof() const
-       { return boost::fusion::accumulate( *collapses_, ApplyCurrentDof(dim) ); }
+       { return 0; } //boost::fusion::accumulate( viewasref(*collapses_), 0, ApplyCurrentDof(dim) ); }
       //! Creates the _A and _b matrices for fitting.
       template< class T_MATRIX, class T_VECTOR >
         void create_A_n_b( T_MATRIX &_A, T_VECTOR &_b );
@@ -317,11 +316,16 @@ namespace CE
       template< class T_MATRIX, class T_VECTOR > struct ApplyRegularization;
       U_MFUNC_DECLARE( randomize, .randomize(arg), typename t_Vector :: value_type )
       VOID_MFUNC_DECLARE(update_all)
-      U_MFUNC_DECLARE( update, .update(arg), types::t_unsigned& )
+      U_MFUNC_DECLARE( update, .update(arg), const types::t_unsigned& )
       struct ApplyEvaluateOne;
-      U_MFUNC_DECLARE( assign, .dim = arg, types::t_unsigned& )
+//     U_MFUNC_DECLARE( assign, .dim = arg, types::t_unsigned& )
       template< class T_COEFFICIENTS > struct ApplyResize;
       template< class T_STREAM > struct PrintToStream;
+      struct add_ref;
+      template< class T > struct ViewAsRef;
+      template< class T > ViewAsRef<T> static viewasref( T& _c ) { return ViewAsRef<T>(_c); }
+      template< class T > ViewAsRef<const T> static const_viewasref( const T& _c )
+        { return ViewAsRef<const T>(_c); }
       //! \endcond
   };
 

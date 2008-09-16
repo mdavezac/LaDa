@@ -45,8 +45,6 @@ namespace opt
       } 
       return res; 
     } 
-
-
 } // end of opt namespace
 
 #endif

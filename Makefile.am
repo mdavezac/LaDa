@@ -2,11 +2,11 @@
 # Version: $Id$
 #
 AUTOMAKE_OPTIONS = foreign
+include Files
 EXTRA_DIST = bootstrap.sh \
 	     $(EXTRA_FILES) \
              doxy.conf \
 	     Files
-include Files
 if DOBANDGAPOPT 
   DARWINSUBDIR = darwin
   PESCANSUBDIR = pescan_interface

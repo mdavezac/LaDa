@@ -33,13 +33,16 @@
    struct ACC_MFUNC( FunctionName )\
    {\
      typedef Type result_type;\
-     template< class T > result_type operator()( T &_t, result_type _r )\
+     template< class T > result_type operator()( T &_t, result_type result )\
      {\
-       foreach( const typename T::value_type &_val, _t )\
-         _r += _val.FunctionName(); \
-       return _r;\
+       typename T::const_iterator i_val = _t.begin(); \
+       typename T::const_iterator i_val_end = _t.end(); \
+       for(; i_val != i_val_end; ++i_val ) \
+         result += i_val->FunctionName(); \
+       return result;\
      }\
    }; 
+
 
 # ifdef U_MFUNC
 #  error U_MFUNC already defined.
@@ -53,7 +56,7 @@
    { \
      typedef void result_type;\
      ArgType arg;\
-     U_MFUNC( FunctionName ) ( const ArgType _t ) : arg( _t ) {}\
+     U_MFUNC( FunctionName ) ( ArgType _t ) : arg( _t ) {}\
      U_MFUNC( FunctionName ) ( const U_MFUNC( FunctionName ) &_c ) : arg( _c.arg ) {}\
      template< class T > result_type operator()( T &_t )\
      {\
