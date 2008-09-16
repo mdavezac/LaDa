@@ -188,36 +188,42 @@ namespace Traits
 {
   namespace CE
   {
-    template< class T_COLLAPSE, class T_NEWSEP >
-    struct CollapseWithNewSeparables
-    {
-      protected:
-        //! The old traits.
-        typedef typename T_COLLAPSE :: t_Traits t_Traits;
-      public:
-        //! The original collapse functor.
-        typedef T_COLLAPSE original;
-        //! The new separables function.
-        typedef T_NEWSEP newseparables;
-      protected:
-        //! Type of the Regulations Policy
-        typedef typename t_Traits :: t_RegPolicy
-                                  ::template rebind< newseparables > :: type 
-           newregpolicy;
-        //! Type of the Policy.
-        typedef typename t_Traits :: t_UpdatePolicy
-                            ::template rebind< newseparables,
-                                               typename t_Traits :: t_Mapping, 
-                                               typename t_Traits :: t_Configurations >
-                            :: type newupdatepolicy;
-      public:
-        //! The rebound type.
-        typedef typename T_COLLAPSE ::template rebind< newseparables,
-                                              typename t_Traits :: t_Mapping,
-                                              newregpolicy,
-                                              typename t_Traits :: t_Configurations,
-                                              newupdatepolicy >
-                           :: type type;
-    };
+    template< class T_SEPARABLES, class T_MAPPING,
+              class T_REGULARIZATIONPOLICY, class T_CONFS, class T_UPDATEPOLICY >
+      template< class T_NEWSEPARABLES >
+        struct Collapse< T_SEPARABLES, T_MAPPING, 
+                         T_REGULARIZATIONPOLICY, T_CONFS, T_UPDATEPOLICY >
+                       :: rebind_with_new_separables
+        {
+          protected:
+            //! The old traits.
+            typedef Collapse< T_SEPARABLES, T_MAPPING, 
+                              T_REGULARIZATIONPOLICY,
+                              T_CONFS, T_UPDATEPOLICY > t_Traits;
+            //! The new separables function.
+            typedef T_NEWSEPARABLES newseparables;
+            //! Type of the Regulations Policy
+            typedef typename t_Traits :: t_RegPolicy :: template rebind
+                             <
+                               newseparables 
+                             > :: type  newregpolicy;
+            //! Type of the Policy.
+            typedef typename t_Traits :: t_UpdatePolicy :: template rebind
+                             < 
+                               newseparables,
+                               typename t_Traits :: t_Mapping, 
+                               typename t_Traits :: t_Configurations
+                             > :: type newupdatepolicy;
+          public:
+            //! The rebound traits.
+            typedef typename t_Traits ::template rebind
+                             < 
+                               newseparables,
+                               typename t_Traits :: t_Mapping,
+                               newregpolicy,
+                               typename t_Traits :: t_Configurations,
+                               newupdatepolicy
+                             > :: type type;
+        };
   }
 } // end of traits namespace.

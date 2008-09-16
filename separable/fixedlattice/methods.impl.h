@@ -10,7 +10,9 @@ namespace CE
     namespace Policy
     {   
       template< class T_SAVEDOBJECT > template< class T_COLLAPSE, class T_MINIMIZER >
-        bool BestOf<T_SAVEDOBJECT> :: go( T_COLLAPSE &_col, T_MINIMIZER &_min, types::t_int _verb )
+        bool BestOf<T_SAVEDOBJECT> :: go( T_COLLAPSE &_col,
+                                          T_MINIMIZER &_min, 
+                                          types::t_int _verb )
         {
           __ASSERT( restarts == 0, "No runs required.\n" )
           _col.randomize( howrandom ); 
@@ -18,18 +20,15 @@ namespace CE
           __ASSERT( which > 2, "Not sure what to check.\n" )
           
           opt::ErrorTuple intermed = _min( _col.coefficients(), _col );
-          if( _verb >= 1 ) std::cout << "  trial " << nbrestarts << " " << intermed << "\n";
+          if( _verb >= 1 ) std::cout << "  trial " << nbrestarts
+                                     << " " << intermed << "\n";
           if(    nbrestarts == 0 
               or ( which == 0 and Fuzzy::gt( best.variance(), intermed.variance() )  )
               or ( which == 1 and Fuzzy::gt( best.mean(), intermed.mean() )  )
               or ( which == 2 and Fuzzy::gt( best.max(), intermed.max() )  ) )
           {
             best = intermed;
-            object = _col.coefficients();
-            norms.clear();
-            std::copy( _col.separables().norms.begin(), 
-                       _col.separables().norms.end(), 
-                       std::back_inserter( norms ) );
+            state = _col;
           }
           ++nbrestarts;
           return nbrestarts < restarts;
@@ -40,9 +39,7 @@ namespace CE
                                                       types::t_int _verb ) const
         {
           if( restarts == 1 ) return _min( _col.coefficients(), _col );
-          _col.coefficients() = object;
-          std::copy( norms.begin(), norms.end(), 
-                     _col.separables().norms.begin() );
+          state.reset(_col);
           return best; 
         }
     } // end of Policy namespace.
@@ -93,14 +90,18 @@ namespace CE
  
       typedef std::vector< std::vector< types::t_unsigned > >
                                     :: const_iterator const_iterator;
+      typedef typename T_COLLAPSE :: t_Traits t_CollapseTraits;
+      typedef typename t_CollapseTraits :: t_Mapping t_Mapping;
+      typedef typename t_Mapping :: t_Container t_Container;
+      t_Container& excluded = _collapse.mapping().excluded;
       const_iterator i_set = _lmo.sets.begin();
       const_iterator i_set_end = _lmo.sets.end();
       for(size_t n(0); i_set != i_set_end; ++i_set, ++n )
       {
         { // Fitting
           opt::ErrorTuple intermediate;
-          _collapse.mapping().excluded =
-             (typename T_COLLAPSE::t_Traits::t_Mapping::t_Container)&(*i_set);
+          excluded.resize( i_set->size() );
+          std::copy( i_set->begin(), i_set->end(), excluded.begin() );
           
           if( _lmo.verbosity >= 1 ) std::cout << " " << n
                                           << ". Training Errors: ";
@@ -141,7 +142,8 @@ namespace CE
         const types::t_real weight = _structure.weight;
         const std::string name = fs::path( _structure.name ).leaf() ;
      
-        typename T_COLLAPSE::t_Matrix::value_type predic( _collapse.evaluate(_n) );
+        typedef typename T_COLLAPSE::t_Traits::t_Coefficients::value_type t_Type; 
+        t_Type predic( _collapse.evaluate(_n) );
         opt::ErrorTuple error( _structure.energy - predic, _structure.weight );
         if( _verbose )
           std::cout << "  structure: " << std::setw(30) << name << "  "

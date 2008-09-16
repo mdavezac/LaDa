@@ -239,6 +239,12 @@ namespace CE
 
     public:
       using t_Policy :: structures;
+      //! Allows rebinding of the separables function.
+      template< class TT_POLICY > struct rebind
+      {
+        //! new separable type.
+        typedef Fit< TT_POLICY > type;
+      };
   };
 
   template< class T_POLICY >
@@ -286,6 +292,13 @@ namespace CE
         using t_Base :: nb_cls;
       public:
         using t_Base :: structures;
+
+       //! Allows rebinding of the separables function.
+       template< class TT_POLICY > struct rebind
+       {
+         //! new separable type.
+         typedef RegulatedFit< TT_POLICY > type;
+       };
     };
 
   namespace FittingPolicy

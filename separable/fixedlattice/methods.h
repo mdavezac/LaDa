@@ -40,12 +40,12 @@ namespace CE
                                  types::t_int ) const
             { return _minimizer( _collapse.efficients(), _collapse ); };
       };
-      template< class T_COEFFICIENTS >
+      template< class T_SAVEDOBJECT >
       class BestOf
       {
         public:
           //! Type of the saved object.
-          typedef T_COEFFICIENTS t_Coefficients;
+          typedef T_SAVEDOBJECT t_SavedObject;
           //! Which best to look at.
           types::t_unsigned which;
           //! How many restarts.
@@ -71,9 +71,7 @@ namespace CE
           //! Current number of restarts.
           opt::ErrorTuple best;
           //! Saved best trial.
-          t_Coefficients object;
-          //! Save normalization.
-          std::vector< typename t_Coefficients::value_type > norms;
+          t_SavedObject state;
       };
     }
     //! \endcond
@@ -92,7 +90,8 @@ namespace CE
         t_Policy policy;
 
         //! Constructor.
-        Fit( t_Structures &_structures ) : structures_( &_structures), verbosity(false) {}
+        Fit   ( t_Structures &_structures )
+            : structures_( &_structures), verbosity(false) {}
 
         template< class T_COLLAPSE, class T_MINIMIZER >
           opt::ErrorTuple operator()( T_COLLAPSE &_collapse, T_MINIMIZER &_minimizer )
@@ -100,7 +99,9 @@ namespace CE
             __TRYBEGIN
             policy.start();
             while( policy.go( _collapse, _minimizer, verbosity - 1 ) );
-            opt::ErrorTuple errors( policy.end( _collapse, _minimizer, verbosity - 1 ) );
+            opt::ErrorTuple errors( policy.end( _collapse,
+                                                _minimizer, 
+                                                verbosity - 1 ) );
             if( verbosity >= 2 )
               return check_all( _collapse, structures(), verbosity >= 3 );
             return errors;

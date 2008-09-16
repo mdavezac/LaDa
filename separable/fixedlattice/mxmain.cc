@@ -283,23 +283,27 @@ int main(int argc, char *argv[])
                                 t_UpdatePolicy > t_CollapseTraits;
   typedef CE::Collapse<t_CollapseTraits> t_Collapse;
   // CE fit functor.
-  typedef CE::Fit< CE::FittingPolicy::PairReg<> > t_CEFit;
-  typedef Traits::CE::CEasCollapse< CE::FittingPolicy::PairReg<>,
-                                    CE::Fit, CE::MatrixRangeCoefficients > t_CECollapseTraits;
+  typedef CE::CEasSeparables< CE::Fit< CE::FittingPolicy::PairReg<> > > t_CEFit;
+  typedef Traits::CE::CEasCollapse< t_CEFit,
+                                    CE::Policy::MatrixRangeCoefficients >
+                          t_CECollapseTraits;
   typedef CE::CEasCollapse< t_CECollapseTraits > t_CECollapse;
-  typedef boost::mpl::vector< t_Collapse, t_CECollapse > t_Collapses;
-  typedef boost::mpl::vector< t_Function, t_CEFit > t_Separables;
+  typedef boost::mpl::vector< t_Collapse, t_CECollapse > t_MPLCollapses;
+  typedef boost::mpl::vector< t_Function, t_CEFit > t_MPLSeparables;
   const size_t sepindex(0);
   const size_t ceindex(1);
 
-  typedef Traits::CE::Many<t_Collapses, t_Separables> t_ManyTraits;
+  typedef Traits::CE::Many<t_MPLSeparables, t_MPLCollapses> t_ManyTraits;
   typedef CE::Many< t_ManyTraits > t_ManyCollapses;
+  typedef t_ManyCollapses :: t_Traits :: t_Separables t_Separables;
+  typedef t_ManyCollapses :: t_Traits :: t_Collapses t_Collapses;
   // Creates Many collapses functor.
   t_ManyCollapses many;
 
   // Creates ce fit object.
-  const cefit_index = many.addone<ceindex>();
-  t_CEFit &cefit( many.separables<ceindex>( cefit_index ) );
+  const size_t cefit_index = many.addone<ceindex>();
+  boost::mpl::at<t_Separables, boost::mpl::int_<1> >::type
+     &cefit( many.separables<ceindex>( cefit_index ) );
   Crystal::read_ce_structures( dir / "LDAs.dat", cefit.structures() );
   if( verbosity >= print_data )
     std::for_each
@@ -357,20 +361,11 @@ int main(int argc, char *argv[])
       }
     }
   }
-  if( rmpairs and postoconfs.positions.size() )
-  {
-    CE::remove_contained_clusters( postoconfs.positions, clusters );
-    size_t size( clusters().size() );
-    if( J0 ) --size;
-    if( J1 ) --size;
-    std::cout << "Retained " << size << " pair figures.\n";
-  }
-  many.collapse<ceindex>( cefit_index ).init( clusters );
+  many.collapses<ceindex>( cefit_index ).init( clusters );
   clusters.clear();
 
-
   // add other collapse functor.
-  init_many_collapses<sepindex>( bdesc, rank, lambda, cefit.structures(), many );
+  CE::init_many_collapses( bdesc, rank, lambda, cefit.structures(), many );
   
 
   opt::NErrorTuple nerror( opt::mean_n_var( cefit.structures() ) ); 
@@ -378,7 +373,7 @@ int main(int argc, char *argv[])
   std::cout << "Shape of separable function: " << bdesc << "\n"
             << "Rank of separable function " << rank << "\n"
             << "Size of separable function "
-            << postoconfs.dof() << "\n"
+            << many.dof() << "\n"
             << "Data directory: " << dir << "\n"
             << "Number of data points: " << many.mapping().size() << " for " 
             << many.nbconfs()
@@ -416,7 +411,7 @@ int main(int argc, char *argv[])
   leavemanyout.extract_cmdl( vm );
 
   // Initializes best of fit.
-  CE::Method::Fit< CE::Method::Policy::BestOf< t_Function :: t_Matrix > >
+  CE::Method::Fit< CE::Method::Policy::BestOf< CE::ManyState > >
     fit( cefit.structures() );
   fit.verbosity = verbosity -1;
   fit.policy.restarts = bestof;
@@ -427,13 +422,13 @@ int main(int argc, char *argv[])
   if( doloo )
   {
     typedef CE :: Mapping
-               :: ExcludeOne< typename t_ManyCollapses :: t_Traits
-                                                       :: t_Mapping > t_looMapping;
-    typedef typename Traits :: CE 
-                            :: ChangeManyMapping< t_ManyCollapses, t_looMapping > 
-                            :: type t_looMany;
+               :: ExcludeOne< t_ManyCollapses :: t_Traits
+                                              :: t_Mapping > t_looMapping;
+    typedef Traits :: CE 
+                   :: ChangeManyMapping< t_ManyCollapses, t_looMapping > 
+                   :: type t_looMany;
     t_looMany loomany( many );
-    loomany.collapse()->self()->mapping().do_exclude = true;
+    loomany.mapping().do_exclude = true;
     std::cout << "Starting Leave-One-Out Procedure.\n";
     opt::t_ErrorPair errors;
     errors = CE::Method::leave_one_out( loomany, fit, allsq, verbosity - 1 );
@@ -444,12 +439,11 @@ int main(int argc, char *argv[])
   {
     typedef std::vector< types::t_unsigned > t_Excluded;
     typedef CE :: Mapping
-               :: ExcludeMany< typename t_ManyCollapses :: t_Traits :: t_Mapping,
+               :: ExcludeMany< t_ManyCollapses :: t_Traits :: t_Mapping,
                                t_Excluded > t_lmoMapping;
-    typedef typename Traits :: CE 
-                            :: ChangeManyMapping< t_ManyCollapses, t_lmoMapping > 
-                            :: type t_looMany;
-    typedef Traits::CE::Many< t_lmoManyTraits > t_lmoMany;
+    typedef Traits :: CE 
+                   :: ChangeManyMapping< t_ManyCollapses, t_lmoMapping > 
+                   :: type t_lmoMany;
 
     t_lmoMany lmomany( many );
     std::cout << "\nStarting leave-many out predictive fit." << std::endl;
@@ -465,7 +459,7 @@ int main(int argc, char *argv[])
     std::cout << "\nFitting using whole training set:" << std::endl;
     fit.verbosity = verbosity;
     nerror = fit( many, allsq );
-    many.collapse(ceindex)->self()->reassign();
+    many.collapses<ceindex>(0).reassign();
     std::cout << nerror << "\n"; 
     if( verbosity >= print_function or print.find("function") != std::string::npos )
       std::cout << many << "\n";

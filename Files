@@ -119,9 +119,10 @@ SEPARABLE_IMPL_H = cefitting.impl.h separable.impl.h collapse.impl.h \
 SEPARABLE_DOC = $(SEPARABLE_CC) $(SEPARABLE_H) $(SEPARABLE_IMPL_H)
 SEPARABLES_FXL_CC = prepare.cc
 SEPARABLES_FXL_H = colmappings.h sepmappings.h functional.h prepare.h collapse.h methods.h \
-                   mixed.h colpolicy.h mixedfunctional.h many.h
+                   mixed.h colpolicy.h mixedfunctional.h many.h ce_as_collapse.h
 SEPARABLES_FXL_IMPL_H = functional.impl.h collapse.impl.h methods.impl.h mixed.impl.h \
-                        colpolicy.impl.h mixedfunctional.impl.h many.impl.h
+                        colpolicy.impl.h mixedfunctional.impl.h many.impl.h \
+                        many.macros.h many.meta.impl.h ce_as_collapse.impl.h
 SEPARABLES_DOC = $(SEPARABLES_FXL_CC) $(SEPARABLES_FXL_H) $(SEPARABLES_FXL_IMPL_H)
 
 
@@ -136,6 +137,9 @@ VFF_DOC = $(VFF_H) $(VFF_IMPLS) $(VFF_CC)
 DOCS_H = revision.h
 DOCS =  beginners  crystal  fortran  functionals  ga  \
         input  mainpage  mpi  xmltagindex gainput executables
+SCRIPT_FILES = atat.pl  CE_to_ATAT_MC.pl  convert_from_atat.pl  escan_to_xml.pl\
+               input_template.xml  max_revision.pl  nxnxn.pl  send_all.pl
+
 ALL_DOCS = doxy.conf $(DOCS_H) \
            $(addprefix docsource/, $(DOCS)) \
            $(addprefix darwin/, $(DARWIN_LIB_DOC)) \
@@ -156,3 +160,6 @@ ALL_DOCS = doxy.conf $(DOCS_H) \
            $(addprefix separable/fixedlattice,$(SEPARABLES_DOC)) \
            $(addprefix vff/,$(VFF_FORTRAN_DOC)) \
            $(addprefix vff/,$(VFF_DOC)) 
+
+EXTRA_FILES =  $(addprefix docsource/, $(DOCS)) \
+               $(addprefix scripts/, $(SCRIPT_FILES)) 

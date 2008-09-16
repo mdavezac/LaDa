@@ -14,7 +14,8 @@
 # define VOID_MFUNC_DECLARE( FunctionName ) \
    struct VOID_MFUNC( FunctionName )\
    {\
-     template< class T > void operator()( T &_t ) \
+     typedef void result_type;\
+     template< class T > result_type operator()( T &_t ) \
      {\
        foreach( const typename T::value_type &_val, _t )\
          _val.FunctionName(); \
@@ -28,10 +29,11 @@
 #  error ACC_MFUNC_DECLARE already defined.
 # endif 
 # define ACC_MFUNC( FunctionName ) AccApply ## FunctionName
-# define ACC_MFUNC_DECLARE( FunctionName ) \
+# define ACC_MFUNC_DECLARE( FunctionName, Type ) \
    struct ACC_MFUNC( FunctionName )\
    {\
-     template< class T > size_t operator()( T &_t, size_t _r )\
+     typedef Type result_type;\
+     template< class T > result_type operator()( T &_t, result_type _r )\
      {\
        foreach( const typename T::value_type &_val, _t )\
          _r += _val.FunctionName(); \
@@ -49,10 +51,11 @@
 # define U_MFUNC_DECLARE(FunctionName,Code,ArgType) \
    struct U_MFUNC(FunctionName) \
    { \
+     typedef void result_type;\
      ArgType arg;\
-     U_MFUNC( FunctionName ) ( const size_t &_t ) : arg( _t ) {}\
+     U_MFUNC( FunctionName ) ( const ArgType _t ) : arg( _t ) {}\
      U_MFUNC( FunctionName ) ( const U_MFUNC( FunctionName ) &_c ) : arg( _c.arg ) {}\
-     template< class T > void operator()( T &_t )\
+     template< class T > result_type operator()( T &_t )\
      {\
        foreach( const typename T::value_type &_val, _t )\
          _val Code;\

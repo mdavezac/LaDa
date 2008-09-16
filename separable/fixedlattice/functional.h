@@ -53,6 +53,15 @@ namespace Traits
        typedef typename t_Coefficients :: t_Matrix t_Matrix;
        //! Type of vector.
        typedef T_VECTOR t_Vector;
+       //! Allows rebinding of the separables function traits.
+       template< class TT_MAPPING, class TT_POLICY, 
+                 class TT_COEFFICIENTS, class TT_VECTOR >
+        struct rebind
+        {
+          //! new type.
+          typedef Separables< TT_MAPPING, TT_POLICY,
+                              TT_COEFFICIENTS, TT_VECTOR > type;
+        };
      };
 
     template< class T_SEPARABLES >  struct SeparablesWithMatrixRange;

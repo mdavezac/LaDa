@@ -71,32 +71,34 @@ namespace CE
       namespace bm = boost::mpl;
       namespace bf = boost::fusion;
       typedef boost::mpl::int_< _index > N;
-      typedef typename bm::at<t_VectorsOfCollapses, N> :: type t_Collapse;
-      typedef typename bm::at<t_VectorsOfSeparables, N> :: type t_Separables;
+      typedef typename bm::at<t_Collapses, N> :: type t_collapse;
+      typedef typename bm::at<t_Separables, N> :: type t_separables;
 
-      bf::at<N>( *collapses_ ).push_back( new t_Collapse );
-      bf::at<N>( *separables_ ).push_back( new t_Separables );
-      bf::at<N>( *collapses_ ).back().init( &bf::at<N>( *separables_ ).back() );
+      bf::at<N>( *collapses_ ).push_back( new typename bm::at<t_Collapses, N> :: type );
+      bf::at<N>( *separables_ ).push_back( new t_separables );
+      bf::at<N>( *collapses_ ).back().init( bf::at<N>( *separables_ ).back() );
       return bf::at<N>( *separables_ ).size() - 1;
     }
 
-    INMANY( template< size_t _index > void ) :: init( size_t _rank, size_t _dimensions )
-    {
-      namespace bblas = boost::numeric::ublas;
-      namespace bf = boost::fusion;
-      namespace bm = boost::mpl;
-      // last collapse is set to fake range fake range 
-      const bblas :: range a( 0, _rank );
-      const bblas :: range b( 0, _dimensions );
-      typedef boost::mpl::int_< _index > N;
-      typedef typename bm::at<t_VectorsOfCollapses, N> :: type t_Collapse;
-      t_Collapse &collapse( bf::at<N>( *collapses_) );
-      collapse.coefficients_interfaces().set( coefficients_, a, b );
-
-      // Now computes rank and dimensions.
-      coefficients_.resize( dof(), dimensions() );
-      boost::fusion::for_each( *collapses_, ApplyResize<t_Coefficients>( coefficients_ ) );
-    }
+    INMANY( template< size_t _index > void )
+      :: init( size_t _rank, size_t _dimensions )
+      {
+        namespace bblas = boost::numeric::ublas;
+        namespace bf = boost::fusion;
+        namespace bm = boost::mpl;
+        // last collapse is set to fake range fake range 
+        const bblas :: range a( 0, _rank );
+        const bblas :: range b( 0, _dimensions );
+        typedef boost::mpl::int_< _index > N;
+        typedef typename bm::at<t_Collapses, N> :: type t_collapse;
+        t_collapse &collapse( bf::at<N>( *collapses_).back() );
+        collapse.coefficients_interface().set( coefficients_, a, b );
+      
+        // Now computes rank and dimensions.
+        coefficients_.resize( dof(), dimensions() );
+        boost::fusion::for_each( *collapses_,
+                                 ApplyResize<const t_Coefficients>( coefficients_ ) );
+      }
 
   template< class T_TRAITS >
   std::ostream& operator<<( std::ostream& _stream, const Many<T_TRAITS> &_many )
@@ -133,11 +135,26 @@ namespace CE
        __TRYCODE( postoconfs.create_positions( *i_tok );,
                   "Could not parse string " << _desc << "\n" )
        const size_t pos = _many.template addone<0>();
-       _many.template collapse<0>( pos ).init( _structures, postoconfs );
-       _many.template collapse<0>( pos ).regularization().lambda = _lambda;
+       _many.template collapses<0>( pos ).init( _structures, postoconfs );
+       _many.template collapses<0>( pos ).regularization().lambda = _lambda;
        _many.template init<0>( rank, postoconfs.dof() );
      }
      __DEBUGTRYEND(,"Error while creating Many collapse/separables.\n" )
    }
+  
+  template< class T_MANY >
+    void ManyState :: operator=( const T_MANY& _many )
+    {
+      coefficients_ = _many.coefficients();
+      norms_.clear();
+      boost::fusion::for_each( *_many.collapses_, Save( norms_ ) );
+    }
+   template< class T_MANY > void ManyState :: reset( T_MANY& _many ) const
+   {
+     _many.coefficients() = coefficients_;
+     boost::fusion::for_each( *_many.collapses_, Reset( norms_ ) );
+   }
+
+
 } // end of CE namespace.
 

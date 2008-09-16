@@ -259,7 +259,7 @@ int main(int argc, char *argv[])
 
 
     // Initializes best of fit.
-    CE::Method::Fit< CE::Method::Policy::BestOf< t_Function :: t_Matrix > > fit( structures );
+    CE::Method::Fit< CE::Method::Policy::BestOf< CE::CollapseState > > fit( structures );
     fit.verbosity = verbosity -1;
     fit.policy.restarts = bestof;
     fit.policy.which = which;

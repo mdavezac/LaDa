@@ -48,16 +48,49 @@ namespace Traits
       typedef T_CONFS t_Configurations;
       //! Type of the Mapping.
       typedef T_SEPARABLES t_Separables;
+      //! Type of the coefficients.
+      typedef typename t_Separables :: t_Coefficients :: t_Matrix t_Coefficients;
       //! Type of the Mapping.
       typedef T_MAPPING t_Mapping;
       //! Type of the Regulations Policy
       typedef T_REGULARIZATIONPOLICY t_RegPolicy;
       //! Type of the Policy.
       typedef T_UPDATEPOLICY t_UpdatePolicy;
+
+      //! Rebinds type.
+      template< class TT_SEPARABLES = t_Separables,
+                class TT_MAPPING = t_Mapping,
+                class TT_REGULARIZATIONPOLICY = t_RegPolicy,
+                class TT_CONFS = t_Configurations, 
+                class TT_UPDATEPOLICY = t_UpdatePolicy > 
+        struct rebind
+        {
+          //! Result type.
+          typedef Collapse< TT_SEPARABLES, TT_MAPPING,
+                            TT_REGULARIZATIONPOLICY, TT_CONFS, 
+                            TT_UPDATEPOLICY >  type;
+        };
+      //! Rebinds the traits with new separables.
+      template< class T_NEWSEP > struct rebind_with_new_separables;
     };
 
     //! Rebinds collapse with new separables.
-    template< class T_COLLAPSE, class T_NEWSEP > struct CollapseWithNewSeparables; 
+    template< class T_COLLAPSE, class T_NEWSEP > struct CollapseWithNewSeparables
+    { 
+      protected:
+        //! The new traits.
+        typedef typename T_COLLAPSE::t_Traits::template rebind_with_new_separables
+                         < 
+                           T_NEWSEP 
+                         > :: type t_NewTraits;
+      public:
+        //! Result type.
+        typedef typename T_COLLAPSE :: template rebind
+                         < 
+                           t_NewTraits
+                         > :: type type;
+    };
+
   }
 } // end of traits namespace.
 
@@ -157,10 +190,10 @@ namespace CE
         //! Returns a constant reference to the regularization.
         const t_RegPolicy& regularization() const { return regularization_; }
         //! Returns a reference to the coefficients.
-        typename t_Separables::t_Matrix& coefficients()
+        typename t_Separables::t_Coefficients::t_Matrix& coefficients()
           { return separables().coefficients(); }
         //! Returns a constant reference to the coefficients.
-        const typename t_Separables::t_Matrix& coefficients() const
+        const typename t_Separables::t_Coefficients::t_Matrix& coefficients() const
           { return separables().coefficients(); }
         //! Allows manipulation of the coefficients' interface itself.
         typename t_Separables :: t_Coefficients&
@@ -204,6 +237,34 @@ namespace CE
         //! Regularization.
         t_RegPolicy regularization_;
     };
+
+  //! Saves the state of a collapse object.
+  class CollapseState
+  {
+    public:
+      template< class T_COLLAPSE >
+        void operator=( const T_COLLAPSE& _c )
+        {
+          coefficients_ = _c.coefficients();
+          norms_ = _c.separables().norms;
+        }
+      template< class T_COLLAPSE >
+        void reset( T_COLLAPSE& _c ) const
+        {
+          _c.coefficients() = coefficients_;
+          _c.separables().norms = norms_;
+        }
+
+    protected:
+      //! Coefficients to save.
+      typedef boost::numeric::ublas::matrix<types::t_real> t_Coefficients;
+      //! Norms to save.
+      typedef boost::numeric::ublas::vector<types::t_real> t_Norms;
+      //! Coefficients to save.
+      t_Coefficients coefficients_;
+      //! Norms to save.
+      t_Norms norms_;
+  };
 
 }
 

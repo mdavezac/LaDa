@@ -192,10 +192,13 @@ namespace Traits
           //! Original traits.
           typedef typename T_SEPARABLES :: t_Traits t_Traits;
           //! New traits.
-          typedef Separables< typename t_Traits::t_Mapping,
-                              typename t_Traits::t_Policy,
-                              ::CE::Policy::MatrixRangeCoefficients,
-                              typename t_Traits::t_Vector > t_NewTraits;
+          typedef typename t_Traits ::template rebind
+                           < 
+                             typename t_Traits::t_Mapping,
+                             typename t_Traits::t_Policy,
+                             ::CE::Policy::MatrixRangeCoefficients,
+                             typename t_Traits::t_Vector
+                           > :: type t_NewTraits;
         public:
           //! Newly rebound Separables function.
           typedef typename T_SEPARABLES ::template rebind< t_NewTraits > :: type type;

@@ -1,8 +1,8 @@
 //
 //  Version: $Id$
 //
-#ifndef _CE_MANY_H_
-#define _CE_MANY_H_
+#ifndef _SEPARABLES_FIXEDLATTICE_CE_AS_COLLAPSE_H_
+#define _SEPARABLES_FIXEDLATTICE_CE_AS_COLLAPSE_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -16,24 +16,60 @@ namespace Traits
   namespace CE
   {
     //! A traits class for wrapping a CE fitting functor as a collapse functor.
-    template< class T_POLICY,
-              template<class> class T_CEFIT,
-              class T_COEFFICIENTS >
+    template< class T_CEFIT, class T_COEFFICIENTS >
     struct CEasCollapse
     {
-      //! Type of the policy.
-      typedef T_POLICY t_Policy;
       //! Type of the fitting functor.
-      typedef T_CEFIT<t_Policy> t_CEFit;
+      typedef T_CEFIT t_CEFit;
+      //! Type of the policy.
+      typedef typename t_CEFit :: t_Policy t_Policy;
       //! Type of the coefficients.
       typedef T_COEFFICIENTS t_Coefficients;
-      //! Helps to obtain a differently typed fitting functor.
-      template< class TT_POLICY > struct rebindCEFit
+      //! Helps to obtain a differently typed class.
+      template< class TT_CEFIT, class TT_COEFFICIENTS > struct rebind
       { 
-        //! Type of the regularization policy.
-        typedef T_CEFIT< TT_POLICY > type;
+        //! Resulting type.
+        typedef CEasCollapse< TT_CEFIT, TT_COEFFICIENTS > type;
+      };
+      //! Fake nullary functor
+      template< class T > struct rebind_with_new_separables
+      {
+        //! The same type.
+        typedef CEasCollapse< T_CEFIT, T_COEFFICIENTS > type;
       };
     };
+    //! \cond
+    namespace details
+    {
+      template< class T_MAPPING, class T_POLICY, 
+                class T_COEFFICIENTS, class T_VECTOR,
+                class T_FIT > struct CEasSeparables;
+    }
+    //! \endcond
+    //! Metafunction for wrapping a CE traits as Separables function traits.
+    template< class T_FIT,
+              class T_COEFFICIENTS = ::CE::Policy::MatrixRangeCoefficients >
+      struct WrapCEasSeparables
+      {
+        protected:
+          //! Type of the fitting function.
+          typedef T_FIT t_Fit;
+          //! Type of the coefficients.
+          typedef T_COEFFICIENTS t_Coefficients;
+          //! Type of the policy
+          typedef typename t_Fit :: t_Policy t_Policy;
+        public:
+          //! Result type.
+          typedef details::CEasSeparables
+                  < 
+                    void, t_Policy, t_Coefficients, 
+                    boost::numeric::ublas::vector
+                    < 
+                      typename t_Coefficients::t_Matrix::value_type
+                    >,
+                   T_FIT 
+                  > type;
+      };
   }
 }
 
@@ -51,36 +87,47 @@ namespace CE
   class CEasCollapse 
   {
     public:
+      //! Helps to obtain a differently typed class.
+      template< class TT_TRAITS > struct rebind
+      { 
+        //! Resulting type.
+        typedef CEasCollapse< TT_TRAITS > type;
+      };
       //! Type of the traits
       typedef T_TRAITS t_Traits;
       //! Type of the policy.
       typedef typename t_Traits :: t_Policy t_Policy;
       //! Type of the fitting functor.
-      typedef typename t_Traits :: t_CEFit t_Fit;
+      typedef typename t_Traits :: t_CEFit t_CEFit;
       //! Type of the mapping.
       typedef Mapping::Basic t_Mapping;
       //! Type of the mapping.
       typedef details::Regularization< t_CEFit > t_Regularization;
       //! Type of the coefficients.
-      typedef t_Traits :: t_Coefficients t_Coefficients;
+      typedef typename t_Traits :: t_Coefficients t_Coefficients;
       //! Type of the matrices.
-      typedef t_Coefficients :: t_Matrix t_Matrix;
+      typedef typename t_Coefficients :: t_Matrix t_Matrix;
       //! The type of the clusters.
       typedef typename t_CEFit :: t_Clusters t_Clusters;
      
       //! constructor.
-      CEasCollapse() { clusters_.reset( new t_Clusters ); }
+      CEasCollapse() : clusters_( new t_Clusters ), cefit_(NULL) {}
+      //! constructor.
+      CEasCollapse   ( t_CEFit& _fit ) 
+                   : cefit_( _fit ), clusters_( new t_Clusters ) {}
       //! Copy constructor.
       CEasCollapse   ( CEasCollapse& _c )
-                   : fit_( _c.fit_ ), clusters_(_c.clusters_),
-                     mapping_( _c.mapping_), regularization( _c.regularization_ ),
+                   : cefit_( _c.cefit_ ), clusters_(_c.clusters_),
+                     mapping_( _c.mapping_), regularization_( _c.regularization_ ),
                      coefficients_(_c.coefficients_) {}
-      //! constructor.
-      CEasCollapse( t_Fit& _fit ) : fit_( _fit ), clusters_( _c.clusters_ ) {}
+      
+      //! Sets the pointer to the fitting class.
+      void init( t_CEFit &_fit ) { cefit_ = &_fit; }
 
       //! Evaluates square errors for one structure.
       typename t_Matrix::value_type evaluate( size_t _n ) const
-       { return bblas::inner_prod( coefficients(), cefit().pis[ _n ] ); }
+       { return boost::numeric
+                     ::ublas::inner_prod( coefficients(), cefit().pis[ _n ] ); }
 
       //! Updates the scales vector and  normalizes.
       void update_all() {}
@@ -106,7 +153,7 @@ namespace CE
       const t_Regularization& regularization() const { return regularization_; }
       //! Creates an X vector for fitting, for a single rank.
       template< class T_VECTOR > void create_X( size_t _i, size_t, T_VECTOR &_out )
-        { std::copy( cefit.pis[_i].begin(), cefit.pis[_i].end(), X.begin() ); }
+        { std::copy( cefit.pis[_i].begin(), cefit.pis[_i].end(), _out.begin() ); }
       //! Reassigns clusters.
       void reassign();
       //! Returns a reference to the coefficients.
@@ -121,8 +168,12 @@ namespace CE
       template< class T_CLUSTERS > void init( const T_CLUSTERS &_Clusters );
 
     protected:
+      //! Returns a reference to the fitting object.
+      t_CEFit& cefit() { return *cefit_; }
+      //! Returns a constant reference to the fitting object.
+      const t_CEFit& cefit() const { return *cefit_; }
       //! Reference to the CE::Fit object.
-      t_Fit &fit_;
+      t_CEFit *cefit_;
       //! The classes of equivalent clusters for mixing.
       boost::shared_ptr<t_Clusters> clusters_;
       //! the mapping from configuration to clusters.
@@ -134,75 +185,27 @@ namespace CE
 
   };
 
-  template< class T_TRAITS > void CEasCollapse<T_TRAITS> :: reassign()
-  {
-    namespace bl = boost::lambda;
-    __DEBUGTRYBEGIN
-    __ASSERT( coefficients().size() != clusters_->size(), "Inconsistent sizes.\n")
- 
-    typename T_VECTOR :: const_iterator i_eci = coefficients().begin();
-    foreach( t_Clusters::value_type & _clusters, clusters() )
-    {
-      foreach( ::CE::Cluster & _cluster, _clusters ) _cluster.eci = *i_eci;
-      ++i_eci;
-    }
-    __DEBUGTRYEND(,"Error in CEasCollapse::reassign().\n" )
-  }
-  template< class T_TRAITS >
-    void CEasCollapse<T_TRAITS> :: randomize( typename t_Matrix :: value_type _howrandom )
-    {
-      typename t_Matrix :: iterator i_c = coefficients().begin();
-      typename t_Matrix :: iterator i_c_end = coefficients().end();
-      for(; i_c != i_c_end; ++i_c )
-        *i_c = t_Type( opt::random::rng() - 5e-1 ) * _howrandom;
-    }
-  template< class T_TRAITS > template< class T_CLUSTERS >
-    void CEasCollapse<T_TRAITS> :: init( const T_CLUSTERS &_clusters )
-    {
-      std::copy( clusters.begin(), clusters.end(),
-                 std::back_inserter( *clusters_ ) );
-      cefit( *clusters_ );
-    }
-
-  namespace details
-  {
-    //! \brief Wrapper around CE::RegulatedFit regularization.
-    template< class T_CEFIT >
-    class Regularization : public CE::Policy::NoReg< T_CEFIT >
+  //! \brief Wraps a CE::Fit class to include separables style metafunctions.
+  template< class T_CEFIT, 
+            class T_TRAITS = typename Traits::CE::WrapCEasSeparables<T_CEFIT>::type >
+    class CEasSeparables : public T_CEFIT
     {
       public:
-        //! Helps to obtain a differently typed regularization.
-        template< class TT_CEFIT > struct rebind
-        { 
-          //! Type of the regularization policy.
-          typedef Regularization< TT_CEFIT > type;
-        };
-        //! Type of the separable function.
+        //! Type of the traits.
+        typedef T_TRAITS t_Traits;
+        //! Type of the fitting function.
         typedef T_CEFIT t_CEFit;
-
-        //! Constructor
-        Regularization() : CE::Policy::NoReg<t_CEFit>() {};
-        //! Copy Constructor.
-        template <class TT_CEFIT> 
-          Regularization   ( const Regularization<TT_CEFIT> &_c )
-                         : CE::Policy::NoReg<t_CEFit>( _c ) {};
-        //! Copy Constructor.
-        template <class TT_SEPARABLES> 
-          Regularization   ( const CE::Policy::NoReg<TT_CEFIT> &_c )
-                         : CE::Policy::NoReg<t_CEFit>( _c ) {};
-
-        //! Would modify A matrix and b vector.
-        template< class T_MATRIX, class T_VECTOR >
-          void operator()( T_MATRIX &_m, T_VECTOR &_v, size_t _dim )
-            { if( _dim == 1 ) separables_.other_A_n_b( _m, _v ); };
-
-        using CE::Policy::NoReg<t_CEFit> :: init;
-      protected:
-        using CE::Policy::NoReg<t_CEFit> :: separables_;
+        //! Allows rebinding of the fake separables function traits.
+        template< class TT_TRAITS >
+          struct rebind
+          {
+            //! new type.
+            typedef CEasSeparables< T_CEFIT, TT_TRAITS > type;
+          };
     };
-  }
-
 
 }
+
+#include "ce_as_collapse.impl.h"
 #endif
 
