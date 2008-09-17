@@ -10,6 +10,12 @@
 #include<boost/lexical_cast.hpp>
 #include<boost/tokenizer.hpp>
 #include<boost/fusion/algorithm/iteration/for_each.hpp>
+#include<boost/spirit/home/phoenix/core.hpp>
+#include<boost/spirit/home/phoenix/stl/algorithm/iteration.hpp>
+#include<boost/spirit/home/phoenix/scope.hpp>
+#include<boost/spirit/home/phoenix/container.hpp>
+#include<boost/spirit/home/phoenix/operator.hpp>
+#include<boost/spirit/home/phoenix/statement/if.hpp>
 
 #include "prepare.h"
 
@@ -99,13 +105,183 @@ namespace CE
         boost::fusion::transform( *collapses_,
                                   ApplyResize<const t_Coefficients>( coefficients_ ) );
       }
+    INMANY( typename MANYHEAD::t_Matrix::value_type ) :: evaluate( size_t _n) const 
+    {
+      namespace bp = boost::phoenix;
+      namespace bpa = boost::phoenix::arg_names;
+      namespace bpl = boost::phoenix::local_names;
+      bp::function< PHOENIX_MEMFUNC1( evaluate ) > memfunc_eval;
+      types::t_real result(0);
+      boost::fusion::for_each
+      ( 
+        const_viewasref(*collapses_),
+        bp::for_each
+        ( 
+          bpa::arg1,
+          bp::lambda[ bp::ref(result) += memfunc_eval( bpa::arg1, bp::ref(_n) ) ]
+        ) 
+      );
+      return result;
+    }
+    INMANY( size_t ) :: current_dof() const 
+    {
+      namespace bp = boost::phoenix;
+      namespace bpa = boost::phoenix::arg_names;
+      namespace bpl = boost::phoenix::local_names;
+      bp::function< phoenix::PHOENIX_MEMFUNC( dof ) > memfunc_dof;
+      bp::function< phoenix::PHOENIX_MEMFUNC( dimensions ) > memfunc_dim;
+      size_t result(0);
+      boost::fusion::for_each
+      ( 
+        const_viewasref(*collapses_),
+        bp::for_each
+        ( 
+          bpa::arg1,
+          bp::lambda
+          [
+            let( bpl::_a = memfunc_dim( bpa::arg1 ) )
+            [
+              bp::if_( bpl::_a > bp::ref( dim ) )
+                [ bp::ref(result) += memfunc_dof(bpa::arg1) ]
+            ]
+          ]
+        ) 
+      );
+      return result;
+    }
+    INMANY( size_t ) :: dof() const 
+    {
+      namespace bp = boost::phoenix;
+      namespace bpa = boost::phoenix::arg_names;
+      bp::function< phoenix::PHOENIX_MEMFUNC( dof ) > memfunc;
+      return boost::fusion::accumulate
+             ( 
+               const_viewasref(*collapses_), 0,
+               bp::accumulate
+               ( 
+                 bpa::arg1, bpa::arg2,
+                 bp::lambda[ memfunc(bpa::arg2) + bpa::arg1 ]
+               ) 
+             );
+    }
+    INMANY( void ) :: update( types::t_unsigned _d ) 
+    {
+      namespace bp = boost::phoenix;
+      namespace bpa = boost::phoenix::arg_names;
+      bp::function< phoenix::PHOENIX_MEMFUNC1( update ) > memfunc;
+      boost::fusion::transform
+      (
+        viewasref(*collapses_),
+        bp::for_each
+        ( 
+          bpa::arg1, 
+          bp::lambda[ memfunc(bpa::arg1, bp::ref( _d ) ) ]
+        ) 
+      );
+    }
+    INMANY( void ) :: update_all() 
+    {
+      namespace bp = boost::phoenix;
+      namespace bpa = boost::phoenix::arg_names;
+      bp::function< phoenix::PHOENIX_MEMFUNC( update_all ) > memfunc;
+      boost::fusion::transform
+      (
+        viewasref(*collapses_),
+        bp::for_each
+        ( 
+          bpa::arg1, 
+          bp::lambda[ memfunc(bpa::arg1) ]
+        ) 
+      );
+    }
+    INMANY( void ) :: reset() 
+    {
+      namespace bp = boost::phoenix;
+      namespace bpa = boost::phoenix::arg_names;
+      bp::function< phoenix::PHOENIX_MEMFUNC( reset ) > memfunc;
+      boost::fusion::transform
+      (
+        viewasref(*collapses_),
+        bp::for_each
+        ( 
+          bpa::arg1, 
+          bp::lambda[ memfunc(bpa::arg1) ]
+        ) 
+      );
+    }
+    INMANY( void ) :: randomize( typename t_Vector :: value_type _howrandom ) 
+    {
+      namespace bp = boost::phoenix;
+      namespace bpa = boost::phoenix::arg_names;
+      bp::function< phoenix::PHOENIX_MEMFUNC1( randomize ) > memfunc;
+      boost::fusion::transform
+      (
+        viewasref(*collapses_),
+        bp::for_each
+        ( 
+          bpa::arg1, 
+          bp::lambda[ memfunc(bpa::arg1, bp::val(_howrandom) ) ]
+        ) 
+      );
+    }
+    INMANY( size_t ) :: nbconfs() const 
+    {
+      namespace bp = boost::phoenix;
+      namespace bpa = boost::phoenix::arg_names;
+      bp::function< phoenix::PHOENIX_MEMFUNC( nbconfs ) > memfunc;
+      return boost::fusion::accumulate
+             ( 
+               const_viewasref(*collapses_), 0,
+               bp::accumulate
+               ( 
+                 bpa::arg1, bpa::arg2,
+                 bp::lambda[ memfunc(bpa::arg2) + bpa::arg1 ]
+               ) 
+             );
+    }
+    INMANY( size_t ) :: dimensions() const 
+    {
+      namespace bp = boost::phoenix;
+      namespace bpa = boost::phoenix::arg_names;
+      namespace bpl = boost::phoenix::local_names;
+      bp::function< phoenix::PHOENIX_MEMFUNC( dimensions ) > memfunc;
+      size_t result(0);
+      boost::fusion::for_each
+      ( 
+        const_viewasref(*collapses_),
+        bp::for_each
+        ( 
+          bpa::arg1, 
+          bp::lambda
+          [ 
+            bp::let( bpl::_a = memfunc( bpa::arg1 ) )
+            [
+              bp::if_( bpl::_a > bp::ref( result ) )
+                [ bp::ref( result ) = bpl::_a ]
+            ]
+          ]
+        ) 
+      );
+      return result;
+    }
 
   template< class T_TRAITS >
   std::ostream& operator<<( std::ostream& _stream, const Many<T_TRAITS> &_many )
   {
-    typedef typename Many<T_TRAITS> :: template
-                                       PrintToStream< std::ostream > PrintToStream;
-//   boost::fusion::transform( *_many.separables_, PrintToStream( _stream ) );
+    namespace bp = boost::phoenix;
+    namespace bpa = boost::phoenix::arg_names;
+    boost::fusion::for_each
+    ( 
+      _many.const_viewasref(*_many.collapses_),
+      bp::for_each
+      ( 
+        bpa::arg1, 
+        bp::lambda
+        [
+          bp::ref( _stream ) << bpa::arg1 << bp::val("\n")
+        ]
+      )
+    );
     return _stream;
   }
 

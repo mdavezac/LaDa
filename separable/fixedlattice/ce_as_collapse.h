@@ -125,9 +125,7 @@ namespace CE
       void init( t_CEFit &_fit ) { cefit_ = &_fit; }
 
       //! Evaluates square errors for one structure.
-      typename t_Matrix::value_type evaluate( size_t _n ) const
-       { return boost::numeric
-                     ::ublas::inner_prod( coefficients(), cefit().pis[ _n ] ); }
+      typename t_Matrix::value_type evaluate( size_t _n ) const;
 
       //! Updates the scales vector and  normalizes.
       void update_all() {}
@@ -166,6 +164,8 @@ namespace CE
       void randomize( typename t_Matrix :: value_type _howrandom );
       //! Initializes clusters and mapping.
       template< class T_CLUSTERS > void init( const T_CLUSTERS &_Clusters );
+      //! Returns a constant reference to the clusters.
+      const t_Clusters& clusters() const { return *clusters_; }
 
     protected:
       //! Returns a reference to the fitting object.
@@ -184,6 +184,16 @@ namespace CE
       t_Coefficients coefficients_;
 
   };
+
+  //! Prints description of the clusters in the collapse functor.
+  template<class T_TRAITS>
+  std::ostream& operator<<( std::ostream& _stream, const CEasCollapse<T_TRAITS>& _col )
+  {
+    typedef typename T_TRAITS :: t_CEFit :: t_Clusters t_Clusters;
+    foreach( const typename t_Clusters :: value_type &cluster_class, _col.clusters() )
+      std::cout << cluster_class.front() << " D=" << cluster_class.size() << "\n";
+    return _stream;
+  }
 
   //! \brief Wraps a CE::Fit class to include separables style metafunctions.
   template< class T_CEFIT, 

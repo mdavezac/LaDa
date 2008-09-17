@@ -4,6 +4,61 @@
 #ifndef _SEPARABLES_FIXEDLATTICES_MANY_MACROS_H_
 #define _SEPARABLES_FIXEDLATTICES_MANY_MACROS_H_
 
+
+#ifdef PHOENIX_MEMFUNC
+#  error PHOENIX_MEMFUNC already defined.
+# endif 
+# ifdef PHOENIX_MEMFUNC_DECLARE
+#  error PHOENIX_MEMFUNC_DECLARE already defined.
+# endif 
+#define PHOENIX_MEMFUNC( memfunc ) memfunc_ ## memfunc ## _impl
+#define PHOENIX_MEMFUNC_DECLARE( memfunc, resulttype ) \
+  struct PHOENIX_MEMFUNC( memfunc ) \
+  { \
+      template <typename Arg> \
+      struct result \
+      {  \
+        typedef resulttype type; \
+      }; \
+      \
+      template <typename Arg> \
+      typename boost::disable_if\
+               < boost::is_same< typename result<Arg> :: type, void >, \
+                 typename result<Arg> :: type > :: type \
+        operator()(Arg n) const  {  return n.memfunc();  } \
+      template <typename Arg> \
+      typename boost::enable_if \
+               < boost::is_same< typename result<Arg> :: type, void >, void > :: type\
+        operator()(Arg n) const  {  n.memfunc();  } \
+  }; \
+
+#ifdef PHOENIX_MEMFUNC1
+#  error PHOENIX_MEMFUNC1 already defined.
+# endif 
+# ifdef PHOENIX_MEMFUNC1_DECLARE
+#  error PHOENIX_MEMFUNC1_DECLARE already defined.
+# endif 
+#define PHOENIX_MEMFUNC1( memfunc ) memfunc1_ ## memfunc ## _impl
+#define PHOENIX_MEMFUNC1_DECLARE( memfunc, resulttype ) \
+  struct PHOENIX_MEMFUNC1( memfunc ) \
+  { \
+      template <typename Arg, typename Arg1 = void > \
+      struct result \
+      {  \
+        typedef resulttype type; \
+      }; \
+      \
+      template <typename Arg, typename Arg1> \
+      typename boost::disable_if\
+               < boost::is_same< typename result<Arg, Arg1> :: type, void >, \
+                 typename result<Arg, Arg1> :: type > :: type \
+        operator()(Arg n, Arg1 a1 ) const  {  return n.memfunc( a1 );  } \
+      template <typename Arg, typename Arg1 > \
+      typename boost::enable_if \
+               < boost::is_same< typename result<Arg, Arg1> :: type, void >, void > :: type\
+        operator()(Arg n, Arg1 a1) const  {  n.memfunc( a1 );  } \
+  }; \
+
 # ifdef VOID_MFUNC
 #  error VOID_MFUNC already defined.
 # endif 
@@ -35,10 +90,8 @@
      typedef Type result_type;\
      template< class T > result_type operator()( T &_t, result_type result )\
      {\
-       typename T::const_iterator i_val = _t.begin(); \
-       typename T::const_iterator i_val_end = _t.end(); \
-       for(; i_val != i_val_end; ++i_val ) \
-         result += i_val->FunctionName(); \
+       foreach( typename T::const_reference &_val, _t )\
+         result += _val.FunctionName(); \
        return result;\
      }\
    }; 
@@ -60,7 +113,7 @@
      U_MFUNC( FunctionName ) ( const U_MFUNC( FunctionName ) &_c ) : arg( _c.arg ) {}\
      template< class T > result_type operator()( T &_t )\
      {\
-       foreach( const typename T::value_type &_val, _t )\
+       foreach( typename T::const_reference &_val, _t )\
          _val Code;\
      }\
    };
@@ -104,6 +157,18 @@
 # endif
 # ifdef INMANY2
 #  undef INMANY2
+# endif
+# ifdef PHOENIX_MEMFUNC
+#  undef PHOENIX_MEMFUNC
+# endif
+# ifdef PHOENIX_MEMFUNC_DECLARE
+#  undef PHOENIX_MEMFUNC_DECLARE
+# ifdef PHOENIX_MEMFUNC1
+#  undef PHOENIX_MEMFUNC1
+# endif
+# ifdef PHOENIX_MEMFUNC_DECLARE1
+#  undef PHOENIX_MEMFUNC_DECLARE1
+# endif
 # endif
 
 

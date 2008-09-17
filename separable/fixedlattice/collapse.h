@@ -237,6 +237,11 @@ namespace CE
         //! Regularization.
         t_RegPolicy regularization_;
     };
+ 
+  //! Prints description of the separables function in the collapse functor.
+  template<class T_TRAITS>
+  std::ostream& operator<<( std::ostream& _stream, const Collapse<T_TRAITS>& _col )
+    { return _stream << _col.separables() << "\n"; } 
 
   //! Saves the state of a collapse object.
   class CollapseState

@@ -75,6 +75,14 @@ namespace CE
       cefit().init( *clusters_ );
     }
 
+  template< class T_TRAITS > 
+    typename CEasCollapse<T_TRAITS> :: t_Matrix :: value_type 
+      CEasCollapse<T_TRAITS> :: evaluate( size_t _n ) const
+      {
+        namespace bblas = boost::numeric::ublas;
+        const bblas::matrix_column< const t_Matrix > column( coefficients(), 0 );
+        return bblas::inner_prod( column, cefit().pis[ _n ] ); 
+      }
   namespace details
   {
     //! \brief Wrapper around CE::RegulatedFit regularization.

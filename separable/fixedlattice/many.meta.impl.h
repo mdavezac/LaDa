@@ -7,29 +7,6 @@
 
 namespace CE
 {
-  INMANY( struct ) :: ApplyDimensions
-  {
-    typedef size_t result_type;
-    template< class T > result_type operator()( const T &_t, size_t _r )
-    {
-      foreach( const typename boost::remove_pointer<typename T::value_type> :: type &_val, _t )
-        _r = std::max( _r, _val.dimensions() );
-      return _r;
-    }
-  };
-  INMANY( struct ) :: ApplyCurrentDof
-  {
-    typedef size_t result_type;
-    const size_t &dim_;
-    ApplyCurrentDof( const size_t &_dim ) : dim_(_dim) {}
-    ApplyCurrentDof( const ApplyCurrentDof &_c ) : dim_(_c.dim_) {}
-    template< class T > result_type operator()( T &_t, size_t _r )
-    {
-      foreach( const typename T::value_type &_val, _t )
-        if( _val.dimensions() < dim_ ) _r += _val.dof(); 
-      return _r;
-    }
-  };
   INMANY(template< class T_VECTOR > struct ) :: ApplyCreateAnB
   {
     typedef void result_type;
@@ -44,7 +21,7 @@ namespace CE
     template< class T > result_type operator()( T &_t )
     {
       namespace bblas = boost::numeric::ublas;
-      foreach( const typename T::value_type &_val, _t )
+      foreach( typename T::const_reference &_val, _t )
       {
         if( _val.dimensions() < self_.dim ) continue;
         const bblas::range colrange( rangestart,
@@ -74,7 +51,7 @@ namespace CE
       template< class T > result_type operator()( T &_t ) 
       {
         namespace bblas = boost::numeric::ublas;
-        foreach( const typename T::value_type &_val, _t )
+        foreach( typename T::const_reference &_val, _t )
         {
           const bblas::range colrange( rangestart,
                                        rangestart + _val.dof() );
@@ -86,20 +63,6 @@ namespace CE
         }
       }
     };
-
-  INMANY( struct ) :: ApplyEvaluateOne
-  {
-    typedef typename t_Matrix::value_type result_type;
-    size_t &n_;
-    ApplyEvaluateOne( size_t &_n ) : n_(_n) {}
-    ApplyEvaluateOne( const ApplyEvaluateOne &_c ) : n_(_c.n_) {}
-    template< class T > result_type operator()( T &_t, result_type _r )
-    {
-      foreach( const typename T::value_type &_val, _t )
-        _r += _val.evaluate(n_);
-      return _r;
-    }
-  };
 
   INMANY( template< class T_COEFFICIENTS > struct )
     :: ApplyResize<const T_COEFFICIENTS>
@@ -114,29 +77,14 @@ namespace CE
     template< class T > result_type operator()( T &_t ) const
     {
       namespace bblas = boost::numeric::ublas;
-      foreach( typename T::value_type &_val, _t )
-     {
+      foreach( typename T::reference &_val, _t )
+      {
         const size_t dof( _val.dof() );
         const bblas::range a( rank_, rank_ + dof );
         const bblas::range b( 0, _val.dimensions() );
         _val.coefficients_interface().set( coefficients_, a, b );
         rank_ += dof;
       }
-    }
-  };
-
-  INMANY( template< class T_STREAM > struct ) :: PrintToStream
-  {
-    typedef T_STREAM& result_type;
-    mutable T_STREAM &stream_;
-    PrintToStream( T_STREAM &_stream ) : stream_(_stream) {}
-    PrintToStream( PrintToStream &_c ) : stream_(_c.stream_) {}
-    template< class T > result_type operator()( const T &_t ) const
-    {
-      namespace bl = boost::lambda;
-      foreach( const typename T::value_type &_val, _t )
-        stream_  << _val << "\n";
-      return stream_;
     }
   };
 
@@ -156,17 +104,39 @@ namespace CE
         T& operator()(T& x) const
           { return x; }
     };
+    struct cadd_ref
+    {
+        template<typename Sig>
+        struct result;
+    
+        template<typename U>
+        struct result<cadd_ref(const U)>
+        : boost::add_reference<const U>
+        {};
+    
+        template <typename T>
+        const T& operator()(const T& x) const
+          { return x; }
+    };
   }
 
-  INMANY( template< class T > struct ) ::  ViewAsRef : boost::fusion::transform_view
-              < 
-                T, details :: add_ref
-              >
+  INMANY( template< class T > struct )
+    ::  ViewAsRef : boost::fusion::transform_view 
+                                   < T, details :: add_ref >
   {
     typedef boost::fusion::transform_view
             < T, details::add_ref > t_Base;
 
     explicit ViewAsRef( T& _v ) : t_Base( _v, details::add_ref() ) {}
+  };
+  INMANY( template< class T > struct )
+    ::  cViewAsRef : boost::fusion::transform_view 
+                                   < const T, details :: cadd_ref >
+  {
+    typedef boost::fusion::transform_view
+            < const T, details::cadd_ref > t_Base;
+
+    explicit cViewAsRef( const T& _v ) : t_Base( _v, details::cadd_ref() ) {}
   };
 
   struct ManyState :: Save

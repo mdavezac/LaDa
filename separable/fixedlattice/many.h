@@ -208,36 +208,27 @@ namespace CE
       //! Evaluates square errors.
       opt::ErrorTuple evaluate() const;
       //! Predicts target value of a structure.
-      typename t_Matrix :: value_type evaluate( size_t _n ) const
-      {
-        return 0; } //boost::fusion::accumulate( viewasref( *collapses_ ), 0, ApplyEvaluateOne(_n) ); 
-//      { return boost::fusion::accumulate( *collapses_, 0, ApplyEvaluateOne(_n) ); }
-
+      typename t_Matrix :: value_type evaluate( size_t _n ) const;
+//     { return boost::fusion::accumulate( const_viewasref( *collapses_ ),
+//                                         0, ApplyEvaluateOne(_n) );  }
 
       //! \brief Updates the separable and copies the eci from column 0 to all
       //!        other columns.
-      void update_all()
-       { boost::fusion::transform( *collapses_, VOID_MFUNC(update_all)() ); }
+      void update_all();
       //! Updates the separable and copies the eci from column d to column 0.
-      void update( types::t_unsigned _d )
-       { boost::fusion::transform( *collapses_, U_MFUNC(update)(_d) ); }
+      void update( types::t_unsigned _d );
       //! Resets collapse functor.
-      void reset()
-       { boost::fusion::transform( *collapses_, VOID_MFUNC(reset)() ); }
+      void reset();
 
       //! Returns the number of dimensions.
-      size_t dimensions() const
-       { return 0; } //boost::fusion::fold( viewasref(*collapses_), 0, ApplyDimensions() ); }
+      size_t dimensions() const;
       //! Returns the number of degrees of liberty (per dimension).
-      size_t dof() const
-       { return 0; } //return boost::fusion::accumulate( viewasref(*collapses_), 0, ACC_MFUNC(dof)() ); }
+      size_t dof() const;
       //! Returns the number of configurations.
-      size_t nbconfs() const
-        { return 0; } //boost::fusion::accumulate( viewasref(*collapses_), 0, ACC_MFUNC(nbconfs)() ); }
+      size_t nbconfs() const;
      
       //! Randomizes both cluster energies and ecis.
-      void randomize( typename t_Vector :: value_type _howrandom )
-       { boost::fusion::transform( *collapses_, U_MFUNC(randomize)(_howrandom) ); }
+      void randomize( typename t_Vector :: value_type _howrandom );
 
       //! Add new collapse and separables.
       template< size_t _index > size_t addone();
@@ -288,8 +279,7 @@ namespace CE
 
     protected:
       //! Returns the number of degrees of liberty for current dimension.
-      size_t current_dof() const
-       { return 0; } //boost::fusion::accumulate( viewasref(*collapses_), 0, ApplyCurrentDof(dim) ); }
+      size_t current_dof() const;
       //! Creates the _A and _b matrices for fitting.
       template< class T_MATRIX, class T_VECTOR >
         void create_A_n_b( T_MATRIX &_A, T_VECTOR &_b );
@@ -307,27 +297,31 @@ namespace CE
 
       // metafunctions.
       //! \cond
-      struct ApplyDimensions;
-      ACC_MFUNC_DECLARE(dof, size_t)
-      ACC_MFUNC_DECLARE(nbconfs, size_t)
-      struct ApplyCurrentDof;
-      VOID_MFUNC_DECLARE(reset);
       template< class T_VECTOR > struct ApplyCreateAnB;
       template< class T_MATRIX, class T_VECTOR > struct ApplyRegularization;
-      U_MFUNC_DECLARE( randomize, .randomize(arg), typename t_Vector :: value_type )
-      VOID_MFUNC_DECLARE(update_all)
-      U_MFUNC_DECLARE( update, .update(arg), const types::t_unsigned& )
-      struct ApplyEvaluateOne;
 //     U_MFUNC_DECLARE( assign, .dim = arg, types::t_unsigned& )
       template< class T_COEFFICIENTS > struct ApplyResize;
-      template< class T_STREAM > struct PrintToStream;
       struct add_ref;
       template< class T > struct ViewAsRef;
+      template< class T > struct cViewAsRef;
       template< class T > ViewAsRef<T> static viewasref( T& _c ) { return ViewAsRef<T>(_c); }
-      template< class T > ViewAsRef<const T> static const_viewasref( const T& _c )
-        { return ViewAsRef<const T>(_c); }
+      template< class T > cViewAsRef<const T> static const_viewasref( const T& _c )
+        { return cViewAsRef<const T>(_c); }
+      PHOENIX_MEMFUNC1_DECLARE( evaluate, typename t_Matrix::value_type )
       //! \endcond
   };
+  //! \cond
+  namespace phoenix
+  {
+    PHOENIX_MEMFUNC1_DECLARE( update, void )
+    PHOENIX_MEMFUNC1_DECLARE( randomize, void )
+    PHOENIX_MEMFUNC_DECLARE( update_all, void )
+    PHOENIX_MEMFUNC_DECLARE( reset, void )
+    PHOENIX_MEMFUNC_DECLARE( dof, size_t )
+    PHOENIX_MEMFUNC_DECLARE( nbconfs, size_t )
+    PHOENIX_MEMFUNC_DECLARE( dimensions, size_t )
+  }
+  //! \endcond
 
   //! Saves the state of a Many collapse object.
   class ManyState
