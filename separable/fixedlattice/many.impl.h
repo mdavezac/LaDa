@@ -308,6 +308,7 @@ namespace CE
          rank = boost::lexical_cast< size_t >( what.str(1) );
          continue;
        }
+       if( rank == 0 ) continue;
        __TRYCODE( postoconfs.create_positions( *i_tok );,
                   "Could not parse string " << _desc << "\n" )
        const size_t pos = _many.template addone<0>();
