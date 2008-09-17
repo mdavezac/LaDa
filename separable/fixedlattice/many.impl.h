@@ -74,13 +74,14 @@ namespace CE
 
     INMANY( template< size_t _index > size_t ) ::  addone()
     {
-      namespace bm = boost::mpl;
       namespace bf = boost::fusion;
       typedef boost::mpl::int_< _index > N;
-      typedef typename bm::at<t_Collapses, N> :: type t_collapse;
-      typedef typename bm::at<t_Separables, N> :: type t_separables;
+      typedef typename t_Traits::template at<t_VectorsOfCollapses, _index>
+                               :: type t_collapse;
+      typedef typename t_Traits::template at<t_VectorsOfSeparables, _index>
+                               :: type t_separables;
 
-      bf::at<N>( *collapses_ ).push_back( new typename bm::at<t_Collapses, N> :: type );
+      bf::at<N>( *collapses_ ).push_back( new t_collapse );
       bf::at<N>( *separables_ ).push_back( new t_separables );
       bf::at<N>( *collapses_ ).back().init( bf::at<N>( *separables_ ).back() );
       return bf::at<N>( *separables_ ).size() - 1;
@@ -91,12 +92,12 @@ namespace CE
       {
         namespace bblas = boost::numeric::ublas;
         namespace bf = boost::fusion;
-        namespace bm = boost::mpl;
         // last collapse is set to fake range fake range 
         const bblas :: range a( 0, _rank );
         const bblas :: range b( 0, _dimensions );
         typedef boost::mpl::int_< _index > N;
-        typedef typename bm::at<t_Collapses, N> :: type t_collapse;
+        typedef typename t_Traits::template at<t_VectorsOfCollapses, _index>
+                                 :: type t_collapse;
         t_collapse &collapse( bf::at<N>( *collapses_).back() );
         collapse.coefficients_interface().set( coefficients_, a, b );
       

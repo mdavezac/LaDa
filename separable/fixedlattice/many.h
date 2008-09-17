@@ -22,6 +22,7 @@
 #include<boost/fusion/algorithm.hpp>
 #include<boost/fusion/mpl.hpp>
 #include<boost/fusion/adapted.hpp>
+#include<boost/fusion/include/convert.hpp>
 
 #include<iostream>
 #include<vector>
@@ -49,18 +50,23 @@ namespace Traits
     struct Many 
     {
       public:
+        //! MPL Ranged separables.
         typedef typename boost::mpl::transform
                 <
                   T_VECTORS_OF_SEPARABLES,
                   SeparablesWithMatrixRange< boost::mpl::_ >  
-                > :: type t_Separables;
-        //! Collapses with Ranged separables.
+                > :: type t_MPLSeparables;
+        //! MPL Collapses with Ranged separables.
         typedef typename boost::mpl::transform
                 <
                   T_VECTORS_OF_COLLAPSES, 
-                  t_Separables,
+                  t_MPLSeparables,
                   CollapseWithNewSeparables< boost::mpl::_1, boost::mpl::_2 >
-                > :: type t_Collapses;
+                > :: type t_MPLCollapses;
+        //! fusion Ranged separables.
+        typedef t_MPLSeparables  t_Separables;
+        //! fusion collapses.
+        typedef t_MPLCollapses  t_Collapses;
       protected:
         //! Transforms an type into the type of a container of vectors.
         typedef boost::ptr_vector< boost::mpl::_ >  make_ptrvector;
@@ -69,23 +75,42 @@ namespace Traits
         //!          contain pointer containers to ranged separables.
         typedef typename boost::mpl::transform
                 < 
-                  t_Separables,
+                  t_MPLSeparables,
                   make_ptrvector
-                > :: type t_MPLVectorOfSeparables;
+                > :: type t_MPLVectorsOfSeparables;
         //! \brief Vector of collapse type.
         //! \details After this double transformation, the mpl tuple should
         //!          contain pointer containers to collapses acting on ranged
         //!          separables.
         typedef typename boost::mpl::transform
                 < 
-                  t_Collapses,
+                  t_MPLCollapses,
                   make_ptrvector
-                >  :: type t_MPLVectorOfCollapses;
+                >  :: type t_MPLVectorsOfCollapses;
       public:
+        template< class T, size_t N >
+          struct at
+          {
+            typedef typename boost::remove_reference
+                    <
+                      typename boost::remove_reference
+                      <
+                        typename boost::fusion::result_of::at
+                        < 
+                          T, boost::mpl::int_<N>
+                        > :: type
+                      > :: type :: reference
+                    > :: type
+                      type;
+          };
         //! Tuple of containers of separables.
-        typedef t_MPLVectorOfSeparables t_VectorsOfSeparables;
+        typedef typename boost :: fusion
+                               :: result_of::as_vector< t_MPLVectorsOfSeparables > 
+                               :: type t_VectorsOfSeparables;
         //! Tuple of containers of collapses.
-        typedef t_MPLVectorOfCollapses t_VectorsOfCollapses;
+        typedef typename boost :: fusion
+                               :: result_of::as_vector< t_MPLVectorsOfCollapses > 
+                               :: type t_VectorsOfCollapses;
         //! Type of the Mapping.
         typedef T_MAPPING t_Mapping;
         //! Type of the coefficients.
@@ -209,8 +234,6 @@ namespace CE
       opt::ErrorTuple evaluate() const;
       //! Predicts target value of a structure.
       typename t_Matrix :: value_type evaluate( size_t _n ) const;
-//     { return boost::fusion::accumulate( const_viewasref( *collapses_ ),
-//                                         0, ApplyEvaluateOne(_n) );  }
 
       //! \brief Updates the separable and copies the eci from column 0 to all
       //!        other columns.
@@ -235,24 +258,22 @@ namespace CE
       
       //! Returns reference to nth separable function.
       template< size_t _index >
-        typename boost::mpl::at< t_Separables, boost::mpl::int_<_index> > :: type&
+        typename t_Traits::template at< t_VectorsOfSeparables, _index > :: type&
           separables( size_t _n )
            { return boost::fusion::at< boost::mpl::int_<_index> >(*separables_)[_n]; }
       //! Returns constant reference to nth separable function.
       template< size_t _index >
-        const typename boost::mpl::at< t_Separables,
-                                       boost::mpl::int_<_index> > :: type&
+        const typename t_Traits::template at< t_VectorsOfSeparables, _index > :: type&
           separables( size_t _n ) const
            { return boost::fusion::at< boost::mpl::int_<_index> >(*separables_)[_n]; }
       //! Returns reference to nth collapse functor.
       template< size_t _index >
-        typename boost::mpl::at< t_Collapses, boost::mpl::int_<_index> > :: type&
+        typename t_Traits::template at< t_VectorsOfCollapses, _index > :: type&
           collapses( size_t _n )
            { return boost::fusion::at< boost::mpl::int_<_index> >(*collapses_)[_n]; }
       //! Returns constant reference to nth collapse functor.
       template< size_t _index >
-        const typename boost::mpl::at< t_Collapses, 
-                                       boost::mpl::int_<_index> > :: type&
+        const typename t_Traits::template at< t_VectorsOfCollapses, _index > :: type&
           collapses( size_t _n ) const
            { return boost::fusion::at< boost::mpl::int_<_index> >(*collapses_)[_n]; }
       //! Returns the number of collapse and separables functions.
