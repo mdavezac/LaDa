@@ -83,7 +83,6 @@ namespace CE
 
       bf::at<N>( *collapses_ ).push_back( new t_collapse );
       bf::at<N>( *separables_ ).push_back( new t_separables );
-      bf::at<N>( *collapses_ ).back().init( bf::at<N>( *separables_ ).back() );
       return bf::at<N>( *separables_ ).size() - 1;
     }
 
@@ -93,13 +92,19 @@ namespace CE
         namespace bblas = boost::numeric::ublas;
         namespace bf = boost::fusion;
         // last collapse is set to fake range fake range 
-        const bblas :: range a( 0, _rank );
-        const bblas :: range b( 0, _dimensions );
         typedef boost::mpl::int_< _index > N;
         typedef typename t_Traits::template at<t_VectorsOfCollapses, _index>
                                  :: type t_collapse;
-        t_collapse &collapse( bf::at<N>( *collapses_).back() );
-        collapse.coefficients_interface().set( coefficients_, a, b );
+        typedef typename t_Traits::template at<t_VectorsOfSeparables, _index>
+                                 :: type t_separables;
+        t_collapse &collapse( bf::at<N>( *collapses_ ).back() );
+        t_separables &separable( bf::at<N>( *separables_ ).back() );
+
+        const bblas :: range a( 0, _rank * t_separables :: t_Mapping :: D);
+        const bblas :: range b( 0, _dimensions );
+        separable.coefficients_interface().set( coefficients_, a, b );
+        separable.norms.resize( _rank );
+        collapse.init( bf::at<N>( *separables_ ).back() );
       
         // Now computes rank and dimensions.
         coefficients_.resize( dof(), dimensions() );
@@ -115,7 +120,7 @@ namespace CE
       types::t_real result(0);
       boost::fusion::for_each
       ( 
-        const_viewasref(*collapses_),
+        *collapses_,
         bp::for_each
         ( 
           bpa::arg1,
@@ -134,7 +139,7 @@ namespace CE
       size_t result(0);
       boost::fusion::for_each
       ( 
-        const_viewasref(*collapses_),
+        *collapses_,
         bp::for_each
         ( 
           bpa::arg1,
@@ -157,7 +162,7 @@ namespace CE
       bp::function< phoenix::PHOENIX_MEMFUNC( dof ) > memfunc;
       return boost::fusion::accumulate
              ( 
-               const_viewasref(*collapses_), 0,
+               *collapses_, 0,
                bp::accumulate
                ( 
                  bpa::arg1, bpa::arg2,
@@ -172,7 +177,7 @@ namespace CE
       bp::function< phoenix::PHOENIX_MEMFUNC1( update ) > memfunc;
       boost::fusion::transform
       (
-        viewasref(*collapses_),
+        *collapses_,
         bp::for_each
         ( 
           bpa::arg1, 
@@ -187,7 +192,7 @@ namespace CE
       bp::function< phoenix::PHOENIX_MEMFUNC( update_all ) > memfunc;
       boost::fusion::transform
       (
-        viewasref(*collapses_),
+        *collapses_,
         bp::for_each
         ( 
           bpa::arg1, 
@@ -202,7 +207,7 @@ namespace CE
       bp::function< phoenix::PHOENIX_MEMFUNC( reset ) > memfunc;
       boost::fusion::transform
       (
-        viewasref(*collapses_),
+        *collapses_,
         bp::for_each
         ( 
           bpa::arg1, 
@@ -217,7 +222,7 @@ namespace CE
       bp::function< phoenix::PHOENIX_MEMFUNC1( randomize ) > memfunc;
       boost::fusion::transform
       (
-        viewasref(*collapses_),
+        *collapses_,
         bp::for_each
         ( 
           bpa::arg1, 
@@ -232,7 +237,7 @@ namespace CE
       bp::function< phoenix::PHOENIX_MEMFUNC( nbconfs ) > memfunc;
       return boost::fusion::accumulate
              ( 
-               const_viewasref(*collapses_), 0,
+               *collapses_, 0,
                bp::accumulate
                ( 
                  bpa::arg1, bpa::arg2,
@@ -249,7 +254,7 @@ namespace CE
       size_t result(0);
       boost::fusion::for_each
       ( 
-        const_viewasref(*collapses_),
+        *collapses_,
         bp::for_each
         ( 
           bpa::arg1, 
@@ -273,7 +278,7 @@ namespace CE
     namespace bpa = boost::phoenix::arg_names;
     boost::fusion::for_each
     ( 
-      _many.const_viewasref(*_many.collapses_),
+      *_many.collapses_,
       bp::for_each
       ( 
         bpa::arg1, 

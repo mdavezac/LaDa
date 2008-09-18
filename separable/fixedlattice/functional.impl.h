@@ -33,6 +33,12 @@ namespace CE
     {
       namespace bblas = boost::numeric::ublas;
       namespace bl = boost::lambda;
+     
+      __ASSERT( ranks() != norms.size(),
+                   "Incoherent sizes: rank("
+                << ranks() << ") != norms.size()("
+                << norms.size() << ").\n")
+
       t_Vector intermed( ranks(), 1e0 );
       t_Policy :: rank_vector( coefficients(), _conf, intermed, bl::_1 *= bl::_2 );
       return bblas::inner_prod( intermed, norms );

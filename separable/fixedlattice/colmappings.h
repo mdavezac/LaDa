@@ -38,13 +38,27 @@ namespace CE
         //! Returns weights.
         const t_Vector& weights() const { return weights_; }
         //! Returns one weight.
-        t_Vector::value_type weight( size_t i ) const { return weights_[i]; }
+        t_Vector::value_type weight( size_t i ) const
+        { 
+          __ASSERT( N != weights_.size(), "Incoherent logic.\n" )
+          __ASSERT( i >= weights_.size(), 
+                       "Index out-of-range: " << i
+                    << " >= " << weights_.size() << "\n" )
+          return weights_[i]; 
+        }
         //! Returns weights.
         t_Vector& targets() { return targets_; }
         //! Returns weights.
         const t_Vector &targets() const { return targets_; }
         //! Returns one weight.
-        t_Vector::value_type target( size_t i ) const { return targets_[i]; }
+        t_Vector::value_type target( size_t i ) const 
+        {
+          __ASSERT( N != targets_.size(), "Incoherent logic.\n" )
+          __ASSERT( i >= targets_.size(), 
+                       "Index out-of-range: " << i
+                    << " >= " << targets_.size() << "\n" )
+          return targets_[i]; 
+        }
         //! Returns the number of structures.
         size_t size() const { return N; }
         //! Allows to skip out on a structure for leave-one or many-out.

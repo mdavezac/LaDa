@@ -270,7 +270,15 @@ namespace CE
         void set( t_RealMatrix& _mat,
                   const boost::numeric::ublas::range &_a,
                   const boost::numeric::ublas::range &_b )
-          { matrix_.reset( new t_Matrix( _mat, _a, _b ) ); }
+        {
+          if( not matrix_.get() )
+            matrix_.reset( new t_Matrix( _mat, _a, _b ) ); 
+          else 
+          {
+            boost::shared_ptr<t_Matrix> y( new t_Matrix( _mat, _a, _b ) );
+            matrix_ = y; 
+          }
+        }
         //! Resize matrix.
         void resize( size_t, size_t ) {};
  

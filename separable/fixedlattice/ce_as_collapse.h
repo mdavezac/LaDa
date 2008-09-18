@@ -58,11 +58,17 @@ namespace Traits
           typedef T_COEFFICIENTS t_Coefficients;
           //! Type of the policy
           typedef typename t_Fit :: t_Policy t_Policy;
+          //! A fake mapping with the correct types and constants.
+          struct t_Mapping 
+          {
+            //! The degrees of liberty per "rank".
+            const static size_t D = 1;
+          };
         public:
           //! Result type.
           typedef details::CEasSeparables
                   < 
-                    void, t_Policy, t_Coefficients, 
+                    t_Mapping, t_Policy, t_Coefficients, 
                     boost::numeric::ublas::vector
                     < 
                       typename t_Coefficients::t_Matrix::value_type

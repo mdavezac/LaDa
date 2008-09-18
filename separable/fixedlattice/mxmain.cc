@@ -361,6 +361,7 @@ int main(int argc, char *argv[])
       }
     }
   }
+  many.collapses<ceindex>( cefit_index ).init( many.separables<ceindex>( cefit_index ) );
   many.collapses<ceindex>( cefit_index ).init( clusters );
   clusters.clear();
 
