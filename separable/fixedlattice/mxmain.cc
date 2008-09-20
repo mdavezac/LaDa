@@ -363,6 +363,7 @@ int main(int argc, char *argv[])
   }
   many.collapses<ceindex>( cefit_index ).init( many.separables<ceindex>( cefit_index ) );
   many.collapses<ceindex>( cefit_index ).init( clusters );
+  many.init<ceindex>( clusters.size(), 1 );
   clusters.clear();
 
   // add other collapse functor.

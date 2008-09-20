@@ -28,9 +28,12 @@ namespace CE
         namespace bblas = boost::numeric::ublas;
         __DEBUGTRYBEGIN
         // Loop over inequivalent configurations.
-        t_Vector X( current_dof() );
+        const size_t cdof( current_dof() );
+        t_Vector X( cdof );
+        if( _A.size1() != cdof )  _A.resize( cdof, cdof );
         std::fill( _A.data().begin(), _A.data().end(), 
                    typename t_Matrix::value_type(0) );
+        if( _b.size() != cdof )  _b.resize( cdof );
         std::fill( _b.data().begin(), _b.data().end(), 
                    typename t_Vector::value_type(0) );
         for( size_t i(0); i < mapping().size(); ++i )
@@ -100,10 +103,9 @@ namespace CE
         t_collapse &collapse( bf::at<N>( *collapses_ ).back() );
         t_separables &separable( bf::at<N>( *separables_ ).back() );
 
-        const bblas :: range a( 0, _rank * t_separables :: t_Mapping :: D);
+        const bblas :: range a( 0, _rank * t_separables :: t_Traits :: t_Mapping :: D);
         const bblas :: range b( 0, _dimensions );
         separable.coefficients_interface().set( coefficients_, a, b );
-        separable.norms.resize( _rank );
         collapse.init( bf::at<N>( *separables_ ).back() );
       
         // Now computes rank and dimensions.
@@ -321,6 +323,7 @@ namespace CE
        _many.template collapses<0>( pos ).init( _structures, postoconfs );
        _many.template collapses<0>( pos ).regularization().lambda = _lambda;
        _many.template init<0>( rank, postoconfs.dof() );
+       _many.template separables<0>( pos ).norms.resize( rank );
      }
      __DEBUGTRYEND(,"Error while creating Many collapse/separables.\n" )
    }

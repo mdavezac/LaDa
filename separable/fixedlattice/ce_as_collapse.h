@@ -124,8 +124,7 @@ namespace CE
       //! Copy constructor.
       CEasCollapse   ( const CEasCollapse& _c )
                    : cefit_( _c.cefit_ ), clusters_(_c.clusters_),
-                     mapping_( _c.mapping_), regularization_( _c.regularization_ ),
-                     coefficients_(_c.coefficients_) {}
+                     mapping_( _c.mapping_), regularization_( _c.regularization_ ) {}
       
       //! Sets the pointer to the fitting class.
       void init( t_CEFit &_fit ) { cefit_ = &_fit; }
@@ -161,11 +160,15 @@ namespace CE
       //! Reassigns clusters.
       void reassign();
       //! Returns a reference to the coefficients.
-      t_Matrix& coefficients() { return coefficients_(); }
+      t_CEFit& separables() { return cefit(); }
+      //! Returns a reference to the coefficients.
+      const t_CEFit& separables() const { return cefit(); }
+      //! Returns a reference to the coefficients.
+      t_Matrix& coefficients() { return separables().coefficients(); }
       //! Returns a constant reference to the coefficients.
-      const t_Matrix& coefficients() const { return coefficients_(); }
+      const t_Matrix& coefficients() const { return separables().coefficients(); }
       //! Allows manipulation of the coefficients' interface itself.
-      t_Coefficients& coefficients_interface() { return coefficients_; }
+      t_Coefficients& coefficients_interface() { return separables().coefficients_interface(); }
       //! Randomizes the coefficients.
       void randomize( typename t_Matrix :: value_type _howrandom );
       //! Initializes clusters and mapping.
@@ -175,9 +178,17 @@ namespace CE
 
     protected:
       //! Returns a reference to the fitting object.
-      t_CEFit& cefit() { return *cefit_; }
+      t_CEFit& cefit()
+      { 
+        __ASSERT( cefit_ == NULL, "Null pointer.\n" )
+        return *cefit_; 
+      }
       //! Returns a constant reference to the fitting object.
-      const t_CEFit& cefit() const { return *cefit_; }
+      const t_CEFit& cefit() const
+      { 
+        __ASSERT( cefit_ == NULL, "Null pointer.\n" )
+        return *cefit_; 
+      }
       //! Reference to the CE::Fit object.
       t_CEFit *cefit_;
       //! The classes of equivalent clusters for mixing.
@@ -186,8 +197,6 @@ namespace CE
       t_Mapping mapping_;
       //! The regularization.
       t_Regularization regularization_;
-      //! The coefficients.
-      t_Coefficients coefficients_;
 
   };
 
@@ -218,6 +227,27 @@ namespace CE
             //! new type.
             typedef CEasSeparables< T_CEFIT, TT_TRAITS > type;
           };
+        //! Type of the coefficients.
+        typedef typename t_Traits :: t_Coefficients t_Coefficients;
+
+        
+        //! Constructor.
+        CEasSeparables() {}
+        //! Copy Constructor.
+        CEasSeparables   ( const CEasSeparables & _c ) 
+                       : T_CEFIT( _c ), coefficients_(_c.coefficients_) {}
+        //! Returns a reference to the coefficients.
+        typename t_Coefficients :: t_Matrix & coefficients()
+          { return coefficients_(); }
+        //! Returns a constant reference to the coefficients.
+        const typename t_Coefficients :: t_Matrix & coefficients() const
+          { return coefficients_(); }
+        //! Allows manipulation of the coefficients' interface itself.
+        t_Coefficients& coefficients_interface() { return coefficients_; }
+
+      protected:
+         //! The coefficients.
+         t_Coefficients coefficients_;
     };
 
 }

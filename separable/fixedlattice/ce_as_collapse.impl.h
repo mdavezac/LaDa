@@ -13,7 +13,7 @@ namespace Traits
     {
       template< class T_MAPPING, class T_POLICY, 
                 class T_COEFFICIENTS, class T_VECTOR, class T_FIT >
-          struct CEasSeparables : public T_FIT
+          struct CEasSeparables
           {
             //! Type of mapping.
             typedef T_MAPPING t_Mapping;
