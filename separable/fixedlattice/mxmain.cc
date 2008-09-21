@@ -277,7 +277,7 @@ int main(int argc, char *argv[])
   typedef CE::Mapping::SymEquiv t_Mapping;
   typedef CE::Policy::Regularization< t_Function > t_Regularization;
   typedef boost::numeric::ublas::matrix<size_t> t_Confs;
-  typedef CE::Policy::HighMemUpdate< t_Function, t_Mapping, t_Confs > t_UpdatePolicy;
+  typedef CE::Policy::LowMemUpdate< t_Function, t_Mapping, t_Confs > t_UpdatePolicy;
   typedef Traits::CE::Collapse< t_Function, t_Mapping, 
                                 t_Regularization, t_Confs,
                                 t_UpdatePolicy > t_CollapseTraits;

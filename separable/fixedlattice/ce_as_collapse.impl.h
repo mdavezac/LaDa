@@ -61,8 +61,8 @@ namespace CE
     void CEasCollapse<T_TRAITS>
       :: randomize( typename t_Matrix :: value_type _howrandom )
       {
-        typename t_Matrix :: iterator i_c = coefficients().begin();
-        typename t_Matrix :: iterator i_c_end = coefficients().end();
+        typename t_Matrix :: iterator1 i_c = coefficients().begin1();
+        typename t_Matrix :: iterator1 i_c_end = coefficients().end1();
         typedef typename t_Matrix :: value_type t_Type;
         for(; i_c != i_c_end; ++i_c )
           *i_c = t_Type( opt::random::rng() - 5e-1 ) * _howrandom;
@@ -86,8 +86,8 @@ namespace CE
   namespace details
   {
     //! \brief Wrapper around CE::RegulatedFit regularization.
-    template< class T_CEFIT >
-    class Regularization : public CE::Policy::NoReg< T_CEFIT >
+    template< class T_CEFIT > 
+    class Regularization
     {
       public:
         //! Helps to obtain a differently typed regularization.
@@ -100,24 +100,26 @@ namespace CE
         typedef T_CEFIT t_CEFit;
 
         //! Constructor
-        Regularization() : CE::Policy::NoReg<t_CEFit>() {};
+        Regularization() : cefit_(NULL) {};
         //! Copy Constructor.
         template <class TT_CEFIT> 
           Regularization   ( const Regularization<T_CEFIT> &_c )
-                         : CE::Policy::NoReg<t_CEFit>( _c ) {};
-        //! Copy Constructor.
-        template <class TT_SEPARABLES> 
-          Regularization   ( const CE::Policy::NoReg<T_CEFIT> &_c )
-                         : CE::Policy::NoReg<t_CEFit>( _c ) {};
+                         : cefit_( _c.cefit_ ) {};
 
         //! Would modify A matrix and b vector.
         template< class T_MATRIX, class T_VECTOR >
-          void operator()( T_MATRIX &_m, T_VECTOR &_v, size_t _dim )
-            { if( _dim == 1 ) separables_.other_A_n_b( _m, _v ); };
+          void operator()( T_MATRIX &_m, T_VECTOR &_v, size_t _dim ) const
+          {
+            __ASSERT( cefit_ == NULL, "null pointer.\n" )
+            if( _dim == 1 ) cefit_->other_A_n_b( _m, _v ); 
+          };
 
-        using CE::Policy::NoReg<t_CEFit> :: init;
+        //! Initializes pointer.
+        void init( const t_CEFit &_fit ) { cefit_ = &_fit; }
+
       protected:
-        using CE::Policy::NoReg<t_CEFit> :: separables_;
+        //! Pointer to regularization functor.
+        const t_CEFit* cefit_;
     };
   }
 } // end of CE namespace

@@ -93,10 +93,19 @@ namespace CE
         ~SymEquiv() {}
         //! Returns the range of equivalent configurations for structure \a _i.
         boost::numeric::ublas::range range( size_t _i ) const 
-          { return boost::numeric::ublas::range( nb_[_i], nb_[_i+1] ); }
+        {
+          __ASSERT( _i >= nb_.size(), "Index out-of-range.\n" )
+          __ASSERT( _i + 1 >= nb_.size(), "Index out-of-range.\n" )
+          return boost::numeric::ublas::range( nb_[_i], nb_[_i+1] ); 
+        }
         //! Returns the weight for an equivalent structure.
         t_Vector::value_type eweight( size_t _i, size_t _c ) const
-          { return equiweights[ nb_[_i] + _c ]; }
+        {
+          __ASSERT( _i + 1 >= nb_.size(), "Index out-of-range.\n" )
+          __ASSERT( _c >= nb_[_i+1] - nb_[_i], "Index out-of-range.\n" )
+          __ASSERT( _i + _c >= equiweights.size(), "Index out-of-range.\n" )
+          return equiweights[ nb_[_i] + _c ]; 
+        }
         //! Initializes the mapping.
         template< class T_STRUCTURES, class T_CONFIGURATIONS >
           void init( const T_STRUCTURES& _strs, 

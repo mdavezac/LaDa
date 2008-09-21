@@ -186,7 +186,6 @@ namespace Fitting
                      T_COLLAPSE &_collapse  ) const
       {
         __TRYBEGIN
-        std::cout << _collapse << "\n";
         namespace bblas = boost::numeric::ublas;
         typedef typename T_COLLAPSE::t_Matrix t_Matrix;
         typedef typename bblas::matrix< typename t_Matrix::value_type> t_OMatrix;
@@ -206,15 +205,16 @@ namespace Fitting
             typedef bblas::matrix_column<t_Matrix> t_Column;
             t_Column column( _solution, dim );
             _collapse( A, b, dim );
-            if( A.size1() == column.size() ) linear_solver( A, column, b );
+            if( A.size1() == column.size() ) 
+              linear_solver( A, column, b );
             else
             {
-              bblas::vector_range< t_Column > range( column, bblas::range( 0, A.size1() ) );
+              bblas::vector_range< t_Column >
+                range( column, bblas::range( 0, A.size1() ) );
               linear_solver( A, range, b );
             }
             _collapse.update( dim );
             opt::ErrorTuple e( _collapse.evaluate() );
-            std::cout << "dim: " << dim << " " << e << "\n";
           }
           ++iter;
        

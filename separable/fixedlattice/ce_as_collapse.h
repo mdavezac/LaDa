@@ -127,7 +127,7 @@ namespace CE
                      mapping_( _c.mapping_), regularization_( _c.regularization_ ) {}
       
       //! Sets the pointer to the fitting class.
-      void init( t_CEFit &_fit ) { cefit_ = &_fit; }
+      void init( t_CEFit &_fit ) { cefit_ = &_fit; regularization().init( _fit ); }
 
       //! Evaluates square errors for one structure.
       typename t_Matrix::value_type evaluate( size_t _n ) const;
@@ -155,8 +155,13 @@ namespace CE
       //! Returns a constant reference to the regularization.
       const t_Regularization& regularization() const { return regularization_; }
       //! Creates an X vector for fitting, for a single rank.
-      template< class T_VECTOR > void create_X( size_t _i, size_t, T_VECTOR &_out )
-        { std::copy( cefit.pis[_i].begin(), cefit.pis[_i].end(), _out.begin() ); }
+      template< class T_VECTOR >
+        void create_X( size_t _i, size_t, T_VECTOR &_out ) 
+        { 
+          __ASSERT( cefit().pis.size() <= _i, "Index out-of-range.\n" )
+          __ASSERT( cefit().pis[_i].size() != _out.size(), "Incompatible sizes.\n" )
+          std::copy( cefit().pis[_i].begin(), cefit().pis[_i].end(), _out.begin() ); 
+        }
       //! Reassigns clusters.
       void reassign();
       //! Returns a reference to the coefficients.
@@ -168,7 +173,8 @@ namespace CE
       //! Returns a constant reference to the coefficients.
       const t_Matrix& coefficients() const { return separables().coefficients(); }
       //! Allows manipulation of the coefficients' interface itself.
-      t_Coefficients& coefficients_interface() { return separables().coefficients_interface(); }
+      t_Coefficients& coefficients_interface()
+        { return separables().coefficients_interface(); }
       //! Randomizes the coefficients.
       void randomize( typename t_Matrix :: value_type _howrandom );
       //! Initializes clusters and mapping.

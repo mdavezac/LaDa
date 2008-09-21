@@ -152,6 +152,7 @@ namespace CE
           void operator()( T_MATRIX &_A, T_VECTOR &_b,
                            types::t_unsigned _dim )
             { dim = _dim; create_A_n_b( _A, _b ); regularization()( _A, _b, _dim); }
+
         //! Evaluates square errors.
         opt::ErrorTuple evaluate() const;
         //! Evaluates square errors for one structure.

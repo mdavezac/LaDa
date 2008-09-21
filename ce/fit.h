@@ -278,7 +278,6 @@ namespace CE
           void construct( T_MATRIX &_A, T_VECTOR &_b ) const
             { details::construct_( *this, _A, _b ); }
 
-      protected:
         //! Adds weight regulation to \a _A.
         template< class T_MATRIX, class T_VECTOR >
           void other_A_n_b( T_MATRIX &_A, T_VECTOR &_b ) const;
@@ -318,7 +317,6 @@ namespace CE
           opt::ErrorTuple check_training( const BaseFit::t_Vector &_ecis,
                                           bool _verbose );
 
-        protected:
           //! Computes \a _A and \a _b excluding excluded structures.
           template< class T_MATRIX, class T_VECTOR >
             void other_A_n_b( T_MATRIX &_A, T_VECTOR &_b ) const {};
@@ -393,12 +391,13 @@ namespace CE
           //! Destructor..
           ~PairReg () {};
 
-        protected:
-          //! Possible initialization stuff.
-          void init( const BaseFit::t_Clusters &_clusters );
           //! Adds pair regulation to \a _A.
           template< class T_MATRIX, class T_VECTOR >
             void other_A_n_b( T_MATRIX &_A, T_VECTOR &_b ) const;
+
+        protected:
+          //! Possible initialization stuff.
+          void init( const BaseFit::t_Clusters &_clusters );
 
           //! A container to the the pair terms.
           typedef std::vector< std::pair< size_t, types::t_real > > t_PairWeights;

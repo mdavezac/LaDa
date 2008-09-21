@@ -198,7 +198,7 @@ namespace CE
         }
     template< class T_SEPARABLES > template< class T_MATRIX, class T_VECTOR >
       void Regularization<T_SEPARABLES> 
-        :: operator()( T_MATRIX &_A, T_VECTOR &_b, size_t _dim )
+        :: operator()( T_MATRIX &_A, T_VECTOR &_b, size_t _dim ) const
         {
           if( Fuzzy::is_zero( lambda ) ) return; 
           typedef typename t_Separables :: t_Vector :: const_iterator t_cit;

@@ -25,11 +25,11 @@
       typename boost::disable_if\
                < boost::is_same< typename result<Arg> :: type, void >, \
                  typename result<Arg> :: type > :: type \
-        operator()(Arg n) const  {  return n.memfunc();  } \
+        operator()(Arg& n) const  {  return n.memfunc();  } \
       template <typename Arg> \
       typename boost::enable_if \
                < boost::is_same< typename result<Arg> :: type, void >, void > :: type\
-        operator()(Arg n) const  {  n.memfunc();  } \
+        operator()(Arg& n) const  {  n.memfunc();  } \
   }; \
 
 #ifdef PHOENIX_MEMFUNC1
@@ -52,11 +52,11 @@
       typename boost::disable_if\
                < boost::is_same< typename result<Arg, Arg1> :: type, void >, \
                  typename result<Arg, Arg1> :: type > :: type \
-        operator()(Arg n, Arg1 a1 ) const  {  return n.memfunc( a1 );  } \
+        operator()(Arg& n, Arg1& a1 ) const  {  return n.memfunc( a1 );  } \
       template <typename Arg, typename Arg1 > \
       typename boost::enable_if \
                < boost::is_same< typename result<Arg, Arg1> :: type, void >, void > :: type\
-        operator()(Arg n, Arg1 a1) const  {  n.memfunc( a1 );  } \
+        operator()(Arg& n, Arg1& a1) const  {  n.memfunc( a1 );  } \
   }; \
 
 # ifdef VOID_MFUNC
@@ -72,7 +72,7 @@
      typedef void result_type;\
      template< class T > result_type operator()( T &_t ) \
      {\
-       foreach( const typename T::value_type &_val, _t )\
+       foreach( typename T::const_reference &_val, _t )\
          _val.FunctionName(); \
      }\
    }; 

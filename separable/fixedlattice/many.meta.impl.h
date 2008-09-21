@@ -3,7 +3,9 @@
 //
 
 //! \cond
-#include <boost/lambda/lambda.hpp>
+#include <boost/concept_check.hpp>
+#include <boost/concept/requires.hpp>
+#include <boost/concept/usage.hpp>
 
 namespace CE
 {
@@ -12,27 +14,27 @@ namespace CE
     typedef void result_type;
     T_VECTOR &X_;
     const size_t &i_;
-    const Many& self_;
-    size_t rangestart;
-    ApplyCreateAnB   ( T_VECTOR &_X, const size_t _i, const Many& _self )
-                   : X_(_X), i_(_i), self_(_self), rangestart(0) {}
+    const size_t &dim;
+    mutable size_t rangestart;
+    ApplyCreateAnB   ( T_VECTOR &_X, const size_t _i, const size_t& _dim )
+                   : X_(_X), i_(_i), dim(_dim), rangestart(0) {}
     ApplyCreateAnB   ( const ApplyCreateAnB & _c )
-                   : X_(_c.X_), i_(_c.i_), self_(_c.self_), rangestart(_c.rangestart) {}
-    template< class T > result_type operator()( T &_t )
+                   : X_(_c.X_), i_(_c.i_), dim(_c.dim),
+                     rangestart(_c.rangestart) {}
+    template< class T > result_type operator()( T &_t ) const
     {
       namespace bblas = boost::numeric::ublas;
-      foreach( typename T::const_reference &_val, _t )
+      foreach( typename T::reference &_val, _t )
       {
-        if( _val.dimensions() < self_.dim ) continue;
+        if( _val.dimensions() <= dim or _val.dof() == 0 ) continue;
         const bblas::range colrange( rangestart,
                                      rangestart + _val.dof() );
     
         // create the X vector.
         bblas::vector_range< t_Vector > colX( X_, colrange );
-        _val.create_X( i_, colX );
+        _val.create_X( i_, dim, colX );
         rangestart += _val.dof();
       }
-      rangestart = 0;
     }
   };
   INMANY2(template< class T_MATRIX, class T_VECTOR > struct ) 
@@ -41,23 +43,24 @@ namespace CE
       typedef void result_type;
       T_MATRIX &A_;
       T_VECTOR &b_;
-      const Many& self_;
-      size_t rangestart;
-      ApplyRegularization   ( T_MATRIX &_A, T_VECTOR &_b, const Many& _self )
-                          : A_(_A), b_(_b), self_(_self), rangestart(0) {}
+      const size_t& dim;
+      mutable size_t rangestart;
+      ApplyRegularization   ( T_MATRIX &_A, T_VECTOR &_b, const size_t& _dim )
+                          : A_(_A), b_(_b), dim(_dim), rangestart(0) {}
       ApplyRegularization   ( const ApplyRegularization &_c )
-                          : A_(_c.A_), b_(_c.b_), self_(_c.self_),
+                          : A_(_c.A_), b_(_c.b_), dim(_c.dim),
                             rangestart(_c.rangestart) {}
-      template< class T > result_type operator()( T &_t ) 
+      template< class T > result_type operator()( T &_t ) const
       {
         namespace bblas = boost::numeric::ublas;
         foreach( typename T::const_reference &_val, _t )
         {
+          if( _val.dimensions() <= dim ) continue;
           const bblas::range colrange( rangestart,
                                        rangestart + _val.dof() );
           bblas::matrix_range<T_MATRIX> sepmat( A_, colrange, colrange );
           bblas::vector_range<T_VECTOR> sepvec( b_, colrange );
-          _val.regularization()( A_, b_, self_.dim ); 
+          _val.regularization()( A_, b_, dim ); 
       
           rangestart += _val.dof();
         }
@@ -68,9 +71,9 @@ namespace CE
     :: ApplyResize<const T_COEFFICIENTS>
   {
     typedef void result_type;
-    size_t rank_;
-    const T_COEFFICIENTS& coefficients_;
-    ApplyResize   ( const T_COEFFICIENTS & _coefficients ) 
+    mutable size_t rank_;
+    T_COEFFICIENTS& coefficients_;
+    ApplyResize   ( T_COEFFICIENTS & _coefficients ) 
                 : coefficients_(_coefficients), rank_(0) {}
     ApplyResize   ( const ApplyResize & _c)
                 : coefficients_(_c.coefficients_), rank_(_c.rank_) {}
@@ -142,61 +145,67 @@ namespace CE
   struct ManyState :: Save
   {
     typedef void result_type;
-    ManyState :: t_Norms& norms;
+    mutable ManyState :: t_Norms& norms;
     Save( ManyState::t_Norms& _norms ) : norms( _norms ) { norms.clear(); }
     Save( const Save &_c ) : norms( _c.norms ) {}
     template< class T >
-      result_type operator()( const T& _t )
-        { foreach( const typename T::value_type &_val, _t ) call( _t ); }
+      typename boost::enable_if
+               <
+                 ManyState::has_norms<typename T::const_reference>,
+                 result_type 
+               > :: type operator()( const T& _t ) const
+        { 
+          foreach( typename T::const_reference &_val, _t ) 
+            norms.push_back( _val.norms );
+        }
     template< class T >
-      typename boost::enable_if< ManyState::has_norms<T>, result_type > :: type
-        call( const T& _t ) { norms.push_back( _t.norms ); }
-    template< class T >
-      typename boost::disable_if< ManyState::has_norms<T>, result_type > :: type
-        call( const T& _t ) {}
+      typename boost::disable_if
+               <
+                 ManyState::has_norms<typename T::const_reference>,
+                 result_type 
+               > :: type operator()( const T& _t ) const {}
   };
 
   struct ManyState :: Reset
   {
     typedef void result_type;
-    ManyState :: t_Norms :: const_iterator i_norm;
+    mutable ManyState :: t_Norms :: const_iterator i_norm;
     ManyState :: t_Norms :: const_iterator i_norm_end;
     Reset   ( const ManyState::t_Norms& _norms ) 
           : i_norm( _norms.begin() ), i_norm_end( _norms.end() ) {}
     Reset( const Reset &_c ) : i_norm( _c.i_norm ), i_norm_end( i_norm_end ) {}
+
+
     template< class T >
-      result_type operator()( T& _t )
-          { foreach( typename T::value_type &_val, _t ) call( _t ); }
-    template< class T >
-      typename boost::enable_if< ManyState::has_norms<T>, result_type > :: type
-        call( T& _t )
-        {
-          __ASSERT( i_norm_end - i_norm > 0, "Iterator out of range.\n" )
-          _t.norms = *i_norm;
-          ++i_norm;
+      typename boost::enable_if
+               <
+                 ManyState::has_norms<typename T::reference>,
+                 result_type 
+               > :: type operator()( T& _t ) const
+        { 
+          foreach( typename T::const_reference &_val, _t ) 
+          {
+            __ASSERT( i_norm_end - i_norm > 0, "Iterator out of range.\n" )
+            _val.norms = *i_norm;
+            ++i_norm;
+          }
         }
     template< class T >
-      typename  boost::disable_if< ManyState::has_norms<T>, result_type > :: type
-        call( T& _t ) {}
+      typename boost::disable_if
+               <
+                 ManyState::has_norms<typename T::reference>,
+                 result_type 
+               > :: type operator()( T& _t ) const {}
+
   };
 
-  template<class T > class ManyState::has_norms
+  template<class T > struct ManyState::has_norms
   {
-    template<class TT> struct CheckForNorms
-    {
-      BOOST_CONCEPT_USAGE(CheckForNorms)
-      {
-        t.norms.clear();
-        t.norms.begin();
-        t.norms.end();
-      }
-      TT t;
-    };
-    typedef char One;
-    struct Two { One two[2]; };
-    template<class U> One (&test( U*, CheckForNorms<U>* a=0 ));
-    Two (&test(...));
-    enum { value = 1 == sizeof( has_norms::test( (T*)0 ) ) };
+    static const bool value = false;
+  };
+  template<class T > struct ManyState::has_norms< Collapse<T> >
+  {
+    static const bool value = true;
   };
 
 

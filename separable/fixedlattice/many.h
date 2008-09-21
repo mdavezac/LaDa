@@ -349,7 +349,7 @@ namespace CE
   {
     public:
       //! Saves a state.
-      template< class T_MANY > void operator=( const T_MANY& _many );
+      template< class T_MANY > void operator=( const T_MANY& _many ) const;
       //! Resets a saved state.
       template< class T_MANY > void reset( T_MANY& _many ) const;
 
@@ -359,9 +359,9 @@ namespace CE
       //! Norms to save.
       typedef std::vector< boost::numeric::ublas::vector<types::t_real> > t_Norms;
       //! Coefficients to save.
-      t_Coefficients coefficients_;
+      mutable t_Coefficients coefficients_;
       //! Norms to save.
-      t_Norms norms_;
+      mutable t_Norms norms_;
       //! A meta-function for saving states.
       struct Save;
       //! A meta-function for resetting saved-states.

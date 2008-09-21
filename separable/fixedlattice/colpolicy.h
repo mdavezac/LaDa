@@ -53,6 +53,17 @@ namespace CE
                        : mapping_(_mapping) {}
           //! Destructor.
           ~LowMemUpdate() {}
+          
+          void print_scales() const
+          {
+            namespace bblas = boost::numeric::ublas;
+            std::cout << "scales_ " << (long int) (&scales_) << "\n";
+           //for( size_t i(0); i < configurations_->size2(); ++i )
+           //{
+           // bblas::matrix_column<const t_CMatrix> scaling( scales_, i );
+           // std::cout << "3scaling " << i << ": " << scaling << "\n";
+           //}
+          }
 
           //! Updates all dimension.
           void operator()();
@@ -162,7 +173,7 @@ namespace CE
 
         //! Would modify A matrix and b vector.
         template< class T_MATRIX, class T_VECTOR >
-          void operator()( T_MATRIX &, T_VECTOR &, size_t _dim ) {}
+          void operator()( T_MATRIX &, T_VECTOR &, size_t _dim ) const {}
 
       protected:
         //! A reference to the separable function.
@@ -197,7 +208,7 @@ namespace CE
 
         //! Would modify A matrix and b vector.
         template< class T_MATRIX, class T_VECTOR >
-          void operator()( T_MATRIX &, T_VECTOR &, size_t _dim );
+          void operator()( T_MATRIX &, T_VECTOR &, size_t _dim ) const;
 
         using NoReg<T_SEPARABLES> :: init;
       protected:

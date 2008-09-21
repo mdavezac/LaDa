@@ -41,7 +41,8 @@ namespace CE
           // allows leave-one-out, or leave-many-out.
           if( mapping().do_skip(i) )  continue;
 
-          bf::transform( *collapses_, ApplyCreateAnB<t_Vector>( X, i, *this ) );
+          std::fill( X.begin(), X.end(), typename t_Vector::value_type(0) );
+          bf::for_each( *collapses_, ApplyCreateAnB<t_Vector>( X, i, dim ) );
           
           _A += mapping().weight(i) * bblas::outer_prod( X, X ); 
           _b += mapping().weight(i) * mapping().target(i) * X;
@@ -58,8 +59,8 @@ namespace CE
 //       boost::fusion::for_each( collapses_, U_MFUNC( assign )(dim) );
         create_A_n_b( _A, _b );
 
-        ApplyRegularization< T_MATRIX, T_VECTOR > applyreg( _A, _b, *this );
-        boost::fusion::transform( *collapses_, applyreg );
+        ApplyRegularization< T_MATRIX, T_VECTOR > applyreg( _A, _b, dim );
+        boost::fusion::for_each( *collapses_, applyreg );
         __DEBUGTRYEND(, "Error in Many::operator()()\n" )
       }
     
@@ -84,7 +85,8 @@ namespace CE
       typedef typename t_Traits::template at<t_VectorsOfSeparables, _index>
                                :: type t_separables;
 
-      bf::at<N>( *collapses_ ).push_back( new t_collapse );
+      t_collapse *ptr =  new t_collapse ;
+      bf::at<N>( *collapses_ ).push_back( ptr );
       bf::at<N>( *separables_ ).push_back( new t_separables );
       return bf::at<N>( *separables_ ).size() - 1;
     }
@@ -110,8 +112,8 @@ namespace CE
       
         // Now computes rank and dimensions.
         coefficients_.resize( dof(), dimensions() );
-        boost::fusion::transform( *collapses_,
-                                  ApplyResize<const t_Coefficients>( coefficients_ ) );
+        boost::fusion::for_each( *collapses_,
+                                 ApplyResize<const t_Coefficients>( coefficients_ ) );
       }
     INMANY( typename MANYHEAD::t_Matrix::value_type ) :: evaluate( size_t _n) const 
     {
@@ -177,7 +179,7 @@ namespace CE
       namespace bp = boost::phoenix;
       namespace bpa = boost::phoenix::arg_names;
       bp::function< phoenix::PHOENIX_MEMFUNC1( update ) > memfunc;
-      boost::fusion::transform
+      boost::fusion::for_each
       (
         *collapses_,
         bp::for_each
@@ -192,7 +194,7 @@ namespace CE
       namespace bp = boost::phoenix;
       namespace bpa = boost::phoenix::arg_names;
       bp::function< phoenix::PHOENIX_MEMFUNC( update_all ) > memfunc;
-      boost::fusion::transform
+      boost::fusion::for_each
       (
         *collapses_,
         bp::for_each
@@ -207,7 +209,7 @@ namespace CE
       namespace bp = boost::phoenix;
       namespace bpa = boost::phoenix::arg_names;
       bp::function< phoenix::PHOENIX_MEMFUNC( reset ) > memfunc;
-      boost::fusion::transform
+      boost::fusion::for_each
       (
         *collapses_,
         bp::for_each
@@ -222,7 +224,7 @@ namespace CE
       namespace bp = boost::phoenix;
       namespace bpa = boost::phoenix::arg_names;
       bp::function< phoenix::PHOENIX_MEMFUNC1( randomize ) > memfunc;
-      boost::fusion::transform
+      boost::fusion::for_each
       (
         *collapses_,
         bp::for_each
@@ -317,6 +319,7 @@ namespace CE
          continue;
        }
        if( rank == 0 ) continue;
+       std::cout << "Creating separable function from " << *i_tok << "\n";
        __TRYCODE( postoconfs.create_positions( *i_tok );,
                   "Could not parse string " << _desc << "\n" )
        const size_t pos = _many.template addone<0>();
@@ -329,16 +332,16 @@ namespace CE
    }
   
   template< class T_MANY >
-    void ManyState :: operator=( const T_MANY& _many )
+    void ManyState :: operator=( const T_MANY& _many ) const
     {
       coefficients_ = _many.coefficients();
       norms_.clear();
-      boost::fusion::transform( *_many.collapses_, Save( norms_ ) );
+      boost::fusion::for_each( *_many.collapses_, Save( norms_ ) );
     }
    template< class T_MANY > void ManyState :: reset( T_MANY& _many ) const
    {
      _many.coefficients() = coefficients_;
-     boost::fusion::transform( *_many.collapses_, Reset( norms_ ) );
+     boost::fusion::for_each( *_many.collapses_, Reset( norms_ ) );
    }
 
 
