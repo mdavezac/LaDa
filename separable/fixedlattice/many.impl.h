@@ -336,12 +336,12 @@ namespace CE
     {
       coefficients_ = _many.coefficients();
       norms_.clear();
-      boost::fusion::for_each( *_many.collapses_, Save( norms_ ) );
+      boost::fusion::for_each( *_many.separables_, Save( norms_ ) );
     }
    template< class T_MANY > void ManyState :: reset( T_MANY& _many ) const
    {
      _many.coefficients() = coefficients_;
-     boost::fusion::for_each( *_many.collapses_, Reset( norms_ ) );
+     boost::fusion::for_each( *_many.separables_, Reset( norms_ ) );
    }
 
 

@@ -90,6 +90,8 @@ namespace CE
     class Separables
     {
       public:
+        //! bullshit
+        const static bool has_norms = true;
         //! Allows rebinding of the separables function.
         template< class TT_TRAITS > struct rebind
         {

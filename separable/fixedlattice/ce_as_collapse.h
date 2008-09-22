@@ -222,6 +222,8 @@ namespace CE
     class CEasSeparables : public T_CEFIT
     {
       public:
+        //! bullshit
+        const static bool has_norms = false;
         //! Type of the traits.
         typedef T_TRAITS t_Traits;
         //! Type of the fitting function.

@@ -183,9 +183,9 @@ namespace CE
                  result_type 
                > :: type operator()( T& _t ) const
         { 
-          foreach( typename T::const_reference &_val, _t ) 
+          foreach( typename T::reference &_val, _t ) 
           {
-            __ASSERT( i_norm_end - i_norm > 0, "Iterator out of range.\n" )
+            __ASSERT( i_norm_end - i_norm <= 0, "Iterator out of range.\n" )
             _val.norms = *i_norm;
             ++i_norm;
           }
@@ -201,13 +201,8 @@ namespace CE
 
   template<class T > struct ManyState::has_norms
   {
-    static const bool value = false;
+    static const bool value = boost::remove_reference<T>::type::has_norms;
   };
-  template<class T > struct ManyState::has_norms< Collapse<T> >
-  {
-    static const bool value = true;
-  };
-
 
 }
 //! \endcond
