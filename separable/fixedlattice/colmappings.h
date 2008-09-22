@@ -85,6 +85,9 @@ namespace CE
         //! Constructor.
         SymEquiv() {}
         //! Copy Constructor.
+        SymEquiv  (const Basic& _c)
+                : Basic( _c ) {} 
+        //! Copy Constructor.
         SymEquiv  (const SymEquiv& _c)
                 : Basic( _c ),
                   equiweights( _c.equiweights ), 
@@ -132,7 +135,7 @@ namespace CE
         //! Constructor.
         ExcludeMany() : T_BASE() {}
         //! Copy Constructor.
-        ExcludeMany( const T_BASE & _c ) : T_BASE( _c ), excluded(NULL) {}
+        ExcludeMany( const T_BASE & _c ) : T_BASE( _c ) {}
         //! Copy Constructor.
         ExcludeMany   ( const ExcludeMany & _c )
                     : T_BASE( _c ), excluded( _c.excluded ) {}
