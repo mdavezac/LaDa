@@ -142,7 +142,7 @@ namespace CE
         const types::t_real weight = _structure.weight;
         const std::string name = fs::path( _structure.name ).leaf() ;
      
-        typedef typename T_COLLAPSE::t_Traits::t_Coefficients::value_type t_Type; 
+        typedef typename T_COLLAPSE::t_Matrix::value_type t_Type; 
         t_Type predic( _collapse.evaluate(_n) );
         opt::ErrorTuple error( _structure.energy - predic, _structure.weight );
         if( _verbose )

@@ -29,16 +29,19 @@ namespace Traits
      {
        protected:
          //! Original separables.
-         typedef typename T_COLTRAITS :: t_Separables t_OrigSeparables;
+         typedef typename T_COLLAPSE :: t_Traits :: t_Separables t_OrigSeparables;
 
        public:
+         //! Original Collapse type.
+         typedef T_COLLAPSE t_OrigCollapse;
          //! Original separable traits.
-         typedef typename t_OrigSeparables t_Traits t_OrigSepTraits;
+         typedef typename t_OrigSeparables :: t_Traits t_OrigSepTraits;
          //! Type of the separable function.
          typedef typename SeparablesWithMatrixRange<t_OrigSeparables>
                                                    :: type t_Separables;
          //! New Collapse functor.
-         typedef typename CollapseWithNewSeparables<t_Separables> :: type t_Collapse;
+         typedef typename CollapseWithNewSeparables<t_OrigCollapse, t_Separables>
+                              :: type t_Collapse;
          //! Type of the configuration matrix.
          typedef typename t_Collapse :: t_Configurations t_Configurations;
          //! Type of the Mapping.
@@ -49,7 +52,61 @@ namespace Traits
          typedef typename t_Collapse :: t_UpdatePolicy t_UpdatePolicy;
          //! CE fit base.
          typedef T_CEBASE t_CEBase;
+
+         //! Rebinds traits.
+         template< class TT_COLLAPSE, class TT_CEBASE >
+         struct rebind
+         {
+           //! Result type.
+           typedef MixedApproach< TT_COLLAPSE, TT_CEBASE >  type;
+         };
+
+//       //! Type of the coefficients range.
+//       typedef typename t_Traits :: t_OrigSepTraits :: t_Matrix t_Coefficients;
      };
+
+    //! Rebinds collapse functor with new mapping.
+    template< class T_MIXED, class T_MAPPING >
+    struct MixedApproachWithNewMapping
+    {
+      protected:
+        //! Original type.
+        typedef T_MIXED t_Mixed;
+        //! Original traits.
+        typedef typename t_Mixed :: t_Traits t_Traits;
+        //! Original CE type`.
+        typedef typename t_Traits :: t_CEBase t_CEBase;
+        //! New Collapse. 
+        typedef typename t_Traits :: t_OrigCollapse t_Collapse;
+        //! Original Collapse traits.
+        typedef typename t_Collapse :: t_Traits t_CollapseTraits;
+        //! New Collapse Traits
+        typedef typename t_CollapseTraits ::template rebind
+                <
+                  typename t_CollapseTraits :: t_Separables, 
+                  T_MAPPING,
+                  typename t_CollapseTraits :: t_RegPolicy, 
+                  typename t_CollapseTraits :: t_Configurations,
+                  typename t_CollapseTraits :: t_UpdatePolicy
+                > :: type t_NewCollapseTraits;
+        //! New Collapse. 
+        typedef typename t_Collapse ::template rebind
+                <
+                  t_NewCollapseTraits
+                > :: type t_NewCollapse;
+        //! New traits
+        typedef typename t_Traits ::template rebind
+                < 
+                  t_NewCollapse, 
+                  t_CEBase
+                > :: type t_NewTraits;
+      public:
+        //! Resulting type.
+        typedef typename t_Mixed ::template rebind
+                <
+                  t_NewTraits 
+                > :: type type;
+    };
 
   } // end of CE namespace 
 
@@ -63,6 +120,13 @@ namespace CE
     {
       template< class TT_TRAITS > friend class MixedApproach;
       public:
+        //! Rebinds MixedApproach.
+        template< class TT_TRAITS >
+        struct rebind
+        {
+          //! Result type.
+          typedef MixedApproach< TT_TRAITS >  type;
+        };
         //! Type of the traits.
         typedef T_TRAITS t_Traits;
         //! Type of the separable collapse functor.

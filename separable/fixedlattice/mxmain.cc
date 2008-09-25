@@ -17,7 +17,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/mpl/vector.hpp>
 
 #include <opt/cgs.h>
 #include <opt/types.h>
@@ -30,7 +29,6 @@
 #include <ce/cluster.h>
 #include <ce/regularization.h>
 #include <ce/harmonic.h>
-#include <ce/fit.h>
 
 #include <opt/leave_many_out.h>
 
@@ -40,9 +38,8 @@
 #include "collapse.h"
 #include "prepare.h"
 #include "methods.h"
+#include "mixed.h"
 #include "mixedfunctional.h"
-#include "many.h"
-#include "ce_as_collapse.h"
 
 #include <revision.h>
 #define __PROGNAME__ "Mixed Approach: CE and Sum of Separable functions on a fixed lattice." 
@@ -260,62 +257,6 @@ int main(int argc, char *argv[])
   lattice( Crystal::read_lattice( latinput, dir ) );
   Crystal::Structure::lattice = lattice.get();
 
-  
-  // Initializes fitting.
-  typedef Fitting::AlternatingLeastSquare<Fitting::Cgs> t_Fitting;
-  t_Fitting allsq;
-  allsq.itermax = maxiter;
-  allsq.tolerance = tolerance;
-  allsq.verbose = verbosity >= print_allsq;
-  allsq.linear_solver.tolerance = dtolerance;
-  allsq.linear_solver.verbose = verbosity >= print_llsq;
-
-  // Separables traits.
-  typedef Traits::CE::Separables< CE::Mapping::VectorDiff<2> > t_FunctionTraits;
-  typedef CE::Separables< t_FunctionTraits > t_Function;
-  // Collapse Traits
-  typedef CE::Mapping::SymEquiv t_Mapping;
-  typedef CE::Policy::Regularization< t_Function > t_Regularization;
-  typedef boost::numeric::ublas::matrix<size_t> t_Confs;
-  typedef CE::Policy::LowMemUpdate< t_Function, t_Mapping, t_Confs > t_UpdatePolicy;
-  typedef Traits::CE::Collapse< t_Function, t_Mapping, 
-                                t_Regularization, t_Confs,
-                                t_UpdatePolicy > t_CollapseTraits;
-  typedef CE::Collapse<t_CollapseTraits> t_Collapse;
-  // CE fit functor.
-  typedef CE::CEasSeparables< CE::Fit< CE::FittingPolicy::PairReg<> > > t_CEFit;
-  typedef Traits::CE::CEasCollapse< t_CEFit,
-                                    CE::Policy::MatrixRangeCoefficients >
-                          t_CECollapseTraits;
-  typedef CE::CEasCollapse< t_CECollapseTraits > t_CECollapse;
-  typedef boost::mpl::vector< t_Collapse, t_CECollapse > t_MPLCollapses;
-  typedef boost::mpl::vector< t_Function, t_CEFit > t_MPLSeparables;
-  const size_t sepindex(0);
-  const size_t ceindex(1);
-
-  typedef Traits::CE::Many<t_MPLSeparables, t_MPLCollapses> t_ManyTraits;
-  typedef CE::Many< t_ManyTraits > t_ManyCollapses;
-  typedef t_ManyCollapses :: t_Traits :: t_Separables t_Separables;
-  typedef t_ManyCollapses :: t_Traits :: t_Collapses t_Collapses;
-  // Creates Many collapses functor.
-  t_ManyCollapses many;
-
-  // Creates ce fit object.
-  const size_t cefit_index = many.addone<ceindex>();
-  boost::mpl::at<t_Separables, boost::mpl::int_<1> >::type
-     &cefit( many.separables<ceindex>( cefit_index ) );
-  Crystal::read_ce_structures( dir / "LDAs.dat", cefit.structures() );
-  if( verbosity >= print_data )
-    std::for_each
-    (
-      cefit.structures().begin(), cefit.structures().end(), 
-      std::cout << bl::_1 << "\n"
-    );
-  cefit.alpha = alpha;
-  cefit.tcoef = tcoef;
-  cefit.do_pairreg = ( not Fuzzy::is_zero( alpha ) and maxpairs );
-  cefit.laksreg = not volkerreg;
-  cefit.verbose = verbosity >= print_checks;
   // create pair terms.
   typedef std::vector< std::vector< CE::Cluster > > t_Clusters;
   std::vector< std::vector< CE::Cluster > > clusters;
@@ -344,10 +285,65 @@ int main(int argc, char *argv[])
       if( _class.front().size() == 1 ) { isfound = true; break; }
     if( isfound ) clusters.push_back( std::vector<CE::Cluster>(1, cluster) ); 
   }
+  
+  // Initializes fitting.
+  typedef Fitting::AlternatingLeastSquare<Fitting::Cgs> t_Fitting;
+  t_Fitting allsq;
+  allsq.itermax = maxiter;
+  allsq.tolerance = tolerance;
+  allsq.verbose = verbosity >= print_allsq;
+  allsq.linear_solver.tolerance = dtolerance;
+  allsq.linear_solver.verbose = verbosity >= print_llsq;
+
+  // Initializes basis.
+  CE::PosToConfs postoconfs( *Crystal::Structure::lattice );
+  if(  ( not bdesc.empty() ) and rank )
+    postoconfs.create_positions( bdesc );
+
+  // Separables traits.
+  typedef Traits::CE::Separables< CE::Mapping::VectorDiff<2> > t_FunctionTraits;
+  typedef CE::Separables< t_FunctionTraits > t_Function;
+  // Collapse Traits
+  typedef CE::Mapping::SymEquiv t_Mapping;
+  typedef CE::Policy::Regularization< t_Function > t_Regularization;
+  typedef boost::numeric::ublas::matrix<size_t> t_Confs;
+  typedef CE::Policy::HighMemUpdate< t_Function, t_Mapping, t_Confs > t_UpdatePolicy;
+  typedef Traits::CE::Collapse< t_Function, t_Mapping, 
+                                t_Regularization, t_Confs,
+                                t_UpdatePolicy > t_CollapseTraits;
+  // CE base
+  typedef CE::Fit< CE::FittingPolicy::PairReg<> > t_CEBase;
+  // Mixed approach traits.
+  typedef Traits::CE::MixedApproach< CE::Collapse<t_CollapseTraits>, 
+                                     t_CEBase > t_MixedTraits;
+  typedef CE::MixedApproach< t_MixedTraits > t_Collapse;
+
+  // Finally creates mixed approach object.
+  t_Collapse mixed;
+  // initializes ce part.
+  Crystal::read_ce_structures( dir / "LDAs.dat", mixed.cefit().structures() );
+  if( verbosity >= print_data )
+    std::for_each
+    (
+      mixed.cefit().structures().begin(), mixed.cefit().structures().end(), 
+      std::cout << bl::_1 << "\n"
+    );
+  mixed.cefit().alpha = alpha;
+  mixed.cefit().tcoef = tcoef;
+  mixed.cefit().do_pairreg = ( not Fuzzy::is_zero( alpha ) and maxpairs );
+  mixed.cefit().laksreg = not volkerreg;
+  mixed.cefit().verbose = verbosity >= print_checks;
+  // initializes collapse part.
+  mixed.collapse().init( mixed.cefit().structures(), postoconfs );
+  mixed.collapse().regularization().lambda = lambda;
+  // initializes mixed.
+  std::copy( clusters.begin(), clusters.end(),
+             std::back_inserter( mixed.clusters() ) );
   if( verbosity >= print_data )
   {
-    CE::Regulated :: t_Clusters :: const_iterator i_class = clusters.begin();
-    CE::Regulated :: t_Clusters :: const_iterator i_class_end = clusters.end();
+    CE::Regulated :: t_Clusters :: const_iterator i_class = mixed.clusters().begin();
+    CE::Regulated :: t_Clusters :: const_iterator i_class_end =
+       mixed.clusters().end();
     for(; i_class != i_class_end; ++i_class )
     {
       if( verbosity < print_data + 1  )  std::cout << i_class->front()
@@ -361,24 +357,27 @@ int main(int argc, char *argv[])
       }
     }
   }
-  many.collapses<ceindex>( cefit_index ).init( many.separables<ceindex>( cefit_index ) );
-  many.collapses<ceindex>( cefit_index ).init( clusters );
-  many.init<ceindex>( clusters.size(), 1 );
+
+  if( rmpairs and postoconfs.positions.size() )
+  {
+    CE::remove_contained_clusters( postoconfs.positions, mixed.clusters() );
+    size_t size( mixed.clusters().size() );
+    if( J0 ) --size;
+    if( J1 ) --size;
+    std::cout << "Retained " << size << " pair figures.\n";
+  }
   clusters.clear();
+  mixed.init( rank, postoconfs.dof() );
 
-  // add other collapse functor.
-  CE::init_many_collapses( bdesc, rank, lambda, cefit.structures(), many );
-  
-
-  opt::NErrorTuple nerror( opt::mean_n_var( cefit.structures() ) ); 
+  opt::NErrorTuple nerror( opt::mean_n_var( mixed.cefit().structures() ) ); 
 
   std::cout << "Shape of separable function: " << bdesc << "\n"
             << "Rank of separable function " << rank << "\n"
             << "Size of separable function "
-            << many.dof() << "\n"
+            << postoconfs.dof() << "\n"
             << "Data directory: " << dir << "\n"
-            << "Number of data points: " << many.mapping().size() << " for " 
-            << many.nbconfs()
+            << "Number of data points: " << mixed.mapping().size() << " for " 
+            << mixed.nbconfs()
             << " symetrically inequivalent configurations.\n";
   if( not verbosity ) std::cout << "Quiet output.\n";
   else std::cout << "Level of verbosity: " << verbosity << "\n";
@@ -413,8 +412,8 @@ int main(int argc, char *argv[])
   leavemanyout.extract_cmdl( vm );
 
   // Initializes best of fit.
-  CE::Method::Fit< CE::Method::Policy::BestOf< CE::ManyState > >
-    fit( cefit.structures() );
+  CE::Method::Fit< CE::Method::Policy::BestOf< CE :: CollapseState > >
+    fit( mixed.cefit().structures() );
   fit.verbosity = verbosity -1;
   fit.policy.restarts = bestof;
   fit.policy.which = which;
@@ -423,35 +422,38 @@ int main(int argc, char *argv[])
   // fitting.
   if( doloo )
   {
-    typedef CE :: Mapping
-               :: ExcludeOne< t_ManyCollapses :: t_Traits
-                                              :: t_Mapping > t_looMapping;
-    typedef Traits :: CE 
-                   :: ChangeManyMapping< t_ManyCollapses, t_looMapping > 
-                   :: type t_looMany;
-    t_looMany loomany( many );
-    loomany.mapping().do_exclude = true;
+    typedef CE::Mapping::ExcludeOne< t_Collapse::t_Traits::t_Mapping > t_looMapping;
+    typedef Traits::CE::MixedApproachWithNewMapping
+            < 
+              t_Collapse,
+              t_looMapping 
+            > :: type t_looCollapse;
+    t_looCollapse loomixed( mixed );
+    loomixed.collapse().mapping().do_exclude = true;
     std::cout << "Starting Leave-One-Out Procedure.\n";
     opt::t_ErrorPair errors;
-    errors = CE::Method::leave_one_out( loomany, fit, allsq, verbosity - 1 );
+    errors = CE::Method::leave_one_out( loomixed, fit, allsq, verbosity - 1 );
     std::cout << "Average Training Errors:\n " << ( nerror = errors.first ) << "\n";
     std::cout << "Final Prediction Errors:\n " << ( nerror = errors.second ) << "\n\n";
   }
   if( leavemanyout.do_perform )
   {
     typedef std::vector< types::t_unsigned > t_Excluded;
-    typedef CE :: Mapping
-               :: ExcludeMany< t_ManyCollapses :: t_Traits :: t_Mapping,
-                               t_Excluded > t_lmoMapping;
-    typedef Traits :: CE 
-                   :: ChangeManyMapping< t_ManyCollapses, t_lmoMapping > 
-                   :: type t_lmoMany;
-
-    t_lmoMany lmomany( many );
+    typedef CE::Mapping::ExcludeMany
+            < 
+              t_Collapse :: t_Traits :: t_Mapping, 
+              t_Excluded
+            > t_lmoMapping;
+    typedef Traits::CE::MixedApproachWithNewMapping
+            < 
+              t_Collapse,
+              t_lmoMapping 
+            > :: type t_lmoCollapse;
+    t_lmoCollapse lmomixed( mixed );
     std::cout << "\nStarting leave-many out predictive fit." << std::endl;
     Fitting::LeaveManyOut::t_Return errors;
     leavemanyout.verbosity = verbosity - 1;
-    errors = CE::Method::leave_many_out( leavemanyout, lmomany, fit, allsq );
+    errors = CE::Method::leave_many_out( leavemanyout, lmomixed, fit, allsq );
     std::cout << "Average Training Errors:\n " << ( nerror = errors.first ) << "\n";
     std::cout << "Final Prediction Errors:\n "
               << ( nerror = errors.second ) << "\n\n";
@@ -460,39 +462,43 @@ int main(int argc, char *argv[])
   {
     std::cout << "\nFitting using whole training set:" << std::endl;
     fit.verbosity = verbosity;
-    nerror = fit( many, allsq );
-    many.collapses<ceindex>(0).reassign();
+    nerror = fit( mixed, allsq );
+    mixed.reassign();
     std::cout << nerror << "\n"; 
     if( verbosity >= print_function or print.find("function") != std::string::npos )
-      std::cout << many << "\n";
+      std::cout << mixed << "\n";
   }
-// if( not doenum.empty() )
-// {
-//   std::cout << "\nStarting Exhaustive Enumeration of " << doenum << "\n\n";
-//   typedef CE::MixedSeparables< t_FunctionTraits, t_Harmonic > t_MixedFunctional;
-//   t_MixedFunctional mixedfunc( *lattice );
-//   mixedfunc.init( cs.string(), bdesc );
-//   mixedfunc = mixed;
-//   Crystal :: Structure structure;
-//   structure.cell = lattice->cell;
-//   size_t n(0);
-//   foreach( const Crystal::Lattice::t_Site &site, lattice->sites )
-//   {
-//     Crystal::Structure::t_Atom atom;
-//     atom.pos = site.pos;
-//     atom.site = n; ++n;
-//     atom.type = -1e0;
-//     structure.atoms.push_back( atom );
-//   }
-//   structure.find_k_vectors();
-//   std::cout << "  -@0 " << structure.get_concentration()
-//             << " " << mixedfunc( structure ) << "\n";
-//   CE::enumerate_pifile( doenum.string(), mixedfunc );
-//   foreach( Crystal::Structure::t_Atom &atom, structure.atoms )
-//     atom.type *= -1e0;
-//   std::cout << "  @0 " << structure.get_concentration()
-//             << " " << mixedfunc( structure ) << "\n";
-// }
+  if( not doenum.empty() )
+  {
+    std::cout << "\nStarting Exhaustive Enumeration of " << doenum << "\n\n";
+    typedef CE::MixedSeparables
+            < 
+              t_Collapse :: t_Traits :: t_Separables, 
+              t_Harmonic 
+            > t_MixedFunctional;
+    t_MixedFunctional mixedfunc( *lattice );
+    mixedfunc.init( cs.string(), bdesc );
+    mixedfunc = mixed;
+    Crystal :: Structure structure;
+    structure.cell = lattice->cell;
+    size_t n(0);
+    foreach( const Crystal::Lattice::t_Site &site, lattice->sites )
+    {
+      Crystal::Structure::t_Atom atom;
+      atom.pos = site.pos;
+      atom.site = n; ++n;
+      atom.type = -1e0;
+      structure.atoms.push_back( atom );
+    }
+    structure.find_k_vectors();
+    std::cout << "  -@0 " << structure.get_concentration()
+              << " " << mixedfunc( structure ) << "\n";
+    Crystal::enumerate_pifile( doenum.string(), mixedfunc );
+    foreach( Crystal::Structure::t_Atom &atom, structure.atoms )
+      atom.type *= -1e0;
+    std::cout << "  @0 " << structure.get_concentration()
+              << " " << mixedfunc( structure ) << "\n";
+  }
   std::cout << "\n\n\nEnd of " << __PROGNAME__ << ".\n" << std::endl;
 
   return 1;
