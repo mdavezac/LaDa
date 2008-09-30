@@ -5,7 +5,7 @@ include ../Files
 # if DOPYTHON
 #   pythonlib = libcrystalpy.la
 # endif
-AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
+AM_CPPFLAGS = @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
 	      @MPI_CFLAGS@ @BOOST_CXXFLAGS@
 AM_LDFLAGS = @BOOST_REGEX@
 noinst_LTLIBRARIES = libcrystal.la # $(pythonlib)

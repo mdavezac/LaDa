@@ -11,7 +11,6 @@ AC_PROG_EGREP
 dompidefault=false
 if [[[ $(echo $CXX | $EGREP "mpi(cxx|c\+\+|CC)" - ) == $CXX ]]]; then 
  dompidefault=true
- mpicompilers=true
 fi
 
 if [[ -e ".env" ]]; then
@@ -65,15 +64,6 @@ AC_ARG_ENABLE(fortran,
        no)  fortran=false ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-fortran) ;;
      esac],[fortran=false])
-
-AC_ARG_ENABLE(nag,
-     [  --enable-nag                  Turn on NAG minimization.
-                                Incompatible with gsl/fortran],
-     [case "${enableval}" in
-       yes) nag=true ;;
-       no)  nag=false ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-fortran) ;;
-     esac],[nag=false])
 
 AC_ARG_ENABLE(emass,
      [  --enable-emass                Turn on electronic mass optimization],
@@ -177,22 +167,6 @@ if test x$nolaunch = xtrue; then
   AC_DEFINE([_NOLAUNCH],[],[])
 fi
 
-AC_ARG_ENABLE(iaga-dir,
-              [  --enable-iaga-dir=?  specifies the base nanopse
-                                directory, eg $HOME/usr/src/nanopse ],
-              [ iaga_dir=${enableval} ] )
-AC_ARG_ENABLE(iaga-ld,
-              [  --enable-iaga-ld=?  specifies the base iaga ld flags ],
-              [ iaga_ld=${enableval} ] )
-#
-# AC_ARG_ENABLE(boost-ld,
-#               [  --enable-boost-ld=?  specifies the base boost ld flags ],
-#               [ boost_ld=${enableval} ] )
-# AC_ARG_ENABLE(boost-cxx,
-#               [  --enable-boost-cxx=?  specifies the boost cxx flags ],
-#               [ boost_cxx=${enableval} ] )
-
-
 if test x$bandgapopt = xtrue ; then 
   galib=true
   pescan=true
@@ -246,7 +220,9 @@ AC_SUBST(NAG_LIBS)
 if test x$gsl = xtrue; then
   fortran=false
   AC_DEFINE([_DOGSL],[],[])
-  PKG_CHECK_MODULES(GSL, gsl >= 1.8 )
+else
+  GSL_CFLAGS=""
+  GSL_LIBS=""
 fi 
 AH_TEMPLATE([__DOCE])
 if test x$ce = xtrue; then
@@ -280,30 +256,7 @@ if test x$fortran = xtrue; then
 fi
 
 AH_TEMPLATE([_DIRECTIAGA])
-direct_iaga=false;
-if test "x$pescan$mpi" = "xtruetrue"; then
-  if test "x$iaga_dir" = "x" ; then
-    direct_iaga=false;
-  else
-    direct_iaga=true;
-#   FC_IAGA_FLAGS="$FCFLAGS -J$iaga_dir/pescan/lib -J$iaga_dir/genpot/lib"
-     
-    cp -u $iaga_dir/genpot/lib/mpigroup.mod pescan_interface
-    cp -u $iaga_dir/genpot/lib/MPIGROUP.mod pescan_interface
-    cp -u $iaga_dir/pescan/lib/escan_comp_api.mod pescan_interface
-    cp -u $iaga_dir/pescan/lib/ESCAN_COMP_API.mod pescan_interface
-    cp -u $iaga_dir/pescan/lib/eigenenergy.mod pescan_interface
-    cp -u $iaga_dir/pescan/lib/EIGENENERGY.mod pescan_interface
-    IAGA_DIR="$iaga_dir/"
-    LD_IAGA_FLAGS=" $iaga_dir/pescan/lib/libpescan.a  $iaga_dir/genpot/lib/libgenpot.a "
-    AC_DEFINE([_DIRECTIAGA],[1],[])
-    if test "x$iaga_ld" = "x" ; then
-      LD_IAGA_FLAGS=" $iaga_dir/pescan/lib/libpescan.a  $iaga_dir/genpot/lib/libgenpot.a "
-    else
-      LD_IAGA_FLAGS="$LD_IAGA_FLAGS $iaga_ld"
-    fi
-  fi
-fi
+direct_iaga=true;
 AC_SUBST(LD_IAGA_FLAGS )
 AC_SUBST(IAGA_DIR)
 # AC_SUBST(FC_IAGA_FLAGS )
@@ -350,35 +303,17 @@ AC_SUBST(CPP_DEBUG_FLAGS)
 
 #  MPI libs
 if test x$mpi = xtrue; then
-  if test "$force_mpi" = true; then
-    AC_DEFINE([_MPI],[1],[])
-    MPI_ADDLIB="../mpi/libmpiobject.la"
-    MPI_CFLAGS="$MPI_CFLAGS -D _OPENMPI_MPI_"
-    mpicompilers=true
-
-  else
-    mpicompilers=false
-    PKG_CHECK_MODULES(WHATEVER, mpich >= 1.2.7, [mpichisthere=yes], [mpichisthere=no] )
-    PKG_CHECK_MODULES(WHATEVER, openmpi >= 1.2, [openmpiisther=yes], [openmpiisther=no] )
-    if test "$openmpiisther" = yes; then
-      PKG_CHECK_MODULES(MPI, openmpi >= 1.2 )
-      AC_DEFINE([_MPI],[1],[])
-      MPI_ADDLIB="../mpi/libmpiobject.la"
-      MPI_CFLAGS="$MPI_CFLAGS -D _OPENMPI_MPI_"
-    elif test "$mpichisthere" = yes; then
-      PKG_CHECK_MODULES(MPI, mpich >= 1.2.7 )
-      AC_DEFINE([_MPI],[1],[])
-      MPI_ADDLIB="../mpi/libmpiobject.la"
-      MPI_CFLAGS="$MPI_CFLAGS -D _MPICH_MPI_"
-    fi
-  fi
+  AC_DEFINE([_MPI],[1],[])
+  MPI_ADDLIB="../mpi/libmpiobject.la"
+  MPI_CFLAGS="-D _OPENMPI_MPI_"
+else
+  MPI_CFLAGS=""
+  MPI_ADDLIB=""
 fi
 AC_SUBST(MPI_CFLAGS)
-AC_SUBST(MPI_LIBS)
 AC_SUBST(MPI_ADDLIB)
 
 #  XML libs
-PKG_CHECK_MODULES(TINYXML, tinyxml)
 AC_SUBST(TINYXML_LIBS)
 AC_SUBST(TINYXML_CFLAGS)
 
@@ -407,21 +342,12 @@ AM_CONDITIONAL(DOSEPARABLE, test x$separable = xtrue)
 
 
 #  eo libs iff galib is enabled 
-if test x$galib = xtrue; then
-  PKG_CHECK_MODULES(EO, eo >= 1.0.1 )
+if test x$galib != xtrue; then
+  EO_CFLAGS=""
+  EO_LIBS=""
 fi 
-AC_SUBST(NAG_CFLAGS)
-AC_SUBST(NAG_LIBS)
-
-# checks for compiler specific flags 
-#
-COMPILER_CXXFLAGS=
-# first checks if friend injection is needed (for atat) (gcc >= 4.0)
-# if test "$ac_compiler_gnu"="yes"; then
-# AX_CHECK_COMPILER_FLAGS([-malign-double], 
-#                         [COMPILER_CXXFLAGS+=" -malign-double"],)
-# fi
-AC_SUBST(COMPILER_CXXFLAGS)
+AC_SUBST(EO_CFLAGS)
+AC_SUBST(EO_LIBS)
 
 #
 AC_PROG_LIBTOOL
@@ -505,8 +431,7 @@ if test "$pescan$direct_iaga" = truefalse; then
   echo " _ interface to nanopse/pescan functional as external program. ";
 fi
 if test "$pescan$direct_iaga" = truetrue; then
-  echo " _ interface to nanopse/pescan functional as external library. ";
-  echo "   iaga base directory = $iaga_dir ";
+  echo " _ interface to nanopse/pescan functional as external library.";
 fi
 if test "x$emass" = xtrue; then
   echo " _ Effective Electronic Mass calculations for ternary (100) uperlattices" 
@@ -530,12 +455,8 @@ echo ""
 if test "$fortran" = true; then
   echo "Will use fortran minimizer"
 fi
-if test "$mpi$mpichisthere" = trueyes; then
-  echo "Will Include MPI where available, using mpich"
-elif test "$mpi$openmpiisther" = trueyes; then
-  echo "Will Include MPI where available, using openmpi"
-elif test "$mpi$mpicompilers" = truetrue; then
-  echo "Will Include MPI where available, using openmpi"
+if test "$mpi" = true; then
+  echo "Will Include MPI where available."
 fi
 if test "$lapack" = true; then
   echo "Will Include some lapack/blas routines for Matrix diagonalization."

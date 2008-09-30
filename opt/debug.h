@@ -39,6 +39,7 @@
           __TRYCODE( __DOASSERT( condition, "" ), error )
 #define __TRYBEGIN try {
 #define __TRYEND( code, error ) } __CATCHCODE( code, error ) 
+#define __COMMA__ ,
 
 
 #ifdef _LADADEBUG

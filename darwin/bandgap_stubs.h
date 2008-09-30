@@ -68,7 +68,7 @@ namespace BandGap
   //!          In practive an evaluator class should be derived from
   //!          GA::Evaluator and a BandGap::Darwin object used for obtaining band-gaps.
   //! \see BandGap::Evaluator, Molecularity::Evaluator
-  class Darwin
+  class Darwin __MPICODE( : public MPI_COMMDEC )
   {
     protected:
       //! \brief Structure on which to perform calculations
@@ -96,17 +96,26 @@ namespace BandGap
       types::t_int age;
       //! How often all-electron calculations should be performed
       types::t_int check_ref_every;
+      __MPICODE
+      (
+        //! mpi suffix to add to calculation files.
+        std::string suffix;
+      )
 
     public:
       //! Constructor and Initializer
       Darwin   ( Crystal::Structure &_s )
-             : structure(_s), bandgap( _s ), references_filename("BandEdge"), 
-               nbeval(0), age(0), check_ref_every(-1) {}
+             : __MPICODE( MPI_COMMCOPY( *::mpi::main ) __COMMA__ )
+               structure(_s), bandgap( _s ), references_filename("BandEdge"), 
+               nbeval(0), age(0), check_ref_every(-1) 
+               __MPICODE( __COMMA__ suffix("") ) {}
       //! Copy Constructor
       Darwin   ( const Darwin &_b ) 
-             : structure(_b.structure), bandgap( _b.bandgap ),
+             : __MPICODE( MPI_COMMCOPY( _b ) __COMMA__ )
+               structure(_b.structure), bandgap( _b.bandgap ),
                references_filename(_b.references_filename),
-               nbeval(_b.nbeval), age(_b.age), check_ref_every(_b.check_ref_every) {}
+               nbeval(_b.nbeval), age(_b.age), check_ref_every(_b.check_ref_every) 
+               __MPICODE( __COMMA__ suffix( _b.suffix ) ) {}
       //! Destructor
       ~Darwin() {};
 
@@ -139,7 +148,7 @@ namespace BandGap
 #ifdef _MPI
       //! Sets communicator and suffix for mpi stuff.
       void set_mpi( boost::mpi::communicator *_comm, const std::string &_suffix )
-        { bandgap.set_mpi( _comm, _suffix ); }
+        { suffix = _suffix; MPI_COMMDEC::set_mpi( _comm ); bandgap.set_mpi( _comm, _suffix ); }
 #endif
       //! initializes the vff part
       bool init( bool _redocenters = false )

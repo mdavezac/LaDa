@@ -97,7 +97,7 @@ namespace mpi
   };
 }
 
-#define MPI_COMMDEC public ::mpi::AddCommunicator
+#define MPI_COMMDEC ::mpi::AddCommunicator
 #define MPI_COMMA ,
 #define MPI_COMMCOPY( _c ) ::mpi::AddCommunicator( _c )
 #define MPI_COMM ::mpi::AddCommunicator::comm()

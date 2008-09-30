@@ -2,7 +2,7 @@
 # Version: $Id$
 #
 include ../Files
-AM_CPPFLAGS = @COMPILER_CXXFLAGS@ @CPP_DEBUG_FLAGS@ @MPI_CFLAGS@ @BOOST_CXXFLAGS@
+AM_CPPFLAGS = @CPP_DEBUG_FLAGS@ @MPI_CFLAGS@ @BOOST_CXXFLAGS@
 noinst_LTLIBRARIES = libprint.la
 libprint_ladir = $(includedir)/LaDa/print
 libprint_la_SOURCES = $(PRINT_CC)

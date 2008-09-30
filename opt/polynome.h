@@ -44,7 +44,7 @@ namespace function {
   //!       \a T_TERM is an index makes the templatization of T_TERM a bit
   //!       artificial.
   template<class T_TYPE=types::t_real, class T_TERM=types::t_int >
-  class Polynome : public Base<T_TYPE> MPI_COMMA MPI_COMMDEC
+  class Polynome : public Base<T_TYPE> __MPICODE( __COMMA__ public MPI_COMMDEC )
   {
     protected:
       //! The type of the base class

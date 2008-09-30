@@ -5,6 +5,9 @@
 #include <print/manip.h>
 #include <print/xmg.h>
 
+#include <boost/mpi/collectives.hpp>
+#include <boost/serialization/string.hpp>
+
 #include "bandgap_stubs.h"
 
 namespace BandGap
@@ -81,7 +84,7 @@ errorout:
     // just creates file.
     if ( bandgap.BandGap().get_method() != Pescan::Interface::FOLDED_SPECTRUM )
     {
-      __MPICODE( if( not comm->is_root_node() ) return true; )
+      __MPICODE( if( not MPI_COMM.rank() ) return true; )
       std::ofstream file( references_filename.c_str(),
                           std::ios_base::out | std::ios_base::trunc ); 
       file.close();
@@ -116,7 +119,7 @@ errorout:
 
 
     // writes referecnce
-    __MPICODE( if( not comm->is_root_node() ) return; )
+    __MPICODE( if( not MPI_COMM.rank() ) return; )
 
     Print::out << " Writing band edges to file " << references_filename << "\n";
     write_references();
@@ -128,7 +131,7 @@ errorout:
     ++age;
     read_references();
 
-    __MPICODE( if( not comm->is_root_node() ) return true; )
+    __MPICODE( if( not MPI_COMM.rank() ) return true; )
 
     // recomputes all electron references every so often, if required
     if (     check_ref_every != -1 
@@ -141,7 +144,7 @@ errorout:
   {
     types :: t_real a, b;
 
-    __MPICODE( if( not comm->is_root_node() ) return; )
+    __MPICODE( if( not MPI_COMM.rank() ) return; )
 
     std::ofstream file( references_filename.c_str(),
                         std::ios_base::out | std::ios_base::trunc ); 
@@ -156,7 +159,7 @@ errorout:
   {
     types :: t_real a, b;
 
-    __MPICODE( if( not comm->is_root_node() ) goto broadcast; )
+    __MPICODE( if( not MPI_COMM.rank() ) goto broadcast; )
 
     { // only serial and root node
       std::ifstream file( references_filename.c_str(), std::ios_base::in ); 
@@ -167,11 +170,10 @@ errorout:
     }
 
 broadcast:
-    __MPICODE( 
-      mpi::BroadCast bc(*comm); 
-      bc << a << b << mpi::BroadCast::allocate 
-         << a << b << mpi::BroadCast::broadcast
-         << a << b << mpi::BroadCast::clear;
+    __MPICODE
+    ( 
+      boost::mpi::broadcast( MPI_COMM, a, 0 );
+      boost::mpi::broadcast( MPI_COMM, b, 0 );
     )
 
     if ( Fuzzy::geq(a, b) )  return;
