@@ -59,7 +59,56 @@ namespace mpi
   //! \brief Main object for creation and destruction of mpich, as well as for
   //!        intialization of transaction helpers
   extern boost::mpi::communicator *main;
+
+  //! Adds a communicator pointer to a class.
+  class AddCommunicator
+  {
+    public:
+      //! Constructor.
+      AddCommunicator() : comm_(NULL) {} 
+      //! Constructor.
+      AddCommunicator( boost::mpi::communicator &_c ) : comm_( &_c ) {} 
+      //! Copy Constructor.
+      AddCommunicator( const AddCommunicator &_c ) : comm_( _c.comm_ ) {} 
+
+      //! Sets mpi pointer.
+      void set_mpi( boost::mpi::communicator* _c )
+      {
+        __ASSERT( _c == NULL, "Pointer not set.\n" )
+        comm_ = _c;
+      }
+      
+    protected:
+      //! Returns reference to communicator.
+      boost::mpi::communicator &comm()
+      {
+        __ASSERT( comm_ == NULL, "Pointer not set.\n" )
+        return *comm_;
+      }
+      //! Returns a constant reference to communicator.
+      const boost::mpi::communicator &comm() const 
+      {
+        __ASSERT( comm_ == NULL, "Pointer not set.\n" )
+        return *comm_;
+      }
+
+      //! The MPI Communicator.
+      boost::mpi::communicator *comm_;
+  };
 }
 
+#define MPI_COMMDEC public ::mpi::AddCommunicator
+#define MPI_COMMA ,
+#define MPI_COMMCOPY( _c ) ::mpi::AddCommunicator( _c )
+#define MPI_COMM ::mpi::AddCommunicator::comm()
+
+#else
+
+#define MPI_COMMDEC
+#define MPI_COMMA
+#define MPI_COMMCOPY( _c ) 
+#define MPI_GETCOMM
+
 #endif
+
 #endif

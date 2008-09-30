@@ -134,9 +134,6 @@ int main(int argc, char *argv[])
             options(allnhidden).positional(p).run(), vm);
   po::notify(vm);
  
-  std::cout << "\n" << __PROGNAME__
-            << " from the " << PACKAGE_STRING << " package.\n"
-            << "Subversion Revision: " << SVN::Revision << "\n\n"; 
   if ( vm.count("version") ) return 1;
   if ( vm.count("help") )
   {
@@ -254,7 +251,7 @@ int main(int argc, char *argv[])
 
   // Loads lattice
   boost::shared_ptr< Crystal::Lattice >
-  lattice( Crystal::read_lattice( latinput, dir ) );
+    lattice( Crystal::read_lattice( latinput, dir ) );
   Crystal::Structure::lattice = lattice.get();
 
   // create pair terms.

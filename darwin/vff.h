@@ -54,7 +54,7 @@ namespace Vff
     bool Save( TiXmlElement &_node ) const;
     //! Serializes a vff Keeper.
     template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
-      { ar & energy; ar & stress; }
+      { _ar & energy; _ar & stress; }
   };
   /* @} */
 

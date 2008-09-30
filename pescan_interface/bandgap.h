@@ -80,11 +80,6 @@ namespace Pescan
       //! Launches a calculation for structure \a _str
       types::t_real operator()( const Crystal::Structure &_str ); 
 
-#ifdef _DIRECTIAGA
-     //! Sets the communicator.
-     void set_mpi( mpi::Base &_c ) { Interface::set_mpi(_c); }
-#endif
-
     protected:
       //! Folded spectrum computation
       types::t_real folded_spectrum(const Crystal::Structure& );

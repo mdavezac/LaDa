@@ -173,7 +173,7 @@ namespace BandGap
       void presubmit( std::list<t_Individual> &_pop ) { _pop.clear(); }
 #ifdef _MPI
       //! forwards comm and suffix to bandgap.
-      void set_mpi( ::mpi::Base *_comm, const std::string &_str )
+      void set_mpi( boost::mpi::communicator *_comm, const std::string &_str )
         { t_Base::set_mpi( _comm, _str ); bandgap.set_mpi( _comm, _str ); }
 #endif
   };

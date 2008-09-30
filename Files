@@ -81,7 +81,8 @@ OPT_H = ndim_iterator.h minimize_base.h polynome.h frprmn_minimizer.h \
         gsl_minimizers.h types.h convex_hull.h function_base.h \
 	va_minimizer.h fitness_function.h  function_functors.h monome.h traits.h \
         fuzzy.h atat.h debug.h va_function.h gsl_lsq.h random.h algorithms.h \
-        gsl.h allsq.h cgs.h gsl_nllsq.h gsl_mins.h gsl_simplex.h errors.h
+        gsl.h allsq.h cgs.h gsl_nllsq.h gsl_mins.h gsl_simplex.h errors.h \
+        bpo_macros.h
 OPT_CC = gsl_lsq.cc random.cc gsl.cc gsl_nllsq.cc gsl_mins.cc gsl_simplex.cc \
          leave_many_out.cc
 OPT_PYTHON_CONVENIENCE_CC =  convex_hull.cc errors.cc 

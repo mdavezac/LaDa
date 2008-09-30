@@ -96,25 +96,17 @@ namespace BandGap
       types::t_int age;
       //! How often all-electron calculations should be performed
       types::t_int check_ref_every;
-      //! Communication group for which this evaluator is set up.
-      __MPICODE( ::mpi::Base *comm; ) 
-      //! Suffix string for files/directories
-      __MPICODE( std::string suffix; ) 
 
     public:
       //! Constructor and Initializer
       Darwin   ( Crystal::Structure &_s )
              : structure(_s), bandgap( _s ), references_filename("BandEdge"), 
-               nbeval(0), age(0), check_ref_every(-1) 
-               __MPICONSTRUCTORCODE( comm( &::mpi::main ) )
-               __MPICONSTRUCTORCODE( suffix("") ) {}
+               nbeval(0), age(0), check_ref_every(-1) {}
       //! Copy Constructor
       Darwin   ( const Darwin &_b ) 
              : structure(_b.structure), bandgap( _b.bandgap ),
                references_filename(_b.references_filename),
-               nbeval(_b.nbeval), age(_b.age), check_ref_every(_b.check_ref_every) 
-               __MPICONSTRUCTORCODE( comm( &::mpi::main ) )
-               __MPICONSTRUCTORCODE( suffix("") ) {}
+               nbeval(_b.nbeval), age(_b.age), check_ref_every(_b.check_ref_every) {}
       //! Destructor
       ~Darwin() {};
 
@@ -146,8 +138,8 @@ namespace BandGap
       void operator()( Keeper &_keeper );
 #ifdef _MPI
       //! Sets communicator and suffix for mpi stuff.
-      void set_mpi( ::mpi::Base *_comm, const std::string &_suffix )
-        { comm = _comm; suffix = _suffix; bandgap.set_mpi( _comm, _suffix ); }
+      void set_mpi( boost::mpi::communicator *_comm, const std::string &_suffix )
+        { bandgap.set_mpi( _comm, _suffix ); }
 #endif
       //! initializes the vff part
       bool init( bool _redocenters = false )
@@ -189,9 +181,9 @@ namespace BandGap
   template<class Archive>
     void Keeper :: serialize(Archive & _ar, const unsigned int _version)
     {
-      ar & boost::serialization::base_object< Vff::Keeper >(*this); 
-      ar & vbm;
-      ar & cbm;
+      _ar & boost::serialization::base_object< Vff::Keeper >(*this); 
+      _ar & vbm;
+      _ar & cbm;
     }
 } // namespace BandGap
 

@@ -1,87 +1,55 @@
 //
 //  Version: $Id$
 //
+
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
+#include <boost/scoped_ptr.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
+#ifdef _MPI
+# include <boost/mpi/environment.hpp>
+#endif
+
+#include <tinyxml/tinyxml.h>
+#include <print/manip.h>
+#include <revision.h>
+#include <opt/bpo_macros.h>
+
 #ifdef _EMASS
+
   #include <vff/layered.h>
   #include <vff/va.h>
   #include "emass.h"
   typedef Pescan::eMassSL t_Pescan;
   typedef Vff::VABase<Vff::Functional> t_Vff;
-#define __PROGNAME__ "Empirical Pseudo-Potential Functional for 100 Effective Masses in GaInSb"
+# define __PROGNAME__ "Empirical Pseudo-Potential Functional for 100 Effective Masses in GaInSb"
+  inline void operator<<( t_Pescan &_pescan, const t_Vff &_vff )
+  {
+    // creates an mpi aware file name for atomic configurations
+    std::ostringstream  sstr;
+    sstr << "atom_config";
+#   ifdef _MPI
+      sstr << "." << mpi::main.rank();
+#   endif
+    // prints atomic configurations
+    _vff.print_escan_input(sstr.str());
+    // tells bandgap where to find atomic configurations
+    _pescan.set_atom_input(sstr.str());
+  }
+
 #else
+
   #include "va.h"
   typedef Pescan::VirtualAtom t_Pescan;
   typedef Vff::VABase<Vff::Functional> t_Vff;
-#define __PROGNAME__ "Empirical Pseudo-Potential Functional"
+# define __PROGNAME__ "Empirical Pseudo-Potential Functional"
+
 #endif
-#include <tinyxml/tinyxml.h>
-#include <print/manip.h>
-#include <revision.h>
 
 
-void parse_cli( int argc, char *argv[],
-                std::string &_filename, std::string &_checkfilename,
-                bool &_docheckresult, bool &_doevaluate )
-{
-  std::ostringstream sstr;
-  for( types::t_int i = 1; i < argc; ++i )
-    sstr << argv[i] << " "; 
-  std::istringstream istr( sstr.str() );
-  while ( istr.good() )
-  {
-    std::string is_op;
-    istr >> is_op; is_op = Print::StripEdges( is_op );
-    if( is_op.empty() ) continue;
-    else if(     istr.good()
-             and (is_op == "-i" or is_op == "--input") ) istr >> _filename;
-    else if (     istr.good()
-              and (is_op == "-s" or is_op == "--save") ) 
-      { _docheckresult = true; istr >> _checkfilename; }
-    else if (is_op == "-d" or is_op == "--donteval") _doevaluate = false;
-    else if( is_op == "-h" or is_op == "--help" )
-    {
-      std::cout << "\n" << __PROGNAME__ << " from the " << PACKAGE_STRING << " package.\n"
-                << "Command-line options:\n\t -h, --help this message"
-                << "\n\t -v, --version Subversion Revision and Package version"
-                << "\n\t -i, --input XML input file"
-                << "\n\t -s, --save XML file where GA results where saved"
-                << " (default: read from GA output tags or structures from input)"
-                << "\n\t -d, --donteval Won't run evaluations, just printouts structures\n\n";
-      exit(1);
-    }
-    else if( is_op == "-v" or is_op == "--version" )
-    {
-      std::cout << "\n" << __PROGNAME__ << " from the " << PACKAGE_STRING << " package\n"
-                << "Subversion Revision: " << SVN::Revision << "\n\n"; 
-      exit(1);
-    }
-  }
-  _filename = Print::reformat_home( _filename );
-  if( _filename != "input.xml" )
-    std::cout << "Reading from input file " << _filename << std::endl;
-  if( _docheckresult )
-  { 
-    _checkfilename = Print::reformat_home( _checkfilename );
-    if( _checkfilename != _filename )
-      std::cout << "Reading from GA output file " << _checkfilename << std::endl;
-  }
-}
-
-#ifdef _EMASS
-inline void operator<<( t_Pescan &_pescan, const t_Vff &_vff )
-{
-  // creates an mpi aware file name for atomic configurations
-  std::ostringstream  sstr;
-  sstr << "atom_config";
-#ifdef _MPI
-    sstr << "." << mpi::main.rank();
-#endif
-  // prints atomic configurations
-  _vff.print_escan_input(sstr.str());
-  // tells bandgap where to find atomic configurations
-  _pescan.set_atom_input(sstr.str());
-}
-#endif
 
 bool evaluate( const TiXmlElement &_node,
                Crystal::Structure &_structure,
@@ -89,7 +57,11 @@ bool evaluate( const TiXmlElement &_node,
                bool _doeval )
 {
   if( not _structure.Load(_node) ) return false;
-  std::cout << "Successfuly read structure input from file " << std::endl;
+  __ROOTCODE
+  (
+    (*::mpi::main),
+    std::cout << "Successfuly read structure input from file " << std::endl;
+  )
   _structure.set_site_indices();
 
   if( not _vff.init(true) )
@@ -118,84 +90,93 @@ bool evaluate( const TiXmlElement &_node,
 
 int main(int argc, char *argv[]) 
 {
-  __MPICODE( mpi::main(argc, argv); )
-  std::string filename("input.xml");
-  std::string checkfilename("");
-  bool do_check_results = false;
-  bool do_evaluate = true;
+  namespace fs = boost::filesystem;
 
-  parse_cli( argc, argv, filename, checkfilename, do_check_results, do_evaluate );
+  __MPI_START__
+  __TRYBEGIN 
 
-  TiXmlDocument doc( filename.c_str() );
   
-  if  ( !doc.LoadFile() )
-  {
-    std::cerr << "error while opening input file " << filename << std::endl
-              << doc.ErrorDesc() << std::endl; 
-    return false;
-  }
+  __BPO_START__
+  __BPO_SPECIFICS__( "Escan Specific Options" )
+      ("check,c", po::value<std::string>(), "GA output filename." ) 
+      ("donteval,d", po::value<bool>()->default_value(false), 
+       "Whether to perform evaluation." );
+  __BPO_GENERATE__()
+  __BPO_MAP__ 
+  __BPO_HELP_N_VERSION__
 
+  const fs::path filename( vm["input"].as< std::string >() );
+  __DOASSERT( not ( fs::is_regular( filename ) or fs::is_symlink( filename ) ),
+              filename << " is a not a valid file.\n" );
+  TiXmlDocument doc( filename.string() );
   TiXmlHandle handle( &doc );
+  __ASSERT( not doc.LoadFile(), 
+               "error while opening input file " 
+            << filename << "\n" << doc.ErrorDesc() << "\n" )
 
-  Crystal::Lattice lattice;
-  Crystal::Structure structure;
-  Crystal::Structure::lattice = &lattice;
-
-  // loads lattice
-  TiXmlElement *child = handle.FirstChild( "Job" ).FirstChild( "Lattice" ).Element();
-  if ( not child )
-  {
-    std::cerr << "Could not find Lattice in input" << std::endl;
-    return false;
-  }
-  if ( not lattice.Load(*child) )
-  {
-    std::cerr << "Error while reading Lattice from input" << std::endl;
-    return false;
-  }
-  std::cout << "Successfuly read Lattice input from file " << filename << std::endl;
-
-#ifdef _EMASS
-  t_Pescan pescan(structure);
-  t_Vff vff( structure );
-  child = handle.FirstChild( "Job" ).Element();
-  if ( not vff.Load(*child) )
-  {
-    std::cerr << "Error while reading vff from input" << std::endl;
-    return false;
-  }
-  std::cout << "Successfuly read vff input from file " << filename << std::endl;
-
-#else
-  t_Pescan pescan(structure);
-  t_Vff &vff = pescan.Vff();
-  __DIAGA( pescan.BandGap().set_mpi( mpi::main ); )
-#endif
-  child = handle.FirstChild( "Job" ).Element();
-  if ( not pescan.Load(*child) )
-  {
-    std::cerr << "Error while reading pescan from input" << std::endl;
-    return false;
-  }
-  std::cout << "Successfuly read pescan input from file " << filename << std::endl;
-
-  if ( checkfilename == "" )
+  bool do_check( vm.count("check") > 0 );
+  fs::path checkfilename;
+  if( do_check ) checkfilename = vm["check"].as< std::string >();
+  else
   { 
-    child = handle.FirstChild( "Job" ).FirstChild( "GA" ).FirstChild( "Filenames" ).Element();
+    TiXmlElement *child = handle.FirstChild( "Job" )
+                                .FirstChild( "GA" )
+                                .FirstChild( "Filenames" )
+                                .Element();
     for( ; child; child = child->NextSiblingElement("Filenames") )
-    {
-      if ( not child->Attribute("save")  ) continue;
-      checkfilename = Print::reformat_home(child->Attribute("save"));
-    }
+      if ( child->Attribute("save")  )
+      {
+        checkfilename = child->Attribute("save");
+        do_check = true;
+        __DOASSERT( not ( fs::is_regular( checkfilename ) or fs::is_symlink( checkfilename ) ),
+                    checkfilename << " is a not a valid file.\n" );
+        break;
+      }
   }
-  if ( checkfilename != "" and checkfilename != filename )
-    if( not doc.LoadFile(checkfilename.c_str()) )
+  bool do_evaluate( vm.count( "donteval" ) == 0 );
+
+  __ROOTCODE
+  (
+    (*::mpi::main),
+    std::cout << "Input filename: " << filename << "\n";
+    if( do_check ) std::cout << "Will check GA output structures from file "
+                             << checkfilename << "\n";
+    if( not do_evaluate ) 
+      std::cout << "Will not perform evaluation.\n";
+    std::cout << "\n\n";
+  )
+
+
+
+  boost::shared_ptr< Crystal::Lattice >
+    lattice( Crystal::read_lattice( filename, "" ) );
+  Crystal::Structure::lattice = lattice.get();
+
+  Crystal::Structure structure;
+# ifdef _EMASS
+    t_Pescan pescan(structure);
+    t_Vff vff( structure );
+    child = handle.FirstChild( "Job" ).Element();
+    if ( not vff.Load(*child) )
     {
-      std::cerr << "Could not loadfile " << checkfilename << std::endl;
+      std::cerr << "Error while reading vff from input" << std::endl;
       return false;
     }
+# else
+    t_Pescan pescan(structure);
+    t_Vff &vff = pescan.Vff();
+    __DIAGA( pescan.BandGap().set_mpi( mpi::main ); )
+# endif
+  TiXmlElement *child = handle.FirstChild( "Job" ).Element();
+  __DOASSERT( not pescan.Load(*child),
+              "Error while reading pescan from input.\n" )
+
+  if ( do_check and checkfilename != filename )
+    __DOASSERT( not doc.LoadFile(checkfilename.string()),
+                "Could not loadfile " << checkfilename << "\n" )
 
 
+  bool do_check_results( false );
   TiXmlHandle docHandle( &doc ); 
   child = docHandle.FirstChild( "Restart" ).
                     FirstChild( "Results" ).
@@ -205,18 +186,22 @@ int main(int argc, char *argv[])
   if( child and evaluate( *child, structure, pescan, vff, do_evaluate ) )
   {
     do_check_results = true;
-    std::cout << "\n\n\nChecking Optimum\n";
-    structure.print_out( std::cout ); 
-    std::cout << "\n\n";
-    structure.print_xcrysden( std::cout );
-#ifndef _EMASS
-    const Pescan::BandGap& bandgap = (const Pescan::BandGap&) pescan;
-    std::cout << "\nVBM: " << bandgap.bands.vbm
-              << " -- CBM:" << bandgap.bands.cbm
-              << "    ---    Band Gap: " << bandgap.bands.gap() << std::endl;
-#else
-    std::cout << "Emass tensor:\n" << pescan.tensor;
-#endif
+    __ROOTCODE
+    (
+      (*::mpi::main),
+      std::cout << "\n\n\nChecking Optimum\n";
+      structure.print_out( std::cout ); 
+      std::cout << "\n\n";
+      structure.print_xcrysden( std::cout );
+#     ifndef _EMASS
+        const Pescan::BandGap& bandgap = (const Pescan::BandGap&) pescan;
+        std::cout << "\nVBM: " << bandgap.bands.vbm
+                  << " -- CBM:" << bandgap.bands.cbm
+                  << "    ---    Band Gap: " << bandgap.bands.gap() << std::endl;
+#     else
+        std::cout << "Emass tensor:\n" << pescan.tensor;
+#     endif
+    )
   }
 
   child = docHandle.FirstChild( "Restart" ).
@@ -228,19 +213,23 @@ int main(int argc, char *argv[])
     if( not evaluate( *child, structure, pescan, vff, do_evaluate ) ) continue;
     do_check_results = true;
     
-    std::cout << "\n\n\nNew Structure\n";
-    structure.print_out( std::cout ); 
-    std::cout << "\n\n";
-    structure.print_xcrysden( std::cout );
-    if ( not do_evaluate ) continue;
-#ifndef _EMASS
-    const Pescan::BandGap& bandgap = (const Pescan::BandGap&) pescan;
-    std::cout << "\nVBM: " << bandgap.bands.vbm
-              << " -- CBM:" << bandgap.bands.cbm
-              << "    ---    Band Gap: " << bandgap.bands.gap() << std::endl;
-#else
-    std::cout << "Emass tensor:\n" << pescan.tensor;
-#endif
+    __ROOTCODE
+    (
+      (*::mpi::main),
+      std::cout << "\n\n\nNew Structure\n";
+      structure.print_out( std::cout ); 
+      std::cout << "\n\n";
+      structure.print_xcrysden( std::cout );
+      if ( not do_evaluate ) continue;
+#     ifndef _EMASS
+        const Pescan::BandGap& bandgap = (const Pescan::BandGap&) pescan;
+        std::cout << "\nVBM: " << bandgap.bands.vbm
+                  << " -- CBM:" << bandgap.bands.cbm
+                  << "    ---    Band Gap: " << bandgap.bands.gap() << std::endl;
+#     else
+        std::cout << "Emass tensor:\n" << pescan.tensor;
+#     endif
+    )
   }
   if ( do_check_results ) return 0;
   child = handle.FirstChild( "Job" ).FirstChild( "Structure" ).Element();
@@ -248,20 +237,26 @@ int main(int argc, char *argv[])
   {
     if( not evaluate( *child, structure, pescan, vff, do_evaluate ) ) continue;
     
-    std::cout << "\n\n\nNew Structure\n";
-    structure.print_out( std::cout ); 
-    std::cout << "\n\n";
-    structure.print_xcrysden( std::cout );
-    if ( not do_evaluate ) continue;
-#ifndef _EMASS
-    const Pescan::BandGap& bandgap = (const Pescan::BandGap&) pescan;
-    std::cout << "\nVBM: " << bandgap.bands.vbm
-              << " -- CBM:" << bandgap.bands.cbm
-              << "    ---    Band Gap: " << bandgap.bands.gap() << std::endl;
-#else
-    std::cout << "Emass tensor:\n" << pescan.tensor;
-#endif
+    __ROOTCODE
+    (
+      (*::mpi::main),
+      std::cout << "\n\n\nNew Structure\n";
+      structure.print_out( std::cout ); 
+      std::cout << "\n\n";
+      structure.print_xcrysden( std::cout );
+      if ( not do_evaluate ) continue;
+#     ifndef _EMASS
+        const Pescan::BandGap& bandgap = (const Pescan::BandGap&) pescan;
+        std::cout << "\nVBM: " << bandgap.bands.vbm
+                  << " -- CBM:" << bandgap.bands.cbm
+                  << "    ---    Band Gap: " << bandgap.bands.gap() << std::endl;
+#     else
+        std::cout << "Emass tensor:\n" << pescan.tensor;
+#     endif
+    )
   }
 
-  return 0;
+  __BPO_CATCH__
+
+  return 1;
 }

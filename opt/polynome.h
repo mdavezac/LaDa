@@ -44,7 +44,7 @@ namespace function {
   //!       \a T_TERM is an index makes the templatization of T_TERM a bit
   //!       artificial.
   template<class T_TYPE=types::t_real, class T_TERM=types::t_int >
-  class Polynome : public Base<T_TYPE>
+  class Polynome : public Base<T_TYPE> MPI_COMMA MPI_COMMDEC
   {
     protected:
       //! The type of the base class
@@ -70,25 +70,18 @@ namespace function {
     protected: 
       //! The list of monomials
       t_Monomes monomes;
-      __MPICODE(
-        /** \ingroup mpi
-         *  Communicator for parallel computation.
-         *  \details During evaluations, the computation over the list of
-         *           monomes is scattered across all processes. **/
-        boost::mpi::communicator *comm;
-      )
 
     public: 
       //! Constructor.
-      Polynome() : t_Base() __MPICONSTRUCTORCODE( comm( ::mpi::main ) ) {}
+      Polynome() : t_Base() MPI_COMMA MPI_COMMCOPY( *::mpi::main ) {}
       //! Constructor and variables initializer.
       Polynome   ( types::t_int nb )
-               : t_Base(nb)
-                 __MPICONSTRUCTORCODE( comm( ::mpi::main ) ) {}
+               : t_Base(nb) MPI_COMMA 
+                 MPI_COMMCOPY( *::mpi::main ) {}
       //! Copy constructor
       Polynome  ( const t_This &_p ) 
-               : monomes(_p.monomes)
-                 __MPICONSTRUCTORCODE( comm( _p.comm ) ) {}
+               : monomes(_p.monomes) MPI_COMMA
+                 MPI_COMMCOPY( _p ) {}
 
       //! Destructor
       virtual ~Polynome() {};
@@ -139,15 +132,6 @@ namespace function {
       //! Dumps the polynomial to a stream.
       std::ostream& operator<<( std::ostream &stream ) const
         { print_out(stream); return stream; }
-
-    protected:
-
-#ifdef _MPI
-    public: 
-     /** \ingroup Genetic
-      *  \brief Sets the communicator. **/
-     void set_mpi( boost::mpi::communicator *_c ) { comm = _c; }
-#endif 
   };
  
   template<class T_TYPE, class T_TERM >
@@ -257,12 +241,12 @@ namespace function {
            __SERIALCODE( = monomes.end() ); 
         typename t_Container :: const_iterator i_real = variables->begin();
         __MPICODE(
-          types :: t_unsigned nperproc = monomes.size() / comm->size(); 
-          types :: t_unsigned remainder = monomes.size() % comm->size();
-          i_monome +=  comm->rank() * nperproc + std::min( (types::t_int) remainder,
-                                                           comm->rank() );
+          types :: t_unsigned nperproc = monomes.size() / MPI_COMM.size(); 
+          types :: t_unsigned remainder = monomes.size() % MPI_COMM.size();
+          i_monome +=  MPI_COMM.rank() * nperproc + std::min( (types::t_int) remainder,
+                                                           MPI_COMM.rank() );
           i_monome_end = i_monome + nperproc;
-          if( remainder and comm->rank() < remainder ) ++i_monome_end;
+          if( remainder and MPI_COMM.rank() < remainder ) ++i_monome_end;
         )
         for ( ; i_monome != i_monome_end; ++i_monome )
         {
@@ -276,7 +260,7 @@ namespace function {
           value += v_monome;
         } // end of loop over monomes
       
-        __MPICODE( value = boost::mpi::all_reduce( *comm, value,
+        __MPICODE( value = boost::mpi::all_reduce( MPI_COMM, value,
                                                    std::plus<types::t_real>() ); )
 
         return value;
@@ -304,12 +288,12 @@ namespace function {
 #endif
 #define __ADDHERE__ __MPISERIALCODE( array, _i_grad )
       __MPICODE(
-        types::t_unsigned nperproc = monomes.size() / comm->size(); 
-        types :: t_unsigned remainder = monomes.size() % comm->size();
-        i_monome +=  comm->rank() * nperproc + std::min( (types::t_int) remainder,
-                                                         comm->rank() );
+        types::t_unsigned nperproc = monomes.size() / MPI_COMM.size(); 
+        types :: t_unsigned remainder = monomes.size() % MPI_COMM.size();
+        i_monome +=  MPI_COMM.rank() * nperproc + std::min( (types::t_int) remainder,
+                                                         MPI_COMM.rank() );
         i_monome_end = i_monome + nperproc;
-        if( remainder and comm->rank() < remainder ) ++i_monome_end;
+        if( remainder and MPI_COMM.rank() < remainder ) ++i_monome_end;
         types::t_real *__ADDHERE__ = new types::t_real[ monomes.size() ];
         std::fill( __ADDHERE__, __ADDHERE__ + monomes.size(), types::t_real(0) );
       )
@@ -340,7 +324,7 @@ namespace function {
         } // end of outer "derivative" loop
       } // end of loop over monomes
       __MPICODE( 
-        boost::mpi::all_reduce( *comm, __ADDHERE__, monomes.size(), __ADDHERE__, 
+        boost::mpi::all_reduce( MPI_COMM, __ADDHERE__, monomes.size(), __ADDHERE__, 
                                 std::plus<types::t_real>() ); 
         std::transform( _i_grad, _i_grad + monomes.size(), __ADDHERE__, _i_grad,
                         boost::lambda::_1 + boost::lambda::_2 ); 
@@ -374,12 +358,12 @@ namespace function {
 #endif
 #define __ADDHERE__ __MPISERIALCODE( array, _i_grad )
         __MPICODE(
-          types :: t_unsigned nperproc = monomes.size() / comm->size(); 
-          types :: t_unsigned remainder = monomes.size() % comm->size();
-          i_monome +=  comm->rank() * nperproc + std::min( (types::t_int) remainder,
-                                                           comm->rank() );
+          types :: t_unsigned nperproc = monomes.size() / MPI_COMM.size(); 
+          types :: t_unsigned remainder = monomes.size() % MPI_COMM.size();
+          i_monome +=  MPI_COMM.rank() * nperproc + std::min( (types::t_int) remainder,
+                                                           MPI_COMM.rank() );
           i_monome_end = i_monome + nperproc;
-          if( remainder and comm->rank() < remainder ) ++i_monome_end;
+          if( remainder and MPI_COMM.rank() < remainder ) ++i_monome_end;
           types::t_real *__ADDHERE__ = new types::t_real[ monomes.size() ];
         )
         for ( ; i_monome != i_monome_end; i_monome++ ) // monome loop 
@@ -414,12 +398,12 @@ namespace function {
         } // end of loop over monomes
       
         __MPICODE( 
-          boost::mpi::all_reduce( *comm, __ADDHERE__, monomes.size(),
+          boost::mpi::all_reduce( MPI_COMM, __ADDHERE__, monomes.size(),
                                   __ADDHERE__, std::plus<types::t_real>() ); 
           std::transform( _i_grad, _i_grad + monomes.size(), __ADDHERE__, _i_grad,
                           boost::lambda::_1 + boost::lambda::_2 ); 
           delete[] __ADDHERE__;
-          value = boost::mpi::all_reduce( *comm, value,
+          value = boost::mpi::all_reduce( MPI_COMM, value,
                                           std::plus<types::t_real>() ); 
         )
 #undef __ADDHERE__
@@ -441,12 +425,12 @@ namespace function {
         typename t_Monomes :: const_iterator i_monome_end __SERIALCODE( = monomes.end() );
         typename t_Container :: const_iterator i_real = variables->begin();
         __MPICODE(
-          types :: t_unsigned nperproc = monomes.size() / comm->size(); 
-          types :: t_unsigned remainder = monomes.size() % comm->size();
-          i_monome +=  comm->rank() * nperproc + std::min( (types::t_int) remainder,
-                                                           comm->rank() );
+          types :: t_unsigned nperproc = monomes.size() / MPI_COMM.size(); 
+          types :: t_unsigned remainder = monomes.size() % MPI_COMM.size();
+          i_monome +=  MPI_COMM.rank() * nperproc + std::min( (types::t_int) remainder,
+                                                           MPI_COMM.rank() );
           i_monome_end = i_monome + nperproc;
-          if( remainder and comm->rank() < remainder ) ++i_monome_end;
+          if( remainder and MPI_COMM.rank() < remainder ) ++i_monome_end;
         )
         for ( ; i_monome != i_monome_end; i_monome++ ) // monome loop 
         {
@@ -473,7 +457,7 @@ namespace function {
           result += partial_grad;
       
         } // end of loop over monomes
-        __MPICODE( result = boost::mpi::all_reduce( *comm, result,
+        __MPICODE( result = boost::mpi::all_reduce( MPI_COMM, result,
                                                     std::plus<types::t_real>() ); )
       
         return result;

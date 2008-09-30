@@ -44,14 +44,14 @@ namespace Pescan
   {
     std::ostringstream sstr;
     sstr << "mkdir -p " << dirname;
-    __DIAGA( __DOCOMMSEQUENTIAL( (*comm), system( sstr.str().c_str() ); ) )
+    __DIAGA( __DOCOMMSEQUENTIAL( MPI_COMM, system( sstr.str().c_str() ); ) )
     __IIAGA( system( sstr.str().c_str() ); ) 
   }
   void Interface :: destroy_directory()
   {
     std::ostringstream sstr;
     sstr << "rm -rf " << dirname;
-    __DIAGA( __DOCOMMSEQUENTIAL( (*comm), system( sstr.str().c_str() ); ) )
+    __DIAGA( __DOCOMMSEQUENTIAL( MPI_COMM, system( sstr.str().c_str() ); ) )
     __IIAGA( system( sstr.str().c_str() ); ) 
   }
   void Interface :: create_potential()
@@ -59,11 +59,11 @@ namespace Pescan
     write_genpot_input();
 
     std::ostringstream sstr;
-    sstr << "cp -u " << atom_input __DIAGA( << "." << comm->rank() ) << " ";
+    sstr << "cp -u " << atom_input __DIAGA( << "." << MPI_COMM.rank() ) << " ";
 #ifndef _NOLAUNCH
     __IIAGA( sstr <<  genpot.launch << " "; )
 #endif
-    __DIAGA( if( comm->is_root_node() ) )
+    __DIAGA( if( MPI_COMM.is_root_node() ) )
     {
       std::vector<std::string> :: const_iterator i_str = genpot.pseudos.begin();
       std::vector<std::string> :: const_iterator i_str_end = genpot.pseudos.end();
@@ -71,7 +71,7 @@ namespace Pescan
     }
     sstr << " " << dirname;
     // Makes sure that procs don't simultaneously access the same file.
-    __DIAGA( __DOCOMMSEQUENTIAL( (*comm), system( sstr.str().c_str() ); ) )
+    __DIAGA( __DOCOMMSEQUENTIAL( MPI_COMM, system( sstr.str().c_str() ); ) )
     __IIAGA( system( sstr.str().c_str() ); ) 
 
     
@@ -83,8 +83,8 @@ namespace Pescan
       system(sstr.str().c_str()); 
     )
     __DIAGA( 
-      int __rank = comm->rank();
-      MPI_Comm __commC = (MPI_Comm) *( (MPI::Comm*) comm->get() ) ;
+      int __rank = MPI_COMM.rank();
+      MPI_Comm __commC = (MPI_Comm) *( (MPI::Comm*) MPI_COMM.get() ) ;
       MPI_Fint __commF = MPI_Comm_c2f( __commC );
       FC_FUNC_(iaga_call_genpot, IAGA_CALL_GENPOT)( &__commF, &__rank );
     )
@@ -113,7 +113,7 @@ namespace Pescan
       }
     }
     sstr << dirname;
-    __DIAGA( __DOCOMMSEQUENTIAL( (*comm), system( sstr.str().c_str() ); ) )
+    __DIAGA( __DOCOMMSEQUENTIAL( MPI_COMM, system( sstr.str().c_str() ); ) )
     __IIAGA( system( sstr.str().c_str() ); )  
 
 #ifndef _NOLAUNCH
@@ -279,7 +279,7 @@ namespace Pescan
     std::ostringstream sstr;
     sstr << Print::StripEdges(dirname)
          << "/" << Print::StripEdges(genpot.filename)
-         __DIAGA( << "." << comm->rank() );
+         __DIAGA( << "." << MPI_COMM.rank() );
     file.open( sstr.str().c_str(), std::ios_base::out|std::ios_base::trunc ); 
 
     __DOASSERT( file.bad() or ( not file.is_open() ),
@@ -309,7 +309,7 @@ namespace Pescan
     std::ostringstream sstr;
     sstr << Print::StripEdges(dirname) << "/"
          __IIAGA( << Print::StripEdges(escan.filename) )
-         __DIAGA( << "escan_input." << comm->rank() );
+         __DIAGA( << "escan_input." << MPI_COMM.rank() );
     std::string name = sstr.str();
     file.open( name.c_str(), std::ios_base::out|std::ios_base::trunc ); 
 
@@ -318,7 +318,7 @@ namespace Pescan
                 << " for writing.\nAborting.\n" )
 
     file << "1 " << Print::StripDir(dirname, genpot.output) 
-                 __DIAGA( << "." << comm->rank() ) << "\n"
+                 __DIAGA( << "." << MPI_COMM.rank() ) << "\n"
          << "2 " << escan.wavefunction_out << "\n"
          << "3 " << escan.method << "\n"
          << "4 " << escan.Eref << " " << genpot.cutoff << " "
@@ -348,7 +348,7 @@ namespace Pescan
                       << escan.scale / Physics::a0("A") <<  "\n";
     }
     file << "12 " << escan.potential << "\n"
-         << "13 " << atom_input __DIAGA( << "." << comm->rank() ) << "\n"
+         << "13 " << atom_input __DIAGA( << "." << MPI_COMM.rank() ) << "\n"
          << "14 " << escan.rcut << "\n"
          << "15 " << escan.spinorbit.size() << "\n";
     std::vector<SpinOrbit> :: const_iterator i_so = escan.spinorbit.begin();
@@ -404,7 +404,7 @@ namespace Pescan
       double values[ escan.nbstates ];
       eigenvalues.resize( escan.nbstates );
       FC_FUNC_(iaga_get_eigenvalues, IAGA_GET_EIGENVALUES)( values, &escan.nbstates );
-      comm->get()->Bcast( values, escan.nbstates, MPI::DOUBLE, 0 );
+      MPI_COMM.get()->Bcast( values, escan.nbstates, MPI::DOUBLE, 0 );
       std::copy( values, values + escan.nbstates, eigenvalues.begin() );
         std::cout << "Eigenvalues: " << std::endl;
       for( types :: t_int i = 0; i < escan.nbstates; i++) 

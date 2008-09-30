@@ -204,12 +204,12 @@ namespace Pescan
        VirtualAtom   ( Crystal::Structure &_str )
                    : t_PescanBase(), t_VABase( _str ),
                      vff( _str ), do_gradients(CHEMICAL_STRESS_GRADIENTS),
-                     is_vff_uninitialized(true)  {}
+                     is_vff_uninitialized(true) {}
        //! Copy Constructor
        VirtualAtom   ( const VirtualAtom &_c )
                    : t_PescanBase( _c ), t_VABase( _c ),
                      vff(_c.vff), do_gradients(_c.do_gradients),
-                     is_vff_uninitialized(true)  {}
+                     is_vff_uninitialized(true) {}
         
 
        //! \brief Evaluated the strain after copying the occupations from
@@ -236,7 +236,7 @@ namespace Pescan
        const t_PescanBase& BandGap() const { return *( (const t_PescanBase*) this ); }
        __MPICODE(
          //! Assigns mpi communicator and suffix.
-         void set_mpi( ::mpi::Base *_comm, const std::string &_s ); 
+         void set_mpi( boost::mpi::communicator *_comm, const std::string &_s ); 
        )
 
        //! gets already computed stress from vff. 
@@ -260,18 +260,18 @@ namespace Pescan
   { 
     __DIAGA(
       vff.evaluate();
-      ::mpi::BroadCast bc( *comm );
+      ::mpi::BroadCast bc(  t_PescanBase::comm() );
       bc << structure << ::mpi::BroadCast::allocate
          << structure << ::mpi::BroadCast::broadcast
          << structure << ::mpi::BroadCast::clear;
       std::ostringstream sstr;
-      sstr << vff.filename << "." << comm->rank();
+      sstr << vff.filename << "." << t_PescanBase::comm().rank();
       std::string filename = sstr.str(); 
       std::cout << "vff.filename: " << vff.filename << std::endl;
       vff.zero_order( filename );
     )
     __IIAGA( 
-      __ROOTCODE( vff.evaluate(); )
+      __ROOTCODE( (*::mpi::main), vff.evaluate(); )
       vff.zero_order( vff.filename );
     )
     set_atom_input( vff.filename );
@@ -345,7 +345,7 @@ namespace Pescan
   }
 
 #ifdef _MPI
-  inline void VirtualAtom :: set_mpi( ::mpi::Base *_comm, const std::string &_s ) 
+  inline void VirtualAtom :: set_mpi( boost::mpi::communicator *_comm, const std::string &_s ) 
   {
     __IIAGA( return; )
     __DIAGA(

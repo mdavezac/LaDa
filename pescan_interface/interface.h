@@ -72,7 +72,7 @@ namespace Pescan
 
   //! \brief Defines an interface for the nanopse pescan program.
   //! \details Mostly, this class writes the input and recovers the output eigenvalues.
-  class Interface 
+  class Interface __DIAGA( : MPI_COMMDEC )
   {
     public:
       //! Method for solving the eigenvalue problem
@@ -214,10 +214,6 @@ namespace Pescan
       std::string maskr;
       //! Whether to delete directory where computations are being performed.
       bool do_destroy_dir;
-      __DIAGA( 
-        //! Pointer to the base wrapper for the MPI intracommunicator
-        mpi::Base *comm;
-      );
      
     public:
       //! Stores results
@@ -225,16 +221,17 @@ namespace Pescan
 
     public:
       //! Constructor
-      Interface () : atom_input("atom.config"), genpot(), escan(),
-                     maskr("maskr"), dirname("ESCAN"), do_destroy_dir(true)
-                     __DIAGA( __MPICONSTRUCTORCODE( comm( &::mpi::main ) ) ) {}
+      Interface()
+        : __DIAGA( MPI_COMMCOPY( *::mpi::main ) MPI_COMMA )
+          atom_input("atom.config"), genpot(), escan(),
+          maskr("maskr"), dirname("ESCAN"), do_destroy_dir(true) {}
       //! Copy Constructor
       Interface   ( const Interface &_c )
-                : atom_input( _c.atom_input ), genpot( _c.genpot ),
+                : __DIAGA( MPI_COMMCOPY( _c ) MPI_COMMA )
+                  atom_input( _c.atom_input ), genpot( _c.genpot ),
                   escan( _c.escan ), maskr( _c.maskr ),
                   dirname( _c.dirname ), do_destroy_dir( _c.do_destroy_dir ),
-                  eigenvalues( _c.eigenvalues )
-                  __DIAGA( __MPICONSTRUCTORCODE( comm( &::mpi::main ) ) ) {}
+                  eigenvalues( _c.eigenvalues ) {}
       //! Destructor
      ~Interface() {};
 
@@ -268,12 +265,6 @@ namespace Pescan
        { escan.nbstates = std::max<types::t_unsigned>(_n, 1); }
  
      void check_existence() const;
-
-#ifdef _DIRECTIAGA
-     /** \ingroup Genetic
-      *  \brief Sets the communicator. **/
-     void set_mpi( mpi::Base &_c ) { comm = &_c; }
-#endif
 
     protected:
      //! Launches a calculation 

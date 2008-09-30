@@ -3,8 +3,18 @@
 //
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+# include <config.h>
 #endif
+
+#include <stdexcept>       // std::runtime_error
+#ifdef _MPI
+# include <boost/mpi/environment.hpp>
+#endif
+#include <boost/scoped_ptr.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
+
+
 
 #ifdef _PESCAN
   #include "bandgap.h"
@@ -26,9 +36,6 @@
 #error Need to define _CE or _PESCAN or _MOLECULARITY
 #endif
 
-#include <stdexcept>       // std::runtime_error
-#include <boost/program_options.hpp>
-
 #include <revision.h>
 #include <print/xmg.h>
 #include <print/stdout.h>
@@ -37,147 +44,68 @@
 
 #include "individual.h"
 #include "darwin.h"
+#include <opt/bpo_macros.h>
 
-#ifdef _MPI
-#include <boost/mpi/environment.hpp>
-#endif
 
 int main(int argc, char *argv[]) 
 {
-  try
+  namespace fs = boost::filesystem;
+
+  __MPI_START__
+  __TRYBEGIN
+
+  __BPO_START__ 
+  __BPO_SPECIFICS__( "GA Options" )
+    __BPO_RERUNS__;
+  __BPO_GENERATE__()
+  __BPO_MAP__
+  __BPO_HELP_N_VERSION__
+
+
+  fs::path input( vm["input"].as< std::string >() );
+  __DOASSERT( not ( fs::is_regular( input ) or fs::is_symlink( input ) ),
+              input << " is a not a valid file.\n" );
+  const unsigned reruns = vm["input"].as< unsigned >();
+  
+  __TRYBEGIN
+    GA::Darwin< t_Evaluator > ga;
+    __DOASSERT( not ga.Load(input.string()),
+                "Could not load input from file " << input << "\n" )
+  __TRYEND(, "" )
+
+  __ROOTCODE
+  (
+    (*::mpi::main),
+    std::cout << "Will load input from file: " << input << ".\n"
+              << "Will perform " << reruns << " GA runs.\n\n";
+  )
+    
+  __MPICODE
+  (
+    std::string input_str = input.string();
+    boost::mpi::broadcast( (*::mpi::main), input_str, 0 ); 
+    input = input_str;
+  )
+  
+  
+  for( types::t_int i = 0; i < reruns; ++i )
   {
-    __MPICODE(
-      boost::mpi::environment env(argc, argv); 
-      boost::mpi::communicator world;
-      ::mpi::main = &world;
+    GA::Darwin< t_Evaluator > ga;
+    __DOASSERT( not ga.Load(input.string()),
+                "Could not load input from file " << input << "\n" )
+    
+    __ROOTCODE
+    (
+      (*::mpi::main),
+      std::cout << "Rerun " << i+1 << " of " << reruns << ".\n";
     )
-    try
-    {
-      namespace po = boost::program_options;
-      
-      std::string filename("input.xml");
-      unsigned reruns = 1;
-      
-      po::options_description generic("Generic Options");
-      generic.add_options()
-             ("help,h", "produces this help message.")
-             ("version,v", "prints version string.");
-      po::options_description specific("GA Options");
-      specific.add_options()
-          ("input,i", po::value<std::string>()->default_value("input.xml"), 
-           "input filename." )
-          ("reruns,r", po::value<unsigned>()->default_value(1),
-                       "number of times to run the algorithm.\n"
-                       "Is equivalent to manually re-launching the program.\n");
-      
-      po::options_description all;
-      all.add(generic).add(specific);
-      
-      po::positional_options_description p;
-      p.add("input", 1);
-      
-      po::variables_map vm;
-      po::store(po::command_line_parser(argc, argv).
-                options(all).positional(p).run(), vm);
-      po::notify(vm);
-      
-      if ( vm.count("help") )
-      {
-        __ROOTCODE( world,
-          std::cout << "Usage: " << argv[0] << " [options] file.xml\n"
-                    << "  file.xml is an optional filename for XML input.\n"
-                    << "  Default input is input.xml.\n\n"
-                    << all << "\n"; 
-        )
-        return 1;
-      }
-      if ( vm.count("version") )
-      {
-        __ROOTCODE(  world,
-          std::cout << "\n" << __PROGNAME__
-                    << " from the " << PACKAGE_STRING << " package\n"
-                    << "Subversion Revision: " << SVN::Revision << "\n\n"; 
-        )
-        return 1;
-      }
-      if ( vm.count("input") )
-      {
-        filename = vm["input"].as< std::string >();
-        __ROOTCODE( world, std::cout << "Input: " << filename << ".\n";)
-      }
-      if ( vm.count("reruns") and vm["reruns"].as<unsigned>() > 1 )
-      {
-        reruns = vm["reruns"].as<unsigned>();
-        __ROOTCODE( world,
-          std::cout << "Will rerun algorithm " << reruns 
-                    << " independent times.\n";
-        )
-      }
-        
-      __MPICODE( boost::mpi::broadcast( world, filename, 0 ); )
-      
-      
-      for( types::t_int i = 0; i < reruns; ++i )
-      {
-        GA::Darwin< t_Evaluator > ga;
-        __DOASSERT( not ga.Load(filename),
-                    "Could not load input from file " << filename << "\n" )
-        
-        std::cout << "Rerun " << i+1 << " of " << reruns << ".\n";
-        ga.run();
-        // for reruns.
-        Print::xmg.dont_truncate();
-        Print::out.dont_truncate();
-      }
-    }
-    catch ( boost::program_options::invalid_command_line_syntax &_b)
-    {
-      std::cerr << "Caught error while running " << __PROGNAME__ << "\n"
-                << "Something wrong with the command-line input.\n"
-                << _b.what() << "\n";
-      return 0;
-    }
-    catch ( boost::program_options::invalid_option_value &_i )
-    {
-      std::cerr << "Caught error while running " << __PROGNAME__ << "\n"
-                << "Argument of option in command-line is invalid.\n"
-                << _i.what() << "\n";
-      return 0;
-    }
-    catch ( boost::program_options::unknown_option &_u)
-    {
-      std::cerr << "Caught error while running " << __PROGNAME__ << "\n"
-                << "Unknown option in command-line.\n"
-                << _u.what() << "\n";
-      return 0;
-    }
-    catch (  boost::program_options::too_many_positional_options_error &_e )
-    {
-      std::cerr << "Caught error while running " << __PROGNAME__ << "\n"
-                << "Too many arguments in command-line.\n"
-                << _e.what() << "\n";
-      return 0;
-    }
-    catch ( std::exception &e )
-    {
-      std::ostringstream sstr;
-      __MPICODE( sstr << "\nProcessor " << world.rank() + 1
-                      << " of " << world.size()
-                      << " says:\n"; )
-    
-      sstr << "Caught error while running " << __PROGNAME__ 
-           << "\n" << e.what() << "\n";
-    
-      std::string message = sstr.str();
-      Print::out << message << Print::endl;
-      __MPICODE( 
-        message = boost::mpi::all_reduce( world, message, std::plus<std::string>() );
-      )
-      __ROOTCODE( world, std::cerr << message << std::endl; )
-      return 0;
-    }
+    ga.run();
+    // for reruns.
+    Print::xmg.dont_truncate();
+    Print::out.dont_truncate();
   }
-  catch ( std::exception &e ) {}
+  
+  __BPO_CATCH__
 
   return 1;
 }
