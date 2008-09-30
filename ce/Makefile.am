@@ -9,7 +9,7 @@ if DOCE
 bin_PROGRAMS = regular cubic tetra 
 cubic_SOURCES = main.cc 
 cubic_CPPFLAGS =  $(AM_CPPFLAGS) -I .. -D_CUBIC_CE_
-cubic_LDFLAGS =  $(AM_LDFLAGS)  @MPI_LIBS@ @BOOST_LDFLAGS@\
+cubic_LDFLAGS =  $(AM_LDFLAGS)  @BOOST_LDFLAGS@\
                  @BOOST_MPI@ @BOOST_PROGOP@ @BOOST_FS@ \
 		 @BOOST_SYSTEM@ @BOOST_REGEX@ 
 cubic_LDADD =   libce.la \
