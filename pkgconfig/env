@@ -1,15 +1,50 @@
 #
 #  Version: $Id$
 #
-bsuf="-il-mt"
-# bsuf="-gcc34-mt"
-BOOST_LDFLAGS="-L$HOME/usr/lib"
+BASEDIR="/home/davezac/usr/"
+
+bsuf="-gcc43-mt"
+BOOST_LDFLAGS="-L$BASEDIR/lib"
 BOOST_MPI="-lboost_serialization$bsuf -lboost_mpi$bsuf"
 BOOST_PROGOP="-lboost_program_options$bsuf"
 BOOST_FS="-lboost_filesystem$bsuf"
 BOOST_PYTHON="-lboost_python$bsuf"
 BOOST_REGEX="-lboost_regex$bsuf"
 BOOST_SYSTEM="-lboost_system$bsuf"
-BOOST_CXXFLAGS="-I$HOME/usr/include/boost-1_35"
-PYTHON_INCLUDE_DIR="$HOME/usr/include/python2.5"
-PYTHON_LIB="$HOME/usr/lib/python2.5"
+BOOST_CXXFLAGS="-I$BASEDIR/include/boost-1_36"
+
+#
+PYTHON_INCLUDE_DIR="/usr/include/python2.5/"
+PYTHON_LIB="/usr/lib64/python2.5/"
+
+# 
+GSL_CFLAGS="-I$BASEDIR/include"
+GSL_LIBS="-L$BASEDIR/lib -lgsl -lgslcblas -lm"
+
+#
+TINYXML_CFLAGS="-I$BASEDIR/include"
+TINYXML_LIBS="-L$BASEDIR/lib -ltinyxml"
+
+#
+EO_CFLAGS="-I$BASEDIR/include"
+EO_LIBS="-L$BASEDIR/lib -lga -leo -leoutils"
+
+#
+IAGA_DIR=$BASEDIR/src/nanopse-0.4.0-beta
+LD_IAGA_FLAGS=" $IAGA_DIR/pescan/lib/libpescan.a  $IAGA_DIR/genpot/lib/libgenpot.a "
+filelist="mpigroup.mod MPIGROUP.mod"
+for file in $filelist
+do
+  if [ -e "$IAGA_DIR/genpot/lib/$file" ]; then
+    cp $IAGA_DIR/genpot/lib/$file pescan_interface
+  fi
+done
+filelist="escan_comp_api.mod ESCAN_COMP_API.mod eigenenergy.mod EIGENENERGY.mod"
+for file in $filelist
+do
+  if [ -e "$IAGA_DIR/pescan/lib/$file" ]; then
+    cp $IAGA_DIR/pescan/lib/$file pescan_interface
+  fi
+done
+
+
