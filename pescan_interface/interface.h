@@ -8,6 +8,8 @@
 #include <config.h>
 #endif
 
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
 
 #include <string>
 #include <vector>
@@ -303,50 +305,34 @@ namespace Pescan
 
   inline void Interface::check_existence() const 
   { 
-    std::ifstream stream;
-    std::string name;
+    namespace bfs = boost::filesystem; 
 
+    bfs::path file;
 #ifndef _NOLAUNCH
-    __IIAGA(
-      name = Print::reformat_home( genpot.launch );
-      __TRYCODE( stream.open(name.c_str(), std::ios::in | std::ios::binary);,
-                 "Program " << (std::string) name << " does not appear to exist.\n" )
-      __ASSERTCATCHCODE( not stream.is_open(),
-                         stream.close(),
-                         "Error while opening " << (std::string) name << ".\n" )
-      stream.close();
-    )
+    __IIAGA
+    (
+      file = genpot.launch;
+      __DOASSERT( not bfs::exists( file ), file << " does not exist.\n" );
 
-    name = Print::reformat_home( escan.launch );
-    __TRYCODE( stream.open(name.c_str(), std::ios::in | std::ios::binary);,
-               "Program " << (std::string) name << " does not appear to exist.\n" )
-    __ASSERTCATCHCODE( not stream.is_open(),
-                       stream.close(),
-                       "Error while opening " << (std::string) name << ".\n" )
-    stream.close();
+      file = escan.launch;
+      __DOASSERT( not bfs::exists( file ), file << " does not exist.\n" );
+    )
 #endif
 
-    name = Print::reformat_home( maskr );
-    __TRYCODE( stream.open(name.c_str(), std::ios::in);,
-               "File " << (std::string) name << " does not appear to exist.\n" )
-    __ASSERTCATCHCODE( not stream.is_open(),
-                       stream.close(),
-                       "Error while opening " << (std::string) name << ".\n" )
-    stream.close();
-
+    file = maskr;
+    __DOASSERT( not bfs::exists( file ), file << " does not exist.\n" );
+    __DOASSERT( not ( bfs::is_regular_file( file ) or bfs::is_symlink( file ) ), 
+                file << " is not a regular file nor a symlink.\n" );
 
     std::vector<std::string> :: const_iterator i_ps = genpot.pseudos.begin();
     std::vector<std::string> :: const_iterator i_ps_end = genpot.pseudos.end();
     for(; i_ps != i_ps_end; ++i_ps )
     {
-      if ( name == *i_ps ) continue;
-      name = *i_ps;
-      __TRYCODE( stream.open(name.c_str(), std::ios::in);,
-                 "File " << (std::string) name << " does not appear to exist.\n" )
-      __ASSERTCATCHCODE( not stream.is_open(),
-                         stream.close(),
-                         "Error while opening " << (std::string) name << ".\n" )
-      stream.close();
+      if ( file.string() == *i_ps ) continue;
+      file = *i_ps;
+      __DOASSERT( not bfs::exists( file ), file << " does not exist.\n" );
+      __DOASSERT( not ( bfs::is_regular_file( file ) or bfs::is_symlink( file ) ), 
+                  file << " is not a regular file nor a symlink.\n" );
     }
 
     if( escan.potential != Escan::SPINORBIT ) return;
@@ -354,16 +340,12 @@ namespace Pescan
     std::vector<SpinOrbit> :: const_iterator i_so_end = escan.spinorbit.end();
     for(; i_ps != i_ps_end; ++i_ps )
     {
-      if ( name == *i_ps ) continue;
-      name = *i_ps;
-      __TRYCODE( stream.open(name.c_str(), std::ios::in);,
-                 "File " << (std::string) name << " does not appear to exist.\n" )
-      __ASSERTCATCHCODE( not stream.is_open(),
-                         stream.close(),
-                         "Error while opening " << (std::string) name << ".\n" )
-      stream.close();
+      if ( file.string() == *i_ps ) continue;
+      file = *i_ps;
+      __DOASSERT( not bfs::exists( file ), file << " does not exist.\n" );
+      __DOASSERT( not ( bfs::is_regular_file( file ) or bfs::is_symlink( file ) ), 
+                  file << " is not a regular file nor a symlink.\n" );
     }
-
   }
 
 } // namespace pescan_interface
