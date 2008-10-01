@@ -10,6 +10,7 @@
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <string>
 #include <vector>
@@ -36,9 +37,11 @@ extern "C"
 }
 //! \endcond
 #define __DIAGA( code ) code
+#define __DIAGASUFFIX / "." / boost::lexical_cast<std::string>(MPI_COMM.rank())
 #define __IIAGA( code ) 
 #else
 #define __DIAGA( code ) 
+#define __DIAGASUFFIX
 #define __IIAGA( code ) code
 #endif
 
@@ -76,6 +79,7 @@ namespace Pescan
   //! \details Mostly, this class writes the input and recovers the output eigenvalues.
   class Interface __DIAGA( : public MPI_COMMDEC )
   {
+    typedef boost::filesystem::path t_Path;
     public:
       //! Method for solving the eigenvalue problem
       enum t_method
@@ -91,14 +95,15 @@ namespace Pescan
     struct GenPot
     {
       //! Filenam where to write the output.
-      std::string filename;
+      t_Path filename;
       types::t_int x; //!< Number of points in x coordinate of real space mesh
       types::t_int y; //!< Number of points in y coordinate of real space mesh
       types::t_int z; //!< Number of points in z coordinate of real space mesh
       types::t_real cutoff; //!< Plane-wave energy cutoff 
-      std::string output;   //!< File to which to write the potential
-      std::string launch;   //!< Command for launching pescan's getVLarg.
-      std::vector<std::string> pseudos; //!< Name of the files describing each pseudo-potentials
+      t_Path output;   //!< File to which to write the potential
+      t_Path launch;   //!< Command for launching pescan's getVLarg.
+      //! Name of the files describing each pseudo-potentials
+      std::vector<t_Path> pseudos;
 
       //! Constructor
       GenPot   () 
@@ -115,7 +120,7 @@ namespace Pescan
     //! Parameters for spin-orbit hamiltonian
     struct SpinOrbit
     {
-      std::string filename; //!< Filename of the spin-orbit empirical pseudo-potential
+      t_Path filename; //!< Filename of the spin-orbit empirical pseudo-potential
       std::string izz; //!< Don't know.
       types::t_real s;   //!< Don't know. 
       types::t_real p;   //!< Don't know. 
@@ -126,8 +131,9 @@ namespace Pescan
       //! Constructor.
       SpinOrbit () : filename(""), izz(""), s(0), p(0), d(0), pnl(0), dnl(0) {};
       //! Copy Constructor.
-      SpinOrbit ( const SpinOrbit &_c) : filename(_c.filename), izz(_c.izz),
-                                         s(_c.s), p(_c.p), d(_c.d), pnl(_c.pnl), dnl(_c.dnl) {};
+      SpinOrbit   ( const SpinOrbit &_c)
+                : filename(_c.filename), izz(_c.izz), s(_c.s), 
+                  p(_c.p), d(_c.d), pnl(_c.pnl), dnl(_c.dnl) {};
     };
     //! Parameters for nanopse's escan program.
     struct Escan
@@ -142,13 +148,13 @@ namespace Pescan
         };
 
       //! Name where to write input.
-      std::string filename;
+      t_Path filename;
       //! Name of the pescan output
-      std::string output;
+      t_Path output;
       //! Stub name for output wavefunction files
-      std::string wavefunction_out;
+      t_Path wavefunction_out;
       //! Stub name for input wavefunction files
-      std::string wavefunction_in;
+      t_Path wavefunction_in;
       //! Wavefunctions to read in
       std::vector<types::t_unsigned> read_in;
       //! Eigenvalue solution method.
@@ -177,7 +183,7 @@ namespace Pescan
       //! Real-space cutoff?
       types::t_real rcut;
       //! System call to lauch nanopse's pescan
-      std::string launch;
+      boost::filesystem::path launch;
       //! Spin orbit parameters.
       std::vector<SpinOrbit> spinorbit;
 
@@ -203,17 +209,15 @@ namespace Pescan
   
     protected:
       //! Filename of the atomic configuation input
-      std::string atom_input;
+      t_Path atom_input;
       //! All potential generation parameters
       GenPot genpot;
       //! All escan-specific parameters
       Escan escan;
       //! Directory where to perform computations.
-      std::string dirname;
-      //! Current Directory.
-      std::string curdir;
+      boost::filesystem::path dirname;
       //! Name of the maskr file.
-      std::string maskr;
+      boost::filesystem::path maskr;
       //! Whether to delete directory where computations are being performed.
       bool do_destroy_dir;
      
@@ -241,7 +245,7 @@ namespace Pescan
      bool Load( const TiXmlElement &_node );
 
      //! Sets the name of the directory where to perform calculations.
-     void set_dirname( const std::string &_dir ) { dirname = _dir; }
+     void set_dirname( const boost::filesystem::path &_dir ) { dirname = _dir; }
      //! Sets the reference energies for folded spectrum calculations.
      void set_reference( types::t_real _val )  { escan.Eref = _val; }
      //! Stores the reference energies for folded spectrum calculations.
@@ -252,7 +256,7 @@ namespace Pescan
      void set_method( t_method _method = FOLDED_SPECTRUM )
        { escan.method = _method; }
      //! Sets the name of the atomic configuration input file from Vff.
-     void set_atom_input( const std::string &_str ) { atom_input = _str; }
+     void set_atom_input( const t_Path &_str ) { atom_input = _str; }
      //! Destroys directory for computations.
      void destroy_directory();
      //! \brief Tries to find a <Functional type="escan"> tag in \a _node.
@@ -306,33 +310,53 @@ namespace Pescan
   inline void Interface::check_existence() const 
   { 
     namespace bfs = boost::filesystem; 
+    bool docontinue(true);
 
-    bfs::path file;
-#ifndef _NOLAUNCH
-    __IIAGA
-    (
-      file = genpot.launch;
-      __DOASSERT( not bfs::exists( file ), file << " does not exist.\n" );
+#   ifdef __thistry__
+#     error macro already defined
+#   endif
+#   ifdef __endthistry__
+#     error macro already defined
+#   endif
+#   define __thistry__ try {
+#   define __endthistry__ \
+      } \
+      catch( std::exception &_e ) \
+      { \
+        docontinue = false; \
+        Print::out << _e.what() << Print::endl; \
+      } 
 
-      file = escan.launch;
-      __DOASSERT( not bfs::exists( file ), file << " does not exist.\n" );
-    )
-#endif
+#   ifndef _NOLAUNCH
+      __IIAGA
+      (
+        __thistry__
+        __DOASSERT( not bfs::exists( genpot.launch ),
+                    genpot.launch << " does not exist.\n" );
+        __endthistry__
+        __thistry__
+        __DOASSERT( not bfs::exists( escan.launch ),
+                    escan.launch << " does not exist.\n" );
+        __endthistry__
+      )
+#   endif
 
-    file = maskr;
-    __DOASSERT( not bfs::exists( file ), file << " does not exist.\n" );
-    __DOASSERT( not ( bfs::is_regular_file( file ) or bfs::is_symlink( file ) ), 
-                file << " is not a regular file nor a symlink.\n" );
+    __DOASSERT( not bfs::exists( maskr ), maskr << " does not exist.\n" );
+    __DOASSERT( not ( bfs::is_regular_file( maskr ) or bfs::is_symlink( maskr ) ), 
+                maskr << " is not a regular file nor a symlink.\n" );
 
-    std::vector<std::string> :: const_iterator i_ps = genpot.pseudos.begin();
-    std::vector<std::string> :: const_iterator i_ps_end = genpot.pseudos.end();
+    t_Path file;
+    std::vector<t_Path> :: const_iterator i_ps = genpot.pseudos.begin();
+    std::vector<t_Path> :: const_iterator i_ps_end = genpot.pseudos.end();
     for(; i_ps != i_ps_end; ++i_ps )
     {
-      if ( file.string() == *i_ps ) continue;
+      if ( file == *i_ps ) continue;
       file = *i_ps;
+      __thistry__
       __DOASSERT( not bfs::exists( file ), file << " does not exist.\n" );
       __DOASSERT( not ( bfs::is_regular_file( file ) or bfs::is_symlink( file ) ), 
                   file << " is not a regular file nor a symlink.\n" );
+      __endthistry__
     }
 
     if( escan.potential != Escan::SPINORBIT ) return;
@@ -340,12 +364,17 @@ namespace Pescan
     std::vector<SpinOrbit> :: const_iterator i_so_end = escan.spinorbit.end();
     for(; i_ps != i_ps_end; ++i_ps )
     {
-      if ( file.string() == *i_ps ) continue;
+      if ( file == *i_ps ) continue;
       file = *i_ps;
+      __thistry__
       __DOASSERT( not bfs::exists( file ), file << " does not exist.\n" );
       __DOASSERT( not ( bfs::is_regular_file( file ) or bfs::is_symlink( file ) ), 
                   file << " is not a regular file nor a symlink.\n" );
+      __endthistry__
     }
+    __DOASSERT( docontinue == true, )
+#   undef __thistry__
+#   undef __endthistry__
   }
 
 } // namespace pescan_interface

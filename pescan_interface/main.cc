@@ -17,6 +17,7 @@
 #include <print/manip.h>
 #include <revision.h>
 #include <opt/bpo_macros.h>
+#include <opt/initial_path.h>
 
 #ifdef _EMASS
 
@@ -90,6 +91,7 @@ bool evaluate( const TiXmlElement &_node,
 
 int main(int argc, char *argv[]) 
 {
+  opt::InitialPath::init();
   namespace fs = boost::filesystem;
 
   __MPI_START__

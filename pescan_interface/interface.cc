@@ -20,20 +20,6 @@ namespace Pescan
 {
   bool Interface :: operator()()
   {
-    long length = 100;
-    while( length < 2000 )
-    {
-      char dir[length];
-      if( getcwd( dir, length ) )
-      {
-        curdir = dir;
-        break;
-      }
-      length += 100;
-    }
-    if( length == 2000 ) __THROW_ERROR( "Could not read pwd.\n" ) 
-    std::cout << "curdir: " << curdir << std::endl;
-
     create_directory();
     create_potential();
     launch_pescan();
@@ -43,91 +29,92 @@ namespace Pescan
 
   void Interface :: create_directory()
   {
-    std::ostringstream sstr;
-    sstr << "mkdir -p " << dirname;
-    __DIAGA( __DOCOMMSEQUENTIAL( MPI_COMM, system( sstr.str().c_str() ); ) )
-    __IIAGA( system( sstr.str().c_str() ); ) 
+    namespace bfs = boost::filesystem;
+    const t_Path newpath(  InitialPath::path() / dirname );
+    __DIAGA
+    ( 
+      for( types::t_int i( 0 ); i < MPI_COMM.size(); ++i )
+        if( MPI_COMM.rank() == i )
+    )
+    if( not bfs::exists( newpath ) ) bfs::create_directory( newpath );
   }
   void Interface :: destroy_directory()
   {
-    std::ostringstream sstr;
-    sstr << "rm -rf " << dirname;
-    __DIAGA( __DOCOMMSEQUENTIAL( MPI_COMM, system( sstr.str().c_str() ); ) )
-    __IIAGA( system( sstr.str().c_str() ); ) 
+    namespace bfs = boost::filesystem;
+    const t_Path newpath(  InitialPath::path() / dirname );
+    __DIAGA
+    ( 
+     for( types::t_int i( 1 ); i < MPI_COMM.size(); ++i )
+       if( MPI_COMM.rank() == i )
+    )
+    if( bfs::exists( newpath ) ) bfs::remove_directory( newpath );
   }
   void Interface :: create_potential()
   {
+    namespace bfs = boost::filesystem;
     write_genpot_input();
+    
+    const t_Path( atom_input __DIAGASUFFIX )
+    bfs::copy_file( InitialPath::path()/orig, InitialPath::path()/dirname );
 
-    std::ostringstream sstr;
-    sstr << "cp -u " << atom_input __DIAGA( << "." << MPI_COMM.rank() ) << " ";
-#ifndef _NOLAUNCH
-    __IIAGA( sstr <<  genpot.launch << " "; )
-#endif
-    __DIAGA( if( not MPI_COMM.rank() ) )
+#   ifndef _NOLAUNCH
+      __IIAGA( bfs::copy_file( genpot.launch, InitialPath::path()/dirname ); )
+#   endif
+    __DIAGA
+    (
+      for( types::t_int i( 1 ); i < MPI_COMM.size(); ++i )
+        if( MPI_COMM.rank() == i )
+    )
     {
-      std::vector<std::string> :: const_iterator i_str = genpot.pseudos.begin();
-      std::vector<std::string> :: const_iterator i_str_end = genpot.pseudos.end();
-      for(; i_str != i_str_end; ++i_str)  sstr << *i_str << " ";
+      std::vector<t_Path> :: const_iterator i_str = genpot.pseudos.begin();
+      std::vector<t_Path> :: const_iterator i_str_end = genpot.pseudos.end();
+      for(; i_str != i_str_end; ++i_str) 
+        bfs::copy_file( *i_str, InitialPath::path()/dirname );
     }
-    sstr << " " << dirname;
-    // Makes sure that procs don't simultaneously access the same file.
-    __DIAGA( __DOCOMMSEQUENTIAL( MPI_COMM, system( sstr.str().c_str() ); ) )
-    __IIAGA( system( sstr.str().c_str() ); ) 
 
     
-#ifndef _NOLAUNCH
-    chdir( dirname.c_str() );
-    __IIAGA( 
-      sstr.str("");
-      sstr << "./" << Print::StripDir(genpot.launch);
-      system(sstr.str().c_str()); 
-    )
-    __DIAGA( 
-      int __rank = MPI_COMM.rank();
-      MPI_Comm __commC = (MPI_Comm) ( MPI_COMM ) ;
-      MPI_Fint __commF = MPI_Comm_c2f( __commC );
-      FC_FUNC_(iaga_call_genpot, IAGA_CALL_GENPOT)( &__commF, &__rank );
-    )
-    chdir( curdir.c_str() );
-#endif
+#   ifndef _NOLAUNCH
+      chdir( ( InitialPath::path() / dirname ).c_str() );
+      __IIAGA(  system( "./" + genpot.launch.filename().string() ) );
+      __DIAGA
+      ( 
+        int __rank = MPI_COMM.rank();
+        MPI_Comm __commC = (MPI_Comm) ( MPI_COMM ) ;
+        MPI_Fint __commF = MPI_Comm_c2f( __commC );
+        FC_FUNC_(iaga_call_genpot, IAGA_CALL_GENPOT)( &__commF, &__rank );
+      )
+      chdir( InitialPath::path().c_str() );
+#   endif
   }
   types::t_real Interface :: launch_pescan()
   {
-    std::ostringstream sstr;
     write_escan_input();
 
-    sstr << "cp -u " << maskr << " "; 
-#ifndef _NOLAUNCH
-    __IIAGA(sstr << escan.launch << " ";)
-#endif
+    __DIAGA
+    ( 
+      for( types::t_int i( 0 ); i < MPI_COMM.size(); ++i )
+        if( MPI_COMM.rank() == i )
+    )
+    bfs::copy_file( maskr, InitialPath::path()/dirname );
+#   ifndef _NOLAUNCH
+      __IIAGA( bfs::copy_file( escan.launch, InitialPath::path()/dirname ); )
+#   endif
     std::vector<SpinOrbit> :: const_iterator i_so = escan.spinorbit.begin();
     std::vector<SpinOrbit> :: const_iterator i_so_end = escan.spinorbit.end();
-    std::vector<std::string> alreadythere;
     for( ; i_so != i_so_end; ++i_so)
-    {
-      if(    std::find( alreadythere.begin(), alreadythere.end(), i_so->filename ) 
-          == alreadythere.end() )
-      {
-        sstr << i_so->filename << " ";
-        alreadythere.push_back(i_so->filename);
-      }
-    }
-    sstr << dirname;
-    __DIAGA( __DOCOMMSEQUENTIAL( MPI_COMM, system( sstr.str().c_str() ); ) )
-    __IIAGA( system( sstr.str().c_str() ); )  
-
-#ifndef _NOLAUNCH
-    chdir( dirname.c_str() );
-    __IIAGA(
-      std::string output = Print::StripEdges(escan.output);
-      sstr.str("");
-      sstr << " ./" << Print::StripDir(escan.launch) << " > " << output;
-      system(sstr.str().c_str());
-    )
-    __DIAGA( FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( &escan.nbstates ); )
-    chdir( curdir.c_str() );
-#endif
+      __DIAGA
+      ( 
+        for( types::t_int i( 0 ); i < MPI_COMM.size(); ++i )
+          if( MPI_COMM.rank() == i )
+      )
+      bfs::copy_file( i_so->filename, InitialPath::path()/dirname );
+    
+#   ifndef _NOLAUNCH
+      chdir( ( InitialPath::path() / dirname ).c_str() );
+      __IIAGA(  system( "./" + escan.launch.filename().string() ) );
+      __DIAGA( FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( &escan.nbstates ); )
+      chdir( InitialPath::path().c_str() );
+#   endif
     return 0.0;
   }
 
@@ -172,7 +159,7 @@ namespace Pescan
 
     child = _node.FirstChildElement("Maskr");
     if( child and child->Attribute("filename") )
-      maskr = Print::reformat_home(child->Attribute("filename"));
+      maskr = child->Attribute("filename");
 
     child = _node.FirstChildElement("GenPot");
     __DOASSERT( not child, "No <GenPot> tag found on input.\nAborting\n" )
@@ -193,7 +180,7 @@ namespace Pescan
     child = child->FirstChildElement("Pseudo");
     for(; child; child = child->NextSiblingElement() )
       if ( child->Attribute("filename") )
-        genpot.pseudos.push_back( Print::reformat_home(child->Attribute("filename")) );
+        genpot.pseudos.push_back( child->Attribute("filename") );
     __DOASSERT( not genpot.check(),
                 "Insufficient or Incorrect Genpot input.\nAborting\n" )
 
@@ -247,7 +234,7 @@ namespace Pescan
       if ( child->Attribute("filename") and child->Attribute("izz") )
       {
         SpinOrbit so;
-        so.filename = Print::reformat_home(child->Attribute("filename"));
+        so.filename = child->Attribute("filename");
         so.izz = child->Attribute("izz");
         if( child->Attribute("s") )
           child->Attribute("s", &so.s);
@@ -277,17 +264,15 @@ namespace Pescan
   void Interface::write_genpot_input()
   {
     std::ofstream file;
-    std::ostringstream sstr;
-    sstr << Print::StripEdges(dirname)
-         << "/" << Print::StripEdges(genpot.filename)
-         __DIAGA( << "." << MPI_COMM.rank() );
-    file.open( sstr.str().c_str(), std::ios_base::out|std::ios_base::trunc ); 
+    const t_Path orig(   opt::InitialPath::path() 
+                       / dirname / genpot.filename __DIAGASUFFIX );
+    file.open( orig.string(), std::ios_base::out|std::ios_base::trunc ); 
 
     __DOASSERT( file.bad() or ( not file.is_open() ),
                    "Could not open file " << sstr.str()
                 << " for writing.\nAborting.\n" )
 
-    file << Print::StripDir(atom_input) << "\n"
+    file << atom_input << "\n"
          << genpot.x << " " 
          << genpot.y << " " 
          << genpot.z << "\n"
@@ -296,8 +281,8 @@ namespace Pescan
          << genpot.z << "\n" << " 0 0 0\n" 
          << genpot.cutoff << "\n"
          << genpot.pseudos.size() << std::endl;
-    std::vector< std::string > :: const_iterator i_str = genpot.pseudos.begin();
-    std::vector< std::string > :: const_iterator i_str_end = genpot.pseudos.end();
+    std::vector< t_Path > :: const_iterator i_str = genpot.pseudos.begin();
+    std::vector< t_Path > :: const_iterator i_str_end = genpot.pseudos.end();
     for(; i_str != i_str_end; ++i_str )
      file << Print::StripDir(*i_str) << "\n";
     file.flush();
@@ -307,25 +292,28 @@ namespace Pescan
   void Interface::write_escan_input()
   {
     std::ofstream file;
+    const t_Path orig
+    ( 
+        opt::InitialPath::path() / dirname 
+      / __IIAGA( genpot.filename )
+        __DIAGA( "escan_input." ) __DIAGASUFFIX
+    );
     std::ostringstream sstr;
-    sstr << Print::StripEdges(dirname) << "/"
-         __IIAGA( << Print::StripEdges(escan.filename) )
-         __DIAGA( << "escan_input." << MPI_COMM.rank() );
-    std::string name = sstr.str();
+    std::string name = orig.string();
     file.open( name.c_str(), std::ios_base::out|std::ios_base::trunc ); 
 
     __DOASSERT( file.bad() or ( not file.is_open() ),
                    "Could not open file " << (std::string) name
                 << " for writing.\nAborting.\n" )
 
-    file << "1 " << Print::StripDir(dirname, genpot.output) 
-                 __DIAGA( << "." << MPI_COMM.rank() ) << "\n"
+    file << "1 " << ( genpot.output __DIAGASUFFIX ) 
          << "2 " << escan.wavefunction_out << "\n"
          << "3 " << escan.method << "\n"
          << "4 " << escan.Eref << " " << genpot.cutoff << " "
                  << escan.smooth << " " << escan.kinscal << "\n"
          << "5 " << escan.nbstates << "\n"
-         << "6 " << escan.niter << " " << escan.nlines << " " << escan.tolerance << "\n";
+         << "6 " << escan.niter << " " << escan.nlines
+                 << " " << escan.tolerance << "\n";
     if( escan.read_in.size() )
     {
       file << "7 " << escan.read_in.size() << "\n"
@@ -349,7 +337,7 @@ namespace Pescan
                       << escan.scale / Physics::a0("A") <<  "\n";
     }
     file << "12 " << escan.potential << "\n"
-         << "13 " << atom_input __DIAGA( << "." << MPI_COMM.rank() ) << "\n"
+         << "13 " << ( atom_input __DIAGASUFFIX ) << "\n"
          << "14 " << escan.rcut << "\n"
          << "15 " << escan.spinorbit.size() << "\n";
     std::vector<SpinOrbit> :: const_iterator i_so = escan.spinorbit.begin();
@@ -365,57 +353,55 @@ namespace Pescan
 
   bool Interface :: read_result()
   {
-#ifdef _NOLAUNCH
-    return true;
-#endif
-#ifndef _DIRECTIAGA
-    std::ifstream file;
-    std::ostringstream sstr;
-    sstr << dirname; 
-    sstr << "/" << Print::StripEdges(escan.output);
-    std::string name = sstr.str();
-    file.open( name.c_str(), std::ios_base::in ); 
-    __DOASSERT( not file.is_open(), 
-                "Could not open file " << (std::string) name << "\n" )
-
-    char cline[256];
-    std::string line("");
-    while (     ( not file.eof() )
-            and line.find("FINAL eigen") == std::string::npos ) 
-    {
-      file.getline( cline, 256 );
-      line = cline;
-    }
-    __DOASSERT( file.eof(),
-                   "Reached end of " << name
-                << " without encoutering eigenvalues\n" )
-
-    eigenvalues.clear(); eigenvalues.reserve(escan.nbstates);
-    types::t_unsigned u(0);
-    types::t_real eig;
-    for(; u < escan.nbstates; ++u )
-    {
-      if(  file.bad() ) break;
-      file >> eig;
-      eigenvalues.push_back( eig );
-    }
-#endif
-
-    __DIAGA(
-      double values[ escan.nbstates ];
-      eigenvalues.resize( escan.nbstates );
-      FC_FUNC_(iaga_get_eigenvalues, IAGA_GET_EIGENVALUES)( values, &escan.nbstates );
-      boost::mpi::broadcast( MPI_COMM, values, escan.nbstates, 0 );
-      std::copy( values, values + escan.nbstates, eigenvalues.begin() );
-        std::cout << "Eigenvalues: " << std::endl;
-      for( types :: t_int i = 0; i < escan.nbstates; i++) 
-        std::cout << eigenvalues[i] << " ---> " << i << std::endl;
-    )
-
-    __IIAGA( __DOASSERT( u != escan.nbstates,
-                            "Found " << u << " eigenvalues in " << name
-                         << " where " << escan.nbstates
-                         << " were expected.\n" ) )
+#   ifndef _NOLAUNCH
+#     ifndef _DIRECTIAGA
+        std::ifstream file;
+        std::ostringstream sstr;
+        const t_Path orig( opt::InitialPath::path() / dirname / escan.output );
+        std::string name = orig.string();
+        file.open( name.c_str(), std::ios_base::in ); 
+        __DOASSERT( not file.is_open(), 
+                    "Could not open file " << (std::string) name << "\n" )
+       
+        char cline[256];
+        std::string line("");
+        while (     ( not file.eof() )
+                and line.find("FINAL eigen") == std::string::npos ) 
+        {
+          file.getline( cline, 256 );
+          line = cline;
+        }
+        __DOASSERT( file.eof(),
+                       "Reached end of " << name
+                    << " without encoutering eigenvalues\n" )
+       
+        eigenvalues.clear(); eigenvalues.reserve(escan.nbstates);
+        types::t_unsigned u(0);
+        types::t_real eig;
+        for(; u < escan.nbstates; ++u )
+        {
+          if(  file.bad() ) break;
+          file >> eig;
+          eigenvalues.push_back( eig );
+        }
+#     endif
+     
+      __DIAGA(
+        double values[ escan.nbstates ];
+        eigenvalues.resize( escan.nbstates );
+        FC_FUNC_(iaga_get_eigenvalues, IAGA_GET_EIGENVALUES)(values,&escan.nbstates);
+        boost::mpi::broadcast( MPI_COMM, values, escan.nbstates, 0 );
+        std::copy( values, values + escan.nbstates, eigenvalues.begin() );
+          Print::out << "Eigenvalues: " << Print::endl;
+        for( types :: t_int i = 0; i < escan.nbstates; i++) 
+          Print::out << eigenvalues[i] << " ---> " << i << Print::endl;
+      )
+     
+      __IIAGA( __DOASSERT( u != escan.nbstates,
+                              "Found " << u << " eigenvalues in " << name
+                           << " where " << escan.nbstates
+                           << " were expected.\n" ) )
+#   endif
     return true;
   }
                
