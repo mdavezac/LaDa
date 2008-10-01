@@ -99,8 +99,7 @@ int main(int argc, char *argv[])
   __BPO_START__
   __BPO_SPECIFICS__( "Escan Specific Options" )
       ("check,c", po::value<std::string>(), "GA output filename." ) 
-      ("donteval,d", po::value<bool>()->default_value(false), 
-       "Whether to perform evaluation." );
+      ("donteval,d", "Whether to perform evaluation." );
   __BPO_GENERATE__()
   __BPO_MAP__ 
   __BPO_HELP_N_VERSION__

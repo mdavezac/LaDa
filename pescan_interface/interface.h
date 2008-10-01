@@ -72,7 +72,7 @@ namespace Pescan
 
   //! \brief Defines an interface for the nanopse pescan program.
   //! \details Mostly, this class writes the input and recovers the output eigenvalues.
-  class Interface __DIAGA( : MPI_COMMDEC )
+  class Interface __DIAGA( : public MPI_COMMDEC )
   {
     public:
       //! Method for solving the eigenvalue problem
@@ -285,6 +285,8 @@ namespace Pescan
      bool read_result();
      //! Loads functional directly from \a _node
      bool Load_( const TiXmlElement &_node );
+     // Forwards mpi::AddCommunicator members to derived classes.
+     MPI_FORWARD_MEMBERS( MPI_COMMDEC )
   };
 
 

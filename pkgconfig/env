@@ -26,12 +26,15 @@ TINYXML_CFLAGS="-I$BASEDIR/include"
 TINYXML_LIBS="-L$BASEDIR/lib -ltinyxml"
 
 #
-EO_CFLAGS="-I$BASEDIR/include"
+EO_CFLAGS="-I$BASEDIR/include/eo"
 EO_LIBS="-L$BASEDIR/lib -lga -leo -leoutils"
 
 #
 IAGA_DIR=$BASEDIR/src/nanopse-0.4.0-beta
 LD_IAGA_FLAGS=" $IAGA_DIR/pescan/lib/libpescan.a  $IAGA_DIR/genpot/lib/libgenpot.a "
+LD_IAGA_FLAGS="$LD_IAGA_FLAGS -L/usr/lib64 -lfftw -lrfftw" 
+LD_IAGA_FLAGS="$LD_IAGA_FLAGS -L/usr/lib64 -llapack"
+LD_IAGA_FLAGS="$LD_IAGA_FLAGS -L/usr/lib64 -lblas"
 filelist="mpigroup.mod MPIGROUP.mod"
 for file in $filelist
 do

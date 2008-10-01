@@ -5,8 +5,9 @@
 #include <sstream>
 #include <stdexcept>       // std::runtime_error
 #ifdef _DIRECTIAGA
-#include <unistd.h>
+# include <unistd.h>
 #endif
+#include <boost/mpi/collectives.hpp>
 
 #include <print/manip.h>
 #include <opt/debug.h>
@@ -63,7 +64,7 @@ namespace Pescan
 #ifndef _NOLAUNCH
     __IIAGA( sstr <<  genpot.launch << " "; )
 #endif
-    __DIAGA( if( MPI_COMM.is_root_node() ) )
+    __DIAGA( if( not MPI_COMM.rank() ) )
     {
       std::vector<std::string> :: const_iterator i_str = genpot.pseudos.begin();
       std::vector<std::string> :: const_iterator i_str_end = genpot.pseudos.end();
@@ -84,7 +85,7 @@ namespace Pescan
     )
     __DIAGA( 
       int __rank = MPI_COMM.rank();
-      MPI_Comm __commC = (MPI_Comm) *( (MPI::Comm*) MPI_COMM.get() ) ;
+      MPI_Comm __commC = (MPI_Comm) ( MPI_COMM ) ;
       MPI_Fint __commF = MPI_Comm_c2f( __commC );
       FC_FUNC_(iaga_call_genpot, IAGA_CALL_GENPOT)( &__commF, &__rank );
     )
@@ -404,7 +405,7 @@ namespace Pescan
       double values[ escan.nbstates ];
       eigenvalues.resize( escan.nbstates );
       FC_FUNC_(iaga_get_eigenvalues, IAGA_GET_EIGENVALUES)( values, &escan.nbstates );
-      MPI_COMM.get()->Bcast( values, escan.nbstates, MPI::DOUBLE, 0 );
+      boost::mpi::broadcast( MPI_COMM, values, escan.nbstates, 0 );
       std::copy( values, values + escan.nbstates, eigenvalues.begin() );
         std::cout << "Eigenvalues: " << std::endl;
       for( types :: t_int i = 0; i < escan.nbstates; i++) 

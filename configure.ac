@@ -256,6 +256,7 @@ if test x$fortran = xtrue; then
 fi
 
 AH_TEMPLATE([_DIRECTIAGA])
+AC_DEFINE([_DIRECTIAGA],[1],[])
 direct_iaga=true;
 AC_SUBST(LD_IAGA_FLAGS )
 AC_SUBST(IAGA_DIR)

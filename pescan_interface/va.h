@@ -8,12 +8,14 @@
 #include <config.h>
 #endif
 
-#include "bandgap.h"
+#include <boost/mpi/collectives.hpp>
 
 #include <vff/pescan_perturbation.h>
 #include <opt/va_function.h>
 #include <opt/types.h>
 #include <mpi/mpi_object.h>
+
+#include "bandgap.h"
 
 namespace Pescan
 {
@@ -258,18 +260,15 @@ namespace Pescan
 
   inline VirtualAtom::t_Type VirtualAtom::evaluate()
   { 
-    __DIAGA(
+    //__DIAGA(
       vff.evaluate();
-      ::mpi::BroadCast bc(  t_PescanBase::comm() );
-      bc << structure << ::mpi::BroadCast::allocate
-         << structure << ::mpi::BroadCast::broadcast
-         << structure << ::mpi::BroadCast::clear;
+      boost::mpi::broadcast ( t_PescanBase::comm(), structure, 0 );
       std::ostringstream sstr;
       sstr << vff.filename << "." << t_PescanBase::comm().rank();
       std::string filename = sstr.str(); 
       std::cout << "vff.filename: " << vff.filename << std::endl;
       vff.zero_order( filename );
-    )
+   // )
     __IIAGA( 
       __ROOTCODE( (*::mpi::main), vff.evaluate(); )
       vff.zero_order( vff.filename );
@@ -353,7 +352,7 @@ namespace Pescan
       sstr << vff.filename 
            __IIAGA( << "." << mpi::main.rank() );
       vff.filename = sstr.str();
-      t_PescanBase::set_mpi( *_comm ); 
+      t_PescanBase::set_mpi( _comm ); 
     )
   }
 #endif

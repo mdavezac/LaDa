@@ -12,6 +12,7 @@
 
 #ifdef _MPI
 #include <boost/mpi/communicator.hpp>
+#include <complex>
 
 // #ifdef _MPICH_MPI_
 // #include <mpi2c++/mpi++.h>
@@ -49,6 +50,13 @@ namespace boost {
     template<class Archive>
     void serialize(Archive & ar, atat::iMatrix3d & g, const unsigned int version)
      { ar & g.x; }
+    //! Serializes a complex number.
+    template<class Archive, class T>
+    inline void serialize (Archive &ar, std::complex<T>& z, const unsigned int file_version)
+    {
+      ar & boost::serialization::make_nvp ("real", real(z));
+      ar & boost::serialization::make_nvp ("imag", imag(z));
+    }
 
   }
 
@@ -78,7 +86,6 @@ namespace mpi
         comm_ = _c;
       }
       
-    protected:
       //! Returns reference to communicator.
       boost::mpi::communicator &comm()
       {
@@ -91,6 +98,7 @@ namespace mpi
         __ASSERT( comm_ == NULL, "Pointer not set.\n" )
         return *comm_;
       }
+    protected:
 
       //! The MPI Communicator.
       boost::mpi::communicator *comm_;
@@ -101,6 +109,13 @@ namespace mpi
 #define MPI_COMMA ,
 #define MPI_COMMCOPY( _c ) ::mpi::AddCommunicator( _c )
 #define MPI_COMM ::mpi::AddCommunicator::comm()
+#define MPI_FORWARD_MEMBERS( base ) \
+  //! Allows derived classes to have access to ::mpi::AddCommunicator members. \
+  boost::mpi::communicator &comm() { return base::comm(); } \
+  //! Allows derived classes to have access to ::mpi::AddCommunicator members. \
+  const boost::mpi::communicator &comm() const { return base::comm(); } \
+  //! Allows derived classes to have access to ::mpi::AddCommunicator members. \
+  void set_mpi( boost::mpi::communicator* _c ) { base::set_mpi( c ); } \
 
 #else
 
@@ -108,6 +123,7 @@ namespace mpi
 #define MPI_COMMA
 #define MPI_COMMCOPY( _c ) 
 #define MPI_GETCOMM
+#define MPI_FORWARD_MEMBERS( base ) 
 
 #endif
 

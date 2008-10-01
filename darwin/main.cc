@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
   fs::path input( vm["input"].as< std::string >() );
   __DOASSERT( not ( fs::is_regular( input ) or fs::is_symlink( input ) ),
               input << " is a not a valid file.\n" );
-  const unsigned reruns = vm["input"].as< unsigned >();
+  const unsigned reruns = vm["reruns"].as< unsigned >();
   
   __TRYBEGIN
     GA::Darwin< t_Evaluator > ga;
