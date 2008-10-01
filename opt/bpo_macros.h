@@ -11,7 +11,7 @@
   po::options_description generic("Generic Options"); \
   generic.add_options() \
          ("help,h", "produces this help message.") \
-         ("version,v", "prints version string.");
+         ("version,v", "prints version string.")
 # define __BPO_SPECIFICS__( section_string ) \
   po::options_description specific( section_string ); \
   specific.add_options() \

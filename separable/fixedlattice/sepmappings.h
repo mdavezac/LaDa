@@ -65,7 +65,7 @@ namespace CE
           static void normalize( T_ITCOEF &_coef, T_NORM &_out )
           {
             namespace bl = boost::lambda;
-            types::t_real norm(0);
+            T_NORM norm(0);
             std::for_each( _coef, _coef + D, bl::var(norm) += bl::_1 * bl::_1 );
             if( Fuzzy::is_zero( norm) ) return;
             norm = std::sqrt( norm );

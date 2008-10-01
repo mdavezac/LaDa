@@ -197,7 +197,7 @@ namespace CE
             i_split->resize( separables_->ranks(), separables_->dimensions() );
         }
     template< class T_SEPARABLES > template< class T_MATRIX, class T_VECTOR >
-      void Regularization<T_SEPARABLES> 
+      void BadRegularization<T_SEPARABLES> 
         :: operator()( T_MATRIX &_A, T_VECTOR &_b, size_t _dim ) const
         {
           if( Fuzzy::is_zero( lambda ) ) return; 
@@ -210,6 +210,25 @@ namespace CE
             t_Type factor( lambda  * (*i_norm) * (*i_norm) );
             for( size_t i(0); i < t_Separables :: t_Mapping :: D; ++i, ++j )
               _A( j, j ) +=  factor * t_Type( t_Separables::t_Mapping::norm( i ) );
+          }
+        }
+    template< class T_SEPARABLES > template< class T_MATRIX, class T_VECTOR >
+      void Regularization<T_SEPARABLES> 
+        :: operator()( T_MATRIX &_A, T_VECTOR &_b, size_t _dim ) const
+        {
+          if( Fuzzy::is_zero( lambda ) ) return; 
+          const size_t D( t_Separables :: t_Mapping :: D );
+          typedef typename t_Separables :: t_Vector :: const_iterator t_cit;
+          t_cit i_norm = separables_->norms.begin();
+          t_cit i_norm_end = separables_->norms.end();
+          for( size_t j(0); i_norm != i_norm_end; ++i_norm, j += D )
+          {
+            typedef typename T_MATRIX::value_type t_Type;
+            t_Type factor( lambda ); //* (*i_norm) * (*i_norm) );
+            for( size_t i(0); i <  D; ++i )
+              for( size_t k(0); k < D; ++k )
+                if( i == k ) _A( j + i, j + k ) += factor *( 1.e0 - 1.e0/t_Type(D) );
+                else  _A( j + i, j + k ) += factor *( -1.e0/t_Type(D) );
           }
         }
 

@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
   __MPI_START__
   __TRYBEGIN
 
-  __BPO_START__ 
+  __BPO_START__;
   __BPO_SPECIFICS__( "GA Options" )
     __BPO_RERUNS__;
   __BPO_GENERATE__()

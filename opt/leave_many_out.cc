@@ -84,7 +84,8 @@ namespace Fitting
       sets.clear();
 out:
       if( except.size() == 1 )
-        std::cout << "   Structure " << except.front() << " is always included in fit.\n"; 
+        std::cout << "   Structure " << except.front()
+                  << " is always included in fit.\n"; 
       else if( except.size() == 2 )
         std::cout << "   Structures " << except.front() << " and " 
                   << except.back() << " are always included in fit.\n"; 

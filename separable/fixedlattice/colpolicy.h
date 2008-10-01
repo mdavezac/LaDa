@@ -180,6 +180,41 @@ namespace CE
         const t_Separables *separables_;
     };
     template< class T_SEPARABLES >
+    class BadRegularization : public NoReg<T_SEPARABLES>
+    {
+      public:
+        //! Helps to obtain a differently typed regularization.
+        template< class T_SEP > struct rebind
+        { 
+          //! Type of the regularization policy.
+          typedef BadRegularization< T_SEP > type;
+        };
+        //! Type of the separable function.
+        typedef T_SEPARABLES t_Separables;
+
+        //! Regulation factor.
+        types::t_real lambda;
+
+        //! Constructor
+        BadRegularization() : NoReg<T_SEPARABLES>(), lambda(0) {};
+        //! Copy Constructor.
+        template <class TT_SEPARABLES> 
+          BadRegularization   ( const BadRegularization<TT_SEPARABLES> &_c )
+                            : NoReg<T_SEPARABLES>( _c ), lambda( _c.lambda ) {};
+        //! Copy Constructor.
+        template <class TT_SEPARABLES> 
+          BadRegularization   ( const NoReg<TT_SEPARABLES> &_c )
+                            : NoReg<T_SEPARABLES>( _c ), lambda( 0 )  {};
+
+        //! Would modify A matrix and b vector.
+        template< class T_MATRIX, class T_VECTOR >
+          void operator()( T_MATRIX &, T_VECTOR &, size_t _dim ) const;
+
+        using NoReg<T_SEPARABLES> :: init;
+      protected:
+        using NoReg<T_SEPARABLES> :: separables_;
+    };
+    template< class T_SEPARABLES >
     class Regularization : public NoReg<T_SEPARABLES>
     {
       public:

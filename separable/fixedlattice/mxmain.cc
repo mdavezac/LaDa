@@ -24,6 +24,7 @@
 #include <opt/debug.h>
 #include <opt/errors.h>
 #include <opt/random.h>
+#include <opt/bpo_macros.h>
 #include <crystal/lattice.h>
 #include <crystal/structure.h>
 #include <ce/cluster.h>
@@ -61,21 +62,16 @@ const types::t_unsigned print_llsq     = 6;
 int main(int argc, char *argv[]) 
 {
   __TRYBEGIN
-  namespace po = boost::program_options;
   namespace bl = boost::lambda;
   namespace fs = boost::filesystem;
   Fitting::LeaveManyOut leavemanyout;
 
-  po::options_description generic("Generic Options");
-  generic.add_options()
-         ("help,h", "produces this help message.")
-         ("version,v", "prints version string.")
+  __BPO_START__
          ("verbose,p", po::value<types::t_unsigned>()->default_value(0),
                        "Level of verbosity.\n"  )
          ("seed", po::value<types::t_unsigned>()->default_value(0),
                   "Seed of the random number generator.\n"  );
-  po::options_description specific("Separables Options");
-  specific.add_options()
+  __BPO_SPECIFICS__( "Separables Options" )
       ("loo,l", "Performs leave-one-out cross-validation.\n"  )
       ("nofit,l", "Does not perform fit.\n"  )
       ("rank,r", po::value<types::t_unsigned>()->default_value(3),
@@ -134,6 +130,9 @@ int main(int argc, char *argv[])
             options(allnhidden).positional(p).run(), vm);
   po::notify(vm);
  
+  std::cout << "\n" << __PROGNAME__ \
+            << " from the " << PACKAGE_STRING << " package.\n" \
+            << "Subversion Revision: " << SVN::Revision << "\n\n"; \
   if ( vm.count("version") ) return 1;
   if ( vm.count("help") )
   {
@@ -298,7 +297,7 @@ int main(int argc, char *argv[])
     postoconfs.create_positions( bdesc );
 
   // Separables traits.
-  typedef Traits::CE::Separables< CE::Mapping::VectorDiff<2> > t_FunctionTraits;
+  typedef Traits::CE::Separables< CE::Mapping::VectorPlus<2> > t_FunctionTraits;
   typedef CE::Separables< t_FunctionTraits > t_Function;
   // Collapse Traits
   typedef CE::Mapping::SymEquiv t_Mapping;
@@ -454,6 +453,11 @@ int main(int argc, char *argv[])
     std::cout << "Average Training Errors:\n " << ( nerror = errors.first ) << "\n";
     std::cout << "Final Prediction Errors:\n "
               << ( nerror = errors.second ) << "\n\n";
+    if( print.find("function") != std::string::npos )
+    {
+      lmomixed.reassign();
+      std::cout << lmomixed << "\n";
+    }
   }
   if( dofit or (not doenum.empty()) )
   {
@@ -499,6 +503,6 @@ int main(int argc, char *argv[])
   std::cout << "\n\n\nEnd of " << __PROGNAME__ << ".\n" << std::endl;
 
   return 1;
-  __CATCHBPO
+  __BPO_CATCH__
 }
 

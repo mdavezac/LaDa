@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
   __TRYBEGIN 
 
   
-  __BPO_START__
+  __BPO_START__;
   __BPO_SPECIFICS__( "Escan Specific Options" )
       ("check,c", po::value<std::string>(), "GA output filename." ) 
       ("donteval,d", "Whether to perform evaluation." );

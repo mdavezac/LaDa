@@ -53,7 +53,9 @@ namespace CE
     const size_t D( t_Separables :: t_Mapping :: D );
     for( size_t r(0); r < _sep.ranks(); ++r )
     {
-      _stream << "\n   Rank " << r << ": " << _sep.norms[r] << "\n     ";
+      _stream << "\n   Rank " << r << ": " 
+              << std::scientific << _sep.norms[r]
+              << std::fixed << "\n     ";
       for( size_t d(0); d < _sep.dimensions(); ++d )
       {
         _stream << "(";
