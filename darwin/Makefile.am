@@ -18,9 +18,9 @@ endif
 if DOEMASSOPT
   EMASSOPT = emass_opt
 endif
-LDADD =
+LDADD = ../opt/libopt.la 
 if DOFORTRAN
-  LDADD +=  ../opt/libopt.la @FCLIBS@
+  LDADD +=  @FCLIBS@
 endif
 if DODIRECTIAGA
    AM_LDFLAGS += @FCLIBS@
@@ -89,3 +89,5 @@ libdarwin_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS)
 	cd ../print; $(MAKE)
 ../print/liblapack.la:
 	cd ../lapack; $(MAKE)
+../opt/libopt.la:
+	cd ../opt; $(MAKE)

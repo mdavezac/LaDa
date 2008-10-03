@@ -103,7 +103,7 @@ namespace GA
           
           
           // Now creates groups
-          types::t_int color = MPI::UNDEFINED;
+          color = MPI::UNDEFINED;
           if( ((::MPI::Graphcomm) *graph_comm) == MPI::COMM_NULL )
             { type = t_Type::t_Type::FARMHAND; goto exit; }
           
@@ -175,9 +175,11 @@ exit:
         {
           if(    type == t_Type::FARMER 
               or type == t_Type::FARMHAND ) return;
-          std::ostringstream sstr;
-          sstr << "." << pool_comm.rank();
-          _eval.set_mpi( &pool_comm, sstr.str() );
+          _eval.set_mpi
+          (
+            &pool_comm,
+            "." + boost::lexical_cast<std::string>( color ) 
+          );
         }
 
     } // namspace Graph

@@ -2,17 +2,16 @@
 //  Version: $Id$
 //
 #include <fstream>
-#include <sstream>
 #include <stdexcept>       // std::runtime_error
 #ifdef _DIRECTIAGA
 # include <unistd.h>
 #endif
 #include <boost/mpi/collectives.hpp>
 
-#include <print/manip.h>
 #include <opt/debug.h>
-
+#include <opt/initial_path.h>
 #include <mpi/macros.h>
+#include <opt/initial_path.h>
 
 #include "interface.h"
 
@@ -30,51 +29,64 @@ namespace Pescan
   void Interface :: create_directory()
   {
     namespace bfs = boost::filesystem;
-    const t_Path newpath(  InitialPath::path() / dirname );
-    __DIAGA
-    ( 
-      for( types::t_int i( 0 ); i < MPI_COMM.size(); ++i )
-        if( MPI_COMM.rank() == i )
-    )
-    if( not bfs::exists( newpath ) ) bfs::create_directory( newpath );
+    const t_Path newpath(  opt::InitialPath::path() / dirname );
+    __DIAGA( for( types::t_int i( 0 ); i < MPI_COMM.size(); ++i ) )
+    {
+      __DIAGA
+      ( 
+        MPI_COMM.barrier(); 
+        if( MPI_COMM.rank() != i ) continue;
+      )
+      if( not bfs::exists( newpath ) ) bfs::create_directory( newpath );
+    }
   }
   void Interface :: destroy_directory()
   {
     namespace bfs = boost::filesystem;
-    const t_Path newpath(  InitialPath::path() / dirname );
-    __DIAGA
-    ( 
-     for( types::t_int i( 1 ); i < MPI_COMM.size(); ++i )
-       if( MPI_COMM.rank() == i )
-    )
-    if( bfs::exists( newpath ) ) bfs::remove_directory( newpath );
+    const t_Path newpath(  opt::InitialPath::path() / dirname );
+    __DIAGA( for( types::t_int i( 0 ); i < MPI_COMM.size(); ++i ) )
+    {
+      __DIAGA
+      ( 
+        MPI_COMM.barrier(); 
+        if( MPI_COMM.rank() == i ) continue;
+      )
+      if( bfs::exists( newpath ) ) bfs::remove_all( newpath );
+    }
   }
   void Interface :: create_potential()
   {
     namespace bfs = boost::filesystem;
     write_genpot_input();
     
-    const t_Path( atom_input __DIAGASUFFIX )
-    bfs::copy_file( InitialPath::path()/orig, InitialPath::path()/dirname );
+    const t_Path newatom( opt::InitialPath::path()/dirname/atom_input.filename() );
+    if( bfs::exists( newatom ) ) bfs::remove( newatom );
+    bfs::copy_file( atom_input, newatom );
 
 #   ifndef _NOLAUNCH
-      __IIAGA( bfs::copy_file( genpot.launch, InitialPath::path()/dirname ); )
+      __IIAGA
+      ( 
+        const t_Path newgenpot( opt::InitialPath::path()/dirname/genpot.launch.filename() );
+        if( not bfs::exists( newgenpot ) ) bfs::copy_file( genpot.launch, newgenpot ); 
+      )
 #   endif
-    __DIAGA
-    (
-      for( types::t_int i( 1 ); i < MPI_COMM.size(); ++i )
-        if( MPI_COMM.rank() == i )
-    )
+    __DIAGA( for( types::t_int i( 0 ); i < MPI_COMM.size(); ++i ) )
     {
-      std::vector<t_Path> :: const_iterator i_str = genpot.pseudos.begin();
-      std::vector<t_Path> :: const_iterator i_str_end = genpot.pseudos.end();
-      for(; i_str != i_str_end; ++i_str) 
-        bfs::copy_file( *i_str, InitialPath::path()/dirname );
+      __DIAGA
+      (
+        MPI_COMM.barrier();
+        if( MPI_COMM.rank() != i ) continue;
+      )
+      foreach( const t_Path& ppath,  genpot.pseudos )
+      {
+        const t_Path newstr( opt::InitialPath::path()/dirname/ppath.filename() );
+        if( not bfs::exists( newstr ) ) bfs::copy_file( ppath, newstr );
+      }
     }
 
     
+    chdir( ( opt::InitialPath::path() / dirname ).string().c_str() );
 #   ifndef _NOLAUNCH
-      chdir( ( InitialPath::path() / dirname ).c_str() );
       __IIAGA(  system( "./" + genpot.launch.filename().string() ) );
       __DIAGA
       ( 
@@ -83,38 +95,49 @@ namespace Pescan
         MPI_Fint __commF = MPI_Comm_c2f( __commC );
         FC_FUNC_(iaga_call_genpot, IAGA_CALL_GENPOT)( &__commF, &__rank );
       )
-      chdir( InitialPath::path().c_str() );
 #   endif
+    chdir( opt::InitialPath::path().string().c_str() );
   }
   types::t_real Interface :: launch_pescan()
   {
+    namespace bfs = boost::filesystem;
     write_escan_input();
 
-    __DIAGA
-    ( 
-      for( types::t_int i( 0 ); i < MPI_COMM.size(); ++i )
-        if( MPI_COMM.rank() == i )
-    )
-    bfs::copy_file( maskr, InitialPath::path()/dirname );
-#   ifndef _NOLAUNCH
-      __IIAGA( bfs::copy_file( escan.launch, InitialPath::path()/dirname ); )
-#   endif
-    std::vector<SpinOrbit> :: const_iterator i_so = escan.spinorbit.begin();
-    std::vector<SpinOrbit> :: const_iterator i_so_end = escan.spinorbit.end();
-    for( ; i_so != i_so_end; ++i_so)
+    __DIAGA( for( types::t_int i( 0 ); i < MPI_COMM.size(); ++i ) )
+    {
       __DIAGA
       ( 
-        for( types::t_int i( 0 ); i < MPI_COMM.size(); ++i )
-          if( MPI_COMM.rank() == i )
+        MPI_COMM.barrier(); 
+        if( MPI_COMM.rank() != i ) continue;
       )
-      bfs::copy_file( i_so->filename, InitialPath::path()/dirname );
-    
+      const t_Path newmaskr( opt::InitialPath::path()/dirname/maskr.filename() );
+      if( not bfs::exists( newmaskr ) ) bfs::copy_file( maskr, newmaskr );
+    }
 #   ifndef _NOLAUNCH
-      chdir( ( InitialPath::path() / dirname ).c_str() );
+      __IIAGA
+      (
+        const t_Path newescan( opt::InitialPath::path()/dirname/escan.launch.filename() );
+        if( not bfs::exists( newescan ) ) bfs::copy_file( escan.launch, newescan );
+      )
+#   endif
+    foreach( const SpinOrbit &sp, escan.spinorbit )
+      __DIAGA( for( types::t_int i( 0 ); i < MPI_COMM.size(); ++i ) )
+      {
+        __DIAGA
+        ( 
+          MPI_COMM.barrier(); 
+          if( MPI_COMM.rank() != i ) continue;
+        )
+        const t_Path newso( opt::InitialPath::path()/dirname/ sp.filename.filename() );
+        if( not bfs::exists( newso ) ) bfs::copy_file( sp.filename, newso );
+      }
+         
+    chdir( ( opt::InitialPath::path() / dirname ).string().c_str() );
+#   ifndef _NOLAUNCH
       __IIAGA(  system( "./" + escan.launch.filename().string() ) );
       __DIAGA( FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( &escan.nbstates ); )
-      chdir( InitialPath::path().c_str() );
 #   endif
+    chdir( opt::InitialPath::path().string().c_str() );
     return 0.0;
   }
 
@@ -265,14 +288,13 @@ namespace Pescan
   {
     std::ofstream file;
     const t_Path orig(   opt::InitialPath::path() 
-                       / dirname / genpot.filename __DIAGASUFFIX );
-    file.open( orig.string(), std::ios_base::out|std::ios_base::trunc ); 
+                       / dirname / __DIAGASUFFIX( genpot.filename ) );
+    file.open( orig.string().c_str(), std::ios_base::out|std::ios_base::trunc ); 
 
     __DOASSERT( file.bad() or ( not file.is_open() ),
-                   "Could not open file " << sstr.str()
-                << " for writing.\nAborting.\n" )
+                "Could not open file " << orig << " for writing.\nAborting.\n" )
 
-    file << atom_input << "\n"
+    file << t_Path(atom_input.stem()).filename() << "\n"
          << genpot.x << " " 
          << genpot.y << " " 
          << genpot.z << "\n"
@@ -281,10 +303,8 @@ namespace Pescan
          << genpot.z << "\n" << " 0 0 0\n" 
          << genpot.cutoff << "\n"
          << genpot.pseudos.size() << std::endl;
-    std::vector< t_Path > :: const_iterator i_str = genpot.pseudos.begin();
-    std::vector< t_Path > :: const_iterator i_str_end = genpot.pseudos.end();
-    for(; i_str != i_str_end; ++i_str )
-     file << Print::StripDir(*i_str) << "\n";
+    foreach( const t_Path& ppath, genpot.pseudos )
+      file << ppath.filename() << "\n";
     file.flush();
     file.close();
   }
@@ -296,17 +316,14 @@ namespace Pescan
     ( 
         opt::InitialPath::path() / dirname 
       / __IIAGA( genpot.filename )
-        __DIAGA( "escan_input." ) __DIAGASUFFIX
+        __DIAGA( __DIAGASUFFIX( t_Path("escan_input") ) )
     );
-    std::ostringstream sstr;
-    std::string name = orig.string();
-    file.open( name.c_str(), std::ios_base::out|std::ios_base::trunc ); 
+    file.open( orig.string().c_str(), std::ios_base::out|std::ios_base::trunc ); 
 
     __DOASSERT( file.bad() or ( not file.is_open() ),
-                   "Could not open file " << (std::string) name
-                << " for writing.\nAborting.\n" )
+                "Could not open file " << orig << " for writing.\nAborting.\n" )
 
-    file << "1 " << ( genpot.output __DIAGASUFFIX ) 
+    file << "1 " << __DIAGASUFFIX( genpot.output ) << "\n" 
          << "2 " << escan.wavefunction_out << "\n"
          << "3 " << escan.method << "\n"
          << "4 " << escan.Eref << " " << genpot.cutoff << " "
@@ -337,13 +354,13 @@ namespace Pescan
                       << escan.scale / Physics::a0("A") <<  "\n";
     }
     file << "12 " << escan.potential << "\n"
-         << "13 " << ( atom_input __DIAGASUFFIX ) << "\n"
+         << "13 " << atom_input.filename() << "\n"
          << "14 " << escan.rcut << "\n"
          << "15 " << escan.spinorbit.size() << "\n";
     std::vector<SpinOrbit> :: const_iterator i_so = escan.spinorbit.begin();
     std::vector<SpinOrbit> :: const_iterator i_so_end = escan.spinorbit.end();
     for(types::t_unsigned i=16; i_so != i_so_end; ++i_so, ++i )
-      file << i << " " << Print::StripDir(i_so->filename) << " " 
+      file << i << " " << i_so->filename.filename() << " " 
            << i_so->izz << " " 
            << i_so->s << " " << i_so->p << " " << i_so->d << " " 
            << i_so->pnl << " " << i_so->dnl << "\n";
@@ -356,7 +373,6 @@ namespace Pescan
 #   ifndef _NOLAUNCH
 #     ifndef _DIRECTIAGA
         std::ifstream file;
-        std::ostringstream sstr;
         const t_Path orig( opt::InitialPath::path() / dirname / escan.output );
         std::string name = orig.string();
         file.open( name.c_str(), std::ios_base::in ); 

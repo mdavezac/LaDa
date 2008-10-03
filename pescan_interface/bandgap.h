@@ -98,7 +98,7 @@ namespace Pescan
       //!          folded_spectrum is launched again, which itself will call
       //!          BandGap::correct. Once a true band-gap has been found, all
       //!          escan parameters are reset (including references).
-      void correct( const std::string &_dir );
+      void correct( const t_Path &_dir );
       //!  Read results + Throw error if eigenvalues cannot be found. 
       void read_and_throw();
   };

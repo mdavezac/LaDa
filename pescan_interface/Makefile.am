@@ -12,9 +12,9 @@ if NOLAUNCH
   AM_LDFLAGS  += @EO_LIBS@
 endif    
 
-LDADD = 
+LDADD = ../opt/libopt.la 
 if DOFORTRAN
-   LDADD += @FCLIBS@ ../opt/libopt.la 
+   LDADD += @FCLIBS@ 
 else 
 if DODIRECTIAGA
    LDADD +=  ../mpi/libmpiobject.la

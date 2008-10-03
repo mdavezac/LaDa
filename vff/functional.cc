@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <boost/filesystem/operations.hpp>
 
 #include <physics/physics.h>
 #include <opt/ndim_iterator.h>
@@ -839,8 +840,9 @@ failure:
      }
   }
 
-  void Functional :: print_escan_input( const std::string &_f ) const
+  void Functional :: print_escan_input( const t_Path &_f ) const
   {
+    namespace bfs = boost::filesystem;
     std::ostringstream stream;
     types::t_unsigned nb_pseudos=0;
 
@@ -922,7 +924,9 @@ failure:
       }
 
     }
-    std::ofstream file( _f.c_str(), std::ios_base::out|std::ios_base::trunc ); 
+    const t_Path directory( _f.parent_path() );
+    if( not bfs::exists( directory ) ) bfs::create_directory( directory );
+    std::ofstream file( _f.string().c_str(), std::ios_base::out|std::ios_base::trunc ); 
     // prints number of atoms
     file << nb_pseudos << "\n";
     // print rest of file

@@ -10,6 +10,7 @@
 
 
 #include <opt/va_function.h>
+#include <boost/filesystem/path.hpp>
 
 #include "functional.h"
 #include "va.h"
@@ -52,6 +53,8 @@ namespace Vff
    */
   class PescanPerturbations : public VABase<Vff::Functional>
   {
+      //! Type of the path.
+      typedef boost::filesystem::path t_Path;
       //! Grandparent class...
       typedef Vff::Functional t_Functional;
     public:
@@ -84,7 +87,7 @@ namespace Vff
 
     public:
       //! File to which to print atomic configurations
-      std::string filename;
+      t_Path filename;
 
     public:
       //! Constructor and Initializer
@@ -101,7 +104,7 @@ namespace Vff
       //! Prints \f$\Delta \mathcal{H}_{\mathrm{stress}}\f$ input for Pescan::VirtualAtom
       types::t_real stress( types::t_unsigned _pos );
       //! Prints \f$\mathcal{H}\f$ input to file for PescanVirtualAtom
-      void zero_order( const std::string &_filename)
+      void zero_order( const t_Path &_filename)
         { t_Base :: print_escan_input( _filename ); }
      
        //! gets already computed stress from vff. 

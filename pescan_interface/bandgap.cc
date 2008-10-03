@@ -8,6 +8,7 @@
 #include <opt/fuzzy.h>
 #include <print/manip.h>
 #include <opt/debug.h>
+#include <opt/initial_path.h>
 
 #include "bandgap.h"
 
@@ -21,19 +22,7 @@ namespace Pescan
 
   types::t_real BandGap::folded_spectrum(const Crystal::Structure &_str)
   {
-    long length = 100;
-    while( length < 2000 )
-    {
-      char dir[length];
-      if( getcwd( dir, length ) )
-      {
-        curdir = dir;
-        break;
-      }
-      length += 100;
-    }
-    if( length == 2000 ) __THROW_ERROR( "Could not read pwd.\n" ) 
-    std::string olddirname = dirname;
+    const t_Path olddirname( dirname );
     create_directory();
 
     // First compute CBM
@@ -41,7 +30,7 @@ namespace Pescan
     escan.Eref = Eref.cbm;
     if ( not do_destroy_dir ) 
     {
-      dirname = olddirname + "/cbm";
+      dirname = olddirname / "cbm";
       create_directory();
     }
     create_potential();
@@ -55,7 +44,7 @@ namespace Pescan
     escan.Eref = Eref.vbm;
     if ( not do_destroy_dir ) 
     {
-      dirname = olddirname + "/vbm";
+      dirname = olddirname / "vbm";
       create_directory();
       create_potential();
     }
@@ -83,11 +72,10 @@ namespace Pescan
     return bands.gap();
   }
 
-  void BandGap :: correct(const std::string & _dir) 
+  void BandGap :: correct(const t_Path & _dir) 
   {
     Escan saved_state = escan;
     Bands keeprefs = Eref;
-    std::string wfn = escan.wavefunction_in;
     escan.wavefunction_in = escan.wavefunction_out;
     escan.read_in.resize( escan.nbstates );
     std::vector<types::t_unsigned> :: iterator i_r = escan.read_in.begin();
@@ -119,7 +107,7 @@ namespace Pescan
                    << Print::endl << Print::flush;
       }
       if ( not do_destroy_dir )
-        dirname = _dir + ( computation == CBM ?  "/cbm": "/vbm" );
+        dirname = _dir / ( computation == CBM ?  "/cbm": "/vbm" );
       do_correct = false;
       
       __TRYCODE( launch_pescan();
@@ -133,6 +121,7 @@ namespace Pescan
       Print::out << "After Correction: VBM=" << bands.vbm
                  << " CBM=" << bands.cbm << Print::endl;
       ++i;
+      if ( not do_destroy_dir ) dirname = _dir;
     } while ( bands.gap() < metallicity and i < 5 );
 
     escan = saved_state;
@@ -220,19 +209,16 @@ namespace Pescan
     try { read_result(); }
     catch( std::exception &_e )
     { 
+      const t_Path filepath( opt::InitialPath::path() / dirname / escan.output.filename() );
       std::ifstream file;
-      std::ostringstream sstr;
-      sstr << dirname; 
-      sstr << "/" << Print::StripEdges(escan.output);
-      std::string name = sstr.str();
-      file.open( name.c_str(), std::ios_base::in ); 
+      file.open( filepath.string().c_str(), std::ios_base::in ); 
       
       __DOASSERT( not file.is_open(),
                     "Could not open escan output file "
-                 << (std::string) name << "\n" );
+                 << filepath << "\n" );
       __DOASSERT( file.bad(),
                     "Error while opening escan output file "
-                 << (std::string) name << "\n" );
+                 << filepath << "\n" );
       char cline[256];
       std::string line("");
       std::cout << "\n\n--- ESCAN OUTPUT ---\n";

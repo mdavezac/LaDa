@@ -42,15 +42,17 @@
 #include <print/stdout.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
+#include <opt/bpo_macros.h>
+#include <opt/initial_path.h>
 
 #include "individual.h"
 #include "darwin.h"
-#include <opt/bpo_macros.h>
 
 
 int main(int argc, char *argv[]) 
 {
   namespace fs = boost::filesystem;
+  opt::InitialPath::init();
 
   __MPI_START__
   __TRYBEGIN

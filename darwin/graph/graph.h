@@ -88,6 +88,8 @@ namespace GA
           boost::mpi::graph_communicator  *graph_comm;
           //! The number of pools (e.g. herds) in the graph topology.
           types::t_unsigned pools;
+          //! The index of the pool in which this process can be found.
+          types::t_int color;
           //! Type of the process
           t_Type::Process type;
       

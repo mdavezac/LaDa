@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <boost/filesystem/path.hpp>
 
 #include <tinyxml/tinyxml.h>
 
@@ -556,6 +557,8 @@ namespace Vff
   //! \endcode
   class Functional : public function :: Base<types::t_real, std::vector<types::t_real> >
   {
+    //! Type of the path.
+    typedef boost::filesystem::path t_Path;
     //! The type of the atom  
     typedef Crystal::Structure::t_Atom  t_Atom;
     //! The type of the atom container
@@ -664,7 +667,7 @@ namespace Vff
       bool init();
       //! \brief Prints atom.config type input to escan
       //! \param _f optional filename to which to direct the output
-      void print_escan_input( const std::string &_f = "atom.config") const;
+      void print_escan_input( const t_Path &_f = "atom.config") const;
       //! \brief Constructs the mesh of Atomic_Center
       //! \details Newer version than Functional::initialize_centers, it works even if
       //! structure is slightly distorted.

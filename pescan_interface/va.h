@@ -14,6 +14,7 @@
 #include <opt/va_function.h>
 #include <opt/types.h>
 #include <mpi/mpi_object.h>
+#include <opt/initial_path.h>
 
 #include "bandgap.h"
 
@@ -260,20 +261,26 @@ namespace Pescan
 
   inline VirtualAtom::t_Type VirtualAtom::evaluate()
   { 
-    //__DIAGA(
+    __DIAGA(
       vff.evaluate();
       boost::mpi::broadcast ( t_PescanBase::comm(), structure, 0 );
       std::ostringstream sstr;
       sstr << vff.filename << "." << t_PescanBase::comm().rank();
       std::string filename = sstr.str(); 
-      std::cout << "vff.filename: " << vff.filename << std::endl;
-      vff.zero_order( filename );
-   // )
+      const t_Path orig
+      (
+          ::opt::InitialPath::path() / dirname
+        / __DIAGASUFFIX( t_Path(vff.filename.filename()) )
+      );
+      vff.zero_order( orig );
+      set_atom_input( orig );
+      Print::out << "vff.filename: " << orig << Print::endl;
+    )
     __IIAGA( 
       __ROOTCODE( (*::mpi::main), vff.evaluate(); )
       vff.zero_order( vff.filename );
+      set_atom_input( vff.filename );
     )
-    set_atom_input( vff.filename );
     t_PescanBase::escan.read_in.clear();
     t_PescanBase::escan.wavefunction_out = "zero_order";
     

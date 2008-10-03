@@ -8,6 +8,7 @@
 #include <config.h>
 #endif
 
+#include <boost/filesystem/path.hpp>
 
 #include <opt/va_function.h>
 #include <crystal/structure.h>
@@ -43,6 +44,8 @@ namespace Vff
   template <class T_VFFBASE>
   class VABase : protected T_VFFBASE, public function::VirtualAtom
   {
+     //! Type of the path.
+     typedef boost::filesystem::path t_Path;
      //! Type from which the vff functional is derived
      typedef T_VFFBASE t_VffBase;
      //! Type from which the VA functional is derived
@@ -130,7 +133,7 @@ namespace Vff
        //! Computes the \e virtual gradients
        void evaluate_gradient( t_Type* _grad );
        //! Forwards Vff::Functional::print_escan_input()
-       void print_escan_input( const std::string _f = "atom.config") const
+       void print_escan_input( const t_Path& _f = "atom.config") const
          { t_VffBase::print_escan_input( _f ); }
        //! \brief Initializes the va variables, and optionnally the centers
        //! \details This routine compounds the function::Base::init()

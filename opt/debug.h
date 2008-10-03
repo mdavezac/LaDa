@@ -4,7 +4,7 @@
 
 #ifndef _OPT_DEBUG_H_
 #define _OPT_DEBUG_H_
-#include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <boost/foreach.hpp>
 

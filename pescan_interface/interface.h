@@ -24,7 +24,7 @@
 #include <atat/vectmac.h>
 #include <crystal/structure.h>
 #include <mpi/mpi_object.h>
-#include <print/manip.h>
+#include <print/stdout.h>
 
 #ifdef _DIRECTIAGA
 // declares fortran interface
@@ -37,11 +37,12 @@ extern "C"
 }
 //! \endcond
 #define __DIAGA( code ) code
-#define __DIAGASUFFIX / "." / boost::lexical_cast<std::string>(MPI_COMM.rank())
+#define __DIAGASUFFIX( code ) \
+        t_Path( code.string() + "." + boost::lexical_cast<std::string>(MPI_COMM.rank()) )
 #define __IIAGA( code ) 
 #else
 #define __DIAGA( code ) 
-#define __DIAGASUFFIX
+#define __DIAGASUFFIX( code ) code
 #define __IIAGA( code ) code
 #endif
 
@@ -79,7 +80,9 @@ namespace Pescan
   //! \details Mostly, this class writes the input and recovers the output eigenvalues.
   class Interface __DIAGA( : public MPI_COMMDEC )
   {
-    typedef boost::filesystem::path t_Path;
+    protected:
+      //! Path type.
+      typedef boost::filesystem::path t_Path;
     public:
       //! Method for solving the eigenvalue problem
       enum t_method
@@ -246,6 +249,8 @@ namespace Pescan
 
      //! Sets the name of the directory where to perform calculations.
      void set_dirname( const boost::filesystem::path &_dir ) { dirname = _dir; }
+     //! Sets the name of the directory where to perform calculations.
+     const t_Path& get_dirname() const { return dirname; }
      //! Sets the reference energies for folded spectrum calculations.
      void set_reference( types::t_real _val )  { escan.Eref = _val; }
      //! Stores the reference energies for folded spectrum calculations.
@@ -372,7 +377,7 @@ namespace Pescan
                   file << " is not a regular file nor a symlink.\n" );
       __endthistry__
     }
-    __DOASSERT( docontinue == true, )
+    __DOASSERT( docontinue == true, "" )
 #   undef __thistry__
 #   undef __endthistry__
   }
