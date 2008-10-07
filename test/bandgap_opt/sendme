@@ -1,15 +1,20 @@
 #! /bin/tcsh
 #
-#PBS -l nodes=3:ppn=2,walltime=05:00:0
-#PBS -q Std
+#PBS -l nodes=4:ppn=2,walltime=00:40:0
+#PBS -q Test
 #PBS -m n 
-module load openmpi fftw
+#PBS -e err
+#PBS -o out
+module load openmpi fftw arpack pgi
 
 
 cd  $PBS_O_WORKDIR/calc
 rm sendme.*
-cp ../launch.pl .
 
-./launch.pl mpirun 2
+cp ../../../darwin/bandgap_opt .
+cp ../input.xml .
+echo "mpirun -np $PBS_NPROCS  --hostfile $PBS_NODEFILE  ./bandgap_opt"
+
+mpirun -np $PBS_NPROCS   ./bandgap_opt 
 
 exit

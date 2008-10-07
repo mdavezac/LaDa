@@ -104,8 +104,8 @@ namespace Vff
       //! Prints \f$\Delta \mathcal{H}_{\mathrm{stress}}\f$ input for Pescan::VirtualAtom
       types::t_real stress( types::t_unsigned _pos );
       //! Prints \f$\mathcal{H}\f$ input to file for PescanVirtualAtom
-      void zero_order( const t_Path &_filename)
-        { t_Base :: print_escan_input( _filename ); }
+      void zero_order( const t_Path &_f )
+        { t_Base :: print_escan_input( _f ); }
      
        //! gets already computed stress from vff. 
        void get_stress( atat::rMatrix3d &_s ) const { _s = Vff().get_stress(); }

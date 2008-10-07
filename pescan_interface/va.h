@@ -261,12 +261,10 @@ namespace Pescan
 
   inline VirtualAtom::t_Type VirtualAtom::evaluate()
   { 
+    namespace bfs = boost::filesystem;
     __DIAGA(
       vff.evaluate();
       boost::mpi::broadcast ( t_PescanBase::comm(), structure, 0 );
-      std::ostringstream sstr;
-      sstr << vff.filename << "." << t_PescanBase::comm().rank();
-      std::string filename = sstr.str(); 
       const t_Path orig
       (
           ::opt::InitialPath::path() / dirname
@@ -274,7 +272,6 @@ namespace Pescan
       );
       vff.zero_order( orig );
       set_atom_input( orig );
-      Print::out << "vff.filename: " << orig << Print::endl;
     )
     __IIAGA( 
       __ROOTCODE( (*::mpi::main), vff.evaluate(); )

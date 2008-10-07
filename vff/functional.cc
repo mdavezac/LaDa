@@ -926,13 +926,17 @@ failure:
     }
     const t_Path directory( _f.parent_path() );
     if( not bfs::exists( directory ) ) bfs::create_directory( directory );
+    __TRYBEGIN
     std::ofstream file( _f.string().c_str(), std::ios_base::out|std::ios_base::trunc ); 
+    __DOASSERT( file.bad(), "Could not open file " << _f << ".\n" ) 
     // prints number of atoms
     file << nb_pseudos << "\n";
     // print rest of file
     file << stream.str();
     file.flush();
     file.close();
+    __ASSERT( not bfs::exists( _f ), _f << " was not created.\n" )
+    __TRYEND(, "")
   }
 
   types::t_real Atomic_Functional

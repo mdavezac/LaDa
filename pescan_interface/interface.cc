@@ -60,8 +60,13 @@ namespace Pescan
     write_genpot_input();
     
     const t_Path newatom( opt::InitialPath::path()/dirname/atom_input.filename() );
-    if( bfs::exists( newatom ) ) bfs::remove( newatom );
-    bfs::copy_file( atom_input, newatom );
+    __ASSERT( bfs::exists( atom_input ), atom_input << " does not exist.\n" );
+    if( newatom != atom_input )
+    { 
+      if( bfs::exists( newatom ) ) bfs::remove( newatom );
+      bfs::copy_file( atom_input, newatom );
+    }
+    __ASSERT( bfs::exists( newatom ), newatom << " does not exist.\n" );
 
 #   ifndef _NOLAUNCH
       __IIAGA
