@@ -9,9 +9,9 @@
     coordinates:
   \code
   <Lattice>
-    <column x="0.0" y="0.5" z="0.5"/>
-    <column x="0.5" y="0.0" z="0.5"/>
-    <column x="0.5" y="0.5" z="0.0"/>
+    <row x="0.0" y="0.5" z="0.5"/>
+    <row x="0.5" y="0.0" z="0.5"/>
+    <row x="0.5" y="0.5" z="0.0"/>
     <site x="0.0" y="0.0" z="0.0">
       ?
     </site>

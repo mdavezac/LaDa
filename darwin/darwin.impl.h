@@ -821,7 +821,6 @@ endstorage:
   template<class T_EVALUATOR>
   void Darwin<T_EVALUATOR> :: make_breeder()
   {
-    bool docontinue = true;
     eoSelectOne<t_Individual> *select;
 
     breeder = topology.breeder<t_GATraits>( evaluator ); 

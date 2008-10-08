@@ -66,6 +66,7 @@ namespace GA
         class Farmer : protected Comm::Farmer< T_GATRAITS, Farmer<T_GATRAITS> >, 
                        public GA::Breeder<T_GATRAITS>
         {
+          friend class Comm::Farmer< T_GATRAITS, Farmer<T_GATRAITS> >;
           public:
             typedef T_GATRAITS t_GATraits; //!< all %GA traits
     
@@ -117,6 +118,7 @@ namespace GA
         class Bull : protected Comm::Bull< T_GATRAITS, Bull<T_GATRAITS> >,
                      public GA::Breeder<T_GATRAITS>
         {
+          friend class Comm::Bull< T_GATRAITS, Bull<T_GATRAITS> >;
           public:
             typedef T_GATRAITS t_GATraits; //!< all %GA traits
     

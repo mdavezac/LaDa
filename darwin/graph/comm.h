@@ -417,6 +417,7 @@ namespace GA
                                                 LaNormande< T_GATRAITS, T_BASE> >,
                            public T_BASE< T_GATRAITS >
         {
+          friend class Comm::Cow< T_GATRAITS, LaNormande< T_GATRAITS, T_BASE> >;
           public:
             //! all %GA traits
             typedef T_GATRAITS         t_GATraits;

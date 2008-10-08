@@ -63,7 +63,7 @@ namespace GA
             Farmhand() {}
     
             //! Creates \a _offspring population from \a _parent
-            void operator()(const t_Population& _parents, t_Population& _offspring) {};
+            void operator()(const t_Population& _parents, t_Population& _offspring) {}
             using t_Base :: set;
         };
     
@@ -164,6 +164,7 @@ namespace GA
                                                 typename T_GATRAITS :: t_Population,
                                                 typename T_GATRAITS :: t_Islands > >
         {
+          friend class Comm::Bull< T_GATRAITS, Bull<T_GATRAITS, T_BASE> >;
           typedef Traits::GA< Evaluator::Bull<T_GATRAITS>,
                               typename T_GATRAITS :: t_Population,
                               typename T_GATRAITS :: t_Islands > t_BaseTraits;

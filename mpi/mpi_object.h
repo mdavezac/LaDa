@@ -12,6 +12,7 @@
 
 #ifdef _MPI
 #include <boost/mpi/communicator.hpp>
+#include <boost/serialization/complex.hpp>
 #include <complex>
 
 // #ifdef _MPICH_MPI_
@@ -50,14 +51,6 @@ namespace boost {
     template<class Archive>
     void serialize(Archive & ar, atat::iMatrix3d & g, const unsigned int version)
      { ar & g.x; }
-    //! Serializes a complex number.
-    template<class Archive, class T>
-    inline void serialize (Archive &ar, std::complex<T>& z, const unsigned int file_version)
-    {
-      ar & boost::serialization::make_nvp ("real", real(z));
-      ar & boost::serialization::make_nvp ("imag", imag(z));
-    }
-
   }
 
 }

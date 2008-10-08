@@ -44,6 +44,7 @@ namespace GA
               ++t_Base::nb_eval;
               __DODEBUGCODE( Print::out << "Evaluating Individual: " << _indiv << Print::endl; )
               unknowns.push_back( t_Unknown( &_indiv, -1) );
+              return t_FitnessQuantity(0);
             }
 
         template<class T_GATRAITS, template< class > class T_BASE >

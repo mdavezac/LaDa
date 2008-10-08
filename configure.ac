@@ -362,7 +362,11 @@ if test "$ac_cv_cxx_have_stl" = yes; then
     gnu) LIBS=" ${LIBS} -lstdc++";;
 #   intel) LIBS=" ${LIBS} -lstdc++ -lcxa -lcxaguard";;
     ibm) FFLAGS="-qsuffix=f=f90 -lC";;
-    portland) LIBS=" ${LIBS} -lC ";;
+    portland)
+     LIBS=" ${LIBS} -lC ";
+     AH_TEMPLATE([BOOST_UBLAS_UNSUPPORTED_COMPILER])
+     AC_DEFINE([BOOST_UBLAS_UNSUPPORTED_COMPILER],[0],[])
+     ;;
   esac
  else
    AC_MSG_ERROR("Could not find standard template libraries")
@@ -393,6 +397,7 @@ AC_SUBST(DOCDIR)
 # fi
 if test "$mpi" != true; then
   BOOST_MPI=""
+  BOOST_SERIALIZATION=""
 fi
 if test "$python" = true; then
   if test "x$PYTHON_INCLUDE_DIR$PYTHON_LIB" = "x"; then
@@ -405,6 +410,7 @@ AC_SUBST(PYTHON_INCLUDE_DIR)
 AC_SUBST(PYTHON_LIB)
 AC_SUBST(BOOST_LDFLAGS)
 AC_SUBST(BOOST_MPI)
+AC_SUBST(BOOST_SERIALIZATION)
 AC_SUBST(BOOST_PROGOP)
 AC_SUBST(BOOST_FS)
 AC_SUBST(BOOST_SYSTEM)

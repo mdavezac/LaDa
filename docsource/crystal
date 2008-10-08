@@ -10,9 +10,9 @@
     \code
     <Structure scale=6.2>
         <Cell>
-            <column x="0.000000" y="1.000000" z="1.000000" />
-            <column x="1.000000" y="0.000000" z="1.000000" />
-            <column x="1.500000" y="1.500000" z="0.000000" />
+            <row x="0.000000" y="1.000000" z="1.000000" />
+            <row x="1.000000" y="0.000000" z="1.000000" />
+            <row x="1.500000" y="1.500000" z="0.000000" />
         </Cell>
         <Atom x="0.000000" y="0.000000" z="0.000000" type="Au" />
         <Atom x="0.500000" y="0.500000" z="0.000000" type="Au" />
@@ -32,7 +32,7 @@
    \secreflist
      \refitem TagStructure \<Structure\>
      \refitem Tagcell \<Cell\>
-     \refitem Tagcolumn \<column/\>
+     \refitem Tagrow \<row/\>
      \refitem TagAtom \<Atom/\>
    \endsecreflist
 
@@ -52,11 +52,11 @@
    \addindex \<Cell\>
    Defines the unit-cell vectors of the \ref TagStructure 
    tag whithin which it is found.  It does not expect any attributes.  The
-   cell-vectors are defined using three \ref Tagcolumn tags.
+   cell-vectors are defined using three \ref Tagrow tags.
 
-   \section Tagcolumn \<column/\>
-   \addindex \<column/\>
-   Defines a column within a 3x3 matrix. It contains the following attributes
+   \section Tagrow \<row/\>
+   \addindex \<row/\>
+   Defines a row within a 3x3 matrix. It contains the following attributes
    \param x first coordinate scaled by ref TagStructure's \a scale attribute
    \param y second coordinate scaled by ref TagStructure's \a scale attribute
    \param z third coordinate scaled by ref TagStructure's \a scale attribute
@@ -86,9 +86,9 @@
     You can input a lattice in the following way:
     \code
     <Lattice>
-        <column x="0.00000000" y="0.50000000" z="0.50000000" />
-        <column x="0.50000000" y="0.00000000" z="0.50000000" />
-        <column x="0.50000000" y="0.50000000" z="0.00000000" />
+        <row x="0.00000000" y="0.50000000" z="0.50000000" />
+        <row x="0.50000000" y="0.00000000" z="0.50000000" />
+        <row x="0.50000000" y="0.50000000" z="0.00000000" />
         <site x="0.00000000" y="0.00000000" z="0.00000000">
             <atom type="Au" />
             <atom type="Pd" />
@@ -99,9 +99,9 @@
        option. Furthermore, the lattice input must be coherent with whatever \ref
        TagStructure which may be required.
 
-    \ref Tagcolumn has already been introduced previously. This variation
+    \ref Tagrow has already been introduced previously. This variation
       accepts the exact same attributes. Note that for some unknowable reason, \ref
-      Tagcolumn tags are not enclosed in a \ref Tagcell tag when defining a \ref  TagLattice tag...
+      Tagrow tags are not enclosed in a \ref Tagcell tag when defining a \ref  TagLattice tag...
 
     The following new XML tags have been introduced:
    \secreflist
@@ -113,7 +113,7 @@
    \section TagLattice \<Lattice\>
    \addindex \<Lattice\>
    Contains information pertaining to a lattice type.  In addition to three
-   \ref Tagcolumn tag's, at least one \ref Tagsite is expected.
+   \ref Tagrow tag's, at least one \ref Tagsite is expected.
    It can include the following attributes
      \param scale scaling factor (&Aring;) with
          respect to which positions and unit-cell vectors are given. Defaults to 1.

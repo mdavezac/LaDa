@@ -24,11 +24,11 @@ namespace Crystal
 		_Compare __comp, _Skip __skip )
     {
       // concept requirements
-      __glibcxx_function_requires(_ForwardIteratorConcept<_ForwardIterator>)
-      __glibcxx_function_requires(_BinaryPredicateConcept<_Compare,
-	    typename iterator_traits<_ForwardIterator>::value_type,
-	    typename iterator_traits<_ForwardIterator>::value_type>)
-      __glibcxx_requires_valid_range(__first, __last);
+  //   __glibcxx_function_requires(_ForwardIteratorConcept<_ForwardIterator>)
+  //   __glibcxx_function_requires(_BinaryPredicateConcept<_Compare,
+  //         typename iterator_traits<_ForwardIterator>::value_type,
+  //         typename iterator_traits<_ForwardIterator>::value_type>)
+  //   __glibcxx_requires_valid_range(__first, __last);
 
       if (__first == __last) return __first;
       do if( not __skip( *__first ) ) break;
@@ -179,18 +179,23 @@ namespace Crystal
       std::vector< t_Position > ypossibles;
       t_Positions :: const_iterator i_ypositions = i_xpositions;
       if( i_xpositions->size() == 1 ) ++i_ypositions; 
+      // Pointers are defined explicitely as a workaround for commercial
+      // compilers, such as pgi.
+      bool (*ptr_is_zero)( types::t_real ) = &Fuzzy::is_zero<types::t_real>;
+      types::t_real (*ptr_norm)( const atat::FixedVector<types::t_real, 3>& )
+         = &atat::norm2<types::t_real, 3>;
       const t_Positions :: value_type :: const_iterator 
         max_x_element = details::max_element
                         (
                           i_ypositions->begin(), i_ypositions->end(),
                           boost::bind( &SplitIntoConfs::compare_from_x,
                                        this, origin, x, _1, _2 ),
-                          bl::bind 
+                          bl::bind
                           (
-                            &Fuzzy::is_zero<types::t_real>,
+                            ptr_is_zero,
                             bl::bind
                             ( 
-                              &atat::norm2<types::t_real, 3>,
+                              ptr_norm,
                                 bl::bind( &t_Position::first, bl::_1 ) 
                               - bl::constant(xPos.first)
                             )

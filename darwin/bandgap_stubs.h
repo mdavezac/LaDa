@@ -152,7 +152,7 @@ namespace BandGap
 #endif
       //! initializes the vff part
       bool init( bool _redocenters = false )
-        { bandgap.init( _redocenters ); }
+        { return bandgap.init( _redocenters ); }
 
     protected:
       //! \brief Sets the next computation to be all-electron

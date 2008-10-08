@@ -15,7 +15,7 @@ libmpiobject_la_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CFLAGS)
 
 bin_PROGRAMS = mpitest
 mpitest_SOURCES = main.cc 
-mpitest_LDFLAGS =  $(AM_LDFLAGS) @BOOST_MPI@
+mpitest_LDFLAGS =  $(AM_LDFLAGS) @BOOST_MPI@ @BOOST_SERIALIZATION@
 mpitest_LDADD = @MPI_ADDLIB@ ../print/libprint.la
 ../print/libprint.la: 
 	cd ../print; $(MAKE)

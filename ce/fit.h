@@ -75,7 +75,7 @@ namespace CE
               : nb_cls(_c.nb_cls ), pis( _c.pis ), 
                 structures_( _c.structures_ ), weights_( _c.weights_ ) {}
       //! Destructor.
-      ~BaseFit() {};
+      ~BaseFit() {}
 
       //! Initializes from structures. 
       void init( const t_Clusters &_clusters );
@@ -206,9 +206,9 @@ namespace CE
       //! Copy Constructor.
       template< class TT_POLICY >
         Fit   ( const Fit< TT_POLICY > &_c )
-            : BaseFit(_c), verbose(_c.verbose) {};
+            : BaseFit(_c), verbose(_c.verbose) {}
       //! Destructor.
-      ~Fit() {};
+      ~Fit() {}
 
       //! Evaluates the cv score for the weights on input.
       template< class T_SOLVER>
@@ -255,7 +255,7 @@ namespace CE
                                             BaseFit::t_Vector &_x, 
                                             const T_SOLVER &_solver );
       template< class T_CLASS, class T_MATRIX, class T_VECTOR > friend
-        void details::construct_( const T_CLASS &_class, T_MATRIX &_A, T_VECTOR &_b ) ;
+        void details::construct_( const T_CLASS &_class, T_MATRIX &_A, T_VECTOR &_b );
       public:
         //! A policy base class.
         typedef T_POLICY t_Policy;
@@ -319,7 +319,7 @@ namespace CE
 
           //! Computes \a _A and \a _b excluding excluded structures.
           template< class T_MATRIX, class T_VECTOR >
-            void other_A_n_b( T_MATRIX &_A, T_VECTOR &_b ) const {};
+            void other_A_n_b( T_MATRIX &_A, T_VECTOR &_b ) const {}
           //! Returns true if index \a _i is an excluded structures.
           bool found( types::t_unsigned _i ) const { return false; }
 

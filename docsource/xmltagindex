@@ -10,7 +10,6 @@
      <LI> \ref TagBond
      <LI> \ref TagBreeding
      <LI> \ref Tagcell
-     <LI> \ref Tagcolumn
      <LI> \ref TagConcentration
      <LI> \ref TagxTaboo
      <LI> \ref TagCrossover
@@ -38,6 +37,7 @@
      <LI> \ref TagPrint
      <LI> \ref TagRandom
      <LI> \ref TagReference
+     <LI> \ref Tagrow
      <LI> \ref Tagsite
      <LI> \ref TagSave
      <LI> \ref TagScaling
