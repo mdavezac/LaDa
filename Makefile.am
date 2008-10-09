@@ -2,11 +2,11 @@
 # Version: $Id$
 #
 AUTOMAKE_OPTIONS = foreign
-include Files
-EXTRA_DIST = bootstrap.sh \
+include $(top_srcdir)/Files
+EXTRA_DIST = $(top_srcdir)/bootstrap.sh \
 	     $(EXTRA_FILES) \
-             doxy.conf \
-	     Files
+             $(top_srcdir)/doxy.conf \
+	     $(top_srcdir)/Files
 if DOBANDGAPOPT 
   DARWINSUBDIR = darwin
   PESCANSUBDIR = pescan_interface
@@ -55,7 +55,7 @@ SUBDIRS = $(MPISUBDIR) atat physics opt crystal print $(CEDIR) $(VFFSUBDIR) \
 	  $(PESCANSUBDIR) $(LAPACKDIR) $(DARWINSUBDIR) $(SEPARABLEDIR) \
 	  $(PYTHONDIR)
 revision.h: force
-	@./scripts/max_revision.pl
+	@ $(top_srcdir)/scripts/max_revision.pl
 force: ;
 all: all-local
 all-local: revision.h
@@ -97,7 +97,7 @@ endif
 
 if DODOC
 doc: $(ALL_DOCS)
-	@cp doxy.conf doxy.tmp
+	@cp $(top_srcdir)/doxy.conf doxy.tmp
 	@echo "HAVE_DOT = @FOUNDDOT@" >> doxy.tmp
 	@echo "INPUT = $(ALL_DOCS)" >> doxy.tmp
 	@echo "OUTPUT_DIRECTORY = @DOCDIR@ " >> doxy.tmp

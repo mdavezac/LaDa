@@ -1,18 +1,18 @@
 #
 # Version: $Id$
 #
-include ../Files
+include $(top_srcdir)/Files
 # if DOPYTHON
 #   pythonlib = libcrystalpy.la
 # endif
 AM_CPPFLAGS = @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
-	      @MPI_CFLAGS@ @BOOST_CXXFLAGS@
+	      @MPI_CFLAGS@ @BOOST_CXXFLAGS@ -I $(top_srcdir) 
 AM_LDFLAGS = @BOOST_REGEX@
 noinst_LTLIBRARIES = libcrystal.la # $(pythonlib)
 libcrystal_la_SOURCES = $(CRYSTAL_CC)
 libcrystal_ladir = $(includedir)/LaDa/crystal
 nobase_libcrystal_la_HEADERS = $(CRYSTAL_H) 
-libcrystal_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
+libcrystal_la_CPPFLAGS = $(AM_CPPFLAGS) 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 
 

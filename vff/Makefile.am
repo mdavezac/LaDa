@@ -1,8 +1,8 @@
 #
 # Version: $Id$
 #
-include ../Files
-AM_CPPFLAGS = @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
+include $(top_srcdir)/Files
+AM_CPPFLAGS = -I $(top_srcdir) @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
 	      @MPI_CFLAGS@ @NAG_CFLAGS@ @GSL_CFLAGS@ @BOOST_CXXFLAGS@
 AM_LDFLAGS = @TINYXML_LIBS@ @GSL_LIBS@ @NAG_LIBS@ @BOOST_FS@  @BOOST_SYSTEM@
 LDADD =
@@ -22,10 +22,10 @@ noinst_LTLIBRARIES = libvff.la
 libvff_la_SOURCES = $(VFF_CC) $(fortranSOURCE)
 libvff_ladir = $(includedir)/LaDa/vff
 nobase_libvff_la_HEADERS = $(VFF_H) $(fortranHEADER)
-libvff_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
+libvff_la_CPPFLAGS = $(AM_CPPFLAGS) 
 
 vff_SOURCES = main.cc 
-vff_CPPFLAGS =  $(AM_CPPFLAGS) -I .. 
+vff_CPPFLAGS =  $(AM_CPPFLAGS) 
 vff_LDFLAGS =  $(AM_LDFLAGS)
 vff_LDADD = ../crystal/libcrystal.la \
 	    ../atat/libatat.la \

@@ -1,7 +1,8 @@
 #! /bin/tcsh
 #
-#PBS -l nodes=4:ppn=2,walltime=00:40:0
-#PBS -q Test
+#PBS -l mppwidth=7
+#PBS -l walltime=00:10:0
+#PBS -q debug
 #PBS -m n 
 #PBS -e err
 #PBS -o out
@@ -11,10 +12,10 @@ module load openmpi fftw arpack pgi
 cd  $PBS_O_WORKDIR/calc
 rm sendme.*
 
-cp ../../../darwin/bandgap_opt .
+cp ../../../../build/darwin/bandgap_opt .
 cp ../input.xml .
 echo "mpirun -np $PBS_NPROCS  --hostfile $PBS_NODEFILE  ./bandgap_opt"
 
-mpirun -np $PBS_NPROCS   ./bandgap_opt 
+aprun -n $PBS_NPROCS   ./bandgap_opt 
 
 exit

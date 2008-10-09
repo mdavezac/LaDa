@@ -1,17 +1,17 @@
 #
 # Version: $Id$
 #
-include ../Files
+include $(top_srcdir)/Files
 
 bin_PROGRAMS = tetra cubic
 
-AM_CPPFLAGS = @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
+AM_CPPFLAGS = -I $(top_srcdir) @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
 	      @BOOST_CXXFLAGS@ -D __DOHALFHALF__
 AM_LDFLAGS = @TINYXML_LIBS@ @BOOST_LDFLAGS@ @BOOST_PROGOP@ \
              @BOOST_SYSTEM@ @BOOST_REGEX@ @BOOST_FS@
 
 cubic_SOURCES = main.cc  
-cubic_CPPFLAGS =  $(AM_CPPFLAGS) -I ..  -D _CUBIC_CE_
+cubic_CPPFLAGS =  $(AM_CPPFLAGS) -D _CUBIC_CE_
 cubic_LDFLAGS =  $(AM_LDFLAGS)
 cubic_LDADD = libseparable.la \
               ../crystal/libcrystal.la \
@@ -21,7 +21,7 @@ cubic_LDADD = libseparable.la \
               ../print/libprint.la 
 
 tetra_SOURCES = $(cubic_SOURCES)
-tetra_CPPFLAGS =  $(AM_CPPFLAGS) -I .. -D_TETRAGONAL_CE_
+tetra_CPPFLAGS =  $(AM_CPPFLAGS) -D_TETRAGONAL_CE_
 tetra_LDFLAGS = $(cubic_LDFLAGS)
 tetra_LDADD = $(cubic_LDADD) 
 
@@ -29,7 +29,7 @@ noinst_LTLIBRARIES = libseparable.la
 libseparable_la_SOURCES = $(SEPARABLE_CC)
 libseparable_ladir = $(includedir)/LaDa/separable
 nobase_libseparable_la_HEADERS = $(SEPARABLE_H) $(SEPARABLE_IMPL_H)
-libseparable_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
+libseparable_la_CPPFLAGS = $(AM_CPPFLAGS) 
 
 SUBDIRS = fixedlattice
 

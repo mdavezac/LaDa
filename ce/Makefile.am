@@ -1,14 +1,14 @@
 #
 # Version: $Id$
 #
-include ../Files
+include $(top_srcdir)/Files
 AM_CPPFLAGS = @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
-	      @MPI_CFLAGS@ @BOOST_CXXFLAGS@
+	      @MPI_CFLAGS@ @BOOST_CXXFLAGS@ -I $(top_srcdir) 
 AM_LDFLAGS = @TINYXML_LIBS@
 if DOCE
 bin_PROGRAMS = regular cubic tetra 
 cubic_SOURCES = main.cc 
-cubic_CPPFLAGS =  $(AM_CPPFLAGS) -I .. -D_CUBIC_CE_
+cubic_CPPFLAGS =  $(AM_CPPFLAGS) $(top_srcdir) -D_CUBIC_CE_
 cubic_LDFLAGS =  $(AM_LDFLAGS)  @BOOST_LDFLAGS@\
                  @BOOST_MPI@ @BOOST_SERIALIZATION@ @BOOST_PROGOP@ @BOOST_FS@ \
 		 @BOOST_SYSTEM@ @BOOST_REGEX@ 
@@ -20,11 +20,11 @@ cubic_LDADD =   libce.la \
 		../print/libprint.la \
 		@BOOST_FS@
 tetra_SOURCES = $(cubic_SOURCES)
-tetra_CPPFLAGS =  $(AM_CPPFLAGS) -I .. -D_TETRAGONAL_CE_
+tetra_CPPFLAGS =  $(AM_CPPFLAGS) -D_TETRAGONAL_CE_
 tetra_LDFLAGS = $(cubic_LDFLAGS)
 tetra_LDADD = $(cubic_LDADD) 
 regular_SOURCES = rmain.cc
-regular_CPPFLAGS =  $(AM_CPPFLAGS) -I .. -D_CUBIC_CE_ @GSL_CFLAGS@
+regular_CPPFLAGS =  $(AM_CPPFLAGS) -D_CUBIC_CE_ @GSL_CFLAGS@
 regular_LDFLAGS = $(cubic_LDFLAGS) @GSL_LIBS@ 
 regular_LDADD = libce.la \
                 ../opt/libopt.la \
@@ -37,7 +37,7 @@ noinst_LTLIBRARIES = libce.la
 libce_la_SOURCES = $(CE_CC)
 libce_ladir = $(includedir)/LaDa/ce
 nobase_libce_la_HEADERS = $(CE_H) $(CE_IMPL_H)
-libce_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
+libce_la_CPPFLAGS =  $(AM_CPPFLAGS) 
 ../crystal/libcrystal.la: 
 	cd ../crystal; $(MAKE) 
 

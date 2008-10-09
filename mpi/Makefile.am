@@ -1,8 +1,8 @@
 #
 # Version: $Id$
 #
-include ../Files
-AM_CPPFLAGS = @CPP_DEBUG_FLAGS@ @MPI_CFLAGS@ @BOOST_CXXFLAGS@
+include $(top_srcdir)/Files
+AM_CPPFLAGS = @CPP_DEBUG_FLAGS@ @MPI_CFLAGS@ @BOOST_CXXFLAGS@ -I$(top_srcdir)
 AM_LDFLAGS = @BOOST_LDFLAGS@
 noinst_LTLIBRARIES = libmpiobject.la
 libmpiobject_la_SOURCES = $(MPI_CC)

@@ -295,6 +295,7 @@ else
   CPP_DEBUG_FLAGS=
   AC_DEFINE([NDEBUG],[1],[])
 fi
+CXXFLAGS="$CXXFLAGS"
 AC_SUBST(CPP_DEBUG_FLAGS)
 
 # ************************************

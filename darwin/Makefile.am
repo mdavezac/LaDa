@@ -1,9 +1,9 @@
 #
 # Version: $Id$
 #
-include ../Files
+include $(top_srcdir)/Files
 AM_CPPFLAGS = @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
-	      @MPI_CFLAGS@ @EO_CFLAGS@ -I .. @BOOST_CXXFLAGS@ 
+	      @MPI_CFLAGS@ @EO_CFLAGS@ -I $(top_srcdir) @BOOST_CXXFLAGS@ 
 AM_LDFLAGS = @TINYXML_LIBS@ @EO_LIBS@ @BOOST_LDFLAGS@ @BOOST_MPI@ \
 	     @BOOST_SERIALIZATION@ @BOOST_PROGOP@ @BOOST_FS@
 if DOBANDGAPOPT
@@ -73,7 +73,7 @@ noinst_LTLIBRARIES = libdarwin.la
 libdarwin_ladir = $(includedir)/LaDa/darwin
 libdarwin_la_SOURCES = $(DARWIN_LIB_CC)
 nobase_libdarwin_la_HEADERS = $(DARWIN_LIB_H) 
-libdarwin_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
+libdarwin_la_CPPFLAGS = $(AM_CPPFLAGS) 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 
 ../ce/libce.la: 

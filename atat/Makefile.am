@@ -1,11 +1,11 @@
 #
 # Version: $Id$
 #
-include ../Files
+include $(top_srcdir)/Files
 if DOPYTHON
   pythonlib = libatatpy.la
 endif
-AM_CPPFLAGS =  @CPP_DEBUG_FLAGS@ @BOOST_CXXFLAGS@ 
+AM_CPPFLAGS = -I$(top_srcdir)  @CPP_DEBUG_FLAGS@ @BOOST_CXXFLAGS@ 
 AM_LDFLAGS = 
 noinst_LTLIBRARIES = libatat.la $(pythonlib)
 libatat_la_SOURCES = $(ATAT_CC)

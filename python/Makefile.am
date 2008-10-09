@@ -1,13 +1,13 @@
 #
 # Version: $Id$
 #
-include ../Files
+include $(top_srdir)/Files
 if DOCE
   CECC=$(PYTHON_CE_CC)
   CEH=$(PYTHON_CE_H)
   CELIB=../ce/libce.la
 endif 
-AM_CPPFLAGS = @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
+AM_CPPFLAGS = -I $(top_srcdir) @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
 	      @MPI_CFLAGS@ @BOOST_CXXFLAGS@ -I@PYTHON_INCLUDE_DIR@
 AM_LDFLAGS = @TINYXML_LIBS@  @BOOST_LDFLAGS@
 lib_LTLIBRARIES = liblada.la 

@@ -2,8 +2,8 @@
 # Version: $Id$
 #
 include ../Files
-AM_CPPFLAGS = @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
-	      @MPI_CFLAGS@ @NAG_CFLAGS@ @GSL_CFLAGS@ @BOOST_CXXFLAGS@
+AM_CPPFLAGS = -I $(top_srcdir) @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
+	      @MPI_CFLAGS@ @NAG_CFLAGS@ @GSL_CFLAGS@ @BOOST_CXXFLAGS@ 
 AM_LDFLAGS = @TINYXML_LIBS@ @NAG_LIBS@ @GSL_LIBS@ \
 	     @BOOST_PROGOP@ @BOOST_REGEX@ @BOOST_FS@ \
 	     @BOOST_SYSTEM@ @BOOST_MPI@ @BOOST_SERIALIZATION@
@@ -40,14 +40,14 @@ noinst_LTLIBRARIES = libescan.la
 libescan_ladir = $(includedir)/LaDa/pescan_interface 
 libescan_la_SOURCES = $(PESCAN_CC) $(emassSOURCE)
 nobase_libescan_la_HEADERS = $(PESCAN_H) $(emassHEADER)
-libescan_la_CPPFLAGS = -I ..  $(AM_CPPFLAGS) 
+libescan_la_CPPFLAGS = $(AM_CPPFLAGS) 
 if DODIRECTIAGA
   libescan_la_SOURCES += $(PESCAN_CC) $(emassSOURCE) $(PESCAN_F90)
   libescan_la_FCFLAGS = $(FCFLAGS) 
 endif
 
 escan_SOURCES = main.cc
-escan_CPPFLAGS = $(AM_CPPFLAGS)  -I .. 
+escan_CPPFLAGS = $(AM_CPPFLAGS) 
 escan_LDFLAGS =  $(AM_LDFLAGS) 
 escan_LDADD = libescan.la \
 	      ../crystal/libcrystal.la \
