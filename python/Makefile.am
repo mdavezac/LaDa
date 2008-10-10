@@ -1,7 +1,7 @@
 #
 # Version: $Id$
 #
-include $(top_srdir)/Files
+include $(top_srcdir)/Files
 if DOCE
   CECC=$(PYTHON_CE_CC)
   CEH=$(PYTHON_CE_H)

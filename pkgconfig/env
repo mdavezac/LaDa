@@ -5,8 +5,7 @@ BASEDIR="/home/davezac/usr/"
 
 bsuf="-gcc43-mt"
 BOOST_LDFLAGS="-L$BASEDIR/lib"
-BOOST_MPI="-lboost_mpi$bsuf"
-BOOST_SERIALIZATION="-lboost_serialization$bsuf"
+BOOST_MPI="-lboost_serialization$bsuf -lboost_mpi$bsuf"
 BOOST_PROGOP="-lboost_program_options$bsuf"
 BOOST_FS="-lboost_filesystem$bsuf"
 BOOST_PYTHON="-lboost_python$bsuf"
@@ -36,18 +35,21 @@ LD_IAGA_FLAGS=" $IAGA_DIR/pescan/lib/libpescan.a  $IAGA_DIR/genpot/lib/libgenpot
 LD_IAGA_FLAGS="$LD_IAGA_FLAGS -L/usr/lib64 -lfftw -lrfftw" 
 LD_IAGA_FLAGS="$LD_IAGA_FLAGS -L/usr/lib64 -llapack"
 LD_IAGA_FLAGS="$LD_IAGA_FLAGS -L/usr/lib64 -lblas"
+if [ ! -e "pescan_interface" ]; then
+  mkdir pescan_interface
+fi
 filelist="mpigroup.mod MPIGROUP.mod"
 for file in $filelist
 do
   if [ -e "$IAGA_DIR/genpot/lib/$file" ]; then
-    cp $IAGA_DIR/genpot/lib/$file pescan_interface
+    cp -u $IAGA_DIR/genpot/lib/$file pescan_interface/$file
   fi
 done
 filelist="escan_comp_api.mod ESCAN_COMP_API.mod eigenenergy.mod EIGENENERGY.mod"
 for file in $filelist
 do
   if [ -e "$IAGA_DIR/pescan/lib/$file" ]; then
-    cp $IAGA_DIR/pescan/lib/$file pescan_interface
+    cp -u $IAGA_DIR/pescan/lib/$file pescan_interface/$file
   fi
 done
 

@@ -925,7 +925,8 @@ failure:
 
     }
     const t_Path directory( _f.parent_path() );
-    if( not bfs::exists( directory ) ) bfs::create_directory( directory );
+    if( not ( directory.empty() or bfs::exists( directory ) ) )
+      bfs::create_directory( directory );
     __TRYBEGIN
     std::ofstream file( _f.string().c_str(), std::ios_base::out|std::ios_base::trunc ); 
     __DOASSERT( file.bad(), "Could not open file " << _f << ".\n" ) 

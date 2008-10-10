@@ -30,6 +30,7 @@ namespace Pescan
   {
     namespace bfs = boost::filesystem;
     const t_Path newpath(  opt::InitialPath::path() / dirname );
+    __ASSERT( newpath.empty(), "Path is empty.\n" )
     __DIAGA( for( types::t_int i( 0 ); i < MPI_COMM.size(); ++i ) )
     {
       __DIAGA
