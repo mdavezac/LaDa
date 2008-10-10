@@ -164,10 +164,10 @@ namespace CE
         //! Type of the separable function.
         typedef T_SEPARABLES t_Separables;
         //! Constructor
-        NoReg() : separables_(NULL) {};
+        NoReg() : separables_(NULL) {}
         //! Constructor
         template <class TT_SEPARABLES> 
-          NoReg( const NoReg<TT_SEPARABLES> &_c ) : separables_( _c.separables_ ){};
+          NoReg( const NoReg<TT_SEPARABLES> &_c ) : separables_( _c.separables_ ){}
         //! Updates pointer to separable function.
         void init( const t_Separables& _sep ) { separables_ = &_sep; }
 
@@ -196,15 +196,15 @@ namespace CE
         types::t_real lambda;
 
         //! Constructor
-        BadRegularization() : NoReg<T_SEPARABLES>(), lambda(0) {};
+        BadRegularization() : NoReg<T_SEPARABLES>(), lambda(0) {}
         //! Copy Constructor.
         template <class TT_SEPARABLES> 
           BadRegularization   ( const BadRegularization<TT_SEPARABLES> &_c )
-                            : NoReg<T_SEPARABLES>( _c ), lambda( _c.lambda ) {};
+                            : NoReg<T_SEPARABLES>( _c ), lambda( _c.lambda ) {}
         //! Copy Constructor.
         template <class TT_SEPARABLES> 
           BadRegularization   ( const NoReg<TT_SEPARABLES> &_c )
-                            : NoReg<T_SEPARABLES>( _c ), lambda( 0 )  {};
+                            : NoReg<T_SEPARABLES>( _c ), lambda( 0 )  {}
 
         //! Would modify A matrix and b vector.
         template< class T_MATRIX, class T_VECTOR >
@@ -231,15 +231,15 @@ namespace CE
         types::t_real lambda;
 
         //! Constructor
-        Regularization() : NoReg<T_SEPARABLES>(), lambda(0) {};
+        Regularization() : NoReg<T_SEPARABLES>(), lambda(0) {}
         //! Copy Constructor.
         template <class TT_SEPARABLES> 
           Regularization   ( const Regularization<TT_SEPARABLES> &_c )
-                         : NoReg<T_SEPARABLES>( _c ), lambda( _c.lambda ) {};
+                         : NoReg<T_SEPARABLES>( _c ), lambda( _c.lambda ) {}
         //! Copy Constructor.
         template <class TT_SEPARABLES> 
           Regularization   ( const NoReg<TT_SEPARABLES> &_c )
-                         : NoReg<T_SEPARABLES>( _c ), lambda( 0 )  {};
+                         : NoReg<T_SEPARABLES>( _c ), lambda( 0 )  {}
 
         //! Would modify A matrix and b vector.
         template< class T_MATRIX, class T_VECTOR >

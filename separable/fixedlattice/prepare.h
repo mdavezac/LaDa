@@ -17,8 +17,6 @@
 #include <crystal/lattice.h>
 #include <crystal/structure.h>
 
-#include "separable.h"
-#include "boolean.h"
 
 namespace CE
 {

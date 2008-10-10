@@ -2,9 +2,9 @@
 <Job>
    <Structure >
         <Cell>
-            <column x="1.0" y="0.0" z="0.0" />
-            <column x="0.0" y="1.0" z="0.0" />
-            <column x="0.0" y="0.0" z="1.0" />
+            <row x="1.0" y="0.0" z="0.0" />
+            <row x="0.0" y="1.0" z="0.0" />
+            <row x="0.0" y="0.0" z="1.0" />
         </Cell>
         <Atom type="Ga" x="0.00" y="0.00" z="0.00" />
         <Atom type="As" x="0.25" y="0.25" z="0.25" />
@@ -16,9 +16,9 @@
         <Atom type="Sb" x="0.25" y="0.75" z="0.75" />
     </Structure>
     <Lattice scale="6.1">
-        <column x="0.0" y="0.5" z="0.5" />
-        <column x="0.5" y="0.0" z="0.5" />
-        <column x="0.5" y="0.5" z="0.0" />
+        <row x="0.0" y="0.5" z="0.5" />
+        <row x="0.5" y="0.0" z="0.5" />
+        <row x="0.5" y="0.5" z="0.0" />
         <site x="0.25" y="0.25" z="0.25">
             <atom type="As" />
             <atom type="Sb" />

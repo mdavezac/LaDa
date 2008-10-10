@@ -7,6 +7,8 @@
 #include <boost/numeric/ublas/io.hpp>
 #include <iostream>
 
+#include <print/manip.h>
+
 namespace CE
 {
 # if defined( HEAD ) || defined(INHEAD) || defined(INHEAD2)
