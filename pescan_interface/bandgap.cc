@@ -1,6 +1,11 @@
 //
 //  Version: $Id$
 //
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include <sstream>
 #include <algorithm>
 
 #include <physics/physics.h>

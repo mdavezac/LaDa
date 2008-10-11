@@ -1,6 +1,11 @@
 //
 //  Version: $Id$
 //
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include <sstream>
 #include <fstream>
 #include <stdexcept>       // std::runtime_error
 #ifdef _DIRECTIAGA

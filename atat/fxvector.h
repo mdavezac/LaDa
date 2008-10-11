@@ -4,6 +4,10 @@
 #ifndef __FXVECTOR_H__
 #define __FXVECTOR_H__
 
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
 #include <math.h>
 #include "misc.h"
 

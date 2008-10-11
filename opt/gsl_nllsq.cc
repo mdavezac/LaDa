@@ -1,6 +1,9 @@
 //
 //  Version: $Id$
 //
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
 
 #include "gsl_nllsq.h"
 #include "gsl.h"

@@ -1,6 +1,10 @@
 //
 //  Version: $Id$
 //
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
 #include "molecularity.h"
 
   // "Molecularity" means that we try and simulate growth conditions...

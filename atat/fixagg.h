@@ -4,6 +4,11 @@
 #ifndef __FIXAGG_H__
 #define __FIXAGG_H__
 
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
+
 #include <opt/types.h>
 
 namespace atat

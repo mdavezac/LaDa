@@ -1,6 +1,10 @@
 //
 //  Version: $Id$
 //
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "bandgap.h"
 
 namespace BandGap

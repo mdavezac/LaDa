@@ -3,6 +3,10 @@
 //
 #ifndef _INTEGER__H_
 #define _INTEGER__H_
+
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
  
 #include <math.h>
 #include "misc.h"

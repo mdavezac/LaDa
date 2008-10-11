@@ -4,6 +4,10 @@
 #ifndef __ARRAY_H__
 #define __ARRAY_H__
 
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
 #include <iostream>
 #include "vectmac.h"
 #include "misc.h"

@@ -4,6 +4,11 @@
 #ifndef _ARRAYLIST_H_
 #define _ARRAYLIST_H_
 
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
+
 #include "array.h"
 #include "linklist.h"
 

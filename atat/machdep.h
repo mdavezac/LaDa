@@ -4,6 +4,10 @@
 #ifndef __MACHDEP_H__
 #define __MACHDEP_H__
 
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
 //#include <values.h>
 #include <limits.h>
 #include <float.h>

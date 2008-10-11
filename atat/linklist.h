@@ -4,6 +4,10 @@
 #ifndef __LINKEDLIST_H__
 #define __LINKEDLIST_H__
 
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
 #include "misc.h"
 
 #include <opt/types.h>

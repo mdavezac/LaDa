@@ -1,6 +1,10 @@
 //
 //  Version: $Id$
 //
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "concentration.h"
 
 #include <opt/debug.h>       // std::runtime_error

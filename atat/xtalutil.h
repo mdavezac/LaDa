@@ -4,6 +4,10 @@
 #ifndef _XTALUTIL_H_
 #define _XTALUTIL_H_
 
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
 #include "vectmac.h"
 #include "arraylist.h"
 #include "integer.h"

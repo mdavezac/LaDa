@@ -1,8 +1,9 @@
 //
 //  Version: $Id$
 //
-// #include <tinyxml/tinyxml.h>
-//
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <sstream>
 #include <string>
