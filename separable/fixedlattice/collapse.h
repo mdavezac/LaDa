@@ -131,21 +131,21 @@ namespace CE
         typedef typename t_Separables :: t_Vector t_Vector;
 
         //! Constructor.
-        Collapse() : dim(0), separables_(NULL), update_( mapping_ )
-          {
-            configurations_.reset( new t_Configurations ); 
-            update_.init( configurations_ ); 
-          }
+        Collapse() : dim(0), separables_(NULL), update_( mapping_ ),
+                     configurations_( new t_Configurations )
+          { update_.init( configurations_ ); }
         //! Copy Constructor.
-        template< class TT_TRAITS>
-          Collapse   ( const Collapse< TT_TRAITS > &_c ) 
-                   : dim( _c.dim ), separables_( _c.separables_ ),
-                     configurations_( _c.configurations_ ),
-                     mapping_( _c.mapping_ ), update_( mapping_ ),
-                     regularization_( _c.regularization_ )
-            { update_.init( _c.configurations_ ); }
+        Collapse   ( const Collapse &_c ) 
+                 : dim( _c.dim ), separables_( _c.separables_ ),
+                   configurations_( _c.configurations_ ),
+                   mapping_( _c.mapping_ ), update_( mapping_ ),
+                   regularization_( _c.regularization_ )
+          { update_.init( _c.configurations_ ); }
         //! Destructor.
         ~Collapse() {}
+        //! Assignement operator.
+        template< class TT_TRAITS >
+          void operator=( const Collapse<TT_TRAITS> &_c );
 
         //! Creates the fitting matrix and target vector.
         template< class T_MATRIX, class T_VECTOR >

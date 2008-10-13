@@ -106,7 +106,7 @@ namespace CE
       result += pair.first.dof();
     return result;
   }
-  INMANY( size_t ) ::current_ dof() const 
+  INMANY( size_t ) ::current_dof() const 
   {
     size_t result(0);
     foreach( t_FittingPair &pair, *fittingpairs_ )

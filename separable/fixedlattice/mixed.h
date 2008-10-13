@@ -147,24 +147,24 @@ namespace CE
 
 
         //! Constructor.
-        MixedApproach() 
-          { clusters_.reset( new t_Clusters ); coefficients_.reset( new t_Matrix ); }
+        MixedApproach() {}
         //! Constructor.
-        template< class TT_TRAITS >
-          MixedApproach   ( const MixedApproach< TT_TRAITS > &_c )
-                        : separables_( _c.separables_ ), 
-                          clusters_( _c.clusters_ ), 
-                          coefficients_( _c.coefficients_ ),
-                          collapse_( _c.collapse_ ),
-                          cefit_( _c.cefit_ )
-            { init( _c.separables().ranks(), _c.separables().dimensions() ); }
+        MixedApproach   ( const MixedApproach &_c )
+                      : clusters_( _c.clusters_ ), 
+                        coefficients_( _c.coefficients_ ),
+                        collapse_( _c.collapse_ ),
+                        cefit_( _c.cefit_ )
+          { init( _c.separables().ranks(), _c.separables().dimensions() ); }
         //! Destructor.
         ~MixedApproach() {}
+        //! Assignement operator.
+        template< class TT_TRAITS >
+          void operator=( const MixedApproach<TT_TRAITS> &_c );
 
         //! Returns a reference to the CE fitting base.
-        t_CEFit& cefit() { return cefit_; }
+        t_CEFit& cefit() { return cefit_(); }
         //! Returns a constant reference to the CE fitting base.
-        const t_CEFit& cefit() const { return cefit_; }
+        const t_CEFit& cefit() const { return cefit_(); }
         //! Returns a reference to the CE fitting base.
         t_Collapse& collapse() { return collapse_; }
         //! Returns a constant reference to the CE fitting base.
@@ -199,38 +199,22 @@ namespace CE
         void init( size_t _ranks, size_t _dims );
 
         //! Returns a reference to the coefficients.
-        t_Matrix& coefficients()
-        {
-          __ASSERT( not coefficients_.get(), "Empty smart pointer.\n" ) 
-          return *coefficients_; 
-        }
+        t_Matrix& coefficients() { return coefficients_(); }
         //! Returns a constant reference to the coefficients.
-        const t_Matrix& coefficients() const 
-        {
-          __ASSERT( not coefficients_.get(), "Empty smart pointer.\n" ) 
-          return *coefficients_; 
-        }
+        const t_Matrix& coefficients() const { return coefficients_(); }
         //! Returns a reference to the mapping.
         typename t_Collapse::t_Mapping& mapping() { return collapse().mapping(); }
         //! Returns a reference to the mapping.
         const typename t_Collapse::t_Mapping& mapping() const
           { return collapse().mapping(); }
         //! Returns a reference to the separable function;
-        t_Separables& separables() { return separables_; }
+        t_Separables& separables() { return collapse().separables(); }
         //! Returns a constant reference to the separable function;
-        const t_Separables& separables() const { return separables_; }
+        const t_Separables& separables() const { return collapse().separables(); }
         //! Returns a reference to the clusters.
-        t_Clusters& clusters()
-        {
-          __ASSERT( not clusters_.get(), "Empty smart pointer.\n" ) 
-          return *clusters_; 
-        }
+        t_Clusters& clusters() { return clusters_(); }
         //! Returns a constant reference to the clusters.
-        const t_Clusters& clusters() const 
-        {
-          __ASSERT( not clusters_.get(), "Empty smart pointer.\n" ) 
-          return *clusters_; 
-        }
+        const t_Clusters& clusters() const { return clusters_(); }
         //! Reassigns clusters.
         void reassign();
         //! Randomizes both cluster energies and ecis.
@@ -241,20 +225,17 @@ namespace CE
         template< class T_MATRIX, class T_VECTOR >
           void create_A_n_b( T_MATRIX &_A, T_VECTOR &_b );
 
-        //! The separable function.
-        t_Separables separables_;
-
         //! The coefficients.
-        boost::shared_ptr<t_Matrix> coefficients_;
+        Indirection::Pointer<t_Matrix> coefficients_;
 
         //! The classes of equivalent clusters for mixing.
-        boost::shared_ptr<t_Clusters> clusters_;
+        Indirection::Pointer<t_Clusters> clusters_;
 
         //! The collapse functor.
         t_Collapse collapse_;
 
         //! The CE fitting functor.
-        t_CEFit cefit_;
+        Indirection::Pointer<t_CEFit> cefit_;
 
         //! Current dimension we are working on.
         size_t dim;

@@ -175,6 +175,17 @@ namespace CE
     regularization().init( _sep );
   }
 
+  INCOLLAPSE( template< class TT_TRAITS > void ) 
+    :: operator=( const Collapse<TT_TRAITS>& _c )
+    {
+      dim = _c.dim;
+      separables() = _c.separables();
+      configurations() = _c.configurations();
+      mapping() = _c.mapping();
+      regularization() = _c.regularization();
+      update_.init( _c.configurations_ ); 
+    }
+
 # undef COLHEAD
 # undef INCOLLAPSE
 # undef INCOLLAPSE2

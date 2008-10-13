@@ -97,7 +97,7 @@ namespace CE
     INCOLLAPSE( void ) :: randomize( typename t_Vector :: value_type _howrandom )
     {
       namespace bblas = boost::numeric::ublas;
-      separables().randomize( _howrandom );
+      collapse().randomize( _howrandom );
       if( cefit().dof() )
       {
         typedef typename t_Matrix :: value_type t_Type;
@@ -200,12 +200,11 @@ namespace CE
       }
       namespace bblas = boost::numeric::ublas;
       separables().norms.resize( _ranks );
-      coefficients().resize(   clusters_->size() 
+      coefficients().resize(   clusters().size() 
                              + _ranks * t_Separables::t_Mapping::D, _dims );
       const bblas::range rows( 0, _ranks * t_Separables::t_Mapping::D );
       const bblas::range columns( 0, _dims );
       separables().coefficients_interface().set( coefficients(), rows, columns );
-      collapse(). init( separables_ );
       __DEBUGTRYEND(, "Error in MixedApproach::init()\n" )
     }
 
@@ -214,7 +213,7 @@ namespace CE
       if( not cefit().dof() ) return;
       namespace bl = boost::lambda;
       __DEBUGTRYBEGIN
-      __ASSERT( coefficients().size1() - collapse().dof() != clusters_->size(),
+      __ASSERT( coefficients().size1() - collapse().dof() != clusters().size(),
                 "Inconsistent sizes.\n")
 
       typename t_Matrix :: const_iterator1 i_eci =   coefficients().begin1()
@@ -226,6 +225,16 @@ namespace CE
       }
       __DEBUGTRYEND(,"Error in MixedApproach::reassign().\n" )
     }
+
+    INCOLLAPSE( template< class TT_TRAITS > void )
+      :: operator=( const MixedApproach< TT_TRAITS >& _c )
+      {
+        clusters() = _c.clusters();
+        coefficients() = _c.coefficients();
+        collapse() = _c.collapse();
+        cefit() = _c.cefit();
+        init( _c.separables().ranks(), _c.separables().dimensions() );
+      }
 
 #  undef COLHEAD
 #  undef INCOLLAPSE

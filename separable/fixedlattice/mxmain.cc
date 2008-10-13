@@ -424,7 +424,7 @@ int main(int argc, char *argv[])
               t_Collapse,
               t_looMapping 
             > :: type t_looCollapse;
-    t_looCollapse loomixed( mixed );
+    t_looCollapse loomixed; loomixed.operator=( mixed );
     loomixed.collapse().mapping().do_exclude = true;
     std::cout << "Starting Leave-One-Out Procedure.\n";
     opt::t_ErrorPair errors;
@@ -445,7 +445,7 @@ int main(int argc, char *argv[])
               t_Collapse,
               t_lmoMapping 
             > :: type t_lmoCollapse;
-    t_lmoCollapse lmomixed( mixed );
+    t_lmoCollapse lmomixed; lmomixed.operator=( mixed );
     std::cout << "\nStarting leave-many out predictive fit." << std::endl;
     Fitting::LeaveManyOut::t_Return errors;
     leavemanyout.verbosity = verbosity - 1;

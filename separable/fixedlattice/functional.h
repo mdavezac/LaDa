@@ -13,6 +13,7 @@
 
 #include <opt/types.h>
 #include <opt/debug.h>
+#include <opt/indirection.h>
 
 namespace CE
 {
@@ -225,26 +226,18 @@ namespace CE
     };
 
     //! Interface between the coefficient matrix and the separable function.
-    class DirectCoefficients
+    class DirectCoefficients : public Indirection::Object
+                                      < boost::numeric::ublas::matrix<types::t_real> >
     {
+      typedef Indirection::Object
+              < boost::numeric::ublas::matrix<types::t_real> > t_Base;
       public:
         //! Type of the matrix.
-        typedef boost::numeric::ublas::matrix<types::t_real> t_Matrix;
+        typedef t_Base :: t_Object t_Matrix;
  
-        //! Constructor.
-        DirectCoefficients() {}
-        //! Copy Constructor.
-        DirectCoefficients( const DirectCoefficients &_c ) : matrix_(_c.matrix_) {} 
-        //! Returns a reference to the matrix.
-        t_Matrix& operator()() { return matrix_; }
-        //! Returns a reference to the matrix.
-        const t_Matrix& operator()() const { return matrix_; }
         //! Resizes matrix.
-        void resize( size_t _i, size_t _j ) { matrix_.resize(_i, _j); }
- 
-      protected:
-        //! The coefficients themselves.
-        t_Matrix matrix_;
+        void resize( size_t _i, size_t _j )
+          { this->operator()().resize(_i, _j); }
     };
     
     //! Interface between the coefficient matrix and the separable function.
