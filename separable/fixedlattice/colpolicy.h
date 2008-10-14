@@ -13,6 +13,7 @@
 
 #include <opt/types.h>
 #include <opt/debug.h>
+#include <opt/indirection.h>
 
 #include "prepare.h"
 
@@ -49,10 +50,9 @@ namespace CE
                     < typename t_Matrix :: value_type > t_CMatrix;
 
           //! the constructor.
-          LowMemUpdate   ( const t_Mapping &_mapping )
-                       : mapping_(_mapping) {}
+          LowMemUpdate() {}
           //! Destructor.
-          ~LowMemUpdate() {}
+          virtual ~LowMemUpdate() {}
           
           void print_scales() const
           {
@@ -66,31 +66,30 @@ namespace CE
           }
 
           //! Updates all dimension.
-          void operator()();
+          void operator()( const t_Separables &_sep,
+                           const t_Configurations &_confs );
           //! Updates only dimension \a _dim. 
-          void operator()( size_t _dim ) { operator()(); }
+          void operator()( size_t _dim,
+                           const t_Separables &_sep,
+                           const t_Configurations &_confs )
+          //! Updates only dimension \a _dim. 
+            { operator()( _sep, _confs ); }
           //! Returns the factor for configurations _kv, and rank _r, and dimension.
           typename t_Vector :: value_type
-            factor( size_t _kv, size_t _r, size_t _dim) const;
-          //! Updates pointer to separable function.
-          void init( const t_Separables& _sep );
-          //! Updates pointer to configurations.
-          void init( const boost::shared_ptr<t_Configurations> &_confs )
-            { configurations_ = _confs; } 
+            factor( size_t _kv, size_t _r, size_t _dim,
+                    const t_Separables &_sep,
+                    const t_Configurations &_confs ) const;
 
         protected:
           //! Recomputes factor from nothing.
           typename t_Vector :: value_type
-            factor_from_scratch( size_t _kv, size_t _r, size_t _dim) const;
+            factor_from_scratch( size_t _kv, size_t _r, size_t _dim,
+                                 const t_Separables &_sep,
+                                 const t_Configurations &_confs ) const;
+
 
           //! Holds the sep. func. split up by rank and confs.
           t_CMatrix scales_;
-          //! A reference to the config. mapping.
-          const t_Mapping &mapping_;
-          //! A reference to the config. mapping.
-          boost::shared_ptr<t_Configurations> configurations_;
-          //! A reference to the separable function.
-          const t_Separables * separables_;
       };
 
     template< class T_SEPARABLES, class T_MAPPING, class T_CONFS >
@@ -120,34 +119,30 @@ namespace CE
                     < typename t_Matrix :: value_type > t_CMatrix;
 
           //! Constructor.
-          HighMemUpdate   ( const t_Mapping &_mapping )
-                        : t_Base( _mapping ) {}
+          HighMemUpdate() {}
           //! Updates all dimension.
-          void operator()();
+          void operator()( const t_Separables &_sep,
+                           const t_Configurations &_confs );
           //! Updates only dimension \a _dim. 
-          void operator()( size_t _dim );
+          void operator()( size_t _dim,
+                           const t_Separables &_sep,
+                           const t_Configurations &_confs );
           //! Returns the factor for configurations _kv, and rank _r, and dimension.
           typename t_Vector :: value_type
-            factor( size_t _kv, size_t _r, size_t _dim) const;
-          //! Updates pointer to separable function.
-          void init( const t_Separables& _sep );
-          //! Updates pointer to configurations.
-          void init( const boost::shared_ptr<t_Configurations> &_confs )
-            { t_Base::init( _confs ); }
+            factor( size_t _kv, size_t _r, size_t _dim,
+                    const t_Separables &_sep,
+                    const t_Configurations &_confs ) const;
 
         protected:
           //! Updates scales_ from dimsplit.
-          void update_scales();
+          void update_scales( const t_Separables &_sep );
           //! Returns the factor for configurations _kv, and rank _r, and dimension.
           typename t_Vector :: value_type
-            factor_from_scratch( size_t _kv, size_t _r, size_t _dim) const;
+            factor_from_scratch( size_t _kv, size_t _r, size_t _dim ) const;
 
           //! Holds the sep. func. split along confs, ranks, and dimensions.
           std::vector< t_CMatrix > dimsplit_;
           using t_Base :: scales_;
-          using t_Base :: mapping_;
-          using t_Base :: configurations_;
-          using t_Base :: separables_;
       };
 
     template< class T_SEPARABLES >
@@ -163,21 +158,11 @@ namespace CE
         };
         //! Type of the separable function.
         typedef T_SEPARABLES t_Separables;
-        //! Constructor
-        NoReg() : separables_(NULL) {}
-        //! Constructor
-        template <class TT_SEPARABLES> 
-          NoReg( const NoReg<TT_SEPARABLES> &_c ) : separables_( _c.separables_ ){}
-        //! Updates pointer to separable function.
-        void init( const t_Separables& _sep ) { separables_ = &_sep; }
 
         //! Would modify A matrix and b vector.
         template< class T_MATRIX, class T_VECTOR >
-          void operator()( T_MATRIX &, T_VECTOR &, size_t _dim ) const {}
+          void operator()( const t_Separables &_sep, T_MATRIX &, T_VECTOR &, size_t _dim ) const {}
 
-      protected:
-        //! A reference to the separable function.
-        const t_Separables *separables_;
     };
     template< class T_SEPARABLES >
     class BadRegularization : public NoReg<T_SEPARABLES>
@@ -198,21 +183,12 @@ namespace CE
         //! Constructor
         BadRegularization() : NoReg<T_SEPARABLES>(), lambda(0) {}
         //! Copy Constructor.
-        template <class TT_SEPARABLES> 
-          BadRegularization   ( const BadRegularization<TT_SEPARABLES> &_c )
-                            : NoReg<T_SEPARABLES>( _c ), lambda( _c.lambda ) {}
-        //! Copy Constructor.
-        template <class TT_SEPARABLES> 
-          BadRegularization   ( const NoReg<TT_SEPARABLES> &_c )
-                            : NoReg<T_SEPARABLES>( _c ), lambda( 0 )  {}
+        BadRegularization   ( const BadRegularization &_c )
+                          : NoReg<T_SEPARABLES>( _c ), lambda( _c.lambda ) {}
 
         //! Would modify A matrix and b vector.
         template< class T_MATRIX, class T_VECTOR >
-          void operator()( T_MATRIX &, T_VECTOR &, size_t _dim ) const;
-
-        using NoReg<T_SEPARABLES> :: init;
-      protected:
-        using NoReg<T_SEPARABLES> :: separables_;
+          void operator()( const t_Separables& _sep, T_MATRIX &, T_VECTOR &, size_t _dim ) const;
     };
     template< class T_SEPARABLES >
     class Regularization : public NoReg<T_SEPARABLES>
@@ -233,21 +209,18 @@ namespace CE
         //! Constructor
         Regularization() : NoReg<T_SEPARABLES>(), lambda(0) {}
         //! Copy Constructor.
-        template <class TT_SEPARABLES> 
-          Regularization   ( const Regularization<TT_SEPARABLES> &_c )
-                         : NoReg<T_SEPARABLES>( _c ), lambda( _c.lambda ) {}
+        Regularization   ( const Regularization &_c )
+                       : NoReg<T_SEPARABLES>( _c ), lambda( _c.lambda ) {}
         //! Copy Constructor.
-        template <class TT_SEPARABLES> 
-          Regularization   ( const NoReg<TT_SEPARABLES> &_c )
-                         : NoReg<T_SEPARABLES>( _c ), lambda( 0 )  {}
+        Regularization   ( const NoReg<T_SEPARABLES> &_c )
+                       : NoReg<T_SEPARABLES>( _c ), lambda( 0 )  {}
+        //! Assignement Operator.
+        template< class TT_SEPARABLES >
+          void operator=( const Regularization<TT_SEPARABLES> & _c ) { lambda = _c.lambda; }
 
         //! Would modify A matrix and b vector.
         template< class T_MATRIX, class T_VECTOR >
-          void operator()( T_MATRIX &, T_VECTOR &, size_t _dim ) const;
-
-        using NoReg<T_SEPARABLES> :: init;
-      protected:
-        using NoReg<T_SEPARABLES> :: separables_;
+          void operator()( const t_Separables &_sep, T_MATRIX &, T_VECTOR &, size_t _dim ) const;
     };
   } // end of Policy namespace.
 

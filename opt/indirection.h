@@ -45,6 +45,9 @@ namespace Indirection
         Pointer() : object_( new t_Object ) {}
         //! Copy Constructor.
         Pointer( const Pointer &_c ) : object_(_c.object_) {} 
+        //! Assignement operator.
+        void operator=( Pointer& _c ) 
+          { boost::shared_ptr<t_Object>( _c.object_ ).swap( object_ ); } 
         //! Returns a reference to the object.
         operator t_Object& () { return *object_; }
         //! Returns a reference to the object.

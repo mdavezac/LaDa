@@ -62,7 +62,8 @@ namespace CE
         {
           const size_t D( t_Separables::t_Mapping :: D );
           typename t_Vector::value_type scalar( mapping().eweight(_i,c) );
-          scalar *=   update_.factor( equivrange.start() + c, r, dim )
+          scalar *=   update_.factor( equivrange.start() + c, r, dim,
+                                      separables(), configurations() )
                     * separables().norms[r]; 
           const bblas::range range( r * D, (r+1) * D );
           bblas::vector_range< T_VECTOR > vecr( _out, range );
@@ -72,18 +73,17 @@ namespace CE
 
   INCOLLAPSE(void) :: update_all()
   {
-    update_.init( configurations_ );
     // First, normalizes coefficients.
     separables().normalize();
     // then calls policy.
-    update_();
+    update_( separables(), configurations() );
   }
   INCOLLAPSE(void) :: update( types::t_unsigned _d )
   {
     // First, normalizes coefficients.
     separables().normalize();
     // then calls policy.
-    update_( _d );
+    update_( _d, separables(), configurations() );
   }
            
 
@@ -168,12 +168,12 @@ namespace CE
     __DEBUGTRYEND(, "Error in Collapse::evaluate().\n" )
   }
 
-  INCOLLAPSE( void ) :: init( t_Separables& _sep )
-  {
-    separables_ = &_sep; 
-    update_.init( _sep );
-    regularization().init( _sep );
-  }
+// INCOLLAPSE( void ) :: init( t_Separables& _sep )
+// {
+//   separables_ = &_sep; 
+//   update_.init( _sep );
+//   regularization().init( _sep );
+// }
 
   INCOLLAPSE( template< class TT_TRAITS > void ) 
     :: operator=( const Collapse<TT_TRAITS>& _c )
@@ -183,7 +183,6 @@ namespace CE
       configurations() = _c.configurations();
       mapping() = _c.mapping();
       regularization() = _c.regularization();
-      update_.init( _c.configurations_ ); 
     }
 
 # undef COLHEAD

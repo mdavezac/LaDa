@@ -213,10 +213,6 @@ int main(int argc, char *argv[])
     // Initializes the symmetry-less separable function.
     typedef Traits::CE::Separables< CE::Mapping::VectorDiff<2> > t_FunctionTraits;
     typedef CE::Separables< t_FunctionTraits > t_Function;
-    t_Function separables;
-    separables.set_rank_n_size( rank, postoconfs.positions.size() );
-    separables.randomize( howrandom );
-    separables.normalize();
 
     // Initializes collapse functor.
     typedef CE::Mapping::ExcludeOne< CE::Mapping::SymEquiv > t_Mapping;
@@ -230,7 +226,6 @@ int main(int argc, char *argv[])
     t_Collapse collapse;
     collapse.init( structures, postoconfs );
     collapse.regularization().lambda = lambda;
-    collapse.init( separables );
 
 
     opt::NErrorTuple nerror( opt::mean_n_var(structures) ); 
@@ -275,7 +270,6 @@ int main(int argc, char *argv[])
       std::cout << "Final Prediction Errors:\n " << ( nerror = errors.second ) << "\n\n";
       std::cout << "Average Training Errors:\n " << errors.first << "\n";
       std::cout << "Final Prediction Errors:\n " << errors.second << "\n\n";
-      if( verbosity >= print_function ) std::cout << separables << "\n";
     }
     if( dofit )
     {
@@ -283,7 +277,6 @@ int main(int argc, char *argv[])
       std::cout << "\nFitting using whole training set:" << std::endl;
       nerror = fit( collapse, allsq );
       std::cout << nerror << "\n"; 
-      if( verbosity >= print_function ) std::cout << separables << "\n";
     }
     std::cout << "\n\n\nEnd of " << __PROGNAME__ << ".\n" << std::endl;
 

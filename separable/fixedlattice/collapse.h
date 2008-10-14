@@ -13,6 +13,7 @@
 
 #include <opt/types.h>
 #include <opt/debug.h>
+#include <opt/indirection.h>
 
 #include "prepare.h"
 #include "colpolicy.h"
@@ -131,16 +132,12 @@ namespace CE
         typedef typename t_Separables :: t_Vector t_Vector;
 
         //! Constructor.
-        Collapse() : dim(0), separables_(NULL), update_( mapping_ ),
-                     configurations_( new t_Configurations )
-          { update_.init( configurations_ ); }
+        Collapse() : dim(0), configurations_( new t_Configurations ) {}
         //! Copy Constructor.
         Collapse   ( const Collapse &_c ) 
                  : dim( _c.dim ), separables_( _c.separables_ ),
                    configurations_( _c.configurations_ ),
-                   mapping_( _c.mapping_ ), update_( mapping_ ),
-                   regularization_( _c.regularization_ )
-          { update_.init( _c.configurations_ ); }
+                   mapping_( _c.mapping_ ) {}
         //! Destructor.
         ~Collapse() {}
         //! Assignement operator.
@@ -169,19 +166,19 @@ namespace CE
         template< class T_STRUCTURES >
         void init( const T_STRUCTURES& _strs, const PosToConfs &_postoconfs );
         //! Sets the norm pointer.
-        void init( t_Separables& _sep );
+//       void init( t_Separables& _sep );
 
         //! Number of configurations.
         size_t nbconfs() const { return configurations().size2(); }
         
         //! Returns the number of dimensions.
-        size_t dimensions() const { return separables_->dimensions(); }
+        size_t dimensions() const { return separables().dimensions(); }
         //! Returns the number of degrees of liberty (per dimension).
-        size_t dof() const { return separables_->dof(); }
+        size_t dof() const { return separables().dof(); }
         //! Returns a reference to the separable function;
-        t_Separables& separables() { return *separables_; }
+        t_Separables& separables() { return separables_(); }
         //! Returns a constant reference to the separable function;
-        const t_Separables& separables() const { return *separables_; }
+        const t_Separables& separables() const { return separables_(); }
         //! Returns a reference to the mapping.
         t_Mapping& mapping() { return mapping_; }
         //! Returns a reference to the mapping.
@@ -229,7 +226,7 @@ namespace CE
         //! Holds current dimension being fitted.
         size_t dim;
         //! Pointer to separable function being minimized.
-        t_Separables *separables_;
+        Indirection::Pointer<t_Separables> separables_;
         //! \brief The mapping from target values to symetrically equivalent
         //!        structures.
         t_Mapping mapping_;
