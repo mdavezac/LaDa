@@ -41,7 +41,7 @@ namespace BandGap
     //! Constructor
     Keeper() : cbm(0), vbm(0) {}
     //! Copy Constructor
-    Keeper(const Keeper &_c) : cbm(_c.cbm), vbm(_c.vbm) {};
+    Keeper(const Keeper &_c) : Vff::Keeper( _c ), cbm(_c.cbm), vbm(_c.vbm) {};
     //! Detructor
     ~Keeper() {};
 
@@ -182,8 +182,6 @@ namespace BandGap
     _keeper.vbm = bandgap.BandGap().bands.vbm; 
     _keeper.cbm = bandgap.BandGap().bands.cbm;
     _keeper.energy = structure.energy;
-    std::cout << "Keeper: " << _keeper.cbm - _keeper.vbm << " = " 
-              << _keeper.cbm << " - " << _keeper.vbm << std::endl;
     bandgap.get_stress(_keeper.stress);
   }
 

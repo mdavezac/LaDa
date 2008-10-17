@@ -178,7 +178,7 @@ namespace GA
       typename t_Store :: Base*          store;
       //! \brief Pointer to a funnel through which all evaluations are done
       //! \see Darwin::Load_Method()
-      Evaluation::Base<t_GATraits>*      evaluation;
+      Evaluation::Abstract<typename t_GATraits::t_Population>*      evaluation;
       //! \brief Points to an object which applies population-dependent
       //! operations on individual fitnesses
       //! \details  This pointer can be set to NULL. In that case, nothing is taboo.

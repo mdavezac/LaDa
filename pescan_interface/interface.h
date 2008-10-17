@@ -27,23 +27,24 @@
 #include <print/stdout.h>
 
 #ifdef _DIRECTIAGA
-// declares fortran interface
-//! \cond
-extern "C"
-{
-  void FC_FUNC_(iaga_call_genpot, IAGA_CALL_GENPOT)( MPI_Fint *, int *);
-  void FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( int* );
-  void FC_FUNC_(iaga_get_eigenvalues, IAGA_GET_EIGENVALUES)( double*, int* );
-}
-//! \endcond
-#define __DIAGA( code ) code
-#define __DIAGASUFFIX( code ) \
-        t_Path( code.string() + "." + boost::lexical_cast<std::string>(MPI_COMM.rank()) )
-#define __IIAGA( code ) 
-#else
-#define __DIAGA( code ) 
-#define __DIAGASUFFIX( code ) code
-#define __IIAGA( code ) code
+  // declares fortran interface
+  //! \cond
+  extern "C"
+  {
+    void FC_FUNC_(getvlarg, GETVLARG)();
+    void FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( MPI_Fint * );
+    void FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( int* );
+    void FC_FUNC_(iaga_get_eigenvalues, IAGA_GET_EIGENVALUES)( double*, int* );
+  }
+  //! \endcond
+# define __DIAGA( code ) code
+# define __DIAGASUFFIX( code ) \
+         t_Path( code.string() + "." + boost::lexical_cast<std::string>(MPI_COMM.rank()) )
+# define __IIAGA( code ) 
+# else
+# define __DIAGA( code ) 
+# define __DIAGASUFFIX( code ) code
+# define __IIAGA( code ) code
 #endif
 
 
@@ -277,6 +278,12 @@ namespace Pescan
  
      void check_existence() const;
 
+     __DIAGA
+     (
+       //! Allows derived classes to have access to ::mpi::AddCommunicator members. 
+       void set_mpi( boost::mpi::communicator* _c );
+     )
+
     protected:
      //! Launches a calculation 
      bool operator()(); 
@@ -296,8 +303,12 @@ namespace Pescan
      bool read_result();
      //! Loads functional directly from \a _node
      bool Load_( const TiXmlElement &_node );
-     // Forwards mpi::AddCommunicator members to derived classes.
-     MPI_FORWARD_MEMBERS( MPI_COMMDEC )
+#    ifdef _DIRECTIAGA
+       //! Allows derived classes to have access to ::mpi::AddCommunicator members. 
+       boost::mpi::communicator &comm() { return MPI_COMMDEC::comm(); } 
+       //! Allows derived classes to have access to ::mpi::AddCommunicator members. 
+       const boost::mpi::communicator &comm() const { return MPI_COMMDEC::comm(); } 
+#    endif
   };
 
 
@@ -330,6 +341,7 @@ namespace Pescan
       { \
         docontinue = false; \
         Print::out << _e.what() << Print::endl; \
+        std::cerr << _e.what() << std::endl; \
       } 
 
 #   ifndef _NOLAUNCH
@@ -346,9 +358,11 @@ namespace Pescan
       )
 #   endif
 
+    __thistry__
     __DOASSERT( not bfs::exists( maskr ), maskr << " does not exist.\n" );
     __DOASSERT( not ( bfs::is_regular_file( maskr ) or bfs::is_symlink( maskr ) ), 
                 maskr << " is not a regular file nor a symlink.\n" );
+    __endthistry__
 
     t_Path file;
     std::vector<t_Path> :: const_iterator i_ps = genpot.pseudos.begin();

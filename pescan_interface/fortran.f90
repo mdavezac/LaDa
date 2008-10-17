@@ -1,22 +1,24 @@
 !
 ! Version: $Id$
 !
-subroutine iaga_call_genpot( comm_handle_, rank_ )
 
+subroutine iaga_set_mpi( comm_handle_ )
+ 
   use mpigroup
   implicit none
   include "mpif.h"
 
+  integer, intent(in) :: comm_handle_
 
-  integer(KIND=MPI_OFFSET_KIND), intent(in) :: comm_handle_
-  integer, intent(in) :: rank_
+  integer inode, ierr
 
-  irank = rank_
-  write(arank,'(I6)') irank
-  arank = adjustl( arank )
   comm_handle = comm_handle_
 
-  call getVLarg()
+  call mpi_comm_rank(comm_handle,inode,ierr)
+  call mpi_comm_rank(mpi_comm_world,irank,ierr)
+
+  write(arank,'(I6)') inode
+  arank = adjustl( arank )
 
 end subroutine
 
@@ -30,7 +32,7 @@ subroutine iaga_call_escan( nbstates_ )
   integer, intent(in) :: nbstates_
   type ( escancomp ) ecp
 
-  if( allocated( zebn ) ) deallocate( zebn )
+  if( allocated( zebn ) )  deallocate( zebn )
   allocate( zebn( nbstates_ ) )
 
   ecp%comm_handle = comm_handle
@@ -63,12 +65,9 @@ subroutine iaga_get_eigenvalues( states_, n_ )
 
   if( .not. allocated( zebn ) ) stop "Storage for eigenergies was never allocated."
 
-! call MPI_Bcast( zebn, 2, MPI_DOUBLE_PRECISION, 0, comm_handle )
-  if( irank == 0 ) then
-    do i = 1, n_, 1
-      states_(i) = zebn(i)*27.211396d0 ! goes to eV
-    enddo
-  endif
+  do i = 1, n_, 1
+    states_(i) = zebn(i)*27.211396d0 ! goes to eV
+  enddo
 
   deallocate( zebn )
 

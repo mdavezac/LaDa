@@ -49,17 +49,6 @@ namespace Pescan
       //! Reference energy for folded spectrum method
       Bands Eref;
 
-    protected:
-      //! For folded spectrum, which computation (VBM or CBM) is being performed.
-      t_computation computation;
-      //! Wether to apply correction scheme when metallic band-gap is found
-      bool do_correct;
-      //! Below this, a band-gap is assumed "metallic"
-      const types::t_real metallicity;
-      //! Amounts by which to increase/decrease references.
-      const types::t_real inc_dec;
-
-    public:
       //! Constructor
       BandGap  () 
              : bands(0,0), Eref(0,0), computation( CBM ), do_correct(true),
@@ -101,6 +90,16 @@ namespace Pescan
       void correct( const t_Path &_dir );
       //!  Read results + Throw error if eigenvalues cannot be found. 
       void read_and_throw();
+    
+      //! For folded spectrum, which computation (VBM or CBM) is being performed.
+      t_computation computation;
+      //! Wether to apply correction scheme when metallic band-gap is found
+      bool do_correct;
+      //! Below this, a band-gap is assumed "metallic"
+      const types::t_real metallicity;
+      //! Amounts by which to increase/decrease references.
+      const types::t_real inc_dec;
+
   };
 
   //! \cond

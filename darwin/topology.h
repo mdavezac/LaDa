@@ -109,8 +109,9 @@ namespace GA
       template < class T_GATRAITS > GA::Breeder<T_GATRAITS>*
         breeder ( typename T_GATRAITS :: t_Evaluator &_eval );
       //! Creates an evaluation object.
-      template <class T_GATRAITS, template <class> class T_BASE > 
-        T_BASE<T_GATRAITS>* evaluation ( typename T_GATRAITS :: t_Evaluator &_eval); 
+      template <class T_GATRAITS, template <class> class T_BASE >  
+        Evaluation :: Abstract< typename T_GATRAITS :: t_Population >*
+          evaluation( typename T_GATRAITS :: t_Evaluator &_eval ); 
       //! Creates history objects
       template < class T_GATRAITS > History<typename T_GATRAITS::t_Individual>*
         history( eoState & _eostates );

@@ -122,20 +122,21 @@ namespace GA
       if( topology.objective() ) 
         objective = topology.objective<t_GATraits>( _parent );
       
-      Print :: out << "Setting evaluation " << typeid( evaluator ).name() << Print::endl;
       if( topology.history() and history )
       {
         evaluation = topology.evaluation< t_GATraits,
                                           Evaluation::WithHistory >( evaluator );
-        static_cast< Evaluation::WithHistory<t_GATraits>* >
-                   (evaluation)->set( history );
+        Evaluation::WithHistory<t_GATraits>*
+          withhistory( static_cast< Evaluation::WithHistory<t_GATraits>* >( evaluation ) );
+        withhistory->set( history );
       }
       if ( not evaluation )
         evaluation = topology.evaluation<t_GATraits, Evaluation::Base >( evaluator );
-      Print :: out << "After Setting evaluation" << Print::endl;
       Load_Storage( _parent );
-      evaluation->set( objective );
-      evaluation->set( store );
+      Evaluation::Base<t_GATraits>*
+        base( static_cast< Evaluation::Base<t_GATraits>* >( evaluation ) );
+      base->set( objective );
+      base->set( store );
       
       if( not topology.scaling() ) return;
       scaling = Scaling::new_from_xml<t_GATraits>( _parent, &evaluator );
@@ -399,7 +400,7 @@ endstorage:
     // Creates Print object
     {
       typedef PrintGA< Store::Base<t_GATraits>,
-                       Evaluation::Base<t_GATraits> > t_PrintGA;
+                       Evaluation::Abstract<t_Population> > t_PrintGA;
       t_PrintGA* printga = new t_PrintGA( *store, *evaluation,
                                           generation_counter, do_print_each_call);
       eostates.storeFunctor(printga);
@@ -891,7 +892,6 @@ endstorage:
   {
     while ( _pop.size() < _size )
     {
-      Print::out << "partition populate" << Print::endl;
       // first random object
       t_Individual indiv;
       evaluator.initialize(indiv);
@@ -951,26 +951,18 @@ endstorage:
   template<class T_EVALUATOR>
   void Darwin<T_EVALUATOR> :: presubmit()
   {
-    Print::out << "presubmit: 0 " << Print::endl;
     // GA::Evaluator does not know about Traits::GA, and even less about
     // Traits::GA::t_Population, hence this bit of hackery.
     std::list< t_Individual > dummy;
     eoPop<t_Individual> dummy2;
-    Print::out << "presubmit: 1 " << Print::endl;
     evaluator.presubmit(dummy);
-    Print::out << "presubmit: 2 " << dummy.empty() << Print::endl;
     if ( dummy.empty() ) return;
-    Print::out << "presubmit: 3 " << Print::endl;
     offspring.resize( dummy.size() );
-    Print::out << "presubmit: 4 " << Print::endl;
     std::copy( dummy.begin(), dummy.end(), offspring.begin() );
-    Print::out << "presubmit: 5 " << Print::endl;
     (*evaluation)(dummy2, offspring);
-    Print::out << "presubmit: 6 " << Print::endl;
     offspring.clear();
     evaluation->nb_eval = 0;
     evaluation->nb_grad = 0;
-    Print::out << "presubmit: 7 " << Print::endl;
   }
 
   template<class T_EVALUATOR>
@@ -979,7 +971,6 @@ endstorage:
     presubmit();
 
     Print::xmg << Print::flush;
-    Print::out << "\nCreating population" << Print::endl;
     populate();
 
     offspring.clear();
@@ -987,7 +978,6 @@ endstorage:
     typename t_Islands :: iterator i_island_end = islands.end();
     typename t_Islands :: iterator i_island;
     __MPICODE( ::mpi::main->barrier(); )
-    Print::out << "\nEvaluating starting population" << Print::endl;
     // A first eval of pop.
     for ( i_island = i_island_begin; i_island != i_island_end; ++i_island )
       __TRYDEBUGCODE( (*evaluation)(offspring, *i_island);,
@@ -1337,6 +1327,7 @@ out:
                                            << save_filename << Print::endl; )
     std::string evalparams = evaluator.print();
     Print::xmg << Print::make_commented_string( evalparams ) << Print::endl;
+    Print::xmg << Print::flush;
     return true;
   }
 

@@ -31,7 +31,6 @@ namespace GA
         template<class T_GATRAITS>
         inline void Farmer<T_GATRAITS> :: onWait( types::t_int _bull )
         {
-          types::t_int buff;
           t_Individual indiv;
           t_CommBase :: comm->recv( _bull, ONWAIT_TAG( TAG ), indiv );
           offspring->push_back( indiv );

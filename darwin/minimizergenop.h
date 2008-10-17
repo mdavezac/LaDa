@@ -52,8 +52,10 @@ namespace GA
       typedef typename t_VA_Traits :: t_Container                  t_VA_Container;
       //! The base of all functions...
       typedef typename function::Base< t_VA_Type, t_VA_Container > t_Base;
+      //! The population container.
+      typedef typename t_GATraits :: t_Population                  t_Population;
       //! The base class of evaluation objects.
-      typedef Evaluation::Base<t_GATraits>                         t_Evaluation;
+      typedef Evaluation::Abstract<t_Population>                   t_Evaluation;
       //! The base calss of the taboo objects
       typedef GA::Taboo_Base<t_Individual>                         t_Taboo;
       //! The type of the gradients used in minimization

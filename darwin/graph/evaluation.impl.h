@@ -2,7 +2,8 @@
 //  Version: $Id$
 //
 
-
+#include <boost/tuple/tuple.hpp>
+#include <boost/serialization/utility.hpp>
 
 namespace GA
 {
@@ -53,7 +54,6 @@ namespace GA
             t_Individual *indiv = next( _bull );
             if( not indiv )
             {
-              Print :: out << "Sending done to: " << _bull << Print::endl;
               t_CommBase::send_command( _bull, t_CommBase::t_Commands::DONE );
               return;
             }
@@ -73,12 +73,28 @@ namespace GA
                                 == blamb::constant( _bull ) );
               if ( i_unknown != unknowns.end() )
               {
-                t_CommBase::comm->recv( _bull, ONWAIT_TAG( TAG+1 ), 
-                                        i_unknown->first->quantities() );
+                typedef ::mpi::Pair
+                        < 
+                          typename t_GATraits :: t_QuantityTraits :: t_Quantity&,
+                          typename t_GATraits :: t_IndivTraits :: t_Object &
+                        > t_MPIPair;
+                t_MPIPair mpipair( i_unknown->first->quantities(),
+                                   i_unknown->first->Object() );
+                t_CommBase::comm->recv( _bull, ONWAIT_TAG( TAG+1 ), mpipair );
+//               t_CommBase::comm->recv
+//               (
+//                 _bull, ONWAIT_TAG( TAG+1 ), 
+//                 i_unknown->first->quantities()
+//               );
+//               t_CommBase::comm->recv
+//               (
+//                 _bull, ONWAIT_TAG( TAG+2 ), 
+//                 i_unknown->first->Object() 
+//               );
                 __TRYDEBUGCODE(
                     t_Base::objective->init( *i_unknown->first );
                     i_unknown->first->set_fitness(
-                      (*t_Base::objective)( i_unknown->first->const_quantities() ) );,
+                     (*t_Base::objective)( i_unknown->first->const_quantities() ) );,
                     "Error while evaluating fitness.\n" )
                 unknowns.erase( i_unknown );
               }
@@ -104,8 +120,24 @@ namespace GA
               t_CommBase::comm->recv( 0, ONWAIT_TAG( TAG ), individual );
               metaeval.init( individual );
               metaeval.evaluate();
-              t_CommBase::comm->send( 0, ONWAIT_TAG( TAG+1 ),
-                                      individual.quantities() ); 
+              typedef ::mpi::Pair
+                      < 
+                        typename t_GATraits :: t_QuantityTraits :: t_Quantity&,
+                        typename t_GATraits :: t_IndivTraits :: t_Object &
+                      > t_MPIPair;
+              t_MPIPair mpipair( individual.quantities(),
+                                 individual.Object() );
+              t_CommBase::comm->send( 0, ONWAIT_TAG( TAG+1 ), mpipair );
+//             t_CommBase::comm->send
+//             ( 
+//               0, ONWAIT_TAG( TAG+1 ),
+//               individual.quantities()
+//             ); 
+//             t_CommBase::comm->send
+//             ( 
+//               0, ONWAIT_TAG( TAG+2 ),
+//               individual.Object() 
+//             ); 
               t_CommBase :: request( t_CommBase::t_Requests::WAITING );
             }
             t_CommBase::command( t_CommBase::t_CowCommands::DONE );

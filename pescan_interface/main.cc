@@ -106,6 +106,7 @@ int main(int argc, char *argv[])
   __BPO_HELP_N_VERSION__
 
   const fs::path filename( vm["input"].as< std::string >() );
+  __DOASSERT( not fs::exists( filename ), filename << " does not exist.\n" );
   __DOASSERT( not ( fs::is_regular( filename ) or fs::is_symlink( filename ) ),
               filename << " is a not a valid file.\n" );
   TiXmlDocument doc( filename.string() );
@@ -258,5 +259,5 @@ int main(int argc, char *argv[])
 
   __BPO_CATCH__
 
-  return 1;
+  return 0;
 }

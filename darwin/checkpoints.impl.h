@@ -28,8 +28,7 @@ namespace GA
                << evaluation.nb_eval << " " << evaluation.nb_grad 
                << Print::endl;
     
-    if( store.newresults() )
-      store.print_results( age() );
+    if( store.newresults() ) store.print_results( age() );
     Print::xmg << Print::flush;
   }
 

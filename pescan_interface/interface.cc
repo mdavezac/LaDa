@@ -22,6 +22,16 @@
 
 namespace Pescan
 {
+# ifdef _DIRECTIAGA
+    void Interface :: set_mpi( boost::mpi::communicator* _c )
+    {
+      MPI_COMMDEC::set_mpi( _c );
+      MPI_Comm __commC = (MPI_Comm) ( MPI_COMM ) ;
+      MPI_Fint __commF = MPI_Comm_c2f( __commC );
+      FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( &__commF );
+    }
+# endif
+
   bool Interface :: operator()()
   {
     create_directory();
@@ -66,13 +76,13 @@ namespace Pescan
     write_genpot_input();
     
     const t_Path newatom( opt::InitialPath::path()/dirname/atom_input.filename() );
-    __ASSERT( bfs::exists( atom_input ), atom_input << " does not exist.\n" );
+    __ASSERT( not bfs::exists( atom_input ), atom_input << " does not exist.\n" );
     if( newatom != atom_input )
     { 
       if( bfs::exists( newatom ) ) bfs::remove( newatom );
       bfs::copy_file( atom_input, newatom );
     }
-    __ASSERT( bfs::exists( newatom ), newatom << " does not exist.\n" );
+    __ASSERT( not bfs::exists( newatom ), newatom << " does not exist.\n" );
 
 #   ifndef _NOLAUNCH
       __IIAGA
@@ -99,13 +109,7 @@ namespace Pescan
     chdir( ( opt::InitialPath::path() / dirname ).string().c_str() );
 #   ifndef _NOLAUNCH
       __IIAGA(  system( "./" + genpot.launch.filename().string() ) );
-      __DIAGA
-      ( 
-        int __rank = MPI_COMM.rank();
-        MPI_Comm __commC = (MPI_Comm) ( MPI_COMM ) ;
-        MPI_Fint __commF = MPI_Comm_c2f( __commC );
-        FC_FUNC_(iaga_call_genpot, IAGA_CALL_GENPOT)( &__commF, &__rank );
-      )
+      __DIAGA( FC_FUNC_(getvlarg, GETVLARG)(); )
 #   endif
     chdir( opt::InitialPath::path().string().c_str() );
   }
@@ -414,14 +418,13 @@ namespace Pescan
 #     endif
      
       __DIAGA(
-        double values[ escan.nbstates ];
         eigenvalues.resize( escan.nbstates );
-        FC_FUNC_(iaga_get_eigenvalues, IAGA_GET_EIGENVALUES)(values,&escan.nbstates);
-        boost::mpi::broadcast( MPI_COMM, values, escan.nbstates, 0 );
-        std::copy( values, values + escan.nbstates, eigenvalues.begin() );
-          Print::out << "Eigenvalues: " << Print::endl;
-        for( types :: t_int i = 0; i < escan.nbstates; i++) 
-          Print::out << eigenvalues[i] << " ---> " << i << Print::endl;
+        std::fill( eigenvalues.begin(), eigenvalues.end(), 0 );
+        FC_FUNC_
+        ( 
+          iaga_get_eigenvalues, IAGA_GET_EIGENVALUES
+        )(&eigenvalues[0],&escan.nbstates);
+        boost::mpi::broadcast( MPI_COMM, eigenvalues, 0 );
       )
      
       __IIAGA( __DOASSERT( u != escan.nbstates,

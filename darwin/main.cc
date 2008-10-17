@@ -69,12 +69,6 @@ int main(int argc, char *argv[])
               input << " is a not a valid file.\n" );
   const unsigned reruns = vm["reruns"].as< unsigned >();
   
-  __TRYBEGIN
-    GA::Darwin< t_Evaluator > ga;
-    __DOASSERT( not ga.Load(input.string()),
-                "Could not load input from file " << input << "\n" )
-  __TRYEND(, "" )
-
   __ROOTCODE
   (
     (*::mpi::main),
@@ -93,9 +87,11 @@ int main(int argc, char *argv[])
   for( types::t_int i = 0; i < reruns; ++i )
   {
     GA::Darwin< t_Evaluator > ga;
-    __DOASSERT( not ga.Load(input.string()),
-                "Could not load input from file " << input << "\n" )
+    Print :: out << "load result: " << ga.Load(input.string()) << Print::endl; 
+   //__DOASSERT( not ga.Load(input.string()),
+   //            "Could not load input from file " << input << "\n" )
     
+    Print::out << "Rerun " << i+1 << " of " << reruns << Print::endl;
     __ROOTCODE
     (
       (*::mpi::main),
@@ -109,5 +105,5 @@ int main(int argc, char *argv[])
   
   __BPO_CATCH__
 
-  return 1;
+  return 0;
 }

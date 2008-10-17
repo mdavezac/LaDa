@@ -1,6 +1,6 @@
 #! /bin/tcsh
 #
-#PBS -l mppwidth=8
+#PBS -l mppwidth=16
 #PBS -l walltime=00:30:0
 #PBS -q interactive
 #PBS -m n 
@@ -12,9 +12,9 @@ module load fftw parpack pgi
 cd  $PBS_O_WORKDIR/calc
 rm sendme.*
 
-cp ../../../build_mpi/darwin/bandgap_opt .
+cp ../../../debug_mpi/darwin/bandgap_opt .
 cp ../input.xml .
 pwd
-aprun -n 8  ./bandgap_opt 
+aprun -n 16  ./bandgap_opt
 
 exit

@@ -166,11 +166,12 @@ namespace GA
        )
     }
   template <class T_GATRAITS, template <class> class T_BASE >  
-    T_BASE<T_GATRAITS>* 
+    Evaluation::Abstract<typename T_GATRAITS :: t_Population >* 
       Topology :: evaluation ( typename T_GATRAITS :: t_Evaluator &_eval )
       {
         typedef T_GATRAITS t_GATraits;
         typedef T_BASE<t_GATraits> t_Base;
+        typedef Evaluation::Abstract<typename t_GATraits :: t_Population > t_aBase;
 #ifdef _MPI
         typedef mpi::Graph::Evaluation::Farmer<t_GATraits, T_BASE> t_Farmer;
         typedef mpi::Graph::Evaluation::Bull<t_GATraits, T_BASE> t_Bull;
@@ -191,23 +192,23 @@ namespace GA
            {
              t_Farmer *result = new t_Farmer( graph );
              result->set( _eval );
-             return (t_Base*) result;
+             return result;
            }
            if( graph->type == mpi::Graph::t_Type::BULL )
            {
              t_Bull *result = new t_Bull( graph );
              result->set( _eval );
-             return (t_Base*) result;
+             return result;
            }
            if( graph->type == mpi::Graph::t_Type::FARMHAND )
            {
              t_Farmhand *result = new t_Farmhand;
              result->set( _eval );
-             return (t_Base*) result;
+             return result;
            }
            t_Cow *result = new t_Cow( graph );
            result->set( _eval );
-           return (t_Base*) result;
+           return result;
           ),
           "Error while creating Evaluation.\n" 
         )

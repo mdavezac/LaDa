@@ -65,7 +65,7 @@ namespace SingleSite
   //!          SingleSite::operator<<( Crystal::Structure&, const Object&) and 
   //!          SingleSite::operator<<( Object&, const Crystal::Structure&) without
   //!          interfering with possible previous
-  //!          decalarations.
+  //!          declarations.
   //! \see SingleSite::operator<<( Crystal::Structure&, const Object& ), 
   //!      SingleSite::operator<<( Object&, const Crystal::Structure& ). 
   struct Object : public BitString::Object<> 

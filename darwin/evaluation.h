@@ -47,17 +47,85 @@ namespace Evaluation
 { 
   //! \brief Funnel through which all calls from %GA to the %Evaluator's
   //! functional routines are routed.
+  //! \details Abstract base class.
+template< class T_POPULATION >
+  class Abstract
+  {
+    public:
+      //! Population type
+      typedef T_POPULATION                  t_Population;
+
+    protected:
+      //! Individual type
+      typedef typename t_Population :: value_type                  t_Individual;
+      //! \brief quantity traits pertaining to Virtual Atom minimization
+      typedef typename t_Individual :: t_IndivTraits :: t_VA_Traits   t_VATraits;
+      //! \brief Gradients type for Virtual Atom minimization
+      typedef typename t_VATraits :: t_QuantityGradients           t_QuantityGradients;
+      //! \brief Type of the variables used in Virtual Atom minimization 
+      //! \details (what is the type of \f$x\f$ in \f$f(x)\f$, where \f$f\f$ is
+      //! this evaluation object.
+      typedef typename t_VATraits :: t_Type                        t_VA_Type;
+      //! \brief Scalar Fitness type
+      typedef typename t_Individual :: t_Fitness :: t_ScalarFitness  t_Fitness;
+      //! \brief Quantity of the Scalar Fitness 
+      typedef typename t_Fitness :: t_Quantity                     t_FitnessQuantity;
+
+    public:
+      //! records the number of effective calls to the functional
+      types::t_unsigned nb_eval; 
+      //! records the number of effective calls to the gradient of the functional
+      types::t_unsigned nb_grad; 
+
+      //! Constructor and Initializer
+      Abstract () : nb_eval(0), nb_grad(0) {}
+      //! Constructor and Initializer
+      Abstract ( const Abstract & _c ) : nb_eval( _c.nb_eval ), nb_grad( _c.nb_grad ) {}
+      //! Destructor
+      virtual ~Abstract() {};
+
+      //! Returns classname.
+      virtual std::string className() const { return "Evaluation::Abstract"; }
+
+      //!  calls on the functional to evaluate \a _indiv
+      virtual t_FitnessQuantity evaluate( t_Individual &_indiv ) = 0;
+      //! calls on the functional to evaluate the (VA) gradients of _indiv
+      virtual void evaluate_gradient( t_Individual &_indiv,
+                                      t_QuantityGradients& _grad,
+                                      t_VA_Type *_i_grad ) = 0;
+      //! combines Evaluation::Base::evaluate(t_Individual&) with 
+      virtual t_FitnessQuantity evaluate_with_gradient( t_Individual &_indiv,
+                                                        t_QuantityGradients& _grad,
+                                                        t_VA_Type *_i_grad ) = 0;
+      //! calls on the functional to evaluate the (VA) gradients of _indiv
+      virtual t_VA_Type evaluate_one_gradient( t_Individual &_indiv,
+                                               t_QuantityGradients& _grad,
+                                               types::t_unsigned _pos ) = 0;
+      //! Evaluates current populations and offspring populations. 
+      virtual void operator()( t_Population &_pop, t_Population &_offspring ) = 0;
+      //! Initializations prior to evaluation proper.
+      virtual void init( t_Individual &_indiv) = 0;
+
+    protected:
+      //! Evaluates a single population.
+      virtual void evaluate( t_Population &_pop ) = 0;
+  };
+
+  //! \brief Funnel through which all calls from %GA to the %Evaluator's
+  //! functional routines are routed.
   //! \details It implements obvious routines such as Base::evaluate(), and
   //! Base::evaluate_gradient, but also a less obvious though necessary storage
   //! ability <em>via</em> through a referenced to a Store::Base objet.
 template< class T_GATRAITS >
-  class Base
+  class Base : public Abstract< typename T_GATRAITS :: t_Population >
   {
     public:
       //! Should contain all GA definitions \sa Traits::GA
       typedef T_GATRAITS  t_GATraits;
 
     protected:
+      //! Type of the base class.
+      typedef Abstract< typename T_GATRAITS :: t_Population > t_Base;
       //! Individual type
       typedef typename t_GATraits :: t_Individual                  t_Individual;
       //! Evaluator type
@@ -86,37 +154,30 @@ template< class T_GATRAITS >
       //! \sa GA::Evaluator, SingleSite::Evaluator, TwoSite::Evaluator,
       //! BandGap::Evaluator, CE::Evaluator, Molecularity::Evaluator
       t_Evaluator *evaluator;
-      //! \brief Links quantities and Fitness. \sa Fitness, Objective
+      //! Links quantities and Fitness. \sa Fitness, Objective
       t_Objective *objective; 
-      t_Store *store; //!< Stores results!! \sa Store
-
-    public:
-      //! records the number of effective calls to the functional
-      types::t_unsigned nb_eval; 
-      //! records the number of effective calls to the gradient of the functional
-      types::t_unsigned nb_grad; 
+      //! Stores results!! \sa Store
+      t_Store *store;
 
     public:
       //! \brief Constructor and Initializer
-      Base () : evaluator(NULL), objective(NULL), store(NULL),
-                nb_eval(0), nb_grad(0) {};
+      Base () : t_Base(), evaluator(NULL), objective(NULL), store(NULL) {}
       //! \brief Constructor and Initializer
       Base   ( t_Evaluator *_eval, t_Objective *_obj, t_Store *_store )
-           : evaluator(_eval), objective(_obj), store(_store), nb_eval(0), nb_grad(0) {};
+           : t_Base(), evaluator(_eval), objective(_obj), store(_store) {}
       //! \brief Copy Constructor 
       Base   ( const Base<t_Evaluator> &_x )
-           : evaluator(_x.evaluator), objective(_x.objective),
-             store(_x.store), nb_eval(_x.nb_eval), nb_grad(_x.nb_grad) {};
+           : t_Base( _x ), evaluator(_x.evaluator),
+             objective(_x.objective), store(_x.store) {}
       //! \brief Destructor
       virtual ~Base() {};
 
+      //! Returns classname.
+      virtual std::string className() const { return "Evaluation::Base"; }
+
     public:
       //! Sets the pointer to the functional interface.
-      void set( t_Evaluator &_eval )
-      { 
-        Print :: out << "Original " << typeid( _eval ).name() << Print::endl;
-        evaluator = &_eval; 
-      }
+      void set( t_Evaluator &_eval ) { evaluator = &_eval; }
       //! Sets the pointer to the objective interface.
       void set( t_Objective *_obj ) { objective = _obj; }
       //! Sets the pointer to the storage interface.

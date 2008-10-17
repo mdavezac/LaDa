@@ -113,6 +113,7 @@ namespace Individual
     _ar & age;
     _ar & repFitness;
     _ar & object;
+    _ar & quantity;
   }
 } // namespace Individual
 

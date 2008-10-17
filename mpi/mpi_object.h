@@ -13,6 +13,7 @@
 #ifdef _MPI
 #include <boost/mpi/communicator.hpp>
 #include <boost/serialization/complex.hpp>
+#include <boost/type_traits/add_reference.hpp>
 #include <complex>
 
 // #ifdef _MPICH_MPI_
@@ -95,6 +96,27 @@ namespace mpi
 
       //! The MPI Communicator.
       boost::mpi::communicator *comm_;
+  };
+
+  //! A class to easily create and pass two object to mpi.
+  template< class FIRST, class SECOND >
+  struct Pair
+  {
+    //! A reference type to the first type.
+    typedef boost::add_reference<FIRST> :: type t_First;
+    //! A reference type to the second type.
+    typedef boost::add_reference<SECOND> :: type t_Second;
+    //! The first reference.
+    t_First first;
+    //! The second reference.
+    t_Second second;
+    //! The constructor and initializer.
+    Pair( t_First _first, t_Second _second ) : first( _first ), second( _second ) {}
+    //! The copy constructor.
+    Pair( const Pair &_c ) : first( _c.first ), second( _c.second ) {}
+    //! The serialize member.
+    template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
+      { _ar & first; _ar & second; }
   };
 }
 
