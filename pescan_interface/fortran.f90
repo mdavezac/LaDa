@@ -23,7 +23,7 @@ subroutine iaga_set_mpi( comm_handle_ )
 end subroutine
 
 subroutine iaga_call_escan( nbstates_ )
-  use escan_comp_api
+  use escan_comp_api, only: escancomp
   use eigenenergy
   use mpigroup
   implicit none
@@ -46,8 +46,6 @@ subroutine iaga_call_escan( nbstates_ )
   ecp%f_xatom = "atom.config"
   ecp%mx=1
   ecp%Eref=-2.43
-
-  escandefaultprint=.false.
 
   call escan_comp(ecp)
 

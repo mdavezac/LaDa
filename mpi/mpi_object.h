@@ -103,9 +103,9 @@ namespace mpi
   struct Pair
   {
     //! A reference type to the first type.
-    typedef boost::add_reference<FIRST> :: type t_First;
+    typedef typename boost::add_reference<FIRST> :: type t_First;
     //! A reference type to the second type.
-    typedef boost::add_reference<SECOND> :: type t_Second;
+    typedef typename boost::add_reference<SECOND> :: type t_Second;
     //! The first reference.
     t_First first;
     //! The second reference.

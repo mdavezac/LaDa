@@ -43,7 +43,7 @@ nobase_libescan_la_HEADERS = $(PESCAN_H) $(emassHEADER)
 libescan_la_CPPFLAGS = $(AM_CPPFLAGS) 
 if DODIRECTIAGA
   libescan_la_SOURCES += $(PESCAN_CC) $(emassSOURCE) $(PESCAN_F90)
-  libescan_la_FCFLAGS = $(FCFLAGS) 
+  libescan_la_FCFLAGS = $(FCFLAGS) @IAGA_FCFLAGS@
 endif
 
 escan_SOURCES = main.cc

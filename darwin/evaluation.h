@@ -149,16 +149,6 @@ template< class T_GATRAITS >
       //! \brief Quantity of the Scalar Fitness 
       typedef typename t_Fitness :: t_Quantity                     t_FitnessQuantity;
 
-    protected:
-      //! \brief Evaluator to which all functional calls should be tunneled.
-      //! \sa GA::Evaluator, SingleSite::Evaluator, TwoSite::Evaluator,
-      //! BandGap::Evaluator, CE::Evaluator, Molecularity::Evaluator
-      t_Evaluator *evaluator;
-      //! Links quantities and Fitness. \sa Fitness, Objective
-      t_Objective *objective; 
-      //! Stores results!! \sa Store
-      t_Store *store;
-
     public:
       //! \brief Constructor and Initializer
       Base () : t_Base(), evaluator(NULL), objective(NULL), store(NULL) {}
@@ -175,7 +165,6 @@ template< class T_GATRAITS >
       //! Returns classname.
       virtual std::string className() const { return "Evaluation::Base"; }
 
-    public:
       //! Sets the pointer to the functional interface.
       void set( t_Evaluator &_eval ) { evaluator = &_eval; }
       //! Sets the pointer to the objective interface.
@@ -217,16 +206,6 @@ template< class T_GATRAITS >
       virtual t_VA_Type evaluate_one_gradient( t_Individual &_indiv,
                                                t_QuantityGradients& _grad,
                                                types::t_unsigned _pos );
-
-    protected:
-      //! \brief Wrapper function which calls Base::evaluate(t_Individual &)
-      //! for each individual in \a _pop
-      //! \details Additionally, this function first calls Base::init to make
-      //! sure that Objective::Base::current_individual and
-      //! GA::Evaluator::init are called prior to evaluation. In the _MPI
-      //! flavor. it also synchronizes Base::store across all processors.
-      virtual void evaluate( t_Population &_pop );
-    public:
       //! \brief Always evaluates \a _offspring <em>via</em>
       //! Evaluation::Base::evaluate(t_Population&), conditional evaluation of
       //! \a _pop. 
@@ -239,6 +218,27 @@ template< class T_GATRAITS >
       //! \details This function makes sure that both the Objectives and the
       //! Evaluators know which Individual \a _indiv we are talking about
       void init( t_Individual &_indiv);
+
+      using t_Base :: nb_grad;
+      using t_Base :: nb_eval;
+
+    protected:
+      //! \brief Wrapper function which calls Base::evaluate(t_Individual &)
+      //! for each individual in \a _pop
+      //! \details Additionally, this function first calls Base::init to make
+      //! sure that Objective::Base::current_individual and
+      //! GA::Evaluator::init are called prior to evaluation. In the _MPI
+      //! flavor. it also synchronizes Base::store across all processors.
+      virtual void evaluate( t_Population &_pop );
+
+      //! \brief Evaluator to which all functional calls should be tunneled.
+      //! \sa GA::Evaluator, SingleSite::Evaluator, TwoSite::Evaluator,
+      //! BandGap::Evaluator, CE::Evaluator, Molecularity::Evaluator
+      t_Evaluator *evaluator;
+      //! Links quantities and Fitness. \sa Fitness, Objective
+      t_Objective *objective; 
+      //! Stores results!! \sa Store
+      t_Store *store;
   };
 
 
