@@ -20,6 +20,21 @@
 
 #include "interface.h"
 
+
+#ifdef _DIRECTIAGA
+  // declares fortran interface
+  //! \cond
+  extern "C"
+  {
+    void FC_FUNC_(getvlarg, GETVLARG)();
+    void FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( MPI_Fint * );
+    void FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( int* );
+    void FC_FUNC_(iaga_get_eigenvalues, IAGA_GET_EIGENVALUES)( double*, int* );
+  }
+  //! \endcond
+#endif
+
+
 namespace Pescan
 {
 # ifdef _DIRECTIAGA

@@ -10,10 +10,6 @@
 
 #include "types.h"
 
-#include <mpi/mpi_object.h>
-
-
-
 //! \brief Defines fuzzy math ordering operator for \a T_ARG
 //! \details if \a T_ARG is an integer type, signed or unsigned, then
 //!          Fuzzy::le, Fuzzy::leq, Fuzzy::ge, Fuzzy::geq, Fuzzy::eq are

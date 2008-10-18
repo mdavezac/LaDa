@@ -27,16 +27,6 @@
 #include <print/stdout.h>
 
 #ifdef _DIRECTIAGA
-  // declares fortran interface
-  //! \cond
-  extern "C"
-  {
-    void FC_FUNC_(getvlarg, GETVLARG)();
-    void FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( MPI_Fint * );
-    void FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( int* );
-    void FC_FUNC_(iaga_get_eigenvalues, IAGA_GET_EIGENVALUES)( double*, int* );
-  }
-  //! \endcond
 # define __DIAGA( code ) code
 # define __DIAGASUFFIX( code ) \
          t_Path( code.string() + "." + boost::lexical_cast<std::string>(MPI_COMM.rank()) )
@@ -284,31 +274,34 @@ namespace Pescan
        void set_mpi( boost::mpi::communicator* _c );
      )
 
-    protected:
-     //! Launches a calculation 
-     bool operator()(); 
-     //! launches pescan once potential has been created.
-     types::t_real launch_pescan(); 
-     //! Creates directory for computations.
-     void create_directory();
-     //! Destroys directory for computations, depending on Interface::do_destroy_dir
-     void destroy_directory_() { if (do_destroy_dir) destroy_directory(); }
-     //! Interfaces to potential creation
-     void create_potential();
-     //! Writes escan parameter input.
-     void write_escan_input();
-     //! Writes potential generation parameter input.
-     void write_genpot_input();
-     //! Reads results from escan output.
-     bool read_result();
-     //! Loads functional directly from \a _node
-     bool Load_( const TiXmlElement &_node );
 #    ifdef _DIRECTIAGA
-       //! Allows derived classes to have access to ::mpi::AddCommunicator members. 
-       boost::mpi::communicator &comm() { return MPI_COMMDEC::comm(); } 
        //! Allows derived classes to have access to ::mpi::AddCommunicator members. 
        const boost::mpi::communicator &comm() const { return MPI_COMMDEC::comm(); } 
 #    endif
+
+   protected:
+    //! Launches a calculation 
+    bool operator()(); 
+    //! launches pescan once potential has been created.
+    types::t_real launch_pescan(); 
+    //! Creates directory for computations.
+    void create_directory();
+    //! Destroys directory for computations, depending on Interface::do_destroy_dir
+    void destroy_directory_() { if (do_destroy_dir) destroy_directory(); }
+    //! Interfaces to potential creation
+    void create_potential();
+    //! Writes escan parameter input.
+    void write_escan_input();
+    //! Writes potential generation parameter input.
+    void write_genpot_input();
+    //! Reads results from escan output.
+    bool read_result();
+    //! Loads functional directly from \a _node
+    bool Load_( const TiXmlElement &_node );
+#   ifdef _DIRECTIAGA
+      //! Allows derived classes to have access to ::mpi::AddCommunicator members. 
+      boost::mpi::communicator &comm() { return MPI_COMMDEC::comm(); } 
+#   endif
   };
 
 
