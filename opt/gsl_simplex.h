@@ -37,6 +37,7 @@ namespace Minimizer {
       }
   }
   //! \endcond
+
   //! \brief Minimizer interfaces for the Gnu Scientific Library
   //! \details Interface to the following algorithms:
   //!         - Fletcher-Reeves conjugate gradient

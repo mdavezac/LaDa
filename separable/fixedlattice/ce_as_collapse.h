@@ -38,6 +38,7 @@ namespace Traits
         typedef CEasCollapse< T_CEFIT, T_COEFFICIENTS > type;
       };
     };
+   
     //! \cond
     namespace details
     {
@@ -46,6 +47,7 @@ namespace Traits
                 class T_FIT > struct CEasSeparables;
     }
     //! \endcond
+
     //! Metafunction for wrapping a CE traits as Separables function traits.
     template< class T_FIT,
               class T_COEFFICIENTS = ::CE::Policy::MatrixRangeCoefficients >

@@ -2,17 +2,17 @@
 ! Version: $Id$
 !
 
-subroutine iaga_set_mpi( comm_handle_ )
+subroutine iaga_set_mpi( in_comm_handle )
  
   use mpigroup
   implicit none
   include "mpif.h"
 
-  integer, intent(in) :: comm_handle_
+  integer, intent(in) :: in_comm_handle
 
   integer inode, ierr
 
-  comm_handle = comm_handle_
+  comm_handle = in_comm_handle
 
   call mpi_comm_rank(comm_handle,inode,ierr)
   call mpi_comm_rank(mpi_comm_world,irank,ierr)
@@ -22,18 +22,18 @@ subroutine iaga_set_mpi( comm_handle_ )
 
 end subroutine
 
-subroutine iaga_call_escan( nbstates_ )
+subroutine iaga_call_escan( in_nbstates )
   use escan_comp_api, only: escancomp
   use eigenenergy
   use mpigroup
   implicit none
   include "mpif.h"
 
-  integer, intent(in) :: nbstates_
+  integer, intent(in) :: in_nbstates
   type ( escancomp ) ecp
 
   if( allocated( zebn ) )  deallocate( zebn )
-  allocate( zebn( nbstates_ ) )
+  allocate( zebn( in_nbstates ) )
 
   ecp%comm_handle = comm_handle
   ecp%fileescaninput= "escan_input."//arank(1:len_trim(arank))
@@ -71,81 +71,98 @@ subroutine iaga_get_eigenvalues( states_, n_ )
 
 end subroutine
 
-! Computes the dipole elements between valence and conduction bands.
-subroutine iaga_dipole_elements( _dipole, _nval, _ncond )
-
-  use matelements
+! Sets stuff for supercell module.
+subroutine iaga_set_cell( in_alat, in_cellin_ng1, in_ng2, in_ng3 )
+ 
   use supercell
-  use wavefunction
-  use strings
-  
+
   implicit none
-  ! _dipole must have given format: 
-  !   1:3 corresponds to the three cartesian coordiantes.
-  !   1:4 corresponds to the four possible spin arrangements
-  !   1:_nval corresponds to the valence bands
-  !   1:_ncond corresponds to the conduction bands 
-  ! And it must be an array of 64bit fortan complexes.
-  complex*16, intent(inout) :: _dipole(1:3, 1:4, 1:_nval, 1:_ncond )
-  ! Number of valence bands.
-  integer, intent(in) :: _nval
-  ! Number of conduction bands.
-  integer, intent(in) :: _ncond
-  ! Locals. 
-  complex*16 :: dipkr(1:3,1:4)
-  complex*16 :: qdpkr(1:4)
-  complex*16, allocatable :: psi_j(:,:)
-  complex*16, allocatable :: psi_v(:,:)
+  ! cell parameter.
+  real*8, intent(in) :: in_alat
+  ! cell vectors.
+  real*8, intent(in) :: in_cell(1:3,1:3)
+  ! grid sizes.
+  integer, intent(in) :: in_ng1, in_ng2, in_ng3
 
-  ! Filenames
-  allocate( engv(1:_nval) )
-  allocate( filev(1:_nval) )
-  allocate( strgv(1:_nval) )
-  allocate( engc(1:_ncond) )
-  allocate( filec(1:_ncond) )
-  allocate( strgc(1:_ncond) )
-
-  open (unit=4,file='mxmat.d',status='old')
-
-     read (4,*) alat
-     read (4,*) a1(1),a1(2),a1(3) 
-     read (4,*) a2(1),a2(2),a2(3) 
-     read (4,*) a3(1),a3(2),a3(3) 
-     read (4,*) ng1,ng2,ng3
-     read (4,*) ngb1,ngb2,ngb3
-     do iv=1, _nval
-        read (4,*) engv(iv),filev(iv),strgv(iv)
-     end do
-     allocate (engc(1:ncon))
-     allocate (filec(1:ncon))
-     allocate (strgc(1:ncon))
-     do ic=1, _ncon
-        read (4,*) engc(ic),filec(ic),strgc(ic)
-     end do
-
-  close (unit=4)
+  a1 = in_cell(1,1:3)
+  a2 = in_cell(2,1:3)
+  a3 = in_cell(3,1:3)
+  ng1 = in_ng1
+  ng2 = in_ng2
+  ng3 = in_ng3
 
   call set_cell()
 
-  allocate( psi_i(1:ngrid, 1:2) )
-  allocate( psi_j(1:ngrid, 1:2) )
+end subroutine iaga_set_cell 
+
+! Computes the dipole elements between valence and conduction bands.
+subroutine iaga_dipole_elements( in_dipole, in_bands, in_nval, &
+                                 in_ncond, in_filename, in_length )
+
+  use matelements
+  use supercell
+  
+  implicit none
+  ! Number of valence bands.
+  integer, intent(in) :: in_nval
+  ! Number of conduction bands.
+  integer, intent(in) :: in_ncond
+  ! in_dipole must have given format: 
+  !   1:3 corresponds to the three cartesian coordinates.
+  !   1:4 corresponds to the four possible spin arrangements
+  !   1:in_nval corresponds to the valence bands
+  !   1:in_ncond corresponds to the conduction bands 
+  ! And it must be an array of 64bit fortan complexes.
+  complex*16, intent(inout) :: in_dipole(1:3, 1:4, 1:in_nval, 1:in_ncond )
+  ! Indices of the wavefunctions.
+  integer, intent(in) :: in_bands(1:in_nval+in_ncond)
+  ! Filename length
+  integer, intent(in) :: in_length
+  ! Wavefunction Filename.
+  character, intent(in) :: in_filename(1:in_length)
+
+  ! Locals. 
+  complex*16 :: qdpkr(1:4)
+  complex*16, allocatable :: psi_c(:,:)
+  complex*16, allocatable :: psi_v(:,:)
+  integer jc, iv
+
+  allocate( psi_c(1:ngrid, 1:2) )
+  allocate( psi_v(1:ngrid, 1:2) )
   
   ! Reads wavefunctions and performs calculations
-  do jc=1, _ncon
-     call readwf ('c',jc,psi_j)
-     do iv=1, _nval
-        call readwf( 'v', iv, psi_i )
-        call dqpole( psi_i(1), psi_j(1), _dipole(1,1, iv,jc ), qdpkr(1,1) )
+  open (unit=4,file=filename,form='unformatted')
+  do jc=1, in_ncond
+     call read_wavefunction( in_bands( in_nval + jc ), psi_c, fileunit )
+     do iv=1, in_nval
+        call read_wavefunction( in_bands( iv ), psi_c, fileunit ) 
+        call dqpole( psi_v, psi_c, in_dipole(:,:, iv,jc ), qdpkr )
      end do
   end do
+  close(4)
 
-  deallocate( psi_i )
-  deallocate( psi_j )
-  deallocate( engc )
-  deallocate( filec )
-  deallocate( strgc )
-  deallocate( engv )
-  deallocate( filev )
-  deallocate( strgv )
+  deallocate( psi_c )
+  deallocate( psi_v )
 
-end
+  contains
+    
+    ! Reads wavefunction from file.
+    subroutine read_wavefunction( in_n, in_psi, fileunit )
+
+      use supercell
+
+      implicit none
+      ! band index.
+      integer, intent(in) :: in_n
+      ! Wavefunction to be read.
+      complex*16, intent(inout) :: in_psi(1:ngrid, 1:2 )
+      ! File unit from which to read.
+      integer, intent(in) :: fileunit
+
+
+      read (4, POS=2*ngrid*in_n+1) psi(:,1) 
+      read (4) psi(:,2) 
+
+    end subroutine read_wavefunction
+
+end subroutine iaga_dipole_elements

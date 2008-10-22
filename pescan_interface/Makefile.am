@@ -39,11 +39,14 @@ bin_PROGRAMS = escan $(binEMASS)
 noinst_LTLIBRARIES = libescan.la
 libescan_ladir = $(includedir)/LaDa/pescan_interface 
 libescan_la_SOURCES = $(PESCAN_CC) $(emassSOURCE)
-nobase_libescan_la_HEADERS = $(PESCAN_H) $(emassHEADER)
+nobase_libescan_la_HEADERS = $(PESCAN_H) $(PESCAN_IMPL_H) $(emassHEADER)
 libescan_la_CPPFLAGS = $(AM_CPPFLAGS) 
 if DODIRECTIAGA
   libescan_la_SOURCES += $(PESCAN_CC) $(emassSOURCE) $(PESCAN_F90)
   libescan_la_FCFLAGS = $(FCFLAGS) @IAGA_FCFLAGS@
+  libescan_la_F77FLAGS = $(FCFLAGS) @IAGA_FCFLAGS@
+  libescan_la_F90FLAGS = $(FCFLAGS) @IAGA_FCFLAGS@
+  libescan_la_FFLAGS = $(FCFLAGS) @IAGA_FCFLAGS@
 endif
 
 escan_SOURCES = main.cc

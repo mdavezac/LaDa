@@ -228,8 +228,11 @@ namespace Pescan
     child->Attribute("y", &genpot.y);
     child->Attribute("z", &genpot.z);
     child->Attribute("cutoff", &genpot.cutoff);
-    if ( child->Attribute("launch") )
-      genpot.launch = child->Attribute("launch");
+    __IIAGA
+    (
+      if ( child->Attribute("launch") )
+        genpot.launch = child->Attribute("launch");
+    )
     child = child->FirstChildElement("Pseudo");
     for(; child; child = child->NextSiblingElement() )
       if ( child->Attribute("filename") )
@@ -258,8 +261,11 @@ namespace Pescan
                 "realcutoff attribute is missing in <Hamiltonian> tag.\n")
     __DOASSERT( not child->Attribute("potential"),
                 "potential attribute is missing in <Hamiltonian> tag.\n")
-    if ( child->Attribute("launch") )
-      escan.launch = child->Attribute("launch");
+    __IIAGA
+    (
+      if ( child->Attribute("launch") )
+        escan.launch = child->Attribute("launch");
+    )
 
     __TRYCODE( check_existence();, "Some files and/or programs are missing.\n" )
 
@@ -370,10 +376,11 @@ namespace Pescan
       file << *i_r;
       for(--i_r_end; i_r != i_r_end; ++i_r)
         file << ", " << *i_r;
-      file << "\n" << "9 " << escan.wavefunction_in << "\n"
-           << "10 0 4 4 4 graph.R\n";
+      file << "\n" << "9 " << escan.wavefunction_in << "\n";
     }
-    else  file << "7 0\n8 0\n9 dummy\n10 0 4 4 4 graph.R\n";
+    else  file << "7 0\n8 0\n9 dummy\n";
+    file << "10 " << escan.rspace_output << " "
+                  << " 1 1 1 " << escan.rspace_wfn << "\n";
 
     if ( atat::norm2( escan.kpoint ) < types::tolerance ) file << "11 0 0 0 0 0\n";
     else

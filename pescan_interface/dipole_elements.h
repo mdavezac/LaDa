@@ -1,51 +1,69 @@
 //
-//  Version: $Id: interface.h 816 2008-10-17 01:29:20Z davezac $
+//  Version: $Id$
 //
-#if undefined( _PESCAN_INTERFACE_DIPOLE_ELEMENTS_H_ ) && defined( _DIRECTIAGA ) 
+#ifndef _PESCAN_INTERFACE_DIPOLE_ELEMENTS_H_ 
 # define _PESCAN_INTERFACE_DIPOLE_ELEMENTS_H_
+# ifdef _DIRECTIAGA 
 
 # ifdef HAVE_CONFIG_H
 #   include <config.h>
 # endif
 
-# include<cmath>
+# include<vector>
+# include<complex>
 
 # include<opt/types.h>
 
-  // declares fortran interface
   //! \cond
-  extern "C"
+  namespace Crystal 
   {
-    void FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( MPI_Fint * );
-    void FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( int* );
-    void FC_FUNC_(iaga_get_eigenvalues, IAGA_GET_EIGENVALUES)( double*, int* );
+    class Structure;
   }
-  namespace Pescan { class BandGap; }
-
   //! \endcond
-
 
   namespace Pescan
   {
+    //! \cond
+    class BandGap;
+    //! \endcond
+
+    //! Holds dipole moments.
     struct Dipole
     {
+      enum t_SpinTransition
+      {
+        DOWN2DOWN, //!< Spin down to spin down transitions.
+        DOWN2UP, //!< Spin down to spin up transitions.
+        UP2UP, //!< Spin up to spin up transitions.
+        UP2DOWN //!< Spin up to spin down transitions.
+      };
+      typedef std::pair<size_t, size_t> t_Band2Band;
       //! The complex dipole moment.
       std::complex<types::t_real> r[3];
-      //! band index i. Negative are conduction bands.
-      int i;
-      //! band index j. Negative are conduction bands.
-      int j;
-      //! 0 is up, 1 is down.
-      bool ispin;
-      //!  0 is up, 1 is down.
-      bool jspin;
+      //! Indices of bands in transition.
+      t_Band2Band band2band;
+      //! Spin transition.
+      t_SpinTransition spin2spin;
       //! Serializes a dipole moment.
       template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
-        {  _ar & r; _ar & i; _ar & j; _ar & ispin ; _ar & jspin; }
+        {  _ar & r; _ar & band2band; _ar & spin2spin; }
     };
+    //! Prints a dipole moment.
+    std::ostream& operator<<( std::ostream &_stream, const Dipole& );
+    //! Computes dipole elements between valence and conduction bands.
+    void dipole_elements( std::vector< Dipole > &_dipoles,
+                          const BandGap& _bandgap,
+                          const Crystal::Structure &_structure,
+                          types::t_real _degeneracy = types::tolerance );
     //! Returns the valence-conduction the norm of the band dipole elements.
-    types::t_real dipole_elements( const BandGap& _bandgap, 
-                                   types::t_real _degeneracy = types::tolerance );
+    types::t_real oscillator_strength( const std::vector<Dipole> &_dipoles );
+    //! Returns the valence-conduction the norm of the band dipole elements.
+    types::t_real oscillator_strength( const BandGap& _bandgap,
+                                       const Crystal::Structure &_structure,
+                                       types::t_real _degeneracy = types::tolerance,
+                                       bool _print = false );
+
   }
 
+# endif
 #endif

@@ -43,6 +43,7 @@
 #else
 
   #include "va.h"
+  #include "dipole_elements.h"
   typedef Pescan::VirtualAtom t_Pescan;
   typedef Vff::VABase<Vff::Functional> t_Vff;
 # define __PROGNAME__ "Empirical Pseudo-Potential Functional"
@@ -73,6 +74,7 @@ bool evaluate( const TiXmlElement &_node,
 
 #ifndef _EMASS
    Pescan::BandGap& bandgap = _pescan.BandGap();
+   bandgap.escan.rspace_output = Pescan::Interface::Escan::WFN_AFTER_CALL;
    bandgap.set_method( Pescan::Interface::ALL_ELECTRON );
    if( _doeval ) _structure.energy = _pescan.evaluate();
 #else
@@ -99,8 +101,13 @@ int main(int argc, char *argv[])
   
   __BPO_START__;
   __BPO_SPECIFICS__( "Escan Specific Options" )
+#     ifndef _EMASS
+        ( "dipoles,d", "Compute Dipole Moments" )
+        ( "degeneracy", po::value<types::t_real>()->default_value(types::tolerance),
+          "Allowable band degeneracy when computing dipole moments" )
+#     endif
       ("check,c", po::value<std::string>(), "GA output filename." ) 
-      ("donteval,d", "Whether to perform evaluation." );
+      ("donteval", "Whether to perform evaluation." );
   __BPO_GENERATE__()
   __BPO_MAP__ 
   __BPO_HELP_N_VERSION__
@@ -135,11 +142,20 @@ int main(int argc, char *argv[])
       }
   }
   bool do_evaluate( vm.count( "donteval" ) == 0 );
+# if !defined( _EMASS )
+    const bool compute_dipoles( vm.count("dipole") != 0 and do_evaluate );
+    const types::t_real degeneracy( vm["degeneracy"].as<types::t_real>() );
+# endif
 
   __ROOTCODE
   (
     (*::mpi::main),
-    std::cout << "Input filename: " << filename << "\n";
+    std::cout << "Input filename: " << filename
+#   ifndef _EMASS_ 
+              << "\nWill " << ( compute_dipoles ? "not ": " " ) 
+              << "compute dipole moments."
+#   endif
+              << "\n";
     if( do_check ) std::cout << "Will check GA output structures from file "
                              << checkfilename << "\n";
     if( not do_evaluate ) 
@@ -199,6 +215,11 @@ int main(int argc, char *argv[])
         std::cout << "\nVBM: " << bandgap.bands.vbm
                   << " -- CBM:" << bandgap.bands.cbm
                   << "    ---    Band Gap: " << bandgap.bands.gap() << std::endl;
+      if( compute_dipoles )
+        std::cout << "oscillator_strength: "
+                  << Pescan::oscillator_strength( bandgap, structure, degeneracy, true )
+                  << "\n";
+      else std::cout << "no dipole computation\n";
 #     else
         std::cout << "Emass tensor:\n" << pescan.tensor;
 #     endif
@@ -227,6 +248,11 @@ int main(int argc, char *argv[])
         std::cout << "\nVBM: " << bandgap.bands.vbm
                   << " -- CBM:" << bandgap.bands.cbm
                   << "    ---    Band Gap: " << bandgap.bands.gap() << std::endl;
+        if( compute_dipoles )
+          std::cout << "oscillator_strength: "
+                    << Pescan::oscillator_strength( bandgap, structure, degeneracy, true )
+                    << "\n";
+        else std::cout << "no dipole computation\n";
 #     else
         std::cout << "Emass tensor:\n" << pescan.tensor;
 #     endif
@@ -251,6 +277,9 @@ int main(int argc, char *argv[])
         std::cout << "\nVBM: " << bandgap.bands.vbm
                   << " -- CBM:" << bandgap.bands.cbm
                   << "    ---    Band Gap: " << bandgap.bands.gap() << std::endl;
+          std::cout << "oscillator_strength: "
+                    << Pescan::oscillator_strength( bandgap, structure, degeneracy, true )
+                    << "\n";
 #     else
         std::cout << "Emass tensor:\n" << pescan.tensor;
 #     endif

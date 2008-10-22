@@ -3,7 +3,7 @@
 #
 
 ATAT_CC = findsym.cc integer.cc xtalutil.cc 
-ATAT_H  = findsym.h  integer.h  xtalutil.h \
+ATAT_H  = findsym.h  integer.h  xtalutil.h lambda.impl.h \
           array.h  arraylist.h   fixagg.h  fxvector.h \
 	  linklist.h  machdep.h  misc.h  vectmac.h  
 
@@ -93,9 +93,10 @@ EMASS_CC = emass.cc
 EMASS_H  = emass.h
 EMASS_DOC = $(EMASS_H) $(EMASS_CC) 
 PESCAN_F90 = fortran.f90
-PESCAN_CC = interface.cc bandgap.cc va.cc 
-PESCAN_H  = interface.h  bandgap.h  va.h 
-PESCAN_DOC = $(PESCAN_H) $(PESCAN_CC) $(PESCAN_F90)
+PESCAN_CC = interface.cc bandgap.cc va.cc dipole_elements.cc
+PESCAN_H  = interface.h  bandgap.h  va.h dipole_elements.h
+PESCAN_IMPL_H  = interface.localclasses.h
+PESCAN_DOC = $(PESCAN_H) $(PESCAN_CC) $(PESCAN_F90) $(PESCAN_IMPL_H)
 
 PHYSICS_CC = physics.cc
 PHYSICS_H  = physics.h
@@ -141,26 +142,26 @@ DOCS =  beginners  crystal  fortran  functionals  ga  \
 SCRIPT_FILES = atat.pl  CE_to_ATAT_MC.pl  convert_from_atat.pl  escan_to_xml.pl\
                input_template.xml  max_revision.pl  nxnxn.pl  send_all.pl
 
-ALL_DOCS = doxy.conf $(DOCS_H) \
-           $(addprefix docsource/, $(DOCS)) \
-           $(addprefix darwin/, $(DARWIN_LIB_DOC)) \
-           $(addprefix darwin/, $(DARWIN_CE_DOC)) \
-           $(addprefix darwin/, $(DARWIN_BG_DOC)) \
-           $(addprefix darwin/, $(DARWIN_L_DOC)) \
-           $(addprefix darwin/, $(DARWIN_E_DOC)) \
-           $(addprefix crystal/,$(CRYSTAL_DOC)) \
-           $(addprefix ce/,$(CE_DOC)) \
-           $(addprefix lapack/,$(LAPACK_DOC)) \
-           $(addprefix mpi/,$(MPI_DOC)) \
-           $(addprefix opt/,$(OPT_DOC)) \
-           $(addprefix pescan_interface/,$(EMASS_DOC)) \
-           $(addprefix pescan_interface/,$(PESCAN_DOC)) \
-           $(addprefix physics/,$(PHYSICS_DOC)) \
-           $(addprefix print/,$(PRINT_DOC)) \
-           $(addprefix separable/,$(SEPARABLE_DOC)) \
-           $(addprefix separable/fixedlattice,$(SEPARABLES_DOC)) \
-           $(addprefix vff/,$(VFF_FORTRAN_DOC)) \
-           $(addprefix vff/,$(VFF_DOC)) 
+ALL_DOCS = $(top_srcdir)/doxy.conf $(top_srcdir)/$(DOCS_H) \
+           $(addprefix $(top_srcdir)/docsource/, $(DOCS)) \
+           $(addprefix $(top_srcdir)/darwin/, $(DARWIN_LIB_DOC)) \
+           $(addprefix $(top_srcdir)/darwin/, $(DARWIN_CE_DOC)) \
+           $(addprefix $(top_srcdir)/darwin/, $(DARWIN_BG_DOC)) \
+           $(addprefix $(top_srcdir)/darwin/, $(DARWIN_L_DOC)) \
+           $(addprefix $(top_srcdir)/darwin/, $(DARWIN_E_DOC)) \
+           $(addprefix $(top_srcdir)/crystal/,$(CRYSTAL_DOC)) \
+           $(addprefix $(top_srcdir)/ce/,$(CE_DOC)) \
+           $(addprefix $(top_srcdir)/lapack/,$(LAPACK_DOC)) \
+           $(addprefix $(top_srcdir)/mpi/,$(MPI_DOC)) \
+           $(addprefix $(top_srcdir)/opt/,$(OPT_DOC)) \
+           $(addprefix $(top_srcdir)/pescan_interface/,$(EMASS_DOC)) \
+           $(addprefix $(top_srcdir)/pescan_interface/,$(PESCAN_DOC)) \
+           $(addprefix $(top_srcdir)/physics/,$(PHYSICS_DOC)) \
+           $(addprefix $(top_srcdir)/print/,$(PRINT_DOC)) \
+           $(addprefix $(top_srcdir)/separable/,$(SEPARABLE_DOC)) \
+           $(addprefix $(top_srcdir)/separable/fixedlattice/,$(SEPARABLES_DOC)) \
+           $(addprefix $(top_srcdir)/vff/,$(VFF_FORTRAN_DOC)) \
+           $(addprefix $(top_srcdir)/vff/,$(VFF_DOC)) 
 
 TEST_PSEUDOS = maskr  vq.atom1  vq.atom2  vq.atom3  vq.atom4  vq.atom5 \
                vq.atom6  vq.atom7  vq.atom8  vwr.pso
@@ -215,6 +216,7 @@ TEST_SEPARABLES_DCUBIC = LDAs.dat \
                          SL_110_A3B-A3B
 TEST_VFF = launch.pl  launch.sh  quaternary.xml  ternary.xml
 TEST_VFF_NANOPSE = position.GaSb  scanparam.GaSb  vff.in  vffparam.GaSb
+ENVIRONMENT_FILES = env
 
 EXTRA_FILES =  $(addprefix docsource/, $(DOCS)) \
                $(addprefix scripts/, $(SCRIPT_FILES)) \
@@ -226,7 +228,8 @@ EXTRA_FILES =  $(addprefix docsource/, $(DOCS)) \
                $(addprefix test/separables/dcubic/, $(TEST_SEPARABLES_DCUBIC)) \
                $(addprefix test/separables/dcubic/, $(TEST_SEPARABLES_DCUBIC)) \
                $(addprefix test/layered_opt/, $(TEST_FILES)) \
-               $(addprefix test/vff/nanopse/, $(TEST_VFF_NANOPSE))
+               $(addprefix test/vff/nanopse/, $(TEST_VFF_NANOPSE)) \
+               $(addprefix pkgconfig/env/, $(ENVIRONMENT_FILES))
             #  test/bandgap/calc \
             #  test/python test/vff/calc \
             #  test/bandgap_opt/calc \

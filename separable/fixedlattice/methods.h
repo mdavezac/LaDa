@@ -75,6 +75,7 @@ namespace CE
       };
     }
     //! \endcond
+
     //! Class for fitting separables and mixed approaches.
     template< class T_POLICY = Policy::Nothing >
     class Fit
