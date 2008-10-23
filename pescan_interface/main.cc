@@ -271,12 +271,50 @@ int main(int argc, char *argv[])
       structure.print_out( std::cout ); 
       std::cout << "\n\n";
       structure.print_xcrysden( std::cout );
-      if ( not do_evaluate ) continue;
+//     if ( not do_evaluate ) continue;
 #     ifndef _EMASS
-        const Pescan::BandGap& bandgap = (const Pescan::BandGap&) pescan;
+//       const Pescan::BandGap& bandgap = (const Pescan::BandGap&) pescan;
+        Pescan::BandGap& bandgap = (Pescan::BandGap&) pescan;
         std::cout << "\nVBM: " << bandgap.bands.vbm
                   << " -- CBM:" << bandgap.bands.cbm
                   << "    ---    Band Gap: " << bandgap.bands.gap() << std::endl;
+        bandgap.eigenvalues.clear();
+        bandgap.eigenvalues.push_back( -0.70901723673688466e0 );
+        bandgap.eigenvalues.push_back( -0.68309604472960483e0 );
+        bandgap.eigenvalues.push_back( -0.67281325704593919e0 );
+        bandgap.eigenvalues.push_back( -0.62756363017878858e0 );
+        bandgap.eigenvalues.push_back( -0.60229511248203260e0 );
+        bandgap.eigenvalues.push_back( -0.58847846945940119e0 );
+        bandgap.eigenvalues.push_back( -0.58701852305360425e0 );
+        bandgap.eigenvalues.push_back( -0.57925758381173897e0 );
+        bandgap.eigenvalues.push_back( -0.44305658641816198e0 );
+        bandgap.eigenvalues.push_back( -0.43648201353915156e0 );
+        bandgap.eigenvalues.push_back( -0.43393450737341621e0 );
+        bandgap.eigenvalues.push_back( -0.43049651938302269e0 );
+        bandgap.eigenvalues.push_back( -0.42973720813485394e0 );
+        bandgap.eigenvalues.push_back( -0.42935929108758714e0 );
+        bandgap.eigenvalues.push_back( -0.42271399633501422e0 );
+        bandgap.eigenvalues.push_back( -0.30217478051297092e0 );
+        bandgap.eigenvalues.push_back( -0.29759083131265834e0 );
+        bandgap.eigenvalues.push_back( -0.29208104213309954e0 );
+        bandgap.eigenvalues.push_back( -0.28901572497824213e0 );
+        bandgap.eigenvalues.push_back( -0.28484493288616974e0 );
+        bandgap.eigenvalues.push_back( -0.28162144758675789e0 );
+        bandgap.eigenvalues.push_back( -0.25065308270200265e0 );
+        bandgap.eigenvalues.push_back( -0.24758386957743173e0 );
+        bandgap.eigenvalues.push_back( -0.24267801736958261e0 );
+        bandgap.eigenvalues.push_back( -0.23886634318751651e0 );
+        bandgap.eigenvalues.push_back( -0.23290426403269765e0 );
+        bandgap.eigenvalues.push_back( -0.22733513805707850e0 );
+        bandgap.eigenvalues.push_back( -0.22039331158218275e0 );
+        bandgap.eigenvalues.push_back( -0.21810395591884335e0 );
+        bandgap.eigenvalues.push_back( -0.20972454395681303e0 );
+        bandgap.eigenvalues.push_back( -0.18884797109807500e0 );
+        bandgap.eigenvalues.push_back( -0.18294040863380412e0 );
+        bandgap.eigenvalues.push_back( -0.18103982066164309e0 );
+        bandgap.bands.vbm = -0.18294040863380412e0;
+        bandgap.bands.cbm = -0.18103982066164309e0;
+
           std::cout << "oscillator_strength: "
                     << Pescan::oscillator_strength( bandgap, structure, degeneracy, true )
                     << "\n";

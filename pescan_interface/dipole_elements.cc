@@ -6,12 +6,15 @@
 #  include <config.h>
 #endif
 
+#ifdef _LADADEBUG
+# include <boost/bind.hpp>
+# include <boost/filesystem/operations.hpp>
+#endif
+
 #include <mpi/mpi_object.h>
 #include <opt/initial_path.h>
 #include <opt/debug.h>
-#ifdef _LADADEBUG
-# include <boost/bind.hpp>
-#endif
+#include <physics/physics.h>
 
 #include "bandgap.h"
 #include "dipole_elements.h"
@@ -20,9 +23,10 @@
 extern "C"
 {
   void FC_FUNC_(iaga_set_cell,IAGA_SET_CELL)
-               (const double*, const double*, const int*, const int*, const int* );
+               (const double*, const double[3][3], const int*, const int*, const int* );
   void FC_FUNC_(iaga_dipole_elements, IAGA_DIPOLE_ELEMENTS)
-               (double*, int*, int*, int*, const char*, const int* );
+               ( double*, const int*, const int*, const int*,
+                 const int*, const char*, const int*, const char*, const int* );
 }
 
 
@@ -33,7 +37,11 @@ namespace Pescan
                         const Crystal::Structure &_structure,
                         types::t_real _degeneracy )
   {
-    __DODEBUGCODE( namespace bl = boost::lambda; )
+    __DODEBUGCODE
+    ( 
+      namespace bl = boost::lambda; 
+      namespace bfs = boost::filesystem; 
+    )
     int ncond(0), nval(0), startval(-1);
     const size_t dipole_array_size( 2 * 3 * 4 * nval * ncond );
     __ASSERT( _bandgap.eigenvalues.size() < 2,
@@ -79,35 +87,65 @@ namespace Pescan
     }
     
     // Sends cell parameters to fortran
+    const types::t_real alat( _structure.scale / Physics::a0("A") );
     FC_FUNC_(iaga_set_cell,IAGA_SET_CELL)
-            ( &_structure.scale, _structure.cell.x,
-              &bandgap.genpot.x, &bandgap.genpot.y, &bandgap.genpot.z );
+            ( &alat, _structure.cell.x, &_bandgap.genpot.x, 
+              &_bandgap.genpot.y, &_bandgap.genpot.z );
+
     // Call fortran code.
     double dipoles[ dipole_array_size ];
-    const char* filename = bandgap.escan.rspace_wfn.string().c_str();
-    const int fsize( bandgap.escan.rspace_wfn.string().size() );
-    FC_FUNC_(iaga_dipole_elements, IAGA_DIPOLE_ELEMENTS)
-            ( dipoles, &nval, &ncond, filename, &fsize );
+    const boost::filesystem::path holepath
+    (
+      (
+        _bandgap.escan.method == Interface::ALL_ELECTRON ?
+          opt::InitialPath::path() / _bandgap.get_dirname():
+          opt::InitialPath::path() / _bandgap.get_dirname() / "cbm"
+      ) / _bandgap.escan.rspace_wfn
+    ); 
+    const char* holename = holepath.string().c_str();
+    const int holesize( holepath.string().size() );
+    const boost::filesystem::path electronpath
+    (
+      (
+        _bandgap.escan.method == Interface::ALL_ELECTRON ?
+          opt::InitialPath::path() / _bandgap.get_dirname():
+          opt::InitialPath::path() / _bandgap.get_dirname() / "vbm"
+      ) / _bandgap.escan.rspace_wfn
+    ); 
 
+    __ASSERT( not bfs::exists( holepath ), holepath << " does not exist.\n" )
+    __ASSERT( not bfs::exists( electronpath ), electronpath << " does not exist.\n" )
+    const char* electronname = electronpath.string().c_str();
+    const int electronsize( electronpath.string().size() );
+    FC_FUNC_(iaga_dipole_elements, IAGA_DIPOLE_ELEMENTS)
+            ( dipoles, &(bands[0]), &(bands[nval]), &nval, &ncond,
+              electronname, &electronsize, holename, &holesize );
+
+    // copies results to output vector.
+    // loop positions determined by order of dipoles in fortran code.
     Dipole dipole;
     types::t_real *i_dip( dipoles ); 
-    for( size_t sp(0u); sp < 4u; ++sp )
-      for( dipole.band2band.first=startval;
-           dipole.band2band.first < nval + startval; 
-           ++dipole.band2band.first )
-        for( dipole.band2band.second = startval + nval;
-             dipole.band2band.second < ncond + startval + nval; 
-             ++dipole.band2band.second )
+    for( size_t l(0); l < nval; ++l )
+    {
+      dipole.band2band.first = bands[l];
+      for( size_t k(0); k < ncond; ++k )
+      {
+        dipole.band2band.second = bands[nval + k];
+        for( size_t sp(0u); sp < 4u; ++sp )
+        {
+          dipole.spin2spin = Dipole::t_SpinTransition( sp );
           for( size_t r(0u); r < 3u; ++r )
           {
-            dipole.spin2spin = Dipole::t_SpinTransition( sp );
             dipole.r[0] = std::complex<types::t_real>( *i_dip, *(i_dip+1) );
             i_dip += 2;
             dipole.r[1] = std::complex<types::t_real>( *i_dip, *(i_dip+1) );
             i_dip += 2;
             dipole.r[2] = std::complex<types::t_real>( *i_dip, *(i_dip+1) );
             _dipoles.push_back( dipole );
-          }
+          } // loop over cartesian coordinates
+        } // loop over spins
+      } // loop over conduction bands
+    } // loop over valence bands
   }
 
   
