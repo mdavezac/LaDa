@@ -13,6 +13,7 @@
 #include <crystal/atom.h>
 #include <opt/fuzzy.h>
 #include <opt/debug.h>
+#include <mpi/mpi_object.h>
 
 namespace Layered
 {
@@ -386,12 +387,9 @@ errorout:
       structure.scale = 2;
 
     // Load in PI and Energy
-    structure.Pi_name = 0;
-    if( _node.Attribute("PI") )
-    {
-      _node.Attribute("PI", &u);
-      structure.Pi_name = (types::t_int) u;
-    }
+    structure.name = "";
+    if ( _node.Attribute("name") )
+      structure.name = _node.Attribute("name");
     double d;
     structure.energy = 666.666;
     if( _node.Attribute("energy") )
@@ -468,8 +466,12 @@ errorout:
 
     concentration.setfrozen( structure );
 
-    __ROOTCODE( structure.print_xcrysden( std::cout );
-                std::cout << std::endl; )
+    __ROOTCODE
+    ( 
+      t_Base :: comm(),
+      structure.print_xcrysden( std::cout );
+      std::cout << std::endl;
+    )
 
     return true;
 

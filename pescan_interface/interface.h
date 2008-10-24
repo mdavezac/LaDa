@@ -109,12 +109,12 @@ namespace Pescan
 
       //! Constructor
       Interface()
-        : __DIAGA( MPI_COMMCOPY( *::mpi::main ) MPI_COMMA )
+        : __DIAGA( MPI_COMMCOPY( *::mpi::main ) __COMMA__ )
           atom_input("atom.config"), genpot(), escan(),
           maskr("maskr"), dirname("ESCAN"), do_destroy_dir(true) {}
       //! Copy Constructor
       Interface   ( const Interface &_c )
-                : __DIAGA( MPI_COMMCOPY( _c ) MPI_COMMA )
+                : __DIAGA( MPI_COMMCOPY( _c ) __COMMA__ )
                   atom_input( _c.atom_input ), genpot( _c.genpot ),
                   escan( _c.escan ), maskr( _c.maskr ),
                   dirname( _c.dirname ), do_destroy_dir( _c.do_destroy_dir ),

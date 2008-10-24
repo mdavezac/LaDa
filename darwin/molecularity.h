@@ -39,16 +39,11 @@ namespace Molecularity
   //! \brief bitstring object for layered structures, including variables for stress
   //! and band-edges.
   class Object : public Layered::Object<>,
-                 public Vff::Keeper, 
-                 public BandGap::Keeper
+                 public ::GA::Keepers::BandGap
   {
     protected:
       //! Layered bitstring base
       typedef Layered :: Object<> t_LayeredBase;  
-      //! Strain info base 
-      typedef Vff::Keeper         t_VffBase;      
-      //! Band gap info base
-      typedef BandGap::Keeper     t_BandGapBase;   
 
     public:
       //! see function::Base::t_Type
@@ -58,18 +53,24 @@ namespace Molecularity
 
     public:
       //! Constructor
-      Object() : t_LayeredBase(), t_VffBase(), t_BandGapBase() {}
+      Object() : t_LayeredBase(), ::GA::Keepers::BandGap() {}
       //! Copy Constructor
-      Object(const Object &_c) : t_LayeredBase(_c), t_VffBase(_c), t_BandGapBase(_c) {};
+      Object(const Object &_c) : t_LayeredBase(_c), ::GA::Keepers::BandGap(_c) {};
       //! Destructor
-      ~Object() {};
+      virtual ~Object() {};
       
       //! Loads strain and band-gap info from XML
       bool Load( const TiXmlElement &_node )
-        { return t_VffBase::Load(_node) and t_BandGapBase::Load(_node); }
+        { return ::GA::Keepers::BandGap::Load(_node); }
       //! Saves strain and band-gap info to XML
       bool Save( TiXmlElement &_node ) const
-        { return t_VffBase::Save(_node) and t_BandGapBase::Save(_node); }
+        { return ::GA::Keepers::BandGap::Save(_node); }
+      //! Serializes a scalar individual.
+      template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
+      {
+        _ar & boost::serialization::base_object< t_LayeredBase >(*this);  
+        _ar & boost::serialization::base_object< ::GA::Keepers::BandGap >(*this);  
+      }
   };
 
   //! \brief Explicitely defines stream dumping of Molecularity::Object 
@@ -106,19 +107,6 @@ namespace Molecularity
       typedef Layered::Evaluator<t_Individual> t_Base;
 
     public:
-      using t_Base :: Load; 
-
-    protected:
-      using t_Base :: current_individual;
-      using t_Base :: current_object;
-
-    protected:
-      //! The pescan interface object for obtaining band-gaps
-      BandGap::Darwin bandgap;
-      //! The vff object for minimizing and computing strain/stress.
-      Vff::Darwin<Vff::Layered> vff;
-
-    public:
       //! Constructor
       Evaluator() : t_Base(), bandgap(structure), vff(structure) {}
       //! Copy Constructor
@@ -148,9 +136,23 @@ namespace Molecularity
       void init( t_Individual &_indiv )
         { t_Base :: init( _indiv ); vff.init(); }
 
+#ifdef _MPI
+      //! forwards comm and suffix to bandgap.
+      void set_mpi( boost::mpi::communicator *_comm, const std::string &_str )
+        { t_Base::set_mpi( _comm, _str ); bandgap.set_mpi( _comm, _str ); }
+#endif
+      using t_Base :: Load; 
+
     protected:
       //! Transforms stress and band-edges to quantities in \a _indiv.
       void object_to_quantities( t_Individual & _indiv );
+
+      //! The pescan interface object for obtaining band-gaps
+      BandGap::Darwin bandgap;
+      //! The vff object for minimizing and computing strain/stress.
+      Vff::Darwin<Vff::Layered> vff;
+      using t_Base :: current_individual;
+      using t_Base :: current_object;
   };
 
 }

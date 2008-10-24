@@ -65,7 +65,7 @@ namespace GA
   //! type will be passed on to rest of the %GA through Evaluator :: t_Individual
   //! and the derived class' t_GATraits :: t_Individual.
   template< class T_INDIVIDUAL>
-  class Evaluator
+  class Evaluator __MPICODE( : public MPI_COMMDEC )
   {
     public:
       typedef T_INDIVIDUAL   t_Individual; //!< The type of individual
@@ -98,23 +98,21 @@ namespace GA
       //! \brief see Evaluator::current_individual
       //! \details Provided for convenience.
       t_Object *current_object;
-      //! Communication group for which this evaluator is set up.
-      __MPICODE( boost::mpi::communicator *comm; ) 
       //! Suffix string for files/directories
       __MPICODE( std::string suffix; ) 
 
     public:
       //! Constructor
-      Evaluator() : current_individual(NULL),
+      Evaluator() : __MPICODE( MPI_COMMCOPY( *::mpi::main ) __COMMA__ )
+                    current_individual(NULL),
                     current_object(NULL)
-                    __MPICONSTRUCTORCODE( comm() )
-                    __MPICONSTRUCTORCODE( suffix("") ) {};
+                    __MPICODE( __COMMA__ suffix("") ) {};
       //! Copy Constructor
       Evaluator   ( const Evaluator &_c )
-                : current_individual( _c.current_individual ),
+                : __MPICODE( MPI_COMMCOPY( _c ) __COMMA__ )
+                  current_individual( _c.current_individual ),
                   current_object( _c.current_object )
-                  __MPICONSTRUCTORCODE( comm( _c.comm ) )
-                  __MPICONSTRUCTORCODE( suffix( _c.suffix ) ) {};
+                  __MPICODE( __COMMA__ suffix( _c.suffix ) ) {};
       //! Destructor
       ~Evaluator() {}
 
@@ -219,7 +217,11 @@ namespace GA
 #ifdef _MPI
       //! Sets communicator and suffix for mpi stuff.
       void set_mpi( boost::mpi::communicator *_comm, const std::string &_suffix )
-        { comm = _comm; suffix = _suffix; }
+        { MPI_COMMDEC::set_mpi( _comm ); suffix = _suffix; }
+      //! Allows derived classes to have access to ::mpi::AddCommunicator members. 
+      boost::mpi::communicator &comm() { return MPI_COMMDEC::comm(); } 
+      //! Allows derived classes to have access to ::mpi::AddCommunicator members. 
+      const boost::mpi::communicator &comm() const { return MPI_COMMDEC::comm(); } 
 #endif
   };
 

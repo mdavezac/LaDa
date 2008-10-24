@@ -83,7 +83,7 @@ namespace BandGap
       { return     ::GA::Keepers::BandGap::Save( _node ) 
                and ::GA::Keepers::ConcTwo::Save( _node ); }
     //! Destructor
-    ~Object() {};
+    virtual ~Object() {};
     //! Serializes a scalar individual.
     template<class Archive> void serialize(Archive & _ar, const unsigned int _version);
   };
@@ -188,10 +188,9 @@ namespace BandGap
   template<class Archive>
     void Object :: serialize(Archive & _ar, const unsigned int _version)
     {
+      _ar & boost::serialization::base_object< TwoSites::Object >( *this ); 
       _ar & boost::serialization::base_object< ::GA::Keepers::BandGap >( *this ); 
       _ar & boost::serialization::base_object< ::GA::Keepers::ConcTwo >( *this ); 
-      _ar & x;
-      _ar & y;
     }
   
 } // namespace BandGap

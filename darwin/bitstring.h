@@ -72,7 +72,7 @@ namespace BitString
       //! Constructor. Initializes the bitstring from \a _c
       Object(const t_Container &_c) : bitstring(_c) {};
       //! Destructor
-      ~Object() {};
+      virtual ~Object() {};
     
       //! Returns true if the bitstrings are equal
       bool operator==( const Object &_c ) const

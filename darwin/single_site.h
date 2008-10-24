@@ -88,10 +88,6 @@ namespace SingleSite
       Object(const Object &_c) : t_Base(_c) {};
       //! Destructor
       ~Object() {};
-    
-      //! Serializes a single-site object.
-      template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
-        { _ar & boost::serialization::base_object< BitString::Object<> >(*this); }
   };
 
   //! Dumps the decoration of \a _str into the object \a _o
