@@ -44,7 +44,7 @@
 
   #include "va.h"
   #include "dipole_elements.h"
-  typedef Pescan::VirtualAtom t_Pescan;
+  typedef Pescan::VirtualAtom< Vff::Functional > t_Pescan;
   typedef Vff::VABase<Vff::Functional> t_Vff;
 # define __PROGNAME__ "Empirical Pseudo-Potential Functional"
 

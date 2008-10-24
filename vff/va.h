@@ -46,6 +46,7 @@ namespace Vff
   {
      //! Type of the path.
      typedef boost::filesystem::path t_Path;
+    public:
      //! Type from which the vff functional is derived
      typedef T_VFFBASE t_VffBase;
      //! Type from which the VA functional is derived

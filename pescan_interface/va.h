@@ -20,6 +20,14 @@
 
 namespace Pescan
 {
+  //! \cond
+  template< class > class VirtualAtom;
+  //!\ endcond
+
+  //! Dumps structure to \a _stream
+  template< class T_VFF >
+    std::ostream& operator<<( std::ostream& _stream, const VirtualAtom<T_VFF>& _va );
+
   /** \brief Implements Virtual Atom for escan band-gaps.
    *  \details The Hamiltonian of escan in reciprocal space, with \b G and \b G' two reciprocal vectors is
    *           \f[
@@ -163,9 +171,10 @@ namespace Pescan
    *
    *
    */
+  template< class T_VFF >
   class VirtualAtom : protected BandGap, public function::VirtualAtom
   {
-     friend std::ostream& operator<<( std::ostream& _stream, const VirtualAtom& _va );
+     friend std::ostream& operator<< <T_VFF>( std::ostream& _stream, const VirtualAtom& _va );
      protected:
        //! Type from which the VA functional is derived
        typedef function::VirtualAtom t_VABase;
@@ -174,7 +183,7 @@ namespace Pescan
        //! \brief Type of the Valence Force Field Functional class
        //! \details It is fitted into a class which adds positional pertubation
        //!          stuff
-       typedef Vff::PescanPerturbations t_Vff;
+       typedef Vff::PescanPerturbations<T_VFF> t_Vff;
 
        //! Amplitude of the numerical derivative
        const static types::t_real deriv_amplitude = 0.01;
@@ -259,108 +268,9 @@ namespace Pescan
        types::t_real apply_wfns();
   };
 
-  inline VirtualAtom::t_Type VirtualAtom::evaluate()
-  { 
-    namespace bfs = boost::filesystem;
-    __DIAGA(
-      vff.evaluate();
-      boost::mpi::broadcast ( t_PescanBase::comm(), structure, 0 );
-      const t_Path orig
-      (
-          ::opt::InitialPath::path() / dirname
-        / __DIAGASUFFIX( t_Path(vff.filename.filename()) )
-      );
-      vff.zero_order( orig );
-      set_atom_input( orig );
-    )
-    __IIAGA( 
-      __ROOTCODE( (*::mpi::main), vff.evaluate(); )
-      vff.zero_order( vff.filename );
-      set_atom_input( vff.filename );
-    )
-    t_PescanBase::escan.read_in.clear();
-    t_PescanBase::escan.wavefunction_out = "zero_order";
-    
-    if( not t_PescanBase::operator()( structure ) ) return false; 
-
-    t_PescanBase::escan.read_in.reserve( t_PescanBase::escan.nbstates );
-    typedef std::vector<types::t_unsigned> :: iterator t_iterator;
-    t_iterator i_r = t_PescanBase::escan.read_in.begin();
-    t_iterator i_r_end = t_PescanBase::escan.read_in.end();
-    for( types::t_unsigned u=1; i_r != i_r_end; ++i_r, ++u ) *i_r = u;
-
-    return true;
-  }
-
-  inline VirtualAtom::t_Type VirtualAtom::evaluate_with_gradient( t_Type* _grad )
-  { 
-    types :: t_real result = t_PescanBase::operator()( structure ); 
-    evaluate_gradient( _grad );
-    return result;
-  }
-
-  inline void VirtualAtom::evaluate_gradient( t_Type* _grad )
-  {
-    t_Container :: iterator i_var = t_VABase::va_vars.begin();
-    t_Container :: iterator i_var_end = t_VABase::va_vars.end();
-    t_Type* i_grad = _grad;
-    for(types::t_unsigned n=0; i_var != i_var_end; ++i_var, ++i_grad, ++n )
-      *i_grad += evaluate_one_gradient( n );
-  }
-
-  inline VirtualAtom::t_Type VirtualAtom::apply_wfns()
-  { 
-    vff.evaluate();
-    t_PescanBase::escan.wavefunction_in = "zero_order";
-    t_PescanBase::escan.wavefunction_out = "first_order";
-
-    types::t_int niter      = t_PescanBase::escan.niter;
-    types::t_int nlines     = t_PescanBase::escan.nlines;
-    types::t_real tolerance = t_PescanBase::escan.tolerance;
-
-    t_PescanBase::escan.niter     = 0;
-    t_PescanBase::escan.nlines    = 0;        
-    t_PescanBase::escan.tolerance = 10000;    
-    
-    types::t_real result = t_PescanBase::operator()( structure ); 
-
-    t_PescanBase::escan.niter     = niter;
-    t_PescanBase::escan.nlines    = nlines;
-    t_PescanBase::escan.tolerance = tolerance;
-
-    return result;
-  }
-
-  //! Dumps structure to \a _stream
-  inline std::ostream& operator<<( std::ostream& _stream, const VirtualAtom& _va )
-  {
-    Crystal::Fourier( _va.structure.atoms.begin(),  _va.structure.atoms.end(),
-                       _va.structure.k_vecs.begin(), _va.structure.k_vecs.end() );
-    return _stream << _va.structure;
-  }
-
-  inline bool VirtualAtom :: init( bool _redocenters )
-  {
-    bool ret =     vff.init( _redocenters or is_vff_uninitialized ) 
-               and t_VABase::init(); 
-    is_vff_uninitialized = false;
-    return ret;
-  }
-
-#ifdef _MPI
-  inline void VirtualAtom :: set_mpi( boost::mpi::communicator *_comm, const std::string &_s ) 
-  {
-    __IIAGA( return; )
-    __DIAGA(
-      std::ostringstream sstr;
-      sstr << vff.filename 
-           __IIAGA( << "." << mpi::main.rank() );
-      vff.filename = sstr.str();
-      t_PescanBase::set_mpi( _comm ); 
-    )
-  }
-#endif
 } // namespace Pescan
+
+# include "va.impl.h"
 
 #endif
 

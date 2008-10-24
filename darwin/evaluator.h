@@ -114,7 +114,7 @@ namespace GA
                   current_object( _c.current_object )
                   __MPICODE( __COMMA__ suffix( _c.suffix ) ) {};
       //! Destructor
-      ~Evaluator() {}
+      virtual ~Evaluator() {}
 
     public:
       //! \brief opens XML file \a _f and calls Evaluator::Load(const TiXmlElement &_node )

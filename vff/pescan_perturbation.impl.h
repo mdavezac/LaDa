@@ -11,7 +11,8 @@
 
 namespace Vff
 { 
-  types::t_real PescanPerturbations :: stress( types::t_unsigned _pos )
+  template< class T_VFFBASE >
+  types::t_real PescanPerturbations<T_VFFBASE> :: stress( types::t_unsigned _pos )
   {
     // Keep track of changes
     t_Atoms copy_atoms = t_VA::structure.atoms;
@@ -50,7 +51,7 @@ namespace Vff
     types::t_unsigned nb_pseudos=0; // nb of pseudos to put in perturbed potential
 
     i_atom = t_VA::structure.atoms.begin();
-    t_Centers :: const_iterator i_center = centers.begin();
+    typename t_Centers :: const_iterator i_center = centers.begin();
     std::vector<types::t_real> :: const_iterator i_ms = microstrain.begin();
     t_pseudos pseudos; pseudos.reserve(4);
     for(; i_atom != i_atom_end; ++i_atom, ++i_center, ++i_ms )
@@ -119,7 +120,7 @@ namespace Vff
     }
 
     // Opens file
-    std::ofstream file( filename.c_str(), std::ios_base::out|std::ios_base::trunc ); 
+    std::ofstream file( filename.string().c_str(), std::ios_base::out|std::ios_base::trunc ); 
     // prints number of atoms
     file << nb_pseudos << "\n";
     // prints cell vectors in units of a0 and other
@@ -149,7 +150,8 @@ namespace Vff
     return result/deriv_amplitude;
   }
 
-  void PescanPerturbations :: chemical( types::t_unsigned _pos )
+  template< class T_VFFBASE >
+  void PescanPerturbations<T_VFFBASE> :: chemical( types::t_unsigned _pos )
   {
     // Only the tetrahedron around pos changes
     std::ostringstream stream;
@@ -245,7 +247,7 @@ namespace Vff
     }
 
     // Opens file
-    std::ofstream file( filename.c_str(), std::ios_base::out|std::ios_base::trunc ); 
+    std::ofstream file( filename.string().c_str(), std::ios_base::out|std::ios_base::trunc ); 
     // prints number of atoms
     file << nb_pseudos << "\n";
     // prints cell vectors in units of a0 and other
@@ -268,12 +270,13 @@ namespace Vff
     file.close();
   }
 
-  void PescanPerturbations :: find_escan_pseudos( const t_Center &_center,
-                                                  t_pseudos _pseudos )
+  template<class T_VFFBASE>
+  void PescanPerturbations<T_VFFBASE> :: find_escan_pseudos( const t_Center &_center,
+                                                             t_pseudos _pseudos )
   {
     _pseudos.clear();
-    t_Center :: const_iterator i_bond = _center.begin();
-    t_Center :: const_iterator i_bond_end = _center.end();
+    typename t_Center :: const_iterator i_bond = _center.begin();
+    typename t_Center :: const_iterator i_bond_end = _center.end();
     for(; i_bond != i_bond_end; ++i_bond )
     { 
       Crystal::StrAtom stratom;

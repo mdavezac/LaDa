@@ -20,50 +20,38 @@ namespace Molecularity
   
   inline void Evaluator :: evaluate()
   {
-    Crystal :: Structure structure0 = structure;
-    // relax structure
-    vff( *current_object );
-    // Load relaxed structure into bandgap
-    bandgap << vff; 
-    structure = structure0;
-
+    Crystal::Structure copy_structure = structure;
+    concentration.get( *current_object );
+    current_object->x = concentration.x;
     // get band gap
+#ifdef _NOLAUNCH
+    typedef t_Individual :: t_IndivTraits :: t_FourierRtoK t_Fourier;
+    t_Fourier( structure.atoms.begin(), structure.atoms.end(),
+               structure.k_vecs.begin(), structure.k_vecs.end() );
+#endif
     bandgap( *current_object );
-  
+
     // set quantity
     object_to_quantities( *current_individual );
+
+    structure = copy_structure;
   }
 
   inline eoF<bool>* Evaluator :: LoadContinue(const TiXmlElement &_el )
   {
-    return new GA::mem_zerop_t<BandGap::Darwin>( bandgap,
-                                                &BandGap::Darwin::Continue,
-                                                "BandGap::Continue"         );     
+    return new GA::mem_zerop_t<t_Functional>( bandgap,
+                                              &t_Functional::Continue,
+                                              "BandGap::Continue"         );     
   }
 
 
   inline std::ostream& operator<<(std::ostream &_stream, const Object &_o)
   {
     return _stream << (const Layered::Object<>&) _o << " "
-                   << "x=" << _o.get_concentration() << " "
-                   << (const BandGap::Keeper&)  _o << " ";
+                   << (const GA::Keepers::ConcOne&)  _o << " "
+                   << (const GA::Keepers::BandGap&)  _o << " ";
   }
 } // namespace Molecularity
 
-
-#ifdef _MPI
-#include <mpi/mpi_object.h>
-namespace mpi
-{
-  template<>
-  inline bool mpi::BroadCast::serialize<Molecularity::Object>
-                                       ( Molecularity::Object & _object )
-  {
-    return     serialize<BandGap::Keeper>( _object )
-           and serialize<Vff::Keeper>( _object )
-           and _object.broadcast( *this );
-  }
-}
-#endif
 
 #endif // _TWOSITES_IMPL_H_

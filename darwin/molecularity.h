@@ -39,7 +39,8 @@ namespace Molecularity
   //! \brief bitstring object for layered structures, including variables for stress
   //! and band-edges.
   class Object : public Layered::Object<>,
-                 public ::GA::Keepers::BandGap
+                 public ::GA::Keepers::BandGap,
+                 public ::GA::Keepers::ConcOne
   {
     protected:
       //! Layered bitstring base
@@ -53,23 +54,29 @@ namespace Molecularity
 
     public:
       //! Constructor
-      Object() : t_LayeredBase(), ::GA::Keepers::BandGap() {}
+      Object() : t_LayeredBase(), ::GA::Keepers::BandGap(), ::GA::Keepers::ConcOne() {}
       //! Copy Constructor
-      Object(const Object &_c) : t_LayeredBase(_c), ::GA::Keepers::BandGap(_c) {};
+      Object   (const Object &_c)
+             : t_LayeredBase(_c),
+               ::GA::Keepers::BandGap(_c), 
+               ::GA::Keepers::ConcOne(_c) {};
       //! Destructor
       virtual ~Object() {};
       
       //! Loads strain and band-gap info from XML
       bool Load( const TiXmlElement &_node )
-        { return ::GA::Keepers::BandGap::Load(_node); }
+        { return     ::GA::Keepers::BandGap::Load(_node) 
+                 and ::GA::Keepers::ConcOne::Load(_node); }
       //! Saves strain and band-gap info to XML
       bool Save( TiXmlElement &_node ) const
-        { return ::GA::Keepers::BandGap::Save(_node); }
+        { return     ::GA::Keepers::BandGap::Save(_node)
+                 and ::GA::Keepers::ConcOne::Save(_node); }
       //! Serializes a scalar individual.
       template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
       {
         _ar & boost::serialization::base_object< t_LayeredBase >(*this);  
         _ar & boost::serialization::base_object< ::GA::Keepers::BandGap >(*this);  
+        _ar & boost::serialization::base_object< ::GA::Keepers::ConcOne >(*this);  
       }
   };
 
@@ -100,18 +107,12 @@ namespace Molecularity
       typedef Molecularity::t_Individual     t_Individual;
       //! All %types relevant to %GA
       typedef Traits::GA< Evaluator >        t_GATraits;
-    protected:
-      //! Type of this class
-      typedef Evaluator                      t_This;
-      //! Type of the base class
-      typedef Layered::Evaluator<t_Individual> t_Base;
 
-    public:
       //! Constructor
-      Evaluator() : t_Base(), bandgap(structure), vff(structure) {}
+      Evaluator() : t_Base(), bandgap(structure) {}
       //! Copy Constructor
       Evaluator   ( const Evaluator &_c )
-                : t_Base(_c), bandgap(_c.bandgap), vff(_c.vff) {}
+                : t_Base(_c), bandgap(_c.bandgap) {}
       //! Destructor
       ~Evaluator() {}
 
@@ -134,7 +135,7 @@ namespace Molecularity
       //!          explicitely, its "initialization" is carried out in the body
       //!          of Darwin::evaluate().
       void init( t_Individual &_indiv )
-        { t_Base :: init( _indiv ); vff.init(); }
+        { t_Base :: init( _indiv ); bandgap.init(); }
 
 #ifdef _MPI
       //! forwards comm and suffix to bandgap.
@@ -144,13 +145,21 @@ namespace Molecularity
       using t_Base :: Load; 
 
     protected:
+      //! Type of this class
+      typedef Evaluator                      t_This;
+      //! Type of the base class
+      typedef Layered::Evaluator<t_Individual> t_Base;
+      //! Type of the Vff functional.
+      typedef Vff::Layered t_Vff;
+      //! Type of the BandGap/Vff all-in-one functional.
+      typedef BandGap::Darwin<t_Vff> t_Functional;
+
+    protected:
       //! Transforms stress and band-edges to quantities in \a _indiv.
       void object_to_quantities( t_Individual & _indiv );
 
       //! The pescan interface object for obtaining band-gaps
-      BandGap::Darwin bandgap;
-      //! The vff object for minimizing and computing strain/stress.
-      Vff::Darwin<Vff::Layered> vff;
+      t_Functional bandgap;
       using t_Base :: current_individual;
       using t_Base :: current_object;
   };

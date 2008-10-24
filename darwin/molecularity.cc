@@ -31,18 +31,10 @@ namespace Molecularity
   {
     if ( not t_Base::Load( _node ) ) return false;
 
-    if ( not vff.Load( _node ) )
-    {
-      std::cerr << " Could not load vff input!! " << std::endl; 
-      return false;
-    }
-    if ( not bandgap.Load( _node ) )
-    {
-      std::cerr << " Could not load bandgap interface from input!! " << std::endl; 
-      return false;
-    }
+    if ( bandgap.Load( _node ) ) return true;
 
-    return true;
+    std::cerr << " Could not load bandgap interface from input!! " << std::endl; 
+    return false;
   }
 
 } // namespace Molecularity

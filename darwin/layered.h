@@ -8,6 +8,7 @@
 #include <config.h>
 #endif
 
+#include <boost/lexical_cast.hpp>
 #include <string>
 #include <ostream>
 
@@ -134,7 +135,7 @@ namespace Layered
       //! Constructor and Initializer
       Object(const t_Container &_c) : t_Base(_c) {};
       //! Destructor
-      ~Object() {};
+      virtual ~Object() {};
   };
 
   //! Dumps the decoration of \a _str into the object \a _o
@@ -160,7 +161,7 @@ namespace Layered
 
     protected:
       //! \brief Value of the fixed concentration.
-      //! \details Not used if the concentration is not fized
+      //! \details Not used if the concentration is not fixed
       types::t_real x0;
       //! The number of sites in the current cell-shape
       types::t_unsigned N;
@@ -184,7 +185,7 @@ namespace Layered
                     : _d(_D), x0(_c.x0), N(_c.N), Nfreeze(_c.Nfreeze),
                       single_c(_c.single_c), x(_c.x) {}
       //! Destructor
-      ~Concentration() {}
+      virtual ~Concentration() {}
 
 
       //! \brief Normalizes the site occupations as given by the \b k-vectors. 
@@ -241,6 +242,7 @@ namespace Layered
   //!          functor SingleSite::Concentration. Saving and Restarting of
   //!          individuals is partially implementated as relates to
   //!          BitString::Object and Crystal::Structure.
+  //! \tparam T_INDIVIDUAL the type of the individual in the GA.
   //! \xmlrestart Individuals are save in \<Individual\> tags in two possible format:
   //!             a long explicit format 
   //! \code
@@ -300,7 +302,7 @@ namespace Layered
                   direction(_c.direction), multiplicity(_c.multiplicity),
                   concentration(_c.concentration) {}
       //! Destructor
-      ~Evaluator() {}
+      virtual ~Evaluator() {}
 
       //! \brief Loads the lattice, the epitaxial parameters from XML, and constructs
       //!        the structure.
@@ -361,6 +363,8 @@ namespace Layered
               a2(_mat.get_column(2)) {}
       //! Copy Constructor.
       Depth( const Depth &_c) : a0(_c.a1), a1(_c.a1), a2(_c.a2) {}
+      //! Destructor.
+      virtual ~Depth() {}
 
       //! Strict weak ordering operator.
       bool operator()(const atat::rVector3d& _1, const atat::rVector3d& _2 );
@@ -403,7 +407,7 @@ namespace Layered
       Taboo   ( const Taboo &_c )
             : t_Base( _c ), sites( _c.sites ), d0( _c.d0 ), d1 ( _c.d1 ) {}
       //! Destructor
-      ~Taboo() {}
+      virtual ~Taboo() {}
 
       //! Loads the maximum number of layers from XML.
       bool Load( const TiXmlElement &_node );
@@ -415,6 +419,52 @@ namespace Layered
 
 } // namespace Layered
 /** @} */
+
+
+namespace GA
+{
+  namespace Keepers
+  {
+    //! Keeps track of concentration.
+    struct ConcOne
+    {
+      //! The concentration of the first site.
+      types::t_real x;
+      //! Constructor.
+      ConcOne() : x(-2) {}
+      //! Copy Constructor.
+      ConcOne( const ConcOne& _c ) : x(_c.x) {}
+      //! Destructor
+      virtual ~ConcOne() {}
+      //! Loads from attributes of \a _node.
+      bool Load( const TiXmlElement &_node )
+      {
+        if ( not _node.Attribute("x" ) ) 
+        {
+          std::cerr << "Could not Load BandGap::Keeper" << std::endl;
+          return false;
+        }
+        x = boost::lexical_cast<types::t_real>( _node.Attribute("x") );
+      
+        return true;
+      }
+      //! Saves as attributes of \a _node.
+      bool Save( TiXmlElement &_node ) const
+      {
+        _node.SetAttribute("x", boost::lexical_cast<std::string>( x ) );
+      
+        return true;
+      }
+      //! Serializes concentration class.
+      template<class Archive>
+        void serialize(Archive & _ar, const unsigned int _version)
+          { _ar & x; }
+    };
+    inline std::ostream& operator<<(std::ostream &_stream, const ConcOne &_o)
+      { return _stream << "x=" << _o.x; }
+
+  }
+}
 
 #include "layered.impl.h"
 

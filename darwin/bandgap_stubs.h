@@ -57,10 +57,6 @@ namespace GA
 
 namespace BandGap
 {
-
-
-
-
   //! \brief GA::Evaluator stub for the band-gap (pescan) functional.
   //! \details Implements all the functionalities necessary to get and keep
   //!          pescan running. This include loading the pescan interface from
@@ -73,41 +69,14 @@ namespace BandGap
   //!          In practive an evaluator class should be derived from
   //!          GA::Evaluator and a BandGap::Darwin object used for obtaining band-gaps.
   //! \see BandGap::Evaluator, Molecularity::Evaluator
+  template< class T_VFF >
   class Darwin __MPICODE( : public MPI_COMMDEC )
   {
-    protected:
-      //! \brief Structure on which to perform calculations
-      //! \details The structure which is referenced should be updated prior to
-      //!          calling Darwin::operator()(). Although much of the
-      //!          information should come from Darwin::atomicconfig, such
-      //!          things as the number of electrons (for all-electron
-      //!          calculations) does not.
-      Crystal::Structure &structure;
-      //! The pescan interface
-      Pescan::VirtualAtom bandgap;
-      //! \brief File in which energy references for the VBM/CBM are written and read.
-      //! \details This file should contain only one line with two number: the
-      //!          first number is the VBM and the second number is the CBM.
-      std::string references_filename;
-      //! \brief The directory name where to perform bandgap calculations.
-      //! \details Should be processor specific in the case of MPI execution.
-      //!          See Pescan::Darwin::operator()() implementation for details.
-      std::string dirname;
-      //! Tracks the number of bandgap evaluations
-      types::t_int nbeval;
-      //! \brief Tracks the number of generations.
-      //! \details Actually, it tracks the number of calls to
-      //!          Darwin::Continue(), which should be the same thing.
-      types::t_int age;
-      //! How often all-electron calculations should be performed
-      types::t_int check_ref_every;
-      __MPICODE
-      (
-        //! mpi suffix to add to calculation files.
-        std::string suffix;
-      )
-
     public:
+      //! Type of the vff functional.
+      typedef T_VFF t_Vff;
+
+
       //! Constructor and Initializer
       Darwin   ( Crystal::Structure &_s )
              : __MPICODE( MPI_COMMCOPY( *::mpi::main ) __COMMA__ )
@@ -169,16 +138,38 @@ namespace BandGap
       void read_references();
       //! Writes Folded Spectra reference energies to file 
       void write_references();
+    
+      //! \brief Structure on which to perform calculations
+      //! \details The structure which is referenced should be updated prior to
+      //!          calling Darwin::operator()(). Although much of the
+      //!          information should come from Darwin::atomicconfig, such
+      //!          things as the number of electrons (for all-electron
+      //!          calculations) does not.
+      Crystal::Structure &structure;
+      //! The pescan interface
+      Pescan::VirtualAtom< T_VFF > bandgap;
+      //! \brief File in which energy references for the VBM/CBM are written and read.
+      //! \details This file should contain only one line with two number: the
+      //!          first number is the VBM and the second number is the CBM.
+      std::string references_filename;
+      //! \brief The directory name where to perform bandgap calculations.
+      //! \details Should be processor specific in the case of MPI execution.
+      //!          See Pescan::Darwin::operator()() implementation for details.
+      std::string dirname;
+      //! Tracks the number of bandgap evaluations
+      types::t_int nbeval;
+      //! \brief Tracks the number of generations.
+      //! \details Actually, it tracks the number of calls to
+      //!          Darwin::Continue(), which should be the same thing.
+      types::t_int age;
+      //! How often all-electron calculations should be performed
+      types::t_int check_ref_every;
+      __MPICODE
+      (
+        //! mpi suffix to add to calculation files.
+        std::string suffix;
+      )
   };
-  inline void Darwin :: operator()( ::GA::Keepers::BandGap &_keeper )
-  {
-    Darwin::operator()();
-    // copies band edges into object
-    _keeper.vbm = bandgap.BandGap().bands.vbm; 
-    _keeper.cbm = bandgap.BandGap().bands.cbm;
-    _keeper.energy = structure.energy;
-    bandgap.get_stress(_keeper.stress);
-  }
 
 } // namespace BandGap
 
@@ -205,5 +196,7 @@ namespace GA
       }
   }
 }
+
+# include "bandgap_stubs.impl.h"
 
 #endif // _PESCAN_H_

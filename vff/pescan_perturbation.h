@@ -51,15 +51,16 @@ namespace Vff
    *           and \f$\Delta \mathcal{H}_{\mathrm{stress}}\f$. It is called
    *           upon by Pescan::VirtualAtom.
    */
-  class PescanPerturbations : public VABase<Vff::Functional>
+  template< class T_VFFBASE >
+  class PescanPerturbations : public VABase<T_VFFBASE>
   {
       //! Type of the path.
       typedef boost::filesystem::path t_Path;
-      //! Grandparent class...
-      typedef Vff::Functional t_Functional;
     public:
+      //! Vff base class.
+      typedef T_VFFBASE t_Functional;
       //! Base class for this class. 
-      typedef VABase<Vff::Functional> t_Base;
+      typedef VABase<t_Functional> t_Base;
       //! The amplitude of the numerical derivative
       const static types::t_real deriv_amplitude = 0.01;
 
@@ -74,15 +75,15 @@ namespace Vff
      typedef Crystal::Structure::t_Atom  t_Atom;
 
      //! Type of the container holding the atomic centers
-     typedef t_Base :: t_Centers t_Centers;  
+     typedef typename t_Base :: t_Centers t_Centers;  
      //! Type of the atomic centers
-     typedef t_Base :: t_Center t_Center;  
+     typedef typename t_Base :: t_Center t_Center;  
      //! Type of the container holding the atomic functionals
-     typedef t_Base :: t_AtomicFunctionals t_AtomicFunctionals;  
+     typedef typename t_Base :: t_AtomicFunctionals t_AtomicFunctionals;  
      //! Type of the atomic functionals
-     typedef t_Base :: t_AtomicFunctional t_AtomicFunctional;  
+     typedef typename t_Base :: t_AtomicFunctional t_AtomicFunctional;  
      //! Type of the VA functional
-     typedef function :: VirtualAtom t_VA;
+     typedef typename t_Base :: t_VABase t_VA;
 
 
     public:
@@ -107,8 +108,10 @@ namespace Vff
       void zero_order( const t_Path &_f )
         { t_Base :: print_escan_input( _f ); }
      
-       //! gets already computed stress from vff. 
-       void get_stress( atat::rMatrix3d &_s ) const { _s = Vff().get_stress(); }
+      //! gets already computed stress from vff. 
+      void get_stress( atat::rMatrix3d &_s ) const { _s = t_Base::Vff().get_stress(); }
+   
+      using t_Base :: evaluate;
 
     protected:
       //! \brief Finds escan potentials
@@ -117,9 +120,15 @@ namespace Vff
       //!          function finds how many types there are of first neighbors.
       void find_escan_pseudos( const t_Center &_center,
                                t_pseudos _pseudos );
+
+      using t_Base :: centers;
+      using t_Base :: functionals;
+      using t_Base :: structure0;
   };
 
 
 } // namespace vff 
+
+#include "pescan_perturbation.impl.h"
 
 #endif // _VFF_PESCAN_PERTURBATION_H_

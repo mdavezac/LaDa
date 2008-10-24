@@ -18,7 +18,7 @@ endif
 if DOEMASSOPT
   EMASSOPT = emass_opt
 endif
-LDADD = ../opt/libopt.la 
+LDADD =
 if DOFORTRAN
   LDADD +=  @FCLIBS@
 endif
@@ -39,6 +39,7 @@ ce_opt_LDADD = libdarwin.la \
 	       ../atat/libatat.la \
 	       ../print/libprint.la \
 	       ../mpi/libmpiobject.la \
+	       ../opt/libopt.la \
 	       @MPI_ADDLIB@
 
 bandgap_opt_SOURCES = main.cc $(DARWIN_BG_CC)

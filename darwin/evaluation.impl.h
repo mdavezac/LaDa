@@ -33,8 +33,6 @@ namespace Evaluation
           _indiv.set_fitness( (*objective)( _indiv.const_quantities() ) );,
           "Error while evaluating fitness.\n" )
 
-        Print :: out << "Storing " << _indiv
-                     << " " << _indiv.const_quantities() << Print::endl;
       __TRYDEBUGCODE( if( store ) (*store)( _indiv );,
                       "Error while checking individual for storage.\n" )
 

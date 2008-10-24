@@ -131,6 +131,9 @@ namespace BandGap
       typedef Crystal::Structure::t_Atoms t_rvecs;
       //! \endcond
 
+      //! Type of the band gap cum vff all-in-one functional.
+      typedef BandGap::Darwin<Vff::Functional> t_BandGap;
+
     public:
       using t_Base :: Load;
       using t_Base :: Save;
@@ -139,8 +142,8 @@ namespace BandGap
       using t_Base :: current_object;
 
     protected:
-      //! BandGap functional
-      BandGap::Darwin bandgap; 
+      //! BandGap/Vff functional
+      t_BandGap bandgap; 
 
     public:
       //! Constructor
@@ -159,7 +162,7 @@ namespace BandGap
       bool Load( const TiXmlElement &_node );
       //! Allows bandgap all-electron recomputation.
       eoF<bool>* LoadContinue(const TiXmlElement &_el )
-        { return new GA::mem_zerop_t<BandGap::Darwin>( bandgap, &BandGap::Darwin::Continue,
+        { return new GA::mem_zerop_t<t_BandGap>( bandgap, &t_BandGap::Continue,
                                                       "BandGap::Continue" );     }
      
       //! \brief Intializes before calls to evaluation member routines
