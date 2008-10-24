@@ -56,25 +56,32 @@ namespace BandGap
 {
 
   //! \brief BitString Object with BandGap capacity
-  //! \details Other than the bitstring itself and the BandGap::Keeper
+  //! \details Other than the bitstring itself and the ::GA::Keepers::BandGap
   //           variables, this object also stores the x and y concentrations of
   //           a quaternary. It overloads dumping an object to a stream.
   //! \see BandGap::operator<<( std::ostream &, const Object& )
-  struct Object : public TwoSites::Object, public BandGap::Keeper
+  struct Object : public TwoSites::Object,
+                  public ::GA::Keepers::BandGap,
+                  public ::GA::Keepers::ConcTwo
   {
     //! The type of the BitString container
     typedef TwoSites::Object :: t_Container t_Container;
-    //! The concentration of the first site.
-    types::t_real x;
-    //! The concentration of the second site.
-    types::t_real y;
 
     //! Constructor
-    Object() : TwoSites::Object(), BandGap::Keeper(), x(-2), y(-2) {}
+    Object() : TwoSites::Object(), ::GA::Keepers::BandGap(),
+               ::GA::Keepers::ConcTwo() {}
     //! Copy Constructor
     Object   (const Object &_c)
-           : TwoSites::Object(_c), BandGap::Keeper(_c),
-             x(_c.x), y(_c.y) {};
+           : TwoSites::Object(_c), ::GA::Keepers::BandGap(_c),
+             ::GA::Keepers::ConcTwo(_c) {};
+    //! Loads from \a _node.
+    bool Load( const TiXmlElement &_node )
+      { return     ::GA::Keepers::BandGap::Load( _node ) 
+               and ::GA::Keepers::ConcTwo::Load( _node ); }
+    //! Saves to \a _node.
+    bool Save( TiXmlElement &_node ) const
+      { return     ::GA::Keepers::BandGap::Save( _node ) 
+               and ::GA::Keepers::ConcTwo::Save( _node ); }
     //! Destructor
     ~Object() {};
     //! Serializes a scalar individual.
@@ -89,7 +96,7 @@ namespace BandGap
     if( _o.Container().size() <= 30 )
       _stream << (const SingleSite::Object& ) _o << " ";
     _stream << "x=" << _o.x << " y="  << _o.y 
-            << (const BandGap::Keeper&) _o;
+            << (const ::GA::Keepers::BandGap&) _o;
     return _stream; 
   } 
 
@@ -181,8 +188,8 @@ namespace BandGap
   template<class Archive>
     void Object :: serialize(Archive & _ar, const unsigned int _version)
     {
-      _ar & boost::serialization::base_object< BandGap::Keeper >( *this ); 
-      _ar & boost::serialization::base_object< TwoSites::Object >( *this ); 
+      _ar & boost::serialization::base_object< ::GA::Keepers::BandGap >( *this ); 
+      _ar & boost::serialization::base_object< ::GA::Keepers::ConcTwo >( *this ); 
       _ar & x;
       _ar & y;
     }

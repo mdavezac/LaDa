@@ -30,13 +30,13 @@ DARWIN_CE_H  = ce.h  single_site.h  groundstate.h  $(DARWIN_CE_IMPL_H)
 DARWIN_CE_DOC = $(DARWIN_CE_H) $(DARWIN_CE_CC) 
 
 DARWIN_BG_CC = bandgap_stubs.cc two_sites.cc single_site.cc vff.cc bandgap.cc 
-DARWIN_BG_IMPL_H = bandgap_stubs.impl.h  two_sites.impl.h  single_site.impl.h  
+DARWIN_BG_IMPL_H = two_sites.impl.h  single_site.impl.h  
 DARWIN_BG_H  = bandgap_stubs.h  two_sites.h  single_site.h  vff.h  bandgap.h \
                $(DARWIN_BG_IMPL_H)
 DARWIN_BG_DOC = $(DARWIN_BG_H) $(DARWIN_BG_CC) 
 
 DARWIN_L_CC = bandgap_stubs.cc two_sites.cc single_site.cc vff.cc molecularity.cc layered.impl.h
-DARWIN_L_IMPL_H = bandgap_stubs.impl.h two_sites.impl.h single_site.impl.h molecularity.impl.h \
+DARWIN_L_IMPL_H = two_sites.impl.h single_site.impl.h molecularity.impl.h \
                   layered.impl.h 
 DARWIN_L_H  = bandgap_stubs.h   two_sites.h single_site.h  vff.h  molecularity.h  layered.h \
               $(DARWIN_L_IMPL_H)

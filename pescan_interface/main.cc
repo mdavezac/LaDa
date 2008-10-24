@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
   }
   bool do_evaluate( vm.count( "donteval" ) == 0 );
 # if !defined( _EMASS )
-    const bool compute_dipoles( vm.count("dipole") != 0 and do_evaluate );
+    const bool compute_dipoles( vm.count("dipoles") != 0 );
     const types::t_real degeneracy( vm["degeneracy"].as<types::t_real>() );
 # endif
 
@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
     (*::mpi::main),
     std::cout << "Input filename: " << filename
 #   ifndef _EMASS_ 
-              << "\nWill " << ( compute_dipoles ? "not ": " " ) 
+              << "\nWill " << ( compute_dipoles ? " ": "not " ) 
               << "compute dipole moments."
 #   endif
               << "\n";
@@ -264,8 +264,8 @@ int main(int argc, char *argv[])
   {
     if( not evaluate( *child, structure, pescan, vff, do_evaluate ) ) continue;
     
-    __ROOTCODE
-    (
+//   __ROOTCODE
+//   (
       (*::mpi::main),
       std::cout << "\n\n\nNew Structure\n";
       structure.print_out( std::cout ); 
@@ -275,9 +275,6 @@ int main(int argc, char *argv[])
 #     ifndef _EMASS
 //       const Pescan::BandGap& bandgap = (const Pescan::BandGap&) pescan;
         Pescan::BandGap& bandgap = (Pescan::BandGap&) pescan;
-        std::cout << "\nVBM: " << bandgap.bands.vbm
-                  << " -- CBM:" << bandgap.bands.cbm
-                  << "    ---    Band Gap: " << bandgap.bands.gap() << std::endl;
         bandgap.eigenvalues.clear();
         bandgap.eigenvalues.push_back( -0.70901723673688466e0 );
         bandgap.eigenvalues.push_back( -0.68309604472960483e0 );
@@ -314,14 +311,19 @@ int main(int argc, char *argv[])
         bandgap.eigenvalues.push_back( -0.18103982066164309e0 );
         bandgap.bands.vbm = -0.18294040863380412e0;
         bandgap.bands.cbm = -0.18103982066164309e0;
+        std::cout << "\nVBM: " << bandgap.bands.vbm
+                  << " -- CBM:" << bandgap.bands.cbm
+                  << "    ---    Band Gap: " << bandgap.bands.gap() << std::endl;
 
+        std::cout << compute_dipoles << "\n";
+        if( compute_dipoles )
           std::cout << "oscillator_strength: "
                     << Pescan::oscillator_strength( bandgap, structure, degeneracy, true )
                     << "\n";
 #     else
         std::cout << "Emass tensor:\n" << pescan.tensor;
 #     endif
-    )
+  // )
   }
 
   __BPO_CATCH__

@@ -14,31 +14,37 @@
 
 #include "bandgap_stubs.h"
 
+namespace GA
+{
+  namespace Keepers 
+  {
+    bool BandGap :: Load ( const TiXmlElement &_node )
+    {
+      double d;
+
+      if ( not _node.Attribute("cbm", &d ) ) goto errorout;
+      cbm = types::t_real(d);
+      if ( not _node.Attribute("vbm", &d ) ) goto errorout;
+      vbm = types::t_real(d);
+
+      return true;
+
+      errorout:
+        std::cerr << "Could not Load GA::Keepers::BandGap" << std::endl;
+        return false;
+    }
+    bool BandGap :: Save( TiXmlElement &_node ) const
+    {
+      _node.SetDoubleAttribute("vbm", vbm );
+      _node.SetDoubleAttribute("cbm", cbm );
+      if( not Vff::Keeper::Save( _node ) ) return false;
+
+      return true;
+    }
+  }
+}
 namespace BandGap
 {
-  bool Keeper :: Load ( const TiXmlElement &_node )
-  {
-    double d;
-
-    if ( not _node.Attribute("cbm", &d ) ) goto errorout;
-    cbm = types::t_real(d);
-    if ( not _node.Attribute("vbm", &d ) ) goto errorout;
-    vbm = types::t_real(d);
-    if( not Vff::Keeper::Load( _node ) ) goto errorout;
-
-    return true;
-errorout:
-    std::cerr << "Could not Load BandGap::Keeper" << std::endl;
-    return false;
-  }
-  bool Keeper :: Save( TiXmlElement &_node ) const
-  {
-    _node.SetDoubleAttribute("vbm", vbm );
-    _node.SetDoubleAttribute("cbm", cbm );
-    if( not Vff::Keeper::Save( _node ) ) return false;
-
-    return true;
-  }
   bool Darwin :: Load( const TiXmlElement &_node )
   {
     if ( not bandgap.Load( _node ) ) return false;

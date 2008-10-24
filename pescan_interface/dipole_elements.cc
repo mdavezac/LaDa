@@ -25,7 +25,7 @@ extern "C"
   void FC_FUNC_(iaga_set_cell,IAGA_SET_CELL)
                (const double*, const double[3][3], const int*, const int*, const int* );
   void FC_FUNC_(iaga_dipole_elements, IAGA_DIPOLE_ELEMENTS)
-               ( double*, const int*, const int*, const int*,
+               ( double[], const int*, const int*, const int*,
                  const int*, const char*, const int*, const char*, const int* );
 }
 
@@ -42,8 +42,6 @@ namespace Pescan
       namespace bl = boost::lambda; 
       namespace bfs = boost::filesystem; 
     )
-    int ncond(0), nval(0), startval(-1);
-    const size_t dipole_array_size( 2 * 3 * 4 * nval * ncond );
     __ASSERT( _bandgap.eigenvalues.size() < 2,
               "Not enough eigenvalues were computed.\n" )
     __ASSERT( _bandgap.bands.gap() < 3e0 * _degeneracy,
@@ -72,6 +70,7 @@ namespace Pescan
     
     // Finds out the number of conduction and valence bands.
     std::vector<int> bands;
+    int ncond(0), nval(0), startval(-1);
     int i = 0;
     foreach( const types::t_real eigenval, _bandgap.eigenvalues )
     {
@@ -79,9 +78,10 @@ namespace Pescan
         bands.push_back( i ), ++nval;
       ++i;
     }
+    i = 0;
     foreach( const types::t_real eigenval, _bandgap.eigenvalues )
     {
-      if( std::abs( eigenval - _bandgap.bands.vbm ) < _degeneracy )
+      if( std::abs( eigenval - _bandgap.bands.cbm ) < _degeneracy )
         bands.push_back( i ), ++ncond;
       ++i;
     }
@@ -93,6 +93,7 @@ namespace Pescan
               &_bandgap.genpot.y, &_bandgap.genpot.z );
 
     // Call fortran code.
+    const size_t dipole_array_size( 2 * 3 * 4 * nval * ncond);
     double dipoles[ dipole_array_size ];
     const boost::filesystem::path holepath
     (
@@ -120,6 +121,7 @@ namespace Pescan
     FC_FUNC_(iaga_dipole_elements, IAGA_DIPOLE_ELEMENTS)
             ( dipoles, &(bands[0]), &(bands[nval]), &nval, &ncond,
               electronname, &electronsize, holename, &holesize );
+    std::cout << nval << " " << ncond << " " << bands[0] << " " << bands[nval] << "\n";
 
     // copies results to output vector.
     // loop positions determined by order of dipoles in fortran code.
@@ -141,8 +143,9 @@ namespace Pescan
             dipole.r[1] = std::complex<types::t_real>( *i_dip, *(i_dip+1) );
             i_dip += 2;
             dipole.r[2] = std::complex<types::t_real>( *i_dip, *(i_dip+1) );
-            _dipoles.push_back( dipole );
+            i_dip += 2;
           } // loop over cartesian coordinates
+          _dipoles.push_back( dipole );
         } // loop over spins
       } // loop over conduction bands
     } // loop over valence bands

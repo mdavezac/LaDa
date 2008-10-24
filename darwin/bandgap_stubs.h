@@ -17,43 +17,48 @@
 
 #include "vff.h"
 
+namespace GA
+{
+  namespace Keepers
+  {
+    //! \brief Object stub which keeps track of CBM and VBM.
+    //! \details This stub is supposed to be used a base class of a %GA object.
+    //!          It keeps track of the conduction band minimum and of the valence
+    //!          band maximum. Very few routines are implemented. Basically, it
+    //!          can serialize itself for mpi purposes, it can be dumped to a
+    //!          stream, and it can load/write istelf from/to and XML element. 
+    //! \sa BandGap::Object, Molecularity::Object
+    //! \xmlinput This stub can load \a cbm and \a vm attributes from "a" node. 
+    //! \code
+    //   <SOMETAG cvm="?" vbm="?"/>
+    //! \endcode
+    //! \a SOMETAG will generally be an %Individual.
+    struct BandGap: public ::Vff::Keeper
+    {
+      types::t_real cbm; //!< Conduction Band Minimum
+      types::t_real vbm; //!< Valence Band Maximum
+    
+      //! Constructor
+      BandGap() : cbm(0), vbm(0) {}
+      //! Copy Constructor
+      BandGap(const BandGap &_c) : Vff::Keeper( _c ), cbm(_c.cbm), vbm(_c.vbm) {};
+      //! Detructor
+      ~BandGap() {};
+    
+      //! Loads BandGap::vbm and BandGap::cvm from attributes of \a _node.
+      bool Load( const TiXmlElement &_node );
+      //! Saves BandGap::vbm and BandGap::cvm as attributes of \a _node.
+      bool Save( TiXmlElement &_node ) const;
+      //! Serializes a scalar individual.
+      template<class Archive> void serialize(Archive & _ar, const unsigned int _version);
+    };
+  }
+}
 
 namespace BandGap
 {
 
-  //! \brief Object stub which keeps track of CBM and VBM.
-  //! \details This stub is supposed to be used a base class of a %GA object.
-  //!          It keeps track of the conduction band minimum and of the valence
-  //!          band maximum. Very few routines are implemented. Basically, it
-  //!          can serialize itself for mpi purposes, it can be dumped to a
-  //!          stream, and it can load/write istelf from/to and XML element. 
-  //! \sa BandGap::Object, Molecularity::Object
-  //! \xmlinput This stub can load \a cbm and \a vm attributes from "a" node. 
-  //! \code
-  //   <SOMETAG cvm="?" vbm="?"/>
-  //! \endcode
-  //! \a SOMETAG will generally be an %Individual.
-  struct Keeper: public Vff::Keeper
-  {
-    types::t_real cbm; //!< Conduction Band Minimum
-    types::t_real vbm; //!< Valence Band Maximum
 
-    //! Constructor
-    Keeper() : cbm(0), vbm(0) {}
-    //! Copy Constructor
-    Keeper(const Keeper &_c) : Vff::Keeper( _c ), cbm(_c.cbm), vbm(_c.vbm) {};
-    //! Detructor
-    ~Keeper() {};
-
-    //! Loads Keeper::vbm and Keeper::cvm from attributes of \a _node.
-    bool Load( const TiXmlElement &_node );
-    //! Saves Keeper::vbm and Keeper::cvm as attributes of \a _node.
-    bool Save( TiXmlElement &_node ) const;
-    //! Serializes a scalar individual.
-    template<class Archive> void serialize(Archive & _ar, const unsigned int _version);
-  };
-  //! Dumps a BandGap::Keeper to a stream.
-  std::ostream& operator<<(std::ostream &_stream, const Keeper &_o);
 
 
   //! \brief GA::Evaluator stub for the band-gap (pescan) functional.
@@ -144,7 +149,7 @@ namespace BandGap
       void operator()();
       //! Computes the band-gap of Darwin::structure and stores the results in
       //! \a _keeper.
-      void operator()( Keeper &_keeper );
+      void operator()( ::GA::Keepers::BandGap &_keeper );
 #ifdef _MPI
       //! Sets communicator and suffix for mpi stuff.
       void set_mpi( boost::mpi::communicator *_comm, const std::string &_suffix )
@@ -165,17 +170,7 @@ namespace BandGap
       //! Writes Folded Spectra reference energies to file 
       void write_references();
   };
-
-  inline std::ostream& operator<<(std::ostream &_stream, const Keeper &_o)
-  { 
-    _stream << " CBM " 
-            << std::fixed << std::setw(12) << std::setprecision(6) << _o.cbm 
-            << "  --  VBM "
-            << std::fixed << std::setw(12) << std::setprecision(6) << _o.vbm; 
-    return _stream; 
-  } 
-
-  inline void Darwin :: operator()( Keeper &_keeper )
+  inline void Darwin :: operator()( ::GA::Keepers::BandGap &_keeper )
   {
     Darwin::operator()();
     // copies band edges into object
@@ -185,14 +180,30 @@ namespace BandGap
     bandgap.get_stress(_keeper.stress);
   }
 
-  template<class Archive>
-    void Keeper :: serialize(Archive & _ar, const unsigned int _version)
-    {
-      _ar & boost::serialization::base_object< Vff::Keeper >(*this); 
-      _ar & vbm;
-      _ar & cbm;
-    }
 } // namespace BandGap
 
+namespace GA
+{
+  //! Policies for keeping track of functional evaluations.
+  namespace Keepers
+  {
+    //! Dumps a GA::Keepers::BandGap to a stream.
+    inline std::ostream& operator<<(std::ostream &_stream, const BandGap &_o)
+    { 
+      _stream << " CBM " 
+              << std::fixed << std::setw(12) << std::setprecision(6) << _o.cbm 
+              << "  --  VBM "
+              << std::fixed << std::setw(12) << std::setprecision(6) << _o.vbm; 
+      return _stream; 
+    } 
+    template<class Archive>
+      void BandGap :: serialize(Archive & _ar, const unsigned int _version)
+      {
+        _ar & boost::serialization::base_object< Vff::Keeper >(*this); 
+        _ar & vbm;
+        _ar & cbm;
+      }
+  }
+}
 
 #endif // _PESCAN_H_

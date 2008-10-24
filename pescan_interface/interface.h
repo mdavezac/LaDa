@@ -104,6 +104,8 @@ namespace Pescan
       boost::filesystem::path maskr;
       //! Stores results
       std::vector<types::t_real> eigenvalues;
+      //! Whether to delete directory where computations are being performed.
+      bool do_destroy_dir;
 
       //! Constructor
       Interface()
@@ -190,8 +192,6 @@ namespace Pescan
 
     //! Directory where to perform computations.
     boost::filesystem::path dirname;
-    //! Whether to delete directory where computations are being performed.
-    bool do_destroy_dir;
 
   };
 

@@ -119,7 +119,7 @@ subroutine iaga_dipole_elements( in_dipole, in_val, in_cond, &
   !   1:in_nval corresponds to the valence bands
   !   1:in_ncond corresponds to the conduction bands 
   ! And it must be an array of 64bit fortan complexes.
-  complex*16, intent(inout) :: in_dipole(1:3, 1:4, 1:in_nval, 1:in_ncond )
+  complex*16, intent(inout) :: in_dipole( 1:3, 1:4, 1:in_nval, 1:in_ncond )
   ! Indices of the wavefunctions.
   integer, intent(in) :: in_val(1:in_nval)
   ! Indices of the wavefunctions.
@@ -137,8 +137,9 @@ subroutine iaga_dipole_elements( in_dipole, in_val, in_cond, &
   complex*16 :: qdpkr(1:4)
   complex*16 :: psi_c(1:ngrid,1:2,1:in_ncond)
   complex*16 :: psi_v(1:ngrid,1:2,1:in_nval)
+  complex*16 :: dipole(1:3, 1:4, 1:in_nval, 1:in_ncond )
   integer, parameter :: fileunit = 17
-  integer :: jc, iv
+  integer :: jc, iv, i, j, k
 
   ! Reads wavefunctions and performs calculations
   open ( unit=fileunit, file=in_valfilename, &
@@ -152,16 +153,25 @@ subroutine iaga_dipole_elements( in_dipole, in_val, in_cond, &
              form='UNFORMATTED', position='REWIND', status='OLD' )
       rewind(fileunit)
     endif
-    write(*,*) in_ncond, in_cond
     call read_wavefunctions( in_cond, in_ncond, psi_c, fileunit )
   close(fileunit)
 
   ! Performs calculations
+  k = 0
   do jc=1, in_ncond
      do iv=1, in_nval
        call dqpole( psi_v(:,:,iv), psi_c(:,:,jc), in_dipole(:,:, iv,jc ), qdpkr )
+      !do i = 1, 4
+      !  do j = 1, 3
+      !    in_dipole( k ) = real( dipole( i,j,iv,jc) )
+      !    in_dipole( k + 1 ) = aimag( dipole( i,j,iv,jc) )
+      !    k = k + 2
+      !  enddo
+      !enddo 
      end do
   end do
+
+  write(*,*) "returning"
 
   contains
     
@@ -182,17 +192,18 @@ subroutine iaga_dipole_elements( in_dipole, in_val, in_cond, &
       integer, intent(in) :: in_fileunit
 
       ! locals
-      integer :: j = 1, i = 1, k, u
+      integer :: j = 1, i = 0, k, u
+      real*8 :: psi(1:ngrid,1:2) 
+
       do while( j <= in_n )
-        write(*,*) "reading: ", i, size( in_psi, 1 ), ngrid
-        do k = 1, ngrid
-          read(in_fileunit) in_psi(k,1, j ) 
-          write(*,*) u , k, in_psi(k,1,j)
-        enddo
-        read(in_fileunit) in_psi(1:ngrid,2, j ) 
+        read(in_fileunit) psi(:,1)
+        read(in_fileunit) psi(:,2)
+        in_psi(:,1,j) = cmplx(psi(:,1), psi(:,2))
+        read(in_fileunit) psi(:,1)
+        read(in_fileunit) psi(:,2)
+        in_psi(:,2,j) = cmplx(psi(:,1), psi(:,2))
         i = i + 1
         if( i .eq. in_bands(j) ) j = j + 1
-        write(*,*) "accepted: ", j
       enddo
 
     end subroutine

@@ -13,6 +13,34 @@
 
 #include "two_sites.h"
 
+namespace GA
+{
+  namespace Keepers
+  {
+    bool ConcTwo :: Load ( const TiXmlElement &_node )
+    {
+      double d;
+    
+      if ( not _node.Attribute("x", &d ) ) goto errorout;
+      x = types::t_real(d);
+      if ( not _node.Attribute("y", &d ) ) goto errorout;
+      y = types::t_real(d);
+    
+      return true;
+      errorout:
+        std::cerr << "Could not Load BandGap::Keeper" << std::endl;
+        return false;
+    }
+    bool ConcTwo :: Save( TiXmlElement &_node ) const
+    {
+      _node.SetDoubleAttribute("x", x );
+      _node.SetDoubleAttribute("y", y );
+    
+      return true;
+    }
+  }
+}
+
 namespace TwoSites
 {
   void rearrange_structure( Crystal::Structure &_str)

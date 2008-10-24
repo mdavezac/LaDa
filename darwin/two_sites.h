@@ -269,8 +269,33 @@ namespace TwoSites
       bool consistency_check();
   };
 
-
 } // namespace TwoSites
+
+namespace GA
+{
+  //! Policies for keeping track of functional evaluations in objects.
+  namespace Keepers
+  {
+    struct ConcTwo
+    {
+      //! The concentration of the first site.
+      types::t_real x;
+      //! The concentration of the second site.
+      types::t_real y;
+      //! Constructor.
+      ConcTwo() : x(-2), y(-2) {}
+      //! Copy Constructor.
+      ConcTwo( const ConcTwo& _c ) : x(_c.x), y(_c.y) {}
+      //! Serializes a scalar individual.
+      template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
+        { _ar & x; _ar & y; }
+      //! Loads from attributes of \a _node.
+      bool Load( const TiXmlElement &_node );
+      //! Saves as attributes of \a _node.
+      bool Save( TiXmlElement &_node ) const;
+    };
+  }
+}
 
 #include "two_sites.impl.h"
 
