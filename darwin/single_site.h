@@ -248,6 +248,7 @@ namespace SingleSite
       bool Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const;
       //! Load a T_INDIVIDUAL instance from XML
       bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
+      //! Loads evaluator from XML.
       bool Load( const TiXmlElement &_node );
       //! \brief Allows %GA to use physical operators, as define in gaoperator.h
       //! \return a pointer to a %GA operator. This pointer is owned by the callee.

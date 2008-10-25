@@ -763,5 +763,116 @@ namespace Crystal {
     return true;
     __DEBUGTRYEND(, "Error while reading from pifile.\n" )
   }
+
+  bool create_structure( Structure& _structure, atat::iVector3d &_direction,
+                         atat::iVector3d &_extent )
+  {
+    //! \brief Strict Weak Ordering functor according to depth along eptiaxial
+    //!        direction
+    //! \details Two vectors are compared by using the value of their scalar
+    //           product with Depth::a0. If these scalar product are equal (as
+    //           defined by Fuzzy::eq()), then their
+    //           scalar product with Depth::a1 are compared. If again these are
+    //           equal, then the scalar porducts with Depth::a2 are compared and
+    //           the result return. Depth::a0 is the first column of the matrix
+    //           given in the constructor argument. Depth::a2 is the second
+    //           column, and Depth::a3 the third.
+    class Depth
+    {
+      protected:
+        atat::rVector3d a0; //!< First ordering direction
+        atat::rVector3d a1; //!< Second ordering direction
+        atat::rVector3d a2; //!< Third ordering direction
+    
+      public:
+        //! \brief Constructor and Initializer
+        //! \param _mat Depth::a0 is set to the first column of this matrix,
+        //!             Depth::a1 to the second, and Depth::a2 to the third.
+        Depth   ( const atat::rMatrix3d &_mat )
+              : a0(_mat.get_column(0)), a1(_mat.get_column(1)),
+                a2(_mat.get_column(2)) {}
+        //! Copy Constructor.
+        Depth( const Depth &_c) : a0(_c.a1), a1(_c.a1), a2(_c.a2) {}
+        //! Destructor.
+        virtual ~Depth() {}
+    
+        //! Strict weak ordering operator.
+        bool operator()(const atat::rVector3d& _1, const atat::rVector3d& _2 );
+    };
+
+    // Then constructs unit cell
+    types::t_real a = (types::t_real) multiplicity;
+    cell = lattice->cell;
+    cell.set_column(0, lattice->cell * direction ); 
+    cell = cell * atat::rMatrix3d( (types::t_real) _extent(0),
+                                   (types::t_real) _extent(1),
+                                   (types::t_real) _extent(2)  );
+
+    // Checks that cell is not singular
+    if ( std::abs( det(cell) ) < types::tolerance )
+      cell.set_column(1, lattice.cell.get_column( 0 ) );
+    if ( std::abs( det(cell) ) < types::tolerance )
+      cell.set_column(2, lattice.cell.get_column( 1 ) );
+    if ( std::abs( det(cell) ) < types::tolerance )
+    {
+      std::cerr << "Could not construct unit-cell\n" << cell << std::endl;
+      return false;
+    }
+
+    // Makes sure the triad is direct
+    if ( det(cell) < 0 )
+    {
+      atat::rVector3d d = cell.get_column(2);
+      cell.set_column(2, cell.get_column(1) );
+      cell.set_column(1, d);
+    }
+
+    // Fills in a structure lattice points.
+    Crystal::Structure copy_structure = structure;
+    Crystal::fill_structure( copy_structure );
+    
+    // We now sort the real space atoms according to layer
+    std::sort( copy_structure.atoms.begin(), copy_structure.atoms.end(),
+               Depth( cell ) );
+    // The lattice sites are also sorted the same way
+    std::sort( lattice.sites.begin(), lattice.sites.end(),
+               Depth( cell ) );
+    Crystal::Lattice::t_Sites::iterator i_site = lattice.sites.begin(); 
+    Crystal::Lattice::t_Sites::iterator i_site_end = lattice.sites.end();
+    for( types::t_unsigned n=0; i_site != i_site_end; ++i_site, ++n )
+      i_site->site = n;
+
+
+    // Finally, we copy the kvector positions as atoms, and the related sites
+    Crystal::Structure::t_Atoms::const_iterator i_vec = copy_structure.atoms.begin();
+    Crystal::Structure::t_Atoms::const_iterator i_vec_end = copy_structure.atoms.end();
+    structure.atoms.clear();
+    structure.atoms.reserve( lattice.sites.size() * copy_structure.atoms.size() );
+    bool only_one_site = lattice.sites.size() == 1;
+    i_site_end = lattice.sites.end();
+    for(; i_vec != i_vec_end; ++i_vec )
+      for( i_site = lattice.sites.begin(); i_site != i_site_end; ++i_site )
+      {
+        Crystal::Structure::t_Atom atom;
+        atom.pos = i_vec->pos + i_site->pos;
+        atom.site = i_site->site;
+        atom.freeze = i_site->freeze;
+        atom.type = -1e0;
+        // vewy impowtant. Otherwise GA::KRandom and GA::Random produce
+        // individuals which are to big.
+        if( i_site != lattice.sites.begin() )
+          atom.freeze = i_site->freeze | Crystal::Structure::t_Atom::FREEZE_T;
+        structure.atoms.push_back(atom);
+      }
+
+    // More of the same... but for kvecs
+    structure.find_k_vectors();
+
+    concentration.setfrozen( structure );
+
+    return true;
+
+  }
+
 } // namespace Crystal
 

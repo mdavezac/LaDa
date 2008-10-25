@@ -298,7 +298,7 @@ namespace Layered
       Evaluator() : t_Base() {}
       //! Copy Constructor
       Evaluator   ( const Evaluator &_c )
-                : t_Base(), lattice(_c.lattice), structure( _c.structure),
+                : t_Base( _c ), lattice(_c.lattice), structure( _c.structure),
                   direction(_c.direction), multiplicity(_c.multiplicity),
                   concentration(_c.concentration) {}
       //! Destructor
