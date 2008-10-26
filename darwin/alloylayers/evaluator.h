@@ -1,8 +1,8 @@
 //
 //  Version: $Id$
 //
-#ifndef _DARWIN_ALLOY_LAYERS_H_
-#define _DARWIN_ALLOY_LAYERS_H_
+#ifndef _DARWIN_ALLOY_LAYERS_EVALUATOR_H_
+#define _DARWIN_ALLOY_LAYERS_EVALUATOR_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -20,11 +20,14 @@
 #include <opt/types.h>
 #include <mpi/mpi_object.h>
 
-#include "evaluator.h"
-#include "individual.h"
-#include "bitstring.h"
-#include "gaoperators.h"
-#include "vff.h"
+#include "../evaluator.h"
+#include "../individual.h"
+#include "../bitstring.h"
+#include "../gaoperators.h"
+#include "../vff.h"
+#include "../bandgap_stubs.h"
+
+#include "policies.h"
 
 
 namespace GA
@@ -32,7 +35,7 @@ namespace GA
   /** \ingroup Genetic
    * @{ */
   //! Optimization for superlattices of random alloy layers of specified concentration.
-  namespace Layered
+  namespace AlloyLayers
   {
     //! \brief Partially overrides GA::Evaluator default to implement behaviors
     //!        relevant to random-alloy layers. 
@@ -63,28 +66,34 @@ namespace GA
     //!                  void assign( const t_Object&, t_Quantity ) member. It
     //!                  need not be public.  However, inheritance is public to
     //!                  allow further public interfaces.
-    template< class T_INDIVIDUAL, class T_TRANSLATE, class T_ASSIGN  >
-    class Evaluator : public GA::Evaluator< T_INDIVIDUAL >,
-                      public T_TRANSLATE 
+    template< class T_INDIVIDUAL,
+              template<class> class T_TRANSLATE,
+              template<class> class T_ASSIGN >
+    class EvaluatorBase : public GA::Evaluator< T_INDIVIDUAL >
+                      public T_TRANSLATE
+                               < typename T_INDIVIDUAL :: t_IndivTraits :: t_Object >
                       public T_ASSIGN
+                               < typename T_INDIVIDUAL :: t_IndivTraits :: t_Object >
     {
       public:
         //! Type of the individual.
         typedef T_INDIVIDUAL t_Individual;
         //! Type of the translation policy
-        typedef T_TRANSLATE t_Translate;
+        typedef T_TRANSLATE< typename t_Individual :: t_IndivTraits :: t_Objec >
+                t_Translate;
         //! Type of the Assignement policy
-        typedef T_ASSIGN t_Assign;
+        typedef T_ASSIGN< typename t_Individual :: t_IndivTraits :: t_Objec >
+                t_Assign;
+        //! All pertinent %GA traits
+        typedef Traits::GA< EvaluatorBase > t_GATraits;
 
       protected:
         //! Traits of the individual.
         typedef typename t_Individual ::t_IndivTraits t_IndivTraits;
-        //! Concentration Functor.
-        typedef typename t_IndivTraits::t_Concentration t_Concentration;
+        //! Type of the %GA object.
+        typedef typename t_IndivTraits :: t_Object t_Object;
         //! Evaluator base.
         typedef GA::Evaluator<t_Individual> t_Base;
-        //! This type
-        typedef Evaluator<t_Individual, t_Translate, t_Assign >     t_This;
 
       protected:
         using t_Base :: current_object;
@@ -95,31 +104,29 @@ namespace GA
         using t_Base::Load;
 
       public:
-        //! Constructor
-        Evaluator() : t_Base() {}
+        //! Default Constructor
+        EvaluatorBase() {}
         //! Copy Constructor
-        Evaluator   ( const Evaluator &_c )
-                  : t_Base(_c), structure( _c.structure),
-                    direction(_c.direction), extent(_c.extent),
-                    layer_size(_c.layer_size) {}
+        EvaluatorBase   ( const EvaluatorBase &_c )
+                  : t_Base(_c), t_Translate(_c), t_Assign(_c),
+                    structure( _c.structure), direction(_c.direction), 
+                    extent(_c.extent), layer_size(_c.layer_size) {}
         //! Destructor
-        virtual ~Evaluator() {}
+        virtual ~EvaluatorBase() {}
 
-        //! \brief Loads the lattice, the epitaxial parameters from XML, and constructs
-        //!        the structure.
+        //! \brief Loads the lattice, the epitaxial parameters from XML, and
+        //!        constructs the structure.
         bool Load( const TiXmlElement &_node );
         //! Loads an individual from XML.
         bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
         //! Saves an individual to XML.
-        bool Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const;
+        bool Save( const t_Individual &_indiv, 
+                   TiXmlElement &_node, bool _type ) const;;
 
-        //! Creates random individuals using GA::Random.
-        bool initialize( t_Individual &_indiv );
-
-        //! Sets Layered::Evaluator::Structure to \a _indiv
+        //! Sets the current_individual pointer.
         void init( t_Individual &_indiv );
 
-        //! Prints conceration attributes and structure
+        //! Prints epitaxial parameters and structure
         std::string print() const;
 
       protected:
@@ -135,6 +142,59 @@ namespace GA
         //! The size of each layer.
         types::t_real layer_size;
     };
+
+    template< class T_INDIVIDUAL,
+              template<class> class T_TRANSLATE,
+              template<class> class T_ASSIGN >
+      class Evaluator : public EvaluatorBase< T_INDIVIDUAL, T_TRANSLATE, T_ASSIGN >,
+      {
+         //! Type of the base class.
+         typedef EvaluatorBase< T_INDIVIDUAL, T_TRANSLATE, T_ASSIGN > t_Base;
+        public:
+         //! All pertinent %GA traits
+         typedef Traits::GA< Evaluator > t_GATraits;
+     
+     
+          //! Constructor
+          Evaluator() : t_Base(), bandgap(structure), edipole(structure) {}
+          //! Copy Constructor
+          Evaluator   ( const Evaluator &_c )
+                    : t_Base(_c), bandgap(_c.bandgap), edipole(_c.edipole) {}
+          //! Destructor
+          virtual ~Evaluator() {};
+     
+          //! Allows bandgap all-electron recomputation.
+          eoF<bool>* LoadContinue(const TiXmlElement &_el )
+            { return new GA::mem_zerop_t<t_BandGap>( bandgap, &t_BandGap::Continue,
+                                                          "BandGap::Continue" );     }
+          //! Loads structure, lattice, bandgap, vff from XML
+          bool Load( const TiXmlElement &_node );
+     
+          //! Initializes the bandgap.
+          void init( t_Individual& ) { bandgap.init(); }
+     
+          //! \brief Evaluates the band gap after strain minimization, and
+          //!        optionally the electic dipole.
+          void evaluate();
+     
+#         ifdef _MPI
+            //! forwards comm and suffix to bandgap.
+            void set_mpi( boost::mpi::communicator *_comm, const std::string &_str )
+              { bandgap.set_mpi( _comm, _str ); }
+#         endif
+     
+        protected:
+          //! Type of the band gap cum vff all-in-one functional.
+          typedef BandGap::Darwin<Vff::Functional> t_BandGap;
+          //! Type of the electric dipole.
+          typedef OscStrength::Darwin t_ElectricDipole;
+     
+          //! BandGap/Vff functional
+          t_BandGap bandgap; 
+          //! Electric dipole functional.
+          t_ElectricDipole edipole;
+      };
+
 
 
   } // namespace Layered

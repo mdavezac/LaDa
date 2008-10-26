@@ -60,7 +60,8 @@ namespace CE
       {
         _stream << "(";
         for( size_t i(0); i < D; ++i )
-          _stream  << _sep.coefficients()( r * D + i, d ) << " ";
+          _stream  << std::setw(8) << std::fixed 
+                   << _sep.coefficients()( r * D + i, d ) << " ";
         _stream << ") ";
         if( d % 5 == 0 and d ) _stream << "\n     "; 
       }

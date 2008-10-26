@@ -128,6 +128,14 @@ namespace BandGap
       bool init( bool _redocenters = false )
         { return bandgap.init( _redocenters ); }
 
+      bool set_keepdirectory( bool _k = true )
+      {
+        bool result( not bandgap.BandGap().do_destroy_dir );
+        bandgap.BandGap().do_destroy_dir = not _k;
+        return result; 
+      }
+      void destroy_directory() { bandgap.BandGap().destroy_directory(); }
+
     protected:
       //! \brief Sets the next computation to be all-electron
       //! \details The next call to Darwin::operator()() will automatically

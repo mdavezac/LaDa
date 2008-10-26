@@ -320,13 +320,13 @@ namespace Crystal {
   //!                        with respect to the growth direction.
   //! \param[in] _direction the growth direction.
   //! \param[in] _extent the size in the direction growth ( x ), the other two
-  //!                    directions. These are take as is from the lattice
-  //!                    unit-cell. The order of the cell-vectors of the output
-  //!                    structure are such that the determinent of the cell is
-  //!                    positive( eg right hand rule).
-  bool create_structure( Structure& _structure,
-                         atat::iVector3d &_direction,
-                         atat::iVector3d &_extent );
+  //!                    directions. These are taken from the lattice
+  //!                    unit-cell such that the determinant of the structure
+  //!                    cell is strictly positive. The first vector in the
+  //!                    unit-cell is the growth direction.
+  bool create_epitaxial_structure( Structure& _structure,
+                                   atat::iVector3d &_direction,
+                                   atat::iVector3d &_extent );
 } // namespace Crystal
 
 #include "structure.impl.h"

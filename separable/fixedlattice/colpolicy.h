@@ -21,6 +21,15 @@ namespace CE
 {
   namespace Policy
   {
+//   //! \Initialization Policy for mixed approach.
+//   class Initialization
+//   {
+//      //! Functor.
+//      template< class T_THIS >
+//      static void init( const size_t &_rank, const size_t &_dimensions, 
+//                        T_THIS& _mixed,  );
+//   };
+    
     //! \brief Low Memory update scheme.
     //! \details Only the values of each rank of the separable function is kept
     //!          for each configuration. As such, updates happen over all
@@ -188,7 +197,8 @@ namespace CE
 
         //! Would modify A matrix and b vector.
         template< class T_MATRIX, class T_VECTOR >
-          void operator()( const t_Separables& _sep, T_MATRIX &, T_VECTOR &, size_t _dim ) const;
+          void operator()( const t_Separables& _sep, T_MATRIX &,
+                           T_VECTOR &, size_t _dim ) const;
     };
     template< class T_SEPARABLES >
     class Regularization : public NoReg<T_SEPARABLES>

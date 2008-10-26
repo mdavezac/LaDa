@@ -72,8 +72,8 @@ int main(int argc, char *argv[])
          ("seed", po::value<types::t_unsigned>()->default_value(0),
                   "Seed of the random number generator.\n"  );
   __BPO_SPECIFICS__( "Separables Options" )
-      ("loo,l", "Performs leave-one-out cross-validation.\n"  )
-      ("nofit,l", "Does not perform fit.\n"  )
+      ("loo", "Performs leave-one-out cross-validation.\n"  )
+      ("nofit", "Does not perform fit.\n"  )
       ("rank,r", po::value<types::t_unsigned>()->default_value(3),
                  "Rank of the sum of separable functions." )
       ("basis,r", po::value<std::string>()->default_value("1x1x4"),

@@ -74,7 +74,7 @@ namespace CE
           const bblas::range seprange( 0, collapse().dof() );
           bblas::matrix_range<T_MATRIX> sepmat( _A, seprange, seprange );
           bblas::vector_range<T_VECTOR> sepvec( _b, seprange );
-          collapse().regularization()( separables(), _A, _b, _dim); 
+          collapse().regularization()( collapse().separables(), _A, _b, _dim); 
         }
         if( cefit().dof() )
         {

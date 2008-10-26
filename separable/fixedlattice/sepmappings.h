@@ -67,8 +67,12 @@ namespace CE
             namespace bl = boost::lambda;
             T_NORM norm(0);
             std::for_each( _coef, _coef + D, bl::var(norm) += bl::_1 * bl::_1 );
-            if( Fuzzy::is_zero( norm) ) return;
-            norm = std::sqrt( norm );
+            if( Fuzzy::is_zero( norm) )
+            {
+              std::fill( _coef, _coef + D, 1e0 );
+              return;
+            } 
+            norm = std::sqrt( norm ) / std::sqrt( D );
             _out *= norm;
             norm = T_NORM(1) / norm;
             std::for_each( _coef, _coef + D, bl::_1 *= bl::constant(norm) );

@@ -201,7 +201,8 @@ namespace CE
         
     template< class T_SEPARABLES > template< class T_MATRIX, class T_VECTOR >
       void BadRegularization<T_SEPARABLES> 
-        :: operator()( const t_Separables& _sep, T_MATRIX &_A, T_VECTOR &_b, size_t _dim ) const
+        :: operator()( const t_Separables& _sep, T_MATRIX &_A,
+                       T_VECTOR &_b, size_t _dim ) const
         {
           if( Fuzzy::is_zero( lambda ) ) return; 
           typedef typename t_Separables :: t_Vector :: const_iterator t_cit;
@@ -217,7 +218,8 @@ namespace CE
         }
     template< class T_SEPARABLES > template< class T_MATRIX, class T_VECTOR >
       void Regularization<T_SEPARABLES> 
-        :: operator()( const t_Separables &_sep, T_MATRIX &_A, T_VECTOR &_b, size_t _dim ) const
+        :: operator()( const t_Separables &_sep, T_MATRIX &_A,
+                       T_VECTOR &_b, size_t _dim ) const
         {
           if( Fuzzy::is_zero( lambda ) ) return; 
           const size_t D( t_Separables :: t_Mapping :: D );
@@ -234,6 +236,10 @@ namespace CE
                 else  _A( j + i, j + k ) += factor *( -1.e0/t_Type(D) );
           }
         }
+
+//   template< class T_TRAITS > 
+//     void Initialization :: init< 
+
 
  } // end of Policy namespace
 } // end of CE namespace.

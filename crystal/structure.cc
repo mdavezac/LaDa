@@ -764,8 +764,9 @@ namespace Crystal {
     __DEBUGTRYEND(, "Error while reading from pifile.\n" )
   }
 
-  bool create_structure( Structure& _structure, atat::iVector3d &_direction,
-                         atat::iVector3d &_extent )
+  bool create_epitaxial_structure( Structure& _structure,
+                                   atat::iVector3d &_direction,
+                                   atat::iVector3d &_extent )
   {
     //! \brief Strict Weak Ordering functor according to depth along eptiaxial
     //!        direction
@@ -809,14 +810,20 @@ namespace Crystal {
                                    (types::t_real) _extent(2)  );
 
     // Checks that cell is not singular
-    if ( std::abs( det(cell) ) < types::tolerance )
+    if ( Fuzzy::is_zero( std::abs(det(cell)) ) )
       cell.set_column(1, lattice.cell.get_column( 0 ) );
-    if ( std::abs( det(cell) ) < types::tolerance )
+    if ( Fuzzy::is_zero( std::abs(det(cell)) ) )
       cell.set_column(2, lattice.cell.get_column( 1 ) );
-    if ( std::abs( det(cell) ) < types::tolerance )
+    if ( Fuzzy::is_zero( std::abs(det(cell)) ) )
     {
       std::cerr << "Could not construct unit-cell\n" << cell << std::endl;
       return false;
+    }
+    if( Fuzzy::leq( det(cell) ) )
+    {
+      rVector3d swap = cell. get_column(1);
+      cell.set_column(1, cell.get_column( 2 ));
+      cell.set_column(2, swap);
     }
 
     // Makes sure the triad is direct

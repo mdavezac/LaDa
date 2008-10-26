@@ -2,8 +2,8 @@
 //  Version: $Id$
 //
 
-#ifndef _DARWIN_ALLOY_LAYERS_IMPL_H_
-#define _DARWIN_ALLOY_LAYERS_IMPL_H_
+#ifndef _DARWIN_ALLOY_LAYERS_EVALUATOR_IMPL_H_
+#define _DARWIN_ALLOY_LAYERS_EVALUATOR_IMPL_H_
 
 #include <stdexcept>       // std::runtime_error
 #include <boost/lexical_cast.hpp>
@@ -15,16 +15,16 @@
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
 
-namespace Layered
+namespace AlloyLayers
 {
-# if defined( EVALHEAD ) || defined(INEVAL)
+# if defined( EVALBASEHEAD ) || defined(INEVALBASE)
 #   error "Macros with same names."
 # endif
-# define EVALHEAD  Evaluator<T_INDIVIDUAL, T_TRANSLATE, T_ASSIGN> 
-#  define INEVAL( var ) \
-     template< class T_VFF >  var EVALHEAD
+# define EVALBASEHEAD  EvaluatorBase<T_INDIVIDUAL, T_TRANSLATE, T_ASSIGN> 
+# define INEVALBASE( var ) \
+     template< class T_INDIVIDUAL, T_TRANSLATE, T_ASSIGN >  var EVALBASEHEAD
 
-  INEVAL( void ) :: init( t_Individual &_indiv )
+  INEVALBASE( void ) :: init( t_Individual &_indiv )
   {
     t_Base :: init( _indiv );
     // sets structure to this object 
@@ -32,7 +32,7 @@ namespace Layered
   }
 
 
-  INEVAL( bool ) :: Load( const TiXmlElement &_node )
+  INEVALBASE( bool ) :: Load( const TiXmlElement &_node )
   {
     __DOASSERT( not lattice.Load( _node ),
                 " Could not load lattice from input.\n" )
@@ -50,7 +50,7 @@ namespace Layered
     return structure.Load( *parent );
   }
 
-  INEVAL( bool ) :: Load_Structure( const TiXmlElement &_node )
+  INEVALBASE( bool ) :: Load_Structure( const TiXmlElement &_node )
   {
     if(     ( not _node.Attribute("direction") )
         and ( not _node.Attribute("extent") )
@@ -59,7 +59,8 @@ namespace Layered
         or  ( not _node.Attribute("extent") ) 
         or  ( not _node.Attribute("layersize") ) ) 
     {
-      std::cerr << "Either cell direction, multiplicity, or layersize are missing on input\n";
+      std::cerr << "Either cell direction, multiplicity, "
+                   "or layersize are missing on input\n";
       return false;
     }
     atat::rVector3d cdir;
@@ -71,16 +72,19 @@ namespace Layered
       sstr >> direction[0]; __DOASSERT( sstr.fail(), ) 
       sstr >> direction[1]; __DOASSERT( sstr.fail(), ) 
       sstr >> direction[2]; __DOASSERT( sstr.fail(), ) 
-      __DOASSERT( atat::norm2( direction ) < types::tolerance, "direction cannot be null.\n" )
+      __DOASSERT( atat::norm2( direction ) < types::tolerance,
+                  "direction cannot be null.\n" )
       sstr.str( _node.Attribute("extent") );
       sstr >> extent[0]; __DOASSERT( sstr.fail(), ) 
       sstr >> extent[1]; __DOASSERT( sstr.fail(), ) 
       sstr >> extent[2]; __DOASSERT( sstr.fail(), ) 
-      __DOASSERT( atat::norm2( direction ) < types::tolerance, "extent cannot be null.\n" )
+      __DOASSERT( atat::norm2( direction ) < types::tolerance,
+                  "extent cannot be null.\n" )
  
       direction = (!lattice.cell) * direction;
       
-      layer_size = boost::lexical_cast<types::t_unsigned>( _node.Attribute("layersize") );
+      layer_size = boost::lexical_cast<types::t_unsigned>
+                                      ( _node.Attribute("layersize") );
       __DOASSERT( layersize > 1,  "Layersize cannot be one or zero.\n" );
     __TRYEND(,"Error while loading superlattice description.\n" )
 
@@ -114,7 +118,7 @@ namespace Layered
     return result;
   }
 
-  INEVAL( inline std::string ) :: print() const
+  INEVALBASE( inline std::string ) :: print() const
   {
     std::ostringstream sstr;
     atat::rVector3d dir = lattice.cell * direction;
@@ -125,7 +129,8 @@ namespace Layered
     return sstr.str();
   }
 
-  INEVAL( bool ) :: Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type )
+  INEVALBASE( bool ) :: Load( t_Individual &_indiv, 
+                          const TiXmlElement &_node, bool _type )
   {
     t_Object &object = _indiv.Object();
 
@@ -147,9 +152,9 @@ namespace Layered
     return true;
   }
 
-  INEVAL( bool ) :: Evaluator<T_INDIVIDUAL> :: Save( const t_Individual &_indiv,
-                                                     TiXmlElement &_node,
-                                                     bool _type ) const
+  INEVALBASE( bool ) :: Evaluator<T_INDIVIDUAL> :: Save( const t_Individual &_indiv,
+                                                         TiXmlElement &_node,
+                                                         bool _type ) const
   {
     const t_Object &object = _indiv.Object();
     if ( _type == GA::LOADSAVE_SHORT )
@@ -164,6 +169,39 @@ namespace Layered
     structure.print_xml(_node);
 
     return true;
+  }
+
+# undef EVALBASEHEAD
+# undef INEVALBASE
+
+# if defined( EVALHEAD ) || defined(INEVAL)
+#   error "Macros with same names."
+# endif
+# define EVALHEAD  Evaluator<T_INDIVIDUAL, T_TRANSLATE, T_ASSIGN> 
+# define INEVAL( var ) \
+     template< class T_INDIVIDUAL, T_TRANSLATE, T_ASSIGN >  var EVALBASEHEAD
+
+  INEVAL( void ) :: evaluate()
+  {
+    //! Calls functionals.
+    Crystal::Structure copy_structure = structure;
+
+    bool oldkeepdir = true;;
+    if( do_dipole ) oldkeepdir = bandgap.set_keepdirectory( false );
+
+    bandgap( *current_object );
+
+    if( do_dipole )
+    {
+      edipole( *current_object );
+      bandgap.set_keepdirectory( oldkeepdir );
+      if( not oldkeepdir ) bandgap.destroy_directory();
+    }
+
+    structure = copy_structure;
+
+    // assign quantities.
+    assign( *current_object, current_individial->quantities() );
   }
 
 # undef EVALHEAD
