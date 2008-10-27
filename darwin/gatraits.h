@@ -64,12 +64,14 @@ namespace Traits
   //!                 which characterize an individual (say a bitstring).
   //! \param T_QUANTITY_TRAITS traits to the quantity used in this
   //!                          optimization. See Traits::Quantity.  
-  //! \param T_VA_TRAITS traits for functional minimization with gradients. See Traits::VA.
+  //! \param T_VA_TRAITS traits for functional minimization with gradients. See
+  //!                    Traits::VA.
   //! \param T_FITNESS type of the fitness to use. See Fitness:Types.
   template< class T_OBJECT,
-            class T_QUANTITY_TRAITS = Traits :: Quantity< typename T_OBJECT :: t_Quantity >,
-            class T_VA_TRAITS = Traits::VA<typename T_OBJECT :: t_Container, 
-                                           typename T_QUANTITY_TRAITS::t_Quantity >,
+            class T_QUANTITY_TRAITS
+               = Traits :: Quantity< typename T_OBJECT :: t_Quantity >,
+            class T_VA_TRAITS = Traits::VA< typename T_OBJECT :: t_Container, 
+                                            typename T_QUANTITY_TRAITS::t_Quantity >,
             class T_FITNESS = typename Fitness::Types< T_QUANTITY_TRAITS > :: t_Vector >
   struct Indiv
   {

@@ -173,7 +173,7 @@ namespace BitString
     {
       if ( _end > bitstring.size() ) _end = bitstring.size();
       std::for_each( bitstring.begin() + _start, bitstring.begin() + _end,
-                     std::ptr_fun( &flip< typename T_CONTAINER::value_type > ) );  
+                     std::negate< typename T_CONTAINER::value_type >() );
     }
     
   //! \brief Implements a bitstring crossover operator.
@@ -262,7 +262,8 @@ namespace BitString
     };
 
   template< class T_OBJECT >
-    inline bool Crossover<T_OBJECT> :: operator()( t_Object &_off, const t_Object &_parent )
+    inline bool Crossover<T_OBJECT> :: operator()( t_Object &_off,
+                                                   const t_Object &_parent )
     {
       if( rate <= types::tolerance  ) return false;
       if( 1.0 - rate <= types::tolerance )
@@ -276,7 +277,8 @@ namespace BitString
       typename t_Object :: const_iterator  i_var_par = _parent.bitstring.begin();
       typename t_Object :: const_iterator  i_var_par_end = _parent.bitstring.end();
       bool has_changed = false;
-      for(; i_var_off != i_var_off_end and i_var_par != i_var_par_end; ++i_var_off, ++i_var_par )
+      for(; i_var_off != i_var_off_end and i_var_par != i_var_par_end;
+           ++i_var_off, ++i_var_par )
       {
         if( not rng.flip( rate ) ) continue;
         *i_var_off = *i_var_par;
@@ -379,13 +381,18 @@ namespace BitString
       if( rate <= types::tolerance  ) return false;
       if( 1.0 - rate <= types::tolerance ) rate = 1.0;
 
+      typedef typename t_Object :: t_Container :: value_type t_Type;
       typename t_Object :: iterator  i_var = _o.bitstring.begin();
       typename t_Object :: iterator  i_var_end = _o.bitstring.end();
       bool has_changed = false;
       for(; i_var != i_var_end; ++i_var )
       {
         if( not rng.flip( rate ) ) continue;
-        flip< typename t_Object :: t_Container :: value_type >( *i_var );
+#       ifndef _ALLOY_LAYERS_
+          flip< t_Type >( *i_var );
+#       else
+          *i_var = t_Type( rng.uniform( 2e0 ) - 1e0 );
+#       endif
         has_changed = true;
       }
       return has_changed;

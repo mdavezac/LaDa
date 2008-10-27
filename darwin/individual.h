@@ -350,17 +350,21 @@ namespace Individual
 
         typedef t_FourierRtoK t_FourierKtoR; //!< Back Fourier transform functor
         //! Traits of scalar individual whose quantities are real
-        typedef Traits::PhysicsIndiv< t_Object, t_Concentration, t_FourierRtoK, t_FourierKtoR,
+        typedef Traits::PhysicsIndiv< t_Object, t_Concentration,
+                                      t_FourierRtoK, t_FourierKtoR,
                                       t_ScalarQuantityTraits > t_realtraits;
         //! Traits of vectorial individual whose quantities are real
-        typedef Traits::PhysicsIndiv< t_Object, t_Concentration, t_FourierRtoK, t_FourierKtoR,
+        typedef Traits::PhysicsIndiv< t_Object, t_Concentration,
+                                      t_FourierRtoK, t_FourierKtoR,
                                       t_VectorQuantityTraits > t_vectortraits;
         //! %Base class for templatized Multi 
         typedef Base< t_vectortraits > VectorBase;
 
       public:
-        typedef Base< t_realtraits > t_Scalar; //!< A scalar individual type for real quantities
-        typedef Multi< VectorBase > t_Vector;  //!< A vectorial individual type for real quantities
+        //! A scalar individual type for real quantities
+        typedef Base< t_realtraits > t_Scalar;
+        //! A vectorial individual type for real quantities
+        typedef Multi< VectorBase > t_Vector; 
     };
 
 

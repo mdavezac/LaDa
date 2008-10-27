@@ -17,23 +17,28 @@
 
 
 #ifdef _PESCAN
-  #include "bandgap.h"
+# include "bandgap.h"
   typedef BandGap :: Evaluator t_Evaluator;
-#define __PROGNAME__ "Band-Gap Optimization"
+# define __PROGNAME__ "Band-Gap Optimization"
 #elif defined(_CE)
-  #include "groundstate.h"
+# include "groundstate.h"
   typedef GroundState :: Evaluator t_Evaluator;
-#define __PROGNAME__ "Cluster Expansion Optimization"
+# define __PROGNAME__ "Cluster Expansion Optimization"
 #elif defined(_MOLECULARITY)
-  #include "molecularity.h"
+# include "molecularity.h"
   typedef Molecularity :: Evaluator t_Evaluator;
-#define __PROGNAME__ "Band-Gap Optimization for Epitaxial Structure"
+# define __PROGNAME__ "Band-Gap Optimization for Epitaxial Structure"
 #elif defined(_EMASS)
-  #include "emass.h"
+# include "emass.h"
   typedef eMassSL :: Evaluator t_Evaluator;
-#define __PROGNAME__ "emass_opt"
+# define __PROGNAME__ "emass_opt"
+#elif defined( _ALLOY_LAYERS_ )
+# include "alloylayers/evaluator.h"
+# include "alloylayers/policies.h"
+# include "alloylayers/object.h"
+
 #else 
-#error Need to define _CE or _PESCAN or _MOLECULARITY
+# error Need to define _CE or _PESCAN or _MOLECULARITY
 #endif
 
 #include <revision.h>
