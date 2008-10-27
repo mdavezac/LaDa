@@ -33,12 +33,25 @@
   typedef eMassSL :: Evaluator t_Evaluator;
 # define __PROGNAME__ "emass_opt"
 #elif defined( _ALLOY_LAYERS_ )
+# include "two_sites.h"
 # include "alloylayers/evaluator.h"
 # include "alloylayers/policies.h"
 # include "alloylayers/object.h"
-
+  typedef Individual :: Types
+          < 
+            GA :: AlloyLayers :: Object,
+            TwoSites :: Concentration,
+            TwoSites :: Fourier 
+          > :: t_Vector t_Individual;
+  typedef GA :: AlloyLayers :: Evaluator
+          <
+            t_Individual,
+            GA :: AlloyLayers :: Translate,
+            GA :: AlloyLayers :: AssignSignal
+          > t_Evaluator;
+# define __PROGNAME__ "alloylayers_opt"
 #else 
-# error Need to define _CE or _PESCAN or _MOLECULARITY
+# error Need to define _CE or _PESCAN or _MOLECULARITY or _ALLOY_LAYERS_
 #endif
 
 #include <revision.h>
@@ -56,6 +69,7 @@
 int main(int argc, char *argv[]) 
 {
   namespace fs = boost::filesystem;
+  namespace bl = boost::lambda;
   opt::InitialPath::init();
 
   __MPI_START__
@@ -95,6 +109,18 @@ int main(int argc, char *argv[])
     Print :: out << "load result: " << ga.Load(input.string()) << Print::endl; 
    //__DOASSERT( not ga.Load(input.string()),
    //            "Could not load input from file " << input << "\n" )
+#   ifdef _ALLOY_LAYERS_
+      ga.evaluator.do_dipole = true;
+      ga.evaluator.connect
+      (
+        bl::_2[0] = bl::bind(  &GA::AlloyLayers::inplane_stress< t_Evaluator >,
+                               bl::_1, bl::constant(ga.evaluator) ) 
+      );
+      ga.evaluator.connect
+      (
+        bl::_2[1] = bl::bind(  &GA::Keepers::OscStrength::osc_strength, bl::_1 )
+      );
+#   endif
     
     Print::out << "Rerun " << i+1 << " of " << reruns << Print::endl;
     __ROOTCODE

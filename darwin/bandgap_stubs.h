@@ -128,13 +128,19 @@ namespace BandGap
       bool init( bool _redocenters = false )
         { return bandgap.init( _redocenters ); }
 
+      //! Sets directory destruction policy.
       bool set_keepdirectory( bool _k = true )
       {
         bool result( not bandgap.BandGap().do_destroy_dir );
         bandgap.BandGap().do_destroy_dir = not _k;
         return result; 
       }
+      //! Destroy directories.
       void destroy_directory() { bandgap.BandGap().destroy_directory(); }
+      //! Returns a constant reference to the bandgap/VA.
+      const Pescan::VirtualAtom< T_VFF >& BandGap() const { return bandgap; }
+      
+
 
     protected:
       //! \brief Sets the next computation to be all-electron

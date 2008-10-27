@@ -15,6 +15,9 @@ endif
 if DOLAYEREDOPT
   LAYEREDOPT = layered_opt
 endif
+if DOALLOYLAYERSOPT
+  ALLOYLAYERSOPT = alloylayers_opt
+endif
 if DOEMASSOPT
   EMASSOPT = emass_opt
 endif
@@ -26,7 +29,7 @@ if DODIRECTIAGA
    AM_LDFLAGS += @FCLIBS@
    LDADD += @FCLIBS@
 endif
-bin_PROGRAMS = $(CEOPT) $(BANDGAPOPT) $(LAYEREDOPT) $(EMASSOPT)
+bin_PROGRAMS = $(CEOPT) $(BANDGAPOPT) $(LAYEREDOPT) $(EMASSOPT) $(ALLOYLAYERSOPT)
 ce_opt_SOURCES = main.cc $(DARWIN_CE_CC)
 ce_opt_HEADERS = $(DARWIN_CE_H)
 ce_optdir = $(includedir)/LaDa/darwin
@@ -61,6 +64,13 @@ layered_optdir = $(includedir)/darwin
 layered_opt_CPPFLAGS =  -D _MOLECULARITY $(AM_CPPFLAGS) @NAG_CFLAGS@ @GSL_CFLAGS@ 
 layered_opt_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIBS@ @NAG_LIBS@ 
 layered_opt_LDADD = $(bandgap_opt_LDADD)
+
+alloylayers_opt_SOURCES = main.cc $(DARWIN_ALLOYLAYERS_CC)
+alloylayers_opt_HEADERS = $(DARWIN_ALLOYLAYERS_H) 
+alloylayers_optdir = $(includedir)/darwin
+alloylayers_opt_CPPFLAGS =  -D _ALLOY_LAYERS_ $(AM_CPPFLAGS) @NAG_CFLAGS@ @GSL_CFLAGS@ 
+alloylayers_opt_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIBS@ @NAG_LIBS@ @BOOST_SIGNAL@
+alloylayers_opt_LDADD = $(bandgap_opt_LDADD)
 
 emass_opt_SOURCES = main.cc $(DARWIN_E_CC)
 emass_opt_HEADERS = $(DARWIN_E_H)

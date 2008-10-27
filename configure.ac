@@ -145,6 +145,14 @@ AC_ARG_ENABLE(emassopt,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-emassopt) ;;
      esac],[emassopt=$enall])
 
+AC_ARG_ENABLE(alloylayersopt,
+     [  --enable-alloylayersopt       Turn on alloylayers configuration space optimization],
+     [case "${enableval}" in
+       yes) alloylayersopt=true ;;
+       no)  alloylayersopt=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-alloylayers) ;;
+     esac],[alloylayersopt=$enall])
+
 AC_ARG_ENABLE(debug,
      [  --enable-debug                Turn on debugging],
      [case "${enableval}" in
@@ -180,6 +188,11 @@ fi
 if test x$emassopt = xtrue; then
   galib=true
   emass=true
+  pescan=true
+  vff=true
+fi
+if test x$alloylayersopt = xtrue; then
+  galib=true
   pescan=true
   vff=true
 fi
@@ -335,6 +348,7 @@ AM_CONDITIONAL(DODARWIN, test x$galib = xtrue)
 AM_CONDITIONAL(DOLAPACK, test x$lapack = xtrue)
 AM_CONDITIONAL(DOEMASS, test x$emass = xtrue)
 AM_CONDITIONAL(DOEMASSOPT, test x$emassopt = xtrue)
+AM_CONDITIONAL(DOALLOYLAYERSOPT, test x$alloylayersopt = xtrue)
 AM_CONDITIONAL(DOFORTRAN, test x$fortran = xtrue)
 AM_CONDITIONAL(DOGSL, test x$gsl = xtrue)
 AM_CONDITIONAL(DONAG, test x$nag = xtrue)
@@ -415,6 +429,7 @@ AC_SUBST(BOOST_SERIALIZATION)
 AC_SUBST(BOOST_PROGOP)
 AC_SUBST(BOOST_FS)
 AC_SUBST(BOOST_SYSTEM)
+AC_SUBST(BOOST_SIGNAL)
 AC_SUBST(BOOST_PYTHON)
 AC_SUBST(BOOST_REGEX)
 AC_SUBST(BOOST_CXXFLAGS)
@@ -455,6 +470,9 @@ if test x$molecularity = xtrue; then
 fi
 if test x$emassopt = xtrue; then
   echo " _ Genetic Algorithm for Electronic Mass Optimization"
+fi
+if test x$alloylayersopt = xtrue; then
+  echo " _ Genetic Algorithm for Alloy Layers configuration space."
 fi
 if test x$separable = xtrue; then
   echo " _ Sum of separable functions fitting."

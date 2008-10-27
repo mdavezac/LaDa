@@ -26,6 +26,7 @@
 #include "../gaoperators.h"
 #include "../vff.h"
 #include "../bandgap_stubs.h"
+#include "../electric_dipole.h"
 
 #include "policies.h"
 
@@ -46,7 +47,7 @@ namespace GA
     //!                     const Crystal::Structure&, t_Object& ) member, 
     //!                     a void translate( const std::string&, t_Object&)
     //!                     member, an a void translate( const t_Object&,
-    //!                     std::string ).  None of these member need be
+    //!                     std::string ).  These member must be
     //!                     public.  However, inheritance is further public
     //!                     interfaces. They allow transformation from objects
     //!                     to structure (for use in functional evaluations )
@@ -57,33 +58,40 @@ namespace GA
     //!                     are serialized in a human readable manner by using
     //!                     the first two member functions.
     //! \tparam T_ASSIGN a policy which assigns functional values into GA
-    //!                  quantities. E.g. sets Individual::quantities to whatever
-    //!                  is needed. This extra layer of indirection should allow
-    //!                  for us to input into the quantities different functional
-    //!                  values as needed, such as bandgap, bandedges, strain...
-    //!                  In other words, it allows static and dynamic setting of
-    //!                  multi-valued quantities. This policy must contain an
-    //!                  void assign( const t_Object&, t_Quantity ) member. It
-    //!                  need not be public.  However, inheritance is public to
-    //!                  allow further public interfaces.
+    //!                  quantities. E.g. sets Individual::quantities to
+    //!                  whatever is needed. This extra layer of indirection
+    //!                  should allow for us to input into the quantities
+    //!                  different functional values as needed, such as
+    //!                  bandgap, bandedges, strain...  In other words, it
+    //!                  allows static and dynamic setting of multi-valued
+    //!                  quantities. This policy must contain a public void
+    //!                  assign( const t_Object&, t_Quantity ) member.
+    //!                  Inheritance is public to allow further public
+    //!                  interfaces.
     template< class T_INDIVIDUAL,
               template<class> class T_TRANSLATE,
-              template<class> class T_ASSIGN >
-    class EvaluatorBase : public GA::Evaluator< T_INDIVIDUAL >
-                      public T_TRANSLATE
-                               < typename T_INDIVIDUAL :: t_IndivTraits :: t_Object >
-                      public T_ASSIGN
-                               < typename T_INDIVIDUAL :: t_IndivTraits :: t_Object >
+              template<class,class> class T_ASSIGN >
+    class EvaluatorBase : public GA::Evaluator< T_INDIVIDUAL >,
+                          public T_TRANSLATE
+                                   < typename T_INDIVIDUAL :: t_IndivTraits :: t_Object >,
+                          public T_ASSIGN
+                                   < typename T_INDIVIDUAL :: t_IndivTraits :: t_Object,
+                                     typename T_INDIVIDUAL :: t_IndivTraits
+                                                           :: t_QuantityTraits :: t_Quantity >
     {
+    
       public:
         //! Type of the individual.
         typedef T_INDIVIDUAL t_Individual;
         //! Type of the translation policy
-        typedef T_TRANSLATE< typename t_Individual :: t_IndivTraits :: t_Objec >
+        typedef T_TRANSLATE< typename t_Individual :: t_IndivTraits :: t_Object >
                 t_Translate;
         //! Type of the Assignement policy
-        typedef T_ASSIGN< typename t_Individual :: t_IndivTraits :: t_Objec >
-                t_Assign;
+        typedef T_ASSIGN
+                < 
+                  typename t_Individual :: t_IndivTraits :: t_Object,
+                  typename t_Individual :: t_IndivTraits :: t_QuantityTraits :: t_Quantity
+                > t_Assign;
         //! All pertinent %GA traits
         typedef Traits::GA< EvaluatorBase > t_GATraits;
 
@@ -96,8 +104,9 @@ namespace GA
         typedef GA::Evaluator<t_Individual> t_Base;
 
       protected:
+        using t_Base :: current_individual;
         using t_Base :: current_object;
-        using t_Translate :: tranlate;
+        using t_Translate :: translate;
         using t_Assign :: assign;
 
       public:
@@ -129,6 +138,10 @@ namespace GA
         //! Prints epitaxial parameters and structure
         std::string print() const;
 
+        //! Returns direction.
+        atat::rVector3d get_direction() const { return direction; }
+
+
       protected:
         //! Loads epitaxial growth parameters and constructs the structure
         bool Load_Structure( const TiXmlElement &_node );
@@ -136,30 +149,39 @@ namespace GA
         //! The structure (cell-shape) for which decoration search is done
         Crystal :: Structure structure;
         //! The growth direction.
-        atat::iVector3d direction;
+        atat::rVector3d direction;
         //! The number of alloy layers.
         atat::iVector3d extent;
         //! The size of each layer.
         types::t_real layer_size;
+        //! A (static) pointer to a lattice object.
+        static boost::shared_ptr< Crystal::Lattice > lattice;
     };
 
     template< class T_INDIVIDUAL,
               template<class> class T_TRANSLATE,
-              template<class> class T_ASSIGN >
-      class Evaluator : public EvaluatorBase< T_INDIVIDUAL, T_TRANSLATE, T_ASSIGN >,
+              template<class,class> class T_ASSIGN >
+      class Evaluator : public EvaluatorBase< T_INDIVIDUAL, T_TRANSLATE, T_ASSIGN >
       {
-         //! Type of the base class.
-         typedef EvaluatorBase< T_INDIVIDUAL, T_TRANSLATE, T_ASSIGN > t_Base;
+          //! Type of the base class.
+          typedef EvaluatorBase< T_INDIVIDUAL, T_TRANSLATE, T_ASSIGN > t_Base;
         public:
-         //! All pertinent %GA traits
-         typedef Traits::GA< Evaluator > t_GATraits;
-     
+          //! Type of the individual.
+          typedef typename t_Base :: t_Individual t_Individual;
+          //! Type of the translation policy.
+          typedef typename t_Base :: t_Translate t_Translate;
+          //! Type of the assignement policy.
+          typedef typename t_Base :: t_Assign t_Assign;
+          //! All pertinent %GA traits
+          typedef Traits::GA< Evaluator > t_GATraits;
+          //! Wether to perform oscilator strength evaluations.
+          bool do_dipole;
      
           //! Constructor
-          Evaluator() : t_Base(), bandgap(structure), edipole(structure) {}
+          Evaluator() : t_Base(), bandgap(structure), edipole(structure), do_dipole(false) {}
           //! Copy Constructor
           Evaluator   ( const Evaluator &_c )
-                    : t_Base(_c), bandgap(_c.bandgap), edipole(_c.edipole) {}
+                    : t_Base(_c), bandgap(_c.bandgap), edipole(_c.edipole), do_dipole(_c.do_dipole){}
           //! Destructor
           virtual ~Evaluator() {};
      
@@ -182,17 +204,20 @@ namespace GA
             void set_mpi( boost::mpi::communicator *_comm, const std::string &_str )
               { bandgap.set_mpi( _comm, _str ); }
 #         endif
+          using t_Base::Load;
      
         protected:
           //! Type of the band gap cum vff all-in-one functional.
           typedef BandGap::Darwin<Vff::Functional> t_BandGap;
           //! Type of the electric dipole.
-          typedef OscStrength::Darwin t_ElectricDipole;
+          typedef ::GA::OscStrength::Darwin t_ElectricDipole;
      
           //! BandGap/Vff functional
           t_BandGap bandgap; 
           //! Electric dipole functional.
           t_ElectricDipole edipole;
+          
+          using t_Base :: structure;
       };
 
 
@@ -203,6 +228,6 @@ namespace GA
 
 }
 
-#include "alloylayers.impl.h"
+#include "evaluator.impl.h"
 
 #endif // _LAYERED_H_

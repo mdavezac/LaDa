@@ -8,8 +8,9 @@
 #include <config.h>
 #endif
 
-#include <sstream>
 #include <boost/function.hpp>
+#include <boost/signal.hpp>
+
 #include <tinyxml/tinyxml.h>
 
 namespace Crystal { class Structure; }
@@ -24,27 +25,27 @@ namespace GA
     //!          instances are ordered in direction of growth ( \see
     //!          bool Crystal::create_epitaxial_structure() ). 
     template< class T_OBJECT >
-      struct Translate<T_OBJECT>
+      struct Translate
       {
         //! Type of the Object.
         typedef T_OBJECT t_Object;
         //! From objects to Crystal::Structure. 
-        static void translate( const t_Object&, Crystal :: Structure& ) const; 
+        static void translate( const t_Object&, Crystal :: Structure& );
         //! From Crystal::Structure to objects.
-        static void translate( const Crystal :: Structure&, t_Object& ) const;
+        static void translate( const Crystal :: Structure&, t_Object& );
         //! From Crystal::Structure to objects.
-        static void translate( const t_Object&, std :: string& ) const;
+        static void translate( const t_Object&, std :: string& );
         //! From Crystal::Structure to objects.
-        static void translate( const std::string&, t_Object& ) const;
+        static void translate( const std::string&, t_Object& );
       };
 
     //! \brief A function to easily create random individuals.
     //! \details The object of \a _indiv is translated from a random structure.
     template< class T_INDIVIDUAL, class T_TRANSLATE >
-      bool Initialize<T_INDIVIDUAL> :: initialize( T_INDIVIDUAL &_indiv,
-                                                   Crystal::Structure& _structure,
-                                                   T_TRANSLATE _translate );
-                                                   
+      bool initialize( T_INDIVIDUAL &_indiv,
+                       Crystal::Structure& _structure,
+                       T_TRANSLATE _translate );
+                                 
     //! \brief Policy to connect a single callback function assigning
     //!        values from an object to a GA quantity/raw fitness.
     template< class T_OBJECT, class T_QUANTITIES >
@@ -72,29 +73,39 @@ namespace GA
     //! \brief Policy to connect any number of callback functions assigning
     //!        values from an object to a GA quantity/raw fitness.
     template< class T_OBJECT, class T_QUANTITIES >
-      class AssignSignals
+      class AssignSignal
       {
         public:
           //! Type of the object.
           typedef T_OBJECT t_Object;
           //! Type of the quantities.
           typedef T_QUANTITIES t_Quantities;
+
+          //! Constructor.
+          AssignSignal() : signal_( new t_Signal ) {}
+          //! Copy Constructor.
+          AssignSignal( const AssignSignal & _c ) : signal_( _c.signal_ ) {}
      
           //! Connects a functor/function to the signal.
           void assign( const t_Object& _o, t_Quantities &_q ) const
-            { return signal_( _o, _q ); }
+            { return (*signal_)( _o, _q ); }
      
           //! Connects a functor/function to the signal.
           template< class T_CONNECT >
-            void connect( T_CONNECT _c ) { signal_.connect( _c ); }
+            void connect( T_CONNECT _c ) { signal_->connect( _c ); }
      
         protected:
-          //! The signal callback container.
-          boost::signal<void(const t_Object&, t_Quantities&) > signal_;
+          //! Type of the signal.
+          typedef boost::signal< void(const t_Object&, t_Quantities&)> t_Signal; 
+          //! \brief The signal callback container.
+          //! \details This is a boost shared pointer, and as such, signal_ is
+          //!          copyable.
+          boost::shared_ptr< t_Signal > signal_;
       };
 
   }
 }
 
 #include "policies.impl.h"
+
 #endif

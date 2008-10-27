@@ -325,7 +325,7 @@ namespace Crystal {
   //!                    cell is strictly positive. The first vector in the
   //!                    unit-cell is the growth direction.
   bool create_epitaxial_structure( Structure& _structure,
-                                   atat::iVector3d &_direction,
+                                   atat::rVector3d &_direction,
                                    atat::iVector3d &_extent );
 } // namespace Crystal
 

@@ -8,11 +8,32 @@
 # include <config.h>
 #endif
 
+#include <string>
+
+#include<opt/types.h>
+#include<vff/layered.h>
+
+#include "../bitstring.h"
+#include "policies.h"
+
+//! \cond
+namespace Crystal
+{
+  class Structure;
+}
+namespace Vff
+{
+  class Keeper;
+  types::t_real inplane_stress( const atat::rMatrix3d &_stress,
+                                const atat::rVector3d &_dir );
+}
+//! \endcond
+
 namespace GA
 {
   namespace AlloyLayers
   {
-    struct Object : public Bitstring::Object<>, 
+    struct Object : public BitString::Object<>, 
                     public ::GA::Keepers::BandGap,
                     public ::GA::Keepers::OscStrength
     {
@@ -41,10 +62,33 @@ namespace GA
         {
           _ar & boost::serialization::base_object< ::BitString::Object<> >( *this ); 
           _ar & boost::serialization::base_object< ::GA::Keepers::BandGap >( *this ); 
-          _ar & boost::serialization::base_object<::GA::Keepers::OscStrength>( *this ); 
+          _ar & boost::serialization::base_object< ::GA::Keepers::OscStrength >( *this ); 
         }
     };
 
+    //! \brief Old-style translation.
+    //! \todo remove this function and replace it with translate.
+    inline void operator<<( std::string &_str, const Object& _o )
+      { Translate< Object > :: translate( _o, _str ); }
+    //! \brief Old-style translation.
+    //! \todo remove this function and replace it with translate.
+    inline void operator<<( Object& _o, const std::string &_str )
+      { Translate< Object > :: translate( _str, _o ); }
+    //! \brief Old-style translation.
+    //! \todo remove this function and replace it with translate.
+    inline void operator<<( Crystal::Structure &_str, const Object& _o )
+      { Translate< Object > :: translate( _o, _str ); }
+    //! \brief Old-style translation.
+    //! \todo remove this function and replace it with translate.
+    inline void operator<<( Object& _o, const Crystal::Structure &_str )
+      { Translate< Object > :: translate( _str, _o ); }
+
+    //! Helper function which returns the inplane stress.
+    template< class T_THIS >
+     inline types::t_real inplane_stress( const Vff::Keeper& _o, const T_THIS &_this )
+     {
+       return Vff::inplane_stress( _o.stress, _this.get_direction() ); 
+     }
   }
 }
 

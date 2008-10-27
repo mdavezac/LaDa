@@ -35,6 +35,13 @@ DARWIN_BG_H  = bandgap_stubs.h  two_sites.h  single_site.h  vff.h  bandgap.h \
                $(DARWIN_BG_IMPL_H)
 DARWIN_BG_DOC = $(DARWIN_BG_H) $(DARWIN_BG_CC) 
 
+DARWIN_ALLOYLAYERS_CC = single_site.cc bandgap_stubs.cc vff.cc electric_dipole.cc
+DARWIN_ALLOYLAYERS_IMPL_H  = alloylayers/evaluator.impl.h  alloylayers/policies.impl.h 
+DARWIN_ALLOYLAYERS_H  = alloylayers/evaluator.h alloylayers/object.h \
+                        alloylayers/policies.h electric_dipole.h \
+                        $(DARWIN_ALLOYLAYERS_IMPL_H)
+DARWIN_ALLOYLAYERS_DOC = $(DARWIN_ALLOYLAYERS_H) $(DARWIN_ALLOYLAYERS_CC) 
+
 DARWIN_L_CC = bandgap_stubs.cc two_sites.cc single_site.cc vff.cc molecularity.cc layered.impl.h
 DARWIN_L_IMPL_H = two_sites.impl.h single_site.impl.h molecularity.impl.h \
                   layered.impl.h 
@@ -149,6 +156,7 @@ ALL_DOCS = $(top_srcdir)/doxy.conf $(top_srcdir)/$(DOCS_H) \
            $(addprefix $(top_srcdir)/darwin/, $(DARWIN_BG_DOC)) \
            $(addprefix $(top_srcdir)/darwin/, $(DARWIN_L_DOC)) \
            $(addprefix $(top_srcdir)/darwin/, $(DARWIN_E_DOC)) \
+           $(addprefix $(top_srcdir)/darwin/, $(DARWIN_ALLOYLAYERS_DOC)) \
            $(addprefix $(top_srcdir)/crystal/,$(CRYSTAL_DOC)) \
            $(addprefix $(top_srcdir)/ce/,$(CE_DOC)) \
            $(addprefix $(top_srcdir)/lapack/,$(LAPACK_DOC)) \
@@ -229,7 +237,7 @@ EXTRA_FILES =  $(addprefix docsource/, $(DOCS)) \
                $(addprefix test/separables/dcubic/, $(TEST_SEPARABLES_DCUBIC)) \
                $(addprefix test/layered_opt/, $(TEST_FILES)) \
                $(addprefix test/vff/nanopse/, $(TEST_VFF_NANOPSE)) \
-               $(addprefix pkgconfig/env/, $(ENVIRONMENT_FILES))
+               $(addprefix pkgconfig/env/, $(ENVIRONMENT_FILES)) 
             #  test/bandgap/calc \
             #  test/python test/vff/calc \
             #  test/bandgap_opt/calc \

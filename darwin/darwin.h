@@ -187,9 +187,6 @@ namespace GA
       //! \see Darwin::Load_Method()
       t_Scaling*                         scaling;
 
-      //! \brief The evaluator instance itself
-      //! \see Darwin::Load(const TiXmlElement& )
-      t_Evaluator   evaluator;
       //! holds a collection of independent populations
       t_Islands     islands;
       //! Offspring population
@@ -204,6 +201,10 @@ namespace GA
       Topology topology;
 
     public:
+      //! \brief The evaluator instance itself
+      //! \see Darwin::Load(const TiXmlElement& )
+      t_Evaluator   evaluator;
+      
       //! Constructor
       Darwin () : filename("input.xml"), tournament_size(2), pop_size(100),
                   max_generations(0), nb_islands(1), do_save(SAVE_RESULTS),

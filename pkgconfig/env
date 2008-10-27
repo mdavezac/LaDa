@@ -11,6 +11,7 @@ BOOST_FS="-lboost_filesystem$bsuf"
 BOOST_PYTHON="-lboost_python$bsuf"
 BOOST_REGEX="-lboost_regex$bsuf"
 BOOST_SYSTEM="-lboost_system$bsuf"
+BOOST_SIGNAL="-lboost_signals$bsuf"
 BOOST_CXXFLAGS="-I$BASEDIR/include/boost-1_36"
 
 #
