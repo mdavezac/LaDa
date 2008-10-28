@@ -7,6 +7,7 @@
 
 #include <stdexcept>       // std::runtime_error
 #include <boost/lexical_cast.hpp>
+#include <boost/bind.hpp>
 
 #include <print/stdout.h>
 #include <crystal/structure.h>
@@ -172,9 +173,8 @@ namespace GA
         return true;
       }
   
-      Crystal :: Structure dummy( structure );
-      translate( object, dummy );
-      dummy.print_xml(_node);
+      translate( object, structure );
+      structure.print_xml(_node);
   
       return true;
     }
@@ -222,6 +222,23 @@ namespace GA
       return true;
     }
 
+    INEVAL( struct ) :: TranslateStoO
+    {
+      const EVALHEAD &this_;
+      TranslateStoO( const EVALHEAD &_this ) : this_(_this) {}
+      TranslateStoO( const TranslateStoO &_c ) : this_(_c.this_) {}
+      typedef typename t_Individual :: t_IndivTraits :: t_Object t_Object;
+      void operator()( const Crystal :: Structure &_s, t_Object & _o )
+        { return this_.translate( _s, _o ); }
+    };
+
+    INEVAL( bool ) :: initialize( t_Individual &_indiv )
+    {
+
+      ::GA::AlloyLayers::initialize( _indiv, structure, TranslateStoO( *this ) );
+      _indiv.invalidate();
+      return true;
+    }
 #   undef EVALHEAD
 #   undef INEVAL
   } // namespace Layered

@@ -79,7 +79,6 @@ namespace GA
                                      typename T_INDIVIDUAL :: t_IndivTraits
                                                            :: t_QuantityTraits :: t_Quantity >
     {
-    
       public:
         //! Type of the individual.
         typedef T_INDIVIDUAL t_Individual;
@@ -147,7 +146,7 @@ namespace GA
         bool Load_Structure( const TiXmlElement &_node );
       
         //! The structure (cell-shape) for which decoration search is done
-        Crystal :: Structure structure;
+        mutable Crystal :: Structure structure;
         //! The growth direction.
         atat::rVector3d direction;
         //! The number of alloy layers.
@@ -163,6 +162,9 @@ namespace GA
               template<class,class> class T_ASSIGN >
       class Evaluator : public EvaluatorBase< T_INDIVIDUAL, T_TRANSLATE, T_ASSIGN >
       {
+          //! creates a functor for specific void translate() overload.
+          class TranslateStoO;
+    
           //! Type of the base class.
           typedef EvaluatorBase< T_INDIVIDUAL, T_TRANSLATE, T_ASSIGN > t_Base;
         public:
@@ -198,6 +200,10 @@ namespace GA
           //! \brief Evaluates the band gap after strain minimization, and
           //!        optionally the electic dipole.
           void evaluate();
+
+          //! Creates random individuals using GA::Random.
+          bool initialize( t_Individual &_indiv );
+
      
 #         ifdef _MPI
             //! forwards comm and suffix to bandgap.
