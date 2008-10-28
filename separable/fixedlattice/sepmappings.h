@@ -21,8 +21,8 @@ namespace CE
   namespace Mapping
   {
     //! \brief Allows different types of mapping from confs to coef parameters.
-    //! \detail This mapping is equivalent to VectorPlus, eg (1,0..), (0,1,....),
-    //!          and so on.
+    //! \details This mapping is equivalent to VectorPlus, eg (1,0..), (0,1,....),
+    //!           and so on.
     template< size_t DIM > class VectorPlus 
     {
       public:
@@ -80,8 +80,8 @@ namespace CE
         static size_t norm( size_t ) { return 1; } 
     };
     //! \brief Allows different types of mapping from confs to coef parameters.
-    //! \detail This mapping is equivalent to VectorPlus, with one constant
-    //!         vector, and all other vectors with a single non-zero component.
+    //! \details This mapping is equivalent to VectorPlus, with one constant
+    //!          vector, and all other vectors with a single non-zero component.
     template< size_t DIM > class VectorDiff
     {
       public:

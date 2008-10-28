@@ -60,7 +60,8 @@
     types::t_real rcut;
     __IIAGA
     (
-      //! System call to lauch nanopse's pescan
+      //! \brief System call to lauch nanopse's pescan.
+      //! \details With __IIAGA defined only.
       boost::filesystem::path launch;
     )
     //! Spin orbit parameters.

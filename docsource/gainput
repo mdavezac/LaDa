@@ -21,6 +21,7 @@
      <LI> \ref TagOffspring
      <LI> \ref TagOperators
      <LI> \ref TagPrint
+     <LI> \ref TagMPI
      <LI> \ref TagRandom
      <LI> \ref TagSave
      <LI> \ref TagScaling
@@ -35,6 +36,7 @@
     \code
 <?xml version="1.0" standalone="no" ?>
 <Job>
+    <MPI pools=7/>
     <GA>
        ...
     </GA>
@@ -676,5 +678,28 @@
              this is only usefull in conjunction with \ref TagTaboos and \ref
              TagHistoryTaboo.
 
+         \section TagMPI \<MPI/\>
+           Sets up the mpi scheme. Depending on the value of the attribute \a
+           pools, there are two possible schemes at present.
+             \param pools = 1 (default) Only one pool of processors. All
+                                        processors run the same way.  Band-gaps
+                                        are evaluated using the number of
+                                        processor the GA job was sent with (eg mpirun -n something).
+             \param pools = n The processors are separated into n pools + 1
+                              lone processor. The lone processor tells the n
+                              pools what to do. Indivduals are sent to the
+                              pools for evaluation. Hence, it is not necessary
+                              to use more pools than you have new offspring at
+                              each generation. mpirun should be launched on n*m
+                              +1 processors, where n is the number of pools, m
+                              the number of processors per pool. If you do
+                              launch with an even number of processors, (at
+                              least) one processor will be idle. When computing
+                              band-gaps and such, there are restrictions as to
+                              how many processors each computation can use (see
+                              nanopse for more details).
+             \note \a pools does not denote the number of processors, but the
+                            number of groups into which the processors are ...
+                            pooled.
 */
 

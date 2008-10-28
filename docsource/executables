@@ -86,6 +86,7 @@
      \e x and \e y concentrations are set using a \ref TagConcentration tag.
       \param -h, --help prints out options
       \param -i, --input file to read input from. Defaults to "input.xml" in current directory.
+     \note Can be launched in multiple processors. See \ref TagMPI for more details.
 
      The input should look something like the following.
      See test/bandgap_opt/input.xml for an actual example.
@@ -118,6 +119,7 @@
      structures are inputed in a special way (see below).
       \param -h, --help prints out options
       \param -i, --input file to read input from. Defaults to "input.xml" in current directory.
+     \note Can be launched in multiple processors. See \ref TagMPI for more details.
 
     Structures can be either loaded from input as done everywhere else or
     constructured. In the former case, the structure must be a minimal

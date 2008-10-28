@@ -22,7 +22,7 @@ namespace Pescan
 {
   //! \cond
   template< class > class VirtualAtom;
-  //!\ endcond
+  //! \endcond
 
   //! Dumps structure to \a _stream
   template< class T_VFF >
