@@ -77,7 +77,7 @@ namespace GA
           { MPI_COMMDEC::set_mpi( _comm ); }
   #endif
         //! initializes nothing.
-        bool init() {}
+        bool init() { return true; }
 
       protected:
         //! Allowable Degeneracy.

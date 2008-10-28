@@ -55,9 +55,9 @@ namespace GA
           virtual void operator()( const t_Individual &_indiv );
 
           //! Does nothing
-          bool Restart( const TiXmlElement &_node ) {}
+          bool Restart( const TiXmlElement &_node ) { return true; }
           //! Does nothing
-          bool Save( TiXmlElement &_node ) const {}
+          bool Save( TiXmlElement &_node ) const { return true; }
 
           //! Does nothing
           virtual void print_results(types::t_unsigned _age,

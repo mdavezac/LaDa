@@ -117,8 +117,7 @@ namespace GA
         //! Copy Constructor
         EvaluatorBase   ( const EvaluatorBase &_c )
                   : t_Base(_c), t_Translate(_c), t_Assign(_c),
-                    structure( _c.structure), direction(_c.direction), 
-                    extent(_c.extent), layer_size(_c.layer_size) {}
+                    structure( _c.structure), direction(_c.direction) {}
         //! Destructor
         virtual ~EvaluatorBase() {}
 
@@ -142,17 +141,10 @@ namespace GA
 
 
       protected:
-        //! Loads epitaxial growth parameters and constructs the structure
-        bool Load_Structure( const TiXmlElement &_node );
-      
         //! The structure (cell-shape) for which decoration search is done
         mutable Crystal :: Structure structure;
         //! The growth direction.
         atat::rVector3d direction;
-        //! The number of alloy layers.
-        atat::iVector3d extent;
-        //! The size of each layer.
-        types::t_real layer_size;
         //! A (static) pointer to a lattice object.
         static boost::shared_ptr< Crystal::Lattice > lattice;
     };

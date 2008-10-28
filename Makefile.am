@@ -55,7 +55,7 @@ SUBDIRS = $(MPISUBDIR) atat physics opt crystal print $(CEDIR) $(VFFSUBDIR) \
 	  $(PESCANSUBDIR) $(LAPACKDIR) $(DARWINSUBDIR) $(SEPARABLEDIR) \
 	  $(PYTHONDIR)
 revision.h: force
-	@ $(top_srcdir)/scripts/max_revision.pl
+	@cd $(top_srcdir); scripts/max_revision.pl
 force: ;
 all: all-local
 all-local: revision.h

@@ -6,15 +6,14 @@
 #endif
 
 #include <algorithm>
+#include <sstream>
 #include <boost/filesystem/operations.hpp>
 #include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 
 #include <opt/ndim_iterator.h>
-#include <opt/traits.h>
 #include <opt/debug.h>
-#include <opt/fuzzy.h>
 
 #include <atat/misc.h>
 #include <physics/physics.h>
@@ -183,7 +182,7 @@ namespace Crystal {
   }
 
        
-  bool Structure :: Load( const TiXmlElement &_element )
+  const TiXmlElement * Structure :: find_node( const TiXmlElement &_element )
   {
     const TiXmlElement *child, *parent;
     double d; atat::rVector3d vec;
@@ -196,35 +195,51 @@ namespace Crystal {
     else
       parent = &_element;
     __DOASSERT( not parent, "Could not find Structure tag in xml.\n" )
+    return parent;
+  }
 
+  void Structure :: load_attributes( const TiXmlElement &_element )
+  {
     // read PI name if available
     name = "";
-    if ( parent->Attribute("name") )
-      name = parent->Attribute("name");
-    energy = 1.0;
-    if ( not parent->Attribute("energy", &d) )
-      energy = 666.666;
-    energy = types::t_real(d);
-    if ( parent->Attribute("weight", &d) )
-      energy = types::t_real(d);
+    if ( _element.Attribute("name") )
+      name = _element.Attribute("name");
+    energy = 666.666e0;
+    if ( _element.Attribute("energy") )
+      energy = boost::lexical_cast<types::t_real>( _element.Attribute("energy") );
+    if ( _element.Attribute("weight") )
+      weight = boost::lexical_cast<types::t_real>( _element.Attribute("weight") );
 
+    scale = 2.0;
+    if ( _element.Attribute("scale") )
+      scale = boost::lexical_cast<types::t_real>( _element.Attribute("scale") );
+    else if ( lattice )
+       scale = lattice->scale; 
+  }
+
+  bool Structure :: load_cell( const TiXmlElement &_element )
+  {
     // reads in cell
-    child = parent->FirstChildElement( "Cell" );
-    __DOASSERT( not child, "Unit-cell not found in structure input\n")
+    const TiXmlElement* child = _element.FirstChildElement( "Cell" );
+    if( not child ) return false;
     child = child->FirstChildElement( "row" );
     freeze = FREEZE_NONE;
-    for (i=0 ; child and i<3; child=child->NextSiblingElement( "row" ), i++ )
+    size_t i(0);
+    for (; child and i<3; child=child->NextSiblingElement( "row" ), i++ )
     {
-      d=1.0; __DOASSERT( not child->Attribute("x", &d),
-                         "Incomplete cell in structure tag.\n" ); vec(0) = d;
-      d=1.0; __DOASSERT( not child->Attribute("y", &d),
-                         "Incomplete cell in structure tag.\n"); vec(1) = d;
-      d=1.0; __DOASSERT( not child->Attribute("z", &d),
-                         "Incomplete cell in structure tag.\n"); vec(2) = d;
-      cell.set_row(i,vec);
+      __DOASSERT( not (     child->Attribute("x") 
+                        and child->Attribute("y") 
+                        and child->Attribute("z")  ),
+                  "Incomplete cell in xml input.\n" )
+
+      __TRYBEGIN
+        cell(i,0) = boost::lexical_cast<types::t_real>( child->Attribute("x") );
+        cell(i,1) = boost::lexical_cast<types::t_real>( child->Attribute("y") );
+        cell(i,2) = boost::lexical_cast<types::t_real>( child->Attribute("z") );
+      __TRYEND(, "Could not parse cell input.\n" )
       if ( child->Attribute("freeze") )
       {
-        str = child->Attribute("freeze");
+        std::string str = child->Attribute("freeze");
         if ( str.find("all") != std::string::npos )
           switch( i )
           {
@@ -262,19 +277,13 @@ namespace Crystal {
         }  
       }
     }
-    __DOASSERT(i != 3, "More than three row for unit-cell in input\n")
+    return i == 3;
+  }
 
-    scale = 0;
-    parent->Attribute("scale", &scale);
-    if ( not scale )
-    {
-      scale = 2.0;
-      if ( lattice )
-       scale = lattice->scale; 
-    }
-
+  bool Structure :: load_atoms( const TiXmlElement &_element )
+  {
     // reads in atoms
-    child = parent->FirstChildElement( "Atom" );
+    const TiXmlElement* child = _element.FirstChildElement( "Atom" );
     atoms.clear();
     for (; child; child=child->NextSiblingElement( "Atom" ) )
     {
@@ -295,10 +304,13 @@ namespace Crystal {
         atom.freeze |= lattice->sites[ atom.site ].freeze;
       atoms.push_back(atom);
     }
+    return atoms.size() != 0;
+  }
 
-
+  bool Structure :: load_kvecs( const TiXmlElement &_element )
+  {
     // reads in kvectors
-    child = parent->FirstChildElement( "Kvec" );
+    const TiXmlElement* child = _element.FirstChildElement( "Kvec" );
     k_vecs.clear();
     for (; child; child=child->NextSiblingElement( "Kvec" ) )
     {
@@ -307,8 +319,65 @@ namespace Crystal {
                   "Could not load k-vector from xml input.\n" )
       k_vecs.push_back(kvec);
     }
-    if ( lattice and ( not k_vecs.size() ) )
-      find_k_vectors();
+
+    return k_vecs.size() != 0;
+  }
+
+  bool Structure :: load_epitaxial( const TiXmlElement &_node )
+  {
+    if(     ( not _node.Attribute("direction") )
+        and ( not _node.Attribute("extent") ) ) return false;
+    if(     ( not _node.Attribute("direction") )
+        or  ( not _node.Attribute("extent") ) )
+    {
+      std::cerr << "Either cell direction, multiplicity, "
+                   "or layersize are missing on input\n";
+      return false;
+    }
+
+    atat::rVector3d direction;
+    atat::iVector3d extent;
+    
+    // First, Load Attributes 
+    __TRYBEGIN
+      std::istringstream sstr; sstr.str( _node.Attribute("direction") );
+      sstr >> direction[0]; __DOASSERT( sstr.fail(), "" ) 
+      sstr >> direction[1]; __DOASSERT( sstr.fail(), "" ) 
+      sstr >> direction[2]; __DOASSERT( sstr.fail(), "" ) 
+      __DOASSERT( atat::norm2( direction ) < types::tolerance,
+                  "direction cannot be null.\n" )
+      sstr.str( _node.Attribute("extent") );
+      sstr >> extent[0]; __DOASSERT( sstr.fail(), "" ) 
+      sstr >> extent[1]; __DOASSERT( sstr.fail(), "" ) 
+      sstr >> extent[2]; __DOASSERT( sstr.fail(), "" ) 
+      __DOASSERT( atat::norm2( direction ) < types::tolerance,
+                  "extent cannot be null.\n" )
+  
+      direction = (!lattice->cell) * direction;
+      
+    __TRYEND(,"Error while loading superlattice description.\n" )
+  
+    return create_epitaxial_structure( *this, direction, extent );
+  }
+
+  bool Structure :: Load( const TiXmlElement &_element )
+  {
+    const TiXmlElement* parent = find_node( _element );
+    if( not parent ) return false;
+
+    // trie to load cell.
+    if( not load_cell( *parent ) ) return false;
+    
+    load_attributes( *parent );
+
+    // tries to load atoms.
+    bool atomsloaded =  load_atoms( *parent );
+    if( not atomsloaded ) atomsloaded = load_epitaxial( *parent );
+    if( not atomsloaded ) atomsloaded = fill_structure( *this );
+    if( not atomsloaded ) return false;
+
+    atomsloaded = load_kvecs( *parent );
+    if( not atomsloaded ) find_k_vectors();
 
     return true;
   }
@@ -573,10 +642,11 @@ namespace Crystal {
     return _stream;
   } 
 
-  void fill_structure( Crystal::Structure &_str )
+  bool fill_structure( Crystal::Structure &_str )
   {
-    if( not _str.lattice ) return;
+    if( not _str.lattice ) return false;
     
+    Structure :: t_Atoms atoms;
     atat::rVector3d vec;
     atat::rMatrix3d &cell = _str.cell; 
     Crystal::Lattice &lattice = *_str.lattice; 
@@ -595,8 +665,6 @@ namespace Crystal {
     global_iterator.add( -range, range);
     global_iterator.add( -range, range);
 
-    
-    _str.atoms.clear();
     do
     {
       // creates vector in lattice basis
@@ -622,10 +690,33 @@ namespace Crystal {
       // And then to cartesian
       vec = lattice.cell * vec;
 
-      _str.atoms.push_back( Crystal::Structure::t_Atom(vec,0) );
+      atoms.push_back( Crystal::Structure::t_Atom(vec,0) );
       
     } while( ++global_iterator );
 
+    // Finally, we copy the kvector positions as atoms, and the related sites
+    Structure::t_Atoms::const_iterator i_vec = atoms.begin();
+    Structure::t_Atoms::const_iterator i_vec_end = atoms.end();
+    _str.atoms.clear();
+    _str.atoms.reserve( _str.lattice->sites.size() * atoms.size() );
+    bool only_one_site = _str.lattice->sites.size() == 1;
+    Lattice :: t_Sites :: const_iterator i_site;
+    Lattice :: t_Sites :: const_iterator i_site_end = _str.lattice->sites.end();
+    for(; i_vec != i_vec_end; ++i_vec )
+      for( i_site = _str.lattice->sites.begin(); i_site != i_site_end; ++i_site )
+      {
+        Structure::t_Atom atom;
+        atom.pos = i_vec->pos + i_site->pos;
+        atom.site = i_site->site;
+        atom.freeze = i_site->freeze;
+        atom.type = -1e0;
+        // vewy impowtant. Otherwise GA::KRandom and GA::Random produce
+        // individuals which are to big.
+        if( i_site != _str.lattice->sites.begin() )
+          atom.freeze = i_site->freeze | Structure::t_Atom::FREEZE_T;
+        _str.atoms.push_back(atom);
+      }
+    return true;
   }
  
   void read_structure( Structure &_struct,
@@ -687,8 +778,7 @@ namespace Crystal {
 
   bool Structure :: set_site_indices()
   {
-    if ( not lattice )
-      return false;
+    if ( not lattice ) return false;
 
     bool result = true;
     t_Atoms :: iterator i_atom = atoms.begin();
@@ -857,49 +947,19 @@ namespace Crystal {
       cell.set_column(1, d);
     }
 
-    // Fills in a structure lattice points.
-    Structure copy_structure( _structure );
-    fill_structure( copy_structure );
-    
-    // We now sort the real space atoms according to layer
-    std::sort( copy_structure.atoms.begin(), copy_structure.atoms.end(),
-               Depth( cell ) );
     // The lattice sites are also sorted the same way
-    std::sort( lattice->sites.begin(), lattice->sites.end(),
-               Depth( cell ) );
+    std::sort( lattice->sites.begin(), lattice->sites.end(), Depth( cell ) );
     Lattice::t_Sites::iterator i_site = lattice->sites.begin(); 
     Lattice::t_Sites::iterator i_site_end = lattice->sites.end();
     for( types::t_unsigned n=0; i_site != i_site_end; ++i_site, ++n )
       i_site->site = n;
 
+    if( not ( fill_structure( _structure ) ) ) return false;
 
-    // Finally, we copy the kvector positions as atoms, and the related sites
-    Structure::t_Atoms::const_iterator i_vec = copy_structure.atoms.begin();
-    Structure::t_Atoms::const_iterator i_vec_end = copy_structure.atoms.end();
-    _structure.atoms.clear();
-    _structure.atoms.reserve( lattice->sites.size() * copy_structure.atoms.size() );
-    bool only_one_site = lattice->sites.size() == 1;
-    i_site_end = lattice->sites.end();
-    for(; i_vec != i_vec_end; ++i_vec )
-      for( i_site = lattice->sites.begin(); i_site != i_site_end; ++i_site )
-      {
-        Structure::t_Atom atom;
-        atom.pos = i_vec->pos + i_site->pos;
-        atom.site = i_site->site;
-        atom.freeze = i_site->freeze;
-        atom.type = -1e0;
-        // vewy impowtant. Otherwise GA::KRandom and GA::Random produce
-        // individuals which are to big.
-        if( i_site != lattice->sites.begin() )
-          atom.freeze = i_site->freeze | Structure::t_Atom::FREEZE_T;
-        _structure.atoms.push_back(atom);
-      }
-
-    // More of the same... but for kvecs
-    _structure.find_k_vectors();
+    // We now sort the real space atoms according to layer
+    std::sort( _structure.atoms.begin(), _structure.atoms.end(), Depth( cell ) );
 
     return true;
-
   }
 
 } // namespace Crystal

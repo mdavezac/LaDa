@@ -30,6 +30,7 @@ namespace GA
     if( d == 0 ) return false;
     if( n >= seeds.size() ) seeds.resize( n, 0 );
     seeds[n] = d;
+    return true;
   }
 
   std::string Topology :: print_seeds() const

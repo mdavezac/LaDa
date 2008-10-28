@@ -48,91 +48,24 @@ namespace GA
       const TiXmlElement *parent = _node.FirstChildElement("Structure");
       __DOASSERT( not parent, "No Structure tag found in input.\n")
   
-      bool loadedstructure = false;
-      if ( Load_Structure( *parent ) )  return true;
-  
-      std::cerr << "Found attributes for constructing a layered structure...\n" 
-                << "But something went wrong.\n"
-                << "Continuing with standard load.\n"; 
-      
-      return structure.Load( *parent );
-    }
-  
-    INEVALBASE( bool ) :: Load_Structure( const TiXmlElement &_node )
-    {
-      if(     ( not _node.Attribute("direction") )
-          and ( not _node.Attribute("extent") )
-          and ( not _node.Attribute("layersize") ) ) return false;
-      if(     ( not _node.Attribute("direction") )
-          or  ( not _node.Attribute("extent") ) 
-          or  ( not _node.Attribute("layersize") ) ) 
-      {
-        std::cerr << "Either cell direction, multiplicity, "
-                     "or layersize are missing on input\n";
-        return false;
-      }
-      atat::rVector3d cdir;
-      atat::rMatrix3d &cell = structure.cell;
-      
-      // First, Load Attributes 
-      __TRYBEGIN
-        std::istringstream sstr; sstr.str( _node.Attribute("direction") );
-        sstr >> direction[0]; __DOASSERT( sstr.fail(), "" ) 
-        sstr >> direction[1]; __DOASSERT( sstr.fail(), "" ) 
-        sstr >> direction[2]; __DOASSERT( sstr.fail(), "" ) 
-        __DOASSERT( atat::norm2( direction ) < types::tolerance,
-                    "direction cannot be null.\n" )
-        sstr.str( _node.Attribute("extent") );
-        sstr >> extent[0]; __DOASSERT( sstr.fail(), "" ) 
-        sstr >> extent[1]; __DOASSERT( sstr.fail(), "" ) 
-        sstr >> extent[2]; __DOASSERT( sstr.fail(), "" ) 
-        __DOASSERT( atat::norm2( direction ) < types::tolerance,
-                    "extent cannot be null.\n" )
-   
-        direction = (!lattice->cell) * direction;
-        
-        layer_size = boost::lexical_cast<types::t_unsigned>
-                                        ( _node.Attribute("layersize") );
-        __DOASSERT( layer_size > 1,  "Layersize cannot be one or zero.\n" );
-      __TRYEND(,"Error while loading superlattice description.\n" )
-  
-      // Load in scale
-      if( _node.Attribute("scale") )
-        _node.Attribute("scale", &structure.scale);
-      else if ( structure.lattice ) 
-        structure.scale = structure.lattice->scale;
-      else structure.scale = 2;
-  
-      // Load in PI and Energy
-      structure.name = "";
-      if ( _node.Attribute("name") )
-        structure.name = _node.Attribute("name");
-      double d;
-      structure.energy = 666.666;
-      if( _node.Attribute("energy") )
-      {
-        _node.Attribute("energy", &d);
-        structure.energy = (types::t_real) d;
-      }
-  
-      bool result = Crystal :: create_epitaxial_structure( structure, direction, extent );
+      if( not structure.Load( _node ) ) return false;
+      direction = structure.cell.get_column(0);
+
       __ROOTCODE
       ( 
         t_Base :: comm(),
         structure.print_xcrysden( std::cout );
         std::cout << std::endl;
       )
-  
-      return result;
+
+      return true;
     }
   
     INEVALBASE( inline std::string ) :: print() const
     {
       std::ostringstream sstr;
       atat::rVector3d dir = lattice->cell * direction;
-      sstr << "Structure: G=" << direction 
-           << ", extent=" << extent
-           << ", nominal number of layers=" << layer_size << "\n"
+      sstr << "Structure: G=" << direction  << "\n"
            << structure << "\n";
       return sstr.str();
     }

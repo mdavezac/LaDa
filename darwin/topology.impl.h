@@ -7,7 +7,6 @@ namespace GA
   template< class T_EVALUATOR >
   bool Topology::Load( const TiXmlElement &_node, T_EVALUATOR &_eval )
   {
-    __SERIALCODE( return true; )
     __TRYMPICODE(
       graph = new mpi::Graph::Topology( comm );
       if( graph->Load( _node ) )
@@ -22,6 +21,7 @@ namespace GA
       _eval.set_mpi( &comm, str );,
       "Error while loading topology.\n"
     )
+    return true;
   }
 
   template< class T_CONTAINER >

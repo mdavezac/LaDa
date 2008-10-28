@@ -238,6 +238,20 @@ namespace Crystal {
 
     //! Serializes a structure.
     template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
+
+    protected:
+      //! Finds parent node.
+      const TiXmlElement* find_node( const TiXmlElement &_element );
+      //! Loads attributes and non-essential variables.
+      void load_attributes( const TiXmlElement &_element );
+      //! Loads the cell.
+      bool load_cell( const TiXmlElement &_element );
+      //! loads atoms.
+      bool load_atoms( const TiXmlElement &_element );
+      //! loads k-vectors.
+      bool load_kvecs( const TiXmlElement &_element );
+      //! loads an epitaxial structure.
+      bool load_epitaxial( const TiXmlElement &_node );
   };
 
   //! Returns true if \a _a and \a _b are periodic equivalents of the unit-cell \a _cell.
@@ -295,7 +309,7 @@ namespace Crystal {
 
   //! \brief fills in \a atoms member of an Crystal::Structure instance from the
   //!        cell-shape and the lattice.
-  void fill_structure( Crystal::Structure &_str );
+  bool fill_structure( Crystal::Structure &_str );
   //! Reads structure in NREL format.
   void read_structure( Structure &_struct, const boost::filesystem::path &_path );
 

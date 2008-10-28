@@ -61,7 +61,7 @@ namespace Fuzzy
 {
     template<>
     inline bool leq<types::t_real>( const types::t_real _a,
-                                     types::t_real _b ) 
+                                    const types::t_real _b ) 
       { return std::abs(_a - _b) < types::tolerance or _a < _b; }
     template<>
     inline bool geq<types::t_real>( const types::t_real _a,

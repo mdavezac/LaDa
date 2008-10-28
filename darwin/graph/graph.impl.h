@@ -104,7 +104,7 @@ namespace GA
           
           // Now creates groups
           color = MPI::UNDEFINED;
-          if( ((::MPI::Graphcomm) *graph_comm) == MPI::COMM_NULL )
+          if( not (bool) *graph_comm )
             { type = t_Type::t_Type::FARMHAND; goto exit; }
           
           // communicator between Farmer and Bulls.

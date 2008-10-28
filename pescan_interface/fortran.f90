@@ -4,7 +4,7 @@
 
 subroutine iaga_set_mpi( in_comm_handle )
  
-  use mpigroup
+  use mpigroup, only : comm_handle, irank, arank
   implicit none
   include "mpif.h"
 
