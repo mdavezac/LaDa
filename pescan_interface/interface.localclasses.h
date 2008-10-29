@@ -91,15 +91,18 @@
             scale(_c.scale), potential(_c.potential), rcut(_c.rcut),
             __IIAGA( launch(_c.launch) __COMMA__ )
             rspace_output( _c.rspace_output ), rspace_wfn( _c.rspace_wfn ) {}
+    //! load from XML.
+    bool Load( const TiXmlElement& _node );
   };
 
   struct GenPot
   {
+    typedef boost::tuple<types::t_int, types::t_int, types::t_int > t_MeshTuple;
     //! Filenam where to write the output.
     t_Path filename;
-    types::t_int x; //!< Number of points in x coordinate of real space mesh
-    types::t_int y; //!< Number of points in y coordinate of real space mesh
-    types::t_int z; //!< Number of points in z coordinate of real space mesh
+    t_MeshTuple mesh; //!< Number of points in real space mesh
+    t_MeshTuple multiple_cell; //!< Multiple Cell Decomposition
+    t_MeshTuple small_box; //!< Small box in the Multiple Cell Decomposition
     types::t_real cutoff; //!< Plane-wave energy cutoff 
     t_Path output;   //!< File to which to write the potential
     __IIAGA
@@ -111,17 +114,20 @@
 
     //! Constructor
     GenPot   () 
-           : filename("pot.input"), x(0), y(0), z(0), 
-             cutoff(0), output("pot.output")
+           : filename("pot.input"), mesh(0,0,0), multiple_cell(0,0,0),
+             small_box(0,0,0), cutoff(0), output("pot.output")
              __IIAGA( __COMMA__ launch("getVLarg") ) {}
     //! Copy Constructor
     GenPot   ( const GenPot & _c )
-           : filename( _c.filename ), x( _c.x ), y( _c.y ), z( _c.z ),
+           : filename( _c.filename ), mesh( _c.mesh ),
+             multiple_cell( _c.multiple_cell ), small_box( _c.small_box ), 
              cutoff( _c.cutoff ), output( _c.output ),
              __IIAGA( launch( _c.launch ) __COMMA__ )
              pseudos( _c.pseudos ) {}
     //! Some coherency checks.
-    bool check() { return x && y && z && cutoff && ( pseudos.size() >= 2 ); }
+    bool check();
+    //! load from XML.
+    bool Load( const TiXmlElement& _node );
   };
   struct SpinOrbit
   {

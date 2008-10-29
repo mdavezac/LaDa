@@ -10,8 +10,11 @@
 #include <stdexcept>       // std::runtime_error
 #ifdef _DIRECTIAGA
 # include <unistd.h>
+# include <boost/mpi/collectives.hpp>
 #endif
-#include <boost/mpi/collectives.hpp>
+#include <boost/tuple/tuple_io.hpp>
+#include <boost/tuple/tuple_comparison.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <opt/debug.h>
 #include <opt/initial_path.h>
@@ -207,6 +210,8 @@ namespace Pescan
       system( str.c_str() );
     }
 
+    __DOASSERT( not genpot.Load( _node ), "Could not load genpot input.\n" );
+
     do_destroy_dir = true;
     if( _node.Attribute("keepdirs") ) do_destroy_dir = false;
 
@@ -214,108 +219,9 @@ namespace Pescan
     if( child and child->Attribute("filename") )
       maskr = child->Attribute("filename");
 
-    child = _node.FirstChildElement("GenPot");
-    __DOASSERT( not child, "No <GenPot> tag found on input.\nAborting\n" )
-    __DOASSERT( not child->Attribute("x"), "x attributes are missing in <GenPot>.\n")
-    __DOASSERT( not child->Attribute("y"), "y attributes are missing in <GenPot>.\n")
-    __DOASSERT( not child->Attribute("z"), "z attributes are missing in <GenPot>.\n")
-    __DOASSERT( not child->Attribute("cutoff"),
-                "cutoff attributes are missing in <GenPot>.\n")
-    __DOASSERT( not child->FirstChildElement("Pseudo"),
-                "Could not find <Pseudo/> in <GenPot>\nAborting\n")
-
-    child->Attribute("x", &genpot.x);
-    child->Attribute("y", &genpot.y);
-    child->Attribute("z", &genpot.z);
-    child->Attribute("cutoff", &genpot.cutoff);
-    __IIAGA
-    (
-      if ( child->Attribute("launch") )
-        genpot.launch = child->Attribute("launch");
-    )
-    child = child->FirstChildElement("Pseudo");
-    for(; child; child = child->NextSiblingElement() )
-      if ( child->Attribute("filename") )
-        genpot.pseudos.push_back( child->Attribute("filename") );
-    __DOASSERT( not genpot.check(),
-                "Insufficient or Incorrect Genpot input.\nAborting\n" )
-
-
-    child = _node.FirstChildElement("Wavefunctions");
-    if( child and child->Attribute("in") )
-      escan.wavefunction_in = child->Attribute("in");
-    if( child and child->Attribute("out") )
-      escan.wavefunction_out = child->Attribute("out");
-    types::t_int j;
-    if( _node.Attribute("method", &j) )
-      escan.method = ( j == 1 ) ? FOLDED_SPECTRUM: ALL_ELECTRON;
-    child = _node.FirstChildElement("Reference");
-    if( child and child->Attribute("value") )
-      child->Attribute("value", &escan.Eref);
-
-    child = _node.FirstChildElement("Hamiltonian");
-    __DOASSERT( not child, "Could not find <Hamiltonian> tag on input.\n")
-    __DOASSERT( not child->Attribute("kinscal"),
-                "kinscal attribute is missing in <Hamiltonian> tag.\n")
-    __DOASSERT( not child->Attribute("realcutoff"),
-                "realcutoff attribute is missing in <Hamiltonian> tag.\n")
-    __DOASSERT( not child->Attribute("potential"),
-                "potential attribute is missing in <Hamiltonian> tag.\n")
-    __IIAGA
-    (
-      if ( child->Attribute("launch") )
-        escan.launch = child->Attribute("launch");
-    )
+    __DOASSERT( not escan.Load( _node ), "Could not load escan input.\n" );
 
     __TRYCODE( check_existence();, "Some files and/or programs are missing.\n" )
-
-    child->Attribute("kinscal", &escan.kinscal);
-    if( child->Attribute("smooth") )
-      child->Attribute("smooth", &escan.smooth);
-    if( child->Attribute("potential") )
-    {
-      child->Attribute("potential", &j);
-      switch( j )
-      {
-        default:
-        case Escan::NOPOT: __THROW_ERROR( "Error, incorrect escan potential\n" ) break;
-        case Escan::LOCAL: escan.potential = Escan::LOCAL; break;
-        case Escan::NONLOCAL: escan.potential = Escan::NONLOCAL; break;
-        case Escan::SPINORBIT: escan.potential = Escan::SPINORBIT; break;
-      }
-    }
-    if( child->Attribute("realcutoff") )
-      child->Attribute("realcutoff", &escan.rcut);
-    if( child->Attribute("nbstates") )
-      child->Attribute("nbstates", &escan.nbstates);
-    child = child->FirstChildElement("SpinOrbit");
-    for(; child; child = child->NextSiblingElement("SpinOrbit") )
-      if ( child->Attribute("filename") and child->Attribute("izz") )
-      {
-        SpinOrbit so;
-        so.filename = child->Attribute("filename");
-        so.izz = child->Attribute("izz");
-        if( child->Attribute("s") )
-          child->Attribute("s", &so.s);
-        if( child->Attribute("p") )
-          child->Attribute("p", &so.p);
-        if( child->Attribute("d") )
-          child->Attribute("d", &so.d);
-        if( child->Attribute("pnl") )
-          child->Attribute("pnl", &so.pnl);
-        if( child->Attribute("dnl") )
-          child->Attribute("dnl", &so.dnl);
-        escan.spinorbit.push_back(so);
-      }
-    child = _node.FirstChildElement("Minimizer");
-    if( not child ) return true;
-
-    if( child->Attribute("niter") )
-      child->Attribute("niter", &escan.niter);
-    if( child->Attribute("nlines") )
-      child->Attribute("nlines", &escan.nlines);
-    if( child->Attribute("tolerance") )
-      child->Attribute("tolerance", &escan.tolerance);
 
     return true;
   }
@@ -330,17 +236,11 @@ namespace Pescan
     __DOASSERT( file.bad() or ( not file.is_open() ),
                 "Could not open file " << orig << " for writing.\nAborting.\n" )
 
-    file << t_Path(atom_input.stem()).filename() << "\n"
-         << genpot.x << " " 
-         << genpot.y << " " 
-         << genpot.z << "\n"
-         << genpot.x << " " 
-         << genpot.y << " " 
-         << genpot.z << "\n" << " 0 0 0\n" 
-         << genpot.cutoff << "\n"
-         << genpot.pseudos.size() << std::endl;
-    foreach( const t_Path& ppath, genpot.pseudos )
-      file << ppath.filename() << "\n";
+    __DOASSERT( not genpot.check(), "Input to genpot is not coherent.\n" )
+
+    file << Interface :: t_Path(atom_input.stem()).filename() << "\n"
+         << genpot;
+
     file.flush();
     file.close();
   }
@@ -457,4 +357,188 @@ namespace Pescan
     return true;
   }
                
+  bool Interface :: GenPot :: check()
+  { 
+    if( multiple_cell == t_MeshTuple(0,0,0) ) 
+    {
+      small_box = multiple_cell;
+      multiple_cell = mesh;
+    }
+    else if(    boost::tuples::get<0>(mesh)
+                  % boost::tuples::get<0>(multiple_cell) != 0 
+             or boost::tuples::get<1>(mesh)
+                  % boost::tuples::get<1>(multiple_cell) != 0  
+             or boost::tuples::get<2>(mesh)
+                  % boost::tuples::get<2>(multiple_cell) != 0  ) return false;
+    return pseudos.size() >= 2; 
+  }
+
+  bool Interface :: GenPot :: Load( const TiXmlElement &_node )
+  {
+    try 
+    {
+      const TiXmlElement *child = _node.FirstChildElement("GenPot");
+      __DOASSERT( not child, "No <GenPot> tag found on input.\nAborting\n" )
+      __DOASSERT( not child->Attribute("x"), "x attributes are missing in <GenPot>.\n")
+      __DOASSERT( not child->Attribute("y"), "y attributes are missing in <GenPot>.\n")
+      __DOASSERT( not child->Attribute("z"), "z attributes are missing in <GenPot>.\n")
+      __DOASSERT( not child->Attribute("cutoff"),
+                  "cutoff attributes are missing in <GenPot>.\n")
+      __DOASSERT( not child->FirstChildElement("Pseudo"),
+                  "Could not find <Pseudo/> in <GenPot>\nAborting\n")
+     
+      boost::tuples::get<0>(mesh)
+        = boost::lexical_cast<types::t_real>( child->Attribute("x") );
+      boost::tuples::get<1>(mesh)
+          = boost::lexical_cast<types::t_real>( child->Attribute("y") );
+      boost::tuples::get<2>(mesh)
+          = boost::lexical_cast<types::t_real>( child->Attribute("z") );
+      multiple_cell = mesh;
+      if( not ( child->Attribute("mx") or child->Attribute("my") or child->Attribute("mz") ) )
+      {
+        boost::tuples::get<0>(multiple_cell)
+          = boost::lexical_cast<types::t_real>( child->Attribute("mx") );
+        boost::tuples::get<1>(multiple_cell)
+          = boost::lexical_cast<types::t_real>( child->Attribute("my") );
+        boost::tuples::get<2>(multiple_cell)
+          = boost::lexical_cast<types::t_real>( child->Attribute("mz") );
+      }
+      small_box = t_MeshTuple(0,0,0);
+      if( not ( child->Attribute("shmx") or child->Attribute("shmy") or child->Attribute("shmz") ) )
+      {
+        boost::tuples::get<0>(small_box)
+          = boost::lexical_cast<types::t_real>( child->Attribute("shmx") );
+        boost::tuples::get<1>(small_box)
+          = boost::lexical_cast<types::t_real>( child->Attribute("shmy") );
+        boost::tuples::get<2>(small_box)
+          = boost::lexical_cast<types::t_real>( child->Attribute("shmz") );
+      }
+      child->Attribute("cutoff", &cutoff);
+      __IIAGA
+      (
+        if ( child->Attribute("launch") )
+          launch = child->Attribute("launch");
+      )
+      child = child->FirstChildElement("Pseudo");
+      for(; child; child = child->NextSiblingElement() )
+        if ( child->Attribute("filename") )
+          pseudos.push_back( child->Attribute("filename") );
+      __DOASSERT( not check(),
+                  "Insufficient or Incorrect Genpot input.\nAborting\n" )
+    }
+    catch( std::exception &_e )
+    {
+      std::cerr << "Error while loading Genpot from XML.\n" << _e.what() << "\n";
+      return false;
+    }
+    return true;
+  } 
+
+  std::ostream& operator<<( std::ostream& _stream, const Interface::GenPot &_g )
+  {
+    _stream << _g.mesh << "\n" 
+            << _g.multiple_cell << "\n" 
+            << _g.small_box << "\n"
+            << _g.cutoff << "\n"
+            << _g.pseudos.size() << std::endl;
+    foreach( const Interface :: t_Path& ppath, _g.pseudos )
+      _stream << ppath.filename() << "\n";
+    return _stream;
+  }
+
+  bool Interface :: Escan :: Load( const TiXmlElement &_node )
+  {
+    const TiXmlElement *child = _node.FirstChildElement("Hamiltonian");
+    try
+    {
+      __DOASSERT( not child, "Could not find <Hamiltonian> tag on input.\n")
+      __DOASSERT( not child->Attribute("kinscal"),
+                  "kinscal attribute is missing in <Hamiltonian> tag.\n")
+      __DOASSERT( not child->Attribute("realcutoff"),
+                  "realcutoff attribute is missing in <Hamiltonian> tag.\n")
+      __DOASSERT( not child->Attribute("potential"),
+                  "potential attribute is missing in <Hamiltonian> tag.\n")
+    }
+    catch( std::exception& _e )
+    {
+      std::cerr << "Escan input is incomplete.\n" << _e.what();
+      return false;
+    }
+    __IIAGA
+    (
+      if ( child->Attribute("launch") )
+        launch = child->Attribute("launch");
+    )
+    child = _node.FirstChildElement("Wavefunctions");
+    if( child and child->Attribute("in") )
+      wavefunction_in = child->Attribute("in");
+    if( child and child->Attribute("out") )
+      wavefunction_out = child->Attribute("out");
+    if( _node.Attribute("method") )
+    {
+      const std::string method_string( child->Attribute("method") );
+      method = ALL_ELECTRON;
+      if(    method_string.find("folded") != std::string::npos
+          or method_string.find("1") != std::string::npos )
+        method = FOLDED_SPECTRUM;
+    }
+    child = _node.FirstChildElement("Reference");
+    if( child and child->Attribute("value") )
+      child->Attribute("value", &Eref);
+
+
+
+    child->Attribute("kinscal", &kinscal);
+    if( child->Attribute("smooth") )
+      child->Attribute("smooth", &smooth);
+    if( child->Attribute("potential") )
+    {
+      const std::string str( child->Attribute("potential") );
+      if(    str.find( "local" ) != std::string::npos 
+          or str.find( "1" ) != std::string::npos  )
+        potential = Escan::LOCAL; 
+      else if(    str.find( "nonlocal" ) != std::string::npos 
+               or str.find( "non-local" ) != std::string::npos  
+               or str.find( "2" ) != std::string::npos  )
+        potential = Escan::NONLOCAL; 
+      else if(    str.find( "spinorbit" ) != std::string::npos 
+               or str.find( "spin-orbit" ) != std::string::npos  
+               or str.find( "3" ) != std::string::npos  )
+        potential = Escan::SPINORBIT; 
+    }
+    if( child->Attribute("realcutoff") )
+      child->Attribute("realcutoff", &rcut);
+    if( child->Attribute("nbstates") )
+      child->Attribute("nbstates", &nbstates);
+    child = child->FirstChildElement("SpinOrbit");
+    for(; child; child = child->NextSiblingElement("SpinOrbit") )
+      if ( child->Attribute("filename") and child->Attribute("izz") )
+      {
+        SpinOrbit so;
+        so.filename = child->Attribute("filename");
+        so.izz = child->Attribute("izz");
+        if( child->Attribute("s") )
+          child->Attribute("s", &so.s);
+        if( child->Attribute("p") )
+          child->Attribute("p", &so.p);
+        if( child->Attribute("d") )
+          child->Attribute("d", &so.d);
+        if( child->Attribute("pnl") )
+          child->Attribute("pnl", &so.pnl);
+        if( child->Attribute("dnl") )
+          child->Attribute("dnl", &so.dnl);
+        spinorbit.push_back(so);
+      }
+    child = _node.FirstChildElement("Minimizer");
+    if( not child ) return true;
+
+    if( child->Attribute("niter") )
+      child->Attribute("niter", &niter);
+    if( child->Attribute("nlines") )
+      child->Attribute("nlines", &nlines);
+    if( child->Attribute("tolerance") )
+      child->Attribute("tolerance", &tolerance);
+
+    return true;
+  }
 }

@@ -10,6 +10,7 @@
 # include <boost/bind.hpp>
 # include <boost/filesystem/operations.hpp>
 #endif
+#include <boost/tuple/tuple.hpp>
 
 #include <mpi/mpi_object.h>
 #include <opt/initial_path.h>
@@ -87,10 +88,12 @@ namespace Pescan
     }
     
     // Sends cell parameters to fortran
+    const int x( boost::tuples::get<0>( _bandgap.genpot.mesh ) );
+    const int y( boost::tuples::get<1>( _bandgap.genpot.mesh ) );
+    const int z( boost::tuples::get<2>( _bandgap.genpot.mesh ) );
     const types::t_real alat( _structure.scale / Physics::a0("A") );
     FC_FUNC_(iaga_set_cell,IAGA_SET_CELL)
-            ( &alat, _structure.cell.x, &_bandgap.genpot.x, 
-              &_bandgap.genpot.y, &_bandgap.genpot.z );
+            ( &alat, _structure.cell.x, &x, &y, &z );
 
     // Call fortran code.
     const size_t dipole_array_size( 2 * 3 * 4 * nval * ncond);

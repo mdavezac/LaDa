@@ -10,7 +10,7 @@
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
-#include <boost/lexical_cast.hpp>
+#include <boost/tuple/tuple.hpp>
 
 #include <string>
 #include <vector>
@@ -71,11 +71,10 @@ namespace Pescan
   //! \details Mostly, this class writes the input and recovers the output eigenvalues.
   class Interface __DIAGA( : public MPI_COMMDEC )
   {
-    protected:
+    public:
       //! Path type.
       typedef boost::filesystem::path t_Path;
 
-    public:
       //! Method for solving the eigenvalue problem
       enum t_method
       { 
@@ -205,6 +204,8 @@ namespace Pescan
     return false;
   }
     
+  //! Prints out the genpot input file.
+  std::ostream& operator<<( std::ostream& _stream, const Interface::GenPot &_g );
 
   inline void Interface::check_existence() const 
   { 

@@ -109,7 +109,7 @@
        input is a mere repetition of pescan input</em>.
        It looks something like this:
        \code
-     <Functional type="escan" method="1">
+     <Functional type="escan" method="folded">
         <Maskr filename = "maskr" />
         <GenPot x="48" y="48" z="96" cutoff="5.0" launch="~/usr/bin/getVLarg">
             <Pseudo filename="~/GAkspace/pseudos/vq.atom1" />
@@ -153,9 +153,9 @@
      Including the specified type, this tag is where all the escan interface data should be
      found. It can contain two attributes,
      \param type type must be equal to \a "escan" here
-     \param method  which can take the values
-          - 0 for an all electron computation
-          - 1 for an a folded spectrum computation
+     \param method  which can take the values 
+          - "1" or "folded" for an a folded spectrum computation
+          - anything else for a full diagonalization
           .
 
       
@@ -200,7 +200,7 @@
                     be replaced with the path to your home
      \param kinscal ?? see nanopse input
      \param smooth ?? see nanopse input
-     \param potential ?? see nanopse input
+     \param potential can be "local", "nonlocal", or "spinorbit" (alternatively "1", "2", or "3" )
      \param realcutoff ?? see nanopse input
      \param nbstates  
                       - for folded spectrum method, the number of states to compute. for
