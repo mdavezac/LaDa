@@ -137,7 +137,7 @@ namespace GA
         std::string print() const;
 
         //! Returns direction.
-        atat::rVector3d get_direction() const { return direction; }
+        const atat::rVector3d& get_direction() const { return direction; }
 
 
       protected:

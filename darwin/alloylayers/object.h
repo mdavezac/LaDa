@@ -21,12 +21,6 @@ namespace Crystal
 {
   class Structure;
 }
-namespace Vff
-{
-  class Keeper;
-  types::t_real inplane_stress( const atat::rMatrix3d &_stress,
-                                const atat::rVector3d &_dir );
-}
 //! \endcond
 
 namespace GA
@@ -82,13 +76,6 @@ namespace GA
     //! \todo remove this function and replace it with translate.
     inline void operator<<( Object& _o, const Crystal::Structure &_str )
       { Translate< Object > :: translate( _str, _o ); }
-
-    //! Helper function which returns the inplane stress.
-    template< class T_THIS >
-     inline types::t_real inplane_stress( const Vff::Keeper& _o, const T_THIS &_this )
-     {
-       return Vff::inplane_stress( _o.stress, _this.get_direction() ); 
-     }
   }
 }
 

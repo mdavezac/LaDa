@@ -141,6 +141,7 @@ namespace GA
         foreach( Crystal::Structure::t_Atom &atom, _structure.atoms )
           atom.type = eo::rng.flip() ? 1e0: -1e0;
         _translate( _structure, _indiv.Object() );
+        return true;
       }
   }
 }

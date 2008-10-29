@@ -33,6 +33,9 @@
   typedef eMassSL :: Evaluator t_Evaluator;
 # define __PROGNAME__ "emass_opt"
 #elif defined( _ALLOY_LAYERS_ )
+# include <boost/lambda/bind.hpp>
+# include <boost/bind.hpp>
+# include "vff.h"
 # include "two_sites.h"
 # include "alloylayers/evaluator.h"
 # include "alloylayers/policies.h"
@@ -110,15 +113,31 @@ int main(int argc, char *argv[])
    //__DOASSERT( not ga.Load(input.string()),
    //            "Could not load input from file " << input << "\n" )
 #   ifdef _ALLOY_LAYERS_
+      typedef t_Evaluator :: t_GATraits :: t_QuantityTraits :: t_Quantity t_Quantity;
+      typedef t_Evaluator :: t_GATraits :: t_Object t_Object;
       ga.evaluator.do_dipole = true;
       ga.evaluator.connect
       (
-        bl::_2[0] = bl::bind(  &GA::AlloyLayers::inplane_stress< t_Evaluator >,
-                               bl::_1, bl::constant(ga.evaluator) ) 
+        bl::bind
+        (
+          &t_Quantity::push_back,
+          bl::_2,
+          bl::bind
+          ( 
+            &Vff::inplane_stress,
+            bl::bind<atat::rMatrix3d>( &t_Object :: stress, bl::_1 ),
+            bl::constant( ga.evaluator.get_direction() )
+          )
+        )
       );
       ga.evaluator.connect
       (
-        bl::_2[1] = bl::bind(  &GA::Keepers::OscStrength::osc_strength, bl::_1 )
+        bl::bind
+        (
+          &t_Quantity::push_back,
+          bl::_2,
+          bl::bind(  &GA::Keepers::OscStrength::osc_strength, bl::_1 )
+        )
       );
 #   endif
     

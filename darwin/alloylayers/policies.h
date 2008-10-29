@@ -88,7 +88,7 @@ namespace GA
      
           //! Connects a functor/function to the signal.
           void assign( const t_Object& _o, t_Quantities &_q ) const
-            { return (*signal_)( _o, _q ); }
+            { _q.clear(); return (*signal_)( _o, _q ); }
      
           //! Connects a functor/function to the signal.
           template< class T_CONNECT >
