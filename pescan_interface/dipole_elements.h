@@ -50,7 +50,14 @@
     };
     //! Prints a dipole moment.
     std::ostream& operator<<( std::ostream &_stream, const Dipole& );
-    //! Computes dipole elements between valence and conduction bands.
+    //! \brief Computes the transition dipole elements between valence and conduction bands.
+    //! \details The transition dipole element is given by the trace of
+    //!           \f$-i[\hat{\matcal{H}}, \hat{r}]\f$. See <A
+    //!           HREF="http://dx.doi.org/10.1103/PhysRevA.3.1242"> Anthony
+    //!           F. Starace, PRA <STRONG>3</STRONG>, 1242 (1977). </A> for
+    //!           details of the derivation. 
+    //! \todo The current implementation expects the system to be spin
+    //!       degenerate, e.g. Kramer's degeneracy.
     void dipole_elements( std::vector< Dipole > &_dipoles,
                           const BandGap& _bandgap,
                           const Crystal::Structure &_structure,

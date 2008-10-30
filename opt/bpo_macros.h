@@ -58,13 +58,14 @@
     return 1; \
   }
 
-#define __BPO_CATCH__ \
+#define __BPO_CATCH__(code) \
   } \
   catch ( boost::program_options::invalid_command_line_syntax &_b)\
   {\
     std::cout << "Caught error while running " << __PROGNAME__ << "\n"\
               << "Something wrong with the command-line input.\n"\
               << _b.what() << std::endl;\
+    code; \
     return 0;\
   }\
   catch ( boost::program_options::invalid_option_value &_i )\
@@ -72,6 +73,7 @@
     std::cout << "Caught error while running " << __PROGNAME__ << "\n"\
               << "Argument of option in command-line is invalid.\n"\
               << _i.what() << std::endl;\
+    code; \
     return 0;\
   }\
   catch ( boost::program_options::unknown_option &_u)\
@@ -79,6 +81,7 @@
     std::cout << "Caught error while running " << __PROGNAME__ << "\n"\
               << "Unknown option in command-line.\n"\
               << _u.what() << std::endl;\
+    code; \
     return 0;\
   }\
   catch (  boost::program_options::too_many_positional_options_error &_e )\
@@ -86,12 +89,14 @@
     std::cout << "Caught error while running " << __PROGNAME__ << "\n"\
               << "Too many arguments in command-line.\n"\
               << _e.what() << std::endl;\
+    code; \
     return 0;\
   }\
   catch ( std::exception &e )\
   {\
     std::cout << "Caught error while running " << __PROGNAME__ \
               << "\n" << e.what() << std::endl;\
+    code; \
     return 0;\
   }
 

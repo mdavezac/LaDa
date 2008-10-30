@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
     Print::out.dont_truncate();
   }
   
-  __BPO_CATCH__
+  __BPO_CATCH__( __MPICODE( MPI_Finalize() ) )
 
   return 0;
 }

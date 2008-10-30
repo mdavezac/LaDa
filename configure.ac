@@ -65,13 +65,13 @@ AC_ARG_ENABLE(fortran,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-fortran) ;;
      esac],[fortran=false])
 
-AC_ARG_ENABLE(emass,
-     [  --enable-emass                Turn on electronic mass optimization],
-     [case "${enableval}" in
-       yes) emass=true ;;
-       no)  emass=false ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-emass) ;;
-     esac],[emass=$enall])
+# AC_ARG_ENABLE(emass,
+#      [  --enable-emass                Turn on electronic mass optimization],
+#      [case "${enableval}" in
+#        yes) emass=true ;;
+#        no)  emass=false ;;
+#        *) AC_MSG_ERROR(bad value ${enableval} for --enable-emass) ;;
+#      esac],[emass=$enall])
 
 AC_ARG_ENABLE(separable,
      [  --enable-separable            Turn on sum of separable functions module.],
@@ -137,13 +137,13 @@ AC_ARG_ENABLE(bandgapopt,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-bandgap) ;;
      esac],[bandgapopt=$enall])
 
-AC_ARG_ENABLE(emassopt,
-     [  --enable-emassopt             Turn on electronic effective mass optimization],
-     [case "${enableval}" in
-       yes) emassopt=true ;;
-       no)  emassopt=false ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-emassopt) ;;
-     esac],[emassopt=$enall])
+# AC_ARG_ENABLE(emassopt,
+#      [  --enable-emassopt             Turn on electronic effective mass optimization],
+#      [case "${enableval}" in
+#        yes) emassopt=true ;;
+#        no)  emassopt=false ;;
+#        *) AC_MSG_ERROR(bad value ${enableval} for --enable-emassopt) ;;
+#      esac],[emassopt=$enall])
 
 AC_ARG_ENABLE(alloylayersopt,
      [  --enable-alloylayersopt       Turn on alloylayers configuration space optimization],
@@ -185,12 +185,12 @@ if test x$molecularity = xtrue; then
   pescan=true
   vff=true
 fi
-if test x$emassopt = xtrue; then
-  galib=true
-  emass=true
-  pescan=true
-  vff=true
-fi
+# if test x$emassopt = xtrue; then
+#   galib=true
+#   emass=true
+#   pescan=true
+#   vff=true
+# fi
 if test x$alloylayersopt = xtrue; then
   galib=true
   pescan=true
@@ -201,11 +201,11 @@ if test x$ceopt = xtrue; then
   galib=true
 fi
 lapack=false
-if test x$emass = xtrue; then
-  pescan=true
-  vff=true
-  lapack=true
-fi
+# if test x$emass = xtrue; then
+#   pescan=true
+#   vff=true
+#   lapack=true
+# fi
 
 AH_TEMPLATE([_DONAG])
 AH_TEMPLATE([_DOGSL])
@@ -346,8 +346,8 @@ AM_CONDITIONAL(DOBANDGAPOPT, test x$bandgapopt = xtrue)
 AM_CONDITIONAL(NOLAUNCH, test x$nolaunch = xtrue)
 AM_CONDITIONAL(DODARWIN, test x$galib = xtrue)
 AM_CONDITIONAL(DOLAPACK, test x$lapack = xtrue)
-AM_CONDITIONAL(DOEMASS, test x$emass = xtrue)
-AM_CONDITIONAL(DOEMASSOPT, test x$emassopt = xtrue)
+# AM_CONDITIONAL(DOEMASS, test x$emass = xtrue)
+# AM_CONDITIONAL(DOEMASSOPT, test x$emassopt = xtrue)
 AM_CONDITIONAL(DOALLOYLAYERSOPT, test x$alloylayersopt = xtrue)
 AM_CONDITIONAL(DOFORTRAN, test x$fortran = xtrue)
 AM_CONDITIONAL(DOGSL, test x$gsl = xtrue)
@@ -456,9 +456,9 @@ fi
 if test "$pescan$direct_iaga" = truetrue; then
   echo " _ interface to nanopse/pescan functional as external library.";
 fi
-if test "x$emass" = xtrue; then
-  echo " _ Effective Electronic Mass calculations for ternary (100) uperlattices" 
-fi
+# if test "x$emass" = xtrue; then
+#   echo " _ Effective Electronic Mass calculations for ternary (100) uperlattices" 
+# fi
 if test "$bandgapopt" = true; then
   echo " _ Genetic Algorithm for Band Gap"
 fi
@@ -468,9 +468,9 @@ fi
 if test x$molecularity = xtrue; then
   echo " _ Genetic Algorithm for Molecularity"
 fi
-if test x$emassopt = xtrue; then
-  echo " _ Genetic Algorithm for Electronic Mass Optimization"
-fi
+# if test x$emassopt = xtrue; then
+#   echo " _ Genetic Algorithm for Electronic Mass Optimization"
+# fi
 if test x$alloylayersopt = xtrue; then
   echo " _ Genetic Algorithm for Alloy Layers configuration space."
 fi

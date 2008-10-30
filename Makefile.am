@@ -17,12 +17,6 @@ if DOLAYEREDOPT
   PESCANSUBDIR = pescan_interface
   VFFSUBDIR = vff
 endif 
-if DOEMASSOPT
-  DARWINSUBDIR = darwin
-  PESCANSUBDIR = pescan_interface
-  VFFSUBDIR = vff
-  LAPACKDIR = lapack
-endif 
 if DOCEOPT
   DARWINSUBDIR = darwin
 endif 

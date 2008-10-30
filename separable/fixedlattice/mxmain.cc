@@ -502,7 +502,8 @@ int main(int argc, char *argv[])
   }
   std::cout << "\n\n\nEnd of " << __PROGNAME__ << ".\n" << std::endl;
 
+  __MPICODE( MPI_Finalize() );
   return 1;
-  __BPO_CATCH__
+  __BPO_CATCH__( __MPICODE( MPI_Finalize() ) )
 }
 

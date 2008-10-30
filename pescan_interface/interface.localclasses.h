@@ -91,8 +91,14 @@
             scale(_c.scale), potential(_c.potential), rcut(_c.rcut),
             __IIAGA( launch(_c.launch) __COMMA__ )
             rspace_output( _c.rspace_output ), rspace_wfn( _c.rspace_wfn ) {}
-    //! load from XML.
-    bool Load( const TiXmlElement& _node );
+    //! loads hamiltonian from XML.
+    bool load_hamiltonian( const TiXmlElement &_node );
+    //! loads wavefunction filenames from XML.
+    bool load_wavefunctions( const TiXmlElement &_node );
+    //! loads reference from XML.
+    bool load_reference( const TiXmlElement &_node );
+    //! loads minimizer parameters from XML.
+    bool load_minimizer( const TiXmlElement &_node );
   };
 
   struct GenPot

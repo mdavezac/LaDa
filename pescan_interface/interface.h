@@ -275,7 +275,7 @@ namespace Pescan
                   file << " is not a regular file nor a symlink.\n" );
       __endthistry__
     }
-    __DOASSERT( docontinue == true, "" )
+    __DOASSERT( docontinue != true, "" )
 #   undef __thistry__
 #   undef __endthistry__
   }

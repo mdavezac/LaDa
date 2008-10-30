@@ -138,14 +138,16 @@ namespace Pescan
         dipole.band2band.second = bands[nval + k];
         for( size_t sp(0u); sp < 4u; ++sp )
         {
+          const types::t_real deltaE(  _bandgap.eigenvalues[ dipole.band2band.second ]
+                                      -_bandgap.eigenvalues[ dipole.band2band.first ]  );
           dipole.spin2spin = Dipole::t_SpinTransition( sp );
           for( size_t r(0u); r < 3u; ++r )
           {
-            dipole.r[0] = std::complex<types::t_real>( *i_dip, *(i_dip+1) );
+            dipole.r[0] = std::complex<types::t_real>( *i_dip, *(i_dip+1) ) * deltaE;
             i_dip += 2;
-            dipole.r[1] = std::complex<types::t_real>( *i_dip, *(i_dip+1) );
+            dipole.r[1] = std::complex<types::t_real>( *i_dip, *(i_dip+1) ) * deltaE;
             i_dip += 2;
-            dipole.r[2] = std::complex<types::t_real>( *i_dip, *(i_dip+1) );
+            dipole.r[2] = std::complex<types::t_real>( *i_dip, *(i_dip+1) ) * deltaE;
             i_dip += 2;
           } // loop over cartesian coordinates
           _dipoles.push_back( dipole );

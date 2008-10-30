@@ -18,8 +18,9 @@
 
 #include <opt/debug.h>
 #include <opt/initial_path.h>
-#include <mpi/macros.h>
 #include <opt/initial_path.h>
+#include <print/manip.h>
+#include <mpi/macros.h>
 
 #include "interface.h"
 
@@ -204,10 +205,20 @@ namespace Pescan
     const TiXmlElement *child;
 
     // lester needs to load "module fftw" when in interactive multi-proc mode
-    if ( _node.Attribute("system") )
+#   ifndef _DIRECTIAGA
+      if ( _node.Attribute("system") )
+      {
+        std::string str = _node.Attribute("system");
+        system( str.c_str() );
+      }
+#   endif
+    if( _node.Attribute("method") )
     {
-      std::string str = _node.Attribute("system");
-      system( str.c_str() );
+      const std::string method_string( _node.Attribute("method") );
+      escan.method = ALL_ELECTRON;
+      if(    method_string.find("folded") != std::string::npos
+          or method_string.find("1") != std::string::npos )
+        escan.method = FOLDED_SPECTRUM;
     }
 
     __DOASSERT( not genpot.Load( _node ), "Could not load genpot input.\n" );
@@ -217,9 +228,13 @@ namespace Pescan
 
     child = _node.FirstChildElement("Maskr");
     if( child and child->Attribute("filename") )
-      maskr = child->Attribute("filename");
+      maskr = Print::reformat_home( child->Attribute("filename") );
 
-    __DOASSERT( not escan.Load( _node ), "Could not load escan input.\n" );
+    __DOASSERT( not escan.load_hamiltonian( _node ), "Could not load escan input.\n" );
+
+    if( escan.load_reference( _node ) ) escan.method = FOLDED_SPECTRUM;
+    escan.load_wavefunctions( _node );
+    escan.load_minimizer( _node );
 
     __TRYCODE( check_existence();, "Some files and/or programs are missing.\n" )
 
@@ -394,7 +409,7 @@ namespace Pescan
       boost::tuples::get<2>(mesh)
           = boost::lexical_cast<types::t_real>( child->Attribute("z") );
       multiple_cell = mesh;
-      if( not ( child->Attribute("mx") or child->Attribute("my") or child->Attribute("mz") ) )
+      if( child->Attribute("mx") and child->Attribute("my") and child->Attribute("mz") )
       {
         boost::tuples::get<0>(multiple_cell)
           = boost::lexical_cast<types::t_real>( child->Attribute("mx") );
@@ -404,7 +419,7 @@ namespace Pescan
           = boost::lexical_cast<types::t_real>( child->Attribute("mz") );
       }
       small_box = t_MeshTuple(0,0,0);
-      if( not ( child->Attribute("shmx") or child->Attribute("shmy") or child->Attribute("shmz") ) )
+      if( child->Attribute("shmx") and child->Attribute("shmy") and child->Attribute("shmz") )
       {
         boost::tuples::get<0>(small_box)
           = boost::lexical_cast<types::t_real>( child->Attribute("shmx") );
@@ -422,7 +437,7 @@ namespace Pescan
       child = child->FirstChildElement("Pseudo");
       for(; child; child = child->NextSiblingElement() )
         if ( child->Attribute("filename") )
-          pseudos.push_back( child->Attribute("filename") );
+          pseudos.push_back( Print::reformat_home( child->Attribute("filename") ) );
       __DOASSERT( not check(),
                   "Insufficient or Incorrect Genpot input.\nAborting\n" )
     }
@@ -436,8 +451,17 @@ namespace Pescan
 
   std::ostream& operator<<( std::ostream& _stream, const Interface::GenPot &_g )
   {
-    _stream << _g.mesh << "\n" 
+    _stream << boost::tuples::set_open(' ')
+            << boost::tuples::set_close(' ')
+            << boost::tuples::set_delimiter(' ')
+            << _g.mesh << "\n" 
+            << boost::tuples::set_open(' ')
+            << boost::tuples::set_close(' ')
+            << boost::tuples::set_delimiter(' ')
             << _g.multiple_cell << "\n" 
+            << boost::tuples::set_open(' ')
+            << boost::tuples::set_close(' ')
+            << boost::tuples::set_delimiter(' ')
             << _g.small_box << "\n"
             << _g.cutoff << "\n"
             << _g.pseudos.size() << std::endl;
@@ -446,8 +470,9 @@ namespace Pescan
     return _stream;
   }
 
-  bool Interface :: Escan :: Load( const TiXmlElement &_node )
+  bool Interface :: Escan :: load_hamiltonian( const TiXmlElement &_node )
   {
+    // Reads attribute of escan functional tag.
     const TiXmlElement *child = _node.FirstChildElement("Hamiltonian");
     try
     {
@@ -469,24 +494,6 @@ namespace Pescan
       if ( child->Attribute("launch") )
         launch = child->Attribute("launch");
     )
-    child = _node.FirstChildElement("Wavefunctions");
-    if( child and child->Attribute("in") )
-      wavefunction_in = child->Attribute("in");
-    if( child and child->Attribute("out") )
-      wavefunction_out = child->Attribute("out");
-    if( _node.Attribute("method") )
-    {
-      const std::string method_string( child->Attribute("method") );
-      method = ALL_ELECTRON;
-      if(    method_string.find("folded") != std::string::npos
-          or method_string.find("1") != std::string::npos )
-        method = FOLDED_SPECTRUM;
-    }
-    child = _node.FirstChildElement("Reference");
-    if( child and child->Attribute("value") )
-      child->Attribute("value", &Eref);
-
-
 
     child->Attribute("kinscal", &kinscal);
     if( child->Attribute("smooth") )
@@ -529,16 +536,47 @@ namespace Pescan
           child->Attribute("dnl", &so.dnl);
         spinorbit.push_back(so);
       }
-    child = _node.FirstChildElement("Minimizer");
+
+    return true;
+  }
+
+  bool Interface :: Escan :: load_wavefunctions( const TiXmlElement &_node )
+  {
+    // Reads attribute of escan functional tag.
+
+    const TiXmlElement *child = _node.FirstChildElement("Wavefunctions");
+    if( not child ) return false;
+    if( child->Attribute("in") )
+      wavefunction_in = child->Attribute("in");
+    if( child->Attribute("out") )
+      wavefunction_out = child->Attribute("out");
+
+    return true;
+  }
+
+  bool Interface :: Escan :: load_minimizer( const TiXmlElement &_node )
+  {
+    // Reads attribute of escan functional tag.
+    const TiXmlElement *child = _node.FirstChildElement("Minimizer");
     if( not child ) return true;
 
     if( child->Attribute("niter") )
-      child->Attribute("niter", &niter);
+      niter = boost::lexical_cast<types::t_int>( child->Attribute("niter") );
     if( child->Attribute("nlines") )
-      child->Attribute("nlines", &nlines);
+      nlines = boost::lexical_cast<types::t_int>( child->Attribute("nlines") );
     if( child->Attribute("tolerance") )
-      child->Attribute("tolerance", &tolerance);
+      tolerance = boost::lexical_cast<types::t_real>( child->Attribute("tolerance") );
 
+    return true;
+  }
+
+  bool Interface :: Escan :: load_reference( const TiXmlElement &_node )
+  {
+    // Reads attribute of escan functional tag.
+    const TiXmlElement *child = _node.FirstChildElement("Reference");
+    if( not child ) return false;
+    if( child->Attribute("value") )
+      Eref = boost::lexical_cast< types::t_real >( child->Attribute("value") );
     return true;
   }
 }

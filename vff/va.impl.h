@@ -56,9 +56,13 @@ namespace Vff
   template< class T_VFFBASE > typename VABase<T_VFFBASE> :: t_Type 
     VABase<T_VFFBASE> :: evaluate()
     {
-      t_VABase::unpack_variables();
-    
-      minimizer(Vff());
+      // no minimization required if variables is empty.
+      if( variables and variables->size() != 0 )
+      {
+        t_VABase::unpack_variables();
+        
+        minimizer(Vff());
+      }
    
       t_VffBase :: structure.energy = t_VffBase::energy();
 
@@ -137,9 +141,8 @@ namespace Vff
   template< class T_VFFBASE > 
     inline bool VABase<T_VFFBASE> :: init( bool _redocenters )
     {
-      if ( _redocenters )
-       if ( not t_VffBase::initialize_centers() ) return false;
-      return t_VABase::init(); //  and t_VffBase::init();
+      if ( _redocenters and ( not t_VffBase::initialize_centers() ) ) return false;
+      return t_VABase::init() and t_VffBase::init();
     }
 
 } // namespace VFF

@@ -18,9 +18,6 @@ endif
 if DOALLOYLAYERSOPT
   ALLOYLAYERSOPT = alloylayers_opt
 endif
-if DOEMASSOPT
-  EMASSOPT = emass_opt
-endif
 LDADD =
 if DOFORTRAN
   LDADD +=  @FCLIBS@
@@ -72,14 +69,6 @@ alloylayers_opt_CPPFLAGS =  -D _ALLOY_LAYERS_ $(AM_CPPFLAGS) @NAG_CFLAGS@ @GSL_C
 alloylayers_opt_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIBS@ @NAG_LIBS@ @BOOST_SIGNAL@
 alloylayers_opt_LDADD = $(bandgap_opt_LDADD)
 
-emass_opt_SOURCES = main.cc $(DARWIN_E_CC)
-emass_opt_HEADERS = $(DARWIN_E_H)
-emass_optdir = $(includedir)/darwin
-emass_opt_CPPFLAGS =  -D _EMASS $(AM_CPPFLAGS) @NAG_CFLAGS@ @GSL_CFLAGS@ 
-emass_opt_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIBS@ @NAG_LIBS@ 
-emass_opt_LDADD = $(bandgap_opt_LDADD) \
-		  ../lapack/liblapack.la @FCLIBS@
-
 noinst_LTLIBRARIES = libdarwin.la
 libdarwin_ladir = $(includedir)/LaDa/darwin
 libdarwin_la_SOURCES = $(DARWIN_LIB_CC)
@@ -99,7 +88,5 @@ libdarwin_la_CPPFLAGS = $(AM_CPPFLAGS)
 	cd ../pescan; $(MAKE)
 ../print/libprint.la:
 	cd ../print; $(MAKE)
-../print/liblapack.la:
-	cd ../lapack; $(MAKE)
 ../opt/libopt.la:
 	cd ../opt; $(MAKE)

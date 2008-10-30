@@ -15,18 +15,16 @@
 
 #define __SPOT_ERROR __FILE__ << ", line: " << __LINE__ << "\n" 
 #define __CATCHCODE(code, error)\
-        catch( std::exception &_e )\
+        catch(...)\
         {\
           code;\
-          std::ostringstream sstr;\
-          sstr << __SPOT_ERROR << error << _e.what();\
-          throw std::runtime_error( sstr.str() );\
+          std::cerr << __SPOT_ERROR << error; \
+          throw 0; \
         }
 #define __THROW_ERROR(error) \
         {\
-          std::ostringstream sstr;\
-          sstr << __SPOT_ERROR << error ;\
-          throw std::runtime_error( sstr.str() );\
+          std::cerr << __SPOT_ERROR << error ;\
+          throw 0; \
         }
 #define __TRYCODE(code,error) try { code } \
         catch ( std::exception &_e )\

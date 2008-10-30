@@ -666,13 +666,6 @@ endstorage:
           }
           __CATCHCODE( if( utterrandom) delete utterrandom; cleanup(),
                        "Error encountered while creating Taboo genetic operator.\n")
-          catch(...) 
-          {
-            cleanup();
-            if ( utterrandom ) delete utterrandom; 
-            __THROW_ERROR(    "Error encountered while creating"
-                           << " Taboo genetic operator.\n" )
-          }
         }
       }
       else if ( str.compare("TabooOp") == 0 )

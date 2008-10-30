@@ -5,6 +5,7 @@
 #include <config.h>
 #endif
 
+#include <iostream>
 #include "gsl.h"
 
 

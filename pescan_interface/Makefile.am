@@ -22,27 +22,15 @@ if DODIRECTIAGA
 endif
 endif
 
-if DOEMASS
- emassSOURCE = $(EMASS_CC)
- emassHEADER = $(EMASS_H)
- emassLDADD = ../lapack/liblapack.la
- binEMASS = emass
-else 
- emassSOURCE = 
- emassHEADER = 
- emassLDADD = 
- bin_EMASS = 
-endif
-
-bin_PROGRAMS = escan $(binEMASS)
+bin_PROGRAMS = escan 
 
 noinst_LTLIBRARIES = libescan.la
 libescan_ladir = $(includedir)/LaDa/pescan_interface 
-libescan_la_SOURCES = $(PESCAN_CC) $(emassSOURCE)
-nobase_libescan_la_HEADERS = $(PESCAN_H) $(PESCAN_IMPL_H) $(emassHEADER)
+libescan_la_SOURCES = $(PESCAN_CC) 
+nobase_libescan_la_HEADERS = $(PESCAN_H) $(PESCAN_IMPL_H) 
 libescan_la_CPPFLAGS = $(AM_CPPFLAGS) 
 if DODIRECTIAGA
-  libescan_la_SOURCES += $(PESCAN_CC) $(emassSOURCE) $(PESCAN_F90)
+  libescan_la_SOURCES += $(PESCAN_CC) $(PESCAN_F90)
   libescan_la_FCFLAGS = $(FCFLAGS) @IAGA_FCFLAGS@
   libescan_la_F77FLAGS = $(FCFLAGS) @IAGA_FCFLAGS@
   libescan_la_F90FLAGS = $(FCFLAGS) @IAGA_FCFLAGS@
@@ -62,12 +50,6 @@ escan_LDADD = libescan.la \
 	      $(LDADD) @LD_IAGA_FLAGS@
 
 
-if DOEMASS
-emass_SOURCES = $(escan_SOURCES)
-emass_CPPFLAGS = $(escan_CPPFLAGS) -D_EMASS
-emass_LDFLAGS = $(escan_LDFLAGS)
-emass_LDADD = $(escan_LDADD) $(emassLDADD)
-endif
 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 
@@ -85,10 +67,6 @@ if DOFORTRAN
 ../mpi/libopt.la:
 	cd ../opt; $(MAKE)
 endif
-if DOEMASS
-../lapack/liblapack.la:
-	cd ../lapack; $(MAKE)
-endif 
 if DODIRECTIAGA
 ../lapack/libmpi.la:
 	cd ../mpi; $(MAKE)

@@ -99,7 +99,7 @@ subroutine iaga_set_cell( in_alat, in_cell, in_ng1, in_ng2, in_ng3 )
 
 end subroutine iaga_set_cell 
 
-! Computes the dipole elements between valence and conduction bands.
+! Computes the observable <r> between valence and conduction bands.
 subroutine iaga_dipole_elements( in_dipole, in_val, in_cond, &
                                  in_nval, in_ncond, &
                                  in_valfilename, in_vallength, &
@@ -161,17 +161,8 @@ subroutine iaga_dipole_elements( in_dipole, in_val, in_cond, &
   do jc=1, in_ncond
      do iv=1, in_nval
        call dqpole( psi_v(:,:,iv), psi_c(:,:,jc), in_dipole(:,:, iv,jc ), qdpkr )
-      !do i = 1, 4
-      !  do j = 1, 3
-      !    in_dipole( k ) = real( dipole( i,j,iv,jc) )
-      !    in_dipole( k + 1 ) = aimag( dipole( i,j,iv,jc) )
-      !    k = k + 2
-      !  enddo
-      !enddo 
      end do
   end do
-
-  write(*,*) "returning"
 
   contains
     
