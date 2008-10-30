@@ -394,39 +394,51 @@ namespace Pescan
     {
       const TiXmlElement *child = _node.FirstChildElement("GenPot");
       __DOASSERT( not child, "No <GenPot> tag found on input.\nAborting\n" )
-      __DOASSERT( not child->Attribute("x"), "x attributes are missing in <GenPot>.\n")
-      __DOASSERT( not child->Attribute("y"), "y attributes are missing in <GenPot>.\n")
-      __DOASSERT( not child->Attribute("z"), "z attributes are missing in <GenPot>.\n")
+      if( not child->Attribute("mesh") )
+      {
+        __DOASSERT( not child->Attribute("x"), "x attributes are missing in <GenPot>.\n")
+        __DOASSERT( not child->Attribute("y"), "y attributes are missing in <GenPot>.\n")
+        __DOASSERT( not child->Attribute("z"), "z attributes are missing in <GenPot>.\n")
+      }
       __DOASSERT( not child->Attribute("cutoff"),
                   "cutoff attributes are missing in <GenPot>.\n")
       __DOASSERT( not child->FirstChildElement("Pseudo"),
                   "Could not find <Pseudo/> in <GenPot>\nAborting\n")
      
-      boost::tuples::get<0>(mesh)
-        = boost::lexical_cast<types::t_real>( child->Attribute("x") );
-      boost::tuples::get<1>(mesh)
-          = boost::lexical_cast<types::t_real>( child->Attribute("y") );
-      boost::tuples::get<2>(mesh)
-          = boost::lexical_cast<types::t_real>( child->Attribute("z") );
-      multiple_cell = mesh;
-      if( child->Attribute("mx") and child->Attribute("my") and child->Attribute("mz") )
+      if( child->Attribute("mesh") )
       {
-        boost::tuples::get<0>(multiple_cell)
-          = boost::lexical_cast<types::t_real>( child->Attribute("mx") );
-        boost::tuples::get<1>(multiple_cell)
-          = boost::lexical_cast<types::t_real>( child->Attribute("my") );
-        boost::tuples::get<2>(multiple_cell)
-          = boost::lexical_cast<types::t_real>( child->Attribute("mz") );
+        std::istringstream sstr;
+        sstr.str( _node.Attribute("mesh") );
+        sstr >> boost::tuples::set_open('(')
+             >> boost::tuples::set_close(')')
+             >> multiple_cell;
+      }
+      else 
+      {
+        boost::tuples::get<0>(mesh)
+          = boost::lexical_cast<types::t_real>( child->Attribute("x") );
+        boost::tuples::get<1>(mesh)
+            = boost::lexical_cast<types::t_real>( child->Attribute("y") );
+        boost::tuples::get<2>(mesh)
+            = boost::lexical_cast<types::t_real>( child->Attribute("z") );
+      }
+      multiple_cell = mesh;
+      if( child->Attribute("multcell") )
+      {
+        std::istringstream sstr;
+        sstr.str( _node.Attribute("multcell") );
+        sstr >> boost::tuples::set_open('(')
+             >> boost::tuples::set_close(')')
+             >> multiple_cell;
       }
       small_box = t_MeshTuple(0,0,0);
-      if( child->Attribute("shmx") and child->Attribute("shmy") and child->Attribute("shmz") )
+      if( child->Attribute("smallbox") )
       {
-        boost::tuples::get<0>(small_box)
-          = boost::lexical_cast<types::t_real>( child->Attribute("shmx") );
-        boost::tuples::get<1>(small_box)
-          = boost::lexical_cast<types::t_real>( child->Attribute("shmy") );
-        boost::tuples::get<2>(small_box)
-          = boost::lexical_cast<types::t_real>( child->Attribute("shmz") );
+        std::istringstream sstr;
+        sstr.str( _node.Attribute("smallbox") );
+        sstr >> boost::tuples::set_open('(')
+             >> boost::tuples::set_close(')')
+             >> small_box;
       }
       child->Attribute("cutoff", &cutoff);
       __IIAGA

@@ -11,6 +11,8 @@
 #include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/tuple/tuple_io.hpp>
+#include <boost/ref.hpp>
 
 #include <opt/ndim_iterator.h>
 #include <opt/debug.h>
@@ -325,6 +327,7 @@ namespace Crystal {
 
   bool Structure :: load_epitaxial( const TiXmlElement &_node )
   {
+    namespace bt = boost::tuples;
     if(     ( not _node.Attribute("direction") )
         and ( not _node.Attribute("extent") ) ) return false;
     if(     ( not _node.Attribute("direction") )
@@ -341,15 +344,19 @@ namespace Crystal {
     // First, Load Attributes 
     __TRYBEGIN
       std::istringstream sstr; sstr.str( _node.Attribute("direction") );
-      sstr >> direction[0]; __DOASSERT( sstr.fail(), "" ) 
-      sstr >> direction[1]; __DOASSERT( sstr.fail(), "" ) 
-      sstr >> direction[2]; __DOASSERT( sstr.fail(), "" ) 
+      boost::tuple< types::t_real&, types::t_real&, types::t_real& >
+                 tupledir( direction[0], direction[1], direction[2] );
+      sstr >> boost::tuples::set_open('(')
+           >> boost::tuples::set_close(')')
+           >> tupledir;
       __DOASSERT( atat::norm2( direction ) < types::tolerance,
                   "direction cannot be null.\n" )
       sstr.str( _node.Attribute("extent") );
-      sstr >> extent[0]; __DOASSERT( sstr.fail(), "" ) 
-      sstr >> extent[1]; __DOASSERT( sstr.fail(), "" ) 
-      sstr >> extent[2]; __DOASSERT( sstr.fail(), "" ) 
+      boost::tuple< types::t_int&, types::t_int&, types::t_int& >
+                 tupleext( extent[0], extent[1], extent[2] );
+      sstr >> boost::tuples::set_open('(')
+           >> boost::tuples::set_close(')')
+           >> tupleext;
       __DOASSERT( atat::norm2( direction ) < types::tolerance,
                   "extent cannot be null.\n" )
   

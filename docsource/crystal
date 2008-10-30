@@ -38,7 +38,11 @@
 
    \section TagStructure \<Structure\>
    \addindex \<Structure\>
-   Contains information pertaining to a single structure. It expects a complete
+   Contains information pertaining to a single structure. There are several
+   ways to define a structure.
+
+   \subsection General structure
+   It expects a complete
    \ref Tagcell as well as at least one \ref TagAtom.
    It can contain the following attributes
      \param scale scaling factor (&Aring;) with
@@ -47,6 +51,15 @@
          "energy" of the structure. Not necessary for input.
      \param Pi Pi-file name of the stucture, or any other
          name you want. Not really of any use.
+
+   \subsection Epitaxial structure.
+    \code
+    <Structure scale=6.2 direction="(0 0 1)" extent="(20 2 2)" />
+    \endcode
+    Defines an epitaxial structure in direction \a direction. The number of
+    layers in that that direction is given by the first number in \a extent.
+    The size of each layer (in terms of lattice unit-cell) is given by the
+    last two numbers of \a extent.
 
    \section Tagcell \<Cell\>
    \addindex \<Cell\>

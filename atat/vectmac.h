@@ -9,6 +9,7 @@
 #endif
 
 #include <boost/cstdlib.hpp>
+#include <boost/tuple/tuple.hpp>
 #define STREAM_VECTOR
 #include "fxvector.h"
 
@@ -29,8 +30,10 @@ typedef Vector3d<types::t_real> rVector3d;
 typedef Vector3d<types::t_int> iVector3d;
 typedef Vector3d<types::t_real> rVector3d;
 typedef Vector3d<types::t_int> iVector3d;
+typedef Vector3d<types::t_unsigned> uVector3d;
 typedef Matrix3d<types::t_real> rMatrix3d;
 typedef Matrix3d<types::t_int> iMatrix3d;
+typedef Matrix3d<types::t_unsigned> uMatrix3d;
 typedef BoundingBox<types::t_int,3> iBoundingBox3d;
 typedef BoundingBox<types::t_real,3> rBoundingBox3d;
 
@@ -41,6 +44,23 @@ inline rVector2d to_real(const iVector2d &v) {
 inline rVector3d to_real(const iVector3d &v) {
   return rVector3d((types::t_real)v(0),(types::t_real)v(1),(types::t_real)v(2));
 }
+
+template< class T_TYPE >
+ void from_tuple( Vector3d<T_TYPE>& _v,
+                  const boost::tuple<T_TYPE, T_TYPE, T_TYPE>& _t )
+ {
+   _v[0] = boost::tuples::get<0>(_t);
+   _v[1] = boost::tuples::get<1>(_t);
+   _v[2] = boost::tuples::get<2>(_t);
+ }
+template< class T_TYPE >
+ void to_tuple( boost::tuple<T_TYPE, T_TYPE, T_TYPE>& _t,
+                Vector3d<T_TYPE>& _v )
+ {
+   boost::tuples::get<0>(_t) = _v[0];
+   boost::tuples::get<1>(_t) = _v[1];
+   boost::tuples::get<2>(_t) = _v[2];
+ }
 
 inline rMatrix3d to_real(const iMatrix3d &a) {
   rMatrix3d b;

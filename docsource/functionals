@@ -174,11 +174,13 @@
      tags ( one for each type of pseudopotential ).
      More specifically, its attributes are those of getVlarg input
      \param launch  full path to <TT>getVlarg</TT> program. On unix, "~" will
-                    be replaced with the path to your home
-     \param x grid coordinate
-     \param y grid coordinate
-     \param z grid coordinate
+                    be replaced with the path to your home. This attribute is
+                    not required if nanopse is used as a library.
+     \param mesh gives the size of the grid in format "(x y z)". Used to be given by  \a x, \a y, \a z.
      \param cutoff plane-wave cutoff
+     \param multcell(optional) Mesh size for the multiple cell scheme of pescan/genpot.
+                               Condition: mesh[i] % multcell[i] == 0, and mesh[i] > multcell[i].
+     \param smallbox(optional) Mesh size for the small box of multiple cell scheme of pescan/genpot.
 
      \section TagPseudo \<Pseudo/\>
      Provides a link to a file containing the definition of a pseudo-potential.
@@ -197,11 +199,16 @@
      general properties, whereas specie dependent stuff go within, in the
      \ref TagSpinOrbit tags.
      \param launch  full path to \e escanCNL program. On unices, "~" will
-                    be replaced with the path to your home
-     \param kinscal ?? see nanopse input
-     \param smooth ?? see nanopse input
+                    be replaced with the path to your home. This attribute is
+                    ignored if nanopse was compiled into LaDa as an external
+                    library.
+     \param kinscal kinetic energy scaling to better the fitting of band gap
+                and effective mass. Fixed during the EPM fitting.
+     \param smooth the smooth factor necessary for small Ecut. Fixed during the
+                EPM fitting.
      \param potential can be "local", "nonlocal", or "spinorbit" (alternatively "1", "2", or "3" )
-     \param realcutoff ?? see nanopse input
+     \param realcutoff The plane wave cutoff energy. This should be fixed from the
+                fitting of the empirical pseudopotential.
      \param nbstates  
                       - for folded spectrum method, the number of states to compute. for
                       - for all-electron method, the number of states to
@@ -212,8 +219,21 @@
     Yet again, see nanopse input for details... The file named here must exist!
     \param filename full path to whatever. On unices, "~/" will
                    be replaced with the path to your home
-    \param izz ?? see nanopse input
-    \param pnl ?? see nanopse input
+    \param izz The atomic numbers of the potential in the nanopse format:
+               "{central atom}0{outer atom}" where {something} should be
+               replaced by an atomic number. Eg "49051" or "33049".
+    \param s (default=0) scale of \i s nonlocal potential.
+    \param p (default=0) scale of \i p nonlocal potential.
+    \param d (default=0) scale of \i d nonlocal potential.
+    \param pnl (default=0) scale of \i p spin-orbit nonlocal potential.
+    \param dnl (default=0) scale of \i d spin-orbit nonlocal potential.
+    According to the nanopse doc:
+              " if all [scales]=0, that means this atom has no nonlocal part. 
+               Very often, we set scale_ref(1:3)=0, and scale_ref(5)=0, just
+               scale_ref(4).ne.0, to introduce the spin-orbit coupling for a 
+               fitted EPM." Word to the wise. Whoever they may be. Whatever it
+               may mean.
+              
 
     <h1> Quaternary concentration functional </h1> \anchor secconc
      In some \f$A_xB_{1-x}C_yD_{1-y}\f$ quaternary strained to fit a lattice
