@@ -131,7 +131,7 @@
              __IIAGA( launch( _c.launch ) __COMMA__ )
              pseudos( _c.pseudos ) {}
     //! Some coherency checks.
-    bool check();
+    void check();
     //! load from XML.
     bool Load( const TiXmlElement& _node );
   };

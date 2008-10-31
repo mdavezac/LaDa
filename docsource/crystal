@@ -41,7 +41,7 @@
    Contains information pertaining to a single structure. There are several
    ways to define a structure.
 
-   \subsection General structure
+   \subsection TagGs General structure
    It expects a complete
    \ref Tagcell as well as at least one \ref TagAtom.
    It can contain the following attributes
@@ -52,14 +52,17 @@
      \param Pi Pi-file name of the stucture, or any other
          name you want. Not really of any use.
 
-   \subsection Epitaxial structure.
+   \subsection TagEs Epitaxial structure for GA. 
     \code
     <Structure scale=6.2 direction="(0 0 1)" extent="(20 2 2)" />
     \endcode
     Defines an epitaxial structure in direction \a direction. The number of
     layers in that that direction is given by the first number in \a extent.
     The size of each layer (in terms of lattice unit-cell) is given by the
-    last two numbers of \a extent.
+    last two numbers of \a extent. This input style defines the backbone of a
+    supercell using the information contained in the Lattice tags. Note however
+    that it does not assign a type to the structure, and as such should only be used
+    with GA. 
 
    \section Tagcell \<Cell\>
    \addindex \<Cell\>

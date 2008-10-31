@@ -12,6 +12,7 @@
 #include <list>
 
 #include <boost/serialization/serialization.hpp>
+#include <boost/filesystem/path.hpp>
 
 #include <eo/eoPop.h>
 #include <eo/eoGenOp.h>
@@ -46,6 +47,8 @@ namespace GA
       typedef T_EVALUATOR t_Evaluator; //!< Evaluator type
       //! All %GA traits
       typedef typename t_Evaluator :: t_GATraits            t_GATraits;
+      //! Type of the path.
+      typedef boost::filesystem::path t_Path;
     private:
       //! Type of this class
       typedef Darwin<t_Evaluator>                           t_This;
@@ -81,18 +84,18 @@ namespace GA
       //! \details At this point (revision ~310), this is no real option.
       //! Darwin::filename is hardcoded to "input.xml".
       //! \todo allow commandline options for specifying input file
-      std::string filename; 
+      t_Path filename; 
       //! \brief Input file of the evaluator
       //! \details If it is different from Darwin::filename, it should be
       //! indicated in a \<Filename evaluator="?"/\> tag in Darwin::filename. Otherwise,
       //! evaluator input is read from Darwin::filename.
-      std::string evaluator_filename;
+      t_Path evaluator_filename;
       //! \brief Input filename where restart data (in XML) can be found
       //! \details It can be different from Darwin::filename. It is set by a
       //! \<Filename restart="?" /\> within the \<GA\> .. \</GA\> tags of
       //! Darwin::filename. Only those components specified by
       //! Darwin::do_restart are read from input.
-      std::string restart_filename;
+      t_Path restart_filename;
       //! \brief Input filename where restart data (in XML) is saved to
       //! \details It can be different from Darwin::filename. It is set by a
       //! \<Filename restart="?" /\> within the \<GA\> .. \</GA\> tags of
@@ -103,7 +106,7 @@ namespace GA
       //  Darwin::do_save & Darwin::SAVE_RESULTS
       //! \endcode
       //! is always true on at least one processor.
-      std::string save_filename;
+      t_Path save_filename;
       //! Size of the deterministic tournaments used to choose parents prior to mating
       types::t_unsigned tournament_size;
       //! Size of the population
@@ -222,8 +225,8 @@ namespace GA
       //! to restarting history... Basically, if you can't find it somewhere
       //! from here, it's probably not gonna get loaded.
       //! \note This %%function makes a call to Evaluator::Load(const
-      //!       TiXmlElement&) and Evaluator::Load(std::string&)
-      bool Load( const std::string &_filename );
+      //!       TiXmlElement&) and Evaluator::Load()
+      bool Load( const t_Path &_filename );
       //! \brief Runs the generational loop
       //! \brief Executive member of the genetic algorithm. It starts by
       //! initializing a population, and goes on to evolving through the

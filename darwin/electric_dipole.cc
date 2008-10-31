@@ -39,6 +39,7 @@ namespace GA
     bool OscStrength :: Save( TiXmlElement &_node ) const
     {
       _node.SetAttribute( "oscillator", boost::lexical_cast< std::string >( osc_strength ) );
+      return true;
     }
   }
   namespace OscStrength

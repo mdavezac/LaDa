@@ -18,7 +18,7 @@
 
 #include <opt/debug.h>
 #include <opt/initial_path.h>
-#include <opt/initial_path.h>
+#include <opt/tuple_io.h>
 #include <print/manip.h>
 #include <mpi/macros.h>
 
@@ -251,7 +251,7 @@ namespace Pescan
     __DOASSERT( file.bad() or ( not file.is_open() ),
                 "Could not open file " << orig << " for writing.\nAborting.\n" )
 
-    __DOASSERT( not genpot.check(), "Input to genpot is not coherent.\n" )
+    __TRYCODE( genpot.check();, "Input to genpot is not coherent.\n" )
 
     file << Interface :: t_Path(atom_input.stem()).filename() << "\n"
          << genpot;
@@ -372,24 +372,50 @@ namespace Pescan
     return true;
   }
                
-  bool Interface :: GenPot :: check()
+  void Interface :: GenPot :: check()
   { 
-    if( multiple_cell == t_MeshTuple(0,0,0) ) 
-    {
-      small_box = multiple_cell;
-      multiple_cell = mesh;
-    }
-    else if(    boost::tuples::get<0>(mesh)
-                  % boost::tuples::get<0>(multiple_cell) != 0 
-             or boost::tuples::get<1>(mesh)
-                  % boost::tuples::get<1>(multiple_cell) != 0  
-             or boost::tuples::get<2>(mesh)
-                  % boost::tuples::get<2>(multiple_cell) != 0  ) return false;
-    return pseudos.size() >= 2; 
+    namespace bt = boost::tuples;
+    __DOASSERT
+    (     
+         bt::get<0>( mesh ) == 0        
+      or bt::get<1>( mesh ) == 0      
+      or bt::get<2>( mesh ) == 0,
+      "Requested mesh has a null component.\n"
+    )
+    __DOASSERT
+    (     
+         bt::get<0>( multiple_cell ) == 0         
+      or bt::get<1>( multiple_cell ) == 0      
+      or bt::get<2>( multiple_cell ) == 0,
+      "Requested multiple_cell has a null component.\n"
+    )
+    __DOASSERT
+    (     
+         bt::get<0>( mesh ) % bt::get<0>( multiple_cell ) != 0         
+      or bt::get<0>( mesh ) % bt::get<1>( multiple_cell ) != 0      
+      or bt::get<0>( mesh ) % bt::get<2>( multiple_cell ) != 0,
+      "Requested multiple cell does not evenly divide requested mesh.\n"
+    )
+    __DOASSERT
+    (     
+         bt::get<0>( mesh ) < bt::get<0>( multiple_cell )         
+      or bt::get<0>( mesh ) < bt::get<1>( multiple_cell )      
+      or bt::get<0>( mesh ) < bt::get<2>( multiple_cell ),
+      "Requested multiple cell parameters are larger than the requested mesh.\n"
+    )
+    __DOASSERT
+    (     
+         bt::get<0>( multiple_cell ) < bt::get<0>( small_box )         
+      or bt::get<0>( multiple_cell ) < bt::get<1>( small_box )      
+      or bt::get<0>( multiple_cell ) < bt::get<2>( small_box ),
+      "Requested multiple cell parameters are smaller than the small box parameters.\n"
+    )
+    __DOASSERT( pseudos.size() >= 2, "Fewer than two pseudos used.\n" )
   }
 
   bool Interface :: GenPot :: Load( const TiXmlElement &_node )
   {
+    namespace bt = boost::tuples;
     try 
     {
       const TiXmlElement *child = _node.FirstChildElement("GenPot");
@@ -406,40 +432,23 @@ namespace Pescan
                   "Could not find <Pseudo/> in <GenPot>\nAborting\n")
      
       if( child->Attribute("mesh") )
-      {
-        std::istringstream sstr;
-        sstr.str( _node.Attribute("mesh") );
-        sstr >> boost::tuples::set_open('(')
-             >> boost::tuples::set_close(')')
-             >> multiple_cell;
-      }
+        __DOASSERT( not opt::tuples::read( child->Attribute("mesh"), mesh ),
+                    "Could not parse mesh attribute.\n" )
       else 
       {
-        boost::tuples::get<0>(mesh)
-          = boost::lexical_cast<types::t_real>( child->Attribute("x") );
-        boost::tuples::get<1>(mesh)
-            = boost::lexical_cast<types::t_real>( child->Attribute("y") );
-        boost::tuples::get<2>(mesh)
-            = boost::lexical_cast<types::t_real>( child->Attribute("z") );
+        bt::get<0>(mesh) = boost::lexical_cast<types::t_int>( child->Attribute("x") );
+        bt::get<1>(mesh) = boost::lexical_cast<types::t_int>( child->Attribute("y") );
+        bt::get<2>(mesh) = boost::lexical_cast<types::t_int>( child->Attribute("z") );
       }
       multiple_cell = mesh;
       if( child->Attribute("multcell") )
-      {
-        std::istringstream sstr;
-        sstr.str( _node.Attribute("multcell") );
-        sstr >> boost::tuples::set_open('(')
-             >> boost::tuples::set_close(')')
-             >> multiple_cell;
-      }
-      small_box = t_MeshTuple(0,0,0);
+        __DOASSERT( not opt::tuples::read( child->Attribute("multcell"), multiple_cell ),
+                    "Could not parse multcell attribute.\n" )
+      small_box = multiple_cell == mesh ? t_MeshTuple(0,0,0): multiple_cell;
       if( child->Attribute("smallbox") )
-      {
-        std::istringstream sstr;
-        sstr.str( _node.Attribute("smallbox") );
-        sstr >> boost::tuples::set_open('(')
-             >> boost::tuples::set_close(')')
-             >> small_box;
-      }
+        __DOASSERT( not opt::tuples::read( child->Attribute("small_box"), small_box ),
+                    "Could not parse smallbox attribute.\n" )
+
       child->Attribute("cutoff", &cutoff);
       __IIAGA
       (
@@ -450,8 +459,7 @@ namespace Pescan
       for(; child; child = child->NextSiblingElement() )
         if ( child->Attribute("filename") )
           pseudos.push_back( Print::reformat_home( child->Attribute("filename") ) );
-      __DOASSERT( not check(),
-                  "Insufficient or Incorrect Genpot input.\nAborting\n" )
+      check();
     }
     catch( std::exception &_e )
     {

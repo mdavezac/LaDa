@@ -9,6 +9,7 @@
 #endif
 
 #include <tinyxml/tinyxml.h>
+#include <eo/utils/eoRNG.h>
 
 #include <pescan_interface/va.h>
 #include <pescan_interface/dipole_elements.h>
@@ -68,8 +69,12 @@ namespace GA
                          const Crystal::Structure& _str, 
                          ::GA::Keepers::OscStrength& _k )
         {
-          _k.osc_strength = ::Pescan::oscillator_strength( _bg, _str, 
-                                                           degeneracy, false );
+#         ifndef _NOLAUNCH
+            _k.osc_strength = ::Pescan::oscillator_strength( _bg, _str, 
+                                                             degeneracy, false );
+#         else
+            _k.osc_strength = rng.uniform();
+#         endif
         }
   #ifdef _MPI
         //! Sets communicator and suffix for mpi stuff.

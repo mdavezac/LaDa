@@ -25,7 +25,7 @@
 namespace GA
 {
 # define OPENXMLINPUT(name) \
-    TiXmlDocument doc( name.c_str() ); \
+    TiXmlDocument doc( name.string() ); \
     TiXmlHandle docHandle( &doc ); \
     __DOASSERT( not doc.LoadFile(), \
                    doc.ErrorDesc() << "\n" \
@@ -448,7 +448,7 @@ endstorage:
   bool Darwin<T_EVALUATOR> :: Restart()
   {
     if( not topology.restart() ) return true;
-    TiXmlDocument doc( restart_filename.c_str() );
+    TiXmlDocument doc( restart_filename.string() );
     TiXmlHandle docHandle( &doc ); 
     if  ( !doc.LoadFile() ) 
     { 
@@ -523,7 +523,7 @@ endstorage:
     TiXmlElement *node;
     if ( save_filename == filename )
     {
-      doc.LoadFile(save_filename.c_str());
+      doc.LoadFile(save_filename.string());
       TiXmlHandle docHandle( &doc );
       node = docHandle.FirstChild("Job").Element();
       TiXmlNode* child = docHandle.FirstChild("Job")
@@ -590,7 +590,7 @@ endstorage:
       node->LinkEndChild( xmlpop );
     }
 
-    if ( not doc.SaveFile(save_filename.c_str() ) )
+    if ( not doc.SaveFile(save_filename.string() ) )
     {
       std::cerr << "Could not save results in " << save_filename << std::endl;
       Print::xmg << Print::Xmg::clear;
@@ -1049,7 +1049,7 @@ endstorage:
 
     if ( restart_filename == filename )
     {
-      doc.LoadFile( restart_filename.c_str() );
+      doc.LoadFile( restart_filename.string() );
       if  ( !doc.LoadFile() ) 
       { 
         std::cerr << __SPOT_ERROR
@@ -1069,7 +1069,7 @@ endstorage:
 nextfilename:
     if ( evaluator_filename != filename )
     {
-      doc.LoadFile( evaluator_filename.c_str() );
+      doc.LoadFile( evaluator_filename.string() );
       __DOASSERT( not doc.LoadFile(), " Could not load restart file\n" )
       parent = doc.RootElement();
       std::ostringstream stream;
@@ -1084,7 +1084,7 @@ nextfilename:
 #endif
 
   template<class T_EVALUATOR>
-  bool Darwin<T_EVALUATOR> :: Load(const std::string &_filename) 
+  bool Darwin<T_EVALUATOR> :: Load(const t_Path &_filename) 
   {
     // Initializes each proc differently
     filename = _filename;
@@ -1092,10 +1092,10 @@ nextfilename:
     restart_filename = _filename;
     save_filename = _filename;
 
-    std::string xmg_filename = "out.xmg";
-    std::string out_filename = "out";
+    t_Path xmg_filename = "out.xmg";
+    t_Path out_filename = "out";
 
-    TiXmlDocument doc( filename.c_str() ); 
+    TiXmlDocument doc( filename.string() ); 
     TiXmlHandle docHandle( &doc ); 
     const TiXmlElement *parent, *child;
 
@@ -1192,13 +1192,15 @@ syncfilenames:
 
     // Loads evaluator first 
     if( evaluator_filename != filename )
-      __TRYASSERT( not evaluator.Load(evaluator_filename),
+      __TRYASSERT( not evaluator.Load(evaluator_filename.string()),
                       "Could not load functional input from "
                    << evaluator_filename << "\n" )
     else
+    {
       __TRYASSERT( not evaluator.Load(*docHandle.FirstChild("Job").Element() ),
                       "Could not load functional input from "
                    << filename << "\n" )
+    }
 
     // Loads topology and assigns comms to evaluators
     __MPICODE(  doc.Parse( input_str.c_str() ); )

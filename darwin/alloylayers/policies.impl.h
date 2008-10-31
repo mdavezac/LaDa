@@ -13,17 +13,19 @@ namespace GA
       void Translate<T_OBJECT> :: translate( const Crystal::Structure& _structure,
                                              t_Object& _object )
       {
+        // Clears current object.
+        typename t_Object :: t_Container& container = _object.Container();
+        container.clear();
+
         const atat::rVector3d direction( _structure.cell.get_column(0) );
         typedef typename Crystal::Structure::t_Atoms::const_iterator t_iatom;
         typedef typename t_Object :: t_Container :: iterator t_ivar;
         t_iatom i_atom = _structure.atoms.begin();
         t_iatom i_atom_end = _structure.atoms.end();
-        t_ivar i_var = _object.Container().begin();
-        __DODEBUGCODE( t_ivar i_var_end = _object.Container().end(); )
         types::t_real last_depth( i_atom->pos * direction );
         types::t_unsigned layer_size(0);
         types::t_real c(0);
-        for( ; i_atom != i_atom_end __DODEBUGCODE( and i_var != i_var_end ); ++i_atom )
+        for( ; i_atom != i_atom_end; ++i_atom )
         {
           const types::t_real new_depth = i_atom->pos * direction;
           if( Fuzzy::eq( last_depth, new_depth ) )
@@ -35,16 +37,13 @@ namespace GA
           }
 
           // New layer has been reached
-          *i_var = c / (types::t_real) layer_size;
+          container.push_back( c / (types::t_real) layer_size );
 
           // Reinitializing layer discovery.
           layer_size = 0;
           last_depth = new_depth;
           c = 0e0;
-          ++i_var;
         }
-        __ASSERT( i_atom != i_atom_end, "Structure smaller than object.\n" )
-        __ASSERT( i_var != i_var_end, "Object smaller than structure.\n" )
       }
 
     template< class T_OBJECT >

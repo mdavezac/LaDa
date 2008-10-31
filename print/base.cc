@@ -7,6 +7,8 @@
 
 #include<iostream>
 #include <sstream>
+#include<boost/lexical_cast.hpp>
+#include<boost/filesystem/operations.hpp>
 
 #include <revision.h>
 
@@ -30,7 +32,7 @@ namespace Print
     is_empty = false;
   }
 
-  void Base :: init(const std::string &_f)
+  void Base :: init(const t_Path &_f)
   { 
     do_print = false;
     __ROOTCODE( (*::mpi::main), do_print = true; )
@@ -38,36 +40,37 @@ namespace Print
     init_(_f); 
   }
 
-  void Base :: init_ (const std::string &_f)
+  void Base :: init_ (const t_Path &_f)
   { 
     if ( is_open() ) close();
-    filename = reformat_home( _f );
+    filename = reformat_home( _f.string() );
     do_print = true;
     __NOTMPIROOT( (*::mpi::main), 
-      std::ostringstream sstr; 
-      sstr << filename << ".mpi:" <<  ::mpi::main->rank();
-      filename = sstr.str();
+      filename =    filename.string()
+                  + ".mpi:" 
+                  + boost::lexical_cast<std::string>( ::mpi::main->rank() );
     )
     is_empty = true;
-    if ( not do_print ) return;
-    
-    file.open( filename.c_str(),
-               truncate ? std::ios_base::trunc: std::ios_base::app | std::ios_base::out); 
+    if ( (not do_print) or (not boost::filesystem::exists( filename )) ) return;
 
+    if( truncate ) { boost::filesystem::remove( filename ); return; }
+
+    file.open( filename.string().c_str(),
+               truncate ? std::ios_base::trunc: std::ios_base::app | std::ios_base::out); 
     if (file.fail() )
     {
       std::cerr << "Could not open " << filename << std::endl;
       do_print = false;
       return;
     }
-    if( not truncate ) file << "\n\n"; 
+    file << "\n\n"; 
     close();
   }
   bool Base :: open ()
   {
     if ( not do_print ) return true;
     if ( file.is_open() ) return true;
-    file.open( filename.c_str(), std::ios_base::out|std::ios_base::app ); 
+    file.open( filename.string().c_str(), std::ios_base::out|std::ios_base::app ); 
     return file.is_open();
   }    
   void Base :: close ()
@@ -79,7 +82,7 @@ namespace Print
   }    
 
 #ifdef _MPI
-  void Base::sync_filename( std::string &_filename )
+  void Base::sync_filename( t_Path &_filename )
   {
     filename = _filename;
     sync_filename();

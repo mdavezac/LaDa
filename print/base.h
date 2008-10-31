@@ -10,11 +10,25 @@
 
 #include <string>
 #include <fstream>
+#include <boost/filesystem/path.hpp>
 
 #include <opt/types.h>
 
 #include <mpi/mpi_object.h>
 
+namespace boost {
+  namespace serialization {
+
+    //! Serializes a path.
+    template<class Archive>
+    void serialize(Archive & _ar, boost::filesystem::path & _p, const unsigned int version)
+    {
+      std::string path( _p.string() );
+      _ar & path; 
+      _p = path;
+    }
+  }
+}
 namespace Print
 {
   //! \brief Base class for printing to file
@@ -25,6 +39,9 @@ namespace Print
   //!          file.
   class Base
   {
+    public:
+      //! Type of the path.
+      typedef boost::filesystem::path t_Path;
     protected:
       //! True if nothing has yet been written to file.
       bool is_empty;
@@ -33,7 +50,7 @@ namespace Print
       //! Whether to truncate or append;
       bool truncate;
       //! The name of the file to which to print.
-      std::string filename;
+      t_Path filename;
       //! The file stream
       std::ofstream file;
 
@@ -49,20 +66,20 @@ namespace Print
       void close();
 
       //! Returns the filename.
-      std::string get_filename() const { return filename; }
+      const t_Path& get_filename() const { return filename; }
       //! Returns true if the filename is not empty.
       bool is_set() const { return not filename.empty(); }
       //! Returns true if the file stream is opened.
       bool is_open() { return do_print and file.is_open(); }
       //! Sets the filename, checks that the file can be opened, and truncates the file.
-      void init(const std::string &_f);
+      void init(const t_Path &_f);
 #ifdef _MPI
       //! \ingroup MPI
       //! Syncs filname across all procs.
       void sync_filename();
       //! \ingroup MPI
       //! Syncs filname across all procs.
-      void sync_filename( std::string &_filename );
+      void sync_filename( t_Path &_filename );
 #endif
       //! Sets to appending file when running init.
       void dont_truncate() { truncate = false; }
@@ -73,7 +90,7 @@ namespace Print
 
     private:
       //! Initializes new file.
-      void init_(const std::string &_f);
+      void init_(const t_Path &_f);
       //! \brief Checks that the stream is open.
       //! \details If the file is empty, prints the revision number.
       void do_checks();

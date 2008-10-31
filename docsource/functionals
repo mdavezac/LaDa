@@ -222,11 +222,11 @@
     \param izz The atomic numbers of the potential in the nanopse format:
                "{central atom}0{outer atom}" where {something} should be
                replaced by an atomic number. Eg "49051" or "33049".
-    \param s (default=0) scale of \i s nonlocal potential.
-    \param p (default=0) scale of \i p nonlocal potential.
-    \param d (default=0) scale of \i d nonlocal potential.
-    \param pnl (default=0) scale of \i p spin-orbit nonlocal potential.
-    \param dnl (default=0) scale of \i d spin-orbit nonlocal potential.
+    \param s (default=0) scale of \e s nonlocal potential.
+    \param p (default=0) scale of \e p nonlocal potential.
+    \param d (default=0) scale of \e d nonlocal potential.
+    \param pnl (default=0) scale of \e p spin-orbit nonlocal potential.
+    \param dnl (default=0) scale of \e d spin-orbit nonlocal potential.
     According to the nanopse doc:
               " if all [scales]=0, that means this atom has no nonlocal part. 
                Very often, we set scale_ref(1:3)=0, and scale_ref(5)=0, just

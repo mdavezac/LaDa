@@ -372,19 +372,20 @@ namespace Crystal {
     const TiXmlElement* parent = find_node( _element );
     if( not parent ) return false;
 
-    // trie to load cell.
-    if( not load_cell( *parent ) ) return false;
     
+    // trie to load cell.
+    if( load_cell( *parent ) )
+    {
+      // tries to load atoms.
+      bool atomsloaded =  load_atoms( *parent );
+      if( not atomsloaded ) atomsloaded = fill_structure( *this );
+      if( not atomsloaded ) return false;
+    }
+    else if( not load_epitaxial( *parent ) ) return false;
+
     load_attributes( *parent );
 
-    // tries to load atoms.
-    bool atomsloaded =  load_atoms( *parent );
-    if( not atomsloaded ) atomsloaded = load_epitaxial( *parent );
-    if( not atomsloaded ) atomsloaded = fill_structure( *this );
-    if( not atomsloaded ) return false;
-
-    atomsloaded = load_kvecs( *parent );
-    if( not atomsloaded ) find_k_vectors();
+    if( not load_kvecs( *parent ) ) find_k_vectors();
 
     return true;
   }
