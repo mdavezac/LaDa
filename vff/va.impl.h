@@ -57,7 +57,7 @@ namespace Vff
     VABase<T_VFFBASE> :: evaluate()
     {
       // no minimization required if variables is empty.
-      if( variables and variables->size() != 0 )
+      if( t_VffBase::variables and t_VffBase::variables->size() != 0 )
       {
         t_VABase::unpack_variables();
         

@@ -25,16 +25,17 @@ namespace GA
         types::t_real last_depth( i_atom->pos * direction );
         types::t_unsigned layer_size(0);
         types::t_real c(0);
-        for( ; i_atom != i_atom_end; ++i_atom )
+        for( ; i_atom != i_atom_end; )
         {
-          const types::t_real new_depth = i_atom->pos * direction;
-          if( Fuzzy::eq( last_depth, new_depth ) )
+          types::t_real new_depth;
+          do
           {
-            // Still in same layer
             c += i_atom->type > 0e0 ? 1e0: -1e0;
             ++layer_size;
-            continue;
+            ++i_atom;
+            new_depth = i_atom->pos * direction;
           }
+          while( Fuzzy::eq( last_depth, new_depth ) and i_atom != i_atom_end );
 
           // New layer has been reached
           container.push_back( c / (types::t_real) layer_size );
@@ -44,6 +45,7 @@ namespace GA
           last_depth = new_depth;
           c = 0e0;
         }
+        std::cout << _object << "\n";
       }
 
     template< class T_OBJECT >
@@ -62,27 +64,33 @@ namespace GA
         __DODEBUGCODE( t_ivar i_var_end = _object.Container().end(); )
         types::t_real last_depth( i_atom->pos * direction );
         types::t_unsigned layer_size(0);
-        for( ; i_atom != i_atom_end __DODEBUGCODE( and i_var != i_var_end ); ++i_atom )
+        for( ; i_atom != i_atom_end __DODEBUGCODE( and i_var != i_var_end ); )
         {
-          const types::t_real new_depth = i_atom->pos * direction;
-          if( Fuzzy::eq( last_depth, new_depth ) )
+          types::t_real new_depth;
+          do
           {
-            // Still in same layer
             ++layer_size;
-            continue;
+            ++i_atom;
+            new_depth = i_atom->pos * direction;
           }
+          while( Fuzzy::eq( last_depth, new_depth ) and i_atom != i_atom_end );
 
           // New layer has been reached
-          // Creates an array with correct concentration, shuffles, then
+          // Creates an array with approximate concentration, shuffles, then
           // assigns to atoms.
-          const bool is_positive(*i_var > 0 ? false: true );
+          const bool is_positive( *i_var > 0 );
           const bool is_negative(not is_positive);
-          const types::t_real ls( (types::t_real)layer_size + 0.1e0 );
+          const types::t_real nb_layers_real
+          (
+            is_positive ? ( 1e0 - (*i_var) ) * 0.5e0 * types::t_real( layer_size ):
+                          ( 1e0 + (*i_var) ) * 0.5e0 * types::t_real( layer_size )
+          );
+          const size_t nb_layers_size_t( nb_layers_real );
           std::vector<bool> arrangment(layer_size,  is_positive );
           std::fill
           ( 
             arrangment.begin(),
-            arrangment.begin() + size_t( ls * ( *i_var )  ),
+            arrangment.begin() + nb_layers_size_t,
             is_negative
           );
           std::random_shuffle( arrangment.begin(), arrangment.end(), ptr_to_rng );
@@ -142,5 +150,6 @@ namespace GA
         _translate( _structure, _indiv.Object() );
         return true;
       }
+
   }
 }

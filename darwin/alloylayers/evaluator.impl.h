@@ -54,7 +54,7 @@ namespace GA
       __ROOTCODE
       ( 
         t_Base :: comm(),
-        std::cout << structure.print_xyz( std::cout ) << std::endl;
+        std::cout << structure.print_xcrysden( std::cout ) << "\n";
       )
 
       return true;
@@ -148,13 +148,9 @@ namespace GA
   
     INEVAL(bool) :: Load( const TiXmlElement &_node )
     {
-      std::cout << "Loading base" << std::endl;
       if( not t_Base :: Load( _node ) ) return false;
-      std::cout << "Loading bandgap" << std::endl;
       if( not bandgap.Load( _node ) ) return false;
-      std::cout << "Loading edipole" << std::endl;
       if( do_dipole and ( not  edipole.Load( _node ) ) ) return false;
-      std::cout << "done loading" << std::endl;
       return true;
     }
 

@@ -10,6 +10,8 @@
 
 #include <boost/function.hpp>
 #include <boost/signal.hpp>
+#include <boost/type_traits/is_base_of.hpp>
+#include <boost/utility/enable_if.hpp>
 
 #include <tinyxml/tinyxml.h>
 
@@ -69,6 +71,47 @@ namespace GA
           //! The callback object.
           boost::function<void(const t_Object&, t_Quantities&) > callback_;
       };
+
+    //! \cond 
+    namespace details { class isPCallB {}; }
+    template< class T_OBJECT > class PrintCallBack;
+    //! \endcond
+    
+    //! Policy to assign a printing callback to an object.
+    template< class T_OBJECT >
+      class PrintCallBack : public details::isPCallB
+      {
+        public:
+          //! Type of the object.
+          typedef T_OBJECT t_Object;
+     
+          //! Sets the callback.
+          template< class T >
+          static void connect_print( T _c )
+            { callback_ = _c; }
+
+          //! prints using callback.
+          static std::ostream& print( std::ostream& _s, const t_Object &_o ) 
+            { return _o.callback_( _s, _o ); } 
+     
+        protected:
+          //! The callback object.
+          static boost::function<std::ostream&(std::ostream&, const t_Object&) > callback_;
+      };
+    //! Connects an object to a dynamic print function.
+    template< class T_OBJECT >
+      typename boost::enable_if
+            < 
+              boost::is_base_of< details::isPCallB, T_OBJECT >,
+              std::ostream
+            > :: type & operator<<( std::ostream& _s, const T_OBJECT& _o )
+      { return _o.print( _s, _o ); }
+
+
+    // A static object to hold a dynamic callback for printing.
+    template< class T_OBJECT >
+      boost::function< std::ostream& (std::ostream&, const T_OBJECT&) > 
+        PrintCallBack<T_OBJECT> :: callback_;
 
     //! \brief Policy to connect any number of callback functions assigning
     //!        values from an object to a GA quantity/raw fitness.

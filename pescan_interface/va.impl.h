@@ -19,7 +19,9 @@ namespace Pescan
   { 
     namespace bfs = boost::filesystem;
     __DIAGA(
+      Print :: out << "before: " << structure << "\n";
       vff.evaluate();
+      Print :: out << "after: " << structure << "\n";
       boost::mpi::broadcast ( t_PescanBase::comm(), structure, 0 );
       const t_Path orig
       (

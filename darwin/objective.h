@@ -939,7 +939,6 @@ namespace Objective
       {
         typename T_TYPE :: t_Vector* result;
         result = T_TYPE::vector_from_xml( _node );
-        if( not result ) std::cerr << "Could not create multi-objective..." << std::endl;
         return result;
       }
     };

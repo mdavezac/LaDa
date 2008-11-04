@@ -139,6 +139,19 @@ int main(int argc, char *argv[])
           bl::bind(  &GA::Keepers::OscStrength::osc_strength, bl::_1 )
         )
       );
+      t_Object :: connect_print
+      (
+        bl::_1 << bl::ret< BitString::Object<> >( bl::_2 )
+               << bl::constant(" Epi Strain: ")
+               << bl::bind
+                  ( 
+                    &Vff::inplane_stress,
+                    bl::bind<atat::rMatrix3d>( &t_Object :: stress, bl::_2 ),
+                    bl::constant( ga.evaluator.get_direction() )
+                  )
+               << bl::constant(" tDip: ")
+               << bl::bind(  &GA::Keepers::OscStrength::osc_strength, bl::_2 )
+      );
 #   endif
     
     Print::out << "Rerun " << i+1 << " of " << reruns << Print::endl;

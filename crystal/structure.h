@@ -22,6 +22,7 @@
 #include <exception>
 
 #include <opt/types.h>
+#include <opt/tinyxml.h>
 #include <atat/vectmac.h>
 #include <atat/xtalutil.h>
 #include <atat/machdep.h>

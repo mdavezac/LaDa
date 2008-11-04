@@ -32,13 +32,13 @@ namespace Crystal {
     //! \brief Strict Weak Ordering functor according to depth along eptiaxial
     //!        direction
     //! \details Two vectors are compared by using the value of their scalar
-    //           product with Depth::a0. If these scalar product are equal (as
+    //           product with Depth::a0 (mod |a1|). If these scalar product are equal (as
     //           defined by Fuzzy::eq()), then their
     //           scalar product with Depth::a1 are compared. If again these are
     //           equal, then the scalar porducts with Depth::a2 are compared and
     //           the result return. Depth::a0 is the first column of the matrix
     //           given in the constructor argument. Depth::a2 is the second
-    //           column, and Depth::a3 the third.
+    //           column, and Depth::a3 the third. 
     class Depth
     {
       protected:
@@ -48,31 +48,35 @@ namespace Crystal {
     
       public:
         //! \brief Constructor and Initializer
-        //! \param _mat Depth::a0 is set to the first column of this matrix,
+        //! \param _mat Depth::a0 is set to the (normalized) first column of this matrix,
         //!             Depth::a1 to the second, and Depth::a2 to the third.
         Depth   ( const atat::rMatrix3d &_mat )
               : a0(_mat.get_column(0)), a1(_mat.get_column(1)),
-                a2(_mat.get_column(2)) {}
+                a2(_mat.get_column(2))
+        {
+          a0 = 1e0 / atat::norm2( a0 ) * a0;
+          a1 = 1e0 / atat::norm2( a1 ) * a1;
+          a2 = 1e0 / atat::norm2( a2 ) * a2;
+        } 
         //! Copy Constructor.
-        Depth( const Depth &_c) : a0(_c.a1), a1(_c.a1), a2(_c.a2) {}
+        Depth( const Depth &_c) : a0(_c.a0), a1(_c.a1), a2(_c.a2) {}
         //! Destructor.
         virtual ~Depth() {}
     
         //! Strict weak ordering operator.
-        bool operator()(const atat::rVector3d& _1, const atat::rVector3d& _2 )
+        bool operator()(const atat::rVector3d& _first, const atat::rVector3d& _second )
         {
-          types::t_real a =   _1 * a0;
-          types::t_real b =   _2 * a0;
-          if ( not Fuzzy::eq( a, b ) )
-            return Fuzzy::le( a, b );
+          types::t_real a =  _first * a0; a -= std::floor( a + types::tolerance );
+          types::t_real b =  _second * a0; b -= std::floor( b + types::tolerance );
+
+          if ( not Fuzzy::eq( a, b ) ) return Fuzzy::le( a, b );
         
-          a =   _1 * a1;
-          b =   _2 * a1;
-          if ( not Fuzzy::eq( a, b ) )
-            return Fuzzy::le( a, b );
+          a =   _first * a1; a -= std::floor( a + types::tolerance );
+          b =   _second * a1; b -= std::floor( b + types::tolerance );
+          if ( not Fuzzy::eq( a, b ) ) return Fuzzy::le( a, b );
           
-          a =   _1 * a2;
-          b =   _2 * a2;
+          a =   _first * a2; a -= std::floor( a + types::tolerance );
+          b =   _second * a2; b -= std::floor( b + types::tolerance );
           return Fuzzy::le( a, b );
         }
     };
@@ -186,18 +190,20 @@ namespace Crystal {
        
   const TiXmlElement * Structure :: find_node( const TiXmlElement &_element )
   {
-    const TiXmlElement *child, *parent;
-    double d; atat::rVector3d vec;
-    int i;
-
-    // Find first XML "Structure" node (may be _element from start, or a child of _element)
-    std::string str = _element.Value();
-    if ( str.compare("Structure" ) != 0 )
-      parent = _element.FirstChildElement("Structure");
-    else
-      parent = &_element;
+    const TiXmlElement *parent = opt::find_node( _element, "Structure" );
     __DOASSERT( not parent, "Could not find Structure tag in xml.\n" )
     return parent;
+//   const TiXmlElement *child, *parent;
+//   double d; atat::rVector3d vec;
+//   int i;
+//
+//   // Find first XML "Structure" node (may be _element from start, or a child of _element)
+//   std::string str = _element.Value();
+//   if ( str.compare("Structure" ) != 0 )
+//     parent = _element.FirstChildElement("Structure");
+//   else
+//     parent = &_element;
+//   return parent;
   }
 
   void Structure :: load_attributes( const TiXmlElement &_element )

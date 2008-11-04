@@ -410,7 +410,7 @@ namespace Pescan
       or bt::get<0>( multiple_cell ) < bt::get<2>( small_box ),
       "Requested multiple cell parameters are smaller than the small box parameters.\n"
     )
-    __DOASSERT( pseudos.size() >= 2, "Fewer than two pseudos used.\n" )
+    __DOASSERT( pseudos.size() < 2, "Fewer than two pseudos used.\n" )
   }
 
   bool Interface :: GenPot :: Load( const TiXmlElement &_node )
@@ -432,8 +432,10 @@ namespace Pescan
                   "Could not find <Pseudo/> in <GenPot>\nAborting\n")
      
       if( child->Attribute("mesh") )
+      {
         __DOASSERT( not opt::tuples::read( child->Attribute("mesh"), mesh ),
                     "Could not parse mesh attribute.\n" )
+      }
       else 
       {
         bt::get<0>(mesh) = boost::lexical_cast<types::t_int>( child->Attribute("x") );
@@ -442,12 +444,16 @@ namespace Pescan
       }
       multiple_cell = mesh;
       if( child->Attribute("multcell") )
+      {
         __DOASSERT( not opt::tuples::read( child->Attribute("multcell"), multiple_cell ),
                     "Could not parse multcell attribute.\n" )
+      }
       small_box = multiple_cell == mesh ? t_MeshTuple(0,0,0): multiple_cell;
       if( child->Attribute("smallbox") )
+      {
         __DOASSERT( not opt::tuples::read( child->Attribute("small_box"), small_box ),
                     "Could not parse smallbox attribute.\n" )
+      }
 
       child->Attribute("cutoff", &cutoff);
       __IIAGA

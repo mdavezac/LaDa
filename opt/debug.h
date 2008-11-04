@@ -7,6 +7,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <boost/foreach.hpp>
+#include <iostream>
 
 #if defined(foreach)
 #  warning "foreach macro already exists"

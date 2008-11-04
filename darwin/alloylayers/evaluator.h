@@ -187,7 +187,7 @@ namespace GA
           bool Load( const TiXmlElement &_node );
      
           //! Initializes the bandgap.
-          void init( t_Individual& ) { bandgap.init(); }
+          void init( t_Individual& _indiv ) { t_Base::init( _indiv ); bandgap.init(); }
      
           //! \brief Evaluates the band gap after strain minimization, and
           //!        optionally the electic dipole.

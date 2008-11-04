@@ -5,6 +5,7 @@
 #define _OBJECTIVE_IMPL_H_
 
 #include <opt/debug.h>
+#include <opt/tinyxml.h>
 
 namespace GA
 {
@@ -460,7 +461,6 @@ namespace Objective
      typename Types<T_GA_TRAITS> :: t_Scalar*
       Types<T_GA_TRAITS> :: scalar_from_xml( const TiXmlElement &_node )
       {
-        if ( not &_node ) return NULL;
         std::string str = "minimize"; 
         std::string name = Print::lowercase(_node.Value());
         if (    name.compare("objective") == 0 
@@ -505,15 +505,9 @@ namespace Objective
        typename Types<T_GA_TRAITS> :: t_Vector*
         Types<T_GA_TRAITS> :: vector_from_xml( const TiXmlElement &_node )
         {
-          if ( not &_node ) return NULL;
-//         std::string str = "minimize"; 
-//         std::string name = Print::lowercase(_node.Value());
-//         if (    name.compare("objective") == 0 
-//              or name.compare("method") == 0 )
-//         {
-//           if ( _node.Attribute( "type" ) )
-//             str = Print::lowercase(_node.Attribute( "type" ));
-//         }
+          const TiXmlElement *parent = opt::find_node( _node, "Objectives" );
+          __DOASSERT( not parent, "Could not find Objectives tag.\n" )
+
           if ( t_Vector::t_QuantityTraits::is_vector ) // and str.compare("LinearSum") == 0 )
           {
             LinearSum<T_GA_TRAITS> *linear = new LinearSum<T_GA_TRAITS>;
@@ -521,7 +515,7 @@ namespace Objective
             
             Print::xmg << Print::Xmg::comment << "Objective: begin LinearSum" << Print::endl;
             Print::xmg << Print::Xmg::indent;
-            const TiXmlElement *child = _node.FirstChildElement("Objective");
+            const TiXmlElement *child = parent->FirstChildElement("Objective");
             for(; child; child = child->NextSiblingElement("Objective") )
             {
               t_Scalar* scalar = scalar_from_xml( *child );
@@ -536,9 +530,6 @@ namespace Objective
             Print::xmg << Print::Xmg::comment << "Objective: end LinearSum" << Print::endl;
             return linear;
           }
-
-          if ( _node.FirstChildElement( "Objective" ) )
-           return new_from_xml( *_node.FirstChildElement( "Objective" ) ); 
 
           return NULL;
         }

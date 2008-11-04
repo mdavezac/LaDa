@@ -29,7 +29,8 @@ namespace GA
   {
     struct Object : public BitString::Object<>, 
                     public ::GA::Keepers::BandGap,
-                    public ::GA::Keepers::OscStrength
+                    public ::GA::Keepers::OscStrength,
+                    public ::GA::AlloyLayers::PrintCallBack< Object >
     {
       //! The type of the BitString container
       typedef ::BitString::Object<> :: t_Container t_Container;
@@ -60,6 +61,11 @@ namespace GA
         }
     };
 
+//   inline std::ostream& operator<<( std::ostream &_stream, const Object &_o )
+//   {
+//     _stream << ( const BitString::Object<>& ) _o << " ";
+//     return _o.PrintCallBack<Object>::print ( _stream, _o );
+//   }
     //! \brief Old-style translation.
     //! \todo remove this function and replace it with translate.
     inline void operator<<( std::string &_str, const Object& _o )

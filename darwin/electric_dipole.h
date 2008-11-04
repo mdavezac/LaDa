@@ -16,6 +16,7 @@
 #include <crystal/structure.h>
 #include <opt/types.h>
 #include <mpi/mpi_object.h>
+#include <print/stdout.h>
 
 #include "vff.h"
 
@@ -43,6 +44,10 @@ namespace GA
       template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
         { _ar & osc_strength; }
     };
+    //! Prints oscillator strength,
+    inline std::ostream& operator<<( std::ostream &_stream, const OscStrength &_o )
+      { return _stream << " TD: " << _o.osc_strength; }
+
   }
 
   namespace OscStrength
@@ -74,6 +79,7 @@ namespace GA
                                                              degeneracy, false );
 #         else
             _k.osc_strength = rng.uniform();
+            Print::out << "osc strength " <<  _k.osc_strength << "\n";
 #         endif
         }
   #ifdef _MPI

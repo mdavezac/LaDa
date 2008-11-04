@@ -117,10 +117,10 @@ namespace GA
   template<class T_EVALUATOR>
   void Darwin<T_EVALUATOR> :: Load_Method(const TiXmlElement &_parent)
   {
-    try
-    {
+    __TRYBEGIN
       if( topology.objective() ) 
         objective = topology.objective<t_GATraits>( _parent );
+      __DOASSERT( not objective, "Could not create multi-objective.\n" )
       
       if( topology.history() and history )
       {
@@ -140,12 +140,7 @@ namespace GA
       
       if( not topology.scaling() ) return;
       scaling = Scaling::new_from_xml<t_GATraits>( _parent, &evaluator );
-    }
-    catch( std::exception &_e )
-    {
-      cleanup();
-      __THROW_ERROR( "Could not create method.\n" << _e.what() )
-    } 
+    __TRYEND(, "Could not create method.\n" )
   }
   
   template<class T_EVALUATOR>
@@ -169,6 +164,7 @@ namespace GA
 
       // Note that one of these tags have already been found and should exist
       child = _parent.FirstChildElement("Objective");
+      if ( not child ) child = _parent.FirstChildElement("Objectives");
       if ( not child ) child = _parent.FirstChildElement("Method");
 
       store = new typename t_Store::FromObjective( evaluator, objective, *child );

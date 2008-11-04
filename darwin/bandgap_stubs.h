@@ -195,7 +195,8 @@ namespace GA
     //! Dumps a GA::Keepers::BandGap to a stream.
     inline std::ostream& operator<<(std::ostream &_stream, const BandGap &_o)
     { 
-      _stream << " CBM " 
+      _stream << "E_lastic " << std::setw(12) << std::setprecision(6) << _o.energy
+              << " -- CBM " 
               << std::fixed << std::setw(12) << std::setprecision(6) << _o.cbm 
               << "  --  VBM "
               << std::fixed << std::setw(12) << std::setprecision(6) << _o.vbm; 

@@ -1,0 +1,91 @@
+<?xml version="1.0" standalone="no" ?>
+<Job>
+  <MPI pools=2 />
+  <Structure direction="(0 0 1)" extent="(5 2 1)" />
+  <Lattice scale="4.2">
+      <row x="0.0" y="0.5" z="0.5" />
+      <row x="0.5" y="0.0" z="0.5" />
+      <row x="0.5" y="0.5" z="0.0" />
+      <site x="0.25" y="0.25" z="0.25">
+          <atom type="As" />
+          <atom type="Sb" />
+      </site>
+      <site x="0.0" y="0.0" z="0.0">
+          <atom type="In" />
+          <atom type="Ga" />
+      </site>
+  </Lattice>
+  <GA popsize="4" rate="0.5" >
+      <Breeding>
+          <TabooOp>
+             <Operators type="and">
+               <Crossover prob=0.75/>
+               <Mutation rate="0.01" prob=0.25/>
+             </Operators>
+          </TabooOp>
+      </Breeding>
+      <Objectives type="linear" >
+        <Objective type="minimize" />
+        <Objective type="maximize" />
+      </Objectives>
+      <Scaling type="Pareto" />
+      <Scaling type="Niching" distance="GeneralHamming" />
+      <Taboos>
+          <Population />
+          <Offspring />
+      </Taboos>
+      <Terminator ref="evaluation" value="8" />
+      <Save what="all" every="1" />
+      <tRestart what="all"/>
+      <Filenames    stop="stop"/>
+      <Filenames xmgrace="agr"/>
+      <Filenames    save="save.xml"/>
+      <Filenames     out="output"/>
+      <Filenames BandEdge="edge" />
+      <Print type="offspring"/>
+      <Print type="pop"/>
+  </GA>
+  <Functional type="vff">
+      <Minimizer type="gsl_bfgs2" itermax="4000" tolerance="0.00001" linetolerance="0.5" zeps="0.02" linestep="0.001" doprint="true"/>
+      <Bond A="In" B="As" d0="2.622" alpha="35.180" />
+      <Bond A="Ga" B="As" d0="2.448" alpha="41.190" />
+      <Bond A="Ga" B="Sb" d0="2.640" alpha="33.160" />
+      <Bond A="In" B="Sb" d0="2.805" alpha="26.610" />
+      <Angle A="As" B="Ga" C="As" gamma="tet" sigma="0" beta="8.93823" />
+      <Angle A="As" B="Ga" C="Sb" gamma="tet" sigma="0" beta="8.08355" />
+      <Angle A="Sb" B="Ga" C="Sb" gamma="tet" sigma="0" beta="7.2289" />
+      <Angle A="In" B="As" C="In" gamma="tet" sigma="0" beta="5.48808" />
+      <Angle A="Ga" B="As" C="In" gamma="tet" sigma="0" beta="7.213155" />
+      <Angle A="Ga" B="As" C="Ga" gamma="tet" sigma="0" beta="8.93823" />
+      <Angle A="As" B="In" C="As" gamma="tet" sigma="0" beta="5.48808" />
+      <Angle A="Sb" B="In" C="As" gamma="tet" sigma="0" beta="4.88615" />
+      <Angle A="Sb" B="In" C="Sb" gamma="tet" sigma="0" beta="4.2842" />
+      <Angle A="Ga" B="Sb" C="Ga" gamma="tet" sigma="0" beta="7.2289" />
+      <Angle A="In" B="Sb" C="In" gamma="tet" sigma="0" beta="4.2842" />
+      <Angle A="Ga" B="Sb" C="In" gamma="tet" sigma="0" beta="5.75655" />
+  </Functional>
+  <Functional type="escan" method="1" keepdirs="true" >
+      <Maskr filename="../../pseudos/maskr"/>
+      <GenPot mesh="( 48 16 16 )"  cutoff="5.0" >
+          <Pseudo filename="../../pseudos/vq.atom1" />
+          <Pseudo filename="../../pseudos/vq.atom2" />
+          <Pseudo filename="../../pseudos/vq.atom3" />
+          <Pseudo filename="../../pseudos/vq.atom4" />
+          <Pseudo filename="../../pseudos/vq.atom5" />
+          <Pseudo filename="../../pseudos/vq.atom6" />
+          <Pseudo filename="../../pseudos/vq.atom7" />
+          <Pseudo filename="../../pseudos/vq.atom8" />
+      </GenPot>
+      <tReferences VBM="-4.9" CBM="-4.7" />
+      <Hamiltonian kinscal="1.23" smooth="0.8" potential="3" realcutoff="4.5" nbstates="3" >
+          <SpinOrbit filename="../../pseudos/vwr.pso" izz="49051" pnl="1.271254 " />
+          <SpinOrbit filename="../../pseudos/vwr.pso" izz="51049" pnl="0.946102 " />
+          <SpinOrbit filename="../../pseudos/vwr.pso" izz="49033" pnl="1.0747401" />
+          <SpinOrbit filename="../../pseudos/vwr.pso" izz="33049" pnl="0.2779539" />
+          <SpinOrbit filename="../../pseudos/vwr.pso" izz="31051" pnl="0.2979240" />
+          <SpinOrbit filename="../../pseudos/vwr.pso" izz="51031" pnl="0.8113915" />
+          <SpinOrbit filename="../../pseudos/vwr.pso" izz="31033" pnl="0.2347250" />
+          <SpinOrbit filename="../../pseudos/vwr.pso" izz="33031" pnl="0.2338090" />
+      </Hamiltonian>
+  </Functional>
+</Job>
