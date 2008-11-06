@@ -33,26 +33,7 @@
   typedef eMassSL :: Evaluator t_Evaluator;
 # define __PROGNAME__ "emass_opt"
 #elif defined( _ALLOY_LAYERS_ )
-# include <boost/lambda/bind.hpp>
-# include <boost/bind.hpp>
-# include "vff.h"
-# include "two_sites.h"
-# include "alloylayers/evaluator.h"
-# include "alloylayers/policies.h"
-# include "alloylayers/object.h"
-  typedef Individual :: Types
-          < 
-            GA :: AlloyLayers :: Object,
-            TwoSites :: Concentration,
-            TwoSites :: Fourier 
-          > :: t_Vector t_Individual;
-  typedef GA :: AlloyLayers :: Evaluator
-          <
-            t_Individual,
-            GA :: AlloyLayers :: Translate,
-            GA :: AlloyLayers :: AssignSignal
-          > t_Evaluator;
-# define __PROGNAME__ "alloylayers_opt"
+# include "alloylayers/main.extras.h"
 #else 
 # error Need to define _CE or _PESCAN or _MOLECULARITY or _ALLOY_LAYERS_
 #endif
@@ -80,6 +61,8 @@ int main(int argc, char *argv[])
 
   __BPO_START__;
   __BPO_SPECIFICS__( "GA Options" )
+    // extra parameters for alloy layers.
+#   include "alloylayers/main.extras.h" 
     __BPO_RERUNS__;
   __BPO_GENERATE__()
   __BPO_MAP__
@@ -94,65 +77,28 @@ int main(int argc, char *argv[])
   __ROOTCODE
   (
     (*::mpi::main),
-    std::cout << "Will load input from file: " << input << ".\n"
-              << "Will perform " << reruns << " GA runs.\n\n";
+    std::cout << "Will load input from file: " << input << ".\n";
   )
     
-  __MPICODE
+  // Reads program options for alloylayers.
+  // Prints program options to standard output.
+#   include "alloylayers/main.extras.h" 
+ 
+  __ROOTCODE
   (
-    std::string input_str = input.string();
-    boost::mpi::broadcast( (*::mpi::main), input_str, 0 ); 
-    input = input_str;
+    (*::mpi::main),
+    std::cout << "Will perform " << reruns << " GA runs.\n\n";
   )
-  
   
   for( types::t_int i = 0; i < reruns; ++i )
   {
     GA::Darwin< t_Evaluator > ga;
     Print :: out << "load result: " << ga.Load(input.string()) << Print::endl; 
-   //__DOASSERT( not ga.Load(input.string()),
-   //            "Could not load input from file " << input << "\n" )
-#   ifdef _ALLOY_LAYERS_
-      typedef t_Evaluator :: t_GATraits :: t_QuantityTraits :: t_Quantity t_Quantity;
-      typedef t_Evaluator :: t_GATraits :: t_Object t_Object;
-      ga.evaluator.do_dipole = true;
-      ga.evaluator.connect
-      (
-        bl::bind
-        (
-          &t_Quantity::push_back,
-          bl::_2,
-          bl::bind
-          ( 
-            &Vff::inplane_stress,
-            bl::bind<atat::rMatrix3d>( &t_Object :: stress, bl::_1 ),
-            bl::constant( ga.evaluator.get_direction() )
-          )
-        )
-      );
-      ga.evaluator.connect
-      (
-        bl::bind
-        (
-          &t_Quantity::push_back,
-          bl::_2,
-          bl::bind(  &GA::Keepers::OscStrength::osc_strength, bl::_1 )
-        )
-      );
-      t_Object :: connect_print
-      (
-        bl::_1 << bl::ret< BitString::Object<> >( bl::_2 )
-               << bl::constant(" Epi Strain: ")
-               << bl::bind
-                  ( 
-                    &Vff::inplane_stress,
-                    bl::bind<atat::rMatrix3d>( &t_Object :: stress, bl::_2 ),
-                    bl::constant( ga.evaluator.get_direction() )
-                  )
-               << bl::constant(" tDip: ")
-               << bl::bind(  &GA::Keepers::OscStrength::osc_strength, bl::_2 )
-      );
-#   endif
+
+    // Prints program options to Print::out and Print::xmg.
+#   include "alloylayers/main.extras.h" 
+    // Connects assignement and print functors for alloylayers config. space.
+#   include "alloylayers/main.extras.h" 
     
     Print::out << "Rerun " << i+1 << " of " << reruns << Print::endl;
     __ROOTCODE

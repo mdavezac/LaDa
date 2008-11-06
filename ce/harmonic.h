@@ -11,6 +11,8 @@
 
 #include <vector>
 #include <math.h>
+#include <boost/serialization/base_object.hpp>
+
 
 #include <tinyxml/tinyxml.h>
 
@@ -47,11 +49,13 @@ namespace CE
       //!          the gradient in a similar way.
       class Linear_Interpolator 
       {
+        friend class boost::serialization::access;
         //! \brief Defines a 2-dimensional point.
         //! \details Defines an x and y member, as well as comparison functions for
         //!          easily retriving the closes instances to a point.
         struct Point
         {
+          friend class boost::serialization::access;
           //! Coordinate along the \e x axis.
           types::t_real x;
           //! Coordinate along the \e y axis.
@@ -69,9 +73,10 @@ namespace CE
           //! Compares (Fuzzy math) the \e x axis coordinate with \a _x
           bool x_lesser( const types::t_real _x ) const 
             { return Fuzzy::le(x, _x); }
-          //! Serializes a point.
-          template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
-            { _ar & x; _ar & y; } 
+          private:
+            //! Serializes a point.
+            template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
+              { _ar & x; _ar & y; } 
         };
     
         protected:
@@ -125,6 +130,7 @@ namespace CE
       template< class T_DERIVED >
       class Base   
       {
+        friend class boost::serialization::access;
         public:
           //! type of the derived class
           typedef T_DERIVED t_Derived;
@@ -193,6 +199,7 @@ namespace CE
     
           //! Clears the interpolation.
           void clear() { interpolation.clear(); };
+        private:
           //! Serializes a harmonic.
           template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
             { _ar & interpolation; _ar & rank; _ar & attenuation; } 
@@ -230,6 +237,7 @@ namespace CE
       class Cubic : public Base< Cubic >
       {
         friend class Base< Cubic >;
+        friend class boost::serialization::access;
         public:
           //! Constructor
           Cubic() {};
@@ -247,12 +255,17 @@ namespace CE
           const static std::string type;
           //! Maximum rank of the cubic harmonic
           const static types::t_int maxrank = 3;
+        private:
+          //! Serializes a harmonic.
+          template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
+            { _ar & boost::serialization::base_object< Base<Tetragonal> >(*this); };
       };
 
       //! Defines a tetragonal harmonic %function of rank 0-9.
       class Tetragonal : public Base< Tetragonal >
       {
         friend class Base< Tetragonal >;
+        friend class boost::serialization::access;
         public:
           //! Constructor
           Tetragonal() {};
@@ -270,6 +283,10 @@ namespace CE
           const static std::string type;
           //! Maximum rank of the cubic harmonic
           const static types::t_int maxrank = 9;
+        private:
+          //! Serializes a harmonic.
+          template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
+            { _ar & boost::serialization::base_object< Base<Tetragonal> >(*this); };
       };
     
     } // namespace Harmonic

@@ -48,6 +48,7 @@ namespace Minimizer {
   //! \xmlinput see TagMinimizer
   class Gsl 
   {
+      friend class boost::serialization::access;
     protected:
       //!< Lists all known gsl multidimensional minimizers.
       enum t_gsl_minimizer_type
@@ -120,6 +121,7 @@ namespace Minimizer {
       bool Load_( const TiXmlElement &_node );
       //! Loads the minimizer from XML
       bool Load( const TiXmlElement &_node );
+    private:
       //! Serializes a structure.
       template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
   };

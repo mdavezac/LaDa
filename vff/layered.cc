@@ -131,7 +131,7 @@ namespace Vff
 
   bool Layered :: Load( const TiXmlElement &_node )
   {
-    const TiXmlElement* parent = find_node( _node );
+    const TiXmlElement* parent = opt::find_functional_node( _node, "vff" );
     if( not t_Base :: Load( *parent ) ) return false;
     return Load_( *parent );
   }

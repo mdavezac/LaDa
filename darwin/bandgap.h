@@ -64,6 +64,7 @@ namespace BandGap
                   public ::GA::Keepers::BandGap,
                   public ::GA::Keepers::ConcTwo
   {
+    friend class boost::serialization::access;
     //! The type of the BitString container
     typedef TwoSites::Object :: t_Container t_Container;
 
@@ -84,8 +85,9 @@ namespace BandGap
                and ::GA::Keepers::ConcTwo::Save( _node ); }
     //! Destructor
     virtual ~Object() {};
-    //! Serializes a scalar individual.
-    template<class Archive> void serialize(Archive & _ar, const unsigned int _version);
+    private:
+      //! Serializes a scalar individual.
+      template<class Archive> void serialize(Archive & _ar, const unsigned int _version);
   };
 
   //! \brief Dumps a BandGap::Object to a stream.

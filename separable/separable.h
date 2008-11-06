@@ -61,6 +61,7 @@ namespace Separable
             template<class> class T_SCALAROP = std::multiplies >
   class Base 
   {
+      friend class boost::serialization::access;
       template< class T_FUNCTION > friend class Collapse;
       friend std::ostream& operator<< <T_BASIS, T_GROUPOP, T_SCALAROP>
                                       ( std::ostream& _stream,
@@ -118,9 +119,6 @@ namespace Separable
       //! Sets all coefs in range \a _first to \a _last.
       template< class T_ITERATOR >
         void set( T_ITERATOR _first, T_ITERATOR _last );
-      //! Serializes a structure.
-      template<class ARCHIVE>
-        void serialize( ARCHIVE & _ar, const unsigned int _version);
       //! Sets name of %function.
       void set_name( const std::string &_str ) { name = _str; }
 
@@ -134,6 +132,10 @@ namespace Separable
       //! \brief Name of this stage of the separable %function.
       //! \details Should be set by the sum of separable %function.
       std::string name;
+    private:
+      //! Serializes a structure.
+      template<class ARCHIVE>
+        void serialize( ARCHIVE & _ar, const unsigned int _version);
   };
   
   template< class T_BASIS, 

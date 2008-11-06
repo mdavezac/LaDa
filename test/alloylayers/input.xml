@@ -1,8 +1,14 @@
 <?xml version="1.0" standalone="no" ?>
 <Job>
   <MPI pools=2 />
-  <Structure direction="(0 0 1)" extent="(5 2 1)" />
-  <Lattice scale="4.2">
+  <Structure direction="(1 1 1)" extent="(3 5 5)">
+    <Cell>
+      <row x="3" y="0" z="0"/>
+      <row x="3" y="-2" z="0"/>
+      <row x="3" y="0" z="-2"/>
+    </Cell>
+  </Structure>
+  <Lattice scale="5.99">
       <row x="0.0" y="0.5" z="0.5" />
       <row x="0.5" y="0.0" z="0.5" />
       <row x="0.5" y="0.5" z="0.0" />
@@ -25,11 +31,12 @@
           </TabooOp>
       </Breeding>
       <Objectives type="linear" >
-        <Objective type="minimize" />
+        <Objective type="target" target=0 />
+        <Objective type="target"  target=0.32 />
         <Objective type="maximize" />
       </Objectives>
       <Scaling type="Pareto" />
-      <Scaling type="Niching" distance="GeneralHamming" />
+      <Scaling type="Niching" distance="GeneralHamming" d0="30" />
       <Taboos>
           <Population />
           <Offspring />

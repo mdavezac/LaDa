@@ -15,6 +15,7 @@
 #include <opt/fuzzy.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
+#include <crystal/layerdepth.h>
 
 namespace GA
 {
@@ -49,13 +50,14 @@ namespace GA
       __DOASSERT( not parent, "No Structure tag found in input.\n")
   
       if( not structure.Load( _node ) ) return false;
+      std::sort( structure.atoms.begin(), structure.atoms.end(), 
+                 Crystal::LayerDepth( structure.cell ) );
+
       direction = structure.cell.get_column(0);
 
-      __ROOTCODE
-      ( 
-        t_Base :: comm(),
-        std::cout << structure.print_xcrysden( std::cout ) << "\n";
-      )
+      //! now calls init member of policies.
+      CallInit< t_Translate, t_This >::call( *this );
+      CallInit< t_Assign, t_This >::call( *this );
 
       return true;
     }
@@ -97,6 +99,7 @@ namespace GA
                                 bool _type ) const
     {
       const t_Object &object = _indiv.Object();
+      if ( not object.Save( _node ) ) return false;
       if ( _type == GA::LOADSAVE_SHORT )
       {
         std::string str;
@@ -132,6 +135,7 @@ namespace GA
       if( do_dipole ) oldkeepdir = bandgap.set_keepdirectory( false );
   
       bandgap( *t_Base::current_object );
+
   
       if( do_dipole )
       {

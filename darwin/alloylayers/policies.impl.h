@@ -17,12 +17,11 @@ namespace GA
         typename t_Object :: t_Container& container = _object.Container();
         container.clear();
 
-        const atat::rVector3d direction( _structure.cell.get_column(0) );
         typedef typename Crystal::Structure::t_Atoms::const_iterator t_iatom;
         typedef typename t_Object :: t_Container :: iterator t_ivar;
         t_iatom i_atom = _structure.atoms.begin();
         t_iatom i_atom_end = _structure.atoms.end();
-        types::t_real last_depth( i_atom->pos * direction );
+        types::t_real last_depth( Translate<T_OBJECT>::layerdepth( i_atom->pos ) );
         types::t_unsigned layer_size(0);
         types::t_real c(0);
         for( ; i_atom != i_atom_end; )
@@ -33,7 +32,7 @@ namespace GA
             c += i_atom->type > 0e0 ? 1e0: -1e0;
             ++layer_size;
             ++i_atom;
-            new_depth = i_atom->pos * direction;
+            new_depth = Translate<T_OBJECT>::layerdepth( i_atom->pos );
           }
           while( Fuzzy::eq( last_depth, new_depth ) and i_atom != i_atom_end );
 
@@ -45,7 +44,6 @@ namespace GA
           last_depth = new_depth;
           c = 0e0;
         }
-        std::cout << _object << "\n";
       }
 
     template< class T_OBJECT >
@@ -54,7 +52,6 @@ namespace GA
       {
         types::t_unsigned (*ptr_to_rng)(const types::t_unsigned& )
             = &eo::random<types::t_unsigned>;
-        const atat::rVector3d direction( _structure.cell.get_column(0) );
         typedef typename Crystal::Structure::t_Atoms::iterator t_iatom;
         typedef typename t_Object :: t_Container :: const_iterator t_ivar;
         t_iatom i_atom = _structure.atoms.begin();
@@ -62,7 +59,7 @@ namespace GA
         t_iatom i_atom_begin( i_atom );
         t_ivar i_var = _object.Container().begin();
         __DODEBUGCODE( t_ivar i_var_end = _object.Container().end(); )
-        types::t_real last_depth( i_atom->pos * direction );
+        types::t_real last_depth( Translate<T_OBJECT>::layerdepth( i_atom->pos ) );
         types::t_unsigned layer_size(0);
         for( ; i_atom != i_atom_end __DODEBUGCODE( and i_var != i_var_end ); )
         {
@@ -71,7 +68,7 @@ namespace GA
           {
             ++layer_size;
             ++i_atom;
-            new_depth = i_atom->pos * direction;
+            new_depth = Translate<T_OBJECT>::layerdepth( i_atom->pos );
           }
           while( Fuzzy::eq( last_depth, new_depth ) and i_atom != i_atom_end );
 

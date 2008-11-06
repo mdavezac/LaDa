@@ -9,7 +9,7 @@ LDADD =
 fortranSOURCE = 
 fortranHEADER = 
 if DOFORTRAN 
-  LDADD += @FCLIBS@ ../opt/libopt.la 
+  LDADD += @FCLIBS@
 #  fortranBIN     =  fortran_test
   fortranSOURCE += $(VFF_FORTRAN_CC)
   fortranHEADER += $(VFF_FORTRAN_H)
@@ -32,6 +32,7 @@ vff_LDADD = ../crystal/libcrystal.la \
 	    libvff.la \
             ../physics/libphysics.la \
             ../print/libprint.la \
+            ../opt/libopt.la \
 	    $(fortranLDADD) \
 	    @MPI_ADDLIB@ \
             $(fortranLDFLAGS)

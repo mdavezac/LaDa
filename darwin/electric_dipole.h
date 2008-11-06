@@ -27,6 +27,7 @@ namespace GA
     //! Keeps track of oscillator strength
     struct OscStrength
     {
+      friend class boost::serialization::access;
       types::t_real osc_strength; //!< Conduction Band Minimum
     
       //! Constructor
@@ -40,13 +41,14 @@ namespace GA
       bool Load( const TiXmlElement &_node );
       //! Saves OscStrength::osc_strength as attributes of \a _node.
       bool Save( TiXmlElement &_node ) const;
-      //! Serializes a scalar individual.
-      template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
-        { _ar & osc_strength; }
+      private:
+        //! Serializes a scalar individual.
+        template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
+          { _ar & osc_strength; }
     };
     //! Prints oscillator strength,
     inline std::ostream& operator<<( std::ostream &_stream, const OscStrength &_o )
-      { return _stream << " TD: " << _o.osc_strength; }
+      { return _stream << " Transition Dipole: " << _o.osc_strength; }
 
   }
 

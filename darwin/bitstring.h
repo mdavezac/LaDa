@@ -49,6 +49,7 @@ namespace BitString
   template< class T_CONTAINER = std::vector< types::t_real > >
   struct Object
   {
+      friend class boost::serialization::access;
     public:
       //! The container type
       typedef T_CONTAINER t_Container; 
@@ -121,6 +122,7 @@ namespace BitString
         return result;
       }
 
+    private:
       //! Serializes an atom.
       template<class ARCHIVE> void serialize( ARCHIVE & _ar,
                                               const unsigned int _version)

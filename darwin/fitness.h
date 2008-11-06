@@ -88,6 +88,7 @@ namespace Fitness
   template<class T_QUANTITYTRAITS >
   class Scalar
   {
+    friend class boost::serialization::access;
     typedef Scalar<T_QUANTITYTRAITS> t_This; //!< Type of this class
 
     public:
@@ -160,6 +161,7 @@ namespace Fitness
       //! \brief Returns a t_Comparison giving the relationship between this
       //!        object and \a _f.
       t_Comparison compare( const t_This &_f ) const;
+    private:
       //! Serializes a scalar fitness.
       template<class ARCHIVE> void serialize(ARCHIVE & _ar, 
                                              const unsigned int _version);
@@ -205,6 +207,7 @@ namespace Fitness
   class Vectorial :
         public Scalar< typename T_QUANTITYTRAITS::t_ScalarQuantityTraits >
   {
+    friend class boost::serialization::access;
     typedef Vectorial<T_QUANTITYTRAITS> t_This;      //!< Type of this class
     //! Type of the base class
     typedef Scalar<typename T_QUANTITYTRAITS::t_ScalarQuantityTraits> t_Base; 
@@ -311,6 +314,7 @@ namespace Fitness
       //! \brief Returns a t_Comparison giving the relationship between this
       //!        object and \a _f.
       t_Comparison compare( const t_This &_f ) const;
+    private:
       //! Serializes a vectorial fitness.
       template<class ARCHIVE> void serialize(ARCHIVE & _ar,
                                              const unsigned int _version);

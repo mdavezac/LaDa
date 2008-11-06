@@ -125,6 +125,13 @@ namespace Crystal {
       //!          _at, the first the index in the first of the sites which can
       //!          is returned.
       types::t_int get_atom_type_index( const std::string &_at ) const;
+      //! Returns the index of the atomic occupation of \a _at site \a _i.
+      //! \details More specifically, returns the index of the string in member
+      //!          Atom_Type< std::vector<std::string> >::type. 
+      //!          If there are more than one site which can accomodate an \a
+      //!          _at, the first the index in the first of the sites which can
+      //!          is returned.
+      types::t_int get_atom_type_index( const std::string &_at, types::t_unsigned _i ) const;
       //! Returns the atomic symbol of \a _at.
       std::string get_atom_string( const Crystal::Atom &_at ) const;
       //! Returns the atomic symbol \a _i of site \a _s
@@ -191,6 +198,10 @@ namespace Crystal {
   boost::shared_ptr< Crystal::Lattice >
     read_lattice( const boost::filesystem::path &_fpath, 
                   const boost::filesystem::path &_dpath );
+
+
+  //! Returns true if a lattice has two sites and the two sites contain different species.
+  bool lattice_has_same_species( const Lattice &_lattice );
 
   // This is inlined so that it gets recompiled with correct _CUBIC_CE_ or
   // _TETRAGONAL_CE_ each time.

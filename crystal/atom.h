@@ -55,6 +55,7 @@ namespace Crystal {
   template<class T_TYPE>
   class Atom_Type
   {
+    friend class boost::serialization::access;
     public:
       //! The type of the occupation
       typedef T_TYPE t_Type;
@@ -115,6 +116,7 @@ namespace Crystal {
       void print_xml( TiXmlElement* const node ) const;
       //! Compares the position of two atoms.
       template< class TTYPE > bool operator < ( const Atom_Type<TTYPE> &_atom ) const;
+    private:
       //! Serializes an atom.
       template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
   };
@@ -293,13 +295,10 @@ namespace Crystal {
 
 
 
-//! Prints an atom to a stream.
-template<class T_TYPE>
-  std::ostream& operator<<(std::ostream& _stream, const Crystal::Atom_Type<T_TYPE> &_at )
-    { _at.print_out( _stream ); return _stream; }
-
-
-
+  //! Prints an atom to a stream.
+  template<class T_TYPE>
+    std::ostream& operator<<(std::ostream& _stream, const Crystal::Atom_Type<T_TYPE> &_at )
+      { _at.print_out( _stream ); return _stream; }
 
 } // namespace Crystal
 

@@ -163,6 +163,7 @@ namespace Minimizer {
   template<typename T_FUNCTIONAL> 
   class GnuSL : public Base< T_FUNCTIONAL >
   {
+      friend class boost::serialization::access;
     public:
       typedef T_FUNCTIONAL t_Functional;
 
@@ -250,6 +251,7 @@ namespace Minimizer {
       bool Load_( const TiXmlElement &_node );
       //! Loads the minimizer from XML
       bool Load( const TiXmlElement &_node );
+    private:
       //! Serializes a structure.
       template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
   };

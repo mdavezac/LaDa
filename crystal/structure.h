@@ -16,6 +16,7 @@
 #include <complex>
 #include <math.h>
 #include <boost/filesystem/path.hpp>
+#include <boost/serialization/serialization.hpp>
 
 
 #include <tinyxml/tinyxml.h>
@@ -61,6 +62,7 @@ namespace Crystal {
   template < class T_TYPE >
   struct TStructure
   {
+    friend class boost::serialization::access;
     //! The atomic type
     typedef Atom_Type<T_TYPE>  t_Atom;
     //! The type of the collection of atoms. 
@@ -132,12 +134,14 @@ namespace Crystal {
     //!           the occupations.
     bool operator== (const TStructure<T_TYPE> &_str ) const;
     
-    //! Serializes a structure.
-    template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
+    private:
+      //! Serializes a structure.
+      template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
   };
   
   struct Structure : public TStructure< types::t_real >
   {
+    friend class boost::serialization::access;
     //! The atomic type
     typedef Atom_Type<types::t_real>  t_Atom;
     //! The type of the collection of atoms. 
@@ -237,9 +241,6 @@ namespace Crystal {
     //! Sets the site index of each atom according to Structure::lattice.
     bool set_site_indices();
 
-    //! Serializes a structure.
-    template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
-
     protected:
       //! Finds parent node.
       const TiXmlElement* find_node( const TiXmlElement &_element );
@@ -253,6 +254,10 @@ namespace Crystal {
       bool load_kvecs( const TiXmlElement &_element );
       //! loads an epitaxial structure.
       bool load_epitaxial( const TiXmlElement &_node );
+
+    private:
+      //! Serializes a structure.
+      template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
   };
 
   //! Returns true if \a _a and \a _b are periodic equivalents of the unit-cell \a _cell.
@@ -342,6 +347,7 @@ namespace Crystal {
   bool create_epitaxial_structure( Structure& _structure,
                                    atat::rVector3d &_direction,
                                    atat::iVector3d &_extent );
+
 } // namespace Crystal
 
 #include "structure.impl.h"

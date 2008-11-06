@@ -168,6 +168,7 @@ namespace opt
     template <class T_OBJECT>
     struct Vertex  
     {
+      friend class boost::serialization::access;
       typedef T_OBJECT t_Object; //!< the object type
 
       types::t_real x; //!< the \a x coordinate in the convex-hull plane
@@ -223,9 +224,10 @@ namespace opt
       //! return Vertex::x
       types::t_real get_concentration() const
         { return x; }
-      //! Serializes a vertex.
-      template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
-        { _ar & x; _ar & y; _ar & object; }
+      private:
+        //! Serializes a vertex.
+        template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
+          { _ar & x; _ar & y; _ar & object; }
     };
     //! Prints out vertex using usual << operator.
     template< class T_OBJECT >
@@ -240,6 +242,7 @@ namespace opt
     //! \f$x < x_\mathrm{end}\f$
     struct HalfLine 
     { 
+      friend class boost::serialization::access;
       types::t_real a; //!< Slope
       types::t_real b; //!< <em>y</em>-axis offset
       types::t_real x_end; //!< rightmost end-point
@@ -268,6 +271,10 @@ namespace opt
       //! returns \a _x <= Vertex::x_end 
       bool x_greatereq(const types::t_real _x) const
         { return _x < x_end or Fuzzy::eq( _x, x_end); }
+      private:
+        //! Serializes a vertex.
+        template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
+          { _ar & a; _ar & b; _ar & x_end; }
     };
 
     //! \brief Handles a collection of Vertex objects defining the convex-hull
@@ -350,12 +357,6 @@ namespace opt
         //! Returns number of breakpoints in convex-hull
         types::t_unsigned size() const { return vertices.size(); }
 
-        //! loads a convex-hull.
-        template<class ARCHIVE> void load(ARCHIVE & _ar, const unsigned int _version)
-          { _ar & vertices; }
-        //! saves a convex-hull.
-        template<class ARCHIVE> void save(ARCHIVE & _ar, const unsigned int _version) const;
-        BOOST_SERIALIZATION_SPLIT_MEMBER()
         //! Returns  a string containing the convex-hull in xmgrace .agr format.
         std::string print() const
         { 
@@ -376,6 +377,13 @@ namespace opt
         //! unconvex breaking-point were found, than it returns true. This
         //! function should be called over and over again until it returns true.
         bool weed_out(); // removes unconvex points one by one
+      private:
+        //! loads a convex-hull.
+        template<class ARCHIVE> void load(ARCHIVE & _ar, const unsigned int _version)
+          { _ar & vertices; }
+        //! saves a convex-hull.
+        template<class ARCHIVE> void save(ARCHIVE & _ar, const unsigned int _version) const;
+        BOOST_SERIALIZATION_SPLIT_MEMBER()
     };
     //! Prints out convex-hull using usual << operator.
     template< class T_OBJECT >
@@ -389,6 +397,7 @@ namespace opt
     //!          NullObject::x.
     class NullObject
     {
+        friend class boost::serialization::access;
       public:
         //! Static concentration.
         static types::t_real x;
@@ -396,6 +405,10 @@ namespace opt
         types::t_real get_concentration() const { return x; }
         //! returns true;
         bool operator==( const NullObject& ) const { return false; }
+      private:
+        //! Serializes a vertex.
+        template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
+          { _ar & x; }
     };
     //! Prints out nothing.
     inline std::ostream& operator<<( std::ostream &_str, const NullObject & ) { return _str; }
@@ -407,6 +420,7 @@ namespace opt
     template< class T_OBJECT >
       class FakeObject : public NullObject
       {
+          friend class boost::serialization::access;
         public:
           //! Type of object to store.
           typedef T_OBJECT t_Object;
@@ -416,6 +430,10 @@ namespace opt
           FakeObject( const t_Object& _object ) : object( _object ) {}; 
           //! Copy Constructor.
           FakeObject( const FakeObject& _object ) : object( _object.object ) {}; 
+      private:
+        //! Serializes a vertex.
+        template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
+          { _ar & boost::serialization::base_object<NullObject>( *this ); _ar & object; }
       };
       //! Prints out object.
       template< class T_OBJECT >

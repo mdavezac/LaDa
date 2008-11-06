@@ -16,39 +16,12 @@
 #include <opt/atat.h>
 #include <opt/debug.h>
 #include <opt/atat.h>
+#include <opt/tinyxml.h>
 
 #include "functional.h"
   
 namespace Vff
 { 
-  // constants obtained from bc -l with scale = 64
-  const types::t_real // 2*sqrt(3)
-    Atomic_Functional :: twos3 = 3.4641016151377545870548926830117447338856105076207612561116139588;
-  const types::t_real // 1 / 16
-    Atomic_Functional :: one16 = 0.0625;
-  const types::t_real  // sqrt(3) / 8
-    Atomic_Functional :: s3o160 = 0.2165063509461096616909307926882340458678506567262975785069758724;
-  const types::t_real  // 1 / 640
-    Atomic_Functional :: one640 = 0.0015625;
-  const types::t_real  // 3 / 8
-    Atomic_Functional :: three8 = 0.375;
-  const  types::t_real // 3 * sqrt(3) / 8
-    Atomic_Functional :: s33o8  = 0.6495190528383289850727923780647021376035519701788927355209276172;
-  const  types::t_real // 3 * sqrt(3) / 16
-    Atomic_Functional :: s33o16 = 0.3247595264191644925363961890323510688017759850894463677604638086;
-  const  types::t_real // 3 / 16
-    Atomic_Functional :: thre16 = 0.1875; 
-  const  types::t_real // 3 / 32
-    Atomic_Functional :: thre32 = 0.09375;
-  const  types::t_real // 3/128 *sqrt(3) 
-    Atomic_Functional :: s33128 = 0.0405949408023955615670495236290438836002219981361807959700579760;
-  const  types::t_real // 3/256 *sqrt(3) 
-    Atomic_Functional :: s33256 = 0.0202974704011977807835247618145219418001109990680903979850289880;
-  const  types::t_real                   
-    Atomic_Functional :: no1280 = 0.00703125;
-  const  types::t_real                   
-    Atomic_Functional :: no2560 = 0.003515625;
-
   bool Functional :: initialize_centers()
   {
     centers.clear();
@@ -176,33 +149,38 @@ namespace Vff
     // some consistency checking
     if ( structure.lattice->get_nb_sites() != 2 )
     { 
-      std::cerr << "Cannot do vff on this lattice" 
-                << std::endl
-                << "Need 2 and only 2 different sites per unit cell" 
-                << std::endl;
+      std::cerr << "Cannot do vff on this lattice.\n" 
+                   "Need 2 and only 2 different sites per unit cell.\n";
       return false;
     }
     if (     structure.lattice->get_nb_types(0) + structure.lattice->get_nb_types(1) < 2
          and structure.lattice->get_nb_types(0) + structure.lattice->get_nb_types(1) > 4 )
     { 
-      std::cerr << "Cannot do vff on this lattice" 
-                << std::endl
-                << "Need at two sites with at most two different atomic types" 
-                << std::endl;
+      std::cerr << "Cannot do vff on this lattice.\n" 
+                   "Need at two sites with at most two different atomic types\n";
+      return false;
+    }
+    if( Crystal::lattice_has_same_species( *structure.lattice ) and 
+        structure.lattice->get_nb_types(0) + structure.lattice->get_nb_types(1) != 4 )
+    {
+      std::cerr << "Cannot do vff on this lattice.\n" 
+                   "When using same species on different, vff needs both sites"
+                   " to have exact same species.\n";
       return false;
     }
 
-    const TiXmlElement* parent = find_node( _element );
-    if( parent ) return Load_(*parent);
+    const TiXmlElement* parent = opt::find_functional_node( _element, "vff" );
+    if( parent ) return load_(*parent);
     std::cerr << "Could not find an <Functional type=\"vff\"> tag in input file" 
               << std::endl;
     return false;
   }
 
-  bool Functional :: Load_( const TiXmlElement &_element )
+  bool Functional :: load_( const TiXmlElement &_element )
   {
     const TiXmlElement *child;
     std::string str;
+    const bool same_species( Crystal::lattice_has_same_species( *structure.lattice ) );
 
 
     // reads and initializes bond cutoff
@@ -212,371 +190,53 @@ namespace Vff
     bond_cutoff *= std::sqrt(3.0) / 4.0; // axes bs same as CE
     bond_cutoff *= bond_cutoff; // squared for simplicity
     
-    // creates an unitialized array of atomic functionals
+    // loads functionals.
     functionals.clear();
-    functionals.push_back( Atomic_Functional( structure.lattice->get_atom_string(0,0),
-                           structure, 0, 0) );
-    if ( structure.lattice->get_nb_types(0) == 2 )
-      functionals.push_back( Atomic_Functional( structure.lattice->get_atom_string(0,1),
-                             structure, 0, 1) );
-    functionals.push_back( Atomic_Functional( structure.lattice->get_atom_string(1,0),
-                           structure, 1, 0) );
-    if ( structure.lattice->get_nb_types(1) == 2 )
-      functionals.push_back( Atomic_Functional( structure.lattice->get_atom_string(1,1),
-                             structure, 1, 1) );
-
-    // **************************************************************
-    // first reads bond interactions
-    // **************************************************************
-    child = _element.FirstChildElement( "Bond" );
-    for( types::t_unsigned i=0; child and i < functionals.size();
-         child = child->NextSiblingElement( "Bond" ), ++i )
+    const Crystal :: Lattice :: t_Site &site0 = (*structure.lattice)[0];
+    const Crystal :: Lattice :: t_Site &site1 = (*structure.lattice)[1];
+    size_t i(0), j(0);
+    foreach( Crystal::Lattice::t_Site::t_Type::value_type specie, site0.type )
     {
-      // reads input
-      std::string A, B;
-      types::t_real d0;
-      std::vector<types::t_real> alphas(5, types::t_real(0));
-      if (    not child->Attribute("A") 
-           or not child->Attribute("B") 
-           or not child->Attribute("d0") 
-           or not child->Attribute("alpha") )
-      {
-        std::cerr << "Bond input is incomplete in input file"
-                  << std::cerr;
-        return false;
-      }
-      A = child->Attribute("A");
-      B = child->Attribute("B");
-      child->Attribute("d0", &d0);
-      child->Attribute("alpha",  &(alphas[0]));
-      child->Attribute("alpha3", &(alphas[1]));
-      child->Attribute("alpha4", &(alphas[2]));
-      child->Attribute("alpha5", &(alphas[3]));
-      child->Attribute("alpha6", &(alphas[4]));
-
-      // finds out where to put it
-      types::t_int where[2];
-      bond_indices( A, B, where );
-
-      functionals[ where[0] ].add_bond( where[1], d0, alphas );
-      functionals[ where[1]+structure.lattice->get_nb_types(0)].add_bond( where[0], d0, alphas );
-    }
-
-    // **************************************************************
-    // then reads angle and bond-angle interactions 
-    // **************************************************************
-    child = _element.FirstChildElement( "Angle" );
-    for(; child; child = child->NextSiblingElement( "Angle" ) )
+      functionals[i].load( _element, 0, j, site1, structure );
+      ++i; ++j;
+    }  
+    j = 0;
+    foreach( Crystal::Lattice::t_Site::t_Type::value_type specie, site0.type )
     {
-      // reads input
-      std::string A, B, C;
-      types::t_real sigma, gamma;
-      std::vector<types::t_real> betas(5,types::t_real(0));
-      if (    not child->Attribute("A") 
-           or not child->Attribute("B") 
-           or not child->Attribute("C") 
-           or not child->Attribute("gamma") 
-           or not child->Attribute("sigma") 
-           or not child->Attribute("beta") )
-      {
-        std::cerr << "Angle input is incomplete in input file"
-                  << std::cerr;
-        return false;
-      }
-      A = child->Attribute("A");
-      B = child->Attribute("B");
-      C = child->Attribute("C");
-      child->Attribute("sigma",  &sigma);
-      child->Attribute("beta",  &(betas[0]));
-      child->Attribute("beta3", &(betas[1]));
-      child->Attribute("beta4", &(betas[2]));
-      child->Attribute("beta5", &(betas[3]));
-      child->Attribute("beta6", &(betas[4]));
-      // gamma is somewhat more complicated...
-      str = child->Attribute("gamma");
-      if ( str.compare("tet") == 0 or str.compare("tetrahedral") == 0  )
-        gamma = -0.33333333333333333333333333333333333333333;
-      else
-        child->Attribute("gamma", &gamma);
-      if( std::abs(gamma) > 1 )
-      {
-        std::cerr << " gamma must be comprised between 1 and -1 " << std::endl;
-        return false;
-      }
-      
-      // finds out where to put it
-      types::t_int where[3];
-      angle_indices( A, B, C, where );
-      functionals[ where[1] ].add_angle( where[0], where[2], gamma, sigma, betas );
-    }
-
+      functionals[i].load( _element, 0, j, site1, structure );
+      ++i; ++j; 
+    }  
+    
     return true;
-  }  // Functional :: Load
+  }  // Functional :: Load_
 
-  const TiXmlElement* Functional :: find_node ( const TiXmlElement &_element )
-  {
-    const TiXmlElement *parent;
-    std::string str;
-
-    // This whole section tries to find a <Functional type="vff"> tag
-    // in _element or its child
-    str = _element.Value();
-    if ( str.compare("Functional" ) != 0 )
-      parent = _element.FirstChildElement("Functional");
-    else parent = &_element;
-    
-    while (parent)
-    {
-      str = "";
-      if ( parent->Attribute( "type" )  )
-        str = parent->Attribute("type");
-      if ( str.compare("vff" ) == 0 )
-        break;
-      parent = parent->NextSiblingElement("Functional");
-    }
-    if ( parent ) return parent;
-    
-    std::cerr << "Could not find an <Functional type=\"vff\"> tag in input file" 
-              << std::endl;
-    return NULL;
-  }  // Functional :: find_node
-
-  types::t_real Atomic_Functional :: evaluate( const Atomic_Center &_center ) const
-  {
-    types :: t_real energy = 0;
-    types :: t_real scale2 = structure->scale * structure->scale;
-
-    Atomic_Center :: const_iterator i_bond_begin  = _center.begin();
-    Atomic_Center :: const_iterator i_bond_end    = _center.end();
-    Atomic_Center :: const_iterator i_bond ( i_bond_begin );
-    for( ; i_bond != i_bond_end; ++i_bond )
-    {
-      // Bond stretch 
-      // sets up parameters
-      types::t_unsigned bond_kind = i_bond.kind();
-      types::t_real bond_length = lengths[bond_kind];
-      
-      // adds energy only if center is site 0 
-      // computes e0 for bond-angle now 
-      types::t_real e0 = i_bond.norm2() * scale2 / bond_length - bond_length; 
-      if ( _center.site_one() ) 
-      {
-        std::vector<types::t_real>::const_iterator i_alpha =   alphas.begin()
-                                                             + 5 * bond_kind + 4;
-        types::t_real dummy = e0 * one640 * (*i_alpha); --i_alpha;
-        dummy =   e0 * ( (*i_alpha) * s3o160 + dummy ); --i_alpha;
-        dummy =   e0 * ( (*i_alpha) * one16 + dummy ); --i_alpha;
-        dummy =   e0 * ( (*i_alpha) / twos3 + dummy ); --i_alpha;
-        energy +=   e0 * e0 * ( (*i_alpha)  + dummy ); 
-      } 
-
-      // Three body terms
-      Atomic_Center :: const_iterator i_angle ( i_bond_begin );
-      for (; i_angle != i_bond_end; ++i_angle )
-        if ( i_angle != i_bond )
-        {
-          // sets up parameters
-          types::t_unsigned end_kind = i_angle.kind();
-          types::t_unsigned angle_kind = bond_kind + end_kind;
-          types::t_real end_length = std::sqrt( bond_length * lengths[end_kind] );
-          types::t_real gamma = gammas[angle_kind];
-          
-          // Bond bending
-          types::t_real e1 =   i_bond.scalar_product( i_angle ) * scale2 / end_length 
-                             - end_length * gamma;
-          if ( i_bond - i_angle > 0 )
-          {
-            std::vector< types::t_real > :: const_iterator i_beta =   betas.begin()
-                                                                    + 5 * angle_kind + 4;
-            types::t_real dummy = e1 * one640 * (*i_beta); --i_beta;
-            dummy =   e1 * ( (*i_beta) * s3o160 + dummy ); --i_beta;
-            dummy =   e1 * ( (*i_beta) * one16 + dummy ); --i_beta;
-            dummy =   e1 * ( (*i_beta) / twos3 + dummy ); --i_beta;
-            energy +=   e1 * e1 * ( (*i_beta)  + dummy ); 
-          }
-
-          // Bond angle
-          energy += e1 * e0 * sigmas[angle_kind];
-        }
-
-    } // for( ; i_bond != i_bond_end; ++i_bond )
-
-    return energy * three8;
-  }
-
-  types::t_real Atomic_Functional
-     :: evaluate_with_gradient( Atomic_Center &_center,
-                                const atat::rMatrix3d &_strain,
-                                atat::rMatrix3d &_stress,
-                                const atat::rMatrix3d &_K0 ) const
-  {
-    types :: t_real energy = 0;
-    types :: t_real scale2 = structure->scale * structure->scale;
-
-    Atomic_Center :: const_iterator i_bond_begin  = _center.begin();
-    Atomic_Center :: const_iterator i_bond_end    = _center.end();
-    Atomic_Center :: const_iterator i_bond ( i_bond_begin );
-    for( ; i_bond != i_bond_end; ++i_bond )
-    {
-      // Bond stretch 
-      // sets up parameters
-      types::t_unsigned bond_kind = i_bond.kind();
-      types::t_real bond_length = lengths[bond_kind];
-      atat::rVector3d d0; i_bond.vector( d0 );
-      
-      // adds energy only if center is site 0 
-      // computes e0 for bond-angle now 
-      types::t_real e0 = norm2(d0) * scale2 / bond_length - bond_length;
-      if ( _center.site_one() ) 
-      {
-        // energy 
-        std::vector<types::t_real>::const_iterator i_alpha =   alphas.begin()
-                                                             + 5 * bond_kind + 4;
-        types::t_real dummy = e0 * one640 * (*i_alpha); --i_alpha;
-        dummy = e0 * ( (*i_alpha) * s3o160 + dummy ); --i_alpha;
-        dummy = e0 * ( (*i_alpha) * one16 + dummy ); --i_alpha;
-        dummy = e0 * ( (*i_alpha) / twos3 + dummy ); --i_alpha;
-        energy +=   e0 * e0 * ( (*i_alpha)  + dummy ); 
-
-        // then gradient 
-        i_alpha += 4; // alphas.begin() + 5 * bond_kind;
-        dummy = e0 * no1280 * (*i_alpha); --i_alpha;
-        dummy = e0 * ( (*i_alpha) * s33128 + dummy ); --i_alpha;
-        dummy = e0 * ( (*i_alpha) * thre16 + dummy ); --i_alpha;
-        dummy = e0 * ( (*i_alpha) * s33o8 + dummy ); --i_alpha;
-        types::t_real e0grad =   2.0 * scale2 / bond_length 
-                               * e0 * ( 1.5e0 * (*i_alpha) + dummy); 
-        atat::rVector3d hold = e0grad * _strain * d0;
-        _center.get_gradient() -= hold; // with respect to atomic positions
-        i_bond->get_gradient() += hold;  
-
-        // stress
-        for( int i = 0; i < 3; ++i )
-          for( int j = 0; j < 3; ++j )
-            for( int k = 0; k < 3; ++k )
-              _stress(i,j) += d0[i] * d0[k] * _K0(k,j) * e0grad * 0.5;
-      }
-
-      // Three body terms
-      Atomic_Center :: const_iterator i_angle ( i_bond_begin );
-      for (types::t_int i=0; i_angle != i_bond_end; ++i, ++i_angle )
-        if ( i_angle != i_bond )
-        {
-          // sets up parameters
-          types::t_unsigned end_kind = i_angle.kind();
-          types::t_unsigned angle_kind = bond_kind + end_kind;
-          types::t_real mean_length = std::sqrt( bond_length * lengths[end_kind] );
-          types::t_real gamma = gammas[angle_kind];
-          types::t_real sigma = sigmas[angle_kind];
-          atat::rVector3d d1; i_angle.vector( d1 );
-          
-          // Bond bending
-          types::t_real e1 =   (d0*d1) * scale2 / mean_length 
-                             - mean_length * gamma;
-          if ( i_bond - i_angle > 0 )
-          {
-            // energy
-            std::vector< types::t_real > :: const_iterator i_beta =   betas.begin() 
-                                                                    + 5 * angle_kind
-                                                                    + 4;
-            types::t_real dummy = e1 * one640 * (*i_beta); --i_beta;
-            dummy = e1 * ( (*i_beta) * s3o160 + dummy ); --i_beta;
-            dummy = e1 * ( (*i_beta) * one16 + dummy ); --i_beta;
-            dummy = e1 * ( (*i_beta) / twos3 + dummy ); --i_beta;
-            energy +=   e1 * e1 * ( (*i_beta)  + dummy ); 
-            
-            // then gradient 
-            i_beta += 4; // goes back to beginning of array
-            dummy = e1 * no2560 * (*i_beta); --i_beta;
-            dummy = e1 * ( (*i_beta) * s33256 + dummy ); --i_beta;
-            dummy = e1 * ( (*i_beta) * thre32 + dummy ); --i_beta;
-            dummy = e1 * ( (*i_beta) * s33o16 + dummy ); --i_beta;
-            types::t_real e1grad =   2.0 * scale2 / mean_length
-                                   * e1 * ( *(  i_beta) * 0.75e0 + dummy);
-            atat::rVector3d hold0 = e1grad * _strain * d0;
-            atat::rVector3d hold1 = e1grad * _strain * d1;
-            _center.get_gradient() -= ( hold0 + hold1); // with respect to atomic positions
-            i_bond->get_gradient() += hold1; 
-            i_angle->get_gradient() += hold0; 
-            
-            // stress
-            for( int i = 0; i < 3; ++i )
-              for( int j = 0; j < 3; ++j )
-                for( int k = 0; k < 3; ++k )
-                  _stress(i,j) +=   (d1[i] * d0[k] + d0[i] * d1[k]) 
-                                  * _K0(k,j) * e1grad * 0.5;
-          }
-
-          // Bond angle energy
-          energy += e1 * e0 * sigma;
-
-          // Bond angle gradients
-          { // position gradients
-            atat::rVector3d hold0 = 1.5 * e1 * sigma / bond_length * scale2
-                                    * ( _strain * d0 );
-            atat::rVector3d hold1 = 0.75 * e0 * sigma / mean_length * scale2
-                                    * ( _strain * d1 );
-            atat::rVector3d hold2 = 0.75 * e0 * sigma / mean_length * scale2
-                                    * ( _strain * d0 );
-            _center.get_gradient() -= (hold0 + hold1 + hold2);
-            (*i_bond).get_gradient() += (hold0 + hold1); //(hold0 + hold1);
-            (*i_angle).get_gradient() += hold2;
-          }
-
-          // stress
-          for( int i = 0; i < 3; ++i )
-            for( int j = 0; j < 3; ++j )
-              for( int k = 0; k < 3; ++k )
-                _stress(i,j) +=   _K0(k,j) * 0.375 * sigma * scale2 
-                                * (   2.0 * e1 / bond_length * d0[i] * d0[k] 
-                                    +   e0 / mean_length 
-                                      * (d0[i] * d1[k] + d1[i] * d0[k]) );
-        } // angle loop
-
-    } // for( ; i_bond != i_bond_end; ++i_bond )
-
-    return energy * three8;
-  }
-
-
-  Atomic_Center :: Atomic_Center  ( Crystal::Structure &_str, t_Atom &_e,
-                                    types::t_unsigned _i )
-                                 : origin(&_e), structure(&_str)
-  {
-     is_site_one = ( structure->lattice->get_atom_site_index( _e ) == 0 );
-     is_site_one_two_species = ( structure->lattice->get_nb_types( 0 ) == 2 );
-     index = _i;
-  }
-
-  types::t_unsigned  Atomic_Center :: kind() const
-  {
-    if ( is_site_one )
-      return structure->lattice->convert_real_to_type_index( 0, origin->type );
-    else if ( is_site_one_two_species )
-      return 2 + structure->lattice->convert_real_to_type_index( 1, origin->type );
-    return 1 + structure->lattice->convert_real_to_type_index( 1, origin->type );
-  }
 
   void Functional :: angle_indices( const std::string &_A,
                                     const std::string &_B, 
                                     const std::string &_C, 
-                                    types::t_int _indices[3] ) const
+                                    types::t_int _indices[3],
+                                    bool _doother ) const
   {
     types::t_int siteA, siteB, siteC;
     siteA = structure.lattice->get_atom_site_index( _A );
-    if ( siteA == -1 ) goto failure;
-    _indices[0] = structure.lattice->get_atom_type_index( _A );
-    if ( _indices[0] == -1 ) goto failure;
     siteB = structure.lattice->get_atom_site_index( _B );
-    if ( siteB == -1 ) goto failure;
-    _indices[1] = structure.lattice->get_atom_type_index( _B );
-    if ( _indices[1] == -1 ) goto failure;
     siteC = structure.lattice->get_atom_site_index( _C );
-    if ( siteC == -1 ) goto failure;
-    _indices[2] = structure.lattice->get_atom_type_index( _C);
-    if ( _indices[2] == -1 ) goto failure;
 
-    if ( siteA == siteB or siteA != siteC ) goto failure;
+    if ( siteA == -1 or siteB == -1 or siteC == -1 ) goto failure;
+    if ( siteA != siteC ) goto failure;
+
+    if ( siteA == siteB )
+    {
+      if( _doother ) siteB = 0;
+      else siteA = siteC = 1;
+    }
+
+    _indices[0] = structure.lattice->get_atom_type_index( _A, siteA );
+    _indices[1] = structure.lattice->get_atom_type_index( _B, siteB );
+    _indices[2] = structure.lattice->get_atom_type_index( _C, siteC );
+
+    if ( _indices[0] == -1 or _indices[1] == -1 or _indices[2] == -1 ) goto failure;
+
     if ( siteB == 0 ) return;
     
     _indices[1] += structure.lattice->get_nb_types(0);
@@ -589,21 +249,21 @@ failure:
                    << _B << "-" << _C << "\n" )
   }
 
+
   void Functional :: bond_indices( const std::string &_A, const std::string &_B,
                                    types::t_int _indices[2] ) const
   {
     types::t_int siteA, siteB, swap;
     // finds out where to put it
     siteA = structure.lattice->get_atom_site_index( _A );
-    if ( siteA == -1 ) goto failure;
-    _indices[0] = structure.lattice->get_atom_type_index( _A );
-    if ( _indices[0] == -1 ) goto failure;
     siteB = structure.lattice->get_atom_site_index( _B );
-    if ( siteB == -1 ) goto failure;
-    _indices[1] = structure.lattice->get_atom_type_index( _B );
-    if ( _indices[1] == -1 ) goto failure;
+    if ( siteA == -1 or siteB == -1 ) goto failure;
 
-    if ( siteA == siteB ) goto failure;
+    if ( siteA == siteB ) siteB = 1;
+
+    _indices[0] = structure.lattice->get_atom_type_index( _A, siteA );
+    _indices[1] = structure.lattice->get_atom_type_index( _B, siteB );
+    if ( _indices[0] == -1 or _indices[1] == -1 ) goto failure;
 
     // reorders things around
     if( siteA != 1 )  return;
@@ -616,54 +276,8 @@ failure:
 failure:
     __THROW_ERROR(   "Something wrong with your input\n" 
                    << "Did not expect bond type " << _A << "-"
-                   << _B << "-" << "\n" )
+                   << _B << "\n" )
   }
-
-  types::t_unsigned  Atomic_Center :: bond_kind( const Atomic_Center &_bond ) const
-  {
-    if ( is_site_one ) 
-      return  structure->lattice->convert_real_to_type_index( 1, _bond.origin->type );
-    else if ( is_site_one_two_species )
-      return  structure->lattice->convert_real_to_type_index( 0, _bond.origin->type );
-    return 0; 
-  }
-
-  types::t_int Atomic_Center :: add_bond( t_BondRefd _bond, 
-                                          const types::t_real _cutoff ) 
-  {
-    bool found_bond = false;
-    opt::Ndim_Iterator< types::t_int, std::less_equal<types::t_int> > period;
-    period.add(-1,1);
-    period.add(-1,1);
-    period.add(-1,1);
-
-    do // goes over periodic image
-    {
-      // constructs perdiodic image of atom *i_bond
-      atat::rVector3d frac_image, image;
-      frac_image[0] =  (types::t_real) period.access(0);
-      frac_image[1] =  (types::t_real) period.access(1);
-      frac_image[2] =  (types::t_real) period.access(2);
-      image = _bond->origin->pos + structure->cell * frac_image;
-
-      // checks if within 
-      if( atat::norm2( image - origin->pos ) < _cutoff  )
-      {
-        // adds bond
-        types :: t_unsigned site = structure->lattice->get_atom_site_index( image );
-        if ( (not site) == is_site_one )
-          return -1;  // error bond between same site
-
-        bonds.push_back( _bond );
-        translations.push_back( frac_image );
-        do_translates.push_back( atat::norm2( frac_image ) > atat::zero_tolerance );
-        found_bond = true;
-      }
-    } while ( ++period ); 
-
-    return found_bond ? (types::t_int) bonds.size() : -1; // not a bond
-  }
-
 
   types::t_real Functional :: energy() const
   {
@@ -942,83 +556,6 @@ failure:
       file.close();
       __ASSERT( not bfs::exists( _f ), _f << " was not created.\n" )
     __TRYEND(, "")
-  }
-
-  types::t_real Atomic_Functional
-    :: MicroStrain( const Atomic_Center &_center, 
-                    const Crystal::Structure &_str0 ) const 
-  {
-    if ( _center.size() != 4 )
-    { 
-      std::cerr << "Microscopic strain cannot be computed "
-                << "Because atom " << _center.get_index()
-                << " " << _center.Origin().pos
-                << " has only " << _center.size() << " bonds " << std::endl;
-      return 0;
-    }
-    // constructs the two matrices
-    // tetra is the original tetrahedron (from _str0), 
-    // dtetra the deformed tetrahedron (from _center )
-    atat::rMatrix3d tetra0, dtetra;
-    atat::rVector3d R0, R1, dR0, dR1;
-
-    Atomic_Center :: const_iterator i_bond  = _center.begin();
-
-    // first vector
-    i_bond.vector(dR0); 
-    R0 =   _str0.atoms[i_bond->get_index()].pos
-         - _str0.atoms[ _center.get_index() ].pos;
-    i_bond.translate( R0, _str0.cell );
-    types::t_real aeq = lengths[i_bond.kind()]; // equilibrium lattice constant
-    types::t_real deq = std::sqrt(i_bond.norm2());
-    types::t_real d0eq = std::sqrt(atat::norm2(R0));
-    ++i_bond;
-    for( types::t_unsigned i=0; i<3; ++i_bond, ++i )
-    {
-      aeq += lengths[i_bond.kind()];
-      i_bond.vector( dR1 );
-      R1 =   _str0.atoms[i_bond->get_index()].pos
-           - _str0.atoms[ _center.get_index() ].pos;
-      i_bond.translate( R1, _str0.cell ); 
-      R0 -= R1; dR0 -= dR1;
-      tetra0.set_row( i, R0 );
-      dtetra.set_row( i, dR0 );
-      R0 = R1; dR0 = dR1;
-      deq += std::sqrt(i_bond.norm2());
-      d0eq += std::sqrt(atat::norm2(R0));
-    }
-
-    return atat::trace( dtetra * (!tetra0) ) / aeq * d0eq * _str0.scale - 3.0;
-  }
-
-  void Atomic_Functional :: print_out( std::ostream &stream ) const
-  {
-    stream << "Site " << str << " " << site << std::endl << "  ";
-    std::vector<types::t_real> :: const_iterator i_var = lengths.begin();
-    std::vector<types::t_real> :: const_iterator i_end = lengths.end();
-    for(; i_var != i_end; ++i_var )
-      stream << *i_var << "  ";
-    stream << std::endl << "  ";
-    i_var = alphas.begin();
-    i_end = alphas.end();
-    for(; i_var != i_end; ++i_var )
-      stream << *i_var << "  ";
-    stream << std::endl << "  ";
-    i_var = betas.begin();
-    i_end = betas.end();
-    for(; i_var != i_end; ++i_var )
-      stream << *i_var << "  ";
-    stream << std::endl << "  ";
-    i_var = gammas.begin();
-    i_end = gammas.end();
-    for(; i_var != i_end; ++i_var )
-      stream << *i_var << "  ";
-    stream << std::endl << "  ";
-    i_var = sigmas.begin();
-    i_end = sigmas.end();
-    for(; i_var != i_end; ++i_var )
-      stream << *i_var << "  ";
-    stream << std::endl;
   }
 
   void Functional :: print_out( std::ostream &stream ) const

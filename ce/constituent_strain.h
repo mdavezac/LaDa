@@ -51,6 +51,7 @@ namespace CE
     template< class T_HARMONIC >
     class Functional : public function::Base<types::t_real>
     {
+        friend class boost::serialization::access;
         //! Type of the Harmonics.
         typedef T_HARMONIC t_Harmonic;
         //! Type of the base class
@@ -132,10 +133,11 @@ namespace CE
            *  \brief Sets the communicator. **/
           void set_mpi( boost::mpi::communicator *_c ) { comm = _c; }
   #endif
+        void operator<<( const Crystal::Structure &_str );
+      private:
         //! Serializes a cluster.
         template<class ARCHIVE> void serialize(ARCHIVE & _ar,
                                                const unsigned int _version);
-        void operator<<( const Crystal::Structure &_str );
     };
 
     template<class T_HARMONIC> template<class ARCHIVE>

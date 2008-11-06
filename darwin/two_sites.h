@@ -278,6 +278,7 @@ namespace GA
   {
     struct ConcTwo
     {
+      friend class boost::serialization::access;
       //! The concentration of the first site.
       types::t_real x;
       //! The concentration of the second site.
@@ -290,10 +291,11 @@ namespace GA
       bool Load( const TiXmlElement &_node );
       //! Saves as attributes of \a _node.
       bool Save( TiXmlElement &_node ) const;
-      //! Serializes concentration class.
-      template<class Archive>
-        void serialize(Archive & _ar, const unsigned int _version)
-          { _ar & x; _ar & y; }
+      private:
+        //! Serializes concentration class.
+        template<class Archive>
+          void serialize(Archive & _ar, const unsigned int _version)
+            { _ar & x; _ar & y; }
     };
   }
 }

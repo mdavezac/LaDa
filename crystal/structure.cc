@@ -16,6 +16,7 @@
 
 #include <opt/ndim_iterator.h>
 #include <opt/debug.h>
+#include <opt/tinyxml.h>
 
 #include <atat/misc.h>
 #include <physics/physics.h>
@@ -26,61 +27,6 @@
 
 
 namespace Crystal {
-
-  namespace 
-  {
-    //! \brief Strict Weak Ordering functor according to depth along eptiaxial
-    //!        direction
-    //! \details Two vectors are compared by using the value of their scalar
-    //           product with Depth::a0 (mod |a1|). If these scalar product are equal (as
-    //           defined by Fuzzy::eq()), then their
-    //           scalar product with Depth::a1 are compared. If again these are
-    //           equal, then the scalar porducts with Depth::a2 are compared and
-    //           the result return. Depth::a0 is the first column of the matrix
-    //           given in the constructor argument. Depth::a2 is the second
-    //           column, and Depth::a3 the third. 
-    class Depth
-    {
-      protected:
-        atat::rVector3d a0; //!< First ordering direction
-        atat::rVector3d a1; //!< Second ordering direction
-        atat::rVector3d a2; //!< Third ordering direction
-    
-      public:
-        //! \brief Constructor and Initializer
-        //! \param _mat Depth::a0 is set to the (normalized) first column of this matrix,
-        //!             Depth::a1 to the second, and Depth::a2 to the third.
-        Depth   ( const atat::rMatrix3d &_mat )
-              : a0(_mat.get_column(0)), a1(_mat.get_column(1)),
-                a2(_mat.get_column(2))
-        {
-          a0 = 1e0 / atat::norm2( a0 ) * a0;
-          a1 = 1e0 / atat::norm2( a1 ) * a1;
-          a2 = 1e0 / atat::norm2( a2 ) * a2;
-        } 
-        //! Copy Constructor.
-        Depth( const Depth &_c) : a0(_c.a0), a1(_c.a1), a2(_c.a2) {}
-        //! Destructor.
-        virtual ~Depth() {}
-    
-        //! Strict weak ordering operator.
-        bool operator()(const atat::rVector3d& _first, const atat::rVector3d& _second )
-        {
-          types::t_real a =  _first * a0; a -= std::floor( a + types::tolerance );
-          types::t_real b =  _second * a0; b -= std::floor( b + types::tolerance );
-
-          if ( not Fuzzy::eq( a, b ) ) return Fuzzy::le( a, b );
-        
-          a =   _first * a1; a -= std::floor( a + types::tolerance );
-          b =   _second * a1; b -= std::floor( b + types::tolerance );
-          if ( not Fuzzy::eq( a, b ) ) return Fuzzy::le( a, b );
-          
-          a =   _first * a2; a -= std::floor( a + types::tolerance );
-          b =   _second * a2; b -= std::floor( b + types::tolerance );
-          return Fuzzy::le( a, b );
-        }
-    };
-  }
 
   bool sort_kvec( const atat::rVector3d &_vec1, const atat::rVector3d &_vec2 )
   {
@@ -193,17 +139,6 @@ namespace Crystal {
     const TiXmlElement *parent = opt::find_node( _element, "Structure" );
     __DOASSERT( not parent, "Could not find Structure tag in xml.\n" )
     return parent;
-//   const TiXmlElement *child, *parent;
-//   double d; atat::rVector3d vec;
-//   int i;
-//
-//   // Find first XML "Structure" node (may be _element from start, or a child of _element)
-//   std::string str = _element.Value();
-//   if ( str.compare("Structure" ) != 0 )
-//     parent = _element.FirstChildElement("Structure");
-//   else
-//     parent = &_element;
-//   return parent;
   }
 
   void Structure :: load_attributes( const TiXmlElement &_element )
@@ -405,8 +340,8 @@ namespace Crystal {
 
     // insert cell
     structure = &_node;
-    std::string name = structure->Value(); 
-    if ( name.compare("Structure") )
+    std::string nodename = structure->Value(); 
+    if ( nodename.compare("Structure") )
     {
       structure = new TiXmlElement( "Structure" );
       _node.LinkEndChild( structure );
@@ -414,8 +349,10 @@ namespace Crystal {
     parent = new TiXmlElement( "Cell" );
     structure->LinkEndChild( parent );
     structure->SetAttribute("N", atoms.size() );
-    structure->SetAttribute("energy", energy );
-    structure->SetAttribute("weight", weight );
+    if( Fuzzy::neq( energy, 666.666 ) ) 
+      structure->SetAttribute("energy", energy );
+    if( Fuzzy::neq( weight, 1e0 ) )
+      structure->SetAttribute("weight", weight );
     structure->SetAttribute("name", name );
     
     for (int i=0; i < 3; ++i)
@@ -961,17 +898,12 @@ namespace Crystal {
       cell.set_column(1, d);
     }
 
-    // The lattice sites are also sorted the same way
-    std::sort( lattice->sites.begin(), lattice->sites.end(), Depth( cell ) );
     Lattice::t_Sites::iterator i_site = lattice->sites.begin(); 
     Lattice::t_Sites::iterator i_site_end = lattice->sites.end();
     for( types::t_unsigned n=0; i_site != i_site_end; ++i_site, ++n )
       i_site->site = n;
 
     if( not ( fill_structure( _structure ) ) ) return false;
-
-    // We now sort the real space atoms according to layer
-    std::sort( _structure.atoms.begin(), _structure.atoms.end(), Depth( cell ) );
 
     return true;
   }

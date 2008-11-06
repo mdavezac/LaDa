@@ -81,6 +81,7 @@ namespace Individual
   template<class T_INDIVTRAITS>
   class Base : public eoObject, public eoPersistent
   {
+      friend class boost::serialization::access;
     public:
       //! Individual Traits type \sa Traits::Indiv, Individual::Types::Scalar
       typedef T_INDIVTRAITS t_IndivTraits; 
@@ -237,6 +238,7 @@ namespace Individual
       //! \param _node  XML node from which to load this instance
       //! \param _loadop a functor capable of loading a Base::t_Object to XML
       template<class LoadOp> bool Load( const TiXmlElement &_node, LoadOp &_loadop );
+    private:
       //! Serializes a scalar individual.
       template<class ARCHIVE> void serialize( ARCHIVE & _ar,
                                               const unsigned int _version);
@@ -252,6 +254,7 @@ namespace Individual
   template< class T_BASE >
   class Multi : public T_BASE
   {
+      friend class boost::serialization::access;
       typedef Multi<T_BASE> t_This; //!< Type of this class.
     public: 
       typedef T_BASE t_Base; //!< %Base class type
@@ -301,6 +304,11 @@ namespace Individual
       //! \param _loadop a functor capable of loading a Base::t_Object from XML
       //! \todo Find a better way to do this, such that we can use Base::Load directly
       template<class LoadOp> bool Load( const TiXmlElement &_node, LoadOp &_loadop );
+    private:
+      //! Serializes a scalar individual.
+      template<class ARCHIVE> void serialize( ARCHIVE & _ar,
+                                              const unsigned int _version)
+        { _ar & boost::serialization::base_object< t_Base >( *this ); }
   };
 
   //! \brief Sends a Individual::Base to a stream \a _str using Base::print_out()

@@ -93,6 +93,7 @@ namespace CE
    */ 
   class Cluster 
   {
+    friend class boost::serialization::access;
     template< class T_CLUSTERS, class T_PIS >
       friend void find_pis( const T_CLUSTERS &_clusters,
                             const Crystal::Structure & _str,
@@ -153,14 +154,15 @@ namespace CE
       void print_out( std::ostream &stream ) const; 
       //! Load a cluster from XML.
       bool Load(const TiXmlElement &_node);
-      //! Serializes a cluster.
-      template<class Archive> void serialize( Archive & _ar,
-                                              const unsigned int _version)
-        { _ar & eci; _ar & vectors; } 
       //! Returns  a constant reference to the vectors.
       const std::vector< atat::rVector3d >& Vectors() const { return vectors; }
       //! Returns  a reference to the vectors.
       std::vector< atat::rVector3d >& Vectors() { return vectors; }
+    private:
+      //! Serializes a cluster.
+      template<class Archive> void serialize( Archive & _ar,
+                                              const unsigned int _version)
+        { _ar & eci; _ar & vectors; } 
   };
 
   inline std::ostream &operator<<( std::ostream &_sstr, const Cluster &_cl )

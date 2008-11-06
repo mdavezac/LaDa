@@ -19,6 +19,7 @@
 #include <crystal/structure.h>
 #include <opt/types.h>
 #include <mpi/mpi_object.h>
+#include <vff/layered.h>
 
 #include "../evaluator.h"
 #include "../individual.h"
@@ -79,6 +80,14 @@ namespace GA
                                      typename T_INDIVIDUAL :: t_IndivTraits
                                                            :: t_QuantityTraits :: t_Quantity >
     {
+      // Allow the policies to call private members of the derived class (eg this class).
+      friend class T_TRANSLATE< typename T_INDIVIDUAL :: t_IndivTraits :: t_Object >;
+      friend class T_ASSIGN
+                   <
+                     typename T_INDIVIDUAL :: t_IndivTraits :: t_Object,
+                     typename T_INDIVIDUAL :: t_IndivTraits
+                                           :: t_QuantityTraits :: t_Quantity
+                   >;
       public:
         //! Type of the individual.
         typedef T_INDIVIDUAL t_Individual;
@@ -101,6 +110,8 @@ namespace GA
         typedef typename t_IndivTraits :: t_Object t_Object;
         //! Evaluator base.
         typedef GA::Evaluator<t_Individual> t_Base;
+        //! Type of this class.
+        typedef EvaluatorBase<t_Individual, T_TRANSLATE, T_ASSIGN> t_This;
 
       protected:
         using t_Base :: current_individual;
@@ -206,7 +217,7 @@ namespace GA
      
         protected:
           //! Type of the band gap cum vff all-in-one functional.
-          typedef BandGap::Darwin<Vff::Functional> t_BandGap;
+          typedef BandGap::Darwin<Vff::Layered> t_BandGap;
           //! Type of the electric dipole.
           typedef ::GA::OscStrength::Darwin t_ElectricDipole;
      

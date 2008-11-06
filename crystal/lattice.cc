@@ -168,7 +168,7 @@ namespace Crystal {
     __THROW_ERROR("Could not find atomic site index!! " << _at << "\n" )
   }
 
-  // returns  -1 on error
+ 
   types::t_int Lattice :: get_atom_type_index( const std::string &_at ) const
   {
     std::vector< t_Site > :: const_iterator i_site = sites.begin(); 
@@ -184,6 +184,20 @@ namespace Crystal {
     }
 
     __THROW_ERROR("Could not find atomic site index!! " << _at << "\n" )
+  }
+  
+  types::t_int Lattice :: get_atom_type_index( const std::string &_at, types::t_unsigned _i ) const
+  {
+    __ASSERT( _i >= sites.size(), "Index out of range.\n" )
+    const t_Site& site = sites[_i];
+
+    const t_Site :: t_Type :: const_iterator i_first( site.type.begin() );
+    const t_Site :: t_Type :: const_iterator i_last( site.type.end() );
+    const t_Site :: t_Type :: const_iterator i_type
+      = std::find( i_first, i_last, _at );
+    __DOASSERT( i_type == i_last, "Could not find atomic specie " << _at << "\n" )
+
+    return i_type - i_first;
   }
   
   bool Lattice :: convert_StrAtom_to_Atom( const Crystal::StrAtom &_in,
@@ -302,5 +316,18 @@ namespace Crystal {
                         - space_group.trans(op)          ) < types::tolerance ) return true;
     return false;
   }
+
+  bool lattice_has_same_species( const Lattice &_lattice )
+  {
+    if( _lattice.sites.size() != 2 ) return false;
+    const Lattice :: t_Site :: t_Type &site1 = _lattice.sites[0].type;
+    const Lattice :: t_Site :: t_Type &site2 = _lattice.sites[1].type;
+
+    foreach( const Lattice :: t_Site :: t_Type :: value_type& type, site1 )
+      if( std::find( site2.begin(), site2.end(), type ) == site2.end() ) return false;
+
+    return true;
+  }
+
 } // namespace Crystal
 

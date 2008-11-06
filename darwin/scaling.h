@@ -131,32 +131,32 @@ namespace Scaling
         void _operator_( TPOPULATION &_pop );
     };
 
-    /** \brief Defines a Niching operation \f$\mathcal{F}(\sigma)
+    /** \brief Defines a Niching operation \f$\mathcal{F}'(\sigma)
                =   \left[\mathcal{F}(\sigma)-O\right]
                  / \sum_{\{\sigma_j\}_{(n)}} \mathcal{D}(\sigma,
                                                          \sigma_j)\f$.
         \details Niching is an operation which attempts to reduce the fitness of
-                 individuals which are, somehow to close to one another. Using
+                 individuals which are related somehow. Using
                  a sharing %function \f$\mathcal{S}(\sigma, \sigma_j)\f$ which
                  judges this closeness, it implements a population dependent
                  fitness.
                  \f[
-                     \mathcal{F}(\sigma) = 
+                     \mathcal{F}'(\sigma) = 
                          \frac{\mathcal{F}(\sigma) - O }
                               {\sum_{\{\sigma_j\}} \mathcal{S}(\sigma, \sigma_j)}
                   \f]
                   Where \f$\mathcal{F}(\sigma)\f$ is the fitness of individual
                   \f$\sigma\f$, \f$\{\sigma\}\f$ represents the current
-                  population. The sharign %function can be pretty much anything
-                  you want, but should reflect how genetically similar two
-                  individuals are. \e O is an offset such that all fitnesses
-                  within the population are negative. Indeed, niching works by
-                  applying a factor \e x, with  0 \< \e x \< 1 to the fitness.
-                  This factor will enhance positve fitnesses (whithin a
-                  minimization scheme) and make negative fitnesses more
-                  unfavorable. Since we want to promote  diversity, all
-                  fitnesses in the population should be negative prior to
-                  applying the niching factor.
+                  population. The sharing %function can be pretty much anything
+                  you want, but should reflect how genetically (or
+                  phenotypically) similar two individuals are. \e O is an
+                  offset such that all fitnesses within the population are
+                  negative. Indeed, niching works by applying a factor \e x,
+                  with  0 \< \e x \< 1 to the fitness.  This factor will
+                  enhance positve fitnesses (whithin a minimization scheme) and
+                  make negative fitnesses more unfavorable. Since we want to
+                  promote  diversity, all fitnesses in the population should be
+                  negative prior to applying the niching factor.
         \note Whether for single or multi-objective %GA, this scaling functor
               acts upon the \b scalar fitness only. 
         \note \f$\mathcal{S}(\sigma_i, \sigma_i)\f$ automatically defaults to 1.

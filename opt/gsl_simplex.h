@@ -50,6 +50,7 @@ namespace Minimizer {
   //! \xmlinput see TagMinimizer
   class Simplex 
   {
+      friend class boost::serialization::access;
     public:
       types::t_real tolerance; //!< Complete convergence
       types::t_real stepsize; //!< line step
@@ -92,6 +93,7 @@ namespace Minimizer {
       bool Load_( const TiXmlElement &_node );
       //! Loads the minimizer from XML
       bool Load( const TiXmlElement &_node );
+    private:
       //! Serializes a structure.
       template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
   };

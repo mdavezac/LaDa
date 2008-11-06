@@ -35,6 +35,7 @@ namespace GA
     //! \a SOMETAG will generally be an %Individual.
     struct BandGap: public ::Vff::Keeper
     {
+      friend class boost::serialization::access;
       types::t_real cbm; //!< Conduction Band Minimum
       types::t_real vbm; //!< Valence Band Maximum
     
@@ -49,8 +50,9 @@ namespace GA
       bool Load( const TiXmlElement &_node );
       //! Saves BandGap::vbm and BandGap::cvm as attributes of \a _node.
       bool Save( TiXmlElement &_node ) const;
-      //! Serializes a scalar individual.
-      template<class Archive> void serialize(Archive & _ar, const unsigned int _version);
+      private:
+        //! Serializes a scalar individual.
+        template<class Archive> void serialize(Archive & _ar, const unsigned int _version);
     };
   }
 }
@@ -195,12 +197,12 @@ namespace GA
     //! Dumps a GA::Keepers::BandGap to a stream.
     inline std::ostream& operator<<(std::ostream &_stream, const BandGap &_o)
     { 
-      _stream << "E_lastic " << std::setw(12) << std::setprecision(6) << _o.energy
-              << " -- CBM " 
-              << std::fixed << std::setw(12) << std::setprecision(6) << _o.cbm 
-              << "  --  VBM "
-              << std::fixed << std::setw(12) << std::setprecision(6) << _o.vbm; 
-      return _stream; 
+      return _stream << " CBM - VMB = " 
+                     << std::fixed << std::setw(8) << std::setprecision(3) << _o.cbm 
+                     << " - " 
+                     << std::fixed << std::setw(8) << std::setprecision(3) << _o.vbm
+                     << " = "
+                     << _o.cbm - _o.vbm;
     } 
     template<class Archive>
       void BandGap :: serialize(Archive & _ar, const unsigned int _version)

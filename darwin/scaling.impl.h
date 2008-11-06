@@ -70,7 +70,7 @@ namespace Scaling
     typename TPOPULATION :: iterator i_indiv = _pop.begin();
     typename TPOPULATION :: iterator i_end = _pop.end();
     typename t_Column :: const_iterator i_sum = sums.begin();
-    for(; i_indiv != i_end; ++i_indiv )
+    for(; i_indiv != i_end; ++i_indiv, ++i_sum )
     {
       t_Individual& indiv  = Modifier::innermost( *i_indiv );
       t_ScalarFitnessQuantity fitness = indiv.fitness();

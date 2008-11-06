@@ -30,6 +30,7 @@
     //! Holds dipole moments.
     struct Dipole
     {
+      friend class boost::serialization::access;
       enum t_SpinTransition
       {
         DOWN2DOWN, //!< Spin down to spin down transitions.
@@ -44,9 +45,10 @@
       t_Band2Band band2band;
       //! Spin transition.
       t_SpinTransition spin2spin;
-      //! Serializes a dipole moment.
-      template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
-        {  _ar & r; _ar & band2band; _ar & spin2spin; }
+      private:
+        //! Serializes a dipole moment.
+        template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
+          {  _ar & r; _ar & band2band; _ar & spin2spin; }
     };
     //! Prints a dipole moment.
     std::ostream& operator<<( std::ostream &_stream, const Dipole& );
