@@ -49,6 +49,5 @@
         <Angle A="In" B="As" C="In" gamma="tet" sigma="-5.753" beta="5.7599" />
         <Angle A="As" B="In" C="As" gamma="tet" sigma="-5.753" beta="5.7599" />
         <Angle A="Ga" B="As" C="In" gamma="-0.35016" sigma="-4.926" beta="7.5651" />
-        <Angle A="In" B="As" C="Ga" gamma="-0.35016" sigma="-4.926" beta="7.5651" />
     </Functional>
 </Job>
