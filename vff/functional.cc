@@ -191,93 +191,19 @@ namespace Vff
     bond_cutoff *= bond_cutoff; // squared for simplicity
     
     // loads functionals.
-    functionals.clear();
-    const Crystal :: Lattice :: t_Site &site0 = (*structure.lattice)[0];
-    const Crystal :: Lattice :: t_Site &site1 = (*structure.lattice)[1];
-    size_t i(0), j(0);
-    foreach( Crystal::Lattice::t_Site::t_Type::value_type specie, site0.type )
-    {
-      functionals[i].load( _element, 0, j, site1, structure );
-      ++i; ++j;
-    }  
-    j = 0;
-    foreach( Crystal::Lattice::t_Site::t_Type::value_type specie, site0.type )
-    {
-      functionals[i].load( _element, 0, j, site1, structure );
-      ++i; ++j; 
-    }  
-    
+    const Crystal :: Lattice :: t_Site &site0 = structure.lattice->sites[0];
+    const Crystal :: Lattice :: t_Site &site1 = structure.lattice->sites[1];
+    const size_t nb0( site0.type.size() );
+    const size_t nb1( site1.type.size() );
+    functionals.resize( nb0 + nb1 );
+    functionals[0].load( _element, 0u, 0u, site1, structure );
+    if( nb0 == 2 ) functionals[1].load( _element, 0u, 1u, site1, structure );
+    functionals[nb0].load( _element, 1u, 0u, site0, structure );
+    if( nb1 == 2 ) functionals[nb0+1].load( _element, 1u, 1u, site0, structure );
+
     return true;
   }  // Functional :: Load_
 
-
-  void Functional :: angle_indices( const std::string &_A,
-                                    const std::string &_B, 
-                                    const std::string &_C, 
-                                    types::t_int _indices[3],
-                                    bool _doother ) const
-  {
-    types::t_int siteA, siteB, siteC;
-    siteA = structure.lattice->get_atom_site_index( _A );
-    siteB = structure.lattice->get_atom_site_index( _B );
-    siteC = structure.lattice->get_atom_site_index( _C );
-
-    if ( siteA == -1 or siteB == -1 or siteC == -1 ) goto failure;
-    if ( siteA != siteC ) goto failure;
-
-    if ( siteA == siteB )
-    {
-      if( _doother ) siteB = 0;
-      else siteA = siteC = 1;
-    }
-
-    _indices[0] = structure.lattice->get_atom_type_index( _A, siteA );
-    _indices[1] = structure.lattice->get_atom_type_index( _B, siteB );
-    _indices[2] = structure.lattice->get_atom_type_index( _C, siteC );
-
-    if ( _indices[0] == -1 or _indices[1] == -1 or _indices[2] == -1 ) goto failure;
-
-    if ( siteB == 0 ) return;
-    
-    _indices[1] += structure.lattice->get_nb_types(0);
-
-    return;
-
-failure:
-    __THROW_ERROR(   "Something wrong with your input\n" 
-                   << "Did not expect angle type " << _A << "-"
-                   << _B << "-" << _C << "\n" )
-  }
-
-
-  void Functional :: bond_indices( const std::string &_A, const std::string &_B,
-                                   types::t_int _indices[2] ) const
-  {
-    types::t_int siteA, siteB, swap;
-    // finds out where to put it
-    siteA = structure.lattice->get_atom_site_index( _A );
-    siteB = structure.lattice->get_atom_site_index( _B );
-    if ( siteA == -1 or siteB == -1 ) goto failure;
-
-    if ( siteA == siteB ) siteB = 1;
-
-    _indices[0] = structure.lattice->get_atom_type_index( _A, siteA );
-    _indices[1] = structure.lattice->get_atom_type_index( _B, siteB );
-    if ( _indices[0] == -1 or _indices[1] == -1 ) goto failure;
-
-    // reorders things around
-    if( siteA != 1 )  return;
-    
-    swap = _indices[1];
-    _indices[1] = _indices[0];
-    _indices[0] = swap;
-
-    return;
-failure:
-    __THROW_ERROR(   "Something wrong with your input\n" 
-                   << "Did not expect bond type " << _A << "-"
-                   << _B << "\n" )
-  }
 
   types::t_real Functional :: energy() const
   {

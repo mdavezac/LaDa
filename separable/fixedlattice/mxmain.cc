@@ -71,6 +71,7 @@ int main(int argc, char *argv[])
                        "Level of verbosity.\n"  )
          ("seed", po::value<types::t_unsigned>()->default_value(0),
                   "Seed of the random number generator.\n"  );
+  __BPO_HIDDEN__;
   __BPO_SPECIFICS__( "Separables Options" )
       ("loo", "Performs leave-one-out cross-validation.\n"  )
       ("nofit", "Does not perform fit.\n"  )

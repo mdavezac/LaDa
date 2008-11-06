@@ -60,6 +60,7 @@ int main(int argc, char *argv[])
   __TRYBEGIN
 
   __BPO_START__;
+  __BPO_HIDDEN__;
   __BPO_SPECIFICS__( "GA Options" )
     // extra parameters for alloy layers.
 #   include "alloylayers/main.extras.h" 

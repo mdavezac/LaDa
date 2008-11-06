@@ -12,11 +12,14 @@
   generic.add_options() \
          ("help,h", "produces this help message.") \
          ("version,v", "prints version string.")
-# define __BPO_SPECIFICS__( section_string ) \
-  po::options_description specific( section_string ); \
-  specific.add_options() \
+# define __BPO_HIDDEN__ \
+  po::options_description hidden( "hidden" ); \
+  hidden.add_options() \
       ("input,i", po::value<std::string>()->default_value("input.xml"), \
        "input filename." ) 
+# define __BPO_SPECIFICS__( section_string ) \
+  po::options_description specific( section_string ); \
+  specific.add_options() 
 # define __BPO_RERUNS__ \
       ("reruns,r", po::value<unsigned>()->default_value(1), \
                    "number of times to run the algorithm.\n" \
@@ -25,13 +28,15 @@
 # define __BPO_GENERATE__( others ) \
   po::options_description all; \
   all.add(generic).add(specific) others ; \
+  po::options_description allnhidden;\
+  allnhidden.add(all).add(hidden);\
   po::positional_options_description p; \
   p.add("input", 1); 
 
 # define __BPO_MAP__ \
   po::variables_map vm; \
   po::store(po::command_line_parser(argc, argv). \
-            options(all).positional(p).run(), vm); \
+            options(allnhidden).positional(p).run(), vm); \
   po::notify(vm); \
 
 # define __BPO_HELP_N_VERSION__ \

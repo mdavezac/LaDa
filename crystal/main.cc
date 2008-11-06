@@ -94,6 +94,7 @@ int main(int argc, char *argv[])
   __TRYBEGIN
 
   __BPO_START__;
+  __BPO_HIDDEN__;
   __BPO_SPECIFICS__( "Alloy Layers Characterization" )
     // extra parameters for alloy layers.
     ("structure", po::value<std::string>(), 

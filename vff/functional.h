@@ -196,44 +196,6 @@ namespace Vff
       const atat::rMatrix3d& get_stress() const
         { return stress; }
 
-      //! \brief Returns the index in the atomic functional array for the bond
-      //!        \a _A - \a _B.
-      //! \details For instance, we can modify the parameters for that bond in
-      //!          the following way:
-      //!          \code
-      //  types::t_int where[2];
-      //  bond_indices( A, B, where )
-
-      //  functionals[ where[0] ].add_bond( where[1], d0, alphas );
-      //  functionals[ where[1]+structure.lattice->get_nb_types(0)]
-      //                         .add_bond( where[0], d0, alphas );
-      //!          \endcode
-      //!          Bond-only parameters should be symmetric. so we have to call
-      //!          Functionall::add_bond() twice in the code above, but you get
-      //!          the picture.
-      //! \param _A First atom. 
-      //! \param _B Second atom. 
-      //! \param _indices The resulting indices.
-      void bond_indices( const std::string &_A, const std::string &_B,
-                         types::t_int _indices[2] ) const;
-
-      //! \brief Returns the indices in the atomic functional array for the angle
-      //!        \a _A - \a _B - \a _C.
-      //! \details For instance, we can modify the parameters for that angle in
-      //!          the following way:
-      //!          \code
-      //  types::t_int where[3];
-      //  angle_indices( A, B, C, where );
-      //  functionals[ where[1] ].add_angle( where[0], where[2], gamma, sigma, betas );
-      //!          \endcode
-      //! \param _A External atom. 
-      //! \param _B Middle atom. 
-      //! \param _C External atom. 
-      //! \param _indices The resulting indices.
-      void angle_indices( const std::string &_A, const std::string &_B,
-                          const std::string &_C, types::t_int _indices[3],
-                          bool _doother = true ) const;
-
     protected:
       //! \brief unpacks variables from minimizer
       //! \details Functional knows about Functional::Structure, whereas minizers now

@@ -86,6 +86,7 @@ int main(int argc, char *argv[])
 
   
   __BPO_START__;
+  __BPO_HIDDEN__;
   __BPO_SPECIFICS__( "Escan Specific Options" )
 #     ifndef _EMASS
         ( "dipoles,d", "Compute Dipole Moments" )

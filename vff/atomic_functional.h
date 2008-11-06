@@ -95,39 +95,6 @@ namespace Vff
                           lengths(_a.lengths), alphas(_a.alphas),
                           betas(_a.betas), gammas(_a.gammas), sigmas(_a.sigmas) {}
       
-      //! \brief Adds a bond type to bond list
-      //! \param _typeB type of atom at end-point of bond
-      //! \param _l equilibrium length
-      //! \param _i bond stretching parameters
-      void add_bond( const types::t_unsigned _typeB, const types::t_real _l,
-                     const std::vector<types::t_real> &_i );
-      //! \brief Adds a bond type to bond list
-      //! \param _typeB type of atom at end-point of bond
-      //! \param _l equilibrium length
-      //! \param _i bond array of stretching parameters (5 types::t_real long)
-      void add_bond( const types::t_unsigned _typeB, const types::t_real _l,
-                     const types::t_real _i[5] );
-      //! \brief Adds angle deformation and bond-angle parameters
-      //! \param _typeA type of atom at end-point of one bond
-      //! \param _typeC type of atom at end-point of other bond
-      //! \param _gamma bond-angle deformation parameter
-      //! \param _sigma equilibrium angle
-      //! \param _i angle deformation parameters
-      void add_angle( const types::t_unsigned _typeA,
-                      const types::t_unsigned _typeC,
-                      const types::t_real _gamma, const types::t_real _sigma, 
-                      const std::vector<types::t_real> &_i );
-      //! \brief Adds angle deformation and bond-angle parameters
-      //! \param _typeA type of atom at end-point of one bond
-      //! \param _typeC type of atom at end-point of other bond
-      //! \param _gamma bond-angle deformation parameter
-      //! \param _sigma equilibrium angle
-      //! \param _i angle array of deformation parameters (5 types::t_real long)
-      void add_angle( const types::t_unsigned _typeA,
-                      const types::t_unsigned _typeC,
-                      const types::t_real _gamma, const types::t_real _sigma, 
-                      const types::t_real _i[5] );
-      
       //! \brief Evaluate strain energy for Atomic_Center _center
       //! \details returns strain energy 
       //! \param _center center for which to evaluate energy
@@ -161,7 +128,7 @@ namespace Vff
       bool load( const TiXmlElement& _node,
                  const types::t_unsigned &_site_index,
                  const types::t_unsigned &_type_index,
-                 const Crystal::Lattice::t_Site &_othersite 
+                 const Crystal::Lattice::t_Site &_othersite,
                  Crystal :: Structure &_structure );
   }; 
 } // namespace vff 

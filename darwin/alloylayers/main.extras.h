@@ -18,7 +18,7 @@
 #   include "evaluator.h"
 #   include "policies.h"
 #   include "object.h"
-#   define __PROGNAME__ "alloylayers_opt"
+#   define __PROGNAME__ "Epitaxial Alloy Layer Optimization"
 
     typedef Individual :: Types
             < 
@@ -59,7 +59,7 @@
       __DOASSERT
       ( 
          not ( optimize_strain or optimize_epi or optimize_bandgaps or optimize_transitions ),
-         "Specify properties to optimize on input. Call --help.\n" 
+         "Specify properties to optimize on input.\nSee " << argv[0] << " --help.\n\n" 
       )
       std::cout << "Strain energy (Vff) will"
                 << ( optimize_strain ? " ": " NOT " )

@@ -9,7 +9,7 @@
 
 #include <algorithm>
 #include <functional>
-#include <boost/filesystem/operations.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <physics/physics.h>
 #include <opt/ndim_iterator.h>
@@ -30,11 +30,11 @@ namespace Vff
                                         const std::string &_A, 
                                         const std::string &_B );
     //! \brief Finds a angle node for species \a _A, \a _B, \a _C.
-    //! \details \a _C is the center of the angle.
-    const TiXmlElement* find_bond_node( const TiXmlElement &_node, 
-                                        const std::string &_C, 
-                                        const std::string &_A, 
-                                        const std::string &_B );
+    //! \details \a _B is the center of the angle.
+    const TiXmlElement* find_angle_node( const TiXmlElement &_node, 
+                                         const std::string &_B, 
+                                         const std::string &_A, 
+                                         const std::string &_C );
   } // end of details namespace
 
   // constants obtained from bc -l with scale = 64
@@ -340,79 +340,20 @@ namespace Vff
     stream << std::endl;
   }
 
-  void Atomic_Functional :: add_bond( const types::t_unsigned _typeB,
-                                      const types::t_real _l,
-                                      const std::vector<types::t_real> &_i )
-  {
-    if ( lengths.size() < _typeB + 1)
-      lengths.resize( _typeB+1, types::t_real(0) );
-    if ( alphas.size() < (_typeB+1) * 5  )
-      alphas.resize( (_typeB+1)*5, types::t_real(0) );
-    lengths[_typeB] = _l;
-    std::copy( _i.begin(), _i.end(), alphas.begin() + _typeB * 5 );
-  }
-  void Atomic_Functional :: add_bond( const types::t_unsigned _typeB,
-                                      const types::t_real _l,
-                                      const types::t_real _i[5] )
-  {
-    if ( lengths.size() < _typeB + 1)
-      lengths.resize( _typeB+1, types::t_real(0) );
-    if ( alphas.size() < (_typeB+1) * 5  )
-      alphas.resize( (_typeB+1)*5, types::t_real(0) );
-    lengths[_typeB] = _l;
-    const types::t_real *i_alpha = _i;
-    std::copy( i_alpha, i_alpha+5, alphas.begin() + _typeB * 5 );
-  }
-  void Atomic_Functional :: add_angle( const types::t_unsigned _typeA,
-                                       const types::t_unsigned _typeC,
-                                       const types::t_real _gamma,
-                                       const types::t_real _sigma, 
-                                       const std::vector<types::t_real> &_i )
-  {
-    types::t_unsigned offset = _typeA+_typeC;
-    if ( gammas.size() < offset + 1  )
-      gammas.resize( offset + 1, types::t_real(0) );
-    if ( sigmas.size() < offset + 1  )
-      sigmas.resize( offset + 1, types::t_real(0) );
-    if ( betas.size() < (offset + 1) * 5 )
-      betas.resize( (offset+1)*5, types::t_real(0) );
-    gammas[offset] = _gamma;
-    sigmas[offset] = _sigma;
-    std::copy( _i.begin(), _i.end(), betas.begin() + offset * 5 );
-  }
-
-  void Atomic_Functional :: add_angle( const types::t_unsigned _typeA,
-                                       const types::t_unsigned _typeC,
-                                       const types::t_real _gamma, const types::t_real _sigma, 
-                                       const types::t_real _i[5] )
-  {
-    types::t_unsigned offset = _typeA+_typeC;
-    if ( gammas.size() < offset + 1  )
-      gammas.resize( offset + 1, types::t_real(0) );
-    if ( sigmas.size() < offset + 1  )
-      sigmas.resize( offset + 1, types::t_real(0) );
-    if ( betas.size() < (offset + 1) * 5 )
-      betas.resize( (offset+1)*5, types::t_real(0) );
-    gammas[offset] = _gamma;
-    sigmas[offset] = _sigma;
-    const types::t_real *i_beta = _i;
-    std::copy( i_beta, i_beta+5, betas.begin() + offset * 5 );
-  }
-
   bool Atomic_Functional :: load( const TiXmlElement& _node,
                                   const types::t_unsigned &_site_index,
                                   const types::t_unsigned &_type_index,
                                   const Crystal::Lattice::t_Site &_othersite,
                                   Crystal :: Structure &_structure )
   {
-    __ASSERT( std::string( _node.Value() ).compare("Functional") != 0;, "Incorrect node.\n" )
-    __ASSERT( std::string( _node.Attribute( "type" ) ).compare("Vff") != 0;,
+    __ASSERT( std::string( _node.Value() ).compare("Functional") != 0, "Incorrect node.\n" )
+    __ASSERT( std::string( _node.Attribute( "type" ) ).compare("vff") != 0,
               "Incorrect node.\n" )
 
     const Crystal::Lattice &lattice = *Crystal::Structure::lattice;
     __ASSERT( _site_index >= lattice.sites.size(), "Index out of range.\n" )
-    const Crystal::Lattice &lsite = lattice.sites[ _site_index ];
-    __ASSERT( _type >= lsite.type.size(), "Index out of range.\n" )
+    const Crystal::Lattice::t_Site &lsite = lattice.sites[ _site_index ];
+    __ASSERT( _type_index >= lsite.type.size(), "Index out of range.\n" )
 
     structure = &_structure;
     specie = lsite.type[ _type_index ];
@@ -422,7 +363,7 @@ namespace Vff
     const types::t_unsigned nangles( 2*nbonds - 1 );
 
     // Resize parameter arrays.
-    length.clear(); lengths.resize( nbonds, 0e0 );     
+    lengths.clear(); lengths.resize( nbonds, 0e0 );     
     alphas.clear(); alphas.resize( 5 * nbonds, 0e0 );   
     sigmas.clear(); sigmas.resize( nangles, 0e0 );     
     gammas.clear(); gammas.resize( nangles, 0e0 ); 
@@ -438,17 +379,17 @@ namespace Vff
       const TiXmlElement *child = details::find_bond_node( _node, specie, *i_atype );
       __DOASSERT( not child,
                      "Could not find parameters for bond: "
-                  << type << "-" << (*i_atype) << ".\n" )
+                  << specie << "-" << (*i_atype) << ".\n" )
       __DOASSERT( not child->Attribute("d0"), 
                      "Could not find parameters d0 of bond: "
-                  << type << "-" << (*i_atype) << ".\n" )
+                  << specie << "-" << (*i_atype) << ".\n" )
       __DOASSERT( not child->Attribute("alpha"), 
                      "Could not find parameters alpha of bond: "
-                  << type << "-" << (*i_atype) << ".\n" )
+                  << specie << "-" << (*i_atype) << ".\n" )
 
-      d0 = boost::lexical_cast< types::t_real >( child->Attribute( "d0" ) );
+      lengths[ bond_index ] = boost::lexical_cast<types::t_real>( child->Attribute( "d0" ) );
       alphas[ 5 * bond_index ]
-        = boost::lexical_cast< types::t_real >( child->Attribute( "alpha" ) );
+        = boost::lexical_cast<types::t_real>( child->Attribute( "alpha" ) );
       for( size_t i(3); i < 7; ++i )
       {
         const std::string str(   std::string("alpha") 
@@ -457,31 +398,31 @@ namespace Vff
         if( not child->Attribute(str) ) continue;
 
         alphas[ 5 * bond_index + i - 2 ]
-          = boost::lexical_cast< types::t_real >( child->Attribute(str) );
+          = boost::lexical_cast<types::t_real>( child->Attribute(str.c_str()) );
       }
       
       // then the angle and bond-angle parameters.
       Crystal::Lattice::t_Site::t_Type::const_iterator i_btype = i_atype;
-      for(; i_bsite != i_asite_end; ++i_bsite, ++angle_index )
+      for(; i_btype != i_atype_end; ++i_btype, ++angle_index )
       {
-        child = find_angle_node( _node, specie, *i_atype, *i_btype );
+        child = details::find_angle_node( _node, specie, *i_atype, *i_btype );
         
         __DOASSERT( not child,
-                       "Could not find parameters for bond: "
-                    << type << "-" << (*i_atype) << "-" << (*i_btype) << ".\n" )
+                       "Could not find parameters for angle: "
+                    << (*i_atype) << "-" << specie << "-" << (*i_btype) << ".\n" )
         __DOASSERT( not child->Attribute("gamma"), 
-                       "Could not find parameters gamma of bond: "
-                    << type << "-" << (*i_atype) << "-" << (*i_btype) << ".\n" )
+                       "Could not find parameters gamma of angle: "
+                    << (*i_atype) << "-" << specie << "-" << (*i_btype) << ".\n" )
         __DOASSERT( not child->Attribute("beta"), 
-                       "Could not find parameters beta of bond: "
-                    << type << "-" << (*i_atype) << "-" << (*i_btype) << ".\n" )
+                       "Could not find parameters beta of angle: "
+                    << (*i_atype) << "-" << specie << "-" << (*i_btype) << ".\n" )
 
         // find gamma
         std::string str( child->Attribute("gamma") );
         if ( str.compare("tet") == 0 or str.compare("tetrahedral") == 0  )
-          gammas[angle_index] = -0.33333333333333333333333333333333333333333;
+          gammas[angle_index] = -1e0/3e0;
         else gammas[angle_index] = boost::lexical_cast<types::t_real>( str );
-        __DOASSERT( std::abs(gamma) > 1,
+        __DOASSERT( std::abs(gammas[angle_index]) > 1,
                     " gamma must be comprised between 1 and -1.\n" )
 
         // find sigma
@@ -489,16 +430,16 @@ namespace Vff
           sigmas[angle_index] = boost::lexical_cast<types::t_real>( child->Attribute( "sigma" ) );
         // find betas
         betas[ 5 * angle_index ] 
-           = boost::lexical_cast<types::t_real>( child->Attribute( "betas" ) );
+           = boost::lexical_cast<types::t_real>( child->Attribute( "beta" ) );
         for( size_t i(3); i < 7; ++i )
         {
-          const std::string str(   std::string("betas") 
+          const std::string str(   std::string("beta") 
                                  + boost::lexical_cast<std::string>(i) );
         
-          if( not child->Attribute(str) ) continue;
+          if( not child->Attribute(str.c_str()) ) continue;
         
           betas[ 5 * angle_index + i - 2 ]
-            = boost::lexical_cast< types::t_real >( child->Attribute(str) );
+            = boost::lexical_cast< types::t_real>( child->Attribute(str.c_str()) );
         } // end of loop over betas.
       } // end of loop over angle kinds.
     } // end of loop over bond kinds.
@@ -513,8 +454,9 @@ namespace Vff
                                         const std::string &_B )
     {
       const TiXmlElement *result = NULL;
-      const TiXmlElement *child( result );
+      const TiXmlElement *child( _node.FirstChildElement("Bond") );
       size_t partial_match(0);
+      size_t exact_match(0);
       for(; child; child = child->NextSiblingElement( "Bond" ) )
       {
         if( not ( child->Attribute( "A" ) and child->Attribute( "B" ) ) ) 
@@ -525,10 +467,19 @@ namespace Vff
         const std::string A = child->Attribute("A");
         const std::string B = child->Attribute("B");
         // exact match.
-        if( A.compare( _A ) == 0 and B.compare( _B ) == 0 ) return child;
+        if( A.compare( _A ) == 0 and B.compare( _B ) == 0 )
+          { ++exact_match; result = child; }
         // partial match.
         if( B.compare( _A ) == 0 and A.compare( _B ) == 0 ) 
-          { result = child; ++partial_match; }
+          { ++partial_match; if( not exact_match ) result = child; }
+      }
+
+      if( exact_match == 1 ) return result;
+      if( exact_match > 1 ) 
+      {
+        std::cerr << "Found more than one match for Bond tag " 
+                  << _A << "-" << _B <<".\nAborting.\n";
+        return NULL;
       }
 
       if( partial_match < 2 ) return result;
@@ -540,14 +491,15 @@ namespace Vff
       return NULL;
     }
 
-    const TiXmlElement* find_bond_node( const TiXmlElement &_node, 
-                                        const std::string &_C, 
-                                        const std::string &_A, 
-                                        const std::string &_B )
+    const TiXmlElement* find_angle_node( const TiXmlElement &_node, 
+                                         const std::string &_B, 
+                                         const std::string &_A, 
+                                         const std::string &_C )
     {
       const TiXmlElement *result = NULL;
-      const TiXmlElement *child( result );
-      for(; child; child = child->NextSiblingElement( "Bond" ) )
+      const TiXmlElement *child( _node.FirstChildElement("Angle") );
+      size_t match(0);
+      for(; child; child = child->NextSiblingElement( "Angle" ) )
       {
         if( not (      child->Attribute( "A" )
                    and child->Attribute( "B" ) 
@@ -556,22 +508,23 @@ namespace Vff
           std::cerr << "Found incomplete Angle tag in xml input.\nTag is ignored.\n";
           continue;
         }
-        const std::string A = child->Attribute("A");
         const std::string B = child->Attribute("B");
-        const std::string C = child->Attribute("C");
         // no match
-        if( C.compare( _C ) != 0 ) continue;
-        // exact match.
-        if( A.compare( _A ) == 0 and B.compare( _B ) == 0 ) return child;
-        // partial match.
-        if( B.compare( _A ) == 0 and A.compare( _B ) == 0 ) 
-          { result = child; ++partial_match; }
+        if( B.compare( _B ) != 0 ) continue;
+
+        const std::string A = child->Attribute("A");
+        const std::string C = child->Attribute("C");
+        // match.
+        if(     ( A.compare( _A ) != 0 or C.compare( _C ) != 0 )
+            and ( C.compare( _A ) != 0 or A.compare( _C ) != 0 )  ) continue;
+        ++match;
+        result = child;
       }
 
-      if( partial_match < 2 ) return result;
+      if( match < 2 ) return result;
 
       std::cerr << "Found more than one acceptable Angle tag for "
-                << _A << "-" << _C << "-" << _B
+                << _A << "-" << _B << "-" << _C
                 << ".\n Aborting\n.";
 
       return NULL;
