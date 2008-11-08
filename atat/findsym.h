@@ -17,6 +17,9 @@
 
 #include <opt/types.h>
 
+namespace LaDa
+{
+
 namespace atat
 { 
 
@@ -137,5 +140,7 @@ types::t_int contains_pure_translations(const Structure &str);
 
 
 } // namespace atat
+
+} // namespace LaDa
 
 #endif

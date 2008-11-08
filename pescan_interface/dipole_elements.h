@@ -14,6 +14,8 @@
 
 # include<opt/types.h>
 
+namespace LaDa
+{
   //! \cond
   namespace Crystal 
   {
@@ -73,6 +75,7 @@
                                        bool _print = false );
 
   }
+} // namespace LaDa
 
 # endif
 #endif

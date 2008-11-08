@@ -12,6 +12,8 @@
 
 #include <opt/types.h>
 
+namespace LaDa
+{ 
 namespace atat
 { 
 void apply_symmetry(Array<rVector3d> *b, const rMatrix3d &point_op, const rVector3d &trans, const Array<rVector3d> &a) {
@@ -818,4 +820,5 @@ types::t_int contains_pure_translations(const Structure &str) {
 
 
 } // namespace atat
+}
 }

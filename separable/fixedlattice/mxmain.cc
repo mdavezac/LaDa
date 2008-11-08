@@ -45,69 +45,68 @@
 #include <revision.h>
 #define __PROGNAME__ "Mixed Approach: CE and Sum of Separable functions on a fixed lattice." 
 #if defined(_CUBIC_CE_)
-typedef CE::ConstituentStrain::Harmonic::Cubic t_Harmonic;
+typedef LaDa::CE::ConstituentStrain::Harmonic::Cubic t_Harmonic;
 #elif defined( _TETRAGONAL_CE_ )
-typedef CE::ConstituentStrain::Harmonic::Tetragonal t_Harmonic;
+typedef LaDa::CE::ConstituentStrain::Harmonic::Tetragonal t_Harmonic;
 #else
 #error Please specify _CUBIC_CE_ or _TETRAGONAL_CE_
 #endif
 
-const types::t_unsigned print_reruns   = 1;
-const types::t_unsigned print_checks   = 2;
-const types::t_unsigned print_function = 3;
-const types::t_unsigned print_allsq    = 4;
-const types::t_unsigned print_data     = 5;
-const types::t_unsigned print_llsq     = 6;
+const LaDa::types::t_unsigned print_reruns   = 1;
+const LaDa::types::t_unsigned print_checks   = 2;
+const LaDa::types::t_unsigned print_function = 3;
+const LaDa::types::t_unsigned print_allsq    = 4;
+const LaDa::types::t_unsigned print_data     = 5;
+const LaDa::types::t_unsigned print_llsq     = 6;
 
 int main(int argc, char *argv[]) 
 {
   __TRYBEGIN
   namespace bl = boost::lambda;
   namespace fs = boost::filesystem;
-  Fitting::LeaveManyOut leavemanyout;
+  LaDa::Fitting::LeaveManyOut leavemanyout;
 
   __BPO_START__
-         ("verbose,p", po::value<types::t_unsigned>()->default_value(0),
+         ("verbose,p", po::value<LaDa::types::t_unsigned>()->default_value(0),
                        "Level of verbosity.\n"  )
-         ("seed", po::value<types::t_unsigned>()->default_value(0),
+         ("seed", po::value<LaDa::types::t_unsigned>()->default_value(0),
                   "Seed of the random number generator.\n"  );
-  __BPO_HIDDEN__;
   __BPO_SPECIFICS__( "Separables Options" )
       ("loo", "Performs leave-one-out cross-validation.\n"  )
       ("nofit", "Does not perform fit.\n"  )
-      ("rank,r", po::value<types::t_unsigned>()->default_value(3),
+      ("rank,r", po::value<LaDa::types::t_unsigned>()->default_value(3),
                  "Rank of the sum of separable functions." )
       ("basis,r", po::value<std::string>()->default_value("1x1x4"),
                  "Description of the ranks/size of the figure used\n." )
-      ("tolerance", po::value<types::t_real>()->default_value(1e-4),
+      ("tolerance", po::value<LaDa::types::t_real>()->default_value(1e-4),
                     "Tolerance of the alternating linear-least square fit.\n"  )
-      ("maxiter", po::value<types::t_unsigned>()->default_value(40),
+      ("maxiter", po::value<LaDa::types::t_unsigned>()->default_value(40),
                   "Maximum number of iterations for"
                   " Alternating linear-least square fit.\n"  )
-      ("1dtolerance", po::value<types::t_real>()->default_value(1e-4),
+      ("1dtolerance", po::value<LaDa::types::t_real>()->default_value(1e-4),
                       "Tolerance of the 1d linear-least square fit.\n" ) 
-      ("random", po::value<types::t_real>()->default_value(5e-1),
+      ("random", po::value<LaDa::types::t_real>()->default_value(5e-1),
                  "Coefficients' randomness.\n" )
-      ("lambda,l", po::value<types::t_real>()->default_value(0),
+      ("lambda,l", po::value<LaDa::types::t_real>()->default_value(0),
                    "Regularization factor.\n" )
-      ("maxpairs,m", po::value<types::t_unsigned>()->default_value(5),
+      ("maxpairs,m", po::value<LaDa::types::t_unsigned>()->default_value(5),
                      "Max distance for pairs (in neighbors)."  )
       ("J0", "Introduce J0 in clusters."  )
       ("J1", "Introduce J1 in clusters."  )
       ("rm", "Remove clusters which are contained within the separable-basis."  )
-      ("alpha", po::value<types::t_real>()->default_value(1),
+      ("alpha", po::value<LaDa::types::t_real>()->default_value(1),
                  "Lambda for pair regularization. With --loo/fit and --tcoef only. " )
-      ("tcoef", po::value<types::t_real>()->default_value(0),
+      ("tcoef", po::value<LaDa::types::t_real>()->default_value(0),
                 "\"t\" coefficient. With --loo/fit only. " )
       ("volkerreg", " Pair regulation done with Volker Blum's"
                     " normalization (changes the units of the \"t\" coefficient). " )
-      ("bestof,b", po::value<types::t_unsigned>()->default_value(1),
+      ("bestof,b", po::value<LaDa::types::t_unsigned>()->default_value(1),
                    "Performs best-of fit.\n" )
       ("enum", po::value<std::string>(), "Enumerate PI-file.\n" )
       ("genes", po::value<std::string>()->default_value(""), "Figure bitstring.\n" )
       ("jtypes", po::value<std::string>(), "Figure description file.\n" )
       ("cs", po::value<std::string>(), "Constituent Strain input file.\n" )
-      ("which,w", po::value<types::t_unsigned>()->default_value(0),
+      ("which,w", po::value<LaDa::types::t_unsigned>()->default_value(0),
                    "Performs best-of for 0 (variance), 1 (mean), or 2(max).\n" )
       ("print", po::value<std::string>()->default_value(""),
                    "Prints out: \"function\".\n" );
@@ -133,7 +132,7 @@ int main(int argc, char *argv[])
  
   std::cout << "\n" << __PROGNAME__ \
             << " from the " << PACKAGE_STRING << " package.\n" \
-            << "Subversion Revision: " << SVN::Revision << "\n\n"; \
+            << "Subversion Revision: " << LaDa::SVN::Revision << "\n\n"; \
   if ( vm.count("version") ) return 1;
   if ( vm.count("help") )
   {
@@ -218,27 +217,27 @@ int main(int argc, char *argv[])
 
   const bool dofit( vm.count("nofit") == 0 );
   const bool doloo( vm.count("loo") != 0 );
-  const types::t_unsigned verbosity = vm["verbose"].as<types::t_unsigned>();
-  types::t_unsigned seed = vm["seed"].as<types::t_unsigned>();
-  seed = opt::random::seed( seed );
-  const types::t_unsigned rank( vm["rank"].as< types::t_unsigned >() );
+  const LaDa::types::t_unsigned verbosity = vm["verbose"].as<LaDa::types::t_unsigned>();
+  LaDa::types::t_unsigned seed = vm["seed"].as<LaDa::types::t_unsigned>();
+  seed = LaDa::opt::random::seed( seed );
+  const LaDa::types::t_unsigned rank( vm["rank"].as< LaDa::types::t_unsigned >() );
   const std::string bdesc( vm["basis"].as<std::string>() );
-  const types::t_real tolerance( vm["tolerance"].as< types::t_real >() );
-  const types::t_unsigned maxiter( vm["maxiter"].as< types::t_unsigned >() );
-  const types::t_real dtolerance( vm["1dtolerance"].as< types::t_real >() );
-  const types::t_real howrandom( vm["random"].as<types::t_real>() );
-  const types::t_real lambda( vm["lambda"].as<types::t_real>() );
+  const LaDa::types::t_real tolerance( vm["tolerance"].as< LaDa::types::t_real >() );
+  const LaDa::types::t_unsigned maxiter( vm["maxiter"].as< LaDa::types::t_unsigned >() );
+  const LaDa::types::t_real dtolerance( vm["1dtolerance"].as< LaDa::types::t_real >() );
+  const LaDa::types::t_real howrandom( vm["random"].as<LaDa::types::t_real>() );
+  const LaDa::types::t_real lambda( vm["lambda"].as<LaDa::types::t_real>() );
   const bool volkerreg = vm.count("volkerreg") != 0;
-  const types::t_real alpha( vm["alpha"].as<types::t_real>() );
-  const types::t_real tcoef( vm["tcoef"].as<types::t_real>() );
-  const types::t_unsigned maxpairs = vm["maxpairs"].as<types::t_unsigned>();
+  const LaDa::types::t_real alpha( vm["alpha"].as<LaDa::types::t_real>() );
+  const LaDa::types::t_real tcoef( vm["tcoef"].as<LaDa::types::t_real>() );
+  const LaDa::types::t_unsigned maxpairs = vm["maxpairs"].as<LaDa::types::t_unsigned>();
   const bool J0( vm.count("J0") > 0 );
   const bool J1( vm.count("J1") > 0 );
   const bool rmpairs( vm.count("rm") > 0 );
-  __ASSERT( Fuzzy::le(tcoef, 0e0), "Coefficient \"t\" cannot negative.\n" )
-  const types::t_unsigned bestof( vm["bestof"].as<types::t_unsigned>() );
+  __ASSERT( LaDa::Fuzzy::le(tcoef, 0e0), "Coefficient \"t\" cannot negative.\n" )
+  const LaDa::types::t_unsigned bestof( vm["bestof"].as<LaDa::types::t_unsigned>() );
   __DOASSERT( bestof == 0, "0 jobs to be performed..." )
-  const types::t_unsigned which( vm["which"].as<types::t_unsigned>() );
+  const LaDa::types::t_unsigned which( vm["which"].as<LaDa::types::t_unsigned>() );
   const std::string genes( boost::algorithm::trim_copy( vm["genes"].as<std::string>() ) );
   if( not genes.empty() )
     __DOASSERT( not boost::algorithm::all( genes, boost::algorithm::is_any_of( "01" ) ),
@@ -250,41 +249,41 @@ int main(int argc, char *argv[])
     std::cout << "Must perform a fit when attempting PIfile enumeration.\n";
 
   // Loads lattice
-  boost::shared_ptr< Crystal::Lattice >
-    lattice( Crystal::read_lattice( latinput, dir ) );
-  Crystal::Structure::lattice = lattice.get();
+  boost::shared_ptr< LaDa::Crystal::Lattice >
+    lattice( LaDa::Crystal::read_lattice( latinput, dir ) );
+  LaDa::Crystal::Structure::lattice = lattice.get();
 
   // create pair terms.
-  typedef std::vector< std::vector< CE::Cluster > > t_Clusters;
-  std::vector< std::vector< CE::Cluster > > clusters;
-  CE :: create_pairs( *lattice, maxpairs, clusters );
+  typedef std::vector< std::vector< LaDa::CE::Cluster > > t_Clusters;
+  std::vector< std::vector< LaDa::CE::Cluster > > clusters;
+  LaDa::CE :: create_pairs( *lattice, maxpairs, clusters );
   std::cout << "  Creating " << clusters.size() << " pair figures.\n";
   if( not jtypes.empty() )
   {
     const size_t d( clusters.size() );
-    CE::read_clusters( *lattice, jtypes, clusters, genes ); 
+    LaDa::CE::read_clusters( *lattice, jtypes, clusters, genes ); 
     std::cout << "  Read " << clusters.size() - d
               << " from input file " << jtypes << "\n";
   }
-  CE::Cluster cluster;
+  LaDa::CE::Cluster cluster;
   if( J0 )
   {
     bool isfound = false;
     foreach( t_Clusters :: value_type &_class, clusters )
       if( _class.front().size() == 0 ) { isfound = true; break; }
-    if( isfound ) clusters.push_back( std::vector<CE::Cluster>(1, cluster) ); 
+    if( isfound ) clusters.push_back( std::vector<LaDa::CE::Cluster>(1, cluster) ); 
   }
-  cluster.Vectors().resize(1, atat::rVector3d(0,0,0) );
+  cluster.Vectors().resize(1, LaDa::atat::rVector3d(0,0,0) );
   if( J1 )
   {
     bool isfound = false;
     foreach( t_Clusters :: value_type &_class, clusters )
       if( _class.front().size() == 1 ) { isfound = true; break; }
-    if( isfound ) clusters.push_back( std::vector<CE::Cluster>(1, cluster) ); 
+    if( isfound ) clusters.push_back( std::vector<LaDa::CE::Cluster>(1, cluster) ); 
   }
   
   // Initializes fitting.
-  typedef Fitting::AlternatingLeastSquare<Fitting::Cgs> t_Fitting;
+  typedef LaDa::Fitting::AlternatingLeastSquare<LaDa::Fitting::Cgs> t_Fitting;
   t_Fitting allsq;
   allsq.itermax = maxiter;
   allsq.tolerance = tolerance;
@@ -293,32 +292,32 @@ int main(int argc, char *argv[])
   allsq.linear_solver.verbose = verbosity >= print_llsq;
 
   // Initializes basis.
-  CE::PosToConfs postoconfs( *Crystal::Structure::lattice );
+  LaDa::CE::PosToConfs postoconfs( *LaDa::Crystal::Structure::lattice );
   if(  ( not bdesc.empty() ) and rank )
     postoconfs.create_positions( bdesc );
 
   // Separables traits.
-  typedef Traits::CE::Separables< CE::Mapping::VectorPlus<2> > t_FunctionTraits;
-  typedef CE::Separables< t_FunctionTraits > t_Function;
+  typedef LaDa::Traits::CE::Separables< LaDa::CE::Mapping::VectorPlus<2> > t_FunctionTraits;
+  typedef LaDa::CE::Separables< t_FunctionTraits > t_Function;
   // Collapse Traits
-  typedef CE::Mapping::SymEquiv t_Mapping;
-  typedef CE::Policy::Regularization< t_Function > t_Regularization;
+  typedef LaDa::CE::Mapping::SymEquiv t_Mapping;
+  typedef LaDa::CE::Policy::Regularization< t_Function > t_Regularization;
   typedef boost::numeric::ublas::matrix<size_t> t_Confs;
-  typedef CE::Policy::HighMemUpdate< t_Function, t_Mapping, t_Confs > t_UpdatePolicy;
-  typedef Traits::CE::Collapse< t_Function, t_Mapping, 
-                                t_Regularization, t_Confs,
-                                t_UpdatePolicy > t_CollapseTraits;
+  typedef LaDa::CE::Policy::HighMemUpdate< t_Function, t_Mapping, t_Confs > t_UpdatePolicy;
+  typedef LaDa::Traits::CE::Collapse< t_Function, t_Mapping, 
+                                      t_Regularization, t_Confs,
+                                      t_UpdatePolicy > t_CollapseTraits;
   // CE base
-  typedef CE::Fit< CE::FittingPolicy::PairReg<> > t_CEBase;
+  typedef LaDa::CE::Fit< LaDa::CE::FittingPolicy::PairReg<> > t_CEBase;
   // Mixed approach traits.
-  typedef Traits::CE::MixedApproach< CE::Collapse<t_CollapseTraits>, 
-                                     t_CEBase > t_MixedTraits;
-  typedef CE::MixedApproach< t_MixedTraits > t_Collapse;
+  typedef LaDa::Traits::CE::MixedApproach< LaDa::CE::Collapse<t_CollapseTraits>, 
+                                           t_CEBase > t_MixedTraits;
+  typedef LaDa::CE::MixedApproach< t_MixedTraits > t_Collapse;
 
   // Finally creates mixed approach object.
   t_Collapse mixed;
   // initializes ce part.
-  Crystal::read_ce_structures( dir / "LDAs.dat", mixed.cefit().structures() );
+  LaDa::Crystal::read_ce_structures( dir / "LDAs.dat", mixed.cefit().structures() );
   if( verbosity >= print_data )
     std::for_each
     (
@@ -327,7 +326,7 @@ int main(int argc, char *argv[])
     );
   mixed.cefit().alpha = alpha;
   mixed.cefit().tcoef = tcoef;
-  mixed.cefit().do_pairreg = ( not Fuzzy::is_zero( alpha ) and maxpairs );
+  mixed.cefit().do_pairreg = ( not LaDa::Fuzzy::is_zero( alpha ) and maxpairs );
   mixed.cefit().laksreg = not volkerreg;
   mixed.cefit().verbose = verbosity >= print_checks;
   // initializes collapse part.
@@ -338,8 +337,8 @@ int main(int argc, char *argv[])
              std::back_inserter( mixed.clusters() ) );
   if( verbosity >= print_data )
   {
-    CE::Regulated :: t_Clusters :: const_iterator i_class = mixed.clusters().begin();
-    CE::Regulated :: t_Clusters :: const_iterator i_class_end =
+    LaDa::CE::Regulated :: t_Clusters :: const_iterator i_class = mixed.clusters().begin();
+    LaDa::CE::Regulated :: t_Clusters :: const_iterator i_class_end =
        mixed.clusters().end();
     for(; i_class != i_class_end; ++i_class )
     {
@@ -357,7 +356,7 @@ int main(int argc, char *argv[])
 
   if( rmpairs and postoconfs.positions.size() )
   {
-    CE::remove_contained_clusters( postoconfs.positions, mixed.clusters() );
+    LaDa::CE::remove_contained_clusters( postoconfs.positions, mixed.clusters() );
     size_t size( mixed.clusters().size() );
     if( J0 ) --size;
     if( J1 ) --size;
@@ -366,7 +365,7 @@ int main(int argc, char *argv[])
   clusters.clear();
   mixed.init( rank, postoconfs.dof() );
 
-  opt::NErrorTuple nerror( opt::mean_n_var( mixed.cefit().structures() ) ); 
+  LaDa::opt::NErrorTuple nerror( LaDa::opt::mean_n_var( mixed.cefit().structures() ) ); 
 
   std::cout << "Shape of separable function: " << bdesc << "\n"
             << "Rank of separable function " << rank << "\n"
@@ -409,7 +408,7 @@ int main(int argc, char *argv[])
   leavemanyout.extract_cmdl( vm );
 
   // Initializes best of fit.
-  CE::Method::Fit< CE::Method::Policy::BestOf< CE :: CollapseState > >
+  LaDa::CE::Method::Fit< LaDa::CE::Method::Policy::BestOf< LaDa::CE :: CollapseState > >
     fit( mixed.cefit().structures() );
   fit.verbosity = verbosity -1;
   fit.policy.restarts = bestof;
@@ -419,8 +418,8 @@ int main(int argc, char *argv[])
   // fitting.
   if( doloo )
   {
-    typedef CE::Mapping::ExcludeOne< t_Collapse::t_Traits::t_Mapping > t_looMapping;
-    typedef Traits::CE::MixedApproachWithNewMapping
+    typedef LaDa::CE::Mapping::ExcludeOne< t_Collapse::t_Traits::t_Mapping > t_looMapping;
+    typedef LaDa::Traits::CE::MixedApproachWithNewMapping
             < 
               t_Collapse,
               t_looMapping 
@@ -428,29 +427,29 @@ int main(int argc, char *argv[])
     t_looCollapse loomixed; loomixed.operator=( mixed );
     loomixed.collapse().mapping().do_exclude = true;
     std::cout << "Starting Leave-One-Out Procedure.\n";
-    opt::t_ErrorPair errors;
-    errors = CE::Method::leave_one_out( loomixed, fit, allsq, verbosity - 1 );
+    LaDa::opt::t_ErrorPair errors;
+    errors = LaDa::CE::Method::leave_one_out( loomixed, fit, allsq, verbosity - 1 );
     std::cout << "Average Training Errors:\n " << ( nerror = errors.first ) << "\n";
     std::cout << "Final Prediction Errors:\n " << ( nerror = errors.second ) << "\n\n";
   }
   if( leavemanyout.do_perform )
   {
-    typedef std::vector< types::t_unsigned > t_Excluded;
-    typedef CE::Mapping::ExcludeMany
+    typedef std::vector< LaDa::types::t_unsigned > t_Excluded;
+    typedef LaDa::CE::Mapping::ExcludeMany
             < 
               t_Collapse :: t_Traits :: t_Mapping, 
               t_Excluded
             > t_lmoMapping;
-    typedef Traits::CE::MixedApproachWithNewMapping
+    typedef LaDa::Traits::CE::MixedApproachWithNewMapping
             < 
               t_Collapse,
               t_lmoMapping 
             > :: type t_lmoCollapse;
     t_lmoCollapse lmomixed; lmomixed.operator=( mixed );
     std::cout << "\nStarting leave-many out predictive fit." << std::endl;
-    Fitting::LeaveManyOut::t_Return errors;
+    LaDa::Fitting::LeaveManyOut::t_Return errors;
     leavemanyout.verbosity = verbosity - 1;
-    errors = CE::Method::leave_many_out( leavemanyout, lmomixed, fit, allsq );
+    errors = LaDa::CE::Method::leave_many_out( leavemanyout, lmomixed, fit, allsq );
     std::cout << "Average Training Errors:\n " << ( nerror = errors.first ) << "\n";
     std::cout << "Final Prediction Errors:\n "
               << ( nerror = errors.second ) << "\n\n";
@@ -473,7 +472,7 @@ int main(int argc, char *argv[])
   if( not doenum.empty() )
   {
     std::cout << "\nStarting Exhaustive Enumeration of " << doenum << "\n\n";
-    typedef CE::MixedSeparables
+    typedef LaDa::CE::MixedSeparables
             < 
               t_Collapse :: t_Traits :: t_Separables, 
               t_Harmonic 
@@ -481,12 +480,12 @@ int main(int argc, char *argv[])
     t_MixedFunctional mixedfunc( *lattice );
     mixedfunc.init( cs.string(), bdesc );
     mixedfunc = mixed;
-    Crystal :: Structure structure;
+    LaDa::Crystal :: Structure structure;
     structure.cell = lattice->cell;
     size_t n(0);
-    foreach( const Crystal::Lattice::t_Site &site, lattice->sites )
+    foreach( const LaDa::Crystal::Lattice::t_Site &site, lattice->sites )
     {
-      Crystal::Structure::t_Atom atom;
+      LaDa::Crystal::Structure::t_Atom atom;
       atom.pos = site.pos;
       atom.site = n; ++n;
       atom.type = -1e0;
@@ -495,8 +494,8 @@ int main(int argc, char *argv[])
     structure.find_k_vectors();
     std::cout << "  -@0 " << structure.get_concentration()
               << " " << mixedfunc( structure ) << "\n";
-    Crystal::enumerate_pifile( doenum.string(), mixedfunc );
-    foreach( Crystal::Structure::t_Atom &atom, structure.atoms )
+    LaDa::Crystal::enumerate_pifile( doenum.string(), mixedfunc );
+    foreach( LaDa::Crystal::Structure::t_Atom &atom, structure.atoms )
       atom.type *= -1e0;
     std::cout << "  @0 " << structure.get_concentration()
               << " " << mixedfunc( structure ) << "\n";

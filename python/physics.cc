@@ -16,16 +16,19 @@
 #include "xml.hpp"
 #include "physics.hpp"
 
-namespace PythonLaDa
+namespace LaDa
 {
-  void expose_physics()
+  namespace Python
   {
-    using namespace boost::python;
-    def("Z", Physics::Atomic::Z);
-    def("Symbol", Physics::Atomic::Symbol);
-    types::t_unsigned (*ptr_charge) (const std::string &) = &Physics::Atomic::Charge;
-    def("Charge", ptr_charge);
-    def("Mass", Physics::Atomic::Mass);
-  }
+    void expose_physics()
+    {
+      using namespace boost::python;
+      def("Z", Physics::Atomic::Z);
+      def("Symbol", Physics::Atomic::Symbol);
+      types::t_unsigned (*ptr_charge) (const std::string &) = &Physics::Atomic::Charge;
+      def("Charge", ptr_charge);
+      def("Mass", Physics::Atomic::Mass);
+    }
 
-}
+  }
+} // namespace LaDa

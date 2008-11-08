@@ -22,11 +22,11 @@
 #include <vff/va.h>
 #ifdef _LAYERED
 #include <vff/layered.h>
-typedef Vff::VABase<Vff::Layered> t_Vff;
+typedef LaDa::Vff::VABase<LaDa::Vff::Layered> t_Vff;
 #define __PROGNAME__ "Valence Force Field Functional for Epitaxial Zinc-Blende Structures"
 #else
 #include <vff/functional.h>
-typedef Vff::VABase<Vff::Functional> t_Vff;
+typedef LaDa::Vff::VABase<LaDa::Vff::Functional> t_Vff;
 #define __PROGNAME__ "Valence Force Field Functional for Zinc-Blende Structures"
 #endif
 
@@ -59,12 +59,13 @@ int main(int argc, char *argv[])
   __DOASSERT( not ( fs::is_regular( input ) or fs::is_symlink( input ) ),
               input << " is a not a valid file.\n" );
     
-  boost::shared_ptr<Crystal::Lattice>  lattice( Crystal::read_lattice( input, "./" ) );
-  Crystal::Structure::lattice = lattice.get();
+  boost::shared_ptr<LaDa::Crystal::Lattice>  
+    lattice( LaDa::Crystal::read_lattice( input, "./" ) );
+  LaDa::Crystal::Structure::lattice = lattice.get();
 
   TiXmlElement *child;
-  atat::rVector3d vec;
-  Crystal::Structure structure;
+  LaDa::atat::rVector3d vec;
+  LaDa::Crystal::Structure structure;
     
   TiXmlDocument doc( input.string().c_str() );
   __DOASSERT( not doc.LoadFile(),
@@ -88,7 +89,7 @@ int main(int argc, char *argv[])
     if( not vff.init(true) ) continue;
     
     structure.energy = vff.evaluate() / 16.0217733;
-    const atat::rMatrix3d stress = vff.Vff().get_stress();
+    const LaDa::atat::rMatrix3d stress = vff.Vff().get_stress();
     std::cout << std::fixed << std::setprecision(5) 
               << "Energy [eV]: " << std::setw(12) << structure.energy << std::endl
               << "Stress Tensor: " << std::endl 
@@ -105,7 +106,7 @@ int main(int argc, char *argv[])
     vff.print_escan_input( "atomic.config" );
   
   
-    Crystal::Fourier( structure.atoms.begin(),  structure.atoms.end(),
+    LaDa::Crystal::Fourier( structure.atoms.begin(),  structure.atoms.end(),
                        structure.k_vecs.begin(), structure.k_vecs.end() );
     structure.print_out(std::cout );
   }

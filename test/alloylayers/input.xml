@@ -4,8 +4,8 @@
   <Structure direction="(1 1 1)" extent="(3 5 5)">
     <Cell>
       <row x="3" y="0" z="0"/>
-      <row x="3" y="-2" z="0"/>
-      <row x="3" y="0" z="-2"/>
+      <row x="3" y="2" z="0"/>
+      <row x="3" y="0" z="2"/>
     </Cell>
   </Structure>
   <Lattice scale="5.99">

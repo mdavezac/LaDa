@@ -7,10 +7,13 @@
 
 #include "convex_hull.h"
 
-namespace opt
-{ 
-  namespace ConvexHull
-  {
-    types::t_real NullObject::x = 0;
+namespace LaDa
+{
+  namespace opt
+  { 
+    namespace ConvexHull
+    {
+      types::t_real NullObject::x = 0;
+    }
   }
-}
+} // namespace LaDa

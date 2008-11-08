@@ -13,7 +13,10 @@
 #include "stdout.h"
 #include "manip.h"
 
-namespace Print
+namespace LaDa
 {
-  StdOut out;
-}
+  namespace Print
+  {
+    StdOut out;
+  }
+} // namespace LaDa

@@ -7,9 +7,11 @@
 #endif
 
 
-namespace PythonLaDa
+namespace LaDa
 {
-  void expose_atom();
-}
-
+  namespace Python
+  {
+    void expose_atom();
+  }
+} //  namespace LaDa
 

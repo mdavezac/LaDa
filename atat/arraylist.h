@@ -14,6 +14,9 @@
 
 #include <opt/types.h>
 
+namespace LaDa
+{
+
 namespace atat
 { 
 
@@ -286,5 +289,7 @@ void extract_columns(Array2d<T> *pa, const Array2d<T> &b, const LinkedList<types
 
 
 } // namespace atat
+
+} // namespace LaDa
 
 #endif

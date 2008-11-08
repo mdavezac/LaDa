@@ -36,15 +36,16 @@
 #include <revision.h>
 #define __PROGNAME__ "Fixed-Lattice Sum of Separable functions" 
 
-const types::t_unsigned print_reruns   = 1;
-const types::t_unsigned print_checks   = 2;
-const types::t_unsigned print_function = 3;
-const types::t_unsigned print_allsq    = 4;
-const types::t_unsigned print_data     = 5;
-const types::t_unsigned print_llsq     = 6;
+const LaDa::types::t_unsigned print_reruns   = 1;
+const LaDa::types::t_unsigned print_checks   = 2;
+const LaDa::types::t_unsigned print_function = 3;
+const LaDa::types::t_unsigned print_allsq    = 4;
+const LaDa::types::t_unsigned print_data     = 5;
+const LaDa::types::t_unsigned print_llsq     = 6;
 
 int main(int argc, char *argv[]) 
 {
+  using LaDa;
   try
   {
     namespace po = boost::program_options;

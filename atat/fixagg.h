@@ -11,6 +11,9 @@
 
 #include <opt/types.h>
 
+namespace LaDa
+{
+
 namespace atat
 { 
 
@@ -25,5 +28,7 @@ public:
 
 
 } // namespace atat
+
+} // namespace LaDa
 
 #endif

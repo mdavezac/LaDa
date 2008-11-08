@@ -23,6 +23,8 @@
 #include "cluster.h"
 
 
+namespace LaDa
+{
 namespace CE {
   //! \cond
   namespace details
@@ -381,4 +383,4 @@ namespace CE {
   }
   
 } // namespace CE
-
+}

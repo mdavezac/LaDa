@@ -12,6 +12,8 @@
 
 #include "harmonic.h"
 
+namespace LaDa
+{
 namespace CE
 {
   namespace ConstituentStrain
@@ -246,4 +248,4 @@ namespace CE
   } // namespace ConstituentStrain
 
 } // namespace CE
-
+}

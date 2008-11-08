@@ -16,56 +16,59 @@
 
 #include "functional.h"
 
-namespace Vff
+namespace LaDa
 {
-  //! \ingroup Fortran 
-  //! \brief Interface object for fortran.
-  //! \details This object is specialized for fcc lattices with two
-  //!          atomic-sites (see Fortran::Fortran() ). An instance of this
-  //!          object, pointed to by Vff::fortran, is created by vff_create().
-  //!          It is upon this instance that all the "C" functions of the
-  //!          fortran interface will act.
-  class Fortran : public Functional
+  namespace Vff
   {
-    protected:
-      //! Crystal::Structure instance to minimize
-      Crystal::Structure structure;
-      //! Crystal::Lattice instance on which Fortran::structure exists.
-      Crystal::Lattice lattice;
+    //! \ingroup Fortran 
+    //! \brief Interface object for fortran.
+    //! \details This object is specialized for fcc lattices with two
+    //!          atomic-sites (see Fortran::Fortran() ). An instance of this
+    //!          object, pointed to by Vff::fortran, is created by vff_create().
+    //!          It is upon this instance that all the "C" functions of the
+    //!          fortran interface will act.
+    class Fortran : public Functional
+    {
+      protected:
+        //! Crystal::Structure instance to minimize
+        Crystal::Structure structure;
+        //! Crystal::Lattice instance on which Fortran::structure exists.
+        Crystal::Lattice lattice;
 
-    public:
-      //! Constructor
-      Fortran();
+      public:
+        //! Constructor
+        Fortran();
 
-      //! Prints the lattice to the standard output
-      void print_lattice() { std::cout << lattice << std::endl; }
-      //! Prints the structure to the standard output
-      void print_structure() { std::cout << structure << std::endl; }
-      //! Sets the scale of the structure and the lattice
-      void set_scale( types::t_real _scale )
-        { structure.scale = lattice.scale = _scale;  }
-      //! \brief Sets the cell of the structure.
-      //! \details Since fortran is the point, the array is a column-major 3x3
-      //!          matrix.
-      void set_cell( types::t_real *_array );
-      //! \brief Sets the atomic positions.
-      //! \see vff_atom()
-      void set_atoms( types::t_int n, types::t_real *_positions, char *_type );
+        //! Prints the lattice to the standard output
+        void print_lattice() { std::cout << lattice << std::endl; }
+        //! Prints the structure to the standard output
+        void print_structure() { std::cout << structure << std::endl; }
+        //! Sets the scale of the structure and the lattice
+        void set_scale( types::t_real _scale )
+          { structure.scale = lattice.scale = _scale;  }
+        //! \brief Sets the cell of the structure.
+        //! \details Since fortran is the point, the array is a column-major 3x3
+        //!          matrix.
+        void set_cell( types::t_real *_array );
+        //! \brief Sets the atomic positions.
+        //! \see vff_atom()
+        void set_atoms( types::t_int n, types::t_real *_positions, char *_type );
 
-      //! \brief sets the parameters of bond interactions.
-      //! \see vff_bond()
-      void set_bond_parameters( char *_bond, const types::t_real _d0,
-                                const types::t_real *_alphas );
-      
-      //! \brief sets the parameters of angle and bond-angle interactions.
-      //! \see vff_angle()
-      void set_angle_parameters( char *_angle, const types::t_real _gamma, 
-                                 const types::t_real _sigma, const types::t_real *_betas );
-  };
- 
-  //! Global instance on which the fortran interface will act.
-  Fortran *fortran = NULL;
-}
+        //! \brief sets the parameters of bond interactions.
+        //! \see vff_bond()
+        void set_bond_parameters( char *_bond, const types::t_real _d0,
+                                  const types::t_real *_alphas );
+        
+        //! \brief sets the parameters of angle and bond-angle interactions.
+        //! \see vff_angle()
+        void set_angle_parameters( char *_angle, const types::t_real _gamma, 
+                                   const types::t_real _sigma, const types::t_real *_betas );
+    };
+   
+    //! Global instance on which the fortran interface will act.
+    Fortran *fortran = NULL;
+  }
+} // namespace LaDa
 
 
 #ifdef _DOXY_HOODWINKER_

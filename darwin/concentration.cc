@@ -9,96 +9,98 @@
 
 #include <opt/debug.h>       // std::runtime_error
 
-types::t_real set_concentration( Crystal::Structure &_str,
-                                 types::t_real _target )
+namespace LaDa
 {
-  types::t_unsigned N = (types::t_int) _str.atoms.size();
-  types::t_complex  *hold = new types::t_complex[ N ];
-
-  __DOASSERT( not hold,
-              " Could not allocate memory in set_concentration.\n" )
-
-  types::t_complex  *i_hold = hold;
-  Crystal::Fourier( _str.atoms.begin(), _str.atoms.end(),
-                     _str.k_vecs.begin(), _str.k_vecs.end(),
-                     i_hold );
-
-  Crystal::Structure::t_Atoms::iterator i_atom = _str.atoms.begin();
-  Crystal::Structure::t_Atoms::iterator i_atom_end = _str.atoms.end();
-  types :: t_int result = 0; 
-  i_hold = hold;
-  for (; i_atom != i_atom_end; ++i_atom, ++i_hold)
+  types::t_real set_concentration( Crystal::Structure &_str,
+                                   types::t_real _target )
   {
-    if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T )
-      ( i_atom->type > 0 ) ? ++result : --result;
-    else 
-    {
-      ( std::real(*i_hold) > 0 ) ? ++result : --result;
-      i_atom->type = ( std::real(*i_hold) > 0 ) ? 1.0: -1.0;
-    }
-  }
+    types::t_unsigned N = (types::t_int) _str.atoms.size();
+    types::t_complex  *hold = new types::t_complex[ N ];
 
-  if ( _target == -2.0 )
-  {
-    delete[] hold;
-    return (double) result  / (double) N;
-  }
+    __DOASSERT( not hold,
+                " Could not allocate memory in set_concentration.\n" )
 
-  types::t_int to_change = static_cast<types::t_int>( (double) N * _target ) - result;
-  if (  not to_change ) 
-  {
-    delete[] hold;
-    return _target;
-  }
+    types::t_complex  *i_hold = hold;
+    Crystal::Fourier( _str.atoms.begin(), _str.atoms.end(),
+                       _str.k_vecs.begin(), _str.k_vecs.end(),
+                       i_hold );
 
-  i_atom = _str.atoms.begin();
-  i_hold = hold;
-  for (; i_atom != i_atom_end; ++i_atom, ++i_hold)
-    if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T )
-      *i_hold = to_change;
-    else if ( to_change > 0 and std::real( *i_hold ) > 0 )
-      *i_hold = to_change;
-    else if ( to_change < 0 and std::real( *i_hold ) < 0 )
-      *i_hold = to_change;
-
-  i_atom = _str.atoms.begin();
-  types::t_int which;
-  do
-  {
+    Crystal::Structure::t_Atoms::iterator i_atom = _str.atoms.begin();
+    Crystal::Structure::t_Atoms::iterator i_atom_end = _str.atoms.end();
+    types :: t_int result = 0; 
     i_hold = hold;
-    which = 0;
-    types::t_real maxr = 1.0;
-    if ( to_change > 0 )
+    for (; i_atom != i_atom_end; ++i_atom, ++i_hold)
     {
+      if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T )
+        ( i_atom->type > 0 ) ? ++result : --result;
+      else 
+      {
+        ( std::real(*i_hold) > 0 ) ? ++result : --result;
+        i_atom->type = ( std::real(*i_hold) > 0 ) ? 1.0: -1.0;
+      }
+    }
+
+    if ( _target == -2.0 )
+    {
+      delete[] hold;
+      return (double) result  / (double) N;
+    }
+
+    types::t_int to_change = static_cast<types::t_int>( (double) N * _target ) - result;
+    if (  not to_change ) 
+    {
+      delete[] hold;
+      return _target;
+    }
+
+    i_atom = _str.atoms.begin();
+    i_hold = hold;
+    for (; i_atom != i_atom_end; ++i_atom, ++i_hold)
+      if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T )
+        *i_hold = to_change;
+      else if ( to_change > 0 and std::real( *i_hold ) > 0 )
+        *i_hold = to_change;
+      else if ( to_change < 0 and std::real( *i_hold ) < 0 )
+        *i_hold = to_change;
+
+    i_atom = _str.atoms.begin();
+    types::t_int which;
+    do
+    {
+      i_hold = hold;
+      which = 0;
+      types::t_real maxr = 1.0;
+      if ( to_change > 0 )
+      {
+        for( types::t_unsigned i = 0; i < N; ++i, ++i_hold ) 
+          if (     ( maxr == 1.0 and std::real( *i_hold ) < 0 )
+               or  (  std::real( *i_hold ) < 0 and maxr <  std::real( *i_hold ) ) )
+          {
+            maxr = std::real( *i_hold );
+            which = i;
+          }
+        ( i_atom + which )->type = 1.0;
+        *( hold + which ) = to_change;
+        result+=2; to_change-=2;
+        continue;
+      }
+      maxr = -1.0;
       for( types::t_unsigned i = 0; i < N; ++i, ++i_hold ) 
-        if (     ( maxr == 1.0 and std::real( *i_hold ) < 0 )
-             or  (  std::real( *i_hold ) < 0 and maxr <  std::real( *i_hold ) ) )
+        if (     ( maxr == -1.0 and std::real( *i_hold ) > 0 )
+             or  (  std::real( *i_hold ) > 0 and maxr >  std::real( *i_hold ) ) )
         {
           maxr = std::real( *i_hold );
           which = i;
         }
-      ( i_atom + which )->type = 1.0;
+      ( i_atom + which )->type = -1.0;
       *( hold + which ) = to_change;
-      result+=2; to_change-=2;
-      continue;
-    }
-    maxr = -1.0;
-    for( types::t_unsigned i = 0; i < N; ++i, ++i_hold ) 
-      if (     ( maxr == -1.0 and std::real( *i_hold ) > 0 )
-           or  (  std::real( *i_hold ) > 0 and maxr >  std::real( *i_hold ) ) )
-      {
-        maxr = std::real( *i_hold );
-        which = i;
-      }
-    ( i_atom + which )->type = -1.0;
-    *( hold + which ) = to_change;
-    result-=2; to_change+=2;
+      result-=2; to_change+=2;
 
-  } while (to_change); 
-  
-  delete[] hold;
-  return (double) result  / (double) N;
-}
+    } while (to_change); 
+    
+    delete[] hold;
+    return (double) result  / (double) N;
+  }
 
 
   bool X_vs_y :: Load ( const TiXmlElement &_node )
@@ -228,4 +230,4 @@ types::t_real set_concentration( Crystal::Structure &_str,
            << a << " * y^2 + "  << b << " * y + "  << c;
     return sstr.str();
   }
-
+} // namespace LaDa

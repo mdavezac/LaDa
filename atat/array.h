@@ -14,6 +14,8 @@
 
 #include <opt/types.h>
 
+namespace LaDa
+{
 namespace atat
 { 
 
@@ -561,5 +563,7 @@ void extract_elements(Array<T> *pa, types::t_int first_dest, const Array<T> &b, 
 
 
 } // namespace atat
+
+} // namespace LaDa
 
 #endif

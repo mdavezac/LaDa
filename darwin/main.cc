@@ -18,19 +18,19 @@
 
 #ifdef _PESCAN
 # include "bandgap.h"
-  typedef BandGap :: Evaluator t_Evaluator;
+  typedef LaDa::BandGap :: Evaluator t_Evaluator;
 # define __PROGNAME__ "Band-Gap Optimization"
 #elif defined(_CE)
 # include "groundstate.h"
-  typedef GroundState :: Evaluator t_Evaluator;
+  typedef LaDa::GroundState :: Evaluator t_Evaluator;
 # define __PROGNAME__ "Cluster Expansion Optimization"
 #elif defined(_MOLECULARITY)
 # include "molecularity.h"
-  typedef Molecularity :: Evaluator t_Evaluator;
+  typedef LaDa::Molecularity :: Evaluator t_Evaluator;
 # define __PROGNAME__ "Band-Gap Optimization for Epitaxial Structure"
 #elif defined(_EMASS)
 # include "emass.h"
-  typedef eMassSL :: Evaluator t_Evaluator;
+  typedef LaDa::eMassSL :: Evaluator t_Evaluator;
 # define __PROGNAME__ "emass_opt"
 #elif defined( _ALLOY_LAYERS_ )
 # include "alloylayers/main.extras.h"
@@ -49,12 +49,11 @@
 #include "individual.h"
 #include "darwin.h"
 
-
 int main(int argc, char *argv[]) 
 {
   namespace fs = boost::filesystem;
   namespace bl = boost::lambda;
-  opt::InitialPath::init();
+  LaDa::opt::InitialPath::init();
 
   __MPI_START__
   __TRYBEGIN
@@ -77,7 +76,7 @@ int main(int argc, char *argv[])
   
   __ROOTCODE
   (
-    (*::mpi::main),
+    (*::LaDa::mpi::main),
     std::cout << "Will load input from file: " << input << ".\n";
   )
     
@@ -87,30 +86,30 @@ int main(int argc, char *argv[])
  
   __ROOTCODE
   (
-    (*::mpi::main),
+    (*::LaDa::mpi::main),
     std::cout << "Will perform " << reruns << " GA runs.\n\n";
   )
   
-  for( types::t_int i = 0; i < reruns; ++i )
+  for( LaDa::types::t_int i = 0; i < reruns; ++i )
   {
-    GA::Darwin< t_Evaluator > ga;
-    Print :: out << "load result: " << ga.Load(input.string()) << Print::endl; 
+    LaDa::GA::Darwin< t_Evaluator > ga;
+    LaDa::Print :: out << "load result: " << ga.Load(input.string()) << LaDa::Print::endl; 
 
     // Prints program options to Print::out and Print::xmg.
 #   include "alloylayers/main.extras.h" 
     // Connects assignement and print functors for alloylayers config. space.
 #   include "alloylayers/main.extras.h" 
     
-    Print::out << "Rerun " << i+1 << " of " << reruns << Print::endl;
+    LaDa::Print::out << "Rerun " << i+1 << " of " << reruns << LaDa::Print::endl;
     __ROOTCODE
     (
-      (*::mpi::main),
+      (*::LaDa::mpi::main),
       std::cout << "Rerun " << i+1 << " of " << reruns << ".\n";
     )
     ga.run();
     // for reruns.
-    Print::xmg.dont_truncate();
-    Print::out.dont_truncate();
+    LaDa::Print::xmg.dont_truncate();
+    LaDa::Print::out.dont_truncate();
   }
   
   __BPO_CATCH__( __MPICODE( MPI_Finalize() ) )

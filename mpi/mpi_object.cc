@@ -8,9 +8,11 @@
 #include "mpi_object.h"
 
 #ifdef _MPI
-namespace mpi
+namespace LaDa
 {
-  boost::mpi::communicator *main = NULL; 
-}
-
+  namespace mpi
+  {
+    boost::mpi::communicator *main = NULL; 
+  }
+} // namespace LaDa
 #endif

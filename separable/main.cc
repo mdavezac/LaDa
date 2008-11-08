@@ -34,12 +34,12 @@
 #include <revision.h>
 #define __PROGNAME__ "Fixed-Lattice Sum of Separable functions" 
 
-const types::t_unsigned print_reruns   = 1;
-const types::t_unsigned print_checks   = 2;
-const types::t_unsigned print_function = 3;
-const types::t_unsigned print_allsq    = 4;
-const types::t_unsigned print_data     = 5;
-const types::t_unsigned print_llsq     = 6;
+const LaDa::types::t_unsigned print_reruns   = 1;
+const LaDa::types::t_unsigned print_checks   = 2;
+const LaDa::types::t_unsigned print_function = 3;
+const LaDa::types::t_unsigned print_allsq    = 4;
+const LaDa::types::t_unsigned print_data     = 5;
+const LaDa::types::t_unsigned print_llsq     = 6;
 
 int main(int argc, char *argv[]) 
 {
@@ -47,51 +47,51 @@ int main(int argc, char *argv[])
   {
     namespace po = boost::program_options;
 
-    Fitting::LeaveManyOut leavemanyout;
+    LaDa::Fitting::LeaveManyOut leavemanyout;
 
     po::options_description generic("Generic Options");
     generic.add_options()
            ("help,h", "produces this help message.")
            ("version,v", "prints version string.")
-           ("verbose,p", po::value<types::t_unsigned>()->default_value(0),
+           ("verbose,p", po::value<LaDa::types::t_unsigned>()->default_value(0),
                          "Level of verbosity.\n"  )
-           ("seed", po::value<types::t_unsigned>()->default_value(0),
+           ("seed", po::value<LaDa::types::t_unsigned>()->default_value(0),
                     "Seed of the random number generator.\n"  )
-           ("reruns", po::value<types::t_unsigned>()->default_value(1),
+           ("reruns", po::value<LaDa::types::t_unsigned>()->default_value(1),
                       "number of times to run the algorithm.\n" 
                       "Is equivalent to manually re-launching the program.\n");
     po::options_description specific("Separables Options");
     specific.add_options()
         ("cross,c", "Performs leave-one-out"
                     " cross-validation, rather than simple fit.\n"  )
-        ("size,s", po::value<types::t_unsigned>()->default_value(3),
+        ("size,s", po::value<LaDa::types::t_unsigned>()->default_value(3),
                    "Size of the cubic basis." )
-        ("rank,r", po::value<types::t_unsigned>()->default_value(3),
+        ("rank,r", po::value<LaDa::types::t_unsigned>()->default_value(3),
                    "Rank of the sum of separable functions." )
         ("basis,r", po::value<std::string>(),
                    "Description of the ranks/size of the figure used\n." )
-        ("tolerance", po::value<types::t_real>()->default_value(1e-4),
+        ("tolerance", po::value<LaDa::types::t_real>()->default_value(1e-4),
                       "Tolerance of the alternating linear-least square fit.\n"  )
-        ("maxiter,m", po::value<types::t_unsigned>()->default_value(40),
+        ("maxiter,m", po::value<LaDa::types::t_unsigned>()->default_value(40),
                       "Maximum number of iterations for"
                       " Alternating linear-least square fit.\n"  )
-        ("1dtolerance", po::value<types::t_real>()->default_value(1e-4),
+        ("1dtolerance", po::value<LaDa::types::t_real>()->default_value(1e-4),
                         "Tolerance of the 1d linear-least square fit.\n" )
         ("noupdate", "Whether to update during 1d least-square fits.\n" )
         ("conv", "Use conventional cell rather than unit-cell.\n"
                  "Should work for fcc and bcc if lattice is inputed right.\n" )
-        ("random", po::value<types::t_real>()->default_value(5e-1),
+        ("random", po::value<LaDa::types::t_real>()->default_value(5e-1),
                    "Coefficients will be chosen randomly in the range [random,-random].\n" )
 #       ifdef __DOHALFHALF__
-          ("lambda,l", po::value<types::t_real>()->default_value(0),
+          ("lambda,l", po::value<LaDa::types::t_real>()->default_value(0),
                        "Regularization factor.\n" )
 #       endif
-        ("nbguesses", po::value<types::t_unsigned>()->default_value(1),
+        ("nbguesses", po::value<LaDa::types::t_unsigned>()->default_value(1),
                       "Number of initial guesses to try prior to (any) fitting.\n" );
     leavemanyout.add_cmdl( specific );
     po::options_description hidden("hidden");
     hidden.add_options()
-        ("offset", po::value<types::t_real>()->default_value(0e0), 
+        ("offset", po::value<LaDa::types::t_real>()->default_value(0e0), 
                    "Adds an offset to the energies.\n" )
         ("prerun", "Wether to perform real-runs, or small pre-runs followed"
                    " by a a longer, converged run.\n" )
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
  
     std::cout << "\n" << __PROGNAME__
               << " from the " << PACKAGE_STRING << " package.\n"
-              << "Subversion Revision: " << SVN::Revision << "\n\n"; 
+              << "Subversion Revision: " << LaDa::SVN::Revision << "\n\n"; 
     if ( vm.count("version") ) return 1;
     if ( vm.count("help") )
     {
@@ -139,37 +139,37 @@ int main(int argc, char *argv[])
     std::string filename("input.xml");
     if( vm.count("latticeinput") ) filename = vm["latticeinput"].as< std::string >();
 
-    types::t_unsigned verbose = vm["verbose"].as<types::t_unsigned>();
-    types::t_unsigned seed = vm["seed"].as<types::t_unsigned>();
-    seed = opt::random::seed( seed );
-    types::t_unsigned reruns(1);
-    if( vm.count("reruns") ) reruns = vm["reruns"].as< types::t_unsigned >();
+    LaDa::types::t_unsigned verbose = vm["verbose"].as<LaDa::types::t_unsigned>();
+    LaDa::types::t_unsigned seed = vm["seed"].as<LaDa::types::t_unsigned>();
+    seed = LaDa::opt::random::seed( seed );
+    LaDa::types::t_unsigned reruns(1);
+    if( vm.count("reruns") ) reruns = vm["reruns"].as< LaDa::types::t_unsigned >();
     __DOASSERT( reruns == 0, "0 number of runs performed... As required on input.\n" )
     bool cross = vm.count("cross");
-    types::t_unsigned rank( vm["rank"].as< types::t_unsigned >() );
+    LaDa::types::t_unsigned rank( vm["rank"].as< LaDa::types::t_unsigned >() );
     __DOASSERT( rank == 0, "Separable function of rank 0 is obnoxious.\n" )
-    types::t_unsigned size( vm["size"].as< types::t_unsigned >() );
+    LaDa::types::t_unsigned size( vm["size"].as< LaDa::types::t_unsigned >() );
     __DOASSERT( size == 0, "Separable function of dimension 0 is obnoxious.\n" )
-    types::t_real tolerance( vm["tolerance"].as< types::t_real >() );
-    types::t_unsigned maxiter( vm["maxiter"].as< types::t_unsigned >() );
-    types::t_real dtolerance( vm["1dtolerance"].as< types::t_real >() );
+    LaDa::types::t_real tolerance( vm["tolerance"].as< LaDa::types::t_real >() );
+    LaDa::types::t_unsigned maxiter( vm["maxiter"].as< LaDa::types::t_unsigned >() );
+    LaDa::types::t_real dtolerance( vm["1dtolerance"].as< LaDa::types::t_real >() );
     bool doupdate = not vm.count("noupdate");
     bool convcell = vm.count("conv");
-    types::t_real offset ( vm["offset"].as< types::t_real >() );
-    if( Fuzzy::eq( offset, types::t_real(0) ) ) offset = types::t_real(0);
+    LaDa::types::t_real offset ( vm["offset"].as< LaDa::types::t_real >() );
+    if( LaDa::Fuzzy::eq( offset, LaDa::types::t_real(0) ) ) offset = LaDa::types::t_real(0);
     bool prerun ( vm.count("prerun") != 0 );
-    types::t_real howrandom( vm["random"].as<types::t_real>() );
+    LaDa::types::t_real howrandom( vm["random"].as<LaDa::types::t_real>() );
     std::string bdesc("");
     if( vm.count("basis") == 1 )
       bdesc = vm["basis"].as<std::string>();
 #   ifdef __DOHALFHALF__
-      types::t_real lambda( vm["lambda"].as<types::t_real>() );
+      LaDa::types::t_real lambda( vm["lambda"].as<LaDa::types::t_real>() );
 #   endif
-    types::t_unsigned nbguesses( vm["nbguesses"].as<types::t_unsigned>() );
+    LaDa::types::t_unsigned nbguesses( vm["nbguesses"].as<LaDa::types::t_unsigned>() );
     __ASSERT( nbguesses == 0, "Invalid input nbguesses = 0.\n" )
 
     // Loads lattice
-    boost::shared_ptr< Crystal::Lattice > lattice( new Crystal :: Lattice );
+    boost::shared_ptr< LaDa::Crystal::Lattice > lattice( new LaDa::Crystal::Lattice );
     { 
       TiXmlDocument doc;
       if( boost::filesystem::exists( filename ) )
@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
       TiXmlElement *child = handle.FirstChild( "Job" )
                                   .FirstChild( "Lattice" ).Element();
       __DOASSERT( not child, "Could not find Lattice in input." )
-      Crystal::Structure::lattice = &( *lattice );
+      LaDa::Crystal::Structure::lattice = &( *lattice );
       __DOASSERT( not lattice->Load(*child),
                   "Error while reading Lattice from input.")
 #     if defined (_TETRAGONAL_CE_)
@@ -203,8 +203,8 @@ int main(int argc, char *argv[])
         // expect explicitely tetragonal lattice. 
         // Other expect a "cubic" lattice wich is implicitely tetragonal...
         // Historical bullshit from input structure files @ nrel.
-        for( types::t_int i=0; i < 3; ++i ) 
-          if( Fuzzy::eq( lattice->cell.x[i][2], 0.5e0 ) )
+        for( LaDa::types::t_int i=0; i < 3; ++i ) 
+          if( LaDa::Fuzzy::eq( lattice->cell.x[i][2], 0.5e0 ) )
             lattice->cell.x[i][2] = 0.6e0;
 #     endif
       lattice->find_space_group();
@@ -213,17 +213,17 @@ int main(int argc, char *argv[])
         // expect explicitely tetragonal lattice. 
         // Other expect a "cubic" lattice wich is implicitely tetragonal...
         // Historical bullshit from input structure files @ nrel.
-        for( types::t_int i=0; i < 3; ++i ) 
-          if( Fuzzy::eq( lattice->cell.x[i][2], 0.6e0 ) )
+        for( LaDa::types::t_int i=0; i < 3; ++i ) 
+          if( LaDa::Fuzzy::eq( lattice->cell.x[i][2], 0.6e0 ) )
             lattice->cell.x[i][2] = 0.5e0;
 #     endif
     }
 
     // Initializes fitting.
-    typedef Fitting::Allsq<Fitting::Cgs> t_Fitting;
+    typedef LaDa::Fitting::Allsq<LaDa::Fitting::Cgs> t_Fitting;
     t_Fitting allsq;
 
-    Separables::BestOf< t_Fitting > bestof;
+    LaDa::Separables::BestOf< t_Fitting > bestof;
     bestof.n = reruns;
     bestof.verbose = verbose >= print_reruns;
     bestof.prerun = prerun;
@@ -236,7 +236,7 @@ int main(int argc, char *argv[])
     bestof.t_Fitting::linear_solver.verbose = verbose >= print_llsq;
 
     // Initializes the symmetry-less separable function.
-    typedef CE::Separables t_Function;
+    typedef LaDa::CE::Separables t_Function;
     t_Function separables( rank, size, convcell ? "conv": "cube" );
     if( not bdesc.empty() )
     {
@@ -244,24 +244,24 @@ int main(int argc, char *argv[])
       boost::match_results<std::string::const_iterator> what;
       __DOASSERT( not boost::regex_search( bdesc, what, re ),
                   "Could not parse --basis input: " << bdesc << "\n" )
-      atat::rMatrix3d cell;
-      cell.set_diagonal( boost::lexical_cast<types::t_real>(what.str(1)),
-                         boost::lexical_cast<types::t_real>(what.str(2)),
-                         boost::lexical_cast<types::t_real>(what.str(3)) );
+      LaDa::atat::rMatrix3d cell;
+      cell.set_diagonal( boost::lexical_cast<LaDa::types::t_real>(what.str(1)),
+                         boost::lexical_cast<LaDa::types::t_real>(what.str(2)),
+                         boost::lexical_cast<LaDa::types::t_real>(what.str(3)) );
       separables.set_basis( cell );
     }
     
     // Initializes cum-symmetry separable function.
-    CE::SymSeparables symsep( separables );
+    LaDa::CE::SymSeparables symsep( separables );
 
     // Initializes collapse functor.
-    Separable::EquivCollapse< t_Function > collapse( separables );
+    LaDa::Separable::EquivCollapse< t_Function > collapse( separables );
 #   ifdef __DOHALFHALF__
       collapse.regular_factor = lambda;
 #   endif
 
     // Initializes Interface to allsq.
-    Fitting::SepCeInterface interface;
+      LaDa::Fitting::SepCeInterface interface;
     interface.howrandom = howrandom;
     interface.nb_initial_guesses = nbguesses;
     interface.verbose = verbose >= 4;
@@ -269,8 +269,8 @@ int main(int argc, char *argv[])
     interface.read( symsep, dir, "LDAs.dat", verbose >= print_data );
 #   if defined (_TETRAGONAL_CE_)
       // From here on, lattice should be explicitely tetragonal.
-      for( types::t_int i=0; i < 3; ++i ) 
-        if( Fuzzy::eq( lattice->cell.x[i][2], 0.5e0 ) )
+      for( LaDa::types::t_int i=0; i < 3; ++i ) 
+        if( LaDa::Fuzzy::eq( lattice->cell.x[i][2], 0.5e0 ) )
           lattice->cell.x[i][2] = 0.6e0;
 #   endif
 
@@ -278,10 +278,10 @@ int main(int argc, char *argv[])
     leavemanyout.extract_cmdl( vm );
     leavemanyout.verbosity = verbose;
 
-    opt::NErrorTuple nerror( interface.mean_n_var() ); 
+    LaDa::opt::NErrorTuple nerror( interface.mean_n_var() ); 
     
 
-    typedef Fitting::SepCeInterface::t_PairErrors t_PairErrors;
+    typedef LaDa::Fitting::SepCeInterface::t_PairErrors t_PairErrors;
 
     std::cout << "Performing " << (cross ? "Cross-Validation" : "Fitting" ) << ".\n"
               << "Using " << ( convcell ? "conventional ": "unit-" )
@@ -313,20 +313,20 @@ int main(int argc, char *argv[])
      std::cout << "Performing prerun.\n";
     std::cout << "Random Seed: " << seed << "\n";
 #   ifdef __DOHALFHALF__
-      if( Fuzzy::gt( lambda, 0e0 ) )
+      if( LaDa::Fuzzy::gt( lambda, 0e0 ) )
         std::cout << "Regularizing with factor: " << lambda << "\n";
       std::cout << "Using True/False and True/True inner basis.\n"; 
 #   else
       std::cout << "Using True/False and False/True inner basis.\n"; 
 #   endif
 
-    if( Fuzzy :: neq( offset, 0e0 ) ) std::cout << "Offset: " << offset << "\n";
+    if( LaDa::Fuzzy :: neq( offset, 0e0 ) ) std::cout << "Offset: " << offset << "\n";
 
     // fitting.
     if( leavemanyout.do_perform )
     {
       std::cout << "\nStarting leave-many out predictive fit." << std::endl;
-      Fitting::LeaveManyOut::t_Return result;
+      LaDa::Fitting::LeaveManyOut::t_Return result;
       result = leavemanyout( interface, bestof, collapse );
       std::cout << " Training errors:\n" << ( nerror = result.first ) << "\n"
                 << " Prediction errors:\n" << ( nerror = result.second ) << "\n";
@@ -341,8 +341,8 @@ int main(int argc, char *argv[])
     else
     {
       std::cout << "\nLeave-one-out prediction:" << std::endl;
-      std::pair< opt::ErrorTuple, opt::ErrorTuple > result;
-      result = Fitting::leave_one_out( interface, bestof, collapse,
+      std::pair< LaDa::opt::ErrorTuple, LaDa::opt::ErrorTuple > result;
+      result = LaDa::Fitting::leave_one_out( interface, bestof, collapse,
                                        verbose >= print_checks );
       std::cout << " Training errors:\n" << ( nerror = result.first ) << "\n"
                 << " Prediction errors:\n" << ( nerror = result.second ) << "\n";

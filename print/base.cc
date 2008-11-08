@@ -19,80 +19,83 @@
 #include <boost/mpi/collectives.hpp>
 #endif
 
-namespace Print
+namespace LaDa
 {
-  void Base :: do_checks()
+  namespace Print
   {
-    if ( not is_open() ) open();
-    if ( not is_empty ) return;
-    
-    file << "### " << std::endl 
-         << "### Subversion Revision Number " << SVN::Revision << std::endl
-         << "### " << std::endl;
-    is_empty = false;
-  }
-
-  void Base :: init(const t_Path &_f)
-  { 
-    do_print = false;
-    __ROOTCODE( (*::mpi::main), do_print = true; )
-    if ( filename == _f ) return;
-    init_(_f); 
-  }
-
-  void Base :: init_ (const t_Path &_f)
-  { 
-    if ( is_open() ) close();
-    filename = reformat_home( _f.string() );
-    do_print = true;
-    __NOTMPIROOT( (*::mpi::main), 
-      filename =    filename.string()
-                  + ".mpi:" 
-                  + boost::lexical_cast<std::string>( ::mpi::main->rank() );
-    )
-    is_empty = true;
-    if ( (not do_print) or (not boost::filesystem::exists( filename )) ) return;
-
-    if( truncate ) { boost::filesystem::remove( filename ); return; }
-
-    file.open( filename.string().c_str(),
-               truncate ? std::ios_base::trunc: std::ios_base::app | std::ios_base::out); 
-    if (file.fail() )
+    void Base :: do_checks()
     {
-      std::cerr << "Could not open " << filename << std::endl;
-      do_print = false;
-      return;
+      if ( not is_open() ) open();
+      if ( not is_empty ) return;
+      
+      file << "### " << std::endl 
+           << "### Subversion Revision Number " << SVN::Revision << std::endl
+           << "### " << std::endl;
+      is_empty = false;
     }
-    file << "\n\n"; 
-    close();
-  }
-  bool Base :: open ()
-  {
-    if ( not do_print ) return true;
-    if ( file.is_open() ) return true;
-    file.open( filename.string().c_str(), std::ios_base::out|std::ios_base::app ); 
-    return file.is_open();
-  }    
-  void Base :: close ()
-  {
-    if ( not do_print ) return;
-    if ( not file.is_open() ) return;
-    file.flush();
-    file.close();
-  }    
 
-#ifdef _MPI
-  void Base::sync_filename( t_Path &_filename )
-  {
-    filename = _filename;
-    sync_filename();
-    _filename = filename;
-  }
-  void Base::sync_filename()
-  {
-    boost::mpi::broadcast( *::mpi::main, filename, 0 );
-    init_(filename);
-  }
-#endif
+    void Base :: init(const t_Path &_f)
+    { 
+      do_print = false;
+      __ROOTCODE( (*LaDa::mpi::main), do_print = true; )
+      if ( filename == _f ) return;
+      init_(_f); 
+    }
 
-}
+    void Base :: init_ (const t_Path &_f)
+    { 
+      if ( is_open() ) close();
+      filename = reformat_home( _f.string() );
+      do_print = true;
+      __NOTMPIROOT( (*LaDa::mpi::main), 
+        filename =    filename.string()
+                    + ".mpi:" 
+                    + boost::lexical_cast<std::string>( LaDa::mpi::main->rank() );
+      )
+      is_empty = true;
+      if ( (not do_print) or (not boost::filesystem::exists( filename )) ) return;
+
+      if( truncate ) { boost::filesystem::remove( filename ); return; }
+
+      file.open( filename.string().c_str(),
+                 truncate ? std::ios_base::trunc: std::ios_base::app | std::ios_base::out); 
+      if (file.fail() )
+      {
+        std::cerr << "Could not open " << filename << std::endl;
+        do_print = false;
+        return;
+      }
+      file << "\n\n"; 
+      close();
+    }
+    bool Base :: open ()
+    {
+      if ( not do_print ) return true;
+      if ( file.is_open() ) return true;
+      file.open( filename.string().c_str(), std::ios_base::out|std::ios_base::app ); 
+      return file.is_open();
+    }    
+    void Base :: close ()
+    {
+      if ( not do_print ) return;
+      if ( not file.is_open() ) return;
+      file.flush();
+      file.close();
+    }    
+
+#   ifdef _MPI
+      void Base::sync_filename( t_Path &_filename )
+      {
+        filename = _filename;
+        sync_filename();
+        _filename = filename;
+      }
+      void Base::sync_filename()
+      {
+        boost::mpi::broadcast( *LaDa::mpi::main, filename, 0 );
+        init_(filename);
+      }
+#   endif
+
+  }
+} // namespace LaDa

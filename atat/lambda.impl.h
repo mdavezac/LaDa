@@ -7,36 +7,36 @@
 #   error Macros __VTYPE__, __STYPE__, or __MTYPE__ already defined.
 #  endif
 #  define _ATAT_LAMBDA_IMPL_H_ 0
-#  define __VTYPE__ atat::rVector3d
-#  define __STYPE__ types::t_real
-#  define __MTYPE__ atat::rMatrix3d
+#  define __VTYPE__ LaDa::atat::rVector3d
+#  define __STYPE__ LaDa::types::t_real
+#  define __MTYPE__ LaDa::atat::rMatrix3d
 #elif _ATAT_LAMBDA_IMPL_H_ == 0
 #  undef _ATAT_LAMBDA_IMPL_H_
 #  undef __VTYPE__ 
 #  undef __STYPE__ 
 #  undef __MTYPE__ 
 #  define _ATAT_LAMBDA_IMPL_H_ 1
-#  define __VTYPE__ atat::rVector2d
-#  define __STYPE__ types::t_real
-#  define __MTYPE__ atat::rMatrix2d
+#  define __VTYPE__ LaDa::atat::rVector2d
+#  define __STYPE__ LaDa::types::t_real
+#  define __MTYPE__ LaDa::atat::rMatrix2d
 #elif _ATAT_LAMBDA_IMPL_H_ == 1
 #  undef _ATAT_LAMBDA_IMPL_H_
 #  undef __VTYPE__ 
 #  undef __STYPE__ 
 #  undef __MTYPE__ 
 #  define _ATAT_LAMBDA_IMPL_H_ 2
-#  define __VTYPE__ atat::iVector3d
-#  define __STYPE__ types::t_int
-#  define __MTYPE__ atat::iMatrix3d
+#  define __VTYPE__ LaDa::atat::iVector3d
+#  define __STYPE__ LaDa::types::t_int
+#  define __MTYPE__ LaDa::atat::iMatrix3d
 #elif _ATAT_LAMBDA_IMPL_H_ == 2
 #  undef _ATAT_LAMBDA_IMPL_H_
 #  undef __VTYPE__ 
 #  undef __STYPE__ 
 #  undef __MTYPE__ 
 #  define _ATAT_LAMBDA_IMPL_H_ 3
-#  define __VTYPE__ atat::iVector2d
-#  define __STYPE__ types::t_int
-#  define __MTYPE__ atat::iMatrix2d
+#  define __VTYPE__ LaDa::atat::iVector2d
+#  define __STYPE__ LaDa::types::t_int
+#  define __MTYPE__ LaDa::atat::iMatrix2d
 #else
 #  undef _ATAT_LAMBDA_IMPL_H_
 #  define _ATAT_LAMBDA_IMPL_H_ 5

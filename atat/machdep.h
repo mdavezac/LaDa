@@ -19,6 +19,8 @@
 
 #include <opt/types.h>
 
+namespace LaDa
+{
 namespace atat
 { 
 
@@ -38,5 +40,7 @@ using namespace std;
 
 
 } // namespace atat
+
+} // namespace LaDa
 
 #endif

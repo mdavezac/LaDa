@@ -29,17 +29,20 @@
 
 using namespace boost::python;
 
-namespace PythonLaDa
+namespace LaDa
 {
-  using namespace atat;
-# include "atat.impl.hpp"
-
-# define _INMODULE_
-  void expose_atat()
+  namespace Python
   {
     using namespace atat;
-#   include "atat.impl.hpp"
-  }
+  # include "atat.impl.hpp"
 
-#undef _INMODULE_
-}
+  # define _INMODULE_
+    void expose_atat()
+    {
+      using namespace atat;
+  #   include "atat.impl.hpp"
+    }
+
+  #undef _INMODULE_
+  }
+} // namespace LaDa

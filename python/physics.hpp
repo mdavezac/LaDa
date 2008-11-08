@@ -9,9 +9,11 @@
 #include <config.h>
 #endif
 
-namespace PythonLaDa
+namespace LaDa
 {
-  void expose_physics();
-}
-
+  namespace Python
+  {
+    void expose_physics();
+  }
+} // namespace LaDa
 #endif

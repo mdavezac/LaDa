@@ -14,35 +14,38 @@
 #include "functors.h"
 #include "concentration.h"
 
-namespace GroundState
+namespace LaDa
 {
-  bool Evaluator :: Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type )
+  namespace GroundState
   {
-    double d;
-    if ( not _node.Attribute("CE", &d ) ) goto errorout;
-    _indiv.quantities() = (types::t_real) d;
+    bool Evaluator :: Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type )
+    {
+      double d;
+      if ( not _node.Attribute("CE", &d ) ) goto errorout;
+      _indiv.quantities() = (types::t_real) d;
 
-    return t_Base::Load( _indiv, _node, _type );
-errorout:
-    std::cerr << "Could not Load CE::Object" << std::endl;
-    return false;
-  }
-  bool Evaluator :: Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const
-  { 
-    double d = (double) _indiv.const_quantities();
-    _node.SetDoubleAttribute("CE", d );
-    return t_Base::Save( _indiv, _node, GA::LOADSAVE_SHORT );
-  }
+      return t_Base::Load( _indiv, _node, _type );
+      errorout:
+        std::cerr << "Could not Load CE::Object" << std::endl;
+        return false;
+    }
+    bool Evaluator :: Save( const t_Individual &_indiv, TiXmlElement &_node, bool _type ) const
+    { 
+      double d = (double) _indiv.const_quantities();
+      _node.SetDoubleAttribute("CE", d );
+      return t_Base::Save( _indiv, _node, GA::LOADSAVE_SHORT );
+    }
 
-  bool Evaluator :: Load( const TiXmlElement &_node )
-  {
-    if( not t_Base::Load( _node ) ) return false;
-    
-    if ( not ce.Load( _node ) ) return false;
-    
-    return true;
-  }
+    bool Evaluator :: Load( const TiXmlElement &_node )
+    {
+      if( not t_Base::Load( _node ) ) return false;
+      
+      if ( not ce.Load( _node ) ) return false;
+      
+      return true;
+    }
 
-} // namespace GroundState
+  } // namespace GroundState
+} // namespace LaDa
 
 

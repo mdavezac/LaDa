@@ -6,235 +6,238 @@
 
 #include <opt/debug.h>
 
-namespace GA
+namespace LaDa
 {
+  namespace GA
+  {
 
-namespace Evaluation
-{
-  template< class T_GATRAITS >
-    typename Base<T_GATRAITS> :: t_FitnessQuantity
-    Base<T_GATRAITS> :: evaluate( t_Individual &_indiv )
-    {
-      __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
-      __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
-      __ASSERT( not store, "Pointer to Evaluator is not set.\n")
-               
-      // only computes "expensive" evaluator functionals once!
-      if ( _indiv.invalid() ) 
+  namespace Evaluation
+  {
+    template< class T_GATRAITS >
+      typename Base<T_GATRAITS> :: t_FitnessQuantity
+      Base<T_GATRAITS> :: evaluate( t_Individual &_indiv )
       {
-        // fitness AND quantities of _indiv must be valid from here-on
-        ++nb_eval;
-        __DODEBUGCODE( Print::out << "Evaluating Individual: " << _indiv << Print::endl; )
-        __TRYDEBUGCODE( evaluator->evaluate();,
-                        "Error while evaluating individual.\n" )
+        __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
+        __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
+        __ASSERT( not store, "Pointer to Evaluator is not set.\n")
+                 
+        // only computes "expensive" evaluator functionals once!
+        if ( _indiv.invalid() ) 
+        {
+          // fitness AND quantities of _indiv must be valid from here-on
+          ++nb_eval;
+          __DODEBUGCODE( Print::out << "Evaluating Individual: " << _indiv << Print::endl; )
+          __TRYDEBUGCODE( evaluator->evaluate();,
+                          "Error while evaluating individual.\n" )
+        }
+
+        __TRYDEBUGCODE(
+            _indiv.set_fitness( (*objective)( _indiv.const_quantities() ) );,
+            "Error while evaluating fitness.\n" )
+
+        __TRYDEBUGCODE( if( store ) (*store)( _indiv );,
+                        "Error while checking individual for storage.\n" )
+
+        return _indiv.fitness();
       }
 
-      __TRYDEBUGCODE(
-          _indiv.set_fitness( (*objective)( _indiv.const_quantities() ) );,
-          "Error while evaluating fitness.\n" )
-
-      __TRYDEBUGCODE( if( store ) (*store)( _indiv );,
-                      "Error while checking individual for storage.\n" )
-
-      return _indiv.fitness();
-    }
-
-  template< class T_GATRAITS >
-    typename Base<T_GATRAITS> :: t_FitnessQuantity
-    Base<T_GATRAITS> :: evaluate_with_gradient( t_Individual &_indiv,
-                                                t_QuantityGradients& _grad,
-                                                t_VA_Type *_i_grad )
-    {
-      __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
-      __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
-      __ASSERT( not store, "Pointer to Evaluator is not set.\n")
-
-      // only computes "expensive" evaluator functionals once!
-      nb_grad += _grad.size(); 
-      if ( _indiv.invalid() ) 
-      {
-        // fitness AND quantities of _indiv must be valid from here-on
-        ++nb_eval; 
-        __TRYDEBUGCODE( evaluator->evaluate_with_gradient( _grad );,
-                        "Error while evaluating individual and gradient.\n" )
-      }
-      else __TRYDEBUGCODE( evaluator->evaluate_gradient( _grad );,
-                           "Error while evaluating gradient of individual\n" )
-
-
-      __TRYDEBUGCODE(
-          _indiv.set_fitness(
-            objective->evaluate_with_gradient( _indiv.const_quantities(),
-                                               _grad, _i_grad ) );,
-          "Error while evaluating fitness and its gradient.\n" )
-
-      __TRYDEBUGCODE( if( store ) (*store)( _indiv );,
-                      "Caught Error while checking individual for storage.\n" )
-
-      return _indiv.fitness();
-    }
-
-  template< class T_GATRAITS >
-    void Base<T_GATRAITS> :: evaluate( t_Population &_pop )
-    {
-      __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
-      __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
-      __ASSERT( not store, "Pointer to Evaluator is not set.\n")
-
-      typename t_Population :: iterator i_indiv = _pop.begin();
-      typename t_Population :: iterator i_end = _pop.end();
-      for(; i_indiv != i_end; ++i_indiv )
-      {
-        init( *i_indiv );
-        evaluate( *i_indiv );
-      }
-    }
-
-  template< class T_GATRAITS >
-    void Base<T_GATRAITS> :: evaluate_gradient( t_Individual &_indiv,
-                                                t_QuantityGradients& _grad,
-                                                t_VA_Type *_i_grad )
-    {
-      __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
-      __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
-      __ASSERT( not store, "Pointer to Evaluator is not set.\n")
-
-      // resets _i_grad
-      types::t_unsigned N = _indiv.Object().Container().size();
-      t_VA_Type *first = _i_grad;
-      std::fill_n( first, N, t_VA_Type(0) );
-      // size and value of _grad should be set by evaluator
-      evaluator->evaluate_gradient( _grad );
-      objective->evaluate_gradient( _indiv.const_quantities(), _grad, _i_grad );
-      nb_grad += _grad.size(); 
-    }
-
-  template< class T_GATRAITS >
-    typename Base<T_GATRAITS> :: t_VA_Type
-      Base<T_GATRAITS> :: evaluate_one_gradient( t_Individual &_indiv,
-                                                 t_QuantityGradients& _grad,
-                                                 types::t_unsigned _pos )
+    template< class T_GATRAITS >
+      typename Base<T_GATRAITS> :: t_FitnessQuantity
+      Base<T_GATRAITS> :: evaluate_with_gradient( t_Individual &_indiv,
+                                                  t_QuantityGradients& _grad,
+                                                  t_VA_Type *_i_grad )
       {
         __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
         __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
         __ASSERT( not store, "Pointer to Evaluator is not set.\n")
 
-        ++nb_grad;
-        evaluate( _indiv );
-        evaluator->evaluate_one_gradient( _grad, _pos );
-        return objective->evaluate_one_gradient( _indiv.const_quantities(), _grad, _pos );
+        // only computes "expensive" evaluator functionals once!
+        nb_grad += _grad.size(); 
+        if ( _indiv.invalid() ) 
+        {
+          // fitness AND quantities of _indiv must be valid from here-on
+          ++nb_eval; 
+          __TRYDEBUGCODE( evaluator->evaluate_with_gradient( _grad );,
+                          "Error while evaluating individual and gradient.\n" )
+        }
+        else __TRYDEBUGCODE( evaluator->evaluate_gradient( _grad );,
+                             "Error while evaluating gradient of individual\n" )
+
+
+        __TRYDEBUGCODE(
+            _indiv.set_fitness(
+              objective->evaluate_with_gradient( _indiv.const_quantities(),
+                                                 _grad, _i_grad ) );,
+            "Error while evaluating fitness and its gradient.\n" )
+
+        __TRYDEBUGCODE( if( store ) (*store)( _indiv );,
+                        "Caught Error while checking individual for storage.\n" )
+
+        return _indiv.fitness();
       }
 
-  template< class T_GATRAITS >
-    void Base<T_GATRAITS> :: operator()( t_Population &_pop, t_Population &_offspring ) 
-    { 
-      __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
-      __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
-      __ASSERT( not store, "Pointer to Evaluator is not set.\n")
-
-      evaluate(_offspring); 
-
-      if ( objective->is_valid() ) return;
-      
-      // if invalid, recomputes whole population
-      evaluate( _pop );
-      evaluate( _offspring );
-    }
-
-
-  template< class T_GATRAITS >
-    inline void Base<T_GATRAITS> :: init( t_Individual &_indiv)
+    template< class T_GATRAITS >
+      void Base<T_GATRAITS> :: evaluate( t_Population &_pop )
       {
         __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
         __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
         __ASSERT( not store, "Pointer to Evaluator is not set.\n")
 
-        objective->init( _indiv );
-        evaluator->init( _indiv );
+        typename t_Population :: iterator i_indiv = _pop.begin();
+        typename t_Population :: iterator i_end = _pop.end();
+        for(; i_indiv != i_end; ++i_indiv )
+        {
+          init( *i_indiv );
+          evaluate( *i_indiv );
+        }
       }
 
-
-
-
-  template< class T_GATRAITS >
-    typename WithHistory<T_GATRAITS> :: t_FitnessQuantity
-    WithHistory<T_GATRAITS> :: evaluate( t_Individual &_indiv )
-    {
-      __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
-      __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
-      __ASSERT( not store, "Pointer to Evaluator is not set.\n")
-
-      bool isnot_clone = (history != NULL); // isnot_clone is false if history does not exist
-      bool do_evaluate = _indiv.invalid();
-
-      if ( history and  history->clone( _indiv ) )
+    template< class T_GATRAITS >
+      void Base<T_GATRAITS> :: evaluate_gradient( t_Individual &_indiv,
+                                                  t_QuantityGradients& _grad,
+                                                  t_VA_Type *_i_grad )
       {
-        isnot_clone = false;
-        do_evaluate = false;
+        __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
+        __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
+        __ASSERT( not store, "Pointer to Evaluator is not set.\n")
+
+        // resets _i_grad
+        types::t_unsigned N = _indiv.Object().Container().size();
+        t_VA_Type *first = _i_grad;
+        std::fill_n( first, N, t_VA_Type(0) );
+        // size and value of _grad should be set by evaluator
+        evaluator->evaluate_gradient( _grad );
+        objective->evaluate_gradient( _indiv.const_quantities(), _grad, _i_grad );
+        nb_grad += _grad.size(); 
       }
 
-      // only evaluates once! from here-on _indiv's fitness should be valid, 
-      // and its "quantities" should have been computed
-      if ( do_evaluate )
+    template< class T_GATRAITS >
+      typename Base<T_GATRAITS> :: t_VA_Type
+        Base<T_GATRAITS> :: evaluate_one_gradient( t_Individual &_indiv,
+                                                   t_QuantityGradients& _grad,
+                                                   types::t_unsigned _pos )
+        {
+          __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
+          __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
+          __ASSERT( not store, "Pointer to Evaluator is not set.\n")
+
+          ++nb_grad;
+          evaluate( _indiv );
+          evaluator->evaluate_one_gradient( _grad, _pos );
+          return objective->evaluate_one_gradient( _indiv.const_quantities(), _grad, _pos );
+        }
+
+    template< class T_GATRAITS >
+      void Base<T_GATRAITS> :: operator()( t_Population &_pop, t_Population &_offspring ) 
+      { 
+        __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
+        __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
+        __ASSERT( not store, "Pointer to Evaluator is not set.\n")
+
+        evaluate(_offspring); 
+
+        if ( objective->is_valid() ) return;
+        
+        // if invalid, recomputes whole population
+        evaluate( _pop );
+        evaluate( _offspring );
+      }
+
+
+    template< class T_GATRAITS >
+      inline void Base<T_GATRAITS> :: init( t_Individual &_indiv)
+        {
+          __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
+          __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
+          __ASSERT( not store, "Pointer to Evaluator is not set.\n")
+
+          objective->init( _indiv );
+          evaluator->init( _indiv );
+        }
+
+
+
+
+    template< class T_GATRAITS >
+      typename WithHistory<T_GATRAITS> :: t_FitnessQuantity
+      WithHistory<T_GATRAITS> :: evaluate( t_Individual &_indiv )
       {
-        ++nb_eval;
-        __TRYDEBUGCODE( evaluator->evaluate();,
-                        "Error while evaluating individual.\n" )
+        __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
+        __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
+        __ASSERT( not store, "Pointer to Evaluator is not set.\n")
+
+        bool isnot_clone = (history != NULL); // isnot_clone is false if history does not exist
+        bool do_evaluate = _indiv.invalid();
+
+        if ( history and  history->clone( _indiv ) )
+        {
+          isnot_clone = false;
+          do_evaluate = false;
+        }
+
+        // only evaluates once! from here-on _indiv's fitness should be valid, 
+        // and its "quantities" should have been computed
+        if ( do_evaluate )
+        {
+          ++nb_eval;
+          __TRYDEBUGCODE( evaluator->evaluate();,
+                          "Error while evaluating individual.\n" )
+        }
+        __TRYDEBUGCODE( _indiv.set_fitness( (*objective)( _indiv.const_quantities() ) );,
+                        "Error while evaluating fitness\n" )
+        // isnot_clone is true only if history exists
+        // and prior call to history->clone( _indiv ) returned false
+        if( isnot_clone ) history->add( _indiv );
+
+        __TRYDEBUGCODE( if( store ) (*store)( _indiv );,
+                        "Error while checking individual for storage.\n" )
+
+        return _indiv.fitness();
       }
-      __TRYDEBUGCODE( _indiv.set_fitness( (*objective)( _indiv.const_quantities() ) );,
-                      "Error while evaluating fitness\n" )
-      // isnot_clone is true only if history exists
-      // and prior call to history->clone( _indiv ) returned false
-      if( isnot_clone ) history->add( _indiv );
 
-      __TRYDEBUGCODE( if( store ) (*store)( _indiv );,
-                      "Error while checking individual for storage.\n" )
-
-      return _indiv.fitness();
-    }
-
-  template< class T_GATRAITS >
-    typename WithHistory<T_GATRAITS> :: t_FitnessQuantity
-    WithHistory<T_GATRAITS> :: evaluate_with_gradient( t_Individual &_indiv,
-                                                       t_QuantityGradients& _grad,
-                                                       t_VA_Type *_i_grad )
-    {
-      __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
-      __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
-      __ASSERT( not store, "Pointer to Evaluator is not set.\n")
-
-      bool isnot_clone = (history != NULL); // isnot_clone is false if history does not exist
-      bool do_evaluate = _indiv.invalid();
-
-      if ( history and  history->clone( _indiv ) )
+    template< class T_GATRAITS >
+      typename WithHistory<T_GATRAITS> :: t_FitnessQuantity
+      WithHistory<T_GATRAITS> :: evaluate_with_gradient( t_Individual &_indiv,
+                                                         t_QuantityGradients& _grad,
+                                                         t_VA_Type *_i_grad )
       {
-        isnot_clone = false;
-        do_evaluate = false;
+        __ASSERT( not evaluator, "Pointer to Evaluator is not set.\n")
+        __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
+        __ASSERT( not store, "Pointer to Evaluator is not set.\n")
+
+        bool isnot_clone = (history != NULL); // isnot_clone is false if history does not exist
+        bool do_evaluate = _indiv.invalid();
+
+        if ( history and  history->clone( _indiv ) )
+        {
+          isnot_clone = false;
+          do_evaluate = false;
+        }
+
+        // only computes "expensive" evaluator functionals once!
+        nb_grad += _grad.size(); 
+        if ( do_evaluate )
+        {
+          // fitness AND quantities of _indiv must be valid from here-on
+          ++nb_eval; 
+          __TRYDEBUGCODE( evaluator->evaluate_with_gradient( _grad );,
+                          "Error while evaluating individual and gradient.\n" )
+        }
+        else __TRYDEBUGCODE( evaluator->evaluate_gradient( _grad );,
+                             "Error while evaluating gradient of individual\n" )
+        __TRYDEBUGCODE(
+            _indiv.set_fitness(
+              objective->evaluate_with_gradient( _indiv.const_quantities(),
+                                                 _grad, _i_grad ) );,
+            "Error while evaluating fitness and its gradient.\n" )
+
+        __TRYDEBUGCODE( if( store ) (*store)( _indiv );,
+                        "Caught Error while checking individual for storage.\n" )
+
+        return _indiv.fitness();
       }
+  } // namespace Evaluation
 
-      // only computes "expensive" evaluator functionals once!
-      nb_grad += _grad.size(); 
-      if ( do_evaluate )
-      {
-        // fitness AND quantities of _indiv must be valid from here-on
-        ++nb_eval; 
-        __TRYDEBUGCODE( evaluator->evaluate_with_gradient( _grad );,
-                        "Error while evaluating individual and gradient.\n" )
-      }
-      else __TRYDEBUGCODE( evaluator->evaluate_gradient( _grad );,
-                           "Error while evaluating gradient of individual\n" )
-      __TRYDEBUGCODE(
-          _indiv.set_fitness(
-            objective->evaluate_with_gradient( _indiv.const_quantities(),
-                                               _grad, _i_grad ) );,
-          "Error while evaluating fitness and its gradient.\n" )
-
-      __TRYDEBUGCODE( if( store ) (*store)( _indiv );,
-                      "Caught Error while checking individual for storage.\n" )
-
-      return _indiv.fitness();
-    }
-} // namespace Evaluation
-
-} // namespace GA
+  } // namespace GA
+} // namespace LaDa
 #endif

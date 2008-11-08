@@ -58,6 +58,8 @@
 
 #ifndef _INMODULE_
 
+namespace LaDa
+{
 namespace atat
 {
   namespace details
@@ -237,6 +239,7 @@ namespace atat
   }
 
 }
+} // namespace LaDa
 
 #else
 

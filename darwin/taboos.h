@@ -21,365 +21,368 @@
 #include "functors.h"
 #include "gatraits.h"
 
-namespace GA
+namespace LaDa
 {
-
-  //! \brief %Taboo base class
-  //! \details %Taboos are functors which simply returns true if the individual
-  //!          in argument should not be allowed to proceed in the population.
-  //!          This class merely declares the relevant virtual interface.
-  template<class T_INDIVIDUAL>
-  class Taboo_Base : public eoUF<const T_INDIVIDUAL&, bool>
+  namespace GA
   {
-    protected:
-      //! The type of the individual
-      typedef T_INDIVIDUAL t_Individual;
 
-    public:
-      //! Constructor
-      Taboo_Base() {}
-      //! Copy constructor
-      Taboo_Base( const Taboo_Base<t_Individual> &_taboo ) {}
-      //! Destructor
-      virtual ~Taboo_Base() {};
+    //! \brief %Taboo base class
+    //! \details %Taboos are functors which simply returns true if the individual
+    //!          in argument should not be allowed to proceed in the population.
+    //!          This class merely declares the relevant virtual interface.
+    template<class T_INDIVIDUAL>
+    class Taboo_Base : public eoUF<const T_INDIVIDUAL&, bool>
+    {
+      protected:
+        //! The type of the individual
+        typedef T_INDIVIDUAL t_Individual;
 
-      //! The number of produced individuals... Not sure why it's one...
-      types::t_unsigned max_production(void) { return 1; }
+      public:
+        //! Constructor
+        Taboo_Base() {}
+        //! Copy constructor
+        Taboo_Base( const Taboo_Base<t_Individual> &_taboo ) {}
+        //! Destructor
+        virtual ~Taboo_Base() {};
 
-      //! \cond
-      virtual bool is_problematic() const {return false;}
-      virtual void set_problematic(bool _p = false) {return; }
-      //! \endcond
+        //! The number of produced individuals... Not sure why it's one...
+        types::t_unsigned max_production(void) { return 1; }
 
-      //! prints out all tabooed individuals or whatever
-      virtual void print_out( std::ostream &str ) const {return;}
-      //! Loads a taboo from XML
-      virtual bool Load( const TiXmlElement &_node ) { return true; }
-  };
+        //! \cond
+        virtual bool is_problematic() const {return false;}
+        virtual void set_problematic(bool _p = false) {return; }
+        //! \endcond
 
-  //! A taboo class defined around a list of tabooed individuals
-  template< class T_INDIVIDUAL, class T_CONTAINER = std::list<T_INDIVIDUAL> >
-  class Taboo : public Taboo_Base<T_INDIVIDUAL>
-  {
-    public:
-      //! The type of the individual
-      typedef T_INDIVIDUAL t_Individual;
-      //! The type of the container of tabooed individual
-      typedef T_CONTAINER t_Container;
-      //! The type of the individual
-      typedef t_Individual value_type;
+        //! prints out all tabooed individuals or whatever
+        virtual void print_out( std::ostream &str ) const {return;}
+        //! Loads a taboo from XML
+        virtual bool Load( const TiXmlElement &_node ) { return true; }
+    };
 
-    protected:
-      //! \cond
-      bool problematic;
-      //! \endcond
+    //! A taboo class defined around a list of tabooed individuals
+    template< class T_INDIVIDUAL, class T_CONTAINER = std::list<T_INDIVIDUAL> >
+    class Taboo : public Taboo_Base<T_INDIVIDUAL>
+    {
+      public:
+        //! The type of the individual
+        typedef T_INDIVIDUAL t_Individual;
+        //! The type of the container of tabooed individual
+        typedef T_CONTAINER t_Container;
+        //! The type of the individual
+        typedef t_Individual value_type;
 
-      //! Whether the container is owned by this instance
-      bool owns_pointer;
-      //! The container of tabooed individuals
-      t_Container *taboo_list;
+      protected:
+        //! \cond
+        bool problematic;
+        //! \endcond
 
-    public:
-      //! Constructs taboo around \a _list
-      Taboo   ( t_Container *_list )
-            : problematic(false), owns_pointer( false ),
-              taboo_list(_list) {};
-      //! Constructor. Creates a new Taboo::taboo_list object.
-      Taboo() : problematic(false), owns_pointer(true)
-        { taboo_list = new t_Container; }
-      //! Copy Constructor
-      Taboo   ( Taboo<t_Individual, t_Container> & _taboo )
-            : owns_pointer( false ),
-              taboo_list(_taboo.taboo_list) {};
-      //! Destructor. If owned, deletes Taboo::taboo_list;
-      virtual ~Taboo();
+        //! Whether the container is owned by this instance
+        bool owns_pointer;
+        //! The container of tabooed individuals
+        t_Container *taboo_list;
 
-      //! returns true if _indiv is in taboo_list
-      virtual bool operator()( const t_Individual& _indiv );
+      public:
+        //! Constructs taboo around \a _list
+        Taboo   ( t_Container *_list )
+              : problematic(false), owns_pointer( false ),
+                taboo_list(_list) {};
+        //! Constructor. Creates a new Taboo::taboo_list object.
+        Taboo() : problematic(false), owns_pointer(true)
+          { taboo_list = new t_Container; }
+        //! Copy Constructor
+        Taboo   ( Taboo<t_Individual, t_Container> & _taboo )
+              : owns_pointer( false ),
+                taboo_list(_taboo.taboo_list) {};
+        //! Destructor. If owned, deletes Taboo::taboo_list;
+        virtual ~Taboo();
 
-      //! \brief Adds an individual to the tabooed list. 
-      //! \details If \a add_fast is false, then \a _indiv is added only if it
-      //!          is not already there.
-      void add( const t_Individual &_indiv, bool add_fast = true );
-      //! \brief Adds an individual to the tabooed list after checking it is
-      //!        not already there.
-      void push_back( const t_Individual &_indiv )
-        { add( _indiv, false ); }
+        //! returns true if _indiv is in taboo_list
+        virtual bool operator()( const t_Individual& _indiv );
 
-      //! Prints all tabooed individuals in the list
-      virtual void print_out( std::ostream &str ) const;
+        //! \brief Adds an individual to the tabooed list. 
+        //! \details If \a add_fast is false, then \a _indiv is added only if it
+        //!          is not already there.
+        void add( const t_Individual &_indiv, bool add_fast = true );
+        //! \brief Adds an individual to the tabooed list after checking it is
+        //!        not already there.
+        void push_back( const t_Individual &_indiv )
+          { add( _indiv, false ); }
 
-      //! \cond
-      virtual bool is_problematic() const
-        { return problematic; }
-      virtual void set_problematic( bool _p = false ) 
-        { problematic = _p; }
-      //! \endcond
+        //! Prints all tabooed individuals in the list
+        virtual void print_out( std::ostream &str ) const;
 
-      //! Appends a complete container of individuals to the tabooed list.
-      template<class tt_Container>
-      void append( const tt_Container &_pop );
-      //! returns a constant iterator to the beginning of the list
-      typename t_Container :: const_iterator begin() const
-        { return taboo_list->begin(); } 
-      //! returns an iterator to the beginning of the list
-      typename t_Container :: iterator begin() 
-        { return taboo_list->begin(); } 
-      //! returns a contant iterator to the end of the list
-      typename t_Container :: const_iterator end() const
-        { return taboo_list->end(); } 
-      //! returns an iterator to the end of the list
-      typename t_Container :: iterator end() 
-        { return taboo_list->end(); } 
-      //! Returns the number of tabooed individuals
-      types::t_unsigned size() const { return taboo_list->size(); }
-      //! Clears the list of tabooed individuals
-      void clear() { taboo_list->clear(); }
-  };
+        //! \cond
+        virtual bool is_problematic() const
+          { return problematic; }
+        virtual void set_problematic( bool _p = false ) 
+          { problematic = _p; }
+        //! \endcond
 
-  //! Creates a taboo list from the offspring population
-  template<class T_GATRAITS>
-  class OffspringTaboo : public Taboo<typename T_GATRAITS::t_Individual,
-                                      typename T_GATRAITS :: t_Population >
-  {
-    public:
-      //! All relevant %GA traits
-      typedef T_GATRAITS t_GATraits;
-      //! The individual type
-      typedef typename t_GATraits::t_Individual value_type;
-    protected:
-      //! The individual type
-      typedef typename t_GATraits::t_Individual t_Individual;
-      //! The population type
-      typedef typename t_GATraits::t_Population t_Population;
-      using Taboo<t_Individual, t_Population> :: taboo_list;
+        //! Appends a complete container of individuals to the tabooed list.
+        template<class tt_Container>
+        void append( const tt_Container &_pop );
+        //! returns a constant iterator to the beginning of the list
+        typename t_Container :: const_iterator begin() const
+          { return taboo_list->begin(); } 
+        //! returns an iterator to the beginning of the list
+        typename t_Container :: iterator begin() 
+          { return taboo_list->begin(); } 
+        //! returns a contant iterator to the end of the list
+        typename t_Container :: const_iterator end() const
+          { return taboo_list->end(); } 
+        //! returns an iterator to the end of the list
+        typename t_Container :: iterator end() 
+          { return taboo_list->end(); } 
+        //! Returns the number of tabooed individuals
+        types::t_unsigned size() const { return taboo_list->size(); }
+        //! Clears the list of tabooed individuals
+        void clear() { taboo_list->clear(); }
+    };
 
-    public:
-      //! Constructor 
-      OffspringTaboo   ( t_Population *_list )
-                     : Taboo<t_Individual, t_Population>( _list ) {}
-//     OffspringTaboo () : Taboo<t_Individual, t_Population>() {}
-      //! Destructor
-      virtual ~OffspringTaboo() {};
-       
-      //! returns true if _indiv is in taboo_list 
-      virtual bool operator()( const t_Individual& _indiv );
-  };
+    //! Creates a taboo list from the offspring population
+    template<class T_GATRAITS>
+    class OffspringTaboo : public Taboo<typename T_GATRAITS::t_Individual,
+                                        typename T_GATRAITS :: t_Population >
+    {
+      public:
+        //! All relevant %GA traits
+        typedef T_GATRAITS t_GATraits;
+        //! The individual type
+        typedef typename t_GATraits::t_Individual value_type;
+      protected:
+        //! The individual type
+        typedef typename t_GATraits::t_Individual t_Individual;
+        //! The population type
+        typedef typename t_GATraits::t_Population t_Population;
+        using Taboo<t_Individual, t_Population> :: taboo_list;
 
-  //! \brief Creates a list of historically previously individuals. 
-  //! \details Can be used directly as a taboo. Can also be used to recover the
-  //!          quantities of previously assessed individuals.
-  template<class T_INDIVIDUAL, class T_CONTAINER = std::list<T_INDIVIDUAL> >
-  class History : public Taboo<T_INDIVIDUAL, T_CONTAINER>
-  {
-    public:
-      //! Type of the individuals
-      typedef T_INDIVIDUAL t_Individual;
-      //! Type of the contaienr of previously assessed individuals
-      typedef T_CONTAINER t_Container;
-      //! Type of the individuals
-      typedef t_Individual value_type;
-    private:
-      //! All %types relevant to an individual
-      typedef typename t_Individual::t_IndivTraits t_IndivTraits;
-    protected:
-      using Taboo<t_Individual, t_Container> :: taboo_list;
-      using Taboo<t_Individual, t_Container> :: owns_pointer;
-      using Taboo<t_Individual, t_Container> :: problematic;
+      public:
+        //! Constructor 
+        OffspringTaboo   ( t_Population *_list )
+                       : Taboo<t_Individual, t_Population>( _list ) {}
+  //     OffspringTaboo () : Taboo<t_Individual, t_Population>() {}
+        //! Destructor
+        virtual ~OffspringTaboo() {};
+         
+        //! returns true if _indiv is in taboo_list 
+        virtual bool operator()( const t_Individual& _indiv );
+    };
 
-    public:
-      //! Constructor
-      History() : Taboo<t_Individual, t_Container>() {}
-      //! Destructor
-      virtual ~History() {};
+    //! \brief Creates a list of historically previously individuals. 
+    //! \details Can be used directly as a taboo. Can also be used to recover the
+    //!          quantities of previously assessed individuals.
+    template<class T_INDIVIDUAL, class T_CONTAINER = std::list<T_INDIVIDUAL> >
+    class History : public Taboo<T_INDIVIDUAL, T_CONTAINER>
+    {
+      public:
+        //! Type of the individuals
+        typedef T_INDIVIDUAL t_Individual;
+        //! Type of the contaienr of previously assessed individuals
+        typedef T_CONTAINER t_Container;
+        //! Type of the individuals
+        typedef t_Individual value_type;
+      private:
+        //! All %types relevant to an individual
+        typedef typename t_Individual::t_IndivTraits t_IndivTraits;
+      protected:
+        using Taboo<t_Individual, t_Container> :: taboo_list;
+        using Taboo<t_Individual, t_Container> :: owns_pointer;
+        using Taboo<t_Individual, t_Container> :: problematic;
 
-      //! If \a _indiv already exists, copy the quantities and fitness()
-      virtual bool clone(t_Individual &_indiv);
-  };
+      public:
+        //! Constructor
+        History() : Taboo<t_Individual, t_Container>() {}
+        //! Destructor
+        virtual ~History() {};
 
-  //! Container class for multiple taboos.
-  template<class T_INDIVIDUAL>
-  class Taboos : public Taboo_Base<T_INDIVIDUAL>
-  {
-    public:
-      //! Type of the individuals
-      typedef T_INDIVIDUAL t_Individual;
+        //! If \a _indiv already exists, copy the quantities and fitness()
+        virtual bool clone(t_Individual &_indiv);
+    };
 
-    protected:
-      //! typeded to taboo base
-      typedef Taboo_Base<t_Individual> t_Type;
-      //! Type of the container of taboos 
-      typedef std::list< t_Type* > t_Container;
+    //! Container class for multiple taboos.
+    template<class T_INDIVIDUAL>
+    class Taboos : public Taboo_Base<T_INDIVIDUAL>
+    {
+      public:
+        //! Type of the individuals
+        typedef T_INDIVIDUAL t_Individual;
 
-    protected: 
-      //! Container with the taboos
-      t_Container taboos;
+      protected:
+        //! typeded to taboo base
+        typedef Taboo_Base<t_Individual> t_Type;
+        //! Type of the container of taboos 
+        typedef std::list< t_Type* > t_Container;
 
-    public:
-      //! Constructor
-      Taboos() {};
-      //! Copy Constructor
-      Taboos( const Taboos<t_Individual> &_taboo ) : taboos( _taboo.taboos ) {};
-      //! Destructor
-      virtual ~Taboos(){};
+      protected: 
+        //! Container with the taboos
+        t_Container taboos;
 
-      //! Number of taboos in the container
-      types::t_unsigned size() const { return taboos.size(); }
-      //! Returns a pointer to the first taboo
-      t_Type* front() { return taboos.front(); }
+      public:
+        //! Constructor
+        Taboos() {};
+        //! Copy Constructor
+        Taboos( const Taboos<t_Individual> &_taboo ) : taboos( _taboo.taboos ) {};
+        //! Destructor
+        virtual ~Taboos(){};
 
-      //! Adds a taboo 
-      void add( Taboo_Base<t_Individual> * _taboo );
-      //! Removes all taboo
-      void clear() { taboos.clear(); } 
+        //! Number of taboos in the container
+        types::t_unsigned size() const { return taboos.size(); }
+        //! Returns a pointer to the first taboo
+        t_Type* front() { return taboos.front(); }
 
-      //! Returns true as soon as one taboo operator returns true,
-      virtual bool operator()( const t_Individual &_indiv );
+        //! Adds a taboo 
+        void add( Taboo_Base<t_Individual> * _taboo );
+        //! Removes all taboo
+        void clear() { taboos.clear(); } 
 
-      //! \cond
-      virtual bool is_problematic() const;
-      void set_problematic( bool _p = false );
-      //! \endcond
+        //! Returns true as soon as one taboo operator returns true,
+        virtual bool operator()( const t_Individual &_indiv );
 
-      //! Forwars print out request to each taboo
-      virtual void print_out( std::ostream &str ) const;
-  };
-  
-  //! Taboo for a list of populations
-  template<class T_GATRAITS>
-  class IslandsTaboos : public Taboo_Base<typename T_GATRAITS::t_Individual>
-  {
-    public:
-      //! All relevant %GA traits
-      typedef T_GATRAITS t_GATraits;
-    private:
-      //! Type of this class
-      typedef IslandsTaboos<t_GATraits>  t_This;
-      //! Type of the individual
-      typedef typename t_GATraits::t_Individual t_Individual;
-      //! Type of the population
-      typedef typename t_GATraits :: t_Population  t_Container;
-      //! Type of the population container
-      typedef typename t_GATraits :: t_Islands     t_Islands;
+        //! \cond
+        virtual bool is_problematic() const;
+        void set_problematic( bool _p = false );
+        //! \endcond
 
-    protected: 
-      //! \cond
-      bool problematic;
-      //! \endcond
+        //! Forwars print out request to each taboo
+        virtual void print_out( std::ostream &str ) const;
+    };
+    
+    //! Taboo for a list of populations
+    template<class T_GATRAITS>
+    class IslandsTaboos : public Taboo_Base<typename T_GATRAITS::t_Individual>
+    {
+      public:
+        //! All relevant %GA traits
+        typedef T_GATRAITS t_GATraits;
+      private:
+        //! Type of this class
+        typedef IslandsTaboos<t_GATraits>  t_This;
+        //! Type of the individual
+        typedef typename t_GATraits::t_Individual t_Individual;
+        //! Type of the population
+        typedef typename t_GATraits :: t_Population  t_Container;
+        //! Type of the population container
+        typedef typename t_GATraits :: t_Islands     t_Islands;
 
-      //! Reference to a list of tabooed populations
-      t_Islands &populations;
+      protected: 
+        //! \cond
+        bool problematic;
+        //! \endcond
 
-    public:
-      //! Constructor
-      IslandsTaboos   ( t_Islands &_islands )
-                    : problematic(false), 
-                      populations( _islands ) {};
-      //! Copy Constructor
-      IslandsTaboos   ( const t_This &_taboos )
-                    : problematic(_taboos.is_problematic), 
-                      populations( _taboos.populations ) {};
-      //! Destrcutor
-      virtual ~IslandsTaboos(){};
+        //! Reference to a list of tabooed populations
+        t_Islands &populations;
 
-      //! Returns true as soon as \a _indiv is found in one of the populations
-      virtual bool operator()( const t_Individual &_indiv );
-      //! Does nothing
-      virtual void print_out( std::ostream &str ) const {}
+      public:
+        //! Constructor
+        IslandsTaboos   ( t_Islands &_islands )
+                      : problematic(false), 
+                        populations( _islands ) {};
+        //! Copy Constructor
+        IslandsTaboos   ( const t_This &_taboos )
+                      : problematic(_taboos.is_problematic), 
+                        populations( _taboos.populations ) {};
+        //! Destrcutor
+        virtual ~IslandsTaboos(){};
 
-      //! \cond
-      virtual bool is_problematic() const
-        { return problematic; }
-      virtual void set_problematic( bool _p = false ) 
-        { problematic = _p; }
-      // \endcond
-  };
+        //! Returns true as soon as \a _indiv is found in one of the populations
+        virtual bool operator()( const t_Individual &_indiv );
+        //! Does nothing
+        virtual void print_out( std::ostream &str ) const {}
 
-  //! \brief Genetic operator which chechs wether a new offspring is tabooed
-  //! \details When a newly generated offspring is found to be taboo, the
-  //!          %function loops to generating a new one. This goes on for a
-  //!          while. If no new individual can be found, a warning is issued and
-  //!          the fucntor tries to create a non-taboo individual with
-  //!          TabooOp::utterrandom. This also goes for while. After which, the
-  //!          functor throws an error.
-  template<class T_INDIVIDUAL>
-  class TabooOp : public eoGenOp<T_INDIVIDUAL>
-  {
-    protected:
-      //! Type of the individual
-      typedef T_INDIVIDUAL t_Individual; 
+        //! \cond
+        virtual bool is_problematic() const
+          { return problematic; }
+        virtual void set_problematic( bool _p = false ) 
+          { problematic = _p; }
+        // \endcond
+    };
 
-    protected:
-      //! Reference to the taboos
-      Taboo_Base<t_Individual> &taboo;
-      //! Reference to a random initializer
-      eoMonOp<t_Individual> &utterrandom;
-      //! Maximum number of tries before going random
-      types::t_unsigned max;
-      //! The genetic operators for generating offsprings
-      eoGenOp<t_Individual> &op;
+    //! \brief Genetic operator which chechs wether a new offspring is tabooed
+    //! \details When a newly generated offspring is found to be taboo, the
+    //!          %function loops to generating a new one. This goes on for a
+    //!          while. If no new individual can be found, a warning is issued and
+    //!          the fucntor tries to create a non-taboo individual with
+    //!          TabooOp::utterrandom. This also goes for while. After which, the
+    //!          functor throws an error.
+    template<class T_INDIVIDUAL>
+    class TabooOp : public eoGenOp<T_INDIVIDUAL>
+    {
+      protected:
+        //! Type of the individual
+        typedef T_INDIVIDUAL t_Individual; 
 
-    public:
-      //! Constructor
-      TabooOp   ( eoGenOp<t_Individual> &_op, 
-                  Taboo_Base<t_Individual> &_taboo,
-                  types::t_unsigned _max,
-                  eoMonOp<t_Individual> &_ur )
-              : taboo(_taboo), utterrandom(_ur), max(_max), op(_op) {}
+      protected:
+        //! Reference to the taboos
+        Taboo_Base<t_Individual> &taboo;
+        //! Reference to a random initializer
+        eoMonOp<t_Individual> &utterrandom;
+        //! Maximum number of tries before going random
+        types::t_unsigned max;
+        //! The genetic operators for generating offsprings
+        eoGenOp<t_Individual> &op;
 
-      //! Number of produced offspring
-      virtual types::t_unsigned max_production()
-        { return op.max_production(); }
+      public:
+        //! Constructor
+        TabooOp   ( eoGenOp<t_Individual> &_op, 
+                    Taboo_Base<t_Individual> &_taboo,
+                    types::t_unsigned _max,
+                    eoMonOp<t_Individual> &_ur )
+                : taboo(_taboo), utterrandom(_ur), max(_max), op(_op) {}
 
-      //! \brief Tries to create an non-tabooed object by applying _op
-      //! \details After max tries, creates a random untaboo object
-      virtual void apply( eoPopulator<t_Individual> &_indiv );
+        //! Number of produced offspring
+        virtual types::t_unsigned max_production()
+          { return op.max_production(); }
 
-      //! returns GA::TabooOp
-      virtual std::string className () const { return "GA::TabooOp"; }
+        //! \brief Tries to create an non-tabooed object by applying _op
+        //! \details After max tries, creates a random untaboo object
+        virtual void apply( eoPopulator<t_Individual> &_indiv );
 
-  };
+        //! returns GA::TabooOp
+        virtual std::string className () const { return "GA::TabooOp"; }
 
-  //! \brief Wraps a taboo over a %GA::Evaluator member %function.
-  //! \details This is useful for implementing application specific taboos, say
-  //!          based on phenotype.
-  template< class T_EVALUATOR >
-  class TabooFunction : public Taboo_Base< typename T_EVALUATOR::t_Individual >
-  {
-    public:
-      //! Type of the evaluator
-      typedef T_EVALUATOR t_Evaluator;
-      //! Pointer to the member %function
-      typedef bool ( t_Evaluator::*t_Function )(typename t_Evaluator::t_Individual &);
-    protected:
-      //! Type of the individual
-      typedef typename t_Evaluator::t_Individual t_Individual;
+    };
 
-    protected:
-      //! Reference to the evaluator
-      t_Evaluator &evaluator;
-      //! Function over which to wrap a taboo
-      t_Function member_func;
-      //! String characterizing this taboo
-      std::string class_name;
+    //! \brief Wraps a taboo over a %GA::Evaluator member %function.
+    //! \details This is useful for implementing application specific taboos, say
+    //!          based on phenotype.
+    template< class T_EVALUATOR >
+    class TabooFunction : public Taboo_Base< typename T_EVALUATOR::t_Individual >
+    {
+      public:
+        //! Type of the evaluator
+        typedef T_EVALUATOR t_Evaluator;
+        //! Pointer to the member %function
+        typedef bool ( t_Evaluator::*t_Function )(typename t_Evaluator::t_Individual &);
+      protected:
+        //! Type of the individual
+        typedef typename t_Evaluator::t_Individual t_Individual;
 
-    public:
-      //! Constructor
-      explicit
-        TabooFunction   ( t_Evaluator &_eval, t_Function _func, const std::string &_cn )
-                      : evaluator(_eval), member_func(_func), class_name(_cn) {};
-      //! Destructor
-      ~TabooFunction() {}
+      protected:
+        //! Reference to the evaluator
+        t_Evaluator &evaluator;
+        //! Function over which to wrap a taboo
+        t_Function member_func;
+        //! String characterizing this taboo
+        std::string class_name;
 
-      //! Returns the string characterizing this taboo
-      std::string className() const { return class_name; }
+      public:
+        //! Constructor
+        explicit
+          TabooFunction   ( t_Evaluator &_eval, t_Function _func, const std::string &_cn )
+                        : evaluator(_eval), member_func(_func), class_name(_cn) {};
+        //! Destructor
+        ~TabooFunction() {}
 
-      //! Returns the application specific taboo.
-      bool operator()( const t_Individual& _indiv )
-        { return ( (evaluator.*member_func) )( _indiv); }
-  };
+        //! Returns the string characterizing this taboo
+        std::string className() const { return class_name; }
 
-} // namespace GA
+        //! Returns the application specific taboo.
+        bool operator()( const t_Individual& _indiv )
+          { return ( (evaluator.*member_func) )( _indiv); }
+    };
+
+  } // namespace GA
+} // namespace LaDa
 
 #include "taboos.impl.h"
 

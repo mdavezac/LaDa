@@ -13,6 +13,8 @@
 
 #include <opt/types.h>
 
+namespace LaDa 
+{ 
 namespace atat
 { 
 
@@ -31,5 +33,7 @@ types::t_int integer_ratio(types::t_int *p, types::t_int *q, types::t_real x, ty
 
 
 } // namespace atat
+
+} // namespace LaDa
 
 #endif

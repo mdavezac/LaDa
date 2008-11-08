@@ -19,6 +19,8 @@
 
 #include "fit.h"
 
+namespace LaDa
+{
 namespace CE
 {
   opt::ErrorTuple BaseFit :: check_one( const t_Vector &_ecis,
@@ -90,4 +92,4 @@ namespace CE
   }
 
 } // end of namespace CE
-
+}

@@ -3,8 +3,11 @@
 //
 #ifndef _LADAPYTHON_ATAT_HPP_
 #define _LADAPYTHON_ATAT_HPP_
-namespace PythonLaDa
+namespace LaDa
 {
-  void expose_atat();
-}
+  namespace Python
+  {
+    void expose_atat();
+  }
+} // namespace LaDa
 #endif 

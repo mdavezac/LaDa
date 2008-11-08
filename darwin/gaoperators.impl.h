@@ -9,392 +9,395 @@
 
 #include "debug.h"
 
-
-namespace GA
+namespace LaDa
 {
-  template<class T_INDIVIDUAL> 
-  std::string Krossover<T_INDIVIDUAL> :: print_out() const
-  {
-    std::ostringstream sstr;
-    sstr << "Krossover, rate = " << rate;
-    if (do_range) sstr << ", Range = true ";
-    return sstr.str();
-  }
-  template<class T_INDIVIDUAL>
-  bool Krossover<T_INDIVIDUAL> :: Load( const TiXmlElement &_node )
-  {
-    std::string name = _node.Value();
-    if ( name.compare("Krossover") ) return false;
 
-    _node.Attribute( "rate", &rate );
-    rate = rate > 0 ? std::abs(rate) : 0.5;
-    if ( rate > 1 ) rate = 0.5;
-    if ( _node.Attribute("type") )
+  namespace GA
+  {
+    template<class T_INDIVIDUAL> 
+    std::string Krossover<T_INDIVIDUAL> :: print_out() const
     {
-      std::string str =  _node.Attribute("type");
-      if ( str.compare("range") == 0 )  do_range = true;
+      std::ostringstream sstr;
+      sstr << "Krossover, rate = " << rate;
+      if (do_range) sstr << ", Range = true ";
+      return sstr.str();
     }
-    return true;
-  }
-  // expects kspace value to exist!!
-  template<class T_INDIVIDUAL>
-  bool Krossover<T_INDIVIDUAL> :: operator()( t_Individual &_indiv,
-                                              const t_Individual &_parent )
-  {
-    t_Object &offspring  = _indiv.Object();
-    const t_Object &parent  = _parent.Object();
-    Crystal::Structure str1 = structure, str2 = structure;
-    str1 << offspring; str2 << parent;
-    t_FourierRtoK( str1.atoms.begin(),  str1.atoms.end(),
-                   str1.k_vecs.begin(), str1.k_vecs.end() );
-    t_FourierKtoR( str2.atoms.begin(),  str2.atoms.end(),
-                   str2.k_vecs.begin(), str2.k_vecs.end() );
+    template<class T_INDIVIDUAL>
+    bool Krossover<T_INDIVIDUAL> :: Load( const TiXmlElement &_node )
+    {
+      std::string name = _node.Value();
+      if ( name.compare("Krossover") ) return false;
 
-    // range crossover ... kvec should be oredered according to size
-    if ( do_range and str1.k_vecs.size() > 2 ) 
+      _node.Attribute( "rate", &rate );
+      rate = rate > 0 ? std::abs(rate) : 0.5;
+      if ( rate > 1 ) rate = 0.5;
+      if ( _node.Attribute("type") )
+      {
+        std::string str =  _node.Attribute("type");
+        if ( str.compare("range") == 0 )  do_range = true;
+      }
+      return true;
+    }
+    // expects kspace value to exist!!
+    template<class T_INDIVIDUAL>
+    bool Krossover<T_INDIVIDUAL> :: operator()( t_Individual &_indiv,
+                                                const t_Individual &_parent )
+    {
+      t_Object &offspring  = _indiv.Object();
+      const t_Object &parent  = _parent.Object();
+      Crystal::Structure str1 = structure, str2 = structure;
+      str1 << offspring; str2 << parent;
+      t_FourierRtoK( str1.atoms.begin(),  str1.atoms.end(),
+                     str1.k_vecs.begin(), str1.k_vecs.end() );
+      t_FourierKtoR( str2.atoms.begin(),  str2.atoms.end(),
+                     str2.k_vecs.begin(), str2.k_vecs.end() );
+
+      // range crossover ... kvec should be oredered according to size
+      if ( do_range and str1.k_vecs.size() > 2 ) 
+      {  
+        types::t_unsigned n = (types::t_unsigned)
+           std::floor(   (types::t_real) rng.random ( str1.k_vecs.size() - 1 ) 
+                       * (types::t_real) rate );
+        std::copy( str2.k_vecs.begin(), str2.k_vecs.begin() + n, str1.k_vecs.begin() );
+      }
+      else // every point crossover
+      {
+        Crystal::Structure::t_kAtoms :: const_iterator i_p = str2.k_vecs.begin();
+        Crystal::Structure::t_kAtoms :: const_iterator i_p_end = str2.k_vecs.end();
+        Crystal::Structure::t_kAtoms :: iterator i_o = str1.k_vecs.begin();
+        for ( ; i_p != i_p_end; ++i_p, ++i_o)
+          if ( rng.flip(rate) )  i_o->type = i_p->type;
+      }
+    
+      concentration( str1 );
+      offspring << str1;
+
+      return true;
+    }
+    template<class T_INDIVIDUAL>
+    void Krossover<T_INDIVIDUAL> :: apply(eoPopulator<t_Individual>& _pop)
+    {
+      t_Individual &offspring = *_pop;
+      const t_Individual &parent = _pop.select();
+      if ( operator()( offspring, parent ) ) (*_pop).invalidate(); 
+    }
+
+    template<class T_INDIVIDUAL>
+    std::string KMutation<T_INDIVIDUAL> :: print_out() const
+    {
+      std::ostringstream sstr;
+      sstr << "KMutation, rate = " << rate;
+      return sstr.str();
+    }
+    template<class T_INDIVIDUAL> 
+    bool KMutation<T_INDIVIDUAL> :: Load( const TiXmlElement &_node )
+    {
+      std::string name = _node.Value();
+      if ( name.compare("KMutation") ) return false;
+
+      _node.Attribute( "rate", &rate );
+      rate = rate > 0 ? std::abs(rate) : 0.5;
+      if ( rate > 1 ) rate = 0.5;
+      return true;
+    }
+    template<class T_INDIVIDUAL>
+    bool KMutation<T_INDIVIDUAL> :: operator()(t_Individual &_indiv )
+    {
+      t_Object &object  = _indiv.Object();
+      Crystal::Structure str = structure;
+      str << object;
+      t_FourierRtoK( str.atoms.begin(),  str.atoms.end(),
+                     str.k_vecs.begin(), str.k_vecs.end() );
+
+      
+      Crystal::Structure::t_kAtoms :: iterator i_k = str.k_vecs.begin();
+      Crystal::Structure::t_kAtoms :: iterator i_k_end = str.k_vecs.end();
+      types::t_real max = std::norm( i_k->type );
+      for(; i_k != i_k_end; ++i_k)
+        if ( max < std::norm( i_k->type ) ) max = std::norm( i_k->type );
+
+      i_k = str.k_vecs.begin();
+      max = std::sqrt( max );
+      bool result = false;
+      for(; i_k != i_k_end; ++i_k)
+        if ( rng.flip(rate) )
+        {
+          i_k->type = std::complex<types::t_real>( rng.uniform( 2.0 * max ) - max, 
+                                                   rng.uniform( 2.0 * max ) - max );
+          result = true;
+        }
+    
+      concentration( str );
+      object << str;
+      return true;
+    }
+
+    template<class T_INDIVIDUAL> 
+    bool KRandom<T_INDIVIDUAL> :: operator()( t_Individual &_indiv )
+    {
+      t_Object &obj = _indiv.Object();
+
+      Crystal::Structure::t_kAtoms :: const_iterator i_kvec = structure.k_vecs.begin();
+      Crystal::Structure::t_kAtoms :: const_iterator i_kvec_end = structure.k_vecs.end();
+      types::t_real n = 3.0 / (types::t_real) structure.k_vecs.size(); 
+      for(; i_kvec != i_kvec_end; ++i_kvec )
+        if( rng.flip(n) )
+          i_kvec->type = std::complex<types::t_real>( rng.uniform( 5.0 ) - 2.5,
+                                                      rng.uniform( 5.0 ) - 2.5  );
+
+      concentration( structure );
+      obj << structure;
+
+      return true;
+    }
+
+
+    template<class T_INDIVIDUAL> 
+    bool Crossover<T_INDIVIDUAL> :: operator()(t_Individual& _indiv, const t_Individual _parent )
+    {
+      t_Object &obj1 = _indiv.Object();
+      const t_Object &obj2 = _parent.Object();
+      op( obj1, obj2 );
+      concentration( obj1 );
+      return true;
+    }
+    template<class T_INDIVIDUAL> 
+    std::string Crossover<T_INDIVIDUAL> :: print_out() const
+    {
+      std::ostringstream sstr;
+      sstr << "Crossover, rate = " << op.rate;
+      return sstr.str();
+    }
+    template<class T_INDIVIDUAL>
+    void Crossover<T_INDIVIDUAL> :: apply(eoPopulator<t_Individual>& _pop)
+    {
+      t_Individual &offspring = *_pop;
+      const t_Individual &parent = _pop.select();
+      if ( operator()( offspring, parent ) ) (*_pop).invalidate(); 
+    }
+    
+
+
+    template<class T_INDIVIDUAL> 
+    bool Mutation<T_INDIVIDUAL> :: operator()( t_Individual &_indiv )
+    {
+      t_Object &obj = _indiv.Object();
+      op( obj );
+      concentration( obj );
+      return true;
+    }
+    template<class T_INDIVIDUAL> 
+    std::string Mutation<T_INDIVIDUAL> :: print_out() const 
+    {
+      std::ostringstream sstr;
+      sstr << "Mutation, rate = " << op.rate;
+      return sstr.str();
+    }
+
+    template<class T_INDIVIDUAL> 
+    bool Random<T_INDIVIDUAL> :: operator()( t_Individual &_indiv )
+    {
+      t_Object &obj = _indiv.Object();
+      obj.bitstring.clear();
+
+      Crystal::Structure::t_Atoms :: const_iterator i_atom = structure.atoms.begin();
+      Crystal::Structure::t_Atoms :: const_iterator i_atom_end = structure.atoms.end();
+      for(; i_atom != i_atom_end; ++i_atom )
+        if ( not (i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T) )
+          obj.bitstring.push_back( rng.flip() ? -1.0: 1.0 );
+
+      concentration( obj );
+
+      return true;
+    }
+
+
+    template<class T_INDIVIDUAL>
+      eoGenOp<T_INDIVIDUAL>*
+        LoadGaOp(const TiXmlElement &_el, Crystal::Structure &_structure, 
+                 typename T_INDIVIDUAL :: t_IndivTraits :: t_Concentration &_concentration )
+    {
+      std::string value = _el.Value();
+
+      if ( value.compare("Crossover") == 0 )
+      {
+        Crossover<T_INDIVIDUAL> *crossover
+           = new Crossover<T_INDIVIDUAL>(_concentration);
+        if ( not crossover ) goto errorout;
+        if ( not crossover->Load( _el ) ) 
+        {
+          delete crossover;
+          return NULL;
+        }
+        Print::xmg << Print::Xmg::comment << crossover->print_out() << Print::endl;
+        // pointer is owned by caller !!
+        return crossover;
+      }
+      else if ( value.compare("Mutation") == 0 )
+      {
+        Mutation<T_INDIVIDUAL> *mutation
+           = new Mutation<T_INDIVIDUAL>(_concentration);
+        if ( not mutation ) goto errorout;
+        if ( not mutation->Load( _el ) ) 
+        {
+          delete mutation;
+          return NULL;
+        }
+        Print::xmg << Print::Xmg::comment << mutation->print_out() << Print::endl;
+        // pointer is owned by caller !!
+        return mutation;
+      }
+      else if ( value.compare( "Random" ) == 0 )
+      {
+        Random<T_INDIVIDUAL> *random
+           = new Random<T_INDIVIDUAL>(_concentration, _structure);
+        Print::xmg << Print::Xmg::comment << random->print_out() << Print::endl;
+        // pointer is owned by caller !!
+        return random;
+      }
+      else if ( value.compare( "Krossover" ) == 0 )
+      {
+        Krossover<T_INDIVIDUAL> *krossover
+           = new Krossover<T_INDIVIDUAL>( _concentration, _structure );
+        if ( not krossover ) goto errorout;
+        if ( not krossover->Load( _el ) ) 
+        {
+          delete krossover;
+          return NULL;
+        }
+        Print::xmg << Print::Xmg::comment << krossover->print_out() << Print::endl;
+        // pointer is owned by caller !!
+        return krossover;
+      }
+      else if ( value.compare( "KMutation" ) == 0 )
+      {
+        KMutation<T_INDIVIDUAL> *kmutation
+           = new KMutation<T_INDIVIDUAL>( _concentration, _structure );
+        if ( not kmutation ) goto errorout;
+        if ( not kmutation->Load( _el ) ) 
+        {
+          delete kmutation;
+          return NULL;
+        }
+        Print::xmg << Print::Xmg::comment << kmutation->print_out() << Print::endl;
+        // pointer is owned by caller !!
+        return kmutation;
+      }
+
+      return NULL;
+
+  errorout:
+      std::cerr << " Memory Allocation error while creating GA Operators " << std::endl;
+      return NULL;
+    }
+
+
+
+    template< class T_INDIVIDUAL >
+    bool xTaboo<T_INDIVIDUAL> :: operator()( const t_Individual& _indiv )
+    {
+      concentration.get( _indiv.Object() );
+      return    Fuzzy::le(concentration.x, lessthan)
+             or Fuzzy::gt(concentration.x, morethan);
+    }
+    template< class T_INDIVIDUAL >
+    bool xTaboo<T_INDIVIDUAL> :: Load( const TiXmlElement &_el ) 
+    {
+      const TiXmlElement *child = &_el;
+      std::string name = _el.Value();
+      if ( name.compare("Concentration") )
+        child = _el.FirstChildElement( "Concentration" );
+      if ( not child ) return false;
+      
+      double d; 
+      lessthan = -1.0; morethan = 1.0;
+      if ( child->Attribute( "lessthan" ) )
+      {
+        child->Attribute( "lessthan", &d );
+        lessthan = ( Fuzzy::gt( d, 0e0) and Fuzzy::le( d, 1e0 ) ) ? 2.0*d-1.0: 1.0;
+      }
+      if ( child->Attribute( "morethan" ) )
+      {
+        child->Attribute( "morethan", &d );
+        morethan = ( Fuzzy::gt( d, 0e0 ) and Fuzzy::le( d, 1e0 ) )? 2.0*d-1.0: 1.0;
+      }
+      if ( Fuzzy::geq( lessthan, morethan ) ) return false;
+     
+      Print::xmg << Print::Xmg::comment << Print::fixed << Print::setprecision(3) 
+                 << "Allowed individuals: x in [ " << 0.5*(lessthan+1.0)
+                 << ", "  << 0.5*(morethan+1.0) << "] " << Print::endl;
+      return true;
+    }
+
+
+    template< class T_INDIVIDUAL >
+    bool XYZAnim<T_INDIVIDUAL> :: operator()( const t_Individual& _indiv )
+    {
+      ++n;
+      if( not open() ) return false;
+      std::ostringstream sstr;
+      sstr << "Iteration: " << n << "  --  " << _indiv.fitness();
+      structure << _indiv.Object();
+      std::ostringstream sstr2;
+      structure.print_xyz( sstr2, sstr.str() );
+      (*file) << sstr2.str();
+      file->close();
+      return true;
+    }
+
+    template< class T_INDIVIDUAL >
+    bool XYZAnim<T_INDIVIDUAL> :: open()
+    {
+      if( not file ) return false;
+      if( file->is_open() ) return true;
+      return file->open();
+    }
+    template< class T_INDIVIDUAL >
+    void XYZAnim<T_INDIVIDUAL> :: init( const std::string &_name )
+    {
+      if( not file )
+      {
+        file = new Print::StdOut;
+        owns_pointer = true;
+      }
+      file->init( _name );
+    }
+
+    template< class T_INDIVIDUAL >
+    bool XYZAnim<T_INDIVIDUAL> :: Load( const TiXmlElement &_node )
     {  
-      types::t_unsigned n = (types::t_unsigned)
-         std::floor(   (types::t_real) rng.random ( str1.k_vecs.size() - 1 ) 
-                     * (types::t_real) rate );
-      std::copy( str2.k_vecs.begin(), str2.k_vecs.begin() + n, str1.k_vecs.begin() );
-    }
-    else // every point crossover
-    {
-      Crystal::Structure::t_kAtoms :: const_iterator i_p = str2.k_vecs.begin();
-      Crystal::Structure::t_kAtoms :: const_iterator i_p_end = str2.k_vecs.end();
-      Crystal::Structure::t_kAtoms :: iterator i_o = str1.k_vecs.begin();
-      for ( ; i_p != i_p_end; ++i_p, ++i_o)
-        if ( rng.flip(rate) )  i_o->type = i_p->type;
-    }
-  
-    concentration( str1 );
-    offspring << str1;
+      std::string name = _node.Value();
+      if( name.compare( "Print" ) ) return false;
+      if( not _node.Attribute( "type" ) ) return false;
+      name = _node.Attribute("type");
+      if( name.compare( "animation" ) != 0 ) return false;
 
-    return true;
-  }
-  template<class T_INDIVIDUAL>
-  void Krossover<T_INDIVIDUAL> :: apply(eoPopulator<t_Individual>& _pop)
-  {
-    t_Individual &offspring = *_pop;
-    const t_Individual &parent = _pop.select();
-    if ( operator()( offspring, parent ) ) (*_pop).invalidate(); 
-  }
+      std::string filename = "out.xyz";
+      const TiXmlNode *parent = _node.Parent();
+      if( parent ) 
+      {
+        const TiXmlElement *child = parent->FirstChildElement( "Filenames" );
+        for(; child; child = child->NextSiblingElement( "Filenames" ) )
+        {
+          if( not child->Attribute( "animation" ) ) continue;
+          name = child->Attribute( "animation" );
+          if( name.size() > 0 ) { filename = name; break; }
+        }
+      }
 
-  template<class T_INDIVIDUAL>
-  std::string KMutation<T_INDIVIDUAL> :: print_out() const
-  {
-    std::ostringstream sstr;
-    sstr << "KMutation, rate = " << rate;
-    return sstr.str();
-  }
-  template<class T_INDIVIDUAL> 
-  bool KMutation<T_INDIVIDUAL> :: Load( const TiXmlElement &_node )
-  {
-    std::string name = _node.Value();
-    if ( name.compare("KMutation") ) return false;
+      init( filename );
 
-    _node.Attribute( "rate", &rate );
-    rate = rate > 0 ? std::abs(rate) : 0.5;
-    if ( rate > 1 ) rate = 0.5;
-    return true;
-  }
-  template<class T_INDIVIDUAL>
-  bool KMutation<T_INDIVIDUAL> :: operator()(t_Individual &_indiv )
-  {
-    t_Object &object  = _indiv.Object();
-    Crystal::Structure str = structure;
-    str << object;
-    t_FourierRtoK( str.atoms.begin(),  str.atoms.end(),
-                   str.k_vecs.begin(), str.k_vecs.end() );
+      Print::xmg << Print::Xmg::comment
+                 << "Will print animation (xyz format) of best individual to " 
+                 << filename << Print::endl;
+      Print::out << "Will print animation (xyz format) of best individual to " 
+                 << filename << "\n";
+
+      return true;
+    }  
 
     
-    Crystal::Structure::t_kAtoms :: iterator i_k = str.k_vecs.begin();
-    Crystal::Structure::t_kAtoms :: iterator i_k_end = str.k_vecs.end();
-    types::t_real max = std::norm( i_k->type );
-    for(; i_k != i_k_end; ++i_k)
-      if ( max < std::norm( i_k->type ) ) max = std::norm( i_k->type );
 
-    i_k = str.k_vecs.begin();
-    max = std::sqrt( max );
-    bool result = false;
-    for(; i_k != i_k_end; ++i_k)
-      if ( rng.flip(rate) )
-      {
-        i_k->type = std::complex<types::t_real>( rng.uniform( 2.0 * max ) - max, 
-                                                 rng.uniform( 2.0 * max ) - max );
-        result = true;
-      }
-  
-    concentration( str );
-    object << str;
-    return true;
   }
-
-  template<class T_INDIVIDUAL> 
-  bool KRandom<T_INDIVIDUAL> :: operator()( t_Individual &_indiv )
-  {
-    t_Object &obj = _indiv.Object();
-
-    Crystal::Structure::t_kAtoms :: const_iterator i_kvec = structure.k_vecs.begin();
-    Crystal::Structure::t_kAtoms :: const_iterator i_kvec_end = structure.k_vecs.end();
-    types::t_real n = 3.0 / (types::t_real) structure.k_vecs.size(); 
-    for(; i_kvec != i_kvec_end; ++i_kvec )
-      if( rng.flip(n) )
-        i_kvec->type = std::complex<types::t_real>( rng.uniform( 5.0 ) - 2.5,
-                                                    rng.uniform( 5.0 ) - 2.5  );
-
-    concentration( structure );
-    obj << structure;
-
-    return true;
-  }
-
-
-  template<class T_INDIVIDUAL> 
-  bool Crossover<T_INDIVIDUAL> :: operator()(t_Individual& _indiv, const t_Individual _parent )
-  {
-    t_Object &obj1 = _indiv.Object();
-    const t_Object &obj2 = _parent.Object();
-    op( obj1, obj2 );
-    concentration( obj1 );
-    return true;
-  }
-  template<class T_INDIVIDUAL> 
-  std::string Crossover<T_INDIVIDUAL> :: print_out() const
-  {
-    std::ostringstream sstr;
-    sstr << "Crossover, rate = " << op.rate;
-    return sstr.str();
-  }
-  template<class T_INDIVIDUAL>
-  void Crossover<T_INDIVIDUAL> :: apply(eoPopulator<t_Individual>& _pop)
-  {
-    t_Individual &offspring = *_pop;
-    const t_Individual &parent = _pop.select();
-    if ( operator()( offspring, parent ) ) (*_pop).invalidate(); 
-  }
-  
-
-
-  template<class T_INDIVIDUAL> 
-  bool Mutation<T_INDIVIDUAL> :: operator()( t_Individual &_indiv )
-  {
-    t_Object &obj = _indiv.Object();
-    op( obj );
-    concentration( obj );
-    return true;
-  }
-  template<class T_INDIVIDUAL> 
-  std::string Mutation<T_INDIVIDUAL> :: print_out() const 
-  {
-    std::ostringstream sstr;
-    sstr << "Mutation, rate = " << op.rate;
-    return sstr.str();
-  }
-
-  template<class T_INDIVIDUAL> 
-  bool Random<T_INDIVIDUAL> :: operator()( t_Individual &_indiv )
-  {
-    t_Object &obj = _indiv.Object();
-    obj.bitstring.clear();
-
-    Crystal::Structure::t_Atoms :: const_iterator i_atom = structure.atoms.begin();
-    Crystal::Structure::t_Atoms :: const_iterator i_atom_end = structure.atoms.end();
-    for(; i_atom != i_atom_end; ++i_atom )
-      if ( not (i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T) )
-        obj.bitstring.push_back( rng.flip() ? -1.0: 1.0 );
-
-    concentration( obj );
-
-    return true;
-  }
-
-
-  template<class T_INDIVIDUAL>
-    eoGenOp<T_INDIVIDUAL>*
-      LoadGaOp(const TiXmlElement &_el, Crystal::Structure &_structure, 
-               typename T_INDIVIDUAL :: t_IndivTraits :: t_Concentration &_concentration )
-  {
-    std::string value = _el.Value();
-
-    if ( value.compare("Crossover") == 0 )
-    {
-      Crossover<T_INDIVIDUAL> *crossover
-         = new Crossover<T_INDIVIDUAL>(_concentration);
-      if ( not crossover ) goto errorout;
-      if ( not crossover->Load( _el ) ) 
-      {
-        delete crossover;
-        return NULL;
-      }
-      Print::xmg << Print::Xmg::comment << crossover->print_out() << Print::endl;
-      // pointer is owned by caller !!
-      return crossover;
-    }
-    else if ( value.compare("Mutation") == 0 )
-    {
-      Mutation<T_INDIVIDUAL> *mutation
-         = new Mutation<T_INDIVIDUAL>(_concentration);
-      if ( not mutation ) goto errorout;
-      if ( not mutation->Load( _el ) ) 
-      {
-        delete mutation;
-        return NULL;
-      }
-      Print::xmg << Print::Xmg::comment << mutation->print_out() << Print::endl;
-      // pointer is owned by caller !!
-      return mutation;
-    }
-    else if ( value.compare( "Random" ) == 0 )
-    {
-      Random<T_INDIVIDUAL> *random
-         = new Random<T_INDIVIDUAL>(_concentration, _structure);
-      Print::xmg << Print::Xmg::comment << random->print_out() << Print::endl;
-      // pointer is owned by caller !!
-      return random;
-    }
-    else if ( value.compare( "Krossover" ) == 0 )
-    {
-      Krossover<T_INDIVIDUAL> *krossover
-         = new Krossover<T_INDIVIDUAL>( _concentration, _structure );
-      if ( not krossover ) goto errorout;
-      if ( not krossover->Load( _el ) ) 
-      {
-        delete krossover;
-        return NULL;
-      }
-      Print::xmg << Print::Xmg::comment << krossover->print_out() << Print::endl;
-      // pointer is owned by caller !!
-      return krossover;
-    }
-    else if ( value.compare( "KMutation" ) == 0 )
-    {
-      KMutation<T_INDIVIDUAL> *kmutation
-         = new KMutation<T_INDIVIDUAL>( _concentration, _structure );
-      if ( not kmutation ) goto errorout;
-      if ( not kmutation->Load( _el ) ) 
-      {
-        delete kmutation;
-        return NULL;
-      }
-      Print::xmg << Print::Xmg::comment << kmutation->print_out() << Print::endl;
-      // pointer is owned by caller !!
-      return kmutation;
-    }
-
-    return NULL;
-
-errorout:
-    std::cerr << " Memory Allocation error while creating GA Operators " << std::endl;
-    return NULL;
-  }
-
-
-
-  template< class T_INDIVIDUAL >
-  bool xTaboo<T_INDIVIDUAL> :: operator()( const t_Individual& _indiv )
-  {
-    concentration.get( _indiv.Object() );
-    return    Fuzzy::le(concentration.x, lessthan)
-           or Fuzzy::gt(concentration.x, morethan);
-  }
-  template< class T_INDIVIDUAL >
-  bool xTaboo<T_INDIVIDUAL> :: Load( const TiXmlElement &_el ) 
-  {
-    const TiXmlElement *child = &_el;
-    std::string name = _el.Value();
-    if ( name.compare("Concentration") )
-      child = _el.FirstChildElement( "Concentration" );
-    if ( not child ) return false;
-    
-    double d; 
-    lessthan = -1.0; morethan = 1.0;
-    if ( child->Attribute( "lessthan" ) )
-    {
-      child->Attribute( "lessthan", &d );
-      lessthan = ( Fuzzy::gt( d, 0e0) and Fuzzy::le( d, 1e0 ) ) ? 2.0*d-1.0: 1.0;
-    }
-    if ( child->Attribute( "morethan" ) )
-    {
-      child->Attribute( "morethan", &d );
-      morethan = ( Fuzzy::gt( d, 0e0 ) and Fuzzy::le( d, 1e0 ) )? 2.0*d-1.0: 1.0;
-    }
-    if ( Fuzzy::geq( lessthan, morethan ) ) return false;
-   
-    Print::xmg << Print::Xmg::comment << Print::fixed << Print::setprecision(3) 
-               << "Allowed individuals: x in [ " << 0.5*(lessthan+1.0)
-               << ", "  << 0.5*(morethan+1.0) << "] " << Print::endl;
-    return true;
-  }
-
-
-  template< class T_INDIVIDUAL >
-  bool XYZAnim<T_INDIVIDUAL> :: operator()( const t_Individual& _indiv )
-  {
-    ++n;
-    if( not open() ) return false;
-    std::ostringstream sstr;
-    sstr << "Iteration: " << n << "  --  " << _indiv.fitness();
-    structure << _indiv.Object();
-    std::ostringstream sstr2;
-    structure.print_xyz( sstr2, sstr.str() );
-    (*file) << sstr2.str();
-    file->close();
-    return true;
-  }
-
-  template< class T_INDIVIDUAL >
-  bool XYZAnim<T_INDIVIDUAL> :: open()
-  {
-    if( not file ) return false;
-    if( file->is_open() ) return true;
-    return file->open();
-  }
-  template< class T_INDIVIDUAL >
-  void XYZAnim<T_INDIVIDUAL> :: init( const std::string &_name )
-  {
-    if( not file )
-    {
-      file = new Print::StdOut;
-      owns_pointer = true;
-    }
-    file->init( _name );
-  }
-
-  template< class T_INDIVIDUAL >
-  bool XYZAnim<T_INDIVIDUAL> :: Load( const TiXmlElement &_node )
-  {  
-    std::string name = _node.Value();
-    if( name.compare( "Print" ) ) return false;
-    if( not _node.Attribute( "type" ) ) return false;
-    name = _node.Attribute("type");
-    if( name.compare( "animation" ) != 0 ) return false;
-
-    std::string filename = "out.xyz";
-    const TiXmlNode *parent = _node.Parent();
-    if( parent ) 
-    {
-      const TiXmlElement *child = parent->FirstChildElement( "Filenames" );
-      for(; child; child = child->NextSiblingElement( "Filenames" ) )
-      {
-        if( not child->Attribute( "animation" ) ) continue;
-        name = child->Attribute( "animation" );
-        if( name.size() > 0 ) { filename = name; break; }
-      }
-    }
-
-    init( filename );
-
-    Print::xmg << Print::Xmg::comment
-               << "Will print animation (xyz format) of best individual to " 
-               << filename << Print::endl;
-    Print::out << "Will print animation (xyz format) of best individual to " 
-               << filename << "\n";
-
-    return true;
-  }  
-
-  
-
-}
+} // namespace LaDa
 #endif

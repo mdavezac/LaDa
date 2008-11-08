@@ -18,6 +18,7 @@ cubic_LDADD =   libce.la \
 		../physics/libphysics.la \
 		@MPI_ADDLIB@ \
 		../print/libprint.la \
+                ../opt/libopt.la 
 		@BOOST_FS@
 tetra_SOURCES = $(cubic_SOURCES)
 tetra_CPPFLAGS =  $(AM_CPPFLAGS) -D_TETRAGONAL_CE_
@@ -27,11 +28,11 @@ regular_SOURCES = rmain.cc
 regular_CPPFLAGS =  $(AM_CPPFLAGS) -D_CUBIC_CE_ @GSL_CFLAGS@
 regular_LDFLAGS = $(cubic_LDFLAGS) @GSL_LIBS@ 
 regular_LDADD = libce.la \
-                ../opt/libopt.la \
                 ../crystal/libcrystal.la \
 		../atat/libatat.la \
 		../physics/libphysics.la \
-		../print/libprint.la 
+		../print/libprint.la \
+                ../opt/libopt.la 
 endif
 noinst_LTLIBRARIES = libce.la 
 libce_la_SOURCES = $(CE_CC)

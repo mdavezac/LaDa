@@ -14,35 +14,37 @@
 
 #include "bandgap_stubs.h"
 
-namespace GA
+namespace LaDa
 {
-  namespace Keepers 
+  namespace GA
   {
-    bool BandGap :: Load ( const TiXmlElement &_node )
+    namespace Keepers 
     {
-      double d;
+      bool BandGap :: Load ( const TiXmlElement &_node )
+      {
+        double d;
 
-      if ( not _node.Attribute("cbm", &d ) ) goto errorout;
-      cbm = types::t_real(d);
-      if ( not _node.Attribute("vbm", &d ) ) goto errorout;
-      vbm = types::t_real(d);
+        if ( not _node.Attribute("cbm", &d ) ) goto errorout;
+        cbm = types::t_real(d);
+        if ( not _node.Attribute("vbm", &d ) ) goto errorout;
+        vbm = types::t_real(d);
 
-      return true;
+        return true;
 
-      errorout:
-        std::cerr << "Could not Load GA::Keepers::BandGap" << std::endl;
-        return false;
-    }
-    bool BandGap :: Save( TiXmlElement &_node ) const
-    {
-      _node.SetDoubleAttribute("vbm", vbm );
-      _node.SetDoubleAttribute("cbm", cbm );
-      if( not Vff::Keeper::Save( _node ) ) return false;
+        errorout:
+          std::cerr << "Could not Load GA::Keepers::BandGap" << std::endl;
+          return false;
+      }
+      bool BandGap :: Save( TiXmlElement &_node ) const
+      {
+        _node.SetDoubleAttribute("vbm", vbm );
+        _node.SetDoubleAttribute("cbm", cbm );
+        if( not Vff::Keeper::Save( _node ) ) return false;
 
-      return true;
-    }
-  } // namespace Keepers
-} // namespace GA
-
+        return true;
+      }
+    } // namespace Keepers
+  } // namespace GA
+}
 
 

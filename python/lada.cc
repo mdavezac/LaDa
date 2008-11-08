@@ -36,14 +36,14 @@
 BOOST_PYTHON_MODULE(LaDa)
 {
   // PythonLaDa::expose_svn();
-  PythonLaDa::expose_physics();
-  PythonLaDa::expose_atat();
-  PythonLaDa::expose_lattice();
-  PythonLaDa::expose_atom();
-  PythonLaDa::expose_structure();
-  PythonLaDa::expose_errors();
-  PythonLaDa::exposeConvexHull<boost::python::object>( "ConvexHull" );
+  LaDa::Python::expose_physics();
+  LaDa::Python::expose_atat();
+  LaDa::Python::expose_lattice();
+  LaDa::Python::expose_atom();
+  LaDa::Python::expose_structure();
+  LaDa::Python::expose_errors();
+  LaDa::Python::exposeConvexHull<boost::python::object>( "ConvexHull" );
 # ifdef __DOCE
-  PythonLaDa::expose_ce();
+  LaDa::Python::expose_ce();
 # endif
 }

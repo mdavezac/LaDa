@@ -24,6 +24,7 @@
 # define __ROOTCODE(a,b) b
 #endif
 
+namespace Crystal = LaDa :: Crystal;
 boost::shared_ptr<Crystal::Lattice>
   load_structure( Crystal::Structure& _structure, const std::string &_input )
   {
@@ -82,10 +83,6 @@ boost::shared_ptr<Crystal::Lattice>
       std::cerr << "Could not write to " << _filename << ".xml" << std::endl;
   }
 
-  void printinfo( Crystal::Structure &_structure )
-  {
-  }
-
 int main(int argc, char *argv[]) 
 {
   namespace fs = boost::filesystem;
@@ -130,20 +127,20 @@ int main(int argc, char *argv[])
   typedef Crystal::Structure::t_Atoms::const_iterator t_iatom;
   t_iatom i_atom = structure.atoms.begin();
   t_iatom i_atom_end = structure.atoms.end();
-  types::t_real last_depth( depth(i_atom->pos) );
-  types::t_unsigned layer_size(0);
-  types::t_unsigned nb_layers(0); 
+  LaDa::types::t_real last_depth( depth(i_atom->pos) );
+  LaDa::types::t_unsigned layer_size(0);
+  LaDa::types::t_unsigned nb_layers(0); 
   std::ostringstream  sstr;
   for( ; i_atom != i_atom_end; )
   {
-    types::t_real new_depth;
+    LaDa::types::t_real new_depth;
     do
     {
       ++layer_size;
       ++i_atom;
       new_depth = depth(i_atom->pos);
     }
-    while( Fuzzy::eq( last_depth, new_depth ) and i_atom != i_atom_end );
+    while( LaDa::Fuzzy::eq( last_depth, new_depth ) and i_atom != i_atom_end );
     ++nb_layers;
 
     sstr << "  _ layer at depth "

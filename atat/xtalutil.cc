@@ -11,6 +11,8 @@
 
 #include <opt/types.h>
 
+namespace LaDa
+{ 
 namespace atat
 { 
 
@@ -558,4 +560,4 @@ void strain_str(Structure *pstr, const Structure &str, const rMatrix3d &strain) 
 
 
 } // namespace atat
-
+}

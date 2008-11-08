@@ -9,9 +9,11 @@
 #include <config.h>
 #endif
 
-namespace PythonLaDa
+namespace LaDa
 {
-  void expose_errors();
-}
-
+  namespace Python
+  {
+    void expose_errors();
+  }
+} // namespace LaDa
 #endif

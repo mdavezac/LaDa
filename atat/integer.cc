@@ -11,6 +11,8 @@
 
 #include <opt/types.h>
 
+namespace LaDa
+{ 
 namespace atat
 { 
 types::t_real zero_tolerance=1e-3;
@@ -64,4 +66,5 @@ types::t_int integer_ratio(types::t_int *pp, types::t_int *pq, types::t_real x, 
 
 
 } // namespace atat
+}
 }

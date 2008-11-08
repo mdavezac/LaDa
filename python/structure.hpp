@@ -11,9 +11,11 @@
 
 #include <crystal/structure.h>
 
-namespace PythonLaDa
+namespace LaDa
 {
-  void expose_structure();
-}
-
+  namespace Python
+  {
+    void expose_structure();
+  }
+} // namespace LaDa
 #endif

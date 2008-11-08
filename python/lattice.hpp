@@ -9,9 +9,11 @@
 #include <config.h>
 #endif
 
-namespace PythonLaDa
+namespace LaDa
 {
-  void expose_lattice();
-}
-
+  namespace Python
+  {
+    void expose_lattice();
+  }
+} // namespace LaDa
 #endif

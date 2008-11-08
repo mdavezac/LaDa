@@ -42,10 +42,10 @@
 # define __BPO_HELP_N_VERSION__ \
   std::cout << "\n" << __PROGNAME__ \
             << " from the " << PACKAGE_STRING << " package.\n" \
-            << "Subversion Revision: " << SVN::Revision << "\n\n"; \
+            << "Subversion Revision: " << ::LaDa::SVN::Revision << "\n\n"; \
   if ( vm.count("help") ) \
   { \
-    __ROOTCODE( (*::mpi::main), \
+    __ROOTCODE( (*::LaDa::mpi::main), \
       std::cout << "Usage: " << argv[0] << " [options] file.xml\n" \
                 << "  file.xml is an optional filename for XML input.\n" \
                 << "  Default input is input.xml.\n\n" \
@@ -55,10 +55,10 @@
   } \
   if ( vm.count("version") ) \
   { \
-    __ROOTCODE(  (*::mpi::main), \
+    __ROOTCODE(  (*::LaDa::mpi::main), \
       std::cout << "\n" << __PROGNAME__ \
                 << " from the " << PACKAGE_STRING << " package\n" \
-                << "Subversion Revision: " << SVN::Revision << "\n\n";  \
+                << "Subversion Revision: " << ::LaDa::SVN::Revision << "\n\n";  \
     ) \
     return 1; \
   }

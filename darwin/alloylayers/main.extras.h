@@ -18,21 +18,21 @@
 #   include "evaluator.h"
 #   include "policies.h"
 #   include "object.h"
+#   include "factory.hpp"
 #   define __PROGNAME__ "Epitaxial Alloy Layer Optimization"
 
-    typedef Individual :: Types
+    typedef LaDa::Individual :: Types
             < 
-              GA :: AlloyLayers :: Object,
-              TwoSites :: Concentration,
-              TwoSites :: Fourier 
+              LaDa :: GA :: AlloyLayers :: Object,
+              LaDa :: TwoSites :: Concentration,
+              LaDa :: TwoSites :: Fourier 
             > :: t_Vector t_Individual;
-    typedef GA :: AlloyLayers :: Evaluator
+    typedef LaDa :: GA :: AlloyLayers :: Evaluator
             <
               t_Individual,
-              GA :: AlloyLayers :: Translate,
-              GA :: AlloyLayers :: AssignSignal
+              LaDa :: GA :: AlloyLayers :: Translate,
+              LaDa :: GA :: AlloyLayers :: AssignSignal
             > t_Evaluator;
-
 
 # elif _MAIN_ALLOY_LAYERS_EXTRAS_ == 0
     // defines program options.
@@ -81,119 +81,45 @@
     // reads program options.
 #   undef _MAIN_ALLOY_LAYERS_EXTRAS_
 #   define _MAIN_ALLOY_LAYERS_EXTRAS_ 3
-    Print::out << "Strain energy (Vff) will"
-               << ( optimize_strain ? " ": " NOT " )
-               << " be optimized.\n";
-    Print::xmg << Print::Xmg::comment
-               << "Strain energy (Vff) will"
-               << ( optimize_strain ? " ": " NOT " )
-               << " be optimized." << Print::endl;
-    Print::out << "Epitaxial strain (Vff) will"
-               << ( optimize_epi ? " ": " NOT " )
-               << " be optimized.\n";
-    Print::xmg << Print::Xmg::comment
-               << "Epitaxial strain (Vff) will"
-               << ( optimize_epi ? " ": " NOT " )
-               << " be optimized." << Print::endl;
-    Print::out << "Band-gaps (escan) will"
-               << ( optimize_bandgaps ? " ": " NOT " )
-               << " be optimized.\n";
-    Print::xmg << Print::Xmg::comment
-               << "Band-gaps (escan) will"
-               << ( optimize_bandgaps ? " ": " NOT " )
-               << " be optimized." << Print::endl;
-    Print::out << "Optical transitions (escan/oscillator strength) will"
-               << ( optimize_transitions ? " ": " NOT " )
-               << " be optimized.\n";
-    Print::xmg << Print::Xmg::comment
-               << "Optical transitions (escan/oscillator strength) will"
-               << ( optimize_transitions ? " ": " NOT " )
-               << " be optimized." << Print::endl;
+      LaDa::Print::out << "Epitaxial strain (Vff) will"
+                       << ( optimize_epi ? " ": " NOT " )
+                       << " be optimized.\n";
+      LaDa::Print::xmg << LaDa::Print::Xmg::comment
+                       << "Epitaxial strain (Vff) will"
+                       << ( optimize_epi ? " ": " NOT " )
+                       << " be optimized." << LaDa::Print::endl;
+      LaDa::Print::out << "Band-gaps (escan) will"
+                       << ( optimize_bandgaps ? " ": " NOT " )
+                       << " be optimized.\n";
+      LaDa::Print::xmg << LaDa::Print::Xmg::comment
+                       << "Band-gaps (escan) will"
+                       << ( optimize_bandgaps ? " ": " NOT " )
+                       << " be optimized." << LaDa::Print::endl;
+      LaDa::Print::out << "Optical transitions (escan/oscillator strength) will"
+                       << ( optimize_transitions ? " ": " NOT " )
+                       << " be optimized.\n";
+      LaDa::Print::xmg << LaDa::Print::Xmg::comment
+                       << "Optical transitions (escan/oscillator strength) will"
+                       << ( optimize_transitions ? " ": " NOT " )
+                       << " be optimized." << LaDa::Print::endl;
 
 # elif _MAIN_ALLOY_LAYERS_EXTRAS_ == 3
     // Connects assignement functors and print functors depending on requested properties.
 #   undef _MAIN_ALLOY_LAYERS_EXTRAS_
 #   define _MAIN_ALLOY_LAYERS_EXTRAS_ 4
 
-    typedef t_Evaluator :: t_GATraits :: t_QuantityTraits :: t_Quantity t_Quantity;
-    typedef t_Evaluator :: t_GATraits :: t_Object t_Object;
-    // Prints object.
-    if( print_genotype )
-      t_Object :: connect_print( bl::_1 << bl::ret< BitString::Object<> >( bl::_2 ) );
-    if( optimize_strain )
-    {
-      ga.evaluator.connect
-      (
-        bl::bind( &t_Quantity::push_back,
-                  bl::_2, bl::bind( &t_Object::energy, bl::_1 ) )
-      );
-      t_Object :: connect_print
-      (
-        bl::_1 << bl::constant(" Strain Energy: ")
-               << bl::bind( &t_Object::energy, bl::_2 )
-      );
-    }
-    if( optimize_epi )
-    {
-      ga.evaluator.connect
-      (
-        bl::bind
-        (
-          &t_Quantity::push_back,
-          bl::_2,
-          bl::bind
-          ( 
-            &Vff::inplane_stress,
-            bl::bind<atat::rMatrix3d>( &t_Object :: stress, bl::_1 ),
-            bl::constant( ga.evaluator.get_direction() )
-          )
-        )
-      );
-      t_Object :: connect_print
-      (
-        bl::_1 << bl::constant(" Epi Strain: ")
-               << bl::constant( std::fixed ) << bl::constant( std::setw(8) )
-               << bl::constant( std::setprecision(3) )
-               << bl::bind
-                  ( 
-                    &Vff::inplane_stress,
-                    bl::bind<atat::rMatrix3d>( &t_Object :: stress, bl::_2 ),
-                    bl::constant( ga.evaluator.get_direction() )
-                  ) / 16.0217733 << bl::constant( " eV/structure" )
-      );
-    }
-    if( optimize_bandgaps )
-    {
-      ga.evaluator.connect
-      (
-        bl::bind
-        (
-          &t_Quantity::push_back,
-         bl::_2,
-          bl::bind( &t_Object::vbm, bl::_1 ) - bl::bind( &t_Object::cbm, bl::_1 )
-        )
-      );
-      t_Object :: connect_print
-      ( 
-        bl::_1 << bl::ret<const ::GA::Keepers::BandGap&>( bl::_2 )
-      );
-    }
-    ga.evaluator.do_dipole = optimize_transitions;
-    if( optimize_transitions )
-    {
-      ga.evaluator.connect
-      (
-        bl::bind
-        (
-          &t_Quantity::push_back,
-          bl::_2, bl::bind(  &t_Object::osc_strength, bl::_1 )
-        )
-      );
-      t_Object :: connect_print
-      ( 
-        bl::_1 << bl::ret<const ::GA::Keepers::OscStrength&>( bl::_2 )
-      );
-    }
+    namespace factory = LaDa::GA::AlloyLayers::Factory;
+    ga.evaluator.do_dipole = false;
+    if( print_genotype ) factory::genotype( ga.evaluator );
+    LaDa::Factory::PureCalls objectives_factory;
+    objectives_factory.connect
+      ( "strain", boost::bind( &factory::strain_energy<t_Evaluator>, ga.evaluator ) )
+      ( "epi", boost::bind( &factory::epitaxial_strain<t_Evaluator>, ga.evaluator ) )
+      ( "bandgap", boost::bind( &factory::bandgap<t_Evaluator>, ga.evaluator ) )
+      ( "transition", boost::bind( &factory::transition<t_Evaluator>, ga.evaluator ) )
+      ( "cbm", boost::bind( &factory::cbm<t_Evaluator>, ga.evaluator ) )
+      ( "vbm", boost::bind( &factory::vbm<t_Evaluator>, ga.evaluator ) )
+    factory::read_objectives( objectives_factory, input );
 
 # else 
     // makes sure this file cannot be (meaningfully) included anymore.

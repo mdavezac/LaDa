@@ -12,6 +12,8 @@
 
 #include <opt/types.h>
 
+namespace LaDa
+{
 namespace atat
 { 
 
@@ -209,4 +211,5 @@ inline void add_at_beginning(LinkedList<T> *ll,T *obj) {
 
 } // namespace atat
 
+} // namespace LaDa
 #endif

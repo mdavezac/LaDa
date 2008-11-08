@@ -13,6 +13,9 @@
 
 #include <opt/types.h>
 
+namespace LaDa
+{
+
 namespace atat
 { 
 
@@ -705,5 +708,7 @@ template<> inline void BoundingBox<types::t_real,2>::before_update(void) {
 
 
 } // namespace atat
+
+} // namespace LaDa
 
 #endif

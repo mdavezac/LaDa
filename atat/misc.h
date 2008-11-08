@@ -15,6 +15,9 @@
 
 #include <opt/types.h>
 
+namespace LaDa
+{
+
 namespace atat
 { 
 
@@ -116,5 +119,7 @@ inline types::t_real uniform01(void) {
 
 
 } // namespace atat
+
+} // namespace LaDa
 
 #endif
