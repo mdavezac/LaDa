@@ -25,12 +25,14 @@ namespace LaDa
         {
           namespace bt = boost::tuples;
           __TRYBEGIN
-            const boost::regex re("\\(?(\\s+)?(\\S+)(\\s+|,)(\\S+)(\\s+|,)(\\S+)(\\s+)?\\)?");
+            const boost::regex re("\\(\\s*(\\S+)\\s*,?"
+                                  "\\s*(\\S+)\\s*,?"
+                                  "\\s*(\\S+)\\s*\\)");
             boost::match_results<std::string::const_iterator> what;
             if( not boost::regex_search( _string, what, re ) ) return false;
-            bt::get<0>(_t) = boost::lexical_cast<types::t_int>( what.str(2) );
-            bt::get<1>(_t) = boost::lexical_cast<types::t_int>( what.str(4) );
-            bt::get<2>(_t) = boost::lexical_cast<types::t_int>( what.str(6) );
+            bt::get<0>(_t) = boost::lexical_cast<types::t_int>( what.str(1) );
+            bt::get<1>(_t) = boost::lexical_cast<types::t_int>( what.str(2) );
+            bt::get<2>(_t) = boost::lexical_cast<types::t_int>( what.str(3) );
           __TRYEND(,"Could not parse tuple.\n")
           return true;
         }

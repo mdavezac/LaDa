@@ -3,12 +3,12 @@
   <MPI pools=2 />
   <Structure direction="(1 1 1)" extent="(3 5 5)">
     <Cell>
-      <row x="3" y="0" z="0"/>
-      <row x="3" y="2" z="0"/>
-      <row x="3" y="0" z="2"/>
+      <row x="5" y="0" z="0"/>
+      <row x="5" y="1" z="0"/>
+      <row x="5" y="0" z="1"/>
     </Cell>
   </Structure>
-  <Lattice scale="5.99">
+  <Lattice scale="6.0">
       <row x="0.0" y="0.5" z="0.5" />
       <row x="0.5" y="0.0" z="0.5" />
       <row x="0.5" y="0.5" z="0.0" />
@@ -31,9 +31,9 @@
           </TabooOp>
       </Breeding>
       <Objectives type="linear" >
-        <Objective type="target" target=0 />
-        <Objective type="target"  target=0.32 />
-        <Objective type="maximize" />
+        <Objective type="target" target=0 value="epi" />
+        <Objective type="target"  target=0.32 value="bandgap" />
+        <Objective type="maximize" value="transition" />
       </Objectives>
       <Scaling type="Pareto" />
       <Scaling type="Niching" distance="GeneralHamming" d0="30" />
@@ -73,7 +73,7 @@
   </Functional>
   <Functional type="escan" method="1" keepdirs="true" >
       <Maskr filename="../../pseudos/maskr"/>
-      <GenPot mesh="( 48 16 16 )"  cutoff="5.0" >
+      <GenPot mesh="(80 16 16)"  cutoff="5.0" >
           <Pseudo filename="../../pseudos/vq.atom1" />
           <Pseudo filename="../../pseudos/vq.atom2" />
           <Pseudo filename="../../pseudos/vq.atom3" />

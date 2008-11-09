@@ -37,7 +37,7 @@ DARWIN_BG_DOC = $(DARWIN_BG_H) $(DARWIN_BG_CC)
 
 DARWIN_ALLOYLAYERS_CC = single_site.cc bandgap_stubs.cc vff.cc electric_dipole.cc
 DARWIN_ALLOYLAYERS_IMPL_H  = alloylayers/evaluator.impl.h  alloylayers/policies.impl.h \
-                             alloylayers/main.extras.h alloy/layers/factory.hpp
+                             alloylayers/main.extras.h alloylayers/factory.hpp
 DARWIN_ALLOYLAYERS_H  = alloylayers/evaluator.h alloylayers/object.h \
                         alloylayers/policies.h electric_dipole.h \
                         $(DARWIN_ALLOYLAYERS_IMPL_H)

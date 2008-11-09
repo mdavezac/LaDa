@@ -10,6 +10,7 @@
 
 #include <map>
 #include <boost/shared_ptr.hpp>
+#include <boost/ptr_container/ptr_map.hpp>
 
 namespace LaDa
 {
@@ -27,9 +28,9 @@ namespace LaDa
       //! The type of the key.
       typedef const std::string t_Key;
       //! The type of the map.
-      typedef std::map< t_Key, BaseType > t_Map;
+      typedef boost::ptr_map< t_Key, BaseType > t_Map;
       //! A class for chaining calls to connect.
-      class ChainConnect;
+      class ChainConnects;
       
       public:
         //! Constructor.
@@ -40,10 +41,10 @@ namespace LaDa
         //! \brief Adds a new functor. 
         //! details Throws on duplicates.
         template< class T_FUNCTOR >
-          void connect( const t_Key& _key, const T_FUNCTOR& _functor );
+          ChainConnects connect( const t_Key& _key, const T_FUNCTOR& _functor );
 
         //! performs the call.
-        ChainConnect& operator()( const t_Key& _key );
+        void operator()( const t_Key& _key );
 
         //! \brief Deletes a connection.
         //! \details Unlike other member functions, this one does not throw if
@@ -58,7 +59,9 @@ namespace LaDa
     struct PureCalls :: BaseType 
     {
       //! The virtual functor. 
-      void operator()() = 0;
+      virtual void operator()() = 0;
+      //! A virtual Destructor.
+      virtual ~BaseType() {};
     };
     template< class T_FUNCTOR >
       class PureCalls :: DerivedType : public BaseType 
@@ -67,41 +70,48 @@ namespace LaDa
           //! the type of the functor.
           typedef T_FUNCTOR t_Functor;
           //! Constructor
-          DerivedType( const t_Functor& _functor ) : functor_( new t_Functor( _functor ) ) {}
+          DerivedType   ( const t_Functor& _functor )
+                      : functor_( new t_Functor( _functor ) ) {}
           //! Copy Constructor.
           DerivedType( const DerivedType& _c ) : functor_( _c.functor_ ) {}
           //! Destructor.
-          ~DerivedType() {}
+          virtual ~DerivedType() {}
          
           //! The virtual functor. 
           void operator()() { (*functor_)(); }
 
         protected:
           //! Holds the functor.
-          boost::smart_ptr< t_Functor > functor_;
+          boost::shared_ptr< t_Functor > functor_;
       };
 
     class PureCalls :: ChainConnects
     {
+        friend class PureCalls;
       public:
         //! Functor which chains calls to connect.
         template< class T_FUNCTOR >
           ChainConnects& operator()( PureCalls::t_Key& _key, const T_FUNCTOR& _functor )
             { this_.connect( _key, _functor ); return *this; }
 
+        //! Copy constructor. 
+        ChainConnects( const ChainConnects &_c ) : this_( _c.this_ ) {}
+
       private:
         //! Private constructor. 
-        PureCalls( PureCalls &_this ) : this_( _this );  
+        ChainConnects( PureCalls &_this ) : this_( _this ) {}
         //! Holds a reference to PureCalls.
         PureCalls &this_;
-    }
+    };
 
     template< class T_FUNCTOR >
-      PureCalls :: ChainConnects& PureCalls :: connect( const t_Key& _key,
-                                                        const T_FUNCTOR& _functor )
+      PureCalls :: ChainConnects PureCalls :: connect( const t_Key& _key,
+                                                       const T_FUNCTOR& _functor )
       {
-        __DOASSERT( map_.end() != map_.find( _key );, "Key " << _key << " already exists.\n" )
-        map_.insert( t_Map :: value_type( _key, DerivedType( _functor ) ) );
+        __DOASSERT( map_.end() != map_.find( _key ),
+                    "Key " << _key << " already exists.\n" )
+        typedef typename t_Map :: value_type value_type;
+        map_.insert( _key, new DerivedType<T_FUNCTOR>( _functor ) );
         return ChainConnects( *this );
       }
 
@@ -109,7 +119,7 @@ namespace LaDa
     {
        t_Map :: iterator i_functor = map_.find( _key );
        __DOASSERT( i_functor == map_.end() , "Key " << _key << " does not exists.\n" )
-       i_functor->second();
+       (*i_functor->second)();
     }
 
     inline void PureCalls :: disconnect( const t_Key& _key )

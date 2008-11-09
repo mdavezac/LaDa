@@ -68,6 +68,10 @@ int main(int argc, char *argv[])
   __BPO_MAP__
   __BPO_HELP_N_VERSION__
 
+  // Reads program options for alloylayers.
+  // Prints program options to standard output.
+#   include "alloylayers/main.extras.h" 
+ 
 
   fs::path input( vm["input"].as< std::string >() );
   __DOASSERT( not ( fs::is_regular( input ) or fs::is_symlink( input ) ),
@@ -80,10 +84,6 @@ int main(int argc, char *argv[])
     std::cout << "Will load input from file: " << input << ".\n";
   )
     
-  // Reads program options for alloylayers.
-  // Prints program options to standard output.
-#   include "alloylayers/main.extras.h" 
- 
   __ROOTCODE
   (
     (*::LaDa::mpi::main),
@@ -93,10 +93,10 @@ int main(int argc, char *argv[])
   for( LaDa::types::t_int i = 0; i < reruns; ++i )
   {
     LaDa::GA::Darwin< t_Evaluator > ga;
-    LaDa::Print :: out << "load result: " << ga.Load(input.string()) << LaDa::Print::endl; 
+    LaDa::Print :: out << "load result: "
+                       << ga.Load(input.string()) 
+                       << LaDa::Print::endl; 
 
-    // Prints program options to Print::out and Print::xmg.
-#   include "alloylayers/main.extras.h" 
     // Connects assignement and print functors for alloylayers config. space.
 #   include "alloylayers/main.extras.h" 
     

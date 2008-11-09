@@ -394,22 +394,23 @@ namespace LaDa
       __DOASSERT
       (     
            bt::get<0>( mesh ) % bt::get<0>( multiple_cell ) != 0         
-        or bt::get<0>( mesh ) % bt::get<1>( multiple_cell ) != 0      
-        or bt::get<0>( mesh ) % bt::get<2>( multiple_cell ) != 0,
-        "Requested multiple cell does not evenly divide requested mesh.\n"
+        or bt::get<1>( mesh ) % bt::get<1>( multiple_cell ) != 0      
+        or bt::get<2>( mesh ) % bt::get<2>( multiple_cell ) != 0,
+           "Requested multiple cell does not evenly divide requested mesh.\n"
+        << mesh << " % " << multiple_cell << "\n"
       )
       __DOASSERT
       (     
            bt::get<0>( mesh ) < bt::get<0>( multiple_cell )         
-        or bt::get<0>( mesh ) < bt::get<1>( multiple_cell )      
-        or bt::get<0>( mesh ) < bt::get<2>( multiple_cell ),
+        or bt::get<1>( mesh ) < bt::get<1>( multiple_cell )      
+        or bt::get<2>( mesh ) < bt::get<2>( multiple_cell ),
         "Requested multiple cell parameters are larger than the requested mesh.\n"
       )
       __DOASSERT
       (     
            bt::get<0>( multiple_cell ) < bt::get<0>( small_box )         
-        or bt::get<0>( multiple_cell ) < bt::get<1>( small_box )      
-        or bt::get<0>( multiple_cell ) < bt::get<2>( small_box ),
+        or bt::get<1>( multiple_cell ) < bt::get<1>( small_box )      
+        or bt::get<2>( multiple_cell ) < bt::get<2>( small_box ),
         "Requested multiple cell parameters are smaller than the small box parameters.\n"
       )
       __DOASSERT( pseudos.size() < 2, "Fewer than two pseudos used.\n" )

@@ -8,7 +8,7 @@
 #include <config.h>
 #endif
 
-#include <boost/filesystem/path,hpp>
+#include <boost/filesystem/path.hpp>
 #include <boost/lambda/bind.hpp>
 #include <string>
 #include <fstream>
@@ -48,12 +48,13 @@ namespace LaDa
         //! Connects optical transition strength with quantities and printing policies
         template< class T_EVALUATOR > void transitions( T_EVALUATOR &_evaluator );
         //! Connects valence band offset with quantities and printing policies
-        template< class T_EVALUATOR > void valence_band_offset( T_EVALUATOR &_evaluator );
+        template< class T_EVALUATOR > void vbm( T_EVALUATOR &_evaluator );
         //! Connects conduction band offset with quantities and printing policies
-        template< class T_EVALUATOR > void conduction_band_offset( T_EVALUATOR &_evaluator );
+        template< class T_EVALUATOR > void cbm( T_EVALUATOR &_evaluator );
         //! Reads objectives from XML input file.
         template< class T_FACTORY >
-          void read_objectives( T_FACTORY& _factory, boost::filesystem::path &_path );
+          void read_physical_properties( T_FACTORY& _factory, 
+                                         boost::filesystem::path &_path );
 
         //! Prints out connections.
         void declare( const std::string& _string );
@@ -165,7 +166,7 @@ namespace LaDa
           declare( "Transition dipoles(Escan)" );
         }
 
-        template< class T_EVALUATOR > void valence_band_offset( T_EVALUATOR &_evaluator )
+        template< class T_EVALUATOR > void vbm( T_EVALUATOR &_evaluator )
         {
           namespace bl = boost::lambda;
           typedef typename T_EVALUATOR :: t_Individual :: t_IndivTraits t_IndivTraits;
@@ -187,7 +188,7 @@ namespace LaDa
           declare( "Valence-band offsets (Escan)" );
         }
 
-        template< class T_EVALUATOR > void conduction_band_offset( T_EVALUATOR &_evaluator )
+        template< class T_EVALUATOR > void cbm( T_EVALUATOR &_evaluator )
         {
           namespace bl = boost::lambda;
           typedef typename T_EVALUATOR :: t_Individual :: t_IndivTraits t_IndivTraits;
@@ -217,10 +218,13 @@ namespace LaDa
         }
 
         template< class T_FACTORY >
-          void read_objectives( T_FACTORY& _factory, boost::filesystem::path &_path )
+          void read_physical_properties( T_FACTORY& _factory,
+                                         boost::filesystem::path &_path )
           {
             TiXmlDocument doc; 
-            doc.Parse( opt::read_file( _path ) );
+            std::string filetxt;
+            opt::read_xmlfile( _path, filetxt );
+            doc.Parse( filetxt.c_str() );
             TiXmlHandle docHandle( &doc ); 
 
             const TiXmlElement* child = docHandle.FirstChild( "Job" )
@@ -228,7 +232,7 @@ namespace LaDa
                                                  .FirstChild( "Objectives" )
                                                  .FirstChild( "Objective" )
                                                  .Element();
-            __DOASSERT( not child, "Could not find Objective tags.\n" )
+            __DOASSERT( not child, "Could not find Objective tag.\n" )
             for(; child; child = child->NextSiblingElement("Objective") )
             {
               __DOASSERT( not child->Attribute("value"),

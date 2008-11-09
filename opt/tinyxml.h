@@ -29,9 +29,12 @@ namespace LaDa
     const TiXmlElement* find_functional_node ( const TiXmlElement &_element,
                                                const std::string &_name );
 
-    //! \brief reads a file and throws it in a string.
+    //! \brief reads a file and dumps it in a string.
     //! \details Works in mpi.
-    const std::string& read_file( boost::filesystem::path &_input );
+    void read_file( boost::filesystem::path &_input, std::string& _result );
+    //! \brief reads an file and dumps it in a string.
+    //! \details Works in mpi.
+    void read_xmlfile( boost::filesystem::path &_input, std::string& _result );
 
   }
 } // namespace LaDa

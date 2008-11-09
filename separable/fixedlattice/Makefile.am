@@ -8,7 +8,7 @@ bin_PROGRAMS = mixed mixedtetra # tetra cubic
 AM_CPPFLAGS = -I $(top_srcdir) @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
 	      @BOOST_CXXFLAGS@ -D __DOHALFHALF__
 AM_LDFLAGS = @TINYXML_LIBS@ @BOOST_LDFLAGS@ @BOOST_PROGOP@ \
-             @BOOST_FS@ @BOOST_REGEX@ @BOOST_SYSTEM@ 
+             @BOOST_FS@ @BOOST_REGEX@ @BOOST_SYSTEM@ @BOOST_MPI@
 
 # cubic_SOURCES = main.cc  
 # cubic_CPPFLAGS =  $(AM_CPPFLAGS)  -D _CUBIC_CE_
@@ -36,7 +36,8 @@ mixed_LDADD = libfxseparable.la \
               ../../atat/libatat.la \
               ../../physics/libphysics.la \
               ../../print/libprint.la \
-              ../../opt/libopt.la  
+              ../../opt/libopt.la  \
+              ../../mpi/libmpiobject.la  
 
 mixedtetra_SOURCES = mxmain.cc
 mixedtetra_CPPFLAGS =  $(AM_CPPFLAGS) -D_TETRAGONAL_CE_
@@ -59,6 +60,8 @@ libfxseparable_la_CPPFLAGS = $(AM_CPPFLAGS)
 	cd ../../physics; $(MAKE) libphysics.la
 ../../opt/libopt.la: 
 	cd ../../opt; $(MAKE) libopt.la
+../../mpi/libmpiobject.la: 
+	cd ../../mpi; $(MAKE) libmpiobject.la
 ../../print/libprint.la: 
 	cd ../../print; $(MAKE) libprint.la
 ../../ce/libce.la: 

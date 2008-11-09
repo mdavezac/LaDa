@@ -47,7 +47,7 @@ escan_LDADD = libescan.la \
               ../physics/libphysics.la \
 	      ../print/libprint.la \
 	      @MPI_ADDLIB@ \
-	      $(LDADD) @LD_IAGA_FLAGS@
+	      @LD_IAGA_FLAGS@ $(LDADD) 
 
 
 

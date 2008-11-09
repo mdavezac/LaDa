@@ -8,7 +8,7 @@ bin_PROGRAMS = tetra cubic
 AM_CPPFLAGS = -I $(top_srcdir) @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
 	      @BOOST_CXXFLAGS@ -D __DOHALFHALF__
 AM_LDFLAGS = @TINYXML_LIBS@ @BOOST_LDFLAGS@ @BOOST_PROGOP@ \
-             @BOOST_SYSTEM@ @BOOST_REGEX@ @BOOST_FS@
+             @BOOST_SYSTEM@ @BOOST_REGEX@ @BOOST_FS@ @BOOST_MPI@
 
 cubic_SOURCES = main.cc  
 cubic_CPPFLAGS =  $(AM_CPPFLAGS) -D _CUBIC_CE_
@@ -17,6 +17,7 @@ cubic_LDADD = libseparable.la \
               ../crystal/libcrystal.la \
               ../atat/libatat.la \
               ../opt/libopt.la \
+              ../mpi/libmpiobject.la \
               ../physics/libphysics.la \
               ../print/libprint.la 
 
@@ -39,7 +40,9 @@ SUBDIRS = fixedlattice
 	cd ../crystal; $(MAKE) 
 ../physics/libphysic.la: 
 	cd ../physics; $(MAKE) 
-/./opt/libopt.la: 
+../opt/libopt.la: 
 	cd ../opt; $(MAKE) 
+../mpi/libmpiobkect.la: 
+	cd ../mpi; $(MAKE) libmpiobject.la
 ../print/libprint.la: 
 	cd ../print; $(MAKE) 

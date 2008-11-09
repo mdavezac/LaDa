@@ -58,7 +58,7 @@
     </Functional>
     <Functional type="escan" method="2" keepdirs="true">
         <Maskr filename="../../pseudos/maskr"/>
-        <GenPot x="48" y="48" z="96" cutoff="5.0" launch="~/usr/bin/getVLarg">
+        <GenPot mesh="(48 48 96)" cutoff="5.0" launch="~/usr/bin/getVLarg">
             <Pseudo filename="../../pseudos/vq.atom1" />
             <Pseudo filename="../../pseudos/vq.atom2" />
             <Pseudo filename="../../pseudos/vq.atom3" />
@@ -69,7 +69,7 @@
             <Pseudo filename="../../pseudos/vq.atom8" />
         </GenPot>
         <References VBM="-4.8" CBM="-4.5" />
-        <Hamiltonian kinscal="1.23" smooth="0.8" potential="3" realcutoff="4.5" nbstates="1" launch="~/usr/bin/escanCNL">
+        <Hamiltonian kinscal="1.23" smooth="0.8" potential="3" realcutoff="4.5" nbstates="1" >
             <SpinOrbit filename="../../pseudos/vwr.pso" izz="49051" pnl="1.271254 " />
             <SpinOrbit filename="../../pseudos/vwr.pso" izz="51049" pnl="0.946102 " />
             <SpinOrbit filename="../../pseudos/vwr.pso" izz="49033" pnl="1.0747401" />
@@ -80,5 +80,4 @@
             <SpinOrbit filename="../../pseudos/vwr.pso" izz="33031" pnl="0.2338090" />
         </Hamiltonian>
     </Functional>
-    <Functional type="Concentration" a="0.001" b="0.648" c="0.239" x0="0.25" />
 </Job>

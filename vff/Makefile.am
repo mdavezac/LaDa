@@ -4,7 +4,8 @@
 include $(top_srcdir)/Files
 AM_CPPFLAGS = -I $(top_srcdir) @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
 	      @MPI_CFLAGS@ @NAG_CFLAGS@ @GSL_CFLAGS@ @BOOST_CXXFLAGS@
-AM_LDFLAGS = @TINYXML_LIBS@ @GSL_LIBS@ @NAG_LIBS@ @BOOST_FS@  @BOOST_SYSTEM@
+AM_LDFLAGS = @TINYXML_LIBS@ @GSL_LIBS@ @NAG_LIBS@ @BOOST_FS@  @BOOST_SYSTEM@ \
+	     @BOOST_MPI@ @BOOST_SERIALIZATION@
 LDADD =
 fortranSOURCE = 
 fortranHEADER = 
@@ -53,7 +54,7 @@ layered_vff_LDADD = $(vff_LDADD)
 	cd ../physics; $(MAKE)
 ../mpi/libmpiobject.la:
 	cd ../mpi; $(MAKE)
-../mpi/libprint.la:
+../print/libprint.la:
 	cd ../print; $(MAKE)
 
 if DOFORTRAN
