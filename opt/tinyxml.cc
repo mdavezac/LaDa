@@ -14,6 +14,7 @@
 #include<sstream>
 
 #include <mpi/mpi_object.h>
+#include <opt/debug.h>
 #include "tinyxml.h"
 
 namespace LaDa
@@ -76,7 +77,6 @@ namespace LaDa
     void read_file( boost::filesystem::path &_input, std::string& _result )
     {
       namespace bfs = boost::filesystem;
-      namespace bl = boost::lambda;
       __ROOTCODE
       ( 
         (*::LaDa::mpi::main), 

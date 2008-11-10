@@ -39,7 +39,7 @@ namespace LaDa
         virtual ~PureCalls() {}
 
         //! \brief Adds a new functor. 
-        //! details Throws on duplicates.
+        //! \details Throws on duplicates.
         template< class T_FUNCTOR >
           ChainConnects connect( const t_Key& _key, const T_FUNCTOR& _functor );
 

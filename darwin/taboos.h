@@ -307,7 +307,7 @@ namespace LaDa
     template<class T_INDIVIDUAL>
     class TabooOp : public eoGenOp<T_INDIVIDUAL>
     {
-      protected:
+      public:
         //! Type of the individual
         typedef T_INDIVIDUAL t_Individual; 
 

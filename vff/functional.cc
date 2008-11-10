@@ -159,15 +159,7 @@ namespace LaDa
            and structure.lattice->get_nb_types(0) + structure.lattice->get_nb_types(1) > 4 )
       { 
         std::cerr << "Cannot do vff on this lattice.\n" 
-                     "Need at two sites with at most two different atomic types\n";
-        return false;
-      }
-      if( Crystal::lattice_has_same_species( *structure.lattice ) and 
-          structure.lattice->get_nb_types(0) + structure.lattice->get_nb_types(1) != 4 )
-      {
-        std::cerr << "Cannot do vff on this lattice.\n" 
-                     "When using same species on different, vff needs both sites"
-                     " to have exact same species.\n";
+                     "Need two sites with at most two different atomic types\n";
         return false;
       }
 

@@ -19,6 +19,7 @@
 #include <opt/debug.h>
 #include <opt/initial_path.h>
 #include <opt/tuple_io.h>
+#include <crystal/lattice.h>
 #include <print/manip.h>
 #include <mpi/macros.h>
 
@@ -413,7 +414,8 @@ namespace LaDa
         or bt::get<2>( multiple_cell ) < bt::get<2>( small_box ),
         "Requested multiple cell parameters are smaller than the small box parameters.\n"
       )
-      __DOASSERT( pseudos.size() < 2, "Fewer than two pseudos used.\n" )
+      __DOASSERT( pseudos.size() < Crystal::nb_species( *Crystal::Structure::lattice ),
+                  "Fewer pseudos than species in lattice.\n" )
     }
 
     bool Interface :: GenPot :: Load( const TiXmlElement &_node )

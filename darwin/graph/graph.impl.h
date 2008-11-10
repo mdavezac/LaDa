@@ -5,6 +5,7 @@
 #include <boost/mpi/graph_communicator.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/lexical_cast.hpp>
 
 #ifdef _LADADEBUG
 #include <boost/lambda/lambda.hpp>

@@ -201,6 +201,9 @@ namespace LaDa
       read_lattice( const boost::filesystem::path &_fpath, 
                     const boost::filesystem::path &_dpath );
 
+    //! Returns the number of species.
+    types::t_unsigned nb_species( const Crystal::Lattice &_lattice );
+
 
     //! Returns true if a lattice has two sites and the two sites contain different species.
     bool lattice_has_same_species( const Lattice &_lattice );

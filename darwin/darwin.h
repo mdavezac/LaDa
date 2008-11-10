@@ -236,6 +236,11 @@ namespace LaDa
         //! somewhere from here, it's probly not gonna get exectuted.
         //! Nonetheless, the loop itself is rather simple, so go look at it.
         void run();
+        //! Returns a pointer to the taboos.
+        Taboo_Base<t_Individual>* const get_taboos() const { return taboos; }
+        //! Returns a pointer to the history.
+        History<t_Individual>* const get_history() const { return history; }
+
 
       protected: 
         //! \brief Loads overall Genetic Algorithm attributes

@@ -6,6 +6,8 @@
 #endif
 
 #include<stdexcept> 
+#include<set> 
+#include<iterator> 
 
 #include <atat/array.h>
 #include <atat/misc.h>
@@ -329,6 +331,14 @@ namespace LaDa
         if( std::find( site2.begin(), site2.end(), type ) == site2.end() ) return false;
 
       return true;
+    }
+
+    types::t_unsigned nb_species( const Lattice &_lattice )
+    {
+      std::set< std::string > set;
+      foreach( const Lattice::t_Site site, _lattice.sites )
+        std::copy( site.type.begin(), site.type.end(), std::inserter( set, set.begin() ) );
+      return set.size();
     }
 
   } // namespace Crystal
