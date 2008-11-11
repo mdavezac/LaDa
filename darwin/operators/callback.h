@@ -8,6 +8,7 @@
 #include <config.h>
 #endif
 
+#include<boost/function.hpp>
 #include "discriminate.h"
 
 namespace LaDa
@@ -18,13 +19,22 @@ namespace LaDa
     namespace Operator
     {
       //! Creates a unary callback operator.
-      template< class T_INDIVIDUAL >
-        class UnaryCallBack
+      template< class T_INDIVIDUAL, class T_POPULATOR = eoPopulator<T_INDIVIDUAL> >
+        class UnaryCallBack : public PopulatorFunctor
+                                     < 
+                                       UnaryCallBack<T_INDIVIDUAL, T_POPULATOR>
+                                       T_INDIVIDUAL,
+                                       T_POPULATOR
+                                     >
         {
           public:
             //! Type of the indidividual
             typedef T_INDIVIDUAL t_Individual;
      
+            //! Constructor.
+            UnaryCallBack() {}
+            //! Copy Constructor.
+            UnaryCallBack( const UnaryCallBack& _c ) : function_( _c.function_) {}
             //! Virtual destrcutor, just to make sure.
             virtual ~UnaryCallBack() {}
      
@@ -41,15 +51,24 @@ namespace LaDa
         };
 
       //! Creates a binary callback operator.
-      template< class T_INDIVIDUAL >
-        class BinaryCallBack
+      template< class T_INDIVIDUAL, class T_POPULATOR = eoPopulator<T_INDIVIDUAL> >
+        class BinaryCallBack : public PopulatorFunctor
+                                      < 
+                                        BinaryCallBack<T_INDIVIDUAL, T_POPULATOR>
+                                        T_INDIVIDUAL,
+                                        T_POPULATOR
+                                      >
         {
           public:
             //! Type of the indidividual
             typedef T_INDIVIDUAL t_Individual;
      
+            //! Constructor.
+            BinaryCallBack() {}
+            //! Copy Constructor.
+            BinaryCallBack( const BinaryCallBack& _c ) : function_( _c.function_) {}
             //! Virtual destrcutor, just to make sure.
-            virtual ~UnaryCallBack() {}
+            virtual ~BinaryCallBack() {}
      
             //! Functor over populator. Branches to correct format for t_Derived.
             bool operator( t_Individual& _a, const t_Individual& _b )

@@ -218,8 +218,7 @@ namespace LaDa
         {
           ++i;
           utterrandom( *_indiv ); // _indiv is a populator
-          if ( not taboo( *_indiv ) )
-            return;
+          if ( not taboo( *_indiv ) ) return;
         } while ( i < UINT_MAX );
 
         std::ostringstream sstr;
@@ -228,6 +227,65 @@ namespace LaDa
         throw std::runtime_error( sstr.str() );
       }
 
+    template< class T_POPULATOR >
+      void taboo_op( T_POPULATOR &_populator, 
+                     Taboo_Base<T_INDIVIDUAL> &_taboos,
+                     boost::function<void(t_Populator& )>& _inner,
+                     boost::function<void(t_Populator& )>& _random )
+      {
+        types::t_unsigned  i = 0;
+        do
+        {
+          ++i;
+          _inner( _populator );
+          if ( not taboo( *_populator ) ) return;
+          *_populator = _populator.select();
+        } while ( i < max );
+
+        _taboo.set_problematic();
+
+        do 
+        {
+          ++i;
+          _random( _populator );
+          if ( not taboo( *_populator ) ) return;
+        } while ( i < UINT_MAX );
+
+        std::ostringstream sstr;
+        sstr << __LINE__ << ", line: " << __LINE__ << "\n"
+             << "Could not create a non-taboo individual\n";
+        throw std::runtime_error( sstr.str() );
+      }
+
+
+    namespace Factory
+    {
+      template< class T_FACTORY >
+        void taboo_op( T_FACTORY &_factory,
+                       boost::function<void( typename T_FACTORY::t_Populator& )>&
+                         _function,
+                       TiXmlElement &_node,
+                       Taboo_Base<typename T_FACTORY::t_Individual > &_taboos,
+                       const std::string& _random = "Random" )
+       {
+         typedef typename T_FACTORY::t_Individual t_Individual;
+         typedef typename T_FACTORY::t_Populator t_Populator;
+         typedef boost::function<void(t_Populator&)> t_Function;
+
+         t_Function random;
+         // creates random operator.
+         factory( _random, random, _node );
+         //! creates inner operator.
+         factory( function, _node );
+
+         // binds all.
+         _function = boost::bind
+                     (
+                       &taboo_op<t_Individual, t_Populator>,
+                       _1, _taboos, _function, random
+                     );
+       }
+    }
 
 
   } // namespace GA

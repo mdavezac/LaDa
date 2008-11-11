@@ -381,6 +381,23 @@ namespace LaDa
           { return ( (evaluator.*member_func) )( _indiv); }
     };
 
+    template< class T_POPULATOR >
+      void taboo_op( T_POPULATOR &_populator, 
+                     Taboo_Base<T_INDIVIDUAL> &_taboos,
+                     boost::function<void(t_Populator& )>& _inner,
+                     boost::function<void(t_Populator& )>& _random );
+
+    namespace Factory
+    {
+      //! Creates a taboo operator.
+      template< class T_FACTORY >
+        void taboo_op( T_FACTORY &_factory,
+                       boost::function<void( typename T_FACTORY::t_Populator )>&
+                         _function,
+                       TiXmlElement &_node,
+                       Taboo_Base<typename T_FACTORY::t_Individual > &_taboos );
+    }
+
   } // namespace GA
 } // namespace LaDa
 
