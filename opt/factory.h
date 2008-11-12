@@ -19,42 +19,43 @@ namespace LaDa
   {
     //! A policy for chaining connect calls.
     template< class T_THIS > 
-    class ChainConnects
-    {
-        friend class T_THIS;
-      public:
-        //! Type of the derived class.
-        typedef T_THIS t_This;
-       
-        //! Functor which chains calls to connect.
-        template< class T_FUNCTOR >
-          ChainConnects& operator()( typename t_This::t_Key& _key,
-                                     const T_FUNCTOR& _functor )
-            { this_.connect( _key, _functor ); return *this; }
+      class ChainConnects
+      {
+        public:
+          //! Type of the derived class.
+          typedef T_THIS t_This;
+         
+     
+          //! Copy constructor. 
+          ChainConnects( const ChainConnects &_c ) : this_( _c.this_ ) {}
+          //! Constructor. 
+          ChainConnects( t_This &_this ) : this_( _this ) {}
 
-        //! Copy constructor. 
-        ChainConnects( const ChainConnects &_c ) : this_( _c.this_ ) {}
+          //! Functor which chains calls to connect.
+          template< class T_FUNCTOR >
+            ChainConnects& operator()( typename t_This::t_Key& _key,
+                                       const T_FUNCTOR& _functor )
+              { this_.connect( _key, _functor ); return *this; }
+        private:
+          //! Holds a reference to PureCalls.
+          t_This &this_;
+      };
 
-      private:
-        //! Private constructor. 
-        ChainConnects( t_This &_this ) : this_( _this ) {}
-        //! Holds a reference to PureCalls.
-        t_This &this_;
-    };
 
-    
     //! \brief Makes pure calls to functors taking no argument and returning no
     //!        values. Functors must be copy constructible.
-    class PureCalls : public ChainConnects< PureCalls >
+    class PureCalls
     {
-      //! Pure abstract class for storing purposes.
-      class BaseType;
-      //! The derived objects which actually store the functors.
-      template< class T_FUNCTOR > class DerivedType;
-      //! The type of the key.
-      typedef const std::string t_Key;
-      //! The type of the map.
-      typedef boost::ptr_map< t_Key, BaseType > t_Map;
+      public:
+        //! The type of the key.
+        typedef const std::string t_Key;
+      private:
+        //! Pure abstract class for storing purposes.
+        class BaseType;
+        //! The derived objects which actually store the functors.
+        template< class T_FUNCTOR > class DerivedType;
+        //! The type of the map.
+        typedef boost::ptr_map< t_Key, BaseType > t_Map;
       
       public:
         //! Constructor.
@@ -116,7 +117,6 @@ namespace LaDa
       {
         __DOASSERT( map_.end() != map_.find( _key ),
                     "Key " << _key << " already exists.\n" )
-        typedef typename t_Map :: value_type value_type;
         map_.insert( _key, new DerivedType<T_FUNCTOR>( _functor ) );
         return ChainConnects<PureCalls>( *this );
       }

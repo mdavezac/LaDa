@@ -298,12 +298,10 @@ namespace LaDa
         str = _parent.FirstChildElement("Filenames")->Attribute("stop");
  
       str = Print::reformat_home(str);
-      continuator = new IslandsContinuator<t_GATraits>(max_generations, str );
+      continuator = new IslandsContinuator<t_GATraits>(counter, max_generations, str );
       eostates.storeFunctor( continuator );
  
       __MPICODE( if( not topology.continuators() ) return; )
- 
-      GenCount &generation_counter = continuator->get_generation_counter();
  
       // Creates SaveEvery object if necessary
       if (      _parent.FirstChildElement("Save") 
@@ -395,7 +393,7 @@ namespace LaDa
         typedef PrintGA< Store::Base<t_GATraits>,
                          Evaluation::Abstract<t_Population> > t_PrintGA;
         t_PrintGA* printga = new t_PrintGA( *store, *evaluation,
-                                            generation_counter, do_print_each_call);
+                                            counter, do_print_each_call);
         eostates.storeFunctor(printga);
         continuator->add( *printga );
       }
@@ -410,7 +408,7 @@ namespace LaDa
         {
           continuator->add(
               eostates.storeFunctor( new PrintOffspring< t_GATraits >
-                                                       ( generation_counter ) ) );
+                                                       ( counter ) ) );
           Print::xmg << Print::Xmg::comment
                      << "Print: offspring" << Print::endl;
         }

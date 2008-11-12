@@ -377,7 +377,7 @@ namespace LaDa
         //! list of updaters. see EO library
         std::list < eoUpdater* >                      updaters;
         //! A generational counter
-        GenCount generation_counter;
+        GenCount &generation_counter;
         //! \brief Maximum number of generations before quitting
         //! \details May quit before if a something in IslandsContinuator ::
         //! continuators says quit. Actually, its generally more usefull to use a
@@ -388,8 +388,8 @@ namespace LaDa
 
       public:
         //! Constructor and Initialisor
-        IslandsContinuator   ( types::t_unsigned _max, std::string _f = "stop" ) 
-                           : generation_counter(0),
+        IslandsContinuator   ( GenCount &_gen, types::t_unsigned _max, std::string _f = "stop" ) 
+                           : generation_counter( _gen ),
                              max_generations(_max), stop_filename(_f)
         {
           if ( stop_filename.empty() ) stop_filename = "stop";

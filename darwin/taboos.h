@@ -8,6 +8,7 @@
 #include <config.h>
 #endif
 
+#include<boost/function.hpp>
 #include <list>
 #include <algorithm>
 
@@ -73,7 +74,7 @@ namespace LaDa
 
       protected:
         //! \cond
-        bool problematic;
+        mutable bool problematic;
         //! \endcond
 
         //! Whether the container is owned by this instance
@@ -114,7 +115,7 @@ namespace LaDa
         //! \cond
         virtual bool is_problematic() const
           { return problematic; }
-        virtual void set_problematic( bool _p = false ) 
+        virtual void set_problematic( bool _p = false ) const
           { problematic = _p; }
         //! \endcond
 
@@ -381,21 +382,22 @@ namespace LaDa
           { return ( (evaluator.*member_func) )( _indiv); }
     };
 
-    template< class T_POPULATOR >
+    template< class T_INDIVIDUAL, class T_POPULATOR >
       void taboo_op( T_POPULATOR &_populator, 
-                     Taboo_Base<T_INDIVIDUAL> &_taboos,
-                     boost::function<void(t_Populator& )>& _inner,
-                     boost::function<void(t_Populator& )>& _random );
+                     const boost::function< Taboo_Base<T_INDIVIDUAL>*() >&,
+                     const boost::function<void(T_POPULATOR& )>& _inner,
+                     const boost::function<void(T_POPULATOR& )>& _random );
 
     namespace Factory
     {
       //! Creates a taboo operator.
       template< class T_FACTORY >
         void taboo_op( T_FACTORY &_factory,
-                       boost::function<void( typename T_FACTORY::t_Populator )>&
-                         _function,
-                       TiXmlElement &_node,
-                       Taboo_Base<typename T_FACTORY::t_Individual > &_taboos );
+                       boost::function<void( typename T_FACTORY::t_Populator& )>&,
+                       const TiXmlElement &_node,
+                       const boost::function
+                             < Taboo_Base<typename T_FACTORY::t_Individual>*() >&,
+                       const std::string& _random );
     }
 
   } // namespace GA

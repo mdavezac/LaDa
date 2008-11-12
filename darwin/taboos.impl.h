@@ -5,6 +5,11 @@
 #ifndef _DARWIN_TABOO_IMPL_H_
 #define _DARWIN_TABOO_IMPL_H_
 
+#include <boost/lexical_cast.hpp>
+#include <boost/bind.hpp>
+
+#include<print/xmg.h>
+
 #include "debug.h"
 
 namespace LaDa
@@ -227,28 +232,32 @@ namespace LaDa
         throw std::runtime_error( sstr.str() );
       }
 
-    template< class T_POPULATOR >
+    template< class T_INDIVIDUAL, class T_POPULATOR >
       void taboo_op( T_POPULATOR &_populator, 
-                     Taboo_Base<T_INDIVIDUAL> &_taboos,
-                     boost::function<void(t_Populator& )>& _inner,
-                     boost::function<void(t_Populator& )>& _random )
+                     boost::function< Taboo_Base<T_INDIVIDUAL>*() >& 
+                       _taboosfunc,
+                     types::t_unsigned _max,
+                     boost::function<void(T_POPULATOR& )>& _inner,
+                     boost::function<void(T_POPULATOR& )>& _random )
       {
+        Taboo_Base<T_INDIVIDUAL> * const taboos = _taboosfunc();
+        __DOASSERT( not taboos, "TabooOperator requested, but not taboos created.\n" )
         types::t_unsigned  i = 0;
         do
         {
           ++i;
           _inner( _populator );
-          if ( not taboo( *_populator ) ) return;
+          if ( not (*taboos)( *_populator ) ) return;
           *_populator = _populator.select();
-        } while ( i < max );
+        } while ( i < _max );
 
-        _taboo.set_problematic();
+        taboos->set_problematic();
 
         do 
         {
           ++i;
           _random( _populator );
-          if ( not taboo( *_populator ) ) return;
+          if ( not (*taboos)( *_populator ) ) return;
         } while ( i < UINT_MAX );
 
         std::ostringstream sstr;
@@ -264,26 +273,34 @@ namespace LaDa
         void taboo_op( T_FACTORY &_factory,
                        boost::function<void( typename T_FACTORY::t_Populator& )>&
                          _function,
-                       TiXmlElement &_node,
-                       Taboo_Base<typename T_FACTORY::t_Individual > &_taboos,
-                       const std::string& _random = "Random" )
+                       const TiXmlElement &_node,
+                       const boost::function
+                         < Taboo_Base<typename T_FACTORY::t_Individual>*() >& 
+                         _taboosfunc,
+                       const std::string& _random)
        {
          typedef typename T_FACTORY::t_Individual t_Individual;
          typedef typename T_FACTORY::t_Populator t_Populator;
          typedef boost::function<void(t_Populator&)> t_Function;
 
+         types::t_unsigned max(100);
+         if( _node.Attribute( "max" ) )
+           max = boost::lexical_cast< types::t_unsigned >( _node.Attribute("max") );
+         Print::xmg << Print::Xmg::comment << "TabooOperator: " << Print::endl
+                    << Print::Xmg::indent << "random fallback: " << Print::endl;
          t_Function random;
          // creates random operator.
-         factory( _random, random, _node );
+         _factory( _random, random, _node );
          //! creates inner operator.
-         factory( function, _node );
+         _factory( _function, _node );
 
          // binds all.
          _function = boost::bind
                      (
-                       &taboo_op<t_Individual, t_Populator>,
-                       _1, _taboos, _function, random
+                       &::LaDa::GA::taboo_op<t_Individual, t_Populator>,
+                       _1, _taboosfunc , max, _function, random
                      );
+         Print::xmg << Print::Xmg::unindent;
        }
     }
 

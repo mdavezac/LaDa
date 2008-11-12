@@ -7,7 +7,7 @@ ATAT_H  = findsym.h  integer.h  xtalutil.h lambda.impl.h \
           array.h  arraylist.h   fixagg.h  fxvector.h \
 	  linklist.h  machdep.h  misc.h  vectmac.h  
 
-DARWIN_LIB_CC = concentration.cc debug.cc topology.cc 
+DARWIN_LIB_CC = concentration.cc debug.cc topology.cc operators/container.cc
 if DOMPI
   DARWIN_LIB_CC += graph/graph.cc
 endif
@@ -15,13 +15,14 @@ endif
 DARWIN_LIB_IMPL_H = darwin.impl.h  evaluation.impl.h individual.impl.h \
 	            scaling.impl.h store.impl.h  fitness.impl.h taboos.impl.h \
                     objective.impl.h bitstring.impl.h gaoperators.impl.h \
-                    checkpoints.impl.h minimizergenop.impl.h topology.impl.h
+                    checkpoints.impl.h minimizergenop.impl.h topology.impl.h 
 DARWIN_LIB_H = concentration.h debug.h \
                breeder.h evaluation.h functors.h loadsave.h \
 	       operators.h statistics.h darwin.h gencount.h store.h \
 	       checkpoints.h evaluator.h individual.h objective.h \
 	       taboos.h gatraits.h  bitstring.h fitness.h gaoperators.h \
-	       scaling.h minimizergenop.h topology.h $(DARWIN_LIB_IMPL_H)
+	       scaling.h minimizergenop.h topology.h operators/container.h\
+               $(DARWIN_LIB_IMPL_H)
 DARWIN_LIB_DOC = $(DARWIN_LIB_H) $(DARWIN_LIB_CC) 
 
 DARWIN_CE_CC = ce.cc single_site.cc groundstate.cc 

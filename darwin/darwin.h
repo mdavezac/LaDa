@@ -204,7 +204,9 @@ namespace LaDa
         eoState eostates;
         //! The mpi/serial topology wrapper
         Topology topology;
-
+        //! Counts the number of generations.
+        GenCount counter;
+        
       public:
         //! \brief The evaluator instance itself
         //! \see Darwin::Load(const TiXmlElement& )
@@ -217,7 +219,7 @@ namespace LaDa
                     populate_style(RANDOM_POPULATE), continuator(NULL), history(NULL),
                     taboos(NULL), breeder_ops(NULL), breeder(NULL), replacement(NULL),
                     objective(NULL), store(NULL), evaluation(NULL), scaling(NULL),
-                    topology(__MPICODE( *::LaDa::mpi::main ) ) {}
+                    topology(__MPICODE( *::LaDa::mpi::main ) ), counter(0) {}
         //! Destructor
         virtual ~Darwin ();
 
@@ -237,9 +239,11 @@ namespace LaDa
         //! Nonetheless, the loop itself is rather simple, so go look at it.
         void run();
         //! Returns a pointer to the taboos.
-        Taboo_Base<t_Individual>* const get_taboos() const { return taboos; }
+        Taboo_Base<t_Individual>* get_taboos() { return taboos; }
         //! Returns a pointer to the history.
         History<t_Individual>* const get_history() const { return history; }
+        //! Returns age functor.
+        const GenCount& get_counter() const { return counter; }
 
 
       protected: 

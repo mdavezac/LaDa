@@ -22,7 +22,7 @@ namespace LaDa
       template< class T_INDIVIDUAL, class T_POPULATOR = eoPopulator<T_INDIVIDUAL> >
         class UnaryCallBack : public PopulatorFunctor
                                      < 
-                                       UnaryCallBack<T_INDIVIDUAL, T_POPULATOR>
+                                       UnaryCallBack<T_INDIVIDUAL, T_POPULATOR>,
                                        T_INDIVIDUAL,
                                        T_POPULATOR
                                      >
@@ -34,27 +34,27 @@ namespace LaDa
             //! Constructor.
             UnaryCallBack() {}
             //! Copy Constructor.
-            UnaryCallBack( const UnaryCallBack& _c ) : function_( _c.function_) {}
+            UnaryCallBack( const UnaryCallBack& _c ) : callback_( _c.callback_) {}
             //! Virtual destrcutor, just to make sure.
             virtual ~UnaryCallBack() {}
      
             //! Functor over populator. Branches to correct format for t_Derived.
-            bool operator( t_Individual& _individual )
+            bool operator()( t_Individual& _individual )
               { return callback_( _individual ); }
             //! Connects the callback.
-            template< class T_FUNCTOR > connect( T_FUNCTOR& _functor )
+            template< class T_FUNCTOR > void connect( const T_FUNCTOR& _functor )
               { callback_ = _functor; } 
-            
+
           private:
             //! The callback object.
-            boost::function<bool(t_Individuals&) > callback_;
+            boost::function<bool(t_Individual&) > callback_;
         };
 
       //! Creates a binary callback operator.
       template< class T_INDIVIDUAL, class T_POPULATOR = eoPopulator<T_INDIVIDUAL> >
         class BinaryCallBack : public PopulatorFunctor
                                       < 
-                                        BinaryCallBack<T_INDIVIDUAL, T_POPULATOR>
+                                        BinaryCallBack<T_INDIVIDUAL, T_POPULATOR>,
                                         T_INDIVIDUAL,
                                         T_POPULATOR
                                       >
@@ -66,20 +66,20 @@ namespace LaDa
             //! Constructor.
             BinaryCallBack() {}
             //! Copy Constructor.
-            BinaryCallBack( const BinaryCallBack& _c ) : function_( _c.function_) {}
+            BinaryCallBack( const BinaryCallBack& _c ) : callback_( _c.callback_) {}
             //! Virtual destrcutor, just to make sure.
             virtual ~BinaryCallBack() {}
      
             //! Functor over populator. Branches to correct format for t_Derived.
-            bool operator( t_Individual& _a, const t_Individual& _b )
+            bool operator()( t_Individual& _a, const t_Individual& _b )
               { return callback_( _a, _b ); }
             //! Connects the callback.
-            template< class T_FUNCTOR > connect( T_FUNCTOR& _functor )
+            template< class T_FUNCTOR > void connect( const T_FUNCTOR& _functor )
               { callback_ = _functor; } 
             
           private:
             //! The callback object.
-            boost::function<bool(t_Individuals&, const t_Individual&) > callback_;
+            boost::function<bool(t_Individual&, const t_Individual&) > callback_;
         };
 
 

@@ -8,7 +8,24 @@
 #include <config.h>
 #endif
 
+#include <vector>
+#include <string>
+#include <boost/function.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <eo/utils/eoRNG.h>
+#include <tinyxml/tinyxml.h>
+
+#include <print/xmg.h>
+#include <opt/types.h>
+
+#include "populator_functor.h"
 #include "discriminate.h"
+
+//! \cond
+template< class EOT > class eoPopulator;
+//! \endcond
 
 namespace LaDa
 {
@@ -17,16 +34,79 @@ namespace LaDa
     //! Holds general stuff for GA operators.
     namespace Operator
     {
-      //! Creates a unary callback operator.
+      //! Creates a container which sequentially calls all of its functors.
+      template< class T_INDIVIDUAL,
+                class T_POPULATOR = eoPopulator< T_INDIVIDUAL > >
+        class BaseContainer
+        {
+            //! Type of the functor container.
+            typedef std::vector< boost::function<void(T_POPULATOR&) > > t_Functors;
+            //! Small class to make Discriminate simpler.
+            template< class T_FUNCTOR >
+              class isother : public IsOther< T_INDIVIDUAL, T_FUNCTOR > {};
+            //! Tag for discriminating between functors.
+            template< bool D > class TypeTag {};
+          public:
+            //! Type of the indidividual
+            typedef T_INDIVIDUAL t_Individual;
+            //! Type of the populator
+            typedef T_POPULATOR t_Populator;
+     
+            //! Constructor.
+            BaseContainer() : functors_( new t_Functors ) {}
+            //! Copy Constructor.
+            BaseContainer( const BaseContainer& _c ) : functors_( _c.functors_ ) {}
+            //! Virtual destrcutor, just to make sure.
+            virtual ~BaseContainer() {}
+     
+            //! Functor over populator. Branches to correct format for t_Derived.
+            void operator()( t_Populator& _populator )
+            {
+              typename t_Functors :: iterator i_functor = functors_->begin();
+              typename t_Functors :: iterator i_functor_end = functors_->end();
+              for(; i_functor != i_functor_end; ++i_functor )
+                (*i_functor)( _populator );
+            }
+            //! Connects the callback.
+            template< class T_FUNCTOR >
+              void connect( T_FUNCTOR& _functor )
+              { connect_( _functor, TypeTag< isother<T_FUNCTOR>::value >() ); }
+            //! Connects the callback.
+            template< class T_FUNCTOR >
+              void connect( boost::shared_ptr<T_FUNCTOR>& _functor )
+                { connect_( *_functor ); }
+
+          protected:
+            //! The functors.
+            boost::shared_ptr<t_Functors> functors_;
+            
+          private:
+            //! Branch for unary and binary operators.
+            template< class T_FUNCTOR >
+              void connect_( T_FUNCTOR& _functor, const TypeTag< false >& )
+              {
+                PopulatorFunctor< T_FUNCTOR, t_Individual,
+                                  t_Populator > popfunc( _functor );
+                connect_( popfunc, TypeTag< true >() );
+              }
+            //! Branch for populator operator (asssumed, not detected).
+            template< class T_FUNCTOR >
+              void connect_( T_FUNCTOR& _functor, const TypeTag<true>& )
+                { functors_->push_back( typename t_Functors :: value_type( _functor ) ); }
+        };
+
+      //! Creates a container class with some selection ability over which functors to call.
       template< class T_INDIVIDUAL,
                 class T_OPSELECTIONPOLICY,
                 class T_POPULATOR = eoPopulator< T_INDIVIDUAL > >
-        class Container
+        class Container : protected BaseContainer< T_INDIVIDUAL, T_POPULATOR >
         {
             //! Type of the functor container.
-            typedef std::vector< boost::function<void(t_Populator&) > > t_Functors;
+            typedef std::vector< boost::function<void(T_POPULATOR&) > > t_Functors;
             //! Type of the rates container.
             typedef std::vector< types::t_real > t_Rates;
+            //! type of the base class;
+            typedef BaseContainer<T_INDIVIDUAL, T_POPULATOR>  t_Base;
           public:
             //! Type of the indidividual
             typedef T_INDIVIDUAL t_Individual;
@@ -35,58 +115,44 @@ namespace LaDa
             //! Type of the populator
             typedef T_POPULATOR t_Populator;
      
+            //! Constructor.
+            Container() : t_Base(), rates_(new t_Rates) {}
+            //! Copy Constructor.
+            Container( const Container& _c ) : t_Base(_c), rates_(_c.rates_) {}
             //! Virtual destrcutor, just to make sure.
             virtual ~Container() {}
      
             //! Functor over populator. Branches to correct format for t_Derived.
-            void operator( t_Populator& _populator )
+            void operator()( t_Populator& _populator )
             {
-              t_OpSelectionPolicy selection( rates_ );
-              t_Functors :: iterator i_functor = functors_.begin();
-              t_Functors :: iterator i_functor_end = functors_.end();
+              t_OpSelectionPolicy selection( *rates_ );
+              typename t_Functors :: iterator i_functor = functors_->begin();
+              typename t_Functors :: iterator i_functor_end = functors_->end();
+              t_Rates :: const_iterator i_rate = rates_->end();
               for(; i_functor != i_functor_end; ++i_functor, ++i_rate )
                 if( selection( *i_rate ) ) (*i_functor)( _populator );
             }
             //! Connects the callback.
             template< class T_FUNCTOR >
               void connect( T_FUNCTOR& _functor, types::t_real _rate )
-              { connect( _functor, _rate,
-                         TypeTag< Discriminate<t_Individual>::value >() ); }
+              {
+                connect( _functor ); 
+                rates_->push_back( _rate );
+              }
             //! Connects the callback.
             template< class T_FUNCTOR >
               void connect( boost::shared_ptr<T_FUNCTOR>& _functor,
                             types::t_real _rate )
-              { connect( *_functor, _rate ); }
+              {
+                connect( *_functor ); 
+                rates_->push_back( _rate );
+              }
             
           private:
-            //! Branch for unary operators.
-            template< class T_FUNCTOR >
-              connect( T_FUNCTOR& _functor, types::t_real _rate, TypeTag<2>& )
-              {
-                PopulatorOperator< T_FUNCTOR, t_Individual,
-                                   t_Populator > popfunc( _functor );
-                connect( popfunc, types::t_real, TypeTag<1> );
-              }
-            //! Branch for binary operators.
-            template< class T_FUNCTOR >
-              connect( T_FUNCTOR& _functor, types::t_real _rate, TypeTag<3>& );
-              {
-                PopulatorOperator< T_FUNCTOR, t_Individual,
-                                   t_Populator > popfunc( _functor );
-                connect( popfunc, types::t_real, TypeTag<1> );
-              }
-            //! Branch for populator operator (asssumed, not detected).
-            template< class T_FUNCTOR >
-              connect( T_FUNCTOR& _functor, types::t_real _rate, TypeTag<1>& )
-              {
-                functors_.push_back( t_Functors :: value_type( _functor ) );
-                rates_.push_back( _rate );
-              }
-
-            //! The functors.
-            t_Functors functors_;
+            using t_Base :: functors_;
+            using t_Base :: connect;
             //! The rates.
-            t_Rates rates_;
+            boost::shared_ptr< t_Rates > rates_;
         };
 
       //! A policy for a sequential container of operators.
@@ -95,7 +161,7 @@ namespace LaDa
         // Constructor.
         Sequential( const std::vector< types::t_real >& ) {}
         //! Functor.
-        bool operator()( types::t_real& _rate ) { eo::rng.flip( _rate ); }
+        bool operator()( types::t_real _rate ) { eo::rng.flip( _rate ); }
         //! Name of the container/policy.
         static const std::string name;
       };
@@ -104,10 +170,10 @@ namespace LaDa
       struct Proportional
       {
         // Constructor.
-        Sequential   ( const std::vector< types::t_real >&  _rates )
-                   : i( _rates ), index(0) {}
+        Proportional   ( const std::vector< types::t_real >&  _rates )
+                     : i( eo::rng.roulette_wheel(_rates) ), index(0) {}
         //! Functor.
-        bool operator()( types::t_real& _rate ) { return index++ == i; }
+        bool operator()( types::t_real _rate ) { return index++ == i; }
 
         //! The value for which to accept the operation.
         types::t_unsigned i;
@@ -125,32 +191,36 @@ namespace LaDa
         void container( T_FACTORY &_factory,
                         boost::function<void(typename T_FACTORY::t_Populator&)>&
                           _function,
-                        TiXmlElement &_node )
+                        const TiXmlElement &_node )
         {
-          typedef Operator::Container
-                  < 
-                    typename T_FACTORY :: t_Individual, 
-                    T_POLICY, 
-                    typename T_FACTORY :: t_Populator 
-                  > t_Container;
-          typedef boost::shared_ptr< t_Container > t_Result;
-          t_Result result( new t_Container );
+          typedef typename T_FACTORY :: t_Individual t_Individual;
+          typedef typename T_FACTORY :: t_Populator t_Populator;
+          typedef Operator::Container<t_Individual, T_POLICY, t_Populator> t_Container;
+          t_Container container;
           const TiXmlElement *child = _node.FirstChildElement();
           Print::xmg << Print::Xmg::comment << T_POLICY::name << Print::endl
                      << Print::Xmg::indent;
+          size_t nbcreated(0);
           for(; child; child = child->NextSiblingElement() )
           {
-            if( not _factory.exists( child->Value() ) ) continue;
-            types::t_real rate(1e0);
+            const std::string key( child->Value() );
+            if( not _factory.exists( key ) ) continue;
+            types::t_real prob(1e0);
             if( child->Attribute( "prob" ) )
-              rate = boost::lexical_cast<types::t_real>( child->Attribute( "prob" ) );
-            boost::function<void(T_POPULATOR&)> function;
-            _factory( function, *child );
+              prob = boost::lexical_cast<types::t_real>( child->Attribute( "prob" ) );
+            boost::function<void(t_Populator&)> function;
+            _factory( key, function, *child );
             Print::xmg << Print::Xmg::addtolast << " prob = " << prob << Print::endl;
-            result->connect( function, rate );
+            container.connect( function, prob );
+            ++nbcreated;
+          }
+          if( nbcreated == 0 )
+          {
+            Print::xmg << Print::Xmg::removelast;
+            return;
           }
           Print::xmg << Print::Xmg :: unindent;
-          return result;
+          _function = container;
         }
 
       //! Specializes void container() to a sequential container.
@@ -160,12 +230,7 @@ namespace LaDa
                            _function,
                          const TiXmlElement &_node )
         {
-          container
-          < 
-            T_FACTORY, 
-            Operator::Sequential,
-            typename T_FACTORY :: t_Populator
-          > ( _factory, _function, _node );
+          container< T_FACTORY, Operator::Sequential>( _factory, _function, _node );
         }
       //! Specializes void container() to a proportional container.
       template< class T_FACTORY >
@@ -174,12 +239,25 @@ namespace LaDa
                               _function,
                             const TiXmlElement &_node )
         {
-          container
-          < 
-            T_FACTORY, 
-            Operator::Sequential
-          > ( _factory, _function, _node );
+          container<T_FACTORY, Operator::Proportional>( _factory, _function, _node );
         }
+
+      template< class T_FACTORY >
+        void containers( T_FACTORY &_factory,
+                         boost::function<void( typename T_FACTORY::t_Populator& )>&
+                           _function,
+                         const TiXmlElement &_node )
+        {
+          std::string type("and");
+          if( _node.Attribute("type") ) type = _node.Attribute("type");
+          __DOASSERT( type != "and" and type != "or",
+                      "Tag Operators expects an attribute \"type\" "
+                      "with values \"and\" or \"or\".\n" )
+          type == "and" ?
+            container< T_FACTORY, Operator::Sequential>( _factory, _function, _node ):
+            container<T_FACTORY, Operator::Proportional>( _factory, _function, _node );
+        }
+
     } // Factory namespace 
   } // GA namespace 
 } // LaDa namespace 
