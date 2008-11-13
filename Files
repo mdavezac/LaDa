@@ -50,9 +50,9 @@ DARWIN_BG_DOC = $(DARWIN_BG_H) $(DARWIN_BG_CC) $(DARWIN_GRAPH_H) $(DARWIN_GRAPH_
 
 LIB_ALLOYLAYERS_CC = single_site.cc bandgap_stubs.cc vff.cc electric_dipole.cc
 LIB_ALLOYLAYERS_IMPL_H  = alloylayers/evaluator.impl.h  alloylayers/policies.impl.h \
-                          alloylayers/main.extras.h alloylayers/factory.hpp
+                          alloylayers/factory.hpp 
 LIB_ALLOYLAYERS_H  = alloylayers/evaluator.h alloylayers/object.h \
-                     alloylayers/policies.h electric_dipole.h \
+                     alloylayers/policies.h electric_dipole.h alloylayers/operators.h \
                      $(LIB_ALLOYLAYERS_IMPL_H)
 
 DARWIN_LIB_DOC = $(DARWIN_LIB_H) $(DARWIN_LIB_CC) $(DARWIN_OP_H) $(DARWIN_OP_CC) \
