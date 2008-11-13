@@ -53,7 +53,7 @@ namespace LaDa
         //!               data points.
         void init_targets( t_Vector &_v ) { targets = _v; }; 
         //! \brief Perform Alternating Linear Least-Square Fit.
-        //! \params _solution should be a vector of vectors. The outer vectors
+        //! \param _solution should be a vector of vectors. The outer vectors
         //!         have the dimension of the problem. The inner vectors should
         //!         be of appropriate type for the chosen least-square fit
         //!         method. On output, \a _solution contains the solution.

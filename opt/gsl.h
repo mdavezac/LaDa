@@ -21,30 +21,47 @@ namespace LaDa
 {
   namespace Gsl
   {
+    //! \brief Wraps gsl_vector around a container.
+    //! \warning Expects contiguous memory. 
     class Vector
     {
       protected:
+        //! Defines the memory block.
         gsl_block bloc;
+        //! Defines the gsl vector.
         gsl_vector vector;
 
       public:
+        //! Constructor and Initializer.
         template< class T_CONTAINER > Vector( T_CONTAINER& _vec );
-        ~Vector() {};
+        //! Destructor.
+        virtual ~Vector() {};
 
+        //! Returns a pointer to the gsl_vector.
         operator gsl_vector*() { return &vector; }
+        //! Returns a const pointer to the gsl_vector.
         operator const gsl_vector* () const { return &vector; }
     };
+    //! \brief Wraps gsl_maxtrix around a container.
+    //! \warning Expects contiguous memory. See gsl_matrix documentation for
+    //!          layout details.
     class Matrix
     {
       protected:
+        //! Defines the memory block.
         gsl_block bloc;
+        //! Defines the gsl maxtrix.
         gsl_matrix matrix;
 
       public:
+        //! Constructor and Initializer.
         Matrix( types::t_int _nrow, std::vector<types::t_real>& _vec );
+        //! Destructor.
         ~Matrix() {};
 
+        //! Returns a pointer to the gsl_matrix.
         operator gsl_matrix*() { return &matrix; }
+        //! Returns a const pointer to the gsl_matrix.
         operator const gsl_matrix* () const { return &matrix; }
     };
     template< class T_CONTAINER >

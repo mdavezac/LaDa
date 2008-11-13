@@ -21,9 +21,17 @@
 
 #include "va.h"
 #include "dipole_elements.h"
-typedef LaDa::Pescan::VirtualAtom< LaDa::Vff::Functional > t_Pescan;
-typedef LaDa::Vff::VABase<LaDa::Vff::Functional> t_Vff;
-#define __PROGNAME__ "Empirical Pseudo-Potential Functional"
+#ifdef _LAYERED_
+# include <vff/layered.h>
+  typedef LaDa::Pescan::VirtualAtom< LaDa::Vff::Layered > t_Pescan;
+  typedef LaDa::Vff::VABase<LaDa::Vff::Layered> t_Vff;
+# define __PROGNAME__ "Empirical Pseudo-Potential Functional for layered Zinc-Blend Structures"
+
+#else
+  typedef LaDa::Pescan::VirtualAtom< LaDa::Vff::Functional > t_Pescan;
+  typedef LaDa::Vff::VABase<LaDa::Vff::Functional> t_Vff;
+# define __PROGNAME__ "Empirical Pseudo-Potential Functional for Zinc-Blend Structures"
+#endif
 
 // performs computation.
 struct Eval

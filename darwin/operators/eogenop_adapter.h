@@ -20,10 +20,13 @@ namespace LaDa
     //! Holds general stuff for GA operators.
     namespace Operator
     {
+      //! \brief Creates an eoGenOp operator from a factory and an XML node.
+      //! \details The return pointer is owned by the eoState object.
       template< class T_FACTORY >
         eoGenOp< typename T_FACTORY :: t_Individual >*
           create_eo_operator( const TiXmlElement&, T_FACTORY&, eoState& );
 
+      //! A wrapper for  eoGenOp<T_INDIVIDUAL> around any void(T_POPULATOR&) functor.
       template< class T_INDIVIDUAL, class T_POPULATOR = eoPopulator<T_INDIVIDUAL> >
         class EOAdapter : public eoGenOp<T_INDIVIDUAL >
         {

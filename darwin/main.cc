@@ -71,9 +71,8 @@ int main(int argc, char *argv[])
   __BPO_VERSION__
 
   fs::path input( vm["input"].as< std::string >() );
-  __DOASSERT( not ( fs::is_regular( input ) or fs::is_symlink( input ) ),
-              input << " is a not a valid file.\n" );
   const unsigned reruns = vm["reruns"].as< unsigned >();
+  std::string short_description = "";
   
 
   // Reads program options for alloylayers.
@@ -86,7 +85,8 @@ int main(int argc, char *argv[])
 #   endif
 #   include "alloylayers/main.extras.h" 
     __ROOTCODE( (*::LaDa::mpi::main), 
-      std::cout << "Usage: " << argv[0] << " [options] file.xml\n" 
+      std::cout << "Description: " << short_description
+                << "Usage: " << argv[0] << " [options] file.xml\n" 
                 << "  file.xml is an optional filename for XML input.\n" 
                 << "  Default input is input.xml.\n\n" 
                 << all << "\n";
@@ -106,6 +106,9 @@ int main(int argc, char *argv[])
     ) 
     return 1; 
   } 
+
+  __DOASSERT( not ( fs::is_regular( input ) or fs::is_symlink( input ) ),
+              input << " is a not a valid file.\n" );
  
 
   __ROOTCODE

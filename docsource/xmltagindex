@@ -4,6 +4,7 @@
 /** \page xIndex Index of all XML Tags
 
   <UL>
+     <LI> \ref TagAnd
      <LI> \ref TagAngle
      <LI> \ref Tagatom
      <LI> \ref TagAtom
@@ -33,6 +34,7 @@
      <LI> \ref TagObjective
      <LI> \ref TagOffspring
      <LI> \ref TagOperators
+     <LI> \ref TagOr
      <LI> \ref TagPseudo
      <LI> \ref TagPrint
      <LI> \ref TagRandom

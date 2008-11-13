@@ -196,6 +196,8 @@ namespace LaDa
   {
     namespace CE
     {
+      //! \brief Meta-function to transform a separable function such that is
+      //!        uses a matrix range.
       template< class T_SEPARABLES >
         struct SeparablesWithMatrixRange
         {

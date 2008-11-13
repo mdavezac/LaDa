@@ -22,7 +22,7 @@ if DODIRECTIAGA
 endif
 endif
 
-bin_PROGRAMS = escan 
+bin_PROGRAMS = escan layered_escan
 
 noinst_LTLIBRARIES = libescan.la
 libescan_ladir = $(includedir)/LaDa/pescan_interface 
@@ -50,6 +50,10 @@ escan_LDADD = libescan.la \
 	      @LD_IAGA_FLAGS@ $(LDADD) 
 
 
+layered_escan_SOURCES = main.cc
+layered_escan_CPPFLAGS = $(escan_CPPFLAGS) -D _LAYERED_
+layered_escan_LDFLAGS =  $(escan_LDFLAGS) 
+layered_escan_LDADD = $(escan_LDADD)
 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 

@@ -98,7 +98,20 @@ int main(int argc, char *argv[])
      "Prints epitaxial structure to xml, xyz, xsf files. Does not perform GA." );
   __BPO_GENERATE__()
   __BPO_MAP__
-  __BPO_HELP_N_VERSION__
+  __BPO_PROGNAME__
+  __BPO_VERSION__
+  if( vm.count("help") )
+  {
+    __ROOTCODE( (*::LaDa::mpi::main), \
+      std::cout << argv[0] << " is meant to help in creating"
+                   " epitaxial structures for use with GA.\n" 
+                   "Usage: " << argv[0] << " [options] file.xml\n" 
+                << "  file.xml is an optional filename for XML input.\n" 
+                << "  Default input is input.xml.\n\n" 
+                << all << "\n";
+    ) 
+    return 0; 
+  }
 
 
   fs::path input( vm["input"].as< std::string >() );

@@ -27,7 +27,7 @@ namespace LaDa
     {
       //! \cond
       template< class T_DERIVED, class T_INDIVIDUAL, class T_POPULATOR > class PopulatorFunctor;
-      //! \cond
+      //! \endcond
 
       //! Assigns a callback functor to a boost function.
       template< class T_DERIVED, class T_INDIVIDUAL, class T_POPULATOR >

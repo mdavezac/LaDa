@@ -48,7 +48,7 @@
     __ROOTCODE(  (*::LaDa::mpi::main), \
       std::cout << "Subversion Revision: " << ::LaDa::SVN::Revision << "\n\n";  \
     ) \
-    return 1; \
+    return 0; \
   }
 # define __BPO_HELP__ \
   if ( vm.count("help") ) \
@@ -59,7 +59,7 @@
                 << "  Default input is input.xml.\n\n" \
                 << all << "\n";  \
     ) \
-    return 1; \
+    return 0; \
   } 
 # define __BPO_HELP_N_VERSION__ \
   __BPO_PROGNAME__ \
@@ -74,7 +74,7 @@
               << "Something wrong with the command-line input.\n"\
               << _b.what() << std::endl;\
     code; \
-    return 0;\
+    return 1;\
   }\
   catch ( boost::program_options::invalid_option_value &_i )\
   {\
@@ -82,7 +82,7 @@
               << "Argument of option in command-line is invalid.\n"\
               << _i.what() << std::endl;\
     code; \
-    return 0;\
+    return 1;\
   }\
   catch ( boost::program_options::unknown_option &_u)\
   {\
@@ -90,7 +90,7 @@
               << "Unknown option in command-line.\n"\
               << _u.what() << std::endl;\
     code; \
-    return 0;\
+    return 1;\
   }\
   catch (  boost::program_options::too_many_positional_options_error &_e )\
   {\
@@ -98,14 +98,14 @@
               << "Too many arguments in command-line.\n"\
               << _e.what() << std::endl;\
     code; \
-    return 0;\
+    return 1;\
   }\
   catch ( std::exception &e )\
   {\
     std::cout << "Caught error while running " << __PROGNAME__ \
               << "\n" << e.what() << std::endl;\
     code; \
-    return 0;\
+    return 1;\
   }
 
 

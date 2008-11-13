@@ -65,6 +65,7 @@ namespace LaDa
     {
         friend class boost::serialization::access;
         template< class T_FUNCTION > friend class Collapse;
+        //! Dumps a separable function to \a _atream.
         friend std::ostream& operator<< <T_BASIS, T_GROUPOP, T_SCALAROP>
                                         ( std::ostream& _stream,
                                           const Base< T_BASIS, 

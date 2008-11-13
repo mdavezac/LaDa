@@ -4,6 +4,7 @@
 /** \page xGAinput Inputing Genetic Algorithm Optimizations
 
   <UL>
+     <LI> \ref TagAnd
      <LI> \ref TagBreeding
      <LI> \ref TagxTaboo
      <LI> \ref TagCrossover
@@ -20,6 +21,7 @@
      <LI> \ref TagObjective
      <LI> \ref TagOffspring
      <LI> \ref TagOperators
+     <LI> \ref TagOr
      <LI> \ref TagPrint
      <LI> \ref TagMPI
      <LI> \ref TagRandom
@@ -198,12 +200,13 @@
          \f$\mathbf{O}(\mathbf{x})\f$, the second one will overwrite the results of the
          first.
 
-   \subsection TagObjective \<Objective/\>  and \<Objective\> ... \</Objective\>
+   \subsection TagObjective \<Objective/\>  and \<Objectives\> ... \</Objectives\>
    \addindex \<Objective\>
    Objectives can be either \e single or \e multi. A single objective is
    defined for a single functional. A multi-objective will optimize multiple
-   functionals. In general, multi-objectives are made up of single-objectives. 
-   \note Some further informations are given in the description  of the Objective namespace.
+   functionals. \e Mind your plurals and singulars when inputing Objective. In
+general, multi-objectives are made up of single-objectives.  \note Some further
+informations are given in the description  of the Objective namespace.
      \param type (Required) can be:
           - (single) "minimize"
             \code
@@ -486,6 +489,13 @@
                       weight with respect to other breeding operators in \ref
                       TagOperators. Yes, you can nest these operators.
     \note By default, \ref TagBreeding is an \<Operator type = \"and"\> operator.
+
+    \subsection TagAnd \<And\>...\</And\>
+    \addindex \<And/\>
+    Short for \<Operators type="and" \> ... \<Operators/\>.
+    \subsection TagOr \<Or\>...\</Or\>
+    \addindex \<Or/\>
+    Short for \<Operators type="or" \> ... \<Operators/\>.
      
     \subsection TagTabooOp \<TabooOp\> ... \</TabooOp\>
     \addindex \<TabooOp\>

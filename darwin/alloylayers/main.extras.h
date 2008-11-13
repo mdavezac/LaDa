@@ -68,6 +68,8 @@
 #     define _MAIN_ALLOY_LAYERS_EXTRAS_ 4
 #   endif
 
+    short_description = "Performs optimizations within the  \"alloy-layers\""
+                        " configuration space of Zinc-Blend structures.\n";
     namespace PPFactory = LaDa::GA::AlloyLayers::Factory;
     typedef LaDa :: GA :: Darwin< t_Evaluator > t_Darwin;
 
@@ -75,7 +77,7 @@
     ga.evaluator.do_dipole = false;
     LaDa::Factory::PureCalls properties_factory;
     properties_factory.connect
-      ( "strain", boost::bind( &PPFactory::strain_energy<t_Evaluator>, boost::ref(ga.evaluator) ) )
+      ( "energy", boost::bind( &PPFactory::strain_energy<t_Evaluator>, boost::ref(ga.evaluator) ) )
       ( "epi", boost::bind( &PPFactory::epitaxial_strain<t_Evaluator>, boost::ref(ga.evaluator) ) )
       ( "bandgap", boost::bind( &PPFactory::bandgap<t_Evaluator>,
                                 boost::ref(ga.evaluator) ) )
@@ -94,8 +96,6 @@
       ( "Operators", boost::bind( &LaDa::GA::Factory::containers<t_OpFactory>, _1, _2, _3 ) )
       ( "And", boost::bind( &LaDa::GA::Factory::sequential<t_OpFactory>, _1, _2, _3 ) )
       ( "Or", boost::bind( &LaDa::GA::Factory::sequential<t_OpFactory>, _1, _2, _3 ) )
-      ( "Sequential", boost::bind( &LaDa::GA::Factory::sequential<t_OpFactory>, _1, _2, _3 ) )
-      ( "Proportional", boost::bind( &LaDa::GA::Factory::sequential<t_OpFactory>, _1, _2, _3 ) )
       ( "TabooOp", boost::bind( &LaDa::GA::Factory::taboo_op<t_OpFactory, t_Darwin>,
                                  _1, _2, _3, boost::ref(ga), "Random" ) )
       ( "Random", boost::bind( &PPFactory::random<t_OpFactory, t_Evaluator>, _1, _2, _3,

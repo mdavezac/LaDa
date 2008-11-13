@@ -16,18 +16,14 @@
 
 namespace LaDa
 {
-  //! \cond
   namespace Crystal 
   {
     class Structure;
   }
-  //! \endcond
 
   namespace Pescan
   {
-    //! \cond
     class BandGap;
-    //! \endcond
 
     //! Holds dipole moments.
     struct Dipole

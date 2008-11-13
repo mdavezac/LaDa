@@ -89,13 +89,13 @@ namespace LaDa
                          const T_VECTOR &_targets, const T_VECTORS &_coefs  );
 
         //! \brief Constructs the completely expanded matrix.
-        //! \tparams T_VECTORS is a vector of vectors.
-        //! \tparams T_VECTOR is a vector of return types.
-        //! \params[in] _x contains the input to sum of separable function in the
-        //!                format \a _x[ o,d ].
-        //! \params[in] _w contains the weights attached to each structural
-        //!                target value. This array is copied to a local
-        //!                container. \a _w[o].
+        //! \tparam T_VECTORS is a vector of vectors.
+        //! \tparam T_VECTOR is a vector of return types.
+        //! \param[in] _x contains the input to sum of separable function in the
+        //!               format \a _x[ o,d ].
+        //! \param[in] _w contains the weights attached to each structural
+        //!               target value. This array is copied to a local
+        //!               container. \a _w[o].
         template< class T_VECTORS, class T_VECTOR > 
           void init( const T_VECTORS &_x, const T_VECTOR &_w );
         //! Resets collapse functor. Clears memory.
@@ -103,8 +103,8 @@ namespace LaDa
         //! Creates a collection of random coefficients.
         //! \details A vector of vectors of correct dimensions is created and
         //!          initialized.
-        //! \tparams should be a vector of vectors.
-        //! \params[out] _coefs creates \a _coefs[d, (r,i) ] uninitialized.
+        //! \tparam should be a vector of vectors.
+        //! \param[out] _coefs creates \a _coefs[d, (r,i) ] uninitialized.
         template< class T_VECTORS > void create_coefs( T_VECTORS &_coefs,
                                                        t_Type _howrandom= 0.5e0 ) const;
         //! Assigns solution coefficients to Collapse::function.

@@ -144,7 +144,7 @@ namespace LaDa
        void set_atom_input( const t_Path &_str ) { atom_input = _str; }
        //! Destroys directory for computations.
        void destroy_directory();
-       //! \brief Tries to find a <Functional type="escan"> tag in \a _node.
+       //! \brief Tries to find a \<Functional type="escan"\> tag in \a _node.
        //! \details Checks wether \a _node or its immediate offpsrings are the
        //!          right functional node.
        const TiXmlElement* find_node (const TiXmlElement &_node );

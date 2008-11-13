@@ -58,12 +58,9 @@
     t_potential potential;
     //! Real-space cutoff?
     types::t_real rcut;
-    __IIAGA
-    (
       //! \brief System call to lauch nanopse's pescan.
       //! \details With __IIAGA defined only.
-      boost::filesystem::path launch;
-    )
+    __IIAGA( boost::filesystem::path launch; )
     //! Spin orbit parameters.
     std::vector<SpinOrbit> spinorbit;
     //! real-space wavefunction  output.
@@ -111,10 +108,8 @@
     t_MeshTuple small_box; //!< Small box in the Multiple Cell Decomposition
     types::t_real cutoff; //!< Plane-wave energy cutoff 
     t_Path output;   //!< File to which to write the potential
-    __IIAGA
-    ( 
-      t_Path launch;   //!< Command for launching pescan's getVLarg. 
-    )
+    //! Command for launching pescan's getVLarg. 
+    __IIAGA( t_Path launch; )
     //! Name of the files describing each pseudo-potentials
     std::vector<t_Path> pseudos;
 
@@ -135,6 +130,7 @@
     //! load from XML.
     bool Load( const TiXmlElement& _node );
   };
+  //! Contains spin-orbit related data.
   struct SpinOrbit
   {
     t_Path filename; //!< Filename of the spin-orbit empirical pseudo-potential

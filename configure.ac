@@ -40,20 +40,13 @@ AC_ARG_ENABLE(python,
      esac],[python=false])
 
 
-AC_ARG_ENABLE(force-mpi,
-     [  --enable-force-mpi             Forces mpi to be on],
-     [case "${enableval}" in
-       yes) force_mpi=true ;;
-       no)  force_mpi=false ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-force-mpi) ;;
-     esac],[force_mpi=$dompidefault])
 AC_ARG_ENABLE(mpi,
      [  --enable-mpi                  Turn on mpi],
      [case "${enableval}" in
        yes) mpi=true ;;
        no)  mpi=false ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-mpi) ;;
-     esac],[mpi=$force_mpi])
+     esac],[mpi=$dompidefault])
 AH_TEMPLATE([_MPI])
 
 AC_ARG_ENABLE(fortran,

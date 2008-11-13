@@ -146,6 +146,7 @@
        \refitem TagPseudo \<Reference/\>
        \refitem TagPseudo \<Hamiltonian\>
        \refitem TagPseudo \<SpinOrbit/\>
+       \refitem Tagoscstrength \<Functional, type="oscillator strength"/\>
      \endsecreflist
 
      \section Tagescanfunc \<Functional type="escan"\>
@@ -234,6 +235,13 @@
                fitted EPM." Word to the wise. Whoever they may be. Whatever it
                may mean.
               
+     \section Tagoscstrength \<Functional, type="oscillator strength" /\>
+     Defines how to compute the oscillator strenght between VBM and CBM. 
+       \param degeneracy (default=1e-7) Bands within \a degeneracy of the VBM
+              (CBM) are identified as degenerate with the VBM (CBM) for the
+              purpose of calculating dipole elements and oscillator strength.
+     Since all the parameters above have optional value, it is possible to omit
+     \<Functional, type="oscillator strength"/\> completely.
 
     <h1> Quaternary concentration functional </h1> \anchor secconc
      In some \f$A_xB_{1-x}C_yD_{1-y}\f$ quaternary strained to fit a lattice

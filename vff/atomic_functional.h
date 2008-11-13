@@ -125,8 +125,10 @@ namespace LaDa
         //! \brief Loads an atomic center from XML.
         //! \param _node is \<Functional type=\"vff\"\>.
         //! \param _site_index is the index of the lattice-site for this atomic functional.
-        //! \param _site_type is the type of the lattice-site for this atomic functional.
+        //! \param _type_index is the type of the lattice-site for this atomic functional.
         //! \param _othersite is the lattice-site of the first neighbours.
+        //! \param _structure Needed for its scale only. The AtomicFunctional
+        //!                   instance will keep a pointer to this object.
         bool load( const TiXmlElement& _node,
                    const types::t_unsigned &_site_index,
                    const types::t_unsigned &_type_index,

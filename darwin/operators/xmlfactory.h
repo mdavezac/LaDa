@@ -23,7 +23,7 @@ namespace LaDa
     {
       //! \cond
       template< class T_INDIVIDUAL, class T_POPULATOR > class XmlOperators;
-      //! \cond
+      //! \endcond
  
       //! Dumps keys to stream.
       template< class T_INDIVIDUAL, class T_POPULATOR >
