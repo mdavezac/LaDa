@@ -61,7 +61,7 @@ boost::shared_ptr<Crystal::Lattice>
       _structure.print_xcrysden( file );
       file.close();
     }
-    const std::string fxyz( _filename + ".xyx" );
+    const std::string fxyz( _filename + ".xyz" );
     file.open( fxyz.c_str(),
                truncate  ? std::ios_base::trunc: std::ios_base::app | std::ios_base::out); 
     if (file.fail() )   

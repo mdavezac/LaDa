@@ -165,7 +165,7 @@ namespace LaDa
         // Constructor.
         Sequential( const std::vector< types::t_real >& ) {}
         //! Functor.
-        bool operator()( types::t_real _rate ) { eo::rng.flip( _rate ); }
+        bool operator()( types::t_real _rate ) { return eo::rng.flip( _rate ); }
         //! Name of the container/policy.
         static const std::string name;
       };
