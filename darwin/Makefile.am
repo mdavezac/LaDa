@@ -57,23 +57,42 @@ bandgap_opt_LDADD = $(ce_opt_LDADD) \
 
 layered_opt_SOURCES = main.cc $(DARWIN_L_CC)
 layered_opt_HEADERS = $(DARWIN_L_H) 
-layered_optdir = $(includedir)/darwin
+layered_optdir = $(includedir)/LaDa/darwin
 layered_opt_CPPFLAGS =  -D _MOLECULARITY $(AM_CPPFLAGS) @NAG_CFLAGS@ @GSL_CFLAGS@ 
 layered_opt_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIBS@ @NAG_LIBS@ 
 layered_opt_LDADD = $(bandgap_opt_LDADD)
 
-alloylayers_opt_SOURCES = main.cc $(DARWIN_ALLOYLAYERS_CC)
-alloylayers_opt_HEADERS = $(DARWIN_ALLOYLAYERS_H) 
-alloylayers_optdir = $(includedir)/darwin
+alloylayers_opt_SOURCES = main.cc 
+alloylayers_opt_HEADERS = alloylayers/main.extras.h
+alloylayers_optdir = $(includedir)/LaDa/darwin
 alloylayers_opt_CPPFLAGS =  -D _ALLOY_LAYERS_ $(AM_CPPFLAGS) @NAG_CFLAGS@ @GSL_CFLAGS@ 
 alloylayers_opt_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIBS@ @NAG_LIBS@ @BOOST_SIGNAL@
-alloylayers_opt_LDADD = $(bandgap_opt_LDADD)
+alloylayers_opt_LDADD = $(bandgap_opt_LDADD) liballoylayers.la
 
-noinst_LTLIBRARIES = libdarwin.la
+noinst_LTLIBRARIES = libdarwin.la libdarwinoperator.la liballoylayers.la libdarwingraph.la
+
+libdarwinoperator_ladir = $(includedir)/LaDa/darwin/operators
+libdarwinoperator_la_SOURCES = $(DARWIN_OP_CC)
+libdarwinoperator_la_HEADERS = $(DARWIN_OP_H)
+libdarwinoperator_la_CPPFLAGS = $(AM_CPPFLAGS)
+
+libdarwingraph_ladir = $(includedir)/LaDa/darwin/graph
+libdarwingraph_la_SOURCES = $(DARWIN_GRAPH_CC)
+libdarwingraph_la_HEADERS = $(DARWIN_GRAPH_H)
+libdarwingraph_la_CPPFLAGS = $(AM_CPPFLAGS)
+
+
+liballoylayers_ladir = $(includedir)/LaDa/darwin/alloylayers
+liballoylayers_la_SOURCES = $(LIB_ALLOYLAYERS_CC)
+liballoylayers_la_HEADERS = $(LIB_ALLOYLAYERS_H)
+liballoylayers_la_CPPFLAGS = $(AM_CPPFLAGS)
+
 libdarwin_ladir = $(includedir)/LaDa/darwin
 libdarwin_la_SOURCES = $(DARWIN_LIB_CC)
 nobase_libdarwin_la_HEADERS = $(DARWIN_LIB_H) 
 libdarwin_la_CPPFLAGS = $(AM_CPPFLAGS) 
+libdarwin_la_LIBADD = libdarwinoperator.la libdarwingraph.la
+
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) 
 ../ce/libce.la: 
