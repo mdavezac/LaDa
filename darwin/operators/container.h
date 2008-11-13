@@ -125,10 +125,14 @@ namespace LaDa
             //! Functor over populator. Branches to correct format for t_Derived.
             void operator()( t_Populator& _populator )
             {
+              __ASSERT( not rates_.get(), "rates_ container does not exist.\n" )
+              __ASSERT( not functors_.get(), "functors_ container does not exist.\n" )
+              __ASSERT( rates_->size() != functors_->size(),
+                        "functors_ and rates_ containers have different sizes.\n" )
               t_OpSelectionPolicy selection( *rates_ );
               typename t_Functors :: iterator i_functor = functors_->begin();
               typename t_Functors :: iterator i_functor_end = functors_->end();
-              t_Rates :: const_iterator i_rate = rates_->end();
+              t_Rates :: const_iterator i_rate = rates_->begin();
               for(; i_functor != i_functor_end; ++i_functor, ++i_rate )
                 if( selection( *i_rate ) ) (*i_functor)( _populator );
             }

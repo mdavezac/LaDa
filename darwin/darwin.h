@@ -5,7 +5,7 @@
 #define  _DARWIN_H_
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+# include <config.h>
 #endif
 
 #include <string>
@@ -32,6 +32,11 @@
 #include "scaling.h"
 #include "gatraits.h"
 #include "topology.h"
+
+#ifdef _ALLOY_LAYERS_
+# include "operators/xmlfactory.h"
+# include "operators/eogenop_adapter.h"
+#endif
 
 namespace LaDa
 {
@@ -206,6 +211,9 @@ namespace LaDa
         Topology topology;
         //! Counts the number of generations.
         GenCount counter;
+#       ifdef _ALLOY_LAYERS_
+          Factory::XmlOperators<t_Individual> operator_factory;
+#       endif
         
       public:
         //! \brief The evaluator instance itself
@@ -244,6 +252,10 @@ namespace LaDa
         History<t_Individual>* const get_history() const { return history; }
         //! Returns age functor.
         const GenCount& get_counter() const { return counter; }
+#       ifdef _ALLOY_LAYERS_
+          void set_operator_factory( const Factory::XmlOperators<t_Individual> &_factory )
+            { operator_factory = _factory; }
+#       endif
 
 
       protected: 

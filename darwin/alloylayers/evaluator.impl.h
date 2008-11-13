@@ -156,7 +156,7 @@ namespace LaDa
       {
         if( not t_Base :: Load( _node ) ) return false;
         if( not bandgap.Load( _node ) ) return false;
-        if( do_dipole and ( not  edipole.Load( _node ) ) ) return false;
+        if( do_dipole ) edipole.Load( _node ); // Okay if not found. Just use default values.
         return true;
       }
  

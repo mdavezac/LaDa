@@ -66,18 +66,48 @@ int main(int argc, char *argv[])
     __BPO_RERUNS__;
   __BPO_GENERATE__()
   __BPO_MAP__
-  __BPO_HELP_N_VERSION__
 
-  // Reads program options for alloylayers.
-  // Prints program options to standard output.
-#   include "alloylayers/main.extras.h" 
- 
+  __BPO_PROGNAME__
+  __BPO_VERSION__
 
   fs::path input( vm["input"].as< std::string >() );
   __DOASSERT( not ( fs::is_regular( input ) or fs::is_symlink( input ) ),
               input << " is a not a valid file.\n" );
   const unsigned reruns = vm["reruns"].as< unsigned >();
   
+
+  // Reads program options for alloylayers.
+  // Prints program options to standard output.
+#   include "alloylayers/main.extras.h" 
+  if ( vm.count("help") ) 
+  { 
+#   ifdef _ALLOY_LAYERS_
+      LaDa::GA::Darwin< t_Evaluator > ga;
+#   endif
+#   include "alloylayers/main.extras.h" 
+    __ROOTCODE( (*::LaDa::mpi::main), 
+      std::cout << "Usage: " << argv[0] << " [options] file.xml\n" 
+                << "  file.xml is an optional filename for XML input.\n" 
+                << "  Default input is input.xml.\n\n" 
+                << all << "\n";
+#     ifdef _ALLOY_LAYERS_
+        std::cout << "The following GA Operators can be used in <Breeding>...</Breeding>:\n"
+                  <<  op_factory << "\n"
+                     "The following physical properties will be optimized\n"
+                  << properties_factory 
+                  << "when included as in\n"
+                     "  <Objectives>\n"
+                     "    <Objective value=\"property A\" ... >\n"
+                     "    <Objective value=\"property B\" ... >\n"
+                     "    ....\n"
+                     "  </Objectives>\n"
+                     "Mind the plural and singulars ;).\n\n";
+#     endif
+    ) 
+    return 1; 
+  } 
+ 
+
   __ROOTCODE
   (
     (*::LaDa::mpi::main),
@@ -93,12 +123,15 @@ int main(int argc, char *argv[])
   for( LaDa::types::t_int i = 0; i < reruns; ++i )
   {
     LaDa::GA::Darwin< t_Evaluator > ga;
+    // creates factories
+#   include "alloylayers/main.extras.h" 
+    // Connects assignement and print functors for alloylayers config. space.
+#   include "alloylayers/main.extras.h" 
+    // Then loads input.
     LaDa::Print :: out << "load result: "
                        << ga.Load(input.string()) 
                        << LaDa::Print::endl; 
 
-    // Connects assignement and print functors for alloylayers config. space.
-#   include "alloylayers/main.extras.h" 
     
     LaDa::Print::out << "Rerun " << i+1 << " of " << reruns << LaDa::Print::endl;
     __ROOTCODE

@@ -52,7 +52,7 @@ namespace LaDa
           Operators<T_POPULATOR, T_ARG> :: connect( const t_Key& _key,
                                                     const T_FUNCTOR& _functor )
           {
-            __DOASSERT( not exists( _key ),
+            __DOASSERT( exists( _key ),
                         "Key " << _key << " already exists.\n" )
             boost::assign::ptr_map_insert< DerivedType<T_FUNCTOR> >
               ( map_ )( _key, _functor );
@@ -77,6 +77,18 @@ namespace LaDa
            if( i_functor != map_.end() ) map_.erase( i_functor );
         }
 
+      template< class T_POPULATOR, class T_ARG >
+        std::ostream& operator<<( std::ostream& _stream, 
+                                  const Operators<T_POPULATOR, T_ARG>& _factory )
+        {
+          typedef Operators<T_POPULATOR, T_ARG> t_Factory;
+          typename t_Factory::t_Map::const_iterator i_map = _factory.map_.begin();
+          typename t_Factory::t_Map::const_iterator i_map_end = _factory.map_.end();
+          _stream << "Factory keys: \n";
+          for(; i_map != i_map_end; ++i_map )
+            _stream << "  _ " << i_map->first << "\n";
+          return _stream;
+        }
     }
   }
 }

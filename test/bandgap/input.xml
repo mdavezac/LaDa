@@ -2,26 +2,12 @@
 <Job>
    <Structure >
         <Cell>
-            <row x="0.000000" y="1.000000" z="1.000000" freeze="xy" />
-            <row x="1.000000" y="0.000000" z="1.000000" freeze="xy" />
-            <row x="1.000000" y="1.000000" z="0.000000" freeze="xy" />
+            <row x="0.000000" y="0.5" z="0.5" freeze="xy" />
+            <row x="0.5" y="0.000000" z="0.5" freeze="xy" />
+            <row x="0.5" y="0.5" z="0.000000" freeze="xy" />
         </Cell>
-        <Atom x="0.000000" y="0.000000" z="0.000000" type="1.000000" />
-        <Atom x="0.250000" y="0.250000" z="0.250000" type="1.000000" />
-        <Atom x="0.500000" y="0.500000" z="0.000000" type="-1.000000" />
-        <Atom x="0.750000" y="0.750000" z="0.250000" type="-1.000000" />
-        <Atom x="0.500000" y="0.000000" z="0.500000" type="-1.000000" />
-        <Atom x="0.750000" y="0.250000" z="0.750000" type="-1.000000" />
-        <Atom x="1.000000" y="0.500000" z="0.500000" type="-1.000000" />
-        <Atom x="1.250000" y="0.750000" z="0.750000" type="-1.000000" />
-        <Atom x="0.000000" y="0.500000" z="0.500000" type="1.000000" />
-        <Atom x="0.250000" y="0.750000" z="0.750000" type="1.000000" />
-        <Atom x="0.500000" y="1.000000" z="0.500000" type="1.000000" />
-        <Atom x="0.750000" y="1.250000" z="0.750000" type="1.000000" />
-        <Atom x="0.500000" y="0.500000" z="1.000000" type="1.000000" />
-        <Atom x="0.750000" y="0.750000" z="1.250000" type="1.000000" />
-        <Atom x="1.000000" y="1.000000" z="1.000000" type="1.000000" />
-        <Atom x="1.250000" y="1.250000" z="1.250000" type="1.000000" />
+        <Atom x="0.000000" y="0.000000" z="0.000000" type="As" />
+        <Atom x="0.250000" y="0.250000" z="0.250000" type="In" />
     </Structure>
     <Lattice scale="6.2">
         <row x="0.0" y="0.5" z="0.5" />
@@ -58,7 +44,7 @@
     </Functional>
     <Functional type="escan" method="2" keepdirs="true">
         <Maskr filename="../../pseudos/maskr"/>
-        <GenPot mesh="(48 48 96)" cutoff="5.0" launch="~/usr/bin/getVLarg">
+        <GenPot mesh="(16 16 16)" cutoff="5.0" launch="~/usr/bin/getVLarg">
             <Pseudo filename="../../pseudos/vq.atom1" />
             <Pseudo filename="../../pseudos/vq.atom2" />
             <Pseudo filename="../../pseudos/vq.atom3" />

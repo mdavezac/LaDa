@@ -8,6 +8,7 @@
 #include <config.h>
 #endif
 
+#include <iostream>
 #include <map>
 #include <boost/shared_ptr.hpp>
 #include <boost/ptr_container/ptr_map.hpp>
@@ -17,6 +18,10 @@ namespace LaDa
   //! Holds factory related objects.
   namespace Factory
   {
+    //! \cond
+    class PureCalls;
+    //! \endcond
+
     //! A policy for chaining connect calls.
     template< class T_THIS > 
       class ChainConnects
@@ -41,11 +46,14 @@ namespace LaDa
           t_This &this_;
       };
 
+    //! Dumps the factory keys to a stream.
+    std::ostream& operator<<( std::ostream&, const PureCalls& );
 
     //! \brief Makes pure calls to functors taking no argument and returning no
     //!        values. Functors must be copy constructible.
     class PureCalls
     {
+      friend std::ostream& operator<<( std::ostream&, const PureCalls& );
       public:
         //! The type of the key.
         typedef const std::string t_Key;
@@ -132,6 +140,15 @@ namespace LaDa
     {
        t_Map :: iterator i_functor = map_.find( _key );
        if( i_functor != map_.end() ) map_.erase( i_functor );
+    }
+
+    std::ostream& operator<<( std::ostream& _stream, const PureCalls& _factory )
+    {
+      PureCalls :: t_Map :: const_iterator i_map = _factory.map_.begin();
+      PureCalls :: t_Map :: const_iterator i_map_end = _factory.map_.end();
+      for(; i_map != i_map_end; ++i_map )
+        _stream << "  _ " << i_map->first << "\n";
+      return _stream;
     }
 
   }

@@ -278,9 +278,13 @@ namespace LaDa
         return false;
       }
       Print::xmg << Print::Xmg::comment << "Breeding Operator Begin" << Print::endl;
-      breeder_ops = new SequentialOp<t_GATraits>;
-      eostates.storeFunctor( breeder_ops );
-      breeder_ops = make_genetic_op(*child->FirstChildElement(), breeder_ops);
+#     ifndef _ALLOY_LAYERS_
+        breeder_ops = new SequentialOp<t_GATraits>;
+        eostates.storeFunctor( breeder_ops );
+        breeder_ops = make_genetic_op(*child->FirstChildElement(), breeder_ops);
+#     else
+        breeder_ops = make_genetic_op( *child, breeder_ops );
+#     endif
       Print::xmg << Print::Xmg::comment << "Breeding Operator End" << Print::endl;
       __DOASSERT( not breeder_ops,
                  "Error while creating breeding operators")
@@ -615,192 +619,196 @@ namespace LaDa
       Darwin<T_EVALUATOR> :: make_genetic_op( const TiXmlElement &el,
                                               eoGenOp<t_Individual> *current_op )
     {
-      eoOp<t_Individual>* this_op;
-      const TiXmlElement *sibling = &el;
-      if (not sibling) return NULL;
-   
-      Print::xmg << Print::Xmg::indent;
- 
-      for ( ; sibling; sibling = sibling->NextSiblingElement() )
-      {
-        std::string str = sibling->Value();
-        double prob = 0.0;
-        int period = 0;
-        this_op = NULL;
-        bool is_gen_op = false;
-        
-        // then creates sibling
-        if ( str.compare("TabooOp") == 0  and taboos )
+#     ifdef _ALLOY_LAYERS_
+        return Operator::create_eo_operator( el, operator_factory, eostates );
+#     else
+        eoOp<t_Individual>* this_op;
+        const TiXmlElement *sibling = &el;
+        if (not sibling) return NULL;
+     
+        Print::xmg << Print::Xmg::indent;
+  
+        for ( ; sibling; sibling = sibling->NextSiblingElement() )
         {
-          Print::xmg << Print::Xmg::comment << "TabooOp Begin" << Print::endl;
-          eoGenOp<t_Individual> *taboo_op
-            = make_genetic_op( *sibling->FirstChildElement(), NULL);
-          if ( not taboo_op )
-            Print::xmg << Print::Xmg::removelast;
-          else
-          {
-            eoMonOp<t_Individual> *utterrandom = NULL;
-            try
-            {
-              Print::xmg << Print::Xmg::comment << "TabooOp End" << Print::endl;
-              utterrandom = new mem_monop_t<t_GATraits>
-                                  ( evaluator, &t_Evaluator::initialize,
-                                    std::string( "Initialize" ) );
-              __DOASSERT( not utterrandom, "Memory Allocation error.\n" )
-              eostates.storeFunctor(utterrandom);
-              this_op = new TabooOp<t_Individual> ( *taboo_op, *taboos, 
-                                                    (types::t_unsigned)(pop_size+1),
-                                                    *utterrandom );
-              __DOASSERT( not this_op, "Memory Allocation error.\n" )
-              eostates.storeFunctor( static_cast< TabooOp<t_Individual> *>(this_op) );
-              is_gen_op = true;
-            }
-            __CATCHCODE( if( utterrandom) delete utterrandom; cleanup(),
-                         "Error encountered while creating Taboo genetic operator.\n")
-          }
-        }
-        else if ( str.compare("TabooOp") == 0 )
-        {
-          Print::xmg << Print::Xmg :: unindent;
-          this_op = make_genetic_op( *sibling->FirstChildElement(), NULL);
-          Print::xmg << Print::Xmg :: indent;
-        }
-        else if ( str.compare("UtterRandom") == 0 )
-        {
-          Print::xmg << Print::Xmg::comment << "UtterRandom" << Print::endl;
-          this_op = new mem_monop_t<t_GATraits>
-                           ( evaluator, &t_Evaluator::initialize,
-                             std::string( "UtterRandom" ) );
-          eostates.storeFunctor( static_cast< TabooOp<t_Individual> *>(this_op) );
-        }
-        else if ( str.compare("Minimizer") == 0 )
-        {
-          Minimizer_Functional<t_GATraits> *func = NULL;
-          MinimizerGenOp<t_GATraits> *mingenop = NULL;
-          try
-          {
-            func =  new Minimizer_Functional<t_GATraits>( *evaluation, *taboos ); 
-            __DOASSERT( not func, "Memory Allocation Error.\n")
+          std::string str = sibling->Value();
+          double prob = 0.0;
+          int period = 0;
+          this_op = NULL;
+          bool is_gen_op = false;
           
-            mingenop = new MinimizerGenOp<t_GATraits>( *func ); 
-            __DOASSERT( not mingenop, "Memory Allocation Error.\n")
- 
-            if ( not mingenop->Load( *sibling ) ) 
-              { delete mingenop; this_op = NULL; }
+          // then creates sibling
+          if ( str.compare("TabooOp") == 0  and taboos )
+          {
+            Print::xmg << Print::Xmg::comment << "TabooOp Begin" << Print::endl;
+            eoGenOp<t_Individual> *taboo_op
+              = make_genetic_op( *sibling->FirstChildElement(), NULL);
+            if ( not taboo_op )
+              Print::xmg << Print::Xmg::removelast;
             else
             {
-              eostates.storeFunctor( mingenop );
-              this_op = mingenop;
+              eoMonOp<t_Individual> *utterrandom = NULL;
+              try
+              {
+                Print::xmg << Print::Xmg::comment << "TabooOp End" << Print::endl;
+                utterrandom = new mem_monop_t<t_GATraits>
+                                    ( evaluator, &t_Evaluator::initialize,
+                                      std::string( "Initialize" ) );
+                __DOASSERT( not utterrandom, "Memory Allocation error.\n" )
+                eostates.storeFunctor(utterrandom);
+                this_op = new TabooOp<t_Individual> ( *taboo_op, *taboos, 
+                                                      (types::t_unsigned)(pop_size+1),
+                                                      *utterrandom );
+                __DOASSERT( not this_op, "Memory Allocation error.\n" )
+                eostates.storeFunctor( static_cast< TabooOp<t_Individual> *>(this_op) );
+                is_gen_op = true;
+              }
+              __CATCHCODE( if( utterrandom) delete utterrandom; cleanup(),
+                           "Error encountered while creating Taboo genetic operator.\n")
             }
           }
-          catch( std::exception &_e )
+          else if ( str.compare("TabooOp") == 0 )
           {
-            cleanup(); 
-            __THROW_ERROR( "Could  not load minimizer genetic operator.\n" << _e.what() )
+            Print::xmg << Print::Xmg :: unindent;
+            this_op = make_genetic_op( *sibling->FirstChildElement(), NULL);
+            Print::xmg << Print::Xmg :: indent;
           }
-          catch(...)
-          { 
-            cleanup();
-            this_op = NULL;
-            __THROW_ERROR( "Memory Allocation Error.\n" ) 
-          }
-        }
-        else if ( str.compare("Operators") == 0 )
-        {
-          if ( sibling->Attribute("type") )
+          else if ( str.compare("UtterRandom") == 0 )
           {
-            std::string sstr = sibling->Attribute("type");
-            if ( sstr.compare("and") == 0 ) 
+            Print::xmg << Print::Xmg::comment << "UtterRandom" << Print::endl;
+            this_op = new mem_monop_t<t_GATraits>
+                             ( evaluator, &t_Evaluator::initialize,
+                               std::string( "UtterRandom" ) );
+            eostates.storeFunctor( static_cast< TabooOp<t_Individual> *>(this_op) );
+          }
+          else if ( str.compare("Minimizer") == 0 )
+          {
+            Minimizer_Functional<t_GATraits> *func = NULL;
+            MinimizerGenOp<t_GATraits> *mingenop = NULL;
+            try
             {
-              Print::xmg << Print::Xmg::comment << "And Begin" << Print::endl;
-              SequentialOp<t_GATraits> *new_branch = new SequentialOp<t_GATraits>;
+              func =  new Minimizer_Functional<t_GATraits>( *evaluation, *taboos ); 
+              __DOASSERT( not func, "Memory Allocation Error.\n")
+            
+              mingenop = new MinimizerGenOp<t_GATraits>( *func ); 
+              __DOASSERT( not mingenop, "Memory Allocation Error.\n")
+  
+              if ( not mingenop->Load( *sibling ) ) 
+                { delete mingenop; this_op = NULL; }
+              else
+              {
+                eostates.storeFunctor( mingenop );
+                this_op = mingenop;
+              }
+            }
+            catch( std::exception &_e )
+            {
+              cleanup(); 
+              __THROW_ERROR( "Could  not load minimizer genetic operator.\n" << _e.what() )
+            }
+            catch(...)
+            { 
+              cleanup();
+              this_op = NULL;
+              __THROW_ERROR( "Memory Allocation Error.\n" ) 
+            }
+          }
+          else if ( str.compare("Operators") == 0 )
+          {
+            if ( sibling->Attribute("type") )
+            {
+              std::string sstr = sibling->Attribute("type");
+              if ( sstr.compare("and") == 0 ) 
+              {
+                Print::xmg << Print::Xmg::comment << "And Begin" << Print::endl;
+                SequentialOp<t_GATraits> *new_branch = new SequentialOp<t_GATraits>;
+                this_op = make_genetic_op( *sibling->FirstChildElement(), new_branch);
+                if ( not this_op )
+                {
+                  Print::xmg << Print::Xmg::removelast;
+                  Print::out << " Failure, or No Operators Found"
+                             << " in \"And\" operator \n";
+                  delete new_branch;
+                }
+                else
+                {
+                  Print::xmg << Print::Xmg::comment << "And End" << Print::endl;
+                  eostates.storeFunctor( new_branch );
+                }
+              }
+            }
+            if ( not this_op )
+            {
+              Print::xmg << Print::Xmg::comment << "Or Begin" << Print::endl;
+              ProportionalOp<t_GATraits> *new_branch = new ProportionalOp<t_GATraits>;
               this_op = make_genetic_op( *sibling->FirstChildElement(), new_branch);
               if ( not this_op )
               {
                 Print::xmg << Print::Xmg::removelast;
-                Print::out << " Failure, or No Operators Found"
-                           << " in \"And\" operator \n";
                 delete new_branch;
               }
               else
               {
-                Print::xmg << Print::Xmg::comment << "And End" << Print::endl;
+                Print::xmg << Print::Xmg::comment << "Or End" << Print::endl;
                 eostates.storeFunctor( new_branch );
               }
             }
-          }
-          if ( not this_op )
-          {
-            Print::xmg << Print::Xmg::comment << "Or Begin" << Print::endl;
-            ProportionalOp<t_GATraits> *new_branch = new ProportionalOp<t_GATraits>;
-            this_op = make_genetic_op( *sibling->FirstChildElement(), new_branch);
-            if ( not this_op )
-            {
-              Print::xmg << Print::Xmg::removelast;
-              delete new_branch;
-            }
-            else
-            {
-              Print::xmg << Print::Xmg::comment << "Or End" << Print::endl;
-              eostates.storeFunctor( new_branch );
-            }
-          }
-          is_gen_op = true;
-        }
-        else // operators specific to t_Evaluator 
-        {
-          eoGenOp<t_Individual> *eoop = evaluator.LoadGaOp( *sibling );
-          eostates.storeFunctor( eoop );
-          if ( eoop ) this_op = eoop;
-          is_gen_op = true;
-        }
-        if ( this_op and sibling->Attribute("period", &period) )
-        {
-          if (     (    ( not max_generations )
-                     or (types::t_unsigned)std::abs(period) < max_generations ) 
-               and period > 0 )
-          {
-            Print::xmg << Print::Xmg::addtolast << " period = "
-                       << period << Print::endl;
-            this_op = new PeriodicOp<t_GATraits>( *this_op,
-                                                  (types::t_unsigned) abs(period),
-                                                   continuator 
-                                                      ->get_generation_counter(),
-                                                    eostates );
-            eostates.storeFunctor( static_cast< PeriodicOp<t_GATraits> *>(this_op) );
             is_gen_op = true;
           }
+          else // operators specific to t_Evaluator 
+          {
+            eoGenOp<t_Individual> *eoop = evaluator.LoadGaOp( *sibling );
+            eostates.storeFunctor( eoop );
+            if ( eoop ) this_op = eoop;
+            is_gen_op = true;
+          }
+          if ( this_op and sibling->Attribute("period", &period) )
+          {
+            if (     (    ( not max_generations )
+                       or (types::t_unsigned)std::abs(period) < max_generations ) 
+                 and period > 0 )
+            {
+              Print::xmg << Print::Xmg::addtolast << " period = "
+                         << period << Print::endl;
+              this_op = new PeriodicOp<t_GATraits>( *this_op,
+                                                    (types::t_unsigned) abs(period),
+                                                     continuator 
+                                                        ->get_generation_counter(),
+                                                      eostates );
+              eostates.storeFunctor( static_cast< PeriodicOp<t_GATraits> *>(this_op) );
+              is_gen_op = true;
+            }
+          }
+          if ( this_op and current_op )
+          {
+            if (not sibling->Attribute("prob", &prob) )
+              prob = 1.0;
+            Print::xmg << Print::Xmg::addtolast << " prob = " << prob << Print::endl;
+            if ( current_op->className().compare("GA::SequentialOp") == 0 )
+              static_cast< SequentialOp<t_GATraits>* >(current_op)
+                 ->add( *this_op, static_cast<double>(prob) );
+            else if ( current_op->className().compare("GA::ProportionalOp") == 0 )
+              static_cast< ProportionalOp<t_GATraits>* >(current_op)
+                ->add( *this_op, static_cast<double>(prob) );
+          }
+          else if ( this_op )
+          {
+            if ( is_gen_op )
+              current_op = static_cast<eoGenOp<t_Individual>*> (this_op);
+            else 
+              current_op = &wrap_op<t_Individual>(*this_op, eostates);
+          }
         }
-        if ( this_op and current_op )
+        
+        if ( not current_op  )
         {
-          if (not sibling->Attribute("prob", &prob) )
-            prob = 1.0;
-          Print::xmg << Print::Xmg::addtolast << " prob = " << prob << Print::endl;
-          if ( current_op->className().compare("GA::SequentialOp") == 0 )
-            static_cast< SequentialOp<t_GATraits>* >(current_op)
-               ->add( *this_op, static_cast<double>(prob) );
-          else if ( current_op->className().compare("GA::ProportionalOp") == 0 )
-            static_cast< ProportionalOp<t_GATraits>* >(current_op)
-              ->add( *this_op, static_cast<double>(prob) );
-        }
-        else if ( this_op )
-        {
-          if ( is_gen_op )
-            current_op = static_cast<eoGenOp<t_Individual>*> (this_op);
-          else 
-            current_op = &wrap_op<t_Individual>(*this_op, eostates);
-        }
-      }
-      
-      if ( not current_op  )
-      {
-        std::cerr << " Error while creating genetic operators " << std::endl;
-        throw;
-      } 
- 
-      Print::xmg << Print::Xmg :: unindent;
-      
-      return current_op;
+          std::cerr << " Error while creating genetic operators " << std::endl;
+          throw;
+        } 
+  
+        Print::xmg << Print::Xmg :: unindent;
+        
+        return current_op;
+#     endif
     }
  
     template<class T_EVALUATOR>

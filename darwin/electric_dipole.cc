@@ -9,6 +9,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include <opt/debug.h>
+#include <opt/tinyxml.h>
 
 #include "electric_dipole.h"
 
@@ -48,23 +49,8 @@ namespace LaDa
     {
       bool Darwin :: Load( const TiXmlElement &_node )
       {
-        const TiXmlElement *parent;
-        std::string str;
-      
-        str = _node.Value();
-        if ( str.compare("Functional" ) != 0 )
-          parent = _node.FirstChildElement("Functional");
-        else
-          parent = &_node;
-      
-        while (parent)
-        {
-          str = "";
-          if ( parent->Attribute( "type" )  )
-            str = parent->Attribute("type");
-          if ( str.compare("oscillator strength" ) == 0 ) break;
-          parent = parent->NextSiblingElement("Functional");
-        }
+        degeneracy = types::tolerance;
+        const TiXmlElement *parent = opt::find_functional_node( _node, "oscillator strength" );
         if( not parent ) return false;
         if( not parent->Attribute( "degeneracy" ) ) return false;
         degeneracy = boost::lexical_cast< types::t_real >

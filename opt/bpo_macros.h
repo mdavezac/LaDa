@@ -39,10 +39,18 @@
             options(allnhidden).positional(p).run(), vm); \
   po::notify(vm); \
 
-# define __BPO_HELP_N_VERSION__ \
+# define __BPO_PROGNAME__ \
   std::cout << "\n" << __PROGNAME__ \
-            << " from the " << PACKAGE_STRING << " package.\n" \
-            << "Subversion Revision: " << ::LaDa::SVN::Revision << "\n\n"; \
+            << " from the " << PACKAGE_STRING << " package.\n";
+# define __BPO_VERSION__ \
+  if ( vm.count("version") ) \
+  { \
+    __ROOTCODE(  (*::LaDa::mpi::main), \
+      std::cout << "Subversion Revision: " << ::LaDa::SVN::Revision << "\n\n";  \
+    ) \
+    return 1; \
+  }
+# define __BPO_HELP__ \
   if ( vm.count("help") ) \
   { \
     __ROOTCODE( (*::LaDa::mpi::main), \
@@ -52,16 +60,11 @@
                 << all << "\n";  \
     ) \
     return 1; \
-  } \
-  if ( vm.count("version") ) \
-  { \
-    __ROOTCODE(  (*::LaDa::mpi::main), \
-      std::cout << "\n" << __PROGNAME__ \
-                << " from the " << PACKAGE_STRING << " package\n" \
-                << "Subversion Revision: " << ::LaDa::SVN::Revision << "\n\n";  \
-    ) \
-    return 1; \
-  }
+  } 
+# define __BPO_HELP_N_VERSION__ \
+  __BPO_PROGNAME__ \
+  __BPO_VERSION__ \
+  __BPO_HELP__
 
 #define __BPO_CATCH__(code) \
   } \

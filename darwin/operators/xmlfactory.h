@@ -21,11 +21,21 @@ namespace LaDa
     //! Holds  GA factory related objects.
     namespace Factory
     {
+      //! \cond
+      template< class T_INDIVIDUAL, class T_POPULATOR > class XmlOperators;
+      //! \cond
  
+      //! Dumps keys to stream.
+      template< class T_INDIVIDUAL, class T_POPULATOR >
+        std::ostream& operator<<( std::ostream&, const XmlOperators<T_INDIVIDUAL, T_POPULATOR>& );
+
       //! Reads from xml and creates operators.
       template< class T_INDIVIDUAL, class T_POPULATOR = eoPopulator<T_INDIVIDUAL> >
         class XmlOperators
         {
+          friend std::ostream& operator<< <T_INDIVIDUAL, T_POPULATOR>
+                                          ( std::ostream&,
+                                            const XmlOperators<T_INDIVIDUAL, T_POPULATOR>& );
             //! Type of the argument for the general factory.
             typedef TiXmlElement t_XmlNode;
             //! Type of the argument for the attribute factory.
@@ -39,6 +49,10 @@ namespace LaDa
             //! Type of the this factory.
             typedef XmlOperators<T_INDIVIDUAL, T_POPULATOR> t_This;
           public:
+            //! Type of the factory functor.
+            typedef boost::function< void( XmlOperators&,
+                                     t_PopFunction&, 
+                                     const t_XmlNode& ) > t_FactoryFunctor;
             //! Type of the key.
             typedef const std::string t_Key;
             //! Type of the populator.
@@ -48,22 +62,20 @@ namespace LaDa
 
             //! Constructor.
             XmlOperators() : factory_( new t_Factory ), attfactory_( new t_AttFactory ),
-                             default_container_( &sequential<t_This> ) {}
+                             default_key_( "And" ) {}
             //! Copy Constructor.
             XmlOperators   ( const XmlOperators& _c ) 
                          : factory_( _c.factory_ ), attfactory_( _c.attfactory_ ),
-                           default_container_( _c.default_container_ ) {}
+                           default_key_( _c.default_key_ ) {}
 
             //! Searches amongst general factory for a function key an creates it.
             void operator()( const t_Key &, t_PopFunction&, const t_XmlNode & );
-            //! Creates an operator from current node.
-            //! Throws if no operator was created.
+            //! Creates an operator from current node using the default container key.
             void operator()( t_PopFunction& _function, const t_XmlNode &_node );
 
-            //! Connects default container creation function.
-            template< class T_FUNCTOR >
-              void connect_default_container_creation( const T_FUNCTOR &_functor )
-              { default_container_ = _functor; }
+            //! Sets the default container key.
+            void set_default_container_key( const std::string &_functor )
+              { default_key_ = _functor; }
            
             //! Connects a functor to the general factory.
             template< class T_FUNCTOR >
@@ -88,9 +100,8 @@ namespace LaDa
             boost::shared_ptr<t_Factory> factory_;
             //! The attribute factory.
             boost::shared_ptr<t_AttFactory> attfactory_;
-            //! A default container creation function.
-            boost::function< void( XmlOperators&, t_PopFunction&, const t_XmlNode& ) >
-              default_container_;
+            //! A default container creation key.
+            std::string default_key_;
         };
 
       template< class T_INDIVIDUAL, class T_POPULATOR >
@@ -117,10 +128,7 @@ namespace LaDa
       template< class T_INDIVIDUAL, class T_POPULATOR >
         void XmlOperators<T_INDIVIDUAL, T_POPULATOR> 
             :: operator()( t_PopFunction& _function, const t_XmlNode &_node )
-            {
-              default_container_( *this, _function, _node ); 
-              try_attribute_factory( _function, _node );
-            }
+            { (*this)( default_key_, _function, _node ); }
 
       template< class T_INDIVIDUAL, class T_POPULATOR > template< class T_FUNCTOR >
         ::LaDa::Factory::ChainConnects< XmlOperators<T_INDIVIDUAL, T_POPULATOR> > 
@@ -134,6 +142,13 @@ namespace LaDa
                      >( *this );
             }
 
+      template< class T_INDIVIDUAL, class T_POPULATOR > 
+        std::ostream& operator<<( std::ostream& _stream, 
+                                  const XmlOperators<T_INDIVIDUAL, T_POPULATOR>& _factory )
+        {
+          _stream << "Xml-tags " << *_factory.factory_
+                  << "Xml-attributes " << *_factory.attfactory_;
+        }
     }
   }
 }

@@ -8,6 +8,7 @@
 #include <config.h>
 #endif
 
+#include <iostream>
 #include <map>
 #include <boost/shared_ptr.hpp>
 #include <boost/ptr_container/ptr_map.hpp>
@@ -20,12 +21,22 @@ namespace LaDa
     //! Holds  GA factory related objects.
     namespace Factory
     {
+      //! \cond
+      template< class T_POPULATOR, class T_ARG > class Operators;
+      //! \endcond
+
+      //! Dumps keys to stream.
+      template< class T_POPULATOR, class T_ARG >
+        std::ostream& operator<<( std::ostream&, const Operators<T_POPULATOR, T_ARG>& );
+
       //! \brief Factory for ga operators.
       //! \details It can take operators of eoPopulators, of one individual,
       //!          and of two individuals.
       template< class T_POPULATOR, class T_ARG = const TiXmlElement >
         class Operators
         {
+          friend std::ostream& operator<< <T_POPULATOR, T_ARG>
+                                          ( std::ostream&, const Operators<T_POPULATOR, T_ARG>& );
           public:
             //! The type of the key.
             typedef std::string t_Key;

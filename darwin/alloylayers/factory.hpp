@@ -64,7 +64,8 @@ namespace LaDa
           namespace bl = boost::lambda;
           typedef typename T_EVALUATOR :: t_Individual :: t_IndivTraits t_IndivTraits;
           typedef typename t_IndivTraits :: t_Object t_Object;
-          t_Object :: connect_print( bl::_1 << bl::ret< BitString::Object<> >( bl::_2 ) ); 
+          t_Object :: connect_print( bl::_1 << bl::ret< BitString::Object<> >( bl::_2 )
+                                            << bl::constant(" ") ); 
         }
 
         template< class T_EVALUATOR > void strain_energy( T_EVALUATOR & _evaluator )
@@ -75,13 +76,18 @@ namespace LaDa
           typedef typename t_IndivTraits :: t_QuantityTraits :: t_Quantity t_Quantity;
           _evaluator.connect
           (
-            bl::bind( &t_Quantity::push_back,
-                      bl::_2, bl::bind( &t_Object::energy, bl::_1 ) )
+            bl::bind
+            ( 
+              &t_Quantity::push_back,
+              bl::_2,
+              bl::bind( &t_Object::energy, bl::_1 ) / bl::constant(16.0217733) 
+            )
           );
           t_Object :: connect_print
           (
             bl::_1 << bl::constant(" Strain Energy: ")
-                   << bl::bind( &t_Object::energy, bl::_2 )
+                   << bl::bind( &t_Object::energy, bl::_2 ) / bl::constant( 16.0217733 )
+                   << bl::constant( " eV/f.u. " )
           );
           declare( "Strain energy(VFF)" );
         }
@@ -102,8 +108,9 @@ namespace LaDa
               ( 
                 &Vff::inplane_stress,
                 bl::bind<atat::rMatrix3d>( &t_Object :: stress, bl::_1 ),
-                bl::constant( _evaluator.get_direction() )
-              )
+                bl::bind<atat::rVector3d>( &T_EVALUATOR :: get_direction,
+                                           bl::constant( boost::cref( _evaluator ) ) )
+              ) / bl::constant( 16.0217733 )
             )
           );
           t_Object :: connect_print
@@ -115,8 +122,9 @@ namespace LaDa
                       ( 
                         &Vff::inplane_stress,
                         bl::bind<atat::rMatrix3d>( &t_Object :: stress, bl::_2 ),
-                        bl::constant( _evaluator.get_direction() )
-                      ) / 16.0217733 << bl::constant( " eV/structure" )
+                        bl::bind<atat::rVector3d>( &T_EVALUATOR :: get_direction,
+                                                   bl::constant( boost::cref( _evaluator ) ) )
+                      ) / bl::constant( 16.0217733 ) << bl::constant( " eV/f.u. " )
           );
           declare( "Epitaxial strain (VFF)" );
         }
@@ -140,6 +148,7 @@ namespace LaDa
           ( 
             bl::_1 << bl::constant( "Bandgap: ") 
                    << bl::bind( &t_Object::vbm, bl::_2 ) - bl::bind( &t_Object::cbm, bl::_2 )
+                   << bl::constant( " " )
           );
           declare( "Band-gaps(Escan)" );
         }
@@ -162,6 +171,7 @@ namespace LaDa
           t_Object :: connect_print
           ( 
             bl::_1 << bl::ret<const Keepers::OscStrength&>( bl::_2 )
+                   << bl::constant( " " )
           );
           declare( "Transition dipoles(Escan)" );
         }
@@ -184,6 +194,7 @@ namespace LaDa
           t_Object :: connect_print
           ( 
             bl::_1 << bl::constant("VBM: ") << bl::bind( &t_Object::vbm, bl::_2 )
+                   << bl::constant( " " )
           );
           declare( "Valence-band offsets (Escan)" );
         }
@@ -206,6 +217,7 @@ namespace LaDa
           t_Object :: connect_print
           ( 
             bl::_1 << bl::constant("CBM: ") << bl::bind( &t_Object::cbm, bl::_2 )
+                   << bl::constant( " " )
           );
           declare( "Conduction-band offsets (Escan)" );
         }

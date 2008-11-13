@@ -1,3 +1,18 @@
+//
+//  Version: $Id$
+//
+
+#ifndef _LADA_GA_OPERATOR_EOADAPTER_H_
+#define _LADA_GA_OPERATOR_EOADAPTER_H_
+
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
+
+#include <eo/eoGenOp.h>
+#include <eo/utils/eoState.h>
+
 namespace LaDa
 {
   namespace GA
@@ -5,12 +20,21 @@ namespace LaDa
     //! Holds general stuff for GA operators.
     namespace Operator
     {
-      template< class T_INDIVIDUAL >
+      template< class T_FACTORY >
+        eoGenOp< typename T_FACTORY :: t_Individual >*
+          create_eo_operator( const TiXmlElement&, T_FACTORY&, eoState& );
+
+      template< class T_INDIVIDUAL, class T_POPULATOR = eoPopulator<T_INDIVIDUAL> >
         class EOAdapter : public eoGenOp<T_INDIVIDUAL >
         {
+          template<class T_FACTORY >
+          friend eoGenOp<typename T_FACTORY::t_Individual>*
+            create_eo_operator( const TiXmlElement&_node, T_FACTORY&, eoState &_eostate );
           public:
             //! Type of the individual.
             typedef T_INDIVIDUAL t_Individual;
+            //! Type of the populator.
+            typedef T_POPULATOR t_Populator;
             //! Constructor.
             EOAdapter() {}
             //! Copy Constructor.
@@ -20,7 +44,7 @@ namespace LaDa
 
             //! \brief Tries to create an non-tabooed object by applying _op
             //! \details After max tries, creates a random untaboo object
-            virtual void apply( eoPopulator<t_Individual> &_indiv )
+            virtual void apply( t_Populator &_indiv )
               { callback_( _indiv ); }
             
             //! returns GA::TabooOp
@@ -32,8 +56,23 @@ namespace LaDa
             
           private:
             //! The callback object.
-            boost::function<bool(t_Individual&, const t_Individual&) > callback_;
+            boost::function<void( t_Populator& ) > callback_;
         };
+
+      //! Creates an eoGenOp functor from a factory.
+      template< class T_FACTORY >
+        eoGenOp< typename T_FACTORY :: t_Individual >*
+          create_eo_operator( const TiXmlElement& _node, T_FACTORY& _factory, eoState &_eostate )
+          {
+            typedef EOAdapter< typename T_FACTORY::t_Individual,
+                               typename T_FACTORY::t_Populator > t_Adapter;
+            t_Adapter *result = new t_Adapter;
+            _eostate.storeFunctor( result );
+            _factory( result->callback_, _node ); 
+            return result;  
+          }
     }
   }
 }
+
+#endif

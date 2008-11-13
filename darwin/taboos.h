@@ -9,6 +9,7 @@
 #endif
 
 #include<boost/function.hpp>
+#include <boost/bind.hpp>
 #include <list>
 #include <algorithm>
 
@@ -382,23 +383,24 @@ namespace LaDa
           { return ( (evaluator.*member_func) )( _indiv); }
     };
 
-    template< class T_INDIVIDUAL, class T_POPULATOR >
+    template< class T_INDIVIDUAL, class T_POPULATOR, class T_DARWIN >
       void taboo_op( T_POPULATOR &_populator, 
-                     const boost::function< Taboo_Base<T_INDIVIDUAL>*() >&,
+                     T_DARWIN&,
+                     types::t_unsigned _max,
                      const boost::function<void(T_POPULATOR& )>& _inner,
                      const boost::function<void(T_POPULATOR& )>& _random );
 
     namespace Factory
     {
-      //! Creates a taboo operator.
-      template< class T_FACTORY >
+      //! Helps create a factory function for a taboo operator.
+      template< class T_FACTORY, class T_DARWIN >
         void taboo_op( T_FACTORY &_factory,
-                       boost::function<void( typename T_FACTORY::t_Populator& )>&,
+                       boost::function<void( typename T_FACTORY::t_Populator& )>&
+                         _function,
                        const TiXmlElement &_node,
-                       const boost::function
-                             < Taboo_Base<typename T_FACTORY::t_Individual>*() >&,
-                       const std::string& _random );
-    }
+                       T_DARWIN& _darwin,
+                       const std::string &_random );
+    } // namespace Factory
 
   } // namespace GA
 } // namespace LaDa

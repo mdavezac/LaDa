@@ -140,25 +140,26 @@ namespace LaDa
       Crystal::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
       Crystal::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
       types::t_unsigned oldnbstates = escan.nbstates;
-      escan.nbstates = 0; 
+      types::t_unsigned bgstates = 0;
       for(; i_atom != i_atom_end; ++i_atom)
       {
         Crystal::StrAtom atom; 
         _str.lattice->convert_Atom_to_StrAtom( *i_atom, atom );
-        escan.nbstates += Physics::Atomic::Charge( atom.type );
+        bgstates += Physics::Atomic::Charge( atom.type );
       }
-      types::t_unsigned bgstates = escan.nbstates + 2;
-      escan.nbstates = bgstates + oldnbstates;
-      if (     escan.potential != Escan::SPINORBIT
-           and atat::norm2(escan.kpoint) < types::tolerance )
+      escan.nbstates += bgstates + 2;
+      if (    escan.potential != Escan::SPINORBIT
+           or Fuzzy::is_zero( atat::norm2(escan.kpoint) ) )
         escan.nbstates /= 2;
 
       __TRYCODE( Interface::operator()();,
                  "All-electron calculation failed.\n" )
 
+      escan.nbstates = oldnbstates;
+
   #ifndef _NOLAUNCH
-      bands.cbm = eigenvalues[ bgstates - 1 ];
-      bands.vbm = eigenvalues[ bgstates - 2 ];
+      bands.cbm = eigenvalues[ bgstates ];
+      bands.vbm = eigenvalues[ bgstates - 1 ];
       std::cout << "BandGap: " << bands.gap() << " = " 
                 << bands.cbm << " - " << bands.vbm << std::endl;
   #else
@@ -167,7 +168,6 @@ namespace LaDa
 
       destroy_directory_();
 
-      escan.nbstates = oldnbstates;
 
       return bands.gap();
     }

@@ -80,7 +80,7 @@ namespace LaDa
         case CLEAR: stream.str(""); break;
         case COMMENT: stream.str(""); stream << comment_string; do_indent(); break;
         case INDENT: ++indentation; break;
-        case UNINDENT: --indentation; break;
+        case UNINDENT: __DOASSERT( not indentation, "Not indented.\n" ) --indentation; break;
         case ADDTOLAST: add_to_last(); break;
         case REMOVELAST: line_list.pop_back(); break;
         case CLEARALL: stream.str(""); clear_all(); break;

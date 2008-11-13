@@ -6,7 +6,6 @@
 #define _DARWIN_TABOO_IMPL_H_
 
 #include <boost/lexical_cast.hpp>
-#include <boost/bind.hpp>
 
 #include<print/xmg.h>
 
@@ -232,15 +231,14 @@ namespace LaDa
         throw std::runtime_error( sstr.str() );
       }
 
-    template< class T_INDIVIDUAL, class T_POPULATOR >
+    template< class T_INDIVIDUAL, class T_POPULATOR, class T_DARWIN >
       void taboo_op( T_POPULATOR &_populator, 
-                     boost::function< Taboo_Base<T_INDIVIDUAL>*() >& 
-                       _taboosfunc,
+                     T_DARWIN &_darwin,
                      types::t_unsigned _max,
-                     boost::function<void(T_POPULATOR& )>& _inner,
-                     boost::function<void(T_POPULATOR& )>& _random )
+                     const boost::function<void(T_POPULATOR& )>& _inner,
+                     const boost::function<void(T_POPULATOR& )>& _random )
       {
-        Taboo_Base<T_INDIVIDUAL> * const taboos = _taboosfunc();
+        Taboo_Base<T_INDIVIDUAL> * const taboos = _darwin.get_taboos();
         __DOASSERT( not taboos, "TabooOperator requested, but not taboos created.\n" )
         types::t_unsigned  i = 0;
         do
@@ -269,39 +267,39 @@ namespace LaDa
 
     namespace Factory
     {
-      template< class T_FACTORY >
+      template< class T_FACTORY, class T_DARWIN >
         void taboo_op( T_FACTORY &_factory,
                        boost::function<void( typename T_FACTORY::t_Populator& )>&
                          _function,
                        const TiXmlElement &_node,
-                       const boost::function
-                         < Taboo_Base<typename T_FACTORY::t_Individual>*() >& 
-                         _taboosfunc,
-                       const std::string& _random)
-       {
-         typedef typename T_FACTORY::t_Individual t_Individual;
-         typedef typename T_FACTORY::t_Populator t_Populator;
-         typedef boost::function<void(t_Populator&)> t_Function;
+                       T_DARWIN &_darwin,
+                       const std::string &_random )
+        {
+          typedef typename T_FACTORY::t_Individual t_Individual;
+          typedef typename T_FACTORY::t_Populator t_Populator;
+          typedef boost::function<void(t_Populator&)> t_Function;
+       
+          types::t_unsigned max(100);
+          if( _node.Attribute( "max" ) )
+            max = boost::lexical_cast< types::t_unsigned >( _node.Attribute("max") );
+          Print::xmg << Print::Xmg::comment << "TabooOperator( random fallback: " 
+                     << _random << " )" << Print::endl << Print::Xmg::indent;
+          t_Function random;
+          // creates random operator.
+          _factory( _random, random, _node );
+          Print::xmg << Print::Xmg::removelast;
+          //! creates inner operator.
+          _factory( _function, _node );
+       
+          // binds all.
+          _function = boost::bind
+                      (
+                        &::LaDa::GA::taboo_op<t_Individual, t_Populator, T_DARWIN>,
+                        _1, boost::ref(_darwin), max, _function, random
+                      );
+          Print::xmg << Print::Xmg::unindent;
+        }
 
-         types::t_unsigned max(100);
-         if( _node.Attribute( "max" ) )
-           max = boost::lexical_cast< types::t_unsigned >( _node.Attribute("max") );
-         Print::xmg << Print::Xmg::comment << "TabooOperator: " << Print::endl
-                    << Print::Xmg::indent << "random fallback: " << Print::endl;
-         t_Function random;
-         // creates random operator.
-         _factory( _random, random, _node );
-         //! creates inner operator.
-         _factory( _function, _node );
-
-         // binds all.
-         _function = boost::bind
-                     (
-                       &::LaDa::GA::taboo_op<t_Individual, t_Populator>,
-                       _1, _taboosfunc , max, _function, random
-                     );
-         Print::xmg << Print::Xmg::unindent;
-       }
     }
 
 

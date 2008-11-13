@@ -300,7 +300,7 @@ namespace LaDa
       file << "10 " << escan.rspace_output << " "
                     << " 1 1 1 " << escan.rspace_wfn << "\n";
 
-      if ( atat::norm2( escan.kpoint ) < types::tolerance ) file << "11 0 0 0 0 0\n";
+      if ( Fuzzy::is_zero( atat::norm2( escan.kpoint ) ) ) file << "11 0 0 0 0 0\n";
       else
       {
         atat::rVector3d k = escan.kpoint;

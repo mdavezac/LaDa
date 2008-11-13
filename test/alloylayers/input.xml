@@ -24,16 +24,12 @@
   <GA popsize="4" rate="0.5" >
       <Breeding>
           <TabooOp>
-             <Operators type="and">
-               <Crossover prob=0.75/>
-               <Mutation rate="0.01" prob=0.25/>
-             </Operators>
+            <Crossover prob=0.75/>
+            <Mutation rate="0.01" prob=0.25/>
           </TabooOp>
       </Breeding>
       <Objectives type="linear" >
-        <Objective type="target" target=0 value="epi" />
-        <Objective type="target"  target=0.32 value="bandgap" />
-        <Objective type="maximize" value="transition" />
+        <Objective type="minimize" value="epi" />
       </Objectives>
       <Scaling type="Pareto" />
       <Scaling type="Niching" distance="GeneralHamming" d0="30" />
