@@ -20,7 +20,7 @@
 #include <print/xmg.h>
 #include <opt/types.h>
 
-#include "populator_functor.h"
+#include "make_populator.h"
 #include "discriminate.h"
 
 //! \cond
@@ -70,29 +70,25 @@ namespace LaDa
             //! Connects the callback.
             template< class T_FUNCTOR >
               void connect( T_FUNCTOR& _functor )
-              { connect_( _functor, TypeTag< isother<T_FUNCTOR>::value >() ); }
+              { 
+                typename t_Functors :: value_type popfunc;
+                MakePopulator< t_Individual, t_Populator > :: transform( _functor, popfunc );
+                functors_->push_back( typename t_Functors :: value_type( popfunc ) );
+              }
+
             //! Connects the callback.
             template< class T_FUNCTOR >
               void connect( boost::shared_ptr<T_FUNCTOR>& _functor )
-                { connect_( *_functor ); }
+              {
+                typename t_Functors :: value_type popfunc;
+                MakePopulator< t_Individual, t_Populator > :: transform( *_functor, popfunc );
+                functors_->push_back( popfunc );
+              }
 
           protected:
             //! The functors.
             boost::shared_ptr<t_Functors> functors_;
             
-          private:
-            //! Branch for unary and binary operators.
-            template< class T_FUNCTOR >
-              void connect_( T_FUNCTOR& _functor, const TypeTag< false >& )
-              {
-                PopulatorFunctor< T_FUNCTOR, t_Individual,
-                                  t_Populator > popfunc( _functor );
-                connect_( popfunc, TypeTag< true >() );
-              }
-            //! Branch for populator operator (asssumed, not detected).
-            template< class T_FUNCTOR >
-              void connect_( T_FUNCTOR& _functor, const TypeTag<true>& )
-                { functors_->push_back( typename t_Functors :: value_type( _functor ) ); }
         };
 
       //! Creates a container class with some selection ability over which functors to call.

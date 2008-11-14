@@ -9,7 +9,7 @@
 #endif
 
 #include<boost/function.hpp>
-#include "discriminate.h"
+#include "populator_functor.h"
 
 namespace LaDa
 {
@@ -20,7 +20,7 @@ namespace LaDa
     {
       //! Creates a unary callback operator.
       template< class T_INDIVIDUAL, class T_POPULATOR = eoPopulator<T_INDIVIDUAL> >
-        class UnaryCallBack : public PopulatorFunctor
+        class UnaryCallBack : public PopulatorCRT
                                      < 
                                        UnaryCallBack<T_INDIVIDUAL, T_POPULATOR>,
                                        T_INDIVIDUAL,
@@ -50,14 +50,9 @@ namespace LaDa
             boost::function<bool(t_Individual&) > callback_;
         };
 
-      template< class T_INDIVIDUAL, class T_POPULATOR > 
-        struct Discriminate< T_INDIVIDUAL, UnaryCallBack< T_INDIVIDUAL, T_POPULATOR > >
-                 : public details::withsizet< Disc::unary_index > {};
-
-
       //! Creates a binary callback operator.
       template< class T_INDIVIDUAL, class T_POPULATOR = eoPopulator<T_INDIVIDUAL> >
-        class BinaryCallBack : public PopulatorFunctor
+        class BinaryCallBack : public PopulatorCRT
                                       < 
                                         BinaryCallBack<T_INDIVIDUAL, T_POPULATOR>,
                                         T_INDIVIDUAL,
@@ -86,10 +81,6 @@ namespace LaDa
             //! The callback object.
             boost::function<bool(t_Individual&, const t_Individual&) > callback_;
         };
-
-      template< class T_INDIVIDUAL, class T_POPULATOR > 
-        struct Discriminate< T_INDIVIDUAL, BinaryCallBack< T_INDIVIDUAL, T_POPULATOR > >
-                 : public details::withsizet< Disc::binary_index > {};
 
     }
 

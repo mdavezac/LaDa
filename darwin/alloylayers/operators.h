@@ -25,7 +25,7 @@ namespace LaDa
       template< class T_INDIVIDUAL >
         bool crossover( T_INDIVIDUAL& _o, const T_INDIVIDUAL &_p, types::t_real &_rate )
         {
-          typedef typename T_INDIVIDUAL :: t_Object t_Object;
+          typedef typename T_INDIVIDUAL :: t_IndivTraits :: t_Object t_Object;
           typename t_Object :: iterator  i_var_off = _o.Object().Container().begin();
           typename t_Object :: iterator  i_var_off_end = _o.Object().Container().end();
           typename t_Object :: const_iterator  i_var_par = _p.Object().Container().begin();
@@ -42,7 +42,7 @@ namespace LaDa
       template< class T_INDIVIDUAL >
         bool mutation( T_INDIVIDUAL& _o, types::t_real &_rate )
         {
-          typedef typename T_INDIVIDUAL :: t_Object t_Object;
+          typedef typename T_INDIVIDUAL :: t_IndivTraits :: t_Object t_Object;
           typedef typename t_Object :: t_Container :: value_type t_Type;
           typename t_Object :: iterator  i_var_off = _o.Object().Container().begin();
           typename t_Object :: iterator  i_var_off_end = _o.Object().Container().end();
@@ -74,7 +74,7 @@ namespace LaDa
             Operator::BinaryCallBack<t_Individual, t_Populator> callback;
             callback.connect
             (
-              boost::bind( &::LaDa::GA::AlloyLayers::crossover<t_Object>,
+              boost::bind( &::LaDa::GA::AlloyLayers::crossover<t_Individual>,
                            _1, _2, rate )
             );
             Operator::assign( callback, _function );
@@ -96,7 +96,7 @@ namespace LaDa
             Operator::BinaryCallBack<t_Individual, t_Populator> callback;
             callback.connect
             (
-              boost::bind(  &::LaDa::GA::AlloyLayers::mutation<t_Object>, _1, rate )
+              boost::bind(  &::LaDa::GA::AlloyLayers::mutation<t_Individual>, _1, rate )
             );
             Operator::assign( callback, _function );
             Print::xmg << Print::Xmg::comment << "Mutation with rate=" << rate << Print::endl;
