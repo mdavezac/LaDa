@@ -150,7 +150,7 @@ namespace LaDa
       escan.nbstates += bgstates + 2;
       if (    escan.potential != Escan::SPINORBIT
            or Fuzzy::is_zero( atat::norm2(escan.kpoint) ) )
-        escan.nbstates /= 2;
+       { escan.nbstates >>= 1; bgstates >>= 1; }
 
       __TRYCODE( Interface::operator()();,
                  "All-electron calculation failed.\n" )
@@ -158,6 +158,9 @@ namespace LaDa
       escan.nbstates = oldnbstates;
 
   #ifndef _NOLAUNCH
+      foreach( types::t_real ei, eigenvalues )
+        std::cout << " " << ei;
+      std::cout << " " << bgstates << "\n";
       bands.cbm = eigenvalues[ bgstates ];
       bands.vbm = eigenvalues[ bgstates - 1 ];
       std::cout << "BandGap: " << bands.gap() << " = " 
