@@ -161,6 +161,20 @@ namespace LaDa
       typename Reference<const typename Pointer<T_QUANTITY> :: t_innermost> :: t_refd
         inline const_innermost(const T_QUANTITY &_ptr )
           { return Pointer<const T_QUANTITY> :: _innermost(_ptr); }
+
+    //! If then else. True flavor.
+    template< bool CONDITION, class THEN, class ELSE >
+      struct if_then_else 
+      {
+        //! result.
+        typedef THEN type;
+      };
+    template< class THEN, class ELSE >
+      struct if_then_else< false, THEN, ELSE >
+      {
+        //! result.
+        typedef ELSE type;
+      };
     
   }
 } // namespace LaDa

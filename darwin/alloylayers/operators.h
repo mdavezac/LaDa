@@ -22,12 +22,13 @@ namespace LaDa
     namespace AlloyLayers
     {
       //! Performs a bitstring crossover.
-      template< class T_OBJECT >
-        bool crossover( T_OBJECT& _o, const T_OBJECT &_p, types::t_real &_rate )
+      template< class T_INDIVIDUAL >
+        bool crossover( T_INDIVIDUAL& _o, const T_INDIVIDUAL &_p, types::t_real &_rate )
         {
-          typename T_OBJECT :: iterator  i_var_off = _o.Container().begin();
-          typename T_OBJECT :: iterator  i_var_off_end = _o.Container().end();
-          typename T_OBJECT :: const_iterator  i_var_par = _p.Container().begin();
+          typedef typename T_INDIVIDUAL :: t_Object t_Object;
+          typename t_Object :: iterator  i_var_off = _o.Object().Container().begin();
+          typename t_Object :: iterator  i_var_off_end = _o.Object().Container().end();
+          typename t_Object :: const_iterator  i_var_par = _p.Object().Container().begin();
           bool has_changed = false;
           for(; i_var_off != i_var_off_end; ++i_var_off, ++i_var_par )
           {
@@ -38,12 +39,13 @@ namespace LaDa
           return has_changed;
         }
       //! Performs a bitstring mutation.
-      template< class T_OBJECT >
-        bool mutation( T_OBJECT& _o, types::t_real &_rate )
+      template< class T_INDIVIDUAL >
+        bool mutation( T_INDIVIDUAL& _o, types::t_real &_rate )
         {
-          typedef typename T_OBJECT :: t_Container :: value_type t_Type;
-          typename T_OBJECT :: iterator  i_var_off = _o.Container().begin();
-          typename T_OBJECT :: iterator  i_var_off_end = _o.Container().end();
+          typedef typename T_INDIVIDUAL :: t_Object t_Object;
+          typedef typename t_Object :: t_Container :: value_type t_Type;
+          typename t_Object :: iterator  i_var_off = _o.Object().Container().begin();
+          typename t_Object :: iterator  i_var_off_end = _o.Object().Container().end();
           bool has_changed = false;
           for(; i_var_off != i_var_off_end; ++i_var_off )
           {

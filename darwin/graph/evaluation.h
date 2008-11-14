@@ -67,7 +67,7 @@
                 Farmhand() {}
         
                 //! Creates \a _offspring population from \a _parent
-                void operator()(const t_Population& _parents, t_Population& _offspring) {}
+                void operator()(t_Population& _parents, t_Population& _offspring) {}
                 using t_Base :: set;
             };
         

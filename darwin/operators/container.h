@@ -258,7 +258,7 @@ namespace LaDa
                       "Tag Operators expects an attribute \"type\" "
                       "with values \"and\" or \"or\".\n" )
           type == "and" ?
-            container< T_FACTORY, Operator::Sequential>( _factory, _function, _node ):
+            container<T_FACTORY, Operator::Sequential>( _factory, _function, _node ):
             container<T_FACTORY, Operator::Proportional>( _factory, _function, _node );
         }
 

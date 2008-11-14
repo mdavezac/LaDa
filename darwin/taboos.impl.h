@@ -157,7 +157,7 @@ namespace LaDa
         return false;
       }
     template<class T_INDIVIDUAL>
-      void Taboos<T_INDIVIDUAL> :: set_problematic( bool _p )
+      void Taboos<T_INDIVIDUAL> :: set_problematic( bool _p ) const
       {
         typename std::list< Taboo_Base<t_Individual> * > :: const_iterator i_taboo = taboos.begin();
         typename std::list< Taboo_Base<t_Individual> * > :: const_iterator i_end = taboos.end();

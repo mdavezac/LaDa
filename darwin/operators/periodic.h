@@ -24,11 +24,11 @@ namespace LaDa
     namespace Operator
     {
       template< class T_POPULATOR > 
-        bool periodic( T_POPULATOR &_populator,
+        void periodic( T_POPULATOR &_populator,
                        boost::function<void(T_POPULATOR&)>& _function,
                        types::t_unsigned &_period,
                        const GenCount &_age )
-        { if( _age() % _period == 0 ) _function( _populator ); }
+        { if ( _age() % _period == 0 ) _function( _populator ); }
     } // namespace Operator
 
     namespace Factory

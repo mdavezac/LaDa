@@ -87,7 +87,8 @@
       ( "vbm", boost::bind( &PPFactory::vbm<t_Evaluator>, boost::ref(ga.evaluator) ) );
 
     // connects ga operator factory.
-    typedef LaDa :: GA :: Factory :: XmlOperators< t_Individual > t_OpFactory;
+    typedef LaDa :: GA :: Factory :: XmlOperators< t_Individual, eoPopulator<t_Individual> >
+      t_OpFactory;
     t_OpFactory op_factory;
     op_factory.connect_attribute
       ( "period", boost::bind( &LaDa::GA::Factory::periodic< t_OpFactory >,

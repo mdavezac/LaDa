@@ -249,7 +249,7 @@ namespace LaDa
         //! Returns a pointer to the taboos.
         Taboo_Base<t_Individual>* get_taboos() { return taboos; }
         //! Returns a pointer to the history.
-        History<t_Individual>* const get_history() const { return history; }
+        History<t_Individual>* get_history() const { return history; }
         //! Returns age functor.
         const GenCount& get_counter() const { return counter; }
 #       ifdef _ALLOY_LAYERS_

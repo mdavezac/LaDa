@@ -58,7 +58,7 @@ namespace LaDa
             virtual bool clone(t_Individual &_indiv );
 
             //! Should not be called as a taboo. throws.
-            virtual bool operator()( const t_Individual& _indiv ) const
+            virtual bool operator()( const t_Individual& _indiv )
               { __THROW_ERROR( "Should not be called as a taboo.\n" ) }
         };
         

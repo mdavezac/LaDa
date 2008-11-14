@@ -52,8 +52,7 @@ boost::shared_ptr<Crystal::Lattice>
   {
     std::ofstream file; 
     const std::string fxsf( _filename + ".xsf" );
-    file.open( fxsf.c_str(),
-               truncate  ? std::ios_base::trunc: std::ios_base::app | std::ios_base::out); 
+    file.open( fxsf.c_str(), std::ios_base::trunc );
     if (file.fail() )   
       std::cerr << "Could not write to " << _filename << ".xsf" << std::endl;
     else
@@ -62,8 +61,7 @@ boost::shared_ptr<Crystal::Lattice>
       file.close();
     }
     const std::string fxyz( _filename + ".xyz" );
-    file.open( fxyz.c_str(),
-               truncate  ? std::ios_base::trunc: std::ios_base::app | std::ios_base::out); 
+    file.open( fxyz.c_str(), std::ios_base::trunc );
     if (file.fail() )   
       std::cerr << "Could not write to " << _filename << ".xyz" << std::endl;
     else

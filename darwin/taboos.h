@@ -52,7 +52,7 @@ namespace LaDa
 
         //! \cond
         virtual bool is_problematic() const {return false;}
-        virtual void set_problematic(bool _p = false) {return; }
+        virtual void set_problematic(bool _p = false) const {return; }
         //! \endcond
 
         //! prints out all tabooed individuals or whatever
@@ -242,7 +242,7 @@ namespace LaDa
 
         //! \cond
         virtual bool is_problematic() const;
-        void set_problematic( bool _p = false );
+        virtual void set_problematic( bool _p = false ) const;
         //! \endcond
 
         //! Forwars print out request to each taboo
@@ -268,7 +268,7 @@ namespace LaDa
 
       protected: 
         //! \cond
-        bool problematic;
+        mutable bool problematic;
         //! \endcond
 
         //! Reference to a list of tabooed populations
@@ -294,7 +294,7 @@ namespace LaDa
         //! \cond
         virtual bool is_problematic() const
           { return problematic; }
-        virtual void set_problematic( bool _p = false ) 
+        virtual void set_problematic( bool _p = false ) const
           { problematic = _p; }
         // \endcond
     };

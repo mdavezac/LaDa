@@ -148,6 +148,7 @@ namespace LaDa
         {
           _stream << "Xml-tags " << *_factory.factory_
                   << "Xml-attributes " << *_factory.attfactory_;
+          return _stream;
         }
     }
   }

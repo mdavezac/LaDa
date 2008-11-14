@@ -10,6 +10,10 @@
 
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
+#include <boost/type_traits/is_const.hpp>
+#include <boost/type_traits/remove_const.hpp>
+
+#include <opt/modifiers.h>
 
 #include "discriminate.h"
 
@@ -26,8 +30,13 @@ namespace LaDa
     namespace Operator
     {
       //! \cond
-      template< class T_DERIVED, class T_INDIVIDUAL, class T_POPULATOR > class PopulatorFunctor;
+      namespace details
+      {
+        template< size_t D > struct branch {};
+      }
       //! \endcond
+
+      template< class T_DERIVED, class T_INDIVIDUAL, class T_POPULATOR > class PopulatorFunctor;
 
       //! Assigns a callback functor to a boost function.
       template< class T_DERIVED, class T_INDIVIDUAL, class T_POPULATOR >
@@ -52,12 +61,12 @@ namespace LaDa
                ( const PopulatorFunctor<T_DERIVED, T_INDIVIDUAL, T_POPULATOR>&,
                  boost::function<void(T_POPULATOR&)>& );
           private:
-            //! A tag structure.
-            template< size_t  D > struct TypeTag {};
             //! Type of the discrimination metafunction.
             typedef Discriminate<T_INDIVIDUAL, T_DERIVED> t_Discriminate;
             //! "Discrimination" index of the functor.
             const static size_t discrimination = t_Discriminate :: value;
+            //! A class to distinguish between types.
+            template< size_t D > struct branch;
      
           public:
             //! Type of the derived class.
@@ -72,58 +81,12 @@ namespace LaDa
      
             //! Functor over populator. Branches to correct format for t_Derived.
             void operator()( t_Populator& _populator )
-              { branch( _populator, TypeTag< discrimination >() ); }
+              { details::branch< discrimination >::call( this, _populator ); }
             //! Functor over populator. Branches to correct format for t_Derived.
             void operator()( t_Populator& _populator ) const
-              { branch( _populator, TypeTag< discrimination >() ); }
+              { details::branch< discrimination > :: call( this, _populator ); }
             
           private:
-            //! Type of the tag for "other" functors.
-            typedef TypeTag< t_Discriminate :: other_index > other_tag;
-            //! Type of the tag for unary functors.
-            typedef TypeTag< t_Discriminate :: unary_index > unary_tag;
-            //! Type of the tag for binary functors.
-            typedef TypeTag< t_Discriminate :: binary_index > binary_tag;
-            //! Type of the tag for const unary functors.
-            typedef TypeTag< t_Discriminate :: const_unary_index > const_unary_tag;
-            //! Type of the tag for const binary functors.
-            typedef TypeTag< t_Discriminate :: const_binary_index > const_binary_tag;
-            //! Unary overload.
-            void branch( t_Populator& _populator, const unary_tag& )
-            {
-              t_Derived *_this = static_cast< t_Derived* >( this  );
-              t_Individual &indiv( *_populator );
-              if( (*_this)( indiv ) ) indiv.invalidate();
-            }
-            //! Binary overload.
-            void branch( t_Populator& _populator, const binary_tag& )
-            {
-              t_Derived *_this = static_cast< t_Derived* >( this  );
-              t_Individual &indiv1( *_populator );
-              const t_Individual &indiv2( _populator.select() );
-              if( (*_this)( indiv1, indiv2 ) ) indiv1.invalidate();
-            }
-            //! "Other" overload.
-            void branch( t_Populator& _populator, const other_tag& )
-              { t_Derived :: operator()( _populator ); }
-            //! const Unary overload.
-            void branch( t_Populator& _populator, const const_unary_tag& ) const
-            {
-              const t_Derived *_this = static_cast< const t_Derived* >( this  );
-              t_Individual &indiv( *_populator );
-              if( (*_this)( indiv ) ) indiv.invalidate();
-            }
-            //! const Binary overload.
-            void branch( t_Populator& _populator, const const_binary_tag& ) const
-            {
-              const t_Derived *_this = static_cast< const t_Derived* >( this  );
-              t_Individual &indiv1( *_populator );
-              const t_Individual &indiv2( _populator.select() );
-              if( (*_this)( indiv1, indiv2 ) ) indiv1.invalidate();
-            }
-            //! const "Other" overload.
-            void branch( t_Populator& _populator, const other_tag& ) const
-              { t_Derived :: operator()( _populator ); }
             //! Assigns this object to \a _function.
             void assign( boost::function< void( t_Populator& ) >& );
         };
@@ -133,7 +96,7 @@ namespace LaDa
                      boost::function< void( T_POPULATOR& ) > &_a )
         {
           typedef PopulatorFunctor< T_DERIVED, T_INDIVIDUAL, T_POPULATOR > t_PopFunc;
-          const T_DERIVED * const derived = static_cast< const T_DERIVED* const >( &_b );
+          const T_DERIVED * const derived = static_cast< T_DERIVED* >( &_b );
           void (t_PopFunc::*ptr_popop)( T_POPULATOR& ) = &t_PopFunc :: operator();
           _a = boost::bind( ptr_popop, *derived, _1 );
         }
@@ -143,11 +106,80 @@ namespace LaDa
                      boost::function< void( T_POPULATOR& ) > &_a )
         {
           typedef PopulatorFunctor< T_DERIVED, T_INDIVIDUAL, T_POPULATOR > t_PopFunc;
-          const T_DERIVED * const derived = static_cast< const T_DERIVED* const >( &_b );
+          const T_DERIVED * const derived = static_cast< T_DERIVED* >( &_b );
           void (t_PopFunc::*ptr_popop)( T_POPULATOR& ) const = &t_PopFunc :: operator();
           _a = boost::bind( ptr_popop, *derived, _1 );
         }
 
+      namespace details
+      {
+        template<> struct branch< Disc::unary_index > 
+        {
+          template< class T_THIS >
+            static void call( T_THIS *_this, typename T_THIS :: t_Populator& _populator );
+        };
+        template<class T_THIS> void branch< Disc::unary_index > 
+          :: call( T_THIS *_this, typename T_THIS :: t_Populator& _populator )
+          {
+            typedef typename Modifier::if_then_else
+                    < 
+                      boost::is_const<T_THIS> :: value, 
+                      const typename T_THIS :: t_Derived,
+                      typename T_THIS :: t_Derived
+                    > :: type t_Derived;
+            typedef typename boost::remove_const< t_Derived > :: type  t_NonConst;
+            t_Derived *derived = static_cast< t_NonConst* >( _this  );
+            t_Individual &indiv( *_populator );
+            if( (*derived)( indiv ) ) indiv.invalidate();
+          }
+        template<> struct branch< Disc::const_unary_index > 
+                      : public branch< Disc::unary_index > {};
+
+
+        template<> struct branch< Disc::binary_index > 
+        {
+          template< class T_THIS >
+            static void call( T_THIS *_this, typename T_THIS :: t_Populator& _populator );
+        };
+        template<class T_THIS> void branch< Disc::binary_index > 
+          :: call( T_THIS *_this, typename T_THIS :: t_Populator& _populator )
+          {
+            typedef typename Modifier::if_then_else
+                    < 
+                      boost::is_const<T_THIS> :: value, 
+                      const typename T_THIS :: t_Derived,
+                      typename T_THIS :: t_Derived
+                    > :: type t_Derived;
+            typedef typename boost::remove_const< t_Derived > :: type  t_NonConst;
+            t_Derived *derived = static_cast< t_NonConst* >( _this  );
+            t_Individual &indiv1( *_populator );
+            const t_Individual &indiv2( _populator.select() );
+            if( (*derived)( indiv1, indiv2 ) ) indiv1.invalidate();
+          }
+        template<> struct branch< Disc::const_binary_index > 
+                      : public branch< Disc::binary_index > {};
+
+        template<> struct branch< Disc::other_index > 
+        {
+          template< class T_THIS >
+            static void call( T_THIS *_this, typename T_THIS :: t_Populator& _populator );
+        };
+        template<class T_THIS> void branch< Disc::other_index > 
+          :: call( T_THIS *_this, typename T_THIS :: t_Populator& _populator )
+          {
+            typedef typename Modifier::if_then_else
+                    < 
+                      boost::is_const<T_THIS> :: value, 
+                      const typename T_THIS :: t_Derived,
+                      typename T_THIS :: t_Derived
+                    > :: type t_Derived;
+            typedef typename boost::remove_const< t_Derived > :: type  t_NonConst;
+            t_Derived *derived = static_cast< t_NonConst* >( _this  );
+            (*derived)( _populator );
+          }
+
+
+      }
     }
 
   }
