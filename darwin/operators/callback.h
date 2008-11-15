@@ -20,12 +20,7 @@ namespace LaDa
     {
       //! Creates a unary callback operator.
       template< class T_INDIVIDUAL, class T_POPULATOR = eoPopulator<T_INDIVIDUAL> >
-        class UnaryCallBack : public PopulatorCRT
-                                     < 
-                                       UnaryCallBack<T_INDIVIDUAL, T_POPULATOR>,
-                                       T_INDIVIDUAL,
-                                       T_POPULATOR
-                                     >
+        class UnaryCallBack
         {
           public:
             //! Type of the indidividual

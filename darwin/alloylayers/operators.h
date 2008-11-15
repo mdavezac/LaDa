@@ -13,7 +13,7 @@
 #include <opt/types.h>
 #include <print/xmg.h>
 
-#include "../operators/callback.h"
+#include "../operators/make_populator.h"
 
 namespace LaDa
 {
@@ -71,13 +71,12 @@ namespace LaDa
             if( _node.Attribute( "rate" ) )
               rate = boost::lexical_cast<types::t_real>( _node.Attribute("rate") );
             if( Fuzzy::leq( rate, 0e0 ) or Fuzzy::geq( rate, 1e0 ) ) rate = 5e-1;
-            Operator::BinaryCallBack<t_Individual, t_Populator> callback;
-            callback.connect
-            (
+            Operator::MakePopulator<t_Individual, t_Populator>::transform_binary
+            ( 
               boost::bind( &::LaDa::GA::AlloyLayers::crossover<t_Individual>,
-                           _1, _2, rate )
+                           _1, _2, rate ),
+              _function 
             );
-            Operator::assign( callback, _function );
             Print::xmg << Print::Xmg::comment << "Crossover with rate=" << rate << Print::endl;
           }
         template< class T_FACTORY >
@@ -93,12 +92,11 @@ namespace LaDa
             if( _node.Attribute( "rate" ) )
               rate = boost::lexical_cast<types::t_real>( _node.Attribute("rate") );
             if( Fuzzy::leq( rate, 0e0 ) or Fuzzy::geq( rate, 1e0 ) ) rate = 5e-1;
-            Operator::BinaryCallBack<t_Individual, t_Populator> callback;
-            callback.connect
-            (
-              boost::bind(  &::LaDa::GA::AlloyLayers::mutation<t_Individual>, _1, rate )
+            Operator::MakePopulator<t_Individual, t_Populator>::transform_unary
+            ( 
+              boost::bind(  &::LaDa::GA::AlloyLayers::mutation<t_Individual>, _1, rate ),
+              _function 
             );
-            Operator::assign( callback, _function );
             Print::xmg << Print::Xmg::comment << "Mutation with rate=" << rate << Print::endl;
           }
 
@@ -111,12 +109,11 @@ namespace LaDa
           {
             typedef typename T_FACTORY :: t_Individual t_Individual;
             typedef typename T_FACTORY :: t_Populator t_Populator;
-            Operator::UnaryCallBack<t_Individual, t_Populator> callback;
-            callback.connect
-            (
-              boost::bind( &T_EVALUATOR::initialize, boost::ref(_evaluator), _1 )
+            Operator::MakePopulator<t_Individual, t_Populator>::transform_unary
+            ( 
+              boost::bind( &T_EVALUATOR::initialize, boost::ref(_evaluator), _1 ),
+              _function 
             );
-            Operator::assign( callback, _function );
             Print::xmg << Print::Xmg::comment << "Random" << Print::endl;
           }
      
