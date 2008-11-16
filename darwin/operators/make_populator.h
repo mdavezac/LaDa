@@ -14,6 +14,7 @@
 #include <boost/type_traits/remove_const.hpp>
 
 #include "discriminate.h"
+#include "callback.h"
 
 //! \cond
 template< class EOT > class eoPopulator;
@@ -43,18 +44,18 @@ namespace LaDa
               static void transform( const T_FUNCTOR &_functor, t_PopFunctor &_result );
             //! Static functions which calls a populator functor with a populator.
             template< class T_FUNCTOR >
-              static void call( T_FUNCTOR &_functor, t_Populator &_populator );
+              static void call( const T_FUNCTOR &_functor, t_Populator &_populator );
 
             //! Unoverloaded function to call unary with populator.
             template< class T_FUNCTOR >
-              void static call_unary( T_FUNCTOR& _functor, T_POPULATOR &_populator );
+              void static call_unary( const T_FUNCTOR& _functor, T_POPULATOR &_populator );
             //! Unoverloaded function to call binary with populator.
             template< class T_FUNCTOR >
-              void static call_binary( T_FUNCTOR& _functor, T_POPULATOR &_populator );
+              void static call_binary( const T_FUNCTOR& _functor, T_POPULATOR &_populator );
 
             //! Unoverloaded function to transform unary functor.
             template< class T_FUNCTOR >
-              void static transform_unary( T_FUNCTOR _functor, t_PopFunctor &_result );
+              void static transform_unary( const T_FUNCTOR &_functor, t_PopFunctor &_result );
             //! Unoverloaded function to call binary with populator.
             template< class T_FUNCTOR >
               void static transform_binary( const T_FUNCTOR& _functor, t_PopFunctor &_result );
@@ -97,23 +98,23 @@ namespace LaDa
 
             //! Calls a unary functor with a populator
             template< class T_FUNCTOR >
-              static void call_( T_FUNCTOR& _functor, T_POPULATOR &_populator, const t_unary& );
+              static void call_( const T_FUNCTOR& _functor, T_POPULATOR &_populator, const t_unary& );
             //! Calls a binary functor with a populator
             template< class T_FUNCTOR >
-              static void call_( T_FUNCTOR& _functor, T_POPULATOR &_populator, const t_binary& );
+              static void call_( const T_FUNCTOR& _functor, T_POPULATOR &_populator, const t_binary& );
             //! Calls a const unary functor with a populator
             template< class T_FUNCTOR >
-              static void call_( T_FUNCTOR& _functor,
+              static void call_( const T_FUNCTOR& _functor,
                                  T_POPULATOR &_populator, 
                                  const t_const_unary& );
             //! Calls a const binary functor with a populator
             template< class T_FUNCTOR >
-              static void call_( T_FUNCTOR& _functor,
+              static void call_( const T_FUNCTOR& _functor,
                                  T_POPULATOR &_populator, 
                                  const t_const_binary& );
             //! Calls a populator functor with a populator
             template< class T_FUNCTOR >
-              static void call_( T_FUNCTOR& _functor, T_POPULATOR &_populator, const t_other& );
+              static void call_( const T_FUNCTOR& _functor, T_POPULATOR &_populator, const t_other& );
         };
 
 #     ifdef INPOP
@@ -123,27 +124,18 @@ namespace LaDa
       template< class T_INDIVIDUAL, class T_POPULATOR > template< class T_FUNCTOR > \
         void MakePopulator<T_INDIVIDUAL, T_POPULATOR>  
 
-      template< class T_FUNCTOR, class T_POPULATOR >
-        void shit( T_FUNCTOR&, T_POPULATOR& )  {}
-      INPOP :: transform_unary( T_FUNCTOR _functor, t_PopFunctor &_result )
-        { _result = boost::bind( &shit<T_FUNCTOR,T_POPULATOR>, _functor, _1 ); }
+      INPOP :: transform_unary( const T_FUNCTOR &_functor, t_PopFunctor &_result )
+        { _result = constUnaryCallBack<t_Individual, t_Populator>( _functor ); }
       INPOP :: transform_binary( const T_FUNCTOR &_functor, t_PopFunctor &_result )
-        { _result = boost::bind( &shit<T_FUNCTOR>, _functor, _1 ); }
-      INPOP :: call_unary( T_FUNCTOR &_functor, t_Populator& _pop )
-      {
-        t_Individual& a = *_pop;
-        if( _functor( a ) ) a.invalidate();
-      }
-      INPOP :: call_binary( T_FUNCTOR &_functor, t_Populator& _pop  )
-      {
-        t_Individual& a = *_pop;
-        const t_Individual& b = _pop.select();
-        if( _functor( a, b ) ) a.invalidate();
-      }
+        { _result = constBinaryCallBack<t_Individual, t_Populator>( _functor ); }
+      INPOP :: call_unary( const T_FUNCTOR &_functor, t_Populator& _pop )
+        { (constUnaryCallBack<t_Individual, t_Populator>( _functor ))( _pop ); }
+      INPOP :: call_binary( const T_FUNCTOR &_functor, t_Populator& _pop  )
+        { (constBinaryCallBack<t_Individual, t_Populator>( _functor ))( _pop ); }
 
       INPOP :: transform( const T_FUNCTOR &_functor, t_PopFunctor &_result )
         { transform_( _functor, _result, Tag<Discriminate<T_INDIVIDUAL, T_FUNCTOR >::value>() ); }
-      INPOP :: call( T_FUNCTOR &_functor, t_Populator &_populator )
+      INPOP :: call( const T_FUNCTOR &_functor, t_Populator &_populator )
         { call_( _functor, _populator, Tag<Discriminate<T_INDIVIDUAL, T_FUNCTOR >::value>() ); }
 
       INPOP :: transform_( const T_FUNCTOR &_functor, t_PopFunctor &_result, const t_unary& )
@@ -159,15 +151,15 @@ namespace LaDa
       INPOP :: transform_( const T_FUNCTOR &_functor, t_PopFunctor &_result, const t_other& )
         { _result = _functor; }
 
-      INPOP :: call_( T_FUNCTOR &_functor, t_Populator& _pop, const t_unary& )
+      INPOP :: call_( const T_FUNCTOR &_functor, t_Populator& _pop, const t_unary& )
         { call_unary( _functor, _pop ); }
-      INPOP :: call_( T_FUNCTOR &_functor, t_Populator& _pop, const t_binary& )
+      INPOP :: call_( const T_FUNCTOR &_functor, t_Populator& _pop, const t_binary& )
         { call_binary( _functor, _pop ); }
-      INPOP :: call_( T_FUNCTOR &_functor, t_Populator& _pop, const t_const_unary& )
+      INPOP :: call_( const T_FUNCTOR &_functor, t_Populator& _pop, const t_const_unary& )
         { call_unary( _functor, _pop ); }
-      INPOP :: call_( T_FUNCTOR &_functor, t_Populator& _pop, const t_const_binary& )
+      INPOP :: call_( const T_FUNCTOR &_functor, t_Populator& _pop, const t_const_binary& )
         { call_binary( _functor, _pop ); }
-      INPOP :: call_( T_FUNCTOR &_functor, t_Populator& _pop, const t_other& )
+      INPOP :: call_( const T_FUNCTOR &_functor, t_Populator& _pop, const t_other& )
         { _functor( _pop ); }
 
 

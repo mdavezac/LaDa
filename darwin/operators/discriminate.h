@@ -96,7 +96,10 @@ namespace LaDa
       }
 
       template< class T_INDIVIDUAL, class T_FUNCTOR >
-        struct Discriminate : public details::withfunctor< T_INDIVIDUAL, T_FUNCTOR > :: type {};
+        struct Discriminate : public details::withfunctor< T_INDIVIDUAL, T_FUNCTOR > :: type 
+        {
+          using details::withfunctor< T_INDIVIDUAL, T_FUNCTOR > :: type :: value;
+        };
 
 
      

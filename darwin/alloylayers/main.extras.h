@@ -93,16 +93,16 @@
     op_factory.connect_attribute
       ( "period", boost::bind( &LaDa::GA::Factory::periodic< t_OpFactory >,
                                _1, _2, _3, ga.get_counter() ) );
-//   op_factory.connect
-//     ( "Operators", boost::bind( &LaDa::GA::Factory::containers<t_OpFactory>, _1, _2, _3 ) )
-//     ( "And", boost::bind( &LaDa::GA::Factory::sequential<t_OpFactory>, _1, _2, _3 ) )
-//     ( "Or", boost::bind( &LaDa::GA::Factory::sequential<t_OpFactory>, _1, _2, _3 ) );
-//     ( "TabooOp", boost::bind( &LaDa::GA::Factory::taboo_op<t_OpFactory, t_Darwin>,
-//                                _1, _2, _3, boost::ref(ga), "Random" ) )
-//     ( "Random", boost::bind( &PPFactory::random<t_OpFactory, t_Evaluator>, _1, _2, _3,
-//                              boost::ref(ga.evaluator) ) )
-//     ( "Crossover", boost::bind( &PPFactory::crossover<t_OpFactory>, _1, _2, _3 ) )
-//     ( "Mutation", boost::bind( &PPFactory::mutation<t_OpFactory>, _1, _2, _3 ) );
+    op_factory.connect
+      ( "Operators", boost::bind( &LaDa::GA::Factory::containers<t_OpFactory>, _1, _2, _3 ) )
+      ( "And", boost::bind( &LaDa::GA::Factory::sequential<t_OpFactory>, _1, _2, _3 ) )
+      ( "Or", boost::bind( &LaDa::GA::Factory::sequential<t_OpFactory>, _1, _2, _3 ) )
+      ( "TabooOp", boost::bind( &LaDa::GA::Factory::taboo_op<t_OpFactory, t_Darwin>,
+                                 _1, _2, _3, boost::ref(ga), "Random" ) )
+      ( "Random", boost::bind( &PPFactory::random<t_OpFactory, t_Evaluator>, _1, _2, _3,
+                               boost::ref(ga.evaluator) ) )
+      ( "Crossover", boost::bind( &PPFactory::crossover<t_OpFactory>, _1, _2, _3 ) )
+      ( "Mutation", boost::bind( &PPFactory::mutation<t_OpFactory>, _1, _2, _3 ) );
     ga.set_operator_factory( op_factory );
 
 # elif _MAIN_ALLOY_LAYERS_EXTRAS_ == 4
