@@ -122,7 +122,7 @@ namespace LaDa
       __TRYBEGIN
         if( topology.objective() ) 
           objective = topology.objective<t_GATraits>( _parent );
-        __DOASSERT( not objective, "Could not create multi-objective.\n" )
+        __DOASSERT( topology.objective() and not objective, "Could not create multi-objective.\n" )
         
         if( topology.history() and history )
         {

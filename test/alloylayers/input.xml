@@ -1,11 +1,11 @@
 <?xml version="1.0" standalone="no" ?>
 <Job>
   <MPI pools=2 />
-  <Structure direction="(1 1 1)" extent="(3 5 5)">
+  <Structure >
     <Cell>
-      <row x="5" y="0" z="0"/>
-      <row x="5" y="1" z="0"/>
-      <row x="5" y="0" z="1"/>
+      <row x="1" y="0" z="0"/>
+      <row x="1" y="2" z="0"/>
+      <row x="1" y="0" z="2"/>
     </Cell>
   </Structure>
   <Lattice scale="6.0">

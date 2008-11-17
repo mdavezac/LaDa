@@ -30,7 +30,7 @@
 #ifdef _DIRECTIAGA
 # define __DIAGA( code ) code
 # define __DIAGASUFFIX( code ) \
-         t_Path( code.string() + "." + boost::lexical_cast<std::string>(MPI_COMM.rank()) )
+         t_Path( code.string() + "." + boost::lexical_cast<std::string>(::LaDa::mpi::main->rank()) )
 # define __IIAGA( code ) 
 # else
 # define __DIAGA( code ) 

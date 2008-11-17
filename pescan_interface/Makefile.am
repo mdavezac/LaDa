@@ -56,22 +56,22 @@ layered_escan_LDFLAGS =  $(escan_LDFLAGS)
 layered_escan_LDADD = $(escan_LDADD)
 
 ../atat/libatat.la: 
-	cd ../atat; $(MAKE) 
+	cd ../atat; $(MAKE) libatat.la
 ../crystal/libcrystal.la: 
-	cd ../crystal; $(MAKE)
+	cd ../crystal; $(MAKE) libcrystal.la
 ../physics/libphysics.la:
-	cd ../physics; $(MAKE)
+	cd ../physics; $(MAKE) libphysics.la
 ../mpi/libmpiobject.la:
-	cd ../mpi; $(MAKE)
+	cd ../mpi; $(MAKE) libmpiobject.la
 ../vff/libvff.la:
-	cd ../vff; $(MAKE)
+	cd ../vff; $(MAKE) libvff.la
 ../print/libprint.la:
-	cd ../print; $(MAKE)
+	cd ../print; $(MAKE) libprint.la
 if DOFORTRAN
 ../mpi/libopt.la:
-	cd ../opt; $(MAKE)
+	cd ../opt; $(MAKE) libopt.la
 endif
 if DODIRECTIAGA
-../lapack/libmpi.la:
-	cd ../mpi; $(MAKE)
+../lapack/liblapack.la:
+	cd ../lapack; $(MAKE) liblapack.la
 endif
