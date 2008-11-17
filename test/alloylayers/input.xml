@@ -30,6 +30,7 @@
       </Breeding>
       <Objectives type="linear" >
         <Objective type="minimize" value="epi" />
+        <Objective type="maximize" value="vbm" />
       </Objectives>
       <Scaling type="Pareto" />
       <Scaling type="Niching" distance="GeneralHamming" d0="30" />

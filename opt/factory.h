@@ -10,146 +10,101 @@
 
 #include <iostream>
 #include <map>
-#include <boost/shared_ptr.hpp>
-#include <boost/ptr_container/ptr_map.hpp>
+
+#include "fusedfactory.h"
 
 namespace LaDa
 {
   //! Holds factory related objects.
   namespace Factory
   {
-    //! \cond
-    class PureCalls;
-    //! \endcond
+    //! The callable factory.
+    template< class T_FUNCTION, class T_KEY >  class Factory;
 
-    //! A policy for chaining connect calls.
-    template< class T_THIS > 
-      class ChainConnects
-      {
-        public:
-          //! Type of the derived class.
-          typedef T_THIS t_This;
-         
-     
-          //! Copy constructor. 
-          ChainConnects( const ChainConnects &_c ) : this_( _c.this_ ) {}
-          //! Constructor. 
-          ChainConnects( t_This &_this ) : this_( _this ) {}
-
-          //! Functor which chains calls to connect.
-          template< class T_FUNCTOR >
-            ChainConnects& operator()( typename t_This::t_Key& _key,
-                                       const T_FUNCTOR& _functor )
-              { this_.connect( _key, _functor ); return *this; }
-        private:
-          //! Holds a reference to PureCalls.
-          t_This &this_;
-      };
-
-    //! Dumps the factory keys to a stream.
-    std::ostream& operator<<( std::ostream&, const PureCalls& );
-
-    //! \brief Makes pure calls to functors taking no argument and returning no
-    //!        values. Functors must be copy constructible.
-    class PureCalls
+    //! Dumps a factory to a stream.
+    template< class T_FUNCTION, class T_KEY >
+      std::ostream& operator<<( std::ostream& _stream,
+                                const Factory<T_FUNCTION, T_KEY>& _factory );
+    namespace details
     {
-      friend std::ostream& operator<<( std::ostream&, const PureCalls& );
-      public:
-        //! The type of the key.
-        typedef const std::string t_Key;
-      private:
-        //! Pure abstract class for storing purposes.
-        class BaseType;
-        //! The derived objects which actually store the functors.
-        template< class T_FUNCTOR > class DerivedType;
-        //! The type of the map.
-        typedef boost::ptr_map< t_Key, BaseType > t_Map;
+      //! An intermediate base class for correct constructor call ordering.
+      template< class T_FUNCTION, class T_KEY >
+        class Intermediate  
+        {
+            //! Type of the fused class.
+            typedef FusedFactory<T_FUNCTION, T_KEY> t_Fused;
+            //! Type of the base class.
+            typedef boost::fusion::unfused_typed< t_Fused, typename t_Fused :: t_Parameters> t_Base; 
+          public:
+            //! Constructor.
+            Intermediate() {}
+            //! Copy Constructor
+            Intermediate( const Intermediate& _c ) : fused_(_c.fused_) {}
       
-      public:
-        //! Constructor.
-        PureCalls() {}
-        //! virtual Destructor.
-        virtual ~PureCalls() {}
-
-        //! \brief Adds a new functor. 
-        //! \details Throws on duplicates.
-        template< class T_FUNCTOR >
-          ChainConnects<PureCalls> connect( const t_Key& _key, const T_FUNCTOR& _functor );
-
-        //! performs the call.
-        void operator()( const t_Key& _key );
-
-        //! \brief Deletes a connection.
-        //! \details Unlike other member functions, this one does not throw if
-        //!          \a _key does not exist..
-        void disconnect( const t_Key& _key );
-         
-      protected:
-        //! The map.
-        t_Map map_;
-    };
-
-    struct PureCalls :: BaseType 
-    {
-      //! The virtual functor. 
-      virtual void operator()() = 0;
-      //! A virtual Destructor.
-      virtual ~BaseType() {};
-    };
-
-    template< class T_FUNCTOR >
-      class PureCalls :: DerivedType : public BaseType 
+            //! Forwards to FusedFactory :: connect()
+            template< class T_FUNCTOR >
+              ChainConnects< t_Fused > connect( const T_KEY& _key, const T_FUNCTOR& _functor )
+                { return fused_. connect<T_FUNCTOR>( _key, _functor ); }
+            //! Forwards to FusedFactory :: connect()
+            template< class T_FUNCTOR >
+              ChainConnects< t_Fused > connect( const T_KEY& _key,
+                                                const typename t_Fused::t_Help& _help,
+                                                const T_FUNCTOR& _functor )
+                { return fused_. connect<T_FUNCTOR>( _key, _help, _functor ); }
+      
+            //! Forwards to FusedFactory :: disconnect()
+            void disconnect( const T_KEY& _key )
+              { fused_.disconnect( _key ); }
+            //! Returns true if \a _key exists.
+            bool exists( const T_KEY& _key ) const { return fused_.exists( _key ); }
+            //! Returns help string.
+            const typename t_Fused::t_Help& help( const T_KEY& _key ) const
+              { return fused_.help( _key ); }
+      
+            protected:
+             t_Fused fused_;
+        };
+    }
+   
+    template< class T_FUNCTION, class T_KEY = std::string >
+      class Factory : public details :: Intermediate< T_FUNCTION, T_KEY >,
+                      public boost::fusion::unfused_typed
+                              <
+                                FusedFactory<T_FUNCTION, T_KEY>,
+                                typename FusedFactory<T_FUNCTION, T_KEY> :: t_Parameters 
+                              > 
       {
+          friend std::ostream& operator<< <T_FUNCTION, T_KEY>
+                                       ( std::ostream& _stream,
+                                         const Factory<T_FUNCTION, T_KEY>& _factory );
+          //! Type of the fused class.
+          typedef FusedFactory<T_FUNCTION, T_KEY> t_Fused;
+          //! Type of the fused base class.
+          typedef details::Intermediate< T_FUNCTION, T_KEY > t_Intermediate;
+          //! Type of the unfused base class.
+          typedef boost::fusion::unfused_typed< t_Fused,
+                                                typename t_Fused :: t_Parameters> t_UnFusedBase; 
         public:
-          //! the type of the functor.
-          typedef T_FUNCTOR t_Functor;
-          //! Constructor
-          DerivedType   ( const t_Functor& _functor )
-                      : functor_( new t_Functor( _functor ) ) {}
+          //! The function type.
+          typedef T_FUNCTION t_Function;
+          //! The key type.
+          typedef T_KEY t_Key;
+          //! The help type.
+          typedef typename t_Fused :: t_Help t_Help;
+          //! Type of the connect return.
+          typedef ChainConnects< t_Fused > t_ConnectReturn;
+          //! Constructor.
+          Factory() : t_Intermediate(), t_UnFusedBase( t_Intermediate::fused_ ) {}
           //! Copy Constructor.
-          DerivedType( const DerivedType& _c ) : functor_( _c.functor_ ) {}
-          //! Destructor.
-          virtual ~DerivedType() {}
-         
-          //! The virtual functor. 
-          void operator()() { (*functor_)(); }
-
-        protected:
-          //! Holds the functor.
-          boost::shared_ptr< t_Functor > functor_;
+          Factory   ( const Factory& _c )
+                  : t_Intermediate( _c ), t_UnFusedBase( t_Intermediate::fused_ ) {}
       };
 
-    template< class T_FUNCTOR >
-      ChainConnects<PureCalls> PureCalls :: connect( const t_Key& _key,
-                                                     const T_FUNCTOR& _functor )
-      {
-        __DOASSERT( map_.end() != map_.find( _key ),
-                    "Key " << _key << " already exists.\n" )
-        map_.insert( _key, new DerivedType<T_FUNCTOR>( _functor ) );
-        return ChainConnects<PureCalls>( *this );
-      }
 
-    inline void PureCalls :: operator()( const t_Key& _key )
-    {
-       t_Map :: iterator i_functor = map_.find( _key );
-       __DOASSERT( i_functor == map_.end() , "Key " << _key << " does not exists.\n" )
-       (*i_functor->second)();
-    }
-
-    inline void PureCalls :: disconnect( const t_Key& _key )
-    {
-       t_Map :: iterator i_functor = map_.find( _key );
-       if( i_functor != map_.end() ) map_.erase( i_functor );
-    }
-
-    std::ostream& operator<<( std::ostream& _stream, const PureCalls& _factory )
-    {
-      PureCalls :: t_Map :: const_iterator i_map = _factory.map_.begin();
-      PureCalls :: t_Map :: const_iterator i_map_end = _factory.map_.end();
-      for(; i_map != i_map_end; ++i_map )
-        _stream << "  _ " << i_map->first << "\n";
-      return _stream;
-    }
+    template< class T_FUNCTION, class T_KEY >
+      std::ostream& operator<<( std::ostream& _stream,
+                                const Factory<T_FUNCTION, T_KEY>& _factory )
+      { return _stream << _factory.details::Intermediate<T_FUNCTION,T_KEY>::fused_; }
 
   }
 }

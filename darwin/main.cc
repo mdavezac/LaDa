@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
 #     ifdef _ALLOY_LAYERS_
         std::cout << "The following GA Operators can be used in <Breeding>...</Breeding>:\n"
                   <<  op_factory << "\n"
-                     "The following physical properties will be optimized\n"
+                     "The following physical properties can be chosen for optimization:\n"
                   << properties_factory 
                   << "when included as in\n"
                      "  <Objectives>\n"
