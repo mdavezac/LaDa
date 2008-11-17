@@ -104,7 +104,8 @@ OPT_H = ndim_iterator.h minimize_base.h polynome.h frprmn_minimizer.h \
 	va_minimizer.h fitness_function.h  function_functors.h monome.h traits.h \
         fuzzy.h atat.h debug.h va_function.h gsl_lsq.h random.h algorithms.h \
         gsl.h allsq.h cgs.h gsl_nllsq.h gsl_mins.h gsl_simplex.h \
-        bpo_macros.h initial_path.h tinyxml.h factory.h modifiers.h tuple_io.h
+        bpo_macros.h initial_path.h tinyxml.h factory.h modifiers.h tuple_io.h \
+        fusedfactory.h chainconnects.h
 OPT_CC = gsl_lsq.cc random.cc gsl.cc gsl_nllsq.cc gsl_mins.cc gsl_simplex.cc \
          leave_many_out.cc initial_path.cc tinyxml.cc
 OPT_PYTHON_CONVENIENCE_H =  convex_hull.h errors.h convex_hull.impl.h
