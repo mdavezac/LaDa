@@ -26,7 +26,6 @@ namespace LaDa
                 // and put unknown individuals into a list.
                 t_Base::evaluate(_offspring); 
 
-
                 // At this point,  unknowns are evaluated. 
                 t_CommBase :: start_all();
                 while( notdone() ) t_CommBase::test_bulls();

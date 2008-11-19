@@ -17,7 +17,7 @@ subroutine iaga_set_mpi( in_comm_handle )
   call mpi_comm_rank(comm_handle,inode,ierr)
   call mpi_comm_rank(mpi_comm_world,irank,ierr)
 
-  write(arank,'(I6)') inode
+  write(arank,'(I6)') irank
   arank = adjustl( arank )
 
 end subroutine
@@ -36,7 +36,7 @@ subroutine iaga_call_escan( in_nbstates )
   allocate( zebn( in_nbstates ) )
 
   ecp%comm_handle = comm_handle
-  ecp%fileescaninput= "escan_input."//arank(1:len_trim(arank))
+  ecp%fileescaninput= trim("escan_input.")//arank(1:len_trim(arank))
   ecp%escanfileonly=.TRUE.
   ecp%escandefaultprint=.false.
   ! The following do not need to be set for escanfileonly=.TRUE.
@@ -161,6 +161,7 @@ subroutine iaga_dipole_elements( in_dipole, in_val, in_cond, &
   do jc=1, in_ncond
      do iv=1, in_nval
        call dqpole( psi_v(:,:,iv), psi_c(:,:,jc), in_dipole(:,:, iv,jc ), qdpkr )
+       write(*,*) "dipole( ", jc, ",", iv, ") ", in_dipole(:,:, iv, jc )
      end do
   end do
 

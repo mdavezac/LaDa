@@ -79,12 +79,20 @@ namespace LaDa
                            Keepers::OscStrength& _k )
           {
 #           ifndef _NOLAUNCH
-              _k.osc_strength = ::LaDa::Pescan::oscillator_strength( _bg, _str, 
-                                                               degeneracy, false );
+              __ROOTCODE
+              ( 
+                MPI_COMM,
+                Print::out << "e1.0" << Print::endl;
+                _k.osc_strength = ::LaDa::Pescan::oscillator_strength( _bg, _str, 
+                                                                       degeneracy, false );
+                Print::out << "e2.0" << Print::endl;
+              )
 #           else
               _k.osc_strength = rng.uniform();
-              Print::out << "osc strength " <<  _k.osc_strength << "\n";
 #           endif
+                Print::out << "e3.0 " << _k.osc_strength << Print::endl;
+            __MPICODE( boost::mpi::broadcast( MPI_COMM, _k.osc_strength, 0 ); )
+                Print::out << "e4.0 " << _k.osc_strength << Print::endl;
           }
 #    ifdef _MPI
           //! Sets communicator and suffix for mpi stuff.

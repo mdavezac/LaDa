@@ -48,6 +48,10 @@ namespace LaDa
       public:
         //! Stores results
         Bands bands;
+        //! Eigenvalues obtained from VBM calculation.
+        std::vector<types::t_real> vbm_eigs;
+        //! Eigenvalues obtained from CBM calculation.
+        std::vector<types::t_real> cbm_eigs;
         //! Reference energy for folded spectrum method
         Bands Eref;
 

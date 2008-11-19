@@ -180,14 +180,13 @@ namespace LaDa
             typedef typename t_Base :: t_Assign t_Assign;
             //! All pertinent %GA traits
             typedef Traits::GA< Evaluator > t_GATraits;
-            //! Wether to perform oscilator strength evaluations.
-            bool do_dipole;
        
             //! Constructor
-            Evaluator() : t_Base(), bandgap(structure), edipole(structure), do_dipole(false) {}
+            Evaluator() : t_Base(), bandgap(structure), edipole(structure), do_dipole_(false) {}
             //! Copy Constructor
             Evaluator   ( const Evaluator &_c )
-                      : t_Base(_c), bandgap(_c.bandgap), edipole(_c.edipole), do_dipole(_c.do_dipole){}
+                      : t_Base(_c), bandgap(_c.bandgap),
+                        edipole(_c.edipole), do_dipole_(_c.do_dipole_){}
             //! Destructor
             virtual ~Evaluator() {};
        
@@ -212,9 +211,14 @@ namespace LaDa
   #         ifdef _MPI
               //! forwards comm and suffix to bandgap.
               void set_mpi( boost::mpi::communicator *_comm, const std::string &_str )
-                { bandgap.set_mpi( _comm, _str ); }
+                { bandgap.set_mpi( _comm, _str ); edipole.set_mpi( _comm, _str ); }
   #         endif
             using t_Base::Load;
+
+            //! Returns true if dipole transition will be computed.
+            bool do_dipole() const { return do_dipole; }
+            //! Sets pescan to compute dipoles on \a _do true.
+            void do_dipole( bool _do );
        
           protected:
             //! Type of the band gap cum vff all-in-one functional.
@@ -226,6 +230,8 @@ namespace LaDa
             t_BandGap bandgap; 
             //! Electric dipole functional.
             t_ElectricDipole edipole;
+            //! Wether to perform oscilator strength evaluations.
+            bool do_dipole_;
             
             using t_Base :: structure;
         };

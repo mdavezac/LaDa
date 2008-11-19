@@ -32,6 +32,9 @@ namespace LaDa
       const t_Path olddirname( dirname );
       create_directory();
 
+      cbm_eigs.clear();
+      vbm_eigs.clear();
+
       // First compute CBM
       computation = CBM;
       escan.Eref = Eref.cbm;
@@ -45,6 +48,7 @@ namespace LaDa
                  read_and_throw();,
                  "Error while computing CBM.\n") 
       bands.cbm = find_closest_eig( Eref.cbm );
+      cbm_eigs = Interface::eigenvalues;
 
       // Then computes VBM
       computation = VBM;
@@ -59,11 +63,19 @@ namespace LaDa
                  read_and_throw();,
                  "Error while computing VBM.\n") 
       bands.vbm = find_closest_eig( Eref.cbm );
+      vbm_eigs = Interface::eigenvalues;
 
   #ifndef _NOLAUNCH
       if( do_correct and bands.gap() < metallicity ) correct( olddirname );
       if( bands.gap() < metallicity )
       {
+        cbm_eigs.clear();
+        vbm_eigs.clear();
+        dirname = olddirname / "vbm";
+        destroy_directory();
+        dirname = olddirname / "cbm";
+        destroy_directory();
+        dirname = olddirname;
         escan.method = ALL_ELECTRON;
         Print :: out << "Failed to find non-metallic band gap.\n"
                      << "Will try an all-electron calculation." << Print::endl;
@@ -104,6 +116,7 @@ namespace LaDa
           escan.Eref = Eref.vbm;
           Print::out << "Modifying VBM reference: " << Eref.vbm
                      << Print::endl << Print::flush;
+          vbm_eigs.clear();
         }
         else
         {
@@ -112,6 +125,7 @@ namespace LaDa
           escan.Eref = Eref.cbm;
           Print::out << "Modifying CBM reference: " << Eref.cbm
                      << Print::endl << Print::flush;
+          cbm_eigs.clear();
         }
         if ( not do_destroy_dir )
           dirname = _dir / ( computation == CBM ?  "/cbm": "/vbm" );
@@ -125,6 +139,8 @@ namespace LaDa
         do_correct = true;
         computation == VBM ?  bands.vbm = find_closest_eig( Eref.vbm ):
                               bands.cbm = find_closest_eig( Eref.cbm );
+        computation == VBM ?  vbm_eigs = Interface::eigenvalues:
+                              cbm_eigs = Interface::eigenvalues;
         Print::out << "After Correction: VBM=" << bands.vbm
                    << " CBM=" << bands.cbm << Print::endl;
         ++i;

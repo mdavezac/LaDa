@@ -664,10 +664,6 @@ namespace LaDa
           atom.site = i_site->site;
           atom.freeze = i_site->freeze;
           atom.type = -1e0;
-          // vewy impowtant. Otherwise GA::KRandom and GA::Random produce
-          // individuals which are to big.
-          if( i_site != _str.lattice->sites.begin() )
-            atom.freeze = i_site->freeze | Structure::t_Atom::FREEZE_T;
           _str.atoms.push_back(atom);
         }
       return true;

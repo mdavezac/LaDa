@@ -20,6 +20,8 @@
 #include "bandgap.h"
 #include "dipole_elements.h"
 
+#include <print/stdout.h>
+
 // declares fortran interface
 extern "C"
 {
@@ -40,33 +42,48 @@ namespace LaDa
                           const Crystal::Structure &_structure,
                           types::t_real _degeneracy )
     {
+      // true if an all electron calculation.
+      namespace bfs = boost::filesystem; 
+      const bool all_electron
+        ( not bfs::exists( opt::InitialPath::path() /  _bandgap.get_dirname() / "cbm" ) );
       __DODEBUGCODE
       ( 
         namespace bl = boost::lambda; 
-        namespace bfs = boost::filesystem; 
       )
-      __ASSERT( _bandgap.eigenvalues.size() < 2,
-                "Not enough eigenvalues were computed.\n" )
+      __ASSERT( _bandgap.eigenvalues.size() < 2 and ( all_electron ), 
+                   "Not enough eigenvalues were computed: " 
+                << _bandgap.eigenvalues.size() << " < " << "2 \n" )
       __ASSERT( _bandgap.bands.gap() < 3e0 * _degeneracy,
                 "Band gap too small or degeneracy tolerance too large.\n" )
+      if( not all_electron )
+      {
+        Print :: out << "vbm: " <<  _bandgap.bands.vbm << " " << _bandgap.vbm_eigs.size() << "  ";
+        foreach( types::t_real shit, _bandgap.vbm_eigs )
+          Print::out << shit << " | ";
+        Print::out << Print::endl;
+        Print :: out << "cbm: " <<  _bandgap.bands.cbm << " " << _bandgap.cbm_eigs.size() << "  ";
+        foreach( types::t_real shit, _bandgap.cbm_eigs )
+          Print::out << shit << " | ";
+        Print::out << Print::endl;
+      }
       __ASSERT
       (
         std::find_if
         ( 
-          _bandgap.eigenvalues.begin(), 
-          _bandgap.eigenvalues.end(),
-          boost::bind( &Fuzzy::gt<types::t_real>, _bandgap.bands.vbm, _1 )
-        ) == _bandgap.eigenvalues.end(),
+          ( all_electron ? _bandgap.eigenvalues.begin(): _bandgap.vbm_eigs.begin() ), 
+          ( all_electron ? _bandgap.eigenvalues.begin(): _bandgap.vbm_eigs.end() ), 
+          boost::bind( &Fuzzy::eq<types::t_real>, _bandgap.bands.vbm, _1 )
+        ) == ( all_electron ? _bandgap.eigenvalues.end(): _bandgap.vbm_eigs.end() ),
         "VBM and eigenvalues are not coherent.\n"
       )
       __ASSERT
       (
         std::find_if
         ( 
-          _bandgap.eigenvalues.begin(), 
-          _bandgap.eigenvalues.end(), 
-          boost::bind( &Fuzzy::gt<types::t_real>, _bandgap.bands.cbm, _1 )
-        ) == _bandgap.eigenvalues.end(),
+          ( all_electron ? _bandgap.eigenvalues.begin(): _bandgap.cbm_eigs.begin() ), 
+          ( all_electron ? _bandgap.eigenvalues.begin(): _bandgap.cbm_eigs.end() ), 
+          boost::bind( &Fuzzy::eq<types::t_real>, _bandgap.bands.cbm, _1 )
+        ) == ( all_electron ? _bandgap.eigenvalues.end(): _bandgap.cbm_eigs.end() ),
         "Bandgap and eigenvalues are not coherent.\n"
       )
       
@@ -75,14 +92,16 @@ namespace LaDa
       std::vector<int> bands;
       int ncond(0), nval(0), startval(-1);
       int i = 0;
-      foreach( const types::t_real eigenval, _bandgap.eigenvalues )
+      foreach( const types::t_real eigenval,
+               all_electron ? _bandgap.eigenvalues: _bandgap.vbm_eigs )
       {
         if( std::abs( eigenval - _bandgap.bands.vbm ) < _degeneracy )
           bands.push_back( i ), ++nval;
         ++i;
       }
       i = 0;
-      foreach( const types::t_real eigenval, _bandgap.eigenvalues )
+      foreach( const types::t_real eigenval, 
+               all_electron ? _bandgap.eigenvalues: _bandgap.cbm_eigs )
       {
         if( std::abs( eigenval - _bandgap.bands.cbm ) < _degeneracy )
           bands.push_back( i ), ++ncond;
@@ -103,9 +122,8 @@ namespace LaDa
       const boost::filesystem::path holepath
       (
         (
-          _bandgap.escan.method == Interface::ALL_ELECTRON ?
-            opt::InitialPath::path() / _bandgap.get_dirname():
-            opt::InitialPath::path() / _bandgap.get_dirname() / "cbm"
+          all_electron ? opt::InitialPath::path() / _bandgap.get_dirname():
+                         opt::InitialPath::path() / _bandgap.get_dirname() / "cbm"
         ) / _bandgap.escan.rspace_wfn
       ); 
       const char* holename = holepath.string().c_str();
@@ -113,9 +131,8 @@ namespace LaDa
       const boost::filesystem::path electronpath
       (
         (
-          _bandgap.escan.method == Interface::ALL_ELECTRON ?
-            opt::InitialPath::path() / _bandgap.get_dirname():
-            opt::InitialPath::path() / _bandgap.get_dirname() / "vbm"
+          all_electron ? opt::InitialPath::path() / _bandgap.get_dirname():
+                         opt::InitialPath::path() / _bandgap.get_dirname() / "vbm"
         ) / _bandgap.escan.rspace_wfn
       ); 
 
@@ -126,7 +143,6 @@ namespace LaDa
       FC_FUNC_(iaga_dipole_elements, IAGA_DIPOLE_ELEMENTS)
               ( dipoles, &(bands[0]), &(bands[nval]), &nval, &ncond,
                 electronname, &electronsize, holename, &holesize );
-      std::cout << nval << " " << ncond << " " << bands[0] << " " << bands[nval] << "\n";
 
       // copies results to output vector.
       // loop positions determined by order of dipoles in fortran code.
@@ -140,16 +156,28 @@ namespace LaDa
           dipole.band2band.second = bands[nval + k];
           for( size_t sp(0u); sp < 4u; ++sp )
           {
-            const types::t_real deltaE(  _bandgap.eigenvalues[ dipole.band2band.second ]
-                                        -_bandgap.eigenvalues[ dipole.band2band.first ]  );
+            const types::t_real first
+            (
+              all_electron ? _bandgap.eigenvalues[ dipole.band2band.first ]:
+                             _bandgap.vbm_eigs[ dipole.band2band.first ]
+            );
+            const types::t_real second
+            (
+              all_electron ? _bandgap.eigenvalues[ dipole.band2band.second ]:
+                             _bandgap.cbm_eigs[ dipole.band2band.second ]
+            );
+            const types::t_real deltaE( second - first );
             dipole.spin2spin = Dipole::t_SpinTransition( sp );
             for( size_t r(0u); r < 3u; ++r )
             {
               dipole.r[0] = std::complex<types::t_real>( *i_dip, *(i_dip+1) ) * deltaE;
+              Print :: out << *i_dip << ", " << *(i_dip+1) << Print::endl;
               i_dip += 2;
               dipole.r[1] = std::complex<types::t_real>( *i_dip, *(i_dip+1) ) * deltaE;
+              Print :: out << *i_dip << ", " << *(i_dip+1) << Print::endl;
               i_dip += 2;
               dipole.r[2] = std::complex<types::t_real>( *i_dip, *(i_dip+1) ) * deltaE;
+              Print :: out << *i_dip << ", " << *(i_dip+1) << Print::endl;
               i_dip += 2;
             } // loop over cartesian coordinates
             _dipoles.push_back( dipole );
@@ -174,9 +202,12 @@ namespace LaDa
     {
       std::vector< Dipole > dipoles;
       dipole_elements( dipoles, _bandgap, _structure, _degeneracy );
+      _print = true;
       if( _print ) foreach( const Dipole &dipole, dipoles )
-                     std::cout << dipole << "\n";
-      return oscillator_strength( dipoles );
+                     Print::out << dipole << "\n";
+      const types::t_real result( oscillator_strength( dipoles ) );
+      Print :: out << "oscillator strength: " << result << Print::endl;
+      return result;
     }
     std::ostream& operator<<( std::ostream &_stream, const Dipole& _dip )
     {

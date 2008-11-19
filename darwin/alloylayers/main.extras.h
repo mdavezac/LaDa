@@ -75,7 +75,7 @@
     typedef LaDa :: GA :: Darwin< t_Evaluator > t_Darwin;
 
     // connects physical properties factory.
-    ga.evaluator.do_dipole = false;
+    ga.evaluator.do_dipole( false );
     LaDa::Factory::Factory<void(void), std::string> properties_factory;
     properties_factory.connect
       ( "epi", "Epitaxial Strain  in eV per f.u.\n"

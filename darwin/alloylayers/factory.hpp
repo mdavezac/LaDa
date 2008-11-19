@@ -159,7 +159,7 @@ namespace LaDa
           typedef typename T_EVALUATOR :: t_Individual :: t_IndivTraits t_IndivTraits;
           typedef typename t_IndivTraits :: t_Object t_Object;
           typedef typename t_IndivTraits :: t_QuantityTraits :: t_Quantity t_Quantity;
-          _evaluator.do_dipole = true;
+          _evaluator.do_dipole( true );
           _evaluator.connect
           (
             bl::bind

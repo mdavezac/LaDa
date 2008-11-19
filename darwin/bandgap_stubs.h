@@ -143,6 +143,13 @@ namespace LaDa
         void destroy_directory() { bandgap.BandGap().destroy_directory(); }
         //! Returns a constant reference to the bandgap/VA.
         const Pescan::VirtualAtom< T_VFF >& BandGap() const { return bandgap; }
+        //! Set rspace output.
+        void set_rspace_output( bool _do )
+        {
+          bandgap.BandGap().escan.rspace_output = _do ?
+            LaDa::Pescan::Interface::Escan::WFN_AFTER_CALL:
+            LaDa::Pescan::Interface::Escan::NOOUTPUT;
+        }
         
 
 

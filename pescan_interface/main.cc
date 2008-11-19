@@ -65,7 +65,8 @@ struct Eval
     bandgap.escan.rspace_output = LaDa::Pescan::Interface::Escan::WFN_AFTER_CALL;
     if( doallelectron ) bandgap.set_method( LaDa::Pescan::Interface::ALL_ELECTRON );
     if( do_evaluate ) structure.energy = pescan.evaluate();
-    if( compute_dipoles ) dip = LaDa::Pescan::oscillator_strength( bandgap, structure, degeneracy, true );
+    if( compute_dipoles )
+      dip = LaDa::Pescan::oscillator_strength( bandgap, structure, degeneracy, true );
 
     LaDa::Crystal::Fourier( structure.atoms.begin(), structure.atoms.end(),
                       structure.k_vecs.begin(), structure.k_vecs.end() );

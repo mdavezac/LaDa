@@ -51,6 +51,7 @@ namespace LaDa
         MPI_Comm __commC = (MPI_Comm) ( MPI_COMM ) ;
         MPI_Fint __commF = MPI_Comm_c2f( __commC );
         FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( &__commF );
+        Print::out << "called set_mpi" << Print::endl;
       }
 #   endif
 
@@ -131,7 +132,9 @@ namespace LaDa
       chdir( ( opt::InitialPath::path() / dirname ).string().c_str() );
   #   ifndef _NOLAUNCH
         __IIAGA(  system( "./" + genpot.launch.filename().string() ) );
+        Print :: out << "launching genpot" << Print::endl;
         __DIAGA( FC_FUNC_(getvlarg, GETVLARG)(); )
+        Print :: out << "returned from genpot" << Print::endl;
   #   endif
       chdir( opt::InitialPath::path().string().c_str() );
     }
@@ -172,7 +175,9 @@ namespace LaDa
       chdir( ( opt::InitialPath::path() / dirname ).string().c_str() );
   #   ifndef _NOLAUNCH
         __IIAGA(  system( "./" + escan.launch.filename().string() ) );
+        Print :: out << "launching escan" << Print::endl;
         __DIAGA( FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( &escan.nbstates ); )
+        Print :: out << "returned from escan" << Print::endl;
   #   endif
       chdir( opt::InitialPath::path().string().c_str() );
       return 0.0;
@@ -246,6 +251,7 @@ namespace LaDa
 
     void Interface::write_genpot_input()
     {
+      namespace bt = boost::tuples;
       std::ofstream file;
       const t_Path orig(   opt::InitialPath::path() 
                          / dirname / __DIAGASUFFIX( genpot.filename ) );
@@ -255,6 +261,19 @@ namespace LaDa
                   "Could not open file " << orig << " for writing.\nAborting.\n" )
 
       __TRYCODE( genpot.check();, "Input to genpot is not coherent.\n" )
+      __DIAGA
+      (
+        __DOASSERT
+        (
+             bt::get<0>( genpot.mesh ) * bt::get<1>(  genpot.mesh ) * bt::get<2>( genpot.mesh )
+           % MPI_COMM.size() != 0,
+              "MPI pool size is inadequate: pool \% n1 * n2 * n3 != 0\n"
+           << bt::get<0>( genpot.mesh ) << "*" << bt::get<1>( genpot.mesh ) 
+           << "*" << bt::get<2>( genpot.mesh ) << " \% " << MPI_COMM.size()
+           << " = " << (   bt::get<0>( genpot.mesh ) * bt::get<1>( genpot.mesh )
+                         * bt::get<2>( genpot.mesh ) % MPI_COMM.size() != 0 )
+        )
+      )
 
       file << Interface :: t_Path(atom_input.stem()).filename() << "\n"
            << genpot;
@@ -277,48 +296,59 @@ namespace LaDa
       __DOASSERT( file.bad() or ( not file.is_open() ),
                   "Could not open file " << orig << " for writing.\nAborting.\n" )
 
-      file << "1 " << __DIAGASUFFIX( genpot.output ) << "\n" 
-           << "2 " << escan.wavefunction_out << "\n"
-           << "3 " << escan.method << "\n"
+      file << "1 " << __DIAGASUFFIX( genpot.output ) << "  # generated atomic potential\n" 
+           << "2 " << escan.wavefunction_out << " # output G-space wavefunctions\n"
+           << "3 " << escan.method << "  # escan method: "
+           << ( escan.method == FOLDED_SPECTRUM  ?
+                   " 1 = folded-spectrum\n": " 2 = diagonalization\n" )
            << "4 " << escan.Eref << " " << genpot.cutoff << " "
-                   << escan.smooth << " " << escan.kinscal << "\n"
-           << "5 " << escan.nbstates << "\n"
+                   << escan.smooth << " " << escan.kinscal 
+                   << " # Eref, cutoff, smooth, kinetic energy scaling\n"
+           << "5 " << escan.nbstates << " # number of states\n"
            << "6 " << escan.niter << " " << escan.nlines
-                   << " " << escan.tolerance << "\n";
+                   << " " << escan.tolerance << " # nb iterations, nlines, tolerance \n";
       if( escan.read_in.size() )
       {
-        file << "7 " << escan.read_in.size() << "\n"
+        file << "7 " << escan.read_in.size() << " # nb of wfns to read from input\n"
              << "8 ";
         std::vector<types::t_unsigned> :: const_iterator i_r = escan.read_in.begin();
         std::vector<types::t_unsigned> :: const_iterator i_r_end = escan.read_in.end();
         file << *i_r;
         for(--i_r_end; i_r != i_r_end; ++i_r)
           file << ", " << *i_r;
-        file << "\n" << "9 " << escan.wavefunction_in << "\n";
+        file << " # wfn indices \n" << "9 " << escan.wavefunction_in << " # wfn input filename\n";
       }
-      else  file << "7 0\n8 0\n9 dummy\n";
+      else  file << "7 0 # nb of wfns read on input \n8 0 # unused \n9 dummy # unused \n";
       file << "10 " << escan.rspace_output << " "
-                    << " 1 1 1 " << escan.rspace_wfn << "\n";
+                    << " 1 1 1 " << escan.rspace_wfn << " # real-space output \n";
 
-      if ( Fuzzy::is_zero( atat::norm2( escan.kpoint ) ) ) file << "11 0 0 0 0 0\n";
+      if ( Fuzzy::is_zero( atat::norm2( escan.kpoint ) ) ) file << "11 0 0 0 0 0 # kpoint=Gamma\n";
       else
       {
         atat::rVector3d k = escan.kpoint;
         file << "11 1 " << k << " " 
                         << std::setw(12) << std::setprecision(8) 
-                        << escan.scale / Physics::a0("A") <<  "\n";
+                        << escan.scale / Physics::a0("A") <<  " # kpoint\n";
       }
-      file << "12 " << escan.potential << "\n"
-           << "13 " << atom_input.filename() << "\n"
-           << "14 " << escan.rcut << "\n"
-           << "15 " << escan.spinorbit.size() << "\n";
+      file << "12 " << escan.potential << " # potential:";
+      switch( escan.potential )
+      {
+        case Escan::NOPOT: __THROW_ERROR( "unknown potential." ); break;
+        case Escan::LOCAL: file << " local potential\n"; break;
+        case Escan::NONLOCAL: file << " non-local potential\n"; break;
+        case Escan::SPINORBIT: file << " non-local potential with spin-orbit coupling\n"; break;
+      }
+      file << "13 " << atom_input.filename() << " # atomic configuration filename\n"
+           << "14 " << escan.rcut << " # real-space projector cut-off\n"
+           << "15 " << escan.spinorbit.size() << " # number of spin-orbit potentials\n";
       std::vector<SpinOrbit> :: const_iterator i_so = escan.spinorbit.begin();
       std::vector<SpinOrbit> :: const_iterator i_so_end = escan.spinorbit.end();
       for(types::t_unsigned i=16; i_so != i_so_end; ++i_so, ++i )
         file << i << " " << i_so->filename.filename() << " " 
              << i_so->izz << " " 
              << i_so->s << " " << i_so->p << " " << i_so->d << " " 
-             << i_so->pnl << " " << i_so->dnl << "\n";
+             << i_so->pnl << " " << i_so->dnl 
+             << " # filename, type, s, p, d, p-nonlocal, d-nonlocal.\n";
       file.flush();
       file.close();
     }

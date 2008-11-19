@@ -34,6 +34,7 @@ namespace LaDa
                       public LaDa::GA::Keepers::OscStrength,
                       public LaDa::GA::AlloyLayers::PrintSignal< Object >
       {
+        friend class boost::serialization::access;
         //! The type of the BitString container
         typedef LaDa::BitString::Object<> :: t_Container t_Container;
         //! Constructor
@@ -53,14 +54,15 @@ namespace LaDa
                    and LaDa::GA::Keepers::OscStrength::Save( _node ); }
         //! Destructor
         virtual ~Object() {};
-        //! Serializes a scalar individual.
-        template<class Archive>
-          void serialize(Archive & _ar, const unsigned int _version)
-          {
-            _ar & boost::serialization::base_object< LaDa::BitString::Object<> >( *this ); 
-            _ar & boost::serialization::base_object< LaDa::GA::Keepers::BandGap >( *this ); 
-            _ar & boost::serialization::base_object< LaDa::GA::Keepers::OscStrength >( *this ); 
-          }
+        private:
+          //! Serializes a scalar individual.
+          template<class Archive>
+            void serialize(Archive & _ar, const unsigned int _version)
+            {
+              _ar & boost::serialization::base_object< LaDa::BitString::Object<> >( *this ); 
+              _ar & boost::serialization::base_object< LaDa::GA::Keepers::BandGap >( *this ); 
+              _ar & boost::serialization::base_object< LaDa::GA::Keepers::OscStrength >( *this ); 
+            }
       };
 
       //! \brief Old-style translation.
