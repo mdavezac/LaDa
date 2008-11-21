@@ -21,7 +21,7 @@
           <atom type="Ga" />
       </site>
   </Lattice>
-  <GA popsize="4" rate="0.5" >
+  <GA popsize="8" rate="0.5" >
       <Breeding>
           <TabooOp>
             <Crossover prob=0.75/>

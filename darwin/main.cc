@@ -91,7 +91,9 @@ int main(int argc, char *argv[])
                 << "  Default input is input.xml.\n\n" 
                 << all << "\n";
 #     ifdef _ALLOY_LAYERS_
-        std::cout << "The following GA Operators can be used in <Breeding>...</Breeding>:\n"
+        std::cout << "The GA tag accepts the following attributes:\n"
+                  << att_factory << "\n"
+                  << "The following GA Operators can be used in <Breeding>...</Breeding>:\n"
                   <<  op_factory << "\n"
                      "The following physical properties can be chosen for optimization:\n"
                   << properties_factory 

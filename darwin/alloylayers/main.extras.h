@@ -127,11 +127,10 @@
       ( "Mutation", "bistring-like mutation.",
         boost::bind( &PPFactory::mutation<t_OpFactory>, _1, _2, _3 ) );
     ga.set_operator_factory( op_factory );
+    if( print_genotype ) PPFactory::genotype( ga.evaluator );
+    PPFactory::read_physical_properties( properties_factory, input );
 
-
-    //! Factory for attributes in GA tag.
-    typedef LaDa::Factory::Factory< void(const std::string&), std::string > t_GAattFactory;
-    t_GAattFactory att_factory;
+    LaDa::Factory::Factory< void(const std::string& ), std::string >& att_factory = ga.att_factory;
     ga.tournament_size = 2;
     ga.replacement_rate = 0.5;
     ga.pop_size = 1;
@@ -166,7 +165,7 @@
         "            if not necessarily used.",
         boost::bind( &LaDa::GA::Topology::seed_n, ga.topology, 0, _1 )
       );
-#     ifdef _MPI
+#    ifdef _MPI
         for( size_t ii(0); ii < LaDa::mpi::main->size(); ++ii )
           att_factory.connect
           (
@@ -180,9 +179,6 @@
     // reads program options.
 #   undef _MAIN_ALLOY_LAYERS_EXTRAS_
 #   define _MAIN_ALLOY_LAYERS_EXTRAS_ 5
-    if( print_genotype ) PPFactory::genotype( ga.evaluator );
-    PPFactory::read_physical_properties( properties_factory, input );
-
 # else 
     // makes sure this file cannot be (meaningfully) included anymore.
 #   undef _MAIN_ALLOY_LAYERS_EXTRAS_

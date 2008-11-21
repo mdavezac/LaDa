@@ -213,11 +213,13 @@ namespace LaDa
       public:
         //! The mpi/serial topology wrapper
         Topology topology;
-      protected:
         //! Counts the number of generations.
         GenCount counter;
 #       ifdef _ALLOY_LAYERS_
+          //! The breeding operator factory.
           Factory::XmlOperators<t_Individual> operator_factory;
+          //! The GA attributes factory.
+          ::LaDa::Factory::Factory< void( const std::string& ), std::string > att_factory;
 #       endif
         
       public:
