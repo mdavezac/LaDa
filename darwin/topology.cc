@@ -28,11 +28,15 @@ namespace LaDa
         __MPICODE( if( graph and n > graph->pools ) return false; )
         __SERIALCODE( if( n != 0 ) return false; )
       }
-      types::t_int d = _att.IntValue();
-      if( d == 0 ) return false;
-      if( n >= seeds.size() ) seeds.resize( n, 0 );
-      seeds[n] = d;
+      seed_n( n, _att.Value() );
       return true;
+    }
+    void Topology :: seed_n( size_t _n, const std::string& _seed )
+    {
+      types::t_int d = boost::lexical_cast<types::t_int>( _seed );
+      if( d == 0 ) return;
+      if( _n >= seeds.size() ) seeds.resize( _n, 0 );
+      seeds[_n] = d;
     }
 
     std::string Topology :: print_seeds() const

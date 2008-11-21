@@ -73,6 +73,8 @@ namespace LaDa
 
         //! Loads seeds from attribute.
         bool LoadSeeds( const TiXmlAttribute &_att );
+        //! Sets seed n.
+        void seed_n( size_t _n, const std::string& _seed );
         //! Print seeds to a string
         std::string print_seeds() const;
         //! Reseeds all procs as needed

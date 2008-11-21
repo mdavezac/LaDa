@@ -42,6 +42,9 @@
               LaDa :: GA :: AlloyLayers :: AssignSignal
             > t_Evaluator;
 
+   template< class T_TYPE > T_TYPE call_lexcast( const std::string& _str )
+    { return boost::lexical_cast<T_TYPE>( _str ); }
+
 # elif _MAIN_ALLOY_LAYERS_EXTRAS_ == 0
     // defines program options.
 #   undef _MAIN_ALLOY_LAYERS_EXTRAS_
@@ -69,13 +72,14 @@
 #     define _MAIN_ALLOY_LAYERS_EXTRAS_ 4
 #   endif
 
+    namespace bl = boost::lambda;
     short_description = "Performs optimizations within the  \"alloy-layers\""
                         " configuration space of Zinc-Blend structures.\n";
     namespace PPFactory = LaDa::GA::AlloyLayers::Factory;
     typedef LaDa :: GA :: Darwin< t_Evaluator > t_Darwin;
 
     // connects physical properties factory.
-    ga.evaluator.do_dipole( false );
+//   ga.evaluator.do_dipole( false );
     LaDa::Factory::Factory<void(void), std::string> properties_factory;
     properties_factory.connect
       ( "epi", "Epitaxial Strain  in eV per f.u.\n"
@@ -84,8 +88,8 @@
       ( "energy", "VFF energy in eV per f.u." ,
         boost::bind<void>( &PPFactory::strain_energy<t_Evaluator>, boost::ref(ga.evaluator) ) )
       ( "bandgap", boost::bind( &PPFactory::bandgap<t_Evaluator>, boost::ref(ga.evaluator) ) )
-      ( "transition", "Dipole oscillator strength between VBM and CBM. Arbitrary units.",
-        boost::bind( &PPFactory::transitions<t_Evaluator>, boost::ref(ga.evaluator) ) )
+//     ( "transition", "Dipole oscillator strength between VBM and CBM. Arbitrary units.",
+//       boost::bind( &PPFactory::transitions<t_Evaluator>, boost::ref(ga.evaluator) ) )
       ( "cbm", "Conduction band minimum in eV.", 
         boost::bind( &PPFactory::cbm<t_Evaluator>, boost::ref(ga.evaluator) ) )
       ( "vbm", "Valence band minimum in eV.",
@@ -123,6 +127,54 @@
       ( "Mutation", "bistring-like mutation.",
         boost::bind( &PPFactory::mutation<t_OpFactory>, _1, _2, _3 ) );
     ga.set_operator_factory( op_factory );
+
+
+    //! Factory for attributes in GA tag.
+    typedef LaDa::Factory::Factory< void(const std::string&), std::string > t_GAattFactory;
+    t_GAattFactory att_factory;
+    ga.tournament_size = 2;
+    ga.replacement_rate = 0.5;
+    ga.pop_size = 1;
+    ga.max_generations = 0;
+    att_factory.connect
+      (
+        "tournament", "size of the deterministic tournaments\n"
+        "           for each parent selection. Default = 2.",
+        bl::var(ga.tournament_size) = bl::bind( &call_lexcast<LaDa::types::t_unsigned>, bl::_1 )
+      )
+      (
+        "rate", "      replacement rate (eg offspring creation rate).\n"
+        "           Default = 0.5.",
+        bl::var(ga.replacement_rate) = bl::bind( &call_lexcast<LaDa::types::t_real>, bl::_1 ) 
+      )
+      (
+        "popsize", "   population size. Default = 1.",
+        bl::var(ga.pop_size) = bl::bind( &call_lexcast<LaDa::types::t_unsigned>, bl::_1 ) 
+      )
+      (
+        "maxgen", "    Max number of generations before quitting."
+        "           Default = 0.",
+        bl::var(ga.max_generations) = bl::bind( &call_lexcast<LaDa::types::t_unsigned>, bl::_1 ) 
+      )
+      (
+        "islands", "    Number of independent islands. Default = 1.",
+        bl::var(ga.nb_islands) = bl::bind( &call_lexcast<LaDa::types::t_unsigned>, bl::_1 ) 
+      )
+      (
+        "seed", "       random seed. Default = 0."
+        "            In MPI, seed0, seed1, ... are accepted,"
+        "            if not necessarily used.",
+        boost::bind( &LaDa::GA::Topology::seed_n, ga.topology, 0, _1 )
+      );
+#     ifdef _MPI
+        for( size_t ii(0); ii < LaDa::mpi::main->size(); ++ii )
+          att_factory.connect
+          (
+            "seed" + boost::lexical_cast<std::string>(ii),
+            "       random seed. Default = 0.",
+            boost::bind( &LaDa::GA::Topology::seed_n, ga.topology, 0, _1 )
+          );
+#     endif
 
 # elif _MAIN_ALLOY_LAYERS_EXTRAS_ == 4
     // reads program options.

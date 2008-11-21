@@ -134,34 +134,29 @@ namespace LaDa
         Crystal::Structure copy_structure( structure );
     
         bool oldkeepdir = true;;
-        if( do_dipole_ )  oldkeepdir = bandgap.set_keepdirectory( true );
+   //    if( do_dipole_ )  oldkeepdir = bandgap.set_keepdirectory( true );
     
         bandgap( *t_Base::current_object );
  
     
-        Print::out << "2.0" << Print::endl;
-        if( do_dipole_ )
-        {
-          edipole( bandgap.BandGap().BandGap(), structure, *t_Base::current_object );
-          bandgap.set_keepdirectory( oldkeepdir );
-          if( not oldkeepdir ) bandgap.destroy_directory();
-        }
-        Print::out << "3.0" << Print::endl;
-        Print::out << structure << "\n";
+   //    if( do_dipole_ )
+   //    {
+   //      edipole( bandgap.BandGap().BandGap(), structure, *t_Base::current_object );
+   //      bandgap.set_keepdirectory( oldkeepdir );
+   //      if( not oldkeepdir ) bandgap.destroy_directory();
+   //    }
     
         structure = copy_structure;
     
-        Print::out << "4.0" << Print::endl;
         // assign quantities.
         assign( *t_Base::current_object, t_Base::current_individual->quantities() );
-        Print::out << "5.0" << Print::endl;
       }
     
       INEVAL(bool) :: Load( const TiXmlElement &_node )
       {
         if( not t_Base :: Load( _node ) ) return false;
         if( not bandgap.Load( _node ) ) return false;
-        if( do_dipole_ ) edipole.Load( _node ); // Okay if not found. Just use default values.
+    //   if( do_dipole_ ) edipole.Load( _node ); // Okay if not found. Just use default values.
         return true;
       }
  
@@ -183,11 +178,11 @@ namespace LaDa
         return true;
       }
 
-      INEVAL( void ) :: do_dipole( bool _do )
-      {
-        do_dipole_ = true;
-        bandgap.set_rspace_output( _do );
-      }
+//     INEVAL( void ) :: do_dipole( bool _do )
+//     {
+//       do_dipole_ = true;
+//       bandgap.set_rspace_output( _do );
+//     }
 
 #     undef EVALHEAD
 #     undef INEVAL

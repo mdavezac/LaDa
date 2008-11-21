@@ -36,6 +36,7 @@
 #ifdef _ALLOY_LAYERS_
 # include "operators/xmlfactory.h"
 # include "operators/eogenop_adapter.h"
+# include <boost/function.hpp>
 #endif
 
 namespace LaDa
@@ -114,6 +115,7 @@ namespace LaDa
         //! \endcode
         //! is always true on at least one processor.
         t_Path save_filename;
+      public:
         //! Size of the deterministic tournaments used to choose parents prior to mating
         types::t_unsigned tournament_size;
         //! Size of the population
@@ -136,6 +138,7 @@ namespace LaDa
         types::t_unsigned do_restart;
         //! ratio of offspring to population size
         types::t_real     replacement_rate;
+      protected:
         //! \brief Print::xmg output flag. 
         //! \see  GA::PrintGA \see Print::xmg
         bool do_print_each_call;
@@ -207,8 +210,10 @@ namespace LaDa
         //! those pointers once the game is up. Go check out EO to find out how it
         //! works.
         eoState eostates;
+      public:
         //! The mpi/serial topology wrapper
         Topology topology;
+      protected:
         //! Counts the number of generations.
         GenCount counter;
 #       ifdef _ALLOY_LAYERS_

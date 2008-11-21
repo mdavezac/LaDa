@@ -48,12 +48,12 @@ DARWIN_BG_H  = bandgap_stubs.h  two_sites.h  single_site.h  vff.h  bandgap.h \
                $(DARWIN_BG_IMPL_H)
 DARWIN_BG_DOC = $(DARWIN_BG_H) $(DARWIN_BG_CC) $(DARWIN_GRAPH_H) $(DARWIN_GRAPH_CC)
 
-LIB_ALLOYLAYERS_CC = single_site.cc bandgap_stubs.cc vff.cc electric_dipole.cc
+LIB_ALLOYLAYERS_CC = single_site.cc bandgap_stubs.cc vff.cc # electric_dipole.cc
 LIB_ALLOYLAYERS_IMPL_H  = alloylayers/evaluator.impl.h  alloylayers/policies.impl.h \
                           alloylayers/factory.hpp 
 LIB_ALLOYLAYERS_H  = alloylayers/evaluator.h alloylayers/object.h \
-                     alloylayers/policies.h electric_dipole.h alloylayers/operators.h \
-                     $(LIB_ALLOYLAYERS_IMPL_H)
+                     alloylayers/policies.h alloylayers/operators.h \
+                     $(LIB_ALLOYLAYERS_IMPL_H) # electric_dipole.h 
 
 DARWIN_LIB_DOC = $(DARWIN_LIB_H) $(DARWIN_LIB_CC) $(DARWIN_OP_H) $(DARWIN_OP_CC) \
                  $(LIB_ALLOYLAYERS_H) $(LIB_ALLOYLAYERS_CC)
@@ -117,8 +117,8 @@ EMASS_CC = emass.cc
 EMASS_H  = emass.h
 EMASS_DOC = $(EMASS_H) $(EMASS_CC) 
 PESCAN_F90 = fortran.f90
-PESCAN_CC = interface.cc bandgap.cc dipole_elements.cc
-PESCAN_H  = interface.h  bandgap.h  va.h dipole_elements.h
+PESCAN_CC = interface.cc bandgap.cc # dipole_elements.cc
+PESCAN_H  = interface.h  bandgap.h  va.h # dipole_elements.h
 PESCAN_IMPL_H  = interface.localclasses.h va.impl.h
 PESCAN_DOC = $(PESCAN_H) $(PESCAN_CC) $(PESCAN_F90) $(PESCAN_IMPL_H)
 

@@ -60,11 +60,11 @@ namespace LaDa
           typedef T_FUNCTION t_Function;
           //! Type of the parameters.
           typedef typename boost::function_types::result_type<t_Function>::type  result_type;
- 
-        private:
           //! Type of the parameters.
-          typedef typename boost::function_types::parameter_types<t_Function>::type  t_FuncParameters;
- 
+          typedef typename boost::function_types::parameter_types<t_Function>::type 
+            t_FuncParameters;
+
+        private:
           //! The type of the map.
           typedef std::map< t_Key, boost::function<t_Function> > t_Map;
           //! Type of the help map.
@@ -113,7 +113,7 @@ namespace LaDa
         protected:
           //! The map.
           boost::shared_ptr< t_Map > map_;
-          //! The map.
+          //! The map with help stuff.
           boost::shared_ptr< t_HelpMap > helpmap_;
       };
 

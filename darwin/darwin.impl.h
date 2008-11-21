@@ -14,10 +14,12 @@
 #include <print/xmg.h>
 #include <print/manip.h>
 #include <opt/debug.h>
+#include <opt/tinyxml.h>
 
 #include "functors.h"
 #include "statistics.h"
 #include "minimizergenop.h"
+#include "operators/populate.h"
 
 #include "debug.h"
 
@@ -47,41 +49,40 @@ namespace LaDa
     bool Darwin<T_EVALUATOR> :: Load_Parameters(const TiXmlElement &_parent)
     {
       // tournament size when selecting parents
-      const TiXmlAttribute *att = _parent.FirstAttribute();
-      for(; att; att = att->Next() )
+      opt::const_AttributeIterator i_att( _parent );
+      opt::const_AttributeIterator i_att_end;
+      for(; i_att != i_att_end; ++i_att )
       {
-        std::string str = att->Name();
+        const std::string& str = i_att->first;
         
         if ( str.compare("tournament")==0 )
         {
-          tournament_size = std::abs(att->IntValue());
+          tournament_size = boost::lexical_cast< types::t_unsigned >( i_att->second );
           if ( tournament_size < 2 ) tournament_size = 2;
         }
         else if ( str.compare("rate")==0 ) // offspring rate
         {
-          replacement_rate = std::abs(att->DoubleValue());
+          replacement_rate = std::abs( boost::lexical_cast< types::t_real >( i_att->second ) );
           if ( replacement_rate > 1 ) replacement_rate = 0.5;
         }
         else if ( str.compare("popsize")==0 ) // population size
         {
-          pop_size = std::abs(att->IntValue());
+          pop_size = boost::lexical_cast< types::t_unsigned >( i_att->second );
           if ( pop_size < 1 ) pop_size = 1;
-          
         }
         else if ( str.compare("maxgen")==0 ) // maximum number of generations
-          max_generations = std::abs(att->IntValue());
+          max_generations = boost::lexical_cast< types::t_unsigned >( i_att->second );
         else if ( str.compare("islands")==0 ) // number of islands
         {
-          nb_islands = std::abs(att->IntValue());
+          nb_islands = boost::lexical_cast< types::t_unsigned >( i_att->second );
           if ( not nb_islands ) nb_islands = 1;
         }
         else if ( str.compare("print")==0 ) // print at each generation
-          do_print_each_call = true;
+          do_print_each_call = boost::lexical_cast< bool >( i_att->second );
         else if ( str.compare("populate")==0 ) 
         {
-          std::string string = att->Value();
           populate_style = RANDOM_POPULATE;
-          if ( string.compare("partition") == 0 )
+          if ( i_att->second.compare("partition") == 0 )
             populate_style = PARTITION_POPULATE;
         }
         else if ( not topology.LoadSeeds( *att ) )
@@ -840,15 +841,26 @@ namespace LaDa
       islands.resize( nb_islands );
       typename t_Islands :: iterator i_pop = islands.begin();
       typename t_Islands :: iterator i_end = islands.end();
-      types::t_unsigned target = pop_size;
+      t_Object&(t_Individual::*ptr_func)( void ) = &t_Individual::Object;
       for(; i_pop != i_end; ++i_pop)
       {
         switch ( populate_style )
         {
-          case RANDOM_POPULATE:
-            random_populate(*i_pop, target); break;
+          case RANDOM_POPULATE: 
+            Operators::populate
+            ( 
+               boost::bind( &t_Evaluator::initialize, boost::ref(evaluator), _1 ),
+               taboos, *i_pop, pop_size, 50 * pop_size 
+            ); break;
+//           random_populate(*i_pop, target); break;
           case PARTITION_POPULATE:
-            partition_populate(*i_pop, target); break;
+            Operators::partition_populate
+            (
+               boost::bind( &t_Evaluator::initialize, boost::ref(evaluator), _1 ),
+               &Operators::call_object_mask<t_Individual>,
+               taboos, *i_pop, pop_size, 50 * pop_size 
+            ); break;
+//           partition_populate(*i_pop, target); break;
         }
       }
     }
