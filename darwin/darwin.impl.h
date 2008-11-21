@@ -47,60 +47,63 @@ namespace LaDa
     template<class T_EVALUATOR>
     bool Darwin<T_EVALUATOR> :: Load_Parameters(const TiXmlElement &_parent)
     {
-      opt::explore_attributes( att_factory, _parent );
+#     ifdef _ALLOY_LAYERS_
+        opt::explore_attributes( att_factory, _parent );
+#     else
       // tournament size when selecting parents
-  //   opt::const_AttributeIterator i_att( _parent );
-  //   const opt::const_AttributeIterator i_att_end;
-  //   for(; i_att != i_att_end; ++i_att )
-  //   {
-  //     const std::string& str = i_att->first;
-  //     
-  //     if ( str.compare("tournament")==0 )
-  //     {
-  //       tournament_size = boost::lexical_cast< types::t_unsigned >( i_att->second );
-  //       if ( tournament_size < 2 ) tournament_size = 2;
-  //     }
-  //     else if ( str.compare("rate")==0 ) // offspring rate
-  //     {
-  //       replacement_rate = std::abs( boost::lexical_cast< types::t_real >( i_att->second ) );
-  //       if ( replacement_rate > 1 ) replacement_rate = 0.5;
-  //     }
-  //     else if ( str.compare("popsize")==0 ) // population size
-  //     {
-  //       pop_size = boost::lexical_cast< types::t_unsigned >( i_att->second );
-  //       if ( pop_size < 1 ) pop_size = 1;
-  //     }
-  //     else if ( str.compare("maxgen")==0 ) // maximum number of generations
-  //       max_generations = boost::lexical_cast< types::t_unsigned >( i_att->second );
-  //     else if ( str.compare("islands")==0 ) // number of islands
-  //     {
-  //       nb_islands = boost::lexical_cast< types::t_unsigned >( i_att->second );
-  //       if ( not nb_islands ) nb_islands = 1;
-  //     }
-  //     else if ( str.compare("print")==0 ) // print at each generation
-  //       do_print_each_call = boost::lexical_cast< bool >( i_att->second );
-  //     else if ( str.compare("populate")==0 ) 
-  //     {
-  //       populate_style = RANDOM_POPULATE;
-  //       if ( i_att->second.compare("partition") == 0 )
-  //         populate_style = PARTITION_POPULATE;
-  //     }
-  //     else if ( not topology.LoadSeeds( i_att.as_tinyxml() ) )
-  //       evaluator.LoadAttribute( *i_att.as_tinyxml() ); 
-  //   }
- 
-  //   // some checking
-  //   if ( std::floor( pop_size * replacement_rate ) == 0 )
-  //   {
-  //     Print::xmg << Print::Xmg::comment
-  //                << "Error: replacement_rate is too small." << Print::endl 
-  //                << Print::Xmg::comment 
-  //                << "Error: setting replacement_rate too 1.0 / pop_size ."
-  //                << Print::endl;
-  //     Print::out << "Error: replacement_rate is too small.\n"
-  //                << "Error: setting replacement_rate too 1.0 / pop_size .\n";
-  //     replacement_rate = 1.00 / pop_size + 10*types::tolerance;
-  //   }
+        opt::const_AttributeIterator i_att( _parent );
+        const opt::const_AttributeIterator i_att_end;
+        for(; i_att != i_att_end; ++i_att )
+        {
+          const std::string& str = i_att->first;
+          
+          if ( str.compare("tournament")==0 )
+          {
+            tournament_size = boost::lexical_cast< types::t_unsigned >( i_att->second );
+            if ( tournament_size < 2 ) tournament_size = 2;
+          }
+          else if ( str.compare("rate")==0 ) // offspring rate
+          {
+            replacement_rate = std::abs( boost::lexical_cast< types::t_real >( i_att->second ) );
+            if ( replacement_rate > 1 ) replacement_rate = 0.5;
+          }
+          else if ( str.compare("popsize")==0 ) // population size
+          {
+            pop_size = boost::lexical_cast< types::t_unsigned >( i_att->second );
+            if ( pop_size < 1 ) pop_size = 1;
+          }
+          else if ( str.compare("maxgen")==0 ) // maximum number of generations
+            max_generations = boost::lexical_cast< types::t_unsigned >( i_att->second );
+          else if ( str.compare("islands")==0 ) // number of islands
+          {
+            nb_islands = boost::lexical_cast< types::t_unsigned >( i_att->second );
+            if ( not nb_islands ) nb_islands = 1;
+          }
+          else if ( str.compare("print")==0 ) // print at each generation
+            do_print_each_call = boost::lexical_cast< bool >( i_att->second );
+          else if ( str.compare("populate")==0 ) 
+          {
+            populate_style = RANDOM_POPULATE;
+            if ( i_att->second.compare("partition") == 0 )
+              populate_style = PARTITION_POPULATE;
+          }
+          else if ( not topology.LoadSeeds( *i_att.as_tinyxml() ) )
+            evaluator.LoadAttribute( *i_att.as_tinyxml() ); 
+        }
+#     endif
+     
+      // some checking
+      if ( std::floor( pop_size * replacement_rate ) == 0 )
+      {
+        Print::xmg << Print::Xmg::comment
+                   << "Error: replacement_rate is too small." << Print::endl 
+                   << Print::Xmg::comment 
+                   << "Error: setting replacement_rate too 1.0 / pop_size ."
+                   << Print::endl;
+        Print::out << "Error: replacement_rate is too small.\n"
+                   << "Error: setting replacement_rate too 1.0 / pop_size .\n";
+        replacement_rate = 1.00 / pop_size + 10*types::tolerance;
+      }
  
       return true;
     }

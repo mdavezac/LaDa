@@ -1,8 +1,8 @@
 //
 //  Version: $Id$
 //
-#ifndef _MPI_OBJECT_H_
-#define _MPI_OBJECT_H_
+#ifndef _LADA_MPI_OBJECT_H_
+#define _LADA_MPI_OBJECT_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>

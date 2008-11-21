@@ -13,6 +13,7 @@
 #include<fstream>
 #include<sstream>
 
+#include <mpi/macros.h>
 #include <mpi/mpi_object.h>
 #include <opt/debug.h>
 #include "tinyxml.h"

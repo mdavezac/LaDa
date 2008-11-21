@@ -32,7 +32,8 @@ regular_LDADD = libce.la \
 		../atat/libatat.la \
 		../physics/libphysics.la \
 		../print/libprint.la \
-                ../opt/libopt.la 
+                ../opt/libopt.la \
+		../mpi/libmpiobject.la
 endif
 noinst_LTLIBRARIES = libce.la 
 libce_la_SOURCES = $(CE_CC)
@@ -40,19 +41,19 @@ libce_ladir = $(includedir)/LaDa/ce
 nobase_libce_la_HEADERS = $(CE_H) $(CE_IMPL_H)
 libce_la_CPPFLAGS =  $(AM_CPPFLAGS) 
 ../crystal/libcrystal.la: 
-	cd ../crystal; $(MAKE) 
+	cd ../crystal; $(MAKE) libcrystal.la
 
 ../atat/libatat.la: 
-	cd ../atat; $(MAKE) 
+	cd ../atat; $(MAKE) libatat.la
 
 ../atat/libphysic.la: 
-	cd ../physics; $(MAKE) 
+	cd ../physics; $(MAKE) libphysics.la
 
 ../mpi/libmpiobject.la:
-	cd ../mpi; $(MAKE)
+	cd ../mpi; $(MAKE) libmpiobject.la
 
 ../print/libprint.la:
-	cd ../print; $(MAKE)
+	cd ../print; $(MAKE) libprint.la
 
 ../opt/libopt.la:
-	cd ../opt; $(MAKE)
+	cd ../opt; $(MAKE) libopt.la

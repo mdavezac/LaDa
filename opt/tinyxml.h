@@ -37,7 +37,7 @@ namespace LaDa
     //! \details Works in mpi.
     void read_xmlfile( boost::filesystem::path &_input, std::string& _result );
 
-    //! Attribute iterator.
+    //! Constant attribute iterator.
     class const_AttributeIterator 
     {
       public:
