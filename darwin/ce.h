@@ -12,6 +12,8 @@
 #include <algorithm>
 #include <functional>
 
+#include <boost/lexical_cast.hpp>
+
 #include <tinyxml/tinyxml.h>
 #include <eo/eoOp.h>
 
@@ -30,6 +32,45 @@
 
 namespace LaDa
 {
+
+  namespace GA
+  {
+    namespace Keepers
+    {
+      struct CE 
+      {
+        types::t_real energy; //!< The energy computed by the CE.
+      
+        //! Constructor
+        Keeper() : energy(0) {}
+        //! Copy Constructor
+        Keeper(const Keeper &_c) : energy(_c.energy) {}
+        //! Destructor
+        ~Keeper() {};
+      
+        //! Loads Keeper::energy and Keeper::stress from XML.
+        bool Load( const TiXmlElement &_node )
+        {
+          if( not _node.Attribute( "energy" ) ) 
+          {
+            std::cerr << "Attribute \"energy\" does not exist.\n";
+            return false;
+          }
+          energy = boost::lexical_cast<types::t_real>( _node.Attribute("energy") );
+          return true;
+        }
+        //! Saves Keeper::energy and Keeper::stress to XML.
+        bool Save( TiXmlElement &_node ) const
+        {
+          _node.SetAttribute( "energy", boost::lexical_cast<std::string>( energy ) );
+          return true;
+        }
+        //! Serializes a vff Keeper.
+        template<class Archive> void serialize(Archive & _ar, const unsigned int _version)
+          { _ar & energy; }
+      };
+    } // namespace Keepers
+  } // namespace GA
 
 //! all things Cluster Expansion (should be...)
   namespace CE

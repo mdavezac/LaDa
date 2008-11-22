@@ -1,8 +1,8 @@
 //
 //  Version: $Id$
 //
-#ifndef _DARWIN_ALLOY_LAYERS_EVALUATOR_H_
-#define _DARWIN_ALLOY_LAYERS_EVALUATOR_H_
+#ifndef _DARWIN_GROUNDSTATES_EVALUATORBASE_H_
+#define _DARWIN_GROUNDSTATES_EVALUATORBASE_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -35,10 +35,8 @@ namespace LaDa
 {
   namespace GA
   {
-    /** \ingroup Genetic
-     * @{ */
     //! Optimization for superlattices of random alloy layers of specified concentration.
-    namespace AlloyLayers
+    namespace GroundStates
     {
       //! \brief Partially overrides GA::Evaluator default to implement behaviors
       //!        relevant to random-alloy layers. 
@@ -145,101 +143,24 @@ namespace LaDa
           //! Sets the current_individual pointer.
           void init( t_Individual &_indiv );
 
-          //! Prints epitaxial parameters and structure
-          std::string print() const;
-
           //! Creates random individuals using GA::Random.
           bool initialize( t_Individual &_indiv );
 
-          //! Returns direction.
-          const atat::rVector3d& get_direction() const { return direction; }
-
+          //! Prints parameters  and structure
+          std::string print() const;
 
         protected:
           //! The structure (cell-shape) for which decoration search is done
           mutable Crystal :: Structure structure;
-          //! The growth direction.
-          atat::rVector3d direction;
           //! A (static) pointer to a lattice object.
           static boost::shared_ptr< Crystal::Lattice > lattice;
       };
 
-      //! An evaluator class for pescan/vff in epitaxial alloy configuration space.
-      template< class T_INDIVIDUAL,
-                template<class> class T_TRANSLATE,
-                template<class,class> class T_ASSIGN >
-        class Evaluator : public EvaluatorBase< T_INDIVIDUAL, T_TRANSLATE, T_ASSIGN >
-        {
-            //! Type of the base class.
-            typedef EvaluatorBase< T_INDIVIDUAL, T_TRANSLATE, T_ASSIGN > t_Base;
-          public:
-            //! Type of the individual.
-            typedef typename t_Base :: t_Individual t_Individual;
-            //! Type of the translation policy.
-            typedef typename t_Base :: t_Translate t_Translate;
-            //! Type of the assignement policy.
-            typedef typename t_Base :: t_Assign t_Assign;
-            //! All pertinent %GA traits
-            typedef Traits::GA< Evaluator > t_GATraits;
-       
-            //! Constructor
-            Evaluator() : t_Base(), bandgap(structure) {}
-            //! Copy Constructor
-            Evaluator   ( const Evaluator &_c )
-                      : t_Base(_c), bandgap(_c.bandgap) {}
-            //! Destructor
-            virtual ~Evaluator() {};
-       
-            //! Allows bandgap all-electron recomputation.
-            eoF<bool>* LoadContinue(const TiXmlElement &_el )
-              { return new GA::mem_zerop_t<t_BandGap>( bandgap, &t_BandGap::Continue,
-                                                            "BandGap::Continue" );     }
-            //! Loads structure, lattice, bandgap, vff from XML
-            bool Load( const TiXmlElement &_node );
-       
-            //! Initializes the bandgap.
-            void init( t_Individual& _indiv ) { t_Base::init( _indiv ); bandgap.init(); }
-       
-            //! \brief Evaluates the band gap after strain minimization, and
-            //!        optionally the electic dipole.
-            void evaluate();
 
-       
-  #         ifdef _MPI
-              //! forwards comm and suffix to bandgap.
-              void set_mpi( boost::mpi::communicator *_comm, const std::string &_str )
-                { bandgap.set_mpi( _comm, _str ); } // edipole.set_mpi( _comm, _str ); }
-  #         endif
-            using t_Base::Load;
-
-//           //! Returns true if dipole transition will be computed.
-//           bool do_dipole() const { return do_dipole; }
-//           //! Sets pescan to compute dipoles on \a _do true.
-//           void do_dipole( bool _do );
-       
-          protected:
-            //! Type of the band gap cum vff all-in-one functional.
-            typedef BandGap::Darwin<Vff::Layered> t_BandGap;
-//           //! Type of the electric dipole.
-//           typedef OscStrength::Darwin t_ElectricDipole;
-       
-            //! BandGap/Vff functional
-            t_BandGap bandgap; 
- //          //! Electric dipole functional.
- //          t_ElectricDipole edipole;
- //          //! Wether to perform oscilator strength evaluations.
- //          bool do_dipole_;
-            
-            using t_Base :: structure;
-        };
+    } // namespace Groundstates
 
 
-
-    } // namespace Layered
-    /** @} */
-
-
- }
+ } // namespace GA
 } // namespace LaDa
  
 

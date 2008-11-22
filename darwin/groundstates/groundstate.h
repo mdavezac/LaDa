@@ -18,10 +18,10 @@
 #include <opt/types.h>
 #include <mpi/mpi_object.h>
 
-#include "evaluator.h"
-#include "individual.h"
-#include "single_site.h"
-#include "ce.h"
+#include "../evaluator.h"
+#include "../individual.h"
+#include "../single_site.h"
+#include "../ce.h"
 
 namespace LaDa
 {

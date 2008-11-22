@@ -2,8 +2,8 @@
 //  Version: $Id$
 //
 
-#ifndef _DARWIN_ALLOY_LAYERS_EVALUATOR_IMPL_H_
-#define _DARWIN_ALLOY_LAYERS_EVALUATOR_IMPL_H_
+#ifndef _DARWIN_GROUNDSTATES_EVALUATORBASE_IMPL_H_
+#define _DARWIN_GROUNDSTATES_EVALUATORBASE_IMPL_H_
 
 #include <stdexcept>       // std::runtime_error
 #include <boost/lexical_cast.hpp>
@@ -15,14 +15,13 @@
 #include <opt/fuzzy.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
-#include <crystal/layerdepth.h>
 #include "../call_init.h"
 
 namespace LaDa
 {
   namespace GA
   {
-    namespace AlloyLayers
+    namespace GroundStates
     {
 #     if defined( EVALBASEHEAD ) || defined(INEVALBASE)
 #       error "Macros with same names."
@@ -53,11 +52,7 @@ namespace LaDa
         __DOASSERT( not parent, "No Structure tag found in input.\n")
     
         if( not structure.Load( _node ) ) return false;
-        std::sort( structure.atoms.begin(), structure.atoms.end(), 
-                   Crystal::LayerDepth( structure.cell ) );
- 
-        direction = structure.cell.get_column(0);
- 
+
         //! now calls init member of policies.
         CallInit< t_Translate, t_This >::call( *this );
         CallInit< t_Assign, t_This >::call( *this );
@@ -69,7 +64,7 @@ namespace LaDa
       {
         std::ostringstream sstr;
         atat::rVector3d dir = lattice->cell * direction;
-        sstr << "Structure: G=" << direction  << "\n"
+        sstr << "Structure: \n"
              << structure << "\n";
         return sstr.str();
       }
@@ -116,7 +111,7 @@ namespace LaDa
     
         return true;
       }
- 
+    
       INEVALBASE( bool ) :: initialize( t_Individual &_indiv )
       {
         foreach( Crystal::Structure::t_Atom &atom, structure.atoms )
@@ -129,56 +124,7 @@ namespace LaDa
 #     undef EVALBASEHEAD
 #     undef INEVALBASE
     
-#     if defined( EVALHEAD ) || defined(INEVAL)
-#       error "Macros with same names."
-#     endif
-#     define EVALHEAD  Evaluator<T_INDIVIDUAL, T_TRANSLATE, T_ASSIGN> 
-#     define INEVAL( var ) \
-         template< class T_INDIVIDUAL, \
-                   template<class> class T_TRANSLATE, \
-                   template<class,class> class T_ASSIGN >  var EVALHEAD
-    
-      INEVAL( void ) :: evaluate()
-      {
-        //! Calls functionals.
-        Crystal::Structure copy_structure( structure );
-    
-        bool oldkeepdir = true;;
-   //    if( do_dipole_ )  oldkeepdir = bandgap.set_keepdirectory( true );
-    
-        bandgap( *t_Base::current_object );
- 
-    
-   //    if( do_dipole_ )
-   //    {
-   //      edipole( bandgap.BandGap().BandGap(), structure, *t_Base::current_object );
-   //      bandgap.set_keepdirectory( oldkeepdir );
-   //      if( not oldkeepdir ) bandgap.destroy_directory();
-   //    }
-    
-        structure = copy_structure;
-    
-        // assign quantities.
-        assign( *t_Base::current_object, t_Base::current_individual->quantities() );
-      }
-    
-      INEVAL(bool) :: Load( const TiXmlElement &_node )
-      {
-        if( not t_Base :: Load( _node ) ) return false;
-        if( not bandgap.Load( _node ) ) return false;
-    //   if( do_dipole_ ) edipole.Load( _node ); // Okay if not found. Just use default values.
-        return true;
-      }
-
-//     INEVAL( void ) :: do_dipole( bool _do )
-//     {
-//       do_dipole_ = true;
-//       bandgap.set_rspace_output( _do );
-//     }
-
-#     undef EVALHEAD
-#     undef INEVAL
-    } // namespace Layered
+    } // namespace GroundStates
   } // namespace GA
 } // namespace LaDa
 

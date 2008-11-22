@@ -14,7 +14,9 @@
 #include<vff/layered.h>
 
 #include "../bitstring.h"
-#include "policies.h"
+#include "../print_callbacks.h"
+#include "../bitstring/object.h"
+#include "../static_translate.h"
 
 namespace LaDa
 {
@@ -29,20 +31,20 @@ namespace LaDa
   {
     namespace AlloyLayers
     {
-      struct Object : public LaDa::BitString::Object<>, 
+      struct Object : public LaDa::GA::BitString::Object<>, 
                       public LaDa::GA::Keepers::BandGap,
                    //  public LaDa::GA::Keepers::OscStrength,
-                      public LaDa::GA::AlloyLayers::PrintSignal< Object >
+                      public LaDa::GA::PrintSignal< Object >
       {
         friend class boost::serialization::access;
         //! The type of the BitString container
-        typedef LaDa::BitString::Object<> :: t_Container t_Container;
+        typedef LaDa::GA::BitString::Object<> :: t_Container t_Container;
         //! Constructor
-        Object() : LaDa::BitString::Object<>(), LaDa::GA::Keepers::BandGap() {}
+        Object() : LaDa::GA::BitString::Object<>(), LaDa::GA::Keepers::BandGap() {}
 //                  LaDa::GA::Keepers::OscStrength() {}
         //! Copy Constructor
         Object   (const Object &_c)
-               : LaDa::BitString::Object<>(_c), LaDa::GA::Keepers::BandGap(_c) {}
+               : LaDa::GA::BitString::Object<>(_c), LaDa::GA::Keepers::BandGap(_c) {}
 //                LaDa::GA::Keepers::OscStrength(_c) {};
         //! Loads from \a _node.
         bool Load( const TiXmlElement &_node )
@@ -59,28 +61,28 @@ namespace LaDa
           template<class Archive>
             void serialize(Archive & _ar, const unsigned int _version)
             {
-              _ar & boost::serialization::base_object< LaDa::BitString::Object<> >( *this ); 
+              _ar & boost::serialization::base_object< LaDa::GA::BitString::Object<> >( *this ); 
               _ar & boost::serialization::base_object< LaDa::GA::Keepers::BandGap >( *this ); 
 //             _ar & boost::serialization::base_object< LaDa::GA::Keepers::OscStrength >( *this ); 
             }
       };
 
-      //! \brief Old-style translation.
-      //! \todo remove this function and replace it with translate.
-      inline void operator<<( std::string &_str, const Object& _o )
-        { Translate< Object > :: translate( _o, _str ); }
-      //! \brief Old-style translation.
-      //! \todo remove this function and replace it with translate.
-      inline void operator<<( Object& _o, const std::string &_str )
-        { Translate< Object > :: translate( _str, _o ); }
-      //! \brief Old-style translation.
-      //! \todo remove this function and replace it with translate.
-      inline void operator<<( Crystal::Structure &_str, const Object& _o )
-        { Translate< Object > :: translate( _o, _str ); }
-      //! \brief Old-style translation.
-      //! \todo remove this function and replace it with translate.
-      inline void operator<<( Object& _o, const Crystal::Structure &_str )
-        { Translate< Object > :: translate( _str, _o ); }
+//     //! \brief Old-style translation.
+//     //! \todo remove this function and replace it with translate.
+//     inline void operator<<( std::string &_str, const Object& _o )
+//       { Translate< Object > :: translate( _o, _str ); }
+//     //! \brief Old-style translation.
+//     //! \todo remove this function and replace it with translate.
+//     inline void operator<<( Object& _o, const std::string &_str )
+//       { Translate< Object > :: translate( _str, _o ); }
+//     //! \brief Old-style translation.
+//     //! \todo remove this function and replace it with translate.
+//     inline void operator<<( Crystal::Structure &_str, const Object& _o )
+//       { Translate< Object > :: translate( _o, _str ); }
+//     //! \brief Old-style translation.
+//     //! \todo remove this function and replace it with translate.
+//     inline void operator<<( Object& _o, const Crystal::Structure &_str )
+//       { Translate< Object > :: translate( _str, _o ); }
     }
   }
 } // namespace LaDa

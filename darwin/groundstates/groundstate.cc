@@ -11,8 +11,8 @@
 #include <crystal/structure.h>
 
 #include "groundstate.h"
-#include "functors.h"
-#include "concentration.h"
+#include "../functors.h"
+#include "../concentration.h"
 
 namespace LaDa
 {

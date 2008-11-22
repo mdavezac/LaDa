@@ -30,8 +30,6 @@ namespace LaDa
 {
   namespace GA
   {
-    /** \ingroup Genetic
-     * @{ */
     namespace AlloyLayers
     {
       //! Holds some functions to connect quantities, functionals, printing policies.
@@ -64,7 +62,7 @@ namespace LaDa
           namespace bl = boost::lambda;
           typedef typename T_EVALUATOR :: t_Individual :: t_IndivTraits t_IndivTraits;
           typedef typename t_IndivTraits :: t_Object t_Object;
-          t_Object :: connect_print( bl::_1 << bl::ret< BitString::Object<> >( bl::_2 )
+          t_Object :: connect_print( bl::_1 << bl::ret< LaDa::GA::BitString::Object<> >( bl::_2 )
                                             << bl::constant(" ") ); 
         }
 
@@ -256,8 +254,6 @@ namespace LaDa
 
       } // namespace factory
     } // namespace Layered
-    /** @} */
-
 
   }
 } // namespace LaDa

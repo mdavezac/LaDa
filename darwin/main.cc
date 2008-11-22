@@ -21,7 +21,7 @@
   typedef LaDa::BandGap :: Evaluator t_Evaluator;
 # define __PROGNAME__ "Band-Gap Optimization"
 #elif defined(_CE)
-# include "groundstate.h"
+# include "groundstates/groundstate.h"
   typedef LaDa::GroundState :: Evaluator t_Evaluator;
 # define __PROGNAME__ "Cluster Expansion Optimization"
 #elif defined(_MOLECULARITY)

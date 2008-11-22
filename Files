@@ -26,6 +26,7 @@ DARWIN_LIB_H = concentration.h debug.h \
 	       checkpoints.h evaluator.h individual.h objective.h \
 	       taboos.h gatraits.h  bitstring.h fitness.h gaoperators.h \
 	       scaling.h minimizergenop.h topology.h \
+               assign_callbacks.h print_callbacks.h \
                $(DARWIN_LIB_IMPL_H)
 
 DARWIN_OP_CC = operators/container.cc 
@@ -37,9 +38,9 @@ DARWIN_OP_H = operators/container.h \
               operators/xmlfactory.h $(DARWIN_OP_IMPL_H)
 
 
-DARWIN_CE_CC = ce.cc single_site.cc groundstate.cc 
+DARWIN_CE_CC = ce.cc single_site.cc groundstates/groundstate.cc 
 DARWIN_CE_IMPL_H = single_site.impl.h 
-DARWIN_CE_H  = ce.h  single_site.h  groundstate.h  $(DARWIN_CE_IMPL_H)
+DARWIN_CE_H  = ce.h  single_site.h  groundstates/groundstate.h  $(DARWIN_CE_IMPL_H)
 DARWIN_CE_DOC = $(DARWIN_CE_H) $(DARWIN_CE_CC) 
 
 DARWIN_BG_CC = bandgap_stubs.cc two_sites.cc single_site.cc vff.cc bandgap.cc 

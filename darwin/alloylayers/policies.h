@@ -17,6 +17,8 @@
 
 #include <crystal/layerdepth.h>
 
+#include "../bitstring/translate.h"
+
 
 namespace LaDa
 {
@@ -26,63 +28,13 @@ namespace LaDa
   {
     namespace AlloyLayers
     {
-      //! A functor which determines whether or not to call an init member function.
-      //! \tparam T_POLICY policy for which to check wether is contains an
-      //!                  init member function.
-      //! \tparam T_CALLER type of the class containing the policy. This type
-      //!                  is part of the init member function's signature.
-      template< class T_POLICY, class T_CALLER >
-        class CallInit
-        {
-          protected:
-            //! \brief A metafunctor using SNIFAE to dectect whether a policy has
-            //!        an init method.
-            class HasInitMethod
-            {
-              //! \brief Structure can be instantiated only for certain class.
-              //! \details Class U must have a member with the correct signature.
-              //!          Function Test then determines the name of this member.
-              template<class U, void (U::*)( const T_CALLER& )> struct SFINAE {};
-              //! This overload can be instantiated only with the correct class and class member.
-              template<class U> static char Test(SFINAE<U, &U::init >*);
-              //! This overload can be instantiated with any class.
-              template<class U> static int Test(...);
-              public:
-                //! The resulting value.
-                static const bool value = sizeof(Test<T_POLICY>(0)) == sizeof(char);
-            };
-            //! A simple tag for overloading;
-            template< bool docall > class Tag {};
-
-          public:
-            //! Type of the policy class.
-            typedef T_POLICY t_Policy;
-            //! Type of the caller class.
-            typedef T_CALLER t_Caller;
-            //! \brief Branches through an overloaded function.
-            //! \details Casting to policy type is also handled at this point.
-            static void call( t_Caller &_caller )
-              { branch( _caller, _caller, Tag< HasInitMethod::value >() ); }
-
-          protected:
-            //! Does have init member.
-            static void branch( t_Policy& _p,
-                                const t_Caller & _caller,
-                                const Tag< true > & ) { _p.init( _caller ); }
-            //! Does not have init member.
-            static void branch( t_Policy& _p,
-                                const t_Caller & _caller,
-                                const Tag< false > & ) { }
-        };
-
-
       //! \brief Policy to translate an object containing a vector of reals to an
       //!        epitaxial alloy structure.
       //! \details It is expected that the atoms in the Crystal::Structure
       //!          instances are ordered in direction of growth ( \see
       //!          bool Crystal::create_epitaxial_structure() ). 
       template< class T_OBJECT >
-        struct Translate
+        struct Translate : public BitString::Translate< T_OBJECT >
         {
           //! Type of the Object.
           typedef T_OBJECT t_Object;
@@ -90,10 +42,6 @@ namespace LaDa
           static void translate( const t_Object&, Crystal :: Structure& );
           //! From Crystal::Structure to objects.
           static void translate( const Crystal :: Structure&, t_Object& );
-          //! From Crystal::Structure to objects.
-          static void translate( const t_Object&, std :: string& );
-          //! From Crystal::Structure to objects.
-          static void translate( const std::string&, t_Object& );
           //! \brief Initializes the LayerDepth functor.
           //! \note This member is called by the evaluator. It does not need to
           //!       exist in all translate policies, but if it does, it cannot be
@@ -102,13 +50,13 @@ namespace LaDa
             void init( const T_THIS &_this )
              { Translate<T_OBJECT>::layerdepth.set( _this.structure.cell ); }
 
+          using BitString::Translate< T_OBJECT > :: translate;
+
           protected:
             //! A layer depth operator.
             static Crystal::LayerDepth layerdepth;
         };
-      template< class T_OBJECT >
-        Crystal::LayerDepth Translate<T_OBJECT> :: layerdepth;
-
+      
       //! \brief A function to easily create random individuals.
       //! \details The object of \a _indiv is translated from a random structure.
       template< class T_INDIVIDUAL, class T_TRANSLATE >
@@ -116,142 +64,108 @@ namespace LaDa
                          Crystal::Structure& _structure,
                          T_TRANSLATE _translate );
                                    
-      //! \brief Policy to connect a single callback function assigning
-      //!        values from an object to a GA quantity/raw fitness.
-      template< class T_OBJECT, class T_QUANTITIES >
-        class AssignCallBack
+
+      template< class T_OBJECT >
+        Crystal::LayerDepth Translate<T_OBJECT> :: layerdepth;
+
+
+      template< class T_OBJECT >
+        void Translate<T_OBJECT> :: translate( const Crystal::Structure& _structure,
+                                               t_Object& _object )
         {
-          public:
-            //! Type of the object.
-            typedef T_OBJECT t_Object;
-            //! Type of the quantities.
-            typedef T_QUANTITIES t_Quantities;
-       
-            //! Assigns a value from object to a quantity.
-            void assign( const t_Object& _o, t_Quantities &_q ) const
-              { return callback_( _o, _q ); }
-       
-            //! Sets the callback.
-            void connect( void (*_c)( t_Object, t_Quantities ) )
-              { callback_ = _c; }
-       
-          protected:
-            //! The callback object.
-            boost::function<void(const t_Object&, t_Quantities&) > callback_;
-        };
+          // Clears current object.
+          typename t_Object :: t_Container& container = _object.Container();
+          container.clear();
 
-      //! \cond 
-      namespace details { class isPCallsB {}; }
-      namespace details { class isPCallB {}; }
-      template< class T_OBJECT > class PrintCallBack;
-      //! \endcond
-      
-      //! Policy to assign a printing callback to an object.
+          typedef typename Crystal::Structure::t_Atoms::const_iterator t_iatom;
+          typedef typename t_Object :: t_Container :: iterator t_ivar;
+          t_iatom i_atom = _structure.atoms.begin();
+          t_iatom i_atom_end = _structure.atoms.end();
+          types::t_real last_depth( Translate<T_OBJECT>::layerdepth( i_atom->pos ) );
+          types::t_unsigned layer_size(0);
+          types::t_real c(0);
+          for( ; i_atom != i_atom_end; )
+          {
+            types::t_real new_depth;
+            do
+            {
+              c += i_atom->type > 0e0 ? 1e0: -1e0;
+              ++layer_size;
+              ++i_atom;
+              new_depth = Translate<T_OBJECT>::layerdepth( i_atom->pos );
+            }
+            while( Fuzzy::eq( last_depth, new_depth ) and i_atom != i_atom_end );
+
+            // New layer has been reached
+            container.push_back( c / (types::t_real) layer_size );
+
+            // Reinitializing layer discovery.
+            layer_size = 0;
+            last_depth = new_depth;
+            c = 0e0;
+          }
+        }
+
       template< class T_OBJECT >
-        class PrintCallBack : public details::isPCallB
+        void Translate<T_OBJECT> :: translate( const t_Object& _object,
+                                               Crystal::Structure& _structure ) 
         {
-          public:
-            //! Type of the object.
-            typedef T_OBJECT t_Object;
-       
-            //! Sets the callback.
-            template< class T >
-            static void connect_print( T _c )
-              { callback_ = _c; }
+          types::t_unsigned (*ptr_to_rng)(const types::t_unsigned& )
+              = &eo::random<types::t_unsigned>;
+          typedef typename Crystal::Structure::t_Atoms::iterator t_iatom;
+          typedef typename t_Object :: t_Container :: const_iterator t_ivar;
+          t_iatom i_atom = _structure.atoms.begin();
+          t_iatom i_atom_end = _structure.atoms.end();
+          t_iatom i_atom_begin( i_atom );
+          t_ivar i_var = _object.Container().begin();
+          __DODEBUGCODE( t_ivar i_var_end = _object.Container().end(); )
+          types::t_real last_depth( Translate<T_OBJECT>::layerdepth( i_atom->pos ) );
+          types::t_unsigned layer_size(0);
+          for( ; i_atom != i_atom_end __DODEBUGCODE( and i_var != i_var_end ); )
+          {
+            types::t_real new_depth;
+            do
+            {
+              ++layer_size;
+              ++i_atom;
+              new_depth = Translate<T_OBJECT>::layerdepth( i_atom->pos );
+            }
+            while( Fuzzy::eq( last_depth, new_depth ) and i_atom != i_atom_end );
 
-            //! prints using callback.
-            static std::ostream& print( std::ostream& _s, const t_Object &_o ) 
-              { return _o.callback_( _s, _o ); } 
-       
-          protected:
-            //! The callback object.
-            static boost::function<std::ostream&(std::ostream&, const t_Object&) > callback_;
-        };
-      // A static object to hold a dynamic callback for printing.
-      template< class T_OBJECT >
-        boost::function< std::ostream& (std::ostream&, const T_OBJECT&) > 
-          PrintCallBack<T_OBJECT> :: callback_;
-      //! Connects an object to a dynamic print function.
-      template< class T_OBJECT >
-        typename boost::enable_if
-              < 
-                boost::is_base_of< details::isPCallB, T_OBJECT >,
-                std::ostream
-              > :: type & operator<<( std::ostream& _s, const T_OBJECT& _o )
-        { return _o.PrintCallBack<T_OBJECT>::print( _s, _o ); }
-      //! Policy to assign a printing callback to an objects.
-      template< class T_OBJECT >
-        class PrintSignal : public details::isPCallsB
-        {
-          public:
-            //! Type of the object.
-            typedef T_OBJECT t_Object;
-       
-            //! Connects a functor/function to the signal.
-            static std::ostream& print( std::ostream& _stream, const t_Object& _o )
-              { signal_( _stream, _o ); return _stream; }
+            // New layer has been reached
+            // Creates an array with approximate concentration, shuffles, then
+            // assigns to atoms.
+            const bool is_positive( *i_var > 0 );
+            const bool is_negative(not is_positive);
+            const types::t_real nb_layers_real
+            (
+              is_positive ? ( 1e0 - (*i_var) ) * 0.5e0 * types::t_real( layer_size ):
+                            ( 1e0 + (*i_var) ) * 0.5e0 * types::t_real( layer_size )
+            );
+            const size_t nb_layers_size_t( nb_layers_real );
+            std::vector<bool> arrangment(layer_size,  is_positive );
+            std::fill
+            ( 
+              arrangment.begin(),
+              arrangment.begin() + nb_layers_size_t,
+              is_negative
+            );
+            std::random_shuffle( arrangment.begin(), arrangment.end(), ptr_to_rng );
+            std::vector<bool> :: const_iterator i_bool = arrangment.end(); 
+            for(; i_atom_begin != i_atom; ++i_atom_begin, ++i_bool )
+              i_atom_begin->type = *i_bool ? 1e0: -1e0;
 
-            //! Connects a functor/function to the signal.
-            template< class T_CONNECT >
-              static void connect_print( T_CONNECT _c ) { signal_.connect( _c ); }
-       
-          protected:
-            //! Type of the signal.
-            typedef boost::signal< void(std::ostream&, const t_Object&)> t_Signal; 
-            //! The callback object.
-            static t_Signal signal_;
-        };
-      // A static object to hold a dynamic callback for printing.
-      template< class T_OBJECT >
-        boost::signal< void (std::ostream&, const T_OBJECT&) > 
-          PrintSignal<T_OBJECT> :: signal_;
-      //! Connects an object to a dynamic print function.
-      template< class T_OBJECT >
-        typename boost::enable_if
-              < 
-                boost::is_base_of< details::isPCallsB, T_OBJECT >,
-                std::ostream
-              > :: type & operator<<( std::ostream& _s, const T_OBJECT& _o )
-        { return _o.PrintSignal<T_OBJECT>::print( _s, _o ); }
-
-
-
-      //! \brief Policy to connect any number of callback functions assigning
-      //!        values from an object to a GA quantity/raw fitness.
-      template< class T_OBJECT, class T_QUANTITIES >
-        class AssignSignal
-        {
-          public:
-            //! Type of the object.
-            typedef T_OBJECT t_Object;
-            //! Type of the quantities.
-            typedef T_QUANTITIES t_Quantities;
-
-            //! Constructor.
-            AssignSignal() : signal_( new t_Signal ) {}
-            //! Copy Constructor.
-            AssignSignal( const AssignSignal & _c ) : signal_( _c.signal_ ) {}
-       
-            //! Connects a functor/function to the signal.
-            void assign( const t_Object& _o, t_Quantities &_q ) const
-              { _q.clear(); return (*signal_)( _o, _q ); }
-       
-            //! Connects a functor/function to the signal.
-            template< class T_CONNECT >
-              void connect( T_CONNECT _c ) { signal_->connect( _c ); }
-       
-          protected:
-            //! Type of the signal.
-            typedef boost::signal< void(const t_Object&, t_Quantities&)> t_Signal; 
-            //! \brief The signal callback container.
-            //! \details This is a boost shared pointer, and as such, signal_ is
-            //!          copyable.
-            boost::shared_ptr< t_Signal > signal_;
-        };
-
-    }
-  }
+            // Reinitializing layer discovery.
+            layer_size = 0;
+            last_depth = new_depth;
+            i_atom_begin = i_atom;
+            ++i_var;
+          }
+          __ASSERT( i_atom != i_atom_end, "Structure smaller than object.\n" )
+          __ASSERT( i_var != i_var_end, "Object smaller than structure.\n" )
+        }
+    } // namespace AlloyLayers
+  } // namespace GA
 } // namespace LaDa
-#include "policies.impl.h"
 
 #endif
