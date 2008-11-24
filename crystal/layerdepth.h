@@ -13,6 +13,7 @@
 
 #include <opt/debug.h>
 #include <opt/fuzzy.h>
+#include <boost/tuple/tuple.hpp>
 
 namespace LaDa
 {
@@ -45,13 +46,27 @@ namespace LaDa
                    : a0( _c.a0 ), a1( _c.a1 ), a2( _c.a2 )
                      __DODEBUGCODE( __COMMA__ isset( _c.isset ) ) {}
         //! \brief Constructor and Initializer
+        //! \param _mat Depth::a0 is set to this vector.
+        //!             Depth::a1 and Depth::a2 are constructed.
+        LayerDepth   ( const atat::rVector3d &_vec ) { set( _vec); }
+        //! \brief Constructor and Initializer
         //! \param _mat Depth::a0 is set to the (normalized) first column of this matrix,
         //!             Depth::a1 to the second, and Depth::a2 to the third.
         LayerDepth   ( const atat::rMatrix3d &_mat ) { set( _mat); }
+        //! \brief Constructor and Initializer
+        //! \param _mat Depth::a0 is set to this vector.
+        //!             Depth::a1 and Depth::a2 are constructed.
+        LayerDepth   ( const boost::tuple<types::t_real, types::t_real, types::t_real> &_vec ) 
+         { set( _vec ); }
         //! Destructor.
         virtual ~LayerDepth() {}
         //! Sets reference vectors.
         void set( const atat::rMatrix3d &_mat );
+        //! Sets and constructs reference vectors.
+        void set( const atat::rVector3d &_mat );
+        //! Sets and constructs reference vectors.
+        void set( const boost::tuple<types::t_real, types::t_real, types::t_real> &_vec ) 
+          { set( atat::rVector3d( _vec.get<0>(), _vec.get<1>(), _vec.get<2>() ) ); }
     
         //! Strict weak ordering operator.
         bool operator()( const atat::rVector3d& _first,

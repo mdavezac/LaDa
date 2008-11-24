@@ -183,8 +183,8 @@ namespace LaDa
       atat::rVector3d centralpos = (!t_VA::structure.cell) * center.Origin().pos;
 
       // then goes over bonds and prints pseudos
-      Atomic_Center :: const_iterator i_bond = center.begin();
-      Atomic_Center :: const_iterator i_bond_end = center.end();
+      AtomicCenter :: const_iterator i_bond = center.begin();
+      AtomicCenter :: const_iterator i_bond_end = center.end();
       for(; i_bond != i_bond_end; ++i_bond )
       { 
         t_VA::structure.lattice->convert_Atom_to_StrAtom( structure0.atoms[i_bond->get_index()],

@@ -24,7 +24,7 @@ namespace LaDa
 {
   namespace Vff
   { 
-    Atomic_Center :: Atomic_Center  ( Crystal::Structure &_str, t_Atom &_e,
+    AtomicCenter :: AtomicCenter  ( Crystal::Structure &_str, t_Atom &_e,
                                       types::t_unsigned _i )
                                    : origin(&_e), structure(&_str)
     {
@@ -33,7 +33,7 @@ namespace LaDa
        index = _i;
     }
 
-    types::t_unsigned  Atomic_Center :: kind() const
+    types::t_unsigned  AtomicCenter :: kind() const
     {
       if ( is_site_one )
         return structure->lattice->convert_real_to_type_index( 0, origin->type );
@@ -42,7 +42,7 @@ namespace LaDa
       return 1 + structure->lattice->convert_real_to_type_index( 1, origin->type );
     }
 
-    types::t_unsigned  Atomic_Center :: bond_kind( const Atomic_Center &_bond ) const
+    types::t_unsigned  AtomicCenter :: bond_kind( const AtomicCenter &_bond ) const
     {
       if ( is_site_one ) 
         return  structure->lattice->convert_real_to_type_index( 1, _bond.origin->type );
@@ -51,7 +51,7 @@ namespace LaDa
       return 0; 
     }
 
-    types::t_int Atomic_Center :: add_bond( t_BondRefd _bond, 
+    types::t_int AtomicCenter :: add_bond( t_BondRefd _bond, 
                                             const types::t_real _cutoff ) 
     {
       bool found_bond = false;
@@ -87,7 +87,7 @@ namespace LaDa
       return found_bond ? (types::t_int) bonds.size() : -1; // not a bond
     }
 #   ifdef _LADADEBUG
-      void Atomic_Center :: const_iterator :: check() const
+      void AtomicCenter :: const_iterator :: check() const
       {
         __ASSERT(not parent,
                  "Pointer to parent atom is invalid.\n")
@@ -118,7 +118,7 @@ namespace LaDa
                      "The bond iterator and the do_translate "
                   << "iterator are out of sync.\n")
       }
-      void Atomic_Center :: const_iterator :: check_valid() const
+      void AtomicCenter :: const_iterator :: check_valid() const
       {
         check();
         __ASSERT( i_bond == parent->bonds.end(),

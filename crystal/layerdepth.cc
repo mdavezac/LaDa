@@ -14,7 +14,6 @@ namespace LaDa
   namespace Crystal 
   {
 
-     //! Sets reference vectors.
      void LayerDepth :: set( const atat::rMatrix3d &_mat )
      {
        a0 = 1e0 / atat::norm2( _mat.get_column(0) ) * _mat.get_column(0);
@@ -22,6 +21,23 @@ namespace LaDa
        a2 = 1e0 / atat::norm2( _mat.get_column(2) ) * _mat.get_column(2);
        __DODEBUGCODE( isset = true; )
      } 
+
+     void LayerDepth :: set( const atat::rVector3d& _vec )
+     {
+        a0 = 1e0 / atat::norm2( _vec ) * _vec ;
+        
+        // First, lets create an orthonormal vector to _vec
+        a1 = Fuzzy::eq( a0(0), 0e0 ) ? 
+               ( Fuzzy::eq( a0(1), 0e0 ) ? 
+                  atat::rVector3d(1, 0, 0):
+                  atat::rVector3d(0, a0(2), -a0(1) )  ): 
+               atat::rVector3d( -a0(2) -a0(1), a0(0), a0(0) );
+
+        // Then, lets create another... 
+        a2( 0 ) = a0(1) * a1(2) - a0(2) * a1(1);
+        a2( 1 ) = a0(2) * a1(0) - a0(0) * a1(2);
+        a2( 2 ) = a0(0) * a1(1) - a0(1) * a1(0);
+     }
     
      //! Strict weak ordering operator.
      bool LayerDepth :: operator()( const atat::rVector3d& _first, 

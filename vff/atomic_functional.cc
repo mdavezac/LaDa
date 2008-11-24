@@ -41,40 +41,40 @@ namespace LaDa
 
     // constants obtained from bc -l with scale = 64
     const types::t_real // 2*sqrt(3)
-      Atomic_Functional :: twos3 = 3.4641016151377545870548926830117447338856105076207612561116139588;
+      AtomicFunctional :: twos3 = 3.4641016151377545870548926830117447338856105076207612561116139588;
     const types::t_real // 1 / 16
-      Atomic_Functional :: one16 = 0.0625;
+      AtomicFunctional :: one16 = 0.0625;
     const types::t_real  // sqrt(3) / 8
-      Atomic_Functional :: s3o160 = 0.2165063509461096616909307926882340458678506567262975785069758724;
+      AtomicFunctional :: s3o160 = 0.2165063509461096616909307926882340458678506567262975785069758724;
     const types::t_real  // 1 / 640
-      Atomic_Functional :: one640 = 0.0015625;
+      AtomicFunctional :: one640 = 0.0015625;
     const types::t_real  // 3 / 8
-      Atomic_Functional :: three8 = 0.375;
+      AtomicFunctional :: three8 = 0.375;
     const  types::t_real // 3 * sqrt(3) / 8
-      Atomic_Functional :: s33o8  = 0.6495190528383289850727923780647021376035519701788927355209276172;
+      AtomicFunctional :: s33o8  = 0.6495190528383289850727923780647021376035519701788927355209276172;
     const  types::t_real // 3 * sqrt(3) / 16
-      Atomic_Functional :: s33o16 = 0.3247595264191644925363961890323510688017759850894463677604638086;
+      AtomicFunctional :: s33o16 = 0.3247595264191644925363961890323510688017759850894463677604638086;
     const  types::t_real // 3 / 16
-      Atomic_Functional :: thre16 = 0.1875; 
+      AtomicFunctional :: thre16 = 0.1875; 
     const  types::t_real // 3 / 32
-      Atomic_Functional :: thre32 = 0.09375;
+      AtomicFunctional :: thre32 = 0.09375;
     const  types::t_real // 3/128 *sqrt(3) 
-      Atomic_Functional :: s33128 = 0.0405949408023955615670495236290438836002219981361807959700579760;
+      AtomicFunctional :: s33128 = 0.0405949408023955615670495236290438836002219981361807959700579760;
     const  types::t_real // 3/256 *sqrt(3) 
-      Atomic_Functional :: s33256 = 0.0202974704011977807835247618145219418001109990680903979850289880;
+      AtomicFunctional :: s33256 = 0.0202974704011977807835247618145219418001109990680903979850289880;
     const  types::t_real                   
-      Atomic_Functional :: no1280 = 0.00703125;
+      AtomicFunctional :: no1280 = 0.00703125;
     const  types::t_real                   
-      Atomic_Functional :: no2560 = 0.003515625;
+      AtomicFunctional :: no2560 = 0.003515625;
 
-    types::t_real Atomic_Functional :: evaluate( const Atomic_Center &_center ) const
+    types::t_real AtomicFunctional :: evaluate( const AtomicCenter &_center ) const
     {
       types :: t_real energy = 0;
       types :: t_real scale2 = structure->scale * structure->scale;
 
-      Atomic_Center :: const_iterator i_bond_begin  = _center.begin();
-      Atomic_Center :: const_iterator i_bond_end    = _center.end();
-      Atomic_Center :: const_iterator i_bond ( i_bond_begin );
+      AtomicCenter :: const_iterator i_bond_begin  = _center.begin();
+      AtomicCenter :: const_iterator i_bond_end    = _center.end();
+      AtomicCenter :: const_iterator i_bond ( i_bond_begin );
       for( ; i_bond != i_bond_end; ++i_bond )
       {
         // Bond stretch 
@@ -97,7 +97,7 @@ namespace LaDa
         } 
 
         // Three body terms
-        Atomic_Center :: const_iterator i_angle ( i_bond_begin );
+        AtomicCenter :: const_iterator i_angle ( i_bond_begin );
         for (; i_angle != i_bond_end; ++i_angle )
         {
           if ( i_angle == i_bond ) continue;
@@ -131,8 +131,8 @@ namespace LaDa
       return energy * three8;
     }
 
-    types::t_real Atomic_Functional
-       :: evaluate_with_gradient( Atomic_Center &_center,
+    types::t_real AtomicFunctional
+       :: evaluate_with_gradient( AtomicCenter &_center,
                                   const atat::rMatrix3d &_strain,
                                   atat::rMatrix3d &_stress,
                                   const atat::rMatrix3d &_K0 ) const
@@ -140,9 +140,9 @@ namespace LaDa
       types :: t_real energy = 0;
       types :: t_real scale2 = structure->scale * structure->scale;
 
-      Atomic_Center :: const_iterator i_bond_begin  = _center.begin();
-      Atomic_Center :: const_iterator i_bond_end    = _center.end();
-      Atomic_Center :: const_iterator i_bond ( i_bond_begin );
+      AtomicCenter :: const_iterator i_bond_begin  = _center.begin();
+      AtomicCenter :: const_iterator i_bond_end    = _center.end();
+      AtomicCenter :: const_iterator i_bond ( i_bond_begin );
       for( ; i_bond != i_bond_end; ++i_bond )
       {
         // Bond stretch 
@@ -185,7 +185,7 @@ namespace LaDa
         }
 
         // Three body terms
-        Atomic_Center :: const_iterator i_angle ( i_bond_begin );
+        AtomicCenter :: const_iterator i_angle ( i_bond_begin );
         for (types::t_int i=0; i_angle != i_bond_end; ++i, ++i_angle )
           if ( i_angle != i_bond )
           {
@@ -265,9 +265,8 @@ namespace LaDa
       return energy * three8;
     }
 
-    types::t_real Atomic_Functional
-      :: MicroStrain( const Atomic_Center &_center, 
-                      const Crystal::Structure &_str0 ) const 
+    types::t_real AtomicFunctional :: MicroStrain( const AtomicCenter &_center, 
+                                                   const Crystal::Structure &_str0 ) const 
     {
       if ( _center.size() != 4 )
       { 
@@ -283,7 +282,7 @@ namespace LaDa
       atat::rMatrix3d tetra0, dtetra;
       atat::rVector3d R0, R1, dR0, dR1;
 
-      Atomic_Center :: const_iterator i_bond  = _center.begin();
+      AtomicCenter :: const_iterator i_bond  = _center.begin();
 
       // first vector
       i_bond.vector(dR0); 
@@ -312,7 +311,7 @@ namespace LaDa
       return atat::trace( dtetra * (!tetra0) ) / aeq * d0eq * _str0.scale - 3.0;
     }
 
-    void Atomic_Functional :: print_out( std::ostream &stream ) const
+    void AtomicFunctional :: print_out( std::ostream &stream ) const
     {
       stream << "Site " << specie << " " << site << std::endl << "  ";
       std::vector<types::t_real> :: const_iterator i_var = lengths.begin();
@@ -342,7 +341,7 @@ namespace LaDa
       stream << std::endl;
     }
 
-    bool Atomic_Functional :: load( const TiXmlElement& _node,
+    bool AtomicFunctional :: load( const TiXmlElement& _node,
                                     const types::t_unsigned &_site_index,
                                     const types::t_unsigned &_type_index,
                                     const Crystal::Lattice::t_Site &_othersite,

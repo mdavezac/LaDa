@@ -24,33 +24,17 @@
 
 namespace LaDa
 {
-  //! \brief Reimplements the Valence Force Field %Functional in c++
-  //! \details Vff, or Valence Force Field functional, is an empirical functional which
-  //! attempts to model the strain energy of a material from at most three-body
-  //! interactions. The there body interactions which are considered are
-  //! bond-stretching, change in bond-angles, and a combination of these two.
-  //! 
-  //! The implementation relies on a body-centered paradigm. In other words,
-  //! four classes have been created:
-  //!   - Vff::Functional is wrapper class and interface to Vff
-  //!   - Vff::Atomic_Center represent a single atom and lists its first neighbor relationships
-  //!   - Vff::Atomic_Center::const_iterator allows coders to travel
-  //!   through a collection of Vff::Atomic_Centera along first neighbor
-  //!   relationships.
-  //!   - Vff::Atomic_Functional computes the strain energy of one single atom, eg
-  //!   all three body terms in which a particular atom takes part.
-  //!   .
   namespace Vff
   {
     //! \cond
-    class Atomic_Center;
+    class AtomicCenter;
     //! \endcond
 
     //! \brief An atom centered functional
-    //! \details Atomic_Functional will compute the energy and strain resulting from
+    //! \details AtomicFunctional will compute the energy and strain resulting from
     //! bond-stretching, angle warping, and bond-angle-warping, eg from all
-    //! first-neighbor two and three body interactions, on an Vff::Atomic_Center atom.
-    class Atomic_Functional 
+    //! first-neighbor two and three body interactions, on an Vff::AtomicCenter atom.
+    class AtomicFunctional 
     {
       //! The type of the atom  
       typedef Crystal::Structure::t_Atom  t_Atom;
@@ -70,9 +54,9 @@ namespace LaDa
 
       protected:
         std::string specie;                  //!< atomic type as a string
-        Crystal :: Structure *structure; //!< structure to which the Atomic_Functional belongs
-        types::t_unsigned site;           //!< site number of Atomic_Center in Crystal::lattice
-        types::t_unsigned type;           //!< atomic type of Atomic_Center
+        Crystal :: Structure *structure; //!< structure to which the AtomicFunctional belongs
+        types::t_unsigned site;           //!< site number of AtomicCenter in Crystal::lattice
+        types::t_unsigned type;           //!< atomic type of AtomicCenter
         std::vector< types::t_real > lengths;  //!< equilibrium bond lengths
         std::vector< types::t_real > alphas;   //!< bond stretching parameters
         std::vector< types::t_real > betas;    //!< angle deformation parameters
@@ -81,42 +65,42 @@ namespace LaDa
         
       public:
         //! Constructore.
-        Atomic_Functional () : structure( NULL ) {};
+        AtomicFunctional () : structure( NULL ) {};
         //! \brief Constructor and Initializer
         //! \param _str atomic type as a string
-        //! \param _struct structure to which Atomic_Center belongs
-        //! \param _site site number of Atomic_Center
-        //! \param _type type number of Atomic_Center
-        Atomic_Functional   ( std::string _str, Crystal::Structure &_struct, 
+        //! \param _struct structure to which AtomicCenter belongs
+        //! \param _site site number of AtomicCenter
+        //! \param _type type number of AtomicCenter
+        AtomicFunctional   ( std::string _str, Crystal::Structure &_struct, 
                               types::t_unsigned _site, 
                               types::t_unsigned _type )
                           : structure(&_struct), site(_site), type(_type) {}
         //! Copy Constructor
-        Atomic_Functional   ( const Atomic_Functional &_a )
+        AtomicFunctional   ( const AtomicFunctional &_a )
                           : specie(_a.specie), structure(_a.structure), site(_a.site), type(_a.type),
                             lengths(_a.lengths), alphas(_a.alphas),
                             betas(_a.betas), gammas(_a.gammas), sigmas(_a.sigmas) {}
         
-        //! \brief Evaluate strain energy for Atomic_Center _center
+        //! \brief Evaluate strain energy for AtomicCenter _center
         //! \details returns strain energy 
         //! \param _center center for which to evaluate energy
         //! \sa function::Base, function::Base::evaluate()
-        types::t_real evaluate( const Atomic_Center &_center ) const;
-        //! \brief Evaluate strain energy and gradients for Atomic_Center _center
+        types::t_real evaluate( const AtomicCenter &_center ) const;
+        //! \brief Evaluate strain energy and gradients for AtomicCenter _center
         //! \details returns strain energy, and computes stress
         //! \param _center center for which to evaluate energy
-        //! \param _strain to which Atomic_Functional::structure is submitted
+        //! \param _strain to which AtomicFunctional::structure is submitted
         //! \param _stress on _center resulting from _strain
         //! \param _K0 displacement resulting from _strain and w.r.t original unit-cell
         //! \sa function::Base, function::Base::evaluate_with_gradient()
-        types::t_real evaluate_with_gradient( Atomic_Center &_center,
+        types::t_real evaluate_with_gradient( AtomicCenter &_center,
                                               const atat::rMatrix3d &_strain,
                                               atat::rMatrix3d &_stress,
                                               const atat::rMatrix3d &_K0 ) const;
         //! \brief computes the trace of the microscopic strain on an atomic center
         //!  structure0 and the atomic centers are expected to be related 
         //! \details To be used for pescan
-        types::t_real MicroStrain( const Atomic_Center &_center, 
+        types::t_real MicroStrain( const AtomicCenter &_center, 
                                    const Crystal::Structure &_str0 ) const;
 
         //! prints out all parameters

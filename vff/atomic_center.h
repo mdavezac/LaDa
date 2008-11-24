@@ -21,22 +21,6 @@
 
 namespace LaDa
 {
-  //! \brief Reimplements the Valence Force Field %Functional in c++
-  //! \details Vff, or Valence Force Field functional, is an empirical functional which
-  //! attempts to model the strain energy of a material from at most three-body
-  //! interactions. The there body interactions which are considered are
-  //! bond-stretching, change in bond-angles, and a combination of these two.
-  //! 
-  //! The implementation relies on a body-centered paradigm. In other words,
-  //! four classes have been created:
-  //!   - Vff::Functional is wrapper class and interface to Vff
-  //!   - Vff::Atomic_Center represent a single atom and lists its first neighbor relationships
-  //!   - Vff::Atomic_Center::const_iterator allows coders to travel
-  //!   through a collection of Vff::Atomic_Centera along first neighbor
-  //!   relationships.
-  //!   - Vff::Atomic_Functional computes the strain energy of one single atom, eg
-  //!   all three body terms in which a particular atom takes part.
-  //!   .
   namespace Vff
   {
 
@@ -45,19 +29,19 @@ namespace LaDa
     //! \brief Represents a single Structure::t_Atom and its first neighbor relationships
     //! \details This class is meant to be used in conjunction with a list of
     //! Crystal::Structure::t_Atom, most likely in a Crystal::Structure. It contains a
-    //! pointer, Atomic_Center::origin, which points a single Crystal::Structure::t_Atom. The
+    //! pointer, AtomicCenter::origin, which points a single Crystal::Structure::t_Atom. The
     //! first neighbor bonds of this atom are collected as vector of pointers to
-    //! Vff::Atomic_Center objects in Atomic_Center::bonds. Since we are concerned
-    //! with periodic structures, Atomic_Center::translations and
-    //! Atomic_Center::bool record which periodic image of an atom
-    //! Atomic_Center::bonds refer to.
-    class Atomic_Center
+    //! Vff::AtomicCenter objects in AtomicCenter::bonds. Since we are concerned
+    //! with periodic structures, AtomicCenter::translations and
+    //! AtomicCenter::bool record which periodic image of an atom
+    //! AtomicCenter::bonds refer to.
+    class AtomicCenter
     {
       friend class Functional;
       //! The type of the atom  
       typedef Crystal::Structure::t_Atom  t_Atom;
       //! The container of atomic centers. Defined here once and for all.
-      typedef std::vector<Atomic_Center> t_Centers;
+      typedef std::vector<AtomicCenter> t_Centers;
       //! Type of pointer/iterator to the atomic center on the other side of the bond
       typedef t_Centers :: iterator t_Bond;
       //! A reference to the of pointer/iterator to the atomic center on the other side of the bond
@@ -73,36 +57,36 @@ namespace LaDa
         
       protected:
         t_Atom *origin; //!< The atom this object is addressing
-        //! \brief Other Vff::Atomic_Center objects with which this one is in a bond-relationship
-        //! \details Via bonds, a collection of Atomic_Center can be made into a tree,
+        //! \brief Other Vff::AtomicCenter objects with which this one is in a bond-relationship
+        //! \details Via bonds, a collection of AtomicCenter can be made into a tree,
         //! which can be travelled linearly, or through the first neighbor bonds,
-        //! using Atomic_Center::const_iterator.
-        //! \sa Atomic_Center::const_iterator, Vff::Functional::construct_centers, 
+        //! using AtomicCenter::const_iterator.
+        //! \sa AtomicCenter::const_iterator, Vff::Functional::construct_centers, 
         //!     Vff::functional::initialize_centers
         std::vector< t_Bond > bonds; 
         //! \brief Allow to relate origin pointer of Atomic_center::bonds to the correct
         //! periodic image with which the bond is made
         std::vector< atat::rVector3d > translations;
         //! \brief A switch to say wether a bond is made directely or with a periodic
-        //! image of an Atomic_Center
+        //! image of an AtomicCenter
         std::vector< bool > do_translates;
         //! Crystal::Structure on which the Vff  functional is applied.
         Crystal :: Structure *structure;
         bool is_site_one; //!< helps determine the kind of atom this is
         bool is_site_one_two_species; //!< helps determine the kind of atom this is
         atat::rVector3d gradient; //!< place holder to compute gradient
-        //! atomic index in Crystal::Structure::t_Atoms collection of Atomic_Center::structure
+        //! atomic index in Crystal::Structure::t_Atoms collection of AtomicCenter::structure
         types::t_unsigned index;
 
       public:
         //! \brief Default Constructor. 
         //! \param _str structure in which \a _e can be found
-        //! \param _e atom to which this Atomic_Center relates
+        //! \param _e atom to which this AtomicCenter relates
         //! \param _i index of _i in _str.atoms collection. Usefull for mpi processing
-        Atomic_Center ( Crystal::Structure &_str, t_Atom &_e, types::t_unsigned _i);
+        AtomicCenter ( Crystal::Structure &_str, t_Atom &_e, types::t_unsigned _i);
         //! \brief Copy Constructor
-        //! \param[in] _c Atomic_Center object to copy
-        Atomic_Center   ( const Atomic_Center &_c )
+        //! \param[in] _c AtomicCenter object to copy
+        AtomicCenter   ( const AtomicCenter &_c )
                       : origin(_c.origin), bonds(_c.bonds), translations(_c.translations), 
                         do_translates(_c.do_translates), structure(_c.structure),
                         is_site_one(_c.is_site_one),
@@ -117,17 +101,17 @@ namespace LaDa
         //! Vff::Functional
         types::t_unsigned kind() const;
 
-        //! \brief Adds _bond to  Atomic_Center::bonds if it is in first neighbor relationship
+        //! \brief Adds _bond to  AtomicCenter::bonds if it is in first neighbor relationship
         //! \details This function returns -1 if \a _e is not a bond, and returns the
         //! number of bounds if it is. Note that poeriodic images of _bond are checked and 
-        //! Atomic_Center::translations and Atomic_Center::do_translate are set accordingly.
-        //! \param _bond Atomic_Center object for which first neighbor relationship is checked
+        //! AtomicCenter::translations and AtomicCenter::do_translate are set accordingly.
+        //! \param _bond AtomicCenter object for which first neighbor relationship is checked
         //! \param _cutoff distance below which first neighborness is implied
         types::t_int add_bond( t_BondRefd _bond, const types::t_real _cutoff  );
 
-        //! Returns a Atomic_Center::const_iterator object pointing to the first bond
+        //! Returns a AtomicCenter::const_iterator object pointing to the first bond
         const_iterator begin() const;
-        //! Returns a Atomic_Center::const_iterator object pointing to the last bond
+        //! Returns a AtomicCenter::const_iterator object pointing to the last bond
         const_iterator end() const;
         //! Returns the number of bonds
         types::t_unsigned size() const
@@ -165,43 +149,43 @@ namespace LaDa
         //! Sets the gradient place-holder to the (0,0,0) vector
         void reset_gradient()
           { gradient[0] = 0; gradient[1] = 0; gradient[2] = 0; }
-        //! Returns true if Atomic_Center is a site 1 in this lattice type
+        //! Returns true if AtomicCenter is a site 1 in this lattice type
         bool site_one() const
           { return is_site_one; }
-        //! Returns the index of this Atomic_Center in Atomic_Center::structure
+        //! Returns the index of this AtomicCenter in AtomicCenter::structure
         types::t_unsigned get_index() const
           { return index; }
 
       protected:
-        //! \brief Returns the type of bond between this Atomic_Center and _bond
+        //! \brief Returns the type of bond between this AtomicCenter and _bond
         //! \param _bond If this is not a bond, function will return result, not error!!
-        //! \sa Atomic_Center::add_bond(), Atomic_Functional::add_bond(), Functional::Load()
-        types::t_unsigned bond_kind( const Atomic_Center &_bond ) const;
+        //! \sa AtomicCenter::add_bond(), Atomic_Functional::add_bond(), Functional::Load()
+        types::t_unsigned bond_kind( const AtomicCenter &_bond ) const;
     };
 
-    //! \brief Iterator to travel along the bonds of an Atomic_Center
-    //! \details Once a mesh of Atomic_Center objects is constructed, with the bonds
+    //! \brief Iterator to travel along the bonds of an AtomicCenter
+    //! \details Once a mesh of AtomicCenter objects is constructed, with the bonds
     //! forming the links in the mesh, an iterator is needed which will allow us to
-    //! travel the mesh in any direction. Atomic_Center::const_iterator is built
-    //! to iterates through the bonds of an Atomic_Center object. From there, one
+    //! travel the mesh in any direction. AtomicCenter::const_iterator is built
+    //! to iterates through the bonds of an AtomicCenter object. From there, one
     //! can easily travel throughout the mesh via first neighbor relationships.
     //! Dereferenced functions are performed by the end point of the bond.
     //! Underederenced functions are performed by the origin of the bond.
-    class Atomic_Center :: const_iterator
+    class AtomicCenter :: const_iterator
     {
       //! The type of the atom  
       typedef Crystal::Structure::t_Atom  t_Atom;
       //! Type of pointer/iterator to the atomic center on the other side of the bond
-      typedef Atomic_Center::t_Bond t_Bond;
+      typedef AtomicCenter::t_Bond t_Bond;
       //! A reference to the of pointer/iterator to the atomic center on the other side of the bond
-      typedef Atomic_Center::t_BondRefd t_BondRefd;
+      typedef AtomicCenter::t_BondRefd t_BondRefd;
       //! \brief A constant reference to the of pointer/iterator to the atomic
       //         center on the other side of the bond
-      typedef Atomic_Center::const_t_BondRefd const_t_BondRefd;
+      typedef AtomicCenter::const_t_BondRefd const_t_BondRefd;
 
       protected:
         //! current origin of the bonds
-        const Atomic_Center *parent;
+        const AtomicCenter *parent;
         //! current bond being iterated
         std::vector< t_Bond > :: const_iterator i_bond;
         //! tranlation, if current bond is an atomic image
@@ -218,7 +202,7 @@ namespace LaDa
         //!                   - on true, initializes to first bond
         //!                   - on false, initializes to last bond
         //!                   .
-        const_iterator   ( const Atomic_Center *_parent, bool _is_begin=true) 
+        const_iterator   ( const AtomicCenter *_parent, bool _is_begin=true) 
                        : parent(_parent)
         {
           if ( _is_begin )
@@ -265,11 +249,11 @@ namespace LaDa
         //! \param _i iterator agains which to check
         types::t_int operator -( const const_iterator &_i )
           { return _i.i_bond - i_bond; }
-        //! Dereferences the iterator: returns Atomic_Center to which bond points
-        Atomic_Center& operator *()  { return *(*i_bond); }
-        //! Dereferences the iterator: returns Atomic_Center to which bond points
-        const Atomic_Center& operator *() const { return *(*i_bond); }
-        //! Dereferences the iterator: returns Atomic_Center to which bond points
+        //! Dereferences the iterator: returns AtomicCenter to which bond points
+        AtomicCenter& operator *()  { return *(*i_bond); }
+        //! Dereferences the iterator: returns AtomicCenter to which bond points
+        const AtomicCenter& operator *() const { return *(*i_bond); }
+        //! Dereferences the iterator: returns AtomicCenter to which bond points
         const_t_BondRefd operator ->() const { return *i_bond; }
         //! Returns bond length squared
         types::t_real norm2() const
@@ -305,18 +289,18 @@ namespace LaDa
           return a * b;
         }
         //! \brief Returns the kind of bond this is
-        //! \see  Atomic_Center::bond_kind(), Atomic_Center::add_bond(),
+        //! \see  AtomicCenter::bond_kind(), AtomicCenter::add_bond(),
         //!       Atomic_Functional::add_bond(), Functional::Load() 
         types::t_unsigned kind() const
           { return parent->bond_kind( *(*i_bond) ); }
         //! \brief Returns the atom at the origin of range of bonds this iterator travels
-        //! \see Atomic_Center::const_iterator::parent 
+        //! \see AtomicCenter::const_iterator::parent 
         t_Atom& Origin()
           { return ((*i_bond)->Origin()); }
         //! \brief Translates a vector _v by periodic image of enpoint of bond
         //! \param _v vector to translate
         //! \param _cell unit-cell defining periodic image (can be different from
-        //! Atomic_Center::structure by amount of minimized strain)
+        //! AtomicCenter::structure by amount of minimized strain)
         void translate( atat::rVector3d &_v, const atat::rMatrix3d &_cell )
           { if( *i_do_translate ) _v += _cell * ( *i_translation ); }
         //! \brief Translates a vector _v by periodic image of enpoint of bond
@@ -329,9 +313,9 @@ namespace LaDa
 #       endif
     }; // end of const_iterator definition
 
-    inline Atomic_Center::const_iterator Atomic_Center :: begin() const
+    inline AtomicCenter::const_iterator AtomicCenter :: begin() const
       { return const_iterator( this ); }
-    inline Atomic_Center::const_iterator Atomic_Center :: end() const
+    inline AtomicCenter::const_iterator AtomicCenter :: end() const
       { return const_iterator( this, false ); }
 
   } // namespace vff 

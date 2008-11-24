@@ -33,7 +33,7 @@ namespace LaDa
       t_Atoms :: iterator i_atom_end = structure.atoms.end();
 
       for(types::t_unsigned index=0; i_atom != i_atom_end; ++i_atom, ++index )
-        centers.push_back( Atomic_Center( structure, *i_atom, index ) );
+        centers.push_back( AtomicCenter( structure, *i_atom, index ) );
 
       // Creates a list of closest neighbors
       std::vector< atat::rVector3d > neighbors;
@@ -118,7 +118,7 @@ namespace LaDa
       t_Atoms :: iterator i_atom_end = structure.atoms.end();
 
       for(types::t_unsigned index=0; i_atom != i_atom_end; ++i_atom, ++index )
-        centers.push_back( Atomic_Center( structure, *i_atom, index ) );
+        centers.push_back( AtomicCenter( structure, *i_atom, index ) );
 
       t_Centers :: iterator i_begin = centers.begin();
       t_Centers :: iterator i_end = centers.end();
@@ -419,8 +419,8 @@ namespace LaDa
 
         // finally goes over bonds and finds number of pseudos and their
         // weights
-        Atomic_Center :: const_iterator i_bond = i_center->begin();
-        Atomic_Center :: const_iterator i_bond_end = i_center->end();
+        AtomicCenter :: const_iterator i_bond = i_center->begin();
+        AtomicCenter :: const_iterator i_bond_end = i_center->end();
         typedef std::pair<types::t_unsigned, types::t_unsigned > t_pseudo;
         typedef std::vector< t_pseudo > t_pseudos;
         t_pseudos pseudos;

@@ -36,11 +36,11 @@ namespace LaDa
   //! The implementation relies on a body-centered paradigm. In other words,
   //! four classes have been created:
   //!   - Vff::Functional is wrapper class and interface to Vff
-  //!   - Vff::Atomic_Center represent a single atom and lists its first neighbor relationships
-  //!   - Vff::Atomic_Center::const_iterator allows coders to travel
+  //!   - Vff::AtomicCenter represent a single atom and lists its first neighbor relationships
+  //!   - Vff::AtomicCenter::const_iterator allows coders to travel
   //!   through a collection of Vff::Atomic_Centera along first neighbor
   //!   relationships.
-  //!   - Vff::Atomic_Functional computes the strain energy of one single atom, eg
+  //!   - Vff::AtomicFunctional computes the strain energy of one single atom, eg
   //!   all three body terms in which a particular atom takes part.
   //!   .
   namespace Vff
@@ -97,11 +97,11 @@ namespace LaDa
 
       protected:
         //! Type of the atomic centers
-        typedef Atomic_Center t_Center;  
+        typedef AtomicCenter t_Center;  
         //! Type of the container holding the atomic centers
         typedef t_Center :: t_Centers t_Centers;  
         //! Type of the container holding the atomic functionals
-        typedef std::vector< Atomic_Functional > t_AtomicFunctionals;  
+        typedef std::vector< AtomicFunctional > t_AtomicFunctionals;  
 
 
       protected:
@@ -110,7 +110,7 @@ namespace LaDa
         Crystal :: Structure structure0; //!< original structure,  needed for gradients
         //! length below which first-neighbor relationship is defined
         types::t_real bond_cutoff; 
-        //! \brief list of all Atomic_Center created from Functional::structure
+        //! \brief list of all AtomicCenter created from Functional::structure
         //! \details Space for the atomic centers are reserved in the
         //!          constructor. It is expected that the iterators will be valid
         //!          throughout the life of the functional, starting with a call
@@ -185,11 +185,11 @@ namespace LaDa
         //! \brief Prints atom.config type input to escan
         //! \param _f optional filename to which to direct the output
         void print_escan_input( const t_Path &_f = "atom.config") const;
-        //! \brief Constructs the mesh of Atomic_Center
+        //! \brief Constructs the mesh of AtomicCenter
         //! \details Newer version than Functional::initialize_centers, it works even if
         //! structure is slightly distorted.
         bool construct_centers();
-        //! \deprecated Constructs the mesh of Atomic_Center
+        //! \deprecated Constructs the mesh of AtomicCenter
         bool initialize_centers();
         //! Prints out all parameters
         void print_out( std::ostream &stream ) const;
@@ -272,7 +272,7 @@ namespace LaDa
     types::t_real Functional :: evaluate_with_gradient( t_grad_iterator const &_i_grad )
     {
       t_Type energy = 0;
-      std::for_each( centers.begin(), centers.end(), std::mem_fun_ref(&Atomic_Center::reset_gradient) );
+      std::for_each( centers.begin(), centers.end(), std::mem_fun_ref(&AtomicCenter::reset_gradient) );
 
       // unpacks variables into vff atomic_center and strain format
       unpack_variables(strain);
