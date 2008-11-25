@@ -32,10 +32,10 @@ namespace LaDa
 
     //! \brief reads a file and dumps it in a string.
     //! \details Works in mpi.
-    void read_file( boost::filesystem::path &_input, std::string& _result );
+    void read_file( const boost::filesystem::path &_input, std::string& _result );
     //! \brief reads an file and dumps it in a string.
     //! \details Works in mpi.
-    void read_xmlfile( boost::filesystem::path &_input, std::string& _result );
+    void read_xmlfile( const boost::filesystem::path &_input, std::string& _result );
 
     //! Constant attribute iterator.
     class const_AttributeIterator 

@@ -13,11 +13,12 @@
 #endif
 
 #include <tinyxml/tinyxml.h>
+
 #include <print/manip.h>
 #include <revision.h>
 #include <opt/bpo_macros.h>
 #include <opt/initial_path.h>
-
+#include <opt/tinyxml.h>
 
 #include "va.h"
 // #include "dipole_elements.h"
@@ -103,49 +104,16 @@ int main(int argc, char *argv[])
 //         "Allowable band degeneracy when computing dipole moments" )
         ( "diag", "Full diagonalization." )
 #     endif
-      ("check,c", po::value<std::string>(), "GA output filename." ) 
+//     ("check,c", po::value<std::string>(), "GA output filename." ) 
       ("donteval", "Whether to perform evaluation." );
   __BPO_GENERATE__()
   __BPO_MAP__ 
   __BPO_HELP_N_VERSION__
 
   const fs::path filename( vm["input"].as< std::string >() );
-  __DOASSERT( not fs::exists( filename ), filename << " does not exist.\n" );
-  __DOASSERT( not ( fs::is_regular( filename ) or fs::is_symlink( filename ) ),
-              filename << " is a not a valid file.\n" );
-  TiXmlDocument doc( filename.string() );
-  TiXmlHandle handle( &doc );
-  __ASSERT( not doc.LoadFile(), 
-               "error while opening input file " 
-            << filename << "\n" << doc.ErrorDesc() << "\n" )
 
   LaDa::Crystal::Structure structure;
   Eval evaluate(structure);
-  bool do_check( vm.count("check") > 0 );
-  fs::path checkfilename;
-  if( do_check ) checkfilename = vm["check"].as< std::string >();
-  else
-  { 
-    TiXmlElement *child = handle.FirstChild( "Job" )
-                                .FirstChild( "GA" )
-                                .FirstChild( "Filenames" )
-                                .Element();
-    for( ; child; child = child->NextSiblingElement("Filenames") )
-      if ( child->Attribute("save")  )
-      {
-        checkfilename = child->Attribute("save");
-        do_check = true;
-        break;
-      }
-  }
-  if( do_check )
-  {
-    if( not ( fs::is_regular( checkfilename ) or fs::is_symlink( checkfilename ) ) )
-    {
-      std::cerr << checkfilename << " is a not a valid file.\nIgnoring it.";
-      do_check = false;
-    } 
-  }
   evaluate.do_evaluate = vm.count( "donteval" ) == 0;
 // evaluate.compute_dipoles = vm.count("dipoles") != 0;
 // evaluate.degeneracy = vm["degeneracy"].as<LaDa::types::t_real>();
@@ -158,47 +126,41 @@ int main(int argc, char *argv[])
 //             << "\nWill " << ( evaluate.compute_dipoles ? " ": "not " ) 
 //             << "compute dipole moments."
               << "\n";
-    if( do_check ) std::cout << "Will check GA output structures from file "
-                             << checkfilename << "\n";
     if( not evaluate.do_evaluate ) 
       std::cout << "Will not perform evaluation.\n";
     std::cout << "\n\n";
   )
 
 
+  __DOASSERT( not fs::exists( filename ), filename << " does not exist.\n" );
+  __DOASSERT( not ( fs::is_regular( filename ) or fs::is_symlink( filename ) ),
+              filename << " is a not a valid file.\n" );
+
+  std::string input_filestream;
+  LaDa::opt::read_xmlfile( filename, input_filestream );
 
   boost::shared_ptr< LaDa::Crystal::Lattice >
-    lattice( LaDa::Crystal::read_lattice( filename, "" ) );
+    lattice( LaDa::Crystal::read_lattice( input_filestream ) );
   LaDa::Crystal::Structure::lattice = lattice.get();
 
+
+  TiXmlDocument doc;
+  TiXmlHandle handle( &doc );
+  doc.Parse( input_filestream.c_str() );
+
   TiXmlElement *child = handle.FirstChild( "Job" ).Element();
-  __DOASSERT( not evaluate.pescan.Load(*child),
+  __DOASSERT( not child, "Could not find node \"Job\" in " << filename << ".\n" )
+  __DOASSERT( not ( child and evaluate.pescan.Load(*child) ),
               "Error while reading pescan from input.\n" )
   __DIAGA( evaluate.pescan.BandGap().set_mpi( LaDa::mpi::main ); )
 
-  if ( do_check and checkfilename != filename )
-    __DOASSERT( not doc.LoadFile(checkfilename.string()),
-                "Could not loadfile " << checkfilename << "\n" )
 
-
-  bool do_check_results( false );
   TiXmlHandle docHandle( &doc ); 
   child = docHandle.FirstChild( "Restart" ).
                     FirstChild( "Results" ).
                     FirstChild( "optimum" ).
                     FirstChild( "Indivividual" ).
                     FirstChild( "Structure" ).Element();
-  if( child and evaluate( *child ) ) do_check_results = true;
-
-  child = docHandle.FirstChild( "Restart" ).
-                    FirstChild( "Results" ).
-                    FirstChild( "Individual").Element();
-  for(; child; child = child->NextSiblingElement("Individual" ) )
-  {
-    if ( not child->FirstChildElement("Structure") ) continue;
-    if ( not evaluate( *child ) ) do_check_results = true;
-  }
-  if( do_check_results ) return 0;
   child = handle.FirstChild( "Job" ).FirstChild( "Structure" ).Element();
   for(; child; child = child->NextSiblingElement("Structure" ) )
     evaluate( *child );

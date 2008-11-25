@@ -75,7 +75,7 @@ namespace LaDa
     }  // Functional :: find_node
 
 
-    void read_file( boost::filesystem::path &_input, std::string& _result )
+    void read_file( const boost::filesystem::path &_input, std::string& _result )
     {
       namespace bfs = boost::filesystem;
       __ROOTCODE
@@ -93,7 +93,7 @@ namespace LaDa
       )
       __MPICODE( boost::mpi::broadcast( *LaDa::mpi::main, _result, 0 ); )
     }
-    void read_xmlfile( boost::filesystem::path &_input, std::string& _result )
+    void read_xmlfile( const boost::filesystem::path &_input, std::string& _result )
     {
       __ROOTCODE
       ( 

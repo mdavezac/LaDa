@@ -24,6 +24,40 @@
       \param -h, --help prints out options
       \param --structure "filename" outputs the structure in xyz, xcrysden, and
              xml formats to filename.xyz, filename.xsf, and filename.xml respectively.
+      \param --direction "(a b c)" Epitaxial growth direction. By default,
+                         (a,b,c) is the first column of the unit-cell. If set
+                         by hand, (a, b, c) must have the correct periodicity. 
+    If the following is the input file:
+    \code
+      <?xml version="1.0" standalone="no" ?>
+      <Job>
+        <MPI pools=2 />
+         <Structure >
+             <Cell>
+                 <row x="1.5" y="0" z="0" />
+                 <row x="0.5" y="1" z="0" />
+                 <row x="0.0" y="0" z="1" />
+             </Cell>
+         </Structure>
+    
+         <Lattice scale="5.43">
+             <row x="0.0" y="0.5" z="0.5" />
+             <row x="0.5" y="0.0" z="0.5" />
+             <row x="0.5" y="0.5" z="0.0" />
+             <site x="0.25" y="0.25" z="0.25">
+                 <atom type="Ge" />
+             </site>
+             <site x="0.0" y="0.0" z="0.0">
+                 <atom type="Ge" />
+             </site>
+         </Lattice>
+      </Job>
+    \endcode
+    and (100) the requested growth direction, then the following call has the
+    correct periodicity and yield the expected 6 layers.
+    \code
+       alloylayers --direction "(1.5 0 0)" 
+    \endcode
    
     \section vffexe vff
     Prints out the energy, the strain tensor, and the minimized structure of

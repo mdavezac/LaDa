@@ -341,6 +341,25 @@ namespace LaDa
       return set.size();
     }
 
+    boost::shared_ptr< Crystal::Lattice >
+      read_lattice( const boost::filesystem::path &_fpath, 
+                    const boost::filesystem::path &_dpath )
+      { 
+        __TRYBEGIN
+        boost::filesystem::path filepath( _fpath );
+        if( not boost::filesystem::exists( filepath ) )
+          filepath = _dpath / _fpath;
+        __DOASSERT( not boost::filesystem::exists( filepath ), 
+                       "Could not find "<< _fpath 
+                    << " in current directory, nor in " <<  _dpath )
+
+        std::string input_filestream;
+        opt::read_xmlfile( filepath, input_filestream );
+        return read_lattice( input_filestream );
+        __TRYEND(, "Could not read lattice from input.\n" )
+      }
+
+
   } // namespace Crystal
 
 } // namespace LaDa

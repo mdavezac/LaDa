@@ -187,6 +187,7 @@ namespace LaDa
       // in _element or its child
     const TiXmlElement* Interface :: find_node (const TiXmlElement &_node )
     {
+      __TRYBEGIN
       const TiXmlElement *parent;
       std::string str;
 
@@ -206,6 +207,7 @@ namespace LaDa
       }
 
       return parent;
+      __TRYEND(, "Could find XML node for escan functional.\n")
     }
 
     bool Interface :: Load_ (const TiXmlElement &_node )
