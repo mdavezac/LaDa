@@ -187,23 +187,6 @@ namespace LaDa
       _pop.push_back(pure);
     } 
 
-    template<class T_INDIVIDUAL> inline GA::Taboo_Base<T_INDIVIDUAL>* 
-      Evaluator<T_INDIVIDUAL> :: LoadTaboo(const TiXmlElement &_el )
-      {
-        if ( concentration.single_c ) return NULL;
-        GA::xTaboo<t_Individual> *xtaboo =
-            new GA::xTaboo< t_Individual >( concentration );
-        if ( xtaboo and xtaboo->Load( _el ) )  return xtaboo;
-        if ( xtaboo ) delete xtaboo;
-        return NULL;
-      }
-
-    template<class T_INDIVIDUAL> 
-      inline bool Evaluator<T_INDIVIDUAL> :: initialize( t_Individual &_indiv )
-      {
-        GA::Random< t_Individual > random( concentration, structure, _indiv );
-        _indiv.invalidate(); return true;
-      }
     template<class T_INDIVIDUAL> 
       inline void Evaluator<T_INDIVIDUAL> :: init( t_Individual &_indiv )
       {

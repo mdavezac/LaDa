@@ -1,8 +1,8 @@
 //
 //  Version: $Id$
 //
-#ifndef _LADA_OPT_FUSED_FACTORY_H_
-#define _LADA_OPT_FUSED_FACTORY_H_
+#ifndef _LADA_FACTORY_FUSED_FACTORY_H_
+#define _LADA_FACTORY_FUSED_FACTORY_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -10,6 +10,9 @@
 
 #include <iostream>
 #include <map>
+
+#include <boost/utility/enable_if.hpp>
+#include <boost/type_traits/is_same.hpp>
 
 #include <boost/mpl/vector.hpp>
 #include <boost/mpl/push_front.hpp>
@@ -30,7 +33,7 @@
 
 #include <boost/function.hpp>
 
-#include "factory.h"
+#include <print/columns.h>
 #include "chainconnects.h"
 
 namespace LaDa
@@ -58,7 +61,7 @@ namespace LaDa
           typedef std::string t_Help;
           //! Type of the function.
           typedef T_FUNCTION t_Function;
-          //! Type of the parameters.
+          //! Type of the return.
           typedef typename boost::function_types::result_type<t_Function>::type  result_type;
           //! Type of the parameters.
           typedef typename boost::function_types::parameter_types<t_Function>::type 
@@ -98,7 +101,17 @@ namespace LaDa
  
           //! performs the call.
           template< class T_SEQUENCE >
-            result_type operator()( T_SEQUENCE& );
+            void operator()( T_SEQUENCE& _arg ) const
+            {
+              const t_Key& key = boost::fusion::at_c<0>( _arg );
+              typename t_Map :: iterator i_functor = map_->find( key );
+              if( not exists( key ) ) return;
+              boost::fusion::invoke
+              ( 
+                i_functor->second,
+                boost::fusion::pop_front( _arg )
+              );
+            }
  
           //! \brief Deletes a connection.
           //! \details Unlike other member functions, this one does not throw if
@@ -141,20 +154,6 @@ namespace LaDa
         }
 
 
-    template< class T_FUNCTION, class T_KEY > template< class T_SEQ >
-      inline typename FusedFactory<T_FUNCTION, T_KEY> :: result_type 
-        FusedFactory<T_FUNCTION, T_KEY> :: operator()( T_SEQ& _arg )
-        {
-          const t_Key& key = boost::fusion::at_c<0>( _arg );
-          typename t_Map :: iterator i_functor = map_->find( key );
-          __DOASSERT( not exists( key ), "Key " << key << " does not exists.\n" )
-          boost::fusion::invoke
-          ( 
-            i_functor->second,
-            boost::fusion::pop_front( _arg )
-          );
-        }
-
     template< class T_FUNCTION, class T_KEY > 
       inline void FusedFactory<T_FUNCTION, T_KEY> :: disconnect( const t_Key& _key )
       {
@@ -169,8 +168,20 @@ namespace LaDa
         typedef typename FusedFactory<T_FUNCTION, T_KEY> :: t_Map :: const_iterator citerator;
         citerator i_map = _factory.map_->begin();
         citerator i_map_end = _factory.map_->end();
+        size_t max(0);
         for(; i_map != i_map_end; ++i_map )
-          _stream << "  _ \"" << i_map->first << "\" " << _factory.help( i_map->first ) << "\n";
+        {
+          const std::string key( i_map->first );
+          if( key.size() > max ) max = key.size();
+        }
+        i_map = _factory.map_->begin();
+        for(; i_map != i_map_end; ++i_map )
+        {
+          const std::string key( i_map->first );
+          const std::string help( _factory.help( i_map->first ) );
+          Print::format_one( _stream, "  " + key, help, max+4, max+4+60 );
+          _stream << "\n";
+        }
         return _stream;
       }
   }

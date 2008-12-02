@@ -42,11 +42,11 @@ namespace LaDa
         types::t_real energy; //!< The energy computed by the CE.
       
         //! Constructor
-        Keeper() : energy(0) {}
+        CE() : energy(0) {}
         //! Copy Constructor
-        Keeper(const Keeper &_c) : energy(_c.energy) {}
+        CE(const CE &_c) : energy(_c.energy) {}
         //! Destructor
-        ~Keeper() {};
+        ~CE() {};
       
         //! Loads Keeper::energy and Keeper::stress from XML.
         bool Load( const TiXmlElement &_node )

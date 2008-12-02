@@ -24,7 +24,6 @@
 #include "../evaluator.h"
 #include "../individual.h"
 #include "../bitstring.h"
-#include "../gaoperators.h"
 #include "../vff.h"
 #include "../bandgap_stubs.h"
 // #include "../electric_dipole.h"
@@ -154,10 +153,13 @@ namespace LaDa
           //! Returns direction.
           const atat::rVector3d& get_direction() const { return direction; }
 
+          //! Returns a constant reference to a structure.
+          const Crystal::Structure& get_structure() const { return structure; }
 
         protected:
           //! The structure (cell-shape) for which decoration search is done
           mutable Crystal :: Structure structure;
+
           //! The growth direction.
           atat::rVector3d direction;
           //! A (static) pointer to a lattice object.

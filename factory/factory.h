@@ -1,8 +1,8 @@
 //
 //  Version: $Id$
 //
-#ifndef _LADA_OPT_FACTORY_H_
-#define _LADA_OPT_FACTORY_H_
+#ifndef _LADA_FACTORY_FACTORY_H_
+#define _LADA_FACTORY_FACTORY_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -66,11 +66,12 @@ namespace LaDa
         };
     }
    
+    //! Creates a factory with an unfused operator().
     template< class T_FUNCTION, class T_KEY = std::string >
       class Factory : public details :: Intermediate< T_FUNCTION, T_KEY >,
                       public boost::fusion::unfused_typed
                               <
-                                FusedFactory<T_FUNCTION, T_KEY>,
+                                const FusedFactory<T_FUNCTION, T_KEY>,
                                 typename FusedFactory<T_FUNCTION, T_KEY> :: t_Parameters 
                               > 
       {
@@ -82,7 +83,7 @@ namespace LaDa
           //! Type of the fused base class.
           typedef details::Intermediate< T_FUNCTION, T_KEY > t_Intermediate;
           //! Type of the unfused base class.
-          typedef boost::fusion::unfused_typed< t_Fused,
+          typedef boost::fusion::unfused_typed< const t_Fused,
                                                 typename t_Fused :: t_Parameters> t_UnFusedBase; 
         public:
           //! The function type.

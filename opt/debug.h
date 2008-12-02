@@ -39,6 +39,8 @@
 #define __TRYBEGIN try {
 #define __TRYEND( code, error ) } __CATCHCODE( code, error ) 
 #define __COMMA__ ,
+#define __BEGINGROUP__ {
+#define __ENDGROUP__ }
 
 
 #ifdef _LADADEBUG

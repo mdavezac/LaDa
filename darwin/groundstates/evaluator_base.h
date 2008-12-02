@@ -22,14 +22,7 @@
 #include <vff/layered.h>
 
 #include "../evaluator.h"
-#include "../individual.h"
-#include "../bitstring.h"
-#include "../gaoperators.h"
-#include "../vff.h"
-#include "../bandgap_stubs.h"
-// #include "../electric_dipole.h"
 
-#include "policies.h"
 
 namespace LaDa
 {
@@ -126,8 +119,8 @@ namespace LaDa
           EvaluatorBase() {}
           //! Copy Constructor
           EvaluatorBase   ( const EvaluatorBase &_c )
-                    : t_Base(_c), t_Translate(_c), t_Assign(_c),
-                      structure( _c.structure), direction(_c.direction) {}
+                        : t_Base(_c), t_Translate(_c), t_Assign(_c),
+                          structure( _c.structure) {}
           //! Destructor
           virtual ~EvaluatorBase() {}
 
@@ -163,7 +156,6 @@ namespace LaDa
  } // namespace GA
 } // namespace LaDa
  
-
-#include "evaluator.impl.h"
+#include "evaluator_base.impl.h"
 
 #endif // _LAYERED_H_

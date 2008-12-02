@@ -1,8 +1,8 @@
 //
 //  Version: $Id$
 //
-#ifndef __PRINT_XMG_H_
-#define __PRINT_XMG_H_
+#ifndef __LADA_PRINT_XMG_H_
+#define __LADA_PRINT_XMG_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>

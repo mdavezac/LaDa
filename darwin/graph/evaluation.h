@@ -18,6 +18,7 @@
 # include <opt/debug.h>
 # include <mpi/mpi_object.h>
 # include <darwin/gatraits.h>
+# include <darwin/taboos/history.h>
 
 # include "evaluator.h"
 
@@ -99,7 +100,7 @@
                 //! type of the population.
                 typedef typename t_GATraits::t_Population    t_Population; 
                 //! Type of the history.
-                typedef GA::History<t_Individual>            t_History;
+                typedef GA::Taboo::History<t_Individual>            t_History;
                 //! Communication base class.
                 typedef Comm::Farmer< T_GATRAITS, t_This >   t_CommBase;
                 //! \brief Scalar Fitness type
@@ -130,7 +131,7 @@
                   { return "GA::mpi::Graph::Evaluation::Farmer"; }
     
                 //! Sets taboo pointer
-                void set( GA::Taboo_Base<t_Individual> *_taboo )
+                void set( GA::Taboo::Container<t_Individual> *_taboo )
                   { t_CommBase :: taboos = t_Base :: taboos = _taboo; }
                 //! Sets objective pointer
                 void set(  typename GA::Objective::Types<t_GATraits>::t_Vector*  _o )

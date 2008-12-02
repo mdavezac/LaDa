@@ -166,10 +166,11 @@ namespace LaDa
         __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
         __ASSERT( not store, "Pointer to Evaluator is not set.\n")
 
-        bool isnot_clone = (history != NULL); // isnot_clone is false if history does not exist
+        // isnot_clone is false if history does not exist
+        bool isnot_clone = ( history->is_on() );
         bool do_evaluate = _indiv.invalid();
 
-        if ( history and  history->clone( _indiv ) )
+        if ( history->clone( _indiv ) )
         {
           isnot_clone = false;
           do_evaluate = false;
@@ -187,7 +188,7 @@ namespace LaDa
                         "Error while evaluating fitness\n" )
         // isnot_clone is true only if history exists
         // and prior call to history->clone( _indiv ) returned false
-        if( isnot_clone ) history->add( _indiv );
+        if( isnot_clone ) history->push_back( _indiv );
 
         __TRYDEBUGCODE( if( store ) (*store)( _indiv );,
                         "Error while checking individual for storage.\n" )
@@ -205,10 +206,10 @@ namespace LaDa
         __ASSERT( not objective, "Pointer to Evaluator is not set.\n")
         __ASSERT( not store, "Pointer to Evaluator is not set.\n")
 
-        bool isnot_clone = (history != NULL); // isnot_clone is false if history does not exist
+        bool isnot_clone = ( history->is_on() ); // isnot_clone is false if history does not exist
         bool do_evaluate = _indiv.invalid();
 
-        if ( history and  history->clone( _indiv ) )
+        if ( history->clone( _indiv ) )
         {
           isnot_clone = false;
           do_evaluate = false;

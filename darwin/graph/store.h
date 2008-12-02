@@ -70,9 +70,9 @@ namespace LaDa
             virtual std::string what_is() const { return "GA::mpi::Graph::BullStore"; }
        
             //! Does nothing
-            virtual void apply_all( eoMonOp<const t_Individual> *_op ) const {}
+            virtual void apply_all( const boost::function<void(const t_Individual&)>& _op ) const {}
             //! Does nothing
-            virtual void apply_best( eoMonOp<const t_Individual> *_op ) const {}
+            virtual void apply_best( const boost::function<void(const t_Individual&)>& _op ) const {}
         };
         
         template < class T_GATRAITS >

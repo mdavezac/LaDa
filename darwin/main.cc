@@ -6,37 +6,20 @@
 #endif
 
 #include <stdexcept>       // std::runtime_error
+#include <functional>
 #ifdef _MPI
 # include <boost/mpi/environment.hpp>
 #endif
 #include <boost/scoped_ptr.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
-#include <opt/initial_path.h>
+#include <boost/lambda/bind.hpp>
 
 
 
-#ifdef _PESCAN
-# include "bandgap.h"
-  typedef LaDa::BandGap :: Evaluator t_Evaluator;
-# define __PROGNAME__ "Band-Gap Optimization"
-#elif defined(_CE)
-# include "groundstates/groundstate.h"
-  typedef LaDa::GroundState :: Evaluator t_Evaluator;
-# define __PROGNAME__ "Cluster Expansion Optimization"
-#elif defined(_MOLECULARITY)
-# include "molecularity.h"
-  typedef LaDa::Molecularity :: Evaluator t_Evaluator;
-# define __PROGNAME__ "Band-Gap Optimization for Epitaxial Structure"
-#elif defined(_EMASS)
-# include "emass.h"
-  typedef LaDa::eMassSL :: Evaluator t_Evaluator;
-# define __PROGNAME__ "emass_opt"
-#elif defined( _ALLOY_LAYERS_ )
+// Includes optimization specific stuff.
+# include "groundstates/main.extras.h"
 # include "alloylayers/main.extras.h"
-#else 
-# error Need to define _CE or _PESCAN or _MOLECULARITY or _ALLOY_LAYERS_
-#endif
 
 #include <revision.h>
 #include <print/xmg.h>
@@ -45,9 +28,24 @@
 #include <mpi/mpi_object.h>
 #include <opt/bpo_macros.h>
 #include <opt/initial_path.h>
+#include <factory/factory.h>
+#include <checkpoints/checkpoint.h>
+#include <checkpoints/print_iteration.h>
 
 #include "individual.h"
 #include "darwin.h"
+#include "taboos/populations.h"
+#include "operators/populate.h"
+#include "checkpoints/maxgen.h"
+#include "checkpoints/maxeval.h"
+#include "checkpoints/print_populations.h"
+#include "checkpoints/stop_onfile.h"
+#include "checkpoints/average_fitness.h"
+#include "checkpoints/true_census.h"
+#include "checkpoints/xcrysdenanim.h"
+#include "checkpoints/xyzanim.h"
+
+
 
 int main(int argc, char *argv[]) 
 {
@@ -61,7 +59,8 @@ int main(int argc, char *argv[])
   __BPO_START__;
   __BPO_HIDDEN__;
   __BPO_SPECIFICS__( "GA Options" )
-    // extra parameters for alloy layers.
+    // optimization extra parameters.
+#   include "groundstates/main.extras.h" 
 #   include "alloylayers/main.extras.h" 
     __BPO_RERUNS__;
   __BPO_GENERATE__()
@@ -78,24 +77,27 @@ int main(int argc, char *argv[])
   // Reads program options for alloylayers.
   // Prints program options to standard output.
 #   include "alloylayers/main.extras.h" 
+#   include "groundstates/main.extras.h" 
   if ( vm.count("help") ) 
   { 
-#   ifdef _ALLOY_LAYERS_
-      LaDa::GA::Darwin< t_Evaluator > ga;
-#   endif
+    LaDa::GA::Darwin< t_Evaluator > ga;
+#   include "main.extras.h" 
 #   include "alloylayers/main.extras.h" 
+#   include "groundstates/main.extras.h" 
     __ROOTCODE( (*::LaDa::mpi::main), 
       std::cout << "Description: " << short_description
                 << "Usage: " << argv[0] << " [options] file.xml\n" 
                 << "  file.xml is an optional filename for XML input.\n" 
                 << "  Default input is input.xml.\n\n" 
-                << all << "\n";
+                << all << "\n"
+                << "The GA tag accepts the following attributes:\n"
+                << ga.att_factory << "\n"
+                << "The following GA Operators can be used in <Breeding>...</Breeding>:\n"
+                << ga.operator_factory
+                << "\nThe taboos can be chosen from the amongst the following:\n"
+                << ga.taboo_factory
 #     ifdef _ALLOY_LAYERS_
-        std::cout << "The GA tag accepts the following attributes:\n"
-                  << att_factory << "\n"
-                  << "The following GA Operators can be used in <Breeding>...</Breeding>:\n"
-                  <<  op_factory << "\n"
-                     "The following physical properties can be chosen for optimization:\n"
+                << "\nThe following physical properties can be chosen for optimization:\n"
                   << properties_factory 
                   << "when included as in\n"
                      "  <Objectives>\n"
@@ -103,8 +105,12 @@ int main(int argc, char *argv[])
                      "    <Objective value=\"property B\" ... >\n"
                      "    ....\n"
                      "  </Objectives>\n"
-                     "Mind the plural and singulars ;).\n\n";
+                     "Mind the plural and singulars ;).\n\n"
+#     else          
+                << "\n"
 #     endif
+                << "Miscellaeneous Items:"
+                << ga.checkpoint_factory << "\n";
     ) 
     return 1; 
   } 
@@ -129,9 +135,12 @@ int main(int argc, char *argv[])
   {
     LaDa::GA::Darwin< t_Evaluator > ga;
     // creates factories
+#   include "main.extras.h" 
+#   include "groundstates/main.extras.h" 
 #   include "alloylayers/main.extras.h" 
-    // Connects assignement and print functors for alloylayers config. space.
+    // Connects assignement and print functors.
 #   include "alloylayers/main.extras.h" 
+#   include "groundstates/main.extras.h" 
     // Then loads input.
     LaDa::Print :: out << "load result: "
                        << ga.Load(input.string()) 

@@ -8,6 +8,8 @@
 #include <config.h>
 #endif
 
+#include "../ce.h"
+
 namespace LaDa
 {
   namespace GA
@@ -26,7 +28,7 @@ namespace LaDa
        
             //! Assigns a value from object to a quantity.
             void assign( const t_Object& _o, t_Quantities &_q ) const
-              { _q = _o.::LaDa::Ga::Keepers::CE::energy; }
+              { _q = _o.Keepers::CE::energy; }
         };
 
     }

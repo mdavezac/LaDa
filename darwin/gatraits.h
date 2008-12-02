@@ -19,10 +19,6 @@
 #include <opt/function_base.h>
 #include <opt/traits.h>
 
-#include <opt/types.h>
-#include <opt/function_base.h>
-#include <opt/traits.h>
-
 #include "fitness.h"
 
 namespace LaDa

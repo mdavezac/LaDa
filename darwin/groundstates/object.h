@@ -1,8 +1,8 @@
 //
 //  Version: $Id$
 //
-#ifndef  _DARWIN_ALLOYLAYERS_OBJECT_H_
-#define  _DARWIN_ALLOYLAYERS_OBJECT_H_
+#ifndef  _DARWIN_GROUNDSTATES_OBJECT_H_
+#define  _DARWIN_GROUNDSTATES_OBJECT_H_
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -13,7 +13,7 @@
 #include<opt/types.h>
 #include<vff/layered.h>
 
-#include "../bitstring.h"
+#include "../bitstring/object.h"
 #include "assign.h"
 
 namespace LaDa
@@ -31,7 +31,6 @@ namespace LaDa
     {
       struct Object : public LaDa::BitString::Object<>, 
                       public LaDa::GA::Keepers::CE
-                      public LaDa::GA::PrintSignal< Object >
       {
         friend class boost::serialization::access;
         //! The type of the BitString container
@@ -43,7 +42,7 @@ namespace LaDa
                : LaDa::BitString::Object<>(_c), LaDa::GA::Keepers::CE(_c) {}
         //! Loads from \a _node.
         bool Load( const TiXmlElement &_node )
-          { return  LaDa::GA::Keepers::BandGap::CE( _node ); } 
+          { return  LaDa::GA::Keepers::CE::Load( _node ); } 
         //! Saves to \a _node.
         bool Save( TiXmlElement &_node ) const
           { return  LaDa::GA::Keepers::CE::Save( _node ); }
@@ -59,22 +58,14 @@ namespace LaDa
             }
       };
 
-      //! \brief Old-style translation.
-      //! \todo remove this function and replace it with translate.
-      inline void operator<<( std::string &_str, const Object& _o )
-        { Translate< Object > :: translate( _o, _str ); }
-      //! \brief Old-style translation.
-      //! \todo remove this function and replace it with translate.
-      inline void operator<<( Object& _o, const std::string &_str )
-        { Translate< Object > :: translate( _str, _o ); }
-      //! \brief Old-style translation.
-      //! \todo remove this function and replace it with translate.
-      inline void operator<<( Crystal::Structure &_str, const Object& _o )
-        { Translate< Object > :: translate( _o, _str ); }
-      //! \brief Old-style translation.
-      //! \todo remove this function and replace it with translate.
-      inline void operator<<( Object& _o, const Crystal::Structure &_str )
-        { Translate< Object > :: translate( _str, _o ); }
+      //! Dumps object to a string.
+      inline std::ostream& operator<<( std::ostream& _stream, const Object& _o )
+      {
+        foreach( types::t_real var, _o.Container() )
+            _stream << ( var > 0 ? "1": "0" );
+        return _stream << "  -  Energy: " << _o.energy;
+      }
+
     }
   }
 } // namespace LaDa

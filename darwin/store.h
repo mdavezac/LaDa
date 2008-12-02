@@ -12,6 +12,8 @@
 #include <algorithm>
 #include <iostream>
 
+#include <boost/function.hpp>
+
 #include <eo/eoPop.h>
 
 #include <tinyxml/tinyxml.h>
@@ -101,9 +103,9 @@ namespace LaDa
         //! Other print method
         virtual std::string print() const = 0; 
         //! Applies \a _op to all stored individuals.
-        virtual void apply_all( eoMonOp<const t_Individual> *_op ) const = 0; 
+        virtual void apply_all( const boost::function<void(const t_Individual&)>& _op ) const = 0; 
         //! Applies \a _op to best stored individuals.
-        virtual void apply_best( eoMonOp<const t_Individual> *_op ) const = 0; 
+        virtual void apply_best( const boost::function<void(const t_Individual&)>& _op ) const = 0; 
     };
 
     //! \brief stores individuals depending upon the return value of a
@@ -176,9 +178,10 @@ namespace LaDa
         virtual std::string what_is() const;
        
         //! Applies \a _op to all stored individuals.
-        virtual void apply_all( eoMonOp<const t_Individual> *_op ) const;
+        virtual void apply_all( const boost::function<void(const t_Individual&)>& _op ) const
+          { std::for_each( results.begin(), results.end(), _op ); }
         //! Applies \a _op to best stored individuals.
-        virtual void apply_best( eoMonOp<const t_Individual> *_op ) const
+        virtual void apply_best( const boost::function<void(const t_Individual&)>& _op ) const
           { condition.apply2optimum(_op); }
 
       private:
@@ -246,7 +249,8 @@ namespace LaDa
           //! \brief prints out BaseOptima::optimum characteristics
           std::string print() const;
           //! Applies \a _op to best stored individuals.
-          void apply2optimum( eoMonOp<const t_Individual> *_op ) const { (*_op)( *optimum ); }
+          void apply2optimum( const boost::function<void(const t_Individual&)>& _op ) const 
+            { _op( *optimum ); }
       };
 
       //! \brief Implements \e Best-Of behavior using an individual's fitness and an Objective

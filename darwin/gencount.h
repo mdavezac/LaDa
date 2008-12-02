@@ -22,20 +22,18 @@ namespace LaDa
     {
       protected:
         //! the number of generation since start of %GA run
-        types::t_unsigned age;
+        boost::shared_ptr<types::t_unsigned> age;
       public:
         //! Copy Constructor
         GenCount( const GenCount &_gc) : age(_gc.age) {};
-        //! Constructor and initializer
-        GenCount( types::t_unsigned _age) : age(_age) {};
         //! Constructor
-        GenCount() : age(0) {};
+        GenCount() : age( new types::t_unsigned ) { *age = 0; };
         //! increments the number of generations by one
-        void operator ++() 
-          { ++age; }
+        void operator ++() { ++(*age); }
         //! Returns the number of generations
-        types::t_unsigned operator()() const
-          { return age; }
+        types::t_unsigned operator()() const { return *age; }
+        //! Sets age.
+        void set_age( types::t_unsigned _age ) { *age = _age; }
     };
   } // namespace GA
 } // namespace LaDa

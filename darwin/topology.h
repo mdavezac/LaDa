@@ -22,6 +22,7 @@
 #include "graph/taboo.h"
 #include "graph/store.h"
 #include "graph/breeders.h"
+#include "taboos/container.h"
 
 #ifdef _MPI
 #include <boost/lambda/lambda.hpp>
@@ -116,9 +117,9 @@ namespace LaDa
         template <class T_GATRAITS, template <class> class T_BASE >  
           Evaluation :: Abstract< typename T_GATRAITS :: t_Population >*
             evaluation( typename T_GATRAITS :: t_Evaluator &_eval ); 
-        //! Creates history objects
-        template < class T_GATRAITS > History<typename T_GATRAITS::t_Individual>*
-          history( eoState & _eostates );
+      // //! Creates history objects
+      // template < class T_GATRAITS > Taboo::History<typename T_GATRAITS::t_Individual>*
+      //   history( eoState & _eostates );
         //! returns objective.
         template <class T_GATRAITS> typename GA::Objective::Types<T_GATRAITS>::t_Vector*
           objective ( const TiXmlElement &_node );
@@ -126,13 +127,13 @@ namespace LaDa
         //! Passes taboo pointer to farmer breeder.
         template <class T_GATRAITS> 
           void set ( GA::Breeder<T_GATRAITS> *_breeder,
-                     Taboo_Base<typename T_GATRAITS::t_Individual> *_taboos);
+                     Taboo::Container<typename T_GATRAITS::t_Individual> *_taboos);
         //! Creates special storage interfaces for very special people.
         template <class T_GATRAITS> typename GA::Store::Base<T_GATRAITS>*
           special_store ( typename T_GATRAITS :: t_Evaluator& _eval );
         //! Creates special_taboo interfaces for very special people.
-        template < class T_GATRAITS > Taboo_Base<typename T_GATRAITS::t_Individual>*
-          special_taboos( eoState & _e );
+        template< class T_GATRAITS > 
+          void special_taboos( Taboo::Container< typename T_GATRAITS :: t_Individual >& _taboos );
     };
 
   } // namespace GA

@@ -15,6 +15,7 @@
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
+#include "../taboos/container.h"
 #include "comm.h"
 
 namespace LaDa
@@ -105,7 +106,7 @@ namespace LaDa
                 { return "GA::mpi::Graph::Breeder::Farmer"; }
 
               //! Sets taboo pointer
-              void set( Taboo_Base<t_Individual> *_taboo )
+              void set( Taboo::Container<t_Individual> *_taboo )
                 { t_CommBase::set( _taboo ); }
       
               //! \brief Response to WAITING request.

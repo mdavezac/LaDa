@@ -203,16 +203,16 @@ namespace LaDa
     //! Policies for keeping track of functional evaluations.
     namespace Keepers
     {
-      //! Dumps a GA::Keepers::BandGap to a stream.
-      inline std::ostream& operator<<(std::ostream &_stream, const BandGap &_o)
-      { 
-        return _stream << " CBM - VMB = " 
-                       << std::fixed << std::setw(8) << std::setprecision(3) << _o.cbm 
-                       << " - " 
-                       << std::fixed << std::setw(8) << std::setprecision(3) << _o.vbm
-                       << " = "
-                       << _o.cbm - _o.vbm;
-      } 
+//     //! Dumps a GA::Keepers::BandGap to a stream.
+//     inline std::ostream& operator<<(std::ostream &_stream, const BandGap &_o)
+//     { 
+//       return _stream << " CBM - VMB = " 
+//                      << std::fixed << std::setw(8) << std::setprecision(3) << _o.cbm 
+//                      << " - " 
+//                      << std::fixed << std::setw(8) << std::setprecision(3) << _o.vbm
+//                      << " = "
+//                      << _o.cbm - _o.vbm;
+//     } 
       template<class Archive>
         void BandGap :: serialize(Archive & _ar, const unsigned int _version)
         {

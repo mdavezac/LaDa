@@ -231,76 +231,7 @@ namespace LaDa
         throw std::runtime_error( sstr.str() );
       }
 
-    template< class T_INDIVIDUAL, class T_POPULATOR, class T_DARWIN >
-      void taboo_op( T_POPULATOR &_populator, 
-                     T_DARWIN &_darwin,
-                     types::t_unsigned _max,
-                     const boost::function<void(T_POPULATOR& )>& _inner,
-                     const boost::function<void(T_POPULATOR& )>& _random )
-      {
-        Taboo_Base<T_INDIVIDUAL> * const taboos = _darwin.get_taboos();
-        __DOASSERT( not taboos, "TabooOperator requested, but not taboos created.\n" )
-        types::t_unsigned  i = 0;
-        do
-        {
-          ++i;
-          _inner( _populator );
-          if ( not (*taboos)( *_populator ) ) return;
-          *_populator = _populator.select();
-        } while ( i < _max );
 
-        taboos->set_problematic();
-
-        do 
-        {
-          ++i;
-          _random( _populator );
-          if ( not (*taboos)( *_populator ) ) return;
-        } while ( i < UINT_MAX );
-
-        std::ostringstream sstr;
-        sstr << __LINE__ << ", line: " << __LINE__ << "\n"
-             << "Could not create a non-taboo individual\n";
-        throw std::runtime_error( sstr.str() );
-      }
-
-
-    namespace Factory
-    {
-      template< class T_FACTORY, class T_DARWIN >
-        void taboo_op( T_FACTORY &_factory,
-                       boost::function<void( typename T_FACTORY::t_Populator& )>&
-                         _function,
-                       const TiXmlElement &_node,
-                       T_DARWIN &_darwin,
-                       const std::string &_random )
-        {
-          typedef typename T_FACTORY::t_Individual t_Individual;
-          typedef typename T_FACTORY::t_Populator t_Populator;
-          typedef boost::function<void(t_Populator&)> t_Function;
-       
-          types::t_unsigned max(100);
-          if( _node.Attribute( "max" ) )
-            max = boost::lexical_cast< types::t_unsigned >( _node.Attribute("max") );
-          Print::xmg << Print::Xmg::comment << "TabooOperator( random fallback: " 
-                     << _random << " )" << Print::endl << Print::Xmg::indent;
-          t_Function random;
-          // creates random operator.
-          _factory( _random, random, _node );
-          Print::xmg << Print::Xmg::removelast;
-          //! creates inner operator.
-          _factory( _function, _node );
-       
-          // binds all.
-          _function = boost::bind
-                      (
-                        &::LaDa::GA::taboo_op<t_Individual, t_Populator, T_DARWIN>,
-                        _1, boost::ref(_darwin), max, _function, random
-                      );
-          Print::xmg << Print::Xmg::unindent;
-        }
-
-    }
 
 
   } // namespace GA

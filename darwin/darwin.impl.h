@@ -17,8 +17,7 @@
 
 #include "functors.h"
 #include "statistics.h"
-#include "minimizergenop.h"
-#include "operators/populate.h"
+#include "taboos/populations.h"
 
 #include "debug.h"
 
@@ -47,51 +46,7 @@ namespace LaDa
     template<class T_EVALUATOR>
     bool Darwin<T_EVALUATOR> :: Load_Parameters(const TiXmlElement &_parent)
     {
-#     ifdef _ALLOY_LAYERS_
-        opt::explore_attributes( att_factory, _parent );
-#     else
-      // tournament size when selecting parents
-        opt::const_AttributeIterator i_att( _parent );
-        const opt::const_AttributeIterator i_att_end;
-        for(; i_att != i_att_end; ++i_att )
-        {
-          const std::string& str = i_att->first;
-          
-          if ( str.compare("tournament")==0 )
-          {
-            tournament_size = boost::lexical_cast< types::t_unsigned >( i_att->second );
-            if ( tournament_size < 2 ) tournament_size = 2;
-          }
-          else if ( str.compare("rate")==0 ) // offspring rate
-          {
-            replacement_rate = std::abs( boost::lexical_cast< types::t_real >( i_att->second ) );
-            if ( replacement_rate > 1 ) replacement_rate = 0.5;
-          }
-          else if ( str.compare("popsize")==0 ) // population size
-          {
-            pop_size = boost::lexical_cast< types::t_unsigned >( i_att->second );
-            if ( pop_size < 1 ) pop_size = 1;
-          }
-          else if ( str.compare("maxgen")==0 ) // maximum number of generations
-            max_generations = boost::lexical_cast< types::t_unsigned >( i_att->second );
-          else if ( str.compare("islands")==0 ) // number of islands
-          {
-            nb_islands = boost::lexical_cast< types::t_unsigned >( i_att->second );
-            if ( not nb_islands ) nb_islands = 1;
-          }
-          else if ( str.compare("print")==0 ) // print at each generation
-            do_print_each_call = boost::lexical_cast< bool >( i_att->second );
-          else if ( str.compare("populate")==0 ) 
-          {
-            populate_style = RANDOM_POPULATE;
-            if ( i_att->second.compare("partition") == 0 )
-              populate_style = PARTITION_POPULATE;
-          }
-          else if ( not topology.LoadSeeds( *i_att.as_tinyxml() ) )
-            evaluator.LoadAttribute( *i_att.as_tinyxml() ); 
-        }
-#     endif
-     
+      opt::explore_attributes( att_factory, _parent );
       // some checking
       if ( std::floor( pop_size * replacement_rate ) == 0 )
       {
@@ -117,7 +72,7 @@ namespace LaDa
       const TiXmlElement *child = _parent.FirstChildElement("History");
       if ( not child ) return;
       Print::xmg << Print::Xmg::comment << "Track History" << Print::endl;
-      history = topology.history<t_GATraits>( eostates );
+      history.is_on();
     }
     
     template<class T_EVALUATOR>
@@ -128,16 +83,13 @@ namespace LaDa
           objective = topology.objective<t_GATraits>( _parent );
         __DOASSERT( topology.objective() and not objective, "Could not create multi-objective.\n" )
         
-        if( topology.history() and history )
+        evaluation = topology.evaluation< t_GATraits,
+                                          Evaluation::WithHistory >( evaluator );
         {
-          evaluation = topology.evaluation< t_GATraits,
-                                            Evaluation::WithHistory >( evaluator );
           Evaluation::WithHistory<t_GATraits>*
             withhistory( static_cast< Evaluation::WithHistory<t_GATraits>* >( evaluation ) );
           withhistory->set( history );
         }
-        if ( not evaluation )
-          evaluation = topology.evaluation<t_GATraits, Evaluation::Base >( evaluator );
         Load_Storage( _parent );
         Evaluation::Base<t_GATraits>*
           base( static_cast< Evaluation::Base<t_GATraits>* >( evaluation ) );
@@ -198,75 +150,10 @@ namespace LaDa
     template<class T_EVALUATOR>
     void Darwin<T_EVALUATOR> :: Load_Taboos( const TiXmlElement &_node )
     {
-      // checks if there are more than one taboo list
-      if ( not _node.FirstChildElement("Taboos") ) return;
-      const TiXmlElement &parent = *_node.FirstChildElement("Taboos");
-      const TiXmlElement *child = parent.FirstChildElement();
- 
-      // Checks for topology specifics
       if( not topology.taboos() ) return;
-      taboos = topology.special_taboos<t_GATraits>( eostates );
-      if( taboos ) return;
- 
-      // creates Taboo container if there are more than one taboo list
-      taboos = new Taboos<t_Individual>;
- 
-      // creates pop taboo
-      child = parent.FirstChildElement("Population");
-      if ( not child ) child = parent.FirstChildElement("PopTaboo");
-      if (child)
-      {
-        Print::xmg << Print::Xmg::comment << "Population Taboo" << Print::endl;
-        IslandsTaboos<t_GATraits> *poptaboo
-           = new IslandsTaboos<t_GATraits>( islands );
-        eostates.storeFunctor(poptaboo);
-        static_cast< Taboos<t_Individual>* >(taboos)->add( poptaboo );
-      }
-      
-      // creates offspring taboo
-      child = parent.FirstChildElement("Offspring");
-      if ( not child ) child = parent.FirstChildElement("OffspringTaboo");
-      if (child)
-      {
-        Print::xmg << Print::Xmg::comment << "Offspring Taboo" << Print::endl;
-        OffspringTaboo<t_GATraits> *offspringtaboo 
-           = new OffspringTaboo<t_GATraits>( &offspring );
-        eostates.storeFunctor(offspringtaboo);
-        static_cast< Taboos<t_Individual>* >(taboos)->add( offspringtaboo );
-      }
- 
-      // makes history a taboo list if it exists
-      child = parent.FirstChildElement("History");
-      if (child and history)
-      {
-        Print::xmg << Print::Xmg::comment << "History Taboo" << Print::endl;
-        static_cast< Taboos<t_Individual>* >(taboos)->add( history );
-      }
-      else if (child)
-        std::cerr << "HistoryTaboo found in Taboos tags, but not History tag found!!" << std::endl
-                  << "Include History tag if you want HistoryTaboo" << std::endl;
- 
- 
-      // then evaluator specific taboos
-      child = parent.FirstChildElement();
-      for( ; child ; child = child->NextSiblingElement() )
-      {
-        Taboo_Base<t_Individual> *func = evaluator.LoadTaboo( *child );
-        eostates.storeFunctor(func);
-        static_cast< Taboos<t_Individual>* >(taboos)->add( func );
-      }
- 
-      // now some cleaning up
-      Taboos<t_Individual>* save_taboos = static_cast< Taboos<t_Individual>* >(taboos);
-      types::t_unsigned n = save_taboos->size();
-      switch( n )
-      {
-        case 0: delete taboos; taboos = NULL; break; // no taboos! 
-        case 1: taboos = save_taboos->front(); delete save_taboos; break; // move lone taboo to front
-        default: eostates.storeFunctor( taboos ); break; // multiple taboos, good as is
-      }
-        
-      return;
+      if( not _node.FirstChildElement("Taboos") ) return;
+      Taboo::Factory::create_container( taboo_factory, *_node.FirstChildElement("Taboos"), taboos );
+      topology.special_taboos<t_GATraits>( taboos );
     }
  
     // Loads mating operations
@@ -282,13 +169,7 @@ namespace LaDa
         return false;
       }
       Print::xmg << Print::Xmg::comment << "Breeding Operator Begin" << Print::endl;
-#     ifndef _ALLOY_LAYERS_
-        breeder_ops = new SequentialOp<t_GATraits>;
-        eostates.storeFunctor( breeder_ops );
-        breeder_ops = make_genetic_op(*child->FirstChildElement(), breeder_ops);
-#     else
-        breeder_ops = make_genetic_op( *child, breeder_ops );
-#     endif
+      breeder_ops = make_genetic_op( *child, breeder_ops );
       Print::xmg << Print::Xmg::comment << "Breeding Operator End" << Print::endl;
       __DOASSERT( not breeder_ops,
                  "Error while creating breeding operators")
@@ -299,6 +180,9 @@ namespace LaDa
     template<class T_EVALUATOR>
     void Darwin<T_EVALUATOR> :: Load_CheckPoints (const TiXmlElement &_parent)
     {
+      __MPICODE( if( not topology.continuators() ) return; )
+      LaDa::Factory::visit_xml( checkpoint_factory, _parent, checkpoints );
+
       // contains all checkpoints
       std::string str = "stop"; 
       if (      _parent.FirstChildElement("Filenames") 
@@ -427,18 +311,18 @@ namespace LaDa
           Print::xmg << Print::Xmg::comment
                      << "Print: current population" << Print::endl;
         }
-        else
-        {
-          eoMonOp<const t_Individual> *op =  evaluator.LoadPrintBest( *child );
-          if ( not op ) continue;
-          eostates.storeFunctor( op );
-          Apply2Best<t_GATraits> *printbest = new Apply2Best<t_GATraits>( *store );
-          try{ printbest = new Apply2Best<t_GATraits>( *store ); }
-          catch(...) { cleanup(); __THROW_ERROR( "Memory allocation error.\n" ) }
-          __DOASSERT(not printbest,  "Memory allocation error.\n");
-          printbest->set_functor( op );
-          continuator->add(*printbest);
-        }
+       //else
+       //{
+       //  eoMonOp<const t_Individual> *op =  evaluator.LoadPrintBest( *child );
+       //  if ( not op ) continue;
+       //  eostates.storeFunctor( op );
+       //  Apply2Best<t_GATraits> *printbest = new Apply2Best<t_GATraits>( *store );
+       //  try{ printbest = new Apply2Best<t_GATraits>( *store ); }
+       //  catch(...) { cleanup(); __THROW_ERROR( "Memory allocation error.\n" ) }
+       //  __DOASSERT(not printbest,  "Memory allocation error.\n");
+       //  printbest->set_functor( op );
+       //  continuator->add(*printbest);
+       //}
       }
  
     } // end of make_check_point
@@ -481,12 +365,13 @@ namespace LaDa
              and ( do_restart & SAVE_RESULTS ) )
           store->Restart(*child);
         else if (     name.compare("History") == 0
-                  and ( do_restart & SAVE_HISTORY ) and history )
+                  and ( do_restart & SAVE_HISTORY ) and history.is_on() )
         {
           LoadObject<t_GATraits> loadop( evaluator, &t_Evaluator::Load, LOADSAVE_SHORT);
-          history->clear();
-          if ( LoadIndividuals( *child, loadop, *history) )
-            Print::xmg << Print::Xmg::comment << "Reloaded " << history->size() 
+          history.off(); // clears history.
+          history.on();
+          if ( LoadIndividuals( *child, loadop, history) )
+            Print::xmg << Print::Xmg::comment << "Reloaded " << history.size() 
                        << " individuals into history" << Print::endl;
           
         } // end of "Population" Restart
@@ -553,7 +438,7 @@ namespace LaDa
         Print::xmg << "Results";
         store->Save( *node );
       }
-      if ( do_save & SAVE_HISTORY and history)
+      if ( do_save & SAVE_HISTORY and history.is_on() )
       {
         // Printout stuff
         ++is_saving;
@@ -563,7 +448,7 @@ namespace LaDa
  
         TiXmlElement *xmlhistory = new TiXmlElement("History");
         SaveObject<t_GATraits> saveop( evaluator, &t_Evaluator::Save, LOADSAVE_SHORT);
-        SaveIndividuals( *xmlhistory, saveop, history->begin(), history->end());
+        SaveIndividuals( *xmlhistory, saveop, history.begin(), history.end());
         node->LinkEndChild( xmlhistory );
       }
       if ( do_save & SAVE_POPULATION )
@@ -623,196 +508,7 @@ namespace LaDa
       Darwin<T_EVALUATOR> :: make_genetic_op( const TiXmlElement &el,
                                               eoGenOp<t_Individual> *current_op )
     {
-#     ifdef _ALLOY_LAYERS_
-        return Operator::create_eo_operator( el, operator_factory, eostates );
-#     else
-        eoOp<t_Individual>* this_op;
-        const TiXmlElement *sibling = &el;
-        if (not sibling) return NULL;
-     
-        Print::xmg << Print::Xmg::indent;
-  
-        for ( ; sibling; sibling = sibling->NextSiblingElement() )
-        {
-          std::string str = sibling->Value();
-          double prob = 0.0;
-          int period = 0;
-          this_op = NULL;
-          bool is_gen_op = false;
-          
-          // then creates sibling
-          if ( str.compare("TabooOp") == 0  and taboos )
-          {
-            Print::xmg << Print::Xmg::comment << "TabooOp Begin" << Print::endl;
-            eoGenOp<t_Individual> *taboo_op
-              = make_genetic_op( *sibling->FirstChildElement(), NULL);
-            if ( not taboo_op )
-              Print::xmg << Print::Xmg::removelast;
-            else
-            {
-              eoMonOp<t_Individual> *utterrandom = NULL;
-              try
-              {
-                Print::xmg << Print::Xmg::comment << "TabooOp End" << Print::endl;
-                utterrandom = new mem_monop_t<t_GATraits>
-                                    ( evaluator, &t_Evaluator::initialize,
-                                      std::string( "Initialize" ) );
-                __DOASSERT( not utterrandom, "Memory Allocation error.\n" )
-                eostates.storeFunctor(utterrandom);
-                this_op = new TabooOp<t_Individual> ( *taboo_op, *taboos, 
-                                                      (types::t_unsigned)(pop_size+1),
-                                                      *utterrandom );
-                __DOASSERT( not this_op, "Memory Allocation error.\n" )
-                eostates.storeFunctor( static_cast< TabooOp<t_Individual> *>(this_op) );
-                is_gen_op = true;
-              }
-              __CATCHCODE( if( utterrandom) delete utterrandom; cleanup(),
-                           "Error encountered while creating Taboo genetic operator.\n")
-            }
-          }
-          else if ( str.compare("TabooOp") == 0 )
-          {
-            Print::xmg << Print::Xmg :: unindent;
-            this_op = make_genetic_op( *sibling->FirstChildElement(), NULL);
-            Print::xmg << Print::Xmg :: indent;
-          }
-          else if ( str.compare("UtterRandom") == 0 )
-          {
-            Print::xmg << Print::Xmg::comment << "UtterRandom" << Print::endl;
-            this_op = new mem_monop_t<t_GATraits>
-                             ( evaluator, &t_Evaluator::initialize,
-                               std::string( "UtterRandom" ) );
-            eostates.storeFunctor( static_cast< TabooOp<t_Individual> *>(this_op) );
-          }
-          else if ( str.compare("Minimizer") == 0 )
-          {
-            Minimizer_Functional<t_GATraits> *func = NULL;
-            MinimizerGenOp<t_GATraits> *mingenop = NULL;
-            try
-            {
-              func =  new Minimizer_Functional<t_GATraits>( *evaluation, *taboos ); 
-              __DOASSERT( not func, "Memory Allocation Error.\n")
-            
-              mingenop = new MinimizerGenOp<t_GATraits>( *func ); 
-              __DOASSERT( not mingenop, "Memory Allocation Error.\n")
-  
-              if ( not mingenop->Load( *sibling ) ) 
-                { delete mingenop; this_op = NULL; }
-              else
-              {
-                eostates.storeFunctor( mingenop );
-                this_op = mingenop;
-              }
-            }
-            catch( std::exception &_e )
-            {
-              cleanup(); 
-              __THROW_ERROR( "Could  not load minimizer genetic operator.\n" << _e.what() )
-            }
-            catch(...)
-            { 
-              cleanup();
-              this_op = NULL;
-              __THROW_ERROR( "Memory Allocation Error.\n" ) 
-            }
-          }
-          else if ( str.compare("Operators") == 0 )
-          {
-            if ( sibling->Attribute("type") )
-            {
-              std::string sstr = sibling->Attribute("type");
-              if ( sstr.compare("and") == 0 ) 
-              {
-                Print::xmg << Print::Xmg::comment << "And Begin" << Print::endl;
-                SequentialOp<t_GATraits> *new_branch = new SequentialOp<t_GATraits>;
-                this_op = make_genetic_op( *sibling->FirstChildElement(), new_branch);
-                if ( not this_op )
-                {
-                  Print::xmg << Print::Xmg::removelast;
-                  Print::out << " Failure, or No Operators Found"
-                             << " in \"And\" operator \n";
-                  delete new_branch;
-                }
-                else
-                {
-                  Print::xmg << Print::Xmg::comment << "And End" << Print::endl;
-                  eostates.storeFunctor( new_branch );
-                }
-              }
-            }
-            if ( not this_op )
-            {
-              Print::xmg << Print::Xmg::comment << "Or Begin" << Print::endl;
-              ProportionalOp<t_GATraits> *new_branch = new ProportionalOp<t_GATraits>;
-              this_op = make_genetic_op( *sibling->FirstChildElement(), new_branch);
-              if ( not this_op )
-              {
-                Print::xmg << Print::Xmg::removelast;
-                delete new_branch;
-              }
-              else
-              {
-                Print::xmg << Print::Xmg::comment << "Or End" << Print::endl;
-                eostates.storeFunctor( new_branch );
-              }
-            }
-            is_gen_op = true;
-          }
-          else // operators specific to t_Evaluator 
-          {
-            eoGenOp<t_Individual> *eoop = evaluator.LoadGaOp( *sibling );
-            eostates.storeFunctor( eoop );
-            if ( eoop ) this_op = eoop;
-            is_gen_op = true;
-          }
-          if ( this_op and sibling->Attribute("period", &period) )
-          {
-            if (     (    ( not max_generations )
-                       or (types::t_unsigned)std::abs(period) < max_generations ) 
-                 and period > 0 )
-            {
-              Print::xmg << Print::Xmg::addtolast << " period = "
-                         << period << Print::endl;
-              this_op = new PeriodicOp<t_GATraits>( *this_op,
-                                                    (types::t_unsigned) abs(period),
-                                                     continuator 
-                                                        ->get_generation_counter(),
-                                                      eostates );
-              eostates.storeFunctor( static_cast< PeriodicOp<t_GATraits> *>(this_op) );
-              is_gen_op = true;
-            }
-          }
-          if ( this_op and current_op )
-          {
-            if (not sibling->Attribute("prob", &prob) )
-              prob = 1.0;
-            Print::xmg << Print::Xmg::addtolast << " prob = " << prob << Print::endl;
-            if ( current_op->className().compare("GA::SequentialOp") == 0 )
-              static_cast< SequentialOp<t_GATraits>* >(current_op)
-                 ->add( *this_op, static_cast<double>(prob) );
-            else if ( current_op->className().compare("GA::ProportionalOp") == 0 )
-              static_cast< ProportionalOp<t_GATraits>* >(current_op)
-                ->add( *this_op, static_cast<double>(prob) );
-          }
-          else if ( this_op )
-          {
-            if ( is_gen_op )
-              current_op = static_cast<eoGenOp<t_Individual>*> (this_op);
-            else 
-              current_op = &wrap_op<t_Individual>(*this_op, eostates);
-          }
-        }
-        
-        if ( not current_op  )
-        {
-          std::cerr << " Error while creating genetic operators " << std::endl;
-          throw;
-        } 
-  
-        Print::xmg << Print::Xmg :: unindent;
-        
-        return current_op;
-#     endif
+      return Operator::create_eo_operator( el, operator_factory, eostates );
     }
  
     template<class T_EVALUATOR>
@@ -827,7 +523,7 @@ namespace LaDa
       breeder->set(&continuator->get_generation_counter());
       breeder->set(select);
       breeder->set(breeder_ops);
-      topology.set<t_GATraits>( breeder, taboos );
+      topology.set<t_GATraits>( breeder, &taboos );
  
       eostates.storeFunctor(breeder);
       eostates.storeFunctor(select);
@@ -846,26 +542,7 @@ namespace LaDa
       typename t_Islands :: iterator i_end = islands.end();
       t_Object&(t_Individual::*ptr_func)( void ) = &t_Individual::Object;
       for(; i_pop != i_end; ++i_pop)
-      {
-        switch ( populate_style )
-        {
-          case RANDOM_POPULATE: 
-            Operators::populate
-            ( 
-               boost::bind( &t_Evaluator::initialize, boost::ref(evaluator), _1 ),
-               taboos, *i_pop, pop_size, 50 * pop_size 
-            ); break;
-//           random_populate(*i_pop, target); break;
-          case PARTITION_POPULATE:
-            Operators::partition_populate
-            (
-               boost::bind( &t_Evaluator::initialize, boost::ref(evaluator), _1 ),
-               &Operators::call_object_mask<t_Individual>,
-               taboos, *i_pop, pop_size, 50 * pop_size 
-            ); break;
-//           partition_populate(*i_pop, target); break;
-        }
-      }
+        population_creator( *i_pop, pop_size );
     }
  
     template<class T_EVALUATOR>
@@ -1033,7 +710,7 @@ namespace LaDa
  
           __DODEBUGCODE(Print::out << "Continuing" << Print::endl;)
         }
-      } while ( continuator->apply( i_island_begin, i_island_end ) );
+      } while ( checkpoints( islands ) ); //continuator->apply( i_island_begin, i_island_end ) );
  
       Print::xmg << Print::flush;
       Save();
@@ -1249,7 +926,7 @@ namespace LaDa
         {
           if ( str.find("pop") != std::string::npos )
             do_restart |= SAVE_POPULATION;
-          if ( str.find("history") != std::string::npos and history )
+          if ( str.find("history") != std::string::npos and history.is_on() )
             do_restart |= SAVE_HISTORY;
           if ( str.find("results") != std::string::npos )
             do_restart |= SAVE_RESULTS;
@@ -1290,7 +967,7 @@ namespace LaDa
         {
           do_save |= SAVE_POPULATION | SAVE_HISTORY;
           Print::xmg << ", Population";
-          if ( history )
+          if ( history.is_on() )
             Print::xmg << ", and History";
           goto out;
         }
@@ -1299,7 +976,7 @@ namespace LaDa
           do_save |= SAVE_POPULATION;
           Print::xmg << ", Population";
         }
-        if ( str.find("history") != std::string::npos and history)
+        if ( str.find("history") != std::string::npos and history.is_on() )
         {
           do_save |= SAVE_HISTORY;
           Print::xmg << ", History";
@@ -1318,9 +995,6 @@ namespace LaDa
                  << Print::Xmg::comment << "Population Size: "
                                         << pop_size << Print::endl
                  << Print::Xmg::comment << topology.print_seeds() << Print::endl 
-                 << Print::Xmg::comment << (  populate_style == RANDOM_POPULATE ?
-                                             "Random Starting Population":
-                                             "Partitionned Starting Population" )
                                         << Print::endl
                  << Print::Xmg::comment << topology.print() << Print::endl;
       if ( max_generations )

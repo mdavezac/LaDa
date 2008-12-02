@@ -13,8 +13,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/ptr_container/ptr_map.hpp>
 
-#include <opt/factory.h>
-#include <opt/chainconnects.h>
+#include <factory/factory.h>
+#include <factory/chainconnects.h>
 
 #include "container.h"
 

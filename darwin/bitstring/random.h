@@ -27,8 +27,8 @@ namespace LaDa
                      typename T_OBJECT::t_Container::value_type min,
                      typename T_OBJECT::t_Container::value_type max )
         {
-          typename t_Object :: iterator  i_var_off = _o.Container().begin();
-          typename t_Object :: iterator  i_var_off_end = _o.Container().end();
+          typename T_OBJECT :: iterator  i_var_off = _o.Container().begin();
+          typename T_OBJECT :: iterator  i_var_off_end = _o.Container().end();
           bool has_changed = false;
           for(; i_var_off != i_var_off_end; ++i_var_off )
             *i_var_off = rng.uniform( max - min ) - min;
@@ -41,8 +41,8 @@ namespace LaDa
                                 typename T_OBJECT::t_Container::value_type _one,
                                 typename T_OBJECT::t_Container::value_type _two )
         {
-          typename t_Object :: iterator  i_var_off = _o.Container().begin();
-          typename t_Object :: iterator  i_var_off_end = _o.Container().end();
+          typename T_OBJECT :: iterator  i_var_off = _o.Container().begin();
+          typename T_OBJECT :: iterator  i_var_off_end = _o.Container().end();
           bool has_changed = false;
           for(; i_var_off != i_var_off_end; ++i_var_off )
             *i_var_off = rng.flip() ? _one: _two;
@@ -60,7 +60,7 @@ namespace LaDa
                                                ::t_Object::t_Type _min )
         {
           typedef typename T_FACTORY :: t_Individual t_Individual;
-          typedef typename T_FACTORY :: t_IndivTraits :: t_Object t_Object;
+          typedef typename T_FACTORY :: t_Individual :: t_IndivTraits :: t_Object t_Object;
           typedef typename T_FACTORY :: t_Populator t_Populator;
           Operator::MakePopulator<t_Individual, t_Populator>::transform_unary
           ( 
@@ -81,7 +81,7 @@ namespace LaDa
                                                           ::t_Object::t_Type _two )
         {
           typedef typename T_FACTORY :: t_Individual t_Individual;
-          typedef typename T_FACTORY :: t_IndivTraits :: t_Object t_Object;
+          typedef typename T_FACTORY :: t_Individual :: t_IndivTraits :: t_Object t_Object;
           typedef typename T_FACTORY :: t_Populator t_Populator;
           Operator::MakePopulator<t_Individual, t_Populator>::transform_unary
           ( 

@@ -15,8 +15,9 @@
 #include <mpi/mpi_object.h>
 #include <darwin/store.h>
 #include <darwin/objective.h>
-#include <darwin/taboos.h>
 #include <darwin/breeder.h>
+#include "../taboos/container.h"
+#include "../taboos/history.h"
 
 #include "topology.h"
 
@@ -181,7 +182,7 @@ namespace LaDa
               //! Type of the storage type holder
               typedef typename Store :: Types< t_GATraits >         t_Store;
               //! Type of the history interface.
-              typedef typename GA::History< t_GATraits >            t_History;
+              typedef typename GA::Taboo::History< t_Individual >   t_History;
               //! Type of the fitness object.
               typedef typename t_IndivTraits :: t_Fitness           t_Fitness;
               //! Type of the lamarckian traits, as declared in the base class
@@ -209,13 +210,13 @@ namespace LaDa
               //! Request buffers
               MPI::Prequest *requests;
               //! Taboo functor.
-              Taboo_Base<t_Individual>*          taboos;
+              Taboo::Container<t_Individual>*      taboos;
               //! Objective functor.
               typename t_ObjectiveType::t_Vector*  objective;
               //! Store functor.
-              typename t_Store :: Base*          store;
+              typename t_Store :: Base*            store;
               //! History functor
-              History<t_Individual>*             history;
+              t_History*                           history;
               //! Pointer to the communicator with bulls.
               boost::mpi::communicator *comm;
               //! A list of active bulls.
@@ -263,7 +264,7 @@ namespace LaDa
           
             public:
               //! Sets taboo pointer
-              void set( Taboo_Base<t_Individual> *_taboo ) { taboos = _taboo; }
+              void set( Taboo::Container<t_Individual> *_taboo ) { taboos = _taboo; }
               //! Sets objective pointer
               void set( typename t_ObjectiveType::t_Vector*  _o )
                 { objective = _o; }

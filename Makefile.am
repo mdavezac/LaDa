@@ -7,16 +7,6 @@ EXTRA_DIST = $(top_srcdir)/bootstrap.sh \
 	     $(EXTRA_FILES) \
              $(top_srcdir)/doxy.conf \
 	     $(top_srcdir)/Files
-if DOBANDGAPOPT 
-  DARWINSUBDIR = darwin
-  PESCANSUBDIR = pescan_interface
-  VFFSUBDIR = vff
-endif 
-if DOLAYEREDOPT
-  DARWINSUBDIR = darwin
-  PESCANSUBDIR = pescan_interface
-  VFFSUBDIR = vff
-endif 
 if DOCEOPT
   DARWINSUBDIR = darwin
 endif 

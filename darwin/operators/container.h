@@ -41,11 +41,6 @@ namespace LaDa
         {
             //! Type of the functor container.
             typedef std::vector< boost::function<void(T_POPULATOR&) > > t_Functors;
-            //! Small class to make Discriminate simpler.
-            template< class T_FUNCTOR >
-              class isother : public IsOther< T_INDIVIDUAL, T_FUNCTOR > {};
-            //! Tag for discriminating between functors.
-            template< bool D > class TypeTag {};
           public:
             //! Type of the indidividual
             typedef T_INDIVIDUAL t_Individual;
@@ -69,7 +64,7 @@ namespace LaDa
             }
             //! Connects the callback.
             template< class T_FUNCTOR >
-              void connect( T_FUNCTOR& _functor )
+              void connect( const T_FUNCTOR& _functor )
               { 
                 typename t_Functors :: value_type popfunc;
                 MakePopulator< t_Individual, t_Populator > :: transform( _functor, popfunc );
@@ -134,17 +129,9 @@ namespace LaDa
             }
             //! Connects the callback.
             template< class T_FUNCTOR >
-              void connect( T_FUNCTOR& _functor, types::t_real _rate )
+              void connect( const T_FUNCTOR& _functor, types::t_real _rate )
               {
                 connect( _functor ); 
-                rates_->push_back( _rate );
-              }
-            //! Connects the callback.
-            template< class T_FUNCTOR >
-              void connect( boost::shared_ptr<T_FUNCTOR>& _functor,
-                            types::t_real _rate )
-              {
-                connect( *_functor ); 
                 rates_->push_back( _rate );
               }
             
@@ -216,7 +203,7 @@ namespace LaDa
           }
           if( nbcreated == 0 )
           {
-            Print::xmg << Print::Xmg::removelast;
+            Print::xmg << Print::Xmg::removelast << Print::Xmg::unindent;
             return;
           }
           Print::xmg << Print::Xmg :: unindent;

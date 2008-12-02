@@ -24,10 +24,8 @@
 #include "evaluator.h"
 #include "concentration.h"
 #include "functors.h"
-#include "taboos.h"
 #include "gatraits.h"
 #include "single_site.h"
-#include "gaoperators.h"
 
 namespace LaDa
 {
@@ -247,16 +245,6 @@ namespace LaDa
         bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
         //! \brief Loads the lattice and the structure (cell-shape) from XML.
         bool Load( const TiXmlElement &_node );
-        //! \brief Allows %GA to use physical operators, as define in gaoperator.h
-        //! \return a pointer to a %GA operator. This pointer is owned by the callee.
-        eoGenOp<t_Individual>* LoadGaOp(const TiXmlElement &_el )
-         { return GA::LoadGaOp<t_Individual>( _el, structure, concentration ); }
-        //! Creates a GA::xTaboo instance if requested.
-        //! \return a pointer to a Taboo_Base functor. This pointer is owned by
-        //!         the callee.
-        GA::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el );
-        //! Creates random individuals using GA::Random.
-        bool initialize( t_Individual &_indiv );
         //! Sets TwoSites::Evaluator::Structure to \a _indiv
         void init( t_Individual &_indiv );
 

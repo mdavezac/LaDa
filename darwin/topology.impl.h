@@ -215,26 +215,26 @@ namespace LaDa
             "Error while creating Evaluation.\n" 
           )
        }
-    template< class T_GATRAITS > 
-      History<typename T_GATRAITS :: t_Individual >*
-        Topology :: history( eoState & _eostates )
-        {
-          typedef T_GATRAITS t_GATraits;
-          typedef typename t_GATraits :: t_Individual t_Individual;
-          typedef History<t_Individual> t_History;
-          t_History *result = NULL;
-          __SERIALCODE( result = new t_History; )
-          __TRYMPICODE(
-            if( (not graph) ) result = new t_History; 
-            else if( graph->type == mpi::Graph::t_Type::FARMER ) 
-              result = new t_History;
-            else if( graph->type == mpi::Graph::t_Type::BULL )
-              result = (t_History*) new mpi::Graph::BullHistory< t_GATraits >(graph);,
-            "Error while creating history.\n" 
-          )
-          if( result ) _eostates.storeFunctor( static_cast<t_History*>(result) );
-          return result;
-        }
+//   template< class T_GATRAITS > 
+//     History<typename T_GATRAITS :: t_Individual >*
+//       Topology :: history( eoState & _eostates )
+//       {
+//         typedef T_GATRAITS t_GATraits;
+//         typedef typename t_GATraits :: t_Individual t_Individual;
+//         typedef Taboo::History<t_Individual> t_History;
+//         t_History *result = NULL;
+//         __SERIALCODE( result = new t_History; )
+//         __TRYMPICODE(
+//           if( (not graph) ) result = new t_History; 
+//           else if( graph->type == mpi::Graph::t_Type::FARMER ) 
+//             result = new t_History;
+//           else if( graph->type == mpi::Graph::t_Type::BULL )
+//             result = (t_History*) new mpi::Graph::BullHistory< t_GATraits >(graph);,
+//           "Error while creating history.\n" 
+//         )
+//         if( result ) _eostates.storeFunctor( static_cast<t_History*>(result) );
+//         return result;
+//       }
     template <class T_GATRAITS> typename GA::Objective::Types<T_GATRAITS>::t_Vector*
       Topology :: objective ( const TiXmlElement &_node )
       {
@@ -258,7 +258,7 @@ namespace LaDa
                         
     template <class T_GATRAITS> 
       void Topology :: set ( GA::Breeder<T_GATRAITS> *_breeder,
-                             Taboo_Base<typename T_GATRAITS::t_Individual> *_taboos)
+                             Taboo::Container<typename T_GATRAITS::t_Individual> *_taboos)
       {
         __MPICODE(
           typedef mpi::Graph::Breeders::Farmer<T_GATRAITS> t_Farmer;
@@ -279,27 +279,16 @@ namespace LaDa
         return NULL;
       }
     template< class T_GATRAITS > 
-      Taboo_Base<typename T_GATRAITS :: t_Individual >*
-        Topology :: special_taboos( eoState &_e )
-        {
-          typedef T_GATRAITS t_GATraits;
-          typedef typename t_GATraits :: t_Individual t_Individual;
-          __SERIALCODE( return NULL; )
-          __TRYMPICODE(
-            if( (not graph) ) return NULL;
-            else if( graph->type == mpi::Graph::t_Type::FARMER )
-              return NULL;
-            else if( graph->type == mpi::Graph::t_Type::COW )
-              return NULL;
-            else if( graph->type == mpi::Graph::t_Type::FARMHAND )
-              return NULL;
-            mpi::Graph::BullTaboo< t_GATraits > *taboo 
-              = new mpi::Graph::BullTaboo< t_GATraits >(graph);
-            _e.storeFunctor(taboo);
-            return (Taboo_Base<t_Individual>*) taboo;,
-            "Error while creating taboos.\n"
-          )
-        }
+      void Topology :: special_taboos( Taboo::Container< typename T_GATRAITS :: t_Individual >& _taboos )
+      {
+        __SERIALCODE( return NULL; )
+        __TRYMPICODE(
+          if( ( not graph ) or graph->type != mpi::Graph::t_Type::BULL ) return;
+          _taboos.clear();
+          _taboos.connect( mpi::Graph::BullTaboo< T_GATRAITS >( graph ) );,
+          "Error while creating taboos.\n"
+        )
+      }
 
   } // namespace GA
 } // namespace LaDa

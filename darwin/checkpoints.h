@@ -25,7 +25,6 @@
 #include <print/stdout.h>
 #include <mpi/mpi_object.h>
 
-#include "taboos.h"
 #include "operators.h"
 #include "gencount.h"
 #include "store.h"
@@ -157,129 +156,6 @@ namespace LaDa
         virtual std::string className(void) const { return "GA::PrintPop"; }
     };
 
-    //! \brief In case of taboo diverges, starts a period of high mutations.
-    //! \details The idea is that if no new individual can be found, than the %GA
-    //! is stuck in a niche. A periode of high mutation could possibly dislodge it.
-    //! \warning Everything in this class is a dirty hack. Its best simply not to use it.
-    template< class T_GATRAITS>
-    class NuclearWinter : public eoStatBase<typename T_GATRAITS::t_Individual>
-    {
-      public:
-        typedef T_GATRAITS t_GATraits; //!< All %GA triats
-      protected:
-        typedef typename t_GATraits::t_Individual t_Individual; //!< Type of an individual
-        typedef typename t_GATraits::t_Population t_Population; //!< Type of the population
-
-      protected:
-        Taboo_Base<t_Individual> &taboo; //!< Reference to the taboos to check
-        eoGenOp<t_Individual> &normal_ops; //!< Reference to the "normal" operators
-        SequentialOp<t_Individual> nuclear_ops; //!< The high-mutation operators
-        eoGenOp<t_Individual> **breeding_ops; //!< The breeding operators. Watch out! Hack!
-        types::t_unsigned nuclear_winter_length; //!< Number of generations of high mutation period
-        types::t_unsigned nuclear_winter_age;//!< Starting date of the high mutation period
-        bool is_gone_nuclear; //!< True if within a high mutation period
-        eoHowMany nuclear_howmany; //!< Number of offsprings to create during high mutation period
-        eoHowMany normal_howmany; //!< Number of offsprings to create during normal period
-        eoHowMany **breeding_howmany; //!< Dirty Hack!
-
-      public:
-        //! Constructor and Initialisor
-        NuclearWinter   ( Taboo_Base<t_Individual> &_taboo, 
-                          eoGenOp<t_Individual> &_nops,
-                          eoGenOp<t_Individual> &_nwops,
-                          types::t_real &_normal_howmany )
-                      : taboo(_taboo),
-                        normal_ops(_nops),
-                        breeding_ops(NULL),
-                        nuclear_winter_length(2),
-                        is_gone_nuclear(false),
-                        nuclear_howmany(1.0),
-                        normal_howmany(_normal_howmany),
-                        breeding_howmany(NULL)
-        {
-          nuclear_ops.add(_nops, 1.0);
-          nuclear_ops.add(_nwops, 1.0);
-        }
-
-        //! Destructor
-        virtual ~NuclearWinter(){};
-
-        
-        //! Dirty Hack!
-        void set_howmany( eoHowMany **_howmany);
-
-        //! \brief This class is a dirty hack of a functor
-        virtual void operator()( const t_Population &_pop );
-
-        //! Dirty Hack!
-        void set_op_address( eoGenOp<t_Individual> ** _ops ) { breeding_ops = _ops; } 
-
-        //! Dirty Hack!
-        eoGenOp<t_Individual>* get_op_address() const;
-
-        //! EO required 
-        void printOn( std::ostream &__os ) const {};
-        //! EO required 
-        void readFrom( std::istream &__os ) const {};
-        //! EO required 
-        virtual void lastCall( const t_Population &_pop) {};
-        //! EO required 
-        virtual std::string className(void) const { return "LaDa::NuclearWinter"; }
-
-    };
-
-    //! \brief adds "old" individuals to a taboo list
-    //! \details Individuals are added to a taboo list here, but certainly not removed
-    //!          from the population.
-    template< class T_GATRAITS>
-    class UpdateAgeTaboo : public eoStatBase<typename T_GATRAITS::t_Individual>
-    {
-      public:
-        typedef T_GATRAITS t_GATraits; //!< All %GA traits.
-      protected:
-        typedef typename t_GATraits::t_Individual t_Individual; //!< Type of the indiviudals
-        typedef typename t_GATraits::t_Population t_Population; //!< Type of the population
-
-      protected:
-        Taboo< t_Individual, std::list<t_Individual> > & taboo; //!< Reference to a Taboo list
-        GenCount &age; //!< Generational counter
-        types::t_unsigned max_age; //!< Maximum allowed age
-        types::t_unsigned check_every; //!< Checks for the old every n generations
-        bool do_print_out; //!< Prints out newly tabooed individual
-
-      public:
-        //! Constructor and Initialisor
-        UpdateAgeTaboo  ( Taboo< t_Individual, std::list<t_Individual> > & _taboo,
-                          GenCount &_age, types::t_unsigned _max_age, bool _do_print_out = false )
-                       : taboo(_taboo), age(_age), max_age(_max_age),
-                         do_print_out( _do_print_out )
-        {
-          check_every = max_age / 10;
-          if ( check_every == 0 )
-            check_every = 1;
-        };
-        //! Copy Constructor
-        UpdateAgeTaboo  ( const UpdateAgeTaboo<t_Individual> & _update )
-                       : taboo(_update.taboo), age(_update.age), 
-                         max_age(_update.max_age), check_every( _update.check_every ),
-                         do_print_out(_update.do_print_out) {};
-
-        //! \brief This class is a functor
-        //! \details Check for old individuals in \a _pop and adds them to the
-        //! taboo list. If required, prints out the tabooed individual to
-        //! Print::xmg as a comment.
-        virtual void operator()( const t_Population &_pop );
-
-        //! EO required
-        void printOn( std::ostream &__os ) const {};
-        //! EO required
-        void readFrom( std::istream &__os ) const {};
-        //! EO required
-        virtual void lastCall( const eoPop<t_Individual> &_pop) {}
-
-        //! EO required
-        virtual std::string className(void) const { return "Darwin::UpdateAgeTaboo"; }
-    };
 
     //! \brief Terminates %GA when condition is found to be true
     //! \details The condition should be a functor of type T_BINOP which takes
@@ -500,78 +376,78 @@ namespace LaDa
 #  endif
  
  
-    //! \brief Applies a functor to all stored individuals.
-    //! \details Generally (depending on the overloading of
-    //!          Store::Manip::apply_all), this should mean applying to whatever
-    //!          container exists in Apply2Stored::store. This functor is not
-    //!          permitted to change anything in the stored invididuals.
-    template< class T_GATRAITS >
-    class Apply2Stored: public eoUpdater
-    {
-      public:
-        //! All relevant GA traits
-        typedef T_GATRAITS t_GATraits;
- 
-      protected:
-        //! Type of the individual
-        typedef typename t_GATraits :: t_Individual t_Individual;
-        //! Type of the abstract base storage class
-        typedef Store::Base<t_GATraits> t_Store;
-        //! Type of the functor.
-        typedef eoMonOp<const t_Individual> t_Functor;
-   
-      protected:
-        const t_Store &store; //!< Reference to the storage class
-        t_Functor *functor; //!< Pointer to the functor
-   
-      public:
-        //! \brief Constructor and (partial) Initializer.
-        //! \details Apply2Stored::set_functor() still needs to be called prior
-        //!          to use.
-        Apply2Stored ( const t_Store &_store ) : store(_store ) {}
-        //! Sets the functor to call for each stored individual.
-        void set_functor( t_Functor *_functor ) { functor = _functor; }
-   
-        //! Functor. Reroutes calls to Store::Manip::apply_all().
-        void operator()() { store.apply_all( *functor ); }
-    };
-   
-    //! \brief Applies a functor to best stored individual.
-    //! \details Generally (depending on the overloading of
-    //!          Store::Manip::apply_best), this should mean applying to whatever
-    //!          optimum exists in Apply2Best::store. This functor is not
-    //!          permitted to change anything in the stored invididuals.
-    template< class T_GATRAITS >
-    class Apply2Best: public eoUpdater
-    {
-      public:
-        //! All relevant GA traits
-        typedef T_GATRAITS t_GATraits;
- 
-      protected:
-        //! Type of the individual
-        typedef typename t_GATraits :: t_Individual t_Individual;
-        //! Type of the abstract base storage class
-        typedef Store::Base<t_GATraits> t_Store;
-        //! Type of the functor.
-        typedef eoMonOp<const t_Individual> t_Functor;
-   
-      protected:
-        const t_Store &store;
-        t_Functor *functor; //!< Pointer to the functor
-   
-      public:
-        //! \brief Constructor and (partial) Initializer.
-        //! \details Apply2Best::set_functor() still needs to be called prior 
-        //!          to use.
-        Apply2Best   ( const t_Store &_store )
-                   : store(_store ) {}
-        //! Sets the functor to call for best stored individual.
-        void set_functor( t_Functor *_functor ) { functor = _functor; }
-   
-        //! Functor. Reroutes calls to Store::Manip::apply_best().
-        void operator()() { store.apply_best( functor ); }
-    };
+//   //! \brief Applies a functor to all stored individuals.
+//   //! \details Generally (depending on the overloading of
+//   //!          Store::Manip::apply_all), this should mean applying to whatever
+//   //!          container exists in Apply2Stored::store. This functor is not
+//   //!          permitted to change anything in the stored invididuals.
+//   template< class T_GATRAITS >
+//   class Apply2Stored: public eoUpdater
+//   {
+//     public:
+//       //! All relevant GA traits
+//       typedef T_GATRAITS t_GATraits;
+//
+//     protected:
+//       //! Type of the individual
+//       typedef typename t_GATraits :: t_Individual t_Individual;
+//       //! Type of the abstract base storage class
+//       typedef Store::Base<t_GATraits> t_Store;
+//       //! Type of the functor.
+//       typedef eoMonOp<const t_Individual> t_Functor;
+//  
+//     protected:
+//       const t_Store &store; //!< Reference to the storage class
+//       t_Functor *functor; //!< Pointer to the functor
+//  
+//     public:
+//       //! \brief Constructor and (partial) Initializer.
+//       //! \details Apply2Stored::set_functor() still needs to be called prior
+//       //!          to use.
+//       Apply2Stored ( const t_Store &_store ) : store(_store ) {}
+//       //! Sets the functor to call for each stored individual.
+//       void set_functor( t_Functor *_functor ) { functor = _functor; }
+//  
+//       //! Functor. Reroutes calls to Store::Manip::apply_all().
+//       void operator()() { store.apply_all( *functor ); }
+//   };
+//  
+//   //! \brief Applies a functor to best stored individual.
+//   //! \details Generally (depending on the overloading of
+//   //!          Store::Manip::apply_best), this should mean applying to whatever
+//   //!          optimum exists in Apply2Best::store. This functor is not
+//   //!          permitted to change anything in the stored invididuals.
+//   template< class T_GATRAITS >
+//   class Apply2Best: public eoUpdater
+//   {
+//     public:
+//       //! All relevant GA traits
+//       typedef T_GATRAITS t_GATraits;
+//
+//     protected:
+//       //! Type of the individual
+//       typedef typename t_GATraits :: t_Individual t_Individual;
+//       //! Type of the abstract base storage class
+//       typedef Store::Base<t_GATraits> t_Store;
+//       //! Type of the functor.
+//       typedef eoMonOp<const t_Individual> t_Functor;
+//  
+//     protected:
+//       const t_Store &store;
+//       t_Functor *functor; //!< Pointer to the functor
+//  
+//     public:
+//       //! \brief Constructor and (partial) Initializer.
+//       //! \details Apply2Best::set_functor() still needs to be called prior 
+//       //!          to use.
+//       Apply2Best   ( const t_Store &_store )
+//                  : store(_store ) {}
+//       //! Sets the functor to call for best stored individual.
+//       void set_functor( t_Functor *_functor ) { functor = _functor; }
+//  
+//       //! Functor. Reroutes calls to Store::Manip::apply_best().
+//       void operator()() { store.apply_best( functor ); }
+//   };
   } // namespace GA
 } // namespace LaDa
 

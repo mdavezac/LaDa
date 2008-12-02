@@ -12,6 +12,7 @@
 #include <boost/lambda/bind.hpp>
 #include <string>
 #include <fstream>
+#include <iomanip>
 
 #include <eo/eoOp.h>
 
@@ -20,6 +21,8 @@
 #include <crystal/structure.h>
 #include <opt/types.h>
 #include <vff/layered.h>
+#include <print/stdout.h>
+#include <print/xmg.h>
 
 #include "../bitstring.h"
 #include "../vff.h"
@@ -57,13 +60,22 @@ namespace LaDa
         //! Prints out connections.
         void declare( const std::string& _string );
 
+        namespace details
+        {
+          //! Dumps object to a string.
+          inline std::ostream& printg( std::ostream& _stream, const LaDa::GA::BitString::Object<>& _o )
+          {
+            foreach( types::t_real var, _o.Container() )
+                _stream << std::fixed << std::setw(7) << std::setprecision(3) << var;
+            return _stream;
+          }
+        }
         template< class T_EVALUATOR > void genotype( const T_EVALUATOR& )
         {
           namespace bl = boost::lambda;
           typedef typename T_EVALUATOR :: t_Individual :: t_IndivTraits t_IndivTraits;
           typedef typename t_IndivTraits :: t_Object t_Object;
-          t_Object :: connect_print( bl::_1 << bl::ret< LaDa::GA::BitString::Object<> >( bl::_2 )
-                                            << bl::constant(" ") ); 
+          t_Object :: connect_print( bl::bind( &details::printg, bl::_1, bl::_2 ) ); 
         }
 
         template< class T_EVALUATOR > void strain_energy( T_EVALUATOR & _evaluator )

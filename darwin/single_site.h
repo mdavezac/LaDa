@@ -19,9 +19,7 @@
 
 #include "evaluator.h"
 #include "functors.h"
-#include "taboos.h"
 #include "bitstring.h"
-#include "gaoperators.h"
 #include "scaling.h"
 
 
@@ -252,40 +250,12 @@ namespace LaDa
         bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
         //! Loads evaluator from XML.
         bool Load( const TiXmlElement &_node );
-        //! \brief Allows %GA to use physical operators, as define in gaoperator.h
-        //! \return a pointer to a %GA operator. This pointer is owned by the callee.
-        eoGenOp<t_Individual>* LoadGaOp(const TiXmlElement &_el )
-         { return GA::LoadGaOp<t_Individual>( _el, structure, concentration ); }
-        //! Creates a GA::xTaboo instance if requested.
-        //! \return a pointer to a Taboo_Base functor. This pointer is owned by the callee.
-        GA::Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el )
-        {
-          if ( concentration.single_c ) return NULL;
-          GA::xTaboo<t_Individual> *xtaboo = new GA::xTaboo< t_Individual >( concentration );
-          if ( xtaboo and xtaboo->Load( _el ) )  return xtaboo;
-          if ( xtaboo ) delete xtaboo;
-          return NULL;
-        }
-
-        //! Creates random individuals using GA::Random.
-        bool initialize( t_Individual &_indiv )
-        {
-          GA::Random< t_Individual > random( concentration, structure, _indiv );
-          _indiv.invalidate(); return true;
-        }
-        //! Checks from \<GA\> attributes wether to fix the concentration.
-        void LoadAttribute ( const TiXmlAttribute &_att )
-          { concentration.LoadAttribute( _att ); };
 
         //! \brief Used to submits individuals to history, etc, prior to starting %GA
         //! \details initializes the endopoints of a convex-hull, for instance.
         //! Presubmitted individuals are not put into the population.
         //! \see GA::Evaluator::presubmit()
         void presubmit( std::list<t_Individual> &_pop );
-
-        //! \brief Returns a functor for printing xyz format
-        //! \see Evaluator::LoadPrintBest()
-        eoMonOp<const t_Individual>* LoadPrintBest( const TiXmlElement &_node );
 
         //! Prints conceration attributes and structure
         std::string print() const;

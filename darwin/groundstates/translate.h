@@ -54,26 +54,25 @@ namespace LaDa
         void Translate<T_OBJECT> :: translate( const Crystal::Structure& _structure,
                                                t_Object& _object )
         {
-          typedef typename t_Object :: t_Container :: iterator t_ivar;
+          typename t_Object :: t_Container& container = _object.Container();
           container.clear();
 
           typedef typename Crystal::Structure::t_Atoms::const_iterator t_iatom;
-          typedef typename t_Object :: t_Container :: iterator t_ivar;
           t_iatom i_atom = _structure.atoms.begin();
           t_iatom i_atom_end = _structure.atoms.end();
-          for( ; i_atom != i_atom_end; ++i_atom, ++i_var )
-            *i_var = i_atom->type > 0 ? 1: 0;
+          for( ; i_atom != i_atom_end; ++i_atom )
+            container.push_back( i_atom->type > 0 ? 1: 0 );
         }
 
       template< class T_OBJECT >
-        void Translate<T_OBJECT> :: translate( const t_Object& _object, 
+        void Translate<T_OBJECT> :: translate( const T_OBJECT& _object, 
                                                Crystal::Structure& _structure )
         {
-          typedef typename t_Object :: t_Container :: iterator t_ivar;
-          typedef typename Crystal::Structure::t_Atoms::const_iterator t_iatom;
-          typedef typename t_Object :: t_Container :: iterator t_ivar;
+          typedef typename T_OBJECT :: t_Container :: const_iterator t_ivar;
+          typedef typename Crystal::Structure::t_Atoms::iterator t_iatom;
           t_iatom i_atom = _structure.atoms.begin();
           t_iatom i_atom_end = _structure.atoms.end();
+          t_ivar i_var = _object.begin(); 
           for( ; i_atom != i_atom_end; ++i_atom, ++i_var )
             i_atom->type = *i_var > 0 ? 1.e0: -1e0;
         }
@@ -84,7 +83,7 @@ namespace LaDa
         {
           typedef typename t_Object :: t_Container :: iterator t_ivar;
           std::istringstream sstr( _string );
-          t_ivar i_var = _object.Container().begin();
+          t_ivar i_var = _object.begin();
           __DODEBUGCODE( t_ivar i_var_end = _object.Container().end(); )
           do
           {

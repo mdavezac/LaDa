@@ -63,9 +63,7 @@ namespace LaDa
       INEVALBASE( inline std::string ) :: print() const
       {
         std::ostringstream sstr;
-        atat::rVector3d dir = lattice->cell * direction;
-        sstr << "Structure: \n"
-             << structure << "\n";
+        sstr << "Structure: \n" << structure << "\n";
         return sstr.str();
       }
     

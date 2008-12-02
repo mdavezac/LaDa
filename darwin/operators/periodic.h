@@ -8,6 +8,7 @@
 # include <config.h>
 #endif
 
+#include<boost/function.hpp>
 #include<boost/lexical_cast.hpp>
 #include<boost/bind.hpp>
 #include<boost/ref.hpp>

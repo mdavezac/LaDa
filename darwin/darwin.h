@@ -13,6 +13,7 @@
 
 #include <boost/serialization/serialization.hpp>
 #include <boost/filesystem/path.hpp>
+#include <boost/function.hpp>
 
 #include <eo/eoPop.h>
 #include <eo/eoGenOp.h>
@@ -22,9 +23,11 @@
 #include <tinyxml/tinyxml.h>
 
 #include <mpi/mpi_object.h>
+#include <factory/xmlfactory.h>
+#include <factory/visit_xml.h>
 
-#include "checkpoints.h"
-#include "taboos.h"
+// #include "checkpoints.h"
+#include "taboos/container.h"
 #include "objective.h"
 #include "store.h"
 #include "evaluation.h"
@@ -33,11 +36,8 @@
 #include "gatraits.h"
 #include "topology.h"
 
-#ifdef _ALLOY_LAYERS_
 # include "operators/xmlfactory.h"
 # include "operators/eogenop_adapter.h"
-# include <boost/function.hpp>
-#endif
 
 namespace LaDa
 {
@@ -142,30 +142,10 @@ namespace LaDa
         //! \brief Print::xmg output flag. 
         //! \see  GA::PrintGA \see Print::xmg
         bool do_print_each_call;
-        enum {
-          //! Starting population is chosen randomly
-          RANDOM_POPULATE,
-          //! \brief Starting population is chosen accross a random partition of space
-          //! \todo move partition_populate to BitString namespace? 
-          //! and make this an application-specific...
-          PARTITION_POPULATE 
-        } populate_style; //!< Flag for how to choose starting population
 
         //! \brief The continuator containing all others. See EO library
         //! \see Darwin::Load_CheckPoints()
         IslandsContinuator<t_GATraits>*    continuator;
-        //! \brief Pointer to a collection containing previously assessed individuals
-        //! \details This pointer can be set to NULL. In that case, no history
-        //! tracking is done.
-        //! \see Darwin::make_History(), Darwin::Save(), Darwin::Restart()
-        History<t_Individual>*             history;
-        //! \brief Pointer to the taboo virtual base class
-        //! \details This pointer can be set to NULL. In that case, nothing is taboo.
-        //! Using a virtual base class allows the instance to be pretty much
-        //! anything we want. 
-        //! \todo Add restarting and saving capabilities for all taboos in GA::Darwin
-        //! \see Darwin::Load_Taboos().
-        Taboo_Base<t_Individual>*          taboos;
         //! Mating operators
         //! \see Darwin::make_genetic_op(), Darwin::Load_Mating()
         eoGenOp<t_Individual>*             breeder_ops;
@@ -186,6 +166,7 @@ namespace LaDa
         //! applications. It is scalar in single-objective applications. 
         //! \see Darwin::Load_Method()
         typename t_ObjectiveType::t_Vector*  objective;
+      public:
         //! \brief Pointer to a class implementing storage capabilities
         //! \see Darwin::Load_Method()
         typename t_Store :: Base*          store;
@@ -200,27 +181,49 @@ namespace LaDa
         //! \see Darwin::Load_Method()
         t_Scaling*                         scaling;
 
-        //! holds a collection of independent populations
-        t_Islands     islands;
-        //! Offspring population
-        t_Population  offspring;
-        
         //! \brief Contains most, if not all, pointers allocated in Darwin. 
         //! \details Is an EO benefit. Basically takes care of deallocating all
         //! those pointers once the game is up. Go check out EO to find out how it
         //! works.
         eoState eostates;
-      public:
+        //! holds a collection of independent populations
+        t_Islands     islands;
+        //! Offspring population
+        t_Population  offspring;
+        
         //! The mpi/serial topology wrapper
         Topology topology;
         //! Counts the number of generations.
         GenCount counter;
-#       ifdef _ALLOY_LAYERS_
-          //! The breeding operator factory.
-          Factory::XmlOperators<t_Individual> operator_factory;
-          //! The GA attributes factory.
-          ::LaDa::Factory::Factory< void( const std::string& ), std::string > att_factory;
-#       endif
+        //! The breeding operator factory.
+        Factory::XmlOperators<t_Individual> operator_factory;
+        //! The GA attributes factory.
+        ::LaDa::Factory::Factory< void( const std::string& ), std::string > att_factory;
+        //! The Taboo Factory.
+        LaDa::Factory::Factory
+        < 
+          void( boost::function< bool( const t_Individual& ) >&, const TiXmlElement& ), 
+          std::string 
+        > taboo_factory;
+
+        //! \brief Pointer to the taboo virtual base class
+        //! \details This pointer can be set to NULL. In that case, nothing is taboo.
+        //! Using a virtual base class allows the instance to be pretty much
+        //! anything we want. 
+        //! \todo Add restarting and saving capabilities for all taboos in GA::Darwin
+        //! \see Darwin::Load_Taboos().
+        Taboo::Container<t_Individual> taboos;
+        //! \brief Pointer to a collection containing previously assessed individuals
+        //! \details This pointer can be set to NULL. In that case, no history
+        //! tracking is done.
+        //! \see Darwin::make_History(), Darwin::Save(), Darwin::Restart()
+        Taboo::History<t_Individual>   history;
+        //! Population creater.
+        boost::function<void( t_Population&, size_t )> population_creator;
+        //! A checkpoint aggregator.
+        CheckPoint::CheckPoint<t_Islands> checkpoints;
+        //! A checkpoint factory.
+        LaDa::Factory::XmlFactory<void(CheckPoint::CheckPoint<t_Islands>&)> checkpoint_factory;
         
       public:
         //! \brief The evaluator instance itself
@@ -231,10 +234,9 @@ namespace LaDa
         Darwin () : filename("input.xml"), tournament_size(2), pop_size(100),
                     max_generations(0), nb_islands(1), do_save(SAVE_RESULTS),
                     do_restart(0), replacement_rate(0.1), do_print_each_call(false),
-                    populate_style(RANDOM_POPULATE), continuator(NULL), history(NULL),
-                    taboos(NULL), breeder_ops(NULL), breeder(NULL), replacement(NULL),
+                    continuator(NULL), breeder_ops(NULL), breeder(NULL), replacement(NULL),
                     objective(NULL), store(NULL), evaluation(NULL), scaling(NULL),
-                    topology(__MPICODE( *::LaDa::mpi::main ) ), counter(0) {}
+                    topology(__MPICODE( *::LaDa::mpi::main ) ) { checkpoints.connect_age_counter( counter ); }
         //! Destructor
         virtual ~Darwin ();
 
@@ -253,17 +255,8 @@ namespace LaDa
         //! somewhere from here, it's probly not gonna get exectuted.
         //! Nonetheless, the loop itself is rather simple, so go look at it.
         void run();
-        //! Returns a pointer to the taboos.
-        Taboo_Base<t_Individual>* get_taboos() { return taboos; }
-        //! Returns a pointer to the history.
-        History<t_Individual>* get_history() const { return history; }
         //! Returns age functor.
         const GenCount& get_counter() const { return counter; }
-#       ifdef _ALLOY_LAYERS_
-          void set_operator_factory( const Factory::XmlOperators<t_Individual> &_factory )
-            { operator_factory = _factory; }
-#       endif
-
 
       protected: 
         //! \brief Loads overall Genetic Algorithm attributes

@@ -13,7 +13,7 @@
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
-#include <darwin/taboos.h>
+#include "../taboos/history.h"
 #include "comm.h"
 
 namespace LaDa
@@ -26,8 +26,7 @@ namespace LaDa
       {
         //! Transfer storage calls to the Farmer
         template< class T_GATRAITS >
-        class BullHistory : protected Comm::Bull< T_GATRAITS, BullHistory<T_GATRAITS> >,
-                            public ::LaDa::GA::History<typename T_GATRAITS :: t_Individual>
+        class BullHistory : protected Comm::Bull< T_GATRAITS, BullHistory<T_GATRAITS> >
         {
           public:
             typedef T_GATRAITS t_GATraits; //!< all GA classes \sa Traits::GA
@@ -35,8 +34,6 @@ namespace LaDa
           private:
             //! Type of the individual
             typedef typename t_GATraits :: t_Individual t_Individual;
-            //! Type of the public base class.
-            typedef ::LaDa::GA::History< t_Individual >       t_Base;
             //! Type of this class.
             typedef BullHistory<t_GATraits>             t_This;
             //! Type of the communication base class.
@@ -47,10 +44,10 @@ namespace LaDa
 
           public:
             //! Constructor
-            BullHistory( Topology *_topo ) : t_CommBase( _topo ), t_Base() {}
+            BullHistory( Topology *_topo ) : t_CommBase( _topo ){}
             //! Copy constructor
             BullHistory   ( const t_This &_taboo )
-                      : t_Base(_taboo), t_CommBase( _taboo ){}
+                      : t_CommBase( _taboo ){}
             //! Destructor
             virtual ~BullHistory() {};
       

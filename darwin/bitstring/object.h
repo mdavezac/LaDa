@@ -124,23 +124,23 @@ namespace LaDa
               { _ar & bitstring; }
         };
 
-      //! \brief Dumps a BitString::Object to a stream.
-      //! \details This routine is generally used to do print-out to such outlets as
-      //!          Print::xmg or Print::out. It is \b not used for XML
-      //!          input/output. Hence it is not used for saving or restarting. You
-      //!          can overide this routine with little danger.
-      template<class T_CONT>
-        std::ostream& operator<<(std::ostream &_stream, const Object<T_CONT> &_o)
-        {
-          typedef typename Object<T_CONT> ::t_Type t_Type;
-          typedef typename Object<T_CONT> ::t_Container :: const_iterator const_iterator;
-          const_iterator i_var = _o.bitstring.begin();
-          const_iterator i_end = _o.bitstring.end();
-          for(; i_var != i_end; ++i_var )
-              _stream << *i_var << " ";
-          return _stream;
-        }
-
+//   //! \brief Dumps a BitString::Object to a stream.
+//   //! \details This routine is generally used to do print-out to such outlets as
+//   //!          Print::xmg or Print::out. It is \b not used for XML
+//   //!          input/output. Hence it is not used for saving or restarting. You
+//   //!          can overide this routine with little danger.
+//   template<class T_CONT>
+//     std::ostream& operator<<(std::ostream &_stream, const Object<T_CONT> &_o)
+//     {
+//       typedef typename Object<T_CONT> ::t_Type t_Type;
+//       typedef typename Object<T_CONT> ::t_Container :: const_iterator const_iterator;
+//       const_iterator i_var = _o.bitstring.begin();
+//       const_iterator i_end = _o.bitstring.end();
+//       for(; i_var != i_end; ++i_var )
+//           _stream << *i_var << " ";
+//       return _stream;
+//     }
+//
       template< class T_CONTAINER >
         inline void Object<T_CONTAINER> :: mask( types::t_unsigned _start,
                                                  types::t_unsigned _end)

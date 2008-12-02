@@ -51,32 +51,50 @@ namespace LaDa
             typedef typename t_Base :: t_Assign t_Assign;
             //! All pertinent %GA traits
             typedef Traits::GA< Evaluator > t_GATraits;
+
+          protected:
+            //! Type of the individual's quantities' traits.
+            typedef typename t_GATraits :: t_VA_Traits t_VATraits;
+            //! Type of the gradient of the individual's quantities.
+            typedef typename t_VATraits :: t_QuantityGradients t_QuantityGradients;
+
+          public:
        
             //! Constructor
-            Evaluator() : t_Base(), bandgap(structure) {}
+            Evaluator() : t_Base(), ce(structure) {}
             //! Copy Constructor
             Evaluator   ( const Evaluator &_c )
-                      : t_Base(_c), bandgap(_c.bandgap) {}
+                      : t_Base(_c), ce(_c.ce) {}
             //! Destructor
             virtual ~Evaluator() {};
        
-            //! Loads structure, lattice, bandgap, vff from XML
-            bool Load( const TiXmlElement &_node );
+            //! Loads structure, lattice, CE functional from XML.
+            bool Load( const TiXmlElement &_node )
+            {
+              if( not t_Base::Load( _node ) ) return false;
+              return ce.Load( _node );
+            }
        
             //! Initializes the bandgap.
-            void init( t_Individual& _indiv ) { t_Base::init( _indiv ); ce.init(); }
+            void init( t_Individual& _indiv ) { t_Base::init( _indiv ); ce.init( _indiv ); }
        
             //! Calls ce evaluator.
-            void evaluate();
-             { t_Assign::assign( ce.evaluate(), current_individual->quantities() ); }
+            void evaluate()
+            {
+              t_Base::current_object->energy = ce.evaluate();
+              assign( *t_Base::current_object, t_Base::current_individual->quantities() );
+            }
 
             //! Computes the gradient of the the functional
             void evaluate_gradient( t_QuantityGradients& _grad )
               { ce.evaluate_gradient( _grad ); }
             //! Evaluates the functional and computes the gradient
             void evaluate_with_gradient( t_QuantityGradients& _grad )
-              { t_Assign::assign( ce.evaluate_with_gradient( _grad ), 
-                                  current_individual->quantities() ); }
+            {
+              t_Base::current_object->energy = ce.evaluate_with_gradient( _grad );  
+              t_Assign::assign( *t_Base::current_object,
+                                t_Base::current_individual->quantities() ); 
+            }
             //! \brief Computes component \a _pos of the gradient and stores in location \a
             //!        _pos of \a _grad
             void evaluate_one_gradient( t_QuantityGradients& _grad, types::t_unsigned _pos ) 
@@ -85,15 +103,15 @@ namespace LaDa
   #         ifdef _MPI
               //! forwards comm and suffix to bandgap.
               void set_mpi( boost::mpi::communicator *_comm, const std::string &_str )
-                { ce.set_mpi( _comm, _str ); t_Base::set_mpi( _comm, _str ); } 
+                { ce.set_mpi( _comm ); t_Base::set_mpi( _comm, _str ); } 
   #         endif
             using t_Base::Load;
 
             //! Loads a phenotypic niche from input
             //! \see  SingleSite::new_Niche_from_xml()
-            void* Load_Niche( const TiXmlElement &_node )
-              { return (void *) SingleSite::new_Niche_from_xml<t_GATraits, 1>
-                                                              ( _node, concentration ); }
+            void* Load_Niche( const TiXmlElement &_node ) {}
+//             { return (void *) SingleSite::new_Niche_from_xml<t_GATraits, 1>
+//                                                             ( _node, concentration ); }
 
             //! Returns a constant reference to a structure.
             const Crystal::Structure& get_structure() const { return structure; }
@@ -117,7 +135,5 @@ namespace LaDa
  }
 } // namespace LaDa
  
-
-#include "evaluator.impl.h"
 
 #endif // _LAYERED_H_

@@ -8,14 +8,13 @@
 #include <config.h>
 #endif
 
-#include <darwin/taboos.h>
 
 #ifdef _MPI
 
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
-#include "graph/comm.h"
+#include "comm.h"
 
 namespace LaDa
 {
@@ -27,8 +26,7 @@ namespace LaDa
       {
         //! Transfer storage calls to the Farmer
         template< class T_GATRAITS >
-        class BullTaboo : protected Comm::Bull< T_GATRAITS, BullTaboo<T_GATRAITS> >,
-                          public Taboo_Base<typename T_GATRAITS :: t_Individual>
+        class BullTaboo : protected Comm::Bull< T_GATRAITS, BullTaboo<T_GATRAITS> >
         {
           public:
             typedef T_GATRAITS t_GATraits; //!< all GA classes \sa Traits::GA
@@ -36,8 +34,6 @@ namespace LaDa
           private:
             //! Type of the individual
             typedef typename t_GATraits :: t_Individual t_Individual;
-            //! Type of the public base class.
-            typedef Taboo_Base< t_Individual > t_Base;
             //! Type of this class.
             typedef BullTaboo<t_GATraits> t_This;
             //! Type of the communication base class.
@@ -48,19 +44,19 @@ namespace LaDa
 
           public:
             //! Constructor
-            BullTaboo ( Topology* _topo ) : t_CommBase(_topo), t_Base() {}
+            BullTaboo ( Topology* _topo ) : t_CommBase(_topo) {}
             //! Copy constructor
             BullTaboo   ( const t_This &_taboo )
-                      : t_Base(_taboo), t_CommBase( _taboo ){}
+                      : t_CommBase( _taboo ){}
             //! Destructor
             virtual ~BullTaboo() {};
       
             //! returns true if _indiv is in taboo_list.
-            virtual bool operator()( const t_Individual& _indiv );
+            bool operator()( const t_Individual& _indiv ) const; 
         };
         
         template < class T_GATRAITS >
-          bool BullTaboo<T_GATRAITS> :: operator()( const t_Individual &_indiv )
+          bool BullTaboo<T_GATRAITS> :: operator()( const t_Individual &_indiv ) const
           {
             t_CommBase::request( t_CommBase::t_Requests::TABOOCHECK );
             t_CommBase::comm->send( 0, ONTABOO_TAG1( TAG ), _indiv );

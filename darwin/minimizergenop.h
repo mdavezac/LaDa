@@ -188,9 +188,9 @@ namespace LaDa
         typedef typename t_GATraits :: t_Individual                  t_Individual;
         //! All %types relevant to the individual
         typedef typename t_GATraits :: t_IndivTraits :: t_VA_Traits  t_VA_Traits;
-        //! All %types relevant to the minimization
+  //     //! All %types relevant to the minimization
   //     typedef typename t_VA_Traits :: t_Functional                 t_Functional;
-  //     //! The base minimizer type
+        //! The base minimizer type
         typedef typename Minimizer::Base< t_Functional >             t_Minimizer;
         //! A functor capable of saving a current state in a minimization functor.
         typedef SaveStateIndividual<t_GATraits >                     t_SaveState;

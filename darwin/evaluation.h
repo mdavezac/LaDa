@@ -21,7 +21,7 @@
 
 #include "objective.h"
 #include "store.h"
-#include "taboos.h"
+#include "taboos/history.h"
 #include "gatraits.h"
 
 namespace LaDa
@@ -82,7 +82,7 @@ namespace LaDa
         //! Constructor and Initializer
         Abstract () : nb_eval(0), nb_grad(0) {}
         //! Constructor and Initializer
-        Abstract ( const Abstract & _c ) : nb_eval( _c.nb_eval ), nb_grad( _c.nb_grad ) {}
+        Abstract ( const Abstract & _c ) : nb_eval(_c.nb_eval), nb_grad(_c.nb_grad) {}
         //! Destructor
         virtual ~Abstract() {};
 
@@ -112,6 +112,7 @@ namespace LaDa
         //! Evaluates a single population.
         virtual void evaluate( t_Population &_pop ) = 0;
     };
+
 
     //! \brief Funnel through which all calls from %GA to the %Evaluator's
     //! functional routines are routed.
@@ -278,7 +279,7 @@ namespace LaDa
         //! \brief Store object type
         typedef Store :: Base<t_GATraits>                            t_Store;
         //! \brief History object type
-        typedef GA::History<t_Individual>                            t_History;
+        typedef GA::Taboo::History<t_Individual>                     t_History;
         //! Scalar Fitness type
         typedef typename t_GATraits :: t_Fitness :: t_ScalarFitness  t_Fitness;
         //! Quantity type of the Scalar Fitness type
@@ -327,7 +328,7 @@ namespace LaDa
                                                           t_QuantityGradients& _grad,
                                                           t_VA_Type *_i_grad );
         //! Sets the pointer to the history interface.
-        void set( t_History *_history ) { history = _history; }
+        void set( t_History &_history ) { history = &_history; }
     };
 
   } // namespace Evaluation

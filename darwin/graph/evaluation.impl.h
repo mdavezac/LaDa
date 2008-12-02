@@ -41,6 +41,7 @@ namespace LaDa
               Farmer<T_GATRAITS, T_BASE> :: evaluate( t_Individual &_indiv )
               {
                 if ( not _indiv.invalid() ) return t_Base::evaluate( _indiv );
+                if( t_Base :: history->clone( _indiv ) ) return t_Base::evaluate( _indiv );
                 
                 // fitness AND quantities of _indiv must be valid from here-on
                 ++t_Base::nb_eval;

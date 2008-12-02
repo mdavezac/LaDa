@@ -90,14 +90,6 @@ AC_ARG_ENABLE(pescan,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-pescan) ;;
      esac],[pescan=$enall])
 
-AC_ARG_ENABLE(molecularity,
-     [  --enable-molecularity         Turn on molecularity],
-     [case "${enableval}" in
-       yes) molecularity=true ;;
-       no)  molecularity=false ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-molecularity) ;;
-     esac],[molecularity=$enall])
-
 AC_ARG_ENABLE(galib,
      [  --enable-galib                Turn on galib],
      [case "${enableval}" in
@@ -121,22 +113,6 @@ AC_ARG_ENABLE(ceopt,
        no)  ceopt=false ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-ceopt) ;;
      esac],[ceopt=$enall])
-
-AC_ARG_ENABLE(bandgapopt,
-     [  --enable-bandgapopt           Turn on bandgap optimization],
-     [case "${enableval}" in
-       yes) bandgapopt=true ;;
-       no)  bandgapopt=false ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-bandgap) ;;
-     esac],[bandgapopt=$enall])
-
-# AC_ARG_ENABLE(emassopt,
-#      [  --enable-emassopt             Turn on electronic effective mass optimization],
-#      [case "${enableval}" in
-#        yes) emassopt=true ;;
-#        no)  emassopt=false ;;
-#        *) AC_MSG_ERROR(bad value ${enableval} for --enable-emassopt) ;;
-#      esac],[emassopt=$enall])
 
 AC_ARG_ENABLE(alloylayersopt,
      [  --enable-alloylayersopt       Turn on alloylayers configuration space optimization],
@@ -168,16 +144,6 @@ if test x$nolaunch = xtrue; then
   AC_DEFINE([_NOLAUNCH],[],[])
 fi
 
-if test x$bandgapopt = xtrue ; then 
-  galib=true
-  pescan=true
-  vff=true
-fi
-if test x$molecularity = xtrue; then
-  galib=true
-  pescan=true
-  vff=true
-fi
 # if test x$emassopt = xtrue; then
 #   galib=true
 #   emass=true
@@ -331,11 +297,9 @@ AC_CHECK_LIB(m,main)
 # conditional
 AM_CONDITIONAL(DOMPI, test x$mpi = xtrue)
 AM_CONDITIONAL(DOPESCAN, test x$pescan = xtrue)
-AM_CONDITIONAL(DOLAYEREDOPT, test x$molecularity = xtrue)
 AM_CONDITIONAL(DOCE, test x$ce = xtrue)
 AM_CONDITIONAL(DOCEOPT, test x$ceopt = xtrue)
 AM_CONDITIONAL(DOVFF, test x$vff = xtrue)
-AM_CONDITIONAL(DOBANDGAPOPT, test x$bandgapopt = xtrue)
 AM_CONDITIONAL(NOLAUNCH, test x$nolaunch = xtrue)
 AM_CONDITIONAL(DODARWIN, test x$galib = xtrue)
 AM_CONDITIONAL(DOLAPACK, test x$lapack = xtrue)
@@ -428,7 +392,7 @@ AC_SUBST(BOOST_CXXFLAGS)
 AC_OUTPUT(Makefile atat/Makefile physics/Makefile opt/Makefile crystal/Makefile
           vff/Makefile mpi/Makefile pescan_interface/Makefile darwin/Makefile 
           print/Makefile lapack/Makefile separable/Makefile ce/Makefile 
-          python/Makefile separable/fixedlattice/Makefile )
+          python/Makefile separable/fixedlattice/Makefile factory/Makefile )
 
 echo ""; echo ""
 echo "Will Compile following modules: "
@@ -450,14 +414,8 @@ fi
 # if test "x$emass" = xtrue; then
 #   echo " _ Effective Electronic Mass calculations for ternary (100) uperlattices" 
 # fi
-if test "$bandgapopt" = true; then
-  echo " _ Genetic Algorithm for Band Gap"
-fi
 if test "$ceopt" = true; then
   echo " _ Genetic Algorithm for Cluster Expansion"
-fi
-if test x$molecularity = xtrue; then
-  echo " _ Genetic Algorithm for Molecularity"
 fi
 # if test x$emassopt = xtrue; then
 #   echo " _ Genetic Algorithm for Electronic Mass Optimization"

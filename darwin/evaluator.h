@@ -18,7 +18,6 @@
 #include <opt/function_base.h>
 #include <mpi/mpi_object.h>
 
-#include "taboos.h"
 #include "loadsave.h"
 
 #include "gatraits.h"
@@ -179,13 +178,6 @@ namespace LaDa
         //! \return a pointer to an eoOp<const t_Individual>.
         //!         This pointer is owned by the callee.
         eoMonOp<const t_Individual>* LoadPrintBest( const TiXmlElement &_node ) { return NULL; }
-        //! \brief Loads application-specific taboos
-        //! \details should return a functor which returns true if an individual is forbidden
-        //! \see TabooFunction
-        //! \related Taboo, Taboos, ... 
-        //! \return a pointer to an eoMonOp<const t_Individual> object owned by
-        //! GA::Darwin::eostates, so don't deallocate yourself.
-        Taboo_Base<t_Individual>* LoadTaboo(const TiXmlElement &_el ) { return NULL; }
         //! \brief Random initialization of the t_object instance of \a _indiv
         //! \return true if \a _indiv should be invalidated (eg, \a _indiv has changed)
         bool initialize( t_Individual &_indiv ) {return false; }; 

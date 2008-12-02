@@ -26,7 +26,7 @@ DARWIN_LIB_H = concentration.h debug.h \
 	       checkpoints.h evaluator.h individual.h objective.h \
 	       taboos.h gatraits.h  bitstring.h fitness.h gaoperators.h \
 	       scaling.h minimizergenop.h topology.h \
-               assign_callbacks.h print_callbacks.h \
+               assign_callbacks.h print_callbacks.h static_translate.h \
                $(DARWIN_LIB_IMPL_H)
 
 DARWIN_OP_CC = operators/container.cc 
@@ -105,14 +105,17 @@ OPT_H = ndim_iterator.h minimize_base.h polynome.h frprmn_minimizer.h \
 	va_minimizer.h fitness_function.h  function_functors.h monome.h traits.h \
         fuzzy.h atat.h debug.h va_function.h gsl_lsq.h random.h algorithms.h \
         gsl.h allsq.h cgs.h gsl_nllsq.h gsl_mins.h gsl_simplex.h \
-        bpo_macros.h initial_path.h tinyxml.h factory.h modifiers.h tuple_io.h \
-        fusedfactory.h chainconnects.h
+        bpo_macros.h initial_path.h tinyxml.h modifiers.h tuple_io.h 
 OPT_CC = gsl_lsq.cc random.cc gsl.cc gsl_nllsq.cc gsl_mins.cc gsl_simplex.cc \
          leave_many_out.cc initial_path.cc tinyxml.cc
 OPT_PYTHON_CONVENIENCE_H =  convex_hull.h errors.h convex_hull.impl.h
 OPT_PYTHON_CONVENIENCE_CC =  convex_hull.cc errors.cc 
 OPT_F90 =  df1dim.f90  frprmn.f90  linmin.f90 leave_many_out.h
 OPT_DOC = $(OPT_H) $(OPT_CC) $(OPT_PYTHON_CONVENIENCE_CC)
+
+FACTORY_CC =
+FACTORY_H = chainconnects.h factory.h fusedfactory.h xmlkey.h
+FACTORY_DOC = $(FACTORY_CC) $(FACTORY_H)
 
 EMASS_CC = emass.cc
 EMASS_H  = emass.h
@@ -127,8 +130,8 @@ PHYSICS_CC = physics.cc
 PHYSICS_H  = physics.h
 PHYSICS_DOC = $(PHYSICS_H) $(PHYSICS_CC) 
 
-PRINT_CC = manip.cc xmg.cc stdout.cc base.cc 
-PRINT_H  = manip.h  xmg.h  stdout.h  base.h  operations.h 
+PRINT_CC = manip.cc xmg.cc stdout.cc base.cc columns.cc
+PRINT_H  = manip.h  xmg.h  stdout.h  base.h  operations.h columns.h
 PRINT_DOC = $(PRINT_H) $(PRINT_CC) 
 
 PYTHON_CE_CC = ce.cc
@@ -187,7 +190,8 @@ ALL_DOCS = $(top_srcdir)/doxy.conf $(top_srcdir)/$(DOCS_H) \
            $(addprefix $(top_srcdir)/separable/,$(SEPARABLE_DOC)) \
            $(addprefix $(top_srcdir)/separable/fixedlattice/,$(SEPARABLES_DOC)) \
            $(addprefix $(top_srcdir)/vff/,$(VFF_FORTRAN_DOC)) \
-           $(addprefix $(top_srcdir)/vff/,$(VFF_DOC)) 
+           $(addprefix $(top_srcdir)/vff/,$(VFF_DOC)) \
+           $(addprefix $(top_srcdir)/factory/,$(FACTORY_DOC)) 
 
 TEST_PSEUDOS = maskr  vq.atom1  vq.atom2  vq.atom3  vq.atom4  vq.atom5 \
                vq.atom6  vq.atom7  vq.atom8  vwr.pso

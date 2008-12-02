@@ -5,6 +5,8 @@
 #ifndef _LADA_GA_POPULATE_
 #define _LADA_GA_POPULATE_
 
+#include <boost/lambda/bind.hpp>
+
 namespace LaDa
 {
   namespace GA
@@ -15,7 +17,7 @@ namespace LaDa
       //!        _operator to create individuals.
       template< class T_OPERATOR, class T_TABOOS, class T_POPULATION >
         void populate( const T_OPERATOR& _operator,
-                       T_TABOOS* const _taboos, T_POPULATION& _pop, 
+                       const T_TABOOS& _taboos, T_POPULATION& _pop, 
                        size_t _popsize, size_t _maxiter )
         {
           typedef typename T_POPULATION :: value_type t_Individual;
@@ -24,7 +26,7 @@ namespace LaDa
           {
             t_Individual indiv;
             _operator( indiv );
-            if ( _taboos and ( not (*_taboos)( indiv ) ) )
+            if ( not _taboos( indiv ) )
             {
               _pop.push_back(indiv);
                 ++j;
@@ -47,7 +49,7 @@ namespace LaDa
       //!        and (ii) adding "masked" individual using \a _maskop.
       template< class T_INITOP, class T_MASKOP, class T_TABOOS, class T_POPULATION >
         void partition_populate( const T_INITOP& _initop, const T_MASKOP& _maskop,
-                                 T_TABOOS* const _taboos, T_POPULATION& _pop, 
+                                 const T_TABOOS& _taboos, T_POPULATION& _pop, 
                                  size_t _popsize, size_t _maxiter )
         {
           typedef typename T_POPULATION :: value_type t_Individual;
@@ -62,51 +64,51 @@ namespace LaDa
             types::t_unsigned end = indiv.Object().size();  
           
             // indiv: ----
-            if ( not ( _taboos and (*_taboos)(indiv) ) ) _pop.push_back(indiv);
+            if ( not _taboos(indiv) ) _pop.push_back(indiv);
             if ( _pop.size() >= _popsize ) break;
             
             _maskop( indiv, start, end );         // indiv: ****
-            if ( not ( _taboos and (*_taboos)(indiv) ) ) _pop.push_back(indiv);
+            if ( not _taboos(indiv) ) _pop.push_back(indiv);
             if ( _pop.size() >= _popsize ) break;
             
             _maskop( indiv, start, end/2 );       // indiv: --**
-            if ( not ( _taboos and (*_taboos)(indiv) ) ) _pop.push_back(indiv);
+            if ( not _taboos(indiv) ) _pop.push_back(indiv);
             if ( _pop.size() >= _popsize ) break;
        
             _maskop( indiv, start, end );         // indiv: **--
-            if ( not ( _taboos and (*_taboos)(indiv) ) ) _pop.push_back(indiv);
+            if ( not _taboos(indiv) ) _pop.push_back(indiv);
             if ( _pop.size() >= _popsize ) break;
        
             _maskop( indiv, start, end/4 );       // indiv: -*--
-            if ( not ( _taboos and (*_taboos)(indiv) ) ) _pop.push_back(indiv);
+            if ( not _taboos(indiv) ) _pop.push_back(indiv);
             if ( _pop.size() >= _popsize ) break;
        
             _maskop( indiv, start, end );         // indiv: *-**
-            if ( not ( _taboos and (*_taboos)(indiv) ) ) _pop.push_back(indiv);
+            if ( not _taboos(indiv) ) _pop.push_back(indiv);
             if ( _pop.size() >= _popsize ) break;
        
             _maskop( indiv, end/2, end*3/4 );     // indiv: *--*
-            if ( not ( _taboos and (*_taboos)(indiv) ) ) _pop.push_back(indiv);
+            if ( not _taboos(indiv) ) _pop.push_back(indiv);
             if ( _pop.size() >= _popsize ) break;
        
             _maskop( indiv, start, end );         // indiv: -**-
-            if ( not ( _taboos and (*_taboos)(indiv) ) ) _pop.push_back(indiv);
+            if ( not _taboos(indiv) ) _pop.push_back(indiv);
             if ( _pop.size() >= _popsize ) break;
        
             _maskop( indiv, end/4, end/2 );       // indiv: --*-
-            if ( not ( _taboos and (*_taboos)(indiv) ) ) _pop.push_back(indiv);
+            if ( not _taboos(indiv) ) _pop.push_back(indiv);
             if ( _pop.size() >= _popsize ) break;
        
             _maskop( indiv, start, end );         // indiv: **-*
-            if ( not ( _taboos and (*_taboos)(indiv) ) ) _pop.push_back(indiv);
+            if ( not _taboos(indiv) ) _pop.push_back(indiv);
             if ( _pop.size() >= _popsize ) break;
        
             _maskop( indiv, start, end/2 );       // indiv: ---*
-            if ( not ( _taboos and (*_taboos)(indiv) ) ) _pop.push_back(indiv);
+            if ( not _taboos(indiv) ) _pop.push_back(indiv);
             if ( _pop.size() >= _popsize ) break;
        
             _maskop( indiv, start, end );         // indiv: *---
-            if ( not ( _taboos and (*_taboos)(indiv) ) ) _pop.push_back(indiv);
+            if ( not _taboos(indiv) ) _pop.push_back(indiv);
           }
           __DOASSERT( _pop.size() < _popsize,
                          "Created " << _pop.size() - popstart << " individuals in "
@@ -114,6 +116,7 @@ namespace LaDa
                          "Are taboos/concentration constraints to restrictive?\n" )
           _pop.resize( _popsize );
         }
+
     } // namespace Operators
   } // namespace GA
 } // namespace LaDa
