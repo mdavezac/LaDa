@@ -44,6 +44,7 @@
 #include "checkpoints/true_census.h"
 #include "checkpoints/xcrysdenanim.h"
 #include "checkpoints/xyzanim.h"
+#include "checkpoints/save_every.h"
 
 
 

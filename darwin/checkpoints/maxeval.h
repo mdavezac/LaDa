@@ -44,7 +44,7 @@ namespace LaDa
           {
             types::t_unsigned maxeval;
             __TRYBEGIN
-             maxeval = boost::lexical_cast<types::t_unsigned>( maxeval );
+             maxeval = boost::lexical_cast<types::t_unsigned>( _maxeval );
             __TRYEND(, "Could not parse \"" << _maxeval << "\" into a natural integer.\n" )
             if( maxeval == 0 )
             {

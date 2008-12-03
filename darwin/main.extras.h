@@ -183,7 +183,7 @@
          )
        )
        (
-         LaDa::Factory::XmlKey( "Filename", "stop" ),
+         LaDa::Factory::XmlKey( "Filenames", "stop" ),
          "GA stops when this file is found.",
          std::ptr_fun( LaDa::GA::CheckPoint::AddressOf::stop_onfile( ga.checkpoints ) )
        );

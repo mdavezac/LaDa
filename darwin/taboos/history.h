@@ -9,6 +9,7 @@
 #endif
 
 #include <algorithm>
+#include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <print/xmg.h>
 

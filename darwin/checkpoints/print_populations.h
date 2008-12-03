@@ -26,7 +26,7 @@ namespace LaDa
       struct PrintPopContainer
       {
         //! Title of the container.
-        const std::string& title;
+        const std::string title;
         //! Constructor.
         PrintPopContainer( const std::string& _title ) : title( _title ) {}
         //! Copy Constructor.

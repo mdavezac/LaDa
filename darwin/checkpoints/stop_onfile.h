@@ -28,7 +28,7 @@ namespace LaDa
     namespace CheckPoint
     {
       //! Returns true if \a _path does not exist.
-      inline bool stop_onfile( const boost::filesystem::path& _path )
+      inline bool stop_onfile( const boost::filesystem::path _path )
       {
         __ROOTCODE
         (
@@ -62,7 +62,6 @@ namespace LaDa
                 std::cerr << "Found and deleted stop file " << path << " on startup.\n";
               __ENDGROUP__
             )
-            if( boost::filesystem::exists( path ) )
             _checkpoint.connect_continuator( boost::bind( &GA::CheckPoint::stop_onfile, path ) );
             Print :: xmg << Print :: Xmg :: comment
                          << "Will stop on finding file " << path << "." << Print::endl;

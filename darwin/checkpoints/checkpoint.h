@@ -44,7 +44,8 @@ namespace LaDa
           bool operator()(T_ITERATOR _first, T_ITERATOR _last) const
           {
             // nothing in signal, throw errror.
-            __ASSERT( _first == _last, "No continuator." )
+            __ASSERT( _first == _last, "No continuator. "
+                     "The GA doesn't know when to stop.\n" )
       
             bool result = *_first++;
             for(; _first != _last; ++_first )
