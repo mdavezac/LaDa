@@ -107,10 +107,10 @@ OPT_H = ndim_iterator.h minimize_base.h polynome.h frprmn_minimizer.h \
         gsl.h allsq.h cgs.h gsl_nllsq.h gsl_mins.h gsl_simplex.h \
         bpo_macros.h initial_path.h tinyxml.h modifiers.h tuple_io.h 
 OPT_CC = gsl_lsq.cc random.cc gsl.cc gsl_nllsq.cc gsl_mins.cc gsl_simplex.cc \
-         leave_many_out.cc initial_path.cc tinyxml.cc
+         leave_many_out.cc initial_path.cc tinyxml.cc fortran_dirio.cc
 OPT_PYTHON_CONVENIENCE_H =  convex_hull.h errors.h convex_hull.impl.h
 OPT_PYTHON_CONVENIENCE_CC =  convex_hull.cc errors.cc 
-OPT_F90 =  df1dim.f90  frprmn.f90  linmin.f90 leave_many_out.h
+OPT_F90 =  df1dim.f90  frprmn.f90  linmin.f90 leave_many_out.h fortran_dirio.h
 OPT_DOC = $(OPT_H) $(OPT_CC) $(OPT_PYTHON_CONVENIENCE_CC)
 
 FACTORY_CC =
@@ -120,9 +120,9 @@ FACTORY_DOC = $(FACTORY_CC) $(FACTORY_H)
 EMASS_CC = emass.cc
 EMASS_H  = emass.h
 EMASS_DOC = $(EMASS_H) $(EMASS_CC) 
-PESCAN_F90 = fortran.f90
-PESCAN_CC = interface.cc bandgap.cc # dipole_elements.cc
-PESCAN_H  = interface.h  bandgap.h  va.h # dipole_elements.h
+PESCAN_F90 = momentum.f90 fortran.f90 
+PESCAN_CC = interface.cc bandgap.cc dipole_elements.cc
+PESCAN_H  = interface.h  bandgap.h  va.h dipole_elements.h
 PESCAN_IMPL_H  = interface.localclasses.h va.impl.h
 PESCAN_DOC = $(PESCAN_H) $(PESCAN_CC) $(PESCAN_F90) $(PESCAN_IMPL_H)
 

@@ -16,20 +16,23 @@
 #include <opt/initial_path.h>
 #include <opt/debug.h>
 #include <physics/physics.h>
+#include <print/stdout.h>
 
 #include "bandgap.h"
 #include "dipole_elements.h"
 
-#include <print/stdout.h>
 
 // declares fortran interface
 extern "C"
 {
-  void FC_FUNC_(iaga_set_cell,IAGA_SET_CELL)
-               (const double*, const double[3][3], const int*, const int*, const int* );
-  void FC_FUNC_(iaga_dipole_elements, IAGA_DIPOLE_ELEMENTS)
-               ( double[], const int*, const int*, const int*,
-                 const int*, const char*, const int*, const char*, const int* );
+  void FC_FUNC_(momentum, MOMENTUM)
+               ( const char*, const int*,
+                 const char*, const int*, 
+                 const char*, const int*,
+                 const int[], const int[],
+                 const int*, const int*,
+                 double[], const int*, const int* );
+
 }
 
 
@@ -37,159 +40,148 @@ namespace LaDa
 {
   namespace Pescan
   {
+    // Computes dipoles, whether all-electron or folded spectrum.
+    void compute_dipoles( std::vector< Dipole > &_dipoles,
+                          const std::vector<types::t_real> &_vbm_eigs,
+                          const std::vector<types::t_real> &_cbm_eigs,
+                          const size_t _kramer, const types::t_real _degeneracy,
+                          const types::t_real _Evbm, const types::t_real _Ecbm,
+                          const std::string& _inputfilename,
+                          const boost::filesystem::path &_valence_path,
+                          const boost::filesystem::path &_conduction_path );
+
     void dipole_elements( std::vector< Dipole > &_dipoles,
                           const BandGap& _bandgap,
-                          const Crystal::Structure &_structure,
-                          types::t_real _degeneracy )
+                          const types::t_real _degeneracy )
     {
-      // true if an all electron calculation.
       namespace bfs = boost::filesystem; 
-      const bool all_electron
-        ( not bfs::exists( opt::InitialPath::path() /  _bandgap.get_dirname() / "cbm" ) );
-      __DODEBUGCODE
-      ( 
-        namespace bl = boost::lambda; 
-      )
-      __ASSERT( _bandgap.eigenvalues.size() < 2 and ( all_electron ), 
-                   "Not enough eigenvalues were computed: " 
-                << _bandgap.eigenvalues.size() << " < " << "2 \n" )
-      __ASSERT( _bandgap.bands.gap() < 3e0 * _degeneracy,
-                "Band gap too small or degeneracy tolerance too large.\n" )
-      if( not all_electron )
+      // true if an all electron calculation.
+      const std::string filename
+      (
+           "escan_input."
+         + boost::lexical_cast<std::string>(::LaDa::mpi::main->rank()) 
+      ); 
+      const bfs::path path
+      (
+          opt::InitialPath::path() / _bandgap.get_dirname() 
+      ); 
+      const size_t kramer( Fuzzy::is_zero( atat::norm2( _bandgap.escan.kpoint ) ) ? 1: 2 ); 
+      if( bfs::exists( opt::InitialPath::path() /  _bandgap.get_dirname() / "cbm" )  )
       {
-        Print :: out << "vbm: " <<  _bandgap.bands.vbm << " " << _bandgap.vbm_eigs.size() << "  ";
-        foreach( types::t_real shit, _bandgap.vbm_eigs )
-          Print::out << shit << " | ";
-        Print::out << Print::endl;
-        Print :: out << "cbm: " <<  _bandgap.bands.cbm << " " << _bandgap.cbm_eigs.size() << "  ";
-        foreach( types::t_real shit, _bandgap.cbm_eigs )
-          Print::out << shit << " | ";
-        Print::out << Print::endl;
+        __ASSERT( bfs::exists( path / "vbm" / filename ), "Could not find file.\n" )
+        __ASSERT( bfs::exists( path / "cbm" / filename ), "Could not find file.\n" )
+        compute_dipoles
+        (
+          _dipoles, _bandgap.vbm_eigs, _bandgap.cbm_eigs,
+          kramer, _degeneracy, _bandgap.bands.vbm, _bandgap.bands.cbm,
+          filename, path / "vbm", path / "cbm"
+        );
       }
+      else
+      {
+        compute_dipoles
+        (
+          _dipoles, _bandgap.eigenvalues, _bandgap.eigenvalues,
+          kramer, _degeneracy, _bandgap.bands.vbm, _bandgap.bands.cbm,
+          filename, path, path
+        );
+      }
+    }
+
+    void compute_dipoles( std::vector< Dipole > &_dipoles,
+                          const std::vector<types::t_real> &_vbm_eigs,
+                          const std::vector<types::t_real> &_cbm_eigs,
+                          const size_t _kramer,
+                          const types::t_real _degeneracy,
+                          const types::t_real _Evbm, const types::t_real _Ecbm,
+                          const  std::string &_inputfilename,
+                          const  boost::filesystem::path &_valence_path,
+                          const  boost::filesystem::path &_conduction_path )
+    {
+      namespace bfs = boost::filesystem; 
       __ASSERT
       (
         std::find_if
         ( 
-          ( all_electron ? _bandgap.eigenvalues.begin(): _bandgap.vbm_eigs.begin() ), 
-          ( all_electron ? _bandgap.eigenvalues.begin(): _bandgap.vbm_eigs.end() ), 
-          boost::bind( &Fuzzy::eq<types::t_real>, _bandgap.bands.vbm, _1 )
-        ) == ( all_electron ? _bandgap.eigenvalues.end(): _bandgap.vbm_eigs.end() ),
+          _vbm_eigs.begin(), _vbm_eigs.end(),
+          boost::bind( &Fuzzy::eq<types::t_real>, _Evbm, _1 )
+        ) == _vbm_eigs.end(),
         "VBM and eigenvalues are not coherent.\n"
       )
       __ASSERT
       (
         std::find_if
         ( 
-          ( all_electron ? _bandgap.eigenvalues.begin(): _bandgap.cbm_eigs.begin() ), 
-          ( all_electron ? _bandgap.eigenvalues.begin(): _bandgap.cbm_eigs.end() ), 
-          boost::bind( &Fuzzy::eq<types::t_real>, _bandgap.bands.cbm, _1 )
-        ) == ( all_electron ? _bandgap.eigenvalues.end(): _bandgap.cbm_eigs.end() ),
-        "Bandgap and eigenvalues are not coherent.\n"
+          _cbm_eigs.begin(), _cbm_eigs.end(),
+          boost::bind( &Fuzzy::eq<types::t_real>, _Ecbm, _1 )
+        ) == _cbm_eigs.end(),
+        "CBM and eigenvalues are not coherent.\n"
       )
-      
+      __ASSERT( not bfs::exists( _valence_path ), _valence_path << " does not exist.\n" )
+      __ASSERT( not bfs::exists( _conduction_path ), _conduction_path << " does not exist.\n" )
       
       // Finds out the number of conduction and valence bands.
-      std::vector<int> bands;
-      int ncond(0), nval(0), startval(-1);
-      int i = 0;
-      foreach( const types::t_real eigenval,
-               all_electron ? _bandgap.eigenvalues: _bandgap.vbm_eigs )
-      {
-        if( std::abs( eigenval - _bandgap.bands.vbm ) < _degeneracy )
-          bands.push_back( i ), ++nval;
-        ++i;
-      }
-      i = 0;
-      foreach( const types::t_real eigenval, 
-               all_electron ? _bandgap.eigenvalues: _bandgap.cbm_eigs )
-      {
-        if( std::abs( eigenval - _bandgap.bands.cbm ) < _degeneracy )
-          bands.push_back( i ), ++ncond;
-        ++i;
-      }
+      std::vector<int> valence_indices;
+      std::vector<types::t_real> :: const_iterator i_band = _vbm_eigs.begin();
+      std::vector<types::t_real> :: const_iterator i_band_end = _vbm_eigs.end();
+      for( int index(0) ; i_band != i_band_end; ++i_band, ++index )
+        if( std::abs( *i_band - _Evbm ) < _degeneracy  )
+          valence_indices.push_back( index );
+      std::vector<int> conduction_indices;
+      i_band = _cbm_eigs.begin();
+      i_band_end = _cbm_eigs.end();
+      for( int index(0) ; i_band != i_band_end; ++i_band, ++index )
+        if( std::abs( *i_band - _Ecbm ) < _degeneracy  )
+          conduction_indices.push_back( index );
       
-      // Sends cell parameters to fortran
-      const int x( boost::tuples::get<0>( _bandgap.genpot.mesh ) );
-      const int y( boost::tuples::get<1>( _bandgap.genpot.mesh ) );
-      const int z( boost::tuples::get<2>( _bandgap.genpot.mesh ) );
-      const types::t_real alat( _structure.scale / Physics::a0("A") );
-      FC_FUNC_(iaga_set_cell,IAGA_SET_CELL)
-              ( &alat, _structure.cell.x, &x, &y, &z );
-
       // Call fortran code.
-      const size_t dipole_array_size( 2 * 3 * 4 * nval * ncond);
-      double dipoles[ dipole_array_size ];
-      const boost::filesystem::path holepath
-      (
-        (
-          all_electron ? opt::InitialPath::path() / _bandgap.get_dirname():
-                         opt::InitialPath::path() / _bandgap.get_dirname() / "cbm"
-        ) / _bandgap.escan.rspace_wfn
-      ); 
-      const char* holename = holepath.string().c_str();
-      const int holesize( holepath.string().size() );
-      const boost::filesystem::path electronpath
-      (
-        (
-          all_electron ? opt::InitialPath::path() / _bandgap.get_dirname():
-                         opt::InitialPath::path() / _bandgap.get_dirname() / "vbm"
-        ) / _bandgap.escan.rspace_wfn
-      ); 
-
-      __ASSERT( not bfs::exists( holepath ), holepath << " does not exist.\n" )
-      __ASSERT( not bfs::exists( electronpath ), electronpath << " does not exist.\n" )
-      const char* electronname = electronpath.string().c_str();
-      const int electronsize( electronpath.string().size() );
-      FC_FUNC_(iaga_dipole_elements, IAGA_DIPOLE_ELEMENTS)
-              ( dipoles, &(bands[0]), &(bands[nval]), &nval, &ncond,
-                electronname, &electronsize, holename, &holesize );
+      const int ninputpath( _inputfilename.size() );
+      const char* char_inputpath( _inputfilename.c_str() );
+      const int nwfn_vbm( _valence_path.string().size() );
+      const char* char_wfnvbm( _valence_path.string().c_str() );
+      const int nwfn_cbm( _conduction_path.string().size() );
+      const char* char_wfncbm( _conduction_path.string().c_str() );
+      const int nval( valence_indices.size() );
+      const int ncond( conduction_indices.size() );
+      const int ndip2( nval * _kramer );
+      const int ndip3( ncond * _kramer );
+      double dipoles[ size_t(ndip2) ][ size_t(ndip3) ][3][2];
+      
+      std::cout << "here\n";
+      FC_FUNC_(momentum, MOMENTUM)
+              ( char_inputpath, &ninputpath,
+                char_wfnvbm, &nwfn_vbm, 
+                char_wfncbm, &nwfn_cbm,  
+                &valence_indices[0], &conduction_indices[0],
+                &nval, &ncond, &(dipoles[0][0][0][0]), &ndip2, &ndip3 );
+      std::cout << "there\n";
 
       // copies results to output vector.
       // loop positions determined by order of dipoles in fortran code.
       Dipole dipole;
-      types::t_real *i_dip( dipoles ); 
-      for( size_t l(0); l < nval; ++l )
+      for( int l(0); l < ndip2; ++l )
       {
-        dipole.band2band.first = bands[l];
-        for( size_t k(0); k < ncond; ++k )
+        dipole.band2band.first = valence_indices[l / _kramer ];
+        for( int k(0); k < ndip3; ++k )
         {
-          dipole.band2band.second = bands[nval + k];
-          for( size_t sp(0u); sp < 4u; ++sp )
+          dipole.band2band.second = conduction_indices[k / _kramer ];
+
+          for( size_t r(0u); r < 3u; ++r )
           {
-            const types::t_real first
-            (
-              all_electron ? _bandgap.eigenvalues[ dipole.band2band.first ]:
-                             _bandgap.vbm_eigs[ dipole.band2band.first ]
-            );
-            const types::t_real second
-            (
-              all_electron ? _bandgap.eigenvalues[ dipole.band2band.second ]:
-                             _bandgap.cbm_eigs[ dipole.band2band.second ]
-            );
-            const types::t_real deltaE( second - first );
-            dipole.spin2spin = Dipole::t_SpinTransition( sp );
-            for( size_t r(0u); r < 3u; ++r )
-            {
-              dipole.r[0] = std::complex<types::t_real>( *i_dip, *(i_dip+1) ) * deltaE;
-              Print :: out << *i_dip << ", " << *(i_dip+1) << Print::endl;
-              i_dip += 2;
-              dipole.r[1] = std::complex<types::t_real>( *i_dip, *(i_dip+1) ) * deltaE;
-              Print :: out << *i_dip << ", " << *(i_dip+1) << Print::endl;
-              i_dip += 2;
-              dipole.r[2] = std::complex<types::t_real>( *i_dip, *(i_dip+1) ) * deltaE;
-              Print :: out << *i_dip << ", " << *(i_dip+1) << Print::endl;
-              i_dip += 2;
-            } // loop over cartesian coordinates
-            _dipoles.push_back( dipole );
-          } // loop over spins
+            dipole.r[r] = std::complex<types::t_real>
+                          ( 
+                            dipoles[k][l][r][0],
+                            dipoles[k][l][r][1]
+                          );
+          } // loop over cartesian coordinates
+          _dipoles.push_back( dipole );
         } // loop over conduction bands
       } // loop over valence bands
     }
-
     
     types::t_real oscillator_strength( const std::vector<Dipole> &_dipoles )
     {
-      types::t_real result;
+      types::t_real result(0);
       foreach( const Dipole &dipole, _dipoles )
         result += std::real(   dipole.r[0] * std::conj(dipole.r[0])
                              + dipole.r[1] * std::conj(dipole.r[1])
@@ -197,11 +189,10 @@ namespace LaDa
       return result;
     }
     types::t_real oscillator_strength( const BandGap& _bandgap,
-                                       const Crystal::Structure &_structure,
                                        types::t_real _degeneracy, bool _print )
     {
       std::vector< Dipole > dipoles;
-      dipole_elements( dipoles, _bandgap, _structure, _degeneracy );
+      dipole_elements( dipoles, _bandgap, _degeneracy );
       _print = true;
       if( _print ) foreach( const Dipole &dipole, dipoles )
                      Print::out << dipole << "\n";
@@ -211,14 +202,12 @@ namespace LaDa
     }
     std::ostream& operator<<( std::ostream &_stream, const Dipole& _dip )
     {
-      const std::string a(    _dip.spin2spin == Dipole::DOWN2DOWN
-                           or _dip.spin2spin == Dipole::DOWN2UP ? "-": "+" );
-      const std::string b(    _dip.spin2spin == Dipole::DOWN2DOWN
-                           or _dip.spin2spin == Dipole::UP2DOWN ? "-": "+" );
-      _stream << "<" << a << _dip.band2band.first
-              << "| r |" << b << _dip.band2band.second << "> = { "
+      _stream << "<" << _dip.band2band.first
+              << "| r |" << _dip.band2band.second << "> = { "
               << _dip.r[0] << ", " << _dip.r[1] << ", " << _dip.r[2] << " }";
       return _stream;
     }
-  }
+
+
+  } // namespace Pescan
 } // namespace LaDa

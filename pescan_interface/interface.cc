@@ -187,27 +187,27 @@ namespace LaDa
       // in _element or its child
     const TiXmlElement* Interface :: find_node (const TiXmlElement &_node )
     {
-      __TRYBEGIN
-      const TiXmlElement *parent;
-      std::string str;
-
-      str = _node.Value();
-      if ( str.compare("Functional" ) != 0 )
-        parent = _node.FirstChildElement("Functional");
-      else
-        parent = &_node;
-
-      while (parent)
-      {
-        str = "";
-        if ( parent->Attribute( "type" )  )
-          str = parent->Attribute("type");
-        if ( str.compare("escan" ) == 0 ) break;
-        parent = parent->NextSiblingElement("Functional");
-      }
-
-      return parent;
-      __TRYEND(, "Could find XML node for escan functional.\n")
+      __TRYBEGIN 
+        const TiXmlElement *parent;
+        std::string str;
+        
+        str = _node.Value();
+        if ( str.compare("Functional" ) != 0 )
+          parent = _node.FirstChildElement("Functional");
+        else
+          parent = &_node;
+        
+        while (parent)
+        {
+          str = "";
+          if ( parent->Attribute( "type" )  )
+            str = parent->Attribute("type");
+          if ( str.compare("escan" ) == 0 ) break;
+          parent = parent->NextSiblingElement("Functional");
+        }
+        
+        return parent;
+      __TRYEND(,"Could not load pescan functional.\n")
     }
 
     bool Interface :: Load_ (const TiXmlElement &_node )
@@ -290,7 +290,7 @@ namespace LaDa
       const t_Path orig
       ( 
           opt::InitialPath::path() / dirname 
-        / __IIAGA( genpot.filename )
+        / __IIAGA( "escan.input" )
           __DIAGA( __DIAGASUFFIX( t_Path("escan_input") ) )
       );
       file.open( orig.string().c_str(), std::ios_base::out|std::ios_base::trunc ); 

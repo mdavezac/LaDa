@@ -34,6 +34,8 @@
 # define __PROGNAME__ "Empirical Pseudo-Potential Functional for Zinc-Blend Structures"
 #endif
 
+#include "dipole_elements.h"
+
 // performs computation.
 struct Eval
 {
@@ -41,8 +43,8 @@ struct Eval
   t_Pescan pescan;
   bool doallelectron;
   bool do_evaluate;
-// bool compute_dipoles;
-// LaDa::types::t_real degeneracy;
+  bool compute_dipoles;
+  LaDa::types::t_real degeneracy;
   
   Eval( LaDa::Crystal :: Structure & _str ) : structure( _str ), pescan( _str ) {}
 
@@ -66,8 +68,8 @@ struct Eval
     bandgap.escan.rspace_output = LaDa::Pescan::Interface::Escan::WFN_AFTER_CALL;
     if( doallelectron ) bandgap.set_method( LaDa::Pescan::Interface::ALL_ELECTRON );
     if( do_evaluate ) structure.energy = pescan.evaluate();
-//   if( compute_dipoles )
-//     dip = LaDa::Pescan::oscillator_strength( bandgap, structure, degeneracy, true );
+    if( compute_dipoles )
+      dip = LaDa::Pescan::oscillator_strength( bandgap, degeneracy, true );
 
     LaDa::Crystal::Fourier( structure.atoms.begin(), structure.atoms.end(),
                       structure.k_vecs.begin(), structure.k_vecs.end() );
@@ -79,8 +81,8 @@ struct Eval
                 << "\n\nVBM: " << bandgap.bands.vbm
                 << " -- CBM: " << bandgap.bands.cbm
                 << "    ---    Band Gap: " << bandgap.bands.gap() << std::endl;
-    // if( not compute_dipoles ) return true; 
-    // std::cout << "oscillator_strength: " << dip << "\n";
+      if( not compute_dipoles ) return true; 
+      std::cout << "oscillator_strength: " << dip << "\n";
     )
     return true;
   }
@@ -98,12 +100,10 @@ int main(int argc, char *argv[])
   __BPO_START__;
   __BPO_HIDDEN__;
   __BPO_SPECIFICS__( "Escan Specific Options" )
-#     ifndef _EMASS
-//       ( "dipoles,d", "Compute Dipole Moments" )
-//       ( "degeneracy", po::value<LaDa::types::t_real>()->default_value(LaDa::types::tolerance),
-//         "Allowable band degeneracy when computing dipole moments" )
+        ( "dipoles,d", "Compute Dipole Moments" )
+        ( "degeneracy", po::value<LaDa::types::t_real>()->default_value(LaDa::types::tolerance),
+          "Allowable band degeneracy when computing dipole moments" )
         ( "diag", "Full diagonalization." )
-#     endif
 //     ("check,c", po::value<std::string>(), "GA output filename." ) 
       ("donteval", "Whether to perform evaluation." );
   __BPO_GENERATE__()
@@ -115,16 +115,16 @@ int main(int argc, char *argv[])
   LaDa::Crystal::Structure structure;
   Eval evaluate(structure);
   evaluate.do_evaluate = vm.count( "donteval" ) == 0;
-// evaluate.compute_dipoles = vm.count("dipoles") != 0;
-// evaluate.degeneracy = vm["degeneracy"].as<LaDa::types::t_real>();
+  evaluate.compute_dipoles = vm.count("dipoles") != 0;
+  evaluate.degeneracy = vm["degeneracy"].as<LaDa::types::t_real>();
   evaluate.doallelectron = vm.count("diag") != 0;
 
   __ROOTCODE
   (
     (*LaDa::mpi::main),
     std::cout << "Input filename: " << filename
-//             << "\nWill " << ( evaluate.compute_dipoles ? " ": "not " ) 
-//             << "compute dipole moments."
+              << "\nWill " << ( evaluate.compute_dipoles ? " ": "not " ) 
+              << "compute dipole moments."
               << "\n";
     if( not evaluate.do_evaluate ) 
       std::cout << "Will not perform evaluation.\n";
