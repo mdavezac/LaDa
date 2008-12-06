@@ -65,7 +65,7 @@ namespace LaDa
       (
           opt::InitialPath::path() / _bandgap.get_dirname() 
       ); 
-      const size_t kramer( Fuzzy::is_zero( atat::norm2( _bandgap.escan.kpoint ) ) ? 1: 2 ); 
+      const size_t kramer( Fuzzy::is_zero( atat::norm2( _bandgap.escan.kpoint ) ) ? 2: 1 ); 
       if( bfs::exists( opt::InitialPath::path() /  _bandgap.get_dirname() / "cbm" )  )
       {
         __ASSERT( bfs::exists( path / "vbm" / filename ), "Could not find file.\n" )
@@ -145,33 +145,31 @@ namespace LaDa
       const int ncond( conduction_indices.size() );
       const int ndip2( nval * _kramer );
       const int ndip3( ncond * _kramer );
-      double dipoles[ size_t(ndip2) ][ size_t(ndip3) ][3][2];
+      double dipoles[ size_t(ndip3) ][ size_t(ndip2) ][3][2];
       
-      std::cout << "here\n";
       FC_FUNC_(momentum, MOMENTUM)
               ( char_inputpath, &ninputpath,
                 char_wfnvbm, &nwfn_vbm, 
                 char_wfncbm, &nwfn_cbm,  
                 &valence_indices[0], &conduction_indices[0],
                 &nval, &ncond, &(dipoles[0][0][0][0]), &ndip2, &ndip3 );
-      std::cout << "there\n";
 
       // copies results to output vector.
       // loop positions determined by order of dipoles in fortran code.
       Dipole dipole;
-      for( int l(0); l < ndip2; ++l )
+      for( int l(0); l < ndip3; ++l )
       {
-        dipole.band2band.first = valence_indices[l / _kramer ];
-        for( int k(0); k < ndip3; ++k )
+        dipole.band2band.second = conduction_indices[l / _kramer ];
+        for( int k(0); k < ndip2; ++k )
         {
-          dipole.band2band.second = conduction_indices[k / _kramer ];
+          dipole.band2band.first = valence_indices[k / _kramer ];
 
           for( size_t r(0u); r < 3u; ++r )
           {
             dipole.r[r] = std::complex<types::t_real>
                           ( 
-                            dipoles[k][l][r][0],
-                            dipoles[k][l][r][1]
+                            dipoles[l][k][r][0],
+                            dipoles[l][k][r][1]
                           );
           } // loop over cartesian coordinates
           _dipoles.push_back( dipole );
@@ -194,10 +192,13 @@ namespace LaDa
       std::vector< Dipole > dipoles;
       dipole_elements( dipoles, _bandgap, _degeneracy );
       _print = true;
-      if( _print ) foreach( const Dipole &dipole, dipoles )
-                     Print::out << dipole << "\n";
       const types::t_real result( oscillator_strength( dipoles ) );
-      Print :: out << "oscillator strength: " << result << Print::endl;
+      if( _print )
+      {
+        foreach( const Dipole &dipole, dipoles )
+          std::cout << dipole << "\n";
+        std :: cout << "oscillator strength: " << result << Print::endl;
+      }
       return result;
     }
     std::ostream& operator<<( std::ostream &_stream, const Dipole& _dip )

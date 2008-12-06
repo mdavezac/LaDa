@@ -50,7 +50,6 @@ struct Eval
 
   bool operator()( const TiXmlElement &_node )
   {
-    LaDa::types::t_real dip;
     if( not structure.Load(_node) ) return false;
     __ROOTCODE
     (
@@ -69,7 +68,7 @@ struct Eval
     if( doallelectron ) bandgap.set_method( LaDa::Pescan::Interface::ALL_ELECTRON );
     if( do_evaluate ) structure.energy = pescan.evaluate();
     if( compute_dipoles )
-      dip = LaDa::Pescan::oscillator_strength( bandgap, degeneracy, true );
+      LaDa::Pescan::oscillator_strength( bandgap, degeneracy, true );
 
     LaDa::Crystal::Fourier( structure.atoms.begin(), structure.atoms.end(),
                       structure.k_vecs.begin(), structure.k_vecs.end() );
@@ -81,8 +80,6 @@ struct Eval
                 << "\n\nVBM: " << bandgap.bands.vbm
                 << " -- CBM: " << bandgap.bands.cbm
                 << "    ---    Band Gap: " << bandgap.bands.gap() << std::endl;
-      if( not compute_dipoles ) return true; 
-      std::cout << "oscillator_strength: " << dip << "\n";
     )
     return true;
   }

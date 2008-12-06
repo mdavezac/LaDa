@@ -283,9 +283,11 @@ module MomentumDipole
       complex(kind=8), intent(inout) :: io_dipoles( 3, in_dip2, in_dip3 )
 
       real(kind=8) ::  vol
-      integer inode,nnodes, n1, n2, n3
+      integer n1, n2, n3, ng, ng_n, mx, nr
+      common /com123/n1,n2,n3,ng,ng_n,nr,mx,vol
+
+      integer inode,nnodes
       common /mpi_data/inode,nnodes
-      common /com123/n1,n2,n3, vol
 
       ! number of band in A
       integer :: nb_Aband
@@ -309,9 +311,9 @@ module MomentumDipole
         int_gpoint(2) = n2p_n(ig) - 1
         int_gpoint(3) = n3p_n(ig) - 1
 
-        if( int_gpoint(1) .gt. n1 / 2 ) int_gpoint(1) = int_gpoint(1) - n1 / 2
-        if( int_gpoint(2) .gt. n2 / 2 ) int_gpoint(2) = int_gpoint(2) - n2 / 2
-        if( int_gpoint(3) .gt. n3 / 2 ) int_gpoint(3) = int_gpoint(3) - n3 / 2
+        if( int_gpoint(1) .gt. n1 / 2 ) int_gpoint(1) = int_gpoint(1) - n1
+        if( int_gpoint(2) .gt. n2 / 2 ) int_gpoint(2) = int_gpoint(2) - n2
+        if( int_gpoint(3) .gt. n3 / 2 ) int_gpoint(3) = int_gpoint(3) - n3
 
         gpoints(ig, 1) =   2.d0 * pi * sum( lattice%kcell(1,:) * int_gpoint ) &
                          * wg_n(ig) * wg_n(ig)
@@ -321,43 +323,42 @@ module MomentumDipole
                          * wg_n(ig) * wg_n(ig)
       enddo ! ig
 
+      io_dipoles = 0d0
       ! now perform sums.
       do Aband = 1, nb_Aband
         do Bband = 1, nb_Bband
 
           ! With spin orbit and Kramer doubling.
-          if( params%is_gamma .and. params%with_spinorbit  ) then
+          if(       params%is_gamma .eqv. .true. &
+              .and. params%with_spinorbit .eqv. .true. ) then
 
             ! Kramer doubling means that half the states are computed
             ! implicitly using invariance through time reversal.
             ! We must still compute the dipole moments of these states.
-            print *, sum( in_Awfns(1:nb_gpoints, Aband, 1 ) *&
-                          conjg( in_Awfns(1:nb_gpoints, Aband, 1 ) ) &
-                         +in_Awfns(1:nb_gpoints, Aband, 2 ) *&
-                          conjg( in_Awfns(1:nb_gpoints, Aband, 2 ) ) ) * vol
-!           call sp_sum( in_Awfns(1:nb_gpoints, Aband, 1 ), & 
-!                        in_Bwfns(1:nb_gpoints, Bband, 1 ), & 
-!                        in_Awfns(1:nb_gpoints, Aband, 2 ), & 
-!                        in_Bwfns(1:nb_gpoints, Bband, 2 ), & 
-!                        io_dipoles(:, 2*Aband, 2*Bband ) )
-!           call invA_sum( in_Awfns(1:nb_gpoints, Aband, 2 ), & 
-!                          in_Bwfns(1:nb_gpoints, Bband, 1 ), & 
-!                          in_Awfns(1:nb_gpoints, Aband, 1 ), & 
-!                          in_Bwfns(1:nb_gpoints, Bband, 2 ), & 
-!                          io_dipoles(:, 2*Aband + 1, 2*Bband + 1 ) )
-!           call invB_sum( in_Awfns(1:nb_gpoints, Aband, 2 ), & 
-!                          in_Bwfns(1:nb_gpoints, Bband, 1 ), & 
-!                          in_Awfns(1:nb_gpoints, Aband, 1 ), & 
-!                          in_Bwfns(1:nb_gpoints, Bband, 2 ), & 
-!                          io_dipoles(:, 2*Aband + 2, 2*Bband + 2 ) )
-!           call invAinvB_sum( in_Awfns(1:nb_gpoints, Aband, 2 ), & 
-!                              in_Bwfns(1:nb_gpoints, Bband, 1 ), & 
-!                              in_Awfns(1:nb_gpoints, Aband, 1 ), & 
-!                              in_Bwfns(1:nb_gpoints, Bband, 2 ), & 
-!                              io_dipoles(:, 2*Aband + 2, 2*Bband + 2 ) )
+            call sp_sum( in_Awfns(1:nb_gpoints, Aband, 1 ), & 
+                         in_Bwfns(1:nb_gpoints, Bband, 1 ), & 
+                         in_Awfns(1:nb_gpoints, Aband, 2 ), & 
+                         in_Bwfns(1:nb_gpoints, Bband, 2 ), & 
+                         io_dipoles(:, 2*(Aband-1)+1, 2*(Bband-1)+1 ) )
+            call invA_sum( in_Awfns(1:nb_gpoints, Aband, 2 ), & 
+                           in_Bwfns(1:nb_gpoints, Bband, 1 ), & 
+                           in_Awfns(1:nb_gpoints, Aband, 1 ), & 
+                           in_Bwfns(1:nb_gpoints, Bband, 2 ), & 
+                           io_dipoles(:, 2*Aband, 2*(Bband-1)+1 ) )
+            call invB_sum( in_Awfns(1:nb_gpoints, Aband, 1 ), & 
+                           in_Bwfns(1:nb_gpoints, Bband, 2 ), & 
+                           in_Awfns(1:nb_gpoints, Aband, 2 ), & 
+                           in_Bwfns(1:nb_gpoints, Bband, 1 ), & 
+                           io_dipoles(:, 2*(Aband-1)+1, 2*Bband ) )
+            call invAinvB_sum( in_Awfns(1:nb_gpoints, Aband, 2 ), & 
+                               in_Bwfns(1:nb_gpoints, Bband, 2 ), & 
+                               in_Awfns(1:nb_gpoints, Aband, 1 ), & 
+                               in_Bwfns(1:nb_gpoints, Bband, 1 ), & 
+                               io_dipoles(:, 2*Aband, 2*Bband ) )
 
           ! With spin orbit and without Kramer doubling
-          else if( params%is_gamma .eqv. .false. .and. params%with_spinorbit ) then
+          else if(       params%is_gamma .eqv. .false. &
+                   .and. params%with_spinorbit .eqv. .true. ) then
            
             call sp_sum( in_Awfns(1:nb_gpoints, Aband, 1 ), & 
                          in_Bwfns(1:nb_gpoints, Bband, 1 ), & 
@@ -387,8 +388,6 @@ module MomentumDipole
         call mpi_reduce( io_dipoles, io_dipoles, nb_Aband * nb_Bband * 4, &
                          MPI_COMPLEX, MPI_SUM, MPI_IN_PLACE, params%ecp%comm_handle, ierr )
       endif
-      print *, io_dipoles
-
 
       ! success
       if( ierr .eq. MPI_SUCCESS ) return 
@@ -435,10 +434,9 @@ module MomentumDipole
  
           complex( kind=8 ), intent(inout) :: io_dipole(3)
  
-          integer k, g
+          integer k
           
-          io_dipole = 0d0
-          do g = 1, nb_gpoints
+          do ig = 1, nb_gpoints
             do k = 1, 3
               io_dipole(k) = io_dipole(k) + gpoints(ig, k) &
                              * (   &
@@ -463,10 +461,9 @@ module MomentumDipole
  
           complex( kind=8 ), intent(inout) :: io_dipole(3)
  
-          integer k, g
+          integer k
           
-          io_dipole = 0d0
-          do g = 1, nb_gpoints
+          do ig = 1, nb_gpoints
             do k = 1, 3
               io_dipole(k) = io_dipole(k) + gpoints(ig, k) &
                              * (   &
@@ -475,6 +472,7 @@ module MomentumDipole
                                )
             enddo
           enddo
+          print *, "   inv ", io_dipole * vol
         
         end subroutine 
 
@@ -492,10 +490,9 @@ module MomentumDipole
  
           complex( kind=8 ), intent(inout) :: io_dipole(3)
  
-          integer k, g
+          integer k
           
-          io_dipole = 0d0
-          do g = 1, nb_gpoints
+          do ig = 1, nb_gpoints
             do k = 1, 3
               io_dipole(k) = io_dipole(k) + gpoints(ig, k) &
                              * (   &
@@ -586,13 +583,13 @@ module MomentumDipole
       common /mpi_data/inode,nnodes
 
       real(kind=8) ::  vol
-      common /com123/vol
+      integer n1, n2, n3, ng, ng_n, mx, nr
+      common /com123/n1,n2,n3,ng,ng_n,nr,mx,vol
 
       call mpi_comm_rank( params%ecp%comm_handle,inode,ierr)
       call mpi_comm_size( params%ecp%comm_handle,nnodes,ierr)
       inode = inode+1
 
-      print *, 1
       ! These two subroutines are external "C++" routines. 
       cwd_size = 0
       call get_current_directory( cwd(1), cwd_size, dir_status ) 
@@ -616,10 +613,6 @@ module MomentumDipole
       ! reads valence band wfns.
       params%ecp%filewg_in = params%ecp%filewg_out
       call read_wavefunctions( valence_wfns, in_indicesA )
-            print *, "B ", sum( valence_wfns(:, 1, 1 ) *&
-                          conjg( valence_wfns(:, 1, 1 ) ) &
-                         + valence_wfns(:, 1, 2 ) *&
-                          conjg( valence_wfns(:, 1, 2 ) ) ) * vol
 
       ! reads conduction input and wavefunctions
       call change_current_directory( cwd, cwd_size, dir_status )
@@ -638,7 +631,6 @@ module MomentumDipole
       deallocate(conduction_wfns)
       call change_current_directory( cwd, cwd_size, dir_status )
       deallocate( cwd )
-      print *, 8
 
     end subroutine ! momentum
 

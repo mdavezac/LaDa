@@ -22,7 +22,6 @@ extern "C"
                 ( char* _out, int *_max_size_out, int *_status )
    {
      const std::string result( boost::filesystem::current_path().string() );
-     std::cout << "result: " << result << " " << *_max_size_out << "\n";
      if( result.size() > *_max_size_out )
      {
        *_max_size_out = result.size();
