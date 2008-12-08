@@ -53,7 +53,7 @@ namespace LaDa
         //! A selection operator for the obtention of parents
         eoSelectOne<t_Individual>* select;
         eoGenOp<t_Individual> *op;  //!< Mating operator
-        GenCount *age;              //!< Generation counter
+        GenCount age;              //!< Generation counter
         //! \brief Number of offspring to create
         //! \details It is declared a pointer so that it can be changed
         //! dynamically during the run. This is useful mostly for
@@ -64,8 +64,7 @@ namespace LaDa
       
       public:
         //! Constructor and Initializer
-        Breeder () : select(NULL), op(NULL), age(NULL),
-                     howMany(NULL), howMany_save(NULL) {}
+        Breeder () : select(NULL), op(NULL), howMany(NULL), howMany_save(NULL) {}
 
         Breeder   ( eoSelectOne<t_Individual>* _select,
                     eoGenOp<t_Individual>* _op,
@@ -100,7 +99,7 @@ namespace LaDa
         //! Sets the replacement rate
         void set( types::t_real _rep );
         //! Sets the generation counter.
-        void set( GenCount *_age ){ age = _age; }
+        void set( GenCount _age ){ age = _age; }
        
         ///! The class name. EO required
         virtual std::string className() const { return "Darwin::Breeder"; }
@@ -112,7 +111,6 @@ namespace LaDa
     {
       __ASSERT( not select, "Breeder::select pointer was not set.\n" ) 
       __ASSERT( not op, "Breeder::op pointer was not set.\n" ) 
-      __ASSERT( not age, "Breeder::age pointer was not set.\n" ) 
       __ASSERT( not howMany, "Breeder::howMany pointer was not set.\n" ) 
       __ASSERT( not howMany_save, "Breeder::howMany_save pointer was not set.\n" ) 
       types::t_unsigned target = (*howMany)( (types::t_unsigned) _parents.size());
@@ -122,7 +120,7 @@ namespace LaDa
       while (_offspring.size() < target)
       {
         (*op)(it);
-        (*it).set_age( (*age)() );
+        (*it).set_age( age() );
         ++it;
       }
     

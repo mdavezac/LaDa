@@ -182,149 +182,6 @@ namespace LaDa
     {
       __MPICODE( if( not topology.continuators() ) return; )
       LaDa::Factory::visit_xml( checkpoint_factory, _parent, checkpoints );
-
-      // contains all checkpoints
-      std::string str = "stop"; 
-      if (      _parent.FirstChildElement("Filenames") 
-           and  _parent.FirstChildElement("Filenames")->Attribute("stop") )
-        str = _parent.FirstChildElement("Filenames")->Attribute("stop");
- 
-      str = Print::reformat_home(str);
-      continuator = new IslandsContinuator<t_GATraits>(counter, max_generations, str );
-      eostates.storeFunctor( continuator );
- 
-      __MPICODE( if( not topology.continuators() ) return; )
- 
-      // Creates SaveEvery object if necessary
-      if (      _parent.FirstChildElement("Save") 
-           and  _parent.FirstChildElement("Save")->Attribute("every") )
-      {
-        types::t_int n;
-        _parent.FirstChildElement("Save")->Attribute("every", &n);
-        
-        if ( n >= 0 and do_save )
-        {
-          Print::xmg << Print::Xmg::comment << "Will Save Every " << n
-                     << " Generations " << Print::endl;
-          SaveEvery<t_This> *save = new SaveEvery<t_This>( *this,
-                                                           &Darwin::Save, 
-                                                           std::abs(n) );
-          eostates.storeFunctor( save );
-          continuator->add( *save );
-        }
-      }
-   
-      // Creates Statistics -- only one type available...
-      const TiXmlElement *child = _parent.FirstChildElement("Statistics");
-      for(; child; child = child->NextSiblingElement("Statistics") )
-      {
-        if( not child->Attribute("type") ) continue;
-        std::string name = child->Attribute("type");
-        if( name.compare("census") == 0 )
-        {
-          continuator->add( eostates.storeFunctor( new TrueCensus< t_GATraits >() ) );
-          Print::xmg << Print::Xmg::comment
-                     << "Statistics: True population size, discounting twins"
-                     << Print::endl;
-        }
-        else if( name.compare("AverageFitness") == 0 )
-        {
-          continuator->add( eostates.storeFunctor( new AverageFitness< t_GATraits >() ) );
-          Print::xmg << Print::Xmg::comment
-                     << "Statistics: Average Fitness" << Print::endl;
-        }
-        else if( name.compare("AverageQuantity") == 0 )
-        {
-          continuator->add(
-              eostates.storeFunctor( new AverageQuantities< t_GATraits >() ) );
-          Print::xmg << Print::Xmg::comment
-                     << "Statistics: Average Quantity " << Print::endl;
-        }
-      }
- 
-      // Creates Terminators
-      child = _parent.FirstChildElement("Terminator");
-      for( ; child; child = child->NextSiblingElement("Terminator") )
-      {
-        eoContinue<t_Individual> *terminator = NULL;
-        std::string type = "<";
-        std::string ref = "";
-        if ( child->Attribute("ref" ) )
-          ref = child->Attribute( "ref" );
-        int max = 0;
-        child->Attribute("value", &max);
- 
-        if ( max <= 0 ) continue;
-        if ( type.compare("<") != 0 ) continue;
- 
-        if ( ref.compare("evaluation") != 0 ) continue;
-        
-        terminator = new Terminator< types::t_unsigned,
-                                     std::less<types::t_unsigned>, t_GATraits >
-                                   ( evaluation->nb_eval, (types::t_unsigned) abs(max),
-                                     std::less<types::t_unsigned>(), "nb_eval < term" );
-        eostates.storeFunctor( terminator );
-        continuator->add( *terminator );
-        Print::xmg << Print::Xmg::comment << "Terminating after " << max
-                   << " evaluations" << Print::endl;
-        
-        // end if max
-      }
-      
-      // Load object specific continuator
-      eoF<bool> *specific = evaluator.LoadContinue( _parent );
-      if ( specific )
-      {
-        eostates.storeFunctor(specific); 
-        continuator->add(
-            eostates.storeFunctor(new Continuator<t_GATraits>(*specific)) );
-      }
- 
-      // Creates Print object
-      {
-        typedef PrintGA< Store::Base<t_GATraits>,
-                         Evaluation::Abstract<t_Population> > t_PrintGA;
-        t_PrintGA* printga = new t_PrintGA( *store, *evaluation,
-                                            counter, do_print_each_call);
-        eostates.storeFunctor(printga);
-        continuator->add( *printga );
-      }
- 
-      // Print Offsprings
-      child = _parent.FirstChildElement("Print"); 
-      for(; child; child = child->NextSiblingElement("Print") )
-      {
-        if( not child->Attribute("type") ) continue;
-        std::string name = child->Attribute("type");
-        if( name.compare("offspring") == 0 )
-        {
-          continuator->add(
-              eostates.storeFunctor( new PrintOffspring< t_GATraits >
-                                                       ( counter ) ) );
-          Print::xmg << Print::Xmg::comment
-                     << "Print: offspring" << Print::endl;
-        }
-        else if(    name.compare("pop") == 0 
-                 or name.compare("population") == 0 )
-        {
-          continuator->add( eostates.storeFunctor( new PrintPop< t_GATraits >() ) );
-          Print::xmg << Print::Xmg::comment
-                     << "Print: current population" << Print::endl;
-        }
-       //else
-       //{
-       //  eoMonOp<const t_Individual> *op =  evaluator.LoadPrintBest( *child );
-       //  if ( not op ) continue;
-       //  eostates.storeFunctor( op );
-       //  Apply2Best<t_GATraits> *printbest = new Apply2Best<t_GATraits>( *store );
-       //  try{ printbest = new Apply2Best<t_GATraits>( *store ); }
-       //  catch(...) { cleanup(); __THROW_ERROR( "Memory allocation error.\n" ) }
-       //  __DOASSERT(not printbest,  "Memory allocation error.\n");
-       //  printbest->set_functor( op );
-       //  continuator->add(*printbest);
-       //}
-      }
- 
     } // end of make_check_point
     
     template<class T_EVALUATOR>
@@ -398,95 +255,6 @@ namespace LaDa
     }
  
     template<class T_EVALUATOR>
-    bool Darwin<T_EVALUATOR> :: Save()
-    {
-      if ( not do_save ) return true;
-      if ( not topology.save() ) return true;
- 
-      TiXmlDocument doc;
-      TiXmlElement *node;
-      if ( save_filename == filename )
-      {
-        doc.LoadFile(save_filename.string());
-        TiXmlHandle docHandle( &doc );
-        node = docHandle.FirstChild("Job").Element();
-        TiXmlNode* child = docHandle.FirstChild("Job")
-                                    .FirstChild("Restart").Node();
-        for(; child; child = docHandle.FirstChild("Job").FirstChild("Restart").Node() )
-          node->RemoveChild(child);
-        node = new TiXmlElement("Restart");
-        if ( not node )
-          return false;
-        child = docHandle.FirstChild("Job").Element();
-        child->LinkEndChild( node );
-      }
-      else
-      {
-        doc.SetTabSize(1);
-        doc.LinkEndChild( new TiXmlDeclaration("1.0", "", "") );
-        node = new TiXmlElement("Restart");
-        if ( not node )
-          return false;
-        doc.LinkEndChild( node );
-      }
- 
-      Print::xmg << Print::Xmg::comment <<  "Saving ";
-      int is_saving = 0;
-      if ( do_save & SAVE_RESULTS )
-      {
-        ++is_saving;
-        Print::xmg << "Results";
-        store->Save( *node );
-      }
-      if ( do_save & SAVE_HISTORY and history.is_on() )
-      {
-        // Printout stuff
-        ++is_saving;
-        if ( is_saving > 1 )
-          Print::xmg << ", ";
-        Print::xmg << " History";
- 
-        TiXmlElement *xmlhistory = new TiXmlElement("History");
-        SaveObject<t_GATraits> saveop( evaluator, &t_Evaluator::Save, LOADSAVE_SHORT);
-        SaveIndividuals( *xmlhistory, saveop, history.begin(), history.end());
-        node->LinkEndChild( xmlhistory );
-      }
-      if ( do_save & SAVE_POPULATION )
-      {
-        // Printout stuff
-        ++is_saving;
-        if ( is_saving == 2 )
-          Print::xmg << " and";
-        if ( is_saving > 2 )
-          Print::xmg << ", and ";
-        Print::xmg << " Population";
- 
-        SaveObject<t_GATraits> saveop( evaluator, &t_Evaluator::Save, LOADSAVE_SHORT);
-        typename t_Islands :: const_iterator i_island = islands.begin();
-        typename t_Islands :: const_iterator i_island_end = islands.end();
-        TiXmlElement *xmlpop = new TiXmlElement("Population");
-        for(; i_island != i_island_end; ++i_island )
-        {
-          TiXmlElement *xmlisland = new TiXmlElement("Island");
-          SaveIndividuals( *xmlisland, saveop, i_island->begin(), i_island->end());
-          xmlpop->LinkEndChild( xmlisland );
-        }
-        node->LinkEndChild( xmlpop );
-      }
- 
-      if ( not doc.SaveFile(save_filename.string() ) )
-      {
-        std::cerr << "Could not save results in " << save_filename << std::endl;
-        Print::xmg << Print::Xmg::clear;
-        Print::out << "********** Save failed!! \n" << Print::endl;
-        return false;
-      }
- 
-      Print::xmg << " in " << save_filename << Print::endl;
-      return true;
-    }
-    
-    template<class T_EVALUATOR>
     eoReplacement<typename T_EVALUATOR::t_GATraits::t_Individual>*
       Darwin<T_EVALUATOR> :: make_replacement()
     {
@@ -520,7 +288,7 @@ namespace LaDa
       if( not breeder ) return;
       select = new eoDetTournamentSelect<t_Individual>(tournament_size);
       breeder->set(replacement_rate);
-      breeder->set(&continuator->get_generation_counter());
+      breeder->set(counter);
       breeder->set(select);
       breeder->set(breeder_ops);
       topology.set<t_GATraits>( breeder, &taboos );
@@ -710,176 +478,32 @@ namespace LaDa
  
           __DODEBUGCODE(Print::out << "Continuing" << Print::endl;)
         }
-      } while ( checkpoints( islands ) ); //continuator->apply( i_island_begin, i_island_end ) );
+      } while ( checkpoints( islands ) ); 
  
       Print::xmg << Print::flush;
-      Save();
     }
  
- 
-#  ifdef _MPI
-    template<class T_EVALUATOR>
-    void Darwin<T_EVALUATOR> :: LoadAllInputFiles(std::string &_input, 
-                                                  std::string &_restart, 
-                                                  std::string &_evaluator ) 
-    {
-      __NOTMPIROOT( (*::LaDa::mpi::main),
-        boost::mpi::broadcast( *::LaDa::mpi::main, _input, 0 );
-        boost::mpi::broadcast( *::LaDa::mpi::main, _restart, 0 );
-        boost::mpi::broadcast( *::LaDa::mpi::main, _evaluator, 0 );
-        return;
-      )
- 
-      OPENXMLINPUT(filename)
-      std::ostringstream stream;
-      const TiXmlElement *parent = doc.RootElement();
-      stream << *parent;
-      _input = stream.str();
-      _restart = _input; 
-      _evaluator = _input;
- 
-      if ( restart_filename == filename )
-      {
-        doc.LoadFile( restart_filename.string() );
-        if  ( !doc.LoadFile() ) 
-        { 
-          std::cerr << __SPOT_ERROR
-                    << doc.ErrorDesc() << "\n"
-                    << "Could not load restart file.\n"
-                    << "Will ignore restart input and start run from scratch"
-                    << std::endl;
-          _restart = "";
-          goto nextfilename;
-        } 
- 
-        parent = doc.RootElement();
-        std::ostringstream stream;
-        stream << *parent;
-        _restart = stream.str();
-      }
-      nextfilename:
-        if ( evaluator_filename != filename )
-        {
-          doc.LoadFile( evaluator_filename.string() );
-          __DOASSERT( not doc.LoadFile(), " Could not load restart file\n" )
-          parent = doc.RootElement();
-          std::ostringstream stream;
-          stream << *parent;
-          _evaluator = stream.str();
-        }
-       
-        boost::mpi::broadcast( *::LaDa::mpi::main, _input, 0 );
-        boost::mpi::broadcast( *::LaDa::mpi::main, _restart, 0 );
-        boost::mpi::broadcast( *::LaDa::mpi::main, _evaluator, 0 );
-    }
-#  endif
  
     template<class T_EVALUATOR>
     bool Darwin<T_EVALUATOR> :: Load(const t_Path &_filename) 
     {
       // Initializes each proc differently
       filename = _filename;
-      evaluator_filename = _filename;
-      restart_filename = _filename;
-      save_filename = _filename;
- 
-      t_Path xmg_filename = "out.xmg";
-      t_Path out_filename = "out";
- 
-      TiXmlDocument doc( filename.string() ); 
+      TiXmlDocument doc;
       TiXmlHandle docHandle( &doc ); 
-      const TiXmlElement *parent, *child;
+      opt::read_xmlfile( filename, doc );
+      const TiXmlElement *node;
+
  
-      __NOTMPIROOT( (*::LaDa::mpi::main), goto syncfilenames; )
- 
-      // first loads all inputfiles 
-      __DOASSERT( not doc.LoadFile(), 
-                     doc.ErrorDesc() << "\n" 
-                  << "Could not load input file " << filename 
-                  << " in  Darwin<T_EVALUATOR>.\nAborting.\n" ) 
- 
-      parent = docHandle.FirstChild("Job").Element();
-      __DOASSERT( not parent, 
-                  "Could not find <Job> tag in  " << filename << "\n"; )
-      parent = docHandle.FirstChild("Job")
-                        .FirstChild("GA").Element();
-      __DOASSERT( not parent, 
-                  "Could not find <GA> tag in  " << filename << "\n"; )
-      child = parent->FirstChildElement("Filenames");
-      for( ; child; child = child->NextSiblingElement("Filenames") )
-      {
-        if (     child->Attribute("evaluator") 
-             and evaluator_filename == filename )
-          evaluator_filename = Print::reformat_home(child->Attribute("evaluator"));
-        if (     child->Attribute("restart") 
-                  and restart_filename == filename )
-          restart_filename = Print::reformat_home(child->Attribute("restart"));
-        if (     child->Attribute("save") 
-                  and save_filename == filename )
-          save_filename = Print::reformat_home(child->Attribute("save"));
-        if ( child->Attribute("out")  )
-          out_filename = child->Attribute("out");
-        if ( child->Attribute("xmgrace") )
-          xmg_filename = Print::reformat_home(child->Attribute("xmgrace"));
-      }
- 
- 
-      syncfilenames:
-      __MPISERIALCODE( 
-        // MPI code
-        __TRYCODE(    Print::out.sync_filename( out_filename );
-                      Print::xmg.sync_filename( xmg_filename );,
-                   "Caught error while synchronizing output filenames\n" 
-        )
-        Print::out << "Starting genetic algorithm run on processor "
-                   << ( 1 + ::LaDa::mpi::main->rank() ) << " of " 
-                   << ::LaDa::mpi::main->size() << ".\n\n";,
-        // Serial code
-        Print::xmg.init( xmg_filename );
-        Print::out.init( out_filename );
-        Print::out << "Starting (serial) genetic algorithm run\n\n";
-      )
- 
-      __ROOTCODE( (*::LaDa::mpi::main),
-        Print::out << "GA Input file is located at " << evaluator_filename << "\n"
-                   << "Functional Input file is located at "
-                     << evaluator_filename << "\n"
-                   << "Restart Input file is located at " << restart_filename << "\n"
-                   << "Xmgrace output file is located at "
-                     << Print::xmg.get_filename() << "\n"
-                   << "Will Save to file located at "
-                     << save_filename << "\n" << Print::endl
-                   << Print::flush;
- 
-        Print::xmg << Print::Xmg :: comment << "new GA run" << Print::endl
-                   << Print::Xmg::comment << "GA Input file is located at "
-                                          << evaluator_filename << Print::endl
-                   << Print::Xmg::comment << "Functional Input file is located at "
-                                          << evaluator_filename << Print::endl
-                   << Print::Xmg::comment << "Restart Input file is located at "
-                                          << restart_filename << Print::endl
-                   << Print::Xmg::comment << "Standard output file is located at "
-                                          << Print::out.get_filename() << Print::endl
-                   << Print::Xmg::comment << "Will Save to file located at "
-                                          << save_filename << Print::endl;
-      )
-      __NOTMPIROOT( (*::LaDa::mpi::main), 
-        Print::out << "Xmgrace output file is located at "
-                     << Print::xmg.get_filename() << "\n"
-                   << "Will Save to file located at "
-                     << save_filename << "\n" << Print::endl
-                   << Print::flush;
-        Print::xmg << Print::Xmg :: comment << "new GA run" << Print::endl;
-      )
- 
-#  ifdef _MPI
-        // broadcasts all input files and filenames
-        std::string input_str, restart_str, evaluator_str;
-        LoadAllInputFiles(input_str, restart_str, evaluator_str);
-        
-        if ( evaluator_filename == filename ) // works for all nodes!!
-          doc.Parse( evaluator_str.c_str() );
-#  endif
+
+      //! Looks for evaluator filename tag.
+      node = docHandle.FirstChild("Job")
+                      .FirstChild("GA")
+                      .FirstChild("Filenames").Element();
+      for(; node; node = node->NextSiblingElement("Filenames") )
+        if( node->Attribute("evaluator") )
+          evaluator_filename = node->Attribute("evaluator");
+      
  
       // Loads evaluator first 
       if( evaluator_filename != filename )
@@ -894,29 +518,30 @@ namespace LaDa
       }
  
       // Loads topology and assigns comms to evaluators
-      __MPICODE(  doc.Parse( input_str.c_str() ); )
-      parent = docHandle.FirstChild("Job").Element();
-      topology.Load( *parent, evaluator );
+      node = docHandle.FirstChild("Job").Element();
+      topology.Load( *node, evaluator );
+
+      // Load checkpoints and filenames.
+      node = docHandle.FirstChild("Job")
+                      .FirstChild("GA").Element();
+      Load_CheckPoints( *node );
           
       // finds <GA> ... </GA> block 
-      parent = docHandle.FirstChild("Job")
-                        .FirstChild("GA").Element();
-      __TRYASSERT( not Load_Parameters( *parent ), 
+      __TRYASSERT( not Load_Parameters( *node ), 
                    "Error while reading GA attributes\n" )
  
  
  
-      make_History( *parent );
-      Load_Taboos( *parent );
-      Load_Method( *parent );
-      __DOASSERT( not  Load_Mating( *parent ),
+      make_History( *node );
+      Load_Taboos( *node );
+      Load_Method( *node );
+      __DOASSERT( not  Load_Mating( *node ),
                   "Error while loading mating operators.\n" )
-      Load_CheckPoints( *parent );
       
       make_breeder();
       replacement = make_replacement();
  
-      const TiXmlElement *restart_xml = parent->FirstChildElement("Restart");
+      const TiXmlElement *restart_xml = node->FirstChildElement("Restart");
       if ( restart_xml and restart_xml->Attribute("what") )
       {
         std::string str = restart_xml->Attribute("what");
@@ -934,7 +559,7 @@ namespace LaDa
       }
       if ( do_restart )
       {
-        __NOTMPIROOT( (*::LaDa::mpi::main), doc.Parse( restart_str.c_str() ); )
+        opt::read_xmlfile( restart_filename, doc );
         if ( restart_filename != filename )
         { 
           if ( not Restart() )
@@ -953,36 +578,6 @@ namespace LaDa
                      << "Starting from scratch\n";
         }
       }
-      do_save = 0;
- 
-      __NOTMPIROOT( (*::LaDa::mpi::main), goto out; )
- 
-      do_save = SAVE_RESULTS;
-      restart_xml = parent->FirstChildElement("Save");
-      Print::xmg << Print::Xmg::comment << "Will Save Results";
-      if ( restart_xml and restart_xml->Attribute("what") )
-      {
-        std::string str = restart_xml->Attribute("what");
-        if ( str.find("all") != std::string::npos )
-        {
-          do_save |= SAVE_POPULATION | SAVE_HISTORY;
-          Print::xmg << ", Population";
-          if ( history.is_on() )
-            Print::xmg << ", and History";
-          goto out;
-        }
-        if ( str.find("pop") != std::string::npos )
-        {
-          do_save |= SAVE_POPULATION;
-          Print::xmg << ", Population";
-        }
-        if ( str.find("history") != std::string::npos and history.is_on() )
-        {
-          do_save |= SAVE_HISTORY;
-          Print::xmg << ", History";
-        }
-      }
-    out:
       Print::xmg << Print::endl;
  
       // reseeds accordint to mpi/serial topology
@@ -1006,8 +601,6 @@ namespace LaDa
       Print::xmg << Print::Xmg::comment << "Number of Islands: "
                                         << nb_islands << Print::endl;
       if( scaling ) Print::xmg << Print::Xmg::comment << scaling->what_is() << Print::endl;
-      __ROOTCODE( (*::LaDa::mpi::main), Print::xmg << Print::Xmg::comment << "Will save to "
-                                             << save_filename << Print::endl; )
       std::string evalparams = evaluator.print();
       Print::xmg << Print::make_commented_string( evalparams ) << Print::endl;
       Print::xmg << Print::flush;
@@ -1015,4 +608,3 @@ namespace LaDa
     }
   } // namespace GA
 } // namespace LaDa
-

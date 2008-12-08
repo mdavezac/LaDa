@@ -45,7 +45,7 @@ namespace LaDa
     }
 
     template<class T_INDIVTRAITS>  template<class SaveOp>
-    bool Base<T_INDIVTRAITS> :: Save( TiXmlElement &_node, SaveOp &_saveop ) const
+    bool Base<T_INDIVTRAITS> :: Save( TiXmlElement &_node, const SaveOp &_saveop ) const
     {
       TiXmlElement *xmlindiv = new TiXmlElement("Individual");
       __DOASSERT( not xmlindiv, "Memory Allocation Error\n" )
@@ -64,7 +64,7 @@ namespace LaDa
 
 
     template<class T_INDIVTRAITS>  template<class LoadOp>
-    bool Base<T_INDIVTRAITS> ::  Load( const TiXmlElement &_node, LoadOp &_loadop ) 
+    bool Base<T_INDIVTRAITS> ::  Load( const TiXmlElement &_node, const LoadOp &_loadop ) 
     {
       const TiXmlElement *parent = &_node;
       std::string name = parent->Value();

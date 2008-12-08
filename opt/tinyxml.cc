@@ -111,6 +111,12 @@ namespace LaDa
       )
       __MPICODE( boost::mpi::broadcast( *LaDa::mpi::main, _result, 0 ); )
     }
+    void read_xmlfile( const boost::filesystem::path &_input, TiXmlDocument& _doc )
+    {
+      std::string string;
+      read_xmlfile( _input, string );
+      _doc.Parse( string.c_str() );
+    }
 
   }
 } // namespace LaDa

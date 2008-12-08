@@ -29,21 +29,21 @@ namespace LaDa
     {
       //! Calls an updater every \a _every generations.
       template< class T_FUNCTOR >
-        void every( bool _lastcall, const GenCount _age, 
-                    size_t _every, const T_FUNCTOR _functor )
+        void every_updater( bool _lastcall, const GenCount _age, 
+                            size_t _every, const T_FUNCTOR& _functor )
         {
-          if( _every == 0 ) { _functor(); return; }
+          if( _every == 0 ) { _functor(_lastcall); return; }
           if( not ( _age() == 0 or _age() % _every == 0 or _lastcall ) ) return;
-          _functor();
+          _functor(_lastcall);
         }
 
       namespace AddressOf
       {
         //! Returns address of void LaDa::GA::CheckPoint::Factory::max_generations()
         template< class T_FUNCTOR >
-          void (*every( const T_FUNCTOR& ))
-                  ( bool, const GenCount, size_t, const T_FUNCTOR )
-            { return &Factory::every< T_FUNCTOR >; }
+          void (*every_updater( const T_FUNCTOR& ))
+                  ( bool, const GenCount, size_t, const T_FUNCTOR& )
+            { return &GA::CheckPoint::every_updater< T_FUNCTOR >; }
       }
   
 

@@ -36,6 +36,9 @@ namespace LaDa
     //! \brief reads an file and dumps it in a string.
     //! \details Works in mpi.
     void read_xmlfile( const boost::filesystem::path &_input, std::string& _result );
+    //! \brief reads an file and has a TiXmlDocument parse it.
+    void read_xmlfile( const boost::filesystem::path &_input, TiXmlDocument& _doc );
+      
 
     //! Constant attribute iterator.
     class const_AttributeIterator 

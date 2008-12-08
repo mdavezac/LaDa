@@ -18,7 +18,7 @@ namespace LaDa
   {
     namespace CheckPoint
     {
-      void SaveGAState :: operator()(bool)
+      void SaveGAState :: operator()(bool) const
       {
         namespace bfs = boost::filesystem;
         __TRYBEGIN
@@ -46,9 +46,12 @@ namespace LaDa
           {
             doc.SetTabSize(1);
             doc.LinkEndChild( new TiXmlDeclaration("1.0", "", "") );
+            TiXmlElement *jobnode = new TiXmlElement("Job");
+            __DOASSERT( not jobnode, "Memory allocation error.\n" )
+            doc.LinkEndChild( jobnode );
             node = new TiXmlElement("Restart");
             __DOASSERT( not node, "Memory allocation error.\n" )
-            doc.LinkEndChild( node );
+            jobnode->LinkEndChild( node );
           }
 
           (*signals_)( *node );

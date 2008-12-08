@@ -29,6 +29,8 @@ namespace LaDa
             typedef T_INDIVIDUAL t_Individual;
             //! Mimics container stuff.
             typedef t_Individual value_type;
+            //! Type of the iterators.
+            typedef typename t_Container :: const_iterator const_iterator;
 
 
             //! Constructor.
@@ -59,13 +61,13 @@ namespace LaDa
             }
 
             //! Turn history on.
-            void on() { if( is_on() ) container_.reset( new t_Container ); }
+            void on() { if( not is_on() ) container_.reset( new t_Container ); }
             //! Turn history off.
-            void off() { if( container_.get() != NULL ) container_.reset(); }
+            void off() { if( is_on() ) container_.reset(); }
             //! returns true if history is on.
-            bool is_on() const { return container_.get() != NULL; }
+            bool is_on() const { return bool(container_); }
             //! returns true if history is off.
-            bool is_off() const { return container_.get() == NULL; }
+            bool is_off() const { return not bool(container_); }
             //! Number of individuals in history.
             size_t size() const
               { return is_off() ? 0: container_->size(); }

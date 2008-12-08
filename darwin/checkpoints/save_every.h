@@ -10,6 +10,7 @@
 
 #include <boost/signals.hpp>
 #include <boost/bind.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 
@@ -21,6 +22,7 @@
 #include <opt/debug.h>
 #include "../taboos/history.h"
 #include "../loadsave.h"
+#include "every.h"
 
 namespace LaDa
 {
@@ -33,13 +35,15 @@ namespace LaDa
       {
         public:
           //! Constructor.
-          SaveGAState() : signals_(new t_SaveSignals) {}
+          SaveGAState   ( const boost::filesystem::path& _path)
+                      : signals_(new t_SaveSignals), filename_( _path ) {}
           //! Copy Constructor.
-          SaveGAState( const SaveGAState & _c ) : signals_(_c.signals_) {}
+          SaveGAState   ( const SaveGAState & _c )
+                      : signals_(_c.signals_), filename_( _c.filename_ ) {}
           //! Updater functor.
-          void operator()( bool );
+          void operator()( bool ) const;
           //! Connects a save signal.
-          template< class T_FUNCTOR > void connect( T_FUNCTOR &_functor )
+          template< class T_FUNCTOR > void connect( const T_FUNCTOR &_functor )
             { signals_->connect( _functor ); }
            
         protected:
@@ -48,14 +52,14 @@ namespace LaDa
           //! Save sockets.
           boost::shared_ptr<t_SaveSignals> signals_;
           //! Filename where to save.
-          boost::filesystem::path filename_;
+          const boost::filesystem::path filename_;
       };
 
       //! Saves a functor.
       template< class T_FUNCTOR > 
         void save_from_functor( TiXmlElement& _node, 
                                 const std::string _childname,
-                                const T_FUNCTOR _functor )
+                                const T_FUNCTOR& _functor )
         {
           __TRYBEGIN
             TiXmlElement *child = new TiXmlElement(_childname);
@@ -69,7 +73,7 @@ namespace LaDa
       template< class T_FUNCTOR, class T_CONTAINER >
         void save_population( TiXmlElement& _node,
                               const std::string _childname,
-                              const T_FUNCTOR _saveop, 
+                              const T_FUNCTOR& _saveop, 
                               const T_CONTAINER& _container )
         {
           __TRYBEGIN
@@ -85,16 +89,29 @@ namespace LaDa
           __TRYEND(, ("Could not save container " + _childname + "\n") )
         }
 
+      //! Saves history if it exists.
+      template< class T_FUNCTOR, class T_CONTAINER >
+        void save_history( TiXmlElement& _node,
+                           const std::string _childname,
+                           const T_FUNCTOR& _saveop, 
+                           const T_CONTAINER& _container )
+        {
+          __TRYBEGIN
+            if( not _container.is_on() ) return;
+            save_population( _node, "History", _saveop, _container );
+          __TRYEND(, ("Could not save container " + _childname + "\n") )
+        }
+
       //! Saves all islands.
       template< class T_FUNCTOR, class T_ISLANDS >
         void save_islands( TiXmlElement& _node, 
-                           const T_FUNCTOR _saveop,
+                           const T_FUNCTOR& _saveop,
                            const T_ISLANDS& _islands )
         {
           __TRYBEGIN
             TiXmlElement *child = new TiXmlElement("Population");
             foreach( const typename T_ISLANDS :: value_type pop, _islands )
-              save_population( "Island", _saveop, pop );
+              save_population( _node, "Island", _saveop, pop );
             _node.LinkEndChild( child );
             Print::out << ("Saved Islands.\n");
           __TRYEND(, ("Could not save Islands.\n") )
@@ -102,7 +119,7 @@ namespace LaDa
 
       //! Save a store functor.
       template< class T_DARWIN >
-        void save_store( const T_DARWIN& _darwin )  { _darwin.store->Save(); }
+        void save_store( TiXmlElement& _node, const T_DARWIN& _darwin )  { _darwin.store->Save( _node ); }
 
       namespace Factory
       {
@@ -113,8 +130,10 @@ namespace LaDa
                            const TiXmlElement& _node, 
                            const T_DARWIN &_darwin  )
           {
-            const boost::filesystem::path path( _darwin.save_filename );
+            if( not _darwin.topology.save() ) return;
             if( not _node.Attribute( "what" ) ) return;
+            if( not _node.Attribute( "save" ) ) return;
+            const boost::filesystem::path filename( "save" );
             const std::string what( _node.Attribute( "what" ) );
             bool saveall( what.compare( "all" ) or what.compare( "ALL" ) );
             typedef typename T_DARWIN :: t_Evaluator t_Evaluator;
@@ -122,14 +141,14 @@ namespace LaDa
             typedef typename t_GATraits :: t_Individual t_Individual;
             typedef SaveObject< t_GATraits > t_SaveOp;
             t_SaveOp saveop( _darwin.evaluator, &t_Evaluator::Save, LOADSAVE_SHORT);
-            SaveGAState signals;
+            SaveGAState signals( filename );
             if( saveall or what.find( "history" ) != std::string::npos )
             {
               signals.connect
               (
                  boost::bind
                  (
-                   &GA::CheckPoint::save_population< t_SaveOp, Taboo::History<t_Individual> >,
+                   &GA::CheckPoint::save_history< t_SaveOp, Taboo::History<t_Individual> >,
                    _1, "History", saveop, boost::cref(_darwin.history)
                  )
               );
@@ -142,7 +161,7 @@ namespace LaDa
                  boost::bind
                  (
                    &GA::CheckPoint::save_store< T_DARWIN >,
-                   _1, _darwin
+                   _1, boost::cref(_darwin)
                  )
               );
               Print::out << "Will Save Results.\n";
@@ -153,13 +172,37 @@ namespace LaDa
               (
                  boost::bind
                  (
-                   &GA::CheckPoint::save_islands< t_SaveOp, typename T_DARWIN :: t_Islands >,
+                   &GA::CheckPoint::save_islands< t_SaveOp, typename t_GATraits :: t_Islands >,
                    _1, saveop, boost::cref(_darwin.islands)
                  )
               );
               Print::out << "Will Save Results.\n";
             }
-            _checkpoint.connect_updater( signals );
+            size_t every = 0;
+            if( _node.Attribute("every" ) )
+            { 
+              const std::string string( _node.Attribute("every") );
+              __TRYBEGIN
+                every = boost::lexical_cast<size_t>( string );
+              __TRYEND(,   "Could not parse " + string
+                         + " as a natural integer in <Filenames stop=... every=" 
+                         + string + ">.\n")
+            }
+            if( every == 0 ) 
+            {
+              Print::out << "Will save at end of each generation.\n";
+              _checkpoint.connect_updater( signals );
+              return;
+            }
+            Print::out << "Will save at end of each generation.\n";
+            _checkpoint.connect_updater
+              ( 
+                boost::bind
+                (
+                  GA::CheckPoint::AddressOf::every_updater( signals ),
+                  _1, _darwin.counter, every, signals 
+                )
+              );
           }
       }
       namespace AddressOf

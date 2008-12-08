@@ -128,7 +128,7 @@ namespace LaDa
       }
 
       template<class T_OBJECT> template <class T_LOADOP>
-      bool Base<T_OBJECT> :: Load( const TiXmlElement &_node, T_LOADOP &_op )
+      bool Base<T_OBJECT> :: Load( const TiXmlElement &_node, const T_LOADOP &_op )
       {
         std::string name = _node.Value();
         const TiXmlElement *child;
@@ -166,7 +166,7 @@ namespace LaDa
       }
 
       template<class T_OBJECT> template< class T_LOADOP >
-      bool Vertex<T_OBJECT> :: Load( const TiXmlElement &_node, T_LOADOP &_op )
+      bool Vertex<T_OBJECT> :: Load( const TiXmlElement &_node, const T_LOADOP &_op )
       {
         std::string name = _node.Value();
         if ( name.compare("Vertex" ) != 0 )
@@ -178,7 +178,7 @@ namespace LaDa
       }
 
       template<class T_OBJECT> template<class T_SAVEOP>
-      bool Base<T_OBJECT> :: Save( TiXmlElement &_node, T_SAVEOP &_op ) const
+      bool Base<T_OBJECT> :: Save( TiXmlElement &_node, const T_SAVEOP &_op ) const
       {
         TiXmlElement *parent;
         
@@ -194,7 +194,7 @@ namespace LaDa
         return i_v == i_end;
       }
       template<class T_OBJECT> template<class T_SAVEOP>
-      bool Vertex<T_OBJECT> :: Save( TiXmlElement &_node, T_SAVEOP &_op ) const
+      bool Vertex<T_OBJECT> :: Save( TiXmlElement &_node, const T_SAVEOP &_op ) const
       {
         TiXmlElement *child = new TiXmlElement("Vertex");
         if ( not child ) return false;

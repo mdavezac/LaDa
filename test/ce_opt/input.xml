@@ -20,7 +20,7 @@
     <Atom x="1.000000" y="1.000000" z="1.000000" type="0.000000" />
     <Atom x="1.500000" y="1.500000" z="1.000000" type="0.000000" />
   </Structure>
-    <GA popsize=10 rate=0.2 maxgen="0" maxeval="0" >
+    <GA popsize=10 rate=0.2 maxgen="10" maxeval="100" >
         <Objective type="convexhull" />
         <Breeding>
           <TabooOp>
@@ -31,9 +31,9 @@
             <Population />
             <Offspring />
         </Taboos>
-        <Filename stop="stop" />
-        <Filenames save="save.xml" />
-        <Filenames out="out" />
+        <Filenames stop="stop" />
+        <Filenames save="save.xml" what="results"/>
+        <Filenames out="ut" />
         <Filenames xmgrace="out.xmg" />
         <Print type="offspring" />
         <Print type="population" />

@@ -44,6 +44,9 @@ namespace LaDa
         template<class T_TYPE> inline void operator_ ( const T_TYPE &_whatever );
 
       private:
+        //! no copy.
+        StdOut( const StdOut& ) {}
+
         //! \brief Checks that the stream is open.
         //! \details If the file is empty, prints the revision number.
         void do_checks()

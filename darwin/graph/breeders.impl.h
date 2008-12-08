@@ -47,13 +47,12 @@ namespace LaDa
                                                      t_Population& _offspring)
           {
             __ASSERT( not t_Base::select, "Selection pointer is not assigned." )
-            __ASSERT( not t_Base::age, "Age pointer is not assigned." )
             __ASSERT( not t_Base::op, "Op pointer is not assigned." )
             eoSelectivePopulator<t_Individual> it(_parents, _offspring, *t_Base::select);
             do
             {
               (*t_Base::op)(it);
-              (*it).set_age( (*t_Base::age)() );
+              (*it).set_age( t_Base::age() );
               t_CommBase :: request( t_CommBase::t_Requests::WAITING );
               t_CommBase :: comm->send( 0, ONWAIT_TAG( TAG ), *it );
               ++it;

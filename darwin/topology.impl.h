@@ -13,10 +13,10 @@ namespace LaDa
         graph = new mpi::Graph::Topology( comm );
         if( graph->Load( _node ) )
           if( graph->init() )
-          { 
+          __BEGINGROUP__
             graph->set_mpi( _eval );
             return true;
-          }
+          __ENDGROUP__
         delete graph;
         graph = NULL;
         std::string str = "";

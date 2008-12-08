@@ -57,6 +57,9 @@ namespace LaDa
         //! The file stream
         std::ofstream file;
  
+        //! No copy
+        Base( const Base& ) {} 
+
       public:
         //! Constructor
         Base () : is_empty(true), do_print(false), truncate(true), filename("") {}

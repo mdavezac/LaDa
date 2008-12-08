@@ -14,7 +14,9 @@ DARWIN_GRAPH_H = graph/breeders.h graph/comm.h graph/evaluation.h \
                  graph/evaluator.h graph/graph.h graph/history.h \
                  graph/objective.h graph/store.h  graph/taboo.h $(DARWIN_GRAPH_IMPL_H)
 
-DARWIN_LIB_CC = concentration.cc debug.cc topology.cc operators/container.cc checkpoints/save_every.cc
+DARWIN_LIB_CC = concentration.cc debug.cc topology.cc \
+                operators/container.cc checkpoints/save_every.cc \
+                init_outputfiles.cc
  
 DARWIN_LIB_IMPL_H = darwin.impl.h  evaluation.impl.h individual.impl.h \
 	            scaling.impl.h store.impl.h  fitness.impl.h taboos.impl.h \

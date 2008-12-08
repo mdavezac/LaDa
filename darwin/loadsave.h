@@ -42,7 +42,7 @@ namespace LaDa
 
       public:
         //! Instance to an application-specific evaluator class
-        t_Evaluator &evaluator;      
+        const t_Evaluator &evaluator;      
         //! Pointer to the member %function which will do the saving.
         t_saveop op;      
         ///! Wether to save in long or condensed form
@@ -52,8 +52,11 @@ namespace LaDa
         //! \param _e Reference to the evaluator
         //! \param _op Pointer to the member %function of \a _e which will do the saving.
         //! \param _t Whether to save in long or short form.
-        SaveObject   ( t_Evaluator &_e, t_saveop _op, bool _t)
+        SaveObject   ( const t_Evaluator &_e, t_saveop _op, bool _t)
                    : evaluator(_e), op(_op), type(_t) {}
+        //! Copy Constructor.
+        SaveObject   ( const SaveObject& _c )
+                   : evaluator(_c.evaluator), op(_c.op), type(_c.type) {}
         //! Functor routine
         bool operator()(const t_Individual &_indiv, TiXmlElement &_node ) const
           { return (evaluator.*op)(_indiv, _node, type); }
@@ -99,7 +102,7 @@ namespace LaDa
         LoadObject   ( t_Evaluator &_e, t_loadop _op, bool _t)
                    : evaluator(_e), op(_op), type(_t) {}
         //! Functor routine
-        bool operator()(t_Individual &_indiv, const TiXmlElement &_node )
+        bool operator()(t_Individual &_indiv, const TiXmlElement &_node ) const
           { return (evaluator.*op)(_indiv, _node, type); }
     };
 
@@ -115,7 +118,7 @@ namespace LaDa
     //! \param _end one past the last individual in the range
     //! \pre The range [ \a _first, \a _end ) should be valid.
     template<class T_IT, class SaveOp>
-    bool SaveIndividuals( TiXmlElement &_node, SaveOp &_saveop, T_IT _first, T_IT _end) 
+    bool SaveIndividuals( TiXmlElement &_node, const SaveOp &_saveop, T_IT _first, T_IT _end) 
     {
       bool result = true;
       for(; _first != _end; ++_first )
@@ -137,7 +140,7 @@ namespace LaDa
     //! \param _n the maximum number of individuals to load. Zero means load all
     //1           you can find. Zero is the default.
     template<class T_CONTAINER, class LoadOp>
-    bool LoadIndividuals( const TiXmlElement &_node, LoadOp &_loadop, 
+    bool LoadIndividuals( const TiXmlElement &_node, const LoadOp &_loadop, 
                           T_CONTAINER& _container, types::t_unsigned _n = 0 )
     {
       bool did_load = false;

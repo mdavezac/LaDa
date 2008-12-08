@@ -80,14 +80,14 @@ namespace LaDa
         typedef Scaling :: Base<t_GATraits>                   t_Scaling;
 
       protected:
-        //! \brief Input/Output Flag. \see Darwin::do_save, Darwin::do_restart
+        //! \brief Input/Output Flag. \see Darwin::do_restart
         const static types::t_unsigned SAVE_RESULTS     = 1; 
-        //! \brief Input/Output Flag. \see Darwin::do_save, Darwin::do_restart
+        //! \brief Input/Output Flag. \see Darwin::do_restart
         const static types::t_unsigned SAVE_HISTORY     = 2; 
-        //! \brief Input/Output Flag. \see Darwin::do_save, Darwin::do_restart
+        //! \brief Input/Output Flag. \see Darwin::do_restart
         const static types::t_unsigned SAVE_POPULATION  = 4; 
 
-      protected:
+      public:
         //! \brief Filename of input
         //! \details At this point (revision ~310), this is no real option.
         //! Darwin::filename is hardcoded to "input.xml".
@@ -104,18 +104,6 @@ namespace LaDa
         //! Darwin::filename. Only those components specified by
         //! Darwin::do_restart are read from input.
         t_Path restart_filename;
-        //! \brief Input filename where restart data (in XML) is saved to
-        //! \details It can be different from Darwin::filename. It is set by a
-        //! \<Filename restart="?" /\> within the \<GA\> .. \</GA\> tags of
-        //! Darwin::filename. Only those components specified by
-        //! Darwin::do_save are actually saved to input. 
-        //! The following code 
-        //! \code
-        //  Darwin::do_save & Darwin::SAVE_RESULTS
-        //! \endcode
-        //! is always true on at least one processor.
-        t_Path save_filename;
-      public:
         //! Size of the deterministic tournaments used to choose parents prior to mating
         types::t_unsigned tournament_size;
         //! Size of the population
@@ -125,14 +113,6 @@ namespace LaDa
         types::t_unsigned max_generations;
         //! Number of independent islands (eg, independent populations)
         types::t_unsigned nb_islands;
-        //! \brief Says which components to save 
-        //! \details There must always be at least one processor on which
-        //! \code
-        //  Darwin::do_save & Darwin::SAVE_RESULTS
-        //! \endcode
-        //! is always true.
-        //! \see Darwin::SAVE_RESULTS, Darwin::SAVE_HISTORY, Darwin::SAVE_POPULATION
-        types::t_unsigned do_save;
         //! \brief Says which components to reload
         //! \see Darwin::SAVE_RESULTS, Darwin::SAVE_HISTORY, Darwin::SAVE_POPULATION
         types::t_unsigned do_restart;
@@ -143,9 +123,6 @@ namespace LaDa
         //! \see  GA::PrintGA \see Print::xmg
         bool do_print_each_call;
 
-        //! \brief The continuator containing all others. See EO library
-        //! \see Darwin::Load_CheckPoints()
-        IslandsContinuator<t_GATraits>*    continuator;
         //! Mating operators
         //! \see Darwin::make_genetic_op(), Darwin::Load_Mating()
         eoGenOp<t_Individual>*             breeder_ops;
@@ -232,9 +209,9 @@ namespace LaDa
         
         //! Constructor
         Darwin () : filename("input.xml"), tournament_size(2), pop_size(100),
-                    max_generations(0), nb_islands(1), do_save(SAVE_RESULTS),
+                    max_generations(0), nb_islands(1), 
                     do_restart(0), replacement_rate(0.1), do_print_each_call(false),
-                    continuator(NULL), breeder_ops(NULL), breeder(NULL), replacement(NULL),
+                    breeder_ops(NULL), breeder(NULL), replacement(NULL),
                     objective(NULL), store(NULL), evaluation(NULL), scaling(NULL),
                     topology(__MPICODE( *::LaDa::mpi::main ) ) { checkpoints.connect_age_counter( counter ); }
         //! Destructor
@@ -281,10 +258,6 @@ namespace LaDa
         bool Restart(const TiXmlElement &_node);
         //! Loads "Restart" information from file
         bool Restart();
-        //! Saves "Restart" information to an XML node \a _node
-        bool Save(const TiXmlElement &_node);
-        //! Saves "Restart" information to file
-        bool Save();
         //! \brief Creates genetic operators from input
         //! \return a pointer to the genetic operator specified by \a el. It
         //!         returns NULL, if the XML input is incorrect, or not a genetic
@@ -323,20 +296,6 @@ namespace LaDa
         void presubmit();
         //! deletes all allocate memory
         void cleanup();
-#  ifdef _MPI
-        /** \ingroup MPI
-         * \brief Loads the input filenames and input files, and broadcasts them
-         * to all processors.
-         * \details  It is quite a pain to write broadcasting functions which
-         * will correctly create the mostly virtual and imbricated types we have
-         * in %GA. Its much easier to have each processor process the input. By
-         * reading the input files as a whole and broadcasting the results, we
-         * can process the input in parallel. 
-         */
-        void LoadAllInputFiles(std::string &_input, 
-                               std::string &_restart, 
-                               std::string &_evaluator );
-#  endif
     };
 
   // template< class T_EVALUATOR >

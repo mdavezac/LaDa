@@ -234,11 +234,11 @@ namespace LaDa
         //! \brief Save to XML
         //! \param _node  XML node to which to save this instance
         //! \param _saveop a functor capable of saving a Base::t_Object to XML
-        template<class SaveOp>  bool Save( TiXmlElement &_node, SaveOp &_saveop ) const;
+        template<class SaveOp>  bool Save( TiXmlElement &_node, const SaveOp &_saveop ) const;
         //! \brief Load from XML
         //! \param _node  XML node from which to load this instance
         //! \param _loadop a functor capable of loading a Base::t_Object to XML
-        template<class LoadOp> bool Load( const TiXmlElement &_node, LoadOp &_loadop );
+        template<class LoadOp> bool Load( const TiXmlElement &_node, const LoadOp &_loadop );
       private:
         //! Serializes a scalar individual.
         template<class ARCHIVE> void serialize( ARCHIVE & _ar,

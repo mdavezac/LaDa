@@ -45,6 +45,9 @@
 #include "checkpoints/xcrysdenanim.h"
 #include "checkpoints/xyzanim.h"
 #include "checkpoints/save_every.h"
+#include "checkpoints/filename.h"
+#include "checkpoints/dummy.h"
+#include "init_outputfiles.h"
 
 
 
@@ -74,7 +77,6 @@ int main(int argc, char *argv[])
   const unsigned reruns = vm["reruns"].as< unsigned >();
   std::string short_description = "";
   
-
   // Reads program options for alloylayers.
   // Prints program options to standard output.
 #   include "alloylayers/main.extras.h" 
@@ -110,7 +112,7 @@ int main(int argc, char *argv[])
 #     else          
                 << "\n"
 #     endif
-                << "Miscellaeneous Items:"
+                << "Miscellaeneous Items:\n"
                 << ga.checkpoint_factory << "\n";
     ) 
     return 1; 
@@ -118,6 +120,7 @@ int main(int argc, char *argv[])
 
   __DOASSERT( not ( fs::is_regular( input ) or fs::is_symlink( input ) ),
               input << " is a not a valid file.\n" );
+  LaDa::GA::init_outputfiles( input );
  
 
   __ROOTCODE
@@ -134,6 +137,19 @@ int main(int argc, char *argv[])
   
   for( LaDa::types::t_int i = 0; i < reruns; ++i )
   {
+
+    __MPISERIALCODE( 
+      // MPI code
+      LaDa::Print::out << "Starting genetic algorithm run on processor "
+                       << ( 1 + LaDa::mpi::main->rank() ) << " of " 
+                       << LaDa::mpi::main->size() << ".\n\n";,
+      // Serial code
+      LaDa::Print::xmg.init( xmg_filename );
+      LaDa::Print::out.init( out_filename );
+      LaDa::Print::out << "Starting (serial) genetic algorithm run\n\n";
+    )
+    LaDa::Print::out << "Rerun " << i+1 << " of " << reruns << LaDa::Print::endl;
+
     LaDa::GA::Darwin< t_Evaluator > ga;
     // creates factories
 #   include "main.extras.h" 
@@ -148,12 +164,6 @@ int main(int argc, char *argv[])
                        << LaDa::Print::endl; 
 
     
-    LaDa::Print::out << "Rerun " << i+1 << " of " << reruns << LaDa::Print::endl;
-    __ROOTCODE
-    (
-      (*::LaDa::mpi::main),
-      std::cout << "Rerun " << i+1 << " of " << reruns << ".\n";
-    )
     ga.run();
     // for reruns.
     LaDa::Print::xmg.dont_truncate();

@@ -132,6 +132,8 @@
           );
 #     endif
 
+       ga.restart_filename = input;
+       ga.evaluator_filename = input;
        ga.checkpoint_factory.connect_value
          (
            LaDa::Factory::XmlKey( "Print", "type", "population" ),
@@ -186,6 +188,43 @@
          LaDa::Factory::XmlKey( "Filenames", "stop" ),
          "GA stops when this file is found.",
          std::ptr_fun( LaDa::GA::CheckPoint::AddressOf::stop_onfile( ga.checkpoints ) )
+       ) 
+       (
+         LaDa::Factory::XmlKey( "Filenames", "evaluator" ),
+         "Reads evaluators from this file.",
+         LaDa::GA::CheckPoint::Factory::Dummy()
+       )
+       (
+         LaDa::Factory::XmlKey( "Filenames", "restart" ),
+         "Reads restart data from this file.",
+         boost::bind
+         (
+           LaDa::GA::CheckPoint::AddressOf::filename( ga.checkpoints ),
+           _1, _2, "Will restart from data in ", boost::ref(ga.restart_filename)
+         )
+       )
+       (
+         LaDa::Factory::XmlKey( "Filenames", "xmgrace" ),
+         "Xmgrace formatted output goes to this file: ",
+         LaDa::GA::CheckPoint::Factory::Dummy()
+       )
+       (
+         LaDa::Factory::XmlKey( "Filenames", "out" ),
+         "Writes output to this file.",
+         LaDa::GA::CheckPoint::Factory::Dummy()
+       );
+       ga.checkpoint_factory.connect_node
+       (
+         LaDa::Factory::XmlKey( "Filenames" ),
+         "when attributes save=\"filename\" and what=\"all or history or "
+         "population or results\" are set, saves the relevant information "
+         "every n generations, with n specified by  attribute every=\"n\""
+         "(Default n=0, eg each and every generation).",
+         boost::bind
+         (
+           LaDa::GA::CheckPoint::AddressOf::save_every( ga.checkpoints, ga ),
+           _1, _2, boost::cref(ga) 
+         )
        );
 
 

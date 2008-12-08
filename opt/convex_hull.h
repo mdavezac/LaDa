@@ -182,7 +182,7 @@ namespace LaDa
         //! \param _node XML node from which to load the Vertex
         //! \param _op Functor capable of loading an instance of t_Object
         template<class T_LOADOP>
-        Vertex (const TiXmlElement &_node, T_LOADOP &_op) { Load( _node, _op ); }
+        Vertex (const TiXmlElement &_node, const T_LOADOP &_op) { Load( _node, _op ); }
         //! \brief Constructor and Initializer
         //! \details Vertex::x is set using \a _object.get_concentration()
         Vertex   (const types::t_real _y, const t_Object &_object) 
@@ -216,12 +216,12 @@ namespace LaDa
         //! \param _node  XML node from which to load the Vertex
         //! \param _op a functor capable of loading a Vertex::t_Object from XML
         template< class T_LOADOP >
-        bool Load( const TiXmlElement &_node, T_LOADOP &_op );
+        bool Load( const TiXmlElement &_node, const T_LOADOP &_op );
         //! \brief Save to XML
         //! \param _node  XML node to which to save the Vertex
         //! \param _op a functor capable of saving a Vertex::t_Object to XML
         template< class T_SAVEOP >
-        bool Save( TiXmlElement &_node, T_SAVEOP &_op ) const;
+        bool Save( TiXmlElement &_node, const T_SAVEOP &_op ) const;
 
         //! return Vertex::x
         types::t_real get_concentration() const
@@ -349,12 +349,12 @@ namespace LaDa
           //! \param _node  XML node from which to load the Vertex
           //! \param _op a functor capable of loading a t_Object from XML
           template< class T_LOADOP >
-          bool Load(const TiXmlElement &_node, T_LOADOP &_op);
+          bool Load(const TiXmlElement &_node, const T_LOADOP &_op);
           //! \brief Saves convex-hull to XML
           //! \param _node  XML node to which to save the Vertex
           //! \param _op a functor capable of saving a t_Object to XML
           template< class T_SAVEOP >
-          bool Save( TiXmlElement &_node, T_SAVEOP &_op ) const;
+          bool Save( TiXmlElement &_node, const T_SAVEOP &_op ) const;
 
           //! Returns number of breakpoints in convex-hull
           types::t_unsigned size() const { return vertices.size(); }

@@ -97,6 +97,9 @@ namespace LaDa
         //! A stream for writting the current line
         std::ostringstream stream;
 
+        //! No copy.
+        Xmg( const Xmg& ) {}
+
       public:
         //! Constructor
         Xmg() : Base(), indentation(0) {};
