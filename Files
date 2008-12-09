@@ -51,7 +51,7 @@ DARWIN_BG_H  = bandgap_stubs.h  two_sites.h  single_site.h  vff.h  bandgap.h \
                $(DARWIN_BG_IMPL_H)
 DARWIN_BG_DOC = $(DARWIN_BG_H) $(DARWIN_BG_CC) $(DARWIN_GRAPH_H) $(DARWIN_GRAPH_CC)
 
-LIB_ALLOYLAYERS_CC = single_site.cc bandgap_stubs.cc vff.cc # electric_dipole.cc
+LIB_ALLOYLAYERS_CC = single_site.cc bandgap_stubs.cc vff.cc electric_dipole.cc
 LIB_ALLOYLAYERS_IMPL_H  = alloylayers/evaluator.impl.h  alloylayers/policies.impl.h \
                           alloylayers/factory.hpp 
 LIB_ALLOYLAYERS_H  = alloylayers/evaluator.h alloylayers/object.h \

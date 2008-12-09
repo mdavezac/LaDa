@@ -83,8 +83,8 @@ namespace LaDa
               ( 
                 MPI_COMM,
                 Print::out << "e1.0" << Print::endl;
-                _k.osc_strength = ::LaDa::Pescan::oscillator_strength( _bg, _str, 
-                                                                       degeneracy, false );
+                _k.osc_strength = ::LaDa::Pescan::oscillator_strength( _bg, degeneracy, false );
+                _k.osc_strength /= types::t_real( _str.atoms.size() );
                 Print::out << "e2.0" << Print::endl;
               )
 #           else

@@ -87,7 +87,7 @@
     typedef LaDa :: GA :: Darwin< t_Evaluator > t_Darwin;
 
     // connects physical properties factory.
-//   ga.evaluator.do_dipole( false );
+    ga.evaluator.do_dipole( false );
     LaDa::Factory::Factory<void(void), std::string> properties_factory;
     properties_factory.connect
       ( "epi", "Epitaxial Strain  in eV per f.u.\n"
@@ -96,8 +96,8 @@
       ( "energy", "VFF energy in eV per f.u." ,
         boost::bind<void>( &PPFactory::strain_energy<t_Evaluator>, boost::ref(ga.evaluator) ) )
       ( "bandgap", boost::bind( &PPFactory::bandgap<t_Evaluator>, boost::ref(ga.evaluator) ) )
-//     ( "transition", "Dipole oscillator strength between VBM and CBM. Arbitrary units.",
-//       boost::bind( &PPFactory::transitions<t_Evaluator>, boost::ref(ga.evaluator) ) )
+      ( "transition", "Dipole oscillator strength between VBM and CBM. Arbitrary units.",
+        boost::bind( &PPFactory::transitions<t_Evaluator>, boost::ref(ga.evaluator) ) )
       ( "cbm", "   Conduction band minimum in eV.", 
         boost::bind( &PPFactory::cbm<t_Evaluator>, boost::ref(ga.evaluator) ) )
       ( "vbm", "   Valence band minimum in eV.",

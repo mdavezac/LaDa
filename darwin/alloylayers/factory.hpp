@@ -175,7 +175,7 @@ namespace LaDa
             bl::bind
             (
               &t_Quantity::push_back,
-              bl::_2, bl::bind(  &t_Object::osc_strength, bl::_1 )
+              bl::_2, bl::bind(  &t_Object::osc_strength, bl::_1 ) 
             )
           );
           t_Object :: connect_print

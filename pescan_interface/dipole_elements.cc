@@ -125,8 +125,12 @@ namespace LaDa
       std::vector<types::t_real> :: const_iterator i_band = _vbm_eigs.begin();
       std::vector<types::t_real> :: const_iterator i_band_end = _vbm_eigs.end();
       for( int index(0) ; i_band != i_band_end; ++i_band, ++index )
+      {
+        std::cout << "| " << *i_band << " - "  << _Evbm << " | = "
+                  << std::abs( *i_band - _Evbm ) << "\n";
         if( std::abs( *i_band - _Evbm ) < _degeneracy  )
           valence_indices.push_back( index );
+      }
       std::vector<int> conduction_indices;
       i_band = _cbm_eigs.begin();
       i_band_end = _cbm_eigs.end();
@@ -157,12 +161,12 @@ namespace LaDa
       // copies results to output vector.
       // loop positions determined by order of dipoles in fortran code.
       Dipole dipole;
-      for( int l(0); l < ndip3; ++l )
+      for( int k(0); k < ndip2; ++k )
       {
-        dipole.band2band.second = conduction_indices[l / _kramer ];
-        for( int k(0); k < ndip2; ++k )
+        dipole.band2band.first = valence_indices[k / _kramer ];
+        for( int l(0); l < ndip3; ++l )
         {
-          dipole.band2band.first = valence_indices[k / _kramer ];
+          dipole.band2band.second = conduction_indices[l / _kramer ];
 
           for( size_t r(0u); r < 3u; ++r )
           {

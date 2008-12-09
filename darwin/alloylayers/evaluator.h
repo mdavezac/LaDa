@@ -26,7 +26,7 @@
 #include "../bitstring.h"
 #include "../vff.h"
 #include "../bandgap_stubs.h"
-// #include "../electric_dipole.h"
+#include "../electric_dipole.h"
 
 #include "policies.h"
 
@@ -185,10 +185,12 @@ namespace LaDa
             typedef Traits::GA< Evaluator > t_GATraits;
        
             //! Constructor
-            Evaluator() : t_Base(), bandgap(structure) {}
+            Evaluator() : t_Base(), bandgap(structure),
+                          edipole( structure ), do_dipole_(false) {}
             //! Copy Constructor
             Evaluator   ( const Evaluator &_c )
-                      : t_Base(_c), bandgap(_c.bandgap) {}
+                      : t_Base(_c), bandgap(_c.bandgap),
+                        edipole( structure ), do_dipole_(false) {}
             //! Destructor
             virtual ~Evaluator() {};
        
@@ -210,27 +212,27 @@ namespace LaDa
   #         ifdef _MPI
               //! forwards comm and suffix to bandgap.
               void set_mpi( boost::mpi::communicator *_comm, const std::string &_str )
-                { bandgap.set_mpi( _comm, _str ); } // edipole.set_mpi( _comm, _str ); }
+                { bandgap.set_mpi( _comm, _str ); edipole.set_mpi( _comm, _str ); }
   #         endif
             using t_Base::Load;
 
-//           //! Returns true if dipole transition will be computed.
-//           bool do_dipole() const { return do_dipole; }
-//           //! Sets pescan to compute dipoles on \a _do true.
-//           void do_dipole( bool _do );
+            //! Returns true if dipole transition will be computed.
+            bool do_dipole() const { return do_dipole; }
+            //! Sets pescan to compute dipoles on \a _do true.
+            void do_dipole( bool _do );
        
           protected:
             //! Type of the band gap cum vff all-in-one functional.
             typedef BandGap::Darwin<Vff::Layered> t_BandGap;
-//           //! Type of the electric dipole.
-//           typedef OscStrength::Darwin t_ElectricDipole;
+            //! Type of the electric dipole.
+            typedef OscStrength::Darwin t_ElectricDipole;
        
             //! BandGap/Vff functional
             t_BandGap bandgap; 
- //          //! Electric dipole functional.
- //          t_ElectricDipole edipole;
- //          //! Wether to perform oscilator strength evaluations.
- //          bool do_dipole_;
+            //! Electric dipole functional.
+            t_ElectricDipole edipole;
+            //! Wether to perform oscilator strength evaluations.
+            bool do_dipole_;
             
             using t_Base :: structure;
         };

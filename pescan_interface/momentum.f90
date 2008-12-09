@@ -136,7 +136,7 @@ module MomentumDipole
       integer inode,nnodes, n1, n2, n3, ng, ng_n, mx, nr, ierr
       common /mpi_data/inode,nnodes
       common /com123/n1,n2,n3,ng,ng_n,nr,mx,vol
-      common /comAD/AL
+      common /comAD/AL,Ecut
       ! mpi error integer
       real( kind = 8 ) delta_k, totg
 
@@ -204,6 +204,7 @@ module MomentumDipole
          write(6,*)'Allocated no. = ',mg_nx
          call abort()
       end if
+      print *, "equal ", ngtotnod(inode), mg_nx
 
       ! Set up index matrices for fft routinines 
       call fftprep_comp(n1,n2,n3)
@@ -321,6 +322,9 @@ module MomentumDipole
                          * wg_n(ig) * wg_n(ig)
         gpoints(ig, 3) = 2.d0 * pi * sum( lattice%kcell(3,:) * int_gpoint ) &
                          * wg_n(ig) * wg_n(ig)
+        gpoints(ig, 1) = 1d0
+        gpoints(ig, 2) = 1d0
+        gpoints(ig, 3) = 1d0
       enddo ! ig
 
       io_dipoles = 0d0
@@ -340,6 +344,14 @@ module MomentumDipole
                          in_Awfns(1:nb_gpoints, Aband, 2 ), & 
                          in_Bwfns(1:nb_gpoints, Bband, 2 ), & 
                          io_dipoles(:, 2*(Aband-1)+1, 2*(Bband-1)+1 ) )
+            call mpi_allreduce( io_dipoles(1, 2*(Aband-1)+1, 2*(Bband-1)+1 ),&
+                                io_dipoles(1, 2*(Aband-1)+1, 2*(Bband-1)+1 ),&
+                                3, MPI_COMPLEX, MPI_SUM, MPI_IN_PLACE, & 
+                                params%ecp%comm_handle, ierr )
+            if( ierr .ne. MPI_SUCCESS ) then
+              print *, "mpi error ", ierr, MPI_SUCCESS
+              call abort()
+            endif
             call invA_sum( in_Awfns(1:nb_gpoints, Aband, 2 ), & 
                            in_Bwfns(1:nb_gpoints, Bband, 1 ), & 
                            in_Awfns(1:nb_gpoints, Aband, 1 ), & 
@@ -381,20 +393,20 @@ module MomentumDipole
       ! normalize to volume.
       io_dipoles = io_dipoles * vol
 
-      if( params%is_gamma .and. params%with_spinorbit ) then
-        call mpi_reduce( io_dipoles, io_dipoles, nb_Aband * nb_Bband, &
-                         MPI_COMPLEX, MPI_SUM, MPI_IN_PLACE, params%ecp%comm_handle, ierr )
-      else
-        call mpi_reduce( io_dipoles, io_dipoles, nb_Aband * nb_Bband * 4, &
-                         MPI_COMPLEX, MPI_SUM, MPI_IN_PLACE, params%ecp%comm_handle, ierr )
-      endif
+ !    if( params%is_gamma .and. params%with_spinorbit ) then
+ !      call mpi_allreduce( io_dipoles, io_dipoles, nb_Aband * nb_Bband * 4, &
+ !                          MPI_COMPLEX, MPI_SUM, MPI_IN_PLACE, params%ecp%comm_handle, ierr )
+ !    else
+ !      call mpi_allreduce( io_dipoles, io_dipoles, nb_Aband * nb_Bband, &
+ !                          MPI_COMPLEX, MPI_SUM, MPI_IN_PLACE, params%ecp%comm_handle, ierr )
+ !    endif
 
-      ! success
-      if( ierr .eq. MPI_SUCCESS ) return 
+!     ! success
+!     if( ierr .eq. MPI_SUCCESS ) return 
 
-      ! not success
-      print *, "Error encountered while calling mpi_reduce."
-      call exit(1)
+!     ! not success
+!     print *, "Error encountered while calling mpi_reduce.", ierr
+!     call exit(1)
 
       contains 
         subroutine sp_sum( in_wfnA_up, in_wfnB_up, in_wfnA_dw, in_wfnB_dw, io_dipole )
@@ -472,7 +484,6 @@ module MomentumDipole
                                )
             enddo
           enddo
-          print *, "   inv ", io_dipole * vol
         
         end subroutine 
 

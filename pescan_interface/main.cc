@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
   __DOASSERT( not child, "Could not find node \"Job\" in " << filename << ".\n" )
   __DOASSERT( not ( child and evaluate.pescan.Load(*child) ),
               "Error while reading pescan from input.\n" )
-  __DIAGA( evaluate.pescan.BandGap().set_mpi( LaDa::mpi::main ); )
+  __DIAGA( evaluate.pescan.set_mpi( LaDa::mpi::main, "" ); )
 
 
   TiXmlHandle docHandle( &doc ); 

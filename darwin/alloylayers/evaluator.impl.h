@@ -144,17 +144,17 @@ namespace LaDa
         Crystal::Structure copy_structure( structure );
     
         bool oldkeepdir = true;;
-   //    if( do_dipole_ )  oldkeepdir = bandgap.set_keepdirectory( true );
+        if( do_dipole_ )  oldkeepdir = bandgap.set_keepdirectory( true );
     
         bandgap( *t_Base::current_object );
  
     
-   //    if( do_dipole_ )
-   //    {
-   //      edipole( bandgap.BandGap().BandGap(), structure, *t_Base::current_object );
-   //      bandgap.set_keepdirectory( oldkeepdir );
-   //      if( not oldkeepdir ) bandgap.destroy_directory();
-   //    }
+        if( do_dipole_ )
+        {
+          edipole( bandgap.BandGap().BandGap(), structure, *t_Base::current_object );
+          bandgap.set_keepdirectory( oldkeepdir );
+          if( not oldkeepdir ) bandgap.destroy_directory();
+        }
     
         structure = copy_structure;
     
@@ -166,15 +166,15 @@ namespace LaDa
       {
         if( not t_Base :: Load( _node ) ) return false;
         if( not bandgap.Load( _node ) ) return false;
-    //   if( do_dipole_ ) edipole.Load( _node ); // Okay if not found. Just use default values.
+        if( do_dipole_ ) edipole.Load( _node ); // Okay if not found. Just use default values.
         return true;
       }
 
-//     INEVAL( void ) :: do_dipole( bool _do )
-//     {
-//       do_dipole_ = true;
-//       bandgap.set_rspace_output( _do );
-//     }
+      INEVAL( void ) :: do_dipole( bool _do )
+      {
+        do_dipole_ = true;
+        bandgap.set_rspace_output( _do );
+      }
 
 #     undef EVALHEAD
 #     undef INEVAL
