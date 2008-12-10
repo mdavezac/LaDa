@@ -39,8 +39,18 @@ namespace LaDa
             );
             Print::xmg << Print::Xmg::comment << "Random" << Print::endl;
           }
-     
       } // namespace Factory
+
+      namespace AddressOf
+      {
+        //! Helper function to return address of GA::AlloyLayers::Factory::random().
+        template< class T_FACTORY, class T_EVALUATOR >
+          void(* random( const T_FACTORY&, const T_EVALUATOR& ) )
+                  ( T_FACTORY &, boost::function<void( typename T_FACTORY::t_Populator& )>&
+                    const TiXmlElement &, T_EVALUATOR & )
+          { return &GA::AlloyLayers::Factory::random< T_FACTORY, T_EVALUATOR >; }
+      }
+     
     } // namespace AlloyLayers
   } // namespace GA
 } // namespace LaDa

@@ -81,7 +81,7 @@ namespace LaDa
           Operator::MakePopulator<t_Individual, t_Populator>::transform_binary
           ( 
             boost::bind( &krossover<t_Object>, _1, _2, rate, do_range,
-                         boost::ref( _structure ),
+                         boost::cref( _structure ),
                          boost::function<void( Crystal::Structure& )>() ),
             _function 
           );

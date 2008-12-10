@@ -36,7 +36,7 @@ namespace LaDa
   {
     /** \ingroup Genetic
      * @{ */
-    //! Optimization for superlattices of random alloy layers of specified concentration.
+    //! Optimization for superlattices of random alloy layers.
     namespace AlloyLayers
     {
       //! \brief Partially overrides GA::Evaluator default to implement behaviors
