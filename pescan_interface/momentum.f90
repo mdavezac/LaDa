@@ -204,7 +204,6 @@ module MomentumDipole
          write(6,*)'Allocated no. = ',mg_nx
          call abort()
       end if
-      print *, "equal ", ngtotnod(inode), mg_nx
 
       ! Set up index matrices for fft routinines 
       call fftprep_comp(n1,n2,n3)
@@ -299,6 +298,8 @@ module MomentumDipole
       integer*8, dimension(3) :: int_gpoint
       integer ::  nb_gpoints
       integer ierr, Aband, Bband, ig
+      complex( kind=8 ) :: mpiresult
+      complex(kind=8) realnb(5), a(5)
 
       nb_gpoints = ngtotnod( inode )
       nb_Aband = size( in_Awfns, 2 )
@@ -316,15 +317,12 @@ module MomentumDipole
         if( int_gpoint(2) .gt. n2 / 2 ) int_gpoint(2) = int_gpoint(2) - n2
         if( int_gpoint(3) .gt. n3 / 2 ) int_gpoint(3) = int_gpoint(3) - n3
 
-        gpoints(ig, 1) =   2.d0 * pi * sum( lattice%kcell(1,:) * int_gpoint ) &
+        gpoints(ig, 1) = 2.d0 * pi * sum( lattice%kcell(1,:) * int_gpoint ) &
                          * wg_n(ig) * wg_n(ig)
         gpoints(ig, 2) = 2.d0 * pi * sum( lattice%kcell(2,:) * int_gpoint ) &
                          * wg_n(ig) * wg_n(ig)
         gpoints(ig, 3) = 2.d0 * pi * sum( lattice%kcell(3,:) * int_gpoint ) &
                          * wg_n(ig) * wg_n(ig)
-        gpoints(ig, 1) = 1d0
-        gpoints(ig, 2) = 1d0
-        gpoints(ig, 3) = 1d0
       enddo ! ig
 
       io_dipoles = 0d0
@@ -344,14 +342,6 @@ module MomentumDipole
                          in_Awfns(1:nb_gpoints, Aband, 2 ), & 
                          in_Bwfns(1:nb_gpoints, Bband, 2 ), & 
                          io_dipoles(:, 2*(Aband-1)+1, 2*(Bband-1)+1 ) )
-            call mpi_allreduce( io_dipoles(1, 2*(Aband-1)+1, 2*(Bband-1)+1 ),&
-                                io_dipoles(1, 2*(Aband-1)+1, 2*(Bband-1)+1 ),&
-                                3, MPI_COMPLEX, MPI_SUM, MPI_IN_PLACE, & 
-                                params%ecp%comm_handle, ierr )
-            if( ierr .ne. MPI_SUCCESS ) then
-              print *, "mpi error ", ierr, MPI_SUCCESS
-              call abort()
-            endif
             call invA_sum( in_Awfns(1:nb_gpoints, Aband, 2 ), & 
                            in_Bwfns(1:nb_gpoints, Bband, 1 ), & 
                            in_Awfns(1:nb_gpoints, Aband, 1 ), & 
@@ -393,20 +383,22 @@ module MomentumDipole
       ! normalize to volume.
       io_dipoles = io_dipoles * vol
 
- !    if( params%is_gamma .and. params%with_spinorbit ) then
- !      call mpi_allreduce( io_dipoles, io_dipoles, nb_Aband * nb_Bband * 4, &
- !                          MPI_COMPLEX, MPI_SUM, MPI_IN_PLACE, params%ecp%comm_handle, ierr )
- !    else
- !      call mpi_allreduce( io_dipoles, io_dipoles, nb_Aband * nb_Bband, &
- !                          MPI_COMPLEX, MPI_SUM, MPI_IN_PLACE, params%ecp%comm_handle, ierr )
- !    endif
+      if( params%is_gamma .eqv. .true. .and. params%with_spinorbit .eqv. .true. ) then
+        call mpi_allreduce( MPI_IN_PLACE, io_dipoles(1,1,1), &
+                            nb_Aband * nb_Bband * 4 * 3 * 2 , &
+                            MPI_DOUBLE_PRECISION, MPI_SUM, params%ecp%comm_handle, ierr )
+      else
+        call mpi_allreduce( MPI_IN_PLACE, io_dipoles(1,1,1), &
+                            nb_Aband * nb_Bband * 3 * 2 , &
+                            MPI_DOUBLE_PRECISION, MPI_SUM, params%ecp%comm_handle, ierr )
+      endif
 
-!     ! success
-!     if( ierr .eq. MPI_SUCCESS ) return 
-
-!     ! not success
-!     print *, "Error encountered while calling mpi_reduce.", ierr
-!     call exit(1)
+      ! success
+      if( ierr .ne. MPI_SUCCESS ) then
+        print *, "Error encountered while calling mpi_reduce.", ierr
+        call mpierror( ierr )
+        call abort()
+      endif
 
       contains 
         subroutine sp_sum( in_wfnA_up, in_wfnB_up, in_wfnA_dw, in_wfnB_dw, io_dipole )
@@ -430,6 +422,7 @@ module MomentumDipole
                              ) &
                            )  
           enddo
+          print *, "sp_sum ", io_dipole * vol
         
         end subroutine 
 
@@ -452,8 +445,8 @@ module MomentumDipole
             do k = 1, 3
               io_dipole(k) = io_dipole(k) + gpoints(ig, k) &
                              * (   &
-                                 - conjg( in_wfnA_up( inv_n(ig) ) ) * in_wfnB_up(ig) &
-                                 + conjg( in_wfnA_dw( inv_n(ig) ) ) * in_wfnB_dw(ig) &
+                                 - in_wfnA_up( inv_n(ig) ) * in_wfnB_up(ig) &
+                                 + in_wfnA_dw( inv_n(ig) ) * in_wfnB_dw(ig) &
                                )
             enddo
           enddo
@@ -479,8 +472,8 @@ module MomentumDipole
             do k = 1, 3
               io_dipole(k) = io_dipole(k) + gpoints(ig, k) &
                              * (   &
-                                 - conjg( in_wfnA_up(ig) ) * in_wfnB_up(inv_n(ig))&
-                                 + conjg( in_wfnA_dw(ig) ) * in_wfnB_dw(inv_n(ig))&
+                                 - conjg( in_wfnA_up(ig) ) * conjg( in_wfnB_up(inv_n(ig)) ) &
+                                 + conjg( in_wfnA_dw(ig) ) * conjg( in_wfnB_dw(inv_n(ig)) ) &
                                )
             enddo
           enddo
@@ -507,8 +500,8 @@ module MomentumDipole
             do k = 1, 3
               io_dipole(k) = io_dipole(k) + gpoints(ig, k) &
                              * (   &
-                                   conjg( in_wfnA_up(inv_n(ig)) ) * in_wfnB_up(inv_n(ig))&
-                                 + conjg( in_wfnA_dw(inv_n(ig)) ) * in_wfnB_dw(inv_n(ig))&
+                                   in_wfnA_up(inv_n(ig)) * conjg( in_wfnB_up(inv_n(ig)) )&
+                                 + in_wfnA_dw(inv_n(ig)) * conjg( in_wfnB_dw(inv_n(ig)) )&
                                )
             enddo
           enddo

@@ -66,10 +66,13 @@ namespace LaDa
           opt::InitialPath::path() / _bandgap.get_dirname() 
       ); 
       const size_t kramer( Fuzzy::is_zero( atat::norm2( _bandgap.escan.kpoint ) ) ? 2: 1 ); 
-      if( bfs::exists( opt::InitialPath::path() /  _bandgap.get_dirname() / "cbm" )  )
+      if(     _bandgap.escan.method == Interface :: FOLDED_SPECTRUM 
+          and bfs::exists( opt::InitialPath::path() /  _bandgap.get_dirname() / "cbm" )  )
       {
-        __ASSERT( bfs::exists( path / "vbm" / filename ), "Could not find file.\n" )
-        __ASSERT( bfs::exists( path / "cbm" / filename ), "Could not find file.\n" )
+        __ASSERT( not bfs::exists( path / "vbm" / filename ), 
+                  "Could not find file " + (path / "vbm" / filename).string() )
+        __ASSERT( not bfs::exists( path / "cbm" / filename ), 
+                  "Could not find file " + (path / "cbm" / filename).string() )
         compute_dipoles
         (
           _dipoles, _bandgap.vbm_eigs, _bandgap.cbm_eigs,
@@ -79,6 +82,9 @@ namespace LaDa
       }
       else
       {
+        __ASSERT( not bfs::exists( path / filename ), 
+                  "Could not find file " + (path / filename).string() )
+          std::cout << "size " << _bandgap.eigenvalues.size() << "\n";
         compute_dipoles
         (
           _dipoles, _bandgap.eigenvalues, _bandgap.eigenvalues,
@@ -99,24 +105,6 @@ namespace LaDa
                           const  boost::filesystem::path &_conduction_path )
     {
       namespace bfs = boost::filesystem; 
-      __ASSERT
-      (
-        std::find_if
-        ( 
-          _vbm_eigs.begin(), _vbm_eigs.end(),
-          boost::bind( &Fuzzy::eq<types::t_real>, _Evbm, _1 )
-        ) == _vbm_eigs.end(),
-        "VBM and eigenvalues are not coherent.\n"
-      )
-      __ASSERT
-      (
-        std::find_if
-        ( 
-          _cbm_eigs.begin(), _cbm_eigs.end(),
-          boost::bind( &Fuzzy::eq<types::t_real>, _Ecbm, _1 )
-        ) == _cbm_eigs.end(),
-        "CBM and eigenvalues are not coherent.\n"
-      )
       __ASSERT( not bfs::exists( _valence_path ), _valence_path << " does not exist.\n" )
       __ASSERT( not bfs::exists( _conduction_path ), _conduction_path << " does not exist.\n" )
       
@@ -124,19 +112,17 @@ namespace LaDa
       std::vector<int> valence_indices;
       std::vector<types::t_real> :: const_iterator i_band = _vbm_eigs.begin();
       std::vector<types::t_real> :: const_iterator i_band_end = _vbm_eigs.end();
-      for( int index(0) ; i_band != i_band_end; ++i_band, ++index )
-      {
-        std::cout << "| " << *i_band << " - "  << _Evbm << " | = "
-                  << std::abs( *i_band - _Evbm ) << "\n";
+      for( int index(1) ; i_band != i_band_end; ++i_band, ++index )
         if( std::abs( *i_band - _Evbm ) < _degeneracy  )
           valence_indices.push_back( index );
-      }
+      __ASSERT( valence_indices.size() == 0,  "VBM and eigenvalues are not coherent.\n" )
       std::vector<int> conduction_indices;
       i_band = _cbm_eigs.begin();
       i_band_end = _cbm_eigs.end();
-      for( int index(0) ; i_band != i_band_end; ++i_band, ++index )
+      for( int index(1) ; i_band != i_band_end; ++i_band, ++index )
         if( std::abs( *i_band - _Ecbm ) < _degeneracy  )
           conduction_indices.push_back( index );
+      __ASSERT( conduction_indices.size() == 0,  "CBM and eigenvalues are not coherent.\n" )
       
       // Call fortran code.
       const int ninputpath( _inputfilename.size() );
@@ -163,10 +149,10 @@ namespace LaDa
       Dipole dipole;
       for( int k(0); k < ndip2; ++k )
       {
-        dipole.band2band.first = valence_indices[k / _kramer ];
+        dipole.band2band.first = valence_indices[k / _kramer ] - 1;
         for( int l(0); l < ndip3; ++l )
         {
-          dipole.band2band.second = conduction_indices[l / _kramer ];
+          dipole.band2band.second = conduction_indices[l / _kramer ] - 1;
 
           for( size_t r(0u); r < 3u; ++r )
           {

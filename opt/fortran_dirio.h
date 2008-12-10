@@ -8,6 +8,7 @@
 #include <config.h>
 #endif
 
+
 extern "C" 
 {
    //! \brief gets correct path from boost::filesystem::current_path().
@@ -21,5 +22,8 @@ extern "C"
    //           \a _dir is not a directory.
    void FC_FUNC_( change_current_directory, CHANGE_CURRENT_DIRECTORY )
                 ( const char* _dir, const int *_max_size_out, int *_status );
+
+   //! Prints out mpierror string to std::cerr.
+   void FC_FUNC( mpierror, MPIERROR )( int *_ierror );
 }
 #endif

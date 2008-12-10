@@ -12,6 +12,8 @@
 #include "fortran_dirio.h"
 #include <iostream>
 
+#include <mpi/mpi_object.h>
+
 extern "C" 
 {
    //! \brief gets correct path from boost::filesystem::current_path().
@@ -55,5 +57,15 @@ extern "C"
      } 
      chdir( path.string().c_str() );
    }
+   
+     void FC_FUNC( mpierror, MPIERROR )( int *_ierror )
+     {
+#      ifdef _MPI
+         char error[150];
+         int len;
+         MPI_Error_string( *_ierror, error, &len );
+         std::cerr << error << "\n";
+#      endif
+     }
 }
 

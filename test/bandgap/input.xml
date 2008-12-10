@@ -57,9 +57,9 @@
     <Minimizer type="gsl_bfgs" itermax="4000" tolerance="0.00001" linetolerance="0.5" zeps="0.02" linestep="0.001" />
     <Minimizer type="frprmn" itermax="4000" tolerance="0.00001" linetolerance="0.5" zeps="0.02" linestep="0.001" />
     </Functional>
-    <Functional type="escan" method="2" keepdirs="true">
+    <Functional type="escan" method="folded" keepdirs="true">
         <Maskr filename="../../pseudos/maskr"/>
-        <GenPot mesh="(16 16 16)" cutoff="5.0" launch="~/usr/bin/getVLarg">
+        <GenPot mesh="(8 8 8)" cutoff="5.0" launch="~/usr/bin/getVLarg">
             <Pseudo filename="../../pseudos/vq.atom1" />
             <Pseudo filename="../../pseudos/vq.atom2" />
             <Pseudo filename="../../pseudos/vq.atom3" />
@@ -69,8 +69,8 @@
             <Pseudo filename="../../pseudos/vq.atom7" />
             <Pseudo filename="../../pseudos/vq.atom8" />
         </GenPot>
-        <tReferences VBM="-4.8" CBM="-4.5" />
-        <Hamiltonian kinscal="1.23" smooth="0.8" potential="3" realcutoff="4.5" nbstates="5" >
+        <References VBM="-5.6" CBM="-5.1" />
+        <Hamiltonian kinscal="1.23" smooth="0.8" potential="3" realcutoff="4.5" nbstates="3" >
             <SpinOrbit filename="../../pseudos/vwr.pso" izz="49051" pnl="1.271254 " />
             <SpinOrbit filename="../../pseudos/vwr.pso" izz="51049" pnl="0.946102 " />
             <SpinOrbit filename="../../pseudos/vwr.pso" izz="49033" pnl="1.0747401" />
