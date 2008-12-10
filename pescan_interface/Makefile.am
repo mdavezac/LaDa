@@ -25,7 +25,7 @@ endif
 bin_PROGRAMS = escan layered_escan
 
 noinst_LTLIBRARIES = libescan.la
-libescan_ladir = $(includedir)/LaDa/pescan_interface 
+libescan_ladir = $(includedir)/LaDa/pescan_interface
 libescan_la_SOURCES = $(PESCAN_CC) 
 nobase_libescan_la_HEADERS = $(PESCAN_H) $(PESCAN_IMPL_H) 
 libescan_la_CPPFLAGS = $(AM_CPPFLAGS) 

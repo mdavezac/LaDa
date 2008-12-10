@@ -50,7 +50,7 @@ module MomentumDipole
 
   private
   ! Pi parameter
-  real( kind=8 ), parameter, private :: pi = 4.d0*datan(1.d0)
+  real( kind=8 ), parameter, private :: pi = 3.14159265358979323846264338327948d0
 
   public :: momentum
 

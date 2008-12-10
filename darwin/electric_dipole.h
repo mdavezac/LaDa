@@ -82,17 +82,12 @@ namespace LaDa
               __ROOTCODE
               ( 
                 MPI_COMM,
-                Print::out << "e1.0" << Print::endl;
                 _k.osc_strength = ::LaDa::Pescan::oscillator_strength( _bg, degeneracy, false );
-                _k.osc_strength /= types::t_real( _str.atoms.size() );
-                Print::out << "e2.0" << Print::endl;
               )
 #           else
               _k.osc_strength = rng.uniform();
 #           endif
-                Print::out << "e3.0 " << _k.osc_strength << Print::endl;
             __MPICODE( boost::mpi::broadcast( MPI_COMM, _k.osc_strength, 0 ); )
-                Print::out << "e4.0 " << _k.osc_strength << Print::endl;
           }
 #    ifdef _MPI
           //! Sets communicator and suffix for mpi stuff.
