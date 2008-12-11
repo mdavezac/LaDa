@@ -1,6 +1,6 @@
 <?xml version="1.0" standalone="no" ?>
 <Job>
-   <tStructure >
+   <Structure >
         <Cell>
             <row x="1.0" y="0.0" z="0.0" />
             <row x="0.0" y="1.0" z="0.0" />
@@ -14,8 +14,8 @@
         <Atom x="1.50000" y="1.00000" z="1.50000" type="In" site="1" />
         <Atom x="0.25000" y="0.75000" z="0.75000" type="As" site="0" />
         <Atom x="1.00000" y="1.50000" z="1.50000" type="In" site="1" />
-    </tStructure>
-   <Structure >
+    </Structure>
+   <tStructure >
         <Cell>
             <row x="0.0" y="0.5" z="0.5" />
             <row x="0.5" y="0.0" z="0.5" />
@@ -23,7 +23,7 @@
         </Cell>
         <Atom x="0.000000" y="0.000000" z="0.000000" type="As" />
         <Atom x="0.250000" y="0.250000" z="0.250000" type="In" />
-    </Structure>
+    </tStructure>
     <Lattice scale="6.2">
         <row x="0.0" y="0.5" z="0.5" />
         <row x="0.5" y="0.0" z="0.5" />
@@ -59,7 +59,7 @@
     </Functional>
     <Functional type="escan" method="folded" keepdirs="true">
         <Maskr filename="../../pseudos/maskr"/>
-        <GenPot mesh="(8 8 8)" cutoff="5.0" launch="~/usr/bin/getVLarg">
+        <GenPot mesh="(16 16 16)" cutoff="5.0" launch="~/usr/bin/getVLarg">
             <Pseudo filename="../../pseudos/vq.atom1" />
             <Pseudo filename="../../pseudos/vq.atom2" />
             <Pseudo filename="../../pseudos/vq.atom3" />

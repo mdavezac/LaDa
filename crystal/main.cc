@@ -126,16 +126,6 @@ int main(int argc, char *argv[])
   boost::shared_ptr<Crystal::Lattice> lattice 
     = load_structure( structure, input.string() );
 
-  if( print_structure )
-  {
-    const std::string filename( vm["structure"].as<std::string>() );
-    std::cout << "Printing structure to file and exiting.\n"
-              << " xml format in " << filename << ".xml\n"
-              << " xyz format in " << filename << ".xyz\n"
-              << " xsf format in " << filename << ".xsf\n";
-    printstructure( structure, filename );
-  }
-
   // prints layer info.
   std::cout << "Layered structure characterization\n";
   Crystal::LayerDepth depth( structure.cell );
@@ -146,6 +136,17 @@ int main(int argc, char *argv[])
     depth.set( vec );
   }
   std::sort( structure.atoms.begin(), structure.atoms.end(), depth );
+
+  if( print_structure )
+  {
+    const std::string filename( vm["structure"].as<std::string>() );
+    std::cout << "Printing structure to file and exiting.\n"
+              << " xml format in " << filename << ".xml\n"
+              << " xyz format in " << filename << ".xyz\n"
+              << " xsf format in " << filename << ".xsf\n";
+    printstructure( structure, filename );
+  }
+
   typedef Crystal::Structure::t_Atoms::const_iterator t_iatom;
   t_iatom i_atom = structure.atoms.begin();
   t_iatom i_atom_end = structure.atoms.end();
