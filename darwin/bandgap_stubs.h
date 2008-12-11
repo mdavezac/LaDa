@@ -56,8 +56,8 @@ namespace LaDa
           //! Serializes a scalar individual.
           template<class Archive> void serialize(Archive & _ar, const unsigned int _version);
       };
-    }
-  }
+    } // namespace Keepers
+  } // namespace GA
 
   namespace BandGap
   {

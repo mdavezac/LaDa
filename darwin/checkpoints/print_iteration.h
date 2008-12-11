@@ -60,11 +60,11 @@ namespace LaDa
           void print_at_iteration( T_CHECKPOINT& _checkpoints, bool _eachcall,
                                    const T_DARWIN& _darwin )
           {
-//           _checkpoints.connect_updater
-//           (
-//             boost::bind( &GA::CheckPoint::print_at_iteration<T_DARWIN>,
-//                          _1, _eachcall, boost::cref(_darwin) )
-//           );
+            _checkpoints.connect_updater
+            (
+              boost::bind( &GA::CheckPoint::print_at_iteration<T_DARWIN>,
+                           _1, _eachcall, boost::cref(_darwin) )
+            );
           }
       }
     } // namespace CheckPoint

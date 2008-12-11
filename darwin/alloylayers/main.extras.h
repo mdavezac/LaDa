@@ -53,6 +53,9 @@
    template< class T_TYPE > T_TYPE call_lexcast( const std::string& _str )
     { return boost::lexical_cast<T_TYPE>( _str ); }
 
+   inline void reference_updater( bool, LaDa::BandGap::Darwin<LaDa::Vff::Layered> & _bg )
+     { _bg.Continue(); }
+
 # elif _MAIN_ALLOY_LAYERS_EXTRAS_ == 0
     // defines program options.
 #   undef _MAIN_ALLOY_LAYERS_EXTRAS_
@@ -120,6 +123,8 @@
 #   define _MAIN_ALLOY_LAYERS_EXTRAS_ 5
     if( print_genotype ) PPFactory::genotype( ga.evaluator );
     PPFactory::read_physical_properties( properties_factory, input );
+    ga.checkpoints.connect_updater( boost::bind( &reference_updater, _1, 
+                                                 boost::ref( ga.evaluator.bandgap ) ) );
 
 # else 
     // makes sure this file cannot be (meaningfully) included anymore.

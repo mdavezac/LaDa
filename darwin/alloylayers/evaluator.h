@@ -194,10 +194,6 @@ namespace LaDa
             //! Destructor
             virtual ~Evaluator() {};
        
-            //! Allows bandgap all-electron recomputation.
-            eoF<bool>* LoadContinue(const TiXmlElement &_el )
-              { return new GA::mem_zerop_t<t_BandGap>( bandgap, &t_BandGap::Continue,
-                                                            "BandGap::Continue" );     }
             //! Loads structure, lattice, bandgap, vff from XML
             bool Load( const TiXmlElement &_node );
        
@@ -221,7 +217,6 @@ namespace LaDa
             //! Sets pescan to compute dipoles on \a _do true.
             void do_dipole( bool _do );
        
-          protected:
             //! Type of the band gap cum vff all-in-one functional.
             typedef BandGap::Darwin<Vff::Layered> t_BandGap;
             //! Type of the electric dipole.
@@ -231,6 +226,7 @@ namespace LaDa
             t_BandGap bandgap; 
             //! Electric dipole functional.
             t_ElectricDipole edipole;
+          protected:
             //! Wether to perform oscilator strength evaluations.
             bool do_dipole_;
             
