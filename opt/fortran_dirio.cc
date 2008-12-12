@@ -2,17 +2,18 @@
 //  Version: $Id$
 //
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+# include <config.h>
 #endif
 
 
 #include<boost/filesystem/path.hpp>
 #include<boost/filesystem/operations.hpp>
 
-#include "fortran_dirio.h"
 #include <iostream>
 
 #include <mpi/mpi_object.h>
+
+#include "fortran_dirio.h"
 
 extern "C" 
 {

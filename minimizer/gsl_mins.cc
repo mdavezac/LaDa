@@ -79,8 +79,6 @@ namespace LaDa
     {
       const TiXmlElement* parent = find_node( _node );
       if( parent ) return Load_(*parent);
-      std::cerr << "Could not find an <Minimizer type=\"some gsl\"> tag in input file" 
-                << std::endl;
       return false;
     }
   }

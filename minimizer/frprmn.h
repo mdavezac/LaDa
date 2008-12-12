@@ -68,11 +68,20 @@ namespace LaDa
         //! Minimization functor
         template< class T_FUNCTION >
           typename T_FUNCTION :: t_Container :: value_type
-            operator()( T_FUNCTION &_func,
+            operator()( const T_FUNCTION &_func,
                         typename T_FUNCTION :: t_Container &_arg ) const
             { return operator_< T_FUNCTION,
                                 typename T_FUNCTION::t_Container,
                                 typename T_FUNCTION::t_Container :: value_type
+                              >( _func, _arg ); }
+        //! Minimization functor
+        template< class T_FUNCTION >
+          typename T_FUNCTION :: t_Return
+            operator()( const T_FUNCTION &_func,
+                        typename T_FUNCTION :: t_Arg &_arg ) const
+            { return operator_< T_FUNCTION,
+                                typename T_FUNCTION :: t_Arg,
+                                typename T_FUNCTION :: t_Return
                               >( _func, _arg ); }
 
         //! Load minimizer parameters from XML
@@ -101,9 +110,8 @@ namespace LaDa
         }
 
       protected:
-        //! Minimization functor
         template< class T_FUNCTION, class T_CONTAINER, class T_RETURN >
-          T_RETURN operator_( T_FUNCTION &_func, T_CONTAINER &_arg ) const;
+          T_RETURN operator_( const T_FUNCTION &_func, T_CONTAINER &_arg ) const;
 
         mutable bool lock;
     };
@@ -113,14 +121,14 @@ namespace LaDa
       template< class T_FUNCTION > double call_frpr(double* _x, double* _y)
       {
         T_FUNCTION *function = static_cast<T_FUNCTION*>(frpr_pointer_);
-        std::copy( _x, _x + function->size(), function->begin() );
-        return function->evaluate_with_gradient( _y );
+        function->gradient( _x, _y );
+        return (*function)( _x );
       }
     }
 
 
     template<typename T_FUNCTION, class T_CONTAINER, class T_RETURN> 
-      T_RETURN Frpr :: operator_( T_FUNCTION& _function, T_CONTAINER& _arg ) const
+      T_RETURN Frpr :: operator_( const T_FUNCTION& _function, T_CONTAINER& _arg ) const
       {
         __DOASSERT( lock == true, "Race condition.\n" )
         lock = true;
@@ -138,7 +146,6 @@ namespace LaDa
 #       undef _MXPARM_
         double result;
   
-        std::cout << "itermax " << itermax << "\n";
         double( *ptr_func )( double*, double* ) = &details::template call_frpr<T_FUNCTION>;
         details::frpr_pointer_ = (void*) (&_function);
         FC_FUNC(frprmn, frprmn) ( x, &x_length, &tolerance,

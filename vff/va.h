@@ -1,8 +1,8 @@
 //
 //  Version: $Id$
 //
-#ifndef _VFF_VA_H_
-#define _VFF_VA_H_
+#ifndef _LADA_VFF_VA_H_
+#define _LADA_VFF_VA_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -16,14 +16,8 @@
 
 #include "functional.h"
 
-#ifdef _DOFORTRAN
-#include <opt/frprmn_minimizer.h>
-#elif defined(_DONAG)
-#include <opt/nag_minimizer.h>
-#else
-#include <minimizer/frprmn.h>
-#include <minimizer/gsl_mins.h>
-#endif
+#include <minimizer/function_wrapper.h>
+#include <minimizer/any.h>
 
 
 namespace LaDa
@@ -84,38 +78,19 @@ namespace LaDa
          typedef t_VABase :: t_Type t_Type;
          //! see functional::Base::t_Container
          typedef t_VABase :: t_Container  t_Container;
-  #ifdef _DOFORTRAN
          //! Type of the minimizer for minimizing strain
-         typedef Minimizer::Frpr<t_VffBase> t_Minimizer;
-  #elif _DONAG
-         //! Type of the minimizer for minimizing strain
-         typedef Minimizer::Nag<t_VffBase> t_Minimizer;
-  #else
-         //! Type of the minimizer for minimizing strain
-         typedef Minimizer::Frpr t_Minimizer;
+         typedef Minimizer::Any t_Minimizer;
+        // typedef Minimizer::Frpr t_Minimizer;
         //typedef Minimizer::Gsl t_Minimizer;
-  #endif
 
        protected:
          //! The minimizer with which vff is minimized
          t_Minimizer minimizer;
 
        public:
-  #ifdef _DOFORTRAN
-         //! Constructor and Initializer
-         VABase   ( Crystal::Structure &_str )
-                : t_VffBase( _str ), t_VABase( _str ),
-                  minimizer( choose_frpr_function<t_VffBase>() ) {}
-  #elif _DONAG
-         //! Constructor and Initializer
-         VABase   ( Crystal::Structure &_str )
-                : t_VffBase( _str ), t_VABase( _str ),
-                  minimizer( choose_nag_function<t_VffBase>() ) {}
-  #else
          //! Constructor and Initializer
          VABase   ( Crystal::Structure &_str )
                 : t_VffBase( _str ), t_VABase( _str ), minimizer() {}
-  #endif
          //! Copy Constructor
          VABase   ( const VABase &_c )
                 : t_VffBase( _c ), t_VABase( _c ), minimizer( _c.minimizer ) {}

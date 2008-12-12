@@ -35,7 +35,7 @@ endif
 if DOCE
   CEDIR = ce
 endif
-SUBDIRS = $(MPISUBDIR) atat physics opt crystal print $(CEDIR) $(VFFSUBDIR) \
+SUBDIRS = $(MPISUBDIR) atat physics opt minimizer crystal print $(CEDIR) $(VFFSUBDIR) \
 	  $(PESCANSUBDIR) $(LAPACKDIR) $(DARWINSUBDIR) $(SEPARABLEDIR) \
 	  $(PYTHONDIR)
 revision.h: force

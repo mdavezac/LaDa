@@ -6,7 +6,6 @@
 
 #include <opt/debug.h>
 #include <opt/tinyxml.h>
-#include <minimizer/function_wrapper.h>
  
 namespace LaDa
 {
@@ -28,12 +27,7 @@ namespace LaDa
         return false;
       } 
 
-      // Now checks for minimizer right in parent node
-      const TiXmlElement *mxml = minimizer.find_node( *parent );
-      if( mxml ) return minimizer.Load_( *mxml );
-
-      // If it is not found within the functional, check for a minimizer node as
-      // a sibling to parent;
+      if( minimizer.Load( *parent ) ) return true;
       return minimizer.Load( *parent->Parent()->ToElement() );
     }
 
@@ -48,8 +42,8 @@ namespace LaDa
 
           t_VABase::unpack_variables();
           
-          minimizer( *( (t_VffBase*) this ), *t_VffBase::variables );
-//         minimizer( function::minimizer_wrapper( *( (t_VffBase*) this ) ), *t_VffBase::variables );
+//         minimizer( *( (t_VffBase*) this ), *t_VffBase::variables );
+          minimizer( function::minimizer_wrapper( *( (t_VffBase*) this ) ), *t_VffBase::variables );
         }
      
         t_VffBase :: structure.energy = t_VffBase::energy();
