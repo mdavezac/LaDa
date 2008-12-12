@@ -21,7 +21,8 @@
 #elif defined(_DONAG)
 #include <opt/nag_minimizer.h>
 #else
-#include <opt/gsl_minimizers.h>
+#include <minimizer/frprmn_minimizer.h>
+#include <minimizer/gsl_mins.h>
 #endif
 
 
@@ -91,7 +92,8 @@ namespace LaDa
          typedef Minimizer::Nag<t_VffBase> t_Minimizer;
   #else
          //! Type of the minimizer for minimizing strain
-         typedef Minimizer::GnuSL<t_VffBase> t_Minimizer;
+         typedef Minimizer::Frpr t_Minimizer;
+        //typedef Minimizer::Gsl t_Minimizer;
   #endif
 
        protected:

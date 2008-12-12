@@ -15,9 +15,9 @@
 #include <boost/numeric/ublas/vector_proxy.hpp>
 #include <boost/numeric/ublas/matrix_proxy.hpp>
 
-#include "types.h"
-#include "debug.h"
-#include "fuzzy.h"
+#include <opt/types.h>
+#include <opt/debug.h>
+#include <opt/fuzzy.h>
 
 namespace LaDa
 {

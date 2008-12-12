@@ -15,7 +15,8 @@
 #include <tinyxml/tinyxml.h>
 #include <boost/lambda/bind.hpp>
 
-#include "algorithms.h"
+#include <opt/algorithms.h>
+
 #include "gsl.h"
 #include "gsl_mins.h"
 

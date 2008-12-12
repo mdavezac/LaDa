@@ -34,6 +34,7 @@ ce_opt_LDADD = libdarwin.la \
 	       ../print/libprint.la \
 	       ../mpi/libmpiobject.la \
 	       ../opt/libopt.la \
+		../minimizer/libminimizer.la \
 	       @MPI_ADDLIB@
 
 alloylayers_opt_SOURCES = main.cc 
@@ -51,6 +52,7 @@ alloylayers_opt_LDADD = libdarwin.la \
 	                ../print/libprint.la \
 	                ../mpi/libmpiobject.la \
 	                ../opt/libopt.la \
+		        ../minimizer/libminimizer.la \
 	                @MPI_ADDLIB@ \
 	                $(LDADD) @LD_IAGA_FLAGS@
 
@@ -94,3 +96,5 @@ libdarwin_la_LIBADD = libdarwinoperator.la libdarwingraph.la
 	cd ../print; $(MAKE) libprint.la
 ../opt/libopt.la:
 	cd ../opt; $(MAKE) libopt.la
+../minimizer/libminimizer.la:
+	cd ../minimizer; $(MAKE) libminimizer.la

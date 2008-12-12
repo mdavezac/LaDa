@@ -5,6 +5,8 @@
 #define _VFF_VA_IMPL_H_
 
 #include <opt/debug.h>
+#include <opt/tinyxml.h>
+#include <minimizer/function_wrapper.h>
  
 namespace LaDa
 {
@@ -18,26 +20,7 @@ namespace LaDa
       if( not t_VffBase :: Load( _node ) ) return false;
 
       // Finds parent functional node
-      const TiXmlElement *parent;
-      std::string str;
-
-      // This whole section tries to find a <Functional type="vff"> tag
-      // in _node or its child
-      str = _node.Value();
-      if ( str.compare("Functional" ) != 0 )
-        parent = _node.FirstChildElement("Functional");
-      else
-        parent = &_node;
-
-      
-      while (parent)
-      {
-        str = "";
-        if ( parent->Attribute( "type" )  )
-          str = parent->Attribute("type");
-        if ( str.compare("vff" ) == 0 ) break;
-        parent = parent->NextSiblingElement("Functional");
-      }
+      const TiXmlElement *parent = opt::find_functional_node( _node, "vff" );
       if ( not parent )
       {
         std::cerr << "Could not find an <Functional type=\"vff\"> tag in input file" 
@@ -61,9 +44,12 @@ namespace LaDa
         // no minimization required if variables is empty.
         if( t_VffBase::variables and t_VffBase::variables->size() != 0 )
         {
+          t_VffBase::init();
+
           t_VABase::unpack_variables();
           
-          minimizer(Vff());
+          minimizer( *( (t_VffBase*) this ), *t_VffBase::variables );
+//         minimizer( function::minimizer_wrapper( *( (t_VffBase*) this ) ), *t_VffBase::variables );
         }
      
         t_VffBase :: structure.energy = t_VffBase::energy();

@@ -392,7 +392,8 @@ AC_SUBST(BOOST_CXXFLAGS)
 AC_OUTPUT(Makefile atat/Makefile physics/Makefile opt/Makefile crystal/Makefile
           vff/Makefile mpi/Makefile pescan_interface/Makefile darwin/Makefile 
           print/Makefile lapack/Makefile separable/Makefile ce/Makefile 
-          python/Makefile separable/fixedlattice/Makefile factory/Makefile )
+          python/Makefile separable/fixedlattice/Makefile factory/Makefile
+          minimizer/Makefile )
 
 echo ""; echo ""
 echo "Will Compile following modules: "

@@ -16,7 +16,7 @@
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <opt/random.h>
-#include <opt/gsl_mins.h>
+#include <minimizer/gsl_mins.h>
 #include <crystal/lattice.h>
 #include <crystal/structure.h>
 #include <opt/bpo_macros.h>

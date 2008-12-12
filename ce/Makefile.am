@@ -18,7 +18,8 @@ cubic_LDADD =   libce.la \
 		../physics/libphysics.la \
 		@MPI_ADDLIB@ \
 		../print/libprint.la \
-                ../opt/libopt.la 
+                ../opt/libopt.la \
+		../minimizer/libminimizer.la \
 		@BOOST_FS@
 tetra_SOURCES = $(cubic_SOURCES)
 tetra_CPPFLAGS =  $(AM_CPPFLAGS) -D_TETRAGONAL_CE_
@@ -33,6 +34,7 @@ regular_LDADD = libce.la \
 		../physics/libphysics.la \
 		../print/libprint.la \
                 ../opt/libopt.la \
+		../minimizer/libminimizer.la \
 		../mpi/libmpiobject.la
 endif
 noinst_LTLIBRARIES = libce.la 
@@ -57,3 +59,6 @@ libce_la_CPPFLAGS =  $(AM_CPPFLAGS)
 
 ../opt/libopt.la:
 	cd ../opt; $(MAKE) libopt.la
+
+../minimizer/libminimizer.la:
+	cd ../minimizer; $(MAKE) libminimizer.la

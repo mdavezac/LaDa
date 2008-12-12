@@ -15,10 +15,10 @@
 
 #include <opt/types.h>
 #include <opt/debug.h>
-#include <opt/cgs.h>
-#include <opt/gsl_simplex.h>
 #include <opt/errors.h>
 #include <crystal/structure.h>
+#include <minimizer/cgs.h>
+#include <minimizer/gsl_simplex.h>
 
 #include "fit.h"
 

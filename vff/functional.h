@@ -304,19 +304,7 @@ namespace LaDa
   } // namespace vff 
 } // namespace LaDa
 
-#ifdef _DOFORTRAN
-#include<opt/frprmn_minimizer.h>
-  //! Creates an instance of a typical Minimizer::Frpr "C" function for calling Vff::Functional
-  extern "C" inline double vff_frprfun(double* _x, double* _y)
-    { return Minimizer::typical_frprfun<LaDa::Vff::Functional>( _x, _y); }
-  //! \brief returns a pointer to the correct extern "C" evaluation function
-  //!        for Minimizer::Frpr.
-  //! \details This routine allows for a standard for Vff::VA to intialize
-  //!          Minimizer::Frpr.
-  template<> inline t_FrprFunction choose_frpr_function<LaDa::Vff::Functional>()
-   { return vff_frprfun; }
-
-#elif defined(_DONAG)
+#if defined(_DONAG)
 #include <nag.h>
 #include <nage04.h>
   //! Creates an instance of a typical NAG "C" function for calling Vff::Functional

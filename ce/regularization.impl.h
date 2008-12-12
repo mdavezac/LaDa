@@ -56,7 +56,7 @@ namespace LaDa
           // CV with optimized weights
           types::t_real cvw;
           __TRYBEGIN
-           cvw = _minimizer.operator()( _reg, solution ); 
+           cvw = _minimizer( _reg, solution ); 
           __TRYEND(," ") 
           std::for_each( solution.begin(), solution.end(), std::cout << bl::_1 << " " );
           std::cout << "\n";

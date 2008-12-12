@@ -14,8 +14,8 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 
-#include "types.h"
-#include "debug.h"
+#include <opt/types.h>
+#include <opt/debug.h>
 
 namespace LaDa
 {

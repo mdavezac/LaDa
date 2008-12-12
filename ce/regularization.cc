@@ -18,7 +18,7 @@
 
 #include <opt/random.h>
 #include <opt/algorithms.h>
-#include <opt/gsl_mins.h>
+#include <minimizer/gsl_mins.h>
 
 #include "regularization.h"
 

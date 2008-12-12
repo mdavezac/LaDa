@@ -5,13 +5,10 @@ include $(top_srcdir)/Files
 AM_CPPFLAGS = -I $(top_srcdir) @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
 	      @MPI_CFLAGS@ @NAG_CFLAGS@ @GSL_CFLAGS@ @BOOST_CXXFLAGS@
 AM_LDFLAGS = @TINYXML_LIBS@ @GSL_LIBS@ @NAG_LIBS@ @BOOST_FS@  @BOOST_SYSTEM@ \
-	     @BOOST_MPI@ @BOOST_SERIALIZATION@
-LDADD =
+	     @BOOST_MPI@ @BOOST_SERIALIZATION@ @FCLIBS@
 fortranSOURCE = 
 fortranHEADER = 
 if DOFORTRAN 
-  LDADD += @FCLIBS@
-#  fortranBIN     =  fortran_test
   fortranSOURCE += $(VFF_FORTRAN_CC)
   fortranHEADER += $(VFF_FORTRAN_H)
 endif
@@ -34,6 +31,7 @@ vff_LDADD = ../crystal/libcrystal.la \
             ../physics/libphysics.la \
             ../print/libprint.la \
             ../opt/libopt.la \
+	    ../minimizer/libminimizer.la \
 	    $(fortranLDADD) \
 	    @MPI_ADDLIB@ \
             $(fortranLDFLAGS)
@@ -57,7 +55,5 @@ layered_vff_LDADD = $(vff_LDADD)
 ../print/libprint.la:
 	cd ../print; $(MAKE)
 
-if DOFORTRAN
-../mpi/libopt.la:
-	cd ../opt; $(MAKE)
-endif
+../minimizer/libminimizer.la:
+	cd ../minimizer; $(MAKE) libminimizer.la

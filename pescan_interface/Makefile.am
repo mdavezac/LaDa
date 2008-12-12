@@ -13,13 +13,9 @@ if NOLAUNCH
 endif    
 
 LDADD = ../opt/libopt.la 
-if DOFORTRAN
-   LDADD += @FCLIBS@ 
-else 
 if DODIRECTIAGA
    LDADD +=  ../mpi/libmpiobject.la
    AM_LDFLAGS += @FCLIBS@
-endif
 endif
 
 bin_PROGRAMS = escan layered_escan
@@ -44,6 +40,7 @@ escan_LDADD = libescan.la \
 	      ../crystal/libcrystal.la \
 	      ../atat/libatat.la \
 	      ../vff/libvff.la \
+	      ../minimizer/libminimizer.la \
               ../physics/libphysics.la \
 	      ../print/libprint.la \
 	      @MPI_ADDLIB@ \
@@ -67,10 +64,8 @@ layered_escan_LDADD = $(escan_LDADD)
 	cd ../vff; $(MAKE) libvff.la
 ../print/libprint.la:
 	cd ../print; $(MAKE) libprint.la
-if DOFORTRAN
-../mpi/libopt.la:
-	cd ../opt; $(MAKE) libopt.la
-endif
+../minimizer/libminimizer.la:
+	cd ../minimizer; $(MAKE) libminimizer.la
 if DODIRECTIAGA
 ../lapack/liblapack.la:
 	cd ../lapack; $(MAKE) liblapack.la

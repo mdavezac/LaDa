@@ -1,8 +1,8 @@
 //
 //  Version: $Id$
 //
-#ifndef _GSL_MINS_H_
-#define _GSL_MINS_H_
+#ifndef _LADA_GSL_MINS_H_
+#define _LADA_GSL_MINS_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -16,7 +16,7 @@
 #include <boost/lambda/bind.hpp>
 #include <boost/serialization/access.hpp>
 
-#include "algorithms.h"
+#include <opt/algorithms.h>
 #include "gsl.h"
 
 #ifdef _MPI
@@ -111,9 +111,23 @@ namespace LaDa
                              types::t_real _linestep );
         //! Minimization functor
         template< class T_FUNCTION >
+          typename T_FUNCTION :: t_Container :: value_type
+            operator()( const T_FUNCTION &_func,
+                        typename T_FUNCTION :: t_Container &_arg ) const
+            { return operator_< T_FUNCTION,
+                                typename T_FUNCTION::t_Container,
+                                typename T_FUNCTION::t_Container :: value_type
+                              >( _func, _arg ); }
+
+        //! Minimization functor
+        template< class T_FUNCTION >
           typename T_FUNCTION :: t_Return
             operator()( const T_FUNCTION &_func,
-                        typename T_FUNCTION :: t_Arg &_arg ) const;
+                        typename T_FUNCTION :: t_Arg &_arg ) const
+            { return operator_< T_FUNCTION,
+                                typename T_FUNCTION :: t_Arg,
+                                typename T_FUNCTION :: t_Return
+                              >( _func, _arg ); }
         //! \brief Finds the node - if it is there - which describes this minimizer
         //! \details Looks for a \<Minimizer\> tag first as \a _node, then as a
         //!          child of \a _node. Different minimizer, defined by the
@@ -125,14 +139,15 @@ namespace LaDa
         //! Loads the minimizer from XML
         bool Load( const TiXmlElement &_node );
       private:
+        //! Minimization functor
+        template< class T_FUNCTION, class T_CONTAINER, class T_RETURN >
+          T_RETURN operator_( const T_FUNCTION &_func, T_CONTAINER &_arg ) const;
         //! Serializes a structure.
         template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
     };
 
-    template<typename T_FUNCTION> 
-      typename T_FUNCTION :: t_Return 
-        Gsl :: operator()( const T_FUNCTION &_func,
-                           typename T_FUNCTION :: t_Arg &_arg ) const
+    template<class T_FUNCTION, class T_CONTAINER, class T_RETURN> 
+      T_RETURN  Gsl :: operator_( const T_FUNCTION &_func, T_CONTAINER &_arg ) const
       {
         namespace bl = boost::lambda;
         gsl_multimin_fdfminimizer *solver;
@@ -166,7 +181,7 @@ namespace LaDa
                                          linestep, linetolerance);
           
           int status;
-          double newe(0), olde(0);
+          T_RETURN newe(0), olde(0);
           types::t_unsigned iter( 0 );
    
           do
@@ -185,7 +200,7 @@ namespace LaDa
               break; 
             }
    
-            newe = gsl_multimin_fdfminimizer_minimum(solver);
+            newe = T_RETURN( gsl_multimin_fdfminimizer_minimum(solver) );
             if( verbose )
               std::cout << "  Gsl Iteration " << iter 
                         << ": " << newe << "\n";
@@ -195,7 +210,7 @@ namespace LaDa
             std::cout << "Error while minimizing with gsl: "
                       << gsl_strerror( status ) << ".\n";
    
-          newe = gsl_multimin_fdfminimizer_minimum( solver );
+          newe = T_RETURN( gsl_multimin_fdfminimizer_minimum( solver ) );
           if ( verbose )
             std::cout << "Final Iteration: " << newe << std::endl;
       
