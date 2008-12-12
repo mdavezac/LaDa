@@ -12,13 +12,9 @@ endif
 if DOALLOYLAYERSOPT
   ALLOYLAYERSOPT = alloylayers_opt
 endif
-LDADD =
-if DOFORTRAN
-  LDADD +=  @FCLIBS@
-endif
+LDADD = @FCLIBS@
 if DODIRECTIAGA
    AM_LDFLAGS += @FCLIBS@
-   LDADD += @FCLIBS@
 endif
 bin_PROGRAMS = $(CEOPT) $(ALLOYLAYERSOPT)
 ce_opt_SOURCES = main.cc $(DARWIN_CE_CC)
@@ -40,8 +36,8 @@ ce_opt_LDADD = libdarwin.la \
 alloylayers_opt_SOURCES = main.cc 
 alloylayers_opt_HEADERS = alloylayers/main.extras.h
 alloylayers_optdir = $(includedir)/LaDa/darwin
-alloylayers_opt_CPPFLAGS =  -D _ALLOY_LAYERS_ $(AM_CPPFLAGS) @NAG_CFLAGS@ @GSL_CFLAGS@ 
-alloylayers_opt_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIBS@ @NAG_LIBS@ @BOOST_SIGNAL@
+alloylayers_opt_CPPFLAGS =  -D _ALLOY_LAYERS_ $(AM_CPPFLAGS) @GSL_CFLAGS@ 
+alloylayers_opt_LDFLAGS =  $(AM_LDFLAGS) @GSL_LIBS@ @BOOST_SIGNAL@
 alloylayers_opt_LDADD = libdarwin.la \
 			liballoylayers.la \
 			../vff/libvff.la \

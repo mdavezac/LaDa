@@ -3,15 +3,13 @@
 #
 include $(top_srcdir)/Files
 AM_CPPFLAGS = -I $(top_srcdir) @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
-	      @MPI_CFLAGS@ @NAG_CFLAGS@ @GSL_CFLAGS@ @BOOST_CXXFLAGS@
-AM_LDFLAGS = @TINYXML_LIBS@ @GSL_LIBS@ @NAG_LIBS@ @BOOST_FS@  @BOOST_SYSTEM@ \
+	      @MPI_CFLAGS@ @GSL_CFLAGS@ @BOOST_CXXFLAGS@
+AM_LDFLAGS = @TINYXML_LIBS@ @GSL_LIBS@ @BOOST_FS@  @BOOST_SYSTEM@ \
 	     @BOOST_MPI@ @BOOST_SERIALIZATION@ @FCLIBS@
 fortranSOURCE = 
 fortranHEADER = 
-if DOFORTRAN 
-  fortranSOURCE += $(VFF_FORTRAN_CC)
-  fortranHEADER += $(VFF_FORTRAN_H)
-endif
+# fortranSOURCE += $(VFF_FORTRAN_CC)
+# fortranHEADER += $(VFF_FORTRAN_H)
 
 bin_PROGRAMS = vff layered_vff
 # noinst_PROGRAMS = $(fortranBIN)
