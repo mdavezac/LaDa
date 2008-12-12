@@ -21,7 +21,7 @@
 #elif defined(_DONAG)
 #include <opt/nag_minimizer.h>
 #else
-#include <minimizer/frprmn_minimizer.h>
+#include <minimizer/frprmn.h>
 #include <minimizer/gsl_mins.h>
 #endif
 

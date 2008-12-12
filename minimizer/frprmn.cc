@@ -7,7 +7,7 @@
 
 #include <opt/types.h>
 
-#include "frprmn_minimizer.h"
+#include "frprmn.h"
 
 namespace LaDa
 {

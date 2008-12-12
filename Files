@@ -141,7 +141,7 @@ PYTHON_H = atat.hpp atat.impl.hpp atom.hpp atom.impl.hpp structure.hpp lattice.h
 PYTHON_CC = atat.cc atom.cc structure.cc lattice.cc lada.cc physics.cc errortuple.cc
 PYTHON_DOC = $(PYTHON_CC) $(PYTHON_H) $(PYTHON_CE_CC) $(PYTHON_CE_H)
 
-MINIMIZER_H =  gsl.h allsq.h cgs.h gsl_nllsq.h gsl_mins.h gsl_simplex.h frprmn_minimizer.h
+MINIMIZER_H =  gsl.h allsq.h cgs.h gsl_nllsq.h gsl_mins.h gsl_simplex.h frprmn.h
 MINIMIZER_CC = gsl_lsq.cc gsl.cc gsl_nllsq.cc gsl_mins.cc gsl_simplex.cc frprmn.cc
 MINIMIZER_F90 =  df1dim.f90  frprmn_fortran.f90  linmin.f90
 MINIMIZER_DOC = $(MINIMIZER_H) $(MINIMIZER_CC)
