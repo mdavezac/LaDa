@@ -106,11 +106,11 @@ OPT_H = ndim_iterator.h minimize_base.h polynome.h \
         types.h function_base.h \
 	va_minimizer.h fitness_function.h  function_functors.h monome.h traits.h \
         fuzzy.h atat.h debug.h va_function.h random.h algorithms.h \
-        bpo_macros.h initial_path.h tinyxml.h modifiers.h tuple_io.h 
+        bpo_macros.h initial_path.h tinyxml.h modifiers.h tuple_io.h  \
+        leave_many_out.h fortran_dirio.h
 OPT_CC = random.cc leave_many_out.cc initial_path.cc tinyxml.cc fortran_dirio.cc
 OPT_PYTHON_CONVENIENCE_H =  convex_hull.h errors.h convex_hull.impl.h
 OPT_PYTHON_CONVENIENCE_CC =  convex_hull.cc errors.cc 
-OPT_F90 =  df1dim.f90  frprmn.f90  linmin.f90 leave_many_out.h fortran_dirio.h
 OPT_DOC = $(OPT_H) $(OPT_CC) $(OPT_PYTHON_CONVENIENCE_CC)
 
 FACTORY_CC =
@@ -141,8 +141,8 @@ PYTHON_H = atat.hpp atat.impl.hpp atom.hpp atom.impl.hpp structure.hpp lattice.h
 PYTHON_CC = atat.cc atom.cc structure.cc lattice.cc lada.cc physics.cc errortuple.cc
 PYTHON_DOC = $(PYTHON_CC) $(PYTHON_H) $(PYTHON_CE_CC) $(PYTHON_CE_H)
 
-MINIMIZER_H =  gsl.h allsq.h cgs.h gsl_nllsq.h gsl_mins.h gsl_simplex.h frprmn.h
-MINIMIZER_CC = gsl_lsq.cc gsl.cc gsl_nllsq.cc gsl_mins.cc gsl_simplex.cc frprmn.cc
+MINIMIZER_H =  gsl.h allsq.h cgs.h gsl_nllsq.h gsl_mins.h gsl_simplex.h frprmn.h any.h
+MINIMIZER_CC = gsl_lsq.cc gsl.cc gsl_nllsq.cc gsl_mins.cc gsl_simplex.cc frprmn.cc any.cc
 MINIMIZER_F90 =  df1dim.f90  frprmn_fortran.f90  linmin.f90
 MINIMIZER_DOC = $(MINIMIZER_H) $(MINIMIZER_CC)
 
