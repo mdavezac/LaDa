@@ -36,7 +36,7 @@ AC_ARG_ENABLE(python,
      [case "${enableval}" in
        yes) python=true ;;
        no)  python=false ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-fortran) ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-python) ;;
      esac],[python=false])
 
 
@@ -48,15 +48,6 @@ AC_ARG_ENABLE(mpi,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-mpi) ;;
      esac],[mpi=$dompidefault])
 AH_TEMPLATE([_MPI])
-
-AC_ARG_ENABLE(fortran,
-     [  --enable-fortran              Turn on fortran minimization.
-                                Incompatible with gsl/nag.],
-     [case "${enableval}" in
-       yes) fortran=true ;;
-       no)  fortran=false ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-fortran) ;;
-     esac],[fortran=false])
 
 # AC_ARG_ENABLE(emass,
 #      [  --enable-emass                Turn on electronic mass optimization],
@@ -166,36 +157,8 @@ lapack=false
 #   lapack=true
 # fi
 
-AH_TEMPLATE([_DONAG])
-AH_TEMPLATE([_DOGSL])
-if test "$vff" = false; then
-  gsl=false
-  fortran=false
-  nag=false
-fi
-if test "$nag" = true; then
-  gsl=false
-  fortran=false
-  AC_DEFINE([_DONAG],[],[])
-  PKG_CHECK_MODULES(NAG, nag )
-fi
 AC_SUBST(GSL_CFLAGS)
 AC_SUBST(GSL_LIBS)
-if test "$fortran" = true; then
-  gsl=false
-  nag=false
-else
-  gsl=true
-fi
-AC_SUBST(NAG_CFLAGS)
-AC_SUBST(NAG_LIBS)
-if test x$gsl = xtrue; then
-  fortran=false
-  AC_DEFINE([_DOGSL],[],[])
-else
-  GSL_CFLAGS=""
-  GSL_LIBS=""
-fi 
 AH_TEMPLATE([__DOCE])
 if test x$ce = xtrue; then
   AC_DEFINE([__DOCE],[],[])
@@ -205,27 +168,11 @@ fi
 # ****** Checks compiler compliances
 # ************************************
 
-AH_TEMPLATE([_DOFORTRAN])
-fortrancompiler=false
-if test x$fortran = xtrue; then
- fortrancompiler=true
-fi
-if test x$lapack = xtrue; then
-  fortrancompiler=true
-fi
-if test "$pescan" = true; then
-  fortrancompiler=true;
-fi
-if test x$fortrancompiler = xtrue; then
-  AC_PROG_FC
-  NREL_AC_PROG_FCPP
-  AC_FC_LIBRARY_LDFLAGS
-  # turn on automatic name mangling
-  AC_FC_WRAPPERS
-fi
-if test x$fortran = xtrue; then
-  AC_DEFINE([_DOFORTRAN],[],[])
-fi
+AC_PROG_FC
+NREL_AC_PROG_FCPP
+AC_FC_LIBRARY_LDFLAGS
+# turn on automatic name mangling
+AC_FC_WRAPPERS
 
 AH_TEMPLATE([_DIRECTIAGA])
 AC_DEFINE([_DIRECTIAGA],[1],[])
@@ -304,9 +251,6 @@ AM_CONDITIONAL(NOLAUNCH, test x$nolaunch = xtrue)
 AM_CONDITIONAL(DODARWIN, test x$galib = xtrue)
 AM_CONDITIONAL(DOLAPACK, test x$lapack = xtrue)
 AM_CONDITIONAL(DOALLOYLAYERSOPT, test x$alloylayersopt = xtrue)
-AM_CONDITIONAL(DOFORTRAN, test x$fortran = xtrue)
-AM_CONDITIONAL(DOGSL, test x$gsl = xtrue)
-AM_CONDITIONAL(DONAG, test x$nag = xtrue)
 AM_CONDITIONAL(DODIRECTIAGA, test x$direct_iaga = xtrue)
 AM_CONDITIONAL(DOPYTHON, test x$python = xtrue)
 AM_CONDITIONAL(DOSEPARABLE, test x$separable = xtrue)
@@ -428,9 +372,6 @@ if test x$separable = xtrue; then
   echo " _ Sum of separable functions fitting."
 fi
 echo ""
-if test "$fortran" = true; then
-  echo "Will use fortran minimizer"
-fi
 if test "$mpi" = true; then
   echo "Will Include MPI where available."
 fi
