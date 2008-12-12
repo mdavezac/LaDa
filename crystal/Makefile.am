@@ -25,17 +25,20 @@ alloylayers_LDADD = libcrystal.la \
 		    ../physics/libphysics.la \
 		    ../atat/libatat.la \
 		    ../opt/libopt.la \
-                    ../mpi/libmpiobject.la
+                    ../mpi/libmpiobject.la \
+		    ../print/libprint.la
 endif
 
+../opt/libopt.la:
+	cd ../opt; $(MAKE) libopt.la
 ../atat/libatat.la: 
-	cd ../atat; $(MAKE) 
+	cd ../atat; $(MAKE) libatat.la
 
-../atat/libphysic.la: 
-	cd ../physics; $(MAKE) 
+../atat/libphysics.la: 
+	cd ../physics; $(MAKE) libphysics.la
 
 ../mpi/libmpiobject.la:
-	cd ../mpi; $(MAKE)
+	cd ../mpi; $(MAKE) libmpiobject.la
 
 ../print/libprint.la:
-	cd ../print; $(MAKE)
+	cd ../print; $(MAKE) libprint.la

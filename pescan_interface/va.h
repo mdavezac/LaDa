@@ -12,6 +12,7 @@
 
 #include <vff/pescan_perturbation.h>
 #include <opt/va_function.h>
+#include <opt/tinyxml.h>
 #include <opt/types.h>
 #include <mpi/mpi_object.h>
 #include <opt/initial_path.h>
@@ -238,7 +239,12 @@ namespace LaDa
 
          //! Loads pescan and vff minimizers from XML
          bool Load( const TiXmlElement &_node )
-           {  return t_PescanBase::Load( _node )  and vff.Load( _node ); }
+         {
+           opt::read_functional<t_PescanBase>( *this, _node, "escan" );
+           opt::read_functional<t_Vff>( vff, _node, "vff" );
+           return true;
+         }
+           // return t_PescanBase::Load( _node )  and vff.Load( _node ); }
 
          //! Returns a reference to the virtual atom vff minimizer
          t_Vff& Vff() { return vff; }

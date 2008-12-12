@@ -11,6 +11,7 @@
 #include <boost/filesystem/path.hpp>
 #include <string>
 #include <tinyxml/tinyxml.h>
+#include <print/manip.h>
 #include "debug.h"
 
 namespace LaDa
@@ -39,6 +40,26 @@ namespace LaDa
     //! \brief reads an file and has a TiXmlDocument parse it.
     void read_xmlfile( const boost::filesystem::path &_input, TiXmlDocument& _doc );
       
+    //! \brief reads a functional from xml, with filename redirection.
+    template< class T_FUNCTIONAL >
+      void read_functional( T_FUNCTIONAL &_functional, 
+                            const TiXmlElement &_node, 
+                            const std::string &_name );
+    //! \brief reads a functional from input file.
+    template< class T_FUNCTIONAL >
+      void read_functional( T_FUNCTIONAL &_functional,
+                            const boost::filesystem::path &_path,
+                            const std::string &_name );
+    //! \brief reads a tag from xml, with filename redirection.
+    template< class T_FUNCTIONAL >
+      void read_tag( T_FUNCTIONAL &_functional, 
+                     const TiXmlElement &_node, 
+                     const std::string &_name );
+    //! \brief reads a tag from input file.
+    template< class T_FUNCTIONAL >
+      void read_tag( T_FUNCTIONAL &_functional,
+                     const boost::filesystem::path &_path,
+                     const std::string &_name );
 
     //! Constant attribute iterator.
     class const_AttributeIterator 
@@ -126,6 +147,63 @@ namespace LaDa
           _factory( i_att->first, i_att->second );
       }
 
+    template< class T_FUNCTIONAL >
+      void read_functional( T_FUNCTIONAL &_functional,
+                            const TiXmlElement &_node,
+                            const std::string& _name  )
+      {
+        const TiXmlElement* node = find_functional_node( _node, _name );
+        __DOASSERT( not node, "Could not read functional " + _name + " from input.\n" )
+        if( node->Attribute("filename") )
+          read_functional( _functional,
+                           boost::filesystem::path
+                           (
+                             Print::reformat_home(node->Attribute("filename"))
+                           ),  _name );
+        _functional.Load( *node );
+      }
+
+    template< class T_FUNCTIONAL >
+      void read_functional( T_FUNCTIONAL &_functional,
+                            const boost::filesystem::path &_path,
+                            const std::string& _name  )
+      {
+        TiXmlDocument doc;
+        TiXmlHandle docHandle( &doc ); 
+        read_xmlfile( _path, doc );
+        const TiXmlElement* child = docHandle.FirstChild( "Job" ).Element();
+        __DOASSERT( not child, "Could not find root node \"Job\".\n" )
+        read_functional( _functional, *child, _name );
+      }
+
+    template< class T_FUNCTIONAL >
+      void read_tag( T_FUNCTIONAL &_functional,
+                     const TiXmlElement &_node,
+                     const std::string& _name  )
+      {
+        const TiXmlElement* node = find_node( _node, _name );
+        __DOASSERT( not node, "Could not read functional " + _name + " from input.\n" )
+        if( node->Attribute("filename") )
+          read_tag( _functional,
+                    boost::filesystem::path
+                    ( 
+                      Print::reformat_home(node->Attribute("filename"))
+                    ),  _name );
+        _functional.Load( *node );
+      }
+
+    template< class T_FUNCTIONAL >
+      void read_tag( T_FUNCTIONAL &_functional,
+                            const boost::filesystem::path &_path,
+                            const std::string& _name  )
+      {
+        TiXmlDocument doc;
+        TiXmlHandle docHandle( &doc ); 
+        read_xmlfile( _path, doc );
+        const TiXmlElement* child = docHandle.FirstChild( "Job" ).Element();
+        __DOASSERT( not child, "Could not find root node \"Job\".\n" )
+        read_tag( _functional, *child, _name );
+      }
   }
 } // namespace LaDa
 #endif

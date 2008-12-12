@@ -1,8 +1,8 @@
 //
 //  Version: $Id$
 //
-#ifndef _PRINT_MANIP_H_
-#define _PRINT_MANIP_H_
+#ifndef _LADA_PRINT_MANIP_H_
+#define _LADA_PRINT_MANIP_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -34,7 +34,7 @@ namespace LaDa
     std::string StripEdges( std::string _string );
     //! \brief Replaces the substring between the first "~" and the next "/" with the
     //!        home directory of the currrent user.
-    std::string reformat_home( std::string _str );
+    std::string reformat_home( const std::string& _str );
     //! Transforms all characters to lowercase.
     std::string lowercase(std::string _string);
     //! Transforms all characters to uppercase.

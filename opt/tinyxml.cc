@@ -102,8 +102,7 @@ namespace LaDa
         TiXmlHandle docHandle( &doc ); 
         __DOASSERT( not doc.LoadFile(), 
                        doc.ErrorDesc() << "\n" 
-                    << "Could not load input file " << _input 
-                    << " in  Darwin<T_EVALUATOR>.\nAborting.\n" ) 
+                    << "Could not load input file " << _input << ".\n" )
         std::ostringstream stream;
         const TiXmlElement *parent = doc.RootElement();
         stream << *parent;

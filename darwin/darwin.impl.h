@@ -494,28 +494,10 @@ namespace LaDa
       opt::read_xmlfile( filename, doc );
       const TiXmlElement *node;
 
- 
-
-      //! Looks for evaluator filename tag.
-      node = docHandle.FirstChild("Job")
-                      .FirstChild("GA")
-                      .FirstChild("Filenames").Element();
-      for(; node; node = node->NextSiblingElement("Filenames") )
-        if( node->Attribute("evaluator") )
-          evaluator_filename = node->Attribute("evaluator");
-      
- 
       // Loads evaluator first 
-      if( evaluator_filename != filename )
-        __TRYASSERT( not evaluator.Load(evaluator_filename.string()),
-                        "Could not load functional input from "
-                     << evaluator_filename << "\n" )
-      else
-      {
-        __TRYASSERT( not evaluator.Load(*docHandle.FirstChild("Job").Element() ),
-                        "Could not load functional input from "
-                     << filename << "\n" )
-      }
+      __TRYASSERT( not evaluator.Load(*docHandle.FirstChild("Job").Element() ),
+                      "Could not load functional input from "
+                   << filename << "\n" )
  
       // Loads topology and assigns comms to evaluators
       node = docHandle.FirstChild("Job").Element();

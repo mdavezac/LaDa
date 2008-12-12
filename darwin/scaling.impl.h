@@ -4,6 +4,8 @@
 #ifndef _RANKING_IMPL_H_
 #define _RANKING_IMPL_H_
 
+#include <boost/regex.hpp>
+
 #include <opt/fuzzy.h>
 
 namespace LaDa
@@ -312,7 +314,9 @@ namespace LaDa
       if( not _node.Attribute("distance") ) return NULL;
       std::string name = _node.Attribute("distance");
       Base<T_GATRAITS> *result;
-      if( name != "GeneralHamming" or name != "generalhamming" ) 
+      const boost::regex gere("\\(G|g)eneral\\s*(H|h)amming");
+      boost::match_results<std::string::const_iterator> what;
+      if( boost::regex_search( name, what, gere ) )
       {
         typedef Niching< Sharing::Triangular<
                              Distance::GeneralHamming<T_GATRAITS> > > t_Niche;

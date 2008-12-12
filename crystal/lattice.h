@@ -32,8 +32,10 @@
 namespace LaDa
 {
   namespace Crystal {
+
     //! Refolds a periodic vector into the unit-cell, as defined by \a lat.
     void refold( atat::rVector3d &vec, const atat::rMatrix3d &lat );
+    
 
     //! \brief Defines a lattice.
     //! \details A lattice is actually quite similar to a structure.
@@ -197,12 +199,19 @@ namespace LaDa
     inline std::ostream& operator<<( std::ostream& _stream, const Crystal::Lattice& _lat )
       { _lat.print_out(_stream); return _stream; }
 
+    //! Load lattice with filename redirection.
+    boost::shared_ptr< Crystal::Lattice > read_lattice( const TiXmlElement& _node );
+    //! Load lattice from input file
+    boost::shared_ptr< Crystal::Lattice > read_lattice( const boost::filesystem::path& _path );
+
     //! Reads lattice from input file \a _fpath in current directory, or in \a _dpath.
     boost::shared_ptr< Crystal::Lattice >
       read_lattice( const boost::filesystem::path &_fpath, 
                     const boost::filesystem::path &_dpath );
     //! Reads lattice from XML input in string format.
     boost::shared_ptr< Crystal::Lattice > read_lattice( const std::string& _string );
+    //! Reads lattice from input file.
+    boost::shared_ptr< Crystal::Lattice > read_lattice( const boost::filesystem::path& _path );
 
     //! Returns the number of species.
     types::t_unsigned nb_species( const Crystal::Lattice &_lattice );
@@ -221,13 +230,11 @@ namespace LaDa
       TiXmlDocument doc;
       TiXmlHandle handle( &doc );
       doc.Parse( _string.c_str() );
-//                    "error while parsing input file.\n" 
-//                 << doc.ErrorDesc() << "\n" )
       TiXmlElement *child = handle.FirstChild( "Job" )
                                   .FirstChild( "Lattice" ).Element();
-      __DOASSERT( not child, "Could not find Lattice in input." )
+      __DOASSERT( not child, "Could not find Lattice in input.\n" )
       __DOASSERT( not result->Load(*child),
-                  "Error while reading Lattice from input.")
+                  "Error while reading Lattice from input.\n")
 #     if defined (_TETRAGONAL_CE_)
         // Only Constituent-Strain expects and space group determination
         // expect explicitely tetragonal lattice. 

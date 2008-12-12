@@ -9,6 +9,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <stdexcept>
 
 #include <tinyxml/tinyxml.h>
@@ -32,15 +33,15 @@ typedef LaDa::Vff::VABase<LaDa::Vff::Functional> t_Vff;
 
 #include <print/manip.h>
 
-#ifdef __ROOTCODE
-# undef __ROOTCODE
-# define __ROOTCODE(a,b) b
+#include <mpi/mpi_object.h>
+#ifdef _MPI
+# include <boost/mpi/environment.hpp>
 #endif
-
     
 int main(int argc, char *argv[]) 
 {  
   namespace fs = boost::filesystem;
+  __MPI_START__
   __TRYBEGIN
 
   __BPO_START__;
@@ -60,7 +61,7 @@ int main(int argc, char *argv[])
               input << " is a not a valid file.\n" );
     
   boost::shared_ptr<LaDa::Crystal::Lattice>  
-    lattice( LaDa::Crystal::read_lattice( input, "./" ) );
+    lattice( LaDa::Crystal::read_lattice( input ) );
   LaDa::Crystal::Structure::lattice = lattice.get();
 
   TiXmlElement *child;
@@ -112,5 +113,5 @@ int main(int argc, char *argv[])
   }
 
   return 0;
-  __BPO_CATCH__()
+  __BPO_CATCH__( __MPICODE( MPI_Finalize() ) )
 }

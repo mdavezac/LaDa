@@ -47,19 +47,19 @@ namespace LaDa
       return _string;
     }
 
-    std::string reformat_home ( std::string _str )
+    std::string reformat_home ( const std::string &_str )
     {
       // Trim leading and tailing spaces
-      _str = StripEdges(_str);
-      if ( _str[0] != '~' ) return _str;
+      std::string str = StripEdges(_str);
+      if ( str[0] != '~' ) return str;
       std::string home="";
       if ( getenv("HOME") ) home = getenv("HOME");
       else if ( getenv("home") ) home = getenv("home");
-      else return _str;
-      if ( _str.find_first_of("/") )
-        _str.erase(0, _str.find_first_of("/") );
-      _str.insert(0, home );
-      return _str;
+      else return str;
+      if ( str.find_first_of("/") )
+        str.erase(0, str.find_first_of("/") );
+      str.insert(0, home );
+      return str;
     }
 
     std::string lowercase(std::string _string)

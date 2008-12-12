@@ -12,6 +12,7 @@
 #include <print/stdout.h>
 #include <crystal/structure.h>
 #include <crystal/atom.h>
+#include <opt/tinyxml.h>
 #include <opt/fuzzy.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
@@ -45,14 +46,12 @@ namespace LaDa
     
       INEVALBASE( bool ) :: Load( const TiXmlElement &_node )
       {
-        __ASSERT( not lattice.get(), "lattice not created.\n" )
-        __DOASSERT( not lattice->Load( _node ),
-                    " Could not load lattice from input.\n" )
+        __TRYBEGIN
+          boost::shared_ptr<Crystal::Lattice> dummy( Crystal::read_lattice( _node ) );
+          lattice.swap( dummy );
+        __TRYEND(, "Could not read lattice from input.\n" )
         Crystal::Structure::lattice = lattice.get();
-        const TiXmlElement *parent = _node.FirstChildElement("Structure");
-        __DOASSERT( not parent, "No Structure tag found in input.\n")
-    
-        if( not structure.Load( _node ) ) return false;
+        opt::read_tag( structure, _node, "Structure" );
         std::sort( structure.atoms.begin(), structure.atoms.end(), 
                    Crystal::LayerDepth( structure.cell ) );
  

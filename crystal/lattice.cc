@@ -11,7 +11,9 @@
 
 #include <atat/array.h>
 #include <atat/misc.h>
+#include <print/manip.h>
 #include <opt/ndim_iterator.h>
+#include <opt/tinyxml.h>
 
 #include "lattice.h"
 
@@ -345,19 +347,40 @@ namespace LaDa
       read_lattice( const boost::filesystem::path &_fpath, 
                     const boost::filesystem::path &_dpath )
       { 
-        __TRYBEGIN
         boost::filesystem::path filepath( _fpath );
         if( not boost::filesystem::exists( filepath ) )
           filepath = _dpath / _fpath;
         __DOASSERT( not boost::filesystem::exists( filepath ), 
                        "Could not find "<< _fpath 
                     << " in current directory, nor in " <<  _dpath )
-
-        std::string input_filestream;
-        opt::read_xmlfile( filepath, input_filestream );
-        return read_lattice( input_filestream );
-        __TRYEND(, "Could not read lattice from input.\n" )
+        return read_lattice( filepath );
       }
+    boost::shared_ptr< Crystal::Lattice > read_lattice( const boost::filesystem::path& _path )
+    {
+      __TRYBEGIN
+        std::string input_filestream;
+        opt::read_xmlfile( _path, input_filestream );
+        return read_lattice( input_filestream );
+      __TRYEND(, "Could not read lattice from input.\n" )
+    }
+
+    boost::shared_ptr< Crystal::Lattice > read_lattice( const TiXmlElement& _node )
+    {
+      const TiXmlElement *parent = opt::find_node( _node, "Lattice" );
+
+      __DOASSERT( not parent, "Could not find Lattice tag in input.\n" )
+      if( parent->Attribute( "filename" ) )
+      {
+        const boost::filesystem::path filename( parent->Attribute("filename") );
+        std::cout << "Reading lattice from file " << filename << "\n";
+        return read_lattice( filename );
+      }
+      __TRYBEGIN
+        boost::shared_ptr< Crystal::Lattice > lattice( new Lattice );
+        __DOASSERT( not lattice->Load( *parent ), "" )
+        return lattice;
+      __TRYEND(,"Could not real lattice from input.\n" )
+    }
 
 
   } // namespace Crystal

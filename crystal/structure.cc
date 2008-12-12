@@ -314,7 +314,7 @@ namespace LaDa
     bool Structure :: Load( const TiXmlElement &_element )
     {
       const TiXmlElement* parent = find_node( _element );
-      if( not parent ) return false;
+      __DOASSERT( not parent, "Could not find structure tag.\n" )
 
       
       // trie to load cell.
@@ -323,7 +323,7 @@ namespace LaDa
         // tries to load atoms.
         bool atomsloaded =  load_atoms( *parent );
         if( not atomsloaded ) atomsloaded = fill_structure( *this );
-        if( not atomsloaded ) return false;
+        __DOASSERT(  not atomsloaded, "Could not read or create atoms.\n" )
       }
       else if( not load_epitaxial( *parent ) ) return false;
 
