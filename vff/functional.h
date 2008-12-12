@@ -305,7 +305,7 @@ namespace LaDa
 } // namespace LaDa
 
 #ifdef _DOFORTRAN
-#include<opt/opt_frprmn.h>
+#include<opt/frprmn_minimizer.h>
   //! Creates an instance of a typical Minimizer::Frpr "C" function for calling Vff::Functional
   extern "C" inline double vff_frprfun(double* _x, double* _y)
     { return Minimizer::typical_frprfun<LaDa::Vff::Functional>( _x, _y); }
