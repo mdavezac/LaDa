@@ -25,6 +25,10 @@ namespace LaDa
       types::t_real a = 1.0 / std::sqrt( atat::norm2(u) );
       u = a * u;
       template_strain.zero(); 
+      template_strain(0,0) = u(0);
+      template_strain(1,1) = u(1);
+      template_strain(2,2) = u(2);
+      return;
 
       // First, lets create an orthonormal vector to u
       atat::rVector3d a1 = Fuzzy::eq( u(0), 0e0 ) ? 
@@ -93,7 +97,7 @@ namespace LaDa
       __ASSERT( variables->size() < 3, "Too few variables.\n" )
       std::vector<types::t_real> :: const_iterator i_x = variables->begin();
 
-      strain = (*i_x++) * template_strain;
+      strain = (*i_x) * template_strain; ++i_x;
       strain(0,0) += 1.0;
       strain(1,1) += 1.0;
       strain(2,2) += 1.0;

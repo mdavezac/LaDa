@@ -19,8 +19,8 @@
 
 #include <tinyxml/tinyxml.h> 
 
-#include <opt/allsq.h>
-#include <opt/cgs.h>
+#include <minimizer/allsq.h>
+#include <minimizer/cgs.h>
 #include <opt/types.h>
 #include <opt/fuzzy.h>
 #include <opt/debug.h>

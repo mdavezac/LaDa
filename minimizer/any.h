@@ -34,7 +34,7 @@ namespace LaDa
           typename T_FUNCTOR :: t_Return 
             operator()( const T_FUNCTOR& _a, typename T_FUNCTOR :: t_Arg& _b )
             { 
-              if( bool( gsl_ ) ) return (*gsl_)( _a, _b ); 
+              if( bool( gsl_ ) ) return gsl_->verbose=true, (*gsl_)( _a, _b ); 
               if( bool( frpr_ ) ) return (*frpr_)( _a, _b ); 
               __ASSERT( true, "No Minimizer is present.\n" )
             }

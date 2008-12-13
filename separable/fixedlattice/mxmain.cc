@@ -18,7 +18,7 @@
 #include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include <opt/cgs.h>
+#include <minimizer/cgs.h>
 #include <opt/types.h>
 #include <opt/fuzzy.h>
 #include <opt/debug.h>
