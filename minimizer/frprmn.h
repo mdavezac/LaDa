@@ -155,7 +155,7 @@ namespace LaDa
                                  //&iter, &result, (void*) 
   
         lock = false;
-        return rtol <= tolerance;
+        return _function( &_arg[0] );
       }
 
   }
