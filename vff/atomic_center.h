@@ -24,7 +24,7 @@ namespace LaDa
   namespace Vff
   {
 
-    class Functional;
+    class Vff;
 
     //! \brief Represents a single Structure::t_Atom and its first neighbor relationships
     //! \details This class is meant to be used in conjunction with a list of
@@ -37,7 +37,7 @@ namespace LaDa
     //! AtomicCenter::bonds refer to.
     class AtomicCenter
     {
-      friend class Functional;
+      friend class Vff;
       //! The type of the atom  
       typedef Crystal::Structure::t_Atom  t_Atom;
       //! The container of atomic centers. Defined here once and for all.
@@ -74,11 +74,12 @@ namespace LaDa
         Crystal :: Structure *structure;
         bool is_site_one; //!< helps determine the kind of atom this is
         bool is_site_one_two_species; //!< helps determine the kind of atom this is
-        atat::rVector3d gradient; //!< place holder to compute gradient
         //! atomic index in Crystal::Structure::t_Atoms collection of AtomicCenter::structure
         types::t_unsigned index;
 
       public:
+        mutable atat::rVector3d gradient; //!< place holder to compute gradient
+
         //! \brief Default Constructor. 
         //! \param _str structure in which \a _e can be found
         //! \param _e atom to which this AtomicCenter relates
@@ -140,12 +141,6 @@ namespace LaDa
         //! Returns the atom at the origin, constant format
         const t_Atom& Origin() const
           { return *origin; }
-        //! Returns the gradient place holder
-        atat::rVector3d& get_gradient()
-          { return gradient; }
-        //! Returns the gradient place holder, constant format
-        const atat::rVector3d& get_gradient() const
-          { return gradient; }
         //! Sets the gradient place-holder to the (0,0,0) vector
         void reset_gradient()
           { gradient[0] = 0; gradient[1] = 0; gradient[2] = 0; }

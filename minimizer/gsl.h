@@ -1,8 +1,8 @@
 //
 //  Version: $Id$
 //
-#ifndef _OPT_GSL_H_
-#define _OPT_GSL_H_
+#ifndef _LADA_MINIMIZERS_GSL_H_
+#define _LADA_MINIMIZERS_GSL_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>

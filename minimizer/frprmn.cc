@@ -13,6 +13,7 @@ namespace LaDa
 {
   namespace Minimizer
   {
+    LADA_REGISTER_MINIMIZER_VARIANT_SOURCE( Frpr, "original VFF" )
     namespace details
     {
       void* frpr_pointer_ = NULL;                           
@@ -56,8 +57,6 @@ namespace LaDa
           break;
         parent = parent->NextSiblingElement("Minimizer");
       }
-      __DOASSERT( not parent, 
-                  "Could not find an <Minimizer type=\"frprmn\"> tag in input file.\n" )
       return parent;
     }
 

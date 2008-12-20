@@ -141,8 +141,10 @@ PYTHON_H = atat.hpp atat.impl.hpp atom.hpp atom.impl.hpp structure.hpp lattice.h
 PYTHON_CC = atat.cc atom.cc structure.cc lattice.cc lada.cc physics.cc errortuple.cc
 PYTHON_DOC = $(PYTHON_CC) $(PYTHON_H) $(PYTHON_CE_CC) $(PYTHON_CE_H)
 
-MINIMIZER_H =  gsl.h allsq.h cgs.h gsl_nllsq.h gsl_mins.h gsl_simplex.h frprmn.h any.h
-MINIMIZER_CC = gsl_lsq.cc gsl.cc gsl_nllsq.cc gsl_mins.cc gsl_simplex.cc frprmn.cc any.cc
+MINIMIZER_H =  gsl.h allsq.h cgs.h gsl_nllsq.h gsl_mins.h gsl_simplex.h frprmn.h any.h \
+               decoupled.h
+MINIMIZER_CC = gsl_lsq.cc gsl.cc gsl_nllsq.cc gsl_mins.cc gsl_simplex.cc frprmn.cc \
+               decoupled.cc
 MINIMIZER_F90 =  df1dim.f90  frprmn_fortran.f90  linmin.f90
 MINIMIZER_DOC = $(MINIMIZER_H) $(MINIMIZER_CC)
 
@@ -164,9 +166,10 @@ SEPARABLES_DOC = $(SEPARABLES_FXL_CC) $(SEPARABLES_FXL_H) $(SEPARABLES_FXL_IMPL_
 VFF_FORTRAN_CC = fortran.cc
 VFF_FORTRAN_H  = fortran.h
 VFF_FORTRAN_DOC = $(VFF_FORTRAN_H) $(VFF_FORTRAN_CC) 
-VFF_CC = atomic_center.cc atomic_functional.cc functional.cc layered.cc # pescan_perturbation.cc 
-VFF_IMPL_H = va.impl.h pescan_perturbation.impl.h atomic_center.h atomic_functional.h
-VFF_H  = functional.h  layered.h  va.h  pescan_perturbation.h $(VFF_IMPL_H)
+VFF_CC = atomic_center.cc atomic_functional.cc functional.cc vff.cc # layered.cc # pescan_perturbation.cc 
+VFF_IMPL_H = va.impl.h pescan_perturbation.impl.h
+VFF_H  = functional.h  layered.h  va.h  pescan_perturbation.h vff.h \
+         atomic_center.h atomic_functional.h $(VFF_IMPL_H)
 VFF_DOC = $(VFF_H) $(VFF_IMPLS) $(VFF_CC) 
 
 DOCS_H = revision.h

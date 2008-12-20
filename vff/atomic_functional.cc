@@ -132,7 +132,7 @@ namespace LaDa
     }
 
     types::t_real AtomicFunctional
-       :: evaluate_with_gradient( AtomicCenter &_center,
+       :: evaluate_with_gradient( const AtomicCenter &_center,
                                   const atat::rMatrix3d &_strain,
                                   atat::rMatrix3d &_stress,
                                   const atat::rMatrix3d &_K0 ) const
@@ -174,8 +174,8 @@ namespace LaDa
           types::t_real e0grad =   2.0 * scale2 / bond_length 
                                  * e0 * ( 1.5e0 * (*i_alpha) + dummy); 
           atat::rVector3d hold = e0grad * _strain * d0;
-          _center.get_gradient() -= hold; // with respect to atomic positions
-          i_bond->get_gradient() += hold;  
+          _center.gradient -= hold; // with respect to atomic positions
+          i_bond->gradient += hold;  
 
           // stress
           for( int i = 0; i < 3; ++i )
@@ -222,9 +222,9 @@ namespace LaDa
                                      * e1 * ( *(  i_beta) * 0.75e0 + dummy);
               atat::rVector3d hold0 = e1grad * _strain * d0;
               atat::rVector3d hold1 = e1grad * _strain * d1;
-              _center.get_gradient() -= ( hold0 + hold1); // with respect to atomic positions
-              i_bond->get_gradient() += hold1; 
-              i_angle->get_gradient() += hold0; 
+              _center.gradient -= ( hold0 + hold1); // with respect to atomic positions
+              i_bond->gradient += hold1; 
+              i_angle->gradient += hold0; 
               
               // stress
               for( int i = 0; i < 3; ++i )
@@ -245,9 +245,9 @@ namespace LaDa
                                       * ( _strain * d1 );
               atat::rVector3d hold2 = 0.75 * e0 * sigma / mean_length * scale2
                                       * ( _strain * d0 );
-              _center.get_gradient() -= (hold0 + hold1 + hold2);
-              (*i_bond).get_gradient() += (hold0 + hold1); //(hold0 + hold1);
-              (*i_angle).get_gradient() += hold2;
+              _center.gradient -= (hold0 + hold1 + hold2);
+              (*i_bond).gradient += (hold0 + hold1); //(hold0 + hold1);
+              (*i_angle).gradient += hold2;
             }
 
             // stress

@@ -11,7 +11,7 @@ fortranHEADER =
 # fortranSOURCE += $(VFF_FORTRAN_CC)
 # fortranHEADER += $(VFF_FORTRAN_H)
 
-bin_PROGRAMS = vff layered_vff
+bin_PROGRAMS = vff # layered_vff
 # noinst_PROGRAMS = $(fortranBIN)
 
 noinst_LTLIBRARIES = libvff.la
@@ -33,10 +33,10 @@ vff_LDADD = ../crystal/libcrystal.la \
 	    $(fortranLDADD) \
 	    @MPI_ADDLIB@ \
             $(fortranLDFLAGS)
-layered_vff_SOURCES = $(vff_SOURCES)
-layered_vff_CPPFLAGS =  $(vff_CPPFLAGS) -D _LAYERED
-layered_vff_LDFLAGS =  $(vff_LDFLAGS)
-layered_vff_LDADD = $(vff_LDADD)
+# layered_vff_SOURCES = $(vff_SOURCES)
+# layered_vff_CPPFLAGS =  $(vff_CPPFLAGS) -D _LAYERED
+# layered_vff_LDFLAGS =  $(vff_LDFLAGS)
+# layered_vff_LDADD = $(vff_LDADD)
 
 # fortran_test_SOURCES = fortran_test.f90 
 # fortran_test_LDFLAGS =  $(vff_LDFLAGS)

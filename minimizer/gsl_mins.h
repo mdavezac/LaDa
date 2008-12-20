@@ -17,11 +17,10 @@
 #include <boost/serialization/access.hpp>
 
 #include <opt/algorithms.h>
-#include "gsl.h"
 
-#ifdef _MPI
-#  include <mpi/mpi_object.h>
-#endif
+#include "gsl.h"
+#include "any.h"
+
 
 namespace LaDa
 {
@@ -146,22 +145,26 @@ namespace LaDa
         template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
     };
 
+    LADA_REGISTER_MINIMIZER_VARIANT_HEADER( Gsl, "GSL" )
+
     template<class T_FUNCTION, class T_CONTAINER, class T_RETURN> 
       T_RETURN  Gsl :: operator_( const T_FUNCTION &_func, T_CONTAINER &_arg ) const
       {
         namespace bl = boost::lambda;
         gsl_multimin_fdfminimizer *solver;
+        typedef std::pair< const T_FUNCTION&, T_CONTAINER& > t_Pair;
+        t_Pair data_pair( _func, _arg );
    
         __DEBUGTRYBEGIN
    
           if ( verbose ) std::cout << "Starting GSL minimization\n";
    
           gsl_multimin_function_fdf gsl_func;
-          gsl_func.f = &details::gsl_f<const T_FUNCTION>;
-          gsl_func.df = &details::gsl_df<const T_FUNCTION>;
-          gsl_func.fdf =  &details::gsl_fdf<const T_FUNCTION>;
+          gsl_func.f = &details::gsl_f<t_Pair>;
+          gsl_func.df = &details::gsl_df<t_Pair>;
+          gsl_func.fdf =  &details::gsl_fdf<t_Pair>;
           gsl_func.n = _arg.size();
-          gsl_func.params = (void*) &_func;
+          gsl_func.params = (void*) &data_pair;
           
           const gsl_multimin_fdfminimizer_type *T;
           switch( type )
@@ -247,26 +250,28 @@ namespace LaDa
     //! \cond
     namespace details
     {
-      template< class T_FUNCTION >
+      template< class T_DATAPAIR >
         double gsl_f( const gsl_vector* _x, void* _data )
         {
-          T_FUNCTION *_this = (T_FUNCTION*) _data;
-          return (*_this)( _x->data );
+          T_DATAPAIR *_this = (T_DATAPAIR*) _data;
+          std::copy( _x->data, _x->data + _this->second.size(), _this->second.begin() );
+          return _this->first( _this->second );
         }
-      template< class T_FUNCTION >
+      template< class T_DATAPAIR >
         void gsl_df( const gsl_vector* _x, void* _data, gsl_vector* _grad )
         {
-          T_FUNCTION *_this = (T_FUNCTION*) _data;
-          _this->gradient( _x->data, _grad->data );
-          types::t_real result = (*_this)( _x->data );
+          T_DATAPAIR *_this = (T_DATAPAIR*) _data;
+          std::copy( _x->data, _x->data + _this->second.size(), _this->second.begin() );
+          _this->first.gradient( _this->second, _grad->data );
         }
-      template< class T_FUNCTION >
+      template< class T_DATAPAIR >
         void gsl_fdf( const gsl_vector *_x, void *_data, double *_r, gsl_vector *_grad)
         { 
           namespace bl = boost::lambda;
-          T_FUNCTION *_this = (T_FUNCTION*) _data;
-          *_r = (*_this)( _x->data );
-          _this->gradient( _x->data, _grad->data );
+          T_DATAPAIR *_this = (T_DATAPAIR*) _data;
+          std::copy( _x->data, _x->data + _this->second.size(), _this->second.begin() );
+          *_r = _this->first( _this->second );
+          _this->first.gradient( _this->second, _grad->data );
         } 
     }
     //! \endcond

@@ -18,6 +18,8 @@
 
 #include <opt/debug.h>
 
+#include "any.h"
+
 //! \cond
 extern "C" double FC_FUNC(frprmn, FRPRMN)
                          ( double *, const int *, const double *,
@@ -34,7 +36,7 @@ namespace LaDa
     namespace details
     {
       extern void* frpr_pointer_;                           
-      template< class T_FUNCTION > double call_frpr(double* _x, double* _y);
+      template< class T_DATAPAIR > double call_frpr(double* _x, double* _y);
     }
     //! \endcond
 
@@ -115,14 +117,16 @@ namespace LaDa
 
         mutable bool lock;
     };
+    LADA_REGISTER_MINIMIZER_VARIANT_HEADER( Frpr, "original VFF" )
    
     namespace details
     {
-      template< class T_FUNCTION > double call_frpr(double* _x, double* _y)
+      template< class T_DATAPAIR > double call_frpr(double* _x, double* _y)
       {
-        T_FUNCTION *function = static_cast<T_FUNCTION*>(frpr_pointer_);
-        function->gradient( _x, _y );
-        return (*function)( _x );
+        T_DATAPAIR *_this = static_cast<T_DATAPAIR*>(frpr_pointer_);
+        std::copy( _x, _x + _this->second.size(), _this->second.begin() );
+        _this->first.gradient( _this->second, _y );
+        return _this->first( _this->second );
       }
     }
 
@@ -146,16 +150,19 @@ namespace LaDa
 #       undef _MXPARM_
         double result;
   
-        double( *ptr_func )( double*, double* ) = &details::template call_frpr<T_FUNCTION>;
-        details::frpr_pointer_ = (void*) (&_function);
+        typedef std::pair< const T_FUNCTION&, T_CONTAINER > t_DataPair;
+        double( *ptr_func )( double*, double* ) = &details::template call_frpr<t_DataPair>;
+        t_DataPair data_pair(_function, _arg);
+        details::frpr_pointer_ = (void*) &data_pair;
         FC_FUNC(frprmn, frprmn) ( x, &x_length, &tolerance,
                                   &line_tolerance, &zeps,
                                   &iter, &result, (void*)ptr_func,
                                   &itermax, &rtol );
-                                 //&iter, &result, (void*) 
+        std::copy( x, x + _arg.size(), _arg.begin() );
+
   
         lock = false;
-        return _function( &_arg[0] );
+        return _function( _arg );
       }
 
   }

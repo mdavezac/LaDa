@@ -93,7 +93,7 @@ namespace LaDa
         //! \param _stress on _center resulting from _strain
         //! \param _K0 displacement resulting from _strain and w.r.t original unit-cell
         //! \sa function::Base, function::Base::evaluate_with_gradient()
-        types::t_real evaluate_with_gradient( AtomicCenter &_center,
+        types::t_real evaluate_with_gradient( const AtomicCenter &_center,
                                               const atat::rMatrix3d &_strain,
                                               atat::rMatrix3d &_stress,
                                               const atat::rMatrix3d &_K0 ) const;

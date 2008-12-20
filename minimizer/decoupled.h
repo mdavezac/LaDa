@@ -18,6 +18,8 @@
 
 #include <opt/debug.h>
 
+#include "frprmn.h"
+#include "gsl_mins.h"
 #include "any.h"
 
 
@@ -25,7 +27,10 @@ namespace LaDa
 {
   namespace Minimizer
   {
-    // \brief Decouples minimization of variables [0, mid[ from [mid, ...[
+    //! \brief Decouples minimization of variables [0, mid[ from [mid, ...[
+    //! \details Performs two minimizations in a row: one for the variables in
+    //!          [0, mid[, and the other for variables [mid, N[ where N is the
+    //!          number of variables.
     class Decoupled 
     {
       public:
@@ -40,7 +45,7 @@ namespace LaDa
         Decoupled() : tolerance(types::tolerance), itermax(500), mid(0) {}
         //! Copy Constructor
         Decoupled   ( const Decoupled &_c ) 
-                  : tolerance(_c.tolerance), itermax(_c.itermax), mid(0) {}
+                  : tolerance(_c.tolerance), itermax(_c.itermax), mid(_c.mid) {}
 
         //! Minimization functor
         template< class T_FUNCTION >
@@ -72,8 +77,9 @@ namespace LaDa
         template< class T_FUNCTION, class T_CONTAINER, class T_RETURN >
           T_RETURN operator_( const T_FUNCTION &_func, T_CONTAINER &_arg ) const;
 
-        Any minimizer;
+        Any< boost::mpl::vector< Frpr, Gsl > > minimizer;
     };
+    LADA_REGISTER_MINIMIZER_VARIANT_HEADER( Decoupled, "decoupled" )
 
     namespace details
     {
@@ -97,18 +103,22 @@ namespace LaDa
             if( _last > 0 ) last_ = size_t( _last );
             if( _last < 0 ) last_ = _cont.size();
           }
-          t_Return operator()( t_Return* const _arg ) const
+          t_Return operator()( const t_Arg& _arg ) const
           {
-            std::copy( _arg + first_, _arg + last_, container_.begin() + first_ );
-            return function_( container_ );
+            std::copy( _arg.begin() + first_, _arg.begin() + last_, container_.begin() + first_ );
+            t_Return result = function_( container_ );
+            std::cout << "E: " << result << "\n";
+            return result;
           }
-          void gradient( t_Return* const _arg, t_Return *_grad ) const
+          void gradient( const t_Arg& _arg, t_Return *_grad ) const
           {
-            std::copy( _arg + first_, _arg + last_, container_.begin() + first_ );
-            t_Return grad[ container_.size() ];
+            std::cout << "first " << first_ << " last " << last_ << "\n";
+            std::copy( _arg.begin() + first_, _arg.begin() + last_, container_.begin() + first_ );
+            t_Return *grad = new t_Return[ container_.size() ];
             std::fill( grad + first_, grad + last_, t_Return(0) );
-            function_.gradient( container_ );
+            function_.gradient( container_, grad );
             std::copy( grad + first_, grad + last_, _grad );
+            delete[] grad;
           }
 
         protected:
@@ -126,7 +136,9 @@ namespace LaDa
     template<typename T_FUNCTION, class T_CONTAINER, class T_RETURN> 
       T_RETURN Decoupled :: operator_( const T_FUNCTION& _function, T_CONTAINER& _arg ) const
       {
-        __DOASSERT( mid <= 0, "No need for decoupled minimizer according to input.\n" )
+        __DOASSERT( mid == 0, 
+                       "No need for decoupled minimizer according to input.\n"
+                    << "mid=" << mid << "\n" )
         __DOASSERT( mid >= _arg.size(), "No need for decoupled minimizer according to input.\n" )
         const details::Ranged< T_FUNCTION, T_CONTAINER > funcA( _function, _arg,  -1, mid );
         const details::Ranged< T_FUNCTION, T_CONTAINER > funcB( _function, _arg, mid, -1 );
@@ -136,12 +148,16 @@ namespace LaDa
         types::t_real val;
         for( int iter(0); itermax < 0 or iter < itermax; ++iter )
         {
-          any( funcA, argA );
-          any( funcB, argB );
+          std::cout << "first \n";
+          minimizer( funcA, argA );
+          std::copy( argA.begin(), argA.end(), _arg.begin() );
+          std::cout << "second \n";
+          minimizer( funcB, argB );
+          std::copy( argB.begin(), argB.end(), _arg.begin() + mid );
           if( iter == 0 ) continue;
 
           types::t_real old = val;
-          val = _function( &_arg[0] );
+          val = _function( _arg );
           if( std::abs( old - val ) < tolerance ) break;
         }
         return val;

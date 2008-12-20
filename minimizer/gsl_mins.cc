@@ -11,6 +11,7 @@ namespace LaDa
 {
   namespace Minimizer {
 
+    LADA_REGISTER_MINIMIZER_VARIANT_SOURCE( Gsl, "GSL" )
 
 
     void Gsl :: set_parameters( t_gsl_minimizer_type _type, 
