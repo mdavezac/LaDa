@@ -26,20 +26,9 @@
 
 namespace LaDa
 {
-  namespace Minimizer {
+  namespace Minimizer 
+  {
 
-    //! \cond
-    namespace details
-    {
-      template< class T_FUNCTION >
-        double gsl_function( const gsl_vector* _x, void* _data )
-        {
-          T_FUNCTION *_this = (T_FUNCTION*) _data;
-          types::t_real result = (*_this)( _x->data );
-          return result;
-        }
-    }
-    //! \endcond
 
     //! \brief Minimizer interfaces for the Gnu Scientific Library
     //! \details Interface to the following algorithms:
@@ -85,7 +74,11 @@ namespace LaDa
         template< class T_FUNCTION >
           typename T_FUNCTION :: t_Return
             operator()( const T_FUNCTION &_func,
-                        typename T_FUNCTION :: t_Arg &_arg ) const;
+                        typename T_FUNCTION :: t_Arg &_arg ) const
+            { return operator_< T_FUNCTION,
+                                typename T_FUNCTION :: t_Arg,
+                                typename T_FUNCTION :: t_Return
+                              >( _func, _arg ); }
         //! \brief Finds the node - if it is there - which describes this minimizer
         //! \details Looks for a \<Minimizer\> tag first as \a _node, then as a
         //!          child of \a _node. Different minimizer, defined by the
@@ -97,27 +90,32 @@ namespace LaDa
         //! Loads the minimizer from XML
         bool Load( const TiXmlElement &_node );
       private:
+        //! Minimization functor
+        template< class T_FUNCTION, class T_CONTAINER, class T_RETURN >
+          T_RETURN operator_( const T_FUNCTION &_func, T_CONTAINER &_arg ) const;
         //! Serializes a structure.
         template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
     };
 
-    template<typename T_FUNCTION> 
-      typename T_FUNCTION :: t_Return 
-        Simplex :: operator()( const T_FUNCTION &_func,
-                               typename T_FUNCTION :: t_Arg &_arg ) const
+    LADA_REGISTER_MINIMIZER_VARIANT_HEADER( Simplex, "GSL Simplex" )
+
+    template<class T_FUNCTION, class T_CONTAINER, class T_RETURN> 
+      T_RETURN  Simplex :: operator_( const T_FUNCTION &_func, T_CONTAINER &_arg ) const
       {
         namespace bl = boost::lambda;
         gsl_multimin_fminimizer *solver;
         gsl_vector *ss;
+        typedef std::pair< const T_FUNCTION&, T_CONTAINER& > t_Pair;
+        t_Pair data_pair( _func, _arg );
 
         __DEBUGTRYBEGIN
    
           if ( verbose ) std::cout << "Starting GSL minimization\n";
    
           gsl_multimin_function gsl_func;
-          gsl_func.f = &details::gsl_function<const T_FUNCTION>;
+          gsl_func.f = &details::gsl_f<t_Pair>;
           gsl_func.n = _arg.size();
-          gsl_func.params = (void*) &_func;
+          gsl_func.params = (void*) &data_pair;
           
           solver = gsl_multimin_fminimizer_alloc( gsl_multimin_fminimizer_nmsimplex,
                                                   gsl_func.n);

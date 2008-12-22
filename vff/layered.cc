@@ -28,38 +28,22 @@ namespace LaDa
       template_strain(0,0) = u(0);
       template_strain(1,1) = u(1);
       template_strain(2,2) = u(2);
+      std::cout << "template strain: " << template_strain << "\n"; 
       return;
-
-      // First, lets create an orthonormal vector to u
-      atat::rVector3d a1 = Fuzzy::eq( u(0), 0e0 ) ? 
-                             ( Fuzzy::eq( u(1), 0e0 ) ? 
-                                atat::rVector3d(1, 0, 0):
-                                atat::rVector3d(0, u(2), -u(1) )  ): 
-                             atat::rVector3d( -u(2) -u(1), u(0), u(0) );
-      a = ( 1.0 / std::sqrt( atat::norm2(a1) ) );
-      a1 =  a * a1;
-
-      // Then, lets create another... 
-      atat::rVector3d a2;
-      a2( 0 ) = u(1) * a1(2) - u(2) * a1(1);
-      a2( 1 ) = u(2) * a1(0) - u(0) * a1(2);
-      a2( 2 ) = u(0) * a1(1) - u(1) * a1(0);
-
-      // Finally, we create a transition matrix from a "u" basis to a cartesian basis.
-      atat::rMatrix3d T; T.set_column(0, u); T.set_column(1, a1); T.set_column(2,a2);
-      atat::rMatrix3d S; S.zero(); S(0,0) = 1;
-      template_strain = T * S * (~T);
     }
 
-    types::t_real Layered :: evaluate()
+    Layered :: t_Return Layered :: operator()( const t_Arg& _arg ) const
     {
-      unpack_variables(strain);
-      return t_Base::energy();
+      atat::rMatrix3d strain;
+      unpack_variables( _arg, strain );
+      t_Return energy = Vff::energy();
+      std::cout << "E: " << energy / 16.0217733 << "\n";
+      return Vff::energy();
     }
 
 
     // initializes stuff before minimization
-    bool Layered :: init()
+    bool Layered :: init( t_Arg& _arg)
     {
       if( not is_fixed_by_input ) create_template_strain();
       // sets up structure0, needed for fractional vs cartesian shit
@@ -68,43 +52,42 @@ namespace LaDa
       // Now counts the degrees of freedom
       types::t_unsigned dof = 1 + posdofs();
 
-      function::Base<> :: resize( dof );
-      if ( not variables ) return false;
+      _arg.resize( dof );
 
-      strain.zero(); 
+      atat::rMatrix3d strain; strain.zero(); 
       strain(0,0) = 1.0;
       strain(1,1) = 1.0;
       strain(2,2) = 1.0;
-      pack_variables(strain);
+      pack_variables( _arg, strain );
       
       return true;
     }
 
     // variables is expected to be of sufficient size!!
-    void Layered :: pack_variables( const atat::rMatrix3d& _strain)
+    void Layered :: pack_variables( t_Arg& _arg, const atat::rMatrix3d& _strain) const
     {
-      __ASSERT( variables->size() == 0, "Too few variables\n" )
       // finally, packs vff format into function::Base format
-      iterator i_var = variables->begin();
+      t_Arg :: iterator i_var = _arg.begin();
       *i_var = u * (_strain * u) - 1.0;
       ++i_var;
       pack_positions( i_var );
     }
 
     // Unpacks opt::Function_Base::variables into Vff::Layered format
-    void Layered :: unpack_variables(atat::rMatrix3d& strain)
+    void Layered :: unpack_variables( const t_Arg& _arg, atat::rMatrix3d& strain ) const
     {
-      __ASSERT( variables->size() < 3, "Too few variables.\n" )
-      std::vector<types::t_real> :: const_iterator i_x = variables->begin();
+      t_Arg :: const_iterator i_x = _arg.begin();
 
+      std::cout << "strain : " << *i_x << "\n";
       strain = (*i_x) * template_strain; ++i_x;
       strain(0,0) += 1.0;
       strain(1,1) += 1.0;
       strain(2,2) += 1.0;
 
+      std::cout << strain << "\n";
       // compute resulting cell vectors
       structure.cell = strain * structure0.cell;
-      unpack_positions( strain, i_x );
+      unpack_positions( i_x, strain );
     }
 
     bool Layered :: Load_( const TiXmlElement &_node )
@@ -150,5 +133,57 @@ namespace LaDa
          stream << "Epitaxial Direction fixed on input: " << direction << "\n";
        else stream << "Epitaxial Direction fixed by unit cell\n";
      }
+
+    void Layered :: pack_gradients(const atat::rMatrix3d& _stress, 
+                                   t_GradientArg &_grad) const
+    {
+      t_GradientArg i_grad(_grad);
+
+      // first, external stuff
+      *i_grad = u * ( _stress(0,0) * u );
+      ++i_grad;
+
+      // then atomic position stuff
+      t_Centers :: const_iterator i_center = centers.begin();
+      t_Centers :: const_iterator i_end = centers.end();
+      t_Atoms :: const_iterator i_atom0 = structure0.atoms.begin();
+      i_center = centers.begin();
+      for (; i_center != i_end; ++i_center, ++i_atom0)
+      {
+        const atat::rVector3d& gradient = i_center->gradient;
+        if ( not (i_atom0->freeze & t_Atom::FREEZE_X) ) 
+          *i_grad = gradient[0], ++i_grad;
+        if ( not (i_atom0->freeze & t_Atom::FREEZE_Y) ) 
+          *i_grad = gradient[1], ++i_grad;
+        if ( not (i_atom0->freeze & t_Atom::FREEZE_Z) ) 
+          *i_grad = gradient[2], ++i_grad;
+      }
+    }
+
+    void Layered :: gradient( const t_Arg& _arg, t_GradientArg &_i_grad ) const
+    {
+      atat::rMatrix3d strain; strain.zero();
+      t_Return energy = 0;
+      foreach( const t_Center& center, centers ) center.gradient = atat::rVector3d(0,0,0);
+
+      // unpacks variables into vff atomic_center and strain format
+      unpack_variables(_arg, strain);
+
+      // computes K0
+      atat::rMatrix3d K0 = (!(~strain));
+
+      // computes energy and gradient
+      t_Centers :: const_iterator i_center = centers.begin();
+      t_Centers :: const_iterator i_end = centers.end();
+      stress.zero();
+      for (; i_center != i_end; ++i_center)
+        energy += functionals[i_center->kind()].
+                        evaluate_with_gradient( *i_center, strain, stress, K0 );
+      std::cout << "E: " << energy / 16.0217733 << "\n";
+
+      // now repacks into function::Base format
+      pack_gradients(stress, _i_grad);
+    }
+
   } // namespace vff
 } // namespace LaDa

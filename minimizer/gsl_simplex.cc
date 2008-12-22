@@ -11,6 +11,8 @@ namespace LaDa
 {
   namespace Minimizer 
   {
+    LADA_REGISTER_MINIMIZER_VARIANT_SOURCE( Simplex, "GSL Simplex" )
+
     void Simplex :: set_parameters( types::t_unsigned _itermax,
                                     types::t_real _tol, 
                                     types::t_real _stepsize ) 

@@ -31,19 +31,21 @@ namespace LaDa
     //!          allowed.
     //! \see Mostly, this class is meant to work with epitaxial structure
     //!      optimization as implemented in Darwin::Molecularity. 
-    class Layered : public Vff::Functional
+    class Layered : public Functional
     {
       //! The type of the atom  
       typedef Crystal::Structure::t_Atom  t_Atom;
       //! The type of the atom container
       typedef Crystal::Structure::t_Atoms t_Atoms;
-      typedef Vff::Functional t_Base; //!< Base Class
+      typedef Functional t_Base; //!< Base Class
       public:
-        typedef t_Base::t_Type t_Type;            //!< see Functional::Base
-        typedef t_Base::t_Container t_Container;  //!< see Functional::Base
-        typedef t_Container :: iterator iterator; //!< see Functional::Base
-        //! see Functional::Base
-        typedef t_Container :: const_iterator const_iterator;
+        //! Type of the return.
+        typedef types :: t_real t_Return;
+        //! Type of the container.
+        typedef std::vector< types :: t_real > t_Arg;
+        //! Type of the gradient argument.
+        typedef types :: t_real* t_GradientArg;
+
 
       protected:
         //! Type of the container holding the atomic centers
@@ -71,11 +73,11 @@ namespace LaDa
         //! \brief Constructor and Initializer
         //! \param _str structure for which to compute energy and stress
         Layered   ( Crystal :: Structure &_str )
-                : Vff::Functional( _str ), direction(0,0,0), u(0,0,0),
+                : t_Base( _str ), direction(0,0,0), u(0,0,0),
                   template_strain(), is_fixed_by_input(false)
           { template_strain.zero(); }
         //! \brief Copy Constructor
-        Layered   ( const Vff::Layered &_c )
+        Layered   ( const Layered &_c )
                 : t_Base( _c ), direction( _c.direction ), u(_c.u),
                   template_strain(_c.template_strain), 
                   is_fixed_by_input(_c.is_fixed_by_input) {}
@@ -88,52 +90,33 @@ namespace LaDa
         //!          and not its base. The alternative is to make pack and unpack
         //!          virtual.
         //! \sa function::Base, function::Base::evaluate
-        types::t_real evaluate(); 
-        //! \brief Evaluates gradients only
-        //! \sa function::Base, function::Base::evaluate_gradient
-        template< typename t_grad_iterator>
-          void evaluate_gradient( t_grad_iterator const &_i_grad )
-            { evaluate_with_gradient( _i_grad ); }
-        //! \brief Evaluates gradients only
-        //! \sa function::Base, function::Base::evaluate_gradient
-        void evaluate_gradient( t_Type * const _i_grad )
-          { evaluate_with_gradient<t_Type*>( _i_grad ); }  
-        //! \brief Evaluates gradients and energy
-        //! \sa function::Base, function::Base::evaluate_with_gradient
-        template< typename t_grad_iterator>
-          t_Type evaluate_with_gradient( t_grad_iterator const &_i_grad );
-        //! \brief Evaluates gradients and energy
-        //! \sa function::Base, function::Base::evaluate_with_gradient
-        t_Type evaluate_with_gradient( t_Type * const _i_grad )
-          { return evaluate_with_gradient<t_Type*>( _i_grad ); }  
-        //! \brief Evaluates gradient in one direction only
-        //! \todo Vff::Functional::implement evaluate_one_gradient
-        //! \sa function::Base, function::Base::evaluate_one_gradient, Minimizer::VA
-        t_Type evaluate_one_gradient( types::t_unsigned _pos) {return 0;}; 
+        t_Return operator()( const t_Arg& _arg ) const; 
+        //! Evaluates a gradient.
+        void gradient( const t_Arg& _arg, t_GradientArg& _grad ) const;
+
         //! \brief initializes stuff before minimization
         //! \details Defines the packing and unpacking process, such that only unfrozen
         //! degrees of liberty are known to the minimizer
         //! \sa function::Base, Minimizer::Base
-        bool init();
+        bool init( t_Arg& _arg );
 
         //! Prints functional to \a stream.
         void print_out( std::ostream &stream ) const;
         
       protected:
-        //! \brief unpacks variables from minimizer
-        //! \details Functional knows about Functional::Structure, whereas minizers now
-        //! about function::Base, this function does the interface between the two
-        void unpack_variables(atat::rMatrix3d& strain);
         //! \brief packs variables from minimizer
         //! \details Functional knows about Functional::Structure, whereas minizers now
         //! about function::Base, this function does the interface between the two
-        void pack_variables(const atat::rMatrix3d& _strain);
+        void pack_variables( t_Arg& _arg, const atat::rMatrix3d& _strain ) const;
+        //! \brief unpacks variables from minimizer
+        //! \details Functional knows about Functional::Structure, whereas minizers now
+        //! about function::Base, this function does the interface between the two
+        void unpack_variables(const t_Arg& _arg, atat::rMatrix3d& strain) const;
         //! \brief packs variables from minimizer
         //! \details Functional knows about Functional::Structure, whereas
         //! minizers now about function::Base, this function does the interface
         //! between the two
-        template< typename t_grad_iterator>
-        void pack_gradients(const atat::rMatrix3d& _stress, t_grad_iterator const &_grad) const;
+        void pack_gradients(const atat::rMatrix3d& _stress, t_GradientArg &_grad) const;
 
 
         //! Initializes Layered::u and Layered::template_strain
@@ -147,60 +130,6 @@ namespace LaDa
         bool Load_( const TiXmlElement &_node );
     };
 
-    template< typename t_grad_iterator>
-    void Vff::Layered :: pack_gradients(const atat::rMatrix3d& _stress, 
-                                        t_grad_iterator const &_grad) const
-    {
-      t_grad_iterator i_grad(_grad);
-
-      // first, external stuff
-      *i_grad = u * ( _stress(0,0) * u );
-      ++i_grad;
-
-      // then atomic position stuff
-      t_Centers :: const_iterator i_center = centers.begin();
-      t_Centers :: const_iterator i_end = centers.end();
-      t_Atoms :: const_iterator i_atom0 = structure0.atoms.begin();
-      i_center = centers.begin();
-      for (; i_center != i_end; ++i_center, ++i_atom0)
-      {
-        const atat::rVector3d& gradient = i_center->get_gradient();
-        if ( not (i_atom0->freeze & t_Atom::FREEZE_X) ) 
-          *i_grad = gradient[0], ++i_grad;
-        if ( not (i_atom0->freeze & t_Atom::FREEZE_Y) ) 
-          *i_grad = gradient[1], ++i_grad;
-        if ( not (i_atom0->freeze & t_Atom::FREEZE_Z) ) 
-          *i_grad = gradient[2], ++i_grad;
-      }
-    }
-
-    template< typename t_grad_iterator>
-    types::t_real Vff::Layered :: evaluate_with_gradient( t_grad_iterator const &_i_grad )
-    {
-      t_Type energy = 0;
-      std::for_each( centers.begin(), centers.end(),
-                     std::mem_fun_ref(&t_Center::reset_gradient) );
-
-      // unpacks variables into vff atomic_center and strain format
-      unpack_variables(strain);
-
-      // computes K0
-      atat::rMatrix3d K0 = (!(~strain));
-
-      // computes energy and gradient
-      t_Centers :: iterator i_center = centers.begin();
-      t_Centers :: iterator i_end = centers.end();
-      stress.zero();
-      for (; i_center != i_end; ++i_center)
-        energy += functionals[i_center->kind()].
-                        evaluate_with_gradient( *i_center, strain, stress, K0 );
-
-      // now repacks into function::Base format
-      pack_gradients(stress, _i_grad);
-
-      return energy;
-    }
-
 
     inline types::t_real inplane_stress( const atat::rMatrix3d &_stress,
                                          const atat::rVector3d &_dir     )
@@ -213,30 +142,5 @@ namespace LaDa
 
   } // namespace vff 
 } // namespace LaDa
-
-#ifdef _DOFORTRAN
-  //! Creates an instance of a typical Minimizer::Frpr "C" function for calling Vff::Layered
-  extern "C" inline double layeredvff_frprfun(double* _x, double* _y)
-    { return Minimizer::typical_frprfun<LaDa::Vff::Layered>( _x, _y); }
-  //! \brief returns a pointer to the correct extern "C" evaluation function
-  //!        for Minimizer::Frpr.
-  //! \details This routine allows for a standard for Vff::VA to intialize
-  //!          Minimizer::Frpr.
-  template<> inline t_FrprFunction choose_frpr_function<LaDa::Vff::Layered>() 
-    { return layeredvff_frprfun; }
-#elif defined(_DONAG)
-#include <nag.h>
-#include <nage04.h>
-  //! Creates an instance of a typical NAG "C" function for calling Vff::Layered
-  extern "C" inline void layeredvff_nagfun(int _n, double* _x, double* _r, double* _g, Nag_Comm* _p)
-    { Minimizer::typical_nagfun<LaDa::Vff::Layered>( _n, _x, _r, _g, _p ); }
-  //! \brief returns a pointer to the correct extern "C" evaluation function
-  //!        for Minimizer::Nag.
-  //! \details This routine allows for a standard for Vff::VA to intialize
-  //!          Minimizer::Nag.
-  template<>
-  inline Minimizer::t_NagFunction choose_nag_function<LaDa::Vff::Layered>()
-    { return layeredvaff_nagfun; }
-#endif
 
 #endif // _VFF_FUNCTIONAL_H_

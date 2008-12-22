@@ -1,51 +1,68 @@
 <?xml version="1.0" standalone="no" ?>
 <Job>
-   <Structure >
-        <Cell>
-            <row x="1.0" y="0.0" z="0.0" />
-            <row x="0.0" y="1.0" z="0.0" />
-            <row x="0.0" y="0.0" z="1.0" />
-        </Cell>
-        <Atom type="Ga" x="0.00" y="0.00" z="0.00" />
-        <Atom type="As" x="0.25" y="0.25" z="0.25" />
-        <Atom type="In" x="0.50" y="0.50" z="0.00" />
-        <Atom type="As" x="0.75" y="0.75" z="0.25" />
-        <Atom type="In" x="0.50" y="0.00" z="0.50" />
-        <Atom type="Sb" x="0.75" y="0.25" z="0.75" />
-        <Atom type="Ga" x="0.00" y="0.50" z="0.50" />
-        <Atom type="Sb" x="0.25" y="0.75" z="0.75" />
-    </Structure>
-    <Lattice scale="6.1">
-        <row x="0.0" y="0.5" z="0.5" />
-        <row x="0.5" y="0.0" z="0.5" />
-        <row x="0.5" y="0.5" z="0.0" />
-        <site x="0.25" y="0.25" z="0.25">
-            <atom type="As" />
-            <atom type="Sb" />
-        </site>
-        <site x="0.0" y="0.0" z="0.0">
-            <atom type="In" />
-            <atom type="Ga" />
-        </site>
-    </Lattice>
-    <Functional type="vff" direction="1 0 0" >
-        <Minimizer type="frprmn" itermax="40000" tolerance="0.00001" linetolerance="0.1" zeps="0.001" />
-        <Minimizer type="gsl_bfgs2" itermax="40000" tolerance="0.00001" linetolerance="0.5" linestep="0.001" doprint="true" />
-        <Bond A="In" B="As" d0="2.62332" alpha="21.6739" alpha3="-112.0" alpha4="150.0"/>
-        <Bond A="Ga" B="As" d0="2.44795" alpha="32.1530" alpha3="-105.0" alpha4="150.0"/>
-        <Bond A="Ga" B="Sb" d0="2.640" alpha="33.160" />
-        <Bond A="In" B="Sb" d0="2.805" alpha="26.610" />
-        <Angle A="As" B="Ga" C="As" gamma="tet" sigma="-4.099" beta="9.3703" />
-        <Angle A="Ga" B="As" C="Ga" gamma="tet" sigma="-4.099" beta="9.3703" />
-        <Angle A="In" B="As" C="In" gamma="tet" sigma="-5.753" beta="5.7599" />
-        <Angle A="As" B="In" C="As" gamma="tet" sigma="-5.753" beta="5.7599" />
-        <Angle A="Ga" B="As" C="In" gamma="-0.35016" sigma="-4.926" beta="7.5651" />
-        <Angle A="As" B="Ga" C="Sb" gamma="tet" sigma="0" beta="8.08355" />
-        <Angle A="Sb" B="Ga" C="Sb" gamma="tet" sigma="0" beta="7.2289" />
-        <Angle A="Sb" B="In" C="As" gamma="tet" sigma="0" beta="4.88615" />
-        <Angle A="Sb" B="In" C="Sb" gamma="tet" sigma="0" beta="4.2842" />
-        <Angle A="Ga" B="Sb" C="Ga" gamma="tet" sigma="0" beta="7.2289" />
-        <Angle A="In" B="Sb" C="In" gamma="tet" sigma="0" beta="4.2842" />
-        <Angle A="Ga" B="Sb" C="In" gamma="tet" sigma="0" beta="5.75655" />
-    </Functional>
+  <Structure>
+    <Cell>
+      <row x="0.0" y="0.5" z="0.5" tfreeze="xyz"  />
+      <row x="0.5" y="0.0" z="0.5" tfreeze="xyz"  />
+      <row x="0.5" y="0.5" z="0.0" tfreeze="xyz"  />
+    </Cell>
+    <Atom x="0.25" y="0.25" z="0.25" type="Ge" tfreeze="xyz" site=0 />
+    <Atom x="0.0" y="0.0" z="0.0" types="Ge"   tfreeze="xyz" site=1 />
+  </Structure>
+
+  <Lattice scale="5.5">
+    <row x="0.0" y="0.5" z="0.5" />
+    <row x="0.5" y="0.0" z="0.5" />
+    <row x="0.5" y="0.5" z="0.0" />
+    <site x="0.25" y="0.25" z="0.25">
+        <atom type="Si" />
+        <atom type="Ge" />
+    </site>
+    <site x="0.0" y="0.0" z="0.0">
+        <atom type="Si" /> 
+        <atom type="Ge" />           
+    </site>
+  </Lattice>
+
+  <Functional type="vff" direction="1 0 0" >
+     <Bond A="Si" B="Si" d0="2.3359" alpha="46.28" />
+     <Bond A="Si" B="Ge" d0="2.3729" alpha="42.71" />
+     <Bond A="Ge" B="Ge" d0="2.4177" alpha="38.57" />
+     <Angle A="Si" B="Si" C="Si" gamma="tet" sigma="0" beta="12.83"/>
+     <Angle A="Ge" B="Ge" C="Ge" gamma="tet" sigma="0" beta="10.59"/>
+     <Angle A="Si" B="Ge" C="Si" gamma="tet" sigma="0" beta="12.14"/>
+     <Angle A="Ge" B="Si" C="Ge" gamma="tet" sigma="0" beta="12.14"/>
+     <Angle A="Si" B="Si" C="Ge" gamma="tet" sigma="0" beta="12.49"/>
+     <Angle A="Si" B="Ge" C="Ge" gamma="tet" sigma="0" beta="11.37"/>
+     <tMinimizer type="decoupled" mid="1" >
+       <tMinimizer type="frprmn" itermax="4000" tolerance="0.00001"
+                  linetolerance="0.5" zeps="0.02" linestep="0.001" />
+       <Minimizer type="gsl_sd" itermax="4000" tolerance="0.00001"
+                  linetolerance="0.0001" zeps="0.02" linestep="0.00001" />
+     </tMinimizer>
+       <tMinimizer type="frprmn" itermax="4000" tolerance="0.0000001"
+                  linetolerance="0.0001" zeps="0.02" linestep="0.0000001" />
+       <Minimizer type="gsl_bfgs2" itermax="4000" tolerance="0.00001"
+                  linetolerance="0.0001" zeps="0.02" linestep="0.1" />
+  </Functional>
+
+  <Functional type="escan" method="completediag">
+      <Maskr filename="pseudos/maskr"/>
+
+      <GenPot x="32" y="16" z="16" cutoff="8.2">
+          <Pseudo filename="pseudos/vq.Si" />
+          <Pseudo filename="pseudos/vq.Ge" />
+          <Pseudo filename="pseudos/vq.SiGe.Si" />
+          <Pseudo filename="pseudos/vq.SiGe.Ge" />
+      </GenPot>
+
+      <References VBM="-4.9" CBM="-4.7" />
+      <Hamiltonian kinscal="1.0" smooth="1.0" potential="spinorbit" realcutoff="5" nbstates="1">
+          <SpinOrbit filename="pseudos/vwr.pso" izz="14014" pnl="0.05" />
+          <SpinOrbit filename="pseudos/vwr.pso" izz="32032" pnl="0.28" />
+          <SpinOrbit filename="pseudos/vwr.pso" izz="14032" pnl="0.28" />
+          <SpinOrbit filename="pseudos/vwr.pso" izz="32014" pnl="0.05" />
+      </Hamiltonian>
+  </Functional>
 </Job>
+

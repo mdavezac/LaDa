@@ -92,8 +92,9 @@ int main(int argc, char *argv[])
     
     structure.energy = vff.evaluate() / 16.0217733;
     const LaDa::atat::rMatrix3d stress = vff.Vff().get_stress();
-    std::cout << std::fixed << std::setprecision(5) 
-              << "Energy [eV]: " << std::setw(12) << structure.energy << std::endl
+    std::cout << std::fixed << std::setprecision(12) 
+              << "Energy [eV]: " << std::setw(18) << structure.energy << std::endl
+              << std::setprecision(5)
               << "Stress Tensor: " << std::endl 
               << std::setw(12) << stress(0,0) << " " << std::setw(12)
                                << stress(1,0) << " " << std::setw(12)

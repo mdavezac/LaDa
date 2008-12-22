@@ -91,30 +91,6 @@ namespace LaDa
         //! The type of the atom container
         typedef Crystal::Structure::t_Atoms t_Atoms;
 
-        //! Type of the atomic centers
-        typedef AtomicCenter t_Center;  
-        //! Type of the container holding the atomic centers
-        typedef t_Center :: t_Centers t_Centers;  
-        //! Type of the container holding the atomic functionals
-        typedef std::vector< AtomicFunctional > t_AtomicFunctionals;  
-
-
-      protected:
-        //! Crystal::Structure for which to compute energy and stress
-        mutable Crystal :: Structure &structure;
-        //! length below which first-neighbor relationship is defined
-        types::t_real bond_cutoff; 
-        //! \brief list of all AtomicCenter created from Vff::structure
-        //! \details Space for the atomic centers are reserved in the
-        //!          constructor. It is expected that the iterators will be valid
-        //!          throughout the life of the functional, starting with a call
-        //!          to the construction of the tree. If the order of the atoms
-        //!          in Vff::structure is changed, then it is imperative
-        //!          that the tree be reconstructed from scratch.
-        t_Centers centers;  
-        //! list of all possbile Atomic_Functionals for Vff::structure.lattice
-        t_AtomicFunctionals functionals;
-        
       public:
         //! \brief Constructor and Initializer
         //! \param _str structure for which to compute energy and stress
@@ -152,6 +128,28 @@ namespace LaDa
         //! \brief Loads Functional for one or two site lattices.
         //! \details If \a _node is not the correct node, the results are undefined.
         bool load_( const TiXmlElement &_node );
+
+        //! Type of the atomic centers
+        typedef AtomicCenter t_Center;  
+        //! Type of the container holding the atomic centers
+        typedef t_Center :: t_Centers t_Centers;  
+        //! Type of the container holding the atomic functionals
+        typedef std::vector< AtomicFunctional > t_AtomicFunctionals;  
+        
+        //! Crystal::Structure for which to compute energy and stress
+        mutable Crystal :: Structure &structure;
+        //! length below which first-neighbor relationship is defined
+        types::t_real bond_cutoff; 
+        //! \brief list of all AtomicCenter created from Vff::structure
+        //! \details Space for the atomic centers are reserved in the
+        //!          constructor. It is expected that the iterators will be valid
+        //!          throughout the life of the functional, starting with a call
+        //!          to the construction of the tree. If the order of the atoms
+        //!          in Vff::structure is changed, then it is imperative
+        //!          that the tree be reconstructed from scratch.
+        t_Centers centers;  
+        //! list of all possbile Atomic_Functionals for Vff::structure.lattice
+        t_AtomicFunctionals functionals;
         
 
 #      ifdef _LADADEBUG

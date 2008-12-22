@@ -71,13 +71,13 @@ namespace LaDa
         ~Regulated() {};
 
         //! Evaluates the cv score for the weights on input.
-        t_Return operator()( const types::t_real * _arg ) const; 
+        t_Return operator()( const t_Arg& _arg ) const; 
         //! Single fit.
         opt::ErrorTuple fit( BaseFit::t_Vector &_x,
                              const types::t_real *_weights ) const
           { return t_Base::operator()( _x, _weights, cgs ); }
         //! Evaluates the gradient.
-        void gradient( const types::t_real * _arg,
+        void gradient( const t_Arg& _arg,
                        types::t_real *_gradient ) const;
         //! Reduce regulated function and cluster by 1.
         Cluster reduce();

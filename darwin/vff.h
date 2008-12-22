@@ -74,12 +74,12 @@ namespace LaDa
     //!          constructor code of BandGap::Evaluator and
     //!          Molecularity::Evaluator, so go and check it out.
     //! \param T_FUNCTIONAL Vff::Functional (default) or derived class
-    template< class T_FUNCTIONAL = Vff::Functional >
-    class Darwin : public Vff::VABase< T_FUNCTIONAL >
+    template< class T_FUNCTIONAL = LaDa::Vff::Functional >
+    class Darwin : public LaDa::Vff::VABase< T_FUNCTIONAL >
     {
       public:
         typedef T_FUNCTIONAL t_Functional; //!< The base class
-        typedef Vff::VABase<T_FUNCTIONAL> t_Base; //!< The base class
+        typedef LaDa::Vff::VABase<T_FUNCTIONAL> t_Base; //!< The base class
 
       public:
         //! \brief Constructor.

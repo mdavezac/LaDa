@@ -166,7 +166,7 @@ SEPARABLES_DOC = $(SEPARABLES_FXL_CC) $(SEPARABLES_FXL_H) $(SEPARABLES_FXL_IMPL_
 VFF_FORTRAN_CC = fortran.cc
 VFF_FORTRAN_H  = fortran.h
 VFF_FORTRAN_DOC = $(VFF_FORTRAN_H) $(VFF_FORTRAN_CC) 
-VFF_CC = atomic_center.cc atomic_functional.cc functional.cc vff.cc # layered.cc # pescan_perturbation.cc 
+VFF_CC = atomic_center.cc atomic_functional.cc functional.cc vff.cc layered.cc # pescan_perturbation.cc 
 VFF_IMPL_H = va.impl.h pescan_perturbation.impl.h
 VFF_H  = functional.h  layered.h  va.h  pescan_perturbation.h vff.h \
          atomic_center.h atomic_functional.h $(VFF_IMPL_H)

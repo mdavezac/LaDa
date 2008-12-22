@@ -29,11 +29,11 @@ namespace LaDa
     //! \cond
     namespace details
     {
-      template< class T_FUNCTION >
+      template< class T_DATAPAIR >
         double gsl_f( const gsl_vector* _x, void* _data );
-      template< class T_FUNCTION >
+      template< class T_DATAPAIR >
         void gsl_df( const gsl_vector* _x, void* _data, gsl_vector* _grad );
-      template< class T_FUNCTION >
+      template< class T_DATAPAIR >
         void gsl_fdf( const gsl_vector *_x, void *_params, double *_r, gsl_vector *_grad);
     }
     //! \endcond
@@ -98,7 +98,7 @@ namespace LaDa
         Gsl () : tolerance(types::tolerance),
                  linetolerance(0.01),
                  linestep(0.1), 
-                 itermax(500), verbose(false) {}
+                 itermax(500), verbose(true) {}
         //! Destructor
         virtual ~Gsl(){};
 
@@ -226,6 +226,11 @@ namespace LaDa
           );
    
           gsl_multimin_fdfminimizer_free (solver);
+
+          // recomputes gradient just to make sure.
+          typename T_CONTAINER::value_type *grad = new typename T_CONTAINER::value_type[ _arg.size() ];
+          _func.gradient( _arg, grad );
+          delete[] grad;
    
           return newe;
    

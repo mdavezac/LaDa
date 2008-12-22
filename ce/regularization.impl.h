@@ -51,7 +51,7 @@ namespace LaDa
           opt::ErrorTuple fitnoreg = _reg.fit( ecis, &zero_vec[0] );
    
           // CV with zero weights
-          types::t_real cvwz( _reg( &zero_vec[0] ) ); 
+          types::t_real cvwz( _reg( zero_vec ) ); 
    
           // CV with optimized weights
           types::t_real cvw;

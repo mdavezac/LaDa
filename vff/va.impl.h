@@ -39,7 +39,7 @@ namespace LaDa
         typename t_VffBase :: t_Arg arg;
         t_VffBase :: init( arg );
           
-        minimizer( *( (t_VffBase*) this), arg );
+        if( arg.size() ) minimizer( *( (t_VffBase*) this), arg );
      
         t_VffBase :: structure.energy = t_VffBase::energy();
 
