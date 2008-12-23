@@ -83,20 +83,6 @@ namespace LaDa
          typedef t_VABase :: t_Type t_Type;
          //! see functional::Base::t_Container
          typedef t_VABase :: t_Container  t_Container;
-         //! Type of the minimizer for minimizing strain
-         typedef Minimizer::Any
-                 < 
-                   boost::mpl::vector
-                   <
-                     Minimizer::Frpr, 
-                     Minimizer::Gsl, 
-                     Minimizer::Minuit2
-                   > 
-                 > t_Minimizer;
-
-       protected:
-         //! The minimizer with which vff is minimized
-         t_Minimizer minimizer;
 
        public:
          //! Constructor and Initializer
@@ -138,9 +124,24 @@ namespace LaDa
           { return *static_cast<const t_VffBase*>(this); }
          //! gets already computed stress from vff. 
          void get_stress( atat::rMatrix3d &_s ) const { _s = Vff().stress; }
+         //! Returns constant structure.
+         const Crystal::Structure& get_structure() const { return structure; }
+         
 
        protected:
+         //! Type of the minimizer for minimizing strain
+         typedef Minimizer::Any
+                 < 
+                   boost::mpl::vector
+                   <
+                     Minimizer::Frpr, 
+                     Minimizer::Gsl, 
+                     Minimizer::Minuit2
+                   > 
+                 > t_Minimizer;
 
+         //! The minimizer with which vff is minimized
+         t_Minimizer minimizer;
     };
 
   } // namespace vff 

@@ -22,15 +22,15 @@ namespace LaDa
     template< class T_TYPE > 
       struct PythonConvexHull
       {
-        typedef ::opt::ConvexHull::FakeObject< T_TYPE >   t_FakeObject;
-        typedef ::opt::ConvexHull::Base< t_FakeObject > t_CHBase;
+        typedef LaDa::opt::ConvexHull::FakeObject< T_TYPE >   t_FakeObject;
+        typedef LaDa::opt::ConvexHull::Base< t_FakeObject > t_CHBase;
         
         static void add( t_CHBase &_ch, const boost::python::tuple &_t )
         {
           __DOASSERT( len( _t ) != 3, "Convex-hull tuple must contain three objects." )
           T_TYPE object = boost::python::extract< T_TYPE >( _t[0] );
           t_FakeObject fake( object );
-          ::opt::ConvexHull::NullObject::x = boost::python::extract< types::t_real >( _t[1] );
+          LaDa::opt::ConvexHull::NullObject::x = boost::python::extract< types::t_real >( _t[1] );
           types::t_real energy = boost::python::extract< types::t_real >( _t[2] );
           _ch.add( energy, fake );
         }
@@ -39,15 +39,15 @@ namespace LaDa
     template<>
       struct PythonConvexHull< boost::python::object >
       {
-        typedef ::opt::ConvexHull::FakeObject< boost::python::object >   t_FakeObject;
-        typedef ::opt::ConvexHull::Base< t_FakeObject > t_CHBase;
+        typedef LaDa::opt::ConvexHull::FakeObject< boost::python::object >   t_FakeObject;
+        typedef LaDa::opt::ConvexHull::Base< t_FakeObject > t_CHBase;
         t_CHBase ch;
         
         static void add( t_CHBase &_ch, const boost::python::tuple &_t )
         {
           __DOASSERT( len( _t ) != 3, "Convex-hull tuple must contain three objects." )
           t_FakeObject fake( _t[0] );
-         ::opt::ConvexHull::NullObject::x = boost::python::extract< types::t_real >( _t[1] );
+         LaDa::opt::ConvexHull::NullObject::x = boost::python::extract< types::t_real >( _t[1] );
           types::t_real energy = boost::python::extract< types::t_real >( _t[2] );
           _ch.add( energy, fake );
         }

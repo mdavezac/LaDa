@@ -1,5 +1,5 @@
 //
-//  Version: $Id: gsl_mins.h 895 2008-12-22 02:04:18Z davezac $
+//  Version: $Id$
 //
 #ifndef _LADA_MINIMIZERS_MINUIT_H_
 #define _LADA_MINIMIZERS_MINUIT_H_

@@ -58,8 +58,6 @@
 
 #ifndef _INMODULE_
 
-namespace LaDa
-{
 namespace atat
 {
   namespace details
@@ -110,7 +108,7 @@ namespace atat
     template< class T_MAT > T_MAT* inverse( T_MAT &_mat )
       { return new T_MAT( !_mat ); }
     template< class T_TYPE, class T_MAT > T_TYPE det( T_MAT &_mat )
-      { return ::atat::det( _mat ); }
+      { return ::LaDa::atat::det( _mat ); }
 #endif
 
     _TYPE_ _CLASSNAME_( getVecItem )( const _CLASSNAME_(Vector) &_v,
@@ -239,7 +237,6 @@ namespace atat
   }
 
 }
-} // namespace LaDa
 
 #else
 

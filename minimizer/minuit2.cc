@@ -1,5 +1,5 @@
 //
-//  Version: $Id: gsl_mins.cc 894 2008-12-20 01:34:01Z davezac $
+//  Version: $Id$
 //
 #ifdef HAVE_CONFIG_H
 #include <config.h>

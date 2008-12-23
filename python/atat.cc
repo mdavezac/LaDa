@@ -33,7 +33,7 @@ namespace LaDa
 {
   namespace Python
   {
-    using namespace atat;
+    using namespace LaDa::atat;
   # include "atat.impl.hpp"
 
   # define _INMODULE_
