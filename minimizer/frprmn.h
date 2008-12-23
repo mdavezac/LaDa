@@ -145,8 +145,9 @@ namespace LaDa
 #       define _MXPARM_ 300
         __DOASSERT( x_length > _MXPARM_,
                       "Current optimizer cannot go beyond " << _MXPARM_ << " variables\n"
-                   << "Change file cited above, as well as variable mxparm in minimizer/df1dim.f90 "
-                   << "and opt/linmin.f90 and recompile if you need to optimize larger structures.\n";)
+                      "Change file cited above, as well as variable mxparm in "
+                      "minimizer/df1dim.f90 and opt/linmin.f90 and recompile "
+                      "if you need to optimize larger structures.\n";)
 #       undef _MXPARM_
         double result;
   
@@ -160,6 +161,13 @@ namespace LaDa
                                   &itermax, &rtol );
         std::copy( x, x + _arg.size(), _arg.begin() );
 
+        { // recomputes gradient just to make sure.
+          typedef typename T_CONTAINER::value_type t_Type;
+          t_Type *grad = new t_Type[ _arg.size() ];
+          _function.gradient( _arg, grad );
+          delete[] grad;
+        }
+   
   
         lock = false;
         return _function( _arg );

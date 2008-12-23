@@ -332,6 +332,8 @@ AC_SUBST(BOOST_SIGNAL)
 AC_SUBST(BOOST_PYTHON)
 AC_SUBST(BOOST_REGEX)
 AC_SUBST(BOOST_CXXFLAGS)
+AC_SUBST(MINUIT_LIBS)
+AC_SUBST(MINUIT_CFLAGS)
 
 AC_OUTPUT(Makefile atat/Makefile physics/Makefile opt/Makefile crystal/Makefile
           vff/Makefile mpi/Makefile pescan_interface/Makefile darwin/Makefile 

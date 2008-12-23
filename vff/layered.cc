@@ -28,7 +28,6 @@ namespace LaDa
       template_strain(0,0) = u(0);
       template_strain(1,1) = u(1);
       template_strain(2,2) = u(2);
-      std::cout << "template strain: " << template_strain << "\n"; 
       return;
     }
 
@@ -37,7 +36,6 @@ namespace LaDa
       atat::rMatrix3d strain;
       unpack_variables( _arg, strain );
       t_Return energy = Vff::energy();
-      std::cout << "E: " << energy / 16.0217733 << "\n";
       return Vff::energy();
     }
 
@@ -78,13 +76,11 @@ namespace LaDa
     {
       t_Arg :: const_iterator i_x = _arg.begin();
 
-      std::cout << "strain : " << *i_x << "\n";
       strain = (*i_x) * template_strain; ++i_x;
       strain(0,0) += 1.0;
       strain(1,1) += 1.0;
       strain(2,2) += 1.0;
 
-      std::cout << strain << "\n";
       // compute resulting cell vectors
       structure.cell = strain * structure0.cell;
       unpack_positions( i_x, strain );
@@ -135,12 +131,12 @@ namespace LaDa
      }
 
     void Layered :: pack_gradients(const atat::rMatrix3d& _stress, 
-                                   t_GradientArg &_grad) const
+                                   t_GradientArg _grad) const
     {
       t_GradientArg i_grad(_grad);
 
       // first, external stuff
-      *i_grad = u * ( _stress(0,0) * u );
+      *i_grad = u * ( _stress * u );
       ++i_grad;
 
       // then atomic position stuff
@@ -160,7 +156,7 @@ namespace LaDa
       }
     }
 
-    void Layered :: gradient( const t_Arg& _arg, t_GradientArg &_i_grad ) const
+    void Layered :: gradient( const t_Arg& _arg, t_GradientArg _i_grad ) const
     {
       atat::rMatrix3d strain; strain.zero();
       t_Return energy = 0;
@@ -179,7 +175,6 @@ namespace LaDa
       for (; i_center != i_end; ++i_center)
         energy += functionals[i_center->kind()].
                         evaluate_with_gradient( *i_center, strain, stress, K0 );
-      std::cout << "E: " << energy / 16.0217733 << "\n";
 
       // now repacks into function::Base format
       pack_gradients(stress, _i_grad);

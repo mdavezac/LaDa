@@ -5,6 +5,8 @@
 #include <config.h>
 #endif
 
+#include <boost/lexical_cast.hpp>
+
 #include "gsl_mins.h"
 
 namespace LaDa
@@ -63,16 +65,23 @@ namespace LaDa
     bool Gsl :: Load_( const TiXmlElement &_node )
     {
       double d; int n;
-      _node.Attribute( "itermax", &n );
-      itermax = (n > 0) ? abs(n) : 10000;
-      _node.Attribute( "tolerance", &d );
-      tolerance = d ? types::t_real(d) : types::tolerance;
-      _node.Attribute( "linetolerance", &d );
-      linetolerance = d ? types::t_real(d) : 0.01;
-      _node.Attribute( "linestep", &d );
-      linestep = d ? types::t_real(d) : 0.1;
-      if( _node.Attribute("verbose") ) verbose = true;
-    
+      if( _node.Attribute( "itermax" ) )
+        itermax = boost::lexical_cast<types::t_unsigned>( _node.Attribute("itermax") );
+      if( _node.Attribute( "tolerance" ) )
+        tolerance = boost::lexical_cast<types::t_real>( _node.Attribute("tolerance") );
+      if( _node.Attribute( "linetolerance" ) )
+        linetolerance = boost::lexical_cast<types::t_real>( _node.Attribute("linetolerance") );
+      if( _node.Attribute( "linestep" ) )
+        linestep = boost::lexical_cast<types::t_real>( _node.Attribute("linestep") );
+      if( _node.Attribute("verbose") ) 
+      {
+        const std::string value( _node.Attribute("verbose") );
+        if( value == "true" or value == "TRUE" or value == "T" or value == "t" ) 
+          verbose = true;
+        else if( value == "false" or value == "FALSE" or value == "F" or value == "f" ) 
+          verbose = false;
+        else verbose = boost::lexical_cast<bool>( _node.Attribute("verbose") );
+      }
       return true;
     }
     

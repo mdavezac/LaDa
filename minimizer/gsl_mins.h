@@ -227,10 +227,13 @@ namespace LaDa
    
           gsl_multimin_fdfminimizer_free (solver);
 
-          // recomputes gradient just to make sure.
-          typename T_CONTAINER::value_type *grad = new typename T_CONTAINER::value_type[ _arg.size() ];
-          _func.gradient( _arg, grad );
-          delete[] grad;
+          
+          { // recomputes gradient just to make sure.
+            typedef typename T_CONTAINER::value_type t_Type;
+            t_Type *grad = new t_Type[ _arg.size() ];
+            _func.gradient( _arg, grad );
+            delete[] grad;
+          }
    
           return newe;
    

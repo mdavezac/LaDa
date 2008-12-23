@@ -27,7 +27,9 @@ namespace LaDa
     //!          next siblings.
     //! \todo Look amongst all siblings.
     const TiXmlElement* find_node( const TiXmlElement &_element,
-                                   const std::string& _name )
+                                   const std::string& _name,
+                                   const std::string& _attribute,
+                                   const std::string& _value )
     {
       const TiXmlElement *parent;
     
@@ -35,9 +37,26 @@ namespace LaDa
       std::string str = _element.Value();
       if ( str.compare(_name) == 0 ) return &_element;
       parent =  _element.FirstChildElement(_name);
-      if( parent ) return parent;
+      if( parent and _attribute == "" and _value == ""  ) return parent;
+      for(; parent; parent = parent->NextSiblingElement( _name ) )
+      {
+        if( not parent->Attribute( _attribute ) ) continue;
+        if( _value == "" ) return parent;
+        const std::string value = *parent->Attribute( _attribute );
+        if( _value == value ) return parent;
+      }
 
-      return _element.NextSiblingElement(_name);
+      parent = _element.NextSiblingElement(_name);
+      if( parent and _attribute == "" and _value == ""  ) return parent;
+      for(; parent; parent = parent->NextSiblingElement( _name ) )
+      {
+        if( not parent->Attribute( _attribute ) ) continue;
+        if( _value == "" ) return parent;
+        const std::string value = *parent->Attribute( _attribute );
+        if( _value == value ) return parent;
+      }
+
+      return NULL;
     }
 
 

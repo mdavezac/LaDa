@@ -19,11 +19,14 @@ namespace LaDa
   namespace opt
   {
     //! \brief Returns the node \a _name.
-    //! \details Looks first to \a _element, then its childrent, then its
-    //!          next siblings.
+    //! \details Looks first to \a _element, then its children, then its
+    //!          next siblings. 
     //! \todo Look amongst all siblings.
-    const TiXmlElement * find_node( const TiXmlElement &_element,
-                                    const std::string& _name );
+    const TiXmlElement* find_node( const TiXmlElement &_element,
+                                   const std::string& _name,
+                                   const std::string& _attribute = "",
+                                   const std::string& _value = "" );
+
 
     //! \brief Returns the node \<Functional type=\a _name\>.
     //! \details Looks first to \a _element, then its childrent, then its

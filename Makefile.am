@@ -92,3 +92,5 @@ clean-local:
 ########install-data-local: doc
 ########	$(INSTALL_DATA) -d $(srcdir)/doc $(docdir)
 endif
+
+configure.ac : .env

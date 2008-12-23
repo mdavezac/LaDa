@@ -21,6 +21,7 @@
 #include <minimizer/any.h>
 #include <minimizer/frprmn.h>
 #include <minimizer/gsl_mins.h>
+#include <minimizer/minuit2.h>
 #include <minimizer/decoupled.h>
 
 
@@ -89,7 +90,7 @@ namespace LaDa
                    <
                      Minimizer::Frpr, 
                      Minimizer::Gsl, 
-                     Minimizer::Decoupled
+                     Minimizer::Minuit2
                    > 
                  > t_Minimizer;
 

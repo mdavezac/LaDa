@@ -194,7 +194,7 @@ namespace LaDa
     }
 
     void Functional :: pack_gradients( const atat::rMatrix3d& _stress, 
-                                       t_GradientArg& _grad) const
+                                       t_GradientArg _grad) const
     {
       t_GradientArg i_grad(_grad);
 
@@ -229,7 +229,7 @@ namespace LaDa
       }
     }
 
-    void Functional :: gradient( const t_Arg& _arg, t_GradientArg& _i_grad ) const
+    void Functional :: gradient( const t_Arg& _arg, t_GradientArg _i_grad ) const
     {
       atat::rMatrix3d strain; strain.zero();
       t_Return energy = 0;

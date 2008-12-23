@@ -92,7 +92,7 @@ namespace LaDa
         //! \sa function::Base, function::Base::evaluate
         t_Return operator()( const t_Arg& _arg ) const; 
         //! Evaluates a gradient.
-        void gradient( const t_Arg& _arg, t_GradientArg& _grad ) const;
+        void gradient( const t_Arg& _arg, t_GradientArg _grad ) const;
 
         //! \brief initializes stuff before minimization
         //! \details Defines the packing and unpacking process, such that only unfrozen
@@ -116,7 +116,7 @@ namespace LaDa
         //! \details Functional knows about Functional::Structure, whereas
         //! minizers now about function::Base, this function does the interface
         //! between the two
-        void pack_gradients(const atat::rMatrix3d& _stress, t_GradientArg &_grad) const;
+        void pack_gradients(const atat::rMatrix3d& _stress, t_GradientArg _grad) const;
 
 
         //! Initializes Layered::u and Layered::template_strain
