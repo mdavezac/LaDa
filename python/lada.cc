@@ -45,8 +45,10 @@ BOOST_PYTHON_MODULE(LaDa)
   LaDa::Python::expose_errors();
   LaDa::Python::exposeConvexHull<boost::python::object>( "ConvexHull" );
 # ifdef __DOCE
-  LaDa::Python::expose_ce();
+    LaDa::Python::expose_ce();
 # endif
-  LaDa::Python::expose_vff();
-  LaDa::Python::expose_layeredvff();
+# ifdef __DOVFF
+    LaDa::Python::expose_vff();
+    LaDa::Python::expose_layeredvff();
+# endif
 }

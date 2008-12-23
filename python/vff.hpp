@@ -9,8 +9,6 @@
 #include <config.h>
 #endif
 
-#include <crystal/structure.h>
-
 namespace LaDa
 {
   namespace Python

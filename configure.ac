@@ -163,6 +163,10 @@ AH_TEMPLATE([__DOCE])
 if test x$ce = xtrue; then
   AC_DEFINE([__DOCE],[],[])
 fi
+AH_TEMPLATE([__DOVFF])
+if test x$vff = xtrue; then
+  AC_DEFINE([__DOVFF],[],[])
+fi
 
 # ************************************
 # ****** Checks compiler compliances

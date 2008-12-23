@@ -2,20 +2,29 @@
 # Version: $Id$
 #
 include $(top_srcdir)/Files
+AM_CPPFLAGS = -I $(top_srcdir) @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
+	      @MPI_CFLAGS@ @BOOST_CXXFLAGS@ -I@PYTHON_INCLUDE_DIR@
+AM_LDFLAGS = @TINYXML_LIBS@  @BOOST_LDFLAGS@ @BOOST_PYTHON@ @BOOST_FS@  
+
 if DOCE
   CECC=$(PYTHON_CE_CC)
   CEH=$(PYTHON_CE_H)
   CELIB=../ce/libce.la
 endif 
-AM_CPPFLAGS = -I $(top_srcdir) @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
-	      @MPI_CFLAGS@ @BOOST_CXXFLAGS@ -I@PYTHON_INCLUDE_DIR@\
-	      @MINUIT_CFLAGS@ @GSL_CFLAGS@
-AM_LDFLAGS = @TINYXML_LIBS@  @BOOST_LDFLAGS@ @MINUIT_LIBS@ @GSL_LIBS@ @BOOST_PYTHON@ @BOOST_FS@  
+if DOVFF
+  VFFCC=$(PYTHON_VFF_CC)
+  VFFH=$(PYTHON_VFF_H)
+  VFFLIBS=../minimizer/libminimizer.la ../vff/libvff.la
+  AM_CPPFLAGS += @MINUIT_CFLAGS@ @GSL_CFLAGS@
+  AM_LDFLAGS += @MINUIT_LIBS@ @GSL_LIBS@ 
+endif
+
 lib_LTLIBRARIES = liblada.la 
 liblada_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
 liblada_la_SOURCES = $(PYTHON_CC) $(CECC)
 liblada_la_LDFLAGS = $(AM_LDFLAGS) -Bshared 
-liblada_la_LIBADD =  ../crystal/libcrystal.la \
+liblada_la_LIBADD =  $(CELIB) $(VFFLIB)
+                     ../crystal/libcrystal.la \
 		     ../atat/libatat.la \
 		     ../opt/libpythonconvenience.la \
 		     ../minimizer/libminimizer.la \
