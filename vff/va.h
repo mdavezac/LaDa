@@ -18,7 +18,7 @@
 #include "functional.h"
 
 #include <minimizer/function_wrapper.h>
-#include <minimizer/any.h>
+#include <minimizer/variant.h>
 #include <minimizer/frprmn.h>
 #include <minimizer/gsl_mins.h>
 #include <minimizer/minuit2.h>
@@ -132,7 +132,7 @@ namespace LaDa
 
        protected:
          //! Type of the minimizer for minimizing strain
-         typedef Minimizer::Any
+         typedef Minimizer::Variant
                  < 
                    boost::mpl::vector
                    <

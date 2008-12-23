@@ -18,7 +18,7 @@
 
 #include <opt/debug.h>
 
-#include "any.h"
+#include "variant.h"
 
 //! \cond
 extern "C" double FC_FUNC(frprmn, FRPRMN)

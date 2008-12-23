@@ -11,51 +11,17 @@ lattice = Lattice()
 lattice.fromXML( "input.xml" )
 vff = LayeredVff()
 vff.structure.fromXML( "input.xml" )
-structure = vff.structure
+structure =  Structure( vff.structure )
 vff.fromXML( "input.xml" )
 vff.init()
 
 length = 31
 scales = [ float(x) / length + 5 for x in range( length ) ]
-vff.structure = structure
-for x in scales:
-  vff.structure.scale = x
-  print x, vff.evaluate() 
-print "&"
-
-vff.direction = rVector3d( [ 1, 0, 0 ] )
-vff.structure = structure
-for x in scales:
-  vff.structure.scale = x
-  print x, vff.evaluate() 
-print "&"
-
-vff.direction = rVector3d( [ 0, 1, 0 ] )
-vff.structure = structure
-for x in scales:
-  vff.structure.scale = x
-  print x, vff.evaluate() 
-print "&"
-
-vff.direction = rVector3d( [ 0, 0, 1 ] )
-vff.structure = structure
-for x in scales:
-  vff.structure.scale = x
-  print x, vff.evaluate() 
-print "&"
-
-vff.direction = rVector3d( [ 1, 0, 1 ] )
-vff.structure = structure
-for x in scales:
-  vff.structure.scale = x
-  print x, vff.evaluate() 
-print "&"
-
-vff.direction = rVector3d( [ 2, 0, 1 ] )
-vff.structure = structure
-for x in scales:
-  vff.structure.scale = x
-  print x, vff.evaluate() 
-
-
-
+directions = [ [1,0,0], [0,1,0], [2,1,0], [2,1,1], [3,1,1], [5,1,1] ]
+for direction in directions:
+  vff.direction = rVector3d( direction )
+  vff.structure = Structure( structure )
+  for x in scales:
+    vff.structure.scale = x
+    print x, vff.evaluate() 
+  print "&"

@@ -38,7 +38,7 @@ namespace LaDa
     {
       using namespace boost::python;
       class_< Crystal::Structure >( "Structure" )
-        .def( init< Crystal::Structure >() )
+        .def( init< Crystal::Structure& >() )
         .def_readwrite( "cell",    &Crystal::Structure::cell )
         .def_readwrite( "atoms",   &Crystal::Structure::atoms )
         .def_readwrite( "k_vecs",   &Crystal::Structure::k_vecs )
@@ -51,7 +51,7 @@ namespace LaDa
         .def( "lattice", &return_crystal_lattice< Crystal::Structure >,
               return_value_policy<reference_existing_object>() );
       class_< Crystal::TStructure<std::string> >( "sStructure" )
-        .def( init< Crystal::TStructure<std::string> >() )
+        .def( init< Crystal::TStructure<std::string>& >() )
         .def_readwrite( "cell",    &Crystal::TStructure<std::string>::cell )
         .def_readwrite( "atoms",   &Crystal::TStructure<std::string>::atoms )
         .def_readwrite( "energy",  &Crystal::TStructure<std::string>::energy )

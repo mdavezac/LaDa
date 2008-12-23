@@ -20,7 +20,7 @@
 
 #include "frprmn.h"
 #include "gsl_mins.h"
-#include "any.h"
+#include "variant.h"
 
 
 namespace LaDa
@@ -77,7 +77,7 @@ namespace LaDa
         template< class T_FUNCTION, class T_CONTAINER, class T_RETURN >
           T_RETURN operator_( const T_FUNCTION &_func, T_CONTAINER &_arg ) const;
 
-        Any< boost::mpl::vector< Frpr, Gsl > > minimizer;
+        Variant< boost::mpl::vector< Frpr, Gsl > > minimizer;
     };
     LADA_REGISTER_MINIMIZER_VARIANT_HEADER( Decoupled, "decoupled" )
 

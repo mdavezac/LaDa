@@ -38,17 +38,17 @@ namespace LaDa
       t_Arg :: const_iterator i_x = _arg.begin();
 
       _strain(0,0) = ( structure.freeze & Crystal::Structure::FREEZE_XX ) ?
-                    1.0 : (*i_x++);
+                       types::t_real(1.0) : (*i_x++);
       _strain(1,1) = ( structure.freeze & Crystal::Structure::FREEZE_YY ) ?
-                    1.0 : (*i_x++);
+                       types::t_real(1.0) : (*i_x++);
       _strain(2,2) = ( structure.freeze & Crystal::Structure::FREEZE_ZZ ) ?
-                    1.0 : (*i_x++);
+                       types::t_real(1.0) : (*i_x++);
       _strain(0,1) = _strain (1,0) = (structure.freeze & Crystal::Structure::FREEZE_XY) ?
-                                   0.0 : (*i_x++);
+                                       types::t_real(0.0) : (*i_x++);
       _strain(0,2) = _strain (2,0) = (structure.freeze & Crystal::Structure::FREEZE_XZ) ?
-                                   0.0 : (*i_x++);
+                                       types::t_real(0.0) : (*i_x++);
       _strain(2,1) = _strain (1,2) = (structure.freeze & Crystal::Structure::FREEZE_YZ) ?
-                                   0.0 : (*i_x++);
+                                       types::t_real(0.0) : (*i_x++);
 
       // compute resulting cell vectors
       structure.cell = _strain * structure0.cell;
@@ -65,13 +65,13 @@ namespace LaDa
       {
         atat::rVector3d pos;
         if ( not (i_atom->freeze & t_Atom::FREEZE_X ) )
-          { pos[0] = 2.0 * (*_i_x ); ++_i_x; }
+          { pos[0] = types::t_real(2.0) * (*_i_x ); ++_i_x; }
         else pos[0] = i_atom->pos[0];
         if ( not (i_atom->freeze & t_Atom::FREEZE_Y ) )
-          { pos[1] = 2.0 * (*_i_x ); ++_i_x; }
+          { pos[1] = types::t_real(2.0) * (*_i_x ); ++_i_x; }
         else pos[1] = i_atom->pos[1];
         if ( not (i_atom->freeze & t_Atom::FREEZE_Z ) )
-          { pos[2] = 2.0 * (*_i_x ); ++_i_x; }
+          { pos[2] = types::t_real(2.0) * (*_i_x ); ++_i_x; }
         else pos[2] = i_atom->pos[2];
 
         i_atom->pos = _strain * pos;
@@ -86,7 +86,6 @@ namespace LaDa
                 or fixed_index[1] >= structure0.atoms.size()
                 or fixed_index[2] >= structure0.atoms.size(),
                 "fixed_index contains out-of-range indices.\n" )
-      atat::rMatrix3d cell_inv = !structure.cell;
 
       types::t_real x =   structure0.atoms[fixed_index[0]].pos[0] 
                         - structure.atoms [fixed_index[0]].pos[0];
@@ -123,9 +122,9 @@ namespace LaDa
 
       atat::rMatrix3d strain;
       strain.zero(); 
-      strain(0,0) = 1.0;
-      strain(1,1) = 1.0;
-      strain(2,2) = 1.0;
+      strain(0,0) = types::t_real(1.0);
+      strain(1,1) = types::t_real(1.0);
+      strain(2,2) = types::t_real(1.0);
 
       pack_variables( _arg, strain);
       
@@ -136,7 +135,6 @@ namespace LaDa
     {
       fixed_index[0] = -1; fixed_index[1] = -1; fixed_index[2] = -1; 
       types::t_unsigned dof = 0;
-      atat::rMatrix3d cell_inv = !structure.cell;
       t_Atoms :: iterator i_atom =  structure0.atoms.begin();
       t_Atoms :: iterator i_atom_end =  structure0.atoms.end();
       for( types::t_unsigned n = 0; i_atom != i_atom_end; ++i_atom, ++n ) 
@@ -185,11 +183,11 @@ namespace LaDa
        for(; i_atom != i_atom_end; ++i_atom )
        {
          if ( not (i_atom->freeze & t_Atom::FREEZE_X ) )
-           { *_i_var = i_atom->pos[0] * 0.5; ++_i_var; }
+           { *_i_var = i_atom->pos[0] * types::t_real(0.5); ++_i_var; }
          if ( not (i_atom->freeze & t_Atom::FREEZE_Y ) )
-           { *_i_var = i_atom->pos[1] * 0.5; ++_i_var; }
+           { *_i_var = i_atom->pos[1] * types::t_real(0.5); ++_i_var; }
          if ( not (i_atom->freeze & t_Atom::FREEZE_Z ) )
-           { *_i_var = i_atom->pos[2] * 0.5; ++_i_var; }
+           { *_i_var = i_atom->pos[2] * types::t_real(0.5); ++_i_var; }
        }
     }
 
@@ -232,7 +230,7 @@ namespace LaDa
     void Functional :: gradient( const t_Arg& _arg, t_GradientArg _i_grad ) const
     {
       atat::rMatrix3d strain; strain.zero();
-      t_Return energy = 0;
+      t_Return energy(0);
       foreach( const t_Center& center, centers ) center.gradient = atat::rVector3d(0,0,0);
 
       // unpacks variables into vff atomic_center and strain format

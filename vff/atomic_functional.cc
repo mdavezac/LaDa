@@ -171,9 +171,9 @@ namespace LaDa
           dummy = e0 * ( (*i_alpha) * s33128 + dummy ); --i_alpha;
           dummy = e0 * ( (*i_alpha) * thre16 + dummy ); --i_alpha;
           dummy = e0 * ( (*i_alpha) * s33o8 + dummy ); --i_alpha;
-          types::t_real e0grad =   2.0 * scale2 / bond_length 
-                                 * e0 * ( 1.5e0 * (*i_alpha) + dummy); 
-          atat::rVector3d hold = e0grad * _strain * d0;
+          types::t_real e0grad =   types::t_real(2.0) * scale2 / bond_length 
+                                 * e0 * ( types::t_real(1.5) * (*i_alpha) + dummy); 
+          atat::rVector3d hold = e0grad * ( _strain * d0 );
           _center.gradient -= hold; // with respect to atomic positions
           i_bond->gradient += hold;  
 
@@ -181,7 +181,7 @@ namespace LaDa
           for( int i = 0; i < 3; ++i )
             for( int j = 0; j < 3; ++j )
               for( int k = 0; k < 3; ++k )
-                _stress(i,j) += d0[i] * d0[k] * _K0(k,j) * e0grad * 0.5;
+                _stress(i,j) += d0[i] * d0[k] * _K0(k,j) * e0grad * types::t_real(0.5);
         }
 
         // Three body terms
@@ -218,10 +218,10 @@ namespace LaDa
               dummy = e1 * ( (*i_beta) * s33256 + dummy ); --i_beta;
               dummy = e1 * ( (*i_beta) * thre32 + dummy ); --i_beta;
               dummy = e1 * ( (*i_beta) * s33o16 + dummy ); --i_beta;
-              types::t_real e1grad =   2.0 * scale2 / mean_length
-                                     * e1 * ( *(  i_beta) * 0.75e0 + dummy);
-              atat::rVector3d hold0 = e1grad * _strain * d0;
-              atat::rVector3d hold1 = e1grad * _strain * d1;
+              types::t_real e1grad =   types::t_real(2.0) * scale2 / mean_length
+                                     * e1 * ( *(  i_beta) * types::t_real(0.75) + dummy);
+              atat::rVector3d hold0 = e1grad * ( _strain * d0 );
+              atat::rVector3d hold1 = e1grad * ( _strain * d1 );
               _center.gradient -= ( hold0 + hold1); // with respect to atomic positions
               i_bond->gradient += hold1; 
               i_angle->gradient += hold0; 
@@ -231,7 +231,7 @@ namespace LaDa
                 for( int j = 0; j < 3; ++j )
                   for( int k = 0; k < 3; ++k )
                     _stress(i,j) +=   (d1[i] * d0[k] + d0[i] * d1[k]) 
-                                    * _K0(k,j) * e1grad * 0.5;
+                                    * _K0(k,j) * e1grad * types::t_real(0.5);
             }
 
             // Bond angle energy
@@ -239,11 +239,11 @@ namespace LaDa
 
             // Bond angle gradients
             { // position gradients
-              atat::rVector3d hold0 = 1.5 * e1 * sigma / bond_length * scale2
+              atat::rVector3d hold0 = types::t_real(1.5) * e1 * sigma / bond_length * scale2
                                       * ( _strain * d0 );
-              atat::rVector3d hold1 = 0.75 * e0 * sigma / mean_length * scale2
+              atat::rVector3d hold1 = types::t_real(0.75) * e0 * sigma / mean_length * scale2
                                       * ( _strain * d1 );
-              atat::rVector3d hold2 = 0.75 * e0 * sigma / mean_length * scale2
+              atat::rVector3d hold2 = types::t_real(0.75) * e0 * sigma / mean_length * scale2
                                       * ( _strain * d0 );
               _center.gradient -= (hold0 + hold1 + hold2);
               (*i_bond).gradient += (hold0 + hold1); //(hold0 + hold1);
@@ -254,8 +254,8 @@ namespace LaDa
             for( int i = 0; i < 3; ++i )
               for( int j = 0; j < 3; ++j )
                 for( int k = 0; k < 3; ++k )
-                  _stress(i,j) +=   _K0(k,j) * 0.375 * sigma * scale2 
-                                  * (   2.0 * e1 / bond_length * d0[i] * d0[k] 
+                  _stress(i,j) +=   _K0(k,j) * types::t_real(0.375) * sigma * scale2 
+                                  * (   types::t_real(2) * e1 / bond_length * d0[i] * d0[k] 
                                       +   e0 / mean_length 
                                         * (d0[i] * d1[k] + d1[i] * d0[k]) );
           } // angle loop

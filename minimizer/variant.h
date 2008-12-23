@@ -20,16 +20,16 @@ namespace LaDa
   {
     //! Wraps around other minimimizers to provided single Load/Launch.
     template< class T_MPL_VECTOR >
-      class Any
+      class Variant
       {
         public:
           //! list of minimizers.
           typedef T_MPL_VECTOR t_Minimizers;
 
           //! Constructor.
-          Any() {}
+          Variant() {}
           //! Copy Constructor.
-          Any( const Any& _c ) : minimizer( _c.minimizer ) {}
+          Variant( const Variant& _c ) : minimizer( _c.minimizer ) {}
   
   
           //! Calls minimizer.
@@ -77,7 +77,7 @@ namespace LaDa
                 {
                   typedef typename boost::mpl::deref<T_FIRST> :: type t_Type;
                   if( not _func.Load( _node ) ) return false;
-                  std::cout <<   "Successfuly loaded "
+                  std::cerr <<   "Successfuly loaded "
                                + MinimizerVariantType<t_Type>::name
                                + " minimizer.\n";
                   return true;
@@ -129,7 +129,7 @@ namespace LaDa
 
     template< class T_MINIMIZERS > template< class T_FUNCTOR >
       typename T_FUNCTOR :: t_Return 
-        Any<T_MINIMIZERS> :: operator()( const T_FUNCTOR& _a, typename T_FUNCTOR :: t_Arg& _b ) const
+        Variant<T_MINIMIZERS> :: operator()( const T_FUNCTOR& _a, typename T_FUNCTOR :: t_Arg& _b ) const
         {
           typedef typename T_FUNCTOR :: t_Return t_Return;
           typedef typename T_FUNCTOR :: t_Arg t_Arg;
@@ -138,7 +138,7 @@ namespace LaDa
 
 
   template< class T_MINIMIZERS > 
-    bool Any<T_MINIMIZERS>::Load( const TiXmlElement& _node )
+    bool Variant<T_MINIMIZERS>::Load( const TiXmlElement& _node )
     {
       const TiXmlElement *node = opt::find_node( _node, "Minimizer" );
       for(; node; node = node->NextSiblingElement( "Minimizer" ) )

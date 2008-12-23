@@ -6,7 +6,7 @@
 #include <config.h>
 #endif
 
-#include "any.h"
+#include "variant.h"
 
 namespace LaDa
 {
@@ -73,7 +73,7 @@ namespace LaDa
       }
 
 
-    bool Any::Load( const TiXmlElement& _node )
+    bool Variant::Load( const TiXmlElement& _node )
     {
       const TiXmlElement *node = opt::find_node( _node, "Minimizer" );
       for(; node; node = node->NextSiblingElement( "Minimizer" ) )

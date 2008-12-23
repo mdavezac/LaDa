@@ -19,7 +19,7 @@
 #include <opt/algorithms.h>
 
 #include "gsl.h"
-#include "any.h"
+#include "variant.h"
 
 
 namespace LaDa
@@ -98,7 +98,7 @@ namespace LaDa
         Gsl () : tolerance(types::tolerance),
                  linetolerance(0.01),
                  linestep(0.1), 
-                 itermax(500), verbose(true) {}
+                 itermax(500), verbose(false) {}
         //! Destructor
         virtual ~Gsl(){};
 

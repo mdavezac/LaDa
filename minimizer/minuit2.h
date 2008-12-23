@@ -18,7 +18,7 @@
 
 #include <opt/types.h>
 
-#include "any.h"
+#include "variant.h"
 
 
 namespace LaDa
@@ -104,6 +104,8 @@ namespace LaDa
             function_.gradient( _arg, &grad[0] );
             return grad;
           }
+        // //! do not check gradient.
+        // virtual bool CheckGradient() const {return false;}
 
         protected:
           //! A constant reference to the wrapped function.

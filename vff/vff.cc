@@ -75,7 +75,7 @@ namespace LaDa
       atat::rVector3d frac_image;
       atat::rVector3d cut;
       cut = neighbors.front();
-      types::t_real cutoff = 0.25 * atat::norm2( neighbors.front() );
+      types::t_real cutoff = types::t_real(0.25) * atat::norm2( neighbors.front() );
       for( i_center = i_begin; i_center != i_end; ++i_center )
       {
         for( i_bond = i_begin; i_bond != i_end; ++i_bond)
@@ -175,9 +175,8 @@ namespace LaDa
 
       // reads and initializes bond cutoff
       _element.Attribute( "cutoff", &bond_cutoff );
-      if ( bond_cutoff == 0 )
-        bond_cutoff = 1.25; 
-      bond_cutoff *= std::sqrt(3.0) / 4.0; // axes bs same as CE
+      if ( bond_cutoff == 0 ) bond_cutoff = types::t_real(1.25); 
+      bond_cutoff *= std::sqrt(3.0) / types::t_real(4); // axes bs same as CE
       bond_cutoff *= bond_cutoff; // squared for simplicity
       
       // loads functionals.

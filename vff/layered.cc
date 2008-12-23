@@ -22,7 +22,7 @@ namespace LaDa
       // The first vector of the cell should indicate the direction of the
       // layering.
       u = is_fixed_by_input ? direction: structure.cell.get_column(0);
-      types::t_real a = 1.0 / std::sqrt( atat::norm2(u) );
+      types::t_real a = types::t_real(1.0) / std::sqrt( atat::norm2(u) );
       u = a * u;
       template_strain.zero(); 
       template_strain(0,0) = u(0);
@@ -53,9 +53,9 @@ namespace LaDa
       _arg.resize( dof );
 
       atat::rMatrix3d strain; strain.zero(); 
-      strain(0,0) = 1.0;
-      strain(1,1) = 1.0;
-      strain(2,2) = 1.0;
+      strain(0,0) = types::t_real(1.0);
+      strain(1,1) = types::t_real(1.0);
+      strain(2,2) = types::t_real(1.0);
       pack_variables( _arg, strain );
       
       return true;
@@ -66,7 +66,7 @@ namespace LaDa
     {
       // finally, packs vff format into function::Base format
       t_Arg :: iterator i_var = _arg.begin();
-      *i_var = u * (_strain * u) - 1.0;
+      *i_var = u * (_strain * u) - types::t_real(1.0);
       ++i_var;
       pack_positions( i_var );
     }
@@ -77,9 +77,9 @@ namespace LaDa
       t_Arg :: const_iterator i_x = _arg.begin();
 
       strain = (*i_x) * template_strain; ++i_x;
-      strain(0,0) += 1.0;
-      strain(1,1) += 1.0;
-      strain(2,2) += 1.0;
+      strain(0,0) += types::t_real(1.0);
+      strain(1,1) += types::t_real(1.0);
+      strain(2,2) += types::t_real(1.0);
 
       // compute resulting cell vectors
       structure.cell = strain * structure0.cell;
@@ -136,7 +136,7 @@ namespace LaDa
       t_GradientArg i_grad(_grad);
 
       // first, external stuff
-      *i_grad = u * ( _stress * u );
+      *i_grad = _stress(0,0) * u(0) + _stress(1,1) * u(1) + _stress(2,2) * u(2);
       ++i_grad;
 
       // then atomic position stuff
@@ -159,7 +159,7 @@ namespace LaDa
     void Layered :: gradient( const t_Arg& _arg, t_GradientArg _i_grad ) const
     {
       atat::rMatrix3d strain; strain.zero();
-      t_Return energy = 0;
+      t_Return energy(0);
       foreach( const t_Center& center, centers ) center.gradient = atat::rVector3d(0,0,0);
 
       // unpacks variables into vff atomic_center and strain format
