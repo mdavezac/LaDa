@@ -7,9 +7,12 @@
 
 
 #include <boost/python.hpp>
+#include <boost/utility/enable_if.hpp>
+#include <boost/type_traits/is_same.hpp>
 
 #include <vff/functional.h>
 #include <vff/layered.h>
+#include <vff/va.h>
 
 #include "vff.hpp"
 
@@ -32,9 +35,8 @@ namespace LaDa
           __DOASSERT( not docHandle.FirstChild("Job").Element(),
                       "Could not find <Job> tag in " << _filename << ".\n" )
          
-          __DOASSERT( not _type.Load( not docHandle.FirstChold("Job").Element ),
-                         "Could not load " << nodename<T_TYPE>()
-                      << " from " << _filename << ".\n" )
+          __DOASSERT( not _type.Load( *docHandle.FirstChild("Job").Element() ),
+                         "Could not load Vff functional from " + _filename + ".\n" )
         }
     }
 
@@ -59,19 +61,24 @@ namespace LaDa
         //! Returns the stress.
         atat::rMatrix3d get_stress() const { return functional_->get_stress(); }
 
+        //! Loads from an XML input file.
+        bool Load( const TiXmlElement &_node ) { return functional_->Load( _node ); }
+       
         //! The owned structure.
         Crystal::Structure structure;
+
 
       protected:
         //! The functional.
         boost::shared_ptr< LaDa::Vff::VABase< T_VFF > > functional_;
     };
 
-    //! Exposes direction parameter in a relatively safe way.
-    class LayeredVff : public LaDa::Vff::Layered
+    class LVff : public LaDa::Vff::Layered
     {
       public:
-        //! Returns direction.
+        //! Constructor.
+        LVff( LaDa::Crystal::Structure& _str ) : LaDa::Vff::Layered( _str ) {}
+        //! Exposes direction setters.
         atat::rVector3d get_direction() const { return direction; } 
         //! Returns direction.
         void set_direction( const atat::rVector3d& _direction)
@@ -82,31 +89,49 @@ namespace LaDa
         } 
     };
 
+    class LayeredVff : public Vff< LVff >
+    {
+      public:
+        //! Exposes direction setters.
+        atat::rVector3d get_direction() const { return functional_->Vff().get_direction(); } 
+        //! Returns direction.
+        void set_direction( const atat::rVector3d& _direction)
+          { functional_->Vff().set_direction( _direction ); } 
+    };
+
+
 #   ifdef EXPOSEVFF 
 #     error Macro EXPOSEVFF already exists.
 #   endif 
 #   define EXPOSEVFF( a, b ) \
-      bp::class_< b >( #a ) \
-        .def( init< b >() ) \
+      bp::class_< b >( a ) \
+        .def( bp::init< b >() ) \
         .def_readwrite( "structure",    &b::structure ) \
-        .def( "fromXML",  &XML::Vff_from_XML ) \
+        .def( "fromXML",  &XML::Vff_from_XML<b> ) \
         .def( "evaluate",  &b::operator() ) \
-        .def( "init",  &b::init() ) \
-        .add_property( "stress",  &b::get_stress() ) 
+        .def( "init",  &b::init ) \
+        .add_property( "stress",  &b::get_stress ) 
 
     void expose_vff()
     {
-      typedef Vff< Lada::Vff::Functional > t_Vff;
+      typedef Vff< LaDa::Vff::Functional > t_Vff;
       namespace bp = boost::python;
+     //bp::class_< t_Vff >( "Vff" ) 
+     //  .def( bp::init< t_Vff >() )
+     //  .def_readwrite( "structure", &t_Vff::structure )
+     //  .def( "fromXML",  &XML::Vff_from_XML<t_Vff> ) 
+     //  .def( "evaluate",  &t_Vff::operator() ) 
+     //  .def( "init",  &t_Vff::init )
+     //  .add_property( "stress",  &t_Vff::get_stress );
       EXPOSEVFF( "Vff", t_Vff );
     }
 
     void expose_layeredvff()
     {
-      typedef Vff< LayeredVff > t_Vff;
+      typedef LayeredVff t_Vff;
       namespace bp = boost::python;
       EXPOSEVFF( "LayeredVff", t_Vff )
-        .add_property( "stress",  &b::get_direction(), &b::set_direction );
+        .add_property( "direction",  &t_Vff::get_direction, &t_Vff::set_direction );
     }
 
 #   undef EXPOSEVFF

@@ -16,7 +16,7 @@ namespace LaDa
   namespace Python
   {
     void expose_vff();
-    void expose_layered_vff();
+    void expose_layeredvff();
   }
 } // namespace LaDa
 #endif

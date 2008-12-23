@@ -19,6 +19,7 @@
 #ifdef __DOCE
 #  include "ce.hpp"
 #endif
+#include "vff.hpp"
 
 // namespace PythonLaDa
 // {
@@ -46,4 +47,6 @@ BOOST_PYTHON_MODULE(LaDa)
 # ifdef __DOCE
   LaDa::Python::expose_ce();
 # endif
+  LaDa::Python::expose_vff();
+  LaDa::Python::expose_layeredvff();
 }

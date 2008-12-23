@@ -22,7 +22,7 @@ namespace LaDa
               static bool apply( T_FUNCTOR& _func, const TiXmlElement &_node )
               {
                 if( not _func.Load( _node ) ) return false;
-                std::cout << "Successfuly loaded " + name(_func) + " minimizer.\n";
+                std::cerr << "Successfuly loaded " + name(_func) + " minimizer.\n";
                 return true;
               }
             const std::string name( Frpr& _func ) { return "original VFF"; }

@@ -122,11 +122,13 @@ namespace LaDa
          //! Returns constant reference to the Vff base class
          const t_VffBase& Vff() const
           { return *static_cast<const t_VffBase*>(this); }
-         //! gets already computed stress from vff. 
-         void get_stress( atat::rMatrix3d &_s ) const { _s = Vff().stress; }
          //! Returns constant structure.
          const Crystal::Structure& get_structure() const { return structure; }
          
+
+          //! \brief Returns a reference to the computed stress
+          //! \sa Functional::stress
+          const atat::rMatrix3d& get_stress() const { return t_VffBase::stress; }
 
        protected:
          //! Type of the minimizer for minimizing strain
