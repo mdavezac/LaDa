@@ -4,6 +4,7 @@
 #
 from LaDa import rMatrix3d, rVector3d, make_rMatrix3d, Lattice, \
                  Structure, Vff, LayeredVff, Escan
+import boost.mpi as mpi
 from sys import exit
 
 XMLfilename = "input.xml"
@@ -16,6 +17,7 @@ structure =  Structure( vff.structure )
 vff.fromXML( XMLfilename )
 vff.init()
 escan = Escan()
+escan.set_mpi( boost.mpi.world )
 escan.fromXML( XMLfilename )
 # print escan.directory
 

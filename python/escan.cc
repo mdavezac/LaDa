@@ -89,7 +89,7 @@ namespace LaDa
         .def_readwrite( "destroy_directory", &t_Escan::do_destroy_dir )
         .def( "fromXML",  &XML::Escan_from_XML<t_Escan> )
         .def( "run", &t_Escan::operator() )
-        .def( "set_mpi", &t_Escan::set_mpi() );
+        .def( "set_mpi", &t_Escan::set_mpi );
     }
 
 #   undef EXPOSE_FILENAME
