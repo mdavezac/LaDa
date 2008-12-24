@@ -99,7 +99,7 @@ namespace LaDa
             //! \brief Constructor and Initializer.
             //! \details The MPI::WORLD_COMM is duplicated and the duplicated is
             //!          pointed to by ::mpi::Base::comm.
-            Topology() : comm(*::LaDa::mpi::main, boost::mpi::comm_duplicate),
+            Topology() : comm(boost::mpi::world, boost::mpi::comm_duplicate),
                          graph_comm( NULL ), pools(0), type(t_Type::FARMHAND) {}
             //! Copy Constructor.
             Topology   ( boost::mpi::communicator &_comm )

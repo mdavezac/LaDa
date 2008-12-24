@@ -51,9 +51,10 @@ struct Eval
   bool operator()( const TiXmlElement &_node )
   {
     if( not structure.Load(_node) ) return false;
+    __MPICODE( boost::mpi::communicator world; )
     __ROOTCODE
     (
-      (*LaDa::mpi::main),
+      world,
       std::cout << "Successfuly read structure input from file:\n";
     )
     structure.set_site_indices();
@@ -75,7 +76,7 @@ struct Eval
 
     __ROOTCODE
     (
-      (*LaDa::mpi::main),
+      world,
       std::cout << structure 
                 << "\n\nVBM: " << bandgap.bands.vbm
                 << " -- CBM: " << bandgap.bands.cbm
@@ -118,7 +119,7 @@ int main(int argc, char *argv[])
 
   __ROOTCODE
   (
-    (*LaDa::mpi::main),
+    (*world),
     std::cout << "Input filename: " << filename
               << "\nWill " << ( evaluate.compute_dipoles ? " ": "not " ) 
               << "compute dipole moments."
@@ -149,7 +150,7 @@ int main(int argc, char *argv[])
   __DOASSERT( not child, "Could not find node \"Job\" in " << filename << ".\n" )
   __DOASSERT( not ( child and evaluate.pescan.Load(*child) ),
               "Error while reading pescan from input.\n" )
-  __DIAGA( evaluate.pescan.set_mpi( LaDa::mpi::main, "" ); )
+  __DIAGA( evaluate.pescan.set_mpi( world.get(), "" ); )
 
 
   TiXmlHandle docHandle( &doc ); 

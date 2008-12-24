@@ -45,7 +45,7 @@
 # define __BPO_VERSION__ \
   if ( vm.count("version") ) \
   { \
-    __ROOTCODE(  (*::LaDa::mpi::main), \
+    __ROOTCODE(  (*world), \
       std::cout << "Subversion Revision: " << ::LaDa::SVN::Revision << "\n\n";  \
     ) \
     return 0; \
@@ -53,7 +53,7 @@
 # define __BPO_HELP__ \
   if ( vm.count("help") ) \
   { \
-    __ROOTCODE( (*::LaDa::mpi::main), \
+    __ROOTCODE( (*world), \
       std::cout << "Usage: " << argv[0] << " [options] file.xml\n" \
                 << "  file.xml is an optional filename for XML input.\n" \
                 << "  Default input is input.xml.\n\n" \

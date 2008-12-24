@@ -34,7 +34,6 @@
 
 #include <print/manip.h>
 
-#include <mpi/mpi_object.h>
 #ifdef _MPI
 # include <boost/mpi/environment.hpp>
 #endif

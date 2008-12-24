@@ -26,7 +26,7 @@ libescan_la_SOURCES = $(PESCAN_CC)
 nobase_libescan_la_HEADERS = $(PESCAN_H) $(PESCAN_IMPL_H) 
 libescan_la_CPPFLAGS = $(AM_CPPFLAGS) 
 if DODIRECTIAGA
-  libescan_la_SOURCES += $(PESCAN_CC) $(PESCAN_F90)
+  libescan_la_SOURCES += $(PESCAN_F90)
   libescan_la_FCFLAGS = $(FCFLAGS) @IAGA_FCFLAGS@
   libescan_la_F77FLAGS = $(FCFLAGS) @IAGA_FCFLAGS@
   libescan_la_F90FLAGS = $(FCFLAGS) @IAGA_FCFLAGS@

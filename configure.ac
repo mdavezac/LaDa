@@ -156,6 +156,7 @@ lapack=false
 #   vff=true
 #   lapack=true
 # fi
+direct_iaga=true;
 
 AC_SUBST(GSL_CFLAGS)
 AC_SUBST(GSL_LIBS)
@@ -166,6 +167,10 @@ fi
 AH_TEMPLATE([__DOVFF])
 if test x$vff = xtrue; then
   AC_DEFINE([__DOVFF],[],[])
+fi
+AH_TEMPLATE([__DOPYTHONESCAN])
+if test x$pescan$python$direct_iaga = xtruetruetrue; then
+  AC_DEFINE([__DOPYTHONESCAN],[],[])
 fi
 
 # ************************************
@@ -180,7 +185,6 @@ AC_FC_WRAPPERS
 
 AH_TEMPLATE([_DIRECTIAGA])
 AC_DEFINE([_DIRECTIAGA],[1],[])
-direct_iaga=true;
 AC_SUBST(LD_IAGA_FLAGS)
 AC_SUBST(IAGA_FCFLAGS)
 # AC_SUBST(FC_IAGA_FLAGS )
@@ -256,6 +260,7 @@ AM_CONDITIONAL(DODARWIN, test x$galib = xtrue)
 AM_CONDITIONAL(DOLAPACK, test x$lapack = xtrue)
 AM_CONDITIONAL(DOALLOYLAYERSOPT, test x$alloylayersopt = xtrue)
 AM_CONDITIONAL(DODIRECTIAGA, test x$direct_iaga = xtrue)
+AM_CONDITIONAL(DOPYTHONPESCAN, test x$python$pescan$direct_iaga = xtruetruetrue)
 AM_CONDITIONAL(DOPYTHON, test x$python = xtrue)
 AM_CONDITIONAL(DOSEPARABLE, test x$separable = xtrue)
 
@@ -334,6 +339,7 @@ AC_SUBST(BOOST_FS)
 AC_SUBST(BOOST_SYSTEM)
 AC_SUBST(BOOST_SIGNAL)
 AC_SUBST(BOOST_PYTHON)
+AC_SUBST(BOOST_MPI_PYTHON)
 AC_SUBST(BOOST_REGEX)
 AC_SUBST(BOOST_CXXFLAGS)
 AC_SUBST(MINUIT_LIBS)

@@ -62,7 +62,7 @@ namespace LaDa
         public:
           //! Constructor and Initializer
           Darwin   ( Crystal::Structure &_s )
-                 : __MPICODE( MPI_COMMCOPY( *::LaDa::mpi::main ) __COMMA__ )
+                 : __MPICODE( MPI_COMMCOPY( boost::mpi::world ) __COMMA__ )
                    degeneracy(types::tolerance)  {}
           //! Copy Constructor
           Darwin   ( const Darwin &_b ) 

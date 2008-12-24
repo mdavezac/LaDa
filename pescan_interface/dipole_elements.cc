@@ -59,7 +59,7 @@ namespace LaDa
       const std::string filename
       (
            "escan_input."
-         + boost::lexical_cast<std::string>(::LaDa::mpi::main->rank()) 
+         + boost::lexical_cast<std::string>(boost::mpi::communicator().rank()) 
       ); 
       const bfs::path path
       (

@@ -97,9 +97,10 @@ namespace LaDa
     void read_file( const boost::filesystem::path &_input, std::string& _result )
     {
       namespace bfs = boost::filesystem;
+      __MPICODE( boost::mpi::communicator world; )
       __ROOTCODE
       ( 
-        (*::LaDa::mpi::main), 
+        world, 
          __DOASSERT( not bfs::exists( _input ), _input << " does not exist.\n" )
          __DOASSERT( not ( bfs::is_regular( _input ) or bfs::is_symlink( _input ) ),
                      _input << " is a not a valid file.\n" );
@@ -110,13 +111,14 @@ namespace LaDa
          for(; i_file != i_file_end; ++i_file ) _result.append( *i_file );
          file.close();
       )
-      __MPICODE( boost::mpi::broadcast( *LaDa::mpi::main, _result, 0 ); )
+      __MPICODE( boost::mpi::broadcast( world, _result, 0 ); )
     }
     void read_xmlfile( const boost::filesystem::path &_input, std::string& _result )
     {
+      __MPICODE( boost::mpi::communicator world; )
       __ROOTCODE
       ( 
-        (*::LaDa::mpi::main), 
+        world, 
         TiXmlDocument doc( _input.string() ); 
         TiXmlHandle docHandle( &doc ); 
         __DOASSERT( not doc.LoadFile(), 
@@ -127,7 +129,7 @@ namespace LaDa
         stream << *parent;
         _result = stream.str();
       )
-      __MPICODE( boost::mpi::broadcast( *LaDa::mpi::main, _result, 0 ); )
+      __MPICODE( boost::mpi::broadcast( world, _result, 0 ); )
     }
     void read_xmlfile( const boost::filesystem::path &_input, TiXmlDocument& _doc )
     {

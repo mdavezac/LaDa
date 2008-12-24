@@ -63,7 +63,11 @@ namespace LaDa
 
         //! Loads from an XML input file.
         bool Load( const TiXmlElement &_node ) { return functional_->Load( _node ); }
-       
+
+        //! Prints escan input.
+        void print_escan_input( boost::filesystem::path &_path )
+          { functional_->print_escan_input( _path ); }
+          
         //! The owned structure.
         Crystal::Structure structure;
 
@@ -110,19 +114,13 @@ namespace LaDa
         .def( "fromXML",  &XML::Vff_from_XML<b> ) \
         .def( "evaluate",  &b::operator() ) \
         .def( "init",  &b::init ) \
+        .def( "print_escan_input",  &b::print_escan_input ) \
         .add_property( "stress",  &b::get_stress ) 
 
     void expose_vff()
     {
       typedef Vff< LaDa::Vff::Functional > t_Vff;
       namespace bp = boost::python;
-     //bp::class_< t_Vff >( "Vff" ) 
-     //  .def( bp::init< t_Vff >() )
-     //  .def_readwrite( "structure", &t_Vff::structure )
-     //  .def( "fromXML",  &XML::Vff_from_XML<t_Vff> ) 
-     //  .def( "evaluate",  &t_Vff::operator() ) 
-     //  .def( "init",  &t_Vff::init )
-     //  .add_property( "stress",  &t_Vff::get_stress );
       EXPOSEVFF( "Vff", t_Vff );
     }
 

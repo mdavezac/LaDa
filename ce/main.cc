@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
  
   
   __MPICODE( std::string input; )
-  __ROOTCODE( (*::LaDa::mpi::main),
+  __ROOTCODE( boost::mpi::world,
     TiXmlDocument doc( filename.string() );
     __DOASSERT( not doc.LoadFile(), 
                   "error while opening input file "
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
   )
   
   __MPICODE(
-      boost::mpi::broadcast( *::LaDa::mpi::main, input, 0 ); 
+      boost::mpi::broadcast( boost::mpi::world, input, 0 ); 
       TiXmlDocument doc;
       doc.Parse( input.c_str() );
   )
@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
   __DOASSERT( not ce.Load(*child), "Error while reading Functional from input." )
   ce.add_equivalent_clusters();
  
-  __MPIROOT( (*::LaDa::mpi::main), OUTPUT << "Nb procs: " << ::LaDa::mpi::main->size() << ENDLINE; )
+  __MPIROOT( boost::mpi::world, OUTPUT << "Nb procs: " << boost::mpi::world.size() << ENDLINE; )
   // do structure
   child = handle.FirstChild( "Job" ).FirstChild( "Structure" ).Element();
   for (; child; child = child->NextSiblingElement("Structure") )
@@ -132,8 +132,8 @@ int main(int argc, char *argv[])
  
     t_Builder::t_VA_Functional functional;
     ce.generate_functional(structure, &functional);
-    __MPICODE( functional.get_functional1()->set_mpi( ::LaDa::mpi::main ); )
-    __MPICODE( functional.get_functional2()->set_mpi( ::LaDa::mpi::main ); )
+    __MPICODE( functional.get_functional1()->set_mpi( boost::mpi::world ); )
+    __MPICODE( functional.get_functional2()->set_mpi( boost::mpi::world ); )
   
     functional.resize( structure.atoms.size() );
     std::transform( structure.atoms.begin(), structure.atoms.end(), functional.begin(),

@@ -17,9 +17,14 @@
 #include "convexhull.impl.hpp"
 #include "errortuple.hpp"
 #ifdef __DOCE
-#  include "ce.hpp"
+# include "ce.hpp"
 #endif
-#include "vff.hpp"
+#ifdef __DOVFF
+# include "vff.hpp"
+#endif
+#ifdef __DOPYTHONESCAN
+# include "escan.hpp"
+#endif
 
 // namespace PythonLaDa
 // {
@@ -51,4 +56,9 @@ BOOST_PYTHON_MODULE(LaDa)
     LaDa::Python::expose_vff();
     LaDa::Python::expose_layeredvff();
 # endif
+# ifdef __DOPYTHONESCAN
+    LaDa::Python::expose_escan_parameters();
+    LaDa::Python::expose_escan();
+# endif
+
 }

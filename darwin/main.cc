@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 #   include "main.extras.h" 
 #   include "alloylayers/main.extras.h" 
 #   include "groundstates/main.extras.h" 
-    __ROOTCODE( (*::LaDa::mpi::main), 
+    __ROOTCODE( boost::mpi::world, 
       std::cout << "Description: " << short_description
                 << "Usage: " << argv[0] << " [options] file.xml\n" 
                 << "  file.xml is an optional filename for XML input.\n" 
@@ -125,13 +125,13 @@ int main(int argc, char *argv[])
 
   __ROOTCODE
   (
-    (*::LaDa::mpi::main),
+    boost::mpi::world,
     std::cout << "Will load input from file: " << input << ".\n";
   )
     
   __ROOTCODE
   (
-    (*::LaDa::mpi::main),
+    boost::mpi::world,
     std::cout << "Will perform " << reruns << " GA runs.\n\n";
   )
   
@@ -141,8 +141,8 @@ int main(int argc, char *argv[])
     __MPISERIALCODE( 
       // MPI code
       LaDa::Print::out << "Starting genetic algorithm run on processor "
-                       << ( 1 + LaDa::mpi::main->rank() ) << " of " 
-                       << LaDa::mpi::main->size() << ".\n\n";,
+                       << ( 1 + boost::mpi::world.rank() ) << " of " 
+                       << boost::mpi::world.size() << ".\n\n";,
       // Serial code
       LaDa::Print::xmg.init( xmg_filename );
       LaDa::Print::out.init( out_filename );

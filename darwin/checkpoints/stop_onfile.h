@@ -32,7 +32,7 @@ namespace LaDa
       {
         __ROOTCODE
         (
-          (*LaDa::mpi::main),
+          boost::mpi::world,
           if( not boost::filesystem::exists( _path ) ) return true;
           Print::out << "Stopping on finding file " << _path << ".\n";
           Print::xmg << Print::Xmg::comment << "Stopping on finding file "
@@ -52,7 +52,7 @@ namespace LaDa
             const boost::filesystem::path path( _path );
             __ROOTCODE
             (
-              (*LaDa::mpi::main),
+              boost::mpi::world,
               if( boost::filesystem::exists( path ) )
               __BEGINGROUP__
                 __DOASSERT( not boost::filesystem::is_regular( path ),

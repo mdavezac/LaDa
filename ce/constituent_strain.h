@@ -85,12 +85,12 @@ namespace LaDa
      
         public:
           //! Constructor
-          Functional() : t_Base() __MPICONSTRUCTORCODE( comm( ::LaDa::mpi::main ) ) {}
+          Functional() : t_Base() __MPICONSTRUCTORCODE( comm( boost::mpi::world ) ) {}
           //! Constructor and Initializer
           Functional   ( const Crystal::Structure& _str,
                          t_Container *_vars=NULL) 
                      : function::Base<t_Type>(_vars)
-                       __MPICONSTRUCTORCODE( comm( ::LaDa::mpi::main ) ) 
+                       __MPICONSTRUCTORCODE( comm( boost::mpi::world ) ) 
             { operator<<( _str ); }
 
           //! Copy Constructor

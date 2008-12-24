@@ -60,10 +60,6 @@ namespace LaDa
 {
   namespace mpi
   {
-    //! \brief Main object for creation and destruction of mpich, as well as for
-    //!        intialization of transaction helpers
-    extern boost::mpi::communicator *main;
-
     //! Adds a communicator pointer to a class.
     class AddCommunicator
     {

@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
   __BPO_VERSION__
   if( vm.count("help") )
   {
-    __ROOTCODE( (*::LaDa::mpi::main), \
+    __ROOTCODE( boost::mpi::world, \
       std::cout << argv[0] << " is meant to help in creating"
                    " epitaxial structures for use with GA.\n" 
                    "Usage: " << argv[0] << " [options] file.xml\n" 

@@ -16,7 +16,7 @@
 #include "manip.h"
 
 #ifdef _MPI
-#include <boost/mpi/collectives.hpp>
+# include <boost/mpi/collectives.hpp>
 #endif
 
 namespace LaDa
@@ -37,7 +37,8 @@ namespace LaDa
     void Base :: init(const t_Path &_f)
     { 
       do_print = false;
-      __ROOTCODE( (*LaDa::mpi::main), do_print = true; )
+      __MPICODE( boost::mpi::communicator world; )
+      __ROOTCODE( world, do_print = true; )
       if ( filename == _f ) return;
       init_(_f); 
     }
@@ -47,10 +48,11 @@ namespace LaDa
       if ( is_open() ) close();
       filename = reformat_home( _f.string() );
       do_print = true;
-      __NOTMPIROOT( (*LaDa::mpi::main), 
+      __MPICODE( boost::mpi::communicator world; )
+      __NOTMPIROOT( world, 
         filename =    filename.string()
                     + ".mpi:" 
-                    + boost::lexical_cast<std::string>( LaDa::mpi::main->rank() );
+                    + boost::lexical_cast<std::string>( world.rank() );
       )
       is_empty = true;
       if ( (not do_print) or (not boost::filesystem::exists( filename )) ) return;
@@ -92,7 +94,8 @@ namespace LaDa
       }
       void Base::sync_filename()
       {
-        boost::mpi::broadcast( *LaDa::mpi::main, filename, 0 );
+        boost::mpi::communicator world;
+        boost::mpi::broadcast( world, filename, 0 );
         init_(filename);
       }
 #   endif

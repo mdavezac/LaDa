@@ -65,7 +65,6 @@
            std::cerr << "Error encountered while creating MPI environment.\n"; \
            return 0; \
          } \
-         ::LaDa::mpi::main = world.get();
 
 # endif
 #endif

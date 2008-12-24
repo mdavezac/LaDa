@@ -30,7 +30,8 @@
 #ifdef _DIRECTIAGA
 # define __DIAGA( code ) code
 # define __DIAGASUFFIX( code ) \
-         t_Path( code.string() + "." + boost::lexical_cast<std::string>(::LaDa::mpi::main->rank()) )
+         t_Path( code.string() + "." \
+       + boost::lexical_cast<std::string>(boost::mpi::communicator().rank()) )
 # define __IIAGA( code ) 
 # else
 # define __DIAGA( code ) 
@@ -111,8 +112,7 @@ namespace LaDa
  
         //! Constructor
         Interface()
-          : __DIAGA( MPI_COMMCOPY( *LaDa::mpi::main ) __COMMA__ )
-            atom_input("atom.config"), genpot(), escan(),
+          : atom_input("atom.config"), genpot(), escan(),
             maskr("maskr"), dirname("ESCAN"), do_destroy_dir(true) {}
         //! Copy Constructor
         Interface   ( const Interface &_c )
@@ -168,9 +168,10 @@ namespace LaDa
          const boost::mpi::communicator &comm() const { return MPI_COMMDEC::comm(); } 
 #      endif
  
-    protected:
       //! Launches a calculation 
       bool operator()(); 
+
+    protected:
       //! launches pescan once potential has been created.
       types::t_real launch_pescan(); 
       //! Creates directory for computations.

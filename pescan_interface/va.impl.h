@@ -32,7 +32,7 @@ namespace LaDa
         set_atom_input( orig );
       )
       __IIAGA( 
-        __ROOTCODE( (*::mpi::main), vff.evaluate(); )
+        __ROOTCODE( boost::mpi::world, vff.evaluate(); )
         vff.zero_order( vff.filename );
         set_atom_input( vff.filename );
       )

@@ -104,7 +104,7 @@ namespace LaDa
  
       public:
         //! Constructor
-        Evaluator() : __MPICODE( MPI_COMMCOPY( *::LaDa::mpi::main ) __COMMA__ )
+        Evaluator() : __MPICODE( MPI_COMMCOPY( boost::mpi::world ) __COMMA__ )
                       current_individual(NULL),
                       current_object(NULL)
                       __MPICODE( __COMMA__ suffix("") ) {};
