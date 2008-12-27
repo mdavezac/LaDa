@@ -5,9 +5,10 @@
 from LaDa import rMatrix3d, rVector3d, make_rMatrix3d, Lattice, \
                  Structure, Vff, LayeredVff, Escan
 import boost.mpi as mpi
-from sys import exit
+import pickle 
+# from sys import exit
 
-XMLfilename = "input.xml"
+XMLfilename = "../input.xml"
 
 lattice = Lattice()
 lattice.fromXML( XMLfilename )
@@ -17,9 +18,18 @@ structure =  Structure( vff.structure )
 vff.fromXML( XMLfilename )
 vff.init()
 escan = Escan()
-escan.set_mpi( boost.mpi.world )
+escan.set_mpi( mpi.world )
 escan.fromXML( XMLfilename )
-# print escan.directory
+
+pickle.dump( vff.structure, open( "pickle", "w" ) )
+
+vff.evaluate()
+print vff.structure
+# escan.vff_inputfile = "atom_input." + str( mpi.world.rank )
+# mpi.broadcast( mpi.world, vff.structure, 0 )
+# vff.print_escan_input( escan.vff_inputfile )
+# escan.run()
+# print escan.eigenvalues
 
 
 

@@ -19,6 +19,7 @@
 #include <opt/debug.h>
 #include <opt/initial_path.h>
 #include <opt/tuple_io.h>
+#include <opt/tinyxml.h>
 #include <crystal/lattice.h>
 #include <print/manip.h>
 #include <mpi/macros.h>
@@ -183,31 +184,15 @@ namespace LaDa
       return 0.0;
     }
 
-      // This whole section tries to find a <Functional type="escan"> tag
-      // in _element or its child
-    const TiXmlElement* Interface :: find_node (const TiXmlElement &_node )
+ 
+    bool Interface::Load( const TiXmlElement &_node )
     {
-      __TRYBEGIN 
-        const TiXmlElement *parent;
-        std::string str;
-        
-        str = _node.Value();
-        if ( str.compare("Functional" ) != 0 )
-          parent = _node.FirstChildElement("Functional");
-        else
-          parent = &_node;
-        
-        while (parent)
-        {
-          str = "";
-          if ( parent->Attribute( "type" )  )
-            str = parent->Attribute("type");
-          if ( str.compare("escan" ) == 0 ) break;
-          parent = parent->NextSiblingElement("Functional");
-        }
-        
-        return parent;
-      __TRYEND(,"Could not load pescan functional.\n")
+      const TiXmlElement *parent = opt::find_node( _node, "Functional", "type", "escan" );
+      if ( parent ) return Load_( *parent );
+      
+      std::cerr << "Could not find an <Functional type=\"escan\"> tag in input file" 
+                << std::endl;
+      return false;
     }
 
     bool Interface :: Load_ (const TiXmlElement &_node )

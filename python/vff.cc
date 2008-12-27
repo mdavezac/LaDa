@@ -65,7 +65,7 @@ namespace LaDa
         bool Load( const TiXmlElement &_node ) { return functional_->Load( _node ); }
 
         //! Prints escan input.
-        void print_escan_input( boost::filesystem::path &_path )
+        void print_escan_input( const std::string &_path ) const
           { functional_->print_escan_input( _path ); }
           
         //! The owned structure.

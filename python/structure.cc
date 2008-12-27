@@ -7,13 +7,18 @@
 
 
 #include <boost/python.hpp>
+#ifdef _MPI
+# include <boost/mpi/python.hpp>
+#endif
 
 #include <opt/types.h>
 #include <opt/debug.h>
+#include <mpi/macros.h>
 
 #include "misc.hpp"
 #include "xml.hpp"
 #include "structure.hpp"
+
 
 namespace LaDa
 {
@@ -36,9 +41,9 @@ namespace LaDa
 
     void expose_structure()
     {
-      using namespace boost::python;
-      class_< Crystal::Structure >( "Structure" )
-        .def( init< Crystal::Structure& >() )
+      namespace bp = boost::python;
+      bp::class_< Crystal::Structure >( "Structure" )
+        .def( bp::init< Crystal::Structure& >() )
         .def_readwrite( "cell",    &Crystal::Structure::cell )
         .def_readwrite( "atoms",   &Crystal::Structure::atoms )
         .def_readwrite( "k_vecs",   &Crystal::Structure::k_vecs )
@@ -49,9 +54,9 @@ namespace LaDa
         .def( "fromXML",  &XML::from<Crystal::Structure> )
         .def( "toXML",  &XML::to<Crystal::Structure> )
         .def( "lattice", &return_crystal_lattice< Crystal::Structure >,
-              return_value_policy<reference_existing_object>() );
-      class_< Crystal::TStructure<std::string> >( "sStructure" )
-        .def( init< Crystal::TStructure<std::string>& >() )
+              bp::return_value_policy<bp::reference_existing_object>() );
+      bp::class_< Crystal::TStructure<std::string> >( "sStructure" )
+        .def( bp::init< Crystal::TStructure<std::string>& >() )
         .def_readwrite( "cell",    &Crystal::TStructure<std::string>::cell )
         .def_readwrite( "atoms",   &Crystal::TStructure<std::string>::atoms )
         .def_readwrite( "energy",  &Crystal::TStructure<std::string>::energy )
@@ -61,7 +66,12 @@ namespace LaDa
         .def( "fromXML",  &XML::from< Crystal::TStructure<std::string> > )
         .def( "toXML",  &XML::to< Crystal::TStructure<std::string> > )
         .def( "lattice", &return_crystal_lattice< Crystal::TStructure<std::string> >,
-              return_value_policy<reference_existing_object>() );
+              bp::return_value_policy<bp::reference_existing_object>() );
+      __MPICODE
+      (
+        boost::mpi::python::register_serialized<Crystal::Structure>();
+        boost::mpi::python::register_serialized< Crystal::TStructure<std::string> >();
+      )
     }
 
   }

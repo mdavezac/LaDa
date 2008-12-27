@@ -35,7 +35,16 @@ namespace LaDa
     
       // Find first XML "Structure" node (may be _element from start, or a child of _element)
       std::string str = _element.Value();
-      if ( str.compare(_name) == 0 ) return &_element;
+      if ( str.compare(_name) == 0 )
+      {
+        if( _attribute == "" ) return &_element;
+        if( _element.Attribute(_attribute) )
+        {
+          if( _value == "" ) return &_element;
+          const std::string value = *_element.Attribute( _attribute );
+          if( _value == value ) return &_element;
+        }
+      }
       parent =  _element.FirstChildElement(_name);
       if( parent and _attribute == "" and _value == ""  ) return parent;
       for(; parent; parent = parent->NextSiblingElement( _name ) )

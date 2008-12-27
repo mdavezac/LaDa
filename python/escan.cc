@@ -9,6 +9,7 @@
 #include <boost/python/enum.hpp>
 
 #include <pescan_interface/interface.h>
+#include <opt/initial_path.h>
 
 #include "escan.hpp"
 
@@ -23,6 +24,8 @@ namespace LaDa
         {
           TiXmlDocument doc( _filename ); 
           TiXmlHandle docHandle( &doc ); 
+          if( not opt::InitialPath::is_initialized() )
+            opt::InitialPath::init();
         
           __DOASSERT( not doc.LoadFile(), 
                          doc.ErrorDesc() << "\n"  
@@ -87,18 +90,12 @@ namespace LaDa
         .add_property( EXPOSE_FILENAME( directory ) )
         .def_readwrite( "parameters", &t_Escan::escan )
         .def_readwrite( "destroy_directory", &t_Escan::do_destroy_dir )
+        .def_readonly( "eigenvalues", &t_Escan::eigenvalues )
         .def( "fromXML",  &XML::Escan_from_XML<t_Escan> )
         .def( "run", &t_Escan::operator() )
         .def( "set_mpi", &t_Escan::set_mpi );
     }
 
 #   undef EXPOSE_FILENAME
-//   void expose_escan()
-//   {
-//     typedef LaDa::Pescan::Interface t_Interface;
-//     typedef LaDa::Pescan::Escan::Interface t_Parameters;
-//     namespace bp = boost::python;
-//     bp::class_< t_Parameters >( "Escan" ) 
-//   }
   } // namespace Python
 } // namespace LaDa

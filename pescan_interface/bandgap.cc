@@ -10,10 +10,11 @@
 
 #include <physics/physics.h>
 #include <print/stdout.h>
-#include <opt/fuzzy.h>
 #include <print/manip.h>
+#include <opt/fuzzy.h>
 #include <opt/debug.h>
 #include <opt/initial_path.h>
+#include <opt/tinyxml.h>
 
 #include "bandgap.h"
 
@@ -193,7 +194,7 @@ namespace LaDa
 
     bool BandGap :: Load( const TiXmlElement &_node )
     {
-      const TiXmlElement *parent = find_node( _node );
+      const TiXmlElement *parent = opt::find_node( _node, "Functional", "type", "escan" );
       __DOASSERT( not parent, 
                   "Could not find <Functional type=\"escan\"> in input\n"; )
       __TRYCODE( __DOASSERT( not Interface :: Load_( *parent ), "" ),

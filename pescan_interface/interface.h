@@ -144,10 +144,6 @@ namespace LaDa
        void set_atom_input( const t_Path &_str ) { atom_input = _str; }
        //! Destroys directory for computations.
        void destroy_directory();
-       //! \brief Tries to find a \<Functional type="escan"\> tag in \a _node.
-       //! \details Checks wether \a _node or its immediate offpsrings are the
-       //!          right functional node.
-       const TiXmlElement* find_node (const TiXmlElement &_node );
        //! \brief Sets the scale to that of the structure
        void set_scale( const Crystal::Structure &_str )
          { escan.scale = _str.scale; }
@@ -197,16 +193,6 @@ namespace LaDa
       boost::filesystem::path dirname;
  
     };
- 
-    inline bool Interface::Load( const TiXmlElement &_node )
-    {
-      const TiXmlElement *parent = find_node( _node );
-      if ( parent ) return Load( *parent );
-      
-      std::cerr << "Could not find an <Functional type=\"escan\"> tag in input file" 
-                << std::endl;
-      return false;
-    }
       
     //! Prints out the genpot input file.
     std::ostream& operator<<( std::ostream& _stream, const Interface::GenPot &_g );

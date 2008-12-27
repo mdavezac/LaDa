@@ -28,6 +28,8 @@ namespace LaDa
           __ASSERT( is_initialized_ == false, "Path has not been initialized.\n" )
           return path_; 
         }
+        //! Returns true if path has been initialized.
+        static bool is_initialized() { return is_initialized_; }
 
       protected:
         //! The path on call to InitialPath.
