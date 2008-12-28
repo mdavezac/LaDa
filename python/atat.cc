@@ -5,27 +5,9 @@
 # include <config.h>
 #endif
 
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
-#include <boost/python.hpp>
-#include <iostream>
-#include <algorithm>
-#include <boost/lambda/lambda.hpp>
-#include <stdexcept>
-
-#include <opt/types.h>
-
-#define STREAM_VECTOR
-#include <atat/fxvector.h>
-#include <atat/vectmac.h>
-
-#ifdef _TYPE_
-#error "Please change _TYPE_ to something else, as it is already being used."
-#endif
-#ifdef _DIM_
-#error "Please change _TYPE_ to something else, as it is already being used."
-#endif
 
 #include "atat.hpp"
+#include "atat.impl.hpp"
 
 using namespace boost::python;
 
@@ -33,16 +15,11 @@ namespace LaDa
 {
   namespace Python
   {
-    using namespace LaDa::atat;
-  # include "atat.impl.hpp"
-
-  # define _INMODULE_
-    void expose_atat()
+    void expose_atat() 
     {
-      using namespace atat;
-  #   include "atat.impl.hpp"
+      expose_atatvector< atat::rVector3d >( "rVector3d" ); 
+      expose_atatvector< atat::iVector3d >( "iVector3d" ); 
+      expose_atatmatrix< atat::rMatrix3d >( "rMatrix3d" ); 
     }
-
-  #undef _INMODULE_
   }
 } // namespace LaDa

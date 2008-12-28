@@ -5,11 +5,15 @@
 # include <config.h>
 #endif
 
+#include <sstream>
 
 #include <boost/python.hpp>
 #ifdef _MPI
 # include <boost/mpi/python.hpp>
 #endif
+#include <boost/serialization/serialization.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 
 #include <opt/types.h>
 #include <opt/debug.h>
@@ -38,6 +42,38 @@ namespace LaDa
                   "Lattice pointer has not been set.\n" )
       return *Crystal::Structure::lattice; 
     }
+    template< class T_STRUCTURE >
+      struct pickle_structure : boost::python::pickle_suite
+      {
+        static boost::python::tuple getinitargs( T_STRUCTURE const& _w)  
+        {
+          return boost::python::tuple();
+        }
+        static boost::python::tuple getstate(const T_STRUCTURE& _in)
+        {
+          std::ostringstream ss;
+          boost::archive::text_oarchive oa( ss );
+          oa << _in;
+
+          return boost::python::make_tuple( ss.str() );
+        }
+        static void setstate( T_STRUCTURE& _out, boost::python::tuple state)
+        {
+          namespace bp = boost::python;
+          if( bp::len( state ) != 1 )
+          {
+            PyErr_SetObject(PyExc_ValueError,
+                            ("expected 9-item tuple in call to __setstate__; got %s"
+                             % state).ptr()
+                );
+            bp::throw_error_already_set();
+          }
+          const std::string str = bp::extract< std::string >( state[0] );
+          std::istringstream ss( str.c_str() );
+          boost::archive::text_iarchive ia( ss );
+          ia >> _out;
+        }
+      };
 
     void expose_structure()
     {
@@ -54,7 +90,8 @@ namespace LaDa
         .def( "fromXML",  &XML::from<Crystal::Structure> )
         .def( "toXML",  &XML::to<Crystal::Structure> )
         .def( "lattice", &return_crystal_lattice< Crystal::Structure >,
-              bp::return_value_policy<bp::reference_existing_object>() );
+              bp::return_value_policy<bp::reference_existing_object>() )
+        .def_pickle( pickle_structure< Crystal::Structure >() );
       bp::class_< Crystal::TStructure<std::string> >( "sStructure" )
         .def( bp::init< Crystal::TStructure<std::string>& >() )
         .def_readwrite( "cell",    &Crystal::TStructure<std::string>::cell )
@@ -66,12 +103,8 @@ namespace LaDa
         .def( "fromXML",  &XML::from< Crystal::TStructure<std::string> > )
         .def( "toXML",  &XML::to< Crystal::TStructure<std::string> > )
         .def( "lattice", &return_crystal_lattice< Crystal::TStructure<std::string> >,
-              bp::return_value_policy<bp::reference_existing_object>() );
-      __MPICODE
-      (
-        boost::mpi::python::register_serialized<Crystal::Structure>();
-        boost::mpi::python::register_serialized< Crystal::TStructure<std::string> >();
-      )
+              bp::return_value_policy<bp::reference_existing_object>() )
+        .def_pickle( pickle_structure< Crystal::TStructure<std::string> >() );
     }
 
   }

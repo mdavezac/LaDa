@@ -1,8 +1,8 @@
 //
 //  Version: $Id$
 //
-#ifndef _LADAPYTHON_ATAT_HPP_
-#define _LADAPYTHON_ATAT_HPP_
+#ifndef _LADA_PYTHON_ATAT_HPP_
+#define _LADA_PYTHON_ATAT_HPP_
 namespace LaDa
 {
   namespace Python

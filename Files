@@ -139,12 +139,12 @@ PRINT_DOC = $(PRINT_H) $(PRINT_CC)
 PYTHON_CE_CC = ce.cc
 PYTHON_CE_H = ce.hpp ce.impl.hpp
 PYTHON_VFF_CC = vff.cc
-PYTHON_VFF_H = vff.hpp
+PYTHON_VFF_H =  vff.hpp
 PYTHON_ESCAN_CC = escan.cc
 PYTHON_ESCAN_H = escan.hpp
 PYTHON_H = atat.hpp atat.impl.hpp atom.hpp atom.impl.hpp structure.hpp lattice.hpp \
            xml.hpp misc.hpp convex_hull.impl.hpp errortuple.hpp 
-PYTHON_CC = atat.cc atom.cc structure.cc lattice.cc lada.cc physics.cc errortuple.cc
+PYTHON_CC = lada.cc atat.cc atom.cc structure.cc lattice.cc physics.cc errortuple.cc
 PYTHON_DOC = $(PYTHON_CC) $(PYTHON_H) \
              $(PYTHON_CE_CC) $(PYTHON_CE_H) \
              $(PYTHON_VFF_H) $(PYTHON_VFF_CC)
