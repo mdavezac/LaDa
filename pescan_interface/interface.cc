@@ -627,5 +627,19 @@ namespace LaDa
         Eref = boost::lexical_cast< types::t_real >( child->Attribute("value") );
       return true;
     }
+    
+    size_t nb_valence_states( const Crystal::Structure &_str ) 
+    {
+      Crystal::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
+      Crystal::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
+      types::t_unsigned bgstates = 0;
+      for(; i_atom != i_atom_end; ++i_atom)
+      {
+        Crystal::StrAtom atom; 
+        _str.lattice->convert_Atom_to_StrAtom( *i_atom, atom );
+        bgstates += Physics::Atomic::Charge( atom.type );
+      }
+      return bgstates;
+    }
   }
 } // namespace LaDa

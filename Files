@@ -101,7 +101,6 @@ LAPACK_DOC = $(LAPACK_H) $(LAPACK_CC)
 MPI_CC     = 
 MPI_H      = mpi_object.h macros.h
 MPI_DOC    = $(MPI_H) $(MPI_CC)
-#frprmn_minimizer.h 
 OPT_H = ndim_iterator.h minimize_base.h polynome.h \
         types.h function_base.h \
 	va_minimizer.h fitness_function.h  function_functors.h monome.h traits.h \

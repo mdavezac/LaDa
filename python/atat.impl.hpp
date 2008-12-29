@@ -33,74 +33,83 @@ namespace LaDa
 {
   namespace Python
   {
-    template< class T_VECTOR >
-      typename vector_introspection<T_VECTOR>::type getvecitem( const T_VECTOR& _vec, types::t_int _i )
-      {
-        typedef typename vector_introspection< T_VECTOR > :: type type;
-        const types::t_int dim(  vector_introspection< T_VECTOR > :: dim );
-        if( _i > dim or _i < -dim )
+    namespace details 
+    {
+      template< class T_VECTOR > 
+        typename vector_introspection< T_VECTOR > :: type 
+          norm2( const T_VECTOR &_vector ) { return LaDa::atat::norm2( _vector ); }
+ 
+      template< class T_VECTOR >
+        typename vector_introspection<T_VECTOR>::type
+          getvecitem( const T_VECTOR& _vec, types::t_int _i )
+          {
+            typedef typename vector_introspection< T_VECTOR > :: type type;
+            const types::t_int dim(  vector_introspection< T_VECTOR > :: dim );
+            if( _i > dim or _i < -dim )
+            {
+              std::ostringstream sstr;
+              throw std::out_of_range( "atat vector" );
+            }
+            return _vec.x[ size_t( _i < 0 ? dim + _i: _i ) ];
+          }
+      template< class T_VECTOR >
+        void setvecitem( T_VECTOR& _vec, types::t_int _i,
+                         typename vector_introspection< T_VECTOR > :: type _a )
         {
-          std::ostringstream sstr;
-          throw std::out_of_range( "atat vector" );
+          typedef typename vector_introspection< T_VECTOR > :: type type;
+          const types::t_int dim(  vector_introspection< T_VECTOR > :: dim );
+          if( _i > dim or _i < -dim )
+          {
+            std::ostringstream sstr;
+            throw std::out_of_range( "atat vector" );
+          }
+          _vec.x[ size_t( _i < 0 ? types::t_int(dim) + _i: _i ) ] = _a;
         }
-        return _vec.x[ size_t( _i < 0 ? dim + _i: _i ) ];
-      }
-    template< class T_VECTOR >
-      void setvecitem( T_VECTOR& _vec, types::t_int _i,
-                       typename vector_introspection< T_VECTOR > :: type _a )
-      {
-        typedef typename vector_introspection< T_VECTOR > :: type type;
-        const types::t_int dim(  vector_introspection< T_VECTOR > :: dim );
-        if( _i > dim or _i < -dim )
+      template< class T_VECTOR >
+        size_t getlength( const T_VECTOR& _vec )
+          { return vector_introspection<T_VECTOR> :: dim; }
+      template< class T_VECTOR >
+        std::string print( const T_VECTOR& _vec )
+        { 
+          std::ostringstream sstr;
+          sstr << _vec;
+          return sstr.str();
+        }
+ 
+      template< class T_MATRIX >
+        typename matrix_introspection<T_MATRIX>::type
+          getmatitem( const T_MATRIX& _m, const boost::python::tuple &_t )
+          {
+            namespace bp = boost::python;
+            const types::t_int _i = bp::extract< types::t_int >( _t[0] );
+            const types::t_int _j = bp::extract< types::t_int >( _t[1] );
+            const types::t_int dim(  matrix_introspection< T_MATRIX > :: dim );
+            if( _i > dim or _i < -dim or _j > dim or _j < -dim )
+            {
+              std::ostringstream sstr;
+              throw std::out_of_range( "atat matrix" );
+            }
+            return _m.x[ size_t(_i < 0 ? dim + _i: _i) ][ size_t(_j < 0 ? dim + _j: _j) ];
+          }
+      template< class T_MATRIX >
+        void setmatitem( T_MATRIX& _m, const boost::python::tuple &_t,
+                         typename matrix_introspection< T_MATRIX > :: type _a )
         {
-          std::ostringstream sstr;
-          throw std::out_of_range( "atat vector" );
+          namespace bp = boost::python;
+          const types::t_int _i = bp::extract< types::t_int >( _t[0] );
+          const types::t_int _j = bp::extract< types::t_int >( _t[1] );
+          const types::t_int dim(  matrix_introspection< T_MATRIX > :: dim );
+          if( _i > dim or _i < -dim or _j > dim or _j < -dim )
+          {
+            std::ostringstream sstr;
+            throw std::out_of_range( "atat matrix" );
+          }
+          _m.x[ size_t(_i < 0 ? dim + _i: _i) ][ size_t(_j < 0 ? dim + _j: _j) ] = _a;
         }
-        _vec.x[ size_t( _i < 0 ? types::t_int(dim) + _i: _i ) ] = _a;
-      }
-    template< class T_VECTOR >
-      size_t getlength( const T_VECTOR& _vec )
-        { return vector_introspection<T_VECTOR> :: dim; }
-    template< class T_VECTOR >
-      std::string print( const T_VECTOR& _vec )
-      { 
-        std::ostringstream sstr;
-        sstr << _vec;
-        return sstr.str();
-      }
-
-    template< class T_MATRIX >
-      typename matrix_introspection<T_MATRIX>::type getmatitem( const T_MATRIX& _m, const boost::python::tuple &_t )
-      {
-        namespace bp = boost::python;
-        const types::t_int _i = bp::extract< types::t_int >( _t[0] );
-        const types::t_int _j = bp::extract< types::t_int >( _t[1] );
-        const types::t_int dim(  matrix_introspection< T_MATRIX > :: dim );
-        if( _i > dim or _i < -dim or _j > dim or _j < -dim )
-        {
-          std::ostringstream sstr;
-          throw std::out_of_range( "atat matrix" );
-        }
-        return _m.x[ size_t(_i < 0 ? dim + _i: _i) ][ size_t(_j < 0 ? dim + _j: _j) ];
-      }
-    template< class T_MATRIX >
-      void setmatitem( T_MATRIX& _m, const boost::python::tuple &_t,
-                       typename matrix_introspection< T_MATRIX > :: type _a )
-      {
-        namespace bp = boost::python;
-        const types::t_int _i = bp::extract< types::t_int >( _t[0] );
-        const types::t_int _j = bp::extract< types::t_int >( _t[1] );
-        const types::t_int dim(  matrix_introspection< T_MATRIX > :: dim );
-        if( _i > dim or _i < -dim or _j > dim or _j < -dim )
-        {
-          std::ostringstream sstr;
-          throw std::out_of_range( "atat matrix" );
-        }
-        _m.x[ size_t(_i < 0 ? dim + _i: _i) ][ size_t(_j < 0 ? dim + _j: _j) ] = _a;
-      }
-    template< class T_MATRIX >
-      size_t getmlength( const T_MATRIX& )
-        { return matrix_introspection<T_MATRIX> :: dim; }
+      template< class T_MATRIX >
+        size_t getmlength( const T_MATRIX& )
+          { return matrix_introspection<T_MATRIX> :: dim; }
+    } // namespace details
 
     template< class T_VECTOR >
       T_VECTOR* make_vector( boost::python::object &_o )
@@ -173,14 +182,15 @@ namespace LaDa
             .def( bp::self / type() )
             .def( bp::self == bp::other<T_VECTOR>() )
             .def( bp::self != bp::other<T_VECTOR>() )
-            .def( "__getitem__", &getvecitem<T_VECTOR> )
-            .def( "__setitem__", &setvecitem<T_VECTOR> ) 
-            .def( "__len__", &getlength<T_VECTOR> ) 
-            .def( "__str__", &print<T_VECTOR> )
+            .def( "__getitem__", &details::getvecitem<T_VECTOR> )
+            .def( "__setitem__", &details::setvecitem<T_VECTOR> ) 
+            .def( "__len__", &details::getlength<T_VECTOR> ) 
+            .def( "__str__", &details::print<T_VECTOR> )
             .def_pickle( pickle() );
 
         bp::def( _name.c_str(), &make_vector< T_VECTOR >, 
                  bp::return_value_policy<bp::manage_new_object>() );
+        bp::def( "norm2", &details::norm2<T_VECTOR> );
       }
 
     template< class T_MATRIX >
@@ -205,10 +215,10 @@ namespace LaDa
             .def( bp::self / type() )
             .def( bp::self != bp::other<T_MATRIX>() )
             .def( bp::self == bp::other<T_MATRIX>() )
-            .def( "__getitem__", &getmatitem<T_MATRIX> )
-            .def( "__setitem__", &setmatitem<T_MATRIX> ) 
-            .def( "__len__", &getmlength<T_MATRIX> ) 
-            .def( "__str__", &print<T_MATRIX> )
+            .def( "__getitem__", &details::getmatitem<T_MATRIX> )
+            .def( "__setitem__", &details::setmatitem<T_MATRIX> ) 
+            .def( "__len__", &details::getmlength<T_MATRIX> ) 
+            .def( "__str__", &details::print<T_MATRIX> )
             .def_pickle( pickle() );
 
         bp::def( _name.c_str(), &make_matrix< T_MATRIX >, 

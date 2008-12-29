@@ -71,6 +71,9 @@ namespace LaDa
   namespace Pescan
   {
 
+    //! Number of valence states in crystal structures.
+    size_t nb_valence_states( const Crystal::Structure &_str );
+
     //! \brief Defines an interface for the nanopse pescan program.
     //! \details Mostly, this class writes the input and recovers the output eigenvalues.
     class Interface __DIAGA( : public MPI_COMMDEC )
@@ -147,6 +150,8 @@ namespace LaDa
        //! \brief Sets the scale to that of the structure
        void set_scale( const Crystal::Structure &_str )
          { escan.scale = _str.scale; }
+       //! \brief Sets the scale to that of the structure
+       types::t_real get_scale() const { return escan.scale; }
        //! sets the number of states to compute
        void set_nbstates( const types::t_unsigned _n )
          { escan.nbstates = std::max<types::t_unsigned>(_n, 1); }
