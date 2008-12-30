@@ -429,7 +429,11 @@ namespace LaDa
       typename t_Islands :: iterator i_island_begin = islands.begin();
       typename t_Islands :: iterator i_island_end = islands.end();
       typename t_Islands :: iterator i_island;
-      __MPICODE( boost::mpi::world.barrier(); )
+      __MPICODE
+      ( 
+        boost::mpi::communicator world;
+        world.barrier(); 
+      )
       // A first eval of pop.
       for ( i_island = i_island_begin; i_island != i_island_end; ++i_island )
         __TRYDEBUGCODE( (*evaluation)(offspring, *i_island);,

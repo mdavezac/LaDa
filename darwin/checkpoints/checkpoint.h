@@ -128,8 +128,11 @@ namespace LaDa
         bool CheckPoint<T_ISLANDS> :: operator()( const t_Islands& _islands )
         {
           bool keepgoing( continuators_() );
-          __MPICODE( keepgoing = boost::mpi::all_reduce( boost::mpi::world, keepgoing,
-                                                         std::logical_and<bool>() ); )
+          __MPICODE
+          (
+            boost::mpi::communicator world;
+            keepgoing = boost::mpi::all_reduce( world, keepgoing, std::logical_and<bool>() ); 
+          )
           const bool lastcall( not keepgoing );
           updaters_( lastcall );
           typename t_Islands :: const_iterator i_pop = _islands.begin();

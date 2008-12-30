@@ -26,6 +26,17 @@ namespace LaDa
                                    const std::string& _name,
                                    const std::string& _attribute = "",
                                    const std::string& _value = "" );
+    //! \brief Performs like find_node but check for possible filename attribute.
+    //! \details Looks first to \a _element, then its children, then its
+    //!          next siblings. If any point a filename attribute is found,
+    //!          then search is redirected to that filename, under the root
+    //!          node. The redirection happens irrespective of any possible
+    //!          content in the node with the filename attribute.
+    //! \todo Look amongst all siblings.
+    const TiXmlElement* find_node_check_filename( const TiXmlElement &_element,
+                                                  const std::string& _name,
+                                                  const std::string& _attribute = "",
+                                                  const std::string& _value = "" );
 
 
     //! \brief Returns the node \<Functional type=\a _name\>.

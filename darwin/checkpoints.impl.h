@@ -245,20 +245,23 @@ namespace LaDa
           result = false;
  
           // checks if stop file exists
-      __MPICODE( if ( boost::mpi::world.rank() == 0 ) )
-      {
-        std::ifstream file( stop_filename.c_str(), std::ios_base::in );
-        if ( file.is_open() )
+      __MPICODE
+      (
+        boost::mpi::communicator world;
+        if ( world.rank() == 0 ) 
+      )
         {
-          Print::xmg << Print::Xmg::comment << "Stopping on finding file "
-                     << stop_filename << Print::endl;
-          Print::out << "\n\nStopping on finding file "
-                     << stop_filename << Print::endl;
-          result = false; 
+          std::ifstream file( stop_filename.c_str(), std::ios_base::in );
+          if ( file.is_open() )
+          {
+            Print::xmg << Print::Xmg::comment << "Stopping on finding file "
+                       << stop_filename << Print::endl;
+            Print::out << "\n\nStopping on finding file "
+                       << stop_filename << Print::endl;
+            result = false; 
+          }
         }
-      }
-      __MPICODE( result = boost::mpi::all_reduce( boost::mpi::world, result,
-                                                  std::logical_and<bool>() ); )
+      __MPICODE( result = boost::mpi::all_reduce( world, result, std::logical_and<bool>() ); )
  
       // last call
       if ( not result )
@@ -303,7 +306,8 @@ namespace LaDa
     inline void Synchronize<T_TYPE> :: operator()()
     {
       t_Type diff = object - current_value;
-      diff = boost::mpi::all_reduce( boost::mpi::world, diff, std::plus<t_Type>() );
+      boost::mpi::communicator world;
+      diff = boost::mpi::all_reduce( world, diff, std::plus<t_Type>() );
       current_value += diff;
       object = current_value;
     }

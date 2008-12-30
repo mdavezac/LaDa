@@ -83,8 +83,7 @@ namespace LaDa
 
         //! Constructor and Initializer
         Darwin   ( Crystal::Structure &_s )
-               : __MPICODE( MPI_COMMCOPY( boost::mpi::world ) __COMMA__ )
-                 structure(_s), bandgap( _s ), references_filename("BandEdge"), 
+               : structure(_s), bandgap( _s ), references_filename("BandEdge"), 
                  nbeval(0), age(0), check_ref_every(-1) 
                  __MPICODE( __COMMA__ suffix("") ) {}
         //! Copy Constructor

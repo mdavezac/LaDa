@@ -122,7 +122,7 @@
         boost::bind( &LaDa::GA::Topology::seed_n, ga.topology, 0, _1 )
       );
 #    ifdef _MPI
-        for( size_t ii(0); ii < boost::mpi::world.size(); ++ii )
+        for( size_t ii(0); ii < world->size(); ++ii )
           ga.att_factory.connect
           (
                "seed" + boost::lexical_cast<std::string>(ii),

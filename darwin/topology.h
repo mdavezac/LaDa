@@ -49,7 +49,7 @@ namespace LaDa
         //! Constructor and Initializer.
         Topology() : seeds(1,0)
                      __MPICONSTRUCTORCODE( graph(NULL) )
-                     __MPICONSTRUCTORCODE( comm( boost::mpi::world, 
+                     __MPICONSTRUCTORCODE( comm( boost::mpi::communicator(), 
                                                  boost::mpi::comm_duplicate ) ) {}
         //! Copy Constructor.
         Topology   ( const Topology &_comm )

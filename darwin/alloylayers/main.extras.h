@@ -98,12 +98,13 @@
         boost::bind<void>( &PPFactory::epitaxial_strain<t_Evaluator>, boost::ref(ga.evaluator) ) )
       ( "energy", "VFF energy in eV per f.u." ,
         boost::bind<void>( &PPFactory::strain_energy<t_Evaluator>, boost::ref(ga.evaluator) ) )
-      ( "bandgap", boost::bind( &PPFactory::bandgap<t_Evaluator>, boost::ref(ga.evaluator) ) )
+      ( "bandgap", "Band gap in eV", 
+        boost::bind( &PPFactory::bandgap<t_Evaluator>, boost::ref(ga.evaluator) ) )
       ( "transition", "Dipole oscillator strength between VBM and CBM. Arbitrary units.",
         boost::bind( &PPFactory::transitions<t_Evaluator>, boost::ref(ga.evaluator) ) )
-      ( "cbm", "   Conduction band minimum in eV.", 
+      ( "cbm", "Conduction band minimum in eV.", 
         boost::bind( &PPFactory::cbm<t_Evaluator>, boost::ref(ga.evaluator) ) )
-      ( "vbm", "   Valence band minimum in eV.",
+      ( "vbm", "Valence band minimum in eV.",
         boost::bind( &PPFactory::vbm<t_Evaluator>, boost::ref(ga.evaluator) ) );
 
     // connects ga operator factory.

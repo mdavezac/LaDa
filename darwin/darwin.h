@@ -212,8 +212,8 @@ namespace LaDa
                     max_generations(0), nb_islands(1), 
                     do_restart(0), replacement_rate(0.1), do_print_each_call(false),
                     breeder_ops(NULL), breeder(NULL), replacement(NULL),
-                    objective(NULL), store(NULL), evaluation(NULL), scaling(NULL),
-                    topology(__MPICODE( boost::mpi::world ) ) { checkpoints.connect_age_counter( counter ); }
+                    objective(NULL), store(NULL), evaluation(NULL), scaling(NULL)
+          { checkpoints.connect_age_counter( counter ); }
         //! Destructor
         virtual ~Darwin ();
 

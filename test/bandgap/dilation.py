@@ -17,6 +17,7 @@ def print_bands( _escan, _structure, _first, _last, _result, _nbpoints = 10 ):
   """
   
   import LaDa
+  from math import sqrt
 
   # Creates set of points.
   points = [ float(u) * ( _last - _first ) / float(_nbpoints) + _first for u in range(_nbpoints) ]
@@ -24,7 +25,7 @@ def print_bands( _escan, _structure, _first, _last, _result, _nbpoints = 10 ):
     _escan.parameters.kpoint = k
     nbstates( _escan, _structure )
     _escan.run()
-    result = [ LaDa.norm2(_escan.parameters.kpoint) ]
+    result = [ sqrt( LaDa.norm2(_escan.parameters.kpoint) ) ]
 
     if    _escan.parameters.potential != LaDa.spinorbit \
        or LaDa.norm2( _escan.parameters.kpoint ) < 1e-6:
@@ -63,7 +64,7 @@ def main():
   escan.scale = vff.structure
 
   result = []
-  print_bands( escan, vff.structure, rVector3d( [0,0,0] ), rVector3d( [2.0,0,0] ), result, 10 )
+  print_bands( escan, vff.structure, rVector3d( [0,0,0] ), rVector3d( [1,0,0] ), result, 20 )
 
   file = open( "result", "w" )
   for eigs in result:

@@ -30,9 +30,10 @@ namespace LaDa
       //! Returns true if \a _path does not exist.
       inline bool stop_onfile( const boost::filesystem::path _path )
       {
+        __MPICODE( boost::mpi::communicator world; )
         __ROOTCODE
         (
-          boost::mpi::world,
+          world,
           if( not boost::filesystem::exists( _path ) ) return true;
           Print::out << "Stopping on finding file " << _path << ".\n";
           Print::xmg << Print::Xmg::comment << "Stopping on finding file "
@@ -50,9 +51,10 @@ namespace LaDa
           void stop_onfile( T_CHECKPOINT& _checkpoint, const std::string& _path )
           {
             const boost::filesystem::path path( _path );
+            __MPICODE( boost::mpi::communicator world; )
             __ROOTCODE
             (
-              boost::mpi::world,
+              world,
               if( boost::filesystem::exists( path ) )
               __BEGINGROUP__
                 __DOASSERT( not boost::filesystem::is_regular( path ),
