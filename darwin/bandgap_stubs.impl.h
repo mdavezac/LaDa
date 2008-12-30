@@ -12,6 +12,7 @@
 #include <boost/mpi/collectives.hpp>
 #include <boost/serialization/string.hpp>
 #include <mpi/mpi_object.h>
+#include <opt/tinyxml.h>
 
 namespace LaDa
 {

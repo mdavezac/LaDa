@@ -50,7 +50,8 @@ namespace LaDa
       bool Darwin :: Load( const TiXmlElement &_node )
       {
         degeneracy = types::tolerance;
-        const TiXmlElement *parent = opt::find_functional_node( _node, "oscillator strength" );
+        const TiXmlElement *parent 
+          = opt::find_node( _node, "Functional", "type", "oscillator strength" );
         if( not parent ) return false;
         if( not parent->Attribute( "degeneracy" ) ) return false;
         degeneracy = boost::lexical_cast< types::t_real >

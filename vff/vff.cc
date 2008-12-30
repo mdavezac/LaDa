@@ -6,9 +6,10 @@
 #endif
 
 #include <cstdlib>
-
 #include <algorithm>
 #include <functional>
+
+#include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 
 #include <physics/physics.h>
@@ -144,6 +145,8 @@ namespace LaDa
 
     bool Vff :: Load ( const TiXmlElement &_element )
     {
+      namespace bfs = boost::filesystem;
+
       // some consistency checking
       if ( structure.lattice->get_nb_sites() != 2 )
       { 
@@ -159,8 +162,26 @@ namespace LaDa
         return false;
       }
 
-      const TiXmlElement* parent = opt::find_functional_node( _element, "vff" );
-      if( parent ) return load_(*parent);
+      const TiXmlElement* parent
+        = opt::find_node( _element, "Functional", "type", "vff" );
+
+      if( not parent )
+      {
+        std::cerr << "Could not find an <Functional type=\"vff\"> tag in input file" 
+                  << std::endl;
+        return false;
+      }
+      if( not parent->Attribute( "filename" ) ) return load_( *parent );
+
+      const bfs::path path( parent->Attribute( "filename" ) );
+      __DOASSERT( not bfs::exists( path ), path.string() + " does not exist.\n" )
+      TiXmlDocument doc;
+      opt::read_xmlfile( path, doc );
+      __DOASSERT( not doc.FirstChild( "Job" ),
+                  "Root tag <Job> does not exist in " + path.string() + ".\n" )
+      parent = opt::find_node( *doc.FirstChildElement( "Job" ), "Functional", "type", "vff" );
+
+      if( parent ) return load_( *parent );
       std::cerr << "Could not find an <Functional type=\"vff\"> tag in input file" 
                 << std::endl;
       return false;

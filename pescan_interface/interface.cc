@@ -8,13 +8,17 @@
 #include <sstream>
 #include <fstream>
 #include <stdexcept>       // std::runtime_error
+
 #ifdef _DIRECTIAGA
 # include <unistd.h>
 # include <boost/mpi/collectives.hpp>
 #endif
+
 #include <boost/tuple/tuple_io.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/filesystem/path.hpp>
+#include <boost/filesystem/operations.hpp>
 
 #include <opt/debug.h>
 #include <opt/initial_path.h>
@@ -187,9 +191,27 @@ namespace LaDa
  
     bool Interface::Load( const TiXmlElement &_node )
     {
+      namespace bfs = boost::filesystem;
       const TiXmlElement *parent = opt::find_node( _node, "Functional", "type", "escan" );
-      if ( parent ) return Load_( *parent );
+
+      if( not parent )
+      {
+        std::cerr << "Could not find an <Functional type=\"escan\"> tag in input file" 
+                  << std::endl;
+        return false;
+      }
+      if( not parent->Attribute( "filename" ) ) return Load_( *parent );
+
+      const bfs::path path( parent->Attribute( "filename" ) );
+      __DOASSERT( not bfs::exists( path ), path.string() + " does not exist.\n" )
+      TiXmlDocument doc;
+      opt::read_xmlfile( path, doc );
+      __DOASSERT( not doc.FirstChild( "Job" ),
+                  "Root tag <Job> does not exist in " + path.string() + ".\n" )
+      parent = opt::find_node( *doc.FirstChildElement( "Job" ), "Functional", "type", "escan" );
       
+      if( parent ) return Load_( *parent );
+
       std::cerr << "Could not find an <Functional type=\"escan\"> tag in input file" 
                 << std::endl;
       return false;

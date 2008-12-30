@@ -5,6 +5,7 @@
 #include <config.h>
 #endif
 
+#include<boost/filesystem/path.hpp>
 #include<boost/filesystem/operations.hpp>
 #include<boost/mpi/collectives.hpp>
 #include<boost/bind.hpp>
@@ -46,6 +47,7 @@ namespace LaDa
         }
       }
       parent =  _element.FirstChildElement(_name);
+      std::cerr << (*parent) << "\n";
       if( parent and _attribute == "" and _value == ""  ) return parent;
       for(; parent; parent = parent->NextSiblingElement( _name ) )
       {
@@ -66,31 +68,6 @@ namespace LaDa
       }
 
       return NULL;
-    }
-
-    const TiXmlElement* find_node_check_filename( const TiXmlElement &_element,
-                                                  const std::string& _name,
-                                                  const std::string& _attribute = "",
-                                                  const std::string& _value = "" )
-    {
-      __TRYBEGIN
-        const TiXmlElement *parent = find_node( _element, _name, _attribute, _value );
-        if( not parent->Attribute("filename") ) return parent;
-        const bfs::path path( parent->Attribute("filename") );
-        __DOASSERT( not bfs::exists( path ), path.string() + " does not exist. aborting.\n" )
-        TiXmlDocument doc;
-        read_xmlfile( path, doc );
-        __DOASSERT( doc.FirstChild("Job"),
-                    "Could not find root node <Job> in " + path.string() + ".\n" )
-        return find_node( doc.FirstChild("Job").Element() );
-      __TRYEND
-      (
-        std::string error = "<" + _name;
-        if( _attribute != "" ) error += " " + attribute;
-        if( _value != "" ) error += "=\"" + value + "\" ";
-        error += "/>";,
-        "Error while searching for " + error + ".\n"
-      )  
     }
 
     //! \brief Returns the node \<Functional type=\a _name\>.
