@@ -8,6 +8,9 @@
 #include <sstream>
 #include <algorithm>
 
+#include <boost/filesystem/path.hpp>
+#include <boost/filesystem/operations.hpp>
+
 #include <physics/physics.h>
 #include <print/stdout.h>
 #include <print/manip.h>
@@ -194,9 +197,28 @@ namespace LaDa
 
     bool BandGap :: Load( const TiXmlElement &_node )
     {
-      const TiXmlElement *parent = opt::find_node( _node, "Functional", "type", "escan" );
+      namespace bfs = boost::filesystem;
+      const TiXmlElement *parent
+         = opt::find_node( _node, "Functional", "type", "escan" );
       __DOASSERT( not parent, 
                   "Could not find <Functional type=\"escan\"> in input\n"; )
+
+      // Checks for filename attribute.
+      bfs::path path;
+      TiXmlDocument doc;
+      if(  parent->Attribute( "filename" ) )
+      {
+        path = parent->Attribute( "filename" );
+        __DOASSERT( not bfs::exists( path ), path.string() + " does not exist.\n" )
+        opt::read_xmlfile( path, doc );
+        __DOASSERT( not doc.FirstChild( "Job" ),
+                    "Root tag <Job> does not exist in " + path.string() + ".\n" )
+        parent = opt::find_node( *doc.FirstChildElement( "Job" ),
+                                 "Functional", "type", "escan" );
+        __DOASSERT( not parent, 
+                    "Could not find <Functional type=\"escan\"> in input\n"; )
+      }
+      
       __TRYCODE( __DOASSERT( not Interface :: Load_( *parent ), "" ),
                  "Encountered error while loading bandgap interface:\n" )
       

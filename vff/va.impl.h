@@ -15,17 +15,27 @@ namespace LaDa
     template< class T_VFFBASE >
     bool VABase<T_VFFBASE> :: Load( const TiXmlElement &_node )
     {
+      namespace bfs = boost::filesystem;
+      const TiXmlElement* parent
+        = opt::find_node( _node, "Functional", "type", "vff" );
+      __DOASSERT( not parent, 
+                  "Could not find <Functional type=\"vff\"> in input\n"; )
+      bfs::path path;
+      TiXmlDocument doc;
+      if(  parent->Attribute( "filename" ) )
+      {
+        path = Print::reformat_home( parent->Attribute( "filename" ) );
+        __DOASSERT( not bfs::exists( path ), path.string() + " does not exist.\n" )
+        opt::read_xmlfile( path, doc );
+        __DOASSERT( not doc.FirstChild( "Job" ),
+                    "Root tag <Job> does not exist in " + path.string() + ".\n" )
+        parent = opt::find_node( *doc.FirstChildElement( "Job" ),
+                                 "Functional", "type", "vff" );
+        __DOASSERT( not parent, 
+                    "Could not find <Functional type=\"vff\"> in input\n"; )
+      }
       // Load base
       if( not t_VffBase :: Load( _node ) ) return false;
-
-      // Finds parent functional node
-      const TiXmlElement *parent = opt::find_functional_node( _node, "vff" );
-      if ( not parent )
-      {
-        std::cerr << "Could not find an <Functional type=\"vff\"> tag in input file" 
-                  << std::endl;
-        return false;
-      } 
 
       if( minimizer.Load( *parent ) ) return true;
       return minimizer.Load( *parent->Parent()->ToElement() );

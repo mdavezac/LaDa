@@ -47,7 +47,6 @@ namespace LaDa
         }
       }
       parent =  _element.FirstChildElement(_name);
-      std::cerr << (*parent) << "\n";
       if( parent and _attribute == "" and _value == ""  ) return parent;
       for(; parent; parent = parent->NextSiblingElement( _name ) )
       {

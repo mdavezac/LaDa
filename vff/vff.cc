@@ -173,7 +173,7 @@ namespace LaDa
       }
       if( not parent->Attribute( "filename" ) ) return load_( *parent );
 
-      const bfs::path path( parent->Attribute( "filename" ) );
+      const bfs::path path( Print::reformat_home( parent->Attribute( "filename" ) ) );
       __DOASSERT( not bfs::exists( path ), path.string() + " does not exist.\n" )
       TiXmlDocument doc;
       opt::read_xmlfile( path, doc );

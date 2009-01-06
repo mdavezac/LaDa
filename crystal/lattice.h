@@ -228,11 +228,27 @@ namespace LaDa
       boost::shared_ptr< Crystal::Lattice > result( new Crystal::Lattice ); 
 
       TiXmlDocument doc;
+      TiXmlDocument doc2;
       TiXmlHandle handle( &doc );
       doc.Parse( _string.c_str() );
       TiXmlElement *child = handle.FirstChild( "Job" )
                                   .FirstChild( "Lattice" ).Element();
       __DOASSERT( not child, "Could not find Lattice in input.\n" )
+      if( child->Attribute("filename") )
+      {
+        const boost::filesystem::path
+          n( Print::reformat_home( child->Attribute("filename") ) );
+        __DOASSERT( not boost::filesystem::exists( n ),
+                    n.string() + " could not be found.\n" )
+        std::string file;
+        opt::read_xmlfile( n, doc2 );
+        doc2.Parse( file.c_str() );
+        __DOASSERT( not doc2.FirstChild( "Job" ), "Job tag does not exist.\n" )
+        __DOASSERT( not doc2.FirstChild( "Job" )->FirstChildElement("Lattice"), 
+                    "Lattice tag does not exist.\n" )
+        child = doc2.FirstChild( "Job" )->FirstChildElement( "Lattice" );
+        __DOASSERT( not child, "Could not find Lattice in input.\n" )
+      }
       __DOASSERT( not result->Load(*child),
                   "Error while reading Lattice from input.\n")
 #     if defined (_TETRAGONAL_CE_)

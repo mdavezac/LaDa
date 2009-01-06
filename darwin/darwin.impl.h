@@ -498,15 +498,15 @@ namespace LaDa
       opt::read_xmlfile( filename, doc );
       const TiXmlElement *node;
 
+      // Loads topology and assigns comms to evaluators
+      node = docHandle.FirstChild("Job").Element();
+      topology.Load( *node, evaluator );
+
       // Loads evaluator first 
       __TRYASSERT( not evaluator.Load(*docHandle.FirstChild("Job").Element() ),
                       "Could not load functional input from "
                    << filename << "\n" )
  
-      // Loads topology and assigns comms to evaluators
-      node = docHandle.FirstChild("Job").Element();
-      topology.Load( *node, evaluator );
-
       // Load checkpoints and filenames.
       node = docHandle.FirstChild("Job")
                       .FirstChild("GA").Element();

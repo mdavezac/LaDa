@@ -7,6 +7,9 @@
 
 #include <cstdlib>
 
+#include <boost/filesystem/path.hpp>
+#include <boost/filesystem/operations.hpp>
+
 #include <opt/fuzzy.h>
 #include <opt/debug.h>
 
@@ -116,8 +119,25 @@ namespace LaDa
 
     bool Layered :: Load( const TiXmlElement &_node )
     {
-      const TiXmlElement* parent = opt::find_functional_node( _node, "vff" );
-      if( not t_Base :: Load( *parent ) ) return false;
+      namespace bfs = boost::filesystem;
+      const TiXmlElement* parent
+        = opt::find_node( _node, "Functional", "type", "vff" );
+      __DOASSERT( not parent, 
+                  "Could not find <Functional type=\"vff\"> in input\n"; )
+      bfs::path path;
+      TiXmlDocument doc;
+      if(  parent->Attribute( "filename" ) )
+      {
+        path = Print :: reformat_home( parent->Attribute( "filename" ) );
+        __DOASSERT( not bfs::exists( path ), path.string() + " does not exist.\n" )
+        opt::read_xmlfile( path, doc );
+        __DOASSERT( not doc.FirstChild( "Job" ),
+                    "Root tag <Job> does not exist in " + path.string() + ".\n" )
+        parent = opt::find_node( *doc.FirstChildElement( "Job" ),
+                                 "Functional", "type", "vff" );
+        __DOASSERT( not parent, 
+                    "Could not find <Functional type=\"vff\"> in input\n"; )
+      }
       return Load_( *parent );
     }
 

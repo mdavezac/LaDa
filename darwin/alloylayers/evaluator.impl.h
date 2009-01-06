@@ -34,7 +34,8 @@ namespace LaDa
                    template<class> class T_TRANSLATE, \
                    template<class,class> class T_ASSIGN >  var EVALBASEHEAD
  
-      INEVALBASE( boost::shared_ptr<Crystal::Lattice> ) :: lattice( new Crystal :: Lattice );
+      INEVALBASE( boost::shared_ptr<Crystal::Lattice> )
+        :: lattice( new Crystal :: Lattice );
  
       INEVALBASE( void ) :: init( t_Individual &_indiv )
       {
@@ -47,7 +48,8 @@ namespace LaDa
       INEVALBASE( bool ) :: Load( const TiXmlElement &_node )
       {
         __TRYBEGIN
-          boost::shared_ptr<Crystal::Lattice> dummy( Crystal::read_lattice( _node ) );
+          boost::shared_ptr<Crystal::Lattice>
+            dummy( Crystal::read_lattice( _node ) );
           lattice.swap( dummy );
         __TRYEND(, "Could not read lattice from input.\n" )
         Crystal::Structure::lattice = lattice.get();

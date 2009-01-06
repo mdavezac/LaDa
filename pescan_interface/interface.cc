@@ -592,7 +592,7 @@ namespace LaDa
         if ( child->Attribute("filename") and child->Attribute("izz") )
         {
           SpinOrbit so;
-          so.filename = child->Attribute("filename");
+          so.filename = Print::reformat_home( child->Attribute("filename") );
           so.izz = child->Attribute("izz");
           if( child->Attribute("s") )
             child->Attribute("s", &so.s);
