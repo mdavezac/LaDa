@@ -16,7 +16,6 @@
 #include <vff/va.h>
 #include <crystal/structure.h>
 #include <opt/function_base.h>
-#include <opt/gsl_minimizers.h>
 #include <opt/types.h>
 #include <atat/vectmac.h>
 
@@ -66,7 +65,7 @@ namespace LaDa
     //! \details This class simply defines the necessary members to minimize a
     //!          structure using Vff. It is templated so that any Vff derivative
     //!          can be used. Whatever the flavor of Vff, the structure is
-    //!          minimized using a GSL minimizer.
+    //!          minimized using a minimizer.
     //!          Communication between an Evaluator class and this class are done
     //!          \e via the reference to the Crystal::Structure
     //!          Vff::Functional::structure which is (should) fed to the

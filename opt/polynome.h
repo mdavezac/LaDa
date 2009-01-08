@@ -75,15 +75,14 @@ namespace LaDa
 
       public: 
         //! Constructor.
-        Polynome() : t_Base() MPI_COMMA MPI_COMMCOPY( boost::mpi::world ) {}
+        Polynome() : t_Base() {}
         //! Constructor and variables initializer.
         Polynome   ( types::t_int nb )
-                 : t_Base(nb) MPI_COMMA 
-                   MPI_COMMCOPY( boost::mpi::world ) {}
+                 : t_Base(nb) {}
         //! Copy constructor
         Polynome  ( const t_This &_p ) 
-                 : monomes(_p.monomes) MPI_COMMA
-                   MPI_COMMCOPY( _p ) {}
+                 : monomes(_p.monomes)
+                   __MPICODE( __COMMA__ MPI_COMMCOPY( _p ) ) {}
 
         //! Destructor
         virtual ~Polynome() {};

@@ -64,7 +64,7 @@ def main():
   escan.scale = vff.structure
 
   result = []
-  print_bands( escan, vff.structure, rVector3d( [0,0,0] ), rVector3d( [1,0,0] ), result, 20 )
+  print_bands( escan, vff.structure, rVector3d( [0,0,0] ), rVector3d( [1,0,0] ), result, 5 )
 
   file = open( "result", "w" )
   for eigs in result:

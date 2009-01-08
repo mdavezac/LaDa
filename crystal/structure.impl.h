@@ -271,8 +271,8 @@ namespace LaDa
         parent = new TiXmlElement( "Cell" );
         structure->LinkEndChild( parent );
         structure->SetAttribute("N", atoms.size() );
-        structure->SetAttribute("energy", energy );
-        structure->SetAttribute("weight", weight );
+        structure->SetDoubleAttribute("energy", energy );
+        structure->SetDoubleAttribute("weight", weight );
         structure->SetAttribute("name", name );
         
         for (int i=0; i < 3; ++i)

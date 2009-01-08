@@ -9,11 +9,14 @@
 #endif
 
 #include <iomanip>
-#include <gsl/gsl_multimin.h>
 #include <functional>
 #include <algorithm>
-#include <tinyxml/tinyxml.h>
+
+#include <boost/tuple/tuple.hpp>
 #include <boost/lambda/bind.hpp>
+
+#include <tinyxml/tinyxml.h>
+#include <gsl/gsl_multimin.h>
 
 #include <opt/algorithms.h>
 
@@ -105,7 +108,7 @@ namespace LaDa
         namespace bl = boost::lambda;
         gsl_multimin_fminimizer *solver;
         gsl_vector *ss;
-        typedef std::pair< const T_FUNCTION&, T_CONTAINER& > t_Pair;
+        typedef boost::tuples::tuple< const T_FUNCTION&, T_CONTAINER& > t_Pair;
         t_Pair data_pair( _func, _arg );
 
         __DEBUGTRYBEGIN

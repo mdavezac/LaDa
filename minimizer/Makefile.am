@@ -9,4 +9,4 @@ noinst_LTLIBRARIES = libminimizer.la
 libminimizer_la_SOURCES =  $(MINIMIZER_F90) $(MINIMIZER_CC)
 libminimizer_la_CPPFLAGS = $(AM_CPPFLAGS)
 libminimizer_ladir = $(includedir)/LaDa/minimizer
-nobase_libminimizer_la_HEADERS = $(MINIMIZER_H)
+libminimizer_la_HEADERS = $(MINIMIZER_H)

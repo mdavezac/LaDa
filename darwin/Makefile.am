@@ -6,6 +6,7 @@ AM_CPPFLAGS = @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ \
 	      @MPI_CFLAGS@ @EO_CFLAGS@ -I $(top_srcdir) @BOOST_CXXFLAGS@ 
 AM_LDFLAGS = @TINYXML_LIBS@ @EO_LIBS@ @BOOST_LDFLAGS@ @BOOST_MPI@ \
 	     @BOOST_SERIALIZATION@ @BOOST_PROGOP@ @BOOST_FS@ @BOOST_SIGNAL@
+EXTRA_DIST = $(top_srcdir)/darwin/main.extras.h
 if DOCEOPT
   CEOPT = ce_opt
 endif
@@ -52,7 +53,8 @@ alloylayers_opt_LDADD = libdarwin.la \
 	                @MPI_ADDLIB@ \
 	                $(LDADD) @LD_IAGA_FLAGS@
 
-noinst_LTLIBRARIES = libdarwin.la libdarwinoperator.la liballoylayers.la libdarwingraph.la
+noinst_LTLIBRARIES = libdarwin.la libdarwinoperator.la liballoylayers.la \
+                     libdarwingraph.la libdarwinckp.la libdarwintaboos.la
 
 libdarwinoperator_ladir = $(includedir)/LaDa/darwin/operators
 libdarwinoperator_la_SOURCES = $(DARWIN_OP_CC)
@@ -64,6 +66,19 @@ libdarwingraph_la_SOURCES = $(DARWIN_GRAPH_CC)
 libdarwingraph_la_HEADERS = $(DARWIN_GRAPH_H)
 libdarwingraph_la_CPPFLAGS = $(AM_CPPFLAGS)
 
+libdarwinckp_ladir = $(includedir)/LaDa/darwin/checkpoints
+libdarwinckp_la_SOURCES = $(DARWIN_CKP_CC)
+libdarwinckp_la_HEADERS = $(DARWIN_CKP_H)
+libdarwinckp_la_CPPFLAGS = $(AM_CPPFLAGS)
+
+libdarwintaboos_ladir = $(includedir)/LaDa/darwin/taboos
+libdarwintaboos_la_SOURCES =
+libdarwintaboos_la_HEADERS = $(DARWIN_TABOOS_H)
+libdarwintaboos_la_CPPFLAGS = $(AM_CPPFLAGS)
+
+libdarwinbitstring_ladir = $(includedir)/LaDa/darwin/bitstring
+libdarwinbitstring_la_HEADERS = $(DARWIN_BITSTRING_H)
+libdarwinbitstring_la_CPPFLAGS = $(AM_CPPFLAGS)
 
 liballoylayers_ladir = $(includedir)/LaDa/darwin/alloylayers
 liballoylayers_la_SOURCES = $(LIB_ALLOYLAYERS_CC)
@@ -74,7 +89,7 @@ libdarwin_ladir = $(includedir)/LaDa/darwin
 libdarwin_la_SOURCES = $(DARWIN_LIB_CC)
 nobase_libdarwin_la_HEADERS = $(DARWIN_LIB_H) 
 libdarwin_la_CPPFLAGS = $(AM_CPPFLAGS) 
-libdarwin_la_LIBADD = libdarwinoperator.la libdarwingraph.la
+libdarwin_la_LIBADD = libdarwinoperator.la libdarwingraph.la libdarwinckp.la
 
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) libatat.la

@@ -9,12 +9,15 @@
 #endif
 
 #include <iomanip>
-#include <gsl/gsl_multimin.h>
 #include <functional>
 #include <algorithm>
-#include <tinyxml/tinyxml.h>
+
+#include <boost/tuple/tuple.hpp>
 #include <boost/lambda/bind.hpp>
 #include <boost/serialization/access.hpp>
+
+#include <gsl/gsl_multimin.h>
+#include <tinyxml/tinyxml.h>
 
 #include <opt/algorithms.h>
 
@@ -152,7 +155,7 @@ namespace LaDa
       {
         namespace bl = boost::lambda;
         gsl_multimin_fdfminimizer *solver;
-        typedef std::pair< const T_FUNCTION&, T_CONTAINER& > t_Pair;
+        typedef boost::tuples::tuple< const T_FUNCTION&, T_CONTAINER& > t_Pair;
         t_Pair data_pair( _func, _arg );
    
         __DEBUGTRYBEGIN
@@ -261,25 +264,31 @@ namespace LaDa
       template< class T_DATAPAIR >
         double gsl_f( const gsl_vector* _x, void* _data )
         {
-          T_DATAPAIR *_this = (T_DATAPAIR*) _data;
-          std::copy( _x->data, _x->data + _this->second.size(), _this->second.begin() );
-          return _this->first( _this->second );
+          namespace bt = boost::tuples;
+          T_DATAPAIR &_this = *( (T_DATAPAIR*) _data );
+          std::copy( _x->data, _x->data + bt::get<1>( _this ).size(),
+                     bt::get<1>( _this ).begin() );
+          return bt::get<0>( _this )( bt::get<1>( _this ) );
         }
       template< class T_DATAPAIR >
         void gsl_df( const gsl_vector* _x, void* _data, gsl_vector* _grad )
         {
-          T_DATAPAIR *_this = (T_DATAPAIR*) _data;
-          std::copy( _x->data, _x->data + _this->second.size(), _this->second.begin() );
-          _this->first.gradient( _this->second, _grad->data );
+          namespace bt = boost::tuples;
+          T_DATAPAIR &_this = *( (T_DATAPAIR*) _data );
+          std::copy( _x->data, _x->data + bt::get<1>( _this ).size(),
+                     bt::get<1>( _this ).begin() );
+          bt::get<0>( _this ).gradient( bt::get<1>( _this ), _grad->data );
         }
       template< class T_DATAPAIR >
-        void gsl_fdf( const gsl_vector *_x, void *_data, double *_r, gsl_vector *_grad)
+        void gsl_fdf( const gsl_vector *_x, void *_data,
+                      double *_r, gsl_vector *_grad)
         { 
-          namespace bl = boost::lambda;
-          T_DATAPAIR *_this = (T_DATAPAIR*) _data;
-          std::copy( _x->data, _x->data + _this->second.size(), _this->second.begin() );
-          *_r = _this->first( _this->second );
-          _this->first.gradient( _this->second, _grad->data );
+          namespace bt = boost::tuples;
+          T_DATAPAIR &_this = *( (T_DATAPAIR*) _data );
+          std::copy( _x->data, _x->data + bt::get<1>( _this ).size(),
+                     bt::get<1>( _this ).begin() );
+          *_r = bt::get<0>( _this )( bt::get<1>( _this ) );
+          bt::get<0>( _this ).gradient( bt::get<1>( _this ), _grad->data );
         } 
     }
     //! \endcond

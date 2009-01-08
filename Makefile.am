@@ -37,7 +37,7 @@ if DOCE
 endif
 SUBDIRS = $(MPISUBDIR) atat physics opt minimizer crystal print $(CEDIR) $(VFFSUBDIR) \
 	  $(PESCANSUBDIR) $(LAPACKDIR) $(DARWINSUBDIR) $(SEPARABLEDIR) \
-	  $(PYTHONDIR)
+	  $(PYTHONDIR) factory
 revision.h: force
 	@cd $(top_srcdir); scripts/max_revision.pl
 force: ;

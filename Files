@@ -15,51 +15,83 @@ DARWIN_GRAPH_H = graph/breeders.h graph/comm.h graph/evaluation.h \
                  graph/objective.h graph/store.h  graph/taboo.h $(DARWIN_GRAPH_IMPL_H)
 
 DARWIN_LIB_CC = concentration.cc debug.cc topology.cc \
-                operators/container.cc checkpoints/save_every.cc \
                 init_outputfiles.cc
  
 DARWIN_LIB_IMPL_H = darwin.impl.h  evaluation.impl.h individual.impl.h \
 	            scaling.impl.h store.impl.h  fitness.impl.h taboos.impl.h \
                     objective.impl.h bitstring.impl.h gaoperators.impl.h \
                     checkpoints.impl.h minimizergenop.impl.h topology.impl.h 
-DARWIN_LIB_H = concentration.h debug.h \
+DARWIN_LIB_H = concentration.h debug.h  init_outputfiles.h \
                breeder.h evaluation.h functors.h loadsave.h \
 	       operators.h statistics.h darwin.h gencount.h store.h \
 	       checkpoints.h evaluator.h individual.h objective.h \
 	       taboos.h gatraits.h  bitstring.h fitness.h gaoperators.h \
 	       scaling.h minimizergenop.h topology.h \
                assign_callbacks.h print_callbacks.h static_translate.h \
-               $(DARWIN_LIB_IMPL_H)
+               call_init.h $(DARWIN_LIB_IMPL_H)
 
 DARWIN_OP_CC = operators/container.cc 
 DARWIN_OP_IMPL_H = operators/factory.impl.h 
-DARWIN_OP_H = operators/container.h \
-              operators/callback.h operators/discriminate.h \
-              operators/eogenop_adapter.h operators/factory.h \
-              operators/periodic.h operators/populator_functor.h \
-              operators/xmlfactory.h $(DARWIN_OP_IMPL_H)
+DARWIN_OP_H =  operators/callback.h          operators/eogenop_adapter.h \
+               operators/make_populator.h    operators/populate.h \
+               operators/xmlfactory.h        operators/container.h \
+               operators/factory.h           operators/minimizer.h \
+               operators/populator_functor.h operators/discriminate.h \
+               operators/factory.impl.h      operators/periodic.h \
+               operators/taboo.h
 
+DARWIN_CKP_CC = checkpoints/save_every.cc
+DARWIN_CKP_H = checkpoints/apply2best.h      checkpoints/checkpoint.h \
+               checkpoints/filename.h        checkpoints/print_iteration.h \
+               checkpoints/stop_onfile.h     checkpoints/xmlfactory.h \
+               checkpoints/apply2stored.h    checkpoints/dummy.h \
+               checkpoints/maxeval.h         checkpoints/print_populations.h \
+               checkpoints/true_census.h     checkpoints/xyzanim.h \
+               checkpoints/average_fitness.h checkpoints/every.h \
+               checkpoints/maxgen.h          checkpoints/save_every.h \
+               checkpoints/xcrysdenanim.h
+
+DARWIN_TABOOS_H = taboos/container.h  taboos/history.h  taboos/populations.h
+
+DARWIN_BITSTRING_H = bitstring/crossover.h  bitstring/mutation.h \
+                     bitstring/object.h  bitstring/random.h  bitstring/translate.h
 
 DARWIN_CE_CC = ce.cc single_site.cc groundstates/groundstate.cc 
 DARWIN_CE_IMPL_H = single_site.impl.h 
-DARWIN_CE_H  = ce.h  single_site.h  groundstates/groundstate.h  $(DARWIN_CE_IMPL_H)
+DARWIN_CE_H  = ce.h  single_site.h \
+               groundstates/assign.h           groundstates/evaluator_base.impl.h \
+               groundstates/groundstate.h      groundstates/main.extras.h \
+               groundstates/populate_factory.h groundstates/evaluator_base.h \
+               groundstates/evaluator.h        groundstates/krossover.h \
+               groundstates/object.h           groundstates/translate.h \
+               $(DARWIN_CE_IMPL_H)
+
 DARWIN_CE_DOC = $(DARWIN_CE_H) $(DARWIN_CE_CC) 
 
 DARWIN_BG_CC = bandgap_stubs.cc two_sites.cc single_site.cc vff.cc bandgap.cc 
-DARWIN_BG_IMPL_H = two_sites.impl.h  single_site.impl.h  bandgap_stubs.impl.h
+DARWIN_BG_IMPL_H = two_sites.impl.h  single_site.impl.h  bandgap_stubs.impl.h \
+                   alloylayers/evaluator.impl.h  alloylayers/policies.impl.h \
+                   bandgap_stubs.impl.h 
 DARWIN_BG_H  = bandgap_stubs.h  two_sites.h  single_site.h  vff.h  bandgap.h \
-               $(DARWIN_BG_IMPL_H)
+               alloylayers/evaluator.h alloylayers/main.extras.h \
+               alloylayers/object.h alloylayers/operators.h \
+               alloylayers/policies.h $(DARWIN_BG_IMPL_H)
 DARWIN_BG_DOC = $(DARWIN_BG_H) $(DARWIN_BG_CC) $(DARWIN_GRAPH_H) $(DARWIN_GRAPH_CC)
 
 LIB_ALLOYLAYERS_CC = single_site.cc bandgap_stubs.cc vff.cc electric_dipole.cc
 LIB_ALLOYLAYERS_IMPL_H  = alloylayers/evaluator.impl.h  alloylayers/policies.impl.h \
-                          alloylayers/factory.hpp 
+                          alloylayers/factory.hpp bandgap_stubs.impl.h two_sites.impl.h
 LIB_ALLOYLAYERS_H  = alloylayers/evaluator.h alloylayers/object.h \
                      alloylayers/policies.h alloylayers/operators.h \
+                     alloylayers/main.extras.h bandgap_stubs.h \
+                     vff.h electric_dipole.h two_sites.h \
                      $(LIB_ALLOYLAYERS_IMPL_H) # electric_dipole.h 
 
-DARWIN_LIB_DOC = $(DARWIN_LIB_H) $(DARWIN_LIB_CC) $(DARWIN_OP_H) $(DARWIN_OP_CC) \
-                 $(LIB_ALLOYLAYERS_H) $(LIB_ALLOYLAYERS_CC)
+DARWIN_LIB_DOC = $(DARWIN_LIB_H) $(DARWIN_LIB_CC) \
+                 $(DARWIN_OP_H) $(DARWIN_OP_CC) \
+                 $(DARWIN_CKP_H) $(DARWIN_CKP_CC) \
+                 $(DARWIN_TABOOS_H) $(DARWIN_BITSTRING_H) \
+                 $(LIB_ALLOYLAYERS_H) $(LIB_ALLOYLAYERS_CC) 
 
 DARWIN_L_CC = bandgap_stubs.cc two_sites.cc single_site.cc vff.cc molecularity.cc layered.impl.h
 DARWIN_L_IMPL_H = two_sites.impl.h single_site.impl.h molecularity.impl.h \
@@ -115,7 +147,10 @@ OPT_PYTHON_CONVENIENCE_CC = convex_hull.cc errors.cc tinyxml.cc \
 OPT_DOC = $(OPT_H) $(OPT_CC) $(OPT_PYTHON_CONVENIENCE_CC)
 
 FACTORY_CC =
-FACTORY_H = chainconnects.h factory.h fusedfactory.h xmlkey.h
+FACTORY_H = chain_connect_attribute.h  chainconnects.h factory.h \
+            fusedfactory.h  xmlfactory.h xmlkey.h chain_connect_node.h \
+            chain_connect_value.h  functiontype.h  visit_xml.h xmlfusedfactory.h
+
 FACTORY_DOC = $(FACTORY_CC) $(FACTORY_H)
 
 EMASS_CC = emass.cc
@@ -141,15 +176,17 @@ PYTHON_VFF_CC = vff.cc
 PYTHON_VFF_H =  vff.hpp
 PYTHON_ESCAN_CC = escan.cc
 PYTHON_ESCAN_H = escan.hpp
-PYTHON_H = atat.hpp atat.impl.hpp atom.hpp atom.impl.hpp structure.hpp lattice.hpp \
-           xml.hpp misc.hpp convex_hull.impl.hpp errortuple.hpp 
+PYTHON_H = atat.hpp atat.impl.hpp atom.hpp structure.hpp lattice.hpp \
+           xml.hpp misc.hpp convexhull.impl.hpp errortuple.hpp physics.hpp \
+           atatintrospection.hpp atatoperators.hpp
 PYTHON_CC = lada.cc atat.cc atom.cc structure.cc lattice.cc physics.cc errortuple.cc
 PYTHON_DOC = $(PYTHON_CC) $(PYTHON_H) \
              $(PYTHON_CE_CC) $(PYTHON_CE_H) \
              $(PYTHON_VFF_H) $(PYTHON_VFF_CC)
 
-MINIMIZER_H =  gsl.h allsq.h cgs.h gsl_nllsq.h gsl_mins.h gsl_simplex.h frprmn.h variant.h \
-               decoupled.h minuit2.h
+MINIMIZER_H =  allsq.h  cgs.h  decoupled.h  frprmn.h  function_wrapper.h  gsl.h \
+               gsl_lsq.h  gsl_mins.h  gsl_nllsq.h  gsl_simplex.h  minuit2.h \
+               variant.h
 MINIMIZER_CC = gsl_lsq.cc gsl.cc gsl_nllsq.cc gsl_mins.cc gsl_simplex.cc frprmn.cc \
                decoupled.cc minuit2.cc 
 MINIMIZER_F90 =  df1dim.f90  frprmn_fortran.f90  linmin.f90

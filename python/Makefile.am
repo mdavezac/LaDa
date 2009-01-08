@@ -17,7 +17,7 @@ if DOPYTHONPESCAN
   ESCANCC=$(PYTHON_ESCAN_CC)
   ESCANH=$(PYTHON_ESCAN_H)
   ESCANLIB= ../mpi/libmpiobject.la ../pescan_interface/libescan.la \
-	    ../print/libprint.la @LD_IAGA_FLAGS@
+	    @LD_IAGA_FLAGS@
   AM_CPPFLAGS += @MINUIT_CFLAGS@ @GSL_CFLAGS@
   AM_LDFLAGS += @FCLIBS@ 
 endif
@@ -25,11 +25,12 @@ endif
 if DOVFF
   VFFCC=$(PYTHON_VFF_CC)
   VFFH=$(PYTHON_VFF_H)
-  VFFLIB=../minimizer/libminimizer.la ../vff/libvff.la
+  VFFLIB=../print/libprint.la ../minimizer/libminimizer.la ../vff/libvff.la
   AM_CPPFLAGS += @MINUIT_CFLAGS@ @GSL_CFLAGS@
   AM_LDFLAGS += @MINUIT_LIBS@ @GSL_LIBS@ 
 endif
 
+EXTRA_DIST = $(PYTHON_H) $(PYTHON_CE_H) $(PYTHON_VFF_H) $(PYTHON_ESCAN_H)
 lib_LTLIBRARIES = liblada.la 
 liblada_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
 liblada_la_SOURCES = $(PYTHON_CC) $(CECC) $(ESCANCC) $(VFFCC) 

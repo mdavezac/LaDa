@@ -14,6 +14,8 @@
 
 #include <functional>
 
+#include <boost/tuple/tuple.hpp>
+
 #include <tinyxml/tinyxml.h>
 
 #include <opt/debug.h>
@@ -123,10 +125,11 @@ namespace LaDa
     {
       template< class T_DATAPAIR > double call_frpr(double* _x, double* _y)
       {
-        T_DATAPAIR *_this = static_cast<T_DATAPAIR*>(frpr_pointer_);
-        std::copy( _x, _x + _this->second.size(), _this->second.begin() );
-        _this->first.gradient( _this->second, _y );
-        return _this->first( _this->second );
+        namespace bt = boost::tuples;
+        T_DATAPAIR &_this = *(static_cast<T_DATAPAIR*>(frpr_pointer_));
+        std::copy( _x, _x + bt::get<1>(_this).size(), bt::get<1>(_this).begin() );
+        bt::get<0>(_this).gradient( bt::get<1>(_this), _y );
+        return bt::get<0>(_this)( bt::get<1>(_this) );
       }
     }
 
@@ -151,8 +154,9 @@ namespace LaDa
 #       undef _MXPARM_
         double result;
   
-        typedef std::pair< const T_FUNCTION&, T_CONTAINER > t_DataPair;
-        double( *ptr_func )( double*, double* ) = &details::template call_frpr<t_DataPair>;
+        typedef boost::tuples::tuple< const T_FUNCTION&, T_CONTAINER& > t_DataPair;
+        double( *ptr_func )( double*, double* )
+          = &details::template call_frpr<t_DataPair>;
         t_DataPair data_pair(_function, _arg);
         details::frpr_pointer_ = (void*) &data_pair;
         FC_FUNC(frprmn, frprmn) ( x, &x_length, &tolerance,

@@ -85,18 +85,16 @@ namespace LaDa
      
         public:
           //! Constructor
-          Functional() : t_Base() __MPICONSTRUCTORCODE( comm( boost::mpi::world ) ) {}
+          Functional() : t_Base() {}
           //! Constructor and Initializer
           Functional   ( const Crystal::Structure& _str,
                          t_Container *_vars=NULL) 
-                     : function::Base<t_Type>(_vars)
-                       __MPICONSTRUCTORCODE( comm( boost::mpi::world ) ) 
-            { operator<<( _str ); }
+                     : function::Base<t_Type>(_vars) { operator<<( _str ); }
 
           //! Copy Constructor
           Functional   ( const Functional &_c )
                             : t_Base(_c), r_vecs( _c.r_vecs), k_vecs( _c.k_vecs) 
-                              __MPICONSTRUCTORCODE( comm( _c.comm ) ) {}
+                              __MPICODE( __COMMA__ comm( _c.comm ) ) {}
           //! Destructorq
           ~Functional(){};
 
