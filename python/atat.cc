@@ -18,8 +18,8 @@ namespace LaDa
     void expose_atat() 
     {
       namespace bp = boost::python;
-      expose_atatvector< atat::rVector3d >( "rVector3d" ); 
-      expose_atatvector< atat::iVector3d >( "iVector3d" ); 
+      expose_atatvector< atat::rVector3d >( "rVector3d", "a 3d-vector of real values." ); 
+      expose_atatvector< atat::iVector3d >( "iVector3d", "a 3d-vector of integer values." ); 
       expose_atatmatrix< atat::rMatrix3d >( "rMatrix3d" ); 
     }
   }

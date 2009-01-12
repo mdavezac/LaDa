@@ -20,7 +20,7 @@ def print_bands( _escan, _structure, _first, _last, _result, _nbpoints = 10 ):
   from math import sqrt
 
   # Creates set of points.
-  points = [ float(u) * ( _last - _first ) / float(_nbpoints) + _first for u in range(_nbpoints) ]
+  points = [ float(u) * ( _last - _first ) / float(_nbpoints) + _first for u in range(_nbpoints+1) ]
   for k in points:
     _escan.parameters.kpoint = k
     nbstates( _escan, _structure )
@@ -44,11 +44,11 @@ def main():
   import boost.mpi as mpi
   # from sys import exit
 
-  XMLfilename = "../input.xml"
+  XMLfilename = "input.xml"
 
   lattice = Lattice()
   lattice.fromXML( XMLfilename )
-  vff = LayeredVff()
+  vff = Vff()
   vff.structure.fromXML( XMLfilename )
   structure =  Structure( vff.structure )
   vff.fromXML( XMLfilename )
@@ -64,7 +64,8 @@ def main():
   escan.scale = vff.structure
 
   result = []
-  print_bands( escan, vff.structure, rVector3d( [0,0,0] ), rVector3d( [1,0,0] ), result, 5 )
+  print_bands( escan, vff.structure, rVector3d( [0,0,0] ), rVector3d( [2,0,0] ), result, 100 )
+  print_bands( escan, vff.structure, rVector3d( [0,0,0] ), rVector3d( [2,2,2] ), result, 100 )
 
   file = open( "result", "w" )
   for eigs in result:

@@ -57,7 +57,7 @@ namespace LaDa
         void init() { functional_->init( true ); }
 
         //! fast evaluation with no reinitialization.
-        types::t_real operator()() const { return functional_->evaluate(); }
+        types::t_real operator()() const { return functional_->evaluate() / 16.0217733; }
         //! Returns the stress.
         atat::rMatrix3d get_stress() const { return functional_->get_stress(); }
 

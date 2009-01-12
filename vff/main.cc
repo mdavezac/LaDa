@@ -19,6 +19,7 @@
 #include <revision.h>
 #include <opt/debug.h>
 #include <opt/bpo_macros.h>
+#include <opt/tuple_io.h>
 
 #ifdef _LAYERED
 # include <vff/va.h>
@@ -46,8 +47,16 @@ int main(int argc, char *argv[])
 
   __BPO_START__;
   __BPO_HIDDEN__;
+# ifdef _LAYERED
+    __BPO_SPECIFICS__("Layered Vff Options")
+      ("direction", po::value<std::string>(), 
+       "If growth direction is NOT the first cell vector/column, then set it here." );
+# endif
   po::options_description all; 
   all.add(generic);
+# ifdef _LAYERED
+    all.add( specific );
+# endif
   po::options_description allnhidden;
   allnhidden.add(all).add(hidden);
   po::positional_options_description p; 
@@ -59,6 +68,18 @@ int main(int argc, char *argv[])
   fs::path input( vm["input"].as< std::string >() );
   __DOASSERT( not ( fs::is_regular( input ) or fs::is_symlink( input ) ),
               input << " is a not a valid file.\n" );
+# ifdef _LAYERED
+    LaDa::atat::rVector3d direction;
+    const bool setdirection = ( vm.count("direction") != 0 );
+    if( setdirection )
+    {
+      boost::tuple<LaDa::types::t_real, LaDa::types::t_real, LaDa::types::t_real> vec;
+      LaDa::opt::tuples::read<LaDa::types::t_real>( vm["direction"].as<std::string>(), vec );
+      direction[0] = vec.get<0>();
+      direction[1] = vec.get<1>();
+      direction[2] = vec.get<2>();
+    }
+# endif
     
   boost::shared_ptr<LaDa::Crystal::Lattice>  
     lattice( LaDa::Crystal::read_lattice( input ) );
@@ -88,6 +109,9 @@ int main(int argc, char *argv[])
     __DOASSERT( not vff.Load(*vff_xml),
                 "Could not Load Valence Force Field Functional from input.\n")
     if( not vff.init(true) ) continue;
+#   ifdef _LAYERED
+      if( setdirection ) vff.Vff().set_direction( direction );
+#   endif
     
     structure.energy = vff.evaluate() / 16.0217733;
     const LaDa::atat::rMatrix3d stress = vff.Vff().get_stress();

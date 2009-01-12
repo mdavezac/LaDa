@@ -162,7 +162,7 @@ namespace LaDa
       }
 
     template< class T_VECTOR >
-      void expose_atatvector( const std::string &_name )
+      void expose_atatvector( const std::string &_name, const std::string &_docstring )
       {
         namespace bp = boost::python;
         typedef typename vector_introspection< T_VECTOR > :: type type;
@@ -170,7 +170,7 @@ namespace LaDa
         typedef typename vector_introspection< T_VECTOR > :: init init;
         const size_t dim(  vector_introspection< T_VECTOR > :: dim );
         // expose atat vector.
-        bp::class_< T_VECTOR>( ("details" + _name).c_str(), init() )
+        bp::class_< T_VECTOR>( ("details" + _name).c_str(), _docstring.c_str(),  init() )
             .def( bp::self + bp::other< T_VECTOR >() ) 
             .def( bp::other< T_VECTOR >() + bp::self ) 
             .def( bp::self - bp::other< T_VECTOR >() ) 

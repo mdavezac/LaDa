@@ -102,6 +102,13 @@ namespace LaDa
 
         //! Prints functional to \a stream.
         void print_out( std::ostream &stream ) const;
+        //! Sets epitaxial direction.
+        void set_direction( const atat::rVector3d& _direction)
+        {
+          is_fixed_by_input = true;
+          direction = _direction;
+          create_template_strain();
+        } 
         
       protected:
         //! \brief packs variables from minimizer
