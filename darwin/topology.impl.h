@@ -251,6 +251,7 @@ namespace LaDa
           const TiXmlElement *child = _node.FirstChildElement("Objective");
           if ( not child ) child = _node.FirstChildElement("Objectives");
           if ( not child ) child = _node.FirstChildElement("Method");
+          __DOASSERT( not child, "Could not find tag describing objectives.\n" )
           
           return t_ObjectiveType :: new_from_xml( *child );
         __TRYEND(, " Could not find Objective tag in input file.\n" )

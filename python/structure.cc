@@ -78,32 +78,51 @@ namespace LaDa
     void expose_structure()
     {
       namespace bp = boost::python;
-      bp::class_< Crystal::Structure >( "Structure" )
+      bp::class_< Crystal::Structure >( "Structure", "Defines a structure.\n"
+                                        "Generally, it is a super-cell of a LaDa.Lattice object." )
         .def( bp::init< Crystal::Structure& >() )
-        .def_readwrite( "cell",    &Crystal::Structure::cell )
-        .def_readwrite( "atoms",   &Crystal::Structure::atoms )
-        .def_readwrite( "k_vecs",   &Crystal::Structure::k_vecs )
-        .def_readwrite( "energy",  &Crystal::Structure::energy )
-        .def_readwrite( "scale",   &Crystal::Structure::scale )
-        .def_readwrite( "index", &Crystal::Structure::name )
+        .def_readwrite( "cell",    &Crystal::Structure::cell,
+                        "The cell in cartesian coordinates (in units of LaDa.Structure.scale)." )
+        .def_readwrite( "atoms",   &Crystal::Structure::atoms,
+                        "The list of atoms of type LaDa.details_Atom. "
+                        "Coordinates are in units of LaDa.Structure.Scale" )
+        .def_readwrite( "k_vecs",   &Crystal::Structure::k_vecs,
+                        "The list of reciprocal-space vectors."
+                        " It is constructure with respected to a LaDa.Lattice object.\n"  ) 
+        .def_readwrite( "energy",  &Crystal::Structure::energy, "Holds a real value." )
+        .def_readwrite( "scale",   &Crystal::Structure::scale,
+                        "A scaling factor for atomic-positions and cell-vectors." )
+        .def_readwrite( "index", &Crystal::Structure::name, "Holds a string.\n" )
         .def( "__str__",  &print<Crystal::Structure> ) 
-        .def( "fromXML",  &XML::from<Crystal::Structure> )
-        .def( "toXML",  &XML::to<Crystal::Structure> )
+        .def( "fromXML",  &XML::from<Crystal::Structure>, bp::arg("file"),
+              "Loads a structure from an XML file." )
+        .def( "toXML",  &XML::to<Crystal::Structure>, bp::arg("file"),
+              "Adds a tag to an XML file describing this structure."  )
         .def( "lattice", &return_crystal_lattice< Crystal::Structure >,
-              bp::return_value_policy<bp::reference_existing_object>() )
+              bp::return_value_policy<bp::reference_existing_object>(),
+              "References the lattice within which this structure is defined."
+              " Read, but do not write to this object." )
         .def_pickle( pickle_structure< Crystal::Structure >() );
       bp::class_< Crystal::TStructure<std::string> >( "sStructure" )
         .def( bp::init< Crystal::TStructure<std::string>& >() )
-        .def_readwrite( "cell",    &Crystal::TStructure<std::string>::cell )
-        .def_readwrite( "atoms",   &Crystal::TStructure<std::string>::atoms )
-        .def_readwrite( "energy",  &Crystal::TStructure<std::string>::energy )
-        .def_readwrite( "scale",   &Crystal::TStructure<std::string>::scale )
-        .def_readwrite( "index", &Crystal::TStructure<std::string>::name )
+        .def_readwrite( "cell",    &Crystal::TStructure<std::string>::cell,
+                        "The cell in cartesian coordinates (in units of LaDa.Structure.scale)." )
+        .def_readwrite( "atoms",   &Crystal::TStructure<std::string>::atoms,
+                        "The list of atoms of type LaDa.details_Atom. "
+                        "Coordinates are in units of LaDa.Structure.Scale" )
+        .def_readwrite( "energy",  &Crystal::TStructure<std::string>::energy, "Holds a real value." )
+        .def_readwrite( "scale",   &Crystal::TStructure<std::string>::scale,
+                        "A scaling factor for atomic-positions and cell-vectors." )
+        .def_readwrite( "index", &Crystal::TStructure<std::string>::name, "Holds a string." )
         .def( "__str__",  &print< Crystal::TStructure<std::string> > ) 
-        .def( "fromXML",  &XML::from< Crystal::TStructure<std::string> > )
-        .def( "toXML",  &XML::to< Crystal::TStructure<std::string> > )
+        .def( "fromXML",  &XML::from< Crystal::TStructure<std::string> >, bp::arg("file"),
+              "Loads a structure from an XML file." )
+        .def( "toXML",  &XML::to< Crystal::TStructure<std::string> >, bp::arg("file"),
+              "Adds a tag to an XML file describing this structure."  )
         .def( "lattice", &return_crystal_lattice< Crystal::TStructure<std::string> >,
-              bp::return_value_policy<bp::reference_existing_object>() )
+              bp::return_value_policy<bp::reference_existing_object>(),
+              "References the lattice within which this structure is defined."
+              "Read, but do not write to this object." )
         .def_pickle( pickle_structure< Crystal::TStructure<std::string> >() );
     }
 

@@ -34,62 +34,93 @@ namespace LaDa
 
     void expose_atom()
     {
-      using namespace boost::python;
+      namespace bp = boost::python;
       typedef Crystal::TStructure<std::string>::t_Atom t_StrAtom;
       typedef Crystal::Structure::t_Atom t_Atom;
       typedef Crystal::Structure::t_kAtom t_kAtom;
       typedef Crystal::Lattice::t_Site t_Site;
-      class_< Crystal::Structure::t_Atoms >("VecStrings")
-        .def(vector_indexing_suite< t_Site::t_Type >());
+      bp::class_< Crystal::Structure::t_Atoms >("VecStrings")
+        .def(bp::vector_indexing_suite< t_Site::t_Type >());
 
-      class_< t_StrAtom >( "details_StrAtom" )
-        .def( init< t_StrAtom >() )
-        .def_readwrite( "pos",    &t_StrAtom::pos )
-        .def_readwrite( "site",   &t_StrAtom::site )
-        .def_readwrite( "type",   &t_StrAtom::type )
+      bp::class_< t_StrAtom >( "details_StrAtom",
+                               "Atom for which the type is specified as an atomic-specie string" )
+        .def( bp::init< t_StrAtom >() )
+        .def_readwrite( "pos",    &t_StrAtom::pos,
+                        "a LaDa.rVector3d object containing the"
+                        " atomic position in cartesian units." )
+        .def_readwrite( "site",   &t_StrAtom::site,
+                        "index of the \"site\" as referenced by a LaDa.Lattice object." )
+        .def_readwrite( "type",   &t_StrAtom::type,
+                        "Atomic specie as a string."
+                        " See LaDa.toAtomType and LaDa.fromAtomType." )
         .def_readwrite( "freeze", &t_StrAtom::freeze )
-        .def( "__str__",  &print<t_StrAtom> ) ;
-      class_< t_Atom >( "details_Atom" )
-        .def( init< t_Atom >() )
-        .def_readwrite( "pos",    &t_Atom::pos )
-        .def_readwrite( "site",   &t_Atom::site )
-        .def_readwrite( "type",   &t_Atom::type )
+        .def( "__str__",  &print<t_StrAtom> );
+      bp::class_< t_Atom >( "details_Atom",
+                            "Atom for which the type is specified as a real number" )
+        .def( bp::init< t_Atom >() )
+        .def_readwrite( "pos",    &t_Atom::pos, 
+                        "a LaDa.rVector3d object containing the"
+                        " atomic position in cartesian units." )
+        .def_readwrite( "site",   &t_Atom::site,
+                        "index of the \"site\" as referenced by a LaDa.Lattice object." )
+        .def_readwrite( "type",   &t_Atom::type,
+                        "Atomic specie as a real number (usually -1.0 and 1.0)."
+                        " See LaDa.toAtomType and LaDa.fromAtomType." )
         .def_readwrite( "freeze", &t_Atom::freeze )
         .def( "__str__",  &print<t_Atom> ) ;
-      class_< t_kAtom >( "details_kAtom" )
-        .def( init< t_kAtom >() )
-        .def_readwrite( "pos",    &t_kAtom::pos )
-        .def_readwrite( "site",   &t_kAtom::site )
-        .def_readwrite( "type",   &t_kAtom::type )
+      bp::class_< t_kAtom >( "details_kAtom", "Represents a reciprocal-space vector." )
+        .def( bp::init< t_kAtom >() )
+        .def_readwrite( "pos",    &t_kAtom::pos,
+                        "a LaDa.rVector3d object containing the"
+                        " vector coordinates in cartesian units." )
+        .def_readwrite( "intensity",   &t_kAtom::type,
+                        "Complex real-value representing the intensity of this k-vector." )
         .def_readwrite( "freeze", &t_kAtom::freeze )
         .def( "__str__",  &print<t_kAtom> ) ;
-      class_< t_Site >( "details_Site" )
-        .def( init< t_Site >() )
-        .def_readwrite( "pos",    &t_Site::pos )
-        .def_readwrite( "site",   &t_Site::site )
-        .def_readwrite( "type",   &t_Site::type )
+      bp::class_< t_Site >( "details_Site",
+                            "A lattice-site listing all possible atomic-specie occupation" )
+        .def( bp::init< t_Site >() )
+        .def_readwrite( "pos",    &t_Site::pos,
+                        "a LaDa.rVector3d object containing the"
+                        " atomic position in cartesian units." )
+        .def_readwrite( "type",   &t_Site::type,
+                        "A list of all possible atomic-species (as atomic simbols)" )
         .def_readwrite( "freeze", &t_Site::freeze )
         .def( "__str__",  &print<t_Site> ) ;
 
 
-      def( "SAtom", &SAtomFromObject,
-           return_value_policy<manage_new_object>() );
-      def( "Atom", &AtomFromObject,
-           return_value_policy<manage_new_object>() );
-      def( "Site", &SiteFromObject,
-           return_value_policy<manage_new_object>() );
+      bp::def( "SAtom", &SAtomFromObject,
+               bp::return_value_policy<bp::manage_new_object>(),
+               bp::arg("arg"),
+               "Factory function for creating details_StrAtom.\n" 
+               "\"arg\" must contain at least three and no more than four items."
+               " The first three must be the cartesian units and the (optional) fourth the type." );
+      bp::def( "Atom", &AtomFromObject,
+               bp::return_value_policy<bp::manage_new_object>(),
+               bp::arg("arg"),
+               "Factory function for creating details_Atom.\n"
+               "\"arg\" must contain at least three and no more than four items."
+               " The first three must be the cartesian units and the (optional) fourth the type." );
+      bp::def( "Site", &SiteFromObject,
+               bp::return_value_policy<bp::manage_new_object>(),
+               bp::arg("arg"),
+               "Factory function for creating details_Site.\n"
+               "\"arg\" must contain at least three and no more than four items."
+               " The first three must be the cartesian units and the "
+               "(optional) fourth the list of atomic-species which can occupy this site." );
 
-      class_< Crystal::TStructure<std::string>::t_Atoms >("SAtoms")
-        .def(vector_indexing_suite< Crystal::TStructure<std::string>::t_Atoms >());
-      class_< Crystal::Structure::t_Atoms >("Atoms")
-        .def(vector_indexing_suite< Crystal::Structure::t_Atoms >());
-      class_< Crystal::Structure::t_kAtoms >("kAtoms")
-        .def(vector_indexing_suite< Crystal::Structure::t_kAtoms >());
-      class_< Crystal::Lattice::t_Sites >("Sites")
-        .def(vector_indexing_suite< Crystal::Lattice::t_Sites >());
+      bp::class_< Crystal::TStructure<std::string>::t_Atoms >("SAtoms",
+                                                              "A list of LaDa.details_StrAtom" )
+        .def(bp::vector_indexing_suite< Crystal::TStructure<std::string>::t_Atoms >());
+      bp::class_< Crystal::Structure::t_Atoms >("Atoms", "A list of LaDa.details_Atom")
+        .def(bp::vector_indexing_suite< Crystal::Structure::t_Atoms >());
+      bp::class_< Crystal::Structure::t_kAtoms >("kAtoms", "A list of LaDa.details_kAtom")
+        .def(bp::vector_indexing_suite< Crystal::Structure::t_kAtoms >());
+      bp::class_< Crystal::Lattice::t_Sites >("Sites", "A list of LaDa.details_Site")
+        .def(bp::vector_indexing_suite< Crystal::Lattice::t_Sites >());
 
-      def( "toAtomType", &toReal );
-      def( "fromAtomType", &toType );
+      bp::def( "toAtomType", &toReal, "Converts from an atomic symbol to a real value." );
+      bp::def( "fromAtomType", &toType, "Converts from a real value to an atomic symbol." );
     }
 
     Crystal::TStructure<std::string>::t_Atom* SAtomFromObject( boost::python::list& _ob )

@@ -170,7 +170,10 @@ namespace LaDa
         typedef typename vector_introspection< T_VECTOR > :: init init;
         const size_t dim(  vector_introspection< T_VECTOR > :: dim );
         // expose atat vector.
-        bp::class_< T_VECTOR>( ("details" + _name).c_str(), _docstring.c_str(),  init() )
+        bp::class_< T_VECTOR>( ("details" + _name).c_str(), 
+                               (   "Hidden object to be created with "
+                                 + _name + " factory function.").c_str(),
+                               init() )
             .def( bp::self + bp::other< T_VECTOR >() ) 
             .def( bp::other< T_VECTOR >() + bp::self ) 
             .def( bp::self - bp::other< T_VECTOR >() ) 
@@ -189,12 +192,15 @@ namespace LaDa
             .def_pickle( pickle() );
 
         bp::def( _name.c_str(), &make_vector< T_VECTOR >, 
-                 bp::return_value_policy<bp::manage_new_object>() );
-        bp::def( "norm2", &details::norm2<T_VECTOR> );
+                 bp::return_value_policy<bp::manage_new_object>(),
+                 _docstring.c_str() );
+        bp::def( "norm2", &details::norm2<T_VECTOR>,
+                 bp::arg("vec"),
+                 ("Returns squared euclidian-norm of an " + _name + " object.").c_str() );
       }
 
     template< class T_MATRIX >
-      void expose_atatmatrix( const std::string &_name )
+      void expose_atatmatrix( const std::string &_name, const std::string &_docstring )
       {
         namespace bp = boost::python;
         typedef typename matrix_introspection< T_MATRIX > :: type type;
@@ -202,7 +208,9 @@ namespace LaDa
         typedef typename matrix_introspection< T_MATRIX > :: pickle pickle;
         const size_t dim(  matrix_introspection< T_MATRIX > :: dim );
         // expose atat vector.
-        bp::class_< T_MATRIX>( ("details" + _name).c_str() )
+        bp::class_< T_MATRIX>( ("details" + _name).c_str(),
+                               (   "Hidden object to be created with "
+                                 + _name + " factory function.").c_str() )
             .def( bp::self + bp::other< T_MATRIX >() ) 
             .def( bp::other< T_MATRIX >() + bp::self ) 
             .def( bp::self - bp::other< T_MATRIX >() ) 
@@ -222,7 +230,7 @@ namespace LaDa
             .def_pickle( pickle() );
 
         bp::def( _name.c_str(), &make_matrix< T_MATRIX >, 
-                 bp::return_value_policy<bp::manage_new_object>() );
+                 bp::return_value_policy<bp::manage_new_object>(), _docstring.c_str() );
       }
 
   }

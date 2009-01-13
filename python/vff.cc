@@ -107,29 +107,50 @@ namespace LaDa
 #   ifdef EXPOSEVFF 
 #     error Macro EXPOSEVFF already exists.
 #   endif 
-#   define EXPOSEVFF( a, b ) \
-      bp::class_< b >( a ) \
+#   define EXPOSEVFF( a, b, c ) \
+      bp::class_< b >( a, c ) \
         .def( bp::init< b >() ) \
-        .def_readwrite( "structure",    &b::structure ) \
-        .def( "fromXML",  &XML::Vff_from_XML<b> ) \
-        .def( "evaluate",  &b::operator() ) \
-        .def( "init",  &b::init ) \
-        .def( "print_escan_input",  &b::print_escan_input ) \
-        .add_property( "stress",  &b::get_stress ) 
+        .def_readwrite( "structure",    &b::structure, \
+                        "The structure to minimize. Input and Output to the functional." ) \
+        .def( "fromXML",  &XML::Vff_from_XML<b>, bp::arg("file"),\
+              "Loads the vff parameters from an XML file." ) \
+        .def( "evaluate",  &b::operator(), \
+              "Minimizes the current structure and returns the energy in eV." ) \
+        .def( "init",  &b::init, "Initializes the functional for the current structure." ) \
+        .def( "print_escan_input",  &b::print_escan_input, bp::arg("file"), \
+              "Outputs the current structure in a format suitable for pescan." ) \
+        .add_property( "stress",  &b::get_stress, \
+                       "Returns the stress. Meaningfull only following a call to Vff.evaluate()." ) 
 
     void expose_vff()
     {
       typedef Vff< LaDa::Vff::Functional > t_Vff;
       namespace bp = boost::python;
-      EXPOSEVFF( "Vff", t_Vff );
+      EXPOSEVFF
+      ( 
+        "Vff", 
+        t_Vff, 
+        "A Valence Force Field Functional.\n"
+        "Prior to use, the parameters must be loaded from an XML file, "
+        "The structure must be itself initialized, and LaDa.Vff.init() must be called."
+        "Order does count :)."
+      );
     }
 
     void expose_layeredvff()
     {
       typedef LayeredVff t_Vff;
       namespace bp = boost::python;
-      EXPOSEVFF( "LayeredVff", t_Vff )
-        .add_property( "direction",  &t_Vff::get_direction, &t_Vff::set_direction );
+      EXPOSEVFF
+      ( 
+        "LayeredVff", 
+        t_Vff,
+        "A Valence Force Field Functional with epitaxial constraints.\n"
+        "Prior to use, the parameters must be loaded from an XML file, "
+        "The structure must be itself initialized, and LaDa.Vff.init() must be called."
+        "Order does count :)."
+      ).add_property( "direction",  &t_Vff::get_direction, &t_Vff::set_direction,
+                      "Defines the direction of growth." );
     }
 
 #   undef EXPOSEVFF

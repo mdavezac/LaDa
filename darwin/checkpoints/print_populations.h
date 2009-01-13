@@ -92,7 +92,7 @@ namespace LaDa
         template< class T_CHECKPOINT >
           void print_population( T_CHECKPOINT& _checkpoint )
           {
-            _checkpoint.connect_statistic( PrintPopContainer( "Current Population:\n" ) ); 
+            _checkpoint.connect_statistic( PrintPopContainer( "Current Population:" ) ); 
             Print::out << "Will print current population at each generation.\n";
             Print::xmg << Print::Xmg::comment << "Will print current population at each generation." 
                        << Print::endl;

@@ -20,7 +20,9 @@ namespace LaDa
       namespace bp = boost::python;
       expose_atatvector< atat::rVector3d >( "rVector3d", "a 3d-vector of real values." ); 
       expose_atatvector< atat::iVector3d >( "iVector3d", "a 3d-vector of integer values." ); 
-      expose_atatmatrix< atat::rMatrix3d >( "rMatrix3d" ); 
+      expose_atatmatrix< atat::rMatrix3d >( "rMatrix3d", "a 3x3 matrix of real values.\n" 
+                                            " Note that the coefficients are accessed using a tuple"
+                                            " as in \" a[(0,0)] \" where \"a\" is an rMatrix3d."); 
     }
   }
 } // namespace LaDa

@@ -97,36 +97,55 @@ namespace LaDa
         .export_values();
 
       bp::class_< t_Parameters >( "EscanParameters", bp::init< t_Parameters&>() ) 
-        .add_property( EXPOSE_FILENAME( input_filename ) )
-        .add_property( EXPOSE_FILENAME( output_filename ) )
-        .def_readwrite( "Eref", &t_Parameters::Eref )
-        .def_readwrite( "nbstates", &t_Parameters::nbstates )
-        .def_readwrite( "kpoint", &t_Parameters::kpoint )
-        .def_readwrite( "method", &t_Parameters::method )
-        .def_readonly("potential", &t_Parameters::potential );
+        .add_property( EXPOSE_FILENAME( input_filename ), 
+                       "Filename where to write the input of nanopse-escan input." 
+                       "You should not need to touch this." )
+        .add_property( EXPOSE_FILENAME( output_filename ),
+                       "Filename of the output of nanopse-escan."
+                       "You should not need to touch this." )
+        .def_readwrite( "Eref", &t_Parameters::Eref,
+                        "Reference energy for folded-spectrum calculation." )
+        .def_readwrite( "nbstates", &t_Parameters::nbstates,
+                        "Number of states to compute." )
+        .def_readwrite( "kpoint", &t_Parameters::kpoint,
+                        "kpoint in units of 2pi/a, where a is the unit-cell parameter."
+                        "If a cell is not cubic, then check nanopse-escan documentation." )
+        .def_readwrite( "method", &t_Parameters::method,
+                        "Calculation method: \"folded\" or \"full_diagonalization\"." )
+        .def_readonly( "potential", &t_Parameters::potential,
+                       "Type of potential: \"local\", \"nonlocal\", or \"spinorbit\"." );
     }
 
     void expose_escan()
     {
       typedef LaDa::Pescan::Interface t_Escan;
       namespace bp = boost::python;
-      bp::class_< t_Escan >( "Escan" ) 
+      bp::class_< t_Escan >( "Escan", "Wrapper around the nanopse-escan functional." ) 
         .def( bp::init< t_Escan& >() )
-        .add_property( EXPOSE_FILENAME( vff_inputfile ) )
-        .add_property( EXPOSE_FILENAME( directory ) )
-        .add_property( "scale", &t_Escan::get_scale, &t_Escan::set_scale )
-        .def_readwrite( "parameters", &t_Escan::escan )
-        .def_readwrite( "destroy_directory", &t_Escan::do_destroy_dir )
-        .def_readonly( "eigenvalues", &t_Escan::eigenvalues )
-        .def( "fromXML",  &XML::Escan_from_XML<t_Escan> )
-        .def( "run", &t_Escan::operator() )
-        .def( "set_mpi", &t_Escan::set_mpi );
+        .add_property( EXPOSE_FILENAME( vff_inputfile ), "Structure input file." )
+        .add_property( EXPOSE_FILENAME( directory ), "Directory where to perform calculations." )
+        .add_property( "scale", &t_Escan::get_scale, &t_Escan::set_scale,
+                       "Internal escan scale. Prior to calculation, "
+                       "set as \"escan.scale = structure\" "
+                       "where \"structure\" is a LaDa.Structure object." )
+        .def_readwrite( "parameters", &t_Escan::escan,
+                        "EscanParameters object." )
+        .def_readwrite( "destroy_directory", &t_Escan::do_destroy_dir,
+                        "If true, directory where calculations are carried out is destroyed "
+                        "at the end of a calculation." )
+        .def_readonly( "eigenvalues", &t_Escan::eigenvalues,
+                       "Computed eigenvalues." )
+        .def( "fromXML",  &XML::Escan_from_XML<t_Escan>, bp::arg("file"),
+              "Loads escan parameters from an XML file." )
+        .def( "run", &t_Escan::operator(), "Performs a calculation." )
+        .def( "set_mpi", &t_Escan::set_mpi, "Sets the boost.mpi communicator." );
       // Register eigenvalues type.
-      bp::class_< std::vector<types::t_real> >("VectorReals")
+      bp::class_< std::vector<types::t_real> >("VectorReals", "A list of real values.")
        .def(bp::vector_indexing_suite< std::vector<types::t_real> >())
        .def("__str__", &details::print_vector< types::t_real, 5 > );
 
-      bp::def( "nb_valence_states", &LaDa::Pescan::nb_valence_states );
+      bp::def( "nb_valence_states", &LaDa::Pescan::nb_valence_states, bp::arg("structure"),
+               "Returns the number of valence states in a structure." );
     }
 
 #   undef EXPOSE_FILENAME
