@@ -353,9 +353,9 @@ namespace LaDa
       structure->LinkEndChild( parent );
       structure->SetAttribute("N", atoms.size() );
       if( Fuzzy::neq( energy, 666.666 ) ) 
-        structure->SetAttribute("energy", energy );
+        structure->SetDoubleAttribute("energy", energy );
       if( Fuzzy::neq( weight, 1e0 ) )
-        structure->SetAttribute("weight", weight );
+        structure->SetDoubleAttribute("weight", weight );
       structure->SetAttribute("name", name );
       
       for (int i=0; i < 3; ++i)
