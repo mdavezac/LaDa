@@ -11,7 +11,7 @@ def nbstates( _escan, _structure ):
        or LaDa.norm2( _escan.parameters.kpoint ) < 1e-6:
       _escan.parameters.nbstates /= 2
 
-def print_bands( _escan, _structure, _first, _last, _result, _nbpoints = 10 ):
+def print_bands( _escan, _structure, _first, _last, _result, _nbpoints = 10, _offset = 0 ):
   """ Adds eigenvalues to result from linear interpolation
       between kpoint _first to kpoint _last (excluded) using nbpoints.
   """
@@ -25,7 +25,7 @@ def print_bands( _escan, _structure, _first, _last, _result, _nbpoints = 10 ):
     _escan.parameters.kpoint = k
     nbstates( _escan, _structure )
     _escan.run()
-    result = [ sqrt( LaDa.norm2(_escan.parameters.kpoint) ) ]
+    result = [ sqrt( LaDa.norm2(_escan.parameters.kpoint) ) + _offset ]
 
     if    _escan.parameters.potential != LaDa.spinorbit \
        or LaDa.norm2( _escan.parameters.kpoint ) < 1e-6:
@@ -64,8 +64,14 @@ def main():
   escan.scale = vff.structure
 
   result = []
-  print_bands( escan, vff.structure, rVector3d( [0,0,0] ), rVector3d( [2,0,0] ), result, 100 )
-  print_bands( escan, vff.structure, rVector3d( [0,0,0] ), rVector3d( [2,2,2] ), result, 100 )
+  print_bands( escan, vff.structure,  
+               rVector3d( [1,0,0] ), rVector3d( [0,0,0] ),
+               result, 50 )
+  for eigs in result:
+    eigs[0] = -eigs[0]
+  print_bands( escan, vff.structure,
+               rVector3d( [0,0,0] ), 0.5 * rVector3d( [1,1,1] ),
+               result, 50 )
 
   file = open( "result", "w" )
   for eigs in result:

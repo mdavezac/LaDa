@@ -95,9 +95,9 @@
     properties_factory.connect
       ( "epi", "Epitaxial Strain  in eV per f.u.\n"
         "(trace of strain - strain along growth direction).",
-        boost::bind<void>( &PPFactory::epitaxial_strain<t_Evaluator>, boost::ref(ga.evaluator) ) )
+        boost::bind( &PPFactory::epitaxial_strain<t_Evaluator>, boost::ref(ga.evaluator) ) )
       ( "energy", "VFF energy in eV per f.u." ,
-        boost::bind<void>( &PPFactory::strain_energy<t_Evaluator>, boost::ref(ga.evaluator) ) )
+        boost::bind( &PPFactory::strain_energy<t_Evaluator>, boost::ref(ga.evaluator) ) )
       ( "bandgap", "Band gap in eV", 
         boost::bind( &PPFactory::bandgap<t_Evaluator>, boost::ref(ga.evaluator) ) )
       ( "transition", "Dipole oscillator strength between VBM and CBM. Arbitrary units.",
