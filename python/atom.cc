@@ -13,6 +13,7 @@
 #include <opt/debug.h>
 #include <crystal/structure.h>
 #include <crystal/atom.h>
+#include <crystal/lattice.h>
 
 
 #include "misc.hpp"

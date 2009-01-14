@@ -18,6 +18,8 @@
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <mpi/macros.h>
+#include <crystal/structure.h>
+#include <crystal/lattice.h>
 
 #include "misc.hpp"
 #include "xml.hpp"
