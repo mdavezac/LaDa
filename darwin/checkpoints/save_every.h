@@ -119,7 +119,8 @@ namespace LaDa
 
       //! Save a store functor.
       template< class T_DARWIN >
-        void save_store( TiXmlElement& _node, const T_DARWIN& _darwin )  { _darwin.store->Save( _node ); }
+        void save_store( TiXmlElement& _node, const T_DARWIN& _darwin ) 
+          { _darwin.store->Save( _node ); }
 
       namespace Factory
       {

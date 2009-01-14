@@ -18,6 +18,7 @@
 #include <opt/debug.h>
 #include <opt/initial_path.h>
 #include <opt/tinyxml.h>
+#include <crystal/lattice.h>
 
 #include "bandgap.h"
 
@@ -208,7 +209,7 @@ namespace LaDa
       TiXmlDocument doc;
       if(  parent->Attribute( "filename" ) )
       {
-        path = parent->Attribute( "filename" );
+        path = Print::reformat_home( parent->Attribute( "filename" ) );
         __DOASSERT( not bfs::exists( path ), path.string() + " does not exist.\n" )
         opt::read_xmlfile( path, doc );
         __DOASSERT( not doc.FirstChild( "Job" ),

@@ -5,8 +5,12 @@
 #include <config.h>
 #endif
 
+#include<algorithm>
+
 #include<boost/lambda/bind.hpp>
+
 #include "errors.h"
+#include <crystal/structure.h>
 
 namespace LaDa
 {

@@ -22,6 +22,7 @@
 #include <physics/physics.h>
 
 #include "structure.h"
+#include "lattice.h"
 
 
 

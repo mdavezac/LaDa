@@ -56,7 +56,6 @@ namespace LaDa
         MPI_Comm __commC = (MPI_Comm) ( MPI_COMM ) ;
         MPI_Fint __commF = MPI_Comm_c2f( __commC );
         FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( &__commF );
-        Print::out << "called set_mpi" << Print::endl;
       }
 #   endif
 

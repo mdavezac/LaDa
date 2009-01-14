@@ -100,7 +100,7 @@ namespace LaDa
     {
       __SERIALCODE( return true; )
       __MPICODE(
-        if( (not graph) and comm.rank() == 0 ) return true;
+        if( (not graph) ) return true;
         else if( graph->type == mpi::Graph::t_Type::FARMER ) return true;
         return false;
       )
@@ -109,7 +109,7 @@ namespace LaDa
     {
       __SERIALCODE( return true; )
       __MPICODE(
-        if( (not graph) and comm.rank() == 0 ) return true;
+        if( (not graph) ) return comm.rank() == 0;
         else if( graph->type == mpi::Graph::t_Type::FARMER ) return true;
         return false;
       )

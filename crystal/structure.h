@@ -29,11 +29,14 @@
 #include <atat/machdep.h>
 
 #include "atom.h"
-#include "lattice.h"
 
 namespace LaDa 
 {
   namespace Crystal {
+
+    //! \cond
+    class Lattice;
+    //! \endcond
 
     //! The atat structure type.
     typedef atat::Structure Atat_Structure;

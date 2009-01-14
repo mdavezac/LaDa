@@ -15,6 +15,7 @@
 #include <tinyxml/tinyxml.h>
 
 #include <crystal/structure.h>
+#include <crystal/lattice.h>
 #include <opt/types.h>
 
 #include "evaluator.h"

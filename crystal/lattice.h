@@ -26,6 +26,8 @@
 #include <atat/vectmac.h>
 #include <atat/machdep.h>
 
+#include <print/stdout.h>
+
 #include "atom.h"
 
 
@@ -249,6 +251,7 @@ namespace LaDa
         child = doc2.FirstChild( "Job" )->FirstChildElement( "Lattice" );
         __DOASSERT( not child, "Could not find Lattice in input.\n" )
       }
+      Print :: out << *child << "\n";
       __DOASSERT( not result->Load(*child),
                   "Error while reading Lattice from input.\n")
 #     if defined (_TETRAGONAL_CE_)

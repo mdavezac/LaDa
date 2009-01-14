@@ -16,10 +16,13 @@
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <opt/algorithms.h>
-#include <crystal/structure.h>
 
 namespace LaDa
 {
+  namespace Crystal 
+  {
+    class Structure;
+  }
   namespace opt
   {
     //! An error tuple.

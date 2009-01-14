@@ -211,8 +211,7 @@ namespace LaDa
       std::string name = _node.Value();
       if ( name.compare("Restart") )
         parent = _node.FirstChildElement("Restart");
-      if ( not parent )
-        return false;
+      if ( not parent ) return false;
      
       const TiXmlElement *child = parent->FirstChildElement();
       for(; child; child = child->NextSiblingElement() )

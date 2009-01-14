@@ -22,6 +22,7 @@
 #endif
 
 #include "structure.h"
+#include "lattice.h"
 #include "layerdepth.h"
 
 
