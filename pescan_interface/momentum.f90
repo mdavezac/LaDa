@@ -245,12 +245,12 @@ module MomentumDipole
         call read_wg_comp( io_wfns(:,:,1), io_wfns(:,:,2),n1,n2,n3,size(in_indices),mg_nx, &
                            params%Ecutoff, lattice%rcell, &
                            params%ecp%filewg_in, size( in_indices ), &
-                           in_indices(1), params%with_spinorbit )
+                           in_indices(1), 1 )
       else
         call read_wg_comp( io_wfns(:,:,1), io_wfns(:,:,1),n1,n2,n3,size(in_indices),mg_nx, &
                            params%Ecutoff, lattice%rcell, &
                            params%ecp%filewg_in, size( in_indices ), &
-                           in_indices, params%with_spinorbit )
+                           in_indices, 0 )
       endif
 
     end subroutine ! read_wavefunctions
@@ -422,7 +422,6 @@ module MomentumDipole
                              ) &
                            )  
           enddo
-          print *, "sp_sum ", io_dipole * vol
         
         end subroutine 
 
