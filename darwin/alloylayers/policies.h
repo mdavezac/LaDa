@@ -142,7 +142,7 @@ namespace LaDa
               is_positive ? ( 1e0 - (*i_var) ) * 0.5e0 * types::t_real( layer_size ):
                             ( 1e0 + (*i_var) ) * 0.5e0 * types::t_real( layer_size )
             );
-            const size_t nb_layers_size_t( nb_layers_real );
+            const size_t nb_layers_size_t( static_cast< size_t >(nb_layers_real) );
             std::vector<bool> arrangment(layer_size,  is_positive );
             std::fill
             ( 

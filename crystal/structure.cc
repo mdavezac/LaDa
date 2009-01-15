@@ -681,7 +681,6 @@ namespace LaDa
                   _path << " is neither a regulare file nor a system link.\n" )
       std::ifstream file( _path.string().c_str(), std::ifstream::in );
       std::string line;
-      size_t i(0);
 
       std::getline( file, line ); // name and inconsequential data.
 
@@ -691,7 +690,7 @@ namespace LaDa
       std::istringstream sstr( line );
       sstr >> N;
       // cell 
-      for(types::t_int i(0); i < 3; ++i )
+      for(size_t i(0); i < 3; ++i )
       {
         __ASSERT( file.eof(),
                   "Reached unexpected end of file: " << _path << ".\n" )

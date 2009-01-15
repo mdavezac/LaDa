@@ -152,6 +152,7 @@ namespace LaDa
     
         if( do_dipole_ )
         {
+          Print::out << "doing dipole" << Print::endl;
           edipole( bandgap.BandGap().BandGap(), structure, *t_Base::current_object );
           bandgap.set_keepdirectory( oldkeepdir );
           if( not oldkeepdir ) bandgap.destroy_directory();
@@ -169,12 +170,6 @@ namespace LaDa
         if( not bandgap.Load( _node ) ) return false;
         if( do_dipole_ ) edipole.Load( _node ); // Okay if not found. Just use default values.
         return true;
-      }
-
-      INEVAL( void ) :: do_dipole( bool _do )
-      {
-        do_dipole_ = true;
-        bandgap.set_rspace_output( _do );
       }
 
 #     undef EVALHEAD

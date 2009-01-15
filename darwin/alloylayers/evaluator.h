@@ -215,7 +215,7 @@ namespace LaDa
             //! Returns true if dipole transition will be computed.
             bool do_dipole() const { return do_dipole; }
             //! Sets pescan to compute dipoles on \a _do true.
-            void do_dipole( bool _do );
+            void do_dipole( bool _do ) { do_dipole_ = _do; }
        
             //! Type of the band gap cum vff all-in-one functional.
             typedef BandGap::Darwin<Vff::Layered> t_BandGap;
@@ -226,10 +226,10 @@ namespace LaDa
             t_BandGap bandgap; 
             //! Electric dipole functional.
             t_ElectricDipole edipole;
-          protected:
             //! Wether to perform oscilator strength evaluations.
             bool do_dipole_;
             
+          protected:
             using t_Base :: structure;
         };
 

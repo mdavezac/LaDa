@@ -17,11 +17,14 @@ vff.init()
 
 length = 31
 scales = [ float(x) / length + 5 for x in range( length ) ]
-directions = [ [1,0,0], [0,1,0], [2,1,0], [2,0,1], [3,1,1], [5,1,1] ]
-for dir in directions:
-  vff.structure = structure
-  vff.direction = rVector3d( dir )
-  for x in scales :
-    vff.structure.scale = x
-    print x, vff.evaluate() 
-  print "&"
+directions = [ [0,0,1] ]
+vff.direction = rVector3d( [0,0,1] )
+# for dir in directions:
+#   vff.structure = structure
+#   vff.direction = rVector3d( dir )
+#   for x in scales :
+vff.structure.scale = 5.48
+e = vff.evaluate()
+u = vff.structure.cell[(2,2)]
+print x, e, u
+# print "&"
