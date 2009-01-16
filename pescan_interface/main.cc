@@ -65,11 +65,15 @@ struct Eval
     }
 
     LaDa::Pescan::BandGap& bandgap = pescan.BandGap();
+    const bool save_do_destroy_directory = bandgap.do_destroy_dir;
+    if( compute_dipoles ) bandgap.do_destroy_dir = false;
     bandgap.escan.rspace_output = LaDa::Pescan::Interface::Escan::WFN_AFTER_CALL;
     if( doallelectron ) bandgap.set_method( LaDa::Pescan::Interface::ALL_ELECTRON );
     if( do_evaluate ) structure.energy = pescan.evaluate();
     if( compute_dipoles )
       LaDa::Pescan::oscillator_strength( bandgap, degeneracy, true );
+    bandgap.do_destroy_dir = save_do_destroy_directory;
+    if( save_do_destroy_directory ) bandgap.destroy_directory();
 
     LaDa::Crystal::Fourier( structure.atoms.begin(), structure.atoms.end(),
                       structure.k_vecs.begin(), structure.k_vecs.end() );
@@ -122,8 +126,7 @@ int main(int argc, char *argv[])
     (*world),
     std::cout << "Input filename: " << filename
               << "\nWill " << ( evaluate.compute_dipoles ? " ": "not " ) 
-              << "compute dipole moments."
-              << "\n";
+              << "compute dipole moments.\n";
     if( not evaluate.do_evaluate ) 
       std::cout << "Will not perform evaluation.\n";
     std::cout << "\n\n";

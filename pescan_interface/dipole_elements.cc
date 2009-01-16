@@ -83,8 +83,7 @@ namespace LaDa
       else
       {
         __ASSERT( not bfs::exists( path / filename ), 
-                  "Could not find file " + (path / filename).string() )
-          std::cout << "size " << _bandgap.eigenvalues.size() << "\n";
+                  "Could not find file " + (path / filename).string() + ".\n" )
         compute_dipoles
         (
           _dipoles, _bandgap.eigenvalues, _bandgap.eigenvalues,

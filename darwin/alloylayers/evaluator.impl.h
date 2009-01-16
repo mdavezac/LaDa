@@ -156,6 +156,7 @@ namespace LaDa
           edipole( bandgap.BandGap().BandGap(), structure, *t_Base::current_object );
           bandgap.set_keepdirectory( oldkeepdir );
           if( not oldkeepdir ) bandgap.destroy_directory();
+          Print::out << "returning from dipole" << Print::endl;
         }
     
         structure = copy_structure;
