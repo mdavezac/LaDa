@@ -146,7 +146,11 @@ namespace LaDa
     {
       types :: t_real a, b;
 
-      __MPICODE( if( not MPI_COMM.rank() ) return; )
+      __MPICODE
+      ( 
+        boost::mpi::communicator world;
+        if( not world.rank() ) return; 
+      )
 
       std::ofstream file( references_filename.c_str(),
                           std::ios_base::out | std::ios_base::trunc ); 

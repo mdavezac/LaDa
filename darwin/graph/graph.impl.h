@@ -177,7 +177,11 @@ namespace LaDa
           void Topology :: set_mpi( T_EVALUATOR &_eval )
           {
             if(    type == t_Type::FARMER 
-                or type == t_Type::FARMHAND ) return;
+                or type == t_Type::FARMHAND )
+            {
+              _eval.set_mpi( &comm, ".0" );
+              return;
+            }
             _eval.set_mpi
             (
               &pool_comm,
