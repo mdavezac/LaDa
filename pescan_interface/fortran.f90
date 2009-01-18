@@ -5,6 +5,7 @@
 subroutine iaga_set_mpi( in_comm_handle )
  
   use mpigroup, only : comm_handle, irank, arank
+  use MomentumDipole, only : params
   implicit none
   include "mpif.h"
 
@@ -13,6 +14,7 @@ subroutine iaga_set_mpi( in_comm_handle )
   integer inode, ierr
 
   comm_handle = in_comm_handle
+  params%ecp%comm_handle = in_comm_handle
 
   call mpi_comm_rank(comm_handle,inode,ierr)
   call mpi_comm_rank(mpi_comm_world,irank,ierr)
