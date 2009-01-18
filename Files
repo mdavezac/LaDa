@@ -78,13 +78,13 @@ DARWIN_BG_H  = bandgap_stubs.h  two_sites.h  single_site.h  vff.h  bandgap.h \
                alloylayers/policies.h $(DARWIN_BG_IMPL_H)
 DARWIN_BG_DOC = $(DARWIN_BG_H) $(DARWIN_BG_CC) $(DARWIN_GRAPH_H) $(DARWIN_GRAPH_CC)
 
-LIB_ALLOYLAYERS_CC = single_site.cc bandgap_stubs.cc vff.cc electric_dipole.cc
+LIB_ALLOYLAYERS_CC = single_site.cc bandgap_stubs.cc vff.cc electric_dipole.cc alloylayers/concentration.cc
 LIB_ALLOYLAYERS_IMPL_H  = alloylayers/evaluator.impl.h  alloylayers/policies.impl.h \
                           alloylayers/factory.hpp bandgap_stubs.impl.h two_sites.impl.h
 LIB_ALLOYLAYERS_H  = alloylayers/evaluator.h alloylayers/object.h \
                      alloylayers/policies.h alloylayers/operators.h \
                      alloylayers/main.extras.h bandgap_stubs.h \
-                     vff.h electric_dipole.h two_sites.h \
+                     vff.h electric_dipole.h two_sites.h alloylayers/concentration.h \
                      $(LIB_ALLOYLAYERS_IMPL_H) # electric_dipole.h 
 
 DARWIN_LIB_DOC = $(DARWIN_LIB_H) $(DARWIN_LIB_CC) \

@@ -907,6 +907,25 @@ namespace LaDa
       return true;
     }
 
+    types::t_real concentration( const Structure& _structure, const size_t i )
+    {
+      __ASSERT( not _structure.lattice, "Lattice pointer is not set.\n" )
+      __ASSERT( i >= _structure.lattice->sites.size(), "Index out-of-range.\n" )
+      __ASSERT(     _structure.lattice->sites[i].type.size() != 2
+                and _structure.lattice->sites[i].type.size() != 1,
+                "Wrong number of types at lattice-site.\n" )
+
+      if( _structure.lattice->sites[i].type.size() == 1 ) return 1e0;
+      types::t_real result( 0 );
+      foreach( const Structure::t_Atom& _a, _structure.atoms )
+      {
+        __ASSERT( _a.site != 0 and _a.site != 1,
+                  "site index not set in structure.\n" )
+        if( _a.site == i ) result += _a.type;
+      }
+      return result;
+    }
+
   } // namespace Crystal
 
 } // namespace LaDa

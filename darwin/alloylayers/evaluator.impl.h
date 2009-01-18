@@ -152,13 +152,15 @@ namespace LaDa
     
         if( do_dipole_ )
         {
-          Print::out << "doing dipole" << Print::endl;
           edipole( bandgap.BandGap().BandGap(), structure, *t_Base::current_object );
           bandgap.set_keepdirectory( oldkeepdir );
           if( not oldkeepdir ) bandgap.destroy_directory();
-          Print::out << "returning from dipole" << Print::endl;
         }
     
+        // gets concentration.
+        t_Base::current_object->x = Crystal::concentration( structure, 0 );
+        t_Base::current_object->y = Crystal::concentration( structure, 1 );
+
         structure = copy_structure;
     
         // assign quantities.

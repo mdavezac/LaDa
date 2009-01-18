@@ -8,6 +8,8 @@
 #include <config.h>
 #endif
 
+#include <boost/serialization/string.hpp>
+
 #include <tinyxml/tinyxml.h>
 
 #include <pescan_interface/va.h>
@@ -53,7 +55,7 @@ namespace LaDa
         //! Saves BandGap::vbm and BandGap::cvm as attributes of \a _node.
         bool Save( TiXmlElement &_node ) const;
         private:
-          //! Serializes a scalar individual.
+          //! Serializes the bandgap.
           template<class Archive> void serialize(Archive & _ar, const unsigned int _version);
       };
     } // namespace Keepers

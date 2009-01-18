@@ -101,11 +101,22 @@
       ( "bandgap", "Band gap in eV", 
         boost::bind( &PPFactory::bandgap<t_Evaluator>, boost::ref(ga.evaluator) ) )
       ( "transition", "Dipole oscillator strength between VBM and CBM. Arbitrary units.",
-        boost::bind( &PPFactory::transitions<t_Evaluator>, boost::ref(ga.evaluator) ) )
-      ( "cbm", "Conduction band minimum in eV.", 
-        boost::bind( &PPFactory::cbm<t_Evaluator>, boost::ref(ga.evaluator) ) )
-      ( "vbm", "Valence band minimum in eV.",
-        boost::bind( &PPFactory::vbm<t_Evaluator>, boost::ref(ga.evaluator) ) );
+        PPFactory::connect_property(ga.evaluator, &t_Individual::t_IndivTraits::t_Object::y,
+                                    "transition dipole=", 
+                                    "Dipole oscillator strength between "
+                                    "VBM and CBM. Arbitrary units." ) )
+      ( "cbm", "Conduction band minimum in eV.",
+        PPFactory::connect_property(ga.evaluator, &t_Individual::t_IndivTraits::t_Object::y,
+                                    "CBM=", "Conduction band minimum in eV." ) )
+      ( "vbm", "Conduction band minimum in eV.",
+        PPFactory::connect_property(ga.evaluator, &t_Individual::t_IndivTraits::t_Object::y,
+                                    "VBM=", "Valence band maximum in eV." ) )
+      ( "x", "Concentration at site x.",
+        PPFactory::connect_property(ga.evaluator, &t_Individual::t_IndivTraits::t_Object::x,
+                                    "x", "Concentration at site 0" ) )
+      ( "y", "Concentration at site x.",
+        PPFactory::connect_property(ga.evaluator, &t_Individual::t_IndivTraits::t_Object::y,
+                                    "y", "Concentration at site 0" ) );
 
     // connects ga operator factory.
     ga.operator_factory.connect

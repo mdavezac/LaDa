@@ -5,12 +5,7 @@
 #include <config.h>
 #endif
 
-#include <print/stdout.h>
-#include <print/manip.h>
-#include <print/xmg.h>
-
-#include <boost/mpi/collectives.hpp>
-#include <boost/serialization/string.hpp>
+#include <opt/types.h>
 
 #include "bandgap_stubs.h"
 

@@ -353,6 +353,9 @@ namespace LaDa
                                      atat::rVector3d &_direction,
                                      atat::iVector3d &_extent );
 
+    //! Returns concentration over set site.
+    types::t_real concentration( const Structure& _structure, const size_t i );
+
   } // namespace Crystal
 
 } // namespace LaDa
