@@ -36,7 +36,7 @@ namespace LaDa
                       "Could not find <Job> tag in " << _filename << ".\n" )
          
           __DOASSERT( not _type.Load( *docHandle.FirstChild("Job").Element() ),
-                         "Could not load Vff functional from " + _filename + ".\n" )
+                         "Could not load Pescan functional from " + _filename + ".\n" )
         }
     }
 

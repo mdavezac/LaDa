@@ -174,8 +174,8 @@ PYTHON_CE_CC = ce.cc
 PYTHON_CE_H = ce.hpp ce.impl.hpp
 PYTHON_VFF_CC = vff.cc
 PYTHON_VFF_H =  vff.hpp
-PYTHON_ESCAN_CC = escan.cc
-PYTHON_ESCAN_H = escan.hpp
+PYTHON_ESCAN_CC = escan.cc bandgap.cc
+PYTHON_ESCAN_H = escan.hpp bandgap.hpp
 PYTHON_H = atat.hpp atat.impl.hpp atom.hpp structure.hpp lattice.hpp \
            xml.hpp misc.hpp convexhull.impl.hpp errortuple.hpp physics.hpp \
            atatintrospection.hpp atatoperators.hpp

@@ -67,7 +67,6 @@ struct Eval
     LaDa::Pescan::BandGap& bandgap = pescan.BandGap();
     const bool save_do_destroy_directory = bandgap.do_destroy_dir;
     if( compute_dipoles ) bandgap.do_destroy_dir = false;
-    bandgap.escan.rspace_output = LaDa::Pescan::Interface::Escan::WFN_AFTER_CALL;
     if( doallelectron ) bandgap.set_method( LaDa::Pescan::Interface::ALL_ELECTRON );
     if( do_evaluate ) structure.energy = pescan.evaluate();
     if( compute_dipoles )

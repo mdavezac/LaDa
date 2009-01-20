@@ -64,7 +64,6 @@ namespace LaDa
     
     bool Gsl :: Load_( const TiXmlElement &_node )
     {
-      double d; int n;
       if( _node.Attribute( "itermax" ) )
         itermax = boost::lexical_cast<types::t_unsigned>( _node.Attribute("itermax") );
       if( _node.Attribute( "tolerance" ) )

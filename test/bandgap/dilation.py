@@ -20,11 +20,12 @@ def print_bands( _escan, _structure, _first, _last, _result, _nbpoints = 10, _of
   from math import sqrt
 
   # Creates set of points.
-  points = [ float(u) * ( _last - _first ) / float(_nbpoints) + _first for u in range(_nbpoints+1) ]
+  points = [ float(u) * ( _last - _first ) / float(_nbpoints) + _first
+             for u in range(_nbpoints+1) ]
   for k in points:
     _escan.parameters.kpoint = k
     nbstates( _escan, _structure )
-    _escan.run()
+    _escan.evaluate()
     result = [ sqrt( LaDa.norm2(_escan.parameters.kpoint) ) + _offset ]
 
     if    _escan.parameters.potential != LaDa.spinorbit \

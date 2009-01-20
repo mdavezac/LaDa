@@ -70,7 +70,7 @@
             <Pseudo filename="../../pseudos/vq.atom8" />
         </GenPot>
         <tReferences VBM="-5.6" CBM="-5.1" />
-        <Hamiltonian kinscal="1.23" smooth="0.8" potential="spin-orbit" realcutoff="4.5" nbstates="3" >
+        <Hamiltonian kinscal="1.23" smooth="0.8" potential="spin-orbit" realcutoff="4.5" nbstates="1" >
             <SpinOrbit filename="../../pseudos/vwr.pso" izz="49051" pnl="1.271254 " />
             <SpinOrbit filename="../../pseudos/vwr.pso" izz="51049" pnl="0.946102 " />
             <SpinOrbit filename="../../pseudos/vwr.pso" izz="49033" pnl="1.0747401" />

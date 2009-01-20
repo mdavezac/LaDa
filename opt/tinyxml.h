@@ -177,8 +177,8 @@ namespace LaDa
       void read_tag( T_OBJECT &_object,
                      const TiXmlElement &_node,
                      const std::string& _name,
-                     const std::string& _attribute = "",
-                     const std::string& _value = ""  )
+                     const std::string& _attribute,
+                     const std::string& _value )
       {
         const TiXmlElement* node = find_node( _node, _name, _attribute, _value );
         const std::string tagname
@@ -208,8 +208,8 @@ namespace LaDa
       void read_tag( T_OBJECT &_object,
                      const boost::filesystem::path &_path,
                      const std::string& _name,
-                     const std::string& _attribute = "",
-                     const std::string& _value = ""  )
+                     const std::string& _attribute,
+                     const std::string& _value )
       {
         TiXmlDocument doc;
         TiXmlHandle docHandle( &doc ); 

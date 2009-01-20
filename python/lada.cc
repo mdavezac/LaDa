@@ -24,6 +24,7 @@
 #endif
 #ifdef __DOPYTHONESCAN
 # include "escan.hpp"
+# include "bandgap.hpp"
 #endif
 
 // namespace PythonLaDa
@@ -59,6 +60,8 @@ BOOST_PYTHON_MODULE(LaDa)
 # ifdef __DOPYTHONESCAN
     LaDa::Python::expose_escan_parameters();
     LaDa::Python::expose_escan();
+    LaDa::Python::expose_bands();
+    LaDa::Python::expose_bandgap();
 # endif
 
 }

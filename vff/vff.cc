@@ -189,7 +189,6 @@ namespace LaDa
 
     bool Vff :: load_( const TiXmlElement &_element )
     {
-      const TiXmlElement *child;
       std::string str;
       const bool same_species( Crystal::lattice_has_same_species( *structure.lattice ) );
 
