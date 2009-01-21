@@ -27,10 +27,12 @@ namespace LaDa
       u = is_fixed_by_input ? direction: structure.cell.get_column(0);
       types::t_real a = types::t_real(1.0) / std::sqrt( atat::norm2(u) );
       u = a * u;
+
       template_strain.zero(); 
-      template_strain(0,0) = u(0);
-      template_strain(1,1) = u(1);
-      template_strain(2,2) = u(2);
+      for( size_t i(0); i < 3; ++i )
+        for( size_t j(0); j < 3; ++j )
+          template_strain(i,j) = u(i) * u(j);
+
       return;
     }
 

@@ -218,6 +218,7 @@ namespace LaDa
             .def( bp::other< T_MATRIX >() * bp::self ) 
             .def( bp::self * bp::other< T_MATRIX >() )
             .def( bp::self * bp::other< t_Vector >() )
+            .def( bp::other< t_Vector >() * bp::self )
             .def( type() * bp::self )
             .def( bp::self * type() )
             .def( bp::self / type() )

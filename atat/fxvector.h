@@ -617,7 +617,7 @@ ostream& operator<<(ostream& s, const FixedMatrix<T,2> &a) {
     for (types::t_int j=0; j<2; j++) {
       s << a.x[i][j] << " ";
     }
-    s << endl;
+    if( i != 2 ) s << "\n";
   }
   return s;
 }
@@ -628,7 +628,7 @@ ostream& operator<<(ostream& s, const FixedMatrix<T,3> &a) {
     for (types::t_int j=0; j<3; j++) {
       s << a.x[i][j] << " ";
     }
-    s << endl;
+    if( i != 2 ) s << "\n";
   }
   return s;
 }

@@ -79,12 +79,43 @@ namespace LaDa
         }
       template< class T_MATRIX >
         typename Python::matrix_introspection< T_MATRIX > :: t_Vector 
-          mulm( const T_MATRIX &_a, const typename Python::matrix_introspection<T_MATRIX> :: t_Vector &_b )
+          mulm( const T_MATRIX &_a,
+                const typename Python::matrix_introspection<T_MATRIX> :: t_Vector &_b )
           {
             typedef typename Python::matrix_introspection<T_MATRIX> :: type type;
-            typedef atat::FixedMatrix<type, Python::matrix_introspection<T_MATRIX> :: dim> t_Fixed;
-            typedef atat::FixedVector<type, Python::matrix_introspection<T_MATRIX> :: dim> t_FixedVector;
+            typedef atat::FixedMatrix
+                    <
+                      type, 
+                      Python::matrix_introspection<T_MATRIX> :: dim
+                    > t_Fixed;
+            typedef atat::FixedVector
+                    < 
+                      type, 
+                      Python::matrix_introspection<T_MATRIX> :: dim
+                    > t_FixedVector;
             return (const t_Fixed&)_a * (const t_FixedVector&)_b; 
+          }
+      template< class T_MATRIX >
+        typename Python::matrix_introspection< T_MATRIX > :: t_Vector 
+          mulm( const typename Python::matrix_introspection<T_MATRIX> :: t_Vector &_b,
+                const T_MATRIX &_a )
+          {
+            typedef typename Python::matrix_introspection<T_MATRIX> :: type type;
+            typedef atat::FixedMatrix
+                    <
+                      type, 
+                      Python::matrix_introspection<T_MATRIX> :: dim
+                    > t_Fixed;
+            typedef atat::FixedVector
+                    < 
+                      type, 
+                      Python::matrix_introspection<T_MATRIX> :: dim
+                    > t_FixedVector;
+            typename Python::matrix_introspection< T_MATRIX > :: t_Vector result(0,0,0);
+            for( size_t i(0); i < 3; ++i )
+              for( size_t j(0); j < 3; ++j )
+                result(i) += _a(j,i) * _b(j);
+            return result;
           }
     } // namespace details.
                                       
@@ -134,7 +165,11 @@ namespace LaDa
         { return details::neq( _a, _b ); }\
       inline Python::matrix_introspection<thistype> :: t_Vector \
         operator*( const thistype& _a,  const Python::matrix_introspection<thistype> :: t_Vector &_b) \
-          { return details::mulm( _a, _b); }
+          { return details::mulm( _a, _b); } \
+      inline Python::matrix_introspection<thistype> :: t_Vector \
+        operator*( const Python::matrix_introspection<thistype> :: t_Vector &_b, \
+                   const thistype& _a ) \
+          { return details::mulm(_b, _a); }
 
     DECOPS( rMatrix3d )
 

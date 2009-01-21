@@ -97,7 +97,8 @@ namespace LaDa
     {
       public:
         //! Exposes direction setters.
-        atat::rVector3d get_direction() const { return functional_->Vff().get_direction(); } 
+        atat::rVector3d get_direction() const
+          { return functional_->Vff().get_direction(); } 
         //! Returns direction.
         void set_direction( const atat::rVector3d& _direction)
           { functional_->Vff().set_direction( _direction ); } 
