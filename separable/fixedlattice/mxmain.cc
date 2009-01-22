@@ -17,7 +17,12 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
+#ifdef _MPI
+# include <boost/scoped_ptr.hpp>
+# include <boost/mpi/environment.hpp>
+#endif
 
+#include <mpi/macros.h>
 #include <minimizer/cgs.h>
 #include <opt/types.h>
 #include <opt/fuzzy.h>
@@ -61,11 +66,11 @@ const LaDa::types::t_unsigned print_llsq     = 6;
 
 int main(int argc, char *argv[]) 
 {
-  __TRYBEGIN
   namespace bl = boost::lambda;
   namespace fs = boost::filesystem;
-  LaDa::Fitting::LeaveManyOut leavemanyout;
 
+  __MPI_START__
+  __TRYBEGIN
   __BPO_START__
          ("verbose,p", po::value<LaDa::types::t_unsigned>()->default_value(0),
                        "Level of verbosity.\n"  )
@@ -110,6 +115,7 @@ int main(int argc, char *argv[])
                    "Performs best-of for 0 (variance), 1 (mean), or 2(max).\n" )
       ("print", po::value<std::string>()->default_value(""),
                    "Prints out: \"function\".\n" );
+  LaDa::Fitting::LeaveManyOut leavemanyout;
   leavemanyout.add_cmdl( specific );
   po::options_description hidden("hidden");
   hidden.add_options()

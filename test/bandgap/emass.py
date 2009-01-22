@@ -92,33 +92,33 @@ def main():
 # create_results( "input.xml", [1,0,0], 0.01, 4, "pickle.bulk" )
   (gamma, results) = read_results( "pickle.bulk" )
 # print gamma
-  for r in results[0:3]:
-    string = "%f" % ( -sqrt(LaDa.norm2( r[0] )) )
-    for u in r[1:]:
-      string = "%s %f" % ( string, u )
-    print string
-  for r in results[3:]:
-    string = "%f" % ( sqrt(LaDa.norm2( r[0] )) )
-    for u in r[1:]:
-      string = "%s %f" % ( string, u )
-    print string
-  print "&"
+# for r in results[0:3]:
+#   string = "%f" % ( -sqrt(LaDa.norm2( r[0] )) )
+#   for u in r[1:]:
+#     string = "%s %f" % ( string, u )
+#   print string
+# for r in results[3:]:
+#   string = "%f" % ( sqrt(LaDa.norm2( r[0] )) )
+#   for u in r[1:]:
+#     string = "%s %f" % ( string, u )
+#   print string
+# print "&"
 
-  for band in range( 3, 4 ): # len( results[0] ) ):
-    matrixA = [ [ 1, -sqrt( LaDa.norm2( r[0] ) ), LaDa.norm2( r[0] ) ] for r in results[:3] ]
-    matrixA.extend( [ [ 1, sqrt( LaDa.norm2( r[0] ) ), LaDa.norm2( r[0] ) ] for r in results[3:] ] )
+  for band in range( 1, len( results[0] ) ):
+    matrixA = [ [ 1, -sqrt( LaDa.norm2( r[0] ) ), LaDa.norm2( r[0] ) ]
+                 for r in results[:3] ]
+    matrixA.extend( [ [ 1, sqrt( LaDa.norm2( r[0] ) ), LaDa.norm2( r[0] ) ]
+                      for r in results[3:] ] )
     vectorB = [ r[band] for r in results ]
     vectorX = [ 0 for r in range(3) ]
-#   print matrixA
-#   print vectorB
     ( x, resid, iter ) = LaDa.linear_lsq( A=matrixA, x=vectorX, b=vectorB, \
                                           verbosity=0, tolerance = 1e-18 )
-    print resid, iter
-    print LaDa.mul_mat_vec( matrixA, x )
-    print x
     for a in range( 9 ):
       u = float(a-4) / 100.0 
       print u, x[0] + u * x[1] + u * u * x[2]
+    print "&"
+    for i,r in enumerate( matrixA ):
+      print r[1], vectorB[i]
     print "&"
 
 #   print A

@@ -23,6 +23,7 @@
 #include <opt/debug.h>
 #include <opt/errors.h>
 #include <opt/random.h>
+#include <opt/bpo_macros.h>
 #include <crystal/lattice.h>
 #include <crystal/structure.h>
 
@@ -52,10 +53,11 @@ int main(int argc, char *argv[])
     namespace bl = boost::lambda;
     namespace fs = boost::filesystem;
 
-    po::options_description generic("Generic Options");
-    generic.add_options()
-           ("help,h", "produces this help message.")
-           ("version,v", "prints version string.")
+    __BPO_START__
+  // po::options_description generic("Generic Options");
+  // generic.add_options()
+  //        ("help,h", "produces this help message.")
+  //        ("version,v", "prints version string.")
            ("verbose,p", po::value<types::t_unsigned>()->default_value(0),
                          "Level of verbosity.\n"  )
            ("seed", po::value<types::t_unsigned>()->default_value(0),

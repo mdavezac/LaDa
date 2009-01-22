@@ -110,13 +110,14 @@ namespace LaDa
           if (normb == 0.0) normb = 1;
           
           resid = ublas::norm_2(r) / normb;
-          if ( Fuzzy::leq( resid, tolerance) ) goto out;
+          if ( resid < tolerance ) goto out;
     
           for (++iter; iter <= itermax; ++iter)
           {
             rho_1 = ublas::prec_inner_prod(rtilde, r);
             if (rho_1 == 0) 
             {
+              if( verbose ) std::cout << "Returning after rho_1 = 0.\n";
               resid = ublas::norm_2(r) / normb;
               break;
             }
@@ -137,7 +138,7 @@ namespace LaDa
             r -= alpha * qhat;
             rho_2 = rho_1;
             resid = ublas::norm_2(r) / normb;
-            if ( Fuzzy::leq( resid, tolerance) ) break;
+            if ( resid < tolerance ) break;
 
             if( not verbose ) continue;
 
