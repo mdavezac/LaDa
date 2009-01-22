@@ -37,7 +37,6 @@ namespace LaDa
         __DOASSERT( not _type.Load( *docHandle.FirstChild("Job").Element() ),
                        "Could not load Bandgap functional from " + _filename + ".\n" )
       }
-
     }
 
     namespace details
@@ -48,6 +47,13 @@ namespace LaDa
         static boost::python::tuple getinitargs( LaDa::Pescan::Bands const& _w) 
           { return boost::python::make_tuple( _w.vbm, _w.cbm ); }
       };
+
+      std::string print_bands( const LaDa::Pescan::Bands & _b )
+      {
+        std::ostringstream sstr;
+        sstr << "Gap = " << _b.gap() << " = " << _b.cbm << " - " << _b.vbm;
+        return sstr.str();
+      }
 
     } // namespace details
 
@@ -61,6 +67,7 @@ namespace LaDa
         .def_readwrite( "vbm", &t_Bands::vbm, "Valence Band Maximum." )
         .def_readwrite( "cbm", &t_Bands::cbm, "Conduction Band Minimum." )
         .def( "gap", &t_Bands::gap, "Returns the gap (LaDa.Bands.cbm - LaDa.Bands.vbm)." )
+        .def( "__str__", &details::print_bands, "Prints out a Bands object to a string." )
         .def_pickle( details::pickle_bands() );
     }
 

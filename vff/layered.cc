@@ -25,15 +25,16 @@ namespace LaDa
       // The first vector of the cell should indicate the direction of the
       // layering.
       u = is_fixed_by_input ? direction: structure.cell.get_column(0);
-      types::t_real a = types::t_real(1.0) / std::sqrt( atat::norm2(u) );
-      u = a * u;
-
       template_strain.zero(); 
       for( size_t i(0); i < 3; ++i )
         for( size_t j(0); j < 3; ++j )
-          template_strain(i,j) = u(i) * u(j);
-
-      return;
+          template_strain(i,j) = u(i)*u(j);
+      const types::t_real b = types::t_real(1.0) / atat::norm2(u);
+      const types::t_real a = std::sqrt( b );
+      u = a * u;
+      for( size_t i(0); i < 3; ++i )
+        for( size_t j(0); j < 3; ++j )
+          template_strain(i,j) *= b;
     }
 
     Layered :: t_Return Layered :: operator()( const t_Arg& _arg ) const
@@ -71,7 +72,20 @@ namespace LaDa
     {
       // finally, packs vff format into function::Base format
       t_Arg :: iterator i_var = _arg.begin();
-      *i_var = u * (_strain * u) - types::t_real(1.0);
+      atat::rMatrix3d strain = _strain;
+      strain(0,0) -= types::t_real(1.0);
+      strain(1,1) -= types::t_real(1.0);
+      strain(2,2) -= types::t_real(1.0);
+      *i_var = 0e0;
+      size_t n(0);
+      for( size_t i(0); i < 3; ++i )
+        for( size_t j(0); j < 3; ++j )
+        {
+          if( Fuzzy::is_zero( template_strain(i,j) ) ) continue;
+          *i_var += template_strain(i,j) * strain(i,j);
+          ++n;
+        }
+      if( n ) *i_var /= types::t_real(n);
       ++i_var;
       pack_positions( i_var );
     }
@@ -158,7 +172,10 @@ namespace LaDa
       t_GradientArg i_grad(_grad);
 
       // first, external stuff
-      *i_grad = _stress(0,0) * u(0) + _stress(1,1) * u(1) + _stress(2,2) * u(2);
+      *i_grad = 0e0;
+      for( size_t i(0); i < 3; ++i )
+        for( size_t j(0); j < 3; ++j )
+          *i_grad += template_strain(i,j) * _stress(i,j);
       ++i_grad;
 
       // then atomic position stuff

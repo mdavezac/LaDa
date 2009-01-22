@@ -16,6 +16,7 @@
 #include "physics.hpp"
 #include "convexhull.impl.hpp"
 #include "errortuple.hpp"
+#include "cgs.hpp"
 #ifdef __DOCE
 # include "ce.hpp"
 #endif
@@ -50,6 +51,9 @@ BOOST_PYTHON_MODULE(LaDa)
   LaDa::Python::expose_structure();
   LaDa::Python::expose_errors();
   LaDa::Python::exposeConvexHull<boost::python::object>( "ConvexHull" );
+  LaDa::Python::expose_cgs();
+  LaDa::Python::expose_llsq();
+  LaDa::Python::expose_mul_mat_vec();
 # ifdef __DOCE
     LaDa::Python::expose_ce();
 # endif

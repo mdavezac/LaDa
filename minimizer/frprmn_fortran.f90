@@ -42,6 +42,10 @@
       parameter (zero = 0.0d0, two = 2.0d0)
       integer uout
       common /io/ uout
+      double precision xmin
+      common /myxmin/xmin
+
+      xmin = 0d0
 
 !
 ! Initializations:
