@@ -103,6 +103,8 @@ namespace LaDa
 
       template< class T_MATRIX > T_MATRIX inv_rMatrix3d( const T_MATRIX &_a )
         { return !_a; }
+      template< class T_MATRIX > T_MATRIX trans_rMatrix3d( const T_MATRIX &_a )
+        { return ~_a; }
        
     } // namespace details.
                                       

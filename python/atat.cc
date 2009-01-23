@@ -27,6 +27,10 @@ namespace LaDa
                &LaDa::atat::details::inv_rMatrix3d< atat::rMatrix3d >,
                bp::arg("matrix"),
                "Inverts an rMatrix3d." );
+      bp::def( "trans_rMatrix3d",
+               &LaDa::atat::details::trans_rMatrix3d< atat::rMatrix3d >,
+               bp::arg("matrix"),
+               "Transpose of an rMatrix3d." );
     }
   }
 } // namespace LaDa

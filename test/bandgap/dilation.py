@@ -4,6 +4,11 @@
 #
 
 def nbstates( _escan, _structure ):
+  """
+     Sets the number of states to be computed in _escan
+     to the number of valence band + one conduction band 
+     ( + two if spin polarized ) in _structure.
+  """
   import LaDa
   if _escan.parameters.method == LaDa.full_diagonalization: 
     _escan.parameters.nbstates = LaDa.nb_valence_states( _structure ) + 2
@@ -11,18 +16,28 @@ def nbstates( _escan, _structure ):
        or LaDa.norm2( _escan.parameters.kpoint ) < 1e-6:
       _escan.parameters.nbstates /= 2
 
-def get_asize( _vff, _cell, _direction ):
+def get_asize( _distorted_structure, _undistorted_cell, _direction ):
+  """
+     Returns the lattice parameter in _direction in a.u.
+  """
   
   from LaDa import norm2, inv_rMatrix3d
   from math import sqrt
 
   u = inv_rMatrix3d( _cell ) * _direction;
-  u = _vff.structure.cell * _vff.structure.scale * u;
+  u = _structure.cell * _structure.scale * u;
   return sqrt( norm2(u) / norm2( _direction ) )
 
 def print_bands( _escan, _structure, _ocell, _first, _last, _result, _nbpoints = 10, _offset = 0 ):
-  """ Adds eigenvalues to result from linear interpolation
-      between kpoint _first to kpoint _last (excluded) using nbpoints.
+  """
+     Adds eigenvalues to _result from linear interpolation
+     between kpoint _first to kpoint _last (included) using nbpoints.
+     The results are appended to _result as a list of lists:
+       [
+         [ norm of (undistorted) kpoint, eig1, eig2, ..., eign ],
+         [ ....  next kpoint ... ],
+         ...
+       ]
   """
   
   import LaDa
@@ -55,8 +70,8 @@ def compute_distorted_kpoint( _original_cell, _distorted_cell, _kpoint ):
 
   import LaDa
 
-  distorted_kcell = LaDa.inv_rMatrix3d( _original_cell )
-  return distorted_kcell * _original_cell * _kpoint
+  distorted_kcell = LaDa.inv_rMatrix3d( LaDa.trans_rMatrix3d( _distorted_cell ) )
+  return distorted_kcell * LaDa.trans_rMatrix3d( _original_cell ) * _kpoint
 
 def save_strings_to_file( _filename, _strings ):
   """
@@ -68,6 +83,10 @@ def save_strings_to_file( _filename, _strings ):
   file.close()
 
 def compute_allbands( _mpi, _vff, _escan, _structure, _kpoint, _scale, _perpdir, _add_states ):
+  """ 
+     Computes all valence bands + 1 conduction band + _add_states
+     for a set kpoint, scale and direction.
+  """
 
     import LaDa
 
@@ -93,7 +112,8 @@ def compute_allbands( _mpi, _vff, _escan, _structure, _kpoint, _scale, _perpdir,
     # computes eigs
     _escan.run()
 
-    string = "%f " % ( get_asize( _vff, _structure.cell, _perpdir ) / 0.529177 )
+    # prints eigs to a string.
+    string = "%f " % ( get_asize( _vff.structure, _structure.cell, _perpdir ) / 0.529177 )
 
     if    _escan.parameters.potential != LaDa.spinorbit \
        or LaDa.norm2( _escan.parameters.kpoint ) < 1e-6:
@@ -104,6 +124,9 @@ def compute_allbands( _mpi, _vff, _escan, _structure, _kpoint, _scale, _perpdir,
     return (string, epi_energy)
       
 def compute_bandgap( _mpi, _vff, _bandgap, _structure, _kpoint, _scale, _perpdir ):
+  """ 
+     Computes the bandgap for a set kpoint, scale and direction.
+  """
 
     import LaDa
 
@@ -122,8 +145,9 @@ def compute_bandgap( _mpi, _vff, _bandgap, _structure, _kpoint, _scale, _perpdir
 
     # computes eigs
     _bandgap.evaluate( _vff.structure )
+    # prints eigs to string.
     string =    "%f %s %s "\
-             % ( get_asize( _vff, _structure.cell, _perpdir ) / 0.529177,\
+             % ( get_asize( _vff.structure, _structure.cell, _perpdir ) / 0.529177,\
                  _bandgap.bands.vbm, _bandgap.bands.cbm )
 
     return (string, epi_energy)
@@ -134,8 +158,10 @@ def main():
   from math import sqrt
   # from sys import exit
 
+  # input file from which to read vff, escan, and structure.
   XMLfilename = "dilation.xml"
 
+  # Loads all parameters from file.
   lattice = LaDa.Lattice()
   lattice.fromXML( XMLfilename )
   vff = LaDa.LayeredVff()
@@ -147,12 +173,14 @@ def main():
   escan.set_mpi( mpi.world )
   escan.fromXML( XMLfilename )
 
+  # Defines a few standard kpoint.
   X = LaDa.rVector3d( [1,0,0] )
   G = LaDa.rVector3d( [0,0,0] )
   L = LaDa.rVector3d( [0.5,0.5,0.5] )
 
-  vff.direction = LaDa.rVector3d( [1,0,0] )
-  perpdir = LaDa.rVector3d( [0,1,0] )
+  # Defines a few parameters.
+  vff.direction = LaDa.rVector3d( [1,1,0] )
+  perpdir = LaDa.rVector3d( [-1,1,0] )
   length = 5
   scales = [ 5.43 + x*(5.65-5.43)/ length  for x in range( length + 1 ) ]
   kpoints = ( X, G, L )
@@ -160,55 +188,55 @@ def main():
 
   results=[]
 
-# for kpoint in kpoints:
+  # This part prints to file the eigenvalues with respect to kpoint and scale.
+  for kpoint in kpoints:
 
-#   results.append( "%s %s %s %s" % ( "# epi:", vff.direction, "  kpoint: ", kpoint ) )
+    results.append( "%s %s %s %s" % ( "# epi:", vff.direction, "  kpoint: ", kpoint ) )
 
-#   # first: full diag
-#   escan.parameters.method = LaDa.full_diagonalization
-#   ( string, epi_energy ) = compute_bandgap( mpi, vff, escan, structure, \
-#                                             kpoint, scales[0], perpdir )
-#   results.append( string )
-#   escan.eref = LaDa.Bands( escan.bands )
-#   escan.parameters.method = LaDa.folded
+    # if computing bandgap only, uncomment this section.
+    # if computing all bands, comment it out.
+    # begin section.
+    escan.parameters.method = LaDa.full_diagonalization
+    ( string, epi_energy ) = compute_bandgap( mpi, vff, escan, structure, \
+                                              kpoint, scales[0], perpdir )
+    results.append( string )
+    escan.eref = LaDa.Bands( escan.bands )
+    escan.parameters.method = LaDa.folded
+    # end section.
 
-#   for x in scales[1:]:
+    for x in scales[1:]:
 
-#     # ( string, epi_energy ) = compute_allbands( mpi, vff, escan, structure, \
-#     #                                            kpoint, x, perpdir, add_states )
-#     ( string, epi_energy ) = compute_bandgap( mpi, vff, escan, structure, \
-#                                               kpoint, x, perpdir )
+      # computes all bands.
+      # ( string, epi_energy ) = compute_allbands( mpi, vff, escan, structure, \
+      #                                            kpoint, x, perpdir, add_states )
+      # computes band gap only
+      ( string, epi_energy ) = compute_bandgap( mpi, vff, escan, structure, \
+                                                kpoint, x, perpdir )
 
-#     results.append( string )
+      results.append( string )
 
-#   # end of loop over scales
-#   results.append( "&" )
+    # end of loop over scales
+    results.append( "&" )
 
-# # end of loop over kpoints
+  # end of loop over kpoints
 
-# save_strings_to_file( "ge_bands", results )
+  save_strings_to_file( "ge_bands", results )
 
-  compute_allbands( mpi, vff, escan, structure, \
-                    G, scales[3], perpdir, add_states )
-  result = []
-  print_bands( escan, vff.structure, structure.cell,
-               LaDa.rVector3d( [2,0,0] ), LaDa.rVector3d( [1,0,0] ),
-               result, 75 )
-  print_bands( escan, vff.structure,  structure.cell,
-               LaDa.rVector3d( [1,0,0] ), LaDa.rVector3d( [0,0,0] ),
-               result, 75 )
+  # This part computes a band structure for a fixed scale.
+# compute_allbands( mpi, vff, escan, structure, \
+#                   G, scales[3], perpdir, add_states )
+# result = []
+# print_bands( escan, vff.structure, structure.cell,
+#              LaDa.rVector3d( [0,0,2] ), LaDa.rVector3d( [0,0,1] ),
+#              result, 2 )
+# file = open( "distorted_periodic", "w" )
 # for eigs in result:
-#   eigs[0] = -eigs[0]
-# print_bands( escan, vff.structure,
-#              LaDa.rVector3d( [0,0,0] ), 0.5 * LaDa.rVector3d( [2,2,2] ),
-#              result, 50 )
+#   string = ""
+#   for u in eigs:
+#     string += " %f " % ( u )
+#   print >>file, string
 
-  file = open( "distorted_periodic", "w" )
-  for eigs in result:
-    string = ""
-    for u in eigs:
-      string += " %f " % ( u )
-    print >>file, string
 
+# Tells Python to call function main on execution.
 if __name__ == "__main__":
   main()
