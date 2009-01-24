@@ -24,8 +24,8 @@ def get_asize( _distorted_structure, _undistorted_cell, _direction ):
   from LaDa import norm2, inv_rMatrix3d
   from math import sqrt
 
-  u = inv_rMatrix3d( _cell ) * _direction;
-  u = _structure.cell * _structure.scale * u;
+  u = inv_rMatrix3d( _undistorted_cell ) * _direction;
+  u = _distorted_structure.cell * _distorted_structure.scale * u;
   return sqrt( norm2(u) / norm2( _direction ) )
 
 def print_bands( _escan, _structure, _ocell, _first, _last, _result, _nbpoints = 10, _offset = 0 ):
@@ -83,10 +83,10 @@ def save_strings_to_file( _filename, _strings ):
   file.close()
 
 def compute_allbands( _mpi, _vff, _escan, _structure, _kpoint, _scale, _perpdir, _add_states ):
-  """ 
-     Computes all valence bands + 1 conduction band + _add_states
-     for a set kpoint, scale and direction.
-  """
+    """ 
+       Computes all valence bands + 1 conduction band + _add_states
+       for a set kpoint, scale and direction.
+    """
 
     import LaDa
 
@@ -124,10 +124,10 @@ def compute_allbands( _mpi, _vff, _escan, _structure, _kpoint, _scale, _perpdir,
     return (string, epi_energy)
       
 def compute_bandgap( _mpi, _vff, _bandgap, _structure, _kpoint, _scale, _perpdir ):
-  """ 
-     Computes the bandgap for a set kpoint, scale and direction.
-  """
-
+    """ 
+       Computes the bandgap for a set kpoint, scale and direction.
+    """
+   
     import LaDa
 
     # Computes epi structure.
