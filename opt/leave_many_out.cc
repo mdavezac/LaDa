@@ -7,6 +7,7 @@
 
 #include <sstream>
 #include <fstream>
+#include <algorithm>
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
@@ -145,39 +146,110 @@ namespace LaDa
       __DOASSERT( sets.size() == 0, "Read 0 sets from input.\n" )
     }
 
+//   void LeaveManyOut :: create_sets( types::t_unsigned _tsize )
+//   {
+//     namespace fs = boost::filesystem;
+//
+//     __DOASSERT( _tsize == 0, "Input error: number of input structures is 0.\n" )
+//     __DOASSERT( nb_sets == 0, "Input error: required creation of 0 sets.\n" )
+//     __DOASSERT( nb_perset == 0, "Input error: required creation of sets of size 0.\n" )
+//
+//     fs::path fullpath = filename;
+//     std::ofstream setfile( fullpath.string().c_str(),
+//                            std::ofstream::out | std::ofstream::trunc );
+//     __ASSERT( not setfile.is_open(), "Could not open " << fullpath << " for writing.\n" )
+//
+//     std::cout << "Creating leave-many-out sets ( saved to file: " 
+//               << fullpath << " ): \n";
+//     for(types::t_unsigned i(nb_sets); i > 0; --i )
+//     {
+//       std::ostringstream sstr;
+//       std::vector< types::t_unsigned > set;
+//       for(types::t_unsigned j(nb_perset); j > 0; --j )
+//       {
+//         types::t_unsigned r;
+//         do { r = opt::random::range(0, _tsize ); }
+//         while(     except.size() != 0
+//                and except.end() != std::find( except.begin(), except.end(), r ) );
+//         set.push_back( r );
+//         sstr << set.back() << " ";
+//       }
+//       std::cout << "  _ " << sstr.str() << "\n";
+//       setfile << sstr.str() << "\n";
+//       sets.push_back( set );
+//     }
+//   }
+
     void LeaveManyOut :: create_sets( types::t_unsigned _tsize )
     {
       namespace fs = boost::filesystem;
-
       __DOASSERT( _tsize == 0, "Input error: number of input structures is 0.\n" )
       __DOASSERT( nb_sets == 0, "Input error: required creation of 0 sets.\n" )
-      __DOASSERT( nb_perset == 0, "Input error: required creation of sets of size 0.\n" )
+      __DOASSERT( nb_perset == 0,
+                  "Input error: required creation of sets of size 0.\n" )
+      __DOASSERT( nb_perset >= _tsize,
+                  "Input error: sets too large.\n" )
 
+      types::t_unsigned (*ptr_to_rng)( types::t_unsigned ) = &opt::random::range;
       fs::path fullpath = filename;
       std::ofstream setfile( fullpath.string().c_str(),
                              std::ofstream::out | std::ofstream::trunc );
-      __ASSERT( not setfile.is_open(), "Could not open " << fullpath << " for writing.\n" )
+      __ASSERT( not setfile.is_open(),
+                "Could not open " << fullpath << " for writing.\n" )
 
-      std::cout << "Creating leave-many-out sets ( saved to file: " 
-                << fullpath << " ): \n";
+      std::cout << "Creating leave-many-out sets (saved to file: " 
+                << fullpath << "): \n";
+      
+      // Original pool of candidates.
+      std::vector< size_t > opool(_tsize, 0);
+      size_t j(0);
+      foreach( size_t &i, opool ){ i = j; ++j; }
+      foreach( types::t_unsigned i, except )
+      {
+        std::vector<size_t> :: iterator i_found
+           = std::find( opool.begin(), opool.end(), i );
+        if( opool.end() !=  i_found ) opool.erase( i_found );
+      }
+
+      std::vector<size_t> pool;
       for(types::t_unsigned i(nb_sets); i > 0; --i )
       {
-        std::ostringstream sstr;
-        std::vector< types::t_unsigned > set;
-        for(types::t_unsigned j(nb_perset); j > 0; --j )
+        const size_t pool_size( pool.size() );
+        // if current pool is exactly empty, reset it to original pool
+        if( pool_size == 0 )
         {
-          types::t_unsigned r;
-          do { r = opt::random::range(0, _tsize ); }
-          while(     except.size() != 0
-                 and except.end() != std::find( except.begin(), except.end(), r ) );
-          set.push_back( r );
-          sstr << set.back() << " ";
+          pool = opool;
+          const size_t zero(0);
+          std::random_shuffle( pool.begin(), pool.end(), ptr_to_rng );
+        }
+        // if current pool is too small, resize it to nb_perset.
+        else if( pool_size < nb_perset )
+        {
+          std::vector<size_t> save = opool;
+          foreach( types::t_unsigned i, pool )
+          {
+            std::vector<size_t> :: iterator i_found
+               = std::find( save.begin(), save.end(), i );
+            if( opool.end() !=  i_found ) save.erase( i_found );
+          }
+          std::random_shuffle( save.begin(), save.end(), ptr_to_rng );
+          std::copy( save.begin(), save.begin() + ( int(nb_perset) - int(pool_size) ),
+                     std::back_inserter( pool ) );
+        }
+
+        sets.resize( sets.size() + 1 );
+        std::ostringstream sstr;
+        for( size_t j(nb_perset); j > 0; --j )
+        {
+          types::t_unsigned back( pool.back() );
+          pool.pop_back();
+          sstr << back << " ";
+          sets.back().push_back( back );
         }
         std::cout << "  _ " << sstr.str() << "\n";
         setfile << sstr.str() << "\n";
-        sets.push_back( set );
       }
     }
 
-  }
+  } // namespace Fitting 
 } // namespace LaDa

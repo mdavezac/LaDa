@@ -8,11 +8,21 @@
 #include <algorithm>
 #include <sstream>
 #include <boost/filesystem/operations.hpp>
-#include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/tuple/tuple_io.hpp>
 #include <boost/ref.hpp>
+
+#include <boost/spirit/include/classic_primitives.hpp>
+#include <boost/spirit/include/classic_numerics.hpp>
+#include <boost/spirit/include/classic_parser.hpp>
+#include <boost/spirit/include/classic_actions.hpp>
+#include <boost/spirit/include/classic_kleene_star.hpp>
+#include <boost/spirit/include/classic_kleene_star.hpp>
+#include <boost/spirit/include/classic_optional.hpp>
+#include <boost/spirit/include/classic_assign_actor.hpp>
+#include <boost/spirit/include/classic_sequence.hpp>
+#include <boost/spirit/include/classic_operators.hpp>
 
 #include <opt/ndim_iterator.h>
 #include <opt/debug.h>
@@ -748,6 +758,7 @@ namespace LaDa
     {
       __TRYBEGIN
       namespace fs = boost::filesystem;
+      namespace bsc = boost::spirit::classic;
 
       // First finds directory of LDAs.dat.
       __DOASSERT( not fs::exists( _dir ), _dir << " does not exist.\n" );
@@ -760,13 +771,19 @@ namespace LaDa
       std::string line;
       while( std::getline( ldas, line ) )
       {
-        const boost::regex re("^(\\s+)?(\\S+)\\s+(-?\\d+(\\.\\d+)?)");
-        boost::match_results<std::string::const_iterator> what;
-        if( not boost::regex_search( line, what, re ) ) continue;
-
         Crystal :: Structure structure;
-        structure.name = what.str(2);
-        structure.energy = boost::lexical_cast<types::t_real>( what.str(3) );
+        bsc::parse_info<> info = bsc::parse
+        (
+          line.c_str(),
+
+          !(*bsc::space_p)
+            >> ( *(
+                    bsc::alnum_p | bsc::punct_p
+               ) )[ bsc::assign_a( structure.name ) ]
+            >> *bsc::space_p
+            >> bsc::real_p[ bsc::assign_a( structure.energy ) ]
+        );
+        if( not info.hit ) continue;
 
         Crystal :: read_structure( structure, dir / structure.name );
         _structures.push_back(structure);
@@ -780,11 +797,9 @@ namespace LaDa
     {
       __DEBUGTRYBEGIN
       // finds first line for structure.
-      const boost::regex No("^\\sNO\\." );
-      boost::match_results<std::string::const_iterator> what;
       std::string line;
       do { std::getline( _sstr, line ); } 
-      while(  not ( boost::regex_search( line, what, No ) or _sstr.eof() ) );
+      while( line.find( "No." ) != std::string::npos or _sstr.eof() );
       if( _sstr.eof() ) return false;
 
       // Tokenize first line.
@@ -810,15 +825,15 @@ namespace LaDa
         for( size_t j(0); j < 3; ++j, ++i_tok )
         {
           __DOASSERT( i_tok == i_tok_end, "Unexpected end-of-line.\n" )
-          _structure.cell(i,j) = boost::lexical_cast<types::t_real>( *i_tok ) * 0.5e0;
+          _structure.cell(i,j)
+            = boost::lexical_cast<types::t_real>( *i_tok ) * 0.5e0;
         }
 
       // read atoms position.
       // find first line of atomic basis.
       _structure.atoms.clear();
-      const boost::regex Basis("^\\sBASIS" );
       do { std::getline( _sstr, line ); } 
-      while( not ( boost::regex_search( line, what, Basis ) or _sstr.eof() ) );
+      while( line.find( "BASIS" ) != std::string::npos or _sstr.eof() );
 
       bool is_first = true;
       while( _structure.atoms.size() < N ) 

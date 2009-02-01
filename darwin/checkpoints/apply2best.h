@@ -32,7 +32,8 @@ namespace LaDa
                        : darwin_(_c.darwin_ ), functor_( _c.functor_ ) {}
        
             //! Functor. Reroutes calls to Store::Manip::apply_best().
-            bool operator()( bool ) { darwin_.store->apply_best( functor_ ); }
+            bool operator()( bool )
+             { darwin_.store->apply_best( functor_ ); return true; }
 
           protected:
             //! The darwin object.

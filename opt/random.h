@@ -28,6 +28,9 @@ namespace LaDa
       types::t_real rng();
       //! Gets a random number from a range [\a _first, \a_last).
       types::t_unsigned range( types::t_unsigned _first, types::t_unsigned _last );
+      //! Gets a random number from a range [\a _first, \a_last).
+      inline types::t_unsigned range( types::t_unsigned _last )
+        { return range(0, _last ); }
     }
   }
 } // namespace Lada

@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
       ("nofit", "Does not perform fit.\n"  )
       ("rank,r", po::value<LaDa::types::t_unsigned>()->default_value(3),
                  "Rank of the sum of separable functions." )
-      ("basis,r", po::value<std::string>()->default_value("1x1x4"),
+      ("basis,b", po::value<std::string>()->default_value("1x1x4"),
                  "Description of the ranks/size of the figure used\n." )
       ("tolerance", po::value<LaDa::types::t_real>()->default_value(1e-4),
                     "Tolerance of the alternating linear-least square fit.\n"  )
