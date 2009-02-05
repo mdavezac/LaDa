@@ -111,7 +111,7 @@ def interpolate_bands( _filename, _order = 2 ):
   
   (gamma, results) = read_results( _filename )
   steps = len( results ) / 2 + 1
-  for band in range( len( results[0] ) - 1, len( results[0] ) ):
+  for band in range( 1, len( results[0] ) ):
     matrixA = [ [ pow( -sqrt( LaDa.norm2( r[0] ) ), i ) for i in range(0, _order+1)  ]
                 for r in results[:steps-1] ]
     matrixA.extend( [ [ pow( sqrt( LaDa.norm2( r[0] ) ), i ) for i in range(0, _order+1)  ]
@@ -125,6 +125,7 @@ def interpolate_bands( _filename, _order = 2 ):
       u = float(a) / 1000.0 
       print u, sum( [ x[i]*pow(u,i) for i in range(0, _order+1) ] )
     print "&"
+    print "# ", 1/x[2]
 
 def main():
   # from sys import exit

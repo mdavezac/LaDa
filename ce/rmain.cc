@@ -68,6 +68,12 @@ int main(int argc, char *argv[])
                    "Lattice input file." )
       ("tolerance", po::value<LaDa::types::t_real>()->default_value(1e-4),
                     "Tolerance of the non-linear-least square fit."  )
+      ("linetol", po::value<LaDa::types::t_real>()->default_value(1e-4),
+                    "Line tolerance for \"some\" minimizers." )
+      ("linestep", po::value<LaDa::types::t_real>()->default_value(1e-4),
+                    "Line step for \"some\" minimizers." )
+      ("strategy", po::value<std::string>()->default_value("fast"),
+                    "Strategy for Minuit2 minimizer." )
       ("itermax,i", po::value<LaDa::types::t_unsigned>()->default_value(0),
                     "Maximum number of iterations for the minimizer."  )
       ("maxpairs,m", po::value<LaDa::types::t_unsigned>()->default_value(5),
@@ -161,6 +167,9 @@ int main(int argc, char *argv[])
   LaDa::types::t_unsigned seed = vm["seed"].as<LaDa::types::t_unsigned>();
   seed = LaDa::opt::random::seed( seed );
   const LaDa::types::t_real tolerance( vm["tolerance"].as< LaDa::types::t_real >() );
+  const LaDa::types::t_real linetol( vm["linetol"].as< LaDa::types::t_real >() );
+  const LaDa::types::t_real linestep( vm["linestep"].as< LaDa::types::t_real >() );
+  const std::string strategy( vm["strategy"].as< std::string >() );
   const LaDa::types::t_unsigned itermax( vm["itermax"].as< LaDa::types::t_unsigned >() );
   const std::string minimizer_type( vm["minimizer"].as< std::string >() );
   const LaDa::types::t_real iweights( vm["iw"].as< LaDa::types::t_real >() );
@@ -303,9 +312,10 @@ int main(int argc, char *argv[])
     fakexml.SetAttribute( "type", minimizer_type );
     fakexml.SetDoubleAttribute( "tolerance", tolerance );
     fakexml.SetAttribute( "itermax", itermax );
-    fakexml.SetDoubleAttribute( "linetolerance", 0.01 );
-    fakexml.SetDoubleAttribute( "linestep", 0.1 );
-    fakexml.SetAttribute( "verbose", "true" );
+    fakexml.SetDoubleAttribute( "linetolerance", linetol );
+    fakexml.SetDoubleAttribute( "linestep", linestep );
+    fakexml.SetAttribute( "strategy", strategy );
+    fakexml.SetAttribute( "verbose", verbosity >= outermin ? "true": "false" );
     typedef LaDa::Minimizer::Variant
             < 
               boost::mpl::vector

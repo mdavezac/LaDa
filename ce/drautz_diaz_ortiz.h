@@ -90,6 +90,7 @@ namespace LaDa
             Regulated::t_Arg::value_type wrange( _initweights );
             do 
             {
+              std::cout << "zero weight: " << cvwz << "\n";
               std::for_each
               ( 
                 solution.begin(), solution.end(),
@@ -98,8 +99,8 @@ namespace LaDa
               cvw = _minimizer( _reg, solution ); 
               ++iter;
               wrange = _initweights / Regulated::t_Arg::value_type( iter );
-            } while( cvw < cvwz and iter < 5 );
-            if( cvw < cvwz )
+            } while( cvw > cvwz and iter < 5 );
+            if( cvw > cvwz )
             {
               std::fill( solution.begin(), solution.end(), Regulated :: t_Arg :: value_type(0) );
               cvw = _minimizer( _reg, solution ); 

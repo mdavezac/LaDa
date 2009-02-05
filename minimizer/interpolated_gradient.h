@@ -49,7 +49,7 @@ namespace LaDa
         t_Matrix Aconst(order, order);
         for( size_t i(0); i < order; ++i )
           for( size_t j(0); j < order; ++j )
-            Aconst(i,j) = std::pow( _stepsize * t_Return( int(i)-int(_n) ), j );
+            Aconst(i,j) = std::pow( _stepsize * t_Return( int(i)-int(_n) ), int(j) );
 
         const t_Matrix Atrans = bnu::trans( Aconst );
         Aconst = bnu::prec_prod( Atrans, Aconst  );
