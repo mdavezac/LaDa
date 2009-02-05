@@ -62,14 +62,17 @@ def create_results( _xmlinput, _direction, _step, _nbval, _filename ):
   bandgap.parameters.nbstates = 4
 
   # +kpoint
-  for i in range( 1, _nbval ):
-    bandgap.parameters.kpoint = LaDa.rVector3d( _direction ) * float(_step) * float(i)
-    dummy = [ LaDa.rVector3d( bandgap.parameters.kpoint ) ]
-    bandgap.parameters.Eref =  gamma.vbm
-    dummy.extend( sorted( get_values( bandgap ) ) )
-    bandgap.parameters.Eref =  gamma.cbm
-    dummy.extend( sorted( get_values( bandgap ) ) )
-    result.append( dummy )
+  dummy = list( result[:len(result)-1] )
+  dummy.reverse()
+  result.extend( dummy )
+# for i in range( 1, _nbval ):
+#   bandgap.parameters.kpoint = LaDa.rVector3d( _direction ) * float(_step) * float(i)
+#   dummy = [ LaDa.rVector3d( bandgap.parameters.kpoint ) ]
+#   bandgap.parameters.Eref =  gamma.vbm
+#   dummy.extend( sorted( get_values( bandgap ) ) )
+#   bandgap.parameters.Eref =  gamma.cbm
+#   dummy.extend( sorted( get_values( bandgap ) ) )
+#   result.append( dummy ) 
 
   file = open( _filename, "w" )
   pickle.dump( (gamma, result), file )
@@ -82,44 +85,61 @@ def read_results( _filename):
   file.close
   return result
 
-def main():
+def print_results( filename ):
+
   from math import sqrt
   import LaDa
+
+  (gamma, results) = read_results( filename )
+  steps = len( results ) / 2 + 1 
+  for r in results[0:steps-1]:
+    string = "%f" % ( -sqrt(LaDa.norm2( r[0] )) )
+    for u in r[1:]:
+      string = "%s %f" % ( string, u )
+    print string
+  for r in results[steps-1:]:
+    string = "%f" % ( sqrt(LaDa.norm2( r[0] )) )
+    for u in r[1:]:
+      string = "%s %f" % ( string, u )
+    print string
+  print "&"
+
+def interpolate_bands( _filename, _order = 2 ):
+
+  from math import sqrt, pow
+  import LaDa
+  
+  (gamma, results) = read_results( _filename )
+  steps = len( results ) / 2 + 1
+  for band in range( len( results[0] ) - 1, len( results[0] ) ):
+    matrixA = [ [ pow( -sqrt( LaDa.norm2( r[0] ) ), i ) for i in range(0, _order+1)  ]
+                for r in results[:steps-1] ]
+    matrixA.extend( [ [ pow( sqrt( LaDa.norm2( r[0] ) ), i ) for i in range(0, _order+1)  ]
+                      for r in results[steps-1:] ] )
+    vectorB = [ r[band] for r in results ]
+    vectorX = [ 0 for r in range(0, _order+1) ]
+    ( x, resid, iter ) = LaDa.linear_lsq( A=matrixA, x=vectorX, b=vectorB, \
+                                          verbosity=0, tolerance = 1e-18, itermax = 10000 )
+    print "# ", x, resid, iter
+    for a in range( -steps, steps + 1):
+      u = float(a) / 1000.0 
+      print u, sum( [ x[i]*pow(u,i) for i in range(0, _order+1) ] )
+    print "&"
+
+def main():
   # from sys import exit
 
 
+  pickle_filename = "_si_vfine_mesh"
+# create_results( "sigeemass.xml", [1,0,0], 0.00005, 100, pickle_filename )
+# print_results( pickle_filename )
+  print_results( "_si_large_mesh" )
+# print_results( "_si_emass.pickle" )
+  interpolate_bands( "_si_large_mesh", 3 )
 
-# create_results( "input.xml", [1,0,0], 0.01, 4, "pickle.bulk" )
-  (gamma, results) = read_results( "pickle.bulk" )
-# print gamma
-# for r in results[0:3]:
-#   string = "%f" % ( -sqrt(LaDa.norm2( r[0] )) )
-#   for u in r[1:]:
-#     string = "%s %f" % ( string, u )
-#   print string
-# for r in results[3:]:
-#   string = "%f" % ( sqrt(LaDa.norm2( r[0] )) )
-#   for u in r[1:]:
-#     string = "%s %f" % ( string, u )
-#   print string
-# print "&"
-
-  for band in range( 1, len( results[0] ) ):
-    matrixA = [ [ 1, -sqrt( LaDa.norm2( r[0] ) ), LaDa.norm2( r[0] ) ]
-                 for r in results[:3] ]
-    matrixA.extend( [ [ 1, sqrt( LaDa.norm2( r[0] ) ), LaDa.norm2( r[0] ) ]
-                      for r in results[3:] ] )
-    vectorB = [ r[band] for r in results ]
-    vectorX = [ 0 for r in range(3) ]
-    ( x, resid, iter ) = LaDa.linear_lsq( A=matrixA, x=vectorX, b=vectorB, \
-                                          verbosity=0, tolerance = 1e-18 )
-    for a in range( 9 ):
-      u = float(a-4) / 100.0 
-      print u, x[0] + u * x[1] + u * u * x[2]
-    print "&"
-    for i,r in enumerate( matrixA ):
-      print r[1], vectorB[i]
-    print "&"
+#   for i,r in enumerate( matrixA ):
+#     print r[1], vectorB[i]
+#   print "&"
 
 #   print A
 #   print b

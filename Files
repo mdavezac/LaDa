@@ -113,9 +113,9 @@ CRYSTAL_DOC = $(CRYSTAL_H) $(CRYSTAL_CC)
 
 CE_CC     = cluster.cc harmonic.cc  polynome.cc regularization.cc fit.cc
 CE_H      = cluster.h  constituent_strain.h  functional_builder.h  harmonic.h \
-            polynome.h regularization.h fit.h
+            polynome.h regularization.h fit.h drautz_diaz_ortiz.h
 CE_IMPL_H = constituent_strain.impl.h  functional_builder.impl.h  harmonic.impl.h \
-            cluster.impl.h regularization.impl.h fit.impl.h
+            cluster.impl.h fit.impl.h
 CE_DOC = $(CE_H) $(CE_CC) 
 
 LAPACK_F90 = dlae2.f   dlanst.f  dlapy2.f  dlarf.f   dlarft.f  dlascl.f \
@@ -186,7 +186,7 @@ PYTHON_DOC = $(PYTHON_CC) $(PYTHON_H) \
 
 MINIMIZER_H =  allsq.h  cgs.h  decoupled.h  frprmn.h  function_wrapper.h  gsl.h \
                gsl_lsq.h  gsl_mins.h  gsl_nllsq.h  gsl_simplex.h  minuit2.h \
-               variant.h
+               variant.h interpolated_gradient.h
 MINIMIZER_CC = gsl_lsq.cc gsl.cc gsl_nllsq.cc gsl_mins.cc gsl_simplex.cc frprmn.cc \
                decoupled.cc minuit2.cc 
 MINIMIZER_F90 =  df1dim.f90  frprmn_fortran.f90  linmin.f90

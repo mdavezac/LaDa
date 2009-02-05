@@ -26,8 +26,8 @@ tetra_CPPFLAGS =  $(AM_CPPFLAGS) -D_TETRAGONAL_CE_
 tetra_LDFLAGS = $(cubic_LDFLAGS)
 tetra_LDADD = $(cubic_LDADD) 
 regular_SOURCES = rmain.cc
-regular_CPPFLAGS =  $(AM_CPPFLAGS) -D_CUBIC_CE_ @GSL_CFLAGS@
-regular_LDFLAGS = $(cubic_LDFLAGS) @GSL_LIBS@ 
+regular_CPPFLAGS =  $(AM_CPPFLAGS) -D_CUBIC_CE_ @GSL_CFLAGS@ @MINUIT_CFLAGS@
+regular_LDFLAGS = $(cubic_LDFLAGS) @GSL_LIBS@ @MINUIT_LIBS@
 regular_LDADD = libce.la \
                 ../crystal/libcrystal.la \
 		../atat/libatat.la \

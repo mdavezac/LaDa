@@ -2,13 +2,37 @@
 //  Version: $Id$
 //
 
+#ifndef _LADA_CE_DRAUTZ_DIAZ_ORTIZ_H_
+#define _LADA_CE_DRAUTZ_DIAZ_ORTIZ_H_
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include <boost/numeric/ublas/vector.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/tuple/tuple.hpp>
+
+#include <opt/types.h>
+#include <opt/debug.h>
+#include <opt/errors.h>
+#include <crystal/structure.h>
+#include <minimizer/cgs.h>
+#include <minimizer/variant.h>
+
+#include "regularization.h"
+
 namespace LaDa
 {
   namespace CE
   {
-    template< class T_MINIMIZER >
+    //! \brief Computes CV scores and reduces number of clusters to zero.
+    //! \details Regulated::clusters are unchanged at the end of the run.
+    //! \brief Regulated Cluster-Expansion.
+    //! \see <A HREF="http://dx.doi.org/10.1103/PhysRevB.73.224207"> Ralf Drautz
+    template< class T_MPLVECTOR >
       void drautz_diaz_ortiz( Regulated &_reg, 
-                              const T_MINIMIZER &_minimizer,
+                              const LaDa::Minimizer::Variant<T_MPLVECTOR> &_minimizer,
                               types::t_int _verbosity,
                               types::t_real _initweights )
       {
@@ -33,7 +57,7 @@ namespace LaDa
             for(; i_clusters != i_clusters_end; ++i_clusters )
               std::cout << i_clusters->front();
           }
-          Regulated :: t_Vector solution( nb_cls );
+          Regulated :: t_Arg solution( nb_cls );
           Regulated :: t_Vector ecis( nb_cls );
           Regulated :: t_Vector zero_vec( nb_cls, 0e0);
           const types::t_real range(100);
@@ -81,3 +105,5 @@ namespace LaDa
       }
   }
 } // namespace LaDa
+
+#endif

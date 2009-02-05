@@ -20,7 +20,7 @@ namespace LaDa
     typedef double t_real;       //!< the real value type
     typedef char t_char;         //!< the character type, unused
     typedef std::complex<types::t_real> t_complex; //!< a complex real type
-    const t_real tolerance = 0.000001; //!< all purpose tolerance global
+    const t_real tolerance = 1.e-10; //!< all purpose tolerance global
   }
 } // namespace LaDa
 #endif

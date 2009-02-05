@@ -12,18 +12,28 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
 #include <boost/program_options.hpp>
+#include <boost/mpl/vector.hpp>
+#ifdef _MPI
+# include <boost/scoped_ptr.hpp>
+# include <boost/mpi/environment.hpp>
+#endif
 
+# include <mpi/mpi_object.h>
+# include <mpi/macros.h>
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <opt/random.h>
+#include <opt/bpo_macros.h>
+#include <minimizer/minuit2.h>
+#include <minimizer/frprmn.h>
 #include <minimizer/gsl_mins.h>
 #include <crystal/lattice.h>
 #include <crystal/structure.h>
-#include <opt/bpo_macros.h>
 
 #include <revision.h>
 #define __PROGNAME__ "Regulated Figure Search."
 
+#include "drautz_diaz_ortiz.h"
 #include "regularization.h"
 #include "cluster.h"
 
@@ -43,6 +53,7 @@ int main(int argc, char *argv[])
   namespace bl = boost::lambda;
   namespace po = boost::program_options;
   __TRYBEGIN
+  __MPI_START__
 
 
   LaDa::Fitting::LeaveManyOut leavemanyout;
@@ -61,7 +72,7 @@ int main(int argc, char *argv[])
                     "Maximum number of iterations for the minimizer."  )
       ("maxpairs,m", po::value<LaDa::types::t_unsigned>()->default_value(5),
                      "Max distance for pairs (in neighbors)."  )
-      ("minimizer", po::value<std::string>()->default_value("simplex"),
+      ("minimizer", po::value<std::string>()->default_value("gsl_bfgs2"),
                     "Type of Minimizer"  )
       ("iw", po::value<LaDa::types::t_real>()->default_value(0),
              "Initial value of the weights."  )
@@ -194,7 +205,7 @@ int main(int argc, char *argv[])
 
   // Construct regularization.
   LaDa::CE::Regulated reg;
-  reg.cgs.tolerance = tolerance;
+  reg.cgs.tolerance = 1e-5 * tolerance;
   reg.cgs.verbose = verbosity >= innermin;
   reg.cgs.itermax = 40;
   
@@ -288,37 +299,29 @@ int main(int argc, char *argv[])
     reg.init();
     LaDa::opt::NErrorTuple nerror = reg.mean_n_var();
   
-    if( minimizer_type.compare( "simplex" ) == 0 )
+    TiXmlElement fakexml( "Minimizer" );
+    fakexml.SetAttribute( "type", minimizer_type );
+    fakexml.SetDoubleAttribute( "tolerance", tolerance );
+    fakexml.SetAttribute( "itermax", itermax );
+    fakexml.SetAttribute( "linetolerance", tolerance * 1e1 );
+    fakexml.SetAttribute( "linestep", 0.01 );
+    fakexml.SetAttribute( "verbose", "true" );
+    typedef LaDa::Minimizer::Variant
+            < 
+              boost::mpl::vector
+              <
+                LaDa::Minimizer::Frpr, 
+                LaDa::Minimizer::Gsl, 
+                LaDa::Minimizer::Minuit2
+              > 
+            > t_Minimizer;
+    t_Minimizer minimizer;
+    if( not minimizer.Load( fakexml ) )
     {
-      LaDa::Minimizer::Simplex simplex;
-      simplex.tolerance = tolerance;
-      simplex.verbose = verbosity >= outermin;
-      simplex.itermax = itermax;
-      simplex.stepsize = 1;
-      LaDa::CE::drautz_diaz_ortiz( reg, simplex, verbosity, iweights);
-    }
-    else 
-    {
-      LaDa::Minimizer::Gsl gsl;
-      gsl.type =  LaDa::Minimizer::Gsl::SteepestDescent;
-      gsl.tolerance = tolerance;
-      gsl.verbose = verbosity >= outermin;
-      gsl.itermax = itermax;
-      gsl.linestep = 0.01;
-      gsl.linetolerance = tolerance * 1e1;
-      if( minimizer_type.compare("bfgs2") == 0 )
-        gsl.type = LaDa::Minimizer::Gsl::BFGS2;
-      if( minimizer_type.compare("bfgs") == 0 )
-        gsl.type = LaDa::Minimizer::Gsl::BFGS;
-      if( minimizer_type.compare("sd") == 0 )
-        gsl.type = LaDa::Minimizer::Gsl::SteepestDescent;
-      if( minimizer_type.compare("fr") == 0 )
-        gsl.type = LaDa::Minimizer::Gsl::FletcherReeves;
-      if( minimizer_type.compare("pr") == 0 )
-        gsl.type = LaDa::Minimizer::Gsl::PolakRibiere;
-    
-      LaDa::CE::drautz_diaz_ortiz( reg, gsl, verbosity, iweights);
-    }
+       std::cerr << "Could not load minimizer " << minimizer_type << ".\n";
+       return 1;
+    } 
+    LaDa::CE::drautz_diaz_ortiz( reg, minimizer, verbosity, iweights);
   }
   return 0;
   __BPO_CATCH__()
