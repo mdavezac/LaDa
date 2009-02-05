@@ -303,8 +303,8 @@ int main(int argc, char *argv[])
     fakexml.SetAttribute( "type", minimizer_type );
     fakexml.SetDoubleAttribute( "tolerance", tolerance );
     fakexml.SetAttribute( "itermax", itermax );
-    fakexml.SetAttribute( "linetolerance", tolerance * 1e1 );
-    fakexml.SetAttribute( "linestep", 0.01 );
+    fakexml.SetDoubleAttribute( "linetolerance", 0.01 );
+    fakexml.SetDoubleAttribute( "linestep", 0.1 );
     fakexml.SetAttribute( "verbose", "true" );
     typedef LaDa::Minimizer::Variant
             < 

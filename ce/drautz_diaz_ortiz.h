@@ -39,12 +39,23 @@ namespace LaDa
         __DEBUGTRYBEGIN
         namespace bl = boost::lambda;
    
+        types::t_unsigned nb_cls( _reg.clusters.size() );
         std::cout << "Starting Variational figure plot.\n";
    
         Regulated::t_Clusters save_clusters( _reg.clusters );
+        std::ofstream file( "shit" );
+//       for(types::t_real r(_initweights-10); r < _initweights+10; r+=0.5 )
+//       {
+//         Regulated :: t_Arg solution( nb_cls, _initweights );
+//         solution[12] = r;
+//         const types::t_real y( _reg( solution ) );
+//         file  << r << "  " << y << "\n";
+//         std::cout  << r << "  " << y << "\n";
+//       }
+//       file.close();
+//       return;
    
         
-        types::t_unsigned nb_cls( _reg.clusters.size() );
    
         while( _reg.clusters.size() > 2 )
         {
@@ -64,7 +75,7 @@ namespace LaDa
           std::for_each
           ( 
             solution.begin(), solution.end(),
-            bl::_1 =  _initweights //bl::bind( &opt::random::rng ) * range - range * 0.5e0
+            bl::_1 =  bl::bind( &opt::random::rng ) * _initweights - _initweights * 0.5e0
           );
           std::for_each
           ( 
