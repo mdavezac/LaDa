@@ -34,7 +34,7 @@ namespace LaDa
       void drautz_diaz_ortiz( Regulated &_reg, 
                               const LaDa::Minimizer::Variant<T_MPLVECTOR> &_minimizer,
                               types::t_int _verbosity,
-                              types::t_real _initweights )
+                              Regulated::t_Arg::value_type _initweights )
       {
         __DEBUGTRYBEGIN
         namespace bl = boost::lambda;
@@ -74,11 +74,6 @@ namespace LaDa
           const types::t_real range(100);
           std::for_each
           ( 
-            solution.begin(), solution.end(),
-            bl::_1 =  bl::bind( &opt::random::rng ) * _initweights - _initweights * 0.5e0
-          );
-          std::for_each
-          ( 
             ecis.begin(), ecis.end(),
             bl::_1 =  bl::bind( &opt::random::rng ) * range - range * 0.5e0
           );
@@ -91,7 +86,24 @@ namespace LaDa
           // CV with optimized weights
           types::t_real cvw;
           __TRYBEGIN
-           cvw = _minimizer( _reg, solution ); 
+            size_t iter(0);
+            Regulated::t_Arg::value_type wrange( _initweights );
+            do 
+            {
+              std::for_each
+              ( 
+                solution.begin(), solution.end(),
+                bl::_1 =  bl::bind( &opt::random::rng ) * wrange - wrange * 0.5e0
+              );
+              cvw = _minimizer( _reg, solution ); 
+              ++iter;
+              wrange = _initweights / Regulated::t_Arg::value_type( iter );
+            } while( cvw < cvwz and iter < 5 );
+            if( cvw < cvwz )
+            {
+              std::fill( solution.begin(), solution.end(), Regulated :: t_Arg :: value_type(0) );
+              cvw = _minimizer( _reg, solution ); 
+            }
           __TRYEND(," ") 
           std::for_each( solution.begin(), solution.end(), std::cout << bl::_1 << " " );
           std::cout << "\n";
