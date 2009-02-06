@@ -106,14 +106,18 @@ namespace LaDa
               cvw = _minimizer( _reg, solution ); 
             }
           __TRYEND(," ") 
-          std::for_each( solution.begin(), solution.end(), std::cout << bl::_1 << " " );
-          std::cout << "\n";
+
           
           // Fitting Error
           opt::ErrorTuple fitwithreg = _reg.fit( ecis, &solution[0] );
-          std::for_each( ecis.begin(), ecis.end(), std::cout << bl::_1 << " " );
-          std::cout << "\n";
-          
+
+
+          std::pair< opt::ErrorTuple, opt::ErrorTuple > loozero, loow;
+          if( _verbosity >= 1 )
+          {
+            loozero = _reg.loo( &zero_vec[0] );
+            loow = _reg.loo( &solution[0]  );
+          }
           // reduces figures by one.
           _reg.reassign( ecis );
           Cluster cluster( _reg.reduce() );
@@ -124,6 +128,10 @@ namespace LaDa
                     << "  Fitting squared error (no regulation): " << fitnoreg << "\n"
                     << "  Fitting squared error (with regulation): " << fitwithreg << "\n"
                     << "  Dropping " << cluster << "\n\n";
+          if( _verbosity >= 1 )
+            std::cout << " weights == 0 " << loozero.first << " " << loozero.second << "\n"
+                      << " weights != 0 " << loow.first << " " << loow.second << "\n";
+
         }
         __DEBUGTRYEND(, "Error encountered in procedure drautz_ortiz_diaz.\n" )
       }

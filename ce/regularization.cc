@@ -110,5 +110,12 @@ namespace LaDa
       std::copy( _arg.begin(), _arg.end(), arg.begin() );
       return Regulated::fit( arg, _weights );
     }
+    std::pair< opt::ErrorTuple, opt::ErrorTuple > 
+      Regulated :: loo( const types::t_real *_weights ) const
+      {
+        t_Vector x( nb_cls ); 
+        std::fill( x.begin(), x.end(), 0 );
+        return leave_one_out( *static_cast<const t_Base*>(this), cgs, x, _weights, false );
+      }
   } // end of namespace CE
 }

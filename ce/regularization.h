@@ -63,6 +63,8 @@ namespace LaDa
           { return t_Base::operator()( _x, _weights, cgs ); }
         //! Single fit.
         opt::ErrorTuple fit( t_Arg &_x, const types::t_real *_weights ) const;
+        //! Leave-one-out
+        std::pair< opt::ErrorTuple, opt::ErrorTuple > loo( const types::t_real* _weights ) const;
         //! Evaluates the gradient.
         void gradient( const t_Arg& _arg,
                        types::t_real * const _gradient ) const;
