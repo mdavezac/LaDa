@@ -58,6 +58,7 @@ namespace LaDa
             {
               if( not is_on() ) return false;
               if( not (*this)( _indiv ) ) container_->push_back( _indiv ); 
+              return true;
             }
 
             //! Turn history on.

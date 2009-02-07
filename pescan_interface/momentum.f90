@@ -9,6 +9,8 @@ module MomentumDipole
   implicit none
   include 'mpif.h'
 
+  private
+
   type t_Escan ! Could be an extension of escancomp... waiting for fortran 2003
 
     type( escancomp ) :: ecp 
@@ -48,11 +50,12 @@ module MomentumDipole
   ! Lattice cell vectors.
   type( t_Lattice ), public :: lattice 
 
-  private
   ! Pi parameter
   real( kind=8 ), parameter, private :: pi = 3.14159265358979323846264338327948d0
 
   public :: momentum
+  public :: t_Escan
+  public :: t_Lattice
 
   contains
 
