@@ -35,9 +35,12 @@ endif
 if DOCE
   CEDIR = ce
 endif
+if DOCLJ
+  CLJDIR = lennard-jhones
+endif
 SUBDIRS = $(MPISUBDIR) atat physics opt minimizer crystal print $(CEDIR) $(VFFSUBDIR) \
 	  $(PESCANSUBDIR) $(LAPACKDIR) $(DARWINSUBDIR) $(SEPARABLEDIR) \
-	  $(PYTHONDIR) factory
+	  $(PYTHONDIR) factory $(CLJDIR)
 revision.h: force
 	@cd $(top_srcdir); scripts/max_revision.pl
 force: ;

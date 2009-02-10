@@ -7,6 +7,10 @@ ATAT_H  = findsym.h  integer.h  xtalutil.h lambda.impl.h \
           array.h  arraylist.h   fixagg.h  fxvector.h \
 	  linklist.h  machdep.h  misc.h  vectmac.h  
 
+CLJ_CC = fortran.cc 
+CLJ_H = fortran.h wrapper.h
+CLJ_DOC = $(CLJ_H) $(CLJ_CC)
+
 DARWIN_GRAPH_CC = graph/graph.cc
 DARWIN_GRAPH_IMPL_H = graph/breeders.impl.h graph/comm.impl.h graph/evaluation.impl.h \
                       graph/evaluator.impl.h graph/graph.impl.h graph/objective.impl.h

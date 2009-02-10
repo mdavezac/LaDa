@@ -31,6 +31,14 @@ AC_ARG_ENABLE(all,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-all) ;;
      esac],[enall=true])
 
+AC_ARG_ENABLE(clj,
+     [  --enable-clj                  Compiles Coulom + Lennard-Jhones wrappers.],
+     [case "${enableval}" in
+       yes) clj=true ;;
+       no)  clj=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-clj) ;;
+     esac],[clj=false])
+
 AC_ARG_ENABLE(python,
      [  --enable-python               Compiles python bindings.],
      [case "${enableval}" in
@@ -263,6 +271,7 @@ AM_CONDITIONAL(DODIRECTIAGA, test x$direct_iaga = xtrue)
 AM_CONDITIONAL(DOPYTHONPESCAN, test x$python$pescan$direct_iaga = xtruetruetrue)
 AM_CONDITIONAL(DOPYTHON, test x$python = xtrue)
 AM_CONDITIONAL(DOSEPARABLE, test x$separable = xtrue)
+AM_CONDITIONAL(DOCLJ, test x$clj = xtrue)
 
 
 #  eo libs iff galib is enabled 
@@ -349,7 +358,7 @@ AC_OUTPUT(Makefile atat/Makefile physics/Makefile opt/Makefile crystal/Makefile
           vff/Makefile mpi/Makefile pescan_interface/Makefile darwin/Makefile 
           print/Makefile lapack/Makefile separable/Makefile ce/Makefile 
           python/Makefile separable/fixedlattice/Makefile factory/Makefile
-          minimizer/Makefile )
+          minimizer/Makefile lennard-jhones/Makefile )
 
 echo ""; echo ""
 echo "Will Compile following modules: "
@@ -373,6 +382,9 @@ fi
 # fi
 if test "$ceopt" = true; then
   echo " _ Genetic Algorithm for Cluster Expansion"
+fi
+if test "$clj" = true; then
+  echo " _ Coulomb + Lennard-Jhones library"
 fi
 # if test x$emassopt = xtrue; then
 #   echo " _ Genetic Algorithm for Electronic Mass Optimization"

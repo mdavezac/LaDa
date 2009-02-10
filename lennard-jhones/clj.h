@@ -1,8 +1,8 @@
 //
 //  Version: $Id: vff.h 895 2008-12-22 02:04:18Z davezac $
 //
-#ifndef _VFF_FUNCTIONAL_H_
-#define _VFF_FUNCTIONAL_H_
+#ifndef _CLJ_FUNCTIONAL_H_
+#define _CLJ_FUNCTIONAL_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -10,11 +10,13 @@
 
 #include <crystal/atom.h>
 #include <crystal/structure.h>
+#include <opt/types.h>
+#include <opt/debug.h>
 
 
 namespace LaDa
 {
-  //! Wrapper around Xiuwen's Lennard-Jhones+Coulomb functional.
+  //! Lennard-Jhones+Coulomb functionals.
   namespace CLJ
   {
     //! The adapter for Coulomb + Lennard-Jhones fortran functional itself.
@@ -46,26 +48,24 @@ namespace LaDa
         //! Get nb of species.
         size_t get_nbspecies() const  { return species_.size(); }
 
+        //! Initializes fortran module with values of this instance.
+        void init () const;
+
       protected:
-        //! convert to fortran-type input from a structure.
-        void convert_to_fortran( types::t_real *const _cell, types::t_int *const _types, 
-                                 types::t_real *const _positions, const Crystal::Structures& _in );
-        //! convert from fortran-type input to a structure.
-        void convert_to_fortran( const types::t_real *const _cell, 
-                                 const types::t_int *const _types, 
-                                 const types::t_real *const _positions, 
-                                 const types::t_real *const _forces, 
-                                 const types::t_real *const _stresses, 
-                                 const Crystal::Structures& _pos, 
-                                 const Crystal::Structures& _stress );
        
         //! convert from fortran-type input back to a structure.
         //! Contains all atomic species.
         t_Species species_;
         //! Epsilon.
         types::t_real epsilon;
-        //! Epsilon.
-        types::t_real rcut_const0;
+        //! scale for cutoff radius for lennard-jhones potential.
+        types::t_real rcut_lj;
+        //! scale cutoff radius for Ewald sum.
+        types::t_real rcut_ewald;
+        //! Scale of hard-sphere atomic radii.
+        types::t_real radii_scale;
+        //! Percent of r^12 term in lennard-jhones.
+        types::t_real PEGS;
     };
 
     struct Clj :: Specie
@@ -88,7 +88,7 @@ namespace LaDa
       Specie( const Specie& _c ) : mass( _c.mass ), charge( _c.charge ), radius( _c.radius ) {}
     };
 
-  } // namespace vff 
+  } // namespace CLJ.
 } // namespace LaDa
 
 #endif // _VFF_FUNCTIONAL_H_
