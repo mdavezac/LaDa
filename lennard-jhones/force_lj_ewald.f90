@@ -253,9 +253,6 @@ subroutine force_lj_ewald (natom, a, ityp, tau, f, stress, ener )
 
   sigma_ewald =  sigma_ewald * 0.5d0
 
-  ! write(6,'(2(f20.10,3x))') v , vcut                      ! XZ
-  ! write(6,'(3(f10.8,3x))') f
-  ! write(6,'(3(f10.8,3x))') stress
 
   stress_ewald(1,1) =  sigma_ewald(1) 
   stress_ewald(2,2) =  sigma_ewald(2)

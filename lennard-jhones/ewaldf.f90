@@ -26,7 +26,7 @@ subroutine EWALDF(IPR,EEWALD,FEWA,FEWAC,STRESS, &
 !C
 !!C     NOTE: THE SUPERCELL MUST BE NEUTRAL !
 !C
-  
+
   use ep_param    ! XZ
 
   IMPLICIT DOUBLE PRECISION (A-H,O-Z)
@@ -49,6 +49,7 @@ subroutine EWALDF(IPR,EEWALD,FEWA,FEWAC,STRESS, &
 !  DIMENSION FSUMR(3,MXDNAT),FSUMG(9,MXDNAT)
 
   REAL(kind=dbl) :: FSUMR(3,MXDNAT),FSUMG(9,MXDNAT)
+  real(kind=dbl), external :: boost_erfc
 
  
 !C     COMPUTE VARIOUS PARAMETERS
@@ -244,7 +245,7 @@ subroutine EWALDF(IPR,EEWALD,FEWA,FEWAC,STRESS, &
            RMOD = SQRT(RMOD)
            ARG = SEPS*RMOD
            IF (ARG .LT. 25.0) THEN
-             EXP1 = ERFC(ARG) / RMOD
+             EXP1 = boost_erfc(ARG) / RMOD
              EXP2 = (EXP1 + SEPI*EXP(-ARG*ARG))/(RMOD*RMOD)
              ESUM0 = ESUM0 + EXP1
              SSUM0(1) = SSUM0(1) + EXP2 * REAL(IR(1)*IR(1))
@@ -315,7 +316,7 @@ subroutine EWALDF(IPR,EEWALD,FEWA,FEWAC,STRESS, &
                RMOD = SQRT(RMOD)
                ARG = SEPS*RMOD
                IF (ARG .LT. 25.0) THEN
-                 EXP1 = ERFC(ARG) / RMOD
+                 EXP1 = boost_erfc(ARG) / RMOD
                  EXP2 = (EXP1 + SEPI*EXP(-ARG*ARG))/(RMOD*RMOD)
                  ESUB = ESUB + EXP1
                  FSUB(1) = FSUB(1) + RP(1) * EXP2

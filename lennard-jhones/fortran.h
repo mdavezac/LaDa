@@ -135,5 +135,6 @@ extern "C" void FC_FUNC_(call_relaxer, CALL_RELAXER)
              double* const,    // stresses
              double*           // energy
            );
+extern "C" double FC_FUNC_(boost_erfc, BOOST_ERFC)( const double *const );
 #endif // _VFF_FUNCTIONAL_H_
 

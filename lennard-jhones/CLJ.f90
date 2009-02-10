@@ -46,8 +46,8 @@ program CLJ
   read(35,*) nspec_tot                             !  number of atomic species
 
   allocate( id(nspec_tot), rad_ion(nspec_tot), charge_ion(nspec_tot), &
-			mspecx(nspec_tot), ibond(2,nspec_tot*nspec_tot), &
-			epslon(nspec_tot*nspec_tot), rsigma(nspec_tot*nspec_tot) )
+            mspecx(nspec_tot), ibond(2,nspec_tot*nspec_tot), &
+            epslon(nspec_tot*nspec_tot), rsigma(nspec_tot*nspec_tot) )
 
   do i = 1, nspec_tot
      read(35,*) id(i), rad_ion(i), charge_ion(i)   !  id, rad_ion, charge_ion
@@ -92,9 +92,9 @@ program CLJ
   k = 0
   do i = 1, nspec_tot
      do j = 1, mspecx(i)
-	    k = k + 1
-	    ityp(k) = id(i)
-	 end do
+        k = k + 1
+        ityp(k) = id(i)
+     end do
   end do
 
 
@@ -107,7 +107,7 @@ program CLJ
   call call_relaxer ( relaxer_handle, natom, axis, ityp, tau, f, stress, ener )
 
 
-! call release_relaxer( relaxer_handle )
+  call release_relaxer( relaxer_handle )
 
   
   ! output

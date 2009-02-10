@@ -19,6 +19,7 @@
 #include <boost/spirit/include/classic_operators.hpp>
 #include <boost/bind.hpp>
 #include <boost/type_traits/remove_pointer.hpp>
+#include <boost/math/special_functions/erf.hpp>
 
 #include "fortran.h"
 #include "c2f_handles.h"
@@ -102,7 +103,6 @@ namespace LaDa
       fakexml.SetDoubleAttribute( "linestep", linestep );
       fakexml.SetAttribute( "strategy", strategy );
       fakexml.SetAttribute( "verbose", verbose ? "true": "false" );
-      std::cout << fakexml << "\n";
       __DOASSERT( not minimizer_.Load( fakexml ), 
                   "Could not create minimizer.\n" << fakexml << "\n" )
 
@@ -176,3 +176,5 @@ extern "C" void FC_FUNC_(call_relaxer, CALL_RELAXER)
   LaDa::CLJ::Relaxer& relaxer( handles[ *_handle ] ); 
   *_energy = relaxer( *_natoms, _occupations, _cell, _positions, _stress, _forces );
 }
+extern "C" double FC_FUNC_(boost_erfc, BOOST_ERFC)( const double *const _in )
+  { return boost::math::erfc( *_in ); }

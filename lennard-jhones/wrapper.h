@@ -118,7 +118,8 @@ namespace LaDa
           cgs.verbose = false;
           cgs.tolerance = 1e-12;
           Minimizer::interpolated_gradient( *this, _arg, cgs, _grads );
-          return operator()( _arg );
+          const typename t_Arg :: value_type result = operator()( _arg );
+          return result;
 
 //         const t_Return *const i_cell = &_arg[0];
 //         const t_Return *const i_pos = i_cell + 9;
