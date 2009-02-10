@@ -5,14 +5,17 @@
 #include <config.h>
 #endif
 
-#include<boost/filesystem/path.hpp>
-#include<boost/filesystem/operations.hpp>
-#include<boost/mpi/collectives.hpp>
-#include<boost/bind.hpp>
-#include<boost/ref.hpp>
 #include<iterator>
 #include<fstream>
 #include<sstream>
+
+#include<boost/filesystem/path.hpp>
+#include<boost/filesystem/operations.hpp>
+#include<boost/bind.hpp>
+#include<boost/ref.hpp>
+#ifdef _MPI
+# include<boost/mpi/collectives.hpp>
+#endif
 
 #include <mpi/macros.h>
 #include <mpi/mpi_object.h>
