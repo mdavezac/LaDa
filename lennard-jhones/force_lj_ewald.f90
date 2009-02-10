@@ -7,13 +7,27 @@ subroutine force_lj_ewald (natom, a, ityp, tau, f, stress, ener )
   !  Original LJ subroutine from Allen-Tildsley's book on
   !  Physics of Liquids
   
-  INTEGER :: natom, iind, ij_typ    ! XZ
+  ! Subroutine arguments.
+  ! Number of atoms.
+  INTEGER, intent(in) :: natom
+  ! Cell parameters.
+  REAL(kind=dbl), intent(in) :: a(3,3)
+  ! Occupation of each atomic site.
+  integer, intent(in) :: ityp(natom)
+  ! Fractional Coordinates of each atomic site.
+  REAL(kind=dbl), intent(in) :: tau(3,natom)
+  ! Forces on each atom.
+  REAL(kind=dbl), intent(out) :: f(3,natom)
+  ! Stress.
+  REAL(kind=dbl), intent(out) :: stress(3,3)
+  ! Energy
+  real(kind=dbl), intent(out) :: ener
   
+
+  ! local variables.
   REAL(kind=dbl) :: V, W 
-  REAL(kind=dbl) :: sij(3), rij(3), a(3,3), axis_ewald(3,3)
-  REAL(kind=dbl) :: tau(3,natom), f(3,natom)
+  REAL(kind=dbl) :: sij(3), rij(3), axis_ewald(3,3)
   
-  integer        :: ityp(natom)
   INTEGER        :: i,j, ii, jj, ispec, jspec
   INTEGER        :: icell1, icell2, icell3
   integer        :: ncell1, ncell2, ncell3
@@ -26,12 +40,10 @@ subroutine force_lj_ewald (natom, a, ityp, tau, f, stress, ener )
   REAL(kind=dbl) :: SR2, SR6, SR12, V_LJ_IJ, vij, WIJ, FIJ, v_elec_ij
   real(kind=dbl) :: q_i, q_j, f_lj_ij, f_elec_ij, rsq_ij_inv
   
-  real(kind=dbl) :: ener
   real(kind=dbl) :: alpha,alpha_inv, alpha_cube
   
   ! variables used to calculate the stress tensor
   
-  REAL(kind=dbl) :: stress(3,3)
   REAL(kind=dbl) :: temp00,temp01,temp02
   REAL(kind=dbl) :: temp10,temp11,temp12
   REAL(kind=dbl) :: temp20,temp21,temp22
@@ -46,6 +58,7 @@ subroutine force_lj_ewald (natom, a, ityp, tau, f, stress, ener )
 
   REAL(kind=dbl) :: V_coul_IJ
   REAL(kind=dbl) :: rcut_const, rcut_sigma, vcut, AUE    ! XZ
+  INTEGER :: iind, ij_typ    ! XZ
 
   AUE = 27.211396d0            ! XZ
   rcut_const = rcut_const0     ! XZ

@@ -16,6 +16,8 @@
 #include <crystal/structure.h>
 #include <opt/types.h>
 #include <opt/debug.h>
+#include <minimizer/cgs.h>
+#include <minimizer/interpolated_gradient.h>
 
 
 namespace LaDa
@@ -103,25 +105,37 @@ namespace LaDa
       typename Wrapper<T_POLICY>::t_Return Wrapper<T_POLICY> :: operator()( const t_Arg& _arg ) const
       {
         std::vector< t_Return > grads( _arg.size(), 0 );
-        return gradient( _arg, &grads[0] );
+        const t_Return *const i_cell = &_arg[0];
+        const t_Return *const i_pos = i_cell + 9;
+        t_Return *const i_force = &grads[0] + 9;
+        return t_Policy :: operator()( i_cell, i_pos, &grads[0], i_force );
       }
     template< class T_POLICY >
       typename Wrapper<T_POLICY> :: t_Return 
         Wrapper<T_POLICY> :: gradient( const t_Arg& _arg, t_Return *const _grads ) const
         {
-          const t_Return *const i_cell = &_arg[0];
-          const t_Return *const i_pos = i_cell + 9;
-          t_Return *const i_force = _grads + 9;
-          t_Policy :: operator()( i_cell, i_pos, _grads, i_force );
+          Fitting::Cgs cgs;
+          cgs.verbose = false;
+          cgs.tolerance = 1e-12;
+          Minimizer::interpolated_gradient( *this, _arg, cgs, _grads );
+          return operator()( _arg );
+
+//         const t_Return *const i_cell = &_arg[0];
+//         const t_Return *const i_pos = i_cell + 9;
+//         t_Return *const i_force = _grads + 9;
+//         return t_Policy :: operator()( i_cell, i_pos, _grads, i_force );
         }
 
     template< class T_POLICY >
-      void Wrapper<T_POLICY> :: create_arguments( t_Arg& _arg,
-                                                  const size_t _Natoms,
-                                                  const typename t_Arg::value_type *const _cell,
-                                                  const typename t_Arg::value_type *const _positions ) const
+      void Wrapper<T_POLICY> :: create_arguments
+      (
+        t_Arg& _arg,
+        const size_t _Natoms,
+        const typename t_Arg::value_type *const _cell,
+        const typename t_Arg::value_type *const _positions 
+      ) const
       {
-        _arg.resize( _Natoms );
+        _arg.resize( 9 + _Natoms * 3 );
         std::copy( _cell, _cell + 9, _arg.begin() );
         std::copy( _positions, _positions + _Natoms * 3, _arg.begin() + 9 );
       }

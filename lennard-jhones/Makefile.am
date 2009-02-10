@@ -6,7 +6,7 @@ include $(top_srcdir)/Files
 #   pythonlib = libcrystalpy.la
 # endif
 AM_CPPFLAGS = @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
-	      @BOOST_CXXFLAGS@ -I $(top_srcdir) @GSL_CFLAGS@ @MINUIT_CFLAGS@
+      	@BOOST_CXXFLAGS@ -I $(top_srcdir) @GSL_CFLAGS@ @MINUIT_CFLAGS@
 AM_LDFLAGS = @BOOST_FS@ @BOOST_SYSTEM@ @GSL_LIBS@ @TINYXML_LIBS@ @FCLIBS@ @MINUIT_LIBS@
 
 lib_LTLIBRARIES = librelaxer.la
@@ -15,11 +15,11 @@ librelaxer_ladir = $(includedir)/LaDa/lennard-jhones
 librelaxer_la_HEADERS = $(CLJ_H) 
 librelaxer_la_CPPFLAGS = $(AM_CPPFLAGS) 
 librelaxer_la_LIBADD = ../crystal/libcrystal.la \
-		       ../atat/libatat.la \
-		       ../minimizer/libminimizer.la \
-		       ../opt/libopt.la \
-		       ../print/libprint.la \
-		       ../physics/libphysics.la
+      		 ../atat/libatat.la \
+      		 ../minimizer/libminimizer.la \
+      		 ../opt/libopt.la \
+      		 ../print/libprint.la \
+      		 ../physics/libphysics.la
 
 bin_PROGRAMS = clj
 clj_SOURCES =  ep_com.f90 CLJ.f90 ewaldf.f90  force_lj_ewald.f90

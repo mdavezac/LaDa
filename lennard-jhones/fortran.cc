@@ -34,62 +34,64 @@ namespace LaDa
       namespace fs = boost::filesystem;
       namespace bsc = boost::spirit::classic;
 
-      const std::string file;
 
-      const std::string name = "gsl_bfgs2";
+      std::string name = "gsl_bfgs2";
       types::t_real tolerance(1e-6);
       types::t_real linetolerance(1e-2);
       types::t_real linestep(1e-1);
       size_t itermax(50);
       bool verbose(false);
-      const std::string strategy("fast");
+      std::string strategy("fast");
 
       std::ifstream ldas( _filename.c_str(), std::ifstream::in );
       std::string line;
       while( std::getline( ldas, line ) )
       {
-       //bsc::parse
-       //(
-       //  line.c_str(),
-       //  bsc::str_p("type:") >> !(*bsc::space_p) >> *bsc::alpha_p[ bsc::assign_a( name ) ]
-       //);
-       //bsc::parse
-       //(
-       //  line.c_str(),
-       //  bsc::str_p("tolerance:") - bsc::str_p("line tolerance")
-       //    >> !(*bsc::space_p) >> *bsc::real_p[ bsc::assign_a( tolerance ) ]
-       //);
-       //bsc::parse
-       //(
-       //  line.c_str(),
-       //  bsc::str_p("line tolerance:")
-       //    >> !(*bsc::space_p) >> *bsc::alpha_p[ bsc::assign_a( linetolerance ) ]
-       //);
-       //bsc::parse
-       //(
-       //  line.c_str(),
-       //  bsc::str_p("line step:")
-       //    >> !(*bsc::space_p) >> *bsc::alpha_p[ bsc::assign_a( linestep ) ]
-       //);
-       //bsc::parse
-       //(
-       //  line.c_str(),
-       //  bsc::str_p("itermax:")
-       //    >> !(*bsc::space_p) >> *bsc::alpha_p[ bsc::assign_a( itermax ) ]
-       //);
-       //if
-       //(
-       //  bsc::parse
-       //  (
-       //    line.c_str(),
-       //    bsc::str_p("verbose")
-       //  ).hit
-       //) verbose = true;
-       //bsc::parse
-       //(
-       //  line.c_str(),
-       //  "strategy:" >> *bsc::space_p >> *bsc::alpha_p[ bsc::assign_a( strategy ) ]
-       //);
+        if( line.find( "#" ) != std::string::npos )
+          line = line.substr( 0, line.find( "#" ) );
+        bsc::parse
+        (
+          line.c_str(),
+          bsc::str_p("type:") >> !(*bsc::space_p)
+                              >> (*(bsc::alnum_p | bsc::str_p('_')))[ bsc::assign_a( name ) ]
+        );
+        bsc::parse
+        (
+          line.c_str(),
+          bsc::str_p("tolerance:") - bsc::str_p("line tolerance")
+            >> !(*bsc::space_p) >> bsc::real_p[ bsc::assign_a( tolerance ) ]
+        );
+        bsc::parse
+        (
+          line.c_str(),
+          bsc::str_p("line tolerance:")
+            >> !(*bsc::space_p) >> bsc::real_p[ bsc::assign_a( linetolerance ) ]
+        );
+        bsc::parse
+        (
+          line.c_str(),
+          bsc::str_p("line step:")
+            >> !(*bsc::space_p) >> bsc::real_p[ bsc::assign_a( linestep ) ]
+        );
+        bsc::parse
+        (
+          line.c_str(),
+          bsc::str_p("itermax:")
+            >> !(*bsc::space_p) >> bsc::real_p[ bsc::assign_a( itermax ) ]
+        );
+        if
+        (
+          bsc::parse
+          (
+            line.c_str(),
+            bsc::str_p("verbose")
+          ).hit
+        ) verbose = true;
+        bsc::parse
+        (
+          line.c_str(),
+          "strategy:" >> !(*bsc::space_p) >> (*bsc::alpha_p)[ bsc::assign_a( strategy ) ]
+        );
       }
 
       TiXmlElement fakexml( "Minimizer" );
@@ -100,7 +102,9 @@ namespace LaDa
       fakexml.SetDoubleAttribute( "linestep", linestep );
       fakexml.SetAttribute( "strategy", strategy );
       fakexml.SetAttribute( "verbose", verbose ? "true": "false" );
-      __DOASSERT( not minimizer_.Load( fakexml ), "Could not create minimizer.\n" )
+      std::cout << fakexml << "\n";
+      __DOASSERT( not minimizer_.Load( fakexml ), 
+                  "Could not create minimizer.\n" << fakexml << "\n" )
 
       __TRYEND(,"Error while parsing " << _filename << "\n" )
     }
