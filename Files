@@ -7,9 +7,9 @@ ATAT_H  = findsym.h  integer.h  xtalutil.h lambda.impl.h \
           array.h  arraylist.h   fixagg.h  fxvector.h \
 	  linklist.h  machdep.h  misc.h  vectmac.h  
 
-CLJ_CC = fortran.cc 
-CLJ_H = fortran.h wrapper.h
-CLJ_DOC = $(CLJ_H) $(CLJ_CC)
+MODELS_CLJ_CC = fortran.cc 
+MODELS_CLJ_H = fortran.h wrapper.h
+MODELS_CLJ_DOC = $(MODELS_CLJ_H) $(MODELS_CLJ_CC)
 
 DARWIN_GRAPH_CC = graph/graph.cc
 DARWIN_GRAPH_IMPL_H = graph/breeders.impl.h graph/comm.impl.h graph/evaluation.impl.h \
@@ -239,6 +239,7 @@ ALL_DOCS = $(top_srcdir)/doxy.conf $(top_srcdir)/$(DOCS_H) \
            $(addprefix $(top_srcdir)/lapack/,$(LAPACK_DOC)) \
            $(addprefix $(top_srcdir)/mpi/,$(MPI_DOC)) \
            $(addprefix $(top_srcdir)/opt/,$(OPT_DOC)) \
+           $(addprefix $(top_srcdir)/models/,$(MODELS_CLJ_DOC)) \
            $(addprefix $(top_srcdir)/pescan_interface/,$(EMASS_DOC)) \
            $(addprefix $(top_srcdir)/pescan_interface/,$(PESCAN_DOC)) \
            $(addprefix $(top_srcdir)/physics/,$(PHYSICS_DOC)) \
