@@ -8,6 +8,8 @@
 #include <config.h>
 #endif
 
+#include <map>
+
 #include <crystal/atom.h>
 #include <crystal/structure.h>
 #include <opt/types.h>
@@ -24,9 +26,15 @@ namespace LaDa
     {
       //! A structure holding the specie types.
       struct Specie;
+      //! Type of the key used in the map.
+      typedef std::string Key;
       //! Type of the container of atomic species.
-      typedef std::vector< Specie > t_Species;
+      typedef std::map< Key, Specie > t_Species;
       public:
+        //! Argument type.
+        typedef Crystal :: TStructure< std::string > t_Arg;
+        //! Return type.
+        typedef types::t_real t_Return;
         //! Constructor and Initializer
         Clj() {}
         //! Copy Constructor
@@ -35,10 +43,10 @@ namespace LaDa
         Clj() {}
 
         //! computes energy and stress and forces.
-        types::t_real energy(const Structure& _in, const Structure& _stress) const;
+        t_Return energy(const t_Arg& _in, t_Arg& _out) const;
 
         //! Add a specie.
-        void add_specie( Specie::t_Mass _mass, Specie::t_Charge _charge, Specie::t_Radius _radius );
+        void add_specie( Specie::t_Type _type, Specie::t_Charge _charge, Specie::t_Radius _radius );
         //! Get a specie.
         const Specie& get_specie( size_t n ) const 
           { __ASSERT( n >= species_.size(), "index out-of-range." ) return species_[_n]; }
@@ -52,8 +60,9 @@ namespace LaDa
         void init () const;
 
       protected:
+        //! Computes Lennard-Jhones term only.
+        t_Return lennard_jhones( const t_Arg& _in, t_Arg &_out );
        
-        //! convert from fortran-type input back to a structure.
         //! Contains all atomic species.
         t_Species species_;
         //! Epsilon.
@@ -71,21 +80,21 @@ namespace LaDa
     struct Clj :: Specie
     {
       //! Type of the atomic mass.
-      typedef size_t t_Mass;
+      typedef std::string t_Type;
       //! Type of the atomic charge.
       typedef types::t_int t_Charge;
       //! Type of the atomic radius.
       typedef types::t_real t_Radius;
       //! Atomic Mass.
-      t_Mass mass;
+      t_Type type;
       //! Atomic Charge.
       t_Charge charge;
       //! Atomic radius.
       t_Radius radius;
       //! Constructor.
-      Specie( t_Mass _m, t_Charge _c, t_Radius _r ) : mass( _m ), charge( _c ), radius( _r ) {}
+      Specie( t_Type _t, t_Charge _c, t_Radius _r ) : type( _t ), charge( _c ), radius( _r ) {}
       //! Copy Constructor.
-      Specie( const Specie& _c ) : mass( _c.mass ), charge( _c.charge ), radius( _c.radius ) {}
+      Specie( const Specie& _t ) : type( _c.type ), charge( _c.charge ), radius( _c.radius ) {}
     };
 
   } // namespace CLJ.
