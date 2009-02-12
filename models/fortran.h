@@ -112,7 +112,7 @@ namespace LaDa
         t_Functional functional_;
     };
 
-  } // namespace CLJ.
+  } // namespace Models.
 } // namespace LaDa
 
 
@@ -121,7 +121,7 @@ extern "C" void FC_FUNC_(create_relaxer, CREATE_RELAXER)
              int* _handle,
              const int* _fsize,
              const char* _filename,
-             LaDa :: CLJ :: Relaxer :: t_Functional
+             LaDa :: Models :: Relaxer :: t_Functional
            );
 extern "C" void FC_FUNC_(release_relaxer, RELEASE_RELAXER)( int* const _handle );
 extern "C" void FC_FUNC_(call_relaxer, CALL_RELAXER)

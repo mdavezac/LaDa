@@ -126,7 +126,7 @@ namespace LaDa
        return wrapper_.results( args, _cell, _positions, _stress, _forces );
     }
 
-  } // namespace CLJ.
+  } // namespace Models.
 } // namespace LaDa
 
 extern "C" void FC_FUNC_(create_relaxer, CREATE_RELAXER)
@@ -134,7 +134,7 @@ extern "C" void FC_FUNC_(create_relaxer, CREATE_RELAXER)
              int* _handle,
              const int* _fsize,
              const char* _filename,
-             LaDa :: CLJ :: Relaxer :: t_Functional _function
+             LaDa :: Models :: Relaxer :: t_Functional _function
            )
 {
   __TRYBEGIN
@@ -142,10 +142,10 @@ extern "C" void FC_FUNC_(create_relaxer, CREATE_RELAXER)
     std::string in;
     std::copy( _filename, _filename + *_fsize, std::back_inserter( in ) );
 
-    LaDa::CLJ::Relaxer relaxer;
+    LaDa::Models::Relaxer relaxer;
     relaxer.read_info( in );
     relaxer.init( _function );
-    LaDa::C2FHandles< LaDa::CLJ::Relaxer > handles;
+    LaDa::C2FHandles< LaDa::Models::Relaxer > handles;
     *_handle = handles.push_back( relaxer );
   __TRYEND(, "Could not create relaxer." )
 }
@@ -154,7 +154,7 @@ extern "C" void FC_FUNC_(release_relaxer, RELEASE_RELAXER)( int* const _handle )
 {
   __TRYBEGIN
     __DOASSERT( *_handle < 0, "Handle cannot be negative.\n" )
-    LaDa::C2FHandles< LaDa::CLJ::Relaxer > handles;
+    LaDa::C2FHandles< LaDa::Models::Relaxer > handles;
     handles.erase( *_handle );
   __TRYEND(, "Could not delete relaxer." )
 }
@@ -172,8 +172,8 @@ extern "C" void FC_FUNC_(call_relaxer, CALL_RELAXER)
            )
 {
   __DOASSERT( *_handle < 0, "Handle cannot be negative.\n" )
-  LaDa::C2FHandles< LaDa::CLJ::Relaxer > handles;
-  LaDa::CLJ::Relaxer& relaxer( handles[ *_handle ] ); 
+  LaDa::C2FHandles< LaDa::Models::Relaxer > handles;
+  LaDa::Models::Relaxer& relaxer( handles[ *_handle ] ); 
   *_energy = relaxer( *_natoms, _occupations, _cell, _positions, _stress, _forces );
 }
 extern "C" double FC_FUNC_(boost_erfc, BOOST_ERFC)( const double *const _in )
