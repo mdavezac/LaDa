@@ -12,7 +12,7 @@ def nbstates( _escan, _structure, _addstates ):
   import LaDa
   _escan.parameters.nbstates = _addstates
   if _escan.parameters.method == LaDa.full_diagonalization: 
-    _escan.parameters.nbstates = LaDa.nb_valence_states( _structure )
+    _escan.parameters.nbstates += LaDa.nb_valence_states( _structure )
   if    _escan.parameters.potential != LaDa.spinorbit \
      or LaDa.norm2( _escan.parameters.kpoint ) < 1e-6:
     _escan.parameters.nbstates /= 2
@@ -54,7 +54,7 @@ def print_bands( _escan, _structure, _ocell, _first, _last,\
              for u in range(_nbpoints+1) ]
   for k in points:
     _escan.parameters.kpoint = compute_distorted_kpoint( _ocell, _structure.cell, k )
-    nbstates( _escan, _structure, 6 )
+    nbstates( _escan, _structure, 10 )
     _escan.run()
     result = [ float(_sign) * vecnorm( k ) + _offset ]
 
@@ -164,7 +164,8 @@ def main():
   # Loads all parameters from file.
   lattice = LaDa.Lattice()
   lattice.fromXML( XMLfilename )
-  vff = LaDa.LayeredVff()
+# vff = LaDa.LayeredVff()
+  vff = LaDa.Vff()
   vff.structure.fromXML( XMLfilename )
   structure =  LaDa.Structure( vff.structure )
   vff.fromXML( XMLfilename )

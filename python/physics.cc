@@ -28,6 +28,9 @@ namespace LaDa
       types::t_unsigned (*ptr_charge) (const std::string &) = &Physics::Atomic::Charge;
       def("Charge", ptr_charge);
       def("Mass", Physics::Atomic::Mass);
+      def("a0", Physics::a0);
+      def("Hartree", Physics::Hartree);
+      def("Rydberg", Physics::Rydberg);
     }
 
   }

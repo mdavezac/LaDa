@@ -116,7 +116,7 @@ def interpolate_bands( _filename, _order = 2 ):
                 for r in results[:steps-1] ]
     matrixA.extend( [ [ pow( sqrt( LaDa.norm2( r[0] ) ), i ) for i in range(0, _order+1)  ]
                       for r in results[steps-1:] ] )
-    vectorB = [ r[band] for r in results ]
+    vectorB = [ r[band] / LaDa.Hartree("eV") for r in results ]
     vectorX = [ 0 for r in range(0, _order+1) ]
     ( x, resid, iter ) = LaDa.linear_lsq( A=matrixA, x=vectorX, b=vectorB, \
                                           verbosity=0, tolerance = 1e-18, itermax = 10000 )

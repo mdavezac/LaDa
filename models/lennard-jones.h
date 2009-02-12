@@ -45,40 +45,36 @@ namespace LaDa
 
       protected:
         //! A structure holding the specie types.
-        struct Specie;
+        struct Bond;
         //! Type of the key used in the map.
         typedef std::string Key;
         //! Type of the container of atomic species.
-        typedef std::map< Key, Specie > t_Species;
+        typedef std::map< Key, Bond > t_Bonds;
 
         //! Contains all atomic species.
-        t_Species species_;
-        //! Bond strength.
-        types::t_real bond_strength_;
+        t_Bonds species_;
         //! Cutoff mesh.
         atat::rVector3d mesh_;
         //! Real space cutoff.
         types::t_real rcut_;
     };
 
-    struct LennardJones :: Specie
+    struct LennardJones :: Bond
     {
       //! Type of the atomic mass.
       typedef std::string t_Type;
-      //! Type of the atomic charge.
-      typedef types::t_int t_Charge;
-      //! Type of the atomic radius.
-      typedef types::t_real t_Radius;
       //! Atomic Mass.
       t_Type type;
-      //! Atomic Charge.
-      t_Charge charge;
-      //! Atomic radius.
-      t_Radius radius;
+      //! Hard sphere parameter.
+      types::t_real hard_sphere;
+      //! van der Walls parameter.
+      types::t_real vand_der_walls;
       //! Constructor.
-      Specie( t_Type _t, t_Charge _c, t_Radius _r ) : type( _t ), charge( _c ), radius( _r ) {}
+      Bond   ( const t_Type &_t, const types::t_real &_hs, const types::t_real &_vdw )
+             : type( _t ), hard_sphere( _r ), van_der_walls( _vdw ) {}
       //! Copy Constructor.
-      Specie( const Specie& _t ) : type( _c.type ), charge( _c.charge ), radius( _c.radius ) {}
+      Bond   ( const Bond& _t )
+             : type( _c.type ), hard_sphere( _c.hard_sphere ), van_der_walls( _c.van_der_walls ) {}
     };
 
   } // namespace CLJ.

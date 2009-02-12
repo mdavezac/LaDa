@@ -35,7 +35,7 @@ endif
 if DOCE
   CEDIR = ce
 endif
-if DOCLJ
+if DOMODELS
   MODELSDIR = models
 endif
 SUBDIRS = $(MPISUBDIR) atat physics opt minimizer crystal print $(CEDIR) $(VFFSUBDIR) \

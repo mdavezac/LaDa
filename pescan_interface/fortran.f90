@@ -66,7 +66,7 @@ subroutine iaga_get_eigenvalues( states_, n_ )
   if( .not. allocated( zebn ) ) stop "Storage for eigenergies was never allocated."
 
   do i = 1, n_, 1
-    states_(i) = zebn(i)*27.211396d0 ! goes to eV
+    states_(i) = zebn(i)*27.211396d0 ! goes to eV from Hartree units.
   enddo
 
   deallocate( zebn )

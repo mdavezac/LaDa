@@ -23,20 +23,13 @@ namespace LaDa
       t_Arg :: t_Atoms :: iterator i_force1 = _out.atoms.begin();
       for( t_cit i_atom1( i_atom_begin ); i_atom1 != i_atom_end; ++i_atom1, ++i_force1 )
       {
-        __DOASSERT( species_.end() != species_.find( i_atom1->type ),
-                    "Specie " + i_atom1->type + " does not exist.\n" )
-
-        const Specie &specie1( species_[ i_atom1->type ] );
-
         t_Arg :: t_Atoms :: iterator i_force2 = i_force1 + 1;
         for( t_cit i_atom2( i_atom1 + 1 ); i_atom2 != i_atom_end; ++i_atom2, ++i_force2 )
         {
-          __DOASSERT( species_.end() != species_.find( i_atom2->type ),
-                      "Specie " + i_atom2->type + " does not exist.\n" )
-          const Specie &specie2( species_[ i_atom2->type ] );
-          const Specie::t_Radius sigma( specie1.radius + specie2.radius );
-          const Specie :: t_Radius sigma_squared( sigma * sigma );
-          const Specie :: t_Radius rcut_squared( rcut_ * rcut_ * sigma_squared );
+          __DOASSERT( species_.end() != species_.find( i_atom1->type + i_atom2->type ),
+                      "Bond " + i_atom1->type + "-" + i_atom2->type + " does not exist.\n" )
+          const Bond &bond( species_[ i_atom2->type ] );
+          const types::t_real rcut_squared( rcut_ * rcut_ );
 
           const atat::rVector3d dfractional
                                 ( 
@@ -49,29 +42,31 @@ namespace LaDa
               for( size_t k(-mesh_[2]); k < mesh_[2]; ++k )
               {
                 // computes distance.
-                const atat::rVector3d distance( _in.cell * ( dfractional + atat::rVector3d(i,j,k) ) );
+                const atat::rVector3d distance
+                (
+                  _in.cell * ( dfractional + atat::rVector3d(i,j,k) ) 
+                );
                 const types::t_real normd( atat::norm2(d) );
                 if( normd > rcut_squared ) continue;
 
                 // energy -= 4.0 * scale * lj_pot( sigma_squared / rcut_squared )
-                { // compute correction energy
-                  const types::t_real sqared( sigma_squared / rcut_squared )
-                  const types::t_real sixth( squared * squared *squared )
-                  const types::t_real twelveth( squared * squared *squared )
-                  energy -= 4.e0 * bond_strength_ * ( twelveth - sixth );
+                { // compute cutoff correction energy
+                  const types::t_real sqared( 1e0 / rcut_squared )
+                  const types::t_real sixth( squared * squared * squared )
+                  const types::t_real twelveth( sixth * sixth );
+                  energy -=  bond.hard_sphere * twelveth - bond.vand_der_walls * sixth;
                 }
 
-                // energy += 4.0 * scale * lj_pot( sigma_squared / rcut_squared )
-                // force += 24.0 * scale * ( 2*u^14 - u^8 ) * d
-                // stress += force_alpha distance_beta
-                { // compute correction energy
-                  const types::t_real inv_normd( 1e0 / normd )
-                  const types::t_real sqared( sigma_squared * inv_normd )
-                  const types::t_real sixth( squared * squared *squared )
-                  const types::t_real twelveth( squared * squared *squared )
-                  energy -= 4.e0 * bond_strength_ * ( twelveth - sixth );
+                { // van_der_walls energy, force, stress.
+                  const types::t_real squared( 1e0 / normd )
+                  const types::t_real sixth( squared * squared * squared )
+                  const types::t_real twelveth( sixth * sixth )
+                  energy -= bond.hard_sphere * twelveth - bond.van_der_walls * sixth;
 
-                  const types::t_real ffactor( 24.e0 * scale * ( 2.e0 * twelveth - sixth ) * inv_normd );
+                  const types::t_real ffactor
+                  ( 
+                    squared * ( 2.e0 * bond.hard_sphere * twelveth - bond.van_der_walls * sixth )
+                  );
                   const atat::rVector3d force( ffactor * distance );
                   i_force1->pos -= force;
                   i_force2->pos += force;
