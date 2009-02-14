@@ -10,6 +10,10 @@
 
 #include <map>
 
+#include <boost/tuple/tuple.hpp>
+
+#include <tinyxml/tinyxml.h>
+
 #include <crystal/atom.h>
 #include <crystal/structure.h>
 #include <opt/types.h>
@@ -43,6 +47,9 @@ namespace LaDa
         //! \param[inout] _out stress and forces. Both are \e added to existing stress and forces.
         t_Return energy(const t_Arg& _in, t_Arg& _out) const;
 
+        //! Loads parameters from XML.
+        bool Load( const TiXmlElement& _node );
+
       protected:
         //! A structure holding the specie types.
         struct Bond;
@@ -53,8 +60,10 @@ namespace LaDa
 
         //! Contains all atomic species.
         t_Bonds species_;
+        //! Cutoff mesh type.
+        typedef boost::tuple<types::t_int, types::t_int, types::t_int > t_MeshTuple;
         //! Cutoff mesh.
-        atat::rVector3d mesh_;
+        t_MeshTuple mesh_;
         //! Real space cutoff.
         types::t_real rcut_;
     };
@@ -68,13 +77,17 @@ namespace LaDa
       //! Hard sphere parameter.
       types::t_real hard_sphere;
       //! van der Walls parameter.
-      types::t_real vand_der_walls;
+      types::t_real van_der_walls;
+      //! Constructor.
+      Bond() {};
       //! Constructor.
       Bond   ( const t_Type &_t, const types::t_real &_hs, const types::t_real &_vdw )
              : type( _t ), hard_sphere( _r ), van_der_walls( _vdw ) {}
       //! Copy Constructor.
       Bond   ( const Bond& _t )
              : type( _c.type ), hard_sphere( _c.hard_sphere ), van_der_walls( _c.van_der_walls ) {}
+      //! Loads parameters from XML.
+      bool Load( const TiXmlElement& _node );
     };
 
   } // namespace CLJ.

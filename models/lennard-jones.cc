@@ -6,6 +6,9 @@
 #include <config.h>
 #endif
 
+#include <boost/lexical_cast.hpp>
+#include <opt/tuple_io.h>
+
 #include "lennard-jones.h"
 
 namespace LaDa
@@ -26,9 +29,13 @@ namespace LaDa
         t_Arg :: t_Atoms :: iterator i_force2 = i_force1 + 1;
         for( t_cit i_atom2( i_atom1 + 1 ); i_atom2 != i_atom_end; ++i_atom2, ++i_force2 )
         {
-          __DOASSERT( species_.end() != species_.find( i_atom1->type + i_atom2->type ),
+          const std::string bondtype( i_atom2->type > i_atom1->type ?
+                                      i_atom2->type + i_atom1->type:
+                                      i_atom1->type + i_atom2->type );
+
+          __DOASSERT( species_.end() != species_.find( bondtype ),
                       "Bond " + i_atom1->type + "-" + i_atom2->type + " does not exist.\n" )
-          const Bond &bond( species_[ i_atom2->type ] );
+          const Bond &bond( species_[ bondtype ] );
           const types::t_real rcut_squared( rcut_ * rcut_ );
 
           const atat::rVector3d dfractional
@@ -79,6 +86,47 @@ namespace LaDa
               } // loop over periodic images.
         } // loop over atom 2
       } // loop over atom 1
+    }
+    
+    bool LennardJones :: Load( const TiXmlElement& _node )
+    {
+      const TiXmlElement* const parent = opt::find_node( _node, "Functional", "LennardJones" );
+      __DOASSERT( not parent->Attribute( "mesh" ), 
+                  "LennardJones functional requires a mesh attribute.\n" )
+      __DOASSERT( not parent->Attribute( "rcut" ), 
+                  "LennardJones functional requires a rcut attribute.\n" )
+
+      // reads bonds
+      const TiXmlElement* child = opt::find_node( _node, "Bond");
+      bonds_.clear();
+      for(; child; child = child->NextSiblingElement( "Bond" ) )
+      {
+        t_Bonds :: value_type bond;
+        if( not bond.Load( *child ) ) return false;
+        __DOASSERT( bonds_.end() != bonds_.find( bond.type ),
+                    "Duplicate bond type.\n" )
+        bonds_[bond.type] = bond;
+      }
+       
+      // reads attributes.
+      __DOASSERT( not opt::tuples::read( parent->Attribute("mesh"), mesh_ ),
+                  "Could not parse mesh attribute.\n" )
+      rcut_ = boost::lexical_cast< types::t_real >( parent->Attribute("rcut") );
+      return true;
+    }
+
+    bool LennardJones :: Bond :: Load( const TiXmlElement& _node )
+    {
+      __ASSERT( _node.Value() != "Bond", "Incorrect XML node.\n" )
+      __DOASSERT( _node.Attribute( "A" ), "Bond requires an A attribute.\n" )
+      __DOASSERT( _node.Attribute( "B" ), "Bond requires a B attribute.\n" )
+      __DOASSERT( _node.Attribute( "hardsphere" ), "Bond requires a hardsphere attribute.\n" )
+      __DOASSERT( _node.Attribute( "vanderwalls" ), "Bond requires a vanderwalls attribute.\n" )
+      const std::string A = _node.Attribute("A");
+      const std::string B = _node.Attribute("B");
+      type = A > B ? A + B: B + A;
+      hard_sphere = boost::lexical_cast< types::t_real >( _node.Attribute("hard_sphere") );
+      van_der_walls = boost::lexical_cast< types::t_real >( _node.Attribute("van_der_walls") );
     }
 
   } // namespace CLJ

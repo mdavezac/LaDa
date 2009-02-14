@@ -7,6 +7,15 @@ def get_values( _escan ):
   _escan.run()
   return [ float(u) for u in _escan.eigenvalues ]
 
+def read_structure( _xmlinput ): 
+  import LaDa
+
+  lattice = LaDa.Lattice()
+  lattice.fromXML( _xmlinput )
+  structure = LaDa.Structure()
+  structure.fromXML( _xmlinput )
+  return structure
+
 def create_results( _xmlinput, _direction, _step, _nbval, _filename ):
 
   import LaDa
@@ -95,48 +104,65 @@ def print_results( filename ):
   for r in results[0:steps-1]:
     string = "%f" % ( -sqrt(LaDa.norm2( r[0] )) )
     for u in r[1:]:
-      string = "%s %f" % ( string, u )
+      string = "%s %f" % ( string, u / LaDa.Hartree("eV")  )
     print string
   for r in results[steps-1:]:
     string = "%f" % ( sqrt(LaDa.norm2( r[0] )) )
     for u in r[1:]:
-      string = "%s %f" % ( string, u )
+      string = "%s %f" % ( string, u / LaDa.Hartree("eV")  )
     print string
   print "&"
 
-def interpolate_bands( _filename, _order = 2 ):
+def interpolate_bands( _filename, _scale, _order = 2 ):
 
-  from math import sqrt, pow
+  from math import sqrt, pow, pi
   import LaDa
   
+  print _scale
+  kscale = 2e0 * pi / _scale
   (gamma, results) = read_results( _filename )
   steps = len( results ) / 2 + 1
+# for band in range( 1, len( results[0] ) ):
   for band in range( 1, len( results[0] ) ):
-    matrixA = [ [ pow( -sqrt( LaDa.norm2( r[0] ) ), i ) for i in range(0, _order+1)  ]
-                for r in results[:steps-1] ]
-    matrixA.extend( [ [ pow( sqrt( LaDa.norm2( r[0] ) ), i ) for i in range(0, _order+1)  ]
-                      for r in results[steps-1:] ] )
+    matrixA = [ \
+                [ \
+                  pow( -sqrt( LaDa.norm2( r[0] ) ) * kscale, i )\
+                  for i in range(0, _order+1)  \
+                ]\
+                for r in results[:steps-1] \
+              ]
+    matrixA.extend\
+    ( \
+      [ \
+        [ \
+          pow( sqrt( LaDa.norm2( r[0] ) ) * kscale , i ) \
+          for i in range(0, _order+1)  \
+        ]\
+        for r in results[steps-1:] \
+      ] \
+    )
     vectorB = [ r[band] / LaDa.Hartree("eV") for r in results ]
     vectorX = [ 0 for r in range(0, _order+1) ]
     ( x, resid, iter ) = LaDa.linear_lsq( A=matrixA, x=vectorX, b=vectorB, \
                                           verbosity=0, tolerance = 1e-18, itermax = 10000 )
-    print "# ", x, resid, iter
-    for a in range( -steps, steps + 1):
-      u = float(a) / 1000.0 
-      print u, sum( [ x[i]*pow(u,i) for i in range(0, _order+1) ] )
-    print "&"
-    print "# ", 1/x[2]
+#   print "# ", x, resid, iter
+#   for a in range( -steps, steps + 1):
+#     u = float(a) / 100.0 
+#     print u, sum( [ x[i]*pow(u,i) for i in range(0, _order+1) ] )
+#   print "&"
+    print "# ", 0.5/x[2]
 
 def main():
   # from sys import exit
 
 
-  pickle_filename = "_si_vfine_mesh"
-# create_results( "sigeemass.xml", [1,0,0], 0.00005, 100, pickle_filename )
+  scale = read_structure( "sigeemass.xml" ).scale 
+  pickle_filename = "_si.0.01"
+# create_results( "sigeemass.xml", [1,0,0], 0.01, 20, pickle_filename )
 # print_results( pickle_filename )
-  print_results( "_si_large_mesh" )
-# print_results( "_si_emass.pickle" )
-  interpolate_bands( "_si_large_mesh", 3 )
+# print_results( "_si_large_mesh" )
+# print_results( pickle_filename )
+  interpolate_bands( pickle_filename, scale, 3 )
 
 #   for i,r in enumerate( matrixA ):
 #     print r[1], vectorB[i]

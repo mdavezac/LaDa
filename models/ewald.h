@@ -10,6 +10,8 @@
 
 #include <map>
 
+#include <tinyxml/tinyxml.h>
+
 #include <crystal/atom.h>
 #include <crystal/structure.h>
 #include <opt/types.h>
@@ -45,8 +47,8 @@ namespace LaDa
         //! \param[inout] _out stress and forces. Both are \e added to existing stress and forces.
         t_Return energy(const t_Arg& _in, t_Arg& _out) const;
 
-        //! Initializes fortran module with values of this instance.
-        void init () const;
+        //! Loads parameters from XML.
+        bool Load( const TiXmlElement& _node );
 
       protected:
 

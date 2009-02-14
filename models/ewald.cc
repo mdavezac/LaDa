@@ -89,5 +89,12 @@ namespace LaDa
       return energy;
     }
 
-  } // namespace CLJ
+    bool Ewald :: Load( const TiXmlElement& _node )
+    {
+      const TiXmlElement* const parent = opt::find_node( _node, "Functional", "Ewald" );
+
+      return true;
+    }
+
+  } // namespace Models
 } // namespace LaDa
