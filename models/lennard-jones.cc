@@ -9,6 +9,8 @@
 #include <boost/lexical_cast.hpp>
 #include <opt/tuple_io.h>
 
+#include <print/manip.h>
+
 #include "lennard-jones.h"
 
 namespace LaDa
@@ -122,8 +124,8 @@ namespace LaDa
       __DOASSERT( _node.Attribute( "B" ), "Bond requires a B attribute.\n" )
       __DOASSERT( _node.Attribute( "hardsphere" ), "Bond requires a hardsphere attribute.\n" )
       __DOASSERT( _node.Attribute( "vanderwalls" ), "Bond requires a vanderwalls attribute.\n" )
-      const std::string A = _node.Attribute("A");
-      const std::string B = _node.Attribute("B");
+      const std::string A = Print :: StripEdges( _node.Attribute("A") );
+      const std::string B = Print :: StripEdges( _node.Attribute("B") );
       type = A > B ? A + B: B + A;
       hard_sphere = boost::lexical_cast< types::t_real >( _node.Attribute("hard_sphere") );
       van_der_walls = boost::lexical_cast< types::t_real >( _node.Attribute("van_der_walls") );

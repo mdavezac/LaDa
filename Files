@@ -7,8 +7,8 @@ ATAT_H  = findsym.h  integer.h  xtalutil.h lambda.impl.h \
           array.h  arraylist.h   fixagg.h  fxvector.h \
 	  linklist.h  machdep.h  misc.h  vectmac.h  
 
-MODELS_CLJ_CC = fortran.cc 
-MODELS_CLJ_H = fortran.h wrapper.h
+MODELS_CLJ_CC = fortran.cc  clj.cc ewald.cc lennard-jones.cc
+MODELS_CLJ_H = fortran.h wrapper.h clj.h ewald.h lennard-jones.h
 MODELS_CLJ_DOC = $(MODELS_CLJ_H) $(MODELS_CLJ_CC)
 
 DARWIN_GRAPH_CC = graph/graph.cc

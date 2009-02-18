@@ -92,6 +92,17 @@ namespace LaDa
     bool Ewald :: Load( const TiXmlElement& _node )
     {
       const TiXmlElement* const parent = opt::find_node( _node, "Functional", "Ewald" );
+      if( not parent ) return false;
+      const TiXmlElement* child = parent->FirstChildElement( "Atom" );
+      for(; child; child = child->NextSiblingElement("Atom") )
+      {
+        if( child->Attribute("type") and child->Attribute("Charge") ) continue;
+        const std::string type = Print::StripEdges( child->Attribute("type") );
+        const types::t_real charge = boost::lexical_cast<types::t_real>( child->Attribute("charge") );
+        __DOASSERT( charges_.find( type ) != species_.end(),
+                    "Duplicate entry in Ewald functional for " + type + "\n" )
+        charges_[type] = charge;
+      }
 
       return true;
     }
