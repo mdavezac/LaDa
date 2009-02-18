@@ -55,5 +55,13 @@ namespace LaDa
       );
       return mean_n_var( t, w );
     }
+
+    ErrorTuple log( const NErrorTuple& _n, const types::t_real _base )
+    {
+      const types::t_real base( 1e0 / std::log( _base ) );
+      return ErrorTuple( -std::log( _n.variance() ) * base, 
+                         -std::log( _n.mean() ) * base, 
+                         -std::log( _n.max() ) * base  );
+    }
   }
 } // namespace LaDa

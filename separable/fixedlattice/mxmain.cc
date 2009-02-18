@@ -390,7 +390,8 @@ int main(int argc, char *argv[])
             << "1d linear-least square tolerance: " 
                << dtolerance << "\n"
             << "Data mean: " << nerror.nmean() << "\n"
-            << "Data Variance: " << nerror.nvariance() << "\n"
+            << "Data variance: " << nerror.nvariance() << "\n"
+            << "Data maximum error: " << nerror.nmax() << "\n"
             << "Random Seed: " << seed << "\n"
             << "Separables Regulation factor: " << lambda << "\n"
             << "Maximum distance of pairs (nth neighbor): " << maxpairs << "\n";

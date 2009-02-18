@@ -38,6 +38,7 @@
 #include "cluster.h"
 
 const LaDa::types::t_int least = 0;
+const LaDa::types::t_int printinteractionenergies = 1;
 const LaDa::types::t_int serrors = 1;
 const LaDa::types::t_int detailederrors = 2;
 const LaDa::types::t_int outermin = 3;
@@ -267,6 +268,10 @@ int main(int argc, char *argv[])
       );
     fit.init( reg.clusters );
     LaDa::opt::NErrorTuple nerror = fit.mean_n_var();
+    std::cout << "Data mean: " << nerror.nmean() << "\n"
+              << "Data variance: " << nerror.nvariance() << "\n"
+              << "Data maximum error: " << nerror.nmax() << "\n";
+
 
     if( doloo )
     {
@@ -282,7 +287,17 @@ int main(int argc, char *argv[])
       LaDa::CE::BaseFit::t_Vector x( reg.clusters.size() );
       std::cout << "Starting Fitting Procedure.\n";
       LaDa::opt::ErrorTuple errors( fit( x, reg.cgs ) );
-      std::cout << "Training Errors:\n " << ( nerror = errors ) << "\n\n";
+      std::cout << "Fitting Errors:\n " << ( nerror = errors ) << "\n\n";
+      std::cout << "Fitting Errors (-log10):\n " << LaDa::opt::log( nerror = errors ) << "\n\n";
+      if( verbosity >= printinteractionenergies )
+      {
+        LaDa::CE::BaseFit::t_Clusters :: const_iterator i_eclusters = reg.clusters.begin();
+        LaDa::CE::BaseFit::t_Clusters :: const_iterator i_eclusters_end = reg.clusters.end();
+        LaDa::CE::BaseFit::t_Vector :: const_iterator i_energ = x.begin();
+        for(; i_eclusters != i_eclusters_end; ++i_eclusters, ++i_energ )
+          std::cout << *i_energ << " " << i_eclusters->size()
+                    <<  "\n" << i_eclusters->front() << "\n"; 
+      }
     }
     if( leavemanyout.do_perform )
     {
