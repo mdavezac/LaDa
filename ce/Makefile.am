@@ -42,6 +42,9 @@ libce_la_SOURCES = $(CE_CC)
 libce_ladir = $(includedir)/LaDa/ce
 nobase_libce_la_HEADERS = $(CE_H) $(CE_IMPL_H)
 libce_la_CPPFLAGS =  $(AM_CPPFLAGS) 
+
+SUBDIRS = python
+
 ../crystal/libcrystal.la: 
 	cd ../crystal; $(MAKE) libcrystal.la
 

@@ -19,6 +19,7 @@
 #include <opt/bpo_macros.h>
 #include <opt/initial_path.h>
 #include <opt/tinyxml.h>
+#include <atat/serialize.h>
 
 #include "va.h"
 // #include "dipole_elements.h"

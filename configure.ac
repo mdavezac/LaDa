@@ -354,11 +354,13 @@ AC_SUBST(BOOST_CXXFLAGS)
 AC_SUBST(MINUIT_LIBS)
 AC_SUBST(MINUIT_CFLAGS)
 
-AC_OUTPUT(Makefile atat/Makefile physics/Makefile opt/Makefile crystal/Makefile
-          vff/Makefile mpi/Makefile pescan_interface/Makefile darwin/Makefile 
-          print/Makefile lapack/Makefile separable/Makefile ce/Makefile 
+AC_OUTPUT(Makefile atat/Makefile atat/python/Makefile physics/Makefile physics/python/Makefile
+          opt/Makefile opt/python/Makefile crystal/Makefile crystal/python/Makefile
+          vff/Makefile vff/python/Makefile mpi/Makefile pescan_interface/Makefile darwin/Makefile 
+          pescan_interface/python/Makefile
+          print/Makefile lapack/Makefile separable/Makefile ce/Makefile ce/python/Makefile
           python/Makefile separable/fixedlattice/Makefile factory/Makefile
-          minimizer/Makefile models/Makefile )
+          minimizer/Makefile minimizer/python/Makefile models/Makefile )
 
 echo ""; echo ""
 echo "Will Compile following modules: "

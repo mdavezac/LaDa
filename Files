@@ -5,7 +5,9 @@
 ATAT_CC = findsym.cc integer.cc xtalutil.cc 
 ATAT_H  = findsym.h  integer.h  xtalutil.h lambda.impl.h \
           array.h  arraylist.h   fixagg.h  fxvector.h \
-	  linklist.h  machdep.h  misc.h  vectmac.h  
+	  linklist.h  machdep.h  misc.h  vectmac.h serialize.h
+ATAT_PYTHON_H = atat.impl.hpp atatintrospection.hpp atatoperators.hpp
+ATAT_PYTHON_CC = atat.cc 
 
 MODELS_CLJ_CC = fortran.cc  clj.cc ewald.cc lennard-jones.cc
 MODELS_CLJ_H = fortran.h wrapper.h clj.h ewald.h lennard-jones.h
@@ -114,6 +116,8 @@ DARWIN_E_DOC = $(DARWIN_E_H) $(DARWIN_E_CC)
 CRYSTAL_CC = lattice.cc structure.cc confsplit.cc layerdepth.cc
 CRYSTAL_H  = lattice.h  structure.h structure.impl.h atom.h  confsplit.h layerdepth.h
 CRYSTAL_DOC = $(CRYSTAL_H) $(CRYSTAL_CC) 
+CRYSTAL_PYTHON_H = structure.h atom.h
+CRYSTAL_PYTHON_CC = structure.cc atom.cc python.cc
 
 CE_CC     = cluster.cc harmonic.cc  polynome.cc regularization.cc fit.cc
 CE_H      = cluster.h  constituent_strain.h  functional_builder.h  harmonic.h \
@@ -121,6 +125,8 @@ CE_H      = cluster.h  constituent_strain.h  functional_builder.h  harmonic.h \
 CE_IMPL_H = constituent_strain.impl.h  functional_builder.impl.h  harmonic.impl.h \
             cluster.impl.h fit.impl.h
 CE_DOC = $(CE_H) $(CE_CC) 
+CE_PYTHON_H = ce.hpp ce.impl.hpp
+CE_PYTHON_CC = ce.cc python.cc
 
 LAPACK_F90 = dlae2.f   dlanst.f  dlapy2.f  dlarf.f   dlarft.f  dlascl.f \
 	     dlasr.f   dlassq.f  dorg2l.f  dorgql.f  dorgtr.f  dsterf.f \
@@ -149,6 +155,8 @@ OPT_PYTHON_CONVENIENCE_H =  convex_hull.h errors.h convex_hull.impl.h \
 OPT_PYTHON_CONVENIENCE_CC = convex_hull.cc errors.cc tinyxml.cc \
                             initial_path.cc fortran_dirio.cc
 OPT_DOC = $(OPT_H) $(OPT_CC) $(OPT_PYTHON_CONVENIENCE_CC)
+OPT_PYTHON_CC = errortuple.cc python.cc
+OPT_PYTHON_H = errortuple.hpp convexhull.impl.hpp
 
 FACTORY_CC =
 FACTORY_H = chain_connect_attribute.h  chainconnects.h factory.h \
@@ -165,10 +173,13 @@ PESCAN_CC = interface.cc bandgap.cc dipole_elements.cc
 PESCAN_H  = interface.h  bandgap.h  va.h dipole_elements.h
 PESCAN_IMPL_H  = interface.localclasses.h va.impl.h
 PESCAN_DOC = $(PESCAN_H) $(PESCAN_CC) $(PESCAN_F90) $(PESCAN_IMPL_H)
+PESCAN_PYTHON_CC = escan.cc bandgap.cc python.cc
+PESCAN_PYTHON_H = escan.hpp bandgap.hpp
 
 PHYSICS_CC = physics.cc
 PHYSICS_H  = physics.h
 PHYSICS_DOC = $(PHYSICS_H) $(PHYSICS_CC) 
+PHYSICS_PYTHON_CC = python.cc
 
 PRINT_CC = manip.cc xmg.cc stdout.cc base.cc columns.cc
 PRINT_H  = manip.h  xmg.h  stdout.h  base.h  operations.h columns.h
@@ -195,6 +206,8 @@ MINIMIZER_CC = gsl_lsq.cc gsl.cc gsl_nllsq.cc gsl_mins.cc gsl_simplex.cc frprmn.
                decoupled.cc minuit2.cc 
 MINIMIZER_F90 =  df1dim.f90  frprmn_fortran.f90  linmin.f90
 MINIMIZER_DOC = $(MINIMIZER_H) $(MINIMIZER_CC)
+MINIMIZER_PYTHON_H = cgs.hpp
+MINIMIZER_PYTHON_CC = cgs.cc python.cc
 
 SEPARABLE_CC = cefitting.cc  main.cc ce.cc
 SEPARABLE_H = boolean.h cefitting.h ce.h lsq.h separable.h collapse.h \
@@ -219,6 +232,8 @@ VFF_IMPL_H = va.impl.h pescan_perturbation.impl.h
 VFF_H  = functional.h  layered.h  va.h  pescan_perturbation.h vff.h \
          atomic_center.h atomic_functional.h $(VFF_IMPL_H)
 VFF_DOC = $(VFF_H) $(VFF_IMPLS) $(VFF_CC) 
+VFF_PYTHON_CC = vff.cc python.cc
+VFF_PYTHON_H = vff.hpp
 
 DOCS_H = revision.h
 DOCS =  beginners  crystal  fortran  functionals  ga  \

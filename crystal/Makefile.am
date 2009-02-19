@@ -15,6 +15,7 @@ libcrystal_la_SOURCES = $(CRYSTAL_CC)
 libcrystal_ladir = $(includedir)/LaDa/crystal
 nobase_libcrystal_la_HEADERS = $(CRYSTAL_H) 
 libcrystal_la_CPPFLAGS = $(AM_CPPFLAGS) 
+SUBDIRS = python
 
 if DOALLOYLAYERSOPT
 bin_PROGRAMS = alloylayers

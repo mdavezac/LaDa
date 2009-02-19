@@ -52,6 +52,8 @@ layered_escan_CPPFLAGS = $(escan_CPPFLAGS) -D _LAYERED_
 layered_escan_LDFLAGS =  $(escan_LDFLAGS) 
 layered_escan_LDADD = $(escan_LDADD)
 
+SUBDIRS = python
+
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) libatat.la
 ../crystal/libcrystal.la: 

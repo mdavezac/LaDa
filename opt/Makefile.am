@@ -15,3 +15,4 @@ libopt_la_CPPFLAGS = $(AM_CPPFLAGS)
 libopt_la_LIBADD = libpythonconvenience.la
 libopt_ladir = $(includedir)/LaDa/opt
 nobase_libopt_la_HEADERS = $(OPT_H)
+SUBDIRS = python

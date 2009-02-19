@@ -10,3 +10,4 @@ libminimizer_la_SOURCES =  $(MINIMIZER_F90) $(MINIMIZER_CC)
 libminimizer_la_CPPFLAGS = $(AM_CPPFLAGS)
 libminimizer_ladir = $(includedir)/LaDa/minimizer
 libminimizer_la_HEADERS = $(MINIMIZER_H)
+SUBDIRS = python

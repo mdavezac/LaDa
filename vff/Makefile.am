@@ -38,6 +38,7 @@ layered_vff_CPPFLAGS =  $(vff_CPPFLAGS) -D _LAYERED
 layered_vff_LDFLAGS =  $(vff_LDFLAGS)
 layered_vff_LDADD = $(vff_LDADD)
 
+SUBDIRS = python
 # fortran_test_SOURCES = fortran_test.f90 
 # fortran_test_LDFLAGS =  $(vff_LDFLAGS)
 # fortran_test_LDADD = $(vff_LDADD)
