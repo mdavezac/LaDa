@@ -6,6 +6,8 @@
 #include <config.h>
 #endif
 
+#include <boost/lexical_cast.hpp>
+
 #include "ewald.h"
 
 extern "C" void FC_FUNC( ewaldf, EWALDF )
@@ -25,26 +27,25 @@ namespace LaDa
 {
   namespace Models
   {
-    Ewald :: t_Return Ewald :: energy( const t_Arg& _in, t_Arg &_out )
+    Ewald :: t_Return Ewald :: energy( const t_Arg& _in, t_Arg &_out ) const
     {
       __DOASSERT( _in.atoms.size() != _out.atoms.size(), "Incoherent structure size.\n" )
-      types::t_real energy(0);
 
-      const size_t natom( _in.atoms.size() );
-      double charges[ natom ];
-      double positions[ natom * 3 ], forces[ natoms * 3 ], cforces[ natoms * 3 ];
+      const size_t natoms( _in.atoms.size() );
+      double charges[ natoms ];
+      double positions[ natoms * 3 ], forces[ natoms * 3 ], cforces[ natoms * 3 ];
       double cell[ 9 ], stress[ 6 ];
       const double verbosity(0);
       double energy(0);
-      const double n( natom );
+      const double n( natoms );
 
-      typedef  ::  t_Atoms :: const_iterator t_cit;
+      typedef t_Arg :: t_Atoms :: const_iterator t_cit;
       t_cit i_atom = _in.atoms.begin();
-      for( size_t i(0); i < natom; ++i, ++i_atom )
+      for( size_t i(0); i < natoms; ++i, ++i_atom )
       {
         __ASSERT( charges_.find( i_atom->type ) == charges_.end(),
                   "Atomic charge does not exist.\n" )
-        charges[i] = charges_[i_atom->type];
+        charges[i] = charges_.find(i_atom->type)->second;
         positions[ i*3 ]     = i_atom->pos[0];
         positions[ i*3 + 1 ] = i_atom->pos[1];
         positions[ i*3 + 2 ] = i_atom->pos[2];
@@ -68,8 +69,8 @@ namespace LaDa
         &n            // dimension of arrays.
       );
       // Copy (reduced) forces.
-      t_Arg :: t_Atom :: iterator i_force = _out.atoms.begin();
-      for( size_t i(0); i < natom; ++i, ++i_force )
+      t_Arg :: t_Atoms :: iterator i_force = _out.atoms.begin();
+      for( size_t i(0); i < natoms; ++i, ++i_force )
       {
         i_force->pos[0] += forces[ i*3 ];
         i_force->pos[1] += forces[ i*3 + 1 ];
@@ -98,8 +99,9 @@ namespace LaDa
       {
         if( child->Attribute("type") and child->Attribute("Charge") ) continue;
         const std::string type = Print::StripEdges( child->Attribute("type") );
-        const types::t_real charge = boost::lexical_cast<types::t_real>( child->Attribute("charge") );
-        __DOASSERT( charges_.find( type ) != species_.end(),
+        const types::t_real charge
+          = boost::lexical_cast<types::t_real>( child->Attribute("charge") );
+        __DOASSERT( charges_.find( type ) != charges_.end(),
                     "Duplicate entry in Ewald functional for " + type + "\n" )
         charges_[type] = charge;
       }

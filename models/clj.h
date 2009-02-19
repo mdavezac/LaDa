@@ -17,6 +17,8 @@
 #include <opt/types.h>
 #include <opt/debug.h>
 
+#include "ewald.h"
+#include "lennard-jones.h"
 
 namespace LaDa
 {
@@ -24,7 +26,7 @@ namespace LaDa
   namespace Models
   {
     //! The adapter for Coulomb + Lennard-Jones fortran functional itself.
-    class Clj :: protected Ewald, protected LennardJones
+    class Clj : protected Ewald, protected LennardJones
     {
       public:
         //! Argument type.
@@ -35,8 +37,8 @@ namespace LaDa
         Clj() {}
         //! Copy Constructor
         Clj( const Clj &_c ) {}
-        //! \brief Destructor
-        Clj() {}
+        //! Destructor.
+        ~Clj() {}
 
         //! \brief computes energy and stress and forces.
         t_Return energy(const t_Arg& _in, t_Arg& _out) const;

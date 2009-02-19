@@ -15,7 +15,6 @@
 #include <crystal/atom.h>
 #include <crystal/structure.h>
 #include <opt/types.h>
-#include <opt/debug.h>
 
 
 namespace LaDa
@@ -39,8 +38,8 @@ namespace LaDa
         Ewald() {}
         //! Copy Constructor
         Ewald( const Ewald &_c ) : charges_(_c.charges_), cutoff_(_c.cutoff_) {}
-        //! \brief Destructor
-        Ewald() {}
+        //! Destructor.
+        ~Ewald() {}
 
         //! \brief computes energy and stress and forces.
         //! \param[in] _in input structure, with reduced coordinates.

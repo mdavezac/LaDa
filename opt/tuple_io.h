@@ -12,6 +12,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
 #include "types.h"
+#include "debug.h"
 
 namespace LaDa
 {

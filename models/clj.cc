@@ -27,7 +27,7 @@ namespace LaDa
       foreach( t_Arg :: t_Atom &atom, _out.atoms )
         atom.pos = atat::rVector3d(0,0,0);
 
-      _out.energy = Ewald::operator()( _in, _out ) + LennardJones::operator()( _in, _out );
+      _out.energy = Ewald::energy( _in, _out ) + LennardJones::energy( _in, _out );
       return _out.energy;
     }
   } // namespace CLJ

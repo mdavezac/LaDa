@@ -17,7 +17,6 @@
 #include <crystal/atom.h>
 #include <crystal/structure.h>
 #include <opt/types.h>
-#include <opt/debug.h>
 
 
 namespace LaDa
@@ -37,10 +36,9 @@ namespace LaDa
         LennardJones() {}
         //! Copy Constructor
         LennardJones   ( const LennardJones &_c )
-                     : species_(_c.species_), bond_strength_(_c.bond_strength_),
-                       mesh_(_c.mesh_), rcut_(_c.rcut_) {}
-        //! \brief Destructor
-        LennardJones() {}
+                     : bonds_(_c.bonds_), mesh_(_c.mesh_), rcut_(_c.rcut_) {}
+        //! Destructor.
+        ~LennardJones() {}
 
         //! \brief computes energy and stress and forces.
         //! \param[in] _in input structure, with reduced coordinates.
@@ -59,7 +57,7 @@ namespace LaDa
         typedef std::map< Key, Bond > t_Bonds;
 
         //! Contains all atomic species.
-        t_Bonds species_;
+        t_Bonds bonds_;
         //! Cutoff mesh type.
         typedef boost::tuple<types::t_int, types::t_int, types::t_int > t_MeshTuple;
         //! Cutoff mesh.
@@ -82,9 +80,9 @@ namespace LaDa
       Bond() {};
       //! Constructor.
       Bond   ( const t_Type &_t, const types::t_real &_hs, const types::t_real &_vdw )
-             : type( _t ), hard_sphere( _r ), van_der_walls( _vdw ) {}
+             : type( _t ), hard_sphere( _hs ), van_der_walls( _vdw ) {}
       //! Copy Constructor.
-      Bond   ( const Bond& _t )
+      Bond   ( const Bond& _c )
              : type( _c.type ), hard_sphere( _c.hard_sphere ), van_der_walls( _c.van_der_walls ) {}
       //! Loads parameters from XML.
       bool Load( const TiXmlElement& _node );
