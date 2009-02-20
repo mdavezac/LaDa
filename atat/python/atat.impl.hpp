@@ -144,6 +144,12 @@ namespace LaDa
         {
           const size_t size( bp::len( _o ) );
           __DOASSERT( size != dim and size != 1, "Incorrect size.\n" )
+          try // copying
+          { 
+            *result = bp::extract<T_MATRIX>( _o );
+            return result; 
+          }
+          catch( ... ) {}
           for( size_t i=0; i < dim; ++i )
           {
             const boost::python::object object = bp::extract<bp::object>( _o[i] );

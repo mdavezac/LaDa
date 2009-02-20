@@ -6,6 +6,7 @@ AM_INIT_AUTOMAKE()
 
 AC_PROG_CC
 AC_PROG_CXX
+AM_PATH_PYTHON(2.3)
 
 AC_PROG_EGREP
 dompidefault=false

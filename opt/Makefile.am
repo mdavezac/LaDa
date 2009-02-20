@@ -12,6 +12,7 @@ libpythonconvenience_la_HEADERS = $(OPT_PYTHON_CONVENIENCE_H)
 libpythonconvenience_la_CPPFLAGS = $(AM_CPPFLAGS)
 libopt_la_SOURCES = $(OPTF90) $(OPT_CC) 
 libopt_la_CPPFLAGS = $(AM_CPPFLAGS)
+libopt_la_LDFLAGS = $(AM_LDFLAGS) @FCLIBS@
 libopt_la_LIBADD = libpythonconvenience.la
 libopt_ladir = $(includedir)/LaDa/opt
 nobase_libopt_la_HEADERS = $(OPT_H)

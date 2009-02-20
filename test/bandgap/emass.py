@@ -16,7 +16,19 @@ def read_structure( _xmlinput ):
   structure.fromXML( _xmlinput )
   return structure
 
-def create_results( _xmlinput, _direction, _step, _nbval, _filename ):
+
+def compute_distorted_kpoint( _original_cell, _distorted_cell, _kpoint ):
+  """
+      Computes the position of the kpoint in a distorted lattice, from its 
+      position in a non-distorted lattice.
+  """
+
+  import LaDa
+
+  distorted_kcell = LaDa.inv_rMatrix3d( LaDa.trans_rMatrix3d( _distorted_cell ) )
+  return distorted_kcell * LaDa.trans_rMatrix3d( _original_cell ) * _kpoint
+
+def create_results( _xmlinput, _kpoint, _direction, _step, _nbval, _filename ):
 
   import LaDa
   import pickle
@@ -29,6 +41,7 @@ def create_results( _xmlinput, _direction, _step, _nbval, _filename ):
   vff.structure.fromXML( _xmlinput )
   structure =  LaDa.Structure( vff.structure )
 
+  original_cell = LaDa.rMatrix3d( structure.cell )
 
   vff.fromXML( _xmlinput )
   vff.init()
@@ -37,6 +50,7 @@ def create_results( _xmlinput, _direction, _step, _nbval, _filename ):
   bandgap.fromXML( _xmlinput )
 
   vff.evaluate()
+  distorted_cell = LaDa.rMatrix3d( vff.structure.cell )
   bandgap.vff_inputfile = "atomic_config." + str( mpi.world.rank )
   mpi.broadcast( mpi.world, vff.structure, 0 )
   vff.print_escan_input( bandgap.vff_inputfile )
@@ -49,7 +63,13 @@ def create_results( _xmlinput, _direction, _step, _nbval, _filename ):
 
   # -kpoint
   for i in [range(1, _nbval)[-u] for u in range( 1, _nbval )]:
-    bandgap.parameters.kpoint = LaDa.rVector3d( _direction ) * float(-_step) * float(i)
+    bandgap.parameters.kpoint = compute_distorted_kpoint\
+                                (
+                                  original_cell,
+                                  distorted_cell,
+                                    LaDa.rVector3d( _kpoint )
+                                  + LaDa.rVector3d( _direction ) * float(-_step) * float(i)
+                                )
     dummy = [ LaDa.rVector3d( bandgap.parameters.kpoint ) ]
     bandgap.parameters.Eref =  gamma.vbm
     dummy.extend( sorted( get_values( bandgap ) ) )
@@ -74,14 +94,14 @@ def create_results( _xmlinput, _direction, _step, _nbval, _filename ):
   dummy = list( result[:len(result)-1] )
   dummy.reverse()
   result.extend( dummy )
-# for i in range( 1, _nbval ):
-#   bandgap.parameters.kpoint = LaDa.rVector3d( _direction ) * float(_step) * float(i)
-#   dummy = [ LaDa.rVector3d( bandgap.parameters.kpoint ) ]
-#   bandgap.parameters.Eref =  gamma.vbm
-#   dummy.extend( sorted( get_values( bandgap ) ) )
-#   bandgap.parameters.Eref =  gamma.cbm
-#   dummy.extend( sorted( get_values( bandgap ) ) )
-#   result.append( dummy ) 
+  for i in range( 1, _nbval ):
+    bandgap.parameters.kpoint = LaDa.rVector3d( _direction ) * float(_step) * float(i)
+    dummy = [ LaDa.rVector3d( bandgap.parameters.kpoint ) ]
+    bandgap.parameters.Eref =  gamma.vbm
+    dummy.extend( sorted( get_values( bandgap ) ) )
+    bandgap.parameters.Eref =  gamma.cbm
+    dummy.extend( sorted( get_values( bandgap ) ) )
+    result.append( dummy ) 
 
   file = open( _filename, "w" )
   pickle.dump( (gamma, result), file )
@@ -100,17 +120,17 @@ def print_results( filename ):
   import LaDa
 
   (gamma, results) = read_results( filename )
-  steps = len( results ) / 2 + 1 
+  steps = len( results )
   for r in results[0:steps-1]:
     string = "%f" % ( -sqrt(LaDa.norm2( r[0] )) )
     for u in r[1:]:
       string = "%s %f" % ( string, u / LaDa.Hartree("eV")  )
     print string
-  for r in results[steps-1:]:
-    string = "%f" % ( sqrt(LaDa.norm2( r[0] )) )
-    for u in r[1:]:
-      string = "%s %f" % ( string, u / LaDa.Hartree("eV")  )
-    print string
+# for r in results[steps-1:]:
+#   string = "%f" % ( sqrt(LaDa.norm2( r[0] )) )
+#   for u in r[1:]:
+#     string = "%s %f" % ( string, u / LaDa.Hartree("eV")  )
+#   print string
   print "&"
 
 def interpolate_bands( _filename, _scale, _order = 2 ):
@@ -119,7 +139,7 @@ def interpolate_bands( _filename, _scale, _order = 2 ):
   import LaDa
   
   print _scale
-  kscale = 2e0 * pi / _scale
+  kscale = 2e0 / _scale
   (gamma, results) = read_results( _filename )
   steps = len( results ) / 2 + 1
 # for band in range( 1, len( results[0] ) ):
@@ -158,11 +178,14 @@ def main():
 
   scale = read_structure( "sigeemass.xml" ).scale 
   pickle_filename = "_si.0.01"
-# create_results( "sigeemass.xml", [1,0,0], 0.01, 20, pickle_filename )
+  create_results( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10, "_ge_gamma" )
+  create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,0.5,0.5], 0.01, 10, "_ge_Ll" )
+  create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,-0.5,0], 0.01, 10, "_ge_Lt" )
+  create_results( "sigeemass.xml", [1,0,0], [1,0,0], 0.01, 10, "_ge_Xl" )
 # print_results( pickle_filename )
 # print_results( "_si_large_mesh" )
 # print_results( pickle_filename )
-  interpolate_bands( pickle_filename, scale, 3 )
+# interpolate_bands( pickle_filename, scale, 3 )
 
 #   for i,r in enumerate( matrixA ):
 #     print r[1], vectorB[i]
