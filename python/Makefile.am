@@ -7,46 +7,78 @@ AM_CPPFLAGS = -I $(top_srcdir) @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
 AM_LDFLAGS = @TINYXML_LIBS@  @BOOST_LDFLAGS@ @BOOST_PYTHON@ @BOOST_FS@  \
              @BOOST_MPI@ @BOOST_SERIALIZATION@ @BOOST_MPI_PYTHON@
 
+
+# lib_LTLIBRARIES = lib_python_lada.la 
+# lib_python_lada_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
+# lib_python_lada_la_SOURCES = $(PYTHON_CC) $(CECC) $(ESCANCC) $(VFFCC) 
+# lib_python_lada_la_LDFLAGS = $(AM_LDFLAGS) -Bshared 
+# lib_python_lada_la_LIBADD = ../crystal/libcrystal.la \
+#		      ../atat/libatat.la \
+#		      ../opt/libpythonconvenience.la \
+#		      ../physics/libphysics.la \
+#		      ../print/libprint.la 
+
+pythonextensions = opt physics atat crystal minimizer 
 if DOCE
-  CECC=$(PYTHON_CE_CC)
-  CEH=$(PYTHON_CE_H)
-  CELIB=../ce/libce.la
+  pythonextensions += ce
+  lib_python_lada_la_LIBADD += ../ce/libce.la 
 endif 
-
 if DOPYTHONPESCAN
-  ESCANCC=$(PYTHON_ESCAN_CC)
-  ESCANH=$(PYTHON_ESCAN_H)
-  ESCANLIB= ../mpi/libmpiobject.la ../pescan_interface/libescan.la \
-	    @LD_IAGA_FLAGS@
-  AM_CPPFLAGS += @MINUIT_CFLAGS@ @GSL_CFLAGS@
-  AM_LDFLAGS += @FCLIBS@ 
+  pythonextensions += escan
+  lib_python_lada_la_LIBADD += ../escan/libescan.la 
 endif
-
 if DOVFF
-  VFFCC=$(PYTHON_VFF_CC)
-  VFFH=$(PYTHON_VFF_H)
-  VFFLIB=../print/libprint.la ../minimizer/libminimizer.la ../vff/libvff.la
-  AM_CPPFLAGS += @MINUIT_CFLAGS@ @GSL_CFLAGS@
-  AM_LDFLAGS += @MINUIT_LIBS@ @GSL_LIBS@ 
+  pythonextensions += vff
+  lib_python_lada_la_LIBADD += ../vff/libvff.la 
 endif
 
-EXTRA_DIST = $(PYTHON_H) $(PYTHON_CE_H) $(PYTHON_VFF_H) $(PYTHON_ESCAN_H)
-lib_LTLIBRARIES = liblada.la 
-liblada_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
-liblada_la_SOURCES = $(PYTHON_CC) $(CECC) $(ESCANCC) $(VFFCC) 
-liblada_la_LDFLAGS = $(AM_LDFLAGS) -Bshared 
-liblada_la_LIBADD =  $(CELIB) $(VFFLIB) $(ESCANLIB)\
-                     ../crystal/libcrystal.la \
-		     ../atat/libatat.la \
-		     ../opt/libpythonconvenience.la \
-		     ../physics/libphysics.la \
-                     @MPI_ADDLIB@  
 if DOPYTHONPESCAN
   liblada_la_FCFLAGS = $(FCFLAGS) @IAGA_FCFLAGS@
   liblada_la_F77FLAGS = $(FCFLAGS) @IAGA_FCFLAGS@
   liblada_la_F90FLAGS = $(FCFLAGS) @IAGA_FCFLAGS@
   liblada_la_FFLAGS = $(FCFLAGS) @IAGA_FCFLAGS@
 endif
+
+pkgpyexec_PYTHON = __init__.py
+force: ;
+__init__.py: force
+	@rm -f __init__.py; \
+	 list='$(pythonextensions)'; \
+	 for library in $$list; do \
+	   echo "import $$library"  >> __init__.py; \
+	 done
+clean-local:
+	-rm -f __init__.py
+
+
+# if DOCE
+#   CECC=$(PYTHON_CE_CC)
+#   CEH=$(PYTHON_CE_H)
+#   CELIB=../ce/libce.la
+#   pythonextensions += ce
+# endif 
+
+# if DOPYTHONPESCAN
+#   ESCANCC=$(PYTHON_ESCAN_CC)
+#   ESCANH=$(PYTHON_ESCAN_H)
+#   ESCANLIB= ../mpi/libmpiobject.la ../pescan_interface/libescan.la \
+#             @LD_IAGA_FLAGS@
+#   AM_CPPFLAGS += @MINUIT_CFLAGS@ @GSL_CFLAGS@
+#   AM_LDFLAGS += @FCLIBS@ 
+#   pythonextensions += escan
+# endif
+
+# if DOVFF
+#   VFFCC=$(PYTHON_VFF_CC)
+#   VFFH=$(PYTHON_VFF_H)
+#   VFFLIB=../print/libprint.la ../minimizer/libminimizer.la ../vff/libvff.la
+#   AM_CPPFLAGS += @MINUIT_CFLAGS@ @GSL_CFLAGS@
+#   AM_LDFLAGS += @MINUIT_LIBS@ @GSL_LIBS@ 
+#   pythonextensions += vff
+# endif
+
+# EXTRA_DIST = $(PYTHON_H) $(PYTHON_CE_H) $(PYTHON_VFF_H) $(PYTHON_ESCAN_H)
+
 ../crystal/libcrystal.la: 
 	cd ../crystal; $(MAKE) libcrystal.la
 

@@ -10,7 +10,7 @@
 #include "escan.hpp"
 #include "bandgap.hpp"
 
-BOOST_PYTHON_MODULE(Pescan)
+BOOST_PYTHON_MODULE(escan)
 {
   LaDa::Python::expose_escan_parameters();
   LaDa::Python::expose_escan();

@@ -30,7 +30,7 @@ if DOSEPARABLE
   CEDIR = ce
 endif
 if DOPYTHON
-  PYTHONDIR = # python
+  PYTHONDIR = python
 endif
 if DOCE
   CEDIR = ce

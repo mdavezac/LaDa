@@ -22,11 +22,11 @@ namespace LaDa
       expose_atatmatrix< atat::rMatrix3d >( "rMatrix3d", "a 3x3 matrix of real values.\n" 
                                             " Note that the coefficients are accessed using a tuple"
                                             " as in \" a[(0,0)] \" where \"a\" is an rMatrix3d."); 
-      bp::def( "inv_rMatrix3d",
+      bp::def( "inverse",
                &LaDa::atat::details::inv_rMatrix3d< atat::rMatrix3d >,
                bp::arg("matrix"),
                "Inverts an rMatrix3d." );
-      bp::def( "trans_rMatrix3d",
+      bp::def( "transpose",
                &LaDa::atat::details::trans_rMatrix3d< atat::rMatrix3d >,
                bp::arg("matrix"),
                "Transpose of an rMatrix3d." );
@@ -34,7 +34,7 @@ namespace LaDa
 
   }
 } // namespace LaDa
-BOOST_PYTHON_MODULE(Atat)
+BOOST_PYTHON_MODULE(atat)
 {
   // PythonLaDa::expose_svn();
   LaDa::Python::expose_atat();

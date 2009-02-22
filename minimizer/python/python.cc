@@ -9,7 +9,7 @@
 
 #include "cgs.hpp"
 
-BOOST_PYTHON_MODULE(Minimizer)
+BOOST_PYTHON_MODULE(minimizer)
 {
   LaDa::Python::expose_cgs();
   LaDa::Python::expose_llsq();

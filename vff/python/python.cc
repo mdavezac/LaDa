@@ -9,7 +9,8 @@
 
 #include "vff.hpp"
 
-BOOST_PYTHON_MODULE(Vff)
+BOOST_PYTHON_MODULE(vff)
 {
   LaDa::Python::expose_vff();
+  LaDa::Python::expose_layeredvff();
 }

@@ -266,10 +266,9 @@ namespace LaDa
 
     void Lattice :: print_out (std::ostream &stream) const
     {
-      stream << std::endl << " Lattice Unit-Cell " << std::endl;
-      stream << cell;
-      
-      stream << " Lattice Sites " << std::endl;
+      stream << std::endl << " Lattice Unit-Cell\n"
+             << cell << "\n"
+             << " Lattice Sites " << "\n";
       t_Sites :: const_iterator i_site = sites.begin();
       t_Sites :: const_iterator i_end = sites.end();
       for( ; i_site != i_end; ++i_site )

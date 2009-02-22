@@ -12,7 +12,7 @@
 #include "convexhull.impl.hpp"
 #include "errortuple.hpp"
 
-BOOST_PYTHON_MODULE(Opt)
+BOOST_PYTHON_MODULE(opt)
 {
   LaDa::Python::expose_errors();
   LaDa::Python::exposeConvexHull<boost::python::object>( "ConvexHull" );

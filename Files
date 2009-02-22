@@ -116,8 +116,8 @@ DARWIN_E_DOC = $(DARWIN_E_H) $(DARWIN_E_CC)
 CRYSTAL_CC = lattice.cc structure.cc confsplit.cc layerdepth.cc
 CRYSTAL_H  = lattice.h  structure.h structure.impl.h atom.h  confsplit.h layerdepth.h
 CRYSTAL_DOC = $(CRYSTAL_H) $(CRYSTAL_CC) 
-CRYSTAL_PYTHON_H = structure.h atom.h
-CRYSTAL_PYTHON_CC = structure.cc atom.cc python.cc
+CRYSTAL_PYTHON_H = structure.hpp atom.hpp lattice.hpp
+CRYSTAL_PYTHON_CC = structure.cc atom.cc lattice.cc python.cc 
 
 CE_CC     = cluster.cc harmonic.cc  polynome.cc regularization.cc fit.cc
 CE_H      = cluster.h  constituent_strain.h  functional_builder.h  harmonic.h \

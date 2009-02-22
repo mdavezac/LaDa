@@ -330,7 +330,6 @@ AC_SUBST(DOCDIR)
 # fi
 if test "$mpi" != true; then
   BOOST_MPI=""
-  BOOST_SERIALIZATION=""
 fi
 if test "$python" = true; then
   if test "x$PYTHON_INCLUDE_DIR$PYTHON_LIB" = "x"; then

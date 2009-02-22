@@ -47,7 +47,7 @@ namespace LaDa
         __DOASSERT( not doloadcode( _type, parent ), 
                        "Could not load " << nodename<T_TYPE>()
                     << " from " << _filename << ".\n" )
-        do_specialcode( _type );
+        do_specialcode<T_TYPE>( _type );
       }
 
       template< class T_TYPE >

@@ -23,20 +23,27 @@ namespace LaDa
     void expose_physics()
     {
       using namespace boost::python;
-      def("Z", Physics::Atomic::Z);
-      def("Symbol", Physics::Atomic::Symbol);
+      def("Z", Physics::Atomic::Z,
+          "Given an atomic symbol, returns the atomic number.");
+      def("Symbol", Physics::Atomic::Symbol,
+          "Given an atomic number, returns the atomic symbol.");
       types::t_unsigned (*ptr_charge) (const std::string &) = &Physics::Atomic::Charge;
-      def("Charge", ptr_charge);
-      def("Mass", Physics::Atomic::Mass);
-      def("a0", Physics::a0);
-      def("Hartree", Physics::Hartree);
-      def("Rydberg", Physics::Rydberg);
+      def("Charge", ptr_charge,
+          "Given an atomic symbol, returns the number of valence electrons." );
+      def("Mass", Physics::Atomic::Mass,
+          "Given an atomic symbol, returns the atomic mass.");
+      def("a0", Physics::a0,
+          "Returns the Bhor radius in A, nm, m, or cm" );
+      def("Hartree", Physics::Hartree,
+          "Returns the Hartree energy in eV, Rydberg, or Hartree" );
+      def("Rydberg", Physics::Rydberg,
+          "Returns the Rydberg energy in eV, Rydberg, or Hartree" );
     }
 
   }
 } // namespace LaDa
 
-BOOST_PYTHON_MODULE(Physics)
+BOOST_PYTHON_MODULE(physics)
 {
   LaDa::Python::expose_physics();
 }

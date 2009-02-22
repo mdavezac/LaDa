@@ -9,11 +9,11 @@ AM_CPPFLAGS = -I $(top_srcdir) @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
 AM_LDFLAGS =  @BOOST_LDFLAGS@ @BOOST_PYTHON@
 
 EXTRA_DIST = $(CE_PYTHON_H) 
-lib_LTLIBRARIES = libpyce.la 
-libpyce_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
-libpyce_la_SOURCES = $(CE_PYTHON_CC) 
-libpyce_la_LDFLAGS = $(AM_LDFLAGS) -Bshared 
-libpyce_la_LIBADD =  ../libce.la 
+pkgpyexec_LTLIBRARIES = _ce.la 
+_ce_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
+_ce_la_SOURCES = $(CE_PYTHON_CC) 
+_ce_la_LDFLAGS = $(AM_LDFLAGS) -module
+_ce_la_LIBADD =  ../libce.la 
 ../libce.la:
 	cd ../; $(MAKE) libce.la
 endif
