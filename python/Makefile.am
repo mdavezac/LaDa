@@ -4,32 +4,35 @@
 include $(top_srcdir)/Files
 AM_CPPFLAGS = -I $(top_srcdir) @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
 	      @MPI_CFLAGS@ @BOOST_CXXFLAGS@ -I@PYTHON_INCLUDE_DIR@
-AM_LDFLAGS = @TINYXML_LIBS@  @BOOST_LDFLAGS@ @BOOST_PYTHON@ @BOOST_FS@  \
-             @BOOST_MPI@ @BOOST_SERIALIZATION@ @BOOST_MPI_PYTHON@
+AM_LDFLAGS = @BOOST_LDFLAGS@ @BOOST_PYTHON@ @TINYXML_LIBS@ @BOOST_FS@  
+if DOMPI
+  AM_LDFLAGS += @BOOST_SERIALIZATION@ @BOOST_MPI@ 
+endif
 
-
-# lib_LTLIBRARIES = lib_python_lada.la 
-# lib_python_lada_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
-# lib_python_lada_la_SOURCES = $(PYTHON_CC) $(CECC) $(ESCANCC) $(VFFCC) 
-# lib_python_lada_la_LDFLAGS = $(AM_LDFLAGS) -Bshared 
-# lib_python_lada_la_LIBADD = ../crystal/libcrystal.la \
-#		      ../atat/libatat.la \
-#		      ../opt/libpythonconvenience.la \
-#		      ../physics/libphysics.la \
-#		      ../print/libprint.la 
+EXTRA_DIST = $(PYTHON_H)
+lib_LTLIBRARIES = libpython_lada.la 
+libpython_lada_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
+libpython_lada_la_SOURCES = 
+libpython_lada_la_LDFLAGS = $(AM_LDFLAGS)
+libpython_lada_la_LIBADD = ../crystal/libcrystal.la \
+                            ../atat/libatat.la \
+                            ../opt/libpythonconvenience.la \
+                            ../physics/libphysics.la \
+                            ../print/libprint.la 
 
 pythonextensions = opt physics atat crystal minimizer 
 if DOCE
   pythonextensions += ce
-  lib_python_lada_la_LIBADD += ../ce/libce.la 
+  libpython_lada_la_LIBADD += ../ce/libce.la 
 endif 
-if DOPYTHONPESCAN
-  pythonextensions += escan
-  lib_python_lada_la_LIBADD += ../escan/libescan.la 
-endif
 if DOVFF
   pythonextensions += vff
-  lib_python_lada_la_LIBADD += ../vff/libvff.la 
+  libpython_lada_la_LIBADD += ../vff/libvff.la ../minimizer/libminimizer.la
+endif
+if DOPYTHONPESCAN
+  pythonextensions += escan
+  libpython_lada_la_LDFLAGS += @FCLIBS@ @LD_IAGA_FLAGS@
+  libpython_lada_la_LIBADD += ../pescan_interface/libescan.la 
 endif
 
 if DOPYTHONPESCAN
@@ -85,7 +88,7 @@ clean-local:
 ../atat/libatat.la: 
 	cd ../atat; $(MAKE) libatat.la
 
-../atat/libphysic.la: 
+../physics/libphysics.la: 
 	cd ../physics; $(MAKE) libphysics.la
 
 ../mpi/libmpiobject.la:

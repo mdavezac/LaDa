@@ -148,9 +148,7 @@ namespace LaDa
       namespace bfs = boost::filesystem;
 
       // some consistency checking
-      std::cout << structure << "\n";
       __ASSERT( not structure.lattice, "Lattice has not been set.\n" )
-      std::cout << structure.lattice->cell << "\n";
       if ( structure.lattice->get_nb_sites() != 2 )
       { 
         std::cerr << "Cannot do vff on this lattice.\n" 

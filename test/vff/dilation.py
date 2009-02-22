@@ -42,9 +42,7 @@ def main():
   functional = vff.LayeredVff()
   functional.structure.fromXML( "input.xml" )
   structure =  crystal.Structure( functional.structure )
-  print functional.structure.lattice();
   functional.fromXML( "input.xml" )
-  return;
   functional.init()
 
   length = 50

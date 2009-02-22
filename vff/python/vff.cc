@@ -25,7 +25,6 @@ namespace LaDa
       template<class T_TYPE>
         void Vff_from_XML(T_TYPE &_type, const std::string &_filename )
         {
-          std::cout << "lattice: " << *_type.structure.lattice << "\n";
           TiXmlDocument doc( _filename ); 
           TiXmlHandle docHandle( &doc ); 
         
@@ -36,7 +35,6 @@ namespace LaDa
           __DOASSERT( not docHandle.FirstChild("Job").Element(),
                       "Could not find <Job> tag in " << _filename << ".\n" )
          
-          std::cout << "type: " << _type.structure << "\n";
           __DOASSERT( not _type.Load( *docHandle.FirstChild("Job").Element() ),
                          "Could not load Vff functional from " + _filename + ".\n" )
         }

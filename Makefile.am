@@ -38,9 +38,9 @@ endif
 if DOMODELS
   MODELSDIR = models
 endif
-SUBDIRS = $(MPISUBDIR) atat physics opt minimizer crystal print $(CEDIR) $(VFFSUBDIR) \
+SUBDIRS = $(PYTHONDIR) $(MPISUBDIR) atat physics opt minimizer crystal print $(CEDIR) $(VFFSUBDIR) \
 	  $(PESCANSUBDIR) $(LAPACKDIR) $(DARWINSUBDIR) $(SEPARABLEDIR) \
-	  $(PYTHONDIR) factory $(MODELSDIR)
+	  factory $(MODELSDIR)
 revision.h: force
 	@cd $(top_srcdir); scripts/max_revision.pl
 force: ;
