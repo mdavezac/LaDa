@@ -16,6 +16,7 @@
 #include <opt/types.h>
 #include <mpi/mpi_object.h>
 #include <opt/initial_path.h>
+#include <crystal/fourier.h>
 
 #include "bandgap.h"
 

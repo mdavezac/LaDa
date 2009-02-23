@@ -16,6 +16,7 @@
 
 #include <crystal/lattice.h>
 #include <crystal/structure.h>
+#include <crystal/fourier.h>
 #include <revision.h>
 #include <opt/debug.h>
 #include <opt/bpo_macros.h>

@@ -91,45 +91,6 @@ namespace LaDa
       }
 
 
-    template<class T_R_IT, class T_K_IT>
-    Fourier :: Fourier( T_R_IT _rfirst, T_R_IT _rend,
-                        T_K_IT _kfirst, T_K_IT _kend )
-    {
-      const std::complex<types::t_real>
-         imath(0, -2*3.1415926535897932384626433832795028841971693993751058208);
-      
-      for (; _kfirst != _kend; ++_kfirst)
-      {
-        _kfirst->type = std::complex<types::t_real>(0);
-        for(T_R_IT i_r( _rfirst ); i_r != _rend; ++i_r )
-        {
-          _kfirst->type +=   exp( imath * ( i_r->pos[0] * _kfirst->pos[0] +
-                                            i_r->pos[1] * _kfirst->pos[1] +
-                                            i_r->pos[2] * _kfirst->pos[2] ) )
-                           * i_r->type;
-        }
-      }
-    }
-    template<class T_R_IT, class T_K_IT, class T_O_IT >
-    Fourier :: Fourier( T_R_IT _rfirst, T_R_IT _rend,
-                        T_K_IT _kfirst, T_K_IT _kend,
-                        T_O_IT _rout ) // sets rvector values from kspace values
-    {
-      const types::t_complex
-         imath(0, 2*3.1415926535897932384626433832795028841971693993751058208);
-      for (; _rfirst != _rend; ++_rfirst, ++_rout)
-      {
-        *_rout = types::t_complex(0,0);
-        for(T_K_IT i_k=_kfirst; i_k != _kend; ++i_k)
-        {
-          *_rout +=   exp( imath * ( _rfirst->pos[0] * i_k->pos[0] +
-                                     _rfirst->pos[1] * i_k->pos[1] +
-                                     _rfirst->pos[2] * i_k->pos[2] ) )
-                    * i_k->type;
-        }
-      }
-    }
-
     template< class T_TYPE >
       void TStructure<T_TYPE> :: print_out (std::ostream &stream) const
       {
@@ -351,28 +312,5 @@ namespace LaDa
         }
    
       }
-
-    template< class T_FUNCTIONAL >
-      void enumerate_pifile( const std::string &_file, T_FUNCTIONAL &_op )
-      {
-        __DEBUGTRYBEGIN
-        Crystal :: Structure structure;
-        std::ifstream file( _file.c_str(), std::ifstream::in );
-        do
-        {
-          if( not Crystal :: read_pifile_structure( file, structure ) ) continue;
-          std::cout << "    @" << structure.name << " " 
-                    << structure.get_concentration()
-                    << " " << _op( structure ) << "\n";
-          foreach( Crystal::Structure::t_Atom &atom, structure.atoms )
-            atom.type = Fuzzy::gt( atom.type, 0e0 ) ? -1e0: 1e0;
-          std::cout << "   -@" << structure.name << " " 
-                    << structure.get_concentration()
-                    << " " << _op( structure ) << "\n";
-        }
-        while( not file.eof() );
-        __DEBUGTRYEND(, "Error while enumerating pifile.\n" )
-      }
-
   }
 } // namespace LaDa
