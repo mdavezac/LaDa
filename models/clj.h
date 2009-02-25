@@ -47,6 +47,9 @@ namespace LaDa
         bool Load( const TiXmlElement& _node );
     };
 
+    //! Creates a CLJ functional using same input as fortran.
+    void read_fortran_input( Clj &_clj, boost::filesystem &_path );
+
   } // namespace CLJ.
 } // namespace LaDa
 

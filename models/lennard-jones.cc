@@ -32,9 +32,7 @@ namespace LaDa
         t_Arg :: t_Atoms :: iterator i_force2 = i_force1 + 1;
         for( t_cit i_atom2( i_atom1 + 1 ); i_atom2 != i_atom_end; ++i_atom2, ++i_force2 )
         {
-          const std::string bondtype( i_atom2->type > i_atom1->type ?
-                                      i_atom2->type + i_atom1->type:
-                                      i_atom1->type + i_atom2->type );
+          const std::string bondtype( bondname( i_atom2->type, i_atom1->type ) );
 
           __DOASSERT( bonds_.end() != bonds_.find( bondtype ),
                       "Bond " + i_atom1->type + "-" + i_atom2->type + " does not exist.\n" )
@@ -127,7 +125,7 @@ namespace LaDa
       __DOASSERT( _node.Attribute( "vanderwalls" ), "Bond requires a vanderwalls attribute.\n" )
       const std::string A = Print :: StripEdges( _node.Attribute("A") );
       const std::string B = Print :: StripEdges( _node.Attribute("B") );
-      type = A > B ? A + B: B + A;
+      type = bondname(A, B);
       hard_sphere = boost::lexical_cast< types::t_real >( _node.Attribute("hard_sphere") );
       van_der_walls = boost::lexical_cast< types::t_real >( _node.Attribute("van_der_walls") );
     }

@@ -17,7 +17,6 @@
 #include <boost/spirit/include/classic_parser.hpp>
 #include <boost/spirit/include/classic_actions.hpp>
 #include <boost/spirit/include/classic_kleene_star.hpp>
-#include <boost/spirit/include/classic_kleene_star.hpp>
 #include <boost/spirit/include/classic_optional.hpp>
 #include <boost/spirit/include/classic_assign_actor.hpp>
 #include <boost/spirit/include/classic_sequence.hpp>

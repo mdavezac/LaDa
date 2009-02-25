@@ -49,6 +49,10 @@ namespace LaDa
         bool Load( const TiXmlElement& _node );
 
       protected:
+        //! Returns bond name from bond endpoints.
+        std::string bondname( const std::string &_a, const std::string &_a ) const 
+          { return _a > _b ? _a + " " +  _b: _b + " " + _a; }
+
         //! A structure holding the specie types.
         struct Bond;
         //! Type of the key used in the map.
