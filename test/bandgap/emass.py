@@ -2,17 +2,34 @@
 #
 # Version: $Id$
 #
+def compute_bandgap( _bandgap, _Evbm, _Ecbm ):
+  from lada import atat
+
+  oldnbstates = _bandgap.parameters.nbstates
+  if atat.norm2(_bandgap.parameters.kpoint) < 1e-6:
+    _bandgap.parameters.nbstates /= 2
+
+  result = []
+  _bandgap.parameters.Eref =  _Evbm
+  result.extend( sorted( get_values( _bandgap ) ) )
+  _bandgap.parameters.Eref =  _Ecbm
+  result.extend( sorted( get_values( _bandgap ) ) )
+  if atat.norm2(_bandgap.parameters.kpoint) < 1e-6:
+    result.extend( sorted( get_values( _bandgap ) ) )
+    result.sort()
+    _bandgap.parameters.nbstates = oldnbstates
+  return result
 
 def get_values( _escan ):
   _escan.run()
   return [ float(u) for u in _escan.eigenvalues ]
 
 def read_structure( _xmlinput ): 
-  import LaDa
+  from lada import crystal
 
-  lattice = LaDa.Lattice()
+  lattice = crystal.Lattice()
   lattice.fromXML( _xmlinput )
-  structure = LaDa.Structure()
+  structure = crystal.Structure()
   structure.fromXML( _xmlinput )
   return structure
 
@@ -23,88 +40,76 @@ def compute_distorted_kpoint( _original_cell, _distorted_cell, _kpoint ):
       position in a non-distorted lattice.
   """
 
-  import LaDa
+  from lada import atat 
 
-  distorted_kcell = LaDa.inv_rMatrix3d( LaDa.trans_rMatrix3d( _distorted_cell ) )
-  return distorted_kcell * LaDa.trans_rMatrix3d( _original_cell ) * _kpoint
+  distorted_kcell = atat.inverse( atat.transpose( _distorted_cell ) )
+  return distorted_kcell * atat.transpose( _original_cell ) * _kpoint
 
 def create_results( _xmlinput, _kpoint, _direction, _step, _nbval, _filename ):
 
-  import LaDa
   import pickle
+  from lada import crystal, vff, atat, escan
   import sys
   import boost.mpi as mpi
+  from math import sqrt
 
-  lattice = LaDa.Lattice()
+  lattice = crystal.Lattice()
   lattice.fromXML( _xmlinput )
-  vff = LaDa.Vff()
-  vff.structure.fromXML( _xmlinput )
-  structure =  LaDa.Structure( vff.structure )
+  func_vff = vff.Vff()
+  func_vff.structure.fromXML( _xmlinput )
+  structure =  crystal.Structure( func_vff.structure )
 
-  original_cell = LaDa.rMatrix3d( structure.cell )
+  original_cell = atat.rMatrix3d( structure.cell )
+  dirn = atat.rVector3d( _direction )
+  dirn = dirn * 1e0 / sqrt( atat.norm2(dirn) )
 
-  vff.fromXML( _xmlinput )
-  vff.init()
-  bandgap = LaDa.BandGap()
+  func_vff.fromXML( _xmlinput )
+  func_vff.init()
+  bandgap = escan.BandGap()
   bandgap.set_mpi( mpi.world )
   bandgap.fromXML( _xmlinput )
 
-  vff.evaluate()
-  distorted_cell = LaDa.rMatrix3d( vff.structure.cell )
+  func_vff.evaluate()
+  distorted_cell = atat.rMatrix3d( func_vff.structure.cell )
   bandgap.vff_inputfile = "atomic_config." + str( mpi.world.rank )
-  mpi.broadcast( mpi.world, vff.structure, 0 )
-  vff.print_escan_input( bandgap.vff_inputfile )
-  bandgap.scale = vff.structure
-  bandgap.evaluate( vff.structure )
-  gamma = LaDa.Bands(bandgap.bands)
+  mpi.broadcast( mpi.world, func_vff.structure, 0 )
+  func_vff.print_escan_input( bandgap.vff_inputfile )
+  bandgap.scale = func_vff.structure
+  bandgap.parameters.kpoint = compute_distorted_kpoint\
+                              (
+                                original_cell,
+                                distorted_cell,
+                                atat.rVector3d( _kpoint )
+                              )
+  bandgap.evaluate( func_vff.structure )
+  gamma = escan.Bands(bandgap.bands)
   bandgap.parameters.nbstates = 4
-  bandgap.parameters.method = LaDa.folded
+  bandgap.parameters.method = escan.folded
   result = []
 
+  dummy = [-range(1, _nbval)[-u] for u in range( 1, _nbval )];
+  dummy.append( 0 )
+  dummy.extend( range(1, _nbval) );
+  kpoints = [ 
+              compute_distorted_kpoint\
+              (
+                original_cell,
+                distorted_cell,
+                  atat.rVector3d( _kpoint )
+                + atat.rVector3d( _direction ) * float(_step) * float(u)
+              )
+              for  u in dummy 
+            ]
+
   # -kpoint
-  for i in [range(1, _nbval)[-u] for u in range( 1, _nbval )]:
-    bandgap.parameters.kpoint = compute_distorted_kpoint\
-                                (
-                                  original_cell,
-                                  distorted_cell,
-                                    LaDa.rVector3d( _kpoint )
-                                  + LaDa.rVector3d( _direction ) * float(-_step) * float(i)
-                                )
-    dummy = [ LaDa.rVector3d( bandgap.parameters.kpoint ) ]
-    bandgap.parameters.Eref =  gamma.vbm
-    dummy.extend( sorted( get_values( bandgap ) ) )
-    bandgap.parameters.Eref =  gamma.cbm
-    dummy.extend( sorted( get_values( bandgap ) ) )
+  for k in kpoints:
+    bandgap.parameters.kpoint = k
+    dummy = [ bandgap.parameters.kpoint * dirn - atat.rVector3d( _kpoint ) * dirn ]
+    dummy.extend( compute_bandgap( bandgap, gamma.vbm, gamma.cbm ) )
     result.append( dummy )
 
-  # gamma
-  bandgap.parameters.nbstates = 2
-  bandgap.parameters.kpoint = LaDa.rVector3d( [0,0,0] )
-  bandgap.parameters.Eref =  gamma.vbm
-  dummy = get_values( bandgap )
-  bandgap.parameters.Eref =  gamma.cbm
-  dummy.extend( get_values( bandgap ) )
-  dummy.extend( dummy )
-  dummy.sort()
-  dummy.insert( 0, LaDa.rVector3d( bandgap.parameters.kpoint ) )
-  result.append( dummy )
-  bandgap.parameters.nbstates = 4
-
-  # +kpoint
-  dummy = list( result[:len(result)-1] )
-  dummy.reverse()
-  result.extend( dummy )
-  for i in range( 1, _nbval ):
-    bandgap.parameters.kpoint = LaDa.rVector3d( _direction ) * float(_step) * float(i)
-    dummy = [ LaDa.rVector3d( bandgap.parameters.kpoint ) ]
-    bandgap.parameters.Eref =  gamma.vbm
-    dummy.extend( sorted( get_values( bandgap ) ) )
-    bandgap.parameters.Eref =  gamma.cbm
-    dummy.extend( sorted( get_values( bandgap ) ) )
-    result.append( dummy ) 
-
   file = open( _filename, "w" )
-  pickle.dump( (gamma, result), file )
+  pickle.dump( (gamma, atat.rVector3d(_kpoint), atat.rVector3d(_direction), result), file )
   file.close()
 
 def read_results( _filename):
@@ -117,14 +122,15 @@ def read_results( _filename):
 def print_results( filename ):
 
   from math import sqrt
-  import LaDa
+  from lada import physics, atat
 
-  (gamma, results) = read_results( filename )
+  (gamma, kpoint, direction, results) = read_results( filename )
+  print "# kpoint: ", kpoint,  "  -- direction: ", direction
   steps = len( results )
   for r in results[0:steps-1]:
-    string = "%f" % ( -sqrt(LaDa.norm2( r[0] )) )
+    string = "%f" % ( -sqrt(atat.norm2( r[0] )) )
     for u in r[1:]:
-      string = "%s %f" % ( string, u / LaDa.Hartree("eV")  )
+      string = "%s %f" % ( string, u / physics.Hartree("eV")  )
     print string
 # for r in results[steps-1:]:
 #   string = "%f" % ( sqrt(LaDa.norm2( r[0] )) )
@@ -136,17 +142,18 @@ def print_results( filename ):
 def interpolate_bands( _filename, _scale, _order = 2 ):
 
   from math import sqrt, pow, pi
-  import LaDa
+  from lada import atat, physics, minimizer
   
   print _scale
   kscale = 2e0 / _scale
-  (gamma, results) = read_results( _filename )
+  (gamma, kpoint, direction, results) = read_results( _filename )
+  print "# kpoint: ", kpoint,  "  -- direction: ", direction
   steps = len( results ) / 2 + 1
 # for band in range( 1, len( results[0] ) ):
   for band in range( 1, len( results[0] ) ):
     matrixA = [ \
                 [ \
-                  pow( -sqrt( LaDa.norm2( r[0] ) ) * kscale, i )\
+                  pow( -sqrt( atat.norm2( r[0] ) ) * kscale, i )\
                   for i in range(0, _order+1)  \
                 ]\
                 for r in results[:steps-1] \
@@ -161,10 +168,10 @@ def interpolate_bands( _filename, _scale, _order = 2 ):
         for r in results[steps-1:] \
       ] \
     )
-    vectorB = [ r[band] / LaDa.Hartree("eV") for r in results ]
+    vectorB = [ r[band] / physics.Hartree("eV") for r in results ]
     vectorX = [ 0 for r in range(0, _order+1) ]
-    ( x, resid, iter ) = LaDa.linear_lsq( A=matrixA, x=vectorX, b=vectorB, \
-                                          verbosity=0, tolerance = 1e-18, itermax = 10000 )
+    ( x, resid, iter ) = minimizer.linear_lsq( A=matrixA, x=vectorX, b=vectorB, \
+                                               verbosity=0, tolerance = 1e-18, itermax = 10000 )
 #   print "# ", x, resid, iter
 #   for a in range( -steps, steps + 1):
 #     u = float(a) / 100.0 
@@ -179,10 +186,10 @@ def main():
   scale = read_structure( "sigeemass.xml" ).scale 
   pickle_filename = "_si.0.01"
   create_results( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10, "_ge_gamma" )
-  create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,0.5,0.5], 0.01, 10, "_ge_Ll" )
-  create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,-0.5,0], 0.01, 10, "_ge_Lt" )
-  create_results( "sigeemass.xml", [1,0,0], [1,0,0], 0.01, 10, "_ge_Xl" )
-# print_results( pickle_filename )
+# create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,0.5,0.5], 0.01, 10, "_ge_Ll" )
+# create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,-0.5,0], 0.01, 10, "_ge_Lt" )
+# create_results( "sigeemass.xml", [1,0,0], [1,0,0], 0.01, 10, "_ge_Xl" )
+# print_results( "_ge_gamma" )
 # print_results( "_si_large_mesh" )
 # print_results( pickle_filename )
 # interpolate_bands( pickle_filename, scale, 3 )

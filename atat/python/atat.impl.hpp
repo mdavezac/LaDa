@@ -112,6 +112,24 @@ namespace LaDa
     } // namespace details
 
     template< class T_VECTOR >
+      T_VECTOR* empty_vector()
+      {
+        namespace bp = boost::python;
+        typedef typename vector_introspection< T_VECTOR > :: type type;
+        const size_t dim(  vector_introspection< T_VECTOR > :: dim );
+        return new T_VECTOR( 0,0,0 );
+      }
+    
+    template< class T_VECTOR >
+      T_VECTOR* copy_vector( const T_VECTOR &_o )
+      {
+        namespace bp = boost::python;
+        typedef typename vector_introspection< T_VECTOR > :: type type;
+        const size_t dim(  vector_introspection< T_VECTOR > :: dim );
+        return new T_VECTOR( _o );
+      }
+
+    template< class T_VECTOR >
       T_VECTOR* make_vector( boost::python::object &_o )
       {
         namespace bp = boost::python;
@@ -134,6 +152,23 @@ namespace LaDa
       }
 
     template< class T_MATRIX >
+      T_MATRIX* empty_matrix()
+      {
+        namespace bp = boost::python;
+        typedef typename matrix_introspection< T_MATRIX > :: type type;
+        const size_t dim(  matrix_introspection< T_MATRIX > :: dim );
+        T_MATRIX *result = new T_MATRIX; result->zero();
+        return result; 
+      }
+    template< class T_MATRIX >
+      T_MATRIX* copy_matrix( const T_MATRIX &_o )
+      {
+        namespace bp = boost::python;
+        typedef typename matrix_introspection< T_MATRIX > :: type type;
+        const size_t dim(  matrix_introspection< T_MATRIX > :: dim );
+        return new T_MATRIX(_o);
+      }
+    template< class T_MATRIX >
       T_MATRIX* make_matrix( boost::python::object &_o )
       {
         namespace bp = boost::python;
@@ -144,12 +179,6 @@ namespace LaDa
         {
           const size_t size( bp::len( _o ) );
           __DOASSERT( size != dim and size != 1, "Incorrect size.\n" )
-          try // copying
-          { 
-            *result = bp::extract<T_MATRIX>( _o );
-            return result; 
-          }
-          catch( ... ) {}
           for( size_t i=0; i < dim; ++i )
           {
             const boost::python::object object = bp::extract<bp::object>( _o[i] );
@@ -176,10 +205,10 @@ namespace LaDa
         typedef typename vector_introspection< T_VECTOR > :: init init;
         const size_t dim(  vector_introspection< T_VECTOR > :: dim );
         // expose atat vector.
-        bp::class_< T_VECTOR>( ("details" + _name).c_str(), 
-                               (   "Hidden object to be created with "
-                                 + _name + " factory function.").c_str(),
-                               init() )
+        bp::class_< T_VECTOR>( _name.c_str(), _docstring.c_str() )
+            .def( "__init__", bp::make_constructor( make_vector<T_VECTOR> ) )
+            .def( "__init__", bp::make_constructor( copy_vector<T_VECTOR> ) )
+            .def( "__init__", bp::make_constructor( empty_vector<T_VECTOR> ) )
             .def( bp::self + bp::other< T_VECTOR >() ) 
             .def( bp::other< T_VECTOR >() + bp::self ) 
             .def( bp::self - bp::other< T_VECTOR >() ) 
@@ -214,9 +243,10 @@ namespace LaDa
         typedef typename matrix_introspection< T_MATRIX > :: pickle pickle;
         const size_t dim(  matrix_introspection< T_MATRIX > :: dim );
         // expose atat vector.
-        bp::class_< T_MATRIX>( ("details" + _name).c_str(),
-                               (   "Hidden object to be created with "
-                                 + _name + " factory function.").c_str() )
+        bp::class_< T_MATRIX>( _name.c_str(), _docstring.c_str() )
+            .def( "__init__", bp::make_constructor( make_matrix<T_MATRIX> ) )
+            .def( "__init__", bp::make_constructor( copy_matrix<T_MATRIX> ) )
+            .def( "__init__", bp::make_constructor( empty_matrix<T_MATRIX> ) )
             .def( bp::self + bp::other< T_MATRIX >() ) 
             .def( bp::other< T_MATRIX >() + bp::self ) 
             .def( bp::self - bp::other< T_MATRIX >() ) 
@@ -235,9 +265,6 @@ namespace LaDa
             .def( "__len__", &details::getmlength<T_MATRIX> ) 
             .def( "__str__", &details::print<T_MATRIX> )
             .def_pickle( pickle() );
-
-        bp::def( _name.c_str(), &make_matrix< T_MATRIX >, 
-                 bp::return_value_policy<bp::manage_new_object>(), _docstring.c_str() );
       }
 
   }
