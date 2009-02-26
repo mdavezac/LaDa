@@ -226,9 +226,6 @@ namespace LaDa
             .def( "__str__", &details::print<T_VECTOR> )
             .def_pickle( pickle() );
 
-        bp::def( _name.c_str(), &make_vector< T_VECTOR >, 
-                 bp::return_value_policy<bp::manage_new_object>(),
-                 _docstring.c_str() );
         bp::def( "norm2", &details::norm2<T_VECTOR>,
                  bp::arg("vec"),
                  ("Returns squared euclidian-norm of an " + _name + " object.").c_str() );
