@@ -19,8 +19,6 @@
 #include <gsl/gsl_multimin.h>
 #include <tinyxml/tinyxml.h>
 
-#include <opt/algorithms.h>
-
 #include "gsl.h"
 #include "variant.h"
 
@@ -222,12 +220,11 @@ namespace LaDa
       
           gsl_vector *minx = gsl_multimin_fdfminimizer_x( solver );
           types::t_unsigned i(0);
-          opt::concurrent_loop
-          (
-            _arg.begin(), _arg.end(), i,
-            bl::_1 = bl::bind( &gsl_vector_get, minx, bl::_2 )
-          );
-   
+          typename T_CONTAINER :: iterator i_arg = _arg.begin();
+          typename T_CONTAINER :: iterator i_arg_end = _arg.end();
+          for( size_t i(0); i_arg != i_arg_end; ++i_arg, ++i )
+            *i_arg = gsl_vector_get(minx, i);
+
           gsl_multimin_fdfminimizer_free (solver);
 
           

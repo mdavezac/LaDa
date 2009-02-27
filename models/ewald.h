@@ -15,20 +15,24 @@
 #include <crystal/atom.h>
 #include <crystal/structure.h>
 #include <opt/types.h>
+#include "python/clj.hpp"
 
 
 namespace LaDa
 {
   namespace Models
   {
+    //! \cond
+    class Clj;
+    void read_fortran_input( Clj&, const boost::filesystem::path& );
+    //! \endcond
+
     //! \brief Interface to fortran ewald sum routine.
     //! \details Ad-hoc implementation for Clj functional.
     class Ewald
     {
-      //! Type of the key used in the map.
-      typedef std::string Key;
-      //! Type of the container of atomic charges.
-      typedef std::map< Key, types::t_int > t_Charges;
+      FRIEND_EXPOSE_CLJ
+      friend  void read_fortran_input( Clj&, const boost::filesystem::path&);
       public:
         //! Argument type.
         typedef Crystal :: TStructure< std::string > t_Arg;
@@ -50,6 +54,10 @@ namespace LaDa
         bool Load( const TiXmlElement& _node );
 
       protected:
+        //! Type of the key used in the map.
+        typedef std::string Key;
+        //! Type of the container of atomic charges.
+        typedef std::map< Key, types::t_int > t_Charges;
 
         //! Contains all atomic species.
         t_Charges charges_;

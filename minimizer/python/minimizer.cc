@@ -35,10 +35,10 @@ namespace LaDa
           TYPE get_ ## NAME () const { return NAME ## _; }\
           void set_ ## NAME( const TYPE& _ ## NAME ) \
           {\
-            _ ## NAME = NAME ## _;\
+            NAME ## _ = _ ## NAME; \
             __TRYBEGIN \
             load_(); \
-            __TRYEND(,"Could not set parameter " + #NAME + ".\n") \
+            __TRYEND(,"Could not set parameter " #NAME ".\n") \
           }
 
         __GETSET__( std::string, type)
@@ -47,16 +47,17 @@ namespace LaDa
         __GETSET__( types::t_real, linetolerance )
         __GETSET__( types::t_real, linestep )
         __GETSET__( std::string, strategy )
-        __GETSET__( bool, verbose_ )
+        __GETSET__( bool, verbose )
 #       undef __GETSET__
 
         Function :: t_Return operator()( const Function& _function,
-                                         const Function :: t_Arg& _arg ) const 
+                                         Function :: t_Arg& _arg ) const 
           { return minimizer_( _function, _arg ); }
         void set( const std::string& _type, 
                   types::t_real _tolerance, 
                   size_t _itermax, 
                   types::t_real _linetolerance,
+                  types::t_real _linestep,
                   const std::string& _strategy,
                   bool _verbose )
         {
@@ -94,13 +95,13 @@ namespace LaDa
     void Minimizer :: load_()
     {
       TiXmlElement fakexml( "Minimizer" );
-      fakexml.SetAttribute( "type", minimizer_type );
-      fakexml.SetDoubleAttribute( "tolerance", tolerance );
-      fakexml.SetAttribute( "itermax", itermax );
-      fakexml.SetDoubleAttribute( "linetolerance", linetol );
-      fakexml.SetDoubleAttribute( "linestep", linestep );
-      fakexml.SetAttribute( "strategy", strategy );
-      fakexml.SetAttribute( "verbose", verbosity >= outermin ? "true": "false" );
+      fakexml.SetAttribute( "type", type_ );
+      fakexml.SetDoubleAttribute( "tolerance", tolerance_ );
+      fakexml.SetAttribute( "itermax", itermax_ );
+      fakexml.SetDoubleAttribute( "linetolerance", linetolerance_ );
+      fakexml.SetDoubleAttribute( "linestep", linestep_ );
+      fakexml.SetAttribute( "strategy", strategy_ );
+      fakexml.SetAttribute( "verbose", verbose_ );
       __DOASSERT( not minimizer_.Load( fakexml ), "Could not load minimizer " << type_ << ".\n" )
     }
 

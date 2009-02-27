@@ -177,6 +177,10 @@ AH_TEMPLATE([__DOVFF])
 if test x$vff = xtrue; then
   AC_DEFINE([__DOVFF],[],[])
 fi
+AH_TEMPLATE([__DOPYTHON])
+if test x$python = xtrue; then
+  AC_DEFINE([__DOPYTHON],[],[])
+fi
 AH_TEMPLATE([__DOPYTHONESCAN])
 if test x$pescan$python$direct_iaga = xtruetruetrue; then
   AC_DEFINE([__DOPYTHONESCAN],[],[])

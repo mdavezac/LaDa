@@ -292,6 +292,18 @@ namespace LaDa
     //! Returns concentration over set site.
     types::t_real concentration( const Structure& _structure, const size_t i );
 
+    //! Returns the tag for freezing coordinate i, j of structure cell.
+    inline types::t_unsigned cell_freeze_tag( const size_t i, const size_t j )
+    {
+      if( i == 0 and j == 0 ) return Structure :: FREEZE_XX;
+      if( (i == 0 and j == 1) or (i == 1 and j == 0) ) return Structure :: FREEZE_XY;
+      if( (i == 0 and j == 2) or (i == 2 and j == 0) ) return Structure :: FREEZE_XZ;
+      if( i == 1 and j == 1 ) return Structure :: FREEZE_YY;
+      if( i == 1 and j == 2 ) return Structure :: FREEZE_YZ;
+      if( i == 2 and j == 2 ) return Structure :: FREEZE_ZZ;
+      return 0;
+    };
+
   } // namespace Crystal
 
 } // namespace LaDa

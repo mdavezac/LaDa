@@ -10,6 +10,7 @@
 
 #include <map>
 
+#include <boost/filesystem/path.hpp>
 #include <boost/tuple/tuple.hpp>
 
 #include <tinyxml/tinyxml.h>
@@ -17,16 +18,24 @@
 #include <crystal/atom.h>
 #include <crystal/structure.h>
 #include <opt/types.h>
+#include "python/clj.hpp"
 
 
 namespace LaDa
 {
   namespace Models
   {
+    //! \cond
+    class Clj;
+    void read_fortran_input( Clj&, const boost::filesystem::path& );
+    //! \endcond
+
     //! \brief A LennardJones model functional.
     //! \details Ad-hoc implementation for Clj functional.
     class LennardJones
     {
+      FRIEND_EXPOSE_CLJ
+      friend  void read_fortran_input( Clj&, const boost::filesystem::path&);
       public:
         //! Argument type.
         typedef Crystal :: TStructure< std::string > t_Arg;
@@ -53,7 +62,7 @@ namespace LaDa
         typedef std::string Key;
 
         //! Returns bond name from bond endpoints.
-        Key bondname( const Key &_a, const Key &_a ) const 
+        static Key bondname( const Key &_a, const Key &_b )
           { return _a > _b ? _a + " " +  _b: _b + " " + _a; }
         //! Extracts atom A from bond name.
         Key extract_atomA( const Key &_key ) const
@@ -90,7 +99,7 @@ namespace LaDa
       Bond() {};
       //! Constructor.
       Bond   ( const types::t_real &_hs, const types::t_real &_vdw )
-             : type( _t ), hard_sphere( _hs ), van_der_walls( _vdw ) {}
+             : hard_sphere( _hs ), van_der_walls( _vdw ) {}
       //! Copy Constructor.
       Bond   ( const Bond& _c )
              : hard_sphere( _c.hard_sphere ), van_der_walls( _c.van_der_walls ) {}

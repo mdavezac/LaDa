@@ -153,7 +153,7 @@ namespace LaDa
           result = false;
         }
 
-      _DOASSERT( not result, "" );
+      __DOASSERT( not result, "" );
     }
 
   } // namespace CLJ

@@ -9,9 +9,11 @@ ATAT_H  = findsym.h  integer.h  xtalutil.h lambda.impl.h \
 ATAT_PYTHON_H = atat.impl.hpp atatintrospection.hpp atatoperators.hpp
 ATAT_PYTHON_CC = atat.cc 
 
-MODELS_CLJ_CC = fortran.cc  clj.cc ewald.cc lennard-jones.cc
-MODELS_CLJ_H = fortran.h wrapper.h clj.h ewald.h lennard-jones.h
-MODELS_CLJ_DOC = $(MODELS_CLJ_H) $(MODELS_CLJ_CC)
+FC_MODELS_CLJ_CC = fortran.cc 
+FC_MODELS_CLJ_H = fortran.h wrapper.h 
+MODELS_CLJ_CC =  clj.cc ewald.cc lennard-jones.cc
+MODELS_CLJ_H = wrapper.h clj.h ewald.h lennard-jones.h
+MODELS_CLJ_DOC = $(FC_MODELS_CLJ_H) $(FC_MODELS_CLJ_CC) $(MODELS_CLJ_H) $(MODELS_CLJ_CC)
 MODELS_PYTHON_H = clj.hpp
 MODELS_PYTHON_CC = python.cc clj.cc
 

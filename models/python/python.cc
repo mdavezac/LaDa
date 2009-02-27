@@ -5,7 +5,8 @@
 # include <config.h>
 #endif
 
-#include <boost/module.hpp>
+#include <boost/python.hpp>
+#include <boost/python/module.hpp>
 
 #include "clj.hpp"
 

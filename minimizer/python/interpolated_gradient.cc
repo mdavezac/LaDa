@@ -5,6 +5,7 @@
 # include <config.h>
 #endif
 
+#include <boost/python/def.hpp>
 
 #include "../cgs.h"
 #include "../interpolated_gradient.h"
@@ -15,22 +16,22 @@ namespace LaDa
 {
   namespace Python
   {
-    void interpolate_gradient( const Function &_function, 
-                               const Function :: t_Arg &_arg, 
-                               boost :: python :: list &_gradient, 
-                               const size_t _n, 
-                               const Function :: t_Return _stepsize,
-                               const size_t _itermax,
-                               const types::t_real _tolerance,
-                               const bool _verbose )
+    void interpolated_gradient( const Function &_function, 
+                                const Function :: t_Arg &_arg, 
+                                boost :: python :: list &_gradient, 
+                                const size_t _n, 
+                                const Function :: t_Return _stepsize,
+                                const size_t _itermax,
+                                const types::t_real _tolerance,
+                                const bool _verbose )
     {
       typedef Fitting :: Cgs t_Cgs;
       typedef Function t_Function;
       t_Cgs cgs;
       cgs.verbose = _verbose;
-      cgs.itermmax = _itermax;
+      cgs.itermax = _itermax;
       cgs.tolerance = _tolerance;
-      typedef boost::remove_pointer<t_Function :: t_GradientArg :: type t_Type;
+      typedef boost::remove_pointer<t_Function :: t_GradientArg > :: type t_Type;
       std::vector< t_Type > gradient( _arg.size(), 0 );
       
       Minimizer :: interpolated_gradient< t_Function, t_Cgs >
