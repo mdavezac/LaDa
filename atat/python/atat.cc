@@ -6,6 +6,8 @@
 #endif
 
 
+#include <boost/python/module_init.hpp>
+
 #include "atat.impl.hpp"
 
 using namespace boost::python;

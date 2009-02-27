@@ -27,7 +27,7 @@ if DOCE
 endif 
 if DOVFF
   pythonextensions += vff
-  libpython_lada_la_LIBADD += ../vff/libvff.la ../minimizer/libminimizer.la
+  libpython_lada_la_LIBADD += ../vff/libvff.la 
 endif
 if DOPYTHONPESCAN
   pythonextensions += escan
@@ -42,6 +42,16 @@ if DOPYTHONPESCAN
   liblada_la_FFLAGS = $(FCFLAGS) @IAGA_FCFLAGS@
 endif
 
+if DOMODELS
+  pythonextensions += models 
+  libpython_lada_la_LIBADD += ../models/libmodels.la 
+endif
+
+if DOMINIMIZER
+  pythonextensions += minimizer 
+  libpython_lada_la_LIBADD += ../minimizer/libminimizer.la
+endif
+
 pkgpyexec_PYTHON = __init__.py
 force: ;
 __init__.py: force
@@ -52,33 +62,6 @@ __init__.py: force
 	 done
 clean-local:
 	-rm -f __init__.py
-
-
-# if DOCE
-#   CECC=$(PYTHON_CE_CC)
-#   CEH=$(PYTHON_CE_H)
-#   CELIB=../ce/libce.la
-#   pythonextensions += ce
-# endif 
-
-# if DOPYTHONPESCAN
-#   ESCANCC=$(PYTHON_ESCAN_CC)
-#   ESCANH=$(PYTHON_ESCAN_H)
-#   ESCANLIB= ../mpi/libmpiobject.la ../pescan_interface/libescan.la \
-#             @LD_IAGA_FLAGS@
-#   AM_CPPFLAGS += @MINUIT_CFLAGS@ @GSL_CFLAGS@
-#   AM_LDFLAGS += @FCLIBS@ 
-#   pythonextensions += escan
-# endif
-
-# if DOVFF
-#   VFFCC=$(PYTHON_VFF_CC)
-#   VFFH=$(PYTHON_VFF_H)
-#   VFFLIB=../print/libprint.la ../minimizer/libminimizer.la ../vff/libvff.la
-#   AM_CPPFLAGS += @MINUIT_CFLAGS@ @GSL_CFLAGS@
-#   AM_LDFLAGS += @MINUIT_LIBS@ @GSL_LIBS@ 
-#   pythonextensions += vff
-# endif
 
 # EXTRA_DIST = $(PYTHON_H) $(PYTHON_CE_H) $(PYTHON_VFF_H) $(PYTHON_ESCAN_H)
 
@@ -114,3 +97,6 @@ clean-local:
 
 ../print/libprint.la: 
 	cd ../print; $(MAKE) libprint.la
+
+../models/libmodels.la: 
+	cd ../models; $(MAKE) libmodels.la

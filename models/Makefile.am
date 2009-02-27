@@ -43,3 +43,5 @@ clj_LDADD = librelaxer.la  @BOOST_PROGOP@
 
 ../crystal/libcrystal.la:
 	cd ../crystal; $(MAKE) libcrystal.la
+
+SUBDIRS = python

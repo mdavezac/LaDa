@@ -11,8 +11,8 @@
 
 #include <boost/python/class.hpp>
 #include <boost/python/object.hpp>
-#include <boost/python/dict.hpp>
-#include <boost/python/remove_pointer.hpp>
+#include <boost/python/list.hpp>
+#include <boost/type_traits/remove_pointer.hpp>
 
 #include <opt/debug.h>
 
@@ -33,28 +33,29 @@ namespace LaDa
         Function( const boost :: python :: object &_object ) : object_( _object ) {}
         //! callable operator.
         t_Return operator()( const t_Arg& _arg ) const
-          { return object_( _arg ); }
+        {
+          const boost::python::object result( object_( _arg ) );
+          return boost::python::extract< t_Return>( result  ); }
         //! calls gradient.
-        t_Return operator()( const t_Arg& _arg, t_GradientArg _gradient ) const
+        t_Return gradient( const t_Arg& _arg, t_GradientArg _gradient ) const
         {
           namespace bp = boost :: python;
-          const bp::dict &dict( object_.attr("__dict__") );
           // copy to gradient
-          bp::list gradient;
+          bp::list grad;
           t_GradientArg i_grad( _gradient );
           const size_t n(_arg.size() ); 
-          for( size_t i(0); i < n; ++i, ++i_grad ) list.append( *i_grad );
+          for( size_t i(0); i < n; ++i, ++i_grad ) grad.append( *i_grad );
           // calls gradient function.
-          object_.attr("gradient")( _arg, gradient );
+          object_.attr("gradient")( _arg, grad );
           // copies gradient back
-          i_grad( _gradient );
+          i_grad = _gradient;
           for( size_t i(0); i < n; ++i, ++i_grad )
-            *i_grad = boost::remove_pointer< t_GradientArg > :: type >( list[i] );
+            *i_grad = bp::extract< boost::remove_pointer< t_GradientArg > :: type >( grad[i] );
         }
 
       protected:
         //! References an object.
-        const boost :: python :: object& _object;
+        const boost :: python :: object& object_;
     };
   }
 } // namespace LaDa

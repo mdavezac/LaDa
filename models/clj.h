@@ -45,6 +45,10 @@ namespace LaDa
 
         //! Loads parameters from XML.
         bool Load( const TiXmlElement& _node );
+
+      protected:
+        //! Checks coherency between Ewald and LennardJones.
+        void check_coherency() const;
     };
 
     //! Creates a CLJ functional using same input as fortran.

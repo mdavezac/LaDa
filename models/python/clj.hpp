@@ -2,8 +2,8 @@
 //  Version: $Id$
 //
 
-#ifndef _LADA_PYTHON_STRUCTURE_HPP_
-#define _LADA_PYTHON_STRUCTURE_HPP_
+#ifndef _LADA_PYTHON_CLJ_HPP_
+#define _LADA_PYTHON_CLJ_HPP_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -13,7 +13,7 @@ namespace LaDa
 {
   namespace Python
   {
-    void expose_structure();
+    void expose_clj();
   }
 } // namespace LaDa
 #endif

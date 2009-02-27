@@ -31,27 +31,44 @@ namespace LaDa
                       strategy_( "fast" ),
                       verbose_( false ) {}
 
-#       define __getset__ ( TYPE, NAME ) \
+#       define __GETSET__( TYPE, NAME ) \
           TYPE get_ ## NAME () const { return NAME ## _; }\
           void set_ ## NAME( const TYPE& _ ## NAME ) \
           {\
             _ ## NAME = NAME ## _;\
             __TRYBEGIN \
             load_(); \
-            __TRYEND(,"Could not set parameter " ## NAME ## " ") \
+            __TRYEND(,"Could not set parameter " + #NAME + ".\n") \
           }
 
-        __getset__( std::string, type)
-        __getset__( types::t_real, tolerance )
-        __getset__( size_t, itermax )
-        __getset__( types::t_real, linetolerance )
-        __getset__( types::t_real, linestep )
-        __getset__( std::string, strategy )
-#       undef __getset__
+        __GETSET__( std::string, type)
+        __GETSET__( types::t_real, tolerance )
+        __GETSET__( size_t, itermax )
+        __GETSET__( types::t_real, linetolerance )
+        __GETSET__( types::t_real, linestep )
+        __GETSET__( std::string, strategy )
+        __GETSET__( bool, verbose_ )
+#       undef __GETSET__
 
         Function :: t_Return operator()( const Function& _function,
                                          const Function :: t_Arg& _arg ) const 
           { return minimizer_( _function, _arg ); }
+        void set( const std::string& _type, 
+                  types::t_real _tolerance, 
+                  size_t _itermax, 
+                  types::t_real _linetolerance,
+                  const std::string& _strategy,
+                  bool _verbose )
+        {
+          type_ = _type;
+          tolerance_ = _tolerance;
+          itermax_ = _itermax;
+          linetolerance_ = _linetolerance;
+          linestep_ = _linestep;
+          strategy_ = _strategy;
+          verbose_ = _verbose;
+          load_();
+        }
 
       protected:
         void load_();
@@ -90,18 +107,38 @@ namespace LaDa
     void expose_minimizer()
     {
       namespace bp = boost::python;
-      bp::class_< Minimizer >( "Minimizer" )
-#       define __getset__(NAME, DOC) \
+      bp::class_< Minimizer >
+      ( 
+         "Minimizer",
+         "Will minimizer a function object. The function object must be callable,\n"
+         "and must define a gradient function as well.\n"
+         "The minimizer can be chosen from any of gsl, original vff, and minuit2 minimizers.\n"
+      )
+#       define __GETSET__(NAME, DOC) \
           .add_property( #NAME, &Minimizer::get_ ## NAME, &Minimizer::set_ ## NAME, DOC )
-        __getset__( type, "" )
-        __getset__( tolerance, "" )
-        __getset__( itermax, "" )
-        __getset__( linetolerance, "" )
-        __getset__( linestep, "" )
-        __getset__( strategy, "" )
-        __getset__( verbose, "" )
-#       undef __getset__
-        .def( "__call__", &Minimizer::operator() );
+        __GETSET__( type, "Name of the minimizer to use." )
+        __GETSET__( tolerance, "Convergence criteria." )
+        __GETSET__( itermax, "Maximum number of iterations." )
+        __GETSET__( linetolerance, "Line tolerance for conjugate-gradient methods." )
+        __GETSET__( linestep, "Line steo for conjugate-gradient methods." )
+        __GETSET__( strategy, "slowest/slow/fast strategies for Minuit2 minimizers." )
+        __GETSET__( verbose, "If true, will print verbose output." )
+#       undef __GETSET__
+        .def( "__call__", &Minimizer::operator() )
+        .def(
+              "set", &Minimizer::set, 
+              (
+                bp::arg("type") = "gsl_bfgs2",
+                bp::arg("convergence") = 1e-6,
+                bp::arg("itermax") = 50,
+                bp::arg("linetolerance") = 1e-2,
+                bp::arg("linestep") = 1e-1,
+                bp::arg("strategy") = "slow",
+                bp::arg("verbose") = false
+              ),
+              "Sets parameters for the optimizers. "
+              "Not all parameters are needed by all optimizers."
+            );
     }
   } // namespace Python
 } // namespace LaDa

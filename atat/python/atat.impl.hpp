@@ -10,13 +10,12 @@
 #include <algorithm>
 #include <stdexcept>
 
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <boost/lambda/lambda.hpp>
-#include <boost/python.hpp>
-#include <boost/python/object.hpp>
-#include <boost/python/tuple.hpp>
-#include <boost/python/list.hpp>
 #include <boost/lexical_cast.hpp>
+
+#include <boost/python.hpp>
+#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
+
 
 #include <opt/types.h>
 #include <opt/debug.h>
@@ -129,8 +128,8 @@ namespace LaDa
         return new T_VECTOR( _o );
       }
 
-    template< class T_VECTOR >
-      T_VECTOR* make_vector( boost::python::object &_o )
+    template< class T_VECTOR, class T_TYPE >
+      T_VECTOR* make_vector( T_TYPE &_o )
       {
         namespace bp = boost::python;
         typedef typename vector_introspection< T_VECTOR > :: type type;
@@ -206,9 +205,11 @@ namespace LaDa
         const size_t dim(  vector_introspection< T_VECTOR > :: dim );
         // expose atat vector.
         bp::class_< T_VECTOR>( _name.c_str(), _docstring.c_str() )
-            .def( "__init__", bp::make_constructor( make_vector<T_VECTOR> ) )
+            .def( "__init__", bp::make_constructor( make_vector<T_VECTOR, boost::python::list> ) )
+            .def( "__init__", bp::make_constructor( make_vector<T_VECTOR, boost::python::tuple> ) )
             .def( "__init__", bp::make_constructor( copy_vector<T_VECTOR> ) )
             .def( "__init__", bp::make_constructor( empty_vector<T_VECTOR> ) )
+            .def( "__init__", bp::make_constructor( vector_introspection<T_VECTOR>::make_new ) )
             .def( bp::self + bp::other< T_VECTOR >() ) 
             .def( bp::other< T_VECTOR >() + bp::self ) 
             .def( bp::self - bp::other< T_VECTOR >() ) 

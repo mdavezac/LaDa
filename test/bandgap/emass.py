@@ -15,7 +15,7 @@ def compute_bandgap( _bandgap, _Evbm, _Ecbm ):
   _bandgap.parameters.Eref =  _Ecbm
   result.extend( sorted( get_values( _bandgap ) ) )
   if atat.norm2(_bandgap.parameters.kpoint) < 1e-6:
-    result.extend( sorted( get_values( _bandgap ) ) )
+    result.extend( result )
     result.sort()
     _bandgap.parameters.nbstates = oldnbstates
   return result
@@ -81,6 +81,7 @@ def create_results( _xmlinput, _kpoint, _direction, _step, _nbval, _filename ):
                                 distorted_cell,
                                 atat.rVector3d( _kpoint )
                               )
+  korigin = atat.rVector3d( bandgap.parameters.kpoint )
   bandgap.evaluate( func_vff.structure )
   gamma = escan.Bands(bandgap.bands)
   bandgap.parameters.nbstates = 4
@@ -103,8 +104,8 @@ def create_results( _xmlinput, _kpoint, _direction, _step, _nbval, _filename ):
 
   # -kpoint
   for k in kpoints:
-    bandgap.parameters.kpoint = k
-    dummy = [ bandgap.parameters.kpoint * dirn - atat.rVector3d( _kpoint ) * dirn ]
+    bandgap.parameters.kpoint = atat.rVector3d( k )
+    dummy = [ bandgap.parameters.kpoint * dirn - atat.rVector3d( korigin ) * dirn ]
     dummy.extend( compute_bandgap( bandgap, gamma.vbm, gamma.cbm ) )
     result.append( dummy )
 
@@ -126,11 +127,10 @@ def print_results( filename ):
 
   (gamma, kpoint, direction, results) = read_results( filename )
   print "# kpoint: ", kpoint,  "  -- direction: ", direction
-  steps = len( results )
-  for r in results[0:steps-1]:
-    string = "%f" % ( -sqrt(atat.norm2( r[0] )) )
+  for r in results:
+    string = "%f" % ( r[0] )
     for u in r[1:]:
-      string = "%s %f" % ( string, u / physics.Hartree("eV")  )
+      string = "%s %f" % ( string, u )
     print string
 # for r in results[steps-1:]:
 #   string = "%f" % ( sqrt(LaDa.norm2( r[0] )) )
@@ -144,40 +144,27 @@ def interpolate_bands( _filename, _scale, _order = 2 ):
   from math import sqrt, pow, pi
   from lada import atat, physics, minimizer
   
-  print _scale
   kscale = 2e0 / _scale
   (gamma, kpoint, direction, results) = read_results( _filename )
   print "# kpoint: ", kpoint,  "  -- direction: ", direction
   steps = len( results ) / 2 + 1
-# for band in range( 1, len( results[0] ) ):
   for band in range( 1, len( results[0] ) ):
     matrixA = [ \
                 [ \
-                  pow( -sqrt( atat.norm2( r[0] ) ) * kscale, i )\
+                  pow( r[0], i )\
                   for i in range(0, _order+1)  \
                 ]\
-                for r in results[:steps-1] \
+                for r in results \
               ]
-    matrixA.extend\
-    ( \
-      [ \
-        [ \
-          pow( sqrt( LaDa.norm2( r[0] ) ) * kscale , i ) \
-          for i in range(0, _order+1)  \
-        ]\
-        for r in results[steps-1:] \
-      ] \
-    )
-    vectorB = [ r[band] / physics.Hartree("eV") for r in results ]
+    vectorB = [ r[band] for r in results ]
     vectorX = [ 0 for r in range(0, _order+1) ]
     ( x, resid, iter ) = minimizer.linear_lsq( A=matrixA, x=vectorX, b=vectorB, \
                                                verbosity=0, tolerance = 1e-18, itermax = 10000 )
-#   print "# ", x, resid, iter
-#   for a in range( -steps, steps + 1):
-#     u = float(a) / 100.0 
-#     print u, sum( [ x[i]*pow(u,i) for i in range(0, _order+1) ] )
-#   print "&"
-    print "# ", 0.5/x[2]
+    print "# ", x, resid, iter
+    for a in results:
+      print a[0], sum( [ x[i]*pow(a[0],i) for i in range(0, _order+1) ] )
+    print "&"
+    print "# ", 0.5/x[2] 
 
 def main():
   # from sys import exit
@@ -186,13 +173,14 @@ def main():
   scale = read_structure( "sigeemass.xml" ).scale 
   pickle_filename = "_si.0.01"
   create_results( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10, "_ge_gamma" )
-# create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,0.5,0.5], 0.01, 10, "_ge_Ll" )
-# create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,-0.5,0], 0.01, 10, "_ge_Lt" )
-# create_results( "sigeemass.xml", [1,0,0], [1,0,0], 0.01, 10, "_ge_Xl" )
-# print_results( "_ge_gamma" )
+  create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,0.5,0.5], 0.01, 10, "_ge_Ll" )
+  create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,-0.5,0], 0.01, 10, "_ge_Lt" )
+  create_results( "sigeemass.xml", [1,0,0], [1,0,0], 0.01, 10, "_ge_Xl" )
+# print_results( "_ge_Ll" )
+# print_results( "_ge_Ll" )
+# interpolate_bands( "_ge_Ll", scale, 3 )
 # print_results( "_si_large_mesh" )
 # print_results( pickle_filename )
-# interpolate_bands( pickle_filename, scale, 3 )
 
 #   for i,r in enumerate( matrixA ):
 #     print r[1], vectorB[i]

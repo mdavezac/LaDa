@@ -103,10 +103,11 @@ namespace LaDa
       for(; child; child = child->NextSiblingElement( "Bond" ) )
       {
         Bond bond;
-        if( not bond.Load( *child ) ) return false;
-        __DOASSERT( bonds_.end() != bonds_.find( bond.type ),
+        std::string type("");
+        if( not bond.Load( *child, type ) ) return false;
+        __DOASSERT( bonds_.end() != bonds_.find( type ),
                     "Duplicate bond type.\n" )
-        bonds_[bond.type] = bond;
+        bonds_[type] = bond;
       }
        
       // reads attributes.
@@ -116,7 +117,7 @@ namespace LaDa
       return true;
     }
 
-    bool LennardJones :: Bond :: Load( const TiXmlElement& _node )
+    bool LennardJones :: Bond :: Load( const TiXmlElement& _node, std::string &_type )
     {
       __ASSERT( _node.Value() != "Bond", "Incorrect XML node.\n" )
       __DOASSERT( _node.Attribute( "A" ), "Bond requires an A attribute.\n" )
@@ -125,9 +126,34 @@ namespace LaDa
       __DOASSERT( _node.Attribute( "vanderwalls" ), "Bond requires a vanderwalls attribute.\n" )
       const std::string A = Print :: StripEdges( _node.Attribute("A") );
       const std::string B = Print :: StripEdges( _node.Attribute("B") );
-      type = bondname(A, B);
+      _type = bondname(A, B);
       hard_sphere = boost::lexical_cast< types::t_real >( _node.Attribute("hard_sphere") );
       van_der_walls = boost::lexical_cast< types::t_real >( _node.Attribute("van_der_walls") );
+    }
+
+
+    void LennardJones :: check_coherency() const
+    {
+      std::vector< std::string > lj;
+      t_Bonds :: const_iterator i_bond = bonds_.begin();
+      t_Bonds :: const_iterator i_bond_end = bonds_.end();
+      for(; i_bond != i_bond_end; ++i_bond) 
+      {
+        const std::string A( LennardJones :: extract_atomA( i_bond->first ) );
+        const std::string B( LennardJones :: extract_atomB( i_bond->first ) );
+        if( lj.end() == std::find( lj.begin(), lj.end(), A ) ) lj.push_back( A );
+        if( lj.end() == std::find( lj.begin(), lj.end(), B ) ) lj.push_back( B );
+      }
+      bool result = true;
+      foreach( const Key &A, lj )
+        foreach( const Key &B, lj )
+        {
+          if( bonds_.find( bondname(A, B) ) != bonds_.end() ) continue;
+          std::cerr << "Bond " + bondname( A, B ) + " does not exist.\n";
+          result = false;
+        }
+
+      _DOASSERT( not result, "" );
     }
 
   } // namespace CLJ

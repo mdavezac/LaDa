@@ -25,7 +25,8 @@ namespace LaDa
         static boost::python::tuple getinitargs( t_Vector const& _w) 
           { return boost::python::make_tuple( _w[0], _w[1], _w[2] ); }
       };
-
+      static t_Vector* make_new( type _a, type _b, type _c )
+        { return new t_Vector( _a, _b, _c ); }
     };
     template<> struct vector_introspection< atat::iVector3d >
     {
@@ -38,6 +39,8 @@ namespace LaDa
         static boost::python::tuple getinitargs( t_Vector const& _w) 
           { return boost::python::make_tuple( _w[0], _w[1], _w[2] ); }
       };
+      static t_Vector* make_new( type _a, type _b, type _c )
+        { return new t_Vector( _a, _b, _c ); }
 
     };
     template<> struct vector_introspection< atat::rVector2d >
@@ -51,6 +54,8 @@ namespace LaDa
         static boost::python::tuple getinitargs( t_Vector const& _w) 
           { return boost::python::make_tuple( _w[0], _w[1] ); }
       };
+      static t_Vector* make_new( type _a, type _b )
+        { return new t_Vector( _a, _b ); }
     };
     template<> struct vector_introspection< atat::iVector2d >
     {
@@ -63,6 +68,8 @@ namespace LaDa
         static boost::python::tuple getinitargs( t_Vector const& _w) 
           { return boost::python::make_tuple( _w[0], _w[1] ); }
       };
+      static t_Vector* make_new( type _a, type _b )
+        { return new t_Vector( _a, _b ); }
     };
 
     template< class T_VECTOR > struct matrix_introspection;

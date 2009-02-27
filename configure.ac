@@ -273,6 +273,7 @@ AM_CONDITIONAL(DOPYTHONPESCAN, test x$python$pescan$direct_iaga = xtruetruetrue)
 AM_CONDITIONAL(DOPYTHON, test x$python = xtrue)
 AM_CONDITIONAL(DOSEPARABLE, test x$separable = xtrue)
 AM_CONDITIONAL(DOMODELS, test x$models = xtrue)
+AM_CONDITIONAL(DOMINIMIZER, test xtrue = xtrue)
 
 
 #  eo libs iff galib is enabled 
@@ -360,7 +361,7 @@ AC_OUTPUT(Makefile atat/Makefile atat/python/Makefile physics/Makefile physics/p
           pescan_interface/python/Makefile
           print/Makefile lapack/Makefile separable/Makefile ce/Makefile ce/python/Makefile
           python/Makefile separable/fixedlattice/Makefile factory/Makefile
-          minimizer/Makefile minimizer/python/Makefile models/Makefile )
+          minimizer/Makefile minimizer/python/Makefile models/Makefile models/python/Makefile )
 
 echo ""; echo ""
 echo "Will Compile following modules: "

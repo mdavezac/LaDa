@@ -12,6 +12,8 @@ ATAT_PYTHON_CC = atat.cc
 MODELS_CLJ_CC = fortran.cc  clj.cc ewald.cc lennard-jones.cc
 MODELS_CLJ_H = fortran.h wrapper.h clj.h ewald.h lennard-jones.h
 MODELS_CLJ_DOC = $(MODELS_CLJ_H) $(MODELS_CLJ_CC)
+MODELS_PYTHON_H = clj.hpp
+MODELS_PYTHON_CC = python.cc clj.cc
 
 DARWIN_GRAPH_CC = graph/graph.cc
 DARWIN_GRAPH_IMPL_H = graph/breeders.impl.h graph/comm.impl.h graph/evaluation.impl.h \
@@ -196,8 +198,8 @@ MINIMIZER_CC = gsl_lsq.cc gsl.cc gsl_nllsq.cc gsl_mins.cc gsl_simplex.cc frprmn.
                decoupled.cc minuit2.cc 
 MINIMIZER_F90 =  df1dim.f90  frprmn_fortran.f90  linmin.f90
 MINIMIZER_DOC = $(MINIMIZER_H) $(MINIMIZER_CC)
-MINIMIZER_PYTHON_H = cgs.hpp
-MINIMIZER_PYTHON_CC = cgs.cc python.cc
+MINIMIZER_PYTHON_H = cgs.hpp minimizer.hpp interpolated_gradient.hpp function.hpp
+MINIMIZER_PYTHON_CC = python.cc cgs.cc minimizer.cc interpolated_gradient.cc
 
 SEPARABLE_CC = cefitting.cc  main.cc ce.cc
 SEPARABLE_H = boolean.h cefitting.h ce.h lsq.h separable.h collapse.h \

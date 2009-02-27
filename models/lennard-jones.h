@@ -49,14 +49,24 @@ namespace LaDa
         bool Load( const TiXmlElement& _node );
 
       protected:
+        //! Type of the key used in the map.
+        typedef std::string Key;
+
         //! Returns bond name from bond endpoints.
-        std::string bondname( const std::string &_a, const std::string &_a ) const 
+        Key bondname( const Key &_a, const Key &_a ) const 
           { return _a > _b ? _a + " " +  _b: _b + " " + _a; }
+        //! Extracts atom A from bond name.
+        Key extract_atomA( const Key &_key ) const
+          { return _key.substr( 0, _key.find( " " ) ); }
+        //! Extracts atom B from bond name.
+        Key extract_atomB( const Key &_key ) const
+          { return _key.substr( _key.find( " " ) ); }
+
+        //! Makes sure that bonds are coherently declared.
+        void check_coherency() const;
 
         //! A structure holding the specie types.
         struct Bond;
-        //! Type of the key used in the map.
-        typedef std::string Key;
         //! Type of the container of atomic species.
         typedef std::map< Key, Bond > t_Bonds;
 
@@ -72,10 +82,6 @@ namespace LaDa
 
     struct LennardJones :: Bond
     {
-      //! Type of the atomic mass.
-      typedef std::string t_Type;
-      //! Atomic Mass.
-      t_Type type;
       //! Hard sphere parameter.
       types::t_real hard_sphere;
       //! van der Walls parameter.
@@ -83,13 +89,13 @@ namespace LaDa
       //! Constructor.
       Bond() {};
       //! Constructor.
-      Bond   ( const t_Type &_t, const types::t_real &_hs, const types::t_real &_vdw )
+      Bond   ( const types::t_real &_hs, const types::t_real &_vdw )
              : type( _t ), hard_sphere( _hs ), van_der_walls( _vdw ) {}
       //! Copy Constructor.
       Bond   ( const Bond& _c )
-             : type( _c.type ), hard_sphere( _c.hard_sphere ), van_der_walls( _c.van_der_walls ) {}
+             : hard_sphere( _c.hard_sphere ), van_der_walls( _c.van_der_walls ) {}
       //! Loads parameters from XML.
-      bool Load( const TiXmlElement& _node );
+      bool Load( const TiXmlElement& _node, std::string &_type );
     };
 
   } // namespace CLJ.

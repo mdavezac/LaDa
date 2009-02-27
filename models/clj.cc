@@ -83,7 +83,8 @@ namespace LaDa
       const size_t nbspecies( boost::lexical_cast< size_t >(line) );
 
       // Atomic types
-      __DOASSERT( nbspecies == 0, "Number of species set to zero in input " + _path.string() + ".\n" )
+      __DOASSERT( nbspecies == 0,
+                  "Number of species set to zero in input " + _path.string() + ".\n" )
       std::vector< atomic_species > species;
       for( size_t i(0); i < nbspecies; ++i )
       {
@@ -109,7 +110,8 @@ namespace LaDa
       }
       
       // Bond types
-      __DOASSERT( nbspecies == 0, "Number of species set to zero in input " + _path.string() + ".\n" )
+      __DOASSERT( nbspecies == 0,
+                  "Number of species set to zero in input " + _path.string() + ".\n" )
       std::vector< bond_type > bonds;
       for( size_t i(0); i < nbspecies * nbspecies; ++i )
       {
@@ -163,8 +165,7 @@ namespace LaDa
       std::getline( file, line );
       __DOASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
        
-      __DOASSERT( boost::lexical_types<types::t_real>( Print::StripEdges( line ) ) != 1e0,
-                  "No pegs factor implemented.\n" )
+      const types::t_real pegs( boost::lexical_types<types::t_real>( Print::StripEdges( line ) ) );
 
       // Now converts to Ewald.
       Ewald :: charges_.clear(); 
@@ -196,7 +197,7 @@ namespace LaDa
         const types::t_real radius6( radius * radius * radius );
         const types::t_real radius12( radius6 * radius6 );
         LennardJones[ bondtype ].hard_sphere = radius12 * bond.epsilon;
-        LennardJones[ bondtype ].van_der_walls = radius6 * bond.epsilon;
+        LennardJones[ bondtype ].van_der_walls = radius6 * bond.epsilon * pegs;
       }
 
       // Hard coded in fortran.
@@ -205,6 +206,53 @@ namespace LaDa
       boost::tuples::get<2>(mesh) = 3;
 
       __TRYEND(, "Could not parse input.\n" )
+    }
+
+    void Clj :: check_coherency() const
+    {
+      LennardJones :: check_coherency();
+      std::vector< std::string > ewald;
+      Ewald :: t_Charges :: const_iterator i_ewal = Ewald :: charges_.begin();
+      Ewald :: t_Charges :: const_iterator i_ewal_end = Ewald :: charges_.end();
+      for(; i_ewald != i_ewald_end; ++i_ewald) 
+        ewald.push_back( i_ewald->first );
+
+      std::vector< std::string > lj;
+      LennardJones :: t_Bonds :: const_iterator i_bond = LennardJones :: bonds_.begin();
+      LennardJones :: t_Bonds :: const_iterator i_bond_end = LennardJones :: bonds_.end();
+      for(; i_bond != i_bond_end; ++i_bond) 
+      {
+        const std::string A( LennardJones :: extract_atomA( i_bond->first ) );
+        const std::string B( LennardJones :: extract_atomB( i_bond->first ) );
+        if( lj.end() == std::find( lj.begin(), lj.end(), A ) ) lj.push_back( A );
+        if( lj.end() == std::find( lj.begin(), lj.end(), B ) ) lj.push_back( B );
+      }
+
+      bool result = true;
+      std::sort( ewald.begin(), ewald.end() );
+      std::sort( lj.begin(), lj.end() );
+      std::vector<std::string> diff;
+      std::set_difference( ewald.begin, ewal.end(), lj.begin(), lj.end(),
+                           std::back_inserter( diff ) );
+      if( diff.size() != 0 )
+      {
+        result = false;
+        std::cerr << "These atomic types are present in Ewald sum, but not in LennardJones.\n";
+        std::for_each( diff.begin(), diff.end(), std::cerr << bl::_1 << bl::constant( " " ) );
+        std::cerr << "\n";
+      }
+      diff.clear();
+      std::set_difference( lj.begin(), lj.end(), ewald.begin, ewal.end(), 
+                           std::back_inserter( diff ) );
+      if( diff.size() != 0 )
+      {
+        result = false;
+        std::cerr << "These atomic types are present in LennardJones sum, "
+                     "but not in Ewald sum.\n";
+        std::for_each( diff.begin(), diff.end(), std::cerr << bl::_1 << bl::constant( " " ) );
+        std::cerr << "\n";
+      }
+      _DOASSERT( not result, "" );
     }
   } // namespace CLJ
 } // namespace LaDa

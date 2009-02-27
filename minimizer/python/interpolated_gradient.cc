@@ -30,7 +30,8 @@ namespace LaDa
       cgs.verbose = _verbose;
       cgs.itermmax = _itermax;
       cgs.tolerance = _tolerance;
-      std::vector< boost::remove_pointer<t_Function :: t_GradientArg> :: type > gradient( _arg.size(), 0 );
+      typedef boost::remove_pointer<t_Function :: t_GradientArg :: type t_Type;
+      std::vector< t_Type > gradient( _arg.size(), 0 );
       
       Minimizer :: interpolated_gradient< t_Function, t_Cgs >
       (

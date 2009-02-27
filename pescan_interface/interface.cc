@@ -494,7 +494,7 @@ namespace LaDa
         small_box = multiple_cell == mesh ? t_MeshTuple(0,0,0): multiple_cell;
         if( child->Attribute("smallbox") )
         {
-          __DOASSERT( not opt::tuples::read( child->Attribute("small_box"), small_box ),
+          __DOASSERT( not opt::tuples::read( child->Attribute("smallbox"), small_box ),
                       "Could not parse smallbox attribute.\n" )
         }
 
