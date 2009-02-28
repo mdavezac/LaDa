@@ -178,16 +178,16 @@ namespace LaDa
       const types::t_real pegs( boost::lexical_cast<types::t_real>( Print::StripEdges( line ) ) );
 
       // Now converts to Ewald.
-      _clj.Ewald::charges_.clear(); 
+      _clj.Ewald::charges.clear(); 
       foreach( const details::atomic_specie & specie, species )
       {
         __DOASSERT( Physics::Atomic::Symbol( specie.atomic_number ) == "error",
                     "Unknow atomic number " << specie.atomic_number << ", please complain.\n" )
-        _clj.Ewald::charges_[ Physics::Atomic::Symbol( specie.atomic_number ) ] = specie.charge;
+        _clj.Ewald::charges[ Physics::Atomic::Symbol( specie.atomic_number ) ] = specie.charge;
       }
 
       // Now converts to LJ.
-      _clj.LennardJones::bonds_.clear();
+      _clj.LennardJones::bonds.clear();
       foreach( const details::bond_type & bond, bonds )
       {
         __DOASSERT( Physics::Atomic::Symbol( bond.a ) == "error",
@@ -207,15 +207,15 @@ namespace LaDa
              Physics::Atomic::Symbol( bond.a ) 
           )
         );
-        __ASSERT( _clj.LennardJones::bonds_.end() != _clj.LennardJones::bonds_.find( bondtype ),
+        __ASSERT( _clj.LennardJones::bonds.end() != _clj.LennardJones::bonds.find( bondtype ),
                   "Bond already exists.\n" )
         const details::atomic_specie A( *find( species.begin(), species.end(), bond.a ) );
         const details::atomic_specie B( *find( species.begin(), species.end(), bond.b ) );
         const types::t_real radius( ( A.radius + B.radius ) * bond.rsigma );
         const types::t_real radius6( radius * radius * radius );
         const types::t_real radius12( radius6 * radius6 );
-        _clj.LennardJones::bonds_[ bondtype ].hard_sphere = radius12 * bond.epsilon;
-        _clj.LennardJones::bonds_[ bondtype ].van_der_walls = radius6 * bond.epsilon * pegs;
+        _clj.LennardJones::bonds[ bondtype ].hard_sphere = radius12 * bond.epsilon;
+        _clj.LennardJones::bonds[ bondtype ].van_der_walls = radius6 * bond.epsilon * pegs;
       }
 
       // Hard coded in fortran.
@@ -231,14 +231,14 @@ namespace LaDa
       namespace bl = boost::lambda;
       LennardJones :: check_coherency();
       std::vector< std::string > ewald;
-      Ewald :: t_Charges :: const_iterator i_ewald = Ewald :: charges_.begin();
-      Ewald :: t_Charges :: const_iterator i_ewald_end = Ewald :: charges_.end();
+      Ewald :: t_Charges :: const_iterator i_ewald = Ewald :: charges.begin();
+      Ewald :: t_Charges :: const_iterator i_ewald_end = Ewald :: charges.end();
       for(; i_ewald != i_ewald_end; ++i_ewald) 
         ewald.push_back( i_ewald->first );
 
       std::vector< std::string > lj;
-      LennardJones :: t_Bonds :: const_iterator i_bond = LennardJones :: bonds_.begin();
-      LennardJones :: t_Bonds :: const_iterator i_bond_end = LennardJones :: bonds_.end();
+      LennardJones :: t_Bonds :: const_iterator i_bond = LennardJones :: bonds.begin();
+      LennardJones :: t_Bonds :: const_iterator i_bond_end = LennardJones :: bonds.end();
       for(; i_bond != i_bond_end; ++i_bond) 
       {
         const std::string A( LennardJones :: extract_atomA( i_bond->first ) );

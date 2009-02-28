@@ -21,7 +21,15 @@
 
 #include "ewald.h"
 #include "lennard-jones.h"
-#include "python/clj.hpp"
+
+#ifdef __DOPYTHON
+  namespace LaDa { namespace Python {
+    void expose_clj();
+  }}
+# define FRIEND_EXPOSE_CLJ friend void LaDa::Python::expose_clj();
+#else
+# define FRIEND_EXPOSE_CLJ 
+#endif
 
 namespace LaDa
 {
@@ -61,4 +69,5 @@ namespace LaDa
   } // namespace CLJ.
 } // namespace LaDa
 
+#undef FRIEND_EXPOSE_CLJ
 #endif // _VFF_FUNCTIONAL_H_

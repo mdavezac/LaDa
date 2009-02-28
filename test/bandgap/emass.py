@@ -144,27 +144,35 @@ def interpolate_bands( _filename, _scale, _order = 2 ):
   from math import sqrt, pow, pi
   from lada import atat, physics, minimizer
   
-  kscale = 2e0 / _scale
   (gamma, kpoint, direction, results) = read_results( _filename )
   print "# kpoint: ", kpoint,  "  -- direction: ", direction
-  steps = len( results ) / 2 + 1
+  start = 0
+  end = len( results ) - start
+  middle = len( results ) / 2 
   for band in range( 1, len( results[0] ) ):
     matrixA = [ \
                 [ \
                   pow( r[0], i )\
                   for i in range(0, _order+1)  \
                 ]\
-                for r in results \
+                for r in results[start:end] \
               ]
-    vectorB = [ r[band] for r in results ]
+    vectorB = [ r[band] for r in results[start:end] ]
     vectorX = [ 0 for r in range(0, _order+1) ]
+    for i in range( 0, len(results) ):
+      v = float(abs(i - middle))
+      if v == 0: continue
+      matrixA[i] = [ u / pow( v, 4 ) for u in matrixA[i] ]
+      vectorB[i] /= pow( v, 4) 
     ( x, resid, iter ) = minimizer.linear_lsq( A=matrixA, x=vectorX, b=vectorB, \
                                                verbosity=0, tolerance = 1e-18, itermax = 10000 )
-    print "# ", x, resid, iter
-    for a in results:
-      print a[0], sum( [ x[i]*pow(a[0],i) for i in range(0, _order+1) ] )
-    print "&"
-    print "# ", 0.5/x[2] 
+#   print "# ", x, resid, iter
+#   for a in results:
+#     print a[0], sum( [ x[i]*pow(a[0],i) for i in range(0, _order+1) ] )
+#   print "&"
+    mass =   physics.Hartree("eV") * 2e0 * pi * pi \
+           * physics.a0("A") * physics.a0("A") / _scale / _scale / x[2]
+    print "# ", mass
 
 def main():
   # from sys import exit
@@ -172,13 +180,15 @@ def main():
 
   scale = read_structure( "sigeemass.xml" ).scale 
   pickle_filename = "_si.0.01"
-  create_results( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10, "_ge_gamma" )
-  create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,0.5,0.5], 0.01, 10, "_ge_Ll" )
-  create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,-0.5,0], 0.01, 10, "_ge_Lt" )
-  create_results( "sigeemass.xml", [1,0,0], [1,0,0], 0.01, 10, "_ge_Xl" )
-# print_results( "_ge_Ll" )
-# print_results( "_ge_Ll" )
-# interpolate_bands( "_ge_Ll", scale, 3 )
+# create_results( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10, "_ge_gamma" )
+# create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,0.5,0.5], 0.01, 10, "_ge_Ll" )
+# create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,-0.5,0], 0.01, 10, "_ge_Lt" )
+# create_results( "sigeemass.xml", [1,0,0], [1,0,0], 0.01, 10, "_ge_Xl" )
+# print_results( "_ge_gamma" )
+# print_results( "_ge_gamma" )
+# print_results( "_ge_gamma" )
+# print_results( "_ge_Xl" )
+  interpolate_bands( "_ge_gamma", scale, 2 )
 # print_results( "_si_large_mesh" )
 # print_results( pickle_filename )
 

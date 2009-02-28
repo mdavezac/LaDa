@@ -107,8 +107,8 @@ namespace LaDa
         .def( bp :: map_indexing_suite< t_Bonds, true >() );
 
       bp::class_< Models::Clj >( "Clj", "Coulomb + LennardJones functional.\n" )
-        .def_readwrite( "charges", &Models::Clj::Ewald::charges_, "Dictionnary to charges." )
-        .def_readwrite( "bonds", &Models::Clj::LennardJones::bonds_, "Dictionnary to bond types." )
+       //.def_readwrite( "charges", &Models::Clj::Ewald::charges, "Dictionnary to charges." )
+       //.def_readwrite( "bonds", &Models::Clj::LennardJones::bonds, "Dictionnary to bond types." )
         .def("__call__", &Models::Clj::energy );
 
       bp::def

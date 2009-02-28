@@ -18,7 +18,6 @@
 #include <crystal/atom.h>
 #include <crystal/structure.h>
 #include <opt/types.h>
-#include "python/clj.hpp"
 
 
 namespace LaDa
@@ -34,18 +33,32 @@ namespace LaDa
     //! \details Ad-hoc implementation for Clj functional.
     class LennardJones
     {
-      FRIEND_EXPOSE_CLJ
       friend  void read_fortran_input( Clj&, const boost::filesystem::path&);
+      protected:
+        //! Cutoff mesh type.
+        typedef boost::tuple<types::t_int, types::t_int, types::t_int > t_MeshTuple;
+
       public:
+        //! A structure holding the specie types.
+        struct Bond;
+        //! Type of the key used in the map.
+        typedef std::string Key;
+        //! Type of the container of atomic species.
+        typedef std::map< Key, Bond > t_Bonds;
         //! Argument type.
         typedef Crystal :: TStructure< std::string > t_Arg;
         //! Return type.
         typedef types::t_real t_Return;
+
+
+        //! Contains all atomic species.
+        t_Bonds bonds;
+
         //! Constructor and Initializer
         LennardJones() {}
         //! Copy Constructor
         LennardJones   ( const LennardJones &_c )
-                     : bonds_(_c.bonds_), mesh_(_c.mesh_), rcut_(_c.rcut_) {}
+                     : bonds(_c.bonds), mesh_(_c.mesh_), rcut_(_c.rcut_) {}
         //! Destructor.
         ~LennardJones() {}
 
@@ -57,9 +70,17 @@ namespace LaDa
         //! Loads parameters from XML.
         bool Load( const TiXmlElement& _node );
 
+        //! Gets mesh for cutoff.
+        t_MeshTuple get_mesh() const { return mesh_; }
+        //! Sets mesh for cutoff.
+        void set_mesh( const t_MeshTuple &_t ) { mesh_ = _t; }
+        //! Gets cutoff.
+        types::t_real get_rcutoff() const { return rcut_; }
+        //! Sets cutoff.
+        void set_rcutoff(types::t_real _r) { rcut_ = _r; }
+
+
       protected:
-        //! Type of the key used in the map.
-        typedef std::string Key;
 
         //! Returns bond name from bond endpoints.
         static Key bondname( const Key &_a, const Key &_b )
@@ -74,15 +95,6 @@ namespace LaDa
         //! Makes sure that bonds are coherently declared.
         void check_coherency() const;
 
-        //! A structure holding the specie types.
-        struct Bond;
-        //! Type of the container of atomic species.
-        typedef std::map< Key, Bond > t_Bonds;
-
-        //! Contains all atomic species.
-        t_Bonds bonds_;
-        //! Cutoff mesh type.
-        typedef boost::tuple<types::t_int, types::t_int, types::t_int > t_MeshTuple;
         //! Cutoff mesh.
         t_MeshTuple mesh_;
         //! Real space cutoff.

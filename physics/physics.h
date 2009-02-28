@@ -91,6 +91,7 @@ namespace LaDa
       else if ( _str == "nm" ) return 5.29177249;
       else if ( _str == "m" )  return 0.529177249e-8;
       else if ( _str == "cm" ) return 0.529177249e-6;
+      else if ( _str == "au" or _str == "a.u." ) return 1e0;
       else throw std::runtime_error( "Unknown Unit for Bhor radius" );
     }
 

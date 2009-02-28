@@ -32,7 +32,7 @@ namespace LaDa
       __DOASSERT( _in.atoms.size() != _out.atoms.size(), "Incoherent structure size.\n" )
 
       const size_t natoms( _in.atoms.size() );
-      double charges[ natoms ];
+      double Qs[ natoms ];
       double positions[ natoms * 3 ], forces[ natoms * 3 ], cforces[ natoms * 3 ];
       double cell[ 9 ], stress[ 6 ];
       const double verbosity(0);
@@ -43,9 +43,9 @@ namespace LaDa
       t_cit i_atom = _in.atoms.begin();
       for( size_t i(0); i < natoms; ++i, ++i_atom )
       {
-        __ASSERT( charges_.find( i_atom->type ) == charges_.end(),
+        __ASSERT( charges.find( i_atom->type ) == charges.end(),
                   "Atomic charge does not exist.\n" )
-        charges[i] = charges_.find(i_atom->type)->second;
+        Qs[i] = charges.find(i_atom->type)->second;
         positions[ i*3 ]     = i_atom->pos[0];
         positions[ i*3 + 1 ] = i_atom->pos[1];
         positions[ i*3 + 2 ] = i_atom->pos[2];
@@ -64,7 +64,7 @@ namespace LaDa
         stress,       // stress
         &n,           // number of atoms
         positions,    // reduced atomic coordinates.
-        charges,      // atomic charges
+        Qs,           // atomic charges
         cell,         // cell vectors
         &n            // dimension of arrays.
       );
@@ -101,9 +101,9 @@ namespace LaDa
         const std::string type = Print::StripEdges( child->Attribute("type") );
         const types::t_real charge
           = boost::lexical_cast<types::t_real>( child->Attribute("charge") );
-        __DOASSERT( charges_.find( type ) != charges_.end(),
+        __DOASSERT( charges.find( type ) != charges.end(),
                     "Duplicate entry in Ewald functional for " + type + "\n" )
-        charges_[type] = charge;
+        charges[type] = charge;
       }
 
       return true;

@@ -34,9 +34,9 @@ namespace LaDa
         {
           const std::string bondtype( bondname( i_atom2->type, i_atom1->type ) );
 
-          __DOASSERT( bonds_.end() != bonds_.find( bondtype ),
+          __DOASSERT( bonds.end() != bonds.find( bondtype ),
                       "Bond " + i_atom1->type + "-" + i_atom2->type + " does not exist.\n" )
-          const Bond &bond( bonds_.find( bondtype )->second );
+          const Bond &bond( bonds.find( bondtype )->second );
           const types::t_real rcut_squared( rcut_ * rcut_ );
 
           const atat::rVector3d dfractional
@@ -99,15 +99,15 @@ namespace LaDa
 
       // reads bonds
       const TiXmlElement* child = opt::find_node( _node, "Bond");
-      bonds_.clear();
+      bonds.clear();
       for(; child; child = child->NextSiblingElement( "Bond" ) )
       {
         Bond bond;
         std::string type("");
         if( not bond.Load( *child, type ) ) return false;
-        __DOASSERT( bonds_.end() != bonds_.find( type ),
+        __DOASSERT( bonds.end() != bonds.find( type ),
                     "Duplicate bond type.\n" )
-        bonds_[type] = bond;
+        bonds[type] = bond;
       }
        
       // reads attributes.
@@ -135,8 +135,8 @@ namespace LaDa
     void LennardJones :: check_coherency() const
     {
       std::vector< std::string > lj;
-      t_Bonds :: const_iterator i_bond = bonds_.begin();
-      t_Bonds :: const_iterator i_bond_end = bonds_.end();
+      t_Bonds :: const_iterator i_bond = bonds.begin();
+      t_Bonds :: const_iterator i_bond_end = bonds.end();
       for(; i_bond != i_bond_end; ++i_bond) 
       {
         const std::string A( LennardJones :: extract_atomA( i_bond->first ) );
@@ -148,7 +148,7 @@ namespace LaDa
       foreach( const Key &A, lj )
         foreach( const Key &B, lj )
         {
-          if( bonds_.find( bondname(A, B) ) != bonds_.end() ) continue;
+          if( bonds.find( bondname(A, B) ) != bonds.end() ) continue;
           std::cerr << "Bond " + bondname( A, B ) + " does not exist.\n";
           result = false;
         }

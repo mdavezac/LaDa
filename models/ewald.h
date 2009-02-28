@@ -15,7 +15,6 @@
 #include <crystal/atom.h>
 #include <crystal/structure.h>
 #include <opt/types.h>
-#include "python/clj.hpp"
 
 
 namespace LaDa
@@ -31,17 +30,24 @@ namespace LaDa
     //! \details Ad-hoc implementation for Clj functional.
     class Ewald
     {
-      FRIEND_EXPOSE_CLJ
       friend  void read_fortran_input( Clj&, const boost::filesystem::path&);
       public:
+        //! Type of the key used in the map.
+        typedef std::string Key;
+        //! Type of the container of atomic charges.
+        typedef std::map< Key, types::t_int > t_Charges;
         //! Argument type.
         typedef Crystal :: TStructure< std::string > t_Arg;
         //! Return type.
         typedef types::t_real t_Return;
+
+        //! Contains all atomic species.
+        t_Charges charges;
+
         //! Constructor and Initializer
         Ewald() {}
         //! Copy Constructor
-        Ewald( const Ewald &_c ) : charges_(_c.charges_), cutoff_(_c.cutoff_) {}
+        Ewald( const Ewald &_c ) : charges(_c.charges), cutoff_(_c.cutoff_) {}
         //! Destructor.
         ~Ewald() {}
 
@@ -53,14 +59,12 @@ namespace LaDa
         //! Loads parameters from XML.
         bool Load( const TiXmlElement& _node );
 
-      protected:
-        //! Type of the key used in the map.
-        typedef std::string Key;
-        //! Type of the container of atomic charges.
-        typedef std::map< Key, types::t_int > t_Charges;
+        //! Sets real-space cutoff.
+        types::t_real get_rcutoff() const { return cutoff_; }
+        //! Sets real-space cutoff.
+        void set_rcutoff(types::t_real _r) { cutoff_ = _r; }
 
-        //! Contains all atomic species.
-        t_Charges charges_;
+      protected:
         //! Cutoff.
         types::t_real cutoff_;
     };
