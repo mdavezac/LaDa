@@ -16,7 +16,6 @@
 #include <boost/spirit/include/classic_assign_actor.hpp>
 #include <boost/spirit/include/classic_operators.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/lambda/core.hpp>
 
 #include <physics/physics.h>
@@ -42,7 +41,7 @@ namespace LaDa
       foreach( t_Arg :: t_Atom &atom, _out.atoms )
         atom.pos = atat::rVector3d(0,0,0);
 
-      _out.energy = Ewald::energy( _in, _out ) + LennardJones::energy( _in, _out );
+      _out.energy = LennardJones::energy( _in, _out );
       return _out.energy;
     }
 
@@ -74,7 +73,8 @@ namespace LaDa
       }
     }
 
-    void read_fortran_input( Clj &_clj, const boost::filesystem::path &_path )
+    void read_fortran_input( Clj &_clj, std::vector<std::string> &_atoms, 
+                             const boost::filesystem::path &_path )
     {
       __TRYBEGIN
 
@@ -85,17 +85,29 @@ namespace LaDa
                   _path << " is neither a regulare file nor a system link.\n" )
       std::ifstream file( _path.string().c_str(), std::ifstream::in );
       std::string line;
+
       __DOASSERT( file.bad(), "Could not open file " + _path.string() + "\n" );
       
       // Number of atomic species.
       std::getline( file, line );
       __DOASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
-      const size_t nbspecies( boost::lexical_cast< size_t >(line) );
+      size_t nbspecies;
+      __DOASSERT
+      (
+        not bsc::parse
+        (
+          line.c_str(),
+           bsc::uint_p[ bsc::assign_a( nbspecies ) ],
+           bsc::space_p
+        ).hit,
+        "Could not parse number of species.\n" 
+      )
 
       // Atomic types
       __DOASSERT( nbspecies == 0,
                   "Number of species set to zero in input " + _path.string() + ".\n" )
       std::vector< details::atomic_specie > species;
+      _atoms.clear();
       for( size_t i(0); i < nbspecies; ++i )
       {
         details::atomic_specie atom;
@@ -117,6 +129,9 @@ namespace LaDa
         __DOASSERT( species.end() != std::find( species.begin(), species.end(), atom ),
                     "Same specie specified twice.\n" )
         species.push_back( atom );
+        __DOASSERT( Physics::Atomic::Symbol(atom.atomic_number) == "error",
+                    "Unknown atom with z=" << atom.atomic_number << ". Please complain.\n" )
+        _atoms.push_back( Physics::Atomic::Symbol( atom.atomic_number ) );
       }
       
       // Bond types
@@ -162,20 +177,44 @@ namespace LaDa
       // lj real space cutoff
       std::getline( file, line );
       __DOASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
-      _clj.LennardJones::rcut_ = boost::lexical_cast<types::t_real>( Print::StripEdges( line ) );
-      __DOASSERT( _clj.LennardJones::rcut_ < 0e0, "Negative real space cutoff for LJ.\n" );
-
+      __DOASSERT
+      (
+        not bsc::parse
+        (
+          line.c_str(),
+           bsc::ureal_p[ bsc::assign_a( _clj.LennardJones::rcut_ ) ],
+           bsc::space_p
+        ).hit,
+        "Could not parse real-space cut-off for lj.\n" 
+      )
       // lj real space cutoff
       std::getline( file, line );
       __DOASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
-      _clj.Ewald::cutoff_ = boost::lexical_cast<types::t_real>( Print::StripEdges( line ) );
-      __DOASSERT( _clj.Ewald::cutoff_ < 0e0, "Negative real space cutoff for Ewald.\n" );
+      __DOASSERT
+      (
+        not bsc::parse
+        (
+          line.c_str(),
+           bsc::ureal_p[ bsc::assign_a( _clj.Ewald::cutoff_ ) ],
+           bsc::space_p
+        ).hit,
+        "Could not parse real-space cut-off for ewald.\n" 
+      )
 
       // PEGS.
       std::getline( file, line );
       __DOASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
-       
-      const types::t_real pegs( boost::lexical_cast<types::t_real>( Print::StripEdges( line ) ) );
+      types::t_real pegs;
+      __DOASSERT
+      (
+        not bsc::parse
+        (
+          line.c_str(),
+           bsc::ureal_p[ bsc::assign_a( pegs ) ],
+           bsc::space_p
+        ).hit,
+        "Could not parse real-space cut-off for ewald.\n" 
+      )
 
       // Now converts to Ewald.
       _clj.Ewald::charges.clear(); 

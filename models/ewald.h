@@ -21,16 +21,10 @@ namespace LaDa
 {
   namespace Models
   {
-    //! \cond
-    class Clj;
-    void read_fortran_input( Clj&, const boost::filesystem::path& );
-    //! \endcond
-
     //! \brief Interface to fortran ewald sum routine.
     //! \details Ad-hoc implementation for Clj functional.
     class Ewald
     {
-      friend  void read_fortran_input( Clj&, const boost::filesystem::path&);
       public:
         //! Type of the key used in the map.
         typedef std::string Key;

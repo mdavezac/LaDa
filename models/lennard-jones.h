@@ -24,16 +24,10 @@ namespace LaDa
 {
   namespace Models
   {
-    //! \cond
-    class Clj;
-    void read_fortran_input( Clj&, const boost::filesystem::path& );
-    //! \endcond
-
     //! \brief A LennardJones model functional.
     //! \details Ad-hoc implementation for Clj functional.
     class LennardJones
     {
-      friend  void read_fortran_input( Clj&, const boost::filesystem::path&);
       protected:
         //! Cutoff mesh type.
         typedef boost::tuple<types::t_int, types::t_int, types::t_int > t_MeshTuple;

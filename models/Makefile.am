@@ -12,7 +12,7 @@ AM_LDFLAGS = @BOOST_FS@ @BOOST_SYSTEM@ @GSL_LIBS@ @TINYXML_LIBS@ @FCLIBS@ @MINUI
 lib_LTLIBRARIES = librelaxer.la
 noinst_LTLIBRARIES = libmodels.la
 
-libmodels_la_SOURCES = $(MODELS_CLJ_CC)
+libmodels_la_SOURCES = $(MODELS_CLJ_CC) $(MODELS_CLJ_F90)
 libmodels_la_CPPFLAGS = $(AM_CPPFLAGS) 
 libmodels_ladir = $(includedir)/LaDa/models
 nobase_libmodels_la_HEADERS = $(MODELS_CLJ_H) 
@@ -20,8 +20,7 @@ nobase_libmodels_la_HEADERS = $(MODELS_CLJ_H)
 
 librelaxer_la_SOURCES = $(FC_MODELS_CLJ_CC)
 librelaxer_la_CPPFLAGS = $(AM_CPPFLAGS) 
-librelaxer_la_LIBADD = libmodels.la \
-                       ../crystal/libcrystal.la \
+librelaxer_la_LIBADD = ../crystal/libcrystal.la \
                        ../atat/libatat.la \
                        ../minimizer/libminimizer.la \
                        ../opt/libopt.la \
@@ -29,8 +28,8 @@ librelaxer_la_LIBADD = libmodels.la \
                        ../physics/libphysics.la
 
 bin_PROGRAMS = clj
-clj_SOURCES =  ep_com.f90 CLJ.f90 ewaldf.f90  force_lj_ewald.f90
-clj_LDADD = librelaxer.la  @BOOST_PROGOP@ 
+clj_SOURCES =  CLJ.f90 force_lj_ewald.f90
+clj_LDADD = libmodels.la librelaxer.la  @BOOST_PROGOP@ 
 
 
 ../minimizer/libminimizer.la: 

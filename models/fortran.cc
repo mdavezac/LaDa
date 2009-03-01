@@ -176,5 +176,3 @@ extern "C" void FC_FUNC_(call_relaxer, CALL_RELAXER)
   LaDa::Models::Relaxer& relaxer( handles[ *_handle ] ); 
   *_energy = relaxer( *_natoms, _occupations, _cell, _positions, _stress, _forces );
 }
-extern "C" double FC_FUNC_(boost_erfc, BOOST_ERFC)( const double *const _in )
-  { return boost::math::erfc( *_in ); }

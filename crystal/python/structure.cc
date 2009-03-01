@@ -52,16 +52,18 @@ namespace LaDa
 
     template<class T_TYPE> 
       void read_poscar( Crystal::TStructure<T_TYPE> &_struct, 
-                        const boost::filesystem::path &_path,
-                        const boost::python::object& _types )
+                        const boost::python::str& _path,
+                        const boost::python::list& _types )
       {
+        const std::string str = boost::python::extract<std::string>( _path );
+        const boost::filesystem::path path( str );
         namespace bp = boost::python;
         const size_t nb( bp::len( _types ) );
         __DOASSERT( nb == 0, "No types given on input to read_poscar.\n" )
         std::vector< T_TYPE > types(nb);
         for( size_t i(0); i < nb; ++i )
           types[i] = bp::extract<T_TYPE>( _types[i] );
-        Crystal :: read_poscar< T_TYPE >( _struct, _path, types ); 
+        Crystal :: read_poscar< T_TYPE >( _struct, path, types ); 
       }
 
     template< class T_STRUCTURE >
@@ -147,6 +149,11 @@ namespace LaDa
               "Read, but do not write to this object." )
         .def_pickle( pickle_structure< Crystal::TStructure<std::string> >() );
       bp::def("read_poscar", &read_poscar<std::string>,
+              (
+                bp::arg("structure"),
+                bp::arg("filename"),
+                bp::arg("species")
+              ),
               "Reads a vasp POSCAR and fills in structure object.\n"
               "Third argument is a list of types, since types are implicit in POSCAR files." );
     }

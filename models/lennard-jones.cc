@@ -7,6 +7,7 @@
 #endif
 
 #include <boost/lexical_cast.hpp>
+#include <boost/tuple/tuple_io.hpp>
 
 #include <print/manip.h>
 #include <opt/tuple_io.h>
@@ -21,7 +22,7 @@ namespace LaDa
     {
       namespace bt = boost::tuples;
       __DOASSERT( _in.atoms.size() != _out.atoms.size(), "Incoherent structure size.\n" )
-      types::t_real energy(0);
+      types::t_real result(0);
 
       typedef t_Arg ::  t_Atoms :: const_iterator t_cit;
       t_cit i_atom_begin = _in.atoms.begin();
@@ -34,7 +35,7 @@ namespace LaDa
         {
           const std::string bondtype( bondname( i_atom2->type, i_atom1->type ) );
 
-          __DOASSERT( bonds.end() != bonds.find( bondtype ),
+          __DOASSERT( bonds.end() == bonds.find( bondtype ),
                       "Bond " + i_atom1->type + "-" + i_atom2->type + " does not exist.\n" )
           const Bond &bond( bonds.find( bondtype )->second );
           const types::t_real rcut_squared( rcut_ * rcut_ );
@@ -45,9 +46,9 @@ namespace LaDa
                                   std::floor( i_atom1->pos[1] - i_atom2->pos[1] ),
                                   std::floor( i_atom1->pos[2] - i_atom2->pos[2] )
                                 );
-          for( size_t i(-bt::get<0>(mesh_)); i < bt::get<0>(mesh_); ++i )
-            for( size_t j(-bt::get<1>(mesh_)); j < bt::get<1>(mesh_); ++j )
-              for( size_t k(-bt::get<2>(mesh_)); k < bt::get<2>(mesh_); ++k )
+          for( types::t_int i(-bt::get<0>(mesh_)); i < bt::get<0>(mesh_); ++i )
+            for( types::t_int j(-bt::get<1>(mesh_)); j < bt::get<1>(mesh_); ++j )
+              for( types::t_int k(-bt::get<2>(mesh_)); k < bt::get<2>(mesh_); ++k )
               {
                 // computes distance.
                 const atat::rVector3d distance
@@ -57,19 +58,21 @@ namespace LaDa
                 const types::t_real normd( atat::norm2(distance) );
                 if( normd > rcut_squared ) continue;
 
-                // energy -= 4.0 * scale * lj_pot( sigma_squared / rcut_squared )
+                // result -= 4.0 * scale * lj_pot( sigma_squared / rcut_squared )
                 { // compute cutoff correction energy
                   const types::t_real squared( 1e0 / rcut_squared );
                   const types::t_real sixth( squared * squared * squared );
                   const types::t_real twelveth( sixth * sixth );
-                  energy -=  bond.hard_sphere * twelveth - bond.van_der_walls * sixth;
+                  result -=  bond.hard_sphere * twelveth - bond.van_der_walls * sixth;
+                  std::cout << result << " " << squared << " " << sixth << " " << twelveth << "\n";
                 }
 
                 { // van_der_walls energy, force, stress.
                   const types::t_real squared( 1e0 / normd );
                   const types::t_real sixth( squared * squared * squared );
                   const types::t_real twelveth( sixth * sixth );
-                  energy -= bond.hard_sphere * twelveth - bond.van_der_walls * sixth;
+                  result -= bond.hard_sphere * twelveth - bond.van_der_walls * sixth;
+                  std::cout << result << " " << squared << " " << sixth << " " << twelveth << "\n\n";
 
                   const types::t_real ffactor
                   ( 
@@ -87,6 +90,7 @@ namespace LaDa
               } // loop over periodic images.
         } // loop over atom 2
       } // loop over atom 1
+      return result;
     }
     
     bool LennardJones :: Load( const TiXmlElement& _node )

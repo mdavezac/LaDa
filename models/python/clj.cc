@@ -9,7 +9,9 @@
 #include <boost/python/self.hpp> 
 #include <boost/python/class.hpp> 
 #include <boost/python/def.hpp> 
-#include <boost/python/dict.hpp> 
+#include <boost/python/list.hpp> 
+#include <boost/python/str.hpp> 
+#include <boost/python/extract.hpp> 
 #include <boost/python/suite/indexing/map_indexing_suite.hpp> 
 
 #include "../clj.h"
@@ -18,6 +20,17 @@ namespace LaDa
 {
   namespace Python
   {
+    class Clj : public Models :: Clj
+    {
+      public:
+        typedef Models::Clj::LennardJones::Bond t_Bond; 
+        typedef Models::Clj::LennardJones::t_Bonds t_Bonds; 
+        typedef Models::Clj::Ewald::t_Charges t_Charges; 
+        const t_Charges get_charges() const { return charges; }
+        void set_charges(const t_Charges& _c) { charges = _c; }
+        const t_Bonds get_bonds() const { return bonds; }
+        void set_bonds(const t_Bonds& _c) { bonds = _c; }
+    };
     template<class T_TYPE, class T_PTR>
       void unfold_structure_( const Crystal :: TStructure<T_TYPE>& _structure, 
                               T_PTR i_var )
@@ -78,6 +91,18 @@ namespace LaDa
                     "Structure and container have different sizes.\n" )
         fold_structure( _ptr.begin(), _structure ); 
       }
+
+    void read_fortran_input( Clj &_clj, boost::python::list &_atoms, 
+                             const boost::python::str& _path )
+    {
+      const std::string str = boost::python::extract<std::string>( _path );
+      const boost::filesystem::path path( str );
+      std::vector< std::string > atoms;
+      Models::read_fortran_input( _clj, atoms, path );
+      foreach( const std::string &atom, atoms )
+        _atoms.append(atom);
+    }
+
     template<class T_TYPE>
       void clear_structure( Crystal :: TStructure<T_TYPE>& _structure )
       {
@@ -89,12 +114,13 @@ namespace LaDa
             i_atom->pos[j] = 0e0;
       }
 
+
     void expose_clj()
     {
       namespace bp = boost :: python;
-      typedef Models::Clj :: LennardJones :: Bond t_Bond; 
-      typedef Models::Clj :: LennardJones :: t_Bonds t_Bonds; 
-      typedef Models::Clj :: Ewald :: t_Charges t_Charges; 
+      typedef Clj::t_Bond t_Bond; 
+      typedef Clj::t_Bonds t_Bonds; 
+      typedef Clj::t_Charges t_Charges; 
 
       bp::class_< t_Charges >( "Charges", "Dictionary of charges" )
         .def( bp :: map_indexing_suite< t_Charges, true >() );
@@ -106,10 +132,10 @@ namespace LaDa
       bp::class_< t_Bonds >( "LJBonds", "Dictionary of bonds" )
         .def( bp :: map_indexing_suite< t_Bonds, true >() );
 
-      bp::class_< Models::Clj >( "Clj", "Coulomb + LennardJones functional.\n" )
-       //.def_readwrite( "charges", &Models::Clj::Ewald::charges, "Dictionnary to charges." )
-       //.def_readwrite( "bonds", &Models::Clj::LennardJones::bonds, "Dictionnary to bond types." )
-        .def("__call__", &Models::Clj::energy );
+      bp::class_< Clj >( "Clj", "Coulomb + LennardJones functional.\n" )
+        .add_property( "charges", &Clj::get_charges, &Clj::set_charges, "Dictionnary of charges." )
+        .add_property( "bonds", &Clj::get_bonds, &Clj::set_bonds, "Dictionnary of bonds." )
+        .def("__call__", &Clj::energy );
 
       bp::def
       ( 
@@ -122,6 +148,19 @@ namespace LaDa
         "fold_structure",
         &fold_structure_< Crystal::TStructure<std::string>, std::vector<types::t_real> >,
         "Folds a c++ vector into a structure."
+      );
+
+      bp::def
+      (
+        "read_epinput",
+        &read_fortran_input,
+        (
+          bp::arg("functional"), 
+          bp::arg("species"),
+          bp::arg("filename")
+        ),
+        "Reads input from fortran model.\n"
+        "species is a list of atomic symbols which can be used to read a POSCAR."
       );
     }
   } // namespace Python

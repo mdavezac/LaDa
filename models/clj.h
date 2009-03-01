@@ -22,24 +22,23 @@
 #include "ewald.h"
 #include "lennard-jones.h"
 
-#ifdef __DOPYTHON
-  namespace LaDa { namespace Python {
-    void expose_clj();
-  }}
-# define FRIEND_EXPOSE_CLJ friend void LaDa::Python::expose_clj();
-#else
-# define FRIEND_EXPOSE_CLJ 
-#endif
-
 namespace LaDa
 {
   //! Empirical models.
   namespace Models
   {
     //! The adapter for Coulomb + Lennard-Jones fortran functional itself.
+    class Clj;
+
+    //! Creates a CLJ functional using same input as fortran.
+    void read_fortran_input( Clj &_clj, std::vector<std::string>& _atoms, 
+                             const boost::filesystem::path &_path );
+
+    // The adapter for Coulomb + Lennard-Jones fortran functional itself.
     class Clj : protected Ewald, protected LennardJones
     {
-      FRIEND_EXPOSE_CLJ
+      friend void read_fortran_input( Clj &_clj, std::vector<std::string>& _atoms, 
+                                      const boost::filesystem::path &_path );
       public:
         //! Argument type.
         typedef Crystal :: TStructure< std::string > t_Arg;
@@ -63,8 +62,6 @@ namespace LaDa
         void check_coherency() const;
     };
 
-    //! Creates a CLJ functional using same input as fortran.
-    void read_fortran_input( Clj &_clj, const boost::filesystem::path &_path );
 
   } // namespace CLJ.
 } // namespace LaDa

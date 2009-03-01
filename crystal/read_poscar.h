@@ -16,7 +16,6 @@
 #include <numeric>
 
 #include <boost/filesystem/operations.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/spirit/include/classic_numerics.hpp>
 #include <boost/spirit/include/classic_primitives.hpp>
 #include <boost/spirit/include/classic_assign_actor.hpp>
@@ -63,7 +62,16 @@ namespace LaDa
         // scale
         std::getline( file, line );
         __DOASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
-        _structure.scale = boost::lexical_cast<types::t_real>(Print::StripEdges( line ));
+        __DOASSERT
+        (
+          not bsc::parse
+          (
+            line.c_str(),
+            bsc::ureal_p[ bsc::assign_a( _structure.scale ) ],
+            bsc::space_p
+          ).hit,
+          "Could not parse cell.\n" 
+        )
         // cell.
         for( size_t i(0); i < 3; ++i )
         {
@@ -74,7 +82,6 @@ namespace LaDa
             not bsc::parse
             (
               line.c_str(),
-            
                   bsc::real_p[ bsc::assign_a( _structure.cell(i, 0) ) ] 
                >> bsc::real_p[ bsc::assign_a( _structure.cell(i, 1) ) ] 
                >> bsc::real_p[ bsc::assign_a( _structure.cell(i, 2) ) ],
@@ -118,6 +125,8 @@ namespace LaDa
         atom.site = -1;
         for( size_t i(0), j(1); i < nb; ++i, ++j )
         {
+          __ASSERT( i_nb == nbatoms.end(), "Unexpected end of vector.\n" )
+          __ASSERT( i_type == _types.end(), "Unexpected end of vector.\n" )
           std::getline( file, line );
           __DOASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
           __DOASSERT
@@ -134,11 +143,10 @@ namespace LaDa
             "Could not parse atomic position " <<  i << ".\n" 
           )
           if( direct ) atom.pos = _structure.cell * atom.pos; 
+          atom.type = *i_type;
           _structure.atoms.push_back( atom );
           if( j != *i_nb ) continue;
           ++i_nb; ++i_type; j = 0;
-          __ASSERT( i_nb == nbatoms.end(), "Unexpected end of vector.\n" )
-          __ASSERT( i_type == _types.end(), "Unexpected end of vector.\n" )
         }
         __TRYEND(, "Could not parse POSCAR " + _path.string() + "\n" )
       }

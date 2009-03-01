@@ -157,10 +157,12 @@ namespace LaDa
         else if( _str ==  "C" ) return  6; 
         else if( _str ==  "N" ) return  7; 
         else if( _str ==  "O" ) return  8; 
+        else if( _str ==  "Na" ) return 11;
         else if( _str ==  "Al" ) return 13;
         else if( _str ==  "Si" ) return 14;
         else if( _str ==  "P" ) return 15; 
         else if( _str ==  "S" ) return 16; 
+        else if( _str ==  "Cl" ) return 17; 
         else if( _str ==  "Sc" ) return 21; 
         else if( _str ==  "Ni" ) return 28;
         else if( _str ==  "Cu" ) return 29;
@@ -185,10 +187,12 @@ namespace LaDa
         else if( _str ==   "C" ) return  12.0107; 
         else if( _str ==   "N" ) return  14.00674; 
         else if( _str ==   "O" ) return  15.9994; 
+        else if( _str ==  "Na" ) return  22.98976; 
         else if( _str ==  "Al" ) return  26.9815;
         else if( _str ==  "Si" ) return  28.0855;
         else if( _str ==   "P" ) return  30.97376; 
         else if( _str ==   "S" ) return  32.066; 
+        else if( _str ==  "Cl" ) return  35.453; 
         else if( _str ==  "Sc" ) return  44.956;
         else if( _str ==  "Ni" ) return  58.6934;
         else if( _str ==  "Cu" ) return  63.546;
@@ -215,10 +219,12 @@ namespace LaDa
           case   6: return  "C"; __BREAK
           case   7: return  "N"; __BREAK
           case   8: return  "O"; __BREAK
+          case  11: return "Na"; __BREAK
           case  13: return "Al"; __BREAK
           case  14: return "Si"; __BREAK
           case  15: return  "P"; __BREAK
           case  16: return  "S"; __BREAK
+          case  17: return "Cl"; __BREAK
           case  21: return "Sc"; __BREAK
           case  28: return "Ni"; __BREAK
           case  29: return "Cu"; __BREAK
