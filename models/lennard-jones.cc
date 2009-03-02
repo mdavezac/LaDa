@@ -18,11 +18,20 @@ namespace LaDa
 {
   namespace Models
   {
-    LennardJones :: t_Return LennardJones :: energy( const t_Arg& _in, t_Arg &_out ) const
+    namespace details
+    {
+      types::t_real range01( const types::t_real _a )
+      {
+        const types::t_real b( _a - std::floor( _a ) );
+        return _a > 1e0 ? _a - 1e0: _a < 0e0 ? _a + 1e0: _a; 
+      }
+    }
+    LennardJones :: t_Return LennardJones :: operator()( const t_Arg& _in, t_Arg &_out ) const
     {
       namespace bt = boost::tuples;
       __DOASSERT( _in.atoms.size() != _out.atoms.size(), "Incoherent structure size.\n" )
       types::t_real result(0);
+      const types::t_real scale_squared( _in.scale * _in.scale );
 
       typedef t_Arg ::  t_Atoms :: const_iterator t_cit;
       t_cit i_atom_begin = _in.atoms.begin();
@@ -42,9 +51,9 @@ namespace LaDa
 
           const atat::rVector3d dfractional
                                 ( 
-                                  std::floor( i_atom1->pos[0] - i_atom2->pos[0] ),
-                                  std::floor( i_atom1->pos[1] - i_atom2->pos[1] ),
-                                  std::floor( i_atom1->pos[2] - i_atom2->pos[2] )
+                                  details::range01( i_atom1->pos[0] - i_atom2->pos[0] ),
+                                  details::range01( i_atom1->pos[1] - i_atom2->pos[1] ),
+                                  details::range01( i_atom1->pos[2] - i_atom2->pos[2] )
                                 );
           for( types::t_int i(-bt::get<0>(mesh_)); i < bt::get<0>(mesh_); ++i )
             for( types::t_int j(-bt::get<1>(mesh_)); j < bt::get<1>(mesh_); ++j )
@@ -55,36 +64,35 @@ namespace LaDa
                 (
                   _in.cell * ( dfractional + atat::rVector3d(i,j,k) ) 
                 );
-                const types::t_real normd( atat::norm2(distance) );
+                const types::t_real normd( atat::norm2(distance) * scale_squared );
                 if( normd > rcut_squared ) continue;
 
                 // result -= 4.0 * scale * lj_pot( sigma_squared / rcut_squared )
                 { // compute cutoff correction energy
                   const types::t_real squared( 1e0 / rcut_squared );
                   const types::t_real sixth( squared * squared * squared );
-                  const types::t_real twelveth( sixth * sixth );
-                  result -=  bond.hard_sphere * twelveth - bond.van_der_walls * sixth;
-                  std::cout << result << " " << squared << " " << sixth << " " << twelveth << "\n";
+                  const types::t_real twelfth( sixth * sixth );
+                  result -=  bond.hard_sphere * twelfth - bond.van_der_walls * sixth;
                 }
 
                 { // van_der_walls energy, force, stress.
                   const types::t_real squared( 1e0 / normd );
                   const types::t_real sixth( squared * squared * squared );
-                  const types::t_real twelveth( sixth * sixth );
-                  result -= bond.hard_sphere * twelveth - bond.van_der_walls * sixth;
-                  std::cout << result << " " << squared << " " << sixth << " " << twelveth << "\n\n";
+                  const types::t_real twelfth( sixth * sixth );
+                  result += bond.hard_sphere * twelfth - bond.van_der_walls * sixth;
 
                   const types::t_real ffactor
                   ( 
-                    squared * ( 2.e0 * bond.hard_sphere * twelveth - bond.van_der_walls * sixth )
+                      6e0 * squared * _in.scale 
+                    * ( 2.e0 * bond.hard_sphere * twelfth - bond.van_der_walls * sixth )
                   );
                   const atat::rVector3d force( ffactor * distance );
-                  i_force1->pos -= force;
-                  i_force2->pos += force;
+                  i_force1->pos += _in.cell * force;
+                  i_force2->pos -= _in.cell * force;
 
                   for( size_t i(0); i < 3; ++i )
                     for( size_t j(0); j < 3; ++j )
-                      _out.cell(i,j) += -force[i] * distance[j];
+                      _out.cell(i,j) += force[i] * distance[j] * _in.scale;
                 }
 
               } // loop over periodic images.

@@ -1,0 +1,10 @@
+2                               !  nspec_tot
+11    0.95     1.0              !  id, rad_ion, charge_ion
+17    1.81    -1.0              !
+  11  11   0.0057   1.21        !  ibond, epslon, rsigma
+  17  17   0.0057   1.21        !
+  11  17   0.0057   1.21        !
+  17  11   0.0057   1.21        !
+2.5                             !  rcut_const0
+25.0                            !  RCUT_ewaldA
+0.0                             !  PEGS   0.0-not  1.0-yes

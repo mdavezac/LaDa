@@ -52,7 +52,7 @@ namespace LaDa
         ~Clj() {}
 
         //! \brief computes energy and stress and forces.
-        t_Return energy(const t_Arg& _in, t_Arg& _out) const;
+        t_Return operator()(const t_Arg& _in, t_Arg& _out) const;
 
         //! Loads parameters from XML.
         bool Load( const TiXmlElement& _node );

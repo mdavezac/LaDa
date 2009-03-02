@@ -270,8 +270,9 @@ namespace LaDa
                          const atat::rVector3d &_b,
                          const atat::rMatrix3d &_cell);
     //! Dumps a structure to a stream.
-    inline std::ostream& operator<<( std::ostream& _stream, const Crystal::Structure& _struc )
-      { _struc.print_out(_stream); return _stream; }
+    template< class T_TYPE >
+      std::ostream& operator<<( std::ostream& _stream, const Crystal::TStructure<T_TYPE>& _struc )
+        { _struc.print_out(_stream); return _stream; }
 
     //! compares two kvectors according to length and position.
     bool sort_kvec( const atat::rVector3d &_vec1, const atat::rVector3d &_vec2 );

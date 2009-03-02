@@ -59,7 +59,7 @@ namespace LaDa
         //! \brief computes energy and stress and forces.
         //! \param[in] _in input structure, with reduced coordinates.
         //! \param[inout] _out stress and forces. Both are \e added to existing stress and forces.
-        t_Return energy(const t_Arg& _in, t_Arg& _out) const;
+        t_Return operator()(const t_Arg& _in, t_Arg& _out) const;
 
         //! Loads parameters from XML.
         bool Load( const TiXmlElement& _node );

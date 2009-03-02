@@ -129,8 +129,8 @@ subroutine force_lj_ewald (natom, a, ityp, tau, f, stress, ener )
                  ryij = rij(2)
                  rzij = rij(3)
                  
-                 rcut_sigma = rcut_const * sigma
-                 if (r_ij < rcut_sigma ) then
+                 rcut_sigma = rcut_const ! * sigma
+                 if (r_ij > rcut_sigma ) cycle
 
                  ! -----------------------------
                  r_ij_inv = 1.d0/rcut_sigma
@@ -221,8 +221,6 @@ subroutine force_lj_ewald (natom, a, ityp, tau, f, stress, ener )
                  stress(3,1) = stress(3,1) + temp20
                  stress(3,2) = stress(3,2) + temp21
 
-                 end if
-                 
               end do  !  icell3
            end do  !  icell2
         end do  !  icell1

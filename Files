@@ -121,7 +121,8 @@ DARWIN_E_DOC = $(DARWIN_E_H) $(DARWIN_E_CC)
 CRYSTAL_CC = lattice.cc structure.cc confsplit.cc layerdepth.cc read_structure.cc \
              epi_structure.cc fill_structure.cc
 CRYSTAL_H  = lattice.h  structure.h structure.impl.h atom.h  confsplit.h layerdepth.h \
-             read_structure.h epi_structure.h fill_structure.h fourier.h read_poscar.h
+             read_structure.h epi_structure.h fill_structure.h fourier.h read_poscar.h \
+             fractional_cartesian.h
 CRYSTAL_DOC = $(CRYSTAL_H) $(CRYSTAL_CC) 
 CRYSTAL_PYTHON_H = structure.hpp atom.hpp lattice.hpp
 CRYSTAL_PYTHON_CC = structure.cc atom.cc lattice.cc python.cc 
@@ -314,6 +315,7 @@ TEST_SEPARABLES_DCUBIC = LDAs.dat \
                          SL_110_A3B-A3B
 TEST_VFF = launch.pl  launch.sh  quaternary.xml  ternary.xml
 TEST_VFF_NANOPSE = position.GaSb  scanparam.GaSb  vff.in  vffparam.GaSb
+TEST_MODELS = ep.input POSCAR_0 models.py
 ENVIRONMENT_FILES = env
 
 EXTRA_FILES =  $(addprefix docsource/, $(DOCS)) \
@@ -327,6 +329,7 @@ EXTRA_FILES =  $(addprefix docsource/, $(DOCS)) \
                $(addprefix test/separables/dcubic/, $(TEST_SEPARABLES_DCUBIC)) \
                $(addprefix test/layered_opt/, $(TEST_FILES)) \
                $(addprefix test/vff/nanopse/, $(TEST_VFF_NANOPSE)) \
+               $(addprefix test/models/, $(TEST_MODELS)) \
                $(addprefix pkgconfig/, $(ENVIRONMENT_FILES)) 
             #  test/bandgap/calc \
             #  test/python test/vff/calc \

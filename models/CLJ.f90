@@ -103,8 +103,9 @@ program CLJ
 
   call create_relaxer( relaxer_handle, 8, "ep.input", force_lj_ewald )
 
-! call force_lj_ewald (natom, axis, ityp, tau, f, stress, ener )
-  call call_relaxer ( relaxer_handle, natom, axis, ityp, tau, f, stress, ener )
+  ener = 0e0
+  call force_lj_ewald (natom, axis, ityp, tau, f, stress, ener )
+! call call_relaxer ( relaxer_handle, natom, axis, ityp, tau, f, stress, ener )
 
 
   call release_relaxer( relaxer_handle )
@@ -112,29 +113,30 @@ program CLJ
   
   ! output
 
-  open(unit=38, file = "CONTCAR", status = "unknown", form = "formatted")
+! open(unit=38, file = "CONTCAR", status = "unknown", form = "formatted")
 
-  write(38,'("Crystal structure of individual")')
+  write(*,*) ener
+  write(*,'("Crystal structure of individual")')
 
-  write(38,'(f10.5)') 1.d0
-  write(38,'(3(f10.5,2x))') axis(:,1)
-  write(38,'(3(f10.5,2x))') axis(:,2)
-  write(38,'(3(f10.5,2x))') axis(:,3)
+  write(*,'(f10.5)') 1.d0
+  write(*,'(3(f15.5,2x))') stress(:,1)
+  write(*,'(3(f15.5,2x))') stress(:,2)
+  write(*,'(3(f15.5,2x))') stress(:,3)
 
-  write(38,*) (mspecx(i), i=1, nspec_tot)
-  write(38,'(a9)') 'Direct   '
+  write(*,*) (mspecx(i), i=1, nspec_tot)
+  write(*,'(a9)') 'Direct   '
 
   do i = 1, natom
-     write(38,'(3(f10.5,2x))') tau(:,i)
+     write(*,'(3(f15.5,2x))') f(:,i)
   end do
 
-  close(38)
+! close(38)
 
-  open(unit=39, file = "OSZICAR", status = "unknown", form = "formatted")
+! open(unit=39, file = "OSZICAR", status = "unknown", form = "formatted")
 
-  write(39,'("   ep-energy")')
-  write(39,'("   1 F= ", ES14.8, " d E= 0.000000E+00")') ener
+! write(39,'("   ep-energy")')
+! write(39,'("   1 F= ", ES14.8, " d E= 0.000000E+00")') ener
 
-  close(39)
+! close(39)
 
 end program CLJ

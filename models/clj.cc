@@ -35,13 +35,13 @@ namespace LaDa
       return true;
     }
 
-    Clj :: t_Return Clj :: energy(const t_Arg& _in, t_Arg& _out) const
+    Clj :: t_Return Clj :: operator()(const t_Arg& _in, t_Arg& _out) const
     {
       _out.cell.zero();
       foreach( t_Arg :: t_Atom &atom, _out.atoms )
         atom.pos = atat::rVector3d(0,0,0);
 
-      _out.energy = LennardJones::energy( _in, _out );
+      _out.energy = LennardJones::operator()( _in, _out ); // + Ewald::operator()( _in, _out );
       return _out.energy;
     }
 
@@ -251,10 +251,11 @@ namespace LaDa
         const details::atomic_specie A( *find( species.begin(), species.end(), bond.a ) );
         const details::atomic_specie B( *find( species.begin(), species.end(), bond.b ) );
         const types::t_real radius( ( A.radius + B.radius ) * bond.rsigma );
-        const types::t_real radius6( radius * radius * radius );
+        const types::t_real radius2( radius * radius );
+        const types::t_real radius6( radius2 * radius2 * radius2 );
         const types::t_real radius12( radius6 * radius6 );
-        _clj.LennardJones::bonds[ bondtype ].hard_sphere = radius12 * bond.epsilon;
-        _clj.LennardJones::bonds[ bondtype ].van_der_walls = radius6 * bond.epsilon * pegs;
+        _clj.LennardJones::bonds[ bondtype ].hard_sphere = radius12 * bond.epsilon * 4e0;
+        _clj.LennardJones::bonds[ bondtype ].van_der_walls = radius6 * bond.epsilon * (1e0 - pegs) * 4e0;
       }
 
       // Hard coded in fortran.

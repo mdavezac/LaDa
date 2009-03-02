@@ -8,26 +8,29 @@
 
 #include <boost/lexical_cast.hpp>
 
+#include <physics/physics.h>
+
 #include "ewald.h"
 
 extern "C" void FC_FUNC( ewaldf, EWALDF )
                 (
-                  const double *const, // verbosity
+                  const int *const, // verbosity
                   const double *const, // Energy
                   const double *const, // forces (reduced)
                   const double *const, // forces (cartesian)
                   const double *const, // stress
-                  const double *const, // number of atoms
+                  const int *const, // number of atoms
                   const double *const, // reduced atomic coordinates.
                   const double *const, // atomic charges
+                  const double *const, // real space cutoff
                   const double *const, // cell vectors
-                  const double *const  // dimension of arrays.
+                  const int *const  // dimension of arrays.
                 );
 namespace LaDa
 {
   namespace Models
   {
-    Ewald :: t_Return Ewald :: energy( const t_Arg& _in, t_Arg &_out ) const
+    Ewald :: t_Return Ewald :: operator()( const t_Arg& _in, t_Arg &_out ) const
     {
       __DOASSERT( _in.atoms.size() != _out.atoms.size(), "Incoherent structure size.\n" )
 
@@ -35,9 +38,10 @@ namespace LaDa
       double Qs[ natoms ];
       double positions[ natoms * 3 ], forces[ natoms * 3 ], cforces[ natoms * 3 ];
       double cell[ 9 ], stress[ 6 ];
-      const double verbosity(0);
+      const int verbosity(0);
       double energy(0);
-      const double n( natoms );
+      const int n( natoms );
+      const double rcut( cutoff_ / Physics::a0("A") );
 
       typedef t_Arg :: t_Atoms :: const_iterator t_cit;
       t_cit i_atom = _in.atoms.begin();
@@ -53,7 +57,7 @@ namespace LaDa
 
       for( size_t i(0); i < 3; ++i )
         for( size_t j(0); j < 3; ++j )
-          cell[ i + j*3 ] = _in.cell(i,j);
+          cell[ i + j*3 ] = _in.cell(i,j) * _in.scale / Physics::a0("A");
 
       FC_FUNC( ewaldf, EWALDF )
       (
@@ -65,6 +69,7 @@ namespace LaDa
         &n,           // number of atoms
         positions,    // reduced atomic coordinates.
         Qs,           // atomic charges
+        &rcut,        // Real-space cutoff.
         cell,         // cell vectors
         &n            // dimension of arrays.
       );
@@ -72,22 +77,22 @@ namespace LaDa
       t_Arg :: t_Atoms :: iterator i_force = _out.atoms.begin();
       for( size_t i(0); i < natoms; ++i, ++i_force )
       {
-        i_force->pos[0] += forces[ i*3 ];
-        i_force->pos[1] += forces[ i*3 + 1 ];
-        i_force->pos[2] += forces[ i*3 + 2 ];
+        i_force->pos[0] += cforces[ i*3 ]     * Physics::Rydberg("eV") / Physics::a0("A");
+        i_force->pos[1] += cforces[ i*3 + 1 ] * Physics::Rydberg("eV") / Physics::a0("A");
+        i_force->pos[2] += cforces[ i*3 + 2 ] * Physics::Rydberg("eV") / Physics::a0("A");
       } // loop over atoms
       // copy stress.
-      _out.cell(0,0) += stress[0];
-      _out.cell(1,1) += stress[1];
-      _out.cell(2,2) += stress[2];
-      _out.cell(0,1) += stress[3];
-      _out.cell(1,0) += stress[3];
-      _out.cell(1,2) += stress[4];
-      _out.cell(2,1) += stress[4];
-      _out.cell(0,2) += stress[5];
-      _out.cell(2,0) += stress[5];
+      _out.cell(0,0) += stress[0] * Physics::Rydberg("eV");
+      _out.cell(1,1) += stress[1] * Physics::Rydberg("eV");
+      _out.cell(2,2) += stress[2] * Physics::Rydberg("eV");
+      _out.cell(0,1) += stress[3] * Physics::Rydberg("eV");
+      _out.cell(1,0) += stress[3] * Physics::Rydberg("eV");
+      _out.cell(1,2) += stress[4] * Physics::Rydberg("eV");
+      _out.cell(2,1) += stress[4] * Physics::Rydberg("eV");
+      _out.cell(0,2) += stress[5] * Physics::Rydberg("eV");
+      _out.cell(2,0) += stress[5] * Physics::Rydberg("eV");
       
-      return energy;
+      return energy * Physics::Rydberg("eV");
     }
 
     bool Ewald :: Load( const TiXmlElement& _node )

@@ -27,6 +27,7 @@
 #include "../structure.h"
 #include "../read_poscar.h"
 #include "../lattice.h"
+#include "../fractional_cartesian.h"
 
 #include "structure.hpp"
 
@@ -156,6 +157,10 @@ namespace LaDa
               ),
               "Reads a vasp POSCAR and fills in structure object.\n"
               "Third argument is a list of types, since types are implicit in POSCAR files." );
+      bp::def("to_cartesian", &Crystal::to_cartesian<std::string>,
+              "Transforms a structure from cartesian to fractional coordinates.\n" );
+      bp::def("to_fractional", &Crystal::to_fractional<std::string>,
+              "Transforms a structure from fractional to cartesian coordinates.\n" );
     }
 
   }
