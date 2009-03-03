@@ -47,11 +47,7 @@ namespace LaDa
 
     Clj :: t_Return Clj :: gradient(const t_Arg& _in, t_Arg& _out) const
     {
-      _out.cell.zero();
-      foreach( t_Arg :: t_Atom &atom, _out.atoms )
-        atom.pos = atat::rVector3d(0,0,0);
-
-      _out.energy = LennardJones::operator()( _in, _out ) + Ewald::operator()( _in, _out );
+      operator()( _in, _out );
       _out.cell = -_out.cell * (~(!_in.cell));
       t_Arg :: t_Atoms :: iterator i_force = _out.atoms.begin();
       const t_Arg :: t_Atoms :: iterator i_force_end = _out.atoms.end();

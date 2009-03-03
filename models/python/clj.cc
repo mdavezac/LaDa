@@ -38,93 +38,47 @@ namespace LaDa
         void set_bonds(const t_Bonds& _c) { bonds = _c; }
     };
     template<class T_TYPE>
-      boost::python::list* ptr_unfold_structure( const Crystal :: TStructure<T_TYPE>& _structure )
+      void unfold_structure( const Crystal :: TStructure<T_TYPE>& _structure, std::vector<types::t_real>& _list )
       {
-        boost::python::list *list = new boost::python::list;
+        _list.clear();
         typedef Crystal::TStructure<T_TYPE> t_Str;
         for( size_t i(0); i < 3; ++i )
           for( size_t j(0); j < 3; ++j )
             if( (_structure.freeze & Crystal::cell_freeze_tag(i,j)) == 0 )
-              list->append( _structure.cell(i,j) );
+              _list.push_back( _structure.cell(i,j) );
         typename Crystal::TStructure<T_TYPE>::t_Atoms::const_iterator i_atom = _structure.atoms.begin();
         typename Crystal::TStructure<T_TYPE>::t_Atoms::const_iterator i_atom_end = _structure.atoms.end();
         for(; i_atom != i_atom_end; ++i_atom )
         {
           if( (i_atom->freeze & t_Str::t_Atom::FREEZE_X) == 0 )
-            list->append( i_atom->pos[0] );
+            _list.push_back( i_atom->pos[0] );
           if( (i_atom->freeze & t_Str::t_Atom::FREEZE_Y) == 0 )
-            list->append( i_atom->pos[1] );
+            _list.push_back( i_atom->pos[1] );
           if( (i_atom->freeze & t_Str::t_Atom::FREEZE_Z) == 0 )
-            list->append( i_atom->pos[2] );
-        }
-        std::cout << "?? " << boost::python::len( *list ) << "\n";
-        return list;
-      }
-    template<class T_TYPE>
-      void unfold_structure( const Crystal :: TStructure<T_TYPE>& _structure, boost::python::list& _list )
-      {
-        typedef Crystal::TStructure<T_TYPE> t_Str;
-        for( size_t i(0); i < 3; ++i )
-          for( size_t j(0); j < 3; ++j )
-            if( (_structure.freeze & Crystal::cell_freeze_tag(i,j)) == 0 )
-              _list.append( _structure.cell(i,j) );
-        typename Crystal::TStructure<T_TYPE>::t_Atoms::const_iterator i_atom = _structure.atoms.begin();
-        typename Crystal::TStructure<T_TYPE>::t_Atoms::const_iterator i_atom_end = _structure.atoms.end();
-        for(; i_atom != i_atom_end; ++i_atom )
-        {
-          if( (i_atom->freeze & t_Str::t_Atom::FREEZE_X) == 0 )
-            _list.append( i_atom->pos[0] );
-          if( (i_atom->freeze & t_Str::t_Atom::FREEZE_Y) == 0 )
-            _list.append( i_atom->pos[1] );
-          if( (i_atom->freeze & t_Str::t_Atom::FREEZE_Z) == 0 )
-            _list.append( i_atom->pos[2] );
+            _list.push_back( i_atom->pos[2] );
         }
       }
     template<class T_TYPE>
-      Crystal::TStructure<T_TYPE>& ret_fold_structure( const boost::python::list &_list,
-                                                       Crystal :: TStructure<T_TYPE>& _structure )
-      {
-        namespace bp = boost::python;
-        typedef Crystal::TStructure<T_TYPE> t_Str;
-        size_t index(0);
-        for( size_t i(0); i < 3; ++i )
-          for( size_t j(0); j < 3; ++j )
-            if( (_structure.freeze & Crystal::cell_freeze_tag(i,j)) == 0 )
-              { _structure.cell(i,j) = bp::extract<types::t_real>( _list[index] ); ++index; }
-        typename Crystal::TStructure<T_TYPE>::t_Atoms::iterator i_atom = _structure.atoms.begin();
-        typename Crystal::TStructure<T_TYPE>::t_Atoms::iterator i_atom_end = _structure.atoms.end();
-        for(; i_atom != i_atom_end; ++i_atom )
-        {
-          if( (i_atom->freeze & t_Str::t_Atom::FREEZE_X) == 0 )
-            { i_atom->pos[0] = bp::extract<types::t_real>( _list[index] ); ++index; }
-          if( (i_atom->freeze & t_Str::t_Atom::FREEZE_Y) == 0 )
-            { i_atom->pos[1] = bp::extract<types::t_real>( _list[index] ); ++index; }
-          if( (i_atom->freeze & t_Str::t_Atom::FREEZE_Z) == 0 )
-            { i_atom->pos[2] = bp::extract<types::t_real>( _list[index] ); ++index; }
-        }
-        return _structure;
-      }
-    template<class T_TYPE>
-      void fold_structure( const boost::python::list &_list,
+      void fold_structure( const std::vector<types::t_real> &_list,
                            Crystal :: TStructure<T_TYPE>& _structure )
       {
         namespace bp = boost::python;
         typedef Crystal::TStructure<T_TYPE> t_Str;
-        size_t index(0);
+        std::vector<types::t_real> :: const_iterator i_var = _list.begin();
         for( size_t i(0); i < 3; ++i )
           for( size_t j(0); j < 3; ++j )
             if( (_structure.freeze & Crystal::cell_freeze_tag(i,j)) == 0 )
-              { _structure.cell(i,j) = bp::extract<types::t_real>( _list[index] ); ++index; }
+              { _structure.cell(i,j) = *i_var; ++i_var; }
         typename Crystal::TStructure<T_TYPE>::t_Atoms::iterator i_atom = _structure.atoms.begin();
         typename Crystal::TStructure<T_TYPE>::t_Atoms::iterator i_atom_end = _structure.atoms.end();
         for(; i_atom != i_atom_end; ++i_atom )
         {
           if( (i_atom->freeze & t_Str::t_Atom::FREEZE_X) == 0 )
-            { i_atom->pos[0] = bp::extract<types::t_real>( _list[index] ); ++index; }
+            { i_atom->pos[0] = *i_var; ++i_var; }
           if( (i_atom->freeze & t_Str::t_Atom::FREEZE_Y) == 0 )
-            { i_atom->pos[1] = bp::extract<types::t_real>( _list[index] ); ++index; }
+            { i_atom->pos[1] = *i_var; ++i_var; }
           if( (i_atom->freeze & t_Str::t_Atom::FREEZE_Z) == 0 )
-            { i_atom->pos[2] = bp::extract<types::t_real>( _list[index] ); ++index; }
+            { i_atom->pos[2] = *i_var; ++i_var; }
         }
       }
 
@@ -133,7 +87,7 @@ namespace LaDa
     {
       const std::string str = boost::python::extract<std::string>( _path );
       const boost::filesystem::path path( str );
-      std::vector< std::string > atoms;
+      std::vector<std::string> atoms;
       Models::read_fortran_input( _clj, atoms, path );
       foreach( const std::string &atom, atoms )
         _atoms.append(atom);
@@ -173,10 +127,7 @@ namespace LaDa
         .add_property( "bonds", &Clj::get_bonds, &Clj::set_bonds, "Dictionnary of bonds." )
         .def("__call__", &Clj::operator() )
         .def("gradient", &Clj::gradient );
-
-      bp::class_< std::vector<types::t_real> >( "detailsRVector", "List of real values." )
-        .def( bp :: vector_indexing_suite< std::vector<types::t_real> >() );
-
+ 
       bp::def
       ( 
         "unfold_structure",

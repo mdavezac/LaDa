@@ -50,9 +50,12 @@ namespace LaDa
         __GETSET__( bool, verbose )
 #       undef __GETSET__
 
-        Function :: t_Return operator()( const Function& _function,
+        Function :: t_Return operator()( const boost::python::object &_function,
                                          Function :: t_Arg& _arg ) const 
-          { return minimizer_( _function, _arg ); }
+        {
+          const Function function( _function );
+          return minimizer_( function, _arg ); 
+        }
         void set( const std::string& _type, 
                   types::t_real _tolerance, 
                   size_t _itermax, 

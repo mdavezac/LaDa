@@ -193,7 +193,7 @@ PRINT_CC = manip.cc xmg.cc stdout.cc base.cc columns.cc
 PRINT_H  = manip.h  xmg.h  stdout.h  base.h  operations.h columns.h
 PRINT_DOC = $(PRINT_H) $(PRINT_CC) 
 
-PYTHON_H = xml.hpp misc.hpp 
+PYTHON_H = xml.hpp misc.hpp std_vector.hpp
 
 MINIMIZER_H =  allsq.h  cgs.h  decoupled.h  frprmn.h  function_wrapper.h  gsl.h \
                gsl_lsq.h  gsl_mins.h  gsl_nllsq.h  gsl_simplex.h  minuit2.h \

@@ -20,14 +20,15 @@ namespace LaDa
   namespace Python
   {
     void interpolated_gradient( const boost::python::object &_function, 
-                                const boost::python::list &_arg, 
-                                boost::python::list &_gradient, 
+                                const std::vector<types::t_real> &_arg, 
+                                std::vector<types::t_real> &_gradient, 
                                 const size_t _n, 
                                 const Function :: t_Return _stepsize,
                                 const size_t _itermax,
                                 const types::t_real _tolerance,
                                 const bool _verbose )
     {
+      __DOASSERT( _gradient.size() != _arg.size(), "Argurments and gradients have different sizes.\n" )
       namespace bp = boost::python;
       typedef Fitting :: Cgs t_Cgs;
       typedef Function t_Function;
@@ -36,30 +37,16 @@ namespace LaDa
       cgs.verbose = _verbose;
       cgs.itermax = _itermax;
       cgs.tolerance = _tolerance;
-      typedef boost::remove_pointer<t_Function :: t_GradientArg > :: type t_Type;
-      std::vector< t_Type > gradient( boost::python::len( _arg ), 0 );
-      t_Function :: t_Arg arg( boost::python::len( _arg ), 0 );
-      t_Function :: t_Arg :: iterator i_var = arg.begin();
-      t_Function :: t_Arg :: iterator i_var_end = arg.end();
-      for(size_t i(0); i_var != i_var_end; ++i_var, ++i )
-        *i_var = bp :: extract< t_Type >( _arg[i] );
-
-      __DOASSERT( bp::len( _gradient ) != bp::len( _arg ),
-                  "Gradient and argument have different sizes.\n" )
       
       Minimizer :: interpolated_gradient< t_Function, t_Cgs >
       (
         function, 
-        arg,
+        _arg,
         cgs,
-        &(gradient[0]),
+        &(_gradient[0]),
         _n,
         _stepsize
       );
-      i_var = gradient.begin();
-      i_var_end = gradient.end();
-      for(size_t i(0); i_var != i_var_end; ++i_var, ++i ) 
-        _gradient[i] = bp::extract< t_Type >( _gradient[i] ) + (*i_var);
     }
 
     void expose_interpolated_gradient()

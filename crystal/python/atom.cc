@@ -13,6 +13,7 @@
 #include <opt/debug.h>
 #include <python/misc.hpp>
 #include <python/xml.hpp>
+#include <python/std_vector.hpp>
 
 #include "../structure.h"
 #include "../atom.h"
@@ -29,7 +30,7 @@ namespace LaDa
   {
     template< class T_TYPE > Crystal::Atom_Type<T_TYPE>* default_constructor();
     template< class T_TYPE > 
-      Crystal::Atom_Type<T_TYPE>* copy_constructor( const boost::python::tuple& _ob );
+      Crystal::Atom_Type<T_TYPE>* copy_constructor( const Crystal::Atom_Type<T_TYPE>& _ob );
     template< class T_TYPE >
       Crystal::Atom_Type<T_TYPE>* object_constructor( const boost::python::tuple& _ob );
     types::t_real toReal(std::string _str );
@@ -55,11 +56,7 @@ namespace LaDa
           .def_readwrite( "freeze", &t_Atom::freeze )
           .def( "__str__",  &print<t_Atom> );
 
-        bp::class_< std::vector<t_Atom> >
-          (
-            ( _name + "s" ).c_str(), ("A list of " + _name ).c_str() 
-          )
-          .def( bp::vector_indexing_suite< std::vector<t_Atom> >() );
+        expose_vector< t_Atom >( ( _name + "s" ).c_str(), ("A list of " + _name ).c_str() );
       }
 
     void expose_atom()
@@ -143,13 +140,8 @@ namespace LaDa
       Crystal::Atom_Type<T_TYPE>* default_constructor()
         { return new Crystal::Atom_Type<T_TYPE>; }
     template< class T_TYPE >
-      Crystal::Atom_Type<T_TYPE>* copy_constructor( const boost::python::tuple& _ob )
-      {
-        return new Crystal::Atom_Type<T_TYPE>
-                   ( 
-                     boost::python::extract< Crystal::Atom_Type<T_TYPE> >( _ob ) 
-                   ); 
-      }
+      Crystal::Atom_Type<T_TYPE>* copy_constructor( const Crystal::Atom_Type<T_TYPE>& _ob )
+        { return new Crystal::Atom_Type<T_TYPE>( _ob ); }
     template< class T_TYPE >
       Crystal::Atom_Type<T_TYPE>* object_constructor( const boost::python::tuple& _ob )
       {

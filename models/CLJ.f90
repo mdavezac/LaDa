@@ -104,8 +104,8 @@ program CLJ
   call create_relaxer( relaxer_handle, 8, "ep.input", force_lj_ewald )
 
   ener = 0e0
-  call force_lj_ewald (natom, axis, ityp, tau, f, stress, ener )
-! call call_relaxer ( relaxer_handle, natom, axis, ityp, tau, f, stress, ener )
+! call force_lj_ewald (natom, axis, ityp, tau, f, stress, ener )
+  call call_relaxer ( relaxer_handle, natom, axis, ityp, tau, f, stress, ener )
 
 
   call release_relaxer( relaxer_handle )
@@ -119,15 +119,15 @@ program CLJ
   write(*,'("Crystal structure of individual")')
 
   write(*,'(f10.5)') 1.d0
-  write(*,'(3(f15.5,2x))') stress(:,1)
-  write(*,'(3(f15.5,2x))') stress(:,2)
-  write(*,'(3(f15.5,2x))') stress(:,3)
+  write(*,'(3(f15.5,2x))') axis(:,1)
+  write(*,'(3(f15.5,2x))') axis(:,2)
+  write(*,'(3(f15.5,2x))') axis(:,3)
 
   write(*,*) (mspecx(i), i=1, nspec_tot)
   write(*,'(a9)') 'Direct   '
 
   do i = 1, natom
-     write(*,'(3(f15.5,2x))') f(:,i)
+     write(*,'(3(f15.5,2x))') tau(:,i)
   end do
 
 ! close(38)
