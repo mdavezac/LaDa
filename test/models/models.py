@@ -13,15 +13,18 @@ class Function:
 
   def gradient( _self, _args, _gradients ):
     from lada import crystal, models
+
     models.fold_structure( _args, _self.structure )
     forces = crystal.sStructure( _self.structure )
-    _self.clj( _self.structure, forces )
+    _self.clj.gradient( _self.structure, forces )
     models.unfold_structure( forces, _gradients )
+
+    return
 
   def ngradient( _self, _args, _gradients ):
     from lada import crystal, models, minimizer
 
-    minimizer.interpolated_gradient( _self, _args, _gradients, n = 6, stepsize=1e-6 )
+    minimizer.interpolated_gradient( _self, _args, _gradients, n = 3, stepsize=1e-2 )
 
 class Parabola:
 
@@ -31,10 +34,10 @@ class Parabola:
   def gradient( _self, _args, _gradients ):
     from lada import minimizer
 
-    minimizer.interpolated_gradient( _self, _args, _gradients )
+    minimizer.interpolated_gradient( _self, _args, _gradients, n=0, stepsize=1e-4 )
 
 def main():
-  from lada import crystal, models
+  from lada import crystal, models, atat
 
   s=str("")
   clj = models.Clj();
@@ -45,9 +48,6 @@ def main():
   crystal.read_poscar( structure, "POSCAR_0", species )
   forces = crystal.sStructure( structure );
   crystal.to_fractional( structure );
-  print clj( structure, forces ), structure, forces
-# print structure, forces
-
   function = Function( clj, structure) 
   args = []
   models.unfold_structure( structure, args )
@@ -57,16 +57,7 @@ def main():
   function.ngradient( args, ngradients )
   function.gradient( args, gradients )
   for i,g in enumerate(ngradients):
-    print i, g, gradients[i]
-
-  print 
-  print 
-
-  p = Parabola()
-  print p([0]), p([1]), p([2])
-  ngrad = [0]
-  p.gradient([1], ngrad)
-  print ngrad[0]
-
+    print i, 2* (g - gradients[i]) / ( g+ gradients[i])
+ 
 if __name__ == "__main__":
   main()

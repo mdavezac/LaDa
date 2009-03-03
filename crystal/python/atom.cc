@@ -27,222 +27,166 @@ namespace LaDa
 {
   namespace Python
   {
-    Crystal::TStructure<std::string>::t_Atom* SAtomFromObject( boost::python::list& _ob );
-    Crystal::Structure::t_Atom* AtomFromObject( boost::python::list& _ob );
-    Crystal::Lattice::t_Site* SiteFromObject( boost::python::list& _ob );
-
+    template< class T_TYPE > Crystal::Atom_Type<T_TYPE>* default_constructor();
+    template< class T_TYPE > 
+      Crystal::Atom_Type<T_TYPE>* copy_constructor( const boost::python::tuple& _ob );
+    template< class T_TYPE >
+      Crystal::Atom_Type<T_TYPE>* object_constructor( const boost::python::tuple& _ob );
     types::t_real toReal(std::string _str );
     std::string toType( types::t_real _r );
+
+    template< class T_TYPE >
+      void expose_typed_atom( const std::string &_name,
+                              const std::string &_ds,
+                              const std::string &_typeds )
+      {
+        namespace bp = boost::python;
+        typedef Crystal::Atom_Type< T_TYPE > t_Atom;
+        bp::class_< t_Atom >( _name.c_str(), _ds.c_str() )
+          .def( "__init__", bp::make_constructor( default_constructor< T_TYPE > ) )
+          .def( "__init__", bp::make_constructor( copy_constructor< T_TYPE > ) )
+          .def( "__init__", bp::make_constructor( object_constructor< T_TYPE > ) )
+          .def_readwrite( "pos",    &t_Atom::pos,
+                          "a LaDa.rVector3d object containing the"
+                          " atomic position in cartesian units." )
+          .def_readwrite( "site",   &t_Atom::site,
+                          "index of the \"site\" as referenced by a LaDa.Lattice object." )
+          .def_readwrite( "type",   &t_Atom::type, _typeds.c_str() )
+          .def_readwrite( "freeze", &t_Atom::freeze )
+          .def( "__str__",  &print<t_Atom> );
+
+        bp::class_< std::vector<t_Atom> >
+          (
+            ( _name + "s" ).c_str(), ("A list of " + _name ).c_str() 
+          )
+          .def( bp::vector_indexing_suite< std::vector<t_Atom> >() );
+      }
 
     void expose_atom()
     {
       namespace bp = boost::python;
-      typedef Crystal::TStructure<std::string>::t_Atom t_StrAtom;
+      typedef Crystal::Atom_Type<std::string> t_StrAtom;
+      typedef Crystal::Atom_Type<types::t_real> t_Atom;
       typedef Crystal::Structure::t_Atom t_Atom;
       typedef Crystal::Structure::t_kAtom t_kAtom;
       typedef Crystal::Lattice::t_Site t_Site;
+
       bp::class_< Crystal::Structure::t_Atoms >("VecStrings")
         .def(bp::vector_indexing_suite< t_Site::t_Type >());
 
-      bp::class_< t_StrAtom >( "details_StrAtom",
-                               "Atom for which the type is specified as an atomic-specie string" )
-        .def( bp::init< t_StrAtom >() )
-        .def_readwrite( "pos",    &t_StrAtom::pos,
-                        "a LaDa.rVector3d object containing the"
-                        " atomic position in cartesian units." )
-        .def_readwrite( "site",   &t_StrAtom::site,
-                        "index of the \"site\" as referenced by a LaDa.Lattice object." )
-        .def_readwrite( "type",   &t_StrAtom::type,
-                        "Atomic specie as a string."
-                        " See LaDa.toAtomType and LaDa.fromAtomType." )
-        .def_readwrite( "freeze", &t_StrAtom::freeze )
-        .def( "__str__",  &print<t_StrAtom> );
-      bp::class_< t_Atom >( "details_Atom",
-                            "Atom for which the type is specified as a real number" )
-        .def( bp::init< t_Atom >() )
-        .def_readwrite( "pos",    &t_Atom::pos, 
-                        "a LaDa.rVector3d object containing the"
-                        " atomic position in cartesian units." )
-        .def_readwrite( "site",   &t_Atom::site,
-                        "index of the \"site\" as referenced by a LaDa.Lattice object." )
-        .def_readwrite( "type",   &t_Atom::type,
-                        "Atomic specie as a real number (usually -1.0 and 1.0)."
-                        " See LaDa.toAtomType and LaDa.fromAtomType." )
-        .def_readwrite( "freeze", &t_Atom::freeze )
-        .def( "__str__",  &print<t_Atom> ) ;
-      bp::class_< t_kAtom >( "details_kAtom", "Represents a reciprocal-space vector." )
-        .def( bp::init< t_kAtom >() )
-        .def_readwrite( "pos",    &t_kAtom::pos,
-                        "a LaDa.rVector3d object containing the"
-                        " vector coordinates in cartesian units." )
-        .def_readwrite( "intensity",   &t_kAtom::type,
-                        "Complex real-value representing the intensity of this k-vector." )
-        .def_readwrite( "freeze", &t_kAtom::freeze )
-        .def( "__str__",  &print<t_kAtom> ) ;
-      bp::class_< t_Site >( "details_Site",
-                            "A lattice-site listing all possible atomic-specie occupation" )
-        .def( bp::init< t_Site >() )
-        .def_readwrite( "pos",    &t_Site::pos,
-                        "a LaDa.rVector3d object containing the"
-                        " atomic position in cartesian units." )
-        .def_readwrite( "type",   &t_Site::type,
-                        "A list of all possible atomic-species (as atomic simbols)" )
-        .def_readwrite( "freeze", &t_Site::freeze )
-        .def( "__str__",  &print<t_Site> ) ;
-
-
-      bp::def( "SAtom", &SAtomFromObject,
-               bp::return_value_policy<bp::manage_new_object>(),
-               bp::arg("arg"),
-               "Factory function for creating details_StrAtom.\n" 
-               "\"arg\" must contain at least three and no more than four items."
-               " The first three must be the cartesian units and the (optional) fourth the type." );
-      bp::def( "Atom", &AtomFromObject,
-               bp::return_value_policy<bp::manage_new_object>(),
-               bp::arg("arg"),
-               "Factory function for creating details_Atom.\n"
-               "\"arg\" must contain at least three and no more than four items."
-               " The first three must be the cartesian units and the (optional) fourth the type." );
-      bp::def( "Site", &SiteFromObject,
-               bp::return_value_policy<bp::manage_new_object>(),
-               bp::arg("arg"),
-               "Factory function for creating details_Site.\n"
-               "\"arg\" must contain at least three and no more than four items."
-               " The first three must be the cartesian units and the "
-               "(optional) fourth the list of atomic-species which can occupy this site." );
-
-      bp::class_< Crystal::TStructure<std::string>::t_Atoms >("SAtoms",
-                                                              "A list of LaDa.details_StrAtom" )
-        .def(bp::vector_indexing_suite< Crystal::TStructure<std::string>::t_Atoms >());
-      bp::class_< Crystal::Structure::t_Atoms >("Atoms", "A list of LaDa.details_Atom")
-        .def(bp::vector_indexing_suite< Crystal::Structure::t_Atoms >());
-      bp::class_< Crystal::Structure::t_kAtoms >("kAtoms", "A list of LaDa.details_kAtom")
-        .def(bp::vector_indexing_suite< Crystal::Structure::t_kAtoms >());
-      bp::class_< Crystal::Lattice::t_Sites >("Sites", "A list of LaDa.details_Site")
-        .def(bp::vector_indexing_suite< Crystal::Lattice::t_Sites >());
+      expose_typed_atom< t_Atom :: t_Type >
+      (
+        "Atom", 
+        "Atom for which the type is specified as a real number",
+        "Atomic specie as a real number (usually -1.0 and 1.0)."
+      );
+      expose_typed_atom< t_StrAtom :: t_Type >
+      (
+        "StrAtom", 
+        "Atom for which the type is specified as a string",
+        "Atomic specie as a string."
+      );
+      expose_typed_atom< t_kAtom :: t_Type >
+      (
+        "kAtom",
+        "Represents a reciprocal-space vector.",
+        "Complex real-value representing the intensity of this k-vector."
+      );
+      expose_typed_atom< t_Site :: t_Type >
+      (
+        "Site",
+        "A lattice-site listing all possible atomic-specie occupation",
+        "A list of all possible atomic-species (as atomic simbols)"
+      );
 
       bp::def( "toAtomType", &toReal, "Converts from an atomic symbol to a real value." );
       bp::def( "fromAtomType", &toType, "Converts from a real value to an atomic symbol." );
     }
 
-    Crystal::TStructure<std::string>::t_Atom* SAtomFromObject( boost::python::list& _ob )
+    void construct_type( Crystal::Atom_Type<types::t_real>& _atm,
+                         const boost::python::tuple& _object )
     {
-      using namespace boost::python;
-      typedef Crystal::TStructure<std::string>::t_Atom t_Atom;
-      t_Atom *result = NULL;
-      try
-      { 
-        result = new t_Atom;
-        types::t_unsigned length = len(_ob);
-        if( length < 3 ) return result;
-
-        result->pos.x[0] = extract< types::t_real >( _ob[0] );
-        result->pos.x[1] = extract< types::t_real >( _ob[1] );
-        result->pos.x[2] = extract< types::t_real >( _ob[2] );
-        if( length == 3 ) return result;
-        result->pos = result->pos;
-        result->type = extract< std::string >( _ob[3] );
-        if( length == 4 ) return result;
-        result->site = extract< types::t_real >( _ob[4] );
-        return result;
-      }
-      catch( std::exception &_e )
+      const boost::python::object o( _object[3] );
+      try{ _atm.type = boost::python::extract< types::t_real >( o ); }
+      catch(...)
       {
-        if( result ) delete result;
-        std::ostringstream sstr;
-        sstr << "Object cannot be converted to an atom: \n"
-             << _e.what() << "\n";
-        throw std::runtime_error( sstr.str() );
+        if( not Crystal::Structure::lattice )
+          throw std::runtime_error( "Did you forget to initialize the Lattice?" );
+        Crystal::StrAtom stratom;
+        stratom.pos = _atm.pos;
+        stratom.type = boost::python::extract< std::string >( _object );
+        Crystal::Structure::lattice->convert_StrAtom_to_Atom( stratom, _atm );
       }
-      catch( ... )
-      {
-        if( result ) delete result;
-        throw std::runtime_error( "Could not convert object to Atom." );
-      }
-      return NULL;
+    }
+    void construct_type( Crystal::Atom_Type<types::t_complex>& _atm,
+                         const boost::python::tuple& _object )
+    {
+      const boost::python::tuple o( _object[3] );
+      _atm.type = types::t_complex( boost::python::extract< types::t_real >( o[0] ),
+                                    boost::python::extract< types::t_real >( o[1] ) );
+    }
+    void construct_type( Crystal::Atom_Type<std::string>& _atm,
+                         const boost::python::object& _object )
+    {
+      const boost::python::str o( _object[3] );
+      _atm.type = boost::python::extract< std::string >( o ); 
+    }
+    void construct_type( Crystal::Atom_Type< std::vector<std::string> >& _atm,
+                         const boost::python::tuple& _object )
+    {
+      const boost::python::list o( _object[3] );
+      for( size_t i(0), n( boost::python::len( o ) ); i < n; ++n )
+        _atm.type.push_back( boost::python::extract<std::string>( o[i]) );
     }
 
-    Crystal::Structure::t_Atom* AtomFromObject( boost::python::list& _ob )
-    {
-      using namespace boost::python;
-      typedef Crystal::Structure::t_Atom t_Atom;
-      t_Atom *result = NULL;
-      try
-      { 
-        result = new t_Atom;
-        types::t_unsigned length = len(_ob);
-        if( length < 3 ) return result;
-
-        result->pos.x[0] = extract< types::t_real >( _ob[0] );
-        result->pos.x[1] = extract< types::t_real >( _ob[1] );
-        result->pos.x[2] = extract< types::t_real >( _ob[2] );
-        if( length == 3 ) return result;
-        try{ result->type = extract< types::t_real >(_ob[3] ); }
-        catch(...)
-        {
-          if( not Crystal::Structure::lattice )
-            throw std::runtime_error( "Did you forget to initialize the Lattice?" );
-          Crystal::StrAtom stratom;
-          stratom.pos = result->pos;
-          stratom.type = extract< std::string >( _ob[3] );
-          Crystal::Structure::lattice->convert_StrAtom_to_Atom( stratom, *result );
+    template< class T_TYPE > 
+      Crystal::Atom_Type<T_TYPE>* default_constructor()
+        { return new Crystal::Atom_Type<T_TYPE>; }
+    template< class T_TYPE >
+      Crystal::Atom_Type<T_TYPE>* copy_constructor( const boost::python::tuple& _ob )
+      {
+        return new Crystal::Atom_Type<T_TYPE>
+                   ( 
+                     boost::python::extract< Crystal::Atom_Type<T_TYPE> >( _ob ) 
+                   ); 
+      }
+    template< class T_TYPE >
+      Crystal::Atom_Type<T_TYPE>* object_constructor( const boost::python::tuple& _ob )
+      {
+        using namespace boost::python;
+        typedef Crystal::Atom_Type<T_TYPE> t_Atom;
+        t_Atom *result = NULL;
+        try
+        { 
+          result = new t_Atom;
+          types::t_unsigned length = len(_ob);
+          if( length < 3 ) return result;
+        
+          result->pos.x[0] = extract< types::t_real >( _ob[0] );
+          result->pos.x[1] = extract< types::t_real >( _ob[1] );
+          result->pos.x[2] = extract< types::t_real >( _ob[2] );
+          if( length == 3 ) return result;
+          construct_type( *result, _ob );
+          if( length == 4 ) return result;
+          result->site = extract< types::t_int >( _ob[4] );
+          return result;
         }
-        if( length == 4 ) return result;
-        result->site = extract< types::t_real >( _ob[4] );
-        return result;
+        catch( std::exception &_e )
+        {
+          if( result ) delete result;
+          std::ostringstream sstr;
+          sstr << "Object cannot be converted to an atom: \n"
+               << _e.what() << "\n";
+          throw std::runtime_error( sstr.str() );
+        }
+        catch( ... )
+        {
+          if( result ) delete result;
+          throw std::runtime_error( "Could not convert object to Atom." );
+        }
+        return NULL;
       }
-      catch( std::exception &_e )
-      {
-        if( result ) delete result;
-        std::ostringstream sstr;
-        sstr << "Object cannot be converted to an atom: \n"
-             << _e.what() << "\n";
-        throw std::runtime_error( sstr.str() );
-      }
-      catch( ... )
-      {
-        if( result ) delete result;
-        throw std::runtime_error( "Could not convert object to Atom." );
-      }
-      return NULL;
-    }
-    Crystal::Lattice::t_Site* SiteFromObject( boost::python::list& _ob )
-    {
-      using namespace boost::python;
-      typedef Crystal::Lattice::t_Site t_Site;
-      types::t_unsigned length = len( _ob );
-      if( length < 3 )
-        throw std::runtime_error( "Object cannot be converted to an atom" );
 
-      t_Site *result = new t_Site;
-      try
-      { 
-        result->pos.x[0] = extract< types::t_real >( _ob[0] );
-        result->pos.x[1] = extract< types::t_real >( _ob[1] );
-        result->pos.x[2] = extract< types::t_real >( _ob[2] );
-        if( length == 3 ) return result;
-        list strlist(_ob[3]);
-        while( len( strlist ) )
-          result->type.push_back( extract<std::string>(strlist.pop(0)) );
-        if( length == 4 ) return result;
-        result->site = extract< types::t_real >( _ob[4] );
-        return result;
-      }
-      catch( std::exception &_e )
-      {
-        delete result;
-        std::ostringstream sstr;
-        sstr << "Object cannot be converted to an atom: \n"
-             << _e.what() << "\n";
-        throw std::runtime_error( sstr.str() );
-      }
-      catch( ... )
-      {
-        delete result;
-        throw std::runtime_error( "Could not convert object to Atom." );
-      }
-      return NULL;
-    }
     types::t_real toReal(std::string _str )
     { 
       if( not Crystal::Structure::lattice )

@@ -88,7 +88,7 @@ subroutine force_lj_ewald (natom, a, ityp, tau, f, stress, ener )
         end if
      end do
        
-     do j = i+1, natom
+     do j = i, natom
         do jj = 1, nspec_tot
            if (ityp(j) == id(jj)) then
               radius_j = rad_ion(jj)
@@ -108,6 +108,9 @@ subroutine force_lj_ewald (natom, a, ityp, tau, f, stress, ener )
         do icell1 = -ncell1,ncell1
            do icell2 = -ncell2,ncell2
               do icell3 = -ncell3,ncell3
+                 
+                 if( i == j .and. icell1 == 0 &
+                     .and. icell2 == 0 .and. icell3 == 0 ) cycle
                  
                  sij(1) = tau(1,i) - tau(1,j)                   
                  sij(2) = tau(2,i) - tau(2,j)                   

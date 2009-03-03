@@ -30,7 +30,7 @@ namespace LaDa
     {
       namespace bt = boost::tuples;
       __DOASSERT( _in.atoms.size() != _out.atoms.size(), "Incoherent structure size.\n" )
-      types::t_real result(0);
+      types::t_real energy(0), ecut(0);
       const types::t_real scale_squared( _in.scale * _in.scale );
 
       typedef t_Arg ::  t_Atoms :: const_iterator t_cit;
@@ -39,8 +39,8 @@ namespace LaDa
       t_Arg :: t_Atoms :: iterator i_force1 = _out.atoms.begin();
       for( t_cit i_atom1( i_atom_begin ); i_atom1 != i_atom_end; ++i_atom1, ++i_force1 )
       {
-        t_Arg :: t_Atoms :: iterator i_force2 = i_force1 + 1;
-        for( t_cit i_atom2( i_atom1 + 1 ); i_atom2 != i_atom_end; ++i_atom2, ++i_force2 )
+        t_Arg :: t_Atoms :: iterator i_force2 = i_force1;
+        for( t_cit i_atom2( i_atom1 ); i_atom2 != i_atom_end; ++i_atom2, ++i_force2 )
         {
           const std::string bondtype( bondname( i_atom2->type, i_atom1->type ) );
 
@@ -59,12 +59,11 @@ namespace LaDa
             for( types::t_int j(-bt::get<1>(mesh_)); j < bt::get<1>(mesh_); ++j )
               for( types::t_int k(-bt::get<2>(mesh_)); k < bt::get<2>(mesh_); ++k )
               {
+                if ( i_atom1 == i_atom2 and i == 0 and j == 0 and k == 0 ) continue;
                 // computes distance.
-                const atat::rVector3d distance
-                (
-                  _in.cell * ( dfractional + atat::rVector3d(i,j,k) ) 
-                );
-                const types::t_real normd( atat::norm2(distance) * scale_squared );
+                const atat::rVector3d fdistance( dfractional + atat::rVector3d(i,j,k) );
+                const atat::rVector3d distance( _in.cell * fdistance * _in.scale );
+                const types::t_real normd( atat::norm2(distance) );
                 if( normd > rcut_squared ) continue;
 
                 // result -= 4.0 * scale * lj_pot( sigma_squared / rcut_squared )
@@ -72,33 +71,33 @@ namespace LaDa
                   const types::t_real squared( 1e0 / rcut_squared );
                   const types::t_real sixth( squared * squared * squared );
                   const types::t_real twelfth( sixth * sixth );
-                  result -=  bond.hard_sphere * twelfth - bond.van_der_walls * sixth;
+                  ecut -=  bond.hard_sphere * twelfth - bond.van_der_walls * sixth;
                 }
 
                 { // van_der_walls energy, force, stress.
                   const types::t_real squared( 1e0 / normd );
                   const types::t_real sixth( squared * squared * squared );
                   const types::t_real twelfth( sixth * sixth );
-                  result += bond.hard_sphere * twelfth - bond.van_der_walls * sixth;
+                  energy += bond.hard_sphere * twelfth - bond.van_der_walls * sixth;
 
                   const types::t_real ffactor
                   ( 
-                      6e0 * squared * _in.scale 
+                      6e0 * squared
                     * ( 2.e0 * bond.hard_sphere * twelfth - bond.van_der_walls * sixth )
                   );
                   const atat::rVector3d force( ffactor * distance );
-                  i_force1->pos += _in.cell * force;
-                  i_force2->pos -= _in.cell * force;
+                  i_force1->pos += force;
+                  i_force2->pos -= force;
 
                   for( size_t i(0); i < 3; ++i )
                     for( size_t j(0); j < 3; ++j )
-                      _out.cell(i,j) += force[i] * distance[j] * _in.scale;
+                      _out.cell(i,j) += force[i] * distance[j];
                 }
 
               } // loop over periodic images.
         } // loop over atom 2
       } // loop over atom 1
-      return result;
+      return energy + ecut;
     }
     
     bool LennardJones :: Load( const TiXmlElement& _node )

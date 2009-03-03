@@ -171,7 +171,8 @@ namespace LaDa
       bp::class_< Clj >( "Clj", "Coulomb + LennardJones functional.\n" )
         .add_property( "charges", &Clj::get_charges, &Clj::set_charges, "Dictionnary of charges." )
         .add_property( "bonds", &Clj::get_bonds, &Clj::set_bonds, "Dictionnary of bonds." )
-        .def("__call__", &Clj::operator() );
+        .def("__call__", &Clj::operator() )
+        .def("gradient", &Clj::gradient );
 
       bp::class_< std::vector<types::t_real> >( "detailsRVector", "List of real values." )
         .def( bp :: vector_indexing_suite< std::vector<types::t_real> >() );

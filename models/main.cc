@@ -16,7 +16,7 @@
 #include <opt/debug.h>
 #include <opt/bpo_macros.h>
 #include <opt/tuple_io.h>
-#include <mpi/mpi_object.h>
+#include <mpi/macros.h>
 #ifdef _MPI
 # include <boost/mpi/environment.hpp>
 #endif
@@ -32,6 +32,7 @@ int main(int argc, char *argv[])
   namespace fs = boost::filesystem;
   namespace bl = boost::lambda;
 
+  __MPI_START__
   __TRYBEGIN
 
   __BPO_START__;
@@ -87,7 +88,7 @@ int main(int argc, char *argv[])
   structure.energy = energy;
   std::cout << "Energy: " << energy  << "\n"
             << structure << "\n" << forces << "\n";
-  __BPO_CATCH__( )
+  __BPO_CATCH__( __MPICODE( MPI_Finalize() ) )
 
   return 0;
 }
