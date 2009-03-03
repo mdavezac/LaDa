@@ -8,10 +8,13 @@
 #include <config.h>
 #endif
 
-#include <mpi/mpi_object.h>
+#include <vector>
+#include <utility>
+
+#include <minimizer/cgs.h>
 #include <crystal/structure.h>
 #include <atat/vectmac.h>
-#include <physics/physics.h>
+#include <opt/types.h>
 
 #include "interface.h"
 
@@ -19,113 +22,62 @@ namespace LaDa
 {
   namespace Pescan 
   {
-
-    //! electronic effective mass for ternary and quaternary super-lattices in (001) direction
-    class eMassSL : public Interface
+    class eMass
     {
       public:
-        //! Inverse Effective Mass tensors
-        atat::rMatrix3d inverse;
-        //! Effective mass tensor;
-        atat::rMatrix3d tensor;
+        //! Conjugate gradient minimizer.
+        typedef Fitting :: Cgs t_Minimizer;
+        //! Conjugate gradient minimizer.
+        t_Minimizer cgs;
+        //! Order of interpolation.
+        size_t order;
+        //! Number of interpolation points.
+        size_t npoints;
+        //! Stepsize for interpolation points.
+        types::t_real stepsize;
+
+        //! Constructor.
+        eMass() : order( 1 ), npoints(2), stepsize( 1e-2 ) {}
+        //! Copy Constructor.
+        eMass   ( const eMass &_c )
+              : cgs( _c.cgs ), order( _c.order ), 
+                npoints( _c.npoints ), stepsize( _c.stepsize ) {}
+
+        //! \brief Computes effective mass.
+        //! \param[in] _interface the escan functional.
+        //! \param[in] _ocell cell vectors of the structure prior to relaxation.
+        //! \param[in] _structure \e relaxed structure for which to compute emasses.
+        //! \param[in] _at effective masses at vector \a _at.
+        //! \param[in] _direction of effective mass.
+        //! \param[in] _nbstates number of bands (and effective masses) to compute.
+        //! \param[in] _eref reference energy at which to compute bands.
+        //! \param[out] _out resulting effective masses and band eigenvalues.
+        void operator()
+        (
+          const Interface& _interface,
+          const atat::rMatrix3d &_ocell, 
+          const Crystal::Structure &_structure,
+          const atat::rVector3d &_at,
+          const atat::rVector3d &_direction,
+          const size_t &_nbstates,
+          const types::t_real &_eref,
+          std::vector< std::pair<types::t_real, types::t_real> > &_out 
+        ) const;
 
       protected:
-        //! Amplitude of the numerical derivative
-        static const types::t_real amplitude = 0.002;
-        //! \f$\frac{\sqrt(2)}{2}\f$
-        static const types::t_real sqrt2_over2 = 0.707106781186547524400844362104849039284835937;
-        //! \f$-\frac{\sqrt(2)}{2}\f$
-        static const types::t_real msqrt2_over2 = -0.707106781186547524400844362104849039284835937;
-        //! Kpoint Gamma
-        static const atat::rVector3d Gamma;
-        //! Kpoint \f$(100)\f$
-        static const atat::rVector3d Lx;
-        //! Kpoint \f$(010)\f$
-        static const atat::rVector3d Ly;
-        //! Kpoint \f$(001)\f$
-        static const atat::rVector3d Lz;
-        //! Kpoint \f$(110)\f$ normalized
-        static const atat::rVector3d Hxy;
-        //! Kpoint \f$(1\bar{1}0)\f$
-        static const atat::rVector3d Hxmy;
-        //! Kpoint \f$(011)\f$
-        static const atat::rVector3d Hyz;
-        //! Kpoint \f$(01\bar{1})\f$
-        static const atat::rVector3d Hymz;
-        //! Kpoint \f$(101)\f$
-        static const atat::rVector3d Hxz;
-        //! Kpoint \f$(\bar{1}01)\f$
-        static const atat::rVector3d Hmxz;
+        //! Computes kpoint in distorted structure from original lattice point.
+        atat::rVector3d distort_kpoint( const atat::rMatrix3d &_ocell, 
+                                        const atat::rMatrix3d &_dcell,
+                                        const atat::rVector3d &_kpoint ) const
+          { return ( !(~_dcell) ) * (~_ocell) * _kpoint; }
+        //! Computes eigenvalues for single kpoint.
+        void compute_( Interface& _interface,
+                       const atat::rVector3d &_kpoints ) const;
 
-      protected:
-        //! Eigenvalues at gamma (degenerate)
-        types::t_real eig_Gamma;
-        //! Eigenvalues at \f$\Gamma + \epsilon(100)\f$
-        types::t_real eig_Lx[2];
-        //! Eigenvalues at \f$\Gamma + \epsilon(010)\f$
-        types::t_real eig_Ly[2];
-        //! Eigenvalues at \f$\Gamma + \epsilon(001)\f$
-        types::t_real eig_Lz[2];
-        //! Eigenvalues at \f$\Gamma + \epsilon(110)\f$
-        types::t_real eig_Hxy[2];
-        //! Eigenvalues at \f$\Gamma + \epsilon(1\bar{1}0)\f$
-        types::t_real eig_Hxmy[2];
-        //! Eigenvalues at \f$\Gamma + \epsilon(011)\f$
-        types::t_real eig_Hyz[2];
-        //! Eigenvalues at \f$\Gamma + \epsilon(01\bar{1})\f$
-        types::t_real eig_Hymz[2];
-        //! Eigenvalues at \f$\Gamma + \epsilon(101)\f$
-        types::t_real eig_Hxz[2];
-        //! Eigenvalues at \f$\Gamma + \epsilon(\bar{1}01)\f$
-        types::t_real eig_Hmxz[2];
-        
+        //! Adds a weight to interpolation points.
+        types::t_real weight_( size_t _i, size_t j ) const;
 
-      public:
-        //! Constructor
-        eMassSL() { tensor.zero(); escan.kpoint = Gamma; }
-        //! Copy Constructor
-        eMassSL( const eMassSL & _c ) : tensor( _c.tensor ) {}
-        //! Destructor
-        ~eMassSL() {};
-
-
-        //! Launches a calculation for structure \a _str
-        bool operator()( const Crystal::Structure &_str ); 
-        //! Loads Functional from XML
-        bool Load( const TiXmlElement &_node );
-
-
-      protected:
-        //! Folded Spectrum gamma computation
-        types::t_real gamma_folded_spectrum();
-        //! All Electron gamma computation
-        types::t_real gamma_all_electron( const Crystal :: Structure& );
-        //! Kpoints other than Gamm
-        void other_kpoints( const atat::rVector3d &_v, types :: t_real *_eig );
-        //! Regroups all escan computations
-        void escan_calls( const Crystal::Structure &_str );
     };
-
-    inline void eMassSL :: other_kpoints( const atat::rVector3d &_v, 
-                                          types :: t_real *_eig )
-    {
-      escan.kpoint = _v;
-      launch_pescan();
-      read_result();
-      *_eig     = eigenvalues.front();
-      *(_eig+1) = eigenvalues.back();
-    }
-
-    inline types::t_real eMassSL::gamma_folded_spectrum()
-    {
-      escan.kpoint = Gamma;
-      escan.nbstates = 1;
-      launch_pescan();
-      read_result();
-
-      return eigenvalues.back();
-    }
-    
 
   } // namespace Pescan
 } // namespace LaDa

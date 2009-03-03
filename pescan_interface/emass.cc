@@ -5,177 +5,166 @@
 #include <config.h>
 #endif
 
-#include <sstream>
+#include <iterator>
+#include <algorithm>
+#include <cmath>
+
 #include <physics/physics.h>
-#include <print/stdout.h>
 
 #include "emass.h"
-
-#include <lapack/lapack.h>
 
                                                     
 namespace LaDa
 {
   namespace Pescan
   {
-    const atat::rVector3d eMassSL :: Gamma(0,0,0);
-    const atat::rVector3d eMassSL :: Lx(1,0,0);
-    const atat::rVector3d eMassSL :: Ly(0,1,0);
-    const atat::rVector3d eMassSL :: Lz(0,0,1);
-    const atat::rVector3d eMassSL :: Hxy(eMassSL::sqrt2_over2,eMassSL::sqrt2_over2,0);
-    const atat::rVector3d eMassSL :: Hxmy(eMassSL::sqrt2_over2,eMassSL::msqrt2_over2,0);
-    const atat::rVector3d eMassSL :: Hyz(0,eMassSL::sqrt2_over2,eMassSL::sqrt2_over2);
-    const atat::rVector3d eMassSL :: Hymz(0,eMassSL::sqrt2_over2,eMassSL::msqrt2_over2);
-    const atat::rVector3d eMassSL :: Hxz(eMassSL::sqrt2_over2,0,eMassSL::sqrt2_over2);
-    const atat::rVector3d eMassSL :: Hmxz(eMassSL::msqrt2_over2,0,eMassSL::sqrt2_over2);
-
-    bool eMassSL::operator()( const Crystal::Structure &_str )
+    namespace details
     {
-      set_scale( _str );
-      escan_calls( _str );
-
-      types::t_real amp2 =   (_str.scale * 1e-10) * ( _str.scale * 1e-10)
-                           * Physics::emass("kg") 
-                           / (   4e0 * Math::pi * Math::pi 
-                               * Physics::hbar("eV*s") * Physics::hbar("J*s")
-                               * amplitude * amplitude ); 
-    
-      inverse(0,0) = ( eig_Lx[0] + eig_Lx[1] - 2.0 * eig_Gamma ) * amp2;
-      inverse(1,1) = ( eig_Ly[0] + eig_Ly[1] - 2.0 * eig_Gamma ) * amp2;
-      inverse(2,2) = ( eig_Lz[0] + eig_Lz[1] - 2.0 * eig_Gamma ) * amp2;
-      amp2 *= 0.25e0;
-      inverse(0,1) = inverse(1,0) = (   eig_Hxy[0] - eig_Hxmy[0]
-                                      + eig_Hxy[1] - eig_Hxmy[1] ) * amp2;
-      inverse(0,2) = inverse(2,0) = (   eig_Hyz[0] - eig_Hymz[0]
-                                      + eig_Hyz[1] - eig_Hymz[1] ) * amp2;
-      inverse(1,2) = inverse(2,1) = (   eig_Hxz[0] - eig_Hmxz[0]
-                                      + eig_Hxz[1] - eig_Hmxz[1] ) * amp2;
-
-      atat::rMatrix3d m, vecs; m.zero();
-      types::t_real eigs[3];
-
-      Lapack::eigen( inverse, vecs, eigs );
-      
-      m.zero();
-      m(0,0) = 1.0 / eigs[0];
-      m(1,1) = 1.0 / eigs[1];
-      m(2,2) = 1.0 / eigs[2];
-
-      tensor = (~vecs) * m * vecs;
-      return true;
+      template< class T_CONTAINER > void double_results( T_CONTAINER& _results );
     }
 
-    void eMassSL :: escan_calls( const Crystal::Structure &_str )
+    void eMass :: operator()
+    (
+      const Interface& _interface,
+      const atat::rMatrix3d &_ocell, 
+      const Crystal::Structure &_structure,
+      const atat::rVector3d &_at,
+      const atat::rVector3d &_direction,
+      const size_t &_nbstates,
+      const types::t_real &_eref,
+      std::vector< std::pair<types::t_real, types::t_real> > &_out 
+    ) const
     {
-      // Stuff to save
-      Escan saved_escan = escan;
+      namespace bnu = boost::numeric::ublas;
+      __DOASSERT( order >= npoints,
+                  "Interpolation order too small, "
+                  "or number of interpolation points to large.\n" )
+      typedef std::vector< std::pair<types::t_real, types::t_real> > t_Results;
+      Interface interface( _interface );
 
-      // Needed only once
-      create_directory();
-      create_potential();
+      // setup functional.
+      interface.escan.nbstates = _nbstates;
+      interface.set_method( Interface :: FOLDED_SPECTRUM );
+      interface.set_reference( _eref );
 
-      // Compute Gamma. This is the one computation which can be all electron
-      eig_Gamma =   ( escan.method == Interface::FOLDED_SPECTRUM ) ?
-                    gamma_folded_spectrum():
-                    gamma_all_electron( _str );
+      // setup kpoints.
+      const bool is_gamma( atat::norm2( _at ) < 1e-8 );
+      const types::t_int nfirst( 1-npoints );
+      const types::t_int nlast( is_gamma ? 1: npoints );
+      std::vector< atat::rVector3d > kpoints;
+      for( types::t_int i(nfirst); i < nlast; ++i )
+        kpoints.push_back(  _at + types::t_real( i ) * _direction * stepsize );
 
-      // Then compute other points
-  //   escan.read_in.clear();
-  //   escan.nbstates = 2;
-  //   escan.wavefunction_in = escan.wavefunction_out;
-  //   escan.wavefunction_out = "dummy";
-  //  
-  //
-  //   other_kpoints( amplitude * Lx, eig_Lx);
-  //   other_kpoints( amplitude * Ly, eig_Ly);
-  //   other_kpoints( amplitude * Lz, eig_Lz);
-  //   other_kpoints( amplitude * Hxy, eig_Hxy);
-  //   other_kpoints( amplitude * Hxmy, eig_Hxmy);
-  //   other_kpoints( amplitude * Hyz, eig_Hyz);
-  //   other_kpoints( amplitude * Hymz, eig_Hymz);
-  //   other_kpoints( amplitude * Hxz, eig_Hxz);
-  //   other_kpoints( amplitude * Hmxz, eig_Hmxz);
-
-  #ifdef _LADADEBUG
-      std::cout << " ****** Gamma " << eig_Gamma   << std::endl;
-      std::cout << " ****** Lx "    << std::setw(12) << eig_Lx[0]   << " "
-                << std::setw(12) << eig_Lx[1]   << std::endl;
-      std::cout << " ****** Ly "    << std::setw(12) << eig_Ly[0]   << " "
-                << std::setw(12) << eig_Ly[1]   << std::endl;
-      std::cout << " ****** Lz "    << std::setw(12) << eig_Lz[0]   << " "
-                << std::setw(12) << eig_Lz[1]   << std::endl;
-      std::cout << " ****** Hxy "   << std::setw(12) << eig_Hxy[0]  << " "
-                << std::setw(12) << eig_Hxy[1]  << std::endl;
-      std::cout << " ****** Hxmy "  << std::setw(12) << eig_Hxmy[0] << " "
-                << std::setw(12) << eig_Hxmy[1] << std::endl;
-      std::cout << " ****** Hyz "   << std::setw(12) << eig_Hyz[0]  << " "
-                << std::setw(12) << eig_Hyz[1]  << std::endl;
-      std::cout << " ****** Hymz "  << std::setw(12) << eig_Hymz[0] << " "
-                << std::setw(12) << eig_Hymz[1] << std::endl;
-      std::cout << " ****** Hxz "   << std::setw(12) << eig_Hxz[0]  << " "
-                << std::setw(12) << eig_Hxz[1]  << std::endl;
-      std::cout << " ****** Hmxz "  << std::setw(12) << eig_Hmxz[0] << " "
-                << std::setw(12) << eig_Hmxz[1] << std::endl;
-      throw std::runtime_error("Stop Here\n");
-  #endif
-
-      escan = saved_escan;
-      destroy_directory_();
-    }
-
-    types::t_real eMassSL::gamma_all_electron( const Crystal::Structure &_str ) 
-    {
-      escan.kpoint = Gamma;
-      
-      Crystal::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
-      Crystal::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
-      escan.nbstates = 2; 
-      for(; i_atom != i_atom_end; ++i_atom)
+      // computes eigenvalues.
+      const atat::rVector3d ndir( _direction * 1e0 / std::sqrt( atat::norm2( _direction ) ) );
+      typedef std::pair< types::t_real, std::vector<types::t_real> > t_Eigs;
+      std::vector< t_Eigs > eigs;
+      foreach( const atat::rVector3d &kpoint, kpoints )
       {
-        Crystal::StrAtom atom; 
-        _str.lattice->convert_Atom_to_StrAtom( *i_atom, atom );
-        escan.nbstates += Physics::Atomic::Charge( atom.type );
+        t_Eigs eig;
+        compute_
+        ( 
+          interface,
+          distort_kpoint( _ocell, _structure.cell, kpoint )
+        );
+        eigs.push_back
+        (
+          t_Eigs
+          (
+            (interface.escan.kpoint - kpoint) * ndir,
+            interface.eigenvalues
+          )
+        );
       }
-      if (    escan.potential != Escan::SPINORBIT
-           or atat::norm2(escan.kpoint) < types::tolerance )
-        escan.nbstates /= 2;
-
-      launch_pescan();
-      read_result();
-
-      escan.Eref = eigenvalues.back();
-      return escan.Eref;
-    }
-
-    bool eMassSL :: Load( const TiXmlElement &_node )
-    {
-      const TiXmlElement *parent = find_node( _node );
-      if ( not parent )
-      {
-        std::cerr << "Could not find <Functional type=\"escan\"> in input" << std::endl;
-        return false;
-      }
-      if ( not Interface :: Load_( *parent ) )
-      {
-        std::cerr << "Could not load Pescan functional" << std::endl;
-        return false;
-      }
+      if( is_gamma ) details::double_results( eigs );
 
       
-      t_method m = escan.method;
-      escan.method = ALL_ELECTRON;
-      const TiXmlElement *child = parent->FirstChildElement("Reference");
-      if( not child ) return true;
-      if(     (not child->Attribute("value") )
-          and (not child->Attribute("VBM") ) ) return true;
+      // computes effective masses.
+      _out.clear();
+      const size_t center_index( npoints - 1 );
+      const types::t_real pi
+      (
+        3.1415926535897932384626433832795028841971693993751058209749445920e0
+      );
+      const types::t_real factor
+      ( // transforms energy and k vector units to atomic units(Hartree).
+        // structure scale is expected in Angstroem.
+        // energy from escan should be in eV.
+          Physics::Hartree("eV") * 2e0 * pi * pi 
+        * Physics::a0("A") * Physics::a0("A") 
+        / _structure.scale / _structure.scale 
+      );
+      for( size_t band(0); band < _nbstates; ++band )
+      {
+        const types::t_real center_eigenvalue( eigs[ center_index ].second[band] );
+        // Setups interpolation.
+        bnu::matrix<types::t_real> Amatrix( kpoints.size(), order + 1);
+        bnu::vector<types::t_real> Bvector( kpoints.size() );
+        bnu::vector<types::t_real> Xvector( order + 1 );
+        for( size_t i(0); i < kpoints.size(); ++i )
+        {
+          Bvector(i) = eigs[i].second[band] * weight_( i, center_index );
+          for( size_t j(0); j < order + 1; ++j )
+            Amatrix(i,j) = std::pow( eigs[i].first, j ) * weight_(i, center_index);
+        }
+        for( size_t j(0); j < order + 1; ++j ) Xvector(j) = 0e0;
 
-      double d;
-      if( child->Attribute( "value" ) ) child->Attribute( "value", &d );
-      if( child->Attribute( "CBM" ) ) child->Attribute( "CBM", &d );
-      escan.Eref = (types::t_real) d;
-      escan.method = m;
-      return true;
+        // Performs least square fit.
+        bnu::matrix<types::t_real> A = bnu::prec_prod( bnu::trans( Amatrix ), Amatrix );
+        LaDa::Fitting::Cgs::t_Return
+          result = cgs
+                   ( 
+                     A,
+                     Xvector,
+                     bnu::prec_prod( bnu::trans( Amatrix ), Bvector )
+                   );
+
+        // finally enters result.
+        const types::t_real mass( factor / Xvector(2) ); 
+        _out.push_back( t_Results::value_type( center_eigenvalue, mass ) );
+      } // end of loop over bands.
+    } // end of functor. 
+
+
+    void eMass :: compute_( Interface &_interface, const atat::rVector3d &_kpoint ) const
+    {
+      size_t oldnbstates = _interface.escan.nbstates;
+      const bool is_gamma( atat::norm2( _kpoint ) < 1e-8 );
+      if( is_gamma ) _interface.escan.nbstates = oldnbstates >> 1;
+      _interface.escan.kpoint = _kpoint;
+
+      _interface();
+      if( is_gamma )
+      {
+        _interface.eigenvalues.reserve( _interface.eigenvalues.size() << 1 );
+        std::copy( _interface.eigenvalues.begin(), _interface.eigenvalues.end(),
+                   std::back_inserter( _interface.eigenvalues ) );
+        _interface.escan.nbstates = oldnbstates;
+      }
+      std::sort( _interface.eigenvalues.begin(), _interface.eigenvalues.end() );
     }
 
-  }
+    //! Adds a weight to interpolation points.
+    types::t_real weight_( size_t _i, size_t _j )
+    {
+      const types::t_int u( std::abs( types::t_int(_i) - types::t_int(_j) ) );
+      return 1e0 / types::t_real( std::pow( u, 2 ) );
+    }
+
+    namespace details 
+    {
+      template< class T_CONTAINER > void double_results( T_CONTAINER &_results )
+      {
+        typedef typename T_CONTAINER :: value_type t_Type;
+        typedef typename T_CONTAINER :: const_reverse_iterator t_crit;
+
+        _results.reserve( _results.size() * 2 - 1 );
+        t_crit i_first = _results.rbegin();
+        t_crit i_end = _results.rend();
+        for(++i_first; i_first != i_end; ++i_first )
+          _results.push_back( t_Type( -i_first->first, i_first->second ) );
+      }
+    } // namespace details
+
+  } // namespace Pescan
 } // namespace LaDa

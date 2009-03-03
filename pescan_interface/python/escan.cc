@@ -7,7 +7,6 @@
 
 #include <boost/python.hpp>
 #include <boost/python/enum.hpp>
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 
 #include <opt/initial_path.h>
 
@@ -60,20 +59,6 @@ namespace LaDa
         { return _a.get_dirname().string(); } 
       void set_directory ( LaDa::Pescan::Interface &_a, const std::string &_b ) 
         { _a.set_dirname( _b ); }
-
-      template< class T_TYPE, size_t LINESIZE >
-      std::string print_vector( const std::vector<T_TYPE> & _container )
-      {
-        std::ostringstream sstr;
-        size_t i(0);
-        foreach( const T_TYPE& value, _container )
-        {
-          if( i % LINESIZE == 0 and i != 0 ) sstr << "\n";
-          sstr << value << " ";
-          ++i;
-        }
-        return sstr.str();
-      }
 
     } // namespace details
 
@@ -139,10 +124,6 @@ namespace LaDa
               "Loads escan parameters from an XML file." )
         .def( "run", &t_Escan::operator(), "Performs a calculation." )
         .def( "set_mpi", &t_Escan::set_mpi, "Sets the boost.mpi communicator." );
-      // Register eigenvalues type.
-      bp::class_< std::vector<types::t_real> >("VectorReals", "A list of real values.")
-       .def(bp::vector_indexing_suite< std::vector<types::t_real> >())
-       .def("__str__", &details::print_vector< types::t_real, 5 > );
 
       bp::def( "nb_valence_states", &LaDa::Pescan::nb_valence_states, bp::arg("structure"),
                "Returns the number of valence states in a structure." );
