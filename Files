@@ -181,8 +181,8 @@ PESCAN_CC = interface.cc bandgap.cc dipole_elements.cc emass.cc
 PESCAN_H  = interface.h  bandgap.h  va.h dipole_elements.h emass.h
 PESCAN_IMPL_H  = interface.localclasses.h va.impl.h
 PESCAN_DOC = $(PESCAN_H) $(PESCAN_CC) $(PESCAN_F90) $(PESCAN_IMPL_H)
-PESCAN_PYTHON_CC = escan.cc bandgap.cc python.cc
-PESCAN_PYTHON_H = escan.hpp bandgap.hpp
+PESCAN_PYTHON_CC = escan.cc bandgap.cc python.cc emass.cc
+PESCAN_PYTHON_H = escan.hpp bandgap.hpp emass.hpp
 
 PHYSICS_CC = physics.cc
 PHYSICS_H  = physics.h

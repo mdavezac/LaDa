@@ -19,8 +19,8 @@ namespace LaDa
   {
     boost::python::list get_masses
     (
-      const eMass& _emass,
-      const Interface& _interface,
+      const Pescan::eMass& _emass,
+      const Pescan::Interface& _interface,
       const atat::rMatrix3d &_ocell, 
       const Crystal::Structure &_structure,
       const atat::rVector3d &_at,
@@ -29,7 +29,8 @@ namespace LaDa
       const types::t_real &_eref
     )
     {
-      std::vector< std::pair< types::t_real, types::t_real > > &out;
+      typedef std::vector< std::pair< types::t_real, types::t_real > > t_Out;
+      t_Out out;
       _emass
       (
        _interface,
@@ -42,8 +43,8 @@ namespace LaDa
        out 
       );
       boost::python::list result;
-      foreach( const std::pair<types::t_real, types::t_real> &r, result )
-        result.append( boost::python::tuple( r.first, r.second ) );
+      foreach( const t_Out :: value_type &r, out )
+        result.append( boost::python::make_tuple( r.first, r.second ) );
       return result;
     }
 
@@ -52,13 +53,13 @@ namespace LaDa
       namespace bp = boost::python;
       typedef LaDa::Pescan::eMass t_eMass;
       bp::class_< t_eMass >( "eMass", "Functor for computing effective masses" )
-        .def_readwrite( "cgs", t_eMass::cgs, "Conjugate gradient for least-square-fit." ) 
-        .def_readwrite( "order", t_eMass::order, "Order of interpolation." )
-        .def_readwrite( "npoints", t_eMass::npoints, "Number of points in interpolation." )
-        .def_readwrite( "stepsize", t_eMass::stepsize, "Distance between interpolation points." )
+        .def_readwrite( "cgs", &t_eMass::cgs, "Conjugate gradient for least-square-fit." ) 
+        .def_readwrite( "order", &t_eMass::order, "Order of interpolation." )
+        .def_readwrite( "npoints", &t_eMass::npoints, "Number of points in interpolation." )
+        .def_readwrite( "stepsize", &t_eMass::stepsize, "Distance between interpolation points." )
         .def
         ( 
-          "__call__", &get_masses
+          "__call__", &get_masses,
           (
             bp::arg("self"),
             bp::arg("escan"),
