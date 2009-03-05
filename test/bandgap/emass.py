@@ -45,6 +45,62 @@ def compute_distorted_kpoint( _original_cell, _distorted_cell, _kpoint ):
   distorted_kcell = atat.inverse( atat.transpose( _distorted_cell ) )
   return distorted_kcell * atat.transpose( _original_cell ) * _kpoint
 
+def get_masses( _xmlinput, _kpoint, _direction, _step, _nbeval ):
+
+  from lada import crystal, vff, atat, escan
+
+  lattice = crystal.Lattice()
+  lattice.fromXML( _xmlinput )
+  func_vff = vff.Vff()
+  func_vff.structure.fromXML( _xmlinput )
+  structure =  crystal.Structure( func_vff.structure )
+
+  original_cell = atat.rMatrix3d( structure.cell )
+  dirn = atat.rVector3d( _direction )
+  dirn = dirn * 1e0 / sqrt( atat.norm2(dirn) )
+
+  func_vff.fromXML( _xmlinput )
+  func_vff.init()
+  func_escan = escan.Escan()
+  func_escan.set_mpi( mpi.world )
+  func_escan.fromXML( _xmlinput )
+
+  func_bg = escan.BandGap()
+  func_bg.set_mpi( mpi.world )
+  func_bg.fromXML( _xmlinput )
+
+  func_vff.evaluate()
+  distorted_cell = atat.rMatrix3d( func_vff.structure.cell )
+  bandgap.vff_inputfile = "atomic_config." + str( mpi.world.rank )
+  mpi.broadcast( mpi.world, func_vff.structure, 0 )
+  func_vff.print_escan_input( bandgap.vff_inputfile )
+  bandgap.scale = func_vff.structure
+  bandgap.parameters.kpoint = compute_distorted_kpoint\
+                              (
+                                original_cell,
+                                distorted_cell,
+                                atat.rVector3d( _kpoint )
+                              )
+  korigin = atat.rVector3d( bandgap.parameters.kpoint )
+  gamma = escan.Bands(bandgap.bands)
+
+  bandgap.escan.Eref = bandgap.Eref.cbm;
+  func_emass = escan.eMass()
+  result = func_emass\
+           (\
+             bandgap,
+             original_cell, 
+             vf.structure,
+             _kpoint,
+             _direction,
+             2,
+             bandgap.Eref.cbm
+           )
+
+  print result
+
+
+
 def create_results( _xmlinput, _kpoint, _direction, _step, _nbval, _filename ):
 
   import pickle
