@@ -235,7 +235,8 @@ def main():
 
 
   scale = read_structure( "sigeemass.xml" ).scale 
-  pickle_filename = "_si.0.01"
+  get_masses( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10 )
+# pickle_filename = "_si.0.01"
 # create_results( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10, "_ge_gamma" )
 # create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,0.5,0.5], 0.01, 10, "_ge_Ll" )
 # create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,-0.5,0], 0.01, 10, "_ge_Lt" )
@@ -244,7 +245,7 @@ def main():
 # print_results( "_ge_gamma" )
 # print_results( "_ge_gamma" )
 # print_results( "_ge_Xl" )
-  interpolate_bands( "_ge_gamma", scale, 2 )
+# interpolate_bands( "_ge_gamma", scale, 2 )
 # print_results( "_si_large_mesh" )
 # print_results( pickle_filename )
 

@@ -145,7 +145,7 @@ namespace LaDa
     }
 
     //! Adds a weight to interpolation points.
-    types::t_real weight_( size_t _i, size_t _j )
+    types::t_real eMass :: weight_( size_t _i, size_t _j ) const
     {
       const types::t_int u( std::abs( types::t_int(_i) - types::t_int(_j) ) );
       return 1e0 / types::t_real( std::pow( u, 2 ) );
