@@ -29,7 +29,7 @@ namespace LaDa
         //! Type of the key used in the map.
         typedef std::string Key;
         //! Type of the container of atomic charges.
-        typedef std::map< Key, types::t_int > t_Charges;
+        typedef std::map< Key, types::t_real > t_Charges;
         //! Argument type.
         typedef Crystal :: TStructure< std::string > t_Arg;
         //! Return type.

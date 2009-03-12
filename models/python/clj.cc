@@ -20,6 +20,7 @@
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp> 
 
 #include <opt/types.h>
+#include <python/std_map.hpp>
 #include "../clj.h"
 
 namespace LaDa
@@ -112,15 +113,18 @@ namespace LaDa
       typedef Clj::t_Bonds t_Bonds; 
       typedef Clj::t_Charges t_Charges; 
 
-      bp::class_< t_Charges >( "Charges", "Dictionary of charges" )
-        .def( bp :: map_indexing_suite< t_Charges, true >() );
+      expose_map< t_Charges >( "Charges", "Dictionary of charges" );
+//     bp::class_< t_Charges >( "Charges", "Dictionary of charges" )
+//       .def( bp :: map_indexing_suite< t_Charges >() );
    
       bp::class_< t_Bond >( "LJBond", "Holds bond parameters for Lennard-Jones." )
+        .def( bp::init<>() )
+        .def( bp::init<t_Bond>() )
         .def_readwrite( "hardsphere", &t_Bond::hard_sphere, "+r^12 factor." )
         .def_readwrite( "vandderwalls", &t_Bond::van_der_walls, "-r^6 factor." );
 
       bp::class_< t_Bonds >( "LJBonds", "Dictionary of bonds" )
-        .def( bp :: map_indexing_suite< t_Bonds, true >() );
+        .def( bp :: map_indexing_suite< t_Bonds >() );
 
       bp::class_< Clj >( "Clj", "Coulomb + LennardJones functional.\n" )
         .add_property( "charges", &Clj::get_charges, &Clj::set_charges, "Dictionnary of charges." )

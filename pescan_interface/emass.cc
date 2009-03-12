@@ -38,7 +38,7 @@ namespace LaDa
     ) const
     {
       namespace bnu = boost::numeric::ublas;
-      __DOASSERT( order >= 2*npoints + 1,
+      __DOASSERT( order >= 2*(npoints-1) + 1,
                   "Interpolation order too large, "
                   "or number of interpolation points to small.\n" )
       __DOASSERT( order < 2,
@@ -54,8 +54,8 @@ namespace LaDa
 
       // setup kpoints.
       const bool is_gamma( atat::norm2( _at ) < 1e-8 );
-      const types::t_int nfirst( -npoints );
-      const types::t_int nlast( is_gamma ? 1: npoints+1 );
+      const types::t_int nfirst( 1-npoints );
+      const types::t_int nlast( is_gamma ? 1: npoints );
       std::vector< atat::rVector3d > kpoints;
       for( types::t_int i(nfirst); i < nlast; ++i )
         kpoints.push_back(  _at + types::t_real( i ) * _direction * stepsize );
@@ -119,11 +119,14 @@ namespace LaDa
         bnu::vector<types::t_real> Xvector( order + 1 );
         for( size_t i(0); i < eigs.size(); ++i )
         {
-          Bvector(i) = eigs[i].second[band] * weight_( i, center_index );
+          const types::t_real w( weight_( i, center_index ) );
+          Bvector(i) = eigs[i].second[band] * w;
           for( size_t j(0); j < order + 1; ++j )
-            Amatrix(i,j) = std::pow( eigs[i].first, j ) * weight_(i, center_index);
+            Amatrix(i,j) = std::pow( eigs[i].first, j ) * w;
         }
         for( size_t j(0); j < order + 1; ++j ) Xvector(j) = 0e0;
+//       std::cout << "Amat:\n" << Amatrix << "\n"
+//                 << "Bvec:\n" << Bvector << "\n";
 
         // Performs least square fit.
         bnu::matrix<types::t_real> A = bnu::prec_prod( bnu::trans( Amatrix ), Amatrix );
@@ -134,9 +137,9 @@ namespace LaDa
                      Xvector,
                      bnu::prec_prod( bnu::trans( Amatrix ), Bvector )
                    );
-        std::cout << bnu::prec_prod( Amatrix, Xvector ) - Bvector << "\n";
-        std::cout << Xvector << "\n";
-        std::cout << result.first << " " << result.second << "\n";
+ //      std::cout << bnu::prec_prod( Amatrix, Xvector ) - Bvector << "\n";
+ //      std::cout << Xvector << "\n";
+ //      std::cout << result.first << " " << result.second << "\n";
 
         // finally enters result.
         const types::t_real mass( factor / Xvector(2) ); 
@@ -166,8 +169,9 @@ namespace LaDa
     //! Adds a weight to interpolation points.
     types::t_real eMass :: weight_( size_t _i, size_t _j ) const
     {
+      return 1e0;
       const types::t_int u( std::abs( types::t_int(_i) - types::t_int(_j) ) );
-      return u == 0? 1e0: 1e0 / types::t_real( std::pow( u, 2 ) );
+      return u == 0? 1e0: 1e0 / types::t_real( std::pow( u, 4 ) );
     }
 
     namespace details 

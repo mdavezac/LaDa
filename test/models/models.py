@@ -1,40 +1,49 @@
 #! /usr/bin/python
 
 class Function:
-  def __init__( _self, _clj, _structure ):
-    _self.clj = _clj
-    _self.structure = _structure
+  def __init__( self, _clj, _structure ):
+    self.clj = _clj
+    self.structure = _structure
 
-  def __call__( _self, _args ):
+  def __call__( self, _args ):
     from lada import crystal, models
-    models.fold_structure( _args, _self.structure )
-    forces = crystal.sStructure( _self.structure )
-    return _self.clj( _self.structure, forces )
+    models.fold_structure( _args, self.structure )
+    forces = crystal.sStructure( self.structure )
+    return self.clj( self.structure, forces )
 
-  def gradient( _self, _args, _gradients ):
+  def gradient( self, _args, _gradients ):
     from lada import crystal, models, minimizer
 
-    models.fold_structure( _args, _self.structure )
-    forces = crystal.sStructure( _self.structure )
-    _self.clj( _self.structure, forces )
-    _self.clj.gradient( _self.structure, forces )
+    models.fold_structure( _args, self.structure )
+    forces = crystal.sStructure( self.structure )
+    self.clj( self.structure, forces )
+    self.clj.gradient( self.structure, forces )
     models.unfold_structure( forces, _gradients )
 
 
-  def ngradient( _self, _args, _gradients ):
+  def ngradient( self, _args, _gradients ):
     from lada import crystal, models, minimizer
 
-    minimizer.interpolated_gradient( _self, _args, _gradients, n=1, stepsize=1e-3 )
+    minimizer.interpolated_gradient( self, _args, _gradients, n=1, stepsize=1e-3 )
 
 class Parabola:
 
-  def __call__( _self, _args ):
+  def __call__( self, _args ):
     return _args[0]
 
-  def gradient( _self, _args, _gradients ):
+  def gradient( self, _args, _gradients ):
     from lada import minimizer
 
-    minimizer.interpolated_gradient( _self, _args, _gradients, n=0, stepsize=1e-4, tolerance=1e-18 )
+    minimizer.interpolated_gradient( self, _args, _gradients, n=0, stepsize=1e-4, tolerance=1e-18 )
+
+def read_functional( _filename ):
+  from lada import crystal, models, atat, minimizer, opt
+
+  clj = models.Clj();
+  species = []
+  models.read_epinput(clj, species, _filename )
+
+  return clj, species
 
 def read_gsgo_history( _filename ):
 
@@ -84,21 +93,45 @@ def read_gsgo_history( _filename ):
 
 
 def main():
+  import nlsq
+  from lada import models
 
   structures = read_gsgo_history( "history.pop_LiCsBr" )
-  for s in structures:
-    print s
+# for s in structures:
+#   print s
  #  print
+
+  epinput = "ep.input"
+  clj, species = read_functional( epinput )
+  nlsq_func = nlsq.Functional( clj, structures )
+  print nlsq_func
+
+  args = nlsq_func.args()
+  print args
+  args[0] = 3
+  print args
+
+  clj.bonds["Cl Na"] = models.LJBond()
+  clj.charges["V"] = 6
+  nlsq_func = nlsq.Functional( clj, structures )
+  print nlsq_func, clj.charges["V"]
+
+  
+
+# for bond in clj.bonds:
+#   print   "%s %8.4f/r^12 - %8.4f/r^6"\
+#         % (bond.key(), bond.data().hardsphere, bond.data().vandderwalls )
+# for charge in clj.charges:
+#   print   "%s %8.4f/r"\
+#         % (charge.key(), charge.data() )
 
 def main2():
   from lada import crystal, models, atat, minimizer, opt
 
   s=str("")
-  clj = models.Clj();
-  species = []
   epinput = "simple.ep.input"
   poscar = "simple.POSCAR_0"
-  models.read_epinput(clj, species, epinput )
+  clj, species = read_functional( epinput )
 
   structure = crystal.sStructure();
   crystal.read_poscar( structure, poscar, species )

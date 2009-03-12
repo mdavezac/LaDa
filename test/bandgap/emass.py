@@ -84,10 +84,11 @@ def get_masses( _xmlinput, _kpoint, _direction, _step, _nbeval ):
                                 atat.rVector3d( _kpoint )
                               )
   korigin = atat.rVector3d( bandgap.parameters.kpoint )
-  bandgap.run()
+  bandgap.evaluate( func_vff.structure )
   gamma = escan.Bands(bandgap.bands)
+  bandgap.eref = gamma
 
-  bandgap.parameters.Eref = bandgap.eref.cbm;
+  bandgap.parameters.Eref = bandgap.eref.vbm;
   func_emass = escan.eMass()
   func_emass.npoints = _nbeval
   result = func_emass\
@@ -97,10 +98,11 @@ def get_masses( _xmlinput, _kpoint, _direction, _step, _nbeval ):
              structure = func_vff.structure,
              kpoint    = atat.rVector3d(_kpoint),
              direction = atat.rVector3d(_direction),
-             nbstates  = 2,
+             nbstates  = 8,
              ref       = bandgap.eref.cbm
            )
 
+  print "gamma: ", gamma
   print "[(eigenvalue, effective mass)]: ", result
 
 
@@ -219,13 +221,14 @@ def interpolate_bands( _filename, _scale, _order = 2 ):
               ]
     vectorB = [ r[band] for r in results[start:end] ]
     vectorX = [ 0 for r in range(0, _order+1) ]
-    for i in range( 0, len(results) ):
-      v = float(abs(i - middle))
-      if v == 0: continue
-      matrixA[i] = [ u / pow( v, 4 ) for u in matrixA[i] ]
-      vectorB[i] /= pow( v, 4) 
+#   for i in range( 0, len(results) ):
+#     v = float(abs(i - middle))
+#     if v == 0: continue
+#     matrixA[i] = [ u / pow( v, 4 ) for u in matrixA[i] ]
+#     vectorB[i] /= pow( v, 4) 
     ( x, resid, iter ) = minimizer.linear_lsq( A=matrixA, x=vectorX, b=vectorB, \
                                                verbosity=0, tolerance = 1e-18, itermax = 10000 )
+    print matrixA, "\n", vectorB
     print "# ", x, resid, iter
 #   for a in results:
 #     print a[0], sum( [ x[i]*pow(a[0],i) for i in range(0, _order+1) ] )
@@ -239,17 +242,17 @@ def main():
 
 
   scale = read_structure( "sigeemass.xml" ).scale 
-  get_masses( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10 )
+# get_masses( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10 )
 # pickle_filename = "_si.0.01"
-# create_results( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10, "_ge_gamma" )
+  create_results( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10, "_ge_new_gamma" )
 # create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,0.5,0.5], 0.01, 10, "_ge_Ll" )
 # create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,-0.5,0], 0.01, 10, "_ge_Lt" )
 # create_results( "sigeemass.xml", [1,0,0], [1,0,0], 0.01, 10, "_ge_Xl" )
-  print_results( "_ge_gamma" )
+  print_results( "_ge_new_gamma" )
 # print_results( "_ge_gamma" )
 # print_results( "_ge_gamma" )
 # print_results( "_ge_Xl" )
-  interpolate_bands( "_ge_gamma", scale, 2 )
+# interpolate_bands( "_ge_gamma", scale, 2 )
 # print_results( "_si_large_mesh" )
 # print_results( pickle_filename )
 
