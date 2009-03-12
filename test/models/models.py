@@ -36,7 +36,61 @@ class Parabola:
 
     minimizer.interpolated_gradient( _self, _args, _gradients, n=0, stepsize=1e-4, tolerance=1e-18 )
 
+def read_gsgo_history( _filename ):
+
+  def read_structure( _lines ):
+  
+    from lada import crystal, atat, physics
+
+    while len( _lines ):
+      line = _lines.pop(0)
+      if line.split()[0] == "Structure": break
+    if not len( _lines ): return (0, 0)
+
+    structure = crystal.sStructure()
+    structure.scale = 5
+
+    func = lambda x: (str(x[0]), float(x[1]))
+    (structure.name, structure.energy) = func(_lines.pop(0).split())
+
+#   print map( lambda x: float(x), _lines.pop(0).split() )
+
+    structure.cell = atat.rMatrix3d( [ map( lambda x: float(x), _lines.pop(0).split() )
+                                       for u in range(0, 3) ] )
+    nbatoms = int( _lines.pop(0) )
+    _lines.pop(0); _lines.pop(0); _lines.pop(0)
+    atomtype = ("Li", "Cs", "Cl" )
+
+    func = lambda x: ( physics.Symbol(int(x[0])),\
+                       atat.rVector3d( [ float(x[i]) for i in range(1,4) ] ) )
+    for n in range(0, nbatoms):
+      atom = crystal.StrAtom()
+      ( atom.type, atom.pos ) = func( _lines.pop(0).split() )
+      structure.atoms.append( atom )
+     
+    return (1,structure)
+
+
+  file=open(_filename,'r')
+  lines = file.readlines()
+  file.close()
+  neof = 1
+  structures = []
+  while neof:
+    (neof, structure) = read_structure( lines )
+    if not neof: break
+    structures.append( structure )
+  return structures
+
+
 def main():
+
+  structures = read_gsgo_history( "history.pop_LiCsBr" )
+  for s in structures:
+    print s
+ #  print
+
+def main2():
   from lada import crystal, models, atat, minimizer, opt
 
   s=str("")

@@ -177,6 +177,7 @@ namespace LaDa
         else if( _str ==  "Sn" ) return 50;
         else if( _str ==  "Sb" ) return 51;
         else if( _str ==  "Te" ) return 52;
+        else if( _str ==  "Cs" ) return 55;
         else if( _str ==  "Au" ) return 79;
         else if( _str ==  "Hg" ) return 80;
         return 0;
@@ -207,6 +208,7 @@ namespace LaDa
         else if( _str ==  "Sn" ) return 118.710;
         else if( _str ==  "Sb" ) return 121.760;
         else if( _str ==  "Te" ) return 127.60;
+        else if( _str ==  "Cs" ) return 132.9054519;
         else if( _str ==  "Au" ) return 196.96655;
         else if( _str ==  "Hg" ) return 200.59;
         return 0;
@@ -239,6 +241,7 @@ namespace LaDa
           case  50: return "Sn"; __BREAK
           case  51: return "Sb"; __BREAK
           case  52: return "Te"; __BREAK
+          case  55: return "Cs"; __BREAK
           case  79: return "Au"; __BREAK
           case  80: return "Hg"; __BREAK
         }
@@ -270,6 +273,7 @@ namespace LaDa
           case  50: return  4; __BREAK
           case  51: return  5; __BREAK
           case  52: return  6; __BREAK
+          case  55: return  1; __BREAK
           case  79: return 10; __BREAK
           case  80: return 11; __BREAK
         }

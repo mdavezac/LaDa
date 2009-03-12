@@ -37,7 +37,7 @@ namespace LaDa
         types::t_real stepsize;
 
         //! Constructor.
-        eMass() : order( 1 ), npoints(2), stepsize( 1e-2 ) {}
+        eMass() : order( 2 ), npoints(2), stepsize( 1e-2 ) {}
         //! Copy Constructor.
         eMass   ( const eMass &_c )
               : cgs( _c.cgs ), order( _c.order ), 

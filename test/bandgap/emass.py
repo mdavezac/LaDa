@@ -48,6 +48,8 @@ def compute_distorted_kpoint( _original_cell, _distorted_cell, _kpoint ):
 def get_masses( _xmlinput, _kpoint, _direction, _step, _nbeval ):
 
   from lada import crystal, vff, atat, escan
+  from math import sqrt
+  import boost.mpi as mpi
 
   lattice = crystal.Lattice()
   lattice.fromXML( _xmlinput )
@@ -61,9 +63,9 @@ def get_masses( _xmlinput, _kpoint, _direction, _step, _nbeval ):
 
   func_vff.fromXML( _xmlinput )
   func_vff.init()
-  func_escan = escan.Escan()
-  func_escan.set_mpi( mpi.world )
-  func_escan.fromXML( _xmlinput )
+  bandgap = escan.BandGap()
+  bandgap.set_mpi( mpi.world )
+  bandgap.fromXML( _xmlinput )
 
   func_bg = escan.BandGap()
   func_bg.set_mpi( mpi.world )
@@ -82,22 +84,24 @@ def get_masses( _xmlinput, _kpoint, _direction, _step, _nbeval ):
                                 atat.rVector3d( _kpoint )
                               )
   korigin = atat.rVector3d( bandgap.parameters.kpoint )
+  bandgap.run()
   gamma = escan.Bands(bandgap.bands)
 
-  bandgap.escan.Eref = bandgap.Eref.cbm;
+  bandgap.parameters.Eref = bandgap.eref.cbm;
   func_emass = escan.eMass()
+  func_emass.npoints = _nbeval
   result = func_emass\
            (\
-             bandgap,
-             original_cell, 
-             vf.structure,
-             _kpoint,
-             _direction,
-             2,
-             bandgap.Eref.cbm
+             escan     = bandgap,
+             ocell     = original_cell, 
+             structure = func_vff.structure,
+             kpoint    = atat.rVector3d(_kpoint),
+             direction = atat.rVector3d(_direction),
+             nbstates  = 2,
+             ref       = bandgap.eref.cbm
            )
 
-  print result
+  print "[(eigenvalue, effective mass)]: ", result
 
 
 
@@ -222,7 +226,7 @@ def interpolate_bands( _filename, _scale, _order = 2 ):
       vectorB[i] /= pow( v, 4) 
     ( x, resid, iter ) = minimizer.linear_lsq( A=matrixA, x=vectorX, b=vectorB, \
                                                verbosity=0, tolerance = 1e-18, itermax = 10000 )
-#   print "# ", x, resid, iter
+    print "# ", x, resid, iter
 #   for a in results:
 #     print a[0], sum( [ x[i]*pow(a[0],i) for i in range(0, _order+1) ] )
 #   print "&"
@@ -241,11 +245,11 @@ def main():
 # create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,0.5,0.5], 0.01, 10, "_ge_Ll" )
 # create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,-0.5,0], 0.01, 10, "_ge_Lt" )
 # create_results( "sigeemass.xml", [1,0,0], [1,0,0], 0.01, 10, "_ge_Xl" )
-# print_results( "_ge_gamma" )
+  print_results( "_ge_gamma" )
 # print_results( "_ge_gamma" )
 # print_results( "_ge_gamma" )
 # print_results( "_ge_Xl" )
-# interpolate_bands( "_ge_gamma", scale, 2 )
+  interpolate_bands( "_ge_gamma", scale, 2 )
 # print_results( "_si_large_mesh" )
 # print_results( pickle_filename )
 

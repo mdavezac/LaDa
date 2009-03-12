@@ -9,6 +9,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include <boost/numeric/ublas/io.hpp>
+
 #include <physics/physics.h>
 
 #include "emass.h"
@@ -36,11 +38,14 @@ namespace LaDa
     ) const
     {
       namespace bnu = boost::numeric::ublas;
-      __DOASSERT( order >= npoints,
-                  "Interpolation order too small, "
-                  "or number of interpolation points to large.\n" )
+      __DOASSERT( order >= 2*npoints + 1,
+                  "Interpolation order too large, "
+                  "or number of interpolation points to small.\n" )
+      __DOASSERT( order < 2,
+                  "Interpolation order too small to get second derivative.\n" )
       typedef std::vector< std::pair<types::t_real, types::t_real> > t_Results;
       Interface interface( _interface );
+      std::cout << "eref " << interface.get_reference() << "\n";
 
       // setup functional.
       interface.escan.nbstates = _nbstates;
@@ -49,14 +54,16 @@ namespace LaDa
 
       // setup kpoints.
       const bool is_gamma( atat::norm2( _at ) < 1e-8 );
-      const types::t_int nfirst( 1-npoints );
-      const types::t_int nlast( is_gamma ? 1: npoints );
+      const types::t_int nfirst( -npoints );
+      const types::t_int nlast( is_gamma ? 1: npoints+1 );
       std::vector< atat::rVector3d > kpoints;
       for( types::t_int i(nfirst); i < nlast; ++i )
         kpoints.push_back(  _at + types::t_real( i ) * _direction * stepsize );
 
       // computes eigenvalues.
       const atat::rVector3d ndir( _direction * 1e0 / std::sqrt( atat::norm2( _direction ) ) );
+      atat::rVector3d korigin( _at ); 
+      distort_kpoint( _ocell, _structure.cell, korigin );
       typedef std::pair< types::t_real, std::vector<types::t_real> > t_Eigs;
       std::vector< t_Eigs > eigs;
       foreach( const atat::rVector3d &kpoint, kpoints )
@@ -71,17 +78,25 @@ namespace LaDa
         (
           t_Eigs
           (
-            (interface.escan.kpoint - kpoint) * ndir,
+            (interface.escan.kpoint - korigin) * ndir,
             interface.eigenvalues
           )
         );
       }
       if( is_gamma ) details::double_results( eigs );
 
+      std::cout << "\n\nbands:\n";
+      foreach( const t_Eigs& es, eigs )
+      {
+        std::cout << es.first << " ";
+        foreach( types::t_real e, es.second )
+          std::cout << e << " ";
+        std::cout << "\n";
+      }
       
       // computes effective masses.
       _out.clear();
-      const size_t center_index( npoints - 1 );
+      const size_t center_index( npoints );
       const types::t_real pi
       (
         3.1415926535897932384626433832795028841971693993751058209749445920e0
@@ -94,14 +109,15 @@ namespace LaDa
         * Physics::a0("A") * Physics::a0("A") 
         / _structure.scale / _structure.scale 
       );
+      std::cout << "factor: " << factor << "\n";
       for( size_t band(0); band < _nbstates; ++band )
       {
         const types::t_real center_eigenvalue( eigs[ center_index ].second[band] );
         // Setups interpolation.
-        bnu::matrix<types::t_real> Amatrix( kpoints.size(), order + 1);
-        bnu::vector<types::t_real> Bvector( kpoints.size() );
+        bnu::matrix<types::t_real> Amatrix( eigs.size(), order + 1);
+        bnu::vector<types::t_real> Bvector( eigs.size() );
         bnu::vector<types::t_real> Xvector( order + 1 );
-        for( size_t i(0); i < kpoints.size(); ++i )
+        for( size_t i(0); i < eigs.size(); ++i )
         {
           Bvector(i) = eigs[i].second[band] * weight_( i, center_index );
           for( size_t j(0); j < order + 1; ++j )
@@ -118,6 +134,9 @@ namespace LaDa
                      Xvector,
                      bnu::prec_prod( bnu::trans( Amatrix ), Bvector )
                    );
+        std::cout << bnu::prec_prod( Amatrix, Xvector ) - Bvector << "\n";
+        std::cout << Xvector << "\n";
+        std::cout << result.first << " " << result.second << "\n";
 
         // finally enters result.
         const types::t_real mass( factor / Xvector(2) ); 
@@ -148,7 +167,7 @@ namespace LaDa
     types::t_real eMass :: weight_( size_t _i, size_t _j ) const
     {
       const types::t_int u( std::abs( types::t_int(_i) - types::t_int(_j) ) );
-      return 1e0 / types::t_real( std::pow( u, 2 ) );
+      return u == 0? 1e0: 1e0 / types::t_real( std::pow( u, 2 ) );
     }
 
     namespace details 
