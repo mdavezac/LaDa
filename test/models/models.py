@@ -93,7 +93,7 @@ def read_gsgo_history( _filename ):
 
 
 def main():
-  import nlsq
+# import nlsq
   from lada import models
 
   structures = read_gsgo_history( "history.pop_LiCsBr" )
@@ -103,19 +103,16 @@ def main():
 
   epinput = "ep.input"
   clj, species = read_functional( epinput )
-  nlsq_func = nlsq.Functional( clj, structures )
-  print nlsq_func
+# nlsq_func = nlsq.Functional( clj, structures )
+# print nlsq_func
+  clj.charges["Na"] = 5
+  print   clj.charges["Na"] 
 
-  args = nlsq_func.args()
-  print args
-  args[0] = 3
-  print args
-
-  clj.bonds["Cl Na"] = models.LJBond()
-  clj.charges["V"] = 6
-  nlsq_func = nlsq.Functional( clj, structures )
-  print nlsq_func, clj.charges["V"]
-
+  fake = models.Test()
+  fake["a"] = 5
+  print fake
+  fake["a"] = 6
+  print fake
   
 
 # for bond in clj.bonds:

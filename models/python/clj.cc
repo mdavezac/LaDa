@@ -27,17 +27,6 @@ namespace LaDa
 {
   namespace Python
   {
-    class Clj : public Models :: Clj
-    {
-      public:
-        typedef Models::Clj::LennardJones::Bond t_Bond; 
-        typedef Models::Clj::LennardJones::t_Bonds t_Bonds; 
-        typedef Models::Clj::Ewald::t_Charges t_Charges; 
-        const t_Charges get_charges() const { return charges; }
-        void set_charges(const t_Charges& _c) { charges = _c; }
-        const t_Bonds get_bonds() const { return bonds; }
-        void set_bonds(const t_Bonds& _c) { bonds = _c; }
-    };
     template<class T_TYPE>
       void unfold_structure( const Crystal :: TStructure<T_TYPE>& _structure, std::vector<types::t_real>& _list )
       {
@@ -83,7 +72,7 @@ namespace LaDa
         }
       }
 
-    void read_fortran_input( Clj &_clj, boost::python::list &_atoms, 
+    void read_fortran_input( Models::Clj &_clj, boost::python::list &_atoms, 
                              const boost::python::str& _path )
     {
       const std::string str = boost::python::extract<std::string>( _path );
@@ -109,10 +98,11 @@ namespace LaDa
     void expose_clj()
     {
       namespace bp = boost :: python;
-      typedef Clj::t_Bond t_Bond; 
-      typedef Clj::t_Bonds t_Bonds; 
-      typedef Clj::t_Charges t_Charges; 
+      typedef Models::Clj::t_Bonds t_Bonds; 
+      typedef Models::Clj::t_Bonds::value_type::second_type t_Bond; 
+      typedef Models::Clj::t_Charges t_Charges; 
 
+      expose_map< t_Charges >( "Test", "Dictionary of charges" );
       expose_map< t_Charges >( "Charges", "Dictionary of charges" );
 //     bp::class_< t_Charges >( "Charges", "Dictionary of charges" )
 //       .def( bp :: map_indexing_suite< t_Charges >() );
@@ -126,11 +116,11 @@ namespace LaDa
       bp::class_< t_Bonds >( "LJBonds", "Dictionary of bonds" )
         .def( bp :: map_indexing_suite< t_Bonds >() );
 
-      bp::class_< Clj >( "Clj", "Coulomb + LennardJones functional.\n" )
-        .add_property( "charges", &Clj::get_charges, &Clj::set_charges, "Dictionnary of charges." )
-        .add_property( "bonds", &Clj::get_bonds, &Clj::set_bonds, "Dictionnary of bonds." )
-        .def("__call__", &Clj::operator() )
-        .def("gradient", &Clj::gradient );
+      bp::class_< Models::Clj >( "Clj", "Coulomb + LennardJones functional.\n" )
+        .def_readwrite( "charges", &Models::Clj::charges, "Dictionnary of charges." )
+        .def_readwrite( "bonds", &Models::Clj::bonds, "Dictionnary of charges." )
+        .def("__call__", &Models::Clj::operator() )
+        .def("gradient", &Models::Clj::gradient );
  
       bp::def
       ( 

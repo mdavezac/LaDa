@@ -35,7 +35,7 @@ namespace LaDa
                              const boost::filesystem::path &_path );
 
     // The adapter for Coulomb + Lennard-Jones fortran functional itself.
-    class Clj : protected Ewald, protected LennardJones
+    class Clj : public Ewald, public LennardJones
     {
       friend void read_fortran_input( Clj &_clj, std::vector<std::string>& _atoms, 
                                       const boost::filesystem::path &_path );
