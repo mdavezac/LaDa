@@ -67,10 +67,6 @@ def get_masses( _xmlinput, _kpoint, _direction, _step, _nbeval ):
   bandgap.set_mpi( mpi.world )
   bandgap.fromXML( _xmlinput )
 
-  func_bg = escan.BandGap()
-  func_bg.set_mpi( mpi.world )
-  func_bg.fromXML( _xmlinput )
-
   func_vff.evaluate()
   distorted_cell = atat.rMatrix3d( func_vff.structure.cell )
   bandgap.vff_inputfile = "atomic_config." + str( mpi.world.rank )
@@ -84,8 +80,12 @@ def get_masses( _xmlinput, _kpoint, _direction, _step, _nbeval ):
                                 atat.rVector3d( _kpoint )
                               )
   korigin = atat.rVector3d( bandgap.parameters.kpoint )
+  bandgap.parameters.nbstates = 4
+  bandgap.parameters.method = escan.full_diagonalization
   bandgap.evaluate( func_vff.structure )
   gamma = escan.Bands(bandgap.bands)
+  print gamma
+  print bandgap.eigenvalues
   bandgap.eref = gamma
 
   bandgap.parameters.Eref = bandgap.eref.vbm;
@@ -98,7 +98,7 @@ def get_masses( _xmlinput, _kpoint, _direction, _step, _nbeval ):
              structure = func_vff.structure,
              kpoint    = atat.rVector3d(_kpoint),
              direction = atat.rVector3d(_direction),
-             nbstates  = 8,
+             nbstates  = 2,
              ref       = bandgap.eref.cbm
            )
 
@@ -211,7 +211,7 @@ def interpolate_bands( _filename, _scale, _order = 2 ):
   start = 0
   end = len( results ) - start
   middle = len( results ) / 2 
-  for band in range( 1, len( results[0] ) ):
+  for band in range( len(results[0])-1, len( results[0] ) ):
     matrixA = [ \
                 [ \
                   pow( r[0], i )\
@@ -221,18 +221,18 @@ def interpolate_bands( _filename, _scale, _order = 2 ):
               ]
     vectorB = [ r[band] for r in results[start:end] ]
     vectorX = [ 0 for r in range(0, _order+1) ]
-#   for i in range( 0, len(results) ):
-#     v = float(abs(i - middle))
-#     if v == 0: continue
-#     matrixA[i] = [ u / pow( v, 4 ) for u in matrixA[i] ]
-#     vectorB[i] /= pow( v, 4) 
+    for i in range( 0, len(results) ):
+      v = float(abs(i - middle))
+      if v == 0: continue
+      matrixA[i] = [ u / pow( v, 4 ) for u in matrixA[i] ]
+      vectorB[i] /= pow( v, 4) 
     ( x, resid, iter ) = minimizer.linear_lsq( A=matrixA, x=vectorX, b=vectorB, \
                                                verbosity=0, tolerance = 1e-18, itermax = 10000 )
     print matrixA, "\n", vectorB
     print "# ", x, resid, iter
-#   for a in results:
-#     print a[0], sum( [ x[i]*pow(a[0],i) for i in range(0, _order+1) ] )
-#   print "&"
+    for a in results:
+      print a[0], sum( [ x[i]*pow(a[0],i) for i in range(0, _order+1) ] )
+    print "&"
     mass =   physics.Hartree("eV") * 2e0 * pi * pi \
            * physics.a0("A") * physics.a0("A") / _scale / _scale / x[2]
     print "# ", mass
@@ -242,17 +242,17 @@ def main():
 
 
   scale = read_structure( "sigeemass.xml" ).scale 
-# get_masses( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10 )
+  get_masses( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10 )
 # pickle_filename = "_si.0.01"
-  create_results( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10, "_ge_new_gamma" )
+# create_results( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10, "_ge_new_gamma" )
 # create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,0.5,0.5], 0.01, 10, "_ge_Ll" )
 # create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,-0.5,0], 0.01, 10, "_ge_Lt" )
 # create_results( "sigeemass.xml", [1,0,0], [1,0,0], 0.01, 10, "_ge_Xl" )
-  print_results( "_ge_new_gamma" )
+# print_results( "_ge_new_gamma" )
 # print_results( "_ge_gamma" )
 # print_results( "_ge_gamma" )
 # print_results( "_ge_Xl" )
-# interpolate_bands( "_ge_gamma", scale, 2 )
+  interpolate_bands( "_ge_gamma", scale, 2 )
 # print_results( "_si_large_mesh" )
 # print_results( pickle_filename )
 

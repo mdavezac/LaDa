@@ -20,6 +20,7 @@
 #include <boost/python/return_value_policy.hpp>
 #include <boost/python/manage_new_object.hpp>
 #include <boost/python/return_internal_reference.hpp>
+#include <boost/python/with_custodian_and_ward.hpp>
 
 #include <opt/debug.h>
 
@@ -40,6 +41,7 @@ namespace LaDa
         namespace bp = boost::python;
         bp::class_< t_iterator >( _name.c_str() )
           .def( bp::init< t_iterator >() )
+          .def( "__iter__", &t_iterator::iter, bp::return_internal_reference<1>() )
           .def( "next", &t_iterator::next, bp::return_internal_reference<1>() )
           .def( "check", &t_iterator::check );
       }
@@ -73,7 +75,7 @@ namespace LaDa
           .def( "has_key", &details::has_key<T_MAP> )
           .def( "items", &details::items<T_MAP>, bp::return_internal_reference<1>() )
           .def( "values", &details::values<T_MAP>, bp::return_internal_reference<1>() )
-          .def( "keys", &details::keys<T_MAP>, bp::return_internal_reference<1>() )
+          .def( "keys", &details::keys<T_MAP>, bp::with_custodian_and_ward_postcall<1,0>() )
           .def( "pop", &details::pop<T_MAP> )
           .def( "popitem", &details::popitem<T_MAP> )
           .def( "__delitem__", &details::pop<T_MAP> )

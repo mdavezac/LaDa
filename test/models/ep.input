@@ -8,3 +8,4 @@
 2.5                             !  rcut_const0
 25.0                            !  RCUT_ewaldA
 0.0                             !  PEGS   0.0-not  1.0-yes
+type: minuit2

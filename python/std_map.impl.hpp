@@ -168,14 +168,14 @@
     }
 #       endif
 
-    template< class T_MAP > boost::python::list* keys( T_MAP& _map ) _PV_
+    template< class T_MAP > boost::python::list keys( T_MAP& _map ) _PV_
 #       if  _LADA_OPT_PYTHON_STD_MAP_IMPL_HPP_ == 1
     {
-      boost::python::list *list = new boost::python::list;
+      boost::python::list list; // = new boost::python::list;
       typename T_MAP :: iterator i_var = _map.begin();
       typename T_MAP :: iterator i_var_end = _map.end();
       for(; i_var != i_var_end; ++i_var )
-        list->append( &i_var->first );
+        list.append( i_var->first.c_str() );
       return list;
     }
 #       endif
@@ -228,7 +228,7 @@
           map_iterator() {}
           map_iterator( t_Map& _map ) : i_current( _map.begin() ), i_end( _map.end() ) {}
           map_iterator( const map_iterator& _c ) : i_current( _c.i_current ), i_end( _c.i_end ) {}
-          typename t_Deref :: t_value* next()
+          typename t_Deref :: t_value next()
           {
             if( i_current == i_end ) 
             {
@@ -238,6 +238,7 @@
             ++i_current;
             return deref( i_current );
           }
+          map_iterator<T_MAP, T_DEREF> * iter() { return this; }
           bool check() const { return true; }
         protected:
           typename t_Map :: iterator i_current;
@@ -263,7 +264,7 @@
         typedef boost::python::str t_value;
         t_value* deref( const T_ITERATOR& _iterator )
         {
-          return new boost::python::str( _iterator->first );
+          return new boost::python::str( _iterator->first.c_str() );
         }
       };
 #       endif

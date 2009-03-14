@@ -121,9 +121,8 @@ namespace LaDa
         Interface   ( const Interface &_c )
                   : __DIAGA( MPI_COMMCOPY( _c ) __COMMA__ )
                     atom_input( _c.atom_input ), genpot( _c.genpot ),
-                    escan( _c.escan ), maskr( _c.maskr ),
-                    dirname( _c.dirname ), do_destroy_dir( _c.do_destroy_dir ),
-                    eigenvalues( _c.eigenvalues ) {}
+                    escan( _c.escan ), maskr( _c.maskr ), eigenvalues( _c.eigenvalues ),
+                    dirname( _c.dirname ), do_destroy_dir( _c.do_destroy_dir ) {}
         //! Destructor
        ~Interface() {};
  

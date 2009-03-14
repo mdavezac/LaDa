@@ -125,8 +125,8 @@ namespace LaDa
             Amatrix(i,j) = std::pow( eigs[i].first, j ) * w;
         }
         for( size_t j(0); j < order + 1; ++j ) Xvector(j) = 0e0;
-//       std::cout << "Amat:\n" << Amatrix << "\n"
-//                 << "Bvec:\n" << Bvector << "\n";
+        std::cout << "Amat:\n" << Amatrix << "\n"
+                  << "Bvec:\n" << Bvector << "\n";
 
         // Performs least square fit.
         bnu::matrix<types::t_real> A = bnu::prec_prod( bnu::trans( Amatrix ), Amatrix );
@@ -169,7 +169,6 @@ namespace LaDa
     //! Adds a weight to interpolation points.
     types::t_real eMass :: weight_( size_t _i, size_t _j ) const
     {
-      return 1e0;
       const types::t_int u( std::abs( types::t_int(_i) - types::t_int(_j) ) );
       return u == 0? 1e0: 1e0 / types::t_real( std::pow( u, 4 ) );
     }

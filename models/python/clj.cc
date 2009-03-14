@@ -15,9 +15,11 @@
 #include <boost/python/str.hpp> 
 #include <boost/python/extract.hpp> 
 #include <boost/python/return_arg.hpp>
+#include <boost/python/make_constructor.hpp>
 #include <boost/python/manage_new_object.hpp>
 #include <boost/python/suite/indexing/map_indexing_suite.hpp> 
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp> 
+#include <boost/tuple/tuple.hpp>
 
 #include <opt/types.h>
 #include <python/std_map.hpp>
@@ -94,6 +96,35 @@ namespace LaDa
             i_atom->pos[j] = 0e0;
       }
 
+    Models::Clj::t_Bonds::value_type::second_type* bond_constructor( types::t_real _a,
+                                                                     types::t_real _b )
+    {
+      typedef Models::Clj::t_Bonds::value_type::second_type t_bond;
+      t_bond *result( new t_bond );
+      result->hard_sphere = _a;
+      result->van_der_walls = _b;
+      return result;
+    }
+
+    void set_mesh( Models::Clj& _clj, const boost::python::tuple& _tuple )
+    {
+      namespace bp = boost::python;
+      if( bp::len( _tuple ) != 3 )
+      {
+        PyErr_SetString(PyExc_StopIteration, "Expected a 3-tuple.");
+        return;
+      }
+      const types::t_int a = bp::extract<types::t_int>( _tuple[0] );
+      const types::t_int b = bp::extract<types::t_int>( _tuple[1] );
+      const types::t_int c = bp::extract<types::t_int>( _tuple[2] );
+      _clj.set_mesh( boost::tuples::make_tuple( a, b, c ) );
+    }
+    boost::python::tuple get_mesh( Models::Clj& _clj )
+    {
+      namespace bt = boost::tuples;
+      const boost::tuple<types::t_int, types::t_int, types::t_int> t( _clj.get_mesh() );
+      return boost::python::make_tuple( bt::get<0>(t), bt::get<1>(t), bt::get<2>(t) ); 
+    }
 
     void expose_clj()
     {
@@ -102,16 +133,17 @@ namespace LaDa
       typedef Models::Clj::t_Bonds::value_type::second_type t_Bond; 
       typedef Models::Clj::t_Charges t_Charges; 
 
-      expose_map< t_Charges >( "Test", "Dictionary of charges" );
-      expose_map< t_Charges >( "Charges", "Dictionary of charges" );
-//     bp::class_< t_Charges >( "Charges", "Dictionary of charges" )
-//       .def( bp :: map_indexing_suite< t_Charges >() );
+//     expose_map< t_Charges >( "Test", "Dictionary of charges" );
+//     expose_map< t_Charges >( "Charges", "Dictionary of charges" );
+      bp::class_< t_Charges >( "Charges", "Dictionary of charges" )
+        .def( bp :: map_indexing_suite< t_Charges >() );
    
       bp::class_< t_Bond >( "LJBond", "Holds bond parameters for Lennard-Jones." )
         .def( bp::init<>() )
         .def( bp::init<t_Bond>() )
+        .def( "__init__", bp::make_constructor( &bond_constructor ) )
         .def_readwrite( "hardsphere", &t_Bond::hard_sphere, "+r^12 factor." )
-        .def_readwrite( "vandderwalls", &t_Bond::van_der_walls, "-r^6 factor." );
+        .def_readwrite( "vanderwalls", &t_Bond::van_der_walls, "-r^6 factor." );
 
       bp::class_< t_Bonds >( "LJBonds", "Dictionary of bonds" )
         .def( bp :: map_indexing_suite< t_Bonds >() );
@@ -120,7 +152,25 @@ namespace LaDa
         .def_readwrite( "charges", &Models::Clj::charges, "Dictionnary of charges." )
         .def_readwrite( "bonds", &Models::Clj::bonds, "Dictionnary of charges." )
         .def("__call__", &Models::Clj::operator() )
-        .def("gradient", &Models::Clj::gradient );
+        .def("gradient", &Models::Clj::gradient )
+        .add_property
+        (
+          "mesh", 
+          &get_mesh, &set_mesh,
+          "Size of the superstructure for lennard-jones real-space sum."
+        )
+        .add_property
+        (
+          "ewald_cutoff", 
+          &Models::Clj::Ewald::get_rcutoff, &Models::Clj::Ewald::set_rcutoff,
+          "Sets cutoff for real-space ewald sum."
+        )
+        .add_property
+        (
+          "lj_cutoff", 
+          &Models::Clj::LennardJones::get_rcutoff, &Models::Clj::LennardJones::set_rcutoff,
+          "Sets cutoff for real-space lennard-jhones sum."
+        );
  
       bp::def
       ( 

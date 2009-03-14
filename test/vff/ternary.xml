@@ -40,8 +40,9 @@
         </site>
     </Lattice>
     <Functional type="vff" direction="1 0 0" >
-        <Minimizer type="frprmn" itermax="40000" tolerance="0.00001" linetolerance="0.01" zeps="0.001" />
-        <Minimizer type="gsl_bfgs2" itermax="40000" tolerance="0.00001" linetolerance="0.5" linestep="0.001" doprint="true" />
+        <Minimizer type="minuit2" tolerance="1e-8" itermax="500000" strategy="fast" verbose="true" uncertainties="1e-1" />
+        <tMinimizer type="frprmn" itermax="40000" tolerance="0.00001" linetolerance="0.01" zeps="0.001" />
+        <tMinimizer type="gsl_bfgs2" itermax="40000" tolerance="0.00001" linetolerance="0.5" linestep="0.001" doprint="true" />
         <Bond A="In" B="As" d0="2.62332" alpha="21.6739" alpha3="-112.0" alpha4="150.0"/>
         <Bond A="Ga" B="As" d0="2.44795" alpha="32.1530" alpha3="-105.0" alpha4="150.0"/>
         <Angle A="As" B="Ga" C="As" gamma="tet" sigma="-4.099" beta="9.3703" />

@@ -93,41 +93,46 @@ def read_gsgo_history( _filename ):
 
 
 def main():
-# import nlsq
-  from lada import models
+  import nlsq
+  from lada import models, minimizer, opt
 
-  structures = read_gsgo_history( "history.pop_LiCsBr" )
+  structures = read_gsgo_history( "LiCsBr_simple" )
 # for s in structures:
 #   print s
  #  print
 
-  epinput = "ep.input"
-  clj, species = read_functional( epinput )
+  epinput = "licsf.input"
+# clj, species = read_functional( epinput )
+  clj = models.Clj()
+  clj.mesh = (3, 3, 3)
+  clj.lj_cutoff = 2.5
+  clj.ewald_cutoff = 25
+  clj.charges["Li"] = 1
+  clj.charges["Cs"] = 1
+  clj.charges["Br"] = -1
+  for bond in ["Li Li", "Li Cs", "Li Br", "Cs Br", "Cs Cs", "Br Br"]:
+    clj.bonds[bond] = models.LJBond( 1, 1 )
 # nlsq_func = nlsq.Functional( clj, structures )
 # print nlsq_func
-  clj.charges["Na"] = 5
-  print   clj.charges["Na"] 
+# args =  nlsq_func.args()
 
-  fake = models.Test()
-  fake["a"] = 5
-  print fake
-  fake["a"] = 6
-  print fake
-  
-
-# for bond in clj.bonds:
-#   print   "%s %8.4f/r^12 - %8.4f/r^6"\
-#         % (bond.key(), bond.data().hardsphere, bond.data().vandderwalls )
-# for charge in clj.charges:
-#   print   "%s %8.4f/r"\
-#         % (charge.key(), charge.data() )
+  minmizer = minimizer.Minimizer()
+  minmizer.set( type="minuit2", convergence=1e-12, linestep=1e-0, verbose = 0 )
+  for structure in structures:
+    print structure
+    function = Function( clj, structure) 
+    args = opt.cReals()
+    models.unfold_structure( structure, args )
+    result = minmizer( function, args )
+#   b = clj(structure, forces )
+#   print "m: ", b, structure, forces
 
 def main2():
   from lada import crystal, models, atat, minimizer, opt
 
   s=str("")
-  epinput = "simple.ep.input"
-  poscar = "simple.POSCAR_0"
+  epinput = "ep.input"
+  poscar = "POSCAR_0"
   clj, species = read_functional( epinput )
 
   structure = crystal.sStructure();
@@ -140,7 +145,7 @@ def main2():
   models.unfold_structure( structure, args )
 
   minmizer = minimizer.Minimizer()
-  minmizer.set( type="minuit2", convergence=1e-12, linestep=1e-0, verbose = 0 )
+  minmizer.set( type="minuit2", convergence=1e-12, linestep=1e-0, verbose = 1, strategy="slowest" )
   result = minmizer( function, args )
 # minmizer.set( type="gsl_sd", convergence=1e-12, linestep=1e-0, verbose = 0 )
 # result = minmizer( function, args )
@@ -155,4 +160,4 @@ def main2():
     print "%2i %18.9e %18.9e %18.9e" % (i, g, gradients[i], g - gradients[i] )
  
 if __name__ == "__main__":
-  main()
+  main2()

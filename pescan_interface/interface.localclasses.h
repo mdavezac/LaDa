@@ -37,10 +37,10 @@
     t_method method;
     //! Reference energy for folded spectrum method
     types::t_real Eref;
-    //! Kinetic scaling factor for plane-wave cutoff
-    types::t_real kinscal;
     //! Smoothness fcator plane-wave cutoff
     types::t_real smooth;
+    //! Kinetic scaling factor for plane-wave cutoff
+    types::t_real kinscal;
     //! The number of states to compute.
     types::t_int nbstates;
     //! Should be the number of iterations. Right?
@@ -86,7 +86,7 @@
             kinscal( _c.kinscal), nbstates(_c.nbstates), niter(_c.niter),
             nlines(_c.nlines), tolerance(_c.tolerance), kpoint(_c.kpoint),
             scale(_c.scale), potential(_c.potential), rcut(_c.rcut),
-            __IIAGA( launch(_c.launch) __COMMA__ )
+            __IIAGA( launch(_c.launch) __COMMA__ ) spinorbit( _c.spinorbit ),
             rspace_output( _c.rspace_output ), rspace_wfn( _c.rspace_wfn ) {}
     //! loads hamiltonian from XML.
     bool load_hamiltonian( const TiXmlElement &_node );
