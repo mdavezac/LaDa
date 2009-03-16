@@ -1,49 +1,27 @@
 #! /usr/bin/python
 
-class Function:
-  def __init__( self, _clj, _structure ):
-    self.clj = _clj
-    self.structure = _structure
+def create_functional():
 
-  def __call__( self, _args ):
-    from lada import crystal, models
-    models.fold_structure( _args, self.structure )
-    forces = crystal.sStructure( self.structure )
-    return self.clj( self.structure, forces )
+  from math import pow
+  from lada import models
 
-  def gradient( self, _args, _gradients ):
-    from lada import crystal, models, minimizer
+  clj = models.Clj()
+  clj.mesh = (3, 3, 3)
+  clj.lj_cutoff = 2.5
+  clj.ewald_cutoff = 25
+  clj.charges["Li"] = 1.5
+  clj.charges["Cs"] = 0.5
+  clj.charges["Br"] = -1
+  hs = { "Li":1.34, "Cs":2.25,"Br":1.14}
+  vdw = {"Li":2.2,"Cs":3,"Br":1.9}
+  for a in ["Li", "Cs", "Br" ]:
+    for b in ["Li", "Cs", "Br" ]:
+      type = models.bond_type( a, b )
+      hs_ = float( hs[a] ) + float( hs[b]  )
+      vdw_ = float(vdw[a]) + float(vdw[b] )
+      clj.bonds[type] = models.LJBond( pow(hs_, 12.0), pow(vdw_, 6.0) )
 
-    models.fold_structure( _args, self.structure )
-    forces = crystal.sStructure( self.structure )
-    self.clj( self.structure, forces )
-    self.clj.gradient( self.structure, forces )
-    models.unfold_structure( forces, _gradients )
-
-
-  def ngradient( self, _args, _gradients ):
-    from lada import crystal, models, minimizer
-
-    minimizer.interpolated_gradient( self, _args, _gradients, n=1, stepsize=1e-3 )
-
-class Parabola:
-
-  def __call__( self, _args ):
-    return _args[0]
-
-  def gradient( self, _args, _gradients ):
-    from lada import minimizer
-
-    minimizer.interpolated_gradient( self, _args, _gradients, n=0, stepsize=1e-4, tolerance=1e-18 )
-
-def read_functional( _filename ):
-  from lada import crystal, models, atat, minimizer, opt
-
-  clj = models.Clj();
-  species = []
-  models.read_epinput(clj, species, _filename )
-
-  return clj, species
+  return clj
 
 def read_gsgo_history( _filename ):
 
@@ -53,14 +31,21 @@ def read_gsgo_history( _filename ):
 
     while len( _lines ):
       line = _lines.pop(0)
-      if line.split()[0] == "Structure": break
+      splitted = line.split()
+      if len( splitted ) == 0: continue
+      if splitted[0] == "Structure": break
     if not len( _lines ): return (0, 0)
 
     structure = crystal.sStructure()
     structure.scale = 5
 
-    func = lambda x: (str(x[0]), float(x[1]))
-    (structure.name, structure.energy) = func(_lines.pop(0).split())
+    splitted = _lines.pop(0).split()
+    func = 0
+    if len( splitted ) < 3:
+      func = lambda x: ( str(x[0]), float(x[1]), 3 )
+    else:
+      func = lambda x: ( str(x[0]), float(x[1]), float(x[2]) )
+    (structure.name, structure.energy, structure.scale) = func(splitted)
 
 #   print map( lambda x: float(x), _lines.pop(0).split() )
 
@@ -94,7 +79,8 @@ def read_gsgo_history( _filename ):
 
 def main():
   import nlsq
-  from lada import models, minimizer, opt
+  from lada import models, minimizer, opt, crystal
+  import clj_module
 
   structures = read_gsgo_history( "LiCsBr_simple" )
 # for s in structures:
@@ -103,61 +89,49 @@ def main():
 
   epinput = "licsf.input"
 # clj, species = read_functional( epinput )
-  clj = models.Clj()
-  clj.mesh = (3, 3, 3)
-  clj.lj_cutoff = 2.5
-  clj.ewald_cutoff = 25
-  clj.charges["Li"] = 1
-  clj.charges["Cs"] = 1
-  clj.charges["Br"] = -1
-  for bond in ["Li Li", "Li Cs", "Li Br", "Cs Br", "Cs Cs", "Br Br"]:
-    clj.bonds[bond] = models.LJBond( 1, 1 )
+  clj = create_functional()
+  print clj
+# clj = models.Clj()
+# clj.mesh = (3, 3, 3)
+# clj.lj_cutoff = 2.5
+# clj.ewald_cutoff = 25
+# clj.charges["Li"] = 1
+# clj.charges["Cs"] = 1
+# clj.charges["Br"] = -1
+# for bond in ["Li Li", "Li Cs", "Li Br", "Cs Br", "Cs Cs", "Br Br"]:
+#   clj.bonds[bond] = models.LJBond( 0.5, 1 )
 # nlsq_func = nlsq.Functional( clj, structures )
 # print nlsq_func
 # args =  nlsq_func.args()
 
   minmizer = minimizer.Minimizer()
-  minmizer.set( type="minuit2", convergence=1e-12, linestep=1e-0, verbose = 0 )
+  minmizer.set( type="minuit2", convergence=1e-12, linestep=1e-3, itermax=400, \
+                verbose = 0, strategy="slowest", uncertainties=0.1, up=1 )
   for structure in structures:
-    print structure
-    function = Function( clj, structure) 
+    function = clj_module.ScaleFunction( clj, structure) 
+    args = opt.cReals()
+    args.append( float(structure.scale) )
+    result = minmizer( function, args )
+    structure.scale = args[0]
+
+    forces = crystal.sStructure( structure )
+    print "energy: ", clj( structure, forces )
+
+    function = clj_module.Function( clj, structure) 
     args = opt.cReals()
     models.unfold_structure( structure, args )
     result = minmizer( function, args )
+    models.fold_structure( args, structure )
+    forces = crystal.sStructure( structure )
+    a = clj( structure, forces )
+    print structure.scale, structure, forces
+    print "f energy: ", a
 #   b = clj(structure, forces )
 #   print "m: ", b, structure, forces
 
-def main2():
-  from lada import crystal, models, atat, minimizer, opt
 
-  s=str("")
-  epinput = "ep.input"
-  poscar = "POSCAR_0"
-  clj, species = read_functional( epinput )
 
-  structure = crystal.sStructure();
-  crystal.read_poscar( structure, poscar, species )
-  crystal.to_fractional( structure );
-  structure.atoms[0].freeze = 7;
-  forces = crystal.sStructure( structure );
-  function = Function( clj, structure) 
-  args = opt.cReals()
-  models.unfold_structure( structure, args )
 
-  minmizer = minimizer.Minimizer()
-  minmizer.set( type="minuit2", convergence=1e-12, linestep=1e-0, verbose = 1, strategy="slowest" )
-  result = minmizer( function, args )
-# minmizer.set( type="gsl_sd", convergence=1e-12, linestep=1e-0, verbose = 0 )
-# result = minmizer( function, args )
-# models.fold_structure( args, structure )
-  b = clj(structure, forces )
-  print "m: ", b, structure, forces
-  gradients = opt.cReals( [ 0 for r in args ] )
-  ngradients = opt.cReals( [ 0 for r in args ] )
-  function.ngradient( args, ngradients )
-  function.gradient( args, gradients )
-  for i,g in enumerate(ngradients):
-    print "%2i %18.9e %18.9e %18.9e" % (i, g, gradients[i], g - gradients[i] )
- 
+
 if __name__ == "__main__":
-  main2()
+  main()

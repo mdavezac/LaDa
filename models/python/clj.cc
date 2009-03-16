@@ -22,7 +22,7 @@
 #include <boost/tuple/tuple.hpp>
 
 #include <opt/types.h>
-#include <python/std_map.hpp>
+#include <python/misc.hpp>
 #include "../clj.h"
 
 namespace LaDa
@@ -141,7 +141,8 @@ namespace LaDa
       bp::class_< t_Bond >( "LJBond", "Holds bond parameters for Lennard-Jones." )
         .def( bp::init<>() )
         .def( bp::init<t_Bond>() )
-        .def( "__init__", bp::make_constructor( &bond_constructor ) )
+        .def( "__init__", bp::make_constructor( &bond_constructor ),
+              "First argument is hard-sphere parameter, and second vand-der-walls parameter." )
         .def_readwrite( "hardsphere", &t_Bond::hard_sphere, "+r^12 factor." )
         .def_readwrite( "vanderwalls", &t_Bond::van_der_walls, "-r^6 factor." );
 
@@ -153,6 +154,7 @@ namespace LaDa
         .def_readwrite( "bonds", &Models::Clj::bonds, "Dictionnary of charges." )
         .def("__call__", &Models::Clj::operator() )
         .def("gradient", &Models::Clj::gradient )
+        .def("__str__", &tostream<Models::Clj> )
         .add_property
         (
           "mesh", 
@@ -172,6 +174,7 @@ namespace LaDa
           "Sets cutoff for real-space lennard-jhones sum."
         );
  
+      bp::def( "bond_type", &Models::LennardJones::bondname );
       bp::def
       ( 
         "unfold_structure",

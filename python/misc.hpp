@@ -25,6 +25,13 @@ namespace LaDa
       _at.print_out( sstr );
       return sstr.str();
     }
+    template< class T_TYPE >
+    std::string tostream( const T_TYPE &_at )
+    { 
+      std::ostringstream sstr;
+      sstr << _at;
+      return sstr.str();
+    }
     template< class T_TYPE, template< class > class T_CONTAINER > 
       void exposeContainer( std::string &_name )
       {

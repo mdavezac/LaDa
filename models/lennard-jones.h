@@ -73,12 +73,11 @@ namespace LaDa
         //! Sets cutoff.
         void set_rcutoff(types::t_real _r) { rcut_ = _r; }
 
-
-      protected:
-
         //! Returns bond name from bond endpoints.
         static Key bondname( const Key &_a, const Key &_b )
           { return _a > _b ? _a + " " +  _b: _b + " " + _a; }
+
+      protected:
         //! Extracts atom A from bond name.
         Key extract_atomA( const Key &_key ) const
           { return _key.substr( 0, _key.find( " " ) ); }

@@ -9,6 +9,7 @@
 #endif
 
 #include <map>
+#include <iostream>
 
 #include <boost/filesystem/path.hpp>
 
@@ -34,11 +35,15 @@ namespace LaDa
     void read_fortran_input( Clj &_clj, std::vector<std::string>& _atoms, 
                              const boost::filesystem::path &_path );
 
+    //! Dumps functional to stream.
+    std::ostream& operator<<( std::ostream& _stream, const Clj& _clj );
+
     // The adapter for Coulomb + Lennard-Jones fortran functional itself.
     class Clj : public Ewald, public LennardJones
     {
       friend void read_fortran_input( Clj &_clj, std::vector<std::string>& _atoms, 
                                       const boost::filesystem::path &_path );
+      friend std::ostream& operator<<( std::ostream& _stream, const Clj& _clj );
       public:
         //! Argument type.
         typedef Crystal :: TStructure< std::string > t_Arg;

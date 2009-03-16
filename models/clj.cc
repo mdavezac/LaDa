@@ -325,5 +325,23 @@ namespace LaDa
       }
       __DOASSERT( not result, "" );
     }
+
+    std::ostream& operator<<( std::ostream& _stream, const Clj& _clj )
+    {
+      _stream << "Lennard-Jones + Coulomb functional:\n  LennardJones Parameters:\n";
+      Clj::LennardJones::t_Bonds :: const_iterator i_bond = _clj.bonds.begin();
+      Clj::LennardJones::t_Bonds :: const_iterator i_bond_end = _clj.bonds.end();
+      for(; i_bond != i_bond_end; ++i_bond )
+        _stream << "    "
+                << i_bond->first << ": " << i_bond->second.hard_sphere << "/r^12 - " 
+                << i_bond->second.van_der_walls << "/r^6\n";
+      Clj::Ewald::t_Charges :: const_iterator i_charge = _clj.charges.begin();
+      Clj::Ewald::t_Charges :: const_iterator i_charge_end = _clj.charges.end();
+      _stream << "  Coulomb terms:\n";
+      for(; i_charge != i_charge_end; ++i_charge )
+        _stream << "    "
+                << i_charge->first << ": " << i_charge->second << "/r^2\n";
+
+    }
   } // namespace CLJ
 } // namespace LaDa

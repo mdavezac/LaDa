@@ -46,6 +46,8 @@ namespace LaDa
           verbose = false;
         else verbose = boost::lexical_cast<bool>( parent->Attribute("verbose") );
       }
+      if( parent->Attribute("up") ) 
+        up = boost::lexical_cast< types::t_real >( parent->Attribute("uncertainties") );
       return true;
     }
   }

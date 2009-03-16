@@ -43,12 +43,19 @@ namespace LaDa
         types::t_unsigned strategy;
         //! uncertainties, whatever those are.
         types::t_real uncertainties;
+        //! uncertainties, whatever those are.
+        types::t_real up;
 
       public:
         //! Constructor.
         Minuit2() : tolerance(types::tolerance),
                     itermax(0), verbose(false),
-                    strategy(2), uncertainties(0.1) {}
+                    strategy(2), uncertainties(0.1), up(1) {}
+        //! Copy constructor
+        Minuit2   ( const Minuit2& _c ) 
+                : tolerance(_c.tolerance),
+                  itermax(_c.itermax), verbose(_c.verbose),
+                  strategy(_c.strategy), uncertainties(_c.uncertainties), up(_c.up) {}
               
         //! Destructor
         virtual ~Minuit2(){};
@@ -86,7 +93,7 @@ namespace LaDa
           typedef double t_Return;
 
           //! Constructor.
-          explicit FunctionWrapper( const T_FUNCTION&  _f ) : function_(_f) {}
+          explicit FunctionWrapper( const T_FUNCTION&  _f, const double _up ) : function_(_f), up_(_up) {}
           //! Copy Constructor.
           FunctionWrapper   ( const FunctionWrapper &_c )
                           : ROOT::Minuit2::FCNGradientBase( _c ),
@@ -96,7 +103,7 @@ namespace LaDa
           //! Evaluation.
           t_Return operator()(const t_Arg& _arg) const { return function_( _arg ); }
           //! See Minuit2 lack of description.
-          virtual double Up() const { return 1e0; }
+          virtual double Up() const { return up_; }
           //! Gradient. 
           t_Arg Gradient( const t_Arg& _arg ) const 
           { 
@@ -104,6 +111,8 @@ namespace LaDa
             function_.gradient( _arg, &grad[0] );
             return grad;
           }
+            //! do not check gradient.
+            virtual bool CheckGradient() const {return false;}
 #         ifndef _LADADEBUG
             //! do not check gradient.
             virtual bool CheckGradient() const {return false;}
@@ -112,6 +121,8 @@ namespace LaDa
         protected:
           //! A constant reference to the wrapped function.
           const t_Function &function_;
+          //! Up, whatever it may be.
+          const double up_;
       };
 
 
@@ -129,7 +140,7 @@ namespace LaDa
                                   std::vector<double>( _arg.size(), uncertainties )
                                 );
           rm2::MnStrategy stra( strategy );
-          FunctionWrapper<T_FUNCTION> wrapper( _func );
+          FunctionWrapper<T_FUNCTION> wrapper( _func, up );
           rm2::MnMigrad minimizer
                         ( 
                           wrapper,

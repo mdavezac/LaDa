@@ -29,7 +29,9 @@ namespace LaDa
                       linetolerance_( 1e-2 ),
                       linestep_( 1e-3 ),
                       strategy_( "fast" ),
-                      verbose_( false ) {}
+                      verbose_( false ),
+                      uncertainties_(0.1),
+                      up_(1) {}
 
 #       define __GETSET__( TYPE, NAME ) \
           TYPE get_ ## NAME () const { return NAME ## _; }\
@@ -48,6 +50,8 @@ namespace LaDa
         __GETSET__( types::t_real, linestep )
         __GETSET__( std::string, strategy )
         __GETSET__( bool, verbose )
+        __GETSET__( types::t_real, uncertainties )
+        __GETSET__( types::t_real, up )
 #       undef __GETSET__
 
         Function :: t_Return operator()( const boost::python::object &_function,
@@ -62,7 +66,9 @@ namespace LaDa
                   types::t_real _linetolerance,
                   types::t_real _linestep,
                   const std::string& _strategy,
-                  bool _verbose )
+                  bool _verbose,
+                  types::t_real _uncertainties,
+                  types::t_real _up )
         {
           type_ = _type;
           tolerance_ = _tolerance;
@@ -71,6 +77,8 @@ namespace LaDa
           linestep_ = _linestep;
           strategy_ = _strategy;
           verbose_ = _verbose;
+          uncertainties_ = _uncertainties;
+          up_ = _up;
           load_();
         }
 
@@ -83,6 +91,8 @@ namespace LaDa
         types::t_real linestep_;
         std::string strategy_;
         bool verbose_;
+        types::t_real uncertainties_;
+        types::t_real up_;
         typedef LaDa::Minimizer::Variant
                 < 
                   boost::mpl::vector
@@ -105,6 +115,8 @@ namespace LaDa
       fakexml.SetDoubleAttribute( "linestep", linestep_ );
       fakexml.SetAttribute( "strategy", strategy_ );
       fakexml.SetAttribute( "verbose", verbose_ );
+      fakexml.SetAttribute( "uncertainties", uncertainties_ );
+      fakexml.SetAttribute( "up", up_ );
       __DOASSERT( not minimizer_.Load( fakexml ), "Could not load minimizer " << type_ << ".\n" )
     }
 
@@ -138,7 +150,9 @@ namespace LaDa
                 bp::arg("linetolerance") = 1e-2,
                 bp::arg("linestep") = 1e-1,
                 bp::arg("strategy") = "slow",
-                bp::arg("verbose") = false
+                bp::arg("verbose") = false,
+                bp::arg("uncertainties") = 0.1,
+                bp::arg("up") = 1
               ),
               "Sets parameters for the optimizers. "
               "Not all parameters are needed by all optimizers."
