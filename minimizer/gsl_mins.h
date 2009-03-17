@@ -265,6 +265,10 @@ namespace LaDa
           T_DATAPAIR &_this = *( (T_DATAPAIR*) _data );
           std::copy( _x->data, _x->data + bt::get<1>( _this ).size(),
                      bt::get<1>( _this ).begin() );
+          std::cout << "f ";
+          foreach( types::t_real a, bt::get<1>( _this ) )
+            std::cout << a << " ";
+          std::cout << "\n";
           return bt::get<0>( _this )( bt::get<1>( _this ) );
         }
       template< class T_DATAPAIR >
@@ -274,6 +278,10 @@ namespace LaDa
           T_DATAPAIR &_this = *( (T_DATAPAIR*) _data );
           std::copy( _x->data, _x->data + bt::get<1>( _this ).size(),
                      bt::get<1>( _this ).begin() );
+          std::cout << "df ";
+          foreach( types::t_real a, bt::get<1>( _this ) )
+            std::cout << a << " ";
+          std::cout << "\n";
           bt::get<0>( _this ).gradient( bt::get<1>( _this ), _grad->data );
         }
       template< class T_DATAPAIR >
@@ -284,8 +292,15 @@ namespace LaDa
           T_DATAPAIR &_this = *( (T_DATAPAIR*) _data );
           std::copy( _x->data, _x->data + bt::get<1>( _this ).size(),
                      bt::get<1>( _this ).begin() );
+          std::cout << "fdf ";
+          foreach( types::t_real a, bt::get<1>( _this ) )
+            std::cout << a << " ";
+          std::cout << "\n";
           *_r = bt::get<0>( _this )( bt::get<1>( _this ) );
           bt::get<0>( _this ).gradient( bt::get<1>( _this ), _grad->data );
+          for( size_t i=0; i < bt::get<1>(_this).size(); ++i )
+            std::cout << *(_grad->data + i) << " ";
+          std::cout << "\n";
         } 
     }
     //! \endcond

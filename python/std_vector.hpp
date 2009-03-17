@@ -75,7 +75,6 @@ namespace LaDa
           typename std::vector<T_TYPE>::const_iterator i_var_end = _ob.end();
           for(; i_var != i_var_end; ++i_var )
             sstr << *i_var << " ";
-          sstr << "\n";
           return sstr.str();
         }
     }

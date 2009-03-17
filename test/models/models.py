@@ -104,9 +104,15 @@ def main():
 # print nlsq_func
 # args =  nlsq_func.args()
 
+  function = clj_module.Parabola()
+  args = opt.cReals()
+  args.append(5)
   minmizer = minimizer.Minimizer()
-  minmizer.set( type="minuit2", convergence=1e-12, linestep=1e-3, itermax=400, \
-                verbose = 1, strategy="slowest", uncertainties=0.1, up=1 )
+  minmizer.set( type="minuit2", convergence=1e-12, linestep=1e-2, itermax=50, \
+                verbose = 1, strategy="slowest", uncertainties=1, up=1 )
+# minmizer( function, args )
+# print args, function(args)
+# return
   for structure in structures:
     function = clj_module.ScaleFunction( clj, structure) 
     args = opt.cReals()
@@ -124,6 +130,7 @@ def main():
     args = opt.cReals()
     clj_module.structure_to_array( structure, args )
     result = minmizer( function, args )
+    print result, args
     clj_module.array_to_structure( args, structure )
     forces = crystal.sStructure( structure )
     a = clj( structure, forces )

@@ -13,7 +13,6 @@ def structure_to_array( _structure, _args ):
     _args.append(atom.pos[0]) 
     _args.append(atom.pos[1]) 
     _args.append(atom.pos[2]) 
-  print _args
 
 def array_to_structure( _args, _structure ):
 
@@ -94,6 +93,7 @@ class Function:
     from lada import crystal, models, minimizer
 
     minimizer.interpolated_gradient( self, _args, _gradients, n=3, stepsize=1e-2 )
+    return _gradients
 
 class ScaleFunction:
   def __init__( self, _clj, _structure ):
@@ -111,16 +111,23 @@ class ScaleFunction:
     from lada import crystal, models, minimizer
 
     minimizer.interpolated_gradient( self, _args, _gradients, n=1, stepsize=1e-3 )
+    return _gradients
 
 class Parabola:
 
   def __call__( self, _args ):
-    return _args[0]
+    from math import cos, sin
+    result = _args[0] * _args[0] - cos( _args[0] )
+    print "__call__ ", _args, result
+    return result
 
   def gradient( self, _args, _gradients ):
     from lada import minimizer
 
-    minimizer.interpolated_gradient( self, _args, _gradients, n=0, stepsize=1e-4, tolerance=1e-18 )
+#   _gradients[0] = 2* _args[0]
+    minimizer.interpolated_gradient( self, _args, _gradients, n=2, stepsize=1e-1, tolerance=1e-12 )
+    print _args, "g: ", _gradients
+    return _gradients;
 
 def main2():
   from lada import crystal, models, atat, minimizer, opt

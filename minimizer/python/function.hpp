@@ -40,14 +40,24 @@ namespace LaDa
         //! calls gradient.
         t_Return gradient( const t_Arg& _arg, t_GradientArg _gradient ) const
         {
+          __TRYBEGIN
           namespace bp = boost :: python;
 
-          std::vector< t_Arg::value_type > gradient( _arg.size(), 0 );
+          typedef std::vector< t_Arg::value_type > t_vector;
+          t_vector gradient( _arg.size(), 0);
           // calls gradient function.
-          object_.attr("gradient")( _arg, gradient );
+          gradient = bp::extract< t_vector >( object_.attr("gradient")( _arg, gradient ) );
           std::vector< t_Arg::value_type > :: iterator i_var = gradient.begin();
           std::vector< t_Arg::value_type > :: iterator i_var_end = gradient.end();
-          for(; i_var != i_var_end; ++i_var, ++_gradient ) *_gradient += *i_var;
+          std::cout << "python ";
+          t_GradientArg grad( _gradient );
+          for(; i_var != i_var_end; ++i_var, ++grad )
+          { 
+            *grad += *i_var;
+            std::cout << *i_var << " ";
+          }
+          std::cout << "\n";
+          __TRYEND(, "Error in gradient.\n" )
         }
 
       protected:
