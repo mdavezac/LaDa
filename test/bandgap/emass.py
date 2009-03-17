@@ -211,7 +211,8 @@ def interpolate_bands( _filename, _scale, _order = 2 ):
   start = 0
   end = len( results ) - start
   middle = len( results ) / 2 
-  for band in range( len(results[0])-1, len( results[0] ) ):
+  print middle, len( results )
+  for band in range( len(results[0])-2, len( results[0] ) ):
     matrixA = [ \
                 [ \
                   pow( r[0], i )\
@@ -228,11 +229,14 @@ def interpolate_bands( _filename, _scale, _order = 2 ):
       vectorB[i] /= pow( v, 4) 
     ( x, resid, iter ) = minimizer.linear_lsq( A=matrixA, x=vectorX, b=vectorB, \
                                                verbosity=0, tolerance = 1e-18, itermax = 10000 )
-    print matrixA, "\n", vectorB
-    print "# ", x, resid, iter
-    for a in results:
-      print a[0], sum( [ x[i]*pow(a[0],i) for i in range(0, _order+1) ] )
-    print "&"
+#   print "matrixA: " 
+#   for row in matrixA:
+#     print row
+#   print "vectorB", vectorB
+#   print "# ", x, resid, iter
+#   for a in results:
+#     print a[0], sum( [ x[i]*pow(a[0],i) for i in range(0, _order+1) ] )
+#   print "&"
     mass =   physics.Hartree("eV") * 2e0 * pi * pi \
            * physics.a0("A") * physics.a0("A") / _scale / _scale / x[2]
     print "# ", mass
@@ -242,7 +246,7 @@ def main():
 
 
   scale = read_structure( "sigeemass.xml" ).scale 
-  get_masses( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10 )
+# get_masses( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10 )
 # pickle_filename = "_si.0.01"
 # create_results( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10, "_ge_new_gamma" )
 # create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,0.5,0.5], 0.01, 10, "_ge_Ll" )

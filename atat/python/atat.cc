@@ -16,6 +16,8 @@ namespace LaDa
 {
   namespace Python
   {
+    template< class T_MATRIX > types::t_real det( const T_MATRIX& _a )
+      { return atat::det( _a ); }
     void expose_atat() 
     {
       namespace bp = boost::python;
@@ -32,6 +34,7 @@ namespace LaDa
                &LaDa::atat::details::trans_rMatrix3d< atat::rMatrix3d >,
                bp::arg("matrix"),
                "Transpose of an rMatrix3d." );
+      bp::def( "det", &det< atat::rMatrix3d >, bp::arg("matrix"), "Returns determinant." );
     }
 
   }

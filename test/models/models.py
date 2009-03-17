@@ -106,7 +106,7 @@ def main():
 
   minmizer = minimizer.Minimizer()
   minmizer.set( type="minuit2", convergence=1e-12, linestep=1e-3, itermax=400, \
-                verbose = 0, strategy="slowest", uncertainties=0.1, up=1 )
+                verbose = 1, strategy="slowest", uncertainties=0.1, up=1 )
   for structure in structures:
     function = clj_module.ScaleFunction( clj, structure) 
     args = opt.cReals()
@@ -117,11 +117,14 @@ def main():
     forces = crystal.sStructure( structure )
     print "energy: ", clj( structure, forces )
 
+    forces = crystal.sStructure( structure )
+    a = clj( structure, forces )
+    print structure.scale, structure, forces
     function = clj_module.Function( clj, structure) 
     args = opt.cReals()
-    models.unfold_structure( structure, args )
+    clj_module.structure_to_array( structure, args )
     result = minmizer( function, args )
-    models.fold_structure( args, structure )
+    clj_module.array_to_structure( args, structure )
     forces = crystal.sStructure( structure )
     a = clj( structure, forces )
     print structure.scale, structure, forces

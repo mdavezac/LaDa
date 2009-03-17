@@ -96,7 +96,7 @@ namespace LaDa
       
       // computes effective masses.
       _out.clear();
-      const size_t center_index( npoints );
+      const size_t center_index( eigs.size()>>1 );
       const types::t_real pi
       (
         3.1415926535897932384626433832795028841971693993751058209749445920e0
@@ -117,6 +117,7 @@ namespace LaDa
         bnu::matrix<types::t_real> Amatrix( eigs.size(), order + 1);
         bnu::vector<types::t_real> Bvector( eigs.size() );
         bnu::vector<types::t_real> Xvector( order + 1 );
+        std::cout << "middle: " << center_index << "\n";
         for( size_t i(0); i < eigs.size(); ++i )
         {
           const types::t_real w( weight_( i, center_index ) );
@@ -138,7 +139,7 @@ namespace LaDa
                      bnu::prec_prod( bnu::trans( Amatrix ), Bvector )
                    );
  //      std::cout << bnu::prec_prod( Amatrix, Xvector ) - Bvector << "\n";
- //      std::cout << Xvector << "\n";
+        std::cout << Xvector << "\n";
  //      std::cout << result.first << " " << result.second << "\n";
 
         // finally enters result.
@@ -170,6 +171,10 @@ namespace LaDa
     types::t_real eMass :: weight_( size_t _i, size_t _j ) const
     {
       const types::t_int u( std::abs( types::t_int(_i) - types::t_int(_j) ) );
+//     std::cout << "u( " << i << ", " << j << ") = " 
+//               << ( u == 0? 1e0: 1e0 / types::t_real( std::pow( u, 4 ) ) ) 
+//               << "\n";
+//     return 1e0;
       return u == 0? 1e0: 1e0 / types::t_real( std::pow( u, 4 ) );
     }
 
