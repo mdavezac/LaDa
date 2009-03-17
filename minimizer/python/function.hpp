@@ -14,6 +14,7 @@
 #include <boost/python/list.hpp>
 #include <boost/python/extract.hpp>
 #include <boost/type_traits/remove_pointer.hpp>
+#include <boost/python/errors.hpp>
 
 #include <opt/debug.h>
 
@@ -35,6 +36,13 @@ namespace LaDa
         t_Return operator()( const t_Arg& _arg ) const
         {
           const boost::python::object result( object_( _arg ) );
+          PyObject* error = PyErr_Occurred();
+          if( error )
+          {
+            std::cerr << "Python raised an exception. Could not obtain gradient.\n";
+            boost::python::throw_error_already_set();
+            return 0;
+          }
           return boost::python::extract< t_Return>( result  ); 
         }
         //! calls gradient.
@@ -47,16 +55,17 @@ namespace LaDa
           t_vector gradient( _arg.size(), 0);
           // calls gradient function.
           gradient = bp::extract< t_vector >( object_.attr("gradient")( _arg, gradient ) );
+          PyObject* error = PyErr_Occurred();
+          if( error )
+          {
+            std::cerr << "Python raised an exception. Could not obtain gradient.\n";
+            bp::throw_error_already_set();
+            return 0;
+          }
           std::vector< t_Arg::value_type > :: iterator i_var = gradient.begin();
           std::vector< t_Arg::value_type > :: iterator i_var_end = gradient.end();
-          std::cout << "python ";
-          t_GradientArg grad( _gradient );
-          for(; i_var != i_var_end; ++i_var, ++grad )
-          { 
-            *grad += *i_var;
-            std::cout << *i_var << " ";
-          }
-          std::cout << "\n";
+          for(; i_var != i_var_end; ++i_var, ++_gradient )
+            *_gradient += *i_var;
           __TRYEND(, "Error in gradient.\n" )
         }
 

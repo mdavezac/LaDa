@@ -139,7 +139,7 @@ namespace LaDa
                      bnu::prec_prod( bnu::trans( Amatrix ), Bvector )
                    );
  //      std::cout << bnu::prec_prod( Amatrix, Xvector ) - Bvector << "\n";
-        std::cout << Xvector << "\n";
+        std::cout << "X: " << Xvector << "\n";
  //      std::cout << result.first << " " << result.second << "\n";
 
         // finally enters result.
@@ -171,6 +171,7 @@ namespace LaDa
     types::t_real eMass :: weight_( size_t _i, size_t _j ) const
     {
       const types::t_int u( std::abs( types::t_int(_i) - types::t_int(_j) ) );
+      return 1e0;
 //     std::cout << "u( " << i << ", " << j << ") = " 
 //               << ( u == 0? 1e0: 1e0 / types::t_real( std::pow( u, 4 ) ) ) 
 //               << "\n";

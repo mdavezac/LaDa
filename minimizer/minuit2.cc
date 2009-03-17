@@ -48,6 +48,15 @@ namespace LaDa
       }
       if( parent->Attribute("up") ) 
         up = boost::lexical_cast< types::t_real >( parent->Attribute("uncertainties") );
+      if( parent->Attribute("gradient") ) 
+      {
+        const std::string value( parent->Attribute("gradient") );
+        if( value == "true" or value == "TRUE" or value == "T" or value == "t" ) 
+          use_gradient = true;
+        else if( value == "false" or value == "FALSE" or value == "F" or value == "f" ) 
+          use_gradient = false;
+        else verbose = boost::lexical_cast<bool>( parent->Attribute("gradient") );
+      }
       return true;
     }
   }

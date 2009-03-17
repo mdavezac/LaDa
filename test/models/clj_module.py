@@ -103,14 +103,23 @@ class ScaleFunction:
 
   def __call__( self, _args ):
     from lada import crystal, models
-    self.structure.scale = _args[0]
+    self.structure.scale = _args[0] * _args[0]
     forces = crystal.sStructure( self.structure )
+    print " __call__ ", _args[0] * _args[0]
     return self.clj( self.structure, forces )
 
   def gradient( self, _args, _gradients ):
     from lada import crystal, models, minimizer
 
-    minimizer.interpolated_gradient( self, _args, _gradients, n=1, stepsize=1e-3 )
+#   self.structure.scale = _args[0] - 0.01
+#   forces = crystal.sStructure( self.structure )
+#   a = self.clj( self.structure, forces )
+#   self.structure.scale = _args[0]
+#   b = self.clj( self.structure, forces )
+#   _gradients[0] = (b - a ) / 0.01
+    
+    minimizer.interpolated_gradient( self, _args, _gradients, n=0, stepsize=1e-1, tolerance=1e-12 )
+    print _args, " g: ", _gradients
     return _gradients
 
 class Parabola:

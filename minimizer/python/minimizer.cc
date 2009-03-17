@@ -31,7 +31,8 @@ namespace LaDa
                       strategy_( "fast" ),
                       verbose_( false ),
                       uncertainties_(0.1),
-                      up_(1) {}
+                      up_(1),
+                      use_gradient_( true ) {}
 
 #       define __GETSET__( TYPE, NAME ) \
           TYPE get_ ## NAME () const { return NAME ## _; }\
@@ -52,13 +53,21 @@ namespace LaDa
         __GETSET__( bool, verbose )
         __GETSET__( types::t_real, uncertainties )
         __GETSET__( types::t_real, up )
+        __GETSET__( bool, use_gradient )
 #       undef __GETSET__
 
         Function :: t_Return operator()( const boost::python::object &_function,
                                          Function :: t_Arg& _arg ) const 
         {
-          const Function function( _function );
-          return minimizer_( function, _arg ); 
+          try
+          {
+            const Function function( _function );
+            return minimizer_( function, _arg ); 
+          }
+          catch (...)
+          {
+            PyErr_SetString( PyExc_RuntimeError, "Error encountered while minimizing from C.\n");
+          }
         }
         void set( const std::string& _type, 
                   types::t_real _tolerance, 
@@ -68,18 +77,27 @@ namespace LaDa
                   const std::string& _strategy,
                   bool _verbose,
                   types::t_real _uncertainties,
-                  types::t_real _up )
+                  types::t_real _up,
+                  bool _ug )
         {
-          type_ = _type;
-          tolerance_ = _tolerance;
-          itermax_ = _itermax;
-          linetolerance_ = _linetolerance;
-          linestep_ = _linestep;
-          strategy_ = _strategy;
-          verbose_ = _verbose;
-          uncertainties_ = _uncertainties;
-          up_ = _up;
-          load_();
+          try
+          {
+            type_ = _type;
+            tolerance_ = _tolerance;
+            itermax_ = _itermax;
+            linetolerance_ = _linetolerance;
+            linestep_ = _linestep;
+            strategy_ = _strategy;
+            verbose_ = _verbose;
+            uncertainties_ = _uncertainties;
+            up_ = _up;
+            use_gradient_ = _ug;
+            load_();
+          }
+          catch (...)
+          {
+            PyErr_SetString( PyExc_RuntimeError, "Error setting minimizer parameters.\n");
+          }
         }
 
       protected:
@@ -93,6 +111,7 @@ namespace LaDa
         bool verbose_;
         types::t_real uncertainties_;
         types::t_real up_;
+        bool use_gradient_;
         typedef LaDa::Minimizer::Variant
                 < 
                   boost::mpl::vector
@@ -117,6 +136,7 @@ namespace LaDa
       fakexml.SetAttribute( "verbose", verbose_ );
       fakexml.SetAttribute( "uncertainties", uncertainties_ );
       fakexml.SetAttribute( "up", up_ );
+      fakexml.SetAttribute( "gradient", use_gradient_ ? "true": "false" );
       __DOASSERT( not minimizer_.Load( fakexml ), "Could not load minimizer " << type_ << ".\n" )
     }
 
@@ -152,7 +172,8 @@ namespace LaDa
                 bp::arg("strategy") = "slow",
                 bp::arg("verbose") = false,
                 bp::arg("uncertainties") = 0.1,
-                bp::arg("up") = 1
+                bp::arg("up") = 1,
+                bp::arg("gradient") = true
               ),
               "Sets parameters for the optimizers. "
               "Not all parameters are needed by all optimizers."

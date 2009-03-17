@@ -225,15 +225,16 @@ def interpolate_bands( _filename, _scale, _order = 2 ):
     for i in range( 0, len(results) ):
       v = float(abs(i - middle))
       if v == 0: continue
-      matrixA[i] = [ u / pow( v, 4 ) for u in matrixA[i] ]
-      vectorB[i] /= pow( v, 4) 
+      weight = 1.0 # 1.0 / pow( v, 4)
+      matrixA[i] = [ u * weight for u in matrixA[i] ]
+      vectorB[i] *= weight
+    print "matrixA: " 
+    for row in matrixA:
+      print row
+    print "vectorB", vectorB
     ( x, resid, iter ) = minimizer.linear_lsq( A=matrixA, x=vectorX, b=vectorB, \
                                                verbosity=0, tolerance = 1e-18, itermax = 10000 )
-#   print "matrixA: " 
-#   for row in matrixA:
-#     print row
-#   print "vectorB", vectorB
-#   print "# ", x, resid, iter
+    print "# ", x, resid, iter
 #   for a in results:
 #     print a[0], sum( [ x[i]*pow(a[0],i) for i in range(0, _order+1) ] )
 #   print "&"
@@ -246,7 +247,7 @@ def main():
 
 
   scale = read_structure( "sigeemass.xml" ).scale 
-# get_masses( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10 )
+  get_masses( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10 )
 # pickle_filename = "_si.0.01"
 # create_results( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10, "_ge_new_gamma" )
 # create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,0.5,0.5], 0.01, 10, "_ge_Ll" )

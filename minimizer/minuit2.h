@@ -31,7 +31,7 @@ namespace LaDa
     {
       protected:
         //! A wrapper for Minuit2 function classes.
-        template< class T_FUNCTION > class FunctionWrapper;
+        template< class T_FUNCTION, bool USE_GRADIENT > class FunctionWrapper;
       public:
         //! Convergence criteria.
         types::t_real tolerance;
@@ -45,17 +45,21 @@ namespace LaDa
         types::t_real uncertainties;
         //! uncertainties, whatever those are.
         types::t_real up;
+        //! Use gradient from functional if true, otherwise, from Minuit2.
+        bool use_gradient;
 
       public:
         //! Constructor.
         Minuit2() : tolerance(types::tolerance),
                     itermax(0), verbose(false),
-                    strategy(2), uncertainties(0.1), up(1) {}
+                    strategy(2), uncertainties(0.1), 
+                    up(1), use_gradient(true) {}
         //! Copy constructor
         Minuit2   ( const Minuit2& _c ) 
                 : tolerance(_c.tolerance),
                   itermax(_c.itermax), verbose(_c.verbose),
-                  strategy(_c.strategy), uncertainties(_c.uncertainties), up(_c.up) {}
+                  strategy(_c.strategy), uncertainties(_c.uncertainties),
+                  up(_c.up), use_gradient( _c.use_gradient ) {}
               
         //! Destructor
         virtual ~Minuit2(){};
@@ -81,22 +85,38 @@ namespace LaDa
 
     LADA_REGISTER_MINIMIZER_VARIANT_HEADER( Minuit2, "Minuit2 Migrad" )
 
-    template< class T_FUNCTION > 
-      class Minuit2 :: FunctionWrapper : public ROOT::Minuit2::FCNGradientBase
+    namespace details
+    {
+      template< bool USE_GRADIENT> struct wrapper_base;
+      template<> struct wrapper_base< true >
+      {
+        typedef ROOT::Minuit2::FCNGradientBase type;
+      };
+      template<> struct wrapper_base< false >
+      {
+        typedef ROOT::Minuit2::FCNBase type;
+      };
+    }
+
+    template< class T_FUNCTION, bool USE_GRADIENT > 
+      class Minuit2 :: FunctionWrapper : public details::wrapper_base< USE_GRADIENT > :: type
       {
         public:
           //! Type of the original function.
           typedef T_FUNCTION t_Function;
+          //! Type of the base class.
+          typedef typename details::wrapper_base< USE_GRADIENT > :: type t_Base;
           //! Type of the argument
           typedef std::vector<double> t_Arg;
           //! Type of the return.
           typedef double t_Return;
 
           //! Constructor.
-          explicit FunctionWrapper( const T_FUNCTION&  _f, const double _up ) : function_(_f), up_(_up) {}
+          explicit FunctionWrapper   ( const T_FUNCTION&  _f, const double _up )
+                                   : function_(_f), up_(_up) {}
           //! Copy Constructor.
           FunctionWrapper   ( const FunctionWrapper &_c )
-                          : ROOT::Minuit2::FCNGradientBase( _c ),
+                          : t_Base( _c ),
                             function_( _c.function_ ) {}
           //! Destructor.
           virtual ~FunctionWrapper() {};
@@ -111,8 +131,8 @@ namespace LaDa
             function_.gradient( _arg, &grad[0] );
             return grad;
           }
-            //! do not check gradient.
-            virtual bool CheckGradient() const {return false;}
+          //! do not check gradient.
+          virtual bool CheckGradient() const {return false;}
 #         ifndef _LADADEBUG
             //! do not check gradient.
             virtual bool CheckGradient() const {return false;}
@@ -140,10 +160,12 @@ namespace LaDa
                                   std::vector<double>( _arg.size(), uncertainties )
                                 );
           rm2::MnStrategy stra( strategy );
-          FunctionWrapper<T_FUNCTION> wrapper( _func, up );
+          boost::shared_ptr< ROOT::Minuit2::FCNBase > wrapper;
+          if( use_gradient ) wrapper.reset( new FunctionWrapper<T_FUNCTION, true>( _func, up ) );
+          else wrapper.reset( new FunctionWrapper<T_FUNCTION, false>( _func, up ) );
           rm2::MnMigrad minimizer
                         ( 
-                          wrapper,
+                          *wrapper,
                           parameters,
                           strategy
                         );

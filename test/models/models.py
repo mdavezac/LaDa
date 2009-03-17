@@ -81,6 +81,7 @@ def main():
   import nlsq
   from lada import models, minimizer, opt, crystal
   import clj_module
+  from math import sqrt
 
   structures = read_gsgo_history( "LiCsBr_simple" )
 # for s in structures:
@@ -108,34 +109,34 @@ def main():
   args = opt.cReals()
   args.append(5)
   minmizer = minimizer.Minimizer()
-  minmizer.set( type="minuit2", convergence=1e-12, linestep=1e-2, itermax=50, \
-                verbose = 1, strategy="slowest", uncertainties=1, up=1 )
+  minmizer.set( type="minuit2", convergence=1e-12, linestep=1e-2, itermax=100, \
+                verbose = 1, strategy="slowest", uncertainties=2, up=1 )
 # minmizer( function, args )
 # print args, function(args)
 # return
   for structure in structures:
     function = clj_module.ScaleFunction( clj, structure) 
     args = opt.cReals()
-    args.append( float(structure.scale) )
+    args.append( sqrt(structure.scale) )
     result = minmizer( function, args )
-    structure.scale = args[0]
+    structure.scale = args[0] * args[0]
 
     forces = crystal.sStructure( structure )
     print "energy: ", clj( structure, forces )
 
-    forces = crystal.sStructure( structure )
-    a = clj( structure, forces )
-    print structure.scale, structure, forces
-    function = clj_module.Function( clj, structure) 
-    args = opt.cReals()
-    clj_module.structure_to_array( structure, args )
-    result = minmizer( function, args )
-    print result, args
-    clj_module.array_to_structure( args, structure )
-    forces = crystal.sStructure( structure )
-    a = clj( structure, forces )
-    print structure.scale, structure, forces
-    print "f energy: ", a
+#   forces = crystal.sStructure( structure )
+#   a = clj( structure, forces )
+#   print structure.scale, structure, forces
+#   function = clj_module.Function( clj, structure) 
+#   args = opt.cReals()
+#   clj_module.structure_to_array( structure, args )
+#   result = minmizer( function, args )
+#   print result, args
+#   clj_module.array_to_structure( args, structure )
+#   forces = crystal.sStructure( structure )
+#   a = clj( structure, forces )
+#   print structure.scale, structure, forces
+#   print "f energy: ", a
 #   b = clj(structure, forces )
 #   print "m: ", b, structure, forces
 
