@@ -84,13 +84,15 @@ def get_masses( _xmlinput, _kpoint, _direction, _step, _nbeval ):
   bandgap.parameters.method = escan.full_diagonalization
   bandgap.evaluate( func_vff.structure )
   gamma = escan.Bands(bandgap.bands)
-  print gamma
-  print bandgap.eigenvalues
   bandgap.eref = gamma
 
   bandgap.parameters.Eref = bandgap.eref.vbm;
   func_emass = escan.eMass()
   func_emass.npoints = _nbeval
+  func_emass.order = 2
+  func_emass.convergence = 1e-18
+  func_emass.itermax = 50
+  func_emass.verbose = 50
   result = func_emass\
            (\
              escan     = bandgap,
@@ -212,7 +214,7 @@ def interpolate_bands( _filename, _scale, _order = 2 ):
   end = len( results ) - start
   middle = len( results ) / 2 
   print middle, len( results )
-  for band in range( len(results[0])-2, len( results[0] ) ):
+  for band in range( len(results[0])-4, len( results[0] )-3 ):
     matrixA = [ \
                 [ \
                   pow( r[0], i )\
@@ -225,7 +227,7 @@ def interpolate_bands( _filename, _scale, _order = 2 ):
     for i in range( 0, len(results) ):
       v = float(abs(i - middle))
       if v == 0: continue
-      weight = 1.0 # 1.0 / pow( v, 4)
+      weight = 1.0 / float( pow( v, 4) )
       matrixA[i] = [ u * weight for u in matrixA[i] ]
       vectorB[i] *= weight
     print "matrixA: " 
@@ -247,17 +249,17 @@ def main():
 
 
   scale = read_structure( "sigeemass.xml" ).scale 
-  get_masses( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10 )
+# get_masses( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10 )
 # pickle_filename = "_si.0.01"
 # create_results( "sigeemass.xml", [0,0,0], [1,0,0], 0.01, 10, "_ge_new_gamma" )
 # create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,0.5,0.5], 0.01, 10, "_ge_Ll" )
 # create_results( "sigeemass.xml", [0.5,0.5,0.5], [0.5,-0.5,0], 0.01, 10, "_ge_Lt" )
 # create_results( "sigeemass.xml", [1,0,0], [1,0,0], 0.01, 10, "_ge_Xl" )
-# print_results( "_ge_new_gamma" )
+  print_results( "_ge_new_gamma" )
 # print_results( "_ge_gamma" )
 # print_results( "_ge_gamma" )
 # print_results( "_ge_Xl" )
-  interpolate_bands( "_ge_gamma", scale, 2 )
+# interpolate_bands( "_ge_new_gamma", scale, 2 )
 # print_results( "_si_large_mesh" )
 # print_results( pickle_filename )
 

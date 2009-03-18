@@ -9,6 +9,11 @@
 #include <algorithm>
 #include <cmath>
 
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/utility.hpp>
+#include <boost/serialization/vector.hpp>
+
 #include <boost/numeric/ublas/io.hpp>
 
 #include <physics/physics.h>
@@ -24,6 +29,21 @@ namespace LaDa
     {
       template< class T_CONTAINER > void double_results( T_CONTAINER& _results );
     }
+
+    template< class T_BANDS >
+      void save_bands( const T_BANDS& _bands )
+      {
+        std::ofstream ofs("_bands");
+        boost::archive::text_oarchive oa(ofs);
+        oa << _bands;
+      }
+    template< class T_BANDS >
+      void load_bands( T_BANDS& _bands )
+      {
+        std::ifstream ofs("_bands");
+        boost::archive::text_iarchive oa(ofs);
+        oa >> _bands;
+      }
 
     void eMass :: operator()
     (
@@ -45,7 +65,6 @@ namespace LaDa
                   "Interpolation order too small to get second derivative.\n" )
       typedef std::vector< std::pair<types::t_real, types::t_real> > t_Results;
       Interface interface( _interface );
-      std::cout << "eref " << interface.get_reference() << "\n";
 
       // setup functional.
       interface.escan.nbstates = _nbstates;
@@ -84,15 +103,6 @@ namespace LaDa
         );
       }
       if( is_gamma ) details::double_results( eigs );
-
-      std::cout << "\n\nbands:\n";
-      foreach( const t_Eigs& es, eigs )
-      {
-        std::cout << es.first << " ";
-        foreach( types::t_real e, es.second )
-          std::cout << e << " ";
-        std::cout << "\n";
-      }
       
       // computes effective masses.
       _out.clear();
@@ -109,7 +119,6 @@ namespace LaDa
         * Physics::a0("A") * Physics::a0("A") 
         / _structure.scale / _structure.scale 
       );
-      std::cout << "factor: " << factor << "\n";
       for( size_t band(0); band < _nbstates; ++band )
       {
         const types::t_real center_eigenvalue( eigs[ center_index ].second[band] );
@@ -117,7 +126,6 @@ namespace LaDa
         bnu::matrix<types::t_real> Amatrix( eigs.size(), order + 1);
         bnu::vector<types::t_real> Bvector( eigs.size() );
         bnu::vector<types::t_real> Xvector( order + 1 );
-        std::cout << "middle: " << center_index << "\n";
         for( size_t i(0); i < eigs.size(); ++i )
         {
           const types::t_real w( weight_( i, center_index ) );
@@ -125,9 +133,6 @@ namespace LaDa
           for( size_t j(0); j < order + 1; ++j )
             Amatrix(i,j) = std::pow( eigs[i].first, j ) * w;
         }
-        for( size_t j(0); j < order + 1; ++j ) Xvector(j) = 0e0;
-        std::cout << "Amat:\n" << Amatrix << "\n"
-                  << "Bvec:\n" << Bvector << "\n";
 
         // Performs least square fit.
         bnu::matrix<types::t_real> A = bnu::prec_prod( bnu::trans( Amatrix ), Amatrix );
@@ -138,9 +143,6 @@ namespace LaDa
                      Xvector,
                      bnu::prec_prod( bnu::trans( Amatrix ), Bvector )
                    );
- //      std::cout << bnu::prec_prod( Amatrix, Xvector ) - Bvector << "\n";
-        std::cout << "X: " << Xvector << "\n";
- //      std::cout << result.first << " " << result.second << "\n";
 
         // finally enters result.
         const types::t_real mass( factor / Xvector(2) ); 
@@ -171,11 +173,6 @@ namespace LaDa
     types::t_real eMass :: weight_( size_t _i, size_t _j ) const
     {
       const types::t_int u( std::abs( types::t_int(_i) - types::t_int(_j) ) );
-      return 1e0;
-//     std::cout << "u( " << i << ", " << j << ") = " 
-//               << ( u == 0? 1e0: 1e0 / types::t_real( std::pow( u, 4 ) ) ) 
-//               << "\n";
-//     return 1e0;
       return u == 0? 1e0: 1e0 / types::t_real( std::pow( u, 4 ) );
     }
 
