@@ -15,6 +15,8 @@
 #include <boost/numeric/ublas/vector_proxy.hpp>
 #include <boost/numeric/ublas/matrix_proxy.hpp>
 
+#include <tinyxml/tinyxml.h>
+
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <opt/fuzzy.h>
@@ -76,6 +78,8 @@ namespace LaDa
         template< class T_MATRIX, class T_VECTOR1, class T_VECTOR2 >
         t_Return operator()( T_MATRIX &_A, T_VECTOR1 &_x, const T_VECTOR2 &_b ) const
           { DummyPrecond p; return operator()( _A, _x, _b, p ); }
+
+        bool load( const TiXmlElement& _node );
       };
            
 

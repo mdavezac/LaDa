@@ -1,5 +1,5 @@
 //
-//  Version: $Id: bandgap_stubs.h 926 2009-01-18 17:10:11Z davezac $
+//  Version: $Id$
 //
 #ifndef _DARWIN_EFFECTIVE_MASS_STUBS_H_
 #define _DARWIN_EFFECTIVE_MASS_STUBS_H_

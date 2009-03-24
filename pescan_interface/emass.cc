@@ -13,10 +13,11 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/utility.hpp>
 #include <boost/serialization/vector.hpp>
-
+#include <boost/lexical_cast.hpp>
 #include <boost/numeric/ublas/io.hpp>
 
 #include <physics/physics.h>
+#include <opt/tuple_io.h>
 
 #include "emass.h"
 
@@ -169,6 +170,39 @@ namespace LaDa
     {
       const types::t_int u( std::abs( types::t_int(_i) - types::t_int(_j) ) );
       return u == 0? 1e0: 1e0 / types::t_real( std::pow( u, 4 ) );
+    }
+
+    bool eMass :: load( const TiXmlElement &_node, const std::string &_name )
+    {
+      const TiXmlElement *parent( opt::find_node( _node, "Functional", "type", _name ) );
+      if( not parent ) return false;
+      if( parent->Attribute("order") )
+        order = boost::lexical_cast< size_t >( parent->Attribute("order") );
+      if( parent->Attribute("npoints") )
+        npoints = boost::lexical_cast< size_t >( parent->Attribute("npoints") );
+      if( parent->Attribute("stepsize") )
+        stepsize = boost::lexical_cast< types::t_real >( parent->Attribute("stepsize") );
+      if( parent->Attribute("kpoint") )
+      {
+        boost::tuples::tuple<types::t_real, types::t_real, types::t_real> t;
+        opt::tuples::read( parent->Attribute( "kpoint" ), t );
+        kpoint[0] = boost::tuples::get<0>( t );
+        kpoint[1] = boost::tuples::get<1>( t );
+        kpoint[2] = boost::tuples::get<2>( t );
+      }
+      if( parent->Attribute("direction") )
+      {
+        boost::tuples::tuple<types::t_real, types::t_real, types::t_real> t;
+        opt::tuples::read( parent->Attribute( "direction" ), t );
+        direction[0] = boost::tuples::get<0>( t );
+        direction[1] = boost::tuples::get<1>( t );
+        direction[2] = boost::tuples::get<2>( t );
+      }
+      if( parent->Attribute("nbstates") )
+        nbstates = boost::lexical_cast< size_t >( parent->Attribute("nbstates") );
+
+      cgs.load( *parent );
+      return true;
     }
 
     namespace details 

@@ -10,6 +10,9 @@
 
 #include <vector>
 #include <utility>
+#include <string>
+
+#include <tinyxml/tinyxml.h>
 
 #include <minimizer/cgs.h>
 #include <crystal/structure.h>
@@ -69,6 +72,9 @@ namespace LaDa
           const types::t_real &_eref,
           t_Output &_out 
         ) const;
+
+        //! Loads parameters from XML node.
+        bool load( const TiXmlElement& _node, const std::string &_name = "emass" );
 
       protected:
         //! Computes kpoint in distorted structure from original lattice point.

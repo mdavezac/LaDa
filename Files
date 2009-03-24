@@ -86,7 +86,7 @@ DARWIN_BG_IMPL_H = two_sites.impl.h  single_site.impl.h  bandgap_stubs.impl.h \
 DARWIN_BG_H  = bandgap_stubs.h  two_sites.h  single_site.h  vff.h  bandgap.h \
                alloylayers/evaluator.h alloylayers/main.extras.h \
                alloylayers/object.h alloylayers/operators.h \
-               alloylayers/policies.h $(DARWIN_BG_IMPL_H)
+               alloylayers/policies.h effetive_mass.h $(DARWIN_BG_IMPL_H)
 DARWIN_BG_DOC = $(DARWIN_BG_H) $(DARWIN_BG_CC) $(DARWIN_GRAPH_H) $(DARWIN_GRAPH_CC)
 
 LIB_ALLOYLAYERS_CC = single_site.cc bandgap_stubs.cc vff.cc electric_dipole.cc alloylayers/concentration.cc
@@ -199,7 +199,7 @@ MINIMIZER_H =  allsq.h  cgs.h  decoupled.h  frprmn.h  function_wrapper.h  gsl.h 
                gsl_lsq.h  gsl_mins.h  gsl_nllsq.h  gsl_simplex.h  minuit2.h \
                variant.h interpolated_gradient.h
 MINIMIZER_CC = gsl_lsq.cc gsl.cc gsl_nllsq.cc gsl_mins.cc gsl_simplex.cc frprmn.cc \
-               decoupled.cc minuit2.cc 
+               decoupled.cc minuit2.cc cgs.cc
 MINIMIZER_F90 =  df1dim.f90  frprmn_fortran.f90  linmin.f90
 MINIMIZER_DOC = $(MINIMIZER_H) $(MINIMIZER_CC)
 MINIMIZER_PYTHON_H = cgs.hpp minimizer.hpp interpolated_gradient.hpp function.hpp
