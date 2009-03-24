@@ -151,6 +151,44 @@ namespace LaDa
           declare( "Band-gaps(Escan)" );
         }
 
+        template< class T_EVALUATOR > void dipole( T_EVALUATOR &_evaluator )
+        {
+          typedef typename T_EVALUATOR :: t_Individual :: t_IndivTraits t_IndivTraits;
+          typedef typename t_IndivTraits :: t_Object t_Object;
+          typedef typename t_IndivTraits :: t_QuantityTraits :: t_Quantity t_Quantity;
+
+          _evaluator.do_dipole = true;
+          // connect_property returns a functor. Next line calls the functor.
+          connect_property( _evaluator, &t_Object::osc_strength,
+                            "transition dipole=", 
+                            "Dipole oscillator strength between "
+                            "VBM and CBM. Arbitrary units." )();
+        }
+
+        template< class T_EVALUATOR > void emass( T_EVALUATOR &_evaluator )
+        {
+          typedef typename T_EVALUATOR :: t_Individual :: t_IndivTraits t_IndivTraits;
+          typedef typename t_IndivTraits :: t_Object t_Object;
+          typedef typename t_IndivTraits :: t_QuantityTraits :: t_Quantity t_Quantity;
+
+          _evaluator.do_emass = true;
+          // connect_property returns a functor. Next line calls the functor.
+          connect_property( _evaluator, &t_Object::emass,
+                            "emass=", 
+                            "Electron effective mass (a.u.)" )();
+        }
+        template< class T_EVALUATOR > void hmass( T_EVALUATOR &_evaluator )
+        {
+          typedef typename T_EVALUATOR :: t_Individual :: t_IndivTraits t_IndivTraits;
+          typedef typename t_IndivTraits :: t_Object t_Object;
+          typedef typename t_IndivTraits :: t_QuantityTraits :: t_Quantity t_Quantity;
+
+          _evaluator.do_hmass = true;
+          connect_property( _evaluator, &t_Object::hmass,
+                            "hmass=", 
+                            "Hole effective mass (a.u.)" )();
+        }
+
         void declare( const std::string& _string )
         {
           LaDa::Print::out << _string << " will be optimized.\n";

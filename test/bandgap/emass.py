@@ -93,14 +93,14 @@ def get_masses( _xmlinput, _kpoint, _direction, _step, _nbeval ):
   func_emass.convergence = 1e-18
   func_emass.itermax = 50
   func_emass.verbose = 50
+  func_emass.kpoint = atat.rVector3d(_kpoint)
+  func_emass.direction = atat.rVector3d(_direction)
+  func_emass.nbstates = 2
   result = func_emass\
            (\
              escan     = bandgap,
              ocell     = original_cell, 
              structure = func_vff.structure,
-             kpoint    = atat.rVector3d(_kpoint),
-             direction = atat.rVector3d(_direction),
-             nbstates  = 2,
              ref       = bandgap.eref.cbm
            )
 

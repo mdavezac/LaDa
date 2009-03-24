@@ -6,6 +6,8 @@
 #endif
 
 
+#include <sys/time.h>
+
 #include <print/stdout.h>
 
 #include "topology.h"

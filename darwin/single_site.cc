@@ -7,6 +7,7 @@
 
 #include <fstream>
 
+#include <crystal/fourier.h>
 #include "single_site.h"
 
 namespace LaDa
@@ -90,9 +91,9 @@ namespace LaDa
           
       // creates individual with unnormalized occupation
       types::t_complex  *i_hold = hold;
-      Fourier( _str.atoms.begin(), _str.atoms.end(),
-               _str.k_vecs.begin(), _str.k_vecs.end(),
-              i_hold );
+      Crystal::Fourier( _str.atoms.begin(), _str.atoms.end(),
+                        _str.k_vecs.begin(), _str.k_vecs.end(),
+                        i_hold );
 
       Crystal::Structure::t_Atoms::iterator i_atom = _str.atoms.begin();
       Crystal::Structure::t_Atoms::iterator i_atom_end = _str.atoms.end();

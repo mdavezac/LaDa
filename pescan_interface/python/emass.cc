@@ -37,9 +37,6 @@ namespace LaDa
       const Pescan::Interface& _interface,
       const atat::rMatrix3d &_ocell, 
       const Crystal::Structure &_structure,
-      const atat::rVector3d &_at,
-      const atat::rVector3d &_direction,
-      const size_t &_nbstates,
       const types::t_real &_eref
     )
     {
@@ -53,9 +50,6 @@ namespace LaDa
        _interface,
        _ocell, 
        _structure,
-       _at,
-       _direction,
-       _nbstates,
        _eref,
        out 
       );
@@ -77,6 +71,9 @@ namespace LaDa
         .def_readwrite( "convergence", &t_eMass::tolerance, "Convergence criteria for cgs." )
         .def_readwrite( "verbose", &t_eMass::verbose, "Verbosity of cgs." )
         .def_readwrite( "itermax", &t_eMass::itermax, "Maximum number of iterations for cgs." )
+        .def_readwrite( "kpoint", &t_eMass::kpoint, "Kpoint at which to compute emass." )
+        .def_readwrite( "direction", &t_eMass::direction, "Direction of emass." )
+        .def_readwrite( "nbstates", &t_eMass::nbstates, "Number of emasses to compute." )
         .def
         ( 
           "__call__", &get_masses,
@@ -85,18 +82,12 @@ namespace LaDa
             bp::arg("escan"),
             bp::arg("ocell"),
             bp::arg("structure"),
-            bp::arg("kpoint") = atat::rVector3d(0,0,0),
-            bp::arg("direction"),
-            bp::arg("nbstates") = 2,
             bp::arg("ref")
           ),
           "Computes and returns tuples ( eigenvalue at kpoint, effective mass at kpoint ).\n"
           "escan = the escan functional for computing eigenvalues.\n"
           "ocell = original (unrelaxed) structure.\n"
           "structure = relaxed structure.\n"
-          "kpoint = reciprocal space vector for which to compute effective masses.\n"
-          "direction = direction for which compute effective masses.\n"
-          "nbstates = number of bands for which compute effective masses. Should be even.\n"
           "ref = reference energy at which to compute bands.\n"
         );
     }

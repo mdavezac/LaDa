@@ -25,6 +25,9 @@ namespace LaDa
     class eMass
     {
       public:
+        //! \brief Type of the ouput argument.
+        //! \details First of pair is the eigenvalue, second of pair is the effective mass.
+        typedef std::vector< std::pair<types::t_real, types::t_real> > t_Output;
         //! Conjugate gradient minimizer.
         typedef Fitting :: Cgs t_Minimizer;
         //! Conjugate gradient minimizer.
@@ -35,21 +38,27 @@ namespace LaDa
         size_t npoints;
         //! Stepsize for interpolation points.
         types::t_real stepsize;
+        //! k-vector for which to compute effective mass.
+        atat::rVector3d kpoint;
+        //! Direction for which to compute effective mass.
+        atat::rVector3d direction;
+        //! Number of states for which to compute effective mass.
+        size_t nbstates;
 
         //! Constructor.
-        eMass() : order( 2 ), npoints(2), stepsize( 1e-2 ) {}
+        eMass() : order( 2 ), npoints(2), stepsize( 1e-2 ),
+                  kpoint( 0,0,0 ), direction(1,1,1), nbstates( 2 ) {}
         //! Copy Constructor.
         eMass   ( const eMass &_c )
               : cgs( _c.cgs ), order( _c.order ), 
-                npoints( _c.npoints ), stepsize( _c.stepsize ) {}
+                npoints( _c.npoints ), stepsize( _c.stepsize ),
+                kpoint( _c.kpoint ), direction( _c.direction ),
+                nbstates( _c.nbstates ) {}
 
         //! \brief Computes effective mass.
         //! \param[in] _interface the escan functional.
         //! \param[in] _ocell cell vectors of the structure prior to relaxation.
         //! \param[in] _structure \e relaxed structure for which to compute emasses.
-        //! \param[in] _at effective masses at vector \a _at.
-        //! \param[in] _direction of effective mass.
-        //! \param[in] _nbstates number of bands (and effective masses) to compute.
         //! \param[in] _eref reference energy at which to compute bands.
         //! \param[out] _out resulting effective masses and band eigenvalues.
         void operator()
@@ -57,11 +66,8 @@ namespace LaDa
           const Interface& _interface,
           const atat::rMatrix3d &_ocell, 
           const Crystal::Structure &_structure,
-          const atat::rVector3d &_at,
-          const atat::rVector3d &_direction,
-          const size_t &_nbstates,
           const types::t_real &_eref,
-          std::vector< std::pair<types::t_real, types::t_real> > &_out 
+          t_Output &_out 
         ) const;
 
       protected:

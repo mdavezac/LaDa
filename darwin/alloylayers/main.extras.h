@@ -11,6 +11,7 @@
     // includes some more files 
     // defines individual and evaluator.
 #   define _MAIN_ALLOY_LAYERS_EXTRAS_ 0
+#   include <atat/serialize.h>
 #   include <eo/eoPopulator.h>
 #   include <boost/lambda/bind.hpp>
 #   include <boost/bind.hpp>
@@ -90,7 +91,7 @@
     typedef LaDa :: GA :: Darwin< t_Evaluator > t_Darwin;
 
     // connects physical properties factory.
-    ga.evaluator.do_dipole( false );
+    ga.evaluator.do_dipole = false;
     LaDa::Factory::Factory<void(void), std::string> properties_factory;
     properties_factory.connect
       ( "epi", "Epitaxial Strain  in eV per f.u.\n"
@@ -101,15 +102,16 @@
       ( "bandgap", "Band gap in eV", 
         boost::bind( &PPFactory::bandgap<t_Evaluator>, boost::ref(ga.evaluator) ) )
       ( "transition", "Dipole oscillator strength between VBM and CBM. Arbitrary units.",
-        PPFactory::connect_property(ga.evaluator, &t_Individual::t_IndivTraits::t_Object::y,
-                                    "transition dipole=", 
-                                    "Dipole oscillator strength between "
-                                    "VBM and CBM. Arbitrary units." ) )
+        boost::bind( &PPFactory::dipole<t_Evaluator>, boost::ref(ga.evaluator) ) )
+      ( "emass", "Effective electronic mass",
+        boost::bind( &PPFactory::emass<t_Evaluator>, boost::ref(ga.evaluator) ) )
+      ( "hmass", "Effective hole mass",
+        boost::bind( &PPFactory::hmass<t_Evaluator>, boost::ref(ga.evaluator) ) )
       ( "cbm", "Conduction band minimum in eV.",
-        PPFactory::connect_property(ga.evaluator, &t_Individual::t_IndivTraits::t_Object::y,
+        PPFactory::connect_property(ga.evaluator, &t_Individual::t_IndivTraits::t_Object::cbm,
                                     "CBM=", "Conduction band minimum in eV." ) )
       ( "vbm", "Conduction band minimum in eV.",
-        PPFactory::connect_property(ga.evaluator, &t_Individual::t_IndivTraits::t_Object::y,
+        PPFactory::connect_property(ga.evaluator, &t_Individual::t_IndivTraits::t_Object::vbm,
                                     "VBM=", "Valence band maximum in eV." ) )
       ( "x", "Concentration at site x.",
         PPFactory::connect_property(ga.evaluator, &t_Individual::t_IndivTraits::t_Object::x,

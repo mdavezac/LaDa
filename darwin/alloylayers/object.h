@@ -17,6 +17,7 @@
 #include "../print_callbacks.h"
 #include "../bitstring/object.h"
 #include "../static_translate.h"
+#include "../effective_mass.h"
 
 #include "concentration.h"
 
@@ -37,6 +38,8 @@ namespace LaDa
                       public LaDa::GA::Keepers::BandGap,
                       public LaDa::GA::Keepers::OscStrength,
                       public LaDa::GA::Keepers::Concentration,
+                      public LaDa::GA::Keepers::eMass,
+                      public LaDa::GA::Keepers::hMass,
                       public LaDa::GA::PrintSignal< Object >
       {
         friend class boost::serialization::access;
@@ -46,23 +49,31 @@ namespace LaDa
         Object() : LaDa::GA::BitString::Object<>(),
                    LaDa::GA::Keepers::BandGap(),
                    LaDa::GA::Keepers::OscStrength(),
-                   LaDa::GA::Keepers::Concentration() {}
+                   LaDa::GA::Keepers::Concentration(),
+                   LaDa::GA::Keepers::eMass(),
+                   LaDa::GA::Keepers::hMass() {}
         //! Copy Constructor
         Object   (const Object &_c)
                : LaDa::GA::BitString::Object<>(_c),
                  LaDa::GA::Keepers::BandGap(_c),
                  LaDa::GA::Keepers::OscStrength(_c),
-                 LaDa::GA::Keepers::Concentration( _c ) {};
+                 LaDa::GA::Keepers::Concentration( _c ),
+                 LaDa::GA::Keepers::eMass( _c ),
+                 LaDa::GA::Keepers::hMass( _c ) {};
         //! Loads from \a _node.
         bool Load( const TiXmlElement &_node )
           { return     LaDa::GA::Keepers::BandGap::Load( _node )
                    and LaDa::GA::Keepers::OscStrength::Load( _node )
-                   and LaDa::GA::Keepers::Concentration::Load( _node ); }
+                   and LaDa::GA::Keepers::Concentration::Load( _node )
+                   and LaDa::GA::Keepers::eMass::Load( _node )
+                   and LaDa::GA::Keepers::hMass::Load( _node ); }
         //! Saves to \a _node.
         bool Save( TiXmlElement &_node ) const
           { return     LaDa::GA::Keepers::BandGap::Save( _node )
                    and LaDa::GA::Keepers::OscStrength::Save( _node ) 
-                   and LaDa::GA::Keepers::Concentration::Save( _node ); }
+                   and LaDa::GA::Keepers::Concentration::Save( _node )
+                   and LaDa::GA::Keepers::eMass::Save( _node )
+                   and LaDa::GA::Keepers::hMass::Save( _node ); }
         //! Destructor
         virtual ~Object() {};
         private:
@@ -74,6 +85,8 @@ namespace LaDa
               _ar & boost::serialization::base_object< LaDa::GA::Keepers::BandGap >( *this ); 
               _ar & boost::serialization::base_object< LaDa::GA::Keepers::OscStrength >( *this ); 
               _ar & boost::serialization::base_object< LaDa::GA::Keepers::Concentration >( *this ); 
+              _ar & boost::serialization::base_object< LaDa::GA::Keepers::eMass >( *this ); 
+              _ar & boost::serialization::base_object< LaDa::GA::Keepers::hMass >( *this ); 
             }
       };
 

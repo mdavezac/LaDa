@@ -6,6 +6,7 @@
 #endif
 
 #include "concentration.h"
+#include <crystal/fourier.h>
 
 #include <opt/debug.h>       // std::runtime_error
 

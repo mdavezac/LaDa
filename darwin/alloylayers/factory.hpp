@@ -51,6 +51,12 @@ namespace LaDa
         template< class T_EVALUATOR > void epitaxial_strain( T_EVALUATOR &_evaluator );
         //! Connects band-gap with quantities and printing policies
         template< class T_EVALUATOR > void bandgap( T_EVALUATOR &_evaluator );
+        //! Connects band-gap with quantities and printing policies, and sets evaluator do_dipole.
+        template< class T_EVALUATOR > void dipole( T_EVALUATOR &_evaluator );
+        //! Connects electron mass with quantities and printing policies.
+        template< class T_EVALUATOR > void emass( T_EVALUATOR &_evaluator );
+        //! Connects hole mass with quantities and printing policies.
+        template< class T_EVALUATOR > void hmass( T_EVALUATOR &_evaluator );
         //! Connects a property with quantities and printing policies.
         template< class T_EVALUATOR, class T_PROPERTY >
           details::ConnectProperty<T_EVALUATOR, T_PROPERTY > 

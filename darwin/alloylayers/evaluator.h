@@ -20,6 +20,7 @@
 #include <opt/types.h>
 #include <mpi/mpi_object.h>
 #include <vff/layered.h>
+#include <pescan_interface/emass.h>
 
 #include "../evaluator.h"
 #include "../individual.h"
@@ -186,11 +187,14 @@ namespace LaDa
        
             //! Constructor
             Evaluator() : t_Base(), bandgap(structure),
-                          edipole( structure ), do_dipole_(false) {}
+                          edipole( structure ), do_dipole(false),
+                          do_emass( false ), do_hmass( false ) {}
             //! Copy Constructor
             Evaluator   ( const Evaluator &_c )
                       : t_Base(_c), bandgap(_c.bandgap),
-                        edipole( structure ), do_dipole_(false) {}
+                        edipole( structure ), do_dipole( _c.do_dipole ),
+                        do_emass( _c.do_emass ), do_hmass( _c.do_hmass ),
+                        emass( _c.emass ), hmass( _c.hmass ) {}
             //! Destructor
             virtual ~Evaluator() {};
        
@@ -212,11 +216,6 @@ namespace LaDa
   #         endif
             using t_Base::Load;
 
-            //! Returns true if dipole transition will be computed.
-            bool do_dipole() const { return do_dipole; }
-            //! Sets pescan to compute dipoles on \a _do true.
-            void do_dipole( bool _do ) { do_dipole_ = _do; }
-       
             //! Type of the band gap cum vff all-in-one functional.
             typedef BandGap::Darwin<Vff::Layered> t_BandGap;
             //! Type of the electric dipole.
@@ -227,10 +226,24 @@ namespace LaDa
             //! Electric dipole functional.
             t_ElectricDipole edipole;
             //! Wether to perform oscilator strength evaluations.
-            bool do_dipole_;
+            bool do_dipole;
+            //! Wether to compute electron effective mass
+            bool do_emass;
+            //! Wether to compute hole effective mass
+            bool do_hmass;
             
           protected:
+            //! Computes effective mass, given an effective mass object and a reference.
+            types::t_real effmass( const Pescan::eMass& _functor,
+                                   types::t_real _ref,
+                                   const atat::rMatrix3d &_ocell ) const;
+
             using t_Base :: structure;
+
+            //! Electron effective mass functor.
+            Pescan::eMass emass;
+            //! Hole effective mass functor.
+            Pescan::eMass hmass;
         };
 
 

@@ -50,11 +50,8 @@ namespace LaDa
       const Interface& _interface,
       const atat::rMatrix3d &_ocell, 
       const Crystal::Structure &_structure,
-      const atat::rVector3d &_at,
-      const atat::rVector3d &_direction,
-      const size_t &_nbstates,
       const types::t_real &_eref,
-      std::vector< std::pair<types::t_real, types::t_real> > &_out 
+      t_Output &_out 
     ) const
     {
       namespace bnu = boost::numeric::ublas;
@@ -63,41 +60,39 @@ namespace LaDa
                   "or number of interpolation points to small.\n" )
       __DOASSERT( order < 2,
                   "Interpolation order too small to get second derivative.\n" )
-      typedef std::vector< std::pair<types::t_real, types::t_real> > t_Results;
       Interface interface( _interface );
 
       // setup functional.
-      interface.escan.nbstates = _nbstates;
+      interface.escan.nbstates = nbstates;
       interface.set_method( Interface :: FOLDED_SPECTRUM );
       interface.set_reference( _eref );
 
       // setup kpoints.
-      const bool is_gamma( atat::norm2( _at ) < 1e-8 );
+      const bool is_gamma( atat::norm2( kpoint ) < 1e-8 );
       const types::t_int nfirst( 1-npoints );
       const types::t_int nlast( is_gamma ? 1: npoints );
       std::vector< atat::rVector3d > kpoints;
       for( types::t_int i(nfirst); i < nlast; ++i )
-        kpoints.push_back(  _at + types::t_real( i ) * _direction * stepsize );
+        kpoints.push_back(  kpoint + types::t_real( i ) * direction * stepsize );
 
       // computes eigenvalues.
-      const atat::rVector3d ndir( _direction * 1e0 / std::sqrt( atat::norm2( _direction ) ) );
-      atat::rVector3d korigin( _at ); 
+      const atat::rVector3d ndir( direction * 1e0 / std::sqrt( atat::norm2( direction ) ) );
+      atat::rVector3d korigin( kpoint );
       distort_kpoint( _ocell, _structure.cell, korigin );
-      typedef std::pair< types::t_real, std::vector<types::t_real> > t_Eigs;
-      std::vector< t_Eigs > eigs;
-      foreach( const atat::rVector3d &kpoint, kpoints )
+      typedef std::pair< types::t_real, std::vector<types::t_real> > t_Eig;
+      std::vector<t_Eig> eigs;
+      foreach( const atat::rVector3d &kp, kpoints )
       {
-        t_Eigs eig;
         compute_
         ( 
           interface,
-          distort_kpoint( _ocell, _structure.cell, kpoint )
+          distort_kpoint( _ocell, _structure.cell, kp )
         );
         eigs.push_back
         (
-          t_Eigs
+          t_Eig
           (
-            (interface.escan.kpoint - korigin) * ndir,
+            (interface.escan.kpoint - korigin ) * ndir,
             interface.eigenvalues
           )
         );
@@ -119,7 +114,7 @@ namespace LaDa
         * Physics::a0("A") * Physics::a0("A") 
         / _structure.scale / _structure.scale 
       );
-      for( size_t band(0); band < _nbstates; ++band )
+      for( size_t band(0); band < nbstates; ++band )
       {
         const types::t_real center_eigenvalue( eigs[ center_index ].second[band] );
         // Setups interpolation.
@@ -146,7 +141,7 @@ namespace LaDa
 
         // finally enters result.
         const types::t_real mass( factor / Xvector(2) ); 
-        _out.push_back( t_Results::value_type( center_eigenvalue, mass ) );
+        _out.push_back( t_Output::value_type( center_eigenvalue, mass ) );
       } // end of loop over bands.
     } // end of functor. 
 

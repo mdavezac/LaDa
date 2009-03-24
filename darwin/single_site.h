@@ -52,13 +52,13 @@ namespace LaDa
   //!           \<Job\> tag.  Its exact format is described in \ref TagStructure.
   namespace SingleSite
   {
-    //! \brief Type of the Fourier functor.
-    //! \details Once doxygen is smart enough, should become
-    //! \code
-    //  using Crystal::Fourier;
-    //! \endcode
-    //!      
-    typedef Crystal::Fourier Fourier;
+//   //! \brief Type of the Fourier functor.
+//   //! \details Once doxygen is smart enough, should become
+//   //! \code
+//   //  using Crystal::Fourier;
+//   //! \endcode
+//   //!      
+//   typedef Crystal::Fourier Fourier;
 
     //! \brief Object describing the decoration of a structure.
     //! \details Mostly, this is a redefinition of a BitString::Object<>. The

@@ -145,17 +145,23 @@ namespace LaDa
         Crystal::Structure copy_structure( structure );
     
         bool oldkeepdir = true;;
-        if( do_dipole_ )  oldkeepdir = bandgap.set_keepdirectory( true );
+        if( do_dipole )  oldkeepdir = bandgap.set_keepdirectory( true );
     
         bandgap( *t_Base::current_object );
  
     
-        if( do_dipole_ )
+        if( do_dipole )
         {
           edipole( bandgap.BandGap().BandGap(), structure, *t_Base::current_object );
           bandgap.set_keepdirectory( oldkeepdir );
           if( not oldkeepdir ) bandgap.destroy_directory();
         }
+        if( do_emass )
+          t_Base::current_object->emass
+             =  effmass( emass, t_Base::current_object->cbm, copy_structure.cell );
+        if( do_emass )
+          t_Base::current_object->hmass 
+             = -effmass( hmass, t_Base::current_object->vbm, copy_structure.cell );
     
         // gets concentration.
         t_Base::current_object->x = Crystal::concentration( structure, 0 );
@@ -167,11 +173,25 @@ namespace LaDa
         assign( *t_Base::current_object, t_Base::current_individual->quantities() );
       }
     
+      INEVAL(types::t_real) :: effmass( const Pescan::eMass& _functor,
+                                        types::t_real _ref,
+                                        const atat::rMatrix3d &_ocell ) const
+      {
+        types::t_real result = 0e0;
+        Pescan::eMass::t_Output masses;
+        emass( bandgap.BandGap().BandGap(), _ocell, structure, _ref, masses );
+        foreach( Pescan::eMass::t_Output::value_type pair, masses )
+          result += pair.second;
+        return result / types::t_real( masses.size() );
+      }
+
       INEVAL(bool) :: Load( const TiXmlElement &_node )
       {
         if( not t_Base :: Load( _node ) ) return false;
         if( not bandgap.Load( _node ) ) return false;
-        if( do_dipole_ ) edipole.Load( _node ); // Okay if not found. Just use default values.
+        if( do_dipole ) edipole.Load( _node ); // Okay if not found. Just use default values.
+//       if( do_emass ) emass.Load( _node ); 
+//       if( do_hmass ) hmass.Load( _node ); 
         return true;
       }
 
