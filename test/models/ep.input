@@ -5,7 +5,7 @@
   17  17   0.0057   1.21        !
   11  17   0.0057   1.21        !
   17  11   0.0057   1.21        !
-2.5                             !  rcut_const0
+5.5                             !  rcut_const0
 25.0                            !  RCUT_ewaldA
 0.0                             !  PEGS   0.0-not  1.0-yes
 type: minuit2

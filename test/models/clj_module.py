@@ -2,23 +2,28 @@
 
 def structure_to_array( _structure, _args ):
 
-  from lada import atat
+  from lada import atat, models
+  from math import acos
 
+  models.unfold_structure( _structure, _args )
+  return
   _args.clear();
   g = atat.transpose( _structure.cell ) * _structure.cell
   for i in range(0, 3):
     for j in range(i, 3 ):
       _args.append( 0.5 * ( g[(i,j)] + g[(j,i)] ) )
   for atom in _structure.atoms:
-    _args.append(atom.pos[0]) 
-    _args.append(atom.pos[1]) 
-    _args.append(atom.pos[2]) 
+    _args.append( atom.pos[0] )
+    _args.append( atom.pos[1] )
+    _args.append( atom.pos[2] )
 
 def array_to_structure( _args, _structure ):
 
-  from lada import atat
-  from math import sqrt
+  from lada import atat, models
+  from math import sqrt, cos
 
+  models.fold_structure( _args, _structure )
+  return
   assert len( _args ) == 6 + len( _structure.atoms ) * 3, "wrong size."
 
   index = 6
@@ -29,7 +34,7 @@ def array_to_structure( _args, _structure ):
   a = ( atat.rVector3d(), atat.rVector3d(), atat.rVector3d() )
   for j in range( 0, 3 ):
     for i in range( 0, 3 ):
-      a[j][i] = _structure.cell[(j,i)]
+      a[i][j] = _structure.cell[(i,j)]
 
   # u, n, m vectors, with u in a0 direction, n perp to a0 with a1 component,...
   u = a[0] / sqrt( atat.norm2(a[0]) )
@@ -73,27 +78,34 @@ class Function:
 
   def __call__( self, _args ):
     from lada import crystal, models
+
     array_to_structure( _args, self.structure )
     forces = crystal.sStructure( self.structure )
     result = self.clj( self.structure, forces )
-    print self.structure, result
+    print "__call__", result
     return result
+
+  def gradient( self, _args, _gradients ):
+    from lada import crystal, models, minimizer, atat
+
+    array_to_structure( _args, self.structure )
+    forces = crystal.sStructure( self.structure )
+#   self.clj( self.structure, forces )
+    self.clj.gradient( self.structure, forces )
+#   stress = 0.5 * self.structure.cell \
+#                * atat.rMatrix3d( forces.cell )
+#   print  forces.cell
+#   forces.cell =   stress + atat.transpose( stress )
+    structure_to_array( forces, _gradients )
+
 
   def ngradient( self, _args, _gradients ):
     from lada import crystal, models, minimizer
 
-    array_to_structure( _args, self.structure )
-    forces = crystal.sStructure( self.structure )
-    self.clj( self.structure, forces )
-    self.clj.gradient( self.structure, forces )
-    array_to_structure( forces, _gradients )
-
-
-  def gradient( self, _args, _gradients ):
-    from lada import crystal, models, minimizer
-
-    minimizer.interpolated_gradient( self, _args, _gradients, n=3, stepsize=1e-2 )
+    minimizer.interpolated_gradient( self, _args, _gradients, n=2, 
+                                     tolerance=1e-12, itermax=100, stepsize=1e-5 )
     return _gradients
+
 
 class ScaleFunction:
   def __init__( self, _clj, _structure ):
@@ -118,7 +130,7 @@ class ScaleFunction:
 #   b = self.clj( self.structure, forces )
 #   _gradients[0] = (b - a ) / 0.01
     
-    minimizer.interpolated_gradient( self, _args, _gradients, n=0, stepsize=1e-1, tolerance=1e-12 )
+    minimizer.interpolated_gradient( self, _args, _gradients, n=2, stepsize=1e-1, tolerance=1e-12 )
     print _args, " g: ", _gradients
     return _gradients
 
@@ -138,6 +150,16 @@ class Parabola:
     print _args, "g: ", _gradients
     return _gradients;
 
+def read_functional( _filename ):
+  from lada import crystal, models, atat, minimizer, opt
+
+  clj = models.Clj();
+  species = []
+  models.read_epinput(clj, species, _filename )
+
+  return clj, species
+
+
 def main2():
   from lada import crystal, models, atat, minimizer, opt
 
@@ -145,6 +167,9 @@ def main2():
   epinput = "ep.input"
   poscar = "POSCAR_0"
   clj, species = read_functional( epinput )
+  clj.mesh = (8, 8, 8)
+  clj.lj_cutoff = 20.5
+  clj.ewald_cutoff = 45
 
   structure = crystal.sStructure();
   crystal.read_poscar( structure, poscar, species )
@@ -161,22 +186,21 @@ def main2():
   scargs = opt.cReals()
   scargs.append( structure.scale )
   args = opt.cReals()
-  array_to_structure( structure, args )
+  structure_to_array( structure, args )
 
-  minmizer( scfunc, scargs )
-  result = minmizer( function, args )
-  minmizer( scfunc, scargs )
-  result = minmizer( function, args )
-  minmizer( scfunc, scargs )
-  result = minmizer( function, args )
-  minmizer( scfunc, scargs )
-  result = minmizer( function, args )
-  minmizer( scfunc, scargs )
+# minmizer( scfunc, scargs )
+# result = minmizer( function, args )
+# minmizer( scfunc, scargs )
+# result = minmizer( function, args )
+# minmizer( scfunc, scargs )
+# result = minmizer( function, args )
+# minmizer( scfunc, scargs )
+# result = minmizer( function, args )
+# minmizer( scfunc, scargs )
 # minmizer.set( type="gsl_sd", convergence=1e-12, linestep=1e-0, verbose = 0 )
 # result = minmizer( function, args )
 # structure_to_array( args, structure )
-  b = clj(structure, forces )
-  print "m: ", a, b, structure, forces
+# b = clj(structure, forces )
   gradients = opt.cReals( [ 0 for r in args ] )
   ngradients = opt.cReals( [ 0 for r in args ] )
   function.ngradient( args, ngradients )

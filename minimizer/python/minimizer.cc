@@ -159,6 +159,7 @@ namespace LaDa
         __GETSET__( linestep, "Line steo for conjugate-gradient methods." )
         __GETSET__( strategy, "slowest/slow/fast strategies for Minuit2 minimizers." )
         __GETSET__( verbose, "If true, will print verbose output." )
+        __GETSET__( use_gradient, "If true will use gradient from object, if false, minuit2 will compute gradient." )
 #       undef __GETSET__
         .def( "__call__", &Minimizer::operator() )
         .def(

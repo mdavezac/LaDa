@@ -160,23 +160,29 @@ namespace LaDa
                                   std::vector<double>( _arg.size(), uncertainties )
                                 );
           rm2::MnStrategy stra( strategy );
-          boost::shared_ptr< ROOT::Minuit2::FCNBase > wrapper;
-          if( use_gradient ) wrapper.reset( new FunctionWrapper<T_FUNCTION, true>( _func, up ) );
-          else wrapper.reset( new FunctionWrapper<T_FUNCTION, false>( _func, up ) );
-          rm2::MnMigrad minimizer
-                        ( 
-                          *wrapper,
-                          parameters,
-                          strategy
-                        );
-          rm2::FunctionMinimum result = minimizer
-                                        (
-                                          itermax != 0 ? itermax: UINT_MAX, 
-                                          tolerance 
-                                        );
-          _arg = result.UserState().Params();
-          if( verbose ) std::cout << result << "\n";
+          std::cout << "use_gradient " <<  use_gradient << "\n";
+#         define CALL_MINIMIZER( cond ) \
+          {\
+            boost::shared_ptr< FunctionWrapper<T_FUNCTION,cond> >\
+              wrapper( new FunctionWrapper<T_FUNCTION, cond>( _func, up ) );\
+            rm2::MnMigrad minimizer\
+                          ( \
+                            *wrapper,\
+                            parameters,\
+                            strategy\
+                          );\
+            rm2::FunctionMinimum result = minimizer\
+                                 (\
+                                   itermax != 0 ? itermax: UINT_MAX, \
+                                   tolerance \
+                                 );\
+            _arg = result.UserState().Params();\
+            if( verbose ) std::cout << result << "\n";\
+          }
+          if( use_gradient ) CALL_MINIMIZER( true )
+          else CALL_MINIMIZER( false );
 
+#         undef CALL_MINIMIZER
           { // recomputes gradient just to make sure.
             typedef typename T_CONTAINER::value_type t_Type;
             t_Type *grad = new t_Type[ _arg.size() ];

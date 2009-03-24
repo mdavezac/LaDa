@@ -6,9 +6,9 @@ def create_functional():
   from lada import models
 
   clj = models.Clj()
-  clj.mesh = (3, 3, 3)
-  clj.lj_cutoff = 2.5
-  clj.ewald_cutoff = 25
+  clj.mesh = (5, 5, 5)
+  clj.lj_cutoff = 10.5
+  clj.ewald_cutoff = 45
   clj.charges["Li"] = 1.5
   clj.charges["Cs"] = 0.5
   clj.charges["Br"] = -1
@@ -109,8 +109,8 @@ def main():
   args = opt.cReals()
   args.append(5)
   minmizer = minimizer.Minimizer()
-  minmizer.set( type="minuit2", convergence=1e-12, linestep=1e-2, itermax=100, \
-                verbose = 1, strategy="slowest", uncertainties=2, up=1 )
+  minmizer.set( type="minuit2", convergence=1e-2, linestep=1, itermax=100, \
+                verbose = 1, strategy="slowest", uncertainties=1, up=0.001, gradient=0 )
 # minmizer( function, args )
 # print args, function(args)
 # return
@@ -123,20 +123,24 @@ def main():
 
     forces = crystal.sStructure( structure )
     print "energy: ", clj( structure, forces )
+    forces = crystal.sStructure( structure )
+    a = clj( structure, forces )
+    print structure.scale, structure, forces
+    minimizer.set_gradient( 1 )
 
-#   forces = crystal.sStructure( structure )
-#   a = clj( structure, forces )
-#   print structure.scale, structure, forces
-#   function = clj_module.Function( clj, structure) 
-#   args = opt.cReals()
-#   clj_module.structure_to_array( structure, args )
+    forces = crystal.sStructure( structure )
+    a = clj( structure, forces )
+    function = clj_module.Function( clj, structure) 
+    args = opt.cReals()
+    clj_module.structure_to_array( structure, args )
+    result = minmizer( function, args )
 #   result = minmizer( function, args )
-#   print result, args
-#   clj_module.array_to_structure( args, structure )
-#   forces = crystal.sStructure( structure )
-#   a = clj( structure, forces )
-#   print structure.scale, structure, forces
-#   print "f energy: ", a
+
+    clj_module.array_to_structure( args, structure )
+    forces = crystal.sStructure( structure )
+    a = clj( structure, forces )
+    print structure.scale, structure, forces
+    print "f energy: ", a
 #   b = clj(structure, forces )
 #   print "m: ", b, structure, forces
 
