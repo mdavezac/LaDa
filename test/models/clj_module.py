@@ -82,24 +82,20 @@ class Function:
     array_to_structure( _args, self.structure )
     forces = crystal.sStructure( self.structure )
     result = self.clj( self.structure, forces )
-    print "__call__", result
+    print "__call__", result, forces
     return result
 
-  def gradient( self, _args, _gradients ):
+  def ngradient( self, _args, _gradients ):
     from lada import crystal, models, minimizer, atat
 
     array_to_structure( _args, self.structure )
     forces = crystal.sStructure( self.structure )
-#   self.clj( self.structure, forces )
     self.clj.gradient( self.structure, forces )
-#   stress = 0.5 * self.structure.cell \
-#                * atat.rMatrix3d( forces.cell )
-#   print  forces.cell
-#   forces.cell =   stress + atat.transpose( stress )
     structure_to_array( forces, _gradients )
+    return _gradients
 
 
-  def ngradient( self, _args, _gradients ):
+  def gradient( self, _args, _gradients ):
     from lada import crystal, models, minimizer
 
     minimizer.interpolated_gradient( self, _args, _gradients, n=2, 
@@ -123,16 +119,89 @@ class ScaleFunction:
   def gradient( self, _args, _gradients ):
     from lada import crystal, models, minimizer
 
-#   self.structure.scale = _args[0] - 0.01
-#   forces = crystal.sStructure( self.structure )
-#   a = self.clj( self.structure, forces )
-#   self.structure.scale = _args[0]
-#   b = self.clj( self.structure, forces )
-#   _gradients[0] = (b - a ) / 0.01
-    
     minimizer.interpolated_gradient( self, _args, _gradients, n=2, stepsize=1e-1, tolerance=1e-12 )
-    print _args, " g: ", _gradients
     return _gradients
+
+class CellFunction:
+
+  def __init__( self, _clj, _structure ):
+    from lada import crystal
+    self.clj = _clj
+    self.structure = crystal.sStructure(_structure)
+
+  def __call__( self, _args ):
+
+    from lada import crystal, models
+
+    self.from_array( _args, self.structure )
+    forces = crystal.sStructure( self.structure )
+    result = self.clj( self.structure, forces )
+    return result
+
+  def gradient( self, _args, _gradients ):
+    from lada import crystal, models, minimizer
+
+    self.from_array( _args, self.structure )
+    forces = crystal.sStructure( self.structure )
+    self.clj.gradient( self.structure, forces )
+    self.from_structure( forces, _gradients )
+    print "__gradient__", _gradients
+    return _gradients
+    
+  @staticmethod
+  def from_structure( _structure, _args ):
+
+    for i in range(0, 3):
+      for j in range(0, 3):
+        _args[ 3*i + j ] = _structure.cell[(i,j)]
+
+  @staticmethod
+  def from_array( _array, _structure ):
+
+    for i in range(0, 3):
+      for j in range(0, 3):
+        _structure.cell[(i,j)] = _array[ 3*i+j]
+
+  @staticmethod
+  def args( _structure ):
+    from lada import opt
+
+    result = opt.cReals( [ 0 for r in range(0,9) ] )
+    CellFunction.from_structure( _structure, result )
+    return result
+
+class PosFunction( CellFunction ):
+
+  def __init__( self, _clj, _structure ):
+    from lada import crystal
+    CellFunction.__init__( self, _clj, _structure )
+
+  @staticmethod
+  def from_structure( _structure, _args ):
+
+    index = 0
+    for at in _structure.atoms:
+      for i in range(0, 3):
+        _args[index] = at.pos[i]
+        index += 1
+
+  @staticmethod
+  def from_array( _array, _structure ):
+
+    index = 0
+    for at in _structure.atoms:
+      for i in range(0, 3):
+        at.pos[i] = _array[index] 
+        index += 1
+
+  @staticmethod
+  def args( _structure ):
+    from lada import opt
+
+    result = opt.cReals( [ 0 for r in range(0, len(_structure.atoms)*3) ] )
+    PosFunction.from_structure( _structure, result )
+    return result
+
 
 class Parabola:
 

@@ -284,6 +284,7 @@ namespace LaDa
           T_DATAPAIR &_this = *( (T_DATAPAIR*) _data );
           std::copy( _x->data, _x->data + bt::get<1>( _this ).size(),
                      bt::get<1>( _this ).begin() );
+          bt::get<0>( _this ).gradient( bt::get<1>( _this ), _grad->data );
           *_r = bt::get<0>( _this )( bt::get<1>( _this ) );
         } 
     }

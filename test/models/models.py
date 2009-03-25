@@ -122,25 +122,29 @@ def main():
     structure.scale = args[0] * args[0]
 
     forces = crystal.sStructure( structure )
-    print "energy: ", clj( structure, forces )
-    forces = crystal.sStructure( structure )
     a = clj( structure, forces )
-    print structure.scale, structure, forces
-    minimizer.set_gradient( 1 )
+    print forces
 
-    forces = crystal.sStructure( structure )
-    a = clj( structure, forces )
-    function = clj_module.Function( clj, structure) 
-    args = opt.cReals()
-    clj_module.structure_to_array( structure, args )
+    minmizer.use_gradient = 1
+
+    function = clj_module.PosFunction( clj, structure )
+    args = clj_module.PosFunction.args( structure )
     result = minmizer( function, args )
-#   result = minmizer( function, args )
-
-    clj_module.array_to_structure( args, structure )
+    clj_module.PosFunction.from_array( args, structure )
     forces = crystal.sStructure( structure )
     a = clj( structure, forces )
     print structure.scale, structure, forces
     print "f energy: ", a
+
+    function = clj_module.CellFunction( clj, structure )
+    args = clj_module.CellFunction.args( structure )
+    result = minmizer( function, args )
+    clj_module.CellFunction.from_array( args, structure )
+    forces = crystal.sStructure( structure )
+    a = clj( structure, forces )
+    print structure.scale, structure, forces
+    print "f energy: ", a
+
 #   b = clj(structure, forces )
 #   print "m: ", b, structure, forces
 
