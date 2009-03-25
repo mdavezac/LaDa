@@ -82,7 +82,6 @@ class Function:
     array_to_structure( _args, self.structure )
     forces = crystal.sStructure( self.structure )
     result = self.clj( self.structure, forces )
-    print "__call__", result, forces
     return result
 
   def ngradient( self, _args, _gradients ):
@@ -113,7 +112,6 @@ class ScaleFunction:
     from lada import crystal, models
     self.structure.scale = _args[0] * _args[0]
     forces = crystal.sStructure( self.structure )
-    print " __call__ ", _args[0] * _args[0]
     return self.clj( self.structure, forces )
 
   def gradient( self, _args, _gradients ):
@@ -145,7 +143,6 @@ class CellFunction:
     forces = crystal.sStructure( self.structure )
     self.clj.gradient( self.structure, forces )
     self.from_structure( forces, _gradients )
-    print "__gradient__", _gradients
     return _gradients
     
   @staticmethod
@@ -208,7 +205,6 @@ class Parabola:
   def __call__( self, _args ):
     from math import cos, sin
     result = _args[0] * _args[0] - cos( _args[0] )
-    print "__call__ ", _args, result
     return result
 
   def gradient( self, _args, _gradients ):
@@ -216,7 +212,6 @@ class Parabola:
 
 #   _gradients[0] = 2* _args[0]
     minimizer.interpolated_gradient( self, _args, _gradients, n=2, stepsize=1e-1, tolerance=1e-12 )
-    print _args, "g: ", _gradients
     return _gradients;
 
 def read_functional( _filename ):

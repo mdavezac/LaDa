@@ -89,64 +89,19 @@ def main():
  #  print
 
   epinput = "licsf.input"
-# clj, species = read_functional( epinput )
   clj = create_functional()
   print clj
-# clj = models.Clj()
-# clj.mesh = (3, 3, 3)
-# clj.lj_cutoff = 2.5
-# clj.ewald_cutoff = 25
-# clj.charges["Li"] = 1
-# clj.charges["Cs"] = 1
-# clj.charges["Br"] = -1
-# for bond in ["Li Li", "Li Cs", "Li Br", "Cs Br", "Cs Cs", "Br Br"]:
-#   clj.bonds[bond] = models.LJBond( 0.5, 1 )
-# nlsq_func = nlsq.Functional( clj, structures )
-# print nlsq_func
-# args =  nlsq_func.args()
 
-  function = clj_module.Parabola()
-  args = opt.cReals()
-  args.append(5)
   minmizer = minimizer.Minimizer()
   minmizer.set( type="minuit2", convergence=1e-2, linestep=1, itermax=100, \
-                verbose = 1, strategy="slowest", uncertainties=1, up=0.001, gradient=0 )
-# minmizer( function, args )
-# print args, function(args)
-# return
+                verbose = 0, strategy="slowest", uncertainties=1, up=0.001, gradient=0 )
   for structure in structures:
     function = clj_module.ScaleFunction( clj, structure) 
     args = opt.cReals()
     args.append( sqrt(structure.scale) )
     result = minmizer( function, args )
     structure.scale = args[0] * args[0]
-
-    forces = crystal.sStructure( structure )
-    a = clj( structure, forces )
-    print forces
-
-    minmizer.use_gradient = 1
-
-    function = clj_module.PosFunction( clj, structure )
-    args = clj_module.PosFunction.args( structure )
-    result = minmizer( function, args )
-    clj_module.PosFunction.from_array( args, structure )
-    forces = crystal.sStructure( structure )
-    a = clj( structure, forces )
-    print structure.scale, structure, forces
-    print "f energy: ", a
-
-    function = clj_module.CellFunction( clj, structure )
-    args = clj_module.CellFunction.args( structure )
-    result = minmizer( function, args )
-    clj_module.CellFunction.from_array( args, structure )
-    forces = crystal.sStructure( structure )
-    a = clj( structure, forces )
-    print structure.scale, structure, forces
-    print "f energy: ", a
-
-#   b = clj(structure, forces )
-#   print "m: ", b, structure, forces
+    print structure.scale
 
 
 

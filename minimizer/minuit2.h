@@ -160,7 +160,6 @@ namespace LaDa
                                   std::vector<double>( _arg.size(), uncertainties )
                                 );
           rm2::MnStrategy stra( strategy );
-          std::cout << "use_gradient " <<  use_gradient << "\n";
 #         define CALL_MINIMIZER( cond ) \
           {\
             boost::shared_ptr< FunctionWrapper<T_FUNCTION,cond> >\
