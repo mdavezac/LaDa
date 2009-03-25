@@ -1,7 +1,7 @@
 #! /bin/bash
 
-aclocal-1.7 
+aclocal
 libtoolize --force
 autoconf
 autoheader
-automake-1.7 -a
+automake -a

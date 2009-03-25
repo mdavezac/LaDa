@@ -127,7 +127,7 @@ namespace LaDa
           const types::t_real w( weight_( i, center_index ) );
           Bvector(i) = eigs[i].second[band] * w;
           for( size_t j(0); j < order + 1; ++j )
-            Amatrix(i,j) = std::pow( eigs[i].first, j ) * w;
+            Amatrix(i,j) = std::pow( eigs[i].first, int(j) ) * w;
         }
 
         // Performs least square fit.
@@ -169,7 +169,7 @@ namespace LaDa
     types::t_real eMass :: weight_( size_t _i, size_t _j ) const
     {
       const types::t_int u( std::abs( types::t_int(_i) - types::t_int(_j) ) );
-      return u == 0? 1e0: 1e0 / types::t_real( std::pow( u, 4 ) );
+      return u == 0? 1e0: 1e0 / std::pow( types::t_real(u), 4 );
     }
 
     bool eMass :: load( const TiXmlElement &_node, const std::string &_name )

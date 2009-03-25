@@ -8,8 +8,8 @@ AM_LDFLAGS = @TINYXML_LIBS@
 if DOCE
 bin_PROGRAMS = regular cubic tetra 
 cubic_SOURCES = main.cc 
-cubic_CPPFLAGS =  $(AM_CPPFLAGS) $(top_srcdir) -D_CUBIC_CE_
-cubic_LDFLAGS =  $(AM_LDFLAGS)  @BOOST_LDFLAGS@\
+cubic_CPPFLAGS =  $(AM_CPPFLAGS) -D_CUBIC_CE_
+cubic_LDFLAGS =  $(AM_LDFLAGS)  @BOOST_LDFLAGS@ \
                  @BOOST_MPI@ @BOOST_SERIALIZATION@ @BOOST_PROGOP@ @BOOST_FS@ \
 		 @BOOST_SYSTEM@ @BOOST_REGEX@ 
 cubic_LDADD =   libce.la \
@@ -19,14 +19,13 @@ cubic_LDADD =   libce.la \
 		@MPI_ADDLIB@ \
 		../print/libprint.la \
                 ../opt/libopt.la \
-		../minimizer/libminimizer.la \
-		@BOOST_FS@
+		../minimizer/libminimizer.la
 tetra_SOURCES = $(cubic_SOURCES)
 tetra_CPPFLAGS =  $(AM_CPPFLAGS) -D_TETRAGONAL_CE_
 tetra_LDFLAGS = $(cubic_LDFLAGS)
 tetra_LDADD = $(cubic_LDADD) 
 regular_SOURCES = rmain.cc
-regular_CPPFLAGS =  $(AM_CPPFLAGS) -D_CUBIC_CE_ @GSL_CFLAGS@ @MINUIT_CFLAGS@
+regular_CPPFLAGS =  $(AM_CPPFLAGS)  -D_CUBIC_CE_ @GSL_CFLAGS@ @MINUIT_CFLAGS@
 regular_LDFLAGS = $(cubic_LDFLAGS) @GSL_LIBS@ @MINUIT_LIBS@
 regular_LDADD = libce.la \
                 ../crystal/libcrystal.la \

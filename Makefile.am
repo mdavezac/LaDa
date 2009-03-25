@@ -1,6 +1,7 @@
 #
 # Version: $Id$
 #
+ACLOCAL_AMFLAGS = -I m4
 AUTOMAKE_OPTIONS = foreign
 include $(top_srcdir)/Files
 EXTRA_DIST = $(top_srcdir)/bootstrap.sh \
