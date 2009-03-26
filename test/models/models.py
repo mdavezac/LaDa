@@ -84,11 +84,13 @@ def main():
   from math import sqrt
   import random
 
+  random.seed()
   minmizer = minimizer.Minimizer()
   minmizer.set( type="minuit2", convergence=1e-2, linestep=1e-2, itermax=100, \
                 verbose = 1, strategy="fast", uncertainties=1, up=1, gradient=1 )
 
-  structures = read_gsgo_history( "LiCsBr_simple" )
+# structures = read_gsgo_history( "LiCsBr_simple" )
+  structures = read_gsgo_history( "history.pop_LiCsBr" )
   for s in structures:
     print s, s.energy
     print
@@ -100,10 +102,9 @@ def main():
   func.wstress = 1 
   func.wforces = 1 
   args = func.args()
-  args = opt.cReals( [ 1 for r in args ] )
-# random.seed()
+  args = opt.cReals( [ random.uniform(1,50) for r in args ] )
 # args = opt.cReals( [ r * ( 1 + random.uniform(-0.02, 0.02 ) ) for r in args ] )
-# func.set_args( args ) 
+  func.set_args( args ) 
   print func
 
   print "Iter 0: ", func( args )
@@ -119,7 +120,7 @@ def main():
   # structure.scale = args[0] * args[0]
     forces = crystal.sStructure( structure )
     structure.energy = clj( structure, forces )
-    print structure.energy, structure.scale, "\n", forces.cell, "\n"
+    print structure.energy, structure.scale, forces, "\n"
 
 
 

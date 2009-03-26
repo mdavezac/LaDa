@@ -83,16 +83,16 @@ class Functional:
     index = 0
     length = len( _args )
     for bond in _functional.bonds:
-      _functional.bonds[bond.key()].hardsphere = _args[index];  index += 1
-      _functional.bonds[bond.key()].vanderwalls = _args[index]; index += 1
+      _functional.bonds[bond.key()].hardsphere = abs(_args[index]);  index += 1
+      _functional.bonds[bond.key()].vanderwalls = abs(_args[index]); index += 1
     sum = 0
     if self.charges == 0: return
     for charge in _functional.charges:
       sign = 1
       if _functional.charges[charge.key()] > 0:
-        _functional.charges[charge.key()] = _args[index];
+        _functional.charges[charge.key()] = abs(_args[index]);
       else:
-        _functional.charges[charge.key()] = -_args[index];
+        _functional.charges[charge.key()] = -abs(_args[index]);
 
   def from_functional( self, _functional, _args ):
 

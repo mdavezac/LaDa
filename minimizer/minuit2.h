@@ -133,10 +133,6 @@ namespace LaDa
           }
           //! do not check gradient.
           virtual bool CheckGradient() const {return false;}
-#         ifndef _LADADEBUG
-            //! do not check gradient.
-            virtual bool CheckGradient() const {return false;}
-#         endif
 
         protected:
           //! A constant reference to the wrapped function.
