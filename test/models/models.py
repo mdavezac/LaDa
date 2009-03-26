@@ -8,10 +8,10 @@ def create_functional():
   clj = models.Clj()
   clj.mesh = (5, 5, 5)
   clj.lj_cutoff = 10.5
-  clj.ewald_cutoff = 45
-  clj.charges["Li"] = 1.5
-  clj.charges["Cs"] = 0.5
-  clj.charges["Br"] = -1
+  clj.ewald_cutoff = 25
+  clj.charges["Li"] = 1.0
+  clj.charges["Cs"] = 1.0
+  clj.charges["Br"] = -1.0
   hs = { "Li":1.34, "Cs":2.25,"Br":1.14}
   vdw = {"Li":2.2,"Cs":3,"Br":1.9}
   for a in ["Li", "Cs", "Br" ]:
@@ -82,26 +82,44 @@ def main():
   from lada import models, minimizer, opt, crystal
   import clj_module
   from math import sqrt
+  import random
+
+  minmizer = minimizer.Minimizer()
+  minmizer.set( type="minuit2", convergence=1e-2, linestep=1e-2, itermax=100, \
+                verbose = 1, strategy="fast", uncertainties=1, up=1, gradient=1 )
 
   structures = read_gsgo_history( "LiCsBr_simple" )
-# for s in structures:
-#   print s
- #  print
+  for s in structures:
+    print s, s.energy
+    print
 
   epinput = "licsf.input"
   clj = create_functional()
-  print clj
+  func = nlsq.Functional( clj, structures )
+  func.wenergy = 0 
+  func.wstress = 1 
+  func.wforces = 1 
+  args = func.args()
+  args = opt.cReals( [ 1 for r in args ] )
+# random.seed()
+# args = opt.cReals( [ r * ( 1 + random.uniform(-0.02, 0.02 ) ) for r in args ] )
+# func.set_args( args ) 
+  print func
 
-  minmizer = minimizer.Minimizer()
-  minmizer.set( type="minuit2", convergence=1e-2, linestep=1, itermax=100, \
-                verbose = 0, strategy="slowest", uncertainties=1, up=0.001, gradient=0 )
+  print "Iter 0: ", func( args )
+  result = minmizer( func, args )
+  func.set_args( args ) 
+  print func
+
   for structure in structures:
-    function = clj_module.ScaleFunction( clj, structure) 
-    args = opt.cReals()
-    args.append( sqrt(structure.scale) )
-    result = minmizer( function, args )
-    structure.scale = args[0] * args[0]
-    print structure.scale
+  # function = clj_module.ScaleFunction( clj, structure) 
+  # args = opt.cReals()
+  # args.append( sqrt(structure.scale) )
+  # result = minmizer( function, args )
+  # structure.scale = args[0] * args[0]
+    forces = crystal.sStructure( structure )
+    structure.energy = clj( structure, forces )
+    print structure.energy, structure.scale, "\n", forces.cell, "\n"
 
 
 
