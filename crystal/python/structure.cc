@@ -88,7 +88,7 @@ namespace LaDa
           if( bp::len( state ) != 1 )
           {
             PyErr_SetObject(PyExc_ValueError,
-                            ("expected 9-item tuple in call to __setstate__; got %s"
+                            ("expected 1-item tuple in call to __setstate__; got %s"
                              % state).ptr()
                 );
             bp::throw_error_already_set();

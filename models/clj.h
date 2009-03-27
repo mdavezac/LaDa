@@ -12,6 +12,8 @@
 #include <iostream>
 
 #include <boost/filesystem/path.hpp>
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/base_object.hpp>
 
 #include <tinyxml/tinyxml.h>
 
@@ -41,6 +43,7 @@ namespace LaDa
     // The adapter for Coulomb + Lennard-Jones fortran functional itself.
     class Clj : public Ewald, public LennardJones
     {
+      friend class boost::serialization::access;
       friend void read_fortran_input( Clj &_clj, std::vector<std::string>& _atoms, 
                                       const boost::filesystem::path &_path );
       friend std::ostream& operator<<( std::ostream& _stream, const Clj& _clj );
@@ -68,8 +71,17 @@ namespace LaDa
       protected:
         //! Checks coherency between Ewald and LennardJones.
         void check_coherency() const;
+
+      private:
+        //! Serializes the functional
+        template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
     };
 
+    template<class ARCHIVE> void Clj :: serialize(ARCHIVE & _ar, const unsigned int _version)
+    {
+      _ar & boost::serialization::base_object< Ewald >(*this);
+      _ar & boost::serialization::base_object< LennardJones >(*this);
+    }
 
   } // namespace CLJ.
 } // namespace LaDa

@@ -10,6 +10,9 @@
 
 #include <map>
 
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/map.hpp>
+
 #include <tinyxml/tinyxml.h>
 
 #include <crystal/atom.h>
@@ -25,6 +28,7 @@ namespace LaDa
     //! \details Ad-hoc implementation for Clj functional.
     class Ewald
     {
+      friend class boost::serialization::access;
       public:
         //! Type of the key used in the map.
         typedef std::string Key;
@@ -61,6 +65,11 @@ namespace LaDa
       protected:
         //! Cutoff.
         types::t_real cutoff_;
+
+      private:
+        //! Serializes the functional
+        template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
+          { _ar & cutoff_; _ar & charges; }
     };
 
   } // namespace CLJ.

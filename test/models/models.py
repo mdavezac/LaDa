@@ -76,6 +76,18 @@ def read_gsgo_history( _filename ):
     structures.append( structure )
   return structures
 
+def save( _func, _filename ):
+
+  import pickle
+  file = open( _filename, "w" )
+  pickle.dump( _func, file )
+  file.close()
+
+def load( _filename ):
+  import pickle
+  file = open( _filename, "r" )
+  return pickle.load( file )
+
 
 def main():
   import nlsq
@@ -91,36 +103,49 @@ def main():
 
 # structures = read_gsgo_history( "LiCsBr_simple" )
   structures = read_gsgo_history( "history.pop_LiCsBr" )
-  for s in structures:
-    print s, s.energy
-    print
+# for s in structures:
+#   print s, s.energy
+#   print
 
-  epinput = "licsf.input"
-  clj = create_functional()
-  func = nlsq.Functional( clj, structures )
-  func.wenergy = 0 
-  func.wstress = 1 
-  func.wforces = 1 
+# clj = load( "__charges" )
+# clj = create_functional()
+
+  func = load( "__charges" )
+# func.doconstant = 1
+# func.constant = -3.182328
+# func.doprint = 1
+# func.charges = 1
   args = func.args()
-  args = opt.cReals( [ random.uniform(1,50) for r in args ] )
-# args = opt.cReals( [ r * ( 1 + random.uniform(-0.02, 0.02 ) ) for r in args ] )
+# args = opt.cReals( [r * ( 1 +  random.uniform(-0.5, 0.5) ) for r in args ] )
+# func.wenergy = 0 
+# func.wstress = 1 
+# func.wforces = 1 
+# args = opt.cReals( [ random.uniform(1,50) for r in args ] )
   func.set_args( args ) 
   print func
 
-  print "Iter 0: ", func( args )
-  result = minmizer( func, args )
-  func.set_args( args ) 
+# print "Iter 0: ", func( args )
+# func.wenergy, func.wstress, func.wforces = (1,0,0)
+# result = minmizer( func, args )
+# func.set_args( args ) 
+# print func
+# save( func, "__charges" )
+
+  func.doprint = 0
+  for setting in [ (1,0,0), (0,1,0), (0,0,1) ]:
+    func.wenergy, func.wstress, func.wforces = setting
+    print func( args )
   print func
 
   for structure in structures:
-  # function = clj_module.ScaleFunction( clj, structure) 
-  # args = opt.cReals()
-  # args.append( sqrt(structure.scale) )
-  # result = minmizer( function, args )
-  # structure.scale = args[0] * args[0]
+#   function = clj_module.ScaleFunction( clj, structure) 
+#   args = opt.cReals()
+#   args.append( sqrt(structure.scale - 0.5) )
+#   result = minmizer( function, args )
+#   structure.scale = args[0] * args[0]
     forces = crystal.sStructure( structure )
-    structure.energy = clj( structure, forces )
-    print structure.energy, structure.scale, forces, "\n"
+    energy = func.functional( structure, forces ) + func.constant
+    print (structure.energy - energy )* 1000 # , forces, "\n"
 
 
 

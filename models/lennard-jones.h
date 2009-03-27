@@ -12,6 +12,8 @@
 
 #include <boost/filesystem/path.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/map.hpp>
 
 #include <tinyxml/tinyxml.h>
 
@@ -28,6 +30,7 @@ namespace LaDa
     //! \details Ad-hoc implementation for Clj functional.
     class LennardJones
     {
+      friend class boost::serialization::access;
       protected:
         //! Cutoff mesh type.
         typedef boost::tuple<types::t_int, types::t_int, types::t_int > t_MeshTuple;
@@ -92,10 +95,21 @@ namespace LaDa
         t_MeshTuple mesh_;
         //! Real space cutoff.
         types::t_real rcut_;
+
+      private:
+        //! Serializes the functional
+        template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
+        {
+          _ar & bonds; _ar & rcut_; 
+          _ar & boost::tuples::get<0>(mesh_); 
+          _ar & boost::tuples::get<1>(mesh_); 
+          _ar & boost::tuples::get<2>(mesh_); 
+        }
     };
 
     struct LennardJones :: Bond
     {
+      friend class boost::serialization::access;
       //! Hard sphere parameter.
       types::t_real hard_sphere;
       //! van der Walls parameter.
@@ -110,6 +124,11 @@ namespace LaDa
              : hard_sphere( _c.hard_sphere ), van_der_walls( _c.van_der_walls ) {}
       //! Loads parameters from XML.
       bool Load( const TiXmlElement& _node, std::string &_type );
+
+      private:
+        //! Serializes the functional
+        template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
+           { _ar & hard_sphere; _ar & van_der_walls; }
     };
 
   } // namespace CLJ.

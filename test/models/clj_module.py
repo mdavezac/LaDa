@@ -110,8 +110,9 @@ class ScaleFunction:
 
   def __call__( self, _args ):
     from lada import crystal, models
-    self.structure.scale = _args[0] * _args[0]
+    self.structure.scale = _args[0] * _args[0] + 0.5
     forces = crystal.sStructure( self.structure )
+    print "__call__", self.structure.scale
     return self.clj( self.structure, forces )
 
   def gradient( self, _args, _gradients ):
