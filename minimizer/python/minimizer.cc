@@ -67,6 +67,7 @@ namespace LaDa
           catch (...)
           {
             PyErr_SetString( PyExc_RuntimeError, "Error encountered while minimizing from C.\n");
+            return -1;
           }
         }
         void set( const std::string& _type, 

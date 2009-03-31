@@ -9,6 +9,7 @@
 #endif
 
 #include <boost/python/object.hpp>
+#include <boost/python/make_constructor.hpp>
 #include <string>
 
 #include "../convex_hull.h"
@@ -35,6 +36,14 @@ namespace LaDa
           _ch.add( energy, fake );
         }
       };
+
+    template< class T_TYPE >
+      typename PythonConvexHull<T_TYPE>::t_CHBase* empty()
+        { return new typename PythonConvexHull<T_TYPE>::t_CHBase(); }
+    template< class T_TYPE >
+      typename PythonConvexHull<T_TYPE>::t_CHBase* 
+        copy( const typename PythonConvexHull<T_TYPE>::t_CHBase &_o )
+          { return new typename PythonConvexHull<T_TYPE>::t_CHBase( _o ); }
    
     template<>
       struct PythonConvexHull< boost::python::object >
@@ -74,12 +83,11 @@ namespace LaDa
   {
     template< class T_TYPE > void exposeConvexHull( const std::string &_name )
     {
-      using namespace boost::python;
-  //   const std::string fakename = "details_Fake" + _name;
-  //   class_< typename PythonConvexHull<T_TYPE>::t_FakeObject >
-  //         ( fakename.c_str(), init< typename PythonConvexHull<T_TYPE>::t_FakeObject >() );
-      class_< typename PythonConvexHull<T_TYPE>::t_CHBase >( _name.c_str() )
-        .def( "evaluate", &PythonConvexHull<T_TYPE>::t_CHBase::evaluate )
+      namespace bp = boost::python;
+      bp::class_< typename PythonConvexHull<T_TYPE>::t_CHBase >( _name.c_str() )
+        .def( "__init__", bp::make_constructor( copy<T_TYPE> ) )
+        .def( "__init__", bp::make_constructor( empty<T_TYPE> ) )
+        .def( "__call__", &PythonConvexHull<T_TYPE>::t_CHBase::evaluate )
         .def( "add", &PythonConvexHull<T_TYPE>::add )
         .def( "__str__", &PythonConvexHull<T_TYPE>::t_CHBase::print );
     }

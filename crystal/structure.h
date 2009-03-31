@@ -119,7 +119,8 @@ namespace LaDa
       //! Copy Constructor
       TStructure   ( const TStructure<T_TYPE> &_str )
                  : cell(_str.cell), atoms(_str.atoms), name(_str.name), 
-                   energy(_str.energy), weight(1), freeze(_str.freeze), scale( _str.scale ) {}
+                   energy(_str.energy), weight(_str.weight),
+                   freeze(_str.freeze), scale( _str.scale ) {}
       //! Destructor.
       ~TStructure () {};
 

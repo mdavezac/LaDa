@@ -111,10 +111,11 @@ namespace LaDa
         .def_readwrite( "atoms",   &Crystal::Structure::atoms,
                         "The list of atoms of type LaDa.details_Atom. "
                         "Coordinates are in units of LaDa.Structure.Scale" )
-        .def_readwrite( "k_vecs",   &Crystal::Structure::k_vecs,
+        .def_readwrite( "k_vecs",  &Crystal::Structure::k_vecs,
                         "The list of reciprocal-space vectors."
                         " It is constructure with respected to a LaDa.Lattice object.\n"  ) 
         .def_readwrite( "energy",  &Crystal::Structure::energy, "Holds a real value." )
+        .def_readwrite( "weight",  &Crystal::Structure::weight, "Optional weight for fitting purposes." )
         .def_readwrite( "scale",   &Crystal::Structure::scale,
                         "A scaling factor for atomic-positions and cell-vectors." )
         .def_readwrite( "index", &Crystal::Structure::name, "Holds a string.\n" )
@@ -136,6 +137,8 @@ namespace LaDa
                         "The list of atoms of type LaDa.details_Atom. "
                         "Coordinates are in units of LaDa.Structure.Scale" )
         .def_readwrite( "energy",  &Crystal::TStructure<std::string>::energy, "Holds a real value." )
+        .def_readwrite( "weight",  &Crystal::TStructure<std::string>::weight,
+                        "Optional weight for fitting purposes." )
         .def_readwrite( "scale",   &Crystal::TStructure<std::string>::scale,
                         "A scaling factor for atomic-positions and cell-vectors." )
         .def_readwrite( "index", &Crystal::TStructure<std::string>::name, "Holds a string." )

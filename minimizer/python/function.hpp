@@ -49,7 +49,7 @@ namespace LaDa
           __TRYEND(,"Could not extract real value from return of python object.\n")
         }
         //! calls gradient.
-        t_Return gradient( const t_Arg& _arg, t_GradientArg _gradient ) const
+        void gradient( const t_Arg& _arg, t_GradientArg _gradient ) const
         {
           __TRYBEGIN
           namespace bp = boost :: python;
@@ -63,7 +63,6 @@ namespace LaDa
           {
             std::cerr << "Python raised an exception. Could not obtain gradient.\n";
             bp::throw_error_already_set();
-            return 0;
           }
           __TRYBEGIN
             gradient = bp::extract< t_vector >( result );

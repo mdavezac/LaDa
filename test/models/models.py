@@ -1,5 +1,12 @@
 #! /usr/bin/python
 
+def conc( _structure, _type ):
+
+  result = 0 
+  for atom in _structure.atoms:
+    if atom.type == _type: result += 1
+  return float( result * 2 ) / float( len( _structure.atoms ) )
+
 def create_functional():
 
   from math import pow
@@ -42,9 +49,9 @@ def read_gsgo_history( _filename ):
     splitted = _lines.pop(0).split()
     func = 0
     if len( splitted ) < 3:
-      func = lambda x: ( str(x[0]), float(x[1]), 3 )
+      func = lambda x: ( str(x[0]), float(x[1]) * 1000.0, 3 )
     else:
-      func = lambda x: ( str(x[0]), float(x[1]), float(x[2]) )
+      func = lambda x: ( str(x[0]), float(x[1]) * 1000.0, float(x[2]) )
     (structure.name, structure.energy, structure.scale) = func(splitted)
 
 #   print map( lambda x: float(x), _lines.pop(0).split() )
@@ -88,6 +95,18 @@ def load( _filename ):
   file = open( _filename, "r" )
   return pickle.load( file )
 
+def reduce_structures( _structures ):
+
+  index = 1
+  s1 = _structures[0]
+  comp = lambda s0:   abs( s0.energy - s1.energy )\
+                    + abs( conc( s0, "Li" ) - conc( s1, "Li" ) ) > 0.0001
+  while index != len( _structures ): 
+    _structures[index:] = filter( comp, _structures[index:] )
+    s1 = _structures[index]
+    index += 1
+  return _structures  
+
 
 def main():
   import nlsq
@@ -103,41 +122,48 @@ def main():
 
 # structures = read_gsgo_history( "LiCsBr_simple" )
   structures = read_gsgo_history( "history.pop_LiCsBr" )
+  structures = reduce_structures( structures )
+  baseline = opt.ConvexHull()
+  baseline.add( ("CsBr", 0, -3.04396490 * 1000 ) )
+  baseline.add( ("LiBr", 1, -3.34619915 * 1000 ) )
+  ch = opt.ConvexHull(baseline)
+  for s in structures:
+    ch.add( ( s, conc( s, "Li" ), s.energy ) )
+  for s in structures:
+    if s.energy - baseline( conc(s, "Li") ) <= 0e0: s.weight = 10
+
 # for s in structures:
 #   print s, s.energy
 #   print
 
 # clj = load( "__charges" )
-# clj = create_functional()
+  clj = create_functional()
+  func = nlsq.Functional( clj, structures )
 
-  func = load( "__charges" )
-# func.doconstant = 1
-# func.constant = -3.182328
-# func.doprint = 1
-# func.charges = 1
+# func = load( "__weights" )
+  func.doconstant = 1
+  func.doprint = 1
+  func.charges = 1
   args = func.args()
-# args = opt.cReals( [r * ( 1 +  random.uniform(-0.5, 0.5) ) for r in args ] )
-# func.wenergy = 0 
-# func.wstress = 1 
-# func.wforces = 1 
-# args = opt.cReals( [ random.uniform(1,50) for r in args ] )
   func.set_args( args ) 
   print func
 
-# print "Iter 0: ", func( args )
-# func.wenergy, func.wstress, func.wforces = (1,0,0)
-# result = minmizer( func, args )
-# func.set_args( args ) 
-# print func
-# save( func, "__charges" )
-
-  func.doprint = 0
-  for setting in [ (1,0,0), (0,1,0), (0,0,1) ]:
-    func.wenergy, func.wstress, func.wforces = setting
-    print func( args )
+  print "Iter 0: ", func( args )
+  func.wenergy, func.wstress, func.wforces = (1,0,0)
+  result = minmizer( func, args )
+  func.set_args( args ) 
   print func
+  save( func, "__weights" )
+  return
+
+# func.doprint = 0
+# for setting in [ (1,0,0), (0,1,0), (0,0,1) ]:
+#   func.wenergy, func.wstress, func.wforces = setting
+#   print func( args )
+# print func
 
   for structure in structures:
+    if structure.energy - baseline( conc(structure, "Li") ) >= 0e0: continue
 #   function = clj_module.ScaleFunction( clj, structure) 
 #   args = opt.cReals()
 #   args.append( sqrt(structure.scale - 0.5) )
@@ -145,7 +171,7 @@ def main():
 #   structure.scale = args[0] * args[0]
     forces = crystal.sStructure( structure )
     energy = func.functional( structure, forces ) + func.constant
-    print (structure.energy - energy )* 1000 # , forces, "\n"
+    print structure.energy - baseline( conc( structure, "Li") ), (structure.energy - energy ) # , forces, "\n"
 
 
 
