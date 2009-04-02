@@ -107,6 +107,31 @@ def reduce_structures( _structures ):
     index += 1
   return _structures  
 
+def increments( _structures, _minimizer, _functional, _n ):
+
+  from lada import opt
+  import random
+
+  args = _functional.args()
+  args = opt.cReals( [ random.uniform(0,10) for r in args ] )
+
+  for i in range(1, _n+1):
+    l = i * len( _structures ) / _n  
+    print "size: ", l
+    _functional.structures = _structures[:l] 
+    _functional.doprint = 0
+    _functional.docharges = 1
+    _functional.doconstant = 1
+    _functional.set_args( args ) 
+
+    print "Iter 0: ", _functional( args )
+    _functional.wenergy, _functional.wstress, _functional.wforces = (1,0,0)
+    result = _minimizer( _functional, args )
+    _functional.set_args( args ) 
+    print _functional
+
+  save( _functional, "__negs" )
+
 
 def main():
   import nlsq
@@ -131,13 +156,16 @@ def main():
   ch = opt.ConvexHull(baseline)
   for s in structures:
     ch.add( ( s, conc( s, "Li" ), s.energy ) )
-  for s in structures:
-    if s.energy - baseline( conc(s, "Li") ) <= 0e0: s.weight = 10
+# for s in structures:
+#   if s.energy - baseline( conc(s, "Li") ) <= 0e0: s.weight = 10
+  structures = filter( lambda s: s.energy - baseline( conc(s, "Li") ) <= 0e0,
+                       structures )
 
 # for s in structures:
 #   print s, s.energy
 #   print
 
+ 
 # clj = load( "__charges" )
   clj = create_functional()
   func = nlsq.Functional( clj, structures )
@@ -146,17 +174,18 @@ def main():
   func.doprint = 0
   func.docharges = 1
   func.doconstant = 1
-  args = func.args()
-  args = opt.cReals( [ random.uniform(0,10) for r in args ] )
-  func.set_args( args ) 
-  print func
+  increments( structures, minmizer, func, 3)
+# args = func.args()
+# args = opt.cReals( [ random.uniform(0,10) for r in args ] )
+# func.set_args( args ) 
+# print func
 
-  print "Iter 0: ", func( args )
-  func.wenergy, func.wstress, func.wforces = (1,0,0)
-  result = minmizer( func, args )
-  func.set_args( args ) 
-  print func
-  save( func, "__negs" )
+# print "Iter 0: ", func( args )
+# func.wenergy, func.wstress, func.wforces = (1,0,0)
+# result = minmizer( func, args )
+# func.set_args( args ) 
+# print func
+# save( func, "__negs" )
   return
 
   func.doprint = 0
