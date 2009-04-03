@@ -114,11 +114,13 @@ def main():
   import clj_module
   from math import sqrt
   import random
+  import statistics
+  import ordering
 
   random.seed()
   minmizer = minimizer.Minimizer()
-  minmizer.set( type="minuit2", convergence=1e-2, linestep=1e-2, itermax=100, \
-                verbose = 1, strategy="fast", uncertainties=1, up=1, gradient=1 )
+  minmizer.set( type="minuit2", convergence=1e-2, linestep=1e-2, itermax=1000, \
+                verbose = 1, strategy="slowest", uncertainties=1, up=1, gradient=1 )
 
 # structures = read_gsgo_history( "LiCsBr_simple" )
   structures = read_gsgo_history( "history.pop_LiCsBr" )
@@ -140,11 +142,12 @@ def main():
   clj = create_functional()
   func = nlsq.Functional( clj, structures )
 
-# func = load( "__weights" )
+# func = load( "__negs2" )
+  func.doprint = 0
+  func.docharges = 1
   func.doconstant = 1
-  func.doprint = 1
-  func.charges = 1
   args = func.args()
+  args = opt.cReals( [ random.uniform(0,10) for r in args ] )
   func.set_args( args ) 
   print func
 
@@ -153,14 +156,22 @@ def main():
   result = minmizer( func, args )
   func.set_args( args ) 
   print func
-  save( func, "__weights" )
+  save( func, "__negs" )
   return
 
-# func.doprint = 0
-# for setting in [ (1,0,0), (0,1,0), (0,0,1) ]:
-#   func.wenergy, func.wstress, func.wforces = setting
-#   print func( args )
-# print func
+  func.doprint = 0
+  for setting in [ (1,0,0), (0,1,0), (0,0,1) ]:
+    func.wenergy, func.wstress, func.wforces = setting
+    print func( args )
+  print func
+
+  corr = statistics.Correlation( clj, structures )
+  print "correlations: ", corr( args )
+  order = ordering.Order( clj, structures )
+  print "order: ", order( args )
+  print
+
+  
 
   for structure in structures:
     if structure.energy - baseline( conc(structure, "Li") ) >= 0e0: continue
