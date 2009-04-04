@@ -118,7 +118,7 @@ namespace LaDa
         .def_readwrite( "weight",  &Crystal::Structure::weight, "Optional weight for fitting purposes." )
         .def_readwrite( "scale",   &Crystal::Structure::scale,
                         "A scaling factor for atomic-positions and cell-vectors." )
-        .def_readwrite( "index", &Crystal::Structure::name, "Holds a string.\n" )
+        .def_readwrite( "name", &Crystal::Structure::name, "Holds a string.\n" )
         .def( "__str__",  &print<Crystal::Structure> ) 
         .def( "fromXML",  &XML::from<Crystal::Structure>, bp::arg("file"),
               "Loads a structure from an XML file." )
@@ -141,7 +141,7 @@ namespace LaDa
                         "Optional weight for fitting purposes." )
         .def_readwrite( "scale",   &Crystal::TStructure<std::string>::scale,
                         "A scaling factor for atomic-positions and cell-vectors." )
-        .def_readwrite( "index", &Crystal::TStructure<std::string>::name, "Holds a string." )
+        .def_readwrite( "name", &Crystal::TStructure<std::string>::name, "Holds a string." )
         .def( "__str__",  &print< Crystal::TStructure<std::string> > ) 
         .def( "fromXML",  &XML::from< Crystal::TStructure<std::string> >, bp::arg("file"),
               "Loads a structure from an XML file." )

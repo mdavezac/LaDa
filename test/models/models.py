@@ -130,7 +130,8 @@ def increments( _structures, _minimizer, _functional, _n ):
     _functional.set_args( args ) 
     print _functional
 
-  save( _functional, "__negs" )
+  _functional.set_args( args ) 
+  return _functional 
 
 
 def main():
@@ -160,6 +161,7 @@ def main():
 #   if s.energy - baseline( conc(s, "Li") ) <= 0e0: s.weight = 10
   structures = filter( lambda s: s.energy - baseline( conc(s, "Li") ) <= 0e0,
                        structures )
+  structures = structures[0:3]
 
 # for s in structures:
 #   print s, s.energy
@@ -169,24 +171,28 @@ def main():
 # clj = load( "__charges" )
   clj = create_functional()
   func = nlsq.Functional( clj, structures )
+# save( func, "__negs" )
 
-# func = load( "__negs2" )
+# func = load( "__negs1" )
   func.doprint = 0
   func.docharges = 1
   func.doconstant = 1
-  increments( structures, minmizer, func, 3)
-# args = func.args()
+# func = increments( structures, minmizer, func, 3)
+# save( _functional, "__negs2" )
+# f = load( "__negs" )
+# print f
+  args = func.args()
 # args = opt.cReals( [ random.uniform(0,10) for r in args ] )
-# func.set_args( args ) 
+  func.set_args( args ) 
 # print func
 
-# print "Iter 0: ", func( args )
-# func.wenergy, func.wstress, func.wforces = (1,0,0)
-# result = minmizer( func, args )
-# func.set_args( args ) 
-# print func
+  print "Iter 0: ", func( args )
+  func.wenergy, func.wstress, func.wforces = (1,0,0)
+  result = minmizer( func, args )
+  func.set_args( args ) 
+  print func
 # save( func, "__negs" )
-  return
+# return
 
   func.doprint = 0
   for setting in [ (1,0,0), (0,1,0), (0,0,1) ]:
@@ -203,7 +209,7 @@ def main():
   
 
   for structure in structures:
-    if structure.energy - baseline( conc(structure, "Li") ) >= 0e0: continue
+#   if structure.energy - baseline( conc(structure, "Li") ) >= 0e0: continue
 #   function = clj_module.ScaleFunction( clj, structure) 
 #   args = opt.cReals()
 #   args.append( sqrt(structure.scale - 0.5) )
@@ -211,6 +217,7 @@ def main():
 #   structure.scale = args[0] * args[0]
     forces = crystal.sStructure( structure )
     energy = func.functional( structure, forces ) + func.constant
+    print energy
     print structure.energy - baseline( conc( structure, "Li") ), (structure.energy - energy ) # , forces, "\n"
 
 

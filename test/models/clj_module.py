@@ -286,6 +286,7 @@ class StructuresFunctional:
 
   def __getstate__(self):
     """Return state values to be pickled."""
+
     return ( self.structures, self.functional, self.doprint, \
              self.doconstant, self.constant, self.docharges )
 

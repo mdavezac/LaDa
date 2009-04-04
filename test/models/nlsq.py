@@ -63,13 +63,16 @@ class Functional( clj_module.StructuresFunctional ):
 
   def __getstate__(self):
     """Return state values to be pickled."""
-    return ( clj_module.StructuresFunctional.__getstate__( self ), \
+#   return (  \
+#            self.wenergy, self.wstress, self.wforces )
+        
+    return ( clj_module.StructuresFunctional.__getstate__( self ),\
              self.wenergy, self.wstress, self.wforces )
 
   def __setstate__(self, state):
     """Restore state from the unpickled state values."""
 
-    ( basestate, self.wenergy, self.wstress, self.wforces ) = state
-    clj_module.StructuresFunctional.__setstate__(self, basestate)
+    ( newstate, self.wenergy, self.wstress, self.wforces ) = state
+    clj_module.StructuresFunctional.__setstate__(self, newstate)
 
 
