@@ -29,6 +29,7 @@
 #include <minimizer/gsl_mins.h>
 #include <crystal/lattice.h>
 #include <crystal/structure.h>
+#include <crystal/read_structure.h>
 
 #include <revision.h>
 #define __PROGNAME__ "Regulated Figure Search."

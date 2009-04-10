@@ -7,6 +7,7 @@
 
 #include <opt/types.h>
 #include <opt/debug.h>
+#include <opt/tinyxml.h>
 
 #include "functional_builder.h"
 
@@ -38,24 +39,7 @@ namespace LaDa
        const TiXmlElement *child, *parent;
        atat::rVector3d vec;
        
-       // This whole section tries to find a <Functional type="vff"> tag
-       // in _node or its child
-       std::string str = _node.Value();
-       if ( str.compare("Functional" ) != 0 )
-         parent = _node.FirstChildElement("Functional");
-       else
-         parent = &_node;
-       
-       
-       while (parent)
-       {
-         str = "";
-         if ( parent->Attribute( "type" )  )
-           str = parent->Attribute("type");
-         if ( str.compare("CE" ) == 0 )
-           break;
-         parent = parent->NextSiblingElement("Functional");
-       }
+       parent = opt::find_node( _node, "Functional", "CE" );
        __DOASSERT( not parent,
                    "Could not find an <Functional type=\"CE\"> tag in input file.\n" )
 

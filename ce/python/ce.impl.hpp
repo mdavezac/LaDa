@@ -167,6 +167,14 @@ namespace LaDa
                   return_internal_reference<1>() );
         }
 
+      template<class T_HARMONIC>
+        void expose_ce_functional( const std::string &_name, const std::string &_docstring )
+        {
+          namespace bp = boost::python;
+          bp::class_< t_Builder >( _name.c_str(), _docstring.c_str() )
+            .def( "
+        }
+
     }
   }
 } // namespace LaDa
