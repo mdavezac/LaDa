@@ -4,9 +4,9 @@
 include $(top_srcdir)/Files
 AM_CPPFLAGS = -I $(top_srcdir) @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
 	      @MPI_CFLAGS@ @BOOST_CXXFLAGS@ -I@PYTHON_INCLUDE_DIR@
-AM_LDFLAGS = @BOOST_LDFLAGS@ @BOOST_PYTHON@ @TINYXML_LIBS@ @BOOST_FS@  
+AM_LDFLAGS = @BOOST_LDFLAGS@ @BOOST_PYTHON@ @TINYXML_LIBS@ @BOOST_FS@ @BOOST_SERIALIZATION@ 
 if DOMPI
-  AM_LDFLAGS += @BOOST_SERIALIZATION@ @BOOST_MPI@ 
+  AM_LDFLAGS += @BOOST_MPI@ 
 endif
 
 EXTRA_DIST = $(PYTHON_H)
@@ -50,6 +50,8 @@ endif
 if DOMINIMIZER
   pythonextensions += minimizer 
   libpython_lada_la_LIBADD += ../minimizer/libminimizer.la
+  libpython_lada_la_LDFLAGS += @GSL_LIBS@  @MINUIT_LIBS@
+  libpython_lada_la_CPPFLAGS += @GSL_CFLAGS@ @MINUIT_CFLAGS@ @FCLIBS@
 endif
 
 pkgpyexec_PYTHON = __init__.py

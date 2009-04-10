@@ -137,7 +137,7 @@ namespace LaDa
      // part
      template< class T_HARMONIC >
      bool Builder<T_HARMONIC> :: generate_functional( const Crystal::Structure &str,
-                                                     t_VA_Functional * const functional )
+                                                     t_VA_Functional * const functional ) const
      {
        std::pair<t_Chemical*, t_CS*> pair( generate_functional( str ) );
        if( (not pair.first) or (not pair.second) ) 
@@ -155,7 +155,7 @@ namespace LaDa
      template< class T_HARMONIC >
      std::pair< typename Builder<T_HARMONIC> :: t_Chemical*,
                 typename Builder<T_HARMONIC> :: t_CS* >
-       Builder<T_HARMONIC> :: generate_functional( const Crystal::Structure &str )
+       Builder<T_HARMONIC> :: generate_functional( const Crystal::Structure &str ) const
        {
          t_Chemical *polynome;
     

@@ -88,12 +88,12 @@ namespace LaDa
         void add_equivalent_clusters();
         //! \brief Creates a specialized cluster expansion functional for structure \a str.
         bool generate_functional(const Crystal::Structure &str,
-                                 t_VA_Functional * const functional);
+                                 t_VA_Functional * const functional) const;
         //! \brief Builds and returns a pair of chemical and strain functionals.
         //! \details The functional are specialized for the structure on input.
         //! \warning the variables of the functionals are not set to anything.
         //!          see function::Base for details.
-        std::pair<t_Chemical*, t_CS*> generate_functional(const Crystal::Structure &_str );
+        std::pair<t_Chemical*, t_CS*> generate_functional(const Crystal::Structure &_str ) const;
 
     };
 
