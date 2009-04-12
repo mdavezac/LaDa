@@ -15,6 +15,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include <opt/algorithms.h>
+#include <crystal/read_structure.h>
 
 #include "cefitting.h" 
 

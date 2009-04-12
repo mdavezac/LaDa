@@ -32,6 +32,7 @@
 #include <opt/bpo_macros.h>
 #include <crystal/lattice.h>
 #include <crystal/structure.h>
+#include <crystal/read_structure.h>
 #include <ce/cluster.h>
 #include <ce/regularization.h>
 #include <ce/harmonic.h>

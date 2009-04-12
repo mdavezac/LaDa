@@ -60,7 +60,8 @@ namespace LaDa
         void nsites( const Crystal :: Structure &_structure,
                      t_Configurations& _confs ) const;
         //! Number of degrees of freedom.
-        size_t dof() const { return n.second - n.first ? n.second - n.first: positions.size(); }
+        size_t dof() const
+          { return n.second - n.first ? n.second - n.first: positions.size(); }
 
       protected:
         //! Initializes list of symmetry operations.
@@ -76,7 +77,9 @@ namespace LaDa
                                           t_Configurations& _confs ) const
     {
       __ASSERT( n.second - n.first == 0 and positions.empty(), "Nothing initialized.\n" )
-      ( n.second - n.first == 0 ) ? posbasis( _structure, _confs ): nsites( _structure, _confs );
+      ( n.second - n.first == 0 ) ?
+        posbasis( _structure, _confs ): 
+        nsites( _structure, _confs );
     }
 
   } // end of CE namespace

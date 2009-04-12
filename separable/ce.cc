@@ -9,6 +9,8 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
 
+#include <crystal/fill_structure.h>
+
 #include "ce.h"
 
 namespace LaDa

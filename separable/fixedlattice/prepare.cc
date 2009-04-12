@@ -14,6 +14,7 @@
 #include "prepare.h"
 
 #include <crystal/confsplit.h>
+#include <crystal/fill_structure.h>
 
 namespace LaDa
 {

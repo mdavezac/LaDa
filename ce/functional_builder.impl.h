@@ -39,7 +39,7 @@ namespace LaDa
        const TiXmlElement *child, *parent;
        atat::rVector3d vec;
        
-       parent = opt::find_node( _node, "Functional", "CE" );
+       parent = opt::find_node( _node, "Functional", "type", "CE" );
        __DOASSERT( not parent,
                    "Could not find an <Functional type=\"CE\"> tag in input file.\n" )
 

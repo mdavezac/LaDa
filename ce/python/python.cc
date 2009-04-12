@@ -9,7 +9,7 @@
 
 #include "ce.hpp"
 
-BOOST_PYTHON_MODULE(CE)
+BOOST_PYTHON_MODULE(ce)
 {
   LaDa::Python::expose_ce();
 }

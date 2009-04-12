@@ -13,7 +13,7 @@ pkgpyexec_LTLIBRARIES = ce.la
 ce_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) -D _CUBIC_CE_
 ce_la_SOURCES = $(CE_PYTHON_CC) 
 ce_la_LDFLAGS = $(AM_LDFLAGS) -module
-models_la_LIBADD =  ../../python/libpython_lada.la 
+ce_la_LIBADD =  ../../python/libpython_lada.la 
 ../../python/libpython_lada.la:
 	cd ../../python; $(MAKE) libpython_lada.la
 endif

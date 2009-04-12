@@ -45,7 +45,7 @@ namespace LaDa
             bp::throw_error_already_set();
             return;
           }
-        
+
           try
           {
             if( not _functional.Load( *parent ) )
@@ -65,7 +65,17 @@ namespace LaDa
             PyErr_SetString
             (
               PyExc_IOError, 
-              ("Could not create ce functional from input-file " + _filename + "\n").c_str() 
+              (   "Could not create ce functional from input-file " + _filename + ".\n" 
+                + std::string( _e.what() ) + "\n" ).c_str() 
+            );
+            bp::throw_error_already_set();
+          }
+          catch( ... )
+          {
+            PyErr_SetString
+            (
+              PyExc_IOError, 
+              ("Could not create ce functional from input-file " + _filename + ".\n").c_str() 
             );
             bp::throw_error_already_set();
           }
@@ -85,7 +95,7 @@ namespace LaDa
                     typename CE::Builder<T_HARMONIC>::t_CS*
                   > t_Pair;
      
-          if( _str.atoms.size() ) 
+          if( not _str.atoms.size() ) 
           {
             PyErr_SetString( PyExc_RuntimeError, "Structure is empty.\n" );
             bp::throw_error_already_set();
@@ -93,7 +103,7 @@ namespace LaDa
           }
           try
           {
-            if ( _str.k_vecs.size() == 0 )
+            if ( not _str.k_vecs.size() )
             {
               std::auto_ptr<Crystal::Structure> str( new Crystal::Structure( _str ) );
               str->find_k_vectors();
@@ -138,12 +148,12 @@ namespace LaDa
             foreach( const Crystal::Structure::t_Atom &atom, _str.atoms )
               container.push_back( atom.type );
             types::t_real result(0);
-            if( _which && 1 ) 
+            if( _which & 1 ) 
             {
               pair.first->set_variables( &container );
               result += pair.first->evaluate();
             }
-            if( _which && 2 )
+            if( _which & 2 )
             {
               pair.second->set_variables( &container );
               result += pair.second->evaluate();
@@ -184,12 +194,12 @@ namespace LaDa
       { return call_which( _functional, _str, 3 ); }
     template< class T_HARMONIC >
       types::t_real call_chem( const CE::Builder<T_HARMONIC> &_functional,
-                              const Crystal::Structure &_str, size_t _which )
+                              const Crystal::Structure &_str )
       { return call_which( _functional, _str, 1 ); }
     template< class T_HARMONIC >
       types::t_real call_cs( const CE::Builder<T_HARMONIC> &_functional,
-                             const Crystal::Structure &_str, size_t _which )
-      { return call_which( _functional, _str, 1 ); }
+                             const Crystal::Structure &_str )
+      { return call_which( _functional, _str, 2 ); }
 
      
       template<class T_HARMONIC>
@@ -198,8 +208,7 @@ namespace LaDa
           namespace bp = boost::python;
           typedef CE::Builder<T_HARMONIC> t_Builder;
           bp::class_< t_Builder >( _name.c_str(), _docstring.c_str() )
-            .def( bp::init<>() )
-            .def( bp::init<t_Builder>() )
+            .def( bp::init<const t_Builder&>() )
             .def( "__call__", &call_all<T_HARMONIC>, "Computes CE + CS." )
             .def( "chemical", &call_chem<T_HARMONIC>, "Computes CE." )
             .def( "cs", &call_cs<T_HARMONIC>, "Computes  CS.")
