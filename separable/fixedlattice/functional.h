@@ -154,6 +154,8 @@ namespace LaDa
 
           //! Allows manipulation of the coefficients' interface itself.
           t_Coefficients& coefficients_interface() { return coefficients_; }
+          //! Allows manipulation of the coefficients' interface itself.
+          const t_Coefficients& coefficients_interface() const { return coefficients_; }
 
 
           //! Serializes a separable function.

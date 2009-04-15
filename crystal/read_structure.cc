@@ -139,9 +139,12 @@ namespace LaDa
       __DEBUGTRYBEGIN
       // finds first line for structure.
       std::string line;
-      do { std::getline( _sstr, line ); } 
-      while( line.find( "No." ) != std::string::npos or _sstr.eof() );
-      if( _sstr.eof() ) return false;
+      do
+      { 
+        if( _sstr.eof() ) return false;
+        std::getline( _sstr, line ); 
+      } 
+      while( line.find( "NO." ) == std::string::npos );
 
       // Tokenize first line.
       boost::char_separator<char> sep(" ");
@@ -173,8 +176,12 @@ namespace LaDa
       // read atoms position.
       // find first line of atomic basis.
       _structure.atoms.clear();
-      do { std::getline( _sstr, line ); } 
-      while( line.find( "BASIS" ) != std::string::npos or _sstr.eof() );
+      do
+      { 
+        if( _sstr.eof() ) return false;
+        std::getline( _sstr, line ); 
+      } 
+      while( line.find( "BASIS" ) == std::string::npos );
 
       bool is_first = true;
       while( _structure.atoms.size() < N ) 
@@ -189,6 +196,7 @@ namespace LaDa
           __DOASSERT( (++i_tok) == i_tok_end, "Unexpected end-of-line.\n" )
         }
         Crystal::Structure :: t_Atom atom;
+        atom.site = 0;
         while( i_tok != i_tok_end )
         {
           atom.type = ( decoration >> _structure.atoms.size() ) % 2 ? -1e0: 1e0;

@@ -32,6 +32,8 @@ namespace LaDa
       :: operator=( const MixedApproach<T_COLTRAITS> &_col )
       {
         namespace bblas = boost::numeric::ublas;
+        this->coefficients_interface()
+          = _col.separables().coefficients_interface();
         this->operator=( _col.separables() );
         typedef typename MixedApproach<T_COLTRAITS> :: t_Matrix t_MixedAMat;
         const bblas::matrix_column< const t_MixedAMat > column0( _col.coefficients(), 0 );
