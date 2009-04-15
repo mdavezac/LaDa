@@ -118,6 +118,8 @@ namespace LaDa
         types::t_unsigned do_restart;
         //! ratio of offspring to population size
         types::t_real     replacement_rate;
+        //! Quits after evaluating starting population.
+        bool do_starting_population_only;
       protected:
         //! \brief Print::xmg output flag. 
         //! \see  GA::PrintGA \see Print::xmg

@@ -437,6 +437,12 @@ namespace LaDa
       for ( i_island = i_island_begin; i_island != i_island_end; ++i_island )
         __TRYDEBUGCODE( (*evaluation)(offspring, *i_island);,
                         "Error while evaluating starting population\n" )
+      if( do_starting_population_only ) 
+      { 
+        checkpoints(islands);
+        Print::xmg << "Performing evaluation of starting population only.\n" << Print::flush;
+        return;
+      }
       types::t_unsigned n = 0;
  
       Print::out << "\nEntering Generational Loop" << Print::endl;

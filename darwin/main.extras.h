@@ -117,6 +117,11 @@
         bl::var(ga.nb_islands) = bl::bind( &call_lexcast<LaDa::types::t_unsigned>, bl::_1 ) 
       )
       (
+        "starting_population_only", "Quits after evaluating starting population."
+        "Default = false.",
+        boost::lambda::var( ga.do_starting_population_only ) = true
+      )
+      (
         "seed", "random seed. Default = 0."
         " In MPI, seed0, seed1, ... are accepted, if not necessarily used.",
         boost::bind( &LaDa::GA::Topology::seed_n, ga.topology, 0, _1 )
