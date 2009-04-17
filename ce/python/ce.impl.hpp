@@ -190,7 +190,7 @@ namespace LaDa
 
     template< class T_HARMONIC >
       types::t_real call_all( const CE::Builder<T_HARMONIC> &_functional,
-                              const Crystal::Structure &_str, size_t _which )
+                              const Crystal::Structure &_str )
       { return call_which( _functional, _str, 3 ); }
     template< class T_HARMONIC >
       types::t_real call_chem( const CE::Builder<T_HARMONIC> &_functional,

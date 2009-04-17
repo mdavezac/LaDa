@@ -128,6 +128,7 @@ namespace LaDa
               bp::return_value_policy<bp::reference_existing_object>(),
               "References the lattice within which this structure is defined."
               " Read, but do not write to this object." )
+        .def( "concentration", &Crystal::Structure::get_concentration, "Returns concentration." )
         .def_pickle( pickle_structure< Crystal::Structure >() );
       bp::class_< Crystal::TStructure<std::string> >( "sStructure" )
         .def( bp::init< Crystal::TStructure<std::string>& >() )
