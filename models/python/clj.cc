@@ -189,6 +189,8 @@ namespace LaDa
       bp::class_< Models::Clj >( "Clj", "Coulomb + LennardJones functional.\n" )
         .def_readwrite( "charges", &Models::Clj::charges, "Dictionnary of charges." )
         .def_readwrite( "bonds", &Models::Clj::bonds, "Dictionnary of charges." )
+        .def("lennard_johnes", &Models::Clj::lennard_johnes )
+        .def("ewald", &Models::Clj::ewald )
         .def("__call__", &Models::Clj::operator() )
         .def("gradient", &Models::Clj::gradient )
         .def("__str__", &tostream<Models::Clj> )

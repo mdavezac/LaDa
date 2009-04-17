@@ -35,13 +35,15 @@ namespace LaDa
       return true;
     }
 
-    Clj :: t_Return Clj :: operator()(const t_Arg& _in, t_Arg& _out) const
+    Clj :: t_Return Clj :: call_(const t_Arg& _in, t_Arg& _out, size_t _which) const
     {
       _out.cell.zero();
       foreach( t_Arg :: t_Atom &atom, _out.atoms )
         atom.pos = atat::rVector3d(0,0,0);
 
-      _out.energy = LennardJones::operator()( _in, _out ) + Ewald::operator()( _in, _out );
+      _out.energy = 0e0;
+      if( _which & 1 ) _out.energy += LennardJones::operator()( _in, _out );
+      if( _which & 2 ) _out.energy += Ewald::operator()( _in, _out );
       return _out.energy;
     }
 

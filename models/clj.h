@@ -60,7 +60,8 @@ namespace LaDa
         ~Clj() {}
 
         //! \brief computes energy and stress and forces.
-        t_Return operator()(const t_Arg& _in, t_Arg& _out) const;
+        t_Return operator()(const t_Arg& _in, t_Arg& _out) const
+         { return call_( _in, _out, 3u ); }
 
         //! \brief computes energy and gradient of functional.
         t_Return gradient(const t_Arg& _in, t_Arg& _out) const;
@@ -68,7 +69,18 @@ namespace LaDa
         //! Loads parameters from XML.
         bool Load( const TiXmlElement& _node );
 
+        //! Computes LennardJohnes only.
+        t_Return lennard_johnes( const t_Arg& _in, t_Arg& _out ) const
+         { return call_( _in, _out, 1u ); }
+        
+        //! Computes Ewald only.
+        t_Return ewald( const t_Arg& _in, t_Arg& _out ) const
+         { return call_( _in, _out, 2u ); }
+
       protected:
+        //! Chooses which part to compute.
+        t_Return call_( const t_Arg& _in, t_Arg& _out, size_t _which ) const;
+
         //! Checks coherency between Ewald and LennardJones.
         void check_coherency() const;
 
