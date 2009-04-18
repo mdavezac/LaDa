@@ -88,7 +88,7 @@ subroutine force_lj_ewald (natom, a, ityp, tau, f, stress, ener )
         end if
      end do
        
-     do j = i, natom
+     do j = 1, natom
         do jj = 1, nspec_tot
            if (ityp(j) == id(jj)) then
               radius_j = rad_ion(jj)
@@ -127,13 +127,14 @@ subroutine force_lj_ewald (natom, a, ityp, tau, f, stress, ener )
                  rij = matmul(a,sij)
                  rsq_ij = sum(rij(:)*rij(:))
                  r_ij = dsqrt(rsq_ij)
+
+                 rcut_sigma = rcut_const ! * sigma
+                 if (r_ij > rcut_sigma ) cycle
                  
                  rxij = rij(1)
                  ryij = rij(2)
                  rzij = rij(3)
                  
-                 rcut_sigma = rcut_const ! * sigma
-                 if (r_ij > rcut_sigma ) cycle
 
                  ! -----------------------------
                  r_ij_inv = 1.d0/rcut_sigma

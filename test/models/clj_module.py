@@ -327,9 +327,14 @@ def main2():
   epinput = "xiuwen.input"
   clj, species = read_functional( epinput )
   clj.mesh = (8, 8, 8)
-  clj.lj_cutoff = 3.3941126
+  clj.lj_cutoff = 55
   clj.ewald_cutoff = 55
 
+  structure = crystal.sStructure();
+  crystal.read_poscar( structure, "POSCAR_0", species )
+  crystal.to_fractional( structure );
+  function = Function( clj, structure )
+  
   rocksalt = crystal.sStructure();
   crystal.read_poscar( rocksalt, "POSCAR_0", species )
   crystal.to_fractional( rocksalt );
@@ -338,13 +343,14 @@ def main2():
   crystal.read_poscar( multiple, "POSCAR_1", species )
   crystal.to_fractional( multiple );
 
-  forces = crystal.sStructure( rocksalt )
-  a = clj.lennard_johnes( rocksalt, forces )
+  forcesa = crystal.sStructure( rocksalt )
+  a = clj.lennard_johnes( rocksalt, forcesa )
   print "rocksalt: ", a
-  forces = crystal.sStructure( multiple )
-  b = clj.lennard_johnes( multiple, forces ) / 2e0
+  forcesb = crystal.sStructure( multiple )
+  b = clj.lennard_johnes( multiple, forcesb ) / 2e0
   print "multiple: ", b
   print a, b, a-b
+  print forcesa, forcesb
 
 # a = clj(structure, forces )
 # minmizer = minimizer.Minimizer()
@@ -353,8 +359,8 @@ def main2():
 # scfunc = ScaleFunction( clj, structure )
 # scargs = opt.cReals()
 # scargs.append( structure.scale )
-# args = opt.cReals()
-# structure_to_array( structure, args )
+  args = opt.cReals()
+  structure_to_array( structure, args )
 
 # minmizer( scfunc, scargs )
 # result = minmizer( function, args )
@@ -369,12 +375,12 @@ def main2():
 # result = minmizer( function, args )
 # structure_to_array( args, structure )
 # b = clj(structure, forces )
-# gradients = opt.cReals( [ 0 for r in args ] )
-# ngradients = opt.cReals( [ 0 for r in args ] )
-# function.ngradient( args, ngradients )
-# function.gradient( args, gradients )
-# for i,g in enumerate(ngradients):
-#   print "%2i %18.9e %18.9e %18.9e" % (i, g, gradients[i], g - gradients[i] )
+  gradients = opt.cReals( [ 0 for r in args ] )
+  ngradients = opt.cReals( [ 0 for r in args ] )
+  function.ngradient( args, ngradients )
+  function.gradient( args, gradients )
+  for i,g in enumerate(ngradients):
+    print "%2i %18.9e %18.9e %18.9e" % (i, g, gradients[i], g - gradients[i] )
  
 if __name__ == "__main__":
   main2()

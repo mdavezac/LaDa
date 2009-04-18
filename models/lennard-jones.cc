@@ -34,13 +34,14 @@ namespace LaDa
       const types::t_real scale_squared( _in.scale * _in.scale );
 
       typedef t_Arg ::  t_Atoms :: const_iterator t_cit;
-      t_cit i_atom_begin = _in.atoms.begin();
-      t_cit i_atom_end = _in.atoms.end();
-      t_Arg :: t_Atoms :: iterator i_force1 = _out.atoms.begin();
+      const t_cit i_atom_begin = _in.atoms.begin();
+      const t_cit i_atom_end = _in.atoms.end();
+      const t_Arg :: t_Atoms :: iterator i_force_begin = _out.atoms.begin();
+      t_Arg :: t_Atoms :: iterator i_force1( i_force_begin );
       for( t_cit i_atom1( i_atom_begin ); i_atom1 != i_atom_end; ++i_atom1, ++i_force1 )
       {
-        t_Arg :: t_Atoms :: iterator i_force2 = i_force1;
-        for( t_cit i_atom2( i_atom1 ); i_atom2 != i_atom_end; ++i_atom2, ++i_force2 )
+        t_Arg :: t_Atoms :: iterator i_force2(i_force_begin);
+        for( t_cit i_atom2( i_atom_begin ); i_atom2 != i_atom_end; ++i_atom2, ++i_force2 )
         {
           const std::string bondtype( bondname( i_atom2->type, i_atom1->type ) );
 
@@ -65,8 +66,6 @@ namespace LaDa
                 const atat::rVector3d distance( _in.cell * fdistance * _in.scale );
                 const types::t_real normd( atat::norm2(distance) );
                 if( normd > rcut_squared ) continue;
-//               std::cout << (i_atom1 - i_atom_begin) << " " << (i_atom2 - i_atom_begin) 
-//                         << " " << i << " " << j << " " << k << "\n";
 
                 // result -= 4.0 * scale * lj_pot( sigma_squared / rcut_squared )
                 { // compute cutoff correction energy
@@ -74,17 +73,13 @@ namespace LaDa
                   const types::t_real sixth( squared * squared * squared );
                   const types::t_real twelfth( sixth * sixth );
                   ecut -=  bond.hard_sphere * twelfth - bond.van_der_walls * sixth;
-                  std::cout << bond.hard_sphere * twelfth - bond.van_der_walls * sixth << " -- "
-                            << distance << "    "
-                            << (i_atom1 - i_atom_begin) << " " << (i_atom2 - i_atom_begin) 
-                            << " " << i << " " << j << " " << k << "\n";
                 }
 
                 { // van_der_walls energy, force, stress.
                   const types::t_real squared( 1e0 / normd );
                   const types::t_real sixth( squared * squared * squared );
                   const types::t_real twelfth( sixth * sixth );
-                // energy += bond.hard_sphere * twelfth - bond.van_der_walls * sixth;
+                  energy += bond.hard_sphere * twelfth - bond.van_der_walls * sixth;
 
                   const types::t_real ffactor
                   ( 
