@@ -5,11 +5,14 @@
 # include <config.h>
 #endif
 
+#include <sstream>
+
 #include <boost/filesystem/path.hpp>
 #include <boost/python/def.hpp>
 #include <boost/python/return_value_policy.hpp>
 #include <boost/python/manage_new_object.hpp>
 #include <boost/python/extract.hpp>
+#include <boost/python/str.hpp>
 
 #include "../read_structure.h"
 #include <python/debug.hpp>
@@ -85,6 +88,40 @@ namespace LaDa
           boost::python::throw_error_already_set();
         }
       }
+
+      void read_pifile_structure( boost::python::str& _str, Crystal::Structure &_structure )
+      {
+        try
+        {
+          const std::string string = boost::python::extract<std::string>( _str );
+          if( string.empty() )
+          {
+            LADA_PYTHON_ERROR
+            ( 
+              PyExc_RuntimeError,
+              ( "Could not read string.\n" )
+            );
+            boost::python::throw_error_already_set();
+          }
+          std::istringstream sstring( string );
+          Crystal::read_pifile_structure( sstring, _structure );
+        }
+        catch( std::exception &_e )
+        {
+          LADA_PYTHON_ERROR( PyExc_RuntimeError, _e.what() );
+          boost::python::throw_error_already_set();
+        }
+        catch( ... )
+        {
+          LADA_PYTHON_ERROR
+          ( 
+            PyExc_RuntimeError,
+            "Could not read structure from pi-file format.\n"
+          );
+          boost::python::throw_error_already_set();
+        }
+        return;
+      }
     }
 
     void expose_read_structure()
@@ -104,6 +141,13 @@ namespace LaDa
         ( boost::python::arg("filename"), boost::python::arg("callable") ),
         "Reads a pi-file and calls a "
         "\"callable( const LaDa::Crystal::Structure )->types::t_real\" for each structure."
+      );
+      boost::python::def
+      ( 
+        "read_pifile_structure",
+        &details::read_pifile_structure,
+        ( boost::python::arg("input"), boost::python::arg("structure") ),
+        "Reads a structure from pi-file type input.\n" 
       );
 
     }

@@ -173,7 +173,7 @@ def main():
   func = nlsq.Functional( clj, structures )
 # save( func, "__negs" )
 
-# func = load( "__negs1" )
+  func = load( "__3" )
   func.doprint = 0
   func.docharges = 1
   func.doconstant = 1
@@ -188,10 +188,10 @@ def main():
 
   print "Iter 0: ", func( args )
   func.wenergy, func.wstress, func.wforces = (1,0,0)
-  result = minmizer( func, args )
+# result = minmizer( func, args )
   func.set_args( args ) 
   print func
-# save( func, "__negs" )
+# save( func, "__3" )
 # return
 
   func.doprint = 0
@@ -208,6 +208,7 @@ def main():
 
   
 
+  func.wenergy, func.wstress, func.wforces = (1,0,0)
   for structure in structures:
 #   if structure.energy - baseline( conc(structure, "Li") ) >= 0e0: continue
 #   function = clj_module.ScaleFunction( clj, structure) 
@@ -216,8 +217,7 @@ def main():
 #   result = minmizer( function, args )
 #   structure.scale = args[0] * args[0]
     forces = crystal.sStructure( structure )
-    energy = func.functional( structure, forces ) + func.constant
-    print energy
+    energy =  ( func.functional( structure, forces ) + func.constant ) / len( structure.atoms )
     print structure.energy - baseline( conc( structure, "Li") ), (structure.energy - energy ) # , forces, "\n"
 
 

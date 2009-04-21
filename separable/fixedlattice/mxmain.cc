@@ -500,7 +500,7 @@ int main(int argc, char *argv[])
       structure.atoms.push_back( atom );
     }
     structure.find_k_vectors();
-    std::cout << "  -@0 " << structure.get_concentration()
+    std::cout << "  @-0 " << structure.get_concentration()
               << " " << mixedfunc( structure ) << "\n";
     LaDa::Crystal::enumerate_pifile( doenum.string(), mixedfunc );
     foreach( LaDa::Crystal::Structure::t_Atom &atom, structure.atoms )

@@ -26,7 +26,7 @@ class Order(clj_module.StructuresFunctional):
     last = self.functional( self.structures[0], forces )
     for structure in self.structures[1:]:
       forces = crystal.sStructure( structure )
-      intermed = self.functional( structure, forces )
+      intermed = self.functional( structure, forces ) / len( structure.atoms )
       result += self.__fermi__( float(intermed - last) )
       last = intermed
     return result

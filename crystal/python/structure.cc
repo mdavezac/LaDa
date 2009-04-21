@@ -115,7 +115,8 @@ namespace LaDa
                         "The list of reciprocal-space vectors."
                         " It is constructure with respected to a LaDa.Lattice object.\n"  ) 
         .def_readwrite( "energy",  &Crystal::Structure::energy, "Holds a real value." )
-        .def_readwrite( "weight",  &Crystal::Structure::weight, "Optional weight for fitting purposes." )
+        .def_readwrite( "weight",  &Crystal::Structure::weight,
+                        "Optional weight for fitting purposes." )
         .def_readwrite( "scale",   &Crystal::Structure::scale,
                         "A scaling factor for atomic-positions and cell-vectors." )
         .def_readwrite( "name", &Crystal::Structure::name, "Holds a string.\n" )
@@ -129,6 +130,7 @@ namespace LaDa
               "References the lattice within which this structure is defined."
               " Read, but do not write to this object." )
         .def( "concentration", &Crystal::Structure::get_concentration, "Returns concentration." )
+        .def( bp::self == bp::other<Crystal::Structure>() )
         .def_pickle( pickle_structure< Crystal::Structure >() );
       bp::class_< Crystal::TStructure<std::string> >( "sStructure" )
         .def( bp::init< Crystal::TStructure<std::string>& >() )
