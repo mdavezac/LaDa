@@ -134,7 +134,7 @@ namespace LaDa
             if( not _darwin.topology.save() ) return;
             if( not _node.Attribute( "what" ) ) return;
             if( not _node.Attribute( "save" ) ) return;
-            const boost::filesystem::path filename( "save" );
+            const boost::filesystem::path filename( _node.Attribute("save") );
             const std::string what( _node.Attribute( "what" ) );
             bool saveall( what.compare( "all" ) or what.compare( "ALL" ) );
             typedef typename T_DARWIN :: t_Evaluator t_Evaluator;

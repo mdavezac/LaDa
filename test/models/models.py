@@ -1,12 +1,5 @@
 #! /usr/bin/python
 
-def conc( _structure, _type ):
-
-  result = 0 
-  for atom in _structure.atoms:
-    if atom.type == _type: result += 1
-  return float( result * 2 ) / float( len( _structure.atoms ) )
-
 def create_functional():
 
   from math import pow
@@ -97,6 +90,7 @@ def load( _filename ):
 
 def reduce_structures( _structures ):
 
+  from ordering import conc
   index = 1
   s1 = _structures[0]
   comp = lambda s0:   abs( s0.energy - s1.energy )\
@@ -142,6 +136,7 @@ def main():
   import random
   import statistics
   import ordering
+  from ordering import conc
 
   random.seed()
   minmizer = minimizer.Minimizer()
@@ -161,7 +156,7 @@ def main():
 #   if s.energy - baseline( conc(s, "Li") ) <= 0e0: s.weight = 10
   structures = filter( lambda s: s.energy - baseline( conc(s, "Li") ) <= 0e0,
                        structures )
-  structures = structures[0:3]
+  structures = structures[:5]
 
 # for s in structures:
 #   print s, s.energy
@@ -173,7 +168,8 @@ def main():
   func = nlsq.Functional( clj, structures )
 # save( func, "__negs" )
 
-  func = load( "__3" )
+# func = load( "__8" )
+  func.structures = structures
   func.doprint = 0
   func.docharges = 1
   func.doconstant = 1
@@ -191,7 +187,7 @@ def main():
 # result = minmizer( func, args )
   func.set_args( args ) 
   print func
-# save( func, "__3" )
+# save( func, "__8" )
 # return
 
   func.doprint = 0
@@ -202,9 +198,12 @@ def main():
 
   corr = statistics.Correlation( clj, structures )
   print "correlations: ", corr( args )
-  order = ordering.Order( clj, structures )
+  order = ordering.Order( clj, structures, baseline )
   print "order: ", order( args )
   print
+  result = minmizer( order, args )
+  order.set_args( args ) 
+  print "order: ", order( args )
 
   
 
@@ -218,7 +217,8 @@ def main():
 #   structure.scale = args[0] * args[0]
     forces = crystal.sStructure( structure )
     energy =  ( func.functional( structure, forces ) + func.constant ) / len( structure.atoms )
-    print structure.energy - baseline( conc( structure, "Li") ), (structure.energy - energy ) # , forces, "\n"
+    print structure.energy - baseline( conc( structure, "Li") ),\
+         energy - baseline( conc( structure, "Li") )
 
 
 
