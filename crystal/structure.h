@@ -32,8 +32,8 @@
 
 namespace LaDa 
 {
-  namespace Crystal {
-
+  namespace Crystal
+  {
     //! \cond
     class Lattice;
     //! \endcond

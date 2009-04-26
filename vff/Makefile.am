@@ -23,9 +23,9 @@ libvff_la_CPPFLAGS = $(AM_CPPFLAGS)
 vff_SOURCES = main.cc 
 vff_CPPFLAGS =  $(AM_CPPFLAGS) 
 vff_LDFLAGS =  $(AM_LDFLAGS) @BOOST_PROGOP@ 
-vff_LDADD = ../crystal/libcrystal.la \
+vff_LDADD = libvff.la \
+            ../crystal/libcrystal.la \
 	    ../atat/libatat.la \
-	    libvff.la \
             ../physics/libphysics.la \
             ../print/libprint.la \
             ../opt/libopt.la \

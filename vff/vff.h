@@ -116,6 +116,10 @@ namespace LaDa
         //! \param _f optional filename to which to direct the output
         void print_escan_input( const t_Path &_f = "atom.config") const;
         //! \brief Constructs the mesh of AtomicCenter
+        //! \details Newer version than Functional::construct_centers. 
+        //!          Uses smith normal form to speed up first neighbor search.
+        bool build_tree();
+        //! \brief Constructs the mesh of AtomicCenter
         //! \details Newer version than Functional::initialize_centers, it works even if
         //! structure is slightly distorted.
         bool construct_centers();
@@ -128,6 +132,17 @@ namespace LaDa
         //! \brief Loads Functional for one or two site lattices.
         //! \details If \a _node is not the correct node, the results are undefined.
         bool load_( const TiXmlElement &_node );
+
+        //! computes smith index.
+        void smith_index_( const atat::rMatrix3d &_toSmith,
+                           const atat::iVector3d &_modulo,
+                           const atat::rVector3d &_pos,
+                           atat::iVector3d &_index );
+        //! Computes matrix to get to smith index.
+        atat::rMatrix3d to_smith_matrix( const atat::rMatrix3d &_deformation,
+                                         const atat::rMatrix3d &_lat_cell,
+                                         const atat::rMatrix3d &_str_cell,
+                                         atat::iVector3d &_smith );
 
         //! Type of the atomic centers
         typedef AtomicCenter t_Center;  

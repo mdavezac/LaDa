@@ -18,6 +18,8 @@
 #include <opt/debug.h>
 #include <opt/atat.h>
 #include <opt/tinyxml.h>
+#include <opt/smith_normal_form.h>
+#include <crystal/ideal_lattice.h>
 
 #include "vff.h"
   
@@ -25,6 +27,178 @@ namespace LaDa
 {
   namespace Vff
   { 
+    bool Vff :: build_tree()
+    {
+      __TRYBEGIN
+      __DOASSERT( structure.lattice == NULL, "Lattice not set.\n" )
+
+      // computes deformation.
+      const atat::rMatrix3d deformation( Crystal::retrieve_deformation( structure, 16 ) );
+
+      // now finds smith normal form of ideal lattice.
+      atat::iVector3d modulo;
+      const atat::rMatrix3d toSmith
+      ( 
+        to_smith_matrix( deformation, structure.lattice->cell, structure.cell, modulo )
+      );
+
+      // finds ideal first neighbor positions.
+      std::vector< atat::rVector3d > first_neighbors;
+      foreach( const Crystal::Lattice::t_Site &site, structure.lattice->sites )
+        first_neighbors.push_back( site.pos );
+      Crystal::find_first_neighbors( first_neighbors, structure.lattice->cell, 4 );
+      foreach( atat::rVector3d &pos, first_neighbors )
+      {
+        pos -= structure.lattice->sites[0].pos;
+        pos = deformation * pos; // adds in deformation for convenience.
+      }
+
+      // creates an array indexing each atom.
+      types::t_real indices[structure.lattice->sites.size()]
+                           [ modulo(0) ][ modulo(1) ][ modulo(2) ];
+      {
+        size_t index(0);
+        foreach( const Crystal::Structure::t_Atom &atom, structure.atoms )
+        {
+          atat::iVector3d sindex;
+          __ASSERT( atom.site < 0, "site indexing is incorrect.\n" );
+          __ASSERT( atom.site > structure.lattice->sites.size(),
+                    "site indexing is incorrect.\n" );
+          smith_index_
+          ( 
+            toSmith, modulo, 
+            atom.pos - structure.lattice->sites[ atom.site ].pos, 
+            sindex 
+          );
+          indices[ unsigned(atom.site) ][ sindex(0) ][ sindex(1) ][ sindex(2) ] = index;
+          ++index;
+        }
+      }
+      
+      // constructs list of centers.
+      centers.clear();
+      centers.reserve( structure.atoms.size() );
+      Crystal::Structure::t_Atoms::iterator i_atom = structure.atoms.begin();
+      Crystal::Structure::t_Atoms::iterator i_atom_end = structure.atoms.end();
+      for(types::t_unsigned index=0; i_atom != i_atom_end; ++i_atom, ++index )
+        centers.push_back( AtomicCenter( structure, *i_atom, index ) );
+
+      // finally builds tree.
+      typedef std::vector< atat::rVector3d > :: const_iterator t_cit;
+      const t_cit i_neigh_begin( first_neighbors.begin() );
+      const t_cit i_neigh_end( first_neighbors.end() );
+
+      t_Centers :: iterator i_center = centers.begin();
+      t_Centers :: iterator i_center_end = centers.end();
+      const atat::rMatrix3d inv_cell( !structure.cell );
+      i_atom = structure.atoms.begin();
+      for(; i_center != i_center_end; ++i_center, ++i_atom )
+      {
+        const unsigned site( i_atom->site == 0 ? 0: 1 );
+        const atat::rVector3d pos
+        ( 
+          i_atom->pos - structure.lattice->sites[site].pos 
+        );
+        for( t_cit i_neigh( i_neigh_begin ); i_neigh != i_neigh_end; ++i_neigh )
+        {
+          // computes index of nearest neighbor.
+          atat::iVector3d sindex;
+          smith_index_
+          (
+            toSmith, modulo, 
+            pos + (*i_neigh), 
+            sindex
+          );
+          const types::t_int cindex( indices[site][ sindex(0) ][ sindex(1) ][ sindex(2) ] );
+          // now creates branch in tree.
+          t_Centers :: iterator i_bond( centers.begin() + cindex );
+          i_center->bonds.push_back( t_Center::__make__iterator__( i_bond ) );
+          const atat::rVector3d dfrac
+          ( 
+              inv_cell 
+            * ( 
+                  (const atat::rVector3d) *i_center 
+                - (const atat::rVector3d) *i_bond
+              )
+           ); 
+          const atat::rVector3d frac
+          (
+            dfrac(0) - rint( dfrac(0) ),
+            dfrac(1) - rint( dfrac(1) ),
+            dfrac(2) - rint( dfrac(2) )
+          );
+          i_center->translations.push_back( frac );
+          i_center->do_translates.push_back
+          ( 
+            atat::norm2(dfrac) > atat::zero_tolerance 
+          );
+        }
+      }
+      __ENDGROUP__
+      catch( ... )
+      {
+        std::cerr << "Could not build tree.\n";
+        return false;
+      }
+    }
+
+    void Vff :: smith_index_( const atat::rMatrix3d &_toSmith,
+                              const atat::iVector3d &_modulo,
+                              const atat::rVector3d &_pos,
+                              atat::iVector3d &_index )
+    {
+      const atat::rVector3d pos( _toSmith * _pos );
+      const atat::iVector3d int_pos
+      (
+        types::t_int( rint( pos(0) ) ),
+        types::t_int( rint( pos(1) ) ),
+        types::t_int( rint( pos(2) ) )
+      );
+      std::cout << _pos << ", " << pos << ", " << int_pos << "\n";
+      for( size_t i(0); i < 3; ++i )
+      {
+        __DOASSERT
+        (
+          std::abs( pos(i) - types::t_real( int_pos(i) ) ) > 0.01, 
+          "Structure is not ideal.\n"
+        )
+        _index(i) = int_pos(i) % _modulo(i);
+      }
+    }
+
+    atat::rMatrix3d Vff :: to_smith_matrix( const atat::rMatrix3d &_deformation,
+                                            const atat::rMatrix3d &_lat_cell,
+                                            const atat::rMatrix3d &_str_cell,
+                                            atat::iVector3d &_modulo )
+    {
+      atat::rMatrix3d result;
+      atat::iMatrix3d left, right, smith;
+      const atat::rMatrix3d inv_lat( !_lat_cell );
+      const atat::rMatrix3d inv_lat_cell( inv_lat * _deformation * _str_cell );
+      std::cout << _lat_cell << "\n\n" << inv_lat << "\n\n";
+      std::cout << _str_cell << "\n\n" << inv_lat_cell << "\n";
+      atat::iMatrix3d int_cell;
+      for( size_t i(0); i < 3; ++i )
+        for( size_t j(0); j < 3; ++j )
+        {
+          int_cell(i,j) = types::t_int( rint( inv_lat_cell(i,j) ) ); 
+          __DOASSERT
+          ( 
+            std::abs( types::t_real( int_cell(i,j) ) - inv_lat_cell(i,j) ) > 0.01,
+               "Input structure is not supercell of the lattice: " 
+            << int_cell(i,j) << " != " << inv_lat_cell(i,j) << "\n"
+          )
+        }
+      opt::smith_normal_form( smith, left, int_cell, right );
+      for( size_t i(0); i < 3; ++i )
+      {
+        for( size_t j(0); j < 3; ++j )
+          result(i,j) = types::t_real( left(i,j) );
+        _modulo(i) = smith(i,i);
+      }
+      return result * ( !_lat_cell ) * _deformation;
+    }
+
     bool Vff :: initialize_centers()
     {
       centers.clear();
@@ -38,9 +212,10 @@ namespace LaDa
 
       // Creates a list of closest neighbors
       std::vector< atat::rVector3d > neighbors;
-      Crystal::Lattice::t_Sites :: iterator i_site_begin = structure.lattice->sites.begin();
-      Crystal::Lattice::t_Sites :: iterator i_site, i_site2;
-      Crystal::Lattice::t_Sites :: iterator i_site_end = structure.lattice->sites.end();
+      typedef Crystal::Lattice::t_Sites :: iterator t_it;
+      t_it i_site_begin = structure.lattice->sites.begin();
+      t_it i_site, i_site2;
+      t_it i_site_end = structure.lattice->sites.end();
       
       for(i_site = i_site_begin; i_site != i_site_end; ++i_site )
       {
@@ -99,7 +274,10 @@ namespace LaDa
                 frac_image[1] = rint( frac_image[1] );
                 frac_image[2] = rint( frac_image[2] );
                 i_center->translations.push_back( frac_image );
-                i_center->do_translates.push_back( atat::norm2(frac_image) > atat::zero_tolerance );
+                i_center->do_translates.push_back
+                ( 
+                  atat::norm2(frac_image) > atat::zero_tolerance 
+                );
               }
             }
           }

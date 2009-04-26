@@ -86,7 +86,7 @@ DARWIN_BG_IMPL_H = two_sites.impl.h  single_site.impl.h  bandgap_stubs.impl.h \
 DARWIN_BG_H  = bandgap_stubs.h  two_sites.h  single_site.h  vff.h  bandgap.h \
                alloylayers/evaluator.h alloylayers/main.extras.h \
                alloylayers/object.h alloylayers/operators.h \
-               alloylayers/policies.h effetive_mass.h $(DARWIN_BG_IMPL_H)
+               alloylayers/policies.h effective_mass.h $(DARWIN_BG_IMPL_H)
 DARWIN_BG_DOC = $(DARWIN_BG_H) $(DARWIN_BG_CC) $(DARWIN_GRAPH_H) $(DARWIN_GRAPH_CC)
 
 LIB_ALLOYLAYERS_CC = single_site.cc bandgap_stubs.cc vff.cc electric_dipole.cc alloylayers/concentration.cc
@@ -119,10 +119,10 @@ DARWIN_E_H  = emass_stubs.h  two_sites.h  single_site.h  vff.h  emass.h  layered
 DARWIN_E_DOC = $(DARWIN_E_H) $(DARWIN_E_CC) 
 
 CRYSTAL_CC = lattice.cc structure.cc confsplit.cc layerdepth.cc read_structure.cc \
-             epi_structure.cc fill_structure.cc
+             epi_structure.cc fill_structure.cc ideal_lattice.cc
 CRYSTAL_H  = lattice.h  structure.h structure.impl.h atom.h  confsplit.h layerdepth.h \
              read_structure.h epi_structure.h fill_structure.h fourier.h read_poscar.h \
-             fractional_cartesian.h
+             fractional_cartesian.h ideal_lattice.h
 CRYSTAL_DOC = $(CRYSTAL_H) $(CRYSTAL_CC) 
 CRYSTAL_PYTHON_H = structure.hpp atom.hpp lattice.hpp read_structure.hpp
 CRYSTAL_PYTHON_CC = structure.cc atom.cc lattice.cc read_structure.cc python.cc 
@@ -156,8 +156,8 @@ OPT_H = ndim_iterator.h minimize_base.h polynome.h \
 	va_minimizer.h fitness_function.h  function_functors.h monome.h traits.h \
         fuzzy.h atat.h debug.h va_function.h random.h algorithms.h \
         bpo_macros.h modifiers.h tuple_io.h  \
-        leave_many_out.h 
-OPT_CC = random.cc leave_many_out.cc 
+        leave_many_out.h smith_normal_form.h
+OPT_CC = random.cc leave_many_out.cc smith_normal_form.cc
 OPT_PYTHON_CONVENIENCE_H =  convex_hull.h errors.h convex_hull.impl.h \
                             tinyxml.h initial_path.h fortran_dirio.h
 OPT_PYTHON_CONVENIENCE_CC = convex_hull.cc errors.cc tinyxml.cc \
@@ -165,6 +165,7 @@ OPT_PYTHON_CONVENIENCE_CC = convex_hull.cc errors.cc tinyxml.cc \
 OPT_DOC = $(OPT_H) $(OPT_CC) $(OPT_PYTHON_CONVENIENCE_CC)
 OPT_PYTHON_CC = errortuple.cc python.cc
 OPT_PYTHON_H = errortuple.hpp convexhull.impl.hpp
+OPT_F90 = rational_mathematics.f90
 
 FACTORY_CC =
 FACTORY_H = chain_connect_attribute.h  chainconnects.h factory.h \

@@ -2,9 +2,9 @@
 <Job>
    <Structure >
         <Cell>
-            <row x="10.000000" y="0.000000" z="0.000000" />
-            <row x="0.500000" y="0.500000" z="0.000000" />
-            <row x="0.500000" y="0.000000" z="0.500000" />
+            <row x="10.000000" y="0.500000" z="0.500000" />
+            <row x="0.000000" y="0.000000" z="0.500000" />
+            <row x="0.000000" y="0.500000" z="0.000000" />
         </Cell>
         <Atom x="0.000000" y="0.000000" z="0.000000" type="Ga" />
         <Atom x="0.250000" y="0.250000" z="0.250000" type="As" />
@@ -40,7 +40,7 @@
         </site>
     </Lattice>
     <Functional type="vff" direction="1 0 0" >
-        <Minimizer type="minuit2" tolerance="1e-8" itermax="500000" strategy="fast" verbose="true" uncertainties="1e-1" />
+        <Minimizer type="minuit2" tolerance="1e-8" itermax="500000" strategy="fast" verbose="false" uncertainties="1e-1" />
         <tMinimizer type="frprmn" itermax="40000" tolerance="0.00001" linetolerance="0.01" zeps="0.001" />
         <tMinimizer type="gsl_bfgs2" itermax="40000" tolerance="0.00001" linetolerance="0.5" linestep="0.001" doprint="true" />
         <Bond A="In" B="As" d0="2.62332" alpha="21.6739" alpha3="-112.0" alpha4="150.0"/>

@@ -8,6 +8,7 @@
 # include <config.h>
 #endif
 
+#include <iomanip>
 #include <math.h>
 #include "misc.h"
 
@@ -278,13 +279,14 @@ istream& operator>>(istream& s, Vector3d<T> &v) {
 
 template<class T>
 ostream& operator<<(ostream& s, const FixedVector<T,2> &v) {
-  s << v.x[0] << " " << v.x[1];
+  s << std::setw(18) << v.x[0] << " " << std::setw(18) << v.x[1];
   return s;
 }
 
 template<class T>
 ostream& operator<<(ostream& s, const FixedVector<T,3> &v) {
-  s << v.x[0] << " " << v.x[1] << " " << v.x[2];
+  s << std::setw(18) << v.x[0] << " " << std::setw(18) << v.x[1]
+    << " " << std::setw(18) << v.x[2];
   return s;
 }
 
@@ -615,7 +617,7 @@ template<class T>
 ostream& operator<<(ostream& s, const FixedMatrix<T,2> &a) {
   for (types::t_int i=0; i<2; i++) {
     for (types::t_int j=0; j<2; j++) {
-      s << a.x[i][j] << " ";
+      s << std::setw(18) << a.x[i][j] << " ";
     }
     if( i != 2 ) s << "\n";
   }

@@ -17,7 +17,7 @@ nobase_libcrystal_la_HEADERS = $(CRYSTAL_H)
 libcrystal_la_CPPFLAGS = $(AM_CPPFLAGS) 
 SUBDIRS = python
 
-if DOALLOYLAYERSOPT
+# if DOALLOYLAYERSOPT
 bin_PROGRAMS = alloylayers
 alloylayers_SOURCES = main.cc
 alloylayers_CPPFLAGS =  $(AM_CPPFLAGS)
@@ -28,7 +28,7 @@ alloylayers_LDADD = libcrystal.la \
 		    ../opt/libopt.la \
                     ../mpi/libmpiobject.la \
 		    ../print/libprint.la
-endif
+# endif
 
 ../opt/libopt.la:
 	cd ../opt; $(MAKE) libopt.la
