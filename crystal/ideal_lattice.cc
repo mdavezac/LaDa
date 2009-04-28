@@ -103,10 +103,6 @@ namespace LaDa
       foreach( const Lattice::t_Site &site, _structure.lattice->sites )
         ideals.push_back( site.pos );
       find_first_neighbors( ideals, _structure.lattice->cell, _nneigs );
-      std::cout << "ideal: \n";
-      foreach( const atat::rVector3d &a, ideals )
-        std::cout << " " << a << "\n";
-      std::cout << "\n";
 
       // Computes list of _structure first neighbors.
       std::vector< atat::rVector3d > non_ideals;
@@ -133,10 +129,6 @@ namespace LaDa
       )
       if( minindex != 0 )  std::swap( non_ideals.front(), non_ideals[minindex] );
       find_first_neighbors( non_ideals, _structure.cell, _nneigs );
-      std::cout << "non ideal: \n";
-      foreach( const atat::rVector3d &a, non_ideals )
-        std::cout << " " << a << "\n";
-      std::cout << "\n";
 
       // computes transformation matrix one row at a time. 
       Fitting::Cgs cgs;
@@ -171,8 +163,8 @@ namespace LaDa
 
         // solves Ax = b
         Fitting::Cgs::t_Return convergence = cgs( A, x, b );
-        std::cout << r << ": " << convergence.first << ", "
-                  << convergence.second << ", "  << x << "\n"; 
+//       std::cout << r << ": " << convergence.first << ", "
+//                 << convergence.second << ", "  << x << "\n"; 
 
         // stores solution.
         for( size_t i(0); i < 3; ++i ) result(r,i) = x(i); 

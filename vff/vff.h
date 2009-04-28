@@ -118,12 +118,14 @@ namespace LaDa
         //! \brief Constructs the mesh of AtomicCenter
         //! \details Newer version than Functional::construct_centers. 
         //!          Uses smith normal form to speed up first neighbor search.
+        //!          Defined in build_tree.cc.
         bool build_tree();
         //! \brief Constructs the mesh of AtomicCenter
         //! \details Newer version than Functional::initialize_centers, it works even if
         //! structure is slightly distorted.
         bool construct_centers();
         //! \deprecated Constructs the mesh of AtomicCenter
+        //! Defined in initialize_centers.cc.
         bool initialize_centers();
         //! Prints out all parameters
         void print_out( std::ostream &stream ) const;
@@ -133,12 +135,14 @@ namespace LaDa
         //! \details If \a _node is not the correct node, the results are undefined.
         bool load_( const TiXmlElement &_node );
 
-        //! computes smith index.
+        //! \brief computes smith index.
+        //! \details Defined in build_tree.cc.
         void smith_index_( const atat::rMatrix3d &_toSmith,
                            const atat::iVector3d &_modulo,
                            const atat::rVector3d &_pos,
                            atat::iVector3d &_index );
-        //! Computes matrix to get to smith index.
+        //! \brief Computes matrix to get to smith index.
+        //! \details Defined in build_tree.cc.
         atat::rMatrix3d to_smith_matrix( const atat::rMatrix3d &_deformation,
                                          const atat::rMatrix3d &_lat_cell,
                                          const atat::rMatrix3d &_str_cell,

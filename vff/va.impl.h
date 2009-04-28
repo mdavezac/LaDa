@@ -128,7 +128,8 @@ namespace LaDa
     template< class T_VFFBASE > 
       inline bool VABase<T_VFFBASE> :: init( bool _redocenters )
       {
-        if ( _redocenters and ( not t_VffBase::initialize_centers() ) ) return false;
+//       if ( _redocenters and ( not t_VffBase::initialize_centers() ) ) return false;
+        if ( _redocenters and ( not t_VffBase::build_tree() ) ) return false;
         return t_VABase::init();
       }
 
