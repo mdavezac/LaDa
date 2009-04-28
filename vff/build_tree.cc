@@ -86,13 +86,25 @@ namespace LaDa
           if( indices[ site ][ sindex(0) ][ sindex(1) ][ sindex(2) ] != Natoms )
           { 
             const size_t i( indices[ site ][ sindex(0) ][ sindex(1) ][ sindex(2) ] );
-            std::cerr << "error: " << site << " " << sindex(0) << " " << sindex(1) << " " << sindex(2) << "\n"
-                      << i << " " << structure.atoms[i] << "\n" << index << " " << atom << "\n";
+            std::cerr << "error: " << site << " "
+                      << sindex(0) << " " << sindex(1) << " " << sindex(2) << "\n"
+                      << i << " " << structure.atoms[i] << "\n"
+                      << index << " " << atom << "\n";
             error = true;
           }
           else indices[ site ][ sindex(0) ][ sindex(1) ][ sindex(2) ] = index;
           ++index;
         }
+        for( size_t i(0); i < Nsites; ++i )
+          for( size_t j(0); j < modulo(0); ++j )
+            for( size_t k(0); k < modulo(1); ++k )
+              for( size_t u(0); u < modulo(2); ++u )
+                if( indices[i][j][k][u] == Natoms )
+                {
+                  std::cerr << "error: " << i << ", " << j << ", " << k  << ", " << u
+                                         << " - could not find all indices.\n";
+                  error = true;
+                }
         __ASSERT( error,  "Two sites with same smith index.\n" )
       }
       
@@ -131,8 +143,9 @@ namespace LaDa
             pos + (*i_neigh), 
             sindex
           );
-          const types::t_int cindex( indices[neighbor_site][sindex(0)][sindex(1)][sindex(2)] );
-          __DOASSERT( cindex == -1, "Index corresponds to no site.\n" )
+          const types::t_int
+            cindex( indices[neighbor_site][sindex(0)][sindex(1)][sindex(2)] );
+          __DOASSERT( cindex == Natoms, "Index corresponds to no site.\n" )
           // now creates branch in tree.
           t_Centers :: iterator i_bond( centers.begin() + cindex );
           i_center->bonds.push_back( t_Center::__make__iterator__( i_bond ) );
@@ -142,18 +155,19 @@ namespace LaDa
             * ( 
                   (const atat::rVector3d) *i_center 
                 - (const atat::rVector3d) *i_bond
+                + (*i_neigh)
               )
            ); 
           const atat::rVector3d frac
           (
-            dfrac(0) - rint( dfrac(0) ),
-            dfrac(1) - rint( dfrac(1) ),
-            dfrac(2) - rint( dfrac(2) )
+            rint( dfrac(0) ),
+            rint( dfrac(1) ),
+            rint( dfrac(2) )
           );
           i_center->translations.push_back( frac );
           i_center->do_translates.push_back
           ( 
-            atat::norm2(dfrac) > atat::zero_tolerance 
+            atat::norm2(frac) > atat::zero_tolerance 
           );
         }
       }
@@ -182,7 +196,7 @@ namespace LaDa
       {
         __DOASSERT
         (
-          std::abs( pos(i) - types::t_real( int_pos(i) ) ) > 0.01, 
+          std::abs( pos(i) - types::t_real( int_pos(i) ) ) > 0.5, 
           "Structure is not ideal.\n"
         )
         _index(i) = int_pos(i) % _modulo(i);

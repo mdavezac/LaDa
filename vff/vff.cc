@@ -96,7 +96,8 @@ namespace LaDa
       opt::read_xmlfile( path, doc );
       __DOASSERT( not doc.FirstChild( "Job" ),
                   "Root tag <Job> does not exist in " + path.string() + ".\n" )
-      parent = opt::find_node( *doc.FirstChildElement( "Job" ), "Functional", "type", "vff" );
+      parent = opt::find_node( *doc.FirstChildElement( "Job" ),
+                               "Functional", "type", "vff" );
 
       if( parent ) return load_( *parent );
       std::cerr << "Could not find an <Functional type=\"vff\"> tag in input file" 
