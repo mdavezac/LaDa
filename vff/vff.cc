@@ -217,15 +217,15 @@ namespace LaDa
           stream << std::fixed    << std::setprecision(7)
                  << std::setw(6)  << index << '0'
                     << std::setw(2) << std::setfill('0') 
-                    << std::right << i_pseudo->first  // pseudo index
-                 << std::setw(12) << pos[0] // pseudo position
-                 << std::setw(12) << pos[1] 
-                 << std::setw(12) << pos[2] 
+                    << std::right << i_pseudo->first  << " " // pseudo index
+                 << std::setw(12) << pos[0] << " "  // pseudo position
+                 << std::setw(12) << pos[1] << " "  
+                 << std::setw(12) << pos[2] << " "  
                  << std::setw(18) << msstrain << " " // microscopic strain
                  << std::setw(6) << std::setprecision(2)
-                                 << types::t_real( i_pseudo->second ) * 0.25  // weight
-                 << std::setw(18) << std::setprecision(7) << pos[0] // pseudo position
-                 << std::setw(12) << pos[1] 
+                    << types::t_real( i_pseudo->second ) * 0.25  << " " // weight
+                 << std::setw(18) << std::setprecision(7) << pos[0] << " " // pseudo position
+                 << std::setw(12) << pos[1] << " "
                  << std::setw(12) << pos[2] << "\n";
         }
 
