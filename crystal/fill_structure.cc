@@ -89,7 +89,6 @@ namespace LaDa
           atom.type = -1e0;
           _structure.atoms.push_back(atom);
         }
-        std::cout <<  "\n";
       } while( ++iterator );
 
       return true;

@@ -91,95 +91,110 @@ namespace LaDa
       _positions.resize( _n );
     }
 
-    atat::rMatrix3d retrieve_deformation( const Structure &_structure,
-                                          const size_t _nneigs )
-    {
-      __TRYBEGIN
-      namespace bnu = boost::numeric::ublas;
-      __ASSERT( _structure.lattice == NULL, "No lattice.\n" )
-
-      // Computes list of ideal first neighbors.
-      std::vector< atat::rVector3d > ideals;
-      foreach( const Lattice::t_Site &site, _structure.lattice->sites )
-        ideals.push_back( site.pos );
-      find_first_neighbors( ideals, _structure.lattice->cell, _nneigs );
-
-      // Computes list of _structure first neighbors.
-      std::vector< atat::rVector3d > non_ideals;
-      non_ideals.reserve( _structure.atoms.size() );
-      const atat::rVector3d origin( _structure.lattice->sites.front().pos );
-      types::t_real mindist(-1);
-      types::t_int minindex(-1);
-      types::t_int index(0);
-      foreach( const Structure::t_Atom &atom, _structure.atoms )
+    boost::tuples::tuple< atat::rMatrix3d, atat::rVector3d >
+      retrieve_deformation( const Structure &_structure, const size_t _nneigs )
       {
-        non_ideals.push_back( atom.pos );
-        const types::t_real d( atat::norm2( atom.pos - origin ) );
-        if( mindist > d or minindex < 0 )
+        typedef boost::tuples::tuple< atat::rMatrix3d, atat::rVector3d > t_Result;
+        __TRYBEGIN
+        namespace bt = boost::tuples;
+        namespace bnu = boost::numeric::ublas;
+        __ASSERT( _structure.lattice == NULL, "No lattice.\n" )
+      
+        // Computes list of ideal first neighbors.
+        std::vector< atat::rVector3d > ideals;
+        foreach( const Lattice::t_Site &site, _structure.lattice->sites )
+          ideals.push_back( site.pos );
+        find_first_neighbors( ideals, _structure.lattice->cell, _nneigs );
+      
+        // Computes list of _structure first neighbors.
+        // First looks for barycenter of all atoms.
+        // Then picks closest atom of site 0 as the one around which to look
+        // for nearest neighbors.
+        std::vector< atat::rVector3d > non_ideals;
+        non_ideals.reserve( _structure.atoms.size() );
+        const atat::rVector3d origin( _structure.lattice->sites.front().pos );
+        atat::rVector3d barycenter;
+        foreach( const Structure::t_Atom &atom, _structure.atoms )
         {
-          mindist = d;
-          minindex = index;
+          non_ideals.push_back( atom.pos );
+          barycenter += atom.pos;
         }
-        ++index;
-      }
-      __DOASSERT
-      (
-        mindist > types::tolerance, 
-        "Cannot work with translated structure.\n" 
-      )
-      if( minindex != 0 )  std::swap( non_ideals.front(), non_ideals[minindex] );
-      find_first_neighbors( non_ideals, _structure.cell, _nneigs );
-
-      // computes transformation matrix one row at a time. 
-      Fitting::Cgs cgs;
-      cgs.verbose = false;
-      cgs.itermax = 100;
-      cgs.tolerance = 1e-12;
-      atat::rMatrix3d result; 
-      for( size_t r(0); r < 3; ++r )
-      {
-        // Ax = b
-        bnu::vector<types::t_real> x(3), b(3);
-        bnu::matrix<types::t_real> A(3,3);
-        A = bnu::zero_matrix<types::t_real>(3,3);
-        // construct vector and matrices.
-        for( size_t i(0); i < 3; ++i )
+        barycenter =  barycenter * 1e0/types::t_real( non_ideals.size() ) ;
+        types::t_real mindist(-1);
+        types::t_int minindex(-1);
+        types::t_int index(0);
+        foreach( const Structure::t_Atom &atom, _structure.atoms )
         {
-          x(i) = 0e0;
-          b(i) = 0e0;
-        }
-        std::vector< atat::rVector3d > :: const_iterator i_ideal = ideals.begin();
-        std::vector< atat::rVector3d > :: const_iterator i_ideal_end = ideals.end();
-        std::vector< atat::rVector3d > :: const_iterator i_non_ideal = non_ideals.begin();
-        for(; i_ideal != i_ideal_end; ++i_ideal, ++i_non_ideal )
-        {
-          __ASSERT( i_non_ideal == non_ideals.end(), "Iterator out of range.\n" )
-          for( size_t i(0); i < 3; ++i )
+          if( atom.site != 0 ) continue;
+          const types::t_real d( atat::norm2( atom.pos - barycenter ) );
+          if( mindist > d or minindex < 0 )
           {
-            b(i) += (*i_ideal)(r) * (*i_non_ideal)(i);
-            for( size_t j(0); j < 3; ++j ) A(i,j) += (*i_non_ideal)(i) * (*i_non_ideal)(j);
+            mindist = d;
+            minindex = index;
           }
+          ++index;
         }
-
-        // solves Ax = b
-        Fitting::Cgs::t_Return convergence = cgs( A, x, b );
-//       std::cout << r << ": " << convergence.first << ", "
-//                 << convergence.second << ", "  << x << "\n"; 
-
-        // stores solution.
-        for( size_t i(0); i < 3; ++i ) result(r,i) = x(i); 
-      }
-
-      return result;
-      __ENDGROUP__
-      catch( ... )
-      {
-        std::cerr << "Error while searching for derformation matrix.\n";
-        atat::rMatrix3d result; 
-        result.zero();
+        __DOASSERT( minindex == -1, "Could not idealize structure. Are site indices set?\n" )
+        if( minindex != 0 )  std::swap( non_ideals.front(), non_ideals[minindex] );
+        find_first_neighbors( non_ideals, _structure.cell, _nneigs );
+      
+        // computes transformation matrix one row at a time. 
+        Fitting::Cgs cgs;
+        cgs.verbose = false;
+        cgs.itermax = 100;
+        cgs.tolerance = 1e-12;
+        t_Result result; 
+        for( size_t r(0); r < 3; ++r )
+        {
+          // Ax = b
+          bnu::vector<types::t_real> x(4), b(4);
+          bnu::matrix<types::t_real> A(4,4);
+          A = bnu::zero_matrix<types::t_real>(4,4);
+          // construct vector and matrices.
+          for( size_t i(0); i < 4; ++i )
+          {
+            x(i) = 0e0;
+            b(i) = 0e0;
+          }
+          typedef std::vector< atat::rVector3d > :: const_iterator t_cit;
+          t_cit i_ideal = ideals.begin();
+          t_cit i_ideal_end = ideals.end();
+          t_cit i_non_ideal = non_ideals.begin();
+          for(; i_ideal != i_ideal_end; ++i_ideal, ++i_non_ideal )
+          {
+            __ASSERT( i_non_ideal == non_ideals.end(), "Iterator out of range.\n" )
+            for( size_t i(0); i < 3; ++i )
+            {
+              b(i) += (*i_ideal)(r) * (*i_non_ideal)(i);
+              for( size_t j(0); j < 3; ++j )
+                A(i,j) += (*i_non_ideal)(i) * (*i_non_ideal)(j);
+              A(i,4) += (*i_non_ideal)(i);
+            }
+            for( size_t j(0); j < 3; ++j )
+              A(4,j) += (*i_non_ideal)(j);
+            A(4,4) += 1e0;
+            b(4) += (*i_ideal)(r);
+          }
+      
+          // solves Ax = b
+          Fitting::Cgs::t_Return convergence = cgs( A, x, b );
+//         std::cout << r << ": " << convergence.first << ", "
+//                   << convergence.second << ", "  << x << "\n"; 
+      
+          // stores solution.
+          for( size_t i(0); i < 3; ++i ) bt::get<0>(result)(r,i) = x(i); 
+          bt::get<1>(result)(r) = x(4);
+        }
+      
         return result;
-      }
-    };
+        __ENDGROUP__
+        catch( ... )
+        {
+          std::cerr << "Error while searching for derformation matrix.\n";
+          atat::rMatrix3d m; m.zero();
+          return t_Result( m, atat::rVector3d() );
+        }
+      };
 
   } // namespace Crystal
 

@@ -20,6 +20,7 @@ namespace LaDa
   { 
     bool Vff :: build_tree()
     {
+      namespace bt = boost::tuples;
       __TRYBEGIN
       __DOASSERT( structure.lattice == NULL, "Lattice not set.\n" )
       __DOASSERT( structure.lattice->sites.size() != 2,
@@ -29,13 +30,15 @@ namespace LaDa
 
       // computes deformation.
       // 16 is the number of first+second neighbors. I think.
-      const atat::rMatrix3d deformation( Crystal::retrieve_deformation( structure, 16 ) );
+      const boost::tuples::tuple< atat::rMatrix3d, atat::rVector3d >
+        deformation( Crystal::retrieve_deformation( structure, 16 ) );
 
       // now finds smith normal form of ideal lattice.
       atat::iVector3d modulo;
       const atat::rMatrix3d toSmith
       ( 
-        to_smith_matrix( deformation, structure.lattice->cell, structure.cell, modulo )
+        to_smith_matrix( bt::get<0>(deformation), structure.lattice->cell, 
+                         structure.cell, modulo )
       );
       __ASSERT( modulo(0) * modulo(1) * modulo(2) * 2 != structure.atoms.size(),
                    "Number of atoms in real and deformed matrices do not correspond: "
@@ -56,7 +59,7 @@ namespace LaDa
       {
         Crystal::find_first_neighbors( first_neighbors[i], structure.lattice->cell, 4 );
         foreach( atat::rVector3d &pos, first_neighbors[i] )
-          pos = deformation * pos; // adds in deformation for convenience.
+          pos = bt::get<0>(deformation) * pos; // adds in deformation for convenience.
       }
       const types::t_unsigned neighbors_site[2] = { 1, 0 };
 

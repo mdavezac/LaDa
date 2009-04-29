@@ -93,6 +93,7 @@ int main(int argc, char *argv[])
   __BPO_HIDDEN__;
   __BPO_SPECIFICS__( "Alloy Layers Characterization" )
     // extra parameters for alloy layers.
+    ("noorder,n", po::value<bool>()->default_value(false), "Do not perform layer ordering.\n" )
     ("structure", po::value<std::string>(), 
      "Prints epitaxial structure to xml, xyz, xsf files. Does not perform GA." )
     ("direction", po::value<std::string>(), 
@@ -118,6 +119,7 @@ int main(int argc, char *argv[])
   }
 
 
+  const bool do_not_order( vm.count("noorder") > 0 );
   fs::path input( vm["input"].as< std::string >() );
   __DOASSERT( not ( fs::is_regular( input ) or fs::is_symlink( input ) ),
               input << " is a not a valid file.\n" );
@@ -127,6 +129,18 @@ int main(int argc, char *argv[])
   Crystal :: Structure structure;
   boost::shared_ptr<Crystal::Lattice> lattice 
     = load_structure( structure, input.string() );
+  if(  do_not_order and print_structure );
+  { 
+    std::cout << "Creating Structure.\n";
+    const std::string filename( vm["structure"].as<std::string>() );
+    std::cout << "Printing structure to file and exiting.\n"
+              << " xml format in " << filename << ".xml\n"
+              << " xyz format in " << filename << ".xyz\n"
+              << " xsf format in " << filename << ".xsf\n";
+    printstructure( structure, filename );
+    return 0; 
+  } 
+  if( do_not_order ) return 0;
 
   // prints layer info.
   std::cout << "Layered structure characterization\n";

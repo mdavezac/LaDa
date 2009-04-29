@@ -18,6 +18,8 @@
 #include <opt/smith_normal_form.h>
 #include <crystal/ideal_lattice.h>
 
+#include <iomanip>
+
 #include "vff.h"
   
 namespace LaDa
@@ -215,7 +217,9 @@ namespace LaDa
           atat::rVector3d pos = (!structure.cell) * i_center->Origin().pos;
           ++nb_pseudos;
           stream << std::fixed    << std::setprecision(7)
-                 << std::setw(6)  << index << '0' << i_pseudo->first  // pseudo index
+                 << std::setw(6)  << index << '0'
+                    << std::setw(2) << std::setfill('0') 
+                    << std::right << i_pseudo->first  // pseudo index
                  << std::setw(12) << pos[0] // pseudo position
                  << std::setw(12) << pos[1] 
                  << std::setw(12) << pos[2] 
