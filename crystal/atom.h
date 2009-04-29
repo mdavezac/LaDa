@@ -63,17 +63,17 @@ namespace LaDa
         //! The type of the occupation
         typedef T_TYPE t_Type;
 
-      public:
-        //! No coordinat is frozen
-        const static types::t_unsigned FREEZE_NONE = 0;
-        //! Cartesian X coordinate is frozen ( Atom_Type::pos[0] )
-        const static types::t_unsigned FREEZE_X    = 1;
-        //! Cartesian Y coordinate is frozen ( Atom_Type::pos[1] )
-        const static types::t_unsigned FREEZE_Y    = 2;
-        //! Cartesian z coordinate is frozen ( Atom_Type::pos[2] )
-        const static types::t_unsigned FREEZE_Z    = 4;
-        //! Occupation coordinate is frozen ( Atom_Type::type )
-        const static types::t_unsigned FREEZE_T    = 8;
+        //! Tags to freeze cell coordinates.
+        enum t_FreezeAtom
+        {
+          FREEZE_NONE =  0, //!< Freeze no atomic coordinate.
+          FREEZE_X   =  1,  //!< Freeze x coordinate.
+          FREEZE_Y   =  2,  //!< Freeze y coordinate.
+          FREEZE_Z   =  4,  //!< Freeze z coordinate.
+          FREEZE_T   =  8,  //!< Freeze type.
+          FREEZE_CARTESIANS  =  7,  //!< Freeze cartesians coordinates.
+          FREEZE_ALL =  15,  //!< Freeze all.
+        };
 
       public:
         //! The atomic position in cartesian coordinate.

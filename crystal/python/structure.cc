@@ -9,6 +9,7 @@
 #include <complex>
 
 #include <boost/python.hpp>
+#include <boost/python/enum.hpp>
 #ifdef _MPI
 # include <boost/mpi/python.hpp>
 #endif
@@ -103,11 +104,25 @@ namespace LaDa
     void expose_structure()
     {
       namespace bp = boost::python;
+      typedef Crystal::Structure::t_FreezeCell t_FreezeCell;
+      bp::enum_<t_FreezeCell>( "FreezeCell", "Tags to freeze cell coordinates." )
+        .value( "none", Crystal::Structure::FREEZE_NONE )
+        .value(   "xx", Crystal::Structure::FREEZE_XX )
+        .value(   "xy", Crystal::Structure::FREEZE_XY )
+        .value(   "xz", Crystal::Structure::FREEZE_XZ )
+        .value(   "yy", Crystal::Structure::FREEZE_YY )
+        .value(   "yz", Crystal::Structure::FREEZE_YZ )
+        .value(   "zz", Crystal::Structure::FREEZE_ZZ )
+        .value(  "all", Crystal::Structure::FREEZE_ALL )
+        .export_values();
+
       bp::class_< Crystal::Structure >( "Structure", "Defines a structure.\n"
                                         "Generally, it is a super-cell of a LaDa.Lattice object." )
         .def( bp::init< Crystal::Structure& >() )
         .def_readwrite( "cell",    &Crystal::Structure::cell,
                         "The cell in cartesian coordinates (in units of LaDa.Structure.scale)." )
+        .def_readwrite( "freeze", &Crystal::Structure::freeze,
+                        "Tags to freeze coordinates when relaxing structure.\n" )
         .def_readwrite( "atoms",   &Crystal::Structure::atoms,
                         "The list of atoms of type LaDa.details_Atom. "
                         "Coordinates are in units of LaDa.Structure.Scale" )

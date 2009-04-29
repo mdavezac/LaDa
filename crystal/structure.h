@@ -73,25 +73,18 @@ namespace LaDa
       //! The type of the collection of atoms. 
       typedef std::vector< t_Atom >     t_Atoms;
 
-      //! Freeze no coordinate of the unit-cell
-      const static types::t_unsigned FREEZE_NONE =  0;
-      //! Freeze the XX coordinate of the unit-cell ( Structure::cell(0,0) )
-      const static types::t_unsigned FREEZE_XX   =  1;
-      //! \brief Freeze the XY coordinate of the unit-cell ( Structure::cell(0,1) and
-      //!        Structure::cell(1,0) )
-      const static types::t_unsigned FREEZE_XY   =  2;
-      //! \brief Freeze the XZ coordinate of the unit-cell ( Structure::cell(0,2) and
-      //!        Structure::cell(2,0) )
-      const static types::t_unsigned FREEZE_XZ   =  4;
-      //! Freeze the YY coordinate of the unit-cell ( Structure::cell(2,2) )
-      const static types::t_unsigned FREEZE_YY   =  8;
-      //! \brief Freeze the YZ coordinate of the unit-cell ( Structure::cell(1,2) and
-      //!        Structure::cell(2,1) )
-      const static types::t_unsigned FREEZE_YZ   = 16;
-      //! Freeze the ZZ coordinate of the unit-cell ( Structure::cell(2,2) )
-      const static types::t_unsigned FREEZE_ZZ   = 32;
-      //! Freeze all coordinates of the unit cell
-      const static types::t_unsigned FREEZE_ALL  = 63;
+      //! Tags to freeze cell coordinates.
+      enum t_FreezeCell
+      {
+        FREEZE_NONE =  0, //!< Freeze no coordinate of the unit-cell
+        FREEZE_XX   =  1, //!< Freeze (0,0)
+        FREEZE_XY   =  2, //!< Freeze (0,1) and (1,0)
+        FREEZE_XZ   =  4, //!< Freeze (0,2) and (2,0)
+        FREEZE_YY   =  8, //!< Freeze (1,1) 
+        FREEZE_YZ   = 16, //!< Freeze (1,2) and (2,1)
+        FREEZE_ZZ   = 32, //!< Freeze (2,2)
+        FREEZE_ALL  = 63  //!< Freeze all coordinates 
+      };
 
       //! The unit-cell of the structure in cartesian coordinate.
       atat::rMatrix3d cell;

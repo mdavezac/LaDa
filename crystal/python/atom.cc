@@ -68,6 +68,16 @@ namespace LaDa
       typedef Crystal::Structure::t_kAtom t_kAtom;
       typedef Crystal::Lattice::t_Site t_Site;
 
+      bp::enum_<t_Atom::t_FreezeAtom>( "FreezeAtom", "Tags to freeze atomic coordinates." )
+        .value(       "none", t_Atom::FREEZE_NONE )
+        .value(          "x", t_Atom::FREEZE_X )
+        .value(          "y", t_Atom::FREEZE_Y )
+        .value(          "z", t_Atom::FREEZE_Z )
+        .value(       "type", t_Atom::FREEZE_T )
+        .value( "cartesians", t_Atom::FREEZE_CARTESIANS )
+        .value(        "all", t_Atom::FREEZE_ALL )
+        .export_values();
+
       bp::class_< Crystal::Structure::t_Atoms >("VecStrings")
         .def(bp::vector_indexing_suite< t_Site::t_Type >());
 
