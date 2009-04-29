@@ -1,5 +1,5 @@
 //
-//  Version: $Id: ideal_lattice.h 1075 2009-04-29 17:34:00Z davezac $
+//  Version: $Id$
 //
 
 #ifndef _LADA_CRYSTAL_DIVIDE_AND_CONQUER_H_
@@ -26,28 +26,48 @@ namespace LaDa
     template< class T_TYPE >
       class ConquerBox
       {
+          //! Type of the atoms.
+          typedef typename Crystal::TStructure<T_TYPE>::t_Atoms t_Atoms;
+          //! Type of an atom.
+          typedef typename Crystal::TStructure<T_TYPE>::t_Atom t_Atom;
         public:
           //! Type of the divide and conquer box, with cell and origin.
-          typedef boost::tuples::tuple< atat::rMatrix3d, atat::rVector3d > t_Box;
+          typedef boost::tuples::tuple
+          < 
+            atat::rMatrix3d, 
+            atat::rVector3d,
+            atat::rMatrix3d
+          > t_Box;
+          //! \brief Type of the atomic state.
+          //! \detail first item contains const ref to atoms.
+          //!         second item contains index of atom in structure.
+          //!         third item is true if atom is in small box.
+          typedef boost::tuples::tuple
+          <
+            const t_Atom &,
+            size_t,
+            bool
+          > t_State;
           //! Returns the cell of the divide and conquer box.
           const atat::rMatrix3d& cell() const { return bt::get<0>(box_); }
           //! Returns the cell origin of the divide and conquer box.
           const atat::rVector3d& origin() const { return bt::get<1>(box_); }
           //! Returns the index of and atom inside this box, w.r.t. the original structure.
-          size_t index( size_t _i ) const { return indices[_i]; }
-          //! \brief Returns true if \a _vec points inside the box.
-          //! \details \a _vec is in cartesian coordinates.
-          bool is_inside_box_cartesian( const atat::rVector3d &_vec ) const;
-          //! \brief Returns true if \a _vec points inside the box.
-          //! \details \a _vec is in fractional coordinates.
-          bool is_inside_box_fractional( const atat::rVector3d &_vec ) const;
+          const t_State& state( size_t _i ) const
+          { 
+            __ASSERT( _i < states_.size(), "Index out-of-range.\n" )
+            return states_[_i]; 
+          }
+          //! Iterator to the first state in the (large) box.
+          t_State::const_iterator begin() const { states_.begin(); }
+          //! Iterator to the end of the states in the (large) box.
+          t_State::const_iterator end() const { states_.end(); }
 
         protected:
-          t_Box overlap_box_;
+          //! Holds boxes sizes and position.
           t_Box box_;
-          Crystal::Structure &structure_;
-          std::vector< const Crystal::Structure<T_TYPE>::t_Atom& > atoms_;
-          std::vector< size_t > indices_;
+          //! Holds states located in the box.
+          std::vector< const t_State > states_;
       };
 
     //! Type of the return of the divide and conquer method.
@@ -71,10 +91,13 @@ namespace LaDa
     //!                                  which to include further atoms.
     //!                                 (Cartesian coordinates).
     typename t_ConquerBoxes<T_TYPE>::shared_ptr  
-      divide_and_conquer_boxes( const Crystal::Structure &_structure, 
+      divide_and_conquer_boxes( const Crystal::TStructure<T_TYPE> &_structure, 
                                 const atat::iVector3d &_n,
                                 const types::t_real _overlap_distance );
                            
+    typename t_ConquerBoxes<T_TYPE>::shared_ptr  
+      atat::iVector3d guess_dnc_params( const Crystal::TStructure<T_TYPE> &_structure, 
+                                        size_t _nperbox )
 
   } // namespace Crystal
 

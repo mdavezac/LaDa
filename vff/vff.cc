@@ -27,6 +27,16 @@ namespace LaDa
   namespace Vff
   { 
 
+    bool vff :: first_neighbors_( std::vector< std::vector< atat::rVector3d > >& _fn )
+    {
+      typedef std::vector< std::vector< atat::rVector3d > > t_FirstNeighbors;
+      _fn.resize( structure.lattice->sites.size() );
+      foreach( const Crystal::Lattice::t_Site &site, structure.lattice->sites )
+        first_neighbors[0].push_back( site.pos );
+      first_neighbors[1] = first_neighbors[0];
+      std::swap( first_neighbors[1][0], first_neighbors[1][1] ); 
+    }
+
     bool Vff :: construct_centers()
     {
       centers.clear();
