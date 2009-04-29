@@ -77,7 +77,7 @@ namespace LaDa
            and structure.lattice->get_nb_types(0) + structure.lattice->get_nb_types(1) > 4 )
       { 
         std::cerr << "Cannot do vff on this lattice.\n" 
-                     "Need two sites with at most two different atomic types\n";
+                     "Need two sites with at most two different atomic types.\n";
         return false;
       }
 
@@ -86,8 +86,7 @@ namespace LaDa
 
       if( not parent )
       {
-        std::cerr << "Could not find an <Functional type=\"vff\"> tag in input file" 
-                  << std::endl;
+        std::cerr << "Could not find an <Functional type=\"vff\"> tag in input file.\n";
         return false;
       }
       if( not parent->Attribute( "filename" ) ) return load_( *parent );
@@ -102,8 +101,7 @@ namespace LaDa
                                "Functional", "type", "vff" );
 
       if( parent ) return load_( *parent );
-      std::cerr << "Could not find an <Functional type=\"vff\"> tag in input file" 
-                << std::endl;
+      std::cerr << "Could not find an <Functional type=\"vff\"> tag in input file.\n";
       return false;
     }
 

@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
   __BPO_HIDDEN__;
   __BPO_SPECIFICS__( "Alloy Layers Characterization" )
     // extra parameters for alloy layers.
-    ("noorder,n", po::value<bool>()->default_value(false), "Do not perform layer ordering.\n" )
+    ("noorder,n", "Do not perform layer ordering.\n" )
     ("structure", po::value<std::string>(), 
      "Prints epitaxial structure to xml, xyz, xsf files. Does not perform GA." )
     ("direction", po::value<std::string>(), 
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
   Crystal :: Structure structure;
   boost::shared_ptr<Crystal::Lattice> lattice 
     = load_structure( structure, input.string() );
-  if(  do_not_order and print_structure );
+  if(  do_not_order and print_structure )
   { 
     std::cout << "Creating Structure.\n";
     const std::string filename( vm["structure"].as<std::string>() );

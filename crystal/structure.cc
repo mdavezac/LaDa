@@ -315,6 +315,23 @@ namespace LaDa
       const TiXmlElement* parent = find_node( _element );
       __DOASSERT( not parent, "Could not find structure tag.\n" )
 
+      if( parent->Attribute("filename") )
+      {
+        namespace bfs = boost::filesystem;
+        const bfs::path path( Print::reformat_home( parent->Attribute( "filename" ) ) );
+        __DOASSERT( not bfs::exists( path ), path.string() + " does not exist.\n" )
+        TiXmlDocument doc;
+        opt::read_xmlfile( path, doc );
+        __DOASSERT( not doc.FirstChild( "Job" ),
+                    "Root tag <Job> does not exist in " + path.string() + ".\n" )
+        parent = opt::find_node( *doc.FirstChildElement( "Job" ),
+                                 "Structure" );
+      
+        if( parent ) return Load( *parent );
+        std::cerr << "Could not find an <Structure> tag in input file.\n";
+        return false;
+      }
+      
       
       // trie to load cell.
       if( load_cell( *parent ) )
@@ -563,7 +580,7 @@ namespace LaDa
     std::ostream& Structure :: print_xcrysden( std::ostream &_stream ) const
     {
       if( not lattice ) return _stream;
-      _stream << "CRYSTAL\nPRIMVEC\n" << ( (~cell) * scale ) << "PRIMCOORD\n" 
+      _stream << "CRYSTAL\nPRIMVEC\n" << ( (~cell) * scale ) << "\nPRIMCOORD\n" 
                 << atoms.size() << " 1 \n";  
       t_Atoms :: const_iterator i_atom = atoms.begin();
       t_Atoms :: const_iterator i_atom_end = atoms.end();
