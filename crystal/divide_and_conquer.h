@@ -12,6 +12,7 @@
 #include <vector>
 
 #include <boost/tuple/tuple.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <opt/types.h>
 
@@ -49,9 +50,9 @@ namespace LaDa
             bool
           > t_State;
           //! Returns the cell of the divide and conquer box.
-          const atat::rMatrix3d& cell() const { return bt::get<0>(box_); }
+          const atat::rMatrix3d& cell() const { return boost::tuples::get<0>(box_); }
           //! Returns the cell origin of the divide and conquer box.
-          const atat::rVector3d& origin() const { return bt::get<1>(box_); }
+          const atat::rVector3d& origin() const { return boost::tuples::get<1>(box_); }
           //! Returns the index of and atom inside this box, w.r.t. the original structure.
           const t_State& state( size_t _i ) const
           { 
@@ -59,9 +60,11 @@ namespace LaDa
             return states_[_i]; 
           }
           //! Iterator to the first state in the (large) box.
-          t_State::const_iterator begin() const { states_.begin(); }
+          typename t_State::const_iterator begin() const { states_.begin(); }
           //! Iterator to the end of the states in the (large) box.
-          t_State::const_iterator end() const { states_.end(); }
+          typename t_State::const_iterator end() const { states_.end(); }
+          //! Number of states in the (large) box.
+          size_t size() const { states_.size(); }
 
         protected:
           //! Holds boxes sizes and position.
@@ -77,7 +80,7 @@ namespace LaDa
         //! Type of the container returned of the divide and conquer method.
         typedef std::vector< ConquerBox<T_TYPE> > type;
         //! Type of the return of the divide and conquer method. A shared pointer.
-        typedef std::vector< ConquerBox<T_TYPE> > shared_ptr;
+        typedef boost::shared_ptr< type > shared_ptr;
       };
     
     //! \brief Returns divide and conquer boxes.
@@ -90,14 +93,18 @@ namespace LaDa
     //! \params[in] \a _overlap_distance is the size of the larger box for
     //!                                  which to include further atoms.
     //!                                 (Cartesian coordinates).
-    typename t_ConquerBoxes<T_TYPE>::shared_ptr  
+    template< class T_TYPE > typename t_ConquerBoxes<T_TYPE>::shared_ptr  
       divide_and_conquer_boxes( const Crystal::TStructure<T_TYPE> &_structure, 
                                 const atat::iVector3d &_n,
                                 const types::t_real _overlap_distance );
                            
-    typename t_ConquerBoxes<T_TYPE>::shared_ptr  
+    //! \brief Tries to guess adequate parameters for divide and conquer.
+    //! \details the conditions are that the number of boxes is a multiple of
+    //!          the number of processor, the number of atoms per box, the
+    //!          squatness of the box.
+    template< class T_TYPE > 
       atat::iVector3d guess_dnc_params( const Crystal::TStructure<T_TYPE> &_structure, 
-                                        size_t _nperbox )
+                                        size_t _nperbox );
 
   } // namespace Crystal
 

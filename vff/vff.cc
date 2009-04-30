@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <functional>
+#include <iomanip>
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -18,7 +19,6 @@
 #include <opt/smith_normal_form.h>
 #include <crystal/ideal_lattice.h>
 
-#include <iomanip>
 
 #include "vff.h"
   
@@ -27,14 +27,18 @@ namespace LaDa
   namespace Vff
   { 
 
-    bool vff :: first_neighbors_( std::vector< std::vector< atat::rVector3d > >& _fn )
+    void Vff :: first_neighbors_( std::vector< std::vector< atat::rVector3d > >& _fn )
     {
+      const size_t Nsites( structure.lattice->sites.size() );
+      __DOASSERT( Nsites != 2, "Expected two sites for VFF.\n" )
       typedef std::vector< std::vector< atat::rVector3d > > t_FirstNeighbors;
       _fn.resize( structure.lattice->sites.size() );
       foreach( const Crystal::Lattice::t_Site &site, structure.lattice->sites )
-        first_neighbors[0].push_back( site.pos );
-      first_neighbors[1] = first_neighbors[0];
-      std::swap( first_neighbors[1][0], first_neighbors[1][1] ); 
+        _fn[0].push_back( site.pos );
+      _fn[1] = _fn[0];
+      std::swap( _fn[1][0], _fn[1][1] ); 
+      for( size_t i(0); i < Nsites; ++i )
+        Crystal::find_first_neighbors( _fn[i], structure.lattice->cell, 4 );
     }
 
     bool Vff :: construct_centers()
@@ -43,7 +47,6 @@ namespace LaDa
       
       t_Atoms :: iterator i_atom = structure.atoms.begin();
       t_Atoms :: iterator i_atom_end = structure.atoms.end();
-
       for(types::t_unsigned index=0; i_atom != i_atom_end; ++i_atom, ++index )
         centers.push_back( AtomicCenter( structure, *i_atom, index ) );
 
@@ -227,7 +230,8 @@ namespace LaDa
           stream << std::fixed    << std::setprecision(7)
                  << std::setw(6)  << index << '0'
                     << std::setw(2) << std::setfill('0') 
-                    << std::right << i_pseudo->first  << " " // pseudo index
+                    << std::right << i_pseudo->first  
+                    << " " << std::setfill(' ') // pseudo index
                  << std::setw(12) << pos[0] << " "  // pseudo position
                  << std::setw(12) << pos[1] << " "  
                  << std::setw(12) << pos[2] << " "  

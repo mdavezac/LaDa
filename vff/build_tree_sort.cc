@@ -17,62 +17,14 @@ namespace LaDa
 {
   namespace Vff
   { 
-    namespace details
-    {
-      template<  class T_CONTAINER >
-        class Order
-        {
-          public:
-            bool operator( atat::rVector3d _a, atat::rVector3d _b ) const
-            {
-              const types::t_real a( atat::norm2(_a) );
-              const types::t_real b( atat::norm2(_b) );
-              if( Fuzzy::neq(a, b) ) return a < b;
-              if( Fuzzy::neq( _a(0), _b(0) )  ) return _a(0) < _b(0);
-              if( Fuzzy::neq( _a(1), _b(1) )  ) return _a(1) < _b(1);
-              return _a(2) < _b(2);
-            }
-        };
-      template<  class T_CONTAINER >
-        class OrderI
-        {
-          public:
-            OrderI  ( atat::rVector3d &_origin, 
-                      const T_CONTAINER &_container )
-                   : o( _origin ), c( _container ) {}
-            OrderI( const Order &_c ) : o(_c.o), c(_c.c) {}
-
-            bool operator( atat::rVector3d _a, atat::rVector3d _b ) const
-            {
-              const types::t_real a( atat::norm2(_a) );
-              const types::t_real b( atat::norm2(_b) );
-              if( Fuzzy::neq(a, b) ) return a < b;
-              if( Fuzzy::neq( _a(0), _b(0) )  ) return _a(0) < _b(0);
-              if( Fuzzy::neq( _a(1), _b(1) )  ) return _a(1) < _b(1);
-              return _a(2) < _b(2);
-            }
-            bool operator( size_t _a, size_t _b ) const;
-            {
-              ASSERT( _a < c.size() and _b < c.size(), "Index out-of-range.\n" )
-              return Order(  c[_a] - o,  c[_b] - o );
-            }
-          private:;
-            const T_CONTAINER &c;
-            const atat::rVector3d &o;
-        };
-    }
-
     bool Vff :: build_tree_sort()
     {
       // finds first neighbors on ideal lattice.
       typedef std::vector< std::vector< atat::rVector3d > > t_FirstNeighbors;
       t_FirstNeighbors fn;
       first_neighbors_( fn );
-      for( size_t i(0); i < structure.lattice->sites.size(); ++i )
-        std::sort( fn[i].begin(), fn[i].end(), details::Order() );
-
-      centers.clear();
       
+      centers.clear();
       // Creates a list of centers
       t_Atoms :: iterator i_atom = structure.atoms.begin();
       t_Atoms :: iterator i_atom_end = structure.atoms.end();
@@ -80,54 +32,63 @@ namespace LaDa
       for(types::t_unsigned index=0; i_atom != i_atom_end; ++i_atom, ++index )
         centers.push_back( AtomicCenter( structure, *i_atom, index ) );
 
-      // builds an array of indices.
-      std::vector< size_t > indices( centers.size() );
+      t_Centers :: iterator i_begin = centers.begin();
+      t_Centers :: iterator i_end = centers.end();
+      t_Centers :: iterator i_center, i_bond;
+      for( i_center = i_begin; i_center != i_end; ++i_center )
       {
-        std::vector<size_t> :: iterator i_b = indices.begin();
-        std::vector<size_t> :: iterator i_e = indices.end();
-        for( size_t i(0); i_b != i_e; ++i_b, ++i ) *i_b = i;
-      }
-      t_Centers :: iterator i_center( centers.begin() );
-      t_Centers :: iterator i_center_end = centers.end();
-      for( i_center; i_center != i_center_end; ++i_center )
-      {
-        std::partial_sort( indices.begin(), 
-                           indices.begin() + 5, 
-                           indices.end(),
-                           details::OrderI( i_center, centers ) );
-        const site( structure.atoms[ indices.front() ].site );
-        __ASSERT( site > 0 and site < structure.lattice->site.size(),
-                  "sites not indexed.\n" )
-        for( size_t i(1); i < 5; ++i )
+        const size_t site( i_center->Origin().site );
+        __DOASSERT( site > structure.lattice->sites.size(), "Unindexed site.\n" )
+        const size_t neigh_site( site == 0 ? 1: 0 );
+        const types::t_real cutoff = types::t_real(0.25) * atat::norm2( fn[site].front() );
+                   
+
+        for( i_bond = i_begin; i_bond != i_end; ++i_bond)
         {
-          t_Centers :: iterator i_bond( centers.begin() + indices[i] );
-          i_center->bonds.push_back( t_Center::__make__iterator__( i_bond ) );
-          const atat::rVector3d dfrac
-          ( 
-              inv_cell 
-            * ( 
-                  (const atat::rVector3d) *i_center 
-                - (const atat::rVector3d) *i_bond
-                + fn[site][i-1] 
-              )
-           ); 
-          const atat::rVector3d frac
-          (
-            rint( dfrac(0) ),
-            rint( dfrac(1) ),
-            rint( dfrac(2) )
-          );
-          i_center->translations.push_back( frac );
-          i_center->do_translates.push_back
-          ( 
-            atat::norm2(frac) > atat::zero_tolerance 
-          );
-        }
-      }
+          if( i_bond == i_center ) continue;
+          if( i_bond->Origin().site == site ) continue;
+          
+          std::vector<atat::rVector3d> :: const_iterator i_neigh = fn[site].begin();
+          const std::vector<atat::rVector3d> :: const_iterator i_neigh_end = fn[site].end();
+          for(; i_neigh != i_neigh_end; ++i_neigh )
+          {
+            const atat::rVector3d image
+            ( 
+              i_center->origin->pos + *i_neigh - i_bond->origin->pos 
+            );
+            const atat::rVector3d frac_image( (!structure.cell) * image );
+            const atat::rVector3d frac_centered
+            ( 
+              frac_image[0] - rint( frac_image[0] ),
+              frac_image[1] - rint( frac_image[1] ),
+              frac_image[2] - rint( frac_image[2] )
+            );
+            const atat::rVector3d cut( structure.cell * frac_centered );
+
+            if( atat::norm2( cut ) > cutoff ) continue;
+            
+            i_center->bonds.push_back( t_Center ::__make__iterator__(i_bond) );
+            const atat::rVector3d trans
+            (
+              rint( frac_image[0] ),
+              rint( frac_image[1] ),
+              rint( frac_image[2] ) 
+            );
+            i_center->translations.push_back( trans );
+            i_center->do_translates.push_back
+            ( 
+              atat::norm2(trans) > atat::zero_tolerance 
+            );
+
+            if( i_center->bonds.size() == 4 ) break;
+          } // loop over neighbors
+          if( i_center->bonds.size() == 4 ) break;
+        } // loop over bonds
+      } // loop over centers 
 
       __DODEBUGCODE( check_tree(); )
       return true;
-    } // Vff :: construct_bond_list
+    } // Vff :: build_tree_sort
 
   } // namespace vff
 } // namespace LaDa

@@ -120,6 +120,8 @@ namespace LaDa
         //!          Uses smith normal form to speed up first neighbor search.
         //!          Defined in build_tree.cc.
         bool build_tree();
+        //! Builds first neighbor tree using partial sort.
+        bool build_tree_sort();
         //! \brief Constructs the mesh of AtomicCenter
         //! \details Newer version than Functional::initialize_centers, it works even if
         //! structure is slightly distorted.
@@ -141,6 +143,8 @@ namespace LaDa
         //! \brief Loads Functional for one or two site lattices.
         //! \details If \a _node is not the correct node, the results are undefined.
         bool load_( const TiXmlElement &_node );
+        //! Finds first neighbors of ideal lattice sites.
+        void first_neighbors_( std::vector< std::vector< atat::rVector3d > >& _fn );
 
         //! \brief computes smith index.
         //! \details Defined in build_tree.cc.

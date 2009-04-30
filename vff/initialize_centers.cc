@@ -24,9 +24,14 @@ namespace LaDa
       // Creates a list of centers
       t_Atoms :: iterator i_atom = structure.atoms.begin();
       t_Atoms :: iterator i_atom_end = structure.atoms.end();
-
       for(types::t_unsigned index=0; i_atom != i_atom_end; ++i_atom, ++index )
         centers.push_back( AtomicCenter( structure, *i_atom, index ) );
+
+      // finds first neighbors on ideal lattice.
+      typedef std::vector< std::vector< atat::rVector3d > > t_FirstNeighbors;
+      t_FirstNeighbors fn;
+      first_neighbors_( fn );
+
 
       // Creates a list of closest neighbors
       std::vector< atat::rVector3d > neighbors;
@@ -65,7 +70,6 @@ namespace LaDa
       t_Centers :: iterator i_begin = centers.begin();
       t_Centers :: iterator i_end = centers.end();
       t_Centers :: iterator i_center, i_bond;
-      atat::rVector3d image;
       atat::rVector3d frac_image;
       atat::rVector3d cut;
       cut = neighbors.front();
@@ -73,33 +77,46 @@ namespace LaDa
       for( i_center = i_begin; i_center != i_end; ++i_center )
       {
         for( i_bond = i_begin; i_bond != i_end; ++i_bond)
-          if( i_bond != i_center )
+        {
+          if( i_bond == i_center ) continue;
+          
+          std::vector<atat::rVector3d> :: const_iterator i_neigh = neighbors.begin();
+          std::vector<atat::rVector3d> :: const_iterator i_neigh_end = neighbors.end();
+          for(; i_neigh != i_neigh_end; ++i_neigh )
           {
-            std::vector<atat::rVector3d> :: const_iterator i_neigh = neighbors.begin();
-            std::vector<atat::rVector3d> :: const_iterator i_neigh_end = neighbors.end();
-            for(; i_neigh != i_neigh_end; ++i_neigh )
-            {
-              image = i_center->origin->pos - *i_neigh - i_bond->origin->pos;
-              frac_image = (!structure.cell) * image;
-              cut[0] = frac_image[0] - rint( frac_image[0] );
-              cut[1] = frac_image[1] - rint( frac_image[1] );
-              cut[2] = frac_image[2] - rint( frac_image[2] );
-              cut = structure.cell * cut;
-              if( atat::norm2( cut ) < cutoff )
-              {
-                i_center->bonds.push_back( t_Center ::__make__iterator__(i_bond) );
-                frac_image[0] = rint( frac_image[0] );
-                frac_image[1] = rint( frac_image[1] );
-                frac_image[2] = rint( frac_image[2] );
-                i_center->translations.push_back( frac_image );
-                i_center->do_translates.push_back
-                ( 
-                  atat::norm2(frac_image) > atat::zero_tolerance 
-                );
-              }
-            }
-          }
-      }
+            const atat::rVector3d image
+            ( 
+              i_center->origin->pos - *i_neigh - i_bond->origin->pos 
+            );
+            const atat::rVector3d frac_image( (!structure.cell) * image );
+            const atat::rVector3d frac_centered
+            ( 
+              frac_image[0] - rint( frac_image[0] ),
+              frac_image[1] - rint( frac_image[1] ),
+              frac_image[2] - rint( frac_image[2] )
+            );
+            const atat::rVector3d cut( structure.cell * frac_centered );
+
+            if( atat::norm2( cut ) > cutoff ) continue;
+            
+            i_center->bonds.push_back( t_Center ::__make__iterator__(i_bond) );
+            const atat::rVector3d trans
+            (
+              rint( frac_image[0] ),
+              rint( frac_image[1] ),
+              rint( frac_image[2] ) 
+            );
+            i_center->translations.push_back( trans );
+            i_center->do_translates.push_back
+            ( 
+              atat::norm2(trans) > atat::zero_tolerance 
+            );
+
+            if( i_center->bonds.size() == 4 ) break;
+          } // loop over neighbors
+          if( i_center->bonds.size() == 4 ) break;
+        } // loop over bonds
+      } // loop over centers 
 
       __DODEBUGCODE( check_tree(); )
       return true;
