@@ -131,22 +131,31 @@ namespace LaDa
         void print_out( std::ostream &stream ) const;
 
       protected:
+        typedef boost::tuples::tuple
+                < 
+                  atat::rMatrix3d, 
+                  atat::rVector3d, 
+                  atat::iVector3d 
+                > t_Transformation;
+        
         //! \brief Loads Functional for one or two site lattices.
         //! \details If \a _node is not the correct node, the results are undefined.
         bool load_( const TiXmlElement &_node );
 
         //! \brief computes smith index.
         //! \details Defined in build_tree.cc.
-        void smith_index_( const atat::rMatrix3d &_toSmith,
-                           const atat::iVector3d &_modulo,
+        void smith_index_( const t_Transformation &_transformation,
                            const atat::rVector3d &_pos,
                            atat::iVector3d &_index );
         //! \brief Computes matrix to get to smith index.
         //! \details Defined in build_tree.cc.
-        atat::rMatrix3d to_smith_matrix( const atat::rMatrix3d &_deformation,
-                                         const atat::rMatrix3d &_lat_cell,
-                                         const atat::rMatrix3d &_str_cell,
-                                         atat::iVector3d &_smith );
+        t_Transformation to_smith_matrix( const boost::tuples::tuple
+                                                <
+                                                  atat::rMatrix3d,
+                                                  atat::rVector3d 
+                                                > &_deformation,
+                                          const atat::rMatrix3d &_lat_cell,
+                                          const atat::rMatrix3d &_str_cell );
 
         //! Type of the atomic centers
         typedef AtomicCenter t_Center;  

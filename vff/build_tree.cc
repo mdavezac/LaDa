@@ -31,21 +31,29 @@ namespace LaDa
       // computes deformation.
       // 16 is the number of first+second neighbors. I think.
       const boost::tuples::tuple< atat::rMatrix3d, atat::rVector3d >
-        deformation( Crystal::retrieve_deformation( structure, 16 ) );
+        deformation( Crystal::retrieve_deformation( structure, 18 ) );
 
       // now finds smith normal form of ideal lattice.
-      atat::iVector3d modulo;
-      const atat::rMatrix3d toSmith
+      const t_Transformation transformation
       ( 
-        to_smith_matrix( bt::get<0>(deformation), structure.lattice->cell, 
-                         structure.cell, modulo )
+        to_smith_matrix( deformation, structure.lattice->cell, structure.cell )
       );
-      __ASSERT( modulo(0) * modulo(1) * modulo(2) * 2 != structure.atoms.size(),
-                   "Number of atoms in real and deformed matrices do not correspond: "
-                <<  modulo(0) << " * " << modulo(1) << " * " <<  modulo(2) 
-                << " * " << Nsites << " = " 
-                <<  modulo(0) * modulo(1) * modulo(2) * Nsites << " != " 
-                <<  structure.atoms.size() << ".\n" )
+
+      __ASSERT
+      ( 
+       2 * bt::get<2>(transformation)(0) 
+         * bt::get<2>(transformation)(1) 
+         * bt::get<2>(transformation)(2)
+       != structure.atoms.size(),
+            "Number of atoms in real and deformed matrices do not correspond: "
+       <<  bt::get<2>(transformation)(0) << " * "
+       << bt::get<2>(transformation)(1) << " * " <<  bt::get<2>(transformation)(2) 
+       << " * " << Nsites << " = " 
+       << (   bt::get<2>(transformation)(0) * bt::get<2>(transformation)(1)
+            * bt::get<2>(transformation)(2) * Nsites )
+       << " != " 
+       <<  structure.atoms.size() << ".\n" 
+      )
 
       // finds ideal first neighbor positions for each lattice sits.
       typedef std::vector< std::vector< atat::rVector3d > > t_FirstNeighbors;
@@ -55,20 +63,25 @@ namespace LaDa
       first_neighbors[1] = first_neighbors[0];
       std::swap( first_neighbors[1][0], first_neighbors[1][1] ); 
       
-      for( size_t i(0); i < Nsites; ++i )
-      {
-        Crystal::find_first_neighbors( first_neighbors[i], structure.lattice->cell, 4 );
-        foreach( atat::rVector3d &pos, first_neighbors[i] )
-          pos = bt::get<0>(deformation) * pos; // adds in deformation for convenience.
+      { // finds first neighbors and adds in deformation.
+        const atat::rMatrix3d inv_def( !bt::get<0>( deformation ) );
+        for( size_t i(0); i < Nsites; ++i )
+        {
+          Crystal::find_first_neighbors( first_neighbors[i], structure.lattice->cell, 4 );
+          foreach( atat::rVector3d &pos, first_neighbors[i] )
+            pos = inv_def * pos; // This way, we can input a single vector to smith_index_
+        }
       }
       const types::t_unsigned neighbors_site[2] = { 1, 0 };
 
       // creates an array indexing each atom.
-      types::t_real indices[Nsites][ modulo(0) ][ modulo(1) ][ modulo(2) ];
+      types::t_real indices[Nsites][ bt::get<2>(transformation)(0) ]
+                                   [ bt::get<2>(transformation)(1) ]
+                                   [ bt::get<2>(transformation)(2) ];
       for( size_t i(0); i < Nsites; ++i )
-        for( size_t j(0); j < modulo(0); ++j )
-          for( size_t k(0); k < modulo(1); ++k )
-            for( size_t u(0); u < modulo(2); ++u )
+        for( size_t j(0); j < bt::get<2>(transformation)(0); ++j )
+          for( size_t k(0); k < bt::get<2>(transformation)(1); ++k )
+            for( size_t u(0); u < bt::get<2>(transformation)(2); ++u )
               indices[i][j][k][u] = Natoms;
       {
         size_t index(0);
@@ -82,7 +95,7 @@ namespace LaDa
           const unsigned site( atom.site );
           smith_index_
           ( 
-            toSmith, modulo, 
+            transformation,
             atom.pos - structure.lattice->sites[ site ].pos, 
             sindex 
           );
@@ -99,9 +112,9 @@ namespace LaDa
           ++index;
         }
         for( size_t i(0); i < Nsites; ++i )
-          for( size_t j(0); j < modulo(0); ++j )
-            for( size_t k(0); k < modulo(1); ++k )
-              for( size_t u(0); u < modulo(2); ++u )
+          for( size_t j(0); j < bt::get<2>(transformation)(0); ++j )
+            for( size_t k(0); k < bt::get<2>(transformation)(1); ++k )
+              for( size_t u(0); u < bt::get<2>(transformation)(2); ++u )
                 if( indices[i][j][k][u] == Natoms )
                 {
                   std::cerr << "error: " << i << ", " << j << ", " << k  << ", " << u
@@ -142,7 +155,7 @@ namespace LaDa
           atat::iVector3d sindex;
           smith_index_
           (
-            toSmith, modulo, 
+            transformation,
             pos + (*i_neigh), 
             sindex
           );
@@ -183,12 +196,15 @@ namespace LaDa
       return true;
     }
 
-    void Vff :: smith_index_( const atat::rMatrix3d &_toSmith,
-                              const atat::iVector3d &_modulo,
+    void Vff :: smith_index_( const t_Transformation &_transformation,
                               const atat::rVector3d &_pos,
                               atat::iVector3d &_index )
     {
-      const atat::rVector3d pos( _toSmith * _pos );
+      namespace bt = boost::tuples;
+      const atat::rVector3d pos
+      ( 
+        bt::get<0>( _transformation ) * _pos - bt::get<1>( _transformation )
+      );
       const atat::iVector3d int_pos
       (
         types::t_int( rint( pos(0) ) ),
@@ -202,41 +218,54 @@ namespace LaDa
           std::abs( pos(i) - types::t_real( int_pos(i) ) ) > 0.5, 
           "Structure is not ideal.\n"
         )
-        _index(i) = int_pos(i) % _modulo(i);
-        if( _index(i) < 0 ) _index(i) += _modulo(i);
+        _index(i) = int_pos(i) % bt::get<2>(_transformation)(i);
+        if( _index(i) < 0 ) _index(i) += bt::get<2>(_transformation)(i);
       }
     }
 
-    atat::rMatrix3d Vff :: to_smith_matrix( const atat::rMatrix3d &_deformation,
-                                            const atat::rMatrix3d &_lat_cell,
-                                            const atat::rMatrix3d &_str_cell,
-                                            atat::iVector3d &_modulo )
-    {
-      atat::rMatrix3d result;
-      atat::iMatrix3d left, right, smith;
-      const atat::rMatrix3d inv_lat( !_lat_cell );
-      const atat::rMatrix3d inv_lat_cell( inv_lat * _deformation * _str_cell );
-      atat::iMatrix3d int_cell;
-      for( size_t i(0); i < 3; ++i )
-        for( size_t j(0); j < 3; ++j )
-        {
-          int_cell(i,j) = types::t_int( rint( inv_lat_cell(i,j) ) ); 
-          __DOASSERT
-          ( 
-            std::abs( types::t_real( int_cell(i,j) ) - inv_lat_cell(i,j) ) > 0.01,
-               "Input structure is not supercell of the lattice: " 
-            << int_cell(i,j) << " != " << inv_lat_cell(i,j) << "\n"
-          )
-        }
-      opt::smith_normal_form( smith, left, int_cell, right );
-      for( size_t i(0); i < 3; ++i )
+    Vff :: t_Transformation 
+      Vff :: to_smith_matrix( const boost::tuples::tuple
+                                    <
+                                      atat::rMatrix3d,
+                                      atat::rVector3d 
+                                    > &_deformation,
+                              const atat::rMatrix3d &_lat_cell,
+                              const atat::rMatrix3d &_str_cell )
       {
-        for( size_t j(0); j < 3; ++j )
-          result(i,j) = types::t_real( left(i,j) );
-        _modulo(i) = smith(i,i);
+        namespace bt = boost::tuples;
+        t_Transformation result;
+        atat::iMatrix3d left, right, smith;
+        const atat::rMatrix3d inv_lat( !_lat_cell );
+        const atat::rMatrix3d inv_lat_cell( inv_lat * bt::get<0>(_deformation) * _str_cell );
+        atat::iMatrix3d int_cell;
+        for( size_t i(0); i < 3; ++i )
+          for( size_t j(0); j < 3; ++j )
+          {
+            int_cell(i,j) = types::t_int( rint( inv_lat_cell(i,j) ) ); 
+            std::cout << rint( inv_lat_cell(i,j) ) << " "
+                      << inv_lat_cell(i,j) << " " 
+                      << types::t_int( rint( inv_lat_cell(i,j) ) ) << "\n";
+//           __DOASSERT
+//           ( 
+//             std::abs( types::t_real( int_cell(i,j) ) - inv_lat_cell(i,j) ) > 0.01,
+//                "Input structure is not supercell of the lattice: \n" 
+//             << int_cell << "\n != \n" << inv_lat_cell << "\n\n"
+//             << bt::get<0>( _deformation ) <<  "\n\n" << bt::get<1>( _deformation ) << "\n";
+//           )
+          }
+        std::cout << "If your cell (in lattice vectors) is not\n" << int_cell 
+                  << "\nthen you have a problem.\n";
+        opt::smith_normal_form( smith, left, int_cell, right );
+        for( size_t i(0); i < 3; ++i )
+        {
+          for( size_t j(0); j < 3; ++j )
+            bt::get<0>( result )(i,j) = types::t_real( left(i,j) );
+          bt::get<2>( result )(i) = smith(i,i);
+        }
+        bt::get<0>( result ) = bt::get<0>( result ) * ( !_lat_cell ) * bt::get<0>(_deformation);
+        bt::get<1>( result ) = bt::get<1>( _deformation );
+        return result;
       }
-      return result * ( !_lat_cell ) * _deformation;
-    }
 
   }
 }

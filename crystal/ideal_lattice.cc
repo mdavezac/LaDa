@@ -125,20 +125,21 @@ namespace LaDa
         types::t_int index(0);
         foreach( const Structure::t_Atom &atom, _structure.atoms )
         {
-          if( atom.site != 0 ) continue;
+          if( atom.site != 0 ) { ++index; continue; }
           const types::t_real d( atat::norm2( atom.pos - barycenter ) );
           if( mindist > d or minindex < 0 )
           {
             mindist = d;
             minindex = index;
           }
-          ++index;
         }
         __DOASSERT( minindex == -1, "Could not idealize structure. Are site indices set?\n" )
         if( minindex != 0 )  std::swap( non_ideals.front(), non_ideals[minindex] );
+        std::cout << " ?? " << non_ideals.front() << "\n";
         find_first_neighbors( non_ideals, _structure.cell, _nneigs );
       
         // computes transformation matrix one row at a time. 
+        std::cout << "Retrieving ideal lattice.\n";
         Fitting::Cgs cgs;
         cgs.verbose = false;
         cgs.itermax = 100;
@@ -168,23 +169,25 @@ namespace LaDa
               b(i) += (*i_ideal)(r) * (*i_non_ideal)(i);
               for( size_t j(0); j < 3; ++j )
                 A(i,j) += (*i_non_ideal)(i) * (*i_non_ideal)(j);
-              A(i,4) += (*i_non_ideal)(i);
+              A(i,3) += (*i_non_ideal)(i);
             }
             for( size_t j(0); j < 3; ++j )
-              A(4,j) += (*i_non_ideal)(j);
-            A(4,4) += 1e0;
-            b(4) += (*i_ideal)(r);
+              A(3,j) += (*i_non_ideal)(j);
+            A(3,3) += 1e0;
+            b(3) += (*i_ideal)(r);
           }
       
           // solves Ax = b
           Fitting::Cgs::t_Return convergence = cgs( A, x, b );
-//         std::cout << r << ": " << convergence.first << ", "
-//                   << convergence.second << ", "  << x << "\n"; 
+          std::cout << "  _ fit along " << r << ": " << convergence.first << ", "
+                    << convergence.second << ", "  << x << "\n"; 
       
           // stores solution.
           for( size_t i(0); i < 3; ++i ) bt::get<0>(result)(r,i) = x(i); 
-          bt::get<1>(result)(r) = x(4);
+          bt::get<1>(result)(r) = x(3);
         }
+        std::cout << "  deformation matrix:\n" << bt::get<0>( result ) 
+                  << "\n  deformation translation: " << bt::get<1>( result ) << "\n\n";
       
         return result;
         __ENDGROUP__
