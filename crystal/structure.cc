@@ -472,8 +472,8 @@ namespace LaDa
        if ( not lattice ) return;
       
        k_vecs.clear();
-       const atat::rMatrix3d inv_cell( !lattice->cell );
-       const atat::rMatrix3d inv_lat_cell( cell * inv_cell );
+       const atat::rMatrix3d inv_cell( ~(!lattice->cell) );
+       const atat::rMatrix3d inv_lat_cell( (~cell) * inv_cell );
        atat::iMatrix3d int_cell;
        for( size_t i(0); i < 3; ++i )
          for( size_t j(0); j < 3; ++j )
@@ -495,7 +495,7 @@ namespace LaDa
            rleft(i,j) = types::t_real( left(i,j) );
        const atat::rMatrix3d factor
        ( 
-         lattice->cell * ( !cell ) * (!rleft) 
+         (~lattice->cell) * (~(!cell)) * (!rleft) 
        );
        for( size_t i(0); i < smith(0,0); ++i )
          for( size_t j(0); j < smith(1,1); ++j )
@@ -506,9 +506,9 @@ namespace LaDa
              // in supercell fractional and c entered.
              const atat::rVector3d vec2       
              (                                
-               vec1(0) - rint( vec1(0) ),
-               vec1(1) - rint( vec1(1) ),
-               vec1(2) - rint( vec1(2) )
+               vec1(0) - std::floor( vec1(0) + 0.5 ),
+               vec1(1) - std::floor( vec1(1) + 0.5 ),
+               vec1(2) - std::floor( vec1(2) + 0.5 )
              );
              // in cartesian
              atat::rVector3d vec( inv_cell * vec1 );

@@ -50,13 +50,10 @@ boost::shared_ptr<Crystal::Lattice>
 
 void randomize( Crystal::Structure &_structure )
 {
-  std::cout << "starting" << "\n";
   LaDa::opt::random::create();
-  std::cout << "here" << "\n";
   foreach( Crystal::Structure::t_Atom& atom, _structure.atoms )
     if( _structure.lattice->sites[ atom.site ].type.size() > 1 )
       atom.type = LaDa::opt::random::flip() ? -1e0: 1e0;
-  std::cout << "done" << "\n";
 }
 
 void printstructure( const Crystal::Structure &_structure, 

@@ -226,7 +226,7 @@ namespace LaDa
       {
         t_Centers :: const_iterator i_center = centers.begin();
         t_Centers :: const_iterator i_center_end = centers.end();
-        for(; i_center != i_center_end; ++i_center )
+        for(size_t index(0); i_center != i_center_end; ++i_center, ++index )
         {
           __DOASSERT( not i_center->origin, 
                       "Origin of the center is invalid\n"; )
@@ -234,7 +234,7 @@ namespace LaDa
                       "Invalid pointer to structure\n"; )
           __DOASSERT( i_center->bonds.size() != 4,
                          "Invalid number of bonds: "
-                      << i_center->bonds.size() << "\n"; )
+                      << i_center->bonds.size() << ", " << index << "\n"; )
           __DOASSERT( i_center->translations.size() != 4,
                          "Invalid number of translations: "
                       << i_center->translations.size() << "\n"; )

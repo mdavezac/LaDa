@@ -8,8 +8,8 @@
 #include <cmath>
 
 #include <opt/atat.h>
-#include <crystal/divide_and_conquer.h>
 #include <crystal/ideal_lattice.h>
+#include <crystal/divide_and_conquer.h>
 
 #include "vff.h"
   
@@ -46,24 +46,26 @@ namespace LaDa
       first_neighbors_( fn );
 
       // Checks if ideal structure. In which case use smith normal tree building.
-//     const atat::rMatrix3d inv_str( (!structure.lattice->cell) * structure.cell );
-//     bool is_ideal = true;
-//     for( size_t i(0); is_ideal and i < 3; ++i )
-//       for( size_t j(0); is_ideal and j < 3; ++j )
-//         if( Fuzzy::neq( inv_str(i,j), rint( inv_str(i,j) ) ) ) is_ideal = false;
-//     if( is_ideal )
-//     {
-//       std::cout << "Trying to create first neighbor tree using smith normal form algorithm.\n";
-//       if( build_tree_smith_( fn ) )
-//       {
-//         __DODEBUGCODE( check_tree(); )
-//         return true;
-//       }
-//       std::cout << "Failed.\n";
-//       t_Centers :: iterator i_center = centers.begin();
-//       t_Centers :: iterator i_center_end = centers.end();
-//       for(; i_center != i_center_end; ++i_center ) i_center->bonds.clear();
-//     } 
+      const atat::rMatrix3d inv_str( (!structure.lattice->cell) * structure.cell );
+      bool is_ideal = true;
+      for( size_t i(0); is_ideal and i < 3; ++i )
+        for( size_t j(0); is_ideal and j < 3; ++j )
+          if( Fuzzy::neq( inv_str(i,j), rint( inv_str(i,j) ) ) ) is_ideal = false;
+      if( is_ideal )
+      {
+        std::cout << "Trying to create first neighbor tree "
+                     "using smith normal form algorithm.\n";
+        if( build_tree_smith_( fn ) )
+        {
+          __DODEBUGCODE( check_tree(); )
+          std::cout << "First Neighbor tree successfully created.\n";
+          return true;
+        }
+        std::cout << "Failed.\n";
+        t_Centers :: iterator i_center = centers.begin();
+        t_Centers :: iterator i_center_end = centers.end();
+        for(; i_center != i_center_end; ++i_center ) i_center->bonds.clear();
+      } 
 
       const size_t Nperbox( 30 );
       if( structure.atoms.size() < Nperbox )
@@ -71,12 +73,18 @@ namespace LaDa
         std::cout << "Creating first neighbor tree using standard algorithm.\n";
         if( not build_tree_sort_( fn ) ) return false;
         __DODEBUGCODE( check_tree(); )
+        std::cout << "First Neighbor tree successfully created.\n";
         return true;
       }
-      
-      std::cout << "Creating first neighbor tree using divide and conquer algorithm.\n";
+       
+      std::cout << "Creating first neighbor tree using "
+                   "divide-and-conquer algorithm.\n";
       // Tries to guess size of divide and conquer.
       const atat::iVector3d nboxes( Crystal::guess_dnc_params( structure, 30 ) );
+      types::t_real n(   structure.atoms.size()
+                       / types::t_real( nboxes(0) * nboxes(1) * nboxes(2) ) );
+      std::cout << "Will divide into " << nboxes(0) << "x" << nboxes(1) << "x" << nboxes(2)
+                << " boxes of " << n << " atoms each.\n";
       // Then creates boxes.
       const types::t_real odist( 1.5e0 * std::sqrt( atat::norm2( fn[0].front() ) ) );
       Crystal::t_ConquerBoxes<types::t_real> :: shared_ptr boxes
@@ -93,6 +101,7 @@ namespace LaDa
       
 
       __DODEBUGCODE( check_tree(); )
+      std::cout << "First Neighbor tree successfully created.\n";
       return true;
     } // Vff :: construct_bond_list
 

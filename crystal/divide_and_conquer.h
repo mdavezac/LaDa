@@ -74,12 +74,12 @@ namespace LaDa
           //! Type of an atom.
           typedef typename Crystal::TStructure<T_TYPE>::t_Atom t_Atom;
         public:
-          //! Type of the divide and conquer box, with cell and origin.
+          //! Type of the divide and conquer box, with cell, origin, and overlap.
           typedef boost::tuples::tuple
           < 
             atat::rMatrix3d, 
             atat::rVector3d,
-            atat::rMatrix3d
+            atat::rVector3d
           > t_Box;
           //! \brief Type of the atomic state.
           //! \detail first item contains index of atom in structure.

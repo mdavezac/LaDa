@@ -90,7 +90,6 @@ namespace LaDa
         } // loop over bonds
       } // loop over centers 
 
-      __DODEBUGCODE( check_tree(); )
       return true;
     } // Vff :: build_tree_sort_dnc
 

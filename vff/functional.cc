@@ -61,18 +61,19 @@ namespace LaDa
       // then computes positions
       t_Atoms :: iterator i_atom = structure.atoms.begin();
       t_Atoms :: iterator i_atom_end = structure.atoms.end();
-      for(; i_atom != i_atom_end; ++i_atom )
+      t_Atoms :: const_iterator i_atom0 = structure0.atoms.begin();
+      for(; i_atom != i_atom_end; ++i_atom, ++i_atom0 )
       {
         atat::rVector3d pos;
         if ( not (i_atom->freeze & t_Atom::FREEZE_X ) )
           { pos[0] = types::t_real(2.0) * (*_i_x ); ++_i_x; }
-        else pos[0] = i_atom->pos[0];
+        else pos[0] = i_atom0->pos[0];
         if ( not (i_atom->freeze & t_Atom::FREEZE_Y ) )
           { pos[1] = types::t_real(2.0) * (*_i_x ); ++_i_x; }
-        else pos[1] = i_atom->pos[1];
+        else pos[1] = i_atom0->pos[1];
         if ( not (i_atom->freeze & t_Atom::FREEZE_Z ) )
           { pos[2] = types::t_real(2.0) * (*_i_x ); ++_i_x; }
-        else pos[2] = i_atom->pos[2];
+        else pos[2] = i_atom0->pos[2];
 
         i_atom->pos = _strain * pos;
       }
