@@ -2,6 +2,7 @@
 //  Version: $Id$
 //
 
+#include <boost/tuple/tuple_io.hpp>
 
 namespace LaDa 
 {
@@ -15,7 +16,7 @@ namespace LaDa
       {
         namespace bt = boost::tuples;
         typedef typename Crystal::TStructure<T_TYPE> :: t_Atoms t_Atoms;
-        typedef typename t_ConquerBoxes<T_TYPE>::shared_ptr t_result;
+        typedef typename t_ConquerBoxes<T_TYPE>::type t_result;
         typedef typename t_ConquerBoxes<T_TYPE>::shared_ptr t_result_ptr;
 
         // constructs cell of small small box
@@ -60,44 +61,43 @@ namespace LaDa
 
         // adds atoms to each box.
         const atat::rMatrix3d inv_str( !_structure.cell );
-        const atat::rMatrix3d to_lcell_index( (!large_cell) * _structure.cell );
-        const atat::rMatrix3d to_scell_index( (!cell) * _structure.cell );
+        const atat::rMatrix3d inv_lcell( !large_cell );
+        const atat::rMatrix3d inv_cell( !cell );
         typename t_Atoms :: const_iterator i_atom = _structure.atoms.begin();
         typename t_Atoms :: const_iterator i_atom_end = _structure.atoms.end();
+        std::cout << cell  << "\n\n" << large_cell << "\n\n" << odist << "\n\n";
         for( size_t index(0); i_atom != i_atom_end; ++i_atom, ++index )
         {
-          const atat::rVector3d rfrac_l( inv_str * i_atom->pos + odist );
-          const atat::rVector3d rfrac_s( inv_str * i_atom->pos );
-          const atat::rVector3d ifrac_l
+          const atat::rVector3d rfrac( inv_str * i_atom->pos );
+          const atat::rVector3d ifrac
           (
-            rfrac_l(0) - std::floor( rfrac_l(0) ),
-            rfrac_l(1) - std::floor( rfrac_l(1) ),
-            rfrac_l(2) - std::floor( rfrac_l(2) )
+            rfrac(0) - std::floor( rfrac(0) ),
+            rfrac(1) - std::floor( rfrac(1) ),
+            rfrac(2) - std::floor( rfrac(2) )
           );
-          const atat::rVector3d ifrac_s
-          (
-            rfrac_s(0) - std::floor( rfrac_s(0) ),
-            rfrac_s(1) - std::floor( rfrac_s(1) ),
-            rfrac_s(2) - std::floor( rfrac_s(2) )
-          );
-          const atat::rVector3d lfrac( to_lcell_index * ifrac_l );
-          const types::t_real i( lfrac(0)  );
-          const types::t_real j( lfrac(1)  );
-          const types::t_real k( lfrac(2)  );
-          const types::t_real u( ( i * _n(1) + j ) * _n(2) +  k );
-          __ASSERT( u < Nboxes, "Index out-of-range.\n" )
-          const atat::rVector3d sfrac( to_scell_index * ifrac_s );
+          const atat::rVector3d in_para( _structure.cell * ifrac );
+          const atat::rVector3d lfrac( inv_lcell * ( in_para + odist ) );
+          const atat::rVector3d sfrac( inv_cell * in_para );
+          const types::t_int i( lfrac(0)  );
+          const types::t_int j( lfrac(1)  );
+          const types::t_int k( lfrac(2)  );
+          const types::t_int u( ( i * _n(1) + j ) * _n(2) +  k );
+          __ASSERT( u >= Nboxes, "Index out-of-range.\n" )
           const bool is_in_small_box
           (
                 i == types::t_int( sfrac(0) )
             and j == types::t_int( sfrac(1) )
             and k == types::t_int( sfrac(2) )
           );
-          (*result)[u].states_.push_back
-            ( 
-               bt::make_tuple( boost::cref( *i_atom ), index, is_in_small_box ) 
-             );
+          std::cout << i_atom->pos << "  " 
+                    << bt::make_tuple( i,j,k ) << " =? " 
+                    << bt::make_tuple( types::t_int( sfrac(0) ), 
+                                       types::t_int( sfrac(1) ), 
+                                       types::t_int( sfrac(2) ) )
+                    << " -> " << ( is_in_small_box ? "true": "false" ) <<  "\n";
+          (*result)[u].states_.push_back( bt::make_tuple( index, is_in_small_box ) );
         }
+        return result;
       }
    
     template< class T_TYPE >

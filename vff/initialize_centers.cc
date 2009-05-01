@@ -5,11 +5,11 @@
 # include <config.h>
 #endif
 
-#include <algorithm>
-#include <functional>
+#include <cmath>
 
-#include <opt/ndim_iterator.h>
 #include <opt/atat.h>
+#include <crystal/divide_and_conquer.h>
+#include <crystal/ideal_lattice.h>
 
 #include "vff.h"
   
@@ -17,106 +17,80 @@ namespace LaDa
 {
   namespace Vff
   { 
+    void Vff :: first_neighbors_( std::vector< std::vector< atat::rVector3d > >& _fn )
+    {
+      const size_t Nsites( structure.lattice->sites.size() );
+      __DOASSERT( Nsites != 2, "Expected two sites for VFF.\n" )
+      typedef std::vector< std::vector< atat::rVector3d > > t_FirstNeighbors;
+      _fn.resize( structure.lattice->sites.size() );
+      foreach( const Crystal::Lattice::t_Site &site, structure.lattice->sites )
+        _fn[0].push_back( site.pos );
+      _fn[1] = _fn[0];
+      std::swap( _fn[1][0], _fn[1][1] ); 
+      for( size_t i(0); i < Nsites; ++i )
+        Crystal::find_first_neighbors( _fn[i], structure.lattice->cell, 4 );
+    }
+
     bool Vff :: initialize_centers()
     {
       centers.clear();
-      
-      // Creates a list of centers
-      t_Atoms :: iterator i_atom = structure.atoms.begin();
-      t_Atoms :: iterator i_atom_end = structure.atoms.end();
-      for(types::t_unsigned index=0; i_atom != i_atom_end; ++i_atom, ++index )
-        centers.push_back( AtomicCenter( structure, *i_atom, index ) );
+      { // Creates a list of centers
+        t_Atoms :: iterator i_atom = structure.atoms.begin();
+        t_Atoms :: iterator i_atom_end = structure.atoms.end();
+        for(types::t_unsigned index=0; i_atom != i_atom_end; ++i_atom, ++index )
+          centers.push_back( AtomicCenter( structure, *i_atom, index ) );
+      }
 
       // finds first neighbors on ideal lattice.
-      typedef std::vector< std::vector< atat::rVector3d > > t_FirstNeighbors;
       t_FirstNeighbors fn;
       first_neighbors_( fn );
 
+      // Checks if ideal structure. In which case use smith normal tree building.
+//     const atat::rMatrix3d inv_str( (!structure.lattice->cell) * structure.cell );
+//     bool is_ideal = true;
+//     for( size_t i(0); is_ideal and i < 3; ++i )
+//       for( size_t j(0); is_ideal and j < 3; ++j )
+//         if( Fuzzy::neq( inv_str(i,j), rint( inv_str(i,j) ) ) ) is_ideal = false;
+//     if( is_ideal )
+//     {
+//       std::cout << "Trying to create first neighbor tree using smith normal form algorithm.\n";
+//       if( build_tree_smith_( fn ) )
+//       {
+//         __DODEBUGCODE( check_tree(); )
+//         return true;
+//       }
+//       std::cout << "Failed.\n";
+//       t_Centers :: iterator i_center = centers.begin();
+//       t_Centers :: iterator i_center_end = centers.end();
+//       for(; i_center != i_center_end; ++i_center ) i_center->bonds.clear();
+//     } 
 
-      // Creates a list of closest neighbors
-      std::vector< atat::rVector3d > neighbors;
-      typedef Crystal::Lattice::t_Sites :: iterator t_it;
-      t_it i_site_begin = structure.lattice->sites.begin();
-      t_it i_site, i_site2;
-      t_it i_site_end = structure.lattice->sites.end();
-      
-      for(i_site = i_site_begin; i_site != i_site_end; ++i_site )
+      const size_t Nperbox( 30 );
+      if( structure.atoms.size() < Nperbox )
       {
-        for(i_site2 = i_site_begin; i_site2 != i_site_end; ++i_site2 )
-        {
-          opt::Ndim_Iterator< types::t_int, std::less_equal<types::t_int> > period;
-          period.add(-1,1);
-          period.add(-1,1);
-          period.add(-1,1);
-          do // goes over periodic image
-          {
-            // constructs perdiodic image of atom *i_bond
-            atat::rVector3d frac_image, image;
-            frac_image[0] =  (types::t_real) period.access(0);
-            frac_image[1] =  (types::t_real) period.access(1);
-            frac_image[2] =  (types::t_real) period.access(2);
-            image = i_site2->pos + structure.lattice->cell * frac_image;
-            if( atat::norm2( image - i_site->pos ) > types::tolerance )
-              neighbors.push_back( image - i_site->pos );
-          } while ( ++period ); 
-        }
+        std::cout << "Creating first neighbor tree using standard algorithm.\n";
+        if( not build_tree_sort_( fn ) ) return false;
+        __DODEBUGCODE( check_tree(); )
+        return true;
       }
-
-      // Sorts the neighbors according to distance from origin
-      std::sort( neighbors.begin(), neighbors.end(), atat::norm_compare() );
-      // And reduces to first neighbors only
-      neighbors.resize(4*structure.lattice->sites.size());
-
-      t_Centers :: iterator i_begin = centers.begin();
-      t_Centers :: iterator i_end = centers.end();
-      t_Centers :: iterator i_center, i_bond;
-      atat::rVector3d frac_image;
-      atat::rVector3d cut;
-      cut = neighbors.front();
-      types::t_real cutoff = types::t_real(0.25) * atat::norm2( neighbors.front() );
-      for( i_center = i_begin; i_center != i_end; ++i_center )
-      {
-        for( i_bond = i_begin; i_bond != i_end; ++i_bond)
-        {
-          if( i_bond == i_center ) continue;
-          
-          std::vector<atat::rVector3d> :: const_iterator i_neigh = neighbors.begin();
-          std::vector<atat::rVector3d> :: const_iterator i_neigh_end = neighbors.end();
-          for(; i_neigh != i_neigh_end; ++i_neigh )
-          {
-            const atat::rVector3d image
-            ( 
-              i_center->origin->pos - *i_neigh - i_bond->origin->pos 
-            );
-            const atat::rVector3d frac_image( (!structure.cell) * image );
-            const atat::rVector3d frac_centered
-            ( 
-              frac_image[0] - rint( frac_image[0] ),
-              frac_image[1] - rint( frac_image[1] ),
-              frac_image[2] - rint( frac_image[2] )
-            );
-            const atat::rVector3d cut( structure.cell * frac_centered );
-
-            if( atat::norm2( cut ) > cutoff ) continue;
-            
-            i_center->bonds.push_back( t_Center ::__make__iterator__(i_bond) );
-            const atat::rVector3d trans
-            (
-              rint( frac_image[0] ),
-              rint( frac_image[1] ),
-              rint( frac_image[2] ) 
-            );
-            i_center->translations.push_back( trans );
-            i_center->do_translates.push_back
-            ( 
-              atat::norm2(trans) > atat::zero_tolerance 
-            );
-
-            if( i_center->bonds.size() == 4 ) break;
-          } // loop over neighbors
-          if( i_center->bonds.size() == 4 ) break;
-        } // loop over bonds
-      } // loop over centers 
+      
+      std::cout << "Creating first neighbor tree using divide and conquer algorithm.\n";
+      // Tries to guess size of divide and conquer.
+      const atat::iVector3d nboxes( Crystal::guess_dnc_params( structure, 30 ) );
+      // Then creates boxes.
+      const types::t_real odist( 1.5e0 * std::sqrt( atat::norm2( fn[0].front() ) ) );
+      Crystal::t_ConquerBoxes<types::t_real> :: shared_ptr boxes
+      (
+        Crystal :: divide_and_conquer_boxes( structure, nboxes, odist )
+      );
+      // Finally calls algorithm.
+      Crystal::t_ConquerBoxes<types::t_real>::type::const_iterator i_box = boxes->begin();
+      Crystal::t_ConquerBoxes<types::t_real>::type::const_iterator i_box_end = boxes->end();
+      bool result( true );
+      for(; result and i_box != i_box_end; ++i_box )
+        result = build_tree_sort_dnc_( *i_box, fn );
+      if( not result ) return false;
+      
 
       __DODEBUGCODE( check_tree(); )
       return true;

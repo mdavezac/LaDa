@@ -27,53 +27,6 @@ namespace LaDa
   namespace Vff
   { 
 
-    void Vff :: first_neighbors_( std::vector< std::vector< atat::rVector3d > >& _fn )
-    {
-      const size_t Nsites( structure.lattice->sites.size() );
-      __DOASSERT( Nsites != 2, "Expected two sites for VFF.\n" )
-      typedef std::vector< std::vector< atat::rVector3d > > t_FirstNeighbors;
-      _fn.resize( structure.lattice->sites.size() );
-      foreach( const Crystal::Lattice::t_Site &site, structure.lattice->sites )
-        _fn[0].push_back( site.pos );
-      _fn[1] = _fn[0];
-      std::swap( _fn[1][0], _fn[1][1] ); 
-      for( size_t i(0); i < Nsites; ++i )
-        Crystal::find_first_neighbors( _fn[i], structure.lattice->cell, 4 );
-    }
-
-    bool Vff :: construct_centers()
-    {
-      centers.clear();
-      
-      t_Atoms :: iterator i_atom = structure.atoms.begin();
-      t_Atoms :: iterator i_atom_end = structure.atoms.end();
-      for(types::t_unsigned index=0; i_atom != i_atom_end; ++i_atom, ++index )
-        centers.push_back( AtomicCenter( structure, *i_atom, index ) );
-
-      t_Centers :: iterator i_begin = centers.begin();
-      t_Centers :: iterator i_end = centers.end();
-      t_Centers :: iterator i_center, i_bond;
-
-      for( i_center = i_begin; i_center != i_end; ++i_center )
-        for( i_bond = i_begin; i_bond != i_end; ++i_bond )
-          if ( i_bond != i_center )
-            i_center->add_bond ( t_Center::__make__iterator__(i_bond), bond_cutoff);
-
-      
-      // consistency check
-      for( i_center = i_begin; i_center != i_end; ++i_center )
-        if ( i_center->size() != 4 )
-        {
-          std::cerr << " Atomic center at " << (atat::rVector3d) i_center->Origin()
-                    << " has " << i_center->size() 
-                    << " bonds!!" << std::endl;
-          return false;
-        } 
-
-      __DODEBUGCODE( check_tree(); )
-      return true;
-    } // Vff :: construct_bond_list
-
     bool Vff :: Load ( const TiXmlElement &_element )
     {
       namespace bfs = boost::filesystem;

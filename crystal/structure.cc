@@ -22,6 +22,7 @@
 #include "epi_structure.h"
 #include "lattice.h"
 
+#include <opt/smith_normal_form.h>
 
 
 namespace LaDa
@@ -469,60 +470,53 @@ namespace LaDa
      void Structure :: find_k_vectors()
      {
        if ( not lattice ) return;
+      
+       k_vecs.clear();
+       const atat::rMatrix3d inv_cell( !lattice->cell );
+       const atat::rMatrix3d inv_lat_cell( cell * inv_cell );
+       atat::iMatrix3d int_cell;
+       for( size_t i(0); i < 3; ++i )
+         for( size_t j(0); j < 3; ++j )
+         {
+           int_cell(i,j) = rint( inv_lat_cell(i,j) );
+           __DOASSERT
+           ( 
+             std::abs( types::t_real( int_cell(i,j) ) - inv_lat_cell(i,j) ) > 0.01,
+                "Input structure is not supercell of the lattice: " 
+             << int_cell(i,j) << " != " << inv_lat_cell(i,j) << "\n"
+           )
+         }
+       atat::iMatrix3d left, right, smith;
+       opt::smith_normal_form( smith, left, int_cell, right );
+       
+       atat::rMatrix3d rleft;
+       for( size_t i(0); i < 3; ++i )
+         for( size_t j(0); j < 3; ++j )
+           rleft(i,j) = types::t_real( left(i,j) );
+       const atat::rMatrix3d factor
+       ( 
+         lattice->cell * ( !cell ) * (!rleft) 
+       );
+       for( size_t i(0); i < smith(0,0); ++i )
+         for( size_t j(0); j < smith(1,1); ++j )
+           for( size_t k(0); k < smith(2,2); ++k )
+           {
+             // in supercell fractional
+             const atat::rVector3d vec1( factor * atat::rVector3d(i,j,k) );
+             // in supercell fractional and c entered.
+             const atat::rVector3d vec2       
+             (                                
+               vec1(0) - rint( vec1(0) ),
+               vec1(1) - rint( vec1(1) ),
+               vec1(2) - rint( vec1(2) )
+             );
+             // in cartesian
+             atat::rVector3d vec( inv_cell * vec1 );
+             refold(vec, inv_cell);
+           
+             k_vecs.push_back( t_kAtom(vec,0) );
+           }
      
-       atat::rVector3d kvec;
-       atat::rMatrix3d k_lat = !( lattice->cell );
-       atat::rMatrix3d k_cell = !( cell );
-       k_vecs.clear();
-    
-    
-       // A is the basis used to determine "a" first brillouin zone
-       atat::rMatrix3d A = lattice->cell * k_cell;
-       
-       types::t_int range =  2 * types::t_int( atoms.size() );
-       // sets up the n-dimensional iterators
-       opt::Ndim_Iterator< types::t_int, std::less_equal<types::t_int> > global_iterator;
-       global_iterator.add( -range, range);
-       global_iterator.add( -range, range);
-       global_iterator.add( -range, range);
-       
-       // the following loop creates all possible k-vectors,
-       // it then refolds them and adds them to the k vector list
-       // only one copy of each refolded vector is allowed
-       k_vecs.clear();
-       do
-       {
-         // creates vector in A basis
-         kvec[0] =  (types::t_real) global_iterator.access(0);
-         kvec[1] =  (types::t_real) global_iterator.access(1);
-         kvec[2] =  (types::t_real) global_iterator.access(2);
-         kvec = A * kvec;
-       
-         // if any of the coordinates is >= 1, then this is a periodic image
-         if (    Fuzzy::geq( kvec(0), 1.0 ) 
-              or Fuzzy::geq( kvec(1), 1.0 ) 
-              or Fuzzy::geq( kvec(2), 1.0 ) ) continue;
-         // if any of the coordinates is < 0, then this is a periodic image
-         if (    Fuzzy::le( kvec(0), 0.0 ) 
-              or Fuzzy::le( kvec(1), 0.0 ) 
-              or Fuzzy::le( kvec(2), 0.0 ) ) continue;
-        
-         // Goes back to lattice basis
-         kvec[0] =  (types::t_real) global_iterator.access(0);
-         kvec[1] =  (types::t_real) global_iterator.access(1);
-         kvec[2] =  (types::t_real) global_iterator.access(2);
-         // And then to cartesian
-         kvec = k_cell * kvec;
-
-         // Refold centers all vectors around origin, eg vector within fist
-         // brillouin zone
-         refold(kvec, k_lat);
-
-         k_vecs.push_back( t_kAtom(kvec,0) );
-       
-       } while( ++global_iterator );
-    
-    
        // finally, sorts  k_vec according to size
        std::sort( k_vecs.begin(), k_vecs.end(), sort_kvec );
      }

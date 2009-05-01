@@ -17,21 +17,8 @@ namespace LaDa
 {
   namespace Vff
   { 
-    bool Vff :: build_tree_sort()
+    bool Vff :: build_tree_sort_(const t_FirstNeighbors & _fn)
     {
-      // finds first neighbors on ideal lattice.
-      typedef std::vector< std::vector< atat::rVector3d > > t_FirstNeighbors;
-      t_FirstNeighbors fn;
-      first_neighbors_( fn );
-      
-      centers.clear();
-      // Creates a list of centers
-      t_Atoms :: iterator i_atom = structure.atoms.begin();
-      t_Atoms :: iterator i_atom_end = structure.atoms.end();
-
-      for(types::t_unsigned index=0; i_atom != i_atom_end; ++i_atom, ++index )
-        centers.push_back( AtomicCenter( structure, *i_atom, index ) );
-
       t_Centers :: iterator i_begin = centers.begin();
       t_Centers :: iterator i_end = centers.end();
       t_Centers :: iterator i_center, i_bond;
@@ -40,7 +27,7 @@ namespace LaDa
         const size_t site( i_center->Origin().site );
         __DOASSERT( site > structure.lattice->sites.size(), "Unindexed site.\n" )
         const size_t neigh_site( site == 0 ? 1: 0 );
-        const types::t_real cutoff = types::t_real(0.25) * atat::norm2( fn[site].front() );
+        const types::t_real cutoff = types::t_real(0.25) * atat::norm2( _fn[site].front() );
                    
 
         for( i_bond = i_begin; i_bond != i_end; ++i_bond)
@@ -48,8 +35,8 @@ namespace LaDa
           if( i_bond == i_center ) continue;
           if( i_bond->Origin().site == site ) continue;
           
-          std::vector<atat::rVector3d> :: const_iterator i_neigh = fn[site].begin();
-          const std::vector<atat::rVector3d> :: const_iterator i_neigh_end = fn[site].end();
+          std::vector<atat::rVector3d> :: const_iterator i_neigh = _fn[site].begin();
+          const std::vector<atat::rVector3d> :: const_iterator i_neigh_end = _fn[site].end();
           for(; i_neigh != i_neigh_end; ++i_neigh )
           {
             const atat::rVector3d image
@@ -86,7 +73,6 @@ namespace LaDa
         } // loop over bonds
       } // loop over centers 
 
-      __DODEBUGCODE( check_tree(); )
       return true;
     } // Vff :: build_tree_sort
 

@@ -16,6 +16,7 @@
 #include <opt/debug.h>
 #include <opt/bpo_macros.h>
 #include <opt/tuple_io.h>
+#include <opt/random.h>
 #include <mpi/mpi_object.h>
 #ifdef _MPI
 # include <boost/mpi/environment.hpp>
@@ -47,39 +48,50 @@ boost::shared_ptr<Crystal::Lattice>
     return lattice;
   }
 
-  void printstructure( const Crystal::Structure &_structure, 
-                       const std::string &_filename )
+void randomize( Crystal::Structure &_structure )
+{
+  std::cout << "starting" << "\n";
+  LaDa::opt::random::create();
+  std::cout << "here" << "\n";
+  foreach( Crystal::Structure::t_Atom& atom, _structure.atoms )
+    if( _structure.lattice->sites[ atom.site ].type.size() > 1 )
+      atom.type = LaDa::opt::random::flip() ? -1e0: 1e0;
+  std::cout << "done" << "\n";
+}
+
+void printstructure( const Crystal::Structure &_structure, 
+                     const std::string &_filename )
+{
+  std::ofstream file; 
+  const std::string fxsf( _filename + ".xsf" );
+  file.open( fxsf.c_str(), std::ios_base::trunc );
+  if (file.fail() )   
+    std::cerr << "Could not write to " << _filename << ".xsf" << std::endl;
+  else
   {
-    std::ofstream file; 
-    const std::string fxsf( _filename + ".xsf" );
-    file.open( fxsf.c_str(), std::ios_base::trunc );
-    if (file.fail() )   
-      std::cerr << "Could not write to " << _filename << ".xsf" << std::endl;
-    else
-    {
-      _structure.print_xcrysden( file );
-      file.close();
-    }
-    const std::string fxyz( _filename + ".xyz" );
-    file.open( fxyz.c_str(), std::ios_base::trunc );
-    if (file.fail() )   
-      std::cerr << "Could not write to " << _filename << ".xyz" << std::endl;
-    else
-    {
-      _structure.print_xyz( file );
-      file.close();
-    }
-    TiXmlDocument docout; docout.SetTabSize(1);
-    docout.LinkEndChild( new TiXmlDeclaration("1.0", "", "") );
-    TiXmlElement *jobnode = new TiXmlElement("Job");
-    if ( not jobnode )
-      { std::cerr << "memory error.\n"; return; }
-    docout.LinkEndChild( jobnode );
-    _structure.print_xml( *jobnode );
-    const std::string fxml( _filename + ".xml" );
-    if ( not docout.SaveFile( fxml ) )
-      std::cerr << "Could not write to " << _filename << ".xml" << std::endl;
+    _structure.print_xcrysden( file );
+    file.close();
   }
+  const std::string fxyz( _filename + ".xyz" );
+  file.open( fxyz.c_str(), std::ios_base::trunc );
+  if (file.fail() )   
+    std::cerr << "Could not write to " << _filename << ".xyz" << std::endl;
+  else
+  {
+    _structure.print_xyz( file );
+    file.close();
+  }
+  TiXmlDocument docout; docout.SetTabSize(1);
+  docout.LinkEndChild( new TiXmlDeclaration("1.0", "", "") );
+  TiXmlElement *jobnode = new TiXmlElement("Job");
+  if ( not jobnode )
+    { std::cerr << "memory error.\n"; return; }
+  docout.LinkEndChild( jobnode );
+  _structure.print_xml( *jobnode );
+  const std::string fxml( _filename + ".xml" );
+  if ( not docout.SaveFile( fxml ) )
+    std::cerr << "Could not write to " << _filename << ".xml" << std::endl;
+}
 
 int main(int argc, char *argv[]) 
 {
@@ -94,6 +106,7 @@ int main(int argc, char *argv[])
   __BPO_SPECIFICS__( "Alloy Layers Characterization" )
     // extra parameters for alloy layers.
     ("noorder,n", "Do not perform layer ordering.\n" )
+    ("randomize,r", "Creates random alloy with random concentrations.\n" )
     ("structure", po::value<std::string>(), 
      "Prints epitaxial structure to xml, xyz, xsf files. Does not perform GA." )
     ("direction", po::value<std::string>(), 
@@ -118,7 +131,6 @@ int main(int argc, char *argv[])
     return 0; 
   }
 
-
   const bool do_not_order( vm.count("noorder") > 0 );
   fs::path input( vm["input"].as< std::string >() );
   __DOASSERT( not ( fs::is_regular( input ) or fs::is_symlink( input ) ),
@@ -129,6 +141,7 @@ int main(int argc, char *argv[])
   Crystal :: Structure structure;
   boost::shared_ptr<Crystal::Lattice> lattice 
     = load_structure( structure, input.string() );
+  if( vm.count("randomize") > 0 ) randomize( structure );
   if(  do_not_order and print_structure )
   { 
     std::cout << "Creating Structure.\n";

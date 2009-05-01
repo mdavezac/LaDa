@@ -27,6 +27,11 @@
 
 namespace LaDa
 {
+  //! \cond
+  namespace Crystal { template< class T_TYPE > class ConquerBox; }
+  //! \endcond 
+
+
   //! \brief Reimplements the Valence Force Field %Functional in c++
   //! \details Vff, or Valence Force Field functional, is an empirical functional which
   //! attempts to model the strain energy of a material from at most three-body
@@ -115,17 +120,6 @@ namespace LaDa
         //! \brief Prints atom.config type input to escan
         //! \param _f optional filename to which to direct the output
         void print_escan_input( const t_Path &_f = "atom.config") const;
-        //! \brief Constructs the mesh of AtomicCenter
-        //! \details Newer version than Functional::construct_centers. 
-        //!          Uses smith normal form to speed up first neighbor search.
-        //!          Defined in build_tree.cc.
-        bool build_tree();
-        //! Builds first neighbor tree using partial sort.
-        bool build_tree_sort();
-        //! \brief Constructs the mesh of AtomicCenter
-        //! \details Newer version than Functional::initialize_centers, it works even if
-        //! structure is slightly distorted.
-        bool construct_centers();
         //! \deprecated Constructs the mesh of AtomicCenter
         //! Defined in initialize_centers.cc.
         bool initialize_centers();
@@ -133,10 +127,12 @@ namespace LaDa
         void print_out( std::ostream &stream ) const;
 
       protected:
+        //! Holds ideal first neighbor positions.
+        typedef std::vector< std::vector< atat::rVector3d > > t_FirstNeighbors;
+        //! Type of the smith normal transformation.
         typedef boost::tuples::tuple
                 < 
                   atat::rMatrix3d, 
-                  atat::rVector3d, 
                   atat::iVector3d 
                 > t_Transformation;
         
@@ -144,7 +140,18 @@ namespace LaDa
         //! \details If \a _node is not the correct node, the results are undefined.
         bool load_( const TiXmlElement &_node );
         //! Finds first neighbors of ideal lattice sites.
-        void first_neighbors_( std::vector< std::vector< atat::rVector3d > >& _fn );
+        void first_neighbors_( t_FirstNeighbors& _fn );
+
+        //! \brief Constructs the mesh of AtomicCenter
+        //! \details Newer version than Functional::construct_centers. 
+        //!          Uses smith normal form to speed up first neighbor search.
+        //!          Defined in build_tree.cc.
+        bool build_tree_smith_(const t_FirstNeighbors& _fn);
+        //! Builds first neighbor tree using two loops over centers.
+        bool build_tree_sort_(const t_FirstNeighbors& _fn);
+        //! Builds first neighbor tree using two loops over centers and divide-n-conquer.
+        bool build_tree_sort_dnc_( const Crystal::ConquerBox<types::t_real>& _dnc, 
+                                   const t_FirstNeighbors& _fn);
 
         //! \brief computes smith index.
         //! \details Defined in build_tree.cc.
@@ -153,12 +160,7 @@ namespace LaDa
                            atat::iVector3d &_index );
         //! \brief Computes matrix to get to smith index.
         //! \details Defined in build_tree.cc.
-        t_Transformation to_smith_matrix( const boost::tuples::tuple
-                                                <
-                                                  atat::rMatrix3d,
-                                                  atat::rVector3d 
-                                                > &_deformation,
-                                          const atat::rMatrix3d &_lat_cell,
+        t_Transformation to_smith_matrix( const atat::rMatrix3d &_lat_cell,
                                           const atat::rMatrix3d &_str_cell );
 
         //! Type of the atomic centers
