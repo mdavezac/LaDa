@@ -107,6 +107,7 @@ int main(int argc, char *argv[])
     TiXmlElement *vff_xml = handle.FirstChild( "Job" ).Element();
     __DOASSERT( not vff_xml, "Could not find <Job> tag in input.\n")
     t_Vff vff(structure);
+    __MPICODE( vff.set_mpi( world.get() ); )
     __DOASSERT( not vff.Load(*vff_xml),
                 "Could not Load Valence Force Field Functional from input.\n")
     if( not vff.init(true) ) continue;
@@ -115,6 +116,9 @@ int main(int argc, char *argv[])
 #   endif
     
     structure.energy = vff.evaluate() / 16.0217733;
+
+    __NOTMPIROOT( (*world), continue; )
+
     const LaDa::atat::rMatrix3d stress = vff.Vff().get_stress();
     std::cout << std::fixed << std::setprecision(12) 
               << "Energy [eV]: " << std::setw(18) << structure.energy << std::endl

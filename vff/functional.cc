@@ -10,7 +10,9 @@
 #include <algorithm>
 #include <functional>
 #include <boost/filesystem/operations.hpp>
-#include <boost/lambda/lambda.hpp>
+#ifdef _MPI
+# include <boost/mpi/collectives/all_reduce.hpp>
+#endif
 
 #include <physics/physics.h>
 #include <opt/ndim_iterator.h>
@@ -226,6 +228,15 @@ namespace LaDa
         if ( not (i_atom0->freeze & t_Atom::FREEZE_Z) ) 
           *i_grad = gradient[2], ++i_grad;
       }
+      __MPICODE
+      (
+        boost::mpi::all_reduce
+        (
+          MPI_COMM, 
+          _grad, size_t(i_grad - _grad), _grad,
+          std::plus<types::t_real>()
+        );
+      )
     }
 
     void Functional :: gradient( const t_Arg& _arg, t_GradientArg _i_grad ) const
@@ -241,12 +252,15 @@ namespace LaDa
       atat::rMatrix3d K0 = (!(~strain));
 
       // computes energy and gradient
-      t_Centers :: const_iterator i_center = centers.begin();
-      t_Centers :: const_iterator i_end = centers.end();
       stress.zero();
-      for (; i_center != i_end; ++i_center)
+      LADA_MPI_SPLIT_LOOP( t_Centers :: const_iterator, center, centers, MPI_COMM )
+      for (; i_center != i_center_end; ++i_center)
         energy += functionals[i_center->kind()].
                        evaluate_with_gradient( *i_center, strain, stress, K0 );
+      __MPICODE
+      ( 
+        energy = boost::mpi::all_reduce( MPI_COMM, energy, std::plus<types::t_real>() ); 
+      )
 
       // now repacks into function::Base format
       pack_gradients(stress, _i_grad);

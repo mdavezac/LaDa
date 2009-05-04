@@ -12,12 +12,16 @@
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
+#ifdef _MPI
+# include <boost/mpi/collectives/all_reduce.hpp>
+#endif
 
 #include <physics/physics.h>
 #include <opt/debug.h>
 #include <opt/tinyxml.h>
 #include <opt/smith_normal_form.h>
 #include <crystal/ideal_lattice.h>
+#include <mpi/mpi_object.h>
 
 
 #include "vff.h"
@@ -102,10 +106,30 @@ namespace LaDa
     {
       types::t_real energy = 0;
       
-      t_Centers :: const_iterator i_center = centers.begin();
-      t_Centers :: const_iterator i_end = centers.end();
-      for (; i_center != i_end; ++i_center)
+      LADA_MPI_SPLIT_LOOP( t_Centers :: const_iterator, center, centers, MPI_COMM )
+// #     ifdef _MPI
+//         for(size_t i(0); i < MPI_COMM.size(); ++i )
+//         {
+//           if( i != MPI_COMM.rank() ) { MPI_COMM.barrier(); continue; }
+//           
+//           std::cout << "proc: " << MPI_COMM.rank() << " -- "
+//                     << types::t_int( i_center - centers.begin() )
+//                     << " -> "
+//                     << types::t_int( i_center_end - centers.begin() ) << " "
+//                     << "nperproc: " << centernperproc << " "
+//                     << "remainder: " << centerremainder << " "
+//                     << "b: " << centerbegin_index << " "
+//                     << "e: " << centerend_index << " "
+//                     << "\n";
+//           MPI_COMM.barrier();
+//         }
+// #     endif
+      for (; i_center != i_center_end; ++i_center)
         energy += functionals[i_center->kind()].evaluate( *i_center );
+      __MPICODE
+      ( 
+        energy = boost::mpi::all_reduce( MPI_COMM, energy, std::plus<types::t_real>() ); 
+      )
 
       return energy;
     }

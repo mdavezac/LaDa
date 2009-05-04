@@ -103,7 +103,8 @@ int main(int argc, char *argv[])
   __BPO_HIDDEN__;
   __BPO_SPECIFICS__( "Escan Specific Options" )
         ( "dipoles,d", "Compute Dipole Moments" )
-        ( "degeneracy", po::value<LaDa::types::t_real>()->default_value(LaDa::types::tolerance),
+        ( "degeneracy", 
+          po::value<LaDa::types::t_real>()->default_value(LaDa::types::tolerance),
           "Allowable band degeneracy when computing dipole moments" )
         ( "diag", "Full diagonalization." )
 //     ("check,c", po::value<std::string>(), "GA output filename." ) 

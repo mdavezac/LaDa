@@ -40,8 +40,13 @@
   po::notify(vm); \
 
 # define __BPO_PROGNAME__ \
-  std::cout << "\n" << __PROGNAME__ \
-            << " from the " << PACKAGE_STRING << " package.\n";
+  __ROOTCODE\
+  ( \
+    (*world), \
+    std::cout << "\n" << __PROGNAME__ \
+              << " from the " << PACKAGE_STRING << " package.\n";\
+  )
+            
 # define __BPO_VERSION__ \
   if ( vm.count("version") ) \
   { \

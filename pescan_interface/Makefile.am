@@ -37,9 +37,9 @@ escan_SOURCES = main.cc
 escan_CPPFLAGS = $(AM_CPPFLAGS) 
 escan_LDFLAGS =  $(AM_LDFLAGS) 
 escan_LDADD = libescan.la \
+	      ../vff/libvff.la \
 	      ../crystal/libcrystal.la \
 	      ../atat/libatat.la \
-	      ../vff/libvff.la \
 	      ../minimizer/libminimizer.la \
               ../physics/libphysics.la \
 	      ../print/libprint.la \

@@ -130,6 +130,16 @@ namespace LaDa
           //! \sa Functional::stress
           const atat::rMatrix3d& get_stress() const { return t_VffBase::stress; }
 
+#         ifdef _MPI
+            //! Sets mpi pointer.
+            void set_mpi( boost::mpi::communicator* _c )
+              { t_VffBase ::  set_mpi( _c ); }
+            //! Returns reference to communicator.
+            boost::mpi::communicator &comm() { return t_VffBase :: comm(); }
+            //! Returns a constant reference to communicator.
+            const boost::mpi::communicator &comm() const { return t_VffBase :: comm(); } 
+#         endif
+
        protected:
          //! Type of the minimizer for minimizing strain
          typedef Minimizer::Variant

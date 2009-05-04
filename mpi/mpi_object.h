@@ -57,6 +57,7 @@ namespace LaDa
           __ASSERT( comm_ == NULL, "Pointer not set.\n" )
           return *comm_;
         }
+
       protected:
 
         //! The MPI Communicator.
@@ -98,6 +99,25 @@ namespace LaDa
   //! Allows derived classes to have access to ::mpi::AddCommunicator members. \
   void set_mpi( boost::mpi::communicator* _c ) { base::set_mpi( c ); } \
 
+// This macro declares iterators which split a loop over mpi processes.
+#define LADA_MPI_SPLIT_LOOP( iterator_type, name, container, comm ) \
+          const size_t name ## natoms( container.size() ); \
+          const size_t name ## mpisize( comm.size() ); \
+          const size_t name ## mpirank( comm.rank() ); \
+          const size_t name ## nperproc( name ## natoms / name ## mpisize ); \
+          const size_t name ## remainder( name ## natoms % name ## mpisize ); \
+          const size_t name ## begin_index \
+            (   \
+                name ## mpirank * name ## nperproc \
+              + std::min( (types::t_int) name ## remainder, (types::t_int) comm.rank() ) \
+            ); \
+          const size_t name ## end_index \
+            (  \
+              ( name ## remainder and name ## mpirank < name ## remainder ) ? \
+                  name ## nperproc + 1: name ## nperproc  \
+            ); \
+          iterator_type i_ ## name( container.begin() + name ## begin_index ); \
+          const iterator_type i_ ## name ## _end( i_ ## name + name ## end_index );
 #else
 
 #define MPI_COMMDEC
@@ -105,7 +125,9 @@ namespace LaDa
 #define MPI_COMMCOPY( _c ) 
 #define MPI_GETCOMM
 #define MPI_FORWARD_MEMBERS( base ) 
-
+#define LADA_MPI_SPLIT_LOOP( iterator_type, name, container, comm ) \
+          iterator_type i_ ## name( container.begin() ); \
+          const iterator_type i_ ## name ## _end( container.end() );
 #endif
 
 #endif

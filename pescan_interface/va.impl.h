@@ -131,6 +131,7 @@ namespace LaDa
              __IIAGA( << "." << mpi::main.rank() );
         vff.filename = sstr.str();
         t_PescanBase::set_mpi( _comm ); 
+        Vff().set_mpi( _comm );
       )
     }
 #  endif
