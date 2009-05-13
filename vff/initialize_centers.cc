@@ -73,20 +73,20 @@ namespace LaDa
       } 
 
       const size_t Nperbox( 30 );
-      if( structure.atoms.size() < Nperbox )
-      {
-        __ROOTCODE
-        ( 
-          MPI_COMM,
-          std::cout << "Creating first neighbor tree using standard algorithm.\n";
-        )
-        if( not build_tree_sort_( fn ) ) return false;
-        __DODEBUGCODE( check_tree(); )
-        __ROOTCODE( MPI_COMM,
-                    std::cout << "First Neighbor tree successfully created.\n"; )
-        return true;
-      }
-       
+//     if( structure.atoms.size() < Nperbox )
+//     {
+//       __ROOTCODE
+//       ( 
+//         MPI_COMM,
+//         std::cout << "Creating first neighbor tree using standard algorithm.\n";
+//       )
+//       if( not build_tree_sort_( fn ) ) return false;
+//       __DODEBUGCODE( check_tree(); )
+//       __ROOTCODE( MPI_COMM,
+//                   std::cout << "First Neighbor tree successfully created.\n"; )
+//       return true;
+//     }
+//      
       __ROOTCODE
       (
         MPI_COMM,
