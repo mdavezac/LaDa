@@ -27,7 +27,7 @@ namespace LaDa
       types::t_real vbm;  //!< Valence Band minimum
       Bands() : cbm(0), vbm(0) {}; //!< Constructor
       //! Constructor and Initializer
-      Bands( const types :: t_real _cbm, types::t_real _vbm ) : cbm(_cbm), vbm(_vbm) {};
+      Bands( const types :: t_real _cbm, const types::t_real _vbm ) : cbm(_cbm), vbm(_vbm) {};
       //! Copy Constructor.
       Bands( const Bands &_bands ) : cbm(_bands.cbm), vbm(_bands.vbm) {};
       //! Returns the gap.

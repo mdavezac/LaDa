@@ -70,6 +70,11 @@ namespace LaDa
           
         //! The owned structure.
         Crystal::Structure structure;
+#       ifdef _MPI
+          //! Sets mpi pointer.
+          void set_mpi( boost::mpi::communicator* _c )
+            { functional_->set_mpi( _c ); }
+#       endif
 
 
       protected:
@@ -108,6 +113,14 @@ namespace LaDa
 #   ifdef EXPOSEVFF 
 #     error Macro EXPOSEVFF already exists.
 #   endif 
+#   ifdef _MPI
+#     ifdef SETMPI
+#       error Macro SETMPI already exists.
+#     endif 
+#     define SETMPI(b) .def("set_mpi", &b::set_mpi, "Sets the boost.mpi communicator.")
+#   else
+#     define SETMPI(b)
+#   endif
 #   define EXPOSEVFF( a, b, c ) \
       bp::class_< b >( a, c ) \
         .def( bp::init< b >() ) \
@@ -121,7 +134,9 @@ namespace LaDa
         .def( "print_escan_input",  &b::print_escan_input, bp::arg("file"), \
               "Outputs the current structure in a format suitable for pescan." ) \
         .add_property( "stress",  &b::get_stress, \
-                       "Returns the stress. Meaningfull only following a call to Vff.evaluate()." ) 
+                       "Returns the stress. Meaningfull only "\
+                       "following a call to Vff.evaluate()." ) \
+        SETMPI(b)
 
     void expose_vff()
     {
@@ -155,6 +170,7 @@ namespace LaDa
     }
 
 #   undef EXPOSEVFF
+#   undef SETMPI
 
   }
 } // namespace LaDa

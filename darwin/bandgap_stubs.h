@@ -124,11 +124,11 @@ namespace LaDa
         //! Computes the band-gap of Darwin::structure and stores the results in
         //! \a _keeper.
         void operator()( LaDa::GA::Keepers::BandGap &_keeper );
-  #ifdef _MPI
-        //! Sets communicator and suffix for mpi stuff.
-        void set_mpi( boost::mpi::communicator *_comm, const std::string &_suffix )
-          { suffix = _suffix; MPI_COMMDEC::set_mpi( _comm ); bandgap.set_mpi( _comm, _suffix ); }
-  #endif
+#       ifdef _MPI
+          //! Sets communicator and suffix for mpi stuff.
+          void set_mpi( boost::mpi::communicator *_comm, const std::string &_suffix )
+            { suffix = _suffix; MPI_COMMDEC::set_mpi( _comm ); bandgap.set_mpi( _comm, _suffix ); }
+#       endif
         //! initializes the vff part
         bool init( bool _redocenters = false )
           { return bandgap.init( _redocenters ); }

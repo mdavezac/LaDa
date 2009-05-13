@@ -98,6 +98,11 @@ namespace LaDa
         void init() { t_Base::init(); } 
         //! Minimizes the structure and stores the results in \a _keeper
         void operator()( Keeper &_keeper );
+#       ifdef _MPI
+          //! Sets communicator and suffix for mpi stuff.
+          void set_mpi( boost::mpi::communicator *_comm, const std::string &_suffix )
+            { t_Base::set_mpi( _comm ); }
+#       endif
     };
     /* @} */
 

@@ -62,7 +62,7 @@ namespace LaDa
       namespace bp = boost::python;
       typedef LaDa::Pescan::Bands t_Bands;
       bp::class_< t_Bands >( "Bands", "Holds vbm and cbm. Used by LaDa.BandGap." )
-        .def( bp::init< LaDa::types::t_real, LaDa::types::t_real >() )
+        .def( bp::init< const LaDa::types::t_real, const LaDa::types::t_real >() )
         .def( bp::init< const t_Bands& >() )
         .def_readwrite( "vbm", &t_Bands::vbm, "Valence Band Maximum." )
         .def_readwrite( "cbm", &t_Bands::cbm, "Conduction Band Minimum." )
