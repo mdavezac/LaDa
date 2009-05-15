@@ -276,39 +276,51 @@ namespace LaDa
                   << " has only " << _center.size() << " bonds " << std::endl;
         return 0;
       }
-      // constructs the two matrices
-      // tetra is the original tetrahedron (from _str0), 
-      // dtetra the deformed tetrahedron (from _center )
-      atat::rMatrix3d tetra0, dtetra;
-      atat::rVector3d R0, R1, dR0, dR1;
 
+      // computes the microstrain as the average strain over four paralellepipeds.
+      // first computes four bond vectors, bond lengths, and angles.
+      atat::rVector3d bonds[4];
+      types::t_real l0s[4]; 
+      types::t_real angles[4][4]; 
       AtomicCenter :: const_iterator i_bond  = _center.begin();
-
-      // first vector
-      i_bond.vector(dR0); 
-      R0 =   _str0.atoms[i_bond->get_index()].pos
-           - _str0.atoms[ _center.get_index() ].pos;
-      i_bond.translate( R0, _str0.cell );
-      types::t_real aeq = lengths[i_bond.kind()]; // equilibrium lattice constant
-      types::t_real deq = std::sqrt(i_bond.norm2());
-      types::t_real d0eq = std::sqrt(atat::norm2(R0));
-      ++i_bond;
-      for( types::t_unsigned i=0; i<3; ++i_bond, ++i )
+      AtomicCenter :: const_iterator i_bond_end    = _center.end();
+      for( size_t i(0); i_bond != i_bond_end; ++i_bond, ++i )
       {
-        aeq += lengths[i_bond.kind()];
-        i_bond.vector( dR1 );
-        R1 =   _str0.atoms[i_bond->get_index()].pos
-             - _str0.atoms[ _center.get_index() ].pos;
-        i_bond.translate( R1, _str0.cell ); 
-        R0 -= R1; dR0 -= dR1;
-        tetra0.set_row( i, R0 );
-        dtetra.set_row( i, dR0 );
-        R0 = R1; dR0 = dR1;
-        deq += std::sqrt(i_bond.norm2());
-        d0eq += std::sqrt(atat::norm2(R0));
+        bonds[i] = structure->scale *  i_bond.vector( bonds[i] );
+        const types::t_unsigned bond_kind( i_bond.kind() );
+        l0s[i] = lengths[ bond_kind ];
+
+        angles[i][i] = 0;
+        AtomicCenter :: const_iterator i_angle( i_bond ); ++i_angle;
+        for( size_t j(i+1); i_angle != i_bond_end; ++i_angle, ++j )
+        {
+          if( i == j ) {  continue; }
+          angles[i][j] = gammas[ bond_kind + i_angle.kind() ];
+          angles[j][i] = angles[i][j];
+        }
       }
 
-      return atat::trace( dtetra * (!tetra0) ) / aeq * d0eq * _str0.scale - 3.0;
+      // now performs loop over all parallelipipeds
+      types::t_real strain(0);
+      for( size_t i(0); i < 4; ++i )
+      {
+        const size_t j( i+1>3 ? i-3: i+1 );
+        const size_t k( j+1>3 ? j-3: j+1 );
+        const types::t_real vol( std::abs( bonds[i] * (bonds[j] ^ bonds[k]) ));
+        const types::t_real vol0
+        ( 
+            l0s[i] * l0s[j] * l0s[k]
+          * std::sqrt
+            (
+              1e0 - angles[i][j] * angles[i][j] - angles[j][k] * angles[j][k]
+                  - angles[k][i] * angles[k][i]
+                  + 2e0 * angles[i][j] * angles[j][k] * angles[k][i] 
+            )
+         );
+        strain += ( vol / vol0 - 1e0 );
+      }
+      strain *= 0.25e0;
+      return strain;
     }
 
     void AtomicFunctional :: print_out( std::ostream &stream ) const
