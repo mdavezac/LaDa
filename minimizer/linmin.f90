@@ -35,7 +35,7 @@
       double precision fret,fret1,fret2,fret3
 ! Parameters:
       integer mxparm
-      parameter (mxparm = 300)
+      parameter (mxparm = 10000)
 ! Local:
       integer j
 !      double precision ax,xx,bx,fa,fx,fb,xmin

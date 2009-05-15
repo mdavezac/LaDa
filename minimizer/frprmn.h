@@ -145,7 +145,7 @@ namespace LaDa
         std::copy( _arg.begin(), _arg.end(), x );
         int iter = 0;
   
-#       define _MXPARM_ 300
+#       define _MXPARM_ 10000
         __DOASSERT( x_length > _MXPARM_,
                       "Current optimizer cannot go beyond " << _MXPARM_ << " variables\n"
                       "Change file cited above, as well as variable mxparm in "

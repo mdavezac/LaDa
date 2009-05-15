@@ -15,7 +15,7 @@
       double precision dx
 ! Parameters:
       integer mxparm
-      parameter (mxparm = 300)
+      parameter (mxparm = 10000)
 ! Common:
       integer ncom
       double precision pcom,xicom
