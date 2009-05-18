@@ -265,5 +265,92 @@ namespace LaDa
         }
       }
 #   endif
+    boost::tuples::tuple< const types::t_real&, const types::t_real&, const types::t_real&,
+                          const types::t_real&, const types::t_real&, const types::t_real& >
+      Vff::get_bond( const std::string &_type ) const
+      {
+        typedef t_AtomicFunctionals :: value_type t_AtomicFunctional;
+        namespace bt = boost::tuples;
+      
+        __DOASSERT( structure.lattice and structure.lattice->sites.size() == 2,
+                    "Lattice undefined or does not have two sites.\n" )
+        namespace bx = boost::xpressive;
+        const std::string bond( Print::StripEdges( _type ) );
+        bx::smatch what;
+      
+        const bx::sregex regex =(    ( bx::s1 = ( bx::alpha >> !bx::alpha ) )
+                                  >> *bx::_s >> "-" >> *bx::_s
+                                  >> ( bx::s2 = ( bx::alpha >> !bx::alpha ) ) );
+        if( !bx::regex_match( bond, what, regex ) )
+          __DOASSERT( true, "Could not find bond " + _type + "\n" )
+      
+        const bool two_species( structure.lattice->sites[0].type.size() == 2 );
+        const std::string A( what.str(1) );
+        const std::string B( what.str(2) );
+        for( size_t site(0); site < 2; ++site )
+        { 
+          const int i = details::type_index()( structure.lattice->sites[ site ].type,  A );
+          const int j = details::type_index()( structure.lattice->sites[ site ? 0: 1 ].type,  B );
+          if( i == -1 or j == -1 ) continue;
+          const size_t Akind
+          (
+            site == 0 ? size_t(i):( two_species ? size_t(2 + i): size_t(1 + i) )
+          );
+          const size_t bond_kind
+          (
+            site == 0 ? size_t(j):( two_species ? size_t(i): 0 )
+          );
+          __DOASSERT( Akind < functionals.size(), "Index out-of-range.\n" )
+          return functionals[Akind].get_bond( bond_kind );
+        }
+        __DOASSERT( true, "Could not find angle.\n" )
+      }
+
+    boost::tuples::tuple< const types::t_real&, const types::t_real&, 
+                          const types::t_real&, const types::t_real&,
+                          const types::t_real&, const types::t_real&, const types::t_real& >
+      Vff::get_angle( const std::string &_type ) const
+      {
+        typedef t_AtomicFunctionals :: value_type t_AtomicFunctional;
+        namespace bt = boost::tuples;
+      
+        __DOASSERT( structure.lattice and structure.lattice->sites.size() == 2,
+                    "Lattice undefined or does not have two sites.\n" )
+        namespace bx = boost::xpressive;
+        const std::string bond( Print::StripEdges( _type ) );
+        bx::smatch what;
+      
+        const bx::sregex regex =(    ( bx::s1 = ( bx::alpha >> !bx::alpha ) )
+                                  >> *bx::_s >> "-" >> *bx::_s
+                                  >> ( bx::s2 = ( bx::alpha >> !bx::alpha ) )
+                                  >> *bx::_s >> "-" >> *bx::_s
+                                  >> ( bx::s3 = ( bx::alpha >> !bx::alpha ) ) );
+        if( !bx::regex_match( bond, what, regex ) )
+          __DOASSERT( true, "Could not find angle " + _type + "\n" )
+      
+        const bool two_species( structure.lattice->sites[0].type.size() == 2 );
+        const std::string A( what.str(1) );
+        const std::string B( what.str(2) );
+        const std::string C( what.str(3) );
+        for( size_t site(0); site < 2; ++site )
+        { 
+          const int i = details::type_index()( structure.lattice->sites[ site ? 0: 1 ].type,  A );
+          const int j = details::type_index()( structure.lattice->sites[ site ].type,  B );
+          const int k = details::type_index()( structure.lattice->sites[ site ? 0: 1 ].type,  C );
+          if( i == -1 or j == -1 or k == -1 ) continue;
+          const size_t Bkind
+          (
+            site == 0 ? size_t(j):( two_species ? size_t(2 + j): size_t(1 + j) )
+          );
+          const size_t angle_kind
+          (
+              site == 0 ? size_t(i):( two_species ? size_t(i): 0 )
+            + site == 0 ? size_t(k):( two_species ? size_t(k): 0 )
+          );
+          __DOASSERT( Bkind < functionals.size(), "Index out-of-range.\n" )
+          return functionals[Bkind].get_angle( angle_kind );
+        }
+        __DOASSERT( true, "Could not find angle.\n" )
+      }
   } // namespace vff
 } // namespace LaDa

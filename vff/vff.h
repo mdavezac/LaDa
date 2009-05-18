@@ -11,6 +11,11 @@
 #include <vector>
 #include <algorithm>
 #include <boost/filesystem/path.hpp>
+#include <boost/xpressive/xpressive.hpp>
+#include <boost/mpl/equal_to.hpp>
+#include <boost/mpl/int.hpp>
+#include <boost/tuple/tuple.hpp>
+
 
 #include <tinyxml/tinyxml.h>
 
@@ -131,6 +136,22 @@ namespace LaDa
         //! Prints out all parameters
         void print_out( std::ostream &stream ) const;
 
+        //! Sets the bond parameters.
+        template< class T_TUPLE >
+          void set_bond( const std::string &_type, T_TUPLE& _tuple );
+        //! Returns bond parameters, first the length, then the alphas.
+        boost::tuples::tuple< const types::t_real&, const types::t_real&, const types::t_real&,
+                              const types::t_real&, const types::t_real&, const types::t_real& >
+          get_bond( const std::string &_type ) const;
+        //! Sets the angle parameters.
+        template< class T_TUPLE >
+          void set_angle( const std::string &_type, T_TUPLE& _tuple );
+        //! Returns angle parameters, first the length, then sigma, then the betas.
+        boost::tuples::tuple< const types::t_real&, const types::t_real&, 
+                              const types::t_real&, const types::t_real&,
+                              const types::t_real&, const types::t_real&, const types::t_real& >
+          get_angle( const std::string &_type ) const;
+
       protected:
         //! Holds ideal first neighbor positions.
         typedef std::vector< std::vector< atat::rVector3d > > t_FirstNeighbors;
@@ -189,13 +210,111 @@ namespace LaDa
         t_Centers centers;  
         //! list of all possbile Atomic_Functionals for Vff::structure.lattice
         t_AtomicFunctionals functionals;
-        
+
 
 #      ifdef _LADADEBUG
          //! Checks that the list of centers are valid. somewhat.
          void check_tree() const;
 #      endif
     };
+
+    namespace details
+    {
+      struct type_index
+      {
+        int operator()( const Crystal::Lattice::t_Site::t_Type& _type,
+                        const std::string & _s ) const
+        {     
+          typedef Crystal::Lattice::t_Site::t_Type t_Type;
+          const t_Type :: const_iterator i_found
+            = std::find( _type.begin(), _type.end(), _s );
+          if( i_found == _type.end() ) return -1;
+          return (int)( i_found - _type.begin() );
+        }
+      };
+    }
+
+
+    template< class T_TUPLE >
+      void Vff::set_bond( const std::string &_type, T_TUPLE& _tuple )
+      {
+        namespace bt = boost::tuples;
+
+        __DOASSERT( structure.lattice and structure.lattice->sites.size() == 2,
+                    "Lattice undefined or does not have two sites.\n" )
+        namespace bx = boost::xpressive;
+        const std::string bond( Print::StripEdges( _type ) );
+        bx::smatch what;
+
+        const bx::sregex regex =(    ( bx::s1 = ( bx::alpha >> !bx::alpha ) )
+                                  >> *bx::_s >> "-" >> *bx::_s
+                                  >> ( bx::s2 = ( bx::alpha >> !bx::alpha ) ) );
+        if( !bx::regex_match( bond, what, regex ) )
+          __DOASSERT( true, "Could not find bond " + _type + "\n" )
+
+        const bool two_species( structure.lattice->sites[0].type.size() == 2 );
+        const std::string A( what.str(1) );
+        const std::string B( what.str(2) );
+        for( size_t site(0); site < 2; ++site )
+        { 
+          const int i = details::type_index()( structure.lattice->sites[ site ].type,  A );
+          const int j = details::type_index()( structure.lattice->sites[ site ? 0: 1 ].type,  B );
+          if( i == -1 or j == -1 ) continue;
+          const size_t Akind
+          (
+            site == 0 ? size_t(i):( two_species ? size_t(2 + i): size_t(1 + i) )
+          );
+          const size_t bond_kind
+          (
+            site == 0 ? size_t(j):( two_species ? size_t(j): 0 )
+          );
+          __DOASSERT( Akind < functionals.size(), "Index out-of-range.\n" )
+          functionals[Akind].set_bond( bond_kind, _tuple );
+        }
+      }
+    
+    template< class T_TUPLE >
+      void Vff::set_angle( const std::string &_type, T_TUPLE& _tuple )
+      {
+        namespace bt = boost::tuples;
+
+        __DOASSERT( structure.lattice and structure.lattice->sites.size() == 2,
+                    "Lattice undefined or does not have two sites.\n" )
+        namespace bx = boost::xpressive;
+        const std::string bond( Print::StripEdges( _type ) );
+        bx::smatch what;
+
+        const bx::sregex regex =(    ( bx::s1 = ( bx::alpha >> !bx::alpha ) )
+                                  >> *bx::_s >> "-" >> *bx::_s
+                                  >> ( bx::s2 = ( bx::alpha >> !bx::alpha ) )
+                                  >> *bx::_s >> "-" >> *bx::_s
+                                  >> ( bx::s3 = ( bx::alpha >> !bx::alpha ) ) );
+        if( !bx::regex_match( bond, what, regex ) )
+          __DOASSERT( true, "Could not find angle " + _type + "\n" )
+
+        const bool two_species( structure.lattice->sites[0].type.size() == 2 );
+        const std::string A( what.str(1) );
+        const std::string B( what.str(2) );
+        const std::string C( what.str(3) );
+        for( size_t site(0); site < 2; ++site )
+        { 
+          const int i = details::type_index()( structure.lattice->sites[ site ? 0: 1 ].type,  A );
+          const int j = details::type_index()( structure.lattice->sites[ site ].type,  B );
+          const int k = details::type_index()( structure.lattice->sites[ site ? 0: 1 ].type,  C );
+          if( i == -1 or j == -1 or k == -1 ) continue;
+          const size_t Bkind
+          (
+            site == 0 ? size_t(j):( two_species ? size_t(2 + j): size_t(1 + j) )
+          );
+          const size_t angle_kind
+          (
+              site == 0 ? size_t(i):( two_species ? size_t(i): 0 )
+            + site == 0 ? size_t(k):( two_species ? size_t(k): 0 )
+          );
+          __DOASSERT( Bkind < functionals.size(), "Index out-of-range.\n" )
+          functionals[Bkind].set_angle( angle_kind, _tuple );
+        }
+      }
 
   } // namespace vff 
 } // namespace LaDa

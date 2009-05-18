@@ -7,6 +7,7 @@
 
 
 #include <boost/python.hpp>
+#include <boost/python/tuple.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_same.hpp>
 
@@ -39,6 +40,7 @@ namespace LaDa
                          "Could not load Vff functional from " + _filename + ".\n" )
         }
     }
+
 
 
     //! Assumes ownership of the Crystal::Structure object needed by vff.
@@ -76,11 +78,128 @@ namespace LaDa
             { functional_->set_mpi( _c ); }
 #       endif
 
+        boost::python::tuple get_bond( const std::string& _bond ) const;
+        void set_bond( const std::string& _bond, const boost::python::tuple& _t );
+
 
       protected:
         //! The functional.
         boost::shared_ptr< LaDa::Vff::VABase< T_VFF > > functional_;
     };
+
+    template< class T_VFF >
+      boost::python::tuple Vff<T_VFF>::get_bond( const std::string &_str ) const 
+      {
+        try
+        {
+          typedef boost::tuples::tuple
+          < 
+            const types::t_real&, const types::t_real&,
+            const types::t_real&, const types::t_real&,
+            const types::t_real&, const types::t_real& 
+          > t_Tuple;
+          const t_Tuple result( functional_->get_bond( _str ) );
+          return boost::python::make_tuple
+          (
+            boost::tuples::get<0>( result ), boost::tuples::get<1>( result ), 
+            boost::tuples::get<2>( result ), boost::tuples::get<3>( result ), 
+            boost::tuples::get<4>( result ), boost::tuples::get<5>( result )
+          );
+        }
+        catch(...)
+        {
+          PyErr_SetObject(PyExc_RuntimeError,
+                          ("could not find parameters of bond " + _str).c_str() );
+          bp::throw_error_already_set();
+        }
+      };
+    template< class T_VFF >
+      boost::python::tuple Vff<T_VFF>::get_angle( const std::string &_str ) const 
+      {
+        try
+        {
+          typedef boost::tuples::tuple
+          < 
+            const types::t_real&, const types::t_real&,
+            const types::t_real&, const types::t_real&,
+            const types::t_real&, const types::t_real&,
+            const types::t_real&
+          > t_Tuple;
+          const t_Tuple result( functional_->get_angle( _str ) );
+          return boost::python::make_tuple
+          (
+            boost::tuples::get<0>( result ), boost::tuples::get<1>( result ), 
+            boost::tuples::get<2>( result ), boost::tuples::get<3>( result ), 
+            boost::tuples::get<4>( result ), boost::tuples::get<5>( result )
+            boost::tuples::get<6>( result )
+          );
+        }
+        catch(...)
+        {
+          PyErr_SetObject(PyExc_RuntimeError,
+                          ("could not find parameters of angle " + _str).c_str() );
+          bp::throw_error_already_set();
+        }
+      };
+    template< class T_VFF >
+      void Vff<T_VFF>::set_bond( const std::string &_str, boost::python::tuple &_t ) const 
+      {
+        namespace bp = boost::python;
+        const size_t N(bp::len( _t )); 
+        if( N == 0 or bp::len( _t ) > 6 )
+        {
+          PyErr_SetObject( PyExc_RuntimeError,
+                           "Too many or to few bond parameters.\n"  );
+          bp::throw_error_already_set();
+          return;
+        }
+        try
+        {
+          const types::t_real a( N ? bp::extract<types::t_real>( _t[0] ): 0 );
+          const types::t_real b( N > 1 ? bp::extract<types::t_real>( _t[1] ): 0e0 );
+          const types::t_real c( N > 2 ? bp::extract<types::t_real>( _t[2] ): 0e0 );
+          const types::t_real d( N > 3 ? bp::extract<types::t_real>( _t[3] ): 0e0 );
+          const types::t_real e( N > 4 ? bp::extract<types::t_real>( _t[4] ): 0e0 );
+          const types::t_real f( N > 5 ? bp::extract<types::t_real>( _t[5] ): 0e0 );
+          functional_->set_bond( _str, boost::tuples::make_tuple( a, b, c, d, e, f ) );
+        }
+        catch(...)
+        {
+          PyErr_SetObject(PyExc_RuntimeError,
+                          ("could not find parameters of bond " + _str).c_str() );
+          bp::throw_error_already_set();
+        }
+      };
+    template< class T_VFF >
+      void Vff<T_VFF>::set_angle( const std::string &_str, boost::python::tuple &_t ) const 
+      {
+        namespace bp = boost::python;
+        const size_t N(bp::len( _t )); 
+        if( N == 0 or bp::len( _t ) > 7 )
+        {
+          PyErr_SetObject( PyExc_RuntimeError,
+                           "Too many or to few bond parameters.\n"  );
+          bp::throw_error_already_set();
+          return;
+        }
+        try
+        {
+          const types::t_real a( N ? bp::extract<types::t_real>( _t[0] ): 0 );
+          const types::t_real b( N > 1 ? bp::extract<types::t_real>( _t[1] ): 0e0 );
+          const types::t_real c( N > 2 ? bp::extract<types::t_real>( _t[2] ): 0e0 );
+          const types::t_real d( N > 3 ? bp::extract<types::t_real>( _t[3] ): 0e0 );
+          const types::t_real e( N > 4 ? bp::extract<types::t_real>( _t[4] ): 0e0 );
+          const types::t_real f( N > 5 ? bp::extract<types::t_real>( _t[5] ): 0e0 );
+          const types::t_real g( N > 6 ? bp::extract<types::t_real>( _t[6] ): 0e0 );
+          functional_->set_angle( _str, boost::tuples::make_tuple( a, b, c, d, e, f, g ) );
+        }
+        catch(...)
+        {
+          PyErr_SetObject(PyExc_RuntimeError,
+                          ("could not find parameters of bond " + _str).c_str() );
+          bp::throw_error_already_set();
+        }
+      };
 
     class LVff : public LaDa::Vff::Layered
     {
@@ -133,6 +252,26 @@ namespace LaDa
         .def( "init",  &b::init, "Initializes the functional for the current structure." ) \
         .def( "print_escan_input",  &b::print_escan_input, bp::arg("file"), \
               "Outputs the current structure in a format suitable for pescan." ) \
+        .def( "set_bond",  &b::set_bond, ( bp::arg("bond"), bp::arg("params") ), \
+              "Sets the parameters of bond from a tuple where:\n" \
+              "  _ the first component is the bond length.\n" \
+              "  _ the second to sixth components are the gammas at order 2-6.\n" \
+              "The tuple can be shortened to include only the first few parameters.\n" ) \
+        .def( "get_bond",  &b::get_bond, bp::arg("angle"), \
+              "Returns the parameters of bond in form of a tuple.\n" \
+              "  _ the first component is the bond length.\n" \
+              "  _ the second to sixth components are the gammas at order 2-6.\n" ) \
+        .def( "set_angle",  &b::set_angle, ( bp::arg("angle"), bp::arg("params") ), \
+              "Sets the parameters of angle from a tuple where:\n" \
+              "  _ the first component is gamma.\n" \
+              "  _ the second component is sigma.\n" \
+              "  _ the third to seventh components are the betas at order 2-6.\n" \
+              "The tuple can be shortened to include only the first few parameters.\n" ) \
+        .def( "get_angle",  &b::get_angle, bp::arg("angle"), \
+              "Returns the parameters of angle in form of a tuple.\n" \
+              "  _ the first component is gamma.\n" \
+              "  _ the second component is sigma.\n" \
+              "  _ the third to seventh components are the betas at order 2-6.\n" ) \
         .add_property( "stress",  &b::get_stress, \
                        "Returns the stress. Meaningfull only "\
                        "following a call to Vff.evaluate()." ) \
