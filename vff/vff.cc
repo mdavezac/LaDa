@@ -334,13 +334,12 @@ namespace LaDa
         const std::string A( what.str(1) );
         const std::string B( what.str(2) );
         const std::string C( what.str(3) );
-        for( size_t site(0); site < 2; ++site )
+        for( size_t site(1); site < 2; ++site )
         { 
           const int
             i = details::type_index()( structure.lattice->sites[ site ? 0: 1 ].type,  A ),
             j = details::type_index()( structure.lattice->sites[ site ].type,  B ),
             k = details::type_index()( structure.lattice->sites[ site ? 0: 1 ].type,  C );
-          std::cout << A << " -  " << B << " - " << C << " " << two_species << "\n";
           if( i == -1 or j == -1 or k == -1 ) continue;
           const size_t Bkind
           (
@@ -348,8 +347,8 @@ namespace LaDa
           );
           const size_t angle_kind
           (
-              site == 0 ? size_t(i):( two_species ? size_t(i): 0 )
-            + site == 0 ? size_t(k):( two_species ? size_t(k): 0 )
+              size_t( site == 0 ? size_t(i):( two_species ? size_t(i): 0 ) )
+            + size_t( site == 0 ? size_t(k):( two_species ? size_t(k): 0 ) )
           );
           __DOASSERT( Bkind >= functionals.size(), "Index out-of-range.\n" )
           return functionals[Bkind].get_angle( angle_kind );

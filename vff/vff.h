@@ -259,20 +259,23 @@ namespace LaDa
         const std::string B( what.str(2) );
         for( size_t site(0); site < 2; ++site )
         { 
-          const int
-            i = details::type_index()( structure.lattice->sites[ site ].type,  A ),
-            j = details::type_index()( structure.lattice->sites[ site ? 0: 1 ].type,  B );
-          if( i == -1 or j == -1 ) continue;
-          const size_t Akind
-          (
-            site == 0 ? size_t(i):( two_species ? size_t(2 + i): size_t(1 + i) )
-          );
-          const size_t bond_kind
-          (
-            site == 0 ? size_t(j):( two_species ? size_t(j): 0 )
-          );
-          __DOASSERT( Akind >= functionals.size(), "Index out-of-range.\n" )
-          functionals[Akind].set_bond( bond_kind, _tuple );
+          for( size_t swap(0); swap < 2; ++swap )
+          {
+            const int
+              i = details::type_index()( structure.lattice->sites[ site ].type,  swap ? A: B ),
+              j = details::type_index()( structure.lattice->sites[ site ? 0: 1 ].type,  swap ? B: A );
+            if( i == -1 or j == -1 ) continue;
+            const size_t Akind
+            (
+              site == 0 ? size_t(i):( two_species ? size_t(2 + i): size_t(1 + i) )
+            );
+            const size_t bond_kind
+            (
+              site == 0 ? size_t(j):( two_species ? size_t(j): 0 )
+            );
+            __DOASSERT( Akind >= functionals.size(), "Index out-of-range.\n" )
+            functionals[Akind].set_bond( bond_kind, _tuple );
+          }
         }
       }
     
@@ -312,8 +315,8 @@ namespace LaDa
           );
           const size_t angle_kind
           (
-              site == 0 ? size_t(i):( two_species ? size_t(i): 0 )
-            + site == 0 ? size_t(k):( two_species ? size_t(k): 0 )
+              size_t(site == 0 ? size_t(i):( two_species ? size_t(i): 0 ))
+            + size_t(site == 0 ? size_t(k):( two_species ? size_t(k): 0 ))
           );
           __DOASSERT( Bkind >= functionals.size(), "Index out-of-range.\n" )
           functionals[Bkind].set_angle( angle_kind, _tuple );

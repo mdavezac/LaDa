@@ -369,7 +369,7 @@ namespace LaDa
                           const types::t_real&, const types::t_real&, const types::t_real& >
       AtomicFunctional::get_angle( size_t _kind ) const
       {
-          __ASSERT( _kind >= lengths.size(), "Index out-of-range.\n" )
+          __ASSERT( _kind >= gammas.size(), "Index out-of-range.\n" )
           __ASSERT( _kind >= sigmas.size(), "Index out-of-range.\n" )
           __ASSERT( 5*_kind + 4 >= betas.size(), "Index out-of-range.\n" )
           return boost::tuples::tie( gammas[_kind], sigmas[_kind],

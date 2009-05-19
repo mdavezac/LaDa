@@ -163,7 +163,7 @@ namespace LaDa
     template< class T_TUPLE >
       void AtomicFunctional :: set_angle( size_t _kind, const T_TUPLE& _tuple )
       {
-        __ASSERT( _kind >= lengths.size(), "Index out-of-range.\n" )
+        __ASSERT( _kind >= gammas.size(), "Index out-of-range.\n" )
         __ASSERT( _kind >= sigmas.size(), "Index out-of-range.\n" )
         __ASSERT( 5*_kind + 4 >= betas.size(), "Index out-of-range.\n" )
         switch( boost::tuples::length<T_TUPLE>::value )
