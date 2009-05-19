@@ -140,6 +140,28 @@ namespace LaDa
             const boost::mpi::communicator &comm() const { return t_VffBase :: comm(); } 
 #         endif
 
+          //! Sets the bond parameters.
+          template< class T_TUPLE >
+            void set_bond( const std::string &_type, const T_TUPLE& _tuple )
+              { t_VffBase::set_bond( _type, _tuple ); }
+          //! Returns bond parameters, first the length, then the alphas.
+          boost::tuples::tuple< const types::t_real&, const types::t_real&,
+                                const types::t_real&, const types::t_real&, 
+                                const types::t_real&, const types::t_real& >
+            get_bond( const std::string &_type ) const
+              { return t_VffBase::get_bond( _type ); }
+          //! Sets the angle parameters.
+          template< class T_TUPLE >
+            void set_angle( const std::string &_type, const T_TUPLE& _tuple )
+              { t_VffBase::set_angle( _type, _tuple); }
+          //! Returns angle parameters, first the length, then sigma, then the betas.
+          boost::tuples::tuple< const types::t_real&, const types::t_real&, 
+                                const types::t_real&, const types::t_real&,
+                                const types::t_real&, const types::t_real&,
+                                const types::t_real& >
+            get_angle( const std::string &_type ) const
+              { return t_VffBase::get_angle( _type ); }
+
        protected:
          //! Type of the minimizer for minimizing strain
          typedef Minimizer::Variant

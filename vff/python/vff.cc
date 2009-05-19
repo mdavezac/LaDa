@@ -80,6 +80,8 @@ namespace LaDa
 
         boost::python::tuple get_bond( const std::string& _bond ) const;
         void set_bond( const std::string& _bond, const boost::python::tuple& _t );
+        boost::python::tuple get_angle( const std::string& _bond ) const;
+        void set_angle( const std::string& _bond, const boost::python::tuple& _t );
 
 
       protected:
@@ -108,9 +110,9 @@ namespace LaDa
         }
         catch(...)
         {
-          PyErr_SetObject(PyExc_RuntimeError,
+          PyErr_SetString(PyExc_RuntimeError,
                           ("could not find parameters of bond " + _str).c_str() );
-          bp::throw_error_already_set();
+          boost::python::throw_error_already_set();
         }
       };
     template< class T_VFF >
@@ -130,72 +132,74 @@ namespace LaDa
           (
             boost::tuples::get<0>( result ), boost::tuples::get<1>( result ), 
             boost::tuples::get<2>( result ), boost::tuples::get<3>( result ), 
-            boost::tuples::get<4>( result ), boost::tuples::get<5>( result )
+            boost::tuples::get<4>( result ), boost::tuples::get<5>( result ),
             boost::tuples::get<6>( result )
           );
         }
         catch(...)
         {
-          PyErr_SetObject(PyExc_RuntimeError,
+          PyErr_SetString(PyExc_RuntimeError,
                           ("could not find parameters of angle " + _str).c_str() );
-          bp::throw_error_already_set();
+          boost::python::throw_error_already_set();
         }
       };
     template< class T_VFF >
-      void Vff<T_VFF>::set_bond( const std::string &_str, boost::python::tuple &_t ) const 
+      void Vff<T_VFF>::set_bond( const std::string &_str, const boost::python::tuple &_t ) 
       {
         namespace bp = boost::python;
         const size_t N(bp::len( _t )); 
         if( N == 0 or bp::len( _t ) > 6 )
         {
-          PyErr_SetObject( PyExc_RuntimeError,
+          PyErr_SetString( PyExc_RuntimeError,
                            "Too many or to few bond parameters.\n"  );
           bp::throw_error_already_set();
           return;
         }
         try
         {
-          const types::t_real a( N ? bp::extract<types::t_real>( _t[0] ): 0 );
-          const types::t_real b( N > 1 ? bp::extract<types::t_real>( _t[1] ): 0e0 );
-          const types::t_real c( N > 2 ? bp::extract<types::t_real>( _t[2] ): 0e0 );
-          const types::t_real d( N > 3 ? bp::extract<types::t_real>( _t[3] ): 0e0 );
-          const types::t_real e( N > 4 ? bp::extract<types::t_real>( _t[4] ): 0e0 );
-          const types::t_real f( N > 5 ? bp::extract<types::t_real>( _t[5] ): 0e0 );
+          const types::t_real
+            a = N ? (types::t_real) (bp::extract<types::t_real>( _t[0] ) ): 0e0,
+            b = N > 1 ? (types::t_real) (bp::extract<types::t_real>( _t[1] ) ): 0e0,
+            c = N > 2 ? (types::t_real) (bp::extract<types::t_real>( _t[2] ) ): 0e0,
+            d = N > 3 ? (types::t_real) (bp::extract<types::t_real>( _t[3] ) ): 0e0,
+            e = N > 4 ? (types::t_real) (bp::extract<types::t_real>( _t[4] ) ): 0e0,
+            f = N > 5 ? (types::t_real) (bp::extract<types::t_real>( _t[5] ) ): 0e0;
           functional_->set_bond( _str, boost::tuples::make_tuple( a, b, c, d, e, f ) );
         }
         catch(...)
         {
-          PyErr_SetObject(PyExc_RuntimeError,
+          PyErr_SetString(PyExc_RuntimeError,
                           ("could not find parameters of bond " + _str).c_str() );
           bp::throw_error_already_set();
         }
       };
     template< class T_VFF >
-      void Vff<T_VFF>::set_angle( const std::string &_str, boost::python::tuple &_t ) const 
+      void Vff<T_VFF>::set_angle( const std::string &_str, const boost::python::tuple &_t )
       {
         namespace bp = boost::python;
         const size_t N(bp::len( _t )); 
         if( N == 0 or bp::len( _t ) > 7 )
         {
-          PyErr_SetObject( PyExc_RuntimeError,
+          PyErr_SetString( PyExc_RuntimeError,
                            "Too many or to few bond parameters.\n"  );
           bp::throw_error_already_set();
           return;
         }
         try
         {
-          const types::t_real a( N ? bp::extract<types::t_real>( _t[0] ): 0 );
-          const types::t_real b( N > 1 ? bp::extract<types::t_real>( _t[1] ): 0e0 );
-          const types::t_real c( N > 2 ? bp::extract<types::t_real>( _t[2] ): 0e0 );
-          const types::t_real d( N > 3 ? bp::extract<types::t_real>( _t[3] ): 0e0 );
-          const types::t_real e( N > 4 ? bp::extract<types::t_real>( _t[4] ): 0e0 );
-          const types::t_real f( N > 5 ? bp::extract<types::t_real>( _t[5] ): 0e0 );
-          const types::t_real g( N > 6 ? bp::extract<types::t_real>( _t[6] ): 0e0 );
+          const types::t_real 
+            a = N ? (types::t_real) (bp::extract<types::t_real>( _t[0] ) ): 0e0,
+            b = N > 1 ? (types::t_real) (bp::extract<types::t_real>( _t[1] ) ): 0e0,
+            c = N > 2 ? (types::t_real) (bp::extract<types::t_real>( _t[2] ) ): 0e0,
+            d = N > 3 ? (types::t_real) (bp::extract<types::t_real>( _t[3] ) ): 0e0,
+            e = N > 4 ? (types::t_real) (bp::extract<types::t_real>( _t[4] ) ): 0e0,
+            f = N > 5 ? (types::t_real) (bp::extract<types::t_real>( _t[5] ) ): 0e0,
+            g = N > 6 ? (types::t_real) (bp::extract<types::t_real>( _t[6] ) ): 0e0;
           functional_->set_angle( _str, boost::tuples::make_tuple( a, b, c, d, e, f, g ) );
         }
         catch(...)
         {
-          PyErr_SetObject(PyExc_RuntimeError,
+          PyErr_SetString(PyExc_RuntimeError,
                           ("could not find parameters of bond " + _str).c_str() );
           bp::throw_error_already_set();
         }

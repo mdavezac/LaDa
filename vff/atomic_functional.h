@@ -111,20 +111,20 @@ namespace LaDa
 
         //! Sets the bond parameters.
         template< class T_TUPLE >
-          void set_bond( size_t _kind, T_TUPLE& _tuple )
-            { tie_bond_()( *this, _kind, _tuple ); }
+          void set_bond( size_t _kind, const T_TUPLE& _tuple );
         //! Returns bond parameters, first the length, then the alphas.
-        boost::tuples::tuple< const types::t_real&, const types::t_real&, const types::t_real&,
-                              const types::t_real&, const types::t_real&, const types::t_real& >
+        boost::tuples::tuple< const types::t_real&, const types::t_real&,
+                              const types::t_real&, const types::t_real&, 
+                              const types::t_real&, const types::t_real& >
           get_bond( size_t _kind ) const;
         //! Sets the angle parameters.
         template< class T_TUPLE >
-          void set_angle( size_t _kind, T_TUPLE& _tuple )
-            { tie_angle_()( *this, _kind, _tuple ); }
+          void set_angle( size_t _kind, const T_TUPLE& _tuple );
         //! Returns angle parameters, first the length, then sigma, then the betas.
         boost::tuples::tuple< const types::t_real&, const types::t_real&, 
                               const types::t_real&, const types::t_real&,
-                              const types::t_real&, const types::t_real&, const types::t_real& >
+                              const types::t_real&, const types::t_real&,
+                              const types::t_real& >
           get_angle( size_t _kind ) const;
 
       protected:
@@ -144,149 +144,40 @@ namespace LaDa
         std::vector< types::t_real > sigmas;   //!< equilibrium tetrahedral symmetry
     }; 
 
-    struct AtomicFunctional::tie_bond_
-    {
-      template< class T >
-        void operator()( AtomicFunctional &_a, size_t _b, const T& _t ) const
+    template< class T_TUPLE >
+      void AtomicFunctional :: set_bond( size_t _kind, const T_TUPLE& _tuple )
+      {
+        __ASSERT( _kind >= lengths.size(), "Index out-of-range.\n" )
+        __ASSERT( 5*_kind + 4 >= alphas.size(), "Index out-of-range.\n" )
+        switch( boost::tuples::length<T_TUPLE>::value )
         {
-          __ASSERT( _b < _a.lengths.size(), "Index out-of-range.\n" )
-          __ASSERT( 5*_b + 4 < _a.alphas.size(), "Index out-of-range.\n" )
-          operator_( _a, _b, _t );
+          case 6: alphas[5*_kind+4] = boost::tuples::get<5>( _tuple );
+          case 5: alphas[5*_kind+3] = boost::tuples::get<4>( _tuple );
+          case 4: alphas[5*_kind+2] = boost::tuples::get<3>( _tuple );
+          case 3: alphas[5*_kind+1] = boost::tuples::get<2>( _tuple );
+          case 2: alphas[5*_kind  ] = boost::tuples::get<1>( _tuple );
+          case 1: lengths[_kind] = boost::tuples::get<0>( _tuple );
+          default:;
         }
-      template< class T >
-        typename boost::enable_if
-        <
-          boost::mpl::equal_to< boost::tuples::length<T>, boost::mpl::int_<0> > 
-        > :: type
-          operator_( const AtomicFunctional &, size_t, const T& ) const {}
-      template< class T >
-        typename boost::enable_if
-        <
-          boost::mpl::equal_to< boost::tuples::length<T>, boost::mpl::int_<1> > 
-        > :: type
-          operator_( AtomicFunctional &_a, size_t _b, const T& _t ) const
-          { _a.lengths[_b] = boost::tuples::get<0>(_t); }
-      template< class T >
-        typename boost::enable_if
-        <
-          boost::mpl::equal_to< boost::tuples::length<T>, boost::mpl::int_<2> > 
-        > :: type
-          operator_( AtomicFunctional &_a, size_t _b, const T& _t ) const
-            { boost::tuples::tie( _a.lengths[_b], _a.alphas[5*_b + 4] ) = _t; }
-      template< class T >
-        typename boost::enable_if
-        <
-          boost::mpl::equal_to< boost::tuples::length<T>, boost::mpl::int_<3> > 
-        > :: type
-          operator_( AtomicFunctional &_a, size_t _b, const T& _t ) const
-            { boost::tuples::tie( _a.lengths[_b], _a.alphas[5*_b + 4], _a.alphas[5*_b+3] ) = _t; }
-      template< class T >
-        typename boost::enable_if
-        <
-          boost::mpl::equal_to< boost::tuples::length<T>, boost::mpl::int_<4> > 
-        > :: type
-          operator_( AtomicFunctional &_a, size_t _b, const T& _t ) const
-          {
-            boost::tuples::tie( _a.lengths[_b],   _a.alphas[5*_b+4],
-                     _a.alphas[5*_b+3], _a.alphas[5*_b+2] ) = _t; 
-          }
-      template< class T >
-        typename boost::enable_if
-        <
-          boost::mpl::equal_to< boost::tuples::length<T>, boost::mpl::int_<5> > 
-        > :: type
-          operator_( AtomicFunctional &_a, size_t _b, const T& _t ) const
-          {
-            boost::tuples::tie( _a.lengths[_b],   _a.alphas[5*_b+4],
-                     _a.alphas[5*_b+3], _a.alphas[5*_b+2], _a.alphas[5*_b+1] ) = _t; 
-          }
-      template< class T >
-        typename boost::enable_if
-        <
-          boost::mpl::equal_to< boost::tuples::length<T>, boost::mpl::int_<6> > 
-        > :: type
-          operator_( AtomicFunctional &_a, size_t _b, const T& _t ) const
-          {
-            boost::tuples::tie( _a.lengths[_b],   _a.alphas[5*_b+4], _a.alphas[5*_b+3], 
-                     _a.alphas[5*_b+2], _a.alphas[5*_b+1], _a.alphas[5*_b] ) = _t; 
-          }
-    };
-    struct AtomicFunctional::tie_angle_
-    {
-      template< class T >
-        void operator()( AtomicFunctional &_a, size_t _b, const T& _t ) const
+      }
+    template< class T_TUPLE >
+      void AtomicFunctional :: set_angle( size_t _kind, const T_TUPLE& _tuple )
+      {
+        __ASSERT( _kind >= lengths.size(), "Index out-of-range.\n" )
+        __ASSERT( _kind >= sigmas.size(), "Index out-of-range.\n" )
+        __ASSERT( 5*_kind + 4 >= betas.size(), "Index out-of-range.\n" )
+        switch( boost::tuples::length<T_TUPLE>::value )
         {
-          __ASSERT( _b < _a.lengths.size(), "Index out-of-range.\n" )
-          __ASSERT( _b < _a.sigmas.size(), "Index out-of-range.\n" )
-          __ASSERT( 5*_b + 4 < _a.betas.size(), "Index out-of-range.\n" )
-          operator_( _a, _b, _t );
+          case 7: betas[5*_kind+4] = boost::tuples::get<6>( _tuple );
+          case 6: betas[5*_kind+3] = boost::tuples::get<5>( _tuple );
+          case 5: betas[5*_kind+2] = boost::tuples::get<4>( _tuple );
+          case 4: betas[5*_kind+1] = boost::tuples::get<3>( _tuple );
+          case 3: betas[5*_kind  ] = boost::tuples::get<2>( _tuple );
+          case 2: sigmas[_kind] = boost::tuples::get<1>( _tuple );
+          case 1: gammas[_kind] = boost::tuples::get<0>( _tuple );
+          default:;
         }
-      template< class T >
-        typename boost::enable_if
-        <
-          boost::mpl::equal_to< boost::tuples::length<T>, boost::mpl::int_<0> > 
-        > :: type
-          operator_( const AtomicFunctional &, size_t, const T& ) const {}
-      template< class T >
-        typename boost::enable_if
-        <
-          boost::mpl::equal_to< boost::tuples::length<T>, boost::mpl::int_<1> > 
-        > :: type
-          operator_( AtomicFunctional &_a, size_t _b, const T& _t ) const
-          { _a.lengths[_b] = boost::tuples::get<0>(_t); }
-      template< class T >
-        typename boost::enable_if
-        <
-          boost::mpl::equal_to< boost::tuples::length<T>, boost::mpl::int_<2> > 
-        > :: type
-          operator_( AtomicFunctional &_a, size_t _b, const T& _t ) const
-            { boost::tuples::tie( _a.lengths[_b], _a.sigmas[_b] ) = _t; }
-      template< class T >
-        typename boost::enable_if
-        <
-          boost::mpl::equal_to< boost::tuples::length<T>, boost::mpl::int_<3> > 
-        > :: type
-          operator_( AtomicFunctional &_a, size_t _b, const T& _t ) const
-            { boost::tuples::tie( _a.lengths[_b], _a.sigmas[_b], _a.betas[5*_b + 4] ) = _t; }
-      template< class T >
-        typename boost::enable_if
-        <
-          boost::mpl::equal_to< boost::tuples::length<T>, boost::mpl::int_<4> > 
-        > :: type
-          operator_( AtomicFunctional &_a, size_t _b, const T& _t ) const
-            { boost::tuples::tie( _a.lengths[_b], _a.sigmas[_b],
-                       _a.betas[5*_b + 4], _a.betas[5*_b+3] ) = _t; }
-      template< class T >
-        typename boost::enable_if
-        <
-          boost::mpl::equal_to< boost::tuples::length<T>, boost::mpl::int_<5> > 
-        > :: type
-          operator_( AtomicFunctional &_a, size_t _b, const T& _t ) const
-          {
-            boost::tuples::tie( _a.lengths[_b], _a.sigmas[_b], _a.betas[5*_b+4],
-                     _a.betas[5*_b+3], _a.betas[5*_b+2] ) = _t; 
-          }
-      template< class T >
-        typename boost::enable_if
-        <
-          boost::mpl::equal_to< boost::tuples::length<T>, boost::mpl::int_<6> > 
-        > :: type
-          operator_( AtomicFunctional &_a, size_t _b, const T& _t ) const
-          {
-            boost::tuples::tie( _a.lengths[_b], _a.sigmas[_b],  _a.betas[5*_b+4],
-                     _a.betas[5*_b+3], _a.betas[5*_b+2], _a.betas[5*_b+1] ) = _t; 
-          }
-      template< class T >
-        typename boost::enable_if
-        <
-          boost::mpl::equal_to< boost::tuples::length<T>, boost::mpl::int_<7> > 
-        > :: type
-          operator_( AtomicFunctional &_a, size_t _b, const T& _t ) const
-          {
-            boost::tuples::tie( _a.lengths[_b], _a.sigmas[_b],  _a.betas[5*_b+4], _a.betas[5*_b+3], 
-                     _a.betas[5*_b+2], _a.betas[5*_b+1], _a.betas[5*_b] ) = _t; 
-          }
-    };
+      }
   } // namespace vff 
 } // namespace LaDa
 #endif // _VFF_FUNCTIONAL_H_

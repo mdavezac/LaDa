@@ -358,10 +358,10 @@ namespace LaDa
       AtomicFunctional::get_bond( size_t _kind ) const
       {
         namespace bt = boost::tuples;
-        __ASSERT( _kind < lengths.size(), "Index out-of-range.\n" )
-        __ASSERT( 5*_kind + 4 < alphas.size(), "Index out-of-range.\n" )
-        return boost::tuples::tie( lengths[_kind], alphas[5*_kind+4], alphas[5*_kind+3], 
-                                   alphas[5*_kind+2], alphas[5*_kind+1], alphas[5*_kind] );
+        __ASSERT( _kind >= lengths.size(), "Index out-of-range.\n" )
+        __ASSERT( 5*_kind + 4 >= alphas.size(), "Index out-of-range.\n" )
+        return boost::tuples::tie( lengths[_kind], alphas[5*_kind], alphas[5*_kind+1], 
+                                   alphas[5*_kind+2], alphas[5*_kind+3], alphas[5*_kind+4] );
       }
 
     boost::tuples::tuple< const types::t_real&, const types::t_real&, 
@@ -369,12 +369,12 @@ namespace LaDa
                           const types::t_real&, const types::t_real&, const types::t_real& >
       AtomicFunctional::get_angle( size_t _kind ) const
       {
-          __ASSERT( _kind < lengths.size(), "Index out-of-range.\n" )
-          __ASSERT( _kind < sigmas.size(), "Index out-of-range.\n" )
-          __ASSERT( 5*_kind + 4 < betas.size(), "Index out-of-range.\n" )
-          return boost::tuples::tie( lengths[_kind], sigmas[_kind],
-                                     betas[5*_kind+4], betas[5*_kind+3], 
-                                     betas[5*_kind+2], betas[5*_kind+1], betas[5*_kind] );
+          __ASSERT( _kind >= lengths.size(), "Index out-of-range.\n" )
+          __ASSERT( _kind >= sigmas.size(), "Index out-of-range.\n" )
+          __ASSERT( 5*_kind + 4 >= betas.size(), "Index out-of-range.\n" )
+          return boost::tuples::tie( gammas[_kind], sigmas[_kind],
+                                     betas[5*_kind], betas[5*_kind+1], 
+                                     betas[5*_kind+2], betas[5*_kind+3], betas[5*_kind+4] );
       }
 
     bool AtomicFunctional :: load( const TiXmlElement& _node,
@@ -464,7 +464,8 @@ namespace LaDa
 
           // find sigma
           if( child->Attribute( "sigma" ) )
-            sigmas[angle_index] = boost::lexical_cast<types::t_real>( child->Attribute( "sigma" ) );
+            sigmas[angle_index]
+              = boost::lexical_cast<types::t_real>( child->Attribute( "sigma" ) );
           // find betas
           betas[ 5 * angle_index ] 
              = boost::lexical_cast<types::t_real>( child->Attribute( "beta" ) );

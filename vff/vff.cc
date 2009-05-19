@@ -272,7 +272,7 @@ namespace LaDa
         typedef t_AtomicFunctionals :: value_type t_AtomicFunctional;
         namespace bt = boost::tuples;
       
-        __DOASSERT( structure.lattice and structure.lattice->sites.size() == 2,
+        __DOASSERT( not (structure.lattice and structure.lattice->sites.size() == 2),
                     "Lattice undefined or does not have two sites.\n" )
         namespace bx = boost::xpressive;
         const std::string bond( Print::StripEdges( _type ) );
@@ -289,8 +289,9 @@ namespace LaDa
         const std::string B( what.str(2) );
         for( size_t site(0); site < 2; ++site )
         { 
-          const int i = details::type_index()( structure.lattice->sites[ site ].type,  A );
-          const int j = details::type_index()( structure.lattice->sites[ site ? 0: 1 ].type,  B );
+          const int
+            i = details::type_index()( structure.lattice->sites[ site ].type,  A ),
+            j = details::type_index()( structure.lattice->sites[ site ? 0: 1 ].type,  B );
           if( i == -1 or j == -1 ) continue;
           const size_t Akind
           (
@@ -300,7 +301,7 @@ namespace LaDa
           (
             site == 0 ? size_t(j):( two_species ? size_t(i): 0 )
           );
-          __DOASSERT( Akind < functionals.size(), "Index out-of-range.\n" )
+          __DOASSERT( Akind >= functionals.size(), "Index out-of-range.\n" )
           return functionals[Akind].get_bond( bond_kind );
         }
         __DOASSERT( true, "Could not find angle.\n" )
@@ -308,13 +309,14 @@ namespace LaDa
 
     boost::tuples::tuple< const types::t_real&, const types::t_real&, 
                           const types::t_real&, const types::t_real&,
-                          const types::t_real&, const types::t_real&, const types::t_real& >
+                          const types::t_real&, const types::t_real&,
+                          const types::t_real& >
       Vff::get_angle( const std::string &_type ) const
       {
         typedef t_AtomicFunctionals :: value_type t_AtomicFunctional;
         namespace bt = boost::tuples;
       
-        __DOASSERT( structure.lattice and structure.lattice->sites.size() == 2,
+        __DOASSERT( not (structure.lattice and structure.lattice->sites.size() == 2),
                     "Lattice undefined or does not have two sites.\n" )
         namespace bx = boost::xpressive;
         const std::string bond( Print::StripEdges( _type ) );
@@ -334,9 +336,11 @@ namespace LaDa
         const std::string C( what.str(3) );
         for( size_t site(0); site < 2; ++site )
         { 
-          const int i = details::type_index()( structure.lattice->sites[ site ? 0: 1 ].type,  A );
-          const int j = details::type_index()( structure.lattice->sites[ site ].type,  B );
-          const int k = details::type_index()( structure.lattice->sites[ site ? 0: 1 ].type,  C );
+          const int
+            i = details::type_index()( structure.lattice->sites[ site ? 0: 1 ].type,  A ),
+            j = details::type_index()( structure.lattice->sites[ site ].type,  B ),
+            k = details::type_index()( structure.lattice->sites[ site ? 0: 1 ].type,  C );
+          std::cout << A << " -  " << B << " - " << C << " " << two_species << "\n";
           if( i == -1 or j == -1 or k == -1 ) continue;
           const size_t Bkind
           (
@@ -347,7 +351,7 @@ namespace LaDa
               site == 0 ? size_t(i):( two_species ? size_t(i): 0 )
             + site == 0 ? size_t(k):( two_species ? size_t(k): 0 )
           );
-          __DOASSERT( Bkind < functionals.size(), "Index out-of-range.\n" )
+          __DOASSERT( Bkind >= functionals.size(), "Index out-of-range.\n" )
           return functionals[Bkind].get_angle( angle_kind );
         }
         __DOASSERT( true, "Could not find angle.\n" )
