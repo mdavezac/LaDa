@@ -28,19 +28,12 @@ namespace LaDa
       template< class T_TYPE >
         bool fill_structure( Crystal::TStructure<T_TYPE> &_structure )
         {
-          std::cout << " 1.1 \n";
           __ASSERT( _structure.lattice == NULL, "Lattice not set.\n" )
-          std::cout << _structure.cell << "\n";
-          std::cout << Crystal::Structure::lattice << "\n";
-          std::cout << Crystal::TStructure<T_TYPE>::lattice << "\n";
-          std::cout << " 1.11 \n";
           const atat::rMatrix3d inv_lat_cell( ( !_structure.lattice->cell ) * _structure.cell );
-          std::cout << " 1.12 \n";
           atat::iMatrix3d int_cell;
           for( size_t i(0); i < 3; ++i )
             for( size_t j(0); j < 3; ++j )
             {
-          std::cout << " 1.13 " << i << " " << j << "\n";
               const types::t_real d( std::floor( inv_lat_cell(i,j) + 0.5  ) );
               int_cell(i,j) = types::t_int( d );
               __DOASSERT
@@ -50,10 +43,8 @@ namespace LaDa
                 << int_cell(i,j) << " != " << inv_lat_cell(i,j) << "\n"
               )
             }
-          std::cout << " 1.2 \n";
           atat::iMatrix3d left, right, smith;
           opt::smith_normal_form( smith, left, int_cell, right );
-          std::cout << " 1.3 \n";
         
           atat::rMatrix3d rleft;
           for( size_t i(0); i < 3; ++i )
@@ -63,7 +54,6 @@ namespace LaDa
           ( 
             ( !_structure.cell ) * _structure.lattice->cell * (!rleft) 
           );
-          std::cout << " 1.4 \n";
           typename TStructure<T_TYPE>::t_Atom atom;
           for( size_t i(0); i < smith(0,0); ++i )
             for( size_t j(0); j < smith(1,1); ++j )
@@ -91,7 +81,6 @@ namespace LaDa
                   _structure.atoms.push_back(atom);
                 }
               }
-          std::cout << " 1.5 \n";
         
           return true;
         }
@@ -108,15 +97,10 @@ namespace LaDa
    
     bool fill_structure( Crystal::TStructure<std::string> &_str )
     {
-      std::cout << " 1 \n";
-      std::cout << _str.lattice << "\n";
       bool const result( details::fill_structure( _str ) );
-      std::cout << " 2 \n";
       if( not result ) return false;
-      std::cout << " 3 \n";
       foreach( Crystal::TStructure<std::string>::t_Atom & atom, _str.atoms )
         atom.type = _str.lattice->sites[ atom.site ].type[0];
-      std::cout << " 4 \n";
       return result;
     }
 
