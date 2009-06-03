@@ -9,7 +9,6 @@ namespace LaDa
 {
   namespace Crystal
   {
-
     template<class T_TYPE> template< class ARCHIVE >
       void TStructure<T_TYPE> :: serialize( ARCHIVE & _ar, const unsigned int _version)
       {

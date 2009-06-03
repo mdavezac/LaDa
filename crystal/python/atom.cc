@@ -105,6 +105,8 @@ namespace LaDa
         "A lattice-site listing all possible atomic-specie occupation",
         "A list of all possible atomic-species (as atomic simbols)"
       );
+      expose_vector< t_Site::t_Type::value_type >( "StringVector", "A std::vector of strings." );
+      
 
       bp::def( "toAtomType", &toReal, "Converts from an atomic symbol to a real value." );
       bp::def( "fromAtomType", &toType, "Converts from a real value to an atomic symbol." );

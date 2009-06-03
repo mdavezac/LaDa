@@ -29,6 +29,7 @@
 #include <atat/machdep.h>
 
 #include "atom.h"
+#include "lattice.h"
 
 namespace LaDa 
 {
@@ -37,6 +38,16 @@ namespace LaDa
     //! \cond
     class Lattice;
     //! \endcond
+
+    namespace details
+    {
+      struct Structure
+      {
+        //! A pointer to the lattice,
+        static Crystal::Lattice *lattice;
+      };
+
+    }
 
     //! The atat structure type.
     typedef atat::Structure Atat_Structure;
@@ -65,7 +76,7 @@ namespace LaDa
     //!           TagStructure. It is better to load the lattice first and the
     //!           structure(s) second.
     template < class T_TYPE >
-    struct TStructure
+    struct TStructure : public details::Structure
     {
       friend class boost::serialization::access;
       //! The atomic type
@@ -152,8 +163,6 @@ namespace LaDa
 
       //! The reciprocal-space vector position in cartesian unit and their intensity.
       std::vector< CAtom > k_vecs;
-      //! A pointer to the lattice,
-      static Crystal::Lattice *lattice;
 
       public: 
 

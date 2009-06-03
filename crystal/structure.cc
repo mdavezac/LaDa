@@ -20,7 +20,6 @@
 #include "structure.h"
 #include "fill_structure.h"
 #include "epi_structure.h"
-#include "lattice.h"
 
 #include <opt/smith_normal_form.h>
 
@@ -30,6 +29,11 @@ namespace LaDa
 
   namespace Crystal 
   {
+
+    namespace details
+    {
+      Crystal::Lattice* Structure :: lattice = NULL;
+    }
 
     bool sort_kvec( const atat::rVector3d &_vec1, const atat::rVector3d &_vec2 )
     {
@@ -46,7 +50,6 @@ namespace LaDa
     }
 
     using atat::rndseed;
-    Crystal::Lattice* Structure :: lattice = NULL;
 
     void Structure :: convert_from_ATAT ( const Atat_Structure &atat  )
     {

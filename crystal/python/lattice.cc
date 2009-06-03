@@ -36,6 +36,12 @@ namespace LaDa
         return result;
       }
       
+      void set_as_crystal_lattice( Crystal::Lattice &_lattice )
+      { 
+        Crystal::Structure::lattice = &_lattice;  
+        Crystal::TStructure<std::string>::lattice = &_lattice;  
+      }
+
       template< class T_TYPE >
         void fromXML(T_TYPE &_type, const std::string &_filename )
         {
@@ -68,9 +74,10 @@ namespace LaDa
           __DOASSERT( not _type.Load( *docHandle.FirstChild("Job").Element() ),
                          "Could not load Lattice from " + _filename + ".\n" )
 
-          Crystal::Structure::lattice = &_type; 
+          set_as_crystal_lattice( _type ); 
           _type.find_space_group();
         }
+
     }
 
     void expose_lattice()
@@ -83,7 +90,8 @@ namespace LaDa
         .def_readwrite( "scale", &Crystal::Lattice::scale )
         .def( "__str__",  &print<Crystal::Lattice> )
         .def( "syms",  &details::symmetry_ops )
-        .def( "fromXML",  &details::fromXML<Crystal::Lattice> );
+        .def( "fromXML",  &details::fromXML<Crystal::Lattice> )
+        .def( "set_as_crystal_lattice", &details::set_as_crystal_lattice );
     // def( "StructureLattice", &return_crystal_lattice, 
     //      return_value_policy<reference_existing_object>() );
     }

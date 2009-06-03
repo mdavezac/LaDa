@@ -26,6 +26,7 @@
 #include <atat/serialize.h>
 
 #include "../structure.h"
+#include "../fill_structure.h"
 #include "../read_poscar.h"
 #include "../lattice.h"
 #include "../fractional_cartesian.h"
@@ -182,6 +183,11 @@ namespace LaDa
               "Transforms a structure from cartesian to fractional coordinates.\n" );
       bp::def("to_fractional", &Crystal::to_fractional<std::string>,
               "Transforms a structure from fractional to cartesian coordinates.\n" );
+
+      bool (*for_real)( Crystal::Structure& ) = &Crystal::fill_structure;
+      bool (*for_string)( Crystal::TStructure<std::string>& ) = &Crystal::fill_structure;
+      bp::def("fill_structure", for_real, "Fills a structure when atomic positions are unknown." );
+      bp::def("fill_structure", for_string, "Fills a structure when atomic positions are unknown." );
     }
 
   }

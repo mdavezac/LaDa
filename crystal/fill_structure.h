@@ -18,6 +18,9 @@ namespace LaDa
     //! \brief fills in \a atoms member of an Crystal::Structure instance from the
     //!        cell-shape and the lattice.
     bool fill_structure( Crystal::Structure &_str );
+    //! \brief fills in \a atoms member of an Crystal::Structure instance from the
+    //!        cell-shape and the lattice.
+    bool fill_structure( Crystal::TStructure<std::string> &_str );
   } // namespace Crystal
 
 } // namespace LaDa
