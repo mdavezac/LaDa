@@ -11,6 +11,7 @@
 #include "structure.hpp"
 #include "atom.hpp"
 #include "read_structure.hpp"
+#include "smith.hpp"
 
 BOOST_PYTHON_MODULE(crystal)
 {
@@ -18,4 +19,5 @@ BOOST_PYTHON_MODULE(crystal)
   LaDa::Python::expose_structure();
   LaDa::Python::expose_lattice();
   LaDa::Python::expose_read_structure();
+  LaDa::Python::expose_smith();
 }

@@ -158,6 +158,7 @@ namespace LaDa
         else if( _str ==  "N" ) return  7; 
         else if( _str ==  "O" ) return  8; 
         else if( _str ==  "Na" ) return 11;
+        else if( _str ==  "Mg" ) return 12;
         else if( _str ==  "Al" ) return 13;
         else if( _str ==  "Si" ) return 14;
         else if( _str ==  "P" ) return 15; 
@@ -189,6 +190,7 @@ namespace LaDa
         else if( _str ==   "N" ) return  14.00674; 
         else if( _str ==   "O" ) return  15.9994; 
         else if( _str ==  "Na" ) return  22.98976; 
+        else if( _str ==  "Mg" ) return  24.305;
         else if( _str ==  "Al" ) return  26.9815;
         else if( _str ==  "Si" ) return  28.0855;
         else if( _str ==   "P" ) return  30.97376; 
@@ -222,6 +224,7 @@ namespace LaDa
           case   7: return  "N"; __BREAK
           case   8: return  "O"; __BREAK
           case  11: return "Na"; __BREAK
+          case  12: return "Mg"; __BREAK
           case  13: return "Al"; __BREAK
           case  14: return "Si"; __BREAK
           case  15: return  "P"; __BREAK
@@ -255,6 +258,7 @@ namespace LaDa
           case   6: return  4; __BREAK
           case   7: return  5; __BREAK
           case   8: return  6; __BREAK
+          case  12: return  2; __BREAK
           case  13: return  3; __BREAK
           case  14: return  4; __BREAK
           case  15: return  5; __BREAK

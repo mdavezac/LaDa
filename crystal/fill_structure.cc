@@ -73,12 +73,14 @@ namespace LaDa
               
                 // adds all lattice sites.
                 typedef Crystal::Lattice::t_Site t_Site;
+                size_t i(0);
                 foreach( const t_Site &site, _structure.lattice->sites ) 
                 {
                   atom.pos = vec + site.pos;
-                  atom.site = site.site;
+                  atom.site = i;
                   atom.freeze = site.freeze;
                   _structure.atoms.push_back(atom);
+                  ++i;
                 }
               }
         

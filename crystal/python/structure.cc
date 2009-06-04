@@ -25,6 +25,8 @@
 #include <python/xml.hpp>
 #include <atat/serialize.h>
 
+#include <physics/physics.h>
+
 #include "../structure.h"
 #include "../fill_structure.h"
 #include "../read_poscar.h"
@@ -102,6 +104,45 @@ namespace LaDa
         }
       };
 
+    boost::python::str xcrysden( Crystal::Structure const & _str )
+    {
+      std::ostringstream sstr;
+      _str.print_xcrysden( sstr ); 
+      return boost::python::str( sstr.str().c_str() );
+    }
+    boost::python::str xcrysden_str( Crystal::TStructure<std::string> const & _str )
+    {
+      if( not _str.lattice ) return boost::python::str("");
+      std::ostringstream sstr;
+      sstr << "CRYSTAL\nPRIMVEC\n" << ( (~_str.cell) * _str.scale ) << "\nPRIMCOORD\n" 
+                << _str.atoms.size() << " 1 \n";  
+      Crystal::TStructure<std::string>::t_Atoms :: const_iterator i_atom = _str.atoms.begin();
+      Crystal::TStructure<std::string>::t_Atoms :: const_iterator i_atom_end = _str.atoms.end();
+      for(; i_atom != i_atom_end; ++i_atom )
+      {
+        sstr << " " << Physics::Atomic::Z(i_atom->type) 
+             << " " << ( i_atom->pos * _str.scale ) << "\n";
+      }
+      return boost::python::str( sstr.str().c_str() );
+    }
+
+    template< class T_TYPE >
+      Crystal::TStructure<T_TYPE>* empty()
+      {
+        Crystal::TStructure<T_TYPE>* result = new Crystal::TStructure<T_TYPE>(); 
+        if( result->lattice ) result->scale = result->lattice->scale;
+        return result;
+      }
+    
+    template< class T_TYPE >
+      Crystal::TStructure<T_TYPE>* copy( Crystal::TStructure<T_TYPE> const &_o )
+      {
+        namespace bp = boost::python;
+        Crystal::TStructure<T_TYPE>* result = new Crystal::TStructure<T_TYPE>( _o ); 
+        if( result->lattice ) result->scale = result->lattice->scale;
+        return result;
+      }
+
     void expose_structure()
     {
       namespace bp = boost::python;
@@ -119,7 +160,8 @@ namespace LaDa
 
       bp::class_< Crystal::Structure >( "Structure", "Defines a structure.\n"
                                         "Generally, it is a super-cell of a LaDa.Lattice object." )
-        .def( bp::init< Crystal::Structure& >() )
+        .def( "__init__", bp::make_constructor( copy<types::t_real> ) )
+        .def( "__init__", bp::make_constructor( empty<types::t_real> ) )
         .def_readwrite( "cell",    &Crystal::Structure::cell,
                         "The cell in cartesian coordinates (in units of LaDa.Structure.scale)." )
         .def_readwrite( "freeze", &Crystal::Structure::freeze,
@@ -147,9 +189,11 @@ namespace LaDa
               " Read, but do not write to this object." )
         .def( "concentration", &Crystal::Structure::get_concentration, "Returns concentration." )
         .def( bp::self == bp::other<Crystal::Structure>() )
+        .def( "xcrysden", &xcrysden, "Outputs in XCrysden format." )
         .def_pickle( pickle_structure< Crystal::Structure >() );
       bp::class_< Crystal::TStructure<std::string> >( "sStructure" )
-        .def( bp::init< Crystal::TStructure<std::string>& >() )
+        .def( "__init__", bp::make_constructor( copy<std::string> ) )
+        .def( "__init__", bp::make_constructor( empty<std::string> ) )
         .def_readwrite( "cell",    &Crystal::TStructure<std::string>::cell,
                         "The cell in cartesian coordinates (in units of LaDa.Structure.scale)." )
         .def_readwrite( "atoms",   &Crystal::TStructure<std::string>::atoms,
@@ -170,6 +214,7 @@ namespace LaDa
               bp::return_value_policy<bp::reference_existing_object>(),
               "References the lattice within which this structure is defined."
               "Read, but do not write to this object." )
+        .def( "xcrysden", &xcrysden_str, "Outputs in XCrysden format." )
         .def_pickle( pickle_structure< Crystal::TStructure<std::string> >() );
       bp::def("read_poscar", &read_poscar<std::string>,
               (
