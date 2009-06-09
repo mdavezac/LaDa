@@ -32,7 +32,7 @@ namespace LaDa
       {
         __DOASSERT
         (
-          std::abs( pos(i) - types::t_real( int_pos(i) ) ) > 0.5, 
+          std::abs( pos(i) - types::t_real( int_pos(i) ) ) > 0.001, 
           "Structure is not ideal.\n"
         )
         result(i) = int_pos(i) % bt::get<1>(_transformation)(i);
@@ -70,21 +70,6 @@ namespace LaDa
       }
       bt::get<0>( result ) = bt::get<0>( result ) * ( !_lat_cell );
 
-      __ASSERT
-      ( 
-       2 * bt::get<1>(result)(0) 
-         * bt::get<1>(result)(1) 
-         * bt::get<1>(result)(2)
-       != structure.atoms.size(),
-            "Number of atoms in real and deformed matrices do not correspond: "
-       <<  bt::get<1>(result)(0) << " * "
-       << bt::get<1>(result)(1) << " * " <<  bt::get<1>(result)(2) 
-       << " * " << structure.lattice->sites.size() << " = " 
-       << (   bt::get<1>(result)(0) * bt::get<1>(result)(1)
-            * bt::get<1>(result)(2) * structure.lattice->sites.size() )
-       << " != " 
-       <<  structure.atoms.size() << ".\n" 
-      )
       return result;
     }
 

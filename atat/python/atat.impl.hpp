@@ -196,6 +196,9 @@ namespace LaDa
       }
 
     template< class T_VECTOR >
+      T_VECTOR xor_( T_VECTOR const& _a, T_VECTOR const& _b ) { return _a^_b; }
+
+    template< class T_VECTOR >
       void expose_atatvector( const std::string &_name, const std::string &_docstring )
       {
         namespace bp = boost::python;
@@ -219,6 +222,7 @@ namespace LaDa
             .def( type() * bp::self )
             .def( bp::self * type() )
             .def( bp::self / type() )
+            .def( "__xor__", &xor_< T_VECTOR > )
             .def( bp::self == bp::other<T_VECTOR>() )
             .def( bp::self != bp::other<T_VECTOR>() )
             .def( "__getitem__", &details::getvecitem<T_VECTOR> )
