@@ -55,7 +55,7 @@ namespace LaDa
         //! Constructor and Initializer
         Clj() {}
         //! Copy Constructor
-        Clj( const Clj &_c ) {}
+        Clj( const Clj &_c ) : Ewald(_c), LennardJones(_c) {}
         //! Destructor.
         ~Clj() {}
 

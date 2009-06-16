@@ -11,12 +11,12 @@ ATAT_PYTHON_CC = atat.cc
 
 FC_MODELS_CLJ_CC = fortran.cc 
 FC_MODELS_CLJ_H = fortran.h wrapper.h 
-MODELS_CLJ_F90 = ep_com.f90 ewaldf.f90
-MODELS_CLJ_CC = clj.cc ewald.cc lennard-jones.cc erfc.cc
-MODELS_CLJ_H = clj.h ewald.h lennard-jones.h
+MODELS_CLJ_F90 = ep_com.f90 ewaldf.f90 
+MODELS_CLJ_CC = clj.cc ewald.cc lennard-jones.cc erfc.cc functional.cc
+MODELS_CLJ_H = clj.h ewald.h lennard-jones.h functional.h
 MODELS_CLJ_DOC = $(FC_MODELS_CLJ_H) $(FC_MODELS_CLJ_CC) $(MODELS_CLJ_H) $(MODELS_CLJ_CC)
-MODELS_PYTHON_H = clj.hpp
-MODELS_PYTHON_CC = python.cc clj.cc
+MODELS_PYTHON_H = clj.hpp functional.hpp
+MODELS_PYTHON_CC = python.cc clj.cc functional.cc
 
 DARWIN_GRAPH_CC = graph/graph.cc
 DARWIN_GRAPH_IMPL_H = graph/breeders.impl.h graph/comm.impl.h graph/evaluation.impl.h \

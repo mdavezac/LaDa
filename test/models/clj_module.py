@@ -84,7 +84,7 @@ class Function:
     result = self.clj( self.structure, forces )
     return result
 
-  def ngradient( self, _args, _gradients ):
+  def gradient( self, _args, _gradients ):
     from lada import crystal, models, minimizer, atat
 
     array_to_structure( _args, self.structure )
@@ -94,7 +94,7 @@ class Function:
     return _gradients
 
 
-  def gradient( self, _args, _gradients ):
+  def ngradient( self, _args, _gradients ):
     from lada import crystal, models, minimizer
 
     minimizer.interpolated_gradient( self, _args, _gradients, n=2, 
@@ -333,7 +333,23 @@ def main2():
   structure = crystal.sStructure();
   crystal.read_poscar( structure, "POSCAR_0", species )
   crystal.to_fractional( structure );
-  function = Function( clj, structure )
+  savestructure = crystal.sStructure( structure )
+  forces = crystal.sStructure( structure )
+
+
+  args = opt.cReals()
+  structure_to_array( structure, args )
+  function = Function( clj, structure)
+  print clj(structure, forces), function( args )
+
+  minmizer = minimizer.Minimizer()
+  minmizer.set( type="gsl_bfgs2", itermax = 20, convergence=1e-12,\
+                linestep=1e-0, verbose = 1, strategy="slowest" )
+  models.minimize( clj, minmizer, structure , models.relaxation.volume )
+  print structure
+  return
+  minmizer( function, args )
+  return
   
   rocksalt = crystal.sStructure();
   crystal.read_poscar( rocksalt, "POSCAR_0", species )
@@ -379,6 +395,7 @@ def main2():
   ngradients = opt.cReals( [ 0 for r in args ] )
   function.ngradient( args, ngradients )
   function.gradient( args, gradients )
+  minmizer( function, args )
   for i,g in enumerate(ngradients):
     print "%2i %18.9e %18.9e %18.9e" % (i, g, gradients[i], g - gradients[i] )
  
