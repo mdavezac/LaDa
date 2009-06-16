@@ -45,15 +45,14 @@ namespace LaDa
         
         //! \brief Constructor and Initializer
         //! \param _str structure for which to compute energy and stress
-        Functional() : relaxation(Relaxation::default_), gravity_(0,0,0) {}
+        Functional() : relaxation(Relaxation::default_) {}
         //! Constructor
         Functional   ( const Clj &_c )
-                   : Clj(_c), relaxation(Relaxation::default_), gravity_(0,0,0) {}
+                   : Clj(_c), relaxation(Relaxation::default_) {}
         //! Copy Constructor
         Functional   ( const Functional &_c )
                    : Clj(_c), forces(_c.forces), structure(_c.structure),
-                     relaxation(_c.relaxation), gravity_(_c.gravity_),
-                     cell0_( _c.cell0_ ) {}
+                     relaxation(_c.relaxation), cell0_( _c.cell0_ ), scaling_(_c.scaling_) {}
         //! \brief Destructor
         ~Functional() {}
 
@@ -86,10 +85,10 @@ namespace LaDa
         //! minizers now about function::Base, this function does the interface
         //! between the two
         void pack_gradients(t_GradientArg _grad) const;
-        //! Center of gravity.
-        atat::rVector3d gravity_;
         //! Original cell, for volume relaxation.
         atat::rMatrix3d cell0_;
+        //! Scaling for volume relaxation.
+        mutable types::t_real scaling_;
     };
 
   } // namespace vff 

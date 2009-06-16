@@ -8,6 +8,11 @@
 
 #include <vector>
 
+#include <algorithm>
+#include <numeric>
+#include <functional>
+
+#include <boost/lambda/lambda.hpp>
 #include <boost/python/def.hpp> 
 #include <boost/python/tuple.hpp> 
 #include <boost/python/enum.hpp> 
@@ -28,12 +33,38 @@ namespace LaDa
     {
       try
       {
+        namespace bl = boost::lambda;
         Models::Functional functional( _functional );
         Models::Functional::t_Arg args;
         functional.relaxation = _relaxation;
         functional.structure = _structure;
         functional.init( args );
+
+        atat::rVector3d const center 
+        (
+          std::accumulate
+          (
+             _structure.atoms.begin(), _structure.atoms.end(),
+             atat::rVector3d(0,0,0), std::plus<atat::rVector3d>()
+          )
+        );
+
         Models::Functional::t_Return result( _minimizer.call( functional, args ) ); 
+
+        atat::rVector3d const center2 
+        (
+          (  
+            center - std::accumulate
+                     ( 
+                       functional.structure.atoms.begin(), functional.structure.atoms.end(), 
+                       atat::rVector3d(0,0,0), std::plus<atat::rVector3d>()
+                     )
+          ) / types::t_real( _structure.atoms.size() )
+        );
+
+        foreach( Models::Clj::t_Arg::t_Atom& atom, functional.structure.atoms ) atom.pos -= center2;
+
+
         _structure.energy = result;
         functional.forces.energy = result;
         _structure = functional.structure;

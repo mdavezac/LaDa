@@ -336,6 +336,13 @@ def main2():
   savestructure = crystal.sStructure( structure )
   forces = crystal.sStructure( structure )
 
+  epsilon = 0.0001
+  structure.cell = (1e0 + epsilon) * savestructure.cell
+  a = clj( structure, forces )
+  structure.cell = (1e0 - epsilon) * savestructure.cell
+  b = clj( structure, forces )
+  print "? ", (a-b) / (2e0 * epsilon)
+  structure.cell = savestructure.cell
 
   args = opt.cReals()
   structure_to_array( structure, args )
@@ -344,7 +351,7 @@ def main2():
 
   minmizer = minimizer.Minimizer()
   minmizer.set( type="gsl_bfgs2", itermax = 20, convergence=1e-12,\
-                linestep=1e-0, verbose = 1, strategy="slowest" )
+                linestep=1e-2, verbose = 1, strategy="slowest" )
   models.minimize( clj, minmizer, structure , models.relaxation.volume )
   print structure
   return
