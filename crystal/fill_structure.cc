@@ -34,11 +34,10 @@ namespace LaDa
           t_SmithTransform transform
             = get_smith_transform( _structure.lattice->cell, _structure.cell);
         
-          atat::rMatrix3d rleft = bt::get<0>(transform) * _structure.lattice->cell;
           atat::iVector3d &smith = bt::get<1>(transform);
           const atat::rMatrix3d factor
           ( 
-            ( !_structure.cell ) * _structure.lattice->cell * (!rleft) 
+             (!_structure.cell) * (!bt::get<0>(transform))
           );
           typename TStructure<T_TYPE>::t_Atom atom;
           for( size_t i(0); i < smith(0); ++i )
@@ -55,7 +54,7 @@ namespace LaDa
                   vec1(2) - std::floor( vec1(2) )
                 );
                 // in cartesian
-                const atat::rVector3d vec( _structure.cell * vec1 );
+                const atat::rVector3d vec( _structure.cell * vec2 );
               
                 // adds all lattice sites.
                 typedef Crystal::Lattice::t_Site t_Site;

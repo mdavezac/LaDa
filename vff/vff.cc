@@ -203,6 +203,7 @@ namespace LaDa
         for( ; i_pseudo != i_pseudo_end; ++i_pseudo )
         {
           atat::rVector3d pos = (!structure.cell) * i_center->Origin().pos;
+          for( size_t i(0); i < 3; ++i ) pos[i] -= std::floor( pos[i] + 0.000001 );
           ++nb_pseudos;
           stream << std::fixed    << std::setprecision(7)
                  << std::setw(6)  << index << '0'
