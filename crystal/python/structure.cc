@@ -143,6 +143,19 @@ namespace LaDa
         return result;
       }
 
+    Crystal::TStructure<std::string>* real_to_string( Crystal::Structure const &_s )
+    {
+      Crystal::TStructure<std::string>* result = new Crystal::TStructure<std::string>(); 
+      Crystal::convert_real_to_string_structure( _s, *result );     
+      return result;
+    }
+    Crystal::Structure* string_to_real( Crystal::TStructure<std::string> const &_s )
+    {
+      Crystal::Structure* result = new Crystal::Structure(); 
+      Crystal::convert_string_to_real_structure( _s, *result );     
+      return result;
+    }
+
     void expose_structure()
     {
       namespace bp = boost::python;
@@ -162,6 +175,7 @@ namespace LaDa
                                         "Generally, it is a super-cell of a LaDa.Lattice object." )
         .def( "__init__", bp::make_constructor( copy<types::t_real> ) )
         .def( "__init__", bp::make_constructor( empty<types::t_real> ) )
+        .def( "__init__", bp::make_constructor( string_to_real ) )
         .def_readwrite( "cell",    &Crystal::Structure::cell,
                         "The cell in cartesian coordinates (in units of LaDa.Structure.scale)." )
         .def_readwrite( "freeze", &Crystal::Structure::freeze,
@@ -194,6 +208,7 @@ namespace LaDa
       bp::class_< Crystal::TStructure<std::string> >( "sStructure" )
         .def( "__init__", bp::make_constructor( copy<std::string> ) )
         .def( "__init__", bp::make_constructor( empty<std::string> ) )
+        .def( "__init__", bp::make_constructor( real_to_string ) )
         .def_readwrite( "cell",    &Crystal::TStructure<std::string>::cell,
                         "The cell in cartesian coordinates (in units of LaDa.Structure.scale)." )
         .def_readwrite( "atoms",   &Crystal::TStructure<std::string>::atoms,

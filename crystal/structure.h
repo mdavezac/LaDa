@@ -308,6 +308,11 @@ namespace LaDa
       return 0;
     };
 
+    void convert_real_to_string_structure( Structure const& _real,
+                                           TStructure<std::string> &_string );
+    void convert_string_to_real_structure( TStructure<std::string> const &_string,
+                                           Structure &_real );
+
   } // namespace Crystal
 
 } // namespace LaDa

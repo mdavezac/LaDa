@@ -20,6 +20,7 @@
 #include "structure.h"
 #include "fill_structure.h"
 #include "epi_structure.h"
+#include "fourier.h"
 
 #include <opt/smith_normal_form.h>
 
@@ -643,6 +644,45 @@ namespace LaDa
         if( _a.site == i ) result += _a.type;
       }
       return result;
+    }
+
+    void convert_real_to_string_structure( Structure const& _real,
+                                           TStructure<std::string> &_string )
+    {
+      _string.scale = _real.scale;
+      _string.freeze = _real.freeze;
+      _string.lattice = _real.lattice;
+      _string.name = _real.name;
+      _string.energy = _real.energy;
+      _string.weight = _real.weight;
+      _string.cell = _real.cell;
+      _string.atoms.resize( _real.atoms.size() );
+      TStructure<std::string>::t_Atoms:: iterator i_string = _string.atoms.begin();
+      TStructure<std::string>::t_Atoms:: iterator const i_string_end = _string.atoms.end();
+      Structure::t_Atoms:: const_iterator i_real = _real.atoms.begin();
+      for(; i_string != i_string_end; ++i_string, ++i_real )
+        _real.lattice->convert_Atom_to_StrAtom( *i_real, *i_string );
+    }
+
+    void convert_string_to_real_structure( TStructure<std::string> const &_string,
+                                           Structure &_real )
+    {
+      _real.scale   = _string.scale;
+      _real.freeze  = _string.freeze;
+      _real.lattice = _string.lattice;
+      _real.name    = _string.name;
+      _real.energy  = _string.energy;
+      _real.weight  = _string.weight;
+      _real.cell    = _string.cell;
+      _real.atoms.resize( _string.atoms.size() );
+      Structure::t_Atoms:: iterator i_real = _real.atoms.begin();
+      Structure::t_Atoms:: iterator const i_real_end = _real.atoms.end();
+      TStructure<std::string>::t_Atoms:: const_iterator i_string = _string.atoms.begin();
+      for(; i_real != i_real_end; ++i_string, ++i_real )
+        _string.lattice->convert_StrAtom_to_Atom( *i_string, *i_real );
+      _real.find_k_vectors();
+      Fourier::Fourier( _real.atoms.begin(), _real.atoms.end(),
+                        _real.k_vecs.begin(), _real.k_vecs.end() );
     }
 
   } // namespace Crystal

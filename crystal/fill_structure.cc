@@ -14,6 +14,7 @@
 
 #include "lattice.h"
 #include "structure.h"
+#include "smith.h"
 #include "fill_structure.h"
 
 
@@ -28,36 +29,21 @@ namespace LaDa
       template< class T_TYPE >
         bool fill_structure( Crystal::TStructure<T_TYPE> &_structure )
         {
+          namespace bt = boost::tuples;
           __ASSERT( _structure.lattice == NULL, "Lattice not set.\n" )
-          const atat::rMatrix3d inv_lat_cell( ( !_structure.lattice->cell ) * _structure.cell );
-          atat::iMatrix3d int_cell;
-          for( size_t i(0); i < 3; ++i )
-            for( size_t j(0); j < 3; ++j )
-            {
-              const types::t_real d( std::floor( inv_lat_cell(i,j) + 0.5  ) );
-              int_cell(i,j) = types::t_int( d );
-              __DOASSERT
-              ( 
-                std::abs( types::t_real( int_cell(i,j) ) - inv_lat_cell(i,j) ) > 0.01,
-                   "Input structure is not supercell of the lattice: " 
-                << int_cell(i,j) << " != " << inv_lat_cell(i,j) << "\n"
-              )
-            }
-          atat::iMatrix3d left, right, smith;
-          opt::smith_normal_form( smith, left, int_cell, right );
+          t_SmithTransform transform
+            = get_smith_transform( _structure.lattice->cell, _structure.cell);
         
-          atat::rMatrix3d rleft;
-          for( size_t i(0); i < 3; ++i )
-            for( size_t j(0); j < 3; ++j )
-              rleft(i,j) = types::t_real( left(i,j) );
+          atat::rMatrix3d rleft = bt::get<0>(transform) * _structure.lattice->cell;
+          atat::iVector3d &smith = bt::get<1>(transform);
           const atat::rMatrix3d factor
           ( 
             ( !_structure.cell ) * _structure.lattice->cell * (!rleft) 
           );
           typename TStructure<T_TYPE>::t_Atom atom;
-          for( size_t i(0); i < smith(0,0); ++i )
-            for( size_t j(0); j < smith(1,1); ++j )
-              for( size_t k(0); k < smith(2,2); ++k )
+          for( size_t i(0); i < smith(0); ++i )
+            for( size_t j(0); j < smith(1); ++j )
+              for( size_t k(0); k < smith(2); ++k )
               {
                 // in supercell fractional
                 const atat::rVector3d vec1( factor * atat::rVector3d(i,j,k) );

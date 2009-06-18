@@ -188,19 +188,18 @@ namespace LaDa
           }
         }
 
-    template< class T_HARMONIC >
-      types::t_real call_all( const CE::Builder<T_HARMONIC> &_functional,
-                              const Crystal::Structure &_str )
-      { return call_which( _functional, _str, 3 ); }
-    template< class T_HARMONIC >
-      types::t_real call_chem( const CE::Builder<T_HARMONIC> &_functional,
-                              const Crystal::Structure &_str )
-      { return call_which( _functional, _str, 1 ); }
-    template< class T_HARMONIC >
-      types::t_real call_cs( const CE::Builder<T_HARMONIC> &_functional,
-                             const Crystal::Structure &_str )
-      { return call_which( _functional, _str, 2 ); }
-
+    template< class T_HARMONIC, int WHICH >
+      types::t_real call( const CE::Builder<T_HARMONIC> &_functional,
+                          const Crystal::Structure &_str )
+      { return call_which( _functional, _str, WHICH ); }
+    template< class T_HARMONIC, int WHICH >
+      types::t_real call_str( const CE::Builder<T_HARMONIC> &_functional,
+                              const Crystal::TStructure<std::string> &_str )
+      {
+        Crystal::Structure str;
+        Crystal::convert_string_to_real_structure(_str, str);
+        return call<T_HARMONIC, WHICH>( _functional, str ); 
+      }
      
       template<class T_HARMONIC>
         void expose_ce_functional( const std::string &_name, const std::string &_docstring )
@@ -209,9 +208,12 @@ namespace LaDa
           typedef CE::Builder<T_HARMONIC> t_Builder;
           bp::class_< t_Builder >( _name.c_str(), _docstring.c_str() )
             .def( bp::init<const t_Builder&>() )
-            .def( "__call__", &call_all<T_HARMONIC>, "Computes CE + CS." )
-            .def( "chemical", &call_chem<T_HARMONIC>, "Computes CE." )
-            .def( "cs", &call_cs<T_HARMONIC>, "Computes  CS.")
+            .def( "__call__", &call<T_HARMONIC, 3>, "Computes CE + CS." )
+            .def( "cs", &call<T_HARMONIC, 2>, "Computes  CS.")
+            .def( "chemical", &call<T_HARMONIC, 1>, "Computes CE." )
+            .def( "__call__", &call_str<T_HARMONIC, 3>, "Computes CE + CS." )
+            .def( "cs", &call_str<T_HARMONIC, 2>, "Computes  CS.")
+            .def( "chemical", &call_str<T_HARMONIC, 1>, "Computes CE." )
             .def( "load", &load_builder<T_HARMONIC>, "Loads functional from XML.");
         }
     } // namespace detailsCE

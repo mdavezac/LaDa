@@ -66,7 +66,7 @@ namespace LaDa
       {
         for( size_t j(0); j < 3; ++j )
           bt::get<0>( result )(i,j) = types::t_real( left(i,j) );
-        bt::get<1>( result )(i) = smith(i,i);
+        bt::get<1>( result )(2-i) = smith(i,i);
       }
       bt::get<0>( result ) = bt::get<0>( result ) * ( !_lat_cell );
 
