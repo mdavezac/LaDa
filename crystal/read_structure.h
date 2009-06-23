@@ -64,6 +64,65 @@ namespace LaDa
         __DEBUGTRYEND(, "Error while enumerating pifile.\n" )
       }
 
+    template< class T_FUNCTIONAL >
+      void enumerate_gusfile( const std::string &_file, T_FUNCTIONAL &_op )
+      {
+        __DEBUGTRYBEGIN
+        Crystal :: Structure structure;
+        std::ifstream file( _file.c_str(), std::ifstream::in );
+        std::string line;
+        do
+        {
+          getline(file, line);
+          if( line.find("#tot") != std::string::npos ) break;
+        } while( (not file.eof()) and file.good() );
+
+        if( file.bad() ) return;
+        do
+        {
+          getline(file, line);
+          std::istringstream input( line );
+          structure.cell.zero();
+          types::t_int dummy;
+          for( size_t i(0); i < 7; ++i ) input >> dummy;
+          input >> structure.cell(0,0) 
+                >> structure.cell(1,0) >> structure.cell(1,1)
+                >> structure.cell(2,0) >> structure.cell(2,1) >> structure.cell(2,2);
+          for( size_t i(0); i < 9; ++i ) input >> dummy;
+          structure.cell = structure.lattice->cell * structure.cell;
+          fill_structure( structure );
+          input >> line;
+          __DOASSERT( line.size() == structure.atoms.size(),
+                      "labels and structure have different sizes.\n" )
+          t_Transform const transform = get_smith_transform( structure );
+          Structure::t_Atoms::iterator i_atom = structure.atoms.begin();
+          Structure::t_Atoms::iterator i_atom_end = structure.atoms.end();
+          iVector3d const &smith( boost::tuples::get<1>(transform) );
+          for(; i_atom != i_atom_end; ++i_atom )
+          {
+            atat::iVector3d indices( get_smith_indices(transform, i_atom->pos) );
+            const size_t index
+            ( 
+              indices[2] + smith(2) * ( indices[1] + smith(1) * indices[0] )
+            );
+            i_atom->type = line[index] == '0' ? -1.0: 1.0; 
+          }
+
+
+          std::cout << "    @" << structure.name << "  " 
+                    << structure.get_concentration()
+                    << " " << _op( structure ) << "\n";
+          
+          for(i_atom = strucutre.atoms.begin(); i_atom != i_atom_end; ++i_atom )
+            i_atom->type = i_atom->type > 0e0 ? -1e0: 1e0;
+          std::cout << "    @-" << structure.name << " " 
+                    << structure.get_concentration()
+                    << " " << _op( structure ) << "\n";
+        }
+        while( (not file.eof()) and file.good() );
+        __DEBUGTRYEND(, "Error while enumerating pifile.\n" )
+      }
+
 
   } // namespace Crystal
 

@@ -23,6 +23,13 @@ namespace LaDa
     //! Returns smith transform.
     t_SmithTransform get_smith_transform( atat::rMatrix3d const &_lat_cell,
                                           atat::rMatrix3d const &_str_cell );
+    //! Returns smith transform.
+    template< class T_TYPE >
+      t_SmithTransform get_smith_transform( Crystal::TStructure<T_TYPE> const &_structure )
+      {
+        __DOASSERT( structure.lattice != NULL, "Lattice not set in structure.\n" );
+        return get_smith_transform( _structure.lattice->cell, _structure.cell ); 
+      }
 
     //! Computes smith indices of position \a _pos.
     atat::iVector3d get_smith_index( t_SmithTransform const &_transformation,

@@ -114,6 +114,7 @@ int main(int argc, char *argv[])
       ("cs", po::value<std::string>(), "Constituent Strain input file.\n" )
       ("which,w", po::value<LaDa::types::t_unsigned>()->default_value(0),
                    "Performs best-of for 0 (variance), 1 (mean), or 2(max).\n" )
+      ("guss", "Use Gus Harts' type PI-file for structural enumeration." )
       ("print", po::value<std::string>()->default_value(""),
                    "Prints out: \"function\".\n" );
   LaDa::Fitting::LeaveManyOut leavemanyout;
@@ -240,6 +241,7 @@ int main(int argc, char *argv[])
   const LaDa::types::t_unsigned maxpairs = vm["maxpairs"].as<LaDa::types::t_unsigned>();
   const bool J0( vm.count("J0") > 0 );
   const bool J1( vm.count("J1") > 0 );
+  const bool gusfile( vm.count("gus") > 0 );
   const bool rmpairs( vm.count("rm") > 0 );
   __ASSERT( LaDa::Fuzzy::le(tcoef, 0e0), "Coefficient \"t\" cannot negative.\n" )
   const LaDa::types::t_unsigned bestof( vm["bestof"].as<LaDa::types::t_unsigned>() );
@@ -502,7 +504,8 @@ int main(int argc, char *argv[])
     structure.find_k_vectors();
     std::cout << "  @-0 " << structure.get_concentration()
               << " " << mixedfunc( structure ) << "\n";
-    LaDa::Crystal::enumerate_pifile( doenum.string(), mixedfunc );
+    if( not gusfile ) LaDa::Crystal::enumerate_pifile( doenum.string(), mixedfunc );
+    else LaDa::Crystal::enumerate_gusfile( doenum.string(), mixedfunc );
     foreach( LaDa::Crystal::Structure::t_Atom &atom, structure.atoms )
       atom.type *= -1e0;
     std::cout << "  @0 " << structure.get_concentration()
