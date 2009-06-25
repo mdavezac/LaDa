@@ -143,14 +143,14 @@ namespace LaDa
         oiterator_.begin(_str);
         oiterator_end_.end(_str);
         N_ = _str.atoms.size();
-        size_t nx = xiterator_.begin(oiterator_); xiterator_end_.end(xiterator_);
-        size_t ny = yiterator_.begin(xiterator_); yiterator_end_.end(yiterator_);
+        xiterator_.begin(oiterator_); xiterator_end_.end(xiterator_);
+        yiterator_.begin(xiterator_); yiterator_end_.end(yiterator_);
 
         val_.origin = *oiterator_;
         val_.x = *xiterator_;
         val_.y = *yiterator_;
         val_.z = val_.x ^ val_.z;
-        val_.weight = 1e0 / types::t_real( N_*yiterator_->size()*xiterator_->size() );
+        val_.weight = 1e0 / types::t_real( N_*yiterator_.size()*xiterator_.size() );
         return *this;
       }
 

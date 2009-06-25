@@ -11,10 +11,14 @@
 #include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
 
+
 #include "prepare.h"
 
 #include <crystal/confsplit.h>
+#include <crystal/neighbors.h>
+#include <separable/struct_to_confs.h>
 #include <crystal/fill_structure.h>
+#include <opt/fuzzy.h>
 
 namespace LaDa
 {
@@ -119,38 +123,87 @@ namespace LaDa
 //     split.clear();
 //   }
 
+    // Strict weak ordering functor from knowledge of basis.
+    struct basis_sort
+    {
+      configurations::Basis const& basis;
+      basis_sort( configurations::Basis const &_b ) : basis(_b) {}
+      basis_sort( basis_sort const &_b ) : basis(_b.basis) {}
+      bool operator()( Crystal::Neighbor const * const _a,
+                       Crystal::Neighbor const * const _b ) const
+      {
+        if( Fuzzy::neq( _a->distance, _b->distance ) ) return _a->distance < _b->distance;
+        const types::t_real ax = _a->pos * basis.x;
+        const types::t_real bx = _b->pos * basis.x;
+        if( Fuzzy::neq( ax, bx ) ) return ax > bx;
+        const types::t_real ay = _a->pos * basis.y;
+        const types::t_real by = _b->pos * basis.y;
+        if( Fuzzy::neq( ay, by ) ) return ay > by;
+        const types::t_real az = _a->pos * basis.z;
+        const types::t_real bz = _b->pos * basis.z;
+        if( Fuzzy::neq( az, bz ) ) return az > bz;
+        return false;
+      }
+    }; 
+
+    // Converts neighbor to type index.
+    struct type_to_bit
+    {
+      Crystal::Structure const &structure;
+      type_to_bit( Crystal::Structure const& _str ) : structure(_str) {}
+      type_to_bit( type_to_bit const& _c ) : structure(_c.structure) {}
+      size_t operator()( Crystal::Neighbor const * const _a ) const
+      {
+        Crystal::Structure::t_Atom const atom = structure.atoms[ _a->index ];
+        return structure.lattice->convert_real_to_type_index( atom.site, atom.type );
+      }
+    };
+
     void PosToConfs :: nsites( const Crystal :: Structure &_structure,
                                t_Configurations& _confs ) const
     {
-      struct basis_sort
-      {
-        configuration::basis const& basis;
-        basis_sort( configuration::basis const &_b ) : basis(_b) {}
-        basis_sort( basis_sort const &_b ) : basis(_b.basis) {}
-        bool operator()( atat::rVector3d const *_a, atat::rVector3d const *_b ) 
-      }; 
-      // Copy atomic positions as pointers.
-      std::vector< Crystal::Structure::t_Atom*> atoms;
-      atoms.reserve(_structure.atoms.size());
-      foreach( Crystal::Structure::t_Atom const & atom, _structure.atoms )
-        atoms.push_back( &atom );
+      const size_t N( _confs.size() );
 
       // now loops over bases.
       CE::configurations::Bases bases( _structure );
       CE::configurations::Bases::const_iterator i_basis = bases.begin();
       CE::configurations::Bases::const_iterator i_basis_end = bases.end();
+
+      // first neighbor containor.
+      Crystal :: Neighbors neighbors( n.second );
+      neighbors.origin = i_basis->origin + atat::rVector3d(1,0,0);
+      
+      // sorting container.
+      std::vector<Crystal::Neighbor const*> atoms(n.second-n.first, NULL);
+      
       for(; i_basis != i_basis_end; ++i_basis )
       {
+        if( not Fuzzy::is_zero( atat::norm2(i_basis->origin - neighbors.origin) ) )
+        {
+          neighbors.origin = i_basis->origin;
+          std::vector<Crystal::Neighbor const*>::iterator i_atom = atoms.begin();
+          std::vector<Crystal::Neighbor const*>::iterator i_atom_end = atoms.end();
+          Crystal::Neighbors::const_iterator i_neigh = neighbors.begin( _structure );
+          for(size_t i(0); i < n.first; ++i) ++i_neigh;
+          for(; i_atom != i_atom_end; ++i_atom, ++i_neigh ) *i_atom = &(*i_neigh);
+        };
         // sorst according to basis.
-        std::partial_sort( atoms.begin(), atoms.begin() + n.second, basis_sort(*i_basis) );
+        std::sort
+        ( 
+          atoms.begin(),
+          atoms.end(),
+          basis_sort(*i_basis) 
+        );
         t_Configurations :: value_type bitset;
         bitset.second = i_basis->weight;
+        bitset.first.reserve(n.second - n.first);
         // then copies atomic types
         std::transform
         ( 
-          atoms.begin() + n.first, atoms.begin() + n.second,
-          std::back_inserter(bitset),
-          type_to_bit(_structure.lattice) 
+          atoms.begin(),
+          atoms.end(),
+          std::back_inserter(bitset.first),
+          type_to_bit(_structure) 
         );
         // finally adds to configurations.
         t_Configurations :: iterator i_found = _confs.begin() + N;

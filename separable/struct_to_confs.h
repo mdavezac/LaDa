@@ -112,6 +112,7 @@ namespace LaDa
         typedef std::vector< atat::rVector3d > t_Neighs;
         public:
           typedef atat::rVector3d const& value_type;
+          typedef atat::rVector3d const* pointer_type;
       
           //! Constructor.
           Xcoord() {}
@@ -124,6 +125,8 @@ namespace LaDa
       
           //! Deref.
           value_type operator*() const { return val_; }
+          //! Deref.
+          pointer_type operator->() const { return &val_; }
           //! Pre-increment operator.
           Xcoord &operator++()
             { ++iterator_; val_ = *iterator_/atat::norm(*iterator_); return *this; }
@@ -163,6 +166,7 @@ namespace LaDa
         friend bool operator==( Ycoord const&, Ycoord const& );
         public:
           typedef atat::rVector3d const& value_type;
+          typedef atat::rVector3d const* pointer_type;
 
           //! Constructor.
           Ycoord() {}
@@ -173,6 +177,8 @@ namespace LaDa
 
           //! Deref.
           value_type operator*() const { return val_; }
+          //! Deref.
+          pointer_type operator->() const { return &val_; }
           //! Pre-increment operator.
           Ycoord &operator++()
           {
@@ -189,7 +195,7 @@ namespace LaDa
           //! Sets to end.
           void end(Ycoord const&);
           //! Number of equivalent configurations.
-          size_t size() const { return equivs_ ? first_->equivs_(): 0; }
+          size_t size() const { return equivs_ ? equivs_->size(): 0; }
 
         protected:
           //! Creates list of equivalent y-positions.
@@ -218,6 +224,7 @@ namespace LaDa
         friend bool operator==( const_iterator const&, const_iterator const& );
         public:
           typedef Basis const& value_type;
+          typedef Basis const* pointer_type;
 
           //! Constructor
           const_iterator() {};
@@ -230,6 +237,8 @@ namespace LaDa
 
           //! Dereference.
           value_type operator*() const { return val_; }
+          //! Deref.
+          pointer_type operator->() const { return &val_; }
           //! Pre-increment operator.
           const_iterator &operator++()
           {
@@ -240,7 +249,7 @@ namespace LaDa
             {
               val_.y = *yiterator_;
               val_.z = val_.x ^ val_.z;
-              val_.weight = 1e0 / types::t_real( N_*yiterator_->size()*xiterator_->size() );
+              val_.weight = 1e0 / types::t_real( N_*yiterator_.size()*xiterator_.size() );
               return *this;
             }
               
@@ -252,7 +261,7 @@ namespace LaDa
               val_.x = *xiterator_;
               val_.y = *yiterator_;
               val_.z = val_.x ^ val_.z;
-              val_.weight = 1e0 / types::t_real( N_*yiterator_->size()*xiterator_->size() );
+              val_.weight = 1e0 / types::t_real( N_*yiterator_.size()*xiterator_.size() );
               return *this;
             }
            
@@ -265,7 +274,7 @@ namespace LaDa
             val_.x = *xiterator_;
             val_.y = *yiterator_;
             val_.z = val_.x ^ val_.z;
-            val_.weight = 1e0 / types::t_real( N_*yiterator_->size()*xiterator_->size() );
+            val_.weight = 1e0 / types::t_real( N_*yiterator_.size()*xiterator_.size() );
             return *this; 
           }
           //! Post-increment operator.
