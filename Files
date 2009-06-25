@@ -206,9 +206,9 @@ MINIMIZER_DOC = $(MINIMIZER_H) $(MINIMIZER_CC)
 MINIMIZER_PYTHON_H = cgs.hpp minimizer.hpp interpolated_gradient.hpp function.hpp
 MINIMIZER_PYTHON_CC = python.cc cgs.cc minimizer.cc interpolated_gradient.cc
 
-SEPARABLE_CC = cefitting.cc  main.cc ce.cc
+SEPARABLE_CC = cefitting.cc ce.cc struct_to_confs.cc
 SEPARABLE_H = boolean.h cefitting.h ce.h lsq.h separable.h collapse.h \
-              cecollapse.h bestof.h
+              cecollapse.h bestof.h struct_to_confs.h
 SEPARABLE_IMPL_H = cefitting.impl.h separable.impl.h collapse.impl.h \
                    cecollapse.impl.h
 SEPARABLE_DOC = $(SEPARABLE_CC) $(SEPARABLE_H) $(SEPARABLE_IMPL_H)

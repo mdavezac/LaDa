@@ -83,40 +83,83 @@ namespace LaDa
       __THROW_ERROR( "Could not parse --basis input: " << _bdesc << "\n" )
     }
 
+//   void PosToConfs :: nsites( const Crystal :: Structure &_structure,
+//                              t_Configurations& _confs ) const
+//   {
+//     Crystal::SplitIntoConfs split;
+//     split( _structure, n );
+//     const size_t N( _confs.size() );
+//     _confs.reserve( N + split.configurations().size() );
+//     typedef Crystal::SplitIntoConfs::t_Configurations tt_confs;
+//     typedef tt_confs :: value_type tt_conf;
+//     typedef tt_conf :: first_type tt_bits;
+//     foreach( const tt_conf & _atomconf,  split.configurations() )
+//     {
+//       t_Configurations :: value_type bitset;
+//       bitset.second = _atomconf.second;
+//       bitset.first.resize( _atomconf.first.size() );
+//       typedef t_Configurations :: value_type :: first_type t_bits;
+//       t_bits :: iterator i_bit = bitset.first.begin();
+//       foreach( const tt_bits :: value_type &bit, _atomconf.first )
+//       {
+//         const Crystal::Structure::t_Atom &atom( _structure.atoms[ bit.second ] );
+//         const Crystal::Structure::t_Atom::t_Type type( atom.type );
+//         *i_bit = Crystal::Structure::lattice
+//                      ->convert_real_to_type_index( atom.site, type );
+//         ++i_bit;
+//       }
+//       // adds to configurations.
+//       t_Configurations :: iterator i_found = _confs.begin() + N;
+//       t_Configurations :: iterator i_conf_end = _confs.end();
+//       for(; i_found != i_conf_end; ++i_found )
+//         if( bitset.first == i_found->first ) break;
+//       if( i_found == i_conf_end ) _confs.push_back( bitset );
+//       else i_found->second += bitset.second;
+//     }
+//     split.clear();
+//   }
+
     void PosToConfs :: nsites( const Crystal :: Structure &_structure,
                                t_Configurations& _confs ) const
     {
-      Crystal::SplitIntoConfs split;
-      split( _structure, n );
-      const size_t N( _confs.size() );
-      _confs.reserve( N + split.configurations().size() );
-      typedef Crystal::SplitIntoConfs::t_Configurations tt_confs;
-      typedef tt_confs :: value_type tt_conf;
-      typedef tt_conf :: first_type tt_bits;
-      foreach( const tt_conf & _atomconf,  split.configurations() )
+      struct basis_sort
       {
+        configuration::basis const& basis;
+        basis_sort( configuration::basis const &_b ) : basis(_b) {}
+        basis_sort( basis_sort const &_b ) : basis(_b.basis) {}
+        bool operator()( atat::rVector3d const *_a, atat::rVector3d const *_b ) 
+      }; 
+      // Copy atomic positions as pointers.
+      std::vector< Crystal::Structure::t_Atom*> atoms;
+      atoms.reserve(_structure.atoms.size());
+      foreach( Crystal::Structure::t_Atom const & atom, _structure.atoms )
+        atoms.push_back( &atom );
+
+      // now loops over bases.
+      CE::configurations::Bases bases( _structure );
+      CE::configurations::Bases::const_iterator i_basis = bases.begin();
+      CE::configurations::Bases::const_iterator i_basis_end = bases.end();
+      for(; i_basis != i_basis_end; ++i_basis )
+      {
+        // sorst according to basis.
+        std::partial_sort( atoms.begin(), atoms.begin() + n.second, basis_sort(*i_basis) );
         t_Configurations :: value_type bitset;
-        bitset.second = _atomconf.second;
-        bitset.first.resize( _atomconf.first.size() );
-        typedef t_Configurations :: value_type :: first_type t_bits;
-        t_bits :: iterator i_bit = bitset.first.begin();
-        foreach( const tt_bits :: value_type &bit, _atomconf.first )
-        {
-          const Crystal::Structure::t_Atom &atom( _structure.atoms[ bit.second ] );
-          const Crystal::Structure::t_Atom::t_Type type( atom.type );
-          *i_bit = Crystal::Structure::lattice
-                       ->convert_real_to_type_index( atom.site, type );
-          ++i_bit;
-        }
-        // adds to configurations.
+        bitset.second = i_basis->weight;
+        // then copies atomic types
+        std::transform
+        ( 
+          atoms.begin() + n.first, atoms.begin() + n.second,
+          std::back_inserter(bitset),
+          type_to_bit(_structure.lattice) 
+        );
+        // finally adds to configurations.
         t_Configurations :: iterator i_found = _confs.begin() + N;
         t_Configurations :: iterator i_conf_end = _confs.end();
         for(; i_found != i_conf_end; ++i_found )
           if( bitset.first == i_found->first ) break;
         if( i_found == i_conf_end ) _confs.push_back( bitset );
         else i_found->second += bitset.second;
-      }
-      split.clear();
+      };
     }
      
     void PosToConfs :: posbasis( const Crystal :: Structure &_structure,
@@ -134,7 +177,7 @@ namespace LaDa
       std::transform
       ( 
         _structure.atoms.begin(), _structure.atoms.end(), fractionals.begin(),
-             ret<atat::rMatrix3d>(constant( !(~_structure.cell) ))
+             ret<atat::rMatrix3d>(constant( !(_structure.cell) ))
            * bind(&Crystal::Structure::t_Atom::pos, _1) 
       );
     
@@ -157,7 +200,7 @@ namespace LaDa
                _1 - constant( *i_shift )
           );
     
-          atat::rMatrix3d inv = !( (*i_op) * (~_structure.cell)  );
+          atat::rMatrix3d inv =  (!_structure.cell) * (*i_op);
     
           // For each basis position, finds closest atomic-position modulo
           // structure-periodicity.

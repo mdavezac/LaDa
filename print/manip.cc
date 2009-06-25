@@ -38,7 +38,7 @@ namespace LaDa
     }
     std::string StripEdges( std::string _string )
     {
-      if ( _string.find_first_of(" \t\n") )
+      if ( _string.find_first_of(" \t\n") != std::string::npos )
         _string.erase(0, _string.find_first_not_of(" \t\n") );
       size_t l = _string.length();
       size_t t = _string.find_last_not_of(" \t\n") + 1;

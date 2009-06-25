@@ -37,31 +37,33 @@ namespace LaDa
           atat::iVector3d &smith = bt::get<1>(transform);
           const atat::rMatrix3d factor
           ( 
-             (!_structure.cell) * (!bt::get<0>(transform))
+             (!bt::get<0>(transform))
           );
+          atat::rMatrix3d inv_cell( !_structure.cell );
           typename TStructure<T_TYPE>::t_Atom atom;
           for( size_t i(0); i < smith(0); ++i )
             for( size_t j(0); j < smith(1); ++j )
               for( size_t k(0); k < smith(2); ++k )
               {
-                // in supercell fractional
-                const atat::rVector3d vec1( factor * atat::rVector3d(i,j,k) );
-                // in supercell fractional and in supercell parallelogram
-                const atat::rVector3d vec2
-                (
-                  vec1(0) - std::floor( vec1(0) ),
-                  vec1(1) - std::floor( vec1(1) ),
-                  vec1(2) - std::floor( vec1(2) )
-                );
-                // in cartesian
-                const atat::rVector3d vec( _structure.cell * vec2 );
+                // in cartesian.
+                const atat::rVector3d vec( factor * atat::rVector3d(i,j,k) );
               
                 // adds all lattice sites.
                 typedef Crystal::Lattice::t_Site t_Site;
                 size_t i(0);
                 foreach( const t_Site &site, _structure.lattice->sites ) 
                 {
-                  atom.pos = vec + site.pos;
+                  // in supercell fractional.
+                  atat::rVector3d frac( inv_cell * ( vec + site.pos ) );
+                  // in supercell fractional and in supercell parallelogram
+                  const atat::rVector3d inside
+                  (
+                    frac(0) - std::floor( frac(0) + 0.0000001 ),
+                    frac(1) - std::floor( frac(1) + 0.0000001 ),
+                    frac(2) - std::floor( frac(2) + 0.0000001 )
+                  );
+                  // back to cartesian.
+                  atom.pos = _structure.cell * inside;
                   atom.site = i;
                   atom.freeze = site.freeze;
                   _structure.atoms.push_back(atom);

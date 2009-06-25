@@ -99,13 +99,13 @@ namespace LaDa
                << ", Cell\n"
                << std::fixed << std::setprecision(5)
                << "   " << std::setw(9) << cell(0,0)
-               << "   " << std::setw(9) << cell(1,0)
-               << "   " << std::setw(9) << cell(2,0) << "\n"
                << "   " << std::setw(9) << cell(0,1)
+               << "   " << std::setw(9) << cell(0,2) << "\n"
+               << "   " << std::setw(9) << cell(1,0)
                << "   " << std::setw(9) << cell(1,1)
-               << "   " << std::setw(9) << cell(2,1) << "\n"
-               << "   " << std::setw(9) << cell(0,2)
-               << "   " << std::setw(9) << cell(1,2)
+               << "   " << std::setw(9) << cell(1,2) << "\n"
+               << "   " << std::setw(9) << cell(2,0)
+               << "   " << std::setw(9) << cell(2,1)
                << "   " << std::setw(9) << cell(2,2) << "\n"
                << "\n   Atoms:\n";
                 

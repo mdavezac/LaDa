@@ -184,9 +184,9 @@ namespace LaDa
                     "Incomplete cell in xml input.\n" )
 
         __TRYBEGIN
-          cell(i,0) = boost::lexical_cast<types::t_real>( child->Attribute("x") );
-          cell(i,1) = boost::lexical_cast<types::t_real>( child->Attribute("y") );
-          cell(i,2) = boost::lexical_cast<types::t_real>( child->Attribute("z") );
+          cell(i,0) = boost::lexical_cast<types::t_real>( Print::StripEdges(child->Attribute("x")) );
+          cell(i,1) = boost::lexical_cast<types::t_real>( Print::StripEdges(child->Attribute("y")) );
+          cell(i,2) = boost::lexical_cast<types::t_real>( Print::StripEdges(child->Attribute("z")) );
         __TRYEND(, "Could not parse cell input.\n" )
         if ( child->Attribute("freeze") )
         {

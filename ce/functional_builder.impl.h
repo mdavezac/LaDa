@@ -161,7 +161,7 @@ namespace LaDa
     
          // finally, creates polynomials
     
-         atat::rMatrix3d inv_cell = !(~str.cell);
+         atat::rMatrix3d inv_cell = !(str.cell);
          polynome = new t_Chemical();
          Crystal :: Structure :: t_Atoms :: const_iterator i_atom = str.atoms.begin();
          Crystal :: Structure :: t_Atoms :: const_iterator i_atom_last = str.atoms.end();

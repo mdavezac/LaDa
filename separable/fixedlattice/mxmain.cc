@@ -504,8 +504,11 @@ int main(int argc, char *argv[])
     structure.find_k_vectors();
     std::cout << "  @-0 " << structure.get_concentration()
               << " " << mixedfunc( structure ) << "\n";
-    if( not gusfile ) LaDa::Crystal::enumerate_pifile( doenum.string(), mixedfunc );
-    else LaDa::Crystal::enumerate_gusfile( doenum.string(), mixedfunc );
+//   if( not gusfile ) LaDa::Crystal::enumerate_pifile( doenum.string(), mixedfunc );
+//   else LaDa::Crystal::enumerate_gusfile( doenum.string(), mixedfunc );
+    LaDa::Crystal::enumerate_pifile( doenum.string(), mixedfunc );
+    std::cout << "\ngus\n";
+    LaDa::Crystal::enumerate_gusfile( "struct_enum.out", mixedfunc );
     foreach( LaDa::Crystal::Structure::t_Atom &atom, structure.atoms )
       atom.type *= -1e0;
     std::cout << "  @0 " << structure.get_concentration()

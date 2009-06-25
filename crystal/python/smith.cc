@@ -43,6 +43,27 @@ namespace LaDa
         return bp::make_tuple( -1 );
       }
     }
+    template< class T_TYPE  >
+    boost::python::tuple get_smith_transform_str( Crystal::TStructure<T_TYPE> const &_struct )
+    {
+      namespace bt = boost::tuples;
+      namespace bp = boost::python;
+      try
+      {
+        Crystal::t_SmithTransform result = Crystal::get_smith_transform( _struct );
+        return bp::make_tuple( bt::get<0>(result), bt::get<1>(result) );
+      }
+      catch(...)
+      {
+        PyErr_SetString
+        (
+          PyExc_IOError, 
+          "Error while computing transform to smith normal form.\n" 
+        );
+        bp::throw_error_already_set();
+        return bp::make_tuple( -1 );
+      }
+    }
 
     
     //! Computes smith indices of position \a _pos.
@@ -104,6 +125,18 @@ namespace LaDa
     void expose_smith()
     {
       namespace bp = boost::python;
+      bp::def
+      ( 
+        "smith_normal_transform", &get_smith_transform_str<std::string>,
+        bp::arg("structure"), 
+        "Returns a tuple allowing a stransformation to the smith normal form." 
+      );
+      bp::def
+      ( 
+        "smith_normal_transform", &get_smith_transform_str<types::t_real>,
+        bp::arg("structure"), 
+        "Returns a tuple allowing a stransformation to the smith normal form." 
+      );
       bp::def
       ( 
         "smith_normal_transform", &get_smith_transform,

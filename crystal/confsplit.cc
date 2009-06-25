@@ -83,7 +83,7 @@ namespace LaDa
       const types::t_int umax = n.second / structure->atoms.size() + 1;
       typedef std::pair< types::t_real, t_Position > t_normedpair;
       typedef std::vector< t_normedpair > t_normedpairs;
-      t_normedpairs normedpairs; normedpairs.reserve( N * ( umax * 3 )^3 );
+      t_normedpairs normedpairs; normedpairs.reserve( N * ( umax * 4 )^3 );
       for( types::t_int x(-umax); x <= umax; ++x )
         for( types::t_int y(-umax); y <= umax; ++y )
           for( types::t_int z(-umax); z <= umax; ++z )
@@ -91,7 +91,7 @@ namespace LaDa
             Structure :: t_Atoms :: const_iterator i_atom = structure->atoms.begin();
             Structure :: t_Atoms :: const_iterator i_atom_end = structure->atoms.end();
             t_normedpair pair;
-            const atat::rVector3d trans(   (~structure->cell)
+            const atat::rVector3d trans(   structure->cell
                                          * atat::rVector3d( types::t_real(x),
                                                             types::t_real(y),
                                                             types::t_real(z) ) );

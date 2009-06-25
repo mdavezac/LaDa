@@ -12,6 +12,7 @@
 #include <boost/tuple/tuple.hpp>
 
 #include <atat/vectmac.h>
+#include "structure.h"
 
 namespace LaDa 
 {
@@ -27,7 +28,7 @@ namespace LaDa
     template< class T_TYPE >
       t_SmithTransform get_smith_transform( Crystal::TStructure<T_TYPE> const &_structure )
       {
-        __DOASSERT( structure.lattice != NULL, "Lattice not set in structure.\n" );
+        __DOASSERT( _structure.lattice == NULL, "Lattice not set in structure.\n" );
         return get_smith_transform( _structure.lattice->cell, _structure.cell ); 
       }
 

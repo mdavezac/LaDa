@@ -169,7 +169,7 @@ namespace LaDa
         for( size_t j(0); j < 3; ++j, ++i_tok )
         {
           __DOASSERT( i_tok == i_tok_end, "Unexpected end-of-line.\n" )
-          _structure.cell(i,j)
+          _structure.cell(j,i)
             = boost::lexical_cast<types::t_real>( *i_tok ) * 0.5e0;
         }
 
