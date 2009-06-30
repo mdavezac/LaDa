@@ -6,6 +6,7 @@
 #endif
 
 #include <struct_to_confs.h>
+#include <crystal/neighbors.h>
 
 namespace LaDa
 {
@@ -25,72 +26,38 @@ namespace LaDa
       }
       void Bases::Xcoord :: create_neighbor_lists_( Bases::Origin const& _origin )
       {
-        //! First finds first and second largest distances.
-        Bases::t_Structure::t_Atoms::const_iterator i_atom = _origin.structure_->atoms.begin();
-        Bases::t_Structure::t_Atoms::const_iterator i_atom_end = _origin.structure_->atoms.end();
-        types::t_real min_dist(-1);
-        types::t_real second_min_dist(-1);
-        atat::rMatrix3d const inv_cell(!_origin.structure_->cell);
-        for(; i_atom != i_atom_end; ++i_atom )
-        {
-          //! Avoid origin.
-          if( i_atom == _origin.iterator_ ) continue;
-          atat::rVector3d const frac( inv_cell * ( i_atom->pos - *_origin ) );
-          atat::rVector3d const centered
-          ( 
-            frac(0) - std::floor(frac(0) + 0.00001),
-            frac(1) - std::floor(frac(1) + 0.00001),
-            frac(2) - std::floor(frac(2) + 0.00001)
-          );
-          atat::rVector3d const cart( _origin.structure_->cell * centered );
-          types::t_real const d( atat::norm2(cart) );
-          if( d < min_dist or min_dist < 0 )
-          {
-            if( min_dist >= 0e0 ) second_min_dist = min_dist;
-            min_dist = d;
-            continue;
-          }
-          if( d < second_min_dist  or second_min_dist < 0 ) second_min_dist = d;
-        }
-
-        //! Now neighbor lists.
+        // We only need first neighbors, if there are more than one,
+        // and second neighbors if there is only one first neighbor.
+        // 13 nearest neighbors should be enough to cover these situations.
+        Crystal::Neighbors neighs( 13, *_origin );
+        Crystal::Neighbors::const_iterator i_first = neighs.begin( *_origin.structure_ );
+        Crystal::Neighbors::const_iterator const i_end = neighs.end();
+        types::t_real const min_dist( i_first->distance );
         first_.reset( new t_Neighs );
-        second_.reset( new t_Neighs );
-        size_t fns(0);
-        for(; i_atom != i_atom_end; ++i_atom )
+        for(; i_first != i_end; ++i_first )
         {
-          //! Avoid origin.
-          bool const is_origin( i_atom == _origin.iterator_ );
-
-          atat::rVector3d const frac( inv_cell * ( i_atom->pos - *_origin ) );
-          atat::rVector3d const centered
-          ( 
-            frac(0) - std::floor(frac(0) + 0.00001),
-            frac(1) - std::floor(frac(1) + 0.00001),
-            frac(2) - std::floor(frac(2) + 0.00001)
-          );
-          atat::rVector3d const cart( _origin.structure_->cell * centered );
-          for( int i(-1); i < 2; ++i)
-            for( int j(-1); j < 2; ++j)
-              for( int k(-1); k < 2; ++k)
-              {
-                if( is_origin and i == 0 and j == 0 and k == 0 ) continue;
-                atat::rVector3d const to_add
-                ( 
-                  cart + _origin.structure_->cell * atat::rVector3d( i, j, k )
-                );
-                if( Fuzzy::eq( atat::norm2(to_add), min_dist ) )
-                {
-                  first_->push_back( to_add );
-                  ++fns;
-                }
-                if( fns > 1 ) continue; // no need for second neighbors.
-                if( Fuzzy::eq( atat::norm2(to_add), second_min_dist ) )
-                  second_->push_back(to_add);
-              }
+          if( Fuzzy::gt( i_first->distance, min_dist ) ) break;
+          
+          first_->push_back( i_first->pos );
         }
-        //! If more than one first neighbor, no need for second neighbors.
-        if( fns > 1 ) boost::shared_ptr<t_Neighs>().swap(second_);
+
+        // if more than one first neighbor, this is all we need.
+        __DOASSERT( i_first == i_end, "Could not find second-largest distance.\n" );
+        if( first_->size() > 1 ) 
+        {
+          second_ = first_;
+          return;
+        }
+        // otherwise get second nearest neighbors.
+        second_.reset( new t_Neighs );
+        types::t_real const second_min_dist( i_first->distance );
+        for(; i_first != i_end; ++i_first )
+        {
+          if( Fuzzy::gt( i_first->distance, second_min_dist ) ) break;
+          
+          second_->push_back( i_first->pos );
+        }
+        __DOASSERT( i_first == i_end, "Could not find third-largest distance.\n" );
       };
 
       void Bases::Xcoord :: begin( Origin const& _origin )
@@ -101,7 +68,7 @@ namespace LaDa
       }
       void Bases::Xcoord :: end( Xcoord const &_b )
       {
-        __DOASSERT( not first_, "End iterator needs a valid begin iterator.\n" );
+        __DOASSERT( not _b.first_, "End iterator needs a valid begin iterator.\n" );
         *this = _b;
         iterator_ = _b.first_->end();
       }
@@ -149,7 +116,7 @@ namespace LaDa
         val_.origin = *oiterator_;
         val_.x = *xiterator_;
         val_.y = *yiterator_;
-        val_.z = val_.x ^ val_.z;
+        val_.z = val_.x ^ val_.y;
         val_.weight = 1e0 / types::t_real( N_*yiterator_.size()*xiterator_.size() );
         return *this;
       }
@@ -166,6 +133,44 @@ namespace LaDa
       Bases::const_iterator Bases::begin() const { return const_iterator().begin_(structure_); }
       Bases::const_iterator Bases::end() const { return const_iterator().end_(structure_); } 
 
+      Bases::const_iterator &Bases::const_iterator::operator++()
+      {
+        if( oiterator_ == oiterator_end_ ) return *this;
+
+        ++yiterator_;
+        if( yiterator_ != yiterator_end_ ) 
+        {
+          val_.y = *yiterator_;
+          val_.z = val_.x ^ val_.y;
+          size_t const u(N_*yiterator_.size()*xiterator_.size());
+          val_.weight = 1e0 / types::t_real( u );
+          return *this;
+        }
+          
+        ++xiterator_;
+        if( xiterator_ != xiterator_end_ )
+        {
+          yiterator_ = Bases::Ycoord( xiterator_ );
+          yiterator_.begin(xiterator_); yiterator_end_.end(yiterator_);
+          val_.x = *xiterator_;
+          val_.y = *yiterator_;
+          val_.z = val_.x ^ val_.y;
+          val_.weight = 1e0 / types::t_real( N_*yiterator_.size()*xiterator_.size() );
+          return *this;
+        }
+       
+        ++oiterator_;
+        if( oiterator_ == oiterator_end_ ) return *this;
+
+        xiterator_.begin(oiterator_); xiterator_end_.end(xiterator_);
+        yiterator_.begin(xiterator_); yiterator_end_.end(yiterator_);
+        val_.origin = *oiterator_;
+        val_.x = *xiterator_;
+        val_.y = *yiterator_;
+        val_.z = val_.x ^ val_.y;
+        val_.weight = 1e0 / types::t_real( N_*yiterator_.size()*xiterator_.size() );
+        return *this; 
+      }
     }  // end of configuration namespace.
   } // end of Crystal namespace.
 } // namespace LaDa

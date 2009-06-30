@@ -54,8 +54,6 @@ namespace LaDa
         do
         {
           if( not Crystal :: read_pifile_structure( file, structure ) ) continue;
-          if( structure.atoms.size() < 2 ) continue;
-          if( structure.atoms.size() > 2 ) break;
           std::cout << "    @" << structure.name << "  " 
                     << structure.get_concentration()
                     << " " << _op( structure ) << "\n";
@@ -87,10 +85,13 @@ namespace LaDa
         do
         {
           getline(file, line);
+          line = Print::StripEdges(line);
+          if( line[0] == '#' ) continue;
           std::istringstream input( line );
           structure.cell.zero();
           types::t_int dummy;
-          for( size_t i(0); i < 7; ++i ) input >> dummy;
+          input >> structure.name;
+          for( size_t i(0); i < 6; ++i ) input >> dummy;
           input >> structure.cell(0,0) 
                 >> structure.cell(1,0) >> structure.cell(1,1)
                 >> structure.cell(2,0) >> structure.cell(2,1) >> structure.cell(2,2);
@@ -99,8 +100,6 @@ namespace LaDa
           structure.cell = structure.lattice->cell * structure.cell;
           structure.atoms.clear();
           fill_structure( structure );
-          if( structure.atoms.size() < 2 ) continue;
-          if( structure.atoms.size() > 2 ) break;
           __DOASSERT( line.size() != structure.atoms.size(),
                       "labels and structure have different sizes.\n" )
           t_SmithTransform const transform = get_smith_transform( structure );

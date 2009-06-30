@@ -16,8 +16,8 @@ namespace LaDa
 {
   namespace Crystal
   {
-    bool operator>( Neighbor const& _a, Neighbor const& _b )
-      { return _a.distance > _b.distance; }
+    bool operator<( Neighbor const& _a, Neighbor const& _b )
+      { return _a.distance < _b.distance; }
 
     void Neighbors :: create_neighbors_list_(t_Structure const& _structure)
     {
@@ -46,24 +46,31 @@ namespace LaDa
             {
                neighbor.pos = _structure.cell * ( frac + atat::rVector3d(x,y,z) );
                neighbor.distance = atat::norm( neighbor.pos );
+               if( Fuzzy::is_zero( neighbor.distance ) ) continue;
 
                t_Neighbors :: iterator i_found 
                (
                  std::find_if
                  (
                    neighbors_.begin(), neighbors_.end(),
-                   boost::lambda::constant(neighbor) > boost::lambda::_1  
+                   boost::lambda::constant(neighbor) < boost::lambda::_1  
                  ) 
                );
 
-               ++size;
-               if( i_found == neighbors_.end() ) neighbors_.push_back( neighbor );
-               else                              neighbors_.insert(i_found, neighbor);
-
-               if( size < nmax ) continue;
                
-               neighbors_.pop_back();
-               --size;
+               if( i_found != neighbors_.end() ) 
+               {
+                 neighbors_.insert(i_found, neighbor);
+
+                 if( size < nmax ) ++size;
+                 else              neighbors_.pop_back();
+                 continue;
+               }
+               
+               if( size == nmax ) continue;
+
+               ++size;
+               neighbors_.push_back( neighbor );
             }
       } // loop over atoms.
     };

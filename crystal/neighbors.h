@@ -46,7 +46,8 @@ namespace LaDa
          atat::rVector3d origin;
 
          //! Constructor.
-         Neighbors(size_t _nmax = 0) : nmax(_nmax) {};
+         Neighbors   (size_t _nmax = 0, atat::rVector3d const &_vec = atat::rVector3d(0,0,0) )
+                   : nmax(_nmax), origin(_vec) {};
          //! returns iterator to first neighbor list.
          const_iterator begin() const { return neighbors_.begin(); }
          //! constructs first neighbor list and returns first iterator.

@@ -29,6 +29,14 @@ namespace LaDa
         atat::rVector3d z;
         types::t_real weight;
       };
+      inline std::ostream& operator<<( std::ostream &_stream, Basis const &_basis )
+      {
+        return _stream << "Origin: " << _basis.origin << " -- "
+                       << "weight: " << _basis.weight << "\n"
+                       << "x: " << _basis.x << "\n"
+                       << "y: " << _basis.y << "\n"
+                       << "z: " << _basis.z << "\n";
+      }
 
       class Bases 
       {
@@ -70,13 +78,17 @@ namespace LaDa
         public:
           //! Return on deref.
           typedef atat::rVector3d const& value_type;
+          //! Return on deref.
+          typedef atat::rVector3d const* pointer_type;
           //! Constructor.
           Origin() {}
           //! Copy Constructor.
-          Origin( Origin const& _c ) : iterator_(_c.iterator_) {};
+          Origin( Origin const& _c ) : structure_(_c.structure_), iterator_(_c.iterator_) {};
 
           //! Deref.
           value_type operator*() const { return iterator_->pos; }
+          //! Deref.
+          pointer_type operator->() const { return &(iterator_->pos); }
           //! Pre-increment operator.
           Origin& operator++() { ++iterator_; return *this; }
           //! Post-increment operator.
@@ -95,7 +107,7 @@ namespace LaDa
       };
       
       inline bool operator==( Bases::Origin const& _a, Bases::Origin const& _b )
-        { return _a.iterator_ != _b.iterator_; }
+        { return _a.iterator_ == _b.iterator_; }
       inline bool operator!=( Bases::Origin const& _a, Bases::Origin const& _b )
         { return not(_a == _b); }
 
@@ -173,7 +185,9 @@ namespace LaDa
           //! Constructor.
           Ycoord( Xcoord const& _x ) { begin(_x); }
           //! Copy constructors
-          Ycoord( Ycoord const& _c ) : equivs_(_c.equivs_), val_(_c.val_), xval_(_c.xval_) {}
+          Ycoord   ( Ycoord const& _c )
+                 : equivs_(_c.equivs_), iterator_(_c.iterator_),
+                   val_(_c.val_), xval_(_c.xval_) {}
 
           //! Deref.
           value_type operator*() const { return val_; }
@@ -233,50 +247,15 @@ namespace LaDa
                          : val_(_c.val_),
                            oiterator_(_c.oiterator_), oiterator_end_(_c.oiterator_end_),
                            xiterator_(_c.xiterator_), xiterator_end_(_c.xiterator_end_),
-                           yiterator_(_c.yiterator_), yiterator_end_(_c.yiterator_end_) {}
+                           yiterator_(_c.yiterator_), yiterator_end_(_c.yiterator_end_),
+                           N_(_c.N_) {}
 
           //! Dereference.
           value_type operator*() const { return val_; }
           //! Deref.
           pointer_type operator->() const { return &val_; }
           //! Pre-increment operator.
-          const_iterator &operator++()
-          {
-            if( oiterator_ == oiterator_end_ ) return *this;
-
-            ++yiterator_;
-            if( yiterator_ != yiterator_end_ ) 
-            {
-              val_.y = *yiterator_;
-              val_.z = val_.x ^ val_.z;
-              val_.weight = 1e0 / types::t_real( N_*yiterator_.size()*xiterator_.size() );
-              return *this;
-            }
-              
-            ++xiterator_;
-            if( xiterator_ != xiterator_end_ )
-            {
-              yiterator_ = Bases::Ycoord( xiterator_ );
-              yiterator_.begin(xiterator_); yiterator_end_.end(yiterator_);
-              val_.x = *xiterator_;
-              val_.y = *yiterator_;
-              val_.z = val_.x ^ val_.z;
-              val_.weight = 1e0 / types::t_real( N_*yiterator_.size()*xiterator_.size() );
-              return *this;
-            }
-           
-            ++oiterator_;
-            if( oiterator_ == oiterator_end_ ) return *this;
-
-            xiterator_.begin(oiterator_); xiterator_end_.end(xiterator_);
-            yiterator_.begin(xiterator_); yiterator_end_.end(yiterator_);
-            val_.origin = *oiterator_;
-            val_.x = *xiterator_;
-            val_.y = *yiterator_;
-            val_.z = val_.x ^ val_.z;
-            val_.weight = 1e0 / types::t_real( N_*yiterator_.size()*xiterator_.size() );
-            return *this; 
-          }
+          const_iterator &operator++();
           //! Post-increment operator.
           const_iterator operator++(int) { return const_iterator( ++(*this) ); }
 
