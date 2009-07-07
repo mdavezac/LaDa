@@ -40,7 +40,7 @@ subroutine iaga_call_escan( in_nbstates )
   ecp%comm_handle = comm_handle
   ecp%fileescaninput= trim("escan_input.")//arank(1:len_trim(arank))
   ecp%escanfileonly=.TRUE.
-  ecp%escandefaultprint=.false.
+  ecp%escandefaultprint=.true.
   ! The following do not need to be set for escanfileonly=.TRUE.
   ecp%filepot="pot.out"
   ecp%filewg_out = "wg.out"
