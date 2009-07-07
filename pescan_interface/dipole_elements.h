@@ -31,13 +31,13 @@ namespace LaDa
       friend class boost::serialization::access;
       typedef std::pair<size_t, size_t> t_Band2Band;
       //! The complex dipole moment.
-      std::complex<types::t_real> r[3];
+      std::complex<types::t_real> p[3];
       //! Indices of bands in transition.
       t_Band2Band band2band;
       private:
         //! Serializes a dipole moment.
         template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
-          {  _ar & r; _ar & band2band; }
+          {  _ar & p; _ar & band2band; }
     };
     //! Prints a dipole moment.
     std::ostream& operator<<( std::ostream &_stream, const Dipole& );

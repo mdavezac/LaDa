@@ -586,6 +586,18 @@ namespace LaDa
         child->Attribute("realcutoff", &rcut);
       if( child->Attribute("nbstates") )
         child->Attribute("nbstates", &nbstates);
+      if( child->Attribute("kpoint") )
+      {
+        boost::tuples::tuple<types::t_real, types::t_real, types::t_real> kp;
+        if( not opt::tuples::read( child->Attribute("kpoint"), kp ) )
+          std::cerr << "Could not parse kpoint attribute in Hamiltonian tag.\n";
+        else
+        {
+          kpoint[0] = boost::tuples::get<0>(kp);
+          kpoint[1] = boost::tuples::get<1>(kp);
+          kpoint[2] = boost::tuples::get<2>(kp);
+        }
+      }
       child = child->FirstChildElement("SpinOrbit");
       for(; child; child = child->NextSiblingElement("SpinOrbit") )
         if ( child->Attribute("filename") and child->Attribute("izz") )

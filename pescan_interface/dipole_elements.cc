@@ -155,7 +155,7 @@ namespace LaDa
 
           for( size_t r(0u); r < 3u; ++r )
           {
-            dipole.r[r] = std::complex<types::t_real>
+            dipole.p[r] = std::complex<types::t_real>
                           ( 
                             dipoles[l][k][r][0],
                             dipoles[l][k][r][1]
@@ -170,9 +170,9 @@ namespace LaDa
     {
       types::t_real result(0);
       foreach( const Dipole &dipole, _dipoles )
-        result += std::real(   dipole.r[0] * std::conj(dipole.r[0])
-                             + dipole.r[1] * std::conj(dipole.r[1])
-                             + dipole.r[2] * std::conj(dipole.r[2]) );
+        result += std::real(   dipole.p[0] * std::conj(dipole.p[0])
+                             + dipole.p[1] * std::conj(dipole.p[1])
+                             + dipole.p[2] * std::conj(dipole.p[2]) );
       return result;
     }
     types::t_real oscillator_strength( const BandGap& _bandgap,
@@ -193,8 +193,8 @@ namespace LaDa
     std::ostream& operator<<( std::ostream &_stream, const Dipole& _dip )
     {
       _stream << "<" << _dip.band2band.first
-              << "| r |" << _dip.band2band.second << "> = { "
-              << _dip.r[0] << ", " << _dip.r[1] << ", " << _dip.r[2] << " }";
+              << "| p |" << _dip.band2band.second << "> = { "
+              << _dip.p[0] << ", " << _dip.p[1] << ", " << _dip.p[2] << " }";
       return _stream;
     }
 
