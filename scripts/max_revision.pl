@@ -72,6 +72,7 @@ sub dodir()
     next if ($dir =~ /LaDa/);
     chdir $dir;
     get_max_revision();
+    dodir();
     chdir "..";
   }
 }
@@ -106,7 +107,7 @@ sub get_max_revision()
       $n ++;
     }
     close IN; 
-    print "Revision String not found in $file\n" if ($found != 1 )
+#   print "Revision String not found in $file\n" if ($found != 1 )
   }
 }
 
