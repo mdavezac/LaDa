@@ -51,44 +51,6 @@ namespace LaDa
         }
       }
 
-      void enumerate_pifile( const std::string &_filename,
-                             const boost::python::object &_callable )
-      {
-        try
-        {
-          Crystal :: Structure structure;
-          std::ifstream file( _filename.c_str(), std::ifstream::in );
-          do
-          {
-            if( not Crystal :: read_pifile_structure( file, structure ) ) continue;
-            _callable( structure );
-            foreach( Crystal::Structure::t_Atom &atom, structure.atoms )
-              atom.type = Fuzzy::gt( atom.type, 0e0 ) ? -1e0: 1e0;
-            structure.name = "-" + structure.name;
-            _callable( structure );
-          }
-          while( not file.eof() );
-        }
-        catch( std::exception &_e )
-        {
-          LADA_PYTHON_ERROR
-          ( 
-            PyExc_RuntimeError,
-            ( "Error while enumerating PI-file " + _filename + ":\n" + _e.what() )
-          );
-          boost::python::throw_error_already_set();
-        }
-        catch( ... )
-        {
-          LADA_PYTHON_ERROR
-          ( 
-            PyExc_RuntimeError,
-            ( "Error while enumerating PI-file " + _filename + "\n" )
-          );
-          boost::python::throw_error_already_set();
-        }
-      }
-
       void read_pifile_structure( boost::python::str& _str, Crystal::Structure &_structure )
       {
         try
@@ -133,14 +95,6 @@ namespace LaDa
         &details::read_structure,
         boost::python::return_value_policy< boost::python::manage_new_object >(),
         "Tries to read a file as a MBCE structure file. Returns a structure on success" 
-      );
-      boost::python::def
-      ( 
-        "enum_pifile",
-        &details::enumerate_pifile,
-        ( boost::python::arg("filename"), boost::python::arg("callable") ),
-        "Reads a pi-file and calls a "
-        "\"callable( const LaDa::Crystal::Structure )->types::t_real\" for each structure."
       );
       boost::python::def
       ( 

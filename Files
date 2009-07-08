@@ -122,10 +122,12 @@ CRYSTAL_CC = lattice.cc structure.cc confsplit.cc layerdepth.cc read_structure.c
              epi_structure.cc fill_structure.cc ideal_lattice.cc smith.cc neighbors.cc
 CRYSTAL_H  = lattice.h  structure.h structure.impl.h atom.h  confsplit.h layerdepth.h \
              read_structure.h epi_structure.h fill_structure.h fourier.h read_poscar.h \
-             fractional_cartesian.h ideal_lattice.h smith.h neighbors.h
+             fractional_cartesian.h ideal_lattice.h smith.h neighbors.h enumerate.h
 CRYSTAL_DOC = $(CRYSTAL_H) $(CRYSTAL_CC) 
-CRYSTAL_PYTHON_H = structure.hpp atom.hpp lattice.hpp read_structure.hpp smith.hpp
-CRYSTAL_PYTHON_CC = structure.cc atom.cc lattice.cc read_structure.cc python.cc smith.cc
+CRYSTAL_PYTHON_H = structure.hpp atom.hpp lattice.hpp read_structure.hpp \
+                   smith.hpp enumerate.hpp
+CRYSTAL_PYTHON_CC = structure.cc atom.cc lattice.cc read_structure.cc \
+                    python.cc smith.cc enumerate.cc
 
 CE_CC     = cluster.cc harmonic.cc  polynome.cc regularization.cc fit.cc
 CE_H      = cluster.h  constituent_strain.h  functional_builder.h  harmonic.h \

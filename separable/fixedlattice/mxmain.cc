@@ -32,7 +32,7 @@
 #include <opt/bpo_macros.h>
 #include <crystal/lattice.h>
 #include <crystal/structure.h>
-#include <crystal/read_structure.h>
+#include <crystal/enumerate.h>
 #include <ce/cluster.h>
 #include <ce/regularization.h>
 #include <ce/harmonic.h>
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
       ("cs", po::value<std::string>(), "Constituent Strain input file.\n" )
       ("which,w", po::value<LaDa::types::t_unsigned>()->default_value(0),
                    "Performs best-of for 0 (variance), 1 (mean), or 2(max).\n" )
-      ("guss", "Use Gus Harts' type PI-file for structural enumeration." )
+      ("gus", "Use Gus Harts' type PI-file for structural enumeration." )
       ("print", po::value<std::string>()->default_value(""),
                    "Prints out: \"function\".\n" );
   LaDa::Fitting::LeaveManyOut leavemanyout;
