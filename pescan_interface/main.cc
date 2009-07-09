@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
   (
     (*world),
     std::cout << "Input filename: " << filename
-              << "\nWill " << ( evaluate.compute_dipoles ? " ": "not " ) 
+              << "\nWill" << ( evaluate.compute_dipoles ? " ": "not " ) 
               << "compute dipole moments.\n";
     if( not evaluate.do_evaluate ) 
       std::cout << "Will not perform evaluation.\n";

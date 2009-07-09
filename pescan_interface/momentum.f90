@@ -147,7 +147,11 @@ module MomentumDipole
       if (inode==1) then
          open(unit=inputunit,file=params%ecp%filepot,form='unformatted',status='old')
          rewind(inputunit)
-         read(inputunit) n1,n2,n3 ! number of nodes when written
+         read(inputunit) n1,n2,n3, ierr ! number of nodes when written
+         if( ierr .ne. nnodes ) then
+           write (*,*) ierr, nnodes 
+           stop "Number of nodes used to write potential different from when reading it." 
+         endif
          read(inputunit) lattice%rcell
       end if
 

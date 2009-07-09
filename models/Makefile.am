@@ -27,7 +27,7 @@ librelaxer_la_LIBADD = ../crystal/libcrystal.la \
                        ../print/libprint.la \
                        ../physics/libphysics.la
 
-bin_PROGRAMS = clj coollj
+bin_PROGRAMS = # clj coollj
 clj_SOURCES =  CLJ.f90 force_lj_ewald.f90
 clj_LDADD = libmodels.la librelaxer.la  @BOOST_PROGOP@ 
 coollj_SOURCES =  main.cc

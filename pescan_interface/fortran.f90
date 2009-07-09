@@ -11,13 +11,15 @@ subroutine iaga_set_mpi( in_comm_handle )
 
   integer, intent(in) :: in_comm_handle
 
-  integer inode, ierr
+  integer inode, ierr, nnodes
+  common /mpi_data/inode,nnodes
 
   comm_handle = in_comm_handle
   params%ecp%comm_handle = in_comm_handle
 
   call mpi_comm_rank(comm_handle,inode,ierr)
   call mpi_comm_rank(mpi_comm_world,irank,ierr)
+  call mpi_comm_size(comm_handle,nnodes,ierr)
 
   write(arank,'(I6)') irank
   arank = adjustl( arank )
