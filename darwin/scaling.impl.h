@@ -161,6 +161,7 @@ namespace LaDa
       template <class T_DISTANCE>
       bool Triangular<T_DISTANCE> :: Load( const TiXmlElement &_node )
       {
+        __TRYBEGIN
         // First finds correct node
         std::string name = _node.Value();
         const TiXmlElement *parent = &_node;
@@ -202,6 +203,7 @@ namespace LaDa
           d_0 = t_ScalarFitnessQuantity( d );
         }
         return distance.Load( _node );
+        __TRYEND(, "Could not create triangular.\n" )
       }
       
       template<class T_DISTANCE>
@@ -274,6 +276,7 @@ namespace LaDa
     Base<T_GATRAITS>* new_from_xml( const TiXmlElement &_node, 
                                     typename T_GATRAITS :: t_Evaluator *_eval )
     {
+      __TRYBEGIN
       const TiXmlElement *parent = &_node;
       std::string name = parent->Value();
       if( name != "Scaling" )
@@ -305,16 +308,18 @@ namespace LaDa
       }
 
       return result;
+      __TRYEND(, "Could not create scaling.\n" )
     }
 
     template<class T_GATRAITS> 
     Base<T_GATRAITS>* new_Niche_from_xml( const TiXmlElement &_node,
                                           typename T_GATRAITS :: t_Evaluator *_eval )
     {
+      __TRYBEGIN
       if( not _node.Attribute("distance") ) return NULL;
       std::string name = _node.Attribute("distance");
       Base<T_GATRAITS> *result;
-      const boost::regex gere("\\(G|g)eneral\\s*(H|h)amming");
+      const boost::regex gere("(G|g)eneral\\s*(H|h)amming");
       boost::match_results<std::string::const_iterator> what;
       if( boost::regex_search( name, what, gere ) )
       {
@@ -337,6 +342,7 @@ namespace LaDa
       }
       if ( result ) delete result;
       return NULL;
+      __TRYEND(, "Could not create niching.\n" )
     }
 
   } // namespace Scaling

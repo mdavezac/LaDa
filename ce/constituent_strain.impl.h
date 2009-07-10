@@ -112,6 +112,7 @@ namespace LaDa
 
         types::t_real value = 0.0;
         __MPICODE(
+          __ASSERT( not comm, "Communicator not set.\n" )
           types :: t_unsigned nperproc = k_vecs.size() / comm->size(); 
           types :: t_unsigned remainder = k_vecs.size() % comm->size();
           i_k_vec +=  comm->rank() * nperproc + std::min( (types::t_int) remainder,

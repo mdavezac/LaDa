@@ -6,6 +6,8 @@
 #include <config.h>
 #endif
 
+#include <mpi/mpi_object.h>
+
 #include "../functional_builder.h"
 #include "../constituent_strain.h"
 #include "../harmonic.h"
@@ -17,8 +19,11 @@ namespace LaDa
   {
     namespace detailsCE
     {
+      template< class T_HARMONIC >
+        class Functional : public CE::Builder<T_HARMONIC>, __MPICODE( public MPI_COMMDEC ) {};
+        
       template<class T_HARMONIC>
-        void load_builder( CE::Builder<T_HARMONIC>& _functional, const std::string &_filename )
+        void load_builder( Functional<T_HARMONIC>& _functional, const std::string &_filename )
         {
           namespace bp = boost::python;
           TiXmlDocument doc( _filename ); 
@@ -84,15 +89,15 @@ namespace LaDa
       template< class T_HARMONIC >
         std::pair
         <
-          typename CE::Builder<T_HARMONIC>::t_Chemical*,
-          typename CE::Builder<T_HARMONIC>::t_CS*
-        > create( const CE::Builder<T_HARMONIC> &_functional, const Crystal::Structure &_str )
+          typename Functional<T_HARMONIC>::t_Chemical*,
+          typename Functional<T_HARMONIC>::t_CS*
+        > create( const Functional<T_HARMONIC> &_functional, const Crystal::Structure &_str )
         {
           namespace bp = boost::python;
           typedef std::pair 
                   <
-                    typename CE::Builder<T_HARMONIC>::t_Chemical*,
-                    typename CE::Builder<T_HARMONIC>::t_CS*
+                    typename Functional<T_HARMONIC>::t_Chemical*,
+                    typename Functional<T_HARMONIC>::t_CS*
                   > t_Pair;
      
           if( not _str.atoms.size() ) 
@@ -126,15 +131,15 @@ namespace LaDa
         }
      
       template< class T_HARMONIC >
-        types::t_real call_which( const CE::Builder<T_HARMONIC> &_functional,
+        types::t_real call_which( Functional<T_HARMONIC> &_functional,
                                   const Crystal::Structure &_str, size_t _which )
         {
           namespace bp = boost::python;
-          typedef typename CE::Builder<T_HARMONIC>::t_Chemical :: t_Container t_Container;
+          typedef typename Functional<T_HARMONIC>::t_Chemical :: t_Container t_Container;
           typedef std::pair 
                   <
-                    typename CE::Builder<T_HARMONIC>::t_Chemical*,
-                    typename CE::Builder<T_HARMONIC>::t_CS*
+                    typename Functional<T_HARMONIC>::t_Chemical*,
+                    typename Functional<T_HARMONIC>::t_CS*
                   > t_Pair;
           t_Pair pair = create( _functional, _str );
           if( pair.first == NULL ) 
@@ -150,11 +155,13 @@ namespace LaDa
             types::t_real result(0);
             if( _which & 1 ) 
             {
+              __MPICODE( pair.first->set_mpi( &_functional.comm() )  );
               pair.first->set_variables( &container );
               result += pair.first->evaluate();
             }
             if( _which & 2 )
             {
+              __MPICODE( pair.second->set_mpi( &_functional.comm() )  );
               pair.second->set_variables( &container );
               result += pair.second->evaluate();
             }
@@ -189,11 +196,11 @@ namespace LaDa
         }
 
     template< class T_HARMONIC, int WHICH >
-      types::t_real call( const CE::Builder<T_HARMONIC> &_functional,
+      types::t_real call( Functional<T_HARMONIC> &_functional,
                           const Crystal::Structure &_str )
       { return call_which( _functional, _str, WHICH ); }
     template< class T_HARMONIC, int WHICH >
-      types::t_real call_str( const CE::Builder<T_HARMONIC> &_functional,
+      types::t_real call_str( Functional<T_HARMONIC> &_functional,
                               const Crystal::TStructure<std::string> &_str )
       {
         Crystal::Structure str;
@@ -205,9 +212,12 @@ namespace LaDa
         void expose_ce_functional( const std::string &_name, const std::string &_docstring )
         {
           namespace bp = boost::python;
-          typedef CE::Builder<T_HARMONIC> t_Builder;
+          typedef Functional<T_HARMONIC> t_Builder;
           bp::class_< t_Builder >( _name.c_str(), _docstring.c_str() )
             .def( bp::init<const t_Builder&>() )
+#           ifdef _MPI
+              .def( "set_mpi", &Functional<T_HARMONIC>::set_mpi )
+#           endif
             .def( "__call__", &call<T_HARMONIC, 3>, "Computes CE + CS." )
             .def( "cs", &call<T_HARMONIC, 2>, "Computes  CS.")
             .def( "chemical", &call<T_HARMONIC, 1>, "Computes CE." )
