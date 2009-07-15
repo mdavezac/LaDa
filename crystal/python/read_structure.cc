@@ -6,16 +6,25 @@
 #endif
 
 #include <sstream>
+#include <iterator>
+#include <set>
+#include <algorithm>
 
+#include <boost/iterator/filter_iterator.hpp>
 #include <boost/filesystem/path.hpp>
+#include <boost/filesystem/operations.hpp>
 #include <boost/python/def.hpp>
+#include <boost/python/tuple.hpp>
 #include <boost/python/return_value_policy.hpp>
 #include <boost/python/manage_new_object.hpp>
 #include <boost/python/extract.hpp>
 #include <boost/python/str.hpp>
 
-#include "../read_structure.h"
 #include <python/debug.hpp>
+#include <physics/physics.h>
+
+#include "../read_structure.h"
+#include "../read_poscar.h"
 
 namespace LaDa
 {
@@ -23,6 +32,161 @@ namespace LaDa
   {
     namespace details
     {
+      struct Filter
+      {
+        Filter( std::string const &_s ) : specie(_s) {}
+        Filter( Filter const& _c ) : specie(_c.specie) {}
+        std::string specie;
+        bool operator()( Crystal::TStructure<std::string>::t_Atom const & _at ) const
+          { return specie == _at.type; }
+      };
+
+      void print_poscar( Crystal::TStructure<std::string> const &_structure, 
+                         boost::python::tuple const &_species,
+                         const std::string &_path )
+      {
+        namespace bf = boost::filesystem;
+        namespace bp = boost::python;
+        typedef Crystal::TStructure<std::string> t_Structure;
+        // Extract specie types.
+        std::vector<std::string> species;
+        try 
+        {
+          for( size_t i(0); i < bp::len(_species); ++i )
+          {
+            std::string const type = bp::extract<std::string>( _species[0] );
+            species.push_back( type );
+            if( Physics::Atomic::Z( type ) == 0 )
+            {
+              LADA_PYTHON_ERROR
+              ( 
+                PyExc_RuntimeError, 
+                "Atomic type " + type + " is unknown.\n" 
+              );
+              boost::python::throw_error_already_set();
+              return;
+            }
+          }
+        }
+        catch(...)
+        {
+          LADA_PYTHON_ERROR( PyExc_RuntimeError, "Could not extract species.\n" );
+          boost::python::throw_error_already_set();
+          return;
+        }
+        { // check all species are included
+          std::set<std::string> a;
+          foreach( t_Structure::t_Atom const &atom, _structure.atoms )
+            a.insert( atom.type );
+          std::set<std::string> b;
+          foreach( std::string const &sp, species ) b.insert( sp );
+          std::set<std::string> c;
+          std::set_difference( b.begin(), b.end(), a.begin(), a.end(),
+                               std::inserter( c, c.begin() ) );
+          if( not c.empty() )
+          {
+            std::string error = "Species in structure are not all included in specie list:";
+            foreach( std::string const d, c ) error += " " + d;
+            error += ".\n";
+            LADA_PYTHON_ERROR( PyExc_RuntimeError, error );
+            bp::throw_error_already_set();
+          }
+        }
+
+        // Checks path
+        std::string POSCAR("POSCAR");
+        bf::path path( _path );
+        if( _path.size() >= POSCAR.size() )
+          if( _path.substr( _path.size() - POSCAR.size() ) == POSCAR )
+            path = _path.substr(0, _path.size() - POSCAR.size() ); 
+        if( path.string().size() != 0 ) 
+        {
+          if( not ( bf::exists(path) and bf::is_directory(path) ) )
+          {
+            LADA_PYTHON_ERROR( PyExc_RuntimeError, "Don't understand path name.\n" );
+            boost::python::throw_error_already_set();
+            return;
+          }
+        }
+
+        // open poscar file
+        path = path / "POSCAR";
+        std::ofstream file;
+        try { file.open( path.string().c_str(), std::ofstream::out|std::ofstream::trunc ); }
+        catch(...)
+        {
+          LADA_PYTHON_ERROR( PyExc_RuntimeError, "Could not open file: " + path.string() + ".\n" );
+          boost::python::throw_error_already_set();
+          return;
+        }
+
+        // prints name, scale, and cell.
+        file << _structure.name  << "\n"
+             << _structure.scale << "\n"
+             << _structure.cell;
+
+        // print nb per specie
+        foreach( std::string const sp, species )
+        {
+          typedef boost::filter_iterator< Filter, t_Structure::t_Atoms::const_iterator > t_it;
+          t_it i_first( Filter(sp), _structure.atoms.begin(), _structure.atoms.end() );
+          t_it i_end( Filter(sp), _structure.atoms.end(), _structure.atoms.end() );
+          file << size_t( i_end.base() - i_first.base() ) << " ";
+        }
+        file << "\nDirect\n";
+        // print cartesian coord.
+        foreach( std::string const sp, species )
+        {
+          typedef boost::filter_iterator< Filter, t_Structure::t_Atoms::const_iterator > t_it;
+          t_it i_first( Filter(sp), _structure.atoms.begin(), _structure.atoms.end() );
+          t_it i_end( Filter(sp), _structure.atoms.end(), _structure.atoms.end() );
+          atat::rMatrix3d inv( !_structure.cell );
+          for(; i_first != i_end; ++i_first )
+            file << Physics::Atomic::Z( i_first->type ) <<  " "
+                 << inv * i_first->pos << "\n";
+        }
+        file.close();
+      };
+
+      template<class T_TYPE>
+        Crystal::TStructure<T_TYPE>* read_poscar( boost::python::tuple const &_species, 
+                                                  const std::string &_path )
+        {
+          namespace bp = boost::python;
+          typedef Crystal::TStructure<T_TYPE> t_Structure;
+          t_Structure *result = NULL;
+          try
+          { 
+            result = new t_Structure;
+            std::vector<T_TYPE> species;
+            for( size_t i(0); i < bp::len(_species); ++i )
+            {
+              T_TYPE const type = bp::extract<T_TYPE>( _species[0] );
+              species.push_back( type );
+            }
+            Crystal::read_poscar( *result, _path, species ); 
+            return result;
+          }
+          catch( std::exception &_e )
+          {
+            if( result ) delete result;
+            LADA_PYTHON_ERROR( PyExc_RuntimeError, _e.what() );
+            boost::python::throw_error_already_set();
+            return NULL;
+          }
+          catch( ... )
+          {
+            if( result ) delete result;
+            LADA_PYTHON_ERROR
+            ( 
+              PyExc_RuntimeError,
+              ("Could not read MBCE-type structure from " + _path + ".\n")
+            );
+            boost::python::throw_error_already_set();
+            return NULL;
+          }
+        }
+
       Crystal::Structure* read_structure( const std::string &_path )
       {
         Crystal::Structure *result = new Crystal::Structure();
@@ -89,6 +253,14 @@ namespace LaDa
     void expose_read_structure()
     {
 
+      boost::python::def
+      (
+        "read_poscar", 
+        &details::read_poscar<std::string>,
+        boost::python::return_value_policy< boost::python::manage_new_object >(),
+        "Tries to read a VASP POSCAR. Needs a tuple of species on input (first argument).\n"
+        "Returns a structure on success" 
+      );
       boost::python::def
       (
         "read_structure", 
