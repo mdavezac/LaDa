@@ -30,8 +30,8 @@ namespace LaDa
       }
       bool Concentration :: Save( TiXmlElement &_node ) const
       {
-        _node.SetAttribute("vbm", boost::lexical_cast<std::string>( x * 0.5e0 + 0.5e0 ) );
-        _node.SetAttribute("cbm", boost::lexical_cast<std::string>( y * 0.5e0 + 0.5e0 ) );
+        _node.SetAttribute("x", boost::lexical_cast<std::string>( x * 0.5e0 + 0.5e0 ) );
+        _node.SetAttribute("y", boost::lexical_cast<std::string>( y * 0.5e0 + 0.5e0 ) );
         return true;
       }
     } // namespace Keepers
