@@ -10,7 +10,6 @@
 #include <set>
 #include <algorithm>
 
-#include <boost/iterator/filter_iterator.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/python/def.hpp>
@@ -32,15 +31,6 @@ namespace LaDa
   {
     namespace details
     {
-      struct Filter
-      {
-        Filter( std::string const &_s ) : specie(_s) {}
-        Filter( Filter const& _c ) : specie(_c.specie) {}
-        std::string specie;
-        bool operator()( Crystal::TStructure<std::string>::t_Atom const & _at ) const
-          { return specie == _at.type; }
-      };
-
       void print_poscar( Crystal::TStructure<std::string> const &_structure, 
                          boost::python::tuple const &_species,
                          const std::string &_path )
@@ -123,27 +113,33 @@ namespace LaDa
         // prints name, scale, and cell.
         file << _structure.name  << "\n"
              << _structure.scale << "\n"
-             << _structure.cell;
+             << _structure.cell  << "\n";
 
         // print nb per specie
         foreach( std::string const sp, species )
         {
-          typedef boost::filter_iterator< Filter, t_Structure::t_Atoms::const_iterator > t_it;
-          t_it i_first( Filter(sp), _structure.atoms.begin(), _structure.atoms.end() );
-          t_it i_end( Filter(sp), _structure.atoms.end(), _structure.atoms.end() );
-          file << size_t( i_end.base() - i_first.base() ) << " ";
+          t_Structure::t_Atoms::const_iterator i_first( _structure.atoms.begin() );
+          t_Structure::t_Atoms::const_iterator const i_end( _structure.atoms.end() );
+          size_t N(0);
+          for(; i_first != i_end; ++i_first )
+            if( i_first->type == sp ) ++N;
+          file << N << " ";
         }
         file << "\nDirect\n";
         // print cartesian coord.
         foreach( std::string const sp, species )
         {
-          typedef boost::filter_iterator< Filter, t_Structure::t_Atoms::const_iterator > t_it;
-          t_it i_first( Filter(sp), _structure.atoms.begin(), _structure.atoms.end() );
-          t_it i_end( Filter(sp), _structure.atoms.end(), _structure.atoms.end() );
-          atat::rMatrix3d inv( !_structure.cell );
-          for(; i_first != i_end; ++i_first )
-            file << Physics::Atomic::Z( i_first->type ) <<  " "
-                 << inv * i_first->pos << "\n";
+          atat::rMatrix3d const inv( !_structure.cell );
+          std::cout << "inv: " << inv << "\n";
+          t_Structure::t_Atoms::const_iterator i_first( _structure.atoms.begin() );
+          t_Structure::t_Atoms::const_iterator const i_end( _structure.atoms.end() );
+          for( size_t N(0); i_first != i_end; ++i_first )
+            if( i_first->type == sp )
+            {
+              file << Physics::Atomic::Z( i_first->type ) <<  " "
+                   << inv * i_first->pos << "\n";
+              std::cout << i_first->pos << "\n";
+            }
         }
         file.close();
       };
@@ -253,6 +249,12 @@ namespace LaDa
     void expose_read_structure()
     {
 
+      boost::python::def
+      (
+        "print_poscar", 
+        &details::print_poscar,
+        "Prints out a poscar to file." 
+      );
       boost::python::def
       (
         "read_poscar", 

@@ -173,6 +173,7 @@ namespace LaDa
         else if( _str ==  "As" ) return 33;
         else if( _str ==  "Se" ) return 34;
         else if( _str ==  "Br" ) return 35;
+        else if( _str ==  "Rb" ) return 37;
         else if( _str ==  "Cd" ) return 48;
         else if( _str ==  "In" ) return 49;
         else if( _str ==  "Sn" ) return 50;
@@ -205,6 +206,7 @@ namespace LaDa
         else if( _str ==  "As" ) return  74.92160;
         else if( _str ==  "Se" ) return  78.96;
         else if( _str ==  "Br" ) return  79.904;
+        else if( _str ==  "Rb" ) return  85.4678;
         else if( _str ==  "Cd" ) return 112.411;
         else if( _str ==  "In" ) return 114.818;
         else if( _str ==  "Sn" ) return 118.710;
@@ -239,6 +241,7 @@ namespace LaDa
           case  33: return "As"; __BREAK
           case  34: return "Se"; __BREAK
           case  35: return "Br"; __BREAK
+          case  37: return "Rb"; __BREAK
           case  48: return "Cd"; __BREAK
           case  49: return "In"; __BREAK
           case  50: return "Sn"; __BREAK

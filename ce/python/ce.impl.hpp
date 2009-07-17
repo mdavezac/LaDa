@@ -20,7 +20,7 @@ namespace LaDa
     namespace detailsCE
     {
       template< class T_HARMONIC >
-        class Functional : public CE::Builder<T_HARMONIC>, __MPICODE( public MPI_COMMDEC ) {};
+        class Functional : public CE::Builder<T_HARMONIC> __MPICODE( __COMMA__ public MPI_COMMDEC ) {};
         
       template<class T_HARMONIC>
         void load_builder( Functional<T_HARMONIC>& _functional, const std::string &_filename )
