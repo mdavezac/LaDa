@@ -20,6 +20,7 @@ namespace LaDa
                        const T_TABOOS& _taboos, T_POPULATION& _pop, 
                        size_t _popsize, size_t _maxiter )
         {
+          if( _pop.size() == _popsize ) return;
           typedef typename T_POPULATION :: value_type t_Individual;
           types::t_unsigned i = 0, j = 0;
           while ( _pop.size() < _popsize and i < _maxiter)
@@ -36,6 +37,7 @@ namespace LaDa
           __DOASSERT( j < _popsize,
                          "Created " << j << " individuals in " << i << " iterations.\n"
                       << "Are taboos/concentration constraints to restrictive?\n" )
+          Print::out << "Created " << j << " new individuals.\n";
           _pop.resize( _popsize );
         }
 
@@ -52,6 +54,7 @@ namespace LaDa
                                  const T_TABOOS& _taboos, T_POPULATION& _pop, 
                                  size_t _popsize, size_t _maxiter )
         {
+          if( _pop.size() == _popsize ) return;
           typedef typename T_POPULATION :: value_type t_Individual;
           size_t i = 0, popstart( _pop.size() );
           while ( _pop.size() < _popsize and i < _maxiter )

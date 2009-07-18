@@ -195,7 +195,7 @@ namespace LaDa
         std::cerr << doc.ErrorDesc() << std::endl; 
         return false;
       } 
-      TiXmlElement *parent = docHandle.FirstChild("Restart").Element();
+      TiXmlElement *parent = docHandle.FirstChild("Job").FirstChild("Restart").Element();
       if ( not parent ) return false;
  
       return Restart( *parent );
@@ -213,13 +213,16 @@ namespace LaDa
         parent = _node.FirstChildElement("Restart");
       if ( not parent ) return false;
      
+      if ( do_restart & SAVE_POPULATION ) islands.clear();
       const TiXmlElement *child = parent->FirstChildElement();
       for(; child; child = child->NextSiblingElement() )
       {
         std::string name = child->Value();
         if (     name.compare("Results") == 0
              and ( do_restart & SAVE_RESULTS ) )
+        {
           store->Restart(*child);
+        }
         else if (     name.compare("History") == 0
                   and ( do_restart & SAVE_HISTORY ) and history.is_on() )
         {
@@ -234,20 +237,20 @@ namespace LaDa
         else if (     name.compare("Population") == 0
                   and ( do_restart & SAVE_POPULATION ) )
         {
+          if( islands.size() > nb_islands ) continue;
           LoadObject<t_GATraits> loadop( evaluator, &t_Evaluator::Load, LOADSAVE_SHORT);
-          islands.clear();
-          const TiXmlElement *island_xml = child->FirstChildElement("Island");
-          for(; island_xml; island_xml = island_xml->NextSiblingElement("Island") )
-          {
-            if( islands.size() > nb_islands )
-              break;
-            t_Population pop;
-            LoadIndividuals( *island_xml, loadop, pop, pop_size);
-            islands.push_back( pop );
-            Print::xmg << Print::Xmg::comment << "Loaded " << pop.size() 
-                       << " individuals into island " << islands.size()
-                       << Print::endl;
-          }
+          t_Population pop;
+          LoadIndividuals( *child, loadop, pop, pop_size);
+          if( pop.size() == 0 ) continue;
+          islands.push_back( pop );
+          Print::xmg << Print::Xmg::comment << "Loaded " << pop.size() 
+                     << " individuals into island " << islands.size()
+                     << Print::endl;
+          Print::out << "Loaded " << pop.size() 
+                     << " individuals into island " << islands.size()
+                     << Print::endl;
+          
+          
         } // end of "Population" Restart
       }
       return true;
@@ -532,10 +535,11 @@ namespace LaDa
       make_breeder();
       replacement = make_replacement();
  
-      const TiXmlElement *restart_xml = node->FirstChildElement("Restart");
-      if ( restart_xml and restart_xml->Attribute("what") )
+      const TiXmlElement *restart_xml = opt::find_node( *node, "Filenames", "restart" );
+      if ( restart_xml )
       {
-        std::string str = restart_xml->Attribute("what");
+        std::string str = "all";
+        if ( restart_xml->Attribute("what") ) str = restart_xml->Attribute("what");
         if ( str.find("all") != std::string::npos )
           do_restart |= SAVE_POPULATION | SAVE_HISTORY | SAVE_RESULTS;
         else
@@ -550,7 +554,6 @@ namespace LaDa
       }
       if ( do_restart )
       {
-        opt::read_xmlfile( restart_filename, doc );
         if ( restart_filename != filename )
         { 
           if ( not Restart() )

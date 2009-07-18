@@ -26,7 +26,7 @@ subroutine iaga_set_mpi( in_comm_handle )
 
 end subroutine
 
-subroutine iaga_call_escan( in_nbstates )
+subroutine iaga_call_escan( in_nbstates, in_verbose )
   use escan_comp_api, only: escancomp
   use eigenenergy
   use mpigroup
@@ -34,6 +34,7 @@ subroutine iaga_call_escan( in_nbstates )
   include "mpif.h"
 
   integer, intent(in) :: in_nbstates
+  integer, intent(in) :: in_verbose
   type ( escancomp ) ecp
 
   if( allocated( zebn ) )  deallocate( zebn )
@@ -43,6 +44,7 @@ subroutine iaga_call_escan( in_nbstates )
   ecp%fileescaninput= trim("escan_input.")//arank(1:len_trim(arank))
   ecp%escanfileonly=.TRUE.
   ecp%escandefaultprint=.true.
+  if( in_verbose == 0 ) ecp%escandefaultprint=.false.
   ! The following do not need to be set for escanfileonly=.TRUE.
   ecp%filepot="pot.out"
   ecp%filewg_out = "wg.out"

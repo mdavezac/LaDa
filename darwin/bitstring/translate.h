@@ -11,6 +11,8 @@
 #include <string>
 #include <ostream>
 
+#include "print/manip.h"
+
 namespace LaDa
 {
   namespace GA
@@ -34,17 +36,15 @@ namespace LaDa
                                                t_Object& _object ) 
         {
           typedef typename t_Object :: t_Container :: iterator t_ivar;
-          std::istringstream sstr( _string );
-          t_ivar i_var = _object.Container().begin();
-          __DODEBUGCODE( t_ivar i_var_end = _object.Container().end(); )
+          std::istringstream sstr( Print::StripEdges(_string) );
+          _object.Container().clear();
           do
           {
-            __ASSERT( i_var == i_var_end, "Object smaller than string.\n" )
-            sstr >> *i_var;
-            ++i_var;
+            typename t_Object :: t_Container :: value_type type;
+            sstr >> type;
+            _object.Container().push_back(type);
           }
           while( not sstr.eof() );
-          __ASSERT( i_var != i_var_end, "String smaller than object.\n" )
         }
 
       template< class T_OBJECT >
@@ -56,7 +56,7 @@ namespace LaDa
           t_ivar i_var = _object.Container().begin();
           t_ivar i_var_end = _object.Container().end();
           for(; i_var != i_var_end; ++i_var ) sstr << (*i_var) << " ";
-          _string = sstr.str(); 
+          _string = Print::StripEdges(sstr.str()); 
         }
 
     } // namespace GroundStates.

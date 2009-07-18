@@ -18,7 +18,7 @@ if [[[ $(echo $CXX | $EGREP "mpi(cxx|c\+\+|CC)" - ) == $CXX ]]]; then
 fi
 
 if [[ -e ".env" ]]; then
-  . ".env"
+  . "./.env"
 else
   echo "Environment variables in file .env not found."
 fi
@@ -193,6 +193,7 @@ fi
 # ****** Checks compiler compliances
 # ************************************
 
+AC_PROG_F77
 AC_PROG_FC
 NREL_AC_PROG_FCPP
 AC_FC_LIBRARY_LDFLAGS

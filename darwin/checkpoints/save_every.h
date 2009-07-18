@@ -79,7 +79,7 @@ namespace LaDa
           __TRYBEGIN
             save_from_functor
             (
-              _node, "Population", 
+              _node, _childname,
               boost::bind
               ( 
                 &GA::SaveIndividuals< typename T_CONTAINER::const_iterator, T_FUNCTOR >,
@@ -109,10 +109,8 @@ namespace LaDa
                            const T_ISLANDS& _islands )
         {
           __TRYBEGIN
-            TiXmlElement *child = new TiXmlElement("Population");
             foreach( const typename T_ISLANDS :: value_type pop, _islands )
-              save_population( _node, "Island", _saveop, pop );
-            _node.LinkEndChild( child );
+              save_population( _node, "Population", _saveop, pop );
             Print::out << ("Saved Islands.\n");
           __TRYEND(, ("Could not save Islands.\n") )
         }

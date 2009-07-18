@@ -85,7 +85,8 @@ namespace LaDa
         if ( _type == GA::LOADSAVE_SHORT )
         {
           if( not _node.Attribute("string") ) return false;
-          translate( _node.Attribute("string"), object );
+          std::string const string = _node.Attribute("string");
+          translate( string, object );
         }
         else 
         {

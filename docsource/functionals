@@ -158,6 +158,9 @@
           - "1" or "folded" for an a folded spectrum computation
           - anything else for a full diagonalization
           .
+     \param verbose true, or t, or 1 for verbose escan output,
+                    false, or f, or 0 for no output. Case is ignored.
+                    When not present, output is verbose by default.
 
       
      \section TagMaskr \<Maskr\>

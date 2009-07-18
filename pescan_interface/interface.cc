@@ -14,6 +14,9 @@
 # include <boost/mpi/collectives.hpp>
 #endif
 
+#include <boost/xpressive/regex_primitives.hpp>
+#include <boost/xpressive/regex_algorithms.hpp>
+#include <boost/xpressive/regex_compiler.hpp>
 #include <boost/tuple/tuple_io.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
 #include <boost/lexical_cast.hpp>
@@ -38,7 +41,7 @@
   {
     void FC_FUNC_(getvlarg, GETVLARG)();
     void FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( MPI_Fint * );
-    void FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( int* );
+    void FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( int*, int* );
     void FC_FUNC_(iaga_get_eigenvalues, IAGA_GET_EIGENVALUES)( double*, int* );
   }
   //! \endcond
@@ -177,7 +180,8 @@ namespace LaDa
       chdir( ( opt::InitialPath::path() / dirname ).string().c_str() );
   #   ifndef _NOLAUNCH
         __IIAGA(  system( "./" + escan.launch.filename().string() ) );
-        __DIAGA( FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( &escan.nbstates ); )
+        int verb( verbose ? 1: 0);
+        __DIAGA( FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( &escan.nbstates, &verb ); )
   #   endif
       chdir( opt::InitialPath::path().string().c_str() );
       return 0.0;
@@ -231,6 +235,17 @@ namespace LaDa
         if(    method_string.find("folded") != std::string::npos
             or method_string.find("1") != std::string::npos )
           escan.method = FOLDED_SPECTRUM;
+      }
+      verbose = true;
+      if( _node.Attribute("verbose") )
+      {
+        namespace bx = boost::xpressive;
+        std::string const verb_string = _node.Attribute("verbose");
+        bx::sregex false_ = bx::icase( bx::as_xpr('f') >> !bx::as_xpr("alse") ) | '1' ;
+        bx::sregex true_ = bx::icase( bx::as_xpr('t') >> !bx::as_xpr("rue") ) | '0' ;
+        if( bx::regex_match( verb_string, false_ ) ) verbose = false;
+        else if( bx::regex_match( verb_string, true_ ) ) verbose = true;
+        else __THROW_ERROR( "Uknown argument to verbose in Pescan: " + verb_string + "\n" )
       }
 
       __DOASSERT( not genpot.Load( _node ), "Could not load genpot input.\n" );

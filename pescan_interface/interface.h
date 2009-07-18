@@ -96,6 +96,8 @@ namespace LaDa
         struct SpinOrbit;
         //! Parameters for nanopse's escan program.
         struct Escan;
+        //! Whether to use verbose escan output.
+        bool verbose;
  
         // Now includes declaration of Genpot, SpinOrbit, Escan classes.
 #       include "interface.localclasses.h"
@@ -116,13 +118,13 @@ namespace LaDa
         //! Constructor
         Interface()
           : atom_input("atom.config"), genpot(), escan(),
-            maskr("maskr"), dirname("ESCAN"), do_destroy_dir(true) {}
+            maskr("maskr"), dirname("ESCAN"), do_destroy_dir(true), verbose(true) {}
         //! Copy Constructor
         Interface   ( const Interface &_c )
                   : __DIAGA( MPI_COMMCOPY( _c ) __COMMA__ )
                     atom_input( _c.atom_input ), genpot( _c.genpot ),
                     escan( _c.escan ), maskr( _c.maskr ), eigenvalues( _c.eigenvalues ),
-                    dirname( _c.dirname ), do_destroy_dir( _c.do_destroy_dir ) {}
+                    dirname( _c.dirname ), do_destroy_dir( _c.do_destroy_dir ), verbose(false) {}
         //! Destructor
        ~Interface() {};
  

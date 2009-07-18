@@ -59,7 +59,7 @@ namespace LaDa
         __ENDGROUP__
         catch(...)
         {
-          std::cerr << "Error while trying to save GA state.\n";
+          std::cerr << "Error while trying to saved GA state.\n";
           Print::out << "Error while trying to save GA state.\n";
           return;
         }
