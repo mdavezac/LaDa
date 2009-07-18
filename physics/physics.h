@@ -164,6 +164,7 @@ namespace LaDa
         else if( _str ==  "P" ) return 15; 
         else if( _str ==  "S" ) return 16; 
         else if( _str ==  "Cl" ) return 17; 
+        else if( _str ==  "K" ) return 19; 
         else if( _str ==  "Sc" ) return 21; 
         else if( _str ==  "Ni" ) return 28;
         else if( _str ==  "Cu" ) return 29;
@@ -197,6 +198,7 @@ namespace LaDa
         else if( _str ==   "P" ) return  30.97376; 
         else if( _str ==   "S" ) return  32.066; 
         else if( _str ==  "Cl" ) return  35.453; 
+        else if( _str ==   "K" ) return  39.0983;
         else if( _str ==  "Sc" ) return  44.956;
         else if( _str ==  "Ni" ) return  58.6934;
         else if( _str ==  "Cu" ) return  63.546;
@@ -232,6 +234,7 @@ namespace LaDa
           case  15: return  "P"; __BREAK
           case  16: return  "S"; __BREAK
           case  17: return "Cl"; __BREAK
+          case  19: return  "K"; __BREAK
           case  21: return "Sc"; __BREAK
           case  28: return "Ni"; __BREAK
           case  29: return "Cu"; __BREAK

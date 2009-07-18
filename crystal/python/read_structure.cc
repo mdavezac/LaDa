@@ -44,7 +44,7 @@ namespace LaDa
         {
           for( size_t i(0); i < bp::len(_species); ++i )
           {
-            std::string const type = bp::extract<std::string>( _species[0] );
+            std::string const type = bp::extract<std::string>( _species[i] );
             species.push_back( type );
             if( Physics::Atomic::Z( type ) == 0 )
             {
@@ -130,7 +130,6 @@ namespace LaDa
         foreach( std::string const sp, species )
         {
           atat::rMatrix3d const inv( !_structure.cell );
-          std::cout << "inv: " << inv << "\n";
           t_Structure::t_Atoms::const_iterator i_first( _structure.atoms.begin() );
           t_Structure::t_Atoms::const_iterator const i_end( _structure.atoms.end() );
           for( size_t N(0); i_first != i_end; ++i_first )
@@ -138,7 +137,6 @@ namespace LaDa
             {
               file << Physics::Atomic::Z( i_first->type ) <<  " "
                    << inv * i_first->pos << "\n";
-              std::cout << i_first->pos << "\n";
             }
         }
         file.close();

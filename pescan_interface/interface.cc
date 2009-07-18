@@ -136,9 +136,7 @@ namespace LaDa
       chdir( ( opt::InitialPath::path() / dirname ).string().c_str() );
   #   ifndef _NOLAUNCH
         __IIAGA(  system( "./" + genpot.launch.filename().string() ) );
-        Print :: out << "launching genpot" << Print::endl;
         __DIAGA( FC_FUNC_(getvlarg, GETVLARG)(); )
-        Print :: out << "returned from genpot" << Print::endl;
   #   endif
       chdir( opt::InitialPath::path().string().c_str() );
     }
@@ -179,9 +177,7 @@ namespace LaDa
       chdir( ( opt::InitialPath::path() / dirname ).string().c_str() );
   #   ifndef _NOLAUNCH
         __IIAGA(  system( "./" + escan.launch.filename().string() ) );
-        Print :: out << "launching escan" << Print::endl;
         __DIAGA( FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( &escan.nbstates ); )
-        Print :: out << "returned from escan" << Print::endl;
   #   endif
       chdir( opt::InitialPath::path().string().c_str() );
       return 0.0;
