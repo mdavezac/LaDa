@@ -135,8 +135,7 @@ namespace LaDa
           for( size_t N(0); i_first != i_end; ++i_first )
             if( i_first->type == sp )
             {
-              file << Physics::Atomic::Z( i_first->type ) <<  " "
-                   << inv * i_first->pos << "\n";
+              file << inv * i_first->pos << "\n";
             }
         }
         file.close();

@@ -39,7 +39,7 @@ namespace LaDa
     //! Returns Rydberg energy in "Ev", "Ry", and "H"
     types::t_real Rydberg( const std::string &_str );
     //! Returns Planck's constant in "erg*s", "J*s", "eV*s", "Ry", and "H"
-    types::t_real planck( const std::string &_str );
+    types::t_real Planck( const std::string &_str );
     //! Returns \f$\hbar\f$ in "erg*s", "J*s", "eV*s", "Ry", and "H"
     types::t_real hbar( const std::string &_str );
     //! Returns electron volts in "eV", "erg", and "J"
@@ -111,7 +111,7 @@ namespace LaDa
       else throw std::runtime_error( "Unknown Unit for Rydberg constant" );
     }
 
-    inline types::t_real planck( const std::string &_str )
+    inline types::t_real Planck( const std::string &_str )
     {
       if( _str == "erg*s" ) return 6.626075510e-27;
       else if( _str == "J*s" ) return 6.626075510e-34;

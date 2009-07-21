@@ -38,6 +38,9 @@ namespace LaDa
           "Returns the Hartree energy in eV, Rydberg, or Hartree" );
       def("Rydberg", Physics::Rydberg,
           "Returns the Rydberg energy in eV, Rydberg, or Hartree" );
+      def("emass", Physics::emass, "Returns the mass of the electron in eV, amu, kg, g, MeV." );
+      def("hbar", Physics::hbar, "Returns hbar in  eV, erg, J." );
+      def("planck", Physics::Planck, "Returns the Planck constant in  eV*s, erg*s, J*s, Ry, H." );
     }
 
   }
