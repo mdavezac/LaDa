@@ -25,7 +25,7 @@ namespace LaDa
       _pis.resize( _clusters.size() );
       std::fill( _pis.begin(), _pis.end(), 0 );
 
-      atat::rMatrix3d inv_cell = !(~_str.cell);
+      atat::rMatrix3d inv_cell = !(_str.cell);
       Crystal :: Structure :: t_Atoms :: const_iterator i_atom = _str.atoms.begin();
       Crystal :: Structure :: t_Atoms :: const_iterator i_atom_end = _str.atoms.end();
       for(; i_atom != i_atom_end; ++i_atom) // loop over atoms

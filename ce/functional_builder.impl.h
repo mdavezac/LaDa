@@ -18,8 +18,8 @@ namespace LaDa
   {
      template< class T_HARMONIC > Crystal::Lattice*
        Builder<T_HARMONIC>::lattice     = NULL;
-     template< class T_HARMONIC > typename Builder<T_HARMONIC> :: t_Clusters*
-       Builder<T_HARMONIC>::clusters    = NULL;
+//    template< class T_HARMONIC > typename Builder<T_HARMONIC> :: t_Clusters*
+//      Builder<T_HARMONIC>::clusters    = NULL;
      template< class T_HARMONIC > typename Builder<T_HARMONIC> :: t_CS*
        Builder<T_HARMONIC>::harmonics   = NULL;
 

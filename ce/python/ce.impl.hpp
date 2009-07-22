@@ -20,7 +20,29 @@ namespace LaDa
     namespace detailsCE
     {
       template< class T_HARMONIC >
-        class Functional : public CE::Builder<T_HARMONIC> __MPICODE( __COMMA__ public MPI_COMMDEC ) {};
+        class Functional : public CE::Builder<T_HARMONIC> __MPICODE( __COMMA__ public MPI_COMMDEC ) 
+        {
+          public:
+            using CE::Builder<T_HARMONIC>::add_equivalent_clusters;
+            using CE::Builder<T_HARMONIC>::clusters;
+            using CE::Builder<T_HARMONIC>::lattice;
+            void read_clusters( std::string const& _path );
+            void clear_clusters() { clusters->clear(); }
+        };
+      
+      template< class T_HARMONIC >
+        void Functional<T_HARMONIC> :: read_clusters( std::string const& _path )
+        {
+          namespace fs = boost::filesystem;  
+
+          std::ifstream file( _path.c_str(), std::ifstream::in );
+          std::string line;
+        
+          CE::Cluster cluster;
+          while( CE::read_cluster( *lattice, file, cluster ) )
+            { clusters->push_back( cluster ); }
+          add_equivalent_clusters();
+        }
         
       template<class T_HARMONIC>
         void load_builder( Functional<T_HARMONIC>& _functional, const std::string &_filename )
@@ -85,6 +107,7 @@ namespace LaDa
             bp::throw_error_already_set();
           }
         }
+
      
       template< class T_HARMONIC >
         std::pair
@@ -224,7 +247,9 @@ namespace LaDa
             .def( "__call__", &call_str<T_HARMONIC, 3>, "Computes CE + CS." )
             .def( "cs", &call_str<T_HARMONIC, 2>, "Computes  CS.")
             .def( "chemical", &call_str<T_HARMONIC, 1>, "Computes CE." )
-            .def( "load", &load_builder<T_HARMONIC>, "Loads functional from XML.");
+            .def( "load", &load_builder<T_HARMONIC>, "Loads functional from XML.")
+            .def( "read_clusters", &Functional<T_HARMONIC>::read_clusters )
+            .def( "clear_clusters", &Functional<T_HARMONIC>::read_clusters );
         }
     } // namespace detailsCE
   } // namespace Python

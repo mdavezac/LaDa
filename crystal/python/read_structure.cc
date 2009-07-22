@@ -158,6 +158,13 @@ namespace LaDa
               species.push_back( type );
             }
             Crystal::read_poscar( *result, _path, species ); 
+            if( result->atoms.size() == 0 )
+            {
+              delete result;
+              LADA_PYTHON_ERROR( PyExc_RuntimeError, "Could not read file " + _path + ".\n" );
+              boost::python::throw_error_already_set();
+              return NULL;
+            }
             return result;
           }
           catch( std::exception &_e )
@@ -208,22 +215,16 @@ namespace LaDa
         }
       }
 
-      void read_pifile_structure( boost::python::str& _str, Crystal::Structure &_structure )
+      Crystal::Structure* read_pifile_structure( std::string const& _str )
       {
         try
         {
-          const std::string string = boost::python::extract<std::string>( _str );
-          if( string.empty() )
-          {
-            LADA_PYTHON_ERROR
-            ( 
-              PyExc_RuntimeError,
-              ( "Could not read string.\n" )
-            );
-            boost::python::throw_error_already_set();
-          }
-          std::istringstream sstring( string );
-          Crystal::read_pifile_structure( sstring, _structure );
+          std::istringstream sstring( _str );
+          Crystal::Structure* structure = new Crystal::Structure;
+          Crystal::read_pifile_structure( sstring, *structure );
+          std::cout << _str << "\n";
+          std::cout << *structure << "\n\n";
+          return structure;
         }
         catch( std::exception &_e )
         {
@@ -239,7 +240,7 @@ namespace LaDa
           );
           boost::python::throw_error_already_set();
         }
-        return;
+        return NULL;
       }
     }
 
@@ -271,7 +272,7 @@ namespace LaDa
       ( 
         "read_pifile_structure",
         &details::read_pifile_structure,
-        ( boost::python::arg("input"), boost::python::arg("structure") ),
+        boost::python::return_value_policy< boost::python::manage_new_object >(),
         "Reads a structure from pi-file type input.\n" 
       );
 

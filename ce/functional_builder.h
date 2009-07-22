@@ -62,7 +62,7 @@ namespace LaDa
         //! Pointer to the lattice 
         static Crystal::Lattice* lattice;
         //! Pointer to the set of clusters
-        static t_Clusters*        clusters;
+        t_Clusters*        clusters;
         //! Pointer to the harmonics
         static t_CS*              harmonics;
         
