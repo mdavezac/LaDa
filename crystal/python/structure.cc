@@ -29,7 +29,6 @@
 
 #include "../structure.h"
 #include "../fill_structure.h"
-#include "../read_poscar.h"
 #include "../lattice.h"
 #include "../fractional_cartesian.h"
 
@@ -54,22 +53,6 @@ namespace LaDa
                   "Lattice pointer has not been set.\n" )
       return *Crystal::Structure::lattice; 
     }
-
-    template<class T_TYPE> 
-      void read_poscar( Crystal::TStructure<T_TYPE> &_struct, 
-                        const boost::python::str& _path,
-                        const boost::python::list& _types )
-      {
-        const std::string str = boost::python::extract<std::string>( _path );
-        const boost::filesystem::path path( str );
-        namespace bp = boost::python;
-        const size_t nb( bp::len( _types ) );
-        __DOASSERT( nb == 0, "No types given on input to read_poscar.\n" )
-        std::vector< T_TYPE > types(nb);
-        for( size_t i(0); i < nb; ++i )
-          types[i] = bp::extract<T_TYPE>( _types[i] );
-        Crystal :: read_poscar< T_TYPE >( _struct, path, types ); 
-      }
 
     template< class T_STRUCTURE >
       struct pickle_structure : boost::python::pickle_suite
@@ -231,14 +214,6 @@ namespace LaDa
               "Read, but do not write to this object." )
         .def( "xcrysden", &xcrysden_str, "Outputs in XCrysden format." )
         .def_pickle( pickle_structure< Crystal::TStructure<std::string> >() );
-      bp::def("read_poscar", &read_poscar<std::string>,
-              (
-                bp::arg("structure"),
-                bp::arg("filename"),
-                bp::arg("species")
-              ),
-              "Reads a vasp POSCAR and fills in structure object.\n"
-              "Third argument is a list of types, since types are implicit in POSCAR files." );
       bp::def("to_cartesian", &Crystal::to_cartesian<std::string>,
               "Transforms a structure from cartesian to fractional coordinates.\n" );
       bp::def("to_fractional", &Crystal::to_fractional<std::string>,

@@ -83,9 +83,9 @@ namespace LaDa
             not bsc::parse
             (
               line.c_str(),
-                  bsc::real_p[ bsc::assign_a( _structure.cell(0, i) ) ] 
-               >> bsc::real_p[ bsc::assign_a( _structure.cell(1, i) ) ] 
-               >> bsc::real_p[ bsc::assign_a( _structure.cell(2, i) ) ],
+                  bsc::real_p[ bsc::assign_a( _structure.cell(i, 0) ) ] 
+               >> bsc::real_p[ bsc::assign_a( _structure.cell(i, 1) ) ] 
+               >> bsc::real_p[ bsc::assign_a( _structure.cell(i, 2) ) ],
                bsc::space_p
             ).hit,
             "Could not parse cell.\n" 

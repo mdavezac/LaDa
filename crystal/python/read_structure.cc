@@ -154,7 +154,7 @@ namespace LaDa
             std::vector<T_TYPE> species;
             for( size_t i(0); i < bp::len(_species); ++i )
             {
-              T_TYPE const type = bp::extract<T_TYPE>( _species[0] );
+              T_TYPE const type = bp::extract<T_TYPE>( _species[i] );
               species.push_back( type );
             }
             Crystal::read_poscar( *result, _path, species ); 
