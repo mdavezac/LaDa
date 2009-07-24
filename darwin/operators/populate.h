@@ -15,31 +15,48 @@ namespace LaDa
     {
       //! \brief Grows a population to a set size \a _popsize using operator \a
       //!        _operator to create individuals.
-      template< class T_OPERATOR, class T_TABOOS, class T_POPULATION >
-        void populate( const T_OPERATOR& _operator,
-                       const T_TABOOS& _taboos, T_POPULATION& _pop, 
-                       size_t _popsize, size_t _maxiter )
+
+      template< class T_OPERATOR, class T_TABOOS >
+        struct Populate
         {
-          if( _pop.size() == _popsize ) return;
-          typedef typename T_POPULATION :: value_type t_Individual;
-          types::t_unsigned i = 0, j = 0;
-          while ( _pop.size() < _popsize and i < _maxiter)
-          {
-            t_Individual indiv;
-            _operator( indiv );
-            if ( not _taboos( indiv ) )
+          typedef void result_type;
+          T_OPERATOR const& operator_;
+          T_TABOOS const& taboos_;
+          Populate   ( T_OPERATOR const& _op, T_TABOOS const &_tab )
+                   : operator_(_op), taboos_(_tab) {}
+          Populate   ( Populate const& _c )
+                   : operator_(_c.operator_), taboos_(_c.taboos_) {}
+                  
+
+          template< class T_POPULATION >
+            result_type operator()( T_POPULATION& _pop,  size_t _popsize )
             {
-              _pop.push_back(indiv);
-                ++j;
+              if( _pop.size() == _popsize ) return;
+              typedef typename T_POPULATION :: value_type t_Individual;
+              types::t_unsigned i = 0, j = 0;
+              types::t_unsigned _maxiter = 50 * _popsize;
+              while ( _pop.size() < _popsize and i < _maxiter)
+              {
+                t_Individual indiv;
+                operator_( indiv );
+                if ( not taboos_( indiv ) )
+                {
+                  _pop.push_back(indiv);
+                    ++j;
+                }
+                ++i;
+              } // while ( i_pop->size() < target )
+              __DOASSERT( j < _popsize,
+                             "Created " << j << " individuals in " << i << " iterations.\n"
+                          << "Are taboos/concentration constraints to restrictive?\n" )
+              Print::out << "Created " << j << " new individuals.\n";
+              _pop.resize( _popsize );
             }
-            ++i;
-          } // while ( i_pop->size() < target )
-          __DOASSERT( j < _popsize,
-                         "Created " << j << " individuals in " << i << " iterations.\n"
-                      << "Are taboos/concentration constraints to restrictive?\n" )
-          Print::out << "Created " << j << " new individuals.\n";
-          _pop.resize( _popsize );
-        }
+        };
+
+      template< class T_OPERATOR, class T_TABOOS >
+        Populate<T_OPERATOR, T_TABOOS> populator( T_OPERATOR const& _op, T_TABOOS &_tab )
+          { return Populate<T_OPERATOR, T_TABOOS>( _op, _tab); }
 
       //! Could use a lambda... but can't get it right...
       template< class T_INDIVIDUAL >

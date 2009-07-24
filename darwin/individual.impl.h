@@ -92,7 +92,9 @@ namespace LaDa
 
       delete xmlindiv;
       __THROW_ERROR( "Errow while save individual\n" <<  *this << "\n" )
-      return false;
+#     ifndef __PGI
+        return false;
+#     endif
     }
 
     template<class T_INDIVTRAITS>  template<class LoadOp>

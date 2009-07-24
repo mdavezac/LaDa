@@ -51,11 +51,10 @@
               LaDa :: GA :: AssignSignal
             > t_Evaluator;
 
-   template< class T_TYPE > T_TYPE call_lexcast( const std::string& _str )
-    { return boost::lexical_cast<T_TYPE>( _str ); }
 
-   inline void reference_updater( bool, LaDa::BandGap::Darwin<LaDa::Vff::Layered> & _bg )
-     { _bg.Continue(); }
+   inline void 
+     reference_updater( bool, LaDa::BandGap::Darwin<LaDa::Vff::Layered> & _bg )
+       { _bg.Continue(); }
 
 # elif _MAIN_ALLOY_LAYERS_EXTRAS_ == 0
     // defines program options.

@@ -48,7 +48,13 @@ namespace LaDa
         template< class T_CHECKPOINT, class T_POPULATION >
           void print_averagefitness( T_CHECKPOINT& _checkpoint )
           {
-            _checkpoint.connect_statistic( &GA::CheckPoint::print_averagefitness<T_POPULATION> ); 
+#           ifdef __PGI 
+              void (*func)(bool, T_POPULATION const& )
+                 = &GA::CheckPoint::print_averagefitness<T_POPULATION>;
+              _checkpoint.connect_statistic( func ); 
+#           else
+              _checkpoint.connect_statistic( &GA::CheckPoint::print_averagefitness<T_POPULATION> ); 
+#           endif
             Print::out << "Will print average scalar fitness at each generation.\n";
             Print::xmg << Print::Xmg::comment << "Will print average scalar fitness at each generation." 
                        << Print::endl;

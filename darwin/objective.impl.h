@@ -533,7 +533,9 @@ namespace LaDa
               return linear;
             }
 
-            return NULL;
+#           ifndef __PGI
+              return NULL;
+#           endif
           }
 
   } // namespace Objective

@@ -140,7 +140,7 @@ namespace LaDa
           bool Load( t_Individual &_indiv, const TiXmlElement &_node, bool _type );
           //! Saves an individual to XML.
           bool Save( const t_Individual &_indiv, 
-                     TiXmlElement &_node, bool _type ) const;;
+                     TiXmlElement &_node, bool _type ) const;
 
           //! Sets the current_individual pointer.
           void init( t_Individual &_indiv );

@@ -32,7 +32,8 @@ vff_LDADD = libvff.la \
 	    ../minimizer/libminimizer.la \
 	    $(fortranLDADD) \
 	    @MPI_ADDLIB@ \
-            $(fortranLDFLAGS)
+            $(fortranLDFLAGS) \
+            @BOOST_MPI@ @BOOST_SERIALIZATION@
 layered_vff_SOURCES = $(vff_SOURCES)
 layered_vff_CPPFLAGS =  $(vff_CPPFLAGS) -D _LAYERED
 layered_vff_LDFLAGS =  $(vff_LDFLAGS)

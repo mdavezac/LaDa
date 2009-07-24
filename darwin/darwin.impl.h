@@ -310,7 +310,6 @@ namespace LaDa
       islands.resize( nb_islands );
       typename t_Islands :: iterator i_pop = islands.begin();
       typename t_Islands :: iterator i_end = islands.end();
-      t_Object&(t_Individual::*ptr_func)( void ) = &t_Individual::Object;
       for(; i_pop != i_end; ++i_pop)
         population_creator( *i_pop, pop_size );
     }

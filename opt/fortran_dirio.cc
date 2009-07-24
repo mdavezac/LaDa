@@ -6,6 +6,7 @@
 #endif
 
 
+#include <unistd.h>
 #include<boost/filesystem/path.hpp>
 #include<boost/filesystem/operations.hpp>
 

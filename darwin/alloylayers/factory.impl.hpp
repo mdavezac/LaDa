@@ -66,21 +66,39 @@ namespace LaDa
           t_Object :: connect_print( bl::bind( &details::printg, bl::_1, bl::_2 ) ); 
         }
 
+#       ifdef __PGI
+          namespace details
+          {
+            template<class T_EVALUATOR>
+              struct strain_energy
+              {
+                typedef typename T_EVALUATOR :: t_Individual :: t_IndivTraits t_IndivTraits;
+                typedef typename t_IndivTraits :: t_Object t_Object;
+                typedef typename t_IndivTraits :: t_QuantityTraits :: t_Quantity t_Quantity;
+                void operator()( t_Object const& _ob, t_Quantity &_quant ) const
+                  { _quant.push_back( _ob.energy / 16.0217733 ); }
+              };
+          }
+#       endif
         template< class T_EVALUATOR > void strain_energy( T_EVALUATOR & _evaluator )
         {
           namespace bl = boost::lambda;
           typedef typename T_EVALUATOR :: t_Individual :: t_IndivTraits t_IndivTraits;
           typedef typename t_IndivTraits :: t_Object t_Object;
           typedef typename t_IndivTraits :: t_QuantityTraits :: t_Quantity t_Quantity;
-          _evaluator.connect
-          (
-            bl::bind
-            ( 
-              &t_Quantity::push_back,
-              bl::_2,
-              bl::bind( &t_Object::energy, bl::_1 ) / bl::constant(16.0217733) 
-            )
-          );
+#         ifdef __PGI
+            _evaluator.connect( details::strain_energy<T_EVALUATOR>() );
+#         else
+            _evaluator.connect
+            (
+              bl::bind
+              ( 
+                &t_Quantity::push_back,
+                bl::_2,
+                bl::bind( &t_Object::energy, bl::_1 ) / bl::constant(16.0217733) 
+              )
+            );
+#         endif
           t_Object :: connect_print
           (
             bl::_1 << bl::constant(" Strain Energy: ")
@@ -90,27 +108,56 @@ namespace LaDa
           declare( "Strain energy(VFF)" );
         }
 
+#       ifdef __PGI
+          namespace details
+          {
+            template<class T_EVALUATOR>
+              struct epi
+              {
+                typedef typename T_EVALUATOR :: t_Individual :: t_IndivTraits t_IndivTraits;
+                typedef typename t_IndivTraits :: t_Object t_Object;
+                typedef typename t_IndivTraits :: t_QuantityTraits :: t_Quantity t_Quantity;
+                epi( T_EVALUATOR& _eval ) : eval_(_eval) {}
+                epi( epi const& _c ) : eval_(_c.eval_) {}
+                T_EVALUATOR & eval_;
+                void operator()( t_Object const& _ob, t_Quantity &_quant ) const
+                {
+                  _quant.push_back
+                  ( 
+                       Vff::inplane_stress( _ob.stress, eval_.get_direction() )
+                    /  16.0217733
+                  );
+                }
+              };
+  
+          }
+#       endif
+
         template< class T_EVALUATOR > void epitaxial_strain( T_EVALUATOR &_evaluator )
         {
           namespace bl = boost::lambda;
           typedef typename T_EVALUATOR :: t_Individual :: t_IndivTraits t_IndivTraits;
           typedef typename t_IndivTraits :: t_Object t_Object;
           typedef typename t_IndivTraits :: t_QuantityTraits :: t_Quantity t_Quantity;
-          _evaluator.connect
-          (
-            bl::bind
+#         ifdef __PGI
+            _evaluator.connect( details::epi<T_EVALUATOR>(_evaluator) );
+#         else
+            _evaluator.connect
             (
-              &t_Quantity::push_back,
-              bl::_2,
               bl::bind
-              ( 
-                &Vff::inplane_stress,
-                bl::bind<atat::rMatrix3d>( &t_Object :: stress, bl::_1 ),
-                bl::bind<atat::rVector3d>( &T_EVALUATOR :: get_direction,
-                                           bl::constant( boost::cref( _evaluator ) ) )
-              ) / bl::constant( 16.0217733 )
-            )
-          );
+              (
+                &t_Quantity::push_back,
+                bl::_2,
+                bl::bind
+                ( 
+                  &Vff::inplane_stress,
+                  bl::bind<atat::rMatrix3d>( &t_Object :: stress, bl::_1 ),
+                  bl::bind<atat::rVector3d>( &T_EVALUATOR :: get_direction,
+                                             bl::constant( boost::cref( _evaluator ) ) )
+                ) / bl::constant( 16.0217733 )
+              )
+            );
+#         endif
           t_Object :: connect_print
           (
             bl::_1 << bl::constant(" Epi Strain: ")
@@ -127,21 +174,39 @@ namespace LaDa
           declare( "Epitaxial strain (VFF)" );
         }
 
+#       ifdef __PGI
+          namespace details
+          {
+            template<class T_EVALUATOR>
+              struct bandgap
+              {
+                typedef typename T_EVALUATOR :: t_Individual :: t_IndivTraits t_IndivTraits;
+                typedef typename t_IndivTraits :: t_Object t_Object;
+                typedef typename t_IndivTraits :: t_QuantityTraits :: t_Quantity t_Quantity;
+                void operator()( t_Object const& _ob, t_Quantity &_quant ) const
+                  { _quant.push_back( _ob.vbm - _ob.cbm ); }
+              };
+          }
+#       endif
         template< class T_EVALUATOR > void bandgap( T_EVALUATOR &_evaluator )
         {
           namespace bl = boost::lambda;
           typedef typename T_EVALUATOR :: t_Individual :: t_IndivTraits t_IndivTraits;
           typedef typename t_IndivTraits :: t_Object t_Object;
           typedef typename t_IndivTraits :: t_QuantityTraits :: t_Quantity t_Quantity;
-          _evaluator.connect
-          (
-            bl::bind
+#         ifdef __PGI
+            _evaluator.connect( details::bandgap<T_EVALUATOR>() );
+#         else
+            _evaluator.connect
             (
-              &t_Quantity::push_back,
-             bl::_2,
-              bl::bind( &t_Object::vbm, bl::_1 ) - bl::bind( &t_Object::cbm, bl::_1 )
-            )
-          );
+              bl::bind
+              (
+                &t_Quantity::push_back,
+               bl::_2,
+                bl::bind( &t_Object::vbm, bl::_1 ) - bl::bind( &t_Object::cbm, bl::_1 )
+              )
+            );
+#         endif
           t_Object :: connect_print
           ( 
             bl::_1 << bl::constant( "Bandgap: ") 
@@ -223,6 +288,20 @@ namespace LaDa
 
         namespace details
         {
+#         ifdef __PGI
+            template<class T_EVALUATOR, class T_PROPERTY>
+              struct connector
+              {
+                typedef typename T_EVALUATOR :: t_Individual :: t_IndivTraits t_IndivTraits;
+                typedef typename t_IndivTraits :: t_Object t_Object;
+                typedef typename t_IndivTraits :: t_QuantityTraits :: t_Quantity t_Quantity;
+                T_PROPERTY property_;
+                connector( T_PROPERTY _pop ): property_(_pop) {}
+                connector( connector const &_c ): property_(_c.property_) {}
+                void operator()( t_Object const& _ob, t_Quantity &_quant ) const
+                  { _quant.push_back( _ob.*property_ ); }
+              };
+#         endif
           template< class T_EVALUATOR, class T_PROPERTY >
             void ConnectProperty<T_EVALUATOR, T_PROPERTY > :: operator()()
             {
@@ -230,15 +309,19 @@ namespace LaDa
               typedef typename T_EVALUATOR :: t_Individual :: t_IndivTraits t_IndivTraits;
               typedef typename t_IndivTraits :: t_Object t_Object;
               typedef typename t_IndivTraits :: t_QuantityTraits :: t_Quantity t_Quantity;
-              evaluator_.connect
-              (
-                bl::bind
+#             ifdef __PGI
+                evaluator_.connect( details::connector<T_EVALUATOR, T_PROPERTY>(property_) );
+#             else
+                evaluator_.connect
                 (
-                  &t_Quantity::push_back,
-                  bl::_2,
-                  bl::bind( property_, bl::_1 )
-                )
-              );
+                  bl::bind
+                  (
+                    &t_Quantity::push_back,
+                    bl::_2,
+                    bl::bind( property_, bl::_1 )
+                  )
+                );
+#             endif
               t_Object :: connect_print
               ( 
                 bl::_1 << bl::constant(name_) << bl::bind( property_, bl::_2 )

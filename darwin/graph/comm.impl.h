@@ -2,6 +2,15 @@
 //  Version: $Id$
 //
 
+#ifdef LADA_BREAK
+# error LADA_BREAK already defined
+#endif
+#ifdef __PGI
+# define LADA_BREAK 
+#else
+# define LADA_BREAK break
+#endif
+
 namespace LaDa
 {
 
@@ -104,7 +113,7 @@ namespace LaDa
                 case t_Requests::STORE: derived->onStore( *i_comp + 1 ); break;
                 case t_Requests::UNDEFINED:
                   __THROW_ERROR( "This request should not have been sent.\n" ) 
-                  break;
+                  LADA_BREAK;
               }
             }
             __TRYEND(, "Encountered error while testing bulls.\n" )
@@ -283,7 +292,7 @@ namespace LaDa
                 case t_Commands :: GRADIENT: _this->onGradient(); break; 
                 case t_Commands :: ONE_GRADIENT:
                   _this->onOneGradient(); break;
-                case t_Commands :: DONE: return t_Commands :: DONE; break;
+                case t_Commands :: DONE: return t_Commands :: DONE; LADA_BREAK;
               }
               return t_Commands :: CONTINUE;
             }
@@ -339,4 +348,6 @@ namespace LaDa
     } // namespace mpi
   } // namespace GA
 } // namespace LaDa
+
+#undef LADA_BREAK
 

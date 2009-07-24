@@ -144,8 +144,6 @@ namespace LaDa
 
     INDARWIN( void ) :: write_references()
     {
-      types :: t_real a, b;
-
       __MPICODE
       ( 
         boost::mpi::communicator world;

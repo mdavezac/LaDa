@@ -48,7 +48,12 @@ namespace LaDa
         template< class T_CHECKPOINT, class T_POPULATION >
           void print_truecensus( T_CHECKPOINT& _checkpoint )
           {
-            _checkpoint.connect_statistic( &GA::CheckPoint::print_truecensus<T_POPULATION> ); 
+#           ifdef __PGI
+              void (*func)(bool, T_POPULATION const&) = &GA::CheckPoint::print_truecensus<T_POPULATION>;
+              _checkpoint.connect_statistic( func ); 
+#           else
+              _checkpoint.connect_statistic( &GA::CheckPoint::print_truecensus<T_POPULATION> ); 
+#           endif
             Print::out << "Will print census at each generation.\n";
             Print::xmg << Print::Xmg::comment << "Will print census at each generation." 
                        << Print::endl;

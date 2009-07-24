@@ -5,7 +5,13 @@
 
 #if ! defined( _LADA_GA_MAIN_EXTRAS_H_ )
 #  define _LADA_GA_MAIN_EXTRAS_H_ 0
-#endif
+#  include<boost/lexical_cast.hpp> 
+   template< class T_TYPE > T_TYPE call_lexcast( const std::string& _str )
+    { return boost::lexical_cast<T_TYPE>( _str ); }
+    inline LaDa::types::t_unsigned call_lexcast_unsigned( const std::string &_str )
+      { return boost::lexical_cast<LaDa::types::t_unsigned>( _str ); }
+    inline LaDa::types::t_real call_lexcast_real( const std::string &_str )
+      { return boost::lexical_cast<LaDa::types::t_real>( _str ); }
 
 #if _LADA_GA_MAIN_EXTRAS_H_ == 0 || _LADA_GA_MAIN_EXTRAS_H_ == 1
     // Creates factories.
@@ -67,29 +73,25 @@
     ga.replacement_rate = 0.5;
     ga.pop_size = 1;
     ga.max_generations = 0;
-    ga.population_creator =
-      bl::bind
-      (
-        &LaDa::GA::Operators::populate< boost::function<bool(t_Individual&)>, 
-                                        LaDa::GA::Taboo::Container<t_Individual>,
-                                        t_Population >,
+    ga.population_creator = LaDa::GA::Operators::populator( 
         bl::protect( bl::bind( &t_Evaluator::initialize, bl::var(ga.evaluator), bl::_1 ) ),
-        bl::var(ga.taboos), bl::_1, bl::_2, 50 * bl::_2
-      );
+        ga.taboos );
     ga.att_factory.connect
       (
         "tournament", "size of the deterministic tournaments"
         " for each parent selection. Default = 2.",
-        bl::var(ga.tournament_size) = bl::bind( &call_lexcast<LaDa::types::t_unsigned>, bl::_1 )
+        bl::var(ga.tournament_size)
+           = bl::bind<LaDa::types::t_unsigned> 
+                     ( &call_lexcast_unsigned, bl::_1 )
       )
       (
         "rate", "replacement rate (eg offspring creation rate)."
         " Default = 0.5.",
-        bl::var(ga.replacement_rate) = bl::bind( &call_lexcast<LaDa::types::t_real>, bl::_1 ) 
+        bl::var(ga.replacement_rate) = bl::bind<LaDa::types::t_real>( &call_lexcast_real, bl::_1 ) 
       )
       (
         "popsize", "population size. Default = 1.",
-        bl::var(ga.pop_size) = bl::bind( &call_lexcast<LaDa::types::t_unsigned>, bl::_1 ) 
+        bl::var(ga.pop_size) = bl::bind( &call_lexcast_unsigned, bl::_1 ) 
       )
       (
         "maxgen", "Max number of generations before quitting."
@@ -100,7 +102,7 @@
             LaDa::GA::CheckPoint::AddressOf::maxgenerations( ga.checkpoints ),
             bl::var(ga.checkpoints), bl::_1, bl::constant(ga.counter) 
           ),
-          bl::var(ga.max_generations) = bl::bind( &call_lexcast<LaDa::types::t_unsigned>, bl::_1 )
+          bl::var(ga.max_generations) = bl::bind( &call_lexcast_unsigned, bl::_1 )
         ) 
       )
       (
@@ -114,7 +116,7 @@
       )
       (
         "islands", "Number of independent islands. Default = 1.",
-        bl::var(ga.nb_islands) = bl::bind( &call_lexcast<LaDa::types::t_unsigned>, bl::_1 ) 
+        bl::var(ga.nb_islands) = bl::bind( &call_lexcast_unsigned, bl::_1 ) 
       )
       (
         "starting_population_only", "Quits after evaluating starting population."

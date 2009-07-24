@@ -109,3 +109,5 @@ libdarwin_la_LIBADD = libdarwinoperator.la libdarwingraph.la libdarwinckp.la
 	cd ../opt; $(MAKE) libopt.la
 ../minimizer/libminimizer.la:
 	cd ../minimizer; $(MAKE) libminimizer.la
+../vff/libvff.la:
+	cd ../vff; $(MAKE) libvff.la

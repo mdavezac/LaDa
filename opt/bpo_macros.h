@@ -37,7 +37,7 @@
   po::variables_map vm; \
   po::store(po::command_line_parser(argc, argv). \
             options(allnhidden).positional(p).run(), vm); \
-  po::notify(vm); \
+  po::notify(vm); 
 
 # define __BPO_PROGNAME__ \
   __ROOTCODE\

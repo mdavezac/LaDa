@@ -19,6 +19,13 @@
 
 #include "../bitstring/translate.h"
 
+#ifdef __PGI
+namespace std
+{
+  void swap( _Bit_reference _a, _Bit_reference _b )
+    { _Bit_reference c(_a); _a = _b; _b = c; }
+}
+#endif
 
 namespace LaDa
 {

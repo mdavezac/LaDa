@@ -27,7 +27,8 @@ alloylayers_LDADD = libcrystal.la \
 		    ../atat/libatat.la \
 		    ../opt/libopt.la \
                     ../mpi/libmpiobject.la \
-		    ../print/libprint.la
+		    ../print/libprint.la \
+                    @BOOST_MPI@ @BOOST_SERIALIZATION@ @BOOST_REGEX@
 # endif
 
 ../opt/libopt.la:

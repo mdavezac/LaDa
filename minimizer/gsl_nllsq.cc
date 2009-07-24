@@ -5,6 +5,7 @@
 # include <config.h>
 #endif
 
+#include <boost/lexical_cast.hpp>
 #include "gsl_nllsq.h"
 #include "gsl.h"
 
@@ -30,10 +31,9 @@ namespace LaDa
       }
       if( parent->Attribute( "tolerance" ) )
         parent->Attribute( "tolerance", &tolerance );
-      types::t_int d( itermax );
+      itermax = 40;
       if( parent->Attribute( "itermax" ) )
-        parent->Attribute( "itermax", &d );
-      itermax = std::abs( d );
+        itermax = boost::lexical_cast<types::t_unsigned>( parent->Attribute("itermax") ); 
       return true;
     }
 

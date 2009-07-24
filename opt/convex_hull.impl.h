@@ -146,12 +146,21 @@ namespace LaDa
           t_Vertex vertex(*child, _op);
           sortcopy.push_back( vertex );
         }
+#       ifdef LADA_BREAK 
+#         error LADA_BREAK already defined
+#       endif
+#       ifdef __PGI
+#         define LADA_BREAK 
+#       else
+#         define LADA_BREAK break
+#       endif
         switch ( sortcopy.size() )
         {
-          case 0: return false; break;
-          case 1: vertices.push_back( sortcopy.back() ); return true; break;
+          case 0: return false; LADA_BREAK;
+          case 1: vertices.push_back( sortcopy.back() ); return true; LADA_BREAK;
           default: break;        
         }
+#       undef LADA_BREAK
 
         std::sort( sortcopy.begin(), sortcopy.end(), std::mem_fun_ref( &Vertex<t_Object>::x_less ) );
         vertices.resize( sortcopy.size() );
