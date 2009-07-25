@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <boost/type_traits/remove_pointer.hpp>
 #include <boost/filesystem/operations.hpp>
 #ifdef _MPI
 # include <boost/mpi/collectives/all_reduce.hpp>
@@ -230,12 +231,20 @@ namespace LaDa
       }
       __MPICODE
       (
-        boost::mpi::all_reduce
+        typedef boost::remove_pointer<t_GradientArg>::type t_Type;
+        // boost does not do in-place reduction.
+        BOOST_MPI_CHECK_RESULT
         (
-          MPI_COMM, 
-          _grad, size_t(i_grad - _grad), _grad,
-          std::plus<types::t_real>()
+          MPI_Allreduce,
+          (
+            MPI_IN_PLACE, _grad, size_t(i_grad - _grad),
+            boost::mpi::get_mpi_datatype<t_Type>(*_grad),
+            boost::mpi::is_mpi_op< std::plus<t_Type>, t_Type>::op(), (MPI_Comm) MPI_COMM
+          )
         );
+//       MPI_Comm __commC = (MPI_Comm) ( MPI_COMM ) ;
+//       boost::mpi::all_reduce( MPI_COMM, _grad, size_t(i_grad - _grad),
+//                               std::plus<types::t_real>());
       )
     }
 

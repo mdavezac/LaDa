@@ -324,9 +324,19 @@ namespace LaDa
       
           } // end of outer "derivative" loop
         } // end of loop over monomes
-        __MPICODE( 
-          boost::mpi::all_reduce( MPI_COMM, __ADDHERE__, monomes.size(), __ADDHERE__, 
-                                  std::plus<types::t_real>() ); 
+        __MPICODE
+        ( 
+          // boost does not do in-place reduction.
+          BOOST_MPI_CHECK_RESULT
+          (
+            MPI_Allreduce,
+            (
+              MPI_IN_PLACE, __ADDHERE__, monomes.size(),
+              boost::mpi::get_mpi_datatype<types::t_real>(*__ADDHERE__),
+              boost::mpi::is_mpi_op< std::plus<types::t_real>, types::t_real>::op(),
+              (MPI_Comm) MPI_COMM
+            )
+          );
           std::transform( _i_grad, _i_grad + monomes.size(), __ADDHERE__, _i_grad,
                           boost::lambda::_1 + boost::lambda::_2 ); 
           delete[] __ADDHERE__;
@@ -398,9 +408,18 @@ namespace LaDa
         
           } // end of loop over monomes
         
-          __MPICODE( 
-            boost::mpi::all_reduce( MPI_COMM, __ADDHERE__, monomes.size(),
-                                    __ADDHERE__, std::plus<types::t_real>() ); 
+          __MPICODE
+          ( 
+            BOOST_MPI_CHECK_RESULT
+            (
+              MPI_Allreduce,
+              (
+                MPI_IN_PLACE, __ADDHERE__, monomes.size(),
+                boost::mpi::get_mpi_datatype<types::t_real>(*__ADDHERE__),
+                boost::mpi::is_mpi_op< std::plus<types::t_real>, types::t_real>::op(),
+                (MPI_Comm) MPI_COMM
+              )
+            );
             std::transform( _i_grad, _i_grad + monomes.size(), __ADDHERE__, _i_grad,
                             boost::lambda::_1 + boost::lambda::_2 ); 
             delete[] __ADDHERE__;
