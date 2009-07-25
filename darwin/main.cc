@@ -49,6 +49,7 @@
 #include "checkpoints/dummy.h"
 #include "init_outputfiles.h"
 
+#include "main.extras.h" 
 
 
 int main(int argc, char *argv[]) 

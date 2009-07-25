@@ -13,7 +13,7 @@
     inline LaDa::types::t_real call_lexcast_real( const std::string &_str )
       { return boost::lexical_cast<LaDa::types::t_real>( _str ); }
 
-#if _LADA_GA_MAIN_EXTRAS_H_ == 0 || _LADA_GA_MAIN_EXTRAS_H_ == 1
+#elif _LADA_GA_MAIN_EXTRAS_H_ == 0 || _LADA_GA_MAIN_EXTRAS_H_ == 1
     // Creates factories.
 #  if _LADA_GA_MAIN_EXTRAS_H_ == 0
 #    undef _LADA_GA_MAIN_EXTRAS_H_

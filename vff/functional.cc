@@ -266,10 +266,20 @@ namespace LaDa
       for (; i_center != i_center_end; ++i_center)
         energy += functionals[i_center->kind()].
                        evaluate_with_gradient( *i_center, strain, stress, K0 );
-      __MPICODE
-      ( 
+#     ifdef _MPI
         energy = boost::mpi::all_reduce( MPI_COMM, energy, std::plus<types::t_real>() ); 
-      )
+        // boost does not do in-place reduction.
+        BOOST_MPI_CHECK_RESULT
+        (
+          MPI_Allreduce,
+          (
+            MPI_IN_PLACE, &(stress.x[0][0]), 9u,
+            boost::mpi::get_mpi_datatype<types::t_real>(stress(0,0)),
+            boost::mpi::is_mpi_op< std::plus<types::t_real>, types::t_real>::op(),
+            (MPI_Comm) MPI_COMM
+          )
+        );
+#     endif
 
       // now repacks into function::Base format
       pack_gradients(stress, _i_grad);
