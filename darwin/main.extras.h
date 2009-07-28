@@ -73,9 +73,12 @@
     ga.replacement_rate = 0.5;
     ga.pop_size = 1;
     ga.max_generations = 0;
-    ga.population_creator = LaDa::GA::Operators::populator( 
-        bl::bind( &t_Evaluator::initialize, boost::cref(ga.evaluator), bl::_1 ),
-        ga.taboos );
+    ga.population_creator
+      = LaDa::GA::Operators::populator
+        ( 
+          bl::bind( &t_Evaluator::initialize, boost::cref(ga.evaluator), bl::_1 ),
+          ga.taboos 
+        );
     ga.att_factory.connect
       (
         "tournament", "size of the deterministic tournaments"

@@ -39,9 +39,6 @@ namespace LaDa
               {
                 t_Individual indiv;
                 operator_( indiv );
-//               foreach( types::t_real b, indiv.Object().Container() )
-//                 std::cout << b << " ";
-//               std::cout << "\n";
                 if ( not taboos_( indiv ) )
                 {
                   _pop.push_back(indiv);
