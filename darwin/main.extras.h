@@ -74,7 +74,7 @@
     ga.pop_size = 1;
     ga.max_generations = 0;
     ga.population_creator = LaDa::GA::Operators::populator( 
-        bl::protect( bl::bind( &t_Evaluator::initialize, bl::var(ga.evaluator), bl::_1 ) ),
+        bl::bind( &t_Evaluator::initialize, boost::cref(ga.evaluator), bl::_1 ),
         ga.taboos );
     ga.att_factory.connect
       (

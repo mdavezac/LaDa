@@ -119,7 +119,7 @@ namespace LaDa
         return true;
       }
  
-      INEVALBASE( bool ) :: initialize( t_Individual &_indiv )
+      INEVALBASE( bool ) :: initialize( t_Individual &_indiv ) const
       {
         foreach( Crystal::Structure::t_Atom &atom, structure.atoms )
           atom.type = eo::rng.flip() ? 1e0: -1e0;

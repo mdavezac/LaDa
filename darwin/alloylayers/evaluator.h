@@ -149,7 +149,7 @@ namespace LaDa
           std::string print() const;
 
           //! Creates random individuals using GA::Random.
-          bool initialize( t_Individual &_indiv );
+          bool initialize( t_Individual &_indiv ) const; 
 
           //! Returns direction.
           const atat::rVector3d& get_direction() const { return direction; }

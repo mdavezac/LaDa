@@ -179,7 +179,7 @@ namespace LaDa
         eoMonOp<const t_Individual>* LoadPrintBest( const TiXmlElement &_node ) { return NULL; }
         //! \brief Random initialization of the t_object instance of \a _indiv
         //! \return true if \a _indiv should be invalidated (eg, \a _indiv has changed)
-        bool initialize( t_Individual &_indiv ) {return false; }; 
+        bool initialize( t_Individual &_indiv ) const {return false; }; 
         //! \brief Called before objective %function is evaluated. 
         //! \details See implementation below.
         void init( t_Individual &_indiv );
