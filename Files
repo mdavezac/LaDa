@@ -125,9 +125,9 @@ CRYSTAL_H  = lattice.h  structure.h structure.impl.h atom.h  confsplit.h layerde
              fractional_cartesian.h ideal_lattice.h smith.h neighbors.h enumerate.h
 CRYSTAL_DOC = $(CRYSTAL_H) $(CRYSTAL_CC) 
 CRYSTAL_PYTHON_H = structure.hpp atom.hpp lattice.hpp read_structure.hpp \
-                   smith.hpp enumerate.hpp
+                   smith.hpp enumerate.hpp layerdepth.hpp
 CRYSTAL_PYTHON_CC = structure.cc atom.cc lattice.cc read_structure.cc \
-                    python.cc smith.cc enumerate.cc
+                    python.cc smith.cc enumerate.cc layerdepth.cc
 
 CE_CC     = cluster.cc harmonic.cc  polynome.cc regularization.cc fit.cc
 CE_H      = cluster.h  constituent_strain.h  functional_builder.h  harmonic.h \

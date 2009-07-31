@@ -13,6 +13,7 @@
 #include "read_structure.hpp"
 #include "enumerate.hpp"
 #include "smith.hpp"
+#include "layerdepth.hpp"
 
 BOOST_PYTHON_MODULE(crystal)
 {
@@ -22,4 +23,5 @@ BOOST_PYTHON_MODULE(crystal)
   LaDa::Python::expose_read_structure();
   LaDa::Python::expose_enumerate();
   LaDa::Python::expose_smith();
+  LaDa::Python::expose_layerdepth();
 }
