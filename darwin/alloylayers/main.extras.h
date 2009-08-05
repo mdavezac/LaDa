@@ -30,6 +30,7 @@
 #   include "../bitstring/mutation.h"
 #   include "../bitstring/crossover.h"
 #   include "operators.h"
+#   include "mutation.h"
 #   include "../assign_callbacks.h"
 #   include "../static_translate.h"
 #   define __PROGNAME__ "Epitaxial Alloy Layer Optimization"
@@ -112,10 +113,10 @@
       ( "vbm", "Conduction band minimum in eV.",
         PPFactory::connect_property(ga.evaluator, &t_Individual::t_IndivTraits::t_Object::vbm,
                                     "VBM=", "Valence band maximum in eV." ) )
-      ( "x", "Concentration at site x.",
+      ( "x", "Concentration at site 0.",
         PPFactory::connect_property(ga.evaluator, &t_Individual::t_IndivTraits::t_Object::x,
                                     "x", "Concentration at site 0" ) )
-      ( "y", "Concentration at site x.",
+      ( "y", "Concentration at site 1.",
         PPFactory::connect_property(ga.evaluator, &t_Individual::t_IndivTraits::t_Object::y,
                                     "y", "Concentration at site 0" ) );
 
@@ -127,7 +128,8 @@
       ( "Crossover", "bitstring-like crossover.",
         boost::bind( &LaDa::GA::BitString::crossover_factory<t_OpFactory>, _1, _2, _3 ) )
       ( "Mutation", "bistring-like mutation.",
-        boost::bind( &LaDa::GA::BitString::mutation_factory<t_OpFactory>, _1, _2, _3 ) );
+        LaDa::GA::AlloyLayers::mutation_factory( ga.evaluator )
+      );
 
 
 # elif _MAIN_ALLOY_LAYERS_EXTRAS_ == 4

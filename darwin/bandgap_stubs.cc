@@ -24,6 +24,8 @@ namespace LaDa
         if ( not _node.Attribute("vbm", &d ) ) goto errorout;
         vbm = types::t_real(d);
 
+        if( not Vff::Keeper::Load( _node ) ) return false;
+
         return true;
 
         errorout:

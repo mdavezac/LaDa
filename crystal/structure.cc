@@ -378,7 +378,8 @@ namespace LaDa
         structure->SetDoubleAttribute("energy", energy );
       if( Fuzzy::neq( weight, 1e0 ) )
         structure->SetDoubleAttribute("weight", weight );
-      structure->SetAttribute("name", name );
+      structure->SetAttribute("name", name);
+      structure->SetDoubleAttribute("scale", scale);
       
       for (int i=0; i < 3; ++i)
       {

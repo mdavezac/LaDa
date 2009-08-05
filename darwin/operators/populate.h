@@ -46,7 +46,7 @@ namespace LaDa
                 }
                 ++i;
               } // while ( i_pop->size() < target )
-              __DOASSERT( j < _popsize,
+              __DOASSERT( _pop.size() < _popsize,
                              "Created " << j << " individuals in " << i << " iterations.\n"
                           << "Are taboos/concentration constraints to restrictive?\n" )
               Print::out << "Created " << j << " new individuals.\n";

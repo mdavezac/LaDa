@@ -5,6 +5,8 @@
 #define _FITNESS_IMPL_H_
 
 #include <boost/serialization/serialization.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <opt/debug.h>
 
@@ -15,13 +17,15 @@ namespace LaDa
     template<class T_QUANTITYTRAITS>
     bool Scalar<T_QUANTITYTRAITS> :: Load( const TiXmlElement & _node ) 
     {
+      namespace ba = boost::algorithm;
       if ( not _node.Attribute( "fitness" ) )
       {
         is_valid = false;
         return false; 
       }
-      double d; _node.Attribute( "fitness", &d );
-      quantity = (t_Quantity) d;
+      
+      std::string const fitness_string(_node.Attribute("fitness"));
+      quantity = boost::lexical_cast<t_Quantity>( ba::trim_copy(fitness_string) );
       is_valid = true;
       return true;
     }
@@ -29,8 +33,7 @@ namespace LaDa
     bool Scalar<T_QUANTITYTRAITS> :: Save( TiXmlElement & _node ) const
     {
       __ASSERT( not is_valid, "Trying to save invalid fitness\n" )
-      double d = (double) quantity;
-      _node.SetDoubleAttribute("fitness", d);
+      _node.SetAttribute("fitness", boost::lexical_cast<std::string>(quantity) );
       return true;
     }
     template<class T_QUANTITYTRAITS>
@@ -127,12 +130,14 @@ namespace LaDa
     template<class T_QUANTITYTRAITS>
     bool Vectorial<T_QUANTITYTRAITS> :: Load( const TiXmlElement & _node )
     {
+      namespace ba = boost::algorithm;
       if ( not _node.Attribute( "fitness" ) )
       {
         vec_is_valid = false;
         return false; 
       }
-      std::istringstream istr; istr.str( _node.Attribute( "fitness" ) );
+      std::string const fitness_string(_node.Attribute("fitness"));
+      std::istringstream istr(ba::trim_copy( fitness_string));
       istr >> *this;
       vec_is_valid = true;
       return true;

@@ -114,10 +114,10 @@ namespace LaDa
           //! Type of this class.
           typedef EvaluatorBase<t_Individual, T_TRANSLATE, T_ASSIGN> t_This;
 
+          using t_Translate :: translate;
         protected:
           using t_Base :: current_individual;
           using t_Base :: current_object;
-          using t_Translate :: translate;
           using t_Assign :: assign;
 
         public:
