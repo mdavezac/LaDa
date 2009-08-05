@@ -96,7 +96,7 @@ LIB_ALLOYLAYERS_H  = alloylayers/evaluator.h alloylayers/object.h \
                      alloylayers/policies.h alloylayers/operators.h \
                      alloylayers/main.extras.h bandgap_stubs.h \
                      vff.h electric_dipole.h two_sites.h alloylayers/concentration.h \
-                     $(LIB_ALLOYLAYERS_IMPL_H) # electric_dipole.h 
+                     alloylayers/muation.h $(LIB_ALLOYLAYERS_IMPL_H) # electric_dipole.h 
 
 DARWIN_LIB_DOC = $(DARWIN_LIB_H) $(DARWIN_LIB_CC) \
                  $(DARWIN_OP_H) $(DARWIN_OP_CC) \
