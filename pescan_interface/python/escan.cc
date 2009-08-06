@@ -5,7 +5,9 @@
 # include <config.h>
 #endif
 
-#include <boost/python.hpp>
+#include <boost/python/class.hpp>
+#include <boost/python/tuple.hpp>
+#include <boost/python/def.hpp>
 #include <boost/python/enum.hpp>
 
 #include <opt/initial_path.h>
@@ -99,6 +101,49 @@ namespace LaDa
                         "Calculation method: \"folded\" or \"full_diagonalization\"." )
         .def_readonly( "potential", &t_Parameters::potential,
                        "Type of potential: \"local\", \"nonlocal\", or \"spinorbit\"." );
+      typedef LaDa::Pescan::Interface::Genpot::t_MeshTuple t_MeshTuple;
+     
+      boost::python::tuple get_impl( t_MeshTuple const& _mesh )
+      {
+        namespace bt = boost::tuples;
+        namespace bp = boost::python;
+        return bp::make_tuple( bt::get<0>(_mesh), bt::get<1>(_mesh), bt::get<2>(_mesh) );
+      }
+      void set_impl( boost::python::tuple const &_tuple, t_MeshTuple const& _mesh )
+      {
+        namespace bt = boost::tuples;
+        namespace bp = boost::python;
+        try
+        {
+          if( bp::len(_tuple) != 3 )
+          {
+            PyErr_SetString( PyExc_RuntimeError, "Should be a 3-tuple.\n" )
+            bp::throw_error_already_set();
+            return
+          }
+          bt::get<0>(_mesh) = bp::extract<types::t_int>( _tuple[0] );
+          bt::get<1>(_mesh) = bp::extract<types::t_int>( _tuple[1] );
+          bt::get<2>(_mesh) = bp::extract<types::t_int>( _tuple[2] );
+        }
+        catch(...)
+        {
+          PyErr_SetString( PyExc_RuntimeError, "Could not translate tuple.\n" );
+          bp::throw_error_already_set();
+        }
+      }
+     
+      boost::python::tuple get_mesh( LaDa::Pescan::Interface::Genpot const &_genpot )
+        { return get_impl(_genpot.mesh); }
+      void set_mesh( LaDa::Pescan::Interface::Genpot const &_genpot, boost::python::tuple const &_t )
+        { set_impl(_t, _genpot.mesh); }
+      boost::python::tuple get_mcell( LaDa::Pescan::Interface::Genpot const &_genpot )
+        { return get_impl(_genpot.multiple_cell); }
+      void set_mcell( LaDa::Pescan::Interface::Genpot const &_genpot, boost::python::tuple const &_t )
+        { set_impl(_t, _genpot.multiple_cell); }
+      boost::python::tuple get_sbox( LaDa::Pescan::Interface::Genpot const &_genpot )
+        { return get_impl(_genpot.small_box); }
+      void set_sbox( LaDa::Pescan::Interface::Genpot const &_genpot, boost::python::tuple const &_t )
+        { set_impl(_t, _genpot.small_box); }
     }
 
     void expose_escan()
@@ -120,6 +165,7 @@ namespace LaDa
                         "at the end of a calculation." )
         .def_readonly( "eigenvalues", &t_Escan::eigenvalues,
                        "Computed eigenvalues." )
+        .def_readwrite("genpot", &t_Escan::genpot)
         .def( "fromXML",  &XML::Escan_from_XML<t_Escan>, bp::arg("file"),
               "Loads escan parameters from an XML file." )
         .def( "run", &t_Escan::operator(), "Performs a calculation." )
@@ -127,6 +173,18 @@ namespace LaDa
 
       bp::def( "nb_valence_states", &LaDa::Pescan::nb_valence_states, bp::arg("structure"),
                "Returns the number of valence states in a structure." );
+    }
+
+
+    void expose_genpot()
+    {
+
+      typedef LaDa::Pescan::Interface::Genpot t_Genpot;
+      namespace bp = boost::python;
+      bp::class_< t_Genpot >( "Genpot", "Wrapper around genpot parameters.", bp::no_init ) 
+        .def( "mesh", &get_mesh, &set_mesh ) 
+        .def( "multiple_cell", &get_mcell, &set_mcell ) 
+        .def( "small_box", &get_sbox, &set_sbox ) ;
     }
 
 #   undef EXPOSE_FILENAME

@@ -15,6 +15,7 @@ namespace LaDa
   {
     void expose_escan_parameters();
     void expose_escan();
+    void expose_genpot();
   }
 } // namespace LaDa
 #endif
