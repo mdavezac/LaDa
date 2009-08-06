@@ -109,19 +109,19 @@ namespace LaDa
       return boost::python::str( sstr.str().c_str() );
     }
 
-    template< class T_TYPE >
-      Crystal::TStructure<T_TYPE>* empty()
+    template< class T_STRUCTURE >
+      T_STRUCTURE* empty()
       {
-        Crystal::TStructure<T_TYPE>* result = new Crystal::TStructure<T_TYPE>(); 
+        T_STRUCTURE* result = new T_STRUCTURE(); 
         if( result->lattice ) result->scale = result->lattice->scale;
         return result;
       }
     
-    template< class T_TYPE >
-      Crystal::TStructure<T_TYPE>* copy( Crystal::TStructure<T_TYPE> const &_o )
+    template< class T_STRUCTURE >
+      T_STRUCTURE* copy( T_STRUCTURE const &_o )
       {
         namespace bp = boost::python;
-        Crystal::TStructure<T_TYPE>* result = new Crystal::TStructure<T_TYPE>( _o ); 
+        T_STRUCTURE* result = new T_STRUCTURE( _o ); 
         if( result->lattice ) result->scale = result->lattice->scale;
         return result;
       }
@@ -156,8 +156,8 @@ namespace LaDa
 
       bp::class_< Crystal::Structure >( "Structure", "Defines a structure.\n"
                                         "Generally, it is a super-cell of a LaDa.Lattice object." )
-        .def( "__init__", bp::make_constructor( copy<types::t_real> ) )
-        .def( "__init__", bp::make_constructor( empty<types::t_real> ) )
+        .def( "__init__", bp::make_constructor( copy<Crystal::Structure> ) )
+        .def( "__init__", bp::make_constructor( empty<Crystal::Structure> ) )
         .def( "__init__", bp::make_constructor( string_to_real ) )
         .def_readwrite( "cell",    &Crystal::Structure::cell,
                         "The cell in cartesian coordinates (in units of LaDa.Structure.scale)." )
@@ -189,8 +189,8 @@ namespace LaDa
         .def( "xcrysden", &xcrysden, "Outputs in XCrysden format." )
         .def_pickle( pickle_structure< Crystal::Structure >() );
       bp::class_< Crystal::TStructure<std::string> >( "sStructure" )
-        .def( "__init__", bp::make_constructor( copy<std::string> ) )
-        .def( "__init__", bp::make_constructor( empty<std::string> ) )
+        .def( "__init__", bp::make_constructor( copy< Crystal::TStructure<std::string> > ) )
+        .def( "__init__", bp::make_constructor( empty< Crystal::TStructure<std::string> > ) )
         .def( "__init__", bp::make_constructor( real_to_string ) )
         .def_readwrite( "cell",    &Crystal::TStructure<std::string>::cell,
                         "The cell in cartesian coordinates (in units of LaDa.Structure.scale)." )
