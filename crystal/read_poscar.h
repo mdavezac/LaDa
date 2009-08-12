@@ -117,7 +117,8 @@ namespace LaDa
         
         // Atomic positions.
         __DOASSERT( nbatoms.size() != _types.size(), 
-                    "Number of species in POSCAR does not match input.\n" )
+                       "Number of species in POSCAR does not match input: " 
+                    << nbatoms.size() << " " << _types.size() << ".\n" )
         const size_t nb( std::accumulate( nbatoms.begin(), nbatoms.end(), 0 ) );
         typename std::vector<T_TYPE> :: const_iterator i_type( _types.begin() );
         std::vector<size_t> :: const_iterator i_nb( nbatoms.begin() );

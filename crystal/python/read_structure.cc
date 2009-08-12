@@ -12,6 +12,8 @@
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
+
+#include <boost/python/str.hpp>
 #include <boost/python/def.hpp>
 #include <boost/python/tuple.hpp>
 #include <boost/python/return_value_policy.hpp>
@@ -64,24 +66,24 @@ namespace LaDa
           boost::python::throw_error_already_set();
           return;
         }
-        { // check all species are included
-          std::set<std::string> a;
-          foreach( t_Structure::t_Atom const &atom, _structure.atoms )
-            a.insert( atom.type );
-          std::set<std::string> b;
-          foreach( std::string const &sp, species ) b.insert( sp );
-          std::set<std::string> c;
-          std::set_difference( b.begin(), b.end(), a.begin(), a.end(),
-                               std::inserter( c, c.begin() ) );
-          if( not c.empty() )
-          {
-            std::string error = "Species in structure are not all included in specie list:";
-            foreach( std::string const d, c ) error += " " + d;
-            error += ".\n";
-            LADA_PYTHON_ERROR( PyExc_RuntimeError, error );
-            bp::throw_error_already_set();
-          }
-        }
+//       { // check all species are included
+//         std::set<std::string> a;
+//         foreach( t_Structure::t_Atom const &atom, _structure.atoms )
+//           a.insert( atom.type );
+//         std::set<std::string> b;
+//         foreach( std::string const &sp, species ) b.insert( sp );
+//         std::set<std::string> c;
+//         std::set_difference( b.begin(), b.end(), a.begin(), a.end(),
+//                              std::inserter( c, c.begin() ) );
+//         if( not c.empty() )
+//         {
+//           std::string error = "Species in structure are not all included in specie list:";
+//           foreach( std::string const d, c ) error += " " + d;
+//           error += ".\n";
+//           LADA_PYTHON_ERROR( PyExc_RuntimeError, error );
+//           bp::throw_error_already_set();
+//         }
+//       }
 
         // Checks path
         std::string POSCAR("POSCAR");
@@ -187,6 +189,48 @@ namespace LaDa
           }
         }
 
+      template< class T_TYPE >
+        Crystal::TStructure<T_TYPE>* read_poscar_one_specie( boost::python::str const &_specie, 
+                                                             const std::string &_path )
+        {
+          namespace bp = boost::python;
+          typedef Crystal::TStructure<T_TYPE> t_Structure;
+          t_Structure *result = NULL;
+          try
+          { 
+            result = new t_Structure;
+            T_TYPE const specie = bp::extract<T_TYPE>( _specie );
+            std::vector<T_TYPE> const species(1, specie);
+            Crystal::read_poscar( *result, _path, species ); 
+            if( result->atoms.size() == 0 )
+            {
+              delete result;
+              LADA_PYTHON_ERROR( PyExc_RuntimeError, "Could not read file " + _path + ".\n" );
+              boost::python::throw_error_already_set();
+              return NULL;
+            }
+            return result;
+          }
+          catch( std::exception &_e )
+          {
+            if( result ) delete result;
+            LADA_PYTHON_ERROR( PyExc_RuntimeError, _e.what() );
+            boost::python::throw_error_already_set();
+            return NULL;
+          }
+          catch( ... )
+          {
+            if( result ) delete result;
+            LADA_PYTHON_ERROR
+            ( 
+              PyExc_RuntimeError,
+              ("Could not read MBCE-type structure from " + _path + ".\n")
+            );
+            boost::python::throw_error_already_set();
+            return NULL;
+          }
+        }
+
       Crystal::Structure* read_structure( const std::string &_path )
       {
         Crystal::Structure *result = new Crystal::Structure();
@@ -256,9 +300,17 @@ namespace LaDa
       boost::python::def
       (
         "read_poscar", 
-        &details::read_poscar<std::string>,
+        &details::read_poscar_one_specie<std::string>,
         boost::python::return_value_policy< boost::python::manage_new_object >(),
         "Tries to read a VASP POSCAR. Needs a tuple of species on input (first argument).\n"
+        "Returns a structure on success" 
+      );
+      boost::python::def
+      (
+        "read_poscar", 
+        &details::read_poscar<std::string>,
+        boost::python::return_value_policy< boost::python::manage_new_object >(),
+        "Tries to read a VASP POSCAR. This is the case of a single atomic specie."
         "Returns a structure on success" 
       );
       boost::python::def
