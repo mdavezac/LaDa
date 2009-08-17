@@ -17,6 +17,7 @@ namespace LaDa
     //! A separable function.
     class Separable
     {
+        friend class VariableMajor;
       public:
         //! Argument type.
         typedef std::vector<Functions::arg_type> arg_type;
@@ -65,6 +66,8 @@ namespace LaDa
           { functions_.push_back(_function); }
         //! Clears all functions and coefficients.
         void clear() { functions_.clear(); }
+        //! Returns number of variables.
+        size_t size() const { return functions_.size(); }
 
         result_type normalize()
         {

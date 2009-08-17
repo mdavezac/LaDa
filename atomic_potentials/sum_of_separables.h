@@ -17,6 +17,7 @@ namespace LaDa
     //! A separable function.
     class SumOfSeparables
     {
+        friend class VariableMajor;
       public:
         //! Argument type.
         typedef Separable::arg_type arg_type;
@@ -82,6 +83,8 @@ namespace LaDa
             { functions_.push_back(_function); coefficients_.push_back(_coef); }
         //! Clears all functions and coefficients.
         void clear() { functions_.clear(); coefficients_.clear(); }
+        //! Returns rank.
+        size_t size() const { return coefficients_.size(); }
 
         //! Normalizes all separable functionals.
         void normalize()
@@ -94,6 +97,7 @@ namespace LaDa
           for(; i_func != i_func_end; ++i_func, ++i_coef) 
             *i_coef *= i_func->normalize();
         }
+
 
       private:
         //! List of functions over scalars.

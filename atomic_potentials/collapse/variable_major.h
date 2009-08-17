@@ -20,12 +20,16 @@ namespace LaDa
     {
       public:
         //! Constructor.
-        VariableMajor(SumOfSepables const &_sumofseps);
+        VariableMajor(SumOfSeparables const &_sumofseps);
         //! Copy Constructor.
-        VariableMajor( VariableMajor &_sos ): sos_(_sos) {}
+        VariableMajor   (VariableMajor &_sos)
+                      : scales_(_c.scales_), coefficients_(_c.coefficients_),
+                        functions_(_c.functions_) {}
 
+        //! copies a sum of separable functions into variable major form.
+        bool operator=(SumOfSeparables const&);
         //! Reassigns functions and coefficients to a sum of separable functions.
-        void reassign(SumOfSeparables &_sumofseps);
+        bool reassign(SumOfSeparables &_sumofseps) const;
 
       private:
        //! Type of the numeric values.

@@ -22,9 +22,14 @@ namespace LaDa
   //! Contains classes for generalized atomic potentials.
   namespace AtomicPotential
   {
+    //! \cond
+    class VariableMajor;
+    //! \endcond
+
     //! Sum of functions over a single variable.
     class Functions
     {
+        friend class VariableMajor;
       public:
         //! Type of the argument.
         typedef types::t_real arg_type;
