@@ -45,6 +45,7 @@
 
 
 #ifdef _LADADEBUG
+# define LADA_DEBUG
 # define __DODEBUGCODE(code) code
 # define __TRYDEBUGCODE(code, error) __TRYCODE(code, error)
 # define __DOTRYDEBUGCODE(code, error) __TRYCODE(code, error)
