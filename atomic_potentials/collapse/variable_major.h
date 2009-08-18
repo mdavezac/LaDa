@@ -34,15 +34,13 @@ namespace LaDa
       private:
        //! Type of the numeric values.
        typedef SumOfSeparables::t_Function::t_Function::arg_type t_Value;
-       //! Type of the numeric vectors.
-       typedef SumOfSeparables::t_Coefficients t_Vector;
        //! Type of the vectors of vectors of coefficients.
-       typedef std::vector<t_Vector> t_CoefVectors;
+       typedef std::vector<vector_type> t_CoefVectors;
        //! Type of the vectors of vectors of functions,
        typedef std::vector< std::vector<SumOfSeparables::t_Function::t_Function> > t_FuncVectors;
 
        //! Vector of scales.
-       t_Vector scales_;
+       vector_type scales_;
        //! Vector of vectors of coefficients.
        t_CoefVectors coefficients_;
        //! Vector of vectors of functions.

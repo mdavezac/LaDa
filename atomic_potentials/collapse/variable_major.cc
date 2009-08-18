@@ -8,6 +8,7 @@
 #include <iostream>
 #include <iterator>
 
+#include "../sum_of_separables.h"
 #include "variable_major.h"
 
 namespace LaDa
@@ -66,8 +67,9 @@ namespace LaDa
           // Adds coefficients and functions.
           std::copy( i_var->functions_.begin(), i_var->functions_.end(), 
                      std::back_inserter(*i_func) );
-          std::copy( i_var->coefficients_.begin(), i_var->coefficients_.end(), 
-                     std::back_inserter(*i_coef) );
+          for(size_t j(0); j < Functions::N; ++j)
+            for(size_t o(0); o < i_var->coefficients.size(); ++o)
+              i_coef->push_back( i_var->coefficients[j][o] );
         } // loop over ranks.
       } // loop over variables.
       return true;
@@ -105,15 +107,18 @@ namespace LaDa
             i_func->end() + current_index + N,
             i_var->functions_.begin()
           );
-          std::copy
-          ( 
-            i_coef->begin() + current_index,
-            i_coef->end() + current_index + N,
-            i_var->coefficients_.begin()
-          );
+          for(size_t u(0), o(0); u < i_coef->size(); ++o)
+            for(size_t j(0); j < Functions::N; ++j, ++u)
+            {
+              LADA_ASSERT( u < i_coef->size, "Index out of range.\n" )
+              i_var->coefficients[j][o] = (*i_coef)[u];
+            }
           current_index += N;
         } // loop over ranks.
-        LADA_ASSERT( current_index == i_coef->size(), "Incoherent containers.\n" )
+#       ifdef LADA_DEBUG
+          for(size_t j(0); j < Functions::N; ++j)
+            LADA_ASSERT( current_index == (*i_coef)[i].size(), "Incoherent containers.\n" )
+#       endif
       } // loop over variables.
       return true;
     }

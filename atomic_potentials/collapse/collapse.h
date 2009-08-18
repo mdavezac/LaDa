@@ -10,89 +10,82 @@
 
 #include <boost/numeric/ublas/matrix.hpp>
 
-#include "sum_of_separables.h"
+#include "../numeric_types.h"
 
 namespace LaDa
 {
   namespace atomic_potential
   {
-    //! \brief Linear least-square-variables input variables.
-    //! \details The separable function is defined as:
-    //           \f[
-    //               S(X) = \sum_r s_r \prod_i \sum_o \alpha_{r,i,o} g_{r,i,o}( x_i )
-    //           \f]
-    //           With \a u indexing the input structures, and \a v indexing the
-    //           sum of symmetric structures, a least-square fit for variable
-    //           \a _i can be performed using the vector:
-    //           \f[
-    //              G^{(u)}_i=\sum_v w_v^{(u)} P_{r,i}[x_i{(u,v)}] g_{i,r,o}[x_i^{(u,v)}]
-    //           \f],
-    //           where 
-    //           \f[
-    //              P_{r,i}[x_v^{(u)}] = \prod_{j\neq i} \sum_o \alpha_{r,j,o} g_{r,j,o}( x_j^{(u,v)} )
-    //           \f],
-    class Collapse
+    // Forward declaration.
+    class SumOfSeparables;
+
+    namespace collapse
     {
-        //! \brief Values of each function of a scalar in the sum of separable functions.
-        //! \details Indices are arranged from outermost to innermost as:
-        //!              _ i (over variables)
-        //!              _ u (over structures)
-        //!              _ v (over symmetrics of a structure)
-        //!              _ r, o (over ranks and function of a scalar of each sum.
-        //!              .
-        typedef std::vector // over variables.
-                <
-                  std::vector // over input structures
-                  <
-                    std::vector // over symmetries of input structure.
-                    <
-                      SumOfSeparables::t_Coefficients // over rank and innermost sum.
-                    >
-                  >
-                > t_FunctionValues;
-        //! Sizes of the separable functions.
-        typedef std::vector< std::vector<size_t> > t_SeparableSizes; 
-        //! Weight of each structure.
-        typedef std::vector<SumOfSeparables::result_type> t_Weights;
-        //! Weight of each symmetrized structure.
-        typedef std::vector< t_Weights > t_SymWeights;
-        //! Value of each separable function.
-        typedef std::vector<SumOfSeparables::result_type> t_SeparableValues;
-      public:
-        //! Type of the matrix argument.
-        typedef boost::numeric::ublas::matrix<SumOfSeparables::result_type> t_Matrix;
-        //! Type of the vector argument.
-        typedef boost::numeric::ublas::matrix<SumOfSeparables::result_type> t_Vector;
-        //! Constructor.
-        Collapse(SumOfSeparables const &_sumofseps);
-        //! Copy Constructor.
-        Collapse   (Collapse const &_sos)
-                 : function_values_(_c.function_values_),
-                   separable_sizes_(_c.separable_sizes_),
-                   weights_(_c.weights_),
-                   sym_weights_(_c.sym_weights_),
-                   separable_values(_c.separable_values) {}
+      //! \brief Linear least-square-variables input variables.
+      //! \details The separable function is defined as:
+      //!          \f[
+      //!              S(X) = \sum_r s_r \prod_i \sum_o \alpha_{r,i,o} g_{r,i,o}( x_i )
+      //!          \f]
+      //!          With \a u indexing the input structures, and \a v indexing the
+      //!          sum of symmetric structures, a least-square fit for variable
+      //!          \a _i can be performed using the vector:
+      //!          \f[
+      //!             G^{(u)}_i=\sum_v w_v^{(u)} P_{r,i}[x_i^{(u,v)}] g_{i,r,o}[x_i^{(u,v)}]
+      //!          \f],
+      //!          where 
+      //!          \f[
+      //!             P_{r,i}[x^(u,v)}_{j\neq i}] = \prod_{j\neq i} \sum_o \alpha_{r,j,o} g_{r,j,o}( x_j^{(u,v)} )
+      //!          \f].
+      //!          To help with this process, containers over the fitting
+      //!          structures and over function values are created,
+      //!          with a hierarchy of iterators. These iterators go from loops
+      //!          over fitting structures, to loops over representations of a
+      //!          single structure, to loop over ranks, to a loop over inner
+      //!          functions. They give access to the values required for
+      //!          computing \f$G${(u)}\f$. 
+      class Collapse
+      {
+        protected:
+          //! Type of the container of coefficients.
+          typedef std::vector<vector_type>  t_Coefficients;
+          //! Type of container of scaling factors.
+          typedef std::vector<SumOfSeparables::result_type> t_ScalingFactors;
+          //! Values associated with the fitting structures.
+          typedef Representations t_FittingStructures;
+          //! Values associated with the fitting structures and functions of the sum of seps.
+          typedef Values t_Values;
 
-        //! Creates A matrix for variable \a _i
-        bool A(t_Matrix &_matrix, size_t _i) const;
-        //! Creates b vector for variable \a _i
-        bool b(t_Vector &_vector, size_t _i) const;
+        public:
+          //! Constructor.
+          Collapse(SumOfSeparables const &_sumofseps);
+          //! Copy Constructor.
+          Collapse   (Collapse const &_sos)
+                   : fitting_structures_(_c.fitting_structures_),
+                     values_(_c.values_),
+                     coefficients_(_c.coefficients_),
+                     scaling_factors_(_c.scaling_factors_) {}
+     
+          //! Creates A matrix and b vector for coordinate \a _i. 
+          bool lsq_data(matrix_type &_matrix, vector_type &_vector, size_t _i) const;
+          //! Return coefficients for coordinate \a _i.
+          t_Coefficients::value_type& coefficients(size_t _i) { return coefficients_[_i]; }
+          //! Updates coordinate \a _i.
+          void update(size_t _i) { values_.update(_coefficients[_i], _i); }
+          //! Adds a structure to the fitting set.
+          void add( Crystal::sStructure const &_structure );
+     
+        private:
+          //! Weight of each structure. 
+          t_FittingStructures fitting_structures_;
+          //! Weight of each structure. 
+          t_Values values_;
+          //! Coefficients of the separable function.
+          t_Coefficients coefficients_;
+          //! Coefficients of the separable function.
+          t_ScalingFactors scaling_factors_;
 
-      private:
-        //! \brief Values of each function for each possible input.
-        //! \details \f$g_{r,i,o}(x_v^{(u)})\f$. 
-        t_FunctionValues g_;
-        //! Size of each separable function;
-        t_SeparableSizes separable_sizes_;
-        //! Weight of each structure. 
-        t_Weights weights_;
-        //! Weight of each inner structure. 
-        t_SymWeights sym_weights_;
-        //! Value of each separable function.
-        t_SeparableValues separable_values;
-        //! Variable major function.
-        VariableMajor variable_major;
-    };
+      };
+    } // namespace collapse
   } // namespace atomic_potential
 } // namespace LaDa
 #endif

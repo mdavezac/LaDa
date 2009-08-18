@@ -11,48 +11,85 @@
 
 namespace LaDa
 {
-  namespace AtomicPotential
+  namespace atomic_potential
   {
-    bool Collapse::lsq(t_Matrix &_matrix, t_Vector &_b, size_t _i) const
+    namespace collapse
     {
-      namespace bnu = boost::numeric::ublas;
-      // Coefficients of this variable.
-      t_SeparableSizes::const_iterator i_size( separable_size.begin() );
-      t_SeparableSizes::const_iterator const i_size_end( separable_size.end() );
-      types::t_real const function_size( variable_major_.coefficients_[_i].size() );
-      
-      //! Loop over structures.
-      t_Weights :: const_iterator i_weight = weights.begin();
-      t_Weights :: const_iterator const i_weight_end = weights.end();
-      t_SymWeights :: const_iterator i_sym_weight;
-      t_SymWeights :: const_iterator const i_sym_weight_end = weights.end();
-      t_FunctionValues::value_type::const_iterator i_str_val = function_values_[_i].begin();
-      t_Factors::value_type::const_iterator i_str_factor( factors_[_i].begin() ); 
-      t_Values::value_type::const_iterator i_str_values( values_[_i].begin() ); 
-      for(; i_weight != i_weight_end; ++i_weight, ++i_str_val, ++i_str_factor) // loop over structures.
-      {
-        t_Vector G(function_size, 0);
-        t_FunctionValues::value_type::value_type::const_iterator i_sym_val = i_str_val->begin();
-        t_Factors::value_type::value_type::const_iterator i_sym_factor( i_str_factor->begin() );
-        t_Values::value_type::value_type::const_iterator i_sym_values( i_str_values->begin() );
-        i_sym_weight = weights.begin();
-        // loop over symmetrized structures.
-        for(; i_sym_weight != i_sym_weight_end; ++i_sym_weight, ++i_sym_val, ++i_str_factor)
-        {
-          t_SeparableSizes::const_iterator i_size = separable_sizes_[_i].begin();
-          t_SeparableSizes::const_iterator i_size_end = separable_sizes_[_i].end();
-          for(size_t start(0); i_size != i_size_end; ++i_size) // loop over ranks.
-          {
-            size_t const end( start + (*i_size) );
-            bnu::vector_range<t_Vector> x(left, bnu::range(start, end));
-            bnu::vector_range<t_Vector> coefs(, bnu::range(start, end));
-            range *= 
-            
-            start = *i_size;
-          }
-        } // loop over symmetrized structures.
-      } // loop over structures.
-    }
 
-  } // namespace AtomicPotential
+      bool Collapse::lsq(matrix_type &_matrix, vector_type &_vector, size_t _i) const
+      {
+        namespace bnu = boost::numeric::ublas;
+
+        const size_t vec_size( coefficients_[_i].size() );
+        if( _matrix.size2() != vec_size )
+        {
+          _matrix.resize(vec_size, vec_size);
+          _vector.resize(vec_size);
+        }
+        else if( _matrix.size2() != _vector.size() )
+          _matrix.resize(vec_size, vec_size);
+        for( size_t i(0); i < vec_size; ++i )
+        {
+          for( size_t j(0); j < vec_size; ++j )
+            _matrix(i,j) = 0e0;
+          _vector(i) = 0e0;
+        }
+          
+        
+        t_FittingStructures :: str_iterator i_str = fitting_structures_.begin(_i);
+        t_FittingStructures :: str_iterator const i_str_end = fitting_structures_.end(_i);
+        t_Values::str_iterator i_str_val = values_.begin(_i);
+        //! Loop over structures.
+        for(; i_str != i_str_end; ++i_str, ++i_str_val)
+        {
+          numeric_type const str_weight(i_str->weight());
+          if( str_weight == 0e0 ) continue; // don't fit this structure.
+
+          t_Representations::str_iterator::rep_iterator i_rep = i_str->begin();
+          t_Representations::str_iterator::rep_iterator const i_rep_end = i_str->end();
+          t_Values::str_iterator::rep_iterator i_rep_val = i_str_val->begin();
+          vector_type G(vec_size, 0); // values to sum to matrix and vector.
+
+          // loop over structure representations.
+          for(; i_rep != i_rep_end; ++i_rep, ++i_rep_val )
+          {
+            numeric_type const rep_weight(i_rep->weight() * str_weight);
+
+            typedef t_FittingStructures::str_iterator::rep_iterator
+                                       ::coordinate_iterator typedef coordinate_iterator;
+            typedef t_Values::str_iterator::rep_iterator
+                            ::rank_iterator typedef rank_iterator;
+            rank_iterator i_rank_val = i_rep_val->begin();
+            rank_iterator const i_rank_val_end = i_rep_val->end();
+            coordinate_iterator i_coord = i_rep->begin();
+
+            // loop over ranks.
+            for(size_t i(0); i_rank_val != i_rank_val_end; ++i_rank_val )
+            {
+              numeric_type factor_i( i_rank_val->other() );
+              rank_iterator::function_iterator i_func = i_rank_val->begin();
+              rank_iterator::function_iterator const i_func_end = i_rank_val->end();
+              // loop over inner functions.
+              for(; i_func != i_func_end; ++i_func, i+=Functions::N, ++i_coord)
+                G( i + (*i_coord) ) += rep_weight * (*i_rank_val) * other;
+            } // loop over ranks
+          } // loop over representations
+
+          // now adds to A matrix and b vector.
+          for(size_t i(0); i < vec_size; ++i )
+          {
+            for(size_t j(i); j < vec_size; ++j)
+              _matrix(i,j) += G(i) * G(j) * str_weight;
+            _vector(i) += i_str->energy() * G(i) * str_weight;
+          } 
+        } // loop over structures.
+
+        // creates second half of matrix.
+        for( size_t i(0); i < vec_size; ++i )
+          for( size_t j(i+1); j < vec_size; ++j )
+            _matrix(i,j) = _matrix(j,i);
+      }
+
+    } // namespace collapse
+  } // namespace atomic_potential
 } // namespace LaDa
