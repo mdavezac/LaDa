@@ -13,8 +13,15 @@
 
 #include "../numeric_types.h"
 
+
 namespace LaDa
 {
+  //! \cond
+  namespace Crystal
+  {
+    template<class T_TYPE> class TStructure<T_TYPE>;
+  }
+  //! \endcond
   namespace atomic_potential
   {
     namespace collapse
@@ -70,7 +77,7 @@ namespace LaDa
           void change_weight( size_t _i, numeric_type _w)
             { weights_[_i].first = _w; } 
           //! Adds a structure to the representations.
-          void add( Crystal::Structure &_structure, numeric_type _w );
+          void add( Crystal::TStructure<std::string> &_structure );
           //! returns iterator to start of structures, for variable \a _i.
           str_iterator begin( size_t _i ) const;
           //! returns iterator to end of structures, for variable \a _i.

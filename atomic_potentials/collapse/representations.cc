@@ -51,6 +51,11 @@ namespace LaDa
           result.i_weight_ = weights_->second.end();
           return result;
         }
+
+      void Representations::add(Crystal::TStructure<std::string> &_structure)
+      {
+        
+      }
     } // namespace collapse
   } // namespace atomic_potential
 } // namespace LaDa

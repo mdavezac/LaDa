@@ -7,6 +7,7 @@
 
 #include <boost/numeric/ublas/vector_proxy.hpp>
 
+#include <crystal/structure.h>
 #include "collapse.h"
 
 namespace LaDa
@@ -45,8 +46,8 @@ namespace LaDa
           numeric_type const str_weight(i_str->weight());
           if( str_weight == 0e0 ) continue; // don't fit this structure.
 
-          t_Representations::str_iterator::rep_iterator i_rep = i_str->begin();
-          t_Representations::str_iterator::rep_iterator const i_rep_end = i_str->end();
+          t_FittingStructures::str_iterator::rep_iterator i_rep = i_str->begin();
+          t_FittingStructures::str_iterator::rep_iterator const i_rep_end = i_str->end();
           t_Values::str_iterator::rep_iterator i_rep_val = i_str_val->begin();
           vector_type G(vec_size, 0); // values to sum to matrix and vector.
 
@@ -90,6 +91,11 @@ namespace LaDa
             _matrix(i,j) = _matrix(j,i);
       }
 
+      void Collapse::add(Crystal::Structure const &_structure )
+      {
+        fitting_structure_.add( _structure );
+        values_.add( _structure, fitting_structure_ );
+      }
     } // namespace collapse
   } // namespace atomic_potential
 } // namespace LaDa

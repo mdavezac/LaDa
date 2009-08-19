@@ -71,7 +71,9 @@ namespace LaDa
           str_iterator end( size_t _i ) const;
 
           //! Updates values using new coefficients.
-          void update( vector_type const &_coefs, size_t _i );
+          void update( vector_type const& _coefs, t_FittingStructure const &_ftstr, size_t _i );
+          //! Adds new structure to fitting set.
+          void add(t_FittingStructure const &_ftstr, Crystal::TStructure<std::string> _structure);
 
         protected:
           //! Coordinates for each structure and representation.

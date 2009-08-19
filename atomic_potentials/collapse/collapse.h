@@ -8,6 +8,7 @@
 #include <config.h>
 #endif
 
+#include <string>
 #include <boost/numeric/ublas/matrix.hpp>
 
 #include "../numeric_types.h"
@@ -54,10 +55,12 @@ namespace LaDa
           typedef Representations t_FittingStructures;
           //! Values associated with the fitting structures and functions of the sum of seps.
           typedef Values t_Values;
+          //! Type of the variable major version of the separable function.
+          typedef VariableMajor t_VariableMajor;
 
         public:
           //! Constructor.
-          Collapse(SumOfSeparables const &_sumofseps);
+          Collapse(SumOfSeparables const &_sumofseps) : variable_major_(_sumofseps) {}
           //! Copy Constructor.
           Collapse   (Collapse const &_sos)
                    : fitting_structures_(_c.fitting_structures_),
@@ -70,9 +73,9 @@ namespace LaDa
           //! Return coefficients for coordinate \a _i.
           t_Coefficients::value_type& coefficients(size_t _i) { return coefficients_[_i]; }
           //! Updates coordinate \a _i.
-          void update(size_t _i) { values_.update(_coefficients[_i], _i); }
+          void update(size_t _i) { values_.update(_coefficients[_i], fitting_structures_, _i); }
           //! Adds a structure to the fitting set.
-          void add( Crystal::sStructure const &_structure );
+          void add(Crystal::TStructure<std::string> const &_structure);
      
         private:
           //! Weight of each structure. 
@@ -83,7 +86,8 @@ namespace LaDa
           t_Coefficients coefficients_;
           //! Coefficients of the separable function.
           t_ScalingFactors scaling_factors_;
-
+          //! Variable major version of the separable function.
+          t_VariableMajor variable_major_;
       };
     } // namespace collapse
   } // namespace atomic_potential
