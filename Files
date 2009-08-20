@@ -119,7 +119,7 @@ DARWIN_E_H  = emass_stubs.h  two_sites.h  single_site.h  vff.h  emass.h  layered
 DARWIN_E_DOC = $(DARWIN_E_H) $(DARWIN_E_CC) 
 
 CRYSTAL_CC = lattice.cc structure.cc confsplit.cc layerdepth.cc read_structure.cc \
-             epi_structure.cc fill_structure.cc ideal_lattice.cc smith.cc neighbors.cc
+             epi_structure.cc fill_structure.cc ideal_lattice.cc smith.cc 
 CRYSTAL_H  = lattice.h  structure.h structure.impl.h atom.h  confsplit.h layerdepth.h \
              read_structure.h epi_structure.h fill_structure.h fourier.h read_poscar.h \
              fractional_cartesian.h ideal_lattice.h smith.h neighbors.h enumerate.h

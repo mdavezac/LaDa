@@ -18,10 +18,14 @@ namespace LaDa
   {
     namespace collapse
     {
+      class FittingSet;
+
       //! Function values and aggregates thereof required by alternating least-square fit.
       class Values
       {
         protected:
+          //! Type of the Fitting set.
+          typedef FittingSet t_FittingSet;
           //! Type of the containers of factors (i!=j) for alternating least square fit.
           typedef std::vector // over coordinates.
                   <
@@ -71,9 +75,9 @@ namespace LaDa
           str_iterator end( size_t _i ) const;
 
           //! Updates values using new coefficients.
-          void update( vector_type const& _coefs, t_FittingStructure const &_ftstr, size_t _i );
+          void update( vector_type const& _coefs, t_FittingSet const &_ftstr, size_t _i );
           //! Adds new structure to fitting set.
-          void add(t_FittingStructure const &_ftstr, Crystal::TStructure<std::string> _structure);
+          void add(t_FittingSet const &_ftstr, Crystal::TStructure<std::string> _structure);
 
         protected:
           //! Coordinates for each structure and representation.

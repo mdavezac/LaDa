@@ -24,6 +24,11 @@ namespace LaDa
   //! \endcond
   namespace atomic_potential
   {
+    // Forward declaration, 
+    //! \cond
+    class Representation;
+    //! \endcond
+
     namespace collapse
     {
       //! \brief   Fitting structure, with coordinates, weights, and energies.
@@ -35,11 +40,11 @@ namespace LaDa
       //!          Containers are arranged such that coordinates of the
       //!          representation are the outermost index. This unnatural
       //!          storage helps perform the alternating least-square fit.
-      class Representations
+      class FittingSet
       {
         protected:
           //! Type of the coordinates for a single representation.
-          typedef std::vector<size_t> t_AtomType;
+          typedef std::vector<specie_type> t_AtomType;
           //! Type of container over coordinates for each  structure and their representations.
           typedef std::vector // container over coodinates
                   <
@@ -67,17 +72,18 @@ namespace LaDa
           //! An iterator over the structures.
           class str_iterator;
           //! Constructor.
-          Representations() {}
+          FittingSet() {}
           //! Copy Constructor.
-          Representations    (Representations const &_const)
+          FittingSet    (FittingSet const &_const)
                            : coordinates_(_c.coordinates_),
                              energies_(_c.energies_), 
                              weights_(_c.weights_){}
           //! Changes the weight of nth structure added to representations.
-          void change_weight( size_t _i, numeric_type _w)
-            { weights_[_i].first = _w; } 
+          numeric_type change_weight( size_t _i, numeric_type _w)
+            { numeric_type const old(weights_[_i].first); weights_[_i].first=_w; return old; } 
           //! Adds a structure to the representations.
-          void add( Crystal::TStructure<std::string> &_structure );
+          void add(Representation const &_representation,
+                   numeric_type _energy, numeric_type _weight);
           //! returns iterator to start of structures, for variable \a _i.
           str_iterator begin( size_t _i ) const;
           //! returns iterator to end of structures, for variable \a _i.
@@ -93,12 +99,12 @@ namespace LaDa
       };
 
       //! True if iterators are at same position.
-      bool operator==( Representations::str_iterator const& _a,
-                       Representations::str_iterator const& _b );
+      bool operator==( FittingSet::str_iterator const& _a,
+                       FittingSet::str_iterator const& _b );
 
       //! \brief Helps iterate over representations.
       //! \warning This special iterator cannot be dereferenced directly. 
-      class Representations::str_iterator
+      class FittingSet::str_iterator
       {
         friend bool operator==( str_iterator const& _a, str_iterator const& _b );
 
@@ -138,22 +144,22 @@ namespace LaDa
       };
 
       //  True if iterators are at same position.
-      inline bool operator==( Representations::str_iterator const& _a,
-                              Representations::str_iterator const& _b )
+      inline bool operator==( FittingSet::str_iterator const& _a,
+                              FittingSet::str_iterator const& _b )
       {
         LADA_ASSERT( _a.i_ == _b.i_, "Inequivalent iterators.\n");
         return _a.i_energy_ != _b.i_energy_; 
       }
       //! False if iterators are at same position.
-      inline bool operator!=( Representations::str_iterator const& _a,
-                              Representations::str_iterator const& _b )
+      inline bool operator!=( FittingSet::str_iterator const& _a,
+                              FittingSet::str_iterator const& _b )
         { return not (_a == _b);
 
       //! True if iterators are at same position.
-      bool operator==( Representations::str_iterator::rep_iterator const& _a,
-                       Representations::str_iterator::rep_iterator const& _b );
+      bool operator==( FittingSet::str_iterator::rep_iterator const& _a,
+                       FittingSet::str_iterator::rep_iterator const& _b );
       
-      class Representations::str_iterator::rep_iterator
+      class FittingSet::str_iterator::rep_iterator
       {
         friend bool operator==( rep_iterator const& _a, rep_iterator const& _b );
         public:
@@ -181,12 +187,12 @@ namespace LaDa
       };
 
       //  True if iterators are at same position.
-      inline bool operator==( Representations::str_iterator::rep_iterator const& _a,
-                              Representations::str_iterator::rep_iterator const& _b )
+      inline bool operator==( FittingSet::str_iterator::rep_iterator const& _a,
+                              FittingSet::str_iterator::rep_iterator const& _b )
         { return _a.i_coordinates_ != _b.i_coordinates_; }
       //! False if iterators are at same position.
-      inline bool operator!=( Representations::str_iterator::rep_iterator const& _a,
-                              Representations::str_iterator::rep_iterator const& _b )
+      inline bool operator!=( FittingSet::str_iterator::rep_iterator const& _a,
+                              FittingSet::str_iterator::rep_iterator const& _b )
         { return not (_a == _b);
     } // namespace collapse
   } // namespace atomic_potential

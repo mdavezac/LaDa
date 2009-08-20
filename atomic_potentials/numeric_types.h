@@ -17,6 +17,8 @@ namespace LaDa
   {
     //! Basic numeric type.
     typedef types::t_real real_type;
+    //! Basic specie type.
+    typedef size_t specie_type;
     //! Numeric vector type.
     typedef boost::numeric::ublas::vector<real_type> vector_type;
     //! Numeric matrix type.

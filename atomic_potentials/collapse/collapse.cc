@@ -8,7 +8,11 @@
 #include <boost/numeric/ublas/vector_proxy.hpp>
 
 #include <crystal/structure.h>
+
+#include "../representation.h" 
 #include "collapse.h"
+#include "values.h"
+#include "fitting_set.h"
 
 namespace LaDa
 {
@@ -37,8 +41,8 @@ namespace LaDa
         }
           
         
-        t_FittingStructures :: str_iterator i_str = fitting_structures_.begin(_i);
-        t_FittingStructures :: str_iterator const i_str_end = fitting_structures_.end(_i);
+        t_FittingSet :: str_iterator i_str = fitting_set_.begin(_i);
+        t_FittingSet :: str_iterator const i_str_end = fitting_set_.end(_i);
         t_Values::str_iterator i_str_val = values_.begin(_i);
         //! Loop over structures.
         for(; i_str != i_str_end; ++i_str, ++i_str_val)
@@ -46,8 +50,8 @@ namespace LaDa
           numeric_type const str_weight(i_str->weight());
           if( str_weight == 0e0 ) continue; // don't fit this structure.
 
-          t_FittingStructures::str_iterator::rep_iterator i_rep = i_str->begin();
-          t_FittingStructures::str_iterator::rep_iterator const i_rep_end = i_str->end();
+          t_FittingSet::str_iterator::rep_iterator i_rep = i_str->begin();
+          t_FittingSet::str_iterator::rep_iterator const i_rep_end = i_str->end();
           t_Values::str_iterator::rep_iterator i_rep_val = i_str_val->begin();
           vector_type G(vec_size, 0); // values to sum to matrix and vector.
 
@@ -56,7 +60,7 @@ namespace LaDa
           {
             numeric_type const rep_weight(i_rep->weight() * str_weight);
 
-            typedef t_FittingStructures::str_iterator::rep_iterator
+            typedef t_FittingSet::str_iterator::rep_iterator
                                        ::coordinate_iterator typedef coordinate_iterator;
             typedef t_Values::str_iterator::rep_iterator
                             ::rank_iterator typedef rank_iterator;
@@ -93,6 +97,7 @@ namespace LaDa
 
       void Collapse::add(Crystal::Structure const &_structure )
       {
+        Representation representation(_structure);
         fitting_structure_.add( _structure );
         values_.add( _structure, fitting_structure_ );
       }
