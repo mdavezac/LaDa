@@ -13,13 +13,13 @@ cubic_LDFLAGS =  $(AM_LDFLAGS)  @BOOST_LDFLAGS@ \
                  @BOOST_MPI@ @BOOST_SERIALIZATION@ @BOOST_PROGOP@ @BOOST_FS@ \
 		 @BOOST_SYSTEM@ @BOOST_REGEX@ 
 cubic_LDADD =   libce.la \
-                ../crystal/libcrystal.la \
-		../atat/libatat.la \
-		../physics/libphysics.la \
+                $(top_builddir)/crystal/libcrystal.la \
+		$(top_builddir)/atat/libatat.la \
+		$(top_builddir)/physics/libphysics.la \
 		@MPI_ADDLIB@ \
-		../print/libprint.la \
-                ../opt/libopt.la \
-		../minimizer/libminimizer.la
+		$(top_builddir)/print/libprint.la \
+                $(top_builddir)/opt/libopt.la \
+		$(top_builddir)/minimizer/libminimizer.la
 tetra_SOURCES = $(cubic_SOURCES)
 tetra_CPPFLAGS =  $(AM_CPPFLAGS) -D_TETRAGONAL_CE_
 tetra_LDFLAGS = $(cubic_LDFLAGS)
@@ -28,39 +28,18 @@ regular_SOURCES = rmain.cc
 regular_CPPFLAGS =  $(AM_CPPFLAGS)  -D_CUBIC_CE_ @GSL_CFLAGS@ @MINUIT_CFLAGS@
 regular_LDFLAGS = $(cubic_LDFLAGS) @GSL_LIBS@ @MINUIT_LIBS@
 regular_LDADD = libce.la \
-                ../crystal/libcrystal.la \
-		../atat/libatat.la \
-		../physics/libphysics.la \
-		../print/libprint.la \
-                ../opt/libopt.la \
-		../minimizer/libminimizer.la \
-		../mpi/libmpiobject.la
+                $(top_builddir)/crystal/libcrystal.la \
+		$(top_builddir)/atat/libatat.la \
+		$(top_builddir)/physics/libphysics.la \
+		$(top_builddir)/print/libprint.la \
+                $(top_builddir)/opt/libopt.la \
+		$(top_builddir)/minimizer/libminimizer.la \
+		$(top_builddir)/mpi/libmpiobject.la
 endif
 noinst_LTLIBRARIES = libce.la 
-libce_la_SOURCES = $(CE_CC)
+libce_la_SOURCES = $(ce_cc)
 libce_ladir = $(includedir)/LaDa/ce
-nobase_libce_la_HEADERS = $(CE_H) $(CE_IMPL_H)
+nobase_libce_la_HEADERS = $(ce_h) $(ce_impl_h)
 libce_la_CPPFLAGS =  $(AM_CPPFLAGS) 
 
 SUBDIRS = python
-
-../crystal/libcrystal.la: 
-	cd ../crystal; $(MAKE) libcrystal.la
-
-../atat/libatat.la: 
-	cd ../atat; $(MAKE) libatat.la
-
-../atat/libphysic.la: 
-	cd ../physics; $(MAKE) libphysics.la
-
-../mpi/libmpiobject.la:
-	cd ../mpi; $(MAKE) libmpiobject.la
-
-../print/libprint.la:
-	cd ../print; $(MAKE) libprint.la
-
-../opt/libopt.la:
-	cd ../opt; $(MAKE) libopt.la
-
-../minimizer/libminimizer.la:
-	cd ../minimizer; $(MAKE) libminimizer.la

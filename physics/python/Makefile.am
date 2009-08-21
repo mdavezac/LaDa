@@ -10,12 +10,10 @@ AM_LDFLAGS =
 
 install-exec-local: ../../python/libpython_lada.la
 
-EXTRA_DIST = $(PHYSICS_PYTHON_H) 
+EXTRA_DIST = $(physics_python_h) 
 pkgpyexec_LTLIBRARIES = physics.la 
 physics_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
-physics_la_SOURCES = $(PHYSICS_PYTHON_CC) 
+physics_la_SOURCES = $(physics_python_cc) 
 physics_la_LDFLAGS = $(AM_LDFLAGS) -module
-physics_la_LIBADD =  ../../python/libpython_lada.la 
-../../python/libpython_lada.la:
-	cd ../../python; $(MAKE) libpython_lada.la
+physics_la_LIBADD =  $(top_builddir)/python/libpython_lada.la 
 endif

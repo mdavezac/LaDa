@@ -31,7 +31,7 @@ namespace LaDa
           _matrix.resize(vec_size, vec_size);
           _vector.resize(vec_size);
         }
-        else if( _matrix.size2() != _vector.size() )
+        else if( _matrix.size1() != vec_size )
           _matrix.resize(vec_size, vec_size);
         for( size_t i(0); i < vec_size; ++i )
         {
@@ -66,12 +66,18 @@ namespace LaDa
                             ::rank_iterator typedef rank_iterator;
             rank_iterator i_rank_val = i_rep_val->begin();
             rank_iterator const i_rank_val_end = i_rep_val->end();
+            t_ScalingFactors::const_iterator i_scale = scaling_factors_.begin();
+#           ifdef LADA_DEBUG
+              t_ScalingFactors::const_iterator const i_scale_end = scaling_factors_.end();
+#           endif
             coordinate_iterator i_coord = i_rep->begin();
 
+
             // loop over ranks.
-            for(size_t i(0); i_rank_val != i_rank_val_end; ++i_rank_val )
+            for(size_t i(0); i_rank_val != i_rank_val_end; ++i_rank_val, ++i_scale )
             {
-              numeric_type factor_i( i_rank_val->other() );
+              LADA_ASSERT(i_scale != i_scale_end, "Iterator out of range.\n")
+              numeric_type factor_i( i_rank_val->other() * (*i_scale) );
               rank_iterator::function_iterator i_func = i_rank_val->begin();
               rank_iterator::function_iterator const i_func_end = i_rank_val->end();
               // loop over inner functions.

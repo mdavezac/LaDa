@@ -2,21 +2,29 @@
 #  Version: $Id$
 #
 
-ATAT_CC = findsym.cc integer.cc xtalutil.cc 
-ATAT_H  = findsym.h  integer.h  xtalutil.h lambda.impl.h \
+atat_cc = findsym.cc integer.cc xtalutil.cc 
+atat_h  = findsym.h  integer.h  xtalutil.h lambda.impl.h \
           array.h  arraylist.h   fixagg.h  fxvector.h \
 	  linklist.h  machdep.h  misc.h  vectmac.h serialize.h
-ATAT_PYTHON_H = atat.impl.hpp atatintrospection.hpp atatoperators.hpp
-ATAT_PYTHON_CC = atat.cc 
+atat_python_h = atat.impl.hpp atatintrospection.hpp atatoperators.hpp
+atat_python_cc = atat.cc 
 
-FC_MODELS_CLJ_CC = fortran.cc 
-FC_MODELS_CLJ_H = fortran.h wrapper.h 
-MODELS_CLJ_F90 = ep_com.f90 ewaldf.f90 
-MODELS_CLJ_CC = clj.cc ewald.cc lennard-jones.cc erfc.cc functional.cc
-MODELS_CLJ_H = clj.h ewald.h lennard-jones.h functional.h
-MODELS_CLJ_DOC = $(FC_MODELS_CLJ_H) $(FC_MODELS_CLJ_CC) $(MODELS_CLJ_H) $(MODELS_CLJ_CC)
-MODELS_PYTHON_H = clj.hpp functional.hpp
-MODELS_PYTHON_CC = python.cc clj.cc functional.cc
+ap_cc = representation.cc
+ap_h  = bases.h  bases.impl.h  functions.h  numeric_types.h  representation.h \
+        separable.h  sum_of_separables.h
+ap_doc = $(ap_h) $(ap_cc)
+ap_collapse_cc = collapse.cc  fitting_set.cc  values.cc  variable_major.cc
+ap_collapse_h  = collapse.h  fitting_set.h  values.h  variable_major.h
+ap_collapse_doc = $(ap_collapse_h) $(ap_collapse_cc)
+
+fc_models_clj_cc = fortran.cc 
+fc_models_clj_h = fortran.h wrapper.h 
+models_clj_f90 = ep_com.f90 ewaldf.f90 
+models_clj_cc = clj.cc ewald.cc lennard-jones.cc erfc.cc functional.cc
+models_clj_h = clj.h ewald.h lennard-jones.h functional.h
+models_clj_doc = $(fc_models_clj_h) $(fc_models_clj_cc) $(models_clj_h) $(models_clj_cc)
+models_python_h = clj.hpp functional.hpp
+models_python_cc = python.cc clj.cc functional.cc
 
 DARWIN_GRAPH_CC = graph/graph.cc
 DARWIN_GRAPH_IMPL_H = graph/breeders.impl.h graph/comm.impl.h graph/evaluation.impl.h \
@@ -118,25 +126,25 @@ DARWIN_E_H  = emass_stubs.h  two_sites.h  single_site.h  vff.h  emass.h  layered
               $(DARWIN_E_IMPL_H)
 DARWIN_E_DOC = $(DARWIN_E_H) $(DARWIN_E_CC) 
 
-CRYSTAL_CC = lattice.cc structure.cc confsplit.cc layerdepth.cc read_structure.cc \
+crystal_cc = lattice.cc structure.cc confsplit.cc layerdepth.cc read_structure.cc \
              epi_structure.cc fill_structure.cc ideal_lattice.cc smith.cc 
-CRYSTAL_H  = lattice.h  structure.h structure.impl.h atom.h  confsplit.h layerdepth.h \
+crystal_h  = lattice.h  structure.h structure.impl.h atom.h  confsplit.h layerdepth.h \
              read_structure.h epi_structure.h fill_structure.h fourier.h read_poscar.h \
              fractional_cartesian.h ideal_lattice.h smith.h neighbors.h enumerate.h
-CRYSTAL_DOC = $(CRYSTAL_H) $(CRYSTAL_CC) 
-CRYSTAL_PYTHON_H = structure.hpp atom.hpp lattice.hpp read_structure.hpp \
+crystal_doc = $(crystal_h) $(crystal_cc) 
+crystal_python_h = structure.hpp atom.hpp lattice.hpp read_structure.hpp \
                    smith.hpp enumerate.hpp layerdepth.hpp
-CRYSTAL_PYTHON_CC = structure.cc atom.cc lattice.cc read_structure.cc \
+crystal_python_cc = structure.cc atom.cc lattice.cc read_structure.cc \
                     python.cc smith.cc enumerate.cc layerdepth.cc
 
-CE_CC     = cluster.cc harmonic.cc  polynome.cc regularization.cc fit.cc
-CE_H      = cluster.h  constituent_strain.h  functional_builder.h  harmonic.h \
+ce_cc     = cluster.cc harmonic.cc  polynome.cc regularization.cc fit.cc
+ce_h      = cluster.h  constituent_strain.h  functional_builder.h  harmonic.h \
             polynome.h regularization.h fit.h drautz_diaz_ortiz.h
-CE_IMPL_H = constituent_strain.impl.h  functional_builder.impl.h  harmonic.impl.h \
+ce_impl_h = constituent_strain.impl.h  functional_builder.impl.h  harmonic.impl.h \
             cluster.impl.h fit.impl.h
-CE_DOC = $(CE_H) $(CE_CC) 
-CE_PYTHON_H = ce.hpp ce.impl.hpp
-CE_PYTHON_CC = ce.cc python.cc
+ce_doc = $(ce_h) $(ce_cc) 
+ce_python_h = ce.hpp ce.impl.hpp
+ce_python_cc = ce.cc python.cc
 
 LAPACK_F90 = dlae2.f   dlanst.f  dlapy2.f  dlarf.f   dlarft.f  dlascl.f \
 	     dlasr.f   dlassq.f  dorg2l.f  dorgql.f  dorgtr.f  dsterf.f \
@@ -150,24 +158,24 @@ LAPACK_CC = lapack.cc
 LAPACK_H  = lapack.h
 LAPACK_DOC = $(LAPACK_H) $(LAPACK_CC) 
 
-MPI_CC     = 
-MPI_H      = mpi_object.h macros.h
-MPI_DOC    = $(MPI_H) $(MPI_CC)
-OPT_H = ndim_iterator.h minimize_base.h polynome.h \
+mpi_cc     = 
+mpi_h      = mpi_object.h macros.h
+mpi_doc    = $(mpi_h) $(mpi_cc)
+
+opt_h = ndim_iterator.h minimize_base.h polynome.h \
         types.h function_base.h \
 	va_minimizer.h fitness_function.h  function_functors.h monome.h traits.h \
         fuzzy.h atat.h debug.h va_function.h random.h algorithms.h \
         bpo_macros.h modifiers.h tuple_io.h  leave_many_out.h 
-       
-OPT_CC = random.cc leave_many_out.cc 
-OPT_PYTHON_CONVENIENCE_H =  convex_hull.h errors.h convex_hull.impl.h \
+opt_cc = random.cc leave_many_out.cc 
+opt_python_convenience_h =  convex_hull.h errors.h convex_hull.impl.h \
                             tinyxml.h initial_path.h fortran_dirio.h smith_normal_form.h
-OPT_PYTHON_CONVENIENCE_CC = convex_hull.cc errors.cc tinyxml.cc \
+opt_python_convenience_cc = convex_hull.cc errors.cc tinyxml.cc \
                             initial_path.cc fortran_dirio.cc smith_normal_form.cc
-OPT_DOC = $(OPT_H) $(OPT_CC) $(OPT_PYTHON_CONVENIENCE_CC)
-OPT_PYTHON_CC = errortuple.cc python.cc
-OPT_PYTHON_H = errortuple.hpp convexhull.impl.hpp
-OPT_F90 = rational_mathematics.f90
+opt_doc = $(opt_h) $(opt_cc) $(opt_python_convenience_cc) $(opt_python_convenience_h)
+opt_python_cc = errortuple.cc python.cc
+opt_python_c = errortuple.hpp convexhull.impl.hpp
+opt_f90 = rational_mathematics.f90
 
 FACTORY_CC =
 FACTORY_H = chain_connect_attribute.h  chainconnects.h factory.h \
@@ -187,16 +195,17 @@ PESCAN_DOC = $(PESCAN_H) $(PESCAN_CC) $(PESCAN_F90) $(PESCAN_IMPL_H)
 PESCAN_PYTHON_CC = escan.cc bandgap.cc python.cc emass.cc
 PESCAN_PYTHON_H = escan.hpp bandgap.hpp emass.hpp
 
-PHYSICS_CC = physics.cc
-PHYSICS_H  = physics.h
-PHYSICS_DOC = $(PHYSICS_H) $(PHYSICS_CC) 
-PHYSICS_PYTHON_CC = python.cc
+physics_cc = physics.cc
+physics_h  = physics.h
+physics_doc = $(physics_h) $(physics_cc) 
+physics_python_h  =
+physics_python_cc = python.cc
 
-PRINT_CC = manip.cc xmg.cc stdout.cc base.cc columns.cc
-PRINT_H  = manip.h  xmg.h  stdout.h  base.h  operations.h columns.h
-PRINT_DOC = $(PRINT_H) $(PRINT_CC) 
+print_cc = manip.cc xmg.cc stdout.cc base.cc columns.cc
+print_h  = manip.h  xmg.h  stdout.h  base.h  operations.h columns.h
+print_doc = $(print_h) $(print_cc) 
 
-PYTHON_H = xml.hpp misc.hpp std_vector.hpp std_map.hpp std_map.impl.hpp debug.hpp
+python_h = xml.hpp misc.hpp std_vector.hpp std_map.hpp std_map.impl.hpp debug.hpp
 
 MINIMIZER_H =  allsq.h  cgs.h  decoupled.h  frprmn.h  function_wrapper.h  gsl.h \
                gsl_lsq.h  gsl_mins.h  gsl_nllsq.h  gsl_simplex.h  minuit2.h \
@@ -250,16 +259,18 @@ ALL_DOCS = $(top_srcdir)/doxy.conf $(top_srcdir)/$(DOCS_H) \
            $(addprefix $(top_srcdir)/darwin/, $(DARWIN_L_DOC)) \
            $(addprefix $(top_srcdir)/darwin/, $(DARWIN_E_DOC)) \
            $(addprefix $(top_srcdir)/darwin/, $(DARWIN_ALLOYLAYERS_DOC)) \
-           $(addprefix $(top_srcdir)/crystal/,$(CRYSTAL_DOC)) \
-           $(addprefix $(top_srcdir)/ce/,$(CE_DOC)) \
+           $(addprefix $(top_srcdir)/atomic_potentials/,$(ap_doc)) \
+           $(addprefix $(top_srcdir)/atomic_potentials/collapse,$(ap_collapse_doc)) \
+           $(addprefix $(top_srcdir)/crystal/,$(crystal_doc)) \
+           $(addprefix $(top_srcdir)/ce/,$(ce_doc)) \
            $(addprefix $(top_srcdir)/lapack/,$(LAPACK_DOC)) \
-           $(addprefix $(top_srcdir)/mpi/,$(MPI_DOC)) \
-           $(addprefix $(top_srcdir)/opt/,$(OPT_DOC)) \
-           $(addprefix $(top_srcdir)/models/,$(MODELS_CLJ_DOC)) \
+           $(addprefix $(top_srcdir)/mpi/,$(mpi_doc)) \
+           $(addprefix $(top_srcdir)/opt/,$(opt_doc)) \
+           $(addprefix $(top_srcdir)/models/,$(models_clj_doc)) \
            $(addprefix $(top_srcdir)/pescan_interface/,$(EMASS_DOC)) \
            $(addprefix $(top_srcdir)/pescan_interface/,$(PESCAN_DOC)) \
-           $(addprefix $(top_srcdir)/physics/,$(PHYSICS_DOC)) \
-           $(addprefix $(top_srcdir)/print/,$(PRINT_DOC)) \
+           $(addprefix $(top_srcdir)/physics/,$(physics_doc)) \
+           $(addprefix $(top_srcdir)/print/,$(print_doc)) \
            $(addprefix $(top_srcdir)/separable/,$(SEPARABLE_DOC)) \
            $(addprefix $(top_srcdir)/separable/fixedlattice/,$(SEPARABLES_DOC)) \
            $(addprefix $(top_srcdir)/vff/,$(VFF_FORTRAN_DOC)) \
@@ -341,3 +352,58 @@ EXTRA_FILES =  $(addprefix docsource/, $(DOCS)) \
             #  test/bandgap_opt/calc \
             #  test/layered_opt/calc \
             #  test/bandgap_opt/calc 
+
+$(top_builddir)/crystal/libcrystal.la: $(addprefix $(top_srcdir)/crystal/, $(crystal_h) )\
+                                       $(addprefix $(top_srcdir)/crystal/, $(crystal_cc) ) 
+	@cd $(top_builddir)/crystal; $(MAKE) libcrystal.la
+
+$(top_builddir)/physics/libphysics.la: $(addprefix $(top_srcdir)/physics/, $(physics_h) )\
+                                       $(addprefix $(top_srcdir)/physics/, $(physics_cc) ) 
+	@cd $(top_builddir)/physics; $(MAKE) libphysics.la
+
+$(top_builddir)/atat/libatat.la: $(addprefix $(top_srcdir)/atat/, $(atat_h) )\
+                                 $(addprefix $(top_srcdir)/atat/, $(atat_cc) ) 
+	@cd $(top_builddir)/atat; $(MAKE) libatat.la
+
+$(top_builddir)/mpi/libmpiobject.la: $(addprefix $(top_srcdir)/mpi/, $(mpi_h) )\
+                                     $(addprefix $(top_srcdir)/mpi/, $(mpi_cc) ) 
+	@cd $(top_builddir)/mpi; $(MAKE) libmpiobject.la
+
+$(top_builddir)/mpi/libprint.la: $(addprefix $(top_srcdir)/print/, $(print_h) )\
+                                 $(addprefix $(top_srcdir)/print/, $(print_cc) ) 
+	@cd $(top_builddir)/print; $(MAKE) libprint.la
+		
+$(top_builddir)/opt/libopt.la: $(addprefix $(top_srcdir)/opt/, $(opt_h) )\
+                               $(addprefix $(top_srcdir)/opt/, $(opt_cc) ) 
+	@cd $(top_builddir)/opt; $(MAKE) libopt.la
+		
+$(top_builddir)/python/libpython_lada.la: $(addprefix $(top_srcdir)/python/, $(python_h) )\
+                                          $(addprefix $(top_srcdir)/python/, $(python_cc) ) 
+	@cd $(top_builddir)/python; $(MAKE) libpython_lada.la
+
+		
+$(top_builddir)/ce/libce.la: $(addprefix $(top_srcdir)/ce/, $(ce_h) )\
+                             $(addprefix $(top_srcdir)/ce/, $(ce_impl_h) ) \
+                             $(addprefix $(top_srcdir)/ce/, $(ce_cc) ) 
+	@cd $(top_builddir)/ce; $(MAKE) libce.la
+		
+$(top_builddir)/vff/libvff.la: $(addprefix $(top_srcdir)/vff/, $(VFF_H) )\
+                               $(addprefix $(top_srcdir)/vff/, $(VFF_CC) ) 
+	@cd $(top_builddir)/vff; $(MAKE) libvff.la
+		
+$(top_builddir)/minimizer/libminimizer.la: $(addprefix $(top_srcdir)/minimizer/, $(MINIMIZER_H) )\
+                                           $(addprefix $(top_srcdir)/minimizer/, $(MINIMIZER_CC) ) 
+	@cd $(top_builddir)/minimizer; $(MAKE) libminimizer.la
+		
+		
+$(top_builddir)/models/libmodels.la: $(addprefix $(top_srcdir)/models/, $(models_clj_h) )\
+                                     $(addprefix $(top_srcdir)/models/, $(models_clj_cc) ) \
+                                     $(addprefix $(top_srcdir)/models/, $(models_clj_f90) ) \
+	@cd $(top_builddir)/models; $(MAKE) libmodels.la
+
+$(top_builddir)/pescan_interface/libescan.la: \
+    $(addprefix $(top_srcdir)/pescan_interface/, $(PESCAN_H) )\
+    $(addprefix $(top_srcdir)/pescan_interface/, $(PESCAN_CC) ) 
+	@cd $(top_builddir)/pescan_interface; $(MAKE) libescan.la
+
+

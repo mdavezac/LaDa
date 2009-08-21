@@ -35,7 +35,7 @@ namespace LaDa
         //! Number of atomic species.
         const static N = 2;
         //! Type of the argument.
-        typedef std::pair<numeric_type, size_t> arg_type;
+        typedef std::pair<numeric_type, specie_type> arg_type;
         //! Type of the return.
         typedef numeric_type result_type;
 

@@ -9,12 +9,10 @@ AM_CPPFLAGS = -I $(top_srcdir) @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
 AM_LDFLAGS =  @BOOST_LDFLAGS@ @BOOST_PYTHON@
 
 
-EXTRA_DIST = $(MODELS_PYTHON_H) 
+EXTRA_DIST = $(models_python_h) 
 pkgpyexec_LTLIBRARIES = models.la 
 models_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
-models_la_SOURCES = $(MODELS_PYTHON_CC) 
+models_la_SOURCES = $(models_python_cc) 
 models_la_LDFLAGS = $(AM_LDFLAGS) -module
-models_la_LIBADD =  ../../python/libpython_lada.la 
-../../python/libpython_lada.la:
-	cd ../../python; $(MAKE) libpython_lada.la
+models_la_LIBADD =  $(top_builddir)/python/libpython_lada.la 
 endif

@@ -26,7 +26,9 @@ namespace LaDa
         protected:
           //! Type of the Fitting set.
           typedef FittingSet t_FittingSet;
-          //! Type of the containers of factors (i!=j) for alternating least square fit.
+          //! \brief Type of the containers of factors (i!=j) for alternating least square fit.
+          //! \details elements: \f$crv =  \sum_o \alpha_{o,r,i}[x_i^{(u,v)}] *
+          //!                       g_{o,r,i}[x_i^{(u,v)}]\f$.
           typedef std::vector // over coordinates.
                   <
                     std::vector // over structures.
@@ -37,7 +39,9 @@ namespace LaDa
                       >
                     >
                   > t_CoordRankValue;
-          //! Type of the containers of factors (i!=j) for alternating least square fit.
+          //! \brief Type of the containers of factors (i!=j) for alternating least square fit.
+          //! \details elements: \f$rv =  \Prod_i\sum_o \alpha_{o,r,i}[x_i^{(u,v)}] *
+          //!             g_{o,r,i}[x_i^{(u,v)}]\f$.
           typedef std::vector // over structures.
                   <
                     std::vector // over representations.
@@ -45,7 +49,8 @@ namespace LaDa
                       std::vector<numeric_type> // over ranks.
                     >
                   > t_RankValues;
-          //! Type of the containers of function values.
+          //! \brief Type of the containers of function values.
+          //! \details elements: \$[ g_{o,r,i}[x_i^{(u,v)}]\f$
           typedef std::vector // over coordinates
                   < 
                     std::vector // over structures

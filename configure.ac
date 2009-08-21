@@ -43,6 +43,14 @@ AC_ARG_ENABLE(models,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-models) ;;
      esac],[models=false])
 
+AC_ARG_ENABLE(potentials,
+     [  --enable-potentials              Compiles generalized atomic potentials.],
+     [case "${enableval}" in
+       yes) potentials=true ;;
+       no)  potentials=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-potentials) ;;
+     esac],[potentials=false])
+
 AC_ARG_ENABLE(python,
      [  --enable-python               Compiles python bindings.],
      [case "${enableval}" in
@@ -281,6 +289,7 @@ AM_CONDITIONAL(DOPYTHONPESCAN, test x$python$pescan$direct_iaga = xtruetruetrue)
 AM_CONDITIONAL(DOPYTHON, test x$python = xtrue)
 AM_CONDITIONAL(DOSEPARABLE, test x$separable = xtrue)
 AM_CONDITIONAL(DOMODELS, test x$models = xtrue)
+AM_CONDITIONAL(DOPOTENTIALS, test x$potentials = xtrue)
 AM_CONDITIONAL(DOMINIMIZER, test xtrue = xtrue)
 
 
@@ -369,7 +378,8 @@ AC_OUTPUT(Makefile atat/Makefile atat/python/Makefile physics/Makefile physics/p
           pescan_interface/python/Makefile
           print/Makefile lapack/Makefile separable/Makefile ce/Makefile ce/python/Makefile
           python/Makefile separable/fixedlattice/Makefile factory/Makefile
-          minimizer/Makefile minimizer/python/Makefile models/Makefile models/python/Makefile )
+          minimizer/Makefile minimizer/python/Makefile models/Makefile models/python/Makefile 
+          atomic_potentials/Makefile atomic_potentials/collapse/Makefile )
 
 echo ""; echo ""
 echo "Will Compile following modules: "
@@ -396,6 +406,9 @@ if test "$ceopt" = true; then
 fi
 if test "$models" = true; then
   echo " _ Model functionals"
+fi
+if test "$potentials" = true; then
+  echo " _ Generalized atomic potentials."
 fi
 # if test x$emassopt = xtrue; then
 #   echo " _ Genetic Algorithm for Electronic Mass Optimization"

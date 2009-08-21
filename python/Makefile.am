@@ -9,16 +9,16 @@ if DOMPI
   AM_LDFLAGS += @BOOST_MPI@ 
 endif
 
-EXTRA_DIST = $(PYTHON_H)
+EXTRA_DIST = $(python_h)
 lib_LTLIBRARIES = libpython_lada.la 
 libpython_lada_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
 libpython_lada_la_SOURCES = 
 libpython_lada_la_LDFLAGS = $(AM_LDFLAGS)
-libpython_lada_la_LIBADD = ../crystal/libcrystal.la \
-                            ../atat/libatat.la \
-                            ../opt/libpythonconvenience.la \
-                            ../physics/libphysics.la \
-                            ../print/libprint.la 
+libpython_lada_la_LIBADD =  $(top_builddir)/crystal/libcrystal.la \
+                            $(top_builddir)/atat/libatat.la \
+                            $(top_builddir)/opt/libpythonconvenience.la \
+                            $(top_builddir)/physics/libphysics.la \
+                            $(top_builddir)/print/libprint.la 
 
 pythonextensions = opt physics atat crystal minimizer 
 if DOCE
@@ -27,12 +27,12 @@ if DOCE
 endif 
 if DOVFF
   pythonextensions += vff
-  libpython_lada_la_LIBADD += ../vff/libvff.la 
+  libpython_lada_la_LIBADD += $(top_builddir)/vff/libvff.la 
 endif
 if DOPYTHONPESCAN
   pythonextensions += escan
   libpython_lada_la_LDFLAGS += @FCLIBS@ @LD_IAGA_FLAGS@
-  libpython_lada_la_LIBADD += ../pescan_interface/libescan.la 
+  libpython_lada_la_LIBADD += $(top_builddir)/pescan_interface/libescan.la 
 endif
 
 if DOPYTHONPESCAN
@@ -44,12 +44,12 @@ endif
 
 if DOMODELS
   pythonextensions += models 
-  libpython_lada_la_LIBADD += ../models/libmodels.la 
+  libpython_lada_la_LIBADD += $(top_builddir)/models/libmodels.la 
 endif
 
 if DOMINIMIZER
   pythonextensions += minimizer 
-  libpython_lada_la_LIBADD += ../minimizer/libminimizer.la
+  libpython_lada_la_LIBADD += $(top_builddir)/minimizer/libminimizer.la
   libpython_lada_la_LDFLAGS += @GSL_LIBS@  @MINUIT_LIBS@
   libpython_lada_la_CPPFLAGS += @GSL_CFLAGS@ @MINUIT_CFLAGS@ @FCLIBS@
 endif
@@ -66,39 +66,5 @@ clean-local:
 	-rm -f __init__.py
 
 # EXTRA_DIST = $(PYTHON_H) $(PYTHON_CE_H) $(PYTHON_VFF_H) $(PYTHON_ESCAN_H)
-
-../crystal/libcrystal.la: 
-	cd ../crystal; $(MAKE) libcrystal.la
-
-../atat/libatat.la: 
-	cd ../atat; $(MAKE) libatat.la
-
-../physics/libphysics.la: 
-	cd ../physics; $(MAKE) libphysics.la
-
-../mpi/libmpiobject.la:
-	cd ../mpi; $(MAKE) libmpiobject.la
-
-../ce/libce.la:
-	cd ../ce; $(MAKE) libce.la
-
-../vff/libvff.la:
-	cd ../vff; $(MAKE) libvff.la
-
-../minimizer/libminimizer.la:
-	cd ../minimizer; $(MAKE) libminimizer.la
-
-../opt/libpythonconvenience.la : 
-	cd ../opt; $(MAKE) libpythonconvenience.la
-
-../opt/errors.o : ../opt/errors.cc
-	cd ../opt; $(MAKE) errors.o
-	
-../pescan_interface/libescan.la: 
-	cd ../pescan_interface; $(MAKE) libescan.la
-
-../print/libprint.la: 
-	cd ../print; $(MAKE) libprint.la
-
-../models/libmodels.la: 
-	cd ../models; $(MAKE) libmodels.la
+$(top_builddir)/opt/errors.o : $(top_srcdir)/opt/errors.cc
+	cd $(top_builddir)/opt; $(MAKE) errors.o

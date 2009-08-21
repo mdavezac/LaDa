@@ -14,10 +14,17 @@ namespace LaDa
 {
   namespace AtomicPotential
   {
+    // Forward declaration.
+    //! \cond
+    namespace collapse
+    {
+      class VariableMajorRange;
+    }
+    //! \endcond
+
     //! A separable function.
     class SumOfSeparables
     {
-        friend class VariableMajor;
       public:
         //! Argument type.
         typedef Separable::arg_type arg_type;

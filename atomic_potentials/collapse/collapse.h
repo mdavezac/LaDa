@@ -62,7 +62,7 @@ namespace LaDa
 
         public:
           //! Constructor.
-          Collapse(SumOfSeparables const &_sumofseps) : variable_major_(_sumofseps) {}
+          Collapse(SumOfSeparables const &_sumofseps) : sumofseps_(_sumofseps) {}
           //! Copy Constructor.
           Collapse   (Collapse const &_sos)
                    : fitting_set_(_c.fitting_set_),
@@ -72,12 +72,12 @@ namespace LaDa
      
           //! Creates A matrix and b vector for coordinate \a _i. 
           bool lsq_data(matrix_type &_matrix, vector_type &_vector, size_t _i) const;
-          //! Return coefficients for coordinate \a _i.
-          t_Coefficients::value_type& coefficients(size_t _i) { return coefficients_[_i]; }
           //! Updates coordinate \a _i.
           void update(size_t _i) { values_.update(_coefficients[_i], fitting_set_, _i); }
           //! Adds a structure to the fitting set.
           void add(Crystal::TStructure<std::string> const &_structure);
+          //! Reassigns coefficients.
+          void reassign() const;
      
         private:
           //! Weight of each structure. 
@@ -88,8 +88,8 @@ namespace LaDa
           t_Coefficients coefficients_;
           //! Coefficients of the separable function.
           t_ScalingFactors scaling_factors_;
-          //! Variable major version of the separable function.
-          t_VariableMajor variable_major_;
+          //! Sum of separables function.
+          SumOfSeparables &sumofseps_;
       };
     } // namespace collapse
   } // namespace atomic_potential

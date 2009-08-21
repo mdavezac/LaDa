@@ -10,12 +10,10 @@ AM_LDFLAGS =  @BOOST_LDFLAGS@ @BOOST_PYTHON@
 
 install-exec-local: ../../python/libpython_lada.la
 
-EXTRA_DIST = $(ATAT_PYTHON_H) 
+EXTRA_DIST = $(atat_python_h) 
 pkgpyexec_LTLIBRARIES = atat.la 
 atat_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
-atat_la_SOURCES = $(ATAT_PYTHON_CC) 
+atat_la_SOURCES = $(atat_python_cc) 
 atat_la_LDFLAGS = $(AM_LDFLAGS) -module
-atat_la_LIBADD =  ../../python/libpython_lada.la 
-../../python/libpython_lada.la:
-	cd ../../python; $(MAKE) libpython_lada.la
+atat_la_LIBADD =  $(top_builddir)/python/libpython_lada.la 
 endif

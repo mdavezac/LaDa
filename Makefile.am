@@ -39,9 +39,12 @@ endif
 if DOMODELS
   MODELSDIR = models
 endif
+if DOPOTENTIALS
+  POTENTIALSDIR = atomic_potentials
+endif
 SUBDIRS = $(PYTHONDIR) $(MPISUBDIR) atat physics opt minimizer crystal print $(CEDIR) $(VFFSUBDIR) \
 	  $(PESCANSUBDIR) $(LAPACKDIR) $(DARWINSUBDIR) $(SEPARABLEDIR) \
-	  factory $(MODELSDIR)
+	  factory $(MODELSDIR) $(POTENTIALSDIR)
 revision.h: force
 	@cd $(top_srcdir); scripts/max_revision.pl
 force: ;

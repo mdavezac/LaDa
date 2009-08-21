@@ -10,12 +10,10 @@ AM_LDFLAGS =
 
 install-exec-local: ../../python/libpython_lada.la
 
-EXTRA_DIST = $(OPT_PYTHON_H) 
+EXTRA_DIST = $(opt_python_h) 
 pkgpyexec_LTLIBRARIES = opt.la 
 opt_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
-opt_la_SOURCES = $(OPT_PYTHON_CC) 
+opt_la_SOURCES = $(opt_python_cc) 
 opt_la_LDFLAGS = $(AM_LDFLAGS) -module
-opt_la_LIBADD =  ../../python/libpython_lada.la 
-../../python/libpython_lada.la:
-	cd ../../python; $(MAKE) libpython_lada.la
+opt_la_LIBADD =  $(top_builddir)/python/libpython_lada.la 
 endif
