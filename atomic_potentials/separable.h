@@ -12,7 +12,7 @@
 
 namespace LaDa
 {
-  namespace AtomicPotential
+  namespace atomic_potential
   {
     //! A separable function.
     class Separable
@@ -25,31 +25,32 @@ namespace LaDa
         typedef Functions::result_type result_type;
 
         //! Type of the functions in list.
-        typedef Separable t_Function;
+        typedef Functions t_Function;
         //! Type of the function-list.
         typedef std::list<t_Function> t_Functions;
 
         //! Type of the iterator over functions and coefficients.
-        typedef t_Function::iterator iterator;
+        typedef t_Functions::iterator iterator;
         //! Type of the iterator over functions and coefficients.
-        typedef t_Function::const_iterator const_iterator;
+        typedef t_Functions::const_iterator const_iterator;
 
         //! Constructor.
         Separable() {}
         //! Copy Constructor.
-        Separable   ( Separable const& _c ) : functions_(_c.functions) {}
+        Separable   ( Separable const& _c ) : functions_(_c.functions_) {}
 
         //! Sums over all functionals.
         template<class T_CONTAINER> 
           result_type operator()( T_CONTAINER const& _x ) const
           {
-            LADA_ASSERT( functions_.size() == _x.size(), "Incoherent containers.\n" ) 
+            LADA_ASSERT( functions_.size() <= _x.size(), "Incoherent containers.\n" ) 
   
             result_type result(1);
             t_Functions :: const_iterator i_func( functions_.begin() );
             t_Functions :: const_iterator const i_func_end( functions_.end() );
-            t_Functions :: const_iterator i_x( _x.begin() );
-            for(; i_func != i_func_end; ++i_func) result *= (*i_func)(*i_x);
+            typename T_CONTAINER :: const_iterator i_x( _x.begin() );
+            for(; i_func != i_func_end; ++i_func, ++i_x)
+              result *= (*i_func)(*i_x);
             return result;
           }
 
@@ -71,8 +72,6 @@ namespace LaDa
 
         result_type normalize()
         {
-          LADA_ASSERT( functions_.size() == coefficients_.size(), "Incoherent containers.\n" ) 
-
           result_type result(1);
           t_Functions :: iterator i_func( functions_.begin() );
           t_Functions :: iterator const i_func_end( functions_.end() );
@@ -86,6 +85,6 @@ namespace LaDa
     };
 
 
-  } // namespace AtomicPotential
+  } // namespace atomic_potential
 } // namespace LaDa
 #endif

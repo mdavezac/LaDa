@@ -11,18 +11,20 @@
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 
+#include <opt/types.h>
+
 namespace LaDa
 {
   namespace atomic_potential
   {
     //! Basic numeric type.
-    typedef types::t_real real_type;
+    typedef types::t_real numeric_type;
     //! Basic specie type.
     typedef size_t specie_type;
     //! Numeric vector type.
-    typedef boost::numeric::ublas::vector<real_type> vector_type;
+    typedef boost::numeric::ublas::vector<numeric_type> vector_type;
     //! Numeric matrix type.
-    typedef boost::numeric::ublas::matrix<real_type> matrix_type;
+    typedef boost::numeric::ublas::matrix<numeric_type> matrix_type;
   } // namespace atomic_potential
 } // namespace LaDa
 #endif

@@ -20,7 +20,7 @@ namespace LaDa
 
         str_iterator result;
         result.i_coordinates_ = coordinates_[_i].begin();
-        result.i_energy = energies_.begin();
+        result.i_energy_ = energies_.begin();
         result.i_weight_ = weights_.begin();
         return result;
       }
@@ -30,7 +30,7 @@ namespace LaDa
 
         str_iterator result;
         result.i_coordinates_ = coordinates_[_i].end();
-        result.i_energy = energies_.end();
+        result.i_energy_ = energies_.end();
         result.i_weight_ = weights_.end();
         return result;
       }
@@ -40,7 +40,7 @@ namespace LaDa
         {
           rep_iterator result;
           result.i_coordinates_ = i_coordinates_->begin();
-          result.i_weight_ = weights_->second.begin();
+          result.i_weight_ = i_weight_->second.begin();
           return result;
         }
 
@@ -49,7 +49,7 @@ namespace LaDa
         {
           rep_iterator result;
           result.i_coordinates_ = i_coordinates_->end();
-          result.i_weight_ = weights_->second.end();
+          result.i_weight_ = i_weight_->second.end();
           return result;
         }
 
@@ -62,25 +62,26 @@ namespace LaDa
         for(; i_coord != i_coord_end; ++i_coord)
         { 
           i_coord->resize( i_coord->size()+1 );
-          t_Coordinates::value_type coord_container = i_coord->back();
-          Representation::const_iterator i_rep = representation.begin();
-          Representation::const_iterator const i_rep_end = representation.end();
+          t_Coordinates::value_type::value_type& coord_container = i_coord->back();
+          Representation::const_iterator i_rep = _representation.begin();
+          Representation::const_iterator const i_rep_end = _representation.end();
           for(; i_rep != i_rep_end; ++i_rep)
           {
             // creates coordinate vector.
             i_coord->back().resize(i_coord->back().size()+1);
-            t_Coordinates::value_type::value_type type_container = i_coord->back().back();
-            foreach(Representation::const_iterator::value_type const& value, i_rep->variables)
-              type_container.back( value.second )
+            t_Coordinates::value_type::value_type
+                                     ::value_type &type_container = i_coord->back().back();
+            foreach(VariableSet::t_Variables::value_type const& value, i_rep->variables)
+              type_container.push_back( value.second );
           }
         }
         // adds energy.
-        energies_.push_back(_energy)
+        energies_.push_back(_energy);
 
         // adds weights.
         {
-          Representation::const_iterator i_rep = representation.begin();
-          Representation::const_iterator const i_rep_end = representation.end();
+          Representation::const_iterator i_rep = _representation.begin();
+          Representation::const_iterator const i_rep_end = _representation.end();
           t_Weights::value_type::second_type weights;
           for(; i_rep != i_rep_end; ++i_rep) weights.push_back(i_rep->weight);
           weights_.push_back( t_Weights::value_type(_weight, weights) );

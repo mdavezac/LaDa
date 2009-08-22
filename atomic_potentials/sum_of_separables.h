@@ -8,23 +8,26 @@
 #include <config.h>
 #endif
 
+#include <boost/iterator/zip_iterator.hpp>
+
 #include "separable.h"
 
 namespace LaDa
 {
-  namespace AtomicPotential
+  namespace atomic_potential
   {
     // Forward declaration.
     //! \cond
     namespace collapse
     {
-      class VariableMajorRange;
+      class CoordRange;
     }
     //! \endcond
 
     //! A separable function.
     class SumOfSeparables
     {
+        friend class collapse::CoordRange;
       public:
         //! Argument type.
         typedef Separable::arg_type arg_type;
@@ -32,13 +35,13 @@ namespace LaDa
         typedef Separable::result_type result_type;
 
         //! Type of the functions in list.
-        typedef Functions t_Function;
+        typedef Separable t_Function;
         //! Type of the function-list.
         typedef std::list<t_Function> t_Functions;
         //! Type of the list of coefficients.
         typedef result_type t_Coefficient;
         //! Type of the list of coefficients.
-        typedef boost::numeric::ublas::vector<t_Coefficient> t_Coefficients;
+        typedef std::vector<t_Coefficient> t_Coefficients;
 
         //! Type of the iterator over functions and coefficients.
         typedef boost::zip_iterator
@@ -55,7 +58,7 @@ namespace LaDa
         SumOfSeparables() {}
         //! Copy Constructor.
         SumOfSeparables   ( SumOfSeparables const& _c )
-                        : functions_(_c.functions), coefficients_(_c.coefficients) {}
+                        : functions_(_c.functions_), coefficients_(_c.coefficients_) {}
 
         //! Sums over all functionals.
         template<class T_CONTAINER> 
@@ -74,16 +77,16 @@ namespace LaDa
 
         //! Returns iterator to functions and coefficients.
         iterator begin()
-          { return iterator( boost::make_tuple(functions_.begin(), coefficients.begin())); }
+          { return iterator( boost::make_tuple(functions_.begin(), coefficients_.begin())); }
         //! Returns iterator to functions and coefficients.
         const_iterator begin() const
-          { return iterator( boost::make_tuple(functions_.begin(), coefficients.begin())); }
+          { return const_iterator( boost::make_tuple(functions_.begin(), coefficients_.begin())); }
         //! Returns iterator to functions and coefficients.
         iterator end()
-          { return iterator( boost::make_tuple(functions_.end(), coefficients.end())); }
+          { return iterator( boost::make_tuple(functions_.end(), coefficients_.end())); }
         //! Returns iterator to functions and coefficients.
         const_iterator end() const
-          { return iterator( boost::make_tuple(functions_.end(), coefficients.end())); }
+          { return const_iterator( boost::make_tuple(functions_.end(), coefficients_.end())); }
         //! pushes a function and coefficient back.
         template< class T_FUNCTION >
           void push_back( T_FUNCTION const& _function, t_Coefficient const &_coef = 1e0 )
@@ -100,7 +103,7 @@ namespace LaDa
 
           t_Functions :: iterator i_func( functions_.begin() );
           t_Functions :: iterator const i_func_end( functions_.end() );
-          t_Coefficients :: const_iterator i_coef( coefficients_.begin() );
+          t_Coefficients :: iterator i_coef( coefficients_.begin() );
           for(; i_func != i_func_end; ++i_func, ++i_coef) 
             *i_coef *= i_func->normalize();
         }
@@ -114,6 +117,6 @@ namespace LaDa
     };
 
 
-  } // namespace AtomicPotential
+  } // namespace atomic_potential
 } // namespace LaDa
 #endif

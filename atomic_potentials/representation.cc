@@ -7,7 +7,9 @@
 
 #include <crystal/structure.h>
 #include <crystal/neighbors.h>
+
 #include "bases.h"
+#include "representation.h"
 
 namespace LaDa
 {
@@ -16,8 +18,8 @@ namespace LaDa
     // Strict weak ordering functor from knowledge of basis.
     struct basis_sort
     {
-      configurations::Basis const& basis;
-      basis_sort( configurations::Basis const &_b ) : basis(_b) {}
+      Basis const& basis;
+      basis_sort( Basis const &_b ) : basis(_b) {}
       basis_sort( basis_sort const &_b ) : basis(_b.basis) {}
       bool operator()( Crystal::Neighbor const * const _a,
                        Crystal::Neighbor const * const _b ) const
@@ -45,9 +47,10 @@ namespace LaDa
                                      size_t _natoms )
     {
       // now loops over bases.
-      Bases bases( _structure );
-      Bases::const_iterator i_basis = bases.begin();
-      Bases::const_iterator i_basis_end = bases.end();
+      typedef Bases< Crystal::TStructure<std::string> > t_Bases;
+      t_Bases bases( _structure );
+      t_Bases::const_iterator i_basis = bases.begin();
+      t_Bases::const_iterator i_basis_end = bases.end();
 
       // first neighbor containor.
       Crystal :: Neighbors neighbors( _natoms );

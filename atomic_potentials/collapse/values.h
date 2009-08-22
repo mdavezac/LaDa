@@ -10,15 +10,27 @@
 
 #include <vector>
 
+#include <opt/debug.h>
+
 #include "../numeric_types.h"
 
 namespace LaDa
 {
   namespace atomic_potential
   {
+    // Forward declaration
+    //! \cond
+    class Representation;
+    class SumOfSeparables;
+    //! \endcond
+
     namespace collapse
     {
+
+      // Forward declaration
+      //! \cond
       class FittingSet;
+      //! \endcond
 
       //! Function values and aggregates thereof required by alternating least-square fit.
       class Values
@@ -38,7 +50,7 @@ namespace LaDa
                         std::vector<numeric_type> // over ranks.
                       >
                     >
-                  > t_CoordRankValue;
+                  > t_CoordRankValues;
           //! \brief Type of the containers of factors (i!=j) for alternating least square fit.
           //! \details elements: \f$rv =  \Prod_i\sum_o \alpha_{o,r,i}[x_i^{(u,v)}] *
           //!             g_{o,r,i}[x_i^{(u,v)}]\f$.
@@ -70,7 +82,7 @@ namespace LaDa
           //! Constructor.
           Values() {}
           //! Copy Constructor.
-          Values   (Values const &_const)
+          Values   (Values const &_c)
                  : coord_rank_values_(_c.coord_rank_values_),
                    rank_values_(_c.rank_values_),
                    function_values_(_c.function_values_) {}
@@ -82,13 +94,13 @@ namespace LaDa
           //! Updates values using new coefficients.
           void update( vector_type const& _coefs, t_FittingSet const &_ftstr, size_t _i );
           //! Adds new structure to fitting set.
-          void add(t_FittingSet const &_ftstr, Crystal::TStructure<std::string> _structure);
+          void add( Representation const &_rep, SumOfSeparables const &_sep );
 
         protected:
           //! Coordinates for each structure and representation.
-          t_CoordRankValue coord_rank_values_;
+          t_CoordRankValues coord_rank_values_;
           //! Coordinates for each structure and representation.
-          t_RankValue coord_values_;
+          t_RankValues rank_values_;
           //! Weight of each structure and represenation.
           t_FunctionValues function_values_;
       };
@@ -100,6 +112,7 @@ namespace LaDa
       class Values::str_iterator
       {
           friend bool operator==( str_iterator const& _a, str_iterator const& _b );
+          friend class Values;
         public:
           //! Iterator over representations.
           class rep_iterator;
@@ -119,6 +132,7 @@ namespace LaDa
             ++i_coord_rank_value_;
             ++i_rank_value_;
             ++i_function_values_;
+            ++n_;
           }
 
           //! Returns iterator over representations.
@@ -132,11 +146,11 @@ namespace LaDa
           //! Current variable.
           size_t n_;
           //! Values aggregate per coordinate and rank.
-          t_CoordRankValue const& coord_rank_values_;
+          t_CoordRankValues const& coord_rank_values_;
           //! Iterator over other factors.
-          t_CoordRankValue::value_type::const_iterator i_coord_rank_value_;
+          t_CoordRankValues::value_type::const_iterator i_coord_rank_value_;
           //! Iterator over other factors.
-          t_RankValue::const_iterator i_rank_value_;
+          t_RankValues::const_iterator i_rank_value_;
           //! Iterator over function values.
           t_FunctionValues::value_type::const_iterator i_function_values_;
       };
@@ -160,15 +174,16 @@ namespace LaDa
       class Values::str_iterator::rep_iterator
       {
           friend bool operator==( rep_iterator const& _a, rep_iterator const& _b );
+          friend class Values::str_iterator;
         public:
           //! Iterator over ranks.
           class rank_iterator; 
           //! Constructor.
           rep_iterator   (size_t _i, size_t _nstr, t_CoordRankValues const &_cr)
-                       : i_(_i), n_str_(_nstr), n_(0), coord_rank_values_(_coord_rank_values_) {}
+                       : i_(_i), n_str_(_nstr), n_(0), coord_rank_values_(_cr) {}
           //! Copy Constructor.
           rep_iterator   (rep_iterator const &_c) 
-                       : i_(_c.i), n_str_(_c.n_str_), n_(_c.n_),
+                       : i_(_c.i_), n_str_(_c.n_str_), n_(_c.n_),
                          coord_rank_values_(_c.coord_rank_values_),
                          i_coord_rank_value_(_c.i_coord_rank_value_),
                          i_rank_value_(_c.i_rank_value_),
@@ -178,6 +193,10 @@ namespace LaDa
           rank_iterator begin() const;
           //! Returns iterator over representations.
           rank_iterator end() const;
+
+          //! Increments operator.
+          void operator++() 
+            { ++i_coord_rank_value_; ++i_rank_value_; ++i_function_values_; ++n_; }
           
         protected:
           //! Current variable.
@@ -187,13 +206,11 @@ namespace LaDa
           //! Current representation.
           size_t n_;
           //! Values aggregate per coordinate and rank.
-          t_CoordRankValue const& coord_rank_values_;
-          //! constant reference to container of coefficients.
-          t_Coefficients &coefficients_;
+          t_CoordRankValues const& coord_rank_values_;
           //! Iterator over other factors.
-          t_CoordRankValue::value_type::value_type::const_iterator i_coord_rank_value_;
+          t_CoordRankValues::value_type::value_type::const_iterator i_coord_rank_value_;
           //! Iterator over other factors.
-          t_RankValue::value_type::const_iterator i_rank_value_;
+          t_RankValues::value_type::const_iterator i_rank_value_;
           //! Iterator over function values.
           t_FunctionValues::value_type::value_type::const_iterator i_function_values_;
       };
@@ -217,9 +234,10 @@ namespace LaDa
       class Values::str_iterator::rep_iterator::rank_iterator
       {
         friend bool operator==( rank_iterator const& _a, rank_iterator const& _b );
+          friend class Values::str_iterator::rep_iterator;
         public:
           //! Iterator over function values.
-          typedef t_FunctionValues::value_type::value_type
+          typedef t_FunctionValues::value_type::value_type::value_type
                                   ::value_type::const_iterator function_iterator;
           //! Constructor.
           rank_iterator  (size_t _i, size_t _nstr, size_t _nrep, t_CoordRankValues const& _cr)
@@ -238,6 +256,9 @@ namespace LaDa
           function_iterator begin() const { return i_function_values_->begin(); }
           //! Returns iterator to function values.
           function_iterator end() const { return i_function_values_->end(); }
+          //! Increments operator.
+          void operator++() 
+            { ++i_coord_rank_value_; ++i_rank_value_; ++i_function_values_; ++n_; }
 
         protected:
           //! Current variable.
@@ -249,13 +270,13 @@ namespace LaDa
           //! Current rank
           size_t n_;
           //! Values aggregate per coordinate and rank.
-          t_CoordRankValue const& coord_rank_values_;
+          t_CoordRankValues const& coord_rank_values_;
           //! Iterator over other factors.
-          t_CoordRankValue::value_type::value_type::value_type::const_iterator i_coord_rank_value_;
+          t_CoordRankValues::value_type::value_type::value_type::const_iterator i_coord_rank_value_;
           //! Iterator over other factors.
-          t_RankValue::value_type::value_type::const_iterator i_rank_value_;
+          t_RankValues::value_type::value_type::const_iterator i_rank_value_;
           //! Iterator over function values.
-          t_FunctionValues::value_type::value_type::const_iterator i_function_values_;
+          t_FunctionValues::value_type::value_type::value_type::const_iterator i_function_values_;
       };
 
       //  True if iterators are at same position.

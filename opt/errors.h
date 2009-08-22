@@ -19,10 +19,13 @@
 
 namespace LaDa
 {
+  //! \cond
   namespace Crystal 
   {
     class Structure;
   }
+  //! \endcond
+
   namespace opt
   {
     //! An error tuple.

@@ -1,27 +1,30 @@
 //
 //  Version: $Id$
 //
-#ifndef LADA_ATOMIC_POTENTIAL_COLLAPSE_WEIGHTS_H_
-#define LADA_ATOMIC_POTENTIAL_COLLAPSE_WEIGHTS_H_
+#ifndef LADA_ATOMIC_POTENTIAL_COLLAPSE_FITTING_SETS_H_
+#define LADA_ATOMIC_POTENTIAL_COLLAPSE_FITTING_SETS_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
 #include <vector>
-#include <utilities>
+#include <utility>
+
+#include <opt/debug.h>
 
 #include "../numeric_types.h"
 
 
 namespace LaDa
 {
-  //! \cond
-  namespace Crystal
-  {
-    template<class T_TYPE> class TStructure<T_TYPE>;
-  }
-  //! \endcond
+// //! \cond
+// namespace Crystal
+// {
+//   template<class T_TYPE> class TStructure;
+// }
+// //! \endcond
+
   namespace atomic_potential
   {
     // Forward declaration, 
@@ -74,8 +77,8 @@ namespace LaDa
           //! Constructor.
           FittingSet() {}
           //! Copy Constructor.
-          FittingSet    (FittingSet const &_const)
-                           : coordinates_(_c.coordinates_),
+          FittingSet    (FittingSet const &_c)
+                      : coordinates_(_c.coordinates_),
                              energies_(_c.energies_), 
                              weights_(_c.weights_){}
           //! Changes the weight of nth structure added to representations.
@@ -107,6 +110,7 @@ namespace LaDa
       class FittingSet::str_iterator
       {
         friend bool operator==( str_iterator const& _a, str_iterator const& _b );
+        friend class FittingSet;
 
         public:
           //! Iterator over representations.
@@ -117,16 +121,16 @@ namespace LaDa
           str_iterator   (str_iterator const &_c) 
                        : i_(_c.i_),
                          i_coordinates_(_c.i_coordinates_),
-                         i_energy(_c.i_energy),
+                         i_energy_(_c.i_energy_),
                          i_weight_(_c.i_weight_) {}
 
           //! Increments iterator. Returns true if not end of container.
           void operator++() {  ++i_coordinates_; ++i_weight_; ++i_energy_; }
 
           //! Return current weight.
-          numeric_type weight() const { return i_str_weight->first; }
+          numeric_type weight() const { return i_weight_->first; }
           //! Return current energy.
-          numeric_type energy() const { return *i_energy; }
+          numeric_type energy() const { return *i_energy_; }
           //! Returns iterator over representations.
           rep_iterator begin() const;
           //! Returns iterator over representations.
@@ -138,7 +142,7 @@ namespace LaDa
           //! Iterator over input structures for specific variable.
           t_Coordinates::value_type::const_iterator i_coordinates_;
           //! Iterator over energies.
-          t_Energies::const_iterator i_energy;
+          t_Energies::const_iterator i_energy_;
           //! Iterator over fitting weights of structures for specific variable.
           t_Weights::const_iterator i_weight_;
       };
@@ -153,7 +157,7 @@ namespace LaDa
       //! False if iterators are at same position.
       inline bool operator!=( FittingSet::str_iterator const& _a,
                               FittingSet::str_iterator const& _b )
-        { return not (_a == _b);
+        { return not (_a == _b); }
 
       //! True if iterators are at same position.
       bool operator==( FittingSet::str_iterator::rep_iterator const& _a,
@@ -162,6 +166,7 @@ namespace LaDa
       class FittingSet::str_iterator::rep_iterator
       {
         friend bool operator==( rep_iterator const& _a, rep_iterator const& _b );
+        friend class FittingSet::str_iterator;
         public:
           typedef t_AtomType :: const_iterator coordinate_iterator;
           //! Constructor.
@@ -171,11 +176,11 @@ namespace LaDa
                        : i_coordinates_(_c.i_coordinates_),
                          i_weight_(_c.i_weight_)  {}
           //! Returns iterator to coordinates.
-          coordinate_iterator begin() const { return i_coordinate->begin(); }
+          coordinate_iterator begin() const { return i_coordinates_->begin(); }
           //! Returns iterator to coordinates.
-          coordinate_iterator end() const { return i_coordinate->end(); }
+          coordinate_iterator end() const { return i_coordinates_->end(); }
           //! Returns the weight.
-          t_Weight::value_type::second_type::value_type weight() const { return *i_weight_; }
+          t_Weights::value_type::second_type::value_type weight() const { return *i_weight_; }
           //! Increments iterators.
           void operator++() { ++i_coordinates_; ++i_weight_; }
           
@@ -193,7 +198,7 @@ namespace LaDa
       //! False if iterators are at same position.
       inline bool operator!=( FittingSet::str_iterator::rep_iterator const& _a,
                               FittingSet::str_iterator::rep_iterator const& _b )
-        { return not (_a == _b);
+        { return not (_a == _b); }
     } // namespace collapse
   } // namespace atomic_potential
 } // namespace LaDa

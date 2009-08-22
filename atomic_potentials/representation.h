@@ -8,7 +8,7 @@
 #include <config.h>
 #endif
 
-#include <utilities>
+#include <utility>
 #include <vector>
 
 #include "numeric_types.h"
@@ -42,7 +42,7 @@ namespace LaDa
     };
 
     //! Compares to variable sets.
-    bool operator==(Representation const& _a, Representation const &_b) 
+    bool operator==(VariableSet const& _a, VariableSet const &_b) 
       { return _a.variables == _b.variables; }
 
 

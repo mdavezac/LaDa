@@ -12,6 +12,8 @@
 #include <boost/numeric/ublas/matrix.hpp>
 
 #include "../numeric_types.h"
+#include "fitting_set.h"
+#include "values.h"
 
 namespace LaDa
 {
@@ -19,8 +21,6 @@ namespace LaDa
   {
     // Forward declaration.
     class SumOfSeparables;
-    class FittingSet;
-    class Values;
 
     namespace collapse
     {
@@ -52,28 +52,27 @@ namespace LaDa
           //! Type of the container of coefficients.
           typedef std::vector<vector_type>  t_Coefficients;
           //! Type of container of scaling factors.
-          typedef std::vector<SumOfSeparables::result_type> t_ScalingFactors;
+          typedef std::vector<numeric_type> t_ScalingFactors;
           //! Values associated with the fitting structures.
           typedef FittingSet t_FittingSet;
           //! Values associated with the fitting structures and functions of the sum of seps.
           typedef Values t_Values;
-          //! Type of the variable major version of the separable function.
-          typedef VariableMajor t_VariableMajor;
 
         public:
           //! Constructor.
-          Collapse(SumOfSeparables const &_sumofseps) : sumofseps_(_sumofseps) {}
+          Collapse(SumOfSeparables &_sumofseps) : sumofseps_(_sumofseps) {}
           //! Copy Constructor.
-          Collapse   (Collapse const &_sos)
+          Collapse   (Collapse const &_c)
                    : fitting_set_(_c.fitting_set_),
                      values_(_c.values_),
                      coefficients_(_c.coefficients_),
-                     scaling_factors_(_c.scaling_factors_) {}
+                     scaling_factors_(_c.scaling_factors_),
+                     sumofseps_(_c.sumofseps_) {}
      
           //! Creates A matrix and b vector for coordinate \a _i. 
           bool lsq_data(matrix_type &_matrix, vector_type &_vector, size_t _i) const;
           //! Updates coordinate \a _i.
-          void update(size_t _i) { values_.update(_coefficients[_i], fitting_set_, _i); }
+          void update(size_t _i) { values_.update(coefficients_[_i], fitting_set_, _i); }
           //! Adds a structure to the fitting set.
           void add(Crystal::TStructure<std::string> const &_structure);
           //! Reassigns coefficients.

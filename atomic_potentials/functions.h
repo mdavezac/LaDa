@@ -10,8 +10,8 @@
 
 #include <list>
 
-#include <boost/tuple/tuple.hpp>
-#include <boost/iterator/zip_iterator.hpp>
+#include <boost/function.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <opt/types.h>
 #include <opt/debug.h>
@@ -21,7 +21,7 @@
 namespace LaDa
 {
   //! Contains classes for generalized atomic potentials.
-  namespace AtomicPotential
+  namespace atomic_potential
   {
     //! \cond
     class VariableMajor;
@@ -33,70 +33,82 @@ namespace LaDa
         friend class VariableMajor;
       public:
         //! Number of atomic species.
-        const static N = 2;
+        const static size_t N = 2;
         //! Type of the argument.
         typedef std::pair<numeric_type, specie_type> arg_type;
         //! Type of the return.
         typedef numeric_type result_type;
 
         //! Type of the functions in list.
-        typedef boost::function<result_type(arg_type const&)> t_Function;
+        typedef boost::function<result_type(arg_type::first_type const&)> t_Function;
         //! Type of the function-list.
         typedef std::list<t_Function> t_Functions;
         //! Type of the list of coefficients.
         typedef result_type t_Coefficient;
         //! Type of the list of coefficients.
-        typedef boost::numeric::ublas::vector<t_Coefficient> t_Coefficients;
+        typedef std::vector<t_Coefficient> t_Coefficients;
 
         //! Type of the iterator over functions and coefficients.
-        typedef boost::zip_iterator
-                <
-                  boost::tuple<t_Functions::iterator, t_Coefficients::iterator>
-                > iterator;
+        class iterator;
         //! Type of the iterator over functions and coefficients.
-        typedef boost::zip_iterator
-                <
-                  boost::tuple<t_Functions::const_iterator, t_Coefficients::const_iterator>
-                > const_iterator;
+        class const_iterator;
+
+        // includes iterator definitions here.
+#       if defined(LADA_WITH_CONST) or defined(LADA_ITERATOR_NAME)
+#         error LADA_WITH_CONST and LADA_ITERATOR_NAME already defined.
+#       endif
+#       define LADA_ITERATOR_NAME iterator
+#       define LADA_WITH_CONST 
+#       include "functions.iterator.h"
+#       define LADA_ITERATOR_NAME const_iterator
+#       define LADA_WITH_CONST const
+#       include "functions.iterator.h"
 
         //! Constructor.
-        Function() {}
+        Functions() {}
         //! Copy Constructor.
-        Function( Function const& _c ): functions_(_c.functions), coefficients_(_c.coefficients) {}
+        Functions   ( Functions const& _c )
+                  : functions_(_c.functions_), coefficients_(_c.coefficients_) {}
 
         //! Sums over all functionals.
         result_type operator()( arg_type const& _x ) const
         {
-          LADA_ASSERT( functions_.size() == coefficients_.size(), "Incoherent containers.\n" ) 
+#         ifdef LADA_DEBUG
+            for(size_t i(0); i < Functions::N; ++i)
+            {
+              LADA_ASSERT( functions_.size() == coefficients_.size() * Functions::N,
+                           "Incoherent containers.\n" ); 
+            }
+#         endif
 
           result_type result(0);
           t_Functions :: const_iterator i_func( functions_.begin() );
           t_Functions :: const_iterator const i_func_end( functions_.end() );
-          t_Coefficients :: const_iterator i_coef( coefficients[_x.second].begin() );
-          for(; i_func != i_func_end; ++i_func, ++i_coef )
-            result += (*i_coef) * (*i_func)(_x.first);
+          t_Coefficients :: const_iterator i_coef( coefficients_.begin() );
+          for(; i_func != i_func_end; ++i_func, i_coef += Functions::N )
+            result += (*(i_coef+_x.second)) * (*i_func)(_x.first);
           return result;
         }
 
         //! Returns iterator to functions and coefficients.
         iterator begin()
-          { return iterator( boost::make_tuple(functions_.begin(), coefficients.begin())); }
+          { return iterator( functions_.begin(), coefficients_.begin()); }
         //! Returns iterator to functions and coefficients.
         const_iterator begin() const
-          { return iterator( boost::make_tuple(functions_.begin(), coefficients.begin())); }
+          { return const_iterator( functions_.begin(), coefficients_.begin()); }
         //! Returns iterator to functions and coefficients.
         iterator end()
-          { return iterator( boost::make_tuple(functions_.end(), coefficients.end())); }
+          { return iterator( functions_.end(), coefficients_.end()); }
         //! Returns iterator to functions and coefficients.
         const_iterator end() const
-          { return iterator( boost::make_tuple(functions_.end(), coefficients.end())); }
+          { return const_iterator( functions_.end(), coefficients_.end()); }
         //! pushes a function and coefficient back.
         template< class T_FUNCTION >
-          void push_back( T_FUNCTION const& _function, t_Coefficient const &_coef[N] = 1e0 )
+          void push_back( T_FUNCTION const& _function, numeric_type const _coef[N] = 1e0 )
           {
             functions_.push_back(_function);
-            for(size_t i<0; i < N; ++i ) 
-              coefficients_[i].push_back(_coef[i]); 
+            for(size_t i(0); i < N; ++i ) 
+              coefficients_.push_back(_coef[i]); 
           }
         //! Clears all functions and coefficients.
         void clear() { functions_.clear(); coefficients_.clear(); }
@@ -112,10 +124,11 @@ namespace LaDa
         //! List of functions over scalars.
         t_Functions functions_;
         //! List of coefficients.
-        t_Coefficients coefficients_[N];
+        t_Coefficients coefficients_;
     };
 
 
-  } // namespace AtomicPotential
+
+  } // namespace atomic_potential
 } // namespace LaDa
 #endif

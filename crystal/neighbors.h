@@ -67,7 +67,8 @@ namespace LaDa
          Neighbors(Neighbors const &_c) {}
 
          //! Creates list of atoms.
-         template<class T_TYPE> void create_neighbors_list_(Crystal::TStructure const& _str);
+         template<class T_TYPE>
+           void create_neighbors_list_(Crystal::TStructure<T_TYPE> const& _str);
          //! List of neighbors.
          t_Neighbors neighbors_;
      };

@@ -40,15 +40,13 @@ namespace LaDa
           CoordRange(SumOfSeparables const &_sumofseps );
           //! Copy Constructor.
           CoordRange   (CoordRange const &_c)
-                             : sumofseps_(_c.sumofseps_),
-                               index_(_c.index_), max_index_(_c.max_index_) {}
+                     : sumofseps_(_c.sumofseps_),
+                       index_(_c.index_), max_index_(_c.max_index_) {}
       
           //! Iterator over ranks.
-          rank_range begin() const 
-            { LADA_VMRASSERT; return rank_range( sumofseps_.begin(), sumofseps_,end() index_ ); }
+          rank_range begin() const;
           //! Iterator over ranks.
-          rank_range end() const
-            { LADA_VMRASSERT; return rank_range( sumofseps_.end(), sumofseps_,end() index_ ); }
+          rank_range end() const;
 
           //! Increments.
           bool operator++() { ++index_; return this->operator bool(); }
@@ -69,28 +67,28 @@ namespace LaDa
           //! Maximum index.
           size_t max_index_;
 
-#       undef LADA_VMRASSERT
       };
 
       //! Compares two rank iterators.
-      bool operator==( VaraibleMajorRange::rank_range const& _a,
-                       VaraibleMajorRange::rank_range const& _b);
+      bool operator==( CoordRange::rank_range const& _a,
+                       CoordRange::rank_range const& _b);
 
       class CoordRange :: rank_range
       {
         friend bool operator==( rank_range const &, rank_range const& );
+        friend class CoordRange;
         //! Type of the var iterator.
-        typedef SumOfSeparables::t_Functions::const_iterator var_iterator_;
+        typedef SumOfSeparables::t_Function::const_iterator var_iterator_;
         public:
           //! value type
-          typedef SumOfSeparables::t_Functions::const_iterator::value_type value_type;
+          typedef SumOfSeparables::t_Function::const_iterator::value_type value_type;
           //! reference type
-          typedef SumOfSeparables::t_Functions::const_iterator::reference reference;
+          typedef SumOfSeparables::t_Function::const_iterator::reference reference;
           //! pointer type
-          typedef SumOfSeparables::t_Functions::const_iterator::pointer pointer;
+          typedef SumOfSeparables::t_Function::const_iterator::pointer pointer;
           
           //! Iterator over functions and coefficients for set rank and variable.
-          typedef SumOfSeparables::t_Functions::t_Functions::const_iterator inner_iterator;
+          typedef SumOfSeparables::t_Function::t_Function::const_iterator inner_iterator;
 
           //! Copy Constructor.
           rank_range   (rank_range const &_c)
@@ -109,7 +107,7 @@ namespace LaDa
           //! Deref.
           pointer operator->() const { return get_i_var_().operator->(); }
           //! True if still iteratable.
-          operator bool() const { return i_rank_ != i_rank_end; }
+          operator bool() const { return i_rank_ != i_rank_end_; }
 
         private:
           //! Constructor.
@@ -127,6 +125,13 @@ namespace LaDa
           //! Variable index.
           size_t index_;
       };
+
+      inline CoordRange::rank_range CoordRange::begin() const 
+        { LADA_VMRASSERT; return rank_range( sumofseps_.begin(), sumofseps_.end(), index_ ); }
+          //! Iterator over ranks.
+      inline CoordRange::rank_range CoordRange::end() const
+        { LADA_VMRASSERT; return rank_range( sumofseps_.end(), sumofseps_.end(), index_ ); }
+#       undef LADA_VMRASSERT
 
       inline bool operator==( CoordRange::rank_range const& _a,
                               CoordRange::rank_range const& _b)
