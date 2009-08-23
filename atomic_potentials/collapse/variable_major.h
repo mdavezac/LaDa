@@ -37,7 +37,9 @@ namespace LaDa
           //! Iterator over ranks.
           class rank_range;
           //! Constructor.
-          CoordRange(SumOfSeparables const &_sumofseps );
+          CoordRange   (SumOfSeparables const &_sumofseps )
+                     : sumofseps_(_sumofseps), index_(0),
+                       max_index_(sumofseps_.nb_coordinates() ) {}
           //! Copy Constructor.
           CoordRange   (CoordRange const &_c)
                      : sumofseps_(_c.sumofseps_),

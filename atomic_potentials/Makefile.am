@@ -1,7 +1,7 @@
 #
 # Version: $Id$
 #
-SUBDIRS = collapse
+SUBDIRS = collapse python
 include $(top_srcdir)/Files
 
 AM_CPPFLAGS = @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\

@@ -44,8 +44,12 @@ namespace LaDa
           .def( "__init__", bp::make_constructor( details::copy_constructor< T_TYPE > ) )
           .def( "__init__", bp::make_constructor( details::object_constructor< T_TYPE > ) )
           .def( bp::vector_indexing_suite< std::vector<T_TYPE> >() )
-          .def( "clear", &std::vector<T_TYPE> :: clear )
-          .def( "__str__", &details::print<T_TYPE> );
+#         ifndef LADA_PYTHON_STD_VECTOR_NOPRINT
+            .def( "__str__", &details::print<T_TYPE> )
+#         else
+#           undef rADA_PYTHON_STD_VECTOR_NOPRINT
+#         endif
+          .def( "clear", &std::vector<T_TYPE> :: clear );
       }
 
     namespace details

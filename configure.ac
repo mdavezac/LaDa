@@ -2,7 +2,7 @@
 #  Version: $Id$
 #
 AC_INIT([LaDa],[3.26])
-AM_INIT_AUTOMAKE()
+AM_INIT_AUTOMAKE([-Wno-portability])
 
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -379,7 +379,7 @@ AC_OUTPUT(Makefile atat/Makefile atat/python/Makefile physics/Makefile physics/p
           print/Makefile lapack/Makefile separable/Makefile ce/Makefile ce/python/Makefile
           python/Makefile separable/fixedlattice/Makefile factory/Makefile
           minimizer/Makefile minimizer/python/Makefile models/Makefile models/python/Makefile 
-          atomic_potentials/Makefile atomic_potentials/collapse/Makefile )
+          atomic_potentials/Makefile atomic_potentials/python/Makefile atomic_potentials/collapse/Makefile )
 
 echo ""; echo ""
 echo "Will Compile following modules: "

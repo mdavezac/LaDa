@@ -1,28 +1,25 @@
 //
 //  Version: $Id$
 //
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
 
-#include <struct_to_confs.h>
-#include <crystal/neighbors.h>
 
 namespace LaDa
 {
-  namespace atomic_potentials
+  namespace atomic_potential
   {
     template<class T_STRUCTURE>
       void Bases<T_STRUCTURE>::Origin :: begin( T_STRUCTURE const& _str )
       {
         structure_ = &_str;
         iterator_ = _str.atoms.begin();
+        index_ = 0;
       }
     template<class T_STRUCTURE>
       void Bases<T_STRUCTURE>::Origin :: end( T_STRUCTURE const& _str )
       {
         structure_ = &_str;
         iterator_ = _str.atoms.end();
+        index_ = _str.atoms.size();
       }
     template<class T_STRUCTURE>
       void Bases<T_STRUCTURE>::Xcoord
@@ -80,11 +77,11 @@ namespace LaDa
     template<class T_STRUCTURE>
       void Bases<T_STRUCTURE>::Ycoord :: create_equiv_ys( Bases<T_STRUCTURE>::Xcoord const &_x )
       {
-        boost::shared_ptr< Bases<T_STRUCTURE>::Xcoord :: t_Neighs >
+        boost::shared_ptr< typename Bases<T_STRUCTURE>::Xcoord :: t_Neighs >
            neighs( _x.second_ ? _x.second_ : _x.first_ );
         types::t_real maxx(-1);
-        Bases<T_STRUCTURE>::Xcoord :: t_Neighs :: const_iterator i_pos = neighs->begin();
-        Bases<T_STRUCTURE>::Xcoord :: t_Neighs :: const_iterator i_pos_end = neighs->end();
+        typename Bases<T_STRUCTURE>::Xcoord :: t_Neighs :: const_iterator i_pos = neighs->begin();
+        typename Bases<T_STRUCTURE>::Xcoord :: t_Neighs :: const_iterator i_pos_end = neighs->end();
         for(; i_pos != i_pos_end; ++i_pos )
         {
           if( i_pos == _x.iterator_ ) continue;
@@ -112,7 +109,7 @@ namespace LaDa
         iterator_ = equivs_->end();
       }
      
-    template<class T_STRUCTURE> Bases<T_STRUCTURE>::const_iterator 
+    template<class T_STRUCTURE> typename Bases<T_STRUCTURE>::const_iterator 
       Bases<T_STRUCTURE>::const_iterator::begin_( T_STRUCTURE const& _str )
       {
         oiterator_.begin(_str);
@@ -122,6 +119,7 @@ namespace LaDa
         yiterator_.begin(xiterator_); yiterator_end_.end(yiterator_);
      
         val_.origin = *oiterator_;
+        val_.index = oiterator_.index();
         val_.x = *xiterator_;
         val_.y = *yiterator_;
         val_.z = val_.x ^ val_.y;
@@ -129,7 +127,7 @@ namespace LaDa
         return *this;
       }
      
-    template<class T_STRUCTURE> Bases<T_STRUCTURE>::const_iterator 
+    template<class T_STRUCTURE> typename Bases<T_STRUCTURE>::const_iterator 
       Bases<T_STRUCTURE>::const_iterator :: end_( T_STRUCTURE const& _str )
       {
         oiterator_.end(_str);
@@ -140,14 +138,14 @@ namespace LaDa
       };
      
     template<class T_STRUCTURE> 
-      Bases<T_STRUCTURE>::const_iterator Bases<T_STRUCTURE>::begin() const
+      typename Bases<T_STRUCTURE>::const_iterator Bases<T_STRUCTURE>::begin() const
         { return const_iterator().begin_(structure_); }
     template<class T_STRUCTURE> 
-      Bases<T_STRUCTURE>::const_iterator Bases<T_STRUCTURE>::end() const
+      typename Bases<T_STRUCTURE>::const_iterator Bases<T_STRUCTURE>::end() const
         { return const_iterator().end_(structure_); } 
      
     template<class T_STRUCTURE> 
-      Bases<T_STRUCTURE>::const_iterator &Bases<T_STRUCTURE>::const_iterator::operator++()
+      typename Bases<T_STRUCTURE>::const_iterator &Bases<T_STRUCTURE>::const_iterator::operator++()
       {
         if( oiterator_ == oiterator_end_ ) return *this;
      
@@ -179,6 +177,7 @@ namespace LaDa
         xiterator_.begin(oiterator_); xiterator_end_.end(xiterator_);
         yiterator_.begin(xiterator_); yiterator_end_.end(yiterator_);
         val_.origin = *oiterator_;
+        val_.index = oiterator_.index();
         val_.x = *xiterator_;
         val_.y = *yiterator_;
         val_.z = val_.x ^ val_.y;

@@ -14,12 +14,7 @@ lib_LTLIBRARIES = libpython_lada.la
 libpython_lada_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
 libpython_lada_la_SOURCES = 
 libpython_lada_la_LDFLAGS = $(AM_LDFLAGS)
-libpython_lada_la_LIBADD =  $(top_builddir)/crystal/libcrystal.la \
-                            $(top_builddir)/atat/libatat.la \
-                            $(top_builddir)/opt/libpythonconvenience.la \
-                            $(top_builddir)/physics/libphysics.la \
-                            $(top_builddir)/print/libprint.la 
-
+libpython_lada_la_LIBADD = 
 pythonextensions = opt physics atat crystal minimizer 
 if DOCE
   pythonextensions += ce
@@ -33,6 +28,10 @@ if DOPYTHONPESCAN
   pythonextensions += escan
   libpython_lada_la_LDFLAGS += @FCLIBS@ @LD_IAGA_FLAGS@
   libpython_lada_la_LIBADD += $(top_builddir)/pescan_interface/libescan.la 
+endif
+if DOPOTENTIALS
+  pythonextensions += potentials
+  libpython_lada_la_LIBADD += $(top_builddir)/atomic_potentials/libpotentials.la 
 endif
 
 if DOPYTHONPESCAN
@@ -53,6 +52,12 @@ if DOMINIMIZER
   libpython_lada_la_LDFLAGS += @GSL_LIBS@  @MINUIT_LIBS@
   libpython_lada_la_CPPFLAGS += @GSL_CFLAGS@ @MINUIT_CFLAGS@ @FCLIBS@
 endif
+libpython_lada_la_LIBADD +=  $(top_builddir)/crystal/libcrystal.la \
+                             $(top_builddir)/atat/libatat.la \
+                             $(top_builddir)/opt/libpythonconvenience.la \
+                             $(top_builddir)/physics/libphysics.la \
+                             $(top_builddir)/print/libprint.la 
+
 
 pkgpyexec_PYTHON = __init__.py
 force: ;

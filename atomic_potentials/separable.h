@@ -69,6 +69,8 @@ namespace LaDa
         void clear() { functions_.clear(); }
         //! Returns number of variables.
         size_t size() const { return functions_.size(); }
+        //! Returns number of variables.
+        size_t nb_coordinates() const { return size(); }
 
         result_type normalize()
         {

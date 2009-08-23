@@ -22,11 +22,23 @@
 
 namespace LaDa
 {
+
+# ifdef __DOPYTHON
+  //! \cond
+  namespace Python
+  {
+    struct Neighbors;
+  }
+  //! \endcond
+# endif
+
   namespace Crystal
   {
      //! Holds neigbor data.
      struct Neighbor
      {
+       Neighbor() {}
+       Neighbor( const Neighbor &_c ) : index(_c.index), pos(_c.pos), distance(_c.distance) {}
        //! Index to atom in structure.
        size_t index;
        //! Position with respect to atom.
@@ -40,6 +52,9 @@ namespace LaDa
 
      class Neighbors
      {
+#        ifdef __DOPYTHON
+         friend class Python::Neighbors;
+#        endif
          //! Type of the list of neighbours.
          typedef std::list<Neighbor> t_Neighbors;
        public:
@@ -100,7 +115,7 @@ namespace LaDa
              for( types::t_int y(-umax); y <= umax; ++y )
                for( types::t_int z(-umax); z <= umax; ++z )
                {
-                  neighbor.pos = _structure.cell * ( frac + atat::rVector3d(x,y,z) );
+                  neighbor.pos = _structure.cell * ( centered + atat::rVector3d(x,y,z) );
                   neighbor.distance = atat::norm( neighbor.pos );
                   if( Fuzzy::is_zero( neighbor.distance ) ) continue;
        

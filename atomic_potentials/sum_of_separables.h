@@ -88,13 +88,21 @@ namespace LaDa
         const_iterator end() const
           { return const_iterator( boost::make_tuple(functions_.end(), coefficients_.end())); }
         //! pushes a function and coefficient back.
-        template< class T_FUNCTION >
-          void push_back( T_FUNCTION const& _function, t_Coefficient const &_coef = 1e0 )
-            { functions_.push_back(_function); coefficients_.push_back(_coef); }
+        void push_back( Separable const& _function, t_Coefficient const &_coef = 1e0 )
+          { functions_.push_back(_function); coefficients_.push_back(_coef); }
         //! Clears all functions and coefficients.
         void clear() { functions_.clear(); coefficients_.clear(); }
         //! Returns rank.
         size_t size() const { return coefficients_.size(); }
+        //! Return number of coordinates.
+        size_t nb_coordinates() const
+        {
+          size_t result(0);
+          t_Functions::const_iterator i_sep( functions_.begin() );
+          t_Functions::const_iterator const i_sep_end( functions_.end() );
+          for(; i_sep != i_sep_end; ++i_sep)
+            result = std::max( result, i_sep->size() );
+        };
 
         //! Normalizes all separable functionals.
         void normalize()

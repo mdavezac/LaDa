@@ -17,16 +17,6 @@ namespace LaDa
     namespace collapse
     {
 
-      CoordRange::CoordRange(SumOfSeparables const &_sumofseps ) 
-         : sumofseps_(_sumofseps), index_(0), max_index_(0) 
-      {
-        typedef SumOfSeparables::t_Functions::const_iterator const_iterator;
-        const_iterator i_sep( sumofseps_.functions_.begin() );
-        const_iterator const i_sep_end( sumofseps_.functions_.end() );
-        for(; i_sep != i_sep_end; ++i_sep)
-          max_index_ = std::max( max_index_, i_sep->size() );
-      }  
-      
       CoordRange::rank_range
         ::rank_range( SumOfSeparables::const_iterator const &_irank,
                       SumOfSeparables::const_iterator const &_irank_end,

@@ -1,8 +1,8 @@
 //
 //  Version: $Id$
 //
-#ifndef _SEPARABLES_STRUCT_TO_CONFS_H_
-#define _SEPARABLES_STRUCT_TO_CONFS_H_
+#ifndef _LADA_ATOMIC_POTENTIALS_BASES_H_
+#define _LADA_ATOMIC_POTENTIALS_BASES_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -14,6 +14,7 @@
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <crystal/structure.h>
+#include <crystal/neighbors.h>
 
 namespace LaDa
 {
@@ -21,10 +22,17 @@ namespace LaDa
   {
     struct Basis 
     {
+      //! Index of the origin in structure for which a representation is built.
+      size_t index;
+      //! Cartesian coordinates of the origin.
       atat::rVector3d origin;
+      //! Cartesian coordinates of the abscissa.
       atat::rVector3d x;
+      //! Cartesian coordinates of the ordinate.
       atat::rVector3d y;
+      //! Cartesian coordinates of the cote.
       atat::rVector3d z;
+      //! Weight of the basis in the representation.
       types::t_real weight;
     };
     inline std::ostream& operator<<( std::ostream &_stream, Basis const &_basis )
@@ -66,17 +74,11 @@ namespace LaDa
           t_Structure const &structure_;
       };
 
-    //! Comparison of origin iterators.
-    template<class T_STRUCTURE>
-      bool operator==( typename Bases<T_STRUCTURE>::Origin const&,
-                       typename Bases<T_STRUCTURE>::Origin const& );
-
     template<class T_STRUCTURE>
       class Bases<T_STRUCTURE>::Origin
       {
         friend class Xcoord;
         friend class Ycoord;
-        friend bool operator==<T_STRUCTURE>( Origin const&, Origin const& );
         public:
           //! Return on deref.
           typedef atat::rVector3d const& value_type;
@@ -85,17 +87,24 @@ namespace LaDa
           //! Constructor.
           Origin() {}
           //! Copy Constructor.
-          Origin( Origin const& _c ) : structure_(_c.structure_), iterator_(_c.iterator_) {};
+          Origin   ( Origin const& _c )
+                 : structure_(_c.structure_), iterator_(_c.iterator_), index_(_c.index_) {};
   
           //! Deref.
           value_type operator*() const { return iterator_->pos; }
           //! Deref.
           pointer_type operator->() const { return &(iterator_->pos); }
+          //! Returns the index of the origin.
+          size_t index() const { return index_; }
           //! Pre-increment operator.
-          Origin& operator++() { ++iterator_; return *this; }
+          Origin& operator++() { ++iterator_; ++index_; return *this; }
           //! Post-increment operator.
-          Origin  operator++(int) { ++iterator_; return Origin(*this); }
+          Origin  operator++(int) { return operator++(); }
   
+          //! Returns false if origins at same position.
+          bool operator!=( Origin const& _b ) const { return iterator_ != _b.iterator_; }
+          //! Returns true if origins at same position.
+          bool operator==( Origin const& _b ) const { return iterator_ == _b.iterator_; }
           //! Points to first origin.
           void begin( t_Structure const& _structure );
           //! Points to end origin.
@@ -106,17 +115,10 @@ namespace LaDa
           typename Bases<T_STRUCTURE>::t_Structure const * structure_;
           //! Iterator itself.
           typename Bases<T_STRUCTURE>::t_Structure::t_Atoms::const_iterator iterator_;
+          //! index of the origin.
+          size_t index_;
       };
     
-    template<class T_STRUCTURE>
-      inline bool operator==( typename Bases<T_STRUCTURE>::Origin const& _a,
-                              typename Bases<T_STRUCTURE>::Origin const& _b )
-        { return _a.iterator_ == _b.iterator_; }
-    template<class T_STRUCTURE>
-      inline bool operator!=( typename Bases<T_STRUCTURE>::Origin const& _a,
-                              typename Bases<T_STRUCTURE>::Origin const& _b )
-      { return not(_a == _b); }
-
     //! Comparison of x iterators.
     template<class T_STRUCTURE>
       bool operator==( typename Bases<T_STRUCTURE>::Xcoord const&,
@@ -128,7 +130,6 @@ namespace LaDa
       class Bases<T_STRUCTURE> :: Xcoord 
       {
         friend class Ycoord;
-        friend bool operator==<T_STRUCTURE>( Xcoord const&, Xcoord const& );
         //! Type of the vector of neighbors.
         typedef std::vector< atat::rVector3d > t_Neighs;
         public:
@@ -160,6 +161,11 @@ namespace LaDa
           void end( Xcoord const &);
           //! Number of equivalent configurations.
           size_t size() const { return first_ ? first_->size(): 0; }
+
+          //! Returns true if x coordinate at same position.
+          bool operator==( Xcoord const& _b ) const { return iterator_ == _b.iterator_; }
+          //! Returns false if x coordinate at same position.
+          bool operator!=( Xcoord const& _b ) const { return iterator_ != _b.iterator_; }
   
         protected:
           //! Finds first and second neihbors.
@@ -175,23 +181,8 @@ namespace LaDa
       };
 
     template<class T_STRUCTURE>
-      inline bool operator==( typename Bases<T_STRUCTURE>::Xcoord const& _a,
-                              typename Bases<T_STRUCTURE>::Xcoord const& _b )
-        { return _a.iterator_ == _b.iterator_; }
-    template<class T_STRUCTURE>
-      inline bool operator!=( typename Bases<T_STRUCTURE>::Xcoord const& _a,
-                              typename Bases<T_STRUCTURE>::Xcoord const& _b )
-        { return not(_a == _b); }
-      
-    //! Comparison of y iterators.
-    template<class T_STRUCTURE>
-      bool operator==( typename Bases<T_STRUCTURE>::Ycoord const& _a,
-                       typename Bases<T_STRUCTURE>::Ycoord const& _b );
-      
-    template<class T_STRUCTURE>
       class Bases<T_STRUCTURE> :: Ycoord
       {
-        friend bool operator==<T_STRUCTURE>( Ycoord const&, Ycoord const& );
         public:
           typedef atat::rVector3d const& value_type;
           typedef atat::rVector3d const* pointer_type;
@@ -226,6 +217,13 @@ namespace LaDa
           void end(Ycoord const&);
           //! Number of equivalent configurations.
           size_t size() const { return equivs_ ? equivs_->size(): 0; }
+
+          //! Returns true if iterators are at same position.
+          bool operator==(  Ycoord const& _b ) const 
+            { return iterator_ == _b.iterator_; }
+          //! Returns false if iterators are at same position.
+          bool operator!=(  Ycoord const& _b ) const
+            { return iterator_ != _b.iterator_; }
       
         protected:
           //! Creates list of equivalent y-positions.
@@ -241,27 +239,13 @@ namespace LaDa
       };
       
     template<class T_STRUCTURE>
-      inline bool operator==( typename Bases<T_STRUCTURE>::Ycoord const& _a,
-                              typename Bases<T_STRUCTURE>::Ycoord const& _b )
-        { return _a.iterator_ == _b.iterator_; }
-    template<class T_STRUCTURE>
-      inline bool operator!=( typename Bases<T_STRUCTURE>::Ycoord const& _a,
-                              typename Bases<T_STRUCTURE>::Ycoord const& _b )
-        { return not(_a == _b); }
-      
-    //! Comparison of basis iterators.
-    template<class T_STRUCTURE>
-      bool operator==( typename Bases<T_STRUCTURE>::const_iterator const& _a,
-                       typename Bases<T_STRUCTURE>::const_iterator const& _b );
-      
-    template<class T_STRUCTURE>
       class Bases<T_STRUCTURE>::const_iterator
       {
         friend class Bases<T_STRUCTURE>;
-        friend bool operator==<T_STRUCTURE>( const_iterator const&, const_iterator const& );
         public:
-          typedef Basis const& value_type;
-          typedef Basis const* pointer_type;
+          typedef Basis const value_type;
+          typedef value_type& reference;
+          typedef value_type* pointer_type;
       
           //! Constructor
           const_iterator() {};
@@ -274,13 +258,19 @@ namespace LaDa
                            N_(_c.N_) {}
       
           //! Dereference.
-          value_type operator*() const { return val_; }
+          reference operator*() const { return val_; }
           //! Deref.
           pointer_type operator->() const { return &val_; }
           //! Pre-increment operator.
           const_iterator &operator++();
           //! Post-increment operator.
           const_iterator operator++(int) { return const_iterator( ++(*this) ); }
+          //! Returns true if iterators are at same position.
+          bool operator==(  const_iterator const& _b ) const 
+            { return oiterator_ == _b.oiterator_; }
+          //! Returns false if iterators are at same position.
+          bool operator!=(  const_iterator const& _b ) const
+            { return oiterator_ != _b.oiterator_; }
       
         private:
           //! initializes to first.
@@ -305,15 +295,9 @@ namespace LaDa
           size_t N_;
       };
       
-    template<class T_STRUCTURE>
-      inline bool operator==( typename Bases<T_STRUCTURE>::const_iterator const& _a,
-                              typename Bases<T_STRUCTURE>::const_iterator const& _b )
-        { return _a.oiterator_ == _b.oiterator_; }
-    template<class T_STRUCTURE>
-      inline bool operator!=( typename Bases<T_STRUCTURE>::const_iterator const& _a,
-                              typename Bases<T_STRUCTURE>::const_iterator const& _b )
-        { return not(_a == _b); }
   } // end of atomic_potential namespace.
 } // namespace LaDa
+
+#include "bases.impl.h"
 
 #endif

@@ -10,11 +10,13 @@ atat_python_h = atat.impl.hpp atatintrospection.hpp atatoperators.hpp
 atat_python_cc = atat.cc 
 
 ap_cc = representation.cc
-ap_h  = bases.h  bases.impl.h  functions.h  numeric_types.h  representation.h \
-        separable.h  sum_of_separables.h
+ap_h  = bases.h  bases.impl.h  functions.h  functions.iterator.h  numeric_types.h\
+        representation.h  separable.h  sum_of_separables.h
 ap_doc = $(ap_h) $(ap_cc)
 ap_collapse_cc = collapse.cc  fitting_set.cc  values.cc  variable_major.cc
 ap_collapse_h  = collapse.h  fitting_set.h  values.h  variable_major.h
+potentials_python_h = python.hpp representation.hpp representation.hpp sum_of_separables.hpp
+potentials_python_cc = python.cc representation.cc bases.cc sum_of_separables.cc
 ap_collapse_doc = $(ap_collapse_h) $(ap_collapse_cc)
 
 fc_models_clj_cc = fortran.cc 
@@ -133,9 +135,9 @@ crystal_h  = lattice.h  structure.h structure.impl.h atom.h  confsplit.h layerde
              fractional_cartesian.h ideal_lattice.h smith.h neighbors.h enumerate.h
 crystal_doc = $(crystal_h) $(crystal_cc) 
 crystal_python_h = structure.hpp atom.hpp lattice.hpp read_structure.hpp \
-                   smith.hpp enumerate.hpp layerdepth.hpp
+                   smith.hpp enumerate.hpp layerdepth.hpp neighbors.hpp
 crystal_python_cc = structure.cc atom.cc lattice.cc read_structure.cc \
-                    python.cc smith.cc enumerate.cc layerdepth.cc
+                    python.cc smith.cc enumerate.cc layerdepth.cc neighbors.cc
 
 ce_cc     = cluster.cc harmonic.cc  polynome.cc regularization.cc fit.cc
 ce_h      = cluster.h  constituent_strain.h  functional_builder.h  harmonic.h \
@@ -369,8 +371,8 @@ $(top_builddir)/mpi/libmpiobject.la: $(addprefix $(top_srcdir)/mpi/, $(mpi_h) )\
                                      $(addprefix $(top_srcdir)/mpi/, $(mpi_cc) ) 
 	@cd $(top_builddir)/mpi; $(MAKE) libmpiobject.la
 
-$(top_builddir)/mpi/libprint.la: $(addprefix $(top_srcdir)/print/, $(print_h) )\
-                                 $(addprefix $(top_srcdir)/print/, $(print_cc) ) 
+$(top_builddir)/print/libprint.la: $(addprefix $(top_srcdir)/print/, $(print_h) )\
+                                   $(addprefix $(top_srcdir)/print/, $(print_cc) ) 
 	@cd $(top_builddir)/print; $(MAKE) libprint.la
 		
 $(top_builddir)/opt/libopt.la: $(addprefix $(top_srcdir)/opt/, $(opt_h) )\
@@ -381,6 +383,9 @@ $(top_builddir)/python/libpython_lada.la: $(addprefix $(top_srcdir)/python/, $(p
                                           $(addprefix $(top_srcdir)/python/, $(python_cc) ) 
 	@cd $(top_builddir)/python; $(MAKE) libpython_lada.la
 
+$(top_builddir)/opt/libpythonconvenience.la: $(addprefix $(top_srcdir)/opt/, $(opt_python_convenience_h) )\
+                                             $(addprefix $(top_srcdir)/opt/, $(opt_python_convenience_cc) ) 
+	@cd $(top_builddir)/opt; $(MAKE) libpythonconvenience.la
 		
 $(top_builddir)/ce/libce.la: $(addprefix $(top_srcdir)/ce/, $(ce_h) )\
                              $(addprefix $(top_srcdir)/ce/, $(ce_impl_h) ) \
@@ -400,6 +405,11 @@ $(top_builddir)/models/libmodels.la: $(addprefix $(top_srcdir)/models/, $(models
                                      $(addprefix $(top_srcdir)/models/, $(models_clj_cc) ) \
                                      $(addprefix $(top_srcdir)/models/, $(models_clj_f90) ) \
 	@cd $(top_builddir)/models; $(MAKE) libmodels.la
+
+$(top_builddir)/atomic_potentials/libpotentials.la: \
+            $(addprefix $(top_srcdir)/atomic_potentials/, $(ap_h) )\
+            $(addprefix $(top_srcdir)/atomic_potentials/, $(ap_cc) ) 
+	@cd $(top_builddir)/atomic_potentials; $(MAKE) libpotentials.la
 
 $(top_builddir)/pescan_interface/libescan.la: \
     $(addprefix $(top_srcdir)/pescan_interface/, $(PESCAN_H) )\

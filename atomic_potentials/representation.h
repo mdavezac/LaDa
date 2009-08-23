@@ -8,6 +8,7 @@
 #include <config.h>
 #endif
 
+#include <iostream>
 #include <utility>
 #include <vector>
 
@@ -41,8 +42,12 @@ namespace LaDa
       t_Variables variables;
     };
 
+    //! Dumps a variable to a stream.
+    inline std::ostream& operator<<( std::ostream& _stream, VariableSet::t_Variable const &_var )
+      { return _stream << "(" << _var.first << ", " << _var.second << ")"; }
+
     //! Compares to variable sets.
-    bool operator==(VariableSet const& _a, VariableSet const &_b) 
+    inline bool operator==(VariableSet const& _a, VariableSet const &_b) 
       { return _a.variables == _b.variables; }
 
 
@@ -72,6 +77,8 @@ namespace LaDa
         t_Sets sets_;
     };
 
+    //! Dumps a representation to a stream.
+    std::ostream& operator<<( std::ostream& _stream, Representation const &_rep );
 
   } // namespace atomic_potential
 } // namespace LaDa
