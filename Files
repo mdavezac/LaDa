@@ -15,8 +15,10 @@ ap_h  = bases.h  bases.impl.h  functions.h  functions.iterator.h  numeric_types.
 ap_doc = $(ap_h) $(ap_cc)
 ap_collapse_cc = collapse.cc  fitting_set.cc  values.cc  variable_major.cc
 ap_collapse_h  = collapse.h  fitting_set.h  values.h  variable_major.h
-potentials_python_h = python.hpp representation.hpp representation.hpp sum_of_separables.hpp
-potentials_python_cc = python.cc representation.cc bases.cc sum_of_separables.cc
+potentials_python_h = representation.hpp bases.hpp representation.hpp sum_of_separables.hpp \
+                      collapse.hpp fitting_set.hpp
+potentials_python_cc = python.cc representation.cc bases.cc sum_of_separables.cc \
+                       collapse.cc fitting_set.cc 
 ap_collapse_doc = $(ap_collapse_h) $(ap_collapse_cc)
 
 fc_models_clj_cc = fortran.cc 

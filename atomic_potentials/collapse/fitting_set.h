@@ -18,12 +18,14 @@
 
 namespace LaDa
 {
-// //! \cond
-// namespace Crystal
-// {
-//   template<class T_TYPE> class TStructure;
-// }
-// //! \endcond
+# ifdef __DOPYTHON
+  //! \cond
+  namespace Python
+  {
+    void expose_fittingset();
+  }
+  //! \endcond
+# endif
 
   namespace atomic_potential
   {

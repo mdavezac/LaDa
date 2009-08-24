@@ -9,6 +9,7 @@
 #include <config.h>
 #endif
 
+#include <boost/python/class.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 
 #include <sstream>

@@ -17,6 +17,14 @@
 
 namespace LaDa
 {
+  // Forward declaration
+  //! \cond
+  namespace Crystal
+  {
+    template<class T_TYPE> class TStructure;
+  }
+  //! \endcond
+ 
   namespace atomic_potential
   {
     // Forward declaration.
