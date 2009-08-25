@@ -53,6 +53,17 @@ namespace LaDa
                 <
                   boost::tuple<t_Functions::const_iterator, t_Coefficients::const_iterator>
                 > const_iterator;
+#       ifdef LADA_WITH_CONST
+#         error LADA_WITH_CONST already defined
+#       endif
+        //! Iterates over coordinates first, then rank.
+        class const_coord_range;
+#       define LADA_WITH_CONST
+#       include "sum_of_separables.coord_range.h"
+        //! Iterates over coordinates first, then rank.
+        class coord_range;
+#       include "sum_of_separables.coord_range.h"
+
         
         //! Constructor.
         SumOfSeparables() {}
@@ -74,6 +85,12 @@ namespace LaDa
               result += (*i_coef) * (*i_func)(_x);
             return result;
           }
+
+
+        //! Iterates over coordinates first, then rank.
+        const_coord_range range() const { return const_coord_range(*this); }
+        //! Iterates over coordinates first, then rank.
+        coord_range range() { return coord_range(*this); }
 
         //! Returns iterator to functions and coefficients.
         iterator begin()

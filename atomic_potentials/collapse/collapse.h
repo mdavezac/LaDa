@@ -68,7 +68,7 @@ namespace LaDa
 
         public:
           //! Constructor.
-          Collapse(SumOfSeparables &_sumofseps) : sumofseps_(_sumofseps) {}
+          Collapse(SumOfSeparables const & _sumofseps);
           //! Copy Constructor.
           Collapse   (Collapse const &_c)
                    : fitting_set_(_c.fitting_set_),
@@ -78,7 +78,7 @@ namespace LaDa
                      sumofseps_(_c.sumofseps_) {}
      
           //! Creates A matrix and b vector for coordinate \a _i. 
-          bool lsq_data(matrix_type &_matrix, vector_type &_vector, size_t _i) const;
+          void lsq_data(matrix_type &_matrix, vector_type &_vector, size_t _i) const;
           //! Updates coordinate \a _i.
           void update(size_t _i) { values_.update(coefficients_[_i], fitting_set_, _i); }
           //! Adds a structure to the fitting set.
@@ -96,7 +96,7 @@ namespace LaDa
           //! Coefficients of the separable function.
           t_ScalingFactors scaling_factors_;
           //! Sum of separables function.
-          SumOfSeparables &sumofseps_;
+          SumOfSeparables sumofseps_;
       };
     } // namespace collapse
   } // namespace atomic_potential

@@ -72,6 +72,7 @@ namespace LaDa
         //! Returns number of variables.
         size_t nb_coordinates() const { return size(); }
 
+
         result_type normalize()
         {
           result_type result(1);

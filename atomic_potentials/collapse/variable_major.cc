@@ -37,27 +37,46 @@ namespace LaDa
         }
       }
 
-      CoordRange::rank_range::var_iterator_ 
-        CoordRange::rank_range::get_i_var_() const 
-        {
-          LADA_ASSERT( i_rank_ != i_rank_end_, "Range not iteratable.\n" )
-          var_iterator_ result( i_rank_->get<0>().begin() );
-          for(size_t i(0); i < index_; ++i, ++result);
-          return result;
-        };
+#     ifdef LADA_GETIVAR
+#       error LADA_GETIVAR already defined.
+#     endif
+#     define LADA_GETIVAR( a, b, c)  \
+        CoordRange::a ## rank_range::b ## var_iterator \
+          CoordRange::rank_range::b ## get_i_var() c \
+          { \
+            LADA_ASSERT( i_rank_ != i_rank_end_, "Range not iteratable.\n" ) \
+            b ## var_iterator result( i_rank_->get<0>().begin() ); \
+            for(size_t i(0); i < index_; ++i, ++result); \
+            return result; \
+          };
+
+      LADA_GETIVAR(const_,const_,const)
+      LADA_GETIVAR(,const_,const)
+      LADA_GETIVAR(,,const)
+      LADA_GETIVAR(,,)
+#     undef LADA_GETIVAR
+
 
       void CoordRange::rank_range::operator++() 
       {
         if( i_rank_ != i_rank_end_ ) return;
-
-        do
-        {
-          ++i_rank_;
-          if( i_rank_ == i_rank_end_ ) break;
-
-        } while( i_rank_->get<0>().size() <= index_  );
-
+        do 
+        { 
+          ++i_rank_; 
+          if( i_rank_ == i_rank_end_ ) break; 
+        } while( i_rank_->get<0>().size() <= index_  ); 
       }
+      void CoordRange::const_rank_range::operator++() 
+      {
+        if( i_rank_ != i_rank_end_ ) return;
+        do 
+        { 
+          ++i_rank_; 
+          if( i_rank_ == i_rank_end_ ) break; 
+        } while( i_rank_->get<0>().size() <= index_  ); 
+      }
+
+
 
     } // namespace collapse.
   } // namespace atomic_potential.

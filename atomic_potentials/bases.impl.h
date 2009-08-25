@@ -162,7 +162,7 @@ namespace LaDa
         ++xiterator_;
         if( xiterator_ != xiterator_end_ )
         {
-          yiterator_ = Bases<T_STRUCTURE>::Ycoord( xiterator_ );
+          yiterator_ = typename Bases<T_STRUCTURE>::Ycoord( xiterator_ );
           yiterator_.begin(xiterator_); yiterator_end_.end(yiterator_);
           val_.x = *xiterator_;
           val_.y = *yiterator_;

@@ -47,6 +47,9 @@ namespace LaDa
       //!          storage helps perform the alternating least-square fit.
       class FittingSet
       {
+#         ifdef __DOPYTHON
+            friend void ::LaDa::Python::expose_fittingset();
+#         endif
         protected:
           //! Type of the coordinates for a single representation.
           typedef std::vector<specie_type> t_AtomType;

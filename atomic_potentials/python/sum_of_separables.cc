@@ -5,8 +5,10 @@
 # include <config.h>
 #endif
 
-#include <sstream>
-#include <complex>
+#include <cmath>
+
+#include <boost/lambda/lambda.hpp>
+#include <boost/lambda/bind.hpp>
 
 #include <boost/python/class.hpp>
 #include <boost/python/object.hpp>
@@ -88,9 +90,33 @@ namespace LaDa
       }
       Functions::t_Coefficient coefs[Functions::N];
       for(size_t i(0); i < Functions::N; ++i)
-        coefs[i] = bp::extract<Functions::t_Coefficient>( _object[i] );
+        coefs[i] = bp::extract<Functions::t_Coefficient>( _tuple[i] );
       _func.push_back( Function(_object), coefs);
     }
+
+    template<class T_TYPE>
+      void push_back_pow( Functions &_func, T_TYPE _pow, 
+                          boost::python::tuple const &_tuple )
+      {
+        namespace bp = boost::python;
+        namespace bl = boost::lambda;
+        if( not bp::len( _tuple ) == Functions::N )
+        {
+          PyErr_SetString
+          (
+            PyExc_TypeError, 
+            "Tuple is not a 2-tuple.\n" 
+          );
+          bp::throw_error_already_set();
+          return;
+        }
+        Functions::t_Coefficient coefs[Functions::N];
+        for(size_t i(0); i < Functions::N; ++i)
+          coefs[i] = bp::extract<Functions::t_Coefficient>( _tuple[i] );
+        typedef atomic_potential::numeric_type numeric_type;
+        numeric_type (*ptr_func)(numeric_type, T_TYPE) = &std::pow;
+        _func.push_back( bl::bind(ptr_func, bl::_1, bl::constant(_pow)), coefs);
+      }
     
     void expose_sumofseps()
     {
@@ -99,7 +125,9 @@ namespace LaDa
       bp::class_<Functions>("Functions", "A function of a single coordinate.")
         .def(bp::init<Functions const&>())
         .def("__call__", &Functions::operator())
-        .def("append", &push_back_python_callable );
+        .def("append", &push_back_python_callable )
+        .def("append_pow", &push_back_pow<atomic_potential::numeric_type>)
+        .def("append_pow", &push_back_pow<int>);
       
       bp::class_<Separable>("Separable", "A separables function.")
         .def(bp::init<Separable const&>())

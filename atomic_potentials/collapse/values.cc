@@ -180,7 +180,7 @@ namespace LaDa
             function_values.resize( function_values.size()+1 );
 
             t_FunctionValues::value_type::value_type::value_type funcs_rank;
-            for(rank_range rank(range.begin()); rank; ++rank )
+            for(rank_range rank(range.range()); rank; ++rank )
             {
               t_FunctionValues::value_type::value_type
                               ::value_type::value_type funcs;

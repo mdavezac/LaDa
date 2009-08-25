@@ -16,6 +16,15 @@
 
 namespace LaDa
 {
+# ifdef __DOPYTHON
+  //! \cond
+  namespace Python
+  {
+    void expose_values();
+  }
+  //! \endcond
+# endif
+
   namespace atomic_potential
   {
     // Forward declaration
@@ -35,6 +44,7 @@ namespace LaDa
       //! Function values and aggregates thereof required by alternating least-square fit.
       class Values
       {
+        friend void ::LaDa::Python::expose_values();
         protected:
           //! Type of the Fitting set.
           typedef FittingSet t_FittingSet;

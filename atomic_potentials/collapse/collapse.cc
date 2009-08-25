@@ -15,6 +15,7 @@
 #include "collapse.h"
 #include "values.h"
 #include "fitting_set.h"
+#include "variable_major.h"
 
 namespace LaDa
 {
@@ -22,8 +23,65 @@ namespace LaDa
   {
     namespace collapse
     {
+      Collapse::Collapse(SumOfSeparables const& _sumofseps) 
+      {
+        try
+        {
+          typedef SumOfSeparables::const_coord_range const_coord_range;
+          typedef const_coord_range::const_rank_range const_rank_range;
+          typedef const_rank_range::const_iterator const_iterator;
+          coefficients_.clear();
+          for(const_coord_range range( _sumofseps.range() ); range; ++range)
+          {
+            size_t nmax(0);
+            const_coord_range::const_rank_range rank_range(range.range());
+            for(; rank_range; ++rank_range)
+            {
+              const_iterator i_first = rank_range.begin();
+              const_iterator const i_end = rank_range.end();
+              for(; i_first != i_end; ++i_first, nmax += Functions::N);
+            }
+          
+            vector_type vec(nmax);
+            rank_range = range.range();
+            for(size_t i(0); rank_range; ++rank_range)
+            {
+              const_iterator i_first = rank_range.begin();
+              const_iterator const i_end = rank_range.end();
+              for(; i_first != i_end; ++i_first)
+                for( size_t j(0); j < Functions::N; ++j, ++i)
+                  vec(i) = (*i_first)[j];
+            }
+            coefficients_.push_back(vec);
+          }
+        }
+        catch(...)
+        {
+          std::cerr << "Could not create collapse object.\n";
+        }
+      }
 
-      bool Collapse::lsq_data(matrix_type &_matrix, vector_type &_vector, size_t _i) const
+      void Collapse::reassign() const
+      {
+        typedef SumOfSeparables::coord_range t_coord_range;
+        typedef t_coord_range::rank_range t_rank_range;
+        typedef t_rank_range::iterator iterator;
+        for(t_coord_range range( sumofseps_ ); range; ++range)
+        {
+          vector_type const &vec(coefficients_[*range]);
+          rank_range rank_range = range.range();
+          for(size_t i(0); rank_range; ++rank_range)
+          {
+            iterator i_first = rank_range.begin();
+            iterator const i_end = rank_range.end();
+            for(; i_first != i_end; ++i_first)
+              for( size_t j(0); j < Functions::N; ++j, ++i)
+                (*i_first)[j] = vec(i);
+          }
+        }
+      };
+
+      void Collapse::lsq_data(matrix_type &_matrix, vector_type &_vector, size_t _i) const
       {
         namespace bnu = boost::numeric::ublas;
 
