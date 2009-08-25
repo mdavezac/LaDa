@@ -69,6 +69,12 @@ namespace LaDa
         const_iterator begin() const { return sets_.begin(); }
         //! Returns a const iterator to the past-the-end variable set.
         const_iterator end() const { return sets_.end(); }
+        //! Returns number of coordinates.
+        size_t nb_coords() const { return sets_.front().variables.size(); }
+        //! Returns number of atoms.
+        size_t nb_atoms() const { return (sets_.front().variables.size() + 5)/3; }
+        //! Returns number of atoms.
+        size_t size() const { return sets_.size(); }
 
       private:
         //! Adds a variable set to this representation.

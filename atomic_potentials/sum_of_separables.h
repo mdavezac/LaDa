@@ -90,6 +90,8 @@ namespace LaDa
         //! Iterates over coordinates first, then rank.
         const_coord_range range() const { return const_coord_range(*this); }
         //! Iterates over coordinates first, then rank.
+        const_coord_range const_range() const { return const_coord_range(*this); }
+        //! Iterates over coordinates first, then rank.
         coord_range range() { return coord_range(*this); }
 
         //! Returns iterator to functions and coefficients.

@@ -78,9 +78,6 @@ namespace LaDa
         .value(        "all", t_Atom::FREEZE_ALL )
         .export_values();
 
-      bp::class_< Crystal::Structure::t_Atoms >("VecStrings")
-        .def(bp::vector_indexing_suite< t_Site::t_Type >());
-
       expose_typed_atom< t_Atom :: t_Type >
       (
         "Atom", 

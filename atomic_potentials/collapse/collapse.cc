@@ -15,7 +15,6 @@
 #include "collapse.h"
 #include "values.h"
 #include "fitting_set.h"
-#include "variable_major.h"
 
 namespace LaDa
 {
@@ -23,7 +22,8 @@ namespace LaDa
   {
     namespace collapse
     {
-      Collapse::Collapse(SumOfSeparables const& _sumofseps) 
+      Collapse::Collapse   (SumOfSeparables & _sumofseps) 
+                         : sumofseps_(_sumofseps)
       {
         try
         {
@@ -31,7 +31,7 @@ namespace LaDa
           typedef const_coord_range::const_rank_range const_rank_range;
           typedef const_rank_range::const_iterator const_iterator;
           coefficients_.clear();
-          for(const_coord_range range( _sumofseps.range() ); range; ++range)
+          for(const_coord_range range( _sumofseps.const_range() ); range; ++range)
           {
             size_t nmax(0);
             const_coord_range::const_rank_range rank_range(range.range());
@@ -54,6 +54,12 @@ namespace LaDa
             }
             coefficients_.push_back(vec);
           }
+
+          SumOfSeparables::const_iterator i_scale( _sumofseps.begin() );
+          SumOfSeparables::const_iterator const i_scale_end( _sumofseps.end() );
+          for(; i_scale != i_scale_end; ++i_scale)
+            scaling_factors_.push_back( i_scale->get<1>() );
+
         }
         catch(...)
         {
@@ -66,10 +72,10 @@ namespace LaDa
         typedef SumOfSeparables::coord_range t_coord_range;
         typedef t_coord_range::rank_range t_rank_range;
         typedef t_rank_range::iterator iterator;
-        for(t_coord_range range( sumofseps_ ); range; ++range)
+        for(t_coord_range range( sumofseps_.range() ); range; ++range)
         {
           vector_type const &vec(coefficients_[*range]);
-          rank_range rank_range = range.range();
+          t_rank_range rank_range = range.range();
           for(size_t i(0); rank_range; ++rank_range)
           {
             iterator i_first = rank_range.begin();

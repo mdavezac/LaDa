@@ -9,7 +9,6 @@
 
 #include "../sum_of_separables.h"
 #include "../representation.h"
-#include "variable_major.h"
 #include "values.h"
 #include "fitting_set.h"
 
@@ -42,6 +41,9 @@ namespace LaDa
 
       void Values::update( vector_type const& _coefs, t_FittingSet const &_ftstr, size_t _i )
       {
+        typedef SumOfSeparables::const_coord_range const_coord_range;
+        typedef const_coord_range::const_rank_range const_rank_range;
+        typedef const_rank_range::const_iterator const_iterator_functions;
         t_FittingSet :: str_iterator i_str = _ftstr.begin(_i);
         t_FittingSet :: str_iterator const i_str_end = _ftstr.end(_i);
         //! Loop over structures.
@@ -139,7 +141,10 @@ namespace LaDa
       void Values::add( Representation const &_reps,
                         SumOfSeparables const& _sumofseps ) 
       {
-        CoordRange const _range(_sumofseps);
+        typedef SumOfSeparables::const_coord_range const_coord_range;
+        typedef const_coord_range::const_rank_range const_rank_range;
+        typedef const_rank_range::const_iterator const_iterator_functions;
+        const_coord_range const _range(_sumofseps.range());
 
         // Case when first structure to be added to function.
         if( function_values_.size() == 0 ) function_values_.resize( _range.size() );
@@ -162,14 +167,13 @@ namespace LaDa
           } // loop over variables.
         }
 
-        typedef CoordRange::rank_range rank_range;
         // Loops over representations.
         Representation::const_iterator i_rep = _reps.begin();
         Representation::const_iterator const i_rep_end = _reps.end();
         for(; i_rep != i_rep_end; ++i_rep)
         {
           // loop overvariables
-          for(CoordRange range(_range); range; ++range)
+          for(const_coord_range range(_range); range; ++range)
           {
             coord_rank_values_[*range].resize( coord_rank_values_[*range].size()+1 );
             t_CoordRankValues::value_type::value_type
@@ -180,13 +184,12 @@ namespace LaDa
             function_values.resize( function_values.size()+1 );
 
             t_FunctionValues::value_type::value_type::value_type funcs_rank;
-            for(rank_range rank(range.range()); rank; ++rank )
+            for(const_rank_range rank(range.range()); rank; ++rank )
             {
               t_FunctionValues::value_type::value_type
                               ::value_type::value_type funcs;
-              typedef rank_range::inner_iterator inner_iterator;
-              inner_iterator i_func = rank.begin(); 
-              inner_iterator i_func_end = rank.end(); 
+              const_iterator_functions i_func = rank.begin(); 
+              const_iterator_functions i_func_end = rank.end(); 
               VariableSet::t_Variables::const_iterator i_var = i_rep->variables.begin(); 
 #             ifdef LADA_DEBUG
                 VariableSet::t_Variables::const_iterator const

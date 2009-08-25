@@ -22,14 +22,14 @@ namespace LaDa
       typedef LaDa::atomic_potential::collapse::FittingSet FittingSet;
       
       expose_vector<FittingSet::t_AtomType>("FittingSet_AtomType", "Implementation only.");
-      expose_vector<std::vector<FittingSet::t_Energies> >("FittingSet_RepCoord",
-                                                          "Implementation only.");
-      expose_vector<std::vector<std::vector<FittingSet::t_Energies> > >
-            ("FittingSet_StrCoord", "Implementation only.");
-      expose_vector<std::vector<std::vector<std::vector<FittingSet::t_Energies> > > >
-            ("FittingSet_Coord", "Implementation only.");
- 
-      expose_vector<FittingSet::t_Energies>("FittingSet_NumericVector", "Implementation only.");
+//     expose_vector<std::vector<FittingSet::t_Energies> >("FittingSet_RepCoord",
+//                                                         "Implementation only.");
+//     expose_vector<std::vector<std::vector<FittingSet::t_Energies> > >
+//           ("FittingSet_StrCoord", "Implementation only.");
+//     expose_vector<std::vector<std::vector<std::vector<FittingSet::t_Energies> > > >
+//           ("FittingSet_Coord", "Implementation only.");
+//
+//     expose_vector<FittingSet::t_Energies>("FittingSet_NumericVector", "Implementation only.");
  
       bp::class_< FittingSet::t_Weights::value_type >("FittingSet_WeightsPair")
         .add_property("str_weight", &FittingSet::t_Weights::value_type::first)

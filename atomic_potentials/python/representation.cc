@@ -55,7 +55,10 @@ namespace LaDa
         "the sum of separable functions framework.",
         bp::init<Representation const&>() 
       ).def( bp::init< Crystal::TStructure<std::string> const&, size_t>() )
-       .def( "__str__", &tostream<Representation const&> );
+       .def( "__str__", &tostream<Representation const&> )
+       .def( "__len__", &Representation::size)
+       .def( "nb_coords", &Representation::nb_coords)
+       .def( "nb_atoms", &Representation::nb_atoms);
     }
 
   }

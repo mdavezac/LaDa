@@ -13,8 +13,8 @@ ap_cc = representation.cc
 ap_h  = bases.h  bases.impl.h  functions.h  functions.iterator.h  numeric_types.h\
         representation.h  separable.h  sum_of_separables.h
 ap_doc = $(ap_h) $(ap_cc)
-ap_collapse_cc = collapse.cc  fitting_set.cc  values.cc  variable_major.cc
-ap_collapse_h  = collapse.h  fitting_set.h  values.h  variable_major.h
+ap_collapse_cc = collapse.cc  fitting_set.cc  values.cc  
+ap_collapse_h  = collapse.h  fitting_set.h  values.h  
 potentials_python_h = representation.hpp bases.hpp representation.hpp sum_of_separables.hpp \
                       collapse.hpp fitting_set.hpp values.hpp
 potentials_python_cc = python.cc representation.cc bases.cc sum_of_separables.cc \

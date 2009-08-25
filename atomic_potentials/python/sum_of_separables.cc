@@ -60,9 +60,8 @@ namespace LaDa
       boost::python::object object;
     };
 
-    void push_back_python_callable( Functions &_func, 
-                                    boost::python::object const &_object, 
-                                    boost::python::tuple const &_tuple )
+    bool extract_tuple( boost::python::tuple const &_tuple,
+                        Functions::t_Coefficient _coefs[Functions::N] )
     {
       namespace bp = boost::python;
       if( not bp::len( _tuple ) == Functions::N )
@@ -72,25 +71,44 @@ namespace LaDa
           PyExc_TypeError, 
           "Tuple is not a 2-tuple.\n" 
         );
+        return false;
+      }
+      try
+      {
+        Functions::t_Coefficient coefs[Functions::N];
+        for(size_t i(0); i < Functions::N; ++i)
+          coefs[i] = bp::extract<Functions::t_Coefficient>( _tuple[i] );
+      }
+      catch(...)
+      {
+        PyErr_SetString
+        (
+          PyExc_TypeError, 
+          "Could not extract coefficients.\n"
+        );
+        return false;
+      }
+      return true;
+    }    
+    void  push_back_python_callable( Functions &_func, 
+                                     boost::python::object const &_object, 
+                                     boost::python::tuple const &_tuple )
+    {    
+      namespace bp = boost::python;
+      Functions::t_Coefficient coefs[Functions::N];
+      if( not extract_tuple(_tuple, coefs)) { bp::throw_error_already_set(); return; }
+      
+      bp::dict const dict( _object.attr("__dict__") );
+      if( not dict.has_key("__call__") )
+      {
+        PyErr_SetString
+        (
+          PyExc_TypeError, 
+          "Object is not callable.\n" 
+        );
         bp::throw_error_already_set();
         return;
       }
-      { 
-        bp::dict const dict( _object.attr("__dict__") );
-        if( not dict.has_key("__call__") )
-        {
-          PyErr_SetString
-          (
-            PyExc_TypeError, 
-            "Object is not callable.\n" 
-          );
-          bp::throw_error_already_set();
-          return;
-        }
-      }
-      Functions::t_Coefficient coefs[Functions::N];
-      for(size_t i(0); i < Functions::N; ++i)
-        coefs[i] = bp::extract<Functions::t_Coefficient>( _tuple[i] );
       _func.push_back( Function(_object), coefs);
     }
 
@@ -100,23 +118,26 @@ namespace LaDa
       {
         namespace bp = boost::python;
         namespace bl = boost::lambda;
-        if( not bp::len( _tuple ) == Functions::N )
-        {
-          PyErr_SetString
-          (
-            PyExc_TypeError, 
-            "Tuple is not a 2-tuple.\n" 
-          );
-          bp::throw_error_already_set();
-          return;
-        }
+
         Functions::t_Coefficient coefs[Functions::N];
-        for(size_t i(0); i < Functions::N; ++i)
-          coefs[i] = bp::extract<Functions::t_Coefficient>( _tuple[i] );
+        if( not extract_tuple(_tuple, coefs)) { bp::throw_error_already_set(); return; }
+
         typedef atomic_potential::numeric_type numeric_type;
         numeric_type (*ptr_func)(numeric_type, T_TYPE) = &std::pow;
         _func.push_back( bl::bind(ptr_func, bl::_1, bl::constant(_pow)), coefs);
       }
+
+    atomic_potential::numeric_type constant( Functions::arg_type::first_type const& ) { return 1e0; }
+
+    void push_back_constant(Functions &_func, boost::python::tuple const &_tuple)
+    {
+      namespace bp = boost::python;
+
+      Functions::t_Coefficient coefs[Functions::N];
+      if( not extract_tuple(_tuple, coefs)) { bp::throw_error_already_set(); return; }
+
+      _func.push_back( &constant, coefs);
+    }
     
     void expose_sumofseps()
     {
@@ -127,7 +148,8 @@ namespace LaDa
         .def("__call__", &Functions::operator())
         .def("append", &push_back_python_callable )
         .def("append_pow", &push_back_pow<atomic_potential::numeric_type>)
-        .def("append_pow", &push_back_pow<int>);
+        .def("append_pow", &push_back_pow<int>)
+        .def("append_constant", &push_back_constant);
       
       bp::class_<Separable>("Separable", "A separables function.")
         .def(bp::init<Separable const&>())

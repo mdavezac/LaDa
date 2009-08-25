@@ -68,7 +68,7 @@ namespace LaDa
 
         public:
           //! Constructor.
-          Collapse(SumOfSeparables const & _sumofseps);
+          Collapse(SumOfSeparables & _sumofseps);
           //! Copy Constructor.
           Collapse   (Collapse const &_c)
                    : fitting_set_(_c.fitting_set_),
@@ -96,7 +96,7 @@ namespace LaDa
           //! Coefficients of the separable function.
           t_ScalingFactors scaling_factors_;
           //! Sum of separables function.
-          SumOfSeparables sumofseps_;
+          SumOfSeparables &sumofseps_;
       };
     } // namespace collapse
   } // namespace atomic_potential
