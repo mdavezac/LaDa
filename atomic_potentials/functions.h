@@ -74,11 +74,8 @@ namespace LaDa
         result_type operator()( arg_type const& _x ) const
         {
 #         ifdef LADA_DEBUG
-            for(size_t i(0); i < Functions::N; ++i)
-            {
-              LADA_ASSERT( functions_.size() == coefficients_.size() * Functions::N,
-                           "Incoherent containers.\n" ); 
-            }
+            LADA_ASSERT( Functions::N * functions_.size() == coefficients_.size(),
+                         "Incoherent containers.\n" ); 
 #         endif
 
           result_type result(0);
@@ -119,6 +116,9 @@ namespace LaDa
           LADA_ASSERT( functions_.size() == coefficients_.size(), "Incoherent containers.\n" );
           return 1;
         }
+
+        //! Returns the number of functions.
+        size_t size() const { return functions_.size(); }
 
       private:
         //! List of functions over scalars.

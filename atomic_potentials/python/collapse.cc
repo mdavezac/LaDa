@@ -42,7 +42,9 @@ namespace LaDa
        .def("lsq_data", &Collapse::lsq_data)
        .def("update", &Collapse::update)
        .def("add", &Collapse::add)
-       .def("reassign", &Collapse::reassign);
+       .def("reassign", &Collapse::reassign)
+       .add_property("values", &Collapse::values_)
+       .add_property("fitting_set", &Collapse::fitting_set_);
     }
 
   }

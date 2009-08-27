@@ -175,6 +175,8 @@ namespace LaDa
           // loop overvariables
           for(const_coord_range range(_range); range; ++range)
           {
+            LADA_ASSERT( *range < coord_rank_values_.size(), "Index out-of-range.\n")
+            LADA_ASSERT( *range < function_values_.size(), "Index out-of-range.\n")
             coord_rank_values_[*range].resize( coord_rank_values_[*range].size()+1 );
             t_CoordRankValues::value_type::value_type
                &coord_rank_values( coord_rank_values_[*range].back() );
@@ -183,36 +185,36 @@ namespace LaDa
                &function_values( function_values_[*range].back() );
             function_values.resize( function_values.size()+1 );
 
-            t_FunctionValues::value_type::value_type::value_type funcs_rank;
-            for(const_rank_range rank(range.range()); rank; ++rank )
-            {
-              t_FunctionValues::value_type::value_type
-                              ::value_type::value_type funcs;
-              const_iterator_functions i_func = rank.begin(); 
-              const_iterator_functions i_func_end = rank.end(); 
-              VariableSet::t_Variables::const_iterator i_var = i_rep->variables.begin(); 
-#             ifdef LADA_DEBUG
-                VariableSet::t_Variables::const_iterator const
-                  i_var_end = i_rep->variables.end();
-#             endif
-              numeric_type var_value(0);
-              for(; i_func != i_func_end; ++i_func, ++i_var)
-              {
-                LADA_ASSERT( i_var != i_var_end, "Iterator out of range.\n" )
-                numeric_type const value( i_func->function()( i_var->first ) );
-                var_value = (*i_func)[ i_var->second ] * value;
-                funcs.push_back(value);
-              }
-              funcs_rank.push_back(funcs);
-              coord_rank_values.back().push_back(var_value);
-            } // over ranks.
-            function_values.push_back(funcs_rank);
-          } // over variables.
+           t_FunctionValues::value_type::value_type::value_type funcs_rank;
+           for(const_rank_range rank(range.range()); rank; ++rank )
+           {
+             t_FunctionValues::value_type::value_type
+                             ::value_type::value_type funcs;
+             const_iterator_functions i_func = rank.begin(); 
+             const_iterator_functions i_func_end = rank.end(); 
+             VariableSet::t_Variables::const_iterator i_var = i_rep->variables.begin(); 
+#            ifdef LADA_DEBUG
+               VariableSet::t_Variables::const_iterator const
+                 i_var_end = i_rep->variables.end();
+#            endif
+             numeric_type var_value(0);
+             for(; i_func != i_func_end; ++i_func, ++i_var)
+             {
+               LADA_ASSERT( i_var != i_var_end, "Iterator out of range.\n" )
+               numeric_type const value( i_func->function()( i_var->first ) );
+               var_value = (*i_func)[ i_var->second ] * value;
+               funcs.push_back(value);
+             }
+             funcs_rank.push_back(funcs);
+             coord_rank_values.back().push_back(var_value);
+           } // over ranks.
+           function_values.push_back(funcs_rank);
+         } // over variables.
 
-          SumOfSeparables::const_iterator i_sep = _sumofseps.begin();
-          SumOfSeparables::const_iterator const i_sep_end = _sumofseps.end();
-          for(; i_sep != i_sep_end; ++i_sep)
-            rank_values_.back().back().push_back( i_sep->get<0>()(i_rep->variables) );
+         SumOfSeparables::const_iterator i_sep = _sumofseps.begin();
+         SumOfSeparables::const_iterator const i_sep_end = _sumofseps.end();
+         for(; i_sep != i_sep_end; ++i_sep)
+           rank_values_.back().back().push_back( i_sep->get<0>()(i_rep->variables) );
         } // over representations.
       }
     } // namespace collapse

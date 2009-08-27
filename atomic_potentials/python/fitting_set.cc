@@ -8,6 +8,7 @@
 #include <boost/python/class.hpp>
 
 #include "../collapse/fitting_set.h"
+#include "../representation.h"
 #define LADA_PYTHON_STD_VECTOR_NOPRINT
 #include <python/std_vector.hpp>
 
@@ -40,7 +41,8 @@ namespace LaDa
       bp::class_<FittingSet>("FittingSet", "Holds fitting related info. For Debugging only.")
         .add_property("coordinates", &FittingSet::coordinates_)
         .add_property("energies", &FittingSet::energies_)
-        .add_property("weights", &FittingSet::weights_);
+        .add_property("weights", &FittingSet::weights_)
+        .def("add", &FittingSet::add);
     }
 
   }

@@ -51,7 +51,7 @@
      //! Constructor.
      LADA_CONST_(coord_range)   (SumOfSeparables LADA_CONST &_sumofseps )
                               : sumofseps_(_sumofseps), index_(0),
-                                max_index_(sumofseps_.nb_coordinates() ) {}
+                                max_index_(_sumofseps.nb_coordinates() ) {}
      //! Copy Constructor.
      LADA_CONST_(coord_range)   ( LADA_CONST_(coord_range) const &_c)
                               : sumofseps_(_c.sumofseps_),

@@ -146,6 +146,7 @@ namespace LaDa
       bp::class_<Functions>("Functions", "A function of a single coordinate.")
         .def(bp::init<Functions const&>())
         .def("__call__", &Functions::operator())
+        .def("__len__", &Functions::size)
         .def("append", &push_back_python_callable )
         .def("append_pow", &push_back_pow<atomic_potential::numeric_type>)
         .def("append_pow", &push_back_pow<int>)
@@ -156,6 +157,7 @@ namespace LaDa
         .def("__call__", &Separable::operator()<atomic_potential::VariableSet::t_Variables>)
         .def("__call__", &call_str<Separable>, bp::arg("structure"))
         .def("__call__", &call_rep<Separable>, bp::arg("representation"))
+        .def("__len__", &Separable::size)
         .def("append", &Separable::push_back);
       
       bp::class_<SumOfSeparables>("SumOfSeparables", "A sum of separables function.")
@@ -163,6 +165,12 @@ namespace LaDa
         .def("__call__", &SumOfSeparables::operator()<atomic_potential::VariableSet::t_Variables>)
         .def("__call__", &call_str<SumOfSeparables>, bp::arg("structure"))
         .def("__call__", &call_rep<SumOfSeparables>, bp::arg("representation"))
+        .add_property
+        (
+          "nb_coordinates", 
+          &SumOfSeparables::nb_coordinates,
+          "Number of coordinates.\n" 
+        )
         .def("append", &SumOfSeparables::push_back);
     }
   }

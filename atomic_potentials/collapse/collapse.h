@@ -24,6 +24,13 @@ namespace LaDa
     template<class T_TYPE> class TStructure;
   }
   //! \endcond
+
+# ifdef __DOPYTHON
+  namespace Python
+  {
+    void expose_collapse();
+  }
+# endif 
  
   namespace atomic_potential
   {
@@ -56,6 +63,9 @@ namespace LaDa
       //!          computing \f$G${(u)}\f$. 
       class Collapse
       {
+#       ifdef __DOPYTHON 
+          friend void Python::expose_collapse();
+#       endif
         protected:
           //! Type of the container of coefficients.
           typedef std::vector<vector_type>  t_Coefficients;

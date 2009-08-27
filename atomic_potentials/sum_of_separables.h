@@ -121,6 +121,7 @@ namespace LaDa
           t_Functions::const_iterator const i_sep_end( functions_.end() );
           for(; i_sep != i_sep_end; ++i_sep)
             result = std::max( result, i_sep->size() );
+          return result;
         };
 
         //! Normalizes all separable functionals.

@@ -84,8 +84,8 @@ namespace LaDa
           //! Copy Constructor.
           FittingSet    (FittingSet const &_c)
                       : coordinates_(_c.coordinates_),
-                             energies_(_c.energies_), 
-                             weights_(_c.weights_){}
+                        energies_(_c.energies_), 
+                        weights_(_c.weights_){}
           //! Changes the weight of nth structure added to representations.
           numeric_type change_weight( size_t _i, numeric_type _w)
             { numeric_type const old(weights_[_i].first); weights_[_i].first=_w; return old; } 
@@ -106,15 +106,10 @@ namespace LaDa
           t_Weights weights_;
       };
 
-      //! True if iterators are at same position.
-      bool operator==( FittingSet::str_iterator const& _a,
-                       FittingSet::str_iterator const& _b );
-
       //! \brief Helps iterate over representations.
       //! \warning This special iterator cannot be dereferenced directly. 
       class FittingSet::str_iterator
       {
-        friend bool operator==( str_iterator const& _a, str_iterator const& _b );
         friend class FittingSet;
 
         public:
@@ -131,6 +126,8 @@ namespace LaDa
 
           //! Increments iterator. Returns true if not end of container.
           void operator++() {  ++i_coordinates_; ++i_weight_; ++i_energy_; }
+          //! Increments iterator. Returns true if not end of container.
+          void operator--() {  --i_coordinates_; --i_weight_; --i_energy_; }
 
           //! Return current weight.
           numeric_type weight() const { return i_weight_->first; }
@@ -140,6 +137,14 @@ namespace LaDa
           rep_iterator begin() const;
           //! Returns iterator over representations.
           rep_iterator end() const;
+          //  True if iterators are at same position.
+          bool operator==( str_iterator const& _a ) const
+          {
+            LADA_ASSERT( i_ == _b.i_, "Inequivalent iterators.\n");
+            return i_energy_ != _b.i_energy_; 
+          }
+          //  False if iterators are at same position.
+          bool operator!=( str_iterator const& _a ) const { return not operator==(_a); }
 
         protected:
           //! Current variable.
@@ -152,22 +157,6 @@ namespace LaDa
           t_Weights::const_iterator i_weight_;
       };
 
-      //  True if iterators are at same position.
-      inline bool operator==( FittingSet::str_iterator const& _a,
-                              FittingSet::str_iterator const& _b )
-      {
-        LADA_ASSERT( _a.i_ == _b.i_, "Inequivalent iterators.\n");
-        return _a.i_energy_ != _b.i_energy_; 
-      }
-      //! False if iterators are at same position.
-      inline bool operator!=( FittingSet::str_iterator const& _a,
-                              FittingSet::str_iterator const& _b )
-        { return not (_a == _b); }
-
-      //! True if iterators are at same position.
-      bool operator==( FittingSet::str_iterator::rep_iterator const& _a,
-                       FittingSet::str_iterator::rep_iterator const& _b );
-      
       class FittingSet::str_iterator::rep_iterator
       {
         friend bool operator==( rep_iterator const& _a, rep_iterator const& _b );
@@ -188,6 +177,16 @@ namespace LaDa
           t_Weights::value_type::second_type::value_type weight() const { return *i_weight_; }
           //! Increments iterators.
           void operator++() { ++i_coordinates_; ++i_weight_; }
+          //! Decrements iterators.
+          void operator--() { --i_coordinates_; --i_weight_; }
+          //  True if iterators are at same position.
+          bool operator==( rep_iterator const& _a ) const
+          {
+            LADA_ASSERT( i_ == _b.i_, "Inequivalent iterators.\n");
+            return i_weight_ != _b.i_weight_; 
+          }
+          //  False if iterators are at same position.
+          bool operator!=( rep_iterator const& _a ) const { return not operator==(_a); }
           
         protected:
           //! Iterator over input structures for specific variable.
@@ -196,14 +195,6 @@ namespace LaDa
           t_Weights::value_type::second_type::const_iterator i_weight_;
       };
 
-      //  True if iterators are at same position.
-      inline bool operator==( FittingSet::str_iterator::rep_iterator const& _a,
-                              FittingSet::str_iterator::rep_iterator const& _b )
-        { return _a.i_coordinates_ != _b.i_coordinates_; }
-      //! False if iterators are at same position.
-      inline bool operator!=( FittingSet::str_iterator::rep_iterator const& _a,
-                              FittingSet::str_iterator::rep_iterator const& _b )
-        { return not (_a == _b); }
     } // namespace collapse
   } // namespace atomic_potential
 } // namespace LaDa
