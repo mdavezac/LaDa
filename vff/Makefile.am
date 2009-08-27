@@ -15,21 +15,21 @@ bin_PROGRAMS = vff layered_vff
 # noinst_PROGRAMS = $(fortranBIN)
 
 noinst_LTLIBRARIES = libvff.la
-libvff_la_SOURCES = $(VFF_CC) $(fortranSOURCE)
+libvff_la_SOURCES = $(vff_cc) $(fortranSOURCE)
 libvff_ladir = $(includedir)/LaDa/vff
-nobase_libvff_la_HEADERS = $(VFF_H) $(fortranHEADER)
+nobase_libvff_la_HEADERS = $(vff_h) $(vff_impl_h) $(fortranHEADER)
 libvff_la_CPPFLAGS = $(AM_CPPFLAGS) 
 
 vff_SOURCES = main.cc 
 vff_CPPFLAGS =  $(AM_CPPFLAGS) 
 vff_LDFLAGS =  $(AM_LDFLAGS) @BOOST_PROGOP@ 
 vff_LDADD = libvff.la \
-            ../crystal/libcrystal.la \
-	    ../atat/libatat.la \
-            ../physics/libphysics.la \
-            ../print/libprint.la \
-            ../opt/libopt.la \
-	    ../minimizer/libminimizer.la \
+            $(top_builddir)/crystal/libcrystal.la \
+	    $(top_builddir)/atat/libatat.la \
+            $(top_builddir)/physics/libphysics.la \
+            $(top_builddir)/print/libprint.la \
+            $(top_builddir)/opt/libopt.la \
+	    $(top_builddir)/minimizer/libminimizer.la \
 	    $(fortranLDADD) \
 	    @MPI_ADDLIB@ \
             $(fortranLDFLAGS) \
@@ -43,17 +43,3 @@ SUBDIRS = python
 # fortran_test_SOURCES = fortran_test.f90 
 # fortran_test_LDFLAGS =  $(vff_LDFLAGS)
 # fortran_test_LDADD = $(vff_LDADD)
-
-../atat/libatat.la: 
-	cd ../atat; $(MAKE) 
-../crystal/libcrystal.la: 
-	cd ../crystal; $(MAKE)
-../physics/libphysics.la:
-	cd ../physics; $(MAKE)
-../mpi/libmpiobject.la:
-	cd ../mpi; $(MAKE)
-../print/libprint.la:
-	cd ../print; $(MAKE)
-
-../minimizer/libminimizer.la:
-	cd ../minimizer; $(MAKE) libminimizer.la

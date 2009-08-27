@@ -7,5 +7,5 @@ AM_CPPFLAGS = -I $(top_srcdir) @CPP_DEBUG_FLAGS@ @MPI_CFLAGS@ \
 AM_LDFLAGS = @TINYXML_LIBS@ @BOOST_LDFLAGS@ @BOOST_SIGNAL@ 
 noinst_LTLIBRARIES = libfactory.la
 libfactory_ladir = $(includedir)/LaDa/factory
-libfactory_la_HEADERS = $(FACTORY_H)
+libfactory_la_HEADERS = $(factory_h)
 libfactory_la_SOURCES = 

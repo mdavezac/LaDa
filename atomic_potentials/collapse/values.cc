@@ -5,7 +5,6 @@
 #include <config.h>
 #endif
 
-#include <opt/fuzzy.h>
 
 #include "../sum_of_separables.h"
 #include "../representation.h"
@@ -18,21 +17,41 @@ namespace LaDa
   {
     namespace collapse
     {
-      Values::str_iterator Values::begin(size_t _i) const
+      Values::str_iterator Values::begin(size_t _i) 
       {
         LADA_ASSERT( _i < coord_rank_values_.size(), "Index out of range.\n" );
-
+ 
         str_iterator result(_i, coord_rank_values_);
         result.i_coord_rank_value_ = coord_rank_values_[_i].begin();
         result.i_rank_value_ = rank_values_.begin();
         result.i_function_values_ = function_values_[_i].begin();
         return result;
       }
-      Values::str_iterator Values::end(size_t _i) const
+      Values::str_iterator Values::end(size_t _i) 
       {
         LADA_ASSERT( _i < coord_rank_values_.size(), "Index out of range.\n" );
-
+ 
         str_iterator result(_i, coord_rank_values_);
+        result.i_coord_rank_value_ = coord_rank_values_[_i].end();
+        // result.i_rank_value_ = rank_values_.end();
+        // result.i_function_values_ = function_values_[_i].end();
+        return result;
+      }
+      Values::const_str_iterator Values::begin(size_t _i) const
+      {
+        LADA_ASSERT( _i < coord_rank_values_.size(), "Index out of range.\n" );
+ 
+        const_str_iterator result(_i, coord_rank_values_);
+        result.i_coord_rank_value_ = coord_rank_values_[_i].begin();
+        result.i_rank_value_ = rank_values_.begin();
+        result.i_function_values_ = function_values_[_i].begin();
+        return result;
+      }
+      Values::const_str_iterator Values::end(size_t _i) const
+      {
+        LADA_ASSERT( _i < coord_rank_values_.size(), "Index out of range.\n" );
+ 
+        const_str_iterator result(_i, coord_rank_values_);
         result.i_coord_rank_value_ = coord_rank_values_[_i].end();
         // result.i_rank_value_ = rank_values_.end();
         // result.i_function_values_ = function_values_[_i].end();
@@ -85,57 +104,6 @@ namespace LaDa
             } // loop over ranks
           } // loop over representations
         } // loop over structures.
-      }
-
-      Values::str_iterator::rep_iterator Values::str_iterator::begin() const
-      {
-        rep_iterator result(i_, n_, coord_rank_values_);
-        result.i_coord_rank_value_ = i_coord_rank_value_->begin();
-        result.i_rank_value_ = i_rank_value_->begin();
-        result.i_function_values_ = i_function_values_->begin();
-        return result;
-      }
-      Values::str_iterator::rep_iterator Values::str_iterator::end() const
-      {
-        rep_iterator result(i_, n_, coord_rank_values_);
-        result.i_coord_rank_value_ = i_coord_rank_value_->end();
-        // result.i_rank_value_ = i_rank_value_->end();
-        // result.i_function_values_ = function_values_->end();
-        return result;
-      }
-
-      Values::str_iterator::rep_iterator::rank_iterator
-        Values::str_iterator::rep_iterator::begin() const
-        {
-          rank_iterator result(i_, n_str_, n_, coord_rank_values_);
-          result.i_coord_rank_value_ = i_coord_rank_value_->begin();
-          result.i_rank_value_ = i_rank_value_->begin();
-          result.i_function_values_ = i_function_values_->begin();
-          return result;
-        }
-      Values::str_iterator::rep_iterator::rank_iterator
-        Values::str_iterator::rep_iterator::end() const
-        {
-          rank_iterator result(i_, n_str_, n_, coord_rank_values_);
-          result.i_coord_rank_value_ = i_coord_rank_value_->end();
-          // result.i_rank_value_ = i_rank_value_->end();
-          // result.i_function_values_ = function_values_->end();
-          return result;
-        }
-
-      numeric_type Values::str_iterator::rep_iterator::rank_iterator::other() const
-      {
-        numeric_type const coord_rank_value( *i_coord_rank_value_ );
-        if( Fuzzy::is_zero(coord_rank_value) ) 
-        {
-          numeric_type result(1);
-          t_CoordRankValues::const_iterator i_cr = coord_rank_values_.begin();
-          t_CoordRankValues::const_iterator const i_cr_end = coord_rank_values_.end();
-          for( size_t i(0); i_cr != i_cr_end; ++i_cr, ++i)
-            if( i != i_ ) result *= (*i_cr)[n_str_][n_rep_][n_];
-          return result;
-        }
-        return (*i_rank_value_) / coord_rank_value;
       }
 
       void Values::add( Representation const &_reps,
@@ -216,7 +184,63 @@ namespace LaDa
          for(; i_sep != i_sep_end; ++i_sep)
            rank_values_.back().back().push_back( i_sep->get<0>()(i_rep->variables) );
         } // over representations.
-      }
+      } // end of add
+
+
+
+
+
+
+//     Values::str_iterator::rep_iterator Values::str_iterator::begin() const
+//     {
+//       rep_iterator result(i_, n_, coord_rank_values_);
+//       result.i_coord_rank_value_ = i_coord_rank_value_->begin();
+//       result.i_rank_value_ = i_rank_value_->begin();
+//       result.i_function_values_ = i_function_values_->begin();
+//       return result;
+//     }
+//     Values::str_iterator::rep_iterator Values::str_iterator::end() const
+//     {
+//       rep_iterator result(i_, n_, coord_rank_values_);
+//       result.i_coord_rank_value_ = i_coord_rank_value_->end();
+//       // result.i_rank_value_ = i_rank_value_->end();
+//       // result.i_function_values_ = function_values_->end();
+//       return result;
+//     }
+//
+//     Values::str_iterator::rep_iterator::rank_iterator
+//       Values::str_iterator::rep_iterator::begin() const
+//       {
+//         rank_iterator result(i_, n_str_, n_, coord_rank_values_);
+//         result.i_coord_rank_value_ = i_coord_rank_value_->begin();
+//         result.i_rank_value_ = i_rank_value_->begin();
+//         result.i_function_values_ = i_function_values_->begin();
+//         return result;
+//       }
+//     Values::str_iterator::rep_iterator::rank_iterator
+//       Values::str_iterator::rep_iterator::end() const
+//       {
+//         rank_iterator result(i_, n_str_, n_, coord_rank_values_);
+//         result.i_coord_rank_value_ = i_coord_rank_value_->end();
+//         // result.i_rank_value_ = i_rank_value_->end();
+//         // result.i_function_values_ = function_values_->end();
+//         return result;
+//       }
+//
+//     numeric_type Values::str_iterator::rep_iterator::rank_iterator::other() const
+//     {
+//       numeric_type const coord_rank_value( *i_coord_rank_value_ );
+//       if( Fuzzy::is_zero(coord_rank_value) ) 
+//       {
+//         numeric_type result(1);
+//         t_CoordRankValues::const_iterator i_cr = coord_rank_values_.begin();
+//         t_CoordRankValues::const_iterator const i_cr_end = coord_rank_values_.end();
+//         for( size_t i(0); i_cr != i_cr_end; ++i_cr, ++i)
+//           if( i != i_ ) result *= (*i_cr)[n_str_][n_rep_][n_];
+//         return result;
+//       }
+//       return (*i_rank_value_) / coord_rank_value;
+//     }
     } // namespace collapse
   } // namespace atomic_potential
 } // namespace LaDa

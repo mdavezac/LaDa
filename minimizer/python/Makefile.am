@@ -10,12 +10,10 @@ AM_LDFLAGS =
 
 install-exec-local: ../../python/libpython_lada.la
 
-EXTRA_DIST = $(MINIMIZER_PYTHON_H) 
+EXTRA_DIST = $(minimizer_python_h) 
 pkgpyexec_LTLIBRARIES = minimizer.la 
 minimizer_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
-minimizer_la_SOURCES = $(MINIMIZER_PYTHON_CC) 
+minimizer_la_SOURCES = $(minimizer_python_cc) 
 minimizer_la_LDFLAGS = $(AM_LDFLAGS) -module
-minimizer_la_LIBADD =  ../../python/libpython_lada.la 
-../../python/libpython_lada.la:
-	cd ../../python; $(MAKE) libpython_lada.la
+minimizer_la_LIBADD =  $(top_builddir)/python/libpython_lada.la 
 endif

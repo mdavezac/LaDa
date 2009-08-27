@@ -16,7 +16,7 @@
 
 #include <crystal/confsplit.h>
 #include <crystal/neighbors.h>
-#include <separable/struct_to_confs.h>
+#include <atomic_potentials/bases.h>
 #include <crystal/fill_structure.h>
 #include <opt/fuzzy.h>
 
@@ -126,8 +126,8 @@ namespace LaDa
     // Strict weak ordering functor from knowledge of basis.
     struct basis_sort
     {
-      configurations::Basis const& basis;
-      basis_sort( configurations::Basis const &_b ) : basis(_b) {}
+      atomic_potential::Basis const& basis;
+      basis_sort( atomic_potential::Basis const &_b ) : basis(_b) {}
       basis_sort( basis_sort const &_b ) : basis(_b.basis) {}
       bool operator()( Crystal::Neighbor const * const _a,
                        Crystal::Neighbor const * const _b ) const
@@ -165,27 +165,38 @@ namespace LaDa
       const size_t N( _confs.size() );
 
       // now loops over bases.
-      CE::configurations::Bases bases( _structure );
-      CE::configurations::Bases::const_iterator i_basis = bases.begin();
-      CE::configurations::Bases::const_iterator i_basis_end = bases.end();
+      typedef atomic_potential::Bases< Crystal::Structure > t_Bases;
+      t_Bases bases( _structure );
+      t_Bases::const_iterator i_basis = bases.begin();
+      t_Bases::const_iterator i_basis_end = bases.end();
 
       // first neighbor containor.
       Crystal :: Neighbors neighbors( n.second );
       neighbors.origin = i_basis->origin + atat::rVector3d(1,0,0);
+      size_t index(1);
       
       // sorting container.
       std::vector<Crystal::Neighbor const*> atoms(n.second-n.first, NULL);
+      size_t origin_type(0);
       
       for(; i_basis != i_basis_end; ++i_basis )
       {
-        if( not Fuzzy::is_zero( atat::norm2(i_basis->origin - neighbors.origin) ) )
+        if( index != i_basis->index ) 
         {
+          index = i_basis->index;
+
+          // finds new nearest neighbors.
           neighbors.origin = i_basis->origin;
           std::vector<Crystal::Neighbor const*>::iterator i_atom = atoms.begin();
           std::vector<Crystal::Neighbor const*>::iterator i_atom_end = atoms.end();
           Crystal::Neighbors::const_iterator i_neigh = neighbors.begin( _structure );
           for(size_t i(0); i < n.first; ++i) ++i_neigh;
           for(; i_atom != i_atom_end; ++i_atom, ++i_neigh ) *i_atom = &(*i_neigh);
+
+          // finds type index at origin.
+          types::t_int const sindex( _structure.atoms[index].site );
+          Crystal::Structure::t_Atom::t_Type const &type = _structure.atoms[index].type;
+          origin_type = _structure.lattice->convert_real_to_type_index( sindex, type );
         };
         // sorst according to basis.
         std::sort
@@ -196,8 +207,9 @@ namespace LaDa
         );
         t_Configurations :: value_type bitset;
         bitset.second = i_basis->weight;
-        bitset.first.reserve(n.second - n.first);
+        bitset.first.reserve(n.second - n.first + 1);
         // then copies atomic types
+        bitset.first.push_back(origin_type);
         std::transform
         ( 
           atoms.begin(),

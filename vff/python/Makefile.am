@@ -10,12 +10,10 @@ AM_LDFLAGS =
 
 install-exec-local: ../../python/libpython_lada.la
 
-EXTRA_DIST = $(VFF_PYTHON_H) 
+EXTRA_DIST = $(vff_python_h) 
 pkgpyexec_LTLIBRARIES = vff.la 
 vff_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
-vff_la_SOURCES = $(VFF_PYTHON_CC) 
+vff_la_SOURCES = $(vff_python_cc) 
 vff_la_LDFLAGS = $(AM_LDFLAGS) -module
-vff_la_LIBADD =  ../../python/libpython_lada.la 
-../../python/libpython_lada.la:
-	cd ../../python; $(MAKE) libpython_lada.la
+vff_la_LIBADD =  $(top_builddir)/python/libpython_lada.la 
 endif

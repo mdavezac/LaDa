@@ -109,7 +109,7 @@ namespace LaDa
         
         t_FittingSet :: str_iterator i_str = fitting_set_.begin(_i);
         t_FittingSet :: str_iterator const i_str_end = fitting_set_.end(_i);
-        t_Values::str_iterator i_str_val = values_.begin(_i);
+        t_Values::const_str_iterator i_str_val = values_.begin(_i);
         //! Loop over structures.
         for(; i_str != i_str_end; ++i_str, ++i_str_val)
         {
@@ -118,7 +118,7 @@ namespace LaDa
 
           t_FittingSet::str_iterator::rep_iterator i_rep = i_str.begin();
           t_FittingSet::str_iterator::rep_iterator const i_rep_end = i_str.end();
-          t_Values::str_iterator::rep_iterator i_rep_val = i_str_val.begin();
+          t_Values::const_str_iterator::const_rep_iterator i_rep_val = i_str_val.begin();
           vector_type G(vec_size, 0); // values to sum to matrix and vector.
 
           // loop over structure representations.
@@ -128,8 +128,8 @@ namespace LaDa
 
             typedef t_FittingSet::str_iterator::rep_iterator
                                 ::coordinate_iterator coordinate_iterator;
-            typedef t_Values::str_iterator::rep_iterator
-                            ::rank_iterator rank_iterator;
+            typedef t_Values::const_str_iterator::const_rep_iterator
+                            ::const_rank_iterator rank_iterator;
             rank_iterator i_rank_val = i_rep_val.begin();
             rank_iterator const i_rank_val_end = i_rep_val.end();
             t_ScalingFactors::const_iterator i_scale = scaling_factors_.begin();

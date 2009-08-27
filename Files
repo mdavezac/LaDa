@@ -30,32 +30,32 @@ models_clj_doc = $(fc_models_clj_h) $(fc_models_clj_cc) $(models_clj_h) $(models
 models_python_h = clj.hpp functional.hpp
 models_python_cc = python.cc clj.cc functional.cc
 
-DARWIN_GRAPH_CC = graph/graph.cc
-DARWIN_GRAPH_IMPL_H = graph/breeders.impl.h graph/comm.impl.h graph/evaluation.impl.h \
+darwin_graph_cc = graph/graph.cc
+darwin_graph_impl_h = graph/breeders.impl.h graph/comm.impl.h graph/evaluation.impl.h \
                       graph/evaluator.impl.h graph/graph.impl.h graph/objective.impl.h
-DARWIN_GRAPH_H = graph/breeders.h graph/comm.h graph/evaluation.h \
+darwin_graph_h = graph/breeders.h graph/comm.h graph/evaluation.h \
                  graph/evaluator.h graph/graph.h graph/history.h \
-                 graph/objective.h graph/store.h  graph/taboo.h $(DARWIN_GRAPH_IMPL_H)
+                 graph/objective.h graph/store.h  graph/taboo.h $(darwin_graph_impl_h)
 
-DARWIN_LIB_CC = concentration.cc debug.cc topology.cc \
+darwin_lib_cc = concentration.cc debug.cc topology.cc \
                 init_outputfiles.cc
  
-DARWIN_LIB_IMPL_H = darwin.impl.h  evaluation.impl.h individual.impl.h \
+darwin_lib_impl_h = darwin.impl.h  evaluation.impl.h individual.impl.h \
 	            scaling.impl.h store.impl.h  fitness.impl.h taboos.impl.h \
                     objective.impl.h bitstring.impl.h gaoperators.impl.h \
                     checkpoints.impl.h minimizergenop.impl.h topology.impl.h 
-DARWIN_LIB_H = concentration.h debug.h  init_outputfiles.h \
+darwin_lib_h = concentration.h debug.h  init_outputfiles.h \
                breeder.h evaluation.h functors.h loadsave.h \
 	       operators.h statistics.h darwin.h gencount.h store.h \
 	       checkpoints.h evaluator.h individual.h objective.h \
 	       taboos.h gatraits.h  bitstring.h fitness.h gaoperators.h \
 	       scaling.h minimizergenop.h topology.h \
                assign_callbacks.h print_callbacks.h static_translate.h \
-               call_init.h $(DARWIN_LIB_IMPL_H)
+               call_init.h $(darwin_lib_impl_h)
 
-DARWIN_OP_CC = operators/container.cc 
-DARWIN_OP_IMPL_H = operators/factory.impl.h 
-DARWIN_OP_H =  operators/callback.h          operators/eogenop_adapter.h \
+darwin_op_cc = operators/container.cc 
+darwin_op_impl_h = operators/factory.impl.h 
+darwin_op_h =  operators/callback.h          operators/eogenop_adapter.h \
                operators/make_populator.h    operators/populate.h \
                operators/xmlfactory.h        operators/container.h \
                operators/factory.h           operators/minimizer.h \
@@ -63,8 +63,8 @@ DARWIN_OP_H =  operators/callback.h          operators/eogenop_adapter.h \
                operators/factory.impl.h      operators/periodic.h \
                operators/taboo.h
 
-DARWIN_CKP_CC = checkpoints/save_every.cc
-DARWIN_CKP_H = checkpoints/apply2best.h      checkpoints/checkpoint.h \
+darwin_ckp_cc = checkpoints/save_every.cc
+darwin_ckp_h = checkpoints/apply2best.h      checkpoints/checkpoint.h \
                checkpoints/filename.h        checkpoints/print_iteration.h \
                checkpoints/stop_onfile.h     checkpoints/xmlfactory.h \
                checkpoints/apply2stored.h    checkpoints/dummy.h \
@@ -74,22 +74,22 @@ DARWIN_CKP_H = checkpoints/apply2best.h      checkpoints/checkpoint.h \
                checkpoints/maxgen.h          checkpoints/save_every.h \
                checkpoints/xcrysdenanim.h
 
-DARWIN_TABOOS_H = taboos/container.h  taboos/history.h  taboos/populations.h
+darwin_taboos_h = taboos/container.h  taboos/history.h  taboos/populations.h
 
-DARWIN_BITSTRING_H = bitstring/crossover.h  bitstring/mutation.h \
+darwin_bitstring_h = bitstring/crossover.h  bitstring/mutation.h \
                      bitstring/object.h  bitstring/random.h  bitstring/translate.h
 
-DARWIN_CE_CC = ce.cc single_site.cc groundstates/groundstate.cc 
-DARWIN_CE_IMPL_H = single_site.impl.h 
-DARWIN_CE_H  = ce.h  single_site.h \
+darwin_ce_cc = ce.cc single_site.cc groundstates/groundstate.cc 
+darwin_ce_impl_h = single_site.impl.h 
+darwin_ce_h  = ce.h  single_site.h \
                groundstates/assign.h           groundstates/evaluator_base.impl.h \
                groundstates/groundstate.h      groundstates/main.extras.h \
                groundstates/populate_factory.h groundstates/evaluator_base.h \
                groundstates/evaluator.h        groundstates/krossover.h \
                groundstates/object.h           groundstates/translate.h \
-               $(DARWIN_CE_IMPL_H)
+               $(darwin_ce_impl_h)
 
-DARWIN_CE_DOC = $(DARWIN_CE_H) $(DARWIN_CE_CC) 
+darwin_ce_doc = $(darwin_ce_h) $(darwin_ce_cc) 
 
 DARWIN_BG_CC = bandgap_stubs.cc two_sites.cc single_site.cc vff.cc bandgap.cc 
 DARWIN_BG_IMPL_H = two_sites.impl.h  single_site.impl.h  bandgap_stubs.impl.h \
@@ -99,22 +99,22 @@ DARWIN_BG_H  = bandgap_stubs.h  two_sites.h  single_site.h  vff.h  bandgap.h \
                alloylayers/evaluator.h alloylayers/main.extras.h \
                alloylayers/object.h alloylayers/operators.h \
                alloylayers/policies.h effective_mass.h $(DARWIN_BG_IMPL_H)
-DARWIN_BG_DOC = $(DARWIN_BG_H) $(DARWIN_BG_CC) $(DARWIN_GRAPH_H) $(DARWIN_GRAPH_CC)
+DARWIN_BG_DOC = $(DARWIN_BG_H) $(DARWIN_BG_CC) $(darwin_graph_h) $(darwin_graph_cc)
 
-LIB_ALLOYLAYERS_CC = single_site.cc bandgap_stubs.cc vff.cc electric_dipole.cc alloylayers/concentration.cc
-LIB_ALLOYLAYERS_IMPL_H  = alloylayers/evaluator.impl.h \
+lib_alloylayers_cc = single_site.cc bandgap_stubs.cc vff.cc electric_dipole.cc alloylayers/concentration.cc
+lib_alloylayers_impl_h  = alloylayers/evaluator.impl.h \
                           alloylayers/factory.hpp bandgap_stubs.impl.h two_sites.impl.h
-LIB_ALLOYLAYERS_H  = alloylayers/evaluator.h alloylayers/object.h \
+lib_alloylayers_h  = alloylayers/evaluator.h alloylayers/object.h \
                      alloylayers/policies.h alloylayers/operators.h \
                      alloylayers/main.extras.h bandgap_stubs.h \
                      vff.h electric_dipole.h two_sites.h alloylayers/concentration.h \
-                     alloylayers/mutation.h $(LIB_ALLOYLAYERS_IMPL_H) # electric_dipole.h 
+                     alloylayers/mutation.h $(lib_alloylayers_impl_h) # electric_dipole.h 
 
-DARWIN_LIB_DOC = $(DARWIN_LIB_H) $(DARWIN_LIB_CC) \
-                 $(DARWIN_OP_H) $(DARWIN_OP_CC) \
-                 $(DARWIN_CKP_H) $(DARWIN_CKP_CC) \
-                 $(DARWIN_TABOOS_H) $(DARWIN_BITSTRING_H) \
-                 $(LIB_ALLOYLAYERS_H) $(LIB_ALLOYLAYERS_CC) 
+darwin_lib_doc = $(darwin_lib_h) $(darwin_lib_cc) \
+                 $(darwin_op_h) $(darwin_op_cc) \
+                 $(darwin_ckp_h) $(darwin_ckp_cc) \
+                 $(darwin_taboos_h) $(darwin_bitstring_h) \
+                 $(lib_alloylayers_h) $(lib_alloylayers_cc) 
 
 DARWIN_L_CC = bandgap_stubs.cc two_sites.cc single_site.cc vff.cc molecularity.cc layered.impl.h
 DARWIN_L_IMPL_H = two_sites.impl.h single_site.impl.h molecularity.impl.h \
@@ -150,7 +150,7 @@ ce_doc = $(ce_h) $(ce_cc)
 ce_python_h = ce.hpp ce.impl.hpp
 ce_python_cc = ce.cc python.cc
 
-LAPACK_F90 = dlae2.f   dlanst.f  dlapy2.f  dlarf.f   dlarft.f  dlascl.f \
+lapack_f90 = dlae2.f   dlanst.f  dlapy2.f  dlarf.f   dlarft.f  dlascl.f \
 	     dlasr.f   dlassq.f  dorg2l.f  dorgql.f  dorgtr.f  dsterf.f \
              dsytd2.f  dlaev2.f  dlansy.f  dlarfb.f  dlarfg.f  dlartg.f \
 	     dlaset.f  dlasrt.f  dlatrd.f  dorg2r.f  dorgqr.f  dsteqr.f \
@@ -158,9 +158,9 @@ LAPACK_F90 = dlae2.f   dlanst.f  dlapy2.f  dlarf.f   dlarft.f  dlascl.f \
 	     dscal.f   dlamch.f  dsyr2k.f  ieeeck.f  iparmq.f  dsymv.f  \
 	     ddot.f    daxpy.f   dsyr2.f   dnrm2.f   dswap.f   dcopy.f  \
 	     dgemv.f   dtrmv.f   dtrmm.f   dger.f   
-LAPACK_CC = lapack.cc 
-LAPACK_H  = lapack.h
-LAPACK_DOC = $(LAPACK_H) $(LAPACK_CC) 
+lapack_cc = lapack.cc 
+lapack_h  = lapack.h
+lapack_doc = $(lapack_h) $(lapack_cc) 
 
 mpi_cc     = 
 mpi_h      = mpi_object.h macros.h
@@ -181,23 +181,23 @@ opt_python_cc = errortuple.cc python.cc
 opt_python_c = errortuple.hpp convexhull.impl.hpp
 opt_f90 = rational_mathematics.f90
 
-FACTORY_CC =
-FACTORY_H = chain_connect_attribute.h  chainconnects.h factory.h \
+factory_cc =
+factory_h = chain_connect_attribute.h  chainconnects.h factory.h \
             fusedfactory.h  xmlfactory.h xmlkey.h chain_connect_node.h \
             chain_connect_value.h  functiontype.h  visit_xml.h xmlfusedfactory.h
 
-FACTORY_DOC = $(FACTORY_CC) $(FACTORY_H)
+factory_doc = $(factory_cc) $(factory_h)
 
 EMASS_CC = emass.cc
 EMASS_H  = emass.h
 EMASS_DOC = $(EMASS_H) $(EMASS_CC) 
-PESCAN_F90 = momentum.f90 fortran.f90 
-PESCAN_CC = interface.cc bandgap.cc dipole_elements.cc emass.cc
-PESCAN_H  = interface.h  bandgap.h  va.h dipole_elements.h emass.h
-PESCAN_IMPL_H  = interface.localclasses.h va.impl.h
-PESCAN_DOC = $(PESCAN_H) $(PESCAN_CC) $(PESCAN_F90) $(PESCAN_IMPL_H)
-PESCAN_PYTHON_CC = escan.cc bandgap.cc python.cc emass.cc
-PESCAN_PYTHON_H = escan.hpp bandgap.hpp emass.hpp
+pescan_f90 = momentum.f90 fortran.f90 
+pescan_cc = interface.cc bandgap.cc dipole_elements.cc emass.cc
+pescan_h  = interface.h  bandgap.h  va.h dipole_elements.h emass.h
+pescan_impl_h  = interface.localclasses.h va.impl.h
+pescan_doc = $(pescan_h) $(pescan_cc) $(pescan_f90) $(pescan_impl_h)
+pescan_python_cc = escan.cc bandgap.cc python.cc emass.cc
+pescan_python_h = escan.hpp bandgap.hpp emass.hpp
 
 physics_cc = physics.cc
 physics_h  = physics.h
@@ -211,54 +211,54 @@ print_doc = $(print_h) $(print_cc)
 
 python_h = xml.hpp misc.hpp std_vector.hpp std_map.hpp std_map.impl.hpp debug.hpp
 
-MINIMIZER_H =  allsq.h  cgs.h  decoupled.h  frprmn.h  function_wrapper.h  gsl.h \
+minimizer_h =  allsq.h  cgs.h  decoupled.h  frprmn.h  function_wrapper.h  gsl.h \
                gsl_lsq.h  gsl_mins.h  gsl_nllsq.h  gsl_simplex.h  minuit2.h \
                variant.h interpolated_gradient.h
-MINIMIZER_CC = gsl_lsq.cc gsl.cc gsl_nllsq.cc gsl_mins.cc gsl_simplex.cc frprmn.cc \
+minimizer_cc = gsl_lsq.cc gsl.cc gsl_nllsq.cc gsl_mins.cc gsl_simplex.cc frprmn.cc \
                decoupled.cc minuit2.cc cgs.cc
-MINIMIZER_F90 =  df1dim.f90  frprmn_fortran.f90  linmin.f90
-MINIMIZER_DOC = $(MINIMIZER_H) $(MINIMIZER_CC)
-MINIMIZER_PYTHON_H = cgs.hpp minimizer.hpp interpolated_gradient.hpp function.hpp
-MINIMIZER_PYTHON_CC = python.cc cgs.cc minimizer.cc interpolated_gradient.cc
+minimizer_f90 =  df1dim.f90  frprmn_fortran.f90  linmin.f90
+minimizer_doc = $(minimizer_h) $(minimizer_cc)
+minimizer_python_h = cgs.hpp minimizer.hpp interpolated_gradient.hpp function.hpp
+minimizer_python_cc = python.cc cgs.cc minimizer.cc interpolated_gradient.cc
 
-SEPARABLE_CC = cefitting.cc ce.cc struct_to_confs.cc
-SEPARABLE_H = boolean.h cefitting.h ce.h lsq.h separable.h collapse.h \
+separable_cc = cefitting.cc ce.cc struct_to_confs.cc
+separable_h = boolean.h cefitting.h ce.h lsq.h separable.h collapse.h \
               cecollapse.h bestof.h struct_to_confs.h
-SEPARABLE_IMPL_H = cefitting.impl.h separable.impl.h collapse.impl.h \
+separable_impl_h = cefitting.impl.h separable.impl.h collapse.impl.h \
                    cecollapse.impl.h
-SEPARABLE_DOC = $(SEPARABLE_CC) $(SEPARABLE_H) $(SEPARABLE_IMPL_H)
-SEPARABLES_FXL_CC = prepare.cc
-SEPARABLES_FXL_H = colmappings.h sepmappings.h functional.h prepare.h collapse.h methods.h \
+separable_doc = $(separable_cc) $(separable_h) $(separable_impl_h)
+separable_fxl_cc = prepare.cc
+separable_fxl_h = colmappings.h sepmappings.h functional.h prepare.h collapse.h methods.h \
                    mixed.h colpolicy.h mixedfunctional.h ce_as_collapse.h
-SEPARABLES_FXL_IMPL_H = functional.impl.h collapse.impl.h methods.impl.h mixed.impl.h \
+separable_fxl_impl_h = functional.impl.h collapse.impl.h methods.impl.h mixed.impl.h \
                         colpolicy.impl.h mixedfunctional.impl.h \
                         ce_as_collapse.impl.h
-SEPARABLES_DOC = $(SEPARABLES_FXL_CC) $(SEPARABLES_FXL_H) $(SEPARABLES_FXL_IMPL_H)
+separable_fxl_doc = $(separable_fxl_cc) $(separable_fxl_h) $(separable_fxl_impl_h)
 
 
 VFF_FORTRAN_CC = fortran.cc
 VFF_FORTRAN_H  = fortran.h
 VFF_FORTRAN_DOC = $(VFF_FORTRAN_H) $(VFF_FORTRAN_CC) 
-VFF_CC = atomic_center.cc atomic_functional.cc functional.cc vff.cc layered.cc\
+vff_cc = atomic_center.cc atomic_functional.cc functional.cc vff.cc layered.cc\
          initialize_centers.cc build_tree_smith.cc build_tree_sort.cc \
          build_tree_sort_dnc.cc # pescan_perturbation.cc 
-VFF_IMPL_H = va.impl.h pescan_perturbation.impl.h
-VFF_H  = functional.h  layered.h  va.h  pescan_perturbation.h vff.h \
-         atomic_center.h atomic_functional.h $(VFF_IMPL_H)
-VFF_DOC = $(VFF_H) $(VFF_IMPLS) $(VFF_CC) 
-VFF_PYTHON_CC = vff.cc python.cc
-VFF_PYTHON_H = vff.hpp
+vff_impl_h = va.impl.h pescan_perturbation.impl.h
+vff_h  = functional.h  layered.h  va.h  pescan_perturbation.h vff.h \
+         atomic_center.h atomic_functional.h $(vff_impl_h)
+vff_doc = $(vff_h) $(vff_impl_h) $(vff_cc) 
+vff_python_cc = vff.cc python.cc
+vff_python_h = vff.hpp
 
-DOCS_H = revision.h
-DOCS =  beginners  crystal  fortran  functionals  ga  \
+docs_h = revision.h
+docs =  beginners  crystal  fortran  functionals  ga  \
         input  mainpage  mpi  xmltagindex gainput executables
 SCRIPT_FILES = atat.pl  CE_to_ATAT_MC.pl  convert_from_atat.pl  escan_to_xml.pl\
                input_template.xml  max_revision.pl  nxnxn.pl  send_all.pl
 
-ALL_DOCS = $(top_srcdir)/doxy.conf $(top_srcdir)/$(DOCS_H) \
-           $(addprefix $(top_srcdir)/docsource/, $(DOCS)) \
-           $(addprefix $(top_srcdir)/darwin/, $(DARWIN_LIB_DOC)) \
-           $(addprefix $(top_srcdir)/darwin/, $(DARWIN_CE_DOC)) \
+ALL_DOCS = $(top_srcdir)/doxy.conf $(top_srcdir)/$(docs_h) \
+           $(addprefix $(top_srcdir)/docsource/, $(docs)) \
+           $(addprefix $(top_srcdir)/darwin/, $(darwin_lib_doc)) \
+           $(addprefix $(top_srcdir)/darwin/, $(darwin_ce_doc)) \
            $(addprefix $(top_srcdir)/darwin/, $(DARWIN_BG_DOC)) \
            $(addprefix $(top_srcdir)/darwin/, $(DARWIN_L_DOC)) \
            $(addprefix $(top_srcdir)/darwin/, $(DARWIN_E_DOC)) \
@@ -267,20 +267,20 @@ ALL_DOCS = $(top_srcdir)/doxy.conf $(top_srcdir)/$(DOCS_H) \
            $(addprefix $(top_srcdir)/atomic_potentials/collapse,$(ap_collapse_doc)) \
            $(addprefix $(top_srcdir)/crystal/,$(crystal_doc)) \
            $(addprefix $(top_srcdir)/ce/,$(ce_doc)) \
-           $(addprefix $(top_srcdir)/lapack/,$(LAPACK_DOC)) \
+           $(addprefix $(top_srcdir)/lapack/,$(lapack_doc)) \
            $(addprefix $(top_srcdir)/mpi/,$(mpi_doc)) \
            $(addprefix $(top_srcdir)/opt/,$(opt_doc)) \
            $(addprefix $(top_srcdir)/models/,$(models_clj_doc)) \
            $(addprefix $(top_srcdir)/pescan_interface/,$(EMASS_DOC)) \
-           $(addprefix $(top_srcdir)/pescan_interface/,$(PESCAN_DOC)) \
+           $(addprefix $(top_srcdir)/pescan_interface/,$(pescan_doc)) \
            $(addprefix $(top_srcdir)/physics/,$(physics_doc)) \
            $(addprefix $(top_srcdir)/print/,$(print_doc)) \
-           $(addprefix $(top_srcdir)/separable/,$(SEPARABLE_DOC)) \
-           $(addprefix $(top_srcdir)/separable/fixedlattice/,$(SEPARABLES_DOC)) \
+           $(addprefix $(top_srcdir)/separable/,$(separable_doc)) \
+           $(addprefix $(top_srcdir)/separable/fixedlattice/,$(separable_fxl_doc)) \
            $(addprefix $(top_srcdir)/vff/,$(VFF_FORTRAN_DOC)) \
-           $(addprefix $(top_srcdir)/vff/,$(VFF_DOC)) \
-           $(addprefix $(top_srcdir)/factory/,$(FACTORY_DOC)) \
-           $(addprefix $(top_srcdir)/minimizer/,$(MINIMIZER_DOC)) 
+           $(addprefix $(top_srcdir)/vff/,$(vff_doc)) \
+           $(addprefix $(top_srcdir)/factory/,$(factory_doc)) \
+           $(addprefix $(top_srcdir)/minimizer/,$(minimizer_doc)) 
 
 TEST_PSEUDOS = maskr  vq.atom1  vq.atom2  vq.atom3  vq.atom4  vq.atom5 \
                vq.atom6  vq.atom7  vq.atom8  vwr.pso
@@ -338,7 +338,7 @@ TEST_VFF_NANOPSE = position.GaSb  scanparam.GaSb  vff.in  vffparam.GaSb
 TEST_MODELS = ep.input POSCAR_0 models.py
 ENVIRONMENT_FILES = env
 
-EXTRA_FILES =  $(addprefix docsource/, $(DOCS)) \
+EXTRA_FILES =  $(addprefix docsource/, $(docs)) \
                $(addprefix scripts/, $(SCRIPT_FILES)) \
                $(addprefix test/pseudos/, $(TEST_PSEUDOS)) \
                $(addprefix test/bandgap/, $(TEST_FILES)) \
@@ -395,12 +395,13 @@ $(top_builddir)/ce/libce.la: $(addprefix $(top_srcdir)/ce/, $(ce_h) )\
                              $(addprefix $(top_srcdir)/ce/, $(ce_cc) ) 
 	@cd $(top_builddir)/ce; $(MAKE) libce.la
 		
-$(top_builddir)/vff/libvff.la: $(addprefix $(top_srcdir)/vff/, $(VFF_H) )\
-                               $(addprefix $(top_srcdir)/vff/, $(VFF_CC) ) 
+$(top_builddir)/vff/libvff.la: $(addprefix $(top_srcdir)/vff/, $(vff_h) )\
+                               $(addprefix $(top_srcdir)/vff/, $(vff_impl_h) )\
+                               $(addprefix $(top_srcdir)/vff/, $(vff_cc) ) 
 	@cd $(top_builddir)/vff; $(MAKE) libvff.la
 		
-$(top_builddir)/minimizer/libminimizer.la: $(addprefix $(top_srcdir)/minimizer/, $(MINIMIZER_H) )\
-                                           $(addprefix $(top_srcdir)/minimizer/, $(MINIMIZER_CC) ) 
+$(top_builddir)/minimizer/libminimizer.la: $(addprefix $(top_srcdir)/minimizer/, $(minimizer_h) )\
+                                           $(addprefix $(top_srcdir)/minimizer/, $(minimizer_cc) ) 
 	@cd $(top_builddir)/minimizer; $(MAKE) libminimizer.la
 		
 		
@@ -415,8 +416,16 @@ $(top_builddir)/atomic_potentials/libpotentials.la: \
 	@cd $(top_builddir)/atomic_potentials; $(MAKE) libpotentials.la
 
 $(top_builddir)/pescan_interface/libescan.la: \
-    $(addprefix $(top_srcdir)/pescan_interface/, $(PESCAN_H) )\
-    $(addprefix $(top_srcdir)/pescan_interface/, $(PESCAN_CC) ) 
+    $(addprefix $(top_srcdir)/pescan_interface/, $(pescan_h) )\
+    $(addprefix $(top_srcdir)/pescan_interface/, $(pescan_cc) ) 
 	@cd $(top_builddir)/pescan_interface; $(MAKE) libescan.la
 
+$(top_builddir)/separable/libseparable.la: \
+    $(addprefix $(top_srcdir)/separable/, $(separable_h) )\
+    $(addprefix $(top_srcdir)/separable/, $(separable_impl_h) )\
+    $(addprefix $(top_srcdir)/separable/, $(separable_cc) ) 
+	@cd $(top_builddir)/separable; $(MAKE) libseparable.la
 
+$(top_builddir)/factory/libfactory.la: \
+    $(addprefix $(top_srcdir)/factory/, $(factory_h) )
+	@cd $(top_builddir)/factory; $(MAKE) libfactory.la

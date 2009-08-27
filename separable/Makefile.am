@@ -14,12 +14,12 @@ cubic_SOURCES = main.cc
 cubic_CPPFLAGS =  $(AM_CPPFLAGS) -D _CUBIC_CE_
 cubic_LDFLAGS =  $(AM_LDFLAGS)
 cubic_LDADD = libseparable.la \
-              ../crystal/libcrystal.la \
-              ../atat/libatat.la \
-              ../opt/libopt.la \
-              ../mpi/libmpiobject.la \
-              ../physics/libphysics.la \
-              ../print/libprint.la 
+              $(top_builddir)/crystal/libcrystal.la \
+              $(top_builddir)/atat/libatat.la \
+              $(top_builddir)/opt/libopt.la \
+              $(top_builddir)/mpi/libmpiobject.la \
+              $(top_builddir)/physics/libphysics.la \
+              $(top_builddir)/print/libprint.la 
 
 tetra_SOURCES = $(cubic_SOURCES)
 tetra_CPPFLAGS =  $(AM_CPPFLAGS) -D_TETRAGONAL_CE_
@@ -27,22 +27,9 @@ tetra_LDFLAGS = $(cubic_LDFLAGS)
 tetra_LDADD = $(cubic_LDADD) 
 
 noinst_LTLIBRARIES = libseparable.la 
-libseparable_la_SOURCES = $(SEPARABLE_CC)
+libseparable_la_SOURCES = $(separable_cc)
 libseparable_ladir = $(includedir)/LaDa/separable
-nobase_libseparable_la_HEADERS = $(SEPARABLE_H) $(SEPARABLE_IMPL_H)
+nobase_libseparable_la_HEADERS = $(separable_h) $(separable_impl_h)
 libseparable_la_CPPFLAGS = $(AM_CPPFLAGS) 
 
 SUBDIRS = fixedlattice
-
-../atat/libatat.la: 
-	cd ../atat; $(MAKE) 
-../crystal/libcrystal.la: 
-	cd ../crystal; $(MAKE) 
-../physics/libphysic.la: 
-	cd ../physics; $(MAKE) 
-../opt/libopt.la: 
-	cd ../opt; $(MAKE) 
-../mpi/libmpiobkect.la: 
-	cd ../mpi; $(MAKE) libmpiobject.la
-../print/libprint.la: 
-	cd ../print; $(MAKE) 

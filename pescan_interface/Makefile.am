@@ -12,9 +12,9 @@ if NOLAUNCH
   AM_LDFLAGS  += @EO_LIBS@
 endif    
 
-LDADD = ../opt/libopt.la 
+LDADD = $(top_builddir)/opt/libopt.la 
 if DODIRECTIAGA
-   LDADD +=  ../mpi/libmpiobject.la
+   LDADD +=  $(top_builddir)/mpi/libmpiobject.la
    AM_LDFLAGS += @FCLIBS@
 endif
 
@@ -22,11 +22,11 @@ bin_PROGRAMS = escan layered_escan
 
 noinst_LTLIBRARIES = libescan.la
 libescan_ladir = $(includedir)/LaDa/pescan_interface
-libescan_la_SOURCES = $(PESCAN_CC) 
-nobase_libescan_la_HEADERS = $(PESCAN_H) $(PESCAN_IMPL_H) 
+libescan_la_SOURCES = $(pescan_cc) 
+nobase_libescan_la_HEADERS = $(pescan_h) $(pescan_impl_h) 
 libescan_la_CPPFLAGS = $(AM_CPPFLAGS) 
 if DODIRECTIAGA
-  libescan_la_SOURCES += $(PESCAN_F90)
+  libescan_la_SOURCES += $(pescan_f90)
   libescan_la_FCFLAGS = $(FCFLAGS) @IAGA_FCFLAGS@
   libescan_la_F77FLAGS = $(FCFLAGS) @IAGA_FCFLAGS@
   libescan_la_F90FLAGS = $(FCFLAGS) @IAGA_FCFLAGS@
@@ -37,12 +37,12 @@ escan_SOURCES = main.cc
 escan_CPPFLAGS = $(AM_CPPFLAGS) 
 escan_LDFLAGS =  $(AM_LDFLAGS) 
 escan_LDADD = libescan.la \
-	      ../vff/libvff.la \
-	      ../crystal/libcrystal.la \
-	      ../atat/libatat.la \
-	      ../minimizer/libminimizer.la \
-              ../physics/libphysics.la \
-	      ../print/libprint.la \
+	      $(top_builddir)/vff/libvff.la \
+	      $(top_builddir)/crystal/libcrystal.la \
+	      $(top_builddir)/atat/libatat.la \
+	      $(top_builddir)/minimizer/libminimizer.la \
+              $(top_builddir)/physics/libphysics.la \
+	      $(top_builddir)/print/libprint.la \
 	      @MPI_ADDLIB@ \
 	      @LD_IAGA_FLAGS@ $(LDADD) 
 
@@ -54,21 +54,16 @@ layered_escan_LDADD = $(escan_LDADD)
 
 SUBDIRS = python
 
-../atat/libatat.la: 
-	cd ../atat; $(MAKE) libatat.la
-../crystal/libcrystal.la: 
-	cd ../crystal; $(MAKE) libcrystal.la
-../physics/libphysics.la:
-	cd ../physics; $(MAKE) libphysics.la
-../mpi/libmpiobject.la:
-	cd ../mpi; $(MAKE) libmpiobject.la
-../vff/libvff.la:
-	cd ../vff; $(MAKE) libvff.la
-../print/libprint.la:
-	cd ../print; $(MAKE) libprint.la
-../minimizer/libminimizer.la:
-	cd ../minimizer; $(MAKE) libminimizer.la
 if DODIRECTIAGA
-../lapack/liblapack.la:
-	cd ../lapack; $(MAKE) liblapack.la
+$(top_builddir)/lapack/liblapack.la: \
+    $(addprefix $(top_srcdir)/lapack/, $(lapack_h) )\
+    $(addprefix $(top_srcdir)/lapack/, $(lapack_f90) )\
+    $(addprefix $(top_srcdir)/lapack/, $(lapack_cc) ) 
+	@cd $(top_builddir)/lapack; $(MAKE) liblapack.la
 endif
+
+
+
+
+
+

@@ -30,14 +30,14 @@ mixed_SOURCES = mxmain.cc
 mixed_CPPFLAGS =  $(AM_CPPFLAGS) -D_CUBIC_CE_
 mixed_LDFLAGS = $(AM_LDFLAGS)
 mixed_LDADD = libfxseparable.la \
-              ../libseparable.la \
-              ../../ce/libce.la \
-              ../../crystal/libcrystal.la \
-              ../../atat/libatat.la \
-              ../../physics/libphysics.la \
-              ../../print/libprint.la \
-              ../../opt/libopt.la  \
-              ../../mpi/libmpiobject.la  
+              $(top_builddir)/separable/libseparable.la \
+              $(top_builddir)/ce/libce.la \
+              $(top_builddir)/crystal/libcrystal.la \
+              $(top_builddir)/atat/libatat.la \
+              $(top_builddir)/physics/libphysics.la \
+              $(top_builddir)/print/libprint.la \
+              $(top_builddir)/opt/libopt.la  \
+              $(top_builddir)/mpi/libmpiobject.la  
 
 mixedtetra_SOURCES = mxmain.cc
 mixedtetra_CPPFLAGS =  $(AM_CPPFLAGS) -D_TETRAGONAL_CE_
@@ -45,26 +45,7 @@ mixedtetra_LDFLAGS = $(mixed_LDFLAGS)
 mixedtetra_LDADD = $(mixed_LDADD) 
 
 noinst_LTLIBRARIES = libfxseparable.la 
-libfxseparable_la_SOURCES = $(SEPARABLES_FXL_CC)
+libfxseparable_la_SOURCES = $(separable_fxl_cc)
 libfxseparable_ladir = $(includedir)/LaDa/separable/fixedlattice
-nobase_libfxseparable_la_HEADERS = $(SEPARABLES_FXL_H) $(SEPARABLES_FXL_IMPL_H)
+nobase_libfxseparable_la_HEADERS = $(separable_fxl_h) $(separable_fxl_impl_h)
 libfxseparable_la_CPPFLAGS = $(AM_CPPFLAGS) 
-
-../libseparable.la:
-	cd ../; $(MAKE) libseparable.la
-../../atat/libatat.la: 
-	cd ../../atat; $(MAKE) libatat.la
-../../crystal/libcrystal.la: 
-	cd ../../crystal; $(MAKE) libcrystal.la
-../../physics/libphysic.la: 
-	cd ../../physics; $(MAKE) libphysics.la
-../../opt/libopt.la: 
-	cd ../../opt; $(MAKE) libopt.la
-../../mpi/libmpiobject.la: 
-	cd ../../mpi; $(MAKE) libmpiobject.la
-../../print/libprint.la: 
-	cd ../../print; $(MAKE) libprint.la
-../../ce/libce.la: 
-	cd ../../ce; $(MAKE) libce.la
-../../mpi/libmpiobject.la:
-	cd ../../mpi; $(MAKE) libmpiobject.la
