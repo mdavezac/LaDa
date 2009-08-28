@@ -133,7 +133,9 @@ namespace LaDa
             i_funcs->resize( i_funcs->size()+1 );
             i_coords->resize( i_coords->size()+1 );
           } // loop over variables.
+          rank_values_.resize(rank_values_.size() + 1);
         }
+        t_RankValues::value_type &str_rv = rank_values_.back();
 
         // Loops over representations.
         Representation::const_iterator i_rep = _reps.begin();
@@ -145,44 +147,47 @@ namespace LaDa
           {
             LADA_ASSERT( *range < coord_rank_values_.size(), "Index out-of-range.\n")
             LADA_ASSERT( *range < function_values_.size(), "Index out-of-range.\n")
-            coord_rank_values_[*range].resize( coord_rank_values_[*range].size()+1 );
             t_CoordRankValues::value_type::value_type
-               &coord_rank_values( coord_rank_values_[*range].back() );
-            coord_rank_values.resize( coord_rank_values.size()+1 );
+               &rep_crv( coord_rank_values_[*range].back() );
             t_FunctionValues::value_type::value_type
-               &function_values( function_values_[*range].back() );
-            function_values.resize( function_values.size()+1 );
+               &rep_fv( function_values_[*range].back() );
+            
+            // Adds rep to coord and str. 
+            rep_crv.resize(rep_crv.size() + 1);
+            rep_fv.resize(rep_fv.size() + 1);
 
-           t_FunctionValues::value_type::value_type::value_type funcs_rank;
-           for(const_rank_range rank(range.range()); rank; ++rank )
-           {
-             t_FunctionValues::value_type::value_type
-                             ::value_type::value_type funcs;
-             const_iterator_functions i_func = rank.begin(); 
-             const_iterator_functions i_func_end = rank.end(); 
-             VariableSet::t_Variables::const_iterator i_var = i_rep->variables.begin(); 
-#            ifdef LADA_DEBUG
-               VariableSet::t_Variables::const_iterator const
-                 i_var_end = i_rep->variables.end();
-#            endif
-             numeric_type var_value(0);
-             for(; i_func != i_func_end; ++i_func, ++i_var)
-             {
-               LADA_ASSERT( i_var != i_var_end, "Iterator out of range.\n" )
-               numeric_type const value( i_func->function()( i_var->first ) );
-               var_value = (*i_func)[ i_var->second ] * value;
-               funcs.push_back(value);
-             }
-             funcs_rank.push_back(funcs);
-             coord_rank_values.back().push_back(var_value);
-           } // over ranks.
-           function_values.push_back(funcs_rank);
-         } // over variables.
-
-         SumOfSeparables::const_iterator i_sep = _sumofseps.begin();
-         SumOfSeparables::const_iterator const i_sep_end = _sumofseps.end();
-         for(; i_sep != i_sep_end; ++i_sep)
-           rank_values_.back().back().push_back( i_sep->get<0>()(i_rep->variables) );
+            t_FunctionValues::value_type::value_type::value_type funcs_rank;
+            for(const_rank_range rank(range.range()); rank; ++rank )
+            {
+              t_FunctionValues::value_type::value_type
+                              ::value_type::value_type funcs;
+              const_iterator_functions i_func = rank.begin(); 
+              const_iterator_functions i_func_end = rank.end(); 
+              VariableSet::t_Variables::const_iterator i_var = i_rep->variables.begin(); 
+#             ifdef LADA_DEBUG
+                VariableSet::t_Variables::const_iterator const
+                  i_var_end = i_rep->variables.end();
+#             endif
+              numeric_type var_value(0);
+              for(; i_func != i_func_end; ++i_func, ++i_var)
+              {
+                LADA_ASSERT( i_var != i_var_end, "Iterator out of range.\n" )
+                numeric_type const value( i_func->function()( i_var->first ) );
+                var_value += (*i_func)[ i_var->second ] * value;
+                funcs.push_back(value);
+              }
+              funcs_rank.push_back(funcs);
+              rep_crv.back().push_back(var_value);
+            } // over ranks.
+            rep_fv.push_back(funcs_rank);
+          } // over variables.
+          
+          str_rv.resize(str_rv.size() + 1);
+          t_RankValues::value_type::value_type &rep_rv = str_rv.back();
+          SumOfSeparables::const_iterator i_sep = _sumofseps.begin();
+          SumOfSeparables::const_iterator const i_sep_end = _sumofseps.end();
+          for(; i_sep != i_sep_end; ++i_sep)
+            rep_rv.push_back( i_sep->get<0>()(i_rep->variables) );
         } // over representations.
       } // end of add
 

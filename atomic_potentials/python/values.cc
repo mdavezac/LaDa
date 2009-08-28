@@ -25,7 +25,7 @@ namespace LaDa
       namespace bp = boost::python;
       typedef LaDa::atomic_potential::collapse::Values Values;
       
-      expose_vector<Values::t_CoordRankValues::value_type::value_type>
+      expose_vector< std::vector< std::vector<double> > >
          ("Values_vec_vec", "Implementation only.");
       expose_vector<Values::t_CoordRankValues::value_type>
          ("Values_vec_vec_vec", "Implementation only.");

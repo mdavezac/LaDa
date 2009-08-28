@@ -56,7 +56,10 @@ namespace LaDa
       void FittingSet::add( Representation const &_representation,
                             numeric_type _energy, numeric_type _weight )
       {
+        LADA_ASSERT( _representation.size(), "Empty representation.\n")
+        LADA_ASSERT( _representation.nb_coords(), "Empty representation.\n")
         // adds types.
+        if( coordinates_.size() == 0 ) coordinates_.resize( _representation.nb_coords() );
         t_Coordinates::iterator i_coord = coordinates_.begin();
         t_Coordinates::iterator const i_coord_end = coordinates_.end();
         for(; i_coord != i_coord_end; ++i_coord)

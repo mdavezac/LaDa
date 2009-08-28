@@ -47,7 +47,7 @@ class LADA_CONST_(rank_range)
     //! Increments.
     void operator++()
     {
-      if( i_rank_ != i_rank_end_ ) return;
+      if( i_rank_ == i_rank_end_ ) return;
       do 
       { 
         ++i_rank_; 

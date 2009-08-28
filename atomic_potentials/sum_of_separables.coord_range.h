@@ -77,7 +77,7 @@
      bool operator++() { ++index_; return this->operator bool(); }
 
      //! Continue iterating or not.
-     operator bool() const { return index_ >= max_index_; }
+     operator bool() const { return index_ < max_index_; }
 
      //! Returns size of the range.
      size_t size() const { return max_index_; }

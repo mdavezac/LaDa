@@ -407,7 +407,7 @@ $(top_builddir)/minimizer/libminimizer.la: $(addprefix $(top_srcdir)/minimizer/,
 		
 $(top_builddir)/models/libmodels.la: $(addprefix $(top_srcdir)/models/, $(models_clj_h) )\
                                      $(addprefix $(top_srcdir)/models/, $(models_clj_cc) ) \
-                                     $(addprefix $(top_srcdir)/models/, $(models_clj_f90) ) \
+                                     $(addprefix $(top_srcdir)/models/, $(models_clj_f90) ) 
 	@cd $(top_builddir)/models; $(MAKE) libmodels.la
 
 $(top_builddir)/atomic_potentials/libpotentials.la: \
