@@ -49,6 +49,8 @@ namespace LaDa
     //! Compares to variable sets.
     inline bool operator==(VariableSet const& _a, VariableSet const &_b) 
       { return _a.variables == _b.variables; }
+    //! Dumps a variable set to a stream.
+    std::ostream& operator<<( std::ostream& _stream, VariableSet const &_rep );
 
 
     //! Representation of a structure a set of symmetry-equivalents set of variables.

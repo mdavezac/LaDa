@@ -133,25 +133,25 @@ namespace LaDa
         }
       }
      
+    std::ostream& operator<<( std::ostream& _stream, VariableSet const &_varset )
+    {
+      _stream << "  _ weight: " << _varset.weight << ", ";
+      typedef VariableSet::t_Variables::const_iterator cit;
+      cit i_var = _varset.variables.begin();
+      cit const i_var_end = _varset.variables.end();
+      for(size_t i(1);  i_var != i_var_end; ++i_var, ++i)
+      {
+        if( i % 15 == 0 ) _stream << "\n                   ";
+        _stream << *i_var << " ";
+      }
+      return _stream;
+    }
     std::ostream& operator<<( std::ostream& _stream, Representation const &_rep )
     {
       _stream << "Representation:\n";
       Representation::const_iterator i_first = _rep.begin();
       Representation::const_iterator const i_end = _rep.end();
-      for(; i_first != i_end; ++i_first)
-      {
-        _stream << "  _ weight: " << i_first->weight << ", ";
-        typedef Representation::const_iterator::value_type::t_Variables::const_iterator cit;
-        cit i_var = i_first->variables.begin();
-        cit const i_var_end = i_first->variables.end();
-        for(size_t i(1);  i_var != i_var_end; ++i_var, ++i)
-        {
-          if( i % 10 == 0 ) _stream << "\n                   ";
-          _stream << *i_var << " ";
-        }
-        _stream << "\n";
-      }
-      return _stream;
+      for(; i_first != i_end; ++i_first) _stream << *i_first << "\n";
     }
 
   } // namespace atomic_potential

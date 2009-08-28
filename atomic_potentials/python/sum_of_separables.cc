@@ -14,8 +14,11 @@
 #include <boost/python/object.hpp>
 #include <boost/python/tuple.hpp>
 #include <boost/python/dict.hpp>
+#include <boost/python/return_value_policy.hpp>
+#include <boost/python/return_internal_reference.hpp>
 
 #include <crystal/structure.h>
+#include <python/misc.hpp>
 
 #include "../representation.h"
 #include "../sum_of_separables.h"
@@ -112,6 +115,56 @@ namespace LaDa
       _func.push_back( Function(_object), coefs);
     }
 
+    struct reference_ss
+    {
+      reference_ss   ( SumOfSeparables::iterator const &_it )
+                   : sep_(_it->get<0>()), coef_(_it->get<1>()) {}
+      reference_ss   ( reference_ss const & _ref )
+                   : sep_(_ref.sep_), coef_(_ref.coef_) {}
+      void set_sep( atomic_potential::Separable & _s ) { sep_ = _s; }
+      atomic_potential::Separable const & get_sep() const { return sep_; }
+      atomic_potential::numeric_type get_coef() const { return coef_; }
+      void set_coef(atomic_potential::numeric_type _t) { coef_ = _t; }
+      atomic_potential::Separable & sep_;
+      atomic_potential::numeric_type & coef_;
+    };
+
+    struct SumOfSepsIter
+    {
+      SumOfSepsIter   ( atomic_potential::SumOfSeparables &_sumofseps )
+                    : first_(true), cit_(_sumofseps.begin()), cit_end_(_sumofseps.end()) {}
+      SumOfSepsIter   ( SumOfSepsIter const &_c )
+                    : cit_(_c.cit_), cit_end_(_c.cit_end_), first_(_c.first_) {}
+
+      SumOfSepsIter &iter()  { return *this; }
+      reference_ss next()
+      {
+        namespace bp = boost::python;
+        if( first_ ) first_ = false; 
+        else 
+        {
+          ++cit_;
+          if( cit_ == cit_end_ )
+          {
+            PyErr_SetString
+            (
+              PyExc_StopIteration, 
+              "Error while computing transform to smith normal form.\n" 
+            );
+            bp::throw_error_already_set();
+            --cit_;
+          }
+        }
+        return cit_;
+      }
+
+      atomic_potential::SumOfSeparables::iterator cit_;
+      atomic_potential::SumOfSeparables::iterator cit_end_;
+      bool first_;
+    };
+    SumOfSepsIter create_sumofsepsiter( atomic_potential::SumOfSeparables & _ss )
+      { return SumOfSepsIter(_ss); }
+
     template<class T_TYPE>
       void push_back_pow( Functions &_func, T_TYPE _pow, 
                           boost::python::tuple const &_tuple )
@@ -127,7 +180,8 @@ namespace LaDa
         _func.push_back( bl::bind(ptr_func, bl::_1, bl::constant(_pow)), coefs);
       }
 
-    atomic_potential::numeric_type constant( Functions::arg_type::first_type const& ) { return 1e0; }
+    atomic_potential::numeric_type constant( Functions::arg_type::first_type const& )
+      { return 1e0; }
 
     void push_back_constant(Functions &_func, boost::python::tuple const &_tuple)
     {
@@ -150,7 +204,8 @@ namespace LaDa
         .def("append", &push_back_python_callable )
         .def("append_pow", &push_back_pow<atomic_potential::numeric_type>)
         .def("append_pow", &push_back_pow<int>)
-        .def("append_constant", &push_back_constant);
+        .def("append_constant", &push_back_constant)
+        .def("__str__", &tostream<Functions>);
       
       bp::class_<Separable>("Separable", "A separables function.")
         .def(bp::init<Separable const&>())
@@ -160,6 +215,35 @@ namespace LaDa
         .def("__len__", &Separable::size)
         .def("append", &Separable::push_back);
       
+      bp::class_<SumOfSepsIter>
+      (
+        "SumOfSeparablesIter", 
+        "An iterator to separable functions.",
+        bp::init<SumOfSepsIter const&>()
+      ).def("__iter__", &SumOfSepsIter::iter, bp::return_internal_reference<1>() )
+       .def("next", &SumOfSepsIter::next);
+
+      bp::class_<reference_ss>
+      (
+        "SumOfSeparablesIterRef", 
+        "Dereferenced iterator to separable functions.",
+        bp::init<reference_ss const&>()
+      ).add_property
+       (
+         "separables", 
+         bp::make_function
+         (
+           &reference_ss::get_sep, 
+           bp::return_internal_reference<>()
+         ), 
+         bp::make_function
+         (
+           &reference_ss::set_sep, 
+           bp::return_internal_reference<>()
+         ), 0
+       ) 
+       .add_property("coefficient", &reference_ss::get_coef, &reference_ss::set_coef);
+
       bp::class_<SumOfSeparables>("SumOfSeparables", "A sum of separables function.")
         .def(bp::init<SumOfSeparables const&>())
         .def("__call__", &SumOfSeparables::operator()<atomic_potential::VariableSet::t_Variables>)
@@ -171,7 +255,8 @@ namespace LaDa
           &SumOfSeparables::nb_coordinates,
           "Number of coordinates.\n" 
         )
-        .def("append", &SumOfSeparables::push_back);
+        .def("append", &SumOfSeparables::push_back)
+        .def("__iter__", &create_sumofsepsiter);
     }
   }
 } // namespace LaDa

@@ -9,6 +9,7 @@
 #endif
 
 #include <list>
+#include <iostream>
 
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
@@ -23,14 +24,8 @@ namespace LaDa
   //! Contains classes for generalized atomic potentials.
   namespace atomic_potential
   {
-    //! \cond
-    class VariableMajor;
-    //! \endcond
-
-    //! Sum of functions over a single variable.
     class Functions
     {
-        friend class VariableMajor;
       public:
         //! Number of atomic species.
         const static size_t N = 2;
@@ -127,6 +122,20 @@ namespace LaDa
         t_Coefficients coefficients_;
     };
 
+    inline std::ostream& operator<<( std::ostream &_stream, Functions const &_func )
+    {
+      Functions::const_iterator i_func( _func.begin() );
+      Functions::const_iterator const i_func_end( _func.end() );
+      for(; i_func != i_func_end; ++i_func)
+      {
+        _stream << "(" << (*i_func)[0];
+        for(size_t i(1); i < _func.N; ++i)
+          _stream << ", " << (*i_func)[i];
+        _stream << ") ";
+      }
+
+      return _stream;
+    }
 
 
   } // namespace atomic_potential
