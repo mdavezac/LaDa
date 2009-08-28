@@ -25,14 +25,12 @@ namespace LaDa
       namespace bp = boost::python;
       typedef LaDa::atomic_potential::collapse::Values Values;
       
-      expose_vector< std::vector< std::vector<double> > >
-         ("Values_vec_vec", "Implementation only.");
-      expose_vector<Values::t_CoordRankValues::value_type>
-         ("Values_vec_vec_vec", "Implementation only.");
-      expose_vector<Values::t_CoordRankValues>
-        ("Values_vec_vec_vec_vec", "Implementation only.");
-      expose_vector<Values::t_FunctionValues>
-        ("Values_vec_vec_vec_vec_vec", "Implementation only.");
+      expose_vector< Values::t_RankValues >
+         ("Values_rankvalues", "Implementation only.");
+      expose_vector< Values::t_RankValues::value_type >
+         ("Values_rankvalues_valuetype", "Implementation only.");
+      expose_vector< Values::t_RankValues::value_type::value_type >
+         ("Values_rankvalues_valuetype_valuettype", "Implementation only.");
  
       bp::class_<Values>("Values", "Holds fitting related info. For Debugging only.")
         .add_property("coord_rank_values", &Values::coord_rank_values_)
