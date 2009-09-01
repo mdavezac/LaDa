@@ -160,10 +160,10 @@ namespace LaDa
 
     Functions::result_type call_1( Functions::iterator::reference const &_ref,
                                    Functions::arg_type::first_type _a )
-      { return _ref.function()( _a ); }
+      { return _ref(_a); }
     Functions::result_type call_2( Functions::iterator::reference const &_ref,
                                    Functions::arg_type const &_a )
-      { return _ref.function()( _a.first ) * _ref[_a.second]; }
+      { return _ref(_a); }
     Functions::result_type call_3( Functions::iterator::reference const &_ref,
                                    boost::python::tuple const &_a )
     {
@@ -171,17 +171,20 @@ namespace LaDa
       Functions::arg_type a;
       if( not bp::len( _a ) == 2 )
       {
-        PyErr_SetString
-        (
-          PyExc_TypeError, 
-          "Tuple is not a 2-tuple.\n" 
-        );
+        PyErr_SetString(PyExc_TypeError, "Tuple is not a 2-tuple.\n");
+        bp::throw_error_already_set();
         return -1;
       }
       try
       {
-        a.first = bp::extract<Functions::arg_type::first_type>( _a[0] );
-        a.second = bp::extract<Functions::arg_type::second_type>( _a[1] );
+        return _ref
+               ( 
+                 Functions::arg_type
+                 (
+                   bp::extract<Functions::arg_type::first_type>( _a[0] ),
+                   bp::extract<Functions::arg_type::second_type>( _a[1] )
+                 )
+               );
       }
       catch( ... )
       {
@@ -192,7 +195,6 @@ namespace LaDa
         );
         return -1;
       }
-      return call_2(_ref, a);
     }
 
 

@@ -119,6 +119,9 @@ namespace LaDa
           //! Adds new structure to fitting set.
           void add( Representation const &_rep, SumOfSeparables const &_sep );
 
+          //! Number of coordinates.
+          size_t nb_coordinates() const { return coord_rank_values_.size(); }
+
         protected:
           //! Coordinates for each structure and representation.
           t_CoordRankValues coord_rank_values_;

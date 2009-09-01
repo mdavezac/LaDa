@@ -143,8 +143,14 @@ namespace LaDa
         for(; i_rep != i_rep_end; ++i_rep)
         {
           // loop overvariables
-          for(const_coord_range range(_range); range; ++range)
+          VariableSet::t_Variables::const_iterator i_var = i_rep->variables.begin(); 
+#         ifdef LADA_DEBUG
+            VariableSet::t_Variables::const_iterator const
+              i_var_end = i_rep->variables.end();
+#         endif
+          for(const_coord_range range(_range); range; ++range, ++i_var)
           {
+            LADA_ASSERT( i_var != i_var_end, "Iterator out of range.\n" )
             LADA_ASSERT( *range < coord_rank_values_.size(), "Index out-of-range.\n")
             LADA_ASSERT( *range < function_values_.size(), "Index out-of-range.\n")
             t_CoordRankValues::value_type::value_type
@@ -154,27 +160,19 @@ namespace LaDa
             
             // Adds rep to coord and str. 
             rep_crv.resize(rep_crv.size() + 1);
-            rep_fv.resize(rep_fv.size() + 1);
 
             t_FunctionValues::value_type::value_type::value_type funcs_rank;
-            for(const_rank_range rank(range.range()); rank; ++rank )
+            for(const_rank_range rank(range.range()); rank; ++rank)
             {
               t_FunctionValues::value_type::value_type
                               ::value_type::value_type funcs;
               const_iterator_functions i_func = rank.begin(); 
               const_iterator_functions i_func_end = rank.end(); 
-              VariableSet::t_Variables::const_iterator i_var = i_rep->variables.begin(); 
-#             ifdef LADA_DEBUG
-                VariableSet::t_Variables::const_iterator const
-                  i_var_end = i_rep->variables.end();
-#             endif
               numeric_type var_value(0);
-              for(; i_func != i_func_end; ++i_func, ++i_var)
+              for(; i_func != i_func_end; ++i_func)
               {
-                LADA_ASSERT( i_var != i_var_end, "Iterator out of range.\n" )
-                numeric_type const value( i_func->function()( i_var->first ) );
-                var_value += (*i_func)[ i_var->second ] * value;
-                funcs.push_back(value);
+                funcs.push_back( (*i_func)( i_var->first ) );
+                var_value += (*i_func)(*i_var);
               }
               funcs_rank.push_back(funcs);
               rep_crv.back().push_back(var_value);
@@ -192,60 +190,6 @@ namespace LaDa
       } // end of add
 
 
-
-
-
-
-//     Values::str_iterator::rep_iterator Values::str_iterator::begin() const
-//     {
-//       rep_iterator result(i_, n_, coord_rank_values_);
-//       result.i_coord_rank_value_ = i_coord_rank_value_->begin();
-//       result.i_rank_value_ = i_rank_value_->begin();
-//       result.i_function_values_ = i_function_values_->begin();
-//       return result;
-//     }
-//     Values::str_iterator::rep_iterator Values::str_iterator::end() const
-//     {
-//       rep_iterator result(i_, n_, coord_rank_values_);
-//       result.i_coord_rank_value_ = i_coord_rank_value_->end();
-//       // result.i_rank_value_ = i_rank_value_->end();
-//       // result.i_function_values_ = function_values_->end();
-//       return result;
-//     }
-//
-//     Values::str_iterator::rep_iterator::rank_iterator
-//       Values::str_iterator::rep_iterator::begin() const
-//       {
-//         rank_iterator result(i_, n_str_, n_, coord_rank_values_);
-//         result.i_coord_rank_value_ = i_coord_rank_value_->begin();
-//         result.i_rank_value_ = i_rank_value_->begin();
-//         result.i_function_values_ = i_function_values_->begin();
-//         return result;
-//       }
-//     Values::str_iterator::rep_iterator::rank_iterator
-//       Values::str_iterator::rep_iterator::end() const
-//       {
-//         rank_iterator result(i_, n_str_, n_, coord_rank_values_);
-//         result.i_coord_rank_value_ = i_coord_rank_value_->end();
-//         // result.i_rank_value_ = i_rank_value_->end();
-//         // result.i_function_values_ = function_values_->end();
-//         return result;
-//       }
-//
-//     numeric_type Values::str_iterator::rep_iterator::rank_iterator::other() const
-//     {
-//       numeric_type const coord_rank_value( *i_coord_rank_value_ );
-//       if( Fuzzy::is_zero(coord_rank_value) ) 
-//       {
-//         numeric_type result(1);
-//         t_CoordRankValues::const_iterator i_cr = coord_rank_values_.begin();
-//         t_CoordRankValues::const_iterator const i_cr_end = coord_rank_values_.end();
-//         for( size_t i(0); i_cr != i_cr_end; ++i_cr, ++i)
-//           if( i != i_ ) result *= (*i_cr)[n_str_][n_rep_][n_];
-//         return result;
-//       }
-//       return (*i_rank_value_) / coord_rank_value;
-//     }
     } // namespace collapse
   } // namespace atomic_potential
 } // namespace LaDa

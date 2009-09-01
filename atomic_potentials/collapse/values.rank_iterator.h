@@ -49,7 +49,7 @@ class LADA_CONST_(rank_iterator)
 
    //  True if iterators are at same position.
    bool operator==(LADA_CONST_(rank_iterator) const& _b ) const
-     { return i_coord_rank_value_ != _b.i_coord_rank_value_;  }
+     { return i_coord_rank_value_ == _b.i_coord_rank_value_;  }
    //! False if iterators are at same position.
    bool operator!=(LADA_CONST_(rank_iterator) const& _b ) const { return not operator==(_b); }
 

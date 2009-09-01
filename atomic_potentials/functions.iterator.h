@@ -30,6 +30,12 @@ class LADA_ITERATOR_NAME
         //! Reference to the function.
         t_Functions::value_type LADA_WITH_CONST& function() const
           { return *i_func_; }
+        //! Calls function with coefficient == 1.
+        Functions::result_type operator()( Functions::arg_type::first_type _a ) const
+          { return (*i_func_)(_a);  }
+        //! Calls function.
+        Functions::result_type operator()( Functions::arg_type const &_a ) const
+          { return (*i_func_)(_a.first) * operator[](_a.second); }
 
       private:
         //! Current position.

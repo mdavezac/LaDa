@@ -58,7 +58,7 @@ class LADA_CONST_(str_iterator)
     bool operator==(LADA_CONST_(str_iterator) const& _b) const
     {
       LADA_ASSERT( i_ == _b.i_, "Inequivalent iterators.\n");
-      return i_coord_rank_value_ != _b.i_coord_rank_value_; 
+      return i_coord_rank_value_ == _b.i_coord_rank_value_; 
     }
     //! False if iterators are at same position.
     bool operator!=(LADA_CONST_(str_iterator) const& _b) const { return not operator==(_b); }

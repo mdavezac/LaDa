@@ -102,6 +102,17 @@ namespace LaDa
       }
     }
 
+    bool operator==(VariableSet const& _a, VariableSet const &_b)
+    {
+      LADA_ASSERT( _a.variables.size() == _b.variables.size(), "Different number of variables.\n")
+      VariableSet::t_Variables::const_iterator i_first = _a.variables.begin();
+      VariableSet::t_Variables::const_iterator i_second = _b.variables.begin();
+      VariableSet::t_Variables::const_iterator const i_end = _a.variables.end();
+      for(; i_first != i_end; ++i_first, ++i_second)
+        if( i_first->second != i_second->second )  return false;
+        else if( std::abs( i_first->first - i_second->first ) > 1e-10 ) return false;
+      return true;
+    }
     void Representation::add_( VariableSet const &_rep )
     {
       t_Sets::iterator i_found = std::find( sets_.begin(), sets_.end(), _rep );
@@ -128,7 +139,8 @@ namespace LaDa
           {
             default: _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.z, type) );
             case 2:  _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.y, type) );
-            case 1:  _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.x, type) ); break;
+            case 1:  _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.x, type) );
+                     break;
           }
         }
       }

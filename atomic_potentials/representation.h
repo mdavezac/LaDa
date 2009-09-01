@@ -47,8 +47,7 @@ namespace LaDa
       { return _stream << "(" << _var.first << ", " << _var.second << ")"; }
 
     //! Compares to variable sets.
-    inline bool operator==(VariableSet const& _a, VariableSet const &_b) 
-      { return _a.variables == _b.variables; }
+    bool operator==(VariableSet const& _a, VariableSet const &_b);
     //! Dumps a variable set to a stream.
     std::ostream& operator<<( std::ostream& _stream, VariableSet const &_rep );
 
