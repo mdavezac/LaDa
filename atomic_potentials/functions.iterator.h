@@ -57,6 +57,11 @@ class LADA_ITERATOR_NAME
     //! Increments iterator.
     LADA_ITERATOR_NAME& operator++()
       { is_set_ = false; ++i_func_; i_coef_ += Functions::N; return *this; }
+    //! Decrements iterator.
+    LADA_ITERATOR_NAME operator--(int) { return operator--(); }
+    //! Decrements iterator.
+    LADA_ITERATOR_NAME& operator--()
+      { is_set_ = false; --i_func_; i_coef_ -= Functions::N; return *this; }
     //! Dereference iterator.
     reference operator*() const { set_(); return value_; }
     //! Dereference iterator.

@@ -16,9 +16,9 @@ ap_doc = $(ap_h) $(ap_cc)
 ap_collapse_cc = collapse.cc  fitting_set.cc  values.cc  
 ap_collapse_h  = collapse.h  fitting_set.h  values.h  
 potentials_python_h = representation.hpp bases.hpp representation.hpp sum_of_separables.hpp \
-                      collapse.hpp fitting_set.hpp values.hpp
+                      collapse.hpp fitting_set.hpp values.hpp functions.hpp separable.hpp
 potentials_python_cc = python.cc representation.cc bases.cc sum_of_separables.cc \
-                       collapse.cc fitting_set.cc values.cc
+                       collapse.cc fitting_set.cc values.cc functions.cc separable.cc
 ap_collapse_doc = $(ap_collapse_h) $(ap_collapse_cc)
 
 fc_models_clj_cc = fortran.cc 
