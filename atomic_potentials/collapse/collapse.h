@@ -96,6 +96,11 @@ namespace LaDa
           void add(Crystal::TStructure<std::string> const &_structure);
           //! Reassigns coefficients.
           void reassign() const;
+          //! Returns coefficients for coordinate \a _i.
+          t_Coefficients::value_type& coefficients(size_t _i) { return coefficients_[_i]; }
+          //! Returns coefficients for coordinate \a _i.
+          t_Coefficients::value_type const& coefficients(size_t _i) const 
+            { return coefficients_[_i]; }
      
         private:
           //! Weight of each structure. 

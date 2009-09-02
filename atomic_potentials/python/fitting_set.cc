@@ -5,6 +5,7 @@
 # include <config.h>
 #endif
 
+#include <boost/python/scope.hpp>
 #include <boost/python/class.hpp>
 
 #include "../collapse/fitting_set.h"
@@ -22,27 +23,28 @@ namespace LaDa
       namespace bp = boost::python;
       typedef LaDa::atomic_potential::collapse::FittingSet FittingSet;
       
-      expose_vector<FittingSet::t_AtomType>("FittingSet_AtomType", "Implementation only.");
-//     expose_vector<std::vector<FittingSet::t_Energies> >("FittingSet_RepCoord",
-//                                                         "Implementation only.");
-//     expose_vector<std::vector<std::vector<FittingSet::t_Energies> > >
-//           ("FittingSet_StrCoord", "Implementation only.");
-//     expose_vector<std::vector<std::vector<std::vector<FittingSet::t_Energies> > > >
-//           ("FittingSet_Coord", "Implementation only.");
-//
-//     expose_vector<FittingSet::t_Energies>("FittingSet_NumericVector", "Implementation only.");
- 
-      bp::class_< FittingSet::t_Weights::value_type >("FittingSet_WeightsPair")
-        .add_property("str_weight", &FittingSet::t_Weights::value_type::first)
-        .add_property("rep_weights", &FittingSet::t_Weights::value_type::second);
- 
-      expose_vector<FittingSet::t_Weights>("FittingSet_Weights", "Implementation only.");
- 
-      bp::class_<FittingSet>("FittingSet", "Holds fitting related info. For Debugging only.")
+      bp::scope scope = bp::class_<FittingSet>
+              ("FittingSet", "Holds fitting related info. For Debugging only.")
         .add_property("coordinates", &FittingSet::coordinates_)
         .add_property("energies", &FittingSet::energies_)
         .add_property("weights", &FittingSet::weights_)
         .def("add", &FittingSet::add);
+
+      expose_vector<FittingSet::t_Coordinates::value_type>
+          ("coord_vec0", "Implementation only.");
+      expose_vector<FittingSet::t_Coordinates::value_type::value_type>
+          ("coord_vec1", "Implementation only.");
+      expose_vector<FittingSet::t_Coordinates::value_type::value_type::value_type>
+          ("coord_vec2", "Implementation only.");
+      expose_vector<FittingSet::t_Coordinates::value_type::value_type::value_type::value_type>
+          ("coord_vec2", "Implementation only.");
+      
+      bp::class_< FittingSet::t_Weights::value_type >("weight_pair")
+        .add_property("fitting", &FittingSet::t_Weights::value_type::first)
+        .add_property("representation", &FittingSet::t_Weights::value_type::second);
+ 
+      expose_vector<FittingSet::t_Weights::value_type>("vec_weights", "Implementation only.");
+ 
     }
 
   }

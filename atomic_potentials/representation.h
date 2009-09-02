@@ -12,6 +12,8 @@
 #include <utility>
 #include <vector>
 
+#include <opt/debug.h>
+
 #include "numeric_types.h"
 
 namespace LaDa
@@ -70,6 +72,18 @@ namespace LaDa
         const_iterator begin() const { return sets_.begin(); }
         //! Returns a const iterator to the past-the-end variable set.
         const_iterator end() const { return sets_.end(); }
+        //! Returns  set \a _n.
+        t_Sets::value_type& operator[](size_t _n) 
+        {
+          LADA_ASSERT( _n < sets_.size(), "Index out-of-range.\n");
+          return sets_[_n];
+        }
+        //! Returns  set \a _n.
+        t_Sets::value_type const& operator[](size_t _n) const
+        {
+          LADA_ASSERT( _n < sets_.size(), "Index out-of-range.\n");
+          return sets_[_n];
+        }
         //! Returns number of coordinates.
         size_t nb_coords() const { return sets_.front().variables.size(); }
         //! Returns number of atoms.

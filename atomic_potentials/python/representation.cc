@@ -23,15 +23,16 @@ namespace LaDa
 {
   namespace Python
   {
+    typedef LaDa::atomic_potential::Representation Representation;
     struct RepresentationIter 
     {
-      RepresentationIter   ( atomic_potential::Representation const &_rep )
+      RepresentationIter   ( Representation const &_rep )
                          : first_(true), cit_(_rep.begin()), cit_end_(_rep.end()) {}
       RepresentationIter   ( RepresentationIter const &_c )
                          : cit_(_c.cit_), cit_end_(_c.cit_end_), first_(_c.first_) {}
 
       RepresentationIter &iter()  { return *this; }
-      atomic_potential::Representation::const_iterator::reference next()
+      Representation::const_iterator::reference next()
       {
         namespace bp = boost::python;
         if( first_ ) first_ = false; 
@@ -40,11 +41,7 @@ namespace LaDa
           ++cit_;
           if( cit_ == cit_end_ )
           {
-            PyErr_SetString
-            (
-              PyExc_StopIteration, 
-              "Error while computing transform to smith normal form.\n" 
-            );
+            PyErr_SetString(PyExc_StopIteration, "Iterator out-of-range");
             bp::throw_error_already_set();
             --cit_;
           }
@@ -52,13 +49,27 @@ namespace LaDa
         return *cit_;
       }
 
-      atomic_potential::Representation::const_iterator cit_;
-      atomic_potential::Representation::const_iterator cit_end_;
+      Representation::const_iterator cit_;
+      Representation::const_iterator cit_end_;
       bool first_;
     };
 
     RepresentationIter create_iter( atomic_potential::Representation const &_rep )
       { return RepresentationIter(_rep); }
+
+    Representation::const_iterator::reference getitem( Representation const& _rep, size_t _i)
+    {
+      if( _i >= _rep.size() )
+      {
+        PyErr_SetString(PyExc_IndexError, "Index out-of-range.");
+        boost::python::throw_error_already_set();
+        {
+          static Representation::const_iterator::value_type val;
+          return val;
+        }
+      }
+      return _rep[_i];
+    }
 
     void expose_representation()
     {
@@ -86,7 +97,6 @@ namespace LaDa
        .add_property("variables", &VariableSet::variables)
        .def("__str__", &tostream<VariableSet>);
 
-      typedef LaDa::atomic_potential::Representation Representation;
       bp::class_<RepresentationIter>
       (
         "RepresentationIterator", 
@@ -106,7 +116,8 @@ namespace LaDa
        .def( "__len__", &Representation::size)
        .def( "nb_coords", &Representation::nb_coords)
        .def( "nb_atoms", &Representation::nb_atoms)
-       .def( "__iter__", &create_iter);
+       .def( "__iter__", &create_iter)
+       .def( "__getitem__", &getitem, bp::return_internal_reference<1>());
     }
 
   }

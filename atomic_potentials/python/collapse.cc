@@ -31,24 +31,19 @@ namespace LaDa
       return boost::python::make_tuple( _mat, _vec );
     }
 
+    pyublas::numpy_vector<vector_type::value_type> coefficients( Collapse const &_coll, size_t _i )
+      { return _coll.coefficients(_i); }
+
+    void update( Collapse &_coll, pyublas::numpy_vector<vector_type::value_type> _vec, size_t _i )
+    {
+      _coll.coefficients(_i) = _vec;
+      _coll.update(_i); 
+    }
+
+
     void expose_collapse()
     {
       namespace bp = boost::python;
-//     typedef atomic_potential::matrix_type matrix_type;
-//     bp::class_<matrix_type>
-//     (
-//       "Matrix", 
-//       "Blind matrix object for the fitting a sum of separable function."
-//     ).def( bp::init<matrix_type const&>() );
-//     typedef atomic_potential::vector_type vector_type;
-//     bp::class_<vector_type>
-//     (
-//       "Vector", 
-//       "Blind vector object for the fitting a sum of separable function."
-//     ).def( bp::init<vector_type const&>() );
-
-
-
 
       bp::class_<Collapse>
       ( 
@@ -57,9 +52,10 @@ namespace LaDa
         bp::init<atomic_potential::SumOfSeparables&>() 
       ).def(bp::init<Collapse const&>())
        .def("lsq_data", &lsq_data)
-       .def("update", &Collapse::update)
+       .def("update", &update)
        .def("add", &Collapse::add)
        .def("reassign", &Collapse::reassign)
+       .def("coefficients", &coefficients)
        .add_property("values", &Collapse::values_)
        .add_property("fitting_set", &Collapse::fitting_set_);
     }

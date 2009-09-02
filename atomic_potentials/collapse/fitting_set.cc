@@ -19,6 +19,7 @@ namespace LaDa
         LADA_ASSERT( _i < coordinates_.size(), "Index out of range.\n" );
 
         str_iterator result;
+        result.i_ = _i;
         result.i_coordinates_ = coordinates_[_i].begin();
         result.i_energy_ = energies_.begin();
         result.i_weight_ = weights_.begin();
@@ -29,6 +30,7 @@ namespace LaDa
         LADA_ASSERT( _i < coordinates_.size(), "Index out of range.\n" );
 
         str_iterator result;
+        result.i_ = _i;
         result.i_coordinates_ = coordinates_[_i].end();
         result.i_energy_ = energies_.end();
         result.i_weight_ = weights_.end();

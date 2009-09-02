@@ -10,8 +10,10 @@ class LADA_CONST_(rank_iterator)
     typedef t_FunctionValues::value_type::value_type::value_type
                             ::value_type::LADA_CONST_(iterator) function_iterator;
     //! Constructor.
-    LADA_CONST_(rank_iterator)   (size_t _i, size_t _nstr, size_t _nrep, t_CoordRankValues const& _cr)
-                               : i_(_i), n_str_(_nstr), n_rep_(_nrep), n_(0), coord_rank_values_(_cr) {}
+    LADA_CONST_(rank_iterator)   (size_t _i, size_t _nstr, size_t _nrep,
+                                  t_CoordRankValues const& _cr)
+                               : i_(_i), n_str_(_nstr), n_rep_(_nrep), n_(0),
+                                 coord_rank_values_(_cr) {}
     //! Copy Constructor.
     LADA_CONST_(rank_iterator)   (LADA_CONST_(rank_iterator) const &_c) 
                                : i_(_c.i_), n_str_(_c.n_str_), n_rep_(_c.n_rep_), n_(_c.n_),

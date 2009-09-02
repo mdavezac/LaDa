@@ -141,7 +141,7 @@ namespace LaDa
           bool operator==( str_iterator const& _a ) const
           {
             LADA_ASSERT( i_ == _a.i_, "Inequivalent iterators.\n");
-            return i_energy_ != _a.i_energy_; 
+            return i_energy_ == _a.i_energy_; 
           }
           //  False if iterators are at same position.
           bool operator!=( str_iterator const& _a ) const { return not operator==(_a); }
@@ -181,7 +181,7 @@ namespace LaDa
           void operator--() { --i_coordinates_; --i_weight_; }
           //  True if iterators are at same position.
           bool operator==( rep_iterator const& _a ) const
-            { return i_weight_ != _a.i_weight_; }
+            { return i_weight_ == _a.i_weight_; }
           //  False if iterators are at same position.
           bool operator!=( rep_iterator const& _a ) const { return not operator==(_a); }
           
