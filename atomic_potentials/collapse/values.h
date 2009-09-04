@@ -45,7 +45,9 @@ namespace LaDa
       //! Function values and aggregates thereof required by alternating least-square fit.
       class Values
       {
-        friend void ::LaDa::Python::expose_values();
+#       ifdef __DOPYTHON
+          friend void ::LaDa::Python::expose_values();
+#       endif
         protected:
           //! Type of the Fitting set.
           typedef FittingSet t_FittingSet;

@@ -101,6 +101,10 @@ namespace LaDa
           //! Returns coefficients for coordinate \a _i.
           t_Coefficients::value_type const& coefficients(size_t _i) const 
             { return coefficients_[_i]; }
+          //! Returns the number of coordinates.
+          size_t nb_coordinates() const;
+          //! Returns average error per structure in fitting set.
+          numeric_type convergence() const;
      
         private:
           //! Weight of each structure. 
@@ -155,8 +159,6 @@ namespace LaDa
             {
               numeric_type const rep_weight(i_rep.weight() * str_weight);
         
-              typedef t_FittingSet::str_iterator::rep_iterator
-                                  ::coordinate_iterator coordinate_iterator;
               typedef t_Values::const_str_iterator::const_rep_iterator
                               ::const_rank_iterator rank_iterator;
               rank_iterator i_rank_val = i_rep_val.begin();

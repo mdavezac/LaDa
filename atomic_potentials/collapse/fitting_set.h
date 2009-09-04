@@ -51,8 +51,6 @@ namespace LaDa
             friend void ::LaDa::Python::expose_fittingset();
 #         endif
         protected:
-          //! Type of the coordinates for a single representation.
-          typedef std::vector<specie_type> t_AtomType;
           //! Type of container over coordinates for each  structure and their representations.
           typedef std::vector // container over coodinates
                   <
@@ -162,7 +160,6 @@ namespace LaDa
         friend bool operator==( rep_iterator const& _a, rep_iterator const& _b );
         friend class FittingSet::str_iterator;
         public:
-          typedef t_AtomType :: const_iterator coordinate_iterator;
           //! Constructor.
           rep_iterator() {}
           //! Copy Constructor.

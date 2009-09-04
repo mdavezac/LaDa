@@ -84,8 +84,10 @@ namespace LaDa
               numeric_type &rank_value(rank_values_[s][p][r]);
               types::t_real i_neq_j(1);
               if( Fuzzy::is_zero(coord_rank_value) )
+              {
                 for(size_t i(0), Nvar(coord_rank_values_.size()); i < Nvar; ++i)
                   if( i != _i ) i_neq_j *= coord_rank_values_[i][s][p][r];
+              }
               else i_neq_j = rank_value / coord_rank_value;
       
               // Updates all i dependent factors.

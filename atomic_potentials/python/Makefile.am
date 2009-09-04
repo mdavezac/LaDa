@@ -10,7 +10,7 @@ AM_LDFLAGS = @BOOST_LDFLAGS@  @BOOST_PYTHON@
 
 install-exec-local: ../../python/libpython_lada.la
 
-EXTRA_DIST = $(potentials_python_h) 
+EXTRA_DIST = $(potentials_python_h) allsq.py
 pkgpyexec_LTLIBRARIES = potentials.la 
 potentials_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
 potentials_la_SOURCES = $(potentials_python_cc) 

@@ -37,6 +37,8 @@ class LADA_CONST_(rank_iterator)
       }
       return (*i_rank_value_) / coord_rank_value;
     }
+    //! Returns rank values.
+    numeric_type all() const { return *i_rank_value_; }
     //! Returns iterator to function values.
     function_iterator begin() const { return i_function_values_->begin(); }
     //! Returns iterator to function values.
