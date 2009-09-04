@@ -32,14 +32,16 @@ namespace LaDa
     typedef LaDa::atomic_potential::SumOfSeparables SumOfSeparables;
     typedef SumOfSeparables::t_Function Separable;
     typedef Separable::t_Function Functions;
+    typedef atomic_potential::Representation Representation;
+    typedef atomic_potential::VariableSet VariableSet;
 
     template<class T_TYPE> 
       typename T_TYPE::result_type call_rep( T_TYPE const& _sep,
-                                             atomic_potential::Representation const & _rep )
+                                             Representation const & _rep )
       {
         typename T_TYPE::result_type result(0);
-        atomic_potential::Representation::const_iterator i_first = _rep.begin();
-        atomic_potential::Representation::const_iterator const i_end = _rep.end();
+        Representation::const_iterator i_first = _rep.begin();
+        Representation::const_iterator const i_end = _rep.end();
       
         for(; i_first != i_end; ++i_first)
           result += _sep(i_first->variables) * i_first->weight;
@@ -49,7 +51,7 @@ namespace LaDa
       typename T_TYPE::result_type call_str( T_TYPE const& _sep,
                                              Crystal::TStructure<std::string> const & _str )
       {
-        atomic_potential::Representation const representation(_str, _sep.nb_coordinates() );
+        Representation const representation(_str, _sep.nb_coordinates() );
         return call_rep(_sep, representation);
       }
    
@@ -61,6 +63,12 @@ namespace LaDa
                    : sep_(_ref.sep_), coef_(_ref.coef_) {}
       void set_sep( atomic_potential::Separable & _s ) { sep_ = _s; }
       atomic_potential::Separable const & get_sep() const { return sep_; }
+      Separable::result_type call_rep_( Representation const &_rep ) const
+        { return call_rep(sep_, _rep); }
+      Separable::result_type call_str_( Crystal::TStructure<std::string> const &_str ) const
+        { return call_str(sep_, _str); }
+      Separable::result_type call_vars_( VariableSet::t_Variables const &_vars ) const
+        { return sep_(_vars); }
       atomic_potential::numeric_type get_coef() const { return coef_; }
       void set_coef(atomic_potential::numeric_type _t) { coef_ = _t; }
       atomic_potential::Separable & sep_;
@@ -149,7 +157,11 @@ namespace LaDa
            bp::return_internal_reference<>()
          ), 0
        ) 
-       .add_property("coefficient", &reference_ss::get_coef, &reference_ss::set_coef);
+       .add_property("coefficient", &reference_ss::get_coef, &reference_ss::set_coef)
+       .def( "__call__", &reference_ss::call_str_, "Calls separable function on a structure." )
+       .def( "__call__", &reference_ss::call_rep_, "Calls separable function on a representation." )
+       .def( "__call__", &reference_ss::call_vars_,
+             "Calls separable function on vector of variables." );
 
     }
   }

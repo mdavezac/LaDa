@@ -75,13 +75,10 @@ namespace LaDa
           // loop over structure representations.
           for(size_t p(0); i_rep != i_rep_end; ++i_rep, ++p )
           {
-            typedef t_FittingSet::str_iterator::rep_iterator
-                                ::coordinate_iterator coordinate_iterator;
-            coordinate_iterator i_coord = i_rep.begin();
       
             // loop over ranks.
             size_t const Nrank(rank_values_[s][p].size());
-            for(size_t r(0), c(0); r < Nrank; ++i_coord, ++r )
+            for(size_t r(0), c(0); r < Nrank; ++r )
             {
               numeric_type &coord_rank_value(coord_rank_values_[_i][s][p][r]);
               numeric_type &rank_value(rank_values_[s][p][r]);
@@ -97,8 +94,8 @@ namespace LaDa
                                       ::value_type::value_type::const_iterator t_Functions;
               t_Functions i_func( function_values_[_i][s][p][r].begin() );
               t_Functions const i_func_end( function_values_[_i][s][p][r].end() );
-              for(; i_func != i_func_end; ++i_func, c+=Functions::N, ++i_coord)
-                coord_rank_value += _coefs(c + (*i_coord)) * (*i_func);
+              for(; i_func != i_func_end; ++i_func, c+=Functions::N )
+                coord_rank_value += _coefs(c + i_rep.specie()) * (*i_func);
       
               rank_value = i_neq_j * coord_rank_value;
             } // loop over ranks

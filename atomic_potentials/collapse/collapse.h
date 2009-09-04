@@ -165,19 +165,17 @@ namespace LaDa
 #             ifdef LADA_DEBUG
                 t_ScalingFactors::const_iterator const i_scale_end = scaling_factors_.end();
 #             endif
-              coordinate_iterator i_coord = i_rep.begin();
-        
         
               // loop over ranks.
               for(size_t i(0); i_rank_val != i_rank_val_end; ++i_rank_val, ++i_scale )
               {
                 LADA_ASSERT(i_scale != i_scale_end, "Iterator out of range.\n")
-                numeric_type factor_i( i_rank_val.other() * (*i_scale) );
+                numeric_type factor_i( i_rank_val.other() * (*i_scale) * rep_weight );
                 rank_iterator::function_iterator i_func = i_rank_val.begin();
                 rank_iterator::function_iterator const i_func_end = i_rank_val.end();
                 // loop over inner functions.
-                for(; i_func != i_func_end; ++i_func, i+=Functions::N, ++i_coord)
-                  G( i + (*i_coord) ) += rep_weight * (*i_func) * factor_i;
+                for(; i_func != i_func_end; ++i_func, i+=Functions::N )
+                  G( i + i_rep.specie() ) += (*i_func) * factor_i;
               } // loop over ranks
             } // loop over representations
         
@@ -193,7 +191,7 @@ namespace LaDa
           // creates second half of matrix.
           for( size_t i(0); i < vec_size; ++i )
             for( size_t j(i+1); j < vec_size; ++j )
-              _matrix(i,j) = _matrix(j,i);
+              _matrix(j,i) = _matrix(i,j);
         }
     } // namespace collapse
   } // namespace atomic_potential

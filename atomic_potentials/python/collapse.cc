@@ -57,6 +57,7 @@ namespace LaDa
        .def("reassign", &Collapse::reassign)
        .def("coefficients", &coefficients)
        .add_property("values", &Collapse::values_)
+       .add_property("scales", &Collapse::scaling_factors_)
        .add_property("fitting_set", &Collapse::fitting_set_);
     }
 

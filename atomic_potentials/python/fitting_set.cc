@@ -36,8 +36,6 @@ namespace LaDa
           ("coord_vec1", "Implementation only.");
       expose_vector<FittingSet::t_Coordinates::value_type::value_type::value_type>
           ("coord_vec2", "Implementation only.");
-      expose_vector<FittingSet::t_Coordinates::value_type::value_type::value_type::value_type>
-          ("coord_vec2", "Implementation only.");
       
       bp::class_< FittingSet::t_Weights::value_type >("weight_pair")
         .add_property("fitting", &FittingSet::t_Weights::value_type::first)

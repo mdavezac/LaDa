@@ -92,7 +92,6 @@ namespace LaDa
          ("Values_vec3", "Implementation only.");
       expose_vector<Values::t_FunctionValues::value_type::value_type::value_type::value_type>
          ("Values_vec4", "Implementation only.");
- 
     }
 
   }

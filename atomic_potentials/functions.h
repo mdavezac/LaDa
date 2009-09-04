@@ -96,7 +96,7 @@ namespace LaDa
           { return const_iterator( functions_.end(), coefficients_.end()); }
         //! pushes a function and coefficient back.
         template< class T_FUNCTION >
-          void push_back( T_FUNCTION const& _function, numeric_type const _coef[N] = 1e0 )
+          void push_back( T_FUNCTION const& _function, numeric_type const _coef[N] )
           {
             functions_.push_back(_function);
             for(size_t i(0); i < N; ++i ) 

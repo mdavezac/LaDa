@@ -114,8 +114,8 @@ namespace LaDa
       ).def( bp::init< Crystal::TStructure<std::string> const&, size_t>() )
        .def( "__str__", &tostream<Representation const&> )
        .def( "__len__", &Representation::size)
-       .def( "nb_coords", &Representation::nb_coords)
-       .def( "nb_atoms", &Representation::nb_atoms)
+       .add_property( "nb_coordinates", &Representation::nb_coords)
+       .add_property( "nb_atoms", &Representation::nb_atoms)
        .def( "__iter__", &create_iter)
        .def( "__getitem__", &getitem, bp::return_internal_reference<1>());
     }

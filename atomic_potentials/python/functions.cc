@@ -32,6 +32,8 @@ namespace LaDa
   {
     typedef atomic_potential::Functions Functions;
 
+    size_t getN () { return Functions::N; }
+
     struct Function
     {
       typedef Functions::arg_type::first_type arg_type;
@@ -77,7 +79,7 @@ namespace LaDa
                                      boost::python::tuple const &_tuple )
     {    
       namespace bp = boost::python;
-      Functions::t_Coefficient coefs[Functions::N] = {0, 0};
+      Functions::t_Coefficient coefs[Functions::N];
       if( not extract_tuple(_tuple, coefs)) { bp::throw_error_already_set(); return; }
       
       bp::dict const dict( _object.attr("__dict__") );
@@ -101,7 +103,7 @@ namespace LaDa
         namespace bp = boost::python;
         namespace bl = boost::lambda;
 
-        Functions::t_Coefficient coefs[Functions::N] = {0, 0};
+        Functions::t_Coefficient coefs[Functions::N];
         if( not extract_tuple(_tuple, coefs)) { bp::throw_error_already_set(); return; }
 
         typedef atomic_potential::numeric_type numeric_type;
@@ -116,7 +118,7 @@ namespace LaDa
     {
       namespace bp = boost::python;
 
-      Functions::t_Coefficient coefs[Functions::N] = {0, 0};
+      Functions::t_Coefficient coefs[Functions::N];
       if( not extract_tuple(_tuple, coefs)) { bp::throw_error_already_set(); return; }
 
       _func.push_back( &constant, coefs);
@@ -240,7 +242,8 @@ namespace LaDa
         .def("append_pow", &push_back_pow<int>)
         .def("append_constant", &push_back_constant)
         .def("__str__", &tostream<Functions>)
-        .def("__iter__", &create_functionsiter);
+        .def("__iter__", &create_functionsiter)
+        .add_static_property("N", &getN);
 
       bp::class_<FunctionsIter>
       (

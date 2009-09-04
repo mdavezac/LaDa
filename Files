@@ -9,11 +9,11 @@ atat_h  = findsym.h  integer.h  xtalutil.h lambda.impl.h \
 atat_python_h = atat.impl.hpp atatintrospection.hpp atatoperators.hpp
 atat_python_cc = atat.cc 
 
-ap_cc = representation.cc
+ap_cc = representation.cc 
 ap_h  = bases.h  bases.impl.h  functions.h  functions.iterator.h  numeric_types.h\
         representation.h  separable.h  sum_of_separables.h
 ap_doc = $(ap_h) $(ap_cc)
-ap_collapse_cc = collapse.cc  fitting_set.cc  values.cc  
+ap_collapse_cc = collapse.cc  fitting_set.cc  values.cc
 ap_collapse_h  = collapse.h  fitting_set.h  values.h  
 potentials_python_h = representation.hpp bases.hpp representation.hpp sum_of_separables.hpp \
                       collapse.hpp fitting_set.hpp values.hpp functions.hpp separable.hpp

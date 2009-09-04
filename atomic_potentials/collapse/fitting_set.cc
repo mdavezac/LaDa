@@ -64,7 +64,7 @@ namespace LaDa
         if( coordinates_.size() == 0 ) coordinates_.resize( _representation.nb_coords() );
         t_Coordinates::iterator i_coord = coordinates_.begin();
         t_Coordinates::iterator const i_coord_end = coordinates_.end();
-        for(; i_coord != i_coord_end; ++i_coord)
+        for(size_t i(0); i_coord != i_coord_end; ++i_coord, ++i)
         { 
           i_coord->resize( i_coord->size()+1 );
           t_Coordinates::value_type::value_type& coord_container = i_coord->back();
@@ -72,12 +72,8 @@ namespace LaDa
           Representation::const_iterator const i_rep_end = _representation.end();
           for(; i_rep != i_rep_end; ++i_rep)
           {
-            // creates coordinate vector.
-            i_coord->back().resize(i_coord->back().size()+1);
-            t_Coordinates::value_type::value_type
-                                     ::value_type &type_container = i_coord->back().back();
-            foreach(VariableSet::t_Variables::value_type const& value, i_rep->variables)
-              type_container.push_back( value.second );
+            LADA_ASSERT(i < i_rep->variables.size(), "Index out-of-range.")
+            coord_container.push_back( i_rep->variables[i].second );
           }
         }
         // adds energy.

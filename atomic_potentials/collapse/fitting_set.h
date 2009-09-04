@@ -60,7 +60,7 @@ namespace LaDa
                     <
                       std::vector  // for each representation of each structure.
                       <
-                        t_AtomType
+                        specie_type
                       >
                     >
                   > t_Coordinates;
@@ -169,10 +169,9 @@ namespace LaDa
           rep_iterator   (rep_iterator const &_c) 
                        : i_coordinates_(_c.i_coordinates_),
                          i_weight_(_c.i_weight_)  {}
-          //! Returns iterator to coordinates.
-          coordinate_iterator begin() const { return i_coordinates_->begin(); }
-          //! Returns iterator to coordinates.
-          coordinate_iterator end() const { return i_coordinates_->end(); }
+          //! Returns specie type.
+          t_Coordinates::value_type::value_type::value_type specie() const
+            { return *i_coordinates_; }
           //! Returns the weight.
           t_Weights::value_type::second_type::value_type weight() const { return *i_weight_; }
           //! Increments iterators.
