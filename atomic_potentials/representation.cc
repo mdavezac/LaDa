@@ -65,7 +65,7 @@ namespace LaDa
       t_Bases::const_iterator i_basis_end = bases.end();
 
       // first neighbor containor.
-      Crystal :: Neighbors neighbors( 4*_natoms );
+      Crystal :: Neighbors neighbors( _natoms );
       neighbors.origin = i_basis->origin + atat::rVector3d(1,0,0);
       size_t index(1);
       
@@ -105,7 +105,6 @@ namespace LaDa
           atoms.end(),
           basis_sort(*i_basis) 
         );
-        std::cout << "size: " << neighbors.size() << "\n";
 
         // gets atomic type of the structure
         VariableSet variable_set;
@@ -141,7 +140,6 @@ namespace LaDa
                     Crystal::TStructure<std::string> const &_structure )
     {
       LADA_ASSERT( _structure.lattice, "Lattice is not set.\n" )
-      std::cout << "basis: " << _basis;
       for(; i_first != i_end; ++i_first)
       {
         Crystal::TStructure<std::string>::t_Atom const &
@@ -154,8 +152,6 @@ namespace LaDa
           ++type;
         }
         atat::rVector3d const vec((*i_first)->pos); 
-        std::cout << "(" <<vec * _basis.x << ", "
-                  << vec * _basis.y << ", " << vec * _basis.z << ") ";
         switch( _vars.variables.size() )
         {
           default: _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.z, type) );
@@ -164,7 +160,6 @@ namespace LaDa
                    break;
         }
       }
-      std::cout << "\n\n";
     }
      
     std::ostream& operator<<( std::ostream& _stream, VariableSet const &_varset )

@@ -158,13 +158,14 @@ namespace LaDa
          
          // Removes atoms beyon nth position which are not at same distance as nth position.
          t_Neighbors::iterator i_last = neighbors_.begin();
-         t_Neighbors::iterator const i_end = neighbors_.begin();
+         t_Neighbors::iterator const i_end = neighbors_.end();
          LADA_DOASSERT( neighbors_.size() > nmax, "Supercell too small.\n");
-         size_t i(0);
+         size_t i(1);
          for(; i < nmax; ++i, ++i_last );
+         LADA_DOASSERT( i_last != i_end, "Supercell too small.\n");
          types::t_real const dist(i_last->distance);
          for(++i_last; i_last != i_end; ++i_last, ++i) 
-           if( Fuzzy::neq(i_last->distance, dist) ) break;
+           if( Fuzzy::gt(i_last->distance, dist) ) break;
          LADA_DOASSERT( i_last != i_end, "Supercell too small.\n");
          neighbors_.resize(i);
        };
