@@ -37,6 +37,7 @@
 #define __TRYASSERT(condition, error) \
           __TRYCODE( __DOASSERT( condition, "" ), error )
 #define LADA_ASSERT(a,b) __ASSERT( (not (a) ), b)
+#define LADA_DOASSERT(a,b) __DOASSERT( (not (a) ), b)
 #define __TRYBEGIN try {
 #define __TRYEND( code, error ) } __CATCHCODE( code, error ) 
 #define __COMMA__ ,

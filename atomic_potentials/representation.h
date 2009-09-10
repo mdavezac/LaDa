@@ -92,6 +92,8 @@ namespace LaDa
         size_t size() const { return sets_.size(); }
 
       private:
+        //! Create a the representation.
+        void create_(Crystal::TStructure<std::string> const &_str, size_t _natoms);
         //! Adds a variable set to this representation.
         void add_( VariableSet const &_rep );
         //! Symmetry-equivalent sets of variables.

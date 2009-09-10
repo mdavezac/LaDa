@@ -33,19 +33,30 @@ namespace LaDa
         if( Fuzzy::neq( ay, by ) ) return ay > by;
         const types::t_real az = _a->pos * basis.z;
         const types::t_real bz = _b->pos * basis.z;
-        if( Fuzzy::neq( az, bz ) ) return az > bz;
-        return false;
+        return az > bz;
       }
     }; 
 
+    void transform_( std::vector<Crystal::Neighbor const*>::const_iterator i_first, 
+                     std::vector<Crystal::Neighbor const*>::const_iterator const & i_end, 
+                     VariableSet &_vars, Basis const &_basis,
+                     Crystal::TStructure<std::string> const &_structure );
 
-    template<class A>
-      void transform( A const& _atoms, VariableSet &_vars, Basis const &_basis,
-                      Crystal::TStructure<std::string> const &_structure );
+    typedef Crystal::TStructure<std::string> t_Structure;
 
-    Representation :: Representation(Crystal::TStructure<std::string> const &_structure,
-                                     size_t _natoms )
+    Representation :: Representation(t_Structure const &_structure, size_t _natoms )
     {
+
+      try { create_(_structure, _natoms); }
+      catch(...)
+      {
+        std::cerr << "Could not create representation for structure.\n" << _structure << "\n";
+      }
+    }
+
+    void Representation :: create_(t_Structure const &_structure, size_t _natoms )
+    {
+      LADA_ASSERT( _natoms >= 3, "Number of atoms is too small.\n" )
       // now loops over bases.
       typedef Bases< Crystal::TStructure<std::string> > t_Bases;
       t_Bases bases( _structure );
@@ -58,7 +69,7 @@ namespace LaDa
       size_t index(1);
       
       // sorting container.
-      std::vector<Crystal::Neighbor const*> atoms(_natoms, NULL);
+      std::vector<Crystal::Neighbor const*> atoms;
       size_t origin_type(0);
       
       for(; i_basis != i_basis_end; ++i_basis )
@@ -69,10 +80,11 @@ namespace LaDa
 
           // finds new nearest neighbors.
           neighbors.origin = i_basis->origin;
-          std::vector<Crystal::Neighbor const*>::iterator i_atom = atoms.begin();
-          std::vector<Crystal::Neighbor const*>::iterator i_atom_end = atoms.end();
           Crystal::Neighbors::const_iterator i_neigh = neighbors.begin( _structure );
-          for(; i_atom != i_atom_end; ++i_atom, ++i_neigh ) *i_atom = &(*i_neigh);
+          Crystal::Neighbors::const_iterator const i_neigh_end = neighbors.end();
+          atoms.clear();
+          atoms.reserve(neighbors.size());
+          for(; i_neigh != i_neigh_end; ++i_neigh) atoms.push_back(&(*i_neigh));
 
           // finds type index at origin.
           origin_type = 0;
@@ -85,9 +97,10 @@ namespace LaDa
           }
         };
         // sorts according to basis.
-        std::sort
+        std::partial_sort
         ( 
           atoms.begin(),
+          atoms.begin() + _natoms,
           atoms.end(),
           basis_sort(*i_basis) 
         );
@@ -97,7 +110,7 @@ namespace LaDa
         variable_set.weight = i_basis->weight;
         variable_set.variables.reserve(3*_natoms-2);
         variable_set.variables.push_back(VariableSet::t_Variable(0, origin_type)); 
-        transform( atoms, variable_set, *i_basis, _structure );
+        transform_( atoms.begin(), atoms.begin() + _natoms, variable_set, *i_basis, _structure );
         add_(variable_set);
       }
     }
@@ -120,30 +133,36 @@ namespace LaDa
       else i_found->weight += _rep.weight;
     }
 
-    template<class A>
-      void transform( A const& _atoms, VariableSet &_vars, Basis const &_basis,
-                      Crystal::TStructure<std::string> const &_structure )
+    void transform_( std::vector<Crystal::Neighbor const*>::const_iterator i_first, 
+                    std::vector<Crystal::Neighbor const*>::const_iterator const & i_end, 
+                    VariableSet &_vars, Basis const &_basis,
+                    Crystal::TStructure<std::string> const &_structure )
+    {
+      LADA_ASSERT( _structure.lattice, "Lattice is not set.\n" )
+      for(; i_first != i_end; ++i_first)
       {
-        LADA_ASSERT( _structure.lattice, "Lattice is not set.\n" )
-        foreach( typename A::value_type const ptr_atom, _atoms ) 
+        Crystal::TStructure<std::string>::t_Atom const &
+           atom = _structure.atoms[ (*i_first)->index ];
+        specie_type type(0);
+        foreach( std::string const& str,
+                 _structure.lattice->sites[atom.site<0? 0: atom.site].type )
         {
-          Crystal::TStructure<std::string>::t_Atom const &atom = _structure.atoms[ ptr_atom->index ];
-          specie_type type(0);
-          foreach( std::string const& str, _structure.lattice->sites[atom.site<0? 0: atom.site].type )
-          {
-            if( str == atom.type ) break;
-            ++type;
-          }
-          atat::rVector3d const vec(ptr_atom->pos); 
-          switch( _vars.variables.size() )
-          {
-            default: _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.z, type) );
-            case 2:  _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.y, type) );
-            case 1:  _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.x, type) );
-                     break;
-          }
+          if( str == atom.type ) break;
+          ++type;
+        }
+        atat::rVector3d const vec((*i_first)->pos); 
+        std::cout << "(" <<vec * _basis.x << ", "
+                  << vec * _basis.y << ", " << vec * _basis.z << ") ";
+        switch( _vars.variables.size() )
+        {
+          default: _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.z, type) );
+          case 2:  _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.y, type) );
+          case 1:  _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.x, type) );
+                   break;
         }
       }
+      std::cout << "\n";
+    }
      
     std::ostream& operator<<( std::ostream& _stream, VariableSet const &_varset )
     {

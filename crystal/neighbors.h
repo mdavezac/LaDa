@@ -76,6 +76,8 @@ namespace LaDa
              { create_neighbors_list_(_str); return begin(); }
          //! returns end of neighbors list.
          const_iterator end() const { return neighbors_.end(); }
+         //! Returns size of neighbors list.
+         size_t size() const { return neighbors_.size(); }
 
        private:
          //! Private copy Constructor.
@@ -102,6 +104,15 @@ namespace LaDa
          typename t_Structure::t_Atoms::const_iterator i_atom_end = _structure.atoms.end();
          Neighbor neighbor;
          neighbor.index = 0;
+         size_t list_max_size(nmax);
+         if( list_max_size <= 12 ) list_max_size = 13;
+         else if( list_max_size <= 18 ) list_max_size = 19;
+         else if( list_max_size <= 42 ) list_max_size = 43;
+         else if( list_max_size <= 54 ) list_max_size = 55;
+         else if( list_max_size <= 54 ) list_max_size = 55;
+         else if( list_max_size <= 78 ) list_max_size = 79;
+         else if( list_max_size <= 86 ) list_max_size = 87;
+         else list_max_size *= 2;
          for(; i_atom != i_atom_end; ++i_atom, ++neighbor.index ) 
          {
            atat::rVector3d const frac( inv_cell * (i_atom->pos - origin) );
@@ -133,17 +144,29 @@ namespace LaDa
                   {
                     neighbors_.insert(i_found, neighbor);
        
-                    if( size < nmax ) ++size;
+                    if( size < list_max_size ) ++size;
                     else              neighbors_.pop_back();
                     continue;
                   }
                   
-                  if( size == nmax ) continue;
+                  if( size == list_max_size ) continue;
        
                   ++size;
                   neighbors_.push_back( neighbor );
                }
          } // loop over atoms.
+         
+         // Removes atoms beyon nth position which are not at same distance as nth position.
+         t_Neighbors::iterator i_last = neighbors_.begin();
+         t_Neighbors::iterator const i_end = neighbors_.begin();
+         LADA_DOASSERT( neighbors_.size() > nmax, "Supercell too small.\n");
+         size_t i(0);
+         for(; i < nmax; ++i, ++i_last );
+         types::t_real const dist(i_last->distance);
+         for(++i_last; i_last != i_end; ++i_last, ++i) 
+           if( Fuzzy::neq(i_last->distance, dist) ) break;
+         LADA_DOASSERT( i_last != i_end, "Supercell too small.\n");
+         neighbors_.resize(i);
        };
 
   } // end of Crystal namespace.
