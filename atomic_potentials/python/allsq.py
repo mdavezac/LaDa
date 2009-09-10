@@ -3,7 +3,7 @@
 #
 #! /usr/bin/python
 
-def allsq( _collapse, tolerance = 1e-16, maxiter=50 ):
+def allsq( _collapse, tolerance = 1e-16, maxiter=50, verbose=False ):
   """ Alternating least-square-fit function.
   """ 
   import numpy
@@ -30,5 +30,7 @@ def allsq( _collapse, tolerance = 1e-16, maxiter=50 ):
     if abs(energies - old_energies) < tolerance: break
 
   return iter, abs(energies - old_energies)
+
+
 
 
