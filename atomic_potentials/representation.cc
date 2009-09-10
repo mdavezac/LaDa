@@ -33,7 +33,8 @@ namespace LaDa
         if( Fuzzy::neq( ay, by ) ) return ay > by;
         const types::t_real az = _a->pos * basis.z;
         const types::t_real bz = _b->pos * basis.z;
-        return az > bz;
+        if( Fuzzy::neq( az, bz ) ) return az > bz;
+        return false;
       }
     }; 
 
@@ -64,7 +65,7 @@ namespace LaDa
       t_Bases::const_iterator i_basis_end = bases.end();
 
       // first neighbor containor.
-      Crystal :: Neighbors neighbors( _natoms );
+      Crystal :: Neighbors neighbors( 4*_natoms );
       neighbors.origin = i_basis->origin + atat::rVector3d(1,0,0);
       size_t index(1);
       
@@ -104,6 +105,7 @@ namespace LaDa
           atoms.end(),
           basis_sort(*i_basis) 
         );
+        std::cout << "size: " << neighbors.size() << "\n";
 
         // gets atomic type of the structure
         VariableSet variable_set;
@@ -139,6 +141,7 @@ namespace LaDa
                     Crystal::TStructure<std::string> const &_structure )
     {
       LADA_ASSERT( _structure.lattice, "Lattice is not set.\n" )
+      std::cout << "basis: " << _basis;
       for(; i_first != i_end; ++i_first)
       {
         Crystal::TStructure<std::string>::t_Atom const &
@@ -161,7 +164,7 @@ namespace LaDa
                    break;
         }
       }
-      std::cout << "\n";
+      std::cout << "\n\n";
     }
      
     std::ostream& operator<<( std::ostream& _stream, VariableSet const &_varset )
