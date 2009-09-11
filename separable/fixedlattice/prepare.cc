@@ -155,6 +155,7 @@ namespace LaDa
           Crystal::Neighbors::const_iterator const i_neigh_end = neighbors.end();
           atoms.clear();
           atoms.reserve(neighbors.size());
+          LADA_ASSERT(neighbors.size() >= n.second, "not enough neighbors.\n")
           for(; i_neigh != i_neigh_end; ++i_neigh) atoms.push_back(&(*i_neigh));
 
           // finds type index at origin.
@@ -166,7 +167,7 @@ namespace LaDa
         std::partial_sort
         ( 
           atoms.begin(),
-          atoms.begin() + n.second,
+          atoms.begin() + n.second - n.first,
           atoms.end(),
           basis_sort(*i_basis) 
         );
@@ -175,10 +176,11 @@ namespace LaDa
         bitset.first.reserve(n.second - n.first + 1);
         // then copies atomic types
         bitset.first.push_back(origin_type);
+        LADA_ASSERT(atoms.size() >= n.second - n.first, "not enough neighbors.\n")
         std::transform
         ( 
-          atoms.begin() + n.first,
-          atoms.end() + n.second,
+          atoms.begin(),
+          atoms.begin() + n.second -n.first,
           std::back_inserter(bitset.first),
           type_to_bit(_structure) 
         );

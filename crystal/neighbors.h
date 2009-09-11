@@ -105,13 +105,14 @@ namespace LaDa
          Neighbor neighbor;
          neighbor.index = 0;
          size_t list_max_size(nmax);
+         std::cout << _structure << "\n";
          if( list_max_size <= 12 ) list_max_size = 13;
-         else if( list_max_size <= 18 ) list_max_size = 19;
-         else if( list_max_size <= 42 ) list_max_size = 43;
-         else if( list_max_size <= 54 ) list_max_size = 55;
-         else if( list_max_size <= 54 ) list_max_size = 55;
-         else if( list_max_size <= 78 ) list_max_size = 79;
-         else if( list_max_size <= 86 ) list_max_size = 87;
+         else if( list_max_size <= 18 ) list_max_size = 20;
+         else if( list_max_size <= 42 ) list_max_size = 44;
+         else if( list_max_size <= 54 ) list_max_size = 56;
+         else if( list_max_size <= 54 ) list_max_size = 56;
+         else if( list_max_size <= 78 ) list_max_size = 80;
+         else if( list_max_size <= 86 ) list_max_size = 88;
          else list_max_size *= 2;
          for(; i_atom != i_atom_end; ++i_atom, ++neighbor.index ) 
          {
@@ -166,6 +167,12 @@ namespace LaDa
          types::t_real const dist(i_last->distance);
          for(++i_last; i_last != i_end; ++i_last, ++i) 
            if( Fuzzy::gt(i_last->distance, dist) ) break;
+         if( i_last == i_end )
+         {
+           std::cout << dist << "\n";
+           for(i_last=neighbors_.begin(); i_last != i_end; ++i_last)
+             std::cout << i_last->distance << " " << i_last->pos << " " << i_last->index << "\n";
+         }
          LADA_DOASSERT( i_last != i_end, "Supercell too small.\n");
          neighbors_.resize(i);
        };

@@ -15,7 +15,6 @@ namespace LaDa
 {
   namespace Crystal
   { 
-
     atat::iVector3d get_smith_index( t_SmithTransform const &_transformation,
                                      atat::rVector3d  const &_pos )
     {
@@ -49,12 +48,13 @@ namespace LaDa
       atat::iMatrix3d left, right, smith;
       const atat::rMatrix3d inv_lat( !_lat_cell );
       const atat::rMatrix3d inv_lat_cell( inv_lat * _str_cell );
+      std::cout  << inv_lat_cell << "\n\n" << inv_lat * (~_str_cell) << "\n\n";
       atat::iMatrix3d int_cell;
       for( size_t i(0); i < 3; ++i )
         for( size_t j(0); j < 3; ++j )
         {
           int_cell(i,j) = types::t_int( rint( inv_lat_cell(i,j) ) ); 
-          __ASSERT
+          __DOASSERT
           ( 
             std::abs( types::t_real( int_cell(i,j) ) - inv_lat_cell(i,j) ) > 0.01,
                "Input structure is not supercell of the lattice: \n" 

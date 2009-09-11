@@ -35,6 +35,10 @@ namespace LaDa
     //! Computes smith indices of position \a _pos.
     atat::iVector3d get_smith_index( t_SmithTransform const &_transformation,
                                      atat::rVector3d  const &_pos );
+
+    inline bool equivalent_mod_cell( t_SmithTransform const &_transformation, 
+                                     atat::rVector3d const &_a, atat::rVector3d const &_b )
+      { return get_smith_index(_transformation, _a - _b) == atat::iVector3d(0,0,0); }
   } // namespace Crystal
 
 } // namespace LaDa
