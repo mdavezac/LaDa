@@ -75,6 +75,25 @@ namespace LaDa
       return true;
     }
 
+    struct CompSites
+    {
+      CompSites( Lattice::t_Site::t_Type const &_types )
+      {
+        std::copy(_types.begin(), _types.end(), std::inserter(set_, set_.begin()));
+      }
+      CompSites( CompSites const &c ): set_(_c.set) {}
+      bool operator()( Lattice::t_Site const &_site )
+      {
+        Lattice::t_Site::t_Type::const_iterator i_first = _site.type.begin();
+        Lattice::t_Site::t_Type::const_iterator const i_end = _site.type.end();
+        for(; i_first != i_end; ++i_first )
+          if( set_.find(*i_first) == set_.end() ) break;
+        return i_first == i_end;
+      }
+
+      std::set<Lattice::t_Site::t_Type::value_type> set_;
+    };
+
     // finds space group and symmetry operations using atat library
     // needs some hooking in
     // also wraps inside cell
@@ -83,14 +102,20 @@ namespace LaDa
       space_group.cell=cell;
       atat::Array<atat::rVector3d> atom_pos( sites.size() );
       atat::Array<types::t_int> atom_type( sites.size() );
-      std::vector<t_Site> :: iterator i_site = sites.begin();
-      std::vector<t_Site> :: iterator i_end = sites.end();
+      t_Sites :: iterator i_site = sites.begin();
+      t_Sites :: iterator i_end = sites.end();
+      atom_pos[0] = i_site->pos;
+      atom_type[0] = 0;
 
       // copies to an atat::Array
-      for(types::t_unsigned n=0; i_site != i_end; ++i_site, ++n)
+      for(types::t_unsigned n(1), i(0); i_site != i_end; ++i_site, ++n)
       {
+        t_Sites :: const_iterator const i_site_begin(sites.begin());
+        t_Sites :: const_iterator const i_found
+            = std::find_if(i_site_begin, i_site, CompSites(i_site->type));
+        
+        atom_type[n] =  i_found == i_site ? (++i): atom_type[i_found - i_site_begin];
         atom_pos[n] = i_site->pos;
-        atom_type[n] = n;
       }
       atat::wrap_inside_cell( &atom_pos, atom_pos, cell );
       // recopies wrapped atoms back to this object
