@@ -51,6 +51,14 @@ AC_ARG_ENABLE(potentials,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-potentials) ;;
      esac],[potentials=false])
 
+AC_ARG_ENABLE(enum,
+     [  --enable-enum              Compiles enumeration library.],
+     [case "${enableval}" in
+       yes) enum=true ;;
+       no)  enum=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-enum) ;;
+     esac],[enum=false])
+
 AC_ARG_ENABLE(python,
      [  --enable-python               Compiles python bindings.],
      [case "${enableval}" in
@@ -289,6 +297,7 @@ AM_CONDITIONAL(DOPYTHONPESCAN, test x$python$pescan$direct_iaga = xtruetruetrue)
 AM_CONDITIONAL(DOPYTHON, test x$python = xtrue)
 AM_CONDITIONAL(DOSEPARABLE, test x$separable = xtrue)
 AM_CONDITIONAL(DOMODELS, test x$models = xtrue)
+AM_CONDITIONAL(DOENUM, test x$enum = xtrue)
 AM_CONDITIONAL(DOPOTENTIALS, test x$potentials = xtrue)
 AM_CONDITIONAL(DOMINIMIZER, test xtrue = xtrue)
 
@@ -380,13 +389,16 @@ AC_OUTPUT(Makefile atat/Makefile atat/python/Makefile physics/Makefile physics/p
           print/Makefile lapack/Makefile separable/Makefile ce/Makefile ce/python/Makefile
           python/Makefile separable/fixedlattice/Makefile factory/Makefile
           minimizer/Makefile minimizer/python/Makefile models/Makefile models/python/Makefile 
-          atomic_potentials/Makefile atomic_potentials/python/Makefile atomic_potentials/collapse/Makefile )
+          atomic_potentials/Makefile atomic_potentials/python/Makefile atomic_potentials/collapse/Makefile
+          enum/Makefile enum/python/Makefile )
 
 echo ""; echo ""
 echo "Will Compile following modules: "
 echo " _ Crystal module library"
-echo " _ Cluster Expansion library module"
 
+if test "$ce" = true; then
+  echo " _ Cluster Expansion library module"
+fi
 if test "$galib" = true; then
   echo " _ GA libraries"
 fi
@@ -410,6 +422,9 @@ if test "$models" = true; then
 fi
 if test "$potentials" = true; then
   echo " _ Generalized atomic potentials."
+fi
+if test "$enum" = true; then
+  echo " _ Enumeration library"
 fi
 # if test x$emassopt = xtrue; then
 #   echo " _ Genetic Algorithm for Electronic Mass Optimization"

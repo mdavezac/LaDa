@@ -91,7 +91,8 @@ namespace LaDa
         .def( "__str__",  &print<Crystal::Lattice> )
         .def( "syms",  &details::symmetry_ops )
         .def( "fromXML",  &details::fromXML<Crystal::Lattice> )
-        .def( "set_as_crystal_lattice", &details::set_as_crystal_lattice );
+        .def( "set_as_crystal_lattice", &details::set_as_crystal_lattice )
+        .def( "find_space_group", &Crystal::Lattice::find_space_group );
     // def( "StructureLattice", &return_crystal_lattice, 
     //      return_value_policy<reference_existing_object>() );
     }

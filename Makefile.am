@@ -42,9 +42,12 @@ endif
 if DOPOTENTIALS
   POTENTIALSDIR = atomic_potentials
 endif
+if DOENUM
+  ENUMDIR = enum
+endif
 SUBDIRS = $(PYTHONDIR) $(MPISUBDIR) atat physics opt minimizer crystal print $(CEDIR) $(VFFSUBDIR) \
 	  $(PESCANSUBDIR) $(LAPACKDIR) $(DARWINSUBDIR) $(SEPARABLEDIR) \
-	  factory $(MODELSDIR) $(POTENTIALSDIR)
+	  factory $(MODELSDIR) $(POTENTIALSDIR) $(ENUMDIR)
 revision.h: force
 	@cd $(top_srcdir); scripts/max_revision.pl
 force: ;

@@ -7,6 +7,7 @@
 
 #include <boost/python.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
+#include <boost/python/errors.hpp>
 #include <sstream>
 
 #include <opt/types.h>
@@ -117,7 +118,11 @@ namespace LaDa
       catch(...)
       {
         if( not Crystal::Structure::lattice )
-          throw std::runtime_error( "Did you forget to initialize the Lattice?" );
+        {
+          PyErr_SetString(PyExc_RuntimeError,"Did you forget to initialize the Lattice?" );
+          boost::python::throw_error_already_set();
+          return;
+        }
         Crystal::StrAtom stratom;
         stratom.pos = _atm.pos;
         stratom.type = boost::python::extract< std::string >( _object );
@@ -178,12 +183,14 @@ namespace LaDa
           std::ostringstream sstr;
           sstr << "Object cannot be converted to an atom: \n"
                << _e.what() << "\n";
-          throw std::runtime_error( sstr.str() );
+          PyErr_SetString(PyExc_RuntimeError, sstr.str().c_str());
+          boost::python::throw_error_already_set();
         }
         catch( ... )
         {
           if( result ) delete result;
-          throw std::runtime_error( "Could not convert object to Atom." );
+          PyErr_SetString(PyExc_RuntimeError, "Could not convert object to Atom." );
+          boost::python::throw_error_already_set();
         }
         return NULL;
       }
@@ -191,22 +198,42 @@ namespace LaDa
     types::t_real toReal(std::string _str )
     { 
       if( not Crystal::Structure::lattice )
-        throw std::runtime_error( "Could not convert atom type.\n" ); 
+      {
+        PyErr_SetString(PyExc_RuntimeError, "Could not convert atom type.\n" );
+        boost::python::throw_error_already_set();
+        return -1e0;
+      }
       if( _str.compare( Crystal::Structure::lattice->sites[0].type[0] ) == 0 )
         return types::t_real(-1);
       else if( _str.compare( Crystal::Structure::lattice->sites[0].type[1] ) == 0 )
         return types::t_real(1);
       else
-        throw std::runtime_error( "Requested Atomic type is not within lattice" );
+      {
+        PyErr_SetString(PyExc_RuntimeError, "Requested Atomic type is not within lattice" );
+        boost::python::throw_error_already_set();
+        return -1e0;
+      }
     }
     std::string toType( types::t_real _r )
     { 
       if( not Crystal::Structure::lattice )
-        throw std::runtime_error( "Could not convert atom type.\n" ); 
+      {
+        PyErr_SetString(PyExc_RuntimeError, "Could not convert atom type.\n" );
+        boost::python::throw_error_already_set();
+        return "-1";
+      }
       if( Crystal::Structure::lattice->sites.size() != 1)
-        throw std::runtime_error( "Lattice cannot have more than one atomic site.\n" ); 
+      {
+        PyErr_SetString(PyExc_RuntimeError, "Lattice cannot have more than one atomic site.\n" ); 
+        boost::python::throw_error_already_set();
+        return "-1";
+      }
       if( Crystal::Structure::lattice->sites[0].type.size() != 2)
-        throw std::runtime_error( "Lattice must have two atomic types.\n" ); 
+      {
+        PyErr_SetString(PyExc_RuntimeError, "Lattice must have two atomic types.\n" ); 
+        boost::python::throw_error_already_set();
+        return "-1";
+      }
       if(     Fuzzy::neq( _r, types::t_real(1) ) 
           and Fuzzy::neq( _r, types::t_real(-1) ) ) return "";
       return Fuzzy::neq( _r, types::t_real(1) ) ? 

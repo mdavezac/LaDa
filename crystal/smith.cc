@@ -48,7 +48,6 @@ namespace LaDa
       atat::iMatrix3d left, right, smith;
       const atat::rMatrix3d inv_lat( !_lat_cell );
       const atat::rMatrix3d inv_lat_cell( inv_lat * _str_cell );
-      std::cout  << inv_lat_cell << "\n\n" << inv_lat * (~_str_cell) << "\n\n";
       atat::iMatrix3d int_cell;
       for( size_t i(0); i < 3; ++i )
         for( size_t j(0); j < 3; ++j )

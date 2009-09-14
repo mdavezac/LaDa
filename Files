@@ -131,15 +131,19 @@ DARWIN_E_H  = emass_stubs.h  two_sites.h  single_site.h  vff.h  emass.h  layered
 DARWIN_E_DOC = $(DARWIN_E_H) $(DARWIN_E_CC) 
 
 crystal_cc = lattice.cc structure.cc confsplit.cc layerdepth.cc read_structure.cc \
-             epi_structure.cc fill_structure.cc ideal_lattice.cc smith.cc 
+             epi_structure.cc fill_structure.cc ideal_lattice.cc smith.cc \
+             symmetry_operator.h 
 crystal_h  = lattice.h  structure.h structure.impl.h atom.h  confsplit.h layerdepth.h \
              read_structure.h epi_structure.h fill_structure.h fourier.h read_poscar.h \
-             fractional_cartesian.h ideal_lattice.h smith.h neighbors.h enumerate.h
+             fractional_cartesian.h ideal_lattice.h smith.h neighbors.h enumerate.h \
+             symmetry_operator.cc 
 crystal_doc = $(crystal_h) $(crystal_cc) 
 crystal_python_h = structure.hpp atom.hpp lattice.hpp read_structure.hpp \
-                   smith.hpp enumerate.hpp layerdepth.hpp neighbors.hpp
+                   smith.hpp enumerate.hpp layerdepth.hpp neighbors.hpp \
+                   symmetry_operator.hpp
 crystal_python_cc = structure.cc atom.cc lattice.cc read_structure.cc \
-                    python.cc smith.cc enumerate.cc layerdepth.cc neighbors.cc
+                    python.cc smith.cc enumerate.cc layerdepth.cc neighbors.cc \
+                    symmetry_operator.cc
 
 ce_cc     = cluster.cc harmonic.cc  polynome.cc regularization.cc fit.cc
 ce_h      = cluster.h  constituent_strain.h  functional_builder.h  harmonic.h \
@@ -149,6 +153,21 @@ ce_impl_h = constituent_strain.impl.h  functional_builder.impl.h  harmonic.impl.
 ce_doc = $(ce_h) $(ce_cc) 
 ce_python_h = ce.hpp ce.impl.hpp
 ce_python_cc = ce.cc python.cc
+
+factory_cc =
+factory_h = chain_connect_attribute.h  chainconnects.h factory.h \
+            fusedfactory.h  xmlfactory.h xmlkey.h chain_connect_node.h \
+            chain_connect_value.h  functiontype.h  visit_xml.h xmlfusedfactory.h
+
+factory_doc = $(factory_cc) $(factory_h)
+
+enum_cc = find_all_cells.cc  label_exchange.cc   numeric_type.cc  \
+          remove_smith_equivalents.cc  transform.cc  translation.cc
+enum_h = exceptions.h  find_all_cells.h  label_exchange.h numeric_type.h \
+         remove_smith_equivalents.h  transform.h  translation.h
+enum_doc = $(enum_h) $(enum_cc)
+enum_python_h = find_all_cells.hpp operations.hpp bitset.hpp
+enum_python_cc = find_all_cells.cc operations.cc bitset.cc python.cc
 
 lapack_f90 = dlae2.f   dlanst.f  dlapy2.f  dlarf.f   dlarft.f  dlascl.f \
 	     dlasr.f   dlassq.f  dorg2l.f  dorgql.f  dorgtr.f  dsterf.f \
@@ -180,13 +199,6 @@ opt_doc = $(opt_h) $(opt_cc) $(opt_python_convenience_cc) $(opt_python_convenien
 opt_python_cc = errortuple.cc python.cc
 opt_python_c = errortuple.hpp convexhull.impl.hpp
 opt_f90 = rational_mathematics.f90
-
-factory_cc =
-factory_h = chain_connect_attribute.h  chainconnects.h factory.h \
-            fusedfactory.h  xmlfactory.h xmlkey.h chain_connect_node.h \
-            chain_connect_value.h  functiontype.h  visit_xml.h xmlfusedfactory.h
-
-factory_doc = $(factory_cc) $(factory_h)
 
 EMASS_CC = emass.cc
 EMASS_H  = emass.h
@@ -267,6 +279,7 @@ ALL_DOCS = $(top_srcdir)/doxy.conf $(top_srcdir)/$(docs_h) \
            $(addprefix $(top_srcdir)/atomic_potentials/collapse,$(ap_collapse_doc)) \
            $(addprefix $(top_srcdir)/crystal/,$(crystal_doc)) \
            $(addprefix $(top_srcdir)/ce/,$(ce_doc)) \
+           $(addprefix $(top_srcdir)/enum/,$(enum_doc)) \
            $(addprefix $(top_srcdir)/lapack/,$(lapack_doc)) \
            $(addprefix $(top_srcdir)/mpi/,$(mpi_doc)) \
            $(addprefix $(top_srcdir)/opt/,$(opt_doc)) \
@@ -429,3 +442,8 @@ $(top_builddir)/separable/libseparable.la: \
 $(top_builddir)/factory/libfactory.la: \
     $(addprefix $(top_srcdir)/factory/, $(factory_h) )
 	@cd $(top_builddir)/factory; $(MAKE) libfactory.la
+
+$(top_builddir)/enum/libenum.la: \
+    $(addprefix $(top_srcdir)/enum/, $(enum_h) ) \
+    $(addprefix $(top_srcdir)/enum/, $(enum_cc) )
+	@cd $(top_builddir)/enum; $(MAKE) libenum.la

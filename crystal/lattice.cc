@@ -8,6 +8,7 @@
 #include<stdexcept> 
 #include<set> 
 #include<iterator> 
+#include<algorithm> 
 
 #include <atat/array.h>
 #include <atat/misc.h>
@@ -81,7 +82,7 @@ namespace LaDa
       {
         std::copy(_types.begin(), _types.end(), std::inserter(set_, set_.begin()));
       }
-      CompSites( CompSites const &c ): set_(_c.set) {}
+      CompSites( CompSites const &_c ): set_(_c.set_) {}
       bool operator()( Lattice::t_Site const &_site )
       {
         Lattice::t_Site::t_Type::const_iterator i_first = _site.type.begin();
@@ -106,12 +107,13 @@ namespace LaDa
       t_Sites :: iterator i_end = sites.end();
       atom_pos[0] = i_site->pos;
       atom_type[0] = 0;
+      ++i_site;
 
       // copies to an atat::Array
       for(types::t_unsigned n(1), i(0); i_site != i_end; ++i_site, ++n)
       {
-        t_Sites :: const_iterator const i_site_begin(sites.begin());
-        t_Sites :: const_iterator const i_found
+        t_Sites :: iterator const i_site_begin(sites.begin());
+        t_Sites :: iterator const i_found
             = std::find_if(i_site_begin, i_site, CompSites(i_site->type));
         
         atom_type[n] =  i_found == i_site ? (++i): atom_type[i_found - i_site_begin];

@@ -45,6 +45,10 @@ if DOMODELS
   pythonextensions += models 
   libpython_lada_la_LIBADD += $(top_builddir)/models/libmodels.la 
 endif
+if DOENUM
+  pythonextensions += enumeration
+  libpython_lada_la_LIBADD += $(top_builddir)/enum/libenum.la 
+endif
 
 if DOMINIMIZER
   pythonextensions += minimizer 
