@@ -16,12 +16,10 @@ namespace LaDa
   {
      t_uint Translation::operator()(t_uint _x, FlavorBase const &_flavorbase) const
      {
-       if( card_ < 2 ) return _x;
+       if(card_ < 2) return _x;
 #      ifdef LADA_DEBUG
-         if( _flavorbase.size() != card_ )
-           BOOST_THROW_EXCEPTION( internal() << error_string("_flavorbase size is incorrect.") );
-         if( _x >= _flavorbase.back() * _flavorbase[1] )
-           BOOST_THROW_EXCEPTION( internal() << error_string("Argument _x is out of range.") );
+         if(_flavorbase.size() != card_) BOOST_THROW_EXCEPTION( argument_error() );
+         if(_x >= _flavorbase.back() * _flavorbase[1]) BOOST_THROW_EXCEPTION( integer_too_large());
 #      endif
        t_uint result(0);
        FlavorBase::const_reverse_iterator i_flavor = _flavorbase.rbegin();

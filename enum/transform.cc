@@ -20,42 +20,74 @@ namespace LaDa
      void Transform :: init(atat::rMatrix3d const &_left, atat::iVector3d const &_smith)
              throw(boost::exception)
      {
+       std::cout << "ini: 0\n";
        namespace bt = boost::tuples;
+       std::cout << "ini: 1\n";
        size_t const nsites_ = independents_.size();
+       std::cout << "ini: 2 " << independents_.size() << "\n";
        size_t const card_(nsites_*_smith(0)*_smith(1)*_smith(2));
+       std::cout << "ini: 3 " << card_ << "\n";
+       if( card_ < 2 ) return;
+       std::cout << "ini: 4 " << nsites_ << "\n";
+#      ifdef LADA_DEBUG
+         if( independents_.size() != nsites_ ) 
+         {
+           std::ostringstream sstr;
+           sstr << independents_.size() << " != " << nsites_ << " ";
+           BOOST_THROW_EXCEPTION( internal() << error_string(sstr.str()));
+         }
+#      endif
+       std::cout << "ini: 5" << _smith << "\n";
 
        namespace bt = boost::tuples;
        permutations_.clear();
+       std::cout << "ini: 6\n";
 
        // loops over sites.
        t_Independents :: const_iterator i_ind = independents_.begin();
        atat::rMatrix3d const rotation = _left * op * (!_left);
        for(types::t_int d(0); d < types::t_int(nsites_); ++d, ++i_ind)
        {
+         std::cout << "ini: 7\n";
          types::t_int permutated_site( d + i_ind->first );
          if( permutated_site < 0 ) permutated_site += types::t_int(nsites_);
          
          atat::rVector3d const t_nd
            = _left * atat::rVector3d(i_ind->second(0), i_ind->second(1), i_ind->second(3));
          atat::rVector3d g;
+         std::cout << "ini: 8\n";
          // loops over first _smith coordinate.
          for(size_t i(0); i < _smith(0); ++i)
          {
+           std::cout << "ini: 9\n";
            g(0) = i;
            // loops over second _smith coordinate.
-           for(size_t j(0); j < _smith(0); ++j)
+           for(size_t j(0); j < _smith(1); ++j)
            {
+             std::cout << "ini: 10\n";
              g(1) = j;
              // loops over third _smith coordinate.
-             for(size_t k(0); k < _smith(0); ++k)
+             for(size_t k(0); k < _smith(2); ++k)
              {
+               std::cout << "ini: 11\n";
                g(2) = k;
+               std::cout << "ini: 11.1\n";
                atat::rVector3d const transformed( rotation * g + t_nd );
+               std::cout << "ini: 11.2\n";
 #              ifdef LADA_DEBUG
+               std::cout << "ini: 11.3\n";
                  for( size_t t(0); t < 3; ++t)
+                 {
+                   std::cout << "ini: 11.4\n";
                    if( not Fuzzy::is_zero(transformed(t) - std::floor(transformed(t)+0.5) - 0.5) ) 
-                     BOOST_THROW_EXCEPTION( symmetry_not_of_supercell() );
+                   {
+                     std::cout << "ini: 11.5\n";
+                     throw symmetry_not_of_supercell();
+                     std::cout << "ini: 11.6\n";
+                   }
+                 }
 #              endif
+               std::cout << "ini: 12\n";
                atat::iVector3d translation
                (
                  types::t_int(std::floor(transformed(0)+0.5)) % _smith(0),
@@ -66,21 +98,32 @@ namespace LaDa
                if( translation(1) < 0 ) translation(1) += _smith(1);
                if( translation(2) < 0 ) translation(2) += _smith(2);
 
+               std::cout << "ini: 13\n";
                permutations_.push_back( get_index(permutated_site, translation, _smith, card_) );
+               std::cout << "ini: 14\n";
              } // over k
+               std::cout << "ini: 15\n";
            } // over j
+               std::cout << "ini: 16\n";
          } // over i
+               std::cout << "ini: 17\n";
        } // over d
+       std::cout << "ini: 18\n";
      }
 
      Transform :: Transform   (Crystal::SymmetryOperator const &_c, Crystal::Lattice const &_lat)
                               throw(boost::exception)
                             : Crystal::SymmetryOperator(_c)
      {
-       bool pure_translation_ = 
-         (    Fuzzy::neq(op.x[0][0], 1.0) or Fuzzy::neq(op.x[0][1], 0.0) or Fuzzy::neq(op.x[0][2], 0.0)
-           or Fuzzy::neq(op.x[1][0], 0.0) or Fuzzy::neq(op.x[1][1], 1.0) or Fuzzy::neq(op.x[1][2], 0.0)
-           or Fuzzy::neq(op.x[2][0], 0.0) or Fuzzy::neq(op.x[2][1], 0.0) or Fuzzy::neq(op.x[2][2], 1.0) );
+       bool pure_translation_ = (    Fuzzy::neq(op.x[0][0], 1.0) 
+                                  or Fuzzy::neq(op.x[0][1], 0.0) 
+                                  or Fuzzy::neq(op.x[0][2], 0.0)
+                                  or Fuzzy::neq(op.x[1][0], 0.0) 
+                                  or Fuzzy::neq(op.x[1][1], 1.0) 
+                                  or Fuzzy::neq(op.x[1][2], 0.0)
+                                  or Fuzzy::neq(op.x[2][0], 0.0) 
+                                  or Fuzzy::neq(op.x[2][1], 0.0) 
+                                  or Fuzzy::neq(op.x[2][2], 1.0) );
 
        if( pure_translation_ )
        {
@@ -149,27 +192,36 @@ namespace LaDa
 
      t_uint Transform::operator()(t_uint _x, FlavorBase const &_flavorbase) const
      {
+         std::cout << "start\n";
+         if(card_ < 2) return _x;
+         std::cout << "start 0\n";
 #      ifdef LADA_DEBUG
-         if( card_ < 2 ) return _x;
-         if( permutations_.size() != card_ )
+         std::cout << "start 1 " << permutations_.size() << " " << card_ << "\n";
+         if(permutations_.size() != card_)
            BOOST_THROW_EXCEPTION( internal() << error_string("permutations_ size is incorrect.") );
-         if( _flavorbase.size() != card_ )
-           BOOST_THROW_EXCEPTION( internal() << error_string("_flavorbase size is incorrect.") );
-         if( _x >= _flavorbase.back() * _flavorbase[1] )
-           BOOST_THROW_EXCEPTION( internal() << error_string("Argument _x is out of range.") );
+         std::cout << "start 2\n";
+         if(_flavorbase.size() != card_) BOOST_THROW_EXCEPTION( argument_error());
+         std::cout << "start 3\n";
+         if(_x >= _flavorbase.back() * _flavorbase[1]) BOOST_THROW_EXCEPTION( integer_too_large() );
+         std::cout << "start 4\n";
 #      endif
 
+         std::cout << "here\n";
        t_uint result(0);
        FlavorBase::const_reverse_iterator i_flavor = _flavorbase.rbegin();
        std::vector<size_t> :: const_iterator i_perm = permutations_.begin();
-       std::vector<size_t> :: const_iterator const i_perm_end = permutations_.begin();
-       for(;i_perm != i_perm_end; ++i_flavor)
+       std::vector<size_t> :: const_iterator const i_perm_end = permutations_.end();
+         std::cout << "here 2\n";
+       for(;i_perm != i_perm_end; ++i_flavor, ++i_perm)
        {
+         std::cout << "here 3\n";
          t_uint const flavor( _x / (*i_flavor) );
          _x %= (*i_flavor);
 
+         std::cout << "here 4: " << _flavorbase.size() << " " << *i_perm << "\n";
          result += flavor * _flavorbase[*i_perm];
        } // c
+         std::cout << "here 4\n";
        return result;
      }
 

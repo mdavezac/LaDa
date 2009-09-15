@@ -37,6 +37,7 @@ namespace LaDa
         Transform    (Transform const &_c)
                    : Crystal::SymmetryOperator(_c),
                      permutations_(_c.permutations_), 
+                     independents_(_c.independents_), 
                      nsites_(_c.nsites_),
                      card_(_c.card_) {}
         //! Initializes transform for specific supercell.

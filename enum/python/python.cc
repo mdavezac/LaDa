@@ -8,7 +8,9 @@
 #include <boost/python.hpp>
 
 #include "find_all_cells.hpp"
-#include "operations.hpp"
+#include "label_exchange.hpp"
+#include "translation.hpp"
+#include "transform.hpp"
 #include "bitset.hpp"
 
 BOOST_PYTHON_MODULE(enumeration)

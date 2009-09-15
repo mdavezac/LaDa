@@ -25,10 +25,8 @@
 
 #include <crystal/lattice.h>
 
-#include "operations.hpp"
+#include "transform.hpp"
 #include "../exceptions.h"
-#include "../translation.h"
-#include "../label_exchange.h"
 #include "../transform.h"
 
 
@@ -79,6 +77,7 @@ namespace LaDa
         std::ostringstream sstr;
         sstr << "Rotation+Translation does not leave the supercell invariant.\n"
              << boost::diagnostic_information(_e);
+        std::cout << "wtf\n";
         PyErr_SetString(PyExc_RuntimeError, sstr.str().c_str());
         bp::throw_error_already_set();
         return;
@@ -94,61 +93,57 @@ namespace LaDa
       }
       catch(...)
       {
+        std::cout << "WTF\n" << "\n";
         PyErr_SetString(PyExc_RuntimeError, "Unkown error.");
         bp::throw_error_already_set();
         return;
       }
     }
 
-    enumeration::LabelExchange & iter( enumeration::LabelExchange &_self ) { return _self; }
-    enumeration::LabelExchange const& next( enumeration::LabelExchange &_self )
+    enumeration::t_uint call( enumeration::Transform const &_self, 
+                              enumeration::t_uint const &_x, 
+                              enumeration::FlavorBase const &_fl)
     {
-      if( not ++_self )
+#     ifndef LADA_DEBUG
+        if( _x >= _flavorbase.back() * _flavorbase[1] )
+        {
+          PyErr_SetString(PyExc_OverflowError, 
+                          "Integer argument too large according to FlavorBase.")
+          bp::throw_error_already_set();
+          return -1;
+        }
+#     endif
+      try { return _self(_x, _fl); }
+      catch(enumeration::integer_too_large &_e)
       {
-        PyErr_SetString( PyExc_StopIteration, "End of range.\n" );
+        PyErr_SetString(PyExc_OverflowError, 
+                        "Integer argument too large according to FlavorBase.");
         bp::throw_error_already_set();
+        return -1;
       }
-      return _self; 
-    }
-
-    void expose_translation()
-    {
-      bp::def
-      (
-        "create_translations",
-        &enumeration::create_translations,
-        (
-          bp::arg("smith"),
-          bp::arg("nsites")
-        ),
-        "Returns array of translation operators for a given "
-        "Smith normal form and number of lattice sites."
-      );
-
-      bp::scope scope = bp::class_<enumeration::Translation>
-      (
-        "Transform", 
-        "Rotation + translation.", 
-        bp::init<atat::iVector3d const &, atat::iVector3d const&, size_t>()
-      ).def( bp::init<enumeration::Translation const&>() )
-       .def("__call__", &enumeration::Translation::operator());
-
-
-      expose_vector<enumeration::Translation>("Array", "Array of Translations");
-      bp::register_ptr_to_python< boost::shared_ptr< std::vector<enumeration::Translation> > >();
-    }
-
-    void expose_label_exchange()
-    {
-      bp::class_<enumeration::LabelExchange>
-      (
-        "LabelExchange", 
-        "Rotation + translation.", 
-        bp::init<size_t, size_t>()
-      ).def( bp::init<enumeration::LabelExchange const&>() )
-       .def("__iter__", &iter, bp::return_internal_reference<1>())
-       .def("next", &next, bp::return_internal_reference<1>())
-       .def("__call__", &enumeration::LabelExchange::operator());
+      catch(enumeration::argument_error &_e)
+      {
+        PyErr_SetString(PyExc_RuntimeError, 
+                        "FlavorBase argument does not correspond to transform object.\n"
+                        "Did you call Transfrom.init?.\n");
+        bp::throw_error_already_set();
+        return -1;
+      }
+      catch(boost::exception &_e)
+      {
+        std::ostringstream sstr;
+        sstr << "Internal error found while calling enumeration.Transform object.\n"
+             << boost::diagnostic_information(_e);
+        PyErr_SetString(PyExc_RuntimeError, sstr.str().c_str());
+        bp::throw_error_already_set();
+        return -1;
+      }
+      catch(...)
+      {
+        PyErr_SetString(PyExc_RuntimeError, "Unkown error.");
+        bp::throw_error_already_set();
+        return -1;
+      }
     }
 
     void expose_transform()
@@ -171,7 +166,7 @@ namespace LaDa
             "Initializes the transform for a specific supercell.\n"
             " _ left is the left transform matrix from the Hermite to the Smith normal form.\n"
             " _ smith is the diagonal of the Smith normal form as an atat.iVector3d.\n")
-       .def("__call__", &enumeration::Transform::operator())
+       .def("__call__", &call)
        .def_readwrite("op", &Crystal::SymmetryOperator::op)
        .def_readwrite("trans", &Crystal::SymmetryOperator::trans)
        .def("invariant", &Crystal::SymmetryOperator::invariant, 

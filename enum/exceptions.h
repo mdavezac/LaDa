@@ -36,7 +36,10 @@ namespace LaDa
     struct supercell_too_large : virtual boost::exception, virtual std::exception {}; 
 
     //! \brief Thrown when an integer is too large.
-    struct integer_too_large : virtual boost::exception, virtual std::exception {}; 
+    struct argument_error : virtual boost::exception, virtual std::exception {}; 
+
+    //! \brief Thrown when an integer is too large.
+    struct integer_too_large : virtual argument_error {};
 
     //! Thrown when the database is of incorrect size.
     struct incorrect_database : virtual boost::exception, virtual std::exception {}; 
