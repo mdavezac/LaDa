@@ -17,38 +17,37 @@ namespace LaDa
 
   namespace enumeration
   {
-     void Transform :: init( Crystal::t_SmithTransform const &_transform ) throw(boost::exception)
+     void Transform :: init(atat::rMatrix3d const &_left, atat::iVector3d const &_smith)
+             throw(boost::exception)
      {
        namespace bt = boost::tuples;
-       atat::rMatrix3d const &left = bt::get<0>(_transform);
-       atat::iVector3d const &smith = bt::get<1>(_transform);
        size_t const nsites_ = independents_.size();
-       size_t const card_(nsites_*smith(0)*smith(1)*smith(2));
+       size_t const card_(nsites_*_smith(0)*_smith(1)*_smith(2));
 
        namespace bt = boost::tuples;
        permutations_.clear();
 
        // loops over sites.
        t_Independents :: const_iterator i_ind = independents_.begin();
-       atat::rMatrix3d const rotation = left * op * (!left);
+       atat::rMatrix3d const rotation = _left * op * (!_left);
        for(types::t_int d(0); d < types::t_int(nsites_); ++d, ++i_ind)
        {
          types::t_int permutated_site( d + i_ind->first );
          if( permutated_site < 0 ) permutated_site += types::t_int(nsites_);
          
          atat::rVector3d const t_nd
-           = left * atat::rVector3d(i_ind->second(0), i_ind->second(1), i_ind->second(3));
+           = _left * atat::rVector3d(i_ind->second(0), i_ind->second(1), i_ind->second(3));
          atat::rVector3d g;
-         // loops over first smith coordinate.
-         for(size_t i(0); i < smith(0); ++i)
+         // loops over first _smith coordinate.
+         for(size_t i(0); i < _smith(0); ++i)
          {
            g(0) = i;
-           // loops over second smith coordinate.
-           for(size_t j(0); j < smith(0); ++j)
+           // loops over second _smith coordinate.
+           for(size_t j(0); j < _smith(0); ++j)
            {
              g(1) = j;
-             // loops over third smith coordinate.
-             for(size_t k(0); k < smith(0); ++k)
+             // loops over third _smith coordinate.
+             for(size_t k(0); k < _smith(0); ++k)
              {
                g(2) = k;
                atat::rVector3d const transformed( rotation * g + t_nd );
@@ -59,15 +58,15 @@ namespace LaDa
 #              endif
                atat::iVector3d translation
                (
-                 types::t_int(std::floor(transformed(0)+0.5)) % smith(0),
-                 types::t_int(std::floor(transformed(1)+0.5)) % smith(1), 
-                 types::t_int(std::floor(transformed(2)+0.5)) % smith(2)  
+                 types::t_int(std::floor(transformed(0)+0.5)) % _smith(0),
+                 types::t_int(std::floor(transformed(1)+0.5)) % _smith(1), 
+                 types::t_int(std::floor(transformed(2)+0.5)) % _smith(2)  
                );
-               if( translation(0) < 0 ) translation(0) += smith(0);
-               if( translation(1) < 0 ) translation(1) += smith(1);
-               if( translation(2) < 0 ) translation(2) += smith(2);
+               if( translation(0) < 0 ) translation(0) += _smith(0);
+               if( translation(1) < 0 ) translation(1) += _smith(1);
+               if( translation(2) < 0 ) translation(2) += _smith(2);
 
-               permutations_.push_back( get_index(permutated_site, translation, smith, card_) );
+               permutations_.push_back( get_index(permutated_site, translation, _smith, card_) );
              } // over k
            } // over j
          } // over i

@@ -69,21 +69,11 @@ namespace LaDa
         }
       }
 
-    void init( enumeration::Transform &_self, bp::tuple const &_tuple )
+    void init( enumeration::Transform &_self,
+               atat::rMatrix3d const& _left,
+               atat::iVector3d const& _smith)
     {
-      if( bp::len(_tuple) != 2 )
-      {
-        PyErr_SetString(PyExc_TypeError, "Argument is not a 2-tuple.\n");
-        bp::throw_error_already_set();
-        return;
-      }
-      try
-      {
-        Crystal::t_SmithTransform t;
-        boost::tuples::get<0>(t) =  bp::extract<atat::rMatrix3d>( _tuple[0] );
-        boost::tuples::get<1>(t) =  bp::extract<atat::iVector3d>( _tuple[1] );
-        _self.init(t); 
-      }
+      try { _self.init(_left, _smith); }
       catch(enumeration::symmetry_not_of_supercell &_e)
       {
         std::ostringstream sstr;
@@ -104,7 +94,7 @@ namespace LaDa
       }
       catch(...)
       {
-        PyErr_SetString(PyExc_RuntimeError, "Could not extract tuple.\n");
+        PyErr_SetString(PyExc_RuntimeError, "Unkown error.");
         bp::throw_error_already_set();
         return;
       }
@@ -177,10 +167,16 @@ namespace LaDa
         "Rotation + translation. Must be initialized to appropriate Smith normal form.", 
         bp::init<Crystal::SymmetryOperator const &, Crystal::Lattice const &>()
       ).def( bp::init<enumeration::Transform const&>() )
-       .def("init", &init)
+       .def("init", &init, (bp::arg("left"), bp::arg("smith")),
+            "Initializes the transform for a specific supercell.\n"
+            " _ left is the left transform matrix from the Hermite to the Smith normal form.\n"
+            " _ smith is the diagonal of the Smith normal form as an atat.iVector3d.\n")
        .def("__call__", &enumeration::Transform::operator())
        .def_readwrite("op", &Crystal::SymmetryOperator::op)
        .def_readwrite("trans", &Crystal::SymmetryOperator::trans)
+       .def("invariant", &Crystal::SymmetryOperator::invariant, 
+            (bp::arg("matrix"), bp::arg("tolerance")=types::tolerance),
+            "Returns true if the matrix is invariant through this rotation.")
        .def("__call__", &Crystal::SymmetryOperator::SymmetryOperator::operator())
        .def("__str__", &tostream<Crystal::SymmetryOperator>);
 

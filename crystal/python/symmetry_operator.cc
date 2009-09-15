@@ -44,6 +44,9 @@ namespace LaDa
         .def(bp::init<atat::rMatrix3d const&, atat::rVector3d const&>())
         .def_readwrite("op", &Crystal::SymmetryOperator::op)
         .def_readwrite("trans", &Crystal::SymmetryOperator::trans)
+        .def("invariant", &Crystal::SymmetryOperator::invariant, 
+             (bp::arg("matrix"), bp::arg("tolerance")=types::tolerance),
+             "Returns true if the matrix is invariant through this rotation.")
         .def("__call__", &Crystal::SymmetryOperator::operator())
         .def("__str__", &tostream<Crystal::SymmetryOperator>);
 

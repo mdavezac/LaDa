@@ -46,6 +46,19 @@ namespace LaDa
       return result;
     }
 
+    
+    bool SymmetryOperator::invariant(atat::rMatrix3d const &_mat, types::t_real _tolerance) const
+    {
+      for(size_t i(0); i < 3; ++i)
+        for(size_t j(0); j < 3; ++j)
+        {
+          types::t_real u(-_mat(i,j));
+          for(size_t k(0); k < 3; ++k) u+= op(i,k) * _mat(k,j);
+          if(std::abs(u) < _tolerance) return false;
+        }
+      return true;
+    }
+
     // boost::shared_ptr< std::vector<SymmetryOperator> > get_symmetries_multisite( Lattice const &_lat );
 
     boost::shared_ptr< std::vector<SymmetryOperator> > get_symmetries( Lattice const &_lat )

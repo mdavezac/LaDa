@@ -51,6 +51,9 @@ namespace LaDa
       //! Applies operator.
       atat::rVector3d operator()( atat::rVector3d const &_a ) const
         { return op*_a + trans; }
+
+      //! True if the matrix is invariant by this operator.
+      bool invariant(atat::rMatrix3d const &_mat, types::t_real _tolerance = types::tolerance) const;
       //! Comparison.
       bool operator==(SymmetryOperator const &_sym)
       {
