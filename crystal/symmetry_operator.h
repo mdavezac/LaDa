@@ -11,8 +11,11 @@
 #include <vector>
 #include <iostream>
 
+#include <boost/shared_ptr.hpp>
+
 #include <opt/debug.h>
 #include <opt/types.h>
+#include <opt/fuzzy.h>
 #include <atat/vectmac.h>
 #include <atat/findsym.h>
 

@@ -32,6 +32,12 @@ namespace LaDa
       if( (not sup) and (not inf) ) return 0;
       return sup ? -1: 1;
     }
+    types::t_real call_single( Crystal::LayerDepth const &_l,
+                               atat::rVector3d const &_a)
+      { return _l(_a); }
+    template<class T> types::t_real call_single_atom( Crystal::LayerDepth const &_l,
+                                                      Crystal::Atom_Type<T> const &_a )
+      { return call_single(_l, _a.pos); }
     template<class T>
       types::t_int call_atom( Crystal::LayerDepth const& _l,
                               Crystal::Atom_Type<T> const &_a, 
@@ -39,7 +45,7 @@ namespace LaDa
         { return call( _l, _a.pos, _b.pos ); }
 
     template<class T_TYPE>
-      void sort_structure( Crystal::TStructure<T_TYPE> &_structure )
+      void sort_structure( T_TYPE &_structure )
       {
         std::sort( _structure.atoms.begin(), _structure.atoms.end(), 
                    Crystal::LayerDepth(_structure.cell) );
@@ -51,11 +57,14 @@ namespace LaDa
       bp::class_<Crystal::LayerDepth>( "LayerDepth", bp::no_init )
         .def( bp::init<atat::rMatrix3d const&>() )
         .def( bp::init<Crystal::LayerDepth const&>() )
+        .def( "__call__", &call_single )
+        .def( "__call__", &call_single_atom<std::string> )
+        .def( "__call__", &call_single_atom<types::t_real> )
         .def( "__call__", &call_atom<std::string> )
         .def( "__call__", &call_atom<types::t_real> )
         .def( "__call__", &call );
-      bp::def( "sort_layers", &sort_structure<std::string> );
-      bp::def( "sort_layers", &sort_structure<types::t_real> );
+      bp::def( "sort_layers", &sort_structure< Crystal::TStructure<std::string> > );
+      bp::def( "sort_layers", &sort_structure<Crystal::Structure> );
     }
 
   }

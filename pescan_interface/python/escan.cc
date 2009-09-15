@@ -9,6 +9,7 @@
 #include <boost/python/tuple.hpp>
 #include <boost/python/def.hpp>
 #include <boost/python/enum.hpp>
+#include <boost/python/str.hpp>
 
 #include <opt/initial_path.h>
 
@@ -157,6 +158,14 @@ namespace LaDa
     void set_sbox( LaDa::Pescan::Interface::GenPot &_genpot, boost::python::tuple const &_t )
       { set_impl(_t, _genpot.small_box); }
 
+    boost::python::str get_directory( LaDa::Pescan::Interface const &_self )
+      { return boost::python::str( _self.get_dirname().string() ); }
+    void set_directory( LaDa::Pescan::Interface &_self, boost::python::str const &_str )
+    {
+      std::string const string = boost::python::extract<std::string>(_str);
+      return _self.set_dirname(string); 
+    }
+
     void expose_escan()
     {
       typedef LaDa::Pescan::Interface t_Escan;
@@ -174,9 +183,12 @@ namespace LaDa
         .def_readwrite( "destroy_directory", &t_Escan::do_destroy_dir,
                         "If true, directory where calculations are carried out is destroyed "
                         "at the end of a calculation." )
+        .add_property("directory", &get_directory, &set_directory, 
+                      "Directory where calculations are carried out.\n")
         .def_readonly( "eigenvalues", &t_Escan::eigenvalues,
                        "Computed eigenvalues." )
         .def_readwrite("genpot", &t_Escan::genpot)
+        .def_readwrite("verbose", &t_Escan::verbose, "Verbose pescan output on true.")
         .def( "fromXML",  &XML::Escan_from_XML<t_Escan>, bp::arg("file"),
               "Loads escan parameters from an XML file." )
         .def( "run", &t_Escan::operator(), "Performs a calculation." )

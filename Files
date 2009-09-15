@@ -132,11 +132,11 @@ DARWIN_E_DOC = $(DARWIN_E_H) $(DARWIN_E_CC)
 
 crystal_cc = lattice.cc structure.cc confsplit.cc layerdepth.cc read_structure.cc \
              epi_structure.cc fill_structure.cc ideal_lattice.cc smith.cc \
-             symmetry_operator.h 
+             symmetry_operator.cc
 crystal_h  = lattice.h  structure.h structure.impl.h atom.h  confsplit.h layerdepth.h \
              read_structure.h epi_structure.h fill_structure.h fourier.h read_poscar.h \
              fractional_cartesian.h ideal_lattice.h smith.h neighbors.h enumerate.h \
-             symmetry_operator.cc 
+             symmetry_operator.h
 crystal_doc = $(crystal_h) $(crystal_cc) 
 crystal_python_h = structure.hpp atom.hpp lattice.hpp read_structure.hpp \
                    smith.hpp enumerate.hpp layerdepth.hpp neighbors.hpp \

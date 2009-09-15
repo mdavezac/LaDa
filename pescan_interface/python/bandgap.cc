@@ -5,13 +5,16 @@
 # include <config.h>
 #endif
 
-#include <boost/python.hpp>
+#include <boost/python/class.hpp>
+#include <boost/python/def.hpp>
 #include <boost/python/enum.hpp>
+#include <boost/python/tuple.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 
 #include <opt/initial_path.h>
 
 #include "../bandgap.h"
+#include "../dipole_elements.h"
 #include "bandgap.hpp"
 
 namespace LaDa
@@ -87,6 +90,25 @@ namespace LaDa
         .def( "fromXML",  &XML::Bandgap_from_XML, bp::arg("file"),
               "Loads bandgap parameters from an XML file." )
         .def( "evaluate", &t_BandGap::operator(), "Performs a calculation." );
+    }
+
+    types::t_real oscillator_strength(Pescan::BandGap const &_bg, types::t_real _d, bool _v)
+      { return Pescan::oscillator_strength(_bg, _d, _v); }
+
+    void expose_oscillator_strength()
+    {
+      namespace bp = boost::python;
+      bp::def
+      (
+        "oscillator_strength",
+        &oscillator_strength,
+        (
+          bp::arg("bandgap_functional"),
+          bp::arg("degeneracy") = 0.001,
+          bp::arg("verbose") = false
+        ),
+        "Returns squared norm of the oscillator strength: |<r>|^2."
+      );
     }
 
   } // namespace Python

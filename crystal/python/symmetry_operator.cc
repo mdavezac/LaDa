@@ -33,10 +33,12 @@ namespace LaDa
       (
         "get_symmetries",
         &Crystal::get_symmetries,
-        "Takes a lattice and returns an array of symmetry operations for which the lattice is invariant.\n"
+        "Takes a lattice and returns an array of symmetry operations for "
+        "which the lattice is invariant.\n"
       );
 
-      bp::scope scope = bp::class_<Crystal::SymmetryOperator>( "SymmetryOperator", "SymmetryOperator" )
+      bp::scope scope = bp::class_<Crystal::SymmetryOperator>
+        ( "SymmetryOperator", "SymmetryOperator" )
         .def(bp::init<atat::rMatrix3d const&>())
         .def(bp::init<atat::rVector3d const&>())
         .def(bp::init<atat::rMatrix3d const&, atat::rVector3d const&>())
