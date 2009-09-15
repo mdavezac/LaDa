@@ -10,6 +10,8 @@
 #include <iterator>
 #include <algorithm>
 
+#include "boost/lexical_cast.hpp"
+
 #include <crystal/lattice.h>
 
 #include "exceptions.h"
@@ -43,7 +45,8 @@ namespace LaDa
     boost::shared_ptr<Database> create_database( size_t _card, size_t _nflavor )
     {
       check_size( _card, _nflavor );
-      return boost::shared_ptr<Database>(new Database(std::pow(_nflavor, _card), true));
+      t_uint k = std::pow(_nflavor, _card);
+      return boost::shared_ptr<Database>(new Database(k, t_uint(-1)));
     }
 
     t_uint count_flavors( Crystal::Lattice const &_lattice)
@@ -52,6 +55,27 @@ namespace LaDa
       foreach( Crystal::Lattice::t_Site const &site, _lattice.sites )
         std::copy( site.type.begin(), site.type.end(), std::inserter(set_, set_.begin()));
       return t_uint(set_.size());
+    }
+
+    std::string integer_to_bitstring( t_uint _x, FlavorBase const& _fl)
+    {
+      if( _fl.size() < 2 ) return "";
+#     ifdef LADA_DEBUG
+        if( _x >= _fl.back() * _fl[1] )
+          BOOST_THROW_EXCEPTION( internal() << error_string("Argument _x is out of range.") );
+#     endif
+
+      std::string result;
+      FlavorBase::const_reverse_iterator i_flavor = _fl.rbegin();
+      FlavorBase::const_reverse_iterator i_flavor_end = _fl.rend();
+      for(;i_flavor != i_flavor_end; ++i_flavor)
+      {
+        t_uint const flavor( _x / (*i_flavor) );
+        _x %= (*i_flavor);
+
+        result += boost::lexical_cast<std::string>(flavor);
+      } // c
+      return result;
     }
 
   }

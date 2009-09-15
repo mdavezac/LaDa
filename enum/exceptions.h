@@ -29,11 +29,14 @@ namespace LaDa
 
     //! \brief Throws this when a transformation does not find equivalent supercell site.
     //! \details Most likely an internal error.
-    struct not_an_integer : virtual symmetry_not_of_lattice {};
+    struct symmetry_not_of_supercell : virtual symmetry_not_of_lattice {};
     
     //! \brief Thrown when the supercell under consideration is too large to be
     //!        represented by the integers in use.
     struct supercell_too_large : virtual boost::exception, virtual std::exception {}; 
+
+    //! \brief Thrown when an integer is too large.
+    struct integer_too_large : virtual boost::exception, virtual std::exception {}; 
 
     //! Thrown when the database is of incorrect size.
     struct incorrect_database : virtual boost::exception, virtual std::exception {}; 

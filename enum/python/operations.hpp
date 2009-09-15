@@ -13,7 +13,9 @@ namespace LaDa
 {
   namespace Python
   {
-    void expose_operations();
+    void expose_label_exchange();
+    void expose_translation();
+    void expose_transform();
   }
 } // namespace LaDa
 #endif

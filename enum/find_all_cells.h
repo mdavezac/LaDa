@@ -87,6 +87,12 @@ namespace LaDa
       return _stream << "Smith Group (" << _sg.smith << ") of "
                      << _sg.supercells.size() << " Matrices.";
     }
+    inline std::ostream& operator<<(std::ostream &_stream, SmithGroup::Supercell const& _sg)
+    {
+      return _stream << "[" << _sg.hermite.get_row(0)
+                     << ", " << _sg.hermite.get_row(1) 
+                     << ", " << _sg.hermite.get_row(2) << "]";
+    }
  
     //! Creates a vector of supercells structure according to their Smith normal form.
     boost::shared_ptr< std::vector<SmithGroup> >

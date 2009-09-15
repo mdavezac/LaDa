@@ -26,6 +26,7 @@
 #include <crystal/lattice.h>
 
 #include "operations.hpp"
+#include "../exceptions.h"
 #include "../translation.h"
 #include "../label_exchange.h"
 #include "../transform.h"
@@ -38,6 +39,36 @@ namespace LaDa
   namespace Python
   {
     namespace bp = boost::python;
+    boost::shared_ptr< std::vector<enumeration::Transform> > 
+      create_transforms( Crystal::Lattice const & _lat)
+      {
+        try { return enumeration::create_transforms(_lat); }
+        catch(enumeration::symmetry_not_of_lattice &_e)
+        {
+          std::ostringstream sstr;
+          sstr << "Rotation+Translation does not leave the lattice invariant.\n"
+               << boost::diagnostic_information(_e);
+          PyErr_SetString(PyExc_RuntimeError, sstr.str().c_str());
+          bp::throw_error_already_set();
+          return boost::shared_ptr< std::vector<enumeration::Transform> >();
+        }
+        catch(boost::exception &_e)
+        {
+          std::ostringstream sstr;
+          sstr << "Internal error found while creating array of Transforms.\n"
+               << boost::diagnostic_information(_e);
+          PyErr_SetString(PyExc_RuntimeError, sstr.str().c_str());
+          bp::throw_error_already_set();
+          return boost::shared_ptr< std::vector<enumeration::Transform> >();
+        }
+        catch(...)
+        {
+          PyErr_SetString(PyExc_RuntimeError, "Uknown error.\n");
+          bp::throw_error_already_set();
+          return boost::shared_ptr< std::vector<enumeration::Transform> >();
+        }
+      }
+
     void init( enumeration::Transform &_self, bp::tuple const &_tuple )
     {
       if( bp::len(_tuple) != 2 )
@@ -52,6 +83,15 @@ namespace LaDa
         boost::tuples::get<0>(t) =  bp::extract<atat::rMatrix3d>( _tuple[0] );
         boost::tuples::get<1>(t) =  bp::extract<atat::iVector3d>( _tuple[1] );
         _self.init(t); 
+      }
+      catch(enumeration::symmetry_not_of_supercell &_e)
+      {
+        std::ostringstream sstr;
+        sstr << "Rotation+Translation does not leave the supercell invariant.\n"
+             << boost::diagnostic_information(_e);
+        PyErr_SetString(PyExc_RuntimeError, sstr.str().c_str());
+        bp::throw_error_already_set();
+        return;
       }
       catch(boost::exception &_e)
       {
@@ -81,30 +121,11 @@ namespace LaDa
       return _self; 
     }
 
-    void expose_operations()
+    void expose_translation()
     {
-      bp::class_<enumeration::Transform>
-      (
-        "Transform", 
-        "Rotation + translation.", 
-        bp::init<Crystal::SymmetryOperator const &, Crystal::Lattice const &>()
-      ).def( bp::init<enumeration::Transform const&>() )
-       .def("init", &init)
-       .def("__call__", &enumeration::Transform::operator());
-
-      bp::class_<enumeration::LabelExchange>
-      (
-        "Transform", 
-        "Rotation + translation.", 
-        bp::init<size_t, size_t>()
-      ).def( bp::init<enumeration::LabelExchange const&>() )
-       .def("__iter__", &iter, bp::return_internal_reference<1>())
-       .def("next", &next, bp::return_internal_reference<1>())
-       .def("__call__", &enumeration::LabelExchange::operator());
-
       bp::def
       (
-        "create_translation",
+        "create_translations",
         &enumeration::create_translations,
         (
           bp::arg("smith"),
@@ -127,5 +148,44 @@ namespace LaDa
       bp::register_ptr_to_python< boost::shared_ptr< std::vector<enumeration::Translation> > >();
     }
 
+    void expose_label_exchange()
+    {
+      bp::class_<enumeration::LabelExchange>
+      (
+        "LabelExchange", 
+        "Rotation + translation.", 
+        bp::init<size_t, size_t>()
+      ).def( bp::init<enumeration::LabelExchange const&>() )
+       .def("__iter__", &iter, bp::return_internal_reference<1>())
+       .def("next", &next, bp::return_internal_reference<1>())
+       .def("__call__", &enumeration::LabelExchange::operator());
+    }
+
+    void expose_transform()
+    {
+      bp::def
+      (
+        "create_transforms",
+        &create_transforms,
+        bp::arg("lattice"),
+        "Returns an array of rotation+translation operators for a given Lattice."
+      );
+
+      bp::class_<enumeration::Transform>
+      (
+        "Transform", 
+        "Rotation + translation. Must be initialized to appropriate Smith normal form.", 
+        bp::init<Crystal::SymmetryOperator const &, Crystal::Lattice const &>()
+      ).def( bp::init<enumeration::Transform const&>() )
+       .def("init", &init)
+       .def("__call__", &enumeration::Transform::operator())
+       .def_readwrite("op", &Crystal::SymmetryOperator::op)
+       .def_readwrite("trans", &Crystal::SymmetryOperator::trans)
+       .def("__call__", &Crystal::SymmetryOperator::SymmetryOperator::operator())
+       .def("__str__", &tostream<Crystal::SymmetryOperator>);
+
+      expose_vector<enumeration::Transform>("Array", "Array of Translations");
+      bp::register_ptr_to_python< boost::shared_ptr< std::vector<enumeration::Transform> > >();
+    }
   }
 } // namespace LaDa

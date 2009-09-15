@@ -14,6 +14,8 @@
 BOOST_PYTHON_MODULE(enumeration)
 {
   LaDa::Python::expose_find_all_cells();
-  LaDa::Python::expose_operations();
+  LaDa::Python::expose_label_exchange();
+  LaDa::Python::expose_translation();
+  LaDa::Python::expose_transform();
   LaDa::Python::expose_bitset();
 }

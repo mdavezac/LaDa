@@ -44,7 +44,7 @@ namespace LaDa
 
     inline t_uint get_index(size_t const &_d, atat::iVector3d const &_g, 
                             atat::iVector3d const &_smith, size_t const &_card) throw()
-      { return _card - _g(2) - _smith(2) * ( _g(1) + _smith(1) * ( _g(0) + _smith(0) *_d ) ); }
+      { return _card-1- _g(2) - _smith(2) * ( _g(1) + _smith(1) * ( _g(0) + _smith(0) *_d ) ); }
 
     //! Throws when supercell is too large for t_uint integer type.
     void check_size( size_t _card, size_t _nflavor ) throw(boost::exception);
@@ -54,6 +54,9 @@ namespace LaDa
 
     //! Returns the number of stomic species in the lattice.
     t_uint count_flavors( Crystal::Lattice const &_lattice);
+
+    //! Transforms an integer to a string.
+    std::string integer_to_bitstring( t_uint _x, FlavorBase const& _fl);
 
   }
 }

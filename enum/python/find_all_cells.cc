@@ -113,8 +113,12 @@ namespace LaDa
       ).def(bp::init<enumeration::SmithGroup::Supercell const&>())
        .def( "__init__", bp::make_constructor( &create ) )
        .def_readwrite("transform", &enumeration::SmithGroup::Supercell::transform)
-       .def_readwrite("hermite", &enumeration::SmithGroup::Supercell::hermite);
+       .def_readwrite("hermite", &enumeration::SmithGroup::Supercell::hermite)
+       .def("__str__", &tostream<enumeration::SmithGroup::Supercell>);
+
       
+      expose_vector<enumeration::SmithGroup::Supercell>
+         ("SupercellsArray", "An array of enumeration.SmithGroup");
       expose_vector<enumeration::SmithGroup>
          ("Array", "An array of enumeration.SmithGroup");
       bp::register_ptr_to_python< boost::shared_ptr< std::vector<enumeration::SmithGroup> > >();

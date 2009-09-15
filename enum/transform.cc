@@ -55,7 +55,7 @@ namespace LaDa
 #              ifdef LADA_DEBUG
                  for( size_t t(0); t < 3; ++t)
                    if( not Fuzzy::is_zero(transformed(t) - std::floor(transformed(t)+0.5) - 0.5) ) 
-                     BOOST_THROW_EXCEPTION( not_an_integer() );
+                     BOOST_THROW_EXCEPTION( symmetry_not_of_supercell() );
 #              endif
                atat::iVector3d translation
                (
@@ -173,5 +173,16 @@ namespace LaDa
        } // c
        return result;
      }
+
+    boost::shared_ptr< std::vector<Transform> > create_transforms( Crystal::Lattice const &_lat )
+      {
+        using namespace Crystal;
+        boost::shared_ptr< std::vector<SymmetryOperator> > symops( get_symmetries(_lat) );
+        boost::shared_ptr< std::vector<Transform> > result( new std::vector<Transform> );
+        result->reserve( symops->size() );
+        foreach(SymmetryOperator const &symop, *symops)
+          result->push_back(Transform(symop, _lat));
+        return result;
+      }
   } // namespace Crystal
 } // namespace LaDa

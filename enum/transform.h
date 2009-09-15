@@ -54,6 +54,7 @@ namespace LaDa
         size_t card_;
     };
 
+    boost::shared_ptr< std::vector<Transform> >  create_transforms( Crystal::Lattice const &_lat );
   }
 }
 
