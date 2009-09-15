@@ -15,6 +15,7 @@ namespace LaDa
   {
     void expose_bands();
     void expose_bandgap();
+    void expose_oscillator_strength();
   }
 } // namespace LaDa
 #endif

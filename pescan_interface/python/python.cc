@@ -17,6 +17,7 @@ BOOST_PYTHON_MODULE(escan)
   LaDa::Python::expose_escan();
   LaDa::Python::expose_bands();
   LaDa::Python::expose_bandgap();
+  LaDa::Python::expose_oscillator_strength();
   LaDa::Python::expose_genpot();
   LaDa::Python::expose_emass();
 }

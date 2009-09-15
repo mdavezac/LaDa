@@ -36,7 +36,7 @@ AC_ARG_ENABLE(all,
      esac],[enall=true])
 
 AC_ARG_ENABLE(models,
-     [  --enable-models                  Compiles Coulom + Lennard-Jhones wrappers.],
+     [  --enable-models               Compiles Coulom + Lennard-Jhones wrappers.],
      [case "${enableval}" in
        yes) models=true ;;
        no)  models=false ;;
@@ -44,7 +44,7 @@ AC_ARG_ENABLE(models,
      esac],[models=false])
 
 AC_ARG_ENABLE(potentials,
-     [  --enable-potentials              Compiles generalized atomic potentials.],
+     [  --enable-potentials           Compiles generalized atomic potentials.],
      [case "${enableval}" in
        yes) potentials=true ;;
        no)  potentials=false ;;
@@ -52,7 +52,7 @@ AC_ARG_ENABLE(potentials,
      esac],[potentials=false])
 
 AC_ARG_ENABLE(enum,
-     [  --enable-enum              Compiles enumeration library.],
+     [  --enable-enum                 Compiles enumeration library.],
      [case "${enableval}" in
        yes) enum=true ;;
        no)  enum=false ;;
