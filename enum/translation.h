@@ -24,36 +24,35 @@ namespace LaDa
     {
       public:
         //! Constructor
-        Translation   (atat::iVector3d const& _trans, atat::iVector3d const &_smith, size_t _nsites)
-                  : smith_(_smith), nsites_(_nsites),
-                    card_(_nsites*_smith(0)*_smith(1)*_smith(2)), 
-                    translation_(_trans) {}
-                   
+        Translation   (atat::iVector3d const &_smith, size_t _nsites);
         //! Copy Constructor
         Translation   (Translation const &_c) 
-                    : smith_(_c.smith_), nsites_(_c.nsites_),
-                      card_(_c.card_), translation_(_c.translation_)  {}
+                    : card_(_c.card_), permutations_(_c.permutations_),
+                      i_trans_(_c.i_trans_), i_trans_end_(_c.i_trans_end_)  {}
 
         //! Returns the transformed integer.
         t_uint operator()(t_uint _x, FlavorBase const &_flavorbase) const;
-
-        //! Comparison operator.
-        bool operator==(Translation const& _c) const
-        { return smith_ == _c.smith_ and nsites_ == _c.nsites_ and translation_ == _c.translation_; }
-
+        //! Iterates to next translation.
+        bool operator++() 
+        {
+          ++i_trans_;
+          if( i_trans_ != i_trans_end_ ) return true;
+          i_trans_ = permutations_.rbegin();
+          return false;
+        }
+        //! Returns number of translations.
+        size_t size() const { return permutations_.size(); }
+        
       private:
-        //! Smith id.
-        atat::iVector3d smith_;
-        //! Number of sites.
-        size_t nsites_;
         //! Cardinality.
         size_t card_;
-        //! Translation within the Smith normal form.
-        atat::iVector3d translation_;
+        //! Permutations.
+        std::vector< std::vector<size_t> > permutations_;
+        //! Iterator over permutation.
+        std::vector< std::vector<size_t> > :: const_reverse_iterator i_trans_;
+        //! Iterator over permutation.                      
+        std::vector< std::vector<size_t> > :: const_reverse_iterator i_trans_end_;
     };
-
-    boost::shared_ptr< std::vector<Translation> > 
-      create_translations(atat::iVector3d const &_smith, size_t _nsites);
   }
 }
 

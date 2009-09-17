@@ -12,16 +12,8 @@
 
 #include <boost/python/class.hpp>
 #include <boost/python/errors.hpp>
-#include <boost/python/tuple.hpp>
-#include <boost/python/scope.hpp>
 #include <boost/python/return_internal_reference.hpp>
-#include <boost/python/register_ptr_to_python.hpp>
-#include <boost/python/def.hpp>
 
-#define LADA_PYTHON_STD_VECTOR_NOPRINT
-#include <python/std_vector.hpp>
-#include <crystal/lattice.h>
-#include <python/misc.hpp>
 
 #include <crystal/lattice.h>
 
@@ -37,31 +29,40 @@ namespace LaDa
   namespace Python
   {
     namespace bp = boost::python;
+    struct Translation : enumeration::Translation
+    {
+      Translation   (atat::iVector3d const &_smith, size_t _nsites)
+                  : enumeration::Translation(_smith, _nsites), first_(true) {}
+      Translation   (const Translation &_c)
+                  : enumeration::Translation(_c), first_(_c.first_) {}
+
+      Translation &iter()  { return *this; }
+      Translation const& next()
+      {
+        if( first_ ) first_ = false; 
+        else if( not enumeration::Translation::operator++() )
+        {
+          first_ = true;
+          PyErr_SetString(PyExc_StopIteration, "End of translations.");
+          bp::throw_error_already_set();
+        }
+        return *this;
+      }
+      bool first_;
+    };
+
     void expose_translation()
     {
-      bp::def
+      bp::class_<Translation>
       (
-        "create_translations",
-        &enumeration::create_translations,
-        (
-          bp::arg("smith"),
-          bp::arg("nsites")
-        ),
-        "Returns array of translation operators for a given "
-        "Smith normal form and number of lattice sites."
-      );
-
-      bp::scope scope = bp::class_<enumeration::Translation>
-      (
-        "Transform", 
+        "Translation", 
         "Rotation + translation.", 
-        bp::init<atat::iVector3d const &, atat::iVector3d const&, size_t>()
-      ).def( bp::init<enumeration::Translation const&>() )
-       .def("__call__", &enumeration::Translation::operator());
-
-
-      expose_vector<enumeration::Translation>("Array", "Array of Translations");
-      bp::register_ptr_to_python< boost::shared_ptr< std::vector<enumeration::Translation> > >();
+        bp::init<atat::iVector3d const &, size_t>()
+      ).def( bp::init<Translation const&>() )
+       .def("__call__", &Translation::operator())
+       .def("__len__", &Translation::size)
+       .def("__iter__", &Translation::iter, bp::return_internal_reference<1>())
+       .def("next", &Translation::next, bp::return_internal_reference<1>());
     }
 
   }

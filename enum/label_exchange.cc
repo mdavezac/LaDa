@@ -27,10 +27,10 @@ namespace LaDa
        FlavorBase::const_reverse_iterator i_flavor = _flavorbase.rbegin();
        for(size_t c(0); c < card_; ++c, ++i_flavor)
        {
-         t_uint const flavor( _x / (*i_flavor) );
+         t_uint const flavor( permutation_[_x / (*i_flavor)] );
          _x %= (*i_flavor);
 
-         result += permutation_[flavor] * (*i_flavor);
+         if( flavor ) result += flavor * (*i_flavor);
        } // c
        return result;
      }

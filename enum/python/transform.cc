@@ -160,6 +160,7 @@ namespace LaDa
             " _ left is the left transform matrix from the Hermite to the Smith normal form.\n"
             " _ smith is the diagonal of the Smith normal form as an atat.iVector3d.\n")
        .def("__call__", &call)
+       .add_property("is_trivial", &enumeration::Transform::is_trivial, "True if the permutation is trivial.")
        .def_readwrite("op", &Crystal::SymmetryOperator::op)
        .def_readwrite("trans", &Crystal::SymmetryOperator::trans)
        .def("invariant", &Crystal::SymmetryOperator::invariant, 

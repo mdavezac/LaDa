@@ -46,7 +46,9 @@ namespace LaDa
     {
       check_size( _card, _nflavor );
       t_uint k = std::pow(_nflavor, _card);
-      return boost::shared_ptr<Database>(new Database(k, t_uint(-1)));
+      boost::shared_ptr<Database> result(new Database(k));
+      result->flip();
+      return result;
     }
 
     t_uint count_flavors( Crystal::Lattice const &_lattice)

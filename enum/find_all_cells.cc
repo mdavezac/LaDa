@@ -55,6 +55,7 @@ namespace LaDa
           // Iterates over values of a such that a * b * c == _nmax
           size_t const c( Ndiv_a/b);
           cell(2,2) = c;
+          if( a * b *c != _nmax ) std::cout << a << " " << b << " " << c << "\n";
           for(size_t d(0); d < b; ++d) 
           {
             cell(1,0) = d;
@@ -86,7 +87,7 @@ namespace LaDa
             types::t_real a(0);
             for(size_t k(0); k < 3; ++k)
               a += op(i,k) * _mat(k,j);
-            if( not Fuzzy::is_zero(std::floor(a) - a) ) return false;
+            if( not Fuzzy::is_zero(std::floor(a+0.1) - a) ) return false;
           }
         return true;
       }

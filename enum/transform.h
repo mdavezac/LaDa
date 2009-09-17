@@ -39,7 +39,7 @@ namespace LaDa
                      permutations_(_c.permutations_), 
                      independents_(_c.independents_), 
                      nsites_(_c.nsites_),
-                     card_(_c.card_) {}
+                     card_(_c.card_), is_trivial_(_c.is_trivial_) {}
         //! Initializes transform for specific supercell.
         void init(atat::rMatrix3d const &_left, atat::iVector3d const &_smith);
         //! Initializes transform for specific supercell.
@@ -47,6 +47,8 @@ namespace LaDa
           { return init(boost::tuples::get<0>(_t), boost::tuples::get<1>(_t)); }
         //! Performs transformation.
         t_uint operator()(t_uint _x, FlavorBase const &_flavorbase) const;
+        //! Is trivial.
+        bool is_trivial() const { return is_trivial_; };
 
       private:
         //! Permutation.
@@ -57,6 +59,8 @@ namespace LaDa
         size_t nsites_;
         //! Total number of sites in the supercell.
         size_t card_;
+        //! is trivial.
+        bool is_trivial_;
     };
 
     boost::shared_ptr< std::vector<Transform> >  create_transforms( Crystal::Lattice const &_lat );

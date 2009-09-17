@@ -89,9 +89,10 @@ namespace LaDa
     }
     inline std::ostream& operator<<(std::ostream &_stream, SmithGroup::Supercell const& _sg)
     {
-      return _stream << "[" << _sg.hermite.get_row(0)
-                     << ", " << _sg.hermite.get_row(1) 
-                     << ", " << _sg.hermite.get_row(2) << "]";
+      for(size_t i(0); i < 3; ++i)
+        for(size_t j(0); j <= i; ++j )
+          _stream << _sg.hermite(i,j) << " ";
+      return _stream;
     }
  
     //! Creates a vector of supercells structure according to their Smith normal form.

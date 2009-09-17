@@ -38,7 +38,8 @@ namespace LaDa
        // loops over sites.
        t_Independents :: const_iterator i_ind = independents_.begin();
        atat::rMatrix3d const rotation = _left * op * (!_left);
-       for(types::t_int d(0); d < types::t_int(nsites_); ++d, ++i_ind)
+       bool non_trivial = false;
+       for(types::t_int d(0), u(card_-1); d < types::t_int(nsites_); ++d, ++i_ind)
        {
          types::t_int permutated_site( d + i_ind->first );
          if( permutated_site < 0 ) permutated_site += types::t_int(nsites_);
@@ -54,7 +55,7 @@ namespace LaDa
            {
              g(1) = j;
              // loops over third _smith coordinate.
-             for(size_t k(0); k < _smith(2); ++k)
+             for(size_t k(0); k < _smith(2); ++k, --u)
              {
                g(2) = k;
                atat::rVector3d const transformed( rotation * g + t_nd );
@@ -73,11 +74,14 @@ namespace LaDa
                if( translation(1) < 0 ) translation(1) += _smith(1);
                if( translation(2) < 0 ) translation(2) += _smith(2);
 
-               permutations_.push_back( get_index(permutated_site, translation, _smith, card_) );
+               size_t const index(get_index(permutated_site, translation, _smith, card_));
+               permutations_.push_back(index);
+               non_trivial |= (u!=index);
              } // over k
            } // over j
          } // over i
        } // over d
+       is_trivial_ = not non_trivial;
      }
 
      Transform :: Transform   (Crystal::SymmetryOperator const &_c, Crystal::Lattice const &_lat)
@@ -177,7 +181,7 @@ namespace LaDa
          t_uint const flavor( _x / (*i_flavor) );
          _x %= (*i_flavor);
 
-         result += flavor * _flavorbase[*i_perm];
+         if(flavor) result += flavor * _flavorbase[*i_perm];
        } // c
        return result;
      }
