@@ -91,13 +91,6 @@ namespace LaDa
         bp::throw_error_already_set();
         return;
       }
-      catch(...)
-      {
-        std::cout << "WTF\n" << "\n";
-        PyErr_SetString(PyExc_RuntimeError, "Unkown error.");
-        bp::throw_error_already_set();
-        return;
-      }
     }
 
     enumeration::t_uint call( enumeration::Transform const &_self, 

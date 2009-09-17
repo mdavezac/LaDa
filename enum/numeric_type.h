@@ -47,7 +47,7 @@ namespace LaDa
       { return _card-1- _g(2) - _smith(2) * ( _g(1) + _smith(1) * ( _g(0) + _smith(0) *_d ) ); }
 
     //! Throws when supercell is too large for t_uint integer type.
-    void check_size( size_t _card, size_t _nflavor ) throw(boost::exception);
+    void check_size( size_t _card, size_t _nflavor );
 
     //! Returns an initialized database for specified size. 
     boost::shared_ptr<Database> create_database( size_t _card, size_t _nflavor );

@@ -26,11 +26,11 @@ namespace LaDa
        for(size_t d(0); d < nsites_; ++d)
        {
          atat::iVector3d g(0,0,0);
-         for(; g(0) < smith_(0); ++g(0))
+         for(g(0)=0; g(0) < smith_(0); ++g(0))
          {
-           for(; g(1) < smith_(1); ++g(1))
+           for(g(1)=0; g(1) < smith_(1); ++g(1))
            {
-             for(; g(2) < smith_(2); ++g(2), ++i_flavor)
+             for(g(2)=0; g(2) < smith_(2); ++g(2), ++i_flavor)
              {
                atat::iVector3d t
                (
@@ -61,9 +61,9 @@ namespace LaDa
         atat::iVector3d g(0,0,0);
         for(; g(0) < _smith(0); ++g(0))
         {
-          for(; g(1) < _smith(1); ++g(1))
+          for(g(1)=0; g(1) < _smith(1); ++g(1))
           {
-            for(; g(2) < _smith(2); ++g(2))
+            for(g(2)=0; g(2) < _smith(2); ++g(2))
               if( g(0) != 0 or g(1) != 0 or g(2) != 0 )
                 result->push_back( Translation(g, _smith, _nsites) );
           }

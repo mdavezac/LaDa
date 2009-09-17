@@ -32,7 +32,7 @@ namespace LaDa
       public:
         //! Copy Constructor
         Transform   (Crystal::SymmetryOperator const &_c,
-                     Crystal::Lattice const &_lat) throw(boost::exception);
+                     Crystal::Lattice const &_lat);
         //! Copy Constructor
         Transform    (Transform const &_c)
                    : Crystal::SymmetryOperator(_c),
@@ -41,10 +41,9 @@ namespace LaDa
                      nsites_(_c.nsites_),
                      card_(_c.card_) {}
         //! Initializes transform for specific supercell.
-        void init(atat::rMatrix3d const &_left, atat::iVector3d const &_smith)
-             throw(boost::exception);
+        void init(atat::rMatrix3d const &_left, atat::iVector3d const &_smith);
         //! Initializes transform for specific supercell.
-        void init( Crystal::t_SmithTransform const &_t ) throw(boost::exception)
+        void init( Crystal::t_SmithTransform const &_t )
           { return init(boost::tuples::get<0>(_t), boost::tuples::get<1>(_t)); }
         //! Performs transformation.
         t_uint operator()(t_uint _x, FlavorBase const &_flavorbase) const;

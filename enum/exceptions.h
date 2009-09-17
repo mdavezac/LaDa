@@ -29,7 +29,7 @@ namespace LaDa
 
     //! \brief Throws this when a transformation does not find equivalent supercell site.
     //! \details Most likely an internal error.
-    struct symmetry_not_of_supercell : virtual symmetry_not_of_lattice {};
+    struct symmetry_not_of_supercell : virtual boost::exception, virtual std::exception {};
     
     //! \brief Thrown when the supercell under consideration is too large to be
     //!        represented by the integers in use.

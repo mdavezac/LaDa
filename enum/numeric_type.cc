@@ -31,7 +31,7 @@ namespace LaDa
       return result;
     }
 
-    void check_size( size_t _card, size_t _nflavor ) throw(boost::exception)
+    void check_size( size_t _card, size_t _nflavor )
     {
       t_uint first(1), second(_nflavor);
       for( size_t i(0); i < _card; ++i )

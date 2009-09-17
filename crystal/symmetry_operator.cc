@@ -49,13 +49,11 @@ namespace LaDa
     
     bool SymmetryOperator::invariant(atat::rMatrix3d const &_mat, types::t_real _tolerance) const
     {
+      atat::rMatrix3d const mat((!_mat) * op * _mat);
       for(size_t i(0); i < 3; ++i)
         for(size_t j(0); j < 3; ++j)
-        {
-          types::t_real u(-_mat(i,j));
-          for(size_t k(0); k < 3; ++k) u+= op(i,k) * _mat(k,j);
-          if(std::abs(u) < _tolerance) return false;
-        }
+          if( std::abs( std::floor(0.01+mat(i,j)) - mat(i,j) ) > types::tolerance ) 
+            return false;
       return true;
     }
 
