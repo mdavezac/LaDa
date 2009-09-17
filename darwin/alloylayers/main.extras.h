@@ -28,7 +28,7 @@
 #   include "../operators/eogenop_adapter.h"
 #   include "../operators/taboo.h"
 #   include "../bitstring/mutation.h"
-#   include "../bitstring/crossover.h"
+#   include "crossover.h"
 #   include "operators.h"
 #   include "mutation.h"
 #   include "../assign_callbacks.h"
@@ -126,7 +126,7 @@
         boost::bind( &PPFactory::random<t_OpFactory, t_Evaluator>,
                      _1, _2, _3, boost::ref(ga.evaluator) ) )
       ( "Crossover", "bitstring-like crossover.",
-        boost::bind( &LaDa::GA::BitString::crossover_factory<t_OpFactory>, _1, _2, _3 ) )
+        boost::bind( &LaDa::GA::AlloyLayers::crossover_factory<t_OpFactory>, _1, _2, _3 ) )
       ( "Mutation", "bistring-like mutation.",
         LaDa::GA::AlloyLayers::mutation_factory( ga.evaluator )
       );

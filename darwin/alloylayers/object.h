@@ -13,11 +13,12 @@
 #include<opt/types.h>
 #include<vff/layered.h>
 
-#include "../bitstring.h"
 #include "../print_callbacks.h"
 #include "../bitstring/object.h"
 #include "../static_translate.h"
 #include "../effective_mass.h"
+#include "../bandgap_stubs.h"
+#include "../electric_dipole.h"
 
 #include "concentration.h"
 
@@ -76,6 +77,11 @@ namespace LaDa
                    and LaDa::GA::Keepers::hMass::Save( _node ); }
         //! Destructor
         virtual ~Object() {};
+        //! \brief Comparison operator.
+        //! \details Checks symmetric equivalents.
+        bool operator==( Object const &_c ) const;
+        //! Chooses random symmetry from all possible symmetries.
+        bool random_symmetry();
         private:
           //! Serializes a scalar individual.
           template<class Archive>

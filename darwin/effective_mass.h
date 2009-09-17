@@ -9,6 +9,7 @@
 #endif
 
 #include <boost/serialization/string.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <tinyxml/tinyxml.h>
 
