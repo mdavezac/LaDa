@@ -10,7 +10,7 @@ AM_LDFLAGS = @BOOST_LDFLAGS@  @BOOST_PYTHON@
 
 install-exec-local: ../../python/libpython_lada.la
 
-EXTRA_DIST = $(enum_python_h) 
+EXTRA_DIST = $(enum_python_h) enum.py
 pkgpyexec_LTLIBRARIES = enumeration.la 
 enumeration_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
 enumeration_la_SOURCES = $(enum_python_cc) 
