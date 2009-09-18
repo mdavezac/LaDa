@@ -20,7 +20,7 @@ namespace LaDa
       template< class T_INDIVIDUAL >
         bool crossover( T_INDIVIDUAL& _o, const T_INDIVIDUAL &_p, types::t_real &_rate )
         {
-          _o.random_symmetry();
+          _o.Object().random_symmetry();
           return BitString::crossover( _o, _p, _rate );
         }
 

@@ -105,7 +105,6 @@ namespace LaDa
          Neighbor neighbor;
          neighbor.index = 0;
          size_t list_max_size(nmax);
-         std::cout << _structure << "\n";
          if( list_max_size <= 12 ) list_max_size = 13;
          else if( list_max_size <= 18 ) list_max_size = 20;
          else if( list_max_size <= 42 ) list_max_size = 44;

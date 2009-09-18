@@ -64,11 +64,13 @@ namespace LaDa
                   "Reached unexpected end of file: " << _path << ".\n" )
         std::getline( file, line );
         sstr.str( line ); sstr.seekg (0, std::ios::beg); sstr.clear();
-        sstr >> _struct.cell.x[i][0]
-             >> _struct.cell.x[i][1]
-             >> _struct.cell.x[i][2];
+        sstr >> _struct.cell.x[0][i]
+             >> _struct.cell.x[1][i]
+             >> _struct.cell.x[2][i];
       }
       _struct.freeze = Crystal::Structure::FREEZE_NONE;
+      LADA_DOASSERT( atat::is_int((!_struct.cell) * _struct.cell),
+                     "Structure cell is not supercell of lattice." )
       // now atoms.
       types::t_int nfound(0);
       while( nfound < N and file.good() )

@@ -5,7 +5,8 @@
 atat_cc = findsym.cc integer.cc xtalutil.cc 
 atat_h  = findsym.h  integer.h  xtalutil.h lambda.impl.h \
           array.h  arraylist.h   fixagg.h  fxvector.h \
-	  linklist.h  machdep.h  misc.h  vectmac.h serialize.h
+	  linklist.h  machdep.h  misc.h  vectmac.h serialize.h \
+          is_int.h
 atat_python_h = atat.impl.hpp atatintrospection.hpp atatoperators.hpp
 atat_python_cc = atat.cc 
 
@@ -133,7 +134,7 @@ DARWIN_E_DOC = $(DARWIN_E_H) $(DARWIN_E_CC)
 
 crystal_cc = lattice.cc structure.cc confsplit.cc layerdepth.cc read_structure.cc \
              epi_structure.cc fill_structure.cc ideal_lattice.cc smith.cc \
-             symmetry_operator.cc
+             symmetry_operator.cc make_primitive.cc
 crystal_h  = lattice.h  structure.h structure.impl.h atom.h  confsplit.h layerdepth.h \
              read_structure.h epi_structure.h fill_structure.h fourier.h read_poscar.h \
              fractional_cartesian.h ideal_lattice.h smith.h neighbors.h enumerate.h \

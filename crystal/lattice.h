@@ -150,6 +150,9 @@ namespace LaDa
         //! Converts a numerically coded atom to an atom with an atomic symbol.
         bool convert_Atom_to_StrAtom( const Crystal::Atom &_in,
                                       Crystal::StrAtom &_out ) const;
+
+        //! make lattice primitive. Returns true if it already is.
+        bool make_primitive();
     
       protected:
         //! \brief Converts an index to a real value.

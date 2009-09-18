@@ -69,6 +69,7 @@ namespace LaDa
       if(     _bandgap.escan.method == Interface :: FOLDED_SPECTRUM 
           and bfs::exists( opt::InitialPath::path() /  _bandgap.get_dirname() / "cbm" )  )
       {
+        std::cout << (opt::InitialPath::path() /  _bandgap.get_dirname() / "cbm") <<"\n";
         __ASSERT( not bfs::exists( path / "vbm" / filename ), 
                   "Could not find file " + (path / "vbm" / filename).string() )
         __ASSERT( not bfs::exists( path / "cbm" / filename ), 

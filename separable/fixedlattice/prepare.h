@@ -61,7 +61,7 @@ namespace LaDa
                      t_Configurations& _confs ) const;
         //! Number of degrees of freedom.
         size_t dof() const
-          { return n.second - n.first ? n.second - n.first: positions.size(); }
+          { return n.second - n.first ? n.second - n.first+1: positions.size(); }
 
       protected:
         //! Initializes list of symmetry operations.
