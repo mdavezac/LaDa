@@ -27,7 +27,8 @@ namespace LaDa
   namespace Crystal {
 
     //! Reads structure in NREL format.
-    void read_structure( Structure &_struct, const boost::filesystem::path &_path );
+    void read_structure( Structure &_struct, const boost::filesystem::path &_path,
+                         bool _check_lattice = false );
 
     //! \brief reads lda energies and structures from NREL input files.
     //! \param[in] _path is the full or relative path to the "LDAs.dat" file.

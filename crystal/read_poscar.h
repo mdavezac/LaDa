@@ -26,6 +26,7 @@
 
 #include <print/manip.h>
 #include <opt/types.h>
+#include <atat/is_int.h>
 
 #include "structure.h"
 
@@ -33,19 +34,21 @@ namespace LaDa
 {
   namespace Crystal
   {
-
     //! Reads structure in NREL format.
     template<class T_TYPE> 
       void read_poscar( TStructure<T_TYPE> &_structure, 
                         const boost::filesystem::path &_path,
-                        const std::vector< T_TYPE >& _types );
-
-    template<class T_TYPE> 
-      void read_poscar( TStructure<T_TYPE> &_structure, 
-                        const boost::filesystem::path &_path,
-                        const std::vector< T_TYPE >& _types )
+                        const std::vector< T_TYPE >& _types,
+                        bool _check_lattice = false )
       {
         __TRYBEGIN
+        atat::rMatrix3d inv_cell;
+        if( _check_lattice and (not _structure.lattice) )
+        {
+          std::cerr << "Requested for structure to be checked against, but lattice not set.\n";
+          _check_lattice = false; 
+        }
+        if( _check_lattice ) inv_cell = !_structure.lattice->cell;
         
         namespace bsc = boost::spirit::classic;
         namespace fs = boost::filesystem;  
@@ -83,14 +86,17 @@ namespace LaDa
             not bsc::parse
             (
               line.c_str(),
-                  bsc::real_p[ bsc::assign_a( _structure.cell(i, 0) ) ] 
-               >> bsc::real_p[ bsc::assign_a( _structure.cell(i, 1) ) ] 
-               >> bsc::real_p[ bsc::assign_a( _structure.cell(i, 2) ) ],
+                  bsc::real_p[ bsc::assign_a( _structure.cell(0, i) ) ] 
+               >> bsc::real_p[ bsc::assign_a( _structure.cell(1, i) ) ] 
+               >> bsc::real_p[ bsc::assign_a( _structure.cell(2, i) ) ],
                bsc::space_p
             ).hit,
             "Could not parse cell.\n" 
           )
         }
+        if( _check_lattice )
+          LADA_DOASSERT( atat::is_int(inv_cell * _structure.cell),
+                         "Structure cell is not supercell of lattice." );
         // number of atoms
         std::vector< size_t > nbatoms;
         std::getline( file, line );
@@ -145,6 +151,8 @@ namespace LaDa
             "Could not parse atomic position " <<  i << ".\n" 
           )
           if( direct ) atom.pos = _structure.cell * atom.pos; 
+          if( _check_lattice )
+            LADA_DOASSERT(atat::is_int(inv_cell * atom.pos), "Atomic position is not on lattice.")
           atom.type = *i_type;
           _structure.atoms.push_back( atom );
           if( j != *i_nb ) continue;

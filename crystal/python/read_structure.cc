@@ -12,12 +12,11 @@
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <boost/python/str.hpp>
 #include <boost/python/def.hpp>
 #include <boost/python/tuple.hpp>
-#include <boost/python/return_value_policy.hpp>
-#include <boost/python/manage_new_object.hpp>
 #include <boost/python/extract.hpp>
 #include <boost/python/str.hpp>
 
@@ -31,6 +30,7 @@ namespace LaDa
 {
   namespace Python
   {
+    namespace bp = boost::python;
     namespace details
     {
       void print_poscar( Crystal::TStructure<std::string> const &_structure, 
@@ -38,7 +38,6 @@ namespace LaDa
                          const std::string &_path )
       {
         namespace bf = boost::filesystem;
-        namespace bp = boost::python;
         typedef Crystal::TStructure<std::string> t_Structure;
         // Extract specie types.
         std::vector<std::string> species;
@@ -115,7 +114,7 @@ namespace LaDa
         // prints name, scale, and cell.
         file << _structure.name  << "\n"
              << _structure.scale << "\n"
-             << _structure.cell  << "\n";
+             << (~_structure.cell)  << "\n"; // prints lines of lattice vectors, not cell per se.
 
         // print nb per specie
         foreach( std::string const sp, species )
@@ -144,127 +143,117 @@ namespace LaDa
       };
 
       template<class T_TYPE>
-        Crystal::TStructure<T_TYPE>* read_poscar( boost::python::tuple const &_species, 
-                                                  const std::string &_path )
-        {
-          namespace bp = boost::python;
-          typedef Crystal::TStructure<T_TYPE> t_Structure;
-          t_Structure *result = NULL;
-          try
-          { 
-            result = new t_Structure;
-            std::vector<T_TYPE> species;
-            for( size_t i(0); i < bp::len(_species); ++i )
-            {
-              T_TYPE const type = bp::extract<T_TYPE>( _species[i] );
-              species.push_back( type );
+        boost::shared_ptr< Crystal::TStructure<T_TYPE> >
+          read_poscar(bp::tuple const &_species, std::string const &_path, bool _c)
+          {
+            namespace bp = boost::python;
+            typedef Crystal::TStructure<T_TYPE> t_Structure;
+            try
+            { 
+              boost::shared_ptr<t_Structure> result( new t_Structure );
+              std::vector<T_TYPE> species;
+              for( size_t i(0); i < bp::len(_species); ++i )
+              {
+                T_TYPE const type = bp::extract<T_TYPE>( _species[i] );
+                species.push_back( type );
+              }
+              Crystal::read_poscar( *result, _path, species, _c); 
+              if( result->atoms.size() == 0 )
+              {
+                LADA_PYTHON_ERROR( PyExc_RuntimeError, "Could not read file " + _path + ".\n" );
+                boost::python::throw_error_already_set();
+                return boost::shared_ptr< Crystal::TStructure<T_TYPE> >(); 
+              }
+              return result;
             }
-            Crystal::read_poscar( *result, _path, species ); 
-            if( result->atoms.size() == 0 )
+            catch( std::exception &_e )
             {
-              delete result;
-              LADA_PYTHON_ERROR( PyExc_RuntimeError, "Could not read file " + _path + ".\n" );
+              LADA_PYTHON_ERROR( PyExc_RuntimeError, _e.what() );
               boost::python::throw_error_already_set();
-              return NULL;
+              return boost::shared_ptr< Crystal::TStructure<T_TYPE> >(); 
             }
-            return result;
+            catch( ... )
+            {
+              LADA_PYTHON_ERROR
+              ( 
+                PyExc_RuntimeError,
+                ("Could not read MBCE-type structure from " + _path + ".\n")
+              );
+              boost::python::throw_error_already_set();
+              return boost::shared_ptr< Crystal::TStructure<T_TYPE> >(); 
+            }
           }
-          catch( std::exception &_e )
-          {
-            if( result ) delete result;
-            LADA_PYTHON_ERROR( PyExc_RuntimeError, _e.what() );
-            boost::python::throw_error_already_set();
-            return NULL;
-          }
-          catch( ... )
-          {
-            if( result ) delete result;
-            LADA_PYTHON_ERROR
-            ( 
-              PyExc_RuntimeError,
-              ("Could not read MBCE-type structure from " + _path + ".\n")
-            );
-            boost::python::throw_error_already_set();
-            return NULL;
-          }
-        }
 
       template< class T_TYPE >
-        Crystal::TStructure<T_TYPE>* read_poscar_one_specie( boost::python::str const &_specie, 
-                                                             const std::string &_path )
-        {
-          namespace bp = boost::python;
-          typedef Crystal::TStructure<T_TYPE> t_Structure;
-          t_Structure *result = NULL;
-          try
-          { 
-            result = new t_Structure;
-            T_TYPE const specie = bp::extract<T_TYPE>( _specie );
-            std::vector<T_TYPE> const species(1, specie);
-            Crystal::read_poscar( *result, _path, species ); 
-            if( result->atoms.size() == 0 )
-            {
-              delete result;
-              LADA_PYTHON_ERROR( PyExc_RuntimeError, "Could not read file " + _path + ".\n" );
-              boost::python::throw_error_already_set();
-              return NULL;
+        boost::shared_ptr< Crystal::TStructure<T_TYPE> >
+          read_poscar_one_specie(bp::str const &_specie, const std::string &_path, bool _c)
+          {
+            namespace bp = boost::python;
+            typedef Crystal::TStructure<T_TYPE> t_Structure;
+            try
+            { 
+              boost::shared_ptr<t_Structure> result( new t_Structure );
+              T_TYPE const specie = bp::extract<T_TYPE>( _specie );
+              std::vector<T_TYPE> const species(1, specie);
+              Crystal::read_poscar( *result, _path, species, _c ); 
+              if( result->atoms.size() == 0 )
+              {
+                LADA_PYTHON_ERROR( PyExc_RuntimeError, "Could not read file " + _path + ".\n" );
+                boost::python::throw_error_already_set();
+                return boost::shared_ptr< Crystal::TStructure<T_TYPE> >(); 
+              }
+              return result;
             }
-            return result;
+            catch( std::exception &_e )
+            {
+              LADA_PYTHON_ERROR( PyExc_RuntimeError, _e.what() );
+              boost::python::throw_error_already_set();
+              return boost::shared_ptr< Crystal::TStructure<T_TYPE> >(); 
+            }
+            catch( ... )
+            {
+              LADA_PYTHON_ERROR
+              ( 
+                PyExc_RuntimeError,
+                ("Could not read MBCE-type structure from " + _path + ".\n")
+              );
+              boost::python::throw_error_already_set();
+              return boost::shared_ptr< Crystal::TStructure<T_TYPE> >(); 
+            }
           }
-          catch( std::exception &_e )
-          {
-            if( result ) delete result;
-            LADA_PYTHON_ERROR( PyExc_RuntimeError, _e.what() );
-            boost::python::throw_error_already_set();
-            return NULL;
-          }
-          catch( ... )
-          {
-            if( result ) delete result;
-            LADA_PYTHON_ERROR
-            ( 
-              PyExc_RuntimeError,
-              ("Could not read MBCE-type structure from " + _path + ".\n")
-            );
-            boost::python::throw_error_already_set();
-            return NULL;
-          }
-        }
 
-      Crystal::Structure* read_structure( const std::string &_path )
+      boost::shared_ptr<Crystal::Structure> read_structure(const std::string &_path, bool _c)
       {
-        Crystal::Structure *result = new Crystal::Structure();
         try
         { 
-          Crystal::read_structure( *result, _path ); 
+          boost::shared_ptr<Crystal::Structure> result( new Crystal::Structure );
+          Crystal::read_structure(*result, _path, _c); 
           return result;
         }
         catch( std::exception &_e )
         {
-          delete result;
           LADA_PYTHON_ERROR( PyExc_RuntimeError, _e.what() );
           boost::python::throw_error_already_set();
-          return NULL;
+          return boost::shared_ptr<Crystal::Structure>(); 
         }
         catch( ... )
         {
-          delete result;
           LADA_PYTHON_ERROR
           ( 
             PyExc_RuntimeError,
             ("Could not read MBCE-type structure from " + _path + ".\n")
           );
           boost::python::throw_error_already_set();
-          return NULL;
+          return boost::shared_ptr<Crystal::Structure>(); 
         }
       }
 
-      Crystal::Structure* read_pifile_structure( std::string const& _str )
+      boost::shared_ptr<Crystal::Structure> read_pifile_structure( std::string const& _str )
       {
         try
         {
           std::istringstream sstring( _str );
-          Crystal::Structure* structure = new Crystal::Structure;
+          boost::shared_ptr<Crystal::Structure> structure( new Crystal::Structure );
           Crystal::read_pifile_structure( sstring, *structure );
           std::cout << _str << "\n";
           std::cout << *structure << "\n\n";
@@ -284,24 +273,28 @@ namespace LaDa
           );
           boost::python::throw_error_already_set();
         }
-        return NULL;
+        return boost::shared_ptr<Crystal::Structure>();
       }
     }
 
     void expose_read_structure()
     {
-
       boost::python::def
       (
         "print_poscar", 
         &details::print_poscar,
+        bp::arg("structure"),
         "Prints out a poscar to file." 
       );
       boost::python::def
       (
         "read_poscar", 
         &details::read_poscar_one_specie<std::string>,
-        boost::python::return_value_policy< boost::python::manage_new_object >(),
+        (
+          bp::arg("types"),
+          bp::arg("path"),
+          bp::arg("check_lattice") = false
+        ),
         "Tries to read a VASP POSCAR. Needs a tuple of species on input (first argument).\n"
         "Returns a structure on success" 
       );
@@ -309,7 +302,11 @@ namespace LaDa
       (
         "read_poscar", 
         &details::read_poscar<std::string>,
-        boost::python::return_value_policy< boost::python::manage_new_object >(),
+        (
+          bp::arg("path"),
+          bp::arg("types"),
+          bp::arg("check_lattice") = false
+        ),
         "Tries to read a VASP POSCAR. This is the case of a single atomic specie."
         "Returns a structure on success" 
       );
@@ -317,14 +314,17 @@ namespace LaDa
       (
         "read_structure", 
         &details::read_structure,
-        boost::python::return_value_policy< boost::python::manage_new_object >(),
+        (
+          bp::arg("path"),
+          bp::arg("check_lattice") = false
+        ),
         "Tries to read a file as a MBCE structure file. Returns a structure on success" 
       );
       boost::python::def
       ( 
         "read_pifile_structure",
         &details::read_pifile_structure,
-        boost::python::return_value_policy< boost::python::manage_new_object >(),
+        bp::arg("string"),
         "Reads a structure from pi-file type input.\n" 
       );
 

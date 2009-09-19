@@ -27,6 +27,7 @@
 #include <opt/tinyxml.h>
 
 #include <atat/misc.h>
+#include <atat/is_int.h>
 
 #include "structure.h"
 #include "read_structure.h"
@@ -39,9 +40,17 @@ namespace LaDa
   namespace Crystal 
   {
     void read_structure( Structure &_struct,
-                         const boost::filesystem::path &_path )
+                         const boost::filesystem::path &_path,
+                         bool _check_lattice)
     {
       __TRYBEGIN
+      atat::rMatrix3d inv_cell;
+      if( _check_lattice and (not _struct.lattice) )
+      {
+        std::cerr << "Requested for structure to be checked against, but lattice not set.\n";
+        _check_lattice = false; 
+      }
+      if( _check_lattice ) inv_cell = !_struct.lattice->cell;
 
       namespace fs = boost::filesystem;  
       __DOASSERT( not fs::exists( _path ), "Path " << _path << " does not exits.\n" )
@@ -69,8 +78,9 @@ namespace LaDa
              >> _struct.cell.x[2][i];
       }
       _struct.freeze = Crystal::Structure::FREEZE_NONE;
-      LADA_DOASSERT( atat::is_int((!_struct.cell) * _struct.cell),
-                     "Structure cell is not supercell of lattice." )
+      if( _check_lattice )
+        LADA_DOASSERT( atat::is_integer(inv_cell * _struct.cell),
+                       "Structure cell is not supercell of lattice." );
       // now atoms.
       types::t_int nfound(0);
       while( nfound < N and file.good() )
@@ -88,6 +98,8 @@ namespace LaDa
         sstr >> a.pos.x[0] >> a.pos.x[1]  >> a.pos.x[2];
         a.freeze = Structure::t_Atom::FREEZE_NONE;
         a.site = 0;
+        if( _check_lattice )
+          LADA_DOASSERT(atat::is_integer(inv_cell * a.pos), "Atomic position is not on lattice.")
         _struct.atoms.push_back(a);
       }
       __ASSERT( nfound != N,    "Could find only " << nfound << " of " 
@@ -128,7 +140,7 @@ namespace LaDa
         );
         if( not info.hit ) continue;
 
-        Crystal :: read_structure( structure, dir / structure.name );
+        Crystal :: read_structure( structure, dir / structure.name, true );
         _structures.push_back(structure);
       }
 
@@ -139,6 +151,10 @@ namespace LaDa
                                 Crystal::Structure &_structure )
     {
       __DEBUGTRYBEGIN
+      LADA_ASSERT(_structure.lattice, "Lattice not set.") 
+#     ifdef LADA_DEBUG
+        atat::rMatrix3d const inv_cell(!_structure.lattice->cell);
+#     endif
       // finds first line for structure.
       std::string line;
       do
@@ -174,6 +190,8 @@ namespace LaDa
           _structure.cell(j,i)
             = boost::lexical_cast<types::t_real>( *i_tok ) * 0.5e0;
         }
+      LADA_ASSERT( atat::is_integer(inv_cell * _structure.cell),
+                   "Structure cell is not supercell of lattice." );
 
       // read atoms position.
       // find first line of atomic basis.
@@ -208,6 +226,7 @@ namespace LaDa
             atom.pos(i) = boost::lexical_cast<Crystal::Structure::t_Atom::t_Type> 
                                              ( *i_tok ) * 0.5e0;
           }
+          LADA_ASSERT(atat::is_integer(inv_cell * atom.pos), "Atomic position is not on lattice.")
           _structure.atoms.push_back( atom );
           if( _structure.atoms.size() == N ) break;
         }

@@ -7,6 +7,7 @@
 
 #include <cmath>
 
+#include <atat/is_int.h>
 #include <opt/fuzzy.h>
 
 #include "lattice.h"
@@ -120,9 +121,7 @@ namespace LaDa
             foreach( t_Site const site, copy.sites )
             {
               atat::rVector3d vec( trial_inv * site.pos );
-              if(     Fuzzy::is_zero(vec(0) - std::floor(vec(0)+0.1)) 
-                  and Fuzzy::is_zero(vec(1) - std::floor(vec(1)+0.1)) 
-                  and Fuzzy::is_zero(vec(2) - std::floor(vec(2)+0.1)) ) continue;
+              if( atat::is_integer(vec) ) continue;
               all_integer = false;
               break;
             }

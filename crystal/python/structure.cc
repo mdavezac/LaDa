@@ -8,8 +8,20 @@
 #include <sstream>
 #include <complex>
 
-#include <boost/python.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <boost/python/class.hpp>
+#include <boost/python/def.hpp>
+#include <boost/python/tuple.hpp>
 #include <boost/python/enum.hpp>
+#include <boost/python/str.hpp>
+#include <boost/python/other.hpp>
+#include <boost/python/self.hpp>
+#include <boost/python/operators.hpp>
+#include <boost/python/make_constructor.hpp>
+#include <boost/python/return_value_policy.hpp>
+#include <boost/python/reference_existing_object.hpp>
+#include <boost/python/register_ptr_to_python.hpp>
 #ifdef _MPI
 # include <boost/mpi/python.hpp>
 #endif
@@ -218,6 +230,9 @@ namespace LaDa
               "Transforms a structure from cartesian to fractional coordinates.\n" );
       bp::def("to_fractional", &Crystal::to_fractional<std::string>,
               "Transforms a structure from fractional to cartesian coordinates.\n" );
+
+      bp::register_ptr_to_python< boost::shared_ptr<Crystal::Structure> >();
+      bp::register_ptr_to_python< boost::shared_ptr< Crystal::TStructure<std::string> > >();
 
       bool (*for_real)( Crystal::Structure& ) = &Crystal::fill_structure;
       bool (*for_string)( Crystal::TStructure<std::string>& ) = &Crystal::fill_structure;
