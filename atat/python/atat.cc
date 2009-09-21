@@ -10,6 +10,7 @@
 
 #include "atat.impl.hpp"
 
+#include "../is_int.h"
 using namespace boost::python;
 
 namespace LaDa
@@ -18,6 +19,12 @@ namespace LaDa
   {
     template< class T_MATRIX > types::t_real det( const T_MATRIX& _a )
       { return atat::det( _a ); }
+
+    bool is_vinteger( atat::rVector3d const &_a ) 
+      {return atat::is_integer(_a); }
+    bool is_minteger( atat::rMatrix3d const &_a ) 
+      {return atat::is_integer(_a); }
+
     void expose_atat() 
     {
       namespace bp = boost::python;
@@ -35,6 +42,9 @@ namespace LaDa
                bp::arg("matrix"),
                "Transpose of an rMatrix3d." );
       bp::def( "det", &det< atat::rMatrix3d >, bp::arg("matrix"), "Returns determinant." );
+
+      boost::python::def("is_integer", &is_vinteger);
+      boost::python::def("is_integer", &is_minteger);
     }
 
   }

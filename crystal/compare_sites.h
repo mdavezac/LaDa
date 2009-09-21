@@ -11,6 +11,7 @@
 
 
 #include <set>
+#include <opt/types.h>
 #include "lattice.h"
 
 
@@ -21,12 +22,13 @@ namespace LaDa
 
     struct CompareSites
     {
-      CompareSites( Lattice::t_Site const &_site )
+      CompareSites( Lattice::t_Site const &_site, types::t_real _tolerance = -1e0 )
       {
+        tolerance = _tolerance < 0e0 ? types::tolerance: _tolerance;
         pos = _site.pos;
         std::copy(_site.type.begin(), _site.type.end(), std::inserter(set_, set_.begin()));
       }
-      CompareSites( CompareSites const &_c ): set_(_c.set_) {}
+      CompareSites( CompareSites const &_c ): set_(_c.set_), pos(_c.pos), tolerance(_c.tolerance) {}
       bool operator()( Lattice::t_Site::t_Type const &_types ) const
       {
         Lattice::t_Site::t_Type::const_iterator i_first = _types.begin();
@@ -37,13 +39,14 @@ namespace LaDa
       }
       bool operator()( Lattice::t_Site const& _site ) const
       {
-        return not(    Fuzzy::neq(_site.pos(0), pos(0)) 
-                    or Fuzzy::neq(_site.pos(1), pos(1)) 
-                    or Fuzzy::neq(_site.pos(2), pos(2)) );
+        return     std::abs(_site.pos(0)-pos(0)) < tolerance 
+               and std::abs(_site.pos(1)-pos(1)) < tolerance 
+               and std::abs(_site.pos(2)-pos(2)) < tolerance;
       }
 
       std::set<Lattice::t_Site::t_Type::value_type> set_;
       atat::rVector3d pos;
+      types::t_real tolerance;
     };
 
 

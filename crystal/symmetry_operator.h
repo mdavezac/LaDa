@@ -87,6 +87,19 @@ namespace LaDa
 
     //! Returns symmetries of a lattice.
     boost::shared_ptr< std::vector<SymmetryOperator> > get_symmetries( Lattice const &_lat );
+
+    //! \brief Returns point symmetries of a cell (except identity).
+    //! \details Rotations are determined from G-vector triplets with the same
+    //!          norm as the unit-cell vectors.
+    //! \see Taken from Enum code, PRB 77, 224115 (2008).
+    boost::shared_ptr< std::vector<SymmetryOperator> >
+      get_point_group_symmetries( atat::rMatrix3d const &_cell, types::t_real _tolerance = -1e0 );
+
+    //! \brief returns space-group symmetries of a lattice.
+    //! \warning Works for primitive lattices only.
+    //! \see Taken from Enum code, PRB 77, 224115 (2008).
+    boost::shared_ptr< std::vector<SymmetryOperator> >
+      get_space_group_symmetries( Lattice const &_lattice, types::t_real _tolerance = -1e0 );
   }
 }
 

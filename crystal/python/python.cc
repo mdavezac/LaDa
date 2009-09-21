@@ -15,6 +15,7 @@
 #include "smith.hpp"
 #include "layerdepth.hpp"
 #include "neighbors.hpp"
+#include "symmetry_operator.hpp"
 
 BOOST_PYTHON_MODULE(crystal)
 {
@@ -26,4 +27,5 @@ BOOST_PYTHON_MODULE(crystal)
   LaDa::Python::expose_smith();
   LaDa::Python::expose_layerdepth();
   LaDa::Python::expose_neighbors();
+  LaDa::Python::expose_symmetry_operator();
 }

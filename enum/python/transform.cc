@@ -149,7 +149,7 @@ namespace LaDa
         "Returns an array of rotation+translation operators for a given Lattice."
       );
 
-      bp::class_<enumeration::Transform>
+      bp::class_<enumeration::Transform, bp::bases<Crystal::SymmetryOperator> >
       (
         "Transform", 
         "Rotation + translation. Must be initialized to appropriate Smith normal form.", 
@@ -160,14 +160,7 @@ namespace LaDa
             " _ left is the left transform matrix from the Hermite to the Smith normal form.\n"
             " _ smith is the diagonal of the Smith normal form as an atat.iVector3d.\n")
        .def("__call__", &call)
-       .add_property("is_trivial", &enumeration::Transform::is_trivial, "True if the permutation is trivial.")
-       .def_readwrite("op", &Crystal::SymmetryOperator::op)
-       .def_readwrite("trans", &Crystal::SymmetryOperator::trans)
-       .def("invariant", &Crystal::SymmetryOperator::invariant, 
-            (bp::arg("matrix"), bp::arg("tolerance")=types::tolerance),
-            "Returns true if the matrix is invariant through this rotation.")
-       .def("__call__", &Crystal::SymmetryOperator::SymmetryOperator::operator())
-       .def("__str__", &tostream<Crystal::SymmetryOperator>);
+       .add_property("is_trivial", &enumeration::Transform::is_trivial, "True if the permutation is trivial.");
 
       expose_vector<enumeration::Transform>("Array", "Array of Translations");
       bp::register_ptr_to_python< boost::shared_ptr< std::vector<enumeration::Transform> > >();

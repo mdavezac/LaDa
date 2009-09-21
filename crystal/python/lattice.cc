@@ -19,16 +19,16 @@ namespace LaDa
 {
   namespace Python
   {
+    namespace bp = boost::python;
     namespace details
     {
-
-      boost::python::list symmetry_ops( const Crystal::Lattice& _lat )
+      bp::list symmetry_ops( const Crystal::Lattice& _lat )
       {
         types::t_int N( _lat.space_group.point_op.getSize() );
-        boost::python::list result;
+        bp::list result;
         for( types::t_int i = 0; i < N; ++i )
         {
-          boost::python::list inner;
+          bp::list inner;
           inner.append( _lat.space_group.point_op(i) );
           inner.append( _lat.space_group.trans(i) );
           result.append( inner );
@@ -82,9 +82,8 @@ namespace LaDa
 
     void expose_lattice()
     {
-      using namespace boost::python;
-      class_< Crystal::Lattice >( "Lattice" )
-        .def( init< Crystal::Lattice >() )
+      bp::class_< Crystal::Lattice >( "Lattice" )
+        .def( bp::init< Crystal::Lattice >() )
         .def_readwrite( "cell",  &Crystal::Lattice::cell )
         .def_readwrite( "sites", &Crystal::Lattice::sites )
         .def_readwrite( "scale", &Crystal::Lattice::scale )
@@ -92,10 +91,11 @@ namespace LaDa
         .def( "syms",  &details::symmetry_ops )
         .def( "fromXML",  &details::fromXML<Crystal::Lattice> )
         .def( "set_as_crystal_lattice", &details::set_as_crystal_lattice )
-        .def( "make_primitive", &Crystal::Lattice::make_primitive )
+        .def( "make_primitive", &Crystal::Lattice::make_primitive,
+              (bp::arg("self"), bp::arg("tolerance")=-1e0),
+              "Makes lattice primitive, e.g. reduces to smallest unit-cell." )
         .def( "find_space_group", &Crystal::Lattice::find_space_group );
-    // def( "StructureLattice", &return_crystal_lattice, 
-    //      return_value_policy<reference_existing_object>() );
+      bp::def( "into_cell", &Crystal::into_cell, (bp::arg("vector"), bp::arg("cell"), bp::arg("inverse")) );
     }
 
   }

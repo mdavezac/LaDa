@@ -26,11 +26,16 @@ namespace LaDa
       result(0) -= std::floor(result(0));
       result(1) -= std::floor(result(1));
       result(2) -= std::floor(result(2));
+      // numerical stability check.
+      if( Fuzzy::eq(result(0), 1e0) ) result(0) = 0e0;
+      if( Fuzzy::eq(result(1), 1e0) ) result(1) = 0e0;
+      if( Fuzzy::eq(result(2), 1e0) ) result(2) = 0e0;
       return _cell * result;
     }
 
-    bool Lattice::make_primitive()
+    bool Lattice::make_primitive(types::t_real _tolerance)
     {
+      if( _tolerance < 0e0 ) _tolerance = types::tolerance;
       if( sites.size() == 0 ) return true;
       // copies lattice.
       Lattice copy(*this);
@@ -38,37 +43,41 @@ namespace LaDa
 
       // moves sites into unit-cell.
       atat::rMatrix3d const inv( !cell );
-      foreach(t_Site &_site, copy.sites) into_cell(_site.pos, cell, inv);
+      foreach(t_Site &_site, copy.sites) _site.pos = into_cell(_site.pos, cell, inv);
 
       // Then compares fractional translations from site 0 to sites of same type.
       std::vector<atat::rVector3d> translations;
-      CompareSites compsites(copy.sites.front());
+      CompareSites compsites(copy.sites.front(), _tolerance);
       t_Sites :: const_iterator i_site = copy.sites.begin();
       t_Sites :: const_iterator const i_site_end = copy.sites.end();
-      for(i_site; i_site != i_site_end; ++i_site )
+      for(; i_site != i_site_end; ++i_site )
       {
         // Translations are created from equivalent sites only.
         if( not compsites(i_site->type) ) continue;
 
         // creates translation.
-        atat::rVector3d translation( into_cell(i_site->pos - compsites.pos, cell, inv) );
+        atat::rVector3d const translation( into_cell(i_site->pos - compsites.pos, cell, inv) );
+        
+        // loop on null translation.
+        if(     Fuzzy::is_zero(translation(0))
+            and Fuzzy::is_zero(translation(1)) 
+            and Fuzzy::is_zero(translation(2)) ) continue;
 
         // checks that it leaves the lattice invariant.
-        bool has_mapping(true);
-        foreach( t_Site const &site, copy.sites )
+        t_Sites :: const_iterator i_mapping = copy.sites.begin();
+        for(; i_mapping != i_site_end; ++i_mapping)
         {
-          CompareSites check_translation(site);
-          check_translation.pos = into_cell( site.pos + translation, cell, inv );
+          CompareSites check_translation(*i_mapping, _tolerance);
+          check_translation.pos = into_cell( i_mapping->pos + translation, cell, inv );
 
           t_Sites::const_iterator i_found
             = std::find_if( copy.sites.begin(), copy.sites.end(), check_translation );
 
-          if( i_found != copy.sites.end() ) continue;
-          has_mapping = false;
-          break;
+          if(i_found == copy.sites.end()) break;
+          if(not check_translation(i_found->type)) break;
         }
 
-        if( not has_mapping ) continue;
+        if( i_mapping != i_site_end ) continue;
 
         // adds translation to vector. This lattice is not primitive.
         translations.push_back( translation );
@@ -106,26 +115,18 @@ namespace LaDa
             types::t_real const det( atat::det(trial) );
             if( Fuzzy::is_zero(det) ) continue;
             // Volume smaller than current new_cell?
-            if( Fuzzy::gt( std::abs(det), volume) ) continue;
+            if( Fuzzy::geq( std::abs(det), volume) ) continue;
             // Direct matrix?
             if( det < 0e0 )
             {
               trial.set_column(2, *i_second);
-              trial.set_column(3, *i_third);
+              trial.set_column(1, *i_third);
               LADA_ASSERT(atat::det(trial) > 0, "Shouldn't happen.\n");
             }
+            // Checks that original cell is a supercell.
+            if( not atat::is_integer((!new_cell) * cell) ) continue;
 
             // Checks that all lattice sites are integers.
-            atat::rMatrix3d const trial_inv( !trial );
-            bool all_integer = true;
-            foreach( t_Site const site, copy.sites )
-            {
-              atat::rVector3d vec( trial_inv * site.pos );
-              if( atat::is_integer(vec) ) continue;
-              all_integer = false;
-              break;
-            }
-            if( not all_integer ) continue;
             volume = std::abs(det);
             new_cell = trial;
           }
@@ -134,23 +135,26 @@ namespace LaDa
       // Found the new cell with smallest volume (e.g. primivite)
       LADA_ASSERT
       (
-        not Fuzzy::is_zero( volume - atat::det(new_cell) ), 
+        not Fuzzy::is_zero( atat::det(cell) - atat::det(new_cell) ), 
         "Could not find primitive cell.\n"
       );
 
       // now creates new lattice.
       sites.clear();
       cell = new_cell;
-      i_site = copy.sites.begin();
-      sites.push_back(*i_site);
-      for(; i_site != i_site_end; ++i_site)
+      atat::rMatrix3d const inv_cell(!cell);
+      foreach(t_Site &s, copy.sites) s.pos = into_cell(s.pos, cell, inv_cell);
+      sites.push_back(copy.sites.front());
+      for(i_site = copy.sites.begin(); i_site != i_site_end; ++i_site)
       {
-        compsites = *i_site;
-        t_Sites::const_iterator i_found = std::find_if(sites.begin(), sites.end(), compsites);
+        CompareSites check(*i_site);
+        t_Sites::const_iterator i_found = std::find_if(sites.begin(), sites.end(), check);
         if( i_found == sites.end() ) sites.push_back(*i_site);
+        else 
+        { LADA_DOASSERT( check(i_found->type), "Two inequivalent sites at same position.\n" ); }
       }
       
-      return true;
+      return false;
     }
 
   } // namespace Crystal

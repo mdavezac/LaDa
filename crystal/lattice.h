@@ -37,6 +37,10 @@ namespace LaDa
 
     //! Refolds a periodic vector into the unit-cell, as defined by \a lat.
     void refold( atat::rVector3d &vec, const atat::rMatrix3d &lat );
+    //! Refolds a periodic vector into the unit cell.
+    atat::rVector3d into_cell( atat::rVector3d const &_vec, 
+                               atat::rMatrix3d const &_cell, 
+                               atat::rMatrix3d const &_inv);
     
 
     //! \brief Defines a lattice.
@@ -152,7 +156,7 @@ namespace LaDa
                                       Crystal::StrAtom &_out ) const;
 
         //! make lattice primitive. Returns true if it already is.
-        bool make_primitive();
+        bool make_primitive(types::t_real _tolerance = -1e0 );
     
       protected:
         //! \brief Converts an index to a real value.
