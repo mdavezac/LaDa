@@ -124,7 +124,8 @@ namespace LaDa
       template< class T_MATRIX, class T_VECTOR>
         void Collapse::lsq_data(T_MATRIX& _matrix, T_VECTOR& _vector, size_t _i) const
         {
-          _vector[0] = 5;
+          LADA_ASSERT( _i < coefficients_.size(),
+                       "index out-of-range: " << _i << " >= " <<  coefficients_.size() << ".\n")
           const size_t vec_size( coefficients_[_i].size() );
           if( _matrix.size2() != vec_size )
           {
@@ -157,6 +158,7 @@ namespace LaDa
             // loop over structure representations.
             for(; i_rep != i_rep_end; ++i_rep, ++i_rep_val )
             {
+              std::cout << "spec: " << i_rep.specie() << "\n";
               numeric_type const rep_weight(i_rep.weight() * str_weight);
         
               typedef t_Values::const_str_iterator::const_rep_iterator
@@ -184,16 +186,17 @@ namespace LaDa
             // now adds to A matrix and b vector.
             for(size_t i(0); i < vec_size; ++i )
             {
-              for(size_t j(i); j < vec_size; ++j)
+              for(size_t j(0); j < vec_size; ++j)
                 _matrix(i,j) += G(i) * G(j) * str_weight;
               _vector(i) += i_str.energy() * G(i) * str_weight;
             } 
+            break;
           } // loop over structures.
         
-          // creates second half of matrix.
-          for( size_t i(0); i < vec_size; ++i )
-            for( size_t j(i+1); j < vec_size; ++j )
-              _matrix(j,i) = _matrix(i,j);
+//         // creates second half of matrix.
+//         for( size_t i(0); i < vec_size; ++i )
+//           for( size_t j(i+1); j < vec_size; ++j )
+//             _matrix(j,i) = _matrix(i,j);
         }
     } // namespace collapse
   } // namespace atomic_potential

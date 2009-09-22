@@ -10,6 +10,7 @@
 
 #include <crystal/lattice.h>
 #include <crystal/smith.h>
+#include <crystal/symmetry_operator.h>
 
 #include "find_all_cells.h"
 
@@ -23,7 +24,7 @@ namespace LaDa
 
     void unique_add( t_Container::value_type const &_supercell, 
                      t_Container::value_type const &_cell, 
-                     t_Container const &_symops,
+                     boost::shared_ptr< std::vector<Crystal::SymmetryOperator> > const &_symops,
                      t_Container &_out );
 
     boost::shared_ptr<t_Container> find_all_cells(Crystal::Lattice const &_lattice, size_t _nmax)
@@ -31,16 +32,9 @@ namespace LaDa
       boost::shared_ptr< t_Container > result(new t_Container);
       t_Container::value_type cell; cell.zero();
 
-      t_Container symops; symops.reserve( _lattice.space_group.point_op.get_size() );
-      for( size_t i(0); i < _lattice.space_group.point_op.get_size(); ++i )
-      {
-        t_Container::value_type const &op( _lattice.space_group.point_op[i] );
-        if(    Fuzzy::neq(op.x[0][0], 1.0) or Fuzzy::neq(op.x[0][1], 0.0) or Fuzzy::neq(op.x[0][2], 0.0)
-            or Fuzzy::neq(op.x[1][0], 0.0) or Fuzzy::neq(op.x[1][1], 1.0) or Fuzzy::neq(op.x[1][2], 0.0)
-            or Fuzzy::neq(op.x[2][0], 0.0) or Fuzzy::neq(op.x[2][1], 0.0) or Fuzzy::neq(op.x[2][2], 1.0) )
-          symops.push_back(op);
-      }
-        
+      boost::shared_ptr< std::vector<Crystal::SymmetryOperator> > symops
+        = Crystal::get_space_group_symmetries(_lattice);
+
       // Iterates over values of a such that a * b * c == _nmax
       for(size_t a(1); a <= _nmax; ++a)
       {
@@ -96,20 +90,21 @@ namespace LaDa
 
     void unique_add( t_Container::value_type const &_supercell, 
                      t_Container::value_type const &_cell, 
-                     t_Container const &_symops,
+                     boost::shared_ptr< std::vector<Crystal::SymmetryOperator> > const &_symops,
                      t_Container &_out )
     {
-      t_Container::const_iterator i_sym = _symops.begin();
-      t_Container::const_iterator const i_sym_end = _symops.end();
+      std::vector<Crystal::SymmetryOperator>::const_iterator i_sym = _symops->begin();
+      std::vector<Crystal::SymmetryOperator>::const_iterator const i_sym_end = _symops->end();
       t_Container::value_type const inv(!(_cell*_supercell));
       for(; i_sym != i_sym_end; ++i_sym)
-        if( _out.end() != std::find_if( _out.begin(), _out.end(), IsInt(inv*(*i_sym)*_cell) ) ) 
+        if( _out.end() != std::find_if(_out.begin(), _out.end(), IsInt(inv*i_sym->op*_cell)) ) 
           break;
       if( i_sym == i_sym_end ) _out.push_back(_supercell);
     }
 
     boost::shared_ptr< std::vector<SmithGroup> >
-      create_smith_groups( Crystal::Lattice const &_lattice, boost::shared_ptr<t_Container> const & _s )
+      create_smith_groups( Crystal::Lattice const &_lattice,
+                           boost::shared_ptr<t_Container> const & _s )
       {
         namespace bt = boost::tuples;
         namespace bl = boost::lambda;

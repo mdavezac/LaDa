@@ -33,17 +33,24 @@ def input_directories(_filename):
         continue
       yield dir 
 
-def main():
-  def create_vasp():
-    from vasp import Vasp, Specie
-    K = Specie( "K", "~/AtomicPotentials/pseudos/K_s" )
-    Rb = Specie( "Rb", "~/AtomicPotentials/pseudos/Rb_s" )
+def add_structures(_vasp, _collapse, input = "input" ):
+  from lada.potentials import Collapse
 
-    vasp = Vasp()
-    vasp.species = [K, Rb]
-    vasp.cutoff_safety
-    vasp.encut  = 1.3 * vasp.__get_encut__( vasp.species )
-    return vasp
+  for dir in  input_directories(input):
+    for structure in extract(dir, _vasp):
+      _collapse.add( structure )
+
+def create_representations(_vasp, nbatoms = 4, input = "input" ):
+  from lada.potentials import Representation
+
+  representations = []
+  for dir in  input_directories(input):
+    for structure in extract(dir, _vasp):
+      representations.append( Representation(structure, nbatoms))
+
+  return representations
+
+def main():
 
   import re
   import sys

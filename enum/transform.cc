@@ -7,6 +7,7 @@
 
 #include <crystal/compare_sites.h>
 #include <crystal/smith.h>
+#include <atat/is_int.h>
 
 #include "exceptions.h"
 #include "transform.h"
@@ -22,7 +23,9 @@ namespace LaDa
        namespace bt = boost::tuples;
        nsites_ = independents_.size();
        card_ = nsites_*_smith(0)*_smith(1)*_smith(2);
+       std::cout << "0.0\n";
        if( card_ < 2 ) return;
+       std::cout << "0.2\n";
 #      ifdef LADA_DEBUG
          if( independents_.size() != nsites_ ) 
          {
@@ -31,6 +34,7 @@ namespace LaDa
            BOOST_THROW_EXCEPTION( internal() << error_string(sstr.str()));
          }
 #      endif
+       std::cout << "1.0\n";
 
        namespace bt = boost::tuples;
        permutations_.clear();
@@ -39,14 +43,17 @@ namespace LaDa
        t_Independents :: const_iterator i_ind = independents_.begin();
        atat::rMatrix3d const rotation = _left * op * (!_left);
        bool non_trivial = false;
+       std::cout << "2.0\n";
        for(types::t_int d(0), u(card_-1); d < types::t_int(nsites_); ++d, ++i_ind)
        {
+       std::cout << "3.0\n";
          types::t_int permutated_site( d + i_ind->first );
          if( permutated_site < 0 ) permutated_site += types::t_int(nsites_);
          
          atat::rVector3d const t_nd = _left * i_ind->second;
          atat::rVector3d g;
          // loops over first _smith coordinate.
+       std::cout << "4.0\n";
          for(size_t i(0); i < _smith(0); ++i)
          {
            g(0) = i;
@@ -58,50 +65,62 @@ namespace LaDa
              for(size_t k(0); k < _smith(2); ++k, --u)
              {
                g(2) = k;
+       std::cout << "5.0\n";
                atat::rVector3d const transformed( rotation * g + t_nd );
 #              ifdef LADA_DEBUG
-                 for( size_t t(0); t < 3; ++t)
-                   if( not Fuzzy::is_zero(transformed(t) - std::floor(transformed(t)+0.3)) ) 
-                     BOOST_THROW_EXCEPTION( symmetry_not_of_supercell() );
+       std::cout << "6.0\n";
+                 if( not atat::is_integer(transformed) )
+                 {
+                   std::cerr << transformed << "\n";
+                   BOOST_THROW_EXCEPTION( symmetry_not_of_supercell() );
+                 }
+       std::cout << "7.0\n";
 #              endif
+       std::cout << "7.0\n";
                atat::iVector3d translation
                (
                  types::t_int(std::floor(transformed(0)+0.5)) % _smith(0),
                  types::t_int(std::floor(transformed(1)+0.5)) % _smith(1), 
                  types::t_int(std::floor(transformed(2)+0.5)) % _smith(2)  
                );
+       std::cout << "8.0\n";
                if( translation(0) < 0 ) translation(0) += _smith(0);
                if( translation(1) < 0 ) translation(1) += _smith(1);
                if( translation(2) < 0 ) translation(2) += _smith(2);
 
+       std::cout << "9.0\n";
                size_t const index(get_index(permutated_site, translation, _smith, card_));
                permutations_.push_back(index);
                non_trivial |= (u!=index);
+       std::cout << "10.0\n";
              } // over k
            } // over j
          } // over i
        } // over d
+       std::cout << "11.0\n";
        is_trivial_ = not non_trivial;
      }
 
      Transform :: Transform   (Crystal::SymmetryOperator const &_c, Crystal::Lattice const &_lat)
                             : Crystal::SymmetryOperator(_c)
      {
-       bool pure_translation_ = (    Fuzzy::neq(op.x[0][0], 1.0) 
-                                  or Fuzzy::neq(op.x[0][1], 0.0) 
-                                  or Fuzzy::neq(op.x[0][2], 0.0)
-                                  or Fuzzy::neq(op.x[1][0], 0.0) 
-                                  or Fuzzy::neq(op.x[1][1], 1.0) 
-                                  or Fuzzy::neq(op.x[1][2], 0.0)
-                                  or Fuzzy::neq(op.x[2][0], 0.0) 
-                                  or Fuzzy::neq(op.x[2][1], 0.0) 
-                                  or Fuzzy::neq(op.x[2][2], 1.0) );
+       bool pure_translation_ = (     Fuzzy::eq(op.x[0][0], 1.0) 
+                                  and Fuzzy::eq(op.x[0][1], 0.0) 
+                                  and Fuzzy::eq(op.x[0][2], 0.0)
+                                  and Fuzzy::eq(op.x[1][0], 0.0) 
+                                  and Fuzzy::eq(op.x[1][1], 1.0) 
+                                  and Fuzzy::eq(op.x[1][2], 0.0)
+                                  and Fuzzy::eq(op.x[2][0], 0.0) 
+                                  and Fuzzy::eq(op.x[2][1], 0.0) 
+                                  and Fuzzy::eq(op.x[2][2], 1.0) );
 
        if( pure_translation_ )
        {
+         std::cout << "pure translation ??\n";
          independents_.resize( _lat.sites.size(), t_Independent(0, _c.trans) );
          return;
        }
+         std::cout << "impure translation ??\n";
        atat::rMatrix3d const inv_cell(!_lat.cell);
        std::vector<Crystal::Lattice::t_Site> sites; sites.reserve( _lat.sites.size() );
        { // construct list of centered sites.
@@ -189,7 +208,8 @@ namespace LaDa
     boost::shared_ptr< std::vector<Transform> > create_transforms( Crystal::Lattice const &_lat )
       {
         using namespace Crystal;
-        boost::shared_ptr< std::vector<SymmetryOperator> > symops( get_symmetries(_lat) );
+        boost::shared_ptr< std::vector<SymmetryOperator> >
+          symops( get_space_group_symmetries(_lat) );
         boost::shared_ptr< std::vector<Transform> > result( new std::vector<Transform> );
         result->reserve( symops->size() );
         foreach(SymmetryOperator const &symop, *symops)

@@ -8,6 +8,9 @@
 #include <pyublas/numpy.hpp>
 #include <boost/python/class.hpp>
 #include <boost/python/tuple.hpp>
+#include <boost/numeric/ublas/io.hpp>
+
+
 #include <crystal/structure.h>
 
 #include "../collapse/collapse.h"
@@ -22,13 +25,22 @@ namespace LaDa
     typedef LaDa::atomic_potential::matrix_type matrix_type;
     typedef LaDa::atomic_potential::vector_type vector_type;
 
+//   boost::python::tuple lsq_data( Collapse const &_coll,
+//                                  pyublas::numpy_matrix<matrix_type::value_type> _mat, 
+//                                  pyublas::numpy_vector<vector_type::value_type> _vec, 
+//                                  size_t _i) 
+//   {
+//     _coll.lsq_data( _mat, _vec, _i );
+//     return boost::python::make_tuple( _mat, _vec );
+//   }
     boost::python::tuple lsq_data( Collapse const &_coll,
-                                   pyublas::numpy_matrix<matrix_type::value_type> _mat, 
-                                   pyublas::numpy_vector<vector_type::value_type> _vec, 
                                    size_t _i) 
     {
-      _coll.lsq_data( _mat, _vec, _i );
-      return boost::python::make_tuple( _mat, _vec );
+      pyublas::numpy_matrix<matrix_type::value_type> mat; 
+      pyublas::numpy_vector<vector_type::value_type> vec; 
+      _coll.lsq_data( mat, vec, _i );
+      std::cout << "here\n" << mat << "\n";
+      return boost::python::make_tuple( mat, vec );
     }
 
     pyublas::numpy_vector<vector_type::value_type> coefficients( Collapse const &_coll, size_t _i )

@@ -15,14 +15,19 @@ def allsq( _collapse, tolerance = 1e-16, maxiter=50, verbose=False ):
 
   old_energies = 0
   energies = 0
-  while( maxiter == 0 or iter < maxiter )
+  while( maxiter == 0 or iter < maxiter ):
 
     iter += 1
     old_energies = energies
 
     # Iterates over a shuffled list of directions.
-    for i in shuffle( range(_collapse.nb_coordinates) ):
+    coords = range(_collapse.nb_coordinates)
+    shuffle(coords)
+    for i in coords:
       A, b = _collapse.lsq_data(i)
+      print A
+      print len(A[0]), len(A[1]), A.shape
+
       x = numpy.linalg.solve(A, b)
       _collapse.update(x, i)
 
