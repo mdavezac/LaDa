@@ -70,13 +70,13 @@ namespace LaDa
         //! \return a pair with the number of accomplished iterations in first,
         //!         and the convergence in second.
         template< class T_MATRIX, class T_VECTOR1, class T_VECTOR2, class T_PRECOND >
-        t_Return operator()( T_MATRIX &_A, T_VECTOR1 &_x, 
+        t_Return operator()( T_MATRIX const &_A, T_VECTOR1 &_x, 
                              const T_VECTOR2 &_b, T_PRECOND &_precond ) const;
         
         //! \brief Performs a conjugate gradient squared minimization without
         //!        preconditionning.
         template< class T_MATRIX, class T_VECTOR1, class T_VECTOR2 >
-        t_Return operator()( T_MATRIX &_A, T_VECTOR1 &_x, const T_VECTOR2 &_b ) const
+        t_Return operator()( T_MATRIX const &_A, T_VECTOR1 &_x, const T_VECTOR2 &_b ) const
           { DummyPrecond p; return operator()( _A, _x, _b, p ); }
 
         bool load( const TiXmlElement& _node );
@@ -84,7 +84,7 @@ namespace LaDa
            
 
       template< class T_MATRIX, class T_VECTOR1, class T_VECTOR2, class T_PRECOND >
-        Cgs::t_Return Cgs :: operator()( T_MATRIX &_A, T_VECTOR1 &_x, 
+        Cgs::t_Return Cgs :: operator()( T_MATRIX const &_A, T_VECTOR1 &_x, 
                                          const T_VECTOR2 &_b, T_PRECOND &_precond ) const
         {
           __DEBUGTRYBEGIN

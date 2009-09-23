@@ -94,6 +94,8 @@ namespace LaDa
           str_iterator begin( size_t _i ) const;
           //! returns iterator to end of structures, for variable \a _i.
           str_iterator end( size_t _i ) const;
+          //! Number of structures.
+          size_t size() const { return weights_.size(); }
 
         protected:
           //! Coordinates for each structure and representation.

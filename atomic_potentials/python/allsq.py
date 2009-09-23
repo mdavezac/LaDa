@@ -22,7 +22,7 @@ def allsq( _collapse, tolerance = 1e-16, maxiter=50, verbose=False ):
 
     # Iterates over a shuffled list of directions.
     coords = range(_collapse.nb_coordinates)
-    shuffle(coords)
+#   shuffle(coords)
     for i in coords:
       A, b = _collapse.lsq_data(i)
       print A

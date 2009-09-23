@@ -39,7 +39,6 @@ namespace LaDa
       pyublas::numpy_matrix<matrix_type::value_type> mat; 
       pyublas::numpy_vector<vector_type::value_type> vec; 
       _coll.lsq_data( mat, vec, _i );
-      std::cout << "here\n" << mat << "\n";
       return boost::python::make_tuple( mat, vec );
     }
 

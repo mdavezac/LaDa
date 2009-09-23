@@ -34,11 +34,13 @@ def input_directories(_filename):
       yield dir 
 
 def add_structures(_vasp, _collapse, input = "input" ):
-  from lada.potentials import Collapse
+  from lada.potentials import Collapse, Representation
 
   for dir in  input_directories(input):
     for structure in extract(dir, _vasp):
       _collapse.add( structure )
+      print Representation(structure, 4)
+      break
 
 def create_representations(_vasp, nbatoms = 4, input = "input" ):
   from lada.potentials import Representation
