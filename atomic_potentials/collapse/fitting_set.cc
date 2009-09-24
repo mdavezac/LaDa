@@ -61,14 +61,12 @@ namespace LaDa
         LADA_ASSERT( _representation.size(), "Empty representation.\n")
         LADA_ASSERT( _representation.nb_coords(), "Empty representation.\n")
         // adds types.
-        std::cout << "csize: " << coordinates_.size() << "\n";
         if( coordinates_.size() == 0 ) coordinates_.resize( _representation.nb_coords() );
         t_Coordinates::iterator i_coord = coordinates_.begin();
         t_Coordinates::iterator const i_coord_end = coordinates_.end();
         for(size_t i(0); i_coord != i_coord_end; ++i_coord, ++i)
         { 
           i_coord->resize( i_coord->size()+1 );
-          std::cout << "str size: " << i_coord->size() << "\n";
           t_Coordinates::value_type::value_type& coord_container = i_coord->back();
           Representation::const_iterator i_rep = _representation.begin();
           Representation::const_iterator const i_rep_end = _representation.end();

@@ -59,7 +59,7 @@ namespace LaDa
 //       }
 //
       boost::python::tuple pcgs( t_Matrix const & _matrix,
-                                 t_Vector &_x,
+                                 t_Vector _x,
                                  t_Vector const &_b,
                                  const types::t_real _tolerance,
                                  const size_t _itermax,
@@ -74,14 +74,16 @@ namespace LaDa
         cgs.itermax = _itermax;
 
         // Performs cgs.
+        std::cout << "1X: " << _x << "\n";
         LaDa::Fitting::Cgs::t_Return result = cgs( _matrix, _x, _b );
+        std::cout << "2X: " << _x << "\n";
 
         // constructs output and returns.
         return bp::make_tuple( result.first, result.second );
       }
 
       boost::python::tuple plsq( t_Matrix const &_matrix, 
-                                 t_Vector &_x,
+                                 t_Vector _x,
                                  t_Vector const &_b,
                                  const types::t_real _tolerance,
                                  const size_t _itermax,
@@ -126,11 +128,10 @@ namespace LaDa
           bp::arg("itermax") = 50,
           bp::arg("verbosity") = false
         ),
-        "Solves the equation A*x=b, with A an input matrix, b an input vector,\n"
-        "and x the starting guess vector.\n The number of rows of A and the size\n"
-        "of the vectors x and b must match. A is encoded like a C matrix. Returns\n"
-        "a tuple (x, residual, iteration), where x is the solution vector and\n"
-        "iteration the number of iterations performed."
+        "Solves the equation A*x=b, with A an input matrix, b an input vector, "
+        "and x the starting guess vector.\n The number of rows of A and the size "
+        "of the vectors x and b must match. A is encoded like a C matrix.\nReturns "
+        "a tuple (residual, iteration)."
       );
     }
     void expose_llsq()
@@ -148,10 +149,9 @@ namespace LaDa
           bp::arg("itermax") = 50,
           bp::arg("verbosity") = false
         ),
-        "Solves the linear least-square problem, with A a matrix of measurement\n"
-        "parameters, x a vector of coefficents, and b a vector of measurements.\n"
-        "Returns a tuple (x, residual, iteration), where x is the solution vector\n"
-        "and iteration the number of iterations performed. This method uses\n"
+        "Solves the linear least-square problem, with A a matrix of measurement"
+        " parameters, x a vector of coefficents, and b a vector of measurements.\n"
+        "Returns a tuple (residual, iteration). This method uses "
         "LaDa.cgs to obtain the solution."
       );
     }

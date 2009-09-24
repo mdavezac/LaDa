@@ -108,7 +108,6 @@ namespace LaDa
 
         typedef atomic_potential::numeric_type numeric_type;
         numeric_type (*ptr_func)(numeric_type, T_TYPE) = &std::pow;
-        std::cout << "pow: " << pow << "\n";
         _func.push_back( bl::bind(ptr_func, bl::_1, bl::constant(_pow)), coefs);
       }
 

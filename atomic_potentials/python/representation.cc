@@ -9,10 +9,10 @@
 #include <complex>
 
 #include <boost/python/class.hpp>
+#include <boost/python/str.hpp>
 
 #include <crystal/structure.h>
 
-#define LADA_PYTHON_STD_VECTOR_NOPRINT
 #include <python/std_vector.hpp>
 #include <python/misc.hpp>
 
@@ -54,7 +54,7 @@ namespace LaDa
       bool first_;
     };
 
-    RepresentationIter create_iter( atomic_potential::Representation const &_rep )
+    RepresentationIter create_iter( Representation const &_rep )
       { return RepresentationIter(_rep); }
 
     Representation::const_iterator::reference getitem( Representation const& _rep, size_t _i)
@@ -71,6 +71,10 @@ namespace LaDa
       return _rep[_i];
     }
 
+    std::ostream& operator<<( std::ostream& _stream,
+                              atomic_potential::VariableSet::t_Variable const &_var )
+      { return atomic_potential::operator<<(_stream, _var); }
+
     void expose_representation()
     {
       namespace bp = boost::python;
@@ -81,7 +85,8 @@ namespace LaDa
         "Coordinate and specie variable from a representations.",
         bp::init<Variable const&>() 
       ).add_property("coordinate", &Variable::first)
-       .add_property("specie", &Variable::second);
+       .add_property("specie", &Variable::second)
+       .def("__str__", &tostream<atomic_potential::VariableSet::t_Variable>);
       
       typedef LaDa::atomic_potential::VariableSet::t_Variables t_Variables;
       expose_vector<t_Variables::value_type>

@@ -161,7 +161,6 @@ namespace LaDa
             // loop over structure representations.
             for(; i_rep != i_rep_end; ++i_rep, ++i_rep_val )
             {
-              std::cout << "spec: " << i_rep.specie() << "\n";
               numeric_type const rep_weight(i_rep.weight() * str_weight);
         
               typedef t_Values::const_str_iterator::const_rep_iterator
@@ -184,22 +183,21 @@ namespace LaDa
                 for(; i_func != i_func_end; ++i_func, i+=Functions::N )
                   G( i + i_rep.specie() ) += (*i_func) * factor_i;
               } // loop over ranks
-              std::cout << "G: " << G << "\n";
             } // loop over representations
         
             // now adds to A matrix and b vector.
             for(size_t i(0); i < vec_size; ++i )
             {
-              for(size_t j(0); j < vec_size; ++j)
+              for(size_t j(i); j < vec_size; ++j)
                 _matrix(i,j) += G(i) * G(j) * str_weight * nb_structures;
               _vector(i) += i_str.energy() * G(i) * str_weight * nb_structures;
             } 
           } // loop over structures.
         
-//         // creates second half of matrix.
-//         for( size_t i(0); i < vec_size; ++i )
-//           for( size_t j(i+1); j < vec_size; ++j )
-//             _matrix(j,i) = _matrix(i,j);
+          // creates second half of matrix.
+          for( size_t i(1); i < vec_size; ++i )
+            for( size_t j(0); j < i; ++j )
+              _matrix(i,j) = _matrix(j,i);
         }
     } // namespace collapse
   } // namespace atomic_potential

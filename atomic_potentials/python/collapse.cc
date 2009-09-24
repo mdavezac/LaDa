@@ -45,13 +45,6 @@ namespace LaDa
     pyublas::numpy_vector<vector_type::value_type> coefficients( Collapse const &_coll, size_t _i )
       { return _coll.coefficients(_i); }
 
-    void update( Collapse &_coll, pyublas::numpy_vector<vector_type::value_type> _vec, size_t _i )
-    {
-      _coll.coefficients(_i) = _vec;
-      _coll.update(_i); 
-    }
-
-
     void expose_collapse()
     {
       namespace bp = boost::python;
@@ -63,14 +56,15 @@ namespace LaDa
         bp::init<atomic_potential::SumOfSeparables&>() 
       ).def(bp::init<Collapse const&>())
        .def("lsq_data", &lsq_data)
-       .def("update", &update)
+       .def("update", &Collapse::update)
        .def("add", &Collapse::add)
        .def("reassign", &Collapse::reassign)
        .def("coefficients", &coefficients)
        .add_property("values", &Collapse::values_)
        .add_property("scales", &Collapse::scaling_factors_)
        .add_property("fitting_set", &Collapse::fitting_set_)
-       .add_property("nb_coordinates", &Collapse::nb_coordinates);
+       .add_property("nb_coordinates", &Collapse::nb_coordinates)
+       .add_property("convergence", &Collapse::convergence);
     }
 
   }

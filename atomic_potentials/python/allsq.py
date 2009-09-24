@@ -3,38 +3,45 @@
 #
 #! /usr/bin/python
 
-def allsq( _collapse, tolerance = 1e-16, maxiter=50, verbose=False ):
+def allsq( _collapse, tolerance = 1e-14, maxiter=50, verbose=False ):
   """ Alternating least-square-fit function.
   """ 
   import numpy
   from random import shuffle
   from math import fabs as abs
+  from lada.minimizer import cgs
 
   N = _collapse.nb_coordinates;
-  iter = 0
+  outer_iter = 0
 
   old_energies = 0
   energies = 0
-  while( maxiter == 0 or iter < maxiter ):
+  while( maxiter == 0 or outer_iter < maxiter ):
 
-    iter += 1
+    if verbose: print "allsq iteration: ", outer_iter
+    outer_iter += 1
     old_energies = energies
 
     # Iterates over a shuffled list of directions.
     coords = range(_collapse.nb_coordinates)
-#   shuffle(coords)
+    shuffle(coords)
     for i in coords:
+      if verbose: print "  _ coordinate: ", i
       A, b = _collapse.lsq_data(i)
-      print A
-      print len(A[0]), len(A[1]), A.shape
+      x = _collapse.coefficients(i)
+      print x
+      res, iter = cgs(A, x, b, tolerance = tolerance)
+      print x
+      if verbose: print res, iter
+      _collapse.update(i)
 
-      x = numpy.linalg.solve(A, b)
-      _collapse.update(x, i)
-
-    energies = collapse.convergence()
+    
+    energies = _collapse.convergence
+    if verbose: print "  convergence: %18.8f %18.8f" % ( energies, energies - old_energies )
     if abs(energies - old_energies) < tolerance: break
 
-  return iter, abs(energies - old_energies)
+  if verbose: print "Final convergence: %18.8f %18.8f" % ( energies, energies - old_energies )
+  return outer_iter, abs(energies - old_energies)
 
 
 
