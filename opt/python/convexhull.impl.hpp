@@ -11,6 +11,8 @@
 #include <boost/python/object.hpp>
 #include <boost/python/make_constructor.hpp>
 #include <boost/python/return_internal_reference.hpp>
+#include <boost/python/return_value_policy.hpp>
+#include <boost/python/with_custodian_and_ward.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <string>
 
@@ -28,8 +30,8 @@ namespace LaDa
         typedef LaDa::opt::ConvexHull::FakeObject< T_TYPE >   t_FakeObject;
         typedef LaDa::opt::ConvexHull::Base< t_FakeObject > t_CHBase;
         
-        static void add2( t_CHBase &_ch, T_TYPE const &_t, types::t_real _x,
-                         types::t_real _energy )
+        static void add( t_CHBase &_ch, T_TYPE const &_t, types::t_real _x,
+                        types::t_real _energy )
         {
           t_FakeObject fake( _t );
           LaDa::opt::ConvexHull::NullObject::x = _x;
@@ -41,7 +43,7 @@ namespace LaDa
         static t_range iter(t_CHBase const &_ch )
             { return t_range(_ch.begin_vertex(), _ch.end_vertex(), true); }
         static t_range& iter2(t_range &_this) { return _this; }
-        boost::python::tuple next(t_range &_this)
+        static boost::python::tuple next(t_range &_this)
         {
           namespace bp = boost::python;
           namespace bt = boost::tuples;
@@ -51,12 +53,12 @@ namespace LaDa
             ++bt::get<0>(_this);
             if( bt::get<0>(_this) == bt::get<1>(_this) )
             {
-              PyErr_SetString(  PyExc_StopIteration, "End-of-range in convex-hull iteration." )
+              PyErr_SetString(  PyExc_StopIteration, "End-of-range in convex-hull iteration." );
               bp::throw_error_already_set();
-              --cit_;
+              --bt::get<0>(_this);
             }
           }
-          return bp::make_tuple( bt::get<0>(_this)->object,
+          return bp::make_tuple( bt::get<0>(_this)->object.object,
                                  bt::get<0>(_this)->x, 
                                  bt::get<0>(_this)->y );
         }
@@ -99,9 +101,8 @@ namespace LaDa
           .def( "__init__", bp::make_constructor( copy<T_TYPE> ) )
           .def( "__init__", bp::make_constructor( empty<T_TYPE> ) )
           .def( "__call__", &PythonConvexHull<T_TYPE>::t_CHBase::evaluate )
-          .def( "add", &PythonConvexHull<T_TYPE>::add1 )
-          .def("__iter__", &PythonConvexHull<T_TYPE>::iter,
-               bp::return_value_policy< bp::custodian_and_ward<1, 0> >())
+          .def( "add", &PythonConvexHull<T_TYPE>::add )
+          .def("__iter__", &PythonConvexHull<T_TYPE>::iter)
           .def( "__str__", &PythonConvexHull<T_TYPE>::t_CHBase::print );
 
       bp::class_< typename PythonConvexHull<T_TYPE>::t_range >( (_name+"_iter").c_str()  )
