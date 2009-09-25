@@ -296,7 +296,7 @@ namespace LaDa
           //! \warning Technically, one should not expect orderto preserved in
           //! lists. Nonetheless, this implementation does... The advantage of
           //! using a list is that we can insert objects in amortized time.
-          typedef std::list< Vertex<t_Object> > t_Vertices; 
+          typedef std::list<t_Vertex> t_Vertices; 
           //! \brief HalfLine collection type
           //! \details Just as t_Vertices, this is a list since half-lines are
           //! expected to be added and removed relatively often as the convex-hull is
@@ -305,6 +305,8 @@ namespace LaDa
           //! lists. Nonetheless, this implementation does... The advantage of
           //! using a list is that we can insert objects in amortized time.
           typedef std::list< HalfLine > t_HalfLines;
+          //! Iterator to vertices.
+          typedef typename t_Vertices :: const_iterator const_iterator;
 
         protected:
           t_Vertices vertices; //!< Vertex collection
@@ -340,11 +342,9 @@ namespace LaDa
           //! removes all vertices
           void clear() { vertices.clear(); }
           //! returns an iterator to the beginning of the Vertex collection
-          typename std::list< t_Vertex > :: const_iterator begin_vertex() const
-            { return vertices.begin(); }
+          const_iterator begin_vertex() const { return vertices.begin(); }
           //! returns an iterator to the end of the Vertex collection
-          typename std::list< t_Vertex > :: const_iterator end_vertex() const
-            { return vertices.end(); }
+          const_iterator end_vertex() const { return vertices.end(); }
           //! \brief Loads the convex-hull from XML
           //! \param _node  XML node from which to load the Vertex
           //! \param _op a functor capable of loading a t_Object from XML

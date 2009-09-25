@@ -31,7 +31,7 @@ def allsq( _collapse, tolerance = 1e-14, maxiter=50, verbose=False ):
       x = _collapse.coefficients(i)
       print x
       res, iter = cgs(A, x, b, tolerance = tolerance)
-      print x
+      print x, "\n", _collapse.coefficients(i)
       if verbose: print res, iter
       _collapse.update(i)
 
