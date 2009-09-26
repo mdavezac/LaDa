@@ -94,7 +94,6 @@ namespace LaDa
        void Neighbors :: create_neighbors_list_(Crystal::TStructure<T_TYPE> const& _structure)
        {
          const types::t_int N( _structure.atoms.size() );
-         const types::t_int umax = nmax / _structure.atoms.size() + 1;
          neighbors_.clear();
          size_t size(0);
          
@@ -113,6 +112,7 @@ namespace LaDa
          else if( list_max_size <= 78 ) list_max_size = 80;
          else if( list_max_size <= 86 ) list_max_size = 88;
          else list_max_size *= 2;
+         const types::t_int umax = list_max_size / _structure.atoms.size() + 1;
          for(; i_atom != i_atom_end; ++i_atom, ++neighbor.index ) 
          {
            atat::rVector3d const frac( inv_cell * (i_atom->pos - origin) );

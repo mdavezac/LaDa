@@ -63,6 +63,7 @@
 #   define _MAIN_ALLOY_LAYERS_EXTRAS_ 1
 
       ("printg,g", "Print genotype when printing invidivual." )
+      ("printvc", "Print vbm, cbm when printing invidivual." )
 
 # elif _MAIN_ALLOY_LAYERS_EXTRAS_ == 1
     // reads program options.
@@ -70,6 +71,7 @@
 #   define _MAIN_ALLOY_LAYERS_EXTRAS_ 2
 
       const bool print_genotype = vm.count("printg") > 0;
+      const bool print_vbmcbm = vm.count("printvc") > 0;
    //  std::cout << "Bitstring genotype will"
    //            << ( print_genotype ? " ": " NOT " )
    //            << " be printed.\n";
@@ -137,6 +139,19 @@
 #   undef _MAIN_ALLOY_LAYERS_EXTRAS_
 #   define _MAIN_ALLOY_LAYERS_EXTRAS_ 5
     if( print_genotype ) PPFactory::genotype( ga.evaluator );
+    if( print_vbmcbm )
+    {
+      typedef t_Individual :: t_IndivTraits :: t_Object t_Object;
+      t_Object :: connect_print
+      ( 
+        bl::_1 << bl::constant( "VBM: ") 
+               << bl::bind( &t_Object::vbm, bl::_2 )
+               << bl::constant( " - " )
+               << bl::constant( "CBM: ") 
+               << bl::bind( &t_Object::cbm, bl::_2 )
+               << bl::constant( " - " )
+      );
+    }
     PPFactory::read_physical_properties( properties_factory, input );
     ga.checkpoints.connect_updater( boost::bind( &reference_updater, _1, 
                                                  boost::ref( ga.evaluator.bandgap ) ) );
