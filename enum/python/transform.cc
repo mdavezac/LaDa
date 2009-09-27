@@ -50,6 +50,24 @@ namespace LaDa
           bp::throw_error_already_set();
           return boost::shared_ptr< std::vector<enumeration::Transform> >();
         }
+        catch(enumeration::symmetry_not_of_supercell &_e)
+        {
+          std::ostringstream sstr;
+          sstr << "Rotation+Translation does not leave the supercell invariant.\n"
+               << boost::diagnostic_information(_e);
+          PyErr_SetString(PyExc_RuntimeError, sstr.str().c_str());
+          bp::throw_error_already_set();
+          return boost::shared_ptr< std::vector<enumeration::Transform> >();
+        }
+        catch(enumeration::internal &_e)
+        {
+          std::ostringstream sstr;
+          sstr << "Internal error while creating transforms: \n"
+               << boost::diagnostic_information(_e);
+          PyErr_SetString(PyExc_RuntimeError, sstr.str().c_str());
+          bp::throw_error_already_set();
+          return boost::shared_ptr< std::vector<enumeration::Transform> >();
+        }
         catch(boost::exception &_e)
         {
           std::ostringstream sstr;
@@ -72,12 +90,20 @@ namespace LaDa
                atat::iVector3d const& _smith)
     {
       try { _self.init(_left, _smith); }
-      catch(enumeration::symmetry_not_of_supercell &_e)
+      catch(enumeration::internal &_e)
+      {
+        std::ostringstream sstr;
+        sstr << "Internal error while creating transform: \n"
+             << boost::diagnostic_information(_e);
+        PyErr_SetString(PyExc_RuntimeError, sstr.str().c_str());
+        bp::throw_error_already_set();
+        return;
+      }
+      catch(enumeration::symmetry_not_of_supercell const & _e)
       {
         std::ostringstream sstr;
         sstr << "Rotation+Translation does not leave the supercell invariant.\n"
              << boost::diagnostic_information(_e);
-        std::cout << "wtf\n";
         PyErr_SetString(PyExc_RuntimeError, sstr.str().c_str());
         bp::throw_error_already_set();
         return;
@@ -88,6 +114,12 @@ namespace LaDa
         sstr << "Internal error found while initializing enumeration.Transform object.\n"
              << boost::diagnostic_information(_e);
         PyErr_SetString(PyExc_RuntimeError, sstr.str().c_str());
+        bp::throw_error_already_set();
+        return;
+      }
+      catch(std::exception &_e)
+      {
+        PyErr_SetString(PyExc_RuntimeError, _e.what());
         bp::throw_error_already_set();
         return;
       }

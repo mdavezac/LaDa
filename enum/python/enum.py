@@ -49,16 +49,22 @@ def create_lattice():
 
   lattice = crystal.Lattice()
 
-  lattice.cell = atat.rMatrix3d( [ [           0.5,          0.5,         0 ], \
-                                   [  -sqrt(3)/2.0,  sqrt(3)/2.0,         0 ], \
-                                   [             0,            0,         1 ] ] )
+  cell1 = atat.rMatrix3d( [ [  1.0,  0.5,  0.0 ], \
+                            [  0.0,  0.5*sqrt(3.0),  0.0 ], \
+                            [  0.0,  0.0,  1.0 ] ] )
+  cell2 = atat.rMatrix3d( [ [  0.5,  0.5,  0.0 ], \
+                            [  -0.5*sqrt(3.0),  0.5*sqrt(3.0),  0.0 ], \
+                            [  0.0,  0.0,  1 ] ] )
+  lattice.cell = cell1
   lattice.scale = 4.42
 
-  lattice.sites.append( crystal.Site( (0, 0,0) ) )
+  lattice.sites.append( crystal.Site( (0., 0, 0) ) )
   lattice.sites[0].type = crystal.StringVector( [ "K", "Rb" ] );
-  lattice.sites.append( crystal.Site( (0, -2.0/sqrt(12), 0.5) ) )
+  lattice.sites.append( crystal.Site( (0.5, sqrt(3)/6.0, 0.5) ) )
   lattice.sites[1].type = crystal.StringVector( [ "K", "Rb" ] );
-  lattice.find_space_group()
+
+  lattice.sites[0].pos = atat.rVector3d(0.5,  0.5/sqrt(3.0), 0.25)
+  lattice.sites[1].pos = atat.rVector3d(0.5,  -0.5/sqrt(3.0), 0.75)
 
   return lattice
 
@@ -79,7 +85,7 @@ def all_symmetrics( _x, _trans, _label, _rotations, _fl ):
 
 
 # def main():
-from lada import enumeration, atat
+from lada import enumeration, atat, crystal
 from math import pow
 import time
 
@@ -89,7 +95,8 @@ species = ("K", "Rb")
 
 nconf = 1
 t0 = time.time()
-for n in range(2, 5):
+for n in range(2, 6):
+  npern = 0
   supercells = enumeration.find_all_cells(lattice, n)
   smiths = enumeration.create_smith_groups(lattice, supercells)
   nflavors = enumeration.count_flavors( lattice )
@@ -125,7 +132,6 @@ for n in range(2, 5):
       cell = lattice.cell * supercell.hermite
       specialized = []
       for transform in transforms:
-        if transform.trans != atat.rVector3d(0,0,0): print transform.trans
         if not transform.invariant(cell): continue
         transform.init(supercell.transform, smith.smith)
         if not transform.is_trivial:
@@ -155,11 +161,11 @@ for n in range(2, 5):
               if v == x: continue
               specialized_database[v] = False
         if specialized_database[x]: # mine.append(x)
-          print "%5i %2i " % (nconf, n),
-          for i in range(0,3):
-            for j in range(0,i+1):
-              print "%2i " % (supercell.hermite[i,j]),
-          print "%10i %20s " % (int(x), enumeration.as_bitstring(x, flavorbase))
+        # print "%5i %5i %2i " % (nconf, npern, n),
+        # for i in range(0,3):
+        #   for j in range(0,i+1):
+        #     print "%2i " % (supercell.hermite[i,j]),
+        # print "%10i %20s " % (int(x), enumeration.as_bitstring(x, flavorbase))
         
 #     gus = set(find_smith_set(n, supercell.hermite));
 #     mine = set(mine)
@@ -179,6 +185,8 @@ for n in range(2, 5):
 #           is_not_there = False
 #           break
 #       if is_not_there: print "M", x, enumeration.as_bitstring(x, flavorbase)
-        nconf+=1 
+          npern+=1
+          nconf+=1 
+  print n, npern, len(supercells)
 t1 = time.time()
 print "Took ", (t1 -t0)/60, "mn to complete."

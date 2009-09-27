@@ -5,7 +5,7 @@
 if DOPYTHON
 include $(top_srcdir)/Files
 AM_CPPFLAGS = -I $(top_srcdir) @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
-      	@BOOST_CXXFLAGS@ -I@PYTHON_INCLUDE_DIR@ @MINUIT_CFLAGS@ @GSL_CFLAGS@
+      	@BOOST_CXXFLAGS@ -I@PYTHON_INCLUDE_DIR@ @MINUIT_CFLAGS@ @GSL_CFLAGS@ @NUMPY_CXXFLAGS@
 AM_LDFLAGS = 
 
 install-exec-local: ../../python/libpython_lada.la
