@@ -93,7 +93,11 @@ namespace LaDa
           template<class T_MATRIX, class T_VECTOR>
             void lsq_data(T_MATRIX& _matrix, T_VECTOR& _vector, size_t _i) const;
           //! Updates coordinate \a _i.
-          void update(size_t _i) { values_.update(coefficients_[_i], fitting_set_, _i); }
+          void update(size_t _i, vector_type const &_x)
+          { 
+            coefficients_[_i] = _x;
+            values_.update(coefficients_[_i], fitting_set_, _i);
+          }
           //! Adds a structure to the fitting set.
           void add(Crystal::TStructure<std::string> const &_structure);
           //! Reassigns coefficients.

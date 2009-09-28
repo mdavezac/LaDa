@@ -74,12 +74,10 @@ namespace LaDa
         cgs.itermax = _itermax;
 
         // Performs cgs.
-        std::cout << "1X: " << _x << "\n";
         LaDa::Fitting::Cgs::t_Return result = cgs( _matrix, _x, _b );
-        std::cout << "2X: " << _x << "\n";
 
         // constructs output and returns.
-        return bp::make_tuple( result.first, result.second );
+        return bp::make_tuple( _x, result.first, result.second );
       }
 
       boost::python::tuple plsq( t_Matrix const &_matrix, 
@@ -108,7 +106,7 @@ namespace LaDa
                    );
 
         // constructs output and returns.
-        return bp::make_tuple( result.first, result.second );
+        return bp::make_tuple( _x, result.first, result.second );
       }
 
     } // namespace details

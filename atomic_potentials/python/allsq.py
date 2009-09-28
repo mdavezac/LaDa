@@ -29,11 +29,9 @@ def allsq( _collapse, tolerance = 1e-14, maxiter=50, verbose=False ):
       if verbose: print "  _ coordinate: ", i
       A, b = _collapse.lsq_data(i)
       x = _collapse.coefficients(i)
-      print x
-      res, iter = cgs(A, x, b, tolerance = tolerance)
-      print x, "\n", _collapse.coefficients(i)
+      x, res, iter = cgs(A, x, b, tolerance = tolerance)
+      _collapse.update(i, x)
       if verbose: print res, iter
-      _collapse.update(i)
 
     
     energies = _collapse.convergence
