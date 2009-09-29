@@ -77,7 +77,7 @@ namespace LaDa
           {
             LADA_ASSERT( functions_.size() == coefficients_.size(), "Incoherent containers.\n" ) 
   
-            result_type result(1);
+            result_type result(0);
             t_Functions :: const_iterator i_func( functions_.begin() );
             t_Functions :: const_iterator const i_func_end( functions_.end() );
             t_Coefficients :: const_iterator i_coef( coefficients_.begin() );

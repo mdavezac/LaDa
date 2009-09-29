@@ -54,7 +54,6 @@ namespace LaDa
             result_type result( (*i_func)(*i_x) );
             for(++i_func, ++i_x; i_func != i_func_end; ++i_func, ++i_x)
               result *= (*i_func)(*i_x);
-            std::cout << result << "\n";
             return result;
           }
 
