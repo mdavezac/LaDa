@@ -3,12 +3,12 @@
 #
 #! /usr/bin/python
 
-def allsq( _collapse, tolerance = 1e-14, maxiter=50, verbose=False ):
+def allsq( _collapse, tolerance = 1e-14, itermax=50, verbose=False ):
   """ Alternating least-square-fit function.
   """ 
   import numpy
   from random import shuffle
-  from math import fabs as abs
+  from math import fabs as abs, sqrt
   from lada.minimizer import cgs
 
   N = _collapse.nb_coordinates;
@@ -16,7 +16,7 @@ def allsq( _collapse, tolerance = 1e-14, maxiter=50, verbose=False ):
 
   old_energies = 0
   energies = 0
-  while( maxiter == 0 or outer_iter < maxiter ):
+  while( itermax == 0 or outer_iter < itermax ):
 
     if verbose: print "allsq iteration: ", outer_iter
     outer_iter += 1
@@ -26,7 +26,7 @@ def allsq( _collapse, tolerance = 1e-14, maxiter=50, verbose=False ):
     coords = range(_collapse.nb_coordinates)
     shuffle(coords)
     for i in coords:
-      if verbose: print "  _ coordinate: ", i
+      if verbose: print "  _ coordinate: ", i,
       A, b = _collapse.lsq_data(i)
       x = _collapse.coefficients(i)
       x, res, iter = cgs(A, x, b, tolerance = tolerance)

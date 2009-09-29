@@ -30,6 +30,7 @@ namespace LaDa
 {
   namespace Python
   {
+    namespace bp = boost::python;
     typedef atomic_potential::Functions Functions;
 
     size_t getN () { return Functions::N; }
@@ -38,17 +39,16 @@ namespace LaDa
     {
       typedef Functions::arg_type::first_type arg_type;
       typedef Functions::result_type result_type;
-      Function( boost::python::object const& _c ) : object(_c) {}
+      Function( bp::object const& _c ) : object(_c) {}
       Function( Function const& _c ) : object(_c.object) {}
       result_type operator()( arg_type const &_arg )
-        { return boost::python::extract<result_type>( object(_arg) ); }
-      boost::python::object object;
+        { return bp::extract<result_type>( object(_arg) ); }
+      bp::object object;
     };
 
-    bool extract_tuple( boost::python::tuple const &_tuple,
+    bool extract_tuple( bp::tuple const &_tuple,
                         Functions::t_Coefficient _coefs[] )
     {
-      namespace bp = boost::python;
       if( not bp::len( _tuple ) == Functions::N )
       {
         PyErr_SetString
@@ -75,10 +75,9 @@ namespace LaDa
       return true;
     }    
     void  push_back_python_callable( Functions &_func, 
-                                     boost::python::object const &_object, 
-                                     boost::python::tuple const &_tuple )
+                                     bp::object const &_object, 
+                                     bp::tuple const &_tuple )
     {    
-      namespace bp = boost::python;
       Functions::t_Coefficient coefs[Functions::N];
       if( not extract_tuple(_tuple, coefs)) { bp::throw_error_already_set(); return; }
       
@@ -98,9 +97,8 @@ namespace LaDa
 
     template<class T_TYPE>
       void push_back_pow( Functions &_func, T_TYPE _pow, 
-                          boost::python::tuple const &_tuple )
+                          bp::tuple const &_tuple )
       {
-        namespace bp = boost::python;
         namespace bl = boost::lambda;
 
         Functions::t_Coefficient coefs[Functions::N];
@@ -114,9 +112,8 @@ namespace LaDa
     atomic_potential::numeric_type constant( Functions::arg_type::first_type const& )
       { return 1e0; }
 
-    void push_back_constant(Functions &_func, boost::python::tuple const &_tuple)
+    void push_back_constant(Functions &_func, bp::tuple const &_tuple)
     {
-      namespace bp = boost::python;
 
       Functions::t_Coefficient coefs[Functions::N];
       if( not extract_tuple(_tuple, coefs)) { bp::throw_error_already_set(); return; }
@@ -124,41 +121,25 @@ namespace LaDa
       _func.push_back( &constant, coefs);
     }
 
-    struct FunctionsIter
+    typedef boost::tuples::tuple< Functions::iterator, 
+                                  Functions::iterator,
+                                  bool > t_IterTuple;
+    t_IterTuple& iter_self( t_IterTuple & _this ) { return _this; }
+    t_IterTuple iter( Functions & _this )
+      { return t_IterTuple(_this.begin(), _this.end(), true); }
+    Functions::iterator::reference next( t_IterTuple & _this )
     {
-      FunctionsIter   ( atomic_potential::Functions &_sep )
-                    : first_(true), cit_(_sep.begin()), cit_end_(_sep.end()) {}
-      FunctionsIter   ( FunctionsIter const &_c )
-                    : cit_(_c.cit_), cit_end_(_c.cit_end_), first_(_c.first_) {}
-
-      FunctionsIter &iter()  { return *this; }
-      atomic_potential::Functions::iterator::reference next()
+      namespace bt = boost::tuples;
+      if( bt::get<2>(_this) ) bt::get<2>(_this) = false;
+      else if( bt::get<0>(_this) != bt::get<1>(_this) ) ++bt::get<0>(_this);
+      if( bt::get<0>(_this) == bt::get<1>(_this) )
       {
-        namespace bp = boost::python;
-        if( first_ ) first_ = false; 
-        else 
-        {
-          ++cit_;
-          if( cit_ == cit_end_ )
-          {
-            PyErr_SetString
-            (
-              PyExc_StopIteration, 
-              "Error while computing transform to smith normal form.\n" 
-            );
-            bp::throw_error_already_set();
-            --cit_;
-          }
-        }
-        return *cit_;
+        PyErr_SetString( PyExc_StopIteration, "End-of-range.\n");
+        bp::throw_error_already_set();
+        return Functions::iterator::reference();
       }
-
-      atomic_potential::Functions::iterator cit_;
-      atomic_potential::Functions::iterator cit_end_;
-      bool first_;
-    };
-    FunctionsIter create_functionsiter( atomic_potential::Functions & _ss )
-      { return FunctionsIter(_ss); }
+      return *bt::get<0>(_this);
+    }
 
     Functions::result_type call_1( Functions::iterator::reference const &_ref,
                                    Functions::arg_type::first_type _a )
@@ -167,9 +148,8 @@ namespace LaDa
                                    Functions::arg_type const &_a )
       { return _ref(_a); }
     Functions::result_type call_3( Functions::iterator::reference const &_ref,
-                                   boost::python::tuple const &_a )
+                                   bp::tuple const &_a )
     {
-      namespace bp = boost::python;
       Functions::arg_type a;
       if( not bp::len( _a ) == 2 )
       {
@@ -203,7 +183,6 @@ namespace LaDa
     atomic_potential::numeric_type getitem( Functions::iterator::reference const &_ref,
                                             size_t _i )
       {
-        namespace bp = boost::python;
         if( _i >= Functions::N )
         {
           PyErr_SetString( PyExc_IndexError, "Coefficient index out of range.\n");
@@ -216,7 +195,6 @@ namespace LaDa
     atomic_potential::numeric_type setitem( Functions::iterator::reference &_ref,
                                             size_t _i, atomic_potential::numeric_type _a )
       {
-        namespace bp = boost::python;
         if( _i >= Functions::N )
         {
           PyErr_SetString( PyExc_IndexError, "Coefficient index out of range.\n");
@@ -231,8 +209,6 @@ namespace LaDa
     
     void expose_functions()
     {
-      namespace bp = boost::python;
-
       bp::scope scope = bp::class_<Functions>("Functions", "A function of a single coordinate.")
         .def(bp::init<Functions const&>())
         .def("__call__", &Functions::operator())
@@ -242,16 +218,16 @@ namespace LaDa
         .def("append_pow", &push_back_pow<int>)
         .def("append_constant", &push_back_constant)
         .def("__str__", &tostream<Functions>)
-        .def("__iter__", &create_functionsiter)
+        .def("__iter__", &iter, bp::with_custodian_and_ward_postcall<1,0>())
         .add_static_property("N", &getN);
 
-      bp::class_<FunctionsIter>
+      bp::class_<t_IterTuple>
       (
         "iterator", 
         "An iterator to functions.",
-        bp::init<FunctionsIter const&>()
-      ).def("__iter__", &FunctionsIter::iter, bp::return_internal_reference<1>() )
-       .def("next", &FunctionsIter::next);
+        bp::no_init
+      ).def("__iter__", &iter_self, bp::return_internal_reference<1>())
+       .def("next", &next, bp::with_custodian_and_ward_postcall<1,0>());
  
       bp::class_<Functions::iterator::reference>
       (

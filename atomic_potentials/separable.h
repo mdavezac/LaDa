@@ -45,12 +45,16 @@ namespace LaDa
           {
             LADA_ASSERT( functions_.size() <= _x.size(), "Incoherent containers.\n" ) 
   
-            result_type result(1);
             t_Functions :: const_iterator i_func( functions_.begin() );
             t_Functions :: const_iterator const i_func_end( functions_.end() );
+            if(i_func == i_func_end) return 0e0;
+
             typename T_CONTAINER :: const_iterator i_x( _x.begin() );
-            for(; i_func != i_func_end; ++i_func, ++i_x)
+
+            result_type result( (*i_func)(*i_x) );
+            for(++i_func, ++i_x; i_func != i_func_end; ++i_func, ++i_x)
               result *= (*i_func)(*i_x);
+            std::cout << result << "\n";
             return result;
           }
 

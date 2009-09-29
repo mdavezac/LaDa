@@ -152,9 +152,9 @@ namespace LaDa
           t_Values::const_str_iterator i_str_val = values_.begin(_i);
           typename T_VECTOR :: value_type const nb_structures( 1e0 / fitting_set_.size() );
           //! Loop over structures.
-          for(; i_str != i_str_end; ++i_str, ++i_str_val)
+          for(size_t istr(0); i_str != i_str_end; ++i_str, ++i_str_val, ++istr)
           {
-            numeric_type const str_weight(i_str.weight());
+            numeric_type const str_weight(i_str.weight()*nb_structures);
             if( str_weight == 0e0 ) continue; // don't fit this structure.
         
             t_FittingSet::str_iterator::rep_iterator i_rep = i_str.begin();
@@ -193,8 +193,8 @@ namespace LaDa
             for(size_t i(0); i < vec_size; ++i )
             {
               for(size_t j(i); j < vec_size; ++j)
-                _matrix(i,j) += G(i) * G(j) * str_weight * nb_structures;
-              _vector(i) += i_str.energy() * G(i) * str_weight * nb_structures;
+                _matrix(i,j) += G(i) * G(j) * str_weight;
+              _vector(i) += i_str.energy() * G(i) * str_weight;
             } 
           } // loop over structures.
         

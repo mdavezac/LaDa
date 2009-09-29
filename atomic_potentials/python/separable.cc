@@ -28,6 +28,7 @@ namespace LaDa
 {
   namespace Python
   {
+    namespace bp = boost::python;
     typedef atomic_potential::Separable Separable;
 
     template<class T_TYPE> 
@@ -49,47 +50,29 @@ namespace LaDa
         atomic_potential::Representation const representation(_str, _sep.nb_coordinates() );
         return call_rep(_sep, representation);
       }
-   
-    struct SeparableIter
+
+    typedef boost::tuples::tuple< Separable::iterator, 
+                                  Separable::iterator,
+                                  bool > t_IterTuple;
+    t_IterTuple& iter_self( t_IterTuple & _this ) { return _this; }
+    t_IterTuple iter( Separable & _this )
+      { return t_IterTuple(_this.begin(), _this.end(), true); }
+    Separable::iterator::reference next( t_IterTuple & _this )
     {
-      SeparableIter   ( atomic_potential::Separable &_sep )
-                    : first_(true), cit_(_sep.begin()), cit_end_(_sep.end()) {}
-      SeparableIter   ( SeparableIter const &_c )
-                    : cit_(_c.cit_), cit_end_(_c.cit_end_), first_(_c.first_) {}
-
-      SeparableIter &iter()  { return *this; }
-      atomic_potential::Separable::iterator::reference next()
+      namespace bt = boost::tuples;
+      if( bt::get<2>(_this) ) bt::get<2>(_this) = false;
+      else if( bt::get<0>(_this) != bt::get<1>(_this) ) ++bt::get<0>(_this);
+      if( bt::get<0>(_this) == bt::get<1>(_this) )
       {
-        namespace bp = boost::python;
-        if( first_ ) first_ = false; 
-        else 
-        {
-          ++cit_;
-          if( cit_ == cit_end_ )
-          {
-            PyErr_SetString
-            (
-              PyExc_StopIteration, 
-              "Error while computing transform to smith normal form.\n" 
-            );
-            bp::throw_error_already_set();
-            --cit_;
-          }
-        }
-        return *cit_;
+        PyErr_SetString( PyExc_StopIteration, "End-of-range.\n");
+        bp::throw_error_already_set();
+        --bt::get<0>(_this);
       }
-
-      atomic_potential::Separable::iterator cit_;
-      atomic_potential::Separable::iterator cit_end_;
-      bool first_;
-    };
-    SeparableIter create_separableiter( atomic_potential::Separable & _ss )
-      { return SeparableIter(_ss); }
-
+      return *bt::get<0>(_this);
+    }
+   
     void expose_separable()
     {
-      namespace bp = boost::python;
-
       bp::scope scope = bp::class_<Separable>("Separable", "A separables function.")
         .def(bp::init<Separable const&>())
         .def("__call__", &Separable::operator()<atomic_potential::VariableSet::t_Variables>)
@@ -97,15 +80,15 @@ namespace LaDa
         .def("__call__", &call_rep<Separable>, bp::arg("representation"))
         .def("__len__", &Separable::size)
         .def("append", &Separable::push_back)
-        .def("__iter__", &create_separableiter);
+        .def("__iter__", &iter, bp::with_custodian_and_ward_postcall<1,0>());
       
-      bp::class_<SeparableIter>
+      bp::class_<t_IterTuple>
       (
         "iterator", 
         "An iterator to separable functions.",
-        bp::init<SeparableIter const&>()
-      ).def("__iter__", &SeparableIter::iter, bp::return_internal_reference<1>() )
-       .def("next", &SeparableIter::next, bp::return_internal_reference<1>() );
+        bp::no_init
+      ).def("__iter__", &iter_self, bp::return_internal_reference<1>() )
+       .def("next", &next, bp::return_internal_reference<1>() );
     }
   }
 } // namespace LaDa

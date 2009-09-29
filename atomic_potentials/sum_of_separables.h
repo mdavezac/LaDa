@@ -81,7 +81,7 @@ namespace LaDa
             t_Functions :: const_iterator i_func( functions_.begin() );
             t_Functions :: const_iterator const i_func_end( functions_.end() );
             t_Coefficients :: const_iterator i_coef( coefficients_.begin() );
-            for(; i_func != i_func_end; ++i_coef )
+            for(; i_func != i_func_end; ++i_coef, ++i_func )
               result += (*i_coef) * (*i_func)(_x);
             return result;
           }

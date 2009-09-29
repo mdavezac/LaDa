@@ -9,6 +9,7 @@
 
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
+#include <boost/tuple/tuple.hpp>
 
 #include <boost/python/scope.hpp>
 #include <boost/python/class.hpp>
@@ -29,6 +30,8 @@ namespace LaDa
 {
   namespace Python
   {
+    namespace bp = boost::python;
+
     typedef LaDa::atomic_potential::SumOfSeparables SumOfSeparables;
     typedef SumOfSeparables::t_Function Separable;
     typedef Separable::t_Function Functions;
@@ -51,70 +54,34 @@ namespace LaDa
       typename T_TYPE::result_type call_str( T_TYPE const& _sep,
                                              Crystal::TStructure<std::string> const & _str )
       {
-        Representation const representation(_str, _sep.nb_coordinates() );
-        return call_rep(_sep, representation);
+        Representation const representation(_str, (_sep.nb_coordinates()+2)/3);
+        types::t_real const result( call_rep(_sep, representation) );
+        return result;
       }
    
-    struct reference_ss
+    typedef boost::tuples::tuple< SumOfSeparables::iterator, 
+                                  SumOfSeparables::iterator,
+                                  bool > t_IterTuple;
+    t_IterTuple& iter_self( t_IterTuple & _this ) { return _this; }
+    t_IterTuple iter( SumOfSeparables & _this )
+      { return t_IterTuple(_this.begin(), _this.end(), true); }
+    boost::python::tuple next( t_IterTuple & _this )
     {
-      reference_ss   ( SumOfSeparables::iterator const &_it )
-                   : sep_(_it->get<0>()), coef_(_it->get<1>()) {}
-      reference_ss   ( reference_ss const & _ref )
-                   : sep_(_ref.sep_), coef_(_ref.coef_) {}
-      void set_sep( atomic_potential::Separable & _s ) { sep_ = _s; }
-      atomic_potential::Separable const & get_sep() const { return sep_; }
-      Separable::result_type call_rep_( Representation const &_rep ) const
-        { return call_rep(sep_, _rep); }
-      Separable::result_type call_str_( Crystal::TStructure<std::string> const &_str ) const
-        { return call_str(sep_, _str); }
-      Separable::result_type call_vars_( VariableSet::t_Variables const &_vars ) const
-        { return sep_(_vars); }
-      atomic_potential::numeric_type get_coef() const { return coef_; }
-      void set_coef(atomic_potential::numeric_type _t) { coef_ = _t; }
-      atomic_potential::Separable & sep_;
-      atomic_potential::numeric_type & coef_;
-    };
-
-    struct SumOfSepsIter
-    {
-      SumOfSepsIter   ( atomic_potential::SumOfSeparables &_sumofseps )
-                    : first_(true), cit_(_sumofseps.begin()), cit_end_(_sumofseps.end()) {}
-      SumOfSepsIter   ( SumOfSepsIter const &_c )
-                    : cit_(_c.cit_), cit_end_(_c.cit_end_), first_(_c.first_) {}
-
-      SumOfSepsIter &iter()  { return *this; }
-      reference_ss next()
+      namespace bt = boost::tuples;
+      if( bt::get<2>(_this) ) bt::get<2>(_this) = false;
+      else if( bt::get<0>(_this) != bt::get<1>(_this) ) ++bt::get<0>(_this);
+      if( bt::get<0>(_this) == bt::get<1>(_this) )
       {
-        namespace bp = boost::python;
-        if( first_ ) first_ = false; 
-        else 
-        {
-          ++cit_;
-          if( cit_ == cit_end_ )
-          {
-            PyErr_SetString
-            (
-              PyExc_StopIteration, 
-              "Error while computing transform to smith normal form.\n" 
-            );
-            bp::throw_error_already_set();
-            --cit_;
-          }
-        }
-        return cit_;
+        PyErr_SetString( PyExc_StopIteration, "End-of-range.\n");
+        bp::throw_error_already_set();
+        return bp::make_tuple(-1);
       }
-
-      atomic_potential::SumOfSeparables::iterator cit_;
-      atomic_potential::SumOfSeparables::iterator cit_end_;
-      bool first_;
-    };
-    SumOfSepsIter create_sumofsepsiter( atomic_potential::SumOfSeparables & _ss )
-      { return SumOfSepsIter(_ss); }
+      return bp::make_tuple( bt::get<0>(*bt::get<0>(_this)), 
+                             bt::get<1>(*bt::get<0>(_this)) );
+    }
 
     void expose_sumofseps()
     {
-      namespace bp = boost::python;
-
       bp::scope scope = bp::class_<SumOfSeparables>
               ("SumOfSeparables", "A sum of separables function.")
         .def(bp::init<SumOfSeparables const&>())
@@ -127,41 +94,17 @@ namespace LaDa
           &SumOfSeparables::nb_coordinates,
           "Number of coordinates.\n" 
         )
+        .def("__len__", &SumOfSeparables::size)
         .def("append", &SumOfSeparables::push_back)
-        .def("__iter__", &create_sumofsepsiter);
+        .def("__iter__", &iter, bp::with_custodian_and_ward_postcall<1,0>());
 
-      bp::class_<SumOfSepsIter>
+      bp::class_<t_IterTuple>
       (
-        "SumOfSeparablesIter", 
+        "SumOfSeparablesIterator", 
         "An iterator to separable functions.",
-        bp::init<SumOfSepsIter const&>()
-      ).def("__iter__", &SumOfSepsIter::iter, bp::return_internal_reference<1>() )
-       .def("next", &SumOfSepsIter::next);
-
-      bp::class_<reference_ss>
-      (
-        "SumOfSeparablesIterRef", 
-        "Dereferenced iterator to separable functions.",
-        bp::init<reference_ss const&>()
-      ).add_property
-       (
-         "separables", 
-         bp::make_function
-         (
-           &reference_ss::get_sep, 
-           bp::return_internal_reference<>()
-         ), 
-         bp::make_function
-         (
-           &reference_ss::set_sep, 
-           bp::return_internal_reference<>()
-         ), 0
-       ) 
-       .add_property("coefficient", &reference_ss::get_coef, &reference_ss::set_coef)
-       .def( "__call__", &reference_ss::call_str_, "Calls separable function on a structure." )
-       .def( "__call__", &reference_ss::call_rep_, "Calls separable function on a representation." )
-       .def( "__call__", &reference_ss::call_vars_,
-             "Calls separable function on vector of variables." );
+        bp::no_init
+      ).def("__iter__", &iter_self, bp::return_internal_reference<1>() )
+       .def("next", &next, bp::with_custodian_and_ward_postcall<1,0>());
 
     }
   }
