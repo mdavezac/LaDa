@@ -48,8 +48,8 @@ namespace LaDa
       {
         t_Container copy( bitstring );
         size_t const size(bitstring.size());
-        size_t const start(opt::random::range(0, size));
-        if(  opt::random::flip() )
+        size_t const start(eo::rng.uniform(size));
+        if(  eo::rng.flip() )
         {
           std::copy(copy.begin()+start, copy.end(), bitstring.begin());
           std::copy(copy.begin(), copy.begin()+start, bitstring.end()-start);
