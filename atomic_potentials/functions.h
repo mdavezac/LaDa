@@ -8,6 +8,10 @@
 #include <config.h>
 #endif
 
+#ifndef LADA_SEPN
+# define LADA_SEPN 2
+#endif
+
 #include <list>
 #include <iostream>
 
@@ -28,7 +32,7 @@ namespace LaDa
     {
       public:
         //! Number of atomic species.
-        const static size_t N = 2;
+        const static size_t N = LADA_SEPN;
         //! Type of the argument.
         typedef std::pair<numeric_type, specie_type> arg_type;
         //! Type of the return.

@@ -85,8 +85,10 @@ namespace LaDa
                         energies_(_c.energies_), 
                         weights_(_c.weights_){}
           //! Changes the weight of nth structure added to representations.
-          numeric_type change_weight( size_t _i, numeric_type _w)
+          numeric_type set_weight( size_t _i, numeric_type _w)
             { numeric_type const old(weights_[_i].first); weights_[_i].first=_w; return old; } 
+          //! Returns weight of structure \a _i
+          numeric_type get_weight( size_t _i ) const { return weights_[_i].first; }
           //! Adds a structure to the representations.
           void add(Representation const &_representation,
                    numeric_type _energy, numeric_type _weight);

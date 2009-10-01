@@ -37,15 +37,11 @@ def add_structures(_vasp, _collapse, input = "input" ):
   from lada.potentials import Collapse, Representation
 
   result = []
-  l = False
   for dir in  input_directories(input):
     for structure in extract(dir, _vasp):
       _collapse.add( structure )
       result.append(structure)
-      print Representation(structure, 4)
-      break
-      if l == True: break
-      l = True
+#     print Representation(structure, 4)
   return result;
 
 def create_representations(_vasp, nbatoms = 4, input = "input" ):

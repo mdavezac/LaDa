@@ -111,6 +111,12 @@ namespace LaDa
           size_t nb_coordinates() const;
           //! Returns average error per structure in fitting set.
           numeric_type convergence() const;
+          //! Returns weight of structure \a _i.
+          numeric_type get_weight( size_t _i ) { return fitting_set_.get_weight(_i); }
+          //! Sets weight of structure \a _i. Returns old weight.
+          numeric_type set_weight( size_t _i, numeric_type &_w )
+            { return fitting_set_.set_weight(_i, _w); }
+          size_t nb_structures() const { return fitting_set_.size(); }
      
         private:
           //! Weight of each structure. 
@@ -150,11 +156,12 @@ namespace LaDa
           t_FittingSet :: str_iterator i_str = fitting_set_.begin(_i);
           t_FittingSet :: str_iterator const i_str_end = fitting_set_.end(_i);
           t_Values::const_str_iterator i_str_val = values_.begin(_i);
-          typename T_VECTOR :: value_type const nb_structures( 1e0 / fitting_set_.size() );
+          typedef typename T_VECTOR::value_type t_value;
+          t_value const nb_structures( t_value(1) / t_value(fitting_set_.size()) );
           //! Loop over structures.
-          for(size_t istr(0); i_str != i_str_end; ++i_str, ++i_str_val, ++istr)
+          for(; i_str != i_str_end; ++i_str, ++i_str_val)
           {
-            numeric_type const str_weight(i_str.weight()*nb_structures);
+            t_value const str_weight(i_str.weight());
             if( str_weight == 0e0 ) continue; // don't fit this structure.
         
             t_FittingSet::str_iterator::rep_iterator i_rep = i_str.begin();
@@ -193,8 +200,8 @@ namespace LaDa
             for(size_t i(0); i < vec_size; ++i )
             {
               for(size_t j(i); j < vec_size; ++j)
-                _matrix(i,j) += G(i) * G(j) * str_weight;
-              _vector(i) += i_str.energy() * G(i) * str_weight;
+                _matrix(i,j) += G(i) * G(j) * str_weight * nb_structures;
+              _vector(i) += i_str.energy() * G(i) * str_weight * nb_structures;
             } 
           } // loop over structures.
         

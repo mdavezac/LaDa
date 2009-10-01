@@ -95,6 +95,13 @@ namespace LaDa
       _func.push_back( Function(_object), coefs);
     }
 
+    atomic_potential::numeric_type constant( Functions::arg_type::first_type const& )
+      { return 1e0; }
+
+    template< class T_TYPE >
+      atomic_potential::neg_pow( Functions::arg_type::first_type const & _x, T_TYPE  _i )
+        { return Fuzzy::is_zero(_x) ? 1e0/types::tolerance: std::pow(_x, _i); }
+
     template<class T_TYPE>
       void push_back_pow( Functions &_func, T_TYPE _pow, 
                           bp::tuple const &_tuple )
@@ -106,11 +113,13 @@ namespace LaDa
 
         typedef atomic_potential::numeric_type numeric_type;
         numeric_type (*ptr_func)(numeric_type, T_TYPE) = &std::pow;
-        _func.push_back( bl::bind(ptr_func, bl::_1, bl::constant(_pow)), coefs);
+        numeric_type (*ptr_neg_func)(numeric_type, T_TYPE) = &neg_pow<T_TYPE>;
+        if( _pow == T_TYPE(0) ) _func.push_back( constant, coefs);
+        else if( _pow < T_TYPE(0) )
+          _func.push_back( bl::bind(ptr_neg_func, bl::_1, bl::constant(_pow)), coefs);
+        else _func.push_back( bl::bind(ptr_func, bl::_1, bl::constant(_pow)), coefs);
       }
 
-    atomic_potential::numeric_type constant( Functions::arg_type::first_type const& )
-      { return 1e0; }
 
     void push_back_constant(Functions &_func, bp::tuple const &_tuple)
     {

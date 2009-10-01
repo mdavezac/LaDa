@@ -40,7 +40,7 @@ namespace LaDa
          {
            if ( Fuzzy::eq(i_begin->x, vertex.x) )
            { 
-             if ( Fuzzy::gt(i_begin->x, vertex.x) )
+             if ( Fuzzy::gt(i_begin->y, vertex.y) )
                *i_begin = vertex;
              return false; // only one point, no convexhull yet!
            }
