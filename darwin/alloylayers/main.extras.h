@@ -144,12 +144,12 @@
       typedef t_Individual :: t_IndivTraits :: t_Object t_Object;
       t_Object :: connect_print
       ( 
-        bl::_1 << bl::constant( "VBM: ") 
+        bl::_1 << bl::constant( " VBM: ") 
                << bl::bind( &t_Object::vbm, bl::_2 )
-               << bl::constant( " - " )
+               << bl::constant( " " )
                << bl::constant( "CBM: ") 
                << bl::bind( &t_Object::cbm, bl::_2 )
-               << bl::constant( " - " )
+               << bl::constant( " " )
       );
     }
     PPFactory::read_physical_properties( properties_factory, input );
