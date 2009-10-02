@@ -8,6 +8,8 @@
 #include <config.h>
 #endif
 
+#include <iostream>
+
 #include <boost/iterator/zip_iterator.hpp>
 
 #include "separable.h"
@@ -144,6 +146,18 @@ namespace LaDa
         t_Coefficients coefficients_;
     };
 
+    inline std::ostream& operator<<( std::ostream &_stream, SumOfSeparables const &_func )
+    {
+      namespace bp = boost::tuples;
+      _stream << "Sum of Separables Function: " << "\n";
+      SumOfSeparables::const_iterator i_func( _func.begin() );
+      SumOfSeparables::const_iterator const i_func_end( _func.end() );
+      for(size_t r(0); i_func != i_func_end; ++i_func, ++r)
+        _stream << "  rank " << r << ", s=" << bp::get<1>(*i_func)
+                << "\n" << bp::get<0>(*i_func) << "\n";
+
+      return _stream;
+    }
 
   } // namespace atomic_potential
 } // namespace LaDa

@@ -7,6 +7,8 @@
 
 #include <cmath>
 
+#include <boost/lexical_cast.hpp>
+
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
 
@@ -76,7 +78,8 @@ namespace LaDa
     }    
     void  push_back_python_callable( Functions &_func, 
                                      bp::object const &_object, 
-                                     bp::tuple const &_tuple )
+                                     bp::tuple const &_tuple,
+                                     std::string const &_name )
     {    
       Functions::t_Coefficient coefs[Functions::N];
       if( not extract_tuple(_tuple, coefs)) { bp::throw_error_already_set(); return; }
@@ -92,7 +95,7 @@ namespace LaDa
         bp::throw_error_already_set();
         return;
       }
-      _func.push_back( Function(_object), coefs);
+      _func.push_back( Function(_object), coefs, _name);
     }
 
     atomic_potential::numeric_type constant( Functions::arg_type::first_type const& )
@@ -114,10 +117,21 @@ namespace LaDa
         typedef atomic_potential::numeric_type numeric_type;
         numeric_type (*ptr_func)(numeric_type, T_TYPE) = &std::pow;
         numeric_type (*ptr_neg_func)(numeric_type const, T_TYPE) = &neg_pow<T_TYPE>;
-        if( _pow == T_TYPE(0) ) _func.push_back( constant, coefs);
+        if( _pow == T_TYPE(0) ) _func.push_back( constant, coefs, "1");
         else if( _pow < T_TYPE(0) )
-          _func.push_back( bl::bind(ptr_neg_func, bl::_1, bl::constant(_pow)), coefs);
-        else _func.push_back( bl::bind(ptr_func, bl::_1, bl::constant(_pow)), coefs);
+          _func.push_back
+          ( 
+             bl::bind(ptr_neg_func, bl::_1, bl::constant(_pow)), 
+             coefs,
+             "x^{" + boost::lexical_cast<std::string>(_pow) + "}"
+          );
+        else
+          _func.push_back
+          ( 
+            bl::bind(ptr_func, bl::_1, bl::constant(_pow)), 
+            coefs,
+            "x^" + boost::lexical_cast<std::string>(_pow) 
+          );
       }
 
 
@@ -127,7 +141,7 @@ namespace LaDa
       Functions::t_Coefficient coefs[Functions::N];
       if( not extract_tuple(_tuple, coefs)) { bp::throw_error_already_set(); return; }
 
-      _func.push_back( &constant, coefs);
+      _func.push_back( &constant, coefs, "1");
     }
 
     typedef boost::tuples::tuple< Functions::iterator, 
@@ -246,11 +260,19 @@ namespace LaDa
         bp::init<Functions::iterator::reference const&>()
       ).def("__getitem__", &getitem)
        .def("__setitem__", &setitem)
+       .def("__str__", &tostream<Functions::iterator::reference>)
        .def("__len__", &len)
        .def("__call__", &call_1, "Calls function with a single real argument. Coefs are ignored.")
        .def("__call__", &call_2, "Calls function with a real and a variable argument.")
-       .def("__call__", &call_3, "Calls function with a tuple of a real and a variable argument.");
- 
+       .def("__call__", &call_3, "Calls function with a tuple of a real and a variable argument.")
+       .add_property
+       (
+          "name",
+          bp::make_function( &Functions::iterator::reference::name, 
+                             bp::return_internal_reference<1>()),
+          bp::make_function( &Functions::iterator::reference::name, 
+                             bp::return_internal_reference<1>())
+       );
     }
   }
 } // namespace LaDa

@@ -113,7 +113,12 @@ namespace LaDa
           //! Sets weight of structure \a _i. Returns old weight.
           numeric_type set_weight( size_t _i, numeric_type &_w )
             { return fitting_set_.set_weight(_i, _w); }
+          //! Number of structures.
           size_t nb_structures() const { return fitting_set_.size(); }
+          //! Weighted sum of the squared energies.
+          numeric_type y_squared() const;
+          //! Weighted sum of the squared energies.
+          numeric_type sum_w() const;
      
         private:
           //! Weight of each structure. 
@@ -155,13 +160,15 @@ namespace LaDa
           t_FittingSet :: str_iterator i_str = fitting_set_.begin(_i);
           t_FittingSet :: str_iterator const i_str_end = fitting_set_.end(_i);
           t_Values::const_str_iterator i_str_val = values_.begin(_i);
-          typedef typename T_VECTOR::value_type t_value;
-          t_value const nb_structures( t_value(1) / t_value(fitting_set_.size()) );
+          numeric_type nstr(0);
+          for(; i_str != i_str_end; ++i_str) nstr += i_str.weight();
+          nstr = numeric_type(1) / nstr;
           //! Loop over structures.
-          for(; i_str != i_str_end; ++i_str, ++i_str_val)
+          for(i_str = fitting_set_.begin(_i); i_str != i_str_end; ++i_str, ++i_str_val)
           {
-            t_value const str_weight(i_str.weight());
+            numeric_type const str_weight(i_str.weight());
             if( str_weight == 0e0 ) continue; // don't fit this structure.
+            nstr += str_weight;
         
             t_FittingSet::str_iterator::rep_iterator i_rep = i_str.begin();
             t_FittingSet::str_iterator::rep_iterator const i_rep_end = i_str.end();
@@ -199,15 +206,24 @@ namespace LaDa
             for(size_t i(0); i < vec_size; ++i )
             {
               for(size_t j(i); j < vec_size; ++j)
-                _matrix(i,j) += G(i) * G(j) * str_weight * nb_structures;
-              _vector(i) += i_str.energy() * G(i) * str_weight * nb_structures;
+                _matrix(i,j) += G(i) * G(j) * str_weight * nstr;
+              _vector(i) += i_str.energy() * G(i) * str_weight * nstr;
             } 
           } // loop over structures.
         
           // creates second half of matrix.
-          for( size_t i(1); i < vec_size; ++i )
-            for( size_t j(0); j < i; ++j )
-              _matrix(i,j) = _matrix(j,i);
+          // divides by total structure weights.
+          numeric_type const inv_nstr( numeric_type(1) / nstr );
+          for( size_t i(0); i < vec_size; ++i )
+          {
+            for( size_t j(i+1); j < vec_size; ++j )
+            {
+//             _matrix(i,j) *= inv_nstr;
+              _matrix(j,i) = _matrix(i,j);
+            }
+//           _vector(i) *= inv_nstr;
+//           _matrix(i,i) *= inv_nstr;
+          }
         }
     } // namespace collapse
   } // namespace atomic_potential

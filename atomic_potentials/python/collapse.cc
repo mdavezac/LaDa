@@ -83,6 +83,8 @@ namespace LaDa
        .add_property("nb_funcs", &Collapse::nb_funcs_)
        .add_property("nb_coordinates", &Collapse::nb_coordinates)
        .add_property("nb_structures", &Collapse::nb_structures)
+       .add_property("y_squared", &Collapse::y_squared)
+       .add_property("sum_w", &Collapse::sum_w)
        .add_property("convergence", &Collapse::convergence);
     }
 

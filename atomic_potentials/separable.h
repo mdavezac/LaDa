@@ -8,6 +8,8 @@
 #include <config.h>
 #endif
 
+#include <iostream>
+
 #include "functions.h"
 
 namespace LaDa
@@ -81,13 +83,7 @@ namespace LaDa
           result_type result(1);
           t_Functions :: iterator i_func( functions_.begin() );
           t_Functions :: iterator const i_func_end( functions_.end() );
-          for(; i_func != i_func_end; ++i_func )
-          { 
-            std::cout << "S0\n";
-            result *= i_func->normalize();
-            std::cout << "S1\n";
-          }
-          std::cout << "S2\n";
+          for(; i_func != i_func_end; ++i_func ) result *= i_func->normalize();
           return result;
         }
 
@@ -96,6 +92,15 @@ namespace LaDa
         t_Functions functions_;
     };
 
+    inline std::ostream& operator<<( std::ostream &_stream, Separable const &_func )
+    {
+      Separable::const_iterator i_func( _func.begin() );
+      Separable::const_iterator const i_func_end( _func.end() );
+      for(size_t i(0); i_func != i_func_end; ++i_func, ++i)
+        _stream << "    coord " << i << ": " << *i_func << "\n";
+
+      return _stream;
+    }
 
   } // namespace atomic_potential
 } // namespace LaDa

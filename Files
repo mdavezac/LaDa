@@ -10,7 +10,7 @@ atat_h  = findsym.h  integer.h  xtalutil.h lambda.impl.h \
 atat_python_h = atat.impl.hpp atatintrospection.hpp atatoperators.hpp
 atat_python_cc = atat.cc 
 
-ap_cc = representation.cc 
+ap_cc = representation.cc functions.cc
 ap_h  = bases.h  bases.impl.h  functions.h  functions.iterator.h  numeric_types.h\
         representation.h  separable.h  sum_of_separables.h
 ap_doc = $(ap_h) $(ap_cc)

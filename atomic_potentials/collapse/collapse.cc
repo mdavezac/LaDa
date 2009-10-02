@@ -77,6 +77,7 @@ namespace LaDa
 
       void Collapse::reassign() const
       {
+        // coefficients
         typedef SumOfSeparables::coord_range t_coord_range;
         typedef t_coord_range::rank_range t_rank_range;
         typedef t_rank_range::iterator iterator;
@@ -93,6 +94,14 @@ namespace LaDa
                 (*i_first)[j] = vec(i);
           }
         }
+
+        // scales
+        LADA_ASSERT( sumofseps_.size() == scaling_factors_.size(), "Incoherent containers." )
+        SumOfSeparables::iterator i_rank = sumofseps_.begin();
+        SumOfSeparables::iterator const i_rank_end = sumofseps_.end();
+        t_ScalingFactors::const_iterator i_scale = scaling_factors_.begin();
+        for(; i_rank != i_rank_end; ++i_rank, ++i_scale)
+          boost::tuples::get<1>(*i_rank) = *i_scale;
       };
 
       // Removes a header dependence by defining it here.
@@ -101,7 +110,7 @@ namespace LaDa
       numeric_type Collapse::convergence() const
       {
         numeric_type result(0);
-        size_t nstr(0);
+        numeric_type nstr(0);
         t_FittingSet :: str_iterator i_str = fitting_set_.begin(0);
         t_FittingSet :: str_iterator const i_str_end = fitting_set_.end(0);
         t_Values::const_str_iterator i_str_val = values_.begin(0);
@@ -110,14 +119,14 @@ namespace LaDa
         {
           numeric_type const str_weight(i_str.weight());
           if( str_weight == 0e0 ) continue; // don't fit this structure.
-          ++nstr;
+          nstr += str_weight;
         
           t_FittingSet::str_iterator::rep_iterator i_rep = i_str.begin();
           t_FittingSet::str_iterator::rep_iterator const i_rep_end = i_str.end();
           t_Values::const_str_iterator::const_rep_iterator i_rep_val = i_str_val.begin();
         
           // loop over structure representations.
-          numeric_type str_val(-i_str.energy()); 
+          numeric_type str_val(0);
           for(; i_rep != i_rep_end; ++i_rep, ++i_rep_val )
           {
             numeric_type const rep_weight(i_rep.weight() * str_weight);
@@ -138,9 +147,10 @@ namespace LaDa
               str_val += i_rank_val.all() * (*i_scale) * rep_weight;
             } // loop over ranks
           } // loop over representations
-          result += str_weight * str_val;
+          std::cout << "str_val: " << str_val << "\n";
+          result += str_weight * (str_val - i_str.energy()) * (str_val - i_str.energy());
         } // loop over structures.
-        return result / numeric_type(nstr); 
+        return result / nstr; 
       }
 
 
@@ -186,7 +196,7 @@ namespace LaDa
 #         endif
           numeric_type const norm
           (
-            std::sqrt( std::accumulate(i_first, i_coef, 0, bl::_1 + bl::_2*bl::_2) )
+            std::sqrt( std::accumulate(i_first, i_coef, numeric_type(0), bl::_1 + bl::_2*bl::_2) )
           );
           numeric_type const inv_norm( numeric_type(1) / norm );
           std::for_each( i_first, i_coef, bl::_1 *= bl::constant(inv_norm) );
@@ -194,6 +204,24 @@ namespace LaDa
         }
       }
 
+      numeric_type Collapse::y_squared() const
+      {
+        numeric_type result(0);
+        t_FittingSet :: str_iterator i_str = fitting_set_.begin(0);
+        t_FittingSet :: str_iterator const i_str_end = fitting_set_.end(0);
+        //! Loop over structures.
+        for(; i_str != i_str_end; ++i_str) result += i_str.weight() * i_str.energy();
+        return result;
+      }
+      numeric_type Collapse::sum_w() const
+      {
+        numeric_type result(0);
+        t_FittingSet :: str_iterator i_str = fitting_set_.begin(0);
+        t_FittingSet :: str_iterator const i_str_end = fitting_set_.end(0);
+        //! Loop over structures.
+        for(; i_str != i_str_end; ++i_str) result += i_str.weight();
+        return result;
+      }
 
     } // namespace collapse
   } // namespace atomic_potential

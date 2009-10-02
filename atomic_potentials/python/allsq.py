@@ -28,6 +28,7 @@ def allsq( _collapse, tolerance = 1e-14, itermax=50, verbose=False ):
     for i in coords:
       if verbose: print "  _ coordinate: ", i,
       A, b = _collapse.lsq_data(i)
+      Ac, b = _collapse.lsq_data(i)
       x = _collapse.coefficients(i)
       x, res, iter = cgs(A, x, b, tolerance = tolerance)
       _collapse.update(i, x)
@@ -39,7 +40,7 @@ def allsq( _collapse, tolerance = 1e-14, itermax=50, verbose=False ):
     if abs(energies - old_energies) < tolerance: break
 
   if verbose: print "Final convergence: %18.8f %18.8f" % ( energies, energies - old_energies )
-  return outer_iter, abs(energies - old_energies)
+  return outer_iter, energies
 
 
 

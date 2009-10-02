@@ -145,12 +145,11 @@ namespace LaDa
             if ( resid < tolerance ) break;
 
             if( not verbose ) continue;
-
-            std::cout << "  Iteration: " << iter 
-                      << "  residual: " << resid << "\n";
           }
           
   out:
+          // numerical noise (?) may make the residual inconsistent. 
+          resid = ublas::norm_2( _b - ublas::prod(_A, _x) ) / ublas::norm_2(_b);
           if( verbose ) 
             std::cout << "Cgs returns after " << iter
                       << (iter > 0 ? " iterations": " iteration")

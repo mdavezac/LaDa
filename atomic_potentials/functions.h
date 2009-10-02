@@ -19,7 +19,6 @@
 
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/lambda/lambda.hpp>
 
 #include <opt/types.h>
 #include <opt/debug.h>
@@ -49,6 +48,8 @@ namespace LaDa
         typedef result_type t_Coefficient;
         //! Type of the list of coefficients.
         typedef std::vector<t_Coefficient> t_Coefficients;
+        //! Type of the list of coefficients.
+        typedef std::vector<std::string> t_Names;
 
         //! Type of the iterator over functions and coefficients.
         class iterator;
@@ -70,71 +71,40 @@ namespace LaDa
         Functions() {}
         //! Copy Constructor.
         Functions   ( Functions const& _c )
-                  : functions_(_c.functions_), coefficients_(_c.coefficients_) {}
+                  : functions_(_c.functions_),
+                    coefficients_(_c.coefficients_),
+                    names_(_c.names_) {}
 
         //! Sums over all functionals.
-        result_type operator()( arg_type const& _x ) const
-        {
-#         ifdef LADA_DEBUG
-            LADA_ASSERT( Functions::N * functions_.size() == coefficients_.size(),
-                         "Incoherent containers.\n" ); 
-#         endif
-
-          result_type result(0);
-          t_Functions :: const_iterator i_func( functions_.begin() );
-          t_Functions :: const_iterator const i_func_end( functions_.end() );
-          t_Coefficients :: const_iterator i_coef( coefficients_.begin() );
-          for(; i_func != i_func_end; ++i_func, i_coef += Functions::N )
-            result += (*(i_coef+_x.second)) * (*i_func)(_x.first);
-          return result;
-        }
+        result_type operator()( arg_type const& _x ) const;
 
         //! Returns iterator to functions and coefficients.
         iterator begin()
-          { return iterator( functions_.begin(), coefficients_.begin()); }
+          { return iterator( functions_.begin(), coefficients_.begin(), names_.begin()); }
         //! Returns iterator to functions and coefficients.
         const_iterator begin() const
-          { return const_iterator( functions_.begin(), coefficients_.begin()); }
+          { return const_iterator( functions_.begin(), coefficients_.begin(), names_.begin()); }
         //! Returns iterator to functions and coefficients.
         iterator end()
-          { return iterator( functions_.end(), coefficients_.end()); }
+          { return iterator( functions_.end(), coefficients_.end(), names_.end()); }
         //! Returns iterator to functions and coefficients.
         const_iterator end() const
-          { return const_iterator( functions_.end(), coefficients_.end()); }
+          { return const_iterator( functions_.end(), coefficients_.end(), names_.end()); }
         //! pushes a function and coefficient back.
         template< class T_FUNCTION >
-          void push_back( T_FUNCTION const& _function, numeric_type const _coef[N] )
+          void push_back( T_FUNCTION const& _function,
+                          numeric_type const _coef[N],
+                          std::string const &_name )
           {
             functions_.push_back(_function);
-            for(size_t i(0); i < N; ++i ) 
-              coefficients_.push_back(_coef[i]); 
+            names_.push_back(_name);
+            for(size_t i(0); i < N; ++i ) coefficients_.push_back(_coef[i]); 
           }
         //! Clears all functions and coefficients.
-        void clear() { functions_.clear(); coefficients_.clear(); }
+        void clear() { functions_.clear(); coefficients_.clear(); names_.clear(); }
 
         //! Normalizes coefficients to one, and returns norm.
-        t_Coefficient normalize() 
-        {
-          namespace bl = boost::lambda; 
-          LADA_ASSERT( Functions::N * functions_.size() == coefficients_.size(), 
-                       "Incoherent containers.\n" );
-          t_Coefficients::iterator const i_first = coefficients_.begin();
-          t_Coefficients::iterator const i_end = coefficients_.end();
-          std::cout << "F 0\n";
-          numeric_type const norm
-          ( 
-            std::sqrt
-            (
-              std::accumulate(i_first, i_end, 0, bl::_1+bl::_2*bl::_2)
-            )
-          );
-          std::cout << "F 1\n";
-          numeric_type const inv_norm( numeric_type(1) / norm );
-          std::cout << "F 2\n";
-          std::for_each(i_first, i_end, bl::_1 *= bl::constant(inv_norm));
-          std::cout << "F 3\n";
-          return norm;
-        }
+        t_Coefficient normalize();
 
         //! Returns the number of functions.
         size_t size() const { return functions_.size(); }
@@ -144,23 +114,20 @@ namespace LaDa
         t_Functions functions_;
         //! List of coefficients.
         t_Coefficients coefficients_;
+        //! List of function names.
+        t_Names names_;
     };
 
-    inline std::ostream& operator<<( std::ostream &_stream, Functions const &_func )
-    {
-      Functions::const_iterator i_func( _func.begin() );
-      Functions::const_iterator const i_func_end( _func.end() );
-      for(; i_func != i_func_end; ++i_func)
-      {
-        _stream << "(" << (*i_func)[0];
-        for(size_t i(1); i < _func.N; ++i)
-          _stream << ", " << (*i_func)[i];
-        _stream << ") ";
-      }
+    //! Dumps iterator reference to stream.
+    std::ostream& operator<<( std::ostream &_stream, 
+                              Functions::const_iterator::reference const &_func );
 
-      return _stream;
-    }
+    //! Dumps iterator reference to stream.
+    std::ostream& operator<<( std::ostream &_stream,
+                              Functions::iterator::reference const &_func );
 
+    //! Dumps function to stream.
+    std::ostream& operator<<( std::ostream &_stream, Functions const &_func );
 
   } // namespace atomic_potential
 } // namespace LaDa

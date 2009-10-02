@@ -16,11 +16,12 @@ class LADA_ITERATOR_NAME
         reference() {}
         //! Constructor.
         reference   ( t_Coefficients::LADA_ITERATOR_NAME const& _c,
-                      t_Functions::LADA_ITERATOR_NAME const& _f )
-                  : i_coef_(_c), i_func_(_f) {}
+                      t_Functions::LADA_ITERATOR_NAME const& _f,
+                      t_Names::LADA_ITERATOR_NAME const& _n )
+                  : i_coef_(_c), i_func_(_f), i_name_(_n) {}
         //! CopyConstructor.
         reference   ( reference const &_c)
-                  : i_coef_(_c.i_coef_), i_func_(_c.i_func_) {}
+                  : i_coef_(_c.i_coef_), i_func_(_c.i_func_), i_name_(_c.i_name_) {}
         //! Returns a reference to that component.
         numeric_type LADA_WITH_CONST& operator[](size_t _i) const
         {
@@ -36,12 +37,16 @@ class LADA_ITERATOR_NAME
         //! Calls function.
         Functions::result_type operator()( Functions::arg_type const &_a ) const
           { return (*i_func_)(_a.first) * operator[](_a.second); }
+        //! Returns name.
+        t_Names::LADA_ITERATOR_NAME::reference name() const { return *i_name_; }
 
       private:
         //! Current position.
         t_Coefficients::LADA_ITERATOR_NAME i_coef_;
         //! Current position.
         t_Functions::LADA_ITERATOR_NAME i_func_;
+        //! Current position.
+        t_Names::LADA_ITERATOR_NAME i_name_;
     };
 
     //! Pointer.
@@ -51,23 +56,24 @@ class LADA_ITERATOR_NAME
 
     //! Constructor.
     LADA_ITERATOR_NAME   (t_Functions::LADA_ITERATOR_NAME const &_f, 
-                          t_Coefficients::LADA_ITERATOR_NAME const &_c)
-                       : i_func_(_f), i_coef_(_c), is_set_(false) {};
+                          t_Coefficients::LADA_ITERATOR_NAME const &_c,
+                          t_Names::LADA_ITERATOR_NAME const &_n)
+                       : i_func_(_f), i_coef_(_c), i_name_(_n), is_set_(false) {};
     //! Copy Constructor.
     LADA_ITERATOR_NAME   (LADA_ITERATOR_NAME const& _c)
-             : i_func_(_c.i_func_), i_coef_(_c.i_coef_), 
+             : i_func_(_c.i_func_), i_coef_(_c.i_coef_), i_name_(_c.i_name_),
                is_set_(_c.is_set_), value_(_c.value_) {};
 
     //! Increments iterator.
     LADA_ITERATOR_NAME operator++(int) { return operator++(); }
     //! Increments iterator.
     LADA_ITERATOR_NAME& operator++()
-      { is_set_ = false; ++i_func_; i_coef_ += Functions::N; return *this; }
+      { is_set_ = false; ++i_func_; i_coef_ += Functions::N; ++i_name_; return *this; }
     //! Decrements iterator.
     LADA_ITERATOR_NAME operator--(int) { return operator--(); }
     //! Decrements iterator.
     LADA_ITERATOR_NAME& operator--()
-      { is_set_ = false; --i_func_; i_coef_ -= Functions::N; return *this; }
+      { is_set_ = false; --i_func_; i_coef_ -= Functions::N; --i_name_; return *this; }
     //! Dereference iterator.
     reference operator*() const { set_(); return value_; }
     //! Dereference iterator.
@@ -86,12 +92,15 @@ class LADA_ITERATOR_NAME
       if(is_set_) return;
       value_.i_coef_ = i_coef_;
       value_.i_func_ = i_func_;
+      value_.i_name_ = i_name_;
       is_set_ = true;
     }
     //! Current function position.
     t_Functions::LADA_ITERATOR_NAME i_func_;
     //! Current coefficient position.
     t_Coefficients::LADA_ITERATOR_NAME i_coef_;
+    //! Current coefficient position.
+    t_Names::LADA_ITERATOR_NAME i_name_;
     //! Whether the value has been set.
     mutable bool is_set_;
     //! A tuple for pointer stuff.
