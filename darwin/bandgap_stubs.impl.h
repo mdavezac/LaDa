@@ -56,6 +56,15 @@ namespace LaDa
       
       if ( not _node.FirstChildElement("GA") ) return true;
       const TiXmlElement *child = _node.FirstChildElement("GA");
+      if ( child->Attribute("update_references") )
+      {
+        std::string const val = child->Attribute("update_references");
+        update_references = not(    (val == "false") or (val == "False") 
+                                 or (val == "FALSE") or (val == "F") or (val == "f") );
+      }
+      if( update_references ) Print::out << "Will update reference energies during GA.\n";
+      else Print::out << "Will not update reference energies during GA.\n";
+
       if ( not _node.FirstChildElement("GA") ) return true;
       child = child->FirstChildElement("Filenames");
       for(; child; child = child->NextSiblingElement("Filenames") )

@@ -86,14 +86,15 @@ namespace LaDa
         //! Constructor and Initializer
         Darwin   ( Crystal::Structure &_s )
                : structure(_s), bandgap( _s ), references_filename("BandEdge"), 
-                 nbeval(0), age(0), check_ref_every(-1) 
+                 nbeval(0), age(0), check_ref_every(-1), update_references(true)
                  __MPICODE( __COMMA__ suffix("") ) {}
         //! Copy Constructor
         Darwin   ( const Darwin &_b ) 
                : __MPICODE( MPI_COMMCOPY( _b ) __COMMA__ )
                  structure(_b.structure), bandgap( _b.bandgap ),
                  references_filename(_b.references_filename),
-                 nbeval(_b.nbeval), age(_b.age), check_ref_every(_b.check_ref_every) 
+                 nbeval(_b.nbeval), age(_b.age), check_ref_every(_b.check_ref_every),
+                 update_references(_b.update_references)
                  __MPICODE( __COMMA__ suffix( _b.suffix ) ) {}
         //! Destructor
         ~Darwin() {};
@@ -190,6 +191,8 @@ namespace LaDa
         types::t_int age;
         //! How often all-electron calculations should be performed
         types::t_int check_ref_every;
+        //! Whether to update references.
+        bool update_references;
         __MPICODE
         (
           //! mpi suffix to add to calculation files.

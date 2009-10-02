@@ -29,16 +29,16 @@ namespace LaDa
         for(size_t start(0), end(_c.bitstring.size()); start < end; ++start)
         {
           if( std::equal(bitstring.begin()+start, bitstring.end(),
-                         _c.bitstring.begin()+start, comp()) )
+                         _c.bitstring.begin(), comp()) )
           {
             if( std::equal(bitstring.begin(), bitstring.begin()+start,
-                           _c.bitstring.begin(), comp()) ) return true;
+                           _c.bitstring.begin()+(end-start), comp()) ) return true;
           }
           if( std::equal(bitstring.rbegin()+start, bitstring.rend(),
-                         _c.bitstring.rbegin()+start, comp()) )
+                         _c.bitstring.begin(), comp()) )
           {
             if( std::equal(bitstring.rbegin(), bitstring.rbegin()+start,
-                           _c.bitstring.rbegin(), comp()) ) return true;
+                           _c.bitstring.begin()+(end-start), comp()) ) return true;
           }
         }
         return false;
