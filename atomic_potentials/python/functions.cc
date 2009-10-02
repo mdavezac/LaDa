@@ -99,7 +99,7 @@ namespace LaDa
       { return 1e0; }
 
     template< class T_TYPE >
-      atomic_potential::neg_pow( Functions::arg_type::first_type const & _x, T_TYPE  _i )
+      atomic_potential::numeric_type neg_pow( Functions::arg_type::first_type const _x, T_TYPE  _i )
         { return Fuzzy::is_zero(_x) ? 1e0/types::tolerance: std::pow(_x, _i); }
 
     template<class T_TYPE>
@@ -113,7 +113,7 @@ namespace LaDa
 
         typedef atomic_potential::numeric_type numeric_type;
         numeric_type (*ptr_func)(numeric_type, T_TYPE) = &std::pow;
-        numeric_type (*ptr_neg_func)(numeric_type, T_TYPE) = &neg_pow<T_TYPE>;
+        numeric_type (*ptr_neg_func)(numeric_type const, T_TYPE) = &neg_pow<T_TYPE>;
         if( _pow == T_TYPE(0) ) _func.push_back( constant, coefs);
         else if( _pow < T_TYPE(0) )
           _func.push_back( bl::bind(ptr_neg_func, bl::_1, bl::constant(_pow)), coefs);
@@ -226,6 +226,7 @@ namespace LaDa
         .def("append_pow", &push_back_pow<atomic_potential::numeric_type>)
         .def("append_pow", &push_back_pow<int>)
         .def("append_constant", &push_back_constant)
+        .def("normalize", &Functions::normalize)
         .def("__str__", &tostream<Functions>)
         .def("__iter__", &iter, bp::with_custodian_and_ward_postcall<1,0>())
         .add_static_property("N", &getN);

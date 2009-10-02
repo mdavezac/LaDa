@@ -80,6 +80,7 @@ namespace LaDa
         .def("__call__", &call_rep<Separable>, bp::arg("representation"))
         .def("__len__", &Separable::size)
         .def("append", &Separable::push_back)
+        .def("normalize", &Separable::normalize)
         .def("__iter__", &iter, bp::with_custodian_and_ward_postcall<1,0>());
       
       bp::class_<t_IterTuple>

@@ -5,7 +5,12 @@
 #include <config.h>
 #endif
 
+#include <cmath>
+#include <numeric>
+#include <algorithm>
+
 #include <boost/numeric/ublas/vector_proxy.hpp>
+#include <boost/lambda/lambda.hpp>
 
 #include <crystal/structure.h>
 
@@ -30,6 +35,7 @@ namespace LaDa
           typedef const_coord_range::const_rank_range const_rank_range;
           typedef const_rank_range::const_iterator const_iterator;
           coefficients_.clear();
+          nb_funcs_.clear(); nb_funcs_.reserve( _sumofseps.nb_coordinates() );
           for(const_coord_range range( _sumofseps.const_range() ); range; ++range)
           {
             size_t nmax(0);
@@ -43,13 +49,16 @@ namespace LaDa
           
             vector_type vec(nmax);
             rank_range = range.range();
+            nb_funcs_.resize(nb_funcs_.size() + 1);
             for(size_t i(0); rank_range; ++rank_range)
             {
               const_iterator i_first = rank_range.begin();
               const_iterator const i_end = rank_range.end();
-              for(; i_first != i_end; ++i_first)
+              size_t n(0);
+              for(; i_first != i_end; ++i_first, ++n)
                 for( size_t j(0); j < Functions::N; ++j, ++i)
                   vec(i) = (*i_first)[j];
+              nb_funcs_.back().push_back(n);
             }
             coefficients_.push_back(vec);
           }
@@ -85,6 +94,9 @@ namespace LaDa
           }
         }
       };
+
+      // Removes a header dependence by defining it here.
+      size_t Collapse :: nb_coordinates() const { return sumofseps_.nb_coordinates(); }
 
       numeric_type Collapse::convergence() const
       {
@@ -146,8 +158,41 @@ namespace LaDa
         values_.add( representation, sumofseps_ );
       }
 
-      size_t Collapse::nb_coordinates() const { return sumofseps_.nb_coordinates(); }
+      void Collapse::update(size_t _i, vector_type const &_x)
+      { 
+        namespace bl = boost::lambda;
+        LADA_DOASSERT( _i < nb_funcs_.size(), "Index out-of-range.\n" )
+        LADA_ASSERT( coefficients_.size() == nb_funcs_.size(), "Incoherent containers.\n" )
+        LADA_ASSERT( scaling_factors_.size() == nb_funcs_[_i].size(), "Incoherent containers.\n" )
 
+        coefficients_[_i] = _x;
+        values_.update(coefficients_[_i], fitting_set_, _i);
+
+        // Normalizes functionals.
+        t_ScalingFactors :: iterator i_scale = scaling_factors_.begin();
+        std::vector<size_t>::const_iterator i_nbfuncs = nb_funcs_[_i].begin();
+        std::vector<size_t>::const_iterator const i_nbfuncs_end = nb_funcs_[_i].end();
+        t_Coefficients::value_type::iterator i_coef = coefficients_[_i].begin();
+#       ifdef LADA_DEBUG
+          size_t acc(0);
+#       endif
+        for(; i_nbfuncs != i_nbfuncs_end; ++i_nbfuncs, ++i_scale) 
+        {
+          t_Coefficients::value_type::iterator const i_first = i_coef;
+          i_coef += Functions::N * (*i_nbfuncs);
+#         ifdef LADA_DEBUG
+            acc += Functions::N * (*i_nbfuncs);
+            LADA_ASSERT(acc <= coefficients_[_i].size(), "index out of range.\n") 
+#         endif
+          numeric_type const norm
+          (
+            std::sqrt( std::accumulate(i_first, i_coef, 0, bl::_1 + bl::_2*bl::_2) )
+          );
+          numeric_type const inv_norm( numeric_type(1) / norm );
+          std::for_each( i_first, i_coef, bl::_1 *= bl::constant(inv_norm) );
+          (*i_scale) *= norm;
+        }
+      }
 
 
     } // namespace collapse

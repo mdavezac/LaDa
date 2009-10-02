@@ -96,6 +96,7 @@ namespace LaDa
         )
         .def("__len__", &SumOfSeparables::size)
         .def("append", &SumOfSeparables::push_back)
+        .def("normalize", &SumOfSeparables::normalize)
         .def("__iter__", &iter, bp::with_custodian_and_ward_postcall<1,0>());
 
       bp::class_<t_IterTuple>

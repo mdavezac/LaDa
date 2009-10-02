@@ -80,6 +80,7 @@ namespace LaDa
        .add_property("values", &Collapse::values_)
        .add_property("scales", &Collapse::scaling_factors_)
        .add_property("fitting_set", &Collapse::fitting_set_)
+       .add_property("nb_funcs", &Collapse::nb_funcs_)
        .add_property("nb_coordinates", &Collapse::nb_coordinates)
        .add_property("nb_structures", &Collapse::nb_structures)
        .add_property("convergence", &Collapse::convergence);

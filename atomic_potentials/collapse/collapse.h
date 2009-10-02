@@ -8,8 +8,8 @@
 #include <config.h>
 #endif
 
-#include <boost/numeric/ublas/io.hpp>
 #include <string>
+#include <vector>
 
 #include "../numeric_types.h"
 #include "../functions.h"
@@ -87,17 +87,14 @@ namespace LaDa
                      values_(_c.values_),
                      coefficients_(_c.coefficients_),
                      scaling_factors_(_c.scaling_factors_),
-                     sumofseps_(_c.sumofseps_) {}
+                     sumofseps_(_c.sumofseps_),
+                     nb_funcs_(_c.nb_funcs_) {}
      
           //! Creates A matrix and b vector for coordinate \a _i. 
           template<class T_MATRIX, class T_VECTOR>
             void lsq_data(T_MATRIX& _matrix, T_VECTOR& _vector, size_t _i) const;
           //! Updates coordinate \a _i.
-          void update(size_t _i, vector_type const &_x)
-          { 
-            coefficients_[_i] = _x;
-            values_.update(coefficients_[_i], fitting_set_, _i);
-          }
+          void update(size_t _i, vector_type const &_x);
           //! Adds a structure to the fitting set.
           void add(Crystal::TStructure<std::string> const &_structure);
           //! Reassigns coefficients.
@@ -129,6 +126,8 @@ namespace LaDa
           t_ScalingFactors scaling_factors_;
           //! Sum of separables function.
           SumOfSeparables &sumofseps_;
+          //! Number of functions per coordinate and rank.
+          std::vector< std::vector<size_t> > nb_funcs_;
       };
 
 
