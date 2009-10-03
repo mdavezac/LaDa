@@ -147,7 +147,6 @@ namespace LaDa
               str_val += i_rank_val.all() * (*i_scale) * rep_weight;
             } // loop over ranks
           } // loop over representations
-          std::cout << "str_val: " << str_val << "\n";
           result += str_weight * (str_val - i_str.energy()) * (str_val - i_str.energy());
         } // loop over structures.
         return result / nstr; 
@@ -177,6 +176,7 @@ namespace LaDa
 
         coefficients_[_i] = _x;
         values_.update(coefficients_[_i], fitting_set_, _i);
+        return;
 
         // Normalizes functionals.
         t_ScalingFactors :: iterator i_scale = scaling_factors_.begin();

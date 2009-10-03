@@ -46,7 +46,7 @@ namespace LaDa
 
      t_uint Translation::operator()(t_uint _x, FlavorBase const &_flavorbase) const
      {
-       if(card_ < 2) return _x;
+       if(i_trans_ == i_trans_end_) return _x;
 #      ifdef LADA_DEBUG
          if(i_trans_->size() != card_)
            BOOST_THROW_EXCEPTION( internal() << error_string("permutations_ size is incorrect.") );

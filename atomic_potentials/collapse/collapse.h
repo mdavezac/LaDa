@@ -206,8 +206,8 @@ namespace LaDa
             for(size_t i(0); i < vec_size; ++i )
             {
               for(size_t j(i); j < vec_size; ++j)
-                _matrix(i,j) += G(i) * G(j) * str_weight * nstr;
-              _vector(i) += i_str.energy() * G(i) * str_weight * nstr;
+                _matrix(i,j) += G(i) * G(j) * str_weight;
+              _vector(i) += i_str.energy() * G(i) * str_weight;
             } 
           } // loop over structures.
         
@@ -218,11 +218,11 @@ namespace LaDa
           {
             for( size_t j(i+1); j < vec_size; ++j )
             {
-//             _matrix(i,j) *= inv_nstr;
+              _matrix(i,j) *= inv_nstr;
               _matrix(j,i) = _matrix(i,j);
             }
-//           _vector(i) *= inv_nstr;
-//           _matrix(i,i) *= inv_nstr;
+            _vector(i) *= inv_nstr;
+            _matrix(i,i) *= inv_nstr;
           }
         }
     } // namespace collapse

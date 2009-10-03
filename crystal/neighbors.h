@@ -99,8 +99,6 @@ namespace LaDa
          
          atat::rMatrix3d const inv_cell( !_structure.cell );
          typedef Crystal::TStructure<T_TYPE> t_Structure;
-         typename t_Structure::t_Atoms::const_iterator i_atom = _structure.atoms.begin();
-         typename t_Structure::t_Atoms::const_iterator i_atom_end = _structure.atoms.end();
          Neighbor neighbor;
          neighbor.index = 0;
          size_t list_max_size(nmax);
@@ -113,6 +111,9 @@ namespace LaDa
          else if( list_max_size <= 86 ) list_max_size = 88;
          else list_max_size *= 2;
          const types::t_int umax = list_max_size / _structure.atoms.size() + 1;
+retry:
+         typename t_Structure::t_Atoms::const_iterator i_atom = _structure.atoms.begin();
+         typename t_Structure::t_Atoms::const_iterator i_atom_end = _structure.atoms.end();
          for(; i_atom != i_atom_end; ++i_atom, ++neighbor.index ) 
          {
            atat::rVector3d const frac( inv_cell * (i_atom->pos - origin) );
@@ -168,11 +169,10 @@ namespace LaDa
            if( Fuzzy::gt(i_last->distance, dist) ) break;
          if( i_last == i_end )
          {
-           std::cout << dist << "\n";
-           for(i_last=neighbors_.begin(); i_last != i_end; ++i_last)
-             std::cout << i_last->distance << " " << i_last->pos << " " << i_last->index << "\n";
+           neighbors_.clear();
+           list_max_size += 20;
+           goto retry;
          }
-         LADA_DOASSERT( i_last != i_end, "Supercell too small.\n");
          neighbors_.resize(i);
        };
 
