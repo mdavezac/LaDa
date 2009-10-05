@@ -100,18 +100,25 @@ namespace LaDa
          atat::rMatrix3d const inv_cell( !_structure.cell );
          typedef Crystal::TStructure<T_TYPE> t_Structure;
          Neighbor neighbor;
+         types::t_real const volume( std::abs(atat::det(_structure.cell)) );
+         size_t list_max_size(nmax+1);
+retry: 
          neighbor.index = 0;
-         size_t list_max_size(nmax);
-         if( list_max_size <= 12 ) list_max_size = 13;
-         else if( list_max_size <= 18 ) list_max_size = 20;
-         else if( list_max_size <= 42 ) list_max_size = 44;
-         else if( list_max_size <= 54 ) list_max_size = 56;
-         else if( list_max_size <= 54 ) list_max_size = 56;
-         else if( list_max_size <= 78 ) list_max_size = 80;
-         else if( list_max_size <= 86 ) list_max_size = 88;
-         else list_max_size *= 2;
-         const types::t_int umax = list_max_size / _structure.atoms.size() + 1;
-retry:
+         // Finds out how far to look.
+         atat::rVector3d const a0( _structure.cell.get_column(0) );
+         atat::rVector3d const a1( _structure.cell.get_column(1) );
+         atat::rVector3d const a2( _structure.cell.get_column(2) );
+         types::t_real const max_norm = std::max( atat::norm(a0), std::max(atat::norm(a1), atat::norm(a2)) );
+         types::t_real const r
+         ( 
+           std::pow(std::max( 1e0, types::t_real(list_max_size) / types::t_real(_structure.atoms.size())),
+                    0.3333333333333)
+         );
+         types::t_int const n0( std::max(1.0, std::ceil(r*max_norm*atat::norm(a1^a2)/volume)) );
+         types::t_int const n1( std::max(1.0, std::ceil(r*max_norm*atat::norm(a2^a0)/volume)) );
+         types::t_int const n2( std::max(1.0, std::ceil(r*max_norm*atat::norm(a0^a1)/volume)) );
+
+
          typename t_Structure::t_Atoms::const_iterator i_atom = _structure.atoms.begin();
          typename t_Structure::t_Atoms::const_iterator i_atom_end = _structure.atoms.end();
          for(; i_atom != i_atom_end; ++i_atom, ++neighbor.index ) 
@@ -123,9 +130,9 @@ retry:
              frac(1) - std::floor( frac(1) + 0.500000001e0 ),
              frac(2) - std::floor( frac(2) + 0.500000001e0 ) 
            );
-           for( types::t_int x(-umax); x <= umax; ++x )
-             for( types::t_int y(-umax); y <= umax; ++y )
-               for( types::t_int z(-umax); z <= umax; ++z )
+           for( types::t_int x(-n0); x <= n0; ++x )
+             for( types::t_int y(-n1); y <= n1; ++y )
+               for( types::t_int z(-n2); z <= n2; ++z )
                {
                   neighbor.pos = _structure.cell * ( centered + atat::rVector3d(x,y,z) );
                   neighbor.distance = atat::norm( neighbor.pos );

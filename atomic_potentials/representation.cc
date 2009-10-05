@@ -86,6 +86,7 @@ namespace LaDa
           atoms.clear();
           atoms.reserve(neighbors.size());
           for(; i_neigh != i_neigh_end; ++i_neigh) atoms.push_back(&(*i_neigh));
+          LADA_ASSERT( atoms.size() >= _natoms, "Internal bug.\n" )
 
           // finds type index at origin.
           origin_type = 0;
@@ -142,6 +143,7 @@ namespace LaDa
       LADA_ASSERT( _structure.lattice, "Lattice is not set.\n" )
       for(; i_first != i_end; ++i_first)
       {
+        LADA_ASSERT( (*i_first)->index < _structure.atoms.size(), "Index out-of-range.\n" )
         Crystal::TStructure<std::string>::t_Atom const &
            atom = _structure.atoms[ (*i_first)->index ];
         specie_type type(0);
@@ -151,6 +153,8 @@ namespace LaDa
           if( str == atom.type ) break;
           ++type;
         }
+        LADA_ASSERT( type < _structure.lattice->sites[atom.site<0? 0: atom.site].type.size(),
+                     "Could not find type: " << atom.type << "\n"  << *_structure.lattice << "\n" ) 
         atat::rVector3d const vec((*i_first)->pos); 
         switch( _vars.variables.size() )
         {
@@ -181,6 +185,7 @@ namespace LaDa
       Representation::const_iterator i_first = _rep.begin();
       Representation::const_iterator const i_end = _rep.end();
       for(; i_first != i_end; ++i_first) _stream << *i_first << "\n";
+      return _stream;
     }
 
   } // namespace atomic_potential

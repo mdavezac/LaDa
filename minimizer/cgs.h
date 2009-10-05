@@ -118,6 +118,9 @@ namespace LaDa
     
           for (++iter; iter <= itermax; ++iter)
           {
+// #           ifdef LADA_DEBUG
+//               types::t_real old_resid = ublas::norm_2( _b - ublas::prod(_A, _x) ) / ublas::norm_2(_b);
+// #           endif
             rho_1 = ublas::prec_inner_prod(rtilde, r);
             if (rho_1 == 0) 
             {
@@ -142,6 +145,10 @@ namespace LaDa
             r -= alpha * qhat;
             rho_2 = rho_1;
             resid = ublas::norm_2(r) / normb;
+// #           ifdef LADA_DEBUG
+//               types::t_real new_resid = ublas::norm_2( _b - ublas::prod(_A, _x) ) / ublas::norm_2(_b);
+//               LADA_ASSERT( new_resid < old_resid, old_resid << " < " << new_resid << ", error in residual.\n" )
+// #           endif
             if ( resid < tolerance ) break;
 
             if( not verbose ) continue;
