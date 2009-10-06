@@ -10,6 +10,7 @@ def allsq( _collapse, tolerance = 1e-14, itermax=50, verbose=False, cgsitermax=1
   from random import shuffle
   from math import fabs as abs, sqrt
   from scipy.sparse.linalg import cgs
+  from scipy.linalg import lstsq
 
   N = _collapse.nb_coordinates;
   outer_iter = 0
@@ -28,11 +29,10 @@ def allsq( _collapse, tolerance = 1e-14, itermax=50, verbose=False, cgsitermax=1
     shuffle(coords)
     for i in coords:
       if verbose: print "  _ coordinate: ", i,
-      A, b = _collapse.lsq_data(i)
-      Ac, b = _collapse.lsq_data(i)
+      A, b = _collapse.lstsq_data(i)
       x = _collapse.coefficients(i)
-      if verbose:  old = _collapse.convergence
-      x, info = cgs(A, b, x, tol=cgstolerance, maxiter=cgsitermax)
+      # x, info = cgs(A, b, x, tol=cgstolerance, maxiter=cgsitermax)
+      x, res, rank, svd = lstsq(A, b, cond=cgstolerance, overwrite_a=1, overwrite_b=1)
       _collapse.update(i, x)
       if verbose:
         n =  _collapse.convergence
@@ -43,7 +43,7 @@ def allsq( _collapse, tolerance = 1e-14, itermax=50, verbose=False, cgsitermax=1
 
     energies = _collapse.convergence
     if verbose: print "  convergence: %18.8f %18.8f" % ( energies, energies - old_energies )
-    else: print "  convergence: %18.8f %18.8f" % ( energies, energies - old_energies )
+   #else: print "  convergence: %18.8f %18.8f" % ( energies, energies - old_energies )
    #assert old_energies >  energies or abs(old_energies -  energies) < 1e-12, \
    #       "Fit is degrading: %e < %e.\n" % (old_energies, _energies)
     if abs(energies - old_energies) < tolerance: break

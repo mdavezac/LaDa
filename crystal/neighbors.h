@@ -95,28 +95,33 @@ namespace LaDa
        {
          const types::t_int N( _structure.atoms.size() );
          neighbors_.clear();
-         size_t size(0);
          
          atat::rMatrix3d const inv_cell( !_structure.cell );
          typedef Crystal::TStructure<T_TYPE> t_Structure;
          Neighbor neighbor;
          types::t_real const volume( std::abs(atat::det(_structure.cell)) );
-         size_t list_max_size(nmax+1);
+         size_t list_max_size(nmax+2);
 retry: 
+         size_t size(0);
          neighbor.index = 0;
          // Finds out how far to look.
          atat::rVector3d const a0( _structure.cell.get_column(0) );
          atat::rVector3d const a1( _structure.cell.get_column(1) );
          atat::rVector3d const a2( _structure.cell.get_column(2) );
-         types::t_real const max_norm = std::max( atat::norm(a0), std::max(atat::norm(a1), atat::norm(a2)) );
+         types::t_real const max_norm
+           = std::max( atat::norm(a0), std::max(atat::norm(a1), atat::norm(a2)) );
          types::t_real const r
          ( 
-           std::pow(std::max( 1e0, types::t_real(list_max_size) / types::t_real(_structure.atoms.size())),
-                    0.3333333333333)
+           std::pow
+           (
+             std::max(1e0, types::t_real(list_max_size) / types::t_real(N)),
+             0.3333333333333
+           )
          );
-         types::t_int const n0( std::max(1.0, std::ceil(r*max_norm*atat::norm(a1^a2)/volume)) );
-         types::t_int const n1( std::max(1.0, std::ceil(r*max_norm*atat::norm(a2^a0)/volume)) );
-         types::t_int const n2( std::max(1.0, std::ceil(r*max_norm*atat::norm(a0^a1)/volume)) );
+         types::t_int n0( std::max(1.0, std::ceil(r*max_norm*atat::norm(a1^a2)/volume)) );
+         types::t_int n1( std::max(1.0, std::ceil(r*max_norm*atat::norm(a2^a0)/volume)) );
+         types::t_int n2( std::max(1.0, std::ceil(r*max_norm*atat::norm(a0^a1)/volume)) );
+         while( n0 * n1 * n2 * 8 * N < list_max_size ) { ++n0; ++n1; ++n2; }
 
 
          typename t_Structure::t_Atoms::const_iterator i_atom = _structure.atoms.begin();
@@ -167,7 +172,7 @@ retry:
          // Removes atoms beyon nth position which are not at same distance as nth position.
          t_Neighbors::iterator i_last = neighbors_.begin();
          t_Neighbors::iterator const i_end = neighbors_.end();
-         LADA_DOASSERT( neighbors_.size() > nmax, "Supercell too small.\n");
+         LADA_ASSERT( neighbors_.size() > nmax, "Supercell too small.\n");
          size_t i(1);
          for(; i < nmax; ++i, ++i_last );
          LADA_DOASSERT( i_last != i_end, "Supercell too small.\n");

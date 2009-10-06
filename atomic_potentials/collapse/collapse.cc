@@ -155,14 +155,9 @@ namespace LaDa
 
       void Collapse::add(Crystal::TStructure<std::string> const &_structure )
       {
-        size_t Nmax(0);
-        SumOfSeparables::const_iterator i_first = sumofseps_.begin();
-        SumOfSeparables::const_iterator i_end = sumofseps_.end();
-        for(; i_first != i_end; ++i_first)
-          Nmax = std::max(Nmax, i_first->get<0>().size());
+        size_t Nmax( 3*(sumofseps_.nb_coordinates()+2) );
            
-        LADA_ASSERT( (Nmax+2) % 3 == 0, "Unexpected number of variables.\n" )
-        Representation representation(_structure, (Nmax + 2) / 3 );
+        Representation representation(_structure, Nmax );
         fitting_set_.add( representation, _structure.energy, _structure.weight );
         values_.add( representation, sumofseps_ );
       }
@@ -175,8 +170,6 @@ namespace LaDa
         LADA_ASSERT( scaling_factors_.size() == nb_funcs_[_i].size(), "Incoherent containers.\n" )
 
         coefficients_[_i] = _x;
-        values_.update(coefficients_[_i], fitting_set_, _i);
-        return;
 
         // Normalizes functionals.
         t_ScalingFactors :: iterator i_scale = scaling_factors_.begin();
@@ -202,6 +195,8 @@ namespace LaDa
           std::for_each( i_first, i_coef, bl::_1 *= bl::constant(inv_norm) );
           (*i_scale) *= norm;
         }
+          
+        values_.update(coefficients_[_i], fitting_set_, _i);
       }
 
       numeric_type Collapse::y_squared() const

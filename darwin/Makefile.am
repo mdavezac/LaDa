@@ -82,7 +82,7 @@ libdarwinbitstring_la_CPPFLAGS = $(AM_CPPFLAGS)
 
 liballoylayers_ladir = $(includedir)/LaDa/darwin/alloylayers
 liballoylayers_la_SOURCES = $(lib_alloylayers_cc)
-liballoylayers_la_HEADERS = $(LIB_ALLOYLAYERS_H)
+liballoylayers_la_HEADERS = $(lib_alloylayers_h)
 liballoylayers_la_CPPFLAGS = $(AM_CPPFLAGS)
 
 libdarwin_ladir = $(includedir)/LaDa/darwin

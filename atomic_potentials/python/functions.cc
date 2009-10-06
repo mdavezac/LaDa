@@ -134,6 +134,34 @@ namespace LaDa
           );
       }
 
+    void push_back_trig( Functions &_func, types::t_real _n,
+                         bp::tuple const &_tuple, bool _which )
+    {
+      namespace bl = boost::lambda;
+      if( Fuzzy::is_zero(_n) )
+      {
+        PyErr_SetString( PyExc_ValueError, "Wave number cannot be zero.\n");
+        bp::throw_error_already_set();
+        return;
+      }
+      Functions::t_Coefficient coefs[Functions::N];
+      if( not extract_tuple(_tuple, coefs)) { bp::throw_error_already_set(); return; }
+
+      typedef atomic_potential::numeric_type numeric_type;
+      numeric_type (* const ptr_cos)(numeric_type) = &std::cos;
+      numeric_type (* const ptr_sin)(numeric_type) = &std::sin;
+      _func.push_back
+      ( 
+        bl::bind(_which ? ptr_cos: ptr_sin, bl::_1*bl::constant(1e0/_n)), 
+        coefs,
+        (_which ? "cos(x/":"sin(x/") + boost::lexical_cast<std::string>(1e0/_n) + ")"
+      );
+    }
+
+    void push_back_cos(Functions &_func, types::t_real _n, bp::tuple const &_tuple)
+      { push_back_trig( _func, _n, _tuple, true ); }
+    void push_back_sin(Functions &_func, types::t_real _n, bp::tuple const &_tuple)
+      { push_back_trig( _func, _n, _tuple, false ); }
 
     void push_back_constant(Functions &_func, bp::tuple const &_tuple)
     {
@@ -210,8 +238,7 @@ namespace LaDa
         {
           PyErr_SetString( PyExc_IndexError, "Coefficient index out of range.\n");
           bp::throw_error_already_set();
-          static atomic_potential::numeric_type a(-1);
-          return a;
+          return -1;
         }
         return _ref[_i];
       }
@@ -222,8 +249,7 @@ namespace LaDa
         {
           PyErr_SetString( PyExc_IndexError, "Coefficient index out of range.\n");
           bp::throw_error_already_set();
-          static atomic_potential::numeric_type a(-1);
-          return a;
+          return -1;
         }
         _ref[_i] = _a;
       }
@@ -240,6 +266,8 @@ namespace LaDa
         .def("append_pow", &push_back_pow<atomic_potential::numeric_type>)
         .def("append_pow", &push_back_pow<int>)
         .def("append_constant", &push_back_constant)
+        .def("append_cos", &push_back_cos)
+        .def("append_sin", &push_back_sin)
         .def("normalize", &Functions::normalize)
         .def("__str__", &tostream<Functions>)
         .def("__iter__", &iter, bp::with_custodian_and_ward_postcall<1,0>())

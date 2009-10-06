@@ -30,12 +30,19 @@ namespace LaDa
     typedef LaDa::atomic_potential::vector_type vector_type;
     typedef LaDa::atomic_potential::numeric_type numeric_type;
 
-    bp::tuple lsq_data( Collapse const &_coll,
-                                   size_t _i) 
+    bp::tuple lsq_data( Collapse const &_coll, size_t _i) 
     {
       pyublas::numpy_matrix<matrix_type::value_type> mat; 
       pyublas::numpy_vector<vector_type::value_type> vec; 
       _coll.lsq_data( mat, vec, _i );
+      return bp::make_tuple( mat, vec );
+    }
+
+    bp::tuple lstsq_data( Collapse const &_coll, size_t _i) 
+    {
+      pyublas::numpy_matrix<matrix_type::value_type> mat; 
+      pyublas::numpy_vector<vector_type::value_type> vec; 
+      _coll.lstsq_data( mat, vec, _i );
       return bp::make_tuple( mat, vec );
     }
 
@@ -70,6 +77,7 @@ namespace LaDa
         bp::init<atomic_potential::SumOfSeparables&>() 
       ).def(bp::init<Collapse const&>())
        .def("lsq_data", &lsq_data)
+       .def("lstsq_data", &lstsq_data)
        .def("update", &Collapse::update)
        .def("add", &Collapse::add)
        .def("reassign", &Collapse::reassign)

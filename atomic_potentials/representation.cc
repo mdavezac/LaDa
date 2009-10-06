@@ -8,6 +8,8 @@
 #include <crystal/structure.h>
 #include <crystal/neighbors.h>
 
+#include <physics/physics.h>
+
 #include "bases.h"
 #include "representation.h"
 
@@ -15,6 +17,22 @@ namespace LaDa
 {
   namespace atomic_potential
   {
+    atat::rVector3d to_spherical( atat::rVector3d const &_a )
+    {
+      types::t_real const  rho = std::sqrt( _a[0]*_a[0] + _a[1]*_a[1] + _a[2]*_a[2] );
+      return Fuzzy::is_zero(rho) ? 
+               atat::rVector3d(0,0,0):
+               atat::rVector3d
+               (
+                 rho,
+                 std::atan2( _a[1], _a[0] ),
+                 std::acos( _a[2] / rho ) 
+               );
+    }
+
+
+    Representation::CoordinateSystem Representation::coord_system = Representation::cartesian;
+    
     // Strict weak ordering functor from knowledge of basis.
     struct basis_sort
     {
@@ -155,13 +173,29 @@ namespace LaDa
         }
         LADA_ASSERT( type < _structure.lattice->sites[atom.site<0? 0: atom.site].type.size(),
                      "Could not find type: " << atom.type << "\n"  << *_structure.lattice << "\n" ) 
-        atat::rVector3d const vec((*i_first)->pos); 
-        switch( _vars.variables.size() )
+        if( Representation::coord_system == Representation::cartesian )
         {
-          default: _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.z, type) );
-          case 2:  _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.y, type) );
-          case 1:  _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.x, type) );
-                   break;
+          atat::rVector3d const vec((*i_first)->pos); 
+          // always include x.
+          _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.x, type) );
+
+          size_t const N(_vars.variables.size());
+          if( N > 1 ) // avoid y for first atom.
+            _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.y, type) );
+          if( N > 2 ) // avoid z for first and second atom.
+            _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.z, type) );
+        }
+        else // spherical coordinates
+        {
+          atat::rVector3d const vec( to_spherical((*i_first)->pos) );
+          // always include x (rho).
+          _vars.variables.push_back( VariableSet::t_Variable(vec.x[0], type) );
+
+          size_t const N(_vars.variables.size());
+          if( N > 1 ) // avoid y(theta) for first atom.
+            _vars.variables.push_back( VariableSet::t_Variable(vec.x[1], type) );
+          if( N > 2 ) // avoid z(phi) for first and second atom.
+            _vars.variables.push_back( VariableSet::t_Variable(vec.x[2], type) );
         }
       }
     }

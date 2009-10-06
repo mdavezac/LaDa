@@ -8,8 +8,8 @@
 #include <boost/python/class.hpp>
 #include <boost/python/tuple.hpp>
 #include <boost/python/def.hpp>
-#include <boost/python/enum.hpp>
 #include <boost/python/str.hpp>
+#include <boost/python/enum.hpp>
 
 #include <opt/initial_path.h>
 

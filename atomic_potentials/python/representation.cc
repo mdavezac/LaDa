@@ -10,6 +10,8 @@
 
 #include <boost/python/class.hpp>
 #include <boost/python/str.hpp>
+#include <boost/python/enum.hpp>
+#include <boost/python/scope.hpp>
 
 #include <crystal/structure.h>
 
@@ -24,6 +26,7 @@ namespace LaDa
   namespace Python
   {
     typedef LaDa::atomic_potential::Representation Representation;
+    size_t getcs () { return Representation::coord_system; }
     struct RepresentationIter 
     {
       RepresentationIter   ( Representation const &_rep )
@@ -110,7 +113,7 @@ namespace LaDa
       ).def("__iter__", &RepresentationIter::iter, bp::return_internal_reference<1>() )
        .def("next", &RepresentationIter::next, bp::return_internal_reference<1>() );
 
-      bp::class_<Representation>
+      bp::object rep = bp::class_<Representation>
       ( 
         "Representation", 
         "Symmetrized sets of variables forming a representation within "
@@ -123,6 +126,15 @@ namespace LaDa
        .add_property( "nb_atoms", &Representation::nb_atoms)
        .def( "__iter__", &create_iter)
        .def( "__getitem__", &getitem, bp::return_internal_reference<1>());
+
+      bp::scope scope = rep;
+
+      bp::enum_< Representation::CoordinateSystem >( "CoordinateSystem" )
+        .value( "cartesian", Representation::cartesian )
+        .value( "spherical", Representation::spherical )
+        .export_values();
+      
+      rep.attr("coord_system") =  Representation::coord_system;
     }
 
   }

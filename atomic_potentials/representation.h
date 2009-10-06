@@ -62,6 +62,14 @@ namespace LaDa
         //! Type of a set of representations.
         typedef std::vector<VariableSet> t_Sets;
       public:
+        //! Coordinate Type.
+        enum CoordinateSystem
+        {
+          cartesian, //! Cartesian coordinates.
+          spherical  //! Spherical coordinates.
+        };
+        //! Switch from one coordinate system to another.
+        static CoordinateSystem coord_system;
         //! Iterator over the representations.
         typedef t_Sets::const_iterator const_iterator;
   
