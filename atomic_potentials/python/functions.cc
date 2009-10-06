@@ -152,9 +152,9 @@ namespace LaDa
       numeric_type (* const ptr_sin)(numeric_type) = &std::sin;
       _func.push_back
       ( 
-        bl::bind(_which ? ptr_cos: ptr_sin, bl::_1*bl::constant(1e0/_n)), 
+        bl::bind(_which ? ptr_cos: ptr_sin, bl::_1*bl::constant(_n)), 
         coefs,
-        (_which ? "cos(x/":"sin(x/") + boost::lexical_cast<std::string>(1e0/_n) + ")"
+        (_which ? "cos(":"sin(") + boost::lexical_cast<std::string>(_n) + "x)"
       );
     }
 
