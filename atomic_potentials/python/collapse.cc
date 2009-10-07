@@ -8,6 +8,9 @@
 #include <sstream>
 
 #include <pyublas/numpy.hpp>
+
+#include <boost/tuple/tuple.hpp>
+
 #include <boost/python/class.hpp>
 #include <boost/python/tuple.hpp>
 #include <boost/numeric/ublas/io.hpp>
@@ -68,6 +71,13 @@ namespace LaDa
     pyublas::numpy_vector<vector_type::value_type> coefficients( Collapse const &_coll, size_t _i )
       { return _coll.coefficients(_i); }
 
+    bp::tuple errors( Collapse const &_coll )
+    {
+      namespace bt = boost::tuples;
+      bt::tuple<numeric_type, numeric_type, numeric_type> const t( _coll.errors() );
+      return bp::make_tuple( bt::get<0>(t), bt::get<1>(t), bt::get<2>(t) );
+    }
+
     void expose_collapse()
     {
       bp::class_<Collapse>
@@ -93,7 +103,7 @@ namespace LaDa
        .add_property("nb_structures", &Collapse::nb_structures)
        .add_property("y_squared", &Collapse::y_squared)
        .add_property("sum_w", &Collapse::sum_w)
-       .add_property("convergence", &Collapse::convergence);
+       .add_property("errors", &errors);
     }
 
   }

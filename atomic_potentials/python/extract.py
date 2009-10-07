@@ -7,7 +7,10 @@ def extract( _dir, _vasp ):
   pwd  = getcwd()
   for root, dirs, files in walk(_dir):
     _vasp.indir = path.join(_dir, root)
-    try: yield _vasp.final()
+    try:
+      structure = _vasp.final()
+      structure.energy /= float( len(structure.atoms) ) 
+      yield structure
     except GeneratorExit : return
     except: pass
 

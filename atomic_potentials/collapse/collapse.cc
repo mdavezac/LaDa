@@ -107,9 +107,11 @@ namespace LaDa
       // Removes a header dependence by defining it here.
       size_t Collapse :: nb_coordinates() const { return sumofseps_.nb_coordinates(); }
 
-      numeric_type Collapse::convergence() const
+      boost::tuples::tuple<numeric_type, numeric_type, numeric_type> Collapse::errors() const
       {
-        numeric_type result(0);
+        numeric_type average(0);
+        numeric_type mse(0);
+        numeric_type max_(0);
         numeric_type nstr(0);
         t_FittingSet :: str_iterator i_str = fitting_set_.begin(0);
         t_FittingSet :: str_iterator const i_str_end = fitting_set_.end(0);
@@ -126,7 +128,7 @@ namespace LaDa
           t_Values::const_str_iterator::const_rep_iterator i_rep_val = i_str_val.begin();
         
           // loop over structure representations.
-          numeric_type str_val(0);
+          numeric_type str_val(-i_str.energy());
           for(; i_rep != i_rep_end; ++i_rep, ++i_rep_val )
           {
             numeric_type const rep_weight(i_rep.weight() * str_weight);
@@ -147,9 +149,11 @@ namespace LaDa
               str_val += i_rank_val.all() * (*i_scale) * rep_weight;
             } // loop over ranks
           } // loop over representations
-          result += str_weight * (str_val - i_str.energy()) * (str_val - i_str.energy());
+          mse += str_weight * str_val * str_val;
+          average += str_weight * std::abs(str_val);
+          max_ = std::max(max_, str_weight * std::abs(str_val));
         } // loop over structures.
-        return result / nstr; 
+        return boost::make_tuple(mse/nstr, average/nstr, max_);
       }
 
 

@@ -11,6 +11,8 @@
 #include <string>
 #include <vector>
 
+#include <boost/tuple/tuple.hpp>
+
 #include "../numeric_types.h"
 #include "../functions.h"
 #include "fitting_set.h"
@@ -114,7 +116,7 @@ namespace LaDa
           //! Returns the number of coordinates.
           size_t nb_coordinates() const;
           //! Returns average error per structure in fitting set.
-          numeric_type convergence() const;
+          boost::tuples::tuple<numeric_type, numeric_type, numeric_type> errors() const;
           //! Returns weight of structure \a _i.
           numeric_type get_weight( size_t _i ) { return fitting_set_.get_weight(_i); }
           //! Sets weight of structure \a _i. Returns old weight.

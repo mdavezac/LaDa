@@ -39,7 +39,7 @@ class Allsq(object):
       for x in _collapse.scales: x=1e0
       for j in  range(_collapse.nb_coordinates):
         x = _collapse.coefficients(j)
-        for u in x: u = random.uniform(0.9, 1.1)
+        x = numpy.array( [random.uniform(-10, 10) for u in x] )
         _collapse.update(j, x) 
 
       iter, e = self.call(_collapse)
@@ -57,8 +57,8 @@ class Allsq(object):
       for i, coefs in enumerate(best_coefs):
         _collapse.update(i, coefs)
 
-    assert fabs( _collapse.convergence - best_e ) < 1e-8, "%f %f" % (_collapse.convergence, best_e)
-    return best_iter, best_e
+    if fabs(_collapse.errors[0] - best_e[0] ) > 1e-8: return self(_collapse, **kwargs)
+    return best_iter, _collapse.errors
 
   def call(self, _collapse):
     import numpy
@@ -72,7 +72,7 @@ class Allsq(object):
     
     old = 0
     old_energies = 0
-    energies = _collapse.convergence
+    energies = _collapse.errors
     while( self.itermax == 0 or outer_iter < self.itermax ):
     
       if self.verbose: print "allsq iteration: ", outer_iter
@@ -90,22 +90,26 @@ class Allsq(object):
         x, res, rank, svd = lstsq(A, b, cond=self.cgstolerance, overwrite_a=1, overwrite_b=1)
         _collapse.update(i, x)
         if self.verbose:
-          n =  _collapse.convergence
+          n =  _collapse.errors
           print res, n
       #   assert old > n or abs(old - n) < 1e-12,  "Fit is degrading: %e < %e.\n" % (old, n)
     
       
     
-      energies = _collapse.convergence
+      energies = _collapse.errors
       if self.verbose:
-        print "  convergence: %18.8f %18.8f" % ( energies, energies - old_energies )
+        print "  errors: %18.8f %18.8f %18.8f  diff: %18.8f %18.8f %18.8f"  \
+              % ( energies[0], energies[1], energies[2], 
+                  energies[0] - old_energies[0], 
+                  energies[1] - old_energies[1], 
+                  energies[2] - old_energies[2] )
      #else: print "  convergence: %18.8f %18.8f" % ( energies, energies - old_energies )
      #assert old_energies >  energies or abs(old_energies -  energies) < 1e-12, \
      #       "Fit is degrading: %e < %e.\n" % (old_energies, _energies)
-      if abs(energies - old_energies) < self.tolerance: break
+      if abs(energies[0] - old_energies[0]) < self.tolerance: break
     
     if self.verbose:
-      print "Final convergence: %18.8f %18.8f" % ( energies, energies - old_energies )
+      print "Final errors: %18.8f %18.8f %18.8f" % energies
     return outer_iter, energies
 
 
