@@ -33,8 +33,19 @@ namespace LaDa
     {
       if ( vectors.size() < 1 ) return;
       std::vector<atat::rVector3d> :: iterator i_vec = vectors.begin();
-      std::vector<atat::rVector3d> :: iterator i_last = vectors.end();
+      std::vector<atat::rVector3d> :: iterator const i_last = vectors.end();
       for(; i_vec != i_last; ++i_vec) *i_vec = _op(*i_vec);
+
+      if( Crystal::Structure::lattice == NULL ) return;
+
+      i_vec = vectors.begin();
+      atat::rVector3d shift( (!Crystal::Structure::lattice->cell) * (*i_vec) );
+      shift(0) -= std::floor(shift(0)); if( Fuzzy::is_zero(shift(0)-1e0) ) shift(0) = 0e0;
+      shift(1) -= std::floor(shift(1)); if( Fuzzy::is_zero(shift(1)-1e0) ) shift(1) = 0e0;
+      shift(2) -= std::floor(shift(2)); if( Fuzzy::is_zero(shift(2)-1e0) ) shift(2) = 0e0;
+      shift = Crystal::Structure::lattice->cell * shift - (*i_vec);
+      if( Fuzzy::is_zero(atat::norm2(frac)) ) return;
+      for(; i_vec != i_vec_end; ++i_vec ) *i_vec -= frac; 
     }
 
     bool Cluster :: equivalent_mod_cell( Cluster &_cluster, const atat::rMatrix3d &_icell) 
