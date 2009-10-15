@@ -88,47 +88,6 @@ namespace LaDa
        return true;
      }
 
-     // finds all clusters, including symmetric equivalents
-     // starting from cluster included in Lamarck::clusters
-     // results are stored in a new Lamarck::clusters
-     template< class T_HARMONIC >
-     void  Builder<T_HARMONIC> :: add_equivalent_clusters() 
-     {
-       const atat::rMatrix3d &cell            = lattice->cell;
-       const atat::rMatrix3d inv_cell         = !cell;
-       const atat::Array<atat::rMatrix3d> &point_op = lattice->space_group.point_op;
-       const atat::Array<atat::rVector3d> &trans    = lattice->space_group.trans;
-       // new clusters will be added directly to Lamarck::clusters
-       t_Clusters old_cluster_list = *clusters;  
-   
-       t_Clusters :: iterator i_old_list_last = old_cluster_list.end();
-       t_Clusters :: iterator i_old_list = old_cluster_list.begin();
-       t_Cluster *transfo_cluster = new t_Cluster;
-   
-       for (; i_old_list != i_old_list_last ; ++i_old_list )
-       {
-         for (types::t_int op=0; op<point_op.get_size(); op++)
-         {
-           // initialize a new cluster to object pointed by i_old_list
-           *transfo_cluster = *i_old_list;
-           
-           // transforms cluster according to symmetry group
-           transfo_cluster->apply_symmetry(point_op(op),trans(op));
-
-           // checks wether transformed cluster is in Lamarck::clusters
-           t_Clusters :: iterator i_cluster  = clusters->begin();
-           t_Clusters :: iterator i_last = clusters->end();
-           for ( ; i_cluster != i_last ; ++i_cluster)
-             if ( transfo_cluster->equivalent_mod_cell(*i_cluster, inv_cell) ) 
-               break;
-   
-           // if it isn't, adds cluster to clusters
-           if (i_cluster == i_last ) 
-             clusters->push_back( *transfo_cluster );
-         }
-       }
-       delete transfo_cluster;
-     }
 
      // converts the clusters into a polynomial forme
      // converts each cluster for each atom to a monome

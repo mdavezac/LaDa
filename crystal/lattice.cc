@@ -17,6 +17,7 @@
 #include <opt/tinyxml.h>
 
 #include "lattice.h"
+#include "symmetry_operator.h"
 
 
 namespace LaDa
@@ -95,62 +96,11 @@ namespace LaDa
       std::set<Lattice::t_Site::t_Type::value_type> set_;
     };
 
-    // finds space group and symmetry operations using atat library
-    // needs some hooking in
-    // also wraps inside cell
-    void Lattice :: find_space_group()
+    void Lattice :: find_space_group(types::t_real _tol)
     {
-      space_group.cell=cell;
-      atat::Array<atat::rVector3d> atom_pos( sites.size() );
-      atat::Array<types::t_int> atom_type( sites.size() );
-      t_Sites :: iterator i_site = sites.begin();
-      t_Sites :: iterator i_end = sites.end();
-      atom_pos[0] = i_site->pos;
-      atom_type[0] = 0;
-      ++i_site;
-
-      // copies to an atat::Array
-      for(types::t_unsigned n(1), i(0); i_site != i_end; ++i_site, ++n)
-      {
-        t_Sites :: iterator const i_site_begin(sites.begin());
-        t_Sites :: iterator const i_found
-            = std::find_if(i_site_begin, i_site, CompSites(i_site->type));
-        
-        atom_type[n] =  i_found == i_site ? (++i): atom_type[i_found - i_site_begin];
-        atom_pos[n] = i_site->pos;
-      }
-      atat::wrap_inside_cell( &atom_pos, atom_pos, cell );
-      // recopies wrapped atoms back to this object
-      i_site = sites.begin();
-      for(types::t_unsigned n=0; i_site != i_end; ++i_site, ++n)
-        i_site->pos = atom_pos[n];
-
-      // finally, looks for space group
-      find_spacegroup(&space_group.point_op, &space_group.trans,
-                      cell, atom_pos, atom_type);
-      if (contains_pure_translations(space_group.point_op,space_group.trans)) 
-        std::cerr << "Warning: unit cell is not primitive." << std::endl;
-      // Makes sure that translations are not by some integer combination of the
-      // unit cell.
-      for( types::t_int i = 0; i < space_group.trans.getSize(); ++i )
-      {
-        // for prettier printing.
-        for( size_t j(0); j < 3; ++j )
-          for( size_t k(0); k < 3; ++k )
-            if( Fuzzy::is_zero( space_group.point_op[i](j,k) ) ) 
-              space_group.point_op[i](j,k) = types::t_real(0);
-
-        atat::rVector3d &trans = space_group.trans(i);
-        if( Fuzzy::eq( atat::norm2( trans ), types::t_real(0) ) ) continue;
-        atat::rVector3d zeroed = (!cell) * trans;
-        zeroed[0] = zeroed[0] - std::floor( zeroed[0] + 0.1 ); 
-        zeroed[1] = zeroed[1] - std::floor( zeroed[1] + 0.1 ); 
-        zeroed[2] = zeroed[2] - std::floor( zeroed[2] + 0.1 ); 
-        if( Fuzzy::is_zero( zeroed[0] ) ) zeroed[0] = types::t_real( 0 );
-        if( Fuzzy::is_zero( zeroed[1] ) ) zeroed[1] = types::t_real( 0 );
-        if( Fuzzy::is_zero( zeroed[2] ) ) zeroed[2] = types::t_real( 0 );
-        trans = cell * zeroed;
-      }
+      boost::shared_ptr< std::vector<SymmetryOperator> >
+        syms(get_space_group_symmetries(_tol));
+      space_group = *syms;
     }
 
     types::t_int Lattice :: get_atom_site_index( const atat::rVector3d &_at ) const
@@ -335,17 +285,6 @@ namespace LaDa
       } while ( (++i_cell) );
 
       vec = current;
-    }
-
-    bool Lattice :: equiv_by_point_group( const atat::rVector3d &_a,
-                                          const atat::rVector3d &_b ) const
-    {
-      if( atat::norm2( _a - _b ) < types::tolerance ) return false;
-      for (types::t_int op=0; op<space_group.point_op.get_size(); ++op) 
-        if ( atat::norm2(   _a 
-                          - space_group.point_op(op) * _b
-                          - space_group.trans(op)          ) < types::tolerance ) return true;
-      return false;
     }
 
     bool lattice_has_same_species( const Lattice &_lattice )

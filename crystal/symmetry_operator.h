@@ -82,11 +82,6 @@ namespace LaDa
                   SymmetryOperator const &_b, 
                   SymmetryOperator &_out );
 
-    //! Transforms space group into array of SymmetryOperators.
-    boost::shared_ptr< std::vector<SymmetryOperator> > transform(atat::SpaceGroup const &_sg);
-
-    //! Returns symmetries of a lattice.
-    boost::shared_ptr< std::vector<SymmetryOperator> > get_symmetries( Lattice const &_lat );
 
     //! \brief Returns point symmetries of a cell (except identity).
     //! \details Rotations are determined from G-vector triplets with the same

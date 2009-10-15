@@ -24,6 +24,10 @@
 
 namespace LaDa
 {
+  //! \cond
+  namespace Crystal { class SymmetryOperator; }
+  //! \endcond
+
   //! \brief Contains most everything %Cluster Expansion and structure related.
   //! \todo move structure related stuff to Physics
   //! \todo Rename Crystal to CE
@@ -127,7 +131,7 @@ namespace LaDa
         types::t_real set_eci(const types::t_real _eci) { eci = _eci; return eci; };
         //! \brief Applies the point symmetry operation \a _op and the translation 
         //!        \a _trans to the cluster.
-        void apply_symmetry(const atat::rMatrix3d &_op, const atat::rVector3d &_trans);
+        void apply_symmetry(Crystal::SymmetryOperator const &_op);
         //! \brief Checks wether this instance and \a _cluster are equivalent in
         //!        cell-shape specialization defined by \a _icell.
         //! \details Cluster Expansion functionals are most usefull when
@@ -169,6 +173,10 @@ namespace LaDa
 
     inline std::ostream &operator<<( std::ostream &_sstr, const Cluster &_cl )
       { _cl.print_out( _sstr ); return _sstr; }
+
+    //! Adds clusters equivalent by symmetry.
+    void  add_equivalent_clusters( const Crystal::Lattice &_lat, 
+                                   std::vector< Cluster > &_out  );
 
   } // namespace CE
 

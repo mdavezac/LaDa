@@ -22,7 +22,6 @@
 #include <opt/debug.h>
 #include <opt/types.h>
 #include <opt/tinyxml.h>
-#include <atat/findsym.h>
 #include <atat/vectmac.h>
 #include <atat/machdep.h>
 
@@ -33,7 +32,13 @@
 
 namespace LaDa
 {
-  namespace Crystal {
+  namespace Crystal 
+  {
+    // Forward Declaration.
+    //! \cond
+    class SymmetryOperator;
+    //! \endcond
+
 
     //! Refolds a periodic vector into the unit-cell, as defined by \a lat.
     void refold( atat::rVector3d &vec, const atat::rMatrix3d &lat );
@@ -51,10 +56,7 @@ namespace LaDa
     //!                             according to position in cartesian coordinate
     //!                             and their possible occupations.
     //!            - Lattice::scale defines the unit in which the cartesian coordinates are given.
-    //!            - Lattice::space_group defines the the space-group of the lattice (How?
-    //!            refer to <A
-    //!            HREF="http://www.its.caltech.edu/~avdw/atat/manual/manual.html">
-    //!            ATAT </A>)
+    //!            - Lattice::space_group operations. Call Lattice::find_space()_group to initialize.
     //!            .
     //!          Each site is an Atom_Type< std::vector<string> > and contains
     //!          both a cartesian position and set of possible occupations (in
@@ -83,8 +85,8 @@ namespace LaDa
         atat::rMatrix3d cell;
         //! The collection of sites.
         t_Sites sites;
-        //! The space-group of the lattice.
-        atat::SpaceGroup space_group;
+        //! The space-group operations of the lattice.
+        std::vector<SymmetryOperator> space_group;
         //! The scale of the cartesian coordinates.
         types::t_real scale;
 
@@ -97,9 +99,10 @@ namespace LaDa
         //! Loads a lattice from XML.
         bool Load( const TiXmlElement &_element );
 
-        //! \brief Computes the space-group of the lattice.
-        //! \details Uses ATAT for this.
-        void find_space_group();
+        //! \brief Finds and stores space group operations.
+        //! \param[in] _tol acceptable tolerance when determining symmetries.
+        //!             -1 implies that types::tolerance is used.
+        void find_space_group(types::t_real _tol = -1e0);
 
         //! Returns the number of sites in the lattice.
         types::t_unsigned get_nb_sites() const
@@ -182,14 +185,6 @@ namespace LaDa
                    0: convert_real_to_type_index( _r ); }
         //! Dumps the lattice to a stream. 
         void print_out (std::ostream &stream) const;
-        //! Compares two positions in lattice \a _lat.
-        bool pos_are_equiv( const atat::rVector3d &_a,
-                            const atat::rVector3d &_b ) const
-          { return atat::equivalent_by_symmetry( _a, _b, cell,
-                                                 space_group.point_op, 
-                                                 space_group.trans ) == 1; }
-        bool equiv_by_point_group( const atat::rVector3d &_a,
-                                   const atat::rVector3d &_b ) const;
     };
 
     inline std::string Lattice::get_atom_string( const Crystal::Atom &_at ) const

@@ -115,7 +115,7 @@ namespace LaDa
     {
       if ( not Crystal::Structure::lattice ) return;
       
-      if( not Crystal::Structure::lattice->space_group.point_op.getSize() )
+      if( not Crystal::Structure::lattice->space_group.size() )
         Crystal::Structure::lattice->find_space_group();
       try{ init_syms( *Crystal::Structure::lattice ); }
       catch(...){}
@@ -123,13 +123,13 @@ namespace LaDa
 
     void SymSeparables :: init_syms( Crystal::Lattice &_lat )
     {
-      types::t_int N( _lat.space_group.point_op.getSize() );
-      __ASSERT( N <= 0, "Lattice does not have symmetry operations.\n" )
+      types::t_int N( _lat.space_group.size() );
+      LADA_ASSERT( N >= 0, "Lattice does not have symmetry operations.\n" )
       syms.reserve( N );
       for( types::t_int i(0); i < N; ++i )
       {
-        if( not Fuzzy::eq( atat::norm2( _lat.space_group.trans(i) ), 0e0 ) ) continue;
-        atat::rMatrix3d &op = _lat.space_group.point_op(i);
+        if( not Fuzzy::eq( atat::norm2( _lat.space_group[i].trans ), 0e0 ) ) continue;
+        atat::rMatrix3d &op = _lat.space_group[i].op;
         if( not Fuzzy::eq( atat::det( op ), 1e0 ) ) continue;
         syms.push_back( op );
       }
