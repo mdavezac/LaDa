@@ -74,6 +74,21 @@ namespace LaDa
          template<class T_TYPE> 
            const_iterator begin(Crystal::TStructure<T_TYPE> const& _str) 
              { create_neighbors_list_(_str); return begin(); }
+         const_iterator begin(Lattice const &_lat)
+         {
+           Crystal::Structure structure;
+           structure.cell = _lat.cell;
+           structure.scale = _lat.scale;
+           size_t i(0);
+           foreach( Lattice::t_Site const &site, _lat.sites )
+           {
+             Crystal::Structure::t_Atom atom(site.pos, 0);
+             atom.site = i;
+             structure.atoms.push_back(atom);
+             ++i;
+           }
+           return begin(structure);
+         }
          //! returns end of neighbors list.
          const_iterator end() const { return neighbors_.end(); }
          //! Returns size of neighbors list.

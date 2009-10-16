@@ -14,6 +14,7 @@
 #include <boost/lambda/bind.hpp>
 #include <boost/regex.hpp>
 
+#include <crystal/neighbors.h>
 #include <crystal/symmetry_operator.h>
 #include <opt/types.h>
 #include <opt/fuzzy.h>
@@ -44,42 +45,40 @@ namespace LaDa
       shift(1) -= std::floor(shift(1)); if( Fuzzy::is_zero(shift(1)-1e0) ) shift(1) = 0e0;
       shift(2) -= std::floor(shift(2)); if( Fuzzy::is_zero(shift(2)-1e0) ) shift(2) = 0e0;
       shift = Crystal::Structure::lattice->cell * shift - (*i_vec);
-      if( Fuzzy::is_zero(atat::norm2(frac)) ) return;
-      for(; i_vec != i_vec_end; ++i_vec ) *i_vec -= frac; 
+      if( Fuzzy::is_zero(atat::norm2(shift)) ) return;
+      for(; i_vec != i_last; ++i_vec ) *i_vec -= shift; 
     }
 
     bool Cluster :: equivalent_mod_cell( Cluster &_cluster, const atat::rMatrix3d &_icell) 
     {
-      namespace bl = boost::lambda;
       if ( vectors.size() != _cluster.vectors.size() ) return false;
       if ( vectors.size() == 0 ) return true;
-
-      // Gets fractional coordinates.
-      std::vector<atat::rVector3d> fractionals;
-      std::vector<atat::rVector3d> :: iterator i_vec = _clusters.vectors.begin();
-      std::vector<atat::rVector3d> :: iterator i_vec_last = _clusters.vectors.end();
+      
+      std::vector<atat::rVector3d> :: iterator i_vec = vectors.begin();
+      std::vector<atat::rVector3d> :: iterator i_vec_last = vectors.end();
       for (; i_vec != i_vec_last; ++i_vec)
       {
-        atat::rVector3d frac(  _icell * (*i_vec) );
-        frac(0) -= std::floor(frac(0)); if( Fuzzy::is_zero(frac(0)-1e0) ) frac(0) = 0e0;
-        frac(1) -= std::floor(frac(1)); if( Fuzzy::is_zero(frac(1)-1e0) ) frac(1) = 0e0;
-        frac(2) -= std::floor(frac(2)); if( Fuzzy::is_zero(frac(2)-1e0) ) frac(2) = 0e0;
-        fractionals.push_back(frac);
+        if ( not atat::equivalent_mod_cell( *_cluster.vectors.begin(), *i_vec, _icell) ) continue;
+      
+        atat::rVector3d shift = (*i_vec) - *(_cluster.vectors.begin());
+        std::vector<atat::rVector3d> :: iterator is_found;
+        
+        // search for _cluster  vector such that|| (*i_vec-shift) - *i_equiv ||  > zero_tolerance
+        std::vector<atat::rVector3d> :: iterator i2_vec = vectors.begin();
+        for(; i2_vec != i_vec_last; ++i2_vec)
+        {
+          is_found  = std::find_if( _cluster.vectors.begin(),
+                                    _cluster.vectors.end(),
+                                    atat::norm_compare( *i2_vec - shift ) );
+      
+          if ( is_found == _cluster.vectors.end() ) break;
+        }
+                                      
+        // if all match, return true
+        if ( i2_vec == i_vec_last ) return true; 
+        
       }
-     
-
-      i_vec = vectors.begin();
-      i_vec_end = vectors.end();
-      for (; i_vec != i_vec_last; ++i_vec)
-      {
-        atat::rVector3d frac(  _icell * (*i_vec) );
-        frac(0) -= std::floor(frac(0)); if( Fuzzy::is_zero(frac(0)-1e0) ) frac(0) = 0e0;
-        frac(1) -= std::floor(frac(1)); if( Fuzzy::is_zero(frac(1)-1e0) ) frac(1) = 0e0;
-        frac(2) -= std::floor(frac(2)); if( Fuzzy::is_zero(frac(2)-1e0) ) frac(2) = 0e0;
-        if( fractionals.end() == std::find(fractionals.begin(), fractionals.end(), frac) )
-          return false;
-      }
-      return true;
+      return false;
     }
 
     void Cluster :: print_out (  std::ostream &stream)  const
@@ -122,123 +121,77 @@ namespace LaDa
       return true;
     }
 
+    // returns true if second position in cluster is equal to pos.
+    struct CompPairs
+    {
+      atat::rVector3d const pos;
+      CompPairs( atat::rVector3d const &_a ) : pos(_a) {}
+      CompPairs( CompPairs const &_a ) : pos(_a.pos) {}
+      bool operator()(Cluster const& _a) const
+        { return Fuzzy::is_zero(atat::norm2(_a.vectors[1]-pos)); }
+    };
 
     void create_pairs( const Crystal :: Lattice &_lat,
                        types::t_unsigned _max_neigh,
-                       std::vector< std::vector<Cluster> > &_out )
+                       std::vector< std::vector<Cluster> > &_out,
+                       size_t _site )
     {
       __DEBUGTRYBEGIN
-      typedef std::vector< std::vector< Cluster > > t_EquivClusters;
+      typedef std::vector< std::vector<Cluster> > t_EquivClusters;
       if( _max_neigh == 0 ) return;
-      
-      namespace bl = boost::lambda;
-      // Creates a vector of all positions within a cube \a _max_neigh big.
-      std::vector< atat::rVector3d > nn;
-      nn.reserve( _max_neigh*_max_neigh*_max_neigh );
-      for( types::t_real x(-types::t_real(_max_neigh));
-           Fuzzy::leq(x, (types::t_real)_max_neigh); x+=1e0 )
-        for( types::t_real y(-types::t_real(_max_neigh));
-             Fuzzy::leq(y, (types::t_real)_max_neigh); y+=1e0 )
-          for( types::t_real z(-types::t_real(_max_neigh));
-               Fuzzy::leq(z, (types::t_real)_max_neigh); z+=1e0 )
-            if(    Fuzzy::neq( x, types::t_real(0) )
-                or Fuzzy::neq( y, types::t_real(0) )
-                or Fuzzy::neq( z, types::t_real(0) ) )
-            nn.push_back( _lat.cell * atat::rVector3d( x, y, z ) );
 
-      // Sorts these positions by size.
-      types::t_real (*ptr_norm2)( const atat::FixedVector<types::t_real,3>& ) 
-                           = &atat::norm2<types::t_real, 3>;
-      std::sort
-      ( 
-        nn.begin(), nn.end(), 
-        bl::bind
-        (
-          std::less<types::t_real>(),
-          bl::bind<types::t_real>( std::ptr_fun( ptr_norm2 ), bl::_1 ),
-          bl::bind<types::t_real>( std::ptr_fun( ptr_norm2 ), bl::_2 ) 
-        )
-      );
-
-      // finds _max_neigh neighbor.
-      std::vector< atat :: rVector3d > :: iterator n_it = nn.begin();
-      __DODEBUGCODE( std::vector< atat :: rVector3d > :: iterator n_it_end = nn.end(); )
-      types::t_real norm = atat::norm2( *n_it ); 
-      for( types::t_unsigned N( _max_neigh ); N != 0; ++n_it )
-      {
-        __ASSERT( n_it == n_it_end, "Iterator out of range with N=" << N << ".\n" )
-        if( Fuzzy::eq( norm, atat::norm2( *n_it ) ) ) continue;
-        --N;
-        norm = atat::norm2( *n_it );
-      }
-      __ASSERT( n_it - nn.begin() -1 <= 0, "Requesting vector of size <= 0.\n" )
-      nn.resize( n_it - nn.begin() - 1 );
-      
-      // Create classes of equivalent positions.
-      std::vector< std::vector< atat::rVector3d > > classes, onesize;
-      //    -- first adds first (null) position.
-      onesize.push_back( std::vector< atat::rVector3d >( 1, nn.front() ) );
-      n_it = nn.begin() + 1;
-      __NDEBUGCODE(std::vector< atat :: rVector3d > :: iterator)
-        n_it_end = nn.end();
-      norm = atat::norm2( *n_it );
-      //    -- then goes across all neighboring atoms and organizes in classes.
-      for(; n_it != n_it_end; ++n_it )
-      {
-        if( Fuzzy::neq( norm, atat::norm2( *n_it ) ) )
-        {
-          std::copy( onesize.begin(), onesize.end(),
-                     std::back_inserter( classes ) );
-          onesize.clear();
-          onesize.push_back( std::vector< atat::rVector3d >( 1, *n_it ) );
-          norm = atat::norm2( *n_it );
-          continue;
-        }
-        // looks for position in class i_found.
-        std::vector< std::vector< atat::rVector3d > > :: iterator
-          i_found = onesize.begin();
-        std::vector< std::vector< atat::rVector3d > > :: iterator
-          i_found_end = onesize.end();
-        for(; i_found != i_found_end; ++i_found )
-        {
-          // checks if position is equivalent to something in class i_found.
-          std::vector< atat::rVector3d > :: const_iterator i_equiv = i_found->begin();
-          std::vector< atat::rVector3d > :: const_iterator i_notequiv = i_found->end();
-          for(; i_equiv != i_notequiv; ++i_equiv )
-            if( _lat.equiv_by_point_group( *i_equiv, *n_it ) ) break;
-          // there are no equivalents, continue;
-          if( i_equiv == i_notequiv ) continue;
-          // adds to i_found and breaks.
-          i_found->push_back( *n_it );
-          break;
-        }
-        if( i_found != onesize.end() ) continue;
-        // Current position is new. Adds a class to onesize.
-        onesize.push_back( std::vector< atat::rVector3d >( 1, *n_it ) );
-      }
-      if( onesize.size() ) std::copy( onesize.begin(), onesize.end(),
-                                      std::back_inserter( classes ) );
-      onesize.clear();
-
+      // Creates a typical cluster.
       Cluster cluster;
       cluster.vectors.resize(2);
-      cluster.vectors[0] = atat::rVector3d(0,0,0); 
+      cluster.vectors[0] = _lat.sites[_site].pos;
       cluster.eci = 0e0;
-      std::vector< std::vector< atat::rVector3d > > :: const_iterator
-        i_class = classes.begin();
-      std::vector< std::vector< atat::rVector3d > > :: const_iterator
-        i_class_end = classes.end();
-      for(; i_class != i_class_end; ++i_class )
+
+      // goes over neighbors and adds to class.
+      Crystal::Neighbors neighbors(12*_max_neigh, cluster.vectors[0]);
+      types::t_int first_of_size(_out.size()-1);
+      Crystal::Neighbors::const_iterator i_first = neighbors.begin(_lat);
+      Crystal::Neighbors::const_iterator const i_end = neighbors.end();
+      types::t_real current_norm(0);
+      for(; i_first != i_end; ++i_first)
       {
-        _out.resize( _out.size() + 1 );
-        t_EquivClusters :: value_type& back = _out.back();
-        std::vector< atat::rVector3d > :: const_iterator i_pos = i_class->begin();
-        std::vector< atat::rVector3d > :: const_iterator i_pos_end = i_class->end();
-        for(; i_pos != i_pos_end; ++i_pos )
+        // Checks if norm has changed.
+        if( not Fuzzy::is_zero(i_first->distance - current_norm) )
         {
-          cluster.vectors.back() = *i_pos;
-          back.push_back( cluster );
+          current_norm = i_first->distance;
+          ++first_of_size;
         }
+
+        // checks if is in known class.
+        atat::rVector3d pos(i_first->pos+cluster.vectors[0]);
+        std::vector<Cluster> *clusters = NULL;
+        bool found = false;
+        for(size_t i(first_of_size); i < _out.size() and (not found); ++i)
+        {
+          clusters = &_out[i];
+          foreach(Crystal::SymmetryOperator const &op, _lat.space_group)
+          {
+            // point group operations only. Translation would shift origin of pair figure.
+            if( not Fuzzy::is_zero(atat::norm2(op.trans)) ) continue;
+
+            atat::rVector3d const equiv(op.op * pos);
+            if
+            ( 
+              clusters->end() == std::find_if(clusters->begin(), clusters->end(), CompPairs(pos)) 
+            ) continue;
+            found = true;
+            break;
+          }
+        } 
+
+        // creates new class if not found.
+        if( not found ) 
+        {
+          _out.resize(_out.size() + 1);
+          clusters = &_out.back();
+        }
+
+        cluster.vectors[1] = pos;
+        clusters->push_back(cluster);
       }
 
       __DEBUGTRYEND(,"Could not create pair clusters.\n" )
@@ -273,7 +226,7 @@ namespace LaDa
         // creates a new class from cluster.
         _out.push_back( std::vector< Cluster >( 1, cluster ) );
         // adds symmetrically equivalent clusters.
-        details::add_equivalent_clusters( _lat, _out.back() );
+        add_equivalent_clusters( _lat, _out.back() );
       }
       if( not _genes.empty() )
         __DOASSERT( i != _genes.size(), "Gene size and jtypes are inconsistent.\n" )
@@ -342,7 +295,6 @@ namespace LaDa
     void  add_equivalent_clusters( const Crystal::Lattice &_lat, 
                                    std::vector< Cluster > &_out )
     {
-      LADA_ASSERT( _site < _lat.sites.size(), "Index out of range.\n" );
       typedef std::vector< Cluster > t_Clusters;
       atat::rMatrix3d const &cell    = _lat.cell;
       atat::rMatrix3d const inv_cell = !cell;
@@ -353,10 +305,12 @@ namespace LaDa
       t_Clusters :: iterator i_old_list = old_cluster_list.begin();
       for (; i_old_list != i_old_list_last ; ++i_old_list )
       {
-        std::vector<SymmetryOperator> :: const_iterator i_op = _lat.space_group.begin();
-        std::vector<SymmetryOperator> :: const_iterator const i_op_end = _lat.space_group.end();
+        typedef std::vector<Crystal::SymmetryOperator> :: const_iterator t_cit;
+        t_cit i_op = _lat.space_group.begin();
+        t_cit const i_op_end = _lat.space_group.end();
         for (; i_op != i_op_end; ++i_op )
         {
+          if( not Fuzzy::is_zero(atat::norm2(i_op->trans)) ) continue;
           // initialize a new cluster to object pointed by i_old_list
           Cluster transfo_cluster( *i_old_list );
           

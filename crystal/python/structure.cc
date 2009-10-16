@@ -51,6 +51,7 @@ namespace LaDa
 {
   namespace Python
   {
+    namespace bp = boost::python;
     namespace XML
     {
       template<> std::string nodename<Crystal::Structure>()  { return "Structure"; }
@@ -59,31 +60,35 @@ namespace LaDa
     }
 
     template< class BULL >
-    Crystal::Lattice& return_crystal_lattice( BULL & )
+    Crystal::Lattice* return_crystal_lattice( BULL & )
     {
-      __DOASSERT( not Crystal::Structure::lattice,
-                  "Lattice pointer has not been set.\n" )
-      return *Crystal::Structure::lattice; 
+      if( not Crystal::Structure::lattice )
+      {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "Crystal::Structure::lattice has not been set.\n");
+        bp::throw_error_already_set();
+        return NULL;
+      }
+      return Crystal::Structure::lattice; 
     }
 
     template< class T_STRUCTURE >
-      struct pickle_structure : boost::python::pickle_suite
+      struct pickle_structure : bp::pickle_suite
       {
-        static boost::python::tuple getinitargs( T_STRUCTURE const& _w)  
+        static bp::tuple getinitargs( T_STRUCTURE const& _w)  
         {
-          return boost::python::tuple();
+          return bp::tuple();
         }
-        static boost::python::tuple getstate(const T_STRUCTURE& _in)
+        static bp::tuple getstate(const T_STRUCTURE& _in)
         {
           std::ostringstream ss;
           boost::archive::text_oarchive oa( ss );
           oa << _in;
 
-          return boost::python::make_tuple( ss.str() );
+          return bp::make_tuple( ss.str() );
         }
-        static void setstate( T_STRUCTURE& _out, boost::python::tuple state)
+        static void setstate( T_STRUCTURE& _out, bp::tuple state)
         {
-          namespace bp = boost::python;
           if( bp::len( state ) != 1 )
           {
             PyErr_SetObject(PyExc_ValueError,
@@ -99,15 +104,15 @@ namespace LaDa
         }
       };
 
-    boost::python::str xcrysden( Crystal::Structure const & _str )
+    bp::str xcrysden( Crystal::Structure const & _str )
     {
       std::ostringstream sstr;
       _str.print_xcrysden( sstr ); 
-      return boost::python::str( sstr.str().c_str() );
+      return bp::str( sstr.str().c_str() );
     }
-    boost::python::str xcrysden_str( Crystal::TStructure<std::string> const & _str )
+    bp::str xcrysden_str( Crystal::TStructure<std::string> const & _str )
     {
-      if( not _str.lattice ) return boost::python::str("");
+      if( not _str.lattice ) return bp::str("");
       std::ostringstream sstr;
       sstr << "CRYSTAL\nPRIMVEC\n" << ( (~_str.cell) * _str.scale ) << "\nPRIMCOORD\n" 
                 << _str.atoms.size() << " 1 \n";  
@@ -118,7 +123,7 @@ namespace LaDa
         sstr << " " << Physics::Atomic::Z(i_atom->type) 
              << " " << ( i_atom->pos * _str.scale ) << "\n";
       }
-      return boost::python::str( sstr.str().c_str() );
+      return bp::str( sstr.str().c_str() );
     }
 
     template< class T_STRUCTURE >
@@ -132,7 +137,6 @@ namespace LaDa
     template< class T_STRUCTURE >
       T_STRUCTURE* copy( T_STRUCTURE const &_o )
       {
-        namespace bp = boost::python;
         T_STRUCTURE* result = new T_STRUCTURE( _o ); 
         if( result->lattice ) result->scale = result->lattice->scale;
         return result;
@@ -153,7 +157,6 @@ namespace LaDa
 
     void expose_structure()
     {
-      namespace bp = boost::python;
       typedef Crystal::Structure::t_FreezeCell t_FreezeCell;
       bp::enum_<t_FreezeCell>( "FreezeCell", "Tags to freeze cell coordinates." )
         .value( "none", Crystal::Structure::FREEZE_NONE )

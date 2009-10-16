@@ -24,10 +24,6 @@
 
 namespace LaDa
 {
-  //! \cond
-  namespace Crystal { class SymmetryOperator; }
-  //! \endcond
-
   //! \brief Contains most everything %Cluster Expansion and structure related.
   //! \todo move structure related stuff to Physics
   //! \todo Rename Crystal to CE
@@ -39,36 +35,16 @@ namespace LaDa
       class Cluster;  
     //! \endcond
 
-    //! \brief Computes pis of \a _str for \a _clusters.
-    //! \param[in] _cluster is a vector of containers of symmetrically equivalent
-    //!                     cluster, centered on the origin.
-    //! \param[in] _str the structure for which to compute the pis.
-    //! \param[out] _pis the computed pis, one per class of symmetrically
-    //!                  equivalent clusters.
-    template< class T_CLUSTERS, class T_PIS >
-    void find_pis( const T_CLUSTERS &_clusters,
-                   const Crystal::Structure & _str,
-                   T_PIS &_pis );
-    //! \brief Computes pis of \a _str for \a _clusters.
-    //! \see[in] _cluster is a vector of containers of symmetrically equivalent
-    //!                     cluster, centered on the origin.
-    //! \param[in] _str structures for which to compute the pis.
-    //! \param[out] _pis the computed pis, one per class of symmetrically
-    //!                  equivalent clusters.
-    template< class T_CLUSTERS, class T_PIS >
-    void find_pis( const T_CLUSTERS &_clusters,
-                   const std::vector< Crystal::Structure > & _str,
-                   T_PIS &_pis );
 
-    //! \brief Finds all pair clusters which are at most the \a _max_neigh and with at
-    //!        most \a _maxN spins.
-    //! \return A vector of vectors of cluster. The inner vectors contain
-    //!         symmetrically equivalent clusters. The new cluster classes are
-    //!         added to the output vector without checking for duplicates.
-    //!
+    //! \brief Finds all pair clusters up to a given cutoff.
+    //! \param[in]_lat is the input lattice.
+    //! \param[in]_max_neigh is the number of pair classes.
+    //! \param[inout] _out is the vector of pair classes.
+    //! \param[in] index of the site for which to find pairs.
     void create_pairs( const Crystal :: Lattice &_lat,
                        types::t_unsigned _max_neigh,
-                       std::vector< std::vector<Cluster> > &_out );
+                       std::vector< std::vector<Cluster> > &_out,
+                       size_t _site = 0 );
     //! Reads clusters from a NREL Jfile.
     void read_clusters( const Crystal::Lattice &_lat, 
                         const boost::filesystem::path &_path, 
@@ -100,23 +76,11 @@ namespace LaDa
     class Cluster 
     {
       friend class boost::serialization::access;
-      template< class T_CLUSTERS, class T_PIS >
-        friend void find_pis( const T_CLUSTERS &_clusters,
-                              const Crystal::Structure & _str,
-                              T_PIS &_pis );
-      template<class T_HARMONIC> friend class Builder;
-      friend void create_pairs( const Crystal :: Lattice &,
-                                types::t_unsigned,
-                                std::vector< std::vector<Cluster> > &);
-      friend bool read_cluster( const Crystal::Lattice &_lat, 
-                                std::istream & _sstr,
-                                Cluster &_out );
       
-      protected:
+      public:
         //! Vectors linking sites which interact through this cluster.
         std::vector<atat::rVector3d> vectors;
 
-      public:
         //! Interaction energy of the cluster.
         types::t_real eci;
 
@@ -181,6 +145,5 @@ namespace LaDa
   } // namespace CE
 
 } // namespace LaDa
-#include "cluster.impl.h"
 
 #endif

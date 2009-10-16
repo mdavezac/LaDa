@@ -18,6 +18,7 @@
 #include<boost/lambda/bind.hpp>
 
 #include "fit.h"
+#include "find_pis.h"
 
 namespace LaDa
 {

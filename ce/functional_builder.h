@@ -85,7 +85,7 @@ namespace LaDa
         //!          a generating family prior to call, then after call,
         //!          Builder::Clusters forms a group with respect to
         //!          every symmetry operation of the lattice,
-        void add_equivalent_clusters() { add_equivalent_clusters(lattice, clusters); }
+        void add_equivalent_clusters() { CE::add_equivalent_clusters(*lattice, *clusters); }
         //! \brief Creates a specialized cluster expansion functional for structure \a str.
         bool generate_functional(const Crystal::Structure &str,
                                  t_VA_Functional * const functional) const;

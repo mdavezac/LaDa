@@ -28,18 +28,13 @@
 #include <print/stdout.h>
 
 #include "atom.h"
+#include "symmetry_operator.h"
 
 
 namespace LaDa
 {
   namespace Crystal 
   {
-    // Forward Declaration.
-    //! \cond
-    class SymmetryOperator;
-    //! \endcond
-
-
     //! Refolds a periodic vector into the unit-cell, as defined by \a lat.
     void refold( atat::rVector3d &vec, const atat::rMatrix3d &lat );
     //! Refolds a periodic vector into the unit cell.
@@ -90,9 +85,12 @@ namespace LaDa
         //! The scale of the cartesian coordinates.
         types::t_real scale;
 
-      public:
         //! Constructor.
         Lattice() {};
+        //! Copy Constructor.
+        Lattice   ( Lattice const &_c ) 
+                : cell(_c.cell), sites(_c.sites), space_group(_c.space_group), scale(_c.scale) {}
+                     
         //! Destructor.
         ~Lattice () {};
 

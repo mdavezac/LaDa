@@ -99,7 +99,7 @@ namespace LaDa
     void Lattice :: find_space_group(types::t_real _tol)
     {
       boost::shared_ptr< std::vector<SymmetryOperator> >
-        syms(get_space_group_symmetries(_tol));
+        syms(get_space_group_symmetries(*this, _tol));
       space_group = *syms;
     }
 

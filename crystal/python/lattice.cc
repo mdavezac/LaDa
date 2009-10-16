@@ -22,20 +22,6 @@ namespace LaDa
     namespace bp = boost::python;
     namespace details
     {
-      bp::list symmetry_ops( const Crystal::Lattice& _lat )
-      {
-        types::t_int N( _lat.space_group.point_op.getSize() );
-        bp::list result;
-        for( types::t_int i = 0; i < N; ++i )
-        {
-          bp::list inner;
-          inner.append( _lat.space_group.point_op(i) );
-          inner.append( _lat.space_group.trans(i) );
-          result.append( inner );
-        }
-        return result;
-      }
-      
       void set_as_crystal_lattice( Crystal::Lattice &_lattice )
       { 
         Crystal::Structure::lattice = &_lattice;  
@@ -87,8 +73,8 @@ namespace LaDa
         .def_readwrite( "cell",  &Crystal::Lattice::cell )
         .def_readwrite( "sites", &Crystal::Lattice::sites )
         .def_readwrite( "scale", &Crystal::Lattice::scale )
+        .def_readwrite( "space_group", &Crystal::Lattice::space_group )
         .def( "__str__",  &print<Crystal::Lattice> )
-        .def( "syms",  &details::symmetry_ops )
         .def( "fromXML",  &details::fromXML<Crystal::Lattice> )
         .def( "set_as_crystal_lattice", &details::set_as_crystal_lattice )
         .def( "make_primitive", &Crystal::Lattice::make_primitive,

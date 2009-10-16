@@ -7,6 +7,7 @@
 #include <boost/numeric/ublas/io.hpp>
 #include <iostream>
 
+#include <ce/find_pis.h>
 #include <print/manip.h>
 
 namespace LaDa
