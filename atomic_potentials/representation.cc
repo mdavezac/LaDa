@@ -9,7 +9,6 @@
 #include <crystal/neighbors.h>
 
 #include <physics/physics.h>
-#include <crystal/symmetry_operator.h>
 
 #include "bases.h"
 #include "representation.h"

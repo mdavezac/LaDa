@@ -37,6 +37,7 @@
 #include "drautz_diaz_ortiz.h"
 #include "regularization.h"
 #include "cluster.h"
+#include "create_pairs.h"
 
 const LaDa::types::t_int least = 0;
 const LaDa::types::t_int printinteractionenergies = 1;

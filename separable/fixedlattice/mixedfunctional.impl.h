@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include <ce/find_pis.h>
+#include <ce/create_pairs.h>
 #include <print/manip.h>
 
 namespace LaDa

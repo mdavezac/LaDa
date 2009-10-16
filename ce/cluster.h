@@ -36,15 +36,6 @@ namespace LaDa
     //! \endcond
 
 
-    //! \brief Finds all pair clusters up to a given cutoff.
-    //! \param[in]_lat is the input lattice.
-    //! \param[in]_max_neigh is the number of pair classes.
-    //! \param[inout] _out is the vector of pair classes.
-    //! \param[in] index of the site for which to find pairs.
-    void create_pairs( const Crystal :: Lattice &_lat,
-                       types::t_unsigned _max_neigh,
-                       std::vector< std::vector<Cluster> > &_out,
-                       size_t _site = 0 );
     //! Reads clusters from a NREL Jfile.
     void read_clusters( const Crystal::Lattice &_lat, 
                         const boost::filesystem::path &_path, 

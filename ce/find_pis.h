@@ -118,14 +118,6 @@ namespace LaDa
         typename T_PIS :: iterator i_pis = _pis.begin();
         for( ; i_str != i_str_end; ++i_str, ++i_pis )
           find_pis( _clusters, *i_str, *i_pis );
-    //
-    //   void (*ptr_func)( const T_CLUSTERS &, const Crystal::Structure &, t_Pis & );
-    //   ptr_func = &find_pis<T_CLUSTERS, t_Pis>;
-    //   opt::concurrent_loop
-    //   (
-    //     _str.begin(), _str.end(), _pis.begin(),
-    //     bl::bind( ptr_func, bl::constant( _clusters ), bl::_1, bl::_2 )
-    //   );
       }
 
   } // end of namespace CE
