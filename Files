@@ -153,8 +153,8 @@ ce_h      = cluster.h  constituent_strain.h  functional_builder.h  harmonic.h \
             create_pairs.h
 ce_impl_h = constituent_strain.impl.h  functional_builder.impl.h  harmonic.impl.h 
 ce_doc = $(ce_h) $(ce_cc) 
-ce_python_h = ce.hpp ce.impl.hpp
-ce_python_cc = ce.cc python.cc
+ce_python_h = ce.hpp ce.impl.hpp clusters.hpp
+ce_python_cc = ce.cc python.cc clusters.cc
 
 factory_cc =
 factory_h = chain_connect_attribute.h  chainconnects.h factory.h \

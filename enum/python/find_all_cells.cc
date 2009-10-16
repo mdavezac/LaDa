@@ -62,9 +62,6 @@ namespace LaDa
     void expose_find_all_cells()
     {
       namespace bp = boost::python;
-      expose_vector<atat::rMatrix3d>
-         ("rMatrix3dArray", "An array of atat.rMatrix3dArray");
-
       bp::def
       (
         "find_all_cells", 

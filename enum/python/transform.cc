@@ -192,7 +192,8 @@ namespace LaDa
             " _ left is the left transform matrix from the Hermite to the Smith normal form.\n"
             " _ smith is the diagonal of the Smith normal form as an atat.iVector3d.\n")
        .def("__call__", &call)
-       .add_property("is_trivial", &enumeration::Transform::is_trivial, "True if the permutation is trivial.");
+       .add_property("is_trivial", &enumeration::Transform::is_trivial,
+                     "True if the permutation is trivial.");
 
       expose_vector<enumeration::Transform>("Array", "Array of Translations");
       bp::register_ptr_to_python< boost::shared_ptr< std::vector<enumeration::Transform> > >();
