@@ -20,6 +20,8 @@
 #include <opt/types.h>
 #include <opt/debug.h>
 
+#include <python/misc.hpp>
+
 #define STREAM_VECTOR
 #include "../fxvector.h"
 #include "../vectmac.h"
@@ -67,13 +69,6 @@ namespace LaDa
       template< class T_VECTOR >
         size_t getlength( const T_VECTOR& _vec )
           { return vector_introspection<T_VECTOR> :: dim; }
-      template< class T_VECTOR >
-        std::string print( const T_VECTOR& _vec )
-        { 
-          std::ostringstream sstr;
-          sstr << _vec;
-          return sstr.str();
-        }
  
       template< class T_MATRIX >
         typename matrix_introspection<T_MATRIX>::type
@@ -209,10 +204,10 @@ namespace LaDa
         // expose atat vector.
         bp::class_< T_VECTOR>( _name.c_str(), _docstring.c_str() )
             .def( "__init__", bp::make_constructor( make_vector<T_VECTOR, boost::python::list> ) )
-            .def( "__init__", bp::make_constructor( make_vector<T_VECTOR, boost::python::tuple> ) )
+            .def( "__init__", bp::make_constructor( make_vector<T_VECTOR, boost::python::tuple> ) ) 
             .def( "__init__", bp::make_constructor( copy_vector<T_VECTOR> ) )
             .def( "__init__", bp::make_constructor( empty_vector<T_VECTOR> ) )
-            .def( "__init__", bp::make_constructor( vector_introspection<T_VECTOR>::make_new ) )
+            .def( "__init__", bp::make_constructor( vector_introspection<T_VECTOR>::make_new ) ) 
             .def( bp::self + bp::other< T_VECTOR >() ) 
             .def( bp::other< T_VECTOR >() + bp::self ) 
             .def( bp::self - bp::other< T_VECTOR >() ) 
@@ -227,8 +222,8 @@ namespace LaDa
             .def( bp::self != bp::other<T_VECTOR>() )
             .def( "__getitem__", &details::getvecitem<T_VECTOR> )
             .def( "__setitem__", &details::setvecitem<T_VECTOR> ) 
-            .def( "__len__", &details::getlength<T_VECTOR> ) 
-            .def( "__str__", &details::print<T_VECTOR> )
+            .def( "__len__", &details::getlength<T_VECTOR> )
+            .def( "__str__", &tostream<T_VECTOR> )
             .def_pickle( pickle() );
 
         bp::def( "norm2", &details::norm2<T_VECTOR>,
@@ -269,7 +264,7 @@ namespace LaDa
             .def( "__getitem__", &details::getmatitem<T_MATRIX> )
             .def( "__setitem__", &details::setmatitem<T_MATRIX> ) 
             .def( "__len__", &details::getmlength<T_MATRIX> ) 
-            .def( "__str__", &details::print<T_MATRIX> )
+            .def( "__str__", &tostream<T_MATRIX> )
             .def_pickle( pickle() );
       }
 

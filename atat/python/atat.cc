@@ -35,6 +35,7 @@ namespace LaDa
       expose_atatmatrix< atat::rMatrix3d >( "rMatrix3d", "a 3x3 matrix of real values.\n" 
                                             " Note that the coefficients are accessed using a tuple"
                                             " as in \" a[(0,0)] \" where \"a\" is an rMatrix3d."); 
+      
       expose_vector<atat::rVector3d>("rVector3dArray", "a vector of 3d vectors.");
       expose_vector<atat::iVector3d>("iVector3dArray", "a vector of 3d vectors.");
       expose_vector<atat::rMatrix3d>("rMatrix3dArray", "a vector of 3d vectors.");
