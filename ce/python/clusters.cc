@@ -62,15 +62,20 @@ namespace LaDa
           .def("__str__", &tostream<CE::Cluster>, "Returns the order of the cluster.\n")
           .def("equivalents", &equiv_clusters, "Returns array of arrays of equivalent clusters.\n");
 
-//     expose_vector<CE::Cluster>
-//       ("Clusters", "An array of (presumably) equivalent clusters.\n");
-//     bp::register_ptr_to_python
-//     < 
-//       boost::shared_ptr< std::vector<CE::Cluster> >
-//     >();
-//
-//     expose_vector< std::vector<CE::Cluster> >
-//       ("Clusters", "An array of arrays of (presumably) equivalent clusters.\n");
+      expose_vector<CE::Cluster>
+        ("Clusters", "An array of (presumably) equivalent clusters.\n");
+      bp::register_ptr_to_python
+      < 
+        boost::shared_ptr< std::vector<CE::Cluster> >
+      >();
+ 
+      expose_vector< std::vector<CE::Cluster> >
+        ("Clusters", "An array of arrays of (presumably) equivalent clusters.\n");
+
+      bp::register_ptr_to_python
+      < 
+        boost::shared_ptr< std::vector< std::vector<CE::Cluster> > >
+      >();
     }
 
   }

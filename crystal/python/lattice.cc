@@ -80,7 +80,13 @@ namespace LaDa
         .def( "make_primitive", &Crystal::Lattice::make_primitive,
               (bp::arg("self"), bp::arg("tolerance")=-1e0),
               "Makes lattice primitive, e.g. reduces to smallest unit-cell." )
-        .def( "find_space_group", &Crystal::Lattice::find_space_group );
+        .def
+        ( 
+          "find_space_group", 
+          &Crystal::Lattice::find_space_group,
+          ( bp::arg("self"), bp::arg("tolerance") = types::tolerance ),
+          "Finds space-group operations (for a given tolerance), stores them in self.space_group."
+        );
       bp::def( "into_cell", &Crystal::into_cell, (bp::arg("vector"), bp::arg("cell"), bp::arg("inverse")) );
     }
 

@@ -5,7 +5,6 @@
 #include <config.h>
 #endif
 
-#include "lattice.h"
 #include "compare_sites.h"
 #include "symmetry_operator.h"
 

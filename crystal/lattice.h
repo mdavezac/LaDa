@@ -1,8 +1,8 @@
 //
 //  Version: $Id$
 //
-#ifndef _LATTICE_H_
-#define _LATTICE_H_
+#ifndef LADA_CRYSTAL_LATTICE_H
+#define LADA_CRYSTAL_LATTICE_H
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>

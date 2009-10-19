@@ -337,6 +337,7 @@ namespace LaDa
       __TRYEND(,"Could not real lattice from input.\n" )
     }
 
+
     //  bool make_primitive() is to be found in make_primitive.cc
 
   } // namespace Crystal

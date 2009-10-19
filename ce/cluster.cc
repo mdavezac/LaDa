@@ -266,5 +266,12 @@ namespace LaDa
       }
     }
     
+    bool Cluster::operator==( Cluster const & _c ) const
+    {
+      foreach( atat::rVector3d const &pos, _c.vectors )
+        if( vectors.end() == std::find(vectors.begin(), vectors.end(), pos) ) 
+          return false;
+      return true;
+    }
   } // namespace CE
 }

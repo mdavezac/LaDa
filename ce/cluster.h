@@ -119,6 +119,8 @@ namespace LaDa
         const std::vector< atat::rVector3d >& Vectors() const { return vectors; }
         //! Returns  a reference to the vectors.
         std::vector< atat::rVector3d >& Vectors() { return vectors; }
+        //! True if involves same positions.
+        bool operator==( Cluster const & _c ) const;
       private:
         //! Serializes a cluster.
         template<class Archive> void serialize( Archive & _ar,
@@ -126,12 +128,18 @@ namespace LaDa
           { _ar & eci; _ar & vectors; } 
     };
 
+    //! A single class of equivalent clusters.
+    typedef std::vector<Cluster> t_Clusters;
+    //! A vector of classes of equivalent clusters.
+    typedef std::vector<t_Clusters> t_ClusterClasses;
+
     inline std::ostream &operator<<( std::ostream &_sstr, const Cluster &_cl )
       { _cl.print_out( _sstr ); return _sstr; }
 
     //! Adds clusters equivalent by symmetry.
     void  add_equivalent_clusters( const Crystal::Lattice &_lat, 
                                    std::vector< Cluster > &_out  );
+    
 
   } // namespace CE
 

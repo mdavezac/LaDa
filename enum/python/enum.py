@@ -83,25 +83,16 @@ def all_symmetrics( _x, _trans, _label, _rotations, _fl ):
     yield t, 'r'
     for u in all_smith(t): yield u
 
+def enumerate( _n, _lattice ):
+  from lada import enumeration, atat, crystal
+  from math import pow
+  import time
 
-# def main():
-from lada import enumeration, atat, crystal
-from math import pow
-import time
-
-lattice = create_lattice()
-lattice.set_as_crystal_lattice()
-species = ("K", "Rb")
-
-nconf = 1
-t0 = time.time()
-for n in range(2, 6):
-  npern = 0
-  supercells = enumeration.find_all_cells(lattice, n)
-  smiths = enumeration.create_smith_groups(lattice, supercells)
-  nflavors = enumeration.count_flavors( lattice )
-  nsites = len(lattice.sites)
-  transforms = enumeration.create_transforms(lattice)
+  supercells = enumeration.find_all_cells(lattice, _n)
+  smiths = enumeration.create_smith_groups(_lattice, supercells)
+  nflavors = enumeration.count_flavors(_lattice)
+  nsites = len(_lattice.sites)
+  transforms = enumeration.create_transforms(_lattice)
   for smith in smiths:
     card = smith.smith[0]*smith.smith[1]*smith.smith[2]*nsites
     label_exchange=enumeration.LabelExchange( card, nflavors )
@@ -129,7 +120,7 @@ for n in range(2, 6):
     for nsupercell, supercell in enumerate(smith.supercells):
       mine = []
       # creates list of transformation which leave the supercell invariant.
-      cell = lattice.cell * supercell.hermite
+      cell = _lattice.cell * supercell.hermite
       specialized = []
       for transform in transforms:
         if not transform.invariant(cell): continue
@@ -160,33 +151,33 @@ for n in range(2, 6):
               v = labelperm(u, flavorbase)
               if v == x: continue
               specialized_database[v] = False
-        if specialized_database[x]: # mine.append(x)
-        # print "%5i %5i %2i " % (nconf, npern, n),
-        # for i in range(0,3):
-        #   for j in range(0,i+1):
-        #     print "%2i " % (supercell.hermite[i,j]),
-        # print "%10i %20s " % (int(x), enumeration.as_bitstring(x, flavorbase))
-        
-#     gus = set(find_smith_set(n, supercell.hermite));
-#     mine = set(mine)
-#     print "smith: ", smith.smith[0], smith.smith[1], smith.smith[1], "supercell: ", supercell, \
-#           maxterm
-#     for x in gus-mine:
-#       is_not_there = True
-#       for u, type in all_symmetrics(x, translations, label_exchange, specialized, flavorbase):
-#         if u in (mine-gus): 
-#           is_not_there = False
-#           break
-#       if is_not_there: print "G", x, enumeration.as_bitstring(x, flavorbase)
-#     for x in mine-gus:
-#       is_not_there = True
-#       for u, type in all_symmetrics(x, translations, label_exchange, specialized, flavorbase):
-#         if u in (gus-mine): 
-#           is_not_there = False
-#           break
-#       if is_not_there: print "M", x, enumeration.as_bitstring(x, flavorbase)
-          npern+=1
-          nconf+=1 
-  print n, npern, len(supercells)
+        if specialized_database[x]: yield x, smith, supercell
+
+# def main():
+from lada import enumeration, atat, crystal
+from math import pow
+import time
+
+lattice = create_lattice()
+lattice.set_as_crystal_lattice()
+species = ("K", "Rb")
+
+nconf = 1
+t0 = time.time()
+for n in range(2, 6):
+  nconf = 0
+  npern = 0
+  oldsupercell = None
+  for x, smith, supercell in enumerate(supercells, lattice):
+    if oldsupercell == None or oldsupercell != supercell:
+      npern = 0
+    print "%5i %5i %2i " % (nconf, npern, n),
+    for i in range(0,3):
+      for j in range(0,i+1):
+        print "%2i " % (supercell.hermite[i,j]),
+    print "%10i %20s " % (int(x), enumeration.as_bitstring(x, flavorbase))
+    npern += 1
+    nconf += 1
+
 t1 = time.time()
 print "Took ", (t1 -t0)/60, "mn to complete."

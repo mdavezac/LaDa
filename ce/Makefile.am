@@ -2,8 +2,7 @@
 # Version: $Id$
 #
 include $(top_srcdir)/Files
-AM_CPPFLAGS = @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
-	      @MPI_CFLAGS@ @BOOST_CXXFLAGS@ -I $(top_srcdir) 
+AM_CPPFLAGS = @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ @BOOST_CXXFLAGS@ @MPI_CFLAGS@ -I $(top_srcdir) 
 AM_LDFLAGS = @TINYXML_LIBS@
 if DOCE
 bin_PROGRAMS = regular cubic tetra 

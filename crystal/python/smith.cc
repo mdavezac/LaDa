@@ -122,6 +122,61 @@ namespace LaDa
       }
     }
 
+    //! Computes smith indices of position \a _pos.
+    size_t get_linear_smith_index( boost::python::tuple const & _transform,
+                                   atat::rVector3d  const &_pos )
+    {
+      namespace bt = boost::tuples;
+      namespace bp = boost::python;
+      if( bp::len( _transform ) != 2 )
+      {
+        PyErr_SetString
+        (
+          PyExc_RuntimeError, 
+          "Incorrect tuple argument when computing smith normal form indices.\n" 
+        );
+        bp::throw_error_already_set();
+        return -1;
+      }
+      try
+      {
+        Crystal::t_SmithTransform transform;
+        try{  bt::get<0>( transform ) = bp::extract< atat::rMatrix3d >( _transform[0] ); }
+        catch(...)
+        {
+          PyErr_SetString
+          (
+            PyExc_IOError, 
+            "First tuple element is not an rMatrix3d object.\n"
+          );
+          bp::throw_error_already_set();
+          return -1;
+        }
+        try{  bt::get<1>( transform ) = bp::extract< atat::iVector3d >( _transform[1] ); }
+        catch(...)
+        {
+          PyErr_SetString
+          (
+            PyExc_IOError, 
+            "Second tuple element is not an iVector3d object.\n"
+          );
+          bp::throw_error_already_set();
+          return -1;
+        }
+        return Crystal::get_linear_smith_index( transform, _pos );
+      }
+      catch(...)
+      {
+        PyErr_SetString
+        (
+          PyExc_IOError, 
+          "Error while computing smith normal form indices.\n" 
+        );
+        bp::throw_error_already_set();
+        return -1;
+      }
+    }
+
     void expose_smith()
     {
       namespace bp = boost::python;
@@ -146,6 +201,12 @@ namespace LaDa
       bp::def
       ( 
         "smith_indices", &get_smith_index,
+        ( bp::arg("transform"), bp::arg("position") ),
+        "Returns the indices of the position in the smith normal form." 
+      );
+      bp::def
+      ( 
+        "linear_smith_index", &get_linear_smith_index,
         ( bp::arg("transform"), bp::arg("position") ),
         "Returns the indices of the position in the smith normal form." 
       );

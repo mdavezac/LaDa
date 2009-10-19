@@ -3,8 +3,7 @@
 #
 include $(top_srcdir)/Files
 
-AM_CPPFLAGS = @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
-	      @BOOST_CXXFLAGS@ -I $(top_srcdir) 
+AM_CPPFLAGS = @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@ @BOOST_CXXFLAGS@ -I $(top_srcdir) 
 AM_LDFLAGS = 
 
 noinst_LTLIBRARIES = libcollapse.la

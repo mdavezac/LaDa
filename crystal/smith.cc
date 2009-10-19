@@ -72,5 +72,34 @@ namespace LaDa
       return result;
     }
 
+    void get_smith_map( Crystal::Structure const &_str, std::vector< std::vector<size_t> > &_out)
+    {
+      // finds map for atomic positions.
+      Crystal::t_SmithTransform const transform( get_smith_transform(_str.lattice->cell, _str.cell) );
+
+      LADA_ASSERT( _str.atoms.size() % _str.lattice->sites.size() == 0, "Unexpected number of atoms.\n" );
+      size_t const N( _str.atoms.size() / _str.lattice->sites.size() );
+      _out.clear();
+      _out.resize(_str.lattice->sites.size(), std::vector<size_t>(N, N)); 
+
+      Crystal::Structure::t_Atoms::const_iterator i_first = _str.atoms.begin();
+      Crystal::Structure::t_Atoms::const_iterator const i_end = _str.atoms.end();
+      for(size_t i(0); i_first != i_end; ++i_first, ++i)
+      {
+        LADA_ASSERT( i_first->site >= 0 and i_first->site < _str.lattice->sites.size(),
+                     "Atoms in structure are not indexed with respect to sites.\n" );
+        
+        atat::rVector3d const pos( i_first->pos - _str.lattice->sites[i_first->site].pos );
+        size_t const smith( Crystal::get_linear_smith_index(transform, pos) );
+        LADA_ASSERT( smith < N, "Incoherent number of atoms per site." );
+        LADA_ASSERT( _out[i_first->site][smith] == N, "Duplicate site." );
+        _out[i_first->site][smith] = i;
+      }
+#     ifdef LADA_DEBUG
+        for( size_t site(0); site < _str.lattice->sites.size(); ++site )
+          for( size_t i(0); i < N; ++i )
+            LADA_ASSERT(_out[site][i] != N, "Atomic site not mapped.")
+#     endif
+    }
   }
 }

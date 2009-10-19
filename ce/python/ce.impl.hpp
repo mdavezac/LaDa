@@ -230,6 +230,11 @@ namespace LaDa
         Crystal::convert_string_to_real_structure(_str, str);
         return call<T_HARMONIC, WHICH>( _functional, str ); 
       }
+
+#     ifndef _MPI
+        template<class T_HARMONIC>
+          void set_mpi( Functional<T_HARMONIC> const &, boost::python::object const & ) {}
+#     endif
      
       template<class T_HARMONIC>
         void expose_ce_functional( const std::string &_name, const std::string &_docstring )
@@ -240,6 +245,8 @@ namespace LaDa
             .def( bp::init<const t_Builder&>() )
 #           ifdef _MPI
               .def( "set_mpi", &Functional<T_HARMONIC>::set_mpi )
+#           else
+              .def( "set_mpi", &set_mpi<T_HARMONIC> )
 #           endif
             .def( "__call__", &call<T_HARMONIC, 3>, "Computes CE + CS." )
             .def( "cs", &call<T_HARMONIC, 2>, "Computes  CS.")

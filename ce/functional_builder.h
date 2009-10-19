@@ -94,7 +94,6 @@ namespace LaDa
         //! \warning the variables of the functionals are not set to anything.
         //!          see function::Base for details.
         std::pair<t_Chemical*, t_CS*> generate_functional(const Crystal::Structure &_str ) const;
-
     };
 
     
