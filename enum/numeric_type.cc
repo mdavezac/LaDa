@@ -55,7 +55,8 @@ namespace LaDa
     {
       std::set<Crystal::Lattice::t_Site::t_Type::value_type> set_;
       foreach( Crystal::Lattice::t_Site const &site, _lattice.sites )
-        std::copy( site.type.begin(), site.type.end(), std::inserter(set_, set_.begin()));
+        if( site.type.size() > 1 )
+          std::copy( site.type.begin(), site.type.end(), std::inserter(set_, set_.begin()));
       return t_uint(set_.size());
     }
 

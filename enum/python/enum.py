@@ -83,7 +83,7 @@ def all_symmetrics( _x, _trans, _label, _rotations, _fl ):
     yield t, 'r'
     for u in all_smith(t): yield u
 
-def enumerate( _n, _lattice ):
+def enum( _n, _lattice ):
   from lada import enumeration, atat, crystal
   from math import pow
   import time
@@ -151,7 +151,7 @@ def enumerate( _n, _lattice ):
               v = labelperm(u, flavorbase)
               if v == x: continue
               specialized_database[v] = False
-        if specialized_database[x]: yield x, smith, supercell
+        if specialized_database[x]: yield x, smith, supercell, flavorbase
 
 # def main():
 from lada import enumeration, atat, crystal
@@ -164,11 +164,11 @@ species = ("K", "Rb")
 
 nconf = 1
 t0 = time.time()
+nconf = 0
 for n in range(2, 6):
-  nconf = 0
   npern = 0
   oldsupercell = None
-  for x, smith, supercell in enumerate(supercells, lattice):
+  for x, smith, supercell, flavorbase in enum(n, lattice):
     if oldsupercell == None or oldsupercell != supercell:
       npern = 0
     print "%5i %5i %2i " % (nconf, npern, n),
