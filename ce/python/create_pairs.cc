@@ -38,7 +38,8 @@ namespace LaDa
          bp::arg("nbpairs"),
          bp::arg("site") = 0
        ),
-       "Returns an array of nbpairs classes of equivalent pair clusters, with origin at _site in the lattice."
+       "Returns an array of nbpairs classes of equivalent pair clusters, "
+       "with origin at _site in the lattice."
       );
     }
 
