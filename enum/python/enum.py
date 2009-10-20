@@ -65,6 +65,7 @@ def create_lattice():
 
   lattice.sites[0].pos = atat.rVector3d(0.5,  0.5/sqrt(3.0), 0.25)
   lattice.sites[1].pos = atat.rVector3d(0.5,  -0.5/sqrt(3.0), 0.75)
+  lattice.find_space_group()
 
   return lattice
 
@@ -88,7 +89,7 @@ def enum( _n, _lattice ):
   from math import pow
   import time
 
-  supercells = enumeration.find_all_cells(lattice, _n)
+  supercells = enumeration.find_all_cells(_lattice, _n)
   smiths = enumeration.create_smith_groups(_lattice, supercells)
   nflavors = enumeration.count_flavors(_lattice)
   nsites = len(_lattice.sites)
@@ -153,31 +154,34 @@ def enum( _n, _lattice ):
               specialized_database[v] = False
         if specialized_database[x]: yield x, smith, supercell, flavorbase
 
-# def main():
-from lada import enumeration, atat, crystal
-from math import pow
-import time
+def main():
+  from lada import enumeration, atat, crystal
+  from math import pow
+  import time
 
-lattice = create_lattice()
-lattice.set_as_crystal_lattice()
-species = ("K", "Rb")
+  lattice = create_lattice()
+  lattice.set_as_crystal_lattice()
+  species = ("K", "Rb")
 
-nconf = 1
-t0 = time.time()
-nconf = 0
-for n in range(2, 6):
-  npern = 0
-  oldsupercell = None
-  for x, smith, supercell, flavorbase in enum(n, lattice):
-    if oldsupercell == None or oldsupercell != supercell:
-      npern = 0
-    print "%5i %5i %2i " % (nconf, npern, n),
-    for i in range(0,3):
-      for j in range(0,i+1):
-        print "%2i " % (supercell.hermite[i,j]),
-    print "%10i %20s " % (int(x), enumeration.as_bitstring(x, flavorbase))
-    npern += 1
-    nconf += 1
+  nconf = 1
+  t0 = time.time()
+  nconf = 0
+  for n in range(2, 6):
+    npern = 0
+    oldsupercell = None
+    for x, smith, supercell, flavorbase in enum(n, lattice):
+      if oldsupercell == None or oldsupercell != supercell:
+        npern = 0
+      print "%5i %5i %2i " % (nconf, npern, n),
+      for i in range(0,3):
+        for j in range(0,i+1):
+          print "%2i " % (supercell.hermite[i,j]),
+      print "%10i %20s " % (int(x), enumeration.as_bitstring(x, flavorbase))
+      npern += 1
+      nconf += 1
 
-t1 = time.time()
-print "Took ", (t1 -t0)/60, "mn to complete."
+  t1 = time.time()
+  print "Took ", (t1 -t0)/60, "mn to complete."
+
+if __name__ == "__main__":
+  main();

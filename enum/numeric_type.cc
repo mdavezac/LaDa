@@ -14,7 +14,6 @@
 
 #include <crystal/lattice.h>
 
-#include "exceptions.h"
 #include "numeric_type.h"
 
 namespace LaDa
@@ -81,5 +80,43 @@ namespace LaDa
       return result;
     }
 
+    void integer_to_structure( Crystal::Structure &_out,
+                               t_uint _x, FlavorBase const &_fl, size_t const _card )
+    {
+      std::string const string( integer_to_bitstring(_x, _fl) );
+      Crystal::t_SmithTransform const
+        transform( Crystal::get_smith_transform(_out.lattice->cell, _out.cell) );
+      Crystal::Structure::t_Atoms::iterator i_atom = _out.atoms.begin();
+      Crystal::Structure::t_Atoms::iterator i_atom_end = _out.atoms.end();
+      for(; i_atom != i_atom_end; ++i_atom)
+      {
+        const size_t index = Crystal::get_linear_smith_index(transform, *i_atom);
+        i_atom->type = (string[index] == '0') ? -1.0: 1.0;
+      }
+    }
+
+    void integer_to_structure( Crystal::TStructure<std::string> &_out,
+                               t_uint _x, FlavorBase const &_fl, size_t const _card )
+    {
+      LADA_ASSERT(_out.lattice != NULL, "lattice not set.")
+      std::vector<size_t> bitstring;
+      integer_to_vector(_x, _fl, bitstring);
+      Crystal::t_SmithTransform const
+        transform( Crystal::get_smith_transform(_out.lattice->cell, _out.cell) );
+      Crystal::TStructure<std::string>::t_Atoms::iterator i_atom = _out.atoms.begin();
+      Crystal::TStructure<std::string>::t_Atoms::iterator i_atom_end = _out.atoms.end();
+      for(; i_atom != i_atom_end; ++i_atom)
+      {
+        LADA_ASSERT( i_atom->site != -1, "Site index not set.\n");
+        size_t const index = Crystal::get_linear_smith_index(transform, *i_atom);
+        size_t const type_index = bitstring[index];
+        LADA_ASSERT( i_atom->site >= 0 and i_atom->site < _out.lattice->sites.size(),
+                     "site index out of range.\n" ); 
+        LADA_ASSERT(     type_index >= 0
+                     and type_index < _out.lattice->sites[i_atom->site].type.size(),
+                     "Type index out of range.\n" ); 
+        i_atom->type = _out.lattice->sites[i_atom->site].type[type_index];
+      }
+    }
   }
 }

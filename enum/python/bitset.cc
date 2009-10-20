@@ -8,6 +8,8 @@
 #include <sstream>
 #include <complex>
 
+#include <pyublas/numpy.hpp>
+
 #include <boost/exception/diagnostic_information.hpp>
 
 #include <boost/python/class.hpp>
@@ -34,6 +36,14 @@ namespace LaDa
     namespace bp = boost::python;
     bool get_item( enumeration::Database const &_d, enumeration::t_uint _x ) { return _d[_x]; }
     void set_item( enumeration::Database &_d, enumeration::t_uint _x, bool _b ) { _d[_x] = _b; }
+
+    pyublas::numpy_vector<size_t> integer_to_vector( enumeration::t_uint _x,
+                                                     enumeration::FlavorBase const& _fl ) 
+    {
+      pyublas::numpy_vector<size_t> result;
+      enumeration::integer_to_vector(_x, _fl, result);
+      return result;
+    }
 
     std::string integer_to_bitstring(enumeration::t_uint _x, enumeration::FlavorBase const &_fl )
     {
@@ -113,6 +123,9 @@ namespace LaDa
 
       bp::def("as_bitstring", &integer_to_bitstring, (bp::arg("integer"), bp::arg("flavorbase")),
               "Converts an integer to a bitstring using flavorbase as  the basis.");
+      bp::def("as_numpy", &integer_to_vector, (bp::arg("integer"), bp::arg("flavorbase")),
+              "Converts an integer to a numpy array of unsigned integers "
+              " using flavorbase as  the basis.");
       
       bp::scope scope = bp::class_<enumeration::Database>
       (

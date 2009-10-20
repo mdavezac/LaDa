@@ -142,10 +142,10 @@ crystal_h  = lattice.h  structure.h structure.impl.h atom.h  confsplit.h layerde
 crystal_doc = $(crystal_h) $(crystal_cc) 
 crystal_python_h = structure.hpp atom.hpp lattice.hpp read_structure.hpp \
                    smith.hpp enumerate.hpp layerdepth.hpp neighbors.hpp \
-                   symmetry_operator.hpp
+                   symmetry_operator.hpp which_site.hpp
 crystal_python_cc = structure.cc atom.cc lattice.cc read_structure.cc \
                     python.cc smith.cc enumerate.cc layerdepth.cc neighbors.cc \
-                    symmetry_operator.cc
+                    symmetry_operator.cc which_site.cc
 
 ce_cc     = cluster.cc harmonic.cc  polynome.cc regularization.cc fit.cc create_pairs.cc 
 ce_h      = cluster.h  constituent_strain.h  functional_builder.h  harmonic.h \

@@ -146,8 +146,10 @@ namespace LaDa
           site.pos = into_cell(site.pos-translation, _lattice.cell, invcell);
 
         // gets point group.
-        boost::shared_ptr< std::vector<SymmetryOperator> > pg = get_point_group_symmetries(_lattice.cell);
-        boost::shared_ptr< std::vector<SymmetryOperator> > result( new std::vector<SymmetryOperator> );
+        boost::shared_ptr< std::vector<SymmetryOperator> >
+          pg = get_point_group_symmetries(_lattice.cell);
+        boost::shared_ptr< std::vector<SymmetryOperator> > 
+          result( new std::vector<SymmetryOperator> );
         result->reserve(pg->size());
              
         // lists sites of same type as sites.front()

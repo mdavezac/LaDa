@@ -16,6 +16,7 @@
 #include "layerdepth.hpp"
 #include "neighbors.hpp"
 #include "symmetry_operator.hpp"
+#include "which_site.hpp"
 
 BOOST_PYTHON_MODULE(crystal)
 {
@@ -28,4 +29,5 @@ BOOST_PYTHON_MODULE(crystal)
   LaDa::Python::expose_layerdepth();
   LaDa::Python::expose_neighbors();
   LaDa::Python::expose_symmetry_operator();
+  LaDa::Python::expose_which_site();
 }

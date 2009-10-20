@@ -14,6 +14,10 @@
 #include <boost/shared_ptr.hpp>
 
 #include <atat/vectmac.h>
+#include <crystal/structure.h>
+#include <crystal/smith.h>
+
+#include "exceptions.h"
 
 namespace LaDa
 {
@@ -44,7 +48,7 @@ namespace LaDa
 
     inline t_uint get_index(size_t const &_d, atat::iVector3d const &_g, 
                             atat::iVector3d const &_smith, size_t const &_card) throw()
-      { return _card-1- _g(2) - _smith(2) * ( _g(1) + _smith(1) * ( _g(0) + _smith(0) *_d ) ); }
+      { return _card-1- Crystal::get_linear_smith_index(_smith, _d, _g); }
 
     //! Throws when supercell is too large for t_uint integer type.
     void check_size( size_t _card, size_t _nflavor );
@@ -57,7 +61,33 @@ namespace LaDa
 
     //! Transforms an integer to a string.
     std::string integer_to_bitstring( t_uint _x, FlavorBase const& _fl);
+    //! Transforms an integer to a string.
+    template< class T_VECTOR>
+      void integer_to_vector(t_uint _x, FlavorBase const& _fl, T_VECTOR &_out)
+      {
+        if( _fl.size() < 2 ) return;
+#       ifdef LADA_DEBUG
+          if( _x >= _fl.back() * _fl[1] )
+            BOOST_THROW_EXCEPTION( internal() << error_string("Argument _x is out of range.") );
+#       endif
+        
+        _out.resize( _fl.size() );
+        FlavorBase::const_reverse_iterator i_flavor = _fl.rbegin();
+        FlavorBase::const_reverse_iterator i_flavor_end = _fl.rend();
+        typename T_VECTOR::iterator i_result = _out.begin();
+        for(;i_flavor != i_flavor_end; ++i_flavor, ++i_result)
+        {
+          *i_result = _x / (*i_flavor);
+          _x %= (*i_flavor);
+        }
+      }
 
+    //! Transform an integer to a structure.
+    void integer_to_structure( Crystal::Structure &_out,
+                               t_uint _x, FlavorBase const &_fl, size_t const _card );
+    //! Transform an integer to a structure.
+    void integer_to_structure( Crystal::TStructure<std::string> &_out,
+                               t_uint _x, FlavorBase const &_fl, size_t const _card );
   }
 }
 

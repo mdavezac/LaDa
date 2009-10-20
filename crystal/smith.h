@@ -36,15 +36,52 @@ namespace LaDa
     atat::iVector3d get_smith_index( t_SmithTransform const &_transformation,
                                      atat::rVector3d  const &_pos );
 
+    //! Computes linear smith index from non-linear smith index.
+    inline size_t get_linear_smith_index( atat::iVector3d const &_extent,
+                                          atat::iVector3d  const &_index )
+      { return _index(2) + _extent(2) * ( _index(1) + _index(0) * _extent(1) ); }
+
+    //! Computes linear smith index from non-linear smith index, including sites.
+    inline size_t get_linear_smith_index( atat::iVector3d const &_extent,
+                                          size_t const &_site_index,
+                                          atat::iVector3d  const &_index )
+      { return _index(2)+_extent(2)*(_index(1)+_extent(1)*(_index(0)+_site_index*_extent(0))); }
+
     //! Computes linear smith index of position \a _pos.
     inline size_t get_linear_smith_index( t_SmithTransform const &_transformation,
                                           atat::rVector3d  const &_pos )
     {
-      atat::iVector3d const indices = get_smith_index( _transformation, _pos );
-      atat::iVector3d const &smith = boost::tuples::get<1>(_transformation);
-      return indices(2) + smith(2) * ( indices(1) + indices(0) * smith(1) );
+      return get_linear_smith_index
+             (
+               boost::tuples::get<1>(_transformation),
+               get_smith_index( _transformation, _pos )
+             );
     }
-
+    //! Computes linear smith index of position \a _pos.
+    inline size_t get_linear_smith_index( t_SmithTransform const &_transformation,
+                                          size_t const &_site_index,
+                                          atat::rVector3d  const &_pos )
+    {
+      return get_linear_smith_index
+             (
+               boost::tuples::get<1>(_transformation),
+               _site_index,
+               get_smith_index( _transformation, _pos )
+             );
+    }
+    //! Computes linear smith index of position \a _pos.
+    template<class T_TYPE>
+      size_t get_linear_smith_index( t_SmithTransform const &_transformation,
+                                     Crystal::Atom_Type<T_TYPE> &_atom ) 
+      {
+        LADA_ASSERT( _atom.site != -1, "Site index not set.\n");
+        return get_linear_smith_index
+               (
+                 boost::tuples::get<1>(_transformation),
+                 _atom.site,
+                 get_smith_index( _transformation, _atom.pos )
+               );
+      }
 
     inline bool equivalent_mod_cell( t_SmithTransform const &_transformation, 
                                      atat::rVector3d const &_a, atat::rVector3d const &_b )
