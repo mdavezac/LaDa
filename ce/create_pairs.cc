@@ -95,19 +95,11 @@ namespace LaDa
           t_Clusters::const_iterator const i_end( clusters->end() );
           for(i_op = point_group.begin(); not_found and i_op != i_op_end; ++i_op)
           {
-            atat::rVector3d const vec( (*i_op)(i_first->pos) );
+            atat::rVector3d const vec( (*i_op)(i_first->pos+origin) - (*i_op)(origin) );
             LADA_ASSERT( which_site( (*i_op)(pos), !_lat.cell, _lat.sites) != -1, "error" );
-            LADA_ASSERT(    which_site( (*i_op)(pos), !_lat.cell, _lat.sites)
-                         == which_site(pos, !_lat.cell, _lat.sites), "error" );
             LADA_ASSERT( which_site(vec + origin, !_lat.cell, _lat.sites) != -1, "error" );
             for(i_begin = clusters->begin(); not_found and i_begin != i_end; ++i_begin)
-            LADA_ASSERT(    which_site(vec + origin, !_lat.cell, _lat.sites)
-                         == which_site(pos, !_lat.cell, _lat.sites), "error" );
-            for(i_begin = clusters->begin(); not_found and i_begin != i_end; ++i_begin)
-            {
-              if( Fuzzy::is_zero( atat::norm2(vec - i_begin->vectors[1]) ) )
-                not_found = false;
-            }
+              if( Fuzzy::is_zero( atat::norm2(vec - i_begin->vectors[1]) ) ) not_found = false;
           }
         } 
 

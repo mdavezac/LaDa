@@ -74,6 +74,96 @@ def link_sites(_lattice):
       result[-1][1].append( (t, op) )
   return result
 
+def create_pairs(_lattice, _n):
+  from lada import ce
+
+  links = link_sites(_lattice)
+
+  results = []
+  for u in links:
+    pairs = ce.create_pairs(_lattice, _n, u[0] )
+    for p in pairs: print p
+    results.append( (u[0], pairs) )
+    for v in u[1]: 
+      results.append( (v[0], pairs.apply_rotation(v[1])) )
+  return results
+
+def square_enum( _n, _lattice ):
+  from lada import enumeration, atat, crystal
+  from math import pow
+  import numpy 
+  import pyublas
+  import time
+
+  structure = crystal.sStructure()
+  structure.cell = atat.rMatrix3d( [[_n, 0, 0], [0, _n, 0], [0, 0, _n]] )
+  crystal.fill_structure(structure);
+  smith = crystal.smith_normal_transform(structure) 
+
+  nflavors = enumeration.count_flavors(_lattice)
+  nsites = len([0 for u in _lattice.sites if  len(u.type) > 1])
+  transforms = enumeration.create_transforms(_lattice)
+  
+  card = int(smith[1][0]*smith[1][1]*smith[1][2]*nsites)
+  label_exchange=enumeration.LabelExchange( card, nflavors )
+  flavorbase = enumeration.create_flavorbase(card, nflavors)
+  translations = enumeration.Translation(smith[1], nsites)
+  database = enumeration.Database(card, nflavors)
+  maxterm = 0
+  inv_cell = atat.inverse(_lattice.cell)
+  for x in xrange(1, int(pow(nflavors, card))-1):
+    if float( sum(enumeration.as_numpy(x, flavorbase)) ) != float(card) / 2.0:
+      database[x] = False
+      continue
+      
+    if not database[x]: continue
+    maxterm = x
+    for labelperm in label_exchange:
+      t = labelperm(x, flavorbase)
+      if t > x: database[t] = False
+    for translation in translations:
+      t = translation(x, flavorbase)
+      if t > x: database[t] = False
+      for labelperm in label_exchange:
+        u = labelperm(t, flavorbase)
+        if u > x: database[u] = False
+
+    # checks supercell dependent transforms.
+    mine = []
+    # creates list of transformation which leave the supercell invariant.
+    specialized = []
+    for transform in transforms:
+      if not transform.invariant(structure.cell): continue
+      transform.init(smith[0], smith[1])
+      if not transform.is_trivial:
+        specialized.append( transform )
+
+    specialized_database = enumeration.Database(database)
+    for x in xrange(1, maxterm+1):
+      if not database[x]: continue
+      maxterm = x
+      
+      for transform in specialized:
+        t = transform(x, flavorbase)
+        if t == x: continue
+        specialized_database[t] = False
+
+        for labelperm in label_exchange:
+          u = labelperm(t, flavorbase)
+          if u == x: continue
+          specialized_database[u] = False
+          
+        for translation in translations:
+          u = translation(t, flavorbase)
+          if u == x: continue
+          specialized_database[u] = False
+          for labelperm in label_exchange:
+            v = labelperm(u, flavorbase)
+            if v == x: continue
+            specialized_database[v] = False
+      if specialized_database[x]:
+        yield x, inv_cell * structure.cell, flavorbase
+        
 def enum( _n, _lattice ):
   from lada import enumeration, atat, crystal
   from math import pow
@@ -94,8 +184,9 @@ def enum( _n, _lattice ):
     database = enumeration.Database(card, nflavors)
     maxterm = 0
     for x in xrange(1, int(pow(nflavors, card))-1):
-#     if float( sum(enumeration.as_numpy(x, flavorbase)) ) != float(card) / 2.0:
-#       database[x] = False
+      if float( sum(enumeration.as_numpy(x, flavorbase)) ) != float(card) / 2.0:
+        database[x] = False
+        continue
         
       if not database[x]: continue
       maxterm = x
@@ -148,7 +239,18 @@ def enum( _n, _lattice ):
               if v == x: continue
               specialized_database[v] = False
         if specialized_database[x]:
-          yield x, smith, supercell, flavorbase
+          yield x, supercell.hermite, flavorbase
+
+def compute_sqs_parameters( _structure, _pairs ):
+  from lada.ce import find_pis
+
+  value = []
+  for cls in _pairs:
+    dummy = find_pis(cls[1], _structure, cls[0]); 
+    if dummy[0] != 0: return None
+    value.extend( find_pis(cls[1], _structure, cls[0])[1:] )
+  return value
+    
 
 def main():
   from lada import crystal, ce, enumeration
@@ -165,52 +267,52 @@ def main():
   lattice = create_lattice()
   lattice.set_as_crystal_lattice()
   print lattice
-  print link_sites(lattice)
+  pairs = create_pairs(lattice, 8)
 
   nconf = 1
   t0 = time.time()
   nconf = 0
-  for n in range(2, 3):
+  values = []
+  for n in range(1, 2):
     npern = 0
     oldsupercell = None
-    for x, smith, supercell, flavorbase in enum(n, lattice):
-      if oldsupercell == None or oldsupercell != supercell:
+    structure = None
+    for x, hermite, flavorbase in square_enum(n, lattice):
+      if oldsupercell == None or oldsupercell != hermite:
         npern = 0
-      print "%5i %5i %2i " % (nconf, npern, n),
-      for i in range(0,3):
-        for j in range(0,i+1):
-          print "%2i " % (supercell.hermite[i,j]),
-      print "%10i %20s " % (int(x), enumeration.as_bitstring(x, flavorbase))
+        structure = crystal.Structure()
+        structure.cell = lattice.cell * hermite
+        crystal.fill_structure(structure)
+        
+#     print "%5i %5i %2i " % (nconf, npern, n),
+#     for i in range(0,3):
+#       for j in range(0,i+1):
+#         print "%2i " % (supercell.hermite[i,j]),
+#     print "%10i %20s " % (int(x), enumeration.as_bitstring(x, flavorbase))
+      enumeration.as_structure(structure, x, flavorbase)
+      dummy = compute_sqs_parameters(structure, pairs) 
+      if dummy != None: values.append( (dummy, hermite, x) )
       npern += 1
       nconf += 1
+
+  def compvals(_a, _b):
+    from math import fabs
+    a, b = 0, 0
+    for u in _a[0]: a += fabs(u)
+    for u in _b[0]: b += fabs(u)
+    a /= float(len(_a[0]))
+    b /= float(len(_a[0]))
+    if fabs(a - b) < 1e-10: return 0
+    if a < b: return -1
+    return 1
+
+  values = sorted(values, compvals) 
+  for val in values[:10]:
+    print val
 
   t1 = time.time()
   print "Took ", (t1 -t0)/60, "mn to complete."
   return
-
-
-  # creates a superstructure with conventional unit-cell
-  structure = crystal.sStructure()
-  structure.cell = lattice.cell * atat.rMatrix3d( [ [ 1, 0, 0],
-                                                    [ 0, 1, 0],
-                                                    [ 0, 0, 1] ] )
-  # fills in atoms in structure
-  crystal.fill_structure( structure )
-
-  # iterates over atoms in site 1 (Octahedral)
-  for atom in filter(structure.atoms, lambda x: x.site == 1 ):
-    # atom.site is the index of the site ad defined in the lattice.
-    # atom.pos is the position.
-    # atom.type is the type...
-    atom.type = random.choice( ["Al", "Mg"] )
-   
-  
-  # one way to print structure.
-  print structure
-  # prints in xcrysden format.
-  print structure.xcrysden()
-  # prints in POSCAR (VASP) format.
-  crystal.print_poscar(structure)
 
 
 if __name__ == "__main__":

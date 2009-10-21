@@ -78,6 +78,7 @@ namespace LaDa
             if( order == 0 ) { *i_out = 1e0; continue; } // zero order class.
 
             t_cit const i_cluster_end = i_class->end();
+            types::t_real pi(0);
             for(; i_cluster != i_cluster_end; ++i_cluster ) // loop over equivalent clusters.
             {
               typedef std::vector<atat::rVector3d> :: const_iterator t_cit;
@@ -104,10 +105,10 @@ namespace LaDa
                   fig *= _str.atoms[ atomic_map[site_index][smith_index] ].type;
                 } // end of loop over spins.
         
-                *i_out += fig / types::t_real(Npersite*Nperclass*order);
+                pi += fig;
               }
             } // loop over equivalent clusters.
-            // normalization
+            *i_out += pi / types::t_real(Npersite*Nperclass*order);
           } // loop over classes of clusters.
         } // loop over atomic positions.
       }

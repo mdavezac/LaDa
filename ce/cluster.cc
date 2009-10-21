@@ -84,7 +84,7 @@ namespace LaDa
     void Cluster :: print_out (  std::ostream &stream)  const
     {
       stream << std::fixed << std::setprecision(5) << std::setw(9);
-      stream << " Cluster: " << eci << "\n";
+      stream << "Cluster: " << eci << "\n";
       
       if (vectors.size() == 0 )
       {

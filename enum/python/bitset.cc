@@ -11,6 +11,9 @@
 #include <pyublas/numpy.hpp>
 
 #include <boost/exception/diagnostic_information.hpp>
+#include <boost/utility/enable_if.hpp>
+#include <boost/type_traits/is_signed.hpp>
+#include <boost/type_traits/make_signed.hpp>
 
 #include <boost/python/class.hpp>
 #include <boost/python/scope.hpp>
@@ -73,7 +76,7 @@ namespace LaDa
       }
       catch(...)
       {
-        PyErr_SetString(PyExc_ValueError, "Could not extract unsigned integers from objects.\n");
+        PyErr_SetString(PyExc_ValueError, "Unknown error in integer_to_bitstring.\n");
         bp::throw_error_already_set();
         return "";
       }
@@ -81,10 +84,13 @@ namespace LaDa
 
     boost::shared_ptr<enumeration::Database> create(size_t const &_a, size_t const &_b)
     {
-      try
+      if( _a == 0 or _b == 0 )
       {
-        return enumeration::create_database(_a, _b);
+        PyErr_SetString(PyExc_ValueError, "Invalid argument: value of 0.\n" );
+        bp::throw_error_already_set();
+        return boost::shared_ptr<enumeration::Database>();
       }
+      try { return enumeration::create_database(_a, _b); }
       catch(enumeration::supercell_too_large &_e)
       {
         std::ostringstream sstr;
@@ -106,11 +112,33 @@ namespace LaDa
       }
       catch(...)
       {
-        PyErr_SetString(PyExc_ValueError, "Could not extract unsigned integers from objects.\n");
+        PyErr_SetString(PyExc_ValueError, "Unknown error while creating database.\n");
         bp::throw_error_already_set();
         return boost::shared_ptr<enumeration::Database>();
       }
     }
+
+    template<class T> typename boost::enable_if<boost::is_signed<T>, bool>::type
+      negative( T const &_a ) { return _a < 0; } 
+    template<class T> typename boost::disable_if<boost::is_signed<T>, bool>::type
+      negative( T const &_a ) { return false; }
+    template<class T> typename boost::enable_if<boost::is_signed<T>, enumeration::t_uint>::type
+      abs( T const &_a ) { return std::abs(_a); }
+    template<class T> typename boost::disable_if<boost::is_signed<T>, enumeration::t_uint>::type
+      abs( T const &_a ) { return _a; }
+
+    template< class T1, class T2>
+      boost::shared_ptr<enumeration::Database> create1(T1 const &_a, T2 const &_b)
+      {
+        if( negative(_a) or negative(_b) )
+        {
+          PyErr_SetString(PyExc_ValueError, "Invalid argument: negative value.\n" );
+          bp::throw_error_already_set();
+          return boost::shared_ptr<enumeration::Database>();
+        }
+        return create(_a, _b);
+      }
+
 
     template<class T_STR> 
       inline void as_structure( T_STR &_out, enumeration::t_uint _x,
@@ -147,12 +175,16 @@ namespace LaDa
         "Fills structure sites using index x. Structure must have correct number of atoms."
       );
       
+      typedef boost::make_signed<enumeration::t_uint>::type t_int;
       bp::scope scope = bp::class_<enumeration::Database>
       (
         "Database", 
         "A large bitset"
       ).def( bp::init<enumeration::Database const&>() )
        .def( "__init__", bp::make_constructor(&create))
+       .def( "__init__", bp::make_constructor(&create1<t_int, t_int>))
+       .def( "__init__", bp::make_constructor(&create1<enumeration::t_uint, t_int>))
+       .def( "__init__", bp::make_constructor(&create1<t_int, enumeration::t_uint>))
        .def("__getitem__", &get_item)
        .def("__setitem__", &set_item)
        .def("__len__", &enumeration::Database::size);
