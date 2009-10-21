@@ -84,10 +84,10 @@ namespace LaDa
 
     //! Transform an integer to a structure.
     void integer_to_structure( Crystal::Structure &_out,
-                               t_uint _x, FlavorBase const &_fl, size_t const _card );
+                               t_uint _x, FlavorBase const &_fl);
     //! Transform an integer to a structure.
     void integer_to_structure( Crystal::TStructure<std::string> &_out,
-                               t_uint _x, FlavorBase const &_fl, size_t const _card );
+                               t_uint _x, FlavorBase const &_fl);
   }
 }
 

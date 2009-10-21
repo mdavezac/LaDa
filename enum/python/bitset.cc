@@ -111,6 +111,11 @@ namespace LaDa
         return boost::shared_ptr<enumeration::Database>();
       }
     }
+
+    template<class T_STR> 
+      inline void as_structure( T_STR &_out, enumeration::t_uint _x,
+                                enumeration::FlavorBase const &_fl )
+        { return enumeration::integer_to_structure(_out, _x, _fl); }
                                                         
     void expose_bitset()
     {
@@ -126,6 +131,21 @@ namespace LaDa
       bp::def("as_numpy", &integer_to_vector, (bp::arg("integer"), bp::arg("flavorbase")),
               "Converts an integer to a numpy array of unsigned integers "
               " using flavorbase as  the basis.");
+
+      bp::def
+      (
+        "as_structure", 
+        &as_structure<Crystal::Structure>,
+        ( bp::arg("structure"), bp::arg("x"), bp::arg("flavorbase") ),
+        "Fills structure sites using index x. Structure must have correct number of atoms."
+      );
+      bp::def
+      (
+        "as_structure", 
+        &as_structure< Crystal::TStructure<std::string> >,
+        ( bp::arg("structure"), bp::arg("x"), bp::arg("flavorbase") ),
+        "Fills structure sites using index x. Structure must have correct number of atoms."
+      );
       
       bp::scope scope = bp::class_<enumeration::Database>
       (

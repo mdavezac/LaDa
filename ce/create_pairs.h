@@ -24,7 +24,7 @@ namespace LaDa
     //! \param[in] index of the site for which to find pairs.
     void create_pairs( const Crystal :: Lattice &_lat,
                        types::t_unsigned _max_neigh,
-                       std::vector< std::vector<Cluster> > &_out,
+                       t_ClusterClasses &_out,
                        size_t _site = 0 );
 
   } // namespace CE

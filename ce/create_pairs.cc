@@ -12,6 +12,7 @@
 #include <crystal/lattice.h>
 #include <crystal/neighbors.h>
 #include <crystal/symmetry_operator.h>
+#include <crystal/which_site.h>
 #include <opt/types.h>
 #include <opt/fuzzy.h>
 
@@ -23,19 +24,9 @@ namespace LaDa
   namespace CE 
   {
 
-    // returns true if second position in cluster is equal to pos.
-    struct CompPairs
-    {
-      atat::rVector3d const pos;
-      CompPairs( atat::rVector3d const &_a ) : pos(_a) {}
-      CompPairs( CompPairs const &_a ) : pos(_a.pos) {}
-      bool operator()(Cluster const& _a) const
-        { return Fuzzy::is_zero(atat::norm2(_a.vectors[1]-pos)); }
-    };
-
     void create_pairs( const Crystal :: Lattice &_lat,
                        types::t_unsigned _max_neigh,
-                       std::vector< std::vector<Cluster> > &_out,
+                       t_ClusterClasses &_out,
                        size_t _site )
     {
       __DEBUGTRYBEGIN
@@ -66,6 +57,15 @@ namespace LaDa
         case 10: size_try = 176; break;
         case 11: size_try = 200; break;
       };
+
+
+      // Computes point group at lattice point.
+      std::vector<Crystal::SymmetryOperator> point_group;
+      foreach(Crystal::SymmetryOperator const &op, _lat.space_group)
+        if( Crystal::which_site(op(origin), !_lat.cell, _lat.sites) == _site )
+          point_group.push_back(op);
+      std::vector<Crystal::SymmetryOperator>::const_iterator i_op;
+      std::vector<Crystal::SymmetryOperator>::const_iterator const i_op_end = point_group.end();
       
       // goes over neighbors and adds to class.
       // Crystal::Neighbors gives us the insurance that classes which are found are complete,
@@ -87,27 +87,32 @@ namespace LaDa
         // checks if is in known class.
         atat::rVector3d pos(i_first->pos+origin);
         std::vector<Cluster> *clusters = NULL;
-        bool found = false;
-        for(size_t i(first_of_size); i < _out.size() and (not found); ++i)
+        bool not_found = true;
+        for(size_t i(first_of_size); not_found and i < _out.size(); ++i)
         {
           clusters = &_out[i];
-          foreach(Crystal::SymmetryOperator const &op, _lat.space_group)
+          t_Clusters::const_iterator i_begin;
+          t_Clusters::const_iterator const i_end( clusters->end() );
+          for(i_op = point_group.begin(); not_found and i_op != i_op_end; ++i_op)
           {
-            // point group operations only. Translation would shift origin of pair figure.
-            if( not Fuzzy::is_zero(atat::norm2(op.trans)) ) continue;
-
-            atat::rVector3d const equiv(op.op * pos);
-            if
-            ( 
-              clusters->end() == std::find_if(clusters->begin(), clusters->end(), CompPairs(equiv)) 
-            ) continue;
-            found = true;
-            break;
+            atat::rVector3d const vec( (*i_op)(i_first->pos) );
+            LADA_ASSERT( which_site( (*i_op)(pos), !_lat.cell, _lat.sites) != -1, "error" );
+            LADA_ASSERT(    which_site( (*i_op)(pos), !_lat.cell, _lat.sites)
+                         == which_site(pos, !_lat.cell, _lat.sites), "error" );
+            LADA_ASSERT( which_site(vec + origin, !_lat.cell, _lat.sites) != -1, "error" );
+            for(i_begin = clusters->begin(); not_found and i_begin != i_end; ++i_begin)
+            LADA_ASSERT(    which_site(vec + origin, !_lat.cell, _lat.sites)
+                         == which_site(pos, !_lat.cell, _lat.sites), "error" );
+            for(i_begin = clusters->begin(); not_found and i_begin != i_end; ++i_begin)
+            {
+              if( Fuzzy::is_zero( atat::norm2(vec - i_begin->vectors[1]) ) )
+                not_found = false;
+            }
           }
         } 
 
         // creates new class if not found.
-        if( not found ) 
+        if( not_found ) 
         {
           _out.resize(_out.size() + 1);
           clusters = &_out.back();

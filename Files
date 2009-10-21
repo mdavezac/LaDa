@@ -189,7 +189,7 @@ mpi_h      = mpi_object.h macros.h
 mpi_doc    = $(mpi_h) $(mpi_cc)
 
 opt_h = ndim_iterator.h minimize_base.h polynome.h \
-        types.h function_base.h \
+        types.h function_base.h pow.h \
 	va_minimizer.h fitness_function.h  function_functors.h monome.h traits.h \
         fuzzy.h atat.h debug.h va_function.h random.h algorithms.h \
         bpo_macros.h modifiers.h tuple_io.h  leave_many_out.h 

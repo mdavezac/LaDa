@@ -24,6 +24,7 @@ namespace LaDa
 {
   namespace Python
   {
+    namespace bp = boost::python;
     namespace details
     {
       template< class T_TYPE > std::vector<T_TYPE>* default_constructor();
@@ -36,10 +37,10 @@ namespace LaDa
     }
 
     template< class T_TYPE >
-      void expose_vector( const std::string &_name, const std::string &_docstring )
+      bp::class_< std::vector<T_TYPE> > expose_vector( const std::string &_name,
+                                                       const std::string &_docstring )
       {
-        namespace bp = boost::python;
-        bp::class_< std::vector< T_TYPE > >( _name.c_str(), _docstring.c_str() )
+        return bp::class_< std::vector< T_TYPE > >( _name.c_str(), _docstring.c_str() )
           .def( "__init__", bp::make_constructor( details::default_constructor< T_TYPE > ) )
           .def( "__init__", bp::make_constructor( details::copy_constructor< T_TYPE > ) )
           .def( "__init__", bp::make_constructor( details::object_constructor< T_TYPE > ) )

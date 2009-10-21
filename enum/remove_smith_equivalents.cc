@@ -7,6 +7,7 @@
 #endif
 
 #include <crystal/lattice.h>
+#include <opt/pow.h>
 
 #include "find_all_cells.h"
 #include "remove_smith_equivalents.h"
@@ -29,7 +30,7 @@ namespace LaDa
       size_t const nflavors( count_flavors(_lattice) );
       check_size(card, nflavors);
       if( nsites < 2 ) return;
-      if( _database.size() != std::pow( count_flavors(_lattice), card ) )
+      if( _database.size() != opt::pow( count_flavors(_lattice), card ) )
         BOOST_THROW_EXCEPTION( incorrect_database() );
       
       Translation translations( _sg.smith, nsites );
@@ -37,7 +38,7 @@ namespace LaDa
  
       typedef std::vector<Translation> :: const_iterator t_cit; 
       LabelExchange label_exchange(card, nflavors);
-      for( t_uint x(0), max(std::pow<t_uint>(nflavors, card)); x < max; ++x )
+      for( t_uint x(0), max(opt::pow(nflavors, card)); x < max; ++x )
       {
         if( not _database[x] ) continue;
         

@@ -99,18 +99,28 @@ namespace LaDa
                                   and Fuzzy::eq(op.x[2][1], 0.0) 
                                   and Fuzzy::eq(op.x[2][2], 1.0) );
 
+       size_t nsites(0);
+       { // Computes number of sites.
+         Crystal::Lattice::t_Sites::const_iterator i_site = _lat.sites.begin();
+         Crystal::Lattice::t_Sites::const_iterator const i_site_end = _lat.sites.end();
+         for(; i_site != i_site_end; ++i_site)
+           if( i_site->type.size() > 1 ) ++nsites;
+       }
+
        if( pure_translation_ )
        {
-         independents_.resize( _lat.sites.size(), t_Independent(0, _c.trans) );
+         independents_.resize( nsites, t_Independent(0, _c.trans) );
          return;
        }
+
        atat::rMatrix3d const inv_cell(!_lat.cell);
-       std::vector<Crystal::Lattice::t_Site> sites; sites.reserve( _lat.sites.size() );
+       std::vector<Crystal::Lattice::t_Site> sites; sites.reserve( nsites );
        { // construct list of centered sites.
          Crystal::Lattice::t_Sites::const_iterator i_site = _lat.sites.begin();
          Crystal::Lattice::t_Sites::const_iterator const i_site_end = _lat.sites.end();
          for(; i_site != i_site_end; ++i_site)
          {
+           if( i_site->type.size() < 2 ) continue;
            atat::rVector3d const frac( inv_cell * i_site->pos );
            atat::rVector3d const centered
            (
@@ -126,10 +136,11 @@ namespace LaDa
          std::vector<Crystal::Lattice::t_Site> :: const_iterator const i_site_begin = sites.begin();
          std::vector<Crystal::Lattice::t_Site> :: const_iterator i_site = i_site_begin;
          std::vector<Crystal::Lattice::t_Site> :: const_iterator const i_site_end = sites.end();
-         types::t_int const nsites( sites.size() );
          atat::rMatrix3d const rotation(inv_cell * op * _lat.cell);
-         for(size_t i(0); i_site != i_site_end; ++i_site, ++i)
+         for(; i_site != i_site_end; ++i_site)
          {
+           if( i_site->type.size() < 2 ) continue;
+           
            atat::rVector3d const frac( rotation * i_site->pos + inv_cell * trans );
            atat::rVector3d const centered
            (

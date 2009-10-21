@@ -10,6 +10,7 @@
 #include <complex>
 
 #include <boost/python/def.hpp>
+#include <boost/python/list.hpp>
 #include <pyublas/numpy.hpp>
 
 
@@ -21,6 +22,7 @@ namespace LaDa
 {
   namespace Python
   {
+    namespace bp = boost::python;
     pyublas::numpy_vector<types::t_real> find_pis( CE::t_ClusterClasses const &_cls,
                                                    Crystal::Structure const &_str,
                                                    size_t _site )
@@ -30,14 +32,32 @@ namespace LaDa
       return vec;
     }
 
+    pyublas::numpy_vector<types::t_real> find_pis2( bp::list const &_cls,
+                                                    Crystal::Structure const &_str,
+                                                    size_t _site )
+    {
+      CE::t_ClusterClasses cls(bp::len(_cls));
+      for(size_t i(0); i < bp::len(_cls); ++i)
+        cls[i] = bp::extract<CE::t_Clusters>(_cls[i]);
+      return find_pis(cls, _str, _site);
+    }
+
     void expose_find_pis()
     {
-      namespace bp = boost::python;
 
       bp::def
       (
         "find_pis",
         &find_pis,
+        ( bp::arg("classes"), bp::arg("structure"), bp::arg("site")=0 ),
+        "Returns pis of a given structure for a given array of classes of equivalent figures,\n"
+        "with site the site index of the origin of the figure."
+      );
+
+      bp::def
+      (
+        "find_pis",
+        &find_pis2,
         ( bp::arg("classes"), bp::arg("structure"), bp::arg("site")=0 ),
         "Returns pis of a given structure for a given array of classes of equivalent figures,\n"
         "with site the site index of the origin of the figure."

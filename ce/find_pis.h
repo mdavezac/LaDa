@@ -55,7 +55,8 @@ namespace LaDa
         atat::rMatrix3d const inv_cell( !_str.lattice->cell );
         Crystal::Lattice::t_Sites const &sites(_str.lattice->sites);
       
-        Crystal::t_SmithTransform const transform( Crystal::get_smith_transform(_str.lattice->cell, _str.cell) );
+        Crystal::t_SmithTransform const
+          transform( Crystal::get_smith_transform(_str.lattice->cell, _str.cell) );
       
         Crystal::Structure::t_Atoms::const_iterator i_first = _str.atoms.begin();
         Crystal::Structure::t_Atoms::const_iterator const i_end = _str.atoms.end();
@@ -79,9 +80,10 @@ namespace LaDa
             t_cit const i_cluster_end = i_class->end();
             for(; i_cluster != i_cluster_end; ++i_cluster ) // loop over equivalent clusters.
             {
-              std::vector<atat::rVector3d> :: const_iterator i_vec_begin = i_cluster->vectors.begin();
-              std::vector<atat::rVector3d> :: const_iterator const i_vec_end = i_cluster->vectors.end();
-              std::vector<atat::rVector3d> :: const_iterator i_center = i_vec_begin;
+              typedef std::vector<atat::rVector3d> :: const_iterator t_cit;
+              t_cit i_vec_begin = i_cluster->vectors.begin();
+              t_cit const i_vec_end = i_cluster->vectors.end();
+              t_cit i_center = i_vec_begin;
               for(; i_center != i_vec_end; ++i_center ) // loop over cluster centers.
               {
                 types::t_real fig(1);
