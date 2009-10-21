@@ -295,6 +295,7 @@ def main():
       npern += 1
       nconf += 1
 
+  print "done computing sqs parameters."
   def compvals(_a, _b):
     from math import fabs
     a, b = 0, 0

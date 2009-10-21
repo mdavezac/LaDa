@@ -129,8 +129,8 @@ namespace LaDa
                               enumeration::t_uint const &_x, 
                               enumeration::FlavorBase const &_fl)
     {
-#     ifndef LADA_DEBUG
-        if( _x >= _flavorbase.back() * _flavorbase[1] )
+#     ifdef LADA_DEBUG
+        if( _x >= _fl.back() * _fl[1] )
         {
           PyErr_SetString(PyExc_OverflowError, 
                           "Integer argument too large according to FlavorBase.")
