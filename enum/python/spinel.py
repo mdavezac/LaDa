@@ -244,11 +244,9 @@ def enum( _n, _lattice ):
 def compute_sqs_parameters( _structure, _pairs ):
   from lada.ce import find_pis
 
-  value = []
-  for cls in _pairs:
-    dummy = find_pis(cls[1], _structure, cls[0]); 
-    if dummy[0] != 0: return None
-    value.extend( find_pis(cls[1], _structure, cls[0])[1:] )
+  value = find_pis(_pairs[0][1], _structure, _pairs[0][0]); 
+  for cls in _pairs[1:]:
+    value += find_pis(cls[1], _structure, cls[0]); 
   return value
     
 
@@ -265,24 +263,30 @@ def main():
 
   # creates the lattice with smallest unit-cell.
   lattice = create_lattice()
+  reduced_lattice = crystal.Lattice(lattice)
+  reduced_lattice.sites.clear()
+  for site in lattice.sites: 
+    if len(site.type) > 1: reduced_lattice.sites.append(site)
+
+  pairs = create_pairs(reduced_lattice, 2)
   lattice.set_as_crystal_lattice()
-  print lattice
-  pairs = create_pairs(lattice, 8)
 
   nconf = 1
   t0 = time.time()
   nconf = 0
   values = []
-  for n in range(1, 2):
+  for n in range(2, 5):
     npern = 0
     oldsupercell = None
     structure = None
-    for x, hermite, flavorbase in square_enum(n, lattice):
+    for x, hermite, flavorbase in enum(n, lattice):
       if oldsupercell == None or oldsupercell != hermite:
         npern = 0
         structure = crystal.Structure()
+        print structure.lattice()
         structure.cell = lattice.cell * hermite
         crystal.fill_structure(structure)
+        print structure
         
 #     print "%5i %5i %2i " % (nconf, npern, n),
 #     for i in range(0,3):
@@ -291,10 +295,12 @@ def main():
 #     print "%10i %20s " % (int(x), enumeration.as_bitstring(x, flavorbase))
       enumeration.as_structure(structure, x, flavorbase)
       dummy = compute_sqs_parameters(structure, pairs) 
-      if dummy != None: values.append( (dummy, hermite, x) )
+      if dummy != None: print dummy
+        # values.append( (dummy, hermite, x) )
       npern += 1
       nconf += 1
 
+  return
   print "done computing sqs parameters."
   def compvals(_a, _b):
     from math import fabs

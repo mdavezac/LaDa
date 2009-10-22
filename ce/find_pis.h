@@ -98,7 +98,8 @@ namespace LaDa
                   ( 
                     dosite ? Crystal::which_site(site_pos, inv_cell, sites): 0
                   );
-                  LADA_DOASSERT( sindex != -1, "Site not found.\n" );
+                  LADA_DOASSERT( sindex != -1, "Site not found.\n" << site_pos << " | " << shift << "\n" );
+                  LADA_DOASSERT( sindex < _str.lattice->sites.size(), "Index out of range.\n" );
                   size_t const site_index(sindex);
                   atat::rVector3d const pos( site_pos - sites[site_index].pos );
                   size_t const smith_index = Crystal::get_linear_smith_index(transform, pos);
@@ -111,6 +112,9 @@ namespace LaDa
             *i_out += pi / types::t_real(Npersite*Nperclass*order);
           } // loop over classes of clusters.
         } // loop over atomic positions.
+#       ifdef LADA_DEBUG
+          foreach(types::t_real &o, _out) if( Fuzzy::is_zero(o) ) o = 0e0;
+#       endif
       }
 
     //! \brief Computes pis of \a _str for \a _clusters.
