@@ -133,7 +133,7 @@ namespace LaDa
         if( _x >= _fl.back() * _fl[1] )
         {
           PyErr_SetString(PyExc_OverflowError, 
-                          "Integer argument too large according to FlavorBase.")
+                          "Integer argument too large according to FlavorBase.");
           bp::throw_error_already_set();
           return -1;
         }
