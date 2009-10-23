@@ -31,6 +31,13 @@ namespace LaDa
       CE::find_pis(_cls, _str, vec, _site);
       return vec;
     }
+    pyublas::numpy_vector<types::t_real> find_pis3( CE::t_ClusterClasses const &_cls,
+                                                   Crystal::Structure const &_str)
+    {
+      pyublas::numpy_vector<types::t_real> vec; 
+      CE::find_pis2(_cls, _str, vec);
+      return vec;
+    }
 
     pyublas::numpy_vector<types::t_real> find_pis2( bp::list const &_cls,
                                                     Crystal::Structure const &_str,
@@ -59,6 +66,14 @@ namespace LaDa
         "find_pis",
         &find_pis2,
         ( bp::arg("classes"), bp::arg("structure"), bp::arg("site")=0 ),
+        "Returns pis of a given structure for a given array of classes of equivalent figures,\n"
+        "with site the site index of the origin of the figure."
+      );
+      bp::def
+      (
+        "find_pis2",
+        &find_pis3,
+        ( bp::arg("classes"), bp::arg("structure") ),
         "Returns pis of a given structure for a given array of classes of equivalent figures,\n"
         "with site the site index of the origin of the figure."
       );

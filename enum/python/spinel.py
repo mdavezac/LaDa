@@ -75,17 +75,25 @@ def link_sites(_lattice):
   return result
 
 def create_pairs(_lattice, _n):
-  from lada import ce
+  from lada import ce, crystal
 
-  links = link_sites(_lattice)
+  reduced_lattice = crystal.Lattice(_lattice)
+  reduced_lattice.sites.clear()
+  map_from_reduced = []
+  for i, site in enumerate(_lattice.sites): 
+    if len(site.type) < 2: continue
+    reduced_lattice.sites.append(site)
+    map_from_reduced.append( i )
+
+  links = link_sites(reduced_lattice)
 
   results = []
   for u in links:
-    pairs = ce.create_pairs(_lattice, _n, u[0] )
+    pairs = ce.create_pairs(reduced_lattice, _n, u[0] )
     for p in pairs: print p
-    results.append( (u[0], pairs) )
+    results.append( (map_from_reduced[u[0]], pairs) )
     for v in u[1]: 
-      results.append( (v[0], pairs.apply_rotation(v[1])) )
+      results.append( (map_from_reduced[v[0]], pairs.apply_rotation(v[1])) )
   return results
 
 def square_enum( _n, _lattice ):
@@ -243,10 +251,15 @@ def enum( _n, _lattice ):
 
 def compute_sqs_parameters( _structure, _pairs ):
   from lada.ce import find_pis
+  from math import fabs
 
   value = find_pis(_pairs[0][1], _structure, _pairs[0][0]); 
   for cls in _pairs[1:]:
     value += find_pis(cls[1], _structure, cls[0]); 
+  if fabs(value[0]) > 0.000001: return None
+  if fabs(value[1]) > 0.000001: return None
+  if fabs(value[2]) > 0.000001: return None
+  if fabs(value[3]) > 0.000001: return None
   return value
     
 
@@ -263,19 +276,14 @@ def main():
 
   # creates the lattice with smallest unit-cell.
   lattice = create_lattice()
-  reduced_lattice = crystal.Lattice(lattice)
-  reduced_lattice.sites.clear()
-  for site in lattice.sites: 
-    if len(site.type) > 1: reduced_lattice.sites.append(site)
-
-  pairs = create_pairs(reduced_lattice, 2)
   lattice.set_as_crystal_lattice()
+  pairs = create_pairs(lattice, 8)
 
   nconf = 1
   t0 = time.time()
   nconf = 0
   values = []
-  for n in range(2, 5):
+  for n in range(1, 5):
     npern = 0
     oldsupercell = None
     structure = None
@@ -283,10 +291,8 @@ def main():
       if oldsupercell == None or oldsupercell != hermite:
         npern = 0
         structure = crystal.Structure()
-        print structure.lattice()
         structure.cell = lattice.cell * hermite
         crystal.fill_structure(structure)
-        print structure
         
 #     print "%5i %5i %2i " % (nconf, npern, n),
 #     for i in range(0,3):
@@ -295,7 +301,7 @@ def main():
 #     print "%10i %20s " % (int(x), enumeration.as_bitstring(x, flavorbase))
       enumeration.as_structure(structure, x, flavorbase)
       dummy = compute_sqs_parameters(structure, pairs) 
-      if dummy != None: print dummy
+      if dummy != None: print dummy, x 
         # values.append( (dummy, hermite, x) )
       npern += 1
       nconf += 1

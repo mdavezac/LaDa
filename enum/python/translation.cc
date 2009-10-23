@@ -39,7 +39,15 @@ namespace LaDa
       Translation &iter()  { return *this; }
       Translation const& next()
       {
-        if( first_ ) first_ = false; 
+        if( first_ ) 
+        {
+          if( size() == 0 ) // no translations.
+          {
+            PyErr_SetString(PyExc_StopIteration, "End of translations.");
+            bp::throw_error_already_set();
+          }
+          else first_ = false; 
+        }
         else if( not enumeration::Translation::operator++() )
         {
           first_ = true;
