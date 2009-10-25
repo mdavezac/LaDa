@@ -22,7 +22,6 @@
 #include <boost/spirit/include/classic_sequence.hpp>
 #include <boost/spirit/include/classic_operators.hpp>
 
-#include <opt/ndim_iterator.h>
 #include <opt/debug.h>
 #include <opt/tinyxml.h>
 

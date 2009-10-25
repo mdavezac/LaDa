@@ -1,8 +1,8 @@
 //
 //  Version: $Id$
 //
-#ifndef _NDIM_ITERATOR_H_
-#define _NDIM_ITERATOR_H_
+#ifndef LADA_OPT_NDIMITERATOR_H_
+#define LADA_OPT_NDIMITERATOR_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -15,22 +15,13 @@
 #include "opt/types.h"
 
 
-#ifdef _DEBUG_ITERATORS_
-  #define _DEBUG_ITERATOR_CHECK_ {if(!check_valid())\
-         { std::cerr << "Invalid use of Ndim_Iterator" << std::endl;\
-           exit(0) } } 
-#else
-  #define _DEBUG_ITERATOR_CHECK_ {}
-#endif // _DEBUG_ITERATORS_
-
-
 namespace LaDa
 {
   namespace opt
   {
 
     /** \brief Iterator of dynamic dimensionality for loop of dynamic nestedness.
-     * \details Creates an iterator which allows for a dinamic number of loops whithin loops. 
+     * \details Creates an iterator which allows for a dynamic number of loops whithin loops. 
      *          Imagine for instance that we thant a three-times nested loop
      *          where each loops iterates 4 times, then we could Ndim_Iterator in
      *          the following code.
@@ -116,7 +107,7 @@ namespace LaDa
                 N-dimensional loop.
      */          
     template<class T_OBJECT, class T_PREDICATE>
-      class Ndim_Iterator
+      class NDimIterator
       {
         public:
           //! Type of inner iterators
@@ -141,9 +132,9 @@ namespace LaDa
 
         public:
           //! Constructor
-          Ndim_Iterator(){};
+          NDimIterator(){};
           //! Destructor
-          ~Ndim_Iterator(){};
+          ~NDimIterator(){};
 
           //! Adds an inner loop to existing loops.
           void add( t_Object _begin, t_Object _end );
@@ -173,88 +164,64 @@ namespace LaDa
           bool loop_is_valid() { return ( current_iterator != last_iterator ); }
 
        protected:
-         #ifdef _DEBUG_ITERATORS_
+#         ifdef LADA_DEBUG
            //! Debug.
            bool check_valid() const;
-         #endif // _DEBUG_ITERATORS_
+#         endif 
 
       };
 
 
       template<typename T_OBJECT, typename T_PREDICATE>
-        inline void Ndim_Iterator<T_OBJECT, T_PREDICATE> :: add( t_Object _begin, t_Object _end )
+        inline void NDimIterator<T_OBJECT, T_PREDICATE> :: add( t_Object _begin, t_Object _end )
         { 
           start.push_back( _begin );
           end.push_back( _end );
           iterators.push_back( _begin );
         }
       template<typename T_OBJECT, typename T_PREDICATE>
-        inline void Ndim_Iterator<T_OBJECT, T_PREDICATE> :: reset()
+        inline void NDimIterator<T_OBJECT, T_PREDICATE> :: reset()
         { 
-          _DEBUG_ITERATOR_CHECK_;
+          LADA_ASSERT( check_valid(), "Iterator is invalid.\n");
           std::copy( start.begin(), start.end(),
                      iterators.begin() );
         }
       template<typename T_OBJECT, typename T_PREDICATE>
-        inline bool Ndim_Iterator<T_OBJECT, T_PREDICATE> :: is_valid()
+        inline bool NDimIterator<T_OBJECT, T_PREDICATE> :: is_valid()
         {
-          _DEBUG_ITERATOR_CHECK_;
+          LADA_ASSERT( check_valid(), "Iterator is invalid.\n");
           return predicate( *iterators.begin(), *end.begin() ); 
         }
       template<typename T_OBJECT, typename T_PREDICATE>
-        inline void Ndim_Iterator<T_OBJECT, T_PREDICATE> :: init_loop()
+        inline void NDimIterator<T_OBJECT, T_PREDICATE> :: init_loop()
         {
-          _DEBUG_ITERATOR_CHECK_;
+          LADA_ASSERT( check_valid(), "Iterator is invalid.\n");
           current_iterator = iterators.begin();
           last_iterator = iterators.end();
         }
       template<typename T_OBJECT, typename T_PREDICATE>
-        const typename Ndim_Iterator<T_OBJECT, T_PREDICATE> :: t_Object&
-        Ndim_Iterator<T_OBJECT, T_PREDICATE> :: access( types::t_unsigned _i ) const
+        const typename NDimIterator<T_OBJECT, T_PREDICATE> :: t_Object&
+        NDimIterator<T_OBJECT, T_PREDICATE> :: access( types::t_unsigned _i ) const
         { 
-          #ifdef _DEBUG_ITERATOR_
-            _DEBUG_ITERATOR_CHECK_;
-            if (_i >= iterators.size() ) 
-            {
-              std::cerr << "Cannot access iterator: value beyond range "
-                        << " t_Object& Ndim_Iterator :: access( types::t_unsigned _i ) const"
-                        << std::endl;
-              exit(0);
-            }
-          #endif // _DEBUG_ITERATOR_
+          LADA_ASSERT( check_valid(), "Iterator is invalid.\n");
+          LADA_ASSERT(_i >= iterators.size(), "Index out of range.\n");
         
           return ( iterators[_i] );
         }
       template<typename T_OBJECT, typename T_PREDICATE>
-        typename Ndim_Iterator<T_OBJECT, T_PREDICATE> :: t_Object&
-          Ndim_Iterator<T_OBJECT, T_PREDICATE> :: access( types::t_unsigned _i )
+        typename NDimIterator<T_OBJECT, T_PREDICATE> :: t_Object&
+          NDimIterator<T_OBJECT, T_PREDICATE> :: access( types::t_unsigned _i )
           { 
-            #ifdef _DEBUG_ITERATOR_
-              _DEBUG_ITERATOR_CHECK_;
-              if (_i >= iterators.size() ) 
-              {
-                std::cerr << "Cannot access iterator: value beyond range "
-                          << " t_Object& Ndim_Iterator :: access( types::t_unsigned _i ) const"
-                          << std::endl;
-                exit(0);
-              }
-            #endif // _DEBUG_ITERATOR_
+            LADA_ASSERT( check_valid(), "Iterator is invalid.\n");
+            LADA_ASSERT(_i >= iterators.size(), "Index out of range.\n");
          
             return ( iterators[_i] );
           }
       template<typename T_OBJECT, typename T_PREDICATE>
-      void Ndim_Iterator<T_OBJECT, T_PREDICATE> :: erase( types::t_unsigned _i )
+      void NDimIterator<T_OBJECT, T_PREDICATE> :: erase( types::t_unsigned _i )
       { 
-        #ifdef _DEBUG_ITERATOR_
-          _DEBUG_ITERATOR_CHECK_;
-          if (_i >= iterators.size() ) 
-          {
-            std::cerr << "Cannot access iterator: value beyond range "
-                      << " void Ndim_Iterator :: erase( types::t_unsigned _i )"
-                      << std::endl;
-            exit(0);
-          }
-        #endif // _DEBUG_ITERATOR_
+        LADA_ASSERT( check_valid(), "Iterator is invalid.\n");
+        LADA_ASSERT(_i >= iterators.size(), "Index out of range.\n");
 
         start.erase( start.begin() + _i );
         end.erase( end.begin() + _i );
@@ -262,9 +229,9 @@ namespace LaDa
       }
 
       template<typename T_OBJECT, typename T_PREDICATE>
-      bool Ndim_Iterator<T_OBJECT, T_PREDICATE> :: increment()
+      bool NDimIterator<T_OBJECT, T_PREDICATE> :: increment()
       {
-        _DEBUG_ITERATOR_CHECK_;
+        LADA_ASSERT( check_valid(), "Iterator is invalid.\n");
         typename std::vector<t_Object> :: iterator ri_it;
         typename std::vector<t_Object> :: iterator ri_end;
         typename std::vector<t_Object> :: iterator ri_itstart;
@@ -294,9 +261,9 @@ namespace LaDa
 
 
 
-      #ifdef _DEBUG_ITERATORS_
+#     ifdef LADA_DEBUG
         template<typename T_OBJECT, typename T_PREDICATE>
-        bool Ndim_Iterator<T_OBJECT, T_PREDICATE> :: check_valid() const
+        bool NDimIterator<T_OBJECT, T_PREDICATE> :: check_valid() const
         {
           types::t_unsigned a = start.size();
           types::t_unsigned b = end.size();
@@ -307,7 +274,7 @@ namespace LaDa
 
           return ( a == b and b == c );
         }
-      #endif // _DEBUG_ITERATORS_
+#     endif
 
 
   } // namespace opt

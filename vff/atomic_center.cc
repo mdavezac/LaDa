@@ -12,11 +12,11 @@
 #include <boost/filesystem/operations.hpp>
 
 #include <physics/physics.h>
-#include <opt/ndim_iterator.h>
 #include <opt/atat.h>
 #include <opt/debug.h>
 #include <opt/atat.h>
 #include <opt/tinyxml.h>
+#include <opt/ndim_iterator.h>
 
 #include "atomic_center.h"
   
@@ -55,7 +55,7 @@ namespace LaDa
                                             const types::t_real _cutoff ) 
     {
       bool found_bond = false;
-      opt::Ndim_Iterator< types::t_int, std::less_equal<types::t_int> > period;
+      opt::NDimIterator< types::t_int, std::less_equal<types::t_int> > period;
       period.add(-1,1);
       period.add(-1,1);
       period.add(-1,1);

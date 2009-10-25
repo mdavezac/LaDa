@@ -268,6 +268,8 @@ namespace LaDa
     
     bool Cluster::operator==( Cluster const & _c ) const
     {
+      if( vectors.size() != _c.vectors.size() ) return false;
+
       foreach( atat::rVector3d const &pos, _c.vectors )
         if( vectors.end() == std::find(vectors.begin(), vectors.end(), pos) ) 
           return false;

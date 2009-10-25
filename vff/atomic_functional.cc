@@ -12,7 +12,6 @@
 #include <boost/lexical_cast.hpp>
 
 #include <physics/physics.h>
-#include <opt/ndim_iterator.h>
 #include <opt/atat.h>
 #include <opt/debug.h>
 #include <opt/atat.h>

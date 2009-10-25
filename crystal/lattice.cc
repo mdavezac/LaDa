@@ -13,7 +13,6 @@
 #include <atat/array.h>
 #include <atat/misc.h>
 #include <print/manip.h>
-#include <opt/ndim_iterator.h>
 #include <opt/tinyxml.h>
 
 #include "lattice.h"
@@ -254,37 +253,6 @@ namespace LaDa
         i_site->print_out(stream);
         stream << "\n";
       }
-    }
-
-    // refold by one vector
-    void refold( atat::rVector3d &vec, const atat::rMatrix3d &lat )
-    {
-      opt::Ndim_Iterator<types::t_int, std::less_equal<types::t_int> > i_cell;
-      atat::rVector3d hold = vec;
-      atat::rVector3d compute;
-      atat::rVector3d current = vec;
-      types::t_real norm_c = norm2(vec);
-
-      i_cell.add(-2,2);
-      i_cell.add(-2,2);
-      i_cell.add(-2,2);
-
-      do
-      {
-        compute(0) = (types::t_real) i_cell.access(0);
-        compute(1) = (types::t_real) i_cell.access(1);
-        compute(2) = (types::t_real) i_cell.access(2);
-
-        vec = hold + lat*compute;
-        if ( norm2( vec ) < norm_c ) 
-        {
-          current = vec;
-          norm_c = norm2(vec);
-        }
-
-      } while ( (++i_cell) );
-
-      vec = current;
     }
 
     bool lattice_has_same_species( const Lattice &_lattice )

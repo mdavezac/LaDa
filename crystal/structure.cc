@@ -10,9 +10,8 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/tuple/tuple_io.hpp>
 
-#include <opt/ndim_iterator.h>
-#include <opt/debug.h>
 #include <opt/tinyxml.h>
+#include <opt/ndim_iterator.h>
 
 #include <atat/misc.h>
 #include <physics/physics.h>
@@ -473,6 +472,35 @@ namespace LaDa
 
     }
 
+    void refold( atat::rVector3d &vec, const atat::rMatrix3d &lat )
+    {
+      opt::NDimIterator<types::t_int, std::less_equal<types::t_int> > i_cell;
+      atat::rVector3d hold = vec;
+      atat::rVector3d compute;
+      atat::rVector3d current = vec;
+      types::t_real norm_c = norm2(vec);
+
+      i_cell.add(-1,1);
+      i_cell.add(-1,1);
+      i_cell.add(-1,1);
+
+      do
+      {
+        compute(0) = (types::t_real) i_cell.access(0);
+        compute(1) = (types::t_real) i_cell.access(1);
+        compute(2) = (types::t_real) i_cell.access(2);
+
+        vec = hold + lat*compute;
+        if ( norm2( vec ) < norm_c ) 
+        {
+          current = vec;
+          norm_c = norm2(vec);
+        }
+
+      } while ( (++i_cell) );
+
+      vec = current;
+    }
      void Structure :: find_k_vectors()
      {
        namespace bt = boost::tuples;
@@ -533,33 +561,6 @@ namespace LaDa
       while( not is_int(b) )
         { b += a; n++;  }
       kvec[2] = n;
-    }
-
-    bool are_equivalent( const atat::rVector3d &_a,
-                         const atat::rVector3d &_b,
-                         const atat::rMatrix3d &_cell) 
-    {
-
-      opt::Ndim_Iterator<types::t_int, std::less_equal<types::t_int> > i_cell;
-      atat::rVector3d compute;
-
-      i_cell.add(-1,1);
-      i_cell.add(-1,1);
-      i_cell.add(-1,1);
-
-      do
-      {
-        compute(0) = (types::t_real) i_cell.access(0);
-        compute(1) = (types::t_real) i_cell.access(1);
-        compute(2) = (types::t_real) i_cell.access(2);
-
-        compute = _a + _cell*compute;
-        if ( norm2( compute - _b ) <  types::tolerance ) 
-          return true;
-
-      } while ( (++i_cell) );
-
-      return false;
     }
 
     std::ostream& Structure :: print_xcrysden( std::ostream &_stream ) const

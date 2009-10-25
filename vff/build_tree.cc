@@ -9,7 +9,6 @@
 #include <functional>
 
 #include <opt/smith_normal_form.h>
-#include <opt/ndim_iterator.h>
 #include <crystal/ideal_lattice.h>
 
 #include "vff.h"

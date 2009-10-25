@@ -8,7 +8,6 @@
 #include <algorithm>
 #include <functional>
 
-#include <opt/ndim_iterator.h>
 #include <opt/atat.h>
 
 #include "vff.h"

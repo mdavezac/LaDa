@@ -7,7 +7,6 @@
 
 #include <functional>
 
-#include <opt/ndim_iterator.h>
 #include <opt/smith_normal_form.h>
 #include <opt/debug.h>
 #include <atat/misc.h>

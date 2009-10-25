@@ -10,7 +10,6 @@
 
 #include <boost/tuple/tuple.hpp>
 
-#include <opt/ndim_iterator.h>
 #include <opt/atat.h>
 #include <crystal/divide_and_conquer.h>
 

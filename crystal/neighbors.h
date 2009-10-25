@@ -94,6 +94,7 @@ namespace LaDa
          //! Returns size of neighbors list.
          size_t size() const { return neighbors_.size(); }
 
+
        private:
          //! Private copy Constructor.
          Neighbors(Neighbors const &_c) {}

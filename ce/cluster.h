@@ -14,7 +14,6 @@
 #include <tinyxml/tinyxml.h>
 
 #include <opt/types.h>
-#include <opt/ndim_iterator.h>
 #include <atat/machdep.h>
 #include <atat/vectmac.h>
 #include <mpi/mpi_object.h>
@@ -121,6 +120,9 @@ namespace LaDa
         std::vector< atat::rVector3d >& Vectors() { return vectors; }
         //! True if involves same positions.
         bool operator==( Cluster const & _c ) const;
+        //! True if involves same positions.
+        bool operator!=( Cluster const & _c ) const
+          { return not operator==(_c); }
       private:
         //! Serializes a cluster.
         template<class Archive> void serialize( Archive & _ar,
