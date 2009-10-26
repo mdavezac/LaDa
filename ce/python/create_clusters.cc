@@ -17,9 +17,9 @@ namespace LaDa
   {
     boost::shared_ptr< CE::t_ClusterClasses >
       create_clusters( Crystal::Lattice const &_lat, size_t _max, size_t _order, size_t _site )
-        { return CE::create_clusteres(_lat, _max, _order, _site ); }
+        { return CE::create_clusters(_lat, _max, _order, _site ); }
 
-    void expose_create_pairs()
+    void expose_create_clusters()
     {
       namespace bp = boost::python;
 

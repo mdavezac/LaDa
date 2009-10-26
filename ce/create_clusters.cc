@@ -20,13 +20,14 @@ namespace LaDa
   {
 
     //! \brief Creates all clusters of oreder \a _order up to \a _n neighbors.
-    boost::shared_ptr<t_ClusterClasses> create_clusters( Crystal::Lattice const &_lat, 
-                                                         size_t _order, size_t _neighbor, size_t _origin )
-    {
-      boost::shared_ptr<t_ClusterClasses> result(new t_ClusterClasses);
-      create_clusters(*result, _lat, _order, _neighbor, _origin);
-      return result;
-    }
+    boost::shared_ptr<t_ClusterClasses>
+      create_clusters( Crystal::Lattice const &_lat, size_t _order,
+                       size_t _neighbor, size_t _origin )
+      {
+        boost::shared_ptr<t_ClusterClasses> result(new t_ClusterClasses);
+        create_clusters(*result, _lat, _order, _neighbor, _origin);
+        return result;
+      }
 
     //! \brief Creates all clusters of oreder \a _order up to \a _n neighbors.
     void create_clusters( t_ClusterClasses &_out, Crystal::Lattice const &_lat,
