@@ -283,7 +283,7 @@ namespace LaDa
       (
         "print_poscar", 
         &details::print_poscar,
-        bp::arg("structure"),
+        ( bp::arg("structure"), bp::arg("species"), bp::arg("path") = "./"),
         "Prints out a poscar to file." 
       );
       boost::python::def
