@@ -21,7 +21,7 @@ libpython_lada_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS)
 libpython_lada_la_SOURCES = 
 libpython_lada_la_LDFLAGS = $(AM_LDFLAGS)
 libpython_lada_la_LIBADD = 
-pythonextensions = opt physics atat crystal svn
+pythonextensions = opt physics atat crystal svn ga
 if DOCE
   pythonextensions += ce
   libpython_lada_la_LIBADD += ../ce/libce.la 

@@ -47,7 +47,7 @@ if DOENUM
 endif
 SUBDIRS = $(PYTHONDIR) $(MPISUBDIR) atat physics opt minimizer crystal print $(CEDIR) $(VFFSUBDIR) \
 	  $(PESCANSUBDIR) $(LAPACKDIR) $(DARWINSUBDIR) $(SEPARABLEDIR) \
-	  factory $(MODELSDIR) $(POTENTIALSDIR) $(ENUMDIR)
+	  factory $(MODELSDIR) $(POTENTIALSDIR) $(ENUMDIR) ga
 revision.h: force
 	@cd $(top_srcdir); scripts/max_revision.pl
 force: ;

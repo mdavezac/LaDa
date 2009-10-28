@@ -389,8 +389,8 @@ AC_OUTPUT(Makefile atat/Makefile atat/python/Makefile physics/Makefile physics/p
           print/Makefile lapack/Makefile separable/Makefile ce/Makefile ce/python/Makefile
           python/Makefile separable/fixedlattice/Makefile factory/Makefile
           minimizer/Makefile minimizer/python/Makefile models/Makefile models/python/Makefile 
-          atomic_potentials/Makefile atomic_potentials/python/Makefile atomic_potentials/collapse/Makefile
-          enum/Makefile enum/python/Makefile )
+          atomic_potentials/Makefile atomic_potentials/python/Makefile 
+          atomic_potentials/collapse/Makefile enum/Makefile enum/python/Makefile  ga/Makefile )
 
 echo ""; echo ""
 echo "Will Compile following modules: "
