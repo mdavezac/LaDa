@@ -1,5 +1,5 @@
 #
-#  Version: $Id: read_structure.cc 1365 2009-10-27 23:22:56Z davezac $
+#  Version: $Id$
 #
 def add_mating(self, _mating):
   """ Adds a mating operation """
