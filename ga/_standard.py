@@ -61,7 +61,7 @@ def fill_darwin(darwin):
   
   # checks whether there is a popsize.
   if not hasattr(darwin, "rate"):
-    darwin.rate = float(len(darwin.offspring)) / float(darwin.popsize))
+    darwin.rate = float(len(darwin.offspring)) / float(darwin.popsize)
 
   # makes sure we have something to do.
   assert darwin.rate > float(0), "offspring or rate attributes required on input."

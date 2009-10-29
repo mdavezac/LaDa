@@ -13,8 +13,9 @@ class Individual:
     """ Initializes a bitstring individual randomly.
     """
     from random import randint
+    import numpy
 
-    self.genome = [ randint(0,1) for i in xrange(size) ]
+    self.genes = numpy.array([ randint(0,1) for i in xrange(size) ])
     self.evaluated = False
 
 
@@ -29,8 +30,8 @@ class Crossover:
     from copy import deepcopy
     
     result = deepcopy(a)
-    at = rate * len(result.genome) 
-    result.genome[at:] = b.genome[len(b.genome)-at:]
+    at = rate * len(result.genes) 
+    result.genes[at:] = b.genes[len(b.genes)-at:]
 
     return result
 
@@ -47,7 +48,7 @@ class Mutation:
     
     result = deepcopy(a)
 
-    for r in result.genome():
+    for r in result.genes():
       if uniform(0, 1)  < rate:
         if r: r = 0
         else: r = 1
@@ -67,7 +68,7 @@ class Mating:
 
     a, b = _selection(population=_population, size=2)
     indiv = None
-    if uniform(0,1) < self.rate: indiv = self.crossover( _population[a], _population[_b]
+    if uniform(0,1) < self.rate: indiv = self.crossover( _population[a], _population[_b])
     else: indiv = self.mutation(_population[a])
 
     indiv.evaluated = False

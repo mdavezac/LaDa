@@ -50,7 +50,7 @@ def run( darwin ):
     while darwin.taboo(indiv) and j < darwin.popsize:
       indiv = darwin.Individual()
       j += 1
-    if j == darwin.popsize: raise RuntimeError: "Could not create population.\n"
+    assert j != darwin.popsize, "Could not create population.\n"
     darwin.population.append(indiv)
 
   # evaluates population if need be.
@@ -76,7 +76,7 @@ def run( darwin ):
         indiv = darwin.mating( darwin.selection, darwin.population )
         j += 1
       darwin.offspring.append(indiv)
-    if j == darwin.popsize: raise RuntimeError: "Could not create offspring.\n"
+    assert j != darwin.popsize, "Could not create offspring.\n"
 
     # now evaluates population.
     darwin.evaluate()
@@ -87,9 +87,8 @@ def run( darwin ):
     darwin.offspring = []
 
   # final stuff before exiting.
-  try: getattr(darwin, "final")
-  except AttributeError: setattr(darwin, lambda self: print "done")
-  darwin.final()
+  if hasattr(darwin, "final"): darwin.final()
+  else: print "done"
   
 
 
