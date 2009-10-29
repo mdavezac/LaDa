@@ -18,8 +18,6 @@ namespace LaDa
 {
   namespace CE
   {
-
-    //! \brief Creates all clusters of oreder \a _order up to \a _n neighbors.
     boost::shared_ptr<t_ClusterClasses>
       create_clusters( Crystal::Lattice const &_lat, size_t _order,
                        size_t _neighbor, size_t _origin )
@@ -29,7 +27,15 @@ namespace LaDa
         return result;
       }
 
-    //! \brief Creates all clusters of oreder \a _order up to \a _n neighbors.
+    boost::shared_ptr<t_Clusters>
+      create_clusters(Crystal::Lattice const &_lat, Cluster const &_cluster, size_t _origin)
+      {
+        boost::shared_ptr<t_Clusters> result(new t_Clusters);
+        create_clusters(*result, _lat, _cluster, _origin);
+        return result;
+      }
+
+    
     void create_clusters( t_ClusterClasses &_out, Crystal::Lattice const &_lat,
                           size_t _order, size_t _neighbor, size_t _origin )
     {
@@ -151,6 +157,33 @@ namespace LaDa
         else i_class->push_back(cluster);
 
       } while(++iterator);
+    }
+
+
+    void create_clusters( t_Clusters &_out, Crystal::Lattice const &_lat,
+                          Cluster const &_cluster, size_t _origin )
+    {
+      LADA_ASSERT(_origin < _lat.sites.size(), "Site index out of range.\n");
+      atat::rVector3d const &origin = _lat.sites[_origin].pos;
+
+      if( _out.size() == 0 ) _out.push_back(_cluster);
+      else if( _out.end() == std::find(_out.begin(), _out.end(), _cluster) )
+        _out.push_back(_cluster); 
+
+      // Computes point group at lattice point.
+      std::vector<Crystal::SymmetryOperator> point_group;
+      foreach(Crystal::SymmetryOperator const &op, _lat.space_group)
+        if( Crystal::which_site(op(origin), !_lat.cell, _lat.sites) == _origin )
+          point_group.push_back(op);
+
+      std::vector<Crystal::SymmetryOperator> :: const_iterator i_op = point_group.begin();
+      std::vector<Crystal::SymmetryOperator> :: const_iterator const i_op_end = point_group.end();
+      for(; i_op != i_op_end; ++i_op )
+      {
+        Cluster other(_cluster); other.apply_symmetry(*i_op);
+        if( _out.end() == std::find(_out.begin(), _out.end(), other) )
+          _out.push_back(other); 
+      }
     }
   } // end of namespace CE
 } // namespace LaDa

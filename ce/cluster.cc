@@ -266,12 +266,26 @@ namespace LaDa
       }
     }
     
+    // == for atat::rVector3d
+    struct cmp
+    {
+      cmp(atat::rVector3d const &_c) : pos(_c) {}
+      cmp(cmp const &_c): pos(_c.pos) {}
+      bool operator()(atat::rVector3d const &_a) const
+      {
+        if( not Fuzzy::is_zero( pos[0] - _a[0] ) ) return false;
+        if( not Fuzzy::is_zero( pos[1] - _a[1] ) ) return false;
+        return  Fuzzy::is_zero( pos[2] - _a[2] );
+      }
+      atat::rVector3d const &pos;
+    };
+
     bool Cluster::operator==( Cluster const & _c ) const
     {
       if( vectors.size() != _c.vectors.size() ) return false;
 
       foreach( atat::rVector3d const &pos, _c.vectors )
-        if( vectors.end() == std::find(vectors.begin(), vectors.end(), pos) ) 
+        if( vectors.end() == std::find_if(vectors.begin(), vectors.end(), cmp(pos)) ) 
           return false;
       return true;
     }
