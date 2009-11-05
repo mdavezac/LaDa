@@ -90,7 +90,7 @@ namespace LaDa
                 types::t_real fig(1);
                 std::vector<atat::rVector3d> :: const_iterator i_vec = i_vec_begin;
                 atat::rVector3d const shift( i_first->pos - *i_center);
-                if( Crystal::which_site(shift, inv_cell, sites) == -1 ) continue;
+                if ( not is_int( (!_str.lattice->cell)*shift) ) continue;
                 for(; i_vec != i_vec_end; ++i_vec) // loop over cluster spins.
                 {
                   atat::rVector3d const site_pos(*i_vec + shift);
