@@ -7,7 +7,7 @@ class Fit():
   def __init__(self, clusters):
     """
       Clusters should be an array with the following form:
-        [ Cluster of sublattice 
+        [ centered on Sublattice 0, centered on Sublattice 1, ... ]
     """
     import copy
 
@@ -20,6 +20,7 @@ class Fit():
 
   def add_structure(structure):
     from lada.ce import find_pis
+    
     
 
 
