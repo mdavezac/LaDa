@@ -16,6 +16,7 @@
 
 #include <crystal/neighbors.h>
 #include <crystal/symmetry_operator.h>
+#include <crystal/which_site.h>
 #include <opt/types.h>
 #include <opt/fuzzy.h>
 #include <opt/atat.h>
@@ -30,76 +31,60 @@ namespace LaDa
   namespace CE 
   {
 
-    void Cluster :: apply_symmetry( Crystal::SymmetryOperator const &_op )
+    void MLCluster :: apply_symmetry( Crystal::SymmetryOperator const &_op )
     {
+      if( is_null ) return;
+      // finds new origin.
+      atat::rVector3d const transformed_pos(_op(lattice.sites[origin].pos)); 
+      LADA_ASSERT( which_site(transformed_pos, inv_cell, lattice.sites) != -1, 
+                   "Rotation is not of matrix.\n" );
+      origin = std:abs(which_site(transformed_pos, inv_cell, lattice.sites));
+
       if ( vectors.size() < 1 ) return;
-      std::vector<atat::rVector3d> :: iterator i_vec = vectors.begin();
-      std::vector<atat::rVector3d> :: iterator const i_last = vectors.end();
-      for(; i_vec != i_last; ++i_vec) *i_vec = _op(*i_vec);
 
-      if( Crystal::Structure::lattice == NULL ) return;
+      // finds new vectors and sites.
+      LADA_ASSERT(Crystal::Structure::lattice != NULL, "No lattice is set.\n");
+      Crystal::Lattice const &lattice = *Crystal::Structure::lattice;
 
-      i_vec = vectors.begin();
-      atat::rVector3d shift( (!Crystal::Structure::lattice->cell) * (*i_vec) );
-      shift(0) -= std::floor(shift(0)); if( Fuzzy::is_zero(shift(0)-1e0) ) shift(0) = 0e0;
-      shift(1) -= std::floor(shift(1)); if( Fuzzy::is_zero(shift(1)-1e0) ) shift(1) = 0e0;
-      shift(2) -= std::floor(shift(2)); if( Fuzzy::is_zero(shift(2)-1e0) ) shift(2) = 0e0;
-      shift = Crystal::Structure::lattice->cell * shift - (*i_vec);
-      if( Fuzzy::is_zero(atat::norm2(shift)) ) return;
-      for(; i_vec != i_last; ++i_vec ) *i_vec -= shift; 
-    }
+      LADA_ASSERT(origin < lattice.sites.size(), "Index out of range.\n");
+      LADA_ASSERT(vectors.size() == sites.size(), "Incoherent number of sites and vectors.\n");
 
-    bool Cluster :: equivalent_mod_cell( Cluster &_cluster, const atat::rMatrix3d &_icell) 
-    {
-      if ( vectors.size() != _cluster.vectors.size() ) return false;
-      if ( vectors.size() == 0 ) return true;
-      
-      std::vector<atat::rVector3d> :: iterator i_vec = vectors.begin();
-      std::vector<atat::rVector3d> :: iterator i_vec_last = vectors.end();
-      for (; i_vec != i_vec_last; ++i_vec)
+      atat::rMatrix3d const inv_cell( !lattice.cell );
+
+      t_Positions :: iterator i_vec = vectors.begin();
+      t_Positions :: iterator const i_last = vectors.end();
+      t_Sites :: iterator i_site = sites.begin();
+      for(; i_vec != i_last; ++i_vec, ++i_site)
       {
-        if ( not atat::equivalent_mod_cell( *_cluster.vectors.begin(), *i_vec, _icell) ) continue;
-      
-        atat::rVector3d shift = (*i_vec) - *(_cluster.vectors.begin());
-        std::vector<atat::rVector3d> :: iterator is_found;
-        
-        // search for _cluster  vector such that|| (*i_vec-shift) - *i_equiv ||  > zero_tolerance
-        std::vector<atat::rVector3d> :: iterator i2_vec = vectors.begin();
-        for(; i2_vec != i_vec_last; ++i2_vec)
-        {
-          is_found  = std::find_if( _cluster.vectors.begin(),
-                                    _cluster.vectors.end(),
-                                    atat::norm_compare( *i2_vec - shift ) );
-      
-          if ( is_found == _cluster.vectors.end() ) break;
-        }
-                                      
-        // if all match, return true
-        if ( i2_vec == i_vec_last ) return true; 
-        
-      }
-      return false;
-    }
-
-    void Cluster :: print_out (  std::ostream &stream)  const
-    {
-      stream << std::fixed << std::setprecision(5) << std::setw(9);
-      stream << "Cluster: " << eci << "\n";
-      
-      if (vectors.size() == 0 )
-      {
-        stream << " No position" << std::endl;
-        return;
+        *i_vec = _op(*i_vec);
+        *i_site = which_site( *i_vec, inv_cell, lattice.sites );
       }
 
-      std::vector<atat::rVector3d> :: const_iterator i_vec = vectors.begin();
-      std::vector<atat::rVector3d> :: const_iterator i_last = vectors.end();
+      // shifts back to origin if necessary.
+      if( not Fuzzy::is_zero(atat::norm2(transformed_pos)) ) 
+        for(i_vec = vectors.begin(); i_vec != i_last; ++i_vec ) *i_vec -= transformed_pos; 
+    }
+
+
+    std::ostream& operator<<( std::ostream &_stream,  MLCluster const &_cls )
+    {
+      _stream << std::fixed << std::setprecision(5) << std::setw(9);
+      _stream << "Cluster@" << _clsorigin;
       
-      for ( ; i_vec != i_last; ++i_vec)
-        stream << " " << ( *i_vec )(0) 
-               << " " << ( *i_vec )(1) 
-               << " " << ( *i_vec )(2) 
-               << "\n";
+      if (_cls.is_null) return _stream << " J0\n";
+      if (_cls.vectors.size() == 0 ) return << " J1\n";
+
+      LADA_ASSERT(_cls.vectors.size() == _cls.sites.size(), "Incoherent sites and vectors.\n");
+      t_Sites :: const_iterator i_site = _cls.sites.begin();
+      t_Positions :: const_iterator i_vec = _cls.vectors.begin();
+      t_Positions :: const_iterator const i_last = _cls.vectors.end();
+      for ( ; i_vec != i_last; ++i_vec, ++i_site)
+        _stream << " @" << *i_site
+                << " " << ( *i_vec )(0) 
+                << " " << ( *i_vec )(1) 
+                << " " << ( *i_vec )(2) 
+                << "\n";
+      return _stream;
     }
 
     bool Cluster :: Load( const TiXmlElement &_node )
@@ -107,14 +92,24 @@ namespace LaDa
       const TiXmlElement *child;
       types::t_real d; atat::rVector3d vec;
 
-      _node.Attribute("eci", &eci);
       vectors.clear();
+      sites.clear();
+
+      is_null = not _node.Attribute("site"); 
+      if( is_null )  return true;
+
+      origin = boost::lexical_cast<size_t>( child->Attribute("site") );
       child = _node.FirstChildElement( "spin" );
       for ( ; child; child=child->NextSiblingElement( "spin" ) )
       {
-        d = 1.0 ; child->Attribute("x", &d); vec(0) = d;
-        d = 1.0 ; child->Attribute("y", &d); vec(1) = d;
-        d = 1.0 ; child->Attribute("z", &d); vec(2) = d;
+        LADA_ASSERT( child->Attribute("x"), "Could not find x attribute.\n" );
+        LADA_ASSERT( child->Attribute("y"), "Could not find y attribute.\n" );
+        LADA_ASSERT( child->Attribute("z"), "Could not find z attribute.\n" );
+        LADA_ASSERT( child->Attribute("site"), "Could not find site attribute.\n" );
+        vec(0) = boost::lexical_cast<types::t_real>(child->Attribute("x"));
+        vec(1) = boost::lexical_cast<types::t_real>(child->Attribute("y"));
+        vec(2) = boost::lexical_cast<types::t_real>(child->Attribute("z"));
+        sites.push_back( boost::lexical_cast<size_t>( child->Attribute("site") ) );
         vectors.push_back(vec);
       }
 

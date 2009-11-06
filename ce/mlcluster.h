@@ -60,15 +60,15 @@ namespace LaDa
         t_Sites sites;
         //! Vectors linking sites which interact through this cluster.
         t_Positions vectors;
-
-        //! Interaction energy of the cluster.
-        types::t_real eci;
+        //! is null cluster.
+        bool is_null;
 
         //! Constructor
-        Cluster () : eci(0e0), origin(0) {};
+        Cluster () : origin(0), is_null(true) {};
         //! Copy Constructor
         Cluster   (const Cluster &_c)
-                : origin(_c.origins), sites(_c.sites), vectors( _c.vectors ), eci( _c.eci) {}
+                : origin(_c.origins), sites(_c.sites), 
+                  vectors(_c.vectors ), eci(_c.eci), is_null(_c.is_null) {}
         //! Destructor
         ~Cluster () {}
 
