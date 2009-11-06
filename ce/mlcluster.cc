@@ -9,280 +9,206 @@
 #include <string>
 #include <iomanip>
 #include <algorithm>
-#include <functional>
-#include <boost/filesystem/operations.hpp>
-#include <boost/lambda/bind.hpp>
-#include <boost/regex.hpp>
 
-#include <crystal/neighbors.h>
-#include <crystal/symmetry_operator.h>
+#include <boost/lexical_cast.hpp>
+
 #include <crystal/which_site.h>
 #include <opt/types.h>
 #include <opt/fuzzy.h>
-#include <opt/atat.h>
-#include <atat/findsym.h>
-#include <atat/xtalutil.h>
 
-#include "cluster.h"
+#include "mlcluster.h"
 
 
 namespace LaDa
 {
   namespace CE 
   {
+    size_t size_t_cast( types::t_int i ) 
+    { 
+      LADA_ASSERT( i < 0, "Symmetry operation is not of lattice.\n" );
+      return size_t(std::abs(i));
+    }
 
     void MLCluster :: apply_symmetry( Crystal::SymmetryOperator const &_op )
     {
-      if( is_null ) return;
-      // finds new origin.
-      atat::rVector3d const transformed_pos(_op(lattice.sites[origin].pos)); 
-      LADA_ASSERT( which_site(transformed_pos, inv_cell, lattice.sites) != -1, 
-                   "Rotation is not of matrix.\n" );
-      origin = std:abs(which_site(transformed_pos, inv_cell, lattice.sites));
-
-      if ( vectors.size() < 1 ) return;
-
-      // finds new vectors and sites.
       LADA_ASSERT(Crystal::Structure::lattice != NULL, "No lattice is set.\n");
       Crystal::Lattice const &lattice = *Crystal::Structure::lattice;
-
-      LADA_ASSERT(origin < lattice.sites.size(), "Index out of range.\n");
-      LADA_ASSERT(vectors.size() == sites.size(), "Incoherent number of sites and vectors.\n");
-
       atat::rMatrix3d const inv_cell( !lattice.cell );
 
-      t_Positions :: iterator i_vec = vectors.begin();
-      t_Positions :: iterator const i_last = vectors.end();
-      t_Sites :: iterator i_site = sites.begin();
-      for(; i_vec != i_last; ++i_vec, ++i_site)
-      {
-        *i_vec = _op(*i_vec);
-        *i_site = which_site( *i_vec, inv_cell, lattice.sites );
-      }
+      // finds new origin.
+      atat::rVector3d const transformed_pos(_op(origin.pos)); 
+      origin.site = size_t_cast(which_site(transformed_pos, inv_cell, lattice.sites));
+      origin.pos = lattice.sites[origin.site].pos;
 
-      // shifts back to origin if necessary.
-      if( not Fuzzy::is_zero(atat::norm2(transformed_pos)) ) 
-        for(i_vec = vectors.begin(); i_vec != i_last; ++i_vec ) *i_vec -= transformed_pos; 
+      if ( size() == 0 ) return;
+
+      t_Spins :: iterator i_spin = begin();
+      t_Spins :: iterator const i_last = end();
+      for(; i_spin != i_last; ++i_spin)
+      {
+        i_spin->pos = _op(i_spin->pos);
+        i_spin->site = size_t_cast(which_site(i_spin->pos+origin.pos, inv_cell, lattice.sites));
+      }
     }
 
 
+    bool MLCluster :: Load( const TiXmlElement &_node )
+    {
+
+      clear();
+      LADA_ASSERT( _node.Attribute("site"), "Missing site attribute.\n" );
+      origin.site = boost::lexical_cast<size_t>(_node.Attribute("site"));
+      LADA_ASSERT( origin.site < Crystal::Structure::lattice->sites.size(), 
+                   "Site index out-of-range.\n" );
+      origin.pos = Crystal::Structure::lattice->sites[origin.site].pos;
+
+      const TiXmlElement *child = _node.FirstChildElement( "spin" );
+      for ( ; child; child=child->NextSiblingElement( "spin" ) )
+      {
+        LADA_ASSERT( child->Attribute("x"), "Missing x attribute.\n" );
+        LADA_ASSERT( child->Attribute("y"), "Missing y attribute.\n" );
+        LADA_ASSERT( child->Attribute("z"), "Missing z attribute.\n" );
+        LADA_ASSERT( child->Attribute("site"), "Could not find site attribute.\n" );
+        Spin const spin = {
+                            boost::lexical_cast<size_t>( child->Attribute("site") ),
+                            atat::rVector3d
+                            (
+                              boost::lexical_cast<types::t_real>( child->Attribute("x") ),
+                              boost::lexical_cast<types::t_real>( child->Attribute("y") ),
+                              boost::lexical_cast<types::t_real>( child->Attribute("z") ) 
+                            )
+                          };
+        push_back( spin );
+      }
+
+      return true;
+    }
+
+    bool operator==(MLCluster::Spin const &_a, MLCluster::Spin const &_b) 
+    {
+      if( _a.site != _b.site ) return false;
+      if( not Fuzzy::is_zero(_a.pos(0)-_b.pos(0)) ) return false;
+      if( not Fuzzy::is_zero(_a.pos(1)-_b.pos(1)) ) return false;
+      return  Fuzzy::is_zero(_a.pos(2)-_b.pos(2));
+    }
+    
+    bool MLCluster::operator==( MLCluster const & _c ) const
+    {
+      if( origin != _c.origin ) return false;
+      LADA_ASSERT( Fuzzy::is_zero( atat::norm2(origin.pos-_c.origin.pos) ), 
+                   "Inconsistent origin positions.\n" )
+      if( size() != _c.size() ) return false;
+
+      t_Spins :: const_iterator i_spin = _c.begin();
+      t_Spins :: const_iterator const i_spin_end = _c.end();
+      for(; i_spin != i_spin_end; ++i_spin)
+        if( end() == std::find(begin(), end(), *i_spin) )
+          return false;
+      return true;
+    }
+
+    types::t_real MLCluster::operator()( Crystal::Structure const &_str, 
+                                         std::vector< std::vector<size_t> > const &_map,
+                                         Crystal::t_SmithTransform const &_transform ) const
+    {
+      types::t_real result(0);
+      Crystal::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
+      Crystal::Structure::t_Atoms::const_iterator const i_atom_end = _str.atoms.end();
+      for(; i_atom != i_atom_end; ++i_atom)
+        result += operator()(*i_atom, _str, _map, _transform);
+      return result;
+    }
+
+    // Finds spin for a given position.
+    types::t_real find_spin( atat::rVector3d const &_vec, 
+                             size_t _site, Crystal::Structure const &_str, 
+                             std::vector< std::vector<size_t> > const &_map,
+                             Crystal::t_SmithTransform const &_transform )
+    {
+      LADA_ASSERT
+      (
+        _site == Crystal::which_site(_vec, !_str.lattice->cell, _str.lattice->sites),
+        "Could not find corresponding spin.\n"
+      );
+      size_t const smith_index = Crystal::get_linear_smith_index(_transform, _vec);
+      LADA_ASSERT
+      (
+        smith_index < _map[_site].size(),
+        "Atomic map and smith index are not coherent.\n"
+      );
+      LADA_ASSERT
+      (
+        _map[_site][smith_index] < _str.atoms.size(),
+        "Atomic map, smith index, and structure are not coherent.\n"
+      );
+      return _str.atoms[ _map[_site][smith_index] ].type;
+    }
+
+    types::t_real MLCluster::operator()( Crystal::Structure::t_Atom const &_atom,
+                                         Crystal::Structure const &_str, 
+                                         std::vector< std::vector<size_t> > const &_map,
+                                         Crystal::t_SmithTransform const &_transform ) const
+    {
+      LADA_ASSERT(_str.lattice, "Lattice not set.\n");
+      LADA_ASSERT(_map.size() == _str.lattice->sites.size(),
+                  "Atomic map and lattice are not coherent.\n");
+      Crystal::Lattice const &lattice = *_str.lattice;
+      types::t_real result(0);
+      if( _atom.site == origin.site ) // atom is  at cluster origin.
+      {
+        result = _atom.type;
+        t_Spins::const_iterator i_spin = begin();
+        t_Spins::const_iterator const i_spin_end = end();
+        for(; i_spin != i_spin_end; ++i_spin)
+        {
+          LADA_ASSERT(i_spin->site < lattice.sites.size(), "Index out-of-range.\n");
+          atat::rVector3d const vec(_atom.pos+i_spin->pos-lattice.sites[i_spin->site].pos);
+          result *= find_spin(vec, i_spin->site, _str, _map, _transform);
+        }
+      } 
+
+      // atom may be at cluster branch.
+      t_Spins::const_iterator i_orig = begin();
+      t_Spins::const_iterator const i_orig_end = end();
+      for(; i_orig != i_orig_end; ++i_orig)
+      {
+        LADA_ASSERT(i_orig->site < lattice.sites.size(), "Index out-of-range.\n")
+        if( _atom.site != i_orig->site ) continue;
+
+        atat::rVector3d const orig(_atom.pos-i_orig->pos-lattice.sites[origin.site].pos);
+        types::t_real intermediate( find_spin( orig, origin.site, _str, _map, _transform) );
+        t_Spins::const_iterator i_spin = begin();
+        t_Spins::const_iterator const i_spin_end = end();
+        for(; i_spin != i_spin_end; ++i_spin)
+        {
+        
+          LADA_ASSERT(i_spin->site < lattice.sites.size(), "Index out-of-range.\n")
+          atat::rVector3d const vec(orig+i_spin->pos-i_spin->pos-lattice.sites[i_spin->site].pos);
+          intermediate *= find_spin(vec, i_spin->site, _str, _map, _transform);
+        }
+        result += intermediate;
+      }
+
+      return result;
+    }
+
+    std::ostream& operator<<( std::ostream &_stream,  MLCluster::Spin const &_spin )
+    {
+      return _stream << "@" << _spin.site
+                     << " " << _spin.pos(0) << " " << _spin.pos(1) << " " << _spin.pos(2);
+    }
+    
     std::ostream& operator<<( std::ostream &_stream,  MLCluster const &_cls )
     {
       _stream << std::fixed << std::setprecision(5) << std::setw(9);
-      _stream << "Cluster@" << _clsorigin;
+      _stream << "Cluster@" << _cls.origin.site;
       
-      if (_cls.is_null) return _stream << " J0\n";
-      if (_cls.vectors.size() == 0 ) return << " J1\n";
+      if (_cls.size() == 0 ) return _stream << " J1\n";
 
-      LADA_ASSERT(_cls.vectors.size() == _cls.sites.size(), "Incoherent sites and vectors.\n");
-      t_Sites :: const_iterator i_site = _cls.sites.begin();
-      t_Positions :: const_iterator i_vec = _cls.vectors.begin();
-      t_Positions :: const_iterator const i_last = _cls.vectors.end();
-      for ( ; i_vec != i_last; ++i_vec, ++i_site)
-        _stream << " @" << *i_site
-                << " " << ( *i_vec )(0) 
-                << " " << ( *i_vec )(1) 
-                << " " << ( *i_vec )(2) 
-                << "\n";
+      MLCluster :: t_Spins :: const_iterator i_spin = _cls.begin();
+      MLCluster :: t_Spins :: const_iterator const i_last = _cls.end();
+      for ( ; i_spin != i_last; ++i_spin) _stream << " " << *i_spin << "\n";
       return _stream;
-    }
-
-    bool Cluster :: Load( const TiXmlElement &_node )
-    {
-      const TiXmlElement *child;
-      types::t_real d; atat::rVector3d vec;
-
-      vectors.clear();
-      sites.clear();
-
-      is_null = not _node.Attribute("site"); 
-      if( is_null )  return true;
-
-      origin = boost::lexical_cast<size_t>( child->Attribute("site") );
-      child = _node.FirstChildElement( "spin" );
-      for ( ; child; child=child->NextSiblingElement( "spin" ) )
-      {
-        LADA_ASSERT( child->Attribute("x"), "Could not find x attribute.\n" );
-        LADA_ASSERT( child->Attribute("y"), "Could not find y attribute.\n" );
-        LADA_ASSERT( child->Attribute("z"), "Could not find z attribute.\n" );
-        LADA_ASSERT( child->Attribute("site"), "Could not find site attribute.\n" );
-        vec(0) = boost::lexical_cast<types::t_real>(child->Attribute("x"));
-        vec(1) = boost::lexical_cast<types::t_real>(child->Attribute("y"));
-        vec(2) = boost::lexical_cast<types::t_real>(child->Attribute("z"));
-        sites.push_back( boost::lexical_cast<size_t>( child->Attribute("site") ) );
-        vectors.push_back(vec);
-      }
-
-      return true;
-    }
-
-    // returns true if second position in cluster is equal to pos.
-    struct CompPairs
-    {
-      atat::rVector3d const pos;
-      CompPairs( atat::rVector3d const &_a ) : pos(_a) {}
-      CompPairs( CompPairs const &_a ) : pos(_a.pos) {}
-      bool operator()(Cluster const& _a) const
-        { return Fuzzy::is_zero(atat::norm2(_a.vectors[1]-pos)); }
-    };
-
-   
-    void read_clusters( const Crystal::Lattice &_lat, 
-                        const boost::filesystem::path &_path, 
-                        std::vector< std::vector< Cluster > > &_out,
-                        const std::string &_genes )
-    {
-      __DEBUGTRYBEGIN
-
-      namespace fs = boost::filesystem;  
-      __DOASSERT( not fs::exists( _path ), "Path " << _path << " does not exits.\n" )
-      __DOASSERT( not( fs::is_regular( _path ) or fs::is_symlink( _path ) ),
-                  _path << " is neither a regulare file nor a system link.\n" )
-      std::ifstream file( _path.string().c_str(), std::ifstream::in );
-      std::string line;
-
-      Cluster cluster;
-      size_t i(0);
-      while( read_cluster( _lat, file, cluster ) )
-      {
-        // This is a hack to avoid inputing Zhe's tetragonal pair terms.
-        if( cluster.size() == 2 ) continue;
-        if( not _genes.empty() )
-        {
-          __DOASSERT( i >= _genes.size(), "Gene size and jtypes are inconsistent.\n" )
-          if( _genes[i] == '0' ) { ++i; continue; }
-        }
-        ++i;
-        // creates a new class from cluster.
-        _out.push_back( std::vector< Cluster >( 1, cluster ) );
-        // adds symmetrically equivalent clusters.
-        add_equivalent_clusters( _lat, _out.back() );
-      }
-      if( not _genes.empty() )
-        __DOASSERT( i != _genes.size(), "Gene size and jtypes are inconsistent.\n" )
-
-      __DEBUGTRYEND(,"Could not read clusters from input.\n" )
-    }
-    bool read_cluster( const Crystal::Lattice &_lat, 
-                       std::istream & _sstr,
-                       Cluster &_out )
-    {
-      __DEBUGTRYBEGIN
-      std::string line;
-      // bypass comments until a name is found.
-      const boost::regex comment("^(\\s+)?#");
-      boost::match_results<std::string::const_iterator> what;
-
-      do
-      { // check for comment.
-        do { std::getline( _sstr, line ); }
-        while(     boost::regex_search( line, what, comment )
-               and ( not _sstr.eof() ) );
-
-        if( _sstr.eof() ) return false;
-      } while( not (    line.find( 'B' ) != std::string::npos 
-                     or line.find( 'J' ) != std::string::npos  ) );
-
-      // now read cluster.
-      // second line should contain order and multiplicity.
-      { // check for comment.
-        std::getline( _sstr, line );
-        while(     boost::regex_search( line, what, comment )
-               and ( not _sstr.eof() ) )
-          std::getline( _sstr, line ); 
-        if( _sstr.eof() ) return false;
-      }
-      types::t_unsigned order;
-      types::t_unsigned multiplicity;
-      { // should contain the order and the multiplicity.
-        std::istringstream sstr( line ); 
-        sstr >> order >> multiplicity;
-        __DOASSERT( sstr.bad(), "Error while reading figure.\n" );
-      }
-
-      // creates cluster.
-      Cluster cluster;
-      for(; order; --order)
-      {
-        { // check for comment.
-          std::getline( _sstr, line ); 
-          while(     boost::regex_search( line, what, comment )
-                 and ( not _sstr.eof() ) )
-            std::getline( _sstr, line ); 
-          __DOASSERT( _sstr.eof(), "Unexpected end of file.\n" )
-        }
-        __DOASSERT( _sstr.eof(),    "Unexpected end-of-file.\n" )
-        std::istringstream sstr(line);
-        types::t_real x, y, z;
-        sstr >> x >> y >> z;
-        cluster.vectors.push_back( atat::rVector3d( x * 5e-1, y * 5e-1, z * 5e-1 ) );
-      }
-      _out = cluster;
-      return true;
-      __DEBUGTRYEND(,"Could not read clusters from input.\n" )
-    }
-
-    void  add_equivalent_clusters( const Crystal::Lattice &_lat, 
-                                   std::vector< Cluster > &_out )
-    {
-      typedef std::vector< Cluster > t_Clusters;
-      atat::rMatrix3d const &cell    = _lat.cell;
-      atat::rMatrix3d const inv_cell = !cell;
-      // new clusters will be added directly to _out
-      t_Clusters old_cluster_list = _out;
-    
-      t_Clusters :: iterator i_old_list_last = old_cluster_list.end();
-      t_Clusters :: iterator i_old_list = old_cluster_list.begin();
-      for (; i_old_list != i_old_list_last ; ++i_old_list )
-      {
-        typedef std::vector<Crystal::SymmetryOperator> :: const_iterator t_cit;
-        t_cit i_op = _lat.space_group.begin();
-        t_cit const i_op_end = _lat.space_group.end();
-        for (; i_op != i_op_end; ++i_op )
-        {
-          if( not Fuzzy::is_zero(atat::norm2(i_op->trans)) ) continue;
-          // initialize a new cluster to object pointed by i_old_list
-          Cluster transfo_cluster( *i_old_list );
-          
-          // transforms cluster according to symmetry group
-          transfo_cluster.apply_symmetry(*i_op);
-    
-          // checks wether transformed cluster is in Lamarck::clusters
-          t_Clusters :: iterator i_cluster  = _out.begin();
-          t_Clusters :: iterator i_last = _out.end();
-          for ( ; i_cluster != i_last ; ++i_cluster)
-            if ( transfo_cluster.equivalent_mod_cell(*i_cluster, inv_cell) ) 
-              break;
-    
-          // if it isn't, adds cluster to clusters
-          if (i_cluster != i_last ) continue;
-          _out.push_back( transfo_cluster );
-        }
-      }
-    }
-    
-    // == for atat::rVector3d
-    struct cmp
-    {
-      cmp(atat::rVector3d const &_c) : pos(_c) {}
-      cmp(cmp const &_c): pos(_c.pos) {}
-      bool operator()(atat::rVector3d const &_a) const
-      {
-        if( not Fuzzy::is_zero( pos[0] - _a[0] ) ) return false;
-        if( not Fuzzy::is_zero( pos[1] - _a[1] ) ) return false;
-        return  Fuzzy::is_zero( pos[2] - _a[2] );
-      }
-      atat::rVector3d const &pos;
-    };
-
-    bool Cluster::operator==( Cluster const & _c ) const
-    {
-      if( vectors.size() != _c.vectors.size() ) return false;
-
-      foreach( atat::rVector3d const &pos, _c.vectors )
-        if( vectors.end() == std::find_if(vectors.begin(), vectors.end(), cmp(pos)) ) 
-          return false;
-      return true;
     }
   } // namespace CE
 }

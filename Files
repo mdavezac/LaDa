@@ -148,10 +148,10 @@ crystal_python_cc = structure.cc atom.cc lattice.cc read_structure.cc \
                     symmetry_operator.cc which_site.cc
 
 ce_cc     = cluster.cc harmonic.cc  polynome.cc regularization.cc fit.cc create_pairs.cc \
-            create_clusters.cc
+            create_clusters.cc mlcluster.cc mlclusters.cc
 ce_h      = cluster.h  constituent_strain.h  functional_builder.h  harmonic.h \
             polynome.h regularization.h fit.h drautz_diaz_ortiz.h find_pis.h \
-            create_pairs.h create_clusters.cc
+            create_pairs.h create_clusters.h mlcluster.h mlclusters.h
 ce_impl_h = constituent_strain.impl.h  functional_builder.impl.h  harmonic.impl.h 
 ce_doc = $(ce_h) $(ce_cc) 
 ce_python_h = ce.hpp ce.impl.hpp clusters.hpp create_pairs.hpp find_pis.hpp create_clusters.hpp

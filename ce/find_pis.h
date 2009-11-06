@@ -19,12 +19,48 @@
 #include <crystal/smith.h>
 
 
+
 #include "cluster.h"
+#include "mlclusters.h"
 
 namespace LaDa
 {
   namespace CE
   {
+    //! \brief Computes the pis of a structure.
+    //! \param[in]  _cls classes of equivalent clusters
+    //! \param[in]  _str structure for which to compute the pis.
+    //! \param[out] _out Pis on output.
+    //! \param[in]  _site sublattice for which to compute the pis.
+    //!                   If negative or larger than the number of sublattices,
+    //!                   clusters will be computed for all sublattices.
+    template<class T_VECTOR >
+      void find_pis( t_MLClusterClasses const &_cls,
+                     Crystal::Structure const &_str, 
+                     T_VECTOR &_out ) 
+      {
+        LADA_DOASSERT( _str.lattice != NULL, "lattice not set.\n" );
+        LADA_DOASSERT( _str.lattice->sites.size() != 0, "lattice does not contain sites.\n" );
+
+        // Gets atomic smith map of the structure.
+        std::vector< std::vector<size_t> > atomic_map;
+        Crystal::get_smith_map( _str, atomic_map );
+        bool const dosite( _str.lattice->sites.size() != 1 );
+        size_t const Npersite( _str.atoms.size() / _str.lattice->sites.size() );
+        atat::rMatrix3d const inv_cell( !_str.lattice->cell );
+        Crystal::Lattice::t_Sites const &sites(_str.lattice->sites);
+        Crystal::t_SmithTransform const
+          transform( Crystal::get_smith_transform(_str.lattice->cell, _str.cell) );
+
+        if( _out.size() != _cls.size() ) _out.resize( _cls.size() );
+        typename T_VECTOR::iterator i_pi = _out.begin();
+        t_MLClusterClasses::const_iterator i_class = _cls.begin();
+        t_MLClusterClasses::const_iterator const i_class_end = _cls.end();
+        for(; i_class != i_class_end; ++i_class, ++i_pi) // loop over clusters classes.
+          *i_pi = (*i_class)(_str, atomic_map, transform);
+      }
+
+
     //! \brief Computes the pis of a structure.
     //! \param[in]  _cls classes of equivalent clusters
     //! \param[in]  _str structure for which to compute the pis.

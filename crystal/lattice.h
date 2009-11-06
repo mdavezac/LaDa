@@ -79,7 +79,9 @@ namespace LaDa
         //! The collection of sites.
         t_Sites sites;
         //! The space-group operations of the lattice.
-        std::vector<SymmetryOperator> space_group;
+        typedef std::vector<SymmetryOperator> t_SpaceGroup;
+        //! The space-group operations of the lattice.
+        t_SpaceGroup space_group;
         //! The scale of the cartesian coordinates.
         types::t_real scale;
 
