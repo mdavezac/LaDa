@@ -12,6 +12,8 @@
 #include "create_pairs.hpp"
 #include "create_clusters.hpp"
 #include "find_pis.hpp"
+#include "mlcluster.hpp"
+#include "mlclusters.hpp"
 
 BOOST_PYTHON_MODULE(ce)
 {
@@ -20,4 +22,5 @@ BOOST_PYTHON_MODULE(ce)
   LaDa::Python::expose_create_pairs();
   LaDa::Python::expose_create_clusters();
   LaDa::Python::expose_find_pis();
+  LaDa::Python::expose_mlcluster();
 }

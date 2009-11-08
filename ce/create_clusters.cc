@@ -6,6 +6,7 @@
 #endif
 
 #include <algorithm>
+#include <iterator>
 
 #include <crystal/which_site.h>
 #include <crystal/neighbors.h>
@@ -18,53 +19,41 @@ namespace LaDa
 {
   namespace CE
   {
-    boost::shared_ptr<t_ClusterClasses>
+    boost::shared_ptr<t_MLClusterClasses>
       create_clusters( Crystal::Lattice const &_lat, size_t _order,
                        size_t _neighbor, size_t _origin )
       {
-        boost::shared_ptr<t_ClusterClasses> result(new t_ClusterClasses);
+        boost::shared_ptr<t_MLClusterClasses> result(new t_MLClusterClasses);
         create_clusters(*result, _lat, _order, _neighbor, _origin);
         return result;
       }
 
-    boost::shared_ptr<t_Clusters>
-      create_clusters(Crystal::Lattice const &_lat, Cluster const &_cluster, size_t _origin)
-      {
-        boost::shared_ptr<t_Clusters> result(new t_Clusters);
-        create_clusters(*result, _lat, _cluster, _origin);
-        return result;
-      }
-
-    
-    void create_clusters( t_ClusterClasses &_out, Crystal::Lattice const &_lat,
+    void create_clusters( t_MLClusterClasses &_out, Crystal::Lattice const &_lat,
                           size_t _order, size_t _neighbor, size_t _origin )
     {
+      _out.clear();
+      // Creates a class of clusters.
+      MLClusters clusters; 
+      clusters.eci = 0e0;
+      if( _order == 1 )
+      {
+        _out.push_back( clusters );
+        return;
+      }
+      
+      LADA_ASSERT(_origin < _lat.sites.size(), "Site index out of range.\n");
+      // Creates a typical cluster.
+      CE::MLCluster cluster; 
+      cluster.origin.site = _origin;
+      cluster.origin.pos = _lat.sites[_origin].pos;
       if( _order < 2 ) 
       {
-        CE::Cluster cls; 
-        cls.eci = 0e0;
-        _out.push_back( t_Clusters(1, cls) );
-        if( _order == 1 ) cls.vectors.push_back( atat::rVector3d(0,0,0) );
+        clusters.push_back(cluster);
         return;
       };
 
-      LADA_ASSERT(_origin < _lat.sites.size(), "Site index out of range.\n");
-      atat::rVector3d const &origin = _lat.sites[_origin].pos;
-
-
-      if( _neighbor == 0 ) return;
-
-      // Computes point group at lattice point.
-      std::vector<Crystal::SymmetryOperator> point_group;
-      foreach(Crystal::SymmetryOperator const &op, _lat.space_group)
-        if( Crystal::which_site(op(origin), !_lat.cell, _lat.sites) == _origin )
-          point_group.push_back(op);
-          
-      // Creates a typical cluster.
-      Cluster cluster;
-      cluster.vectors.resize(_order);
-      cluster.vectors[0] = atat::rVector3d(0,0,0);
-      cluster.eci = 0e0;
+      LADA_ASSERT( _neighbor == 0, "Incoherent arguments.\n");
+      cluster.resize(_order-1);
 
       // gets all neighbors.
       size_t const N(_out.size()+_neighbor);
@@ -85,10 +74,10 @@ namespace LaDa
         case 11: size_try = 200; break;
       };
       
-      std::vector<atat::rVector3d> neighbors;
+      std::vector<Crystal::Neighbor> neighbors;
       do
       { // creates vector of neighbors
-        Crystal::Neighbors neighbors_(size_try, origin);
+        Crystal::Neighbors neighbors_(size_try, cluster.origin.pos);
         Crystal::Neighbors::const_iterator i_first = neighbors_.begin(_lat);
         Crystal::Neighbors::const_iterator i_begin = i_first;
         Crystal::Neighbors::const_iterator const i_end = neighbors_.end();
@@ -96,15 +85,16 @@ namespace LaDa
         types::t_real current_norm(0);
         for(; i_first != i_end; ++i_first, ++n)
         {
+          if( _lat.sites[i_first->index].type.size() < 2 ) continue;
           if( Fuzzy::is_zero(current_norm - i_first->distance) ) continue;
           if( s == _neighbor ) break;
           current_norm = i_first->distance;
           ++s;
         }
-        if( s != _neighbor ) continue;
+        if( s != _neighbor ) { size_try << 1; continue; } // did not find all neighbors.
+
         neighbors.reserve(n);
-        for(; i_begin != i_first; ++i_begin )
-          neighbors.push_back(i_begin->pos);
+        std::copy(i_begin, i_first, std::back_inserter(neighbors));
         break;
       }
       while(true);
@@ -127,63 +117,28 @@ namespace LaDa
         if( do_iterate ) continue;
 
         // creates cluster.
-        for(size_t i(1); i < _order; ++i)
-          cluster.vectors[i] = neighbors[iterator.access(i-1)]; 
-
-        // now checks whether it should be part of a cluster class somewhere.
-        std::vector<Crystal::SymmetryOperator> :: const_iterator i_op = point_group.begin();       
-        std::vector<Crystal::SymmetryOperator> :: const_iterator const i_op_end = point_group.end();       
-        t_ClusterClasses::iterator i_class = _out.begin();
-        t_ClusterClasses::iterator const i_class_end = _out.end();
-        for(; i_op != i_op_end; ++i_op );
+        for(size_t i(0); i < _order-1; ++i)
         {
-          Cluster transformed( cluster ); transformed.apply_symmetry( *i_op ); 
-
-          for(i_class = _out.begin(); i_class != i_class_end; ++i_class )
-          {
-            if( i_class->size() == 0 ) break;
-            if( i_class->front().size() != _order ) continue;
-
-            if( i_class->end() != std::find(i_class->begin(), i_class->end(), cluster) ) 
-              break;
-          }
-
-          // if cluster found, break.
-          if( i_class != i_class_end ) break;
+          cluster[i].pos = neighbors[iterator.access(i)].pos; 
+          cluster[i].site = neighbors[iterator.access(i)].index; 
         }
 
+        // now checks whether it should be part of a cluster class somewhere.
+        t_MLClusterClasses::iterator i_class = _out.begin();
+        t_MLClusterClasses::iterator const i_class_end = _out.end();
+        for(; i_class != i_class_end; ++i_class );
+          if( i_class->end() != std::find(i_class->begin(), i_class->end(), cluster) )
+            break;
+
         // adds new cluster.
-        if( i_op == i_op_end )  _out.push_back( t_Clusters(1, cluster) );
-        else i_class->push_back(cluster);
+        if( i_class == i_class_end ) 
+        {
+          clusters.init( cluster );
+          _out.push_back( clusters );
+        }
 
       } while(++iterator);
     }
 
-
-    void create_clusters( t_Clusters &_out, Crystal::Lattice const &_lat,
-                          Cluster const &_cluster, size_t _origin )
-    {
-      LADA_ASSERT(_origin < _lat.sites.size(), "Site index out of range.\n");
-      atat::rVector3d const &origin = _lat.sites[_origin].pos;
-
-      if( _out.size() == 0 ) _out.push_back(_cluster);
-      else if( _out.end() == std::find(_out.begin(), _out.end(), _cluster) )
-        _out.push_back(_cluster); 
-
-      // Computes point group at lattice point.
-      std::vector<Crystal::SymmetryOperator> point_group;
-      foreach(Crystal::SymmetryOperator const &op, _lat.space_group)
-        if( Crystal::which_site(op(origin), !_lat.cell, _lat.sites) == _origin )
-          point_group.push_back(op);
-
-      std::vector<Crystal::SymmetryOperator> :: const_iterator i_op = point_group.begin();
-      std::vector<Crystal::SymmetryOperator> :: const_iterator const i_op_end = point_group.end();
-      for(; i_op != i_op_end; ++i_op )
-      {
-        Cluster other(_cluster); other.apply_symmetry(*i_op);
-        if( _out.end() == std::find(_out.begin(), _out.end(), other) )
-          _out.push_back(other); 
-      }
-    }
   } // end of namespace CE
 } // namespace LaDa

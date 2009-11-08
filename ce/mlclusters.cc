@@ -6,7 +6,11 @@
 #include <config.h>
 #endif
 
-#include<boost/lexical_cast.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/xpressive/regex_primitives.hpp>
+#include <boost/xpressive/regex_algorithms.hpp>
+#include <boost/xpressive/regex_compiler.hpp>
 
 #include <print/manip.h>
 
@@ -70,7 +74,7 @@ namespace LaDa
                                           std::vector< std::vector<size_t> > const &_map,
                                           Crystal::t_SmithTransform const &_transform ) const
     {
-      if( empty() ) return eci;
+      if( empty() ) return 1;
 
       types::t_real result(0);
       const_iterator i_cluster = begin();
@@ -93,5 +97,97 @@ namespace LaDa
       return _stream << Print::indent( stream.str(), "  ");
     }
     
+    bool bypass_comment( std::istream & _sstr, std::string &_line )
+    {
+      namespace bx = boost::xpressive;
+      bx::sregex const re = bx::bos >> (*bx::_s) >> bx::as_xpr('#');
+      do { std::getline( _sstr, _line ); }
+      while(     bx::regex_search( _line, re ) 
+             and ( not _sstr.eof() ) );
+      return not _sstr.eof();
+    };
+
+    bool read_cluster( const Crystal::Lattice &_lat, 
+                       std::istream & _sstr,
+                       MLCluster &_out )
+    {
+      _out.clear(); // clears spins.
+
+      std::string line;
+      // bypass comments until a name is found.
+      do
+      { // check for comment.
+        if( not bypass_comment(_sstr, line) ) return false;
+      } while( not (    line.find( 'B' ) != std::string::npos 
+                     or line.find( 'J' ) != std::string::npos  ) );
+
+      // now read cluster.
+      if( not bypass_comment(_sstr, line) ) return false;
+      types::t_unsigned order;
+      types::t_unsigned multiplicity;
+      { // should contain the order and the multiplicity.
+        std::istringstream sstr( line ); 
+        sstr >> order >> multiplicity;
+        LADA_DOASSERT( not sstr.bad(), "Error while reading figure.\n" );
+      }
+
+      // creates cluster.
+      _out.origin.site = 0;
+      _out.origin.pos = _lat.sites[0].pos;
+      // bypasse first vector (eg origin).
+      LADA_ASSERT( bypass_comment(_sstr, line), "Unexpected end of file.\n");
+      for(; order; --order)
+      {
+        LADA_ASSERT( bypass_comment(_sstr, line), "Unexpected end of file.\n");
+        std::istringstream sstr(line);
+        MLCluster::Spin spin;
+        spin.site = 0;
+        sstr >> spin.pos(0) >> spin.pos(1) >> spin.pos(2);
+        _out.push_back( spin );
+      }
+      return true;
+    }
+
+    boost::shared_ptr<t_MLClusterClasses> read_clusters( const Crystal::Lattice &_lat, 
+                                                         const boost::filesystem::path &_path, 
+                                                         const std::string & _genes ) 
+    {
+      namespace fs = boost::filesystem;  
+      // Check path.
+      LADA_DOASSERT( fs::exists( _path ), "Path " << _path << " does not exits.\n" )
+      LADA_DOASSERT( fs::is_regular( _path ) or fs::is_symlink( _path ),
+                     _path << " is neither a regulare file nor a system link.\n" )
+
+      // create result.
+      boost::shared_ptr<t_MLClusterClasses> result( new t_MLClusterClasses );
+
+      std::ifstream file( _path.string().c_str(), std::ifstream::in );
+      std::string line;
+
+      // create typical cluster.
+      MLCluster cluster;
+
+      // read new clusters until done.
+      size_t i(0);
+      while( read_cluster( _lat, file, cluster ) )
+      {
+        // This is a hack to avoid inputing Zhe's tetragonal pair terms.
+        if( cluster.order() == 2 ) continue;
+
+        ++i;
+        if( not _genes.empty() )
+        {
+          LADA_DOASSERT( i <= _genes.size(), "Gene size and jtypes are inconsistent.\n" )
+          if( _genes[i-1] == '0' ) continue; 
+        }
+
+        result->push_back(MLClusters());
+        result->back().init(cluster);
+      }
+
+      LADA_DOASSERT( _genes.empty() or i == _genes.size(), "Gene size and jtypes are inconsistent.\n" )
+    }
+
+
   } // namespace CE
 }

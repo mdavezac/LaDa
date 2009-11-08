@@ -11,6 +11,9 @@
 #include <vector>
 #include <iostream>
 
+#include <boost/filesystem/path.hpp>
+#include <boost/shared_ptr.hpp>
+
 #include <tinyxml/tinyxml.h>
 
 #include <opt/types.h>
@@ -100,6 +103,7 @@ namespace LaDa
     std::ostream &operator<<( std::ostream &_sstr, const MLCluster::Spin &_spin );
     //! Dumps a cluster to as stream.
     std::ostream &operator<<( std::ostream &_sstr, const MLCluster &_cls );
+
   } // namespace CE
 
 } // namespace LaDa

@@ -68,6 +68,11 @@ namespace LaDa
 
     //! Dumps a cluster class to as stream.
     std::ostream &operator<<( std::ostream &_sstr, const MLClusters &_cls );
+
+    //! Read clusters from NREL file
+    boost::shared_ptr<t_MLClusterClasses> read_clusters( const Crystal::Lattice &_lat, 
+                                                         const boost::filesystem::path &_path, 
+                                                         const std::string & _genes = "" );
     
   } // namespace CE
 
