@@ -1,6 +1,5 @@
 #! /usr/bin/python
 
-  
 def main():
   from lada import ce, crystal
   from math import fabs
@@ -12,6 +11,11 @@ def main():
   structure = crystal.Structure()
   structure.fromXML("input.xml")
 
+  mlclasses = ce.MLClusterClasses("input.xml", False)
+# mlclasses[0]
+# print mlclasses
+
+# mlclusters = convert_clusters_to_mlclusters
   tests = [ ("000011100000", -74.377010),
             ("111000000101", -83.064845), 
             ("101000000011", -80.889828), 

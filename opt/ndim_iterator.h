@@ -204,7 +204,7 @@ namespace LaDa
         NDimIterator<T_OBJECT, T_PREDICATE> :: access( types::t_unsigned _i ) const
         { 
           LADA_ASSERT( check_valid(), "Iterator is invalid.\n");
-          LADA_ASSERT(_i >= iterators.size(), "Index out of range.\n");
+          LADA_ASSERT(_i < iterators.size(), "Index out of range.\n");
         
           return ( iterators[_i] );
         }
@@ -213,7 +213,7 @@ namespace LaDa
           NDimIterator<T_OBJECT, T_PREDICATE> :: access( types::t_unsigned _i )
           { 
             LADA_ASSERT( check_valid(), "Iterator is invalid.\n");
-            LADA_ASSERT(_i >= iterators.size(), "Index out of range.\n");
+            LADA_ASSERT(_i < iterators.size(), "Index out of range.\n");
          
             return ( iterators[_i] );
           }
@@ -221,7 +221,7 @@ namespace LaDa
       void NDimIterator<T_OBJECT, T_PREDICATE> :: erase( types::t_unsigned _i )
       { 
         LADA_ASSERT( check_valid(), "Iterator is invalid.\n");
-        LADA_ASSERT(_i >= iterators.size(), "Index out of range.\n");
+        LADA_ASSERT(_i < iterators.size(), "Index out of range.\n");
 
         start.erase( start.begin() + _i );
         end.erase( end.begin() + _i );

@@ -13,11 +13,11 @@
 #include <boost/python/register_ptr_to_python.hpp>
 #include <boost/python/return_internal_reference.hpp>
 #include <boost/python/scope.hpp>
+#include <boost/python/list.hpp>
 #include <boost/python/make_constructor.hpp>
 #include <boost/python/default_call_policies.hpp>
 
 #include <python/misc.hpp>
-#include <python/std_vector.hpp>
 
 #include "mlclusters.hpp"
 #include "../mlclusters.h"
@@ -48,6 +48,27 @@ namespace LaDa
       }
       _vec[ size_t( _i < 0 ? types::t_int(dim) + _i: _i ) ] = _a;
     }
+    CE::t_MLClusterClasses::const_reference getvecitem2( const CE::t_MLClusterClasses& _vec, types::t_int _i )
+    {
+      const types::t_int dim(  _vec.size() );
+      if( _i > dim or _i < -dim )
+      {
+        std::ostringstream sstr;
+        throw std::out_of_range( "CE::t_MLClusterClasses" );
+      }
+      return _vec[ size_t( _i < 0 ? dim + _i: _i ) ];
+    }
+    void setvecitem2( CE::t_MLClusterClasses& _vec, types::t_int _i,
+                      CE::t_MLClusterClasses::const_reference _a )
+    {
+      const types::t_int dim(  _vec.size() );
+      if( _i > dim or _i < -dim )
+      {
+        std::ostringstream sstr;
+        throw std::out_of_range( "atat vector" );
+      }
+      _vec[ size_t( _i < 0 ? types::t_int(dim) + _i: _i ) ] = _a;
+    }
 
     boost::shared_ptr<CE::MLClusters> init( CE::MLCluster const &_cls )
     {
@@ -68,13 +89,30 @@ namespace LaDa
                                                      std::string const &_path,
                                                      std::string const &_genes )
       { return CE::read_clusters( _lat, _path, _genes); }
+    boost::shared_ptr<CE::t_MLClusterClasses> init3(std::string const &_path, bool _b)
+      { return CE::load_mlclusters(_path, _b); }
 
+    boost::shared_ptr<CE::t_MLClusterClasses> copy_constructor( CE::t_MLClusterClasses const & _ob )
+      { return boost::shared_ptr<CE::t_MLClusterClasses>( new CE::t_MLClusterClasses(_ob) ); }
+    boost::shared_ptr<CE::t_MLClusterClasses> object_constructor( const boost::python::list& _ob )
+    {
+      namespace bp = boost::python;
+      const size_t n( bp::len( _ob ) );
+      boost::shared_ptr<CE::t_MLClusterClasses> result( new CE::t_MLClusterClasses );
+      result->reserve( n );
+      for( size_t i(0); i < n; ++i )
+        result->push_back( bp::extract<CE::MLClusters>( _ob[i] ) );
+      return result;
+    }
 
     void expose_mlclusters()
     {
       namespace bp = boost::python;
-      expose_vector<CE::t_MLClusterClasses>
+      bp::register_ptr_to_python< boost::shared_ptr<CE::t_MLClusterClasses> >();
+      bp::class_<CE::t_MLClusterClasses>
         ("MLClusterClasses", "An array of arrays of (presumably) equivalent multi-lattice clusters.\n")
+        .def( "__init__", bp::make_constructor( &copy_constructor ) )
+        .def( "__init__", bp::make_constructor( &object_constructor ) )
         .def
         (
           "__init__",
@@ -87,7 +125,23 @@ namespace LaDa
           "Construct class of equivalent clusters from file. \n"
           "If genes is not empty, then it must be a string of 0 and 1, \n"
           "where 0 means that cluster in the input file will be ignored.\n"
-        );
+        )
+        .def
+        (
+          "__init__",
+          bp::make_constructor
+          ( 
+            &init3, 
+            bp::default_call_policies(), 
+            (bp::arg("file"), bp::arg("is_multi")=true)
+          ),
+          "Construct class of equivalent clusters from an xml file. \n"
+          "If is_multi is false, then expects a single lattice format.\n" 
+        )
+        .def("__getitem__", &getvecitem2, bp::return_internal_reference<>())
+        .def("__setitem__", &setvecitem2)
+        .def( "__str__", &tostream<CE::t_MLClusterClasses> )
+        .def( "clear", &CE::t_MLClusterClasses :: clear );
       
       bp::scope scope = bp::class_<CE::MLClusters>
         ("MLClusters", "An array of equivalent multi-lattice cluster (figure).")
@@ -100,7 +154,6 @@ namespace LaDa
           .def("__getitem__", &getvecitem, bp::return_internal_reference<>())
           .def("__setitem__", &setvecitem);
       bp::register_ptr_to_python< boost::shared_ptr<CE::MLClusters> >();
-      bp::register_ptr_to_python< boost::shared_ptr<CE::t_MLClusterClasses> >();
     }
 
   }

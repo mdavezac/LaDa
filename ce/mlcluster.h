@@ -64,7 +64,7 @@ namespace LaDa
         types::t_int order() const { return size()+1; };
 
         //! Load a cluster from XML.
-        bool Load(const TiXmlElement &_node);
+        bool load(const TiXmlElement &_node);
         //! True if involves same positions.
         bool operator==( MLCluster const & _c ) const;
         //! True if involves same positions.

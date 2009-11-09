@@ -52,7 +52,7 @@ namespace LaDa
     }
 
 
-    bool MLCluster :: Load( const TiXmlElement &_node )
+    bool MLCluster :: load( const TiXmlElement &_node )
     {
 
       clear();

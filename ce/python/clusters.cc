@@ -120,7 +120,7 @@ namespace LaDa
           .def("apply_symmetry", &apply_symmetry, "Returns a transformed cluster.\n")
           .def("apply_rotation", &apply_rot0, "Returns a rotated cluster.\n")
           .def("__len__", &CE::Cluster::size, "Returns the order of the cluster.\n")
-          .def("__str__", &tostream<CE::Cluster>, "Returns the order of the cluster.\n")
+          .def("__str__", &tostream<CE::Cluster>, "Dumps the cluster to a string.\n")
           .def("equivalents", &equiv_clusters, "Returns array of arrays of equivalent clusters.\n");
 
 

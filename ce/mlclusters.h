@@ -37,7 +37,7 @@ namespace LaDa
         types::t_int order() const { return size() ? back().order(): 0; }
 
         //! Load a cluster from XML.
-        bool Load(const TiXmlElement &_node);
+        bool load(const TiXmlElement &_node);
         //! True if involves same positions.
         bool operator==(MLClusters const & _c) const;
         //! True if involves same positions.
@@ -73,6 +73,9 @@ namespace LaDa
     boost::shared_ptr<t_MLClusterClasses> read_clusters( const Crystal::Lattice &_lat, 
                                                          const boost::filesystem::path &_path, 
                                                          const std::string & _genes = "" );
+    //! Read clusters from NREL file
+    boost::shared_ptr<t_MLClusterClasses> load_mlclusters( const boost::filesystem::path &_path, 
+                                                           bool is_newformat = true );
     
   } // namespace CE
 

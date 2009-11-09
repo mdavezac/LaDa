@@ -13,6 +13,7 @@
 #include <boost/xpressive/regex_compiler.hpp>
 
 #include <print/manip.h>
+#include <opt/tinyxml.h>
 
 #include "mlclusters.h"
 
@@ -43,7 +44,7 @@ namespace LaDa
       }
     }
 
-    bool MLClusters :: Load( const TiXmlElement &_node )
+    bool MLClusters :: load( const TiXmlElement &_node )
     {
       clear();
       if( not _node.Attribute("eci") ) eci = 0e0;
@@ -53,9 +54,10 @@ namespace LaDa
       MLCluster cluster;
       for ( ; child; child=child->NextSiblingElement( "Cluster" ) )
       {
-        if( not cluster.Load(*child) ) return false;
+        if( not cluster.load(*child) ) return false;
         push_back(cluster);
       }
+      if( size() == 1 ) init(front(), eci);
 
       return true;
     }
@@ -188,6 +190,98 @@ namespace LaDa
       LADA_DOASSERT( _genes.empty() or i == _genes.size(), "Gene size and jtypes are inconsistent.\n" )
     }
 
+    boost::shared_ptr<t_MLClusterClasses> load_old(TiXmlElement const &_node);
+    boost::shared_ptr<t_MLClusterClasses> load_new(TiXmlElement const &_node);
+    
+    boost::shared_ptr<t_MLClusterClasses> load_mlclusters( boost::filesystem::path const &_path, 
+                                                           bool is_newformat )
+    {
+      namespace fs = boost::filesystem;  
+      // Check path.
+      LADA_DOASSERT( fs::exists( _path ), "Path " << _path << " does not exits.\n" )
+      LADA_DOASSERT( fs::is_regular( _path ) or fs::is_symlink( _path ),
+                     _path << " is neither a regulare file nor a system link.\n" )
 
+      std::string text;
+      opt::read_xmlfile(_path, text);
+      TiXmlDocument doc;
+      TiXmlHandle handle( &doc );
+      doc.Parse( text.c_str() );
+      TiXmlElement const *job_node = handle.FirstChild( "Job" ).Element();
+      LADA_DOASSERT( job_node, "Could not find Job tag in input.\n" );
+      TiXmlElement const *func_node = opt::find_node(*job_node, "Functional", "type", "CE");
+      LADA_DOASSERT( func_node, "Could not find Functional CE in input.\n" );
+
+      return is_newformat ? load_new(*func_node): load_old(*func_node);
+    }
+
+    boost::shared_ptr<t_MLClusterClasses> load_old(TiXmlElement const &_node)
+    {
+      
+      TiXmlElement const * clusters_node = opt::find_node(_node, "Clusters");
+      LADA_DOASSERT( clusters_node, "Could not find Clusters node in input.\n" );
+      TiXmlElement const * cluster_node = clusters_node->FirstChildElement("Cluster");
+      LADA_DOASSERT( cluster_node, "Could not find Clusters node in input.\n" );
+       
+      boost::shared_ptr<t_MLClusterClasses> result(new t_MLClusterClasses);
+      MLCluster cluster;
+      MLClusters clusters;
+      cluster.origin.pos = atat::rVector3d(0,0,0);
+      cluster.origin.site = 0;
+      for(; cluster_node; cluster_node = cluster_node->NextSiblingElement("Cluster") )
+      {
+        LADA_DOASSERT(cluster_node->Attribute("eci"), "eci attribute not found.\n");
+        clusters.eci = boost::lexical_cast<types::t_real>(cluster_node->Attribute("eci"));
+    
+        TiXmlElement const  *vec_node = cluster_node->FirstChildElement("spin");
+        if( not vec_node ) // J0
+        {
+          clusters.clear();
+          result->push_back(clusters);
+          continue;
+        }
+        for(; vec_node; vec_node = vec_node->NextSiblingElement("spin") )
+        {
+          LADA_ASSERT(vec_node->Attribute("x"), "Missing x attribute.\n");
+          LADA_ASSERT(vec_node->Attribute("y"), "Missing y attribute.\n");
+          LADA_ASSERT(vec_node->Attribute("z"), "Missing z attribute.\n");
+          MLCluster::Spin const spin = 
+          {
+            0,
+            atat::rVector3d
+            (
+              boost::lexical_cast<types::t_real>(vec_node->Attribute("x")), 
+              boost::lexical_cast<types::t_real>(vec_node->Attribute("y")), 
+              boost::lexical_cast<types::t_real>(vec_node->Attribute("z"))  
+            ) 
+          };
+          
+          // avoid origin.
+          if( Fuzzy::is_zero(atat::norm2(spin.pos)) ) continue;
+          cluster.push_back(spin);
+        }
+
+        clusters.init(cluster, clusters.eci);
+        result->push_back(clusters);
+      }
+      return result;
+    }  
+
+    boost::shared_ptr<t_MLClusterClasses> load_new(TiXmlElement const &_node)
+    {
+      
+      TiXmlElement const * clusters_node = opt::find_node(_node, "Clusters");
+      LADA_DOASSERT( clusters_node, "Could not find Clusters node in input.\n" );
+      TiXmlElement const * cluster_node = clusters_node->FirstChildElement("Cluster");
+      LADA_DOASSERT( cluster_node, "Could not find Clusters node in input.\n" );
+       
+      boost::shared_ptr<t_MLClusterClasses> result(new t_MLClusterClasses);
+      for(; cluster_node; cluster_node = cluster_node->NextSiblingElement("Cluster") )
+      {
+        result->push_back(MLClusters());
+        result->back().load( *cluster_node );
+      }
+      return result;
+    } 
   } // namespace CE
 }

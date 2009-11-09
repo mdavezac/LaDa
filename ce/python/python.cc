@@ -23,4 +23,5 @@ BOOST_PYTHON_MODULE(ce)
   LaDa::Python::expose_create_clusters();
   LaDa::Python::expose_find_pis();
   LaDa::Python::expose_mlcluster();
+  LaDa::Python::expose_mlclusters();
 }
