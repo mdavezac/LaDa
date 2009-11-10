@@ -81,8 +81,13 @@ namespace LaDa
       types::t_real result(0);
       const_iterator i_cluster = begin();
       const_iterator const i_cluster_end = end();
+      LADA_ASSERT( _str.lattice, "Lattice is not set.\n" );
+      LADA_ASSERT( _str.atoms.size() % _str.lattice->sites.size() == 0,
+                   "Inconsistent structure and lattice.\n" );
+      types::t_real const npersite(_str.atoms.size()/_str.lattice->sites.size());
+      types::t_real const factor(1e0/types::t_real(npersite*order()));
       for(; i_cluster != i_cluster_end; ++i_cluster) // loop over clusters classes.
-        result += (*i_cluster)(_str, _map, _transform);
+        result += (*i_cluster)(_str, _map, _transform) * factor;
       return result;
     }
 
@@ -187,7 +192,8 @@ namespace LaDa
         result->back().init(cluster);
       }
 
-      LADA_DOASSERT( _genes.empty() or i == _genes.size(), "Gene size and jtypes are inconsistent.\n" )
+      LADA_DOASSERT( _genes.empty() or i == _genes.size(),
+                     "Gene size and jtypes are inconsistent.\n" )
     }
 
     boost::shared_ptr<t_MLClusterClasses> load_old(TiXmlElement const &_node);
@@ -240,7 +246,7 @@ namespace LaDa
           result->push_back(clusters);
           continue;
         }
-        for(; vec_node; vec_node = vec_node->NextSiblingElement("spin") )
+        for(cluster.clear(); vec_node; vec_node = vec_node->NextSiblingElement("spin") )
         {
           LADA_ASSERT(vec_node->Attribute("x"), "Missing x attribute.\n");
           LADA_ASSERT(vec_node->Attribute("y"), "Missing y attribute.\n");

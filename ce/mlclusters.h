@@ -29,12 +29,13 @@ namespace LaDa
         //! Constructor
         MLClusters() : eci(0) {};
         //! Copy Constructor
-        MLClusters(const MLClusters &_c) : clusters_(_c.clusters_), eci(_c.eci) {}
+        MLClusters   (const MLClusters &_c)
+                   : clusters_(_c.clusters_), eci(_c.eci) {}
         //! Destructor
         ~MLClusters() {}
 
         //! Returns the number of spins in these clusters.
-        types::t_int order() const { return size() ? back().order(): 0; }
+        types::t_int order() const { return empty() ? 0: back().order(); }
 
         //! Load a cluster from XML.
         bool load(const TiXmlElement &_node);

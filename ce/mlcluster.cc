@@ -25,7 +25,7 @@ namespace LaDa
   {
     size_t size_t_cast( types::t_int i ) 
     { 
-      LADA_ASSERT( i < 0, "Symmetry operation is not of lattice.\n" );
+      LADA_ASSERT( i >= 0, "Symmetry operation is not of lattice.\n" );
       return size_t(std::abs(i));
     }
 
@@ -175,15 +175,15 @@ namespace LaDa
         LADA_ASSERT(i_orig->site < lattice.sites.size(), "Index out-of-range.\n")
         if( _atom.site != i_orig->site ) continue;
 
-        atat::rVector3d const orig(_atom.pos-i_orig->pos-lattice.sites[origin.site].pos);
-        types::t_real intermediate( find_spin( orig, origin.site, _str, _map, _transform) );
+        atat::rVector3d const center(_atom.pos-i_orig->pos);
+        types::t_real intermediate
+          = find_spin(center-lattice.sites[origin.site].pos, origin.site, _str, _map, _transform);
         t_Spins::const_iterator i_spin = begin();
         t_Spins::const_iterator const i_spin_end = end();
         for(; i_spin != i_spin_end; ++i_spin)
         {
-        
-          LADA_ASSERT(i_spin->site < lattice.sites.size(), "Index out-of-range.\n")
-          atat::rVector3d const vec(orig+i_spin->pos-i_spin->pos-lattice.sites[i_spin->site].pos);
+          LADA_ASSERT(i_spin->site < lattice.sites.size(), "Index out-of-range.\n");
+          atat::rVector3d const vec( center + i_spin->pos - lattice.sites[i_spin->site].pos );
           intermediate *= find_spin(vec, i_spin->site, _str, _map, _transform);
         }
         result += intermediate;
@@ -204,6 +204,7 @@ namespace LaDa
       _stream << "Cluster@" << _cls.origin.site;
       
       if (_cls.size() == 0 ) return _stream << " J1\n";
+      else _stream << "\n";
 
       MLCluster :: t_Spins :: const_iterator i_spin = _cls.begin();
       MLCluster :: t_Spins :: const_iterator const i_last = _cls.end();

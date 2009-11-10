@@ -17,10 +17,13 @@
 #include <boost/python/make_constructor.hpp>
 #include <boost/python/default_call_policies.hpp>
 
+#include <pyublas/numpy.hpp>
+
 #include <python/misc.hpp>
 
 #include "mlclusters.hpp"
 #include "../mlclusters.h"
+#include "../find_pis.h"
 
 
 namespace LaDa
@@ -85,6 +88,28 @@ namespace LaDa
       return _stream;
     }
 
+    types::t_real call( CE::t_MLClusterClasses const &_cls, Crystal::Structure const &_str )
+    {
+      std::vector<types::t_real> pis;
+      CE::find_pis(_cls, _str, pis);
+      types::t_real result(0);
+      LADA_ASSERT( _cls.size() == pis.size(), "Inconsistent sizes.\n")
+      std::vector<types::t_real> :: const_iterator i_pi = pis.begin();
+      std::vector<types::t_real> :: const_iterator const i_pi_end = pis.end();
+      CE::t_MLClusterClasses::const_iterator i_class = _cls.begin();
+      for(; i_pi != i_pi_end; ++i_pi, ++i_class)
+        result += (*i_pi) * i_class->eci;
+      return result;
+    }
+     
+    pyublas::numpy_vector<types::t_real>  pis( CE::t_MLClusterClasses const &_cls,
+                                                  Crystal::Structure const &_str )
+    {
+      pyublas::numpy_vector<types::t_real> pis_;
+      CE::find_pis(_cls, _str, pis_);
+      return pis_;
+    }
+
     boost::shared_ptr<CE::t_MLClusterClasses> init2( Crystal::Lattice const &_lat,
                                                      std::string const &_path,
                                                      std::string const &_genes )
@@ -140,8 +165,10 @@ namespace LaDa
         )
         .def("__getitem__", &getvecitem2, bp::return_internal_reference<>())
         .def("__setitem__", &setvecitem2)
-        .def( "__str__", &tostream<CE::t_MLClusterClasses> )
-        .def( "clear", &CE::t_MLClusterClasses :: clear );
+        .def("__str__", &tostream<CE::t_MLClusterClasses> )
+        .def("clear", &CE::t_MLClusterClasses :: clear )
+        .def("__call__", &call, "Returns energy of structure.\n")
+        .def("pis", &pis, "Return numpy vector corresponding to structure pis.\n");
       
       bp::scope scope = bp::class_<CE::MLClusters>
         ("MLClusters", "An array of equivalent multi-lattice cluster (figure).")

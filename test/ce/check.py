@@ -13,7 +13,7 @@ def main():
 
   mlclasses = ce.MLClusterClasses("input.xml", False)
 # mlclasses[0]
-# print mlclasses
+  print mlclasses
 
 # mlclusters = convert_clusters_to_mlclusters
   tests = [ ("000011100000", -74.377010),
@@ -55,9 +55,11 @@ def main():
     for i, atom in enumerate(structure.atoms):
       if test[0][i] == "0": atom.type = -1e0
       else:               atom.type = 1e0
-    c = functional(structure) 
+    c = functional.chemical(structure) 
+    d = mlclasses(structure) 
     print "check %f, test %f, diff %f " \
-          % ( c, test[1], fabs(c-test[1]) )
+          % ( c, d, fabs(c-d) )
+#         % ( d, test[1], fabs(d-test[1]) )
 
 if __name__ == "__main__":
   main()

@@ -46,7 +46,6 @@ namespace LaDa
         std::vector< std::vector<size_t> > atomic_map;
         Crystal::get_smith_map( _str, atomic_map );
         bool const dosite( _str.lattice->sites.size() != 1 );
-        size_t const Npersite( _str.atoms.size() / _str.lattice->sites.size() );
         atat::rMatrix3d const inv_cell( !_str.lattice->cell );
         Crystal::Lattice::t_Sites const &sites(_str.lattice->sites);
         Crystal::t_SmithTransform const
@@ -57,7 +56,7 @@ namespace LaDa
         t_MLClusterClasses::const_iterator i_class = _cls.begin();
         t_MLClusterClasses::const_iterator const i_class_end = _cls.end();
         for(; i_class != i_class_end; ++i_class, ++i_pi) // loop over clusters classes.
-          *i_pi = (*i_class)(_str, atomic_map, transform);
+          *i_pi =  i_class->order() ? (*i_class)(_str, atomic_map, transform): 1e0; 
       }
 
 
