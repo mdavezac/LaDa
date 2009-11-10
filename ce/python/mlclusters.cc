@@ -33,10 +33,12 @@ namespace LaDa
     CE::MLClusters::const_reference getvecitem( const CE::MLClusters& _vec, types::t_int _i )
     {
       const types::t_int dim(  _vec.size() );
-      if( _i > dim or _i < -dim )
+      if( _i >= dim or _i <= -dim )
       {
-        std::ostringstream sstr;
-        throw std::out_of_range( "CE::MLClusters" );
+        PyErr_SetString(PyExc_IndexError, "CE::MLCluster");
+        boost::python::throw_error_already_set();
+        static CE::MLClusters::value_type val;
+        return val;
       }
       return _vec[ size_t( _i < 0 ? dim + _i: _i ) ];
     }
@@ -44,20 +46,23 @@ namespace LaDa
                      CE::MLClusters::const_reference _a )
     {
       const types::t_int dim(  _vec.size() );
-      if( _i > dim or _i < -dim )
+      if( _i >= dim or _i <= -dim )
       {
-        std::ostringstream sstr;
-        throw std::out_of_range( "atat vector" );
+        PyErr_SetString(PyExc_IndexError, "CE::MLCluster");
+        boost::python::throw_error_already_set();
+        return;
       }
       _vec[ size_t( _i < 0 ? types::t_int(dim) + _i: _i ) ] = _a;
     }
     CE::t_MLClusterClasses::const_reference getvecitem2( const CE::t_MLClusterClasses& _vec, types::t_int _i )
     {
       const types::t_int dim(  _vec.size() );
-      if( _i > dim or _i < -dim )
+      if( _i >= dim or _i <= -dim )
       {
-        std::ostringstream sstr;
-        throw std::out_of_range( "CE::t_MLClusterClasses" );
+        PyErr_SetString(PyExc_IndexError, "CE::MLCluster");
+        boost::python::throw_error_already_set();
+        static CE::t_MLClusterClasses::value_type val;
+        return val;
       }
       return _vec[ size_t( _i < 0 ? dim + _i: _i ) ];
     }
@@ -65,10 +70,11 @@ namespace LaDa
                       CE::t_MLClusterClasses::const_reference _a )
     {
       const types::t_int dim(  _vec.size() );
-      if( _i > dim or _i < -dim )
+      if( _i >= dim or _i <= -dim )
       {
-        std::ostringstream sstr;
-        throw std::out_of_range( "atat vector" );
+        PyErr_SetString(PyExc_IndexError, "CE::MLCluster");
+        boost::python::throw_error_already_set();
+        return;
       }
       _vec[ size_t( _i < 0 ? types::t_int(dim) + _i: _i ) ] = _a;
     }

@@ -34,11 +34,11 @@ namespace LaDa
     }
 
     boost::shared_ptr< std::vector<CE::Cluster> > 
-      equiv_clusters( CE::Cluster &_self, Crystal::Lattice &_lat )
+      equiv_clusters( CE::Cluster &_self )
       {
         boost::shared_ptr< std::vector<CE::Cluster> >
           result( new std::vector<CE::Cluster>(1, _self) );
-        add_equivalent_clusters( _lat, *result);
+        add_equivalent_clusters(*Crystal::Structure::lattice, *result);
         return result;
       }
 
@@ -112,16 +112,14 @@ namespace LaDa
               "Apply symmetry operation to an array of equivalent clusters.\n");
       bp::def("apply_symmetry", &apply_sym<CE::t_ClusterClasses>,
               "Apply symmetry operation to an array of classes of equivalent clusters.\n");
-
-      bp::scope scope = bp::class_<CE::Cluster>("Cluster", "A cluster (figure).")
-          .def(bp::init<CE::Cluster const&>())
-          .add_property("eci", &CE::Cluster::eci, "Interaction energy.")
-          .add_property("vectors", &CE::Cluster::vectors, "Spin positions.")
-          .def("apply_symmetry", &apply_symmetry, "Returns a transformed cluster.\n")
-          .def("apply_rotation", &apply_rot0, "Returns a rotated cluster.\n")
-          .def("__len__", &CE::Cluster::size, "Returns the order of the cluster.\n")
-          .def("__str__", &tostream<CE::Cluster>, "Dumps the cluster to a string.\n")
-          .def("equivalents", &equiv_clusters, "Returns array of arrays of equivalent clusters.\n");
+      bp::def("equivalents", &equiv_clusters);
+      
+      expose_vector< std::vector<CE::Cluster> >
+        ("ClusterClasses", "An array of arrays of (presumably) equivalent clusters.\n")
+        .def("apply_rotation", &apply_rot<CE::t_ClusterClasses>,
+             "Returns array of rotated clusters.")
+        .def("apply_symmetry", &apply_sym<CE::t_ClusterClasses>,
+             "Returns array of transformed clusters.");
 
 
       expose_vector<CE::Cluster>
@@ -131,17 +129,21 @@ namespace LaDa
         .def("apply_symmetry", &apply_sym<CE::t_Clusters>,
              "Returns array of transformed clusters.");
 
+      bp::scope scope = bp::class_<CE::Cluster>("Cluster", "A cluster (figure).")
+          .def(bp::init<CE::Cluster const&>())
+          .def_readwrite("eci", &CE::Cluster::eci, "Interaction energy.")
+          .def_readwrite("vectors", &CE::Cluster::vectors, "Spin positions.")
+          .def("apply_symmetry", &apply_symmetry, "Returns a transformed cluster.\n")
+          .def("apply_rotation", &apply_rot0, "Returns a rotated cluster.\n")
+          .def("__len__", &CE::Cluster::size, "Returns the order of the cluster.\n")
+          .def("__str__", &tostream<CE::Cluster>, "Dumps the cluster to a string.\n")
+          .def("equivalents", &equiv_clusters, "Returns array of arrays of equivalent clusters.\n");
+
       bp::register_ptr_to_python
       < 
         boost::shared_ptr< std::vector<CE::Cluster> >
       >();
  
-      expose_vector< std::vector<CE::Cluster> >
-        ("Clusters", "An array of arrays of (presumably) equivalent clusters.\n")
-        .def("apply_rotation", &apply_rot<CE::t_ClusterClasses>,
-             "Returns array of rotated clusters.")
-        .def("apply_symmetry", &apply_sym<CE::t_ClusterClasses>,
-             "Returns array of transformed clusters.");
 
       bp::register_ptr_to_python
       < 

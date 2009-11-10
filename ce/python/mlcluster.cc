@@ -12,6 +12,7 @@
 #include <boost/python/scope.hpp>
 #include <boost/python/class.hpp>
 #include <boost/python/return_internal_reference.hpp>
+#include <boost/python/errors.hpp>
 
 #include "mlcluster.hpp"
 #include "../mlcluster.h"
@@ -33,10 +34,12 @@ namespace LaDa
     CE::MLCluster::const_reference getvecitem( const CE::MLCluster& _vec, types::t_int _i )
     {
       const types::t_int dim(  _vec.size() );
-      if( _i > dim or _i < -dim )
+      if( _i >= dim or _i <= -dim )
       {
-        std::ostringstream sstr;
-        throw std::out_of_range( "CE::MLCluster" );
+        PyErr_SetString(PyExc_IndexError, "CE::MLCluster");
+        boost::python::throw_error_already_set();
+        static CE::MLCluster::value_type val;
+        return val;
       }
       return _vec[ size_t( _i < 0 ? dim + _i: _i ) ];
     }
@@ -44,10 +47,11 @@ namespace LaDa
                      CE::MLCluster::const_reference _a )
     {
       const types::t_int dim(  _vec.size() );
-      if( _i > dim or _i < -dim )
+      if( _i >= dim or _i <= -dim )
       {
-        std::ostringstream sstr;
-        throw std::out_of_range( "atat vector" );
+        PyErr_SetString(PyExc_IndexError, "CE::MLCluster");
+        boost::python::throw_error_already_set();
+        return;
       }
       _vec[ size_t( _i < 0 ? types::t_int(dim) + _i: _i ) ] = _a;
     }

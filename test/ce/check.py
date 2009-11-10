@@ -1,9 +1,27 @@
 #! /usr/bin/python
 
+def convert(_classes):
+  from lada import ce
+
+  result = ce.ClusterClasses()
+  for class_ in _classes:
+    dummy = ce.Clusters()
+    for mlcluster in class_:
+      cluster = ce.Cluster()
+      cluster.eci = class_.eci
+      cluster.vectors.append(mlcluster.origin.pos)
+      for i, vec in enumerate(mlcluster):
+        cluster.vectors.append(vec.pos)
+      dummy.append(cluster)
+    result.append(dummy)
+  return result
+
 def main():
   from lada import ce, crystal
   from math import fabs
   import boost.mpi as mpi
+  import numpy
+  import pyublas
 
   functional = ce.Cubic()
   functional.set_mpi(mpi.world)
@@ -13,7 +31,8 @@ def main():
 
   mlclasses = ce.MLClusterClasses("input.xml", False)
 # mlclasses[0]
-  print mlclasses
+# print mlclasses
+  classes = convert(mlclasses)
 
 # mlclusters = convert_clusters_to_mlclusters
   tests = [ ("000011100000", -74.377010),
@@ -51,15 +70,14 @@ def main():
             ("000001110000", -74.377010), 
             ("010000000001", -55.269849) ] 
 
+  print len(mlclasses[0]), len(structure.atoms)
   for test in tests:
     for i, atom in enumerate(structure.atoms):
       if test[0][i] == "0": atom.type = -1e0
       else:               atom.type = 1e0
-    c = functional.chemical(structure) 
-    d = mlclasses(structure) 
+    c = functional(structure) 
     print "check %f, test %f, diff %f " \
-          % ( c, d, fabs(c-d) )
-#         % ( d, test[1], fabs(d-test[1]) )
+          % ( c, test[1], fabs(c-test[1]) )
 
 if __name__ == "__main__":
   main()

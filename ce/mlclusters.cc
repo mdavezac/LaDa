@@ -85,10 +85,10 @@ namespace LaDa
       LADA_ASSERT( _str.atoms.size() % _str.lattice->sites.size() == 0,
                    "Inconsistent structure and lattice.\n" );
       types::t_real const npersite(_str.atoms.size()/_str.lattice->sites.size());
-      types::t_real const factor(1e0/types::t_real(npersite*order()));
+      types::t_real const factor(1e0/types::t_real(npersite));
       for(; i_cluster != i_cluster_end; ++i_cluster) // loop over clusters classes.
-        result += (*i_cluster)(_str, _map, _transform) * factor;
-      return result;
+        result += (*i_cluster)(_str, _map, _transform);
+      return result * factor / types::t_real(size());
     }
 
     std::ostream& operator<<( std::ostream &_stream,  MLClusters const &_class )
