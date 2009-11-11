@@ -40,6 +40,21 @@ class Fit():
     # records energy.
     self._data[-1,-1] = structure.energy
 
+  def add_directory(path):
+    import os.path
+
+    assert os.path.exists(path), "%s does not exist.\n" % (path)
+    assert os.path.isdir(path), "%s is not a directory.\n" % (path)
+
+    
+    for filename in os.listdir("."):
+      structure = None
+      try: structure = crystal.read_structure( filename )
+      except: continue
+      structure.weight = 1e0
+      self.add_structure(structure)
+
+
      
 
     

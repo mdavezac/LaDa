@@ -5,7 +5,12 @@
 # include <config.h>
 #endif
 
-#include <boost/python.hpp>
+#include <boost/python/def.hpp>
+#include <boost/python/class.hpp>
+#include <boost/python/register_ptr_to_python.hpp>
+#include <boost/python/make_constructor.hpp>
+#include <boost/python/errors.hpp>
+
 #include <opt/types.h>
 #include <crystal/structure.h>
 #include <crystal/lattice.h>
@@ -64,22 +69,53 @@ namespace LaDa
           _type.find_space_group();
         }
 
+      boost::shared_ptr<Crystal::Lattice> init( std::string const &_path )
+      {
+        namespace bfs = boost::filesystem;
+        if( not bfs::exists(_path) )
+        {
+          PyErr_SetString( PyExc_IOError, (_path + " does not exist.\n").c_str() );
+          bp::throw_error_already_set();
+          return boost::shared_ptr<Crystal::Lattice>();
+        }
+        if( not( bfs::is_regular(_path) or bfs::is_symlink(_path) ) )
+        {
+          PyErr_SetString( PyExc_IOError, (_path + " is not a file.\n").c_str() );
+          bp::throw_error_already_set();
+          return boost::shared_ptr<Crystal::Lattice>();
+        }
+
+        std::string text;
+        opt::read_file(_path, text);
+
+        boost::shared_ptr<Crystal::Lattice> result(new Crystal::Lattice);
+        if( not result )
+        {
+          PyErr_SetString( PyExc_IOError, ("Could read lattice from " + _path + ".\n").c_str() );
+          bp::throw_error_already_set();
+          return boost::shared_ptr<Crystal::Lattice>();
+        }
+        set_as_crystal_lattice(*result);
+        return result;
+      }
+
     }
 
     void expose_lattice()
     {
       bp::class_< Crystal::Lattice >( "Lattice" )
-        .def( bp::init< Crystal::Lattice >() )
-        .def_readwrite( "cell",  &Crystal::Lattice::cell )
-        .def_readwrite( "sites", &Crystal::Lattice::sites )
-        .def_readwrite( "scale", &Crystal::Lattice::scale )
-        .def_readwrite( "space_group", &Crystal::Lattice::space_group )
-        .def( "__str__",  &print<Crystal::Lattice> )
-        .def( "fromXML",  &details::fromXML<Crystal::Lattice> )
-        .def( "set_as_crystal_lattice", &details::set_as_crystal_lattice )
-        .def( "make_primitive", &Crystal::Lattice::make_primitive,
-              (bp::arg("self"), bp::arg("tolerance")=-1e0),
-              "Makes lattice primitive, e.g. reduces to smallest unit-cell." )
+        .def(bp::init< Crystal::Lattice >() )
+        .def("__init__", bp::make_constructor(&details::init), "Construct lattice form xml file.\n")
+        .def_readwrite("cell",  &Crystal::Lattice::cell )
+        .def_readwrite("sites", &Crystal::Lattice::sites )
+        .def_readwrite("scale", &Crystal::Lattice::scale )
+        .def_readwrite("space_group", &Crystal::Lattice::space_group )
+        .def("__str__",  &print<Crystal::Lattice> )
+        .def("fromXML",  &details::fromXML<Crystal::Lattice> )
+        .def("set_as_crystal_lattice", &details::set_as_crystal_lattice )
+        .def("make_primitive", &Crystal::Lattice::make_primitive,
+             (bp::arg("self"), bp::arg("tolerance")=-1e0),
+             "Makes lattice primitive, e.g. reduces to smallest unit-cell." )
         .def
         ( 
           "find_space_group", 
@@ -87,7 +123,9 @@ namespace LaDa
           ( bp::arg("self"), bp::arg("tolerance") = types::tolerance ),
           "Finds space-group operations (for a given tolerance), stores them in self.space_group."
         );
-      bp::def( "into_cell", &Crystal::into_cell, (bp::arg("vector"), bp::arg("cell"), bp::arg("inverse")) );
+      bp::register_ptr_to_python< boost::shared_ptr<Crystal::Lattice> >();
+      bp::def( "into_cell", &Crystal::into_cell,
+               (bp::arg("vector"), bp::arg("cell"), bp::arg("inverse")) );
     }
 
   }
