@@ -7,11 +7,11 @@ def main():
 
   from lada import crystal, ce
 
-  lattice = crystal.Lattice("data/ce.xml")
-  fit = ce.Fit()
+  lattice = crystal.Lattice("input.xml")
+  mlclasses = ce.MLClusterClasses("input.xml", False)
+  fit = ce.Fit(mlclasses)
 
   fit.read_directory("data")
-  print fit._data 
 
 if __name__ == "__main__":
   main()

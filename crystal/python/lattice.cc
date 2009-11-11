@@ -86,15 +86,36 @@ namespace LaDa
         }
 
         std::string text;
-        opt::read_file(_path, text);
-
-        boost::shared_ptr<Crystal::Lattice> result(new Crystal::Lattice);
-        if( not result )
+        opt::read_xmlfile(_path, text);
+        TiXmlDocument doc;
+        TiXmlHandle handle( &doc );
+        doc.Parse( text.c_str() );
+        TiXmlElement const *child = handle.FirstChild( "Job" ).Element();
+        if( not child )
         {
-          PyErr_SetString( PyExc_IOError, ("Could read lattice from " + _path + ".\n").c_str() );
+          PyErr_SetString( PyExc_IOError, (_path + " does not contain Job tag.\n").c_str() );
           bp::throw_error_already_set();
           return boost::shared_ptr<Crystal::Lattice>();
         }
+        child =  handle.FirstChild( "Job" ).FirstChild("Lattice").Element();
+        if( not child )
+        {
+          PyErr_SetString( PyExc_IOError, (_path + " does not contain Lattice tag.\n").c_str() );
+          bp::throw_error_already_set();
+          return boost::shared_ptr<Crystal::Lattice>();
+        }
+
+        boost::shared_ptr<Crystal::Lattice> result(new Crystal::Lattice);
+        if( not result->Load(*child) )
+        {
+          std::cerr << text << "\n";
+          if( child ) std::cerr << *child <<"\n";
+          PyErr_SetString( PyExc_IOError, (_path + " does not contain lattice.\n").c_str() );
+          bp::throw_error_already_set();
+          return boost::shared_ptr<Crystal::Lattice>();
+        }
+
+        result->find_space_group();
         set_as_crystal_lattice(*result);
         return result;
       }

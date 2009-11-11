@@ -173,16 +173,18 @@ namespace LaDa
         .def("__setitem__", &setvecitem2)
         .def("__str__", &tostream<CE::t_MLClusterClasses> )
         .def("clear", &CE::t_MLClusterClasses :: clear )
+        .def("__len__", &CE::t_MLClusterClasses::size)
         .def("__call__", &call, "Returns energy of structure.\n")
         .def("pis", &pis, "Return numpy vector corresponding to structure pis.\n");
       
       bp::scope scope = bp::class_<CE::MLClusters>
         ("MLClusters", "An array of equivalent multi-lattice cluster (figure).")
           .def(bp::init<CE::MLClusters const&>())
-          .def("__init__", bp::make_constructor(&init), "Creates a class of equivalent clusters from input.\n" )
+          .def( "__init__", bp::make_constructor(&init),
+                "Creates a class of equivalent clusters from input.\n" )
           .add_property("eci", &CE::MLClusters::eci, "Interaction energy.")
           .def("order", &CE::MLClusters::order, "Returns the order of the cluster.\n")
-          .def("__len__", &CE::MLClusters::size, "Returns the order of the cluster.\n")
+          .def("__len__", &CE::MLClusters::size, "Returns the number of equivalent cluster.\n")
           .def("__str__", &tostream<CE::MLClusters>, "Returns the order of the cluster.\n")
           .def("__getitem__", &getvecitem, bp::return_internal_reference<>())
           .def("__setitem__", &setvecitem);

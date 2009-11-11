@@ -26,6 +26,6 @@ for filename in os.listdir("."):
   if filename == "LDAs.dat": continue
   try:
    structure = crystal.read_structure( filename )
-   print   "%45s %8.4f " % ( structure.name, functional(structure) )
+   print   "%45s %8.4f " % ( structure.name, functional.chemical(structure) )
   except: continue
       

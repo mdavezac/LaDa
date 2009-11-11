@@ -38,14 +38,14 @@ namespace LaDa
 
       // reads cell first
       child = parent->FirstChildElement( "row" );
-      for (i=0 ; child; i++, child = child->NextSiblingElement("row") )
+      for (i=0 ; child; ++i, child = child->NextSiblingElement("row") )
       {
         child->Attribute("x", &d); vec(0) = d;
         child->Attribute("y", &d); vec(1) = d;
         child->Attribute("z", &d); vec(2) = d;
         cell.set_row(i, vec);
       }
-      __DOASSERT( i != 3, "Incorrect cell in lattice tag on input.\n" )
+      LADA_DOASSERT( i == 3, "Incorrect cell in lattice tag on input: " << i << *parent << "\n"; )
 
       // reads scale if it exist
       scale = 0;

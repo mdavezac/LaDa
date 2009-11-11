@@ -24,7 +24,7 @@ class Fit():
     self.structures = []
     self.onoffs = [] 
 
-  def add_structure(structure):
+  def add_structure(self, structure):
     from lada.ce import find_pis
     import numpy
     import pyublas
@@ -32,27 +32,35 @@ class Fit():
     nclasses = len(self.classes)
     # resize array to fit structure.
     if self._data == None: 
-      self._data = numpy.arange(nclasses+1).reshape(1, nclasses+1)
-    else: numpy.resize(self._data, (self.shape[0]+1, self.shape[1]))
+      self._data = numpy.array( [float(0) for o in xrange(nclasses+1)] ).reshape(1, nclasses+1)
+    else:
+      self._data = numpy.resize(self._data, (self._data.shape[0]+1, self._data.shape[1]))
 
     # computes pis and assigns them.
-    self._data[-1,:nself.classes] = ce.find_pis(self.classes, structure)
+    self._data[-1,:len(self.classes)] = self.classes.pis(structure)
     # records energy.
     self._data[-1,-1] = structure.energy
+    print self._data[-1]
 
-  def add_directory(path):
+  def read_directory(self, path):
     import os.path
+    import re
+    from lada import crystal
 
     assert os.path.exists(path), "%s does not exist.\n" % (path)
     assert os.path.isdir(path), "%s is not a directory.\n" % (path)
+    LDAs_filename = os.path.join(path, "LDAs.dat")
+    assert os.path.exists(LDAs_filename), "%s does not exist.\n" % (LDAs_filename)
 
-    
-    for filename in os.listdir("."):
-      structure = None
-      try: structure = crystal.read_structure( filename )
-      except: continue
+    LDAs = open(LDAs_filename, "r")
+    for line in LDAs:
+      if re.match("\s*#", line) != None: continue 
+      filename = line.split()[0] 
+      structure = crystal.read_structure( os.path.join(path, filename) )
+      structure.energy = float(line.split()[1])
       structure.weight = 1e0
       self.add_structure(structure)
+    
 
 
      
