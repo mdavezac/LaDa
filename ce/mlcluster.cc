@@ -92,19 +92,55 @@ namespace LaDa
       return  Fuzzy::is_zero(_a.pos(2)-_b.pos(2));
     }
     
+    // Compares for same origin.
+    bool compare( MLCluster const &_a, MLCluster const &_b )
+    {
+      if( _a.origin.site != _b.origin.site ) return false;
+      LADA_ASSERT( Fuzzy::is_zero( atat::norm2(_a.origin.pos-_b.origin.pos) ), 
+                   "Inconsistent origin positions.\n" )
+
+      MLCluster::t_Spins :: const_iterator i_spin = _a.begin();
+      MLCluster::t_Spins :: const_iterator const i_spin_end = _a.end();
+      for(; i_spin != i_spin_end; ++i_spin)
+        if( _b.end() == std::find(_b.begin(), _b.end(), *i_spin) ) return false;
+      return true;
+    }
+    
     bool MLCluster::operator==( MLCluster const & _c ) const
     {
-      if( origin != _c.origin ) return false;
-      LADA_ASSERT( Fuzzy::is_zero( atat::norm2(origin.pos-_c.origin.pos) ), 
-                   "Inconsistent origin positions.\n" )
       if( size() != _c.size() ) return false;
 
-      t_Spins :: const_iterator i_spin = _c.begin();
-      t_Spins :: const_iterator const i_spin_end = _c.end();
+      // compares with original origin.
+      if( compare(*this, _c) ) return true;
+
+      // gets lattice for origin shifts.
+      LADA_ASSERT(Crystal::Structure::lattice, "Lattice not set.\n");
+      Crystal::Lattice const &lattice = *Crystal::Structure::lattice;
+
+      // compares with shifted origins.
+      t_Spins :: const_iterator i_spin = begin();
+      t_Spins :: const_iterator const i_spin_end = end();
       for(; i_spin != i_spin_end; ++i_spin)
-        if( end() == std::find(begin(), end(), *i_spin) )
-          return false;
-      return true;
+      {
+        if( _c.origin.site != i_spin->site ) continue;
+        MLCluster shifted;
+        shifted.origin.site = i_spin->site; 
+        shifted.origin.pos = lattice.sites[i_spin->site].pos;
+        t_Spins :: const_iterator i_spin_add = begin();
+        for(; i_spin_add != i_spin_end; ++i_spin_add)
+          if(i_spin == i_spin_add)
+          {
+            MLCluster::Spin const spin = {origin.site, -i_spin->pos};
+            shifted.push_back(spin);
+          }
+          else
+          {
+            MLCluster::Spin const spin = {i_spin_add->site, i_spin_add->pos-i_spin->pos};
+            shifted.push_back(spin);
+          }
+        if( compare(shifted, _c) ) return true;
+      }
+      return false;
     }
 
     types::t_real MLCluster::operator()( Crystal::Structure const &_str, 
@@ -149,46 +185,23 @@ namespace LaDa
                                          std::vector< std::vector<size_t> > const &_map,
                                          Crystal::t_SmithTransform const &_transform ) const
     {
+      if( _atom.site != origin.site ) return 0;
+
       LADA_ASSERT(_str.lattice, "Lattice not set.\n");
       LADA_ASSERT(_map.size() == _str.lattice->sites.size(),
                   "Atomic map and lattice are not coherent.\n");
       Crystal::Lattice const &lattice = *_str.lattice;
-      types::t_real result(0);
-      if( _atom.site == origin.site ) // atom is  at cluster origin.
-      {
-        result = _atom.type;
-        t_Spins::const_iterator i_spin = begin();
-        t_Spins::const_iterator const i_spin_end = end();
-        for(; i_spin != i_spin_end; ++i_spin)
-        {
-          LADA_ASSERT(i_spin->site < lattice.sites.size(), "Index out-of-range.\n");
-          atat::rVector3d const vec(_atom.pos+i_spin->pos-lattice.sites[i_spin->site].pos);
-          result *= find_spin(vec, i_spin->site, _str, _map, _transform);
-        }
-      } 
 
-      // atom may be at cluster branch.
-      t_Spins::const_iterator i_orig = begin();
-      t_Spins::const_iterator const i_orig_end = end();
-      for(; i_orig != i_orig_end; ++i_orig)
+      types::t_real result(_atom.type);
+      t_Spins::const_iterator i_spin = begin();
+      t_Spins::const_iterator const i_spin_end = end();
+      for(; i_spin != i_spin_end; ++i_spin)
       {
-        LADA_ASSERT(i_orig->site < lattice.sites.size(), "Index out-of-range.\n")
-        if( _atom.site != i_orig->site ) continue;
-
-        atat::rVector3d const center(_atom.pos-i_orig->pos);
-        types::t_real intermediate
-          = find_spin(center-lattice.sites[origin.site].pos, origin.site, _str, _map, _transform);
-        t_Spins::const_iterator i_spin = begin();
-        t_Spins::const_iterator const i_spin_end = end();
-        for(; i_spin != i_spin_end; ++i_spin)
-        {
-          LADA_ASSERT(i_spin->site < lattice.sites.size(), "Index out-of-range.\n");
-          atat::rVector3d const vec( center + i_spin->pos - lattice.sites[i_spin->site].pos );
-          intermediate *= find_spin(vec, i_spin->site, _str, _map, _transform);
-        }
-        result += intermediate;
+        LADA_ASSERT(i_spin->site < lattice.sites.size(), "Index out-of-range.\n");
+        atat::rVector3d const vec(_atom.pos+i_spin->pos-lattice.sites[i_spin->site].pos);
+        result *= find_spin(vec, i_spin->site, _str, _map, _transform);
       }
-
+      
       return result;
     }
 

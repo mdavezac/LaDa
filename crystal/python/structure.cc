@@ -60,7 +60,7 @@ namespace LaDa
     }
 
     template< class BULL >
-    Crystal::Lattice* return_crystal_lattice( BULL & )
+    Crystal::Lattice const* return_crystal_lattice( BULL & )
     {
       if( not Crystal::Structure::lattice )
       {
@@ -195,10 +195,17 @@ namespace LaDa
               "Loads a structure from an XML file." )
         .def( "toXML",  &XML::to<Crystal::Structure>, bp::arg("file"),
               "Adds a tag to an XML file describing this structure."  )
-        .def( "lattice", &return_crystal_lattice< Crystal::Structure >,
-              bp::return_value_policy<bp::reference_existing_object>(),
-              "References the lattice within which this structure is defined."
-              " Read, but do not write to this object." )
+        .add_property
+        ( 
+          "lattice",
+          bp::make_function
+          (
+            &return_crystal_lattice< Crystal::Structure >,
+            bp::return_value_policy<bp::reference_existing_object>()
+          ),
+          "References the lattice within which this structure is defined."
+          " Read, but do not write to this object." 
+        )
         .def( "concentration", &Crystal::Structure::get_concentration, "Returns concentration." )
         .def( bp::self == bp::other<Crystal::Structure>() )
         .def( "xcrysden", &xcrysden, "Outputs in XCrysden format." )
@@ -223,11 +230,18 @@ namespace LaDa
               "Loads a structure from an XML file." )
         .def( "toXML",  &XML::to< Crystal::TStructure<std::string> >, bp::arg("file"),
               "Adds a tag to an XML file describing this structure."  )
-        .def( "lattice", &return_crystal_lattice< Crystal::TStructure<std::string> >,
-              bp::return_value_policy<bp::reference_existing_object>(),
-              "References the lattice within which this structure is defined."
-              "Read, but do not write to this object." )
         .def( "xcrysden", &xcrysden_str, "Outputs in XCrysden format." )
+        .add_property
+        ( 
+          "lattice",
+          bp::make_function
+          (
+            &return_crystal_lattice< Crystal::Structure >,
+            bp::return_value_policy<bp::reference_existing_object>()
+          ),
+          "References the lattice within which this structure is defined."
+          " Read, but do not write to this object." 
+        )
         .def_pickle( pickle_structure< Crystal::TStructure<std::string> >() );
       bp::def("to_cartesian", &Crystal::to_cartesian<std::string>,
               "Transforms a structure from cartesian to fractional coordinates.\n" );

@@ -28,6 +28,7 @@ namespace LaDa
             using CE::Builder<T_HARMONIC>::lattice;
             void read_clusters( std::string const& _path );
             void clear_clusters() { clusters->clear(); }
+            std::vector<CE::Cluster> const & get_clusters() const { return *clusters; }
         };
       
       template< class T_HARMONIC >
@@ -256,7 +257,13 @@ namespace LaDa
             .def( "chemical", &call_str<T_HARMONIC, 1>, "Computes CE." )
             .def( "load", &load_builder<T_HARMONIC>, "Loads functional from XML.")
             .def( "read_clusters", &Functional<T_HARMONIC>::read_clusters )
-            .def( "clear_clusters", &Functional<T_HARMONIC>::read_clusters );
+            .def( "clear_clusters", &Functional<T_HARMONIC>::read_clusters )
+            .add_property
+            ( 
+               "clusters", 
+               bp::make_function( &Functional<T_HARMONIC>::get_clusters, 
+                                  bp::return_internal_reference<>() )
+            );
         }
     } // namespace detailsCE
   } // namespace Python

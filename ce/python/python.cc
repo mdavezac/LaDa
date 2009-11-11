@@ -15,7 +15,7 @@
 #include "mlcluster.hpp"
 #include "mlclusters.hpp"
 
-BOOST_PYTHON_MODULE(ce)
+BOOST_PYTHON_MODULE(_ce)
 {
   LaDa::Python::expose_ce();
   LaDa::Python::expose_clusters();
