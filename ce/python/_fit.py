@@ -20,9 +20,10 @@ class Fit():
 
 
     self.classes = ce.MLClusterClasses(clusters)
-    self._data = None
+    self._pis = None
+    self._energies = None
+    self._onofss = None
     self.structures = []
-    self.onoffs = [] 
 
   def add_structure(self, structure):
     from lada.ce import find_pis

@@ -236,7 +236,7 @@ namespace LaDa
           "lattice",
           bp::make_function
           (
-            &return_crystal_lattice< Crystal::Structure >,
+            &return_crystal_lattice< Crystal::TStructure<std::string> >,
             bp::return_value_policy<bp::reference_existing_object>()
           ),
           "References the lattice within which this structure is defined."
