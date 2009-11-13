@@ -25,9 +25,7 @@ def main():
   errors = ce.leave_one_out(fit)
   npreds, nstr = errors.shape
   prediction = errors[ numpy.arange(errors.shape[0]), numpy.arange(errors.shape[0]) ]
-  x_axis = [ [j for i in xrange(nstr) if i != j ] for j in xrange(npreds) ] 
-  y_axis = [ [i for i in xrange(nstr) if i != j ] for j in xrange(npreds) ] 
-  training = errors[x_axis, y_axis]
+  training = errors[ numpy.array([[(j,i) for i in xrange(nstr) if i != j] for j in xrange(npreds)]) ]
   t2  = time()
 
   print x
