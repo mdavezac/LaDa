@@ -204,7 +204,7 @@ class PairRegulatedFit(Fit):
     else: normalization = sqrt(self._tcoef / normalization)
 
     # now constructs matrix.
-    for i, data in enumerate(weights): A[ i, data[0] ] = data[1]
+    for i, data in enumerate(weights): A[ i, data[0] ] = data[1] * normalization
 
   def __call__(self, A = None, b = None):
     """ Returns observation matrix A and target vector b.
@@ -236,8 +236,35 @@ class PairRegulatedFit(Fit):
 
     return A, b 
 
-    
+def leave_one_out( fitter ):
+  import numpy
 
+  ncls, nstr = fitter.size()  
+
+  # matrix which holds errors for all structures. 
+  errors = numpy.zeros( (nstr,nstr), dtype='float64')
+  # fitting matrices from which to get errors.
+  fitter.extinguish_structure() 
+  A_all, b_all = fitter()
+  A_all = A_all[:nstr, :].copy()
+  b_all = b_all[:nstr].copy()
+
+  # loop over fitting sets.
+  for i in xrange(nstr):
+    fitter.extinguish_structure(i)
+    A, b = fitter()
+    x, residues, rank, s = numpy.linalg.lstsq(A, b)
+    errors[i, :] = numpy.dot(A_all, x) - b_all
+
+  return errors
+
+
+      
+
+
+  
+
+  
 
 
      

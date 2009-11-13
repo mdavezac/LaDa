@@ -7,24 +7,32 @@ def main():
 
   from boost import mpi
   from lada import crystal, ce
-  import numpy.linalg
+  import numpy
+  from math import fabs
+  from time import time
 
 
+  t0  = time()
   lattice = crystal.Lattice("input.xml")
   mlclasses = ce.MLClusterClasses("input.xml", False)
-  fit = ce.PairRegulatedFit(mlclasses)
+  fit = ce.PairRegulatedFit(mlclasses, alpha=2, tcoef=1)
 
   fit.read_directory("data")
+  A, b = fit()
+  x, residual, rank, s = numpy.linalg.lstsq(A, b)
+  t1  = time()
 
-  print fit._pis.shape
-  print len(fit._str_onoff)
-  print len(fit._cls_onoff)
+  errors = ce.leave_one_out(fit)
+  npreds, nstr = errors.shape
+  prediction = errors[ numpy.arange(errors.shape[0]), numpy.arange(errors.shape[0]) ]
+  x_axis = [ [j for i in xrange(nstr) if i != j ] for j in xrange(npreds) ] 
+  y_axis = [ [i for i in xrange(nstr) if i != j ] for j in xrange(npreds) ] 
+  training = errors[x_axis, y_axis]
+  t2  = time()
 
-
-  A,b = fit()
-  x, residues, rank, s = numpy.linalg.lstsq(A, b)
   print x
-  print residues
-
+  print "Training error: ", numpy.average(training*training)
+  print "Prediction  error: ", numpy.average(prediction*prediction)
+  print t2 - t1, t1 - t0
 if __name__ == "__main__":
   main()
