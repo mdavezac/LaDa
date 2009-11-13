@@ -13,6 +13,7 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/format.hpp>
 
 #include <boost/python/str.hpp>
 #include <boost/python/def.hpp>
@@ -112,9 +113,14 @@ namespace LaDa
         }
 
         // prints name, scale, and cell.
-        file << _structure.name  << "\n"
-             << _structure.scale << "\n"
-             << (~_structure.cell)  << "\n"; // prints lines of lattice vectors, not cell per se.
+        file << boost::format("%s\n%.18f\n"
+                              "  %25.18f  %25.18f  %25.18f  \n"
+                              "  %25.18f  %25.18f  %25.18f  \n"
+                              "  %25.18f  %25.18f  %25.18f  \n")
+                  % _structure.name % _structure.scale
+                  % _structure.cell(0,0) % _structure.cell(1,0) % _structure.cell(2, 0)
+                  % _structure.cell(0,1) % _structure.cell(1,1) % _structure.cell(2, 1)
+                  % _structure.cell(0,2) % _structure.cell(1,2) % _structure.cell(2, 2);
 
         // print nb per specie
         foreach( std::string const sp, species )
@@ -136,7 +142,8 @@ namespace LaDa
           for( size_t N(0); i_first != i_end; ++i_first )
             if( i_first->type == sp )
             {
-              file << inv * i_first->pos << "\n";
+              atat::rVector3d const vec(inv * i_first->pos); 
+              file << boost::format("  %25.18f %25.18f %25.18f\n") % vec(0) % vec(1) %vec(2);
             }
         }
         file.close();

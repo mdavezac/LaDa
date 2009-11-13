@@ -11,12 +11,16 @@ class Fit():
         clusters should be a ce.MLClusterClass instance, or convertible. A copy
         of clusters is assigned to self.classes
     """
-    import copy
     from lada import ce 
+    import numpy
 
 
-    self._data = None
-    self._classes = clusters
+    self._pis       = None
+    self._energies  = None
+    self._weights   = None
+    self._str_onoff = None
+    self._cls_onoff = numpy.array([True for u in clusters], dtype=bool)
+    self._classes = ce.MLClusterClasses(clusters)
 
   def __call__(self, A = None, b = None):
     """ Returns observation matrix A and target vector b.
@@ -24,37 +28,31 @@ class Fit():
         A and b can then be used in linear-least square fit method numpy.linalg.lstsq(A,b)
     """
 
-    import numpy.linalg
+    import numpy
     import pyublas
 
+    # gets array lengths
     x, y = 0, 0
-    for u in self._data[1:,-1]:
+    for u in self._str_onoff:
       if u : x += 1
-    for u in self._data[0,:-3]:
+    for u in self._cls_onoff:
       if u : y += 1
 
-    assert A == None or A.shape == (x, y), "A does not have correct shape.\n"
-    assert b == None or len(b) == x, "b does not have correct length.\n" 
       
-    if A == None and b == None:
-      A = numpy.narray([0e0 for i in range(x*y)]).shape(x,y)
-      b = numpy.narray([0e0 for i in range(y)]).shape(1,y)
-    elif A == None: 
-      x, y = 0, len(b) 
-      A = numpy.narray([0e0 for i in range(x*y)]).shape(x,y)
-    elif A == None: 
-      y = A.shape[0]
-      b = numpy.narray([0e0 for i in range(y)]).shape(1,y)
+    # creates arrays if they are not provided.
+    if A == None: A = numpy.zeros((x,y), dtype='float64')
+    if b == None: b = numpy.zeros((x,), dtype='float64')
 
-    str_ons = self._data[:,-1]
-    cls_ons = self._data[0,:]
+    # checks arrays have correct size
+    assert A.shape == (x, y), "A does not have correct shape.\n"
+    assert len(b) == x, "b does not have correct length.\n" 
 
-    weights = self._data[str_on,-2]
-    mat = self._data[str_ons, cls_ons].copy()
-    vec = self._data[str_ons, -3].copy()
-    for i in range(len(b)):
-      mat[i] *= w[i] 
-      vec[i,:] *= w[i]
+    # fills arrays from local data.
+    mat = self._pis[self._str_onoff,:][:,self._cls_onoff].copy()
+    vec = self._energies[self._str_onoff].copy()
+    weights = self._weights[self._str_onoff]
+    for i in range(len(b)): mat[i,:] *= weights[i] 
+    vec *= weights
 
     return A+mat, b+vec
 
@@ -71,20 +69,23 @@ class Fit():
     import pyublas
     
     # resize array to fit structure.
-    if self._data == None:  # on-offs for clusters.
+    if self._pis == None:  # on-offs for clusters.
       nclasses = len(self._classes)
-      self._data = numpy.array( [float(1) for o in xrange(nclasses+3)] ).reshape(1, nclasses+3)
-      self._data[:] = True
-      self._data[-3:] = False
-
-    self._data = numpy.resize(self._data, (self._data.shape[0]+1, self._data.shape[1]))
-    print self._data
+      self._pis = numpy.zeros((1, nclasses), dtype='float64').copy()
+      self._energies = numpy.zeros((1,), dtype='float64').copy()
+      self._weights = numpy.zeros((1,), dtype='float64').copy()
+      self._str_onoff = numpy.array([True], dtype=bool)
+    else: 
+      self._energies.resize((len(self._energies)+1,))
+      self._weights.resize((len(self._weights)+1,))
+      self._str_onoff.resize((len(self._str_onoff)+1,))
+      self._pis.resize((self._pis.shape[0]+1, self._pis.shape[1]))
 
     # computes pis and adds data
-    self._data[-1,:-3] = self._classes.pis(structure)
-    self._data[-1,-3] = structure.energy
-    self._data[-1,-2] = structure.weight
-    self._data[-1,-1] = True
+    self._pis[-1,:] = self._classes.pis(structure)
+    self._energies[-1] = structure.energy
+    self._weights[-1] = structure.weight
+    self._str_onoff[-1] = True
 
   def extinguish_structure(self, n = None, on = "all"):
     """ Extinguishes structure at index n (n can be a list of indices).
@@ -95,8 +96,8 @@ class Fit():
         If n is None and on == all, then  all structures are turned on.
     """
 
-    if on == "all": self._data[1:, -1] = True
-    if n != None: self._data[n+1, -1] = False
+    if on == "all": self._str_onoff[:] = True
+    if n != None: self._str_onoff[n] = False
 
   def extinguish_cluster(self, n = None, on = "all"):
     """ Extinguishes cluster class at index n (n can be a list of indices).
@@ -104,8 +105,8 @@ class Fit():
         If n is None and on == all, then  all cluster classes are turned on.
     """
 
-    if on == "all": self._data[0, :-3] = True
-    if n != None: self._data[0, n] = False
+    if on == "all": self._cls_onoff[:] = True
+    if n != None: self._cls_onoff[n] = False
  
   def assign_genome(self, n):
     """ Assigns a bitstring genome for fitting.
@@ -115,17 +116,17 @@ class Fit():
 
     if hasattr(n, "shape"):
       assert len(n.shape) == 1, "Wrong shape for parameter n.\n" 
-    if hasattr(n, "__len__"):
-      assert len(n) == self._data.shape[0]-3, "n too long.\n" 
-    self._data[0, :-3] = n
+    self._cls_onoff[:] = n
 
   def set_weight(self, n, weight): 
     """ Sets the weigh of structure at index n (n can be a list of indices.) """
-    self._data[n, -2] = weight
+    if hasattr(n, "shape"):
+      assert len(n.shape) == 1, "Wrong shape for parameter n.\n" 
+    self._weights[n] = weight
 
   def size(self): 
     """ Returns the total number of cluster and structures (whether on or off). """
-    return self._data.shape[0]-1, self._data.shape[1]-3
+    return len(self._cls_onoff), len(self._str_onoff)
 
 
 
@@ -150,8 +151,93 @@ class Fit():
       structure.energy = float(line.split()[1])
       structure.weight = 1e0
       self.add_structure(structure)
-    print self._data 
     
+
+
+class PairRegulatedFit(Fit):
+  """ CE with pair regularisation.
+      This class returns (__call__) observation and target arrays for use with
+      linear least square fit routine from numpy.linalg.
+      The last observations are for regularisation.
+      For some reason (a bug that lasted long enough to become a feature?)
+      there are two types of reugalarization used at NREL. They differ only by
+      in the exact normalization (or equivalently, they differ in the unit of tcoef).
+      self.alpha and self.tcoef parameterize the regularization.
+  """
+
+  def __init__(self, clusters, alpha = 2, tcoef = 1, type="laks"):
+    """ alpha and tcoef are the regularization coefficients. """
+    from lada import atat
+
+    # constructs from base.
+    Fit.__init__(self, clusters)
+
+    # now adds regulatization.
+    self._type = type
+    self._alpha = alpha
+    self._tcoef = tcoef
+
+    # and initializes regularization data.
+    self._norms = []
+    i=0
+    for i, class_ in enumerate(self._classes): 
+      if class_.order() != 2: continue
+      self._norms.append( (i,atat.norm2( class_[0].origin.pos - class_[0][0].pos)) )
+      
+  def _compute_weights(self, A):
+    from math import pow, sqrt
+     
+    assert len(self._norms) == A.shape[0], "Wrong size for A."
+
+    weights = []
+    normalization = 0e0
+
+    # Constructs coefficients
+    coef = 4e0
+    if self._type != "laks": coef = 1e0
+    for i, norm in self._norms: 
+      w = pow( norm, self._alpha ) * 0.5e0
+      weights.append( (i, sqrt(w)) )
+      normalization += w * coef
+
+    if self._type != "laks": normalization = sqrt(self._tcoef) / normalization
+    else: normalization = sqrt(self._tcoef / normalization)
+
+    # now constructs matrix.
+    for i, data in enumerate(weights): A[ i, data[0] ] = data[1]
+
+  def __call__(self, A = None, b = None):
+    """ Returns observation matrix A and target vector b.
+        if A or b are given, adds to the pre-existing matrix and vector.
+        A and b can then be used in linear-least square fit method numpy.linalg.lstsq(A,b)
+        A and b (if given) should be large enough to accomodate for pair regularization.
+    """
+    import numpy
+
+
+    # gets array lengths
+    x, y = 0, 0
+    for u in self._str_onoff:
+      if u : x += 1
+    for u in self._cls_onoff:
+      if u : y += 1
+    xreg = x + len(self._norms)
+
+      
+    # creates arrays if they are not provided.
+    if A == None: A = numpy.zeros((xreg,y), dtype='float64')
+    if b == None: b = numpy.zeros((xreg,), dtype='float64')
+
+    # calls base class
+    A[:x,:], b[:x] = Fit.__call__(self, A[:x,:], b[:x]) 
+
+    # adds regularization
+    self._compute_weights(A[x:,:])
+
+    return A, b 
+
+    
+
 
 
      

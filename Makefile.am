@@ -31,7 +31,7 @@ if DOSEPARABLE
   CEDIR = ce
 endif
 if DOPYTHON
-  PYTHONDIR = python
+  PYTHONDIR = python ga vasp
 endif
 if DOCE
   CEDIR = ce
@@ -45,9 +45,9 @@ endif
 if DOENUM
   ENUMDIR = enum
 endif
-SUBDIRS = $(PYTHONDIR) $(MPISUBDIR) atat physics opt minimizer crystal print $(CEDIR) $(VFFSUBDIR) \
+SUBDIRS = atat physics opt minimizer crystal print $(CEDIR) $(VFFSUBDIR) \
 	  $(PESCANSUBDIR) $(LAPACKDIR) $(DARWINSUBDIR) $(SEPARABLEDIR) \
-	  factory $(MODELSDIR) $(POTENTIALSDIR) $(ENUMDIR) ga
+	  factory $(MODELSDIR) $(POTENTIALSDIR) $(ENUMDIR) $(MPISUBDIR) $(PYTHONDIR) 
 revision.h: force
 	@cd $(top_srcdir); scripts/max_revision.pl
 force: ;
