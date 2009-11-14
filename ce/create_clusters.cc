@@ -20,8 +20,8 @@ namespace LaDa
   namespace CE
   {
     boost::shared_ptr<t_MLClusterClasses>
-      create_clusters( Crystal::Lattice const &_lat, size_t _order,
-                       size_t _neighbor, size_t _origin )
+      create_clusters( Crystal::Lattice const &_lat, size_t const _order,
+                       size_t const _neighbor, size_t const _origin )
       {
         boost::shared_ptr<t_MLClusterClasses> result(new t_MLClusterClasses);
         create_clusters(*result, _lat, _order, _neighbor, _origin);
@@ -29,13 +29,14 @@ namespace LaDa
       }
 
     void create_clusters( t_MLClusterClasses &_out, Crystal::Lattice const &_lat,
-                          size_t _order, size_t _neighbor, size_t _origin )
+                          size_t const _order, size_t const _neighbor, size_t const _origin )
     {
       _out.clear();
-      // Creates a class of clusters.
+
+      // J0
       MLClusters clusters; 
       clusters.eci = 0e0;
-      if( _order == 1 )
+      if( _order == 0u )
       {
         _out.push_back( clusters );
         return;
@@ -46,13 +47,14 @@ namespace LaDa
       CE::MLCluster cluster; 
       cluster.origin.site = _origin;
       cluster.origin.pos = _lat.sites[_origin].pos;
-      if( _order < 2 ) 
+      if( _order == 1u )  // J1
       {
-        clusters.push_back(cluster);
+        clusters.init(cluster);
+        _out.push_back(clusters);
         return;
       };
 
-      LADA_ASSERT( _neighbor == 0, "Incoherent arguments.\n");
+      LADA_ASSERT( _neighbor != 0u, "Incoherent arguments.\n");
       cluster.resize(_order-1);
 
       // gets all neighbors.
@@ -77,6 +79,7 @@ namespace LaDa
       std::vector<Crystal::Neighbor> neighbors;
       do
       { // creates vector of neighbors
+        std::cout << "size_try: " << size_try << "\n";
         Crystal::Neighbors neighbors_(size_try, cluster.origin.pos);
         Crystal::Neighbors::const_iterator i_first = neighbors_.begin(_lat);
         Crystal::Neighbors::const_iterator i_begin = i_first;
@@ -91,13 +94,14 @@ namespace LaDa
           current_norm = i_first->distance;
           ++s;
         }
-        if( s != _neighbor ) { size_try << 1; continue; } // did not find all neighbors.
+        if( s != _neighbor ) { size_try <<= 1; continue; } // did not find all neighbors.
 
         neighbors.reserve(n);
         std::copy(i_begin, i_first, std::back_inserter(neighbors));
         break;
       }
       while(true);
+      std::cout << "done neighbors.\n";
       // creates an order-dimensional iterator 
       opt::NDimIterator< size_t, std::less<size_t> > iterator;
       for( size_t i(1); i < _order; ++i )
@@ -106,15 +110,11 @@ namespace LaDa
       do
       {
         // performs loop over i < j < k < ... only to avoid double counting.
-        bool do_iterate = false;
-        for(size_t i(1); i < _order; ++i)
-        {
-          if( iterator.access(i) > iterator.access(i-1) ) continue;
-          
-          do_iterate = true;
-          break;
-        }
-        if( do_iterate ) continue;
+        bool dont_iterate = true;
+        for(size_t i(1); i < _order-1 and dont_iterate; ++i)
+          if( iterator.access(i) <= iterator.access(i-1) ) dont_iterate = false;
+        if( not dont_iterate ) continue;
+        std::cout << 1u << "\n";
 
         // creates cluster.
         for(size_t i(0); i < _order-1; ++i)
@@ -123,19 +123,24 @@ namespace LaDa
           cluster[i].site = neighbors[iterator.access(i)].index; 
         }
 
+        std::cout << 2u << "\n";
         // now checks whether it should be part of a cluster class somewhere.
         t_MLClusterClasses::iterator i_class = _out.begin();
         t_MLClusterClasses::iterator const i_class_end = _out.end();
         for(; i_class != i_class_end; ++i_class );
           if( i_class->end() != std::find(i_class->begin(), i_class->end(), cluster) )
             break;
+        std::cout << 3u << "\n";
 
         // adds new cluster.
         if( i_class == i_class_end ) 
         {
+        std::cout << 4u << "\n";
           clusters.init( cluster );
           _out.push_back( clusters );
+          std::cout << "_out size: " << _out.size() << "\n";
         }
+        std::cout << 5u << "\n";
 
       } while(++iterator);
     }

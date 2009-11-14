@@ -95,6 +95,8 @@ namespace LaDa
     {
       if( _class.size() == 0 )
         return _stream << "Cluster class J0: " << _class.eci << "\n";
+      if( _class.order() == 1 )
+        return _stream << "Cluster class J1: " << _class.eci << "\n";
 
       _stream << "Cluster Class: " << _class.eci << "\n";
       std::ostringstream stream;

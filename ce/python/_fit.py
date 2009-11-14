@@ -258,18 +258,3 @@ def leave_one_out( fitter ):
 
   return errors
 
-
-      
-
-
-  
-
-  
-
-
-     
-
-    
-    
-
-

@@ -8,6 +8,8 @@
 #include <iostream>
 #include <sstream>
 #include <complex>
+#include <algorithm>
+#include <iterator>
 
 #include <boost/python/class.hpp>
 #include <boost/python/register_ptr_to_python.hpp>
@@ -54,7 +56,8 @@ namespace LaDa
       }
       _vec[ size_t( _i < 0 ? types::t_int(dim) + _i: _i ) ] = _a;
     }
-    CE::t_MLClusterClasses::const_reference getvecitem2( const CE::t_MLClusterClasses& _vec, types::t_int _i )
+    CE::t_MLClusterClasses::const_reference getvecitem2( const CE::t_MLClusterClasses& _vec,
+                                                         types::t_int _i )
     {
       const types::t_int dim(  _vec.size() );
       if( _i >= dim or _i <= -dim )
@@ -135,14 +138,32 @@ namespace LaDa
         result->push_back( bp::extract<CE::MLClusters>( _ob[i] ) );
       return result;
     }
+    template<class T_TYPE>
+      void extend( T_TYPE &_classes, boost::python::list const & _list )
+      {
+        namespace bp = boost::python;
+        size_t const N( bp::len(_list) );
+        for(size_t i(0); i < N; ++i)
+          _classes.push_back( bp::extract<typename T_TYPE::value_type>(_list[i]) );
+      }
+
+    template<class T_TYPE>
+      void extend2( T_TYPE &_classes, T_TYPE const &_b )
+      {
+        _classes.reserve( _classes.size() + _b.size() );
+        std::copy( _b.begin(), _b.end(), std::back_inserter(_classes) ); 
+      }
+
 
     void expose_mlclusters()
     {
       namespace bp = boost::python;
       bp::register_ptr_to_python< boost::shared_ptr<CE::t_MLClusterClasses> >();
       bp::class_<CE::t_MLClusterClasses>
-        ("MLClusterClasses", "An array of arrays of (presumably) equivalent multi-lattice clusters.\n")
-        .def( "__init__", bp::make_constructor( &copy_constructor ) )
+       (
+          "MLClusterClasses", 
+          "An array of arrays of (presumably) equivalent multi-lattice clusters.\n"
+       ).def( "__init__", bp::make_constructor( &copy_constructor ) )
         .def( "__init__", bp::make_constructor( &object_constructor ) )
         .def
         (
@@ -175,7 +196,9 @@ namespace LaDa
         .def("clear", &CE::t_MLClusterClasses :: clear )
         .def("__len__", &CE::t_MLClusterClasses::size)
         .def("__call__", &call, "Returns energy of structure.\n")
-        .def("pis", &pis, "Return numpy vector corresponding to structure pis.\n");
+        .def("pis", &pis, "Return numpy vector corresponding to structure pis.\n")
+        .def("extend", &extend<CE::t_MLClusterClasses>)
+        .def("extend", &extend2<CE::t_MLClusterClasses>);
       
       bp::scope scope = bp::class_<CE::MLClusters>
         ("MLClusters", "An array of equivalent multi-lattice cluster (figure).")
@@ -183,11 +206,13 @@ namespace LaDa
           .def( "__init__", bp::make_constructor(&init),
                 "Creates a class of equivalent clusters from input.\n" )
           .add_property("eci", &CE::MLClusters::eci, "Interaction energy.")
-          .def("order", &CE::MLClusters::order, "Returns the order of the cluster.\n")
+          .add_property("order", &CE::MLClusters::order, "Order of the cluster.\n")
           .def("__len__", &CE::MLClusters::size, "Returns the number of equivalent cluster.\n")
           .def("__str__", &tostream<CE::MLClusters>, "Returns the order of the cluster.\n")
           .def("__getitem__", &getvecitem, bp::return_internal_reference<>())
-          .def("__setitem__", &setvecitem);
+          .def("__setitem__", &setvecitem)
+          .def("extend", &extend<CE::MLClusters>)
+          .def("extend", &extend2<CE::MLClusters>);
       bp::register_ptr_to_python< boost::shared_ptr<CE::MLClusters> >();
     }
 

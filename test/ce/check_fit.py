@@ -15,7 +15,7 @@ def main():
   t0  = time()
   lattice = crystal.Lattice("input.xml")
   mlclasses = ce.MLClusterClasses("input.xml", False)
-  fit = ce.PairRegulatedFit(mlclasses, alpha=2, tcoef=1)
+  fit = ce.PairRegulatedFit(mlclasses, alpha=3, tcoef=1)
 
   fit.read_directory("data")
   A, b = fit()
@@ -25,12 +25,14 @@ def main():
   errors = ce.leave_one_out(fit)
   npreds, nstr = errors.shape
   prediction = errors[ numpy.arange(errors.shape[0]), numpy.arange(errors.shape[0]) ]
-  training = errors[ numpy.array([[(j,i) for i in xrange(nstr) if i != j] for j in xrange(npreds)]) ]
+  training\
+    = errors[ numpy.array([[(j,i) for i in xrange(nstr) if i != j] for j in xrange(npreds)]) ]
   t2  = time()
 
   print x
   print "Training error: ", numpy.average(training*training)
   print "Prediction  error: ", numpy.average(prediction*prediction)
   print t2 - t1, t1 - t0
+
 if __name__ == "__main__":
   main()

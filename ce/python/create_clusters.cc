@@ -16,8 +16,8 @@ namespace LaDa
   namespace Python
   {
     boost::shared_ptr< CE::t_MLClusterClasses >
-      create_clusters( Crystal::Lattice const &_lat, size_t _max, size_t _order, size_t _site )
-        { return CE::create_clusters(_lat, _max, _order, _site ); }
+      create_clusters( Crystal::Lattice const &_lat, size_t _order, size_t _max, size_t _site )
+        { return CE::create_clusters(_lat, _order, _max, _site ); }
 
     void expose_create_clusters()
     {
@@ -29,8 +29,8 @@ namespace LaDa
         &create_clusters,
         (
           bp::arg("lattice"),
-          bp::arg("nth_shell"),
           bp::arg("order"),
+          bp::arg("nth_shell"),
           bp::arg("site") = 0
         ),
         "Returns an array of arrays of equivalent clusters of given order, origin,"
