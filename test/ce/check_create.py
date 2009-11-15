@@ -15,10 +15,12 @@ def main():
   
   lattice = crystal.Lattice("input.xml")
   mlclasses = ce.create_clusters( lattice, nth_shell=0, order=0, site=0)
-  mlclasses.extend( ce.create_clusters( lattice, nth_shell=0, order=1, site=0) )
-  mlclasses.extend( ce.create_clusters( lattice, nth_shell=40, order=2, site=0) )
-# print "here"
-# mlclasses.extend( ce.create_clusters( lattice, nth_shell=9, order=3, site=0) )
+# mlclasses.extend( ce.create_clusters( lattice, nth_shell=0, order=1, site=0) )
+  mlclasses.extend( ce.create_clusters( lattice, nth_shell=20, order=2, site=0) )
+  mlclasses.extend( ce.create_clusters( lattice, nth_shell=9, order=3, site=0) )
+  mlclasses.extend( ce.create_clusters( lattice, nth_shell=4, order=4, site=0) )
+  mlclasses.extend( ce.create_clusters( lattice, nth_shell=2, order=5, site=0) )
+  mlclasses.extend( ce.create_clusters( lattice, nth_shell=2, order=6, site=0) )
   print mlclasses, len(mlclasses)
 
   t1 = time()

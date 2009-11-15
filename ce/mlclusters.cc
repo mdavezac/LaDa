@@ -109,7 +109,7 @@ namespace LaDa
       MLClusters::const_iterator i_cls = _class.begin();
       MLClusters::const_iterator const i_cls_end = _class.end();
       for(; i_cls != i_cls_end; ++i_cls) stream << *i_cls;
-      return _stream << Print::indent( stream.str(), "  ");
+      return _stream << Print::indent( stream.str(), "    ");
     }
     
     bool bypass_comment( std::istream & _sstr, std::string &_line )
