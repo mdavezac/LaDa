@@ -28,6 +28,9 @@ namespace LaDa
         return result;
       }
 
+    
+
+
     void create_clusters( t_MLClusterClasses &_out, Crystal::Lattice const &_lat,
                           size_t const _order, size_t const _neighbor, size_t const _origin )
     {
@@ -79,7 +82,6 @@ namespace LaDa
       std::vector<Crystal::Neighbor> neighbors;
       do
       { // creates vector of neighbors
-        std::cout << "size_try: " << size_try << "\n";
         Crystal::Neighbors neighbors_(size_try, cluster.origin.pos);
         Crystal::Neighbors::const_iterator i_first = neighbors_.begin(_lat);
         Crystal::Neighbors::const_iterator i_begin = i_first;
@@ -101,7 +103,6 @@ namespace LaDa
         break;
       }
       while(true);
-      std::cout << "done neighbors.\n";
       // creates an order-dimensional iterator 
       opt::NDimIterator< size_t, std::less<size_t> > iterator;
       for( size_t i(1); i < _order; ++i )
@@ -114,7 +115,6 @@ namespace LaDa
         for(size_t i(1); i < _order-1 and dont_iterate; ++i)
           if( iterator.access(i) <= iterator.access(i-1) ) dont_iterate = false;
         if( not dont_iterate ) continue;
-        std::cout << 1u << "\n";
 
         // creates cluster.
         for(size_t i(0); i < _order-1; ++i)
@@ -123,24 +123,17 @@ namespace LaDa
           cluster[i].site = neighbors[iterator.access(i)].index; 
         }
 
-        std::cout << 2u << "\n";
-        // now checks whether it should be part of a cluster class somewhere.
-        t_MLClusterClasses::iterator i_class = _out.begin();
-        t_MLClusterClasses::iterator const i_class_end = _out.end();
-        for(; i_class != i_class_end; ++i_class );
-          if( i_class->end() != std::find(i_class->begin(), i_class->end(), cluster) )
-            break;
-        std::cout << 3u << "\n";
-
-        // adds new cluster.
-        if( i_class == i_class_end ) 
+        // now checks whether it exists somewhere already
+        bool const do_add
+        (
+             _out.size() == 0 
+          or _out.end() == std::find(_out.begin(), _out.end(), cluster) 
+        );
+        if( do_add )
         {
-        std::cout << 4u << "\n";
           clusters.init( cluster );
           _out.push_back( clusters );
-          std::cout << "_out size: " << _out.size() << "\n";
         }
-        std::cout << 5u << "\n";
 
       } while(++iterator);
     }

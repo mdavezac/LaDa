@@ -8,6 +8,8 @@
 #include <cstdlib>
 #include <sstream>
 
+#include <boost/algorithm/string/trim.hpp>
+
 #include "manip.h"
 
 
@@ -103,9 +105,14 @@ namespace LaDa
         result << _str.substr(old, i - old +1 ) << _ind;
         ++i; old = i;
         i = _str.find('\n', old);
+        if( i == _str.size()-1 ) break;
       }
-      result << _str.substr(old);
-      return result.str();
+      std::string const string( result.str() );
+      for(i=string.size(); i != 0; --i)
+        if( string[i] != ' ' ) break;
+
+      if( i == string.size() ) return string;
+      return string.substr(0, i);
     }
 
   }

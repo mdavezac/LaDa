@@ -39,11 +39,16 @@ namespace LaDa
 
         //! Load a cluster from XML.
         bool load(const TiXmlElement &_node);
-        //! True if involves same positions.
-        bool operator==(MLClusters const & _c) const;
-        //! True if involves same positions.
-        bool operator!=(MLClusters const & _c) const
-          { return not operator==(_c); }
+        //! True if this class contains _c.
+        bool operator==(MLCluster const & _b) const;
+        //! True if all clusters in _c are contained here, and vice-versa.
+        bool operator==(MLClusters const & _b) const;
+        //! False if this class contains _c.
+        bool operator!=(MLCluster const & _b) const
+          { return not operator==(_b); }
+        //! False if all clusters in _c are contained here, and vice-versa.
+        bool operator!=(MLClusters const & _b) const
+          { return not operator==(_b); }
 
         //! Initializes a cluster class from a cluster.
         void init(MLCluster const &_cluster, types::t_real _eci=0e0);

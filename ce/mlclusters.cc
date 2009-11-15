@@ -62,6 +62,12 @@ namespace LaDa
       return true;
     }
 
+    bool MLClusters::operator==(MLCluster const &_b) const
+    {
+      if( order() != _b.order() ) return false;
+      return end() != std::find(begin(), end(), _b);
+    }
+
     bool MLClusters::operator==(MLClusters const &_b) const
     {
       if( size() != _b.size() ) return false;
