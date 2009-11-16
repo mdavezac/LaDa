@@ -44,7 +44,7 @@ def main():
   import os.path
   import shutil
   import subprocess
-  from  vasp import Vasp, Specie
+  from lada.vasp import Vasp, Specie
 
   structure = crystal.sStructure()
   structure.cell = atat.rMatrix3d( [[1,0,0],[0,1,0],[0,0,1]] )
