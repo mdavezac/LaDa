@@ -237,6 +237,10 @@ class PairRegulatedFit(Fit):
     return A, b 
 
 def leave_one_out( fitter ):
+  """ Performs leave-many out on fitter using the given sets. 
+      Returns a matrix where each line contains the fitted and predicted structures.
+      The predictions are the diagonal elements.
+  """
   import numpy
 
   ncls, nstr = fitter.size()  
@@ -251,6 +255,32 @@ def leave_one_out( fitter ):
 
   # loop over fitting sets.
   for i in xrange(nstr):
+    fitter.extinguish_structure(i)
+    A, b = fitter()
+    x, residues, rank, s = numpy.linalg.lstsq(A, b)
+    errors[i, :] = numpy.dot(A_all, x) - b_all
+
+  return errors
+
+
+def leave_many_out( fitter, sets ):
+  """ Performs leave-many out on fitter using the given sets. 
+      Returns a matrix where each line contains the fitted and predicted structures for one set.
+  """
+  import numpy
+
+  ncls, nstr = fitter.size()  
+
+  # matrix which holds errors for all structures. 
+  errors = numpy.zeros( (nstr,nstr), dtype='float64')
+  # fitting matrices from which to get errors.
+  fitter.extinguish_structure() 
+  A_all, b_all = fitter()
+  A_all = A_all[:nstr, :].copy()
+  b_all = b_all[:nstr].copy()
+
+  # loop over fitting sets.
+  for i in set:
     fitter.extinguish_structure(i)
     A, b = fitter()
     x, residues, rank, s = numpy.linalg.lstsq(A, b)
