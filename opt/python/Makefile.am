@@ -11,9 +11,13 @@ AM_LDFLAGS =
 install-exec-local: ../../python/libpython_lada.la
 
 EXTRA_DIST = $(opt_python_h) 
-pkgpyexec_LTLIBRARIES = opt.la 
-opt_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
-opt_la_SOURCES = $(opt_python_cc) 
-opt_la_LDFLAGS = $(AM_LDFLAGS) -module
-opt_la_LIBADD =  $(top_builddir)/python/libpython_lada.la 
+subpkgpyexec_PYTHON = __init__.py secant.py
+subpkgpyexec_LTLIBRARIES = _opt.la 
+subpkgpyexecdir = $(pkgpyexecdir)/opt
+_opt_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
+_opt_la_SOURCES = $(opt_python_cc) 
+_opt_la_LDFLAGS = $(AM_LDFLAGS) -module
+_opt_la_LIBADD =  $(top_builddir)/python/libpython_lada.la 
+__init__.py: 
+	@echo "from _op import *"  > __init__.py; 
 endif

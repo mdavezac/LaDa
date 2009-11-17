@@ -57,9 +57,41 @@ def check_generation( self ):
   if self.max_gen < 0: return True
   return self.current_gen < self.max_gen
   
+def add_population_evaluation(self, evaluation):
+  """ Standard population evaluation. 
+      Evaluates individual only if fitness attribute does not exist. 
+      Fitness is the return  from evaluation subroutine given on input.
+  """
+  def popeval(self):
+    for indiv in self.population:
+      if not hasattr(indiv, "fitness" ): 
+        indiv.fitness = self.indiv_evaluation(indiv)
+    for indiv in self.offspring:
+      if not hasattr(indiv, "fitness" ): 
+        indiv.fitness = self.indiv_evaluation(indiv)
+  self.indiv_evaluation = evaluation
+  self.evaluation = popeval
+  return self
+
+def add_checkpoint(self, _chk):
+  """ Adds a checkpoint """
+  try: self.checkpoints.append( _chk ) 
+  except AttributeError: self.checkpoints = [_chk]
+  return self;
+
 def fill_attributes(self):
   """ Checks self for correct attributes.
-      Fills in where possible. 
+      Fills in where possible:
+        _ "taboo" defaults to standard.taboo
+        _ "selection" defaults to standard.selection
+        _ "population" defaults to empty list []
+        _ "popsize" defaults to len(self.population)
+        _ "offspring" defaults to empty list []
+        _ "rate" defaults to len(self.offspring)/self.popsize
+        _ standard.check_generation is ALWAYS added to the checkpoints
+        _ "current_gen" defaults to 0 
+        _ "max_gen" defaults to 100, or current_gen+100 if max_gen > current_gen.
+        _ "cmp_indiv" defaults to standard.cmp_indiv
   """
   import darwin 
   # must have an evaluation function.

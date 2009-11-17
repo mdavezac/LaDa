@@ -39,9 +39,9 @@ def  main():
 
   evaluation = Eval()
   evaluation.target = numpy.array([1 for u in xrange(bitstring.Individual.size)])
-
   print "Target: ", evaluation.target
-  darwin = dd.add_population_evaluation( darwin, evaluation )
+
+  darwin = standard.add_population_evaluation( darwin, evaluation )
   darwin.checkpoints = [ standard.print_offspring, 
                          standard.average_fitness,
                          standard.best,

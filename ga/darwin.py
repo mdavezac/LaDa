@@ -1,26 +1,6 @@
 #
 #  Version: $Id$
 #
-
-def add_population_evaluation(self, evaluation):
-  """ Standard population evaluation. """
-  def popeval(self):
-    for indiv in self.population:
-      if not hasattr(indiv, "fitness" ): 
-        indiv.fitness = self.indiv_evaluation(indiv)
-    for indiv in self.offspring:
-      if not hasattr(indiv, "fitness" ): 
-        indiv.fitness = self.indiv_evaluation(indiv)
-  self.indiv_evaluation = evaluation
-  self.evaluation = popeval
-  return self
-
-def add_checkpoint(self, _chk):
-  """ Adds a checkpoint """
-  try: self.checkpoints.append( _chk ) 
-  except AttributeError: self.checkpoints = [_chk]
-  return self;
-
 def run( self ):
   """ Runs a GA algorithm """
   import standard

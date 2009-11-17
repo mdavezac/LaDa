@@ -99,15 +99,15 @@ class Fit():
     if on == "all": self._str_onoff[:] = True
     if n != None: self._str_onoff[n] = False
 
-  def extinguish_cluster(self, n = None, on = "all"):
+  def extinguish_cluster(self, n = None, on = "all", mask=False):
     """ Extinguishes cluster class at index n (n can be a list of indices).
         If on == "all", then turns all other cluster classes on.
         If n is None and on == all, then  all cluster classes are turned on.
     """
 
-    if on == "all": self._cls_onoff[:] = True
-    if n != None: self._cls_onoff[n] = False
- 
+    if on == "all": self._cls_onoff[:] = not mask
+    if n != None: self._cls_onoff[n] = mask
+
   def assign_genome(self, n):
     """ Assigns a bitstring genome for fitting.
         A bitstring genome should be a numpy boolean array of the same size as
@@ -187,7 +187,12 @@ class PairRegulatedFit(Fit):
   def _compute_weights(self, A):
     from math import pow, sqrt
      
-    assert len(self._norms) == A.shape[0], "Wrong size for A."
+    # Get data for "on" pairs.
+    pairs = []
+    for p, norm in self._norms:
+      if self._cls_onoff[p]: pairs.append((p,norm))
+
+    assert len(pairs) == A.shape[0], "Wrong size for A."
 
     weights = []
     normalization = 0e0
@@ -195,7 +200,7 @@ class PairRegulatedFit(Fit):
     # Constructs coefficients
     coef = 4e0
     if self._type != "laks": coef = 1e0
-    for i, norm in self._norms: 
+    for i, norm in pairs: 
       w = pow( norm, self._alpha ) * 0.5e0
       weights.append( (i, sqrt(w)) )
       normalization += w * coef
