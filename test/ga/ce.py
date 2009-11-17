@@ -16,10 +16,11 @@ def  main():
                         path = "data",
                         lmo_ratio=0.3333333, 
                         alpha=2.0, tcoef=10,
-                        2B=20, 3B9, 4B=5, 5B=2, 6B=2)
+                        B2=10) # , B3=9, B4=5, B5=2, B6=2)
 
   # the darwin class holding all ga parameters.
   class Darwin: pass
+  darwin = Darwin
 
   # individual type.
   darwin.Individual = ce.Individual

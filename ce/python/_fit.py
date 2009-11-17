@@ -181,7 +181,7 @@ class PairRegulatedFit(Fit):
     self._norms = []
     i=0
     for i, class_ in enumerate(self._classes): 
-      if class_.order() != 2: continue
+      if class_.order != 2: continue
       self._norms.append( (i,atat.norm2( class_[0].origin.pos - class_[0][0].pos)) )
       
   def _compute_weights(self, A):
@@ -226,7 +226,9 @@ class PairRegulatedFit(Fit):
       if u : x += 1
     for u in self._cls_onoff:
       if u : y += 1
-    xreg = x + len(self._norms)
+    xreg = x
+    for p, norm in self._norms:
+      if self._cls_onoff[p]: xreg += 1
 
       
     # creates arrays if they are not provided.

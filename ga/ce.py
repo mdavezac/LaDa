@@ -10,7 +10,9 @@ class Eval:
         and the a short form for the allowed clusters.
     """
     from lada import ce 
+    import os
     import re
+    import random
 
     self.lattice = lattice
 
@@ -18,11 +20,12 @@ class Eval:
     self.alpha, self.tcoef = alpha, tcoef
 
     # checks that keywords are well formed.
+    key_regex = re.compile("B(\d+)")
     for key in keywords.keys(): 
-      a_re = re.match("(\d+)B", key)
-      assert a_re != None, "Keyword %s is not of the form J[0,1] or (\d+)B(\d+)" % (a)
-      assert a_re.end() == len(a), "Keyword %s is not of the form J[0,1] or (\d+)B(\d+)" % (a)
-      assert int(a_re.group(1)) > 1, "Cannot understand keyword %s" % (a)
+      a_re = re.match(key_regex, key)
+      assert a_re != None, "Keyword %s is not of the form B(\d+)" % (key)
+      assert a_re.end() == len(key), "Keyword %s is not of the form B(\d+)" % (key)
+      assert int(a_re.group(1)) > 1, "Cannot understand keyword %s" % (key)
       assert keywords[key] > 0, "Cannot understand input %s=%i" % (key, keywords[key])
 
     # sanity check.
@@ -43,25 +46,25 @@ class Eval:
       return result
 
     # now creates multi-lattice clusters, along with index bookkeeping.
-    self._mlclasses = ce.create_clusters(lattice, nth_shell=0, order=0, site=site) # J0
+    self._mlclasses = ce.create_clusters(lattice, nth_shell=0, order=0, site=0) # J0
     # creates J1 for these sites.
     for site in equivalent_sites():
       self._mlclasses.extend(ce.create_clusters(lattice, nth_shell=0, order=1, site=site))
     # creates many bodies.
-    self._fixed = len(self.mlclasses)
+    self._fixed = len(self._mlclasses)
     for site in equivalent_sites():
       for key in keys:
-        regex = re.compile("(\d+)B")
+        regex = re.match(key_regex, key)
         order = int(regex.group(1))
         shell = keywords[key]
         self._mlclasses.extend(ce.create_clusters(lattice, nth_shell=shell, order=order, site=site))
 
     # creates fitting function 
-    self.fitter = ce.RegulatedFit(_mlclasses, alpha=self.alpha[0], tcoef=self.tcoef[0])
+    self.fitter = ce.PairRegulatedFit(self._mlclasses, alpha=self.alpha, tcoef=self.tcoef)
     self.fitter.read_directory(path)
 
     # now reads/creates set.
-    set_path = os.path.join(directory, "set")
+    set_path = os.path.join(path, "set")
     self._sets = []
     ncls, nstr = self.fitter.size()
     if os.path.exists(set_path):
@@ -91,7 +94,7 @@ class Eval:
 
   def __len__(self):
     """ Returns the number of many-body figures (minus J0, J1, and pairs) """
-    return self._changeables - self._fixed
+    return len(self._mlclasses) - self._fixed
      
 
 
@@ -100,15 +103,18 @@ class Eval:
         Optimizes cv score with respect to pairs, and pair regularization.
     """
     from math import fabs
+    from .. import ce
+    import numpy
 
-    assert self._changeables - self._fixed == len(indiv.genes), "Individual is of incorrect size.\n"
-    onoffs = numpy.empty((len(self.mlclasses),) type=bool)
+    assert len(self._mlclasses) - self._fixed == len(indiv.genes),\
+           "Individual is of incorrect size.\n"
+    onoffs = numpy.zeros((len(self._mlclasses),), dtype=bool)
     onoffs[:self._fixed] = True
-    onoffs[self._fixed:self._changeables] = indiv.genes
+    onoffs[self._fixed:] = indiv.genes
 
     self.fitter.extinguish_cluster(onoffs, mask=True) 
-    self.fitter.alpha = alpha
-    self.fitter.tcoef = tcoef
+    self.fitter.alpha = self.alpha
+    self.fitter.tcoef = self.tcoef
 
     if len(self._sets) == 0:
       errors = ce.leave_one_out(self.fitter)
@@ -134,10 +140,12 @@ class Individual:
     from random import choice
     import numpy
 
-    self.genes = numpy.array([ choice([True,False]) for i in xrange(Individual.size) ], type=bool)
+    self.genes = numpy.array([ choice([True,False]) for i in xrange(Individual.size) ], dtype=bool)
     self.evaluated = False
   
   def __eq__(self, a): 
     from math import fabs
     if a == None: return False
-    return a.genes == self.genes
+    for i, b in enumerate(a.genes):
+      if self.genes[i] != b: return False
+    return True

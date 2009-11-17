@@ -53,7 +53,7 @@ class Secant:
       if self._end[0] < self._first[0]: self.result = self._end
       else: self.result = self._first
 
-      raise StopIteration:
+      raise StopIteration
 
   def next(self):
 

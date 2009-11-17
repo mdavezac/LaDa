@@ -1,8 +1,12 @@
 #
 #  Version: $Id$
 #
-def no_taboo( self, _indiv ): return False
+""" Holds standard genetic algorithm operations. """
+def no_taboo( self, _indiv ):
+  """ Does nothing. """
+  return False
 def taboo( self, _indiv ):
+  """ taboo makes sure that no two individuals in the population and the offspring are the same. """
   return _indiv in self.population or _indiv in self.offspring
 
 def tournament( self, size = 2 ):
@@ -25,6 +29,7 @@ def cmp_indiv( a, b, tolerance = 1e-12 ):
   return 1
 
 def average_fitness(self):
+  """ Prints out average fitness. """
   result = 0e0
   for indiv in self.population:
     result += indiv.fitness
@@ -60,7 +65,8 @@ def check_generation( self ):
 def add_population_evaluation(self, evaluation):
   """ Standard population evaluation. 
       Evaluates individual only if fitness attribute does not exist. 
-      Fitness is the return  from evaluation subroutine given on input.
+      Fitness is the return of evaluation subroutine given on input.
+      evaluation subroutine should take an individual at its only argument.
   """
   def popeval(self):
     for indiv in self.population:
@@ -128,7 +134,7 @@ def fill_attributes(self):
   assert self.rate > float(0), "offspring or rate attributes required on input."
  
   # checks whether there is a checkpoint.
-  self = darwin.add_checkpoint(self, check_generation)
+  self = add_checkpoint(self, check_generation)
 
   # checks current generation.
   if not hasattr(self, "current_gen"): self.current_gen = 0
