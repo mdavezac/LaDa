@@ -123,8 +123,7 @@ class Eval:
       return numpy.average(prediction*prediction)
     else:
       errors = ce.leave_many_out(self.fitter, self._sets)
-      npreds, nstr = errors.shape
-      prediction = errors[ [[(j,i) for i in self._sets[j]] for j in len(self.sets)] ]
+      prediction = errors[ [[(j,i) for i in s] for j, s in enumerate(self._sets)] ]
       return numpy.average(prediction*prediction)
 
 class Individual:

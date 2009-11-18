@@ -60,7 +60,8 @@ namespace LaDa
         atat::rVector3d const a0( _cell.get_column(0) );
         atat::rVector3d const a1( _cell.get_column(1) );
         atat::rVector3d const a2( _cell.get_column(2) );
-        types::t_real const max_norm = std::max( atat::norm(a0), std::max(atat::norm(a1), atat::norm(a2)) );
+        types::t_real const max_norm = std::max( atat::norm(a0),
+                                                 std::max(atat::norm(a1), atat::norm(a2)) );
         int const n0( std::ceil(max_norm*atat::norm(a1^a2)/volume) );
         int const n1( std::ceil(max_norm*atat::norm(a2^a0)/volume) );
         int const n2( std::ceil(max_norm*atat::norm(a0^a1)/volume) );
@@ -108,7 +109,8 @@ namespace LaDa
 
               // adds to vector of symmetries.
               SymmetryOperator symop(rotation);
-              if( result->end() == std::find( result->begin(), result->end(), symop) ) result->push_back( symop );
+              if( result->end() == std::find( result->begin(), result->end(), symop) )
+                result->push_back( symop );
             }
         return result;
       }

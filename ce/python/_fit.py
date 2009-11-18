@@ -209,7 +209,11 @@ class PairRegulatedFit(Fit):
     else: normalization = sqrt(self._tcoef / normalization)
 
     # now constructs matrix.
-    for i, data in enumerate(weights): A[ i, data[0] ] = data[1] * normalization
+    for i, data in enumerate(weights):
+      j = 0
+      for u in range(data[0]):
+        if self._cls_onoff[u]: j+=1
+      A[i, j] = data[1] * normalization
 
   def __call__(self, A = None, b = None):
     """ Returns observation matrix A and target vector b.
@@ -279,7 +283,7 @@ def leave_many_out( fitter, sets ):
   ncls, nstr = fitter.size()  
 
   # matrix which holds errors for all structures. 
-  errors = numpy.zeros( (nstr,nstr), dtype='float64')
+  errors = numpy.zeros( (len(sets),nstr), dtype='float64')
   # fitting matrices from which to get errors.
   fitter.extinguish_structure() 
   A_all, b_all = fitter()
@@ -287,7 +291,7 @@ def leave_many_out( fitter, sets ):
   b_all = b_all[:nstr].copy()
 
   # loop over fitting sets.
-  for i in set:
+  for i in sets:
     fitter.extinguish_structure(i)
     A, b = fitter()
     x, residues, rank, s = numpy.linalg.lstsq(A, b)
