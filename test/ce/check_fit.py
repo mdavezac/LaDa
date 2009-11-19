@@ -23,46 +23,49 @@ def main():
   x, residual, rank, s = numpy.linalg.lstsq(A, b)
   t1  = time()
 
+  t2  = time()
+  loo_errors = ce.leave_one_out(fit)
+  npreds, nstr = loo_errors.shape
+  prediction = 0e0
+  training = 0e0
+  for i in xrange(loo_errors.shape[0]):
+    for j in xrange(loo_errors.shape[1]):
+      if j == i: prediction += loo_errors[i,j]*loo_errors[i,j]
+      else: training += loo_errors[i,j]*loo_errors[i,j]
+  prediction /= float(nstr)
+  training /= float(nstr*nstr - nstr)
+  print "Training error: ", training
+  print "Prediction  error: ", prediction
+
   ncls, nstr = fit.size()
-  size = max( int(float(nstr)*0.3333), 1 )
+  size = max( int(float(nstr)*0.33333333333), 1 )
   full_set = []
   predsets = []
-  for i in xrange(100):
+  for i in xrange(10):
     if len(full_set) < size:
       full_set = [ j for j in range(nstr) ]
       random.shuffle(full_set)
     predsets.append( full_set[:size] )
     full_set = full_set[size:]
-    print "  ", predsets[-1]
 
   errors = ce.leave_many_out(fit, predsets)
   prediction = 0e0
   training = 0e0
+  n = 0
   for i in xrange(errors.shape[0]):
     for j in xrange(errors.shape[1]):
-      if j in predset[i]: predictions += errors[i,j]
-      else: training += errors[i,j]
-  print errors.shape
-  pred_x = numpy.array([j for i in s for j, s in enumerate(predsets)])
-  pred_y = numpy.array([i for i in s for s in predsets] )
-  prediction = errors[ pred_x, pred_y ]
-  training = errors[ numpy.array([[j for i in xrange(nstr) if i not in s]\
-                                  for j, s in enumerate(predsets)]),
-                       numpy.array([[i for i in xrange(nstr) if i not in s] for s in predsets]) ]
-  print "Training error: ", numpy.average(training*training)
-  print "Prediction  error: ", numpy.average(prediction*prediction)
+      if j in predsets[i]:
+        prediction += errors[i,j]*errors[i,j]
+        n += 1
+      else: training += errors[i,j]*errors[i,j]
+  prediction /= float(n)
+  training /= float(errors.shape[0]*errors.shape[1] - n)
+  print errors.shape, n
+  print "Training error: ", training
+  print "Prediction  error: ", prediction
 
 
-  errors = ce.leave_one_out(fit)
-  npreds, nstr = errors.shape
-  prediction = errors[ numpy.arange(errors.shape[0]), numpy.arange(errors.shape[0]) ]
-  training\
-    = errors[ numpy.array([[(j,i) for i in xrange(nstr) if i != j] for j in xrange(npreds)]) ]
-  t2  = time()
 
-  print x
-  print "Training error: ", numpy.average(training*training)
-  print "Prediction  error: ", numpy.average(prediction*prediction)
   print t2 - t1, t1 - t0
 
 if __name__ == "__main__":

@@ -291,8 +291,8 @@ def leave_many_out( fitter, sets ):
   b_all = b_all[:nstr].copy()
 
   # loop over fitting sets.
-  for i in sets:
-    fitter.extinguish_structure(i)
+  for i, s in enumerate(sets):
+    fitter.extinguish_structure(s)
     A, b = fitter()
     x, residues, rank, s = numpy.linalg.lstsq(A, b)
     errors[i, :] = numpy.dot(A_all, x) - b_all
