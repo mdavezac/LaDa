@@ -184,24 +184,33 @@ class EvalFitPairs(Eval):
     assert len(self._mlclasses) - self._fixed == len(indiv.genes),\
            "Individual is of incorrect size.\n"
 
-    def callable(x):
+    self.nfun = 0
+    def callable_loo(x):
       from math import sqrt, log as ln, fabs, exp
+      if self.nfun > 300: raise StopIteration
+      self.nfun += 1
       self.fitter.alpha = x[0]
       self.fitter.tcoef = 100*exp(x[1])
-      if len(self._sets) == 0:
-        errors = leave_one_out(self.fitter)
-        npreds, nstr = errors.shape
-        prediction = errors[ numpy.arange(errors.shape[0]), numpy.arange(errors.shape[0]) ]
-        return sqrt(numpy.average(prediction*prediction))
-      else:
-        errors = leave_many_out(self.fitter, self._sets)
-        npred, prediction = 0, 0e0
-        for i in xrange(errors.shape[0]):
-          for j in xrange(errors.shape[1]):
-            if j not in self._sets[i]: continue
-            prediction += errors[i,j] * errors[i,j]
-            npred += 1
-        return sqrt(prediction / float(npred))
+      errors = leave_one_out(self.fitter)
+      npreds, nstr = errors.shape
+      prediction = errors[ numpy.arange(errors.shape[0]), numpy.arange(errors.shape[0]) ]
+      return sqrt(numpy.average(prediction*prediction))
+    def callable_lmo(x):
+      from math import sqrt, log as ln, fabs, exp
+      if self.nfun > 300: raise StopIteration
+      self.nfun += 1
+      self.fitter.alpha = x[0]
+      self.fitter.tcoef = 100*exp(x[1])
+      errors = leave_many_out(self.fitter, self._sets)
+      npred, prediction = 0, 0e0
+      for i in xrange(errors.shape[0]):
+        for j in xrange(errors.shape[1]):
+          if j not in self._sets[i]: continue
+          prediction += errors[i,j] * errors[i,j]
+          npred += 1
+      return sqrt(prediction / float(npred))
+    which_callable = callable_lmo
+    if len(self._sets) == 0: which_callable = callable_loo
 
     # creates pair values.
     pairs = [ self.pairs[0] ]
@@ -221,12 +230,17 @@ class EvalFitPairs(Eval):
       self.fitter.extinguish_cluster(onoffs, mask=True) 
 
 #     x0, fopt, dummy, dummy, dummy, dummy = \
-      x0, fopt, dummy, dummy, dummy = \
-          simplex(callable, x0, ftol=0.1, xtol=0.1, full_output=True, 
-                  disp=False, maxfun=20, maxiter=20)
-      if minvals == None or minvals > fopt:  minvals = fopt
+      fopt, iter, = 0,0
+      try:
+        x0, fopt, iter, dummy, dummy = \
+            simplex(which_callable, x0, ftol=0.1, xtol=0.1, full_output=True, 
+                    disp=False, maxfun=20, maxiter=20)
+      except StopIteration:
+        fopt = 1e12
+        pass
+      if minvals == None or minvals[0] > fopt:  minvals = (fopt, iter)
 
-    return minvals
+    return minvals[0]
 
 
 

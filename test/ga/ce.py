@@ -16,7 +16,7 @@ def  main():
                                 path = "data",
                                 lmo_ratio=0.3333333, 
                                 pairs = (5, 20, 5),
-                                B3=5, B4=5 )
+                                B3=9, B4=5, B5=2, B6=2)
                                 # B2=10) # , B3=9, B4=5, B5=2, B6=2)
 
   # the darwin class holding all ga parameters.
@@ -50,7 +50,7 @@ def  main():
 
   darwin.mating = bitstring.Mating()
   darwin.rate   = 0.2
-  darwin.popsize = 40
+  darwin.popsize = 100
   darwin.max_gen = 3000
 
   dd.run(darwin)
