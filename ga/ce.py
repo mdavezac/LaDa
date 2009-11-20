@@ -135,6 +135,9 @@ class Eval:
 class EvalFitPairs(Eval):
   """ Performs evaluation of many-body while optimizing regularised number of pairs. """
 
+  max_nfuncs = 100
+  max_pow = 15
+
   def __init__(self, pairs=(10, 20), **kwarg):
     from lada import ce
     from math import fabs
@@ -187,7 +190,9 @@ class EvalFitPairs(Eval):
     self.nfun = 0
     def callable_loo(x):
       from math import sqrt, log as ln, fabs, exp
-      if self.nfun > 300: raise StopIteration
+      if self.nfun > EvalFitPairs.max_nfuncs: raise StopIteration
+      if fabs(x[0]) > EvalFitPairs.max_pow: raise ValueError
+      if fabs(x[1]) > EvalFitPairs.max_pow: raise ValueError
       self.nfun += 1
       self.fitter.alpha = x[0]
       self.fitter.tcoef = 100*exp(x[1])
@@ -197,7 +202,9 @@ class EvalFitPairs(Eval):
       return sqrt(numpy.average(prediction*prediction))
     def callable_lmo(x):
       from math import sqrt, log as ln, fabs, exp
-      if self.nfun > 300: raise StopIteration
+      if self.nfun > EvalFitPairs.max_nfuncs: raise StopIteration
+      if fabs(x[0]) > EvalFitPairs.max_pow: raise ValueError
+      if fabs(x[1]) > EvalFitPairs.max_pow: raise ValueError
       self.nfun += 1
       self.fitter.alpha = x[0]
       self.fitter.tcoef = 100*exp(x[1])
@@ -236,8 +243,9 @@ class EvalFitPairs(Eval):
             simplex(which_callable, x0, ftol=0.1, xtol=0.1, full_output=True, 
                     disp=False, maxfun=20, maxiter=20)
       except StopIteration:
-        fopt = 1e12
-        pass
+        fopt = 1e12; x0 = numpy.array([1.1,1.0])
+      except ValueError:
+        fopt = 1e12; x0 = numpy.array([1.1,1.0])
       if minvals == None or minvals[0] > fopt:  minvals = (fopt, iter)
 
     return minvals[0]

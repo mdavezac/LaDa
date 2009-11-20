@@ -37,7 +37,6 @@ class Crossover:
 
   def __call__(self, a, b):
     from copy import deepcopy
-    from sys import exit
     
     result = deepcopy(a)
     at = self.rate * len(result.genes) 
@@ -76,12 +75,12 @@ class Mating:
     self.mutation = mutation
 
   def __call__(self, darwin):
-    from random import uniform
+    from random import random
 
     a = darwin.selection(darwin)
 
     indiv = None
-    if uniform(0,1) < self.rate:
+    if random() < self.rate:
       b = a
       while( b == a ): b = darwin.selection(darwin)
       indiv = self.crossover( darwin.population[a], darwin.population[b])
