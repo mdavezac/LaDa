@@ -21,6 +21,7 @@ class Fit():
     self._str_onoff = None
     self._cls_onoff = numpy.array([True for u in clusters], dtype=bool)
     self._classes = ce.MLClusterClasses(clusters)
+    self._structures = None
 
   def __call__(self, A = None, b = None):
     """ Returns observation matrix A and target vector b.
@@ -75,11 +76,13 @@ class Fit():
       self._energies = numpy.zeros((1,), dtype='float64').copy()
       self._weights = numpy.zeros((1,), dtype='float64').copy()
       self._str_onoff = numpy.array([True], dtype=bool)
+      self._structures = [structure]
     else: 
       self._energies.resize((len(self._energies)+1,))
       self._weights.resize((len(self._weights)+1,))
       self._str_onoff.resize((len(self._str_onoff)+1,))
       self._pis.resize((self._pis.shape[0]+1, self._pis.shape[1]))
+      self._structures.append(structure)
 
     # computes pis and adds data
     self._pis[-1,:] = self._classes.pis(structure)
@@ -129,6 +132,24 @@ class Fit():
     return len(self._cls_onoff), len(self._str_onoff)
 
 
+  def reset_clusterclasses(self, classes):
+    """ Resets cluster classes to those on input.
+        This is necessary after changing the cluster classes. 
+        The weights and energies remain the same after and before call.
+    """
+    from numpy import array
+    from lada.ce import MLClusterClasses
+
+    self._cls_onoff = array([True for u in classes], dtype=bool)
+    self._classes = MLClusterClasses(classes)
+
+    structures = self._structures
+    weights = self._weights
+    self._pis = None
+    for structure in structures:
+      self.add_structure(structure)
+    self._weights = weights
+
 
   def read_directory(self, path):
     """ Reads a directory containing LDAs.dat file and adds the structures to the fitting set. 
@@ -173,19 +194,33 @@ class PairRegulatedFit(Fit):
     Fit.__init__(self, clusters)
 
     # now adds regulatization.
-    self._type = type
-    self._alpha = alpha
-    self._tcoef = tcoef
+    self.type = type
+    self.alpha = alpha
+    self.tcoef = tcoef
 
     # and initializes regularization data.
     self._norms = []
-    i=0
     for i, class_ in enumerate(self._classes): 
       if class_.order != 2: continue
       self._norms.append( (i,atat.norm2( class_[0].origin.pos - class_[0][0].pos)) )
       
+  def reset_clusterclasses(self, classes):
+    """ Recompute pis from known structures.
+        This is necessary after changing the cluster classes. 
+        The weights and energies remain the same after and before call.
+        Bookkeeping for regulated pairs is re-initialized.
+    """
+    from lada.atat import norm2
+    
+    Fit.reset_clusterclasses(self, classes)
+    self._norms = []
+    for i, class_ in enumerate(self._classes): 
+      if class_.order != 2: continue
+      self._norms.append( (i,norm2( class_[0].origin.pos - class_[0][0].pos)) )
+      
+
   def _compute_weights(self, A):
-    from math import pow, sqrt
+    from math import pow, sqrt, fabs
      
     # Get data for "on" pairs.
     pairs = []
@@ -199,14 +234,14 @@ class PairRegulatedFit(Fit):
 
     # Constructs coefficients
     coef = 4e0
-    if self._type != "laks": coef = 1e0
+    if self.type != "laks": coef = 1e0
     for i, norm in pairs: 
-      w = pow( norm, self._alpha ) * 0.5e0
+      w = pow( norm, self.alpha ) * 0.5e0
       weights.append( (i, sqrt(w)) )
       normalization += w * coef
 
-    if self._type != "laks": normalization = sqrt(self._tcoef) / normalization
-    else: normalization = sqrt(self._tcoef / normalization)
+    if self.type != "laks": normalization = sqrt(fabs(self.tcoef)) / normalization
+    else: normalization = sqrt(fabs(self.tcoef) / normalization)
 
     # now constructs matrix.
     for i, data in enumerate(weights):
@@ -221,8 +256,10 @@ class PairRegulatedFit(Fit):
         A and b can then be used in linear-least square fit method numpy.linalg.lstsq(A,b)
         A and b (if given) should be large enough to accomodate for pair regularization.
     """
-    import numpy
+    from numpy import zeros
+    from math import fabs
 
+    if fabs(self.tcoef) < 1e-12: return Fit.__call__(self, A, b)
 
     # gets array lengths
     x, y = 0, 0
@@ -236,10 +273,13 @@ class PairRegulatedFit(Fit):
 
       
     # creates arrays if they are not provided.
-    if A == None: A = numpy.zeros((xreg,y), dtype='float64')
-    if b == None: b = numpy.zeros((xreg,), dtype='float64')
+    if A == None: A = zeros((xreg,y), dtype='float64')
+    if b == None: b = zeros((xreg,), dtype='float64')
+
 
     # calls base class
+    if xreg == x:
+      return Fit.__call__(self, A[:x,:], b[:x]) 
     A[:x,:], b[:x] = Fit.__call__(self, A[:x,:], b[:x]) 
 
     # adds regularization

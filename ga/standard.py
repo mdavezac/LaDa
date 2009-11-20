@@ -41,20 +41,20 @@ def best(self):
   for indiv in self.population:
     if best == None or  self.cmp_indiv( best, indiv ) == 1: 
       best = indiv
-  print "  Best Individual: ", best.genes, best.fitness
+  print "  Best Individual: ", best, best.fitness
   return True
 
 def print_population(self):
   print "  Population: "
   for indiv in self.population:
-    print "    ", indiv.genes, indiv.fitness
+    print "    ", indiv, indiv.fitness
   return True
 
 def print_offspring(self):
   print "  Offspring: "
   for indiv in self.population:
     if indiv.birth == self.current_gen - 1: 
-      print "    ", indiv.genes, indiv.fitness
+      print "    ", indiv, indiv.fitness
   return True
 
 def check_generation( self ):

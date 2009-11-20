@@ -25,6 +25,8 @@ class Individual:
       if fabs( self.genes[i] - u ) > 1e-18: return False
     return True
 
+  def __str__(self): return "%s" % (self.genes)
+
 
 class Crossover:
   """ A crossover operation.

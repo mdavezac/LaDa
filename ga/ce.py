@@ -1,6 +1,17 @@
 #
 #  Version: $Id: ce.py 1396 2009-11-16 02:59:48Z davezac $
 #
+def _equivalent_sites(lattice):
+  """ Returns a list containing only one site index per inequivalent sub-lattice. """
+  from lada import crystal
+
+  result = set( i for i in range(len(lattice.sites)) ) 
+  for i, site in enumerate(lattice.sites):
+    if i not in result: continue
+    for op in lattice.space_group:
+      j = crystal.which_site( op(site.pos), lattice )
+      if j != i and j in result: result.remove(j)
+  return result
 
 class Eval:
 
@@ -33,26 +44,15 @@ class Eval:
 
     keys = sorted(keywords.keys(), cmp)
 
-    def equivalent_sites():
-      """ Returns a list containing only one site index per inequivalent sub-lattice. """
-      from lada import crystal
-    
-      result = set( i for i in range(len(self.lattice.sites)) ) 
-      for i, site in enumerate(self.lattice.sites):
-        if i not in result: continue
-        for op in lattice.space_group:
-          j = crystal.which_site( op(site.pos), self.lattice )
-          if j != i and j in result: result.remove(j)
-      return result
 
     # now creates multi-lattice clusters, along with index bookkeeping.
     self._mlclasses = ce.create_clusters(lattice, nth_shell=0, order=0, site=0) # J0
     # creates J1 for these sites.
-    for site in equivalent_sites():
+    for site in _equivalent_sites(self.lattice):
       self._mlclasses.extend(ce.create_clusters(lattice, nth_shell=0, order=1, site=site))
     # creates many bodies.
     self._fixed = len(self._mlclasses)
-    for site in equivalent_sites():
+    for site in _equivalent_sites(self.lattice):
       for key in keys:
         regex = re.match(key_regex, key)
         order = int(regex.group(1))
@@ -102,7 +102,7 @@ class Eval:
     """ Returns cv score for this individual.
         Optimizes cv score with respect to pairs, and pair regularization.
     """
-    from math import fabs
+    from math import sqrt
     from .. import ce
     import numpy
 
@@ -120,11 +120,116 @@ class Eval:
       errors = ce.leave_one_out(self.fitter)
       npreds, nstr = errors.shape
       prediction = errors[ numpy.arange(errors.shape[0]), numpy.arange(errors.shape[0]) ]
-      return numpy.average(prediction*prediction)
+      return sqrt(numpy.average(prediction*prediction))
     else:
       errors = ce.leave_many_out(self.fitter, self._sets)
-      prediction = errors[ [[(j,i) for i in s] for j, s in enumerate(self._sets)] ]
-      return numpy.average(prediction*prediction)
+      npred, prediction = 0, 0e0
+      for i in xrange(errors.shape[0]):
+        for j in xrange(errors.shape[1]):
+          if j not in self._sets[i]: continue
+          prediction += errors[i,j] * errors[i,j]
+          npred += 1
+      return sqrt(prediction / float(npred))
+
+
+class EvalFitPairs(Eval):
+  """ Performs evaluation of many-body while optimizing regularised number of pairs. """
+
+  def __init__(self, pairs=(10, 20), **kwarg):
+    from lada import ce
+    from math import fabs
+
+    assert "B2" not in kwarg.keys(), "Cannot use B2 to initialize EvalFitPairs. Use pairs=(?,?).\n"
+
+    if len(pairs) != 2 and len(pairs) !=3:
+      raise ValueError, "Keyword pairs should be initialized with a 2 or 3-tuple.\n"
+    if len(pairs) == 2: self.pairs = (pairs[0], pairs[1], 1)
+    else:
+      if fabs(pairs[0] -pairs[1]) < pairs[2]: 
+        raise ValueError, "Third argument of keyword pairs is the step-size."
+      self.pairs = (pairs[0], pairs[1], pairs[2]) 
+
+
+
+    # creates self from base class.
+    Eval.__init__(self, **kwarg)
+    # create pair terms.
+    classes = None
+    for site in _equivalent_sites(self.lattice):
+      if classes == None:
+        classes = ce.create_clusters(self.lattice, nth_shell=self.pairs[1], order=2, site=site)
+        self._pairindex = [0]
+        pairs = len(classes)
+      else:
+        self._pairindex.append(len(classes))
+        classes.extend(ce.create_clusters(lself.attice, nth_shell=self.pairs[1],
+                                          order=2, site=site))
+        if len(classes) - self._pairindex[-1] > pairs: pairs = len(classes) - self._pairindex[-1]
+    # adds pair terms.
+    self.pairs = (self.pairs[0], pairs, self.pairs[2])
+    self._pairindex.append(len(classes))
+    self._fixed = len(classes) + 2 # pairs + J0 + J1 
+    classes.extend(self._mlclasses)
+    self._mlclasses = classes
+
+    self.fitter.reset_clusterclasses(classes)
+
+
+  def __call__(self, indiv):
+    import numpy
+    from scipy.optimize import fmin as simplex
+#   from scipy.optimize import fmin_powell as simplex
+    from lada.ce import leave_many_out, leave_one_out
+
+    assert len(self._mlclasses) - self._fixed == len(indiv.genes),\
+           "Individual is of incorrect size.\n"
+
+    def callable(x):
+      from math import sqrt, log as ln, fabs, exp
+      self.fitter.alpha = x[0]
+      self.fitter.tcoef = 100*exp(x[1])
+      if len(self._sets) == 0:
+        errors = leave_one_out(self.fitter)
+        npreds, nstr = errors.shape
+        prediction = errors[ numpy.arange(errors.shape[0]), numpy.arange(errors.shape[0]) ]
+        return sqrt(numpy.average(prediction*prediction))
+      else:
+        errors = leave_many_out(self.fitter, self._sets)
+        npred, prediction = 0, 0e0
+        for i in xrange(errors.shape[0]):
+          for j in xrange(errors.shape[1]):
+            if j not in self._sets[i]: continue
+            prediction += errors[i,j] * errors[i,j]
+            npred += 1
+        return sqrt(prediction / float(npred))
+
+    # creates pair values.
+    pairs = [ self.pairs[0] ]
+    while pairs[-1] < self.pairs[1]:
+      pairs.append( pairs[-1] + self.pairs[2] )
+    if pairs[-1] != self.pairs[1]: pairs.append( self.pairs[1] )
+
+    x0 = numpy.array([1.1,1.0])
+    minvals = None
+    for p in pairs:
+      onoffs = numpy.zeros((len(self._mlclasses),), dtype=bool)
+      for i, index in enumerate(self._pairindex[:-1]):
+        nbpairs = min(i+p, self._pairindex[index+1])
+        onoffs[i:nbpairs] = True
+      onoffs[self._pairindex[-1]:self._fixed] = True
+      onoffs[self._fixed:] = indiv.genes
+      self.fitter.extinguish_cluster(onoffs, mask=True) 
+
+#     x0, fopt, dummy, dummy, dummy, dummy = \
+      x0, fopt, dummy, dummy, dummy = \
+          simplex(callable, x0, ftol=0.1, xtol=0.1, full_output=True, 
+                  disp=False, maxfun=20, maxiter=20)
+      if minvals == None or minvals > fopt:  minvals = fopt
+
+    return minvals
+
+
+
 
 class Individual:
   """ An individual for boolean bitstrings.
@@ -148,3 +253,10 @@ class Individual:
     for i, b in enumerate(a.genes):
       if self.genes[i] != b: return False
     return True
+  
+  def __str__(self):
+    string = ""
+    for i in self.genes:
+      if i: string += "1"
+      else: string += "0"
+    return string

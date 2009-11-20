@@ -12,20 +12,34 @@ def  main():
   lattice = crystal.Lattice("data/lattice.xml")
 
   # the evaluations (CE fitting) class.
-  evaluation = ce.Eval( lattice=lattice,
-                        path = "data",
-                        lmo_ratio=0.3333333, 
-                        alpha=2.0, tcoef=10,
-                        B2=10) # , B3=9, B4=5, B5=2, B6=2)
+  evaluation = ce.EvalFitPairs( lattice=lattice,
+                                path = "data",
+                                lmo_ratio=0.3333333, 
+                                pairs = (5, 20, 5),
+                                B3=5, B4=5 )
+                                # B2=10) # , B3=9, B4=5, B5=2, B6=2)
 
   # the darwin class holding all ga parameters.
   class Darwin: pass
   darwin = Darwin
 
   # individual type.
-  darwin.Individual = ce.Individual
+  class Individual(ce.Individual):
+
+    def __init__(self):
+      from random import shuffle, randint
+
+      ce.Individual.__init__(self)
+
+      list_ = [i for i in xrange(len(self.genes))]
+      shuffle(list_)
+      self.genes[:] = False
+      self.genes[list_[:randint(1, min(20, ce.Individual.size))]] = True
+
+
+  darwin.Individual = Individual
   # size of the individuals.
-  darwin.Individual.size = len(evaluation)
+  ce.Individual.size = len(evaluation)
 
   darwin = Darwin()
 
@@ -36,7 +50,7 @@ def  main():
 
   darwin.mating = bitstring.Mating()
   darwin.rate   = 0.2
-  darwin.popsize = 100
+  darwin.popsize = 40
   darwin.max_gen = 3000
 
   dd.run(darwin)

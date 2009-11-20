@@ -26,7 +26,7 @@ def run( self ):
       indiv = self.Individual()
       loop = self.taboo(self, indiv)
       j += 1
-      assert j < self.popsize, "Could not create population. %i\n" % (j)
+      assert j < max(10*self.popsize, 100), "Could not create offspring.\n"
     indiv.birth = self.current_gen
     self.population.append(indiv)
 
@@ -47,7 +47,7 @@ def run( self ):
         indiv = self.mating(self)
         loop = self.taboo(self, indiv)
         j += 1
-        assert j < self.popsize, "Could not create offspring.\n"
+        assert j < max(10*self.popsize, 100), "Could not create offspring.\n"
       indiv.birth = self.current_gen
       self.offspring.append(indiv)
 
