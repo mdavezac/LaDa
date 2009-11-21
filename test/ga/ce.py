@@ -21,7 +21,7 @@ def  main():
 
   # the darwin class holding all ga parameters.
   class Darwin: pass
-  darwin = Darwin
+  darwin = Darwin()
 
   # individual type.
   class Individual(ce.Individual):
@@ -102,8 +102,6 @@ def  main():
   darwin.Individual = Individual
   # size of the individuals.
   ce.Individual.size = len(evaluation)
-
-  darwin = Darwin()
 
   darwin = standard.add_population_evaluation( darwin, evaluation )
   darwin.checkpoints = [ standard.print_offspring, 

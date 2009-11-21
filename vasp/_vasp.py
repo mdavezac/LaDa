@@ -672,7 +672,7 @@ class Vasp:
   
     # run program
     result += "\n# Go to execution path and start run\ncd " + wpath + "\n"
-    result += Vasp.program + "\n"
+    result += self.program + "\n"
 
     # copy files back to indir.
     if os.path.abspath( self.indir ) != os.path.abspath( wpath ):
