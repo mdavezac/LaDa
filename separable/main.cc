@@ -1,4 +1,4 @@
-//
+# //
 //  Version: $Id$
 //
 #ifdef HAVE_CONFIG_H
@@ -31,7 +31,6 @@
 #include "bestof.h"
 #include <opt/leave_many_out.h>
 
-#include <revision.h>
 #define __PROGNAME__ "Fixed-Lattice Sum of Separable functions" 
 
 const LaDa::types::t_unsigned print_reruns   = 1;
@@ -113,8 +112,7 @@ int main(int argc, char *argv[])
     po::notify(vm);
  
     std::cout << "\n" << __PROGNAME__
-              << " from the " << PACKAGE_STRING << " package.\n"
-              << "Subversion Revision: " << LaDa::SVN::Revision << "\n\n"; 
+              << " from the " << PACKAGE_STRING << " package.\n";
     if ( vm.count("version") ) return 1;
     if ( vm.count("help") )
     {

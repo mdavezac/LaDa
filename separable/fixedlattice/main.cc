@@ -34,7 +34,6 @@
 #include "prepare.h"
 #include "methods.h"
 
-#include <revision.h>
 #define __PROGNAME__ "Fixed-Lattice Sum of Separable functions" 
 
 const LaDa::types::t_unsigned print_reruns   = 1;

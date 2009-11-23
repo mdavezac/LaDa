@@ -22,7 +22,6 @@
 
 #include "functional_builder.h"
 
-#include <revision.h>
 #define __PROGNAME__ "lamarck"
 
 #if defined( _LADADEBUG ) && defined( _MPI )

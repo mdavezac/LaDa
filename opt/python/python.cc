@@ -7,8 +7,6 @@
 
 #include <boost/python.hpp>
 
-#include <revision.h>
-
 #include <python/std_vector.hpp>
 #include <opt/types.h>
 

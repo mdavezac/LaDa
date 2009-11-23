@@ -21,7 +21,6 @@
 # include "groundstates/main.extras.h"
 # include "alloylayers/main.extras.h"
 
-#include <revision.h>
 #include <print/xmg.h>
 #include <print/stdout.h>
 #include <opt/debug.h>

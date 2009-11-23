@@ -15,7 +15,6 @@
 #include <tinyxml/tinyxml.h>
 
 #include <print/manip.h>
-#include <revision.h>
 #include <opt/bpo_macros.h>
 #include <opt/initial_path.h>
 #include <opt/tinyxml.h>

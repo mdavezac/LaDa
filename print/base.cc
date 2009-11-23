@@ -10,7 +10,6 @@
 #include<boost/lexical_cast.hpp>
 #include<boost/filesystem/operations.hpp>
 
-#include <revision.h>
 
 #include "base.h"
 #include "manip.h"
@@ -28,9 +27,6 @@ namespace LaDa
       if ( not is_open() ) open();
       if ( not is_empty ) return;
       
-      file << "### " << std::endl 
-           << "### Subversion Revision Number " << SVN::Revision << std::endl
-           << "### " << std::endl;
       is_empty = false;
     }
 

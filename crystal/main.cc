@@ -12,7 +12,6 @@
 #define __PROGNAME__ "alloylayers"
 
 
-#include <revision.h>
 #include <opt/debug.h>
 #include <opt/bpo_macros.h>
 #include <opt/tuple_io.h>

@@ -48,7 +48,6 @@
 #include "mixed.h"
 #include "mixedfunctional.h"
 
-#include <revision.h>
 #define __PROGNAME__ "Mixed Approach: CE and Sum of Separable functions on a fixed lattice." 
 #if defined(_CUBIC_CE_)
 typedef LaDa::CE::ConstituentStrain::Harmonic::Cubic t_Harmonic;

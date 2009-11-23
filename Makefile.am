@@ -48,11 +48,11 @@ endif
 SUBDIRS = atat physics opt minimizer crystal print $(CEDIR) $(VFFSUBDIR) \
 	  $(PESCANSUBDIR) $(LAPACKDIR) $(DARWINSUBDIR) $(SEPARABLEDIR) \
 	  factory $(MODELSDIR) $(POTENTIALSDIR) $(ENUMDIR) $(MPISUBDIR) $(PYTHONDIR) 
-revision.h: force
-	@cd $(top_srcdir); scripts/max_revision.pl
-force: ;
-all: all-local
-all-local: revision.h
+# revision.h: force
+# 	@cd $(top_srcdir); scripts/max_revision.pl
+# force: ;
+# all: all-local
+# all-local: revision.h
 
 if DOCE
 ce/cubic: force

@@ -8,8 +8,6 @@
 #include<iostream>
 #include <sstream>
 
-#include "../revision.h"
-
 #include "xmg.h"
 
 namespace LaDa
@@ -31,9 +29,6 @@ namespace LaDa
       if ( line_list.empty() ) return; 
 
       open();
-
-      if ( is_empty )  // print revision
-        file << comment_string << "Subversion Revision " << SVN::Revision << std::endl;
 
       is_empty = false;
 

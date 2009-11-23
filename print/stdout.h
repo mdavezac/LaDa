@@ -11,7 +11,6 @@
 #include <list>
 
 #include <opt/types.h>
-#include <revision.h>
 #include <mpi/mpi_object.h>
 
 #include "base.h"
@@ -54,9 +53,6 @@ namespace LaDa
           if ( not is_open() ) open();
           if ( not is_empty ) return;
           
-          file << "### " << std::endl 
-               << "### Subversion Revision Number " << SVN::Revision << std::endl
-               << "### " << std::endl;
           is_empty = false;
         }
           

@@ -11,7 +11,7 @@ endif
 
 pkgpyexec_LTLIBRARIES = svn.la
 svn_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
-svn_la_SOURCES = svn.cc
+svn_la_SOURCES = # svn.cc
 svn_la_LDFLAGS = $(AM_LDFLAGS) -module
 svn_la_LIBADD =  libpython_lada.la 
 

@@ -31,7 +31,6 @@
 #include <crystal/structure.h>
 #include <crystal/read_structure.h>
 
-#include <revision.h>
 #define __PROGNAME__ "Regulated Figure Search."
 
 #include "drautz_diaz_ortiz.h"
@@ -112,8 +111,7 @@ int main(int argc, char *argv[])
   __BPO_MAP__
  
   std::cout << "\n" << __PROGNAME__
-            << " from the " << PACKAGE_STRING << " package.\n"
-            << "Subversion Revision: " << LaDa::SVN::Revision << "\n\n"; 
+            << " from the " << PACKAGE_STRING << " package.\n";
   if ( vm.count("version") ) return 1;
   if ( vm.count("help") )
   {

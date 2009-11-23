@@ -10,8 +10,8 @@
   namespace po = boost::program_options; \
   po::options_description generic("Generic Options"); \
   generic.add_options() \
-         ("help,h", "produces this help message.") \
-         ("version,v", "prints version string.")
+         ("help,h", "produces this help message.") 
+//        ("version,v", "prints version string.")
 # define __BPO_HIDDEN__ \
   po::options_description hidden( "hidden" ); \
   hidden.add_options() \
@@ -47,14 +47,7 @@
               << " from the " << PACKAGE_STRING << " package.\n";\
   )
             
-# define __BPO_VERSION__ \
-  if ( vm.count("version") ) \
-  { \
-    __ROOTCODE(  (*world), \
-      std::cout << "Subversion Revision: " << ::LaDa::SVN::Revision << "\n\n";  \
-    ) \
-    return 0; \
-  }
+# define __BPO_VERSION__ ;
 # define __BPO_HELP__ \
   if ( vm.count("help") ) \
   { \
