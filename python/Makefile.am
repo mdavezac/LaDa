@@ -9,19 +9,13 @@ if DOMPI
   AM_LDFLAGS += @BOOST_MPI@ 
 endif
 
-pkgpyexec_LTLIBRARIES = svn.la
-svn_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
-svn_la_SOURCES = # svn.cc
-svn_la_LDFLAGS = $(AM_LDFLAGS) -module
-svn_la_LIBADD =  libpython_lada.la 
-
 EXTRA_DIST = $(python_h)
 lib_LTLIBRARIES = libpython_lada.la 
 libpython_lada_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
 libpython_lada_la_SOURCES = 
 libpython_lada_la_LDFLAGS = $(AM_LDFLAGS)
 libpython_lada_la_LIBADD = 
-pythonextensions = opt physics atat crystal svn ga
+pythonextensions = opt physics atat crystal ga
 if DOCE
   pythonextensions += ce
   libpython_lada_la_LIBADD += ../ce/libce.la 
