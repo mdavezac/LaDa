@@ -16,7 +16,6 @@ class Individual:
     import numpy
 
     self.genes = numpy.array([ randint(0,1) for i in xrange(Individual.size) ])
-    self.evaluated = False
   
   def __eq__(self, a): 
     from math import fabs
@@ -38,11 +37,11 @@ class Crossover:
   def __call__(self, a, b):
     from copy import deepcopy
     
-    result = deepcopy(a)
-    at = self.rate * len(result.genes) 
-    result.genes[at:] = b.genes[len(b.genes)-at:]
+    at = self.rate * len(a.genes) 
+    a.genes[at:] = b.genes[len(b.genes)-at:]
 
-    return result
+    if hasattr(a, "fitness"): delattr(a, "fitness")
+    return a
 
 class Mutation:
   """ A crossover operation.
@@ -55,37 +54,69 @@ class Mutation:
     from copy import deepcopy
     from random import uniform
     
-    result = deepcopy(a)
-
-    for i in xrange(len(result.genes)):
+    for i in xrange(len(a.genes)):
       if uniform(0, 1)  < self.rate:
-        if result.genes[i] == 1: result.genes[i] = 0
-        else: result.genes[i] = 1
-    return result
+        if a.genes[i] == 1: a.genes[i] = 0
+        else: a.genes[i] = 1
+    if hasattr(a, "fitness"): delattr(a, "fitness")
+    return a
 
 
+class LocalSearch(object):
+  """ Performs a local search over a bitstring by flipping random bits. """
 
-class Mating: 
+  def __init__(self, evaluation, darwin, itermax=3):
+    """ Initializes a LocalSearch instance.
+          _ evaluation is a functor or function taking an individual as its argument. 
+          _ darwin is a class containing a taboo, a selection, and an cmp_indiv
+            procedure, as well as a population.
+          _ itermax is the maximum number of evaluation. 
+    """
 
-  """ Chooses between Crossover and Mutation.
-  """
-  def __init__(self, rate = 0.8, crossover = Crossover(), mutation = Mutation() ):
-    self.rate = rate
-    self.crossover = crossover
-    self.mutation = mutation
+    self.evaluation = evaluation
+    self.darwin = darwin
+    self.itermax = itermax
+  
+  def __call__(self, indiv):
+    from random import shuffle
 
-  def __call__(self, darwin):
-    from random import random
+    # computes original fitness.
+    if not hasattr( indiv, "fitness" ):
+      indiv.fitness = self.evaluation(indiv)
 
-    a = darwin.selection(darwin)
+    # dummy class for comparing fitnesses.
+    class Dummy():
+      def __init__(self, fitness): self.fitness = fitness
+   
 
-    indiv = None
-    if random() < self.rate:
-      b = a
-      while( b == a ): b = darwin.selection(darwin)
-      indiv = self.crossover( darwin.population[a], darwin.population[b])
-    else: indiv = self.mutation(darwin.population[a])
+    indices = range( len(indiv.genes) )
+    iter = 0
+    while self.itermax < 0 or iter < self.itermax:
 
-    if hasattr(indiv, "fitness"): delattr(indiv, "fitness")
+      shuffle(indices) # random list of genetic indices.
+
+      all_taboo = True
+      moved = False
+      for i in indices: 
+        indiv.genes[i] = not indiv.genes[i]
+        if self.darwin.taboo(self.darwin, indiv ):
+          indiv.genes[i] = not indiv.genes[i]
+          continue
+        all_taboo = False
+
+        new_fitness = Dummy(self.evaluation(indiv))
+        iter += 1
+        if self.darwin.cmp_indiv(new_fitness, indiv) <= 0: 
+          indiv.fitness = new_fitness.fitness
+          moved = True
+        else: indiv.genes[i] = not indiv.genes[i]
+        
+        if iter >= self.itermax: break
+
+      if not moved: break # local minima
+      if all_taboo: break # all nearest neighbors are taboo.
+
     return indiv
+
+          
 

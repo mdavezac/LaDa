@@ -79,6 +79,84 @@ def add_population_evaluation(self, evaluation):
   self.evaluation = popeval
   return self
 
+
+class Mating(object):
+  """ Aggregator of mating operators. 
+      Mating operations can be added using the Mating.add bound method.
+      Operations are called either sequentially[==and] or proportionally[==or] (either all
+      or only one can be called). 
+  """
+      
+
+  def __init__(self, sequential=False): 
+
+    self.operators = []
+    self.sequential = sequential
+
+  def add(self, function, rate=1):
+
+
+    # checks for number of arguments to function.
+    nb_args = -1
+    if hasattr(function, "__class__") and issubclass(function.__class__, Mating): pass
+    elif hasattr(function, "func_code"): nb_args = function.func_code.co_argcount
+    else: nb_args = function.__call__.im_func.func_code.co_argcount - 1
+
+    if rate <= 0e0: raise ValueError, "rate argument cannot be negative (%s)." % (rate)
+    self.operators.append( (function, rate, nb_args) )
+  
+  def __call__(self, darwin):
+
+    from random import random
+
+    def call_function(function, n, indiv = None):
+      """ Calls functions/functors mating operations. """
+      from copy import deepcopy
+      # calls other Mating instances.
+      if n == -1: return function(darwin)
+
+      individuals = []
+      if indiv != None: individuals.append(indiv)
+      else: individuals.append( deepcopy(darwin.population[darwin.selection(darwin)]) )
+
+      # calls unaries
+      if   n == 1: return function( individuals[0] )
+
+      # calls binaries
+      b = individuals[0]
+      while( b not in individuals ): b = darwin.population[darwin.selection(darwin)]
+      individuals.append(b)
+      if n == 2: return function( individuals[0], individuals[1] )
+
+      # calls ternaries
+      b = individuals[0]
+      while( b not in individuals ): b = darwin.population[darwin.selection(darwin)]
+      individuals.append(b)
+      if n == 3: return function( individuals[0], individuals[1], individuals[2] )
+
+      raise "Mating operations has to be unary, binary, or ternary.\n"
+
+    indiv = None
+    if self.sequential: # choose any operator depending on rate.
+      while indiv == None: # makes sure we don't bypass all mating operations
+        for function, rate, n in self.operators:
+          if random() < rate: indiv = call_function( function, n, indiv )
+    else: # choose only one operator.
+      max = 0e0
+      for function, rate, n in self.operators: max += rate
+      assert rate > 0e0;
+      last = 0e0
+      r = random() * max
+      for function, rate, n in self.operators:
+        if r <= last + rate:
+          indiv = call_function( function, n )
+          break
+        last += rate
+
+    assert indiv != None, "%s" % (self.sequential)
+    return indiv
+
+
 def add_checkpoint(self, _chk):
   """ Adds a checkpoint """
   try: self.checkpoints.append( _chk ) 
