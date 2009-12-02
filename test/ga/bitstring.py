@@ -32,7 +32,7 @@ class PrintNbEvals:
 
     
 def  main():
-  from lada.ga import darwin as dd, bitstring, standard
+  from lada.ga import darwin as dd, bitstring, standard, ce
   import numpy
   import copy
 
@@ -59,12 +59,15 @@ def  main():
                          stop_at_zero ]
 
   mating = standard.Mating(sequential=False)
-  mating.add( bitstring.Crossover(rate=0.5), rate=0.8 )
+  mating.add( bitstring.Crossover(rate=0.25), rate=0.8 )
   mating.add( bitstring.Mutation(rate=3e0/float(bitstring.Individual.size)), rate=0.2 )
 
   darwin.mating = standard.Mating(sequential=True)
   darwin.mating.add( mating, rate=0.8 )
-  darwin.mating.add( bitstring.LocalSearch(evaluation, darwin, itermax=75), rate=0.8 )
+  darwin.mating.add( bitstring.LocalSearch(evaluation, darwin, itermax=10), rate=0.8 )
+
+  darwin.taboo = standard.Taboo(diversity=True)
+  darwin.taboo.add( ce.Taboo(maxmbs=15) ) # constrains to less than maxmbs+1 manybodies
 
   darwin.rate   = 0.2
   darwin.popsize = 100

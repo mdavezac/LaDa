@@ -289,6 +289,18 @@ class SetOver:
     return a;
 
 
+class Taboo(object):
+  """ Constrains individuals to having less than a given number of many-bodies. """
+  def __init__(self, maxmbs = -1): self.maxmbs = maxmbs
+  def __call__(self, darwin, indiv):
+    """ Returns True if the individual has more than self.maxmbs manybodies. """
+    if self.maxmbs <= 0: return False
+
+    sum = 0
+    for i in indiv.genes:
+      if i: sum += 1 
+    return sum > self.maxmbs 
+
 
     
 

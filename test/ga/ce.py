@@ -61,8 +61,11 @@ def  main():
 
   darwin.mating = standard.Mating(sequential=True)
   darwin.mating.add( mating, rate=0.9 )
-  itermax = int( float(len(evaluation)) * 1.5 )
+  itermax = 20 # int( float(len(evaluation)) * 1.5 )
   darwin.mating.add( bitstring.LocalSearch(evaluation, darwin, itermax=itermax), rate=0.8 )
+
+  darwin.taboo = standard.Taboo(diversity=True)
+  darwin.taboo.add( ce.Taboo(maxmbs=15) ) # constrains to less than maxmbs+1 manybodies
 
   darwin.rate   = 0.2
   darwin.popsize = 20

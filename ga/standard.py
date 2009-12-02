@@ -1,13 +1,35 @@
 #
 #  Version: $Id$
 #
+
 """ Holds standard genetic algorithm operations. """
-def no_taboo( self, _indiv ):
-  """ Does nothing. """
-  return False
-def taboo( self, _indiv ):
-  """ taboo makes sure that no two individuals in the population and the offspring are the same. """
-  return _indiv in self.population or _indiv in self.offspring
+class Taboo(object):
+  """ A container of taboo operators.
+      By default, a diversity taboo operator is added. 
+  """
+
+  def __init__(self, diversity=True):
+    def diversity_taboo(self, _indiv):
+      """ taboo makes sure that no two individuals in the population and the
+          offspring are the same. """
+      return _indiv in self.population or _indiv in self.offspring
+
+    self.taboos = []
+    if diversity: self.taboos.append(diversity_taboo)
+
+  def add(self, taboo):
+    """ Adds a taboo operator to the list.
+        A taboo operator takes the darwin class and the individual as arguments
+        and returns True if the individual is taboo.
+    """
+    self.taboos.append(taboo)
+
+  def __call__(self, darwin, indiv):
+    """ Returns true if any one operator returns true. """
+    for taboo in self.taboos:
+      if taboo(darwin, indiv): return True
+
+    return False
 
 def tournament( self, size = 2 ):
   """ deterministic tournament """
@@ -187,7 +209,7 @@ def fill_attributes(self):
     self.Individual = Individual
 
   # Checks whether self has a taboo object.
-  if not hasattr(self, "taboo"): self.taboo = taboo
+  if not hasattr(self, "taboo"): self.taboo = Taboo()
 
   # Checks whether self has a selection object.
   if not hasattr(self, "selection"): self.selection = tournament

@@ -95,14 +95,12 @@ class LocalSearch(object):
 
       shuffle(indices) # random list of genetic indices.
 
-      all_taboo = True
       moved = False
       for i in indices: 
         indiv.genes[i] = not indiv.genes[i]
         if self.darwin.taboo(self.darwin, indiv ):
           indiv.genes[i] = not indiv.genes[i]
           continue
-        all_taboo = False
 
         new_fitness = Dummy(self.evaluation(indiv))
         iter += 1
@@ -114,7 +112,6 @@ class LocalSearch(object):
         if iter >= self.itermax: break
 
       if not moved: break # local minima
-      if all_taboo: break # all nearest neighbors are taboo.
 
     return indiv
 
