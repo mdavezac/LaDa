@@ -82,10 +82,9 @@ class Reduction(object):
 
   def _step(self):
     # N1
-    if (self.b < self.a):
-      self._n1_action()
+    if self.b < self.a: self._n1_action()
     # N2
-    if (self.c < self.b):
+    if self.c < self.b:
       self._n2_action()
       return True
     # N3
@@ -231,21 +230,48 @@ class Reduction(object):
 def main():
 
   from numpy import matrix
-  from numpy.linalg import inv
+  from numpy.linalg import inv, det 
   import cellsym
+  from lada import crystal, atat
+  import pyublas
 
-  cell = matrix( [ [0, 8, 8], [1, 7, 8], [1, 1, 0] ], dtype="float64") # * 4.419999999999999929
+  file = open("POSCAR", "w")
+  print >>file
+  print >>file, "4.419999999999999929"
+  print >>file, "     0.000000000000000000       1.000000000000000000       1.000000000000000000"
+  print >>file, "     8.000000000000000000       7.000000000000000000       1.000000000000000000"
+  print >>file, "     8.000000000000000000       8.000000000000000000       0.000000000000000000"
+  print >>file, "5 3"
+  print >>file, "Direct"
+  print >>file, "       0.000000000000000000      0.000000000000000000      0.000000000000000000"
+  print >>file, "       0.000000000000000000      0.000000000000000000      0.125000000000000000"
+  print >>file, "       0.000000000000000000      0.000000000000000000      0.375000000000000000"
+  print >>file, "       0.000000000000000000      0.000000000000000000      0.500000000000000000"
+  print >>file, "       0.000000000000000000      0.000000000000000000      0.750000000000000000"
+  print >>file, "       0.000000000000000000      0.000000000000000000      0.250000000000000000"
+  print >>file, "       0.000000000000000000      0.000000000000000000      0.625000000000000000"
+  print >>file, "       0.000000000000000000      0.000000000000000000      0.875000000000000000"
+  file.close()
+  structure = crystal.read_poscar( ("K", "Rb"), "POSCAR" )
+  print structure.cell, "\n"
+
+  cell = matrix( [ [0.0, 8, 8], [1, 7, 8], [1, 1, 0] ], dtype="float32") # * 4.419999999999999929
 
   reduction = Reduction()
 
-  cell = inv(cell).T
-  new_cell = reduction(cell)
+# cell = inv(cell).T
+  new_cell = reduction(cell, recip=True)
   print cell, "\n\n", new_cell
   
   ibrav, celldims, dummy = cellsym.lattice_type(cell) 
   print cellsym.str_lattice_type(ibrav, celldims)
   ibrav, celldims, dummy = cellsym.lattice_type(new_cell) 
   print cellsym.str_lattice_type(ibrav, celldims)
+  for i in range(3):
+    for j in range(3):
+      structure.cell[i,j] = new_cell[i,j]
+
+  crystal.print_poscar(structure, ("K", "Rb"))
 
 if __name__ == "__main__":
   main()

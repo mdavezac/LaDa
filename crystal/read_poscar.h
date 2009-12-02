@@ -91,7 +91,7 @@ namespace LaDa
                >> bsc::real_p[ bsc::assign_a( _structure.cell(2, i) ) ],
                bsc::space_p
             ).hit,
-            "Could not parse cell.\n" 
+            "Could not parse cell-vector " << i << ".\n" 
           )
         }
         if( _check_lattice )
