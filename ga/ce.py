@@ -138,7 +138,7 @@ class EvalFitPairs(Eval):
   max_nfuncs = 100
   max_pow = 15
 
-  def __init__(self, pairs=(10, 20), **kwarg):
+  def __init__(self, pairs=(10, 20), *args, **kwarg):
     from lada import ce
     from math import fabs
 
@@ -155,7 +155,7 @@ class EvalFitPairs(Eval):
 
 
     # creates self from base class.
-    Eval.__init__(self, **kwarg)
+    Eval.__init__(self, *args, **kwarg)
     # create pair terms.
     classes = None
     for site in _equivalent_sites(self.lattice):
@@ -250,8 +250,47 @@ class EvalFitPairs(Eval):
 
     return minvals[0]
 
+class SetOver:
+  """ Mating crossover operations over included sets of many-bodies.
+      If inclusive, then the offspring contains all many-bodies that are in
+      both parents, and some which are in either. If not inclusive, than the
+      offspring contains some many-bodies which are set in either parents.
+  """
+  def __init__(self, rate=0.5, inclusive=True):
+    """ Initializes SetOver parameters.
+        inclusive species which type of \"SetOver\" to perform, and rate the
+        acceptance rate of many-bodies. 
+    """
+    self.rate = rate; self.inclusive = inclusive
+
+  def __call__(self, a, b): 
+    from copy import deepcopy
+    from random import random
+
+    set_a = set()
+    for i, n in enumerate(a.genes):
+      if n: set_a.add(i)
+    set_b = set()
+    for i, n in enumerate(b.genes):
+      if n: set_b.add(i)
+
+    if self.inclusive: 
+      a.genes[:] = False
+      for i in set_a & set_b: 
+        a.genes[i] = True
+      for i in set_a ^ set_b: 
+        if random() < self.rate:
+          a.genes[i] = True
+    else: 
+      for i in set_a | set_b: 
+        if random() < self.rate:
+          a.genes[i] = True
+    if hasattr(a, "fitness"): delattr(a, "fitness")
+    return a;
 
 
+
+    
 
 class Individual:
   """ An individual for boolean bitstrings.
@@ -259,15 +298,21 @@ class Individual:
   """
 
   size = 10
+  max_mbs_oninit = -1
 
   def __init__(self):
     """ Initializes a boolean bitstring individual randomly.
     """
-    from random import choice
+    from random import choice, shuffle, randint
     import numpy
 
     self.genes = numpy.array([ choice([True,False]) for i in xrange(Individual.size) ], dtype=bool)
-    self.evaluated = False
+
+    if self.max_mbs_oninit > 0:
+      list_ = [i for i in xrange(len(self.genes))]
+      shuffle(list_)
+      self.genes[:] = False
+      self.genes[list_[:randint(1, min(20, Individual.size))]] = True
   
   def __eq__(self, a): 
     from math import fabs
