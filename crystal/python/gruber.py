@@ -235,25 +235,25 @@ def main():
   from lada import crystal, atat
   import pyublas
 
-  file = open("POSCAR", "w")
-  print >>file
-  print >>file, "4.419999999999999929"
-  print >>file, "     0.000000000000000000       1.000000000000000000       1.000000000000000000"
-  print >>file, "     8.000000000000000000       7.000000000000000000       1.000000000000000000"
-  print >>file, "     8.000000000000000000       8.000000000000000000       0.000000000000000000"
-  print >>file, "5 3"
-  print >>file, "Direct"
-  print >>file, "       0.000000000000000000      0.000000000000000000      0.000000000000000000"
-  print >>file, "       0.000000000000000000      0.000000000000000000      0.125000000000000000"
-  print >>file, "       0.000000000000000000      0.000000000000000000      0.375000000000000000"
-  print >>file, "       0.000000000000000000      0.000000000000000000      0.500000000000000000"
-  print >>file, "       0.000000000000000000      0.000000000000000000      0.750000000000000000"
-  print >>file, "       0.000000000000000000      0.000000000000000000      0.250000000000000000"
-  print >>file, "       0.000000000000000000      0.000000000000000000      0.625000000000000000"
-  print >>file, "       0.000000000000000000      0.000000000000000000      0.875000000000000000"
-  file.close()
-  structure = crystal.read_poscar( ("K", "Rb"), "POSCAR" )
-  print structure.cell, "\n"
+ #file = open("POSCAR", "w")
+ #print >>file
+ #print >>file, "4.419999999999999929"
+ #print >>file, "     0.000000000000000000       1.000000000000000000       1.000000000000000000"
+ #print >>file, "     8.000000000000000000       7.000000000000000000       1.000000000000000000"
+ #print >>file, "     8.000000000000000000       8.000000000000000000       0.000000000000000000"
+ #print >>file, "5 3"
+ #print >>file, "Direct"
+ #print >>file, "       0.000000000000000000      0.000000000000000000      0.000000000000000000"
+ #print >>file, "       0.000000000000000000      0.000000000000000000      0.125000000000000000"
+ #print >>file, "       0.000000000000000000      0.000000000000000000      0.375000000000000000"
+ #print >>file, "       0.000000000000000000      0.000000000000000000      0.500000000000000000"
+ #print >>file, "       0.000000000000000000      0.000000000000000000      0.750000000000000000"
+ #print >>file, "       0.000000000000000000      0.000000000000000000      0.250000000000000000"
+ #print >>file, "       0.000000000000000000      0.000000000000000000      0.625000000000000000"
+ #print >>file, "       0.000000000000000000      0.000000000000000000      0.875000000000000000"
+ #file.close()
+ #structure = crystal.read_poscar( ("K", "Rb"), "POSCAR" )
+ #print structure.cell, "\n"
 
   cell = matrix( [ [0.0, 8, 8], [1, 7, 8], [1, 1, 0] ], dtype="float32") # * 4.419999999999999929
 
@@ -267,11 +267,11 @@ def main():
   print cellsym.str_lattice_type(ibrav, celldims)
   ibrav, celldims, dummy = cellsym.lattice_type(new_cell) 
   print cellsym.str_lattice_type(ibrav, celldims)
-  for i in range(3):
-    for j in range(3):
-      structure.cell[i,j] = new_cell[i,j]
+ #for i in range(3):
+ #  for j in range(3):
+ #    structure.cell[i,j] = new_cell[i,j]
 
-  crystal.print_poscar(structure, ("K", "Rb"))
+ #crystal.print_poscar(structure, ("K", "Rb"))
 
 if __name__ == "__main__":
   main()
