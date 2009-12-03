@@ -43,7 +43,7 @@
         not possess a fitness attribute. 
 
     An example (function test()) can be found directly in the package's __init__.py
- """
+"""
 def test():
   class Eval:
 

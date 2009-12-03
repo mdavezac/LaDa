@@ -11,7 +11,7 @@
 #include "bandgap.hpp"
 #include "emass.hpp"
 
-BOOST_PYTHON_MODULE(escan)
+BOOST_PYTHON_MODULE(_escan)
 {
   LaDa::Python::expose_escan_parameters();
   LaDa::Python::expose_escan();

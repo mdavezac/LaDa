@@ -191,7 +191,7 @@ namespace LaDa
         .def_readwrite("verbose", &t_Escan::verbose, "Verbose pescan output on true.")
         .def( "fromXML",  &XML::Escan_from_XML<t_Escan>, bp::arg("file"),
               "Loads escan parameters from an XML file." )
-        .def( "run", &t_Escan::operator(), "Performs a calculation." )
+        .def( "__call__", &t_Escan::operator(), "Performs a calculation." )
         .def( "set_mpi", &t_Escan::set_mpi, "Sets the boost.mpi communicator." );
 
       bp::def( "nb_valence_states", &LaDa::Pescan::nb_valence_states, bp::arg("structure"),

@@ -41,6 +41,48 @@ namespace LaDa
         }
     }
 
+    struct center_iterator
+    {
+      typdef vff::AtomicCenter::t_Centers::const_iterator type;
+
+      type first_;
+      type end_;
+      bool is_first;
+
+      center_iterator   (type const &_f, type const &_end)
+                      : first_(_f), end_(_end), is_first(true) {}
+      center_iterator   (center_iterator const &_c)
+                      : first_(_c.first_), end_(_c.end_), is_first(_c.is_first_) {}
+
+      center_iterator iter() const { return *this; }
+      Value next() const 
+      {
+        if( first_ == end_ ) 
+        {
+          Py
+        }
+        if( is_first ) 
+      };
+    };
+
+    template<class T_VFF>
+      struct WithIterators : public T_VFF
+      {
+        WithIterator(Crystal::Structure &_str) : T_VFF(_str) {}
+        WithIterator(WithIterators const &_c) : T_VFF(_c) {}
+        virtual ~WithIterator() {}
+        //! iterator over first neighbor tree.
+        center_iterator iter() const { return center_iterator( centers_.begin(), centers_.end() ); }
+
+        protected:
+          using T_VFF::centers_;
+          using T_VFF::operator();
+          using T_VFF::print_escan_input;
+          using T_VFF::init;
+#         ifdef _MPI
+            using T_VFF::set_mpi;
+#         endif
+      };
 
 
     //! Assumes ownership of the Crystal::Structure object needed by vff.
@@ -48,7 +90,7 @@ namespace LaDa
     {
       public:
         //! Type of the functional.
-        typedef LaDa::Vff::VABase< T_VFF > t_Functional;
+        typedef LaDa::Vff::VABase< WithIterators<T_VFF> > t_Functional;
         //! Constructor.
         Vff() { functional_.reset( new t_Functional( structure ) ); }
         //! Copy Constructor.
@@ -82,6 +124,7 @@ namespace LaDa
         void set_bond( const std::string& _bond, const boost::python::tuple& _t );
         boost::python::tuple get_angle( const std::string& _bond ) const;
         void set_angle( const std::string& _bond, const boost::python::tuple& _t );
+
 
 
       protected:

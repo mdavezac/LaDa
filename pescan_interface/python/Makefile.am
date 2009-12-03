@@ -11,9 +11,11 @@ AM_LDFLAGS =
 install-exec-local: ../../python/libpython_lada.la
 
 EXTRA_DIST = $(pescan_python_h) 
-pkgpyexec_LTLIBRARIES = escan.la 
-escan_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
-escan_la_SOURCES = $(pescan_python_cc) 
-escan_la_LDFLAGS = $(AM_LDFLAGS) -module 
-escan_la_LIBADD =  $(top_builddir)/python/libpython_lada.la
+subpkgpyexec_PYTHON = __init__.py va.py
+subpkgpyexecdir = $(pkgpyexecdir)/escan
+subpkgpyexec_LTLIBRARIES = _escan.la 
+_escan_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
+_escan_la_SOURCES = $(pescan_python_cc) 
+_escan_la_LDFLAGS = $(AM_LDFLAGS) -module 
+_escan_la_LIBADD =  $(top_builddir)/python/libpython_lada.la
 endif
