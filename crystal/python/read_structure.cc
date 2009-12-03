@@ -86,7 +86,7 @@ namespace LaDa
 //       }
 
         // Checks path
-        std::string POSCAR("POSCAR");
+        std::string const POSCAR("POSCAR");
         bf::path path( _path );
         if( _path.size() >= POSCAR.size() )
           if( _path.substr( _path.size() - POSCAR.size() ) == POSCAR )
