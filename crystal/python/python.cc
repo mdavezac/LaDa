@@ -18,7 +18,7 @@
 #include "symmetry_operator.hpp"
 #include "which_site.hpp"
 
-BOOST_PYTHON_MODULE(crystal)
+BOOST_PYTHON_MODULE(_crystal)
 {
   LaDa::Python::expose_atom();
   LaDa::Python::expose_structure();
