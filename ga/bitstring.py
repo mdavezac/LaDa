@@ -65,7 +65,7 @@ class Mutation:
 class LocalSearch(object):
   """ Performs a local search over a bitstring by flipping random bits. """
 
-  def __init__(self, evaluation, darwin, itermax=3):
+  def __init__(self, evaluation, darwin, itermax=3, decrease=False):
     """ Initializes a LocalSearch instance.
           _ evaluation is a functor or function taking an individual as its argument. 
           _ darwin is a class containing a taboo, a selection, and an cmp_indiv
@@ -76,6 +76,7 @@ class LocalSearch(object):
     self.evaluation = evaluation
     self.darwin = darwin
     self.itermax = itermax
+    self.decrease = decrease
   
   def __call__(self, indiv):
     from random import shuffle
@@ -90,13 +91,15 @@ class LocalSearch(object):
    
 
     indices = range( len(indiv.genes) )
+    if self.decrease: indices = [i for i in indices if self.genes[i]] 
     iter = 0
     while self.itermax < 0 or iter < self.itermax:
 
+      if len(indices) < 2: break
       shuffle(indices) # random list of genetic indices.
 
       moved = False
-      for i in indices: 
+      for j, i in enumerate(indices): 
         indiv.genes[i] = not indiv.genes[i]
         if self.darwin.taboo(self.darwin, indiv ):
           indiv.genes[i] = not indiv.genes[i]
@@ -107,6 +110,7 @@ class LocalSearch(object):
         if self.darwin.cmp_indiv(new_fitness, indiv) <= 0: 
           indiv.fitness = new_fitness.fitness
           moved = True
+          indices.pop(j)
         else: indiv.genes[i] = not indiv.genes[i]
         
         if iter >= self.itermax: break
