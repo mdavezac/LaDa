@@ -91,7 +91,7 @@ class LocalSearch(object):
    
 
     indices = range( len(indiv.genes) )
-    if self.decrease: indices = [i for i in indices if self.genes[i]] 
+    if self.decrease: indices = [i for i in indices if indiv.genes[i]] 
     iter = 0
     while self.itermax < 0 or iter < self.itermax:
 
