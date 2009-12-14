@@ -144,7 +144,46 @@ namespace LaDa
       inline void as_structure( T_STR &_out, enumeration::t_uint _x,
                                 enumeration::FlavorBase const &_fl )
         { return enumeration::integer_to_structure(_out, _x, _fl); }
-                                                        
+
+    struct flavor_iter
+    {
+      flavor_iter   (enumeration::FlavorBase const &_fl, enumeration::t_uint const _x) 
+                  : i_it(_fl.rbegin()), i_it_end(_fl.rend()), x(_x), is_first(true) 
+      {
+        if( x < *i_it * _fl[1] ) return;
+        
+        PyErr_SetString(PyExc_ValueError, "integer argument is too large.\n");
+        boost::python::throw_error_already_set();
+        i_it = i_it_end;
+        is_first = false;
+      }
+      flavor_iter   (flavor_iter const &_c) 
+                  : i_it(_c.i_it), i_it_end(_c.i_it_end), x(_c.x), is_first(_c.is_first) {}
+
+      flavor_iter iter() { return *this; }
+      enumeration::t_uint next()
+      {
+        if( is_first ) is_first = false;
+        else if(i_it != i_it_end) ++i_it;
+
+        if( i_it != i_it_end )
+        {
+          PyErr_SetString(PyExc_StopIteration, "Stop iteration.\n");
+          boost::python::throw_error_already_set();
+          return -1;
+        }
+        
+        enumeration::t_uint const flavor( x / (*i_it) );
+        x %= (*i_it);
+        return x;
+      };
+
+      enumeration::t_uint x;
+      enumeration::FlavorBase::const_reverse_iterator i_it;
+      enumeration::FlavorBase::const_reverse_iterator i_it_end;
+      bool is_first;
+    };
+
     void expose_bitset()
     {
       bp::def("get_index", &enumeration::get_index);
@@ -153,6 +192,11 @@ namespace LaDa
               (bp::arg("card"), bp::arg("nflavors")), "Creates a basis nflavors^k, ( 0<=k<card)." );
       expose_vector<size_t>("FlavorBase", "A basis k^m");
       bp::register_ptr_to_python< boost::shared_ptr< std::vector<size_t> > >();
+      
+      bp::class_<flavor_iter>("IntegerIterator", "Iterates over atoms of an integer structure.\n",
+                              bp::init<enumeration::FlavorBase const &, enumeration::t_uint>())
+        .def("__iter__", &flavor_iter::iter )
+        .def("next", &flavor_iter::next );
 
       bp::def("as_bitstring", &integer_to_bitstring, (bp::arg("integer"), bp::arg("flavorbase")),
               "Converts an integer to a bitstring using flavorbase as  the basis.");
