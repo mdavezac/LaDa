@@ -32,7 +32,7 @@ namespace LaDa
     enumeration::LabelExchange & iter( enumeration::LabelExchange &_self ) { return _self; }
     enumeration::LabelExchange const& next( enumeration::LabelExchange &_self )
     {
-      if( not ++_self )
+      if( not (++_self) )
       {
         PyErr_SetString( PyExc_StopIteration, "End of range.\n" );
         bp::throw_error_already_set();

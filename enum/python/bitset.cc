@@ -166,7 +166,7 @@ namespace LaDa
         if( is_first ) is_first = false;
         else if(i_it != i_it_end) ++i_it;
 
-        if( i_it != i_it_end )
+        if( i_it == i_it_end )
         {
           PyErr_SetString(PyExc_StopIteration, "Stop iteration.\n");
           boost::python::throw_error_already_set();
@@ -175,7 +175,7 @@ namespace LaDa
         
         enumeration::t_uint const flavor( x / (*i_it) );
         x %= (*i_it);
-        return x;
+        return flavor;
       };
 
       enumeration::t_uint x;
