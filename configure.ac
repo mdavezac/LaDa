@@ -178,12 +178,6 @@ if test x$ceopt = xtrue; then
   ce=true
   galib=true
 fi
-lapack=false
-# if test x$emass = xtrue; then
-#   pescan=true
-#   vff=true
-#   lapack=true
-# fi
 direct_iaga=true;
 
 AC_SUBST(GSL_CFLAGS)
@@ -290,7 +284,6 @@ AM_CONDITIONAL(DOCEOPT, test x$ceopt = xtrue)
 AM_CONDITIONAL(DOVFF, test x$vff = xtrue)
 AM_CONDITIONAL(NOLAUNCH, test x$nolaunch = xtrue)
 AM_CONDITIONAL(DODARWIN, test x$galib = xtrue)
-AM_CONDITIONAL(DOLAPACK, test x$lapack = xtrue)
 AM_CONDITIONAL(DOALLOYLAYERSOPT, test x$alloylayersopt = xtrue)
 AM_CONDITIONAL(DODIRECTIAGA, test x$direct_iaga = xtrue)
 AM_CONDITIONAL(DOPYTHONPESCAN, test x$python$pescan$direct_iaga = xtruetruetrue)
@@ -386,7 +379,7 @@ AC_OUTPUT(Makefile atat/Makefile atat/python/Makefile physics/Makefile physics/p
           opt/Makefile opt/python/Makefile crystal/Makefile crystal/python/Makefile
           vff/Makefile vff/python/Makefile mpi/Makefile pescan_interface/Makefile darwin/Makefile 
           pescan_interface/python/Makefile
-          print/Makefile lapack/Makefile separable/Makefile ce/Makefile ce/python/Makefile
+          print/Makefile separable/Makefile ce/Makefile ce/python/Makefile
           python/Makefile separable/fixedlattice/Makefile factory/Makefile
           minimizer/Makefile minimizer/python/Makefile models/Makefile models/python/Makefile 
           atomic_potentials/Makefile atomic_potentials/python/Makefile 
@@ -439,9 +432,6 @@ fi
 echo ""
 if test "$mpi" = true; then
   echo "Will Include MPI where available."
-fi
-if test "$lapack" = true; then
-  echo "Will Include some lapack/blas routines for Matrix diagonalization."
 fi
 if test "x$python" = "xtrue"; then
   echo "Will compile python bindings."
