@@ -1,59 +1,54 @@
+from parameter_types import Standard, NoPrintStandard
+
 class Incar(object):
-  """ Contains vasp Incar parameters. 
-      This class separates vasp parameters from methods to launch and control
-      vasp. Any attribute here should be printable as a vasp incar.
-  """
+  # public attributes over which not to iterate.
+  _exclude_from_iteration = []
 
-  class Standard(object):
-    """ A standard parameter in the form of key/value pair. """
-    def __init__(self, key, value, validity=None, doc=None):
 
-      self.key = key
-      self.value = value
-      if doc != None: self.__doc__ = doc
+  class _DocObject(object):
+    def __init__(self, string):
+      self.string = string
+    def __get__(self, parent, parenttype=None):
+      result = self.string + "\n" 
+      for i, name in parent:
+        result += name + ": " + i.__doc__ + "\n"
+      return result
 
     def __set__(self, parent, value):
-      """ Sets value of key/value pair """
-      if self.validity != None:
-        assert self.validity(value), \
-               "Value %s = %s is invalid.\n%s\n"  % (self.key, value, self.__doc__)
-      self.value = value
+      self.string = value
 
-    def __get__(self, parent, parenttype=None):
-      """ Gets value of key/value pair """
-      return self.value
+  __doc__ = _DocObject( """ Contains vasp Incar parameters. 
+                            This class separates vasp parameters from methods to launch and control
+                            vasp. vasp attributes can be listed by iterating over this class, or
+                            calling iter.
+                        """ )
 
-    def __str__(self):
-      """ Prints in INCAR format. """
-      return "%s = %s" % (self.key, self.value)
+  
+  def __iter__(self):
 
-    def add_to_doc(self, parent):
+    vasp = [ u for u in dir(self) if u[0] != '_' ] # removes private stuff.
+    vasp = [ u for u in vasp if u not in self._exclude_from_iteration ]
+    def generator():
+      for i in vasp: yield (getattr(self, i), i)
+    return generator()
+        
 
-      lock = "_LockDocOfObject%s" % (self.__name__)
-      if hasattr(parent.__class__, lock): return 
-      setattr(parent, lock, None)
-      parent.__doc__ += "self.%s:\n%s" % (self.__name__, self.%s)
-
-  def NoPrintStandard(Standard):
-    """ Does not print if value is the default given on initialization. """
-    def __init__(self, key, value, validity=None, doc=None):
-      Standard.__init__(self, key, value, validity, doc)
-      self.default = value
-    def __str__(self):
-      if self.default == self.value: 
-        return "# %s = VASP default." % (self.key)
-      return Standard.__str__(self)
-
-
-
+ 
   def __init__(self):
 
-    self.iniwave = Standard( "INIWAV", "random", validity = lambda x: x=="random" or x=="jellium",\
-                             doc = """Initializes wave functions with \"random\" or \"jellium\"""" ) 
-#   self.nelect = NoPrintStandard( "NELECT", 0, validity = lambda x: x >= 0,
-#                                  """ Sets number of electrons in calculation.
-#                                      0 lets VASP compute it from species in the system. 
-#                                  """ )
+
+    self.iniwave = Standard\
+                   ( 
+                     "INIWAV", "random", validity = lambda x: x=="random" or x=="jellium",\
+                     doc = """Initializes wave functions with \"random\" or \"jellium\"""" 
+                   ) 
+    self.nelect = NoPrintStandard\
+                  (
+                    "NELECT", 0 , validity = lambda x: x >= 0,
+                    doc = """ Sets number of electrons in calculation.
+                              0 lets VASP compute it from species in the system. 
+                          """
+                  )
 #   self.nbands = NoPrintStandard( "NBANDS", 0, validity = lambda x: x >= 0,
 #                                  """ Sets number of bands to include in calculation.
 #                                      0 lets VASP decide.
@@ -129,3 +124,7 @@ class Incar(object):
 #   self.indir = ""
 
 #   self.other = {}
+ww = Incar()
+print ww.__doc__
+# for prop, name in ww:
+#   print name, prop
