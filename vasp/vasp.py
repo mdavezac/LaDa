@@ -1,29 +1,31 @@
 from parameters import Incar
 
 
-class Vasp(object):
+class Vasp(Incar):
 
   program = "vasp.mpi"
-  def __init__(self):
 
-    # incar parameters.
-    self.incar = Incar()
+  def __init__(self):
+    Incar.__init__(self) 
 
   def _prerun(self):
 
-    for param in self.incar:
-      print param
+    for param in self:
+      print param.incar_string(self)
 
   def __call__(self, structure):
 
-    self.sytem = structure
+    self.system = structure
     self._prerun()
 
 
 if __name__ == "__main__":
   from lada import crystal, atat
+  from specie import Specie
+  
   vasp = Vasp() 
-  vasp.species = [("Al", "~/AtomicPotentials/pseudos/K_s")]
+  vasp.species = [Specie("Al", "~/AtomicPotentials/pseudos/K_s")]
+  vasp.fftgrid.value = (10,10,10)
   structure = crystal.sStructure()
   structure.scale = 1e0
   structure.cell = atat.rMatrix3d([[0,0.5,0.5],[0.5,0,0.5],[0.5,0.5,0]])

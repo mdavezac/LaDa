@@ -1,4 +1,7 @@
-from parameter_types import Standard, NoPrintStandard, AlgoValue, PrecValue, EdiffValue
+from parameter_types import Standard, NoPrintStandard, AlgoValue, \
+                            PrecValue, EdiffValue, EncutValue, \
+                            SmearingValue, SymValue, FFTValue, \
+                            RestartValue, RelaxationValue
 
 class Incar(object):
   """ Contains vasp Incar parameters. 
@@ -6,22 +9,8 @@ class Incar(object):
       vasp. vasp attributes can be listed by iterating over this class, or
       calling iter.
   """ 
-  _exclude_from_iteration = []
-  """ Public attributes over which not to iterate. 
-      This means these public attributes are not proper vasp parameters. """
 
-  def __iter__(self):
-
-    vasp = [ u for u in dir(self) if u[0] != '_' ] # removes private stuff.
-    vasp = [ u for u in vasp if u not in self._exclude_from_iteration ]
-    def generator():
-      for i in vasp: yield (getattr(self, i), i)
-    return generator()
-        
-
- 
-  def __init__(self):
-
+  def __init__(self): 
     self.iniwave = Standard("INIWAV", "random", validity = lambda x: x=="random" or x=="jellium")
     """ Initializes wave functions with \"random\"(default) or \"jellium\" """ 
     self.nelect = NoPrintStandard("NELECT", 0 , validity = lambda x: x >= 0)
@@ -41,22 +30,22 @@ class Incar(object):
     """ Electronic minimization. 
         Can be \"very fast\", \"fast\", or \"normal\" (default). 
     """ 
-    self.value = PrecValue()
+    self.precision = PrecValue()
     """ Sets accuracy of calculation. 
         Can be \"accurate\" (default), \"low\", \"medium\", \"high\".
     """
-    self.prec = EdiffValue(self)
+    self.prec = EdiffValue()
     """ Sets the convergence criteria for electronic minimization.
         This tolerance is divided by the number of atoms in the system. 
         For this reason, printing to incar is doned via the return to __call__.\n"
     """
     self.nsw = Standard("NSW", 0, validity = lambda x: int(x) == float(x) and int(x) >= 0)
     """ Maximum number of ionic steps. \n """ 
-    self.encut = EcutValue(self, safety=1.25)
+    self.encut = EncutValue(safety=1.25)
     """ Gets maximum cutoff from POTCAR.
         Actual printed value is that times the safety. 
     """
-    self.smearing = SmearingValue(string = "insulator" )
+    self.smearing = SmearingValue()
     """ Value of the smearing used in the calculation. 
         It can be specified as a string: "type x", where type is any of fermi,
         gaussian, mp, tetra, metal or insulator, and x is the energy scale in eV.
@@ -75,6 +64,33 @@ class Incar(object):
         Can be "off" or a float corresponding to the tolerance used to determine
         symmetry operation.  By default, it is 1e-5.
     """
-    self.fft = FFTValue(self, grid = None)
+    self.fftgrid = FFTValue(grid = None)
     """ Computes fft grid using VASP. Or if grid is given, computes using that grid. """
+    self.relaxation = RelaxationValue()
+    """ Sets ISIF in incar depending on type relaxation required. 
+    
+         - if set to None or empty string, then no relaxation.
+         - if ionic is in string, then includes ionic relaxation.
+         - if cellshape is in string, then includes cell relaxation.
+         - if volume is in string, then includes volume relaxation.
+    
+         Makes sure that the parameters make sense together. 
+         Can also be set using an integer between 0 and 7. See VASP manual. 
+    """
 
+  restart = RestartValue(None)
+  """
+      Directory where to restart, or None.
+      
+      If None, then starts from scratch.
+      If this directory contains WAVECAR or CHGCAR, then restarts from
+      wavefunctions or charge. If this directory does not exist, issue an
+      error.
+  """
+
+  def __iter__(self):
+
+    for name in dir(self):
+      if name[0] == '_': continue
+      attr = getattr(self, name)
+      if hasattr(attr, "incar_string"): yield attr
