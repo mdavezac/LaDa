@@ -1,7 +1,7 @@
-from parameter_types import Standard, NoPrintStandard, AlgoValue, \
-                            PrecValue, EdiffValue, EncutValue, \
-                            SmearingValue, SymValue, FFTValue, \
-                            RestartValue, RelaxationValue
+from incar_params import Standard, NoPrintStandard, AlgoValue, \
+                         PrecValue, EdiffValue, EncutValue, \
+                         SmearingValue, SymValue, FFTValue, \
+                         RestartValue, RelaxationValue
 
 class Incar(object):
   """ Contains vasp Incar parameters. 

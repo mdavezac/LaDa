@@ -1,4 +1,4 @@
-from parameters import Incar
+from incar import Incar
 from kpoints import Density
 
 
@@ -34,7 +34,7 @@ if __name__ == "__main__":
   vasp.fftgrid.value = (10,10,10)
   structure = crystal.sStructure()
   structure.scale = 1e0
-  structure.cell = atat.rMatrix3d([[0,0.5,0.5],[0.5,0,0.5],[0.5,0.5,0]])
+  structure.cell = atat.rMatrix3d([[2,0.5,0.5],[0.0,0,0.5],[0.0,0.5,0]])
   structure.atoms.append( crystal.StrAtom() )
   structure.atoms[0].pos = atat.rVector3d(0,0,0)
   structure.atoms[0].type = "Al"
