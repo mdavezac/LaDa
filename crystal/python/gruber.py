@@ -24,8 +24,10 @@ class Reduction(object):
         the same but within a reduced Niggli unit-cell.
     """
 
+    from copy import deepcopy
     from numpy import matrix
     from numpy.linalg import inv
+    from lada import atat
 
     cell = None 
     if hasattr(structure, "cell"):
@@ -56,8 +58,8 @@ class Reduction(object):
     if recip: cell = inv(cell).T
 
     if hasattr(structure, "cell"):
-      new_structure = structure.__class__(structure)
-      new_structure.cell = cell
+      new_structure = deepcopy(structure)
+      new_structure.cell = atat.rMatrix3d( [[cell[i,j] for j in range(3)] for i in range(3)] )
       return new_structure
     else: return cell
 

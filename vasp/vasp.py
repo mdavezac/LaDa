@@ -1,4 +1,5 @@
 from parameters import Incar
+from kpoints import Density
 
 
 class Vasp(Incar):
@@ -8,10 +9,15 @@ class Vasp(Incar):
   def __init__(self):
     Incar.__init__(self) 
 
+    self.indir = ""
+    self.kpoints = Density()
+
   def _prerun(self):
 
     for param in self:
       print param.incar_string(self)
+
+    print self.kpoints(self)
 
   def __call__(self, structure):
 
