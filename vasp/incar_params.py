@@ -259,8 +259,31 @@ class FFTValue(object):
       return "NGX = %i\nNGY = %i\nNGZ = %i" % self(vasp)
 
     def __call__(self, vasp):
+      from copy import deepcopy
+      from lada.opt import Tempdir
+      from lada.vasp import kpoints, Run, Extract
+
       if self._value != None: return self._value
-      raise RuntimeError, "Not implemented."
+
+      _vasp = deepcopy(vasp)
+      with Tempdir(_vasp.workdir) as _vasp.indir:
+        _vasp.kpoints = kpoints.Gamma()
+        _vasp.relaxation = None
+        del _vasp.fft # simply remove attribute to get VASP default
+        # makes sure we do nothing during this run
+        _vasp.nelmdl = Standard("NELMDL",  0)
+        _vasp.nelm   = Standard("NELM",  0)
+        _vasp.nelmin = Standard("NELMIN",  0)
+
+        # Now runs vasp. OUTCAR should be in temp indir
+        Run.__call__(vasp) 
+
+        # finally extracts from OUTCAR.
+        vasp.fft = Extract(_vasp.indir).fft
+
+
+
+      
 
 class RestartValue(object):
   """
@@ -330,8 +353,12 @@ class RelaxationValue(object):
       return 
     except TypeError: pass
 
-    ionic =  re.search( "ionic", object.lower() ) != None
-    cellshape = re.search( "cell(\s+|-|_)?shape", object.lower() ) != None
+    if object.lower() == "static": 
+      self._value = 0
+      return 
+
+    ionic =  re.search( "ion(ic|s)?", object.lower() ) != None
+    cellshape = re.search( "cell(\s+|-|_)?(?:shape)?", object.lower() ) != None
     volume = re.search( "volume", object.lower() ) != None
     if (not ionic) and (not cellshape) and (not volume): self._value = 0
     elif ionic and (not cellshape) and (not volume):     self._value = 2

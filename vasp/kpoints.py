@@ -1,3 +1,10 @@
+""" Module containing different k-mesh schemes """
+class Gamma(objec):
+  """ K-mesh with a single point: Gamma. """
+  def __call__(self, vasp):
+    """ Returns a string which is the text of the KPOINTS file """
+    return """Gamma only\n0\nGamma\n1 1 1\n0 0 0\n"""
+
 class Density(object):
   """ Contains vasp kpoints parameters. """
   def __init__(self, offset=(0.5, 0.5, 0.5), length=70):
