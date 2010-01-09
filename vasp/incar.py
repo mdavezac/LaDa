@@ -11,6 +11,8 @@ class Incar(object):
   """ 
 
   def __init__(self): 
+    object.__init__(self) # calls base class.
+
     self.iniwave = Standard("INIWAV", "random", validity = lambda x: x=="random" or x=="jellium")
     """ Initializes wave functions with \"random\"(default) or \"jellium\" """ 
     self.nelect = NoPrintStandard("NELECT", 0 , validity = lambda x: x >= 0)
