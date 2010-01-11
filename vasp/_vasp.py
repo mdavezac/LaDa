@@ -2,64 +2,63 @@
 #  Version: $Id$
 #
 from specie import Specie
-from parameters import Parameters
 
 class Vasp:
   """Can create 'vasp' jobs.
       Startup parameters:
-      _ restart should be directory from which to restart, or nothing.
-      _ species holds the list of Specie objects.
-      _ iniwave can be either random or jellium. VASP manual recommends random.
+        - restart should be directory from which to restart, or nothing.
+        - species holds the list of Specie objects.
+        - iniwave can be either random or jellium. VASP manual recommends random.
       Electronic degrees of freedom:
-      _ encut is the energy cutoff. if it is <= 0, then ENCUT = cutoff_safety * max(ENMAX)
-        otherwise,  ENCUT = encut.
-      _ cutoff_safety is a real number such that ECUT = cutoff_safety * EMAX,
-        where EMAX is the maxium from the potcars of the species in the job.
-      _ nelect is the number of electrons. 0 or "vasp" will have VASP compute it for us.
-      _ nbands is the number of bands. 0 or "vasp" lest vasp figure it out.
-      _ nspins is the number of spins, either 1 or 2.
-      _ ng is the number of points NGX, NGY, NGZ.
-        If it is zero, then runs vasp to find out best value.
-        If it is negative, then do not use NG? tags.
-      _ smearing is the type of smearing function used in metals. It can be
-          "fermi x"  for Fermi-Dirac function.
-          "gaussian x" for gaussians.
-          "mp N x" for Methfessel-Paxton method, where N is the order of the expansion.
-          "tretra x" for tetrahedron method without Blochl correction.
-          "tretra bloech x" for tetrahedron method with Blochl correction.
-          "metal x" is equivalent to "mp 1 0.2"
-          "insulator" is equivalent to "tetra bloechl"
-          x is the value of the smearing in eV. If it is not present, a value
-          of 0.2eV is used by default.
-       _ kpoint is the kpoint scheme. It can be:
-          a list of atat.rVector3d or of 4-tuples with the direct coordinates and weights.
-          "gamma N" to generate a gamma-centered NxNxN mesh
-          "mp N " to generate an off-center Monkhorst-Pack NxNxN mesh.
-          "file filename" to use a pre-generated file.
-          "d=? o=?" to generate a mesh with density ? (from d=?) and an offset
-                   (o=?). The algorithm is the same as vasp option 'auto',
-                   except that an offset can be given. d is the number of
-                   points per unit of reciprocal-space length.
-          An empty string/array defaults to Gamma only.
-      _ isym is the symmetrization method. It can be:
-           off x,
-           usp x recommended value for ultra-soft pseudos,
-           paw x recommended value for paw pseudos
-           default x will set isym depending on the pseudo of the species.
-           x is an optional parameter specifying the precision.
+        - encut is the energy cutoff. if it is <= 0, then ENCUT = cutoff_safety * max(ENMAX)
+          otherwise,  ENCUT = encut.
+        - cutoff_safety is a real number such that ECUT = cutoff_safety * EMAX,
+          where EMAX is the maxium from the potcars of the species in the job.
+        - nelect is the number of electrons. 0 or "vasp" will have VASP compute it for us.
+        - nbands is the number of bands. 0 or "vasp" lest vasp figure it out.
+        - nspins is the number of spins, either 1 or 2.
+        - ng is the number of points NGX, NGY, NGZ.
+          If it is zero, then runs vasp to find out best value.
+          If it is negative, then do not use NG? tags.
+        - smearing is the type of smearing function used in metals. It can be
+            "fermi x"  for Fermi-Dirac function.
+            "gaussian x" for gaussians.
+            "mp N x" for Methfessel-Paxton method, where N is the order of the expansion.
+            "tretra x" for tetrahedron method without Blochl correction.
+            "tretra bloech x" for tetrahedron method with Blochl correction.
+            "metal x" is equivalent to "mp 1 0.2"
+            "insulator" is equivalent to "tetra bloechl"
+            x is the value of the smearing in eV. If it is not present, a value
+            of 0.2eV is used by default.
+         - kpoint is the kpoint scheme. It can be:
+            a list of atat.rVector3d or of 4-tuples with the direct coordinates and weights.
+            "gamma N" to generate a gamma-centered NxNxN mesh
+            "mp N " to generate an off-center Monkhorst-Pack NxNxN mesh.
+            "file filename" to use a pre-generated file.
+            "d=? o=?" to generate a mesh with density ? (from d=?) and an offset
+            (o=?). The algorithm is the same as vasp option 'auto',
+            except that an offset can be given. d is the number of
+            points per unit of reciprocal-space length.
+            An empty string/array defaults to Gamma only.
+        - isym is the symmetrization method. It can be:
+             off x,
+             usp x recommended value for ultra-soft pseudos,
+             paw x recommended value for paw pseudos
+             default x will set isym depending on the pseudo of the species.
+             x is an optional parameter specifying the precision.
       Electronic Minimization:
-      _ algo can be "normal", "fast", or "very fast".
-      _ ediff sets the convergence criteria of the charge SCF loop.
-      _ prec sets the precision (cutoff, fft grids...). 
-        It can be "low", "medium", "normal", "accurate", or "high".
+        - algo can be "normal", "fast", or "very fast".
+        - ediff sets the convergence criteria of the charge SCF loop.
+        - prec sets the precision (cutoff, fft grids...). 
+          It can be "low", "medium", "normal", "accurate", or "high".
       Ionic Minimization:
-      _ relaxation specifies which degrees of freedom to relax: ionic, 
-        cellshape, volume, and the method, which can be:
-             md (IBRION = 0) molecular dynamics, no cell-shape optimization.
-             local (IBRION = 1 ) rmm-diis is good close to the minimum
-             global (IBRION = 2) conjugate-gradient is the most robust method.
-      _ potim is the time-step for ionic-motions.
-      _ nsw is the maximum number of ionic step. 40 by default.
+        - relaxation specifies which degrees of freedom to relax: ionic, 
+          cellshape, volume, and the method, which can be:
+            - md (IBRION = 0) molecular dynamics, no cell-shape optimization.
+            - local (IBRION = 1 ) rmm-diis is good close to the minimum
+            - global (IBRION = 2) conjugate-gradient is the most robust method.
+        - potim is the time-step for ionic-motions.
+        - nsw is the maximum number of ionic step. 40 by default.
 
       The path to the VASP executable should be specified in static variable Vasp.program.
   """
@@ -589,11 +588,11 @@ class Vasp:
     
   def prepare(self, _structure, wpath = "", repat = "all", header = "", footer="" ):
     """Prepares a script for launching vasp.
-       _structure is the structure over which to perform calculations.
-       _repat are the file to repatriate: "outcar, poscar, chgcar, wavecar, contcar, ibzkpt"
-              "all" will copy everything back to _outpath.
-              "none" will do the opposite
-       _wpath is the directory where to compute the structure.
+         - structure is the structure over which to perform calculations.
+         - repat are the file to repatriate: "outcar, poscar, chgcar, wavecar, contcar, ibzkpt"
+           "all" will copy everything back to _outpath.
+           "none" will do the opposite
+         - wpath is the directory where to compute the structure.
     """
     import os
     import tempfile

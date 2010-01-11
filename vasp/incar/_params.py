@@ -1,4 +1,4 @@
-""" Paremeters types for use as attributes in Incar """
+""" Standard parameter types for use as attributes in Incar """
 class Standard(object):
   """
       A standard parameter in the form of key/value pair. 
@@ -74,8 +74,9 @@ class PrecValue(Standard):
 
 class EdiffValue(Standard):
   """ Sets the convergence criteria for electronic minimization.
-      This tolerance is divided by the number of atoms in the system. 
-      For this reason, printing to incar is doned via the return to __call__.\n"
+
+      This tolerance is divided by the number of atoms in the system.  For this
+      reason, printing to incar is doned via the return to __call__.
   """
   def __init__(self, value = 1e-4):
     Standard.__init__(self, "EDIFF", value, validity = lambda x: x > 0e0)
@@ -326,10 +327,10 @@ class RestartValue(object):
 class RelaxationValue(object):
   """ Sets ISIF in incar depending on type relaxation required. 
 
-       - if set to None or empty string, then no relaxation.
-       - if ionic is in string, then includes ionic relaxation.
-       - if cellshape is in string, then includes cell relaxation.
-       - if volume is in string, then includes volume relaxation.
+        - if set to None or empty string, then no relaxation.
+        - if ionic is in string, then includes ionic relaxation.
+        - if cellshape is in string, then includes cell relaxation.
+        - if volume is in string, then includes volume relaxation.
 
        Makes sure that the parameters make sense together. 
        Can also be set using an integer between 0 and 7. See VASP manual. 

@@ -1,21 +1,30 @@
 """ Subpackage containing extraction methods for vasp parameters from vasp output. """
+from _success import Success
 
-from incar import Incar
-from kpoints import Density
+class Extract(object):
+  """ Main class for extracting VASP output as python objects.
 
-class Extract(object)
-  """ Extracts VASP values """
+      This class should contain attributes (eg fermi_energy) which can extract
+      their values from the vasp output files located in self.indir.  
+
+      >>> result = Extract("./")
+      >>> print result.fermi_energy * 13.26
+  """
 
   def __init__(self, indir = ""): self.indir = indir
+
+  success = Success()
+  r""" Checks for success of vasp calculation """
 
   def _get_energy_sigma0(self):
     """ Gets total energy extrapolated to $\sigma=0$ from vasp run """
     from os.path import exists, join
     import re
+    from lada.vasp import Launch
 
-    path = Run.OUTCAR 
-    if self.indir != "": path = join(self.indir, path)
-    assert exists(path), "File %s does not exist.\n" % (path)
+    path = Launch.OUTCAR 
+    if len(self.indir): path = join(self.indir, path)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = None
     with open(path, "r") as file:
@@ -32,12 +41,12 @@ class Extract(object)
   def _get_energy(self):
     """ Gets total energy from vasp run """
     from os.path import exists, join
-    from shoot import Launch
     import re
+    from lada.vasp import Launch
 
     path = Launch.OUTCAR 
-    if self.indir != "": path = join(self.indir, path)
-    assert exists(path), "File %s does not exist.\n" % (path)
+    if len(self.indir): path = join(self.indir, path)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = None
     with open(path, "r") as file:
@@ -55,10 +64,11 @@ class Extract(object)
     """ Gets total free energy from vasp run """
     from os.path import exists, join
     import re
+    from lada.vasp import Launch
 
-    path = Run.OUTCAR 
-    if self.indir != "": path = join(self.indir, path)
-    assert exists(path), "File %s does not exist.\n" % (path)
+    path = Launch.OUTCAR 
+    if len(self.indir): path = join(self.indir, path)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = None
     with open(path, "r") as file:
@@ -76,10 +86,11 @@ class Extract(object)
     """ Gets total free energy from vasp run """
     from os.path import exists, join
     import re
+    from lada.vasp import Launch
 
-    path = Run.OUTCAR 
-    if self.indir != "": path = join(self.indir, path)
-    assert exists(path), "File %s does not exist.\n" % (path)
+    path = Launch.OUTCAR 
+    if len(self.indir): path = join(self.indir, path)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = None
     with open(path, "r") as file:
@@ -97,10 +108,11 @@ class Extract(object)
     """ Gets structure from CONTCAR file and total energy from OUTCAR """
     from os.path import exists, join
     import re
+    from lada.vasp import Launch
 
-    path = Run.CONTCAR 
-    if self.indir != "": path = join(self.indir, path)
-    assert exists(path), "File %s does not exist.\n" % (path)
+    path = Launch.CONTCAR 
+    if len(self.indir): path = join(self.indir, path)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = crystal.read_poscar(tuple(self.species), self.CONTCAR)
     result.energy = self.energy
@@ -113,10 +125,11 @@ class Extract(object)
     """ Returns recommended or actual fft setting """
     from os.path import exists, join
     import re
+    from lada.vasp import Launch
 
-    path = Run.OUTCAR 
-    if self.indir != "": path = join(self.indir, path)
-    assert exists(path), "File %s does not exist.\n" % (path)
+    path = Launch.OUTCAR 
+    if len(self.indir): path = join(self.indir, path)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = None
     with open(path, "r") as file:
@@ -124,9 +137,9 @@ class Extract(object)
       # find start
       for line in file:
         if re.search("I would recommend the setting", line): break;
-      ng_regex = re.compile(r"WARNING:\s+wrap\s+around\s+error\s+
-                              must\s+be\s+expected\s+set\s+NG(X|Y|Z)\s+to\s+(\d+)", re.X)
-      g_regex = re.compile(r"NG(X|Y|Z)\s+is\s+ok\s+and\s+might\s+be\s+reduce\s+to\s+(\d+)", re.X)
+      ng_regex = re.compile(r"""WARNING:\s+wrap\s+around\s+error\s+
+                                must\s+be\s+expected\s+set\s+NG(X|Y|Z)\s+to\s+(\d+)""", re.X)
+      g_regex = re.compile(r"""NG(X|Y|Z)\s+is\s+ok\s+and\s+might\s+be\s+reduce\s+to\s+(\d+)""", re.X)
       found_regex = re.compile(r"""dimension\s+x,y,z\s+
                                    NGX\s+=\s+(\d+)\s+
                                    NGY\s+=\s+(\d+)\s+
@@ -189,7 +202,7 @@ class Extract(object)
 #   from os.path import exists, join
 #   import re
 
-#   path = Run.OUTCAR 
+#   path = Launch.OUTCAR 
 #   if self.indir != "": path = join(self.indir, path)
 #   assert exists(path), "File %s does not exist.\n" % (path)
 #   

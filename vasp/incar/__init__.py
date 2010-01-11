@@ -1,10 +1,12 @@
-from incar_params import Standard, NoPrintStandard, AlgoValue, \
-                         PrecValue, EdiffValue, EncutValue, \
-                         SmearingValue, SymValue, FFTValue, \
-                         RestartValue, RelaxationValue
+""" Subpackage defining vasp incar parameters. """
+from _params import Standard, NoPrintStandard, AlgoValue, \
+                    PrecValue, EdiffValue, EncutValue, \
+                    SmearingValue, SymValue, FFTValue, \
+                    RestartValue, RelaxationValue
 
 class Incar(object):
   """ Contains vasp Incar parameters. 
+
       This class separates vasp parameters from methods to launch and control
       vasp. vasp attributes can be listed by iterating over this class, or
       calling iter.
@@ -92,6 +94,12 @@ class Incar(object):
   """
 
   def __iter__(self):
+    """ Iterates over vasp incar parameters.
+
+        To be identified as an incar parameter, an attribute should have an
+        incar_string function. In this way, the Incar class can be subclassed
+        while retaining this method.
+    """
 
     for name in dir(self):
       if name[0] == '_': continue

@@ -1,5 +1,5 @@
 """ Module containing different k-mesh schemes """
-class Gamma(objec):
+class Gamma(object):
   """ K-mesh with a single point: Gamma. """
   def __call__(self, vasp):
     """ Returns a string which is the text of the KPOINTS file """
@@ -9,9 +9,8 @@ class Density(object):
   """ Contains vasp kpoints parameters. """
   def __init__(self, offset=(0.5, 0.5, 0.5), length=70):
     """ Initializes density.
-
-         - offset is with respect to Gamma, eg (0, 0, 0) means gamma centered.
-         - length is the target number of points per 2\pi/Angstrom.
+          - offset is with respect to Gamma, eg (0, 0, 0) means gamma centered.
+          - length is the target number of points per 2\pi/Angstrom.
     """
 
     self.offset = offset

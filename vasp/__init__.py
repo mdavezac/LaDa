@@ -12,7 +12,7 @@
     retrieval and vasp calculations can be performed using the same class and
     script). 
 """
-from launch import launch
+from launch import Launch
 from extract import Extract
 from incar import Incar
 from incar_params import *
