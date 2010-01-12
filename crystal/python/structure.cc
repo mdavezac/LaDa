@@ -31,6 +31,8 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
+#include <boost/filesystem/operations.hpp>
+
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <python/misc.hpp>
@@ -155,6 +157,37 @@ namespace LaDa
       return result;
     }
 
+    template<class T_STRUCTURE> 
+      T_STRUCTURE* fromXML(std::string const &_path)
+      {
+        namespace bfs = boost::filesystem
+        if( not bp::exists(_path) )
+        {
+          PyErr_SetString(PyExc_IOError, (_path + " does not exist.\n").c_str())
+          bp::throw_error_already_set();
+          return NULL;
+        }
+        T_STRUCTURE result = new T_STRUCTURE;
+        try
+        { 
+          if(not result->Load(_path))
+          {
+            PyErr_SetString(PyExc_IOError, ("Could not load structure from " + _path).c_str())
+            delete result;
+            result = NULL;
+            bp::throw_error_already_set();
+          }
+        }
+        catch(std::exception &_e)
+        {
+          PyErr_SetString(PyExc_IOError, ("Could not load structure from " + _path).c_str())
+          delete result;
+          result = NULL;
+          bp::throw_error_already_set();
+        }
+        return result
+      }
+
     void expose_structure()
     {
       typedef Crystal::Structure::t_FreezeCell t_FreezeCell;
@@ -171,6 +204,7 @@ namespace LaDa
 
       bp::class_< Crystal::Structure >( "Structure", "Defines a structure.\n"
                                         "Generally, it is a super-cell of a LaDa.Lattice object." )
+        .def( "__init__", bp::make_constructor( fromXML<Crystal::Structure> ) )
         .def( "__init__", bp::make_constructor( copy<Crystal::Structure> ) )
         .def( "__init__", bp::make_constructor( empty<Crystal::Structure> ) )
         .def( "__init__", bp::make_constructor( string_to_real ) )
@@ -211,6 +245,7 @@ namespace LaDa
         .def( "xcrysden", &xcrysden, "Outputs in XCrysden format." )
         .def_pickle( pickle_structure< Crystal::Structure >() );
       bp::class_< Crystal::TStructure<std::string> >( "sStructure" )
+        .def( "__init__", bp::make_constructor( fromXML< Crystal::TStructure<std::string> > ) )
         .def( "__init__", bp::make_constructor( copy< Crystal::TStructure<std::string> > ) )
         .def( "__init__", bp::make_constructor( empty< Crystal::TStructure<std::string> > ) )
         .def( "__init__", bp::make_constructor( real_to_string ) )

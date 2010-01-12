@@ -104,9 +104,15 @@ def add_population_evaluation(self, evaluation):
 
 class Mating(object):
   """ Aggregator of mating operators. 
+
       Mating operations can be added using the Mating.add bound method.
       Operations are called either sequentially[==and] or proportionally[==or] (either all
       or only one can be called). 
+
+      Mating operations can be unary, binary, or ternary. The first argument passed
+      to each operation is the new offspring, passed by reference. The other
+      arguments are references to individual in the population. They should be
+      treated as read-only.
   """
       
 

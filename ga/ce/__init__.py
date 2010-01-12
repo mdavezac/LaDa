@@ -1,6 +1,4 @@
-#
-#  Version: $Id: ce.py 1396 2009-11-16 02:59:48Z davezac $
-#
+""" A GA subpackage to select figures for a cluster expansion. """
 def _equivalent_sites(lattice):
   """ Returns a list containing only one site index per inequivalent sub-lattice. """
   from lada import crystal

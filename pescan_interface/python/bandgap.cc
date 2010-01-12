@@ -68,7 +68,7 @@ namespace LaDa
         .def( bp::init< const t_Bands& >() )
         .def_readwrite( "vbm", &t_Bands::vbm, "Valence Band Maximum." )
         .def_readwrite( "cbm", &t_Bands::cbm, "Conduction Band Minimum." )
-        .def( "gap", &t_Bands::gap, "Returns the gap (LaDa.Bands.cbm - LaDa.Bands.vbm)." )
+        .add_property( "gap", &t_Bands::gap, "Returns the gap (LaDa.Bands.cbm - LaDa.Bands.vbm)." )
         .def( "__str__", &details::print_bands, "Prints out a Bands object to a string." )
         .def_pickle( details::pickle_bands() );
     }

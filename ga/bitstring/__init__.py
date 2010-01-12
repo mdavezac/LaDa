@@ -1,6 +1,4 @@
-#
-#  Version: $Id$
-#
+""" A GA subpackage defining standard genetic operator for bitstrings. """
 
 class Individual:
   """ An individual for bitstrings.
@@ -10,8 +8,7 @@ class Individual:
   size = 10
 
   def __init__(self):
-    """ Initializes a bitstring individual randomly.
-    """
+    """ Initializes a bitstring individual randomly. """
     from random import randint
     import numpy
 
@@ -28,30 +25,33 @@ class Individual:
 
 
 class Crossover:
-  """ A crossover operation.
-  """
+  """ A crossover operation. """
 
   def __init__(self, rate = 0.5):
     self.rate = rate
 
   def __call__(self, a, b):
-    from copy import deepcopy
+    from random import uniform
     
-    at = self.rate * len(a.genes) 
-    a.genes[at:] = b.genes[len(b.genes)-at:]
+    assert len(a.genes) == len(b.genes), "Bitstring must be of equal lengths"
+
+    i = int( uniform(0, 1) * len(a.genes) )
+    j = int( self.rate * len(a.genes) )
+    if j >= len(a.genes): 
+      a.genes[i:] = b.genes[i:] 
+      a.genes[:j-len(a.genes)] = b.genes[:j-len(a.genes)]
+    else: a.genes[i:j] = b.genes[i:j]
 
     if hasattr(a, "fitness"): delattr(a, "fitness")
     return a
 
 class Mutation:
-  """ A crossover operation.
-  """
+  """ A mutation operation. """
 
   def __init__(self, rate = 0.10):
     self.rate = rate
 
   def __call__(self, a):
-    from copy import deepcopy
     from random import uniform
     
     for i in xrange(len(a.genes)):
