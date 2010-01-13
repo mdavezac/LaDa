@@ -6,8 +6,8 @@
 class Tempdir:
   """ Works with "with" statement to create/destroy a temporary directory 
    
-      >> with Tempdir(path) as tempdir:
-      >>   ...
+      >>> with Tempdir(path) as tempdir:
+      >>>   ...
   """
   def __init__(self, workdir): self.workdir = workdir
 

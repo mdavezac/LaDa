@@ -1,13 +1,13 @@
 """ Class to change working directory within local context only.
    
-    >> with Changedir(path) as pwd:
-    >>   ...
+    >>> with Changedir(path) as pwd:
+    >>>   ...
 """
 class Changedir:
   """ Works with "with" statement to temporarily change the working directory 
    
-      >> with Changedir(path) as pwd:
-      >>   ...
+      >>> with Changedir(path) as pwd:
+      >>>   ...
   """
   def __init__(self, pwd): self.pwd = pwd
 

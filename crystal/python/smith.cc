@@ -180,29 +180,30 @@ namespace LaDa
     void expose_smith()
     {
       namespace bp = boost::python;
-      bp::def
-      ( 
-        "smith_normal_transform", &get_smith_transform_str<std::string>,
-        bp::arg("structure"), 
-        "Returns a tuple allowing a stransformation to the smith normal form." 
-      );
-      bp::def
-      ( 
-        "smith_normal_transform", &get_smith_transform_str<types::t_real>,
-        bp::arg("structure"), 
-        "Returns a tuple allowing a stransformation to the smith normal form." 
-      );
+      bp::def("smith_normal_transform", &get_smith_transform_str<std::string>);
+      bp::def("smith_normal_transform", &get_smith_transform_str<types::t_real>);
       bp::def
       ( 
         "smith_normal_transform", &get_smith_transform,
-        ( bp::arg("lattice_cell"), bp::arg("structure_cell") ),
-        "Returns a tuple allowing a stransformation to the smith normal form." 
+        "Returns a tuple allowing a stransformation to the smith normal form.\n\n" 
+        "The input can have one or two arguments depending on their types:\n"
+        "  - if one argument is given, it must be of type L{Structure} or a"
+             " L{sStructure}, with L{Structure.lattice} set.\n"
+        "  - if two argument are given, the first one is the cell of the"
+             " structure, and the second the cell of the lattice.\n" 
+        "In any case, the cell of structure must be exactly commensurate with "
+        "the lattice, eg no relaxation.\n"
+        "@see: U{G. Hart and R. Forcade, I{Phys. Rev. B.} B{80}, 014120 (2009)"
+        "<dx.doi.org/10.1103/PhysRevB.80.014120>}\n"
       );
       bp::def
       ( 
         "smith_indices", &get_smith_index,
         ( bp::arg("transform"), bp::arg("position") ),
-        "Returns the indices of the position in the smith normal form." 
+        "Returns the indices of the position in the smith normal form.\n\n" 
+        "@param transform: transformation tuple yielded by L{smith_normal_transform}\n"
+        "@param position: cartesian coordinates on the lattice.\n"
+        "@type position: L{atat.rVector3d}.\n"
       );
       bp::def
       ( 
