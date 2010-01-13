@@ -160,19 +160,19 @@ namespace LaDa
     template<class T_STRUCTURE> 
       T_STRUCTURE* fromXML(std::string const &_path)
       {
-        namespace bfs = boost::filesystem
-        if( not bp::exists(_path) )
+        namespace bfs = boost::filesystem;
+        if( not bfs::exists(_path) )
         {
-          PyErr_SetString(PyExc_IOError, (_path + " does not exist.\n").c_str())
+          PyErr_SetString(PyExc_IOError, (_path + " does not exist.\n").c_str());
           bp::throw_error_already_set();
           return NULL;
         }
-        T_STRUCTURE result = new T_STRUCTURE;
+        T_STRUCTURE* result = new T_STRUCTURE;
         try
         { 
           if(not result->Load(_path))
           {
-            PyErr_SetString(PyExc_IOError, ("Could not load structure from " + _path).c_str())
+            PyErr_SetString(PyExc_IOError, ("Could not load structure from " + _path).c_str());
             delete result;
             result = NULL;
             bp::throw_error_already_set();
@@ -180,12 +180,12 @@ namespace LaDa
         }
         catch(std::exception &_e)
         {
-          PyErr_SetString(PyExc_IOError, ("Could not load structure from " + _path).c_str())
+          PyErr_SetString(PyExc_IOError, ("Could not load structure from " + _path).c_str());
           delete result;
           result = NULL;
           bp::throw_error_already_set();
         }
-        return result
+        return result;
       }
 
     void expose_structure()

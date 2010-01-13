@@ -1,6 +1,3 @@
-//
-//  Version: $Id$
-//
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
@@ -90,25 +87,5 @@ namespace LaDa
               "Loads bandgap parameters from an XML file." )
         .def( "evaluate", &t_BandGap::operator(), "Performs a calculation." );
     }
-
-    types::t_real oscillator_strength(Pescan::BandGap const &_bg, types::t_real _d, bool _v)
-      { return Pescan::oscillator_strength(_bg, _d, _v); }
-
-    void expose_oscillator_strength()
-    {
-      namespace bp = boost::python;
-      bp::def
-      (
-        "oscillator_strength",
-        &oscillator_strength,
-        (
-          bp::arg("bandgap_functional"),
-          bp::arg("degeneracy") = 0.001,
-          bp::arg("verbose") = false
-        ),
-        "Returns squared norm of the oscillator strength: |<r>|^2."
-      );
-    }
-
   } // namespace Python
 } // namespace LaDa

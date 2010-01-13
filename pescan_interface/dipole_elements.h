@@ -1,8 +1,5 @@
-//
-//  Version: $Id$
-//
-#ifndef _PESCAN_INTERFACE_DIPOLE_ELEMENTS_H_ 
-# define _PESCAN_INTERFACE_DIPOLE_ELEMENTS_H_
+#ifndef LADA_PESCAN_INTERFACE_DIPOLE_ELEMENTS_H
+# define LADA_PESCAN_INTERFACE_DIPOLE_ELEMENTS_H
 # ifdef _DIRECTIAGA 
 
 # ifdef HAVE_CONFIG_H
@@ -34,6 +31,8 @@ namespace LaDa
       std::complex<types::t_real> p[3];
       //! Indices of bands in transition.
       t_Band2Band band2band;
+      //! Equality (mostly for python bindings).
+      bool operator==( Dipole const &_b) const { return band2band == _b.band2band; }
       private:
         //! Serializes a dipole moment.
         template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
@@ -52,9 +51,9 @@ namespace LaDa
     void dipole_elements( std::vector< Dipole > &_dipoles,
                           const BandGap& _bandgap,
                           const types::t_real _degeneracy = types::tolerance );
-    //! Returns the valence-conduction the norm of the band dipole elements.
+    //! Returns the norm of the valence-conduction dipole elements.
     types::t_real oscillator_strength( const std::vector<Dipole> &_dipoles );
-    //! Returns the valence-conduction the norm of the band dipole elements.
+    //! Returns the norm of the valence-conduction dipole elements.
     types::t_real oscillator_strength( const BandGap& _bandgap,
                                        const types::t_real _degeneracy = types::tolerance,
                                        bool _print = false );

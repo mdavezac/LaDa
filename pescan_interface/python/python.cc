@@ -10,6 +10,7 @@
 #include "escan.hpp"
 #include "bandgap.hpp"
 #include "emass.hpp"
+#include "dipole_elements.hpp"
 
 BOOST_PYTHON_MODULE(_escan)
 {
@@ -20,4 +21,5 @@ BOOST_PYTHON_MODULE(_escan)
   LaDa::Python::expose_oscillator_strength();
   LaDa::Python::expose_genpot();
   LaDa::Python::expose_emass();
+  LaDa::Python::expose_dipoles();
 }

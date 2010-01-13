@@ -1,7 +1,3 @@
-#
-# Version: $Id$
-#
-
 if DOPYTHON
 include $(top_srcdir)/Files
 AM_CPPFLAGS = -I $(top_srcdir) @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
