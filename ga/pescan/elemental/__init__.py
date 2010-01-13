@@ -111,7 +111,7 @@ class Converter(object):
         atom.type = self.structure.lattice.sites[atom.site].type[object[i]]
       return Structure(result)
 
-class Bandgap(object):
+class BandgapEvaluator(object):
   """ An evaluator function for bandgaps. """
   def __init__(self, input = "input.xml", lattice = None):
     """ Initializes the bandgap object. 
@@ -126,19 +126,28 @@ class Bandgap(object):
     import boost.mpi as mpi
 
     self.converter = converter 
+    """ Conversion functor between structures and bitstrings. """
 
     self.lattice = lattice
+    """ Zinc-blend lattice. """
     if self.lattice = None: self.lattice = crystal.lattice(input)
 
     self.vff = LayeredVff() # Creates vff functional
+    """ Vff functional """
     self.vff.set_mpi(mpi.world) # sets up mpi group for vff.
     self.vff.fromXML(input) # load vff parameters.
     vff.direction = atat.rVector3d(converter.cell[0,0], converter.cell[1,0], converter.cell[2,0])
 
     self.escan = BandGap() # creates bandgap functional
+    """ Bandgap functional """
     self.escan.set_mpi(mpi.world) # sets mpi group
     self.escan.fromXML(input) # loads escan parameters.
     self.escan.scale = self.lattice.scale
+
+    self.directory_prefix = "indiv"
+    """ Directory prefix """
+    self.nbcalc = 0
+    """ Number of calculations. """
 
  def __call__(self, indiv):
    """ Computes bandgap of an individual. 
@@ -150,21 +159,85 @@ class Bandgap(object):
    """
    from boost import mpi
    from lada import crystal
+   from lada.opt.changedir import Changedir
+   import os
+   import shutil
 
-   # creates structure from bitstring
-   self.vff.structure = self.converter(indiv.genes)
-   self.vff.init()
+   # moves to new calculation directory
+   self.bandgap.directory = self.directory_prefix + "_" + str(self.nbcalc)
+   if exists(self.bandgap.directory): shutil.rmtree( self.bandgap.directory)
+   os.makedirs(self.bandgap.directory)
 
-   # Computes epitaxial structure
-   indiv.epi_energy = self.vff.evaluate()
+   # moves to calculation directory
+   with Changedir(self.bandgap.directory) as pwd:
+     # creates structure from bitstring
+     self.vff.structure = self.converter(indiv.genes)
+     self.vff.init()
+    
+     # Computes epitaxial structure
+     indiv.epi_energy = self.vff.evaluate()
+    
+     # Computes bandgap
+     self.escan.vff_inputfile = "atom_input." + str( mpi.world.rank )
+     self.vff.print_escan_input(self.escan.vff_inputfile)
+     self.bandgap.evaluate(self.vff.structure)
+     indiv.bands = self.bandgap.bands
 
-   # Computes bandgap
-   self.escan.vff_inputfile = "atom_input." + str( mpi.world.rank )
-   self.vff.print_escan_input(self.escan.vff_inputfile)
-   self.bandgap.evaluate(self.vff.structure)
-   indiv.bands = self.bandgap.bands
+   # destroy directory if requested.
+   if self.bandgap.destroy_directory: shutil.rmtree(self.bandgap.directory)
    
    return indiv.bands.gap
+
+
+def DipoleEvaluator(BandgapEvaluator):
+  """ Evaluates the oscillator strength.
+
+      On top of those quantities saved by base class BandgapEvaluator,
+      this class stores the dipole elements in indiv.dipoles.
+  """
+  def __init__(self, *args, degeneracy = 1e-3, **kwargs): 
+    """ Initializes the dipole element evaluator. 
+
+        Dipole elements are evaluated between the VBM and the CBM.
+        Bands making up the VBM (CBM) are identified as degenerate if they are
+        within "degeneracy" of each other.
+    """
+    self.degeneracy = degeneracy
+    """ Bands making up the VBM (CBM) are identified as degenerate if they are 
+        within "degeneracy" of each other. """
+    BandgapEvaluator.__init__(self, *args, **kwargs)
+
+
+  def __call__(self, indiv):
+    """ Computes oscillator strength. """
+    import os
+    import shutil
+    from lada.pescan import dipole_elements
+    from lada.opt.changedir import Changedir
+
+    # keeps track of directory destruction
+    dodestroy = self.bandgap.escan.destroy_directory 
+    self.bandgap.destroy_directory = False
+    
+    # calls original evaluation function
+    super(DipoleEvaluator, self).__call__(self, indiv)
+
+    # moves to calculation directory
+    with Changedir(self.bandgap.directory) as pwd:
+      # computes dipole elements.
+      indiv.dipoles = dipole_elements(self.bandgap, self.degeneracy)
+
+    # destroy calculation directory if requested
+    self.bandgap.escan.destroy_directory = dodestroy
+    if dodestroy: shutil.rmtree(self.bandgap.directory)
+
+    # return average dipole element.
+    result = 0e0
+    for u in indiv.dipoles: result += abs(u.p)
+    result /= float(len(indiv.dipoles)
+
+    return result
+
 
 
 
