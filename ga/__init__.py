@@ -16,27 +16,27 @@
     The following describes the standard operations in a self instance of
     Darwin. Note that at present, none of the methods added to Darwin are bound
     to the instance. E.g. they take self explicitely:
-      _ Selection is performed using the self.selection method. It takes one
+      - Selection is performed using the self.selection method. It takes one
         argument, self itself.
-      _ self.ating operations take the Darwin instance as an argument. It should
+      - self.ating operations take the Darwin instance as an argument. It should
         return an instance of self.Individual for which no fitness attribute
         exist. Examples are given in the bitstring module.
-      _ self.checkpoints is a list of unbound method taking self as the
+      - self.checkpoints is a list of unbound method taking self as the
         only argument and returning False if the GA should stop. They are executed
         at the end of each generation. They are used for both output (always
         returning True) and convergence. A method checking for maximum number
         of generations (self.max_gen) is ALWAYS added to these checkpoints.
-      _ self.popsize is the population size.
-      _ self.rate * self.popsize is the number of offspring at each
+      - self.popsize is the population size.
+      - self.rate * self.popsize is the number of offspring at each
         generation. At this point, all offspring are indiscreminately entered in
         the next population.
-      _ self.cmp_indiv compares the fitness of two individuals. By default,
+      - self.cmp_indiv compares the fitness of two individuals. By default,
         this GA minimizes.
-      _ self.Individual is a class (not an instance) defining individuals. It
+      - self.Individual is a class (not an instance) defining individuals. It
         should contain an __init__ function which randomly initializes the
         individual. By default, and instance of self.Individual should have
         an fitness attribute if and only if it has already been evaluated.
-      _ self.evaluation is a function taking self as its only argument. It
+      - self.evaluation is a function taking self as its only argument. It
         should evaluate the offspring and populations as necessary. When using
         standard.add_population_evaluation(self, evaluation), each individual
         of population and offspring is evaluated only if that individual does

@@ -41,48 +41,48 @@ namespace LaDa
         }
     }
 
-    struct center_iterator
-    {
-      typdef vff::AtomicCenter::t_Centers::const_iterator type;
-
-      type first_;
-      type end_;
-      bool is_first;
-
-      center_iterator   (type const &_f, type const &_end)
-                      : first_(_f), end_(_end), is_first(true) {}
-      center_iterator   (center_iterator const &_c)
-                      : first_(_c.first_), end_(_c.end_), is_first(_c.is_first_) {}
-
-      center_iterator iter() const { return *this; }
-      Value next() const 
-      {
-        if( first_ == end_ ) 
-        {
-          Py
-        }
-        if( is_first ) 
-      };
-    };
-
-    template<class T_VFF>
-      struct WithIterators : public T_VFF
-      {
-        WithIterator(Crystal::Structure &_str) : T_VFF(_str) {}
-        WithIterator(WithIterators const &_c) : T_VFF(_c) {}
-        virtual ~WithIterator() {}
-        //! iterator over first neighbor tree.
-        center_iterator iter() const { return center_iterator( centers_.begin(), centers_.end() ); }
-
-        protected:
-          using T_VFF::centers_;
-          using T_VFF::operator();
-          using T_VFF::print_escan_input;
-          using T_VFF::init;
-#         ifdef _MPI
-            using T_VFF::set_mpi;
-#         endif
-      };
+//     struct center_iterator
+//     {
+//       typedef Vff::AtomicCenter::t_Centers::const_iterator type;
+//
+//       type first_;
+//       type end_;
+//       bool is_first;
+//
+//       center_iterator   (type const &_f, type const &_end)
+//                       : first_(_f), end_(_end), is_first(true) {}
+//       center_iterator   (center_iterator const &_c)
+//                       : first_(_c.first_), end_(_c.end_), is_first(_c.is_first_) {}
+//
+//       center_iterator iter() const { return *this; }
+//       Value next() const 
+//       {
+//         if( first_ == end_ ) 
+//         {
+//           Py
+//         }
+//         if( is_first ) 
+//       };
+//     };
+//
+//     template<class T_VFF>
+//       struct WithIterators : public T_VFF
+//       {
+//         WithIterator(Crystal::Structure &_str) : T_VFF(_str) {}
+//         WithIterator(WithIterators const &_c) : T_VFF(_c) {}
+//         virtual ~WithIterator() {}
+//         //! iterator over first neighbor tree.
+//         center_iterator iter() const { return center_iterator( centers_.begin(), centers_.end() ); }
+//
+//         protected:
+//           using T_VFF::centers_;
+//           using T_VFF::operator();
+//           using T_VFF::print_escan_input;
+//           using T_VFF::init;
+// #         ifdef _MPI
+//             using T_VFF::set_mpi;
+// #         endif
+//       };
 
 
     //! Assumes ownership of the Crystal::Structure object needed by vff.
@@ -90,7 +90,7 @@ namespace LaDa
     {
       public:
         //! Type of the functional.
-        typedef LaDa::Vff::VABase< WithIterators<T_VFF> > t_Functional;
+        typedef LaDa::Vff::VABase< T_VFF > t_Functional;
         //! Constructor.
         Vff() { functional_.reset( new t_Functional( structure ) ); }
         //! Copy Constructor.
@@ -301,24 +301,24 @@ namespace LaDa
               "Outputs the current structure in a format suitable for pescan." ) \
         .def( "set_bond",  &b::set_bond, ( bp::arg("bond"), bp::arg("params") ), \
               "Sets the parameters of bond from a tuple where:\n" \
-              "  _ the first component is the bond length.\n" \
-              "  _ the second to sixth components are the gammas at order 2-6.\n" \
+              "  - the first component is the bond length.\n" \
+              "  - the second to sixth components are the gammas at order 2-6.\n" \
               "The tuple can be shortened to include only the first few parameters.\n" ) \
         .def( "get_bond",  &b::get_bond, bp::arg("angle"), \
               "Returns the parameters of bond in form of a tuple.\n" \
-              "  _ the first component is the bond length.\n" \
-              "  _ the second to sixth components are the gammas at order 2-6.\n" ) \
+              "  - the first component is the bond length.\n" \
+              "  - the second to sixth components are the gammas at order 2-6.\n" ) \
         .def( "set_angle",  &b::set_angle, ( bp::arg("angle"), bp::arg("params") ), \
               "Sets the parameters of angle from a tuple where:\n" \
-              "  _ the first component is gamma.\n" \
-              "  _ the second component is sigma.\n" \
-              "  _ the third to seventh components are the betas at order 2-6.\n" \
+              "  - the first component is gamma.\n" \
+              "  - the second component is sigma.\n" \
+              "  - the third to seventh components are the betas at order 2-6.\n" \
               "The tuple can be shortened to include only the first few parameters.\n" ) \
         .def( "get_angle",  &b::get_angle, bp::arg("angle"), \
               "Returns the parameters of angle in form of a tuple.\n" \
-              "  _ the first component is gamma.\n" \
-              "  _ the second component is sigma.\n" \
-              "  _ the third to seventh components are the betas at order 2-6.\n" ) \
+              "  - the first component is gamma.\n" \
+              "  - the second component is sigma.\n" \
+              "  - the third to seventh components are the betas at order 2-6.\n" ) \
         .add_property( "stress",  &b::get_stress, \
                        "Returns the stress. Meaningfull only "\
                        "following a call to Vff.evaluate()." ) \
@@ -332,10 +332,18 @@ namespace LaDa
       ( 
         "Vff", 
         t_Vff, 
-        "A Valence Force Field Functional.\n"
+        "A Valence Force Field Functional.\n\n"
         "Prior to use, the parameters must be loaded from an XML file, "
         "The structure must be itself initialized, and LaDa.Vff.init() must be called."
-        "Order does count :)."
+        "Order does count :).\n\n"
+        ">>> vff = lada.vff.Vff()\n"
+        ">>> vff.set_mpi(boost.mpi.world) # if compiled with mpi only!\n"
+        ">>> vff.fromXML(\"input.xml\")\n"
+        ">>> vff.structure.fromXML(\"input.xml\")\n"
+        ">>> vff.init()\n"
+        ">>> vff.evaluate()\n\n"
+        "For deep copy, one may use the default constructor: >>> vff2 = lada.vff.Vff(vff1)\n"
+
       );
     }
 
@@ -347,10 +355,18 @@ namespace LaDa
       ( 
         "LayeredVff", 
         t_Vff,
-        "A Valence Force Field Functional with epitaxial constraints.\n"
+        "A Valence Force Field Functional with epitaxial constraints.\n\n"
         "Prior to use, the parameters must be loaded from an XML file, "
         "The structure must be itself initialized, and LaDa.Vff.init() must be called."
-        "Order does count :)."
+        "Order does count :).\n\n"
+        ">>> vff = lada.vff.Vff()\n"
+        ">>> vff.set_mpi(boost.mpi.world) # if compiled with mpi only!\n"
+        ">>> vff.fromXML(\"input.xml\")\n"
+        ">>> vff.structure.fromXML(\"input.xml\")\n"
+        ">>> vff.direction = lada.atat.rVector3d(0,0,1) # uses vff.structure[:,0] by default.\n" 
+        ">>> vff.init()\n"
+        ">>> vff.evaluate()\n\n"
+        "For deep copy, one may use the default constructor: >>> vff2 = lada.vff.Vff(vff1)\n"
       ).add_property( "direction",  &t_Vff::get_direction, &t_Vff::set_direction,
                       "Defines the direction of growth." );
     }

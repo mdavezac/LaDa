@@ -2,13 +2,25 @@
 #  Version: $Id$
 #
 
-""" Holds standard genetic algorithm operations. """
+""" Holds standard genetic algorithm operations. 
+
+    @group Checkpoints: best, print_population, print_offspring,
+                        average_fitness, _check_generation
+"""
+
 class Taboo(object):
   """ A container of taboo operators.
       By default, a diversity taboo operator is added. 
   """
 
   def __init__(self, diversity=True):
+    """ Creates a Taboo container.
+
+        @param diversity: if True then a diversity constraint is added to the
+          Taboo container. Otherwise the container is empty on initialization.
+        @type diversity: Boolean
+    """
+    super(Taboo, self).__init__(self)
     def diversity_taboo(self, _indiv):
       """ taboo makes sure that no two individuals in the population and the
           offspring are the same. """
@@ -59,6 +71,7 @@ def average_fitness(self):
   return True
 
 def best(self):
+  """ Checkpoint which prints out the best individual. """
   best = None
   for indiv in self.population:
     if best == None or  self.cmp_indiv( best, indiv ) == 1: 
@@ -79,8 +92,11 @@ def print_offspring(self):
       print "    ", indiv, indiv.fitness
   return True
 
-def check_generation( self ):
-  """ returns false if maximum number of generations was passed. """
+def _check_generation( self ):
+  """ returns false if maximum number of generations was passed. 
+      
+      @attention: This checkpoint is always added by default. Users need not include it.
+  """
   if self.max_gen < 0: return True
   return self.current_gen < self.max_gen
   
@@ -186,7 +202,7 @@ class Mating(object):
 
 
 def add_checkpoint(self, _chk):
-  """ Adds a checkpoint """
+  """ Adds a checkpoint to self.checkpoints. """
   try: self.checkpoints.append( _chk ) 
   except AttributeError: self.checkpoints = [_chk]
   return self;
@@ -194,16 +210,16 @@ def add_checkpoint(self, _chk):
 def fill_attributes(self):
   """ Checks self for correct attributes.
       Fills in where possible:
-        _ "taboo" defaults to standard.taboo
-        _ "selection" defaults to standard.selection
-        _ "population" defaults to empty list []
-        _ "popsize" defaults to len(self.population)
-        _ "offspring" defaults to empty list []
-        _ "rate" defaults to len(self.offspring)/self.popsize
-        _ standard.check_generation is ALWAYS added to the checkpoints
-        _ "current_gen" defaults to 0 
-        _ "max_gen" defaults to 100, or current_gen+100 if max_gen > current_gen.
-        _ "cmp_indiv" defaults to standard.cmp_indiv
+        - "taboo" defaults to standard.taboo
+        - "selection" defaults to standard.selection
+        - "population" defaults to empty list []
+        - "popsize" defaults to len(self.population)
+        - "offspring" defaults to empty list []
+        - "rate" defaults to len(self.offspring)/self.popsize
+        - standard._check_generation is ALWAYS added to the checkpoints
+        - "current_gen" defaults to 0 
+        - "max_gen" defaults to 100, or current_gen+100 if max_gen > current_gen.
+        - "cmp_indiv" defaults to standard.cmp_indiv
   """
   import darwin 
   # must have an evaluation function.
@@ -240,7 +256,7 @@ def fill_attributes(self):
   assert self.rate > float(0), "offspring or rate attributes required on input."
  
   # checks whether there is a checkpoint.
-  self = add_checkpoint(self, check_generation)
+  self = add_checkpoint(self, _check_generation)
 
   # checks current generation.
   if not hasattr(self, "current_gen"): self.current_gen = 0

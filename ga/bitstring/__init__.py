@@ -67,10 +67,10 @@ class LocalSearch(object):
 
   def __init__(self, evaluation, darwin, itermax=3):
     """ Initializes a LocalSearch instance.
-          _ evaluation is a functor or function taking an individual as its argument. 
-          _ darwin is a class containing a taboo, a selection, and an cmp_indiv
+          - evaluation is a functor or function taking an individual as its argument. 
+          - darwin is a class containing a taboo, a selection, and an cmp_indiv
             procedure, as well as a population.
-          _ itermax is the maximum number of evaluation. 
+          - itermax is the maximum number of evaluation. 
     """
 
     self.evaluation = evaluation

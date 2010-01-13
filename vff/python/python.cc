@@ -5,12 +5,20 @@
 # include <config.h>
 #endif
 
-#include <boost/python.hpp>
+#include <boost/python/module.hpp>
+#include <boost/python/docstring_options.hpp>
+#include <boost/python/scope.hpp>
 
 #include "vff.hpp"
 
 BOOST_PYTHON_MODULE(vff)
 {
+  namespace bp = boost::python;
+  bp::scope scope;
+  scope.attr("__doc__") = "Valence Force-Field functional for the Zinc-Blende lattice.\n";
+
+  bp::docstring_options doc_options(true, false);
+
   LaDa::Python::expose_vff();
   LaDa::Python::expose_layeredvff();
 }

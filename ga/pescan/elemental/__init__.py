@@ -1,8 +1,8 @@
 """ A GA subpackage defining standard genetic operator for elemental alloys. """
 
-from lada.ga.bistring import Individual as BitstringIndividual, \
-                             Crossover as BitstringCrossover,
-                             Mutation
+from lada.ga.bitstring import Individual as BitstringIndividual, \
+                              Crossover as BitstringCrossover, \
+                              Mutation
 class Individual(BitstringIndividual):
   """ An individual for elemental superlattices. 
       
@@ -40,7 +40,7 @@ class Individual(BitstringIndividual):
 class Crossover(BitstringCrossover):
   """ A crossover operation between elemental superlattices. """
   def __init__(self, *args, **kwargs):
-    BitstringCrossover.__init__(self.*args, self.**kwargs)
+    BitstringCrossover.__init__(self, *args, **kwargs)
 
   def __call__(self, a, b):
     """ Performs bitstring crossover between two elemental superlattices.
@@ -67,13 +67,15 @@ class Converter(object):
   def __init__(self, cell):
     """ Initializes a functor for bitstring to crystal structure conversion. 
 
+        sStructure().lattice must be set (using  lada.crystal.Lattice.set_as_crystal_lattice(...)).
         @param cell: are the lattice-vectors of the supercell making up the
           elemental superlattice. The epitaxial direction must be given by the
           first column vector.
-        @type cell: is an lada.atat.rMatrix3d or derived.
+        @type cell: lada.atat.rMatrix3d
 
-        Prerequisite: sStructure().lattice must be set (using
-        lada.crystal.Lattice.set_as_crystal_lattice(...)).
+
+
+
     """
     from lada.crystal import LayerDepth, sort_layers, sStructure, fill_structure
     
@@ -85,7 +87,7 @@ class Converter(object):
 
     ld = LayerDepth(self.structure.cell)
     for i in range(1, len(self.structure.atoms)): 
-      if not ld(self.structure.atoms[i-1].pos, self.structure.atoms[i].pos)): 
+      if not ld(self.structure.atoms[i-1].pos, self.structure.atoms[i].pos): 
         raise ValueError, "Input structure is not an elemental superlattice."
 
     
@@ -113,12 +115,18 @@ class Converter(object):
 
 class BandgapEvaluator(object):
   """ An evaluator function for bandgaps. """
-  def __init__(self, input = "input.xml", lattice = None):
+  def __init__(self, converter, input = "input.xml", lattice = None):
     """ Initializes the bandgap object. 
 
         @param converter: is a functor which converts between a bitstring and a
           lada.crystal.sStructure, and vice versa.
-        @param type: must be a functor with a cell attribute. 
+        @type  converter: duck-typed to L{Converter}
+        @param input: is the XML input file for the vff, pescan, 
+          (optionally) lattice parameters.
+        @type input: string
+        @param lattice: Zinc-Blende lattice. If not given, it must be in the
+          input file.
+        @type lattice: None or lada.crystal.Lattice
     """
     from lada.vff import LayeredVff
     from lada.pescan import BandGap
@@ -130,7 +138,7 @@ class BandgapEvaluator(object):
 
     self.lattice = lattice
     """ Zinc-blend lattice. """
-    if self.lattice = None: self.lattice = crystal.lattice(input)
+    if self.lattice == None: self.lattice = crystal.Lattice(input)
 
     self.vff = LayeredVff() # Creates vff functional
     """ Vff functional """
@@ -149,53 +157,53 @@ class BandgapEvaluator(object):
     self.nbcalc = 0
     """ Number of calculations. """
 
- def __call__(self, indiv):
-   """ Computes bandgap of an individual. 
-   
-       The epitaxial energy is stored in indiv.epi_energy
-       The eigenvalues are stored in indiv.eigenvalues
-       The VBM and CBM are stored in indiv.bands
-       returns the bandgap.
-   """
-   from boost import mpi
-   from lada import crystal
-   from lada.opt.changedir import Changedir
-   import os
-   import shutil
-
-   # moves to new calculation directory
-   self.bandgap.directory = self.directory_prefix + "_" + str(self.nbcalc)
-   if exists(self.bandgap.directory): shutil.rmtree( self.bandgap.directory)
-   os.makedirs(self.bandgap.directory)
-
-   # moves to calculation directory
-   with Changedir(self.bandgap.directory) as pwd:
-     # creates structure from bitstring
-     self.vff.structure = self.converter(indiv.genes)
-     self.vff.init()
+  def __call__(self, indiv):
+    """ Computes bandgap of an individual. 
     
-     # Computes epitaxial structure
-     indiv.epi_energy = self.vff.evaluate()
+        The epitaxial energy is stored in indiv.epi_energy
+        The eigenvalues are stored in indiv.eigenvalues
+        The VBM and CBM are stored in indiv.bands
+        returns the bandgap.
+    """
+    from boost import mpi
+    from lada import crystal
+    from lada.opt.changedir import Changedir
+    import os
+    import shutil
+ 
+    # moves to new calculation directory
+    self.bandgap.directory = self.directory_prefix + "_" + str(self.nbcalc)
+    if exists(self.bandgap.directory): shutil.rmtree( self.bandgap.directory)
+    os.makedirs(self.bandgap.directory)
+ 
+    # moves to calculation directory
+    with Changedir(self.bandgap.directory) as pwd:
+      # creates structure from bitstring
+      self.vff.structure = self.converter(indiv.genes)
+      self.vff.init()
+     
+      # Computes epitaxial structure
+      indiv.epi_energy = self.vff.evaluate()
+     
+      # Computes bandgap
+      self.escan.vff_inputfile = "atom_input." + str( mpi.world.rank )
+      self.vff.print_escan_input(self.escan.vff_inputfile)
+      self.bandgap.evaluate(self.vff.structure)
+      indiv.bands = self.bandgap.bands
+ 
+    # destroy directory if requested.
+    if self.bandgap.destroy_directory: shutil.rmtree(self.bandgap.directory)
     
-     # Computes bandgap
-     self.escan.vff_inputfile = "atom_input." + str( mpi.world.rank )
-     self.vff.print_escan_input(self.escan.vff_inputfile)
-     self.bandgap.evaluate(self.vff.structure)
-     indiv.bands = self.bandgap.bands
-
-   # destroy directory if requested.
-   if self.bandgap.destroy_directory: shutil.rmtree(self.bandgap.directory)
-   
-   return indiv.bands.gap
+    return indiv.bands.gap
 
 
-def DipoleEvaluator(BandgapEvaluator):
+class DipoleEvaluator(BandgapEvaluator):
   """ Evaluates the oscillator strength.
 
       On top of those quantities saved by base class BandgapEvaluator,
       this class stores the dipole elements in indiv.dipoles.
   """
-  def __init__(self, *args, degeneracy = 1e-3, **kwargs): 
+  def __init__(self, degeneracy = 1e-3, *args, **kwargs): 
     """ Initializes the dipole element evaluator. 
 
         Dipole elements are evaluated between the VBM and the CBM.
@@ -212,6 +220,7 @@ def DipoleEvaluator(BandgapEvaluator):
     """ Computes oscillator strength. """
     import os
     import shutil
+    import numpy.linalg
     from lada.pescan import dipole_elements
     from lada.opt.changedir import Changedir
 
@@ -233,13 +242,7 @@ def DipoleEvaluator(BandgapEvaluator):
 
     # return average dipole element.
     result = 0e0
-    for u in indiv.dipoles: result += abs(u.p)
-    result /= float(len(indiv.dipoles)
+    for u in indiv.dipoles: result += numpy.linalg.norm(u.p)
+    result /= float(len(indiv.dipoles))
 
     return result
-
-
-
-
-   
-
