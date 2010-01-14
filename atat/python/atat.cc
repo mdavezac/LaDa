@@ -19,13 +19,13 @@ namespace LaDa
 {
   namespace Python
   {
-    template< class T_MATRIX > types::t_real det( const T_MATRIX& _a )
-      { return atat::det( _a ); }
 
     bool is_vinteger( atat::rVector3d const &_a ) 
       {return atat::is_integer(_a); }
     bool is_minteger( atat::rMatrix3d const &_a ) 
       {return atat::is_integer(_a); }
+
+    template<class T_MATRIX> T_MATRIX inverse(T_MATRIX const &_a) { return !_a; }
 
     void expose_atat() 
     {
@@ -38,7 +38,8 @@ namespace LaDa
       
       expose_vector<atat::rVector3d>("rVector3dArray", "a vector of 3d vectors.");
       expose_vector<atat::iVector3d>("iVector3dArray", "a vector of 3d vectors.");
-      expose_vector<atat::rMatrix3d>("rMatrix3dArray", "a vector of 3d vectors.");
+      expose_vector<atat::rMatrix3d>("rMatrix3dArray", "a vector of 3d vectors.")
+        .add_property("I", &inverse<atat::rMatrix3d>, "Inverse matrix." );
 
       bp::def( "inverse",
                &LaDa::atat::details::inv_rMatrix3d< atat::rMatrix3d >,

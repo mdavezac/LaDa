@@ -228,7 +228,7 @@ namespace LaDa
 
         bp::def( "norm2", &details::norm2<T_VECTOR>,
                  bp::arg("vec"),
-                 ("Returns squared euclidian-norm of an " + _name + " object.").c_str() );
+                 ("Returns squared euclidian-norm of an L{" + _name + "} object.").c_str() );
       }
     template< class T >
       bool neq( T const& _a, T const &_b ) { return not (_a == _b); }
@@ -236,37 +236,43 @@ namespace LaDa
       bool eq( T const& _a, T const &_b ) { return _a == _b; }
 
     template< class T_MATRIX >
-      void expose_atatmatrix( const std::string &_name, const std::string &_docstring )
-      {
-        namespace bp = boost::python;
-        typedef typename matrix_introspection< T_MATRIX > :: type type;
-        typedef typename matrix_introspection< T_MATRIX > :: t_Vector t_Vector;
-        typedef typename matrix_introspection< T_MATRIX > :: pickle pickle;
-        const size_t dim(  matrix_introspection< T_MATRIX > :: dim );
-        // expose atat vector.
-        bp::class_< T_MATRIX>( _name.c_str(), _docstring.c_str() )
-            .def( "__init__", bp::make_constructor( make_matrix<T_MATRIX> ) )
-            .def( "__init__", bp::make_constructor( copy_matrix<T_MATRIX> ) )
-            .def( "__init__", bp::make_constructor( empty_matrix<T_MATRIX> ) )
-            .def( bp::self + bp::other< T_MATRIX >() ) 
-            .def( bp::other< T_MATRIX >() + bp::self ) 
-            .def( bp::self - bp::other< T_MATRIX >() ) 
-            .def( bp::other< T_MATRIX >() - bp::self ) 
-            .def( bp::other< T_MATRIX >() * bp::self ) 
-            .def( bp::self * bp::other< T_MATRIX >() )
-            .def( bp::self * bp::other< t_Vector >() )
-            .def( bp::other< t_Vector >() * bp::self )
-            .def( bp::other<type>() * bp::self )
-            .def( bp::self * bp::other<type>() )
-            .def( bp::self / bp::other<type>() )
-            .def( "__ne__", &neq<T_MATRIX> )
-            .def( "__eq__", &eq<T_MATRIX> )
-            .def( "__getitem__", &details::getmatitem<T_MATRIX> )
-            .def( "__setitem__", &details::setmatitem<T_MATRIX> ) 
-            .def( "__len__", &details::getmlength<T_MATRIX> ) 
-            .def( "__str__", &tostream<T_MATRIX> )
-            .def_pickle( pickle() );
-      }
+      typename matrix_introspection<T_MATRIX>::type det( const T_MATRIX& _a ) 
+        { return atat::det(_a); }
+    template<class T_MATRIX> T_MATRIX transpose(T_MATRIX const &_a)  { return ~_a; }
+    template< class T_MATRIX >
+      boost::python::class_<T_MATRIX>
+        expose_atatmatrix( const std::string &_name, const std::string &_docstring )
+        {
+          namespace bp = boost::python;
+          typedef typename matrix_introspection< T_MATRIX > :: type type;
+          typedef typename matrix_introspection< T_MATRIX > :: t_Vector t_Vector;
+          typedef typename matrix_introspection< T_MATRIX > :: pickle pickle;
+          const size_t dim(  matrix_introspection< T_MATRIX > :: dim );
+          // expose atat vector.
+          return bp::class_< T_MATRIX>( _name.c_str(), _docstring.c_str() )
+                   .def( "__init__", bp::make_constructor( make_matrix<T_MATRIX> ) )
+                   .def( "__init__", bp::make_constructor( copy_matrix<T_MATRIX> ) )
+                   .def( "__init__", bp::make_constructor( empty_matrix<T_MATRIX> ) )
+                   .add_property("T", &transpose<T_MATRIX>, "Transposed matrix.\n")
+                   .def( bp::self + bp::other< T_MATRIX >() ) 
+                   .def( bp::other< T_MATRIX >() + bp::self ) 
+                   .def( bp::self - bp::other< T_MATRIX >() ) 
+                   .def( bp::other< T_MATRIX >() - bp::self ) 
+                   .def( bp::other< T_MATRIX >() * bp::self ) 
+                   .def( bp::self * bp::other< T_MATRIX >() )
+                   .def( bp::self * bp::other< t_Vector >() )
+                   .def( bp::other< t_Vector >() * bp::self )
+                   .def( bp::other<type>() * bp::self )
+                   .def( bp::self * bp::other<type>() )
+                   .def( bp::self / bp::other<type>() )
+                   .def( "__ne__", &neq<T_MATRIX> )
+                   .def( "__eq__", &eq<T_MATRIX> )
+                   .def( "__getitem__", &details::getmatitem<T_MATRIX> )
+                   .def( "__setitem__", &details::setmatitem<T_MATRIX> ) 
+                   .def( "__len__", &details::getmlength<T_MATRIX> ) 
+                   .def( "__str__", &tostream<T_MATRIX> )
+                   .def_pickle( pickle() );
+        }
 
   }
 }

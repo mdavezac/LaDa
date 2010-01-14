@@ -1,7 +1,3 @@
-#
-#  Version: $Id$
-#
-
 """ Holds standard genetic algorithm operations. 
 
     @group Checkpoints: best, print_population, print_offspring,
@@ -56,7 +52,10 @@ def tournament( self, size = 2 ):
   return result
 
 def cmp_indiv( a, b, tolerance = 1e-12 ):
-  """ Compares two individuals. """
+  """ Compares two individuals. 
+
+      Minimizes fitness by default.
+  """
   from math import fabs
   if fabs(a.fitness - b.fitness) <  tolerance: return 0
   elif a.fitness < b.fitness: return -1

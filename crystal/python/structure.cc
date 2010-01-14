@@ -33,6 +33,8 @@
 
 #include <boost/filesystem/operations.hpp>
 
+#include <pyublas/numpy.hpp>
+
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <python/misc.hpp>
@@ -188,6 +190,48 @@ namespace LaDa
         return result;
       }
 
+    template<class T_STRUCTURE>
+      boost::shared_ptr<T_STRUCTURE> fill_structure(T_STRUCTURE const &_str)
+      {
+        boost::shared_ptr<T_STRUCTURE> result( new T_STRUCTURE(_str) );
+        if( not result->lattice ) 
+        {
+          PyErr_SetString(PyExc_RuntimeError, "lada.crystal.lattice not set.\n");
+          bp::throw_error_already_set();
+          boost::shared_ptr<T_STRUCTURE> b;
+          result.swap(b);
+        }
+        else if( not Crystal::fill_structure(*result) )
+        {
+          PyErr_SetString(PyExc_RuntimeError, "Could not create fill in structure.\n");
+          bp::throw_error_already_set();
+          boost::shared_ptr<T_STRUCTURE> b;
+          result.swap(b);
+        }
+        return result;
+      }
+    boost::shared_ptr< Crystal::TStructure<std::string> >
+      fill_atatcell(atat::rMatrix3d const& _cell)
+      {
+        typedef Crystal::TStructure<std::string> t_structure;
+        t_structure str;
+        str.cell = _cell;
+        boost::shared_ptr< t_structure > result(fill_structure<t_structure>(str));
+        if( not result ) return result;
+        result->scale = result->lattice->scale;
+        return result;
+      }
+    boost::shared_ptr< Crystal::TStructure<std::string> >
+      fill_numpycell(pyublas::numpy_matrix<types::t_real> const& _cell)
+      {
+        atat::rMatrix3d cell;
+        for( size_t i(0); i < 3; ++i ) 
+          for( size_t j(0); j < 3; ++j ) 
+            cell(i,j) = _cell(i,j);
+        return fill_atatcell(cell);
+      }
+      
+
     void expose_structure()
     {
       typedef Crystal::Structure::t_FreezeCell t_FreezeCell;
@@ -301,13 +345,19 @@ namespace LaDa
       bp::def("to_fractional", &Crystal::to_fractional<std::string>,
               "Transforms a structure from fractional to cartesian coordinates.\n" );
 
-      bp::register_ptr_to_python< boost::shared_ptr<Crystal::Structure> >();
-      bp::register_ptr_to_python< boost::shared_ptr< Crystal::TStructure<std::string> > >();
-
-      bool (*for_real)( Crystal::Structure& ) = &Crystal::fill_structure;
-      bool (*for_string)( Crystal::TStructure<std::string>& ) = &Crystal::fill_structure;
-      bp::def("fill_structure", for_real, "Fills a structure when atomic positions are unknown." );
-      bp::def("fill_structure", for_string, "Fills a structure when atomic positions are unknown." );
+      bp::def("fill_structure", &fill_structure<Crystal::Structure>);
+      bp::def("fill_structure", &fill_atatcell);
+      bp::def("fill_structure", &fill_numpycell);
+      bp::def
+      (
+        "fill_structure", 
+        &fill_structure< Crystal::TStructure<std::string> >,
+        "Returns a structure from knowledge of cell and lattice.\n\n"
+        "The argument can be of type L{Structure}, L{sStructure}, "
+        "L{atat.rMatrix3d}, or a numpy matrix. In the first case, the return is "
+        "also a L{Structure}. In all other cases, the return is an L{sStructure}.\n"
+        "@raise RuntimeError: If the filled structure could not be created.\n" 
+      );
     }
 
   }

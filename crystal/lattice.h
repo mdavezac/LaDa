@@ -35,7 +35,8 @@ namespace LaDa
 {
   namespace Crystal 
   {
-    //! Refolds a periodic vector into the unit cell.
+    //! \brief Refolds a periodic vector into the unit cell.
+    //! \note Source code is in make_primitive.cc
     atat::rVector3d into_cell( atat::rVector3d const &_vec, 
                                atat::rMatrix3d const &_cell, 
                                atat::rMatrix3d const &_inv);

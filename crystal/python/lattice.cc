@@ -122,6 +122,9 @@ namespace LaDa
 
     }
 
+    atat::rVector3d into_cell2(atat::rVector3d const &_vec, atat::rMatrix3d const &_cell)
+      { return Crystal::into_cell(_vec, _cell, !_cell); }
+
     void expose_lattice()
     {
       bp::class_< Crystal::Lattice >( "Lattice" )
@@ -145,8 +148,20 @@ namespace LaDa
           "Finds space-group operations (for a given tolerance), stores them in self.space_group."
         );
       bp::register_ptr_to_python< boost::shared_ptr<Crystal::Lattice> >();
-      bp::def( "into_cell", &Crystal::into_cell,
-               (bp::arg("vector"), bp::arg("cell"), bp::arg("inverse")) );
+      bp::def("fold_vector", &into_cell2, (bp::arg("vector"), bp::arg("cell")));
+      bp::def
+      (
+        "fold_vector", &Crystal::into_cell,
+        (bp::arg("vector"), bp::arg("cell"), bp::arg("inverse")),
+        "Returns the vector folded into the given cell.\n\n"
+        "@param vector: the vector to be folded.\n"
+        "@type vector: L{atat.rVector3d}\n"
+        "@param cell: the cell for which to fold.\n"
+        "@type cell: L{atat.rMatrix3d}\n"
+        "@param inv: the inverse of the cell for which to fold. Computed from "
+        "cell if not given on input.\n"
+        "@type inv: L{atat.rMatrix3d}\n"
+      );
     }
 
   }
