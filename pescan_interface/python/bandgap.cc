@@ -85,7 +85,7 @@ namespace LaDa
                         "and output when performing Full-Diagonalization calculations." )
         .def( "fromXML",  &XML::Bandgap_from_XML, bp::arg("file"),
               "Loads bandgap parameters from an XML file." )
-        .def( "evaluate", &t_BandGap::operator(), "Performs a calculation." );
+        .def( "__call__", &t_BandGap::operator(), "Performs a calculation." );
     }
   } // namespace Python
 } // namespace LaDa

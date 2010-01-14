@@ -21,7 +21,6 @@ BOOST_PYTHON_MODULE(_escan)
   bp::scope scope;
   scope.attr("__doc__") = "This namespace is imported into lada.escan.\n";
 
-  LaDa::Python::expose_escan_parameters();
   LaDa::Python::expose_escan();
   LaDa::Python::expose_bands();
   LaDa::Python::expose_bandgap();

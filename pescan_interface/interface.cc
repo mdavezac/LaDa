@@ -100,6 +100,7 @@ namespace LaDa
         if( bfs::exists( newpath ) ) bfs::remove_all( newpath );
       }
     }
+
     void Interface :: create_potential()
     {
       namespace bfs = boost::filesystem;

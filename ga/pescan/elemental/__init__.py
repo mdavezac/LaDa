@@ -188,7 +188,7 @@ class BandgapEvaluator(object):
       # Computes bandgap
       self.escan.vff_inputfile = "atom_input." + str( mpi.world.rank )
       self.vff.print_escan_input(self.escan.vff_inputfile)
-      self.bandgap.evaluate(self.vff.structure)
+      self.bandgap(self.vff.structure)
       indiv.bands = self.bandgap.bands
  
     # destroy directory if requested.
