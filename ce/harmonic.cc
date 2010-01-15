@@ -34,7 +34,7 @@ namespace CE
       }
       //! \endcond
 
-      using atat::ipow;
+      using math::ipow;
       // adds point in sorted list
       void Linear_Interpolator :: add_point (const types::t_real _x, const types::t_real _y )
       {
@@ -127,7 +127,7 @@ namespace CE
       }
 
 
-      types::t_real Cubic :: operator()( const atat::rVector3d &_k ) const
+      types::t_real Cubic :: operator()( const Eigen::Vector3d &_k ) const
       {
         types::t_real r2=norm2(_k);
         types::t_real A=sqrt(1./(4.*M_PI));
@@ -177,7 +177,7 @@ namespace CE
         return 0.;
       }
 
-      types::t_real Tetragonal :: operator()( const atat::rVector3d &_k ) const
+      types::t_real Tetragonal :: operator()( const Eigen::Vector3d &_k ) const
       {
         typedef types::t_real t_real;
         if( rank == 0 ) return t_real(1);
@@ -186,7 +186,7 @@ namespace CE
         if(    Fuzzy::neq(_k[0], t_real(0) )
             or Fuzzy::neq(_k[1], t_real(0) ) )
         {
-          ctheta =  details::pow2(_k[2]) / atat::norm2( _k );
+          ctheta =  details::pow2(_k[2]) / _k.squaredNorm();
           stheta =  t_real(1) - ctheta;
           types::t_real a = _k[0] * _k[0] + _k[1] * _k[1]; 
           cfai   = details::pow2( _k[0] ) / a;

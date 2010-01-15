@@ -86,8 +86,8 @@ namespace LaDa
       }
 
     void init( enumeration::Transform &_self,
-               atat::rMatrix3d const& _left,
-               atat::iVector3d const& _smith)
+               Eigen::Matrix3d const& _left,
+               Eigen::Vector3i const& _smith)
     {
       try { _self.init(_left, _smith); }
       catch(enumeration::internal &_e)

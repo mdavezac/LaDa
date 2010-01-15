@@ -16,9 +16,7 @@
 #endif
 
 #include <physics/physics.h>
-#include <opt/atat.h>
 #include <opt/debug.h>
-#include <opt/atat.h>
 #include <opt/tinyxml.h>
 
 #include "functional.h"
@@ -29,13 +27,13 @@ namespace LaDa
   { 
     Functional :: t_Return Functional :: operator()( const t_Arg& _arg ) const
     {
-      atat::rMatrix3d strain;
+      Eigen::Matrix3d strain;
       unpack_variables( _arg, strain );
       return Vff::energy();
     }
 
     // Unpacks opt::Function_Base::variables into Vff::Functional format
-    void Functional :: unpack_variables(const t_Arg& _arg, atat::rMatrix3d& _strain) const
+    void Functional :: unpack_variables(const t_Arg& _arg, Eigen::Matrix3d& _strain) const
     {
       t_Arg :: const_iterator i_x = _arg.begin();
 
@@ -58,7 +56,7 @@ namespace LaDa
     }
 
     void Functional :: unpack_positions( t_Arg :: const_iterator &_i_x, 
-                                         atat::rMatrix3d& _strain ) const
+                                         Eigen::Matrix3d& _strain ) const
     {
       // then computes positions
       t_Atoms :: iterator i_atom = structure.atoms.begin();
@@ -66,7 +64,7 @@ namespace LaDa
       t_Atoms :: const_iterator i_atom0 = structure0.atoms.begin();
       for(; i_atom != i_atom_end; ++i_atom, ++i_atom0 )
       {
-        atat::rVector3d pos;
+        Eigen::Vector3d pos;
         if ( not (i_atom->freeze & t_Atom::FREEZE_X ) )
           { pos[0] = types::t_real(2.0) * (*_i_x ); ++_i_x; }
         else pos[0] = i_atom0->pos[0];
@@ -123,7 +121,7 @@ namespace LaDa
      
       _arg.resize( dof );
 
-      atat::rMatrix3d strain;
+      Eigen::Matrix3d strain;
       strain.zero(); 
       strain(0,0) = types::t_real(1.0);
       strain(1,1) = types::t_real(1.0);
@@ -159,7 +157,7 @@ namespace LaDa
 
     // variables is expected to be of sufficient size!!
     // call init() first
-    void Functional :: pack_variables( t_Arg& _arg, const atat::rMatrix3d& _strain ) const
+    void Functional :: pack_variables( t_Arg& _arg, const Eigen::Matrix3d& _strain ) const
     {
       // finally, packs vff format into function::Base format
       t_Arg :: iterator i_var = _arg.begin();
@@ -194,7 +192,7 @@ namespace LaDa
        }
     }
 
-    void Functional :: pack_gradients( const atat::rMatrix3d& _stress, 
+    void Functional :: pack_gradients( const Eigen::Matrix3d& _stress, 
                                        t_GradientArg _grad) const
     {
       t_GradientArg i_grad(_grad);
@@ -220,7 +218,7 @@ namespace LaDa
       i_center = centers.begin();
       for (; i_center != i_end; ++i_center, ++i_atom0)
       {
-        const atat::rVector3d& gradient = i_center->gradient;
+        const Eigen::Vector3d& gradient = i_center->gradient;
         if ( not (i_atom0->freeze & t_Atom::FREEZE_X) ) 
           *i_grad = gradient[0], ++i_grad;
         if ( not (i_atom0->freeze & t_Atom::FREEZE_Y) ) 
@@ -249,15 +247,15 @@ namespace LaDa
 
     void Functional :: gradient( const t_Arg& _arg, t_GradientArg _i_grad ) const
     {
-      atat::rMatrix3d strain; strain.zero();
+      Eigen::Matrix3d strain; strain.zero();
       t_Return energy(0);
-      foreach( const t_Center& center, centers ) center.gradient = atat::rVector3d(0,0,0);
+      foreach( const t_Center& center, centers ) center.gradient = Eigen::Vector3d(0,0,0);
 
       // unpacks variables into vff atomic_center and strain format
       unpack_variables( _arg, strain);
 
       // computes K0
-      atat::rMatrix3d K0 = (!(~strain));
+      Eigen::Matrix3d K0 = (!(~strain));
 
       // computes energy and gradient
       stress.zero();

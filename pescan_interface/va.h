@@ -260,7 +260,7 @@ namespace LaDa
          )
 
          //! gets already computed stress from vff. 
-         void get_stress( atat::rMatrix3d &_s ) const { vff.get_stress( _s ); }
+         void get_stress( Eigen::Matrix3d &_s ) const { vff.get_stress( _s ); }
 
          //! \brief Initializes the va variables, and optionnally the centers
          //! \details This routine compounds the function::Base::init()

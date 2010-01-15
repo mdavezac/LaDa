@@ -142,7 +142,7 @@ namespace LaDa
   //   return fuzzy::le( a[2], b[2] );
   // }
   //
-  // void Separable :: add( atat::rVector3d & _pos )
+  // void Separable :: add( Eigen::Vector3d & _pos )
   // {
   //   // position is already in basis.
   //   if( map.find( _pos ) != map.end() ) return;

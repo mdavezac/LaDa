@@ -271,7 +271,7 @@ namespace LaDa
             size_t n(0);
             for(; n < size_t(i_cluster->size()); ++n ) 
             {
-              const atat::rVector3d &pos( (*i_cluster)[n] );
+              const Eigen::Vector3d &pos( (*i_cluster)[n] );
               if( Fuzzy::is_zero( atat::norm2( pos ) ) ) continue;
               typename T_POSITIONS :: const_iterator i_pos = _positions.begin();
               typename T_POSITIONS :: const_iterator i_pos_end = _positions.end();

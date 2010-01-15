@@ -12,9 +12,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include <physics/physics.h>
-#include <opt/atat.h>
 #include <opt/debug.h>
-#include <opt/atat.h>
 #include <opt/tinyxml.h>
 
 #include "atomic_functional.h"
@@ -132,9 +130,9 @@ namespace LaDa
 
     types::t_real AtomicFunctional
        :: evaluate_with_gradient( const AtomicCenter &_center,
-                                  const atat::rMatrix3d &_strain,
-                                  atat::rMatrix3d &_stress,
-                                  const atat::rMatrix3d &_K0 ) const
+                                  const Eigen::Matrix3d &_strain,
+                                  Eigen::Matrix3d &_stress,
+                                  const Eigen::Matrix3d &_K0 ) const
     {
       types :: t_real energy = 0;
       types :: t_real scale2 = structure->scale * structure->scale;
@@ -148,7 +146,7 @@ namespace LaDa
         // sets up parameters
         types::t_unsigned bond_kind = i_bond.kind();
         types::t_real bond_length = lengths[bond_kind];
-        atat::rVector3d d0; i_bond.vector( d0 );
+        Eigen::Vector3d d0; i_bond.vector( d0 );
         
         // adds energy only if center is site 0 
         // computes e0 for bond-angle now 
@@ -172,7 +170,7 @@ namespace LaDa
           dummy = e0 * ( (*i_alpha) * s33o8 + dummy ); --i_alpha;
           types::t_real e0grad =   types::t_real(2.0) * scale2 / bond_length 
                                  * e0 * ( types::t_real(1.5) * (*i_alpha) + dummy); 
-          atat::rVector3d hold = e0grad * ( _strain * d0 );
+          Eigen::Vector3d hold = e0grad * ( _strain * d0 );
           _center.gradient -= hold; // with respect to atomic positions
           i_bond->gradient += hold;  
 
@@ -194,7 +192,7 @@ namespace LaDa
             types::t_real mean_length = std::sqrt( bond_length * lengths[end_kind] );
             types::t_real gamma = gammas[angle_kind];
             types::t_real sigma = sigmas[angle_kind];
-            atat::rVector3d d1; i_angle.vector( d1 );
+            Eigen::Vector3d d1; i_angle.vector( d1 );
             
             // Bond bending
             types::t_real e1 =   (d0*d1) * scale2 / mean_length 
@@ -219,8 +217,8 @@ namespace LaDa
               dummy = e1 * ( (*i_beta) * s33o16 + dummy ); --i_beta;
               types::t_real e1grad =   types::t_real(2.0) * scale2 / mean_length
                                      * e1 * ( *(  i_beta) * types::t_real(0.75) + dummy);
-              atat::rVector3d hold0 = e1grad * ( _strain * d0 );
-              atat::rVector3d hold1 = e1grad * ( _strain * d1 );
+              Eigen::Vector3d hold0 = e1grad * ( _strain * d0 );
+              Eigen::Vector3d hold1 = e1grad * ( _strain * d1 );
               _center.gradient -= ( hold0 + hold1); // with respect to atomic positions
               i_bond->gradient += hold1; 
               i_angle->gradient += hold0; 
@@ -238,11 +236,11 @@ namespace LaDa
 
             // Bond angle gradients
             { // position gradients
-              atat::rVector3d hold0 = types::t_real(1.5) * e1 * sigma / bond_length * scale2
+              Eigen::Vector3d hold0 = types::t_real(1.5) * e1 * sigma / bond_length * scale2
                                       * ( _strain * d0 );
-              atat::rVector3d hold1 = types::t_real(0.75) * e0 * sigma / mean_length * scale2
+              Eigen::Vector3d hold1 = types::t_real(0.75) * e0 * sigma / mean_length * scale2
                                       * ( _strain * d1 );
-              atat::rVector3d hold2 = types::t_real(0.75) * e0 * sigma / mean_length * scale2
+              Eigen::Vector3d hold2 = types::t_real(0.75) * e0 * sigma / mean_length * scale2
                                       * ( _strain * d0 );
               _center.gradient -= (hold0 + hold1 + hold2);
               (*i_bond).gradient += (hold0 + hold1); //(hold0 + hold1);
@@ -278,7 +276,7 @@ namespace LaDa
 
       // computes the microstrain as the average strain over four paralellepipeds.
       // first computes four bond vectors, bond lengths, and angles.
-      atat::rVector3d bonds[4];
+      Eigen::Vector3d bonds[4];
       types::t_real l0s[4]; 
       types::t_real angles[4][4]; 
       AtomicCenter :: const_iterator i_bond  = _center.begin();

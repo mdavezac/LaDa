@@ -14,6 +14,10 @@
 
 #include <boost/lambda/lambda.hpp>
 
+#include <Eigen/Geometry> 
+#include <Eigen/LU> 
+
+
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <opt/fuzzy.h>
@@ -42,7 +46,7 @@ namespace LaDa
        //! Index to atom in structure.
        size_t index;
        //! Position with respect to atom.
-       atat::rVector3d pos;
+       Eigen::Vector3d pos;
        //! Distance from atom.
        types::t_real distance;
      };
@@ -63,10 +67,10 @@ namespace LaDa
          //! The number of first neighbors to compute.
          size_t nmax;
          //! The origin from which to compute neighbors.
-         atat::rVector3d origin;
+         Eigen::Vector3d origin;
 
          //! Constructor.
-         Neighbors   (size_t _nmax = 0, atat::rVector3d const &_vec = atat::rVector3d(0,0,0) )
+         Neighbors   (size_t _nmax = 0, Eigen::Vector3d const &_vec = Eigen::Vector3d(0,0,0) )
                    : nmax(_nmax), origin(_vec) {};
          //! returns iterator to first neighbor list.
          const_iterator begin() const { return neighbors_.begin(); }
@@ -112,20 +116,20 @@ namespace LaDa
          const types::t_int N( _structure.atoms.size() );
          neighbors_.clear();
          
-         atat::rMatrix3d const inv_cell( !_structure.cell );
+         Eigen::Matrix3d const inv_cell( !_structure.cell );
          typedef Crystal::TStructure<T_TYPE> t_Structure;
          Neighbor neighbor;
-         types::t_real const volume( std::abs(atat::det(_structure.cell)) );
+         types::t_real const volume( std::abs(_structure.cell.determinant()) );
          size_t list_max_size(nmax+2);
 retry: 
          size_t size(0);
          neighbor.index = 0;
          // Finds out how far to look.
-         atat::rVector3d const a0( _structure.cell.get_column(0) );
-         atat::rVector3d const a1( _structure.cell.get_column(1) );
-         atat::rVector3d const a2( _structure.cell.get_column(2) );
+         Eigen::Vector3d const a0( _structure.cell.col(0) );
+         Eigen::Vector3d const a1( _structure.cell.col(1) );
+         Eigen::Vector3d const a2( _structure.cell.col(2) );
          types::t_real const max_norm
-           = std::max( atat::norm(a0), std::max(atat::norm(a1), atat::norm(a2)) );
+           = std::max( a0.norm(), std::max(a1.norm(), a2.norm()) );
          types::t_real const r
          ( 
            std::pow
@@ -134,9 +138,9 @@ retry:
              0.3333333333333
            )
          );
-         types::t_int n0( std::max(1.0, std::ceil(r*max_norm*atat::norm(a1^a2)/volume)) );
-         types::t_int n1( std::max(1.0, std::ceil(r*max_norm*atat::norm(a2^a0)/volume)) );
-         types::t_int n2( std::max(1.0, std::ceil(r*max_norm*atat::norm(a0^a1)/volume)) );
+         types::t_int n0( std::max(1.0, std::ceil(r*max_norm*a1.cross(a2).norm()/volume)) );
+         types::t_int n1( std::max(1.0, std::ceil(r*max_norm*a2.cross(a0).norm()/volume)) );
+         types::t_int n2( std::max(1.0, std::ceil(r*max_norm*a0.cross(a1).norm()/volume)) );
          while( n0 * n1 * n2 * 8 * N < list_max_size ) { ++n0; ++n1; ++n2; }
 
 
@@ -144,8 +148,8 @@ retry:
          typename t_Structure::t_Atoms::const_iterator i_atom_end = _structure.atoms.end();
          for(; i_atom != i_atom_end; ++i_atom, ++neighbor.index ) 
          {
-           atat::rVector3d const frac( inv_cell * (i_atom->pos - origin) );
-           atat::rVector3d const centered
+           Eigen::Vector3d const frac( inv_cell * (i_atom->pos - origin) );
+           Eigen::Vector3d const centered
            ( 
              frac(0) - std::floor( frac(0) + 0.500000001e0 ),
              frac(1) - std::floor( frac(1) + 0.500000001e0 ),
@@ -155,8 +159,8 @@ retry:
              for( types::t_int y(-n1); y <= n1; ++y )
                for( types::t_int z(-n2); z <= n2; ++z )
                {
-                  neighbor.pos = _structure.cell * ( centered + atat::rVector3d(x,y,z) );
-                  neighbor.distance = atat::norm( neighbor.pos );
+                  neighbor.pos = _structure.cell * ( centered + Eigen::Vector3d(x,y,z) );
+                  neighbor.distance = neighbor.pos.norm();
                   if( Fuzzy::is_zero( neighbor.distance ) ) continue;
        
                   t_Neighbors :: iterator i_found 

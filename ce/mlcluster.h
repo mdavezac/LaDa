@@ -41,7 +41,7 @@ namespace LaDa
         struct Spin 
         {
           size_t site; //!< site index.
-          atat::rVector3d pos; //!< Position.
+          Eigen::Vector3d pos; //!< Position.
         };
         //! Type of the cluster spins.
         typedef std::vector<Spin> t_Spins;

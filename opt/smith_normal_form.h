@@ -9,16 +9,15 @@
 #include <config.h>
 #endif
 
-#include <atat/vectmac.h>
-#include "types.h"
+#include <Eigen/Core> 
 
 namespace LaDa 
 {
   namespace opt
   {
     //! Computes smith normal form of a matrix \a  _S = \a _L \a _M \a _R.
-    void smith_normal_form( atat::iMatrix3d& _S, atat::iMatrix3d & _L,
-                            const atat::iMatrix3d& _M, atat::iMatrix3d &_R );
+    void smith_normal_form( Eigen::Matrix3i& _S, Eigen::Matrix3i & _L,
+                            const Eigen::Matrix3i& _M, Eigen::Matrix3i &_R );
   } // namespace opt
 
 } // namespace LaDa

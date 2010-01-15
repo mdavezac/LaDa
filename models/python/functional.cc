@@ -40,24 +40,24 @@ namespace LaDa
         functional.structure = _structure;
         functional.init( args );
 
-        atat::rVector3d const center 
+        Eigen::Vector3d const center 
         (
           std::accumulate
           (
              _structure.atoms.begin(), _structure.atoms.end(),
-             atat::rVector3d(0,0,0), std::plus<atat::rVector3d>()
+             Eigen::Vector3d(0,0,0), std::plus<Eigen::Vector3d>()
           )
         );
 
         Models::Functional::t_Return result( _minimizer.call( functional, args ) ); 
 
-        atat::rVector3d const center2 
+        Eigen::Vector3d const center2 
         (
           (  
             center - std::accumulate
                      ( 
                        functional.structure.atoms.begin(), functional.structure.atoms.end(), 
-                       atat::rVector3d(0,0,0), std::plus<atat::rVector3d>()
+                       Eigen::Vector3d(0,0,0), std::plus<Eigen::Vector3d>()
                      )
           ) / types::t_real( _structure.atoms.size() )
         );

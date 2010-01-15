@@ -73,7 +73,7 @@ namespace LaDa
         bool init( t_Arg& _arg );
         //! \brief Returns a reference to the computed stress
         //! \sa Functional::stress
-        const atat::rMatrix3d& get_stress() const { return stress; }
+        const Eigen::Matrix3d& get_stress() const { return stress; }
 
         //! Sets the bond parameters.
         template< class T_TUPLE >
@@ -101,13 +101,13 @@ namespace LaDa
         //! \brief unpacks variables from minimizer
         //! \details Functional knows about Functional::Structure, whereas minizers now
         //! about function::Base, this function does the interface between the two
-        void unpack_variables(const t_Arg& _arg, atat::rMatrix3d& strain) const;
+        void unpack_variables(const t_Arg& _arg, Eigen::Matrix3d& strain) const;
         //! Unpacks position variables only.
-        void unpack_positions( t_Arg::const_iterator& _i_x, atat::rMatrix3d& strain) const;
+        void unpack_positions( t_Arg::const_iterator& _i_x, Eigen::Matrix3d& strain) const;
         //! \brief packs variables from minimizer
         //! \details Functional knows about Functional::Structure, whereas minizers now
         //! about function::Base, this function does the interface between the two
-        void pack_variables( t_Arg& _arg, const atat::rMatrix3d& _strain ) const;
+        void pack_variables( t_Arg& _arg, const Eigen::Matrix3d& _strain ) const;
         //! Packs position variables only.
         void pack_positions( t_Arg :: iterator & _i_x) const;
         //! Counts positional degrees of freedom.
@@ -116,15 +116,15 @@ namespace LaDa
         //! \details Functional knows about Functional::Structure, whereas
         //! minizers now about function::Base, this function does the interface
         //! between the two
-        void pack_gradients( const atat::rMatrix3d& _stress,
+        void pack_gradients( const Eigen::Matrix3d& _stress,
                              t_GradientArg _grad) const;
       
         //! original structure,  needed for gradients
         Crystal :: Structure structure0;
         //! stores stress in Functional::structure after computation
-        mutable atat::rMatrix3d stress;
+        mutable Eigen::Matrix3d stress;
         //! Index of the first atoms with fixed x, y, z;
-        atat::iVector3d fixed_index; 
+        Eigen::Vector3i fixed_index; 
     };
 
   } // namespace vff 

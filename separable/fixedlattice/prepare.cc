@@ -27,12 +27,12 @@ namespace LaDa
     // Forward declarations.
     namespace details
     {
-      void cubic_basis( types::t_unsigned _n, const atat::rMatrix3d &_cell,
-                        std::vector< atat::rVector3d >& _positions );
-      void supercell_basis( types::t_unsigned _n, const atat::rMatrix3d &_cell,
-                            std::vector< atat::rVector3d >& _positions );
+      void cubic_basis( types::t_unsigned _n, const Eigen::Matrix3d &_cell,
+                        std::vector< Eigen::Vector3d >& _positions );
+      void supercell_basis( types::t_unsigned _n, const Eigen::Matrix3d &_cell,
+                            std::vector< Eigen::Vector3d >& _positions );
       void convcell_basis( types::t_unsigned _n,
-                           std::vector< atat::rVector3d >& _positions );
+                           std::vector< Eigen::Vector3d >& _positions );
     }
     
     void PosToConfs :: init_syms( Crystal::Lattice &_lat )
@@ -43,7 +43,7 @@ namespace LaDa
       for( types::t_int i(0); i < N; ++i )
       {
         if( not Fuzzy::eq( atat::norm2( _lat.space_group[i].trans ), 0e0 ) ) continue;
-        atat::rMatrix3d &op = _lat.space_group[i].op;
+        Eigen::Matrix3d &op = _lat.space_group[i].op;
   //     if( not Fuzzy::eq( atat::det( op ), 1e0 ) ) continue;
         syms.push_back( op );
       }
@@ -61,7 +61,7 @@ namespace LaDa
       if( boost::regex_search( _bdesc, what, re2 ) )
       {
         n.first = n.second = 0;
-        atat::rMatrix3d cell;
+        Eigen::Matrix3d cell;
         cell.set_diagonal( boost::lexical_cast<types::t_real>(what.str(1)),
                            boost::lexical_cast<types::t_real>(what.str(2)),
                            boost::lexical_cast<types::t_real>(what.str(3)) );
@@ -136,7 +136,7 @@ namespace LaDa
 
       // first neighbor containor.
       Crystal :: Neighbors neighbors( n.second );
-      neighbors.origin = i_basis->origin + atat::rVector3d(1,0,0);
+      neighbors.origin = i_basis->origin + Eigen::Vector3d(1,0,0);
       size_t index(1);
       
       // sorting container.
@@ -209,12 +209,12 @@ namespace LaDa
       std::transform
       ( 
         _structure.atoms.begin(), _structure.atoms.end(), fractionals.begin(),
-             ret<atat::rMatrix3d>(constant( !(_structure.cell) ))
+             ret<Eigen::Matrix3d>(constant( !(_structure.cell) ))
            * bind(&Crystal::Structure::t_Atom::pos, _1) 
       );
     
       // Loops over shifts.
-      typedef std::vector<atat::rVector3d> :: const_iterator t_shift_iterator;
+      typedef std::vector<Eigen::Vector3d> :: const_iterator t_shift_iterator;
       t_shift_iterator i_shift( fractionals.begin() );
       t_shift_iterator i_shift_end( fractionals.end() );
       for(; i_shift != i_shift_end; ++i_shift )
@@ -232,7 +232,7 @@ namespace LaDa
                _1 - constant( *i_shift )
           );
     
-          atat::rMatrix3d inv =  (!_structure.cell) * (*i_op);
+          Eigen::Matrix3d inv =  (!_structure.cell) * (*i_op);
     
           // For each basis position, finds closest atomic-position modulo
           // structure-periodicity.
@@ -241,13 +241,13 @@ namespace LaDa
           t_Positions :: const_iterator i_pos_end( positions.end() );
           for(types::t_int i=0; i_pos != i_pos_end; ++i_pos, ++i )
           {
-            atat::rVector3d pos = inv * (*i_pos);
+            Eigen::Vector3d pos = inv * (*i_pos);
             t_Positions::const_iterator i_found( shifted_fracs.begin() );
             t_Positions::const_iterator i_end( shifted_fracs.end() );
             types::t_int j(0);
             for(; i_found != i_end; ++i_found, ++j )
             {
-              atat::rVector3d a = pos - (*i_found);
+              Eigen::Vector3d a = pos - (*i_found);
               a[0] += 0.05e0; a[0] -= std::floor(a[0]); a[0] -= 0.05e0;
               a[1] += 0.05e0; a[1] -= std::floor(a[1]); a[1] -= 0.05e0;
               a[2] += 0.05e0; a[2] -= std::floor(a[2]); a[2] -= 0.05e0;
@@ -282,8 +282,8 @@ namespace LaDa
     
     namespace details
     {
-      void cubic_basis( types::t_unsigned _n, const atat::rMatrix3d &_cell,
-                        std::vector< atat::rVector3d >& _positions )
+      void cubic_basis( types::t_unsigned _n, const Eigen::Matrix3d &_cell,
+                        std::vector< Eigen::Vector3d >& _positions )
       {
         _positions.clear();
         _positions.reserve( _n*_n*_n );
@@ -291,7 +291,7 @@ namespace LaDa
           for( types::t_unsigned j = 0; j < _n; ++j )
             for( types::t_unsigned k = 0; k < _n; ++k )
             {
-              atat::rVector3d pos( i, j, k );
+              Eigen::Vector3d pos( i, j, k );
               _positions.push_back( _cell * pos );
             }
         namespace bl = boost::lambda;
@@ -301,14 +301,14 @@ namespace LaDa
            bl::_1 * bl::_1  > bl::_2 * bl::_2
         );
       }
-      void supercell_basis( types::t_unsigned _n, const atat::rMatrix3d &_cell,
-                            std::vector< atat::rVector3d >& _positions )
+      void supercell_basis( types::t_unsigned _n, const Eigen::Matrix3d &_cell,
+                            std::vector< Eigen::Vector3d >& _positions )
       {
         __DEBUGTRYBEGIN
         namespace bl = boost::lambda;
 
         Crystal::Structure structure;
-        atat::rMatrix3d mat;
+        Eigen::Matrix3d mat;
         mat.identity(); mat =  mat * (types::t_real)_n;
         structure.cell = _cell * mat;
         __ASSERT( not Crystal::Structure::lattice,
@@ -338,12 +338,12 @@ namespace LaDa
         __DEBUGTRYEND(, "Error while creating super-cell basis.\n" )
       }
       void convcell_basis( types::t_unsigned _n, 
-                           std::vector< atat::rVector3d >& _positions )
+                           std::vector< Eigen::Vector3d >& _positions )
       {
         __DEBUGTRYBEGIN
         __ASSERT( not Crystal::Structure::lattice, 
                   "Lattice has not been set.\n" )
-        atat::rMatrix3d mult;
+        Eigen::Matrix3d mult;
         // assume fcc
         if( Fuzzy::eq( Crystal::Structure::lattice->cell.x[0][0], 0e0 ) ) 
         {

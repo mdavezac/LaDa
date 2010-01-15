@@ -21,10 +21,7 @@
 #include <opt/traits.h>
 #include <opt/fuzzy.h>
 
-#include <atat/vectmac.h>
-#include <atat/xtalutil.h>
-#include <atat/machdep.h>
-#include <atat/fxvector.h>
+#include <Eigen/Core>
 
 namespace LaDa
 {
@@ -77,7 +74,7 @@ namespace LaDa
 
       public:
         //! The atomic position in cartesian coordinate.
-        atat::rVector3d pos;
+        Eigen::Vector3d pos;
         //! The atomic occupation.
         t_Type  type;
         //! The frozen status
@@ -86,11 +83,11 @@ namespace LaDa
         types::t_int site;
         
         //! Constructor
-        Atom_Type() : pos(atat::rVector3d(0,0,0)),
+        Atom_Type() : pos(Eigen::Vector3d(0,0,0)),
                       freeze(FREEZE_NONE), site(-1) {};
         //! Constructor and Initializer
         explicit 
-          Atom_Type   ( const atat::rVector3d &_pos, t_Type _type) 
+          Atom_Type   ( const Eigen::Vector3d &_pos, t_Type _type) 
                     : pos(_pos), type(_type), freeze(FREEZE_NONE),
                       site(-1) {};
         //! Copy Constructor
@@ -103,11 +100,11 @@ namespace LaDa
         //! Compares both occupation and type.
         bool equal (const Atom_Type<t_Type> &_atom) const;
         //! Returns a constant reference to the atomic position.
-        operator const atat::rVector3d& () const { return pos; }
+        operator const Eigen::Vector3d& () const { return pos; }
         //! Returns a constant reference to the atomic occupation.
         operator const t_Type& () const { return type; } 
         //! Sets the atomic position.
-        void operator=( const atat::rVector3d &_pos ) { pos = _pos; }
+        void operator=( const Eigen::Vector3d &_pos ) { pos = _pos; }
         //! Sets the occupation.
         void operator=( const t_Type &_type ) { type = _type; }
 
@@ -196,7 +193,7 @@ namespace LaDa
         ss.clear(); ss.str( str );
         ss >> z;
 
-        pos = atat::rVector3d(x,y,z);
+        pos = Eigen::Vector3d(x,y,z);
 
         ss.clear(); ss.str("");
         if ( _element.Attribute("type") )
@@ -273,11 +270,11 @@ namespace LaDa
     template<class T_TYPE> template< class TTYPE >
       bool Atom_Type<T_TYPE> :: operator < ( const Atom_Type<TTYPE> &_atom ) const
       {
-        types::t_real norma = atat::norm( pos ), normb = atat::norm(_atom.pos);
+        types::t_real norma = pos.norm(), normb = _atom.pos.norm();
 
-        if ( norma < atat::zero_tolerance and normb > atat::zero_tolerance )
+        if ( norma < types::tolerance and normb > types::tolerance )
           return true;
-        if ( norma < atat::zero_tolerance or normb < atat::zero_tolerance )
+        if ( norma < types::tolerance or normb < types::tolerance )
           return false;
          
         types::t_real a = pos[0] / norma, b = _atom.pos[0] / normb;

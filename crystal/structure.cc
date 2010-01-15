@@ -10,10 +10,10 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/tuple/tuple_io.hpp>
 
+#include <Eigen/LU>
+
 #include <opt/tinyxml.h>
 #include <opt/ndim_iterator.h>
-
-#include <atat/misc.h>
 #include <physics/physics.h>
 
 #include "structure.h"
@@ -36,10 +36,10 @@ namespace LaDa
       Crystal::Lattice* Structure :: lattice = NULL;
     }
 
-    bool sort_kvec( const atat::rVector3d &_vec1, const atat::rVector3d &_vec2 )
+    bool sort_kvec( const Eigen::Vector3d &_vec1, const Eigen::Vector3d &_vec2 )
     {
-      types::t_real a = atat::norm2( _vec1 );
-      types::t_real b = atat::norm2( _vec2 );
+      types::t_real a = _vec1.squaredNorm();
+      types::t_real b = _vec2.squaredNorm();
       if ( std::abs( a - b ) > types::tolerance ) return a < b;
       a = _vec1[0]; b = _vec2[0];
       if ( std::abs( a - b ) > types::tolerance ) return a < b;
@@ -50,20 +50,10 @@ namespace LaDa
       return false;
     }
 
-    using atat::rndseed;
-
-    void Structure :: convert_from_ATAT ( const Atat_Structure &atat  )
-    {
-      cell = atat.cell;
-      for ( types::t_int i = 0; i < atat.atom_pos.get_size(); i++ )
-        atoms.push_back( Atom_Type<types::t_real>( atat.atom_pos[i],
-                               static_cast<types::t_real>(atat.atom_type[i]) ) );
-    }
-                                                                   
     void Structure :: print_out (std::ostream &stream) const
     {
       stream << "\n Structure, scale: " << scale << ", Volume: "
-             << atat::det( cell )
+             << cell.determinant()
              << ", Cell\n"
              << std::fixed << std::setprecision(5)
              << "   " << std::setw(9) << cell(0,0)
@@ -286,8 +276,8 @@ namespace LaDa
         return false;
       }
 
-      atat::rVector3d direction;
-      atat::iVector3d extent;
+      Eigen::Vector3d direction;
+      Eigen::Vector3i extent;
       
       // First, Load Attributes 
       __TRYBEGIN
@@ -297,16 +287,14 @@ namespace LaDa
         sstr >> boost::tuples::set_open('(')
              >> boost::tuples::set_close(')')
              >> tupledir;
-        __DOASSERT( atat::norm2( direction ) < types::tolerance,
-                    "direction cannot be null.\n" )
+        __DOASSERT( direction.squaredNorm() < types::tolerance, "direction cannot be null.\n" )
         sstr.str( _node.Attribute("extent") );
         boost::tuple< types::t_int&, types::t_int&, types::t_int& >
                    tupleext( extent[0], extent[1], extent[2] );
         sstr >> boost::tuples::set_open('(')
              >> boost::tuples::set_close(')')
              >> tupleext;
-        __DOASSERT( atat::norm2( direction ) < types::tolerance,
-                    "extent cannot be null.\n" )
+        __DOASSERT( direction.squaredNorm() < types::tolerance, "extent cannot be null.\n" )
     
         direction = (!lattice->cell) * direction;
         
@@ -383,9 +371,9 @@ namespace LaDa
       for (int i=0; i < 3; ++i)
       {
         child = new TiXmlElement( "row" );
-        child->SetDoubleAttribute( "x", cell.get_row(i)(0) );
-        child->SetDoubleAttribute( "y", cell.get_row(i)(1) );
-        child->SetDoubleAttribute( "z", cell.get_row(i)(2) );
+        child->SetDoubleAttribute( "x", cell.row(i)(0) );
+        child->SetDoubleAttribute( "y", cell.row(i)(1) );
+        child->SetDoubleAttribute( "z", cell.row(i)(2) );
         parent->LinkEndChild(child);
         if ( i == 0 and
              freeze & FREEZE_XX or 
@@ -472,12 +460,12 @@ namespace LaDa
 
     }
 
-    void refold( atat::rVector3d &vec, const atat::rMatrix3d &lat )
+    void refold( Eigen::Vector3d &vec, const Eigen::Matrix3d &lat )
     {
       opt::NDimIterator<types::t_int, std::less_equal<types::t_int> > i_cell;
-      atat::rVector3d hold = vec;
-      atat::rVector3d compute;
-      atat::rVector3d current = vec;
+      Eigen::Vector3d hold = vec;
+      Eigen::Vector3d compute;
+      Eigen::Vector3d current = vec;
       types::t_real norm_c = norm2(vec);
 
       i_cell.add(-1,1);
@@ -507,12 +495,12 @@ namespace LaDa
        if ( not lattice ) return;
       
        k_vecs.clear();
-       atat::rMatrix3d const kcell( !(~cell) );
-       atat::rMatrix3d const klat( !(~lattice->cell) );
+       Eigen::Matrix3d const kcell( !(~cell) );
+       Eigen::Matrix3d const klat( !(~lattice->cell) );
        t_SmithTransform transform = get_smith_transform( kcell, klat );
        
-       atat::iVector3d &smith = bt::get<1>(transform);
-       const atat::rMatrix3d factor
+       Eigen::Vector3i &smith = bt::get<1>(transform);
+       const Eigen::Matrix3d factor
        ( 
           (~lattice->cell) * (!bt::get<0>(transform))
        );
@@ -521,16 +509,16 @@ namespace LaDa
            for( size_t k(0); k < smith(2); ++k )
            {
              // in supercell fractional
-             const atat::rVector3d vec1( factor * atat::rVector3d(i,j,k) );
+             const Eigen::Vector3d vec1( factor * Eigen::Vector3d(i,j,k) );
              // in supercell fractional and c entered.
-             const atat::rVector3d vec2       
+             const Eigen::Vector3d vec2       
              (                                
                vec1(0) - std::floor( vec1(0) + 0.5 ),
                vec1(1) - std::floor( vec1(1) + 0.5 ),
                vec1(2) - std::floor( vec1(2) + 0.5 )
              );
              // in cartesian
-             atat::rVector3d vec( klat * vec2 );
+             Eigen::Vector3d vec( klat * vec2 );
              refold(vec, klat);
            
              k_vecs.push_back( t_kAtom(vec,0) );
@@ -541,22 +529,22 @@ namespace LaDa
      }
 
 
-    void  find_range( const atat::rMatrix3d &A, atat::iVector3d &kvec )
+    void  find_range( const Eigen::Matrix3d &A, Eigen::Vector3i &kvec )
     {
-      atat::rVector3d a = A.get_row(0), b;
+      Eigen::Vector3d a = A.row(0), b;
       types::t_int n = 1;
       b = a;
       while( not is_int(b) )
         { b += a; n++;  }
       kvec[0] = n;
 
-      a = A.get_row(1);
+      a = A.row(1);
       b = a; n = 1;
       while( not is_int(b) )
         { b += a; n++;  }
       kvec[1] = n;
       
-      a = A.get_row(2);
+      a = A.row(2);
       b = a; n = 1;
       while( not is_int(b) )
         { b += a; n++;  }

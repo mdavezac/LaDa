@@ -170,7 +170,7 @@ namespace LaDa
       }
       escan.nbstates += bgstates + 2;
       if (    escan.potential != Escan::SPINORBIT
-           or Fuzzy::is_zero( atat::norm2(escan.kpoint) ) )
+           or Fuzzy::is_zero( escan.kpoint.squaredNorm() ) )
        { escan.nbstates >>= 1; bgstates >>= 1; }
 
       __TRYCODE( Interface::operator()();,

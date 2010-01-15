@@ -65,7 +65,7 @@ namespace LaDa
       (
           opt::InitialPath::path() / _bandgap.get_dirname() 
       ); 
-      const size_t kramer( Fuzzy::is_zero( atat::norm2( _bandgap.escan.kpoint ) ) ? 2: 1 ); 
+      const size_t kramer( Fuzzy::is_zero( _bandgap.escan.kpoint.squareNorm() ) ? 2: 1 ); 
       if(     _bandgap.escan.method == Interface :: FOLDED_SPECTRUM 
           and bfs::exists( opt::InitialPath::path() /  _bandgap.get_dirname() / "cbm" )  )
       {

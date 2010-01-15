@@ -84,9 +84,9 @@ namespace LaDa
         //! \param _K0 displacement resulting from _strain and w.r.t original unit-cell
         //! \sa function::Base, function::Base::evaluate_with_gradient()
         types::t_real evaluate_with_gradient( const AtomicCenter &_center,
-                                              const atat::rMatrix3d &_strain,
-                                              atat::rMatrix3d &_stress,
-                                              const atat::rMatrix3d &_K0 ) const;
+                                              const Eigen::Matrix3d &_strain,
+                                              Eigen::Matrix3d &_stress,
+                                              const Eigen::Matrix3d &_K0 ) const;
         //! \brief computes the trace of the microscopic strain on an atomic center
         //!  structure0 and the atomic centers are expected to be related 
         //! \details To be used for pescan

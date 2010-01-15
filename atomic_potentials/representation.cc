@@ -17,12 +17,12 @@ namespace LaDa
 {
   namespace atomic_potential
   {
-    atat::rVector3d to_spherical( atat::rVector3d const &_a )
+    Eigen::Vector3d to_spherical( Eigen::Vector3d const &_a )
     {
       types::t_real const  rho = std::sqrt( _a[0]*_a[0] + _a[1]*_a[1] + _a[2]*_a[2] );
       return Fuzzy::is_zero(rho) ? 
-               atat::rVector3d(0,0,0):
-               atat::rVector3d
+               Eigen::Vector3d(0,0,0):
+               Eigen::Vector3d
                (
                  rho,
                  std::atan2( _a[1], _a[0] ),
@@ -84,7 +84,7 @@ namespace LaDa
 
       // first neighbor containor.
       Crystal :: Neighbors neighbors( _natoms );
-      neighbors.origin = i_basis->origin + atat::rVector3d(1,0,0);
+      neighbors.origin = i_basis->origin + Eigen::Vector3d(1,0,0);
       size_t index(1);
       
       // sorting container.
@@ -175,7 +175,7 @@ namespace LaDa
                      "Could not find type: " << atom.type << "\n"  << *_structure.lattice << "\n" ) 
         if( Representation::coord_system == Representation::cartesian )
         {
-          atat::rVector3d const vec((*i_first)->pos); 
+          Eigen::Vector3d const vec((*i_first)->pos); 
           // always include x.
           _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.x, type) );
 
@@ -187,7 +187,7 @@ namespace LaDa
         }
         else // spherical coordinates
         {
-          atat::rVector3d const vec( to_spherical((*i_first)->pos) );
+          Eigen::Vector3d const vec( to_spherical((*i_first)->pos) );
           // always include x (rho).
           _vars.variables.push_back( VariableSet::t_Variable(vec.x[0], type) );
 

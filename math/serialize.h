@@ -15,19 +15,19 @@ namespace boost {
 
     //! Serializes atat real vectors.
     template<class Archive>
-    void serialize(Archive & ar, LaDa::atat::rVector3d & g, const unsigned int version)
+    void serialize(Archive & ar, LaDa::Eigen::Vector3d & g, const unsigned int version)
      { ar & g.x; }
      //! Serializes atat integer vectors.
     template<class Archive>
-    void serialize(Archive & ar, LaDa::atat::iVector3d & g, const unsigned int version)
+    void serialize(Archive & ar, LaDa::Eigen::Vector3i & g, const unsigned int version)
      { ar & g.x; }
     //! Serializes atat real matrices.
     template<class Archive>
-    void serialize(Archive & ar, LaDa::atat::rMatrix3d & g, const unsigned int version)
+    void serialize(Archive & ar, LaDa::Eigen::Matrix3d & g, const unsigned int version)
      { ar & g.x; }
     //! Serializes atat integer matrices.
     template<class Archive>
-    void serialize(Archive & ar, LaDa::atat::iMatrix3d & g, const unsigned int version)
+    void serialize(Archive & ar, LaDa::Eigen::Matrix3i & g, const unsigned int version)
      { ar & g.x; }
   }
 

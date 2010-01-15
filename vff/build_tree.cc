@@ -1,6 +1,3 @@
-//
-//  Version: $Id$
-//
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
@@ -29,7 +26,7 @@ namespace LaDa
 
       // computes deformation.
       // 16 is the number of first+second neighbors. I think.
-      const boost::tuples::tuple< atat::rMatrix3d, atat::rVector3d >
+      const boost::tuples::tuple< Eigen::Matrix3d, Eigen::Vector3d >
         deformation( Crystal::retrieve_deformation( structure, 18 ) );
 
       // now finds smith normal form of ideal lattice.
@@ -55,7 +52,7 @@ namespace LaDa
       )
 
       // finds ideal first neighbor positions for each lattice sits.
-      typedef std::vector< std::vector< atat::rVector3d > > t_FirstNeighbors;
+      typedef std::vector< std::vector< Eigen::Vector3d > > t_FirstNeighbors;
       t_FirstNeighbors first_neighbors( Nsites );
       foreach( const Crystal::Lattice::t_Site &site, structure.lattice->sites )
         first_neighbors[0].push_back( site.pos );
@@ -63,11 +60,11 @@ namespace LaDa
       std::swap( first_neighbors[1][0], first_neighbors[1][1] ); 
       
       { // finds first neighbors and adds in deformation.
-        const atat::rMatrix3d inv_def( !bt::get<0>( deformation ) );
+        const Eigen::Matrix3d inv_def( !bt::get<0>( deformation ) );
         for( size_t i(0); i < Nsites; ++i )
         {
           Crystal::find_first_neighbors( first_neighbors[i], structure.lattice->cell, 4 );
-          foreach( atat::rVector3d &pos, first_neighbors[i] )
+          foreach( Eigen::Vector3d &pos, first_neighbors[i] )
             pos = inv_def * pos; // This way, we can input a single vector to smith_index_
         }
       }
@@ -87,7 +84,7 @@ namespace LaDa
         bool error = false;
         foreach( const Crystal::Structure::t_Atom &atom, structure.atoms )
         {
-          atat::iVector3d sindex;
+          Eigen::Vector3i sindex;
           __ASSERT( atom.site < 0, "site indexing is incorrect.\n" );
           __ASSERT( atom.site > structure.lattice->sites.size(),
                     "site indexing is incorrect.\n" );
@@ -132,17 +129,17 @@ namespace LaDa
         centers.push_back( AtomicCenter( structure, *i_atom, index ) );
 
       // finally builds tree.
-      typedef std::vector< atat::rVector3d > :: const_iterator t_cit;
+      typedef std::vector< Eigen::Vector3d > :: const_iterator t_cit;
 
       t_Centers :: iterator i_center = centers.begin();
       t_Centers :: iterator i_center_end = centers.end();
-      const atat::rMatrix3d inv_cell( !structure.cell );
+      const Eigen::Matrix3d inv_cell( !structure.cell );
       i_atom = structure.atoms.begin();
       for(; i_center != i_center_end; ++i_center, ++i_atom )
       {
         const unsigned center_site( i_atom->site );
         const unsigned neighbor_site( neighbors_site[center_site] );
-        const atat::rVector3d pos
+        const Eigen::Vector3d pos
         ( 
           i_atom->pos - structure.lattice->sites[neighbor_site].pos 
         );
@@ -151,7 +148,7 @@ namespace LaDa
         for(; i_neigh != i_neigh_end; ++i_neigh )
         {
           // computes index of nearest neighbor.
-          atat::iVector3d sindex;
+          Eigen::Vector3i sindex;
           smith_index_
           (
             transformation,
@@ -164,26 +161,23 @@ namespace LaDa
           // now creates branch in tree.
           t_Centers :: iterator i_bond( centers.begin() + cindex );
           i_center->bonds.push_back( t_Center::__make__iterator__( i_bond ) );
-          const atat::rVector3d dfrac
+          const Eigen::Vector3d dfrac
           ( 
               inv_cell 
             * ( 
-                  (const atat::rVector3d) *i_center 
-                - (const atat::rVector3d) *i_bond
+                  (const Eigen::Vector3d) *i_center 
+                - (const Eigen::Vector3d) *i_bond
                 + (*i_neigh)
               )
            ); 
-          const atat::rVector3d frac
+          const Eigen::Vector3d frac
           (
             rint( dfrac(0) ),
             rint( dfrac(1) ),
             rint( dfrac(2) )
           );
           i_center->translations.push_back( frac );
-          i_center->do_translates.push_back
-          ( 
-            atat::norm2(frac) > atat::zero_tolerance 
-          );
+          i_center->do_translates.push_back( not Fuzzy::is_zero(frac.squaredNorm()) );
         }
       }
       __ENDGROUP__
@@ -196,15 +190,15 @@ namespace LaDa
     }
 
     void Vff :: smith_index_( const t_Transformation &_transformation,
-                              const atat::rVector3d &_pos,
-                              atat::iVector3d &_index )
+                              const Eigen::Vector3d &_pos,
+                              Eigen::Vector3i &_index )
     {
       namespace bt = boost::tuples;
-      const atat::rVector3d pos
+      const Eigen::Vector3d pos
       ( 
         bt::get<0>( _transformation ) * _pos - bt::get<1>( _transformation )
       );
-      const atat::iVector3d int_pos
+      const Eigen::Vector3i int_pos
       (
         types::t_int( rint( pos(0) ) ),
         types::t_int( rint( pos(1) ) ),
@@ -225,18 +219,18 @@ namespace LaDa
     Vff :: t_Transformation 
       Vff :: to_smith_matrix( const boost::tuples::tuple
                                     <
-                                      atat::rMatrix3d,
-                                      atat::rVector3d 
+                                      Eigen::Matrix3d,
+                                      Eigen::Vector3d 
                                     > &_deformation,
-                              const atat::rMatrix3d &_lat_cell,
-                              const atat::rMatrix3d &_str_cell )
+                              const Eigen::Matrix3d &_lat_cell,
+                              const Eigen::Matrix3d &_str_cell )
       {
         namespace bt = boost::tuples;
         t_Transformation result;
-        atat::iMatrix3d left, right, smith;
-        const atat::rMatrix3d inv_lat( !_lat_cell );
-        const atat::rMatrix3d inv_lat_cell( inv_lat * bt::get<0>(_deformation) * _str_cell );
-        atat::iMatrix3d int_cell;
+        Eigen::Matrix3i left, right, smith;
+        const Eigen::Matrix3d inv_lat( !_lat_cell );
+        const Eigen::Matrix3d inv_lat_cell( inv_lat * bt::get<0>(_deformation) * _str_cell );
+        Eigen::Matrix3i int_cell;
         for( size_t i(0); i < 3; ++i )
           for( size_t j(0); j < 3; ++j )
           {

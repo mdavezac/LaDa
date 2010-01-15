@@ -86,7 +86,7 @@ namespace LaDa
         //! between the two
         void pack_gradients(t_GradientArg _grad) const;
         //! Original cell, for volume relaxation.
-        atat::rMatrix3d cell0_;
+        Eigen::Matrix3d cell0_;
         //! Scaling for volume relaxation.
         mutable types::t_real scaling_;
     };

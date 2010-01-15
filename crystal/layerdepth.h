@@ -9,8 +9,6 @@
 #include <config.h>
 #endif
 
-#include <atat/vectmac.h>
-
 #include <opt/debug.h>
 #include <opt/fuzzy.h>
 #include <boost/tuple/tuple.hpp>
@@ -33,9 +31,9 @@ namespace LaDa
     class LayerDepth
     {
       protected:
-        atat::rVector3d a0; //!< First ordering direction
-        atat::rVector3d a1; //!< Second ordering direction
-        atat::rVector3d a2; //!< Third ordering direction
+        Eigen::Vector3d a0; //!< First ordering direction
+        Eigen::Vector3d a1; //!< Second ordering direction
+        Eigen::Vector3d a2; //!< Third ordering direction
         __DODEBUGCODE( bool isset; ) 
     
       public:
@@ -48,11 +46,11 @@ namespace LaDa
         //! \brief Constructor and Initializer
         //! \param _mat Depth::a0 is set to this vector.
         //!             Depth::a1 and Depth::a2 are constructed.
-        LayerDepth   ( const atat::rVector3d &_vec ) { set( _vec); }
+        LayerDepth   ( const Eigen::Vector3d &_vec ) { set( _vec); }
         //! \brief Constructor and Initializer
         //! \param _mat Depth::a0 is set to the (normalized) first column of this matrix,
         //!             Depth::a1 to the second, and Depth::a2 to the third.
-        LayerDepth   ( const atat::rMatrix3d &_mat ) { set( _mat); }
+        LayerDepth   ( const Eigen::Matrix3d &_mat ) { set( _mat); }
         //! \brief Constructor and Initializer
         //! \param _mat Depth::a0 is set to this vector.
         //!             Depth::a1 and Depth::a2 are constructed.
@@ -61,18 +59,18 @@ namespace LaDa
         //! Destructor.
         virtual ~LayerDepth() {}
         //! Sets reference vectors.
-        void set( const atat::rMatrix3d &_mat );
+        void set( const Eigen::Matrix3d &_mat );
         //! Sets and constructs reference vectors.
-        void set( const atat::rVector3d &_mat );
+        void set( const Eigen::Vector3d &_mat );
         //! Sets and constructs reference vectors.
         void set( const boost::tuple<types::t_real, types::t_real, types::t_real> &_vec ) 
-          { set( atat::rVector3d( _vec.get<0>(), _vec.get<1>(), _vec.get<2>() ) ); }
+          { set( Eigen::Vector3d( _vec.get<0>(), _vec.get<1>(), _vec.get<2>() ) ); }
     
         //! Strict weak ordering operator.
-        bool operator()( const atat::rVector3d& _first,
-                         const atat::rVector3d& _second ) const;
+        bool operator()( const Eigen::Vector3d& _first,
+                         const Eigen::Vector3d& _second ) const;
         //! Returns the depth.
-        types::t_real operator()( const atat::rVector3d& _first ) const;
+        types::t_real operator()( const Eigen::Vector3d& _first ) const;
     };
 
   } // namespace Crystal

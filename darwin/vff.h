@@ -17,7 +17,6 @@
 #include <crystal/structure.h>
 #include <opt/function_base.h>
 #include <opt/types.h>
-#include <atat/vectmac.h>
 
 
 namespace LaDa
@@ -40,7 +39,7 @@ namespace LaDa
     struct Keeper 
     {
       types::t_real energy; //!< The strain energy computed by %Vff.
-      atat::rMatrix3d stress; //!< The stress computed by %Vff.
+      Eigen::Matrix3d stress; //!< The stress computed by %Vff.
 
       //! Constructor
       Keeper() : energy(0) { stress.zero(); }

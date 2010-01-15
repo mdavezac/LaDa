@@ -242,7 +242,7 @@ int main(int argc, char *argv[])
       boost::match_results<std::string::const_iterator> what;
       __DOASSERT( not boost::regex_search( bdesc, what, re ),
                   "Could not parse --basis input: " << bdesc << "\n" )
-      LaDa::atat::rMatrix3d cell;
+      LaDa::Eigen::Matrix3d cell;
       cell.set_diagonal( boost::lexical_cast<LaDa::types::t_real>(what.str(1)),
                          boost::lexical_cast<LaDa::types::t_real>(what.str(2)),
                          boost::lexical_cast<LaDa::types::t_real>(what.str(3)) );

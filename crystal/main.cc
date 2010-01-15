@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
   if( vm.count("direction") )
     std::cout << "Growth direction: " << vm["direction"].as<std::string>() << "\n";
   else 
-    std::cout << "Growth direction: " << structure.cell.get_column(0) << "\n";
+    std::cout << "Growth direction: " << structure.cell.col(0) << "\n";
   std::cout << "Number of layers: " << nb_layers << "\n"
             << sstr.str() << "\n";
 

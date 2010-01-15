@@ -34,7 +34,7 @@ namespace LaDa
         { return enumeration::create_smith_groups( _lattice, _nmax); }
     boost::shared_ptr< std::vector<enumeration::SmithGroup> >
       create_smith_groups2( Crystal::Lattice const &_lattice,
-                            boost::shared_ptr< std::vector<atat::rMatrix3d> > const & _s )
+                            boost::shared_ptr< std::vector<Eigen::Matrix3d> > const & _s )
         { return enumeration::create_smith_groups( _lattice, _s); }
 
     enumeration::SmithGroup::Supercell* create( boost::python::tuple const &_tuple)
@@ -48,8 +48,8 @@ namespace LaDa
       }
       try
       {
-        atat::rMatrix3d const transform = bp::extract<atat::rMatrix3d>( _tuple[0] );
-        atat::rMatrix3d const hermite = bp::extract<atat::rMatrix3d>( _tuple[1] );
+        Eigen::Matrix3d const transform = bp::extract<atat::rMatrix3d>( _tuple[0] );
+        Eigen::Matrix3d const hermite = bp::extract<atat::rMatrix3d>( _tuple[1] );
         return new enumeration::SmithGroup::Supercell(transform, hermite);
       }
       catch(...)
@@ -69,7 +69,7 @@ namespace LaDa
         "Finds all cells of a certain size for a given lattice."
       );
 
-      bp::register_ptr_to_python< boost::shared_ptr< std::vector<atat::rMatrix3d> > >();
+      bp::register_ptr_to_python< boost::shared_ptr< std::vector<Eigen::Matrix3d> > >();
 
       bp::def
       (
@@ -96,7 +96,7 @@ namespace LaDa
       (
         "SmithGroup", 
         "A group of supercells with equivalent translational symmetries",
-        bp::init<atat::iVector3d const&>()
+        bp::init<Eigen::Vector3i const&>()
       ).def(bp::init<enumeration::SmithGroup const &>())
        .def_readwrite("smith", &enumeration::SmithGroup::smith)
        .def_readwrite("supercells", &enumeration::SmithGroup::supercells)
@@ -106,7 +106,7 @@ namespace LaDa
       (
         "Supercell", 
         "A supercell defined by a Hermite matrix and a transform to translation group.\n",
-        bp::init<atat::rMatrix3d const&, atat::rMatrix3d const&>()
+        bp::init<Eigen::Matrix3d const&, atat::rMatrix3d const&>()
       ).def(bp::init<enumeration::SmithGroup::Supercell const&>())
        .def( "__init__", bp::make_constructor( &create ) )
        .def_readwrite("transform", &enumeration::SmithGroup::Supercell::transform)

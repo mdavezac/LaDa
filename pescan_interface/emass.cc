@@ -49,7 +49,7 @@ namespace LaDa
     void eMass :: operator()
     (
       const Interface& _interface,
-      const atat::rMatrix3d &_ocell, 
+      const Eigen::Matrix3d &_ocell, 
       const Crystal::Structure &_structure,
       const types::t_real &_eref,
       t_Output &_out 
@@ -69,20 +69,20 @@ namespace LaDa
       interface.set_reference( _eref );
 
       // setup kpoints.
-      const bool is_gamma( atat::norm2( kpoint ) < 1e-8 );
+      const bool is_gamma( kpoint.squareNorm() < 1e-8 );
       const types::t_int nfirst( 1-npoints );
       const types::t_int nlast( is_gamma ? 1: npoints );
-      std::vector< atat::rVector3d > kpoints;
+      std::vector< Eigen::Vector3d > kpoints;
       for( types::t_int i(nfirst); i < nlast; ++i )
         kpoints.push_back(  kpoint + types::t_real( i ) * direction * stepsize );
 
       // computes eigenvalues.
-      const atat::rVector3d ndir( direction * 1e0 / std::sqrt( atat::norm2( direction ) ) );
-      atat::rVector3d korigin( kpoint );
+      const Eigen::Vector3d ndir( direction.normalized() );
+      Eigen::Vector3d korigin( kpoint );
       distort_kpoint( _ocell, _structure.cell, korigin );
       typedef std::pair< types::t_real, std::vector<types::t_real> > t_Eig;
       std::vector<t_Eig> eigs;
-      foreach( const atat::rVector3d &kp, kpoints )
+      foreach( const Eigen::Vector3d &kp, kpoints )
       {
         compute_
         ( 
@@ -147,10 +147,10 @@ namespace LaDa
     } // end of functor. 
 
 
-    void eMass :: compute_( Interface &_interface, const atat::rVector3d &_kpoint ) const
+    void eMass :: compute_( Interface &_interface, const Eigen::Vector3d &_kpoint ) const
     {
       size_t oldnbstates = _interface.escan.nbstates;
-      const bool is_gamma( atat::norm2( _kpoint ) < 1e-8 );
+      const bool is_gamma( Fuzzy::is_zero(_kpoint.squaredNorm()) );
       if( is_gamma ) _interface.escan.nbstates = oldnbstates >> 1;
       _interface.escan.kpoint = _kpoint;
 

@@ -1,40 +1,35 @@
-//
-//  Version: $Id$
-//
-#ifndef __ATAT_H_
-#define __ATAT_H_
+#ifndef LADA_MATH_COMPARE_NORMS_H
+#define LADA_MATH_COMPARE_NORMS_H
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
-#include <atat/vectmac.h>
-
 #include "fuzzy.h"
 
 namespace LaDa
 {
-  namespace atat
+  namespace math
   { 
     //! Functor for sorting atat real vectors
-    class norm_compare
+    class CompareNorms
     {
       //! Vector to which to compare
-      const rVector3d vec ;
+      const Eigen::Vector3d vec ;
       public:
         //! Constructor and initializer
-        norm_compare( const rVector3d &_vec ) : vec(_vec) {};
+        norm_compare( Eigen::Vector3d &_vec ) : vec(_vec) {};
         //! Constructor and initializer
         norm_compare() : vec(0,0,0) {};
         //! Copy Constructor
         norm_compare( const norm_compare &_c ) : vec(_c.vec) {};
         //! \brief returns true if the norm of \a _a - norm::compare::vec is
         //!        smaller than the norm pf \a _b - norm::compare::vec.
-        bool operator()( const rVector3d &_a, const rVector3d &_b ) const
-          { return Fuzzy::le( norm2( _a - vec ), norm2( _b - vec ) ); }
+        bool operator()( Eigen::Vector3d &_a, Eigen::Vector3d &_b ) const
+          { return Fuzzy::le( (_a - vec).squaredNorm(), (_b - vec).squaredNorm() ); }
         //! Returns true if \a _a = norm::compare::vec.
-        bool operator()( const rVector3d &_a ) const
-          { return Fuzzy::eq( norm2( _a - vec ), 0.0 ); } 
+        bool operator()( Eigen::Vector3d &_a ) const
+          { return Fuzzy::is_zero( (_a - vec).squaredNorm() ); } 
     };
   }
 } // namespace LaDa

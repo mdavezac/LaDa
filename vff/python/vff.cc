@@ -61,7 +61,7 @@ namespace LaDa
         //! fast evaluation with no reinitialization.
         types::t_real operator()() const { return functional_->evaluate() / 16.0217733; }
         //! Returns the stress.
-        atat::rMatrix3d get_stress() const { return functional_->get_stress(); }
+        Eigen::Matrix3d get_stress() const { return functional_->get_stress(); }
 
         //! Loads from an XML input file.
         bool Load( const TiXmlElement &_node ) { return functional_->Load( _node ); }
@@ -211,9 +211,9 @@ namespace LaDa
         //! Constructor.
         LVff( LaDa::Crystal::Structure& _str ) : LaDa::Vff::Layered( _str ) {}
         //! Exposes direction setters.
-        atat::rVector3d get_direction() const { return direction; } 
+        Eigen::Vector3d get_direction() const { return direction; } 
         //! Returns direction.
-        void set_direction( const atat::rVector3d& _direction)
+        void set_direction( const Eigen::Vector3d& _direction)
         {
           is_fixed_by_input = true;
           direction = _direction;
@@ -225,10 +225,10 @@ namespace LaDa
     {
       public:
         //! Exposes direction setters.
-        atat::rVector3d get_direction() const
+        Eigen::Vector3d get_direction() const
           { return functional_->Vff().get_direction(); } 
         //! Returns direction.
-        void set_direction( const atat::rVector3d& _direction)
+        void set_direction( const Eigen::Vector3d& _direction)
           { functional_->Vff().set_direction( _direction ); } 
     };
 

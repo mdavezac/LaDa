@@ -24,7 +24,7 @@ namespace LaDa
     {
       protected: 
         //! Type of the of a position.
-        typedef std::pair< atat::rVector3d, size_t > t_Position;
+        typedef std::pair< Eigen::Vector3d, size_t > t_Position;
         //! Type of the container of positions.
         typedef std::list< std::vector< t_Position > > t_Positions;
 
@@ -54,18 +54,18 @@ namespace LaDa
         //! \brief Adds configurations, knowing the origin \a _i.
         void from_origin( size_t _i );
         //! \brief Compares positions indexed as integers, given the origin and x-axis.
-        bool compare_from_x( const atat::rVector3d &_origin, 
-                             const atat::rVector3d &_x, 
+        bool compare_from_x( const Eigen::Vector3d &_origin, 
+                             const Eigen::Vector3d &_x, 
                              const t_Position& _a1, 
                              const t_Position& _a2 ) const
           { return Fuzzy::le( _a1.first * _x, _a2.first * _x ); }
         //! \brief Compares positions indexed as integers, given the coordinate system.
         //! \note Does not compare norms of \a _a1 - \a _origin and \a _a2 - \a _origin,
         //!       E.g. does not implement complete comparison rule. 
-        bool compare_from_coords( const atat::rVector3d &_origin, 
-                                  const atat::rVector3d &_x, 
-                                  const atat::rVector3d &_y, 
-                                  const atat::rVector3d &_z, 
+        bool compare_from_coords( const Eigen::Vector3d &_origin, 
+                                  const Eigen::Vector3d &_x, 
+                                  const Eigen::Vector3d &_y, 
+                                  const Eigen::Vector3d &_z, 
                                   const t_Position& _a1, 
                                   const t_Position& _a2 ) const; 
         //! \brief Computes a list of atoms of the SplitIntoCoefs::n closest
@@ -75,7 +75,7 @@ namespace LaDa
         //!                            the same distance from the origin. E.g.
         //!                            each internal vector contains all
         //!                            positions on  a sphere.
-        void find_atoms_in_sphere( const atat::rVector3d &_origin,
+        void find_atoms_in_sphere( const Eigen::Vector3d &_origin,
                                    t_Positions &_positions );
         //! The number of atoms to included in each configuration.
         std::pair<size_t, size_t> n;

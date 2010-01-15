@@ -33,10 +33,10 @@ namespace LaDa
     {
       LADA_ASSERT(Crystal::Structure::lattice != NULL, "No lattice is set.\n");
       Crystal::Lattice const &lattice = *Crystal::Structure::lattice;
-      atat::rMatrix3d const inv_cell( !lattice.cell );
+      Eigen::Matrix3d const inv_cell( !lattice.cell );
 
       // finds new origin.
-      atat::rVector3d const transformed_pos(_op(origin.pos)); 
+      Eigen::Vector3d const transformed_pos(_op(origin.pos)); 
       origin.site = size_t_cast(which_site(transformed_pos, inv_cell, lattice.sites));
       origin.pos = lattice.sites[origin.site].pos;
 
@@ -71,7 +71,7 @@ namespace LaDa
         LADA_ASSERT( child->Attribute("site"), "Could not find site attribute.\n" );
         Spin const spin = {
                             boost::lexical_cast<size_t>( child->Attribute("site") ),
-                            atat::rVector3d
+                            Eigen::Vector3d
                             (
                               boost::lexical_cast<types::t_real>( child->Attribute("x") ),
                               boost::lexical_cast<types::t_real>( child->Attribute("y") ),
@@ -96,7 +96,7 @@ namespace LaDa
     bool compare( MLCluster const &_a, MLCluster const &_b )
     {
       if( _a.origin.site != _b.origin.site ) return false;
-      LADA_ASSERT( Fuzzy::is_zero( atat::norm2(_a.origin.pos-_b.origin.pos) ), 
+      LADA_ASSERT( Fuzzy::is_zero( (_a.origin.pos-_b.origin.pos).squaredNorm() ), 
                    "Inconsistent origin positions.\n" )
 
       MLCluster::t_Spins :: const_iterator i_spin = _a.begin();
@@ -156,7 +156,7 @@ namespace LaDa
     }
 
     // Finds spin for a given position.
-    types::t_real find_spin( atat::rVector3d const &_vec, 
+    types::t_real find_spin( Eigen::Vector3d const &_vec, 
                              size_t _site, Crystal::Structure const &_str, 
                              std::vector< std::vector<size_t> > const &_map,
                              Crystal::t_SmithTransform const &_transform )
@@ -198,7 +198,7 @@ namespace LaDa
       for(; i_spin != i_spin_end; ++i_spin)
       {
         LADA_ASSERT(i_spin->site < lattice.sites.size(), "Index out-of-range.\n");
-        atat::rVector3d const vec(_atom.pos+i_spin->pos-lattice.sites[i_spin->site].pos);
+        Eigen::Vector3d const vec(_atom.pos+i_spin->pos-lattice.sites[i_spin->site].pos);
         result *= find_spin(vec, i_spin->site, _str, _map, _transform);
       }
       

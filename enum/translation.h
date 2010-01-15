@@ -24,7 +24,7 @@ namespace LaDa
     {
       public:
         //! Constructor
-        Translation   (atat::iVector3d const &_smith, size_t _nsites);
+        Translation   (Eigen::Vector3i const &_smith, size_t _nsites);
         //! Copy Constructor
         Translation   (Translation const &_c) 
                     : card_(_c.card_), permutations_(_c.permutations_),

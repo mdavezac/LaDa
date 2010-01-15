@@ -1,7 +1,3 @@
-//
-//  Version: $Id$
-//
-
 #include <boost/lambda/lambda.hpp>
 #include <boost/serialization/base_object.hpp>
 
@@ -27,10 +23,10 @@ namespace LaDa
       }
 
     //! \cond
-    void  find_range( const atat::rMatrix3d &A, atat::iVector3d &kvec );
+    void  find_range( const Eigen::Matrix3d &A, Eigen::Vector3i &kvec );
 
     template <class CONTAINER>
-    void remove_equivalents( CONTAINER &_cont, const atat::rMatrix3d &_cell)
+    void remove_equivalents( CONTAINER &_cont, const Eigen::Matrix3d &_cell)
     {
       typename CONTAINER :: iterator i_vec = _cont.begin();
       typename CONTAINER :: iterator i_end = _cont.end();
@@ -49,7 +45,7 @@ namespace LaDa
           continue;
         }
         
-        ( atat::norm2( (atat::rVector3d&) *i_vec ) < atat::norm2( (atat::rVector3d&) *i_which ) ) ? 
+        ( i_vec->pos.squaredNorm() < i_which->pos.squaredNorm() ) ?  
               _cont.erase(i_which): _cont.erase(i_vec);
         i_vec = _cont.begin();
         i_end = _cont.end();
@@ -95,7 +91,7 @@ namespace LaDa
       {
         namespace bl = boost::lambda;
         stream << "\n Structure, scale: " << scale << ", Volume: "
-               << atat::det( cell )
+               << cell.determinant()
                << ", Cell\n"
                << std::fixed << std::setprecision(5)
                << "   " << std::setw(9) << cell(0,0)
@@ -119,7 +115,7 @@ namespace LaDa
       bool TStructure<T_TYPE> :: Load( const TiXmlElement &_element )
       {
         const TiXmlElement *child, *parent;
-        double d; atat::rVector3d vec;
+        double d; Eigen::Vector3d vec;
         int i;
    
         // Find first XML "Structure" node (may be _element from start, or a child of _element)
@@ -238,9 +234,9 @@ namespace LaDa
         for (int i=0; i < 3; ++i)
         {
           child = new TiXmlElement( "row" );
-          child->SetDoubleAttribute( "x", cell.get_row(i)(0) );
-          child->SetDoubleAttribute( "y", cell.get_row(i)(1) );
-          child->SetDoubleAttribute( "z", cell.get_row(i)(2) );
+          child->SetDoubleAttribute( "x", cell.row(i)(0) );
+          child->SetDoubleAttribute( "y", cell.row(i)(1) );
+          child->SetDoubleAttribute( "z", cell.row(i)(2) );
           parent->LinkEndChild(child);
           if ( i == 0 and
                freeze & FREEZE_XX or 

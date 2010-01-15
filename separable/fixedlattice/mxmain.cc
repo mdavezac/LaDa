@@ -281,7 +281,7 @@ int main(int argc, char *argv[])
       if( _class.front().size() == 0 ) { isfound = true; break; }
     if( isfound ) clusters.push_back( std::vector<LaDa::CE::Cluster>(1, cluster) ); 
   }
-  cluster.Vectors().resize(1, LaDa::atat::rVector3d(0,0,0) );
+  cluster.Vectors().resize(1, LaDa::Eigen::Vector3d(0,0,0) );
   if( J1 )
   {
     bool isfound = false;

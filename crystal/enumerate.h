@@ -108,10 +108,10 @@ namespace LaDa
           t_SmithTransform const transform = get_smith_transform( structure );
           Structure::t_Atoms::iterator i_atom = structure.atoms.begin();
           Structure::t_Atoms::iterator i_atom_end = structure.atoms.end();
-          atat::iVector3d const &smith( boost::tuples::get<1>(transform) );
+          Eigen::Vector3i const &smith( boost::tuples::get<1>(transform) );
           for(; i_atom != i_atom_end; ++i_atom )
           {
-            atat::iVector3d indices( get_smith_index(transform, i_atom->pos) );
+            Eigen::Vector3i indices( get_smith_index(transform, i_atom->pos) );
             const size_t index
             ( 
               indices[2] + smith(2) * ( indices[1] + smith(1) * indices[0] )

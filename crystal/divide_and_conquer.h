@@ -50,7 +50,7 @@ namespace LaDa
     //!                                 (Cartesian coordinates).
     template< class T_TYPE > typename t_ConquerBoxes<T_TYPE>::shared_ptr  
       divide_and_conquer_boxes( const Crystal::TStructure<T_TYPE> &_structure, 
-                                const atat::iVector3d &_n,
+                                const Eigen::Vector3i &_n,
                                 const types::t_real _overlap_distance );
                            
     //! \brief Tries to guess adequate parameters for divide and conquer.
@@ -58,7 +58,7 @@ namespace LaDa
     //!          the number of processor, the number of atoms per box, the
     //!          squatness of the box.
     template< class T_TYPE > 
-      atat::iVector3d guess_dnc_params( const Crystal::TStructure<T_TYPE> &_structure, 
+      Eigen::Vector3i guess_dnc_params( const Crystal::TStructure<T_TYPE> &_structure, 
                                         size_t _nperbox );
     
     //! A small box for divide and conquer algorithms.
@@ -67,7 +67,7 @@ namespace LaDa
       {
           friend  typename t_ConquerBoxes<T_TYPE>::shared_ptr  
             divide_and_conquer_boxes<T_TYPE>( const Crystal::TStructure<T_TYPE> &_structure, 
-                                              const atat::iVector3d &_n,
+                                              const Eigen::Vector3i &_n,
                                               const types::t_real _overlap_distance );
           //! Type of the atoms.
           typedef typename Crystal::TStructure<T_TYPE>::t_Atoms t_Atoms;
@@ -77,9 +77,9 @@ namespace LaDa
           //! Type of the divide and conquer box, with cell, origin, and overlap.
           typedef boost::tuples::tuple
           < 
-            atat::rMatrix3d, 
-            atat::rVector3d,
-            atat::rVector3d
+            Eigen::Matrix3d, 
+            Eigen::Vector3d,
+            Eigen::Vector3d
           > t_Box;
           //! \brief Type of the atomic state.
           //! \detail first item contains index of atom in structure.
@@ -89,9 +89,9 @@ namespace LaDa
           typedef std::vector< t_State > t_States;
 
           //! Returns the cell of the divide and conquer box.
-          const atat::rMatrix3d& cell() const { return boost::tuples::get<0>(box_); }
+          const Eigen::Matrix3d& cell() const { return boost::tuples::get<0>(box_); }
           //! Returns the cell origin of the divide and conquer box.
-          const atat::rVector3d& origin() const { return boost::tuples::get<1>(box_); }
+          const Eigen::Vector3d& origin() const { return boost::tuples::get<1>(box_); }
           //! Returns the index of and atom inside this box, w.r.t. the original structure.
           const t_State& state( size_t _i ) const
           { 

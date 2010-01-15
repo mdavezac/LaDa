@@ -12,9 +12,7 @@
 #include <boost/filesystem/operations.hpp>
 
 #include <physics/physics.h>
-#include <opt/atat.h>
 #include <opt/debug.h>
-#include <opt/atat.h>
 #include <opt/tinyxml.h>
 #include <opt/ndim_iterator.h>
 
@@ -63,14 +61,14 @@ namespace LaDa
       do // goes over periodic image
       {
         // constructs perdiodic image of atom *i_bond
-        atat::rVector3d frac_image, image;
+        Eigen::Vector3d frac_image, image;
         frac_image[0] =  (types::t_real) period.access(0);
         frac_image[1] =  (types::t_real) period.access(1);
         frac_image[2] =  (types::t_real) period.access(2);
         image = _bond->origin->pos + structure->cell * frac_image;
 
         // checks if within 
-        if( atat::norm2( image - origin->pos ) < _cutoff  )
+        if( (image - origin->pos).squaredNorm() < _cutoff  )
         {
           // adds bond
           types :: t_unsigned site = structure->lattice->get_atom_site_index( image );
@@ -79,7 +77,7 @@ namespace LaDa
 
           bonds.push_back( _bond );
           translations.push_back( frac_image );
-          do_translates.push_back( atat::norm2( frac_image ) > atat::zero_tolerance );
+          do_translates.push_back( not Fuzzy::is_zero(frac_image.squaredNorm()) );
           found_bond = true;
         }
       } while ( ++period ); 

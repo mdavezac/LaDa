@@ -350,8 +350,8 @@ namespace LaDa
         std::cerr << "Either cell direction or multiplicity is missing on input\n";
         return false;
       }
-      atat::rVector3d cdir;
-      atat::rMatrix3d &cell = structure.cell;
+      Eigen::Vector3d cdir;
+      Eigen::Matrix3d &cell = structure.cell;
       
       // First, Load Attributes 
       bool couldload = true;
@@ -360,7 +360,7 @@ namespace LaDa
       sstr >> direction[1]; if ( sstr.fail() ) couldload = false;
       sstr >> direction[2]; if ( sstr.fail() ) couldload = false;
 
-      if ( atat::norm2( direction ) < types::tolerance ) couldload = false;
+      if ( direction.squaredNorm() < types::tolerance ) couldload = false;
 
       if ( not couldload )
       {
@@ -408,9 +408,9 @@ namespace LaDa
 
       // Checks that cell is not singular
       if ( std::abs( det(cell) ) < types::tolerance )
-        cell.set_column(1, lattice.cell.get_column( 0 ) );
+        cell.set_column(1, lattice.cell.col( 0 ) );
       if ( std::abs( det(cell) ) < types::tolerance )
-        cell.set_column(2, lattice.cell.get_column( 1 ) );
+        cell.set_column(2, lattice.cell.col( 1 ) );
       if ( std::abs( det(cell) ) < types::tolerance )
       {
         std::cerr << "Could not construct unit-cell\n" << cell << std::endl;
@@ -420,8 +420,8 @@ namespace LaDa
       // Makes sure the triad is direct
       if ( det(cell) < 0 )
       {
-        atat::rVector3d d = cell.get_column(2);
-        cell.set_column(2, cell.get_column(1) );
+        Eigen::Vector3d d = cell.col(2);
+        cell.set_column(2, cell.col(1) );
         cell.set_column(1, d);
       }
 
@@ -483,7 +483,7 @@ namespace LaDa
       inline std::string Evaluator<T_INDIVIDUAL> :: print() const
       {
         std::ostringstream sstr;
-        atat::rVector3d dir = lattice.cell * direction;
+        Eigen::Vector3d dir = lattice.cell * direction;
         sstr << concentration.print() << "\n"
              << "Structure: " << multiplicity
              << " (" << dir(0) << ", " << dir(1) << ", " << dir(2)
@@ -564,8 +564,8 @@ namespace LaDa
     }
 
 
-    inline bool Depth::operator()( const atat::rVector3d &_1,
-                                   const atat::rVector3d &_2 )
+    inline bool Depth::operator()( const Eigen::Vector3d &_1,
+                                   const Eigen::Vector3d &_2 )
     {
       types::t_real a =   _1 * a0;
       types::t_real b =   _2 * a0;

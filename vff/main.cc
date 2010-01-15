@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
   __DOASSERT( not ( fs::is_regular( input ) or fs::is_symlink( input ) ),
               input << " is a not a valid file.\n" );
 # ifdef _LAYERED
-    LaDa::atat::rVector3d direction;
+    LaDa::Eigen::Vector3d direction;
     const bool setdirection = ( vm.count("direction") != 0 );
     if( setdirection )
     {
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
   LaDa::Crystal::Structure::lattice = lattice.get();
 
   TiXmlElement *child;
-  LaDa::atat::rVector3d vec;
+  LaDa::Eigen::Vector3d vec;
   LaDa::Crystal::Structure structure;
     
   TiXmlDocument doc( input.string().c_str() );
@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
 
     __NOTMPIROOT( (*world), continue; )
 
-    const LaDa::atat::rMatrix3d stress = vff.Vff().get_stress();
+    const LaDa::Eigen::Matrix3d stress = vff.Vff().get_stress();
     std::cout << std::fixed << std::setprecision(12) 
               << "Energy [eV]: " << std::setw(18) << structure.energy << std::endl
               << std::setprecision(5)

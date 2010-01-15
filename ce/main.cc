@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 
 
   TiXmlElement *child;
-  LaDa::atat::rVector3d vec;
+  LaDa::Eigen::Vector3d vec;
   LaDa::Crystal::Lattice lattice;
  
   

@@ -111,7 +111,7 @@ namespace LaDa
           { t_Base :: print_escan_input( _f ); }
        
         //! gets already computed stress from vff. 
-        void get_stress( atat::rMatrix3d &_s ) const { _s = t_Base::Vff().get_stress(); }
+        void get_stress( Eigen::Matrix3d &_s ) const { _s = t_Base::Vff().get_stress(); }
      
         using t_Base :: evaluate;
 

@@ -60,7 +60,7 @@ namespace LaDa
       {
         //! Checks if this atom/center has moved appreciably
         typedef t_Atom t_atom;
-        atat::rVector3d vec = ( i_center->Origin().pos - i_atom->pos ) * deriv_amplitude;
+        Eigen::Vector3d vec = ( i_center->Origin().pos - i_atom->pos ) * deriv_amplitude;
         // then computes microscopic strain
         types::t_real msstrain = functionals[i_center->kind()].MicroStrain( *i_center,
                                                                             structure0 );
@@ -89,8 +89,8 @@ namespace LaDa
         t_pseudos::const_iterator i_pseudo_end = pseudos.end();
         for( ; i_pseudo != i_pseudo_end; ++i_pseudo )
         {
-          atat::rVector3d newpos = (!t_VA::structure.cell) * i_center->Origin().pos;
-          atat::rVector3d oldpos = (!t_VA::structure.cell) * i_atom->pos;
+          Eigen::Vector3d newpos = (!t_VA::structure.cell) * i_center->Origin().pos;
+          Eigen::Vector3d oldpos = (!t_VA::structure.cell) * i_atom->pos;
           nb_pseudos += 2;
                  // old position and microstrain
           stream << std::fixed    << std::setprecision(7)
@@ -180,7 +180,7 @@ namespace LaDa
 
 
       //! central position
-      atat::rVector3d centralpos = (!t_VA::structure.cell) * center.Origin().pos;
+      Eigen::Vector3d centralpos = (!t_VA::structure.cell) * center.Origin().pos;
 
       // then goes over bonds and prints pseudos
       AtomicCenter :: const_iterator i_bond = center.begin();
@@ -191,7 +191,7 @@ namespace LaDa
                                                           stratom );
         types::t_unsigned Z = Physics::Atomic::Z( stratom.type );
 
-        atat::rVector3d bondpos = (!t_VA::structure.cell) * i_bond->Origin().pos;
+        Eigen::Vector3d bondpos = (!t_VA::structure.cell) * i_bond->Origin().pos;
 
         nb_pseudos += 4;
         // central "original" atom 

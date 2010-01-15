@@ -16,8 +16,6 @@
 #include <opt/debug.h>
 #include <opt/types.h>
 #include <opt/fuzzy.h>
-#include <atat/vectmac.h>
-#include <atat/findsym.h>
 
 
 namespace LaDa
@@ -35,25 +33,25 @@ namespace LaDa
       //! Constructor.
       SymmetryOperator() : trans(0,0,0) { op.zero(); op(0,0)=1e0; op(1,1)=1e0; op(2,2)=1e0; }
       //! Constructor.
-      SymmetryOperator   ( atat::rMatrix3d const &_op,
-                           atat::rVector3d const& _t = atat::rVector3d(0,0,0) )
+      SymmetryOperator   ( Eigen::Matrix3d const &_op,
+                           Eigen::Vector3d const& _t = Eigen::Vector3d(0,0,0) )
                        : op(_op), trans(_t) {}
       //! Constructor.
-      SymmetryOperator   ( atat::rVector3d const& _t)
+      SymmetryOperator   ( Eigen::Vector3d const& _t)
                        : trans(_t) { op.zero(); op(0,0)=1e0; op(1,1)=1e0; op(2,2)=1e0; }
       //! Copy Constructor.
       SymmetryOperator( SymmetryOperator const& _c ) : op(_c.op), trans(_c.trans) {}
 
       //! Matrix operator.
-      atat::rMatrix3d op;
+      Eigen::Matrix3d op;
       //! Vector translation
-      atat::rVector3d trans;
+      Eigen::Vector3d trans;
       //! Applies operator.
-      atat::rVector3d operator()( atat::rVector3d const &_a ) const
+      Eigen::Vector3d operator()( Eigen::Vector3d const &_a ) const
         { return op*_a + trans; }
 
       //! True if the matrix is invariant by this operator.
-      bool invariant(atat::rMatrix3d const &_mat, types::t_real _tolerance = types::tolerance) const;
+      bool invariant(Eigen::Matrix3d const &_mat, types::t_real _tolerance = types::tolerance) const;
       //! Comparison.
       bool operator==(SymmetryOperator const &_sym)
       {
@@ -88,7 +86,7 @@ namespace LaDa
     //!          norm as the unit-cell vectors.
     //! \see Taken from Enum code, PRB 77, 224115 (2008).
     boost::shared_ptr< std::vector<SymmetryOperator> >
-      get_point_group_symmetries( atat::rMatrix3d const &_cell, types::t_real _tolerance = -1e0 );
+      get_point_group_symmetries( Eigen::Matrix3d const &_cell, types::t_real _tolerance = -1e0 );
 
     //! \brief returns space-group symmetries of a lattice.
     //! \warning Works for primitive lattices only.

@@ -10,7 +10,6 @@
 
 #include <boost/tuple/tuple.hpp>
 
-#include <opt/atat.h>
 #include <crystal/divide_and_conquer.h>
 
 #include "vff.h"
@@ -38,7 +37,7 @@ namespace LaDa
         const size_t site( center.Origin().site );
         __DOASSERT( site > structure.lattice->sites.size(), "Unindexed site.\n" )
         const size_t neigh_site( site == 0 ? 1: 0 );
-        const types::t_real cutoff = types::t_real(0.25) * atat::norm2( _fn[site].front() );
+        const types::t_real cutoff = types::t_real(0.25) * _fn[site].front().squaredNorm();
                    
         // loops over all potential bonds (in large box)
         for( t_States :: const_iterator i_bond( i_state_begin );
@@ -50,38 +49,35 @@ namespace LaDa
           const t_Center &bond( centers[ bond_index ] );
           if( site == bond.site_one() ? 0: 1 ) continue;
           
-          std::vector<atat::rVector3d> :: const_iterator i_neigh = _fn[site].begin();
-          const std::vector<atat::rVector3d> :: const_iterator i_neigh_end = _fn[site].end();
+          std::vector<Eigen::Vector3d> :: const_iterator i_neigh = _fn[site].begin();
+          const std::vector<Eigen::Vector3d> :: const_iterator i_neigh_end = _fn[site].end();
           for(; i_neigh != i_neigh_end; ++i_neigh )
           {
-            const atat::rVector3d image
+            const Eigen::Vector3d image
             ( 
               center.origin->pos + *i_neigh - bond.origin->pos
             );
-            const atat::rVector3d frac_image( (!structure.cell) * image );
-            const atat::rVector3d frac_centered
+            const Eigen::Vector3d frac_image( (!structure.cell) * image );
+            const Eigen::Vector3d frac_centered
             ( 
               frac_image[0] - rint( frac_image[0] ),
               frac_image[1] - rint( frac_image[1] ),
               frac_image[2] - rint( frac_image[2] )
             );
-            const atat::rVector3d cut( structure.cell * frac_centered );
+            const Eigen::Vector3d cut( structure.cell * frac_centered );
 
-            if( atat::norm2( cut ) > cutoff ) continue;
+            if( cut.squaredNorm() > cutoff ) continue;
             
             t_Centers :: iterator ii_bond( centers.begin() + bond_index );
             center.bonds.push_back( t_Center ::__make__iterator__( ii_bond ) );
-            const atat::rVector3d trans
+            const Eigen::Vector3d trans
             (
               rint( frac_image[0] ),
               rint( frac_image[1] ),
               rint( frac_image[2] ) 
             );
             center.translations.push_back( trans );
-            center.do_translates.push_back
-            ( 
-              atat::norm2(trans) > atat::zero_tolerance 
-            );
+            center.do_translates.push_back( not Fuzzy::is_zero(frac.squaredNorm()) );
 
             if( center.bonds.size() == 4 ) break;
           } // loop over neighbors

@@ -127,10 +127,10 @@ void calc_lattice_vectors(rMatrix3d *lattice_vector, const rVector3d &cell_lengt
 
 void calc_lattice_vectors(rVector3d *cell_length, rVector3d *cell_angle, const rMatrix3d &lattice_vector) {
   for (types::t_int i=0; i<3; i++) {
-    (*cell_length)(i)=norm(lattice_vector.get_column(i));
+    (*cell_length)(i)=norm(lattice_vector.col(i));
   }
   for (types::t_int i=0; i<3; i++) {
-    (*cell_angle)(i)=acos(lattice_vector.get_column((i+1)%3)*lattice_vector.get_column((i+2)%3)/(((*cell_length)((i+1)%3))*((*cell_length)((i+2)%3))))*180.0/M_PI;
+    (*cell_angle)(i)=acos(lattice_vector.col((i+1)%3)*lattice_vector.col((i+2)%3)/(((*cell_length)((i+1)%3))*((*cell_length)((i+2)%3))))*180.0/M_PI;
   }
 }
 
@@ -138,7 +138,7 @@ iVector3d find_sphere_bounding_box(const rMatrix3d &cell, types::t_real radius) 
   iVector3d max_cell;
   rMatrix3d rec_lat=~!cell;
   for (types::t_int i=0 ; i<3; i++) {
-    max_cell(i)=(types::t_int)ceil(norm(rec_lat.get_column(i))*radius+zero_tolerance);
+    max_cell(i)=(types::t_int)ceil(norm(rec_lat.col(i))*radius+zero_tolerance);
   }
   return(max_cell);
 }
@@ -207,7 +207,7 @@ void LatticePointIterator::init(const rMatrix3d &_cell, types::t_int skipzero) {
   cell=_cell;
   inc_radius=0;
   for (types::t_int i=0; i<3; i++) {
-    inc_radius=MAX(inc_radius,norm(cell.get_column(i)));
+    inc_radius=MAX(inc_radius,norm(cell.col(i)));
   }
   inc_radius+=zero_tolerance;
   max_radius=(skipzero ? 0. : -1.);
@@ -408,7 +408,7 @@ void AtomPairIterator::init(void) {
   }
   inc_radius=0;
   for (types::t_int i=0; i<3; i++) {
-    inc_radius=MAX(inc_radius,norm(cell.get_column(i)));
+    inc_radius=MAX(inc_radius,norm(cell.col(i)));
   }
   inc_radius+=zero_tolerance;
   max_radius=0.;
@@ -540,7 +540,7 @@ void find_common_simple_supercell(iVector3d *psimple_supercell, const rMatrix3d 
   rMatrix3d isupercell=!supercell;
   for (types::t_int i=0; i<3; i++) {
     types::t_int m=1;
-    while (!is_int(isupercell*((types::t_real)m*unitcell.get_column(i)))) m++;
+    while (!is_int(isupercell*((types::t_real)m*unitcell.col(i)))) m++;
     (*psimple_supercell)(i)=m;
   }
 }

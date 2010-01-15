@@ -73,7 +73,7 @@ namespace LaDa
         from_origin( i );
     }
 
-    void SplitIntoConfs :: find_atoms_in_sphere( const atat::rVector3d &_origin,
+    void SplitIntoConfs :: find_atoms_in_sphere( const Eigen::Vector3d &_origin,
                                                  t_Positions &_positions )
     {
       //namespace bm = boost::math;
@@ -91,15 +91,15 @@ namespace LaDa
             Structure :: t_Atoms :: const_iterator i_atom = structure->atoms.begin();
             Structure :: t_Atoms :: const_iterator i_atom_end = structure->atoms.end();
             t_normedpair pair;
-            const atat::rVector3d trans(   structure->cell
-                                         * atat::rVector3d( types::t_real(x),
+            const Eigen::Vector3d trans(   structure->cell
+                                         * Eigen::Vector3d( types::t_real(x),
                                                             types::t_real(y),
                                                             types::t_real(z) ) );
             for( pair.second.second=0; i_atom != i_atom_end;
                  ++i_atom, ++pair.second.second )
             {
               pair.second.first = trans + i_atom->pos - _origin; 
-              pair.first = atat::norm2( pair.second.first );
+              pair.first = pair.second.first.squaredNorm();
               normedpairs.push_back( pair );
             }
           }
@@ -165,7 +165,7 @@ namespace LaDa
       const size_t nsize( n.second - n.first );
       t_CoefBitset bitset( t_Bitset( nsize  ), weight );
       bitset.first[0] = t_Position( structure->atoms[_i].pos, _i );
-      const atat::rVector3d origin( structure->atoms[ _i ].pos );
+      const Eigen::Vector3d origin( structure->atoms[ _i ].pos );
 
       epositions.clear();
       find_atoms_in_sphere( origin, epositions );
@@ -178,7 +178,7 @@ namespace LaDa
         xweight( bitset.second / types::t_real( i_xpositions->size() ) );
       foreach( const t_Positions::value_type::value_type &xPos, *i_xpositions )
       {
-        const atat::rVector3d x( xPos.first - origin );
+        const Eigen::Vector3d x( xPos.first - origin );
         // finds positions defining y.
         // Stores possible y positions.
         std::vector< t_Position > ypossibles;
@@ -187,8 +187,6 @@ namespace LaDa
         // Pointers are defined explicitely as a workaround for commercial
         // compilers, such as pgi.
         bool (*ptr_is_zero)( types::t_real ) = &Fuzzy::is_zero<types::t_real>;
-        types::t_real (*ptr_norm)( const atat::FixedVector<types::t_real, 3>& )
-           = &atat::norm2<types::t_real, 3>;
         const t_Positions :: value_type :: const_iterator 
           max_x_element = details::max_element
                           (
@@ -200,7 +198,7 @@ namespace LaDa
                               ptr_is_zero,
                               bl::bind
                               ( 
-                                ptr_norm,
+                                &Eigen::Vector3d::squaredNorm,
                                   bl::bind( &t_Position::first, bl::_1 ) 
                                 - bl::constant(xPos.first)
                               )
@@ -217,7 +215,7 @@ namespace LaDa
         foreach( const t_Position yPos, *i_ypositions )
         {
           if( Fuzzy::neq( yPos.first * x, max_x_scalar_pos ) ) continue;
-          if( Fuzzy::is_zero( atat::norm2( yPos.first - xPos.first ) ) ) continue;
+          if( Fuzzy::is_zero( (yPos.first - xPos.first).squaredNorm() ) ) continue;
           ypossibles.push_back( yPos );
         }
 
@@ -225,8 +223,8 @@ namespace LaDa
         foreach( const t_Position yPos, ypossibles )
         {
           // at this point, we can define the complete coordinate system.
-          const atat::rVector3d y( yPos.first - origin );
-          const atat::rVector3d z( x^y );
+          const Eigen::Vector3d y( yPos.first - origin );
+          const Eigen::Vector3d z( x^y );
 
           // atoms are now included in the list according to the following rule:
           //  _ closest to the origin first.
@@ -285,10 +283,10 @@ namespace LaDa
       } // end of loop over equivalent  x coords.
     }
 
-    bool SplitIntoConfs :: compare_from_coords( const atat::rVector3d &_origin, 
-                                                const atat::rVector3d &_x, 
-                                                const atat::rVector3d &_y, 
-                                                const atat::rVector3d &_z, 
+    bool SplitIntoConfs :: compare_from_coords( const Eigen::Vector3d &_origin, 
+                                                const Eigen::Vector3d &_x, 
+                                                const Eigen::Vector3d &_y, 
+                                                const Eigen::Vector3d &_z, 
                                                 const t_Position& _a1, 
                                                 const t_Position& _a2 ) const
     { 

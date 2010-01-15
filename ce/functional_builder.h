@@ -14,16 +14,13 @@
 #include <opt/function_functors.h>
 #include <tinyxml/tinyxml.h>
 #include <mpi/mpi_object.h>
-#include <atat/vectmac.h>
 #include <crystal/structure.h>
 #include <crystal/lattice.h>
-
 
 #include "polynome.h"
 #include "cluster.h"
 #include "constituent_strain.h"
 
-#include <mpi/mpi_object.h>
 
 namespace LaDa
 {

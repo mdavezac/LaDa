@@ -8,7 +8,6 @@
 
 #include <algorithm>
 
-#include <atat/vectmac.h>
 #include <crystal/lattice.h>
 #include <crystal/neighbors.h>
 #include <crystal/symmetry_operator.h>
@@ -36,8 +35,8 @@ namespace LaDa
       // Creates a typical cluster.
       Cluster cluster;
       cluster.vectors.resize(2);
-      cluster.vectors[0] = atat::rVector3d(0,0,0);
-      atat::rVector3d const &origin(_lat.sites[_site].pos);
+      cluster.vectors[0] = Eigen::Vector3d(0,0,0);
+      Eigen::Vector3d const &origin(_lat.sites[_site].pos);
       cluster.eci = 0e0;
 
       size_t const N(_out.size()+_max_neigh);
@@ -85,7 +84,7 @@ namespace LaDa
         }
 
         // checks if is in known class.
-        atat::rVector3d pos(i_first->pos+origin);
+        Eigen::Vector3d pos(i_first->pos+origin);
         std::vector<Cluster> *clusters = NULL;
         bool not_found = true;
         for(size_t i(first_of_size); not_found and i < _out.size(); ++i)
@@ -95,11 +94,11 @@ namespace LaDa
           t_Clusters::const_iterator const i_end( clusters->end() );
           for(i_op = point_group.begin(); not_found and i_op != i_op_end; ++i_op)
           {
-            atat::rVector3d const vec( (*i_op)(i_first->pos+origin) - (*i_op)(origin) );
+            Eigen::Vector3d const vec( (*i_op)(i_first->pos+origin) - (*i_op)(origin) );
             LADA_ASSERT( which_site( (*i_op)(pos), !_lat.cell, _lat.sites) != -1, "error" );
             LADA_ASSERT( which_site(vec + origin, !_lat.cell, _lat.sites) != -1, "error" );
             for(i_begin = clusters->begin(); not_found and i_begin != i_end; ++i_begin)
-              if( Fuzzy::is_zero( atat::norm2(vec - i_begin->vectors[1]) ) ) not_found = false;
+              if( Fuzzy::is_zero( (vec - i_begin->vectors[1]).squaredNorm() ) ) not_found = false;
           }
         } 
 

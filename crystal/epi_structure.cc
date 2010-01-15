@@ -8,6 +8,8 @@
 #include <opt/debug.h>
 #include <opt/types.h>
 
+#include <Eigen/LU>
+
 #include "lattice.h"
 #include "structure.h"
 #include "epi_structure.h"
@@ -21,13 +23,13 @@ namespace LaDa
   namespace Crystal 
   {
     bool create_epitaxial_structure( Structure& _structure,
-                                     atat::rVector3d &_direction,
-                                     atat::iVector3d &_extent )
+                                     Eigen::Vector3d &_direction,
+                                     Eigen::Vector3i &_extent )
     {
 
       // Then constructs unit cell
-      atat::rMatrix3d &cell( _structure.cell ); 
-      atat::rMatrix3d diagonal;
+      Eigen::Matrix3d &cell( _structure.cell ); 
+      Eigen::Matrix3d diagonal;
       diagonal.set_diagonal( (types::t_real) _extent(0),
                              (types::t_real) _extent(1),
                              (types::t_real) _extent(2)  );
@@ -37,27 +39,27 @@ namespace LaDa
       cell = cell * diagonal;
 
       // Checks that cell is not singular
-      if ( Fuzzy::is_zero( std::abs(det(cell)) ) )
-        cell.set_column(1, lattice->cell.get_column( 0 ) );
-      if ( Fuzzy::is_zero( std::abs(det(cell)) ) )
-        cell.set_column(2, lattice->cell.get_column( 1 ) );
-      if ( Fuzzy::is_zero( std::abs(det(cell)) ) )
+      if ( Fuzzy::is_zero( std::abs(cell.determinant()) ) )
+        cell.set_column(1, lattice->cell.col( 0 ) );
+      if ( Fuzzy::is_zero( std::abs(cell.determinant()) ) )
+        cell.set_column(2, lattice->cell.col( 1 ) );
+      if ( Fuzzy::is_zero( std::abs(cell.determinant()) ) )
       {
         std::cerr << "Could not construct unit-cell\n" << cell << std::endl;
         return false;
       }
-      if( Fuzzy::is_zero( det(cell) ) )
+      if( Fuzzy::is_zero( cell.determinant() ) )
       {
-        atat::rVector3d swap = cell. get_column(1);
-        cell.set_column(1, cell.get_column( 2 ));
+        Eigen::Vector3d swap = cell.col(1);
+        cell.set_column(1, cell.col( 2 ));
         cell.set_column(2, swap);
       }
 
       // Makes sure the triad is direct
-      if ( det(cell) < 0 )
+      if ( cell.determinant() < 0 )
       {
-        atat::rVector3d d = cell.get_column(2);
-        cell.set_column(2, cell.get_column(1) );
+        Eigen::Vector3d d = cell.col(2);
+        cell.set_column(2, cell.col(1) );
         cell.set_column(1, d);
       }
 

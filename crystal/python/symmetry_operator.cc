@@ -30,7 +30,7 @@ namespace LaDa
     namespace bp = boost::python;
 
     boost::shared_ptr< std::vector<Crystal::SymmetryOperator> >
-      get_point_group_symmetries( atat::rMatrix3d const &_cell, types::t_real _tolerance = -1e0 )
+      get_point_group_symmetries( Eigen::Matrix3d const &_cell, types::t_real _tolerance = -1e0 )
       {
         boost::shared_ptr< std::vector<Crystal::SymmetryOperator> > 
           result = Crystal::get_point_group_symmetries( _cell, _tolerance );
@@ -81,9 +81,9 @@ namespace LaDa
 
       bp::scope scope = bp::class_<Crystal::SymmetryOperator>
         ( "SymmetryOperator", "SymmetryOperator" )
-        .def(bp::init<atat::rMatrix3d const&>())
-        .def(bp::init<atat::rVector3d const&>())
-        .def(bp::init<atat::rMatrix3d const&, atat::rVector3d const&>())
+        .def(bp::init<Eigen::Matrix3d const&>())
+        .def(bp::init<Eigen::Vector3d const&>())
+        .def(bp::init<Eigen::Matrix3d const&, Eigen::Vector3d const&>())
         .def_readwrite("op", &Crystal::SymmetryOperator::op)
         .def_readwrite("trans", &Crystal::SymmetryOperator::trans)
         .def("invariant", &Crystal::SymmetryOperator::invariant, 

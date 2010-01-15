@@ -37,7 +37,7 @@ namespace LaDa
      bool Builder<T_HARMONIC> :: Load (const TiXmlElement &_node)
      {
        const TiXmlElement *child, *parent;
-       atat::rVector3d vec;
+       Eigen::Vector3d vec;
        
        parent = opt::find_node( _node, "Functional", "type", "CE" );
        __DOASSERT( not parent,
@@ -120,7 +120,7 @@ namespace LaDa
     
          // finally, creates polynomials
     
-         atat::rMatrix3d inv_cell = !(str.cell);
+         Eigen::Matrix3d inv_cell = !(str.cell);
          polynome = new t_Chemical();
          Crystal :: Structure :: t_Atoms :: const_iterator i_atom = str.atoms.begin();
          Crystal :: Structure :: t_Atoms :: const_iterator i_atom_last = str.atoms.end();
@@ -129,11 +129,11 @@ namespace LaDa
          {
            t_Clusters :: iterator i_cluster = clusters->begin();
            t_Clusters :: iterator i_cluster_last = clusters->end();
-           atat::rVector3d atom_pos = i_atom->pos;
+           Eigen::Vector3d atom_pos = i_atom->pos;
            
            for( ; i_cluster != i_cluster_last; ++i_cluster ) // loop over clusters
            {
-             typedef std::vector<atat::rVector3d> :: iterator vec_iterator;
+             typedef std::vector<Eigen::Vector3d> :: iterator vec_iterator;
              vec_iterator i_cpos_begin = i_cluster->vectors.begin();
              vec_iterator i_cpos_center = i_cluster->vectors.begin();
              vec_iterator i_cpos_last = i_cluster->vectors.end();
@@ -153,7 +153,7 @@ namespace LaDa
                i_cpos = i_cpos_begin;
                for (; i_cpos != i_cpos_last; ++i_cpos ) // loop over cluster points
                {
-                 atat::rVector3d shift = atom_pos - *i_cpos_center;
+                 Eigen::Vector3d shift = atom_pos - *i_cpos_center;
                  
                  if ( not is_int( (!lattice->cell)*shift)) continue;
                  
@@ -161,7 +161,7 @@ namespace LaDa
                  Crystal::Structure::t_Atoms::const_iterator i_equiv = str.atoms.begin();
                  size_t index(0);
                  for (; i_equiv != i_atom_last; ++i_equiv, ++index)  
-                   if ( atat::equivalent_mod_cell( *i_cpos + shift, i_equiv->pos,inv_cell) ) 
+                   if ( math::equivalent_mod_cell( *i_cpos + shift, i_equiv->pos,inv_cell) ) 
                      break;
                  
                  __ASSERT( i_equiv == i_atom_last, 

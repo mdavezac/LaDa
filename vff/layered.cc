@@ -27,12 +27,12 @@ namespace LaDa
     {
       // The first vector of the cell should indicate the direction of the
       // layering.
-      u = is_fixed_by_input ? direction: structure.cell.get_column(0);
+      u = is_fixed_by_input ? direction: structure.cell.col(0);
       template_strain.zero(); 
       for( size_t i(0); i < 3; ++i )
         for( size_t j(0); j < 3; ++j )
           template_strain(i,j) = u(i)*u(j);
-      const types::t_real b = types::t_real(1.0) / atat::norm2(u);
+      const types::t_real b = types::t_real(1.0) / u.squaredNorm();
       const types::t_real a = std::sqrt( b );
       u = a * u;
       for( size_t i(0); i < 3; ++i )
@@ -42,7 +42,7 @@ namespace LaDa
 
     Layered :: t_Return Layered :: operator()( const t_Arg& _arg ) const
     {
-      atat::rMatrix3d strain;
+      Eigen::Matrix3d strain;
       unpack_variables( _arg, strain );
       t_Return energy = Vff::energy();
       return Vff::energy();
@@ -61,7 +61,7 @@ namespace LaDa
 
       _arg.resize( dof );
 
-      atat::rMatrix3d strain; strain.zero(); 
+      Eigen::Matrix3d strain; strain.zero(); 
       strain(0,0) = types::t_real(1.0);
       strain(1,1) = types::t_real(1.0);
       strain(2,2) = types::t_real(1.0);
@@ -71,11 +71,11 @@ namespace LaDa
     }
 
     // variables is expected to be of sufficient size!!
-    void Layered :: pack_variables( t_Arg& _arg, const atat::rMatrix3d& _strain) const
+    void Layered :: pack_variables( t_Arg& _arg, const Eigen::Matrix3d& _strain) const
     {
       // finally, packs vff format into function::Base format
       t_Arg :: iterator i_var = _arg.begin();
-      atat::rMatrix3d strain = _strain;
+      Eigen::Matrix3d strain = _strain;
       strain(0,0) -= types::t_real(1.0);
       strain(1,1) -= types::t_real(1.0);
       strain(2,2) -= types::t_real(1.0);
@@ -94,7 +94,7 @@ namespace LaDa
     }
 
     // Unpacks opt::Function_Base::variables into Vff::Layered format
-    void Layered :: unpack_variables( const t_Arg& _arg, atat::rMatrix3d& strain ) const
+    void Layered :: unpack_variables( const t_Arg& _arg, Eigen::Matrix3d& strain ) const
     {
       t_Arg :: const_iterator i_x = _arg.begin();
 
@@ -122,7 +122,7 @@ namespace LaDa
       sstr >> direction[1]; if ( sstr.fail() ) couldload = false;
       sstr >> direction[2]; if ( sstr.fail() ) couldload = false;
 
-      if ( atat::norm2( direction ) < types::tolerance ) couldload = false;
+      if ( Fuzzy::is_zero( direction.squaredNorm() ) ) couldload = false;
 
       if ( not couldload )
       {
@@ -169,7 +169,7 @@ namespace LaDa
        else stream << "Epitaxial Direction fixed by unit cell\n";
      }
 
-    void Layered :: pack_gradients(const atat::rMatrix3d& _stress, 
+    void Layered :: pack_gradients(const Eigen::Matrix3d& _stress, 
                                    t_GradientArg _grad) const
     {
       t_GradientArg i_grad(_grad);
@@ -188,7 +188,7 @@ namespace LaDa
       i_center = centers.begin();
       for (; i_center != i_end; ++i_center, ++i_atom0)
       {
-        const atat::rVector3d& gradient = i_center->gradient;
+        const Eigen::Vector3d& gradient = i_center->gradient;
         if ( not (i_atom0->freeze & t_Atom::FREEZE_X) ) 
           *i_grad = gradient[0], ++i_grad;
         if ( not (i_atom0->freeze & t_Atom::FREEZE_Y) ) 
@@ -221,15 +221,15 @@ namespace LaDa
 
     void Layered :: gradient( const t_Arg& _arg, t_GradientArg _i_grad ) const
     {
-      atat::rMatrix3d strain; strain.zero();
+      Eigen::Matrix3d strain; strain.zero();
       t_Return energy(0);
-      foreach( const t_Center& center, centers ) center.gradient = atat::rVector3d(0,0,0);
+      foreach( const t_Center& center, centers ) center.gradient = Eigen::Vector3d(0,0,0);
 
       // unpacks variables into vff atomic_center and strain format
       unpack_variables(_arg, strain);
 
       // computes K0
-      atat::rMatrix3d K0 = (!(~strain));
+      Eigen::Matrix3d K0 = (!(~strain));
 
       // computes energy and gradient
       stress.zero();

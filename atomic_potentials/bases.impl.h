@@ -64,7 +64,7 @@ namespace LaDa
       {
         create_neighbor_lists_( _origin );
         iterator_ = first_->begin();
-        val_ = *iterator_ / atat::norm(*iterator_);
+        val_ = iterator_->normalized();
       }
     template<class T_STRUCTURE>
       void Bases<T_STRUCTURE>::Xcoord :: end( Xcoord const &_b )
@@ -88,7 +88,7 @@ namespace LaDa
           types::t_real const d( (*i_pos) * (*_x) );
           if( d > maxx or maxx < 0e0 ) maxx = d;
         }
-        equivs_.reset( new std::list<atat::rVector3d> );
+        equivs_.reset( new std::list<Eigen::Vector3d> );
         for(i_pos = neighs->begin(); i_pos != i_pos_end; ++i_pos)
           if( Fuzzy::eq( (*i_pos) * (*_x), maxx ) ) equivs_->push_back( *i_pos );
       } 
@@ -99,8 +99,7 @@ namespace LaDa
         create_equiv_ys( _x );
         xval_ = *_x;
         iterator_ = equivs_->begin();
-        val_ = (*iterator_) - ( (*iterator_) * xval_ ) * xval_;
-        val_ = val_ / atat::norm(val_); 
+        val_ = ( (*iterator_) - ( (*iterator_) * xval_ ) * xval_ ).normalized();
       }
     template<class T_STRUCTURE>
       void Bases<T_STRUCTURE>::Ycoord :: end( Ycoord const &_b )

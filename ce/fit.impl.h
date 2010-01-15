@@ -151,8 +151,7 @@ namespace LaDa
             if( i_clusters->front().size() != 2 ) continue;
     
             types::t_real D( i_clusters->size() );
-            types::t_real R( atat::norm2(   i_clusters->front()[0] 
-                                          - i_clusters->front()[1] ) );
+            types::t_real R( (i_clusters->front()[0] - i_clusters->front()[1]).squaredNorm() );
     
             types::t_real weight = std::pow( R, alpha ) / D;
             normalization += laksreg ?

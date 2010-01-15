@@ -6,7 +6,6 @@
 # include <config.h>
 #endif
 
-#include <opt/atat.h>
 #include <opt/debug.h>
 #include <algorithm>
 #include <boost/lambda/lambda.hpp>
@@ -82,26 +81,26 @@ namespace LaDa
       // first, external stuff
       if( relaxation == Relaxation::default_ )
       {
-        atat::rMatrix3d const stress( -forces.cell * (~(!structure.cell)) );
+        Eigen::Matrix3d const stress( -forces.cell * (~(!structure.cell)) );
         for( size_t i(0); i < 3; ++i )
           for( size_t j(0); j < 3; ++j, ++i_grad )
             *i_grad = stress(i,j);
       }
       else if( relaxation == Relaxation::volume ) 
       {
-        atat::rMatrix3d const stress( -forces.cell * (~(!structure.cell)) );
+        Eigen::Matrix3d const stress( -forces.cell * (~(!structure.cell)) );
         *i_grad = 0e0;
         for( size_t i(0); i < 3; ++i )
           for( size_t j(0); j < 3; ++j )
             *i_grad += cell0_(i,j) * stress(i,j);
         ++i_grad;
       }
-      atat::rMatrix3d const matrix( -structure.scale * (~structure.cell) );
+      Eigen::Matrix3d const matrix( -structure.scale * (~structure.cell) );
       Clj::t_Arg::t_Atoms :: iterator i_atom = forces.atoms.begin();
       Clj::t_Arg::t_Atoms :: iterator i_atom_end = forces.atoms.end();
       for(; i_atom != i_atom_end; ++i_atom )
       {
-        atat::rVector3d const pos( matrix * i_atom->pos );
+        Eigen::Vector3d const pos( matrix * i_atom->pos );
         for( size_t i(0); i < 3; ++i, ++i_grad ) *i_grad = pos[i];
       }
     }

@@ -7,7 +7,7 @@
 
 #include <crystal/compare_sites.h>
 #include <crystal/smith.h>
-#include <atat/is_int.h>
+#include <math/is_integer.h>
 
 #include "exceptions.h"
 #include "transform.h"
@@ -18,7 +18,7 @@ namespace LaDa
 
   namespace enumeration
   {
-     void Transform :: init(atat::rMatrix3d const &_left, atat::iVector3d const &_smith)
+     void Transform :: init(Eigen::Matrix3d const &_left, Eigen::Vector3i const &_smith)
      {
        namespace bt = boost::tuples;
        nsites_ = independents_.size();
@@ -38,14 +38,14 @@ namespace LaDa
 
        // loops over sites.
        t_Independents :: const_iterator i_ind = independents_.begin();
-       atat::rMatrix3d const rotation = _left * op * (!_left);
+       Eigen::Matrix3d const rotation = _left * op * (!_left);
        bool non_trivial = false;
        for(types::t_int d(0), u(card_-1); d < types::t_int(nsites_); ++d, ++i_ind)
        {
          types::t_int const permutated_site( i_ind->first );
          
-         atat::rVector3d const t_nd = _left * i_ind->second;
-         atat::rVector3d g;
+         Eigen::Vector3d const t_nd = _left * i_ind->second;
+         Eigen::Vector3d g;
          // loops over first _smith coordinate.
          for(size_t i(0); i < _smith(0); ++i)
          {
@@ -58,15 +58,15 @@ namespace LaDa
              for(size_t k(0); k < _smith(2); ++k, --u)
              {
                g(2) = k;
-               atat::rVector3d const transformed( rotation * g + t_nd );
+               Eigen::Vector3d const transformed( rotation * g + t_nd );
 #              ifdef LADA_DEBUG
-                 if( not atat::is_integer(transformed) )
+                 if( not math::is_integer(transformed) )
                  {
                    throw symmetry_not_of_supercell();
                    BOOST_THROW_EXCEPTION( symmetry_not_of_supercell() );
                  }
 #              endif
-               atat::iVector3d translation
+               Eigen::Vector3i translation
                (
                  types::t_int(std::floor(transformed(0)+0.001)) % _smith(0),
                  types::t_int(std::floor(transformed(1)+0.001)) % _smith(1), 
@@ -113,7 +113,7 @@ namespace LaDa
          return;
        }
 
-       atat::rMatrix3d const inv_cell(!_lat.cell);
+       Eigen::Matrix3d const inv_cell(!_lat.cell);
        std::vector<Crystal::Lattice::t_Site> sites; sites.reserve( nsites );
        { // construct list of centered sites.
          Crystal::Lattice::t_Sites::const_iterator i_site = _lat.sites.begin();
@@ -121,8 +121,8 @@ namespace LaDa
          for(; i_site != i_site_end; ++i_site)
          {
            if( i_site->type.size() < 2 ) continue;
-           atat::rVector3d const frac( inv_cell * i_site->pos );
-           atat::rVector3d const centered
+           Eigen::Vector3d const frac( inv_cell * i_site->pos );
+           Eigen::Vector3d const centered
            (
              frac(0) - std::floor( frac(0) + 0.5 ),
              frac(1) - std::floor( frac(1) + 0.5 ),
@@ -136,13 +136,13 @@ namespace LaDa
          std::vector<Crystal::Lattice::t_Site> :: const_iterator const i_site_begin = sites.begin();
          std::vector<Crystal::Lattice::t_Site> :: const_iterator i_site = i_site_begin;
          std::vector<Crystal::Lattice::t_Site> :: const_iterator const i_site_end = sites.end();
-         atat::rMatrix3d const rotation(inv_cell * op * _lat.cell);
+         Eigen::Matrix3d const rotation(inv_cell * op * _lat.cell);
          for(; i_site != i_site_end; ++i_site)
          {
            if( i_site->type.size() < 2 ) continue;
            
-           atat::rVector3d const frac( rotation * i_site->pos + inv_cell * trans );
-           atat::rVector3d const centered
+           Eigen::Vector3d const frac( rotation * i_site->pos + inv_cell * trans );
+           Eigen::Vector3d const centered
            (
              frac(0) - std::floor( frac(0) + 0.5 ),
              frac(1) - std::floor( frac(1) + 0.5 ),
@@ -169,7 +169,7 @@ namespace LaDa
            // computes d_{N,d} as an integer which sends a d integer values to its transform.
            types::t_int const d_nd = ( i_found - i_site_begin );
            // computes translation vector t_{N,d} (in the centered lattice).
-           atat::rVector3d const
+           Eigen::Vector3d const
              t_nd( SymmetryOperator::operator()(_lat.cell*i_site->pos) - _lat.cell * centered );
 
            // pushes into 

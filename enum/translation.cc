@@ -14,11 +14,11 @@ namespace LaDa
 
   namespace enumeration
   {
-     Translation :: Translation   (atat::iVector3d const &_smith, size_t _nsites)
+     Translation :: Translation   (Eigen::Vector3i const &_smith, size_t _nsites)
                                 : card_(_smith(0)*_smith(1)*_smith(2) * _nsites)
      {
        // loop over possible translations.
-       atat::iVector3d trans(0,0,0);
+       Eigen::Vector3i trans(0,0,0);
        for(trans(0) = 0; trans(0) < _smith(0); ++trans(0))
          for(trans(1) = 0; trans(1) < _smith(1); ++trans(1))
            for(trans(2) = 0; trans(2) < _smith(2); ++trans(2))
@@ -26,11 +26,11 @@ namespace LaDa
              if( trans(0) == 0 and trans(1) == 0 and trans(2) == 0 ) continue;
              std::vector<size_t> permutation; permutation.reserve(card_);
              for(size_t d(0); d<_nsites; ++d)
-               for(atat::iVector3d x(0, 0,0); x(0) < _smith(0); ++x(0))
+               for(Eigen::Vector3i x(0, 0,0); x(0) < _smith(0); ++x(0))
                  for(x(1) = 0; x(1) < _smith(1); ++x(1))
                    for(x(2) = 0; x(2) < _smith(2); ++x(2))
                    {
-                     atat::iVector3d const g
+                     Eigen::Vector3i const g
                      (
                        ( trans(0) + x(0) ) % _smith(0),
                        ( trans(1) + x(1) ) % _smith(1),

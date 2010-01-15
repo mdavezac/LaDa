@@ -86,11 +86,11 @@ namespace LaDa
         types::t_real x = get_concentration();
 
         
-        std::vector<atat::rVector3d> :: const_iterator i_k_vec = k_vecs.begin();
-        std::vector<atat::rVector3d> :: const_iterator i_k_vec_end __SERIALCODE( = k_vecs.end() );
-        std::vector<atat::rVector3d> :: const_iterator i_r_vec;
-        std::vector<atat::rVector3d> :: const_iterator i_r_vec_begin = r_vecs.begin();
-        std::vector<atat::rVector3d> :: const_iterator i_r_vec_end = r_vecs.end();
+        std::vector<Eigen::Vector3d> :: const_iterator i_k_vec = k_vecs.begin();
+        std::vector<Eigen::Vector3d> :: const_iterator i_k_vec_end __SERIALCODE( = k_vecs.end() );
+        std::vector<Eigen::Vector3d> :: const_iterator i_r_vec;
+        std::vector<Eigen::Vector3d> :: const_iterator i_r_vec_begin = r_vecs.begin();
+        std::vector<Eigen::Vector3d> :: const_iterator i_r_vec_end = r_vecs.end();
         typename t_Harmonics :: const_iterator i_harmonic;
         typename t_Harmonics :: const_iterator i_harmonic_begin = harmonics.begin();
         typename t_Harmonics :: const_iterator i_harmonic_end = harmonics.end();
@@ -156,11 +156,11 @@ namespace LaDa
       {
         __ASSERT( variables->size() == 0, 
                   "variables have not been initialized.\n" )
-        std::vector<atat::rVector3d> :: const_iterator i_k_vec = k_vecs.begin();
-        std::vector<atat::rVector3d> :: const_iterator i_k_vec_end __SERIALCODE( = k_vecs.end() );
-        std::vector<atat::rVector3d> :: const_iterator i_r_vec;
-        std::vector<atat::rVector3d> :: const_iterator i_r_vec_begin = r_vecs.begin();
-        std::vector<atat::rVector3d> :: const_iterator i_r_vec_end = r_vecs.end();
+        std::vector<Eigen::Vector3d> :: const_iterator i_k_vec = k_vecs.begin();
+        std::vector<Eigen::Vector3d> :: const_iterator i_k_vec_end __SERIALCODE( = k_vecs.end() );
+        std::vector<Eigen::Vector3d> :: const_iterator i_r_vec;
+        std::vector<Eigen::Vector3d> :: const_iterator i_r_vec_begin = r_vecs.begin();
+        std::vector<Eigen::Vector3d> :: const_iterator i_r_vec_end = r_vecs.end();
         typename t_Harmonics :: const_iterator i_harmonic;
         typename t_Harmonics :: const_iterator i_harmonic_begin = harmonics.begin();
         typename t_Harmonics :: const_iterator i_harmonic_end = harmonics.end();
@@ -250,11 +250,11 @@ namespace LaDa
       {
         __ASSERT( variables->size() == 0, 
                   "variables have not been initialized.\n" )
-        std::vector<atat::rVector3d> :: const_iterator i_k_vec = k_vecs.begin();
-        std::vector<atat::rVector3d> :: const_iterator i_k_vec_end __SERIALCODE( = k_vecs.end() ); 
-        std::vector<atat::rVector3d> :: const_iterator i_r_vec;
-        std::vector<atat::rVector3d> :: const_iterator i_r_vec_begin = r_vecs.begin();
-        std::vector<atat::rVector3d> :: const_iterator i_r_vec_end = r_vecs.end();
+        std::vector<Eigen::Vector3d> :: const_iterator i_k_vec = k_vecs.begin();
+        std::vector<Eigen::Vector3d> :: const_iterator i_k_vec_end __SERIALCODE( = k_vecs.end() ); 
+        std::vector<Eigen::Vector3d> :: const_iterator i_r_vec;
+        std::vector<Eigen::Vector3d> :: const_iterator i_r_vec_begin = r_vecs.begin();
+        std::vector<Eigen::Vector3d> :: const_iterator i_r_vec_end = r_vecs.end();
         typename t_Harmonics :: const_iterator i_harmonic;
         typename t_Harmonics :: const_iterator i_harmonic_begin = harmonics.begin();
         typename t_Harmonics :: const_iterator i_harmonic_end = harmonics.end();
@@ -381,7 +381,7 @@ namespace LaDa
       void Functional<T_HARMONIC> :: print_xml( TiXmlElement &_node ) const
       {
         TiXmlElement *parent, *child;
-        atat::rVector3d vec; 
+        Eigen::Vector3d vec; 
 
         // checks if Structure exists
         parent = _node.FirstChildElement("Structure");
@@ -391,8 +391,8 @@ namespace LaDa
           _node.LinkEndChild(parent);
         }
 
-        std::vector<atat::rVector3d> :: const_iterator i_vec = k_vecs.begin();
-        std::vector<atat::rVector3d> :: const_iterator i_end = k_vecs.end();
+        std::vector<Eigen::Vector3d> :: const_iterator i_vec = k_vecs.begin();
+        std::vector<Eigen::Vector3d> :: const_iterator i_end = k_vecs.end();
         for( ; i_vec != i_end; ++i_vec )
         {
           child = new TiXmlElement( "kvec" );
@@ -409,7 +409,7 @@ namespace LaDa
       {
         const TiXmlElement *child, *str;
         t_Harmonic harmonic;
-        atat::rVector3d vec; types::t_real d;
+        Eigen::Vector3d vec; types::t_real d;
 
         // advance to Structure tag
         str = _element.FirstChildElement( "Structure" );

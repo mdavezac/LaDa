@@ -124,9 +124,9 @@ types::t_int equivalent_by_symmetry(const Structure &a, const Structure &b,
 
 void find_pointgroup(Array<rMatrix3d> *point_op, const rMatrix3d &cell) {
   LinkedList<rMatrix3d> point_op_list;
-  rVector3d u1=cell.get_column(0);
-  rVector3d u2=cell.get_column(1);
-  rVector3d u3=cell.get_column(2);
+  rVector3d u1=cell.col(0);
+  rVector3d u2=cell.col(1);
+  rVector3d u3=cell.col(2);
   rMatrix3d inv_cell=!cell;
   rMatrix3d id;
   id.identity();
@@ -322,7 +322,7 @@ rMatrix3d find_almost_reduced_cell(const rMatrix3d &cell) {
   types::t_int sign_to_flip=(l1_norm(signs) % 2);
   for (types::t_int i=0; i<3; i++) {
     if (signs(i)==sign_to_flip) {
-      rcell.set_column(i,-rcell.get_column(i));
+      rcell.set_column(i,-rcell.col(i));
     }
   }
   if (det(rcell)<0) rcell=-rcell;
@@ -448,8 +448,8 @@ void find_supercells(Array<rMatrix3d> *supercell, types::t_int min_volume, types
 }
 
 void find_supercells_2D(Array<rMatrix3d> *supercell, types::t_int min_volume, types::t_int max_volume, const rMatrix3d &unitcell, const Array<rMatrix3d> &pointgroup) {
-  rVector3d rec=unitcell.get_column(0)^unitcell.get_column(1);
-  rVector3d rc=unitcell.get_column(2);
+  rVector3d rec=unitcell.col(0)^unitcell.col(1);
+  rVector3d rc=unitcell.col(2);
   if (!near_zero(rec*rc-norm(rec)*norm(rc))) {
     ERRORQUIT("c axis is not perpendicular to a,b plane.");
   }
