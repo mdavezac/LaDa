@@ -86,7 +86,7 @@ namespace LaDa
 
         // Adds triplets which are rotations.
         typedef std::vector<Eigen::Vector3d> :: const_iterator t_cit;
-        Eigen::Matrix3d const inv_cell( !_cell );
+        Eigen::Matrix3d const inv_cell(_cell.inverse());
         foreach( Eigen::Vector3d const & rot_a0, gvectors0 )
           foreach( Eigen::Vector3d const & rot_a1, gvectors1 )
             foreach( Eigen::Vector3d const & rot_a2, gvectors2 )

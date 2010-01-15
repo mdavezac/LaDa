@@ -57,7 +57,7 @@ if DOMINIMIZER
   libpython_lada_la_CPPFLAGS += @GSL_CFLAGS@ @MINUIT_CFLAGS@ @FCLIBS@
 endif
 libpython_lada_la_LIBADD +=  $(top_builddir)/crystal/libcrystal.la \
-                             $(top_builddir)/atat/libatat.la \
+                             $(top_builddir)/atat/libmath.la \
                              $(top_builddir)/opt/libpythonconvenience.la \
                              $(top_builddir)/physics/libphysics.la \
                              $(top_builddir)/print/libprint.la 

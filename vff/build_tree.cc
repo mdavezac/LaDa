@@ -60,7 +60,7 @@ namespace LaDa
       std::swap( first_neighbors[1][0], first_neighbors[1][1] ); 
       
       { // finds first neighbors and adds in deformation.
-        const Eigen::Matrix3d inv_def( !bt::get<0>( deformation ) );
+        const Eigen::Matrix3d inv_def( bt::get<0>( deformation ).inverse() );
         for( size_t i(0); i < Nsites; ++i )
         {
           Crystal::find_first_neighbors( first_neighbors[i], structure.lattice->cell, 4 );
@@ -228,7 +228,7 @@ namespace LaDa
         namespace bt = boost::tuples;
         t_Transformation result;
         Eigen::Matrix3i left, right, smith;
-        const Eigen::Matrix3d inv_lat( !_lat_cell );
+        const Eigen::Matrix3d inv_lat( _lat_cell.inverse() );
         const Eigen::Matrix3d inv_lat_cell( inv_lat * bt::get<0>(_deformation) * _str_cell );
         Eigen::Matrix3i int_cell;
         for( size_t i(0); i < 3; ++i )

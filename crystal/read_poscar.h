@@ -24,6 +24,8 @@
 #include <boost/spirit/include/classic_kleene_star.hpp>
 #include <boost/spirit/include/classic_actions.hpp>
 
+#include <Eigen/LU>
+
 #include <print/manip.h>
 #include <opt/types.h>
 #include <math/is_integer.h>
@@ -48,7 +50,7 @@ namespace LaDa
           std::cerr << "Requested for structure to be checked against, but lattice not set.\n";
           _check_lattice = false; 
         }
-        if( _check_lattice ) inv_cell = !_structure.lattice->cell;
+        if( _check_lattice ) inv_cell = _structure.lattice->cell.inverse();
         
         namespace bsc = boost::spirit::classic;
         namespace fs = boost::filesystem;  

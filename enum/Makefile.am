@@ -20,6 +20,6 @@ enum_LDFLAGS =  $(AM_LDFLAGS) @BOOST_PROGOP@
 enum_LDADD = libenum.la \
              $(top_builddir)/crystal/libcrystal.la \
              $(top_builddir)/physics/libphysics.la \
-             $(top_builddir)/atat/libatat.la \
+             $(top_builddir)/atat/libmath.la \
              $(top_builddir)/opt/libopt.la \
              $(top_builddir)/print/libprint.la 

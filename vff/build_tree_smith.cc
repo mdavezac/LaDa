@@ -99,7 +99,7 @@ namespace LaDa
 
       t_Centers :: iterator i_center = centers.begin();
       t_Centers :: iterator i_center_end = centers.end();
-      const Eigen::Matrix3d inv_cell( !structure.cell );
+      const Eigen::Matrix3d inv_cell( structure.cell.inverse() );
       i_atom = structure.atoms.begin();
       for(; i_center != i_center_end; ++i_center, ++i_atom )
       {
@@ -186,7 +186,7 @@ namespace LaDa
         namespace bt = boost::tuples;
         t_Transformation result;
         Eigen::Matrix3i left, right, smith;
-        const Eigen::Matrix3d inv_lat( !_lat_cell );
+        const Eigen::Matrix3d inv_lat( _lat_cell.inverse() );
         const Eigen::Matrix3d inv_lat_cell( inv_lat * _str_cell );
         Eigen::Matrix3i int_cell;
         for( size_t i(0); i < 3; ++i )

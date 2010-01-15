@@ -5,6 +5,7 @@
 #include <config.h>
 #endif
 
+#include <opt/types.h>
 #include "smith_normal_form.h"
 
 //! \cond

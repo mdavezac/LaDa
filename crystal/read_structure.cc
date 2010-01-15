@@ -48,7 +48,7 @@ namespace LaDa
         std::cerr << "Requested for structure to be checked against, but lattice not set.\n";
         _check_lattice = false; 
       }
-      if( _check_lattice ) inv_cell = !_struct.lattice->cell;
+      if( _check_lattice ) inv_cell = _struct.lattice->cell.inverse();
 
       namespace fs = boost::filesystem;  
       __DOASSERT( not fs::exists( _path ), "Path " << _path << " does not exits.\n" )

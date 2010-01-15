@@ -36,7 +36,7 @@ namespace LaDa
           ( 
              (!bt::get<0>(transform))
           );
-          Eigen::Matrix3d inv_cell( !_structure.cell );
+          Eigen::Matrix3d inv_cell( _structure.cell.inverse() );
           typename TStructure<T_TYPE>::t_Atom atom;
           for( size_t i(0); i < smith(0); ++i )
             for( size_t j(0); j < smith(1); ++j )

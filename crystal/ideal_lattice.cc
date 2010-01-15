@@ -46,7 +46,7 @@ namespace LaDa
     {
       __ASSERT( _positions.size() == 0, "Position vector is empty.\n" )
       // first recenters around first atom.
-      const Eigen::Matrix3d inv_cell( !_cell );
+      const Eigen::Matrix3d inv_cell( _cell.inverse() );
       const Eigen::Vector3d origin( _positions[0] );
       types::t_real mindist = -1e0;
       foreach( Eigen::Vector3d &pos, _positions )

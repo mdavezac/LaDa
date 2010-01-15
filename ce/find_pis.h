@@ -46,7 +46,7 @@ namespace LaDa
         std::vector< std::vector<size_t> > atomic_map;
         Crystal::get_smith_map( _str, atomic_map );
         bool const dosite( _str.lattice->sites.size() != 1 );
-        Eigen::Matrix3d const inv_cell( _str.lattice->cell.inverse() );
+        .inverse()Eigen::Matrix3d const inv_cell( _str.lattice->cell.inverse() );
         Crystal::Lattice::t_Sites const &sites(_str.lattice->sites);
         Crystal::t_SmithTransform const
           transform( Crystal::get_smith_transform(_str.lattice->cell, _str.cell) );
@@ -185,7 +185,7 @@ namespace LaDa
       _pis.resize( _clusters.size() );
       std::fill( _pis.begin(), _pis.end(), 0 );
 
-      Eigen::Matrix3d inv_cell = !(_str.cell);
+      Eigen::Matrix3d inv_cell = _str.cell.inverse();
       Crystal :: Structure :: t_Atoms :: const_iterator i_atom = _str.atoms.begin();
       Crystal :: Structure :: t_Atoms :: const_iterator i_atom_end = _str.atoms.end();
       for(; i_atom != i_atom_end; ++i_atom) // loop over atoms

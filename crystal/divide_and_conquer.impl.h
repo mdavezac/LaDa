@@ -89,8 +89,8 @@ namespace LaDa
         // the direction for which we can look for periodic images.
         const Eigen::Vector3i extent( _n(0)>1 ? 1:0, _n(1)>1 ? 1:0, _n(2)>1 ? 1:0 );
         // adds atoms to each box.
-        const Eigen::Matrix3d inv_str( !_structure.cell );
-        const Eigen::Matrix3d inv_cell( !cell );
+        const Eigen::Matrix3d inv_str( _structure.cell.inverse() );
+        const Eigen::Matrix3d inv_cell( cell.inverse() );
         typename t_Atoms :: const_iterator i_atom = _structure.atoms.begin();
         typename t_Atoms :: const_iterator i_atom_end = _structure.atoms.end();
         for( size_t index(0); i_atom != i_atom_end; ++i_atom, ++index )

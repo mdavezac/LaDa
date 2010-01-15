@@ -44,7 +44,7 @@ namespace LaDa
       bool is_primitive = true;
 
       // moves sites into unit-cell.
-      Eigen::Matrix3d const inv( !cell );
+      Eigen::Matrix3d const inv(cell.inverse());
       foreach(t_Site &_site, copy.sites) _site.pos = into_cell(_site.pos, cell, inv);
 
       // Then compares fractional translations from site 0 to sites of same type.
@@ -144,7 +144,7 @@ namespace LaDa
       // now creates new lattice.
       sites.clear();
       cell = new_cell;
-      Eigen::Matrix3d const inv_cell(!cell);
+      Eigen::Matrix3d const inv_cell(cell.inverse());
       foreach(t_Site &s, copy.sites) s.pos = into_cell(s.pos, cell, inv_cell);
       sites.push_back(copy.sites.front());
       for(i_site = copy.sites.begin(); i_site != i_site_end; ++i_site)

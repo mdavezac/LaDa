@@ -176,7 +176,7 @@ namespace LaDa
                  _1 - constant( *i_shift )
             );
 
-            Eigen::Matrix3d inv = !( (*i_op) * (~_structure.cell)  );
+            Eigen::Matrix3d inv = ( (*i_op) * (~_structure.cell)  ).inverse();
 
             // For each basis position, finds closest atomic-position modulo
             // structure-periodicity.

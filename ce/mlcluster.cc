@@ -33,7 +33,7 @@ namespace LaDa
     {
       LADA_ASSERT(Crystal::Structure::lattice != NULL, "No lattice is set.\n");
       Crystal::Lattice const &lattice = *Crystal::Structure::lattice;
-      Eigen::Matrix3d const inv_cell( !lattice.cell );
+      Eigen::Matrix3d const inv_cell( lattice.cell.inverse() );
 
       // finds new origin.
       Eigen::Vector3d const transformed_pos(_op(origin.pos)); 

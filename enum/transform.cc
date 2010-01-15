@@ -113,7 +113,7 @@ namespace LaDa
          return;
        }
 
-       Eigen::Matrix3d const inv_cell(!_lat.cell);
+       Eigen::Matrix3d const inv_cell(_lat.cell.inverse());
        std::vector<Crystal::Lattice::t_Site> sites; sites.reserve( nsites );
        { // construct list of centered sites.
          Crystal::Lattice::t_Sites::const_iterator i_site = _lat.sites.begin();

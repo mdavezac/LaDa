@@ -95,7 +95,7 @@ namespace LaDa
     {
       std::vector<Crystal::SymmetryOperator>::const_iterator i_sym = _symops->begin();
       std::vector<Crystal::SymmetryOperator>::const_iterator const i_sym_end = _symops->end();
-      t_Container::value_type const inv(!(_cell*_supercell));
+      t_Container::value_type const inv((_cell*_supercell).inverse());
       for(; i_sym != i_sym_end; ++i_sym)
         if( _out.end() != std::find_if(_out.begin(), _out.end(), IsInt(inv*i_sym->op*_cell)) ) 
           break;

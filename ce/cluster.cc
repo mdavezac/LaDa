@@ -230,7 +230,7 @@ namespace LaDa
     {
       typedef std::vector< Cluster > t_Clusters;
       Eigen::Matrix3d const &cell    = _lat.cell;
-      Eigen::Matrix3d const inv_cell = !cell;
+      Eigen::Matrix3d const inv_cell = cell.inverse();
       // new clusters will be added directly to _out
       t_Clusters old_cluster_list = _out;
     

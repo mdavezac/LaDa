@@ -25,7 +25,7 @@ vff_CPPFLAGS =  $(AM_CPPFLAGS)
 vff_LDFLAGS =  $(AM_LDFLAGS) @BOOST_PROGOP@ 
 vff_LDADD = libvff.la \
             $(top_builddir)/crystal/libcrystal.la \
-	    $(top_builddir)/atat/libatat.la \
+	    $(top_builddir)/atat/libmath.la \
             $(top_builddir)/physics/libphysics.la \
             $(top_builddir)/print/libprint.la \
             $(top_builddir)/opt/libopt.la \

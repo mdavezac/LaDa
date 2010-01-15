@@ -24,7 +24,7 @@ alloylayers_CPPFLAGS =  $(AM_CPPFLAGS)
 alloylayers_LDFLAGS =  $(AM_LDFLAGS) @BOOST_PROGOP@ 
 alloylayers_LDADD = libcrystal.la \
 		    $(top_builddir)/physics/libphysics.la \
-		    $(top_builddir)/atat/libatat.la \
+		    $(top_builddir)/atat/libmath.la \
 		    $(top_builddir)/opt/libopt.la \
                     $(top_builddir)/mpi/libmpiobject.la \
 		    $(top_builddir)/print/libprint.la \
