@@ -131,7 +131,7 @@ namespace CE
       {
         types::t_real r2=norm2(_k);
         types::t_real A=sqrt(1./(4.*M_PI));
-        if ( Fuzzy::leq( r2, types::t_real(0) ) )
+        if ( math::leq( r2, types::t_real(0) ) )
         {
           switch ( rank )
           {
@@ -183,8 +183,8 @@ namespace CE
         if( rank == 0 ) return t_real(1);
         types::t_real ctheta(1), cfai(1);
         types::t_real stheta(0), sfai(0);
-        if(    Fuzzy::neq(_k[0], t_real(0) )
-            or Fuzzy::neq(_k[1], t_real(0) ) )
+        if(    math::neq(_k[0], t_real(0) )
+            or math::neq(_k[1], t_real(0) ) )
         {
           ctheta =  details::pow2(_k[2]) / _k.squaredNorm();
           stheta =  t_real(1) - ctheta;

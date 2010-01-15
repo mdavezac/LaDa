@@ -68,9 +68,9 @@ namespace LaDa
         if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_X ) vec[0] = 0.0;
         if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_Y ) vec[1] = 0.0;
         if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_Z ) vec[2] = 0.0;
-        if(     ( not Fuzzy::eq( vec[0], 0e0 ) )  
-            and ( not Fuzzy::eq( vec[1], 0e0 ) )  
-            and ( not Fuzzy::eq( vec[2], 0e0 ) )  ) continue;
+        if(     ( not math::eq( vec[0], 0e0 ) )  
+            and ( not math::eq( vec[1], 0e0 ) )  
+            and ( not math::eq( vec[2], 0e0 ) )  ) continue;
 
         // It has, hence it is printed out to the pseudo list.
         // First, we must find the type of empirical pseudo 

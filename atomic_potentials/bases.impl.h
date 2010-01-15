@@ -35,7 +35,7 @@ namespace LaDa
         first_.reset( new t_Neighs );
         for(; i_first != i_end; ++i_first )
         {
-          if( Fuzzy::gt( i_first->distance, min_dist ) ) break;
+          if( math::gt( i_first->distance, min_dist ) ) break;
           
           first_->push_back( i_first->pos );
         }
@@ -52,7 +52,7 @@ namespace LaDa
         types::t_real const second_min_dist( i_first->distance );
         for(; i_first != i_end; ++i_first )
         {
-          if( Fuzzy::gt( i_first->distance, second_min_dist ) ) break;
+          if( math::gt( i_first->distance, second_min_dist ) ) break;
           
           second_->push_back( i_first->pos );
         }
@@ -90,7 +90,7 @@ namespace LaDa
         }
         equivs_.reset( new std::list<Eigen::Vector3d> );
         for(i_pos = neighs->begin(); i_pos != i_pos_end; ++i_pos)
-          if( Fuzzy::eq( (*i_pos) * (*_x), maxx ) ) equivs_->push_back( *i_pos );
+          if( math::eq( (*i_pos) * (*_x), maxx ) ) equivs_->push_back( *i_pos );
       } 
       
     template<class T_STRUCTURE>

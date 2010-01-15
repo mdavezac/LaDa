@@ -14,11 +14,11 @@ namespace LaDa
 {
   //! \brief Defines fuzzy math ordering operator for \a T_ARG
   //! \details if \a T_ARG is an integer type, signed or unsigned, then
-  //!          Fuzzy::le, Fuzzy::leq, Fuzzy::ge, Fuzzy::geq, Fuzzy::eq are
+  //!          math::le, math::leq, math::ge, math::geq, math::eq are
   //!          exactly equivalent to <, <=, >, =>, and ==. If on the other hand
-  //!          \a T_ARG is types::real, then Fuzzy::less, Fuzzy::greater,
-  //!          Fuzzy::equal are defined with a fuzzy limit (types::tolerance)
-  namespace Fuzzy
+  //!          \a T_ARG is types::real, then math::less, math::greater,
+  //!          math::equal are defined with a fuzzy limit (types::tolerance)
+  namespace math
   {
       //! \brief returns true if \f$ \_a  < \_b \f$
       //! \details if \a T_ARG is a types::real, return true if 
@@ -54,12 +54,12 @@ namespace LaDa
       //! \details if \a T_ARG is a types::real, return true if 
       //!          \a _a < types::tolerance.
       template< class T_ARG >
-      inline bool is_zero( const T_ARG _a ) { return Fuzzy::eq( _a, T_ARG(0) ); }
+      inline bool is_zero( const T_ARG _a ) { return math::eq( _a, T_ARG(0) ); }
   } // end namsepace Fuzzy
 
 
   //! \cond
-  namespace Fuzzy
+  namespace math
   {
       template<>
       inline bool leq<types::t_real>( const types::t_real _a,

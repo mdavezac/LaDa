@@ -160,7 +160,7 @@ namespace LaDa
         else if ( *i_monome == _monome )    // equivalent monome already exists
         {
           *i_monome += _monome;
-          if ( Fuzzy::eq(i_monome->coefficient, 0e0) )
+          if ( math::eq(i_monome->coefficient, 0e0) )
             monomes.erase(i_monome);
         }
         else       // places _monome in the sorted list, before i_monome

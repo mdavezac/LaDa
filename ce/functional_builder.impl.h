@@ -120,7 +120,7 @@ namespace LaDa
     
          // finally, creates polynomials
     
-         Eigen::Matrix3d inv_cell = !(str.cell);
+         Eigen::Matrix3d inv_cell = str.cell.inverse();
          polynome = new t_Chemical();
          Crystal :: Structure :: t_Atoms :: const_iterator i_atom = str.atoms.begin();
          Crystal :: Structure :: t_Atoms :: const_iterator i_atom_last = str.atoms.end();
@@ -161,7 +161,7 @@ namespace LaDa
                  Crystal::Structure::t_Atoms::const_iterator i_equiv = str.atoms.begin();
                  size_t index(0);
                  for (; i_equiv != i_atom_last; ++i_equiv, ++index)  
-                   if ( math::equivalent_mod_cell( *i_cpos + shift, i_equiv->pos,inv_cell) ) 
+                   if ( math::are_periodic_images(*i_cpos + shift, i_equiv->pos, inv_cell) ) 
                      break;
                  
                  __ASSERT( i_equiv == i_atom_last, 

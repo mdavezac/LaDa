@@ -2,50 +2,31 @@
 //  Version: $Id$
 //
 
-#ifndef _ATAT_LAMBDA_IMPL_H_
+#ifndef LADA_MATH_LAMBDA_IMPL_H
 #  if defined( __VTYPE__ ) || defined (__STYPE__) || defined( __MTYPE__)
 #   error Macros __VTYPE__, __STYPE__, or __MTYPE__ already defined.
 #  endif
-#  define _ATAT_LAMBDA_IMPL_H_ 0
-#  define __VTYPE__ LaDa::Eigen::Vector3d
-#  define __STYPE__ LaDa::types::t_real
-#  define __MTYPE__ LaDa::Eigen::Matrix3d
-#elif _ATAT_LAMBDA_IMPL_H_ == 0
-#  undef _ATAT_LAMBDA_IMPL_H_
+#  define LADA_MATH_LAMBDA_IMPL_H 0
+#  define __VTYPE__ Eigen::Vector3d
+#  define __STYPE__ types::t_real
+#  define __MTYPE__ Eigen::Matrix3d
+#elif LADA_MATH_LAMBDA_IMPL_H == 0
+#  undef LADA_MATH_LAMBDA_IMPL_H
 #  undef __VTYPE__ 
 #  undef __STYPE__ 
 #  undef __MTYPE__ 
-#  define _ATAT_LAMBDA_IMPL_H_ 1
-#  define __VTYPE__ LaDa::atat::rVector2d
-#  define __STYPE__ LaDa::types::t_real
-#  define __MTYPE__ LaDa::atat::rMatrix2d
-#elif _ATAT_LAMBDA_IMPL_H_ == 1
-#  undef _ATAT_LAMBDA_IMPL_H_
-#  undef __VTYPE__ 
-#  undef __STYPE__ 
-#  undef __MTYPE__ 
-#  define _ATAT_LAMBDA_IMPL_H_ 2
+#  define LADA_MATH_LAMBDA_IMPL_H 1
 #  define __VTYPE__ LaDa::Eigen::Vector3i
 #  define __STYPE__ LaDa::types::t_int
 #  define __MTYPE__ LaDa::Eigen::Matrix3i
-#elif _ATAT_LAMBDA_IMPL_H_ == 2
-#  undef _ATAT_LAMBDA_IMPL_H_
-#  undef __VTYPE__ 
-#  undef __STYPE__ 
-#  undef __MTYPE__ 
-#  define _ATAT_LAMBDA_IMPL_H_ 3
-#  define __VTYPE__ LaDa::atat::iVector2d
-#  define __STYPE__ LaDa::types::t_int
-#  define __MTYPE__ LaDa::atat::iMatrix2d
-#else
-#  undef _ATAT_LAMBDA_IMPL_H_
-#  define _ATAT_LAMBDA_IMPL_H_ 5
+#elif LADA_MATH_LAMBDA_IMPL_H == 1
+#  define LADA_MATH_LAMBDA_IMPL_H 2
 #  undef __VTYPE__ 
 #  undef __STYPE__ 
 #  undef __MTYPE__ 
 #endif
 
-#if _ATAT_LAMBDA_IMPL_H_ < 4
+#if LADA_MATH_LAMBDA_IMPL_H < 2
 #include <boost/lambda/control_structures.hpp>
 //! \cond
 namespace boost { 

@@ -24,8 +24,8 @@ namespace LaDa
           types::t_real to_change[2];
           to_change[0] = (types::t_real) N * ( x0 - x );
           to_change[1] = (types::t_real) N * ( y0 - y );
-          if(     Fuzzy::gt(to_change[0],  -1.0)  and Fuzzy::le(to_change[0], 1.0 )
-              and Fuzzy::gt(to_change[1],  -1.0)  and Fuzzy::le(to_change[1], 1.0 ) ) return;
+          if(     math::gt(to_change[0],  -1.0)  and math::le(to_change[0], 1.0 )
+              and math::gt(to_change[1],  -1.0)  and math::le(to_change[1], 1.0 ) ) return;
     
           __ASSERT( sites.size() != _obj.Container().size(), "Inequivalent sizes.\n" )
     
@@ -52,7 +52,7 @@ namespace LaDa
               = &eo::random<types::t_unsigned>;
           for( types::t_unsigned i=0; i < 2; ++i )
           {
-            if( Fuzzy::gt(to_change[i],  -1.0) and Fuzzy::le(to_change[i], 1.0 ) ) continue;
+            if( math::gt(to_change[i],  -1.0) and math::le(to_change[i], 1.0 ) ) continue;
             std::vector<types::t_unsigned> :: iterator i_pos = pos[i].begin();
             std::vector<types::t_unsigned> :: iterator i_pos_end = pos[i].end();
             std::random_shuffle(i_pos, i_pos_end, ptr_to_rng );
@@ -63,9 +63,9 @@ namespace LaDa
               ( to_change[i] > 0 ) ? to_change[i] -= 2: to_change[i] += 2;
             
               // Fuzzy math at this point could create infinit loop
-              if( Fuzzy::gt(to_change[i],  -1.0) and Fuzzy::leq(to_change[i], 1.0 ) ) break;
+              if( math::gt(to_change[i],  -1.0) and math::leq(to_change[i], 1.0 ) ) break;
             }
-            __DOASSERT( Fuzzy::leq(to_change[i],  -1.0) or Fuzzy::gt(to_change[i], 1.0 ),
+            __DOASSERT( math::leq(to_change[i],  -1.0) or math::gt(to_change[i], 1.0 ),
                            "Concentration could not be set\n"
                         << "Incompatibility between required x/y and frozen atoms?\n"; )
           }

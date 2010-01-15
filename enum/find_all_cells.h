@@ -54,7 +54,7 @@ namespace LaDa
         {
           for( size_t i(0); i < 3; ++i )
             for( size_t j(0); j < 3; ++j )
-              if( not Fuzzy::is_zero(hermite(i,j)-_a.hermite(i,j)) ) return false;
+              if( not math::is_zero(hermite(i,j)-_a.hermite(i,j)) ) return false;
           return true;
         }
       };

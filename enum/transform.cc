@@ -89,15 +89,15 @@ namespace LaDa
      Transform :: Transform   (Crystal::SymmetryOperator const &_c, Crystal::Lattice const &_lat)
                             : Crystal::SymmetryOperator(_c)
      {
-       bool pure_translation_ = (     Fuzzy::eq(op.x[0][0], 1.0) 
-                                  and Fuzzy::eq(op.x[0][1], 0.0) 
-                                  and Fuzzy::eq(op.x[0][2], 0.0)
-                                  and Fuzzy::eq(op.x[1][0], 0.0) 
-                                  and Fuzzy::eq(op.x[1][1], 1.0) 
-                                  and Fuzzy::eq(op.x[1][2], 0.0)
-                                  and Fuzzy::eq(op.x[2][0], 0.0) 
-                                  and Fuzzy::eq(op.x[2][1], 0.0) 
-                                  and Fuzzy::eq(op.x[2][2], 1.0) );
+       bool pure_translation_ = (     math::eq(op.x[0][0], 1.0) 
+                                  and math::eq(op.x[0][1], 0.0) 
+                                  and math::eq(op.x[0][2], 0.0)
+                                  and math::eq(op.x[1][0], 0.0) 
+                                  and math::eq(op.x[1][1], 1.0) 
+                                  and math::eq(op.x[1][2], 0.0)
+                                  and math::eq(op.x[2][0], 0.0) 
+                                  and math::eq(op.x[2][1], 0.0) 
+                                  and math::eq(op.x[2][2], 1.0) );
 
        size_t nsites(0);
        { // Computes number of sites.

@@ -55,18 +55,18 @@ namespace LaDa
       //! Comparison.
       bool operator==(SymmetryOperator const &_sym)
       {
-        return not(    Fuzzy::neq(op(0,0), _sym.op(0,0))
-                    or Fuzzy::neq(op(1,0), _sym.op(1,0))
-                    or Fuzzy::neq(op(2,0), _sym.op(2,0))
-                    or Fuzzy::neq(op(0,1), _sym.op(0,1))
-                    or Fuzzy::neq(op(1,1), _sym.op(1,1)) 
-                    or Fuzzy::neq(op(2,1), _sym.op(2,1))
-                    or Fuzzy::neq(op(0,2), _sym.op(0,2)) 
-                    or Fuzzy::neq(op(1,2), _sym.op(1,2))
-                    or Fuzzy::neq(op(2,2), _sym.op(2,2)) 
-                    or Fuzzy::neq(trans.x[0], _sym.trans[0])
-                    or Fuzzy::neq(trans.x[1], _sym.trans[1]) 
-                    or Fuzzy::neq(trans.x[2], _sym.trans[2]) );
+        return not(    math::neq(op(0,0), _sym.op(0,0))
+                    or math::neq(op(1,0), _sym.op(1,0))
+                    or math::neq(op(2,0), _sym.op(2,0))
+                    or math::neq(op(0,1), _sym.op(0,1))
+                    or math::neq(op(1,1), _sym.op(1,1)) 
+                    or math::neq(op(2,1), _sym.op(2,1))
+                    or math::neq(op(0,2), _sym.op(0,2)) 
+                    or math::neq(op(1,2), _sym.op(1,2))
+                    or math::neq(op(2,2), _sym.op(2,2)) 
+                    or math::neq(trans.x[0], _sym.trans[0])
+                    or math::neq(trans.x[1], _sym.trans[1]) 
+                    or math::neq(trans.x[2], _sym.trans[2]) );
       }
     };
 

@@ -27,8 +27,8 @@ namespace LaDa
         a0 = vec.normalized();
         
         // First, lets create an orthonormal vector to _vec
-        a1 = Fuzzy::eq( a0(0), 0e0 ) ? 
-               ( Fuzzy::eq( a0(1), 0e0 ) ? 
+        a1 = math::eq( a0(0), 0e0 ) ? 
+               ( math::eq( a0(1), 0e0 ) ? 
                   Eigen::Vector3d(1, 0, 0):
                   Eigen::Vector3d(0, a0(2), -a0(1) )  ): 
                Eigen::Vector3d( -a0(2) -a0(1), a0(0), a0(0) );
@@ -47,15 +47,15 @@ namespace LaDa
        types::t_real a =  _first * a0; a -= std::floor( a - types::tolerance );
        types::t_real b =  _second * a0; b -= std::floor( b - types::tolerance );
 
-       if ( not Fuzzy::eq( a, b ) ) return Fuzzy::le( a, b );
+       if ( not math::eq( a, b ) ) return math::le( a, b );
      
        a =   _first * a1; a -= std::floor( a - types::tolerance );
        b =   _second * a1; b -= std::floor( b - types::tolerance );
-       if ( not Fuzzy::eq( a, b ) ) return Fuzzy::le( a, b );
+       if ( not math::eq( a, b ) ) return math::le( a, b );
        
        a =   _first * a2; a -= std::floor( a - types::tolerance );
        b =   _second * a2; b -= std::floor( b - types::tolerance );
-       return Fuzzy::le( a, b );
+       return math::le( a, b );
      }
      //! Returns the depth.
      types::t_real LayerDepth :: operator()( const Eigen::Vector3d& _first ) const

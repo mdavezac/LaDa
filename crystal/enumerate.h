@@ -60,7 +60,7 @@ namespace LaDa
                     << structure.get_concentration()
                     << " " << _op( structure ) << "\n";
           foreach( Crystal::Structure::t_Atom &atom, structure.atoms )
-            atom.type = Fuzzy::gt( atom.type, 0e0 ) ? -1e0: 1e0;
+            atom.type = math::gt( atom.type, 0e0 ) ? -1e0: 1e0;
           std::cout << "    @-" << structure.name << " " 
                     << structure.get_concentration()
                     << " " << _op( structure ) << "\n";

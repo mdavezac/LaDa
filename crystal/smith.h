@@ -82,7 +82,7 @@ namespace LaDa
                );
       }
 
-    inline bool equivalent_mod_cell( t_SmithTransform const &_transformation, 
+    inline bool are_periodic_images( t_SmithTransform const &_transformation, 
                                      Eigen::Vector3d const &_a, Eigen::Vector3d const &_b )
       { return get_smith_index(_transformation, _a - _b) == Eigen::Vector3i(0,0,0); }
 

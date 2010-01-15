@@ -271,7 +271,7 @@ namespace LaDa
           };
           
           // avoid origin.
-          if( Fuzzy::is_zero( spin.pos.squaredNorm() ) ) continue;
+          if( math::is_zero( spin.pos.squaredNorm() ) ) continue;
           cluster.push_back(spin);
         }
 

@@ -272,7 +272,7 @@ namespace LaDa
           { return _x < x_end; }
         //! returns \a _x <= Vertex::x_end 
         bool x_greatereq(const types::t_real _x) const
-          { return _x < x_end or Fuzzy::eq( _x, x_end); }
+          { return _x < x_end or math::eq( _x, x_end); }
         private:
           //! Serializes a vertex.
           template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)

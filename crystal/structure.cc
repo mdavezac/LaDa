@@ -361,9 +361,9 @@ namespace LaDa
       parent = new TiXmlElement( "Cell" );
       structure->LinkEndChild( parent );
       structure->SetAttribute("N", atoms.size() );
-      if( Fuzzy::neq( energy, 666.666 ) ) 
+      if( math::neq( energy, 666.666 ) ) 
         structure->SetDoubleAttribute("energy", energy );
-      if( Fuzzy::neq( weight, 1e0 ) )
+      if( math::neq( weight, 1e0 ) )
         structure->SetDoubleAttribute("weight", weight );
       structure->SetAttribute("name", name);
       structure->SetDoubleAttribute("scale", scale);

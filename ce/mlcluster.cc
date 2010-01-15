@@ -87,16 +87,16 @@ namespace LaDa
     bool operator==(MLCluster::Spin const &_a, MLCluster::Spin const &_b) 
     {
       if( _a.site != _b.site ) return false;
-      if( not Fuzzy::is_zero(_a.pos(0)-_b.pos(0)) ) return false;
-      if( not Fuzzy::is_zero(_a.pos(1)-_b.pos(1)) ) return false;
-      return  Fuzzy::is_zero(_a.pos(2)-_b.pos(2));
+      if( not math::is_zero(_a.pos(0)-_b.pos(0)) ) return false;
+      if( not math::is_zero(_a.pos(1)-_b.pos(1)) ) return false;
+      return  math::is_zero(_a.pos(2)-_b.pos(2));
     }
     
     // Compares for same origin.
     bool compare( MLCluster const &_a, MLCluster const &_b )
     {
       if( _a.origin.site != _b.origin.site ) return false;
-      LADA_ASSERT( Fuzzy::is_zero( (_a.origin.pos-_b.origin.pos).squaredNorm() ), 
+      LADA_ASSERT( math::is_zero( (_a.origin.pos-_b.origin.pos).squaredNorm() ), 
                    "Inconsistent origin positions.\n" )
 
       MLCluster::t_Spins :: const_iterator i_spin = _a.begin();

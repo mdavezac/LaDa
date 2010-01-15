@@ -10,6 +10,8 @@
 #include<iterator> 
 #include<algorithm> 
 
+#include <Eigen/LU>
+
 #include <print/manip.h>
 #include <opt/tinyxml.h>
 
@@ -102,12 +104,12 @@ namespace LaDa
 
     types::t_int Lattice :: get_atom_site_index( const Eigen::Vector3d &_at ) const
     {
-      const Eigen::Matrix3d inv_cell = !cell;
+      const Eigen::Matrix3d inv_cell = cell.inverse();
       std::vector< t_Site > :: const_iterator i_site = sites.begin(); 
       std::vector< t_Site > :: const_iterator i_end = sites.end(); 
       
       for (; i_site != i_end; ++i_site )
-        if ( math::equivalent_mod_cell(_at, i_site->pos,inv_cell) ) 
+        if ( math::are_periodic_images(_at, i_site->pos, inv_cell) ) 
           return i_site - sites.begin();
 
       __THROW_ERROR("Could not find atomic site index!! " << _at << "\n" )
@@ -133,12 +135,12 @@ namespace LaDa
 
     types::t_int Lattice :: get_atom_type_index( const Crystal :: Atom &_at ) const
     {
-      const Eigen::Matrix3d inv_cell = !cell;
+      const Eigen::Matrix3d inv_cell = cell.inverse();
       std::vector< t_Site > :: const_iterator i_site = sites.begin(); 
       std::vector< t_Site > :: const_iterator i_end = sites.end(); 
       
       for (; i_site != i_end; ++i_site )
-        if ( math::equivalent_mod_cell(_at.pos, i_site->pos,inv_cell) ) 
+        if (math::are_periodic_images(_at.pos, i_site->pos, inv_cell) ) 
         {
           if ( i_site->type.size() == 1 ) return 0;
           return convert_real_to_type_index( _at.type );

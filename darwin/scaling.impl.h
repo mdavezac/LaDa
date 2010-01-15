@@ -196,7 +196,7 @@ namespace LaDa
         {
           double d = 0;
           parent->Attribute("d0", &d );
-          __DOASSERT( Fuzzy::le(d, 0e0),
+          __DOASSERT( math::le(d, 0e0),
                          "Invalid d0 = " << d 
                       << " in Sharing::Triangular.\n" )
             

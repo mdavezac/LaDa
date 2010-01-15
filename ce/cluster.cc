@@ -39,15 +39,15 @@ namespace LaDa
 
       i_vec = vectors.begin();
       Eigen::Vector3d shift( (!Crystal::Structure::lattice->cell) * (*i_vec) );
-      shift(0) -= std::floor(shift(0)); if( Fuzzy::is_zero(shift(0)-1e0) ) shift(0) = 0e0;
-      shift(1) -= std::floor(shift(1)); if( Fuzzy::is_zero(shift(1)-1e0) ) shift(1) = 0e0;
-      shift(2) -= std::floor(shift(2)); if( Fuzzy::is_zero(shift(2)-1e0) ) shift(2) = 0e0;
+      shift(0) -= std::floor(shift(0)); if( math::is_zero(shift(0)-1e0) ) shift(0) = 0e0;
+      shift(1) -= std::floor(shift(1)); if( math::is_zero(shift(1)-1e0) ) shift(1) = 0e0;
+      shift(2) -= std::floor(shift(2)); if( math::is_zero(shift(2)-1e0) ) shift(2) = 0e0;
       shift = Crystal::Structure::lattice->cell * shift - (*i_vec);
-      if( Fuzzy::is_zero(shift,squaredNorm()) ) return;
+      if( math::is_zero(shift,squaredNorm()) ) return;
       for(; i_vec != i_last; ++i_vec ) *i_vec -= shift; 
     }
 
-    bool Cluster :: equivalent_mod_cell( Cluster &_cluster, const Eigen::Matrix3d &_icell) 
+    bool Cluster :: are_periodic_images( Cluster &_cluster, const Eigen::Matrix3d &_icell) 
     {
       if ( vectors.size() != _cluster.vectors.size() ) return false;
       if ( vectors.size() == 0 ) return true;
@@ -56,7 +56,7 @@ namespace LaDa
       std::vector<Eigen::Vector3d> :: iterator i_vec_last = vectors.end();
       for (; i_vec != i_vec_last; ++i_vec)
       {
-        if ( not math::equivalent_mod_cell( *_cluster.vectors.begin(), *i_vec, _icell) ) continue;
+        if ( not math::are_periodic_images( *_cluster.vectors.begin(), *i_vec, _icell) ) continue;
       
         Eigen::Vector3d shift = (*i_vec) - *(_cluster.vectors.begin());
         std::vector<Eigen::Vector3d> :: iterator is_found;
@@ -126,7 +126,7 @@ namespace LaDa
       CompPairs( Eigen::Vector3d const &_a ) : pos(_a) {}
       CompPairs( CompPairs const &_a ) : pos(_a.pos) {}
       bool operator()(Cluster const& _a) const
-        { return Fuzzy::is_zero( (_a.vectors[1]-pos).squaredNorm() ); }
+        { return math::is_zero( (_a.vectors[1]-pos).squaredNorm() ); }
     };
 
    
@@ -243,7 +243,7 @@ namespace LaDa
         t_cit const i_op_end = _lat.space_group.end();
         for (; i_op != i_op_end; ++i_op )
         {
-          if( not Fuzzy::is_zero(i_op->trans.squaredNorm()) ) continue;
+          if( not math::is_zero(i_op->trans.squaredNorm()) ) continue;
           // initialize a new cluster to object pointed by i_old_list
           Cluster transfo_cluster( *i_old_list );
           
@@ -254,7 +254,7 @@ namespace LaDa
           t_Clusters :: iterator i_cluster  = _out.begin();
           t_Clusters :: iterator i_last = _out.end();
           for ( ; i_cluster != i_last ; ++i_cluster)
-            if ( transfo_cluster.equivalent_mod_cell(*i_cluster, inv_cell) ) 
+            if ( transfo_cluster.are_periodic_images(*i_cluster, inv_cell) ) 
               break;
     
           // if it isn't, adds cluster to clusters
@@ -271,9 +271,9 @@ namespace LaDa
       cmp(cmp const &_c): pos(_c.pos) {}
       bool operator()(Eigen::Vector3d const &_a) const
       {
-        if( not Fuzzy::is_zero( pos[0] - _a[0] ) ) return false;
-        if( not Fuzzy::is_zero( pos[1] - _a[1] ) ) return false;
-        return  Fuzzy::is_zero( pos[2] - _a[2] );
+        if( not math::is_zero( pos[0] - _a[0] ) ) return false;
+        if( not math::is_zero( pos[1] - _a[1] ) ) return false;
+        return  math::is_zero( pos[2] - _a[2] );
       }
       Eigen::Vector3d const &pos;
     };

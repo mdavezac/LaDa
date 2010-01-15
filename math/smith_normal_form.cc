@@ -15,7 +15,7 @@ extern "C" void FC_FUNC(smithnormalform, SMITHNORMALFORM)
 namespace LaDa
 {
 
-  namespace opt
+  namespace math
   {
     
     void smith_normal_form( Eigen::Matrix3i& _S, Eigen::Matrix3i & _L,

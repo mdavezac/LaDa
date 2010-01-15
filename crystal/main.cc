@@ -49,10 +49,10 @@ boost::shared_ptr<Crystal::Lattice>
 
 void randomize( Crystal::Structure &_structure )
 {
-  LaDa::opt::random::create();
+  LaDa::opt::math::create();
   foreach( Crystal::Structure::t_Atom& atom, _structure.atoms )
     if( _structure.lattice->sites[ atom.site ].type.size() > 1 )
-      atom.type = LaDa::opt::random::flip() ? -1e0: 1e0;
+      atom.type = LaDa::opt::math::flip() ? -1e0: 1e0;
 }
 
 void printstructure( const Crystal::Structure &_structure, 
@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
       ++i_atom;
       new_depth = depth(i_atom->pos);
     }
-    while( LaDa::Fuzzy::eq( last_depth, new_depth ) and i_atom != i_atom_end );
+    while( LaDa::math::eq( last_depth, new_depth ) and i_atom != i_atom_end );
     ++nb_layers;
 
     sstr << "  _ layer at depth "

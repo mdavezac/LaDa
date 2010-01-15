@@ -13,12 +13,12 @@
 #include <vector> 
 #include <algorithm> 
 
+#include <Eigen/LU>
+
 #include <crystal/lattice.h>
 #include <crystal/structure.h>
 #include <crystal/which_site.h>
 #include <crystal/smith.h>
-
-
 
 #include "cluster.h"
 #include "mlclusters.h"
@@ -46,7 +46,7 @@ namespace LaDa
         std::vector< std::vector<size_t> > atomic_map;
         Crystal::get_smith_map( _str, atomic_map );
         bool const dosite( _str.lattice->sites.size() != 1 );
-        Eigen::Matrix3d const inv_cell( !_str.lattice->cell );
+        Eigen::Matrix3d const inv_cell( _str.lattice->cell.inverse() );
         Crystal::Lattice::t_Sites const &sites(_str.lattice->sites);
         Crystal::t_SmithTransform const
           transform( Crystal::get_smith_transform(_str.lattice->cell, _str.cell) );
@@ -87,7 +87,7 @@ namespace LaDa
         Crystal::get_smith_map( _str, atomic_map );
         bool const dosite( _str.lattice->sites.size() != 1 );
         size_t const Npersite( _str.atoms.size() / _str.lattice->sites.size() );
-        Eigen::Matrix3d const inv_cell( !_str.lattice->cell );
+        Eigen::Matrix3d const inv_cell( _str.lattice->cell.inverse() );
         Crystal::Lattice::t_Sites const &sites(_str.lattice->sites);
       
         Crystal::t_SmithTransform const
@@ -148,7 +148,7 @@ namespace LaDa
           } // loop over classes of clusters.
         } // loop over atomic positions.
 #       ifdef LADA_DEBUG
-          foreach(types::t_real &o, _out) if( Fuzzy::is_zero(o) ) o = 0e0;
+          foreach(types::t_real &o, _out) if( math::is_zero(o) ) o = 0e0;
 #       endif
       }
 
@@ -226,7 +226,7 @@ namespace LaDa
                 // finds atom to which lattice site is equivalent
                 Crystal::Structure::t_Atoms::const_iterator i_equiv = _str.atoms.begin();
                 for (; i_equiv != i_atom_end; ++i_equiv)  
-                  if ( math::equivalent_mod_cell( *i_cpos + shift, i_equiv->pos,inv_cell) ) 
+                  if ( math::are_periodic_images(*i_cpos + shift, i_equiv->pos, inv_cell) ) 
                     break;
 
                 __ASSERT( i_equiv == i_atom_end,

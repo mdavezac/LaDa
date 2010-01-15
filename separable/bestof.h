@@ -79,7 +79,7 @@ namespace LaDa
                                     << std::fixed
                                     << std::setprecision(3) << result << "\n";
 
-            if( Fuzzy::geq( result, best.first ) ) continue;
+            if( math::geq( result, best.first ) ) continue;
             
             best.first = result;
             best.second = _coefs;
@@ -140,7 +140,7 @@ namespace LaDa
                                      << std::fixed
                                      << std::setprecision(3) << result << "\n";
 
-            if( Fuzzy::geq( result, best.first ) ) continue;
+            if( math::geq( result, best.first ) ) continue;
             
             best.first = result;
             best.second = _coefs;

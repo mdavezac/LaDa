@@ -170,7 +170,7 @@ namespace LaDa
       }
       escan.nbstates += bgstates + 2;
       if (    escan.potential != Escan::SPINORBIT
-           or Fuzzy::is_zero( escan.kpoint.squaredNorm() ) )
+           or math::is_zero( escan.kpoint.squaredNorm() ) )
        { escan.nbstates >>= 1; bgstates >>= 1; }
 
       __TRYCODE( Interface::operator()();,
@@ -306,9 +306,9 @@ namespace LaDa
    
         bands.cbm += bands.vbm;
    
-        if ( Fuzzy::gt( bands.cbm, bands.vbm ) ) return;
+        if ( math::gt( bands.cbm, bands.vbm ) ) return;
         std::swap( bands.cbm, bands.vbm );
-        if ( Fuzzy::eq(bands.vbm, bands.cbm ) ) bands.cbm += 0.1;
+        if ( math::eq(bands.vbm, bands.cbm ) ) bands.cbm += 0.1;
       }
 #   endif
 

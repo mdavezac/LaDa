@@ -84,7 +84,7 @@ namespace LaDa
       for( size_t i(0); i < 3; ++i )
         for( size_t j(0); j < 3; ++j )
         {
-          if( Fuzzy::is_zero( template_strain(i,j) ) ) continue;
+          if( math::is_zero( template_strain(i,j) ) ) continue;
           *i_var += template_strain(i,j) * strain(i,j);
           ++n;
         }
@@ -122,7 +122,7 @@ namespace LaDa
       sstr >> direction[1]; if ( sstr.fail() ) couldload = false;
       sstr >> direction[2]; if ( sstr.fail() ) couldload = false;
 
-      if ( Fuzzy::is_zero( direction.squaredNorm() ) ) couldload = false;
+      if ( math::is_zero( direction.squaredNorm() ) ) couldload = false;
 
       if ( not couldload )
       {

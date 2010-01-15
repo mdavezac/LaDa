@@ -161,7 +161,7 @@ retry:
                {
                   neighbor.pos = _structure.cell * ( centered + Eigen::Vector3d(x,y,z) );
                   neighbor.distance = neighbor.pos.norm();
-                  if( Fuzzy::is_zero( neighbor.distance ) ) continue;
+                  if( math::is_zero( neighbor.distance ) ) continue;
        
                   t_Neighbors :: iterator i_found 
                   (
@@ -198,7 +198,7 @@ retry:
          LADA_DOASSERT( i_last != i_end, "Supercell too small.\n");
          types::t_real const dist(i_last->distance);
          for(++i_last; i_last != i_end; ++i_last, ++i) 
-           if( Fuzzy::gt(i_last->distance, dist) ) break;
+           if( math::gt(i_last->distance, dist) ) break;
          if( i_last == i_end )
          {
            neighbors_.clear();

@@ -77,7 +77,7 @@ namespace LaDa
               rint( frac_image[2] ) 
             );
             center.translations.push_back( trans );
-            center.do_translates.push_back( not Fuzzy::is_zero(frac.squaredNorm()) );
+            center.do_translates.push_back( not math::is_zero(frac.squaredNorm()) );
 
             if( center.bonds.size() == 4 ) break;
           } // loop over neighbors

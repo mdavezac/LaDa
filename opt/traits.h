@@ -226,24 +226,24 @@ namespace LaDa
         //! true is Quantity::t_Quantity is a vector 
         const static bool is_vector = Dim<t_Quantity> :: is_vector;
 
-        //! Incorporates Fuzzy::le
+        //! Incorporates math::le
         static bool le( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
-          { return Fuzzy::le(_a,_b); }
-        //! Incorporates Fuzzy::leq
+          { return math::le(_a,_b); }
+        //! Incorporates math::leq
         static bool leq( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
-          { return Fuzzy::leq(_a,_b); }
-        //! Incorporates Fuzzy::gt
+          { return math::leq(_a,_b); }
+        //! Incorporates math::gt
         static bool gt( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
-          { return Fuzzy::gt(_a,_b); }
-        //! Incorporates Fuzzy::geq
+          { return math::gt(_a,_b); }
+        //! Incorporates math::geq
         static bool geq( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
-          { return Fuzzy::geq(_a,_b); }
-        //! Incorporates Fuzzy::eq
+          { return math::geq(_a,_b); }
+        //! Incorporates math::eq
         static bool eq( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
-          { return Fuzzy::eq(_a,_b); }
-        //! Incorporates Fuzzy::neq
+          { return math::eq(_a,_b); }
+        //! Incorporates math::neq
         static bool neq( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
-          { return not Fuzzy::eq(_a,_b); }
+          { return not math::eq(_a,_b); }
         //! Prints out the full vector into the stream
         static void print_out( std::ostream& _stream, const t_Quantity &_quantity )
           { opt::IsAScalar<is_scalar>::print_out(_stream, _quantity); }

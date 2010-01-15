@@ -20,7 +20,7 @@ namespace LaDa
     Eigen::Vector3d to_spherical( Eigen::Vector3d const &_a )
     {
       types::t_real const  rho = std::sqrt( _a[0]*_a[0] + _a[1]*_a[1] + _a[2]*_a[2] );
-      return Fuzzy::is_zero(rho) ? 
+      return math::is_zero(rho) ? 
                Eigen::Vector3d(0,0,0):
                Eigen::Vector3d
                (
@@ -42,16 +42,16 @@ namespace LaDa
       bool operator()( Crystal::Neighbor const * const _a,
                        Crystal::Neighbor const * const _b ) const
       {
-        if( Fuzzy::neq( _a->distance, _b->distance ) ) return _a->distance < _b->distance;
+        if( math::neq( _a->distance, _b->distance ) ) return _a->distance < _b->distance;
         const types::t_real ax = _a->pos * basis.x;
         const types::t_real bx = _b->pos * basis.x;
-        if( Fuzzy::neq( ax, bx ) ) return ax > bx;
+        if( math::neq( ax, bx ) ) return ax > bx;
         const types::t_real ay = _a->pos * basis.y;
         const types::t_real by = _b->pos * basis.y;
-        if( Fuzzy::neq( ay, by ) ) return ay > by;
+        if( math::neq( ay, by ) ) return ay > by;
         const types::t_real az = _a->pos * basis.z;
         const types::t_real bz = _b->pos * basis.z;
-        if( Fuzzy::neq( az, bz ) ) return az > bz;
+        if( math::neq( az, bz ) ) return az > bz;
         return false;
       }
     }; 

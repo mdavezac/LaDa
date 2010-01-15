@@ -240,7 +240,7 @@ namespace LaDa
           std::for_each
           ( 
             x.begin(), x.end(),
-            bl::_1 =   ( bl::bind( &opt::random::rng ) - bl::constant(5e-1) )
+            bl::_1 =   ( bl::bind( &opt::math::rng ) - bl::constant(5e-1) )
                      * bl::constant(range)
           );
           { // fitting.

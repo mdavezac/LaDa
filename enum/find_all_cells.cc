@@ -81,7 +81,7 @@ namespace LaDa
             types::t_real a(0);
             for(size_t k(0); k < 3; ++k)
               a += op(i,k) * _mat(k,j);
-            if( not Fuzzy::is_zero(std::floor(a+0.1) - a) ) return false;
+            if( not math::is_zero(std::floor(a+0.1) - a) ) return false;
           }
         return true;
       }

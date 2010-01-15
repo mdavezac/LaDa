@@ -26,10 +26,10 @@ namespace LaDa
         //! \brief returns true if the norm of \a _a - norm::compare::vec is
         //!        smaller than the norm pf \a _b - norm::compare::vec.
         bool operator()( Eigen::Vector3d &_a, Eigen::Vector3d &_b ) const
-          { return Fuzzy::le( (_a - vec).squaredNorm(), (_b - vec).squaredNorm() ); }
+          { return math::le( (_a - vec).squaredNorm(), (_b - vec).squaredNorm() ); }
         //! Returns true if \a _a = norm::compare::vec.
         bool operator()( Eigen::Vector3d &_a ) const
-          { return Fuzzy::is_zero( (_a - vec).squaredNorm() ); } 
+          { return math::is_zero( (_a - vec).squaredNorm() ); } 
     };
   }
 } // namespace LaDa

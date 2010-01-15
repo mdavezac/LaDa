@@ -53,7 +53,7 @@ namespace LaDa
                   i_c, i_c + *i_size, 
                   bl::var( norm ) += (
                                        bl::_1 =   bl::constant(range) 
-                                                * bl::bind( &opt::random::rng )
+                                                * bl::bind( &opt::math::rng )
                                                   + bl::if_then_else_return
                                                     ( 
                                                       bl::var(centered), 
@@ -65,7 +65,7 @@ namespace LaDa
                                      )
                 );
               }
-              while( Fuzzy::eq( norm, t_Type(0) ) );
+              while( math::eq( norm, t_Type(0) ) );
               norm = std::sqrt(norm);
               function[r] = norm;
               norm = t_Type(1) / norm;
@@ -227,7 +227,7 @@ namespace LaDa
                       __ASSERT( function.coefs.size() <= rII,
                                 "Rank index out of range.\n" )
  
-                      if( Fuzzy::neq( *i_iexpI, 0e0 ) )
+                      if( math::neq( *i_iexpI, 0e0 ) )
                       {
                         t_Type UI( function[ rI ] );
                         i_fac = factors[ rI * nb_targets + o].begin();
@@ -246,7 +246,7 @@ namespace LaDa
                         }
                       }
                       
-                      if( Fuzzy::eq( *i_iexpII, 0e0 ) ) continue;
+                      if( math::eq( *i_iexpII, 0e0 ) ) continue;
  
                       // Computes second factor.
                       t_Type UII( function[ rII ] ); 
@@ -277,7 +277,7 @@ namespace LaDa
  
 #         ifdef __DOHALFHALF__
             // adds regularization.
-            if( Fuzzy::leq( regular_factor, 0e0 ) ) return;
+            if( math::leq( regular_factor, 0e0 ) ) return;
             //  -- loop over ranks
             __ASSERT( _coefs[_dim].size() % 2 != 0, 
                       "Odd number of coefficients: " << _coefs[_dim].size() << ".\n" )
@@ -328,7 +328,7 @@ namespace LaDa
                                    bl::var(dummy) * bl::var(dummy) * bl::_3 )
           );
 #         ifdef __DOHALFHALF__
-            if( Fuzzy::leq( regular_factor, 0e0 ) )
+            if( math::leq( regular_factor, 0e0 ) )
               return result / (types::t_real) _targets.size();
             typename T_VECTORS :: const_iterator i_coefs = _coefs.begin();
             typename T_VECTORS :: const_iterator i_coefs_end = _coefs.end();

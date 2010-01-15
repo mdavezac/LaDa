@@ -29,11 +29,11 @@ namespace LaDa
         {
           Eigen::Vector3d pos( _inv_cell * (_pos - i_first->pos) );
           pos(0) -= std::floor(pos(0)+0.01);
-          if( not Fuzzy::is_zero(pos(0)) ) continue;
+          if( not math::is_zero(pos(0)) ) continue;
           pos(1) -= std::floor(pos(1)+0.01);
-          if( not Fuzzy::is_zero(pos(1)) ) continue;
+          if( not math::is_zero(pos(1)) ) continue;
           pos(2) -= std::floor(pos(2)+0.01);
-          if( Fuzzy::is_zero(pos(2)) ) return i;
+          if( math::is_zero(pos(2)) ) return i;
         }
         return -1;
       };

@@ -141,17 +141,17 @@ namespace LaDa
     template<class T_TYPE> template< class TTYPE >
       inline bool Atom_Type<T_TYPE> :: operator== (const Atom_Type<TTYPE> &_atom) const
       {
-        return     Fuzzy::eq( pos[0], _atom.pos[0] ) 
-               and Fuzzy::eq( pos[1], _atom.pos[1] ) 
-               and Fuzzy::eq( pos[2], _atom.pos[2] ); 
+        return     math::eq( pos[0], _atom.pos[0] ) 
+               and math::eq( pos[1], _atom.pos[1] ) 
+               and math::eq( pos[2], _atom.pos[2] ); 
       }
 
     template<class T_TYPE> 
       inline bool Atom_Type<T_TYPE> :: equal (const Atom_Type<t_Type> &_atom) const
         {
-          return     Fuzzy::eq(_atom.pos[0], pos[0] )
-                 and Fuzzy::eq(_atom.pos[1], pos[1] )
-                 and Fuzzy::eq(_atom.pos[2], pos[2] )
+          return     math::eq(_atom.pos[0], pos[0] )
+                 and math::eq(_atom.pos[1], pos[1] )
+                 and math::eq(_atom.pos[2], pos[2] )
                  and type == _atom.type;
         };
 
@@ -278,15 +278,15 @@ namespace LaDa
           return false;
          
         types::t_real a = pos[0] / norma, b = _atom.pos[0] / normb;
-        if ( Fuzzy::eq(a, b) )
+        if ( math::eq(a, b) )
           return a < b;
 
         a = pos[1] / norma; b = _atom.pos[1] / normb;
-        if ( Fuzzy::eq(a, b) )
+        if ( math::eq(a, b) )
           return a < b;
 
         a = pos[2] / norma; b = _atom.pos[2] / normb;
-        if ( Fuzzy::eq(a, b) )
+        if ( math::eq(a, b) )
           return false;
 
         return a < b;

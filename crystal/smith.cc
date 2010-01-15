@@ -6,7 +6,7 @@
 #endif
 
 
-#include <opt/smith_normal_form.h>
+#include <math/smith_normal_form.h>
 #include <opt/debug.h>
 
 #include "smith.h"
@@ -60,7 +60,7 @@ namespace LaDa
             << int_cell << "\n != \n" << inv_lat_cell << "\n\n"
           )
         }
-      opt::smith_normal_form( smith, left, int_cell, right );
+      math::smith_normal_form( smith, left, int_cell, right );
       for( size_t i(0); i < 3; ++i )
       {
         for( size_t j(0); j < 3; ++j )

@@ -49,7 +49,7 @@ namespace LaDa
       bool is_ideal = true;
       for( size_t i(0); is_ideal and i < 3; ++i )
         for( size_t j(0); is_ideal and j < 3; ++j )
-          if( Fuzzy::neq( inv_str(i,j), rint( inv_str(i,j) ) ) ) is_ideal = false;
+          if( math::neq( inv_str(i,j), rint( inv_str(i,j) ) ) ) is_ideal = false;
       if( is_ideal )
       {
         __ROOTCODE

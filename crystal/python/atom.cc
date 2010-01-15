@@ -234,9 +234,9 @@ namespace LaDa
         boost::python::throw_error_already_set();
         return "-1";
       }
-      if(     Fuzzy::neq( _r, types::t_real(1) ) 
-          and Fuzzy::neq( _r, types::t_real(-1) ) ) return "";
-      return Fuzzy::neq( _r, types::t_real(1) ) ? 
+      if(     math::neq( _r, types::t_real(1) ) 
+          and math::neq( _r, types::t_real(-1) ) ) return "";
+      return math::neq( _r, types::t_real(1) ) ? 
                 Crystal::Structure::lattice->sites[0].type[0]:
                 Crystal::Structure::lattice->sites[0].type[1] ;
     }

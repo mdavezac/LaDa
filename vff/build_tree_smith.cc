@@ -143,7 +143,7 @@ namespace LaDa
             rint( dfrac(2) )
           );
           i_center->translations.push_back( frac );
-          i_center->do_translates.push_back( not Fuzzy::is_zero(frac.squaredNorm()) );
+          i_center->do_translates.push_back( not math::is_zero(frac.squaredNorm()) );
         }
       }
       __ENDGROUP__
@@ -200,7 +200,7 @@ namespace LaDa
               << int_cell << "\n != \n" << inv_lat_cell << "\n\n"
             )
           }
-        opt::smith_normal_form( smith, left, int_cell, right );
+        math::smith_normal_form( smith, left, int_cell, right );
         for( size_t i(0); i < 3; ++i )
         {
           for( size_t j(0); j < 3; ++j )

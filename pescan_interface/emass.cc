@@ -150,7 +150,7 @@ namespace LaDa
     void eMass :: compute_( Interface &_interface, const Eigen::Vector3d &_kpoint ) const
     {
       size_t oldnbstates = _interface.escan.nbstates;
-      const bool is_gamma( Fuzzy::is_zero(_kpoint.squaredNorm()) );
+      const bool is_gamma( math::is_zero(_kpoint.squaredNorm()) );
       if( is_gamma ) _interface.escan.nbstates = oldnbstates >> 1;
       _interface.escan.kpoint = _kpoint;
 

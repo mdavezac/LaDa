@@ -206,7 +206,7 @@ namespace LaDa
 
       types::t_real to_change = ((types::t_real) N) * ( x0  - x );
       // inline with non-use of fzzy math below...
-      if ( Fuzzy::gt(to_change, -1.0) and Fuzzy::leq(to_change, 1.0) ) return;
+      if ( math::gt(to_change, -1.0) and math::leq(to_change, 1.0) ) return;
 
       // Puts the positions which can be changed into a list
       std::vector<types::t_unsigned> pos;
@@ -232,10 +232,10 @@ namespace LaDa
         BitString::flip<typename T_CONT::value_type>(_obj.bitstring[*i_pos]);
         ( to_change > 0 ) ? to_change -= 2: to_change += 2;
 
-        if ( Fuzzy::gt(to_change, -1.0) and Fuzzy::leq(to_change, 1.0) ) break;
+        if ( math::gt(to_change, -1.0) and math::leq(to_change, 1.0) ) break;
       }
         
-      __DOASSERT( Fuzzy::leq(to_change, -1.0) or Fuzzy::gt(to_change, 1.0),
+      __DOASSERT( math::leq(to_change, -1.0) or math::gt(to_change, 1.0),
                      "Concentration could not be set\n"
                   << "Incompatibility between required x/y and frozen atoms?\n"; )
     }
@@ -569,17 +569,17 @@ namespace LaDa
     {
       types::t_real a =   _1 * a0;
       types::t_real b =   _2 * a0;
-      if ( not Fuzzy::eq( a, b ) )
-        return Fuzzy::le( a, b );
+      if ( not math::eq( a, b ) )
+        return math::le( a, b );
 
       a =   _1 * a1;
       b =   _2 * a1;
-      if ( not Fuzzy::eq( a, b ) )
-        return Fuzzy::le( a, b );
+      if ( not math::eq( a, b ) )
+        return math::le( a, b );
       
       a =   _1 * a2;
       b =   _2 * a2;
-      return Fuzzy::le( a, b );
+      return math::le( a, b );
     }
 
 

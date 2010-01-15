@@ -95,7 +95,7 @@ namespace LaDa
       types::t_real z =   structure0.atoms[fixed_index[2]].pos[2] 
                         - structure.atoms [fixed_index[2]].pos[2];
 
-      if ( Fuzzy::eq(x, 0e0) and Fuzzy::eq(y, 0e0) and Fuzzy::eq(z, 0e0) ) return;
+      if ( math::eq(x, 0e0) and math::eq(y, 0e0) and math::eq(z, 0e0) ) return;
       for(i_atom = structure.atoms.begin(); i_atom != i_atom_end; ++i_atom )
         { i_atom->pos[0] += x; i_atom->pos[1] += y; i_atom->pos[2] += z; }
     }

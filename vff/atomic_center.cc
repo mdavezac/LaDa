@@ -77,7 +77,7 @@ namespace LaDa
 
           bonds.push_back( _bond );
           translations.push_back( frac_image );
-          do_translates.push_back( not Fuzzy::is_zero(frac_image.squaredNorm()) );
+          do_translates.push_back( not math::is_zero(frac_image.squaredNorm()) );
           found_bond = true;
         }
       } while ( ++period ); 

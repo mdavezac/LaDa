@@ -42,9 +42,9 @@ namespace LaDa
       syms.reserve( N );
       for( types::t_int i(0); i < N; ++i )
       {
-        if( not Fuzzy::eq( atat::norm2( _lat.space_group[i].trans ), 0e0 ) ) continue;
+        if( not math::eq( atat::norm2( _lat.space_group[i].trans ), 0e0 ) ) continue;
         Eigen::Matrix3d &op = _lat.space_group[i].op;
-  //     if( not Fuzzy::eq( atat::det( op ), 1e0 ) ) continue;
+  //     if( not math::eq( atat::det( op ), 1e0 ) ) continue;
         syms.push_back( op );
       }
     }
@@ -96,16 +96,16 @@ namespace LaDa
       bool operator()( Crystal::Neighbor const * const _a,
                        Crystal::Neighbor const * const _b ) const
       {
-        if( Fuzzy::neq( _a->distance, _b->distance ) ) return _a->distance < _b->distance;
+        if( math::neq( _a->distance, _b->distance ) ) return _a->distance < _b->distance;
         const types::t_real ax = _a->pos * basis.x;
         const types::t_real bx = _b->pos * basis.x;
-        if( Fuzzy::neq( ax, bx ) ) return ax > bx;
+        if( math::neq( ax, bx ) ) return ax > bx;
         const types::t_real ay = _a->pos * basis.y;
         const types::t_real by = _b->pos * basis.y;
-        if( Fuzzy::neq( ay, by ) ) return ay > by;
+        if( math::neq( ay, by ) ) return ay > by;
         const types::t_real az = _a->pos * basis.z;
         const types::t_real bz = _b->pos * basis.z;
-        if( Fuzzy::neq( az, bz ) ) return az > bz;
+        if( math::neq( az, bz ) ) return az > bz;
         return false;
       }
     }; 
@@ -251,7 +251,7 @@ namespace LaDa
               a[0] += 0.05e0; a[0] -= std::floor(a[0]); a[0] -= 0.05e0;
               a[1] += 0.05e0; a[1] -= std::floor(a[1]); a[1] -= 0.05e0;
               a[2] += 0.05e0; a[2] -= std::floor(a[2]); a[2] -= 0.05e0;
-              if( Fuzzy::eq( atat::norm2( a ), 0e0 ) ) break; 
+              if( math::eq( atat::norm2( a ), 0e0 ) ) break; 
             }
             __DOASSERT( i_found == shifted_fracs.end(),
                         "Could not find equivalent position.\n" ) 
@@ -345,7 +345,7 @@ namespace LaDa
                   "Lattice has not been set.\n" )
         Eigen::Matrix3d mult;
         // assume fcc
-        if( Fuzzy::eq( Crystal::Structure::lattice->cell.x[0][0], 0e0 ) ) 
+        if( math::eq( Crystal::Structure::lattice->cell.x[0][0], 0e0 ) ) 
         {
           mult.x[0][0] = -1e0; mult.x[1][0] =  1e0; mult.x[2][0] =  1e0; 
           mult.x[0][1] =  1e0; mult.x[1][1] = -1e0; mult.x[2][1] =  1e0; 

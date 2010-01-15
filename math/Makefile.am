@@ -8,4 +8,4 @@ noinst_LTLIBRARIES = libatat.la
 libatat_la_SOURCES = $(atat_cc)
 libatat_ladir = $(includedir)/LaDa/atat
 nobase_libatat_la_HEADERS = $(atat_h)
-SUBDIRS = python
+# SUBDIRS = python

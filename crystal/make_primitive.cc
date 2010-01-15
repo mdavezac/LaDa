@@ -29,9 +29,9 @@ namespace LaDa
       result(1) -= std::floor(result(1));
       result(2) -= std::floor(result(2));
       // numerical stability check.
-      if( Fuzzy::eq(result(0), 1e0) ) result(0) = 0e0;
-      if( Fuzzy::eq(result(1), 1e0) ) result(1) = 0e0;
-      if( Fuzzy::eq(result(2), 1e0) ) result(2) = 0e0;
+      if( math::eq(result(0), 1e0) ) result(0) = 0e0;
+      if( math::eq(result(1), 1e0) ) result(1) = 0e0;
+      if( math::eq(result(2), 1e0) ) result(2) = 0e0;
       return _cell * result;
     }
 
@@ -61,9 +61,9 @@ namespace LaDa
         Eigen::Vector3d const translation( into_cell(i_site->pos - compsites.pos, cell, inv) );
         
         // loop on null translation.
-        if(     Fuzzy::is_zero(translation(0))
-            and Fuzzy::is_zero(translation(1)) 
-            and Fuzzy::is_zero(translation(2)) ) continue;
+        if(     math::is_zero(translation(0))
+            and math::is_zero(translation(1)) 
+            and math::is_zero(translation(2)) ) continue;
 
         // checks that it leaves the lattice invariant.
         t_Sites :: const_iterator i_mapping = copy.sites.begin();
@@ -115,9 +115,9 @@ namespace LaDa
 
             // singular matrix?
             types::t_real const det(trial.determinant());
-            if( Fuzzy::is_zero(det) ) continue;
+            if( math::is_zero(det) ) continue;
             // Volume smaller than current new_cell?
-            if( Fuzzy::geq( std::abs(det), volume) ) continue;
+            if( math::geq( std::abs(det), volume) ) continue;
             // Direct matrix?
             if( det < 0e0 )
             {
@@ -137,7 +137,7 @@ namespace LaDa
       // Found the new cell with smallest volume (e.g. primivite)
       LADA_ASSERT
       (
-        not Fuzzy::is_zero(cell.determinant() - new_cell.determinant() ), 
+        not math::is_zero(cell.determinant() - new_cell.determinant() ), 
         "Could not find primitive cell.\n"
       );
 

@@ -130,9 +130,9 @@ namespace LaDa
       syms.reserve( N );
       for( types::t_int i(0); i < N; ++i )
       {
-        if( not Fuzzy::is_zero(_lat.space_group[i].trans.squaredNorm()) ) continue;
+        if( not math::is_zero(_lat.space_group[i].trans.squaredNorm()) ) continue;
         Eigen::Matrix3d &op = _lat.space_group[i].op;
-        if( not Fuzzy::is_zero(op.determinant() - 1e0) ) continue;
+        if( not math::is_zero(op.determinant() - 1e0) ) continue;
         syms.push_back( op );
       }
     }
@@ -195,11 +195,11 @@ namespace LaDa
                 a[0] += 0.05e0; a[0] -= std::floor(a[0]); a[0] -= 0.05e0;
                 a[1] += 0.05e0; a[1] -= std::floor(a[1]); a[1] -= 0.05e0;
                 a[2] += 0.05e0; a[2] -= std::floor(a[2]); a[2] -= 0.05e0;
-                if( Fuzzy::is_zero( a.squaredNorm(), 0e0 ) ) break; 
+                if( math::is_zero( a.squaredNorm(), 0e0 ) ) break; 
               }
               __DOASSERT( i_found == shifted_fracs.end(), "Could not find equivalent position.\n" ) 
               // Found the position in atomic structure.
-              bitset[ i ] = Fuzzy::eq( _structure.atoms[j].type, -1e0 );
+              bitset[ i ] = math::eq( _structure.atoms[j].type, -1e0 );
             }
             // adds to configurations if similar bitset cannot be found.
             // otherwise increase weight of similar structure.
@@ -303,7 +303,7 @@ namespace LaDa
                   "Lattice has not been set.\n" )
         Eigen::Matrix3d mult;
         // assume fcc
-        if( Fuzzy::eq( Crystal::Structure::lattice->cell.x[0][0], 0e0 ) ) 
+        if( math::eq( Crystal::Structure::lattice->cell.x[0][0], 0e0 ) ) 
         {
           mult.x[0][0] = -1e0; mult.x[1][0] =  1e0; mult.x[2][0] =  1e0; 
           mult.x[0][1] =  1e0; mult.x[1][1] = -1e0; mult.x[2][1] =  1e0; 

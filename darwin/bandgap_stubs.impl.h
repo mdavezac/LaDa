@@ -32,7 +32,7 @@ namespace LaDa
 
       // Sets to folded spectrum if Pescan::BandGap::Eref have been specified
       // correctly
-      if( Fuzzy::gt( bandgap.BandGap().Eref.cbm, bandgap.BandGap().Eref.vbm ) )
+      if( math::gt( bandgap.BandGap().Eref.cbm, bandgap.BandGap().Eref.vbm ) )
       {
          bandgap.BandGap().set_method(); 
          Print::xmg << Print::Xmg::comment 
@@ -188,7 +188,7 @@ namespace LaDa
         boost::mpi::broadcast( MPI_COMM, pair, 0 );
 #     endif
 
-      if ( Fuzzy::geq(a, b) )  return;
+      if ( math::geq(a, b) )  return;
       bandgap.BandGap().Eref.vbm = a; 
       bandgap.BandGap().Eref.cbm = b; 
     }

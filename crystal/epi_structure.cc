@@ -39,16 +39,16 @@ namespace LaDa
       cell = cell * diagonal;
 
       // Checks that cell is not singular
-      if ( Fuzzy::is_zero( std::abs(cell.determinant()) ) )
+      if ( math::is_zero( std::abs(cell.determinant()) ) )
         cell.set_column(1, lattice->cell.col( 0 ) );
-      if ( Fuzzy::is_zero( std::abs(cell.determinant()) ) )
+      if ( math::is_zero( std::abs(cell.determinant()) ) )
         cell.set_column(2, lattice->cell.col( 1 ) );
-      if ( Fuzzy::is_zero( std::abs(cell.determinant()) ) )
+      if ( math::is_zero( std::abs(cell.determinant()) ) )
       {
         std::cerr << "Could not construct unit-cell\n" << cell << std::endl;
         return false;
       }
-      if( Fuzzy::is_zero( cell.determinant() ) )
+      if( math::is_zero( cell.determinant() ) )
       {
         Eigen::Vector3d swap = cell.col(1);
         cell.set_column(1, cell.col( 2 ));

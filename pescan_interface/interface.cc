@@ -341,7 +341,7 @@ namespace LaDa
       file << "10 " << escan.rspace_output << " "
                     << " 1 1 1 " << escan.rspace_wfn << " # real-space output \n";
 
-      if ( Fuzzy::is_zero( escan.kpoint.squareNorm() ) ) file << "11 0 0 0 0 0 # kpoint=Gamma\n";
+      if ( math::is_zero( escan.kpoint.squareNorm() ) ) file << "11 0 0 0 0 0 # kpoint=Gamma\n";
       else
       {
         Eigen::Vector3d k = escan.kpoint;

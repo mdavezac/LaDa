@@ -33,8 +33,8 @@ namespace LaDa
         const types::t_real a = _a.squaredNorm();
         const types::t_real b = _b.squaredNorm();
         if( std::abs( a - b ) > m ) return a < b;
-        if( Fuzzy::neq( _a[0], _b[0] ) ) return _a[0] < _b[0];
-        if( Fuzzy::neq( _a[1], _b[1] ) ) return _a[1] < _b[1];
+        if( math::neq( _a[0], _b[0] ) ) return _a[0] < _b[0];
+        if( math::neq( _a[1], _b[1] ) ) return _a[1] < _b[1];
         return _a[2] < _b[2];
       }
       types::t_real m;

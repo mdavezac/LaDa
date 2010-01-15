@@ -76,7 +76,7 @@ namespace LaDa
               rate = boost::lexical_cast<types::t_real>( _node.Attribute("rate") );
             bool do_range( false );
             if( _node.Attribute( "dorange" ) ) do_range = true;
-            if( Fuzzy::leq( rate, 0e0 ) or Fuzzy::geq( rate, 1e0 ) ) rate = 5e-1;
+            if( math::leq( rate, 0e0 ) or math::geq( rate, 1e0 ) ) rate = 5e-1;
             Operator::MakePopulator<t_Individual, t_Populator>::transform_binary
             ( 
               boost::bind( &PureLayers::krossover<t_Object>, _1, _2, rate, do_range,

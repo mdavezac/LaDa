@@ -13,7 +13,7 @@
 
 namespace LaDa 
 {
-  namespace opt
+  namespace math
   {
     //! Computes smith normal form of a matrix \a  _S = \a _L \a _M \a _R.
     void smith_normal_form( Eigen::Matrix3i& _S, Eigen::Matrix3i & _L,

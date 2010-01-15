@@ -58,7 +58,7 @@ namespace LaDa
                              const Eigen::Vector3d &_x, 
                              const t_Position& _a1, 
                              const t_Position& _a2 ) const
-          { return Fuzzy::le( _a1.first * _x, _a2.first * _x ); }
+          { return math::le( _a1.first * _x, _a2.first * _x ); }
         //! \brief Compares positions indexed as integers, given the coordinate system.
         //! \note Does not compare norms of \a _a1 - \a _origin and \a _a2 - \a _origin,
         //!       E.g. does not implement complete comparison rule. 

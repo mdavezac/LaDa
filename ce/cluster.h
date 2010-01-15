@@ -94,7 +94,7 @@ namespace LaDa
         //!          the inverse of \a _icell.
         //! \param _cluster some cluster
         //! \param _icell if \f$\Omega\f$ is the cell-shape, then \a _icell = \f$\Omega^{-1}\f$.
-        bool equivalent_mod_cell( Cluster &_cluster, const Eigen::Matrix3d &_icell);
+        bool are_periodic_images( Cluster &_cluster, const Eigen::Matrix3d &_icell);
 
         //! Returns a constant reference to  vector \a _i of the cluster.
         const Eigen::Vector3d& access(types::t_int _i) const { return vectors[_i]; }

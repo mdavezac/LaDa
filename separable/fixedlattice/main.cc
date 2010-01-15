@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
     __ASSERT( not ( dofit or doloo ), "Nothing to do..." )
     const types::t_unsigned verbosity = vm["verbose"].as<types::t_unsigned>();
     types::t_unsigned seed = vm["seed"].as<types::t_unsigned>();
-    seed = opt::random::seed( seed );
+    seed = opt::math::seed( seed );
     const types::t_unsigned rank( vm["rank"].as< types::t_unsigned >() );
     const std::string bdesc( vm["basis"].as<std::string>() );
     __DOASSERT( rank == 0, "Separable function of rank 0 is obnoxious.\n" )
@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
       // Other expect a "cubic" lattice wich is implicitely tetragonal...
       // Historical bullshit from input structure files @ nrel.
       for( types::t_int i=0; i < 3; ++i ) 
-        if( Fuzzy::eq( lattice->cell.x[i][2], 0.5e0 ) )
+        if( math::eq( lattice->cell.x[i][2], 0.5e0 ) )
           lattice->cell.x[i][2] = 0.6e0;
 #   endif
     lattice->find_space_group();
@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
       // Other expect a "cubic" lattice wich is implicitely tetragonal...
       // Historical bullshit from input structure files @ nrel.
       for( types::t_int i=0; i < 3; ++i ) 
-        if( Fuzzy::eq( lattice->cell.x[i][2], 0.6e0 ) )
+        if( math::eq( lattice->cell.x[i][2], 0.6e0 ) )
           lattice->cell.x[i][2] = 0.5e0;
 #   endif
 

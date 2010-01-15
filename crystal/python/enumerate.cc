@@ -35,7 +35,7 @@ namespace LaDa
             if( not Crystal :: read_pifile_structure( file, structure ) ) continue;
             _callable( structure );
             foreach( Crystal::Structure::t_Atom &atom, structure.atoms )
-              atom.type = Fuzzy::gt( atom.type, 0e0 ) ? -1e0: 1e0;
+              atom.type = math::gt( atom.type, 0e0 ) ? -1e0: 1e0;
             structure.name = "-" + structure.name;
             _callable( structure );
           }
