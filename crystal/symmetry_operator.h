@@ -15,7 +15,7 @@
 
 #include <opt/debug.h>
 #include <opt/types.h>
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 
 
 namespace LaDa
@@ -31,14 +31,14 @@ namespace LaDa
     struct SymmetryOperator
     {
       //! Constructor.
-      SymmetryOperator() : trans(0,0,0) { op.zero(); op(0,0)=1e0; op(1,1)=1e0; op(2,2)=1e0; }
+      SymmetryOperator() : trans(Eigen::Vector3d::Zero()), op(Eigen::Matrix3d::Identity()) {}
       //! Constructor.
       SymmetryOperator   ( Eigen::Matrix3d const &_op,
                            Eigen::Vector3d const& _t = Eigen::Vector3d(0,0,0) )
                        : op(_op), trans(_t) {}
       //! Constructor.
       SymmetryOperator   ( Eigen::Vector3d const& _t)
-                       : trans(_t) { op.zero(); op(0,0)=1e0; op(1,1)=1e0; op(2,2)=1e0; }
+                       : trans(_t), op(Eigen::Matrix3d::Identity()) {}
       //! Copy Constructor.
       SymmetryOperator( SymmetryOperator const& _c ) : op(_c.op), trans(_c.trans) {}
 
@@ -64,9 +64,9 @@ namespace LaDa
                     or math::neq(op(0,2), _sym.op(0,2)) 
                     or math::neq(op(1,2), _sym.op(1,2))
                     or math::neq(op(2,2), _sym.op(2,2)) 
-                    or math::neq(trans.x[0], _sym.trans[0])
-                    or math::neq(trans.x[1], _sym.trans[1]) 
-                    or math::neq(trans.x[2], _sym.trans[2]) );
+                    or math::neq(trans(0), _sym.trans(0))
+                    or math::neq(trans(1), _sym.trans(1)) 
+                    or math::neq(trans(2), _sym.trans(2)) );
       }
     };
 

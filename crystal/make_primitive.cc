@@ -9,8 +9,8 @@
 
 #include <Eigen/LU> 
 
-#include <math/is_integer.h>
-#include <opt/fuzzy.h>
+#include <math/misc.h>
+#include <math/fuzzy.h>
 
 #include "lattice.h"
 #include "compare_sites.h"

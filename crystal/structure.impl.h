@@ -58,15 +58,15 @@ namespace LaDa
     template< class T_TYPE >
      bool TStructure<T_TYPE> :: operator== (const TStructure<T_TYPE> &_str ) const
      {
-       return     Fuzzy :: eq( cell(0,0), _str.cell(0,0) )
-              and Fuzzy :: eq( cell(1,0), _str.cell(1,0) )
-              and Fuzzy :: eq( cell(2,0), _str.cell(2,0) )
-              and Fuzzy :: eq( cell(0,1), _str.cell(0,1) )
-              and Fuzzy :: eq( cell(1,1), _str.cell(1,1) )
-              and Fuzzy :: eq( cell(2,1), _str.cell(2,1) )
-              and Fuzzy :: eq( cell(0,2), _str.cell(0,2) )
-              and Fuzzy :: eq( cell(1,2), _str.cell(1,2) )
-              and Fuzzy :: eq( cell(2,2), _str.cell(2,2) )
+       return     math::eq( cell(0,0), _str.cell(0,0) )
+              and math::eq( cell(1,0), _str.cell(1,0) )
+              and math::eq( cell(2,0), _str.cell(2,0) )
+              and math::eq( cell(0,1), _str.cell(0,1) )
+              and math::eq( cell(1,1), _str.cell(1,1) )
+              and math::eq( cell(2,1), _str.cell(2,1) )
+              and math::eq( cell(0,2), _str.cell(0,2) )
+              and math::eq( cell(1,2), _str.cell(1,2) )
+              and math::eq( cell(2,2), _str.cell(2,2) )
               and atoms == _str.atoms;
      }
       
@@ -151,7 +151,7 @@ namespace LaDa
                              "Incomplete cell in structure tag.\n"); vec(1) = d;
           d=1.0; __DOASSERT( not child->Attribute("z", &d),
                              "Incomplete cell in structure tag.\n"); vec(2) = d;
-          cell.set_row(i,vec);
+          cell.row(i) = vec;
           if ( child->Attribute("freeze") )
           {
             str = child->Attribute("freeze");

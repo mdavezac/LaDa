@@ -20,7 +20,7 @@
 
 #include <opt/types.h>
 #include <opt/debug.h>
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 
 #include "structure.h"
 

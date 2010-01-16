@@ -2,8 +2,10 @@
 #  Version: $Id$
 #
 
-math_cc = random.cc smith_normal_form.cc
-math_h  = compare_norms.h  fuzzy.h  lambda.impl.h  misc.h  random.h  serialize.h  smith_normal_form.h
+math_cc = random.cc smith_normal_form.cc 
+math_h  = compare_norms.h  fuzzy.h  lambda.impl.h  misc.h  random.h  serialize.h \
+          smith_normal_form.h traits.h fuzzy.h modifiers.h 
+math_f90 = rational_mathematics.f90
 # math_python_h = atat.impl.hpp atatintrospection.hpp atatoperators.hpp
 # math_python_cc = atat.cc 
 
@@ -190,18 +192,17 @@ mpi_doc    = $(mpi_h) $(mpi_cc)
 
 opt_h = ndim_iterator.h minimize_base.h polynome.h \
         types.h function_base.h pow.h \
-	va_minimizer.h fitness_function.h  function_functors.h monome.h traits.h \
-        fuzzy.h va_function.h algorithms.h \
-        bpo_macros.h modifiers.h tuple_io.h  leave_many_out.h 
+	va_minimizer.h fitness_function.h  function_functors.h monome.h \
+        va_function.h algorithms.h \
+        bpo_macros.h tuple_io.h  leave_many_out.h 
 opt_cc = leave_many_out.cc 
 opt_python_convenience_h =  convex_hull.h errors.h convex_hull.impl.h \
-                            tinyxml.h initial_path.h fortran_dirio.h smith_normal_form.h
+                            tinyxml.h initial_path.h fortran_dirio.h 
 opt_python_convenience_cc = convex_hull.cc errors.cc tinyxml.cc \
-                            initial_path.cc fortran_dirio.cc smith_normal_form.cc
+                            initial_path.cc fortran_dirio.cc 
 opt_doc = $(opt_h) $(opt_cc) $(opt_python_convenience_cc) $(opt_python_convenience_h)
 opt_python_cc = errortuple.cc python.cc
 opt_python_c = errortuple.hpp convexhull.impl.hpp
-opt_f90 = rational_mathematics.f90
 
 EMASS_CC = emass.cc
 EMASS_H  = emass.h

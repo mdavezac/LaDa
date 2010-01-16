@@ -1,6 +1,3 @@
-//
-//  Version: $Id$
-//
 #ifndef _CONVEX_HULL_BASE_H_
 #define _CONVEX_HULL_BASE_H_
 
@@ -13,19 +10,18 @@
 #include <iostream>
 #include <iomanip>
 
+#include <boost/serialization/serialization.hpp>
+#include <boost/lambda/lambda.hpp>
+#include <boost/lambda/bind.hpp>
+
 #include <tinyxml/tinyxml.h>
 
+#include <math/fuzzy.h>
 #include <mpi/mpi_object.h>
 
 #include "types.h"
 #include "function_functors.h"
-#include "fuzzy.h"
 
-#include <mpi/mpi_object.h>
-
-#include <boost/serialization/serialization.hpp>
-#include <boost/lambda/lambda.hpp>
-#include <boost/lambda/bind.hpp>
 
 namespace LaDa
 {

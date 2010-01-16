@@ -8,7 +8,7 @@
 #include <config.h>
 #endif
 
-#include "types.h"
+#include <opt/types.h>
 
 namespace LaDa
 {

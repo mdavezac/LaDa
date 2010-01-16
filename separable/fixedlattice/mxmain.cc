@@ -25,7 +25,7 @@
 #include <mpi/macros.h>
 #include <minimizer/cgs.h>
 #include <opt/types.h>
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 #include <opt/debug.h>
 #include <opt/errors.h>
 #include <opt/random.h>

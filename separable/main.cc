@@ -22,7 +22,7 @@
 #include <minimizer/allsq.h>
 #include <minimizer/cgs.h>
 #include <opt/types.h>
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 #include <opt/debug.h>
 #include <opt/errors.h>
 

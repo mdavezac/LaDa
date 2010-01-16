@@ -14,7 +14,7 @@
 
 #include <opt/debug.h>
 #include <opt/types.h>
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 
 
 namespace LaDa

@@ -5,7 +5,7 @@
 #ifndef _GAOPERATORS_IMPL_H_
 #define _GAOPERATORS_IMPL_H_
 
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 
 #include "debug.h"
 

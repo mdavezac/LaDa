@@ -13,7 +13,7 @@
 #include <crystal/structure.h>
 #include <crystal/atom.h>
 #include <opt/tinyxml.h>
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
 #include <crystal/layerdepth.h>

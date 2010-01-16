@@ -15,15 +15,13 @@
 #include <opt/tinyxml.h>
 #include <opt/ndim_iterator.h>
 #include <physics/physics.h>
+#include <math/misc.h>
 
 #include "structure.h"
 #include "fill_structure.h"
 #include "epi_structure.h"
 #include "fourier.h"
 #include "smith.h"
-
-#include <opt/smith_normal_form.h>
-
 
 namespace LaDa
 {
@@ -296,7 +294,7 @@ namespace LaDa
              >> tupleext;
         __DOASSERT( direction.squaredNorm() < types::tolerance, "extent cannot be null.\n" )
     
-        direction = (!lattice->cell) * direction;
+        direction = lattice->cell.inverse() * direction;
         
       __TRYEND(,"Error while loading superlattice description.\n" )
     
@@ -466,7 +464,7 @@ namespace LaDa
       Eigen::Vector3d hold = vec;
       Eigen::Vector3d compute;
       Eigen::Vector3d current = vec;
-      types::t_real norm_c = norm2(vec);
+      types::t_real norm_c = vec.squaredNorm();
 
       i_cell.add(-1,1);
       i_cell.add(-1,1);
@@ -479,10 +477,10 @@ namespace LaDa
         compute(2) = (types::t_real) i_cell.access(2);
 
         vec = hold + lat*compute;
-        if ( norm2( vec ) < norm_c ) 
+        if ( vec.squaredNorm() < norm_c ) 
         {
           current = vec;
-          norm_c = norm2(vec);
+          norm_c = vec.squaredNorm();
         }
 
       } while ( (++i_cell) );
@@ -495,15 +493,12 @@ namespace LaDa
        if ( not lattice ) return;
       
        k_vecs.clear();
-       Eigen::Matrix3d const kcell( !(~cell) );
-       Eigen::Matrix3d const klat( !(~lattice->cell) );
+       Eigen::Matrix3d const kcell( cell.inverse().transpose() );
+       Eigen::Matrix3d const klat( lattice->cell.inverse().transpose() );
        t_SmithTransform transform = get_smith_transform( kcell, klat );
        
        Eigen::Vector3i &smith = bt::get<1>(transform);
-       const Eigen::Matrix3d factor
-       ( 
-          (~lattice->cell) * (!bt::get<0>(transform))
-       );
+       const Eigen::Matrix3d factor(lattice->cell.transpose() * bt::get<0>(transform).inverse());
        for( size_t i(0); i < smith(0); ++i )
          for( size_t j(0); j < smith(1); ++j )
            for( size_t k(0); k < smith(2); ++k )
@@ -534,19 +529,19 @@ namespace LaDa
       Eigen::Vector3d a = A.row(0), b;
       types::t_int n = 1;
       b = a;
-      while( not is_int(b) )
+      while( not math::is_integer(b) )
         { b += a; n++;  }
       kvec[0] = n;
 
       a = A.row(1);
       b = a; n = 1;
-      while( not is_int(b) )
+      while( not math::is_integer(b) )
         { b += a; n++;  }
       kvec[1] = n;
       
       a = A.row(2);
       b = a; n = 1;
-      while( not is_int(b) )
+      while( not math::is_integer(b) )
         { b += a; n++;  }
       kvec[2] = n;
     }
@@ -554,7 +549,7 @@ namespace LaDa
     std::ostream& Structure :: print_xcrysden( std::ostream &_stream ) const
     {
       if( not lattice ) return _stream;
-      _stream << "CRYSTAL\nPRIMVEC\n" << ( (~cell) * scale ) << "\nPRIMCOORD\n" 
+      _stream << "CRYSTAL\nPRIMVEC\n" << (scale*cell.transpose()) << "\nPRIMCOORD\n" 
                 << atoms.size() << " 1 \n";  
       t_Atoms :: const_iterator i_atom = atoms.begin();
       t_Atoms :: const_iterator i_atom_end = atoms.end();

@@ -28,7 +28,7 @@
 
 #include <print/manip.h>
 #include <opt/types.h>
-#include <math/is_integer.h>
+#include <math/misc.h>
 
 #include "structure.h"
 

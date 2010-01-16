@@ -11,7 +11,7 @@
 #include <boost/python.hpp>
 #include <boost/python/enum.hpp>
 
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 #include "../atom.h"
 #include "../structure.h"
 #include "../layerdepth.h"

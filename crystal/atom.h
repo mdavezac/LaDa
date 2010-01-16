@@ -18,8 +18,8 @@
 #include <tinyxml/tinyxml.h>
 
 #include <opt/types.h>
-#include <opt/traits.h>
-#include <opt/fuzzy.h>
+#include <math/traits.h>
+#include <math/fuzzy.h>
 
 #include <Eigen/Core>
 
@@ -163,7 +163,7 @@ namespace LaDa
                << std::setw(8) << pos[1] << "  " 
                << std::setw(8) << pos[2];
         stream << "  type: " << std::setw(16)
-               << Traits::Quantity< T_TYPE > :: print(type);
+               << math::traits::Quantity< T_TYPE > :: print(type);
         if ( site != -1 )
           stream << "  site: " << site;
         stream << "  freeze: " << freeze;

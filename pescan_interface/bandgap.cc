@@ -14,7 +14,7 @@
 #include <physics/physics.h>
 #include <print/stdout.h>
 #include <print/manip.h>
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 #include <opt/debug.h>
 #include <opt/initial_path.h>
 #include <opt/tinyxml.h>

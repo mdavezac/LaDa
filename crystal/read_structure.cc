@@ -25,7 +25,7 @@
 #include <opt/debug.h>
 #include <opt/tinyxml.h>
 
-#include <math/is_integer.h>
+#include <math/misc.h>
 
 #include "structure.h"
 #include "read_structure.h"

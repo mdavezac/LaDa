@@ -13,7 +13,7 @@
 # include <boost/mpi/collectives/all_reduce.hpp>
 #endif
 
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 #include <opt/debug.h>
 
 #include "layered.h"

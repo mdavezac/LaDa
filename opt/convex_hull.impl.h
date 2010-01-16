@@ -1,7 +1,3 @@
-//
-//  Version: $Id$
-//
-
 namespace LaDa
 {
   namespace opt

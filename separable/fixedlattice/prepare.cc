@@ -18,7 +18,7 @@
 #include <crystal/neighbors.h>
 #include <atomic_potentials/bases.h>
 #include <crystal/fill_structure.h>
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 
 namespace LaDa
 {

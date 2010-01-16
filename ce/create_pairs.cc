@@ -13,7 +13,7 @@
 #include <crystal/symmetry_operator.h>
 #include <crystal/which_site.h>
 #include <opt/types.h>
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 
 #include "create_pairs.h"
 

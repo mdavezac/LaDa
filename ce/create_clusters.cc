@@ -14,7 +14,7 @@
 #include <crystal/which_site.h>
 #include <crystal/neighbors.h>
 #include <opt/ndim_iterator.h>
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 #include <opt/pow.h>
 
 #include "create_pairs.h"

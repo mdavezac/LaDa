@@ -14,6 +14,7 @@
 
 #include <print/manip.h>
 #include <opt/tinyxml.h>
+#include <math/misc.h>
 
 #include "lattice.h"
 #include "symmetry_operator.h"
@@ -43,7 +44,7 @@ namespace LaDa
         child->Attribute("x", &d); vec(0) = d;
         child->Attribute("y", &d); vec(1) = d;
         child->Attribute("z", &d); vec(2) = d;
-        cell.set_row(i, vec);
+        cell.row(i) = vec;
       }
       LADA_DOASSERT( i == 3, "Incorrect cell in lattice tag on input: " << i << *parent << "\n"; )
 

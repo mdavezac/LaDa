@@ -11,7 +11,7 @@
 #include <utility> 
 
 #include <opt/types.h>
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 #include <opt/debug.h>
 
 

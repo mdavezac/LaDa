@@ -19,7 +19,7 @@
 
 
 #include <opt/types.h>
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 #include <mpi/mpi_object.h>
 
 namespace LaDa

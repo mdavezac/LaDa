@@ -10,7 +10,7 @@
 
 #include <cmath>
 
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 
 
 namespace LaDa

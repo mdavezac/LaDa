@@ -11,7 +11,7 @@
 
 #include <minimizer/cgs.h>
 #include <opt/debug.h>
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 
 #include "ideal_lattice.h"
 
