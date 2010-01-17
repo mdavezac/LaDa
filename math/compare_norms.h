@@ -18,11 +18,11 @@ namespace LaDa
       const math::rVector3d vec ;
       public:
         //! Constructor and initializer
-        norm_compare( math::rVector3d &_vec ) : vec(_vec) {};
+        CompareNorms( math::rVector3d const &_vec ) : vec(_vec) {};
         //! Constructor and initializer
-        norm_compare() : vec(0,0,0) {};
+        CompareNorms() : vec(0,0,0) {};
         //! Copy Constructor
-        norm_compare( const norm_compare &_c ) : vec(_c.vec) {};
+        CompareNorms( const CompareNorms &_c ) : vec(_c.vec) {};
         //! \brief returns true if the norm of \a _a - norm::compare::vec is
         //!        smaller than the norm pf \a _b - norm::compare::vec.
         bool operator()( math::rVector3d &_a, math::rVector3d &_b ) const

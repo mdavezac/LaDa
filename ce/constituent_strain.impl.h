@@ -122,7 +122,7 @@ namespace LaDa
         )
         for ( ; i_k_vec != i_k_vec_end; ++i_k_vec )
         {
-          if ( norm2( *i_k_vec ) < types::tolerance ) // don't need to compute Gamma
+          if ( i_k_vec->squaredNorm() < types::tolerance ) // don't need to compute Gamma
             continue;
 
           i_harmonic = i_harmonic_begin;
@@ -206,7 +206,7 @@ namespace LaDa
         )
         for ( ; i_k_vec != i_k_vec_end; ++i_k_vec )
         {
-          if ( norm2( *i_k_vec ) < types::tolerance ) // don't need to compute Gamma
+          if ( i_k_vec->squaredNorm() < types::tolerance ) // don't need to compute Gamma
             continue;
 
           i_harmonic = i_harmonic_begin;
@@ -317,7 +317,7 @@ namespace LaDa
         )
         for ( ; i_k_vec != i_k_vec_end; ++i_k_vec )
         {
-          if ( norm2( *i_k_vec ) < types::tolerance ) // don't need to compute Gamma
+          if ( i_k_vec->squaredNorm() < types::tolerance ) // don't need to compute Gamma
             continue;
 
           i_harmonic = i_harmonic_begin;

@@ -257,8 +257,8 @@ namespace LaDa
         // Other expect a "cubic" lattice wich is implicitely tetragonal...
         // Historical bullshit from input structure files @ nrel.
         for( types::t_int i=0; i < 3; ++i ) 
-          if( math::eq( result->cell.x[2][i], 0.5e0 ) )
-            result->cell.x[2][i] = 0.6e0;
+          if( math::eq( result->cell(2,i), 0.5e0 ) )
+            result->cell(2,i) = 0.6e0;
 #     endif
       result->find_space_group();
 #     if defined (_TETRAGONAL_CE_)
@@ -267,8 +267,8 @@ namespace LaDa
         // Other expect a "cubic" lattice wich is implicitely tetragonal...
         // Historical bullshit from input structure files @ nrel.
         for( types::t_int i=0; i < 3; ++i ) 
-          if( math::eq( result->cell.x[2][i], 0.6e0 ) )
-            result->cell.x[2][i] = 0.5e0;
+          if( math::eq( result->cell(2,i), 0.6e0 ) )
+            result->cell(2,i) = 0.5e0;
 #     endif
       return result;
       __TRYEND(, "Could not read lattice from input.\n" )

@@ -19,6 +19,7 @@
 
 
 #include <opt/types.h>
+#include <math/eigen.h>
 #include <math/fuzzy.h>
 #include <mpi/mpi_object.h>
 
@@ -155,7 +156,7 @@ namespace LaDa
             //!    traitsgaussian atternuation at \a _k , and of the cubic harmonic at \a _k.
             //! \param [in] _x concentration.
             //! \param [in] _k reciprocal-space vector.
-            types::t_real evaluate(const types::t_real _x, const math::rVector3d &_k) const;
+            types::t_real evaluate(const types::t_real _x, math::rVector3d const &_k) const;
             //! \brief Returns the interpolated value at \a _x.
             //! \param [in] _x concentration.
             types::t_real evaluate(const types::t_real _x) const

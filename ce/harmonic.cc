@@ -9,6 +9,7 @@
 #include <functional>
 
 #include <opt/debug.h>
+#include <math/misc.h>
 
 #include "harmonic.h"
 
@@ -129,7 +130,7 @@ namespace CE
 
       types::t_real Cubic :: operator()( const math::rVector3d &_k ) const
       {
-        types::t_real r2=norm2(_k);
+        types::t_real r2=_k.squaredNorm();
         types::t_real A=sqrt(1./(4.*M_PI));
         if ( math::leq( r2, types::t_real(0) ) )
         {
@@ -145,7 +146,7 @@ namespace CE
         {
            case 0: return(A);
            case 1: 
-             return (   A*sqrt(21./4.)*(1.-5.*(ipow(_k(0),2)*ipow(_k(1),2) 
+             return (   A*sqrt(21./4.)*(1.-5.*(math::ipow(_k(0),2)*ipow(_k(1),2) 
                       + ipow(_k(0),2)*ipow(_k(2),2) 
                       + ipow(_k(1),2)*ipow(_k(2),2)) / ipow(r2,2)));
            case 2: 

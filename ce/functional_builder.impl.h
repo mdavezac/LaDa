@@ -8,6 +8,7 @@
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <opt/tinyxml.h>
+#include <math/misc.h>
 
 #include "functional_builder.h"
 
@@ -148,14 +149,14 @@ namespace LaDa
              {   
                // sets up a monome with the correct coefficient
                function::Monome<> monome(   i_cluster->eci
-                                          / ( (Real) i_cluster->vectors.size() ) );
+                                          / ( (types::t_real) i_cluster->vectors.size() ) );
     
                i_cpos = i_cpos_begin;
                for (; i_cpos != i_cpos_last; ++i_cpos ) // loop over cluster points
                {
                  math::rVector3d shift = atom_pos - *i_cpos_center;
                  
-                 if ( not is_int( (!lattice->cell)*shift)) continue;
+                 if ( not math::is_integer( lattice->cell.inverse()*shift)) continue;
                  
                  // finds atom to which "point" is equivalent
                  Crystal::Structure::t_Atoms::const_iterator i_equiv = str.atoms.begin();

@@ -19,6 +19,7 @@
 #include <crystal/structure.h>
 #include <crystal/which_site.h>
 #include <crystal/smith.h>
+#include <math/misc.h>
 
 #include "cluster.h"
 #include "mlclusters.h"
@@ -46,7 +47,7 @@ namespace LaDa
         std::vector< std::vector<size_t> > atomic_map;
         Crystal::get_smith_map( _str, atomic_map );
         bool const dosite( _str.lattice->sites.size() != 1 );
-        .inverse()math::rMatrix3d const inv_cell( _str.lattice->cell.inverse() );
+        math::rMatrix3d const inv_cell( _str.lattice->cell.inverse() );
         Crystal::Lattice::t_Sites const &sites(_str.lattice->sites);
         Crystal::t_SmithTransform const
           transform( Crystal::get_smith_transform(_str.lattice->cell, _str.cell) );
@@ -125,7 +126,7 @@ namespace LaDa
                 types::t_real fig(1);
                 std::vector<math::rVector3d> :: const_iterator i_vec = i_vec_begin;
                 math::rVector3d const shift( i_first->pos - *i_center);
-                if ( not is_int( (!_str.lattice->cell)*shift) ) continue;
+                if ( not math::is_integer( _str.lattice->cell.inverse()*shift) ) continue;
                 for(; i_vec != i_vec_end; ++i_vec) // loop over cluster spins.
                 {
                   math::rVector3d const site_pos(*i_vec + shift);
@@ -221,7 +222,7 @@ namespace LaDa
               {
                 math::rVector3d shift = i_atom->pos - *i_cpos_center;
                 
-                if ( not is_int( (!_str.lattice->cell)*shift) ) continue;
+                if ( not math::is_integer( _str.lattice->cell.inverse()*shift) ) continue;
                 
                 // finds atom to which lattice site is equivalent
                 Crystal::Structure::t_Atoms::const_iterator i_equiv = _str.atoms.begin();

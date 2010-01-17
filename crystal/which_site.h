@@ -11,6 +11,7 @@
 #include <cmath>
 
 #include <math/fuzzy.h>
+#include <math/eigen.h>
 
 
 namespace LaDa

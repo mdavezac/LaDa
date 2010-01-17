@@ -16,12 +16,13 @@
 #include <cmath>
 #include <math.h>
 
+
 #include "function_base.h"
 #include "monome.h"
-#include "fuzzy.h"
 #include <iomanip>
 
 #include <mpi/mpi_object.h>
+#include <math/fuzzy.h>
 #ifdef _MPI
 #include <boost/lambda/lambda.hpp>
 #include <boost/mpi/collectives.hpp>

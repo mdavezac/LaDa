@@ -19,6 +19,7 @@
 #include <opt/types.h>
 #include <math/fuzzy.h>
 #include <math/compare_norms.h>
+#include <math/misc.h>
 
 #include "cluster.h"
 
@@ -43,7 +44,7 @@ namespace LaDa
       shift(1) -= std::floor(shift(1)); if( math::is_zero(shift(1)-1e0) ) shift(1) = 0e0;
       shift(2) -= std::floor(shift(2)); if( math::is_zero(shift(2)-1e0) ) shift(2) = 0e0;
       shift = Crystal::Structure::lattice->cell * shift - (*i_vec);
-      if( math::is_zero(shift,squaredNorm()) ) return;
+      if( math::is_zero(shift.squaredNorm()) ) return;
       for(; i_vec != i_last; ++i_vec ) *i_vec -= shift; 
     }
 
@@ -67,7 +68,7 @@ namespace LaDa
         {
           is_found  = std::find_if( _cluster.vectors.begin(),
                                     _cluster.vectors.end(),
-                                    math::compare_norms(*i2_vec - shift) );
+                                    math::CompareNorms((*i2_vec - shift).eval()) );
       
           if ( is_found == _cluster.vectors.end() ) break;
         }

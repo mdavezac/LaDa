@@ -22,7 +22,7 @@
 # include <mpi/macros.h>
 #include <opt/types.h>
 #include <opt/debug.h>
-#include <opt/random.h>
+#include <math/random.h>
 #include <opt/bpo_macros.h>
 #include <minimizer/minuit2.h>
 #include <minimizer/frprmn.h>
@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
   const LaDa::types::t_unsigned maxpairs = vm["maxpairs"].as<LaDa::types::t_unsigned>();
   const LaDa::types::t_int verbosity = vm["verbose"].as<LaDa::types::t_int>();
   LaDa::types::t_unsigned seed = vm["seed"].as<LaDa::types::t_unsigned>();
-  seed = LaDa::opt::math::seed( seed );
+  seed = LaDa::math::seed( seed );
   const LaDa::types::t_real tolerance( vm["tolerance"].as< LaDa::types::t_real >() );
   const LaDa::types::t_real linetol( vm["linetol"].as< LaDa::types::t_real >() );
   const LaDa::types::t_real linestep( vm["linestep"].as< LaDa::types::t_real >() );

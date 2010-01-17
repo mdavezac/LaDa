@@ -29,8 +29,6 @@ namespace LaDa
   namespace CE 
   {
 
-    using Crystal::Atat_Structure;
-
     //! \brief This creates a cell-shape specialized functional out of a set of clusters.
     //! \details The cluster expansion formalism is meant to be true for the
     //!          full infinite lattice. Unfortunately, within such a paradigm,
