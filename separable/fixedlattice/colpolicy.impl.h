@@ -5,6 +5,7 @@
 #include<boost/numeric/ublas/matrix_proxy.hpp>
 #include<boost/numeric/ublas/operation.hpp>
 #include<boost/lambda/bind.hpp>
+#include<boost/lambda/if.hpp>
 
 namespace LaDa
 {

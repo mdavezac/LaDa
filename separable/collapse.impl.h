@@ -2,7 +2,7 @@
 //  Version: $Id$
 //
 
-#include <opt/random.h>
+#include <math/random.h>
 
 namespace LaDa
 {
@@ -457,9 +457,9 @@ namespace LaDa
                 i_c, i_c + *i_size, 
                 bl::var( norm ) += (
                                      bl::_1 =   bl::constant(range) 
-                                              * bl::bind( &opt::math::rng )
+                                              * bl::bind( &math::rng )
                                               + bl::constant( t_Type(1e0 - 0.5*range) ),
-                                     bl::_1 * bl::_1
+                                     bl::bind(&math::rVector3d::squaredNorm, bl::_1)
                                    )
               );
             }

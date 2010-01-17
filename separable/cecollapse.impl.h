@@ -2,7 +2,8 @@
 //  Version: $Id$
 //
 
-#include <opt/random.h>
+#include <boost/lambda/if.hpp>
+#include <math/random.h>
 #include <opt/algorithms.h>
 
 namespace LaDa
@@ -53,7 +54,7 @@ namespace LaDa
                   i_c, i_c + *i_size, 
                   bl::var( norm ) += (
                                        bl::_1 =   bl::constant(range) 
-                                                * bl::bind( &opt::math::rng )
+                                                * bl::bind( &math::rng )
                                                   + bl::if_then_else_return
                                                     ( 
                                                       bl::var(centered), 

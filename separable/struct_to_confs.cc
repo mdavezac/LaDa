@@ -83,12 +83,12 @@ namespace LaDa
         for(; i_pos != i_pos_end; ++i_pos )
         {
           if( i_pos == _x.iterator_ ) continue;
-          types::t_real const d( (*i_pos) * (*_x) );
+          types::t_real const d( i_pos->dot(*_x) );
           if( d > maxx or maxx < 0e0 ) maxx = d;
         }
         equivs_.reset( new std::list<math::rVector3d> );
         for(i_pos = neighs->begin(); i_pos != i_pos_end; ++i_pos)
-          if( math::eq( (*i_pos) * (*_x), maxx ) ) equivs_->push_back( *i_pos );
+          if( math::eq( i_pos->dot(*_x), maxx ) ) equivs_->push_back( *i_pos );
       } 
       
       void Bases::Ycoord :: begin( Bases::Xcoord const &_x )
@@ -96,8 +96,7 @@ namespace LaDa
         create_equiv_ys( _x );
         xval_ = *_x;
         iterator_ = equivs_->begin();
-        val_ = (*iterator_) - ( (*iterator_) * xval_ ) * xval_;
-        val_ = val_->normalized();
+        val_ = ( (*iterator_) - iterator_->dot(xval_) * xval_ ).normalized();
       }
       void Bases::Ycoord :: end( Ycoord const &_b )
       {

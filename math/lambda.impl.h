@@ -7,9 +7,9 @@
 #   error Macros __VTYPE__, __STYPE__, or __MTYPE__ already defined.
 #  endif
 #  define LADA_MATH_LAMBDA_IMPL_H 0
-#  define __VTYPE__ math::rVector3d
-#  define __STYPE__ types::t_real
-#  define __MTYPE__ math::rMatrix3d
+#  define __VTYPE__ LaDa::math::rVector3d
+#  define __STYPE__ LaDa::types::t_real
+#  define __MTYPE__ LaDa::math::rMatrix3d
 #elif LADA_MATH_LAMBDA_IMPL_H == 0
 #  undef LADA_MATH_LAMBDA_IMPL_H
 #  undef __VTYPE__ 
@@ -20,6 +20,7 @@
 #  define __STYPE__ LaDa::types::t_int
 #  define __MTYPE__ LaDa::math::iMatrix3d
 #elif LADA_MATH_LAMBDA_IMPL_H == 1
+#  undef LADA_MATH_LAMBDA_IMPL_H
 #  define LADA_MATH_LAMBDA_IMPL_H 2
 #  undef __VTYPE__ 
 #  undef __STYPE__ 
@@ -39,10 +40,6 @@ namespace boost {
     template<> 
     struct plain_return_type_2<arithmetic_action<minus_action>, __VTYPE__, __VTYPE__> {
       typedef __VTYPE__ type;
-    };
-    template<> 
-    struct plain_return_type_2<arithmetic_action<multiply_action>, __VTYPE__, __VTYPE__> {
-      typedef __STYPE__ type;
     };
 
     template<> 

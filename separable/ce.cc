@@ -12,6 +12,7 @@
 #include <Eigen/LU>
 
 #include <crystal/fill_structure.h>
+#include <math/lambda.impl.h>
 
 #include "ce.h"
 
@@ -195,7 +196,7 @@ namespace LaDa
                 a[0] += 0.05e0; a[0] -= std::floor(a[0]); a[0] -= 0.05e0;
                 a[1] += 0.05e0; a[1] -= std::floor(a[1]); a[1] -= 0.05e0;
                 a[2] += 0.05e0; a[2] -= std::floor(a[2]); a[2] -= 0.05e0;
-                if( math::is_zero( a.squaredNorm(), 0e0 ) ) break; 
+                if( math::is_zero(a) ) break; 
               }
               __DOASSERT( i_found == shifted_fracs.end(), "Could not find equivalent position.\n" ) 
               // Found the position in atomic structure.
@@ -256,7 +257,8 @@ namespace LaDa
         std::sort
         ( 
           _positions.begin(), _positions.end(),
-           bl::_1 * bl::_1  > bl::_2 * bl::_2
+          bl::bind(&math::rVector3d::squaredNorm, bl::_1)
+            > bl::bind(&math::rVector3d::squaredNorm, bl::_2)
         );
       }
       void supercell_basis( types::t_unsigned _n, const math::rMatrix3d &_cell,
@@ -267,8 +269,7 @@ namespace LaDa
 
         Crystal::Structure structure;
         math::rMatrix3d mat;
-        mat.identity(); mat =  mat * (types::t_real)_n;
-        structure.cell = _cell * mat;
+        structure.cell = _cell * (types::t_real)_n;
         __ASSERT( not Crystal::Structure::lattice,
                   "Lattice of structure has not beens set.\n" )
         Crystal :: fill_structure( structure );
@@ -291,7 +292,8 @@ namespace LaDa
         std::sort
         ( 
           _positions.begin(), _positions.end(),
-           bl::_1 * bl::_1  > bl::_2 * bl::_2
+          bl::bind(&math::rVector3d::squaredNorm, bl::_1)
+            > bl::bind(&math::rVector3d::squaredNorm, bl::_2)
         );
         __DEBUGTRYEND(, "Error while creating super-cell basis.\n" )
       }
@@ -303,17 +305,17 @@ namespace LaDa
                   "Lattice has not been set.\n" )
         math::rMatrix3d mult;
         // assume fcc
-        if( math::eq( Crystal::Structure::lattice->cell.x[0][0], 0e0 ) ) 
+        if( math::eq( Crystal::Structure::lattice->cell(0,0), 0e0 ) ) 
         {
-          mult.x[0][0] = -1e0; mult.x[1][0] =  1e0; mult.x[2][0] =  1e0; 
-          mult.x[0][1] =  1e0; mult.x[1][1] = -1e0; mult.x[2][1] =  1e0; 
-          mult.x[0][2] =  1e0; mult.x[1][2] =  1e0; mult.x[2][2] = -1e0; 
+          mult(0,0) = -1e0; mult(1,0) =  1e0; mult(2,0) =  1e0; 
+          mult(0,1) =  1e0; mult(1,1) = -1e0; mult(2,1) =  1e0; 
+          mult(0,2) =  1e0; mult(1,2) =  1e0; mult(2,2) = -1e0; 
         }
         else // assume bcc
         {
-          mult.x[0][0] = 0e0; mult.x[1][0] = 1e0; mult.x[2][0] = 1e0; 
-          mult.x[0][1] = 1e0; mult.x[1][1] = 0e0; mult.x[2][1] = 1e0; 
-          mult.x[0][2] = 1e0; mult.x[1][2] = 1e0; mult.x[2][2] = 0e0; 
+          mult(0,0) = 0e0; mult(1,0) = 1e0; mult(2,0) = 1e0; 
+          mult(0,1) = 1e0; mult(1,1) = 0e0; mult(2,1) = 1e0; 
+          mult(0,2) = 1e0; mult(1,2) = 1e0; mult(2,2) = 0e0; 
         }
         mult = Crystal::Structure::lattice->cell * mult;
         supercell_basis( _n, mult, _positions );

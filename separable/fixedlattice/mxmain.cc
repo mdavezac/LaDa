@@ -24,11 +24,11 @@
 
 #include <mpi/macros.h>
 #include <minimizer/cgs.h>
-#include <opt/types.h>
 #include <math/fuzzy.h>
+#include <math/random.h>
+#include <opt/types.h>
 #include <opt/debug.h>
 #include <opt/errors.h>
-#include <opt/random.h>
 #include <opt/bpo_macros.h>
 #include <crystal/lattice.h>
 #include <crystal/structure.h>
@@ -138,8 +138,7 @@ int main(int argc, char *argv[])
   po::notify(vm);
  
   std::cout << "\n" << __PROGNAME__ \
-            << " from the " << PACKAGE_STRING << " package.\n" \
-            << "Subversion Revision: " << LaDa::SVN::Revision << "\n\n"; \
+            << " from the " << PACKAGE_STRING << " package.\n";
   if ( vm.count("version") ) return 1;
   if ( vm.count("help") )
   {
@@ -226,7 +225,7 @@ int main(int argc, char *argv[])
   const bool doloo( vm.count("loo") != 0 );
   const LaDa::types::t_unsigned verbosity = vm["verbose"].as<LaDa::types::t_unsigned>();
   LaDa::types::t_unsigned seed = vm["seed"].as<LaDa::types::t_unsigned>();
-  seed = LaDa::opt::math::seed( seed );
+  seed = LaDa::math::seed( seed );
   const LaDa::types::t_unsigned rank( vm["rank"].as< LaDa::types::t_unsigned >() );
   const std::string bdesc( vm["basis"].as<std::string>() );
   const LaDa::types::t_real tolerance( vm["tolerance"].as< LaDa::types::t_real >() );

@@ -56,10 +56,10 @@ namespace LaDa
                                    typename T_ITCOEF::value_type _range )
             {
               typedef typename T_ITCOEF :: value_type t_Type;
-              *_coef = t_Type( opt::math::rng() - 0.5e0 ) * _range + t_Type(1);
-              *(_coef + 1) = t_Type( opt::math::rng() - 0.5e0 ) * _range + t_Type(1);
+              *_coef = t_Type( math::rng() - 0.5e0 ) * _range + t_Type(1);
+              *(_coef + 1) = t_Type( math::rng() - 0.5e0 ) * _range + t_Type(1);
               for( size_t i(2); i < D; ++i )
-                *(_coef + i) = t_Type( opt::math::rng() - 0.5e0 ) * _range + t_Type(1);
+                *(_coef + i) = t_Type( math::rng() - 0.5e0 ) * _range + t_Type(1);
             }
 
           //! Normalizes vector.
@@ -126,10 +126,10 @@ namespace LaDa
                                    typename T_ITCOEF::value_type _range )
             {
               typedef typename T_ITCOEF :: value_type t_Type;
-              *_coef = t_Type( opt::math::rng() - 0.5e0 ) * _range + t_Type(1);
-              *( _coef + 1 ) = t_Type( opt::math::rng() - 0.5e0 ) * _range;
+              *_coef = t_Type( math::rng() - 0.5e0 ) * _range + t_Type(1);
+              *( _coef + 1 ) = t_Type( math::rng() - 0.5e0 ) * _range;
               for( size_t i(2); i < D; ++i )
-                *(_coef + i) = t_Type( opt::math::rng() - 0.5e0 ) * _range;
+                *(_coef + i) = t_Type( math::rng() - 0.5e0 ) * _range;
             }
 
           //! Normalizes vector.

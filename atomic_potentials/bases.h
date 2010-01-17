@@ -204,7 +204,7 @@ namespace LaDa
           Ycoord &operator++()
           {
             ++iterator_;
-            val_ = ( (*iterator_) - ( (*iterator_) * xval_ ) * xval_ ).normalized();
+            val_ = ( (*iterator_) - iterator_->dot(xval_) * xval_ ).normalized();
             return *this; 
           }
           //! Post-increment operator.

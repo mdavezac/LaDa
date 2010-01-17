@@ -20,6 +20,8 @@ namespace LaDa
     typedef Eigen::Matrix<types::t_real, 3, 3> rMatrix3d;
     //! 3d-vector of integers. 
     typedef Eigen::Matrix<types::t_int, 3, 3> iMatrix3d;
+
+
   } // namespace math
 } // namespace LaDa
 

@@ -12,13 +12,15 @@
 #include <boost/lexical_cast.hpp>
 
 
-#include "prepare.h"
 
 #include <crystal/confsplit.h>
 #include <crystal/neighbors.h>
 #include <atomic_potentials/bases.h>
 #include <crystal/fill_structure.h>
 #include <math/fuzzy.h>
+#include <math/lambda.impl.h>
+
+#include "prepare.h"
 
 namespace LaDa
 {
@@ -42,7 +44,7 @@ namespace LaDa
       syms.reserve( N );
       for( types::t_int i(0); i < N; ++i )
       {
-        if( not math::eq( atat::norm2( _lat.space_group[i].trans ), 0e0 ) ) continue;
+        if( not math::is_zero(_lat.space_group[i].trans) ) continue;
         math::rMatrix3d &op = _lat.space_group[i].op;
   //     if( not math::eq( atat::det( op ), 1e0 ) ) continue;
         syms.push_back( op );
@@ -61,11 +63,13 @@ namespace LaDa
       if( boost::regex_search( _bdesc, what, re2 ) )
       {
         n.first = n.second = 0;
-        math::rMatrix3d cell;
-        cell.set_diagonal( boost::lexical_cast<types::t_real>(what.str(1)),
-                           boost::lexical_cast<types::t_real>(what.str(2)),
-                           boost::lexical_cast<types::t_real>(what.str(3)) );
-        details::supercell_basis( 1, cell, positions );
+        math::rVector3d cell
+        ( 
+          boost::lexical_cast<types::t_real>(what.str(1)),
+          boost::lexical_cast<types::t_real>(what.str(2)),
+          boost::lexical_cast<types::t_real>(what.str(3)) 
+        );
+        details::supercell_basis( 1, cell.asDiagonal(), positions );
         return;
       }
       if( boost::regex_search( _bdesc, what, re3 ) )
@@ -97,14 +101,14 @@ namespace LaDa
                        Crystal::Neighbor const * const _b ) const
       {
         if( math::neq( _a->distance, _b->distance ) ) return _a->distance < _b->distance;
-        const types::t_real ax = _a->pos * basis.x;
-        const types::t_real bx = _b->pos * basis.x;
+        types::t_real const ax = basis.x.dot(_a->pos);
+        types::t_real const bx = basis.x.dot(_b->pos);
         if( math::neq( ax, bx ) ) return ax > bx;
-        const types::t_real ay = _a->pos * basis.y;
-        const types::t_real by = _b->pos * basis.y;
+        types::t_real const ay = basis.y.dot(_a->pos);
+        types::t_real const by = basis.y.dot(_b->pos);
         if( math::neq( ay, by ) ) return ay > by;
-        const types::t_real az = _a->pos * basis.z;
-        const types::t_real bz = _b->pos * basis.z;
+        types::t_real const az = basis.z.dot(_a->pos);
+        types::t_real const bz = basis.z.dot(_b->pos);
         if( math::neq( az, bz ) ) return az > bz;
         return false;
       }
@@ -251,7 +255,7 @@ namespace LaDa
               a[0] += 0.05e0; a[0] -= std::floor(a[0]); a[0] -= 0.05e0;
               a[1] += 0.05e0; a[1] -= std::floor(a[1]); a[1] -= 0.05e0;
               a[2] += 0.05e0; a[2] -= std::floor(a[2]); a[2] -= 0.05e0;
-              if( math::eq( atat::norm2( a ), 0e0 ) ) break; 
+              if( math::is_zero(a) ) break; 
             }
             __DOASSERT( i_found == shifted_fracs.end(),
                         "Could not find equivalent position.\n" ) 
@@ -298,7 +302,8 @@ namespace LaDa
         std::sort
         ( 
           _positions.begin(), _positions.end(),
-           bl::_1 * bl::_1  > bl::_2 * bl::_2
+          bl::bind(&math::rVector3d::squaredNorm, bl::_1)
+            > bl::bind(&math::rVector3d::squaredNorm, bl::_2)
         );
       }
       void supercell_basis( types::t_unsigned _n, const math::rMatrix3d &_cell,
@@ -308,9 +313,7 @@ namespace LaDa
         namespace bl = boost::lambda;
 
         Crystal::Structure structure;
-        math::rMatrix3d mat;
-        mat.identity(); mat =  mat * (types::t_real)_n;
-        structure.cell = _cell * mat;
+        structure.cell = _cell * (types::t_real) _n;
         __ASSERT( not Crystal::Structure::lattice,
                   "Lattice of structure has not beens set.\n" )
         Crystal :: fill_structure( structure );
@@ -333,7 +336,8 @@ namespace LaDa
         std::sort
         ( 
           _positions.begin(), _positions.end(),
-           bl::_1 * bl::_1  > bl::_2 * bl::_2
+          bl::bind(&math::rVector3d::squaredNorm, bl::_1)
+            > bl::bind(&math::rVector3d::squaredNorm, bl::_2)
         );
         __DEBUGTRYEND(, "Error while creating super-cell basis.\n" )
       }
@@ -345,17 +349,17 @@ namespace LaDa
                   "Lattice has not been set.\n" )
         math::rMatrix3d mult;
         // assume fcc
-        if( math::eq( Crystal::Structure::lattice->cell.x[0][0], 0e0 ) ) 
+        if( math::eq( Crystal::Structure::lattice->cell(0,0), 0e0 ) ) 
         {
-          mult.x[0][0] = -1e0; mult.x[1][0] =  1e0; mult.x[2][0] =  1e0; 
-          mult.x[0][1] =  1e0; mult.x[1][1] = -1e0; mult.x[2][1] =  1e0; 
-          mult.x[0][2] =  1e0; mult.x[1][2] =  1e0; mult.x[2][2] = -1e0; 
+          mult(0,0) = -1e0; mult(1,0) =  1e0; mult(2,0) =  1e0; 
+          mult(0,1) =  1e0; mult(1,1) = -1e0; mult(2,1) =  1e0; 
+          mult(0,2) =  1e0; mult(1,2) =  1e0; mult(2,2) = -1e0; 
         }
         else // assume bcc
         {
-          mult.x[0][0] = 0e0; mult.x[1][0] = 1e0; mult.x[2][0] = 1e0; 
-          mult.x[0][1] = 1e0; mult.x[1][1] = 0e0; mult.x[2][1] = 1e0; 
-          mult.x[0][2] = 1e0; mult.x[1][2] = 1e0; mult.x[2][2] = 0e0; 
+          mult(0,0) = 0e0; mult(1,0) = 1e0; mult(2,0) = 1e0; 
+          mult(0,1) = 1e0; mult(1,1) = 0e0; mult(2,1) = 1e0; 
+          mult(0,2) = 1e0; mult(1,2) = 1e0; mult(2,2) = 0e0; 
         }
         mult = Crystal::Structure::lattice->cell * mult;
         supercell_basis( _n, mult, _positions );
