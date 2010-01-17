@@ -17,6 +17,7 @@
 #include "neighbors.hpp"
 #include "symmetry_operator.hpp"
 #include "which_site.hpp"
+#include "vectors_string.hpp"
 
 BOOST_PYTHON_MODULE(_crystal)
 {
@@ -30,4 +31,5 @@ BOOST_PYTHON_MODULE(_crystal)
   LaDa::Python::expose_neighbors();
   LaDa::Python::expose_symmetry_operator();
   LaDa::Python::expose_which_site();
+  LaDa::Python::expose_vecstr();
 }

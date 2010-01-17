@@ -47,7 +47,7 @@ namespace LaDa
         //! \param _str structure for which to compute energy and stress
         Functional   ( Crystal :: Structure &_str )
                    : Vff( _str ), structure0(_str), fixed_index(-1,-1,-1)
-          { stress.zero(); }
+          { stress = math::rMatrix3d::Zero(); }
         //! \brief Copy Constructor
         Functional   ( const Functional &_c )
                    : Vff( _c ), structure0( _c.structure0 ), stress( _c.stress ),

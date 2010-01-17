@@ -8,46 +8,44 @@
 
 
 def create_lattice():
-  from lada import crystal, atat
+  from numpy import Matrix
+  from lada import crystal, math
 
   lattice = crystal.Lattice()
 
-  lattice.cell = atat.rMatrix3d( [ [ 0, 0.5, 0.5 ], \
-                                   [ 0.5, 0, 0.5 ], \
-                                   [ 0.5, 0.5, 0 ] ] )
+  lattice.cell = Matrix( [ [ 0, 0.5, 0.5 ], \
+                           [ 0.5, 0, 0.5 ], \
+                           [ 0.5, 0.5, 0 ] ] )
 
   # Manganese - Tetrahedral
-  lattice.sites.append( crystal.Site( (0, 0, 0) ) )
-  lattice.sites[0].type = crystal.StringVector( [ "Mg" ] );
+  lattice.sites.append( crystal.Site(numpy.array([0, 0, 0], dtype="float64"), ["Mg"]) )
   lattice.sites.append( lattice.sites[0] )
-  lattice.sites[0].pos = atat.rVector3d( (   0,    0,    0) )
-  lattice.sites[1].pos = atat.rVector3d( (0.25, 0.25, 0.25) )
+  lattice.sites[0].pos = numpy.array( [   0,    0,    0], dtype="float64" )
+  lattice.sites[1].pos = numpy.array( [0.25, 0.25, 0.25], dtype="float64" )
 
   # Aluminum - Octahedral
-  lattice.sites.append( crystal.Site( (5.0/8.0, 5.0/8.0, 5.0/8.0) ) )
-  lattice.sites[2].type = crystal.StringVector( ["Al", "Mg"] )
+  lattice.sites.append( crystal.Site(numpy.array([5.0/8.0, 5.0/8.0, 5.0/8.0], dtype="float64"), ["Al", "Mg"]) )
   lattice.sites.extend( [ lattice.sites[2] for u in range(0,3) ] )
-  lattice.sites[2].pos = atat.rVector3d( [5.0/8.0, 5.0/8.0, 5.0/8.0] )
-  lattice.sites[3].pos = atat.rVector3d( [5.0/8.0, 7.0/8.0, 7.0/8.0] )
-  lattice.sites[4].pos = atat.rVector3d( [7.0/8.0, 5.0/8.0, 7.0/8.0] )
-  lattice.sites[5].pos = atat.rVector3d( [7.0/8.0, 7.0/8.0, 5.0/8.0] )
+  lattice.sites[2].pos = numpy.array( [5.0/8.0, 5.0/8.0, 5.0/8.0], dtype="float64")
+  lattice.sites[3].pos = numpy.array( [5.0/8.0, 7.0/8.0, 7.0/8.0], dtype="float64")
+  lattice.sites[4].pos = numpy.array( [7.0/8.0, 5.0/8.0, 7.0/8.0], dtype="float64")
+  lattice.sites[5].pos = numpy.array( [7.0/8.0, 7.0/8.0, 5.0/8.0], dtype="float64")
 
   # Oxygens
   x = 0.387
-  lattice.sites.append( crystal.Site( (x, x, x) ) )
-  lattice.sites[6].type = crystal.StringVector( ["O"] )
+  lattice.sites.append( crystal.Site( numpy.array([x, x, x], dtype="float64"), ["O"]) )
   lattice.sites.extend( [ lattice.sites[6] for u in range(0,7) ] )
-  lattice.sites[ 6].pos = atat.rVector3d( [     x,      x,      x] )
-  lattice.sites[ 7].pos = atat.rVector3d( [     x,     -x,     -x] )
-  lattice.sites[ 8].pos = atat.rVector3d( [0.25-x, 0.25-x, 0.25-x] )
-  lattice.sites[ 9].pos = atat.rVector3d( [0.25-x, 0.25+x, 0.25+x] )
-  lattice.sites[10].pos = atat.rVector3d( [    -x,     -x,      x] )
-  lattice.sites[11].pos = atat.rVector3d( [    -x,      x,     -x] )
-  lattice.sites[12].pos = atat.rVector3d( [0.25+x, 0.25-x, 0.25+x] )
-  lattice.sites[13].pos = atat.rVector3d( [0.25+x, 0.25+x, 0.25-x] )
+  lattice.sites[ 6].pos = numpy.array( [     x,      x,      x], dtype="float64" )
+  lattice.sites[ 7].pos = numpy.array( [     x,     -x,     -x], dtype="float64" )
+  lattice.sites[ 8].pos = numpy.array( [0.25-x, 0.25-x, 0.25-x], dtype="float64" )
+  lattice.sites[ 9].pos = numpy.array( [0.25-x, 0.25+x, 0.25+x], dtype="float64" )
+  lattice.sites[10].pos = numpy.array( [    -x,     -x,      x], dtype="float64" )
+  lattice.sites[11].pos = numpy.array( [    -x,      x,     -x], dtype="float64" )
+  lattice.sites[12].pos = numpy.array( [0.25+x, 0.25-x, 0.25+x], dtype="float64" )
+  lattice.sites[13].pos = numpy.array( [0.25+x, 0.25+x, 0.25-x], dtype="float64" )
 
-# for site in lattice.sites: 
-#   site.pos -= atat.rVector3d( (3.0/8.0, 3.0/8.0, 3.0/8.0) )
+# trans = numpy.array([3.0/8.0, 3.0/8.0, 3.0/8.0], dtype="float64")
+# for site in lattice.sites: site.pos -= trans
 
   lattice.scale = 7.5 # in bhor?
   lattice.find_space_group()
@@ -97,14 +95,14 @@ def create_pairs(_lattice, _n):
   return results
 
 def square_enum( _n, _lattice ):
-  from lada import enumeration, atat, crystal
   from math import pow
-  import numpy 
+  import numpy as np
   import pyublas
   import time
+  from lada import enumeration, crystal, math
 
   structure = crystal.sStructure()
-  structure.cell = atat.rMatrix3d( [[_n, 0, 0], [0, _n, 0], [0, 0, _n]] )
+  structure.cell = np.array( [[_n, 0, 0], [0, _n, 0], [0, 0, _n]], dtype="float64" )
   crystal.fill_structure(structure);
   smith = crystal.smith_normal_transform(structure) 
 
@@ -118,7 +116,7 @@ def square_enum( _n, _lattice ):
   translations = enumeration.Translation(smith[1], nsites)
   database = enumeration.Database(card, nflavors)
   maxterm = 0
-  inv_cell = atat.inverse(_lattice.cell)
+  inv_cell = _lattice.cell.I
   for x in xrange(1, int(pow(nflavors, card))-1):
     if float( sum(enumeration.as_numpy(x, flavorbase)) ) != float(card) / 2.0:
       database[x] = False
@@ -173,7 +171,7 @@ def square_enum( _n, _lattice ):
         yield x, inv_cell * structure.cell, flavorbase
         
 def enum( _n, _lattice ):
-  from lada import enumeration, atat, crystal
+  from lada import enumeration, math, crystal
   from math import pow
   import numpy 
   import pyublas

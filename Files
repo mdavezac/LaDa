@@ -141,10 +141,10 @@ crystal_h  = lattice.h  structure.h structure.impl.h atom.h  confsplit.h layerde
 crystal_doc = $(crystal_h) $(crystal_cc) 
 crystal_python_h = structure.hpp atom.hpp lattice.hpp read_structure.hpp \
                    smith.hpp enumerate.hpp layerdepth.hpp neighbors.hpp \
-                   symmetry_operator.hpp which_site.hpp
+                   symmetry_operator.hpp which_site.hpp 
 crystal_python_cc = structure.cc atom.cc lattice.cc read_structure.cc \
                     python.cc smith.cc enumerate.cc layerdepth.cc neighbors.cc \
-                    symmetry_operator.cc which_site.cc
+                    symmetry_operator.cc which_site.cc 
 
 ce_cc     = cluster.cc harmonic.cc  polynome.cc regularization.cc fit.cc create_pairs.cc \
             create_clusters.cc mlcluster.cc mlclusters.cc
@@ -201,8 +201,8 @@ opt_python_convenience_h =  convex_hull.h errors.h convex_hull.impl.h \
 opt_python_convenience_cc = convex_hull.cc errors.cc tinyxml.cc \
                             initial_path.cc fortran_dirio.cc 
 opt_doc = $(opt_h) $(opt_cc) $(opt_python_convenience_cc) $(opt_python_convenience_h)
-opt_python_cc = errortuple.cc python.cc
-opt_python_c = errortuple.hpp convexhull.impl.hpp
+opt_python_cc = errortuple.cc python.cc 
+opt_python_c = errortuple.hpp convexhull.impl.hpp 
 
 EMASS_CC = emass.cc
 EMASS_H  = emass.h

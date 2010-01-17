@@ -15,7 +15,6 @@
 #include <opt/debug.h>
 #include <opt/bpo_macros.h>
 #include <opt/tuple_io.h>
-#include <opt/random.h>
 #include <mpi/mpi_object.h>
 #ifdef _MPI
 # include <boost/mpi/environment.hpp>

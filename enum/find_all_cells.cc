@@ -30,7 +30,7 @@ namespace LaDa
     boost::shared_ptr<t_Container> find_all_cells(Crystal::Lattice const &_lattice, size_t _nmax)
     {
       boost::shared_ptr< t_Container > result(new t_Container);
-      t_Container::value_type cell; cell.zero();
+      t_Container::value_type cell(t_Container::value_type::Zero());
 
       boost::shared_ptr< std::vector<Crystal::SymmetryOperator> > symops
         = Crystal::get_space_group_symmetries(_lattice);

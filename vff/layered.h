@@ -75,7 +75,7 @@ namespace LaDa
         Layered   ( Crystal :: Structure &_str )
                 : t_Base( _str ), direction(0,0,0), u(0,0,0),
                   template_strain(), is_fixed_by_input(false)
-          { template_strain.zero(); }
+          { template_strain = math::rMatrix3d::Zero(); }
         //! \brief Copy Constructor
         Layered   ( const Layered &_c )
                 : t_Base( _c ), direction( _c.direction ), u(_c.u),
@@ -143,7 +143,7 @@ namespace LaDa
     {
       types::t_real norm = _dir.squaredNorm();
       types::t_real trace = _stress(0,0) + _stress(1,1) + _stress(2,2);
-      types::t_real axial = (_dir * (_stress * _dir) ) / norm;
+      types::t_real axial = (_dir.dot(_stress * _dir) ) / norm;
       return ( trace - axial ) * 0.5;
     }
 

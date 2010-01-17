@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <functional>
 
-#include <opt/smith_normal_form.h>
+#include <math/smith_normal_form.h>
 #include <crystal/ideal_lattice.h>
 #include <crystal/divide_and_conquer.h>
 

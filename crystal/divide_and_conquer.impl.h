@@ -48,8 +48,7 @@ namespace LaDa
 
         // constructs cell of small small box
         math::rMatrix3d cell( _structure.cell );
-        for( size_t i(0); i < 3; ++i )
-          cell.set_column(i, cell.col(i) * ( 1e0 / types::t_real( _n(i) ) ) );
+        for( size_t i(0); i < 3; ++i ) cell.col(i) *= 1e0 / types::t_real( _n(i) );
         // constructs cell of large box.
         math::rVector3d odist;
         for( size_t i(0); i < 3; ++i )

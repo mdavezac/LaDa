@@ -291,7 +291,7 @@ template <> struct ScalarTraits<double>
     }
   };
 
-void expose_eigen_vectors()
+void expose_vecstr()
 {
   import_array(); // needed for NumPy 
 

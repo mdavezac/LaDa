@@ -281,7 +281,7 @@ namespace LaDa
                 + _b.parent->structure->cell * (*_b.i_translation);
           else
             b = (*_b.i_bond)->origin->pos - _b.parent->origin->pos;
-          return a * b;
+          return a.dot(b);
         }
         //! \brief Returns the kind of bond this is
         //! \see  AtomicCenter::bond_kind(), AtomicCenter::add_bond(),

@@ -17,7 +17,7 @@ def is_valid(flavorbase, x):
   
 
 def enum( n, lattice ):
-  from lada import enumeration, atat, crystal
+  from lada import enumeration, math, crystal
   from math import pow
   import time
 
@@ -90,7 +90,7 @@ def enum( n, lattice ):
         if specialized_database[x]: yield x, smith, supercell, flavorbase
 
 def create_database(lattice, n0=1, n1=4):
-  from lada import enumeration, atat, crystal
+  from lada import enumeration, math, crystal
   from math import pow
 
   # prints lattice
@@ -157,7 +157,8 @@ def create_database(lattice, n0=1, n1=4):
 
 def read_database(filename, withperms=True):
   import re
-  from lada import crystal, atat, enumeration
+  import numpy as np
+  from lada import crystal, math, enumeration
 
   lattice = crystal.Lattice()
   with open(filename, "r") as file:
@@ -189,7 +190,7 @@ def read_database(filename, withperms=True):
 
     hermite = None
     flavorbase = None
-    transform = atat.rMatrix3d()
+    transform = np.zeros((3,3), dtype="float64")
     structure = crystal.sStructure()
     structure.scale = lattice.scale
     for line in file:
@@ -198,7 +199,7 @@ def read_database(filename, withperms=True):
       if data[0] == "n:": continue
       if data[0] == "hermite:":
         data.pop(0)
-        if hermite == None: hermite = atat.rMatrix3d()
+        if hermite == None: hermite = np.zeros((3,3), dtype="float64")
         for i in range(3):
           for j in range(3): 
             hermite[i,j] = float(data.pop(0))
@@ -209,7 +210,7 @@ def read_database(filename, withperms=True):
           for j in range(3): 
             transform[i,j] = float(data.pop(0))
       elif data[0] == "smith:":
-        smith = atat.iVector3d( int(data[1]), int(data[2]), int(data[3]) )
+        smith = np.array( [int(data[1]), int(data[2]), int(data[3])] )
         translations = enumeration.Translation(smith, nsites)
         cell = lattice.cell * hermite
         structure.cell = cell

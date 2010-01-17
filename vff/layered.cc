@@ -28,7 +28,7 @@ namespace LaDa
       // The first vector of the cell should indicate the direction of the
       // layering.
       u = is_fixed_by_input ? direction: structure.cell.col(0);
-      template_strain.zero(); 
+      template_strain = math::rMatrix3d::Zero(); 
       for( size_t i(0); i < 3; ++i )
         for( size_t j(0); j < 3; ++j )
           template_strain(i,j) = u(i)*u(j);
@@ -61,7 +61,7 @@ namespace LaDa
 
       _arg.resize( dof );
 
-      math::rMatrix3d strain; strain.zero(); 
+      math::rMatrix3d strain = math::rMatrix3d::Zero();
       strain(0,0) = types::t_real(1.0);
       strain(1,1) = types::t_real(1.0);
       strain(2,2) = types::t_real(1.0);
@@ -221,7 +221,7 @@ namespace LaDa
 
     void Layered :: gradient( const t_Arg& _arg, t_GradientArg _i_grad ) const
     {
-      math::rMatrix3d strain; strain.zero();
+      math::rMatrix3d strain = math::rMatrix3d::Zero();
       t_Return energy(0);
       foreach( const t_Center& center, centers ) center.gradient = math::rVector3d(0,0,0);
 
@@ -232,7 +232,7 @@ namespace LaDa
       math::rMatrix3d K0 = (!(~strain));
 
       // computes energy and gradient
-      stress.zero();
+      stress = math::rMatrix3d::Zero();
       LADA_MPI_SPLIT_LOOP( t_Centers :: const_iterator, center, centers, MPI_COMM )
       for (; i_center != i_center_end; ++i_center)
         energy += functionals[i_center->kind()].

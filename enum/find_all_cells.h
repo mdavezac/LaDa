@@ -42,7 +42,7 @@ namespace LaDa
         //! Hermite form;
         math::rMatrix3d hermite;
         //! Constructor.
-        Supercell () { transform.zero(); hermite.zero(); }
+        Supercell () { transform = math::rMatrix3d::Zero(); hermite = math::rMatrix3d::Zero(); }
         //! Constructor.
         Supercell   ( math::rMatrix3d const & _transform, math::rMatrix3d const & _hermite )
                   : transform(_transform), hermite(_hermite) {}

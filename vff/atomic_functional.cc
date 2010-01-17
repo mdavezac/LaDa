@@ -150,7 +150,7 @@ namespace LaDa
         
         // adds energy only if center is site 0 
         // computes e0 for bond-angle now 
-        types::t_real e0 = norm2(d0) * scale2 / bond_length - bond_length;
+        types::t_real e0 = d0.squaredNorm() * scale2 / bond_length - bond_length;
         if ( _center.site_one() ) 
         {
           // energy 
@@ -195,7 +195,7 @@ namespace LaDa
             math::rVector3d d1; i_angle.vector( d1 );
             
             // Bond bending
-            types::t_real e1 =   (d0*d1) * scale2 / mean_length 
+            types::t_real e1 =   d0.dot(d1) * scale2 / mean_length 
                                - mean_length * gamma;
             if ( i_bond - i_angle > 0 )
             {
@@ -303,7 +303,7 @@ namespace LaDa
       {
         const size_t j( i+1>3 ? i-3: i+1 );
         const size_t k( j+1>3 ? j-3: j+1 );
-        const types::t_real vol( std::abs( bonds[i] * (bonds[j] ^ bonds[k]) ));
+        const types::t_real vol( std::abs( bonds[i].dot(bonds[j] ^ bonds[k]) ));
         const types::t_real vol0
         ( 
             l0s[i] * l0s[j] * l0s[k]

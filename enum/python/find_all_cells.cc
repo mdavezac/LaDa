@@ -48,8 +48,8 @@ namespace LaDa
       }
       try
       {
-        math::rMatrix3d const transform = bp::extract<atat::rMatrix3d>( _tuple[0] );
-        math::rMatrix3d const hermite = bp::extract<atat::rMatrix3d>( _tuple[1] );
+        math::rMatrix3d const transform = bp::extract<math::rMatrix3d>( _tuple[0] );
+        math::rMatrix3d const hermite = bp::extract<math::rMatrix3d>( _tuple[1] );
         return new enumeration::SmithGroup::Supercell(transform, hermite);
       }
       catch(...)
@@ -106,7 +106,7 @@ namespace LaDa
       (
         "Supercell", 
         "A supercell defined by a Hermite matrix and a transform to translation group.\n",
-        bp::init<math::rMatrix3d const&, atat::rMatrix3d const&>()
+        bp::init<math::rMatrix3d const&, math::rMatrix3d const&>()
       ).def(bp::init<enumeration::SmithGroup::Supercell const&>())
        .def( "__init__", bp::make_constructor( &create ) )
        .def_readwrite("transform", &enumeration::SmithGroup::Supercell::transform)

@@ -19,7 +19,6 @@
 #include <physics/physics.h>
 #include <opt/debug.h>
 #include <opt/tinyxml.h>
-#include <opt/smith_normal_form.h>
 #include <crystal/ideal_lattice.h>
 #include <mpi/mpi_object.h>
 

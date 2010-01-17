@@ -31,11 +31,13 @@ namespace LaDa
 {
   namespace Python
   {
-    template< class T_TYPE > Crystal::Atom_Type<T_TYPE>* default_constructor();
-    template< class T_TYPE > 
-      Crystal::Atom_Type<T_TYPE>* copy_constructor( const Crystal::Atom_Type<T_TYPE>& _ob );
     template< class T_TYPE >
-      Crystal::Atom_Type<T_TYPE>* object_constructor( const boost::python::tuple& _ob );
+      Crystal::Atom_Type<T_TYPE>* object_constructor( math::rVector3d const &_vec,
+                                                      boost::python::object const & _ob) ;
+    template< class T_TYPE >
+      Crystal::Atom_Type<T_TYPE>* full_constructor( math::rVector3d const &_vec,
+                                                    boost::python::object const & _ob,
+                                                    types::t_int _site );
     types::t_real toReal(std::string _str );
     std::string toType( types::t_real _r );
 
@@ -46,23 +48,35 @@ namespace LaDa
       {
         namespace bp = boost::python;
         typedef Crystal::Atom_Type< T_TYPE > t_Atom;
-        bp::class_< t_Atom >( _name.c_str(), _ds.c_str() )
-          .def( "__init__", bp::make_constructor( default_constructor< T_TYPE > ) )
-          .def( "__init__", bp::make_constructor( copy_constructor< T_TYPE > ) )
-          .def( bp::init<math::rVector3d const &, T_TYPE>())
-          .def( bp::init<math::rVector3d const &, T_TYPE>())
-          .add_property
-          (
-            "pos",
-            make_getter(&t_Atom::pos, bp::return_value_policy<bp::return_by_value>()),
-            make_setter(&t_Atom::pos, bp::return_value_policy<bp::return_by_value>()),
-            "A 1-dimensional numpy array of length 3 containing atomic position in cartesian units."
-          )
-          .def_readwrite( "site",   &t_Atom::site,
-                          "index of the \"site\" as referenced by a LaDa.Lattice object." )
-          .def_readwrite( "type",   &t_Atom::type, _typeds.c_str() )
-          .def_readwrite( "freeze", &t_Atom::freeze )
-          .def( "__str__",  &print<t_Atom> );
+        bp::class_< t_Atom >
+        ( 
+          _name.c_str(), 
+          ( 
+              _ds 
+            +  "\nThis object can be constructed from:\n"
+               "  - with no argument\n"
+               "  - another L{" + _name + "} object (deepcopy)\n"
+               "  - a numpy 1d-vector of length 3, in which self.L{pos<" 
+               + _name + ".pos>} is the only variable to be set.\n"
+               "  - same as above + a type value.\n"
+               "  - same as above + a site index.\n"
+          ).c_str()
+        ).def(bp::init<t_Atom const &>())
+         .def("__init__", bp::make_constructor( &object_constructor< T_TYPE > ) )
+         .def("__init__", bp::make_constructor( &full_constructor< T_TYPE > ) )
+         .def(bp::init<math::rVector3d const &, T_TYPE>())
+         .add_property
+         (
+           "pos",
+           make_getter(&t_Atom::pos, bp::return_value_policy<bp::return_by_value>()),
+           make_setter(&t_Atom::pos, bp::return_value_policy<bp::return_by_value>()),
+           "A 1-dimensional numpy array of length 3 containing atomic position in cartesian units."
+         )
+         .def_readwrite( "site",   &t_Atom::site,
+                         "index of the \"site\" as referenced by a LaDa.Lattice object." )
+         .def_readwrite( "type",   &t_Atom::type, _typeds.c_str() )
+         .def_readwrite( "freeze", &t_Atom::freeze )
+         .def( "__str__",  &print<t_Atom> );
 
         expose_vector< t_Atom >( ( _name + "s" ).c_str(), ("A list of " + _name ).c_str() );
       }
@@ -118,10 +132,9 @@ namespace LaDa
     }
 
     void construct_type( Crystal::Atom_Type<types::t_real>& _atm,
-                         const boost::python::tuple& _object )
+                         const boost::python::object& _object )
     {
-      const boost::python::object o( _object[3] );
-      try{ _atm.type = boost::python::extract< types::t_real >( o ); }
+      try{ _atm.type = boost::python::extract< types::t_real >( _object ); }
       catch(...)
       {
         if( not Crystal::Structure::lattice )
@@ -137,32 +150,93 @@ namespace LaDa
       }
     }
     void construct_type( Crystal::Atom_Type<types::t_complex>& _atm,
-                         const boost::python::tuple& _object )
+                         const boost::python::object& _object )
     {
-      const boost::python::tuple o( _object[3] );
-      _atm.type = types::t_complex( boost::python::extract< types::t_real >( o[0] ),
-                                    boost::python::extract< types::t_real >( o[1] ) );
+      if( bp::len(_object) == 2 )
+      {
+        PyErr_SetString( PyExc_ValueError, "Object is not a complex value.\n");
+        bp::throw_error_already_set();
+        return; 
+      }
+      _atm.type = types::t_complex( boost::python::extract< types::t_real >( _object[0] ),
+                                    boost::python::extract< types::t_real >( _object[1] ) );
     }
     void construct_type( Crystal::Atom_Type<std::string>& _atm,
                          const boost::python::object& _object )
-    {
-      const boost::python::str o( _object[3] );
-      _atm.type = boost::python::extract< std::string >( o ); 
-    }
+      { _atm.type = boost::python::extract< std::string >( _object ); }
     void construct_type( Crystal::Atom_Type< std::vector<std::string> >& _atm,
-                         const boost::python::tuple& _object )
+                         const boost::python::object& _object )
     {
-      const boost::python::list o( _object[3] );
+      const boost::python::list o( _object );
       for( size_t i(0), n( boost::python::len( o ) ); i < n; ++n )
         _atm.type.push_back( boost::python::extract<std::string>( o[i]) );
     }
 
-    template< class T_TYPE > 
-      Crystal::Atom_Type<T_TYPE>* default_constructor()
-        { return new Crystal::Atom_Type<T_TYPE>; }
     template< class T_TYPE >
-      Crystal::Atom_Type<T_TYPE>* copy_constructor( const Crystal::Atom_Type<T_TYPE>& _ob )
-        { return new Crystal::Atom_Type<T_TYPE>( _ob ); }
+      Crystal::Atom_Type<T_TYPE>* object_constructor( math::rVector3d const &_vec,
+                                                      boost::python::object const& _ob )
+      {
+        using namespace boost::python;
+        typedef Crystal::Atom_Type<T_TYPE> t_Atom;
+        t_Atom *result = NULL;
+        try
+        { 
+          result = new t_Atom;
+          result->pos = _vec;
+          construct_type( *result, _ob );
+          return result;
+        }
+        catch( std::exception &_e )
+        {
+          if( result ) delete result;
+          std::ostringstream sstr;
+          sstr << "Object cannot be converted to an atom: \n"
+               << _e.what() << "\n";
+          PyErr_SetString(PyExc_RuntimeError, sstr.str().c_str());
+          boost::python::throw_error_already_set();
+        }
+        catch( ... )
+        {
+          if( result ) delete result;
+          PyErr_SetString(PyExc_RuntimeError, "Could not convert object to Atom." );
+          boost::python::throw_error_already_set();
+        }
+        return NULL;
+      }
+    template< class T_TYPE >
+      Crystal::Atom_Type<T_TYPE>* full_constructor( math::rVector3d const &_vec,
+                                                    boost::python::object const& _ob,
+                                                    types::t_int _site )
+      {
+        using namespace boost::python;
+        typedef Crystal::Atom_Type<T_TYPE> t_Atom;
+        t_Atom *result = NULL;
+        try
+        { 
+          result = new t_Atom;
+          result->pos = _vec;
+          construct_type( *result, _ob );
+          result->site = _site; 
+          return result;
+        }
+        catch( std::exception &_e )
+        {
+          if( result ) delete result;
+          std::ostringstream sstr;
+          sstr << "Object cannot be converted to an atom: \n"
+               << _e.what() << "\n";
+          PyErr_SetString(PyExc_RuntimeError, sstr.str().c_str());
+          boost::python::throw_error_already_set();
+        }
+        catch( ... )
+        {
+          if( result ) delete result;
+          PyErr_SetString(PyExc_RuntimeError, "Could not convert object to Atom." );
+          boost::python::throw_error_already_set();
+        }
+        return NULL;
+      }
+
 
     types::t_real toReal(std::string _str )
     { 
